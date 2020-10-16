@@ -6268,7 +6268,7 @@ static BOOL poll_isset(WSAPOLLFD *fds, int max, SOCKET s, int rev)
 
 static void test_WSAPoll(void)
 {
-    int ix, ret, err, poll_timeout;
+    int ix, ret, err;
     SOCKET fdListen, fdRead, fdWrite;
     struct sockaddr_in address;
     socklen_t len;
@@ -6315,19 +6315,18 @@ static void test_WSAPoll(void)
     address.sin_family = AF_INET;
     len = sizeof(address);
     fdListen = setup_server_socket(&address, &len);
-    poll_timeout = 100;
 
     /* When no events are pending poll returns 0 with no error */
     POLL_CLEAR();
     POLL_SET(fdListen, POLLIN);
-    ret = pWSAPoll(fds, ix, poll_timeout);
+    ret = pWSAPoll(fds, ix, 100);
     ok(ret == 0, "expected 0, got %d\n", ret);
 
     /* Test listening socket connection attempt notifications */
     fdWrite = setup_connector_socket(&address, len, TRUE);
     POLL_CLEAR();
     POLL_SET(fdListen, POLLIN | POLLOUT);
-    ret = pWSAPoll(fds, ix, poll_timeout);
+    ret = pWSAPoll(fds, ix, 100);
     ok(ret == 1, "expected 1, got %d\n", ret);
     ok(POLL_ISSET(fdListen, POLLRDNORM), "fdListen socket events incorrect\n");
     len = sizeof(address);
@@ -6339,7 +6338,7 @@ static void test_WSAPoll(void)
     POLL_SET(fdListen, POLLIN | POLLOUT);
     POLL_SET(fdRead, POLLIN | POLLOUT);
     POLL_SET(fdWrite, POLLIN | POLLOUT);
-    ret = pWSAPoll(fds, ix, poll_timeout);
+    ret = pWSAPoll(fds, ix, 100);
     ok(ret == 2, "expected 2, got %d\n", ret);
     ok(POLL_ISSET(fdWrite, POLLWRNORM), "fdWrite socket events incorrect\n");
     ok(POLL_ISSET(fdRead, POLLWRNORM), "fdRead socket events incorrect\n");
@@ -6355,7 +6354,7 @@ static void test_WSAPoll(void)
     POLL_CLEAR();
     POLL_SET(fdListen, POLLIN | POLLOUT);
     POLL_SET(fdRead, POLLIN);
-    ret = pWSAPoll(fds, ix, poll_timeout);
+    ret = pWSAPoll(fds, ix, 100);
     ok(ret == 1, "expected 1, got %d\n", ret);
     ok(POLL_ISSET(fdRead, POLLRDNORM), "fdRead socket events incorrect\n");
     ret = recv(fdRead, tmp_buf, sizeof(tmp_buf), 0);
@@ -6368,7 +6367,7 @@ static void test_WSAPoll(void)
     POLL_CLEAR();
     POLL_SET(fdListen, POLLIN | POLLOUT);
     POLL_SET(fdRead, POLLIN);
-    ret = pWSAPoll(fds, ix, poll_timeout);
+    ret = pWSAPoll(fds, ix, 100);
     ok(ret == 1, "expected 1, got %d\n", ret);
     ok(POLL_ISSET(fdRead, POLLRDBAND), "fdRead socket events incorrect\n");
     tmp_buf[0] = 0xAF;
@@ -6385,7 +6384,7 @@ static void test_WSAPoll(void)
     POLL_CLEAR();
     POLL_SET(fdListen, POLLIN | POLLOUT);
     POLL_SET(fdRead, POLLIN | POLLOUT);
-    ret = pWSAPoll(fds, ix, poll_timeout);
+    ret = pWSAPoll(fds, ix, 100);
     ok(ret == 1, "expected 1, got %d\n", ret);
     tmp_buf[0] = 0xAF;
     SetLastError(0xdeadbeef);
@@ -6402,34 +6401,34 @@ static void test_WSAPoll(void)
     POLL_CLEAR();
     POLL_SET(fdListen, POLLIN | POLLOUT);
     POLL_SET(fdWrite, POLLIN);
-    ret = pWSAPoll(fds, ix, poll_timeout);
+    ret = pWSAPoll(fds, ix, 100);
     ok(ret == 1, "expected 1, got %d\n", ret);
     ok(POLL_ISSET(fdWrite, POLLHUP), "fdWrite socket events incorrect\n");
     ret = recv(fdWrite, tmp_buf, sizeof(tmp_buf), 0);
     ok(ret == 0, "expected 0, got %d\n", ret);
-
-    /* When a connection is attempted to a non-listening socket due to a bug
-     * in the MS code it will never be notified. This is a long standing issue
-     * that will never be fixed for compatibility reasons so we have to deal
-     * with it manually. */
     ret = closesocket(fdWrite);
     ok(ret == 0, "expected 0, got %d\n", ret);
     ret = closesocket(fdListen);
     ok(ret == 0, "expected 0, got %d\n", ret);
-    len = sizeof(address);
-    fdWrite = setup_connector_socket(&address, len, TRUE);
-    POLL_CLEAR();
-    POLL_SET(fdWrite, POLLIN | POLLOUT);
-    poll_timeout = 2000;
-    ret = pWSAPoll(fds, ix, poll_timeout);
-todo_wine
-    ok(ret == 0, "expected 0, got %d\n", ret);
-    len = sizeof(id);
-    id = 0xdeadbeef;
-    err = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len);
-    ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
-    ok(id == WSAECONNREFUSED, "expected 10061, got %d\n", id);
-    closesocket(fdWrite);
+
+    /* The following WSAPoll() call times out on versions older than w10pro64,
+     * but even on w10pro64 it takes over 2 seconds for an error to be reported,
+     * so make the test interactive-only. */
+    if (winetest_interactive)
+    {
+        len = sizeof(address);
+        fdWrite = setup_connector_socket(&address, len, TRUE);
+        POLL_CLEAR();
+        POLL_SET(fdWrite, POLLIN | POLLOUT);
+        ret = pWSAPoll(fds, ix, 10000);
+        ok(ret == 1, "expected 0, got %d\n", ret);
+        len = sizeof(id);
+        id = 0xdeadbeef;
+        err = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len);
+        ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
+        ok(id == WSAECONNREFUSED, "expected 10061, got %d\n", id);
+        closesocket(fdWrite);
+    }
 
     /* Try poll() on a closed socket after connection */
     tcp_socketpair(&fdRead, &fdWrite);
@@ -6437,12 +6436,12 @@ todo_wine
     POLL_CLEAR();
     POLL_SET(fdWrite, POLLIN | POLLOUT);
     POLL_SET(fdRead, POLLIN | POLLOUT);
-    ret = pWSAPoll(fds, ix, poll_timeout);
+    ret = pWSAPoll(fds, ix, 2000);
     ok(ret == 1, "expected 1, got %d\n", ret);
     ok(POLL_ISSET(fdRead, POLLNVAL), "fdRead socket events incorrect\n");
     POLL_CLEAR();
     POLL_SET(fdWrite, POLLIN | POLLOUT);
-    ret = pWSAPoll(fds, ix, poll_timeout);
+    ret = pWSAPoll(fds, ix, 2000);
     ok(ret == 1, "expected 1, got %d\n", ret);
 todo_wine
     ok(POLL_ISSET(fdWrite, POLLWRNORM | POLLHUP) || broken(POLL_ISSET(fdWrite, POLLWRNORM)) /* <= 2008 */,
@@ -6455,7 +6454,7 @@ todo_wine
     ok(thread_handle != NULL, "CreateThread failed unexpectedly: %d\n", GetLastError());
     POLL_CLEAR();
     POLL_SET(fdWrite, POLLIN | POLLOUT);
-    ret = pWSAPoll(fds, ix, poll_timeout);
+    ret = pWSAPoll(fds, ix, 2000);
     ok(ret == 1, "expected 1, got %d\n", ret);
     ok(POLL_ISSET(fdWrite, POLLWRNORM), "fdWrite socket events incorrect\n");
     WaitForSingleObject (thread_handle, 1000);
@@ -6466,7 +6465,7 @@ todo_wine
     ok(thread_handle != NULL, "CreateThread failed unexpectedly: %d\n", GetLastError());
     POLL_CLEAR();
     POLL_SET(fdWrite, POLLIN);
-    ret = pWSAPoll(fds, ix, poll_timeout);
+    ret = pWSAPoll(fds, ix, 2000);
     ok(ret == 1, "expected 1, got %d\n", ret);
     ok(POLL_ISSET(fdWrite, POLLNVAL), "fdWrite socket events incorrect\n");
     WaitForSingleObject (thread_handle, 1000);
