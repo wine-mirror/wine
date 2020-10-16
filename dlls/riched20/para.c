@@ -29,14 +29,14 @@ void para_mark_rewrap( ME_TextEditor *editor, ME_Paragraph *para )
     para_mark_add( editor, para );
 }
 
-static ME_DisplayItem *make_para(ME_TextEditor *editor)
+static ME_Paragraph *para_create( ME_TextEditor *editor )
 {
     ME_DisplayItem *item = ME_MakeDI(diParagraph);
 
     ME_SetDefaultParaFormat(editor, &item->member.para.fmt);
     item->member.para.nFlags = MEPF_REWRAP;
 
-    return item;
+    return &item->member.para;
 }
 
 void destroy_para(ME_TextEditor *editor, ME_DisplayItem *item)
@@ -130,7 +130,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   LOGFONTW lf;
   HFONT hf;
   ME_TextBuffer *text = editor->pBuffer;
-  ME_DisplayItem *para = make_para(editor);
+  ME_Paragraph *para = para_create( editor );
   ME_Run *run;
   ME_Style *style;
   int eol_len;
@@ -175,25 +175,25 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   }
 
   eol_len = editor->bEmulateVersion10 ? 2 : 1;
-  para->member.para.text = ME_MakeStringN( cr_lf, eol_len );
+  para->text = ME_MakeStringN( cr_lf, eol_len );
 
   run = run_create( style, MERF_ENDPARA );
   run->nCharOfs = 0;
   run->len = eol_len;
-  run->para = &para->member.para;
-  para->member.para.eop_run = run;
+  run->para = para;
+  para->eop_run = run;
 
-  ME_InsertBefore(text->pLast, para);
-  ME_InsertBefore(text->pLast, run_get_di( run ));
-  para->member.para.prev_para = text->pFirst;
-  para->member.para.next_para = text->pLast;
-  text->pFirst->member.para.next_para = para;
-  text->pLast->member.para.prev_para = para;
+  ME_InsertBefore( text->pLast, para_get_di( para) );
+  ME_InsertBefore( text->pLast, run_get_di( run ) );
+  para->prev_para = text->pFirst;
+  para->next_para = text->pLast;
+  text->pFirst->member.para.next_para = para_get_di( para );
+  text->pLast->member.para.prev_para = para_get_di( para );
 
   text->pLast->member.para.nCharOfs = editor->bEmulateVersion10 ? 2 : 1;
 
   wine_rb_init( &editor->marked_paras, para_mark_compare );
-  para_mark_add( editor, &para->member.para );
+  para_mark_add( editor, para );
   ME_DestroyContext(&c);
 }
 
@@ -518,7 +518,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
 {
   ME_DisplayItem *next_para = NULL;
   ME_DisplayItem *run_para = NULL;
-  ME_DisplayItem *new_para = make_para(editor);
+  ME_Paragraph *new_para = para_create( editor );
   ME_Run *end_run;
   int ofs, i;
   ME_DisplayItem *pp;
@@ -543,7 +543,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   if (run_para->member.para.fmt.wNumbering)
       para_num_clear_list( editor, &run_para->member.para, &run_para->member.para.fmt );
 
-  new_para->member.para.text = ME_VSplitString( run_para->member.para.text, run->member.run.nCharOfs );
+  new_para->text = ME_VSplitString( run_para->member.para.text, run->member.run.nCharOfs );
 
   end_run = run_create( style, run_flags );
   ofs = end_run->nCharOfs = run->member.run.nCharOfs;
@@ -560,7 +560,7 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
     if (editor->pCursors[i].pPara == run_para &&
         run->member.run.nCharOfs <= editor->pCursors[i].pRun->member.run.nCharOfs)
     {
-      editor->pCursors[i].pPara = new_para;
+      editor->pCursors[i].pPara = para_get_di( new_para );
     }
   }
 
@@ -568,38 +568,38 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
   pp = run;
   while(pp->type == diRun) {
     pp->member.run.nCharOfs -= ofs;
-    pp->member.run.para = &new_para->member.para;
+    pp->member.run.para = new_para;
     pp = ME_FindItemFwd(pp, diRunOrParagraphOrEnd);
   }
-  new_para->member.para.nCharOfs = run_para->member.para.nCharOfs + ofs;
-  new_para->member.para.nCharOfs += eol_len;
-  new_para->member.para.nFlags = 0;
-  para_mark_rewrap( editor, &new_para->member.para );
+  new_para->nCharOfs = run_para->member.para.nCharOfs + ofs;
+  new_para->nCharOfs += eol_len;
+  new_para->nFlags = 0;
+  para_mark_rewrap( editor, new_para );
 
   /* FIXME initialize format style and call ME_SetParaFormat blah blah */
-  new_para->member.para.fmt = run_para->member.para.fmt;
-  new_para->member.para.border = run_para->member.para.border;
+  new_para->fmt = run_para->member.para.fmt;
+  new_para->border = run_para->member.para.border;
 
   /* insert paragraph into paragraph double linked list */
-  new_para->member.para.prev_para = run_para;
-  new_para->member.para.next_para = next_para;
-  run_para->member.para.next_para = new_para;
-  next_para->member.para.prev_para = new_para;
+  new_para->prev_para = run_para;
+  new_para->next_para = next_para;
+  run_para->member.para.next_para = para_get_di( new_para );
+  next_para->member.para.prev_para = para_get_di( new_para );
 
   /* insert end run of the old paragraph, and new paragraph, into DI double linked list */
-  ME_InsertBefore(run, new_para);
-  ME_InsertBefore( new_para, run_get_di( end_run ));
+  ME_InsertBefore( run, para_get_di( new_para ) );
+  ME_InsertBefore( para_get_di( new_para ), run_get_di( end_run ) );
 
   /* Fix up the paras' eop_run ptrs */
-  new_para->member.para.eop_run = run_para->member.para.eop_run;
+  new_para->eop_run = run_para->member.para.eop_run;
   run_para->member.para.eop_run = end_run;
 
   if (!editor->bEmulateVersion10) { /* v4.1 */
     if (paraFlags & (MEPF_ROWSTART|MEPF_CELL))
     {
       ME_DisplayItem *cell = ME_MakeDI(diCell);
-      ME_InsertBefore(new_para, cell);
-      new_para->member.para.pCell = cell;
+      ME_InsertBefore( para_get_di( new_para ), cell );
+      new_para->pCell = cell;
       cell->member.cell.next_cell = NULL;
       if (paraFlags & MEPF_ROWSTART)
       {
@@ -610,7 +610,9 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
           cell->member.cell.nNestingLevel = run_para->member.para.pCell->member.cell.nNestingLevel + 1;
         else
           cell->member.cell.nNestingLevel = 1;
-      } else {
+      }
+      else
+      {
         cell->member.cell.prev_cell = run_para->member.para.pCell;
         assert(cell->member.cell.prev_cell);
         cell->member.cell.prev_cell->member.cell.next_cell = cell;
@@ -619,37 +621,39 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
         cell->member.cell.nNestingLevel = cell->member.cell.prev_cell->member.cell.nNestingLevel;
         cell->member.cell.parent_cell = cell->member.cell.prev_cell->member.cell.parent_cell;
       }
-    } else if (paraFlags & MEPF_ROWEND) {
+    }
+    else if (paraFlags & MEPF_ROWEND)
+    {
       run_para->member.para.nFlags |= MEPF_ROWEND;
       run_para->member.para.pCell = run_para->member.para.pCell->member.cell.parent_cell;
-      new_para->member.para.pCell = run_para->member.para.pCell;
+      new_para->pCell = run_para->member.para.pCell;
       assert(run_para->member.para.prev_para->member.para.nFlags & MEPF_CELL);
       assert(!(run_para->member.para.prev_para->member.para.nFlags & MEPF_ROWSTART));
-      if (new_para->member.para.pCell != new_para->member.para.next_para->member.para.pCell
-          && new_para->member.para.next_para->member.para.pCell
-          && !new_para->member.para.next_para->member.para.pCell->member.cell.prev_cell)
+      if (new_para->pCell != new_para->next_para->member.para.pCell
+          && new_para->next_para->member.para.pCell
+          && !new_para->next_para->member.para.pCell->member.cell.prev_cell)
       {
         /* Row starts just after the row that was ended. */
-        new_para->member.para.nFlags |= MEPF_ROWSTART;
+        new_para->nFlags |= MEPF_ROWSTART;
       }
-    } else {
-      new_para->member.para.pCell = run_para->member.para.pCell;
     }
+    else new_para->pCell = run_para->member.para.pCell;
+
     table_update_flags( &run_para->member.para );
-    table_update_flags( &new_para->member.para );
+    table_update_flags( new_para );
   }
 
   /* force rewrap of the */
   if (run_para->member.para.prev_para->type == diParagraph)
     para_mark_rewrap( editor, &run_para->member.para.prev_para->member.para );
 
-  para_mark_rewrap( editor, &new_para->member.para.prev_para->member.para );
+  para_mark_rewrap( editor, &new_para->prev_para->member.para );
 
   /* we've added the end run, so we need to modify nCharOfs in the next paragraphs */
   ME_PropagateCharOffset(next_para, eol_len);
   editor->nParagraphs++;
 
-  return new_para;
+  return para_get_di( new_para );
 }
 
 /* join tp with tp->member.para.next_para, keeping tp's style; this
