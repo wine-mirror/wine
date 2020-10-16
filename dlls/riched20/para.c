@@ -211,23 +211,20 @@ void ME_MarkAllForWrapping(ME_TextEditor *editor)
   ME_MarkForWrapping(editor, editor->pBuffer->pFirst->member.para.next_para, editor->pBuffer->pLast);
 }
 
-static void ME_UpdateTableFlags(ME_DisplayItem *para)
+static void table_update_flags( ME_Paragraph *para )
 {
-  para->member.para.fmt.dwMask |= PFM_TABLE|PFM_TABLEROWDELIMITER;
-  if (para->member.para.pCell) {
-    para->member.para.nFlags |= MEPF_CELL;
-  } else {
-    para->member.para.nFlags &= ~MEPF_CELL;
-  }
-  if (para->member.para.nFlags & MEPF_ROWEND) {
-    para->member.para.fmt.wEffects |= PFE_TABLEROWDELIMITER;
-  } else {
-    para->member.para.fmt.wEffects &= ~PFE_TABLEROWDELIMITER;
-  }
-  if (para->member.para.nFlags & (MEPF_ROWSTART|MEPF_CELL|MEPF_ROWEND))
-    para->member.para.fmt.wEffects |= PFE_TABLE;
-  else
-    para->member.para.fmt.wEffects &= ~PFE_TABLE;
+    para->fmt.dwMask |= PFM_TABLE | PFM_TABLEROWDELIMITER;
+
+    if (para->pCell) para->nFlags |= MEPF_CELL;
+    else para->nFlags &= ~MEPF_CELL;
+
+    if (para->nFlags & MEPF_ROWEND) para->fmt.wEffects |= PFE_TABLEROWDELIMITER;
+    else para->fmt.wEffects &= ~PFE_TABLEROWDELIMITER;
+
+    if (para->nFlags & (MEPF_ROWSTART | MEPF_CELL | MEPF_ROWEND))
+        para->fmt.wEffects |= PFE_TABLE;
+    else
+        para->fmt.wEffects &= ~PFE_TABLE;
 }
 
 static inline BOOL para_num_same_list( const PARAFORMAT2 *item, const PARAFORMAT2 *base )
@@ -638,8 +635,8 @@ ME_DisplayItem *ME_SplitParagraph(ME_TextEditor *editor, ME_DisplayItem *run,
     } else {
       new_para->member.para.pCell = run_para->member.para.pCell;
     }
-    ME_UpdateTableFlags(run_para);
-    ME_UpdateTableFlags(new_para);
+    table_update_flags( &run_para->member.para );
+    table_update_flags( &new_para->member.para );
   }
 
   /* force rewrap of the */
