@@ -39,6 +39,123 @@ static IBackgroundCopyJob *test_job;
 static GUID test_jobId;
 static BG_JOB_TYPE test_type;
 
+typedef struct IBackgroundCopyCallback2Impl {
+    IBackgroundCopyCallback2 IBackgroundCopyCallback2_iface;
+    LONG ref;
+} IBackgroundCopyCallback2Impl;
+
+static inline IBackgroundCopyCallback2Impl *impl_from_IBackgroundCopyCallback2(IBackgroundCopyCallback2 *iface)
+{
+    return CONTAINING_RECORD(iface, IBackgroundCopyCallback2Impl, IBackgroundCopyCallback2_iface);
+}
+
+static HRESULT WINAPI IBackgroundCopyCallback2Impl_QueryInterface(IBackgroundCopyCallback2 *iface, REFIID riid, void **ppv)
+{
+    IBackgroundCopyCallback2Impl *This = impl_from_IBackgroundCopyCallback2(iface);
+
+    if (!ppv)
+    {
+        return E_INVALIDARG;
+    }
+
+    *ppv = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IBackgroundCopyCallback) ||
+        IsEqualIID(riid, &IID_IBackgroundCopyCallback2))
+    {
+        *ppv = &This->IBackgroundCopyCallback2_iface;
+    }
+    else
+    {
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI IBackgroundCopyCallback2Impl_AddRef(IBackgroundCopyCallback2 *iface)
+{
+    IBackgroundCopyCallback2Impl *This = impl_from_IBackgroundCopyCallback2(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    trace("IBackgroundCopyCallback2Impl_AddRef called (%p, ref = %d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI IBackgroundCopyCallback2Impl_Release(IBackgroundCopyCallback2 *iface)
+{
+    IBackgroundCopyCallback2Impl *This = impl_from_IBackgroundCopyCallback2(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    trace("IBackgroundCopyCallback2Impl_Release called (%p, ref = %d)\n", This, ref);
+
+    if (ref == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI IBackgroundCopyCallback2Impl_JobError(IBackgroundCopyCallback2 *iface, IBackgroundCopyJob *pJob, IBackgroundCopyError *pError)
+{
+    trace("IBackgroundCopyCallback2Impl_JobError called (%p, %p, %p)\n", iface, pJob, pError);
+    return S_OK;
+}
+
+static HRESULT WINAPI IBackgroundCopyCallback2Impl_JobModification(IBackgroundCopyCallback2 *iface, IBackgroundCopyJob *pJob, DWORD dwReserved)
+{
+    trace("IBackgroundCopyCallback2Impl_JobModification called (%p, %p)\n", iface, pJob);
+    return S_OK;
+}
+
+static HRESULT WINAPI IBackgroundCopyCallback2Impl_JobTransferred(IBackgroundCopyCallback2 *iface, IBackgroundCopyJob *pJob)
+{
+    trace("IBackgroundCopyCallback2Impl_JobTransferred called (%p, %p)\n", iface, pJob);
+    return S_OK;
+}
+
+static HRESULT WINAPI IBackgroundCopyCallback2Impl_FileTransferred(IBackgroundCopyCallback2 *iface, IBackgroundCopyJob *pJob, IBackgroundCopyFile *pFile)
+{
+    trace("IBackgroundCopyCallback2Impl_FileTransferred called (%p, %p, %p)\n", iface, pJob, pFile);
+    return S_OK;
+}
+
+
+static const IBackgroundCopyCallback2Vtbl copyCallback_vtbl =
+{
+    IBackgroundCopyCallback2Impl_QueryInterface,
+    IBackgroundCopyCallback2Impl_AddRef,
+    IBackgroundCopyCallback2Impl_Release,
+    IBackgroundCopyCallback2Impl_JobTransferred,
+    IBackgroundCopyCallback2Impl_JobError,
+    IBackgroundCopyCallback2Impl_JobModification,
+    IBackgroundCopyCallback2Impl_FileTransferred
+};
+
+static BOOL create_background_copy_callback2(IBackgroundCopyCallback2 **copyCallback)
+{
+    IBackgroundCopyCallback2Impl *obj;
+    *copyCallback = NULL;
+
+    obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj));
+
+    if (!obj)
+    {
+        trace("Out of memory creating IBackgroundCopyCallback2\n");
+        return FALSE;
+    }
+
+    obj->IBackgroundCopyCallback2_iface.lpVtbl = &copyCallback_vtbl;
+    obj->ref = 1;
+
+    *copyCallback = &obj->IBackgroundCopyCallback2_iface;
+
+    return TRUE;
+}
+
 static HRESULT test_create_manager(void)
 {
     HRESULT hres;
@@ -592,6 +709,20 @@ static void test_HttpOptions(void)
     unsigned int i;
     WCHAR *headers;
     ULONG flags, orig_flags;
+    IBackgroundCopyCallback2 *copyCallback;
+    IUnknown *copyCallbackUnknown;
+
+    ok(create_background_copy_callback2(&copyCallback) == TRUE, "create_background_copy_callback2 failed\n");
+
+    hr = IBackgroundCopyCallback2_QueryInterface(copyCallback, &IID_IUnknown, (LPVOID*)&copyCallbackUnknown);
+    ok(hr == S_OK,"IBackgroundCopyCallback_QueryInterface(IID_IUnknown) failed: %08x\n", hr);
+
+    hr = IBackgroundCopyJob_SetNotifyInterface(test_job, copyCallbackUnknown);
+    ok(hr == S_OK,"IBackgroundCopyCallback_SetNotifyInterface failed: %08x\n", hr);
+
+    hr = IBackgroundCopyJob_SetNotifyFlags(test_job, BG_NOTIFY_JOB_TRANSFERRED | BG_NOTIFY_JOB_ERROR | BG_NOTIFY_DISABLE | BG_NOTIFY_JOB_MODIFICATION | BG_NOTIFY_FILE_TRANSFERRED);
+    ok(hr == S_OK,"IBackgroundCopyCallback_SetNotifyFlags failed: %08x\n", hr);
+
 
     DeleteFileW(test_localPathA);
     hr = IBackgroundCopyJob_AddFile(test_job, L"http://test.winehq.org/", test_localPathA);
@@ -710,6 +841,12 @@ static void test_HttpOptions(void)
     ok(hr == BG_E_INVALID_STATE, "got 0x%08x\n", hr);
 
     DeleteFileW(test_localPathA);
+
+    hr = IBackgroundCopyJob_SetNotifyInterface(test_job, NULL);
+    ok(hr == BG_E_INVALID_STATE, "got 0x%08x\n", hr);
+
+    IUnknown_Release(copyCallbackUnknown);
+    IBackgroundCopyCallback2_Release(copyCallback);
 }
 
 typedef void (*test_t)(void);
