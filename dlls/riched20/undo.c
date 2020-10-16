@@ -373,7 +373,7 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, struct undo_item *undo)
   {
     ME_Cursor tmp;
     cursor_from_char_ofs( editor, undo->u.join_paras.pos, &tmp );
-    ME_JoinParagraphs(editor, tmp.pPara, TRUE);
+    para_join( editor, &tmp.pPara->member.para, TRUE );
     break;
   }
   case undo_split_para:

@@ -369,7 +369,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
           keepFirstParaFormat = TRUE;
         }
       }
-      ME_JoinParagraphs(editor, c.pPara, keepFirstParaFormat);
+      para_join( editor, &c.pPara->member.para, keepFirstParaFormat );
       /* ME_SkipAndPropagateCharOffset(p->pRun, shift); */
       ME_CheckCharOffsets(editor);
       nChars -= (eollen < nChars) ? eollen : nChars;
