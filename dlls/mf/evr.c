@@ -35,6 +35,12 @@ enum video_renderer_flags
     EVR_PRESENTER_INITED_SERVICES = 0x8,
 };
 
+enum video_stream_flags
+{
+    EVR_STREAM_PREROLLING = 0x1,
+    EVR_STREAM_PREROLLED = 0x2,
+};
+
 struct video_renderer;
 
 struct video_stream
@@ -44,6 +50,7 @@ struct video_stream
     IMFGetService IMFGetService_iface;
     LONG refcount;
     unsigned int id;
+    unsigned int flags;
     struct video_renderer *parent;
     IMFMediaEventQueue *event_queue;
     IMFVideoSampleAllocator *allocator;
@@ -318,7 +325,18 @@ static HRESULT WINAPI video_stream_sink_GetMediaTypeHandler(IMFStreamSink *iface
 
 static HRESULT WINAPI video_stream_sink_ProcessSample(IMFStreamSink *iface, IMFSample *sample)
 {
+    struct video_stream *stream = impl_from_IMFStreamSink(iface);
+
     FIXME("%p, %p.\n", iface, sample);
+
+    EnterCriticalSection(&stream->cs);
+    if (stream->flags & EVR_STREAM_PREROLLING)
+    {
+        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkPrerolled, &GUID_NULL, S_OK, NULL);
+        stream->flags &= ~EVR_STREAM_PREROLLING;
+        stream->flags |= EVR_STREAM_PREROLLED;
+    }
+    LeaveCriticalSection(&stream->cs);
 
     return E_NOTIMPL;
 }
@@ -958,9 +976,34 @@ static ULONG WINAPI video_renderer_preroll_Release(IMFMediaSinkPreroll *iface)
 
 static HRESULT WINAPI video_renderer_preroll_NotifyPreroll(IMFMediaSinkPreroll *iface, MFTIME start_time)
 {
-    FIXME("%p, %s.\n", iface, debugstr_time(start_time));
+    struct video_renderer *renderer = impl_from_IMFMediaSinkPreroll(iface);
+    HRESULT hr = S_OK;
+    size_t i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, debugstr_time(start_time));
+
+    EnterCriticalSection(&renderer->cs);
+    if (renderer->flags & EVR_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+    {
+        for (i = 0; i < renderer->stream_count; ++i)
+        {
+            struct video_stream *stream = renderer->streams[i];
+
+            EnterCriticalSection(&stream->cs);
+            if (!(stream->flags & (EVR_STREAM_PREROLLING | EVR_STREAM_PREROLLED)))
+            {
+                IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkRequestSample,
+                        &GUID_NULL, S_OK, NULL);
+                stream->flags |= EVR_STREAM_PREROLLING;
+            }
+            LeaveCriticalSection(&stream->cs);
+        }
+    }
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static const IMFMediaSinkPrerollVtbl video_renderer_preroll_vtbl =
