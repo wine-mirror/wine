@@ -3452,6 +3452,21 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
     return status;
 }
 
+/***********************************************************************
+ *             NtAllocateVirtualMemoryEx   (NTDLL.@)
+ *             ZwAllocateVirtualMemoryEx   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *size_ptr, ULONG type,
+                                           ULONG protect, MEM_EXTENDED_PARAMETER *parameters,
+                                           ULONG count )
+{
+    if (count && !parameters) return STATUS_INVALID_PARAMETER;
+
+    if (count) FIXME( "Ignoring %d extended parameters %p\n", count, parameters );
+
+    return NtAllocateVirtualMemory( process, ret, 0, size_ptr, type, protect );
+}
+
 
 /***********************************************************************
  *             NtFreeVirtualMemory   (NTDLL.@)

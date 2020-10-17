@@ -34,6 +34,8 @@ static NTSTATUS (WINAPI *pRtlCreateUserStack)(SIZE_T, SIZE_T, ULONG, SIZE_T, SIZ
 static ULONG64 (WINAPI *pRtlGetEnabledExtendedFeatures)(ULONG64);
 static NTSTATUS (WINAPI *pRtlFreeUserStack)(void *);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
+static NTSTATUS (WINAPI *pNtAllocateVirtualMemoryEx)(HANDLE, PVOID *, SIZE_T *, ULONG, ULONG,
+                                                     MEM_EXTENDED_PARAMETER *, ULONG);
 static const BOOL is_win64 = sizeof(void*) != sizeof(int);
 
 static SYSTEM_BASIC_INFORMATION sbi;
@@ -215,6 +217,24 @@ static void test_NtAllocateVirtualMemory(void)
     size = 0;
     status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
     ok(status == STATUS_SUCCESS, "NtFreeVirtualMemory failed\n");
+
+    if (!pNtAllocateVirtualMemoryEx)
+    {
+        win_skip("NtAllocateVirtualMemoryEx() is missing\n");
+        return;
+    }
+
+    /* simple allocation should succeed */
+    size = 0x1000;
+    addr1 = NULL;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr1, &size, MEM_RESERVE | MEM_COMMIT,
+                                        PAGE_EXECUTE_READWRITE, NULL, 0);
+    ok(status == STATUS_SUCCESS, "NtAllocateVirtualMemoryEx returned %08x\n", status);
+
+    /* specifying a count of >0 with NULL parameters should fail */
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr1, &size, MEM_RESERVE | MEM_COMMIT,
+                                        PAGE_EXECUTE_READWRITE, NULL, 1);
+    ok(status == STATUS_INVALID_PARAMETER, "NtAllocateVirtualMemoryEx returned %08x\n", status);
 }
 
 static void test_RtlCreateUserStack(void)
@@ -648,6 +668,7 @@ START_TEST(virtual)
     pRtlCreateUserStack = (void *)GetProcAddress(mod, "RtlCreateUserStack");
     pRtlFreeUserStack = (void *)GetProcAddress(mod, "RtlFreeUserStack");
     pRtlGetEnabledExtendedFeatures = (void *)GetProcAddress(mod, "RtlGetEnabledExtendedFeatures");
+    pNtAllocateVirtualMemoryEx = (void *)GetProcAddress(mod, "NtAllocateVirtualMemoryEx");
 
     NtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), NULL);
     trace("system page size %#x\n", sbi.PageSize);

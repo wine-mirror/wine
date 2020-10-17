@@ -141,6 +141,7 @@
 # @ stub NtAllocateUserPhysicalPages
 @ stdcall -syscall NtAllocateUuids(ptr ptr ptr ptr)
 @ stdcall -syscall NtAllocateVirtualMemory(long ptr long ptr long long)
+@ stdcall -syscall NtAllocateVirtualMemoryEx(long ptr ptr long long ptr long)
 @ stdcall -syscall NtAreMappedFilesTheSame(ptr ptr)
 @ stdcall -syscall NtAssignProcessToJobObject(long long)
 @ stub NtCallbackReturn
@@ -1146,6 +1147,7 @@
 # @ stub ZwAllocateUserPhysicalPages
 @ stdcall -private -syscall ZwAllocateUuids(ptr ptr ptr ptr) NtAllocateUuids
 @ stdcall -private -syscall ZwAllocateVirtualMemory(long ptr long ptr long long) NtAllocateVirtualMemory
+@ stdcall -private -syscall ZwAllocateVirtualMemoryEx(long ptr ptr long long ptr long) NtAllocateVirtualMemoryEx
 @ stdcall -private -syscall ZwAreMappedFilesTheSame(ptr ptr) NtAreMappedFilesTheSame
 @ stdcall -private -syscall ZwAssignProcessToJobObject(long long) NtAssignProcessToJobObject
 @ stub ZwCallbackReturn
