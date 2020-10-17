@@ -3610,28 +3610,31 @@ static void test_select(void)
     ok(FD_ISSET(fdWrite, &readfds), "fdWrite socket is not in the set\n");
     ret = recv(fdWrite, tmp_buf, sizeof(tmp_buf), 0);
     ok(ret == 0, "expected 0, got %d\n", ret);
-
-    /* When a connection is attempted to a non-listening socket it will get to the except descriptor */
     ret = closesocket(fdWrite);
     ok(ret == 0, "expected 0, got %d\n", ret);
     ret = closesocket(fdListen);
     ok(ret == 0, "expected 0, got %d\n", ret);
-    len = sizeof(address);
-    fdWrite = setup_connector_socket(&address, len, TRUE);
-    FD_ZERO_ALL();
-    FD_SET(fdWrite, &writefds);
-    FD_SET(fdWrite, &exceptfds);
-    select_timeout.tv_sec = 2; /* requires more time to realize it will not connect */
-    ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
-    ok(ret == 1, "expected 1, got %d\n", ret);
-    len = sizeof(id);
-    id = 0xdeadbeef;
-    ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len);
-    ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-    ok(id == WSAECONNREFUSED, "expected 10061, got %d\n", id);
-    ok(FD_ISSET(fdWrite, &exceptfds), "fdWrite socket is not in the set\n");
-    ok(select_timeout.tv_usec == 250000, "select timeout should not have changed\n");
-    closesocket(fdWrite);
+
+    /* w10pro64 sometimes takes over 2 seconds for an error to be reported. */
+    if (winetest_interactive)
+    {
+        len = sizeof(address);
+        fdWrite = setup_connector_socket(&address, len, TRUE);
+        FD_ZERO_ALL();
+        FD_SET(fdWrite, &writefds);
+        FD_SET(fdWrite, &exceptfds);
+        select_timeout.tv_sec = 10;
+        ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
+        ok(ret == 1, "expected 1, got %d\n", ret);
+        len = sizeof(id);
+        id = 0xdeadbeef;
+        ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len);
+        ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
+        ok(id == WSAECONNREFUSED, "expected 10061, got %d\n", id);
+        ok(FD_ISSET(fdWrite, &exceptfds), "fdWrite socket is not in the set\n");
+        ok(select_timeout.tv_usec == 250000, "select timeout should not have changed\n");
+        closesocket(fdWrite);
+    }
 
     /* Try select() on a closed socket after connection */
     tcp_socketpair(&fdRead, &fdWrite);
