@@ -1041,7 +1041,7 @@ void manage_desktop( WCHAR *arg )
             initialize_systray( graphics_driver, using_root, enable_shell );
             if (!using_root) initialize_launchers( hwnd );
 
-            if ((shell32 = LoadLibraryA( "shell32.dll" )) &&
+            if ((shell32 = LoadLibraryW( L"shell32.dll" )) &&
                 (pShellDDEInit = (void *)GetProcAddress( shell32, (LPCSTR)188)))
             {
                 pShellDDEInit( TRUE );

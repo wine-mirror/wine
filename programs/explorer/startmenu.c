@@ -375,7 +375,7 @@ static void run_dialog(void)
                                LPCSTR lpszTitle, LPCSTR lpszDesc, DWORD dwFlags);
     HMODULE hShell32;
 
-    hShell32 = LoadLibraryA("shell32");
+    hShell32 = LoadLibraryW(L"shell32");
     pRunFileDlg = (void*)GetProcAddress(hShell32, (LPCSTR)61);
 
     pRunFileDlg(NULL, NULL, NULL, NULL, NULL, 0);
