@@ -48,13 +48,10 @@ UINT    uFlags);
 
 void TaskManager_OnFileNew(void)
 {
-    HMODULE            hShell32;
     RUNFILEDLG        RunFileDlg;
     OSVERSIONINFOW    versionInfo;
-    static const WCHAR wszShell32[] = {'S','H','E','L','L','3','2','.','D','L','L',0};
 
-    hShell32 = LoadLibraryW(wszShell32);
-    RunFileDlg = (void *)GetProcAddress(hShell32, (LPCSTR)61);
+    RunFileDlg = (void *)GetProcAddress(GetModuleHandleW(L"shell32.dll"), (LPCSTR)61);
 
     /* Show "Run..." dialog */
     if (RunFileDlg)
@@ -76,6 +73,4 @@ void TaskManager_OnFileNew(void)
             RunFileDlg(hMainWnd, hIcon, NULL, szTitle, NULL, RFF_CALCDIRECTORY);
         }
     }
-
-    FreeLibrary(hShell32);
 }
