@@ -88,7 +88,7 @@ CRITICAL_SECTION DSOUND_capturers_lock = { &DSOUND_capturers_lock_debug, -1, 0, 
 GUID                    DSOUND_renderer_guids[MAXWAVEDRIVERS];
 GUID                    DSOUND_capture_guids[MAXWAVEDRIVERS];
 
-const WCHAR wine_vxd_drv[] = { 'w','i','n','e','m','m','.','v','x','d', 0 };
+const WCHAR wine_vxd_drv[] = L"winemm.vxd";
 
 /* All default settings, you most likely don't want to touch these, see wiki on UsefulRegistryKeys */
 int ds_hel_buflen = 32768 * 2;
@@ -454,10 +454,6 @@ HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
     BOOL keep_going;
     HRESULT hr, init_hr;
 
-    static const WCHAR primary_desc[] = {'P','r','i','m','a','r','y',' ',
-        'S','o','u','n','d',' ','D','r','i','v','e','r',0};
-    static const WCHAR empty_drv[] = {0};
-
     init_hr = get_mmdevenum(&devenum);
     if(!devenum)
         return init_hr;
@@ -484,8 +480,8 @@ HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
         return DS_OK;
     }
 
-    TRACE("Calling back with NULL (%s)\n", wine_dbgstr_w(primary_desc));
-    keep_going = cb(NULL, primary_desc, empty_drv, user);
+    TRACE("Calling back with NULL (Primary Sound Driver)\n");
+    keep_going = cb(NULL, L"Primary Sound Driver", L"", user);
 
     /* always send the default device first */
     if(keep_going){

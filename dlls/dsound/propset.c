@@ -42,7 +42,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
-static WCHAR wInterface[] = { 'I','n','t','e','r','f','a','c','e',0 };
+static WCHAR wInterface[] = L"Interface";
 
 typedef struct IKsPrivatePropertySetImpl
 {
