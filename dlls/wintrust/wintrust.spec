@@ -37,7 +37,7 @@
 @ stub CryptCATPersistStore
 @ stub CryptCATPutAttrInfo
 @ stub CryptCATPutCatAttrInfo
-@ stub CryptCATPutMemberInfo
+@ stdcall CryptCATPutMemberInfo(ptr wstr wstr ptr long long ptr)
 @ stub CryptCATStoreFromHandle
 @ stub CryptCATVerifyMember
 @ stdcall CryptSIPCreateIndirectData(ptr ptr ptr)

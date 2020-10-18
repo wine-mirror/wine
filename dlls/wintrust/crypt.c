@@ -849,6 +849,19 @@ BOOL WINAPI CryptCATCatalogInfoFromContext(HCATINFO hcatinfo, CATALOG_INFO *info
 }
 
 /***********************************************************************
+ *      CryptCATPutMemberInfo  (WINTRUST.@)
+ */
+CRYPTCATMEMBER * WINAPI CryptCATPutMemberInfo(HANDLE catalog, WCHAR *filename,
+        WCHAR *member, GUID *subject, DWORD version, DWORD size, BYTE *data)
+{
+    FIXME("catalog %p, filename %s, member %s, subject %s, version %u, size %u, data %p, stub!\n",
+            catalog, debugstr_w(filename), debugstr_w(member), debugstr_guid(subject), version, size, data);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
+/***********************************************************************
  *      CryptCATOpen  (WINTRUST.@)
  */
 HANDLE WINAPI CryptCATOpen(WCHAR *filename, DWORD flags, HCRYPTPROV hProv,
