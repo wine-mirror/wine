@@ -74,6 +74,13 @@ void WINAPI PvkFreeCryptProv(HCRYPTPROV hProv, LPCWSTR pwszCapiProvider, DWORD d
                     debugstr_w(pwszTmpContainer));
 }
 
+HRESULT WINAPI SignerSign(SIGNER_SUBJECT_INFO *subject, SIGNER_CERT *cert, SIGNER_SIGNATURE_INFO *signature,
+        SIGNER_PROVIDER_INFO *provider, const WCHAR *timestamp, CRYPT_ATTRIBUTES *attrs, void *sip_data)
+{
+    FIXME("%p %p %p %p %s %p %p stub\n", subject, cert, signature, provider, debugstr_w(timestamp), attrs, sip_data);
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI SignerSignEx(DWORD flags, SIGNER_SUBJECT_INFO *subject_info, SIGNER_CERT *signer_cert,
                             SIGNER_SIGNATURE_INFO *signature_info, SIGNER_PROVIDER_INFO *provider_info,
                             const WCHAR *http_time_stamp, CRYPT_ATTRIBUTES *request, void *sip_data,

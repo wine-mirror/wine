@@ -23,7 +23,7 @@
 @ stub SignerAddTimeStampResponseEx
 @ stub SignerCreateTimeStampRequest
 @ stdcall SignerFreeSignerContext(ptr)
-@ stub SignerSign
+@ stdcall SignerSign(ptr ptr ptr ptr wstr ptr ptr)
 @ stdcall SignerSignEx(long ptr ptr ptr ptr wstr ptr ptr ptr)
 @ stub SignerTimeStamp
 @ stub SignerTimeStampEx
