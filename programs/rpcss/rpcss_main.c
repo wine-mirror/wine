@@ -36,7 +36,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-static WCHAR rpcssW[] = {'R','p','c','S','s',0};
+static WCHAR rpcssW[] = L"RpcSs";
 static HANDLE exit_event;
 static SERVICE_STATUS_HANDLE service_handle;
 
@@ -149,10 +149,10 @@ static RPC_STATUS RPCSS_Initialize(void)
 {
     static unsigned short irot_protseq[] = IROT_PROTSEQ;
     static unsigned short irot_endpoint[] = IROT_ENDPOINT;
-    static unsigned short epm_protseq[] = {'n','c','a','c','n','_','n','p',0};
-    static unsigned short epm_endpoint[] = {'\\','p','i','p','e','\\','e','p','m','a','p','p','e','r',0};
-    static unsigned short epm_protseq_lrpc[] = {'n','c','a','l','r','p','c',0};
-    static unsigned short epm_endpoint_lrpc[] = {'e','p','m','a','p','p','e','r',0};
+    static unsigned short epm_protseq[] = L"ncacn_np";
+    static unsigned short epm_endpoint[] = L"\\pipe\\epmapper";
+    static unsigned short epm_protseq_lrpc[] = L"ncalrpc";
+    static unsigned short epm_endpoint_lrpc[] = L"epmapper";
     static unsigned short irpcss_protseq[] = IRPCSS_PROTSEQ;
     static unsigned short irpcss_endpoint[] = IRPCSS_ENDPOINT;
     static const struct protseq_map
