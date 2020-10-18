@@ -351,7 +351,7 @@ BOOL WINAPI AllocConsole(void)
 
     memset(&console_si, 0, sizeof(console_si));
     console_si.cb = sizeof(console_si);
-    /* setup a view arguments for wineconsole (it'll use them as default values)  */
+    /* setup a view arguments for conhost (it'll use them as default values)  */
     if (app_si.dwFlags & STARTF_USECOUNTCHARS)
     {
         console_si.dwFlags |= STARTF_USECOUNTCHARS;
@@ -386,7 +386,7 @@ BOOL WINAPI AllocConsole(void)
     if (!init_console_std_handles( !(app_si.dwFlags & STARTF_USESTDHANDLES) )) goto error;
 
     RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle = console;
-    TRACE( "Started wineconsole pid=%08x tid=%08x\n", pi.dwProcessId, pi.dwThreadId );
+    TRACE( "Started conhost pid=%08x tid=%08x\n", pi.dwProcessId, pi.dwThreadId );
 
     CloseHandle( server );
     RtlLeaveCriticalSection( &console_section );
