@@ -31,7 +31,6 @@
 #include "perfdata.h"
 
 static PROCNTQSI                       pNtQuerySystemInformation = NULL;
-static PROCGGR                         pGetGuiResources = NULL;
 static PROCGPIC                        pGetProcessIoCounters = NULL;
 static PROCISW64                       pIsWow64Process = NULL;
 static CRITICAL_SECTION                PerfDataCriticalSection;
@@ -60,11 +59,9 @@ BOOL PerfDataInitialize(void)
 {
     LONG    status;
     static const WCHAR wszNtdll[] = {'n','t','d','l','l','.','d','l','l',0};
-    static const WCHAR wszUser32[] = {'u','s','e','r','3','2','.','d','l','l',0};
     static const WCHAR wszKernel32[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
 
     pNtQuerySystemInformation = (PROCNTQSI)GetProcAddress(GetModuleHandleW(wszNtdll), "NtQuerySystemInformation");
-    pGetGuiResources = (PROCGGR)GetProcAddress(GetModuleHandleW(wszUser32), "GetGuiResources");
     pGetProcessIoCounters = (PROCGPIC)GetProcAddress(GetModuleHandleW(wszKernel32), "GetProcessIoCounters");
     pIsWow64Process = (PROCISW64)GetProcAddress(GetModuleHandleW(wszKernel32), "IsWow64Process");
     
@@ -297,10 +294,8 @@ void PerfDataRefresh(void)
                 RevertToSelf();
                 CloseHandle(hProcessToken);
             }
-            if (pGetGuiResources) {
-                pPerfData[Idx].USERObjectCount = pGetGuiResources(hProcess, GR_USEROBJECTS);
-                pPerfData[Idx].GDIObjectCount = pGetGuiResources(hProcess, GR_GDIOBJECTS);
-            }
+            pPerfData[Idx].USERObjectCount = GetGuiResources(hProcess, GR_USEROBJECTS);
+            pPerfData[Idx].GDIObjectCount = GetGuiResources(hProcess, GR_GDIOBJECTS);
             if (pGetProcessIoCounters)
                 pGetProcessIoCounters(hProcess, &pPerfData[Idx].IOCounters);
             if (pIsWow64Process)
