@@ -862,6 +862,17 @@ CRYPTCATMEMBER * WINAPI CryptCATPutMemberInfo(HANDLE catalog, WCHAR *filename,
 }
 
 /***********************************************************************
+ *      CryptCATPersistStore  (WINTRUST.@)
+ */
+BOOL WINAPI CryptCATPersistStore(HANDLE catalog)
+{
+    FIXME("catalog %p, stub!\n", catalog);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *      CryptCATOpen  (WINTRUST.@)
  */
 HANDLE WINAPI CryptCATOpen(WCHAR *filename, DWORD flags, HCRYPTPROV hProv,

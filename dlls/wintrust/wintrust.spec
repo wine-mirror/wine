@@ -34,7 +34,7 @@
 @ stdcall CryptCATGetMemberInfo(ptr wstr)
 @ stub CryptCATHandleFromStore
 @ stdcall CryptCATOpen(wstr long long long long)
-@ stub CryptCATPersistStore
+@ stdcall CryptCATPersistStore(ptr)
 @ stub CryptCATPutAttrInfo
 @ stub CryptCATPutCatAttrInfo
 @ stdcall CryptCATPutMemberInfo(ptr wstr wstr ptr long long ptr)
