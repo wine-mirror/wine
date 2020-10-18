@@ -142,6 +142,7 @@ CRYPTCATMEMBER    * WINAPI CryptCATGetMemberInfo(HANDLE, LPWSTR);
 HANDLE    WINAPI CryptCATOpen(LPWSTR,DWORD,HCRYPTPROV,DWORD,DWORD);
 BOOL      WINAPI CryptCATPersistStore(HANDLE catalog);
 CRYPTCATATTRIBUTE * WINAPI CryptCATPutAttrInfo(HANDLE catalog, CRYPTCATMEMBER *member, WCHAR *name, DWORD flags, DWORD size, BYTE *data);
+CRYPTCATATTRIBUTE * WINAPI CryptCATPutCatAttrInfo(HANDLE catalog, WCHAR *name, DWORD flags, DWORD size, BYTE *data);
 CRYPTCATMEMBER    * WINAPI CryptCATPutMemberInfo(HANDLE catalog, WCHAR *filename, WCHAR *member, GUID *subject, DWORD version, DWORD size, BYTE *data);
 
 #ifdef __cplusplus

@@ -862,6 +862,19 @@ CRYPTCATATTRIBUTE * WINAPI CryptCATPutAttrInfo(HANDLE catalog, CRYPTCATMEMBER *m
 }
 
 /***********************************************************************
+ *      CryptCATPutCatAttrInfo  (WINTRUST.@)
+ */
+CRYPTCATATTRIBUTE * WINAPI CryptCATPutCatAttrInfo(HANDLE catalog,
+        WCHAR *name, DWORD flags, DWORD size, BYTE *data)
+{
+    FIXME("catalog %p, name %s, flags %#x, size %u, data %p, stub!\n",
+            catalog, debugstr_w(name), flags, size, data);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
+/***********************************************************************
  *      CryptCATPutMemberInfo  (WINTRUST.@)
  */
 CRYPTCATMEMBER * WINAPI CryptCATPutMemberInfo(HANDLE catalog, WCHAR *filename,
