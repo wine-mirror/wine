@@ -247,6 +247,23 @@ static struct container *read_key_container( const char *name, DWORD flags )
     return ret;
 }
 
+static void delete_key_container( const char *name, DWORD flags )
+{
+    char path[sizeof(dss_path_fmt) + MAX_PATH];
+    HKEY rootkey;
+
+    sprintf( path, dss_path_fmt, name );
+
+    if (flags & CRYPT_MACHINE_KEYSET)
+        rootkey = HKEY_LOCAL_MACHINE;
+    else
+        rootkey = HKEY_CURRENT_USER;
+
+    /* @@ Wine registry key: HKLM\Software\Wine\Crypto\DSS */
+    /* @@ Wine registry key: HKCU\Software\Wine\Crypto\DSS */
+    RegDeleteKeyExA( rootkey, path, 0, 0 );
+}
+
 BOOL WINAPI CPAcquireContext( HCRYPTPROV *ret_prov, LPSTR container, DWORD flags, PVTableProvStruc vtable )
 {
     struct container *ret;
@@ -284,6 +301,11 @@ BOOL WINAPI CPAcquireContext( HCRYPTPROV *ret_prov, LPSTR container, DWORD flags
     case CRYPT_VERIFYCONTEXT:
         ret = create_key_container( "", flags );
         break;
+
+    case CRYPT_DELETEKEYSET:
+        delete_key_container( name, flags );
+        *ret_prov = 0;
+        return TRUE;
 
     default:
         FIXME( "unsupported flags %08x\n", flags );
