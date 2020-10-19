@@ -43,6 +43,7 @@ struct input_stream
     IMFMediaType *media_type;
     MFVideoNormalizedRect rect;
     unsigned int zorder;
+    IMFSample *sample;
 };
 
 struct output_stream
@@ -172,6 +173,9 @@ static void video_mixer_clear_types(struct video_mixer *mixer)
         if (mixer->inputs[i].media_type)
             IMFMediaType_Release(mixer->inputs[i].media_type);
         mixer->inputs[i].media_type = NULL;
+        if (mixer->inputs[i].sample)
+            IMFSample_Release(mixer->inputs[i].sample);
+        mixer->inputs[i].sample = NULL;
     }
     for (i = 0; i < mixer->output.type_count; ++i)
     {
@@ -899,9 +903,33 @@ static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, 
 
 static HRESULT WINAPI video_mixer_transform_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
 {
-    FIXME("%p, %u, %p, %#x.\n", iface, id, sample, flags);
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    struct input_stream *input;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p, %#x.\n", iface, id, sample, flags);
+
+    if (!sample)
+        return E_POINTER;
+
+    EnterCriticalSection(&mixer->cs);
+
+    if (SUCCEEDED(hr = video_mixer_get_input(mixer, id, &input)))
+    {
+        if (!input->media_type || !mixer->output.media_type)
+            hr = MF_E_TRANSFORM_TYPE_NOT_SET;
+        else if (input->sample)
+            hr = MF_E_NOTACCEPTING;
+        else
+        {
+            input->sample = sample;
+            IMFSample_AddRef(input->sample);
+        }
+    }
+
+    LeaveCriticalSection(&mixer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_mixer_transform_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,

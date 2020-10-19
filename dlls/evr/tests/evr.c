@@ -2154,6 +2154,23 @@ todo_wine
 todo_wine
     ok(!color, "Unexpected color %#x.\n", color);
 
+    IMFDesiredSample_Clear(desired);
+
+    hr = IMFTransform_ProcessInput(mixer, 0, NULL, 0);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_ProcessInput(mixer, 5, NULL, 0);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_ProcessInput(mixer, 0, sample, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_ProcessInput(mixer, 0, sample, 0);
+    ok(hr == MF_E_NOTACCEPTING, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_ProcessInput(mixer, 5, sample, 0);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
     IMFSample_Release(sample);
 
     IDirect3DSurface9_Release(surface);
