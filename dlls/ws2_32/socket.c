@@ -2482,99 +2482,6 @@ static NTSTATUS WS2_async_recv( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS stat
 }
 
 /***********************************************************************
- *              WS2_async_accept_recv            (INTERNAL)
- *
- * This function is used to finish the read part of an accept request. It is
- * needed to place the completion on the correct socket (listener).
- */
-static NTSTATUS WS2_async_accept_recv( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
-{
-    struct ws2_accept_async *wsa = user;
-
-    status = WS2_async_recv( wsa->read, iosb, status );
-    if (status == STATUS_PENDING)
-        return status;
-
-    if (wsa->cvalue)
-        WS_AddCompletion( HANDLE2SOCKET(wsa->listen_socket), wsa->cvalue, iosb->u.Status, iosb->Information, TRUE );
-
-    release_async_io( &wsa->io );
-    return status;
-}
-
-/***********************************************************************
- *              WS2_async_accept                (INTERNAL)
- *
- * This is the function called to satisfy the AcceptEx callback
- */
-static NTSTATUS WS2_async_accept( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
-{
-    struct ws2_accept_async *wsa = user;
-    int len;
-    char *addr;
-
-    TRACE("status: 0x%x listen: %p, accept: %p\n", status, wsa->listen_socket, wsa->accept_socket);
-
-    if (status == STATUS_ALERTED)
-    {
-        obj_handle_t accept_handle = wine_server_obj_handle( wsa->accept_socket );
-        IO_STATUS_BLOCK io;
-
-        status = NtDeviceIoControlFile( wsa->listen_socket, NULL, NULL, NULL, &io, IOCTL_AFD_ACCEPT_INTO,
-                                        &accept_handle, sizeof(accept_handle), NULL, 0 );
-
-        if (NtStatusToWSAError( status ) == WSAEWOULDBLOCK)
-            return STATUS_PENDING;
-
-        if (status == STATUS_INVALID_HANDLE)
-        {
-            FIXME("AcceptEx accepting socket closed but request was not cancelled\n");
-            status = STATUS_CANCELLED;
-        }
-    }
-    else if (status == STATUS_HANDLES_CLOSED)
-        status = STATUS_CANCELLED;  /* strange windows behavior */
-
-    if (status != STATUS_SUCCESS)
-        goto finish;
-
-    /* WS2 Spec says size param is extra 16 bytes long...what do we put in it? */
-    addr = ((char *)wsa->buf) + wsa->data_len;
-    len = wsa->local_len - sizeof(int);
-    WS_getsockname(HANDLE2SOCKET(wsa->accept_socket),
-                   (struct WS_sockaddr *)(addr + sizeof(int)), &len);
-    *(int *)addr = len;
-
-    addr += wsa->local_len;
-    len = wsa->remote_len - sizeof(int);
-    WS_getpeername(HANDLE2SOCKET(wsa->accept_socket),
-                   (struct WS_sockaddr *)(addr + sizeof(int)), &len);
-    *(int *)addr = len;
-
-    if (!wsa->read)
-        goto finish;
-
-    wsa->io.callback = WS2_async_accept_recv;
-    status = register_async( ASYNC_TYPE_READ, wsa->accept_socket, &wsa->io,
-                             wsa->user_overlapped->hEvent, NULL, NULL, iosb);
-
-    if (status != STATUS_PENDING)
-        goto finish;
-
-    /* The APC has finished but no completion should be sent for the operation yet, additional processing
-     * needs to be performed by WS2_async_accept_recv() first. */
-    return STATUS_MORE_PROCESSING_REQUIRED;
-
-finish:
-    iosb->u.Status = status;
-    iosb->Information = 0;
-
-    if (wsa->read) release_async_io( &wsa->read->io );
-    release_async_io( &wsa->io );
-    return status;
-}
-
-/***********************************************************************
  *              WS2_send                (INTERNAL)
  *
  * Workhorse for both synchronous and asynchronous send() operations.
@@ -2820,23 +2727,30 @@ error:
 /***********************************************************************
  *     AcceptEx
  */
-static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DWORD dest_len,
-                         DWORD local_addr_len, DWORD rem_addr_len, LPDWORD received,
-                         LPOVERLAPPED overlapped)
+static BOOL WINAPI WS2_AcceptEx( SOCKET listener, SOCKET acceptor, void *dest, DWORD recv_len,
+                                 DWORD local_len, DWORD remote_len, DWORD *ret_len, OVERLAPPED *overlapped)
 {
-    DWORD status;
-    struct ws2_accept_async *wsa;
-    int fd;
+    struct afd_accept_into_params params =
+    {
+        .accept_handle = acceptor,
+        .recv_len = recv_len,
+        .local_len = local_len,
+    };
+    void *cvalue = NULL;
+    NTSTATUS status;
 
-    TRACE("(%04lx, %04lx, %p, %d, %d, %d, %p, %p)\n", listener, acceptor, dest, dest_len, local_addr_len,
-                                                  rem_addr_len, received, overlapped);
+    TRACE( "listener %#lx, acceptor %#lx, dest %p, recv_len %u, local_len %u, remote_len %u, ret_len %p, "
+           "overlapped %p\n", listener, acceptor, dest, recv_len, local_len, remote_len, ret_len, overlapped );
 
     if (!overlapped)
     {
         SetLastError(WSA_INVALID_PARAMETER);
         return FALSE;
     }
+
+    if (!((ULONG_PTR)overlapped->hEvent & 1)) cvalue = overlapped;
     overlapped->Internal = STATUS_PENDING;
+    overlapped->InternalHigh = 0;
 
     if (!dest)
     {
@@ -2844,72 +2758,19 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
         return FALSE;
     }
 
-    if (!rem_addr_len)
+    if (!remote_len)
     {
         SetLastError(WSAEFAULT);
         return FALSE;
     }
 
-    fd = get_sock_fd( listener, FILE_READ_DATA, NULL );
-    if (fd == -1) return FALSE;
-    release_sock_fd( listener, fd );
+    status = NtDeviceIoControlFile( SOCKET2HANDLE(listener), overlapped->hEvent, NULL, cvalue,
+                                    (IO_STATUS_BLOCK *)overlapped, IOCTL_AFD_ACCEPT_INTO, &params, sizeof(params),
+                                    dest, recv_len + local_len + remote_len );
 
-    fd = get_sock_fd( acceptor, FILE_READ_DATA, NULL );
-    if (fd == -1) return FALSE;
-    release_sock_fd( acceptor, fd );
-
-    wsa = (struct ws2_accept_async *)alloc_async_io( sizeof(*wsa), WS2_async_accept );
-    if(!wsa)
-    {
-        SetLastError(WSAEFAULT);
-        return FALSE;
-    }
-
-    wsa->listen_socket   = SOCKET2HANDLE(listener);
-    wsa->accept_socket   = SOCKET2HANDLE(acceptor);
-    wsa->user_overlapped = overlapped;
-    wsa->cvalue          = !((ULONG_PTR)overlapped->hEvent & 1) ? (ULONG_PTR)overlapped : 0;
-    wsa->buf             = dest;
-    wsa->data_len        = dest_len;
-    wsa->local_len       = local_addr_len;
-    wsa->remote_len      = rem_addr_len;
-    wsa->read            = NULL;
-
-    if (wsa->data_len)
-    {
-        /* set up a read request if we need it */
-        wsa->read = (struct ws2_async *)alloc_async_io( offsetof(struct ws2_async, iovec[1]), WS2_async_accept_recv );
-        if (!wsa->read)
-        {
-            HeapFree( GetProcessHeap(), 0, wsa );
-            SetLastError(WSAEFAULT);
-            return FALSE;
-        }
-
-        wsa->read->hSocket     = wsa->accept_socket;
-        wsa->read->flags       = 0;
-        wsa->read->lpFlags     = &wsa->read->flags;
-        wsa->read->addr        = NULL;
-        wsa->read->addrlen.ptr = NULL;
-        wsa->read->control     = NULL;
-        wsa->read->n_iovecs    = 1;
-        wsa->read->first_iovec = 0;
-        wsa->read->completion_func = NULL;
-        wsa->read->iovec[0].iov_base = wsa->buf;
-        wsa->read->iovec[0].iov_len  = wsa->data_len;
-    }
-
-    status = register_async( ASYNC_TYPE_READ, SOCKET2HANDLE(listener), &wsa->io,
-                             overlapped->hEvent, NULL, (void *)wsa->cvalue, (IO_STATUS_BLOCK *)overlapped );
-
-    if(status != STATUS_PENDING)
-    {
-        HeapFree( GetProcessHeap(), 0, wsa->read );
-        HeapFree( GetProcessHeap(), 0, wsa );
-    }
-
-    SetLastError( NtStatusToWSAError(status) );
-    return FALSE;
+    if (ret_len) *ret_len = overlapped->InternalHigh;
+    WSASetLastError( NtStatusToWSAError(status) );
+    return !status;
 }
 
 /***********************************************************************

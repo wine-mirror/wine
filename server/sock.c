@@ -84,6 +84,7 @@
 #include "winerror.h"
 #define USE_WS_PREFIX
 #include "winsock2.h"
+#include "ws2tcpip.h"
 #include "wsipx.h"
 #include "wine/afd.h"
 
@@ -120,6 +121,15 @@
 #define FD_WINE_RAW                0x80000000
 #define FD_WINE_INTERNAL           0xFFFF0000
 
+struct accept_req
+{
+    struct list entry;
+    struct async *async;
+    struct sock *acceptsock;
+    int accepted;
+    unsigned int recv_len, local_len;
+};
+
 struct sock
 {
     struct object       obj;         /* object header */
@@ -143,8 +153,11 @@ struct sock
     struct async_queue  read_q;      /* queue for asynchronous reads */
     struct async_queue  write_q;     /* queue for asynchronous writes */
     struct async_queue  ifchange_q;  /* queue for interface change notifications */
+    struct async_queue  accept_q;    /* queue for asynchronous accepts */
     struct object      *ifchange_obj; /* the interface change notification object */
     struct list         ifchange_entry; /* entry in ifchange notification list */
+    struct list         accept_list; /* list of pending accept requests */
+    struct accept_req  *accept_recv_req; /* pending accept-into request which will recv on this socket */
 };
 
 static void sock_dump( struct object *obj, int verbose );
@@ -161,6 +174,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static void sock_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue );
 
+static int accept_into_socket( struct sock *sock, struct sock *acceptsock );
 static int sock_get_ntstatus( int err );
 static unsigned int sock_get_error( int err );
 
@@ -203,6 +217,98 @@ static const struct fd_ops sock_fd_ops =
     sock_reselect_async           /* reselect_async */
 };
 
+union unix_sockaddr
+{
+    struct sockaddr addr;
+    struct sockaddr_in in;
+    struct sockaddr_in6 in6;
+#ifdef HAS_IPX
+    struct sockaddr_ipx ipx;
+#endif
+#ifdef HAS_IRDA
+    struct sockaddr_irda irda;
+#endif
+};
+
+static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_sockaddr *wsaddr, socklen_t wsaddrlen )
+{
+    memset( wsaddr, 0, wsaddrlen );
+
+    switch (uaddr->addr.sa_family)
+    {
+    case AF_INET:
+    {
+        struct WS_sockaddr_in win = {0};
+
+        if (wsaddrlen < sizeof(win)) return -1;
+        win.sin_family = WS_AF_INET;
+        win.sin_port = uaddr->in.sin_port;
+        memcpy( &win.sin_addr, &uaddr->in.sin_addr, sizeof(win.sin_addr) );
+        memcpy( wsaddr, &win, sizeof(win) );
+        return sizeof(win);
+    }
+
+    case AF_INET6:
+    {
+        struct WS_sockaddr_in6 win = {0};
+
+        if (wsaddrlen < sizeof(struct WS_sockaddr_in6_old)) return -1;
+        win.sin6_family = WS_AF_INET6;
+        win.sin6_port = uaddr->in6.sin6_port;
+        win.sin6_flowinfo = uaddr->in6.sin6_flowinfo;
+        memcpy( &win.sin6_addr, &uaddr->in6.sin6_addr, sizeof(win.sin6_addr) );
+#ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
+        win.sin6_scope_id = uaddr->in6.sin6_scope_id;
+#endif
+        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6))
+        {
+            memcpy( wsaddr, &win, sizeof(struct WS_sockaddr_in6) );
+            return sizeof(struct WS_sockaddr_in6);
+        }
+        memcpy( wsaddr, &win, sizeof(struct WS_sockaddr_in6_old) );
+        return sizeof(struct WS_sockaddr_in6_old);
+    }
+
+#ifdef HAS_IPX
+    case AF_IPX:
+    {
+        struct WS_sockaddr_ipx win = {0};
+
+        if (wsaddrlen < sizeof(win)) return -1;
+        win.sa_family = WS_AF_IPX;
+        memcpy( win.sa_netnum, &uaddr->ipx.sipx_network, sizeof(win.sa_netnum) );
+        memcpy( win.sa_nodenum, &uaddr->ipx.sipx_node, sizeof(win.sa_nodenum) );
+        win.sa_socket = uaddr->ipx.sipx_port;
+        memcpy( wsaddr, &win, sizeof(win) );
+        return sizeof(win);
+    }
+#endif
+
+#ifdef HAS_IRDA
+    case AF_IRDA:
+    {
+        SOCKADDR_IRDA win;
+
+        if (wsaddrlen < sizeof(win)) return -1;
+        win.irdaAddressFamily = WS_AF_IRDA;
+        memcpy( win.irdaDeviceID, &uaddr->irda.sir_addr, sizeof(win.irdaDeviceID) );
+        if (uaddr->irda.sir_lsap_sel != LSAP_ANY)
+            snprintf( win.irdaServiceName, sizeof(win.irdaServiceName), "LSAP-SEL%u", uaddr->irda.sir_lsap_sel );
+        else
+            memcpy( win.irdaServiceName, uaddr->irda.sir_name, sizeof(win.irdaServiceName) );
+        memcpy( wsaddr, &win, sizeof(win) );
+        return sizeof(win);
+    }
+#endif
+
+    case AF_UNSPEC:
+        return 0;
+
+    default:
+        return -1;
+
+    }
+}
 
 /* Permutation of 0..FD_MAX_EVENTS - 1 representing the order in which
  * we post messages if there are multiple events.  Used to send
@@ -339,8 +445,134 @@ static inline int sock_error( struct fd *fd )
     return optval;
 }
 
+static void free_accept_req( struct accept_req *req )
+{
+    list_remove( &req->entry );
+    req->acceptsock->accept_recv_req = NULL;
+    release_object( req->async );
+    free( req );
+}
+
+static void fill_accept_output( struct accept_req *req, struct iosb *iosb )
+{
+    union unix_sockaddr unix_addr;
+    struct WS_sockaddr *win_addr;
+    socklen_t unix_len;
+    int fd, size = 0;
+    char *out_data;
+    int win_len;
+
+    if (!(out_data = mem_alloc( iosb->out_size ))) return;
+
+    fd = get_unix_fd( req->acceptsock->fd );
+
+    if (req->recv_len && (size = recv( fd, out_data, req->recv_len, 0 )) < 0)
+    {
+        if (!req->accepted && errno == EWOULDBLOCK)
+        {
+            req->accepted = 1;
+            sock_reselect( req->acceptsock );
+            set_error( STATUS_PENDING );
+            return;
+        }
+
+        set_win32_error( sock_get_error( errno ) );
+        free( out_data );
+        return;
+    }
+
+    if (req->local_len)
+    {
+        if (req->local_len < sizeof(int))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            free( out_data );
+            return;
+        }
+
+        unix_len = sizeof(unix_addr);
+        win_addr = (struct WS_sockaddr *)(out_data + req->recv_len + sizeof(int));
+        if (getsockname( fd, &unix_addr.addr, &unix_len ) < 0 ||
+            (win_len = sockaddr_from_unix( &unix_addr, win_addr, req->local_len )) < 0)
+        {
+            set_win32_error( sock_get_error( errno ) );
+            free( out_data );
+            return;
+        }
+        memcpy( out_data + req->recv_len, &win_len, sizeof(int) );
+    }
+
+    unix_len = sizeof(unix_addr);
+    win_addr = (struct WS_sockaddr *)(out_data + req->recv_len + req->local_len + sizeof(int));
+    if (getpeername( fd, &unix_addr.addr, &unix_len ) < 0 ||
+        (win_len = sockaddr_from_unix( &unix_addr, win_addr, iosb->out_size - req->recv_len - req->local_len )) < 0)
+    {
+        set_win32_error( sock_get_error( errno ) );
+        free( out_data );
+        return;
+    }
+    memcpy( out_data + req->recv_len + req->local_len, &win_len, sizeof(int) );
+
+    iosb->status = STATUS_SUCCESS;
+    iosb->result = size;
+    iosb->out_data = out_data;
+    set_error( STATUS_ALERTED );
+}
+
+static void complete_async_accept( struct sock *sock, struct accept_req *req )
+{
+    struct sock *acceptsock = req->acceptsock;
+    struct async *async = req->async;
+    struct iosb *iosb;
+
+    if (debug_level) fprintf( stderr, "completing accept request for socket %p\n", sock );
+
+    if (!accept_into_socket( sock, acceptsock )) return;
+
+    iosb = async_get_iosb( async );
+    fill_accept_output( req, iosb );
+    release_object( iosb );
+}
+
+static void complete_async_accept_recv( struct accept_req *req )
+{
+    struct async *async = req->async;
+    struct iosb *iosb;
+
+    if (debug_level) fprintf( stderr, "completing accept recv request for socket %p\n", req->acceptsock );
+
+    assert( req->recv_len );
+
+    iosb = async_get_iosb( async );
+    fill_accept_output( req, iosb );
+    release_object( iosb );
+}
+
 static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
 {
+    if (event & (POLLIN | POLLPRI))
+    {
+        struct accept_req *req;
+
+        LIST_FOR_EACH_ENTRY( req, &sock->accept_list, struct accept_req, entry )
+        {
+            if (!req->accepted)
+            {
+                complete_async_accept( sock, req );
+                if (get_error() != STATUS_PENDING)
+                    async_terminate( req->async, get_error() );
+                break;
+            }
+        }
+
+        if (sock->accept_recv_req)
+        {
+            complete_async_accept_recv( sock->accept_recv_req );
+            if (get_error() != STATUS_PENDING)
+                async_terminate( sock->accept_recv_req->async, get_error() );
+        }
+    }
+
     if (is_fd_overlapped( sock->fd ))
     {
         if (event & (POLLIN|POLLPRI) && async_waiting( &sock->read_q ))
@@ -355,16 +587,25 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
             async_wake_up( &sock->write_q, STATUS_ALERTED );
             event &= ~POLLOUT;
         }
-        if ( event & (POLLERR|POLLHUP) )
-        {
-            int status = sock_get_ntstatus( error );
-
-            if ( !(sock->state & FD_READ) )
-                async_wake_up( &sock->read_q, status );
-            if ( !(sock->state & FD_WRITE) )
-                async_wake_up( &sock->write_q, status );
-        }
     }
+
+    if (event & (POLLERR | POLLHUP))
+    {
+        int status = sock_get_ntstatus( error );
+        struct accept_req *req, *next;
+
+        if (!(sock->state & FD_READ))
+            async_wake_up( &sock->read_q, status );
+        if (!(sock->state & FD_WRITE))
+            async_wake_up( &sock->write_q, status );
+
+        LIST_FOR_EACH_ENTRY_SAFE( req, next, &sock->accept_list, struct accept_req, entry )
+            async_terminate( req->async, status );
+
+        if (sock->accept_recv_req)
+            async_terminate( sock->accept_recv_req->async, status );
+    }
+
     return event;
 }
 
@@ -539,7 +780,11 @@ static int sock_get_poll_events( struct fd *fd )
         /* connecting, wait for writable */
         return POLLOUT;
 
-    if (async_queued( &sock->read_q ))
+    if (!list_empty( &sock->accept_list ) || sock->accept_recv_req )
+    {
+        ev |= POLLIN | POLLPRI;
+    }
+    else if (async_queued( &sock->read_q ))
     {
         if (async_waiting( &sock->read_q )) ev |= POLLIN | POLLPRI;
     }
@@ -601,6 +846,16 @@ static void sock_queue_async( struct fd *fd, struct async *async, int type, int 
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue )
 {
     struct sock *sock = get_fd_user( fd );
+    struct accept_req *req, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( req, next, &sock->accept_list, struct accept_req, entry )
+    {
+        struct iosb *iosb = async_get_iosb( req->async );
+        if (iosb->status != STATUS_PENDING)
+            free_accept_req( req );
+        release_object( iosb );
+    }
+
     /* ignore reselect on ifchange queue */
     if (&sock->ifchange_q != queue)
         sock_reselect( sock );
@@ -615,6 +870,8 @@ static struct fd *sock_get_fd( struct object *obj )
 static void sock_destroy( struct object *obj )
 {
     struct sock *sock = (struct sock *)obj;
+    struct accept_req *req, *next;
+
     assert( obj->ops == &sock_ops );
 
     /* FIXME: special socket shutdown stuff? */
@@ -622,11 +879,18 @@ static void sock_destroy( struct object *obj )
     if ( sock->deferred )
         release_object( sock->deferred );
 
+    if (sock->accept_recv_req)
+        async_terminate( sock->accept_recv_req->async, STATUS_CANCELLED );
+
+    LIST_FOR_EACH_ENTRY_SAFE( req, next, &sock->accept_list, struct accept_req, entry )
+        async_terminate( req->async, STATUS_CANCELLED );
+
     async_wake_up( &sock->ifchange_q, STATUS_CANCELLED );
     sock_release_ifchange( sock );
     free_async_queue( &sock->read_q );
     free_async_queue( &sock->write_q );
     free_async_queue( &sock->ifchange_q );
+    free_async_queue( &sock->accept_q );
     if (sock->event) release_object( sock->event );
     if (sock->fd)
     {
@@ -658,10 +922,13 @@ static struct sock *create_socket(void)
     sock->connect_time = 0;
     sock->deferred = NULL;
     sock->ifchange_obj = NULL;
+    sock->accept_recv_req = NULL;
     init_async_queue( &sock->read_q );
     init_async_queue( &sock->write_q );
     init_async_queue( &sock->ifchange_q );
+    init_async_queue( &sock->accept_q );
     memset( sock->errors, 0, sizeof(sock->errors) );
+    list_init( &sock->accept_list );
     return sock;
 }
 
@@ -1065,6 +1332,24 @@ static int sock_get_ntstatus( int err )
     }
 }
 
+static struct accept_req *alloc_accept_req( struct sock *acceptsock, struct async *async,
+                                            const struct afd_accept_into_params *params )
+{
+    struct accept_req *req = mem_alloc( sizeof(*req) );
+
+    if (req)
+    {
+        req->async = (struct async *)grab_object( async );
+        req->acceptsock = acceptsock;
+        req->accepted = 0;
+        req->recv_len = 0;
+        req->local_len = 0;
+        req->recv_len = params->recv_len;
+        req->local_len = params->local_len;
+    }
+    return req;
+}
+
 static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct sock *sock = get_fd_user( fd );
@@ -1111,22 +1396,39 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     case IOCTL_AFD_ACCEPT_INTO:
     {
         static const int access = FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES | FILE_READ_DATA;
+        const struct afd_accept_into_params *params = get_req_data();
         struct sock *acceptsock;
-        obj_handle_t handle;
+        unsigned int remote_len;
+        struct accept_req *req;
 
-        if (get_req_data_size() != sizeof(handle))
+        if (get_req_data_size() != sizeof(*params) ||
+            get_reply_max_size() < params->recv_len ||
+            get_reply_max_size() - params->recv_len < params->local_len)
         {
             set_error( STATUS_BUFFER_TOO_SMALL );
             return 0;
         }
-        handle = *(obj_handle_t *)get_req_data();
 
-        if (!(acceptsock = (struct sock *)get_handle_obj( current->process, handle, access, &sock_ops )))
+        remote_len = get_reply_max_size() - params->recv_len - params->local_len;
+        if (remote_len < sizeof(int))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
             return 0;
-        if (accept_into_socket( sock, acceptsock ))
-            acceptsock->wparam = handle;
+        }
+
+        if (!(acceptsock = (struct sock *)get_handle_obj( current->process, params->accept_handle, access, &sock_ops )))
+            return 0;
+
+        if (!(req = alloc_accept_req( acceptsock, async, params ))) return 0;
+        list_add_tail( &sock->accept_list, &req->entry );
+        acceptsock->accept_recv_req = req;
         release_object( acceptsock );
-        return 0;
+
+        acceptsock->wparam = params->accept_handle;
+        queue_async( &sock->accept_q, async );
+        sock_reselect( sock );
+        set_error( STATUS_PENDING );
+        return 1;
     }
 
     case IOCTL_AFD_ADDRESS_LIST_CHANGE:

@@ -7382,6 +7382,8 @@ todo_wine
     ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on a non-listening socket "
         "returned %d + errno %d\n", bret, WSAGetLastError());
     ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
+    if (!bret && WSAGetLastError() == ERROR_IO_PENDING)
+        CancelIo((HANDLE)listener);
 
     iret = listen(listener, 5);
     ok(!iret, "failed to listen, error %u\n", GetLastError());
@@ -7455,9 +7457,9 @@ todo_wine
     bytesReturned = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
-    todo_wine ok(!bret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
-    todo_wine ok((NTSTATUS)overlapped.Internal == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", overlapped.Internal);
+    ok(!bret, "expected failure\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
+    ok((NTSTATUS)overlapped.Internal == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", overlapped.Internal);
     ok(!bytesReturned, "got size %u\n", bytesReturned);
 
     closesocket(acceptor);
@@ -7799,19 +7801,10 @@ todo_wine
     closesocket(acceptor);
 
     dwret = WaitForSingleObject(overlapped.hEvent, 1000);
-    todo_wine ok(dwret == WAIT_OBJECT_0,
+    ok(dwret == WAIT_OBJECT_0,
        "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
-
-    if (dwret != WAIT_TIMEOUT) {
-        bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
-        ok(!bret && GetLastError() == ERROR_OPERATION_ABORTED, "GetOverlappedResult failed, error %d\n", GetLastError());
-    }
-    else {
-        bret = CancelIo((HANDLE) listener);
-        ok(bret, "Failed to cancel failed test. Bailing...\n");
-        if (!bret) return;
-        WaitForSingleObject(overlapped.hEvent, 0);
-    }
+    bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
+    ok(!bret && GetLastError() == ERROR_OPERATION_ABORTED, "GetOverlappedResult failed, error %d\n", GetLastError());
 
     acceptor = socket(AF_INET, SOCK_STREAM, 0);
     ok(acceptor != INVALID_SOCKET, "failed to create socket, error %u\n", GetLastError());
@@ -9384,12 +9377,12 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
     ok(bret == FALSE, "failed to get completion status %u\n", bret);
-    todo_wine ok(GetLastError() == ERROR_OPERATION_ABORTED
+    ok(GetLastError() == ERROR_OPERATION_ABORTED
             || GetLastError() == ERROR_CONNECTION_ABORTED, "got error %u\n", GetLastError());
     ok(key == 125, "Key is %lu\n", key);
     ok(num_bytes == 0, "Number of bytes transferred is %u\n", num_bytes);
     ok(olp == &ov, "Overlapped structure is at %p\n", olp);
-    todo_wine ok((NTSTATUS)olp->Internal == STATUS_CANCELLED
+    ok((NTSTATUS)olp->Internal == STATUS_CANCELLED
             || (NTSTATUS)olp->Internal == STATUS_CONNECTION_ABORTED, "got status %#lx\n", olp->Internal);
 
     SetLastError(0xdeadbeef);
