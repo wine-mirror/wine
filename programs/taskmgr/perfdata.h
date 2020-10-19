@@ -66,7 +66,6 @@ struct _SYSTEM_PAGEFILE_INFORMATION
 #define GR_GDIOBJECTS     0       /* Count of GDI objects */
 #define GR_USEROBJECTS    1       /* Count of USER objects */
 
-typedef LONG (WINAPI *PROCNTQSI)(UINT,PVOID,ULONG,PULONG); 
 typedef BOOL (WINAPI *PROCGPIC)(HANDLE,PIO_COUNTERS);
 typedef BOOL (WINAPI *PROCISW64)(HANDLE,PBOOL);
 

@@ -30,7 +30,6 @@
 #include "taskmgr.h"
 #include "perfdata.h"
 
-static PROCNTQSI                       pNtQuerySystemInformation = NULL;
 static PROCGPIC                        pGetProcessIoCounters = NULL;
 static PROCISW64                       pIsWow64Process = NULL;
 static CRITICAL_SECTION                PerfDataCriticalSection;
@@ -58,22 +57,17 @@ static size_t size_diff(size_t x, size_t y)
 BOOL PerfDataInitialize(void)
 {
     LONG    status;
-    static const WCHAR wszNtdll[] = {'n','t','d','l','l','.','d','l','l',0};
     static const WCHAR wszKernel32[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
 
-    pNtQuerySystemInformation = (PROCNTQSI)GetProcAddress(GetModuleHandleW(wszNtdll), "NtQuerySystemInformation");
     pGetProcessIoCounters = (PROCGPIC)GetProcAddress(GetModuleHandleW(wszKernel32), "GetProcessIoCounters");
     pIsWow64Process = (PROCISW64)GetProcAddress(GetModuleHandleW(wszKernel32), "IsWow64Process");
     
     InitializeCriticalSection(&PerfDataCriticalSection);
 
-    if (!pNtQuerySystemInformation)
-        return FALSE;
-
     /*
      * Get number of processors in the system
      */
-    status = pNtQuerySystemInformation(SystemBasicInformation, &SystemBasicInfo, sizeof(SystemBasicInfo), NULL);
+    status = NtQuerySystemInformation(SystemBasicInformation, &SystemBasicInfo, sizeof(SystemBasicInfo), NULL);
     if (status != NO_ERROR)
         return FALSE;
     
@@ -102,24 +96,25 @@ void PerfDataRefresh(void)
 
 
     /* Get new system time */
-    status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &SysTimeInfo, sizeof(SysTimeInfo), 0);
+    status = NtQuerySystemInformation(SystemTimeOfDayInformation, &SysTimeInfo, sizeof(SysTimeInfo), 0);
     if (status != NO_ERROR)
         return;
 
     /* Get new CPU's idle time */
-    status = pNtQuerySystemInformation(SystemPerformanceInformation, &SysPerfInfo, sizeof(SysPerfInfo), NULL);
+    status = NtQuerySystemInformation(SystemPerformanceInformation, &SysPerfInfo, sizeof(SysPerfInfo), NULL);
     if (status != NO_ERROR)
         return;
 
     /* Get system cache information */
-    status = pNtQuerySystemInformation(SystemCacheInformation, &SysCacheInfo, sizeof(SysCacheInfo), NULL);
+    status = NtQuerySystemInformation(SystemCacheInformation, &SysCacheInfo, sizeof(SysCacheInfo), NULL);
     if (status != NO_ERROR)
         return;
 
     /* Get processor time information */
     SysProcessorTimeInfo = HeapAlloc(GetProcessHeap(), 0,
-                                sizeof(*SysProcessorTimeInfo) * SystemBasicInfo.NumberOfProcessors);
-    status = pNtQuerySystemInformation(SystemProcessorPerformanceInformation, SysProcessorTimeInfo, sizeof(*SysProcessorTimeInfo) * SystemBasicInfo.NumberOfProcessors, &ulSize);
+            sizeof(*SysProcessorTimeInfo) * SystemBasicInfo.NumberOfProcessors);
+    status = NtQuerySystemInformation(SystemProcessorPerformanceInformation, SysProcessorTimeInfo,
+            sizeof(*SysProcessorTimeInfo) * SystemBasicInfo.NumberOfProcessors, &ulSize);
     if (status != NO_ERROR) {
         HeapFree(GetProcessHeap(), 0, SysProcessorTimeInfo);
         return;
@@ -135,7 +130,7 @@ void PerfDataRefresh(void)
         BufferSize += 0x10000;
         SysHandleInfoData = HeapAlloc(GetProcessHeap(), 0, BufferSize);
 
-        status = pNtQuerySystemInformation(SystemHandleInformation, SysHandleInfoData, BufferSize, &ulSize);
+        status = NtQuerySystemInformation(SystemHandleInformation, SysHandleInfoData, BufferSize, &ulSize);
 
         if (status == 0xC0000004 /*STATUS_INFO_LENGTH_MISMATCH*/) {
             HeapFree(GetProcessHeap(), 0, SysHandleInfoData);
@@ -153,7 +148,7 @@ void PerfDataRefresh(void)
         BufferSize += 0x10000;
         pBuffer = HeapAlloc(GetProcessHeap(), 0, BufferSize);
 
-        status = pNtQuerySystemInformation(SystemProcessInformation, pBuffer, BufferSize, &ulSize);
+        status = NtQuerySystemInformation(SystemProcessInformation, pBuffer, BufferSize, &ulSize);
 
         if (status == 0xC0000004 /*STATUS_INFO_LENGTH_MISMATCH*/) {
             HeapFree(GetProcessHeap(), 0, pBuffer);
