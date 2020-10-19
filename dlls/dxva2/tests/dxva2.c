@@ -420,15 +420,13 @@ static void test_video_processor(void)
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = IDirectXVideoProcessor_GetCreationParameters(processor, &guid, NULL, NULL, NULL);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(IsEqualGUID(&guid, &DXVA2_VideoProcSoftwareDevice), "Unexpected device guid.\n");
-}
+
     hr = IDirectXVideoProcessor_GetCreationParameters(processor, NULL, NULL, &format, NULL);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(format == D3DFMT_A8R8G8B8, "Unexpected format %u.\n", format);
-}
+
     IDirectXVideoProcessor_Release(processor);
     IDirectXVideoProcessor_Release(processor2);
 

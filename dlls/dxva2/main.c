@@ -71,6 +71,10 @@ struct video_processor
     LONG refcount;
 
     IDirectXVideoProcessorService *service;
+    GUID device;
+    DXVA2_VideoDesc video_desc;
+    D3DFORMAT rt_format;
+    unsigned int max_substreams;
 };
 
 static BOOL dxva_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
@@ -170,14 +174,25 @@ static HRESULT WINAPI video_processor_GetVideoProcessorService(IDirectXVideoProc
 }
 
 static HRESULT WINAPI video_processor_GetCreationParameters(IDirectXVideoProcessor *iface,
-        GUID *device, DXVA2_VideoDesc *video_desc, D3DFORMAT *rt_format, UINT *maxstreams)
+        GUID *device, DXVA2_VideoDesc *video_desc, D3DFORMAT *rt_format, UINT *max_substreams)
 {
-    FIXME("%p, %p, %p, %p, %p.\n", iface, device, video_desc, rt_format, maxstreams);
+    struct video_processor *processor = impl_from_IDirectXVideoProcessor(iface);
 
-    if (!device && !video_desc && !rt_format && !maxstreams)
+    TRACE("%p, %p, %p, %p, %p.\n", iface, device, video_desc, rt_format, max_substreams);
+
+    if (!device && !video_desc && !rt_format && !max_substreams)
         return E_INVALIDARG;
 
-    return E_NOTIMPL;
+    if (device)
+        *device = processor->device;
+    if (video_desc)
+        *video_desc = processor->video_desc;
+    if (rt_format)
+        *rt_format = processor->rt_format;
+    if (max_substreams)
+        *max_substreams = processor->max_substreams;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_processor_GetVideoProcessorCaps(IDirectXVideoProcessor *iface,
@@ -376,12 +391,12 @@ static HRESULT WINAPI device_manager_processor_service_GetFilterPropertyRange(
 }
 
 static HRESULT WINAPI device_manager_processor_service_CreateVideoProcessor(IDirectXVideoProcessorService *iface,
-        REFGUID deviceguid, const DXVA2_VideoDesc *video_desc, D3DFORMAT rt_format, UINT max_substreams,
+        REFGUID device, const DXVA2_VideoDesc *video_desc, D3DFORMAT rt_format, UINT max_substreams,
         IDirectXVideoProcessor **processor)
 {
     struct video_processor *object;
 
-    FIXME("%p, %s, %p, %d, %u, %p.\n", iface, debugstr_guid(deviceguid), video_desc, rt_format, max_substreams,
+    FIXME("%p, %s, %p, %d, %u, %p.\n", iface, debugstr_guid(device), video_desc, rt_format, max_substreams,
             processor);
 
     /* FIXME: validate render target format */
@@ -393,6 +408,10 @@ static HRESULT WINAPI device_manager_processor_service_CreateVideoProcessor(IDir
     object->refcount = 1;
     object->service = iface;
     IDirectXVideoProcessorService_AddRef(object->service);
+    object->device = *device;
+    object->video_desc = *video_desc;
+    object->rt_format = rt_format;
+    object->max_substreams = max_substreams;
 
     *processor = &object->IDirectXVideoProcessor_iface;
 
