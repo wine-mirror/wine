@@ -103,7 +103,9 @@ HRESULT WINAPI DwmGetColorizationColor(DWORD *colorization, BOOL opaque_blend)
  */
 HRESULT WINAPI DwmFlush(void)
 {
-    FIXME("() stub\n");
+    static BOOL once;
+
+    if (!once++) FIXME("() stub\n");
 
     return E_NOTIMPL;
 }
