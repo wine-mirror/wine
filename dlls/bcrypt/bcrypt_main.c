@@ -1476,8 +1476,11 @@ static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
         if (!(buffer = heap_alloc( key_orig->u.a.pubkey_len ))) return STATUS_NO_MEMORY;
         memcpy( buffer, key_orig->u.a.pubkey, key_orig->u.a.pubkey_len );
 
+        key_copy->u.a.bitlen     = key_orig->u.a.bitlen;
+        key_copy->u.a.flags      = key_orig->u.a.flags;
         key_copy->u.a.pubkey     = buffer;
         key_copy->u.a.pubkey_len = key_orig->u.a.pubkey_len;
+        key_copy->u.a.dss_seed   = key_orig->u.a.dss_seed;
 
         if ((status = key_funcs->key_asymmetric_duplicate( key_orig, key_copy ))) return status;
     }
