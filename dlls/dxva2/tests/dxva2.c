@@ -23,10 +23,11 @@
 #include "initguid.h"
 #include "dxva2api.h"
 
-static int get_refcount(IUnknown *object)
+static unsigned int get_refcount(void *object)
 {
-    IUnknown_AddRef(object);
-    return IUnknown_Release(object);
+    IUnknown *iface = object;
+    IUnknown_AddRef(iface);
+    return IUnknown_Release(iface);
 }
 
 static HWND create_window(void)
@@ -120,13 +121,13 @@ static void test_device_manager(void)
 
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    refcount = get_refcount((IUnknown *)device);
+    refcount = get_refcount(device);
 
     handle1 = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle1);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    refcount2 = get_refcount((IUnknown *)device);
+    refcount2 = get_refcount(device);
     ok(refcount2 == refcount, "Unexpected refcount %d.\n", refcount);
 
     handle = NULL;
@@ -357,7 +358,104 @@ done:
     DestroyWindow(window);
 }
 
+static void test_video_processor(void)
+{
+    IDirectXVideoProcessorService *service, *service2;
+    IDirect3DDevice9 *device;
+    IDirect3DDeviceManager9 *manager;
+    HANDLE handle, handle1;
+    IDirect3D9 *d3d;
+    HWND window;
+    UINT token;
+    HRESULT hr;
+    IDirectXVideoProcessor *processor, *processor2;
+    DXVA2_VideoDesc video_desc;
+    GUID guid;
+    D3DFORMAT format;
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = DXVA2CreateDirect3DDeviceManager9(&token, &manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    handle = NULL;
+    hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    handle1 = NULL;
+    hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ok(get_refcount(manager) == 1, "Unexpected refcount %u.\n", get_refcount(manager));
+
+    hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoProcessorService,
+            (void **)&service);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    memset(&video_desc, 0, sizeof(video_desc));
+    video_desc.SampleWidth = 64;
+    video_desc.SampleHeight = 64;
+    video_desc.Format = D3DFMT_A8R8G8B8;
+
+    hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcSoftwareDevice, &video_desc,
+            D3DFMT_A8R8G8B8, 1, &processor);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &DXVA2_VideoProcSoftwareDevice, &video_desc,
+            D3DFMT_A8R8G8B8, 1, &processor2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(processor2 != processor, "Unexpected instance.\n");
+
+    hr = IDirectXVideoProcessor_GetCreationParameters(processor, NULL, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirectXVideoProcessor_GetCreationParameters(processor, &guid, NULL, NULL, NULL);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &DXVA2_VideoProcSoftwareDevice), "Unexpected device guid.\n");
+}
+    hr = IDirectXVideoProcessor_GetCreationParameters(processor, NULL, NULL, &format, NULL);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(format == D3DFMT_A8R8G8B8, "Unexpected format %u.\n", format);
+}
+    IDirectXVideoProcessor_Release(processor);
+    IDirectXVideoProcessor_Release(processor2);
+
+    hr = IDirect3DDeviceManager9_GetVideoService(manager, handle, &IID_IDirectXVideoProcessorService,
+            (void **)&service2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(service == service2, "Unexpected pointer.\n");
+
+    IDirectXVideoProcessorService_Release(service2);
+    IDirectXVideoProcessorService_Release(service);
+
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, handle1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IDirect3DDevice9_Release(device);
+    IDirect3DDeviceManager9_Release(manager);
+
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(dxva2)
 {
     test_device_manager();
+    test_video_processor();
 }
