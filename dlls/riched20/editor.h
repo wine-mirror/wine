@@ -273,6 +273,7 @@ void ME_ReplaceSel(ME_TextEditor *editor, BOOL can_undo, const WCHAR *str, int l
 int set_selection( ME_TextEditor *editor, int to, int from ) DECLSPEC_HIDDEN;
 HRESULT editor_copy_or_cut( ME_TextEditor *editor, BOOL cut, ME_Cursor *start, int count,
                             IDataObject **data_out ) DECLSPEC_HIDDEN;
+ME_Paragraph *editor_end_para( ME_TextEditor *editor ) DECLSPEC_HIDDEN;
 ME_Paragraph *editor_first_para( ME_TextEditor *editor ) DECLSPEC_HIDDEN;
 
 /* table.c */

@@ -26,15 +26,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
 void ME_SetCursorToStart(ME_TextEditor *editor, ME_Cursor *cursor)
 {
-  cursor->pPara = editor->pBuffer->pFirst->member.para.next_para;
-  cursor->pRun = ME_FindItemFwd(cursor->pPara, diRun);
+  cursor->pPara = para_get_di( editor_first_para( editor ) );
+  cursor->pRun = run_get_di( para_first_run( &cursor->pPara->member.para ) );
   cursor->nOffset = 0;
 }
 
 static void ME_SetCursorToEnd(ME_TextEditor *editor, ME_Cursor *cursor, BOOL final_eop)
 {
-  cursor->pPara = editor->pBuffer->pLast->member.para.prev_para;
-  cursor->pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun);
+  cursor->pPara = para_get_di( para_prev( editor_end_para( editor ) ) );
+  cursor->pRun = run_get_di( para_end_run( &cursor->pPara->member.para ) );
   cursor->nOffset = final_eop ? cursor->pRun->member.run.len : 0;
 }
 
