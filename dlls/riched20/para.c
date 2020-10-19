@@ -39,20 +39,18 @@ static ME_Paragraph *para_create( ME_TextEditor *editor )
     return &item->member.para;
 }
 
-void destroy_para(ME_TextEditor *editor, ME_DisplayItem *item)
+void para_destroy( ME_TextEditor *editor, ME_Paragraph *para )
 {
-    assert(item->type == diParagraph);
-
-    if (item->member.para.nWidth == editor->nTotalWidth)
+    if (para->nWidth == editor->nTotalWidth)
     {
-        item->member.para.nWidth = 0;
+        para->nWidth = 0;
         editor->nTotalWidth = get_total_width(editor);
     }
-    editor->total_rows -= item->member.para.nRows;
-    ME_DestroyString(item->member.para.text);
-    para_num_clear( &item->member.para.para_num );
-    para_mark_remove( editor, &item->member.para );
-    ME_DestroyDisplayItem(item);
+    editor->total_rows -= para->nRows;
+    ME_DestroyString( para->text );
+    para_num_clear( &para->para_num );
+    para_mark_remove( editor, para );
+    ME_DestroyDisplayItem( para_get_di( para ) );
 }
 
 /* Note para_next/prev will return the start and end doc nodes */
@@ -762,7 +760,7 @@ ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_fir
   para->next_para = next->next_para;
   next->next_para->member.para.prev_para = para_get_di( para );
   ME_Remove( para_get_di(next) );
-  destroy_para( editor, para_get_di( next ) );
+  para_destroy( editor, next );
 
   ME_PropagateCharOffset( para->next_para, -end_len );
 

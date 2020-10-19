@@ -3213,10 +3213,11 @@ void ME_DestroyEditor(ME_TextEditor *editor)
   ME_ClearTempStyle(editor);
   ME_EmptyUndoStack(editor);
   editor->pBuffer->pFirst = NULL;
-  while(p) {
+  while(p)
+  {
     pNext = p->next;
     if (p->type == diParagraph)
-      destroy_para(editor, p);
+      para_destroy( editor, &p->member.para );
     else
       ME_DestroyDisplayItem(p);
     p = pNext;
