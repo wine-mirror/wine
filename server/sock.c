@@ -1463,6 +1463,13 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (!(acceptsock = (struct sock *)get_handle_obj( current->process, params->accept_handle, access, &sock_ops )))
             return 0;
 
+        if (acceptsock->accept_recv_req)
+        {
+            release_object( acceptsock );
+            set_win32_error( WSAEINVAL );
+            return 0;
+        }
+
         if (!(req = alloc_accept_req( acceptsock, async, params ))) return 0;
         list_add_tail( &sock->accept_list, &req->entry );
         acceptsock->accept_recv_req = req;

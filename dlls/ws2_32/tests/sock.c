@@ -7554,23 +7554,9 @@ todo_wine
     bret = pAcceptEx(listener, acceptor, buffer, 0,
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
-    todo_wine ok(bret == FALSE && WSAGetLastError() == WSAEINVAL,
+    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL,
        "AcceptEx on already pending socket returned %d + errno %d\n", bret, WSAGetLastError());
     ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
-    if (bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING) {
-        /* We need to cancel this call, otherwise things fail */
-        bret = CancelIo((HANDLE) listener);
-        ok(bret, "Failed to cancel failed test. Bailing...\n");
-        if (!bret) return;
-        WaitForSingleObject(overlapped.hEvent, 0);
-
-        overlapped.Internal = 0xdeadbeef;
-        bret = pAcceptEx(listener, acceptor, buffer, 0,
-            sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
-            &bytesReturned, &overlapped);
-        ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx returned %d + errno %d\n", bret, WSAGetLastError());
-        ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
-    }
 
     iret = connect(acceptor,  (struct sockaddr*)&bindAddress, sizeof(bindAddress));
     todo_wine ok(iret == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL,
