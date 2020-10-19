@@ -30,8 +30,6 @@
 #include "taskmgr.h"
 #include "perfdata.h"
 
-static PROCGPIC                        pGetProcessIoCounters = NULL;
-static PROCISW64                       pIsWow64Process = NULL;
 static CRITICAL_SECTION                PerfDataCriticalSection;
 static PPERFDATA                       pPerfDataOld = NULL;    /* Older perf data (saved to establish delta values) */
 static PPERFDATA                       pPerfData = NULL;    /* Most recent copy of perf data */
@@ -57,11 +55,7 @@ static size_t size_diff(size_t x, size_t y)
 BOOL PerfDataInitialize(void)
 {
     LONG    status;
-    static const WCHAR wszKernel32[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
 
-    pGetProcessIoCounters = (PROCGPIC)GetProcAddress(GetModuleHandleW(wszKernel32), "GetProcessIoCounters");
-    pIsWow64Process = (PROCISW64)GetProcAddress(GetModuleHandleW(wszKernel32), "IsWow64Process");
-    
     InitializeCriticalSection(&PerfDataCriticalSection);
 
     /*
@@ -291,10 +285,8 @@ void PerfDataRefresh(void)
             }
             pPerfData[Idx].USERObjectCount = GetGuiResources(hProcess, GR_USEROBJECTS);
             pPerfData[Idx].GDIObjectCount = GetGuiResources(hProcess, GR_GDIOBJECTS);
-            if (pGetProcessIoCounters)
-                pGetProcessIoCounters(hProcess, &pPerfData[Idx].IOCounters);
-            if (pIsWow64Process)
-                pIsWow64Process(hProcess, &pPerfData[Idx].Wow64Process);
+            GetProcessIoCounters(hProcess, &pPerfData[Idx].IOCounters);
+            IsWow64Process(hProcess, &pPerfData[Idx].Wow64Process);
             CloseHandle(hProcess);
         }
         pPerfData[Idx].UserTime.QuadPart = pSPI->UserTime.QuadPart;
