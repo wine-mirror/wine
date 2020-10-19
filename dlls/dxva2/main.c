@@ -392,7 +392,7 @@ static HRESULT WINAPI device_manager_OpenDeviceHandle(IDirect3DDeviceManager9 *i
                 sizeof(*manager->handles)))
         {
             *hdevice = ULongToHandle(manager->count + 1);
-            manager->handles[manager->count].flags |= HANDLE_FLAG_OPEN;
+            manager->handles[manager->count].flags = HANDLE_FLAG_OPEN;
             manager->handles[manager->count].state_block = NULL;
             manager->count++;
         }
