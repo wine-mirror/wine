@@ -19,9 +19,9 @@
 @ stdcall GetTimestampForLoadedLibrary(long)
 @ stdcall ImageDirectoryEntryToData(ptr long long ptr)
 @ stdcall ImageDirectoryEntryToDataEx(ptr long long ptr ptr)
-@ stdcall ImageNtHeader(ptr) ntdll.RtlImageNtHeader
-@ stdcall ImageRvaToSection(ptr ptr long) ntdll.RtlImageRvaToSection
-@ stdcall ImageRvaToVa(ptr ptr long ptr) ntdll.RtlImageRvaToVa
+@ stdcall -import ImageNtHeader(ptr) RtlImageNtHeader
+@ stdcall -import ImageRvaToSection(ptr ptr long) RtlImageRvaToSection
+@ stdcall -import ImageRvaToVa(ptr ptr long ptr) RtlImageRvaToVa
 @ stdcall ImagehlpApiVersion()
 @ stdcall ImagehlpApiVersionEx(ptr)
 @ stdcall MakeSureDirectoryPathExists(str)
