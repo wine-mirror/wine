@@ -777,7 +777,7 @@ interface IDirectXVideoProcessor : IUnknown
         [in] const DXVA2_VideoProcessBltParams* pBltParams,
         [in] const DXVA2_VideoSample* pSamples,
         [in] UINT NumSamples,
-        [out] HANDLE* pHandleCompleteIDirect3DDeviceManager9);
+        [out] HANDLE* pHandleComplete);
 }
 
 /*****************************************************************************
