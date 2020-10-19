@@ -50,10 +50,6 @@ extern int alphaBlendMode;
 
 #define MSSTYLES_VERSION 0x0003
 
-static const WCHAR szThemesIniResource[] = {
-    't','h','e','m','e','s','_','i','n','i','\0'
-};
-
 static PTHEME_FILE tfActiveTheme;
 
 /***********************************************************************/
@@ -78,15 +74,6 @@ HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWST
     HMODULE hTheme;
     HRSRC hrsc;
     HRESULT hr = S_OK;
-    static const WCHAR szPackThemVersionResource[] = {
-        'P','A','C','K','T','H','E','M','_','V','E','R','S','I','O','N', '\0'
-    };
-    static const WCHAR szColorNamesResource[] = {
-        'C','O','L','O','R','N','A','M','E','S','\0'
-    };
-    static const WCHAR szSizeNamesResource[] = {
-        'S','I','Z','E','N','A','M','E','S','\0'
-    };
 
     WORD version;
     DWORD versize;
@@ -105,7 +92,7 @@ HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWST
         hr = HRESULT_FROM_WIN32(GetLastError());
         goto invalid_theme;
     }
-    if(!(hrsc = FindResourceW(hTheme, MAKEINTRESOURCEW(1), szPackThemVersionResource))) {
+    if(!(hrsc = FindResourceW(hTheme, MAKEINTRESOURCEW(1), L"PACKTHEM_VERSION"))) {
         TRACE("No version resource found\n");
         hr = HRESULT_FROM_WIN32(ERROR_BAD_FORMAT);
         goto invalid_theme;
@@ -124,14 +111,14 @@ HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWST
         goto invalid_theme;
     }
 
-    if(!(hrsc = FindResourceW(hTheme, MAKEINTRESOURCEW(1), szColorNamesResource))) {
+    if(!(hrsc = FindResourceW(hTheme, MAKEINTRESOURCEW(1), L"COLORNAMES"))) {
         TRACE("Color names resource not found\n");
         hr = HRESULT_FROM_WIN32(ERROR_BAD_FORMAT);
         goto invalid_theme;
     }
     pszColors = LoadResource(hTheme, hrsc);
 
-    if(!(hrsc = FindResourceW(hTheme, MAKEINTRESOURCEW(1), szSizeNamesResource))) {
+    if(!(hrsc = FindResourceW(hTheme, MAKEINTRESOURCEW(1), L"SIZENAMES"))) {
         TRACE("Size names resource not found\n");
         hr = HRESULT_FROM_WIN32(ERROR_BAD_FORMAT);
         goto invalid_theme;
@@ -259,7 +246,7 @@ HRESULT MSSTYLES_SetActiveTheme(PTHEME_FILE tf, BOOL setMetrics)
  */
 PUXINI_FILE MSSTYLES_GetThemeIni(PTHEME_FILE tf)
 {
-    return UXINI_LoadINI(tf->hTheme, szThemesIniResource);
+    return UXINI_LoadINI(tf->hTheme, L"themes_ini");
 }
 
 /***********************************************************************
@@ -269,9 +256,6 @@ PUXINI_FILE MSSTYLES_GetThemeIni(PTHEME_FILE tf)
  */
 static PUXINI_FILE MSSTYLES_GetActiveThemeIni(PTHEME_FILE tf)
 {
-    static const WCHAR szFileResNamesResource[] = {
-        'F','I','L','E','R','E','S','N','A','M','E','S','\0'
-    };
     DWORD dwColorCount = 0;
     DWORD dwSizeCount = 0;
     DWORD dwColorNum = 0;
@@ -299,7 +283,7 @@ static PUXINI_FILE MSSTYLES_GetActiveThemeIni(PTHEME_FILE tf)
         dwSizeCount++;
     }
 
-    if(!(hrsc = FindResourceW(tf->hTheme, MAKEINTRESOURCEW(1), szFileResNamesResource))) {
+    if(!(hrsc = FindResourceW(tf->hTheme, MAKEINTRESOURCEW(1), L"FILERESNAMES"))) {
         TRACE("FILERESNAMES map not found\n");
         return NULL;
     }
@@ -865,8 +849,6 @@ static void parse_apply_nonclient (struct PARSENONCLIENTSTATE* state)
  */
 static void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics)
 {
-    static const WCHAR szSysMetrics[] = {'S','y','s','M','e','t','r','i','c','s','\0'};
-    static const WCHAR szGlobals[] = {'g','l','o','b','a','l','s','\0'};
     PTHEME_CLASS cls;
     PTHEME_CLASS globals;
     PTHEME_PARTSTATE ps;
@@ -886,7 +868,7 @@ static void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics)
     ini = MSSTYLES_GetActiveThemeIni(tf);
 
     while((lpName=UXINI_GetNextSection(ini, &dwLen))) {
-        if(CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, lpName, dwLen, szSysMetrics, -1) == CSTR_EQUAL) {
+        if(CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, lpName, dwLen, L"SysMetrics", -1) == CSTR_EQUAL) {
             struct PARSECOLORSTATE colorState;
             struct PARSENONCLIENTSTATE nonClientState;
             
@@ -938,7 +920,7 @@ static void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics)
         }
         if(MSSTYLES_ParseIniSectionName(lpName, dwLen, szAppName, szClassName, &iPartId, &iStateId)) {
             BOOL isGlobal = FALSE;
-            if(!lstrcmpiW(szClassName, szGlobals)) {
+            if(!lstrcmpiW(szClassName, L"globals")) {
                 isGlobal = TRUE;
             }
             cls = MSSTYLES_AddClass(tf, szAppName, szClassName);
@@ -957,7 +939,7 @@ static void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics)
     }
 
     /* App/Class combos override values defined by the base class, map these overrides */
-    globals = MSSTYLES_FindClass(tf, NULL, szGlobals);
+    globals = MSSTYLES_FindClass(tf, NULL, L"globals");
     cls = tf->classes;
     while(cls) {
         if(*cls->szAppName) {
@@ -1250,10 +1232,6 @@ HRESULT MSSTYLES_GetPropertyColor(PTHEME_PROPERTY tp, COLORREF *pColor)
 static HRESULT MSSTYLES_GetFont (LPCWSTR lpCur, LPCWSTR lpEnd,
                                  LPCWSTR *lpValEnd, LOGFONTW* pFont)
 {
-    static const WCHAR szBold[] = {'b','o','l','d','\0'};
-    static const WCHAR szItalic[] = {'i','t','a','l','i','c','\0'};
-    static const WCHAR szUnderline[] = {'u','n','d','e','r','l','i','n','e','\0'};
-    static const WCHAR szStrikeOut[] = {'s','t','r','i','k','e','o','u','t','\0'};
     int pointSize;
     WCHAR attr[32];
 
@@ -1271,10 +1249,10 @@ static HRESULT MSSTYLES_GetFont (LPCWSTR lpCur, LPCWSTR lpEnd,
     pFont->lfWeight = FW_REGULAR;
     pFont->lfCharSet = DEFAULT_CHARSET;
     while(MSSTYLES_GetNextToken(lpCur, lpEnd, &lpCur, attr, ARRAY_SIZE(attr))) {
-        if(!lstrcmpiW(szBold, attr)) pFont->lfWeight = FW_BOLD;
-        else if(!lstrcmpiW(szItalic, attr)) pFont->lfItalic = TRUE;
-        else if(!lstrcmpiW(szUnderline, attr)) pFont->lfUnderline = TRUE;
-        else if(!lstrcmpiW(szStrikeOut, attr)) pFont->lfStrikeOut = TRUE;
+        if(!lstrcmpiW(L"bold", attr)) pFont->lfWeight = FW_BOLD;
+        else if(!lstrcmpiW(L"italic", attr)) pFont->lfItalic = TRUE;
+        else if(!lstrcmpiW(L"underline", attr)) pFont->lfUnderline = TRUE;
+        else if(!lstrcmpiW(L"strikeout", attr)) pFont->lfStrikeOut = TRUE;
     }
     *lpValEnd = lpCur;
     return S_OK;
