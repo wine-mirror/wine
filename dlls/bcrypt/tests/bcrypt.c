@@ -2603,6 +2603,9 @@ static void test_DSA(void)
     ok(!memcmp(dssKey, buf, size), "wrong data\n");
     HeapFree(GetProcessHeap(), 0, buf);
 
+    ret = pBCryptDestroyKey(key);
+    ok(!ret, "got %08x\n", ret);
+
     ret = pBCryptCloseAlgorithmProvider(alg, 0);
     ok(!ret, "got %08x\n", ret);
 }
