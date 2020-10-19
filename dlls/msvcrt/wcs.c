@@ -545,7 +545,8 @@ static MSVCRT_size_t MSVCRT_wcsrtombs_l(char *mbstr, const MSVCRT_wchar_t **wcst
 {
     MSVCRT_pthreadlocinfo locinfo;
     MSVCRT_size_t tmp = 0;
-    BOOL used_default;
+    BOOL used_default = FALSE;
+    BOOL *pused_default;
 
     if(!locale)
         locinfo = get_locinfo();
@@ -570,9 +571,11 @@ static MSVCRT_size_t MSVCRT_wcsrtombs_l(char *mbstr, const MSVCRT_wchar_t **wcst
         return i;
     }
 
+    pused_default = (locinfo->lc_codepage != CP_UTF8 ? &used_default : NULL);
+
     if(!mbstr) {
         tmp = WideCharToMultiByte(locinfo->lc_codepage, WC_NO_BEST_FIT_CHARS,
-                *wcstr, -1, NULL, 0, NULL, &used_default);
+                *wcstr, -1, NULL, 0, NULL, pused_default);
         if(!tmp || used_default) {
             *MSVCRT__errno() = MSVCRT_EILSEQ;
             return -1;
@@ -585,7 +588,7 @@ static MSVCRT_size_t MSVCRT_wcsrtombs_l(char *mbstr, const MSVCRT_wchar_t **wcst
         MSVCRT_size_t i, size;
 
         size = WideCharToMultiByte(locinfo->lc_codepage, WC_NO_BEST_FIT_CHARS,
-                *wcstr, 1, buf, 3, NULL, &used_default);
+                *wcstr, 1, buf, 3, NULL, pused_default);
         if(!size || used_default) {
             *MSVCRT__errno() = MSVCRT_EILSEQ;
             return -1;
