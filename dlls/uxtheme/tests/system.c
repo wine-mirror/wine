@@ -127,10 +127,10 @@ static void test_OpenThemeData(void)
     HRESULT   hRes;
     BOOL      bTPDefined;
 
-    WCHAR szInvalidClassList[] = {'D','E','A','D','B','E','E','F', 0 };
-    WCHAR szButtonClassList[]  = {'B','u','t','t','o','n', 0 };
-    WCHAR szButtonClassList2[]  = {'b','U','t','T','o','N', 0 };
-    WCHAR szClassList[]        = {'B','u','t','t','o','n',';','L','i','s','t','B','o','x', 0 };
+    const WCHAR szInvalidClassList[] = L"DEADBEEF";
+    const WCHAR szButtonClassList[]  = L"Button";
+    const WCHAR szButtonClassList2[] = L"bUtToN";
+    const WCHAR szClassList[]        = L"Button;ListBox";
 
     bThemeActive = IsThemeActive();
 
@@ -274,10 +274,10 @@ static void test_OpenThemeDataEx(void)
     HWND      hWnd;
     BOOL      bThemeActive;
 
-    WCHAR szInvalidClassList[] = {'D','E','A','D','B','E','E','F', 0 };
-    WCHAR szButtonClassList[]  = {'B','u','t','t','o','n', 0 };
-    WCHAR szButtonClassList2[]  = {'b','U','t','T','o','N', 0 };
-    WCHAR szClassList[]        = {'B','u','t','t','o','n',';','L','i','s','t','B','o','x', 0 };
+    const WCHAR szInvalidClassList[] = L"DEADBEEF";
+    const WCHAR szButtonClassList[]  = L"Button";
+    const WCHAR szButtonClassList2[] = L"bUtToN";
+    const WCHAR szClassList[]        = L"Button;ListBox";
 
     if (!pOpenThemeDataEx)
     {
