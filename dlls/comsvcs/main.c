@@ -40,7 +40,7 @@ typedef struct dispensermanager
 {
     IDispenserManager IDispenserManager_iface;
     LONG ref;
-    HANDLE mta_thread, mta_stop_event;
+    CO_MTA_USAGE_COOKIE mta_cookie;
 } dispensermanager;
 
 typedef struct holder
@@ -285,25 +285,12 @@ static ULONG WINAPI dismanager_Release(IDispenserManager *iface)
 
     if (!ref)
     {
-        if (This->mta_thread)
-        {
-            SetEvent(This->mta_stop_event);
-            WaitForSingleObject(This->mta_thread, INFINITE);
-            CloseHandle(This->mta_stop_event);
-            CloseHandle(This->mta_thread);
-        }
+        if (This->mta_cookie)
+            CoDecrementMTAUsage(This->mta_cookie);
         heap_free(This);
     }
 
     return ref;
-}
-
-static DWORD WINAPI mta_thread_proc(void *arg)
-{
-    CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    WaitForSingleObject(arg, INFINITE);
-    CoUninitialize();
-    return 0;
 }
 
 static HRESULT WINAPI dismanager_RegisterDispenser(IDispenserManager *iface, IDispenserDriver *driver,
@@ -319,11 +306,8 @@ static HRESULT WINAPI dismanager_RegisterDispenser(IDispenserManager *iface, IDi
 
     hr = create_holder(driver, dispenser);
 
-    if (!This->mta_thread)
-    {
-        This->mta_stop_event = CreateEventA(NULL, TRUE, FALSE, NULL);
-        This->mta_thread = CreateThread(NULL, 0, mta_thread_proc, This->mta_stop_event, 0, NULL);
-    }
+    if (!This->mta_cookie)
+        CoIncrementMTAUsage(&This->mta_cookie);
 
     TRACE("<-- 0x%08x, %p\n", hr, *dispenser);
 
