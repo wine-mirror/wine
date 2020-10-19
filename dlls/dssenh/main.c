@@ -860,8 +860,7 @@ BOOL WINAPI CPSignHash( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD keyspec, const
 {
     struct container *container = (struct container *)hprov;
     struct hash *hash = (struct hash *)hhash;
-    UCHAR hashval[MAX_HASH_LEN];
-    ULONG len, hashlen = sizeof(hashval);
+    ULONG len;
 
     TRACE( "%p, %p, %u, %s, %08x, %p, %p\n", (void *)hprov, (void *)hhash, keyspec, debugstr_w(desc), flags, sig,
            siglen );
@@ -870,14 +869,13 @@ BOOL WINAPI CPSignHash( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD keyspec, const
     if (hash->magic != MAGIC_HASH) return FALSE;
 
     if (!(len = get_signature_length( container->sign_key->algid ))) return FALSE;
-    if (!CPGetHashParam( hprov, hhash, HP_HASHVAL, hashval, &hashlen, 0 )) return FALSE;
     if (*siglen < len)
     {
         *siglen = len;
         return TRUE;
     }
 
-    return !BCryptSignHash( container->sign_key->handle, NULL, hashval, hashlen, sig, *siglen, siglen, 0 );
+    return !BCryptSignHash( container->sign_key->handle, NULL, hash->value, hash->len, sig, *siglen, siglen, 0 );
 }
 
 BOOL WINAPI CPVerifySignature( HCRYPTPROV hprov, HCRYPTHASH hhash, const BYTE *sig, DWORD siglen, HCRYPTKEY hpubkey,
@@ -885,8 +883,6 @@ BOOL WINAPI CPVerifySignature( HCRYPTPROV hprov, HCRYPTHASH hhash, const BYTE *s
 {
     struct hash *hash = (struct hash *)hhash;
     struct key *key = (struct key *)hpubkey;
-    UCHAR hashval[MAX_HASH_LEN];
-    ULONG hashlen = sizeof(hashval);
 
     TRACE( "%p, %p, %p, %u %p, %s, %08x\n", (void *)hprov, (void *)hhash, sig, siglen, (void *)hpubkey,
            debugstr_w(desc), flags );
@@ -898,9 +894,7 @@ BOOL WINAPI CPVerifySignature( HCRYPTPROV hprov, HCRYPTHASH hhash, const BYTE *s
         return FALSE;
     }
 
-    if (!CPGetHashParam( hprov, hhash, HP_HASHVAL, hashval, &hashlen, 0 )) return FALSE;
-
-    return !BCryptVerifySignature( key->handle, NULL, hashval, hashlen, (UCHAR *)sig, siglen, 0 );
+    return !BCryptVerifySignature( key->handle, NULL, hash->value, hash->len, (UCHAR *)sig, siglen, 0 );
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
