@@ -578,6 +578,7 @@ BOOL WINAPI CPExportKey( HCRYPTPROV hprov, HCRYPTKEY hkey, HCRYPTKEY hexpkey, DW
                          BYTE *data, DWORD *len )
 {
     struct key *key = (struct key *)hkey;
+    const WCHAR *type;
 
     TRACE( "%p, %p, %p, %08x, %08x, %p, %p\n", (void *)hprov, (void *)hkey, (void *)hexpkey, blobtype, flags,
            data, len );
@@ -588,18 +589,28 @@ BOOL WINAPI CPExportKey( HCRYPTPROV hprov, HCRYPTKEY hkey, HCRYPTKEY hexpkey, DW
         FIXME( "export key not supported\n" );
         return FALSE;
     }
-    if (blobtype != PUBLICKEYBLOB)
-    {
-        FIXME( "blob type %u not supported\n", blobtype );
-        return FALSE;
-    }
     if (flags)
     {
         FIXME( "flags %08x not supported\n", flags );
         return FALSE;
     }
 
-    return !BCryptExportKey( key->handle, NULL, LEGACY_DSA_V2_PUBLIC_BLOB, data, *len, len, 0 );
+    switch (blobtype)
+    {
+    case PUBLICKEYBLOB:
+        type = LEGACY_DSA_V2_PUBLIC_BLOB;
+        break;
+
+    case PRIVATEKEYBLOB:
+        type = LEGACY_DSA_V2_PRIVATE_BLOB;
+        break;
+
+    default:
+        FIXME( "blob type %u not supported\n", blobtype );
+        return FALSE;
+    }
+
+    return !BCryptExportKey( key->handle, NULL, type, data, *len, len, 0 );
 }
 
 BOOL WINAPI CPDuplicateKey( HCRYPTPROV hprov, HCRYPTKEY hkey, DWORD *reserved, DWORD flags, HCRYPTKEY *ret_key )
