@@ -363,8 +363,9 @@ static void inherit_handle( struct process *parent, const obj_handle_t handle, s
 
     src = get_handle( parent, handle );
     if (!src || !(src->access & RESERVED_INHERIT)) return;
-    grab_object_for_handle( src->ptr );
     index = handle_to_index( handle );
+    if (dst[index].ptr) return;
+    grab_object_for_handle( src->ptr );
     dst[index] = *src;
     table->last = max( table->last, index );
 }
