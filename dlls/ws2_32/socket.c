@@ -2673,55 +2673,50 @@ static int WS2_register_async_shutdown( SOCKET s, int type )
 /***********************************************************************
  *		accept		(WS2_32.1)
  */
-SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr, int *addrlen32)
+SOCKET WINAPI WS_accept( SOCKET s, struct WS_sockaddr *addr, int *len )
 {
-    DWORD err;
-    int fd;
-    BOOL is_blocking;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
     obj_handle_t accept_handle;
+    HANDLE sync_event;
+    SOCKET ret;
 
-    TRACE("socket %04lx\n", s );
-    err = sock_is_blocking(s, &is_blocking);
-    if (err)
-        goto error;
+    TRACE("%#lx\n", s);
 
-    for (;;)
+    if (!(sync_event = CreateEventW( NULL, TRUE, FALSE, NULL ))) return INVALID_SOCKET;
+    status = NtDeviceIoControlFile( SOCKET2HANDLE(s), (HANDLE)((ULONG_PTR)sync_event | 0), NULL, NULL, &io,
+                                    IOCTL_AFD_ACCEPT, NULL, 0, &accept_handle, sizeof(accept_handle) );
+    if (status == STATUS_PENDING)
     {
-        status = NtDeviceIoControlFile( SOCKET2HANDLE(s), NULL, NULL, NULL, &io, IOCTL_AFD_ACCEPT,
-                                        NULL, 0, &accept_handle, sizeof(accept_handle) );
-        if (!status)
+        if (WaitForSingleObject( sync_event, INFINITE ) == WAIT_FAILED)
         {
-            SOCKET as = HANDLE2SOCKET(wine_server_ptr_handle( accept_handle ));
-
-            if (!socket_list_add(as))
-            {
-                CloseHandle(SOCKET2HANDLE(as));
-                return SOCKET_ERROR;
-            }
-            if (addr && addrlen32 && WS_getpeername(as, addr, addrlen32))
-            {
-                WS_closesocket(as);
-                return SOCKET_ERROR;
-            }
-            TRACE("\taccepted %04lx\n", as);
-            return as;
+            CloseHandle( sync_event );
+            return SOCKET_ERROR;
         }
-        err = NtStatusToWSAError( status );
-        if (!is_blocking) break;
-        if (err != WSAEWOULDBLOCK) break;
-        fd = get_sock_fd( s, FILE_READ_DATA, NULL );
-        /* block here */
-        do_block(fd, POLLIN, -1);
-        _sync_sock_state(s); /* let wineserver notice connection */
-        release_sock_fd( s, fd );
+        status = io.u.Status;
+    }
+    CloseHandle( sync_event );
+    if (status)
+    {
+        WARN("failed; status %#x\n", status);
+        WSASetLastError( NtStatusToWSAError( status ) );
+        return INVALID_SOCKET;
     }
 
-error:
-    WARN(" -> ERROR %d\n", err);
-    SetLastError(err);
-    return INVALID_SOCKET;
+    ret = HANDLE2SOCKET(wine_server_ptr_handle( accept_handle ));
+    if (!socket_list_add( ret ))
+    {
+        CloseHandle( SOCKET2HANDLE(ret) );
+        return INVALID_SOCKET;
+    }
+    if (addr && len && WS_getpeername( ret, addr, len ))
+    {
+        WS_closesocket( ret );
+        return INVALID_SOCKET;
+    }
+
+    TRACE("returning %#lx\n", ret);
+    return ret;
 }
 
 /***********************************************************************
