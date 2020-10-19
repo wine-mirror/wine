@@ -3051,6 +3051,40 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR:
+        {
+            const VkPhysicalDeviceFragmentShadingRateFeaturesKHR *in = (const VkPhysicalDeviceFragmentShadingRateFeaturesKHR *)in_header;
+            VkPhysicalDeviceFragmentShadingRateFeaturesKHR *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->pipelineFragmentShadingRate = in->pipelineFragmentShadingRate;
+            out->primitiveFragmentShadingRate = in->primitiveFragmentShadingRate;
+            out->attachmentFragmentShadingRate = in->attachmentFragmentShadingRate;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TERMINATE_INVOCATION_FEATURES_KHR:
+        {
+            const VkPhysicalDeviceShaderTerminateInvocationFeaturesKHR *in = (const VkPhysicalDeviceShaderTerminateInvocationFeaturesKHR *)in_header;
+            VkPhysicalDeviceShaderTerminateInvocationFeaturesKHR *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->shaderTerminateInvocation = in->shaderTerminateInvocation;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         default:
             FIXME("Application requested a linked structure of type %u.\n", in_header->sType);
         }
@@ -4040,6 +4074,12 @@ static void WINAPI wine_vkCmdSetExclusiveScissorNV(VkCommandBuffer commandBuffer
 {
     TRACE("%p, %u, %u, %p\n", commandBuffer, firstExclusiveScissor, exclusiveScissorCount, pExclusiveScissors);
     commandBuffer->device->funcs.p_vkCmdSetExclusiveScissorNV(commandBuffer->command_buffer, firstExclusiveScissor, exclusiveScissorCount, pExclusiveScissors);
+}
+
+static void WINAPI wine_vkCmdSetFragmentShadingRateKHR(VkCommandBuffer commandBuffer, const VkExtent2D *pFragmentSize, const VkFragmentShadingRateCombinerOpKHR combinerOps[2])
+{
+    TRACE("%p, %p, %p\n", commandBuffer, pFragmentSize, combinerOps);
+    commandBuffer->device->funcs.p_vkCmdSetFragmentShadingRateKHR(commandBuffer->command_buffer, pFragmentSize, combinerOps);
 }
 
 static void WINAPI wine_vkCmdSetFrontFaceEXT(VkCommandBuffer commandBuffer, VkFrontFace frontFace)
@@ -5199,6 +5239,12 @@ static void WINAPI wine_vkGetPhysicalDeviceFormatProperties2KHR(VkPhysicalDevice
     physicalDevice->instance->funcs.p_vkGetPhysicalDeviceFormatProperties2KHR(physicalDevice->phys_dev, format, pFormatProperties);
 }
 
+static VkResult WINAPI wine_vkGetPhysicalDeviceFragmentShadingRatesKHR(VkPhysicalDevice physicalDevice, uint32_t *pFragmentShadingRateCount, VkPhysicalDeviceFragmentShadingRateKHR *pFragmentShadingRates)
+{
+    TRACE("%p, %p, %p\n", physicalDevice, pFragmentShadingRateCount, pFragmentShadingRates);
+    return physicalDevice->instance->funcs.p_vkGetPhysicalDeviceFragmentShadingRatesKHR(physicalDevice->phys_dev, pFragmentShadingRateCount, pFragmentShadingRates);
+}
+
 VkResult WINAPI wine_vkGetPhysicalDeviceImageFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format, VkImageType type, VkImageTiling tiling, VkImageUsageFlags usage, VkImageCreateFlags flags, VkImageFormatProperties *pImageFormatProperties)
 {
 #if defined(USE_STRUCT_CONVERSION)
@@ -5981,6 +6027,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetDiscardRectangleEXT", &wine_vkCmdSetDiscardRectangleEXT},
     {"vkCmdSetEvent", &wine_vkCmdSetEvent},
     {"vkCmdSetExclusiveScissorNV", &wine_vkCmdSetExclusiveScissorNV},
+    {"vkCmdSetFragmentShadingRateKHR", &wine_vkCmdSetFragmentShadingRateKHR},
     {"vkCmdSetFrontFaceEXT", &wine_vkCmdSetFrontFaceEXT},
     {"vkCmdSetLineStippleEXT", &wine_vkCmdSetLineStippleEXT},
     {"vkCmdSetLineWidth", &wine_vkCmdSetLineWidth},
@@ -6190,6 +6237,7 @@ static const struct vulkan_func vk_instance_dispatch_table[] =
     {"vkGetPhysicalDeviceFormatProperties", &wine_vkGetPhysicalDeviceFormatProperties},
     {"vkGetPhysicalDeviceFormatProperties2", &wine_vkGetPhysicalDeviceFormatProperties2},
     {"vkGetPhysicalDeviceFormatProperties2KHR", &wine_vkGetPhysicalDeviceFormatProperties2KHR},
+    {"vkGetPhysicalDeviceFragmentShadingRatesKHR", &wine_vkGetPhysicalDeviceFragmentShadingRatesKHR},
     {"vkGetPhysicalDeviceImageFormatProperties", &wine_vkGetPhysicalDeviceImageFormatProperties},
     {"vkGetPhysicalDeviceImageFormatProperties2", &wine_vkGetPhysicalDeviceImageFormatProperties2},
     {"vkGetPhysicalDeviceImageFormatProperties2KHR", &wine_vkGetPhysicalDeviceImageFormatProperties2KHR},
@@ -6343,6 +6391,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_external_fence",
     "VK_KHR_external_memory",
     "VK_KHR_external_semaphore",
+    "VK_KHR_fragment_shading_rate",
     "VK_KHR_get_memory_requirements2",
     "VK_KHR_image_format_list",
     "VK_KHR_imageless_framebuffer",
@@ -6365,6 +6414,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_shader_float_controls",
     "VK_KHR_shader_non_semantic_info",
     "VK_KHR_shader_subgroup_extended_types",
+    "VK_KHR_shader_terminate_invocation",
     "VK_KHR_spirv_1_4",
     "VK_KHR_storage_buffer_storage_class",
     "VK_KHR_swapchain",

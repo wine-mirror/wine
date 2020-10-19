@@ -1338,6 +1338,7 @@ struct vulkan_device_funcs
     void (*p_vkCmdSetDiscardRectangleEXT)(VkCommandBuffer, uint32_t, uint32_t, const VkRect2D *);
     void (*p_vkCmdSetEvent)(VkCommandBuffer, VkEvent, VkPipelineStageFlags);
     void (*p_vkCmdSetExclusiveScissorNV)(VkCommandBuffer, uint32_t, uint32_t, const VkRect2D *);
+    void (*p_vkCmdSetFragmentShadingRateKHR)(VkCommandBuffer, const VkExtent2D *, const VkFragmentShadingRateCombinerOpKHR[2]);
     void (*p_vkCmdSetFrontFaceEXT)(VkCommandBuffer, VkFrontFace);
     void (*p_vkCmdSetLineStippleEXT)(VkCommandBuffer, uint32_t, uint16_t);
     void (*p_vkCmdSetLineWidth)(VkCommandBuffer, float);
@@ -1716,6 +1717,7 @@ struct vulkan_instance_funcs
     void (*p_vkGetPhysicalDeviceFormatProperties)(VkPhysicalDevice, VkFormat, VkFormatProperties *);
     void (*p_vkGetPhysicalDeviceFormatProperties2)(VkPhysicalDevice, VkFormat, VkFormatProperties2 *);
     void (*p_vkGetPhysicalDeviceFormatProperties2KHR)(VkPhysicalDevice, VkFormat, VkFormatProperties2 *);
+    VkResult (*p_vkGetPhysicalDeviceFragmentShadingRatesKHR)(VkPhysicalDevice, uint32_t *, VkPhysicalDeviceFragmentShadingRateKHR *);
 #if defined(USE_STRUCT_CONVERSION)
     VkResult (*p_vkGetPhysicalDeviceImageFormatProperties)(VkPhysicalDevice, VkFormat, VkImageType, VkImageTiling, VkImageUsageFlags, VkImageCreateFlags, VkImageFormatProperties_host *);
 #else
@@ -1899,6 +1901,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdSetDiscardRectangleEXT) \
     USE_VK_FUNC(vkCmdSetEvent) \
     USE_VK_FUNC(vkCmdSetExclusiveScissorNV) \
+    USE_VK_FUNC(vkCmdSetFragmentShadingRateKHR) \
     USE_VK_FUNC(vkCmdSetFrontFaceEXT) \
     USE_VK_FUNC(vkCmdSetLineStippleEXT) \
     USE_VK_FUNC(vkCmdSetLineWidth) \
@@ -2098,6 +2101,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetPhysicalDeviceFormatProperties) \
     USE_VK_FUNC(vkGetPhysicalDeviceFormatProperties2) \
     USE_VK_FUNC(vkGetPhysicalDeviceFormatProperties2KHR) \
+    USE_VK_FUNC(vkGetPhysicalDeviceFragmentShadingRatesKHR) \
     USE_VK_FUNC(vkGetPhysicalDeviceImageFormatProperties) \
     USE_VK_FUNC(vkGetPhysicalDeviceImageFormatProperties2) \
     USE_VK_FUNC(vkGetPhysicalDeviceImageFormatProperties2KHR) \
