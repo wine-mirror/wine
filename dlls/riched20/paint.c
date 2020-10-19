@@ -696,9 +696,8 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
   }
 }
 
-static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
+static void ME_DrawTableBorders( ME_Context *c, ME_Paragraph *para )
 {
-  ME_Paragraph *para = &paragraph->member.para;
   if (!c->editor->bEmulateVersion10) /* v4.1 */
   {
     if (para->pCell)
@@ -778,7 +777,7 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
       if (atBottom) {
         int oldLeft = rc.left;
         width = max(ME_twips2pointsY(c, cell->border.bottom.width), 1);
-        paraAfterRow = table_row_end( &paragraph->member.para )->next_para;
+        paraAfterRow = table_row_end( para )->next_para;
         if (paraAfterRow->member.para.nFlags & MEPF_ROWSTART) {
           ME_DisplayItem *nextEndCell;
           nextEndCell = ME_FindItemBack( para_get_di( table_row_end( &paraAfterRow->member.para ) ), diCell );
@@ -845,7 +844,7 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
       oldpen = SelectObject(c->hDC, pen);
 
       /* Find the start relative to the text */
-      firstX = c->pt.x + ME_FindItemFwd(paragraph, diRun)->member.run.pt.x;
+      firstX = c->pt.x + para_first_run( para )->pt.x;
       /* Go back by the horizontal gap, which is stored in dxOffset */
       firstX -= ME_twips2pointsX(c, para->fmt.dxOffset);
       /* The left edge, stored in dxStartIndent affected just the first edge */
@@ -853,7 +852,7 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
       rowY = c->pt.y + para->pt.y;
       if (para->fmt.dwMask & PFM_SPACEBEFORE)
         rowY += ME_twips2pointsY(c, para->fmt.dySpaceBefore);
-      nHeight = ME_FindItemFwd(paragraph, diStartRow)->member.row.nHeight;
+      nHeight = ME_FindItemFwd( para_get_di( para ), diStartRow )->member.row.nHeight;
       rowBottom = rowY + nHeight;
 
       /* Draw horizontal lines */
@@ -892,9 +891,8 @@ static void ME_DrawTableBorders(ME_Context *c, ME_DisplayItem *paragraph)
   }
 }
 
-static void draw_para_number( ME_Context *c, ME_DisplayItem *p )
+static void draw_para_number( ME_Context *c, ME_Paragraph *para )
 {
-    ME_Paragraph *para = &p->member.para;
     int x, y;
     COLORREF old_text;
 
@@ -1034,8 +1032,8 @@ static void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
     no++;
   }
 
-  ME_DrawTableBorders(c, paragraph);
-  draw_para_number(c, paragraph);
+  ME_DrawTableBorders( c, para );
+  draw_para_number( c, para );
 
   SetTextAlign(c->hDC, align);
 }
