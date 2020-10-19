@@ -169,8 +169,8 @@ static BOOL initialize_task_service(void)
 
 START_TEST(schtasks)
 {
-    static WCHAR wineW[] = {'\\','w','i','n','e',0};
-    static WCHAR wine_testW[] = {'\\','w','i','n','e','\\','t','e','s','t',0};
+    static WCHAR wineW[] = L"\\wine";
+    static WCHAR wine_testW[] = L"\\wine\\test";
     DWORD r;
 
     CoInitialize(NULL);
