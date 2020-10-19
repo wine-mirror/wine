@@ -1996,15 +1996,18 @@ INT CDECL MSVCRT_wctomb( char *dst, MSVCRT_wchar_t ch )
 INT CDECL MSVCRT_wctob( MSVCRT_wint_t wchar )
 {
     char out;
-    BOOL error;
+    BOOL error = FALSE;
+    BOOL *perror;
     UINT codepage = get_locinfo()->lc_codepage;
+
+    perror = (codepage != CP_UTF8 ? &error : NULL);
 
     if(!codepage) {
         if (wchar < 0xff)
             return (signed char)wchar;
         else
             return MSVCRT_EOF;
-    } else if(WideCharToMultiByte( codepage, 0, &wchar, 1, &out, 1, NULL, &error ) && !error)
+    } else if(WideCharToMultiByte( codepage, 0, &wchar, 1, &out, 1, NULL, perror ) && !error)
         return (INT)out;
     return MSVCRT_EOF;
 }
