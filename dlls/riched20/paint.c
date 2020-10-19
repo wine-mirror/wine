@@ -440,17 +440,16 @@ static void ME_DebugWrite(HDC hDC, const POINT *pt, LPCWSTR szText) {
   SetTextColor(hDC, color);
 }
 
-static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Paragraph *para) 
+static void ME_DrawRun( ME_Context *c, int x, int y, ME_Run *run, ME_Paragraph *para )
 {
-  ME_Run *run = &rundi->member.run;
   ME_DisplayItem *start;
   int runofs = run->nCharOfs+para->nCharOfs;
   int nSelFrom, nSelTo;
-  
+
   if (run->nFlags & MERF_HIDDEN)
     return;
 
-  start = ME_FindItemBack(rundi, diStartRow);
+  start = ME_FindItemBack( run_get_di( run ), diStartRow );
   ME_GetSelectionOfs(c->editor, &nSelFrom, &nSelTo);
 
   /* Draw selected end-of-paragraph mark */
@@ -1003,8 +1002,8 @@ static void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
           FrameRect(c->hDC, &rc, GetSysColorBrush(COLOR_GRAYTEXT));
         }
         if (visible)
-          ME_DrawRun(c, c->pt.x + run->pt.x,
-                     c->pt.y + para->pt.y + run->pt.y + baseline, p, para);
+          ME_DrawRun( c, c->pt.x + run->pt.x,
+                      c->pt.y + para->pt.y + run->pt.y + baseline, run, para );
         if (me_debug)
         {
           static const WCHAR wszRunDebug[] = {'[','%','d',':','%','x',']',' ','%','l','s',0};
