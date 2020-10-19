@@ -837,6 +837,27 @@ BOOL WINAPI CPGetHashParam( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD param, BYT
     }
 }
 
+BOOL WINAPI CPSetHashParam( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD param, const BYTE *data, DWORD flags )
+{
+    struct hash *hash = (struct hash *)hhash;
+
+    TRACE( "%p, %p, %08x, %p, %08x\n", (void *)hprov, (void *)hhash, param, data, flags );
+
+    if (hash->magic != MAGIC_HASH) return FALSE;
+
+    switch (param)
+    {
+    case HP_HASHVAL:
+        memcpy( hash->value, data, hash->len );
+        return TRUE;
+
+    default:
+        FIXME( "param %u not supported\n", param );
+        SetLastError( NTE_BAD_TYPE );
+        return FALSE;
+    }
+}
+
 BOOL WINAPI CPDeriveKey( HCRYPTPROV hprov, ALG_ID algid, HCRYPTHASH hhash, DWORD flags, HCRYPTKEY *ret_key )
 {
     return FALSE;

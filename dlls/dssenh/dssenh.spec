@@ -18,7 +18,7 @@
 @ stub CPHashSessionKey
 @ stdcall CPImportKey(ptr ptr long ptr long ptr)
 @ stdcall CPReleaseContext(ptr long)
-@ stub CPSetHashParam
+@ stdcall CPSetHashParam(ptr ptr long ptr long)
 @ stub CPSetKeyParam
 @ stub CPSetProvParam
 @ stdcall CPSignHash(ptr ptr long wstr long ptr ptr)
