@@ -13,7 +13,7 @@
 @ stdcall CPGetHashParam(ptr ptr long ptr ptr long)
 @ stub CPGetKeyParam
 @ stdcall CPGetProvParam(ptr long ptr ptr long)
-@ stub CPGetUserKey
+@ stdcall CPGetUserKey(ptr long ptr)
 @ stdcall CPHashData(ptr ptr ptr long long)
 @ stub CPHashSessionKey
 @ stdcall CPImportKey(ptr ptr long ptr long ptr)

@@ -615,6 +615,35 @@ BOOL WINAPI CPDuplicateKey( HCRYPTPROV hprov, HCRYPTKEY hkey, DWORD *reserved, D
     return TRUE;
 }
 
+BOOL WINAPI CPGetUserKey( HCRYPTPROV hprov, DWORD keyspec, HCRYPTKEY *ret_key )
+{
+    struct container *container = (struct container *)hprov;
+    BOOL ret = FALSE;
+
+    TRACE( "%p, %08x, %p\n", (void *)hprov, keyspec, ret_key );
+
+    if (container->magic != MAGIC_CONTAINER) return FALSE;
+
+    switch (keyspec)
+    {
+    case AT_KEYEXCHANGE:
+        if (!container->exch_key) SetLastError( NTE_NO_KEY );
+        else if ((*ret_key = (HCRYPTKEY)duplicate_key( container->exch_key ))) ret = TRUE;
+        break;
+
+    case AT_SIGNATURE:
+        if (!container->sign_key) SetLastError( NTE_NO_KEY );
+        else if ((*ret_key = (HCRYPTKEY)duplicate_key( container->sign_key ))) ret = TRUE;
+        break;
+
+    default:
+        SetLastError( NTE_NO_KEY );
+        return FALSE;
+    }
+
+    return ret;
+}
+
 BOOL WINAPI CPGenRandom( HCRYPTPROV hprov, DWORD len, BYTE *buffer )
 {
     struct container *container = (struct container *)hprov;

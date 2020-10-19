@@ -1470,6 +1470,50 @@ static void test_duplicate_hash(void)
     ok(result, "got %08x\n", GetLastError());
 }
 
+static void test_userkey(void)
+{
+    HCRYPTPROV hprov;
+    HCRYPTKEY hkey;
+    BOOL result;
+
+    CryptAcquireContextA(&hprov, "winetest", MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_DELETEKEYSET);
+    result = CryptAcquireContextA(&hprov, "winetest", MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_NEWKEYSET);
+    ok(result, "got %08x\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    result = CryptGetUserKey(hprov, AT_KEYEXCHANGE, &hkey);
+    ok(!result, "success\n");
+    ok(GetLastError() == NTE_NO_KEY, "got %08x\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    result = CryptGetUserKey(hprov, AT_SIGNATURE, &hkey);
+    ok(!result, "success\n");
+    ok(GetLastError() == NTE_NO_KEY, "got %08x\n", GetLastError());
+
+    result = CryptGenKey(hprov, AT_SIGNATURE, 1024 << 16, &hkey);
+    ok(result, "got %08x\n", GetLastError());
+    result = CryptDestroyKey(hkey);
+    ok(result, "got %08x\n", GetLastError());
+
+    result = CryptGetUserKey(hprov, AT_SIGNATURE, &hkey);
+    ok(result, "got %08x\n", GetLastError());
+    result = CryptDestroyKey(hkey);
+    ok(result, "got %08x\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    result = CryptGetUserKey(hprov, AT_KEYEXCHANGE, &hkey);
+    ok(!result, "success\n");
+    ok(GetLastError() == NTE_NO_KEY, "got %08x\n", GetLastError());
+
+    result = CryptReleaseContext(hprov, 0);
+    ok(result, "got %08x\n", GetLastError());
+
+    hprov = 0xdeadbeef;
+    result = CryptAcquireContextA(&hprov, "winetest", MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH, CRYPT_DELETEKEYSET);
+    ok(result, "got %08x\n", GetLastError());
+    ok(!hprov, "got %08x\n", (DWORD)hprov);
+}
+
 START_TEST(dssenh)
 {
     test_acquire_context();
@@ -1480,4 +1524,5 @@ START_TEST(dssenh)
     test_verify_signature();
     test_key_exchange();
     test_duplicate_hash();
+    test_userkey();
 }
