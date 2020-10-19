@@ -117,7 +117,6 @@ static void write_to_stdout(const WCHAR *str)
 static BOOL run_find_for_line(const WCHAR *line, const WCHAR *tofind)
 {
     void *found;
-    WCHAR lineending[] = {'\r', '\n', 0};
 
     if (lstrlenW(line) == 0 || lstrlenW(tofind) == 0)
         return FALSE;
@@ -127,7 +126,7 @@ static BOOL run_find_for_line(const WCHAR *line, const WCHAR *tofind)
     if (found)
     {
         write_to_stdout(line);
-        write_to_stdout(lineending);
+        write_to_stdout(L"\r\n");
         return TRUE;
     }
 

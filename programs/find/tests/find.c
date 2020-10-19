@@ -128,7 +128,6 @@ static void mangle_text(const BYTE *input, int input_len, BYTE *output, int outp
 
 static void run_find_stdin_(const WCHAR *commandline, const BYTE *input, int input_len, const BYTE *out_expected, int out_expected_len, int exitcode_expected, const char *file, int line)
 {
-    static const WCHAR find_exe[] = { 'f','i','n','d','.','e','x','e',' ','%','s',0 };
     HANDLE child_stdin_read;
     HANDLE child_stdout_write;
     HANDLE parent_stdin_write;
@@ -157,7 +156,7 @@ static void run_find_stdin_(const WCHAR *commandline, const BYTE *input, int inp
     startup_info.hStdError = NULL;
     startup_info.dwFlags |= STARTF_USESTDHANDLES;
 
-    wsprintfW(cmd, find_exe, commandline);
+    wsprintfW(cmd, L"find.exe %s", commandline);
 
     CreateProcessW(NULL, cmd, NULL, NULL, TRUE, 0, NULL, NULL, &startup_info, &process_info);
     CloseHandle(child_stdin_read);
@@ -243,7 +242,7 @@ static void run_find_str_(const char *commandline, const char *input, const char
 static void run_find_unicode_(const BYTE *input, int input_len, const BYTE *out_expected, int out_expected_len, int exitcode_expected, BOOL is_file, const char *file, int line)
 {
     /* Need "test" as char and quoted wchar */
-    static const WCHAR wstr_quoted_test[] = { '"','t', 'e', 's', 't','"',0 };
+    static const WCHAR wstr_quoted_test[] = L"\"test\"";
     static const char str_test[] = "test";
 
     BYTE out_expected_mangled[200] = {0};
