@@ -91,12 +91,11 @@ static int WINAPIV ipconfig_message_printfW(int msg, ...)
 
 static int ipconfig_message(int msg)
 {
-    static const WCHAR formatW[] = {'%','1',0};
     WCHAR msg_buffer[8192];
 
     LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer, ARRAY_SIZE(msg_buffer));
 
-    return ipconfig_printfW(formatW, msg_buffer);
+    return ipconfig_printfW(L"%1", msg_buffer);
 }
 
 static const WCHAR *iftype_to_string(DWORD type)
@@ -123,27 +122,18 @@ static const WCHAR *iftype_to_string(DWORD type)
 
 static void print_field(int msg, const WCHAR *value)
 {
-    static const WCHAR formatW[] = {' ',' ',' ',' ','%','1',':',' ','%','2','\n',0};
-
-    WCHAR field[] = {'.',' ','.',' ','.',' ','.',' ','.',' ','.',' ','.',' ','.',' ','.',
-                     ' ','.',' ','.',' ','.',' ','.',' ','.',' ','.',' ','.',' ','.',' ',0};
+    WCHAR field[] = L". . . . . . . . . . . . . . . . . ";
     WCHAR name_buffer[ARRAY_SIZE(field)];
 
     LoadStringW(GetModuleHandleW(NULL), msg, name_buffer, ARRAY_SIZE(name_buffer));
     memcpy(field, name_buffer, sizeof(WCHAR) * min(lstrlenW(name_buffer), ARRAY_SIZE(field) - 1));
 
-    ipconfig_printfW(formatW, field, value);
+    ipconfig_printfW(L"    %1: %2\n", field, value);
 }
 
 static void print_value(const WCHAR *value)
 {
-    static const WCHAR formatW[] = {' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
-                                    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
-                                    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
-                                    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
-                                    '%','1','\n',0};
-
-    ipconfig_printfW(formatW, value);
+    ipconfig_printfW(L"                                        %1\n", value);
 }
 
 static BOOL socket_address_to_string(WCHAR *buf, DWORD len, SOCKET_ADDRESS *addr)
@@ -172,15 +162,12 @@ static void print_basic_information(void)
 
             for (p = adapters; p; p = p->Next)
             {
-                static const WCHAR newlineW[] = {'\n',0};
-                static const WCHAR emptyW[] = {0};
-
                 IP_ADAPTER_UNICAST_ADDRESS *addr;
                 IP_ADAPTER_GATEWAY_ADDRESS_LH *gateway;
                 WCHAR addr_buf[54];
 
                 ipconfig_message_printfW(STRING_ADAPTER_FRIENDLY, iftype_to_string(p->IfType), p->FriendlyName);
-                ipconfig_printfW(newlineW);
+                ipconfig_printfW(L"\n");
                 print_field(STRING_CONN_DNS_SUFFIX, p->DnsSuffix);
 
                 for (addr = p->FirstUnicastAddress; addr; addr = addr->Next)
@@ -206,9 +193,9 @@ static void print_basic_information(void)
                     }
                 }
                 else
-                    print_field(STRING_DEFAULT_GATEWAY, emptyW);
+                    print_field(STRING_DEFAULT_GATEWAY, L"");
 
-                ipconfig_printfW(newlineW);
+                ipconfig_printfW(L"\n");
             }
         }
 
@@ -247,9 +234,6 @@ static const WCHAR *nodetype_to_string(DWORD type)
 
 static WCHAR *physaddr_to_string(WCHAR *buf, BYTE *addr, DWORD len)
 {
-    static const WCHAR fmtW[] = {'%','0','2','X','-',0};
-    static const WCHAR fmt2W[] = {'%','0','2','X',0};
-
     if (!len)
         *buf = '\0';
     else
@@ -259,10 +243,10 @@ static WCHAR *physaddr_to_string(WCHAR *buf, BYTE *addr, DWORD len)
 
         for (i = 0; i < len - 1; i++)
         {
-            swprintf(p, 4, fmtW, addr[i]);
+            swprintf(p, 4, L"%02X-", addr[i]);
             p += 3;
         }
-        swprintf(p, 3, fmt2W, addr[i]);
+        swprintf(p, 3, L"%02X", addr[i]);
     }
 
     return buf;
@@ -280,9 +264,6 @@ static const WCHAR *boolean_to_string(int value)
 
 static void print_full_information(void)
 {
-    static const WCHAR newlineW[] = {'\n',0};
-    static const WCHAR emptyW[] = {0};
-
     FIXED_INFO *info;
     IP_ADAPTER_ADDRESSES *adapters;
     ULONG out = 0;
@@ -307,7 +288,7 @@ static void print_full_information(void)
 
             /* FIXME: Output WINS proxy status and DNS suffix search list. */
 
-            ipconfig_printfW(newlineW);
+            ipconfig_printfW(L"\n");
         }
 
         HeapFree(GetProcessHeap(), 0, info);
@@ -333,7 +314,7 @@ static void print_full_information(void)
                 WCHAR addr_buf[54];
 
                 ipconfig_message_printfW(STRING_ADAPTER_FRIENDLY, iftype_to_string(p->IfType), p->FriendlyName);
-                ipconfig_printfW(newlineW);
+                ipconfig_printfW(L"\n");
                 print_field(STRING_CONN_DNS_SUFFIX, p->DnsSuffix);
                 print_field(STRING_DESCRIPTION, p->Description);
                 print_field(STRING_PHYS_ADDR, physaddr_to_string(physaddr_buf, p->PhysicalAddress, p->PhysicalAddressLength));
@@ -364,9 +345,9 @@ static void print_full_information(void)
                     }
                 }
                 else
-                    print_field(STRING_DEFAULT_GATEWAY, emptyW);
+                    print_field(STRING_DEFAULT_GATEWAY, L"");
 
-                ipconfig_printfW(newlineW);
+                ipconfig_printfW(L"\n");
             }
         }
 
@@ -376,9 +357,6 @@ static void print_full_information(void)
 
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
-    static const WCHAR slashHelp[] = {'/','?',0};
-    static const WCHAR slashAll[] = {'/','a','l','l',0};
-
     WSADATA data;
 
     if (WSAStartup(MAKEWORD(2, 2), &data))
@@ -386,13 +364,13 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 
     if (argc > 1)
     {
-        if (!lstrcmpW(slashHelp, argv[1]))
+        if (!lstrcmpW(L"/?", argv[1]))
         {
             ipconfig_message(STRING_USAGE);
             WSACleanup();
             return 1;
         }
-        else if (!wcsicmp(slashAll, argv[1]))
+        else if (!wcsicmp(L"/all", argv[1]))
         {
             if (argv[2])
             {
