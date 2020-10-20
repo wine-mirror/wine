@@ -165,6 +165,9 @@ static void GetDDInterface_2(void)
     if(ret != DD_OK)
     {
         ok(FALSE, "IDirectDraw::CreateSurface failed with error %x\n", ret);
+        IDirectDraw2_Release(dd2);
+        IDirectDraw4_Release(dd4);
+        IDirectDraw7_Release(dd7);
         return;
     }
     ret = IDirectDrawSurface_QueryInterface(dsurface, &IID_IDirectDrawSurface2, (void **) &dsurface2);
@@ -226,6 +229,9 @@ static void GetDDInterface_4(void)
     if(ret != DD_OK)
     {
         ok(FALSE, "IDirectDraw::CreateSurface failed with error %x\n", ret);
+        IDirectDraw2_Release(dd2);
+        IDirectDraw4_Release(dd4);
+        IDirectDraw7_Release(dd7);
         return;
     }
     ret = IDirectDrawSurface4_QueryInterface(dsurface4, &IID_IDirectDrawSurface2, (void **) &dsurface2);
@@ -297,6 +303,9 @@ static void GetDDInterface_7(void)
     if(ret != DD_OK)
     {
         ok(FALSE, "IDirectDraw::CreateSurface failed with error %x\n", ret);
+        IDirectDraw2_Release(dd2);
+        IDirectDraw4_Release(dd4);
+        IDirectDraw7_Release(dd7);
         return;
     }
     ret = IDirectDrawSurface7_QueryInterface(dsurface7, &IID_IDirectDrawSurface4, (void **) &dsurface4);

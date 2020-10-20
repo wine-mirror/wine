@@ -97,6 +97,9 @@ static void test_ddraw_objects(void)
     if (!surface)
     {
         win_skip("Could not create surface : %08x\n", hr);
+        IDirectDraw_Release(DDraw1);
+        IDirectDraw2_Release(DDraw2);
+        IDirectDraw4_Release(DDraw4);
         IDirectDraw7_Release(DDraw7);
         return;
     }
