@@ -1054,14 +1054,14 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
 
     if (para_next( para ))
     {
-      if (c.pt.y != para_next( para )->pt.y)
+      if (c.pt.x != para_next( para )->pt.x || c.pt.y != para_next( para )->pt.y)
       {
         next = para;
         while (para_next( next ) && &next->marked_entry != next_entry &&
                next != &editor->pBuffer->pLast->member.para)
         {
           update_repaint( para_next( next ), &repaint );
-          para_next( next )->pt.y = c.pt.y;
+          para_next( next )->pt = c.pt;
           adjust_para_y( para_next( next ), &c, &repaint );
           next = para_next( next );
         }
