@@ -658,14 +658,10 @@ void ME_RTFParAttrHook(RTF_Info *info)
           para = para->member.para.next_para;
           para = ME_InsertTableRowStartAtParagraph(info->editor, para);
           tableDef->tableRowStart = para;
-        } else {
-          ME_Cursor cursor;
-          WCHAR endl = '\r';
-          cursor = info->editor->pCursors[0];
-          if (cursor.nOffset || cursor.pRun->member.run.nCharOfs)
-            ME_InsertTextFromCursor(info->editor, 0, &endl, 1, info->style);
-          tableDef->tableRowStart = ME_InsertTableRowStartFromCursor(info->editor);
         }
+        else
+          tableDef->tableRowStart = ME_InsertTableRowStartAtParagraph( info->editor,
+                                                                       info->editor->pCursors[0].pPara );
         info->nestingLevel = 1;
         info->canInheritInTbl = TRUE;
       }
