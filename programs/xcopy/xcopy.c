@@ -526,16 +526,11 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
 
             /* Output a status message */
             if (!skipFile) {
-                if (flags & OPT_QUIET) {
-                    /* Skip message */
-                } else if (flags & OPT_FULL) {
-                    const WCHAR infostr[]   = {'%', '1', ' ', '-', '>', ' ',
-                                               '%', '2', '\n', 0};
-
-                    XCOPY_wprintf(infostr, copyFrom, copyTo);
-                } else {
-                    const WCHAR infostr[] = {'%', '1', '\n', 0};
-                    XCOPY_wprintf(infostr, copyFrom);
+                if (!(flags & OPT_QUIET)) {
+                    if (flags & OPT_FULL)
+                        XCOPY_wprintf(L"%1 -> %2\n", copyFrom, copyTo);
+                    else
+                        XCOPY_wprintf(L"%1\n", copyFrom);
                 }
 
                 /* If allowing overwriting of read only files, remove any
