@@ -290,6 +290,13 @@ static const char manifest10[] =
 "</asmv2:trustInfo>"
 "</assembly>";
 
+/* Empty <dependency> element */
+static const char manifest11[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" xmlns:asmv2=\"urn:schemas-microsoft-com:asm.v2\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"1.0.0.0\"  name=\"Wine.Test\" type=\"win32\"></assemblyIdentity>"
+"<dependency />"
+"</assembly>";
+
 static const char testdep_manifest1[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
 "<assemblyIdentity type=\"win32\" name=\"testdep\" version=\"6.5.4.3\" processorArchitecture=\"" ARCH "\"/>"
@@ -2239,6 +2246,18 @@ static void test_actctx(void)
     }
     else
         skip("Could not create manifest file 10\n");
+
+    if (create_manifest_file("test11.manifest", manifest11, -1, NULL, NULL))
+    {
+        handle = test_create("test11.manifest");
+        ok(handle != INVALID_HANDLE_VALUE, "Failed to create activation context for %s, error %u\n",
+                "manifest11", GetLastError());
+        DeleteFileA("test11.manifest");
+        if (handle != INVALID_HANDLE_VALUE)
+            ReleaseActCtx(handle);
+    }
+    else
+        skip("Could not create manifest file 11\n");
 
     trace("manifest4\n");
 
