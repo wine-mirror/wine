@@ -386,9 +386,8 @@ static BOOL stream_out_font_and_colour_tbls( ME_OutStream *pStream, ME_Run *firs
   return TRUE;
 }
 
-static BOOL
-ME_StreamOutRTFTableProps(ME_TextEditor *editor, ME_OutStream *pStream,
-                          ME_DisplayItem *para)
+static BOOL stream_out_table_props( ME_TextEditor *editor, ME_OutStream *pStream,
+                                    ME_Paragraph *para )
 {
   ME_DisplayItem *cell;
   char props[STREAMOUT_BUFFER_SIZE] = "";
@@ -397,16 +396,18 @@ ME_StreamOutRTFTableProps(ME_TextEditor *editor, ME_OutStream *pStream,
 
   if (!ME_StreamOutPrint(pStream, "\\trowd"))
     return FALSE;
-  if (!editor->bEmulateVersion10) { /* v4.1 */
-    PARAFORMAT2 *pFmt = &table_row_end( &para->member.para )->fmt;
-    para = para_get_di( table_row_start( &para->member.para ) );
-    cell = para->member.para.next_para->member.para.pCell;
+  if (!editor->bEmulateVersion10) /* v4.1 */
+  {
+    PARAFORMAT2 *pFmt = &table_row_end( para )->fmt;
+    para = table_row_start( para );
+    cell = para->next_para->member.para.pCell;
     assert(cell);
     if (pFmt->dxOffset)
       sprintf(props + strlen(props), "\\trgaph%d", pFmt->dxOffset);
     if (pFmt->dxStartIndent)
       sprintf(props + strlen(props), "\\trleft%d", pFmt->dxStartIndent);
-    do {
+    do
+    {
       ME_Border* borders[4] = { &cell->member.cell.border.top,
                                 &cell->member.cell.border.left,
                                 &cell->member.cell.border.bottom,
@@ -427,14 +428,16 @@ ME_StreamOutRTFTableProps(ME_TextEditor *editor, ME_OutStream *pStream,
       sprintf(props + strlen(props), "\\cellx%d", cell->member.cell.nRightBoundary);
       cell = cell->member.cell.next_cell;
     } while (cell->member.cell.next_cell);
-  } else { /* v1.0 - 3.0 */
-    const ME_Border* borders[4] = { &para->member.para.border.top,
-                                    &para->member.para.border.left,
-                                    &para->member.para.border.bottom,
-                                    &para->member.para.border.right };
-    PARAFORMAT2 *pFmt = &para->member.para.fmt;
+  }
+  else /* v1.0 - 3.0 */
+  {
+    const ME_Border* borders[4] = { &para->border.top,
+                                    &para->border.left,
+                                    &para->border.bottom,
+                                    &para->border.right };
+    PARAFORMAT2 *pFmt = &para->fmt;
 
-    assert(!(para->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND|MEPF_CELL)));
+    assert( !(para->nFlags & (MEPF_ROWSTART | MEPF_ROWEND | MEPF_CELL)) );
     if (pFmt->dxOffset)
       sprintf(props + strlen(props), "\\trgaph%d", pFmt->dxOffset);
     if (pFmt->dxStartIndent)
@@ -533,54 +536,46 @@ static BOOL stream_out_para_num( ME_OutStream *stream, ME_Paragraph *para, BOOL 
     return TRUE;
 }
 
-static BOOL
-ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
-                         ME_DisplayItem *para)
+static BOOL stream_out_para_props( ME_TextEditor *editor, ME_OutStream *pStream,
+                                   ME_Paragraph *para )
 {
-  PARAFORMAT2 *fmt = &para->member.para.fmt;
+  PARAFORMAT2 *fmt = &para->fmt;
   char props[STREAMOUT_BUFFER_SIZE] = "";
   int i;
-  ME_Paragraph *prev_para = NULL;
+  ME_Paragraph *prev_para = para_prev( para );
 
-  if (para->member.para.prev_para->type == diParagraph)
-      prev_para = &para->member.para.prev_para->member.para;
-
-  if (!editor->bEmulateVersion10) { /* v4.1 */
-    if (para->member.para.nFlags & MEPF_ROWSTART) {
-      pStream->nNestingLevel++;
-      if (pStream->nNestingLevel == 1) {
-        if (!ME_StreamOutRTFTableProps(editor, pStream, para))
-          return FALSE;
-      }
-      return TRUE;
-    } else if (para->member.para.nFlags & MEPF_ROWEND) {
-      pStream->nNestingLevel--;
-      if (pStream->nNestingLevel >= 1) {
-        if (!ME_StreamOutPrint(pStream, "{\\*\\nesttableprops"))
-          return FALSE;
-        if (!ME_StreamOutRTFTableProps(editor, pStream, para))
-          return FALSE;
-        if (!ME_StreamOutPrint(pStream, "\\nestrow}{\\nonesttables\\par}\r\n"))
-          return FALSE;
-      } else {
-        if (!ME_StreamOutPrint(pStream, "\\row\r\n"))
-          return FALSE;
-      }
-      return TRUE;
-    }
-  } else { /* v1.0 - 3.0 */
-    if (para->member.para.fmt.dwMask & PFM_TABLE &&
-        para->member.para.fmt.wEffects & PFE_TABLE)
+  if (!editor->bEmulateVersion10) /* v4.1 */
+  {
+    if (para->nFlags & MEPF_ROWSTART)
     {
-      if (!ME_StreamOutRTFTableProps(editor, pStream, para))
-        return FALSE;
+      pStream->nNestingLevel++;
+      if (pStream->nNestingLevel == 1)
+         if (!stream_out_table_props( editor, pStream, para )) return FALSE;
+      return TRUE;
     }
+    else if (para->nFlags & MEPF_ROWEND)
+    {
+      pStream->nNestingLevel--;
+      if (pStream->nNestingLevel >= 1)
+      {
+        if (!ME_StreamOutPrint(pStream, "{\\*\\nesttableprops")) return FALSE;
+        if (!stream_out_table_props( editor, pStream, para )) return FALSE;
+        if (!ME_StreamOutPrint(pStream, "\\nestrow}{\\nonesttables\\par}\r\n")) return FALSE;
+      }
+      else if (!ME_StreamOutPrint(pStream, "\\row\r\n")) return FALSE;
+      return TRUE;
+    }
+  }
+  else /* v1.0 - 3.0 */
+  {
+    if (para->fmt.dwMask & PFM_TABLE && para->fmt.wEffects & PFE_TABLE)
+      if (!stream_out_table_props( editor, pStream, para )) return FALSE;
   }
 
   if (prev_para && !memcmp( fmt, &prev_para->fmt, sizeof(*fmt) ))
   {
     if (fmt->wNumbering)
-      return stream_out_para_num( pStream, &para->member.para, FALSE );
+      return stream_out_para_num( pStream, para, FALSE );
     return TRUE;
   }
 
@@ -588,14 +583,15 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
     return FALSE;
 
   if (fmt->wNumbering)
-    if (!stream_out_para_num( pStream, &para->member.para, TRUE )) return FALSE;
+    if (!stream_out_para_num( pStream, para, TRUE )) return FALSE;
 
-  if (!editor->bEmulateVersion10) { /* v4.1 */
-    if (pStream->nNestingLevel > 0)
-      strcat(props, "\\intbl");
-    if (pStream->nNestingLevel > 1)
-      sprintf(props + strlen(props), "\\itap%d", pStream->nNestingLevel);
-  } else { /* v1.0 - 3.0 */
+  if (!editor->bEmulateVersion10) /* v4.1 */
+  {
+    if (pStream->nNestingLevel > 0) strcat(props, "\\intbl");
+    if (pStream->nNestingLevel > 1) sprintf(props + strlen(props), "\\itap%d", pStream->nNestingLevel);
+  }
+  else /* v1.0 - 3.0 */
+  {
     if (fmt->dwMask & PFM_TABLE && fmt->wEffects & PFE_TABLE)
       strcat(props, "\\intbl");
   }
@@ -605,8 +601,10 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
    * set very different from the documentation.
    * (Tested with RichEdit 5.50.25.0601) */
   
-  if (fmt->dwMask & PFM_ALIGNMENT) {
-    switch (fmt->wAlignment) {
+  if (fmt->dwMask & PFM_ALIGNMENT)
+  {
+    switch (fmt->wAlignment)
+    {
       case PFA_LEFT:
         /* Default alignment: not emitted */
         break;
@@ -622,10 +620,12 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
     }
   }
   
-  if (fmt->dwMask & PFM_LINESPACING) {
+  if (fmt->dwMask & PFM_LINESPACING)
+  {
     /* FIXME: MSDN says that the bLineSpacingRule field is controlled by the
      * PFM_SPACEAFTER flag. Is that true? I don't believe so. */
-    switch (fmt->bLineSpacingRule) {
+    switch (fmt->bLineSpacingRule)
+    {
       case 0: /* Single spacing */
         strcat(props, "\\sl-240\\slmult1");
         break;
@@ -676,8 +676,10 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
     if (fmt->dwMask & PFM_TABSTOPS) {
       static const char * const leader[6] = { "", "\\tldot", "\\tlhyph", "\\tlul", "\\tlth", "\\tleq" };
 
-      for (i = 0; i < fmt->cTabCount; i++) {
-        switch ((fmt->rgxTabs[i] >> 24) & 0xF) {
+      for (i = 0; i < fmt->cTabCount; i++)
+      {
+        switch ((fmt->rgxTabs[i] >> 24) & 0xf)
+        {
           case 1:
             strcat(props, "\\tqc");
             break;
@@ -704,7 +706,8 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_OutStream *pStream,
   if (fmt->sStyle != -1)
     sprintf(props + strlen(props), "\\s%d", fmt->sStyle);
   
-  if (fmt->dwMask & PFM_SHADING) {
+  if (fmt->dwMask & PFM_SHADING)
+  {
     static const char * const style[16] = { "", "\\bgdkhoriz", "\\bgdkvert", "\\bgdkfdiag",
                                      "\\bgdkbdiag", "\\bgdkcross", "\\bgdkdcross",
                                      "\\bghoriz", "\\bgvert", "\\bgfdiag",
@@ -1025,7 +1028,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
     if (cursor.pPara != prev_para)
     {
       prev_para = cursor.pPara;
-      if (!ME_StreamOutRTFParaProps(editor, pStream, cursor.pPara))
+      if (!stream_out_para_props( editor, pStream, &cursor.pPara->member.para ))
         return FALSE;
     }
 
