@@ -301,6 +301,14 @@ struct char_width_info
     INT unk;   /* unknown */
 };
 
+/* Undocumented structure filled in by GetFontFileInfo */
+struct font_fileinfo
+{
+    FILETIME writetime;
+    LARGE_INTEGER size;
+    WCHAR path[1];
+};
+
 struct gdi_font
 {
     void   *private;  /* font backend private data */
@@ -329,6 +337,16 @@ struct font_backend_funcs
     BOOL  (CDECL *pGetTextMetrics)( struct gdi_font *font, TEXTMETRICW *metrics );
     struct gdi_font * (CDECL *pSelectFont)( struct gdi_font *prev, DC *dc, HFONT hfont,
                                             UINT *aa_flags, UINT default_aa_flags );
+    INT   (CDECL *pAddFontResourceEx)( LPCWSTR file, DWORD flags, PVOID pdv );
+    INT   (CDECL *pRemoveFontResourceEx)( LPCWSTR file, DWORD flags, PVOID pdv );
+    HANDLE (CDECL *pAddFontMemResourceEx)( void *font, DWORD size, PVOID pdv, DWORD *count );
+    BOOL  (CDECL *pCreateScalableFontResource)( DWORD hidden, LPCWSTR resource,
+                                                LPCWSTR font_file, LPCWSTR font_path );
+    BOOL  (CDECL *pGetFontFileData)( DWORD instance_id, DWORD unknown, UINT64 offset,
+                                     void *buff, DWORD buff_size );
+    BOOL  (CDECL *pGetFontFileInfo)( DWORD instance_id, DWORD unknown,
+                                     struct font_fileinfo *info, SIZE_T size, SIZE_T *needed );
+
     BOOL  (CDECL *alloc_font)( struct gdi_font *font );
     void  (CDECL *destroy_font)( struct gdi_font *font );
 };
@@ -339,11 +357,7 @@ extern void font_init(void) DECLSPEC_HIDDEN;
 
 /* freetype.c */
 
-extern INT WineEngAddFontResourceEx(LPCWSTR, DWORD, PVOID) DECLSPEC_HIDDEN;
-extern HANDLE WineEngAddFontMemResourceEx(PVOID, DWORD, PVOID, LPDWORD) DECLSPEC_HIDDEN;
-extern BOOL WineEngCreateScalableFontResource(DWORD, LPCWSTR, LPCWSTR, LPCWSTR) DECLSPEC_HIDDEN;
 extern BOOL WineEngInit( const struct font_backend_funcs **funcs ) DECLSPEC_HIDDEN;
-extern BOOL WineEngRemoveFontResourceEx(LPCWSTR, DWORD, PVOID) DECLSPEC_HIDDEN;
 
 /* gdiobj.c */
 extern HGDIOBJ alloc_gdi_handle( void *obj, WORD type, const struct gdi_obj_funcs *funcs ) DECLSPEC_HIDDEN;

@@ -3880,8 +3880,8 @@ BOOL WINAPI CreateScalableFontResourceW( DWORD hidden, LPCWSTR resource_file,
     TRACE("(%d, %s, %s, %s)\n", hidden, debugstr_w(resource_file),
           debugstr_w(font_file), debugstr_w(font_path) );
 
-    return WineEngCreateScalableFontResource( hidden, resource_file,
-                                              font_file, font_path );
+    if (!font_funcs) return FALSE;
+    return font_funcs->pCreateScalableFontResource( hidden, resource_file, font_file, font_path );
 }
 
 /*************************************************************************
@@ -4663,11 +4663,12 @@ fail:
  */
 INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
 {
-    int ret = WineEngAddFontResourceEx(str, fl, pdv);
+    int ret;
     WCHAR *filename;
     BOOL hidden;
 
-    if (ret == 0)
+    if (!font_funcs) return 1;
+    if (!(ret = font_funcs->pAddFontResourceEx( str, fl, pdv )))
     {
         /* FreeType <2.3.5 has problems reading resources wrapped in PE files. */
         HMODULE hModule = LoadLibraryExW(str, NULL, LOAD_LIBRARY_AS_DATAFILE);
@@ -4685,7 +4686,7 @@ INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
         else if ((filename = get_scalable_filename( str, &hidden )) != NULL)
         {
             if (hidden) fl |= FR_PRIVATE | FR_NOT_ENUM;
-            ret = WineEngAddFontResourceEx( filename, fl, pdv );
+            ret = font_funcs->pAddFontResourceEx( filename, fl, pdv );
             HeapFree( GetProcessHeap(), 0, filename );
         }
     }
@@ -4721,8 +4722,8 @@ HANDLE WINAPI AddFontMemResourceEx( PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD
         SetLastError(ERROR_INVALID_PARAMETER);
         return NULL;
     }
-
-    ret = WineEngAddFontMemResourceEx(pbFont, cbFont, pdv, &num_fonts);
+    if (!font_funcs) return NULL;
+    ret = font_funcs->pAddFontMemResourceEx( pbFont, cbFont, pdv, &num_fonts );
     if (ret)
     {
         __TRY
@@ -4769,11 +4770,13 @@ BOOL WINAPI RemoveFontResourceExA( LPCSTR str, DWORD fl, PVOID pdv )
  */
 BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
 {
-    int ret = WineEngRemoveFontResourceEx( str, fl, pdv );
+    int ret;
     WCHAR *filename;
     BOOL hidden;
 
-    if (ret == 0)
+    if (!font_funcs) return TRUE;
+
+    if (!(ret = font_funcs->pRemoveFontResourceEx( str, fl, pdv )))
     {
         /* FreeType <2.3.5 has problems reading resources wrapped in PE files. */
         HMODULE hModule = LoadLibraryExW(str, NULL, LOAD_LIBRARY_AS_DATAFILE);
@@ -4785,7 +4788,7 @@ BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
         else if ((filename = get_scalable_filename( str, &hidden )) != NULL)
         {
             if (hidden) fl |= FR_PRIVATE | FR_NOT_ENUM;
-            ret = WineEngRemoveFontResourceEx( filename, fl, pdv );
+            ret = font_funcs->pRemoveFontResourceEx( filename, fl, pdv );
             HeapFree( GetProcessHeap(), 0, filename );
         }
     }
@@ -4965,6 +4968,40 @@ BOOL WINAPI GetFontRealizationInfo(HDC hdc, struct font_realization_info *info)
     ret = dev->funcs->pGetFontRealizationInfo( dev, info );
     release_dc_ptr(dc);
     return ret;
+}
+
+/*************************************************************************
+ *             GetRasterizerCaps   (GDI32.@)
+ */
+BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
+{
+    lprs->nSize = sizeof(RASTERIZER_STATUS);
+    lprs->wFlags = font_funcs ? (TT_AVAILABLE | TT_ENABLED) : 0;
+    lprs->nLanguageID = 0;
+    return TRUE;
+}
+
+/*************************************************************************
+ *             GetFontFileData   (GDI32.@)
+ */
+BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD unknown, UINT64 offset, void *buff, DWORD buff_size )
+{
+    if (!font_funcs) return FALSE;
+    return font_funcs->pGetFontFileData( instance_id, unknown, offset, buff, buff_size );
+}
+
+/*************************************************************************
+ *             GetFontFileInfo   (GDI32.@)
+ */
+BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_fileinfo *info,
+                             SIZE_T size, SIZE_T *needed )
+{
+    if (!font_funcs)
+    {
+        *needed = 0;
+        return FALSE;
+    }
+    return font_funcs->pGetFontFileInfo( instance_id, unknown, info, size, needed );
 }
 
 struct realization_info

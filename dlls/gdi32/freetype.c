@@ -392,12 +392,6 @@ typedef struct {
     GdiFont *font;
 } CHILD_FONT;
 
-struct font_fileinfo {
-    FILETIME writetime;
-    LARGE_INTEGER size;
-    WCHAR path[1];
-};
-
 struct tagGdiFont {
     struct gdi_font *gdi_font;
     struct list entry;
@@ -3239,113 +3233,93 @@ static void delete_external_font_keys(void)
 }
 
 /*************************************************************
- *    WineEngAddFontResourceEx
+ * freetype_AddFontResourceEx
  *
  */
-INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
+static INT CDECL freetype_AddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 {
     WCHAR path[MAX_PATH];
     INT ret = 0;
+    DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
 
-    GDI_CheckNotLock();
+    EnterCriticalSection( &freetype_cs );
 
-    if (ft_handle)  /* do it only if we have freetype up and running */
-    {
-        DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
+    if (!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
+    if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
+        ret = add_font_resource( path, addfont_flags );
 
-        EnterCriticalSection( &freetype_cs );
-
-        if (!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
-        if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
-            ret = add_font_resource( path, addfont_flags );
-
-        if (!ret && !strchrW(file, '\\')) {
-            /* Try in %WINDIR%/fonts, needed for Fotobuch Designer */
-            get_winfonts_dir_path( file, path );
+    if (!ret && !strchrW(file, '\\')) {
+        /* Try in %WINDIR%/fonts, needed for Fotobuch Designer */
+        get_winfonts_dir_path( file, path );
+        ret = add_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
+        /* Try in datadir/fonts (or builddir/fonts), needed for Magic the Gathering Online */
+        if (!ret)
+        {
+            get_data_dir_path( file, path );
             ret = add_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
-            /* Try in datadir/fonts (or builddir/fonts), needed for Magic the Gathering Online */
-            if (!ret)
-            {
-                get_data_dir_path( file, path );
-                ret = add_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
-            }
         }
-
-        LeaveCriticalSection( &freetype_cs );
     }
+
+    LeaveCriticalSection( &freetype_cs );
     return ret;
 }
 
 /*************************************************************
- *    WineEngAddFontMemResourceEx
+ * freetype_AddFontMemResourceEx
  *
  */
-HANDLE WineEngAddFontMemResourceEx(PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD *pcFonts)
+static HANDLE CDECL freetype_AddFontMemResourceEx(PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD *pcFonts)
 {
-    GDI_CheckNotLock();
+    PVOID pFontCopy = HeapAlloc(GetProcessHeap(), 0, cbFont);
 
-    if (ft_handle)  /* do it only if we have freetype up and running */
+    TRACE("Copying %d bytes of data from %p to %p\n", cbFont, pbFont, pFontCopy);
+    memcpy(pFontCopy, pbFont, cbFont);
+
+    EnterCriticalSection( &freetype_cs );
+    *pcFonts = AddFontToList(NULL, NULL, pFontCopy, cbFont, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE);
+    LeaveCriticalSection( &freetype_cs );
+
+    if (*pcFonts == 0)
     {
-        PVOID pFontCopy = HeapAlloc(GetProcessHeap(), 0, cbFont);
-
-        TRACE("Copying %d bytes of data from %p to %p\n", cbFont, pbFont, pFontCopy);
-        memcpy(pFontCopy, pbFont, cbFont);
-
-        EnterCriticalSection( &freetype_cs );
-        *pcFonts = AddFontToList(NULL, NULL, pFontCopy, cbFont, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE);
-        LeaveCriticalSection( &freetype_cs );
-
-        if (*pcFonts == 0)
-        {
-            TRACE("AddFontToList failed\n");
-            HeapFree(GetProcessHeap(), 0, pFontCopy);
-            return 0;
-        }
-        /* FIXME: is the handle only for use in RemoveFontMemResourceEx or should it be a true handle?
-         * For now return something unique but quite random
-         */
-        TRACE("Returning handle %lx\n", ((INT_PTR)pFontCopy)^0x87654321);
-        return (HANDLE)(((INT_PTR)pFontCopy)^0x87654321);
+        TRACE("AddFontToList failed\n");
+        HeapFree(GetProcessHeap(), 0, pFontCopy);
+        return 0;
     }
-
-    *pcFonts = 0;
-    return 0;
+    /* FIXME: is the handle only for use in RemoveFontMemResourceEx or should it be a true handle?
+     * For now return something unique but quite random
+     */
+    TRACE("Returning handle %lx\n", ((INT_PTR)pFontCopy)^0x87654321);
+    return (HANDLE)(((INT_PTR)pFontCopy)^0x87654321);
 }
 
 /*************************************************************
- *    WineEngRemoveFontResourceEx
+ * freetype_RemoveFontResourceEx
  *
  */
-BOOL WineEngRemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
+static BOOL CDECL freetype_RemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 {
     WCHAR path[MAX_PATH];
     INT ret = 0;
+    DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
 
-    GDI_CheckNotLock();
+    EnterCriticalSection( &freetype_cs );
 
-    if (ft_handle)  /* do it only if we have freetype up and running */
+    if(!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
+    if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
+        ret = remove_font_resource( path, addfont_flags );
+
+    if (!ret && !strchrW(file, '\\'))
     {
-        DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
-
-        EnterCriticalSection( &freetype_cs );
-
-        if(!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
-        if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
-            ret = remove_font_resource( path, addfont_flags );
-
-        if (!ret && !strchrW(file, '\\'))
+        get_winfonts_dir_path( file, path );
+        ret = remove_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
+        if (!ret)
         {
-            get_winfonts_dir_path( file, path );
+            get_data_dir_path( file, path );
             ret = remove_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
-            if (!ret)
-            {
-                get_data_dir_path( file, path );
-                ret = remove_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
-            }
         }
-
-        LeaveCriticalSection( &freetype_cs );
     }
+
+    LeaveCriticalSection( &freetype_cs );
     return ret;
 }
 
@@ -3624,11 +3598,11 @@ static BOOL create_fot( const WCHAR *resource, const WCHAR *font_file, const str
 }
 
 /*************************************************************
- *    WineEngCreateScalableFontResource
+ * freetype_CreateScalableFontResource
  *
  */
-BOOL WineEngCreateScalableFontResource( DWORD hidden, LPCWSTR resource,
-                                        LPCWSTR font_file, LPCWSTR font_path )
+static BOOL CDECL freetype_CreateScalableFontResource( DWORD hidden, LPCWSTR resource,
+                                                       LPCWSTR font_file, LPCWSTR font_path )
 {
     WCHAR *filename = get_ttf_file_name( font_file, font_path );
     struct fontdir fontdir;
@@ -8138,17 +8112,6 @@ static BOOL CDECL freetype_FontIsLinked( struct gdi_font *font )
     return ret;
 }
 
-/*************************************************************************
- *             GetRasterizerCaps   (GDI32.@)
- */
-BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
-{
-    lprs->nSize = sizeof(RASTERIZER_STATUS);
-    lprs->wFlags = TT_AVAILABLE | TT_ENABLED;
-    lprs->nLanguageID = 0;
-    return TRUE;
-}
-
 /*************************************************************
  * freetype_GetFontRealizationInfo
  */
@@ -8178,9 +8141,10 @@ static BOOL CDECL freetype_GetFontRealizationInfo( struct gdi_font *gdi_font, st
 }
 
 /*************************************************************************
- *             GetFontFileData   (GDI32.@)
+ * freetype_GetFontFileData
  */
-BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD unknown, UINT64 offset, void *buff, DWORD buff_size )
+static BOOL CDECL freetype_GetFontFileData( DWORD instance_id, DWORD unknown, UINT64 offset,
+                                            void *buff, DWORD buff_size )
 {
     struct font_handle_entry *entry = handle_entry( instance_id );
     DWORD tag = 0, size;
@@ -8208,9 +8172,10 @@ BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD unknown, UINT64 offset, vo
 }
 
 /*************************************************************************
- *             GetFontFileInfo   (GDI32.@)
+ * freetype_GetFontFileInfo
  */
-BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_fileinfo *info, SIZE_T size, SIZE_T *needed )
+static BOOL CDECL freetype_GetFontFileInfo( DWORD instance_id, DWORD unknown,
+                                            struct font_fileinfo *info, SIZE_T size, SIZE_T *needed )
 {
     struct font_handle_entry *entry = handle_entry( instance_id );
     SIZE_T required_size;
@@ -8506,71 +8471,22 @@ static const struct font_backend_funcs font_funcs =
     freetype_GetTextFace,
     freetype_GetTextMetrics,
     freetype_SelectFont,
+    freetype_AddFontResourceEx,
+    freetype_RemoveFontResourceEx,
+    freetype_AddFontMemResourceEx,
+    freetype_CreateScalableFontResource,
+    freetype_GetFontFileData,
+    freetype_GetFontFileInfo,
     freetype_alloc_font,
     freetype_destroy_font
 };
 
 #else /* HAVE_FREETYPE */
 
-struct font_fileinfo;
-
 /*************************************************************************/
 
 BOOL WineEngInit( const struct font_backend_funcs **funcs )
 {
-    return FALSE;
-}
-
-INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
-{
-    FIXME("(%s, %x, %p): stub\n", debugstr_w(file), flags, pdv);
-    return 1;
-}
-
-INT WineEngRemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
-{
-    FIXME("(%s, %x, %p): stub\n", debugstr_w(file), flags, pdv);
-    return TRUE;
-}
-
-HANDLE WineEngAddFontMemResourceEx(PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD *pcFonts)
-{
-    FIXME("(%p, %u, %p, %p): stub\n", pbFont, cbFont, pdv, pcFonts);
-    return NULL;
-}
-
-BOOL WineEngCreateScalableFontResource( DWORD hidden, LPCWSTR resource,
-                                        LPCWSTR font_file, LPCWSTR font_path )
-{
-    FIXME("stub\n");
-    return FALSE;
-}
-
-/*************************************************************************
- *             GetRasterizerCaps   (GDI32.@)
- */
-BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
-{
-    lprs->nSize = sizeof(RASTERIZER_STATUS);
-    lprs->wFlags = 0;
-    lprs->nLanguageID = 0;
-    return TRUE;
-}
-
-/*************************************************************************
- *             GetFontFileData   (GDI32.@)
- */
-BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD unknown, UINT64 offset, void *buff, DWORD buff_size )
-{
-    return FALSE;
-}
-
-/*************************************************************************
- *             GetFontFileInfo   (GDI32.@)
- */
-BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_fileinfo *info, SIZE_T size, SIZE_T *needed)
-{
-    *needed = 0;
     return FALSE;
 }
 
