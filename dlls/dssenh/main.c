@@ -285,10 +285,12 @@ BOOL WINAPI CPAcquireContext( HCRYPTPROV *ret_prov, LPSTR container, DWORD flags
     switch (flags)
     {
     case 0:
+    case 0 | CRYPT_MACHINE_KEYSET:
         ret = read_key_container( name, flags );
         break;
 
     case CRYPT_NEWKEYSET:
+    case CRYPT_NEWKEYSET | CRYPT_MACHINE_KEYSET:
         if ((ret = read_key_container( name, flags )))
         {
             heap_free( ret );
@@ -299,10 +301,12 @@ BOOL WINAPI CPAcquireContext( HCRYPTPROV *ret_prov, LPSTR container, DWORD flags
         break;
 
     case CRYPT_VERIFYCONTEXT:
+    case CRYPT_VERIFYCONTEXT | CRYPT_MACHINE_KEYSET:
         ret = create_key_container( "", flags );
         break;
 
     case CRYPT_DELETEKEYSET:
+    case CRYPT_DELETEKEYSET | CRYPT_MACHINE_KEYSET:
         delete_key_container( name, flags );
         *ret_prov = 0;
         return TRUE;
