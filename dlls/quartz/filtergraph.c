@@ -2331,7 +2331,7 @@ static HRESULT WINAPI MediaSeeking_GetCurrentPosition(IMediaSeeking *iface, LONG
     {
         ret = graph->stream_stop;
     }
-    else if (graph->state == State_Running && graph->refClock)
+    else if (graph->state == State_Running && !graph->needs_async_run && graph->refClock)
     {
         REFERENCE_TIME time;
         IReferenceClock_GetTime(graph->refClock, &time);
