@@ -311,33 +311,32 @@ static BOOL find_color_in_colortbl( ME_OutStream *stream, COLORREF color, unsign
     return i < stream->nFontTblLen;
 }
 
-static BOOL
-ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
-                               ME_DisplayItem *pLastRun)
+static BOOL stream_out_font_and_colour_tbls( ME_OutStream *pStream, ME_Run *first, ME_Run *last )
 {
-  ME_DisplayItem *item = pFirstRun;
+  ME_Run *run = first;
   ME_FontTableItem *table = pStream->fonttbl;
   unsigned int i;
   ME_DisplayItem *pCell = NULL;
   ME_Paragraph *prev_para = NULL;
 
-  do {
-    CHARFORMAT2W *fmt = &item->member.run.style->fmt;
+  do
+  {
+    CHARFORMAT2W *fmt = &run->style->fmt;
 
-    add_font_to_fonttbl( pStream, item->member.run.style );
+    add_font_to_fonttbl( pStream, run->style );
 
     if (fmt->dwMask & CFM_COLOR && !(fmt->dwEffects & CFE_AUTOCOLOR))
       add_color_to_colortbl( pStream, fmt->crTextColor );
     if (fmt->dwMask & CFM_BACKCOLOR && !(fmt->dwEffects & CFE_AUTOBACKCOLOR))
       add_color_to_colortbl( pStream, fmt->crBackColor );
 
-    if (item->member.run.para != prev_para)
+    if (run->para != prev_para)
     {
       /* check for any para numbering text */
-      if (item->member.run.para->fmt.wNumbering)
-        add_font_to_fonttbl( pStream, item->member.run.para->para_num.style );
+      if (run->para->fmt.wNumbering)
+        add_font_to_fonttbl( pStream, run->para->para_num.style );
 
-      if ((pCell = item->member.run.para->pCell))
+      if ((pCell = run->para->pCell))
       {
         ME_Border* borders[4] = { &pCell->member.cell.border.top,
                                   &pCell->member.cell.border.left,
@@ -348,13 +347,12 @@ ME_StreamOutRTFFontAndColorTbl(ME_OutStream *pStream, ME_DisplayItem *pFirstRun,
             add_color_to_colortbl( pStream, borders[i]->colorRef );
       }
 
-      prev_para = item->member.run.para;
+      prev_para = run->para;
     }
 
-    if (item == pLastRun)
-      break;
-    item = ME_FindItemFwd(item, diRun);
-  } while (item);
+    if (run == last) break;
+    run = run_next_all_paras( run );
+  } while (run);
 
   if (!ME_StreamOutPrint(pStream, "{\\fonttbl"))
     return FALSE;
@@ -1007,7 +1005,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
   if (!ME_StreamOutRTFHeader(pStream, dwFormat))
     return FALSE;
 
-  if (!ME_StreamOutRTFFontAndColorTbl(pStream, cursor.pRun, endCur.pRun))
+  if (!stream_out_font_and_colour_tbls( pStream, &cursor.pRun->member.run, &endCur.pRun->member.run ))
     return FALSE;
 
   /* TODO: stylesheet table */
