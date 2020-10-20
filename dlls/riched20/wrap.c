@@ -1026,7 +1026,7 @@ static void adjust_para_y( ME_Paragraph *para, ME_Context *c, struct repaint_ran
 BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
 {
   ME_Paragraph *para, *next;
-  struct wine_rb_entry *entry, *next_entry;
+  struct wine_rb_entry *entry, *next_entry = NULL;
   ME_Context c;
   int totalWidth = editor->nTotalWidth, prev_width;
   struct repaint_range repaint = { NULL, NULL };
@@ -1039,7 +1039,16 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
   while (entry)
   {
     para = WINE_RB_ENTRY_VALUE( entry, ME_Paragraph, marked_entry );
-    next_entry = wine_rb_next( entry );
+
+    /* If the first entry lies inside a table, go back to the start
+       of the table to ensure cell heights are kept in sync. */
+    if (!next_entry && para_in_table( para ) && para != table_outer_para( para ))
+    {
+        para = table_outer_para( para );
+        next_entry = entry;
+    }
+    else
+        next_entry = wine_rb_next( entry );
 
     c.pt = para->pt;
     prev_width = para->nWidth;
@@ -1054,7 +1063,8 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
 
     if (para_next( para ))
     {
-      if (c.pt.x != para_next( para )->pt.x || c.pt.y != para_next( para )->pt.y)
+      if (c.pt.x != para_next( para )->pt.x || c.pt.y != para_next( para )->pt.y ||
+          para_in_table( para ))
       {
         next = para;
         while (para_next( next ) && &next->marked_entry != next_entry &&

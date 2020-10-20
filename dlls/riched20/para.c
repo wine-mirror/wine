@@ -119,6 +119,11 @@ ME_Run *para_end_run( ME_Paragraph *para )
     return para->eop_run;
 }
 
+BOOL para_in_table( ME_Paragraph *para )
+{
+    return para->fmt.wEffects & PFE_TABLE;
+}
+
 void ME_MakeFirstParagraph(ME_TextEditor *editor)
 {
   static const WCHAR cr_lf[] = {'\r','\n',0};
