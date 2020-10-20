@@ -1492,7 +1492,7 @@ static void test_viewport_object(void)
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
-        IDirectDraw_Release(ddraw);
+        IDirectDraw2_Release(ddraw);
         DestroyWindow(window);
         return;
     }
@@ -3138,7 +3138,7 @@ static void test_coop_level_mode_set(void)
 
     hr = IDirectDrawSurface_IsLost(primary);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirectDraw_RestoreDisplayMode(ddraw);
+    hr = IDirectDraw2_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
     hr = IDirectDrawSurface_IsLost(primary);
     ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
@@ -6069,7 +6069,7 @@ static void test_surface_attachment(void)
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
     memset(&surface_desc, 0, sizeof(surface_desc));
@@ -6584,7 +6584,7 @@ static void test_create_surface_pitch(void)
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
     mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ((63 * 4) + 8) * 63);
@@ -7833,7 +7833,7 @@ static void test_palette_gdi(void)
     surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
     surface_desc.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
     U1(surface_desc.ddpfPixelFormat).dwRGBBitCount = 8;
-    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
     /* Avoid colors from the Windows default palette. */
@@ -10070,7 +10070,7 @@ static void test_shademode(void)
     IDirectDrawSurface_Release(rt);
     refcount = IDirect3DDevice2_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
-    IDirectDraw_Release(ddraw);
+    IDirectDraw2_Release(ddraw);
     DestroyWindow(window);
 }
 
@@ -13914,7 +13914,7 @@ static void test_killfocus(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
-    hr = IDirectDraw_CreateSurface(killfocus_ddraw, &surface_desc, &killfocus_surface, NULL);
+    hr = IDirectDraw2_CreateSurface(killfocus_ddraw, &surface_desc, &killfocus_surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
     SetForegroundWindow(GetDesktopWindow());

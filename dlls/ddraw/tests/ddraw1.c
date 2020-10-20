@@ -2012,7 +2012,7 @@ static void test_ck_complex(void)
     {
         skip("Failed to create a 3D device, skipping test.\n");
         DestroyWindow(window);
-        IDirectDraw2_Release(ddraw);
+        IDirectDraw_Release(ddraw);
         return;
     }
     IDirect3DDevice_Release(device);
@@ -11205,7 +11205,7 @@ static void test_surface_desc_size(void)
         }
     }
 
-    refcount = IDirectDraw7_Release(ddraw);
+    refcount = IDirectDraw_Release(ddraw);
     ok(!refcount, "DirectDraw has %u references left.\n", refcount);
 }
 
@@ -11529,9 +11529,9 @@ static void test_ck_operation(void)
     U3(surface_desc.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
     U4(surface_desc.ddpfPixelFormat).dwBBitMask = 0x000000ff;
     U5(surface_desc.ddpfPixelFormat).dwRGBAlphaBitMask = 0xff000000;
-    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &dst, NULL);
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &dst, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
-    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &src, NULL);
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &src, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
     ckey.dwColorSpaceLowValue = 0x0000ff00;

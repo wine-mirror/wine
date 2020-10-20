@@ -7779,7 +7779,7 @@ static void test_surface_attachment(void)
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
     memset(&surface_desc, 0, sizeof(surface_desc));
@@ -8099,7 +8099,7 @@ static void test_private_data(void)
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
     reset_ddsd(&surface_desc);
@@ -8214,7 +8214,7 @@ static void test_private_data(void)
 
     memset(&hal_caps, 0, sizeof(hal_caps));
     hal_caps.dwSize = sizeof(hal_caps);
-    hr = IDirectDraw7_GetCaps(ddraw, &hal_caps, NULL);
+    hr = IDirectDraw4_GetCaps(ddraw, &hal_caps, NULL);
     ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
     if ((hal_caps.ddsCaps.dwCaps & (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP)) == (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP))
     {
@@ -8515,7 +8515,7 @@ static void test_create_surface_pitch(void)
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
     mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ((63 * 4) + 8) * 63);
@@ -11468,7 +11468,7 @@ static void test_texcoordindex(void)
     destroy_viewport(device, viewport);
 
     IDirectDrawSurface4_Release(rt);
-    IDirectDraw_Release(ddraw);
+    IDirectDraw4_Release(ddraw);
     refcount = IDirect3DDevice3_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     DestroyWindow(window);
@@ -16531,7 +16531,7 @@ static void test_killfocus(void)
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
-    hr = IDirectDraw7_CreateSurface(killfocus_ddraw, &surface_desc, &killfocus_surface, NULL);
+    hr = IDirectDraw4_CreateSurface(killfocus_ddraw, &surface_desc, &killfocus_surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
     SetForegroundWindow(GetDesktopWindow());

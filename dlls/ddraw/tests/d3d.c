@@ -105,7 +105,7 @@ static BOOL CreateDirect3D(void)
         return FALSE;
     }
 
-    rc = IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_NORMAL);
+    rc = IDirectDraw7_SetCooperativeLevel(lpDD, NULL, DDSCL_NORMAL);
     ok(rc==DD_OK, "SetCooperativeLevel returned: %x\n", rc);
 
     rc = IDirectDraw7_QueryInterface(lpDD, &IID_IDirect3D7, (void**) &lpD3D);
@@ -196,7 +196,7 @@ static void ReleaseDirect3D(void)
 
     if (lpDD != NULL)
     {
-        IDirectDraw_Release(lpDD);
+        IDirectDraw7_Release(lpDD);
         lpDD = NULL;
     }
 }

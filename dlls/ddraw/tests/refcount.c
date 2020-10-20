@@ -379,7 +379,7 @@ static void test_d3d_ifaces(void)
     IDirect3D_Release(D3D1);
 
     hr = IDirectDraw2_QueryInterface(DDraw2, &IID_IDirect3D2, (void **) &D3D2);
-    ok(hr == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", hr);
+    ok(hr == DD_OK, "IDirectDraw2_QueryInterface returned %08x\n", hr);
     ref = getRefcount( (IUnknown *) DDraw4);
     ok(ref == 1, "IDirectDraw4 reference count is %ld\n", ref);
     ref = getRefcount( (IUnknown *) DDraw2);
@@ -389,7 +389,7 @@ static void test_d3d_ifaces(void)
     IDirect3D2_Release(D3D2);
 
     hr = IDirectDraw4_QueryInterface(DDraw4, &IID_IDirect3D3, (void **) &D3D3);
-    ok(hr == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", hr);
+    ok(hr == DD_OK, "IDirectDraw4_QueryInterface returned %08x\n", hr);
     ref = getRefcount( (IUnknown *) DDraw4);
     ok(ref == 1, "IDirectDraw4 reference count is %ld\n", ref);
     ref = getRefcount( (IUnknown *) DDraw2);
@@ -418,7 +418,7 @@ static void test_d3d_ifaces(void)
     /* It is possible to query any IDirect3D interfaces from any IDirectDraw interface,
      * Except IDirect3D7, it can only be returned by IDirectDraw7(which can't return older ifaces)
      */
-    hr = IDirectDraw_QueryInterface(DDraw2, &IID_IDirect3D, (void **) &D3D1);
+    hr = IDirectDraw2_QueryInterface(DDraw2, &IID_IDirect3D, (void **) &D3D1);
     ok(hr == DD_OK, "IDirectDraw2_QueryInterface returned %08x\n", hr);
     IDirect3D_Release(D3D1);
     hr = IDirectDraw4_QueryInterface(DDraw4, &IID_IDirect3D, (void **) &D3D1);

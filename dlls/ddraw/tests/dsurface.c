@@ -99,11 +99,11 @@ static void GetDDInterface_1(void)
     ret = IDirectDrawSurface_QueryInterface(dsurface, &IID_IDirectDrawSurface2, (void **) &dsurface2);
     ok(ret == DD_OK, "IDirectDrawSurface_QueryInterface returned %08x\n", ret);
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw2, (void **) &dd2);
-    ok(ret == DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", ret);
+    ok(ret == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", ret);
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw4, (void **) &dd4);
-    ok(ret == DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", ret);
+    ok(ret == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", ret);
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
-    ok(ret == DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", ret);
+    ok(ret == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", ret);
 
     ref1 = getref((IUnknown *) lpDD);
     ok(ref1 == 1, "IDirectDraw refcount is %d\n", ref1);
@@ -129,9 +129,9 @@ static void GetDDInterface_1(void)
     ret = IDirectDrawSurface2_GetDDInterface(dsurface2, NULL);
     ok(ret == DDERR_INVALIDPARAMS, "IDirectDrawSurface7_GetDDInterface returned %08x\n", ret);
 
-    IDirectDraw_Release(dd2);
-    IDirectDraw_Release(dd4);
-    IDirectDraw_Release(dd7);
+    IDirectDraw2_Release(dd2);
+    IDirectDraw4_Release(dd4);
+    IDirectDraw7_Release(dd7);
     IDirectDrawSurface2_Release(dsurface2);
     IDirectDrawSurface_Release(dsurface);
 }
@@ -149,11 +149,11 @@ static void GetDDInterface_2(void)
     void *dd;
 
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw2, (void **) &dd2);
-    ok(ret == DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", ret);
+    ok(ret == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", ret);
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw4, (void **) &dd4);
-    ok(ret == DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", ret);
+    ok(ret == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", ret);
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
-    ok(ret == DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", ret);
+    ok(ret == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", ret);
 
     /* Create a surface */
     ZeroMemory(&surface, sizeof(surface));
@@ -190,9 +190,9 @@ static void GetDDInterface_2(void)
     ok(dd == dd2, "Returned interface pointer is not equal to the creation interface\n");
     IUnknown_Release((IUnknown *) dd);
 
-    IDirectDraw_Release(dd2);
-    IDirectDraw_Release(dd4);
-    IDirectDraw_Release(dd7);
+    IDirectDraw2_Release(dd2);
+    IDirectDraw4_Release(dd4);
+    IDirectDraw7_Release(dd7);
     IDirectDrawSurface2_Release(dsurface2);
     IDirectDrawSurface_Release(dsurface);
 }
@@ -210,11 +210,11 @@ static void GetDDInterface_4(void)
     void *dd;
 
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw2, (void **) &dd2);
-    ok(ret == DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", ret);
+    ok(ret == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", ret);
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw4, (void **) &dd4);
-    ok(ret == DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", ret);
+    ok(ret == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", ret);
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
-    ok(ret == DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", ret);
+    ok(ret == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", ret);
 
     /* Create a surface */
     ZeroMemory(&surface, sizeof(surface));
@@ -261,9 +261,9 @@ static void GetDDInterface_4(void)
     ok(dd == dd4, "Returned interface pointer is not equal to the creation interface\n");
     IUnknown_Release((IUnknown *) dd);
 
-    IDirectDraw_Release(dd2);
-    IDirectDraw_Release(dd4);
-    IDirectDraw_Release(dd7);
+    IDirectDraw2_Release(dd2);
+    IDirectDraw4_Release(dd4);
+    IDirectDraw7_Release(dd7);
     IDirectDrawSurface4_Release(dsurface4);
     IDirectDrawSurface2_Release(dsurface2);
 }
@@ -281,11 +281,11 @@ static void GetDDInterface_7(void)
     void *dd;
 
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw2, (void **) &dd2);
-    ok(ret == DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", ret);
+    ok(ret == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", ret);
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw4, (void **) &dd4);
-    ok(ret == DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", ret);
+    ok(ret == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", ret);
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
-    ok(ret == DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", ret);
+    ok(ret == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", ret);
 
     /* Create a surface */
     ZeroMemory(&surface, sizeof(surface));
@@ -332,9 +332,9 @@ static void GetDDInterface_7(void)
     ok(dd == dd7, "Returned interface pointer is not equal to the creation interface\n");
     IUnknown_Release((IUnknown *) dd);
 
-    IDirectDraw_Release(dd2);
-    IDirectDraw_Release(dd4);
-    IDirectDraw_Release(dd7);
+    IDirectDraw2_Release(dd2);
+    IDirectDraw4_Release(dd4);
+    IDirectDraw7_Release(dd7);
     IDirectDrawSurface4_Release(dsurface4);
     IDirectDrawSurface7_Release(dsurface7);
 }
@@ -2494,7 +2494,7 @@ START_TEST(dsurface)
         ReleaseDirectDraw();
         return;
     }
-    IDirectDraw_Release(dd4);
+    IDirectDraw4_Release(dd4);
 
     if(!can_create_primary_surface())
     {
