@@ -343,12 +343,10 @@ static HRESULT WINAPI test_create_from_url_callback_Invoke(IMFAsyncCallback *ifa
 
     object = NULL;
     hr = IMFSourceResolver_EndCreateObjectFromURL(resolver, result, &obj_type, &object);
-todo_wine
     ok(hr == S_OK, "Failed to create an object, hr %#x.\n", hr);
 
     hr = IMFAsyncResult_GetObject(result, &object2);
     ok(hr == S_OK, "Failed to get result object, hr %#x.\n", hr);
-todo_wine
     ok(object2 == object, "Unexpected object.\n");
 
     if (object)

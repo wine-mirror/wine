@@ -5750,6 +5750,8 @@ static HRESULT resolver_handler_end_create(struct source_resolver *resolver, enu
     if (!(queued_result = heap_alloc_zero(sizeof(*queued_result))))
         return E_OUTOFMEMORY;
 
+    queued_result->origin = origin;
+
     IRtwqAsyncResult_GetObject(inner_result, &handler.handler);
 
     switch (origin)
