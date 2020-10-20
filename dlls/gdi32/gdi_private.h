@@ -265,7 +265,7 @@ extern void dibdrv_set_window_surface( DC *dc, struct window_surface *surface ) 
 extern const struct gdi_dc_funcs null_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs dib_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs path_driver DECLSPEC_HIDDEN;
-extern const struct gdi_dc_funcs *font_driver DECLSPEC_HIDDEN;
+extern const struct gdi_dc_funcs font_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name ) DECLSPEC_HIDDEN;
 extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DECLSPEC_HIDDEN;
 
@@ -273,16 +273,13 @@ extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DE
 extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, DWORD filesize, BOOL on_disk ) DECLSPEC_HIDDEN;
 
 /* font.c */
+
 struct font_gamma_ramp
 {
     DWORD gamma;
     BYTE  encode[256];
     BYTE  decode[256];
 };
-
-extern void font_init(void) DECLSPEC_HIDDEN;
-
-/* freetype.c */
 
 /* Undocumented structure filled in by GetFontRealizationInfo */
 struct font_realization_info
@@ -304,10 +301,48 @@ struct char_width_info
     INT unk;   /* unknown */
 };
 
+struct gdi_font
+{
+    void   *private;  /* font backend private data */
+};
+
+struct font_backend_funcs
+{
+    BOOL  (CDECL *pEnumFonts)( LOGFONTW *lf, FONTENUMPROCW proc, LPARAM lparam );
+    BOOL  (CDECL *pFontIsLinked)( struct gdi_font *font );
+    BOOL  (CDECL *pGetCharABCWidths)( struct gdi_font *font, UINT first, UINT last, ABC *buffer );
+    BOOL  (CDECL *pGetCharABCWidthsI)( struct gdi_font *font, UINT first, UINT count, WORD *gi, ABC *buffer );
+    BOOL  (CDECL *pGetCharWidth)( struct gdi_font *font, UINT first, UINT last, INT *buffer );
+    BOOL  (CDECL *pGetCharWidthInfo)( struct gdi_font *font, struct char_width_info *info );
+    DWORD (CDECL *pGetFontData)( struct gdi_font *font, DWORD table, DWORD offset, void *buf, DWORD size );
+    BOOL  (CDECL *pGetFontRealizationInfo)( struct gdi_font *font, struct font_realization_info *info );
+    DWORD (CDECL *pGetFontUnicodeRanges)( struct gdi_font *font, GLYPHSET *glyphset );
+    DWORD (CDECL *pGetGlyphIndices)( struct gdi_font *font, const WCHAR *str, INT count, WORD *gi, DWORD flags );
+    DWORD (CDECL *pGetGlyphOutline)( struct gdi_font *font, UINT glyph, UINT format,
+                                     GLYPHMETRICS *gm, DWORD buflen, void *buf, const MAT2 *mat );
+    DWORD (CDECL *pGetKerningPairs)( struct gdi_font *font, DWORD count, KERNINGPAIR *pairs );
+    UINT  (CDECL *pGetOutlineTextMetrics)( struct gdi_font *font, UINT size, OUTLINETEXTMETRICW *metrics );
+    UINT  (CDECL *pGetTextCharsetInfo)( struct gdi_font *font, FONTSIGNATURE *fs, DWORD flags );
+    BOOL  (CDECL *pGetTextExtentExPoint)( struct gdi_font *font, LPCWSTR wstr, INT count, INT *dxs );
+    BOOL  (CDECL *pGetTextExtentExPointI)( struct gdi_font *font, const WORD *indices, INT count, INT *dxs );
+    INT   (CDECL *pGetTextFace)( struct gdi_font *font, INT count, WCHAR *str );
+    BOOL  (CDECL *pGetTextMetrics)( struct gdi_font *font, TEXTMETRICW *metrics );
+    struct gdi_font * (CDECL *pSelectFont)( struct gdi_font *prev, DC *dc, HFONT hfont,
+                                            UINT *aa_flags, UINT default_aa_flags );
+    BOOL  (CDECL *alloc_font)( struct gdi_font *font );
+    void  (CDECL *destroy_font)( struct gdi_font *font );
+};
+
+extern struct gdi_font *alloc_gdi_font(void) DECLSPEC_HIDDEN;
+extern void free_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
+extern void font_init(void) DECLSPEC_HIDDEN;
+
+/* freetype.c */
+
 extern INT WineEngAddFontResourceEx(LPCWSTR, DWORD, PVOID) DECLSPEC_HIDDEN;
 extern HANDLE WineEngAddFontMemResourceEx(PVOID, DWORD, PVOID, LPDWORD) DECLSPEC_HIDDEN;
 extern BOOL WineEngCreateScalableFontResource(DWORD, LPCWSTR, LPCWSTR, LPCWSTR) DECLSPEC_HIDDEN;
-extern BOOL WineEngInit(void) DECLSPEC_HIDDEN;
+extern BOOL WineEngInit( const struct font_backend_funcs **funcs ) DECLSPEC_HIDDEN;
 extern BOOL WineEngRemoveFontResourceEx(LPCWSTR, DWORD, PVOID) DECLSPEC_HIDDEN;
 
 /* gdiobj.c */

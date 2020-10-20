@@ -44,6 +44,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 
 static HKEY wine_fonts_key;
 
+struct font_physdev
+{
+    struct gdi_physdev dev;
+    struct gdi_font   *font;
+};
+
+static inline struct font_physdev *get_font_dev( PHYSDEV dev )
+{
+    return (struct font_physdev *)dev;
+}
+
+static const struct font_backend_funcs *font_funcs;
+
   /* Device -> World size conversion */
 
 /* Performs a device to world transformation on the specified width (which
@@ -99,7 +112,7 @@ static INT FONT_GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer );
 static INT FONT_GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL FONT_DeleteObject( HGDIOBJ handle );
 
-static const struct gdi_obj_funcs font_funcs =
+static const struct gdi_obj_funcs fontobj_funcs =
 {
     FONT_SelectObject,  /* pSelectObject */
     FONT_GetObjectA,    /* pGetObjectA */
@@ -316,6 +329,24 @@ static inline BOOL is_dbcs_ansi_cp(UINT ansi_cp)
             || ansi_cp == 936     /* CP936 for Chinese Simplified */
             || ansi_cp == 949     /* CP949 for Korean */
             || ansi_cp == 950 );  /* CP950 for Chinese Traditional */
+}
+
+struct gdi_font *alloc_gdi_font(void)
+{
+    struct gdi_font *font = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*font) );
+
+    if (font_funcs && !font_funcs->alloc_font( font ))
+    {
+        free_gdi_font( font );
+        return NULL;
+    }
+    return font;
+}
+
+void free_gdi_font( struct gdi_font *font )
+{
+    if (font->private) font_funcs->destroy_font( font );
+    HeapFree( GetProcessHeap(), 0, font );
 }
 
 static void add_font_list(HKEY hkey, const struct nls_update_font_list *fl, int dpi)
@@ -560,6 +591,472 @@ static void update_codepage(void)
     }
 }
 
+
+/*************************************************************
+ * font_CreateDC
+ */
+static BOOL CDECL font_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
+                                 LPCWSTR output, const DEVMODEW *devmode )
+{
+    struct font_physdev *physdev;
+
+    if (!font_funcs) return TRUE;
+    if (!(physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) ))) return FALSE;
+    push_dc_driver( dev, &physdev->dev, &font_driver );
+    return TRUE;
+}
+
+
+/*************************************************************
+ * font_DeleteDC
+ */
+static BOOL CDECL font_DeleteDC( PHYSDEV dev )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    font_funcs->pSelectFont( physdev->font, NULL, 0, NULL, 0 );
+    HeapFree( GetProcessHeap(), 0, physdev );
+    return TRUE;
+}
+
+
+/*************************************************************
+ * font_EnumFonts
+ */
+static BOOL CDECL font_EnumFonts( PHYSDEV dev, LOGFONTW *lf, FONTENUMPROCW proc, LPARAM lparam )
+{
+    return font_funcs->pEnumFonts( lf, proc, lparam );
+}
+
+
+/*************************************************************
+ * font_FontIsLinked
+ */
+static BOOL CDECL font_FontIsLinked( PHYSDEV dev )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pFontIsLinked );
+        return dev->funcs->pFontIsLinked( dev );
+    }
+    return font_funcs->pFontIsLinked( physdev->font );
+}
+
+
+/*************************************************************
+ * font_GetCharABCWidths
+ */
+static BOOL CDECL font_GetCharABCWidths( PHYSDEV dev, UINT first, UINT last, ABC *buffer )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetCharABCWidths );
+        return dev->funcs->pGetCharABCWidths( dev, first, last, buffer );
+    }
+    return font_funcs->pGetCharABCWidths( physdev->font, first, last, buffer );
+}
+
+
+/*************************************************************
+ * font_GetCharABCWidthsI
+ */
+static BOOL CDECL font_GetCharABCWidthsI( PHYSDEV dev, UINT first, UINT count, WORD *gi, ABC *buffer )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetCharABCWidthsI );
+        return dev->funcs->pGetCharABCWidthsI( dev, first, count, gi, buffer );
+    }
+    return font_funcs->pGetCharABCWidthsI( physdev->font, first, count, gi, buffer );
+}
+
+
+/*************************************************************
+ * font_GetCharWidth
+ */
+static BOOL CDECL font_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *buffer )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetCharWidth );
+        return dev->funcs->pGetCharWidth( dev, first, last, buffer );
+    }
+    return font_funcs->pGetCharWidth( physdev->font, first, last, buffer );
+}
+
+
+/*************************************************************
+ * font_GetCharWidthInfo
+ */
+static BOOL CDECL font_GetCharWidthInfo( PHYSDEV dev, void *ptr )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetCharWidthInfo );
+        return dev->funcs->pGetCharWidthInfo( dev, ptr );
+    }
+    return font_funcs->pGetCharWidthInfo( physdev->font, ptr );
+}
+
+
+/*************************************************************
+ * font_GetFontData
+ */
+static DWORD CDECL font_GetFontData( PHYSDEV dev, DWORD table, DWORD offset, void *buf, DWORD size )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetFontData );
+        return dev->funcs->pGetFontData( dev, table, offset, buf, size );
+    }
+    return font_funcs->pGetFontData( physdev->font, table, offset, buf, size );
+}
+
+
+/*************************************************************
+ * font_GetFontRealizationInfo
+ */
+static BOOL CDECL font_GetFontRealizationInfo( PHYSDEV dev, void *ptr )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetFontRealizationInfo );
+        return dev->funcs->pGetFontRealizationInfo( dev, ptr );
+    }
+    return font_funcs->pGetFontRealizationInfo( physdev->font, ptr );
+}
+
+
+/*************************************************************
+ * font_GetFontUnicodeRanges
+ */
+static DWORD CDECL font_GetFontUnicodeRanges( PHYSDEV dev, GLYPHSET *glyphset )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetFontUnicodeRanges );
+        return dev->funcs->pGetFontUnicodeRanges( dev, glyphset );
+    }
+    return font_funcs->pGetFontUnicodeRanges( physdev->font, glyphset );
+}
+
+
+/*************************************************************
+ * font_GetGlyphIndices
+ */
+static DWORD CDECL font_GetGlyphIndices( PHYSDEV dev, const WCHAR *str, INT count, WORD *gi, DWORD flags )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetGlyphIndices );
+        return dev->funcs->pGetGlyphIndices( dev, str, count, gi, flags );
+    }
+    return font_funcs->pGetGlyphIndices( physdev->font, str, count, gi, flags );
+}
+
+
+/*************************************************************
+ * font_GetGlyphOutline
+ */
+static DWORD CDECL font_GetGlyphOutline( PHYSDEV dev, UINT glyph, UINT format,
+                                         GLYPHMETRICS *gm, DWORD buflen, void *buf, const MAT2 *mat )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetGlyphOutline );
+        return dev->funcs->pGetGlyphOutline( dev, glyph, format, gm, buflen, buf, mat );
+    }
+    return font_funcs->pGetGlyphOutline( physdev->font, glyph, format, gm, buflen, buf, mat );
+}
+
+
+/*************************************************************
+ * font_GetKerningPairs
+ */
+static DWORD CDECL font_GetKerningPairs( PHYSDEV dev, DWORD count, KERNINGPAIR *pairs )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetKerningPairs );
+        return dev->funcs->pGetKerningPairs( dev, count, pairs );
+    }
+    return font_funcs->pGetKerningPairs( physdev->font, count, pairs );
+}
+
+
+/*************************************************************
+ * font_GetOutlineTextMetrics
+ */
+static UINT CDECL font_GetOutlineTextMetrics( PHYSDEV dev, UINT size, OUTLINETEXTMETRICW *metrics )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetOutlineTextMetrics );
+        return dev->funcs->pGetOutlineTextMetrics( dev, size, metrics );
+    }
+    return font_funcs->pGetOutlineTextMetrics( physdev->font, size, metrics );
+}
+
+
+/*************************************************************
+ * font_GetTextCharsetInfo
+ */
+static UINT CDECL font_GetTextCharsetInfo( PHYSDEV dev, FONTSIGNATURE *fs, DWORD flags )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetTextCharsetInfo );
+        return dev->funcs->pGetTextCharsetInfo( dev, fs, flags );
+    }
+    return font_funcs->pGetTextCharsetInfo( physdev->font, fs, flags );
+}
+
+
+/*************************************************************
+ * font_GetTextExtentExPoint
+ */
+static BOOL CDECL font_GetTextExtentExPoint( PHYSDEV dev, const WCHAR *str, INT count, INT *dxs )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetTextExtentExPoint );
+        return dev->funcs->pGetTextExtentExPoint( dev, str, count, dxs );
+    }
+    return font_funcs->pGetTextExtentExPoint( physdev->font, str, count, dxs );
+}
+
+
+/*************************************************************
+ * font_GetTextExtentExPointI
+ */
+static BOOL CDECL font_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, INT count, INT *dxs )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetTextExtentExPointI );
+        return dev->funcs->pGetTextExtentExPointI( dev, indices, count, dxs );
+    }
+    return font_funcs->pGetTextExtentExPointI( physdev->font, indices, count, dxs );
+}
+
+
+/*************************************************************
+ * font_GetTextFace
+ */
+static INT CDECL font_GetTextFace( PHYSDEV dev, INT count, WCHAR *str )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetTextFace );
+        return dev->funcs->pGetTextFace( dev, count, str );
+    }
+    return font_funcs->pGetTextFace( physdev->font, count, str );
+}
+
+
+/*************************************************************
+ * font_GetTextMetrics
+ */
+static BOOL CDECL font_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )
+{
+    struct font_physdev *physdev = get_font_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetTextMetrics );
+        return dev->funcs->pGetTextMetrics( dev, metrics );
+    }
+    return font_funcs->pGetTextMetrics( physdev->font, metrics );
+}
+
+
+/*************************************************************
+ * font_SelectFont
+ */
+static HFONT CDECL font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
+{
+    UINT default_aa_flags = *aa_flags;
+    struct font_physdev *physdev = get_font_dev( dev );
+    DC *dc = get_physdev_dc( dev );
+
+    if (!default_aa_flags)
+    {
+        PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectFont );
+        next->funcs->pSelectFont( next, hfont, &default_aa_flags );
+    }
+    physdev->font = font_funcs->pSelectFont( physdev->font, dc, hfont, aa_flags, default_aa_flags );
+    return physdev->font ? hfont : 0;
+}
+
+
+const struct gdi_dc_funcs font_driver =
+{
+    NULL,                           /* pAbortDoc */
+    NULL,                           /* pAbortPath */
+    NULL,                           /* pAlphaBlend */
+    NULL,                           /* pAngleArc */
+    NULL,                           /* pArc */
+    NULL,                           /* pArcTo */
+    NULL,                           /* pBeginPath */
+    NULL,                           /* pBlendImage */
+    NULL,                           /* pChord */
+    NULL,                           /* pCloseFigure */
+    NULL,                           /* pCreateCompatibleDC */
+    font_CreateDC,                  /* pCreateDC */
+    font_DeleteDC,                  /* pDeleteDC */
+    NULL,                           /* pDeleteObject */
+    NULL,                           /* pDeviceCapabilities */
+    NULL,                           /* pEllipse */
+    NULL,                           /* pEndDoc */
+    NULL,                           /* pEndPage */
+    NULL,                           /* pEndPath */
+    font_EnumFonts,                 /* pEnumFonts */
+    NULL,                           /* pEnumICMProfiles */
+    NULL,                           /* pExcludeClipRect */
+    NULL,                           /* pExtDeviceMode */
+    NULL,                           /* pExtEscape */
+    NULL,                           /* pExtFloodFill */
+    NULL,                           /* pExtSelectClipRgn */
+    NULL,                           /* pExtTextOut */
+    NULL,                           /* pFillPath */
+    NULL,                           /* pFillRgn */
+    NULL,                           /* pFlattenPath */
+    font_FontIsLinked,              /* pFontIsLinked */
+    NULL,                           /* pFrameRgn */
+    NULL,                           /* pGdiComment */
+    NULL,                           /* pGetBoundsRect */
+    font_GetCharABCWidths,          /* pGetCharABCWidths */
+    font_GetCharABCWidthsI,         /* pGetCharABCWidthsI */
+    font_GetCharWidth,              /* pGetCharWidth */
+    font_GetCharWidthInfo,          /* pGetCharWidthInfo */
+    NULL,                           /* pGetDeviceCaps */
+    NULL,                           /* pGetDeviceGammaRamp */
+    font_GetFontData,               /* pGetFontData */
+    font_GetFontRealizationInfo,    /* pGetFontRealizationInfo */
+    font_GetFontUnicodeRanges,      /* pGetFontUnicodeRanges */
+    font_GetGlyphIndices,           /* pGetGlyphIndices */
+    font_GetGlyphOutline,           /* pGetGlyphOutline */
+    NULL,                           /* pGetICMProfile */
+    NULL,                           /* pGetImage */
+    font_GetKerningPairs,           /* pGetKerningPairs */
+    NULL,                           /* pGetNearestColor */
+    font_GetOutlineTextMetrics,     /* pGetOutlineTextMetrics */
+    NULL,                           /* pGetPixel */
+    NULL,                           /* pGetSystemPaletteEntries */
+    font_GetTextCharsetInfo,        /* pGetTextCharsetInfo */
+    font_GetTextExtentExPoint,      /* pGetTextExtentExPoint */
+    font_GetTextExtentExPointI,     /* pGetTextExtentExPointI */
+    font_GetTextFace,               /* pGetTextFace */
+    font_GetTextMetrics,            /* pGetTextMetrics */
+    NULL,                           /* pGradientFill */
+    NULL,                           /* pIntersectClipRect */
+    NULL,                           /* pInvertRgn */
+    NULL,                           /* pLineTo */
+    NULL,                           /* pModifyWorldTransform */
+    NULL,                           /* pMoveTo */
+    NULL,                           /* pOffsetClipRgn */
+    NULL,                           /* pOffsetViewportOrg */
+    NULL,                           /* pOffsetWindowOrg */
+    NULL,                           /* pPaintRgn */
+    NULL,                           /* pPatBlt */
+    NULL,                           /* pPie */
+    NULL,                           /* pPolyBezier */
+    NULL,                           /* pPolyBezierTo */
+    NULL,                           /* pPolyDraw */
+    NULL,                           /* pPolyPolygon */
+    NULL,                           /* pPolyPolyline */
+    NULL,                           /* pPolygon */
+    NULL,                           /* pPolyline */
+    NULL,                           /* pPolylineTo */
+    NULL,                           /* pPutImage */
+    NULL,                           /* pRealizeDefaultPalette */
+    NULL,                           /* pRealizePalette */
+    NULL,                           /* pRectangle */
+    NULL,                           /* pResetDC */
+    NULL,                           /* pRestoreDC */
+    NULL,                           /* pRoundRect */
+    NULL,                           /* pSaveDC */
+    NULL,                           /* pScaleViewportExt */
+    NULL,                           /* pScaleWindowExt */
+    NULL,                           /* pSelectBitmap */
+    NULL,                           /* pSelectBrush */
+    NULL,                           /* pSelectClipPath */
+    font_SelectFont,                /* pSelectFont */
+    NULL,                           /* pSelectPalette */
+    NULL,                           /* pSelectPen */
+    NULL,                           /* pSetArcDirection */
+    NULL,                           /* pSetBkColor */
+    NULL,                           /* pSetBkMode */
+    NULL,                           /* pSetBoundsRect */
+    NULL,                           /* pSetDCBrushColor */
+    NULL,                           /* pSetDCPenColor */
+    NULL,                           /* pSetDIBitsToDevice */
+    NULL,                           /* pSetDeviceClipping */
+    NULL,                           /* pSetDeviceGammaRamp */
+    NULL,                           /* pSetLayout */
+    NULL,                           /* pSetMapMode */
+    NULL,                           /* pSetMapperFlags */
+    NULL,                           /* pSetPixel */
+    NULL,                           /* pSetPolyFillMode */
+    NULL,                           /* pSetROP2 */
+    NULL,                           /* pSetRelAbs */
+    NULL,                           /* pSetStretchBltMode */
+    NULL,                           /* pSetTextAlign */
+    NULL,                           /* pSetTextCharacterExtra */
+    NULL,                           /* pSetTextColor */
+    NULL,                           /* pSetTextJustification */
+    NULL,                           /* pSetViewportExt */
+    NULL,                           /* pSetViewportOrg */
+    NULL,                           /* pSetWindowExt */
+    NULL,                           /* pSetWindowOrg */
+    NULL,                           /* pSetWorldTransform */
+    NULL,                           /* pStartDoc */
+    NULL,                           /* pStartPage */
+    NULL,                           /* pStretchBlt */
+    NULL,                           /* pStretchDIBits */
+    NULL,                           /* pStrokeAndFillPath */
+    NULL,                           /* pStrokePath */
+    NULL,                           /* pUnrealizePalette */
+    NULL,                           /* pWidenPath */
+    NULL,                           /* pD3DKMTCheckVidPnExclusiveOwnership */
+    NULL,                           /* pD3DKMTSetVidPnSourceOwner */
+    NULL,                           /* wine_get_wgl_driver */
+    NULL,                           /* wine_get_vulkan_driver */
+    GDI_PRIORITY_FONT_DRV           /* priority */
+};
+
 /***********************************************************************
  *              font_init
  */
@@ -570,7 +1067,7 @@ void font_init(void)
         return;
 
     update_codepage();
-    WineEngInit();
+    WineEngInit( &font_funcs );
 }
 
 
@@ -920,7 +1417,7 @@ HFONT WINAPI CreateFontIndirectExW( const ENUMLOGFONTEXDVW *penumex )
 
     fontPtr->logfont = *plf;
 
-    if (!(hFont = alloc_gdi_handle( fontPtr, OBJ_FONT, &font_funcs )))
+    if (!(hFont = alloc_gdi_handle( fontPtr, OBJ_FONT, &fontobj_funcs )))
     {
         HeapFree( GetProcessHeap(), 0, fontPtr );
         return 0;
