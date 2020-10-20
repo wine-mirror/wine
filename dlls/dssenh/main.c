@@ -433,11 +433,7 @@ static BOOL generate_key( struct container *container, ALG_ID algid, DWORD bitle
         return FALSE;
     }
 
-    if (!store_key_container_keys( container ))
-    {
-        destroy_key( key );
-        return FALSE;
-    }
+    if (!store_key_container_keys( container )) return FALSE;
 
     *ret_key = (HCRYPTKEY)key;
     return TRUE;
@@ -494,7 +490,7 @@ BOOL WINAPI CPImportKey( HCRYPTPROV hprov, const BYTE *data, DWORD len, HCRYPTKE
                          HCRYPTKEY *ret_key )
 {
     struct container *container = (struct container *)hprov;
-    struct key *key;
+    struct key *key, *exch_key, *sign_key;
     BLOBHEADER *hdr;
     DSSPUBKEY *pubkey;
     const WCHAR *type;
@@ -549,12 +545,24 @@ BOOL WINAPI CPImportKey( HCRYPTPROV hprov, const BYTE *data, DWORD len, HCRYPTKE
         {
         case AT_KEYEXCHANGE:
         case CALG_DH_SF:
-            container->exch_key = key;
+            if (!(exch_key = duplicate_key( key )))
+            {
+                destroy_key( key );
+                return FALSE;
+            }
+            destroy_key( container->exch_key );
+            container->exch_key = exch_key;
             break;
 
         case AT_SIGNATURE:
         case CALG_DSS_SIGN:
-            container->sign_key = key;
+            if (!(sign_key = duplicate_key( key )))
+            {
+                destroy_key( key );
+                return FALSE;
+            }
+            destroy_key( container->sign_key );
+            container->sign_key = sign_key;
             break;
 
         default:
@@ -563,11 +571,7 @@ BOOL WINAPI CPImportKey( HCRYPTPROV hprov, const BYTE *data, DWORD len, HCRYPTKE
             return FALSE;
         }
 
-        if (!store_key_container_keys( container ))
-        {
-            destroy_key( key );
-            return FALSE;
-        }
+        if (!store_key_container_keys( container )) return FALSE;
     }
 
     *ret_key = (HCRYPTKEY)key;
