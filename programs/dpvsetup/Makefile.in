@@ -1,0 +1,8 @@
+MODULE    = dpvsetup.exe
+
+EXTRADLLFLAGS = -mwindows -municode -mno-cygwin
+
+C_SRCS = \
+	main.c
+
+RC_SRCS = version.rc
