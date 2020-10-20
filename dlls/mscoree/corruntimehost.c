@@ -56,6 +56,16 @@ struct DomainEntry
 
 static HANDLE dll_fixup_heap; /* using a separate heap so we can have execute permission */
 
+static CRITICAL_SECTION fixup_list_cs;
+static CRITICAL_SECTION_DEBUG fixup_list_cs_debug =
+{
+    0, 0, &fixup_list_cs,
+    { &fixup_list_cs_debug.ProcessLocksList,
+      &fixup_list_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": fixup_list_cs") }
+};
+static CRITICAL_SECTION fixup_list_cs = { &fixup_list_cs_debug, -1, 0, 0, 0, 0 };
+
 static struct list dll_fixups;
 
 WCHAR **private_path = NULL;
@@ -1222,6 +1232,34 @@ static const struct vtable_fixup_thunk thunk_template = {0};
 
 #endif
 
+DWORD WINAPI GetTokenForVTableEntry(HINSTANCE hinst, BYTE **ppVTEntry)
+{
+    struct dll_fixup *fixup;
+    DWORD result = 0;
+    DWORD rva;
+    int i;
+
+    TRACE("%p,%p\n", hinst, ppVTEntry);
+
+    rva = (BYTE*)ppVTEntry - (BYTE*)hinst;
+
+    EnterCriticalSection(&fixup_list_cs);
+    LIST_FOR_EACH_ENTRY(fixup, &dll_fixups, struct dll_fixup, entry)
+    {
+        if (fixup->dll != hinst)
+            continue;
+        if (rva < fixup->fixup->rva || (rva - fixup->fixup->rva >= fixup->fixup->count * sizeof(ULONG_PTR)))
+            continue;
+        i = (rva - fixup->fixup->rva) / sizeof(ULONG_PTR);
+        result = ((ULONG_PTR*)fixup->tokens)[i];
+        break;
+    }
+    LeaveCriticalSection(&fixup_list_cs);
+
+    TRACE("<-- %x\n", result);
+    return result;
+}
+
 static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
 {
     HRESULT hr=S_OK;
@@ -1356,7 +1394,9 @@ static void FixupVTableEntry(HMODULE hmodule, VTableFixup *vtable_fixup)
         return;
     }
 
+    EnterCriticalSection(&fixup_list_cs);
     list_add_tail(&dll_fixups, &fixup->entry);
+    LeaveCriticalSection(&fixup_list_cs);
 }
 
 static void FixupVTable_Assembly(HMODULE hmodule, ASSEMBLY *assembly)

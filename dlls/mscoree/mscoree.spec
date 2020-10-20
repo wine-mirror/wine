@@ -64,7 +64,7 @@
 @ stub GetRequestedRuntimeVersionForCLSID
 @ stub GetStartupFlags
 @ stub GetTargetForVTableEntry
-@ stub GetTokenForVTableEntry
+@ stdcall GetTokenForVTableEntry(ptr ptr)
 @ stdcall GetVersionFromProcess(ptr ptr long ptr)
 @ stub GetXMLElement
 @ stub GetXMLElementAttribute
