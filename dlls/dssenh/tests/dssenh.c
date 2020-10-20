@@ -1514,6 +1514,36 @@ static void test_userkey(void)
     ok(!hprov, "got %08x\n", (DWORD)hprov);
 }
 
+static void test_duplicate_key(void)
+{
+    HCRYPTPROV hprov;
+    HCRYPTKEY hkey, hkey2;
+    DWORD len;
+    BOOL result;
+    BYTE buf[512];
+
+    result = CryptAcquireContextA(&hprov, NULL, MS_DEF_DSS_PROV_A, PROV_DSS, CRYPT_VERIFYCONTEXT);
+    ok(result, "got %08x\n", GetLastError());
+
+    result = CryptImportKey(hprov, DSS_SIGN_PrivateKey, sizeof(DSS_SIGN_PrivateKey), 0, CRYPT_EXPORTABLE, &hkey);
+    ok(result, "got %08x\n", GetLastError());
+
+    result = CryptDuplicateKey(hkey, NULL, 0, &hkey2);
+    ok(result, "got %08x\n", GetLastError());
+
+    len = sizeof(buf);
+    result = CryptExportKey(hkey2, 0, PRIVATEKEYBLOB, 0, buf, &len);
+    ok(result, "got %08x\n", GetLastError());
+    ok(len == sizeof(DSS_SIGN_PrivateKey), "got %u\n", len);
+    ok(!memcmp(buf, DSS_SIGN_PrivateKey, sizeof(DSS_SIGN_PrivateKey)), "wrong data\n");
+
+    result = CryptDestroyKey(hkey2);
+    ok(result, "got %08x\n", GetLastError());
+
+    result = CryptDestroyKey(hkey);
+    ok(result, "got %08x\n", GetLastError());
+}
+
 START_TEST(dssenh)
 {
     test_acquire_context();
@@ -1525,4 +1555,5 @@ START_TEST(dssenh)
     test_key_exchange();
     test_duplicate_hash();
     test_userkey();
+    test_duplicate_key();
 }
