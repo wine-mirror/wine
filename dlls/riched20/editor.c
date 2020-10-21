@@ -2504,7 +2504,7 @@ static BOOL handle_enter(ME_TextEditor *editor)
                 if (para->member.para.nFlags & MEPF_ROWEND)
                 {
                     /* Add a new table row after this row. */
-                    para = ME_AppendTableRow(editor, para);
+                    para = para_get_di( table_append_row( editor, &para->member.para ) );
                     para = para->member.para.next_para;
                     editor->pCursors[0].pPara = para;
                     editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
@@ -2552,7 +2552,7 @@ static BOOL handle_enter(ME_TextEditor *editor)
                         if (from == to)
                         {
                             ME_ContinueCoalescingTransaction(editor);
-                            para = ME_AppendTableRow(editor, para);
+                            para = para_get_di( table_append_row( editor, &para->member.para ) );
                             editor->pCursors[0].pPara = para;
                             editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
                             editor->pCursors[0].nOffset = 0;
@@ -2583,7 +2583,7 @@ static BOOL handle_enter(ME_TextEditor *editor)
                         else
                         {
                             editor->pCursors[1] = editor->pCursors[0];
-                            para = ME_AppendTableRow(editor, para);
+                            para = para_get_di( table_append_row( editor, &para->member.para ) );
                             editor->pCursors[0].pPara = para;
                             editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
                             editor->pCursors[0].nOffset = 0;
