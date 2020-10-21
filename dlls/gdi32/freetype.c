@@ -324,68 +324,6 @@ typedef struct {
 
 typedef struct tagGdiFont GdiFont;
 
-#define FIRST_FONT_HANDLE 1
-#define MAX_FONT_HANDLES  256
-
-struct font_handle_entry
-{
-    void *obj;
-    WORD  generation; /* generation count for reusing handle values */
-};
-
-static struct font_handle_entry font_handles[MAX_FONT_HANDLES];
-static struct font_handle_entry *next_free;
-static struct font_handle_entry *next_unused = font_handles;
-
-static inline DWORD entry_to_handle( struct font_handle_entry *entry )
-{
-    unsigned int idx = entry - font_handles + FIRST_FONT_HANDLE;
-    return idx | (entry->generation << 16);
-}
-
-static inline struct font_handle_entry *handle_entry( DWORD handle )
-{
-    unsigned int idx = LOWORD(handle) - FIRST_FONT_HANDLE;
-
-    if (idx < MAX_FONT_HANDLES)
-    {
-        if (!HIWORD( handle ) || HIWORD( handle ) == font_handles[idx].generation)
-            return &font_handles[idx];
-    }
-    if (handle) WARN( "invalid handle 0x%08x\n", handle );
-    return NULL;
-}
-
-static DWORD alloc_font_handle( void *obj )
-{
-    struct font_handle_entry *entry;
-
-    entry = next_free;
-    if (entry)
-        next_free = entry->obj;
-    else if (next_unused < font_handles + MAX_FONT_HANDLES)
-        entry = next_unused++;
-    else
-    {
-        ERR( "out of realized font handles\n" );
-        return 0;
-    }
-    entry->obj = obj;
-    if (++entry->generation == 0xffff) entry->generation = 1;
-    return entry_to_handle( entry );
-}
-
-static void free_font_handle( DWORD handle )
-{
-    struct font_handle_entry *entry;
-
-    if ((entry = handle_entry( handle )))
-    {
-        entry->obj = next_free;
-        next_free = entry;
-    }
-}
-
 typedef struct {
     struct list entry;
     Face *face;
@@ -429,7 +367,6 @@ struct tagGdiFont {
     const VOID *vert_feature;
     ULONG ttc_item_offset; /* 0 if font is not a part of TrueType collection */
     DWORD cache_num;
-    DWORD instance_id;
     struct font_fileinfo *fileinfo;
 };
 
@@ -4174,7 +4111,6 @@ static BOOL CDECL freetype_alloc_font( struct gdi_font *font )
     ret->font_desc.matrix.eM11 = ret->font_desc.matrix.eM22 = 1.0;
     ret->total_kern_pairs = (DWORD)-1;
     ret->kern_pairs = NULL;
-    ret->instance_id = alloc_font_handle(ret);
     list_init(&ret->child_fonts);
     ret->gdi_font = font;
     font->private = ret;
@@ -4200,7 +4136,6 @@ static void CDECL freetype_destroy_font( struct gdi_font *gdi_font )
     }
 
     HeapFree(GetProcessHeap(), 0, font->fileinfo);
-    free_font_handle(font->instance_id);
     if (font->ft_face) pFT_Done_Face(font->ft_face);
     if (font->mapping) unmap_font_file( font->mapping );
     HeapFree(GetProcessHeap(), 0, font->kern_pairs);
@@ -4544,7 +4479,7 @@ static void calc_hash(FONT_DESC *pfd)
     pfd->hash = hash;
 }
 
-static GdiFont *find_in_cache(HFONT hfont, const LOGFONTW *plf, const FMAT2 *pmat, BOOL can_use_bitmap)
+static GdiFont *find_in_cache(const LOGFONTW *plf, const FMAT2 *pmat, BOOL can_use_bitmap)
 {
     GdiFont *ret;
     FONT_DESC fd;
@@ -5058,7 +4993,7 @@ static struct gdi_font * CDECL freetype_SelectFont( struct gdi_font *prev, DC *d
     EnterCriticalSection( &freetype_cs );
 
     /* check the cache first */
-    if((ret = find_in_cache(hfont, &lf, &dcmat, can_use_bitmap)) != NULL) {
+    if((ret = find_in_cache(&lf, &dcmat, can_use_bitmap)) != NULL) {
         TRACE("returning cached gdiFont(%p) for hFont %p\n", ret, hfont);
         goto done;
     }
@@ -5350,7 +5285,7 @@ found_face:
         dcmat.eM11 = dcmat.eM22 = 1.0;
         /* As we changed the matrix, we need to search the cache for the font again,
          * otherwise we might explode the cache. */
-        if((cachedfont = find_in_cache(hfont, &lf, &dcmat, can_use_bitmap)) != NULL) {
+        if((cachedfont = find_in_cache(&lf, &dcmat, can_use_bitmap)) != NULL) {
             TRACE("Found cached font after non-scalable matrix rescale!\n");
             free_gdi_font( ret->gdi_font );
             ret = cachedfont;
@@ -8125,7 +8060,7 @@ static BOOL CDECL freetype_GetFontRealizationInfo( struct gdi_font *gdi_font, st
         info->flags |= 2;
 
     info->cache_num = font->cache_num;
-    info->instance_id = font->instance_id;
+    info->instance_id = gdi_font->handle;
     if (info->size == sizeof(*info))
     {
         info->unk = 0;
@@ -8143,20 +8078,12 @@ static BOOL CDECL freetype_GetFontRealizationInfo( struct gdi_font *gdi_font, st
 /*************************************************************************
  * freetype_GetFontFileData
  */
-static BOOL CDECL freetype_GetFontFileData( DWORD instance_id, DWORD unknown, UINT64 offset,
+static BOOL CDECL freetype_GetFontFileData( struct gdi_font *gdi_font, DWORD unknown, UINT64 offset,
                                             void *buff, DWORD buff_size )
 {
-    struct font_handle_entry *entry = handle_entry( instance_id );
     DWORD tag = 0, size;
-    GdiFont *font;
+    GdiFont *font = get_font_ptr( gdi_font );
 
-    if (!entry)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    font = entry->obj;
     if (font->ttc_item_offset)
         tag = MS_TTCF_TAG;
 
@@ -8174,23 +8101,11 @@ static BOOL CDECL freetype_GetFontFileData( DWORD instance_id, DWORD unknown, UI
 /*************************************************************************
  * freetype_GetFontFileInfo
  */
-static BOOL CDECL freetype_GetFontFileInfo( DWORD instance_id, DWORD unknown,
+static BOOL CDECL freetype_GetFontFileInfo( struct gdi_font *gdi_font, DWORD unknown,
                                             struct font_fileinfo *info, SIZE_T size, SIZE_T *needed )
 {
-    struct font_handle_entry *entry = handle_entry( instance_id );
-    SIZE_T required_size;
-    const GdiFont *font;
+    const GdiFont *font = get_font_ptr( gdi_font );
 
-    if (!entry)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    if (!needed)
-        needed = &required_size;
-
-    font = entry->obj;
     *needed = sizeof(*info) + strlenW(font->fileinfo->path) * sizeof(WCHAR);
     if (*needed > size)
     {

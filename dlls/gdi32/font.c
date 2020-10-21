@@ -331,10 +331,82 @@ static inline BOOL is_dbcs_ansi_cp(UINT ansi_cp)
             || ansi_cp == 950 );  /* CP950 for Chinese Traditional */
 }
 
+/* realized font objects */
+
+#define FIRST_FONT_HANDLE 1
+#define MAX_FONT_HANDLES  256
+
+struct font_handle_entry
+{
+    struct gdi_font *font;
+    WORD generation; /* generation count for reusing handle values */
+};
+
+static struct font_handle_entry font_handles[MAX_FONT_HANDLES];
+static struct font_handle_entry *next_free;
+static struct font_handle_entry *next_unused = font_handles;
+
+static struct font_handle_entry *handle_entry( DWORD handle )
+{
+    unsigned int idx = LOWORD(handle) - FIRST_FONT_HANDLE;
+
+    if (idx < MAX_FONT_HANDLES)
+    {
+        if (!HIWORD( handle ) || HIWORD( handle ) == font_handles[idx].generation)
+            return &font_handles[idx];
+    }
+    if (handle) WARN( "invalid handle 0x%08x\n", handle );
+    return NULL;
+}
+
+static struct gdi_font *get_font_from_handle( DWORD handle )
+{
+    struct font_handle_entry *entry = handle_entry( handle );
+
+    if (entry) return entry->font;
+    SetLastError( ERROR_INVALID_PARAMETER );
+    return NULL;
+}
+
+static DWORD alloc_font_handle( struct gdi_font *font )
+{
+    struct font_handle_entry *entry;
+
+    entry = next_free;
+    if (entry)
+        next_free = (struct font_handle_entry *)entry->font;
+    else if (next_unused < font_handles + MAX_FONT_HANDLES)
+        entry = next_unused++;
+    else
+    {
+        ERR( "out of realized font handles\n" );
+        return 0;
+    }
+    entry->font = font;
+    if (++entry->generation == 0xffff) entry->generation = 1;
+    return MAKELONG( entry - font_handles + FIRST_FONT_HANDLE, entry->generation );
+}
+
+static void free_font_handle( DWORD handle )
+{
+    struct font_handle_entry *entry;
+
+    if ((entry = handle_entry( handle )))
+    {
+        entry->font = (struct gdi_font *)next_free;
+        next_free = entry;
+    }
+}
+
 struct gdi_font *alloc_gdi_font(void)
 {
     struct gdi_font *font = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*font) );
 
+    if (!(font->handle = alloc_font_handle( font )))
+    {
+        HeapFree( GetProcessHeap(), 0, font );
+        return NULL;
+    }
     if (font_funcs && !font_funcs->alloc_font( font ))
     {
         free_gdi_font( font );
@@ -346,6 +418,7 @@ struct gdi_font *alloc_gdi_font(void)
 void free_gdi_font( struct gdi_font *font )
 {
     if (font->private) font_funcs->destroy_font( font );
+    free_font_handle( font->handle );
     HeapFree( GetProcessHeap(), 0, font );
 }
 
@@ -4986,8 +5059,10 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
  */
 BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD unknown, UINT64 offset, void *buff, DWORD buff_size )
 {
-    if (!font_funcs) return FALSE;
-    return font_funcs->pGetFontFileData( instance_id, unknown, offset, buff, buff_size );
+    struct gdi_font *font = get_font_from_handle( instance_id );
+
+    if (!font_funcs || !font) return FALSE;
+    return font_funcs->pGetFontFileData( font, unknown, offset, buff, buff_size );
 }
 
 /*************************************************************************
@@ -4996,12 +5071,17 @@ BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD unknown, UINT64 offset, vo
 BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_fileinfo *info,
                              SIZE_T size, SIZE_T *needed )
 {
-    if (!font_funcs)
+    SIZE_T required_size;
+    struct gdi_font *font = get_font_from_handle( instance_id );
+
+    if (!needed) needed = &required_size;
+
+    if (!font_funcs || !font)
     {
         *needed = 0;
         return FALSE;
     }
-    return font_funcs->pGetFontFileInfo( instance_id, unknown, info, size, needed );
+    return font_funcs->pGetFontFileInfo( font, unknown, info, size, needed );
 }
 
 struct realization_info

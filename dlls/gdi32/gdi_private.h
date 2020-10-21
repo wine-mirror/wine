@@ -312,6 +312,7 @@ struct font_fileinfo
 struct gdi_font
 {
     void   *private;  /* font backend private data */
+    DWORD   handle;
 };
 
 struct font_backend_funcs
@@ -342,9 +343,9 @@ struct font_backend_funcs
     HANDLE (CDECL *pAddFontMemResourceEx)( void *font, DWORD size, PVOID pdv, DWORD *count );
     BOOL  (CDECL *pCreateScalableFontResource)( DWORD hidden, LPCWSTR resource,
                                                 LPCWSTR font_file, LPCWSTR font_path );
-    BOOL  (CDECL *pGetFontFileData)( DWORD instance_id, DWORD unknown, UINT64 offset,
+    BOOL  (CDECL *pGetFontFileData)( struct gdi_font *font, DWORD unknown, UINT64 offset,
                                      void *buff, DWORD buff_size );
-    BOOL  (CDECL *pGetFontFileInfo)( DWORD instance_id, DWORD unknown,
+    BOOL  (CDECL *pGetFontFileInfo)( struct gdi_font *font, DWORD unknown,
                                      struct font_fileinfo *info, SIZE_T size, SIZE_T *needed );
 
     BOOL  (CDECL *alloc_font)( struct gdi_font *font );
