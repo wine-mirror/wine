@@ -949,6 +949,7 @@ static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, 
 {
     struct video_mixer *mixer = impl_from_IMFTransform(iface);
     HRESULT hr = S_OK;
+    unsigned int i;
 
     TRACE("%p, %u, %#lx.\n", iface, message, param);
 
@@ -961,6 +962,23 @@ static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, 
             video_mixer_release_device_manager(mixer);
             if (param)
                 hr = IUnknown_QueryInterface((IUnknown *)param, &IID_IDirect3DDeviceManager9, (void **)&mixer->device_manager);
+
+            LeaveCriticalSection(&mixer->cs);
+
+            break;
+
+        case MFT_MESSAGE_COMMAND_FLUSH:
+
+            EnterCriticalSection(&mixer->cs);
+
+            for (i = 0; i < mixer->input_count; ++i)
+            {
+                if (mixer->inputs[i].sample)
+                {
+                    IMFSample_Release(mixer->inputs[i].sample);
+                    mixer->inputs[i].sample = NULL;
+                }
+            }
 
             LeaveCriticalSection(&mixer->cs);
 
