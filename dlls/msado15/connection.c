@@ -23,6 +23,7 @@
 #include "initguid.h"
 #include "ocidl.h"
 #include "objbase.h"
+#include "msdasc.h"
 #include "olectl.h"
 #include "msado15_backcompat.h"
 
@@ -56,6 +57,7 @@ struct connection
     WCHAR                    *provider;
     ConnectModeEnum           mode;
     CursorLocationEnum        location;
+    IUnknown                 *session;
     struct connection_point   cp_connev;
 };
 
@@ -98,6 +100,7 @@ static ULONG WINAPI connection_Release( _Connection *iface )
             if (connection->cp_connev.sinks[i])
                 IUnknown_Release( connection->cp_connev.sinks[i] );
         }
+        if (connection->session) IUnknown_Release( connection->session );
         heap_free( connection->cp_connev.sinks );
         heap_free( connection->provider );
         heap_free( connection->datasource );
@@ -240,6 +243,12 @@ static HRESULT WINAPI connection_Close( _Connection *iface )
 
     if (connection->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
 
+    if (connection->session)
+    {
+        IUnknown_Release( connection->session );
+        connection->session = NULL;
+    }
+
     connection->state = adStateClosed;
     return S_OK;
 }
@@ -273,13 +282,50 @@ static HRESULT WINAPI connection_Open( _Connection *iface, BSTR connect_str, BST
                                        LONG options )
 {
     struct connection *connection = impl_from_Connection( iface );
-    FIXME( "%p, %s, %s, %p, %08x\n", iface, debugstr_w(connect_str), debugstr_w(userid),
-           password, options );
+    IDBProperties *props;
+    IDBInitialize *dbinit = NULL;
+    IDataInitialize *datainit;
+    IDBCreateSession *session = NULL;
+    HRESULT hr;
+
+    TRACE( "%p, %s, %s, %p, %08x\n", iface, debugstr_w(connect_str), debugstr_w(userid), password, options );
 
     if (connection->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
+    if (!connect_str) return E_FAIL;
 
-    connection->state = adStateOpen;
-    return S_OK;
+    if ((hr = CoCreateInstance( &CLSID_MSDAINITIALIZE, NULL, CLSCTX_INPROC_SERVER, &IID_IDataInitialize,
+                                (void **)&datainit )) != S_OK) return hr;
+    if ((hr = IDataInitialize_GetDataSource( datainit, NULL, CLSCTX_INPROC_SERVER, connect_str, &IID_IDBInitialize,
+                                             (IUnknown **)&dbinit )) != S_OK) goto done;
+    if ((hr = IDBInitialize_QueryInterface( dbinit, &IID_IDBProperties, (void **)&props )) != S_OK) goto done;
+
+    /* TODO - Update username/password if required. */
+    if ((userid && *userid) || (password && *password))
+        FIXME("Username/password parameters currently not supported\n");
+
+    if ((hr = IDBInitialize_Initialize( dbinit )) != S_OK) goto done;
+    if ((hr = IDBInitialize_QueryInterface( dbinit, &IID_IDBCreateSession, (void **)&session )) != S_OK) goto done;
+    if ((hr = IDBCreateSession_CreateSession( session, NULL, &IID_IUnknown, &connection->session )) == S_OK)
+    {
+        connection->state = adStateOpen;
+    }
+    IDBCreateSession_Release( session );
+
+done:
+    if (hr != S_OK && connection->session)
+    {
+        IUnknown_Release( connection->session );
+        connection->session = NULL;
+    }
+    if (dbinit)
+    {
+        IDBInitialize_Uninitialize( dbinit );
+        IDBInitialize_Release( dbinit );
+    }
+    IDataInitialize_Release( datainit );
+
+    TRACE("ret 0x%08x\n", hr);
+    return hr;
 }
 
 static HRESULT WINAPI connection_get_Errors( _Connection *iface, Errors **obj )
@@ -688,6 +734,7 @@ HRESULT Connection_create( void **obj )
     }
     connection->mode = adModeUnknown;
     connection->location = adUseServer;
+    connection->session = NULL;
 
     connection->cp_connev.conn = connection;
     connection->cp_connev.riid = &DIID_ConnectionEvents;

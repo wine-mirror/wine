@@ -808,12 +808,12 @@ if (0) /* Crashes on windows */
     ok(!wcscmp(str, str2), "wrong string %s\n", wine_dbgstr_w(str2));
 
     hr = _Connection_Open(connection, NULL, NULL, NULL, 0);
-    todo_wine ok(hr == E_FAIL, "Failed, hr 0x%08x\n", hr);
+    ok(hr == E_FAIL, "Failed, hr 0x%08x\n", hr);
 
     /* Open adds trailing ; if it's missing */
     str3 = SysAllocString(L"Provider=MSDASQL.1;Persist Security Info=False;Data Source=wine_test;");
     hr = _Connection_Open(connection, NULL, NULL, NULL, adConnectUnspecified);
-    todo_wine ok(hr == E_FAIL, "Failed, hr 0x%08x\n", hr);
+    ok(hr == E_FAIL, "Failed, hr 0x%08x\n", hr);
 
     str2 = NULL;
     hr = _Connection_get_ConnectionString(connection, &str2);

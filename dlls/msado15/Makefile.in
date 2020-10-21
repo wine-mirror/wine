@@ -1,5 +1,5 @@
 MODULE    = msado15.dll
-IMPORTS   = oleaut32
+IMPORTS   = oleaut32 ole32
 
 EXTRADLLFLAGS = -mno-cygwin
 
