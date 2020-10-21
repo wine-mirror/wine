@@ -115,6 +115,9 @@ static void test_device_manager(void)
     hr = IDirect3DDeviceManager9_LockDevice(manager, 0, &device2, FALSE);
     ok(hr == DXVA2_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
 
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, 0);
+    ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
+
     /* Invalid token. */
     hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token + 1);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
@@ -123,9 +126,13 @@ static void test_device_manager(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     refcount = get_refcount(device);
 
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(manager, 0);
+    ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
+
     handle1 = NULL;
     hr = IDirect3DDeviceManager9_OpenDeviceHandle(manager, &handle1);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!handle1, "Unexpected handle value.\n");
 
     refcount2 = get_refcount(device);
     ok(refcount2 == refcount, "Unexpected refcount %d.\n", refcount);
@@ -150,6 +157,9 @@ static void test_device_manager(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDeviceManager9_TestDevice(manager, handle1);
+    ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_TestDevice(manager, 0);
     ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
 
     handle = NULL;

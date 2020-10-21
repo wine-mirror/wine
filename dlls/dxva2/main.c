@@ -562,7 +562,7 @@ static HRESULT WINAPI device_manager_OpenDeviceHandle(IDirect3DDeviceManager9 *i
 
 static HRESULT device_manager_get_handle_index(struct device_manager *manager, HANDLE hdevice, size_t *idx)
 {
-    if (hdevice > ULongToHandle(manager->count))
+    if (!hdevice || hdevice > ULongToHandle(manager->count))
         return E_HANDLE;
     *idx = (ULONG_PTR)hdevice - 1;
     return S_OK;
