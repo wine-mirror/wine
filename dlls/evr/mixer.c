@@ -965,6 +965,10 @@ static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, 
             LeaveCriticalSection(&mixer->cs);
 
             break;
+
+        case MFT_MESSAGE_COMMAND_DRAIN:
+            break;
+
         default:
             WARN("Message not handled %d.\n", message);
             hr = E_NOTIMPL;

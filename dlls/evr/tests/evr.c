@@ -2171,6 +2171,9 @@ todo_wine
     hr = IMFTransform_ProcessInput(mixer, 5, sample, 0);
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFTransform_ProcessMessage(mixer, MFT_MESSAGE_COMMAND_DRAIN, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     IMFSample_Release(sample);
 
     IDirect3DSurface9_Release(surface);
