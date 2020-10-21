@@ -81,12 +81,14 @@ struct video_mixer
     unsigned int input_count;
     struct output_stream output;
 
-    COLORREF bkgnd_color;
     IDirect3DDeviceManager9 *device_manager;
+    HANDLE device_handle;
+
     IMediaEventSink *event_sink;
     IMFAttributes *attributes;
     IMFAttributes *internal_attributes;
     unsigned int mixing_flags;
+    COLORREF bkgnd_color;
     LONGLONG lower_bound;
     LONGLONG upper_bound;
     CRITICAL_SECTION cs;
@@ -266,6 +268,17 @@ static ULONG WINAPI video_mixer_inner_AddRef(IUnknown *iface)
     return refcount;
 }
 
+static void video_mixer_release_device_manager(struct video_mixer *mixer)
+{
+    if (mixer->device_manager)
+    {
+        IDirect3DDeviceManager9_CloseDeviceHandle(mixer->device_manager, mixer->device_handle);
+        IDirect3DDeviceManager9_Release(mixer->device_manager);
+    }
+    mixer->device_handle = NULL;
+    mixer->device_manager = NULL;
+}
+
 static ULONG WINAPI video_mixer_inner_Release(IUnknown *iface)
 {
     struct video_mixer *mixer = impl_from_IUnknown(iface);
@@ -282,8 +295,7 @@ static ULONG WINAPI video_mixer_inner_Release(IUnknown *iface)
                 IMFAttributes_Release(mixer->inputs[i].attributes);
         }
         video_mixer_clear_types(mixer);
-        if (mixer->device_manager)
-            IDirect3DDeviceManager9_Release(mixer->device_manager);
+        video_mixer_release_device_manager(mixer);
         if (mixer->attributes)
             IMFAttributes_Release(mixer->attributes);
         if (mixer->internal_attributes)
@@ -695,6 +707,33 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
     return count ? S_OK : hr;
 }
 
+static HRESULT video_mixer_get_processor_service(struct video_mixer *mixer, IDirectXVideoProcessorService **service)
+{
+    HRESULT hr;
+
+    if (!mixer->device_handle)
+    {
+        if (FAILED(hr = IDirect3DDeviceManager9_OpenDeviceHandle(mixer->device_manager, &mixer->device_handle)))
+            return hr;
+    }
+
+    for (;;)
+    {
+        hr = IDirect3DDeviceManager9_GetVideoService(mixer->device_manager, mixer->device_handle,
+                &IID_IDirectXVideoProcessorService, (void **)service);
+        if (hr == DXVA2_E_NEW_VIDEO_DEVICE)
+        {
+            IDirect3DDeviceManager9_CloseDeviceHandle(mixer->device_manager, mixer->device_handle);
+            mixer->device_handle = NULL;
+            if (SUCCEEDED(hr = IDirect3DDeviceManager9_OpenDeviceHandle(mixer->device_manager, &mixer->device_handle)))
+                continue;
+        }
+        break;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI video_mixer_transform_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *media_type, DWORD flags)
 {
     struct video_mixer *mixer = impl_from_IMFTransform(iface);
@@ -702,7 +741,6 @@ static HRESULT WINAPI video_mixer_transform_SetInputType(IMFTransform *iface, DW
     DXVA2_VideoDesc video_desc;
     HRESULT hr = E_NOTIMPL;
     unsigned int count;
-    HANDLE handle;
     GUID *guids;
 
     TRACE("%p, %u, %p, %#x.\n", iface, id, media_type, flags);
@@ -716,37 +754,33 @@ static HRESULT WINAPI video_mixer_transform_SetInputType(IMFTransform *iface, DW
         hr = MF_E_NOT_INITIALIZED;
     else
     {
-        if (SUCCEEDED(hr = IDirect3DDeviceManager9_OpenDeviceHandle(mixer->device_manager, &handle)))
+        if (SUCCEEDED(hr = video_mixer_get_processor_service(mixer, &service)))
         {
-            if (SUCCEEDED(hr = IDirect3DDeviceManager9_GetVideoService(mixer->device_manager, handle,
-                    &IID_IDirectXVideoProcessorService, (void **)&service)))
+            if (SUCCEEDED(hr = video_mixer_init_dxva_videodesc(media_type, &video_desc)))
             {
-                if (SUCCEEDED(hr = video_mixer_init_dxva_videodesc(media_type, &video_desc)))
+                if (!id)
                 {
-                    if (!id)
+                    if (SUCCEEDED(hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(service, &video_desc,
+                            &count, &guids)))
                     {
-                        if (SUCCEEDED(hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(service, &video_desc,
-                                &count, &guids)))
+                        if (SUCCEEDED(hr = video_mixer_collect_output_types(mixer, &video_desc, service, count,
+                                guids, flags)) && !(flags & MFT_SET_TYPE_TEST_ONLY))
                         {
-                            if (SUCCEEDED(hr = video_mixer_collect_output_types(mixer, &video_desc, service, count,
-                                    guids, flags)) && !(flags & MFT_SET_TYPE_TEST_ONLY))
-                            {
-                                if (mixer->inputs[0].media_type)
-                                    IMFMediaType_Release(mixer->inputs[0].media_type);
-                                mixer->inputs[0].media_type = media_type;
-                                IMFMediaType_AddRef(mixer->inputs[0].media_type);
-                            }
-                            CoTaskMemFree(guids);
+                            if (mixer->inputs[0].media_type)
+                                IMFMediaType_Release(mixer->inputs[0].media_type);
+                            mixer->inputs[0].media_type = media_type;
+                            IMFMediaType_AddRef(mixer->inputs[0].media_type);
                         }
-                    }
-                    else
-                    {
-                        FIXME("Unimplemented for substreams.\n");
-                        hr = E_NOTIMPL;
+                        CoTaskMemFree(guids);
                     }
                 }
+                else
+                {
+                    FIXME("Unimplemented for substreams.\n");
+                    hr = E_NOTIMPL;
+                }
             }
-            IDirect3DDeviceManager9_CloseDeviceHandle(mixer->device_manager, handle);
+            IDirectXVideoProcessorService_Release(service);
         }
     }
 
@@ -897,9 +931,7 @@ static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, 
 
             EnterCriticalSection(&mixer->cs);
 
-            if (mixer->device_manager)
-                IDirect3DDeviceManager9_Release(mixer->device_manager);
-            mixer->device_manager = NULL;
+            video_mixer_release_device_manager(mixer);
             if (param)
                 hr = IUnknown_QueryInterface((IUnknown *)param, &IID_IDirect3DDeviceManager9, (void **)&mixer->device_manager);
 
