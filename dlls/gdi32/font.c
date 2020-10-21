@@ -107,6 +107,15 @@ static inline INT INTERNAL_YWSTODS(DC *dc, INT height)
     return pt[1].y - pt[0].y;
 }
 
+static inline WCHAR *strdupW( const WCHAR *p )
+{
+    WCHAR *ret;
+    DWORD len = (strlenW(p) + 1) * sizeof(WCHAR);
+    ret = HeapAlloc(GetProcessHeap(), 0, len);
+    memcpy(ret, p, len);
+    return ret;
+}
+
 static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc );
 static INT FONT_GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer );
 static INT FONT_GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer );
@@ -422,8 +431,14 @@ void free_gdi_font( struct gdi_font *font )
 {
     if (font->private) font_funcs->destroy_font( font );
     free_font_handle( font->handle );
+    HeapFree( GetProcessHeap(), 0, font->name );
     HeapFree( GetProcessHeap(), 0, font->fileinfo );
     HeapFree( GetProcessHeap(), 0, font );
+}
+
+void set_gdi_font_name( struct gdi_font *font, const WCHAR *name )
+{
+    font->name = strdupW( name );
 }
 
 /* Undocumented structure filled in by GetFontFileInfo */
@@ -1074,13 +1089,20 @@ static BOOL CDECL font_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, 
 static INT CDECL font_GetTextFace( PHYSDEV dev, INT count, WCHAR *str )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    INT len;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetTextFace );
         return dev->funcs->pGetTextFace( dev, count, str );
     }
-    return font_funcs->pGetTextFace( physdev->font, count, str );
+    len = strlenW( physdev->font->name ) + 1;
+    if (str)
+    {
+        lstrcpynW( str, physdev->font->name, count );
+        len = min( count, len );
+    }
+    return len;
 }
 
 

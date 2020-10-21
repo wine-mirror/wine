@@ -330,7 +330,6 @@ struct tagGdiFont {
     /* the following members can be accessed without locking, they are never modified after creation */
     FT_Face ft_face;
     struct font_mapping *mapping;
-    LPWSTR name;
     int charset;
     int codepage;
     BOOL fake_italic;
@@ -4115,7 +4114,6 @@ static void CDECL freetype_destroy_font( struct gdi_font *gdi_font )
     if (font->mapping) unmap_font_file( font->mapping );
     HeapFree(GetProcessHeap(), 0, font->kern_pairs);
     HeapFree(GetProcessHeap(), 0, font->potm);
-    HeapFree(GetProcessHeap(), 0, font->name);
     for (i = 0; i < font->gmsize; i++)
         HeapFree(GetProcessHeap(),0,font->gm[i]);
     HeapFree(GetProcessHeap(), 0, font->gm);
@@ -4381,14 +4379,15 @@ static LONG load_VDMX(GdiFont *font, LONG height)
  */
 static BOOL create_child_font_list(GdiFont *font)
 {
+    struct gdi_font *gdi_font = font->gdi_font;
     BOOL ret = FALSE;
     SYSTEM_LINKS *font_link;
     CHILD_FONT *font_link_entry, *new_child;
     FontSubst *psub;
     WCHAR* font_name;
 
-    psub = get_font_subst(&font_subst_list, font->name, -1);
-    font_name = psub ? psub->to.name : font->name;
+    psub = get_font_subst(&font_subst_list, gdi_font->name, -1);
+    font_name = psub ? psub->to.name : gdi_font->name;
     font_link = find_font_link(font_name);
     if (font_link != NULL)
     {
@@ -5163,7 +5162,7 @@ found_face:
     pick_charmap( ret->ft_face, ret->charset );
 
     ret->orientation = FT_IS_SCALABLE(ret->ft_face) ? lf.lfOrientation : 0;
-    ret->name = psub ? strdupW( psub->from.name ) : strdupW( family->family_name );
+    set_gdi_font_name( gdi_font, psub ? psub->from.name : family->family_name );
     ret->underline = lf.lfUnderline ? 0xff : 0;
     ret->strikeout = lf.lfStrikeOut ? 0xff : 0;
     create_child_font_list(ret);
@@ -5338,6 +5337,7 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset_list *l
 static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEXW pelf,
 			   NEWTEXTMETRICEXW *pntm, LPDWORD ptype)
 {
+    struct gdi_font *gdi_font;
     GdiFont *font;
     LONG width, height;
 
@@ -5350,7 +5350,8 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
         return;
     }
 
-    font = get_font_ptr( alloc_gdi_font() );
+    gdi_font = alloc_gdi_font();
+    font = get_font_ptr( gdi_font );
 
     if(face->scalable) {
         height = 100;
@@ -5363,11 +5364,11 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
     
     if (!(font->ft_face = OpenFontFace(font, face, width, height)))
     {
-        free_gdi_font(font->gdi_font);
+        free_gdi_font(gdi_font);
         return;
     }
 
-    font->name = strdupW( family_name );
+    set_gdi_font_name( gdi_font, family_name );
     font->ntmFlags = face->ntmFlags;
 
     if (get_outline_text_metrics(font))
@@ -5436,7 +5437,7 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
         face->cached_enum_data->type = *ptype;
     }
 
-    free_gdi_font(font->gdi_font);
+    free_gdi_font(gdi_font);
 }
 
 static BOOL family_matches(Family *family, const WCHAR *face_name)
@@ -6783,7 +6784,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     FT_Int load_flags = get_load_flags(format);
     FT_Matrix matrices[3];
     BOOL needsTransform = FALSE;
-    BOOL tategaki = (font->name[0] == '@');
+    BOOL tategaki = (gdi_font->name[0] == '@');
     BOOL vertical_metrics;
 
     TRACE("%p, %04x, %08x, %p, %08x, %p, %p\n", font, glyph, format, lpgm,
@@ -7151,6 +7152,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
 {
     BOOL ret = FALSE;
     FT_Face ft_face = font->ft_face;
+    struct gdi_font *gdi_font = font->gdi_font;
     UINT needed, lenfam, lensty, lenface, lenfull;
     TT_OS2 *pOS2;
     TT_HoriHeader *pHori;
@@ -7168,21 +7170,21 @@ static BOOL get_outline_text_metrics(GdiFont *font)
 
     needed = sizeof(*font->potm);
 
-    lenfam = (strlenW(font->name) + 1) * sizeof(WCHAR);
-    family_nameW = strdupW(font->name);
+    lenfam = (strlenW(gdi_font->name) + 1) * sizeof(WCHAR);
+    family_nameW = strdupW(gdi_font->name);
 
     style_nameW = ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
     lensty = (strlenW(style_nameW) + 1) * sizeof(WCHAR);
 
     face_nameW = ft_face_get_full_name( ft_face, GetSystemDefaultLangID() );
-    if (font->name[0] == '@') face_nameW = get_vertical_name( face_nameW );
+    if (gdi_font->name[0] == '@') face_nameW = get_vertical_name( face_nameW );
     lenface = (strlenW(face_nameW) + 1) * sizeof(WCHAR);
 
     full_nameW = get_face_name( ft_face, TT_NAME_ID_UNIQUE_ID, GetSystemDefaultLangID() );
     if (!full_nameW)
     {
         static const WCHAR fake_nameW[] = {'f','a','k','e',' ','n','a','m','e', 0};
-        FIXME("failed to read full_nameW for font %s!\n", wine_dbgstr_w(font->name));
+        FIXME("failed to read full_nameW for font %s!\n", wine_dbgstr_w(gdi_font->name));
         full_nameW = strdupW(fake_nameW);
     }
     lenfull = (strlenW(full_nameW) + 1) * sizeof(WCHAR);
@@ -7565,7 +7567,7 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
     child->font->ntmFlags = child_face->ntmFlags;
     child->font->orientation = font->orientation;
     child->font->scale_y = font->scale_y;
-    child->font->name = strdupW( child_face->family->family_name );
+    set_gdi_font_name( child->font->gdi_font, child_face->family->family_name );
     child->font->base_font = font;
     TRACE("created child font %p for base %p\n", child->font, font);
     return TRUE;
@@ -7768,22 +7770,6 @@ static DWORD CDECL freetype_GetFontData( struct gdi_font *font, DWORD table, DWO
           font, debugstr_an((char*)&table, 4), offset, buf, cbData);
 
     return get_font_data( get_font_ptr(font), table, offset, buf, cbData );
-}
-
-/*************************************************************
- * freetype_GetTextFace
- */
-static INT CDECL freetype_GetTextFace( struct gdi_font *gdi_font, INT count, LPWSTR str )
-{
-    GdiFont *font = get_font_ptr(gdi_font);
-    INT n = strlenW(font->name) + 1;
-
-    if (str)
-    {
-        lstrcpynW(str, font->name, count);
-        n = min(count, n);
-    }
-    return n;
 }
 
 /*************************************************************
@@ -8207,7 +8193,6 @@ static const struct font_backend_funcs font_funcs =
     freetype_GetTextCharsetInfo,
     freetype_GetTextExtentExPoint,
     freetype_GetTextExtentExPointI,
-    freetype_GetTextFace,
     freetype_GetTextMetrics,
     freetype_SelectFont,
     freetype_AddFontResourceEx,

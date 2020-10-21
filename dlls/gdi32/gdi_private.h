@@ -316,6 +316,7 @@ struct gdi_font
     LOGFONTW               lf;
     FMAT2                  matrix;
     BOOL                   can_use_bitmap;
+    WCHAR                 *name;
     struct font_fileinfo  *fileinfo;
 };
 
@@ -338,7 +339,6 @@ struct font_backend_funcs
     UINT  (CDECL *pGetTextCharsetInfo)( struct gdi_font *font, FONTSIGNATURE *fs, DWORD flags );
     BOOL  (CDECL *pGetTextExtentExPoint)( struct gdi_font *font, LPCWSTR wstr, INT count, INT *dxs );
     BOOL  (CDECL *pGetTextExtentExPointI)( struct gdi_font *font, const WORD *indices, INT count, INT *dxs );
-    INT   (CDECL *pGetTextFace)( struct gdi_font *font, INT count, WCHAR *str );
     BOOL  (CDECL *pGetTextMetrics)( struct gdi_font *font, TEXTMETRICW *metrics );
     struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont, UINT *aa_flags, UINT default_aa_flags );
 
@@ -359,6 +359,7 @@ extern void free_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern void cache_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern struct gdi_font *find_cached_gdi_font( const LOGFONTW *lf, const FMAT2 *matrix,
                                               BOOL can_use_bitmap ) DECLSPEC_HIDDEN;
+extern void set_gdi_font_name( struct gdi_font *font, const WCHAR *name ) DECLSPEC_HIDDEN;
 extern void set_gdi_font_file_info( struct gdi_font *font, const WCHAR *file, SIZE_T data_size ) DECLSPEC_HIDDEN;
 extern void font_init(void) DECLSPEC_HIDDEN;
 
