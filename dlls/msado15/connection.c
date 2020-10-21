@@ -179,7 +179,7 @@ static HRESULT WINAPI connection_put_ConnectionString( _Connection *iface, BSTR 
     struct connection *connection = impl_from_Connection( iface );
     WCHAR *source = NULL;
 
-    TRACE( "%p, %s\n", connection, debugstr_w( !wcsstr( str, L"Password" ) ? L"<hidden>" : str ) );
+    TRACE( "%p, %s\n", connection, debugstr_w( str && !wcsstr( str, L"Password" ) ? L"<hidden>" : str ) );
 
     if (str && !(source = strdupW( str ))) return E_OUTOFMEMORY;
     heap_free( connection->datasource );
