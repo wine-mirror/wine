@@ -313,6 +313,9 @@ struct gdi_font
     DWORD                  handle;
     DWORD                  cache_num;
     DWORD                  hash;
+    UINT                   charset;
+    UINT                   codepage;
+    FONTSIGNATURE          fs;
     LOGFONTW               lf;
     FMAT2                  matrix;
     BOOL                   can_use_bitmap;
@@ -336,7 +339,6 @@ struct font_backend_funcs
                                      GLYPHMETRICS *gm, DWORD buflen, void *buf, const MAT2 *mat );
     DWORD (CDECL *pGetKerningPairs)( struct gdi_font *font, DWORD count, KERNINGPAIR *pairs );
     UINT  (CDECL *pGetOutlineTextMetrics)( struct gdi_font *font, UINT size, OUTLINETEXTMETRICW *metrics );
-    UINT  (CDECL *pGetTextCharsetInfo)( struct gdi_font *font, FONTSIGNATURE *fs, DWORD flags );
     BOOL  (CDECL *pGetTextExtentExPoint)( struct gdi_font *font, LPCWSTR wstr, INT count, INT *dxs );
     BOOL  (CDECL *pGetTextExtentExPointI)( struct gdi_font *font, const WORD *indices, INT count, INT *dxs );
     BOOL  (CDECL *pGetTextMetrics)( struct gdi_font *font, TEXTMETRICW *metrics );

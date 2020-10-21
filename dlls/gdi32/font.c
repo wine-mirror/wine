@@ -1047,7 +1047,8 @@ static UINT CDECL font_GetTextCharsetInfo( PHYSDEV dev, FONTSIGNATURE *fs, DWORD
         dev = GET_NEXT_PHYSDEV( dev, pGetTextCharsetInfo );
         return dev->funcs->pGetTextCharsetInfo( dev, fs, flags );
     }
-    return font_funcs->pGetTextCharsetInfo( physdev->font, fs, flags );
+    if (fs) *fs = physdev->font->fs;
+    return physdev->font->charset;
 }
 
 

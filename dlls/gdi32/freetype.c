@@ -330,8 +330,6 @@ struct tagGdiFont {
     /* the following members can be accessed without locking, they are never modified after creation */
     FT_Face ft_face;
     struct font_mapping *mapping;
-    int charset;
-    int codepage;
     BOOL fake_italic;
     BOOL fake_bold;
     BYTE underline;
@@ -344,7 +342,6 @@ struct tagGdiFont {
     DWORD ntmFlags;
     DWORD aa_flags;
     UINT ntmCellHeight, ntmAvgWidth;
-    FONTSIGNATURE fs;
     GdiFont *base_font;
     VOID *GSUB_Table;
     const VOID *vert_feature;
@@ -4032,7 +4029,7 @@ static FT_Face OpenFontFace(GdiFont *font, Face *face, LONG width, LONG height)
 }
 
 
-static int get_nearest_charset(const WCHAR *family_name, Face *face, int *cp)
+static UINT get_nearest_charset(const WCHAR *family_name, Face *face, UINT *cp)
 {
   /* Only get here if lfCharSet == DEFAULT_CHARSET or we couldn't find
      a single face with the requested charset.  The idea is to check if
@@ -4407,8 +4404,8 @@ static BOOL create_child_font_list(GdiFont *font)
      * if not SYMBOL or OEM then we also get all the fonts for Microsoft
      * Sans Serif.  This is how asian windows get default fallbacks for fonts
      */
-    if (is_dbcs_ansi_cp(GetACP()) && font->charset != SYMBOL_CHARSET &&
-        font->charset != OEM_CHARSET &&
+    if (is_dbcs_ansi_cp(GetACP()) && gdi_font->charset != SYMBOL_CHARSET &&
+        gdi_font->charset != OEM_CHARSET &&
         strcmpiW(font_name,szDefaultFallbackLink) != 0)
     {
         font_link = find_font_link(szDefaultFallbackLink);
@@ -4702,7 +4699,7 @@ static const GSUB_Feature * GSUB_get_feature(const GSUB_Header *header, const GS
     return NULL;
 }
 
-static const char* get_opentype_script(const GdiFont *font)
+static const char* get_opentype_script(const struct gdi_font *font)
 {
     /*
      * I am not sure if this is the correct way to generate our script tag
@@ -4741,7 +4738,7 @@ static const VOID * get_GSUB_vert_feature(const GdiFont *font)
 
     header = font->GSUB_Table;
 
-    script = GSUB_get_script_table(header, get_opentype_script(font));
+    script = GSUB_get_script_table(header, get_opentype_script(font->gdi_font));
     if (!script)
     {
         TRACE("Script not found\n");
@@ -5094,14 +5091,14 @@ found:
 found_face:
     height = lf.lfHeight;
 
-    ret->fs = face->fs;
+    gdi_font->fs = face->fs;
 
     if(csi.fs.fsCsb[0]) {
-        ret->charset = lf.lfCharSet;
-        ret->codepage = csi.ciACP;
+        gdi_font->charset = lf.lfCharSet;
+        gdi_font->codepage = csi.ciACP;
     }
     else
-        ret->charset = get_nearest_charset( family->family_name, face, &ret->codepage );
+        gdi_font->charset = get_nearest_charset( family->family_name, face, &gdi_font->codepage );
 
     TRACE( "Chosen: %s (%s/%p:%ld)\n", debugstr_w(face->full_name), debugstr_w(face->file),
            face->font_data_ptr, face->face_index );
@@ -5159,7 +5156,7 @@ found_face:
     set_gdi_font_file_info( gdi_font, face->file, face->font_data_size );
     ret->ntmFlags = face->ntmFlags;
 
-    pick_charmap( ret->ft_face, ret->charset );
+    pick_charmap( ret->ft_face, gdi_font->charset );
 
     ret->orientation = FT_IS_SCALABLE(ret->ft_face) ? lf.lfOrientation : 0;
     set_gdi_font_name( gdi_font, psub ? psub->from.name : family->family_name );
@@ -5728,6 +5725,7 @@ static FT_UInt get_glyph_index_symbol(const GdiFont *font, UINT glyph)
 
 static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
 {
+    struct gdi_font *gdi_font = font->gdi_font;
     FT_UInt ret;
     WCHAR wc;
     char buf;
@@ -5739,13 +5737,13 @@ static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
 
         default_used_pointer = NULL;
         default_used = FALSE;
-        if (codepage_sets_default_used(font->codepage))
+        if (codepage_sets_default_used(gdi_font->codepage))
             default_used_pointer = &default_used;
         wc = (WCHAR)glyph;
-        if (!WideCharToMultiByte(font->codepage, 0, &wc, 1, &buf, sizeof(buf), NULL, default_used_pointer) ||
+        if (!WideCharToMultiByte(gdi_font->codepage, 0, &wc, 1, &buf, sizeof(buf), NULL, default_used_pointer) ||
             default_used)
         {
-            if (font->codepage == CP_SYMBOL)
+            if (gdi_font->codepage == CP_SYMBOL)
             {
                 ret = get_glyph_index_symbol(font, glyph);
                 if (!ret)
@@ -5781,6 +5779,7 @@ static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
 /* helper for freetype_GetGlyphIndices */
 static FT_UInt get_gdi_glyph_index(const GdiFont *font, UINT glyph)
 {
+    struct gdi_font *gdi_font = font->gdi_font;
     WCHAR wc = (WCHAR)glyph;
     BOOL default_used = FALSE;
     BOOL *default_used_pointer = NULL;
@@ -5790,12 +5789,12 @@ static FT_UInt get_gdi_glyph_index(const GdiFont *font, UINT glyph)
     if(font->ft_face->charmap->encoding != FT_ENCODING_NONE)
         return get_glyph_index(font, glyph);
 
-    if (codepage_sets_default_used(font->codepage))
+    if (codepage_sets_default_used(gdi_font->codepage))
         default_used_pointer = &default_used;
-    if(!WideCharToMultiByte(font->codepage, 0, &wc, 1, &buf, sizeof(buf), NULL, default_used_pointer)
+    if(!WideCharToMultiByte(gdi_font->codepage, 0, &wc, 1, &buf, sizeof(buf), NULL, default_used_pointer)
        || default_used)
     {
-        if (font->codepage == CP_SYMBOL && wc < 0x100)
+        if (gdi_font->codepage == CP_SYMBOL && wc < 0x100)
             ret = (unsigned char)wc;
         else
             ret = 0;
@@ -6961,6 +6960,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
 static BOOL get_bitmap_text_metrics(GdiFont *font)
 {
+    struct gdi_font *gdi_font = font->gdi_font;
     FT_Face ft_face = font->ft_face;
     FT_WinFNT_HeaderRec winfnt_header;
     const DWORD size = offsetof(OUTLINETEXTMETRICW, otmFiller); 
@@ -7013,7 +7013,7 @@ static BOOL get_bitmap_text_metrics(GdiFont *font)
         TM.tmStruckOut = font->strikeout;
         /* NB inverted meaning of TMPF_FIXED_PITCH */
         TM.tmPitchAndFamily = FT_IS_FIXED_WIDTH(ft_face) ? 0 : TMPF_FIXED_PITCH;
-        TM.tmCharSet = font->charset;
+        TM.tmCharSet = gdi_font->charset;
     }
 
     if(font->fake_bold)
@@ -7398,7 +7398,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
             TM.tmPitchAndFamily |= TMPF_TRUETYPE;
     }
 
-    TM.tmCharSet = font->charset;
+    TM.tmCharSet = gdi_font->charset;
 
     font->potm->otmFiller = 0;
     memcpy(&font->potm->otmPanoseNumber, pOS2->panose, PANOSE_COUNT);
@@ -7770,16 +7770,6 @@ static DWORD CDECL freetype_GetFontData( struct gdi_font *font, DWORD table, DWO
           font, debugstr_an((char*)&table, 4), offset, buf, cbData);
 
     return get_font_data( get_font_ptr(font), table, offset, buf, cbData );
-}
-
-/*************************************************************
- * freetype_GetTextCharsetInfo
- */
-static UINT CDECL freetype_GetTextCharsetInfo( struct gdi_font *gdi_font, LPFONTSIGNATURE fs, DWORD flags )
-{
-    GdiFont *font = get_font_ptr(gdi_font);
-    if (fs) *fs = font->fs;
-    return font->charset;
 }
 
 /* Retrieve a list of supported Unicode ranges for a given font.
@@ -8190,7 +8180,6 @@ static const struct font_backend_funcs font_funcs =
     freetype_GetGlyphOutline,
     freetype_GetKerningPairs,
     freetype_GetOutlineTextMetrics,
-    freetype_GetTextCharsetInfo,
     freetype_GetTextExtentExPoint,
     freetype_GetTextExtentExPointI,
     freetype_GetTextMetrics,
