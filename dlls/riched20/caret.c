@@ -333,18 +333,18 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
     {
       /* We aren't deleting anything in this run, so we will go back to the
        * last run we are deleting text in. */
-      ME_PrevRun(&c.pPara, &c.pRun, TRUE);
+      c.pRun = run_get_di( run_prev_all_paras( &c.pRun->member.run ) );
+      c.pPara = para_get_di( c.pRun->member.run.para );
       c.nOffset = c.pRun->member.run.len;
     }
     run = &c.pRun->member.run;
-    if (run->nFlags & MERF_ENDPARA) {
+    if (run->nFlags & MERF_ENDPARA)
+    {
       int eollen = c.pRun->member.run.len;
       BOOL keepFirstParaFormat;
 
-      if (!ME_FindItemFwd(c.pRun, diParagraph))
-      {
-        return TRUE;
-      }
+      if (!para_next( para_next( &c.pPara->member.para ) )) return TRUE;
+
       keepFirstParaFormat = (totalChars == nChars && nChars <= eollen &&
                              run->nCharOfs);
       if (!editor->bEmulateVersion10) /* v4.1 */
