@@ -82,6 +82,7 @@ struct video_mixer
     struct output_stream output;
 
     IDirect3DDeviceManager9 *device_manager;
+    IDirectXVideoProcessor *processor;
     HANDLE device_handle;
 
     IMediaEventSink *event_sink;
@@ -270,6 +271,8 @@ static ULONG WINAPI video_mixer_inner_AddRef(IUnknown *iface)
 
 static void video_mixer_release_device_manager(struct video_mixer *mixer)
 {
+    if (mixer->processor)
+        IDirectXVideoProcessor_Release(mixer->processor);
     if (mixer->device_manager)
     {
         IDirect3DDeviceManager9_CloseDeviceHandle(mixer->device_manager, mixer->device_handle);
@@ -277,6 +280,7 @@ static void video_mixer_release_device_manager(struct video_mixer *mixer)
     }
     mixer->device_handle = NULL;
     mixer->device_manager = NULL;
+    mixer->processor = NULL;
 }
 
 static ULONG WINAPI video_mixer_inner_Release(IUnknown *iface)
@@ -819,10 +823,33 @@ static HRESULT WINAPI video_mixer_transform_SetOutputType(IMFTransform *iface, D
 
     if (SUCCEEDED(hr) && !(flags & MFT_SET_TYPE_TEST_ONLY))
     {
-        if (mixer->output.media_type)
-            IMFMediaType_Release(mixer->output.media_type);
-        mixer->output.media_type = type;
-        IMFMediaType_AddRef(mixer->output.media_type);
+        IDirectXVideoProcessorService *service;
+
+        if (SUCCEEDED(hr = video_mixer_get_processor_service(mixer, &service)))
+        {
+            DXVA2_VideoDesc video_desc;
+            GUID subtype = { 0 };
+            D3DFORMAT rt_format;
+
+            if (mixer->processor)
+                IDirectXVideoProcessor_Release(mixer->processor);
+            mixer->processor = NULL;
+
+            video_mixer_init_dxva_videodesc(mixer->inputs[0].media_type, &video_desc);
+            IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype);
+            rt_format = subtype.Data1;
+
+            if (SUCCEEDED(hr = IDirectXVideoProcessorService_CreateVideoProcessor(service, &mixer->output.rt_formats[i].device,
+                    &video_desc, rt_format, MAX_MIXER_INPUT_STREAMS, &mixer->processor)))
+            {
+                if (mixer->output.media_type)
+                    IMFMediaType_Release(mixer->output.media_type);
+                mixer->output.media_type = type;
+                IMFMediaType_AddRef(mixer->output.media_type);
+            }
+
+            IDirectXVideoProcessorService_Release(service);
+        }
     }
 
     LeaveCriticalSection(&mixer->cs);
