@@ -1479,11 +1479,10 @@ static HRESULT WINAPI audio_renderer_stream_type_handler_IsMediaTypeSupported(IM
     TRACE("%p, %p, %p.\n", iface, in_type, out_type);
 
     EnterCriticalSection(&renderer->cs);
-    hr = renderer->current_media_type && IMFMediaType_IsEqual(renderer->current_media_type, in_type, &flags) == S_OK ?
-            S_OK : MF_E_INVALIDMEDIATYPE;
+    hr = IMFMediaType_IsEqual(renderer->media_type, in_type, &flags);
     LeaveCriticalSection(&renderer->cs);
 
-    return hr;
+    return hr != S_OK ? MF_E_INVALIDMEDIATYPE : hr;
 }
 
 static HRESULT WINAPI audio_renderer_stream_type_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
