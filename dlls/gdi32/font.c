@@ -402,6 +402,9 @@ struct gdi_font *alloc_gdi_font(void)
 {
     struct gdi_font *font = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*font) );
 
+    font->refcount = 1;
+    font->matrix.eM11 = font->matrix.eM22 = 1.0;
+
     if (!(font->handle = alloc_font_handle( font )))
     {
         HeapFree( GetProcessHeap(), 0, font );
@@ -420,6 +423,100 @@ void free_gdi_font( struct gdi_font *font )
     if (font->private) font_funcs->destroy_font( font );
     free_font_handle( font->handle );
     HeapFree( GetProcessHeap(), 0, font );
+}
+
+/* font cache */
+
+static struct list gdi_font_list = LIST_INIT( gdi_font_list );
+static struct list unused_gdi_font_list = LIST_INIT( unused_gdi_font_list );
+static unsigned int unused_font_count;
+#define UNUSED_CACHE_SIZE 10
+
+static BOOL fontcmp( const struct gdi_font *font, DWORD hash, const LOGFONTW *lf,
+                     const FMAT2 *matrix, BOOL can_use_bitmap )
+{
+    if (font->hash != hash) return TRUE;
+    if (memcmp( &font->matrix, matrix, sizeof(*matrix))) return TRUE;
+    if (memcmp( &font->lf, lf, offsetof(LOGFONTW, lfFaceName))) return TRUE;
+    if (!font->can_use_bitmap != !can_use_bitmap) return TRUE;
+    return strcmpiW( font->lf.lfFaceName, lf->lfFaceName);
+}
+
+static DWORD hash_font( const LOGFONTW *lf, const FMAT2 *matrix, BOOL can_use_bitmap )
+{
+    DWORD hash = 0, *ptr, two_chars;
+    WORD *pwc;
+    unsigned int i;
+
+    for (i = 0, ptr = (DWORD *)matrix; i < sizeof(*matrix) / sizeof(DWORD); i++, ptr++)
+        hash ^= *ptr;
+    for(i = 0, ptr = (DWORD *)lf; i < 7; i++, ptr++)
+        hash ^= *ptr;
+    for(i = 0, ptr = (DWORD *)lf->lfFaceName; i < LF_FACESIZE/2; i++, ptr++)
+    {
+        two_chars = *ptr;
+        pwc = (WCHAR *)&two_chars;
+        if(!*pwc) break;
+        *pwc = toupperW(*pwc);
+        pwc++;
+        *pwc = toupperW(*pwc);
+        hash ^= two_chars;
+        if(!*pwc) break;
+    }
+    hash ^= !can_use_bitmap;
+    return hash;
+}
+
+void cache_gdi_font( struct gdi_font *font )
+{
+    static DWORD cache_num = 1;
+
+    font->cache_num = cache_num++;
+    font->hash = hash_font( &font->lf, &font->matrix, font->can_use_bitmap );
+    list_add_head( &gdi_font_list, &font->entry );
+    TRACE( "font %p\n", font );
+}
+
+struct gdi_font *find_cached_gdi_font( const LOGFONTW *lf, const FMAT2 *matrix, BOOL can_use_bitmap )
+{
+    struct gdi_font *font;
+    DWORD hash = hash_font( lf, matrix, can_use_bitmap );
+
+    /* try the in-use list */
+    LIST_FOR_EACH_ENTRY( font, &gdi_font_list, struct gdi_font, entry )
+    {
+        if (fontcmp( font, hash, lf, matrix, can_use_bitmap )) continue;
+        list_remove( &font->entry );
+        list_add_head( &gdi_font_list, &font->entry );
+        if (!font->refcount++)
+        {
+            list_remove( &font->unused_entry );
+            unused_font_count--;
+        }
+        return font;
+    }
+    return NULL;
+}
+
+static void release_gdi_font( struct gdi_font *font )
+{
+    if (!font) return;
+    if (--font->refcount) return;
+
+    TRACE( "font %p\n", font );
+
+    /* add it to the unused list */
+    list_add_head( &unused_gdi_font_list, &font->unused_entry );
+    if (unused_font_count > UNUSED_CACHE_SIZE)
+    {
+        font = LIST_ENTRY( list_tail( &unused_gdi_font_list ), struct gdi_font, unused_entry );
+        TRACE( "freeing %p\n", font );
+        list_remove( &font->entry );
+        list_remove( &font->unused_entry );
+        free_gdi_font( font );
+        return;
+    }
+    unused_font_count++;
 }
 
 static void add_font_list(HKEY hkey, const struct nls_update_font_list *fl, int dpi)
@@ -687,7 +784,7 @@ static BOOL CDECL font_DeleteDC( PHYSDEV dev )
 {
     struct font_physdev *physdev = get_font_dev( dev );
 
-    font_funcs->pSelectFont( physdev->font, NULL, 0, NULL, 0 );
+    release_gdi_font( physdev->font );
     HeapFree( GetProcessHeap(), 0, physdev );
     return TRUE;
 }
@@ -982,6 +1079,7 @@ static HFONT CDECL font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 {
     UINT default_aa_flags = *aa_flags;
     struct font_physdev *physdev = get_font_dev( dev );
+    struct gdi_font *prev = physdev->font;
     DC *dc = get_physdev_dc( dev );
 
     if (!default_aa_flags)
@@ -989,7 +1087,12 @@ static HFONT CDECL font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
         PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectFont );
         next->funcs->pSelectFont( next, hfont, &default_aa_flags );
     }
-    physdev->font = font_funcs->pSelectFont( physdev->font, dc, hfont, aa_flags, default_aa_flags );
+    if (!hfont)  /* notification that the font has been changed by another driver */
+        physdev->font = NULL;
+    else
+        physdev->font = font_funcs->pSelectFont( dc, hfont, aa_flags, default_aa_flags );
+
+    if (prev) release_gdi_font( prev );
     return physdev->font ? hfont : 0;
 }
 

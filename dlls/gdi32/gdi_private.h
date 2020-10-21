@@ -309,10 +309,21 @@ struct font_fileinfo
     WCHAR path[1];
 };
 
+typedef struct { FLOAT eM11, eM12, eM21, eM22; } FMAT2;
+
 struct gdi_font
 {
-    void   *private;  /* font backend private data */
-    DWORD   handle;
+    struct list            entry;
+    struct list            unused_entry;
+    DWORD                  refcount;
+    /* the following members can be accessed without locking, they are never modified after creation */
+    void                  *private;  /* font backend private data */
+    DWORD                  handle;
+    DWORD                  cache_num;
+    DWORD                  hash;
+    LOGFONTW               lf;
+    FMAT2                  matrix;
+    BOOL                   can_use_bitmap;
 };
 
 struct font_backend_funcs
@@ -336,8 +347,8 @@ struct font_backend_funcs
     BOOL  (CDECL *pGetTextExtentExPointI)( struct gdi_font *font, const WORD *indices, INT count, INT *dxs );
     INT   (CDECL *pGetTextFace)( struct gdi_font *font, INT count, WCHAR *str );
     BOOL  (CDECL *pGetTextMetrics)( struct gdi_font *font, TEXTMETRICW *metrics );
-    struct gdi_font * (CDECL *pSelectFont)( struct gdi_font *prev, DC *dc, HFONT hfont,
-                                            UINT *aa_flags, UINT default_aa_flags );
+    struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont, UINT *aa_flags, UINT default_aa_flags );
+
     INT   (CDECL *pAddFontResourceEx)( LPCWSTR file, DWORD flags, PVOID pdv );
     INT   (CDECL *pRemoveFontResourceEx)( LPCWSTR file, DWORD flags, PVOID pdv );
     HANDLE (CDECL *pAddFontMemResourceEx)( void *font, DWORD size, PVOID pdv, DWORD *count );
@@ -354,6 +365,9 @@ struct font_backend_funcs
 
 extern struct gdi_font *alloc_gdi_font(void) DECLSPEC_HIDDEN;
 extern void free_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
+extern void cache_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
+extern struct gdi_font *find_cached_gdi_font( const LOGFONTW *lf, const FMAT2 *matrix,
+                                              BOOL can_use_bitmap ) DECLSPEC_HIDDEN;
 extern void font_init(void) DECLSPEC_HIDDEN;
 
 /* freetype.c */

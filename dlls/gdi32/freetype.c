@@ -310,18 +310,6 @@ typedef struct {
     BOOL         init;
 } GM;
 
-typedef struct {
-    FLOAT eM11, eM12;
-    FLOAT eM21, eM22;
-} FMAT2;
-
-typedef struct {
-    DWORD hash;
-    LOGFONTW lf;
-    FMAT2 matrix;
-    BOOL can_use_bitmap;
-} FONT_DESC;
-
 typedef struct tagGdiFont GdiFont;
 
 typedef struct {
@@ -332,9 +320,6 @@ typedef struct {
 
 struct tagGdiFont {
     struct gdi_font *gdi_font;
-    struct list entry;
-    struct list unused_entry;
-    unsigned int refcount;
     GM **gm;
     DWORD gmsize;
     OUTLINETEXTMETRICW *potm;
@@ -353,7 +338,6 @@ struct tagGdiFont {
     BYTE underline;
     BYTE strikeout;
     INT orientation;
-    FONT_DESC font_desc;
     LONG aveWidth, ppem;
     double scale_y;
     SHORT yMax;
@@ -366,7 +350,6 @@ struct tagGdiFont {
     VOID *GSUB_Table;
     const VOID *vert_feature;
     ULONG ttc_item_offset; /* 0 if font is not a part of TrueType collection */
-    DWORD cache_num;
     struct font_fileinfo *fileinfo;
 };
 
@@ -393,10 +376,6 @@ struct enum_charset_list {
 #define GM_BLOCK_SIZE 128
 #define FONT_GM(font,idx) (&(font)->gm[(idx) / GM_BLOCK_SIZE][(idx) % GM_BLOCK_SIZE])
 
-static struct list gdi_font_list = LIST_INIT(gdi_font_list);
-static struct list unused_gdi_font_list = LIST_INIT(unused_gdi_font_list);
-static unsigned int unused_font_count;
-#define UNUSED_CACHE_SIZE 10
 static struct list system_links = LIST_INIT(system_links);
 
 static struct list font_subst_list = LIST_INIT(font_subst_list);
@@ -4103,12 +4082,10 @@ static int get_nearest_charset(const WCHAR *family_name, Face *face, int *cp)
 static BOOL CDECL freetype_alloc_font( struct gdi_font *font )
 {
     GdiFont *ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
-    ret->refcount = 1;
     ret->gmsize = 1;
     ret->gm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(GM*));
     ret->gm[0] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(GM) * GM_BLOCK_SIZE);
     ret->potm = NULL;
-    ret->font_desc.matrix.eM11 = ret->font_desc.matrix.eM22 = 1.0;
     ret->total_kern_pairs = (DWORD)-1;
     ret->kern_pairs = NULL;
     list_init(&ret->child_fonts);
@@ -4399,116 +4376,6 @@ static LONG load_VDMX(GdiFont *font, LONG height)
     }
 
     return ppem;
-}
-
-static void dump_gdi_font_list(void)
-{
-    GdiFont *font;
-
-    TRACE("---------- Font Cache ----------\n");
-    LIST_FOR_EACH_ENTRY( font, &gdi_font_list, struct tagGdiFont, entry )
-        TRACE("font=%p ref=%u %s %d\n", font, font->refcount,
-              debugstr_w(font->font_desc.lf.lfFaceName), font->font_desc.lf.lfHeight);
-}
-
-static void grab_font( GdiFont *font )
-{
-    if (!font->refcount++)
-    {
-        list_remove( &font->unused_entry );
-        unused_font_count--;
-    }
-}
-
-static void release_font( struct gdi_font *gdi_font )
-{
-    GdiFont *font;
-
-    if (!gdi_font) return;
-    if (!(font = get_font_ptr(gdi_font))) return;
-    if (!--font->refcount)
-    {
-        TRACE( "font %p\n", font );
-
-        /* add it to the unused list */
-        list_add_head( &unused_gdi_font_list, &font->unused_entry );
-        if (unused_font_count > UNUSED_CACHE_SIZE)
-        {
-            font = LIST_ENTRY( list_tail( &unused_gdi_font_list ), struct tagGdiFont, unused_entry );
-            TRACE( "freeing %p\n", font );
-            list_remove( &font->entry );
-            list_remove( &font->unused_entry );
-            free_gdi_font( font->gdi_font );
-        }
-        else unused_font_count++;
-
-        if (TRACE_ON(font)) dump_gdi_font_list();
-    }
-}
-
-static BOOL fontcmp(const GdiFont *font, FONT_DESC *fd)
-{
-    if(font->font_desc.hash != fd->hash) return TRUE;
-    if(memcmp(&font->font_desc.matrix, &fd->matrix, sizeof(fd->matrix))) return TRUE;
-    if(memcmp(&font->font_desc.lf, &fd->lf, offsetof(LOGFONTW, lfFaceName))) return TRUE;
-    if(!font->font_desc.can_use_bitmap != !fd->can_use_bitmap) return TRUE;
-    return strcmpiW(font->font_desc.lf.lfFaceName, fd->lf.lfFaceName);
-}
-
-static void calc_hash(FONT_DESC *pfd)
-{
-    DWORD hash = 0, *ptr, two_chars;
-    WORD *pwc;
-    unsigned int i;
-
-    for(i = 0, ptr = (DWORD*)&pfd->matrix; i < sizeof(FMAT2)/sizeof(DWORD); i++, ptr++)
-        hash ^= *ptr;
-    for(i = 0, ptr = (DWORD*)&pfd->lf; i < 7; i++, ptr++)
-        hash ^= *ptr;
-    for(i = 0, ptr = (DWORD*)pfd->lf.lfFaceName; i < LF_FACESIZE/2; i++, ptr++) {
-        two_chars = *ptr;
-        pwc = (WCHAR *)&two_chars;
-        if(!*pwc) break;
-        *pwc = toupperW(*pwc);
-        pwc++;
-        *pwc = toupperW(*pwc);
-        hash ^= two_chars;
-        if(!*pwc) break;
-    }
-    hash ^= !pfd->can_use_bitmap;
-    pfd->hash = hash;
-}
-
-static GdiFont *find_in_cache(const LOGFONTW *plf, const FMAT2 *pmat, BOOL can_use_bitmap)
-{
-    GdiFont *ret;
-    FONT_DESC fd;
-
-    fd.lf = *plf;
-    fd.matrix = *pmat;
-    fd.can_use_bitmap = can_use_bitmap;
-    calc_hash(&fd);
-
-    /* try the in-use list */
-    LIST_FOR_EACH_ENTRY( ret, &gdi_font_list, struct tagGdiFont, entry )
-    {
-        if(fontcmp(ret, &fd)) continue;
-        if(!can_use_bitmap && !FT_IS_SCALABLE(ret->ft_face)) continue;
-        list_remove( &ret->entry );
-        list_add_head( &gdi_font_list, &ret->entry );
-        grab_font( ret );
-        return ret;
-    }
-    return NULL;
-}
-
-static void add_to_cache(GdiFont *font)
-{
-    static DWORD cache_num = 1;
-
-    font->cache_num = cache_num++;
-    list_add_head(&gdi_font_list, &font->entry);
-    TRACE( "font %p\n", font );
 }
 
 /*************************************************************
@@ -4927,9 +4794,10 @@ static void fill_fileinfo_from_face( GdiFont *font, Face *face )
 /*************************************************************
  * freetype_SelectFont
  */
-static struct gdi_font * CDECL freetype_SelectFont( struct gdi_font *prev, DC *dc, HFONT hfont,
-                                                    UINT *aa_flags, UINT default_aa_flags )
+static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *aa_flags,
+                                                    UINT default_aa_flags )
 {
+    struct gdi_font *gdi_font;
     GdiFont *ret;
     Face *face, *best, *best_bitmap;
     Family *family, *last_resort_family;
@@ -4943,12 +4811,6 @@ static struct gdi_font * CDECL freetype_SelectFont( struct gdi_font *prev, DC *d
     FMAT2 dcmat;
     FontSubst *psub = NULL;
     const SYSTEM_LINKS *font_link;
-
-    if (!hfont)  /* notification that the font has been changed by another driver */
-    {
-        release_font( prev );
-        return NULL;
-    }
 
     GetObjectW( hfont, sizeof(lf), &lf );
     lf.lfWidth = abs(lf.lfWidth);
@@ -4993,18 +4855,19 @@ static struct gdi_font * CDECL freetype_SelectFont( struct gdi_font *prev, DC *d
     EnterCriticalSection( &freetype_cs );
 
     /* check the cache first */
-    if((ret = find_in_cache(&lf, &dcmat, can_use_bitmap)) != NULL) {
+    if ((gdi_font = find_cached_gdi_font( &lf, &dcmat, can_use_bitmap ))) {
+        ret = get_font_ptr( gdi_font );
         TRACE("returning cached gdiFont(%p) for hFont %p\n", ret, hfont);
         goto done;
     }
 
     TRACE("not in cache\n");
-    ret = get_font_ptr( alloc_gdi_font() );
+    gdi_font = alloc_gdi_font();
+    ret = get_font_ptr( gdi_font );
 
-    ret->font_desc.matrix = dcmat;
-    ret->font_desc.lf = lf;
-    ret->font_desc.can_use_bitmap = can_use_bitmap;
-    calc_hash(&ret->font_desc);
+    gdi_font->matrix = dcmat;
+    gdi_font->lf = lf;
+    gdi_font->can_use_bitmap = can_use_bitmap;
 
     /* If lfFaceName is "Symbol" then Windows fixes up lfCharSet to
        SYMBOL_CHARSET so that Symbol gets picked irrespective of the
@@ -5196,7 +5059,7 @@ static struct gdi_font * CDECL freetype_SelectFont( struct gdi_font *prev, DC *d
     }
     if(!last_resort_family) {
         FIXME("can't find a single appropriate font - bailing\n");
-        free_gdi_font(ret->gdi_font);
+        free_gdi_font(gdi_font);
         ret = NULL;
         goto done;
     }
@@ -5275,23 +5138,23 @@ found_face:
     if(!face->scalable) {
         /* Windows uses integer scaling factors for bitmap fonts */
         INT scale, scaled_height;
-        GdiFont *cachedfont;
+        struct gdi_font *cachedfont;
 
         /* FIXME: rotation of bitmap fonts is ignored */
-        height = abs(GDI_ROUND( (double)height * ret->font_desc.matrix.eM22 ));
+        height = abs(GDI_ROUND( (double)height * gdi_font->matrix.eM22 ));
         if (ret->aveWidth)
-            ret->aveWidth = (double)ret->aveWidth * ret->font_desc.matrix.eM11;
-        ret->font_desc.matrix.eM11 = ret->font_desc.matrix.eM22 = 1.0;
+            ret->aveWidth = (double)ret->aveWidth * gdi_font->matrix.eM11;
+        gdi_font->matrix.eM11 = gdi_font->matrix.eM22 = 1.0;
         dcmat.eM11 = dcmat.eM22 = 1.0;
         /* As we changed the matrix, we need to search the cache for the font again,
          * otherwise we might explode the cache. */
-        if((cachedfont = find_in_cache(&lf, &dcmat, can_use_bitmap)) != NULL) {
+        if((cachedfont = find_cached_gdi_font( &lf, &dcmat, can_use_bitmap ))) {
             TRACE("Found cached font after non-scalable matrix rescale!\n");
-            free_gdi_font( ret->gdi_font );
-            ret = cachedfont;
+            free_gdi_font( gdi_font );
+            gdi_font = cachedfont;
+            ret = get_font_ptr( gdi_font );
             goto done;
         }
-        calc_hash(&ret->font_desc);
 
         if (height != 0) height = diff;
         height += face->size.height;
@@ -5315,7 +5178,7 @@ found_face:
 
     if (!ret->ft_face)
     {
-        free_gdi_font( ret->gdi_font );
+        free_gdi_font( gdi_font );
         ret = NULL;
         goto done;
     }
@@ -5352,7 +5215,7 @@ found_face:
 
     TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
 
-    add_to_cache(ret);
+    cache_gdi_font( gdi_font );
 done:
     if (ret)
     {
@@ -5395,10 +5258,9 @@ done:
             }
         }
         TRACE( "%p %s %d aa %x\n", hfont, debugstr_w(lf.lfFaceName), lf.lfHeight, *aa_flags );
-        release_font( prev );
     }
     LeaveCriticalSection( &freetype_cs );
-    return ret->gdi_font;
+    return gdi_font;
 }
 
 static INT load_script_name( UINT id, WCHAR buffer[LF_FACESIZE] )
@@ -6063,6 +5925,7 @@ enum matrices_index
 static BOOL get_transform_matrices( GdiFont *font, BOOL vertical, const MAT2 *user_transform,
                                     FT_Matrix matrices[3] )
 {
+    struct gdi_font *gdi_font = font->gdi_font;
     static const FT_Matrix identity_mat = { (1 << 16), 0, 0, (1 << 16) };
     BOOL needs_transform = FALSE;
     double width_ratio;
@@ -6135,13 +5998,13 @@ static BOOL get_transform_matrices( GdiFont *font, BOOL vertical, const MAT2 *us
     }
 
     /* World transform */
-    if (!is_identity_FMAT2( &font->font_desc.matrix ))
+    if (!is_identity_FMAT2( &gdi_font->matrix ))
     {
         FT_Matrix world_mat;
-        world_mat.xx =  FT_FixedFromFloat( font->font_desc.matrix.eM11 );
-        world_mat.xy = -FT_FixedFromFloat( font->font_desc.matrix.eM21 );
-        world_mat.yx = -FT_FixedFromFloat( font->font_desc.matrix.eM12 );
-        world_mat.yy =  FT_FixedFromFloat( font->font_desc.matrix.eM22 );
+        world_mat.xx =  FT_FixedFromFloat( gdi_font->matrix.eM11 );
+        world_mat.xy = -FT_FixedFromFloat( gdi_font->matrix.eM21 );
+        world_mat.yx = -FT_FixedFromFloat( gdi_font->matrix.eM12 );
+        world_mat.yy =  FT_FixedFromFloat( gdi_font->matrix.eM22 );
 
         for (i = 0; i < 3; i++)
             pFT_Matrix_Multiply( &world_mat, &matrices[i] );
@@ -6937,6 +6800,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     GLYPHMETRICS gm;
     FT_Face ft_face = incoming_font->ft_face;
     GdiFont *font = incoming_font;
+    struct gdi_font *gdi_font = font->gdi_font;
     FT_Glyph_Metrics metrics;
     FT_UInt glyph_index;
     DWORD needed = 0;
@@ -6952,8 +6816,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	  buflen, buf, lpmat);
 
     TRACE("font transform %f %f %f %f\n",
-          font->font_desc.matrix.eM11, font->font_desc.matrix.eM12,
-          font->font_desc.matrix.eM21, font->font_desc.matrix.eM22);
+          gdi_font->matrix.eM11, gdi_font->matrix.eM12,
+          gdi_font->matrix.eM21, gdi_font->matrix.eM22);
 
     if(format & GGO_GLYPH_INDEX) {
         if(font->ft_face->charmap->encoding == FT_ENCODING_NONE) {
@@ -6971,6 +6835,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         BOOL vert;
         get_glyph_index_linked(incoming_font, glyph, &font, &glyph_index, &vert);
         ft_face = font->ft_face;
+        gdi_font = font->gdi_font;
         if (!vert && tategaki)
             tategaki = check_unicode_tategaki(glyph);
     }
@@ -7186,6 +7051,7 @@ static BOOL get_bitmap_text_metrics(GdiFont *font)
 
 static void scale_font_metrics(const GdiFont *font, LPTEXTMETRICW ptm)
 {
+    const struct gdi_font *gdi_font = font->gdi_font;
     double scale_x, scale_y;
 
     if (font->aveWidth)
@@ -7196,8 +7062,8 @@ static void scale_font_metrics(const GdiFont *font, LPTEXTMETRICW ptm)
     else
         scale_x = font->scale_y;
 
-    scale_x *= fabs(font->font_desc.matrix.eM11);
-    scale_y = font->scale_y * fabs(font->font_desc.matrix.eM22);
+    scale_x *= fabs(gdi_font->matrix.eM11);
+    scale_y = font->scale_y * fabs(gdi_font->matrix.eM22);
 
 #define SCALE_X(x) (x) = GDI_ROUND((double)(x) * (scale_x))
 #define SCALE_Y(y) (y) = GDI_ROUND((double)(y) * (scale_y))
@@ -7225,6 +7091,7 @@ static void scale_font_metrics(const GdiFont *font, LPTEXTMETRICW ptm)
 
 static void scale_outline_font_metrics(const GdiFont *font, OUTLINETEXTMETRICW *potm)
 {
+    const struct gdi_font *gdi_font = font->gdi_font;
     double scale_x, scale_y;
 
     if (font->aveWidth)
@@ -7235,8 +7102,8 @@ static void scale_outline_font_metrics(const GdiFont *font, OUTLINETEXTMETRICW *
     else
         scale_x = font->scale_y;
 
-    scale_x *= fabs(font->font_desc.matrix.eM11);
-    scale_y = font->scale_y * fabs(font->font_desc.matrix.eM22);
+    scale_x *= fabs(gdi_font->matrix.eM11);
+    scale_y = font->scale_y * fabs(gdi_font->matrix.eM22);
 
     scale_font_metrics(font, &potm->otmTextMetrics);
 
@@ -7684,13 +7551,14 @@ static UINT CDECL freetype_GetOutlineTextMetrics( struct gdi_font *gdi_font, UIN
 
 static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
 {
+    struct gdi_font *gdi_font = font->gdi_font;
     const struct list *face_list;
     Face *child_face = NULL, *best_face = NULL;
     UINT penalty = 0, new_penalty = 0;
     BOOL bold, italic, bd, it;
 
-    italic = !!font->font_desc.lf.lfItalic;
-    bold = font->font_desc.lf.lfWeight > FW_MEDIUM;
+    italic = !!gdi_font->lf.lfItalic;
+    bold = gdi_font->lf.lfWeight > FW_MEDIUM;
 
     face_list = get_face_list_from_family( child->face->family );
     LIST_FOR_EACH_ENTRY( child_face, face_list, Face, entry )
@@ -7717,7 +7585,9 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
 
     child->font->fake_italic = italic && !( child_face->ntmFlags & NTM_ITALIC );
     child->font->fake_bold = bold && !( child_face->ntmFlags & NTM_BOLD );
-    child->font->font_desc = font->font_desc;
+    child->font->gdi_font->lf = gdi_font->lf;
+    child->font->gdi_font->matrix = gdi_font->matrix;
+    child->font->gdi_font->can_use_bitmap = gdi_font->can_use_bitmap;
     child->font->ntmFlags = child_face->ntmFlags;
     child->font->orientation = font->orientation;
     child->font->scale_y = font->scale_y;
@@ -8059,7 +7929,7 @@ static BOOL CDECL freetype_GetFontRealizationInfo( struct gdi_font *gdi_font, st
     if(FT_IS_SCALABLE(font->ft_face))
         info->flags |= 2;
 
-    info->cache_num = font->cache_num;
+    info->cache_num = gdi_font->cache_num;
     info->instance_id = gdi_font->handle;
     if (info->size == sizeof(*info))
     {
