@@ -1086,7 +1086,7 @@ __ASM_GLOBAL_FUNC( call_consolidate_callback,
                    "pushq %rsi\n\t"
                    "pushq %rdi\n\t"
                    "leaq 0x200(%rcx),%rsi\n\t"
-                   "leaq 0x60(%rsp),%rdi\n\t"
+                   "leaq 0x70(%rsp),%rdi\n\t"
                    "movq $0x14,%rcx\n\t"
                    "cld\n\t"
                    "rep; movsq\n\t"
