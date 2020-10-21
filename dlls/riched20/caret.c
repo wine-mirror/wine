@@ -473,11 +473,11 @@ static struct re_object* create_re_object(const REOBJECT *reo)
 
 void ME_InsertOLEFromCursor(ME_TextEditor *editor, const REOBJECT* reo, int nCursor)
 {
-  ME_Style *style = ME_GetInsertStyle( editor, nCursor );
   ME_Run *run, *prev;
   const WCHAR space = ' ';
   struct re_object *reobj_prev = NULL;
   ME_Cursor *cursor = editor->pCursors + nCursor;
+  ME_Style *style = style_get_insert_style( editor, cursor );
 
   /* FIXME no no no */
   if (ME_IsSelection(editor))
@@ -508,9 +508,9 @@ void ME_InsertOLEFromCursor(ME_TextEditor *editor, const REOBJECT* reo, int nCur
 
 void ME_InsertEndRowFromCursor(ME_TextEditor *editor, int nCursor)
 {
-  ME_Style *style = ME_GetInsertStyle( editor, nCursor );
   const WCHAR space = ' ';
   ME_Cursor *cursor = editor->pCursors + nCursor;
+  ME_Style *style = style_get_insert_style( editor, cursor );
 
   /* FIXME no no no */
   if (ME_IsSelection(editor))
@@ -1510,7 +1510,7 @@ void ME_DeleteSelection(ME_TextEditor *editor)
 
 ME_Style *ME_GetSelectionInsertStyle(ME_TextEditor *editor)
 {
-  return ME_GetInsertStyle(editor, 0);
+    return style_get_insert_style( editor, editor->pCursors );
 }
 
 void ME_SendSelChange(ME_TextEditor *editor)

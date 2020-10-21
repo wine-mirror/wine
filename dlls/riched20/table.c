@@ -63,7 +63,7 @@ static ME_DisplayItem* ME_InsertEndParaFromCursor(ME_TextEditor *editor,
                                                   const WCHAR *eol_str, int eol_len,
                                                   int paraFlags)
 {
-  ME_Style *pStyle = ME_GetInsertStyle(editor, nCursor);
+  ME_Style *pStyle = style_get_insert_style( editor, editor->pCursors + nCursor );
   ME_Paragraph *para;
   ME_Cursor* cursor = &editor->pCursors[nCursor];
 

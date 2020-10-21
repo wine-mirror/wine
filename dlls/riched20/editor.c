@@ -2596,7 +2596,7 @@ static BOOL handle_enter(ME_TextEditor *editor)
                 }
             }
 
-            style = ME_GetInsertStyle(editor, 0);
+            style = style_get_insert_style( editor, editor->pCursors );
 
             /* Normally the new eop style is the insert style, however in a list it is copied from the existing
             eop style (this prevents the list label style changing when the new eop is inserted).
@@ -2838,7 +2838,7 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
     /* WM_CHAR is restricted to nTextLimit */
     if(editor->nTextLimit > ME_GetTextLength(editor) - (to-from))
     {
-      ME_Style *style = ME_GetInsertStyle(editor, 0);
+      ME_Style *style = style_get_insert_style( editor, editor->pCursors );
       ME_ContinueCoalescingTransaction(editor);
       ME_InsertTextFromCursor(editor, 0, &wstr, 1, style);
       ME_ReleaseStyle(style);
@@ -4818,7 +4818,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     HIMC hIMC;
 
-    ME_Style *style = ME_GetInsertStyle(editor, 0);
+    ME_Style *style = style_get_insert_style( editor, editor->pCursors );
     hIMC = ITextHost_TxImmGetContext(editor->texthost);
     ME_DeleteSelection(editor);
     ME_SaveTempStyle(editor, style);

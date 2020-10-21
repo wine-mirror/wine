@@ -1697,7 +1697,7 @@ static HRESULT WINAPI ITextRange_fnSetText(ITextRange *me, BSTR str)
     len = lstrlenW(str);
     cursor = editor->pCursors[0];
     cursor_from_char_ofs( editor, This->start, &editor->pCursors[0] );
-    style = ME_GetInsertStyle(editor, 0);
+    style = style_get_insert_style( editor, editor->pCursors );
     ME_InsertTextFromCursor(editor, 0, str, len, style);
     ME_ReleaseStyle(style);
     editor->pCursors[0] = cursor;

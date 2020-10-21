@@ -716,7 +716,7 @@ void ME_SetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
   {
     ME_Style *s;
     if (!editor->pBuffer->pCharStyle)
-      editor->pBuffer->pCharStyle = ME_GetInsertStyle(editor, 0);
+      editor->pBuffer->pCharStyle = style_get_insert_style( editor, editor->pCursors );
     s = ME_ApplyStyle(editor, editor->pBuffer->pCharStyle, pFmt);
     ME_ReleaseStyle(editor->pBuffer->pCharStyle);
     editor->pBuffer->pCharStyle = s;
