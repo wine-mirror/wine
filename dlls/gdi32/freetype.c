@@ -330,8 +330,6 @@ struct tagGdiFont {
     /* the following members can be accessed without locking, they are never modified after creation */
     FT_Face ft_face;
     struct font_mapping *mapping;
-    BOOL fake_italic;
-    BOOL fake_bold;
     BYTE underline;
     BYTE strikeout;
     INT orientation;
@@ -3959,6 +3957,7 @@ static LONG load_VDMX(GdiFont*, LONG);
 
 static FT_Face OpenFontFace(GdiFont *font, Face *face, LONG width, LONG height)
 {
+    struct gdi_font *gdi_font = font->gdi_font;
     FT_Error err;
     FT_Face ft_face;
     void *data_ptr;
@@ -3993,6 +3992,8 @@ static FT_Face OpenFontFace(GdiFont *font, Face *face, LONG width, LONG height)
 
     /* set it here, as load_VDMX needs it */
     font->ft_face = ft_face;
+    gdi_font->scalable = FT_IS_SCALABLE(ft_face);
+    gdi_font->face_index = face->face_index;
 
     if(FT_IS_SCALABLE(ft_face)) {
         FT_ULong len;
@@ -4785,7 +4786,7 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
     GetObjectW( hfont, sizeof(lf), &lf );
     lf.lfWidth = abs(lf.lfWidth);
 
-    can_use_bitmap = GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_RA_ABLE;
+    can_use_bitmap = !!(GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_RA_ABLE);
 
     TRACE("%s, h=%d, it=%d, weight=%d, PandF=%02x, charset=%d orient %d escapement %d\n",
 	  debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic,
@@ -5085,8 +5086,8 @@ found:
     }
     if(best)
         face = best->scalable ? best : best_bitmap;
-    ret->fake_italic = (it && !(face->ntmFlags & NTM_ITALIC));
-    ret->fake_bold = (bd && !(face->ntmFlags & NTM_BOLD));
+    gdi_font->fake_italic = (it && !(face->ntmFlags & NTM_ITALIC));
+    gdi_font->fake_bold = (bd && !(face->ntmFlags & NTM_BOLD));
 
 found_face:
     height = lf.lfHeight;
@@ -5215,7 +5216,7 @@ done:
             case GGO_GRAY4_BITMAP:
             case GGO_GRAY8_BITMAP:
             case WINE_GGO_GRAY16_BITMAP:
-                if ((!antialias_fakes || (!ret->fake_bold && !ret->fake_italic)) && is_hinting_enabled())
+                if ((!antialias_fakes || (!gdi_font->fake_bold && !gdi_font->fake_italic)) && is_hinting_enabled())
                 {
                     WORD gasp_flags;
                     if (get_gasp_flags( ret, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
@@ -5933,7 +5934,7 @@ static BOOL get_transform_matrices( GdiFont *font, BOOL vertical, const MAT2 *us
     }
 
     /* Slant transform */
-    if (font->fake_italic)
+    if (gdi_font->fake_italic)
     {
         FT_Matrix slant_mat;
         slant_mat.xx = (1 << 16);
@@ -6056,6 +6057,8 @@ static FT_Vector get_advance_metric(GdiFont *incoming_font, GdiFont *font,
                                     const FT_Glyph_Metrics *metrics,
                                     const FT_Matrix *transMat, BOOL vertical_metrics)
 {
+    struct gdi_font *incoming_gdi_font = incoming_font->gdi_font;
+    struct gdi_font *gdi_font = font->gdi_font;
     FT_Vector adv;
     FT_Fixed base_advance, em_scale = 0;
     BOOL fixed_pitch_full = FALSE;
@@ -6072,7 +6075,7 @@ static FT_Vector get_advance_metric(GdiFont *incoming_font, GdiFont *font,
        they have double halfwidth character width. E.g. if the font is 19 ppem,
        we return 20 (not 19) for fullwidth characters as we return 10 for
        halfwidth characters. */
-    if(FT_IS_SCALABLE(incoming_font->ft_face) &&
+    if(incoming_gdi_font->scalable &&
        (incoming_font->potm || get_outline_text_metrics(incoming_font)) &&
        !(incoming_font->potm->otmTextMetrics.tmPitchAndFamily & TMPF_FIXED_PITCH)) {
         UINT avg_advance;
@@ -6097,7 +6100,7 @@ static FT_Vector get_advance_metric(GdiFont *incoming_font, GdiFont *font,
         }
     }
 
-    if (font->fake_bold) {
+    if (gdi_font->fake_bold) {
         if (!transMat)
             adv.x += 1 << 6;
         else {
@@ -6845,7 +6848,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     }
 
     metrics = ft_face->glyph->metrics;
-    if(font->fake_bold) {
+    if(gdi_font->fake_bold) {
         if (!get_bold_glyph_outline(ft_face->glyph, font->ppem, &metrics) && metrics.width)
             metrics.width += 1 << 6;
     }
@@ -6890,7 +6893,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     switch (format)
     {
     case GGO_BITMAP:
-        needed = get_mono_glyph_bitmap( ft_face->glyph, bbox, font->fake_bold,
+        needed = get_mono_glyph_bitmap( ft_face->glyph, bbox, gdi_font->fake_bold,
                                         needsTransform, matrices, buflen, buf );
         break;
 
@@ -6898,7 +6901,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     case GGO_GRAY4_BITMAP:
     case GGO_GRAY8_BITMAP:
     case WINE_GGO_GRAY16_BITMAP:
-        needed = get_antialias_glyph_bitmap( ft_face->glyph, bbox, format, font->fake_bold,
+        needed = get_antialias_glyph_bitmap( ft_face->glyph, bbox, format, gdi_font->fake_bold,
                                              needsTransform, matrices, buflen, buf );
 	break;
 
@@ -6906,7 +6909,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     case WINE_GGO_HBGR_BITMAP:
     case WINE_GGO_VRGB_BITMAP:
     case WINE_GGO_VBGR_BITMAP:
-        needed = get_subpixel_glyph_bitmap( ft_face->glyph, bbox, format, font->fake_bold,
+        needed = get_subpixel_glyph_bitmap( ft_face->glyph, bbox, format, gdi_font->fake_bold,
                                             needsTransform, matrices, &gm, buflen, buf );
         break;
 
@@ -7016,7 +7019,7 @@ static BOOL get_bitmap_text_metrics(GdiFont *font)
         TM.tmCharSet = gdi_font->charset;
     }
 
-    if(font->fake_bold)
+    if(gdi_font->fake_bold)
         TM.tmWeight = FW_BOLD;
 #undef TM
 
@@ -7050,9 +7053,9 @@ static void scale_font_metrics(const GdiFont *font, LPTEXTMETRICW ptm)
     SCALE_Y(ptm->tmExternalLeading);
 
     SCALE_X(ptm->tmOverhang);
-    if(font->fake_bold)
+    if(gdi_font->fake_bold)
     {
-        if(!FT_IS_SCALABLE(font->ft_face))
+        if(!gdi_font->scalable)
             ptm->tmOverhang++;
         ptm->tmAveCharWidth++;
         ptm->tmMaxCharWidth++;
@@ -7273,7 +7276,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     }
     TM.tmMaxCharWidth = SCALE_X(ft_face->bbox.xMax - ft_face->bbox.xMin);
     TM.tmWeight = FW_REGULAR;
-    if (font->fake_bold)
+    if (gdi_font->fake_bold)
         TM.tmWeight = FW_BOLD;
     else
     {
@@ -7322,7 +7325,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
             TM.tmBreakChar = pOS2->usFirstCharIndex;
         TM.tmDefaultChar = TM.tmBreakChar - 1;
     }
-    TM.tmItalic = font->fake_italic ? 255 : ((ft_face->style_flags & FT_STYLE_FLAG_ITALIC) ? 255 : 0);
+    TM.tmItalic = gdi_font->fake_italic ? 255 : ((ft_face->style_flags & FT_STYLE_FLAG_ITALIC) ? 255 : 0);
     TM.tmUnderlined = font->underline;
     TM.tmStruckOut = font->strikeout;
 
@@ -7403,9 +7406,9 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     font->potm->otmFiller = 0;
     memcpy(&font->potm->otmPanoseNumber, pOS2->panose, PANOSE_COUNT);
     font->potm->otmfsSelection = pOS2->fsSelection;
-    if (font->fake_italic)
+    if (gdi_font->fake_italic)
         font->potm->otmfsSelection |= 1;
-    if (font->fake_bold)
+    if (gdi_font->fake_bold)
         font->potm->otmfsSelection |= 1 << 5;
     /* Only return valid bits that define embedding and subsetting restrictions */
     font->potm->otmfsType = pOS2->fsType & 0x30e;
@@ -7508,7 +7511,7 @@ static UINT CDECL freetype_GetOutlineTextMetrics( struct gdi_font *gdi_font, UIN
 
     TRACE("font=%p\n", font);
 
-    if (!FT_IS_SCALABLE( font->ft_face )) return 0;
+    if (!gdi_font->scalable) return 0;
 
     EnterCriticalSection( &freetype_cs );
 
@@ -7559,8 +7562,8 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
         return FALSE;
     }
 
-    child->font->fake_italic = italic && !( child_face->ntmFlags & NTM_ITALIC );
-    child->font->fake_bold = bold && !( child_face->ntmFlags & NTM_BOLD );
+    child->font->gdi_font->fake_italic = italic && !( child_face->ntmFlags & NTM_ITALIC );
+    child->font->gdi_font->fake_bold = bold && !( child_face->ntmFlags & NTM_BOLD );
     child->font->gdi_font->lf = gdi_font->lf;
     child->font->gdi_font->matrix = gdi_font->matrix;
     child->font->gdi_font->can_use_bitmap = gdi_font->can_use_bitmap;
@@ -7651,7 +7654,7 @@ static BOOL CDECL freetype_GetCharWidthInfo( struct gdi_font *gdi_font, struct c
 
     TRACE("%p, %p\n", font, info);
 
-    if (FT_IS_SCALABLE(font->ft_face) &&
+    if (gdi_font->scalable &&
         (pHori = pFT_Get_Sfnt_Table(font->ft_face, ft_sfnt_hhea)))
     {
         FT_Fixed em_scale;
@@ -7865,34 +7868,6 @@ static BOOL CDECL freetype_FontIsLinked( struct gdi_font *font )
     ret = !list_empty( &get_font_ptr(font)->child_fonts );
     LeaveCriticalSection( &freetype_cs );
     return ret;
-}
-
-/*************************************************************
- * freetype_GetFontRealizationInfo
- */
-static BOOL CDECL freetype_GetFontRealizationInfo( struct gdi_font *gdi_font, struct font_realization_info *info )
-{
-    GdiFont *font = get_font_ptr(gdi_font);
-    TRACE("(%p, %p)\n", font, info);
-
-    info->flags = 1;
-    if(FT_IS_SCALABLE(font->ft_face))
-        info->flags |= 2;
-
-    info->cache_num = gdi_font->cache_num;
-    info->instance_id = gdi_font->handle;
-    if (info->size == sizeof(*info))
-    {
-        info->unk = 0;
-        info->face_index = font->ft_face->face_index;
-        info->simulations = 0;
-        if (font->fake_bold)
-            info->simulations |= 0x1;
-        if (font->fake_italic)
-            info->simulations |= 0x2;
-    }
-
-    return TRUE;
 }
 
 /*************************************************************************
@@ -8174,7 +8149,6 @@ static const struct font_backend_funcs font_funcs =
     freetype_GetCharWidth,
     freetype_GetCharWidthInfo,
     freetype_GetFontData,
-    freetype_GetFontRealizationInfo,
     freetype_GetFontUnicodeRanges,
     freetype_GetGlyphIndices,
     freetype_GetGlyphOutline,

@@ -318,7 +318,11 @@ struct gdi_font
     FONTSIGNATURE          fs;
     LOGFONTW               lf;
     FMAT2                  matrix;
-    BOOL                   can_use_bitmap;
+    UINT                   face_index;
+    BOOL                   can_use_bitmap : 1;
+    BOOL                   fake_italic : 1;
+    BOOL                   fake_bold : 1;
+    BOOL                   scalable : 1;
     WCHAR                 *name;
     struct font_fileinfo  *fileinfo;
 };
@@ -332,7 +336,6 @@ struct font_backend_funcs
     BOOL  (CDECL *pGetCharWidth)( struct gdi_font *font, UINT first, UINT last, INT *buffer );
     BOOL  (CDECL *pGetCharWidthInfo)( struct gdi_font *font, struct char_width_info *info );
     DWORD (CDECL *pGetFontData)( struct gdi_font *font, DWORD table, DWORD offset, void *buf, DWORD size );
-    BOOL  (CDECL *pGetFontRealizationInfo)( struct gdi_font *font, struct font_realization_info *info );
     DWORD (CDECL *pGetFontUnicodeRanges)( struct gdi_font *font, GLYPHSET *glyphset );
     DWORD (CDECL *pGetGlyphIndices)( struct gdi_font *font, const WCHAR *str, INT count, WORD *gi, DWORD flags );
     DWORD (CDECL *pGetGlyphOutline)( struct gdi_font *font, UINT glyph, UINT format,

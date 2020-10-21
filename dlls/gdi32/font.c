@@ -944,13 +944,30 @@ static DWORD CDECL font_GetFontData( PHYSDEV dev, DWORD table, DWORD offset, voi
 static BOOL CDECL font_GetFontRealizationInfo( PHYSDEV dev, void *ptr )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    struct font_realization_info *info = ptr;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetFontRealizationInfo );
         return dev->funcs->pGetFontRealizationInfo( dev, ptr );
     }
-    return font_funcs->pGetFontRealizationInfo( physdev->font, ptr );
+
+    TRACE( "(%p, %p)\n", physdev->font, info);
+
+    info->flags = 1;
+    if (physdev->font->scalable) info->flags |= 2;
+
+    info->cache_num = physdev->font->cache_num;
+    info->instance_id = physdev->font->handle;
+    if (info->size == sizeof(*info))
+    {
+        info->unk = 0;
+        info->face_index = physdev->font->face_index;
+        info->simulations = 0;
+        if (physdev->font->fake_bold) info->simulations |= 0x1;
+        if (physdev->font->fake_italic) info->simulations |= 0x2;
+    }
+    return TRUE;
 }
 
 
