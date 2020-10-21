@@ -89,6 +89,7 @@ struct video_mixer
     IMFAttributes *attributes;
     IMFAttributes *internal_attributes;
     unsigned int mixing_flags;
+    unsigned int is_streaming;
     COLORREF bkgnd_color;
     LONGLONG lower_bound;
     LONGLONG upper_bound;
@@ -984,6 +985,17 @@ static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, 
 
             break;
 
+        case MFT_MESSAGE_NOTIFY_BEGIN_STREAMING:
+        case MFT_MESSAGE_NOTIFY_END_STREAMING:
+
+            EnterCriticalSection(&mixer->cs);
+
+            mixer->is_streaming = message == MFT_MESSAGE_NOTIFY_BEGIN_STREAMING;
+
+            LeaveCriticalSection(&mixer->cs);
+
+            break;
+
         case MFT_MESSAGE_COMMAND_DRAIN:
             break;
 
@@ -1016,6 +1028,7 @@ static HRESULT WINAPI video_mixer_transform_ProcessInput(IMFTransform *iface, DW
             hr = MF_E_NOTACCEPTING;
         else
         {
+            mixer->is_streaming = 1;
             input->sample = sample;
             IMFSample_AddRef(input->sample);
         }
