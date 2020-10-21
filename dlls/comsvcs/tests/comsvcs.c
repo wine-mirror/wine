@@ -197,6 +197,7 @@ static void create_dispenser(void)
     ok(!WaitForSingleObject(thread, 1000), "wait failed\n");
     GetExitCodeThread(thread, &ret);
     ok(ret == CO_E_NOTINITIALIZED, "got unexpected hr %#x\n", ret);
+    CloseHandle(thread);
 
     init_test_driver(&driver);
 
@@ -210,6 +211,7 @@ static void create_dispenser(void)
     ok(!WaitForSingleObject(thread, 20000), "wait failed\n");
     GetExitCodeThread(thread, &ret);
     ok(ret == S_OK, "got unexpected hr %#x\n", ret);
+    CloseHandle(thread);
 
     hr = IDispenserManager_RegisterDispenser(dispenser, &driver.IDispenserDriver_iface, L"SC.Pool 0 0", &holder2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
