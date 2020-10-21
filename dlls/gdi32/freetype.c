@@ -350,7 +350,6 @@ struct tagGdiFont {
     VOID *GSUB_Table;
     const VOID *vert_feature;
     ULONG ttc_item_offset; /* 0 if font is not a part of TrueType collection */
-    struct font_fileinfo *fileinfo;
 };
 
 static inline GdiFont *get_font_ptr( struct gdi_font *font ) { return font->private; }
@@ -4112,7 +4111,6 @@ static void CDECL freetype_destroy_font( struct gdi_font *gdi_font )
         HeapFree(GetProcessHeap(), 0, child);
     }
 
-    HeapFree(GetProcessHeap(), 0, font->fileinfo);
     if (font->ft_face) pFT_Done_Face(font->ft_face);
     if (font->mapping) unmap_font_file( font->mapping );
     HeapFree(GetProcessHeap(), 0, font->kern_pairs);
@@ -4767,30 +4765,6 @@ static const VOID * get_GSUB_vert_feature(const GdiFont *font)
     return feature;
 }
 
-static void fill_fileinfo_from_face( GdiFont *font, Face *face )
-{
-    WIN32_FILE_ATTRIBUTE_DATA info;
-    int len;
-
-    if (!face->file)
-    {
-        font->fileinfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*font->fileinfo));
-        font->fileinfo->size.QuadPart = face->font_data_size;
-        return;
-    }
-
-    len = strlenW(face->file);
-    font->fileinfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*font->fileinfo) + len * sizeof(WCHAR));
-    if (GetFileAttributesExW(face->file, GetFileExInfoStandard, &info))
-    {
-        font->fileinfo->writetime = info.ftLastWriteTime;
-        font->fileinfo->size.QuadPart = (LONGLONG)info.nFileSizeHigh << 32 | info.nFileSizeLow;
-        strcpyW(font->fileinfo->path, face->file);
-    }
-    else
-        memset(font->fileinfo, 0, sizeof(*font->fileinfo) + len * sizeof(WCHAR));
-}
-
 /*************************************************************
  * freetype_SelectFont
  */
@@ -5183,7 +5157,7 @@ found_face:
         goto done;
     }
 
-    fill_fileinfo_from_face( ret, face );
+    set_gdi_font_file_info( gdi_font, face->file, face->font_data_size );
     ret->ntmFlags = face->ntmFlags;
 
     pick_charmap( ret->ft_face, ret->charset );
@@ -7969,26 +7943,6 @@ static BOOL CDECL freetype_GetFontFileData( struct gdi_font *gdi_font, DWORD unk
 }
 
 /*************************************************************************
- * freetype_GetFontFileInfo
- */
-static BOOL CDECL freetype_GetFontFileInfo( struct gdi_font *gdi_font, DWORD unknown,
-                                            struct font_fileinfo *info, SIZE_T size, SIZE_T *needed )
-{
-    const GdiFont *font = get_font_ptr( gdi_font );
-
-    *needed = sizeof(*info) + strlenW(font->fileinfo->path) * sizeof(WCHAR);
-    if (*needed > size)
-    {
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        return FALSE;
-    }
-
-    /* path is included too */
-    memcpy(info, font->fileinfo, *needed);
-    return TRUE;
-}
-
-/*************************************************************************
  * Kerning support for TrueType fonts
  */
 
@@ -8261,7 +8215,6 @@ static const struct font_backend_funcs font_funcs =
     freetype_AddFontMemResourceEx,
     freetype_CreateScalableFontResource,
     freetype_GetFontFileData,
-    freetype_GetFontFileInfo,
     freetype_alloc_font,
     freetype_destroy_font
 };

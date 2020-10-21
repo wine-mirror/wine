@@ -301,14 +301,6 @@ struct char_width_info
     INT unk;   /* unknown */
 };
 
-/* Undocumented structure filled in by GetFontFileInfo */
-struct font_fileinfo
-{
-    FILETIME writetime;
-    LARGE_INTEGER size;
-    WCHAR path[1];
-};
-
 typedef struct { FLOAT eM11, eM12, eM21, eM22; } FMAT2;
 
 struct gdi_font
@@ -324,6 +316,7 @@ struct gdi_font
     LOGFONTW               lf;
     FMAT2                  matrix;
     BOOL                   can_use_bitmap;
+    struct font_fileinfo  *fileinfo;
 };
 
 struct font_backend_funcs
@@ -356,8 +349,6 @@ struct font_backend_funcs
                                                 LPCWSTR font_file, LPCWSTR font_path );
     BOOL  (CDECL *pGetFontFileData)( struct gdi_font *font, DWORD unknown, UINT64 offset,
                                      void *buff, DWORD buff_size );
-    BOOL  (CDECL *pGetFontFileInfo)( struct gdi_font *font, DWORD unknown,
-                                     struct font_fileinfo *info, SIZE_T size, SIZE_T *needed );
 
     BOOL  (CDECL *alloc_font)( struct gdi_font *font );
     void  (CDECL *destroy_font)( struct gdi_font *font );
@@ -368,6 +359,7 @@ extern void free_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern void cache_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern struct gdi_font *find_cached_gdi_font( const LOGFONTW *lf, const FMAT2 *matrix,
                                               BOOL can_use_bitmap ) DECLSPEC_HIDDEN;
+extern void set_gdi_font_file_info( struct gdi_font *font, const WCHAR *file, SIZE_T data_size ) DECLSPEC_HIDDEN;
 extern void font_init(void) DECLSPEC_HIDDEN;
 
 /* freetype.c */
