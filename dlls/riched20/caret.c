@@ -327,9 +327,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
   {
     ME_Run *run;
     cursor_from_char_ofs( editor, nOfs + nChars, &c );
-    if (!c.nOffset &&
-        nOfs+nChars == (c.pRun->member.run.nCharOfs
-                        + c.pPara->member.para.nCharOfs))
+    if (!c.nOffset)
     {
       /* We aren't deleting anything in this run, so we will go back to the
        * last run we are deleting text in. */
