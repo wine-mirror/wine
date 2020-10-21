@@ -681,7 +681,11 @@ HRESULT Connection_create( void **obj )
     connection->state = adStateClosed;
     connection->timeout = 30;
     connection->datasource = NULL;
-    connection->provider = SysAllocString(L"MSDASQL");
+    if (!(connection->provider = strdupW( L"MSDASQL" )))
+    {
+        heap_free( connection );
+        return E_OUTOFMEMORY;
+    }
     connection->mode = adModeUnknown;
     connection->location = adUseServer;
 
