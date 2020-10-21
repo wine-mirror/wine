@@ -58,29 +58,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit_lists);
 
 static const WCHAR cr_lf[] = {'\r', '\n', 0};
 
-static ME_DisplayItem* ME_InsertEndParaFromCursor(ME_TextEditor *editor,
-                                                  int nCursor,
-                                                  const WCHAR *eol_str, int eol_len,
-                                                  int paraFlags)
+static ME_Paragraph* table_insert_end_para( ME_TextEditor *editor, ME_Cursor *cursor,
+                                            const WCHAR *eol_str, int eol_len, int para_flags )
 {
-  ME_Style *pStyle = style_get_insert_style( editor, editor->pCursors + nCursor );
-  ME_Paragraph *para;
-  ME_Cursor* cursor = &editor->pCursors[nCursor];
+    ME_Style *style = style_get_insert_style( editor, cursor );
+    ME_Paragraph *para;
 
-  if (cursor->nOffset) run_split( editor, cursor );
+    if (cursor->nOffset) run_split( editor, cursor );
 
-  para = para_split( editor, &cursor->pRun->member.run, pStyle, eol_str, eol_len, paraFlags );
-  ME_ReleaseStyle(pStyle);
-  cursor->pPara = para_get_di( para );
-  cursor->pRun = run_get_di( para_first_run( para ) );
-  return para_get_di( para );
+    para = para_split( editor, &cursor->pRun->member.run, style, eol_str, eol_len, para_flags );
+    ME_ReleaseStyle( style );
+    cursor->pPara = para_get_di( para );
+    cursor->pRun = run_get_di( para_first_run( para ) );
+    return para;
 }
 
 ME_DisplayItem* ME_InsertTableRowStartFromCursor(ME_TextEditor *editor)
 {
-  ME_DisplayItem *para;
-  para = ME_InsertEndParaFromCursor(editor, 0, cr_lf, 2, MEPF_ROWSTART);
-  return para->member.para.prev_para;
+    ME_Paragraph *para;
+
+    para = table_insert_end_para( editor, editor->pCursors, cr_lf, 2, MEPF_ROWSTART );
+    return para_get_di( para_prev( para ) );
 }
 
 ME_DisplayItem* ME_InsertTableRowStartAtParagraph(ME_TextEditor *editor,
@@ -120,17 +118,19 @@ ME_DisplayItem* ME_InsertTableRowStartAtParagraph(ME_TextEditor *editor,
  * Returns the first paragraph of the new cell. */
 ME_DisplayItem* ME_InsertTableCellFromCursor(ME_TextEditor *editor)
 {
-  ME_DisplayItem *para;
-  WCHAR tab = '\t';
-  para = ME_InsertEndParaFromCursor(editor, 0, &tab, 1, MEPF_CELL);
-  return para;
+    ME_Paragraph *para;
+    WCHAR tab = '\t';
+
+    para = table_insert_end_para( editor, editor->pCursors, &tab, 1, MEPF_CELL );
+    return para_get_di( para );
 }
 
 ME_DisplayItem* ME_InsertTableRowEndFromCursor(ME_TextEditor *editor)
 {
-  ME_DisplayItem *para;
-  para = ME_InsertEndParaFromCursor(editor, 0, cr_lf, 2, MEPF_ROWEND);
-  return para->member.para.prev_para;
+    ME_Paragraph *para;
+
+    para = table_insert_end_para( editor, editor->pCursors, cr_lf, 2, MEPF_ROWEND );
+    return para_get_di( para_prev( para ) );
 }
 
 ME_Paragraph* table_row_end( ME_Paragraph *para )
