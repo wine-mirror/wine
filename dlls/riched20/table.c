@@ -172,6 +172,26 @@ ME_Paragraph* table_outer_para( ME_Paragraph *para )
   return para;
 }
 
+ME_Cell *table_row_first_cell( ME_Paragraph *para )
+{
+    if (!para_in_table( para )) return NULL;
+
+    para = para_next( table_row_start( para ) );
+    return para_cell( para );
+}
+
+ME_Cell *cell_next( ME_Cell *cell )
+{
+    if (!cell->next_cell) return NULL;
+    return &cell->next_cell->member.cell;
+}
+
+ME_Cell *cell_prev( ME_Cell *cell )
+{
+    if (!cell->prev_cell) return NULL;
+    return &cell->prev_cell->member.cell;
+}
+
 /* Make a bunch of assertions to make sure tables haven't been corrupted.
  *
  * These invariants may not hold true in the middle of streaming in rich text

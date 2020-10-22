@@ -124,6 +124,12 @@ BOOL para_in_table( ME_Paragraph *para )
     return para->fmt.wEffects & PFE_TABLE;
 }
 
+ME_Cell *para_cell( ME_Paragraph *para )
+{
+    if (!para->pCell) return NULL;
+    return &para->pCell->member.cell;
+}
+
 void ME_MakeFirstParagraph(ME_TextEditor *editor)
 {
   static const WCHAR cr_lf[] = {'\r','\n',0};

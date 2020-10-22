@@ -204,6 +204,7 @@ void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt) DECLSPE
 void ME_MarkAllForWrapping(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_SetDefaultParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt) DECLSPEC_HIDDEN;
 int get_total_width(ME_TextEditor *editor) DECLSPEC_HIDDEN;
+ME_Cell *para_cell( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 void para_destroy( ME_TextEditor *editor, ME_Paragraph *item ) DECLSPEC_HIDDEN;
 ME_Run *para_end_run( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Run *para_first_run( ME_Paragraph *para ) DECLSPEC_HIDDEN;
@@ -279,6 +280,8 @@ ME_Paragraph *editor_first_para( ME_TextEditor *editor ) DECLSPEC_HIDDEN;
 
 /* table.c */
 BOOL ME_IsInTable(ME_DisplayItem *pItem) DECLSPEC_HIDDEN;
+ME_Cell *cell_next( ME_Cell *cell ) DECLSPEC_HIDDEN;
+ME_Cell *cell_prev( ME_Cell *cell ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_append_row( ME_TextEditor *editor, ME_Paragraph *table_row ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_insert_cell( ME_TextEditor *editor, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_insert_row_end( ME_TextEditor *editor, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
@@ -286,6 +289,7 @@ ME_Paragraph *table_insert_row_start( ME_TextEditor *editor, ME_Cursor *cursor )
 ME_Paragraph *table_insert_row_start_at_para( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_outer_para( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_row_end( ME_Paragraph *para ) DECLSPEC_HIDDEN;
+ME_Cell *table_row_first_cell( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_row_start( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 void ME_CheckTablesForCorruption(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, ME_Cursor *c, int *nChars) DECLSPEC_HIDDEN;
@@ -293,6 +297,11 @@ void ME_TabPressedInTable(ME_TextEditor *editor, BOOL bSelectedRow) DECLSPEC_HID
 void ME_MoveCursorFromTableRowStartParagraph(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 struct RTFTable *ME_MakeTableDef(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_InitTableDef(ME_TextEditor *editor, struct RTFTable *tableDef) DECLSPEC_HIDDEN;
+static inline ME_DisplayItem *cell_get_di(ME_Cell *cell)
+{
+    return (ME_DisplayItem *)((ptrdiff_t)cell - offsetof(ME_DisplayItem, member));
+}
+
 
 /* txthost.c */
 ITextHost *ME_CreateTextHost(HWND hwnd, CREATESTRUCTW *cs, BOOL bEmulateVersion10) DECLSPEC_HIDDEN;

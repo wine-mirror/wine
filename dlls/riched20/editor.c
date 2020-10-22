@@ -987,8 +987,9 @@ void ME_RTFSpecialCharHook(RTF_Info *info)
       /* else fall through since v4.1 treats rtfNestRow and rtfRow the same */
     case rtfRow:
     {
-      ME_DisplayItem *cell, *run;
+      ME_DisplayItem *run;
       ME_Paragraph *para;
+      ME_Cell *cell;
       int i;
 
       if (!tableDef)
@@ -1004,44 +1005,44 @@ void ME_RTFSpecialCharHook(RTF_Info *info)
           info->nestingLevel++;
         }
         para = tableDef->row_start;
-        cell = ME_FindItemFwd( para_get_di( para ), diCell );
-        assert(cell && !cell->member.cell.prev_cell);
+        cell = table_row_first_cell( para );
+        assert( cell && !cell_prev( cell ) );
         if (tableDef->numCellsDefined < 1)
         {
           /* 2000 twips appears to be the cell size that native richedit uses
            * when no cell sizes are specified. */
-          const int defaultCellSize = 2000;
-          int nRightBoundary = defaultCellSize;
-          cell->member.cell.nRightBoundary = nRightBoundary;
-          while (cell->member.cell.next_cell) {
-            cell = cell->member.cell.next_cell;
-            nRightBoundary += defaultCellSize;
-            cell->member.cell.nRightBoundary = nRightBoundary;
+          const int default_size = 2000;
+          int right_boundary = default_size;
+          cell->nRightBoundary = right_boundary;
+          while (cell_next( cell ))
+          {
+            cell = cell_next( cell );
+            right_boundary += default_size;
+            cell->nRightBoundary = right_boundary;
           }
           para = table_insert_cell( info->editor, info->editor->pCursors );
-          cell = para->pCell;
-          cell->member.cell.nRightBoundary = nRightBoundary;
+          cell = para_cell( para );
+          cell->nRightBoundary = right_boundary;
         }
         else
         {
           for (i = 0; i < tableDef->numCellsDefined; i++)
           {
             RTFCell *cellDef = &tableDef->cells[i];
-            cell->member.cell.nRightBoundary = cellDef->rightBoundary;
-            ME_ApplyBorderProperties(info, &cell->member.cell.border,
-                                     cellDef->border);
-            cell = cell->member.cell.next_cell;
+            cell->nRightBoundary = cellDef->rightBoundary;
+            ME_ApplyBorderProperties( info, &cell->border, cellDef->border );
+            cell = cell_next( cell );
             if (!cell)
             {
               para = table_insert_cell( info->editor, info->editor->pCursors );
-              cell = para->pCell;
+              cell = para_cell( para );
             }
           }
           /* Cell for table row delimiter is empty */
-          cell->member.cell.nRightBoundary = tableDef->cells[i-1].rightBoundary;
+          cell->nRightBoundary = tableDef->cells[i - 1].rightBoundary;
         }
 
-        run = ME_FindItemFwd(cell, diRun);
+        run = ME_FindItemFwd( cell_get_di( cell) , diRun );
         if (info->editor->pCursors[0].pRun != run ||
             info->editor->pCursors[0].nOffset)
         {
