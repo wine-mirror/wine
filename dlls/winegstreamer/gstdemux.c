@@ -2032,45 +2032,57 @@ static ULONG WINAPI GST_QualityControl_Release(IQualityControl *iface)
     return IPin_Release(&pin->pin.pin.IPin_iface);
 }
 
-static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm)
+static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality q)
 {
     struct gstdemux_source *pin = impl_from_IQualityControl(iface);
     GstQOSType type = GST_QOS_TYPE_OVERFLOW;
     GstClockTime timestamp;
     GstClockTimeDiff diff;
-    GstEvent *evt;
+    GstEvent *event;
 
-    TRACE("(%p)->(%p, { 0x%x %u %s %s })\n", pin, sender,
-            qm.Type, qm.Proportion,
-            wine_dbgstr_longlong(qm.Late),
-            wine_dbgstr_longlong(qm.TimeStamp));
+    TRACE("pin %p, sender %p, type %s, proportion %u, late %s, timestamp %s.\n",
+            pin, sender, q.Type == Famine ? "Famine" : "Flood", q.Proportion,
+            debugstr_time(q.Late), debugstr_time(q.TimeStamp));
 
     mark_wine_thread();
 
-    /* GSTQOS_TYPE_OVERFLOW is also used for buffers that arrive on time, but
+    /* GST_QOS_TYPE_OVERFLOW is also used for buffers that arrive on time, but
      * DirectShow filters might use Famine, so check that there actually is an
      * underrun. */
-    if (qm.Type == Famine && qm.Proportion > 1000)
+    if (q.Type == Famine && q.Proportion < 1000)
         type = GST_QOS_TYPE_UNDERFLOW;
 
     /* DirectShow filters sometimes pass negative timestamps (Audiosurf uses the
      * current time instead of the time of the last buffer). GstClockTime is
      * unsigned, so clamp it to 0. */
-    timestamp = max(qm.TimeStamp * 100, 0);
+    timestamp = max(q.TimeStamp * 100, 0);
 
     /* The documentation specifies that timestamp + diff must be nonnegative. */
-    diff = qm.Late * 100;
+    diff = q.Late * 100;
     if (diff < 0 && timestamp < (GstClockTime)-diff)
         diff = -timestamp;
 
-    evt = gst_event_new_qos(type, qm.Proportion / 1000.0, diff, timestamp);
+    /* DirectShow "Proportion" describes what percentage of buffers the upstream
+     * filter should keep (i.e. dropping the rest). If frames are late, the
+     * proportion will be less than 1. For example, a proportion of 500 means
+     * that the element should drop half of its frames, essentially because
+     * frames are taking twice as long as they should to arrive.
+     *
+     * GStreamer "proportion" is the inverse of this; it describes how much
+     * faster the upstream element should produce frames. I.e. if frames are
+     * taking twice as long as they should to arrive, we want the frames to be
+     * decoded twice as fast, and so we pass 2.0 to GStreamer. */
 
-    if (!evt) {
-        WARN("Failed to create QOS event\n");
-        return E_INVALIDARG;
+    if (!q.Proportion)
+    {
+        WARN("Ignoring quality message with zero proportion.\n");
+        return S_OK;
     }
 
-    gst_pad_push_event(pin->my_sink, evt);
+    if (!(event = gst_event_new_qos(type, 1000.0 / q.Proportion, diff, timestamp)))
+        ERR("Failed to create QOS event.\n");
+
+    gst_pad_push_event(pin->my_sink, event);
 
     return S_OK;
 }
