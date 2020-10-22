@@ -379,6 +379,7 @@ static const struct column col_sounddevice[] =
     { L"Manufacturer", CIM_STRING },
     { L"Name",         CIM_STRING },
     { L"ProductName",  CIM_STRING },
+    { L"Status",       CIM_STRING },
     { L"StatusInfo",   CIM_UINT16 },
 };
 static const struct column col_stdregprov[] =
@@ -768,6 +769,7 @@ struct record_sounddevice
     const WCHAR *manufacturer;
     const WCHAR *name;
     const WCHAR *productname;
+    const WCHAR *status;
     UINT16       statusinfo;
 };
 struct record_stdregprov
@@ -886,7 +888,7 @@ static const struct record_quickfixengineering data_quickfixengineering[] =
 };
 static const struct record_sounddevice data_sounddevice[] =
 {
-    { L"The Wine Project", L"Wine Audio Device", L"Wine Audio Device", 3 /* enabled */ }
+    { L"The Wine Project", L"Wine Audio Device", L"Wine Audio Device", L"OK", 3 /* enabled */ }
 };
 static const struct record_stdregprov data_stdregprov[] =
 {
