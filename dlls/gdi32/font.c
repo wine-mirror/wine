@@ -430,8 +430,12 @@ struct gdi_font *alloc_gdi_font(void)
 
 void free_gdi_font( struct gdi_font *font )
 {
+    DWORD i;
+
     if (font->private) font_funcs->destroy_font( font );
     free_font_handle( font->handle );
+    for (i = 0; i < font->gm_size; i++) HeapFree( GetProcessHeap(), 0, font->gm[i] );
+    HeapFree( GetProcessHeap(), 0, font->gm );
     HeapFree( GetProcessHeap(), 0, font->name );
     HeapFree( GetProcessHeap(), 0, font->fileinfo );
     HeapFree( GetProcessHeap(), 0, font );
@@ -467,6 +471,62 @@ void set_gdi_font_file_info( struct gdi_font *font, const WCHAR *file, SIZE_T da
         strcpyW( font->fileinfo->path, file );
     }
     else font->fileinfo->size.QuadPart = data_size;
+}
+
+struct glyph_metrics
+{
+    GLYPHMETRICS gm;
+    ABC          abc;  /* metrics of the unrotated char */
+    BOOL         init;
+};
+
+#define GM_BLOCK_SIZE 128
+
+/* TODO: GGO format support */
+BOOL get_gdi_font_glyph_metrics( struct gdi_font *font, UINT index, GLYPHMETRICS *gm, ABC *abc )
+{
+    UINT block = index / GM_BLOCK_SIZE;
+    UINT entry = index % GM_BLOCK_SIZE;
+
+    if (block < font->gm_size && font->gm[block] && font->gm[block][entry].init)
+    {
+        *gm  = font->gm[block][entry].gm;
+        *abc = font->gm[block][entry].abc;
+
+        TRACE( "cached gm: %u, %u, %s, %d, %d abc: %d, %u, %d\n",
+               gm->gmBlackBoxX, gm->gmBlackBoxY, wine_dbgstr_point( &gm->gmptGlyphOrigin ),
+               gm->gmCellIncX, gm->gmCellIncY, abc->abcA, abc->abcB, abc->abcC );
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+void set_gdi_font_glyph_metrics( struct gdi_font *font, UINT index, const GLYPHMETRICS *gm, const ABC *abc )
+{
+    UINT block = index / GM_BLOCK_SIZE;
+    UINT entry = index % GM_BLOCK_SIZE;
+
+    if (block >= font->gm_size)
+    {
+        struct glyph_metrics **ptr;
+
+        if (font->gm)
+            ptr = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, font->gm, (block + 1) * sizeof(*ptr) );
+        else
+            ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, (block + 1) * sizeof(*ptr) );
+        if (!ptr) return;
+        font->gm_size = block + 1;
+        font->gm = ptr;
+    }
+    if (!font->gm[block])
+    {
+        font->gm[block] = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**font->gm) * GM_BLOCK_SIZE );
+        if (!font->gm[block]) return;
+    }
+    font->gm[block][entry].gm   = *gm;
+    font->gm[block][entry].abc  = *abc;
+    font->gm[block][entry].init = TRUE;
 }
 
 /* font cache */

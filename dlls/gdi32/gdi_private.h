@@ -303,11 +303,15 @@ struct char_width_info
 
 typedef struct { FLOAT eM11, eM12, eM21, eM22; } FMAT2;
 
+struct glyph_metrics;
+
 struct gdi_font
 {
     struct list            entry;
     struct list            unused_entry;
     DWORD                  refcount;
+    DWORD                  gm_size;
+    struct glyph_metrics **gm;
     /* the following members can be accessed without locking, they are never modified after creation */
     void                  *private;  /* font backend private data */
     DWORD                  handle;
@@ -375,6 +379,10 @@ extern struct gdi_font *find_cached_gdi_font( const LOGFONTW *lf, const FMAT2 *m
                                               BOOL can_use_bitmap ) DECLSPEC_HIDDEN;
 extern void set_gdi_font_name( struct gdi_font *font, const WCHAR *name ) DECLSPEC_HIDDEN;
 extern void set_gdi_font_file_info( struct gdi_font *font, const WCHAR *file, SIZE_T data_size ) DECLSPEC_HIDDEN;
+extern BOOL get_gdi_font_glyph_metrics( struct gdi_font *font, UINT index,
+                                        GLYPHMETRICS *gm, ABC *abc ) DECLSPEC_HIDDEN;
+extern void set_gdi_font_glyph_metrics( struct gdi_font *font, UINT index,
+                                        const GLYPHMETRICS *gm, const ABC *abc ) DECLSPEC_HIDDEN;
 extern void font_init(void) DECLSPEC_HIDDEN;
 
 /* freetype.c */

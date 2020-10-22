@@ -304,12 +304,6 @@ typedef struct tagFamily {
     struct list *replacement;
 } Family;
 
-typedef struct {
-    GLYPHMETRICS gm;
-    ABC          abc;  /* metrics of the unrotated char */
-    BOOL         init;
-} GM;
-
 typedef struct tagGdiFont GdiFont;
 
 typedef struct {
@@ -320,8 +314,6 @@ typedef struct {
 
 struct tagGdiFont {
     struct gdi_font *gdi_font;
-    GM **gm;
-    DWORD gmsize;
     OUTLINETEXTMETRICW *potm;
     DWORD total_kern_pairs;
     KERNINGPAIR *kern_pairs;
@@ -355,9 +347,6 @@ struct enum_charset_list {
     DWORD total;
     struct enum_charset_element element[32];
 };
-
-#define GM_BLOCK_SIZE 128
-#define FONT_GM(font,idx) (&(font)->gm[(idx) / GM_BLOCK_SIZE][(idx) % GM_BLOCK_SIZE])
 
 static struct list system_links = LIST_INIT(system_links);
 
@@ -4068,9 +4057,6 @@ static UINT get_nearest_charset(const WCHAR *family_name, Face *face, UINT *cp)
 static BOOL CDECL freetype_alloc_font( struct gdi_font *font )
 {
     GdiFont *ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
-    ret->gmsize = 1;
-    ret->gm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(GM*));
-    ret->gm[0] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(GM) * GM_BLOCK_SIZE);
     ret->potm = NULL;
     ret->total_kern_pairs = (DWORD)-1;
     ret->kern_pairs = NULL;
@@ -4087,7 +4073,6 @@ static void CDECL freetype_destroy_font( struct gdi_font *gdi_font )
 {
     GdiFont *font = get_font_ptr( gdi_font );
     CHILD_FONT *child, *child_next;
-    DWORD i;
 
     LIST_FOR_EACH_ENTRY_SAFE( child, child_next, &font->child_fonts, CHILD_FONT, entry )
     {
@@ -4102,58 +4087,8 @@ static void CDECL freetype_destroy_font( struct gdi_font *gdi_font )
     if (font->mapping) unmap_font_file( font->mapping );
     HeapFree(GetProcessHeap(), 0, font->kern_pairs);
     HeapFree(GetProcessHeap(), 0, font->potm);
-    for (i = 0; i < font->gmsize; i++)
-        HeapFree(GetProcessHeap(),0,font->gm[i]);
-    HeapFree(GetProcessHeap(), 0, font->gm);
     HeapFree(GetProcessHeap(), 0, font->GSUB_Table);
     HeapFree(GetProcessHeap(), 0, font);
-}
-
-/* TODO: GGO format support */
-static BOOL get_cached_metrics( GdiFont *font, UINT index, GLYPHMETRICS *gm, ABC *abc )
-{
-    UINT block = index / GM_BLOCK_SIZE;
-    UINT entry = index % GM_BLOCK_SIZE;
-
-    if (block < font->gmsize && font->gm[block] && font->gm[block][entry].init)
-    {
-        *gm  = font->gm[block][entry].gm;
-        *abc = font->gm[block][entry].abc;
-
-        TRACE( "cached gm: %u, %u, %s, %d, %d abc: %d, %u, %d\n",
-               gm->gmBlackBoxX, gm->gmBlackBoxY, wine_dbgstr_point( &gm->gmptGlyphOrigin ),
-               gm->gmCellIncX, gm->gmCellIncY, abc->abcA, abc->abcB, abc->abcC );
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-static void set_cached_metrics( GdiFont *font, UINT index, const GLYPHMETRICS *gm, const ABC *abc )
-{
-    UINT block = index / GM_BLOCK_SIZE;
-    UINT entry = index % GM_BLOCK_SIZE;
-
-    if (block >= font->gmsize)
-    {
-        GM **ptr = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                font->gm, (block + 1) * sizeof(GM *) );
-        if (!ptr) return;
-
-        font->gmsize = block + 1;
-        font->gm = ptr;
-    }
-
-    if (!font->gm[block])
-    {
-        font->gm[block] = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                     sizeof(GM) * GM_BLOCK_SIZE );
-        if (!font->gm[block]) return;
-    }
-
-    font->gm[block][entry].gm   = *gm;
-    font->gm[block][entry].abc  = *abc;
-    font->gm[block][entry].init = TRUE;
 }
 
 static DWORD get_font_data( GdiFont *font, DWORD table, DWORD offset, LPVOID buf, DWORD cbData)
@@ -6805,7 +6740,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     format &= ~GGO_UNHINTED;
 
     if (format == GGO_METRICS && is_identity_MAT2(lpmat) &&
-        get_cached_metrics( font, glyph_index, lpgm, abc ))
+        get_gdi_font_glyph_metrics( gdi_font, glyph_index, lpgm, abc ))
         return 1; /* FIXME */
 
     needsTransform = get_transform_matrices( font, tategaki, lpmat, matrices );
@@ -6860,7 +6795,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
     if ((format == GGO_METRICS || format == GGO_BITMAP || format ==  WINE_GGO_GRAY16_BITMAP) &&
         is_identity_MAT2(lpmat)) /* don't cache custom transforms */
-        set_cached_metrics( font, glyph_index, &gm, abc );
+        set_gdi_font_glyph_metrics( gdi_font, glyph_index, &gm, abc );
 
     if(format == GGO_METRICS)
     {
