@@ -344,19 +344,12 @@ struct font_backend_funcs
 {
     BOOL  (CDECL *pEnumFonts)( LOGFONTW *lf, FONTENUMPROCW proc, LPARAM lparam );
     BOOL  (CDECL *pFontIsLinked)( struct gdi_font *font );
-    BOOL  (CDECL *pGetCharABCWidths)( struct gdi_font *font, UINT first, UINT last, ABC *buffer );
-    BOOL  (CDECL *pGetCharABCWidthsI)( struct gdi_font *font, UINT first, UINT count, WORD *gi, ABC *buffer );
-    BOOL  (CDECL *pGetCharWidth)( struct gdi_font *font, UINT first, UINT last, INT *buffer );
     BOOL  (CDECL *pGetCharWidthInfo)( struct gdi_font *font, struct char_width_info *info );
     DWORD (CDECL *pGetFontData)( struct gdi_font *font, DWORD table, DWORD offset, void *buf, DWORD size );
     DWORD (CDECL *pGetFontUnicodeRanges)( struct gdi_font *font, GLYPHSET *glyphset );
     DWORD (CDECL *pGetGlyphIndices)( struct gdi_font *font, const WCHAR *str, INT count, WORD *gi, DWORD flags );
-    DWORD (CDECL *pGetGlyphOutline)( struct gdi_font *font, UINT glyph, UINT format,
-                                     GLYPHMETRICS *gm, DWORD buflen, void *buf, const MAT2 *mat );
     DWORD (CDECL *pGetKerningPairs)( struct gdi_font *font, DWORD count, KERNINGPAIR *pairs );
     UINT  (CDECL *pGetOutlineTextMetrics)( struct gdi_font *font, UINT size, OUTLINETEXTMETRICW *metrics );
-    BOOL  (CDECL *pGetTextExtentExPoint)( struct gdi_font *font, LPCWSTR wstr, INT count, INT *dxs );
-    BOOL  (CDECL *pGetTextExtentExPointI)( struct gdi_font *font, const WORD *indices, INT count, INT *dxs );
     BOOL  (CDECL *pGetTextMetrics)( struct gdi_font *font, TEXTMETRICW *metrics );
     struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont, UINT *aa_flags, UINT default_aa_flags );
 
@@ -369,6 +362,8 @@ struct font_backend_funcs
                                      void *buff, DWORD buff_size );
 
     BOOL  (CDECL *alloc_font)( struct gdi_font *font );
+    DWORD (CDECL *get_glyph_outline)( struct gdi_font *font, UINT glyph, UINT format,
+                                      GLYPHMETRICS *gm, ABC *abc, DWORD buflen, void *buf, const MAT2 *mat );
     void  (CDECL *destroy_font)( struct gdi_font *font );
 };
 

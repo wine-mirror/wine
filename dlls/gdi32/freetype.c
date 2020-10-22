@@ -6662,11 +6662,15 @@ static FT_Int get_load_flags( UINT format )
     return load_flags;
 }
 
-static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
-                               LPGLYPHMETRICS lpgm, ABC *abc, DWORD buflen, LPVOID buf,
-                               const MAT2* lpmat)
+/*************************************************************
+ * freetype_get_glyph_outline
+ */
+static DWORD CDECL freetype_get_glyph_outline( struct gdi_font *incoming_gdi_font, UINT glyph, UINT format,
+                                               GLYPHMETRICS *lpgm, ABC *abc, DWORD buflen, void *buf,
+                                               const MAT2 *lpmat )
 {
     GLYPHMETRICS gm;
+    GdiFont *incoming_font = get_font_ptr( incoming_gdi_font );
     FT_Face ft_face = incoming_font->ft_face;
     GdiFont *font = incoming_font;
     struct gdi_font *gdi_font = font->gdi_font;
@@ -7365,17 +7369,6 @@ end:
 }
 
 /*************************************************************
- * freetype_GetGlyphOutline
- */
-static DWORD CDECL freetype_GetGlyphOutline( struct gdi_font *font, UINT glyph, UINT format,
-                                             LPGLYPHMETRICS lpgm, DWORD buflen, LPVOID buf, const MAT2 *lpmat )
-{
-    ABC abc;
-
-    return get_glyph_outline( get_font_ptr(font), glyph, format, lpgm, &abc, buflen, buf, lpmat );
-}
-
-/*************************************************************
  * freetype_GetTextMetrics
  */
 static BOOL CDECL freetype_GetTextMetrics( struct gdi_font *font, TEXTMETRICW *metrics )
@@ -7499,27 +7492,6 @@ done:
 }
 
 /*************************************************************
- * freetype_GetCharWidth
- */
-static BOOL CDECL freetype_GetCharWidth( struct gdi_font *font, UINT firstChar, UINT lastChar, LPINT buffer )
-{
-    static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
-    UINT c;
-    GLYPHMETRICS gm;
-    ABC abc;
-
-    TRACE("%p, %d, %d, %p\n", font, firstChar, lastChar, buffer);
-
-    for(c = firstChar; c <= lastChar; c++) {
-        if (get_glyph_outline( get_font_ptr(font), c, GGO_METRICS, &gm, &abc, 0, NULL, &identity ) == GDI_ERROR)
-            buffer[c - firstChar] = 0;
-        else
-            buffer[c - firstChar] = abc.abcA + abc.abcB + abc.abcC;
-    }
-    return TRUE;
-}
-
-/*************************************************************
  * freetype_GetCharWidthInfo
  */
 static BOOL CDECL freetype_GetCharWidthInfo( struct gdi_font *gdi_font, struct char_width_info *info )
@@ -7542,87 +7514,6 @@ static BOOL CDECL freetype_GetCharWidthInfo( struct gdi_font *gdi_font, struct c
 
     info->unk = 0;
 
-    return TRUE;
-}
-
-/*************************************************************
- * freetype_GetCharABCWidths
- */
-static BOOL CDECL freetype_GetCharABCWidths( struct gdi_font *font, UINT firstChar, UINT lastChar, LPABC buffer )
-{
-    static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
-    UINT c;
-    GLYPHMETRICS gm;
-
-    TRACE("%p, %d, %d, %p\n", font, firstChar, lastChar, buffer);
-
-    for(c = firstChar; c <= lastChar; c++, buffer++)
-        get_glyph_outline( get_font_ptr(font), c, GGO_METRICS, &gm, buffer, 0, NULL, &identity );
-
-    return TRUE;
-}
-
-/*************************************************************
- * freetype_GetCharABCWidthsI
- */
-static BOOL CDECL freetype_GetCharABCWidthsI( struct gdi_font *gdi_font, UINT firstChar, UINT count, LPWORD pgi, LPABC buffer )
-{
-    GdiFont *font = get_font_ptr(gdi_font);
-    static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
-    UINT c;
-    GLYPHMETRICS gm;
-
-    if(!FT_HAS_HORIZONTAL(font->ft_face))
-        return FALSE;
-
-    for(c = 0; c < count; c++, buffer++)
-        get_glyph_outline( font, pgi ? pgi[c] : firstChar + c, GGO_METRICS | GGO_GLYPH_INDEX,
-                           &gm, buffer, 0, NULL, &identity );
-
-    return TRUE;
-}
-
-/*************************************************************
- * freetype_GetTextExtentExPoint
- */
-static BOOL CDECL freetype_GetTextExtentExPoint( struct gdi_font *font, LPCWSTR wstr, INT count, INT *dxs )
-{
-    static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
-    INT idx, pos;
-    ABC abc;
-    GLYPHMETRICS gm;
-
-    TRACE("%p, %s, %d\n", font, debugstr_wn(wstr, count), count);
-
-    for (idx = pos = 0; idx < count; idx++)
-    {
-        get_glyph_outline( get_font_ptr(font), wstr[idx], GGO_METRICS, &gm, &abc, 0, NULL, &identity );
-        pos += abc.abcA + abc.abcB + abc.abcC;
-        dxs[idx] = pos;
-    }
-
-    return TRUE;
-}
-
-/*************************************************************
- * freetype_GetTextExtentExPointI
- */
-static BOOL CDECL freetype_GetTextExtentExPointI( struct gdi_font *font, const WORD *indices, INT count, INT *dxs )
-{
-    static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
-    INT idx, pos;
-    ABC abc;
-    GLYPHMETRICS gm;
-
-    TRACE("%p, %p, %d\n", font, indices, count);
-
-    for (idx = pos = 0; idx < count; idx++)
-    {
-        get_glyph_outline( get_font_ptr(font), indices[idx], GGO_METRICS | GGO_GLYPH_INDEX,
-                           &gm, &abc, 0, NULL, &identity );
-        pos += abc.abcA + abc.abcB + abc.abcC;
-        dxs[idx] = pos;
-    }
     return TRUE;
 }
 
@@ -7989,18 +7880,12 @@ static const struct font_backend_funcs font_funcs =
 {
     freetype_EnumFonts,
     freetype_FontIsLinked,
-    freetype_GetCharABCWidths,
-    freetype_GetCharABCWidthsI,
-    freetype_GetCharWidth,
     freetype_GetCharWidthInfo,
     freetype_GetFontData,
     freetype_GetFontUnicodeRanges,
     freetype_GetGlyphIndices,
-    freetype_GetGlyphOutline,
     freetype_GetKerningPairs,
     freetype_GetOutlineTextMetrics,
-    freetype_GetTextExtentExPoint,
-    freetype_GetTextExtentExPointI,
     freetype_GetTextMetrics,
     freetype_SelectFont,
     freetype_AddFontResourceEx,
@@ -8009,6 +7894,7 @@ static const struct font_backend_funcs font_funcs =
     freetype_CreateScalableFontResource,
     freetype_GetFontFileData,
     freetype_alloc_font,
+    freetype_get_glyph_outline,
     freetype_destroy_font
 };
 

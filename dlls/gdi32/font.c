@@ -57,6 +57,8 @@ static inline struct font_physdev *get_font_dev( PHYSDEV dev )
 
 static const struct font_backend_funcs *font_funcs;
 
+static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
+
   /* Device -> World size conversion */
 
 /* Performs a device to world transformation on the specified width (which
@@ -937,17 +939,22 @@ static BOOL CDECL font_FontIsLinked( PHYSDEV dev )
 static BOOL CDECL font_GetCharABCWidths( PHYSDEV dev, UINT first, UINT last, ABC *buffer )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    BOOL ret;
+    GLYPHMETRICS gm;
+    UINT c;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetCharABCWidths );
         return dev->funcs->pGetCharABCWidths( dev, first, last, buffer );
     }
+
+    TRACE( "%p, %u, %u, %p\n", physdev->font, first, last, buffer );
+
     EnterCriticalSection( &font_cs );
-    ret = font_funcs->pGetCharABCWidths( physdev->font, first, last, buffer );
+    for (c = first; c <= last; c++, buffer++)
+        font_funcs->get_glyph_outline( physdev->font, c, GGO_METRICS, &gm, buffer, 0, NULL, &identity );
     LeaveCriticalSection( &font_cs );
-    return ret;
+    return TRUE;
 }
 
 
@@ -957,17 +964,23 @@ static BOOL CDECL font_GetCharABCWidths( PHYSDEV dev, UINT first, UINT last, ABC
 static BOOL CDECL font_GetCharABCWidthsI( PHYSDEV dev, UINT first, UINT count, WORD *gi, ABC *buffer )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    BOOL ret;
+    GLYPHMETRICS gm;
+    UINT c;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetCharABCWidthsI );
         return dev->funcs->pGetCharABCWidthsI( dev, first, count, gi, buffer );
     }
+
+    TRACE( "%p, %u, %u, %p\n", physdev->font, first, count, buffer );
+
     EnterCriticalSection( &font_cs );
-    ret = font_funcs->pGetCharABCWidthsI( physdev->font, first, count, gi, buffer );
+    for (c = 0; c < count; c++, buffer++)
+        font_funcs->get_glyph_outline( physdev->font, gi ? gi[c] : first + c, GGO_METRICS | GGO_GLYPH_INDEX,
+                                       &gm, buffer, 0, NULL, &identity );
     LeaveCriticalSection( &font_cs );
-    return ret;
+    return TRUE;
 }
 
 
@@ -977,17 +990,29 @@ static BOOL CDECL font_GetCharABCWidthsI( PHYSDEV dev, UINT first, UINT count, W
 static BOOL CDECL font_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *buffer )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    BOOL ret;
+    GLYPHMETRICS gm;
+    ABC abc;
+    UINT c;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetCharWidth );
         return dev->funcs->pGetCharWidth( dev, first, last, buffer );
     }
+
+    TRACE( "%p, %d, %d, %p\n", physdev->font, first, last, buffer );
+
     EnterCriticalSection( &font_cs );
-    ret = font_funcs->pGetCharWidth( physdev->font, first, last, buffer );
+    for (c = first; c <= last; c++)
+    {
+        if (font_funcs->get_glyph_outline( physdev->font, c, GGO_METRICS,
+                                           &gm, &abc, 0, NULL, &identity ) == GDI_ERROR)
+            buffer[c - first] = 0;
+        else
+            buffer[c - first] = abc.abcA + abc.abcB + abc.abcC;
+    }
     LeaveCriticalSection( &font_cs );
-    return ret;
+    return TRUE;
 }
 
 
@@ -1100,6 +1125,7 @@ static DWORD CDECL font_GetGlyphOutline( PHYSDEV dev, UINT glyph, UINT format,
 {
     struct font_physdev *physdev = get_font_dev( dev );
     DWORD ret;
+    ABC abc;
 
     if (!physdev->font)
     {
@@ -1107,7 +1133,7 @@ static DWORD CDECL font_GetGlyphOutline( PHYSDEV dev, UINT glyph, UINT format,
         return dev->funcs->pGetGlyphOutline( dev, glyph, format, gm, buflen, buf, mat );
     }
     EnterCriticalSection( &font_cs );
-    ret = font_funcs->pGetGlyphOutline( physdev->font, glyph, format, gm, buflen, buf, mat );
+    ret = font_funcs->get_glyph_outline( physdev->font, glyph, format, gm, &abc, buflen, buf, mat );
     LeaveCriticalSection( &font_cs );
     return ret;
 }
@@ -1179,17 +1205,27 @@ static UINT CDECL font_GetTextCharsetInfo( PHYSDEV dev, FONTSIGNATURE *fs, DWORD
 static BOOL CDECL font_GetTextExtentExPoint( PHYSDEV dev, const WCHAR *str, INT count, INT *dxs )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    BOOL ret;
+    GLYPHMETRICS gm;
+    INT i, pos;
+    ABC abc;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetTextExtentExPoint );
         return dev->funcs->pGetTextExtentExPoint( dev, str, count, dxs );
     }
+
+    TRACE( "%p, %s, %d\n", physdev->font, debugstr_wn(str, count), count );
+
     EnterCriticalSection( &font_cs );
-    ret = font_funcs->pGetTextExtentExPoint( physdev->font, str, count, dxs );
+    for (i = pos = 0; i < count; i++)
+    {
+        font_funcs->get_glyph_outline( physdev->font, str[i], GGO_METRICS, &gm, &abc, 0, NULL, &identity );
+        pos += abc.abcA + abc.abcB + abc.abcC;
+        dxs[i] = pos;
+    }
     LeaveCriticalSection( &font_cs );
-    return ret;
+    return TRUE;
 }
 
 
@@ -1199,17 +1235,28 @@ static BOOL CDECL font_GetTextExtentExPoint( PHYSDEV dev, const WCHAR *str, INT 
 static BOOL CDECL font_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, INT count, INT *dxs )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    BOOL ret;
+    GLYPHMETRICS gm;
+    INT i, pos;
+    ABC abc;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetTextExtentExPointI );
         return dev->funcs->pGetTextExtentExPointI( dev, indices, count, dxs );
     }
+
+    TRACE( "%p, %p, %d\n", physdev->font, indices, count );
+
     EnterCriticalSection( &font_cs );
-    ret = font_funcs->pGetTextExtentExPointI( physdev->font, indices, count, dxs );
+    for (i = pos = 0; i < count; i++)
+    {
+        font_funcs->get_glyph_outline( physdev->font, indices[i], GGO_METRICS | GGO_GLYPH_INDEX,
+                                       &gm, &abc, 0, NULL, &identity );
+        pos += abc.abcA + abc.abcB + abc.abcC;
+        dxs[i] = pos;
+    }
     LeaveCriticalSection( &font_cs );
-    return ret;
+    return TRUE;
 }
 
 
@@ -3140,7 +3187,6 @@ BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
 static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT flags, UINT aa_flags,
                                GLYPHMETRICS *metrics, struct gdi_image_bits *image )
 {
-    static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
     UINT indices[3] = {0, 0, 0x20};
     unsigned int i;
     DWORD ret, size;
