@@ -113,21 +113,19 @@ ME_Paragraph* table_insert_row_start_at_para( ME_TextEditor *editor, ME_Paragrap
 /* Inserts a diCell and starts a new paragraph for the next cell.
  *
  * Returns the first paragraph of the new cell. */
-ME_DisplayItem* ME_InsertTableCellFromCursor(ME_TextEditor *editor)
+ME_Paragraph* table_insert_cell( ME_TextEditor *editor, ME_Cursor *cursor )
 {
-    ME_Paragraph *para;
     WCHAR tab = '\t';
 
-    para = table_insert_end_para( editor, editor->pCursors, &tab, 1, MEPF_CELL );
-    return para_get_di( para );
+    return table_insert_end_para( editor, editor->pCursors, &tab, 1, MEPF_CELL );
 }
 
-ME_DisplayItem* ME_InsertTableRowEndFromCursor(ME_TextEditor *editor)
+ME_Paragraph* table_insert_row_end( ME_TextEditor *editor, ME_Cursor *cursor )
 {
     ME_Paragraph *para;
 
-    para = table_insert_end_para( editor, editor->pCursors, cr_lf, 2, MEPF_ROWEND );
-    return para_get_di( para_prev( para ) );
+    para = table_insert_end_para( editor, cursor, cr_lf, 2, MEPF_ROWEND );
+    return para_prev( para );
 }
 
 ME_Paragraph* table_row_end( ME_Paragraph *para )
@@ -424,13 +422,13 @@ ME_Paragraph* table_append_row( ME_TextEditor *editor, ME_Paragraph *table_row )
     while (cell->member.cell.next_cell)
     {
       cell = cell->member.cell.next_cell;
-      para = &ME_InsertTableCellFromCursor( editor )->member.para;
+      para = table_insert_cell( editor, editor->pCursors );
       insertedCell = ME_FindItemBack( para_get_di( para ), diCell );
       /* Copy cell properties */
       insertedCell->member.cell.nRightBoundary = cell->member.cell.nRightBoundary;
       insertedCell->member.cell.border = cell->member.cell.border;
     };
-    para = &ME_InsertTableRowEndFromCursor(editor)->member.para;
+    para = table_insert_row_end( editor, editor->pCursors );
     para->fmt = prev_table_end->fmt;
     /* return the table row start for the inserted paragraph */
     return para_next( &ME_FindItemFwd( cell, diParagraph )->member.para );
