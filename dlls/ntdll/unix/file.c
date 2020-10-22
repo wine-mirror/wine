@@ -2550,6 +2550,8 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                         goto not_found;
                     }
                 }
+                /* if that did not work, restore previous state of unix_name */
+                unix_name[pos - 1] = 0;
             }
             close( fd );
         }
