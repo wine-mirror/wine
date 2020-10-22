@@ -99,11 +99,10 @@ static void compareUrlArray(const CRYPT_URL_ARRAY *expected,
     }
 }
 
-static WCHAR url[] =
- { 'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',0 };
 
 static void test_getObjectUrl(void)
 {
+    static WCHAR url[] = L"http://winehq.org";
     BOOL ret;
     DWORD urlArraySize = 0, infoSize = 0;
     PCCERT_CONTEXT cert;
