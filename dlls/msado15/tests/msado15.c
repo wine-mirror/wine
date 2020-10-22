@@ -68,6 +68,7 @@ static void test_Recordset(void)
     LONG refs, count, state;
     VARIANT missing, val, index;
     CursorLocationEnum location;
+    CursorTypeEnum cursor;
     BSTR name;
     HRESULT hr;
 
@@ -143,6 +144,11 @@ static void test_Recordset(void)
     hr = _Recordset_get_CursorLocation( recordset, &location );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( location == adUseServer, "got %d\n", location );
+
+    cursor = adOpenUnspecified;
+    hr = _Recordset_get_CursorType( recordset, &cursor );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( cursor == adOpenForwardOnly, "got %d\n", cursor );
 
     VariantInit( &missing );
     hr = _Recordset_AddNew( recordset, missing, missing );

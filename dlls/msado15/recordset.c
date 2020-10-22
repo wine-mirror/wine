@@ -44,6 +44,7 @@ struct recordset
     LONG               index;
     VARIANT           *data;
     CursorLocationEnum cursor_location;
+    CursorTypeEnum     cursor_type;
 };
 
 struct fields
@@ -910,14 +911,22 @@ static HRESULT WINAPI recordset_put_CacheSize( _Recordset *iface, LONG size )
 
 static HRESULT WINAPI recordset_get_CursorType( _Recordset *iface, CursorTypeEnum *cursor_type )
 {
-    FIXME( "%p, %p\n", iface, cursor_type );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p, %p\n", iface, cursor_type );
+
+    *cursor_type = recordset->cursor_type;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_put_CursorType( _Recordset *iface, CursorTypeEnum cursor_type )
 {
-    FIXME( "%p, %d\n", iface, cursor_type );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+
+    TRACE( "%p, %d\n", iface, cursor_type );
+
+    recordset->cursor_type = cursor_type;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_get_EOF( _Recordset *iface, VARIANT_BOOL *eof )
@@ -1546,6 +1555,7 @@ HRESULT Recordset_create( void **obj )
     recordset->refs = 1;
     recordset->index = -1;
     recordset->cursor_location = adUseServer;
+    recordset->cursor_type = adOpenForwardOnly;
 
     *obj = &recordset->Recordset_iface;
     TRACE( "returning iface %p\n", *obj );
