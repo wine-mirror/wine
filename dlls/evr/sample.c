@@ -21,6 +21,8 @@
 #include "evr.h"
 #include "mfapi.h"
 #include "mferror.h"
+#include "d3d9.h"
+#include "dxva2api.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -108,6 +110,7 @@ struct sample_allocator
 
     IMFVideoSampleAllocatorNotify *callback;
     unsigned int free_samples;
+    IDirect3DDeviceManager9 *device_manager;
     CRITICAL_SECTION cs;
 };
 
@@ -168,6 +171,8 @@ static ULONG WINAPI sample_allocator_Release(IMFVideoSampleAllocator *iface)
     {
         if (allocator->callback)
             IMFVideoSampleAllocatorNotify_Release(allocator->callback);
+        if (allocator->device_manager)
+            IDirect3DDeviceManager9_Release(allocator->device_manager);
         DeleteCriticalSection(&allocator->cs);
         heap_free(allocator);
     }
@@ -178,9 +183,27 @@ static ULONG WINAPI sample_allocator_Release(IMFVideoSampleAllocator *iface)
 static HRESULT WINAPI sample_allocator_SetDirectXManager(IMFVideoSampleAllocator *iface,
         IUnknown *manager)
 {
-    FIXME("%p, %p.\n", iface, manager);
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocator(iface);
+    IDirect3DDeviceManager9 *device_manager = NULL;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, manager);
+
+    if (manager && FAILED(hr = IUnknown_QueryInterface(manager, &IID_IDirect3DDeviceManager9,
+            (void **)&device_manager)))
+    {
+        return hr;
+    }
+
+    EnterCriticalSection(&allocator->cs);
+
+    if (allocator->device_manager)
+        IDirect3DDeviceManager9_Release(allocator->device_manager);
+    allocator->device_manager = device_manager;
+
+    LeaveCriticalSection(&allocator->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI sample_allocator_UninitializeSampleAllocator(IMFVideoSampleAllocator *iface)
