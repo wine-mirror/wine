@@ -279,12 +279,11 @@ ME_Paragraph *editor_first_para( ME_TextEditor *editor ) DECLSPEC_HIDDEN;
 
 /* table.c */
 BOOL ME_IsInTable(ME_DisplayItem *pItem) DECLSPEC_HIDDEN;
-ME_DisplayItem *ME_InsertTableRowStartFromCursor(ME_TextEditor *editor) DECLSPEC_HIDDEN;
-ME_DisplayItem *ME_InsertTableRowStartAtParagraph(ME_TextEditor *editor,
-                                                  ME_DisplayItem *para) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_InsertTableCellFromCursor(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_InsertTableRowEndFromCursor(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 ME_Paragraph *table_append_row( ME_TextEditor *editor, ME_Paragraph *table_row ) DECLSPEC_HIDDEN;
+ME_Paragraph *table_insert_row_start( ME_TextEditor *editor, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
+ME_Paragraph *table_insert_row_start_at_para( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_outer_para( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_row_end( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_row_start( ME_Paragraph *para ) DECLSPEC_HIDDEN;

@@ -73,44 +73,41 @@ static ME_Paragraph* table_insert_end_para( ME_TextEditor *editor, ME_Cursor *cu
     return para;
 }
 
-ME_DisplayItem* ME_InsertTableRowStartFromCursor(ME_TextEditor *editor)
+ME_Paragraph* table_insert_row_start( ME_TextEditor *editor, ME_Cursor *cursor )
 {
     ME_Paragraph *para;
 
-    para = table_insert_end_para( editor, editor->pCursors, cr_lf, 2, MEPF_ROWSTART );
-    return para_get_di( para_prev( para ) );
+    para = table_insert_end_para( editor, cursor, cr_lf, 2, MEPF_ROWSTART );
+    return para_prev( para );
 }
 
-ME_DisplayItem* ME_InsertTableRowStartAtParagraph(ME_TextEditor *editor,
-                                                  ME_DisplayItem *para)
+ME_Paragraph* table_insert_row_start_at_para( ME_TextEditor *editor, ME_Paragraph *para )
 {
-  ME_DisplayItem *prev_para, *end_para;
-  ME_Cursor savedCursor = editor->pCursors[0];
-  ME_DisplayItem *startRowPara;
-  editor->pCursors[0].pPara = para;
-  editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
-  editor->pCursors[0].nOffset = 0;
-  editor->pCursors[1] = editor->pCursors[0];
-  startRowPara = ME_InsertTableRowStartFromCursor(editor);
-  savedCursor.pPara = ME_GetParagraph(savedCursor.pRun);
-  editor->pCursors[0] = savedCursor;
-  editor->pCursors[1] = editor->pCursors[0];
+    ME_Paragraph *prev_para, *end_para, *start_row;
+    ME_Cursor cursor;
 
-  end_para = editor->pCursors[0].pPara->member.para.next_para;
-  prev_para = startRowPara->member.para.next_para;
-  para = prev_para->member.para.next_para;
-  while (para != end_para)
-  {
-    para->member.para.pCell = prev_para->member.para.pCell;
-    para->member.para.nFlags |= MEPF_CELL;
-    para->member.para.nFlags &= ~(MEPF_ROWSTART|MEPF_ROWEND);
-    para->member.para.fmt.dwMask |= PFM_TABLE|PFM_TABLEROWDELIMITER;
-    para->member.para.fmt.wEffects |= PFE_TABLE;
-    para->member.para.fmt.wEffects &= ~PFE_TABLEROWDELIMITER;
-    prev_para = para;
-    para = para->member.para.next_para;
-  }
-  return startRowPara;
+    cursor.pPara = para_get_di( para );
+    cursor.pRun = run_get_di( para_first_run( para ) );
+    cursor.nOffset = 0;
+
+    start_row = table_insert_row_start( editor, &cursor );
+
+    end_para = para_next( &editor->pCursors[0].pPara->member.para );
+    prev_para = para_next( start_row );
+    para = para_next( prev_para );
+
+    while (para != end_para)
+    {
+        para->pCell = prev_para->pCell;
+        para->nFlags |= MEPF_CELL;
+        para->nFlags &= ~(MEPF_ROWSTART | MEPF_ROWEND);
+        para->fmt.dwMask |= PFM_TABLE | PFM_TABLEROWDELIMITER;
+        para->fmt.wEffects |= PFE_TABLE;
+        para->fmt.wEffects &= ~PFE_TABLEROWDELIMITER;
+        prev_para = para;
+        para = para_next( para );
+    }
+    return start_row;
 }
 
 /* Inserts a diCell and starts a new paragraph for the next cell.
@@ -419,7 +416,7 @@ ME_Paragraph* table_append_row( ME_TextEditor *editor, ME_Paragraph *table_row )
     editor->pCursors[0].pRun = run_get_di( run );
     editor->pCursors[0].nOffset = 0;
     editor->pCursors[1] = editor->pCursors[0];
-    para = &ME_InsertTableRowStartFromCursor(editor)->member.para;
+    para = table_insert_row_start( editor, editor->pCursors );
     insertedCell = ME_FindItemFwd( para_get_di( para ), diCell );
     /* Copy cell properties */
     insertedCell->member.cell.nRightBoundary = cell->member.cell.nRightBoundary;
