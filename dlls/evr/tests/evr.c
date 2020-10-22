@@ -2062,6 +2062,7 @@ static void test_mixer_samples(void)
 {
     IDirect3DDeviceManager9 *manager;
     MFT_OUTPUT_DATA_BUFFER buffer;
+    IMFVideoProcessor *processor;
     IDirect3DSurface9 *surface;
     IMFDesiredSample *desired;
     IDirect3DDevice9 *device;
@@ -2085,6 +2086,9 @@ static void test_mixer_samples(void)
 
     hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&mixer);
     ok(hr == S_OK, "Failed to create a mixer, hr %#x.\n", hr);
+
+    hr = IMFTransform_QueryInterface(mixer, &IID_IMFVideoProcessor, (void **)&processor);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTransform_GetInputStatus(mixer, 0, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
@@ -2147,7 +2151,6 @@ static void test_mixer_samples(void)
 
     memset(&buffer, 0, sizeof(buffer));
     hr = IMFTransform_ProcessOutput(mixer, 0, 1, &buffer, &status);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     /* It needs a sample with a backing surface. */
@@ -2156,7 +2159,6 @@ todo_wine
 
     buffer.pSample = sample;
     hr = IMFTransform_ProcessOutput(mixer, 0, 1, &buffer, &status);
-todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     IMFSample_Release(sample);
@@ -2175,17 +2177,25 @@ todo_wine
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "Unexpected hr %#x.\n", hr);
 
     color = get_surface_color(surface, 0, 0);
+todo_wine
     ok(color == D3DCOLOR_ARGB(0x10, 0xff, 0x00, 0x00), "Unexpected color %#x.\n", color);
 
     /* Streaming is not started yet. Output is colored black, but only if desired timestamps were set. */
     IMFDesiredSample_SetDesiredSampleTimeAndDuration(desired, 100, 0);
 
     hr = IMFTransform_ProcessOutput(mixer, 0, 1, &buffer, &status);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     color = get_surface_color(surface, 0, 0);
-todo_wine
+    ok(!color, "Unexpected color %#x.\n", color);
+
+    hr = IMFVideoProcessor_SetBackgroundColor(processor, RGB(0, 0, 255));
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_ProcessOutput(mixer, 0, 1, &buffer, &status);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    color = get_surface_color(surface, 0, 0);
     ok(!color, "Unexpected color %#x.\n", color);
 
     IMFDesiredSample_Clear(desired);
@@ -2231,6 +2241,7 @@ todo_wine
 
     IDirect3DSurface9_Release(surface);
 
+    IMFVideoProcessor_Release(processor);
     IMFTransform_Release(mixer);
 
     IDirect3DDevice9_Release(device);

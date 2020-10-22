@@ -712,6 +712,13 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
     return count ? S_OK : hr;
 }
 
+static HRESULT video_mixer_open_device_handle(struct video_mixer *mixer)
+{
+    IDirect3DDeviceManager9_CloseDeviceHandle(mixer->device_manager, mixer->device_handle);
+    mixer->device_handle = NULL;
+    return IDirect3DDeviceManager9_OpenDeviceHandle(mixer->device_manager, &mixer->device_handle);
+}
+
 static HRESULT video_mixer_get_processor_service(struct video_mixer *mixer, IDirectXVideoProcessorService **service)
 {
     HRESULT hr;
@@ -728,9 +735,7 @@ static HRESULT video_mixer_get_processor_service(struct video_mixer *mixer, IDir
                 &IID_IDirectXVideoProcessorService, (void **)service);
         if (hr == DXVA2_E_NEW_VIDEO_DEVICE)
         {
-            IDirect3DDeviceManager9_CloseDeviceHandle(mixer->device_manager, mixer->device_handle);
-            mixer->device_handle = NULL;
-            if (SUCCEEDED(hr = IDirect3DDeviceManager9_OpenDeviceHandle(mixer->device_manager, &mixer->device_handle)))
+            if (SUCCEEDED(hr = video_mixer_open_device_handle(mixer)))
                 continue;
         }
         break;
@@ -1083,12 +1088,86 @@ static HRESULT WINAPI video_mixer_transform_ProcessInput(IMFTransform *iface, DW
     return hr;
 }
 
-static HRESULT WINAPI video_mixer_transform_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
-        MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
+static HRESULT video_mixer_get_sample_surface(IMFSample *sample, IDirect3DSurface9 **surface)
 {
-    FIXME("%p, %#x, %u, %p, %p.\n", iface, flags, count, samples, status);
+    IMFMediaBuffer *buffer;
+    IMFGetService *gs;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    if (FAILED(hr = IMFSample_GetBufferByIndex(sample, 0, &buffer)))
+        return hr;
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFGetService, (void **)&gs);
+    IMFMediaBuffer_Release(buffer);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IMFGetService_GetService(gs, &MR_BUFFER_SERVICE, &IID_IDirect3DSurface9, (void **)surface);
+    IMFGetService_Release(gs);
+    return hr;
+}
+
+static HRESULT video_mixer_get_d3d_device(struct video_mixer *mixer, IDirect3DDevice9 **device)
+{
+    HRESULT hr;
+
+    for (;;)
+    {
+        hr = IDirect3DDeviceManager9_LockDevice(mixer->device_manager, mixer->device_handle,
+                device, TRUE);
+        if (hr == DXVA2_E_NEW_VIDEO_DEVICE)
+        {
+            if (SUCCEEDED(hr = video_mixer_open_device_handle(mixer)))
+                continue;
+        }
+        break;
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI video_mixer_transform_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
+        MFT_OUTPUT_DATA_BUFFER *buffers, DWORD *status)
+{
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    IDirect3DSurface9 *surface;
+    IDirect3DDevice9 *device;
+    HRESULT hr;
+
+    TRACE("%p, %#x, %u, %p, %p.\n", iface, flags, count, buffers, status);
+
+    if (!buffers || !count || !buffers->pSample)
+        return E_INVALIDARG;
+
+    if (count > 1)
+        FIXME("Multiple buffers are not handled.\n");
+
+    *status = 0;
+
+    EnterCriticalSection(&mixer->cs);
+
+    if (SUCCEEDED(hr = video_mixer_get_sample_surface(buffers->pSample, &surface)))
+    {
+        if (mixer->is_streaming)
+        {
+            FIXME("Streaming state is not handled.\n");
+            hr = E_NOTIMPL;
+        }
+        else
+        {
+            if (SUCCEEDED(hr = video_mixer_get_d3d_device(mixer, &device)))
+            {
+                IDirect3DDevice9_ColorFill(device, surface, NULL, 0);
+                IDirect3DDeviceManager9_UnlockDevice(mixer->device_manager, mixer->device_handle, FALSE);
+                IDirect3DDevice9_Release(device);
+            }
+        }
+        IDirect3DSurface9_Release(surface);
+    }
+
+    LeaveCriticalSection(&mixer->cs);
+
+    return hr;
 }
 
 static const IMFTransformVtbl video_mixer_transform_vtbl =
