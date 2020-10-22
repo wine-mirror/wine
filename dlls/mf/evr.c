@@ -528,13 +528,26 @@ static ULONG WINAPI video_stream_get_service_Release(IMFGetService *iface)
 static HRESULT WINAPI video_stream_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
 {
     struct video_stream *stream = impl_from_stream_IMFGetService(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
 
     if (IsEqualGUID(service, &MR_VIDEO_ACCELERATION_SERVICE))
     {
         if (IsEqualIID(riid, &IID_IMFVideoSampleAllocator))
-            return IMFVideoSampleAllocator_QueryInterface(stream->allocator, riid, obj);
+        {
+            EnterCriticalSection(&stream->cs);
+
+            if (!stream->allocator)
+                hr = MFCreateVideoSampleAllocator(&IID_IMFVideoSampleAllocator, (void **)&stream->allocator);
+            if (SUCCEEDED(hr))
+                hr = IMFVideoSampleAllocator_QueryInterface(stream->allocator, riid, obj);
+
+            LeaveCriticalSection(&stream->cs);
+
+            return hr;
+        }
+
         return E_NOINTERFACE;
     }
 
@@ -567,9 +580,6 @@ static HRESULT video_renderer_stream_create(struct video_renderer *renderer, uns
     InitializeCriticalSection(&stream->cs);
 
     if (FAILED(hr = MFCreateEventQueue(&stream->event_queue)))
-        goto failed;
-
-    if (FAILED(hr = MFCreateVideoSampleAllocator(&IID_IMFVideoSampleAllocator, (void **)&stream->allocator)))
         goto failed;
 
     stream->parent = renderer;
