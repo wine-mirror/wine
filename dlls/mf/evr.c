@@ -83,6 +83,7 @@ struct video_renderer
 
     IMFTransform *mixer;
     IMFVideoPresenter *presenter;
+    IUnknown *device_manager;
     unsigned int flags;
     unsigned int state;
 
@@ -539,7 +540,11 @@ static HRESULT WINAPI video_stream_get_service_GetService(IMFGetService *iface, 
             EnterCriticalSection(&stream->cs);
 
             if (!stream->allocator)
+            {
                 hr = MFCreateVideoSampleAllocator(&IID_IMFVideoSampleAllocator, (void **)&stream->allocator);
+                if (SUCCEEDED(hr))
+                    hr = IMFVideoSampleAllocator_SetDirectXManager(stream->allocator, stream->parent->device_manager);
+            }
             if (SUCCEEDED(hr))
                 hr = IMFVideoSampleAllocator_QueryInterface(stream->allocator, riid, obj);
 
@@ -667,6 +672,8 @@ static ULONG WINAPI video_renderer_sink_Release(IMFMediaSink *iface)
             IMFTransform_Release(renderer->mixer);
         if (renderer->presenter)
             IMFVideoPresenter_Release(renderer->presenter);
+        if (renderer->device_manager)
+            IUnknown_Release(renderer->device_manager);
         if (renderer->clock)
             IMFPresentationClock_Release(renderer->clock);
         if (renderer->attributes)
@@ -1183,6 +1190,12 @@ static HRESULT video_renderer_configure_presenter(struct video_renderer *rendere
         IMFTopologyServiceLookupClient_Release(lookup_client);
     }
 
+    if (FAILED(MFGetService((IUnknown *)renderer->presenter, &MR_VIDEO_ACCELERATION_SERVICE,
+            &IID_IUnknown, (void **)&renderer->device_manager)))
+    {
+        WARN("Failed to get device manager from the presenter.\n");
+    }
+
     return hr;
 }
 
@@ -1201,6 +1214,12 @@ static HRESULT video_renderer_initialize(struct video_renderer *renderer, IMFTra
     {
         IMFVideoPresenter_Release(renderer->presenter);
         renderer->presenter = NULL;
+    }
+
+    if (renderer->device_manager)
+    {
+        IUnknown_Release(renderer->device_manager);
+        renderer->device_manager = NULL;
     }
 
     renderer->mixer = mixer;
