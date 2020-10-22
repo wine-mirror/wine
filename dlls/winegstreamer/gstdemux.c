@@ -2060,7 +2060,7 @@ static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFil
 
     /* The documentation specifies that timestamp + diff must be nonnegative. */
     diff = qm.Late * 100;
-    if (timestamp < -diff)
+    if (diff < 0 && timestamp < (GstClockTime)-diff)
         diff = -timestamp;
 
     evt = gst_event_new_qos(type, qm.Proportion / 1000.0, diff, timestamp);
