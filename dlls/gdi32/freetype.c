@@ -330,16 +330,6 @@ struct tagGdiFont {
     /* the following members can be accessed without locking, they are never modified after creation */
     FT_Face ft_face;
     struct font_mapping *mapping;
-    BYTE underline;
-    BYTE strikeout;
-    INT orientation;
-    LONG aveWidth, ppem;
-    double scale_y;
-    SHORT yMax;
-    SHORT yMin;
-    DWORD ntmFlags;
-    DWORD aa_flags;
-    UINT ntmCellHeight, ntmAvgWidth;
     GdiFont *base_font;
     VOID *GSUB_Table;
     const VOID *vert_feature;
@@ -4000,13 +3990,13 @@ static FT_Face OpenFontFace(GdiFont *font, Face *face, LONG width, LONG height)
         DWORD header;
 
         /* load the VDMX table if we have one */
-        font->ppem = load_VDMX(font, height);
-        if(font->ppem == 0)
-            font->ppem = calc_ppem_for_height(ft_face, height);
-        TRACE("height %d => ppem %d\n", height, font->ppem);
+        gdi_font->ppem = load_VDMX(font, height);
+        if(gdi_font->ppem == 0)
+            gdi_font->ppem = calc_ppem_for_height(ft_face, height);
+        TRACE("height %d => ppem %d\n", height, gdi_font->ppem);
 
-        if((err = pFT_Set_Pixel_Sizes(ft_face, 0, font->ppem)) != 0)
-            WARN("FT_Set_Pixel_Sizes %d, %d rets %x\n", 0, font->ppem, err);
+        if((err = pFT_Set_Pixel_Sizes(ft_face, 0, gdi_font->ppem)) != 0)
+            WARN("FT_Set_Pixel_Sizes %d, %d rets %x\n", 0, gdi_font->ppem, err);
 
         /* see if it's a TTC */
         len = sizeof(header);
@@ -4022,7 +4012,7 @@ static FT_Face OpenFontFace(GdiFont *font, Face *face, LONG width, LONG height)
             }
         }
     } else {
-        font->ppem = height;
+        gdi_font->ppem = height;
         if((err = pFT_Set_Pixel_Sizes(ft_face, width, height)) != 0)
             WARN("FT_Set_Pixel_Sizes %d, %d rets %x\n", width, height, err);
     }
@@ -4243,6 +4233,7 @@ typedef struct {
 
 static LONG load_VDMX(GdiFont *font, LONG height)
 {
+    struct gdi_font *gdi_font = font->gdi_font;
     VDMX_Header hdr;
     VDMX_group group;
     BYTE devXRatio, devYRatio;
@@ -4318,9 +4309,9 @@ static LONG load_VDMX(GdiFont *font, LONG height)
                 ppem = GET_BE_WORD(vTable[i * 3]);
 
 		if(yMax + -yMin == height) {
-		    font->yMax = yMax;
-		    font->yMin = yMin;
-                    TRACE("ppem %d found; height=%d  yMax=%d  yMin=%d\n", ppem, height, font->yMax, font->yMin);
+		    gdi_font->yMax = yMax;
+		    gdi_font->yMin = yMin;
+                    TRACE("ppem %d found; height=%d  yMax=%d  yMin=%d\n", ppem, height, gdi_font->yMax, gdi_font->yMin);
 		    break;
 		}
 		if(yMax + -yMin > height) {
@@ -4328,14 +4319,14 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 			ppem = 0;
 			goto end; /* failed */
 		    }
-		    font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
-		    font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
+		    gdi_font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
+		    gdi_font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
                     ppem = GET_BE_WORD(vTable[i * 3]);
-                    TRACE("ppem %d found; height=%d  yMax=%d  yMin=%d\n", ppem, height, font->yMax, font->yMin);
+                    TRACE("ppem %d found; height=%d  yMax=%d  yMin=%d\n", ppem, height, gdi_font->yMax, gdi_font->yMin);
 		    break;
 		}
 	    }
-	    if(!font->yMax) {
+	    if(!gdi_font->yMax) {
 		ppem = 0;
 		TRACE("ppem not found for height %d\n", height);
 	    }
@@ -4358,9 +4349,9 @@ static LONG load_VDMX(GdiFont *font, LONG height)
                 }
 
 		if(yPelHeight == ppem) {
-		    font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
-		    font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
-                    TRACE("ppem %d found; yMax=%d  yMin=%d\n", ppem, font->yMax, font->yMin);
+		    gdi_font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
+		    gdi_font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
+                    TRACE("ppem %d found; yMax=%d  yMin=%d\n", ppem, gdi_font->yMax, gdi_font->yMin);
 		    break;
 		}
 	    }
@@ -5104,7 +5095,7 @@ found_face:
     TRACE( "Chosen: %s (%s/%p:%ld)\n", debugstr_w(face->full_name), debugstr_w(face->file),
            face->font_data_ptr, face->face_index );
 
-    ret->aveWidth = height ? lf.lfWidth : 0;
+    gdi_font->aveWidth = height ? lf.lfWidth : 0;
 
     if(!face->scalable) {
         /* Windows uses integer scaling factors for bitmap fonts */
@@ -5113,8 +5104,8 @@ found_face:
 
         /* FIXME: rotation of bitmap fonts is ignored */
         height = abs(GDI_ROUND( (double)height * gdi_font->matrix.eM22 ));
-        if (ret->aveWidth)
-            ret->aveWidth = (double)ret->aveWidth * gdi_font->matrix.eM11;
+        if (gdi_font->aveWidth)
+            gdi_font->aveWidth = (double)gdi_font->aveWidth * gdi_font->matrix.eM11;
         gdi_font->matrix.eM11 = gdi_font->matrix.eM22 = 1.0;
         dcmat.eM11 = dcmat.eM22 = 1.0;
         /* As we changed the matrix, we need to search the cache for the font again,
@@ -5136,14 +5127,12 @@ found_face:
         if (scale > 2 && scaled_height - height > face->size.height / 4) scale--;
         /* The jump between unscaled and doubled is delayed by 1 */
         else if (scale == 2 && scaled_height - height > (face->size.height / 4 - 1)) scale--;
-        ret->scale_y = scale;
+        gdi_font->scale_y = scale;
 
         width = face->size.x_ppem >> 6;
         height = face->size.y_ppem >> 6;
     }
-    else
-        ret->scale_y = 1.0;
-    TRACE("font scale y: %f\n", ret->scale_y);
+    TRACE("font scale y: %f\n", gdi_font->scale_y);
 
     ret->ft_face = OpenFontFace(ret, face, width, height);
 
@@ -5155,14 +5144,12 @@ found_face:
     }
 
     set_gdi_font_file_info( gdi_font, face->file, face->font_data_size );
-    ret->ntmFlags = face->ntmFlags;
+    gdi_font->ntmFlags = face->ntmFlags;
+    gdi_font->aa_flags = HIWORD( face->flags );
 
     pick_charmap( ret->ft_face, gdi_font->charset );
 
-    ret->orientation = FT_IS_SCALABLE(ret->ft_face) ? lf.lfOrientation : 0;
     set_gdi_font_name( gdi_font, psub ? psub->from.name : family->family_name );
-    ret->underline = lf.lfUnderline ? 0xff : 0;
-    ret->strikeout = lf.lfStrikeOut ? 0xff : 0;
     create_child_font_list(ret);
 
     if (face->flags & ADDFONT_VERTICAL_FONT) /* We need to try to load the GSUB table */
@@ -5182,7 +5169,6 @@ found_face:
             }
         }
     }
-    ret->aa_flags = HIWORD( face->flags );
 
     TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
 
@@ -5199,7 +5185,7 @@ done:
         case CLEARTYPE_QUALITY:
         case CLEARTYPE_NATURAL_QUALITY:
         default:
-            if (!*aa_flags) *aa_flags = ret->aa_flags;
+            if (!*aa_flags) *aa_flags = gdi_font->aa_flags;
             if (!*aa_flags) *aa_flags = default_aa_flags;
 
             /* fixup the antialiasing flags for that font */
@@ -5358,8 +5344,7 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
         height = face->size.y_ppem >> 6;
         width = face->size.x_ppem >> 6;
     }
-    font->scale_y = 1.0;
-    
+
     if (!(font->ft_face = OpenFontFace(font, face, width, height)))
     {
         free_gdi_font(gdi_font);
@@ -5367,15 +5352,15 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
     }
 
     set_gdi_font_name( gdi_font, family_name );
-    font->ntmFlags = face->ntmFlags;
+    gdi_font->ntmFlags = face->ntmFlags;
 
     if (get_outline_text_metrics(font))
     {
         memcpy(&pntm->ntmTm, &font->potm->otmTextMetrics, sizeof(TEXTMETRICW));
 
         pntm->ntmTm.ntmSizeEM = font->potm->otmEMSquare;
-        pntm->ntmTm.ntmCellHeight = font->ntmCellHeight;
-        pntm->ntmTm.ntmAvgWidth = font->ntmAvgWidth;
+        pntm->ntmTm.ntmCellHeight = gdi_font->ntmCellHeight;
+        pntm->ntmTm.ntmAvgWidth = gdi_font->ntmAvgWidth;
 
         lstrcpynW(pelf->elfLogFont.lfFaceName,
                  (WCHAR*)((char*)font->potm + (ULONG_PTR)font->potm->otmpFamilyName),
@@ -5909,25 +5894,25 @@ static BOOL get_transform_matrices( GdiFont *font, BOOL vertical, const MAT2 *us
     matrices[matrix_unrotated] = identity_mat;
 
     /* Scaling factor */
-    if (font->aveWidth)
+    if (gdi_font->aveWidth)
     {
         TEXTMETRICW tm;
         get_text_metrics( font, &tm );
 
-        width_ratio = (double)font->aveWidth;
+        width_ratio = (double)gdi_font->aveWidth;
         width_ratio /= (double)font->potm->otmTextMetrics.tmAveCharWidth;
     }
     else
-        width_ratio = font->scale_y;
+        width_ratio = gdi_font->scale_y;
 
     /* Scaling transform */
-    if (width_ratio != 1.0 || font->scale_y != 1.0)
+    if (width_ratio != 1.0 || gdi_font->scale_y != 1.0)
     {
         FT_Matrix scale_mat;
         scale_mat.xx = FT_FixedFromFloat( width_ratio );
         scale_mat.xy = 0;
         scale_mat.yx = 0;
-        scale_mat.yy = FT_FixedFromFloat( font->scale_y );
+        scale_mat.yy = FT_FixedFromFloat( gdi_font->scale_y );
 
         pFT_Matrix_Multiply( &scale_mat, &matrices[matrix_unrotated] );
         needs_transform = TRUE;
@@ -5948,12 +5933,12 @@ static BOOL get_transform_matrices( GdiFont *font, BOOL vertical, const MAT2 *us
 
     /* Rotation transform */
     matrices[matrix_hori] = matrices[matrix_unrotated];
-    if (font->orientation % 3600)
+    if (gdi_font->scalable && gdi_font->lf.lfOrientation % 3600)
     {
         FT_Matrix rotation_mat;
         FT_Vector angle;
 
-        pFT_Vector_Unit( &angle, MulDiv( 1 << 16, font->orientation, 10 ) );
+        pFT_Vector_Unit( &angle, MulDiv( 1 << 16, gdi_font->lf.lfOrientation, 10 ) );
         rotation_mat.xx =  angle.x;
         rotation_mat.xy = -angle.y;
         rotation_mat.yx =  angle.y;
@@ -6079,12 +6064,12 @@ static FT_Vector get_advance_metric(GdiFont *incoming_font, GdiFont *font,
        (incoming_font->potm || get_outline_text_metrics(incoming_font)) &&
        !(incoming_font->potm->otmTextMetrics.tmPitchAndFamily & TMPF_FIXED_PITCH)) {
         UINT avg_advance;
-        em_scale = MulDiv(incoming_font->ppem, 1 << 16,
+        em_scale = MulDiv(incoming_gdi_font->ppem, 1 << 16,
                           incoming_font->ft_face->units_per_EM);
-        avg_advance = pFT_MulFix(incoming_font->ntmAvgWidth, em_scale);
+        avg_advance = pFT_MulFix(incoming_gdi_font->ntmAvgWidth, em_scale);
         fixed_pitch_full = (avg_advance > 0 &&
                             (base_advance + 63) >> 6 ==
-                            pFT_MulFix(incoming_font->ntmAvgWidth*2, em_scale));
+                            pFT_MulFix(incoming_gdi_font->ntmAvgWidth*2, em_scale));
         if (fixed_pitch_full && !transMat)
             adv.x = (avg_advance * 2) << 6;
     }
@@ -6093,7 +6078,7 @@ static FT_Vector get_advance_metric(GdiFont *incoming_font, GdiFont *font,
         pFT_Vector_Transform(&adv, transMat);
         if (fixed_pitch_full && adv.y == 0) {
             FT_Vector vec;
-            vec.x = incoming_font->ntmAvgWidth;
+            vec.x = incoming_gdi_font->ntmAvgWidth;
             vec.y = 0;
             pFT_Vector_Transform(&vec, transMat);
             adv.x = (pFT_MulFix(vec.x, em_scale) * 2) << 6;
@@ -6849,7 +6834,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
     metrics = ft_face->glyph->metrics;
     if(gdi_font->fake_bold) {
-        if (!get_bold_glyph_outline(ft_face->glyph, font->ppem, &metrics) && metrics.width)
+        if (!get_bold_glyph_outline(ft_face->glyph, gdi_font->ppem, &metrics) && metrics.width)
             metrics.width += 1 << 6;
     }
 
@@ -6989,8 +6974,6 @@ static BOOL get_bitmap_text_metrics(GdiFont *font)
         TM.tmDefaultChar = winfnt_header.default_char + winfnt_header.first_char;
         TM.tmBreakChar = winfnt_header.break_char + winfnt_header.first_char;
         TM.tmItalic = winfnt_header.italic;
-        TM.tmUnderlined = font->underline;
-        TM.tmStruckOut = font->strikeout;
         TM.tmPitchAndFamily = winfnt_header.pitch_and_family;
         TM.tmCharSet = winfnt_header.charset;
     }
@@ -7012,12 +6995,12 @@ static BOOL get_bitmap_text_metrics(GdiFont *font)
         TM.tmDefaultChar = 32;
         TM.tmBreakChar = 32;
         TM.tmItalic = ft_face->style_flags & FT_STYLE_FLAG_ITALIC ? 1 : 0;
-        TM.tmUnderlined = font->underline;
-        TM.tmStruckOut = font->strikeout;
         /* NB inverted meaning of TMPF_FIXED_PITCH */
         TM.tmPitchAndFamily = FT_IS_FIXED_WIDTH(ft_face) ? 0 : TMPF_FIXED_PITCH;
         TM.tmCharSet = gdi_font->charset;
     }
+    TM.tmUnderlined = gdi_font->lf.lfUnderline ? 0xff : 0;
+    TM.tmStruckOut = gdi_font->lf.lfStrikeOut ? 0xff : 0;
 
     if(gdi_font->fake_bold)
         TM.tmWeight = FW_BOLD;
@@ -7032,16 +7015,16 @@ static void scale_font_metrics(const GdiFont *font, LPTEXTMETRICW ptm)
     const struct gdi_font *gdi_font = font->gdi_font;
     double scale_x, scale_y;
 
-    if (font->aveWidth)
+    if (gdi_font->aveWidth)
     {
-        scale_x = (double)font->aveWidth;
+        scale_x = (double)gdi_font->aveWidth;
         scale_x /= (double)font->potm->otmTextMetrics.tmAveCharWidth;
     }
     else
-        scale_x = font->scale_y;
+        scale_x = gdi_font->scale_y;
 
     scale_x *= fabs(gdi_font->matrix.eM11);
-    scale_y = font->scale_y * fabs(gdi_font->matrix.eM22);
+    scale_y = gdi_font->scale_y * fabs(gdi_font->matrix.eM22);
 
 #define SCALE_X(x) (x) = GDI_ROUND((double)(x) * (scale_x))
 #define SCALE_Y(y) (y) = GDI_ROUND((double)(y) * (scale_y))
@@ -7072,16 +7055,16 @@ static void scale_outline_font_metrics(const GdiFont *font, OUTLINETEXTMETRICW *
     const struct gdi_font *gdi_font = font->gdi_font;
     double scale_x, scale_y;
 
-    if (font->aveWidth)
+    if (gdi_font->aveWidth)
     {
-        scale_x = (double)font->aveWidth;
+        scale_x = (double)gdi_font->aveWidth;
         scale_x /= (double)font->potm->otmTextMetrics.tmAveCharWidth;
     }
     else
-        scale_x = font->scale_y;
+        scale_x = gdi_font->scale_y;
 
     scale_x *= fabs(gdi_font->matrix.eM11);
-    scale_y = font->scale_y * fabs(gdi_font->matrix.eM22);
+    scale_y = gdi_font->scale_y * fabs(gdi_font->matrix.eM22);
 
     scale_font_metrics(font, &potm->otmTextMetrics);
 
@@ -7120,17 +7103,18 @@ static void scale_outline_font_metrics(const GdiFont *font, OUTLINETEXTMETRICW *
 
 static BOOL get_text_metrics(GdiFont *font, LPTEXTMETRICW ptm)
 {
+    struct gdi_font *gdi_font = font->gdi_font;
     if(!font->potm)
     {
         if (!get_outline_text_metrics(font) && !get_bitmap_text_metrics(font)) return FALSE;
 
         /* Make sure that the font has sane width/height ratio */
-        if (font->aveWidth)
+        if (gdi_font->aveWidth)
         {
-            if ((font->aveWidth + font->potm->otmTextMetrics.tmHeight - 1) / font->potm->otmTextMetrics.tmHeight > 100)
+            if ((gdi_font->aveWidth + font->potm->otmTextMetrics.tmHeight - 1) / font->potm->otmTextMetrics.tmHeight > 100)
             {
-                WARN("Ignoring too large font->aveWidth %d\n", font->aveWidth);
-                font->aveWidth = 0;
+                WARN("Ignoring too large font->aveWidth %d\n", gdi_font->aveWidth);
+                gdi_font->aveWidth = 0;
             }
         }
     }
@@ -7207,7 +7191,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     needed += lenfull;
 
 
-    em_scale = (FT_Fixed)MulDiv(font->ppem, 1 << 16, ft_face->units_per_EM);
+    em_scale = (FT_Fixed)MulDiv(gdi_font->ppem, 1 << 16, ft_face->units_per_EM);
 
     pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
     if(!pOS2) {
@@ -7245,15 +7229,15 @@ static BOOL get_outline_text_metrics(GdiFont *font)
         descent = windescent;
     }
 
-    font->ntmCellHeight = ascent + descent;
-    font->ntmAvgWidth = pOS2->xAvgCharWidth;
+    gdi_font->ntmCellHeight = ascent + descent;
+    gdi_font->ntmAvgWidth = pOS2->xAvgCharWidth;
 
 #define SCALE_X(x) (pFT_MulFix(x, em_scale))
 #define SCALE_Y(y) (pFT_MulFix(y, em_scale))
 
-    if(font->yMax) {
-	TM.tmAscent = font->yMax;
-	TM.tmDescent = -font->yMin;
+    if(gdi_font->yMax) {
+	TM.tmAscent = gdi_font->yMax;
+	TM.tmDescent = -gdi_font->yMin;
 	TM.tmInternalLeading = (TM.tmAscent + TM.tmDescent) - ft_face->size->metrics.y_ppem;
     } else {
 	TM.tmAscent = SCALE_Y(ascent);
@@ -7326,8 +7310,8 @@ static BOOL get_outline_text_metrics(GdiFont *font)
         TM.tmDefaultChar = TM.tmBreakChar - 1;
     }
     TM.tmItalic = gdi_font->fake_italic ? 255 : ((ft_face->style_flags & FT_STYLE_FLAG_ITALIC) ? 255 : 0);
-    TM.tmUnderlined = font->underline;
-    TM.tmStruckOut = font->strikeout;
+    TM.tmUnderlined = gdi_font->lf.lfUnderline ? 255 : 0;
+    TM.tmStruckOut = gdi_font->lf.lfStrikeOut ? 255 : 0;
 
     /* Yes TPMF_FIXED_PITCH is correct; braindead api */
     if(!FT_IS_FIXED_WIDTH(ft_face) &&
@@ -7395,7 +7379,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
 
     if(FT_IS_SFNT(ft_face))
     {
-        if (font->ntmFlags & NTM_PS_OPENTYPE)
+        if (gdi_font->ntmFlags & NTM_PS_OPENTYPE)
             TM.tmPitchAndFamily |= TMPF_DEVICE;
         else
             TM.tmPitchAndFamily |= TMPF_TRUETYPE;
@@ -7554,7 +7538,7 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
     child_face = best_face ? best_face : child->face;
 
     child->font = get_font_ptr( alloc_gdi_font() );
-    child->font->ft_face = OpenFontFace( child->font, child_face, 0, -font->ppem );
+    child->font->ft_face = OpenFontFace( child->font, child_face, 0, -gdi_font->ppem );
     if(!child->font->ft_face)
     {
         free_gdi_font(child->font->gdi_font);
@@ -7567,9 +7551,9 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
     child->font->gdi_font->lf = gdi_font->lf;
     child->font->gdi_font->matrix = gdi_font->matrix;
     child->font->gdi_font->can_use_bitmap = gdi_font->can_use_bitmap;
-    child->font->ntmFlags = child_face->ntmFlags;
-    child->font->orientation = font->orientation;
-    child->font->scale_y = font->scale_y;
+    child->font->gdi_font->ntmFlags = child_face->ntmFlags;
+    child->font->gdi_font->aa_flags = HIWORD( child_face->flags );
+    child->font->gdi_font->scale_y = gdi_font->scale_y;
     set_gdi_font_name( child->font->gdi_font, child_face->family->family_name );
     child->font->base_font = font;
     TRACE("created child font %p for base %p\n", child->font, font);
@@ -7658,7 +7642,7 @@ static BOOL CDECL freetype_GetCharWidthInfo( struct gdi_font *gdi_font, struct c
         (pHori = pFT_Get_Sfnt_Table(font->ft_face, ft_sfnt_hhea)))
     {
         FT_Fixed em_scale;
-        em_scale = MulDiv(font->ppem, 1 << 16, font->ft_face->units_per_EM);
+        em_scale = MulDiv(gdi_font->ppem, 1 << 16, font->ft_face->units_per_EM);
         info->lsb = (SHORT)pFT_MulFix(pHori->min_Left_Side_Bearing,  em_scale);
         info->rsb = (SHORT)pFT_MulFix(pHori->min_Right_Side_Bearing, em_scale);
     }
@@ -7942,10 +7926,11 @@ static DWORD parse_format0_kern_subtable(GdiFont *font,
                                          const USHORT *glyph_to_char,
                                          KERNINGPAIR *kern_pair, DWORD cPairs)
 {
+    struct gdi_font *gdi_font = font->gdi_font;
     USHORT i, nPairs;
     const struct TT_kern_pair *tt_kern_pair;
 
-    TRACE("font height %d, units_per_EM %d\n", font->ppem, font->ft_face->units_per_EM);
+    TRACE("font height %d, units_per_EM %d\n", gdi_font->ppem, font->ft_face->units_per_EM);
 
     nPairs = GET_BE_WORD(tt_f0_ks->nPairs);
 
@@ -7965,16 +7950,16 @@ static DWORD parse_format0_kern_subtable(GdiFont *font,
         kern_pair->wFirst = glyph_to_char[GET_BE_WORD(tt_kern_pair[i].left)];
         kern_pair->wSecond = glyph_to_char[GET_BE_WORD(tt_kern_pair[i].right)];
         /* this algorithm appears to better match what Windows does */
-        kern_pair->iKernAmount = (short)GET_BE_WORD(tt_kern_pair[i].value) * font->ppem;
+        kern_pair->iKernAmount = (short)GET_BE_WORD(tt_kern_pair[i].value) * gdi_font->ppem;
         if (kern_pair->iKernAmount < 0)
         {
             kern_pair->iKernAmount -= font->ft_face->units_per_EM / 2;
-            kern_pair->iKernAmount -= font->ppem;
+            kern_pair->iKernAmount -= gdi_font->ppem;
         }
         else if (kern_pair->iKernAmount > 0)
         {
             kern_pair->iKernAmount += font->ft_face->units_per_EM / 2;
-            kern_pair->iKernAmount += font->ppem;
+            kern_pair->iKernAmount += gdi_font->ppem;
         }
         kern_pair->iKernAmount /= font->ft_face->units_per_EM;
 

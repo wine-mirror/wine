@@ -413,6 +413,7 @@ struct gdi_font *alloc_gdi_font(void)
 
     font->refcount = 1;
     font->matrix.eM11 = font->matrix.eM22 = 1.0;
+    font->scale_y = 1.0;
 
     if (!(font->handle = alloc_font_handle( font )))
     {

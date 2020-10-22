@@ -319,6 +319,15 @@ struct gdi_font
     LOGFONTW               lf;
     FMAT2                  matrix;
     UINT                   face_index;
+    double                 scale_y;
+    INT                    aveWidth;
+    INT                    ppem;
+    SHORT                  yMax;
+    SHORT                  yMin;
+    UINT                   ntmFlags;
+    UINT                   ntmCellHeight;
+    UINT                   ntmAvgWidth;
+    UINT                   aa_flags;
     BOOL                   can_use_bitmap : 1;
     BOOL                   fake_italic : 1;
     BOOL                   fake_bold : 1;
