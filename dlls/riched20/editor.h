@@ -280,6 +280,8 @@ ME_Paragraph *editor_first_para( ME_TextEditor *editor ) DECLSPEC_HIDDEN;
 
 /* table.c */
 BOOL ME_IsInTable(ME_DisplayItem *pItem) DECLSPEC_HIDDEN;
+ME_Paragraph *cell_end_para( ME_Cell *cell ) DECLSPEC_HIDDEN;
+ME_Paragraph *cell_first_para( ME_Cell *cell ) DECLSPEC_HIDDEN;
 ME_Cell *cell_next( ME_Cell *cell ) DECLSPEC_HIDDEN;
 ME_Cell *cell_prev( ME_Cell *cell ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_append_row( ME_TextEditor *editor, ME_Paragraph *table_row ) DECLSPEC_HIDDEN;
@@ -289,6 +291,7 @@ ME_Paragraph *table_insert_row_start( ME_TextEditor *editor, ME_Cursor *cursor )
 ME_Paragraph *table_insert_row_start_at_para( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_outer_para( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_row_end( ME_Paragraph *para ) DECLSPEC_HIDDEN;
+ME_Cell *table_row_end_cell( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Cell *table_row_first_cell( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_row_start( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 void ME_CheckTablesForCorruption(ME_TextEditor *editor) DECLSPEC_HIDDEN;

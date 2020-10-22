@@ -23,12 +23,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
-static void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph);
+static void draw_paragraph( ME_Context *c, ME_Paragraph *para );
 
 void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
 {
-  ME_DisplayItem *item;
+  ME_Paragraph *para;
   ME_Context c;
+  ME_Cell *cell;
   int ys, ye;
   HRGN oldRgn;
 
@@ -44,36 +45,29 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
   ME_InitContext(&c, editor, hDC);
   SetBkMode(hDC, TRANSPARENT);
 
-  item = editor->pBuffer->pFirst->next;
+  para = editor_first_para( editor );
   /* This context point is an offset for the paragraph positions stored
    * during wrapping. It shouldn't be modified during painting. */
   c.pt.x = c.rcView.left - editor->horz_si.nPos;
   c.pt.y = c.rcView.top - editor->vert_si.nPos;
-  while(item != editor->pBuffer->pLast)
+  while (para_next( para ))
   {
-    assert(item->type == diParagraph);
-
-    ys = c.pt.y + item->member.para.pt.y;
-    if (item->member.para.pCell
-        != item->member.para.next_para->member.para.pCell)
-    {
-      ME_Cell *cell = NULL;
-      cell = &ME_FindItemBack(item->member.para.next_para, diCell)->member.cell;
+    ys = c.pt.y + para->pt.y;
+    cell = para_cell( para );
+    if (cell && para == cell_end_para( cell ))
       ye = c.pt.y + cell->pt.y + cell->nHeight;
-    } else {
-      ye = ys + item->member.para.nHeight;
-    }
-    if (item->member.para.pCell && !(item->member.para.nFlags & MEPF_ROWEND) &&
-        item->member.para.pCell != item->member.para.prev_para->member.para.pCell)
+    else ye = ys + para->nHeight;
+
+    if (cell && !(para->nFlags & MEPF_ROWEND) && para == cell_first_para( cell ))
     {
       /* the border shifts the text down */
-      ys -= item->member.para.pCell->member.cell.yTextOffset;
+      ys -= para_cell( para )->yTextOffset;
     }
 
     /* Draw the paragraph if any of the paragraph is in the update region. */
     if (ys < rcUpdate->bottom && ye > rcUpdate->top)
-      ME_DrawParagraph(&c, item);
-    item = item->member.para.next_para;
+      draw_paragraph( &c, para );
+    para = para_next( para );
   }
   if (c.pt.y + editor->nTotalLength < c.rcView.bottom)
   {
@@ -909,12 +903,12 @@ static void draw_para_number( ME_Context *c, ME_Paragraph *para )
     }
 }
 
-static void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
+static void draw_paragraph( ME_Context *c, ME_Paragraph *para )
 {
   int align = SetTextAlign(c->hDC, TA_BASELINE);
   ME_DisplayItem *p;
+  ME_Cell *cell;
   ME_Run *run;
-  ME_Paragraph *para = NULL;
   RECT rc, bounds;
   int y;
   int height = 0, baseline = 0, no=0;
@@ -923,32 +917,33 @@ static void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph)
   rc.left = c->pt.x;
   rc.right = c->rcView.right;
 
-  assert(paragraph);
-  para = &paragraph->member.para;
   y = c->pt.y + para->pt.y;
-  if (para->pCell)
+  if ((cell = para_cell( para )))
   {
-    ME_Cell *cell = &para->pCell->member.cell;
     rc.left = c->pt.x + cell->pt.x;
     rc.right = rc.left + cell->nWidth;
   }
-  if (para->nFlags & MEPF_ROWSTART) {
-    ME_Cell *cell = &para->next_para->member.para.pCell->member.cell;
+  if (para->nFlags & MEPF_ROWSTART)
+  {
+    cell = table_row_first_cell( para );
     rc.right = c->pt.x + cell->pt.x;
-  } else if (para->nFlags & MEPF_ROWEND) {
-    ME_Cell *cell = &para->prev_para->member.para.pCell->member.cell;
+  }
+  else if (para->nFlags & MEPF_ROWEND)
+  {
+    cell = table_row_end_cell( para );
     rc.left = c->pt.x + cell->pt.x + cell->nWidth;
   }
   ME_DrawParaDecoration(c, para, y, &bounds);
   y += bounds.top;
-  if (bounds.left || bounds.right) {
+  if (bounds.left || bounds.right)
+  {
     rc.left = max(rc.left, c->pt.x + bounds.left);
     rc.right = min(rc.right, c->pt.x - bounds.right
                              + max(c->editor->sizeWindow.cx,
                                    c->editor->nTotalWidth));
   }
 
-  for (p = paragraph->next; p != para->next_para; p = p->next)
+  for (p = para_get_di( para )->next; p != para_get_di( para_next( para ) ); p = p->next)
   {
     switch(p->type) {
       case diParagraph:

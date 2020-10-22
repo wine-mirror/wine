@@ -180,6 +180,14 @@ ME_Cell *table_row_first_cell( ME_Paragraph *para )
     return para_cell( para );
 }
 
+ME_Cell *table_row_end_cell( ME_Paragraph *para )
+{
+    if (!para_in_table( para )) return NULL;
+
+    para = para_prev( table_row_end( para ));
+    return cell_next( para_cell( para ) );
+}
+
 ME_Cell *cell_next( ME_Cell *cell )
 {
     if (!cell->next_cell) return NULL;
@@ -190,6 +198,20 @@ ME_Cell *cell_prev( ME_Cell *cell )
 {
     if (!cell->prev_cell) return NULL;
     return &cell->prev_cell->member.cell;
+}
+
+ME_Paragraph *cell_first_para( ME_Cell *cell )
+{
+    return &ME_FindItemFwd( cell_get_di( cell ), diParagraph )->member.para;
+}
+
+ME_Paragraph *cell_end_para( ME_Cell *cell )
+{
+    ME_Cell *next = cell_next( cell );
+
+    if (!next) return cell_first_para( cell ); /* End of row */
+
+    return &ME_FindItemBack( cell_get_di( next ), diParagraph )->member.para;
 }
 
 /* Make a bunch of assertions to make sure tables haven't been corrupted.
