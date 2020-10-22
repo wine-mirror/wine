@@ -859,6 +859,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
         }
         return S_OK;
     default:
+        FIXME("Unimplemented conversion path!\n");
         return WINCODEC_ERR_UNSUPPORTEDOPERATION;
     }
 }
