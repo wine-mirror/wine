@@ -934,11 +934,37 @@ static HRESULT WINAPI video_mixer_transform_GetInputStatus(IMFTransform *iface, 
     return hr;
 }
 
-static HRESULT WINAPI video_mixer_transform_GetOutputStatus(IMFTransform *iface, DWORD *flags)
+static HRESULT WINAPI video_mixer_transform_GetOutputStatus(IMFTransform *iface, DWORD *status)
 {
-    FIXME("%p, %p.\n", iface, flags);
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    HRESULT hr = S_OK;
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, status);
+
+    if (!status)
+        return E_POINTER;
+
+    EnterCriticalSection(&mixer->cs);
+
+    if (!mixer->output.media_type)
+        hr = MF_E_TRANSFORM_TYPE_NOT_SET;
+    else
+    {
+        *status = MFT_OUTPUT_STATUS_SAMPLE_READY;
+        for (i = 0; i < mixer->input_count; ++i)
+        {
+            if (!mixer->inputs[i].sample)
+            {
+                *status = 0;
+                break;
+            }
+        }
+    }
+
+    LeaveCriticalSection(&mixer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_mixer_transform_SetOutputBounds(IMFTransform *iface, LONGLONG lower, LONGLONG upper)

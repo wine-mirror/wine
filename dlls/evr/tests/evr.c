@@ -2098,6 +2098,12 @@ static void test_mixer_samples(void)
     hr = IMFTransform_GetInputStatus(mixer, 1, &status);
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFTransform_GetOutputStatus(mixer, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetOutputStatus(mixer, &status);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
     /* Configure device and media types. */
     hr = DXVA2CreateDirect3DDeviceManager9(&token, &manager);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -2131,6 +2137,11 @@ static void test_mixer_samples(void)
 
     hr = IMFTransform_GetInputStatus(mixer, 1, &status);
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    status = ~0u;
+    hr = IMFTransform_GetOutputStatus(mixer, &status);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!status, "Unexpected status %#x.\n", status);
 
     IMFMediaType_Release(video_type);
 
@@ -2190,6 +2201,11 @@ todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(status == MFT_INPUT_STATUS_ACCEPT_DATA, "Unexpected status %#x.\n", status);
 
+    status = ~0u;
+    hr = IMFTransform_GetOutputStatus(mixer, &status);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!status, "Unexpected status %#x.\n", status);
+
     hr = IMFTransform_ProcessInput(mixer, 0, sample, 0);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
@@ -2197,6 +2213,10 @@ todo_wine
     hr = IMFTransform_GetInputStatus(mixer, 0, &status);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!status, "Unexpected status %#x.\n", status);
+
+    hr = IMFTransform_GetOutputStatus(mixer, &status);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(status == MFT_OUTPUT_STATUS_SAMPLE_READY, "Unexpected status %#x.\n", status);
 
     hr = IMFTransform_ProcessInput(mixer, 0, sample, 0);
     ok(hr == MF_E_NOTACCEPTING, "Unexpected hr %#x.\n", hr);
