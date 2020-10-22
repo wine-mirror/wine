@@ -38,8 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(cryptnet);
 
 #define IS_INTOID(x)    (((ULONG_PTR)(x) >> 16) == 0)
 
-static const WCHAR cryptNet[] = { 'c','r','y','p','t','n','e','t','.',
-   'd','l','l',0 };
 
 /***********************************************************************
  *    DllRegisterServer (CRYPTNET.@)
@@ -48,11 +46,11 @@ HRESULT WINAPI DllRegisterServer(void)
 {
    TRACE("\n");
    CryptRegisterDefaultOIDFunction(X509_ASN_ENCODING,
-    CRYPT_OID_VERIFY_REVOCATION_FUNC, 0, cryptNet);
+    CRYPT_OID_VERIFY_REVOCATION_FUNC, 0, L"cryptnet.dll");
    CryptRegisterOIDFunction(0, CRYPT_OID_OPEN_STORE_PROV_FUNC, "Ldap",
-    cryptNet, "LdapProvOpenStore");
+    L"cryptnet.dll", "LdapProvOpenStore");
    CryptRegisterOIDFunction(0, CRYPT_OID_OPEN_STORE_PROV_FUNC,
-    CERT_STORE_PROV_LDAP_W, cryptNet, "LdapProvOpenStore");
+    CERT_STORE_PROV_LDAP_W, L"cryptnet.dll", "LdapProvOpenStore");
    return S_OK;
 }
 
@@ -63,7 +61,7 @@ HRESULT WINAPI DllUnregisterServer(void)
 {
    TRACE("\n");
    CryptUnregisterDefaultOIDFunction(X509_ASN_ENCODING,
-    CRYPT_OID_VERIFY_REVOCATION_FUNC, cryptNet);
+    CRYPT_OID_VERIFY_REVOCATION_FUNC, L"cryptnet.dll");
    CryptUnregisterOIDFunction(0, CRYPT_OID_OPEN_STORE_PROV_FUNC, "Ldap");
    CryptUnregisterOIDFunction(0, CRYPT_OID_OPEN_STORE_PROV_FUNC,
     CERT_STORE_PROV_LDAP_W);
@@ -851,28 +849,6 @@ static BOOL WINAPI FTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
     return FALSE;
 }
 
-static const WCHAR x509cacert[] = { 'a','p','p','l','i','c','a','t','i','o','n',
- '/','x','-','x','5','0','9','-','c','a','-','c','e','r','t',0 };
-static const WCHAR x509emailcert[] = { 'a','p','p','l','i','c','a','t','i','o',
- 'n','/','x','-','x','5','0','9','-','e','m','a','i','l','-','c','e','r','t',
- 0 };
-static const WCHAR x509servercert[] = { 'a','p','p','l','i','c','a','t','i','o',
- 'n','/','x','-','x','5','0','9','-','s','e','r','v','e','r','-','c','e','r',
- 't',0 };
-static const WCHAR x509usercert[] = { 'a','p','p','l','i','c','a','t','i','o',
- 'n','/','x','-','x','5','0','9','-','u','s','e','r','-','c','e','r','t',0 };
-static const WCHAR pkcs7cert[] = { 'a','p','p','l','i','c','a','t','i','o','n',
- '/','x','-','p','k','c','s','7','-','c','e','r','t','i','f','c','a','t','e',
- 's',0 };
-static const WCHAR pkixCRL[] = { 'a','p','p','l','i','c','a','t','i','o','n',
- '/','p','k','i','x','-','c','r','l',0 };
-static const WCHAR pkcs7CRL[] = { 'a','p','p','l','i','c','a','t','i','o','n',
- '/','x','-','p','k','c','s','7','-','c','r','l',0 };
-static const WCHAR pkcs7sig[] = { 'a','p','p','l','i','c','a','t','i','o','n',
- '/','x','-','p','k','c','s','7','-','s','i','g','n','a','t','u','r','e',0 };
-static const WCHAR pkcs7mime[] = { 'a','p','p','l','i','c','a','t','i','o','n',
- '/','x','-','p','k','c','s','7','-','m','i','m','e',0 };
-
 static BOOL WINAPI HTTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
  LPCSTR pszObjectOid, DWORD dwRetrievalFlags, DWORD dwTimeout,
  PCRYPT_BLOB_ARRAY pObject, PFN_FREE_ENCODED_OBJECT_FUNC *ppfnFreeObject,
@@ -908,9 +884,14 @@ static BOOL WINAPI HTTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
              &hHost);
             if (ret)
             {
-                static LPCWSTR types[] = { x509cacert, x509emailcert,
-                 x509servercert, x509usercert, pkcs7cert, pkixCRL, pkcs7CRL,
-                 pkcs7sig, pkcs7mime, NULL };
+                static LPCWSTR types[] =
+                {
+                 L"application/x-x509-ca-cert", L"application/x-x509-email-cert",
+                 L"application/x-x509-server-cert", L"application/x-x509-user-cert",
+                 L"application/x-pkcs7-certifcates", L"application/pkix-crl",
+                 L"application/x-pkcs7-crl", L"application/x-pkcs7-signature",
+                 L"application/x-pkcs7-mime", NULL
+                };
                 HINTERNET hHttp = HttpOpenRequestW(hHost, NULL,
                  components.lpszUrlPath, NULL, NULL, types,
                  INTERNET_FLAG_NO_COOKIES | INTERNET_FLAG_NO_UI,
