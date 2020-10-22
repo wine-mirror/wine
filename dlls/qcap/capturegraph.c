@@ -343,6 +343,9 @@ static HRESULT WINAPI fnCaptureGraphBuilder2_FindInterface(ICaptureGraphBuilder2
     TRACE("graph %p, category %s, majortype %s, filter %p, iid %s, out %p.\n",
             graph, debugstr_guid(category), debugstr_guid(majortype), filter, debugstr_guid(iid), out);
 
+    if (!filter)
+        return E_POINTER;
+
     if (category && IsEqualGUID(category, &LOOK_DOWNSTREAM_ONLY))
         return find_interface_recurse(PINDIR_OUTPUT, NULL, NULL, filter, iid, out);
 

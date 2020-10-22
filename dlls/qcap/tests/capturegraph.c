@@ -384,6 +384,10 @@ static void test_find_interface(void)
 
     /* Test search order without any restrictions applied. */
 
+    hr = ICaptureGraphBuilder2_FindInterface(capture_graph, NULL, &bogus_majortype,
+                NULL, &testiid, (void **)&unk);
+    ok(hr == E_POINTER, "got hr %#x.\n", hr);
+
     for (i = 0; i < ARRAY_SIZE(tests_from_filter2); ++i)
     {
         hr = ICaptureGraphBuilder2_FindInterface(capture_graph, NULL, &bogus_majortype,
