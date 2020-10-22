@@ -86,6 +86,7 @@
 #include "winsock2.h"
 #include "ws2tcpip.h"
 #include "wsipx.h"
+#include "af_irda.h"
 #include "wine/afd.h"
 
 #include "process.h"
