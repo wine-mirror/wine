@@ -460,6 +460,8 @@ static void test_Win32_Process( IWbemServices *services, BOOL use_full_path )
     IWbemClassObject *process, *sig_in, *out;
     IWbemQualifierSet *qualifiers;
     VARIANT retval, val;
+    SAFEARRAY *names;
+    LONG bound, i;
     DWORD full_path_len = 0;
     LONG flavor;
     CIMTYPE type;
@@ -484,6 +486,21 @@ static void test_Win32_Process( IWbemServices *services, BOOL use_full_path )
         win_skip( "Win32_Process not available\n" );
         return;
     }
+    names = NULL;
+    hr = IWbemClassObject_GetNames( process, NULL, 0, NULL, &names );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( names != NULL, "names not set\n" );
+    hr = SafeArrayGetUBound( names, 1, &bound );
+    ok( hr == S_OK, "got %08x\n", hr );
+    for (i = 0; i <= bound; i++)
+    {
+        BSTR str;
+        hr = SafeArrayGetElement( names, &i, &str );
+        ok( hr == S_OK, "%d: got %08x\n", i, hr );
+        SysFreeString( str );
+    }
+    SafeArrayDestroy( names );
+
     sig_in = (void*)0xdeadbeef;
     hr = IWbemClassObject_GetMethod( process, L"GetOwner", 0, &sig_in, NULL );
     ok( hr == S_OK, "failed to get GetOwner method %08x\n", hr );

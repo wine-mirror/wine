@@ -1375,40 +1375,61 @@ HRESULT put_propval( const struct view *view, UINT index, const WCHAR *name, VAR
 
 HRESULT get_properties( const struct view *view, UINT index, LONG flags, SAFEARRAY **props )
 {
+    static const WCHAR * const system_props[] =
+        { L"__GENUS", L"__CLASS", L"__RELPATH", L"__PROPERTY_COUNT", L"__SERVER", L"__NAMESPACE", L"__PATH" };
     SAFEARRAY *sa;
     BSTR str;
-    UINT i, table_index, result_index, num_props;
+    UINT i, table_index, result_index, count = 0;
     struct table *table;
     HRESULT hr;
-    LONG j;
+    LONG j = 0;
 
     if ((hr = map_view_index( view, index, &table_index, &result_index )) != S_OK) return hr;
-
-    num_props = count_result_properties( view, table_index );
-    if (!(sa = SafeArrayCreateVector( VT_BSTR, 0, num_props ))) return E_OUTOFMEMORY;
-
     table = view->table[table_index];
-    for (i = 0, j = 0; i < table->num_cols; i++)
+
+    if (!(flags & WBEM_FLAG_NONSYSTEM_ONLY)) count += ARRAY_SIZE(system_props);
+    if (!(flags & WBEM_FLAG_SYSTEM_ONLY))
     {
-        BOOL is_system;
-
-        if (is_method( table, i )) continue;
-        if (!is_result_prop( view, table->columns[i].name )) continue;
-
-        is_system = is_system_prop( table->columns[i].name );
-        if ((flags & WBEM_FLAG_NONSYSTEM_ONLY) && is_system) continue;
-        else if ((flags & WBEM_FLAG_SYSTEM_ONLY) && !is_system) continue;
-
-        str = SysAllocString( table->columns[i].name );
-        if (!str || SafeArrayPutElement( sa, &j, str ) != S_OK)
+        for (i = 0; i < table->num_cols; i++)
         {
-            SysFreeString( str );
-            SafeArrayDestroy( sa );
-            return E_OUTOFMEMORY;
+            if (!is_method( table, i ) && is_result_prop( view, table->columns[i].name )) count++;
         }
-        SysFreeString( str );
-        j++;
     }
+
+    if (!(sa = SafeArrayCreateVector( VT_BSTR, 0, count ))) return E_OUTOFMEMORY;
+
+    if (!(flags & WBEM_FLAG_NONSYSTEM_ONLY))
+    {
+        for (j = 0; j < ARRAY_SIZE(system_props); j++)
+        {
+            str = SysAllocString( system_props[j] );
+            if (!str || SafeArrayPutElement( sa, &j, str ) != S_OK)
+            {
+                SysFreeString( str );
+                SafeArrayDestroy( sa );
+                return E_OUTOFMEMORY;
+            }
+            SysFreeString( str );
+        }
+    }
+    if (!(flags & WBEM_FLAG_SYSTEM_ONLY))
+    {
+        for (i = 0; i < table->num_cols; i++)
+        {
+            if (is_method( table, i ) || !is_result_prop( view, table->columns[i].name )) continue;
+
+            str = SysAllocString( table->columns[i].name );
+            if (!str || SafeArrayPutElement( sa, &j, str ) != S_OK)
+            {
+                SysFreeString( str );
+                SafeArrayDestroy( sa );
+                return E_OUTOFMEMORY;
+            }
+            SysFreeString( str );
+            j++;
+        }
+    }
+
     *props = sa;
     return S_OK;
 }
