@@ -384,6 +384,7 @@ extern BOOL get_gdi_font_glyph_metrics( struct gdi_font *font, UINT index,
 extern void set_gdi_font_glyph_metrics( struct gdi_font *font, UINT index,
                                         const GLYPHMETRICS *gm, const ABC *abc ) DECLSPEC_HIDDEN;
 extern void font_init(void) DECLSPEC_HIDDEN;
+extern CRITICAL_SECTION font_cs DECLSPEC_HIDDEN;
 
 /* freetype.c */
 

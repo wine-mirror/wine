@@ -340,6 +340,14 @@ static inline BOOL is_dbcs_ansi_cp(UINT ansi_cp)
             || ansi_cp == 950 );  /* CP950 for Chinese Traditional */
 }
 
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &font_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": font_cs") }
+};
+CRITICAL_SECTION font_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 /* realized font objects */
 
 #define FIRST_FONT_HANDLE 1
@@ -909,13 +917,17 @@ static BOOL CDECL font_EnumFonts( PHYSDEV dev, LOGFONTW *lf, FONTENUMPROCW proc,
 static BOOL CDECL font_FontIsLinked( PHYSDEV dev )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    BOOL ret;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pFontIsLinked );
         return dev->funcs->pFontIsLinked( dev );
     }
-    return font_funcs->pFontIsLinked( physdev->font );
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->pFontIsLinked( physdev->font );
+    LeaveCriticalSection( &font_cs );
+    return ret;
 }
 
 
@@ -925,13 +937,17 @@ static BOOL CDECL font_FontIsLinked( PHYSDEV dev )
 static BOOL CDECL font_GetCharABCWidths( PHYSDEV dev, UINT first, UINT last, ABC *buffer )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    BOOL ret;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetCharABCWidths );
         return dev->funcs->pGetCharABCWidths( dev, first, last, buffer );
     }
-    return font_funcs->pGetCharABCWidths( physdev->font, first, last, buffer );
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->pGetCharABCWidths( physdev->font, first, last, buffer );
+    LeaveCriticalSection( &font_cs );
+    return ret;
 }
 
 
@@ -941,13 +957,17 @@ static BOOL CDECL font_GetCharABCWidths( PHYSDEV dev, UINT first, UINT last, ABC
 static BOOL CDECL font_GetCharABCWidthsI( PHYSDEV dev, UINT first, UINT count, WORD *gi, ABC *buffer )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    BOOL ret;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetCharABCWidthsI );
         return dev->funcs->pGetCharABCWidthsI( dev, first, count, gi, buffer );
     }
-    return font_funcs->pGetCharABCWidthsI( physdev->font, first, count, gi, buffer );
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->pGetCharABCWidthsI( physdev->font, first, count, gi, buffer );
+    LeaveCriticalSection( &font_cs );
+    return ret;
 }
 
 
@@ -957,13 +977,17 @@ static BOOL CDECL font_GetCharABCWidthsI( PHYSDEV dev, UINT first, UINT count, W
 static BOOL CDECL font_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *buffer )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    BOOL ret;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetCharWidth );
         return dev->funcs->pGetCharWidth( dev, first, last, buffer );
     }
-    return font_funcs->pGetCharWidth( physdev->font, first, last, buffer );
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->pGetCharWidth( physdev->font, first, last, buffer );
+    LeaveCriticalSection( &font_cs );
+    return ret;
 }
 
 
@@ -1054,13 +1078,17 @@ static DWORD CDECL font_GetFontUnicodeRanges( PHYSDEV dev, GLYPHSET *glyphset )
 static DWORD CDECL font_GetGlyphIndices( PHYSDEV dev, const WCHAR *str, INT count, WORD *gi, DWORD flags )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    DWORD ret;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetGlyphIndices );
         return dev->funcs->pGetGlyphIndices( dev, str, count, gi, flags );
     }
-    return font_funcs->pGetGlyphIndices( physdev->font, str, count, gi, flags );
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->pGetGlyphIndices( physdev->font, str, count, gi, flags );
+    LeaveCriticalSection( &font_cs );
+    return ret;
 }
 
 
@@ -1071,13 +1099,17 @@ static DWORD CDECL font_GetGlyphOutline( PHYSDEV dev, UINT glyph, UINT format,
                                          GLYPHMETRICS *gm, DWORD buflen, void *buf, const MAT2 *mat )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    DWORD ret;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetGlyphOutline );
         return dev->funcs->pGetGlyphOutline( dev, glyph, format, gm, buflen, buf, mat );
     }
-    return font_funcs->pGetGlyphOutline( physdev->font, glyph, format, gm, buflen, buf, mat );
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->pGetGlyphOutline( physdev->font, glyph, format, gm, buflen, buf, mat );
+    LeaveCriticalSection( &font_cs );
+    return ret;
 }
 
 
@@ -1087,13 +1119,17 @@ static DWORD CDECL font_GetGlyphOutline( PHYSDEV dev, UINT glyph, UINT format,
 static DWORD CDECL font_GetKerningPairs( PHYSDEV dev, DWORD count, KERNINGPAIR *pairs )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    DWORD ret;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetKerningPairs );
         return dev->funcs->pGetKerningPairs( dev, count, pairs );
     }
-    return font_funcs->pGetKerningPairs( physdev->font, count, pairs );
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->pGetKerningPairs( physdev->font, count, pairs );
+    LeaveCriticalSection( &font_cs );
+    return ret;
 }
 
 
@@ -1103,13 +1139,20 @@ static DWORD CDECL font_GetKerningPairs( PHYSDEV dev, DWORD count, KERNINGPAIR *
 static UINT CDECL font_GetOutlineTextMetrics( PHYSDEV dev, UINT size, OUTLINETEXTMETRICW *metrics )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    UINT ret;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetOutlineTextMetrics );
         return dev->funcs->pGetOutlineTextMetrics( dev, size, metrics );
     }
-    return font_funcs->pGetOutlineTextMetrics( physdev->font, size, metrics );
+
+    if (!physdev->font->scalable) return 0;
+
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->pGetOutlineTextMetrics( physdev->font, size, metrics );
+    LeaveCriticalSection( &font_cs );
+    return ret;
 }
 
 
@@ -1136,13 +1179,17 @@ static UINT CDECL font_GetTextCharsetInfo( PHYSDEV dev, FONTSIGNATURE *fs, DWORD
 static BOOL CDECL font_GetTextExtentExPoint( PHYSDEV dev, const WCHAR *str, INT count, INT *dxs )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    BOOL ret;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetTextExtentExPoint );
         return dev->funcs->pGetTextExtentExPoint( dev, str, count, dxs );
     }
-    return font_funcs->pGetTextExtentExPoint( physdev->font, str, count, dxs );
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->pGetTextExtentExPoint( physdev->font, str, count, dxs );
+    LeaveCriticalSection( &font_cs );
+    return ret;
 }
 
 
@@ -1152,13 +1199,17 @@ static BOOL CDECL font_GetTextExtentExPoint( PHYSDEV dev, const WCHAR *str, INT 
 static BOOL CDECL font_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, INT count, INT *dxs )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    BOOL ret;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetTextExtentExPointI );
         return dev->funcs->pGetTextExtentExPointI( dev, indices, count, dxs );
     }
-    return font_funcs->pGetTextExtentExPointI( physdev->font, indices, count, dxs );
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->pGetTextExtentExPointI( physdev->font, indices, count, dxs );
+    LeaveCriticalSection( &font_cs );
+    return ret;
 }
 
 
@@ -1191,13 +1242,18 @@ static INT CDECL font_GetTextFace( PHYSDEV dev, INT count, WCHAR *str )
 static BOOL CDECL font_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    BOOL ret;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetTextMetrics );
         return dev->funcs->pGetTextMetrics( dev, metrics );
     }
-    return font_funcs->pGetTextMetrics( physdev->font, metrics );
+
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->pGetTextMetrics( physdev->font, metrics );
+    LeaveCriticalSection( &font_cs );
+    return ret;
 }
 
 
@@ -1216,10 +1272,14 @@ static HFONT CDECL font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
         PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectFont );
         next->funcs->pSelectFont( next, hfont, &default_aa_flags );
     }
-    if (!hfont)  /* notification that the font has been changed by another driver */
-        physdev->font = NULL;
-    else
+
+    if (hfont)
+    {
+        EnterCriticalSection( &font_cs );
         physdev->font = font_funcs->pSelectFont( dc, hfont, aa_flags, default_aa_flags );
+        LeaveCriticalSection( &font_cs );
+    }
+    else physdev->font = NULL;  /* notification that the font has been changed by another driver */
 
     if (prev) release_gdi_font( prev );
     return physdev->font ? hfont : 0;
@@ -4973,7 +5033,11 @@ INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
     BOOL hidden;
 
     if (!font_funcs) return 1;
-    if (!(ret = font_funcs->pAddFontResourceEx( str, fl, pdv )))
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->pAddFontResourceEx( str, fl, pdv );
+    LeaveCriticalSection( &font_cs );
+
+    if (!ret)
     {
         /* FreeType <2.3.5 has problems reading resources wrapped in PE files. */
         HMODULE hModule = LoadLibraryExW(str, NULL, LOAD_LIBRARY_AS_DATAFILE);
@@ -4991,7 +5055,9 @@ INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
         else if ((filename = get_scalable_filename( str, &hidden )) != NULL)
         {
             if (hidden) fl |= FR_PRIVATE | FR_NOT_ENUM;
+            EnterCriticalSection( &font_cs );
             ret = font_funcs->pAddFontResourceEx( filename, fl, pdv );
+            LeaveCriticalSection( &font_cs );
             HeapFree( GetProcessHeap(), 0, filename );
         }
     }
@@ -5028,7 +5094,9 @@ HANDLE WINAPI AddFontMemResourceEx( PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD
         return NULL;
     }
     if (!font_funcs) return NULL;
+    EnterCriticalSection( &font_cs );
     ret = font_funcs->pAddFontMemResourceEx( pbFont, cbFont, pdv, &num_fonts );
+    LeaveCriticalSection( &font_cs );
     if (ret)
     {
         __TRY
@@ -5081,7 +5149,11 @@ BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
 
     if (!font_funcs) return TRUE;
 
-    if (!(ret = font_funcs->pRemoveFontResourceEx( str, fl, pdv )))
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->pRemoveFontResourceEx( str, fl, pdv );
+    LeaveCriticalSection( &font_cs );
+
+    if (!ret)
     {
         /* FreeType <2.3.5 has problems reading resources wrapped in PE files. */
         HMODULE hModule = LoadLibraryExW(str, NULL, LOAD_LIBRARY_AS_DATAFILE);
@@ -5093,7 +5165,9 @@ BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
         else if ((filename = get_scalable_filename( str, &hidden )) != NULL)
         {
             if (hidden) fl |= FR_PRIVATE | FR_NOT_ENUM;
+            EnterCriticalSection( &font_cs );
             ret = font_funcs->pRemoveFontResourceEx( filename, fl, pdv );
+            LeaveCriticalSection( &font_cs );
             HeapFree( GetProcessHeap(), 0, filename );
         }
     }
@@ -5291,10 +5365,15 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
  */
 BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD unknown, UINT64 offset, void *buff, DWORD buff_size )
 {
-    struct gdi_font *font = get_font_from_handle( instance_id );
+    struct gdi_font *font;
+    BOOL ret = FALSE;
 
-    if (!font_funcs || !font) return FALSE;
-    return font_funcs->pGetFontFileData( font, unknown, offset, buff, buff_size );
+    if (!font_funcs) return FALSE;
+    EnterCriticalSection( &font_cs );
+    if ((font = get_font_from_handle( instance_id )))
+        ret = font_funcs->pGetFontFileData( font, unknown, offset, buff, buff_size );
+    LeaveCriticalSection( &font_cs );
+    return ret;
 }
 
 /*************************************************************************
@@ -5303,24 +5382,26 @@ BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD unknown, UINT64 offset, vo
 BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_fileinfo *info,
                              SIZE_T size, SIZE_T *needed )
 {
-    SIZE_T required_size;
-    struct gdi_font *font = get_font_from_handle( instance_id );
+    SIZE_T required_size = 0;
+    struct gdi_font *font;
+    BOOL ret = FALSE;
 
-    if (!needed) needed = &required_size;
+    EnterCriticalSection( &font_cs );
 
-    if (!font)
+    if ((font = get_font_from_handle( instance_id )))
     {
-        *needed = 0;
-        return FALSE;
+        required_size = sizeof(*info) + strlenW( font->fileinfo->path ) * sizeof(WCHAR);
+        if (required_size <= size)
+        {
+            memcpy( info, font->fileinfo, required_size );
+            ret = TRUE;
+        }
+        else SetLastError( ERROR_INSUFFICIENT_BUFFER );
     }
-    *needed = sizeof(*info) + strlenW( font->fileinfo->path ) * sizeof(WCHAR);
-    if (*needed > size)
-    {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        return FALSE;
-    }
-    memcpy( info, font->fileinfo, *needed );
-    return TRUE;
+
+    LeaveCriticalSection( &font_cs );
+    if (needed) *needed = required_size;
+    return ret;
 }
 
 struct realization_info

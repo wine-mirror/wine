@@ -464,15 +464,6 @@ static UINT default_aa_flags;
 static HKEY hkey_font_cache;
 static BOOL antialias_fakes = TRUE;
 
-static CRITICAL_SECTION freetype_cs;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &freetype_cs,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": freetype_cs") }
-};
-static CRITICAL_SECTION freetype_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
-
 static const WCHAR font_mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N','T','_','M','U','T','E','X','_','_','\0'};
 
 static const WCHAR szDefaultFallbackLink[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0};
@@ -3130,8 +3121,6 @@ static INT CDECL freetype_AddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv
     INT ret = 0;
     DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
 
-    EnterCriticalSection( &freetype_cs );
-
     if (!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
     if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
         ret = add_font_resource( path, addfont_flags );
@@ -3147,8 +3136,6 @@ static INT CDECL freetype_AddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv
             ret = add_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
         }
     }
-
-    LeaveCriticalSection( &freetype_cs );
     return ret;
 }
 
@@ -3163,10 +3150,7 @@ static HANDLE CDECL freetype_AddFontMemResourceEx(PVOID pbFont, DWORD cbFont, PV
     TRACE("Copying %d bytes of data from %p to %p\n", cbFont, pbFont, pFontCopy);
     memcpy(pFontCopy, pbFont, cbFont);
 
-    EnterCriticalSection( &freetype_cs );
     *pcFonts = AddFontToList(NULL, NULL, pFontCopy, cbFont, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE);
-    LeaveCriticalSection( &freetype_cs );
-
     if (*pcFonts == 0)
     {
         TRACE("AddFontToList failed\n");
@@ -3190,8 +3174,6 @@ static BOOL CDECL freetype_RemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID
     INT ret = 0;
     DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
 
-    EnterCriticalSection( &freetype_cs );
-
     if(!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
     if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
         ret = remove_font_resource( path, addfont_flags );
@@ -3206,8 +3188,6 @@ static BOOL CDECL freetype_RemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID
             ret = remove_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
         }
     }
-
-    LeaveCriticalSection( &freetype_cs );
     return ret;
 }
 
@@ -4749,8 +4729,6 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
     TRACE("DC transform %f %f %f %f\n", dcmat.eM11, dcmat.eM12,
                                         dcmat.eM21, dcmat.eM22);
 
-    EnterCriticalSection( &freetype_cs );
-
     /* check the cache first */
     if ((gdi_font = find_cached_gdi_font( &lf, &dcmat, can_use_bitmap ))) {
         ret = get_font_ptr( gdi_font );
@@ -4957,8 +4935,7 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
     if(!last_resort_family) {
         FIXME("can't find a single appropriate font - bailing\n");
         free_gdi_font(gdi_font);
-        ret = NULL;
-        goto done;
+        return NULL;
     }
 
     WARN("could only find a bitmap font - this will probably look awful!\n");
@@ -5074,8 +5051,7 @@ found_face:
     if (!ret->ft_face)
     {
         free_gdi_font( gdi_font );
-        ret = NULL;
-        goto done;
+        return NULL;
     }
 
     set_gdi_font_file_info( gdi_font, face->file, face->font_data_size );
@@ -5151,7 +5127,6 @@ done:
         }
         TRACE( "%p %s %d aa %x\n", hfont, debugstr_w(lf.lfFaceName), lf.lfHeight, *aa_flags );
     }
-    LeaveCriticalSection( &freetype_cs );
     return gdi_font;
 }
 
@@ -5419,9 +5394,9 @@ static BOOL enum_face_charsets(const Family *family, Face *face, struct enum_cha
               elf.elfLogFont.lfItalic, elf.elfLogFont.lfWeight,
               ntm.ntmTm.ntmFlags);
         /* release section before callback (FIXME) */
-        LeaveCriticalSection( &freetype_cs );
+        LeaveCriticalSection( &font_cs );
         if (!proc(&elf.elfLogFont, (TEXTMETRICW *)&ntm, type, lparam)) return FALSE;
-        EnterCriticalSection( &freetype_cs );
+        EnterCriticalSection( &font_cs );
     }
     return TRUE;
 }
@@ -5449,7 +5424,7 @@ static BOOL CDECL freetype_EnumFonts( LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM
 
     create_enum_charset_list(plf->lfCharSet, &enum_charsets);
 
-    EnterCriticalSection( &freetype_cs );
+    EnterCriticalSection( &font_cs );
     if(plf->lfFaceName[0]) {
         WCHAR *face_name = plf->lfFaceName;
         FontSubst *psub = get_font_subst(&font_subst_list, plf->lfFaceName, plf->lfCharSet);
@@ -5475,7 +5450,7 @@ static BOOL CDECL freetype_EnumFonts( LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM
             if (!enum_face_charsets(family, face, &enum_charsets, proc, lparam, NULL)) return FALSE;
 	}
     }
-    LeaveCriticalSection( &freetype_cs );
+    LeaveCriticalSection( &font_cs );
     return TRUE;
 }
 
@@ -5762,8 +5737,6 @@ static DWORD CDECL freetype_GetGlyphIndices( struct gdi_font *gdi_font, LPCWSTR 
         got_default = TRUE;
     }
 
-    EnterCriticalSection( &freetype_cs );
-
     for(i = 0; i < count; i++)
     {
         pgi[i] = get_gdi_glyph_index(font, lpstr[i]);
@@ -5779,7 +5752,6 @@ static DWORD CDECL freetype_GetGlyphIndices( struct gdi_font *gdi_font, LPCWSTR 
         else
             pgi[i] = get_GSUB_vert_glyph(font, pgi[i]);
     }
-    LeaveCriticalSection( &freetype_cs );
     return count;
 }
 
@@ -7398,13 +7370,9 @@ end:
 static DWORD CDECL freetype_GetGlyphOutline( struct gdi_font *font, UINT glyph, UINT format,
                                              LPGLYPHMETRICS lpgm, DWORD buflen, LPVOID buf, const MAT2 *lpmat )
 {
-    DWORD ret;
     ABC abc;
 
-    EnterCriticalSection( &freetype_cs );
-    ret = get_glyph_outline( get_font_ptr(font), glyph, format, lpgm, &abc, buflen, buf, lpmat );
-    LeaveCriticalSection( &freetype_cs );
-    return ret;
+    return get_glyph_outline( get_font_ptr(font), glyph, format, lpgm, &abc, buflen, buf, lpmat );
 }
 
 /*************************************************************
@@ -7412,12 +7380,7 @@ static DWORD CDECL freetype_GetGlyphOutline( struct gdi_font *font, UINT glyph, 
  */
 static BOOL CDECL freetype_GetTextMetrics( struct gdi_font *font, TEXTMETRICW *metrics )
 {
-    BOOL ret;
-
-    EnterCriticalSection( &freetype_cs );
-    ret = get_text_metrics( get_font_ptr(font), metrics );
-    LeaveCriticalSection( &freetype_cs );
-    return ret;
+    return get_text_metrics( get_font_ptr(font), metrics );
 }
 
 /*************************************************************
@@ -7430,10 +7393,6 @@ static UINT CDECL freetype_GetOutlineTextMetrics( struct gdi_font *gdi_font, UIN
 
     TRACE("font=%p\n", font);
 
-    if (!gdi_font->scalable) return 0;
-
-    EnterCriticalSection( &freetype_cs );
-
     if (font->potm || get_outline_text_metrics( font ))
     {
         if(potm && cbSize >= font->potm->otmSize)
@@ -7443,7 +7402,6 @@ static UINT CDECL freetype_GetOutlineTextMetrics( struct gdi_font *gdi_font, UIN
         }
 	ret = font->potm->otmSize;
     }
-    LeaveCriticalSection( &freetype_cs );
     return ret;
 }
 
@@ -7552,14 +7510,12 @@ static BOOL CDECL freetype_GetCharWidth( struct gdi_font *font, UINT firstChar, 
 
     TRACE("%p, %d, %d, %p\n", font, firstChar, lastChar, buffer);
 
-    EnterCriticalSection( &freetype_cs );
     for(c = firstChar; c <= lastChar; c++) {
         if (get_glyph_outline( get_font_ptr(font), c, GGO_METRICS, &gm, &abc, 0, NULL, &identity ) == GDI_ERROR)
             buffer[c - firstChar] = 0;
         else
             buffer[c - firstChar] = abc.abcA + abc.abcB + abc.abcC;
     }
-    LeaveCriticalSection( &freetype_cs );
     return TRUE;
 }
 
@@ -7600,12 +7556,9 @@ static BOOL CDECL freetype_GetCharABCWidths( struct gdi_font *font, UINT firstCh
 
     TRACE("%p, %d, %d, %p\n", font, firstChar, lastChar, buffer);
 
-    EnterCriticalSection( &freetype_cs );
-
     for(c = firstChar; c <= lastChar; c++, buffer++)
         get_glyph_outline( get_font_ptr(font), c, GGO_METRICS, &gm, buffer, 0, NULL, &identity );
 
-    LeaveCriticalSection( &freetype_cs );
     return TRUE;
 }
 
@@ -7622,13 +7575,10 @@ static BOOL CDECL freetype_GetCharABCWidthsI( struct gdi_font *gdi_font, UINT fi
     if(!FT_HAS_HORIZONTAL(font->ft_face))
         return FALSE;
 
-    EnterCriticalSection( &freetype_cs );
-
     for(c = 0; c < count; c++, buffer++)
         get_glyph_outline( font, pgi ? pgi[c] : firstChar + c, GGO_METRICS | GGO_GLYPH_INDEX,
                            &gm, buffer, 0, NULL, &identity );
 
-    LeaveCriticalSection( &freetype_cs );
     return TRUE;
 }
 
@@ -7644,8 +7594,6 @@ static BOOL CDECL freetype_GetTextExtentExPoint( struct gdi_font *font, LPCWSTR 
 
     TRACE("%p, %s, %d\n", font, debugstr_wn(wstr, count), count);
 
-    EnterCriticalSection( &freetype_cs );
-
     for (idx = pos = 0; idx < count; idx++)
     {
         get_glyph_outline( get_font_ptr(font), wstr[idx], GGO_METRICS, &gm, &abc, 0, NULL, &identity );
@@ -7653,7 +7601,6 @@ static BOOL CDECL freetype_GetTextExtentExPoint( struct gdi_font *font, LPCWSTR 
         dxs[idx] = pos;
     }
 
-    LeaveCriticalSection( &freetype_cs );
     return TRUE;
 }
 
@@ -7669,8 +7616,6 @@ static BOOL CDECL freetype_GetTextExtentExPointI( struct gdi_font *font, const W
 
     TRACE("%p, %p, %d\n", font, indices, count);
 
-    EnterCriticalSection( &freetype_cs );
-
     for (idx = pos = 0; idx < count; idx++)
     {
         get_glyph_outline( get_font_ptr(font), indices[idx], GGO_METRICS | GGO_GLYPH_INDEX,
@@ -7678,8 +7623,6 @@ static BOOL CDECL freetype_GetTextExtentExPointI( struct gdi_font *font, const W
         pos += abc.abcA + abc.abcB + abc.abcC;
         dxs[idx] = pos;
     }
-
-    LeaveCriticalSection( &freetype_cs );
     return TRUE;
 }
 
@@ -7781,12 +7724,7 @@ static DWORD CDECL freetype_GetFontUnicodeRanges( struct gdi_font *font, GLYPHSE
  */
 static BOOL CDECL freetype_FontIsLinked( struct gdi_font *font )
 {
-    BOOL ret;
-
-    EnterCriticalSection( &freetype_cs );
-    ret = !list_empty( &get_font_ptr(font)->child_fonts );
-    LeaveCriticalSection( &freetype_cs );
-    return ret;
+    return !list_empty( &get_font_ptr(font)->child_fonts );
 }
 
 /*************************************************************************
@@ -7920,7 +7858,6 @@ static DWORD CDECL freetype_GetKerningPairs( struct gdi_font *gdi_font, DWORD cP
     USHORT i, nTables;
     USHORT *glyph_to_char;
 
-    EnterCriticalSection( &freetype_cs );
     if (font->total_kern_pairs != (DWORD)-1)
     {
         if (cPairs && kern_pair)
@@ -7929,8 +7866,6 @@ static DWORD CDECL freetype_GetKerningPairs( struct gdi_font *gdi_font, DWORD cP
             memcpy(kern_pair, font->kern_pairs, cPairs * sizeof(*kern_pair));
         }
         else cPairs = font->total_kern_pairs;
-
-        LeaveCriticalSection( &freetype_cs );
         return cPairs;
     }
 
@@ -7941,17 +7876,11 @@ static DWORD CDECL freetype_GetKerningPairs( struct gdi_font *gdi_font, DWORD cP
     if (length == GDI_ERROR)
     {
         TRACE("no kerning data in the font\n");
-        LeaveCriticalSection( &freetype_cs );
         return 0;
     }
 
     buf = HeapAlloc(GetProcessHeap(), 0, length);
-    if (!buf)
-    {
-        WARN("Out of memory\n");
-        LeaveCriticalSection( &freetype_cs );
-        return 0;
-    }
+    if (!buf) return 0;
 
     get_font_data(font, MS_KERN_TAG, 0, buf, length);
 
@@ -7959,9 +7888,7 @@ static DWORD CDECL freetype_GetKerningPairs( struct gdi_font *gdi_font, DWORD cP
     glyph_to_char = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(USHORT) * 65536);
     if (!glyph_to_char)
     {
-        WARN("Out of memory allocating a glyph index to char code map\n");
         HeapFree(GetProcessHeap(), 0, buf);
-        LeaveCriticalSection( &freetype_cs );
         return 0;
     }
 
@@ -8055,8 +7982,6 @@ static DWORD CDECL freetype_GetKerningPairs( struct gdi_font *gdi_font, DWORD cP
         memcpy(kern_pair, font->kern_pairs, cPairs * sizeof(*kern_pair));
     }
     else cPairs = font->total_kern_pairs;
-
-    LeaveCriticalSection( &freetype_cs );
     return cPairs;
 }
 
