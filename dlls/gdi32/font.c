@@ -1044,7 +1044,7 @@ static DWORD CDECL font_GetFontData( PHYSDEV dev, DWORD table, DWORD offset, voi
         dev = GET_NEXT_PHYSDEV( dev, pGetFontData );
         return dev->funcs->pGetFontData( dev, table, offset, buf, size );
     }
-    return font_funcs->pGetFontData( physdev->font, table, offset, buf, size );
+    return font_funcs->get_font_data( physdev->font, table, offset, buf, size );
 }
 
 
@@ -5412,12 +5412,20 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD unknown, UINT64 offset, void *buff, DWORD buff_size )
 {
     struct gdi_font *font;
+    DWORD tag = 0, size;
     BOOL ret = FALSE;
 
     if (!font_funcs) return FALSE;
     EnterCriticalSection( &font_cs );
     if ((font = get_font_from_handle( instance_id )))
-        ret = font_funcs->pGetFontFileData( font, unknown, offset, buff, buff_size );
+    {
+        if (font->ttc_item_offset) tag = MS_TTCF_TAG;
+        size = font_funcs->get_font_data( font, tag, 0, NULL, 0 );
+        if (size != GDI_ERROR && size >= buff_size && offset <= size - buff_size)
+            ret = font_funcs->get_font_data( font, tag, offset, buff, buff_size ) != GDI_ERROR;
+        else
+            SetLastError( ERROR_INVALID_PARAMETER );
+    }
     LeaveCriticalSection( &font_cs );
     return ret;
 }

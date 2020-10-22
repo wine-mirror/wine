@@ -221,18 +221,6 @@ MAKE_FUNCPTR(FcPatternGetString);
 #define GET_BE_DWORD(x) RtlUlongByteSwap(x)
 #endif
 
-#define MS_MAKE_TAG( _x1, _x2, _x3, _x4 ) \
-          ( ( (FT_ULong)_x4 << 24 ) |     \
-            ( (FT_ULong)_x3 << 16 ) |     \
-            ( (FT_ULong)_x2 <<  8 ) |     \
-              (FT_ULong)_x1         )
-
-#define MS_GASP_TAG MS_MAKE_TAG('g', 'a', 's', 'p')
-#define MS_GSUB_TAG MS_MAKE_TAG('G', 'S', 'U', 'B')
-#define MS_KERN_TAG MS_MAKE_TAG('k', 'e', 'r', 'n')
-#define MS_TTCF_TAG MS_MAKE_TAG('t', 't', 'c', 'f')
-#define MS_VDMX_TAG MS_MAKE_TAG('V', 'D', 'M', 'X')
-
 /* 'gasp' flags */
 #define GASP_GRIDFIT 0x01
 #define GASP_DOGRAY  0x02
@@ -325,7 +313,6 @@ struct tagGdiFont {
     GdiFont *base_font;
     VOID *GSUB_Table;
     const VOID *vert_feature;
-    ULONG ttc_item_offset; /* 0 if font is not a part of TrueType collection */
 };
 
 static inline GdiFont *get_font_ptr( struct gdi_font *font ) { return font->private; }
@@ -3972,12 +3959,12 @@ static FT_Face OpenFontFace(GdiFont *font, Face *face, LONG width, LONG height)
         if (!pFT_Load_Sfnt_Table(ft_face, 0, 0, (void*)&header, &len)) {
             if (header == MS_TTCF_TAG)
             {
-                len = sizeof(font->ttc_item_offset);
+                len = sizeof(gdi_font->ttc_item_offset);
                 if (pFT_Load_Sfnt_Table(ft_face, 0, (3 + face->face_index) * sizeof(DWORD),
-                        (void*)&font->ttc_item_offset, &len))
-                    font->ttc_item_offset = 0;
+                        (void*)&gdi_font->ttc_item_offset, &len))
+                    gdi_font->ttc_item_offset = 0;
                 else
-                    font->ttc_item_offset = GET_BE_DWORD(font->ttc_item_offset);
+                    gdi_font->ttc_item_offset = GET_BE_DWORD(gdi_font->ttc_item_offset);
             }
         }
     } else {
@@ -4071,9 +4058,13 @@ static void CDECL freetype_destroy_font( struct gdi_font *gdi_font )
     HeapFree(GetProcessHeap(), 0, font);
 }
 
-static DWORD get_font_data( GdiFont *font, DWORD table, DWORD offset, LPVOID buf, DWORD cbData)
+/*************************************************************
+ * freetype_get_font_data
+ */
+static DWORD CDECL freetype_get_font_data( struct gdi_font *font, DWORD table, DWORD offset,
+                                           void *buf, DWORD cbData)
 {
-    FT_Face ft_face = font->ft_face;
+    FT_Face ft_face = get_font_ptr(font)->ft_face;
     FT_ULong len;
     FT_Error err;
 
@@ -4094,19 +4085,16 @@ static DWORD get_font_data( GdiFont *font, DWORD table, DWORD offset, LPVOID buf
             offset += font->ttc_item_offset;
     }
 
-    table = RtlUlongByteSwap( table );  /* MS tags differ in endianness from FT ones */
-
     /* make sure value of len is the value freetype says it needs */
     if (buf && len)
     {
         FT_ULong needed = 0;
-        err = pFT_Load_Sfnt_Table(ft_face, table, offset, NULL, &needed);
+        err = pFT_Load_Sfnt_Table(ft_face, RtlUlongByteSwap(table), offset, NULL, &needed);
         if( !err && needed < len) len = needed;
     }
-    err = pFT_Load_Sfnt_Table(ft_face, table, offset, buf, &len);
+    err = pFT_Load_Sfnt_Table(ft_face, RtlUlongByteSwap(table), offset, buf, &len);
     if (err)
     {
-        table = RtlUlongByteSwap( table );
         TRACE("Can't find table %s\n", debugstr_an((char*)&table, 4));
 	return GDI_ERROR;
     }
@@ -4157,7 +4145,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
     LONG ppem = 0;
     int i;
 
-    result = get_font_data(font, MS_VDMX_TAG, 0, &hdr, sizeof(hdr));
+    result = freetype_get_font_data(gdi_font, MS_VDMX_TAG, 0, &hdr, sizeof(hdr));
 
     if(result == GDI_ERROR) /* no vdmx table present, use linear scaling */
 	return ppem;
@@ -4174,7 +4162,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 	Ratios ratio;
 
 	offset = sizeof(hdr) + (i * sizeof(Ratios));
-	get_font_data(font, MS_VDMX_TAG, offset, &ratio, sizeof(Ratios));
+	freetype_get_font_data(gdi_font, MS_VDMX_TAG, offset, &ratio, sizeof(Ratios));
 	offset = -1;
 
 	TRACE("Ratios[%d] %d  %d : %d -> %d\n", i, ratio.bCharSet, ratio.xRatio, ratio.yStartRatio, ratio.yEndRatio);
@@ -4191,7 +4179,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 		WORD group_offset;
 
 		offset = sizeof(hdr) + numRatios * sizeof(ratio) + i * sizeof(group_offset);
-		get_font_data(font, MS_VDMX_TAG, offset, &group_offset, sizeof(group_offset));
+		freetype_get_font_data(gdi_font, MS_VDMX_TAG, offset, &group_offset, sizeof(group_offset));
 		offset = GET_BE_WORD(group_offset);
 		break;
 	    }
@@ -4199,7 +4187,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 
     if(offset == -1) return 0;
 
-    if(get_font_data(font, MS_VDMX_TAG, offset, &group, sizeof(group)) != GDI_ERROR) {
+    if(freetype_get_font_data(gdi_font, MS_VDMX_TAG, offset, &group, sizeof(group)) != GDI_ERROR) {
 	USHORT recs;
 	BYTE startsz, endsz;
 	WORD *vTable;
@@ -4211,7 +4199,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 	TRACE("recs=%d  startsz=%d  endsz=%d\n", recs, startsz, endsz);
 
 	vTable = HeapAlloc(GetProcessHeap(), 0, recs * sizeof(VDMX_vTable));
-	result = get_font_data(font, MS_VDMX_TAG, offset + sizeof(group), vTable, recs * sizeof(VDMX_vTable));
+	result = freetype_get_font_data(gdi_font, MS_VDMX_TAG, offset + sizeof(group), vTable, recs * sizeof(VDMX_vTable));
 	if(result == GDI_ERROR) {
 	    FIXME("Failed to retrieve vTable\n");
 	    goto end;
@@ -4409,8 +4397,9 @@ static FT_Encoding pick_charmap( FT_Face face, int charset )
     return *encs;
 }
 
-static BOOL get_gasp_flags( GdiFont *font, WORD *flags )
+static BOOL get_gasp_flags( struct gdi_font *gdi_font, WORD *flags )
 {
+    GdiFont *font = get_font_ptr( gdi_font );
     DWORD size;
     WORD buf[16]; /* Enough for seven ranges before we need to alloc */
     WORD *alloced = NULL, *ptr = buf;
@@ -4418,7 +4407,7 @@ static BOOL get_gasp_flags( GdiFont *font, WORD *flags )
     BOOL ret = FALSE;
 
     *flags = 0;
-    size = get_font_data( font, MS_GASP_TAG,  0, NULL, 0 );
+    size = freetype_get_font_data( gdi_font, MS_GASP_TAG,  0, NULL, 0 );
     if (size == GDI_ERROR) return FALSE;
     if (size < 4 * sizeof(WORD)) return FALSE;
     if (size > sizeof(buf))
@@ -4427,7 +4416,7 @@ static BOOL get_gasp_flags( GdiFont *font, WORD *flags )
         if (!ptr) return FALSE;
     }
 
-    get_font_data( font, MS_GASP_TAG, 0, ptr, size );
+    freetype_get_font_data( gdi_font, MS_GASP_TAG, 0, ptr, size );
 
     version  = GET_BE_WORD( *ptr++ );
     num_recs = GET_BE_WORD( *ptr++ );
@@ -5065,11 +5054,11 @@ found_face:
 
     if (face->flags & ADDFONT_VERTICAL_FONT) /* We need to try to load the GSUB table */
     {
-        int length = get_font_data(ret, MS_GSUB_TAG , 0, NULL, 0);
+        int length = freetype_get_font_data(gdi_font, MS_GSUB_TAG , 0, NULL, 0);
         if (length != GDI_ERROR)
         {
             ret->GSUB_Table = HeapAlloc(GetProcessHeap(),0,length);
-            get_font_data(ret, MS_GSUB_TAG , 0, ret->GSUB_Table, length);
+            freetype_get_font_data(gdi_font, MS_GSUB_TAG , 0, ret->GSUB_Table, length);
             TRACE("Loaded GSUB table of %i bytes\n",length);
             ret->vert_feature = get_GSUB_vert_feature(ret);
             if (!ret->vert_feature)
@@ -5116,7 +5105,7 @@ done:
                 if ((!antialias_fakes || (!gdi_font->fake_bold && !gdi_font->fake_italic)) && is_hinting_enabled())
                 {
                     WORD gasp_flags;
-                    if (get_gasp_flags( ret, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
+                    if (get_gasp_flags( gdi_font, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
                     {
                         TRACE( "font %s %d aa disabled by GASP\n",
                                debugstr_w(lf.lfFaceName), lf.lfHeight );
@@ -7517,16 +7506,6 @@ static BOOL CDECL freetype_GetCharWidthInfo( struct gdi_font *gdi_font, struct c
     return TRUE;
 }
 
-/*************************************************************
- * freetype_GetFontData
- */
-static DWORD CDECL freetype_GetFontData( struct gdi_font *font, DWORD table, DWORD offset, LPVOID buf, DWORD cbData )
-{
-    TRACE("font=%p, table=%s, offset=0x%x, buf=%p, cbData=0x%x\n",
-          font, debugstr_an((char*)&table, 4), offset, buf, cbData);
-
-    return get_font_data( get_font_ptr(font), table, offset, buf, cbData );
-}
 
 /* Retrieve a list of supported Unicode ranges for a given font.
  * Can be called with NULL gs to calculate the buffer size. Returns
@@ -7616,29 +7595,6 @@ static DWORD CDECL freetype_GetFontUnicodeRanges( struct gdi_font *font, GLYPHSE
 static BOOL CDECL freetype_FontIsLinked( struct gdi_font *font )
 {
     return !list_empty( &get_font_ptr(font)->child_fonts );
-}
-
-/*************************************************************************
- * freetype_GetFontFileData
- */
-static BOOL CDECL freetype_GetFontFileData( struct gdi_font *gdi_font, DWORD unknown, UINT64 offset,
-                                            void *buff, DWORD buff_size )
-{
-    DWORD tag = 0, size;
-    GdiFont *font = get_font_ptr( gdi_font );
-
-    if (font->ttc_item_offset)
-        tag = MS_TTCF_TAG;
-
-    size = get_font_data( font, tag, 0, NULL, 0 );
-    if (size < buff_size || offset > size - buff_size)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    /* For now this only works for SFNT case. */
-    return get_font_data( font, tag, offset, buff, buff_size ) != 0;
 }
 
 /*************************************************************************
@@ -7762,7 +7718,7 @@ static DWORD CDECL freetype_GetKerningPairs( struct gdi_font *gdi_font, DWORD cP
 
     font->total_kern_pairs = 0;
 
-    length = get_font_data(font, MS_KERN_TAG, 0, NULL, 0);
+    length = freetype_get_font_data(gdi_font, MS_KERN_TAG, 0, NULL, 0);
 
     if (length == GDI_ERROR)
     {
@@ -7773,7 +7729,7 @@ static DWORD CDECL freetype_GetKerningPairs( struct gdi_font *gdi_font, DWORD cP
     buf = HeapAlloc(GetProcessHeap(), 0, length);
     if (!buf) return 0;
 
-    get_font_data(font, MS_KERN_TAG, 0, buf, length);
+    freetype_get_font_data(gdi_font, MS_KERN_TAG, 0, buf, length);
 
     /* build a glyph index to char code map */
     glyph_to_char = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(USHORT) * 65536);
@@ -7881,7 +7837,6 @@ static const struct font_backend_funcs font_funcs =
     freetype_EnumFonts,
     freetype_FontIsLinked,
     freetype_GetCharWidthInfo,
-    freetype_GetFontData,
     freetype_GetFontUnicodeRanges,
     freetype_GetGlyphIndices,
     freetype_GetKerningPairs,
@@ -7892,8 +7847,8 @@ static const struct font_backend_funcs font_funcs =
     freetype_RemoveFontResourceEx,
     freetype_AddFontMemResourceEx,
     freetype_CreateScalableFontResource,
-    freetype_GetFontFileData,
     freetype_alloc_font,
+    freetype_get_font_data,
     freetype_get_glyph_outline,
     freetype_destroy_font
 };

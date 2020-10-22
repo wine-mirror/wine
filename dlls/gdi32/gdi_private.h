@@ -332,6 +332,7 @@ struct gdi_font
     UINT                   ntmCellHeight;
     UINT                   ntmAvgWidth;
     UINT                   aa_flags;
+    ULONG                  ttc_item_offset;    /* 0 if font is not a part of TrueType collection */
     BOOL                   can_use_bitmap : 1;
     BOOL                   fake_italic : 1;
     BOOL                   fake_bold : 1;
@@ -340,12 +341,20 @@ struct gdi_font
     struct font_fileinfo  *fileinfo;
 };
 
+#define MS_MAKE_TAG(ch1,ch2,ch3,ch4) \
+    (((DWORD)ch4 << 24) | ((DWORD)ch3 << 16) | ((DWORD)ch2 << 8) | (DWORD)ch1)
+
+#define MS_GASP_TAG MS_MAKE_TAG('g', 'a', 's', 'p')
+#define MS_GSUB_TAG MS_MAKE_TAG('G', 'S', 'U', 'B')
+#define MS_KERN_TAG MS_MAKE_TAG('k', 'e', 'r', 'n')
+#define MS_TTCF_TAG MS_MAKE_TAG('t', 't', 'c', 'f')
+#define MS_VDMX_TAG MS_MAKE_TAG('V', 'D', 'M', 'X')
+
 struct font_backend_funcs
 {
     BOOL  (CDECL *pEnumFonts)( LOGFONTW *lf, FONTENUMPROCW proc, LPARAM lparam );
     BOOL  (CDECL *pFontIsLinked)( struct gdi_font *font );
     BOOL  (CDECL *pGetCharWidthInfo)( struct gdi_font *font, struct char_width_info *info );
-    DWORD (CDECL *pGetFontData)( struct gdi_font *font, DWORD table, DWORD offset, void *buf, DWORD size );
     DWORD (CDECL *pGetFontUnicodeRanges)( struct gdi_font *font, GLYPHSET *glyphset );
     DWORD (CDECL *pGetGlyphIndices)( struct gdi_font *font, const WCHAR *str, INT count, WORD *gi, DWORD flags );
     DWORD (CDECL *pGetKerningPairs)( struct gdi_font *font, DWORD count, KERNINGPAIR *pairs );
@@ -358,10 +367,10 @@ struct font_backend_funcs
     HANDLE (CDECL *pAddFontMemResourceEx)( void *font, DWORD size, PVOID pdv, DWORD *count );
     BOOL  (CDECL *pCreateScalableFontResource)( DWORD hidden, LPCWSTR resource,
                                                 LPCWSTR font_file, LPCWSTR font_path );
-    BOOL  (CDECL *pGetFontFileData)( struct gdi_font *font, DWORD unknown, UINT64 offset,
-                                     void *buff, DWORD buff_size );
 
     BOOL  (CDECL *alloc_font)( struct gdi_font *font );
+    DWORD (CDECL *get_font_data)( struct gdi_font *gdi_font, DWORD table, DWORD offset,
+                                  void *buf, DWORD count );
     DWORD (CDECL *get_glyph_outline)( struct gdi_font *font, UINT glyph, UINT format,
                                       GLYPHMETRICS *gm, ABC *abc, DWORD buflen, void *buf, const MAT2 *mat );
     void  (CDECL *destroy_font)( struct gdi_font *font );
