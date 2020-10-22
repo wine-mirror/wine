@@ -1890,6 +1890,9 @@ START_TEST(converter)
     test_conversion(&testdata_32bppBGRA, &testdata_24bppRGB, "32bppBGRA -> 24bppRGB", FALSE);
     test_conversion(&testdata_32bppRGBA, &testdata_24bppBGR, "32bppRGBA -> 24bppBGR", FALSE);
 
+    test_conversion(&testdata_32bppRGBA, &testdata_32bppBGRA, "32bppRGBA -> 32bppBGRA", FALSE);
+    test_conversion(&testdata_32bppBGRA, &testdata_32bppRGBA, "32bppBGRA -> 32bppRGBA", FALSE);
+
     test_conversion(&testdata_64bppRGBA, &testdata_32bppRGBA, "64bppRGBA -> 32bppRGBA", FALSE);
     test_conversion(&testdata_64bppRGBA, &testdata_32bppRGB, "64bppRGBA -> 32bppRGB", FALSE);
 
