@@ -316,7 +316,7 @@ static BOOL stream_out_font_and_colour_tbls( ME_OutStream *pStream, ME_Run *firs
   ME_Run *run = first;
   ME_FontTableItem *table = pStream->fonttbl;
   unsigned int i;
-  ME_DisplayItem *pCell = NULL;
+  ME_Cell *cell = NULL;
   ME_Paragraph *prev_para = NULL;
 
   do
@@ -336,12 +336,10 @@ static BOOL stream_out_font_and_colour_tbls( ME_OutStream *pStream, ME_Run *firs
       if (run->para->fmt.wNumbering)
         add_font_to_fonttbl( pStream, run->para->para_num.style );
 
-      if ((pCell = run->para->pCell))
+      if ((cell = para_cell( run->para )))
       {
-        ME_Border* borders[4] = { &pCell->member.cell.border.top,
-                                  &pCell->member.cell.border.left,
-                                  &pCell->member.cell.border.bottom,
-                                  &pCell->member.cell.border.right };
+        ME_Border* borders[4] = { &cell->border.top, &cell->border.left,
+                                  &cell->border.bottom, &cell->border.right };
         for (i = 0; i < 4; i++)
           if (borders[i]->width > 0)
             add_color_to_colortbl( pStream, borders[i]->colorRef );
@@ -389,7 +387,7 @@ static BOOL stream_out_font_and_colour_tbls( ME_OutStream *pStream, ME_Run *firs
 static BOOL stream_out_table_props( ME_TextEditor *editor, ME_OutStream *pStream,
                                     ME_Paragraph *para )
 {
-  ME_DisplayItem *cell;
+  ME_Cell *cell;
   char props[STREAMOUT_BUFFER_SIZE] = "";
   int i;
   const char sideChar[4] = {'t','l','b','r'};
@@ -399,19 +397,16 @@ static BOOL stream_out_table_props( ME_TextEditor *editor, ME_OutStream *pStream
   if (!editor->bEmulateVersion10) /* v4.1 */
   {
     PARAFORMAT2 *pFmt = &table_row_end( para )->fmt;
-    para = table_row_start( para );
-    cell = para->next_para->member.para.pCell;
-    assert(cell);
+    cell = table_row_first_cell( para );
+    assert( cell );
     if (pFmt->dxOffset)
       sprintf(props + strlen(props), "\\trgaph%d", pFmt->dxOffset);
     if (pFmt->dxStartIndent)
       sprintf(props + strlen(props), "\\trleft%d", pFmt->dxStartIndent);
     do
     {
-      ME_Border* borders[4] = { &cell->member.cell.border.top,
-                                &cell->member.cell.border.left,
-                                &cell->member.cell.border.bottom,
-                                &cell->member.cell.border.right };
+      ME_Border* borders[4] = { &cell->border.top, &cell->border.left,
+                                &cell->border.bottom, &cell->border.right };
       for (i = 0; i < 4; i++)
       {
         if (borders[i]->width)
@@ -425,9 +420,9 @@ static BOOL stream_out_table_props( ME_TextEditor *editor, ME_OutStream *pStream
             sprintf(props + strlen(props), "\\brdrcf%u", idx);
         }
       }
-      sprintf(props + strlen(props), "\\cellx%d", cell->member.cell.nRightBoundary);
-      cell = cell->member.cell.next_cell;
-    } while (cell->member.cell.next_cell);
+      sprintf( props + strlen(props), "\\cellx%d", cell->nRightBoundary );
+      cell = cell_next( cell );
+    } while (cell_next( cell ));
   }
   else /* v1.0 - 3.0 */
   {
