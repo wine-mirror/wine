@@ -1,12 +1,12 @@
-The Wine maintenance release 5.0.2 is now available.
+The Wine maintenance release 5.0.3 is now available.
 
 What's new in this release (see below for details):
   - Various bug fixes
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/5.0/wine-5.0.2.tar.xz
-  http://mirrors.ibiblio.org/wine/source/5.0/wine-5.0.2.tar.xz
+  https://dl.winehq.org/wine/source/5.0/wine-5.0.3.tar.xz
+  http://mirrors.ibiblio.org/wine/source/5.0/wine-5.0.3.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,209 +22,192 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 5.0.2 (total 46):
+Bugs fixed in 5.0.3 (total 44):
 
-   8439  Multiple Microsoft product installers fail due missing shell app path expansion (Visual Studio .NET 2002, 2003, Visual Foxpro 9.0)
-  19239  Multiple applications crash with division by zero on edit control with zero line height (eBay Turbo Lister, Clarin TX control wrapper)
-  29806  Hype The Time Quest: DirectX Media (DXM) v6.0 runtime installer fails (advpack.ExecuteCab should extract the INF from CAB before running the install part)
-  30814  Age of Empires II scrolling gets stuck after Alt-Tab away and back
-  31890  Multiple applications need IAudioEndpointVolume::GetMasterVolumeLevelScalar method implementation (Cisco IP Communicator, Cairo Shell v0.3.x)
-  39534  Bad Mojo Redux crashes on start (ddraw1_vtbl and ddraw_surface1_vtbl need to be writable)
-  41559  (winecfg) Add ability to change windows version via command line
-  43638  Multiple 4k demoscene OpenGL demos crash on startup with 'No active WGL context found' (Yermom, 'End of time' by Alcatraz and Altair)
-  45839  Qt 5.8 SDK installer needs 'IFileSystem.MoveFile' method implementation for maintenance tool creation step
-  46949  DDraw games using older windowed mode wrappers such as DirectX Windower Embedded v2.3/D3D Windower v1.x crash (ddraw_palette_vtbl and ddraw_surface{1,2,3,4,7}_vtbl need to be writable)
-  47621  Command link buttons in task dialog are displayed in wrong style
-  47794  Rockstar Games Launcher installer button images do not display
-  47999  Gif pictures stored in PE files are not loaded into HTML web pages via Res protocol
-  48186  every wine process shows a definite leak in dlls/ntdll/env.c
-  48471  Mismatching behavior of GetEnvironmentVariableW for empty / long values
-  48490  Restored minimized windows have wrong height
-  48495  XCP-ng Center v8.x (.NET 4.6 app) can't connect to server with self-signed certificate
-  48593  Multiple games play only one frame of video (Fable: The Lost Chapters, Audiosurf, Dark Souls 2, Oddworld: Munch's Oddysee)
-  48611  Cairo Shell v0.3.x (.NET 4.7 app) crashes due to missing 'HKCU\\Software\\Microsoft\\Windows NT\\CurrentVersion\\WinLogon\\Shell' registry sub-key
-  48683  iTunes v12.10.4.2 crashes on unimplemented function wmvcore.dll.WMIsContentProtected when adding folders to directory scan
-  48731  Just Cause crashes while loading level with builtin d3dx9_26
-  48732  How to Survive crashes on start (fullscreen mode)
-  48738  cmd.exe crashes when running certain batch files
-  48739  ConEmu (Windows console emulator) v19.10.12 fails to set Wininet's INTERNET_OPTION_IGNORE_OFFLINE and shows error dialog at startup
-  48740  ConEmu is constantly loosing focus
-  48747  ConEmu flickers and scrolls randomly
-  48750  Few missing DirectSound3D Algorithms GUID Defs
-  48762  IExplore immediately crashes on www.msnbc.com with a failed assertion
-  48801  Multiple games crash on unimplemented function d3dx11_43.dll.D3DX11GetImageInfoFromFile (Assetto Corsa 1.14.x, Project Cars)
-  48803  FITietokanta crashes every time after ADD-button is pressed
-  48806  Panzer Corps 2 needs msvcp140.dll.?_XLgamma@std@@YANN@Z
-  48814  Microsoft Word 6.0 for Windows installer crashes after wine-4.8-247-g0d7d0427d0
-  48816  The explorer doesn't support '/cd' option
-  48844  Magical Scramble Demo 1.20P shows white boxes instead of pictures.
-  48932  Wine does not display any windows unless `xrandr --auto` has been run
-  48960  NtQueryDirectoryFile incorrectly returns STATUS_NO_MORE_FILES when it encounters an ignored entry
-  48974  Multiple MSI-based installers show 'newBinaryXX' text instead of bitmap on button controls (missing support for 'msidbControlAttributesBitmap')
-  49005  Listview header occasionally fails to redraw when list is scrolled vertically
-  49034  Enlarge list width in font selection dialog
-  49115  Hitman (2016) and Hitman 2 (2018) fail to launch in DX11 mode
-  49142  Horizontal mouse scroll events (X11 buttons 6 and 7) should not be translated to back/forward events
-  49146  Hearts of Iron IV needs api-ms-win-crt-private-l1-1-0.dll._o_sin
-  49173  widl generates invalid code for Gecko's ISimpleDOM.idl
-  49175  Duplicated checking canonicalized inside kernelbase/path.c
-  49198  Denuvo Anti-Cheat 'denuvo-anti-cheat.sys' crashes in entry point (incorrect page protection restored during relocation processing)
-  49203  Possible incorrect usage >= instead <= in shlview.c
+   7102  Microsoft Word 6.0 for Windows: copy/paste causes crash on unimplemented function ole2.dll16.OLEISCURRENTCLIPBOARD
+  26171  BVRP classic phone tools installer reports error 'Insufficient buffer' when trying to install print processor (AddPrintProcessorA stub should be symmetric to AddPrintProcessorW)
+  35903  CED1401 USB function driver fails to install (setupapi should use the original INF path as a default source path when copying files)
+  38020  Foxit Reader 6.12 crashes on unimplemented function msasn1.dll.ASN1_CreateModule during validation of digital signatures
+  44127  Metal Gear Solid V: Ground Zeroes doesn't launch
+  44306  Visual Novel "A Clockwork Ley-Line: The Borderline of Dusk" doesn't work with d3d9
+  44925  Multiple kernel drivers require 'ntoskrnl.exe.ExCreateCallback' stub to return STATUS_SUCCESS (StarForce v3, TrackMania Nations ESWC. Denuvo Anti-Cheat)
+  45536  Total Commander 9.x crashes on unimplemented function usp10.dll.ScriptGetFontAlternateGlyphs when Wine is not detected via named export 'ntdll.wine_get_version'
+  46726  Dirt Rally 2.0 does not use embedded CA cert
+  46818  PS4 Remote Play 2.x (.NET 4.x app) crashes on Sign-In PlayStation network (mshtml:HTMLDocument_get_cookie should not fail for 'about:blank')
+  48256  pwsh.exe (from Powershell-6.*) crashes after 20~50 sec: System.EntryPointNotFoundException: Unable to find an entry point named 'FreeAddrInfoEx' in DLL 'ws2_32.dll'.
+  48405  Battle.Net Launcher Beta crashes with Windows version set to 10
+  48668  rFactor2 - Physics thread slower on multiplayer mode
+  48779  Secret Files 3 crashes at launch (needs d3dx9_skin_info_Clone)
+  48938  Ashes of the Singularity: Escalation crashes on start
+  48959  S-Gear 2 installer does not recognize wine as Windows 10
+  49147  Microsoft Teams 1.3.x crashes on unimplemented function setupapi.dll.CM_Get_Device_Interface_AliasW
+  49178  Spitfire Audio 3.x crashes on start due to 'WTSQuerySessionInformationA' stub not initializing out parameters
+  49179  winetest.exe fails to run on windows arm (surface rt / armv7): procedure entry point NtCurrentTeb could not be located in the dynamic link library C:\Users\User\Desktop\winetest.exe
+  49189  Auslogics Registry Cleaner 8.x crashes and shows "OLE error 80004001" (SetCurrentProcessExplicitAppUserModelID stub needs to return S_OK)
+  49221  Denuvo Anti-Cheat 'denuvo-anti-cheat.sys' crashes due to unhandled emulation of MSR register reads related to CPU / virtualization features (returning zero value is sufficient)
+  49257  Avast Free Antivirus 20.3 crashes before installing due to unimplemented function rpcrt4.dll.RpcIfInqId
+  49264  MultiSync installation crashes (needs _Command::get/put_CommandText)
+  49272  MultiSync installation crashes (msado15.dll needs {b196b284-bab4-101a-b69c-00aa00341d07} IConnectionPointContainer)
+  49281  FinanceExplorer crashes inside msado15.dll
+  49289  Denuvo Anti-Cheat 'denuvo-anti-cheat.sys' crashes on unimplemented function ntoskrnl.exe.ExRegisterCallback
+  49291  Denuvo Anti-Cheat 'denuvo-anti-cheat.sys' crashes on unimplemented function ntoskrnl.exe.ExUnregisterCallback when unloading
+  49303  MultiSync installation crashes (msado15.dll needs IConnectionPointContainer::FindConnectionPoint)
+  49322  cmudpro334 shows error on unimplemented ITaskbarList::SetOverlayIcon()
+  49352  JamKazam 1.0.3744 msi installer fails at 'InstallFiles' action (incorrect handling of administrative image with compressed source files)
+  49372  winedump crashes for sltg typelib files
+  49379  Altium Designer 20 crashes on missing d2d1.dll.D2D1CreateDevice
+  49388  MultiSync installation crashes (msado15.dll needs IConnectionPoint::Advise)
+  49439  Printing and scanning software for Brother L2540DW fails to install (VBScript parser can't handle a "case else" statement with a comment and no statements to execute)
+  49460  where.exe is missing in wine (affects Waves Central )
+  49487  ListView control custom draw in report view shows blank item if handler clears uItemState CDIS_SELECTED flag
+  49488  uninitialized bytes in server call from ntdll/server_write_file
+  49570  LVM_FINDITEM should do case-insensitive test for item text
+  49620  Tableau Desktop fails to install
+  49656  SAP GUI - Ws2_32.getaddrinfo crashes with non-standard service (/etc/services)
+  49662  Wine Internet Explorer crashes on https://[2600::]/
+  49664  FrostyModManager v1.0.5.9 crashes on launch
+  49666  Red Dead Redemption 2 requires HEAP flags offset to match Windows
+  49685  Gigabyte "EasyTune" service crashes in wbemprox
 
 ----------------------------------------------------------------
 
-Changes since 5.0.1:
+Changes since 5.0.2:
 
-Akihiro Sagawa (2):
-      ddraw/tests: Add more managed texture tests.
-      ddraw: Allow to create managed textures with DDSCAPS_TEXTURE|DDSCAPS_3DDEVICE caps.
+Aaro Altonen (8):
+      msado15: Implement _Command get/put CommandType.
+      msado15: Implement _Command get/put CommandText.
+      msado15: Add IConnectionPointContainer stub to _Connection.
+      msado15: Add IConnectionPoint stub to _Connection.
+      msado15: Implement IConnectionPointContainer_FindConnectionPoint.
+      include: Add ConnectionEventsVt definition.
+      msado15/tests: Add tests for IConnectionPoint::Advise/Unadvise.
+      msado15: Implement IConnectionPoint::Advise/Unadvise.
+
+Akihiro Sagawa (1):
+      documentation: Update Japanese translation.
 
 Alex Henrie (2):
-      mmdevapi: Report 100% volume in GetMasterVolumeLevelScalar stub.
-      wine.inf: Add Winlogon keys.
+      urlmon: Call parse_host in combine_uri to set related parse_data fields.
+      urlmon: Fix null pointer dereference in process_hook_section (Coverity).
 
-Alexandre Julliard (5):
-      user.exe: Clear out the thunk array to catch invalid winprocs.
-      ntdll: Don't abort directory search in single entry mode when a file is ignored.
-      urlmon/tests: Update winehq.org's IP address.
-      secur32/tests: Update for new WineHQ certificate.
-      wininet/tests: Update for new WineHQ certificate.
+Alexandre Julliard (1):
+      setupapi: Support a WineSourceDirs section to copy files from the Wine build or data dir.
 
-Alistair Leslie-Hughes (3):
-      d3dx9: Add support for D3DFMT_P8 in DDS files.
-      ddraw: Make palette and remaining surface vtbls writable.
-      shell32: Correct if condition.
+Alistair Leslie-Hughes (1):
+      msado15: Implement _Connection get/put ConnectionString.
 
-Andrew Eikum (1):
-      winebus.sys: Don't return too early if SDL initialization succeeds.
+Anton Baskanov (1):
+      amstream: Don't crash if parent is NULL in AMAudioStream:: and AMDirectDrawStream::GetMultiMediaStream.
 
-Andrey Gusev (1):
-      d3dx11: Add D3DX11GetImageInfoFromFileA/W stub.
+Brendan Shanks (5):
+      winhttp: Treat a partial certificate chain as having an unknown/invalid CA.
+      whoami: Add semi-stub application to display username.
+      winevulkan: Don't initialize the Vulkan driver in DllMain().
+      ntdll: Pad HEAP structure so 'flags' offset matches recent Windows.
+      winemac.drv: Fix warnings for constants deprecated by macOS 10.14.
 
-Bernhard Übelacker (1):
-      cmd: Fix crash in if condition parsing.
+Changping Yu (2):
+      kernel32/tests: Add test for thread enumeration order in toolhelp.
+      kernel32: Adjust thread creation insertion order.
 
-Brendan Shanks (3):
-      dinput: Fix crash in dump_DIEFFECT() when rglDirection is unexpectedly NULL.
-      dinput: Fix crash in dump_DIEFFECT() when lpvTypeSpecificParams is unexpectedly NULL.
-      vulkan-1: Set FILEVERSION to fix official Vulkan loader installer.
+Derek Lesho (1):
+      msctf: Always provide a context when from GetBase/Top.
 
-Damjan Jovanovic (5):
-      shell32/tests: Test shlexec argv[0], and same-named executables in a different directory.
-      shell32: Simplify SHELL_execute().
-      shell32: Pass the executable's full path from SHELL_execute() to CreateProcess().
-      mshtml: Fix handling res protocol resource type ids without leading '#'.
-      mshtml: Support implicit RT_FILE resource type in res protocol.
+Dmitry Kislyuk (1):
+      vbscript: Parse empty CASE ELSE clause.
 
-Dmitry Timoshkov (4):
-      server: All fields up to CheckSum are mandatory regardless of SizeOfOptionalHeader value.
-      ntdll: Don't try to map the PE file past the size of the backing file.
-      kernel32: On process entry store PEB address in %ebx.
-      kernel32/tests: Add a PE test image that resembles format of some of 8k demos.
+Dmitry Timoshkov (1):
+      winedump: Fix parsing of SLTG typelib created with some old tool.
 
-Emilio Cobos Álvarez (1):
-      widl: Use DECLSPEC_ALIGN in MSVC compatible way for return types too.
+Gijs Vermeulen (5):
+      wtsapi32: Implement WTSQuerySessionInformationA.
+      d3dx9: Implement ID3DXSkinInfo_Clone().
+      amstream: Don't crash on NULL ddraw in IDirectDrawMediaStream::GetDirectDraw().
+      wbemprox: Set obj to NULL on error in get_object().
+      wbemprox: Don't crash in IWbemClassObject::Put() when called with empty class object.
 
-Gabriel Ivăncescu (3):
-      quartz: Clear the WS_CHILD style instead of unparenting the window.
-      winex11.drv: Use a helper to retrieve the decoration rect for managed windows.
-      winex11.drv: Fix X11DRV_X_to_window_rect to handle windows smaller than the decoration.
+Hans Leidekker (3):
+      msado15: Fix NULL pointer dereference in close_recordset.
+      msi: Fix installing from administrative image with compressed source files.
+      ws2_32: Avoid a crash in WS_getaddrinfo when the specified service doesn't exist.
 
-Gijs Vermeulen (2):
-      advpack: Extract inf file before installing in ExecuteCab().
-      ucrtbase: Add more _o forwards.
+Jacek Caban (3):
+      winnt.h: Provide inline NtCurrentTeb implementation for mingw arm builds.
+      mshtml: Return NULL in IHTMLDocument2::get_cookie if InternetGetCookieExW failes.
+      urlmon: Remove unused flags argument from parse_host.
 
-Hans Leidekker (1):
-      msi: Add support for bitmap buttons.
+Jefferson Carpenter (1):
+      ntoskrnl.exe: Set reserved to 0 in pnp WM_DEVICECHANGE broadcast.
 
-Ilia Mirkin (1):
-      crypt32: Also check CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG.
+Jiajin Cui (1):
+      gdiplus: Fix crash if failed to create bitmap.
 
-Jacek Caban (2):
-      scrrun: Add MoveFile implementation.
-      widl: Use DECLSPEC_ALIGN in MSVC compatible way.
+Julian Rüger (1):
+      documentation: Update German translation.
 
-Jeff Smith (3):
-      mshtml/tests: Add tests showing how toString has changed in IE9+.
-      jscript: Set return object's class to 'object' in Object.create.
-      msvcrt: Stop forwarding iswctype functions to ntdll.
+Louis Lenders (7):
+      usp10: Add stub for ScriptGetFontAlternateGlyphs.
+      shcore: Return S_OK in SetCurrentProcessExplicitAppUserModelID.
+      ws2_32: Add FreeAddrInfoEx.
+      setupapi: Add stub for CM_Get_Device_Interface_Alias{A,W}.
+      explorerframe: Return S_OK in ITaskbarList::SetOverlayIcon.
+      where.exe: Add stub program.
+      sc.exe: Fake succes for the SdSet argument.
 
-Markus Engel (1):
-      user32: Force undefined bits in GetKeyState() and GetKeyboardState() to zero.
+Matteo Bruni (3):
+      wined3d: Add GPU information for AMD Raven Ridge.
+      user32: Add missing WM_WINE_CLIPCURSOR message type name.
+      user32: Make sure update_window_state() is always executed on the owner thread.
 
-Martin Storsjo (2):
-      ntdll: Properly return errors when failing to unwind.
-      ntdll: Pass a nonnull handler_data when continuing after a collided unwind on arm64.
+Nikolay Sivov (7):
+      d2d1: Implement D2D1CreateDevice().
+      dwrite: Implement IDWriteFont::Equals().
+      dwrite: Add partial implementation for IDWriteFontFace5::Equals().
+      comctl32/listview: Rename helper argument.
+      comctl32/listview: Use case-insensitive compare in LVM_FINDITEM.
+      comctl32/listview: Do no alter custom draw text colors between notification stages.
+      winedbg: Double dll name buffer size for unimplemented function exception.
 
-Mas Ahmad Muhammad (1):
-      comdlg32: Enlarge list area in CHOOSE_FONT window.
-
-Michael Müller (2):
-      opengl32: Treat invalid pixel types as PFD_TYPE_RGBA in wglChoosePixelFormat.
-      ddraw: Make ddraw1_vtbl and ddraw_surface1_vtbl writable.
-
-Murray Colpman (1):
-      winex11.drv: Interpret mouse 6/7 as horiz scroll.
-
-Nikolay Sivov (3):
-      comctl32/button: Use duplicated image for drawing.
-      comctl32/listview: Only apply horizontal offset when setting header position.
-      dxgi: Translate DXGI_USAGE_UNORDERED_ACCESS to corresponding wined3d bind flag.
-
-Owen Rudge (2):
-      winecfg: Add support for '/v' parameter allowing Windows version to be changed.
-      winecfg: Return 0 on success when setting Windows version.
-
-Paul Gofman (1):
-      d3d11: Use stricmp() instead of _strnicmp(..., -1).
+Paul Gofman (7):
+      ntoskrnl.exe: Return STATUS_SUCCESS from ExCreateCallback() stub.
+      ntoskrnl.exe: Return zero for unknown msr registers.
+      ntoskrnl.exe: Add stub for ExRegisterCallback() function.
+      ntoskrnl.exe: Add stub for ExUnregisterCallback() function.
+      ws2_32: Optimize interface_bind_check() by caching adapter addresses.
+      winebuild: Correct hotpatching prologue in import thunks for x86_64.
+      shell32: Only consider copy operation multidest if the number of dst files is greater than one.
 
 Piotr Caban (1):
-      msvcp90: Add std:_XLgamma implementation.
-
-Roman Pišl (5):
-      wininet: Add stub for INTERNET_OPTION_IGNORE_OFFLINE.
-      user32/edit: Avoid division by zero during initialization.
-      wineconsole: Don't activate window when computing positions.
-      wineconsole: Don't allow recurrent resizing while grabbing changes.
-      comctl32/edit: Avoid division by zero during initialization.
+      msasn1: Fix buffer allocations.
 
 Rémi Bernon (1):
-      winex11.drv: Remove frame when non-client area is empty.
+      kernel32: Catch process creation breakpoint exceptions.
 
-Sven Baars (6):
-      ntdll: Fix a string leak in init_user_process_params (Valgrind).
-      setupapi: Fix a memory leak (Valgrind).
-      kernelbase: Fix a string leak in CreateProcessInternal (Valgrind).
-      ntdll: Fix a memory leak in fork_and_exec.
-      setupapi: Only copy driver info if SetupDiEnumDriverInfoW succeeded (Valgrind).
-      setupapi: Make sure the class name is always set on success in SetupDiGetINFClassW (Valgrind).
+Vijay Kiran Kamuju (12):
+      ole2.dll16: Add stub OleIsCurrentClipboard function.
+      winspool.drv: Implement AddPrintProcessorA via AddPrintProcessorW.
+      include: Add related ASN1encoding_s and ASN1decoding_s structs.
+      msasn1: Add ASN1_CreateModule stub implementation.
+      msasn1/tests: Add initial tests.
+      msasn1: Implement ASN1_CreateModule function.
+      msasn1: Implement ASN1_CloseModule function.
+      msasn1: Add partial implementation of ASN1_CreateEncoder.
+      msasn1: Add stub for ASN1_CloseEncoder function.
+      msasn1: Add partial implementation of ASN1_CreateDecoder.
+      msasn1: Add stub for ASN1_CloseDecoder function.
+      msasn1: Add stub for ASN1_Decode function.
 
-Vijay Kiran Kamuju (2):
-      wmvcore: Add semi-stub implementation for WMIsContentProtected.
-      include: Add missing GUIDs in dsound.h.
+Zebediah Figura (6):
+      setupapi: Reset the source file pointer when comparing files.
+      setupapi: Store the original INF file path in a .pnf file.
+      setupapi: Use the original INF source path if possible when copying files.
+      winecfg: Set the Current{Major, Minor}VersionNumber registry values.
+      wbemprox: Return WBEM_E_NOT_FOUND from get_object() if no object is available.
+      d3dcompiler: Iterate through the instruction list in reverse in free_instr_list() (Valgrind).
 
-Vladimir Panteleev (4):
-      kernel32/tests: Fix GetLastError() checks in environment tests.
-      kernelbase: Preserve last error when GetEnvironmentVariableA succeeds.
-      kernelbase: Don't return ERROR_INSUFFICIENT_BUFFER from GetEnvironmentVariableW.
-      kernelbase: Fix GetEnvironmentVariableW return for empty variables.
-
-Zebediah Figura (5):
-      winegstreamer: Also use GST_QOS_TYPE_OVERFLOW for samples that arrive on time.
-      winegstreamer: Clamp both timestamp and timestamp + diff to 0.
-      ntoskrnl.exe: Protect relocated pages one at a time.
-      ntoskrnl.exe: Protect the two relocated pages independently.
-      ntdll: Avoid leaking the previous environment in RtlSetCurrentEnvironment().
-
-Zhipeng Zhao (1):
-      explorer: Support '/cd,' command line option.
-
-Zhiyi Zhang (5):
-      winex11.drv: Ignore disconnected outputs when finding mirroring slaves.
-      comctl32/tests: Test button styles.
-      comctl32/button: Do not set BS_PUSHBUTTON and BS_DEFPUSHBUTTON style directly to Split Buttons and Command Links.
-      kernelbase: Check NULL canonicalized_len parameter in UrlCanonicalizeW().
-      setupapi: Fix a registry key handle leak.
+Zhiyi Zhang (2):
+      rpcrt4: Implement RpcIfInqId().
+      dwmapi: Check NULL parameter in DwmIsCompositionEnabled().
 
 --
 Michael Stefaniuc
