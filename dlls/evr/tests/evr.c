@@ -2086,6 +2086,18 @@ static void test_mixer_samples(void)
     hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&mixer);
     ok(hr == S_OK, "Failed to create a mixer, hr %#x.\n", hr);
 
+    hr = IMFTransform_GetInputStatus(mixer, 0, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputStatus(mixer, 1, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputStatus(mixer, 0, &status);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_GetInputStatus(mixer, 1, &status);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
     /* Configure device and media types. */
     hr = DXVA2CreateDirect3DDeviceManager9(&token, &manager);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -2106,8 +2118,19 @@ static void test_mixer_samples(void)
     hr = IMFTransform_SetInputType(mixer, 0, video_type, 0);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFTransform_GetInputStatus(mixer, 0, &status);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
+
     hr = IMFTransform_SetOutputType(mixer, 0, video_type, 0);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    status = 0;
+    hr = IMFTransform_GetInputStatus(mixer, 0, &status);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(status == MFT_INPUT_STATUS_ACCEPT_DATA, "Unexpected status %#x.\n", status);
+
+    hr = IMFTransform_GetInputStatus(mixer, 1, &status);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
 
     IMFMediaType_Release(video_type);
 
@@ -2162,8 +2185,18 @@ todo_wine
     hr = IMFTransform_ProcessInput(mixer, 5, NULL, 0);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
+    status = 0;
+    hr = IMFTransform_GetInputStatus(mixer, 0, &status);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(status == MFT_INPUT_STATUS_ACCEPT_DATA, "Unexpected status %#x.\n", status);
+
     hr = IMFTransform_ProcessInput(mixer, 0, sample, 0);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    status = ~0u;
+    hr = IMFTransform_GetInputStatus(mixer, 0, &status);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!status, "Unexpected status %#x.\n", status);
 
     hr = IMFTransform_ProcessInput(mixer, 0, sample, 0);
     ok(hr == MF_E_NOTACCEPTING, "Unexpected hr %#x.\n", hr);

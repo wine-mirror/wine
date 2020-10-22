@@ -909,11 +909,29 @@ static HRESULT WINAPI video_mixer_transform_GetOutputCurrentType(IMFTransform *i
     return hr;
 }
 
-static HRESULT WINAPI video_mixer_transform_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
+static HRESULT WINAPI video_mixer_transform_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *status)
 {
-    FIXME("%p, %u, %p.\n", iface, id, flags);
+    struct video_mixer *mixer = impl_from_IMFTransform(iface);
+    struct input_stream *stream;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, id, status);
+
+    if (!status)
+        return E_POINTER;
+
+    EnterCriticalSection(&mixer->cs);
+
+    if (!mixer->output.media_type)
+        hr = MF_E_TRANSFORM_TYPE_NOT_SET;
+    else if (SUCCEEDED(hr = video_mixer_get_input(mixer, id, &stream)))
+    {
+        *status = stream->sample ? 0 : MFT_INPUT_STATUS_ACCEPT_DATA;
+    }
+
+    LeaveCriticalSection(&mixer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_mixer_transform_GetOutputStatus(IMFTransform *iface, DWORD *flags)
