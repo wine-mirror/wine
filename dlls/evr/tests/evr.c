@@ -1099,6 +1099,14 @@ static void test_default_presenter(void)
     if (FAILED(hr))
         return;
 
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoPositionMapper, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = MFGetService((IUnknown *)presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPositionMapper, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDeviceID, (void **)&deviceid);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 

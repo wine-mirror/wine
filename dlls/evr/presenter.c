@@ -48,6 +48,7 @@ struct video_presenter
     IMFVideoDisplayControl IMFVideoDisplayControl_iface;
     IMFRateSupport IMFRateSupport_iface;
     IMFGetService IMFGetService_iface;
+    IMFVideoPositionMapper IMFVideoPositionMapper_iface;
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
     LONG refcount;
@@ -102,6 +103,11 @@ static struct video_presenter *impl_from_IMFRateSupport(IMFRateSupport *iface)
 static struct video_presenter *impl_from_IMFGetService(IMFGetService *iface)
 {
     return CONTAINING_RECORD(iface, struct video_presenter, IMFGetService_iface);
+}
+
+static struct video_presenter *impl_from_IMFVideoPositionMapper(IMFVideoPositionMapper *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_presenter, IMFVideoPositionMapper_iface);
 }
 
 static unsigned int get_gcd(unsigned int a, unsigned int b)
@@ -190,6 +196,10 @@ static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFI
     else if (IsEqualIID(riid, &IID_IMFGetService))
     {
         *obj = &presenter->IMFGetService_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFVideoPositionMapper))
+    {
+        *obj = &presenter->IMFVideoPositionMapper_iface;
     }
     else
     {
@@ -900,8 +910,11 @@ static HRESULT WINAPI video_presenter_getservice_GetService(IMFGetService *iface
 
     if (IsEqualGUID(&MR_VIDEO_RENDER_SERVICE, service))
     {
-        if (IsEqualIID(riid, &IID_IMFVideoDisplayControl))
+        if (IsEqualIID(riid, &IID_IMFVideoDisplayControl) ||
+                IsEqualIID(riid, &IID_IMFVideoPositionMapper))
+        {
             return IMFVideoPresenter_QueryInterface(&presenter->IMFVideoPresenter_iface, riid, obj);
+        }
         else
         {
             FIXME("Unsupported interface %s.\n", debugstr_guid(riid));
@@ -920,6 +933,40 @@ static const IMFGetServiceVtbl video_presenter_getservice_vtbl =
     video_presenter_getservice_AddRef,
     video_presenter_getservice_Release,
     video_presenter_getservice_GetService,
+};
+
+static HRESULT WINAPI video_presenter_position_mapper_QueryInterface(IMFVideoPositionMapper *iface, REFIID riid, void **obj)
+{
+    struct video_presenter *presenter = impl_from_IMFVideoPositionMapper(iface);
+    return IMFVideoPresenter_QueryInterface(&presenter->IMFVideoPresenter_iface, riid, obj);
+}
+
+static ULONG WINAPI video_presenter_position_mapper_AddRef(IMFVideoPositionMapper *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFVideoPositionMapper(iface);
+    return IMFVideoPresenter_AddRef(&presenter->IMFVideoPresenter_iface);
+}
+
+static ULONG WINAPI video_presenter_position_mapper_Release(IMFVideoPositionMapper *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFVideoPositionMapper(iface);
+    return IMFVideoPresenter_Release(&presenter->IMFVideoPresenter_iface);
+}
+
+static HRESULT WINAPI video_presenter_position_mapper_MapOutputCoordinateToInputStream(IMFVideoPositionMapper *iface,
+        float x_out, float y_out, DWORD output_stream, DWORD input_stream, float *x_in, float *y_in)
+{
+    FIXME("%p, %f, %f, %u, %u, %p, %p.\n", iface, x_out, y_out, output_stream, input_stream, x_in, y_in);
+
+    return E_NOTIMPL;
+}
+
+static const IMFVideoPositionMapperVtbl video_presenter_position_mapper_vtbl =
+{
+    video_presenter_position_mapper_QueryInterface,
+    video_presenter_position_mapper_AddRef,
+    video_presenter_position_mapper_Release,
+    video_presenter_position_mapper_MapOutputCoordinateToInputStream,
 };
 
 HRESULT WINAPI MFCreateVideoPresenter(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
@@ -984,6 +1031,7 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
     object->IMFVideoDisplayControl_iface.lpVtbl = &video_presenter_control_vtbl;
     object->IMFRateSupport_iface.lpVtbl = &video_presenter_rate_support_vtbl;
     object->IMFGetService_iface.lpVtbl = &video_presenter_getservice_vtbl;
+    object->IMFVideoPositionMapper_iface.lpVtbl = &video_presenter_position_mapper_vtbl;
     object->IUnknown_inner.lpVtbl = &video_presenter_inner_vtbl;
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;
