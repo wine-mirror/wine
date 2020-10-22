@@ -1136,11 +1136,11 @@ static HRESULT WINAPI video_mixer_transform_ProcessOutput(IMFTransform *iface, D
 
     TRACE("%p, %#x, %u, %p, %p.\n", iface, flags, count, buffers, status);
 
-    if (!buffers || !count || !buffers->pSample)
+    if (!buffers || !count || count > 1 || !buffers->pSample)
         return E_INVALIDARG;
 
-    if (count > 1)
-        FIXME("Multiple buffers are not handled.\n");
+    if (buffers->dwStreamID)
+        return MF_E_INVALIDSTREAMNUMBER;
 
     *status = 0;
 
