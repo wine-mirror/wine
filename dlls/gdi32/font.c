@@ -1103,17 +1103,55 @@ static DWORD CDECL font_GetFontUnicodeRanges( PHYSDEV dev, GLYPHSET *glyphset )
 static DWORD CDECL font_GetGlyphIndices( PHYSDEV dev, const WCHAR *str, INT count, WORD *gi, DWORD flags )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    DWORD ret;
+    UINT default_char;
+    char ch;
+    BOOL used, got_default = FALSE;
+    int i;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetGlyphIndices );
         return dev->funcs->pGetGlyphIndices( dev, str, count, gi, flags );
     }
+
+    if (flags & GGI_MARK_NONEXISTING_GLYPHS)
+    {
+        default_char = 0xffff;  /* XP would use 0x1f for bitmap fonts */
+        got_default = TRUE;
+    }
+
     EnterCriticalSection( &font_cs );
-    ret = font_funcs->pGetGlyphIndices( physdev->font, str, count, gi, flags );
+
+    for (i = 0; i < count; i++)
+    {
+        UINT glyph = str[i];
+
+        if (!font_funcs->get_glyph_index( physdev->font, &glyph ))
+        {
+            glyph = 0;
+            if (physdev->font->codepage == CP_SYMBOL)
+            {
+                if (str[i] >= 0xf020 && str[i] <= 0xf100) glyph = str[i] - 0xf000;
+                else if (str[i] < 0x100) glyph = str[i];
+            }
+            else if (WideCharToMultiByte( physdev->font->codepage, 0, &str[i], 1,
+                                          &ch, 1, NULL, &used ) && !used)
+                glyph = (unsigned char)ch;
+        }
+        if (!glyph)
+        {
+            if (!got_default)
+            {
+                default_char = font_funcs->get_default_glyph( physdev->font );
+                got_default = TRUE;
+            }
+            glyph = default_char;
+        }
+        gi[i] = glyph;
+    }
+
     LeaveCriticalSection( &font_cs );
-    return ret;
+    return count;
 }
 
 

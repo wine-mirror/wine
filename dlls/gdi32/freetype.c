@@ -5661,88 +5661,53 @@ static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
     return pFT_Get_Char_Index(font->ft_face, glyph);
 }
 
-/* helper for freetype_GetGlyphIndices */
-static FT_UInt get_gdi_glyph_index(const GdiFont *font, UINT glyph)
+/*************************************************************
+ * freetype_get_glyph_index
+ */
+static BOOL CDECL freetype_get_glyph_index( struct gdi_font *gdi_font, UINT *glyph )
 {
-    struct gdi_font *gdi_font = font->gdi_font;
-    WCHAR wc = (WCHAR)glyph;
-    BOOL default_used = FALSE;
-    BOOL *default_used_pointer = NULL;
-    FT_UInt ret;
-    char buf;
+    GdiFont *font = get_font_ptr( gdi_font );
 
-    if(font->ft_face->charmap->encoding != FT_ENCODING_NONE)
-        return get_glyph_index(font, glyph);
+    if (font->ft_face->charmap->encoding == FT_ENCODING_NONE) return FALSE;
 
-    if (codepage_sets_default_used(gdi_font->codepage))
-        default_used_pointer = &default_used;
-    if(!WideCharToMultiByte(gdi_font->codepage, 0, &wc, 1, &buf, sizeof(buf), NULL, default_used_pointer)
-       || default_used)
+    if (font->ft_face->charmap->encoding == FT_ENCODING_MS_SYMBOL)
     {
-        if (gdi_font->codepage == CP_SYMBOL && wc < 0x100)
-            ret = (unsigned char)wc;
-        else
-            ret = 0;
-    }
-    else
-        ret = (unsigned char)buf;
-    TRACE("%04x (%02x) -> ret %d def_used %d\n", glyph, (unsigned char)buf, ret, default_used);
-    return ret;
-}
+        if (!(*glyph = get_glyph_index_symbol( font, *glyph )))
+        {
+            WCHAR wc = *glyph;
+            char ch;
 
-static FT_UInt get_default_char_index(GdiFont *font)
-{
-    FT_UInt default_char;
-
-    if (FT_IS_SFNT(font->ft_face))
-    {
-        TT_OS2 *pOS2 = pFT_Get_Sfnt_Table(font->ft_face, ft_sfnt_os2);
-        default_char = (pOS2->usDefaultChar ? get_glyph_index(font, pOS2->usDefaultChar) : 0);
-    }
-    else
-    {
-        TEXTMETRICW textm;
-        get_text_metrics(font, &textm);
-        default_char = textm.tmDefaultChar;
+            if (WideCharToMultiByte( CP_ACP, 0, &wc, 1, &ch, 1, NULL, NULL ))
+                *glyph = get_glyph_index_symbol( font, (unsigned char)ch );
+        }
+        return TRUE;
     }
 
-    return default_char;
+    if ((*glyph = pFT_Get_Char_Index( font->ft_face, *glyph )))
+        *glyph = get_GSUB_vert_glyph( font, *glyph );
+
+    return TRUE;
 }
 
 /*************************************************************
- * freetype_GetGlyphIndices
+ * freetype_get_default_glyph
  */
-static DWORD CDECL freetype_GetGlyphIndices( struct gdi_font *gdi_font, LPCWSTR lpstr,
-                                             INT count, LPWORD pgi, DWORD flags )
+static UINT CDECL freetype_get_default_glyph( struct gdi_font *gdi_font )
 {
-    GdiFont *font = get_font_ptr(gdi_font);
-    int i;
-    WORD default_char;
-    BOOL got_default = FALSE;
+    GdiFont *font = get_font_ptr( gdi_font );
+    FT_WinFNT_HeaderRec winfnt;
+    TT_OS2 *pOS2;
 
-    if (flags & GGI_MARK_NONEXISTING_GLYPHS)
+    if ((pOS2 = pFT_Get_Sfnt_Table( font->ft_face, ft_sfnt_os2 )))
     {
-        default_char = 0xffff;  /* XP would use 0x1f for bitmap fonts */
-        got_default = TRUE;
+        UINT glyph = pOS2->usDefaultChar;
+        freetype_get_glyph_index( gdi_font, &glyph );
+        return glyph;
     }
-
-    for(i = 0; i < count; i++)
-    {
-        pgi[i] = get_gdi_glyph_index(font, lpstr[i]);
-        if  (pgi[i] == 0)
-        {
-            if (!got_default)
-            {
-                default_char = get_default_char_index(font);
-                got_default = TRUE;
-            }
-            pgi[i] = default_char;
-        }
-        else
-            pgi[i] = get_GSUB_vert_glyph(font, pgi[i]);
-    }
-    return count;
+    if (!pFT_Get_WinFNT_Header( font->ft_face, &winfnt )) return winfnt.default_char + winfnt.first_char;
+    return 32;
 }
+
 
 static inline BOOL is_identity_FMAT2(const FMAT2 *matrix)
 {
@@ -7838,7 +7803,6 @@ static const struct font_backend_funcs font_funcs =
     freetype_FontIsLinked,
     freetype_GetCharWidthInfo,
     freetype_GetFontUnicodeRanges,
-    freetype_GetGlyphIndices,
     freetype_GetKerningPairs,
     freetype_GetOutlineTextMetrics,
     freetype_GetTextMetrics,
@@ -7849,6 +7813,8 @@ static const struct font_backend_funcs font_funcs =
     freetype_CreateScalableFontResource,
     freetype_alloc_font,
     freetype_get_font_data,
+    freetype_get_glyph_index,
+    freetype_get_default_glyph,
     freetype_get_glyph_outline,
     freetype_destroy_font
 };
