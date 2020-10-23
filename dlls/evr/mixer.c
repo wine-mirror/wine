@@ -28,6 +28,7 @@
 
 #include "initguid.h"
 #include "evr9.h"
+#include "evcode.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -44,6 +45,7 @@ struct input_stream
     MFVideoNormalizedRect rect;
     unsigned int zorder;
     IMFSample *sample;
+    unsigned int sample_requested : 1;
 };
 
 struct rt_format
@@ -995,6 +997,15 @@ static HRESULT WINAPI video_mixer_transform_ProcessEvent(IMFTransform *iface, DW
     return E_NOTIMPL;
 }
 
+static void video_mixer_request_sample(struct video_mixer *mixer, unsigned int idx)
+{
+    if (!mixer->event_sink || mixer->inputs[idx].sample_requested)
+        return;
+
+    IMediaEventSink_Notify(mixer->event_sink, EC_SAMPLE_NEEDED, idx, 0);
+    mixer->inputs[idx].sample_requested = 1;
+}
+
 static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
 {
     struct video_mixer *mixer = impl_from_IMFTransform(iface);
@@ -1039,6 +1050,12 @@ static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, 
 
             EnterCriticalSection(&mixer->cs);
 
+            if (!mixer->is_streaming)
+            {
+                for (i = 0; i < mixer->input_count; ++i)
+                    video_mixer_request_sample(mixer, i);
+            }
+
             mixer->is_streaming = message == MFT_MESSAGE_NOTIFY_BEGIN_STREAMING;
 
             LeaveCriticalSection(&mixer->cs);
@@ -1078,6 +1095,7 @@ static HRESULT WINAPI video_mixer_transform_ProcessInput(IMFTransform *iface, DW
         else
         {
             mixer->is_streaming = 1;
+            input->sample_requested = 0;
             input->sample = sample;
             IMFSample_AddRef(input->sample);
         }
