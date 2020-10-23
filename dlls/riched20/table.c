@@ -625,10 +625,7 @@ void ME_TabPressedInTable(ME_TextEditor *editor, BOOL bSelectedRow)
       editor->pCursors[0] = fromCursor;
       editor->pCursors[1] = fromCursor;
       /* FIXME: For some reason the caret is shown at the start of the
-       *        previous paragraph in v1.0 to v3.0, and bCaretAtEnd only works
-       *        within the paragraph for wrapped lines. */
-      if (ME_FindItemBack(fromCursor.pRun, diRun))
-        editor->bCaretAtEnd = TRUE;
+       *        previous paragraph in v1.0 to v3.0 */
     } else if ((bSelectedRow || !ME_IsInTable(toCursor.pRun))) {
       ME_SelectOrInsertNextCell(editor, fromCursor.pRun);
     } else {

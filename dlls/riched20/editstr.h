@@ -398,7 +398,6 @@ typedef struct tagME_TextEditor
   int total_rows;
   COLORREF rgbBackColor;
   HBRUSH hbrBackground;
-  BOOL bCaretAtEnd;
   int nEventMask;
   int nModifyStep;
   struct list undo_stack;
