@@ -880,21 +880,21 @@ int ME_GetCursorOfs(const ME_Cursor *cursor)
 /* Helper function for ME_FindPixelPos to find paragraph within tables */
 static ME_Paragraph *pixel_pos_in_table_row( int x, int y, ME_Paragraph *para )
 {
-  ME_DisplayItem *cell, *next_cell;
+  ME_Cell *cell, *next_cell;
 
   assert( para->nFlags & MEPF_ROWSTART );
-  cell = para_next( para )->pCell;
-  assert(cell);
+  cell = table_row_first_cell( para );
+  assert( cell );
 
   /* find the cell we are in */
-  while ((next_cell = cell->member.cell.next_cell) != NULL)
+  while ((next_cell = cell_next( cell )) != NULL)
   {
-    if (x < next_cell->member.cell.pt.x)
+    if (x < next_cell->pt.x)
     {
-      para = &ME_FindItemFwd( cell, diParagraph )->member.para;
+      para = cell_first_para( cell );
       /* Found the cell, but there might be multiple paragraphs in
        * the cell, so need to search down the cell for the paragraph. */
-      while (cell == para->pCell)
+      while (cell == para_cell( para ))
       {
         if (y < para->pt.y + para->nHeight)
         {
