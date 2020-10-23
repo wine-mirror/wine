@@ -59,8 +59,8 @@ typedef struct {
     WCHAR url[1];
 } MimeHtmlBinding;
 
-static const WCHAR mhtml_prefixW[] = {'m','h','t','m','l',':'};
-static const WCHAR mhtml_separatorW[] = {'!','x','-','u','s','c',':'};
+static const WCHAR mhtml_prefixW[] = L"mhtml:";
+static const WCHAR mhtml_separatorW[] = L"!x-usc:";
 
 static inline LPWSTR heap_strdupW(LPCWSTR str)
 {
@@ -82,16 +82,16 @@ static HRESULT parse_mhtml_url(const WCHAR *url, mhtml_url_t *r)
 {
     const WCHAR *p;
 
-    if(wcsnicmp(url, mhtml_prefixW, ARRAY_SIZE(mhtml_prefixW)))
+    if(wcsnicmp(url, mhtml_prefixW, lstrlenW(mhtml_prefixW)))
         return E_FAIL;
 
-    r->mhtml = url + ARRAY_SIZE(mhtml_prefixW);
+    r->mhtml = url + lstrlenW(mhtml_prefixW);
     p = wcschr(r->mhtml, '!');
     if(p) {
         r->mhtml_len = p - r->mhtml;
         /* FIXME: We handle '!' and '!x-usc:' in URLs as the same thing. Those should not be the same. */
-        if(!wcsncmp(p, mhtml_separatorW, ARRAY_SIZE(mhtml_separatorW)))
-            p += ARRAY_SIZE(mhtml_separatorW);
+        if(!wcsncmp(p, mhtml_separatorW, lstrlenW(mhtml_separatorW)))
+            p += lstrlenW(mhtml_separatorW);
         else
             p++;
     }else {
@@ -656,7 +656,7 @@ static HRESULT WINAPI MimeHtmlProtocolInfo_CombineUrl(IInternetProtocolInfo *ifa
         DWORD cchResult, DWORD* pcchResult, DWORD dwReserved)
 {
     MimeHtmlProtocol *This = impl_from_IInternetProtocolInfo(iface);
-    size_t len = ARRAY_SIZE(mhtml_prefixW);
+    size_t len = lstrlenW(mhtml_prefixW);
     mhtml_url_t url;
     WCHAR *p;
     HRESULT hres;
@@ -669,27 +669,26 @@ static HRESULT WINAPI MimeHtmlProtocolInfo_CombineUrl(IInternetProtocolInfo *ifa
     if(FAILED(hres))
         return hres;
 
-    if(!wcsnicmp(pwzRelativeUrl, mhtml_prefixW, ARRAY_SIZE(mhtml_prefixW))) {
+    if(!wcsnicmp(pwzRelativeUrl, mhtml_prefixW, len)) {
         FIXME("Relative URL is mhtml protocol\n");
         return INET_E_USE_DEFAULT_PROTOCOLHANDLER;
     }
 
     len += url.mhtml_len;
     if(*pwzRelativeUrl)
-        len += lstrlenW(pwzRelativeUrl) + ARRAY_SIZE(mhtml_separatorW);
+        len += lstrlenW(pwzRelativeUrl) + lstrlenW(mhtml_separatorW);
     if(len >= cchResult) {
         *pcchResult = 0;
         return E_FAIL;
     }
 
-    memcpy(pwzResult, mhtml_prefixW, sizeof(mhtml_prefixW));
-    p = pwzResult + ARRAY_SIZE(mhtml_prefixW);
+    lstrcpyW(pwzResult, mhtml_prefixW);
+    p = pwzResult + lstrlenW(mhtml_prefixW);
     memcpy(p, url.mhtml, url.mhtml_len*sizeof(WCHAR));
     p += url.mhtml_len;
     if(*pwzRelativeUrl) {
-        memcpy(p, mhtml_separatorW, sizeof(mhtml_separatorW));
-        p += ARRAY_SIZE(mhtml_separatorW);
-        lstrcpyW(p, pwzRelativeUrl);
+        lstrcpyW(p, mhtml_separatorW);
+        lstrcatW(p, pwzRelativeUrl);
     }else {
         *p = 0;
     }

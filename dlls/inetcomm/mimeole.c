@@ -3697,8 +3697,6 @@ HRESULT WINAPI MimeOleObjectFromMoniker(BINDF bindf, IMoniker *moniker, IBindCtx
     size_t len;
     HRESULT hres;
 
-    static const WCHAR mhtml_prefixW[] = {'m','h','t','m','l',':'};
-
     WARN("(0x%08x, %p, %p, %s, %p, %p) semi-stub\n", bindf, moniker, binding, debugstr_guid(riid), out, moniker_new);
 
     if(!IsEqualGUID(&IID_IUnknown, riid)) {
@@ -3713,12 +3711,12 @@ HRESULT WINAPI MimeOleObjectFromMoniker(BINDF bindf, IMoniker *moniker, IBindCtx
     TRACE("display name %s\n", debugstr_w(display_name));
 
     len = lstrlenW(display_name);
-    mhtml_url = heap_alloc((len+1)*sizeof(WCHAR) + sizeof(mhtml_prefixW));
+    mhtml_url = heap_alloc(len*sizeof(WCHAR) + sizeof(L"mhtml:"));
     if(!mhtml_url)
         return E_OUTOFMEMORY;
 
-    memcpy(mhtml_url, mhtml_prefixW, sizeof(mhtml_prefixW));
-    lstrcpyW(mhtml_url + ARRAY_SIZE(mhtml_prefixW), display_name);
+    lstrcpyW(mhtml_url, L"mhtml:");
+    lstrcatW(mhtml_url, display_name);
     HeapFree(GetProcessHeap(), 0, display_name);
 
     hres = CreateURLMoniker(NULL, mhtml_url, moniker_new);
