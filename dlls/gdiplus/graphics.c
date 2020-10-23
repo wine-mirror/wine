@@ -5270,7 +5270,7 @@ GpStatus gdip_format_string(HDC hdc,
             if(*(stringdup + sum + fit) == ' ')
                 while(*(stringdup + sum + fit) == ' ')
                     fit++;
-            else
+            else if (!(format->attr & StringFormatFlagsNoWrap))
                 while(*(stringdup + sum + fit - 1) != ' '){
                     fit--;
 

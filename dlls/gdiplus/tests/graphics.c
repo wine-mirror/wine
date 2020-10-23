@@ -4900,10 +4900,8 @@ todo_wine
     rect.Height = 32000.0;
     status = GdipMeasureString(graphics, string2, -1, font, &rect, format_no_wrap, &bounds, &glyphs, &lines);
     expect(Ok, status);
-    todo_wine {
     expectf_(width_M_M, bounds.Width, 0.1);
     expect(3, glyphs);
-    }
     expect(1, lines);
 
     status = GdipDeleteFont(font);
