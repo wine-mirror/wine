@@ -30,12 +30,22 @@ namespace DLL
         void Func(ref int i);
     }
 
+    [ComVisible(true), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface ITest2
+    {
+        void Func2(ref int i);
+    }
+
     [Guid("2e106e50-e7a4-4489-8538-83643f100fdc"), ComVisible(true), ClassInterface(ClassInterfaceType.None)]
-    public class Test : ITest
+    public class Test : ITest, ITest2
     {
         public void Func(ref int i)
         {
             i = 42;
+        }
+        public void Func2(ref int i)
+        {
+            i = 43;
         }
     }
 }

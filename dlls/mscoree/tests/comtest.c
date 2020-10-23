@@ -33,6 +33,8 @@
 
 HMODULE hmscoree;
 
+DEFINE_GUID(IID_ITest2, 0x50adb433, 0xf6c5, 0x3b30, 0x92,0x0a, 0x55,0x57,0x11,0x86,0x75,0x09);
+
 typedef enum _run_type
 {
     run_type_current_working_directory = 0,
@@ -156,6 +158,7 @@ static void run_registry_test(run_type run)
     char buffer[256];
     ITest *test = NULL;
     HRESULT hr, result_expected;
+    IUnknown *unk = NULL;
     HKEY hkey;
     DWORD ret;
     int i = 0;
@@ -184,6 +187,9 @@ static void run_registry_test(run_type run)
         hr = ITest_Func(test, &i);
         ok(hr == S_OK, "Got %x\n", hr);
         ok(i == 42, "Expected 42, got %d\n", i);
+        hr = ITest_QueryInterface(test, &IID_ITest2, (void**)&unk);
+        todo_wine ok(hr == S_OK, "ITest_QueryInterface returned %x\n", hr);
+        if (hr == S_OK) IUnknown_Release(unk);
         ITest_Release(test);
     }
 
