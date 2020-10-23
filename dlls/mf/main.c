@@ -1523,7 +1523,8 @@ static ULONG WINAPI sample_copier_transform_Release(IMFTransform *iface)
 
     if (!refcount)
     {
-        IMFAttributes_Release(transform->attributes);
+        if (transform->attributes)
+            IMFAttributes_Release(transform->attributes);
         if (transform->buffer_type)
             IMFMediaType_Release(transform->buffer_type);
         DeleteCriticalSection(&transform->cs);
@@ -1999,6 +2000,7 @@ static const IMFTransformVtbl sample_copier_transform_vtbl =
 HRESULT WINAPI MFCreateSampleCopierMFT(IMFTransform **transform)
 {
     struct sample_copier *object;
+    HRESULT hr;
 
     TRACE("%p.\n", transform);
 
@@ -2008,10 +2010,20 @@ HRESULT WINAPI MFCreateSampleCopierMFT(IMFTransform **transform)
 
     object->IMFTransform_iface.lpVtbl = &sample_copier_transform_vtbl;
     object->refcount = 1;
-    MFCreateAttributes(&object->attributes, 0);
     InitializeCriticalSection(&object->cs);
+
+    if (FAILED(hr = MFCreateAttributes(&object->attributes, 0)))
+        goto failed;
+
+    IMFAttributes_SetUINT32(object->attributes, &MFT_SUPPORT_DYNAMIC_FORMAT_CHANGE, 1);
 
     *transform = &object->IMFTransform_iface;
 
     return S_OK;
+
+failed:
+
+    IMFTransform_Release(&object->IMFTransform_iface);
+
+    return hr;
 }

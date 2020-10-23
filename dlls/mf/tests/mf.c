@@ -3660,6 +3660,7 @@ static BOOL is_sample_copier_available_type(IMFMediaType *type)
 
 static void test_sample_copier(void)
 {
+    IMFAttributes *attributes, *attributes2;
     DWORD in_min, in_max, out_min, out_max;
     IMFMediaType *mediatype, *mediatype2;
     MFT_OUTPUT_STREAM_INFO output_info;
@@ -3668,9 +3669,9 @@ static void test_sample_copier(void)
     DWORD input_count, output_count;
     MFT_OUTPUT_DATA_BUFFER buffer;
     IMFMediaBuffer *media_buffer;
-    IMFAttributes *attributes;
+    DWORD count, flags, status;
     IMFTransform *copier;
-    DWORD flags, status;
+    UINT32 value;
     HRESULT hr;
 
     hr = MFCreateSampleCopierMFT(&copier);
@@ -3678,6 +3679,16 @@ static void test_sample_copier(void)
 
     hr = IMFTransform_GetAttributes(copier, &attributes);
     ok(hr == S_OK, "Failed to get transform attributes, hr %#x.\n", hr);
+    hr = IMFTransform_GetAttributes(copier, &attributes2);
+    ok(hr == S_OK, "Failed to get transform attributes, hr %#x.\n", hr);
+    ok(attributes == attributes2, "Unexpected instance.\n");
+    IMFAttributes_Release(attributes2);
+    hr = IMFAttributes_GetCount(attributes, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count == 1, "Unexpected attribute count %u.\n", count);
+    hr = IMFAttributes_GetUINT32(attributes, &MFT_SUPPORT_DYNAMIC_FORMAT_CHANGE, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!value, "Unexpected value %u.\n", value);
     IMFAttributes_Release(attributes);
 
     hr = IMFTransform_GetInputStreamAttributes(copier, 0, &attributes);
