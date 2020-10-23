@@ -689,30 +689,31 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
   }
 }
 
-static void ME_DrawTableBorders( ME_Context *c, ME_Paragraph *para )
+static void draw_table_borders( ME_Context *c, ME_Paragraph *para )
 {
   if (!c->editor->bEmulateVersion10) /* v4.1 */
   {
-    if (para->pCell)
+    if (para_cell( para ))
     {
       RECT rc;
-      ME_Cell *cell = &para->pCell->member.cell;
-      ME_DisplayItem *paraAfterRow;
+      ME_Cell *cell = para_cell( para );
+      ME_Paragraph *after_row;
       HPEN pen, oldPen;
       LOGBRUSH logBrush;
       HBRUSH brush;
       COLORREF color;
       POINT oldPt;
       int width;
-      BOOL atTop = (para->pCell != para->prev_para->member.para.pCell);
-      BOOL atBottom = (para->pCell != para->next_para->member.para.pCell);
+      BOOL atTop = (para == cell_first_para( cell ));
+      BOOL atBottom = (para == cell_end_para( cell ));
       int top = c->pt.y + (atTop ? cell->pt.y : para->pt.y);
       int bottom = (atBottom ?
                     c->pt.y + cell->pt.y + cell->nHeight :
                     top + para->nHeight + (atTop ? cell->yTextOffset : 0));
       rc.left = c->pt.x + cell->pt.x;
       rc.right = rc.left + cell->nWidth;
-      if (atTop) {
+      if (atTop)
+      {
         /* Erase gap before text if not all borders are the same height. */
         width = max(ME_twips2pointsY(c, cell->border.top.width), 1);
         rc.top = top + width;
@@ -725,14 +726,17 @@ static void ME_DrawTableBorders( ME_Context *c, ME_Paragraph *para )
        * The order borders are draw in is left, top, bottom, right in order
        * to be consistent with native richedit.  This is noticeable from the
        * overlap of borders of different colours. */
-      if (!(para->nFlags & MEPF_ROWEND)) {
+      if (!(para->nFlags & MEPF_ROWEND))
+      {
         rc.top = top;
         rc.bottom = bottom;
         if (cell->border.left.width > 0)
         {
           color = cell->border.left.colorRef;
           width = max(ME_twips2pointsX(c, cell->border.left.width), 1);
-        } else {
+        }
+        else
+        {
           color = RGB(192,192,192);
           width = 1;
         }
@@ -749,12 +753,15 @@ static void ME_DrawTableBorders( ME_Context *c, ME_Paragraph *para )
         MoveToEx(c->hDC, oldPt.x, oldPt.y, NULL);
       }
 
-      if (atTop) {
+      if (atTop)
+      {
         if (cell->border.top.width > 0)
         {
           brush = CreateSolidBrush(cell->border.top.colorRef);
           width = max(ME_twips2pointsY(c, cell->border.top.width), 1);
-        } else {
+        }
+        else
+        {
           brush = GetStockObject(LTGRAY_BRUSH);
           width = 1;
         }
@@ -767,29 +774,24 @@ static void ME_DrawTableBorders( ME_Context *c, ME_Paragraph *para )
 
       /* Draw the bottom border if at the last paragraph in the cell, and when
        * in the last row of the table. */
-      if (atBottom) {
+      if (atBottom)
+      {
         int oldLeft = rc.left;
         width = max(ME_twips2pointsY(c, cell->border.bottom.width), 1);
-        paraAfterRow = table_row_end( para )->next_para;
-        if (paraAfterRow->member.para.nFlags & MEPF_ROWSTART) {
-          ME_DisplayItem *nextEndCell;
-          nextEndCell = ME_FindItemBack( para_get_di( table_row_end( &paraAfterRow->member.para ) ), diCell );
-          assert(nextEndCell && !nextEndCell->member.cell.next_cell);
-          rc.left = c->pt.x + nextEndCell->member.cell.pt.x;
-          /* FIXME: Native draws FROM the bottom of the table rather than
-           * TO the bottom of the table in this case, but just doing so here
-           * will cause the next row to erase the border. */
-          /*
-          rc.top = bottom;
-          rc.bottom = rc.top + width;
-           */
+        after_row = para_next( table_row_end( para ) );
+        if (after_row->nFlags & MEPF_ROWSTART)
+        {
+          ME_Cell *next_end;
+          next_end = table_row_end_cell( after_row );
+          assert( next_end && !cell_next( next_end ) );
+          rc.left = c->pt.x + next_end->pt.x;
         }
-        if (rc.left < rc.right) {
-          if (cell->border.bottom.width > 0) {
+        if (rc.left < rc.right)
+        {
+          if (cell->border.bottom.width > 0)
             brush = CreateSolidBrush(cell->border.bottom.colorRef);
-          } else {
+          else
             brush = GetStockObject(LTGRAY_BRUSH);
-          }
           rc.bottom = bottom;
           rc.top = rc.bottom - width;
           FillRect(c->hDC, &rc, brush);
@@ -800,15 +802,17 @@ static void ME_DrawTableBorders( ME_Context *c, ME_Paragraph *para )
       }
 
       /* Right border only drawn if at the end of the table row. */
-      if (!cell->next_cell->member.cell.next_cell &&
-          !(para->nFlags & MEPF_ROWSTART))
+      if (!cell_next( cell_next( cell ) ) && !(para->nFlags & MEPF_ROWSTART))
       {
         rc.top = top;
         rc.bottom = bottom;
-        if (cell->border.right.width > 0) {
+        if (cell->border.right.width > 0)
+        {
           color = cell->border.right.colorRef;
           width = max(ME_twips2pointsX(c, cell->border.right.width), 1);
-        } else {
+        }
+        else
+        {
           color = RGB(192,192,192);
           width = 1;
         }
@@ -825,13 +829,15 @@ static void ME_DrawTableBorders( ME_Context *c, ME_Paragraph *para )
         MoveToEx(c->hDC, oldPt.x, oldPt.y, NULL);
       }
     }
-  } else { /* v1.0 - 3.0 */
+  }
+  else /* v1.0 - 3.0 */
+  {
     /* Draw simple table border */
-    if (para->fmt.dwMask & PFM_TABLE && para->fmt.wEffects & PFE_TABLE) {
+    if (para_in_table( para ))
+    {
       HPEN pen = NULL, oldpen = NULL;
       int i, firstX, startX, endX, rowY, rowBottom, nHeight;
       POINT oldPt;
-      PARAFORMAT2 *pNextFmt;
 
       pen = CreatePen(PS_SOLID, 0, para->border.top.colorRef);
       oldpen = SelectObject(c->hDC, pen);
@@ -853,11 +859,9 @@ static void ME_DrawTableBorders( ME_Context *c, ME_Paragraph *para )
       i = para->fmt.cTabCount - 1;
       endX = startX + ME_twips2pointsX(c, para->fmt.rgxTabs[i] & 0x00ffffff) + 1;
       LineTo(c->hDC, endX, rowY);
-      pNextFmt = &para->next_para->member.para.fmt;
       /* The bottom of the row only needs to be drawn if the next row is
        * not a table. */
-      if (!(pNextFmt && pNextFmt->dwMask & PFM_TABLE && pNextFmt->wEffects &&
-            para->nRows == 1))
+      if (!(para_next( para ) && para_in_table( para_next( para ) ) && para->nRows == 1))
       {
         /* Decrement rowBottom to draw the bottom line within the row, and
          * to not draw over this line when drawing the vertical lines. */
@@ -1026,7 +1030,7 @@ static void draw_paragraph( ME_Context *c, ME_Paragraph *para )
     no++;
   }
 
-  ME_DrawTableBorders( c, para );
+  draw_table_borders( c, para );
   draw_para_number( c, para );
 
   SetTextAlign(c->hDC, align);
