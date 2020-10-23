@@ -1038,6 +1038,7 @@ static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, 
                 {
                     IMFSample_Release(mixer->inputs[i].sample);
                     mixer->inputs[i].sample = NULL;
+                    mixer->inputs[i].sample_requested = 0;
                 }
             }
 
@@ -1150,6 +1151,7 @@ static HRESULT WINAPI video_mixer_transform_ProcessOutput(IMFTransform *iface, D
     struct video_mixer *mixer = impl_from_IMFTransform(iface);
     IDirect3DSurface9 *surface;
     IDirect3DDevice9 *device;
+    unsigned int i;
     HRESULT hr;
 
     TRACE("%p, %#x, %u, %p, %p.\n", iface, flags, count, buffers, status);
@@ -1168,8 +1170,26 @@ static HRESULT WINAPI video_mixer_transform_ProcessOutput(IMFTransform *iface, D
     {
         if (mixer->is_streaming)
         {
-            FIXME("Streaming state is not handled.\n");
-            hr = E_NOTIMPL;
+            for (i = 0; i < mixer->input_count; ++i)
+            {
+                if (!mixer->inputs[i].sample)
+                {
+                    hr = MF_E_TRANSFORM_NEED_MORE_INPUT;
+                    break;
+                }
+            }
+
+            /* FIXME: for now discard input */
+
+            if (SUCCEEDED(hr))
+            {
+                for (i = 0; i < mixer->input_count; ++i)
+                {
+                    IMFSample_Release(mixer->inputs[i].sample);
+                    mixer->inputs[i].sample = NULL;
+                    video_mixer_request_sample(mixer, i);
+                }
+            }
         }
         else
         {
