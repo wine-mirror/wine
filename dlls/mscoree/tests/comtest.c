@@ -148,6 +148,51 @@ static void run_test(BOOL expect_success)
         }
         IClassFactory_Release(classFactory);
     }
+
+}
+
+static void run_registry_test(run_type run)
+{
+    char buffer[256];
+    ITest *test = NULL;
+    HRESULT hr, result_expected;
+    HKEY hkey;
+    DWORD ret;
+    int i = 0;
+
+    if (run == run_type_exe_directory) result_expected = S_OK;
+    else result_expected = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+
+    sprintf(buffer, "CLSID\\%s", wine_dbgstr_guid(&CLSID_Test), "");
+    ret = RegCreateKeyA( HKEY_CLASSES_ROOT, buffer, &hkey );
+    ok(ret == ERROR_SUCCESS, "RegCreateKeyA returned %x\n", ret);
+
+    ret = RegSetKeyValueA(hkey, "InprocServer32", NULL, REG_SZ, "mscoree.dll", 11);
+    ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %x\n", ret);
+    ret = RegSetKeyValueA(hkey, "InprocServer32", "Assembly", REG_SZ, "comtest, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null", 74);
+    ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %x\n", ret);
+    ret = RegSetKeyValueA(hkey, "InprocServer32", "Class", REG_SZ, "DLL.Test", 8);
+    ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %x\n", ret);
+    ret = RegSetKeyValueA(hkey, "InprocServer32", "CodeBase", REG_SZ, "file:///U:/invalid/path/to/comtest.dll", 41);
+    ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %x\n", ret);
+
+    hr = CoCreateInstance(&CLSID_Test, NULL, CLSCTX_INPROC_SERVER, &IID_ITest, (void**)&test);
+    todo_wine ok(hr == result_expected, "Expected %x, got %x\n", result_expected, hr);
+
+    if (hr == S_OK)
+    {
+        hr = ITest_Func(test, &i);
+        ok(hr == S_OK, "Got %x\n", hr);
+        ok(i == 42, "Expected 42, got %d\n", i);
+        ITest_Release(test);
+    }
+
+    RegDeleteKeyValueA(hkey, "InprocServer32", "CodeBase");
+    RegDeleteKeyValueA(hkey, "InprocServer32", "Class");
+    RegDeleteKeyValueA(hkey, "InprocServer32", "Assembly");
+    RegDeleteKeyValueA(hkey, "InprocServer32", NULL);
+    RegDeleteKeyA(hkey, "InprocServer32");
+    RegCloseKey(hkey);
 }
 
 static void get_dll_path_for_run(char *path_dll, UINT path_dll_size, run_type run)
@@ -247,6 +292,7 @@ static void prepare_and_run_test(const char *dll_source, run_type run)
         SetCurrentDirectoryA(path_tmp);
 
     run_test(run == run_type_exe_directory);
+    run_registry_test(run);
 
 cleanup:
     if (handle_context != NULL && handle_context != INVALID_HANDLE_VALUE)
