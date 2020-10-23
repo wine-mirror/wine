@@ -45,43 +45,26 @@ typedef struct {
     nsIDOMHTMLBodyElement *nsbody;
 } HTMLBodyElement;
 
-static const WCHAR aquaW[] = {'a','q','u','a',0};
-static const WCHAR blackW[] = {'b','l','a','c','k',0};
-static const WCHAR blueW[] = {'b','l','u','e',0};
-static const WCHAR fuchsiaW[] = {'f','u','s','h','s','i','a',0};
-static const WCHAR grayW[] = {'g','r','a','y',0};
-static const WCHAR greenW[] = {'g','r','e','e','n',0};
-static const WCHAR limeW[] = {'l','i','m','e',0};
-static const WCHAR maroonW[] = {'m','a','r','o','o','n',0};
-static const WCHAR navyW[] = {'n','a','v','y',0};
-static const WCHAR oliveW[] = {'o','l','i','v','e',0};
-static const WCHAR purpleW[] = {'p','u','r','p','l','e',0};
-static const WCHAR redW[] = {'r','e','d',0};
-static const WCHAR silverW[] = {'s','i','l','v','e','r',0};
-static const WCHAR tealW[] = {'t','e','a','l',0};
-static const WCHAR whiteW[] = {'w','h','i','t','e',0};
-static const WCHAR yellowW[] = {'y','e','l','l','o','w',0};
-
 static const struct {
     LPCWSTR keyword;
     DWORD rgb;
 } keyword_table[] = {
-    {aquaW,     0x00ffff},
-    {blackW,    0x000000},
-    {blueW,     0x0000ff},
-    {fuchsiaW,  0xff00ff},
-    {grayW,     0x808080},
-    {greenW,    0x008000},
-    {limeW,     0x00ff00},
-    {maroonW,   0x800000},
-    {navyW,     0x000080},
-    {oliveW,    0x808000},
-    {purpleW,   0x800080},
-    {redW,      0xff0000},
-    {silverW,   0xc0c0c0},
-    {tealW,     0x008080},
-    {whiteW,    0xffffff},
-    {yellowW,   0xffff00}
+    {L"aqua",     0x00ffff},
+    {L"black",    0x000000},
+    {L"blue",     0x0000ff},
+    {L"fushsia",  0xff00ff},
+    {L"gray",     0x808080},
+    {L"green",    0x008000},
+    {L"lime",     0x00ff00},
+    {L"maroon",   0x800000},
+    {L"navy",     0x000080},
+    {L"olive",    0x808000},
+    {L"purple",   0x800080},
+    {L"red",      0xff0000},
+    {L"silver",   0xc0c0c0},
+    {L"teal",     0x008080},
+    {L"white",    0xffffff},
+    {L"yellow",   0xffff00}
 };
 
 static int comp_value(const WCHAR *ptr, int dpc)

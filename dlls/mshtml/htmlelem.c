@@ -38,32 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-static const WCHAR aW[]        = {'A',0};
-static const WCHAR areaW[]     = {'A','R','E','A',0};
-static const WCHAR bodyW[]     = {'B','O','D','Y',0};
-static const WCHAR buttonW[]   = {'B','U','T','T','O','N',0};
-static const WCHAR embedW[]    = {'E','M','B','E','D',0};
-static const WCHAR formW[]     = {'F','O','R','M',0};
-static const WCHAR frameW[]    = {'F','R','A','M','E',0};
-static const WCHAR headW[]     = {'H','E','A','D',0};
-static const WCHAR htmlW[]     = {'H','T','M','L',0};
-static const WCHAR iframeW[]   = {'I','F','R','A','M','E',0};
-static const WCHAR imgW[]      = {'I','M','G',0};
-static const WCHAR inputW[]    = {'I','N','P','U','T',0};
-static const WCHAR labelW[]    = {'L','A','B','E','L',0};
-static const WCHAR linkW[]     = {'L','I','N','K',0};
-static const WCHAR metaW[]     = {'M','E','T','A',0};
-static const WCHAR objectW[]   = {'O','B','J','E','C','T',0};
-static const WCHAR optionW[]   = {'O','P','T','I','O','N',0};
-static const WCHAR scriptW[]   = {'S','C','R','I','P','T',0};
-static const WCHAR selectW[]   = {'S','E','L','E','C','T',0};
-static const WCHAR styleW[]    = {'S','T','Y','L','E',0};
-static const WCHAR tableW[]    = {'T','A','B','L','E',0};
-static const WCHAR tdW[]       = {'T','D',0};
-static const WCHAR textareaW[] = {'T','E','X','T','A','R','E','A',0};
-static const WCHAR title_tagW[]= {'T','I','T','L','E',0};
-static const WCHAR trW[]       = {'T','R',0};
-
 #define ATTRFLAG_CASESENSITIVE  0x0001
 #define ATTRFLAG_ASSTRING       0x0002
 #define ATTRFLAG_EXPANDURL      0x0004
@@ -74,31 +48,31 @@ typedef struct {
 } tag_desc_t;
 
 static const tag_desc_t tag_descs[] = {
-    {aW,         HTMLAnchorElement_Create},
-    {areaW,      HTMLAreaElement_Create},
-    {bodyW,      HTMLBodyElement_Create},
-    {buttonW,    HTMLButtonElement_Create},
-    {embedW,     HTMLEmbedElement_Create},
-    {formW,      HTMLFormElement_Create},
-    {frameW,     HTMLFrameElement_Create},
-    {headW,      HTMLHeadElement_Create},
-    {htmlW,      HTMLHtmlElement_Create},
-    {iframeW,    HTMLIFrame_Create},
-    {imgW,       HTMLImgElement_Create},
-    {inputW,     HTMLInputElement_Create},
-    {labelW,     HTMLLabelElement_Create},
-    {linkW,      HTMLLinkElement_Create},
-    {metaW,      HTMLMetaElement_Create},
-    {objectW,    HTMLObjectElement_Create},
-    {optionW,    HTMLOptionElement_Create},
-    {scriptW,    HTMLScriptElement_Create},
-    {selectW,    HTMLSelectElement_Create},
-    {styleW,     HTMLStyleElement_Create},
-    {tableW,     HTMLTable_Create},
-    {tdW,        HTMLTableCell_Create},
-    {textareaW,  HTMLTextAreaElement_Create},
-    {title_tagW, HTMLTitleElement_Create},
-    {trW,        HTMLTableRow_Create}
+    {L"A",         HTMLAnchorElement_Create},
+    {L"AREA",      HTMLAreaElement_Create},
+    {L"BODY",      HTMLBodyElement_Create},
+    {L"BUTTON",    HTMLButtonElement_Create},
+    {L"EMBED",     HTMLEmbedElement_Create},
+    {L"FORM",      HTMLFormElement_Create},
+    {L"FRAME",     HTMLFrameElement_Create},
+    {L"HEAD",      HTMLHeadElement_Create},
+    {L"HTML",      HTMLHtmlElement_Create},
+    {L"IFRAME",    HTMLIFrame_Create},
+    {L"IMG",       HTMLImgElement_Create},
+    {L"INPUT",     HTMLInputElement_Create},
+    {L"LABEL",     HTMLLabelElement_Create},
+    {L"LINK",      HTMLLinkElement_Create},
+    {L"META",      HTMLMetaElement_Create},
+    {L"OBJECT",    HTMLObjectElement_Create},
+    {L"OPTION",    HTMLOptionElement_Create},
+    {L"SCRIPT",    HTMLScriptElement_Create},
+    {L"SELECT",    HTMLSelectElement_Create},
+    {L"STYLE",     HTMLStyleElement_Create},
+    {L"TABLE",     HTMLTable_Create},
+    {L"TD",        HTMLTableCell_Create},
+    {L"TEXTAREA",  HTMLTextAreaElement_Create},
+    {L"TITLE",     HTMLTitleElement_Create},
+    {L"TR",        HTMLTableRow_Create}
 };
 
 static const tag_desc_t *get_tag_desc(const WCHAR *tag_name)
@@ -230,18 +204,12 @@ HRESULT elem_string_attr_setter(HTMLElement *elem, const WCHAR *name, const WCHA
 
 HRESULT get_readystate_string(READYSTATE readystate, BSTR *p)
 {
-    static const WCHAR uninitializedW[] = {'u','n','i','n','i','t','i','a','l','i','z','e','d',0};
-    static const WCHAR loadingW[] = {'l','o','a','d','i','n','g',0};
-    static const WCHAR loadedW[] = {'l','o','a','d','e','d',0};
-    static const WCHAR interactiveW[] = {'i','n','t','e','r','a','c','t','i','v','e',0};
-    static const WCHAR completeW[] = {'c','o','m','p','l','e','t','e',0};
-
     static const LPCWSTR readystate_strs[] = {
-        uninitializedW,
-        loadingW,
-        loadedW,
-        interactiveW,
-        completeW
+        L"uninitialized",
+        L"loading",
+        L"loaded",
+        L"interactive",
+        L"complete"
     };
 
     assert(readystate <= READYSTATE_COMPLETE);
