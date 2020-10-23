@@ -4449,8 +4449,9 @@ static void test_measure_string(void)
 {
     static const WCHAR tahomaW[] = { 'T','a','h','o','m','a',0 };
     static const WCHAR string[] = { 'A','0','1',0 };
+    static const WCHAR string2[] = { 'M',' ','M','M',0 };
     HDC hdc;
-    GpStringFormat *format;
+    GpStringFormat *format, *format_no_wrap;
     CharacterRange range;
     GpRegion *region;
     GpGraphics *graphics;
@@ -4458,7 +4459,7 @@ static void test_measure_string(void)
     GpFont *font;
     GpStatus status;
     RectF bounds, rect;
-    REAL width, height, width_1, width_2;
+    REAL width, height, width_1, width_2, width_MM, width_M_M;
     REAL margin_x, margin_y, width_rgn, height_rgn;
     int lines, glyphs;
 
@@ -4856,6 +4857,55 @@ todo_wine
     expectf_(width_rgn, bounds.Width, 1.0);
     expectf_(height_rgn, bounds.Height, 1.0);
 
+    /* Measure "MM" */
+    rect.X = 5.0;
+    rect.Y = 5.0;
+    rect.Width = 32000.0;
+    rect.Height = 32000.0;
+    status = GdipMeasureString(graphics, string2 + 2, 2, font, &rect, NULL, &bounds, &glyphs, &lines);
+    expect(Ok, status);
+    expect(2, glyphs);
+    expect(1, lines);
+    width_MM = bounds.Width;
+
+    /* Measure "M M" */
+    rect.X = 5.0;
+    rect.Y = 5.0;
+    rect.Width = 32000.0;
+    rect.Height = 32000.0;
+    status = GdipMeasureString(graphics, string2, 3, font, &rect, NULL, &bounds, &glyphs, &lines);
+    expect(Ok, status);
+    expect(3, glyphs);
+    expect(1, lines);
+    width_M_M = bounds.Width;
+
+    /* With wrap */
+    rect.X = 5.0;
+    rect.Y = 5.0;
+    rect.Width = width_M_M;
+    rect.Height = 32000.0;
+    status = GdipMeasureString(graphics, string2, -1, font, &rect, NULL, &bounds, &glyphs, &lines);
+    expect(Ok, status);
+    expectf_(width_MM, bounds.Width, 0.1);
+    expect(4, glyphs);
+    expect(2, lines);
+
+    /* Without wrap */
+    status = GdipCreateStringFormat(StringFormatFlagsNoWrap, LANG_NEUTRAL, &format_no_wrap);
+    expect(Ok, status);
+
+    rect.X = 5.0;
+    rect.Y = 5.0;
+    rect.Width = width_M_M;
+    rect.Height = 32000.0;
+    status = GdipMeasureString(graphics, string2, -1, font, &rect, format_no_wrap, &bounds, &glyphs, &lines);
+    expect(Ok, status);
+    todo_wine {
+    expectf_(width_M_M, bounds.Width, 0.1);
+    expect(3, glyphs);
+    }
+    expect(1, lines);
+
     status = GdipDeleteFont(font);
     expect(Ok, status);
 
@@ -4866,6 +4916,7 @@ todo_wine
     GdipDeleteFontFamily(family);
     GdipDeleteRegion(region);
     GdipDeleteStringFormat(format);
+    GdipDeleteStringFormat(format_no_wrap);
 }
 
 static void test_measured_extra_space(void)
