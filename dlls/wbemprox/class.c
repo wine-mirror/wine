@@ -971,8 +971,11 @@ static HRESULT WINAPI class_object_GetMethodQualifierSet(
     LPCWSTR wszMethod,
     IWbemQualifierSet **ppQualSet)
 {
-    FIXME("%p, %s, %p\n", iface, debugstr_w(wszMethod), ppQualSet);
-    return E_NOTIMPL;
+    struct class_object *co = impl_from_IWbemClassObject( iface );
+
+    TRACE("%p, %s, %p\n", iface, debugstr_w(wszMethod), ppQualSet);
+
+    return WbemQualifierSet_create( co->name, wszMethod, (void **)ppQualSet );
 }
 
 static HRESULT WINAPI class_object_GetMethodOrigin(
