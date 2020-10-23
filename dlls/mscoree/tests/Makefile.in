@@ -1,5 +1,5 @@
 TESTDLL   = mscoree.dll
-IMPORTS   = ole32 shlwapi uuid shell32
+IMPORTS   = ole32 shlwapi uuid shell32 advapi32
 
 C_SRCS = \
 	comtest.c \
