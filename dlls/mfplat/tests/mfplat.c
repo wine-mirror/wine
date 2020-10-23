@@ -4497,10 +4497,38 @@ if (0)
     ok(!refcount, "Unexpected refcount %u.\n", refcount);
 }
 
+struct test_thread_param
+{
+    IMFDXGIDeviceManager *manager;
+    HANDLE handle;
+    BOOL lock;
+};
+
+static DWORD WINAPI test_device_manager_thread(void *arg)
+{
+    struct test_thread_param *param = arg;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    if (param->lock)
+    {
+        hr = IMFDXGIDeviceManager_LockDevice(param->manager, param->handle, &IID_ID3D11Device,
+                (void **)&device, FALSE);
+        if (SUCCEEDED(hr))
+            ID3D11Device_Release(device);
+    }
+    else
+        hr = IMFDXGIDeviceManager_UnlockDevice(param->manager, param->handle, FALSE);
+
+    return hr;
+}
+
 static void test_dxgi_device_manager(void)
 {
     IMFDXGIDeviceManager *manager, *manager2;
-    ID3D11Device *d3d11_dev, *d3d11_dev2;
+    ID3D11Device *device, *d3d11_dev, *d3d11_dev2;
+    struct test_thread_param param;
+    HANDLE handle1, handle, thread;
     UINT token, token2;
     HRESULT hr;
 
@@ -4531,6 +4559,12 @@ static void test_dxgi_device_manager(void)
     ok(token2 && token2 != token, "got wrong token: %u, %u.\n", token2, token);
     ok(manager != manager2, "got wrong pointer: %p.\n", manager2);
     EXPECT_REF(manager, 1);
+
+    hr = IMFDXGIDeviceManager_OpenDeviceHandle(manager, &handle);
+    ok(hr == MF_E_DXGI_DEVICE_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_CloseDeviceHandle(manager, 0);
+    ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
 
     hr = pD3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_VIDEO_SUPPORT,
                            NULL, 0, D3D11_SDK_VERSION, &d3d11_dev, NULL, NULL);
@@ -4568,6 +4602,126 @@ static void test_dxgi_device_manager(void)
     EXPECT_REF(manager, 1);
     EXPECT_REF(d3d11_dev2, 2);
     EXPECT_REF(d3d11_dev, 1);
+
+    handle = NULL;
+    hr = IMFDXGIDeviceManager_OpenDeviceHandle(manager, &handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!handle, "Unexpected handle value %p.\n", handle);
+
+    handle1 = NULL;
+    hr = IMFDXGIDeviceManager_OpenDeviceHandle(manager, &handle1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(handle != handle1, "Unexpected handle.\n");
+
+    hr = IMFDXGIDeviceManager_CloseDeviceHandle(manager, handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Already closed. */
+    hr = IMFDXGIDeviceManager_CloseDeviceHandle(manager, handle);
+    ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
+
+    handle = NULL;
+    hr = IMFDXGIDeviceManager_OpenDeviceHandle(manager, &handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_CloseDeviceHandle(manager, handle1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_TestDevice(manager, handle1);
+    ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_LockDevice(manager, handle, &IID_ID3D11Device, (void **)&device, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(device == d3d11_dev2, "Unexpected device pointer.\n");
+    ID3D11Device_Release(device);
+
+    hr = IMFDXGIDeviceManager_UnlockDevice(manager, handle, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_UnlockDevice(manager, handle, FALSE);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_UnlockDevice(manager, UlongToHandle(100), FALSE);
+    ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
+
+    /* Locked with one handle, unlock with another. */
+    hr = IMFDXGIDeviceManager_OpenDeviceHandle(manager, &handle1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_LockDevice(manager, handle, &IID_ID3D11Device, (void **)&device, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_UnlockDevice(manager, handle1, FALSE);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    ID3D11Device_Release(device);
+
+    /* Closing unlocks the device. */
+    hr = IMFDXGIDeviceManager_CloseDeviceHandle(manager, handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_LockDevice(manager, handle1, &IID_ID3D11Device, (void **)&device, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D11Device_Release(device);
+
+    hr = IMFDXGIDeviceManager_CloseDeviceHandle(manager, handle1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Open two handles. */
+    hr = IMFDXGIDeviceManager_OpenDeviceHandle(manager, &handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_OpenDeviceHandle(manager, &handle1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_LockDevice(manager, handle, &IID_ID3D11Device, (void **)&device, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D11Device_Release(device);
+
+    hr = IMFDXGIDeviceManager_LockDevice(manager, handle1, &IID_ID3D11Device, (void **)&device, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D11Device_Release(device);
+
+    hr = IMFDXGIDeviceManager_UnlockDevice(manager, handle, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_UnlockDevice(manager, handle, FALSE);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    param.manager = manager;
+    param.handle = handle;
+    param.lock = TRUE;
+    thread = CreateThread(NULL, 0, test_device_manager_thread, &param, 0, NULL);
+    ok(!WaitForSingleObject(thread, 1000), "Wait for a test thread failed.\n");
+    GetExitCodeThread(thread, (DWORD *)&hr);
+    ok(hr == MF_E_DXGI_VIDEO_DEVICE_LOCKED, "Unexpected hr %#x.\n", hr);
+    CloseHandle(thread);
+
+    hr = IMFDXGIDeviceManager_UnlockDevice(manager, handle1, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_UnlockDevice(manager, handle1, FALSE);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    /* Lock on main thread, unlock on another. */
+    hr = IMFDXGIDeviceManager_LockDevice(manager, handle, &IID_ID3D11Device, (void **)&device, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ID3D11Device_Release(device);
+
+    param.manager = manager;
+    param.handle = handle;
+    param.lock = FALSE;
+    thread = CreateThread(NULL, 0, test_device_manager_thread, &param, 0, NULL);
+    ok(!WaitForSingleObject(thread, 1000), "Wait for a test thread failed.\n");
+    GetExitCodeThread(thread, (DWORD *)&hr);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    CloseHandle(thread);
+
+    hr = IMFDXGIDeviceManager_CloseDeviceHandle(manager, handle1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_CloseDeviceHandle(manager, handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     IMFDXGIDeviceManager_Release(manager);
     EXPECT_REF(d3d11_dev2, 1);

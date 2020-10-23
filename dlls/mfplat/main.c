@@ -8556,17 +8556,42 @@ HRESULT WINAPI CreatePropertyStore(IPropertyStore **store)
     return S_OK;
 }
 
+enum dxgi_device_handle_flags
+{
+    DXGI_DEVICE_HANDLE_FLAG_OPEN = 0x1,
+    DXGI_DEVICE_HANDLE_FLAG_INVALID = 0x2,
+    DXGI_DEVICE_HANDLE_FLAG_LOCKED = 0x4,
+};
+
 struct dxgi_device_manager
 {
     IMFDXGIDeviceManager IMFDXGIDeviceManager_iface;
     LONG refcount;
     UINT token;
     IDXGIDevice *device;
+
+    unsigned int *handles;
+    size_t count;
+    size_t capacity;
+
+    unsigned int locks;
+    unsigned int locking_tid;
+
+    CRITICAL_SECTION cs;
+    CONDITION_VARIABLE lock;
 };
 
 static struct dxgi_device_manager *impl_from_IMFDXGIDeviceManager(IMFDXGIDeviceManager *iface)
 {
     return CONTAINING_RECORD(iface, struct dxgi_device_manager, IMFDXGIDeviceManager_iface);
+}
+
+static HRESULT dxgi_device_manager_get_handle_index(struct dxgi_device_manager *manager, HANDLE hdevice, size_t *idx)
+{
+    if (!hdevice || hdevice > ULongToHandle(manager->count))
+        return E_HANDLE;
+    *idx = (ULONG_PTR)hdevice - 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI dxgi_device_manager_QueryInterface(IMFDXGIDeviceManager *iface, REFIID riid, void **obj)
@@ -8607,17 +8632,61 @@ static ULONG WINAPI dxgi_device_manager_Release(IMFDXGIDeviceManager *iface)
     {
         if (manager->device)
             IDXGIDevice_Release(manager->device);
+        DeleteCriticalSection(&manager->cs);
+        heap_free(manager->handles);
         heap_free(manager);
     }
 
     return refcount;
 }
 
-static HRESULT WINAPI dxgi_device_manager_CloseDeviceHandle(IMFDXGIDeviceManager *iface, HANDLE device)
+static void dxgi_device_manager_lock_handle(struct dxgi_device_manager *manager, size_t idx)
 {
-    FIXME("(%p, %p): stub.\n", iface, device);
+    if (manager->handles[idx] & DXGI_DEVICE_HANDLE_FLAG_LOCKED)
+        return;
 
-    return E_NOTIMPL;
+    manager->handles[idx] |= DXGI_DEVICE_HANDLE_FLAG_LOCKED;
+    manager->locks++;
+}
+
+static void dxgi_device_manager_unlock_handle(struct dxgi_device_manager *manager, size_t idx)
+{
+    if (!(manager->handles[idx] & DXGI_DEVICE_HANDLE_FLAG_LOCKED))
+        return;
+
+    manager->handles[idx] &= ~DXGI_DEVICE_HANDLE_FLAG_LOCKED;
+    if (!--manager->locks)
+        manager->locking_tid = 0;
+}
+
+static HRESULT WINAPI dxgi_device_manager_CloseDeviceHandle(IMFDXGIDeviceManager *iface, HANDLE hdevice)
+{
+    struct dxgi_device_manager *manager = impl_from_IMFDXGIDeviceManager(iface);
+    HRESULT hr;
+    size_t idx;
+
+    TRACE("%p, %p.\n", iface, hdevice);
+
+    EnterCriticalSection(&manager->cs);
+
+    if (SUCCEEDED(hr = dxgi_device_manager_get_handle_index(manager, hdevice, &idx)))
+    {
+        if (manager->handles[idx] & DXGI_DEVICE_HANDLE_FLAG_OPEN)
+        {
+            dxgi_device_manager_unlock_handle(manager, idx);
+            manager->handles[idx] = 0;
+            if (idx == manager->count - 1)
+                manager->count--;
+        }
+        else
+            hr = E_HANDLE;
+    }
+
+    LeaveCriticalSection(&manager->cs);
+
+    WakeAllConditionVariable(&manager->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI dxgi_device_manager_GetVideoService(IMFDXGIDeviceManager *iface, HANDLE device,
@@ -8628,57 +8697,180 @@ static HRESULT WINAPI dxgi_device_manager_GetVideoService(IMFDXGIDeviceManager *
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dxgi_device_manager_LockDevice(IMFDXGIDeviceManager *iface, HANDLE device,
-                                                     REFIID riid, void **ppv, BOOL block)
+static HRESULT WINAPI dxgi_device_manager_LockDevice(IMFDXGIDeviceManager *iface, HANDLE hdevice,
+        REFIID riid, void **obj, BOOL block)
 {
-    FIXME("(%p, %p, %s, %p, %d): stub.\n", iface, device, wine_dbgstr_guid(riid), ppv, block);
+    struct dxgi_device_manager *manager = impl_from_IMFDXGIDeviceManager(iface);
+    HRESULT hr;
+    size_t idx;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %s, %p, %d.\n", iface, hdevice, wine_dbgstr_guid(riid), obj, block);
+
+    EnterCriticalSection(&manager->cs);
+
+    if (SUCCEEDED(hr = dxgi_device_manager_get_handle_index(manager, hdevice, &idx)))
+    {
+        if (!manager->device)
+        {
+            hr = MF_E_DXGI_DEVICE_NOT_INITIALIZED;
+        }
+        else if (manager->locking_tid == GetCurrentThreadId())
+        {
+            if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(manager->device, riid, obj)))
+                dxgi_device_manager_lock_handle(manager, idx);
+        }
+        else if (manager->locking_tid && !block)
+        {
+            hr = MF_E_DXGI_VIDEO_DEVICE_LOCKED;
+        }
+        else
+        {
+            while (manager->locking_tid)
+            {
+                SleepConditionVariableCS(&manager->lock, &manager->cs, INFINITE);
+            }
+
+            if (SUCCEEDED(hr = dxgi_device_manager_get_handle_index(manager, hdevice, &idx)))
+            {
+                if (manager->handles[idx] & DXGI_DEVICE_HANDLE_FLAG_INVALID)
+                    hr = MF_E_DXGI_NEW_VIDEO_DEVICE;
+                else if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(manager->device, riid, obj)))
+                {
+                    manager->locking_tid = GetCurrentThreadId();
+                    dxgi_device_manager_lock_handle(manager, idx);
+                }
+            }
+        }
+    }
+
+    LeaveCriticalSection(&manager->cs);
+
+    return hr;
 }
 
-static HRESULT WINAPI dxgi_device_manager_OpenDeviceHandle(IMFDXGIDeviceManager *iface, HANDLE *device)
+static HRESULT WINAPI dxgi_device_manager_OpenDeviceHandle(IMFDXGIDeviceManager *iface, HANDLE *hdevice)
 {
-    FIXME("(%p, %p): stub.\n", iface, device);
+    struct dxgi_device_manager *manager = impl_from_IMFDXGIDeviceManager(iface);
+    HRESULT hr = S_OK;
+    size_t i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, hdevice);
+
+    *hdevice = NULL;
+
+    EnterCriticalSection(&manager->cs);
+
+    if (!manager->device)
+        hr = MF_E_DXGI_DEVICE_NOT_INITIALIZED;
+    else
+    {
+        for (i = 0; i < manager->count; ++i)
+        {
+            if (!(manager->handles[i] & DXGI_DEVICE_HANDLE_FLAG_OPEN))
+            {
+                manager->handles[i] |= DXGI_DEVICE_HANDLE_FLAG_OPEN;
+                *hdevice = ULongToHandle(i + 1);
+                break;
+            }
+        }
+
+        if (mf_array_reserve((void **)&manager->handles, &manager->capacity, manager->count + 1,
+                sizeof(*manager->handles)))
+        {
+            *hdevice = ULongToHandle(manager->count + 1);
+            manager->handles[manager->count++] = DXGI_DEVICE_HANDLE_FLAG_OPEN;
+        }
+        else
+            hr = E_OUTOFMEMORY;
+    }
+
+    LeaveCriticalSection(&manager->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI dxgi_device_manager_ResetDevice(IMFDXGIDeviceManager *iface, IUnknown *device, UINT token)
 {
     struct dxgi_device_manager *manager = impl_from_IMFDXGIDeviceManager(iface);
     IDXGIDevice *dxgi_device;
-    HRESULT hr;
+    size_t i;
 
-    TRACE("(%p, %p, %u).\n", iface, device, token);
+    TRACE("%p, %p, %u.\n", iface, device, token);
 
     if (!device || token != manager->token)
         return E_INVALIDARG;
 
-    hr = IUnknown_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
-    if (SUCCEEDED(hr))
+    if (FAILED(IUnknown_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device)))
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&manager->cs);
+
+    if (manager->device)
     {
-        if (manager->device)
-            IDXGIDevice_Release(manager->device);
-        manager->device = dxgi_device;
+        for (i = 0; i < manager->count; ++i)
+        {
+            manager->handles[i] |= DXGI_DEVICE_HANDLE_FLAG_INVALID;
+            manager->handles[i] &= ~DXGI_DEVICE_HANDLE_FLAG_LOCKED;
+        }
+        manager->locking_tid = 0;
+        manager->locks = 0;
+        IDXGIDevice_Release(manager->device);
     }
-    else
-        hr = E_INVALIDARG;
+    manager->device = dxgi_device;
+
+    LeaveCriticalSection(&manager->cs);
+
+    WakeAllConditionVariable(&manager->lock);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI dxgi_device_manager_TestDevice(IMFDXGIDeviceManager *iface, HANDLE hdevice)
+{
+    struct dxgi_device_manager *manager = impl_from_IMFDXGIDeviceManager(iface);
+    HRESULT hr;
+    size_t idx;
+
+    TRACE("%p, %p.\n", iface, hdevice);
+
+    EnterCriticalSection(&manager->cs);
+
+    if (SUCCEEDED(hr = dxgi_device_manager_get_handle_index(manager, hdevice, &idx)))
+    {
+        if (manager->handles[idx] & DXGI_DEVICE_HANDLE_FLAG_INVALID)
+            hr = MF_E_DXGI_NEW_VIDEO_DEVICE;
+        else if (!(manager->handles[idx] & DXGI_DEVICE_HANDLE_FLAG_OPEN))
+            hr = E_HANDLE;
+    }
+
+    LeaveCriticalSection(&manager->cs);
 
     return hr;
 }
 
-static HRESULT WINAPI dxgi_device_manager_TestDevice(IMFDXGIDeviceManager *iface, HANDLE device)
+static HRESULT WINAPI dxgi_device_manager_UnlockDevice(IMFDXGIDeviceManager *iface, HANDLE hdevice,
+         BOOL savestate)
 {
-    FIXME("(%p, %p): stub.\n", iface, device);
+    struct dxgi_device_manager *manager = impl_from_IMFDXGIDeviceManager(iface);
+    HRESULT hr = E_FAIL;
+    size_t idx;
 
-    return E_NOTIMPL;
-}
+    TRACE("%p, %p, %d.\n", iface, hdevice, savestate);
 
-static HRESULT WINAPI dxgi_device_manager_UnlockDevice(IMFDXGIDeviceManager *iface, HANDLE device, BOOL state)
-{
-    FIXME("(%p, %p, %d): stub.\n", iface, device, state);
+    EnterCriticalSection(&manager->cs);
 
-    return E_NOTIMPL;
+    if (SUCCEEDED(dxgi_device_manager_get_handle_index(manager, hdevice, &idx)))
+    {
+        hr = manager->handles[idx] & DXGI_DEVICE_HANDLE_FLAG_LOCKED ? S_OK : E_INVALIDARG;
+        if (SUCCEEDED(hr))
+            dxgi_device_manager_unlock_handle(manager, idx);
+    }
+
+    LeaveCriticalSection(&manager->cs);
+
+    WakeAllConditionVariable(&manager->lock);
+
+    return hr;
 }
 
 static const IMFDXGIDeviceManagerVtbl dxgi_device_manager_vtbl =
@@ -8699,7 +8891,7 @@ HRESULT WINAPI MFCreateDXGIDeviceManager(UINT *token, IMFDXGIDeviceManager **man
 {
     struct dxgi_device_manager *object;
 
-    TRACE("(%p, %p).\n", token, manager);
+    TRACE("%p, %p.\n", token, manager);
 
     if (!token || !manager)
         return E_POINTER;
@@ -8712,6 +8904,8 @@ HRESULT WINAPI MFCreateDXGIDeviceManager(UINT *token, IMFDXGIDeviceManager **man
     object->refcount = 1;
     object->token = GetTickCount();
     object->device = NULL;
+    InitializeCriticalSection(&object->cs);
+    InitializeConditionVariable(&object->lock);
 
     TRACE("Created device manager: %p, token: %u.\n", object, object->token);
 
