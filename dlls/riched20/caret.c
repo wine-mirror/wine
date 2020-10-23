@@ -1241,13 +1241,17 @@ static void
 ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs, BOOL extend)
 {
   ME_DisplayItem *pRun = pCursor->pRun;
-  ME_DisplayItem *pOldPara = pCursor->pPara;
-  ME_DisplayItem *pItem, *pNewPara;
+  ME_Paragraph *old_para = &pCursor->pPara->member.para, *new_para;
+  ME_DisplayItem *pItem;
   int x = ME_GetXForArrow(editor, pCursor);
 
   if (editor->bCaretAtEnd && !pCursor->nOffset)
-    if (!ME_PrevRun(&pOldPara, &pRun, TRUE))
-      return;
+  {
+    ME_Run *prev = run_prev_all_paras( &pRun->member.run );
+    if (!prev) return;
+    pRun = run_get_di( prev );
+    old_para = prev->para;
+  }
 
   if (nRelOfs == -1)
   {
@@ -1262,25 +1266,23 @@ ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs, BOOL 
         ME_SetCursorToStart(editor, pCursor);
       return;
     }
-    pNewPara = ME_GetParagraph(pItem);
-    if (pOldPara->member.para.nFlags & MEPF_ROWEND ||
-        (pOldPara->member.para.pCell &&
-         pOldPara->member.para.pCell != pNewPara->member.para.pCell))
+    new_para = &ME_GetParagraph(pItem)->member.para;
+    if (old_para->nFlags & MEPF_ROWEND ||
+        (para_cell( old_para ) && para_cell( old_para ) != para_cell( new_para )))
     {
       /* Brought out of a cell */
-      pNewPara = table_row_start( &pOldPara->member.para )->prev_para;
-      if (pNewPara->type == diTextStart)
-        return; /* At the top, so don't go anywhere. */
-      pItem = ME_FindItemFwd(pNewPara, diStartRow);
+      new_para = para_prev( table_row_start( old_para ));
+      if (!new_para) return; /* At the top, so don't go anywhere. */
+      pItem = ME_FindItemFwd( para_get_di( new_para ), diStartRow);
     }
-    if (pNewPara->member.para.nFlags & MEPF_ROWEND)
+    if (new_para->nFlags & MEPF_ROWEND)
     {
       /* Brought into a table row */
-      ME_Cell *cell = &ME_FindItemBack(pNewPara, diCell)->member.cell;
-      while (x < cell->pt.x && cell->prev_cell)
-        cell = &cell->prev_cell->member.cell;
-      if (cell->next_cell) /* else - we are still at the end of the row */
-        pItem = ME_FindItemBack(cell->next_cell, diStartRow);
+      ME_Cell *cell = table_row_end_cell( new_para );
+      while (x < cell->pt.x && cell_prev( cell ))
+        cell = cell_prev( cell );
+      if (cell_next( cell )) /* else - we are still at the end of the row */
+        pItem = ME_FindItemBack( cell_get_di( cell_next( cell ) ), diStartRow );
     }
   }
   else
@@ -1293,25 +1295,22 @@ ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs, BOOL 
         ME_SetCursorToEnd(editor, pCursor, TRUE);
       return;
     }
-    pNewPara = ME_GetParagraph(pItem);
-    if (pOldPara->member.para.nFlags & MEPF_ROWSTART ||
-        (pOldPara->member.para.pCell &&
-         pOldPara->member.para.pCell != pNewPara->member.para.pCell))
+    new_para = &ME_GetParagraph(pItem)->member.para;
+    if (old_para->nFlags & MEPF_ROWSTART ||
+        (para_cell( old_para ) && para_cell( old_para ) != para_cell( new_para )))
     {
       /* Brought out of a cell */
-      pNewPara = table_row_end( &pOldPara->member.para )->next_para;
-      if (pNewPara->type == diTextEnd)
-        return; /* At the bottom, so don't go anywhere. */
-      pItem = ME_FindItemFwd(pNewPara, diStartRow);
+      new_para = para_next( table_row_end( old_para ) );
+      if (!para_next( new_para )) return; /* At the bottom, so don't go anywhere. */
+      pItem = ME_FindItemFwd( para_get_di( new_para ), diStartRow );
     }
-    if (pNewPara->member.para.nFlags & MEPF_ROWSTART)
+    if (new_para->nFlags & MEPF_ROWSTART)
     {
       /* Brought into a table row */
-      ME_DisplayItem *cell = ME_FindItemFwd(pNewPara, diCell);
-      while (cell->member.cell.next_cell &&
-             x >= cell->member.cell.next_cell->member.cell.pt.x)
-        cell = cell->member.cell.next_cell;
-      pItem = ME_FindItemFwd(cell, diStartRow);
+      ME_Cell *cell = table_row_first_cell( new_para );
+      while (cell_next( cell ) && x >= cell_next( cell )->pt.x)
+        cell = cell_next( cell );
+      pItem = ME_FindItemFwd( cell_get_di( cell ), diStartRow );
     }
   }
   if (!pItem)
