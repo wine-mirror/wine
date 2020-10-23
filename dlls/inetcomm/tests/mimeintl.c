@@ -235,7 +235,7 @@ static void test_convert(void)
     ULONG read;
     PROPVARIANT prop_in, prop_out;
     static char test_string[] = "test string";
-    static WCHAR test_stringW[] = {'t','e','s','t',' ','s','t','r','i','n','g',0};
+    static WCHAR test_stringW[] = L"test string";
 
     hr = MimeOleGetInternat(&internat);
     ok(hr == S_OK, "ret %08x\n", hr);

@@ -826,7 +826,6 @@ static void test_mhtml_message(void)
 static void test_MessageSetProp(void)
 {
     static const char topic[] = "wine topic";
-    static const WCHAR topicW[] = {'w','i','n','e',' ','t','o','p','i','c',0};
     HRESULT hr;
     IMimeMessage *msg;
     IMimeBody *body;
@@ -906,7 +905,7 @@ static void test_MessageSetProp(void)
     if(hr == S_OK)
     {
         ok(prop.vt == VT_LPWSTR, "type %d\n", prop.vt);
-        ok(!lstrcmpW(prop.u.pwszVal, topicW), "got %s\n", wine_dbgstr_w(prop.u.pwszVal));
+        ok(!lstrcmpW(prop.u.pwszVal, L"wine topic"), "got %s\n", wine_dbgstr_w(prop.u.pwszVal));
         PropVariantClear(&prop);
     }
 
@@ -1488,8 +1487,6 @@ static void test_mhtml_protocol_info(void)
     unsigned i, exlen;
     HRESULT hres;
 
-    static const WCHAR http_url[] = {'h','t','t','p',':','/','/','t','e','s','t','.','o','r','g',0};
-
     hres = CoCreateInstance(&CLSID_IMimeHtmlProtocol, NULL, CLSCTX_INPROC_SERVER,
                             &IID_IInternetProtocolInfo, (void**)&protocol_info);
     ok(hres == S_OK, "Could not create protocol info: %08x\n", hres);
@@ -1516,8 +1513,9 @@ static void test_mhtml_protocol_info(void)
         }
     }
 
-    hres = IInternetProtocolInfo_CombineUrl(protocol_info, http_url, http_url, ICU_BROWSER_MODE,
-                                            combined_url, ARRAY_SIZE(combined_url), &combined_len, 0);
+    hres = IInternetProtocolInfo_CombineUrl(protocol_info, L"http://test.org", L"http://test.org",
+                                            ICU_BROWSER_MODE, combined_url, ARRAY_SIZE(combined_url),
+                                            &combined_len, 0);
     ok(hres == E_FAIL, "CombineUrl failed: %08x\n", hres);
 
     IInternetProtocolInfo_Release(protocol_info);
