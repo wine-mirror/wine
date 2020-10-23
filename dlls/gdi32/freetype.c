@@ -3239,7 +3239,7 @@ struct fontdir
 #include <poppack.h>
 
 static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEXW pelf,
-                           NEWTEXTMETRICEXW *pntm, LPDWORD ptype);
+                           NEWTEXTMETRICEXW *pntm);
 
 static BOOL get_fontdir( const WCHAR *dos_name, struct fontdir *fd )
 {
@@ -3249,7 +3249,6 @@ static BOOL get_fontdir( const WCHAR *dos_name, struct fontdir *fd )
     WCHAR *family_name;
     ENUMLOGFONTEXW elf;
     NEWTEXTMETRICEXW ntm;
-    DWORD type;
 
     if (!(unix_name = wine_get_unix_file_name( dos_name ))) return FALSE;
     ft_face = new_ft_face( unix_name, NULL, 0, 0, FALSE );
@@ -3259,14 +3258,14 @@ static BOOL get_fontdir( const WCHAR *dos_name, struct fontdir *fd )
     if (face)
     {
         family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
-        GetEnumStructs( face, family_name, &elf, &ntm, &type );
+        GetEnumStructs( face, family_name, &elf, &ntm );
         release_face( face );
         HeapFree( GetProcessHeap(), 0, family_name );
     }
     pFT_Done_Face( ft_face );
 
     if (!face) return FALSE;
-    if ((type & TRUETYPE_FONTTYPE) == 0) return FALSE;
+    if (!(ntm.ntmTm.tmPitchAndFamily & TMPF_TRUETYPE)) return FALSE;
 
     memset( fd, 0, sizeof(*fd) );
 
@@ -5217,8 +5216,19 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset_list *l
     return n;
 }
 
+static UINT get_font_type( const NEWTEXTMETRICEXW *ntm )
+{
+    UINT ret = 0;
+
+    if (ntm->ntmTm.tmPitchAndFamily & TMPF_TRUETYPE)  ret |= TRUETYPE_FONTTYPE;
+    if (ntm->ntmTm.tmPitchAndFamily & TMPF_DEVICE)    ret |= DEVICE_FONTTYPE;
+    if (!(ntm->ntmTm.tmPitchAndFamily & TMPF_VECTOR)) ret |= RASTER_FONTTYPE;
+    return ret;
+}
+
+
 static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEXW pelf,
-			   NEWTEXTMETRICEXW *pntm, LPDWORD ptype)
+                           NEWTEXTMETRICEXW *pntm)
 {
     struct gdi_font *gdi_font;
     GdiFont *font;
@@ -5229,7 +5239,6 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
         TRACE("Cached\n");
         *pelf = face->cached_enum_data->elf;
         *pntm = face->cached_enum_data->ntm;
-        *ptype = face->cached_enum_data->type;
         return;
     }
 
@@ -5303,20 +5312,11 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
     pelf->elfLogFont.lfQuality = DRAFT_QUALITY;
     pelf->elfLogFont.lfPitchAndFamily = (pntm->ntmTm.tmPitchAndFamily & 0xf1) + 1;
 
-    *ptype = 0;
-    if (pntm->ntmTm.tmPitchAndFamily & TMPF_TRUETYPE)
-        *ptype |= TRUETYPE_FONTTYPE;
-    if (pntm->ntmTm.tmPitchAndFamily & TMPF_DEVICE)
-        *ptype |= DEVICE_FONTTYPE;
-    if(!(pntm->ntmTm.tmPitchAndFamily & TMPF_VECTOR))
-        *ptype |= RASTER_FONTTYPE;
-
     face->cached_enum_data = HeapAlloc(GetProcessHeap(), 0, sizeof(*face->cached_enum_data));
     if (face->cached_enum_data)
     {
         face->cached_enum_data->elf = *pelf;
         face->cached_enum_data->ntm = *pntm;
-        face->cached_enum_data->type = *ptype;
     }
 
     free_gdi_font(gdi_font);
@@ -5347,10 +5347,10 @@ static BOOL enum_face_charsets(const Family *family, Face *face, struct enum_cha
 {
     ENUMLOGFONTEXW elf;
     NEWTEXTMETRICEXW ntm;
-    DWORD type = 0;
-    DWORD i;
+    DWORD type, i;
 
-    GetEnumStructs( face, face->family->family_name, &elf, &ntm, &type );
+    GetEnumStructs( face, face->family->family_name, &elf, &ntm );
+    type = get_font_type( &ntm );
     for(i = 0; i < list->total; i++) {
         if(!face->scalable && face->fs.fsCsb[0] == 0) { /* OEM bitmap */
             elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = OEM_CHARSET;
