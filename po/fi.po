@@ -5025,11 +5025,11 @@ msgstr "DLL:n alustus epäonnistui.\n"
 
 #: dlls/kernel32/winerror.mc:1373
 msgid "Shutdown in progress.\n"
-msgstr "Sulkeminen meneillään.\n"
+msgstr "Sammutus meneillään.\n"
 
 #: dlls/kernel32/winerror.mc:1378
 msgid "No shutdown in progress.\n"
-msgstr "Sulkeminen ei meneillään.\n"
+msgstr "Ei sammutusta meneillään.\n"
 
 #: dlls/kernel32/winerror.mc:1383
 msgid "I/O device error.\n"
@@ -6924,16 +6924,12 @@ msgid "No Signature found in file.\n"
 msgstr "Tiedostosta ei löytynyt allekirjoitusta.\n"
 
 #: dlls/kernel32/winerror.mc:3774
-#, fuzzy
-#| msgid "Invalid level.\n"
 msgid "Invalid call.\n"
-msgstr "Taso ei kelpaa.\n"
+msgstr "Kutsu ei kelpaa.\n"
 
 #: dlls/kernel32/winerror.mc:3781
-#, fuzzy
-#| msgid "Value is not available.\n"
 msgid "Resource is not currently available.\n"
-msgstr "Arvo ei saatavilla.\n"
+msgstr "Resurssi ei ole nyt saatavilla.\n"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -7107,11 +7103,11 @@ msgstr "Objektia tai arvoa ei löydy.\n"
 
 #: dlls/mferror/mferror.mc:235
 msgid "Value is not available.\n"
-msgstr "Arvo ei saatavilla.\n"
+msgstr "Arvo ei ole saatavilla.\n"
 
 #: dlls/mferror/mferror.mc:242
 msgid "Clock is not available.\n"
-msgstr "Kello ei saatavilla.\n"
+msgstr "Kello ei ole saatavilla.\n"
 
 #: dlls/mferror/mferror.mc:263
 msgid "Multiple subscribers are not supported.\n"
@@ -10032,16 +10028,12 @@ msgid "Line Islands Daylight Time"
 msgstr "Linesaarten kesäaika"
 
 #: dlls/tzres/tzres.rc:90
-#, fuzzy
-#| msgid "China Standard Time"
 msgid "Cuba Standard Time"
-msgstr "Kiinan normaaliaika"
+msgstr "Kuuban normaaliaika"
 
 #: dlls/tzres/tzres.rc:91
-#, fuzzy
-#| msgid "China Daylight Time"
 msgid "Cuba Daylight Time"
-msgstr "Kiinan kesäaika"
+msgstr "Kuuban kesäaika"
 
 #: dlls/tzres/tzres.rc:134
 msgid "Jordan Standard Time"
@@ -10240,16 +10232,12 @@ msgid "US Eastern Daylight Time"
 msgstr "Itäinen kesäaika (USA)"
 
 #: dlls/tzres/tzres.rc:176
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "North Korea Standard Time"
-msgstr "Korean normaaliaika"
+msgstr "Pohjois-Korean normaaliaika"
 
 #: dlls/tzres/tzres.rc:177
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "North Korea Daylight Time"
-msgstr "Korean kesäaika"
+msgstr "Pohjois-Korean kesäaika"
 
 #: dlls/tzres/tzres.rc:212
 msgid "Tasmania Standard Time"
@@ -10564,16 +10552,12 @@ msgid "Egypt Daylight Time"
 msgstr "Egyptin kesäaika"
 
 #: dlls/tzres/tzres.rc:104
-#, fuzzy
-#| msgid "Central Standard Time (Mexico)"
 msgid "Eastern Standard Time (Mexico)"
-msgstr "Keskinen normaaliaika (Meksiko)"
+msgstr "Itäinen normaaliaika (Meksiko)"
 
 #: dlls/tzres/tzres.rc:105
-#, fuzzy
-#| msgid "Central Daylight Time (Mexico)"
 msgid "Eastern Daylight Time (Mexico)"
-msgstr "Keskinen kesäaika (Meksiko)"
+msgstr "Itäinen kesäaika (Meksiko)"
 
 #: dlls/tzres/tzres.rc:148
 msgid "Mauritius Standard Time"
@@ -10778,153 +10762,115 @@ msgstr "&Lisää ikkunoita..."
 
 #: dlls/vbscript/vbscript.rc:30
 msgid "Overflow"
-msgstr ""
+msgstr "Ylivuoto"
 
 #: dlls/vbscript/vbscript.rc:31
-#, fuzzy
-#| msgid "Out of memory."
 msgid "Out of memory"
-msgstr "Muisti ei riitä."
+msgstr "Muisti ei riitä"
 
 #: dlls/vbscript/vbscript.rc:33
 msgid "This array is fixed or temporarily locked"
-msgstr ""
+msgstr "Tämä taulukko on kiinteä tai väliaikaisesti lukittu"
 
 #: dlls/vbscript/vbscript.rc:34
-#, fuzzy
-#| msgid "Data type mismatch.\n"
 msgid "Type mismatch"
-msgstr "Tietotyyppi ei täsmää.\n"
+msgstr "Tyyppi ei täsmää"
 
 #: dlls/vbscript/vbscript.rc:36
-#, fuzzy
-#| msgid "I/O device error.\n"
 msgid "Device I/O error"
-msgstr "I/O-laitteen virhe.\n"
+msgstr "Laitteen I/O-virhe"
 
 #: dlls/vbscript/vbscript.rc:37
-#, fuzzy
-#| msgid "File already exists.\n"
 msgid "File already exists"
-msgstr "Tiedosto on jo olemassa.\n"
+msgstr "Tiedosto on jo olemassa"
 
 #: dlls/vbscript/vbscript.rc:38
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "Disk full"
-msgstr "Levy täynnä.\n"
+msgstr "Levy täynnä"
 
 #: dlls/vbscript/vbscript.rc:39
-#, fuzzy
-#| msgid "Too many open files.\n"
 msgid "Too many files"
-msgstr "Liian monta avointa tiedostoa.\n"
+msgstr "Liian monta tiedostoa"
 
 #: dlls/vbscript/vbscript.rc:40
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permission denied"
-msgstr "Pääsy estetty.\n"
+msgstr "Pääsy estetty"
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
-msgstr ""
+msgstr "Polun-/tiedostonkäyttövirhe"
 
 #: dlls/vbscript/vbscript.rc:42
-#, fuzzy
-#| msgid "Path not found.\n"
 msgid "Path not found"
-msgstr "Polkua ei löydy.\n"
+msgstr "Polkua ei löydy"
 
 #: dlls/vbscript/vbscript.rc:43
-#, fuzzy
-#| msgid "(value not set)"
 msgid "Object variable not set"
-msgstr "(arvoa ei asetettu)"
+msgstr "Objektimuuttujaa ei ole asetettu"
 
 #: dlls/vbscript/vbscript.rc:44
-#, fuzzy
-#| msgid "Invalid user buffer.\n"
 msgid "Invalid use of Null"
-msgstr "Annettu puskuri ei kelpaa.\n"
+msgstr "Null-arvon käyttö ei kelpaa"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
-msgstr ""
+msgstr "Tarvittavaa väliaikaistiedostoa ei voida luoda"
 
 #: dlls/vbscript/vbscript.rc:46
-#, fuzzy
-#| msgid "Automation server can't create object"
 msgid "ActiveX component can't create object"
-msgstr "Automaatiopalvelin ei voi luoda objektia"
+msgstr "ActiveX-komponentti ei voi luoda objektia"
 
 #: dlls/vbscript/vbscript.rc:47
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Class doesn't support Automation"
-msgstr "Objekti ei tue tätä toimintoa"
+msgstr "Luokka ei tue automaatiota"
 
 #: dlls/vbscript/vbscript.rc:48
 msgid "File name or class name not found during Automation operation"
-msgstr ""
+msgstr "Tiedostonimeä tai luokan nimeä ei löydy automaatio-operaatiossa"
 
 #: dlls/vbscript/vbscript.rc:51
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support named arguments"
-msgstr "Objekti ei tue tätä toimintoa"
+msgstr "Objekti ei tue nimettyjä argumentteja"
 
 #: dlls/vbscript/vbscript.rc:52
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
-msgstr "Objekti ei tue tätä toimintoa"
+msgstr "Objekti ei tue nykyistä alueellista asetusta"
 
 #: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
-#, fuzzy
-#| msgid "Element not found.\n"
 msgid "Named argument not found"
-msgstr "Elementtiä ei löydy.\n"
+msgstr "Nimettyä argumenttia ei löydy"
 
 #: dlls/vbscript/vbscript.rc:55
 msgid "Wrong number of arguments or invalid property assignment"
-msgstr ""
+msgstr "Väärä määrä argumentteja tai virhe ominaisuuden asettamisessa"
 
 #: dlls/vbscript/vbscript.rc:56
-#, fuzzy
-#| msgid "Object Class Violation"
 msgid "Object not a collection"
-msgstr "Objektiluokkarikkomus"
+msgstr "Objekti ei ole kokoelma"
 
 #: dlls/vbscript/vbscript.rc:57
-#, fuzzy
-#| msgid "Specified control was not found in message"
 msgid "Specified DLL function not found"
-msgstr "Viestistä ei löytynyt määriteltyä kontrollia"
+msgstr "Määriteltyä DLL-funktiota ei löydy"
 
 #: dlls/vbscript/vbscript.rc:58
 msgid "Variable uses an Automation type not supported in VBScript"
-msgstr ""
+msgstr "Muuttuja käyttää automaatiotyyppiä, jota VBScript ei tue"
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "The remote server machine does not exist or is unavailable"
-msgstr ""
+msgstr "Etäpalvelinta ei ole tai se ei ole tavoitettavissa"
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr ""
+msgstr "Viallinen tai määrittämätön viittaus"
 
 #: dlls/vbscript/vbscript.rc:62
-#, fuzzy
-#| msgid "Microsoft JScript compilation error"
 msgid "Microsoft VBScript compilation error"
-msgstr "Microsoft JScript -käännösvirhe"
+msgstr "Microsoft VBScript -käännösvirhe"
 
 #: dlls/vbscript/vbscript.rc:63
-#, fuzzy
-#| msgid "Microsoft JScript runtime error"
 msgid "Microsoft VBScript runtime error"
-msgstr "Microsoft JScript -suoritusvirhe"
+msgstr "Microsoft VBScript -suoritusvirhe"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"
@@ -11022,33 +10968,27 @@ msgstr ""
 
 #: dlls/wininet/wininet.rc:35
 msgid "Effective Date"
-msgstr ""
+msgstr "Voimaantulopäiväys"
 
 #: dlls/wininet/wininet.rc:37
-#, fuzzy
-#| msgid "Security"
 msgid "Security Protocol"
-msgstr "Turvallisuus"
+msgstr "Salausprotokolla"
 
 #: dlls/wininet/wininet.rc:38
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature Type"
 msgstr "Allekirjoitus"
 
 #: dlls/wininet/wininet.rc:39
-#, fuzzy
-#| msgid "Encrypting File System"
 msgid "Encryption Type"
-msgstr "Tiedostojärjestelmän salaus"
+msgstr "Salauksen tyyppi"
 
 #: dlls/wininet/wininet.rc:40
 msgid "Privacy Strength"
-msgstr ""
+msgstr "Yksityisyyden vahvuus"
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
-msgstr ""
+msgstr "bittiä"
 
 #: dlls/wininet/winineterror.mc:26
 msgid "The request has timed out.\n"
