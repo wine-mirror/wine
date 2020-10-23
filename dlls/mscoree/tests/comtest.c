@@ -180,7 +180,8 @@ static void run_registry_test(run_type run)
     ok(ret == ERROR_SUCCESS, "RegSetKeyValueA returned %x\n", ret);
 
     hr = CoCreateInstance(&CLSID_Test, NULL, CLSCTX_INPROC_SERVER, &IID_ITest, (void**)&test);
-    todo_wine ok(hr == result_expected, "Expected %x, got %x\n", result_expected, hr);
+    todo_wine_if(result_expected != S_OK)
+    ok(hr == result_expected, "Expected %x, got %x\n", result_expected, hr);
 
     if (hr == S_OK)
     {

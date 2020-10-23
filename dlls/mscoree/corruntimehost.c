@@ -1747,6 +1747,7 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
     HKEY key, subkey;
     LONG res;
     int offset = 0;
+    HANDLE file = INVALID_HANDLE_VALUE;
     DWORD numKeys, keyLength;
     WCHAR codebase[MAX_PATH + 8];
     WCHAR classname[350], subkeyName[256];
@@ -1782,7 +1783,12 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
                 offset = lstrlenW(wszFileSlash);
 
             lstrcpyW(filename, codebase + offset);
+
+            file = CreateFileW(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
         }
+
+        if (file != INVALID_HANDLE_VALUE)
+            CloseHandle(file);
         else
         {
             WCHAR assemblyname[MAX_PATH + 8];
@@ -1791,27 +1797,37 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
             WARN("CodeBase value cannot be found, trying Assembly.\n");
             /* get the last subkey of InprocServer32 */
             res = RegQueryInfoKeyW(key, 0, 0, 0, &numKeys, 0, 0, 0, 0, 0, 0, 0);
-            if (res != ERROR_SUCCESS || numKeys == 0)
-                goto cleanup;
-            numKeys--;
-            keyLength = ARRAY_SIZE(subkeyName);
-            res = RegEnumKeyExW(key, numKeys, subkeyName, &keyLength, 0, 0, 0, 0);
             if (res != ERROR_SUCCESS)
                 goto cleanup;
-            res = RegOpenKeyExW(key, subkeyName, 0, KEY_READ, &subkey);
-            if (res != ERROR_SUCCESS)
-                goto cleanup;
-            dwBufLen = MAX_PATH + 8;
-            res = RegGetValueW(subkey, NULL, wszAssembly, RRF_RT_REG_SZ, NULL, assemblyname, &dwBufLen);
-            RegCloseKey(subkey);
-            if (res != ERROR_SUCCESS)
-                goto cleanup;
+            if (numKeys > 0)
+            {
+                numKeys--;
+                keyLength = ARRAY_SIZE(subkeyName);
+                res = RegEnumKeyExW(key, numKeys, subkeyName, &keyLength, 0, 0, 0, 0);
+                if (res != ERROR_SUCCESS)
+                    goto cleanup;
+                res = RegOpenKeyExW(key, subkeyName, 0, KEY_READ, &subkey);
+                if (res != ERROR_SUCCESS)
+                    goto cleanup;
+                dwBufLen = MAX_PATH + 8;
+                res = RegGetValueW(subkey, NULL, wszAssembly, RRF_RT_REG_SZ, NULL, assemblyname, &dwBufLen);
+                RegCloseKey(subkey);
+                if (res != ERROR_SUCCESS)
+                    goto cleanup;
+            }
+            else
+            {
+                dwBufLen = MAX_PATH + 8;
+                res = RegGetValueW(key, NULL, wszAssembly, RRF_RT_REG_SZ, NULL, assemblyname, &dwBufLen);
+                if (res != ERROR_SUCCESS)
+                    goto cleanup;
+            }
 
             hr = get_file_from_strongname(assemblyname, filename, MAX_PATH);
             if (FAILED(hr))
             {
                 /*
-                 * The registry doesn't have a CodeBase entry and it's not in the GAC.
+                 * The registry doesn't have a CodeBase entry or the file isn't there, and it's not in the GAC.
                  *
                  * Use the Assembly Key to retrieve the filename.
                  *    Assembly : REG_SZ : AssemblyName, Version=X.X.X.X, Culture=neutral, PublicKeyToken=null
