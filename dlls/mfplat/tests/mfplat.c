@@ -4530,6 +4530,7 @@ static void test_dxgi_device_manager(void)
     struct test_thread_param param;
     HANDLE handle1, handle, thread;
     UINT token, token2;
+    IUnknown *unk;
     HRESULT hr;
 
     if (!pMFCreateDXGIDeviceManager)
@@ -4559,6 +4560,9 @@ static void test_dxgi_device_manager(void)
     ok(token2 && token2 != token, "got wrong token: %u, %u.\n", token2, token);
     ok(manager != manager2, "got wrong pointer: %p.\n", manager2);
     EXPECT_REF(manager, 1);
+
+    hr = IMFDXGIDeviceManager_GetVideoService(manager, NULL, &IID_ID3D11Device, (void **)&unk);
+    ok(hr == MF_E_DXGI_DEVICE_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
 
     hr = IMFDXGIDeviceManager_OpenDeviceHandle(manager, &handle);
     ok(hr == MF_E_DXGI_DEVICE_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
@@ -4593,6 +4597,12 @@ static void test_dxgi_device_manager(void)
     EXPECT_REF(manager, 1);
     EXPECT_REF(d3d11_dev, 2);
 
+    /* GetVideoService() on device change. */
+    handle = NULL;
+    hr = IMFDXGIDeviceManager_OpenDeviceHandle(manager, &handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!handle, "Unexpected handle value %p.\n", handle);
+
     hr = pD3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0,
                            NULL, 0, D3D11_SDK_VERSION, &d3d11_dev2, NULL, NULL);
     ok(hr == S_OK, "D3D11CreateDevice failed: %#x.\n", hr);
@@ -4603,10 +4613,31 @@ static void test_dxgi_device_manager(void)
     EXPECT_REF(d3d11_dev2, 2);
     EXPECT_REF(d3d11_dev, 1);
 
+    hr = IMFDXGIDeviceManager_GetVideoService(manager, handle, &IID_ID3D11Device, (void **)&unk);
+    ok(hr == MF_E_DXGI_NEW_VIDEO_DEVICE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_CloseDeviceHandle(manager, handle);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     handle = NULL;
     hr = IMFDXGIDeviceManager_OpenDeviceHandle(manager, &handle);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!!handle, "Unexpected handle value %p.\n", handle);
+
+    hr = IMFDXGIDeviceManager_GetVideoService(manager, NULL, &IID_ID3D11Device, (void **)&unk);
+    ok(hr == E_HANDLE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIDeviceManager_GetVideoService(manager, handle, &IID_ID3D11Device, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = IMFDXGIDeviceManager_GetVideoService(manager, handle, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    hr = IMFDXGIDeviceManager_GetVideoService(manager, handle, &IID_IDXGIDevice, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
 
     handle1 = NULL;
     hr = IMFDXGIDeviceManager_OpenDeviceHandle(manager, &handle1);

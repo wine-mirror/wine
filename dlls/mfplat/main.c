@@ -8689,12 +8689,32 @@ static HRESULT WINAPI dxgi_device_manager_CloseDeviceHandle(IMFDXGIDeviceManager
     return hr;
 }
 
-static HRESULT WINAPI dxgi_device_manager_GetVideoService(IMFDXGIDeviceManager *iface, HANDLE device,
-                                                          REFIID riid, void **service)
+static HRESULT WINAPI dxgi_device_manager_GetVideoService(IMFDXGIDeviceManager *iface, HANDLE hdevice,
+        REFIID riid, void **service)
 {
-    FIXME("(%p, %p, %s, %p): stub.\n", iface, device, debugstr_guid(riid), service);
+    struct dxgi_device_manager *manager = impl_from_IMFDXGIDeviceManager(iface);
+    HRESULT hr;
+    size_t idx;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %s, %p.\n", iface, hdevice, debugstr_guid(riid), service);
+
+    EnterCriticalSection(&manager->cs);
+
+    if (!manager->device)
+        hr = MF_E_DXGI_DEVICE_NOT_INITIALIZED;
+    else if (SUCCEEDED(hr = dxgi_device_manager_get_handle_index(manager, hdevice, &idx)))
+    {
+        if (manager->handles[idx] & DXGI_DEVICE_HANDLE_FLAG_INVALID)
+            hr = MF_E_DXGI_NEW_VIDEO_DEVICE;
+        else if (manager->handles[idx] & DXGI_DEVICE_HANDLE_FLAG_OPEN)
+            hr = IDXGIDevice_QueryInterface(manager->device, riid, service);
+        else
+            hr = E_HANDLE;
+    }
+
+    LeaveCriticalSection(&manager->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI dxgi_device_manager_LockDevice(IMFDXGIDeviceManager *iface, HANDLE hdevice,
