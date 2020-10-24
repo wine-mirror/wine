@@ -2057,8 +2057,8 @@ static const IMFAttributesVtbl video_renderer_attributes_vtbl =
 static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
 {
     struct video_renderer *object;
-    IMFVideoPresenter *presenter;
-    IMFTransform *mixer;
+    IMFVideoPresenter *presenter = NULL;
+    IMFTransform *mixer = NULL;
     HRESULT hr;
 
     TRACE("%p, %p, %p.\n", attributes, user_context, obj);
