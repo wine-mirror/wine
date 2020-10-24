@@ -1,0 +1,8 @@
+MODULE    = d3d8thk.dll
+
+EXTRADLLFLAGS = -mno-cygwin
+
+C_SRCS = \
+	d3d8thk_main.c
+
+RC_SRCS = version.rc

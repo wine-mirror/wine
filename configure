@@ -1189,6 +1189,7 @@ enable_d3d10core
 enable_d3d11
 enable_d3d12
 enable_d3d8
+enable_d3d8thk
 enable_d3d9
 enable_d3dcompiler_33
 enable_d3dcompiler_34
@@ -20392,6 +20393,7 @@ wine_fn_config_makefile dlls/d3d12 enable_d3d12
 wine_fn_config_makefile dlls/d3d12/tests enable_tests
 wine_fn_config_makefile dlls/d3d8 enable_d3d8
 wine_fn_config_makefile dlls/d3d8/tests enable_tests
+wine_fn_config_makefile dlls/d3d8thk enable_d3d8thk
 wine_fn_config_makefile dlls/d3d9 enable_d3d9
 wine_fn_config_makefile dlls/d3d9/tests enable_tests
 wine_fn_config_makefile dlls/d3dcompiler_33 enable_d3dcompiler_33
