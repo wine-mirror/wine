@@ -25,6 +25,9 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
+#ifdef SONAME_LIBPNG
+#include <png.h>
+#endif
 
 #define NONAMELESSUNION
 
@@ -42,8 +45,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 #ifdef SONAME_LIBPNG
-
-#include <png.h>
 
 static void *libpng_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
