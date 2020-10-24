@@ -132,6 +132,12 @@ SECURITY_STATUS WINAPI NCryptIsAlgSupported(NCRYPT_PROV_HANDLE provider, const W
     return NTE_NOT_SUPPORTED;
 }
 
+BOOL WINAPI NCryptIsKeyHandle(NCRYPT_KEY_HANDLE hKey)
+{
+    FIXME("(0x%lx): stub\n", hKey);
+    return FALSE;
+}
+
 SECURITY_STATUS WINAPI NCryptOpenKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_HANDLE *key,
                                      const WCHAR *name, DWORD keyspec, DWORD flags)
 {
