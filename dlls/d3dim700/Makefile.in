@@ -1,0 +1,8 @@
+MODULE    = d3dim700.dll
+
+EXTRADLLFLAGS = -mno-cygwin
+
+C_SRCS = \
+	d3dim700_main.c
+
+RC_SRCS = version.rc
