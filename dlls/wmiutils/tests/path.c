@@ -25,53 +25,26 @@
 #include "wbemcli.h"
 #include "wine/test.h"
 
-static const WCHAR path1[] = {0};
-static const WCHAR path2[] = {'\\',0};
-static const WCHAR path3[] = {'\\','\\','s','e','r','v','e','r',0};
-static const WCHAR path4[] = {'\\','\\','s','e','r','v','e','r','\\',0};
-static const WCHAR path5[] = {'\\','\\','.','\\',0};
-static const WCHAR path6[] = {'/','/','.','/','r','o','o','t','/','c','i','m','v','2',0};
-static const WCHAR path7[] =
-    {'/','/','.','/','r','o','o','t','/','c','i','m','v','2',':','W','i','n','3','2','_',
-     'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
-static const WCHAR path8[] =
-    {'/','r','o','o','t','/','c','i','m','v','2',':','W','i','n','3','2','_',
-     'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
-static const WCHAR path9[] =
-    {'\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
-     'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
-static const WCHAR path10[] =
-    {'/','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
-     'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
-static const WCHAR path11[] =
-    {'/','/','.','\\','r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
-     'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
-static const WCHAR path12[] =
-    {'r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
-     'O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
-static const WCHAR path13[] =
-    {'\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',0};
-static const WCHAR path14[] =
-    {'W','i','n','3','2','_','O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
-static const WCHAR path15[] =
-    {'r','o','o','t','\\','c','i','m','v','2',0};
-static const WCHAR path16[] =
-    {'\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',0};
-static const WCHAR path17[] =
-    {'\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
-     'L','o','g','i','c','a','l','D','i','s','k','.','D','e','v','i','c','e','I','d','=',
-     '"','C',':','"',0};
-static const WCHAR path18[] =
-    {'\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
-     'L','o','g','i','c','a','l','D','i','s','k','.','D','e','v','i','c','e','I','d','=',
-     '"','C',':','"',',','D','r','i','v','e','T','y','p','e','=','3',0};
-static const WCHAR path19[] =
-    {'\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
-     'L','o','g','i','c','a','l','D','i','s','k','.','D','e','v','i','c','e','I','d','=',0};
-static const WCHAR path20[] =
-    {'\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
-     'L','o','g','i','c','a','l','D','i','s','k','.','D','e','v','i','c','e','I','d',' ','=',' ',
-     '"','C',':','"',0};
+static const WCHAR path1[] = L"";
+static const WCHAR path2[] = L"\\";
+static const WCHAR path3[] = L"\\\\server";
+static const WCHAR path4[] = L"\\\\server\\";
+static const WCHAR path5[] = L"\\\\.\\";
+static const WCHAR path6[] = L"//./root/cimv2";
+static const WCHAR path7[] = L"//./root/cimv2:Win32_OperatingSystem";
+static const WCHAR path8[] = L"/root/cimv2:Win32_OperatingSystem";
+static const WCHAR path9[] = L"\\\\.\\root\\cimv2:Win32_OperatingSystem";
+static const WCHAR path10[] = L"/\\.\\root\\cimv2:Win32_OperatingSystem";
+static const WCHAR path11[] = L"//.\\root\\cimv2:Win32_OperatingSystem";
+static const WCHAR path12[] = L"root\\cimv2:Win32_OperatingSystem";
+static const WCHAR path13[] = L"\\\\.\\root\\cimv2";
+static const WCHAR path14[] = L"Win32_OperatingSystem";
+static const WCHAR path15[] = L"root\\cimv2";
+static const WCHAR path16[] = L"\\\\.\\root\\cimv2";
+static const WCHAR path17[] = L"\\\\.\\root\\cimv2:Win32_LogicalDisk.DeviceId=\"C:\"";
+static const WCHAR path18[] = L"\\\\.\\root\\cimv2:Win32_LogicalDisk.DeviceId=\"C:\",DriveType=3";
+static const WCHAR path19[] = L"\\\\.\\root\\cimv2:Win32_LogicalDisk.DeviceId=";
+static const WCHAR path20[] = L"\\\\.\\root\\cimv2:Win32_LogicalDisk.DeviceId = \"C:\"";
 
 static IWbemPath *create_path(void)
 {
@@ -161,20 +134,11 @@ static void test_IWbemPath_SetText(void)
 
 static void test_IWbemPath_GetText(void)
 {
-    static const WCHAR serviceW[] =
-        {'W','i','n','3','2','_','S','e','r','v','i','c','e','.','N','a','m','e','=',
-         '\"','S','e','r','v','i','c','e','\"',0};
-    static const WCHAR classW[] =
-        {'W','i','n','3','2','_','C','l','a','s','s',0};
-    static const WCHAR expected1W[] =
-        {'r','o','o','t','\\','c','i','m','v','2',':','W','i','n','3','2','_',
-         'L','o','g','i','c','a','l','D','i','s','k','.','D','e','v','i','c','e','I','d','=',
-         '"','C',':','"',0};
-    static const WCHAR expected2W[] =
-        {'W','i','n','3','2','_','L','o','g','i','c','a','l','D','i','s','k','.',
-         'D','e','v','i','c','e','I','d','=','"','C',':','"',0};
-    static const WCHAR expected3W[] =
-        {'\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',0};
+    static const WCHAR serviceW[] = L"Win32_Service.Name=\"Service\"";
+    static const WCHAR classW[] = L"Win32_Class";
+    static const WCHAR expected1W[] = L"root\\cimv2:Win32_LogicalDisk.DeviceId=\"C:\"";
+    static const WCHAR expected2W[] = L"Win32_LogicalDisk.DeviceId=\"C:\"";
+    static const WCHAR expected3W[] = L"\\\\.\\root\\cimv2";
     WCHAR buf[128];
     ULONG len, count;
     IWbemPath *path;
@@ -364,7 +328,7 @@ static void test_IWbemPath_GetText(void)
 
 static void test_IWbemPath_GetClassName(void)
 {
-    static const WCHAR classW[] = {'W','i','n','3','2','_','L','o','g','i','c','a','l','D','i','s','k',0};
+    static const WCHAR classW[] = L"Win32_LogicalDisk";
     IWbemPath *path;
     HRESULT hr;
     WCHAR buf[32];
@@ -412,8 +376,7 @@ static void test_IWbemPath_GetClassName(void)
 
 static void test_IWbemPath_SetClassName(void)
 {
-    static const WCHAR classW[] = {'c','l','a','s','s',0};
-    static const WCHAR emptyW[] = {0};
+    static const WCHAR classW[] = L"class";
     IWbemPath *path;
     WCHAR buf[16];
     ULONG len;
@@ -425,7 +388,7 @@ static void test_IWbemPath_SetClassName(void)
     hr = IWbemPath_SetClassName( path, NULL );
     ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
 
-    hr = IWbemPath_SetClassName( path, emptyW );
+    hr = IWbemPath_SetClassName( path, L"" );
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = IWbemPath_SetClassName( path, classW );
@@ -450,7 +413,6 @@ static void test_IWbemPath_SetClassName(void)
 
 static void test_IWbemPath_GetServer(void)
 {
-    static const WCHAR dotW[] = {'.',0};
     IWbemPath *path;
     HRESULT hr;
     WCHAR buf[32];
@@ -490,8 +452,8 @@ static void test_IWbemPath_GetServer(void)
     len = ARRAY_SIZE(buf);
     hr = IWbemPath_GetServer( path, &len, buf );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !lstrcmpW( buf, dotW ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
-    ok( len == lstrlenW( dotW ) + 1, "unexpected length %u\n", len );
+    ok( !lstrcmpW( buf, L"." ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW(L"." ) + 1, "unexpected length %u\n", len );
 
     IWbemPath_Release( path );
 }
@@ -561,8 +523,6 @@ static void test_IWbemPath_GetInfo(void)
 
 static void test_IWbemPath_SetServer(void)
 {
-    static const WCHAR serverW[] = {'s','e','r','v','e','r',0};
-    static const WCHAR emptyW[] = {0};
     IWbemPath *path;
     WCHAR buf[16];
     ULONG len;
@@ -578,17 +538,17 @@ static void test_IWbemPath_SetServer(void)
     hr = IWbemPath_GetServer( path, &len, buf );
     ok( hr == WBEM_E_NOT_AVAILABLE, "got %08x\n", hr );
 
-    hr = IWbemPath_SetServer( path, emptyW );
+    hr = IWbemPath_SetServer( path, L"" );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    hr = IWbemPath_SetServer( path, serverW );
+    hr = IWbemPath_SetServer( path, L"server" );
     ok( hr == S_OK, "got %08x\n", hr );
 
     buf[0] = 0;
     len = ARRAY_SIZE(buf);
     hr = IWbemPath_GetServer( path, &len, buf );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !lstrcmpW( buf, serverW ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( !lstrcmpW( buf, L"server" ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
 
     flags = 0;
     hr = IWbemPath_GetInfo( path, 0, &flags );
@@ -616,8 +576,6 @@ static void test_IWbemPath_SetServer(void)
 
 static void test_IWbemPath_GetNamespaceAt(void)
 {
-    static const WCHAR rootW[] = {'r','o','o','t',0};
-    static const WCHAR cimv2W[] = {'c','i','m','v','2',0};
     IWbemPath *path;
     HRESULT hr;
     WCHAR buf[32];
@@ -657,15 +615,15 @@ static void test_IWbemPath_GetNamespaceAt(void)
     len = ARRAY_SIZE(buf);
     hr = IWbemPath_GetNamespaceAt( path, 0, &len, buf );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !lstrcmpW( buf, rootW ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
-    ok( len == lstrlenW( rootW ) + 1, "unexpected length %u\n", len );
+    ok( !lstrcmpW( buf, L"root" ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( L"root" ) + 1, "unexpected length %u\n", len );
 
     buf[0] = 0;
     len = ARRAY_SIZE(buf);
     hr = IWbemPath_GetNamespaceAt( path, 1, &len, buf );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !lstrcmpW( buf, cimv2W ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
-    ok( len == lstrlenW( cimv2W ) + 1, "unexpected length %u\n", len );
+    ok( !lstrcmpW( buf, L"cimv2" ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( L"cimv2" ) + 1, "unexpected length %u\n", len );
 
     IWbemPath_Release( path );
 }
@@ -719,7 +677,6 @@ static void test_IWbemPath_RemoveNamespaceAt(void)
         WBEMPATH_INFO_ANON_LOCAL_MACHINE | WBEMPATH_INFO_IS_INST_REF |
         WBEMPATH_INFO_HAS_SUBSCOPES | WBEMPATH_INFO_V2_COMPLIANT |
         WBEMPATH_INFO_CIM_COMPLIANT | WBEMPATH_INFO_PATH_HAD_SERVER;
-    static const WCHAR cimv2W[] = {'c','i','m','v','2',0};
     IWbemPath *path;
     WCHAR buf[16];
     ULONG len, count;
@@ -763,8 +720,8 @@ static void test_IWbemPath_RemoveNamespaceAt(void)
     len = ARRAY_SIZE(buf);
     hr = IWbemPath_GetNamespaceAt( path, 0, &len, buf );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !lstrcmpW( buf, cimv2W ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
-    ok( len == lstrlenW( cimv2W ) + 1, "unexpected length %u\n", len );
+    ok( !lstrcmpW( buf, L"cimv2" ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( L"cimv2" ) + 1, "unexpected length %u\n", len );
 
     hr = IWbemPath_RemoveNamespaceAt( path, 0 );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -794,8 +751,6 @@ static void test_IWbemPath_SetNamespaceAt(void)
         WBEMPATH_INFO_ANON_LOCAL_MACHINE | WBEMPATH_INFO_V1_COMPLIANT |
         WBEMPATH_INFO_V2_COMPLIANT | WBEMPATH_INFO_CIM_COMPLIANT |
         WBEMPATH_INFO_SERVER_NAMESPACE_ONLY;
-    static const WCHAR rootW[] = {'r','o','o','t',0};
-    static const WCHAR cimv2W[] = {'c','i','m','v','2',0};
     IWbemPath *path;
     WCHAR buf[16];
     ULONG len, count;
@@ -807,10 +762,10 @@ static void test_IWbemPath_SetNamespaceAt(void)
     hr = IWbemPath_SetNamespaceAt( path, 0, NULL );
     ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
 
-    hr = IWbemPath_SetNamespaceAt( path, 1, cimv2W );
+    hr = IWbemPath_SetNamespaceAt( path, 1, L"cimv2" );
     ok( hr == WBEM_E_INVALID_PARAMETER, "got %08x\n", hr );
 
-    hr = IWbemPath_SetNamespaceAt( path, 0, cimv2W );
+    hr = IWbemPath_SetNamespaceAt( path, 0, L"cimv2" );
     ok( hr == S_OK, "got %08x\n", hr );
 
     count = 0xdeadbeef;
@@ -828,10 +783,10 @@ static void test_IWbemPath_SetNamespaceAt(void)
     len = ARRAY_SIZE(buf);
     hr = IWbemPath_GetNamespaceAt( path, 0, &len, buf );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !lstrcmpW( buf, cimv2W ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
-    ok( len == lstrlenW( cimv2W ) + 1, "unexpected length %u\n", len );
+    ok( !lstrcmpW( buf, L"cimv2" ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( L"cimv2" ) + 1, "unexpected length %u\n", len );
 
-    hr = IWbemPath_SetNamespaceAt( path, 0, rootW );
+    hr = IWbemPath_SetNamespaceAt( path, 0, L"root" );
     ok( hr == S_OK, "got %08x\n", hr );
 
     flags = 0;
@@ -849,15 +804,15 @@ static void test_IWbemPath_SetNamespaceAt(void)
     len = ARRAY_SIZE(buf);
     hr = IWbemPath_GetNamespaceAt( path, 0, &len, buf );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !lstrcmpW( buf, rootW ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
-    ok( len == lstrlenW( rootW ) + 1, "unexpected length %u\n", len );
+    ok( !lstrcmpW( buf, L"root" ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( L"root" ) + 1, "unexpected length %u\n", len );
 
     buf[0] = 0;
     len = ARRAY_SIZE(buf);
     hr = IWbemPath_GetNamespaceAt( path, 1, &len, buf );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !lstrcmpW( buf, cimv2W ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
-    ok( len == lstrlenW( cimv2W ) + 1, "unexpected length %u\n", len );
+    ok( !lstrcmpW( buf, L"cimv2" ), "unexpected buffer contents %s\n", wine_dbgstr_w(buf) );
+    ok( len == lstrlenW( L"cimv2" ) + 1, "unexpected length %u\n", len );
 
     IWbemPath_Release( path );
 }

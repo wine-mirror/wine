@@ -92,13 +92,11 @@ static HRESULT WINAPI status_code_GetErrorCodeText(
     LONG flags,
     BSTR *text )
 {
-    static const WCHAR fmt[] =
-        {'E','r','r','o','r',' ','c','o','d','e',':',' ','0','x','%','0','8','x',0};
     WCHAR msg[32];
 
     FIXME("%p, 0x%08x, 0x%04x, 0x%08x, %p\n", iface, res, lcid, flags, text);
 
-    swprintf(msg, ARRAY_SIZE(msg), fmt, res);
+    swprintf(msg, ARRAY_SIZE(msg), L"Error code: 0x%08x", res);
     *text = SysAllocString(msg);
     return WBEM_S_NO_ERROR;
 }
@@ -110,13 +108,11 @@ static HRESULT WINAPI status_code_GetFacilityCodeText(
     LONG flags,
     BSTR *text )
 {
-    static const WCHAR fmt[] =
-        {'F','a','c','i','l','i','t','y',' ','c','o','d','e',':',' ','0','x','%','0','8','x',0};
     WCHAR msg[32];
 
     FIXME("%p, 0x%08x, 0x%04x, 0x%08x, %p\n", iface, res, lcid, flags, text);
 
-    swprintf(msg, ARRAY_SIZE(msg), fmt, res);
+    swprintf(msg, ARRAY_SIZE(msg), L"Facility code: 0x%08x", res);
     *text = SysAllocString(msg);
     return WBEM_S_NO_ERROR;
 }
