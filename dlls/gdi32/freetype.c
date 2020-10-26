@@ -2108,6 +2108,14 @@ static INT CDECL freetype_add_font( const WCHAR *file, DWORD flags )
 }
 
 /*************************************************************
+ * freetype_add_mem_font
+ */
+static INT CDECL freetype_add_mem_font( void *ptr, SIZE_T size, DWORD flags )
+{
+    return AddFontToList( NULL, NULL, ptr, size, flags );
+}
+
+/*************************************************************
  * freetype_remove_font
  */
 static INT CDECL freetype_remove_font( const WCHAR *file, DWORD flags )
@@ -3047,31 +3055,6 @@ static void delete_external_font_keys(void)
  end:
     if(win9x_key) RegCloseKey(win9x_key);
     if(winnt_key) RegCloseKey(winnt_key);
-}
-
-/*************************************************************
- * freetype_AddFontMemResourceEx
- *
- */
-static HANDLE CDECL freetype_AddFontMemResourceEx(PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD *pcFonts)
-{
-    PVOID pFontCopy = HeapAlloc(GetProcessHeap(), 0, cbFont);
-
-    TRACE("Copying %d bytes of data from %p to %p\n", cbFont, pbFont, pFontCopy);
-    memcpy(pFontCopy, pbFont, cbFont);
-
-    *pcFonts = AddFontToList(NULL, NULL, pFontCopy, cbFont, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE);
-    if (*pcFonts == 0)
-    {
-        TRACE("AddFontToList failed\n");
-        HeapFree(GetProcessHeap(), 0, pFontCopy);
-        return 0;
-    }
-    /* FIXME: is the handle only for use in RemoveFontMemResourceEx or should it be a true handle?
-     * For now return something unique but quite random
-     */
-    TRACE("Returning handle %lx\n", ((INT_PTR)pFontCopy)^0x87654321);
-    return (HANDLE)(((INT_PTR)pFontCopy)^0x87654321);
 }
 
 static WCHAR *get_ttf_file_name( LPCWSTR font_file, LPCWSTR font_path )
@@ -7477,9 +7460,9 @@ static const struct font_backend_funcs font_funcs =
     freetype_GetCharWidthInfo,
     freetype_GetFontUnicodeRanges,
     freetype_SelectFont,
-    freetype_AddFontMemResourceEx,
     freetype_CreateScalableFontResource,
     freetype_add_font,
+    freetype_add_mem_font,
     freetype_remove_font,
     freetype_alloc_font,
     freetype_get_font_data,

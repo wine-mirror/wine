@@ -370,10 +370,10 @@ struct font_backend_funcs
     DWORD (CDECL *pGetFontUnicodeRanges)( struct gdi_font *font, GLYPHSET *glyphset );
     struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont, UINT *aa_flags, UINT default_aa_flags );
 
-    HANDLE (CDECL *pAddFontMemResourceEx)( void *font, DWORD size, PVOID pdv, DWORD *count );
     BOOL  (CDECL *pCreateScalableFontResource)( DWORD hidden, LPCWSTR resource,
                                                 LPCWSTR font_file, LPCWSTR font_path );
     INT   (CDECL *add_font)( const WCHAR *file, DWORD flags );
+    INT   (CDECL *add_mem_font)( void *ptr, SIZE_T size, DWORD flags );
     BOOL  (CDECL *remove_font)( const WCHAR *file, DWORD flags );
 
     BOOL  (CDECL *alloc_font)( struct gdi_font *font );

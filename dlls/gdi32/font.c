@@ -5429,34 +5429,48 @@ BOOL WINAPI RemoveFontResourceW( LPCWSTR str )
 /***********************************************************************
  *           AddFontMemResourceEx    (GDI32.@)
  */
-HANDLE WINAPI AddFontMemResourceEx( PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD *pcFonts)
+HANDLE WINAPI AddFontMemResourceEx( PVOID ptr, DWORD size, PVOID pdv, DWORD *pcFonts )
 {
     HANDLE ret;
     DWORD num_fonts;
+    void *copy;
 
-    if (!pbFont || !cbFont || !pcFonts)
+    if (!ptr || !size || !pcFonts)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return NULL;
     }
     if (!font_funcs) return NULL;
+    if (!(copy = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
+    memcpy( copy, ptr, size );
+
     EnterCriticalSection( &font_cs );
-    ret = font_funcs->pAddFontMemResourceEx( pbFont, cbFont, pdv, &num_fonts );
+    num_fonts = font_funcs->add_mem_font( copy, size, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
     LeaveCriticalSection( &font_cs );
-    if (ret)
+
+    if (!num_fonts)
     {
-        __TRY
-        {
-            *pcFonts = num_fonts;
-        }
-        __EXCEPT_PAGE_FAULT
-        {
-            WARN("page fault while writing to *pcFonts (%p)\n", pcFonts);
-            RemoveFontMemResourceEx(ret);
-            ret = 0;
-        }
-        __ENDTRY
+        HeapFree( GetProcessHeap(), 0, copy );
+        return NULL;
     }
+
+    /* FIXME: is the handle only for use in RemoveFontMemResourceEx or should it be a true handle?
+     * For now return something unique but quite random
+     */
+    ret = (HANDLE)((INT_PTR)copy ^ 0x87654321);
+
+    __TRY
+    {
+        *pcFonts = num_fonts;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        WARN("page fault while writing to *pcFonts (%p)\n", pcFonts);
+        RemoveFontMemResourceEx( ret );
+        ret = 0;
+    }
+    __ENDTRY
+    TRACE( "Returning handle %p\n", ret );
     return ret;
 }
 
