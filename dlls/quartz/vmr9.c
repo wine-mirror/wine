@@ -605,7 +605,7 @@ static HRESULT vmr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
         *out = &filter->IAMFilterMiscFlags_iface;
     else if (IsEqualGUID(iid, &IID_IVMRFilterConfig))
         *out = &filter->IVMRFilterConfig_iface;
-    else if (IsEqualGUID(iid, &IID_IVMRFilterConfig9))
+    else if (IsEqualGUID(iid, &IID_IVMRFilterConfig9) && is_vmr9(filter))
         *out = &filter->IVMRFilterConfig9_iface;
     else if (IsEqualGUID(iid, &IID_IVMRMixerBitmap9) && is_vmr9(filter))
         *out = &filter->IVMRMixerBitmap9_iface;

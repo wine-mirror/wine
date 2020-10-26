@@ -253,7 +253,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVMRAspectRatioControl9, FALSE);
     check_interface(filter, &IID_IVMRDeinterlaceControl9, FALSE);
-    todo_wine check_interface(filter, &IID_IVMRFilterConfig9, FALSE);
+    check_interface(filter, &IID_IVMRFilterConfig9, FALSE);
     check_interface(filter, &IID_IVMRMixerBitmap9, FALSE);
     check_interface(filter, &IID_IVMRMixerControl, FALSE);
     check_interface(filter, &IID_IVMRMixerControl9, FALSE);
