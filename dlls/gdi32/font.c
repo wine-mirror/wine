@@ -350,6 +350,49 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 CRITICAL_SECTION font_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+#ifndef WINE_FONT_DIR
+#define WINE_FONT_DIR "fonts"
+#endif
+
+void get_font_dir( WCHAR *path )
+{
+    static const WCHAR slashW[] = {'\\',0};
+    static const WCHAR fontsW[] = {'\\','f','o','n','t','s',0};
+    static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
+    static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
+
+    if (GetEnvironmentVariableW( winedatadirW, path, MAX_PATH ))
+    {
+        const char fontdir[] = WINE_FONT_DIR;
+        strcatW( path, slashW );
+        MultiByteToWideChar( CP_ACP, 0, fontdir, -1, path + strlenW(path), MAX_PATH - strlenW(path) );
+    }
+    else if (GetEnvironmentVariableW( winebuilddirW, path, MAX_PATH ))
+    {
+        strcatW( path, fontsW );
+    }
+    if (path[5] == ':') memmove( path, path + 4, (strlenW(path) - 3) * sizeof(WCHAR) );
+    else path[1] = '\\';  /* change \??\ to \\?\ */
+}
+
+void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
+{
+    static const WCHAR slashW[] = {'\\',0};
+
+    get_font_dir( path );
+    strcatW( path, slashW );
+    strcatW( path, file );
+}
+
+void get_fonts_win_dir_path( const WCHAR *file, WCHAR *path )
+{
+    static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\\',0};
+
+    GetWindowsDirectoryW( path, MAX_PATH );
+    strcatW( path, fontsW );
+    strcatW( path, file );
+}
+
 /* realized font objects */
 
 #define FIRST_FONT_HANDLE 1

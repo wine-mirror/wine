@@ -225,10 +225,6 @@ MAKE_FUNCPTR(FcPatternGetString);
 #define GASP_GRIDFIT 0x01
 #define GASP_DOGRAY  0x02
 
-#ifndef WINE_FONT_DIR
-#define WINE_FONT_DIR "fonts"
-#endif
-
 /* This is basically a copy of FT_Bitmap_Size with an extra element added */
 typedef struct {
     FT_Short height;
@@ -2858,46 +2854,6 @@ static void load_mac_fonts(void)
 
 #endif
 
-static void get_font_dir( WCHAR *path )
-{
-    static const WCHAR slashW[] = {'\\',0};
-    static const WCHAR fontsW[] = {'\\','f','o','n','t','s',0};
-    static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
-    static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
-
-    if (GetEnvironmentVariableW( winedatadirW, path, MAX_PATH ))
-    {
-        const char fontdir[] = WINE_FONT_DIR;
-        strcatW( path, slashW );
-        MultiByteToWideChar( CP_ACP, 0, fontdir, -1, path + strlenW(path), MAX_PATH - strlenW(path) );
-    }
-    else if (GetEnvironmentVariableW( winebuilddirW, path, MAX_PATH ))
-    {
-        strcatW( path, fontsW );
-    }
-    if (path[5] == ':') memmove( path, path + 4, (strlenW(path) - 3) * sizeof(WCHAR) );
-    else path[1] = '\\';  /* change \??\ to \\?\ */
-}
-
-static void get_data_dir_path( LPCWSTR file, WCHAR *path )
-{
-    static const WCHAR slashW[] = {'\\','\0'};
-
-    get_font_dir( path );
-    strcatW( path, slashW );
-    strcatW( path, file );
-}
-
-static void get_winfonts_dir_path(LPCWSTR file, WCHAR *path)
-{
-    static const WCHAR slashW[] = {'\\','\0'};
-
-    GetWindowsDirectoryW(path, MAX_PATH);
-    strcatW(path, fontsW);
-    strcatW(path, slashW);
-    strcatW(path, file);
-}
-
 static void load_system_fonts(void)
 {
     HKEY hkey;
@@ -2910,10 +2866,10 @@ static void load_system_fonts(void)
             dlen = sizeof(data);
             if(RegQueryValueExW(hkey, *value, 0, &type, (void*)data, &dlen) == ERROR_SUCCESS &&
                type == REG_SZ) {
-                get_winfonts_dir_path( data, pathW );
+                get_fonts_win_dir_path( data, pathW );
                 if (!add_font_resource( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE ))
                 {
-                    get_data_dir_path( data, pathW );
+                    get_fonts_data_dir_path( data, pathW );
                     add_font_resource( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
                 }
             }
@@ -3110,12 +3066,12 @@ static INT CDECL freetype_AddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv
 
     if (!ret && !strchrW(file, '\\')) {
         /* Try in %WINDIR%/fonts, needed for Fotobuch Designer */
-        get_winfonts_dir_path( file, path );
+        get_fonts_win_dir_path( file, path );
         ret = add_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
         /* Try in datadir/fonts (or builddir/fonts), needed for Magic the Gathering Online */
         if (!ret)
         {
-            get_data_dir_path( file, path );
+            get_fonts_data_dir_path( file, path );
             ret = add_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
         }
     }
@@ -3163,11 +3119,11 @@ static BOOL CDECL freetype_RemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID
 
     if (!ret && !strchrW(file, '\\'))
     {
-        get_winfonts_dir_path( file, path );
+        get_fonts_win_dir_path( file, path );
         ret = remove_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
         if (!ret)
         {
-            get_data_dir_path( file, path );
+            get_fonts_data_dir_path( file, path );
             ret = remove_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
         }
     }
@@ -3615,10 +3571,10 @@ static void init_font_list(void)
                 {
                     WCHAR pathW[MAX_PATH];
 
-                    get_winfonts_dir_path( data, pathW );
+                    get_fonts_win_dir_path( data, pathW );
                     if (!add_font_resource( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE ))
                     {
-                        get_data_dir_path( data, pathW );
+                        get_fonts_data_dir_path( data, pathW );
                         add_font_resource( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
                     }
                 }
