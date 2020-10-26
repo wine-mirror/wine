@@ -322,7 +322,7 @@ static void test_interfaces(void)
     todo_wine check_interface(filter, &IID_IBasicVideo, FALSE);
     check_interface(filter, &IID_IBasicVideo2, FALSE);
     todo_wine check_interface(filter, &IID_IVideoWindow, FALSE);
-    todo_wine check_interface(filter, &IID_IVMRMonitorConfig9, FALSE);
+    check_interface(filter, &IID_IVMRMonitorConfig9, FALSE);
     check_interface(filter, &IID_IVMRWindowlessControl9, FALSE);
 
     ref = IBaseFilter_Release(filter);
