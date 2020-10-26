@@ -74,6 +74,7 @@ struct video_mixer
     IMFVideoProcessor IMFVideoProcessor_iface;
     IMFAttributes IMFAttributes_iface;
     IMFQualityAdvise IMFQualityAdvise_iface;
+    IMFClockStateSink IMFClockStateSink_iface;
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
     LONG refcount;
@@ -151,6 +152,11 @@ static struct video_mixer *impl_from_IMFAttributes(IMFAttributes *iface)
 static struct video_mixer *impl_from_IMFQualityAdvise(IMFQualityAdvise *iface)
 {
     return CONTAINING_RECORD(iface, struct video_mixer, IMFQualityAdvise_iface);
+}
+
+static struct video_mixer *impl_from_IMFClockStateSink(IMFClockStateSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_mixer, IMFClockStateSink_iface);
 }
 
 static int video_mixer_compare_input_id(const void *a, const void *b)
@@ -250,6 +256,10 @@ static HRESULT WINAPI video_mixer_inner_QueryInterface(IUnknown *iface, REFIID r
     else if (IsEqualIID(riid, &IID_IMFQualityAdvise))
     {
         *obj = &mixer->IMFQualityAdvise_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFClockStateSink))
+    {
+        *obj = &mixer->IMFClockStateSink_iface;
     }
     else
     {
@@ -2181,6 +2191,77 @@ static const IMFQualityAdviseVtbl video_mixer_quality_advise_vtbl =
     video_mixer_quality_advise_DropTime,
 };
 
+static HRESULT WINAPI video_mixer_clock_state_sink_QueryInterface(IMFClockStateSink *iface,
+        REFIID riid, void **out)
+{
+    struct video_mixer *mixer = impl_from_IMFClockStateSink(iface);
+    return IMFTransform_QueryInterface(&mixer->IMFTransform_iface, riid, out);
+}
+
+static ULONG WINAPI video_mixer_clock_state_sink_AddRef(IMFClockStateSink *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFClockStateSink(iface);
+    return IMFTransform_AddRef(&mixer->IMFTransform_iface);
+}
+
+static ULONG WINAPI video_mixer_clock_state_sink_Release(IMFClockStateSink *iface)
+{
+    struct video_mixer *mixer = impl_from_IMFClockStateSink(iface);
+    return IMFTransform_Release(&mixer->IMFTransform_iface);
+}
+
+static HRESULT WINAPI video_mixer_clock_state_sink_OnClockStart(IMFClockStateSink *iface,
+        MFTIME systime, LONGLONG offset)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_clock_state_sink_OnClockStop(IMFClockStateSink *iface,
+        MFTIME systime)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_clock_state_sink_OnClockPause(IMFClockStateSink *iface,
+        MFTIME systime)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_clock_state_sink_OnClockRestart(IMFClockStateSink *iface,
+        MFTIME systime)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_mixer_clock_state_sink_OnClockSetRate(IMFClockStateSink *iface,
+        MFTIME systime, float rate)
+{
+    FIXME("%p, %f.\n", iface, rate);
+
+    return E_NOTIMPL;
+}
+
+static const IMFClockStateSinkVtbl video_mixer_clock_state_sink_vtbl =
+{
+    video_mixer_clock_state_sink_QueryInterface,
+    video_mixer_clock_state_sink_AddRef,
+    video_mixer_clock_state_sink_Release,
+    video_mixer_clock_state_sink_OnClockStart,
+    video_mixer_clock_state_sink_OnClockStop,
+    video_mixer_clock_state_sink_OnClockPause,
+    video_mixer_clock_state_sink_OnClockRestart,
+    video_mixer_clock_state_sink_OnClockSetRate,
+};
+
 HRESULT WINAPI MFCreateVideoMixer(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -2212,6 +2293,7 @@ HRESULT evr_mixer_create(IUnknown *outer, void **out)
     object->IMFVideoProcessor_iface.lpVtbl = &video_mixer_processor_vtbl;
     object->IMFAttributes_iface.lpVtbl = &video_mixer_attributes_vtbl;
     object->IMFQualityAdvise_iface.lpVtbl = &video_mixer_quality_advise_vtbl;
+    object->IMFClockStateSink_iface.lpVtbl = &video_mixer_clock_state_sink_vtbl;
     object->IUnknown_inner.lpVtbl = &video_mixer_inner_vtbl;
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;
