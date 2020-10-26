@@ -728,6 +728,13 @@ float WINAPI D2D1Tan(float angle)
     return tanf(angle);
 }
 
+float WINAPI D2D1Vec3Length(float x, float y, float z)
+{
+    TRACE("x %.8e, y %.8e, z %.8e.\n", x, y, z);
+
+    return sqrtf(x * x + y * y + z * z);
+}
+
 static BOOL get_config_key_dword(HKEY default_key, HKEY application_key, const char *name, DWORD *value)
 {
     DWORD type, data, size;

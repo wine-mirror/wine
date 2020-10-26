@@ -9427,8 +9427,8 @@ static void test_wic_bitmap_format(void)
 
 static void test_math(void)
 {
+    float s, c, t, l;
     unsigned int i;
-    float s, c, t;
 
     static const struct
     {
@@ -9459,6 +9459,24 @@ static void test_math(void)
         {M_PI,         8.74227766e-008f},
     };
 
+    static const struct
+    {
+        float x;
+        float y;
+        float z;
+        float l;
+    }
+    l_data[] =
+    {
+        {0.0f, 0.0f, 0.0f, 0.0f},
+        {1.0f, 0.0f, 0.0f, 1.0f},
+        {0.0f, 1.0f, 0.0f, 1.0f},
+        {0.0f, 0.0f, 1.0f, 1.0f},
+        {1.0f, 1.0f, 1.0f, 1.73205078f},
+        {1.0f, 2.0f, 2.0f, 3.0f},
+        {1.0f, 2.0f, 3.0f, 3.74165750f},
+    };
+
     for (i = 0; i < ARRAY_SIZE(sc_data); ++i)
     {
         D2D1SinCos(sc_data[i].x, &s, &c);
@@ -9473,6 +9491,13 @@ static void test_math(void)
         t = D2D1Tan(t_data[i].x);
         ok(compare_float(t, t_data[i].t, 1),
                 "Test %u: Got unexpected tan %.8e, expected %.8e.\n", i, t, t_data[i].t);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(l_data); ++i)
+    {
+        l = D2D1Vec3Length(l_data[i].x, l_data[i].y, l_data[i].z);
+        ok(compare_float(l, l_data[i].l, 0),
+                "Test %u: Got unexpected length %.8e, expected %.8e.\n", i, l, l_data[i].l);
     }
 }
 

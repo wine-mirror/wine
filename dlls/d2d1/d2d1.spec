@@ -8,4 +8,4 @@
 @ stub D2D1CreateDeviceContext
 @ stdcall D2D1SinCos(float ptr ptr)
 @ stdcall D2D1Tan(float)
-@ stub D2D1Vec3Length
+@ stdcall D2D1Vec3Length(float float float)
