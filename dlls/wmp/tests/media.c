@@ -67,8 +67,8 @@ static HANDLE playing_event;
 static HANDLE completed_event;
 static DWORD main_thread_id;
 
-static const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
-static const WCHAR mp3file1s[] = {'t','e','s','t','1','s','.','m','p','3',0};
+static const WCHAR mp3file[] = L"test.mp3";
+static const WCHAR mp3file1s[] = L"test1s.mp3";
 static inline WCHAR *load_resource(const WCHAR *name)
 {
     static WCHAR pathW[MAX_PATH];
@@ -308,7 +308,6 @@ static BOOL test_wmp(void)
     VARIANT_BOOL vbool;
     LONG progress;
     IWMPMedia *media;
-    static const WCHAR currentPosition[] = {'c','u','r','r','e','n','t','P','o','s','i','t','i','o','n',0};
     BSTR bstrcurrentPosition;
 
     hres = CoCreateInstance(&CLSID_WindowsMediaPlayer, NULL, CLSCTX_INPROC_SERVER, &IID_IOleObject, (void**)&oleobj);
@@ -344,7 +343,7 @@ static BOOL test_wmp(void)
     ok(hres == S_OK, "get_controls failed: %08x\n", hres);
     ok(controls != NULL, "controls = NULL\n");
 
-    bstrcurrentPosition = SysAllocString(currentPosition);
+    bstrcurrentPosition = SysAllocString(L"currentPosition");
     hres = IWMPControls_get_isAvailable(controls, bstrcurrentPosition, &vbool);
     ok(hres == S_OK, "IWMPControls_get_isAvailable failed: %08x\n", hres);
     ok(vbool == VARIANT_FALSE, "unexpected value\n");
@@ -487,16 +486,6 @@ playback_skip:
 
 static void test_media_item(void)
 {
-    static const WCHAR slashW[] = {'\\',0};
-    static const WCHAR testW[] = {'t','e','s','t',0};
-    static const WCHAR fooW[] = {'f','o','o',':','/','/',0};
-    static const WCHAR fileW[] = {'f','i','l','e',':','/','/','/',0};
-    static const WCHAR httpW[] = {'h','t','t','p',':','/','/',0};
-    static const WCHAR httpsW[] = {'h','t','t','p','s',':','/','/',0};
-    static const WCHAR invalidurlW[] = {'i','n','v','a','l','i','d','_','u','r','l',0};
-    static const WCHAR invalidurlmp3W[] = {'i','n','v','a','l','i','d','_','u','r','l','.','m','p','3',0};
-    static const WCHAR winehqurlW[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',
-                                                    '/','t','e','s','t','s','/','t','e','s','t','.','m','p','3',0};
     static WCHAR pathW[MAX_PATH];
     static WCHAR currentdirW[MAX_PATH];
     struct {
@@ -504,17 +493,17 @@ static void test_media_item(void)
         const WCHAR *filename;
         const WCHAR *expected;
     } tests[] = {
-        { NULL, invalidurlmp3W, invalidurlW },
-        { currentdirW, mp3file, testW },
-        { currentdirW, invalidurlmp3W, invalidurlW },
-        { httpW, winehqurlW, testW },
-        { httpW, invalidurlmp3W, invalidurlmp3W },
-        { httpsW, winehqurlW, testW },
-        { httpsW, invalidurlmp3W, invalidurlmp3W },
-        { fileW, mp3file, testW },
-        { fileW, invalidurlmp3W, invalidurlW },
-        { fooW, mp3file, mp3file },
-        { fooW, invalidurlmp3W, invalidurlmp3W }
+        { NULL, L"invalid_url.mp3", L"invalid_url" },
+        { currentdirW, mp3file, L"test" },
+        { currentdirW, L"invalid_url.mp3", L"invalid_url" },
+        { L"http://", L"test.winehq.org/tests/test.mp3", L"test" },
+        { L"http://", L"invalid_url.mp3", L"invalid_url.mp3" },
+        { L"https://", L"test.winehq.org/tests/test.mp3", L"test" },
+        { L"https://", L"invalid_url.mp3", L"invalid_url.mp3" },
+        { L"file:///", mp3file, L"test" },
+        { L"file:///", L"invalid_url.mp3", L"invalid_url" },
+        { L"foo://", mp3file, mp3file },
+        { L"foo://", L"invalid_url.mp3", L"invalid_url.mp3" }
     };
     IWMPMedia *media, *media2;
     IWMPPlayer4 *player;
@@ -570,13 +559,13 @@ static void test_media_item(void)
     SysFreeString(str);
     hr = IWMPMedia_get_name(media, &str);
     ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
-    ok(!lstrcmpW(str, testW), "Expected %s, got %s\n", wine_dbgstr_w(testW), wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"test"), "Expected %s, got %s\n", wine_dbgstr_w(L"test"), wine_dbgstr_w(str));
     SysFreeString(str);
     hr = IWMPMedia_put_name(media, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
     hr = IWMPMedia_get_name(media, &str);
     ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
-    ok(!lstrcmpW(str, testW), "Expected %s, got %s\n", wine_dbgstr_w(testW), wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"test"), "Expected %s, got %s\n", wine_dbgstr_w(L"test"), wine_dbgstr_w(str));
     SysFreeString(str);
 
     hr = IWMPPlayer4_put_currentMedia(player, media);
@@ -588,12 +577,12 @@ static void test_media_item(void)
     ok(media2 != NULL, "Unexpected media instance.\n");
     hr = IWMPMedia_get_name(media2, &str);
     ok(hr == S_OK, "Failed to get item name, hr %#x.\n", hr);
-    ok(!lstrcmpW(str, testW), "Expected %s, got %s\n", wine_dbgstr_w(testW), wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, L"test"), "Expected %s, got %s\n", wine_dbgstr_w(L"test"), wine_dbgstr_w(str));
     SysFreeString(str);
     IWMPMedia_Release(media2);
 
     GetCurrentDirectoryW(ARRAY_SIZE(currentdirW), currentdirW);
-    lstrcatW(currentdirW, slashW);
+    lstrcatW(currentdirW, L"\\");
 
     for (i=0; i<ARRAY_SIZE(tests); i++)
     {
@@ -671,7 +660,7 @@ static void test_playlist(void)
     HRESULT hr;
     BSTR str, str2;
     LONG count;
-    static const WCHAR nameW[] = {'P','l','a','y','l','i','s','t','1',0};
+    static const WCHAR nameW[] = L"Playlist1";
 
     hr = CoCreateInstance(&CLSID_WindowsMediaPlayer, NULL, CLSCTX_INPROC_SERVER, &IID_IWMPPlayer4, (void **)&player);
     if (hr == REGDB_E_CLASSNOTREG)

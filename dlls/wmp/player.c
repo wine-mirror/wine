@@ -28,8 +28,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wmp);
 static ATOM player_msg_class;
 static INIT_ONCE class_init_once;
 static UINT WM_WMPEVENT;
-static const WCHAR WMPmessageW[] = {'_', 'W', 'M', 'P', 'M','e','s','s','a','g','e',0};
-static const WCHAR emptyW[] = {0};
 
 static void update_state(WindowsMediaPlayer *wmp, LONG type, LONG state)
 {
@@ -142,7 +140,7 @@ static HRESULT WINAPI WMPPlayer4_get_URL(IWMPPlayer4 *iface, BSTR *url)
     TRACE("(%p)->(%p)\n", This, url);
 
     if (!This->media)
-        return return_bstr(emptyW, url);
+        return return_bstr(L"", url);
 
     return return_bstr(This->media->url, url);
 }
@@ -258,7 +256,6 @@ static HRESULT WINAPI WMPPlayer4_get_playlistCollection(IWMPPlayer4 *iface, IWMP
 
 static HRESULT WINAPI WMPPlayer4_get_versionInfo(IWMPPlayer4 *iface, BSTR *version)
 {
-    static const WCHAR versionW[] = {'1','2','.','0','.','7','6','0','1','.','1','6','9','8','2',0};
     WindowsMediaPlayer *This = impl_from_IWMPPlayer4(iface);
 
     TRACE("(%p)->(%p)\n", This, version);
@@ -266,7 +263,7 @@ static HRESULT WINAPI WMPPlayer4_get_versionInfo(IWMPPlayer4 *iface, BSTR *versi
     if (!version)
         return E_POINTER;
 
-    return return_bstr(versionW, version);
+    return return_bstr(L"12.0.7601.16982", version);
 }
 
 static HRESULT WINAPI WMPPlayer4_launchURL(IWMPPlayer4 *iface, BSTR url)
@@ -1447,11 +1444,10 @@ static HRESULT WINAPI WMPControls_Invoke(IWMPControls *iface, DISPID dispIdMembe
 static HRESULT WINAPI WMPControls_get_isAvailable(IWMPControls *iface, BSTR bstrItem, VARIANT_BOOL *pIsAvailable)
 {
     WindowsMediaPlayer *This = impl_from_IWMPControls(iface);
-    static const WCHAR currentPosition[] = {'c','u','r','r','e','n','t','P','o','s','i','t','i','o','n',0};
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrItem), pIsAvailable);
     if (!This->filter_graph) {
         *pIsAvailable = VARIANT_FALSE;
-    } else if (wcscmp(currentPosition, bstrItem) == 0) {
+    } else if (wcscmp(L"currentPosition", bstrItem) == 0) {
         DWORD capabilities;
         IMediaSeeking_GetCapabilities(This->media_seeking, &capabilities);
         *pIsAvailable = (capabilities & AM_SEEKING_CanSeekAbsolute) ?
@@ -2202,12 +2198,12 @@ static BOOL WINAPI register_player_msg_class(INIT_ONCE *once, void *param, void 
     static WNDCLASSEXW wndclass = {
         sizeof(wndclass), CS_DBLCLKS, player_wnd_proc, 0, 0,
         NULL, NULL, NULL, NULL, NULL,
-        WMPmessageW, NULL
+        L"_WMPMessage", NULL
     };
 
     wndclass.hInstance = wmp_instance;
     player_msg_class = RegisterClassExW(&wndclass);
-    WM_WMPEVENT= RegisterWindowMessageW(WMPmessageW);
+    WM_WMPEVENT= RegisterWindowMessageW(L"_WMPMessage");
     return TRUE;
 }
 
@@ -2220,7 +2216,6 @@ BOOL init_player(WindowsMediaPlayer *wmp)
 {
     IWMPPlaylist *playlist;
     BSTR name;
-    static const WCHAR nameW[] = {'P','l','a','y','l','i','s','t','1',0};
 
     InitOnceExecuteOnce(&class_init_once, register_player_msg_class, NULL, NULL);
     wmp->msg_window = CreateWindowW( MAKEINTRESOURCEW(player_msg_class), NULL, 0, 0,
@@ -2240,7 +2235,7 @@ BOOL init_player(WindowsMediaPlayer *wmp)
     wmp->IWMPControls_iface.lpVtbl = &WMPControlsVtbl;
     wmp->IWMPNetwork_iface.lpVtbl = &WMPNetworkVtbl;
 
-    name = SysAllocString(nameW);
+    name = SysAllocString(L"Playlist1");
     if (SUCCEEDED(create_playlist(name, NULL, 0, &playlist)))
         wmp->playlist = unsafe_impl_from_IWMPPlaylist(playlist);
     else
@@ -2285,7 +2280,7 @@ HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia)
     IUri *uri;
     BSTR path;
     HRESULT hr;
-    WCHAR *name_dup, slashW[] = {'/',0};
+    WCHAR *name_dup;
 
     media = heap_alloc_zero(sizeof(*media));
     if (!media)
@@ -2317,7 +2312,7 @@ HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia)
         /* GetPath() will return "/" for invalid uri's
          * only strip extension when uri is valid
          */
-        if (wcscmp(path, slashW) != 0)
+        if (wcscmp(path, L"/") != 0)
             PathRemoveExtensionW(name_dup);
         PathStripPathW(name_dup);
 
@@ -2328,8 +2323,8 @@ HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia)
     }
     else
     {
-        media->url = heap_strdupW(emptyW);
-        media->name = heap_strdupW(emptyW);
+        media->url = heap_strdupW(L"");
+        media->name = heap_strdupW(L"");
     }
 
     media->duration = duration;
@@ -2353,8 +2348,8 @@ HRESULT create_playlist(BSTR name, BSTR url, LONG count, IWMPPlaylist **ppPlayli
         return E_OUTOFMEMORY;
 
     playlist->IWMPPlaylist_iface.lpVtbl = &WMPPlaylistVtbl;
-    playlist->url = url ? heap_strdupW(url) : heap_strdupW(emptyW);
-    playlist->name = name ? heap_strdupW(name) : heap_strdupW(emptyW);
+    playlist->url = heap_strdupW(url ? url : L"");
+    playlist->name = heap_strdupW(name ? name : L"");
     playlist->ref = 1;
     playlist->count = count;
 

@@ -95,13 +95,11 @@ static ATOM wmp_class;
 
 static BOOL WINAPI register_wmp_class(INIT_ONCE *once, void *param, void **context)
 {
-    /* It seems that native uses ATL for this. We use a fake name to make tests happy. */
-    static const WCHAR atl_wmpW[] = {'A','T','L',':','W','M','P',0};
-
     static WNDCLASSEXW wndclass = {
         sizeof(wndclass), CS_DBLCLKS, wmp_wnd_proc, 0, 0,
         NULL, NULL, NULL, NULL, NULL,
-        atl_wmpW, NULL
+        /* It seems that native uses ATL for this. We use a fake name to make tests happy. */
+        L"ATL:WMP", NULL
     };
 
     wndclass.hInstance = wmp_instance;

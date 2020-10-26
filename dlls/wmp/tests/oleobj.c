@@ -70,7 +70,7 @@ DEFINE_EXPECT(GetWindowContext);
 DEFINE_EXPECT(ShowObject);
 DEFINE_EXPECT(OnShowWindow_FALSE);
 
-static const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
+static const WCHAR mp3file[] = L"test.mp3";
 static inline WCHAR *load_resource(const WCHAR *name)
 {
     static WCHAR pathW[MAX_PATH];
@@ -1372,19 +1372,17 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 static void create_container_window(void)
 {
-    static const WCHAR wmp_testW[] =
-        {'W','M','P','T','e','s','t',0};
     static WNDCLASSEXW wndclass = {
         sizeof(WNDCLASSEXW),
         0,
         wnd_proc,
         0, 0, NULL, NULL, NULL, NULL, NULL,
-        wmp_testW,
+        L"WMPTest",
         NULL
     };
 
     RegisterClassExW(&wndclass);
-    container_hwnd = CreateWindowW(wmp_testW, wmp_testW,
+    container_hwnd = CreateWindowW(L"WMPTest", L"WMPTest",
             WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
             515, 530, NULL, NULL, NULL, NULL);
     ShowWindow(container_hwnd, SW_SHOW);
