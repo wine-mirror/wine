@@ -603,7 +603,7 @@ static HRESULT vmr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
         *out = &filter->IAMCertifiedOutputProtection_iface;
     else if (IsEqualGUID(iid, &IID_IAMFilterMiscFlags))
         *out = &filter->IAMFilterMiscFlags_iface;
-    else if (IsEqualGUID(iid, &IID_IVMRFilterConfig))
+    else if (IsEqualGUID(iid, &IID_IVMRFilterConfig) && !is_vmr9(filter))
         *out = &filter->IVMRFilterConfig_iface;
     else if (IsEqualGUID(iid, &IID_IVMRFilterConfig9) && is_vmr9(filter))
         *out = &filter->IVMRFilterConfig9_iface;
