@@ -312,6 +312,7 @@ struct gdi_font
     DWORD                  refcount;
     DWORD                  gm_size;
     struct glyph_metrics **gm;
+    OUTLINETEXTMETRICW     otm;
     /* the following members can be accessed without locking, they are never modified after creation */
     void                  *private;  /* font backend private data */
     DWORD                  handle;
@@ -337,7 +338,6 @@ struct gdi_font
     BOOL                   fake_italic : 1;
     BOOL                   fake_bold : 1;
     BOOL                   scalable : 1;
-    WCHAR                 *name;
     void                  *data_ptr;
     SIZE_T                 data_size;
     FILETIME               writetime;
@@ -360,8 +360,6 @@ struct font_backend_funcs
     BOOL  (CDECL *pGetCharWidthInfo)( struct gdi_font *font, struct char_width_info *info );
     DWORD (CDECL *pGetFontUnicodeRanges)( struct gdi_font *font, GLYPHSET *glyphset );
     DWORD (CDECL *pGetKerningPairs)( struct gdi_font *font, DWORD count, KERNINGPAIR *pairs );
-    UINT  (CDECL *pGetOutlineTextMetrics)( struct gdi_font *font, UINT size, OUTLINETEXTMETRICW *metrics );
-    BOOL  (CDECL *pGetTextMetrics)( struct gdi_font *font, TEXTMETRICW *metrics );
     struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont, UINT *aa_flags, UINT default_aa_flags );
 
     INT   (CDECL *pAddFontResourceEx)( LPCWSTR file, DWORD flags, PVOID pdv );
@@ -377,6 +375,8 @@ struct font_backend_funcs
     UINT  (CDECL *get_default_glyph)( struct gdi_font *gdi_font );
     DWORD (CDECL *get_glyph_outline)( struct gdi_font *font, UINT glyph, UINT format,
                                       GLYPHMETRICS *gm, ABC *abc, DWORD buflen, void *buf, const MAT2 *mat );
+    BOOL  (CDECL *set_outline_text_metrics)( struct gdi_font *font );
+    BOOL  (CDECL *set_bitmap_text_metrics)( struct gdi_font *font );
     void  (CDECL *destroy_font)( struct gdi_font *font );
 };
 
@@ -385,7 +385,9 @@ extern void free_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern void cache_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern struct gdi_font *find_cached_gdi_font( const LOGFONTW *lf, const FMAT2 *matrix,
                                               BOOL can_use_bitmap ) DECLSPEC_HIDDEN;
-extern void set_gdi_font_name( struct gdi_font *font, const WCHAR *name ) DECLSPEC_HIDDEN;
+static inline const WCHAR *get_gdi_font_name( struct gdi_font *font ) { return (WCHAR *)font->otm.otmpFamilyName; }
+extern void set_gdi_font_names( struct gdi_font *font, const WCHAR *family_name, const WCHAR *style_name,
+                                const WCHAR *full_name ) DECLSPEC_HIDDEN;
 extern BOOL get_gdi_font_glyph_metrics( struct gdi_font *font, UINT index,
                                         GLYPHMETRICS *gm, ABC *abc ) DECLSPEC_HIDDEN;
 extern void set_gdi_font_glyph_metrics( struct gdi_font *font, UINT index,

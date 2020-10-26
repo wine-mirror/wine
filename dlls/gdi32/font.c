@@ -463,14 +463,20 @@ void free_gdi_font( struct gdi_font *font )
     if (font->private) font_funcs->destroy_font( font );
     free_font_handle( font->handle );
     for (i = 0; i < font->gm_size; i++) HeapFree( GetProcessHeap(), 0, font->gm[i] );
+    HeapFree( GetProcessHeap(), 0, font->otm.otmpFamilyName );
+    HeapFree( GetProcessHeap(), 0, font->otm.otmpStyleName );
+    HeapFree( GetProcessHeap(), 0, font->otm.otmpFaceName );
+    HeapFree( GetProcessHeap(), 0, font->otm.otmpFullName );
     HeapFree( GetProcessHeap(), 0, font->gm );
-    HeapFree( GetProcessHeap(), 0, font->name );
     HeapFree( GetProcessHeap(), 0, font );
 }
 
-void set_gdi_font_name( struct gdi_font *font, const WCHAR *name )
+void set_gdi_font_names( struct gdi_font *font, const WCHAR *family_name, const WCHAR *style_name,
+                         const WCHAR *full_name )
 {
-    font->name = strdupW( name );
+    font->otm.otmpFamilyName = (char *)strdupW( family_name );
+    font->otm.otmpStyleName = (char *)strdupW( style_name );
+    font->otm.otmpFaceName = (char *)strdupW( full_name );
 }
 
 struct glyph_metrics
@@ -1187,13 +1193,77 @@ static DWORD CDECL font_GetKerningPairs( PHYSDEV dev, DWORD count, KERNINGPAIR *
 }
 
 
+static void scale_outline_font_metrics( const struct gdi_font *font, OUTLINETEXTMETRICW *otm )
+{
+    double scale_x, scale_y;
+
+    if (font->aveWidth)
+    {
+        scale_x = (double)font->aveWidth;
+        scale_x /= (double)font->otm.otmTextMetrics.tmAveCharWidth;
+    }
+    else
+        scale_x = font->scale_y;
+
+    scale_x *= fabs(font->matrix.eM11);
+    scale_y = font->scale_y * fabs(font->matrix.eM22);
+
+/* Windows scales these values as signed integers even if they are unsigned */
+#define SCALE_X(x) (x) = GDI_ROUND((int)(x) * (scale_x))
+#define SCALE_Y(y) (y) = GDI_ROUND((int)(y) * (scale_y))
+
+    SCALE_Y(otm->otmTextMetrics.tmHeight);
+    SCALE_Y(otm->otmTextMetrics.tmAscent);
+    SCALE_Y(otm->otmTextMetrics.tmDescent);
+    SCALE_Y(otm->otmTextMetrics.tmInternalLeading);
+    SCALE_Y(otm->otmTextMetrics.tmExternalLeading);
+
+    SCALE_X(otm->otmTextMetrics.tmOverhang);
+    if (font->fake_bold)
+    {
+        if (!font->scalable) otm->otmTextMetrics.tmOverhang++;
+        otm->otmTextMetrics.tmAveCharWidth++;
+        otm->otmTextMetrics.tmMaxCharWidth++;
+    }
+    SCALE_X(otm->otmTextMetrics.tmAveCharWidth);
+    SCALE_X(otm->otmTextMetrics.tmMaxCharWidth);
+
+    SCALE_Y(otm->otmAscent);
+    SCALE_Y(otm->otmDescent);
+    SCALE_Y(otm->otmLineGap);
+    SCALE_Y(otm->otmsCapEmHeight);
+    SCALE_Y(otm->otmsXHeight);
+    SCALE_Y(otm->otmrcFontBox.top);
+    SCALE_Y(otm->otmrcFontBox.bottom);
+    SCALE_X(otm->otmrcFontBox.left);
+    SCALE_X(otm->otmrcFontBox.right);
+    SCALE_Y(otm->otmMacAscent);
+    SCALE_Y(otm->otmMacDescent);
+    SCALE_Y(otm->otmMacLineGap);
+    SCALE_X(otm->otmptSubscriptSize.x);
+    SCALE_Y(otm->otmptSubscriptSize.y);
+    SCALE_X(otm->otmptSubscriptOffset.x);
+    SCALE_Y(otm->otmptSubscriptOffset.y);
+    SCALE_X(otm->otmptSuperscriptSize.x);
+    SCALE_Y(otm->otmptSuperscriptSize.y);
+    SCALE_X(otm->otmptSuperscriptOffset.x);
+    SCALE_Y(otm->otmptSuperscriptOffset.y);
+    SCALE_Y(otm->otmsStrikeoutSize);
+    SCALE_Y(otm->otmsStrikeoutPosition);
+    SCALE_Y(otm->otmsUnderscoreSize);
+    SCALE_Y(otm->otmsUnderscorePosition);
+
+#undef SCALE_X
+#undef SCALE_Y
+}
+
 /*************************************************************
  * font_GetOutlineTextMetrics
  */
 static UINT CDECL font_GetOutlineTextMetrics( PHYSDEV dev, UINT size, OUTLINETEXTMETRICW *metrics )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    UINT ret;
+    UINT ret = 0;
 
     if (!physdev->font)
     {
@@ -1204,7 +1274,27 @@ static UINT CDECL font_GetOutlineTextMetrics( PHYSDEV dev, UINT size, OUTLINETEX
     if (!physdev->font->scalable) return 0;
 
     EnterCriticalSection( &font_cs );
-    ret = font_funcs->pGetOutlineTextMetrics( physdev->font, size, metrics );
+    if (font_funcs->set_outline_text_metrics( physdev->font ))
+    {
+	ret = physdev->font->otm.otmSize;
+        if (metrics && size >= physdev->font->otm.otmSize)
+        {
+            WCHAR *ptr = (WCHAR *)(metrics + 1);
+            *metrics = physdev->font->otm;
+            metrics->otmpFamilyName = (char *)ptr - (ULONG_PTR)metrics;
+            strcpyW( ptr, (WCHAR *)physdev->font->otm.otmpFamilyName );
+            ptr += strlenW(ptr) + 1;
+            metrics->otmpStyleName = (char *)ptr - (ULONG_PTR)metrics;
+            strcpyW( ptr, (WCHAR *)physdev->font->otm.otmpStyleName );
+            ptr += strlenW(ptr) + 1;
+            metrics->otmpFaceName = (char *)ptr - (ULONG_PTR)metrics;
+            strcpyW( ptr, (WCHAR *)physdev->font->otm.otmpFaceName );
+            ptr += strlenW(ptr) + 1;
+            metrics->otmpFullName = (char *)ptr - (ULONG_PTR)metrics;
+            strcpyW( ptr, (WCHAR *)physdev->font->otm.otmpFullName );
+            scale_outline_font_metrics( physdev->font, metrics );
+        }
+    }
     LeaveCriticalSection( &font_cs );
     return ret;
 }
@@ -1301,15 +1391,60 @@ static INT CDECL font_GetTextFace( PHYSDEV dev, INT count, WCHAR *str )
         dev = GET_NEXT_PHYSDEV( dev, pGetTextFace );
         return dev->funcs->pGetTextFace( dev, count, str );
     }
-    len = strlenW( physdev->font->name ) + 1;
+    len = strlenW( get_gdi_font_name(physdev->font) ) + 1;
     if (str)
     {
-        lstrcpynW( str, physdev->font->name, count );
+        lstrcpynW( str, get_gdi_font_name(physdev->font), count );
         len = min( count, len );
     }
     return len;
 }
 
+
+static void scale_font_metrics( struct gdi_font *font, TEXTMETRICW *tm )
+{
+    double scale_x, scale_y;
+
+    /* Make sure that the font has sane width/height ratio */
+    if (font->aveWidth && (font->aveWidth + tm->tmHeight - 1) / tm->tmHeight > 100)
+    {
+        WARN( "Ignoring too large font->aveWidth %d\n", font->aveWidth );
+        font->aveWidth = 0;
+    }
+
+    if (font->aveWidth)
+    {
+        scale_x = (double)font->aveWidth;
+        scale_x /= (double)font->otm.otmTextMetrics.tmAveCharWidth;
+    }
+    else
+        scale_x = font->scale_y;
+
+    scale_x *= fabs(font->matrix.eM11);
+    scale_y = font->scale_y * fabs(font->matrix.eM22);
+
+#define SCALE_X(x) (x) = GDI_ROUND((x) * scale_x)
+#define SCALE_Y(y) (y) = GDI_ROUND((y) * scale_y)
+
+    SCALE_Y(tm->tmHeight);
+    SCALE_Y(tm->tmAscent);
+    SCALE_Y(tm->tmDescent);
+    SCALE_Y(tm->tmInternalLeading);
+    SCALE_Y(tm->tmExternalLeading);
+
+    SCALE_X(tm->tmOverhang);
+    if (font->fake_bold)
+    {
+        if (!font->scalable) tm->tmOverhang++;
+        tm->tmAveCharWidth++;
+        tm->tmMaxCharWidth++;
+    }
+    SCALE_X(tm->tmAveCharWidth);
+    SCALE_X(tm->tmMaxCharWidth);
+
+#undef SCALE_X
+#undef SCALE_Y
+}
 
 /*************************************************************
  * font_GetTextMetrics
@@ -1317,7 +1452,7 @@ static INT CDECL font_GetTextFace( PHYSDEV dev, INT count, WCHAR *str )
 static BOOL CDECL font_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    BOOL ret;
+    BOOL ret = FALSE;
 
     if (!physdev->font)
     {
@@ -1326,7 +1461,13 @@ static BOOL CDECL font_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )
     }
 
     EnterCriticalSection( &font_cs );
-    ret = font_funcs->pGetTextMetrics( physdev->font, metrics );
+    if (font_funcs->set_outline_text_metrics( physdev->font ) ||
+        font_funcs->set_bitmap_text_metrics( physdev->font ))
+    {
+        *metrics = physdev->font->otm.otmTextMetrics;
+        scale_font_metrics( physdev->font, metrics );
+        ret = TRUE;
+    }
     LeaveCriticalSection( &font_cs );
     return ret;
 }
