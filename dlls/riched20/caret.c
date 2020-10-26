@@ -818,38 +818,28 @@ ME_SelectByType(ME_TextEditor *editor, ME_SelectionType selectionType)
       editor->pCursors[1] = editor->pCursors[0];
       ME_MoveCursorWords(editor, &editor->pCursors[1], -1);
       break;
-    case stLine:
     case stParagraph:
-    {
-      ME_DisplayItem *pItem;
-      ME_DIType fwdSearchType, backSearchType;
-      if (selectionType == stParagraph) {
-          backSearchType = diParagraph;
-          fwdSearchType = diParagraphOrEnd;
-      } else {
-          backSearchType = diStartRow;
-          fwdSearchType = diStartRowOrParagraphOrEnd;
-      }
-      pItem = ME_FindItemFwd(editor->pCursors[0].pRun, fwdSearchType);
-      assert(pItem);
-      if (pItem->type == diTextEnd)
-          editor->pCursors[0].pRun = ME_FindItemBack(pItem, diRun);
-      else
-          editor->pCursors[0].pRun = ME_FindItemFwd(pItem, diRun);
-      editor->pCursors[0].pPara = ME_GetParagraph(editor->pCursors[0].pRun);
-      editor->pCursors[0].nOffset = 0;
+      editor->pCursors[1] = editor->pCursors[0];
 
-      pItem = ME_FindItemBack(pItem, backSearchType);
-      editor->pCursors[1].pRun = ME_FindItemFwd(pItem, diRun);
-      editor->pCursors[1].pPara = ME_GetParagraph(editor->pCursors[1].pRun);
+      editor->pCursors[0].pRun = run_get_di( para_end_run( &editor->pCursors[0].pPara->member.para ) );
+      editor->pCursors[0].pPara = para_get_di( editor->pCursors[0].pRun->member.run.para );
+      editor->pCursors[0].nOffset = editor->pCursors[0].pRun->member.run.len;
+
+      editor->pCursors[1].pRun = run_get_di( para_first_run( &editor->pCursors[1].pPara->member.para ) );
       editor->pCursors[1].nOffset = 0;
+      break;
+    case stLine:
+    {
+      ME_Row *row = row_from_cursor( editor->pCursors );
+
+      row_first_cursor( row, editor->pCursors + 1 );
+      row_end_cursor( row, editor->pCursors, TRUE );
       break;
     }
     case stDocument:
       /* Select everything with cursor anchored from the start of the text */
-      editor->nSelectionType = stDocument;
       ME_SetCursorToStart(editor, &editor->pCursors[1]);
-      ME_SetCursorToEnd(editor, &editor->pCursors[0], FALSE);
+      ME_SetCursorToEnd(editor, &editor->pCursors[0], TRUE);
       break;
     default: assert(0);
   }
