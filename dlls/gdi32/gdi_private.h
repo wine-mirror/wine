@@ -355,6 +355,13 @@ struct gdi_font
 #define MS_TTCF_TAG MS_MAKE_TAG('t', 't', 'c', 'f')
 #define MS_VDMX_TAG MS_MAKE_TAG('V', 'D', 'M', 'X')
 
+#define ADDFONT_EXTERNAL_FONT 0x01
+#define ADDFONT_ALLOW_BITMAP  0x02
+#define ADDFONT_ADD_TO_CACHE  0x04
+#define ADDFONT_ADD_RESOURCE  0x08  /* added through AddFontResource */
+#define ADDFONT_VERTICAL_FONT 0x10
+#define ADDFONT_AA_FLAGS(flags) ((flags) << 16)
+
 struct font_backend_funcs
 {
     BOOL  (CDECL *pEnumFonts)( LOGFONTW *lf, FONTENUMPROCW proc, LPARAM lparam );
@@ -363,11 +370,11 @@ struct font_backend_funcs
     DWORD (CDECL *pGetFontUnicodeRanges)( struct gdi_font *font, GLYPHSET *glyphset );
     struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont, UINT *aa_flags, UINT default_aa_flags );
 
-    INT   (CDECL *pAddFontResourceEx)( LPCWSTR file, DWORD flags, PVOID pdv );
-    INT   (CDECL *pRemoveFontResourceEx)( LPCWSTR file, DWORD flags, PVOID pdv );
     HANDLE (CDECL *pAddFontMemResourceEx)( void *font, DWORD size, PVOID pdv, DWORD *count );
     BOOL  (CDECL *pCreateScalableFontResource)( DWORD hidden, LPCWSTR resource,
                                                 LPCWSTR font_file, LPCWSTR font_path );
+    INT   (CDECL *add_font)( const WCHAR *file, DWORD flags );
+    BOOL  (CDECL *remove_font)( const WCHAR *file, DWORD flags );
 
     BOOL  (CDECL *alloc_font)( struct gdi_font *font );
     DWORD (CDECL *get_font_data)( struct gdi_font *gdi_font, DWORD table, DWORD offset,

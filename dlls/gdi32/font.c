@@ -5293,21 +5293,99 @@ fail:
     return name;
 }
 
+static int add_system_font_resource( const WCHAR *file, DWORD flags )
+{
+    WCHAR path[MAX_PATH];
+    int ret;
+
+    /* try in %WINDIR%/fonts, needed for Fotobuch Designer */
+    get_fonts_win_dir_path( file, path );
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->add_font( path, flags );
+    LeaveCriticalSection( &font_cs );
+    /* try in datadir/fonts (or builddir/fonts), needed for Magic the Gathering Online */
+    if (!ret)
+    {
+        get_fonts_data_dir_path( file, path );
+        EnterCriticalSection( &font_cs );
+        ret = font_funcs->add_font( path, flags );
+        LeaveCriticalSection( &font_cs );
+    }
+    return ret;
+}
+
+static BOOL remove_system_font_resource( LPCWSTR file, DWORD flags )
+{
+    WCHAR path[MAX_PATH];
+    int ret;
+
+    get_fonts_win_dir_path( file, path );
+    EnterCriticalSection( &font_cs );
+    ret = font_funcs->remove_font( path, flags );
+    LeaveCriticalSection( &font_cs );
+    if (!ret)
+    {
+        get_fonts_data_dir_path( file, path );
+        EnterCriticalSection( &font_cs );
+        ret = font_funcs->remove_font( path, flags );
+        LeaveCriticalSection( &font_cs );
+    }
+    return ret;
+}
+
+static int add_font_resource( LPCWSTR file, DWORD flags )
+{
+    WCHAR path[MAX_PATH];
+    int ret = 0;
+
+    if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
+    {
+        DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
+
+        if (!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
+        EnterCriticalSection( &font_cs );
+        ret = font_funcs->add_font( path, addfont_flags );
+        LeaveCriticalSection( &font_cs );
+    }
+
+    if (!ret && !strchrW( file, '\\' ))
+        ret = add_system_font_resource( file, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
+
+    return ret;
+}
+
+static BOOL remove_font_resource( LPCWSTR file, DWORD flags )
+{
+    WCHAR path[MAX_PATH];
+    BOOL ret = FALSE;
+
+    if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
+    {
+        DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
+
+        if (!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
+        EnterCriticalSection( &font_cs );
+        ret = font_funcs->remove_font( path, addfont_flags );
+        LeaveCriticalSection( &font_cs );
+    }
+
+    if (!ret && !strchrW( file, '\\' ))
+        ret = remove_system_font_resource( file, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
+
+    return ret;
+}
+
 /***********************************************************************
  *           AddFontResourceExW    (GDI32.@)
  */
-INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
+INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD flags, PVOID pdv )
 {
     int ret;
     WCHAR *filename;
     BOOL hidden;
 
     if (!font_funcs) return 1;
-    EnterCriticalSection( &font_cs );
-    ret = font_funcs->pAddFontResourceEx( str, fl, pdv );
-    LeaveCriticalSection( &font_cs );
-
-    if (!ret)
+    if (!(ret = add_font_resource( str, flags )))
     {
         /* FreeType <2.3.5 has problems reading resources wrapped in PE files. */
         HMODULE hModule = LoadLibraryExW(str, NULL, LOAD_LIBRARY_AS_DATAFILE);
@@ -5324,10 +5402,8 @@ INT WINAPI AddFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
         }
         else if ((filename = get_scalable_filename( str, &hidden )) != NULL)
         {
-            if (hidden) fl |= FR_PRIVATE | FR_NOT_ENUM;
-            EnterCriticalSection( &font_cs );
-            ret = font_funcs->pAddFontResourceEx( filename, fl, pdv );
-            LeaveCriticalSection( &font_cs );
+            if (hidden) flags |= FR_PRIVATE | FR_NOT_ENUM;
+            ret = add_font_resource( filename, flags );
             HeapFree( GetProcessHeap(), 0, filename );
         }
     }
@@ -5411,7 +5487,7 @@ BOOL WINAPI RemoveFontResourceExA( LPCSTR str, DWORD fl, PVOID pdv )
 /***********************************************************************
  *           RemoveFontResourceExW    (GDI32.@)
  */
-BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
+BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD flags, PVOID pdv )
 {
     int ret;
     WCHAR *filename;
@@ -5419,11 +5495,7 @@ BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
 
     if (!font_funcs) return TRUE;
 
-    EnterCriticalSection( &font_cs );
-    ret = font_funcs->pRemoveFontResourceEx( str, fl, pdv );
-    LeaveCriticalSection( &font_cs );
-
-    if (!ret)
+    if (!(ret = remove_font_resource( str, flags )))
     {
         /* FreeType <2.3.5 has problems reading resources wrapped in PE files. */
         HMODULE hModule = LoadLibraryExW(str, NULL, LOAD_LIBRARY_AS_DATAFILE);
@@ -5434,10 +5506,8 @@ BOOL WINAPI RemoveFontResourceExW( LPCWSTR str, DWORD fl, PVOID pdv )
         }
         else if ((filename = get_scalable_filename( str, &hidden )) != NULL)
         {
-            if (hidden) fl |= FR_PRIVATE | FR_NOT_ENUM;
-            EnterCriticalSection( &font_cs );
-            ret = font_funcs->pRemoveFontResourceEx( filename, fl, pdv );
-            LeaveCriticalSection( &font_cs );
+            if (hidden) flags |= FR_PRIVATE | FR_NOT_ENUM;
+            ret = remove_font_resource( filename, flags );
             HeapFree( GetProcessHeap(), 0, filename );
         }
     }

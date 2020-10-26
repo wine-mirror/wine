@@ -272,13 +272,6 @@ typedef struct tagFace {
 
 #define FS_DBCS_MASK (FS_JISJAPAN|FS_CHINESESIMP|FS_WANSUNG|FS_CHINESETRAD|FS_JOHAB)
 
-#define ADDFONT_EXTERNAL_FONT 0x01
-#define ADDFONT_ALLOW_BITMAP  0x02
-#define ADDFONT_ADD_TO_CACHE  0x04
-#define ADDFONT_ADD_RESOURCE  0x08  /* added through AddFontResource */
-#define ADDFONT_VERTICAL_FONT 0x10
-#define ADDFONT_AA_FLAGS(flags) ((flags) << 16)
-
 typedef struct tagFamily {
     struct list entry;
     unsigned int refcount;
@@ -2098,7 +2091,10 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
     return ret;
 }
 
-static int add_font_resource( const WCHAR *file, DWORD flags )
+/*************************************************************
+ * freetype_add_font
+ */
+static INT CDECL freetype_add_font( const WCHAR *file, DWORD flags )
 {
     int ret = 0;
     char *unixname = wine_get_unix_file_name( file );
@@ -2111,7 +2107,10 @@ static int add_font_resource( const WCHAR *file, DWORD flags )
     return ret;
 }
 
-static int remove_font_resource( const WCHAR *file, DWORD flags )
+/*************************************************************
+ * freetype_remove_font
+ */
+static INT CDECL freetype_remove_font( const WCHAR *file, DWORD flags )
 {
     Family *family, *family_next;
     Face *face, *face_next;
@@ -2867,10 +2866,10 @@ static void load_system_fonts(void)
             if(RegQueryValueExW(hkey, *value, 0, &type, (void*)data, &dlen) == ERROR_SUCCESS &&
                type == REG_SZ) {
                 get_fonts_win_dir_path( data, pathW );
-                if (!add_font_resource( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE ))
+                if (!freetype_add_font( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE ))
                 {
                     get_fonts_data_dir_path( data, pathW );
-                    add_font_resource( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
+                    freetype_add_font( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
                 }
             }
         }
@@ -3051,34 +3050,6 @@ static void delete_external_font_keys(void)
 }
 
 /*************************************************************
- * freetype_AddFontResourceEx
- *
- */
-static INT CDECL freetype_AddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
-{
-    WCHAR path[MAX_PATH];
-    INT ret = 0;
-    DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
-
-    if (!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
-    if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
-        ret = add_font_resource( path, addfont_flags );
-
-    if (!ret && !strchrW(file, '\\')) {
-        /* Try in %WINDIR%/fonts, needed for Fotobuch Designer */
-        get_fonts_win_dir_path( file, path );
-        ret = add_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
-        /* Try in datadir/fonts (or builddir/fonts), needed for Magic the Gathering Online */
-        if (!ret)
-        {
-            get_fonts_data_dir_path( file, path );
-            ret = add_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
-        }
-    }
-    return ret;
-}
-
-/*************************************************************
  * freetype_AddFontMemResourceEx
  *
  */
@@ -3101,33 +3072,6 @@ static HANDLE CDECL freetype_AddFontMemResourceEx(PVOID pbFont, DWORD cbFont, PV
      */
     TRACE("Returning handle %lx\n", ((INT_PTR)pFontCopy)^0x87654321);
     return (HANDLE)(((INT_PTR)pFontCopy)^0x87654321);
-}
-
-/*************************************************************
- * freetype_RemoveFontResourceEx
- *
- */
-static BOOL CDECL freetype_RemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
-{
-    WCHAR path[MAX_PATH];
-    INT ret = 0;
-    DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
-
-    if(!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
-    if (GetFullPathNameW( file, MAX_PATH, path, NULL ))
-        ret = remove_font_resource( path, addfont_flags );
-
-    if (!ret && !strchrW(file, '\\'))
-    {
-        get_fonts_win_dir_path( file, path );
-        ret = remove_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
-        if (!ret)
-        {
-            get_fonts_data_dir_path( file, path );
-            ret = remove_font_resource( path, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE );
-        }
-    }
-    return ret;
 }
 
 static WCHAR *get_ttf_file_name( LPCWSTR font_file, LPCWSTR font_path )
@@ -3565,17 +3509,17 @@ static void init_font_list(void)
             {
                 if(data[0] && (data[1] == ':'))
                 {
-                    add_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE);
+                    freetype_add_font( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE);
                 }
                 else if(dlen / 2 >= 6 && !strcmpiW(data + dlen / 2 - 5, dot_fonW))
                 {
                     WCHAR pathW[MAX_PATH];
 
                     get_fonts_win_dir_path( data, pathW );
-                    if (!add_font_resource( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE ))
+                    if (!freetype_add_font( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE ))
                     {
                         get_fonts_data_dir_path( data, pathW );
-                        add_font_resource( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
+                        freetype_add_font( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
                     }
                 }
                 /* reset dlen and vlen */
@@ -7533,10 +7477,10 @@ static const struct font_backend_funcs font_funcs =
     freetype_GetCharWidthInfo,
     freetype_GetFontUnicodeRanges,
     freetype_SelectFont,
-    freetype_AddFontResourceEx,
-    freetype_RemoveFontResourceEx,
     freetype_AddFontMemResourceEx,
     freetype_CreateScalableFontResource,
+    freetype_add_font,
+    freetype_remove_font,
     freetype_alloc_font,
     freetype_get_font_data,
     freetype_get_glyph_index,
