@@ -417,13 +417,31 @@ static void free_font_handle( DWORD handle )
     }
 }
 
-struct gdi_font *alloc_gdi_font(void)
+struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_T data_size )
 {
-    struct gdi_font *font = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*font) );
+    UINT len = file ? strlenW(file) : 0;
+    struct gdi_font *font = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                       offsetof( struct gdi_font, file[len + 1] ));
 
     font->refcount = 1;
     font->matrix.eM11 = font->matrix.eM22 = 1.0;
     font->scale_y = 1.0;
+
+    if (file)
+    {
+        WIN32_FILE_ATTRIBUTE_DATA info;
+        if (GetFileAttributesExW( file, GetFileExInfoStandard, &info ))
+        {
+            font->writetime = info.ftLastWriteTime;
+            font->data_size = (LONGLONG)info.nFileSizeHigh << 32 | info.nFileSizeLow;
+            memcpy( font->file, file, len * sizeof(WCHAR) );
+        }
+    }
+    else
+    {
+        font->data_ptr = data_ptr;
+        font->data_size = data_size;
+    }
 
     if (!(font->handle = alloc_font_handle( font )))
     {
@@ -447,40 +465,12 @@ void free_gdi_font( struct gdi_font *font )
     for (i = 0; i < font->gm_size; i++) HeapFree( GetProcessHeap(), 0, font->gm[i] );
     HeapFree( GetProcessHeap(), 0, font->gm );
     HeapFree( GetProcessHeap(), 0, font->name );
-    HeapFree( GetProcessHeap(), 0, font->fileinfo );
     HeapFree( GetProcessHeap(), 0, font );
 }
 
 void set_gdi_font_name( struct gdi_font *font, const WCHAR *name )
 {
     font->name = strdupW( name );
-}
-
-/* Undocumented structure filled in by GetFontFileInfo */
-struct font_fileinfo
-{
-    FILETIME writetime;
-    LARGE_INTEGER size;
-    WCHAR path[1];
-};
-
-void set_gdi_font_file_info( struct gdi_font *font, const WCHAR *file, SIZE_T data_size )
-{
-    WIN32_FILE_ATTRIBUTE_DATA info;
-    int len = 0;
-
-    if (file) len = strlenW( file );
-    if (!(font->fileinfo = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                      offsetof( struct font_fileinfo, path[len + 1] ))))
-        return;
-
-    if (file && GetFileAttributesExW( file, GetFileExInfoStandard, &info ))
-    {
-        font->fileinfo->writetime = info.ftLastWriteTime;
-        font->fileinfo->size.QuadPart = (LONGLONG)info.nFileSizeHigh << 32 | info.nFileSizeLow;
-        strcpyW( font->fileinfo->path, file );
-    }
-    else font->fileinfo->size.QuadPart = data_size;
 }
 
 struct glyph_metrics
@@ -5468,6 +5458,14 @@ BOOL WINAPI GetFontFileData( DWORD instance_id, DWORD unknown, UINT64 offset, vo
     return ret;
 }
 
+/* Undocumented structure filled in by GetFontFileInfo */
+struct font_fileinfo
+{
+    FILETIME writetime;
+    LARGE_INTEGER size;
+    WCHAR path[1];
+};
+
 /*************************************************************************
  *             GetFontFileInfo   (GDI32.@)
  */
@@ -5482,10 +5480,12 @@ BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_filei
 
     if ((font = get_font_from_handle( instance_id )))
     {
-        required_size = sizeof(*info) + strlenW( font->fileinfo->path ) * sizeof(WCHAR);
+        required_size = sizeof(*info) + strlenW( font->file ) * sizeof(WCHAR);
         if (required_size <= size)
         {
-            memcpy( info, font->fileinfo, required_size );
+            info->writetime = font->writetime;
+            info->size.QuadPart = font->data_size;
+            strcpyW( info->path, font->file );
             ret = TRUE;
         }
         else SetLastError( ERROR_INSUFFICIENT_BUFFER );

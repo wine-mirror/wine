@@ -4724,14 +4724,6 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
         goto done;
     }
 
-    TRACE("not in cache\n");
-    gdi_font = alloc_gdi_font();
-    ret = get_font_ptr( gdi_font );
-
-    gdi_font->matrix = dcmat;
-    gdi_font->lf = lf;
-    gdi_font->can_use_bitmap = can_use_bitmap;
-
     /* If lfFaceName is "Symbol" then Windows fixes up lfCharSet to
        SYMBOL_CHARSET so that Symbol gets picked irrespective of the
        original value lfCharSet.  Note this is a special case for
@@ -4739,6 +4731,9 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
 
     if(!strcmpiW(lf.lfFaceName, SymbolW))
         lf.lfCharSet = SYMBOL_CHARSET;
+
+    it = !!lf.lfItalic;
+    bd = lf.lfWeight > 550;
 
     if(!TranslateCharsetInfo((DWORD*)(INT_PTR)lf.lfCharSet, &csi, TCI_SRCCHARSET)) {
         switch(lf.lfCharSet) {
@@ -4922,7 +4917,6 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
     }
     if(!last_resort_family) {
         FIXME("can't find a single appropriate font - bailing\n");
-        free_gdi_font(gdi_font);
         return NULL;
     }
 
@@ -4931,8 +4925,6 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
     csi.fs.fsCsb[0] = 0;
 
 found:
-    it = lf.lfItalic ? 1 : 0;
-    bd = lf.lfWeight > 550 ? 1 : 0;
 
     height = lf.lfHeight;
 
@@ -4977,12 +4969,19 @@ found:
     }
     if(best)
         face = best->scalable ? best : best_bitmap;
-    gdi_font->fake_italic = (it && !(face->ntmFlags & NTM_ITALIC));
-    gdi_font->fake_bold = (bd && !(face->ntmFlags & NTM_BOLD));
 
 found_face:
     height = lf.lfHeight;
 
+    TRACE("not in cache\n");
+    gdi_font = alloc_gdi_font( face->file, face->font_data_ptr, face->font_data_size );
+    ret = get_font_ptr( gdi_font );
+
+    gdi_font->matrix = dcmat;
+    gdi_font->lf = lf;
+    gdi_font->can_use_bitmap = can_use_bitmap;
+    gdi_font->fake_italic = (it && !(face->ntmFlags & NTM_ITALIC));
+    gdi_font->fake_bold = (bd && !(face->ntmFlags & NTM_BOLD));
     gdi_font->fs = face->fs;
 
     if(csi.fs.fsCsb[0]) {
@@ -5042,7 +5041,6 @@ found_face:
         return NULL;
     }
 
-    set_gdi_font_file_info( gdi_font, face->file, face->font_data_size );
     gdi_font->ntmFlags = face->ntmFlags;
     gdi_font->aa_flags = HIWORD( face->flags );
 
@@ -5242,7 +5240,7 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
         return;
     }
 
-    gdi_font = alloc_gdi_font();
+    gdi_font = alloc_gdi_font( face->file, face->font_data_ptr, face->font_data_size );
     font = get_font_ptr( gdi_font );
 
     if(face->scalable) {
@@ -7355,6 +7353,7 @@ static UINT CDECL freetype_GetOutlineTextMetrics( struct gdi_font *gdi_font, UIN
 static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
 {
     struct gdi_font *gdi_font = font->gdi_font;
+    struct gdi_font *child_font;
     const struct list *face_list;
     Face *child_face = NULL, *best_face = NULL;
     UINT penalty = 0, new_penalty = 0;
@@ -7377,24 +7376,25 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
     }
     child_face = best_face ? best_face : child->face;
 
-    child->font = get_font_ptr( alloc_gdi_font() );
+    child_font = alloc_gdi_font( child_face->file, child_face->font_data_ptr, child_face->font_data_size );
+    child->font = get_font_ptr( child_font );
     child->font->ft_face = OpenFontFace( child->font, child_face, 0, -gdi_font->ppem );
     if(!child->font->ft_face)
     {
-        free_gdi_font(child->font->gdi_font);
+        free_gdi_font(child_font);
         child->font = NULL;
         return FALSE;
     }
 
-    child->font->gdi_font->fake_italic = italic && !( child_face->ntmFlags & NTM_ITALIC );
-    child->font->gdi_font->fake_bold = bold && !( child_face->ntmFlags & NTM_BOLD );
-    child->font->gdi_font->lf = gdi_font->lf;
-    child->font->gdi_font->matrix = gdi_font->matrix;
-    child->font->gdi_font->can_use_bitmap = gdi_font->can_use_bitmap;
-    child->font->gdi_font->ntmFlags = child_face->ntmFlags;
-    child->font->gdi_font->aa_flags = HIWORD( child_face->flags );
-    child->font->gdi_font->scale_y = gdi_font->scale_y;
-    set_gdi_font_name( child->font->gdi_font, child_face->family->family_name );
+    child_font->fake_italic = italic && !( child_face->ntmFlags & NTM_ITALIC );
+    child_font->fake_bold = bold && !( child_face->ntmFlags & NTM_BOLD );
+    child_font->lf = gdi_font->lf;
+    child_font->matrix = gdi_font->matrix;
+    child_font->can_use_bitmap = gdi_font->can_use_bitmap;
+    child_font->ntmFlags = child_face->ntmFlags;
+    child_font->aa_flags = HIWORD( child_face->flags );
+    child_font->scale_y = gdi_font->scale_y;
+    set_gdi_font_name( child_font, child_face->family->family_name );
     child->font->base_font = font;
     TRACE("created child font %p for base %p\n", child->font, font);
     return TRUE;

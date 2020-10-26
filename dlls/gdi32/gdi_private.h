@@ -338,7 +338,10 @@ struct gdi_font
     BOOL                   fake_bold : 1;
     BOOL                   scalable : 1;
     WCHAR                 *name;
-    struct font_fileinfo  *fileinfo;
+    void                  *data_ptr;
+    SIZE_T                 data_size;
+    FILETIME               writetime;
+    WCHAR                  file[1];
 };
 
 #define MS_MAKE_TAG(ch1,ch2,ch3,ch4) \
@@ -377,13 +380,12 @@ struct font_backend_funcs
     void  (CDECL *destroy_font)( struct gdi_font *font );
 };
 
-extern struct gdi_font *alloc_gdi_font(void) DECLSPEC_HIDDEN;
+extern struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_T data_size ) DECLSPEC_HIDDEN;
 extern void free_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern void cache_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern struct gdi_font *find_cached_gdi_font( const LOGFONTW *lf, const FMAT2 *matrix,
                                               BOOL can_use_bitmap ) DECLSPEC_HIDDEN;
 extern void set_gdi_font_name( struct gdi_font *font, const WCHAR *name ) DECLSPEC_HIDDEN;
-extern void set_gdi_font_file_info( struct gdi_font *font, const WCHAR *file, SIZE_T data_size ) DECLSPEC_HIDDEN;
 extern BOOL get_gdi_font_glyph_metrics( struct gdi_font *font, UINT index,
                                         GLYPHMETRICS *gm, ABC *abc ) DECLSPEC_HIDDEN;
 extern void set_gdi_font_glyph_metrics( struct gdi_font *font, UINT index,
