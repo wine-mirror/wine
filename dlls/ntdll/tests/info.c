@@ -500,7 +500,7 @@ static void test_query_module(void)
     status = pNtQuerySystemInformation(SystemModuleInformationEx, NULL, 0, &size);
     if (status == STATUS_INVALID_INFO_CLASS)
     {
-        todo_wine win_skip("SystemModuleInformationEx is not supported.\n");
+        win_skip("SystemModuleInformationEx is not supported.\n");
         return;
     }
     ok(status == STATUS_INFO_LENGTH_MISMATCH, "got %#x\n", status);
