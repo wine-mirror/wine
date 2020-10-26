@@ -469,37 +469,64 @@ static void test_query_procperf(void)
 
 static void test_query_module(void)
 {
+    const RTL_PROCESS_MODULE_INFORMATION_EX *infoex;
+    SYSTEM_MODULE_INFORMATION *info;
     NTSTATUS status;
-    ULONG ReturnLength;
-    ULONG ModuleCount, i;
+    ULONG size, i;
+    char *buffer;
 
-    ULONG SystemInformationLength = sizeof(SYSTEM_MODULE_INFORMATION);
-    SYSTEM_MODULE_INFORMATION* smi = HeapAlloc(GetProcessHeap(), 0, SystemInformationLength); 
-    SYSTEM_MODULE* sm;
+    status = pNtQuerySystemInformation(SystemModuleInformation, NULL, 0, &size);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "got %#x\n", status);
+    ok(size > 0, "expected nonzero size\n");
 
-    /* Request the needed length */
-    status = pNtQuerySystemInformation(SystemModuleInformation, smi, 0, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
-    ok( ReturnLength > 0, "Expected a ReturnLength to show the needed length\n");
+    info = malloc(size);
+    status = pNtQuerySystemInformation(SystemModuleInformation, info, size, &size);
+    ok(!status, "got %#x\n", status);
 
-    SystemInformationLength = ReturnLength;
-    smi = HeapReAlloc(GetProcessHeap(), 0, smi , SystemInformationLength);
-    status = pNtQuerySystemInformation(SystemModuleInformation, smi, SystemInformationLength, &ReturnLength);
-    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok(info->ModulesCount > 0, "Expected some modules to be loaded\n");
 
-    ModuleCount = smi->ModulesCount;
-    sm = &smi->Modules[0];
-    /* our implementation is a stub for now */
-    ok( ModuleCount > 0, "Expected some modules to be loaded\n");
-
-    /* Loop through all the modules/drivers, Wine doesn't get here (yet) */
-    for (i = 0; i < ModuleCount ; i++)
+    for (i = 0; i < info->ModulesCount; i++)
     {
-        ok( i == sm->LoadOrderIndex, "LoadOrderIndex (%d) should have matched %u\n", sm->LoadOrderIndex, i);
-        sm++;
+        const SYSTEM_MODULE *module = &info->Modules[i];
+
+        ok(module->LoadOrderIndex == i, "%u: got index %u\n", i, module->LoadOrderIndex);
+        ok(!!module->ImageBaseAddress, "%u: got NULL address\n", i);
+        ok(module->ImageSize, "%u: got 0 size\n", i);
+        ok(module->LoadCount, "%u: got 0 load count\n", i);
     }
 
-    HeapFree( GetProcessHeap(), 0, smi);
+    free(info);
+
+    status = pNtQuerySystemInformation(SystemModuleInformationEx, NULL, 0, &size);
+    if (status == STATUS_INVALID_INFO_CLASS)
+    {
+        todo_wine win_skip("SystemModuleInformationEx is not supported.\n");
+        return;
+    }
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "got %#x\n", status);
+    ok(size > 0, "expected nonzero size\n");
+
+    buffer = malloc(size);
+    status = pNtQuerySystemInformation(SystemModuleInformationEx, buffer, size, &size);
+    ok(!status, "got %#x\n", status);
+
+    infoex = (const void *)buffer;
+    for (i = 0; infoex->NextOffset; i++)
+    {
+        const SYSTEM_MODULE *module = &infoex->BaseInfo;
+
+        ok(module->LoadOrderIndex == i, "%u: got index %u\n", i, module->LoadOrderIndex);
+        ok(!!module->ImageBaseAddress, "%u: got NULL address\n", i);
+        ok(module->ImageSize, "%u: got 0 size\n", i);
+        ok(module->LoadCount, "%u: got 0 load count\n", i);
+
+        infoex = (const void *)((const char *)infoex + infoex->NextOffset);
+    }
+    ok(((char *)infoex - buffer) + sizeof(infoex->NextOffset) == size,
+            "got size %u, null terminator %u\n", size, (char *)infoex - buffer);
+
+    free(buffer);
+
 }
 
 static void test_query_handle(void)
