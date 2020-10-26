@@ -426,6 +426,7 @@ struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_T data_
     font->refcount = 1;
     font->matrix.eM11 = font->matrix.eM22 = 1.0;
     font->scale_y = 1.0;
+    font->kern_count = -1;
 
     if (file)
     {
@@ -468,6 +469,7 @@ void free_gdi_font( struct gdi_font *font )
     HeapFree( GetProcessHeap(), 0, font->otm.otmpFaceName );
     HeapFree( GetProcessHeap(), 0, font->otm.otmpFullName );
     HeapFree( GetProcessHeap(), 0, font->gm );
+    HeapFree( GetProcessHeap(), 0, font->kern_pairs );
     HeapFree( GetProcessHeap(), 0, font );
 }
 
@@ -1179,17 +1181,27 @@ static DWORD CDECL font_GetGlyphOutline( PHYSDEV dev, UINT glyph, UINT format,
 static DWORD CDECL font_GetKerningPairs( PHYSDEV dev, DWORD count, KERNINGPAIR *pairs )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    DWORD ret;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetKerningPairs );
         return dev->funcs->pGetKerningPairs( dev, count, pairs );
     }
+
     EnterCriticalSection( &font_cs );
-    ret = font_funcs->pGetKerningPairs( physdev->font, count, pairs );
+    if (physdev->font->kern_count == -1)
+        physdev->font->kern_count = font_funcs->get_kerning_pairs( physdev->font,
+                                                                   &physdev->font->kern_pairs );
     LeaveCriticalSection( &font_cs );
-    return ret;
+
+    if (count && pairs)
+    {
+        count = min( count, physdev->font->kern_count );
+        memcpy( pairs, physdev->font->kern_pairs, count * sizeof(*pairs) );
+    }
+    else count = physdev->font->kern_count;
+
+    return count;
 }
 
 

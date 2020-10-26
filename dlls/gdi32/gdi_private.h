@@ -313,6 +313,8 @@ struct gdi_font
     DWORD                  gm_size;
     struct glyph_metrics **gm;
     OUTLINETEXTMETRICW     otm;
+    KERNINGPAIR           *kern_pairs;
+    int                    kern_count;
     /* the following members can be accessed without locking, they are never modified after creation */
     void                  *private;  /* font backend private data */
     DWORD                  handle;
@@ -359,7 +361,6 @@ struct font_backend_funcs
     BOOL  (CDECL *pFontIsLinked)( struct gdi_font *font );
     BOOL  (CDECL *pGetCharWidthInfo)( struct gdi_font *font, struct char_width_info *info );
     DWORD (CDECL *pGetFontUnicodeRanges)( struct gdi_font *font, GLYPHSET *glyphset );
-    DWORD (CDECL *pGetKerningPairs)( struct gdi_font *font, DWORD count, KERNINGPAIR *pairs );
     struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont, UINT *aa_flags, UINT default_aa_flags );
 
     INT   (CDECL *pAddFontResourceEx)( LPCWSTR file, DWORD flags, PVOID pdv );
@@ -377,6 +378,7 @@ struct font_backend_funcs
                                       GLYPHMETRICS *gm, ABC *abc, DWORD buflen, void *buf, const MAT2 *mat );
     BOOL  (CDECL *set_outline_text_metrics)( struct gdi_font *font );
     BOOL  (CDECL *set_bitmap_text_metrics)( struct gdi_font *font );
+    DWORD (CDECL *get_kerning_pairs)( struct gdi_font *gdi_font, KERNINGPAIR **kern_pair );
     void  (CDECL *destroy_font)( struct gdi_font *font );
 };
 

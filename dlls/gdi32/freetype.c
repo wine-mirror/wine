@@ -302,8 +302,6 @@ typedef struct {
 
 struct tagGdiFont {
     struct gdi_font *gdi_font;
-    DWORD total_kern_pairs;
-    KERNINGPAIR *kern_pairs;
     struct list child_fonts;
 
     /* the following members can be accessed without locking, they are never modified after creation */
@@ -4021,8 +4019,6 @@ static UINT get_nearest_charset(const WCHAR *family_name, Face *face, UINT *cp)
 static BOOL CDECL freetype_alloc_font( struct gdi_font *font )
 {
     GdiFont *ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
-    ret->total_kern_pairs = (DWORD)-1;
-    ret->kern_pairs = NULL;
     list_init(&ret->child_fonts);
     ret->gdi_font = font;
     font->private = ret;
@@ -4048,7 +4044,6 @@ static void CDECL freetype_destroy_font( struct gdi_font *gdi_font )
 
     if (font->ft_face) pFT_Done_Face(font->ft_face);
     if (font->mapping) unmap_font_file( font->mapping );
-    HeapFree(GetProcessHeap(), 0, font->kern_pairs);
     HeapFree(GetProcessHeap(), 0, font->GSUB_Table);
     HeapFree(GetProcessHeap(), 0, font);
 }
@@ -7458,30 +7453,17 @@ static DWORD parse_format0_kern_subtable(GdiFont *font,
 }
 
 /*************************************************************
- * freetype_GetKerningPairs
+ * freetype_get_kerning_pairs
  */
-static DWORD CDECL freetype_GetKerningPairs( struct gdi_font *gdi_font, DWORD cPairs, KERNINGPAIR *kern_pair )
+static DWORD CDECL freetype_get_kerning_pairs( struct gdi_font *gdi_font, KERNINGPAIR **pairs )
 {
     GdiFont *font = get_font_ptr(gdi_font);
-    DWORD length;
+    DWORD length, count = 0;
     void *buf;
     const struct TT_kern_table *tt_kern_table;
     const struct TT_kern_subtable *tt_kern_subtable;
     USHORT i, nTables;
     USHORT *glyph_to_char;
-
-    if (font->total_kern_pairs != (DWORD)-1)
-    {
-        if (cPairs && kern_pair)
-        {
-            cPairs = min(cPairs, font->total_kern_pairs);
-            memcpy(kern_pair, font->kern_pairs, cPairs * sizeof(*kern_pair));
-        }
-        else cPairs = font->total_kern_pairs;
-        return cPairs;
-    }
-
-    font->total_kern_pairs = 0;
 
     length = freetype_get_font_data(gdi_font, MS_KERN_TAG, 0, NULL, 0);
 
@@ -7563,21 +7545,19 @@ static DWORD CDECL freetype_GetKerningPairs( struct gdi_font *gdi_font, DWORD cP
          */
         if (tt_kern_subtable_copy.coverage.bits.format == 0)
         {
-            DWORD new_chunk, old_total = font->total_kern_pairs;
+            DWORD new_chunk, old_total = count;
 
             new_chunk = parse_format0_kern_subtable(font, (const struct TT_format0_kern_subtable *)(tt_kern_subtable + 1),
                                                     glyph_to_char, NULL, 0);
-            font->total_kern_pairs += new_chunk;
+            count += new_chunk;
 
-            if (!font->kern_pairs)
-                font->kern_pairs = HeapAlloc(GetProcessHeap(), 0,
-                                             font->total_kern_pairs * sizeof(*font->kern_pairs));
+            if (!*pairs)
+                *pairs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(**pairs));
             else
-                font->kern_pairs = HeapReAlloc(GetProcessHeap(), 0, font->kern_pairs,
-                                               font->total_kern_pairs * sizeof(*font->kern_pairs));
+                *pairs = HeapReAlloc(GetProcessHeap(), 0, *pairs, count * sizeof(**pairs));
 
             parse_format0_kern_subtable(font, (const struct TT_format0_kern_subtable *)(tt_kern_subtable + 1),
-                        glyph_to_char, font->kern_pairs + old_total, new_chunk);
+                        glyph_to_char, *pairs + old_total, new_chunk);
         }
         else
             TRACE("skipping kerning table format %u\n", tt_kern_subtable_copy.coverage.bits.format);
@@ -7587,14 +7567,7 @@ static DWORD CDECL freetype_GetKerningPairs( struct gdi_font *gdi_font, DWORD cP
 
     HeapFree(GetProcessHeap(), 0, glyph_to_char);
     HeapFree(GetProcessHeap(), 0, buf);
-
-    if (cPairs && kern_pair)
-    {
-        cPairs = min(cPairs, font->total_kern_pairs);
-        memcpy(kern_pair, font->kern_pairs, cPairs * sizeof(*kern_pair));
-    }
-    else cPairs = font->total_kern_pairs;
-    return cPairs;
+    return count;
 }
 
 static const struct font_backend_funcs font_funcs =
@@ -7603,7 +7576,6 @@ static const struct font_backend_funcs font_funcs =
     freetype_FontIsLinked,
     freetype_GetCharWidthInfo,
     freetype_GetFontUnicodeRanges,
-    freetype_GetKerningPairs,
     freetype_SelectFont,
     freetype_AddFontResourceEx,
     freetype_RemoveFontResourceEx,
@@ -7616,6 +7588,7 @@ static const struct font_backend_funcs font_funcs =
     freetype_get_glyph_outline,
     freetype_set_outline_text_metrics,
     freetype_set_bitmap_text_metrics,
+    freetype_get_kerning_pairs,
     freetype_destroy_font
 };
 
