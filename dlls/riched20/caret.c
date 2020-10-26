@@ -1375,19 +1375,11 @@ static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
   assert(pCursor->pRun->type == diRun);
 }
 
-static void ME_ArrowHome(ME_TextEditor *editor, ME_Cursor *pCursor)
+static void ME_ArrowHome( ME_TextEditor *editor, ME_Cursor *cursor )
 {
-  ME_DisplayItem *pRow = ME_FindItemBack(pCursor->pRun, diStartRow);
-  if (pRow) {
-    ME_DisplayItem *pRun;
+    ME_Row *row = row_from_cursor( cursor );
 
-    pRun = ME_FindItemFwd(pRow, diRun);
-    if (pRun) {
-      pCursor->pRun = pRun;
-      assert(pCursor->pPara == ME_GetParagraph(pRun));
-      pCursor->nOffset = 0;
-    }
-  }
+    row_first_cursor( row, cursor );
 }
 
 static void ME_ArrowCtrlHome(ME_TextEditor *editor, ME_Cursor *pCursor)
@@ -1395,14 +1387,11 @@ static void ME_ArrowCtrlHome(ME_TextEditor *editor, ME_Cursor *pCursor)
   ME_SetCursorToStart(editor, pCursor);
 }
 
-static void ME_ArrowEnd(ME_TextEditor *editor, ME_Cursor *pCursor)
+static void ME_ArrowEnd( ME_TextEditor *editor, ME_Cursor *cursor )
 {
-  ME_DisplayItem *pRow;
+    ME_Row *row = row_from_cursor( cursor );
 
-  pRow = ME_FindItemFwd(pCursor->pRun, diStartRowOrParagraphOrEnd);
-  assert(pRow);
-  pCursor->pRun = ME_FindItemBack(pRow, diRun);
-  pCursor->nOffset = (pRow->type == diStartRow) ? pCursor->pRun->member.run.len : 0;
+    row_end_cursor( row, cursor, FALSE );
 }
 
 static void ME_ArrowCtrlEnd(ME_TextEditor *editor, ME_Cursor *pCursor)
