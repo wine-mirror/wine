@@ -1499,9 +1499,23 @@ static HRESULT WINAPI video_renderer_clock_sink_OnClockRestart(IMFClockStateSink
 
 static HRESULT WINAPI video_renderer_clock_sink_OnClockSetRate(IMFClockStateSink *iface, MFTIME systime, float rate)
 {
-    FIXME("%p, %s, %f.\n", iface, debugstr_time(systime), rate);
+    struct video_renderer *renderer = impl_from_IMFClockStateSink(iface);
+    IMFClockStateSink *sink;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %f.\n", iface, debugstr_time(systime), rate);
+
+    EnterCriticalSection(&renderer->cs);
+
+    IMFVideoPresenter_OnClockSetRate(renderer->presenter, systime, rate);
+    if (SUCCEEDED(IMFTransform_QueryInterface(renderer->mixer, &IID_IMFClockStateSink, (void **)&sink)))
+    {
+        IMFClockStateSink_OnClockSetRate(sink, systime, rate);
+        IMFClockStateSink_Release(sink);
+    }
+
+    LeaveCriticalSection(&renderer->cs);
+
+    return S_OK;
 }
 
 static const IMFClockStateSinkVtbl video_renderer_clock_sink_vtbl =
