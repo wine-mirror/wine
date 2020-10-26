@@ -903,40 +903,39 @@ static ME_Paragraph *pixel_pos_in_table_row( int x, int y, ME_Paragraph *para )
   return para;
 }
 
-
-static BOOL cursor_from_row( ME_TextEditor *editor, ME_DisplayItem *pRow,
-                             int x, ME_Cursor *cursor )
+static BOOL row_cursor( ME_TextEditor *editor, ME_Row *row, int x,
+                        ME_Cursor *cursor )
 {
-  ME_DisplayItem *pNext, *pLastRun;
-  ME_Row *row = &pRow->member.row;
-  BOOL exact = TRUE;
+    ME_Run *run, *last;
+    BOOL exact = TRUE;
 
-  if (x < row->pt.x)
-  {
-      x = row->pt.x;
-      exact = FALSE;
-  }
-  pNext = ME_FindItemFwd(pRow, diRunOrStartRow);
-  assert(pNext->type == diRun);
-  cursor->nOffset = 0;
-  do {
-    int run_x = pNext->member.run.pt.x;
-    int width = pNext->member.run.nWidth;
-
-    if (x >= run_x && x < run_x+width)
+    if (x < row->pt.x)
     {
-      cursor->nOffset = ME_CharFromPoint(editor, x-run_x, &pNext->member.run, TRUE, TRUE);
-      cursor->pRun = pNext;
-      cursor->pPara = ME_GetParagraph( cursor->pRun );
-      return exact;
+        x = row->pt.x;
+        exact = FALSE;
     }
-    pLastRun = pNext;
-    pNext = ME_FindItemFwd(pNext, diRunOrStartRow);
-  } while(pNext && pNext->type == diRun);
 
-  cursor->pRun = pLastRun;
-  cursor->pPara = ME_GetParagraph( cursor->pRun );
-  return FALSE;
+    run = row_first_run( row );
+    assert( run );
+    cursor->nOffset = 0;
+    do
+    {
+        if (x >= run->pt.x && x < run->pt.x + run->nWidth)
+        {
+            cursor->nOffset = ME_CharFromPoint( editor,  x - run->pt.x, run, TRUE, TRUE );
+            cursor->pRun = run_get_di( run );
+            cursor->pPara = para_get_di( run->para );
+            return exact;
+        }
+        last = run;
+        run = row_next_run( row, run );
+    } while (run);
+
+    run = last;
+
+    cursor->pRun = run_get_di( run );
+    cursor->pPara = para_get_di( run->para );
+    return FALSE;
 }
 
 /* Finds the run and offset from the pixel position.
@@ -995,8 +994,7 @@ static BOOL cursor_from_virtual_coords( ME_TextEditor *editor, int x, int y,
     row = ME_FindItemBack( para_get_di( para ), diStartRow);
   }
 
-
-  if (row) return cursor_from_row( editor, row, x, result ) && isExact;
+  if (row) return row_cursor( editor, &row->member.row, x, result ) && isExact;
 
   ME_SetCursorToEnd(editor, result, TRUE);
   return FALSE;
@@ -1279,7 +1277,7 @@ ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs, BOOL 
     /* row not found - ignore */
     return;
   }
-  cursor_from_row( editor, pItem, x, pCursor );
+  row_cursor( editor, &pItem->member.row, x, pCursor );
   assert(pCursor->pRun);
   assert(pCursor->pRun->type == diRun);
 }
@@ -1329,7 +1327,7 @@ static void ME_ArrowPageUp(ME_TextEditor *editor, ME_Cursor *pCursor)
       pLast = p;
     } while(1);
 
-    cursor_from_row( editor, pLast, x, pCursor );
+    row_cursor( editor, &pLast->member.row, x, pCursor );
   }
   assert(pCursor->pRun);
   assert(pCursor->pRun->type == diRun);
@@ -1383,7 +1381,7 @@ static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
       pLast = p;
     } while(1);
 
-    cursor_from_row( editor, pLast, x, pCursor );
+    row_cursor( editor, &pLast->member.row, x, pCursor );
   }
   assert(pCursor->pRun);
   assert(pCursor->pRun->type == diRun);

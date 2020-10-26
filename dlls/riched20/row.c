@@ -24,6 +24,35 @@
 
 #include "editor.h"
 
+ME_Row *row_next( ME_Row *row )
+{
+    ME_DisplayItem *item;
+
+    item = ME_FindItemFwd( row_get_di( row ), diStartRow );
+    if (!item) return NULL;
+    return &item->member.row;
+}
+
+ME_Run *row_first_run( ME_Row *row )
+{
+    ME_DisplayItem *item;
+
+    item = ME_FindItemFwd( row_get_di( row ), diRunOrStartRow );
+    assert( item->type == diRun );
+    return &item->member.run;
+}
+
+ME_Run *row_next_run( ME_Row *row, ME_Run *run )
+{
+    ME_DisplayItem *item;
+
+    assert( row == &ME_FindItemBack( run_get_di( run ), diStartRow )->member.row );
+
+    item = ME_FindItemFwd( run_get_di( run ), diRunOrStartRow );
+    if (!item || item->type == diStartRow) return NULL;
+    return &item->member.run;
+}
+
 /* I'm sure these functions would simplify some code in caret ops etc,
  * I just didn't remember them when I wrote that code
  */ 

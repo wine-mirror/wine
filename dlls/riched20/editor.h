@@ -111,10 +111,17 @@ int ME_ReverseFindNonWhitespaceV(const ME_String *s, int nVChar) DECLSPEC_HIDDEN
 int ME_ReverseFindWhitespaceV(const ME_String *s, int nVChar) DECLSPEC_HIDDEN;
 
 /* row.c */
+ME_Run *row_first_run( ME_Row *row ) DECLSPEC_HIDDEN;
+ME_Row *row_next( ME_Row *row ) DECLSPEC_HIDDEN;
+ME_Run *row_next_run( ME_Row *row, ME_Run *run ) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_RowStart(ME_DisplayItem *item) DECLSPEC_HIDDEN;
 /* ME_DisplayItem *ME_RowEnd(ME_DisplayItem *item); */
 ME_DisplayItem *ME_FindRowWithNumber(ME_TextEditor *editor, int nRow) DECLSPEC_HIDDEN;
 int ME_RowNumberFromCharOfs(ME_TextEditor *editor, int nOfs) DECLSPEC_HIDDEN;
+static inline ME_DisplayItem *row_get_di( ME_Row *row )
+{
+    return (ME_DisplayItem *)((ptrdiff_t)row - offsetof(ME_DisplayItem, member));
+}
 
 /* run.c */
 void cursor_from_char_ofs( ME_TextEditor *editor, int char_ofs, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
