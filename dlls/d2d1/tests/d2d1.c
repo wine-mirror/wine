@@ -9428,7 +9428,7 @@ static void test_wic_bitmap_format(void)
 static void test_math(void)
 {
     unsigned int i;
-    float s, c;
+    float s, c, t;
 
     static const struct
     {
@@ -9445,6 +9445,20 @@ static void test_math(void)
         {M_PI,        -8.74227766e-008f, -1.0f},
     };
 
+    static const struct
+    {
+        float x;
+        float t;
+    }
+    t_data[] =
+    {
+        {0.0f,         0.0f},
+        {1.0f,         1.55740774f},
+        {2.0f,        -2.18503976f},
+        {M_PI / 2.0f, -2.28773320e+007f},
+        {M_PI,         8.74227766e-008f},
+    };
+
     for (i = 0; i < ARRAY_SIZE(sc_data); ++i)
     {
         D2D1SinCos(sc_data[i].x, &s, &c);
@@ -9452,6 +9466,13 @@ static void test_math(void)
                 "Test %u: Got unexpected sin %.8e, expected %.8e.\n", i, s, sc_data[i].s);
         ok(compare_float(c, sc_data[i].c, 0),
                 "Test %u: Got unexpected cos %.8e, expected %.8e.\n", i, c, sc_data[i].c);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(t_data); ++i)
+    {
+        t = D2D1Tan(t_data[i].x);
+        ok(compare_float(t, t_data[i].t, 1),
+                "Test %u: Got unexpected tan %.8e, expected %.8e.\n", i, t, t_data[i].t);
     }
 }
 

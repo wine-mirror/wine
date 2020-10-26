@@ -7,5 +7,5 @@
 @ stdcall D2D1CreateDevice(ptr ptr ptr)
 @ stub D2D1CreateDeviceContext
 @ stdcall D2D1SinCos(float ptr ptr)
-@ stub D2D1Tan
+@ stdcall D2D1Tan(float)
 @ stub D2D1Vec3Length

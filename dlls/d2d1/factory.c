@@ -721,6 +721,13 @@ void WINAPI D2D1SinCos(float angle, float *s, float *c)
     *c = cosf(angle);
 }
 
+float WINAPI D2D1Tan(float angle)
+{
+    TRACE("angle %.8e.\n", angle);
+
+    return tanf(angle);
+}
+
 static BOOL get_config_key_dword(HKEY default_key, HKEY application_key, const char *name, DWORD *value)
 {
     DWORD type, data, size;
