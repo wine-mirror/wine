@@ -2734,11 +2734,11 @@ static HRESULT WINAPI ITextRange_fnScrollIntoView(ITextRange *me, LONG value)
     {
     case tomStart:
         cursor_from_char_ofs( editor, This->start, &cursor );
-        ME_GetCursorCoordinates(editor, &cursor, &x, &y, &height);
+        cursor_coords( editor, &cursor, &x, &y, &height );
         break;
     case tomEnd:
         cursor_from_char_ofs( editor, This->end, &cursor );
-        ME_GetCursorCoordinates(editor, &cursor, &x, &y, &height);
+        cursor_coords( editor, &cursor, &x, &y, &height );
         break;
     default:
         FIXME("bStart value %d not handled\n", value);

@@ -218,31 +218,29 @@ int set_selection_cursors(ME_TextEditor *editor, int from, int to)
 }
 
 
-void ME_GetCursorCoordinates(ME_TextEditor *editor, ME_Cursor *pCursor,
-                             int *x, int *y, int *height)
+void cursor_coords( ME_TextEditor *editor, ME_Cursor *cursor,
+                    int *x, int *y, int *height )
 {
-  ME_DisplayItem *row;
-  ME_Run *run = &pCursor->pRun->member.run;
-  ME_Paragraph *para = &pCursor->pPara->member.para;
+  ME_Row *row;
+  ME_Run *run = &cursor->pRun->member.run;
+  ME_Paragraph *para = &cursor->pPara->member.para;
   ME_Run *size_run = run, *prev;
   ME_Context c;
   int run_x;
 
-  assert(height && x && y);
   assert(~para->nFlags & MEPF_REWRAP);
 
-  row = ME_FindItemBack( run_get_di( run ), diStartRowOrParagraph );
-  assert(row && row->type == diStartRow);
+  row = row_from_cursor( cursor );
 
   ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
 
-  if (!pCursor->nOffset && (prev = run_prev( run ))) size_run = prev;
+  if (!cursor->nOffset && (prev = run_prev( run ))) size_run = prev;
 
-  run_x = ME_PointFromCharContext( &c, run, pCursor->nOffset, TRUE );
+  run_x = ME_PointFromCharContext( &c, run, cursor->nOffset, TRUE );
 
   *height = size_run->nAscent + size_run->nDescent;
   *x = c.rcView.left + run->pt.x + run_x - editor->horz_si.nPos;
-  *y = c.rcView.top + para->pt.y + row->member.row.nBaseline
+  *y = c.rcView.top + para->pt.y + row->nBaseline
        + run->pt.y - size_run->nAscent - editor->vert_si.nPos;
   ME_DestroyContext(&c);
   return;
@@ -252,7 +250,7 @@ void create_caret(ME_TextEditor *editor)
 {
   int x, y, height;
 
-  ME_GetCursorCoordinates(editor, &editor->pCursors[0], &x, &y, &height);
+  cursor_coords( editor, &editor->pCursors[0], &x, &y, &height );
   ITextHost_TxCreateCaret(editor->texthost, NULL, 0, height);
   editor->caret_height = height;
   editor->caret_hidden = TRUE;
@@ -281,7 +279,7 @@ void update_caret(ME_TextEditor *editor)
   if (!editor->bHaveFocus) return;
   if (!ME_IsSelection(editor))
   {
-    ME_GetCursorCoordinates(editor, &editor->pCursors[0], &x, &y, &height);
+    cursor_coords( editor, &editor->pCursors[0], &x, &y, &height );
     if (height != editor->caret_height) create_caret(editor);
     x = min(x, editor->rcFormat.right-1);
     ITextHost_TxSetCaretPos(editor->texthost, x, y);
