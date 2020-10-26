@@ -213,7 +213,9 @@ void ME_SetDefaultParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt) DECLSPEC_
 int get_total_width(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 ME_Cell *para_cell( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 void para_destroy( ME_TextEditor *editor, ME_Paragraph *item ) DECLSPEC_HIDDEN;
+ME_Row *para_end_row( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Run *para_end_run( ME_Paragraph *para ) DECLSPEC_HIDDEN;
+ME_Row *para_first_row( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Run *para_first_run( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 BOOL para_in_table( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_first_fmt ) DECLSPEC_HIDDEN;

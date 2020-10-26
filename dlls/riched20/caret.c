@@ -952,7 +952,7 @@ static BOOL cursor_from_virtual_coords( ME_TextEditor *editor, int x, int y,
                                         ME_Cursor *result, BOOL final_eop )
 {
   ME_Paragraph *para = editor_first_para( editor );
-  ME_DisplayItem *row = NULL;
+  ME_Row *row = NULL, *next_row;
   BOOL isExact = TRUE;
 
   x -= editor->rcFormat.left;
@@ -966,7 +966,7 @@ static BOOL cursor_from_virtual_coords( ME_TextEditor *editor, int x, int y,
       if (para->nFlags & MEPF_ROWSTART)
         para = pixel_pos_in_table_row( x, y, para );
       y -= para->pt.y;
-      row = ME_FindItemFwd( para_get_di( para ), diStartRow);
+      row = para_first_row( para );
       break;
     }
     else if (para->nFlags & MEPF_ROWSTART)
@@ -977,24 +977,22 @@ static BOOL cursor_from_virtual_coords( ME_TextEditor *editor, int x, int y,
   /* find row */
   while (row)
   {
-    ME_DisplayItem *next_row;
-
-    if (y < row->member.row.pt.y + row->member.row.nHeight) break;
-    next_row = ME_FindItemFwd(row, diStartRow);
+    if (y < row->pt.y + row->nHeight) break;
+    next_row = row_next( row );
     if (!next_row) break;
     row = next_row;
   }
 
-  if (!row && !final_eop)
+  if (!row && !final_eop && para_prev( para ))
   {
     /* The position is below the last paragraph, so the last row will be used
      * rather than the end of the text, so the x position will be used to
      * determine the offset closest to the pixel position. */
     isExact = FALSE;
-    row = ME_FindItemBack( para_get_di( para ), diStartRow);
+    row = para_end_row( para_prev( para ) );
   }
 
-  if (row) return row_cursor( editor, &row->member.row, x, result ) && isExact;
+  if (row) return row_cursor( editor, row, x, result ) && isExact;
 
   ME_SetCursorToEnd(editor, result, TRUE);
   return FALSE;

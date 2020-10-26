@@ -130,6 +130,25 @@ ME_Cell *para_cell( ME_Paragraph *para )
     return &para->pCell->member.cell;
 }
 
+ME_Row *para_first_row( ME_Paragraph *para )
+{
+    ME_DisplayItem *item;
+
+    item = ME_FindItemFwd( para_get_di( para ), diStartRowOrParagraph );
+    if (!item || item->type != diStartRow) return NULL;
+    return &item->member.row;
+}
+
+ME_Row *para_end_row( ME_Paragraph *para )
+{
+    ME_DisplayItem *item;
+
+    para = para_next( para );
+    item = ME_FindItemBack( para_get_di( para ), diStartRowOrParagraph );
+    if (!item || item->type != diStartRow) return NULL;
+    return &item->member.row;
+}
+
 void ME_MakeFirstParagraph(ME_TextEditor *editor)
 {
   static const WCHAR cr_lf[] = {'\r','\n',0};

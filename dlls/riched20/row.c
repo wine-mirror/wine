@@ -28,8 +28,8 @@ ME_Row *row_next( ME_Row *row )
 {
     ME_DisplayItem *item;
 
-    item = ME_FindItemFwd( row_get_di( row ), diStartRow );
-    if (!item) return NULL;
+    item = ME_FindItemFwd( row_get_di( row ), diStartRowOrParagraphOrEnd );
+    if (!item || item->type != diStartRow) return NULL;
     return &item->member.row;
 }
 
