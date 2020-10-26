@@ -50,6 +50,7 @@ SOURCES = \
 	bits2_0.idl \
 	bits2_5.idl \
 	bits3_0.idl \
+	bits5_0.idl \
 	bitsmsg.h \
 	bluetoothapis.h \
 	bthsdpdef.h \

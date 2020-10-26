@@ -27,6 +27,7 @@
 #include "initguid.h"
 #include "bits2_0.h"
 #include "bits2_5.h"
+#include "bits5_0.h"
 
 /* Globals used by many tests */
 static WCHAR test_remotePathA[MAX_PATH];
@@ -75,6 +76,8 @@ static void init_paths(void)
 static BOOL setup(void)
 {
     HRESULT hres;
+    IBackgroundCopyJob5* test_job_5;
+    BITS_JOB_PROPERTY_VALUE prop_val;
 
     test_manager = NULL;
     test_job = NULL;
@@ -93,6 +96,25 @@ static BOOL setup(void)
     {
         IBackgroundCopyManager_Release(test_manager);
         return FALSE;
+    }
+
+    /* The Wine TestBot Windows 10 VMs disable Windows Update by putting
+       the network connection in metered mode.
+
+       Unfortunately, this will make BITS jobs fail, since the default transfer policy
+       on Windows 10 prevents BITs job from running over a metered network
+
+       To allow these tests in this file to run on the testbot, we
+       set the BITS_JOB_PROPERTY_ID_COST_FLAGS property to BITS_COST_STATE_TRANSFER_ALWAYS,
+       ensuring that BITS will still try to run the job on a metered network */
+    prop_val.Dword = BITS_COST_STATE_TRANSFER_ALWAYS;
+    hres = IBackgroundCopyJob_QueryInterface(test_job, &IID_IBackgroundCopyJob5, (void **)&test_job_5);
+    /* BackgroundCopyJob5 was added in Windows 8, so this may not exist. The metered connection
+       workaround is only applied on Windows 10, so it's fine if this fails. */
+    if (SUCCEEDED(hres)) {
+        hres = IBackgroundCopyJob5_SetProperty(test_job_5, BITS_JOB_PROPERTY_ID_COST_FLAGS, prop_val);
+        ok(hres == S_OK, "Failed to set the cost flags: %08x\n", hres);
+        IBackgroundCopyJob5_Release(test_job_5);
     }
 
     return TRUE;
@@ -333,6 +355,43 @@ static void compareFiles(WCHAR *n1, WCHAR *n2)
     ok(memcmp(b1, b2, s1) == 0, "Files differ in contents\n");
 }
 
+/* Handles a timeout in the BG_JOB_STATE_ERROR or BG_JOB_STATE_TRANSIENT_ERROR state */
+static void handle_job_err(void)
+{
+    HRESULT hres;
+    IBackgroundCopyError *err;
+    BG_ERROR_CONTEXT errContext;
+    HRESULT errCode;
+    LPWSTR contextDesc;
+    LPWSTR errDesc;
+
+    hres = IBackgroundCopyJob_GetError(test_job, &err);
+    if (SUCCEEDED(hres)) {
+        hres = IBackgroundCopyError_GetError(err, &errContext, &errCode);
+        if (SUCCEEDED(hres)) {
+            ok(0, "Got context: %d code: %d\n", errContext, errCode);
+        } else {
+            ok(0, "Failed to get error info: 0x%08x\n", hres);
+        }
+
+        hres = IBackgroundCopyError_GetErrorContextDescription(err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), &contextDesc);
+        if (SUCCEEDED(hres)) {
+            ok(0, "Got context desc: %s\n", wine_dbgstr_w(contextDesc));
+        } else {
+            ok(0, "Failed to get context desc: 0x%08x\n", hres);
+        }
+
+        hres = IBackgroundCopyError_GetErrorDescription(err, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), &errDesc);
+        if (SUCCEEDED(hres)) {
+            ok(0, "Got error desc: %s\n", wine_dbgstr_w(errDesc));
+        } else {
+            ok(0, "Failed to get error desc: 0x%08x\n", hres);
+        }
+    } else {
+        ok(0, "Failed to get error: 0x%08x\n", hres);
+    }
+}
+
 /* Test a complete transfer for local files */
 static void test_CompleteLocal(void)
 {
@@ -362,12 +421,22 @@ static void test_CompleteLocal(void)
         hres = IBackgroundCopyJob_GetState(test_job, &state);
         ok(hres == S_OK, "IBackgroundCopyJob_GetState\n");
         ok(state == BG_JOB_STATE_QUEUED || state == BG_JOB_STATE_CONNECTING
-           || state == BG_JOB_STATE_TRANSFERRING || state == BG_JOB_STATE_TRANSFERRED,
+           || state == BG_JOB_STATE_TRANSFERRING || state == BG_JOB_STATE_TRANSFERRED
+           || state == BG_JOB_STATE_TRANSIENT_ERROR,
            "Bad state: %d\n", state);
+
+        if (state == BG_JOB_STATE_TRANSIENT_ERROR) {
+            hres = IBackgroundCopyJob_Resume(test_job);
+            ok(hres == S_OK, "IBackgroundCopyJob_Resume\n");
+        }
+
         if (state == BG_JOB_STATE_TRANSFERRED)
             break;
         Sleep(1000);
     }
+
+    if (state == BG_JOB_STATE_ERROR || state == BG_JOB_STATE_TRANSIENT_ERROR)
+        handle_job_err();
 
     ok(i < timeout_sec, "BITS jobs timed out\n");
     hres = IBackgroundCopyJob_Complete(test_job);
@@ -430,12 +499,23 @@ static void test_CompleteLocalURL(void)
         hres = IBackgroundCopyJob_GetState(test_job, &state);
         ok(hres == S_OK, "IBackgroundCopyJob_GetState\n");
         ok(state == BG_JOB_STATE_QUEUED || state == BG_JOB_STATE_CONNECTING
-           || state == BG_JOB_STATE_TRANSFERRING || state == BG_JOB_STATE_TRANSFERRED,
+           || state == BG_JOB_STATE_TRANSFERRING || state == BG_JOB_STATE_TRANSFERRED
+           || state == BG_JOB_STATE_TRANSIENT_ERROR,
            "Bad state: %d\n", state);
+
+        if (state == BG_JOB_STATE_TRANSIENT_ERROR) {
+            hres = IBackgroundCopyJob_Resume(test_job);
+            ok(hres == S_OK, "IBackgroundCopyJob_Resume\n");
+        }
+
         if (state == BG_JOB_STATE_TRANSFERRED)
             break;
         Sleep(1000);
     }
+
+    if (state == BG_JOB_STATE_ERROR || state == BG_JOB_STATE_TRANSIENT_ERROR)
+        handle_job_err();
+
 
     ok(i < timeout_sec, "BITS jobs timed out\n");
     hres = IBackgroundCopyJob_Complete(test_job);
@@ -572,11 +652,22 @@ static void test_HttpOptions(void)
         ok(state == BG_JOB_STATE_QUEUED ||
            state == BG_JOB_STATE_CONNECTING ||
            state == BG_JOB_STATE_TRANSFERRING ||
-           state == BG_JOB_STATE_TRANSFERRED, "unexpected state: %u\n", state);
+           state == BG_JOB_STATE_TRANSFERRED ||
+           state == BG_JOB_STATE_TRANSIENT_ERROR, "unexpected state: %u\n", state);
+
+        if (state == BG_JOB_STATE_TRANSIENT_ERROR) {
+            hr = IBackgroundCopyJob_Resume(test_job);
+            ok(hr == S_OK, "IBackgroundCopyJob_Resume\n");
+        }
 
         if (state == BG_JOB_STATE_TRANSFERRED) break;
         Sleep(1000);
     }
+
+    if (state == BG_JOB_STATE_ERROR || state == BG_JOB_STATE_TRANSIENT_ERROR)
+        handle_job_err();
+
+
     ok(i < timeout, "BITS job timed out\n");
     if (i < timeout)
     {
@@ -651,10 +742,27 @@ START_TEST(job)
     };
     const test_t *test;
     int i;
+    HRESULT hres;
 
     init_paths();
 
-    CoInitialize(NULL);
+    /* CoInitializeEx and CoInitializeSecurity with RPC_C_IMP_LEVEL_IMPERSONATE
+     * are required to set the job transfer policy
+     */
+    hres = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    if (FAILED(hres)) {
+        ok(0, "CoInitializeEx faied: %0x\n", hres);
+        return;
+    }
+
+    hres = CoInitializeSecurity(NULL, -1, NULL, NULL,
+                           RPC_C_AUTHN_LEVEL_CONNECT,
+                           RPC_C_IMP_LEVEL_IMPERSONATE,
+                           NULL, EOAC_NONE, 0);
+    if (FAILED(hres)) {
+        ok(0, "CoInitializeSecurity failed: %0x\n", hres);
+        return;
+    }
 
     if (FAILED(test_create_manager()))
     {
