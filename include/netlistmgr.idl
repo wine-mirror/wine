@@ -27,9 +27,25 @@ interface IEnumNetworks;
 interface IEnumNetworkConnections;
 interface INetwork;
 interface INetworkConnection;
+interface INetworkConnectionEvents;
 interface INetworkCostManager;
+interface INetworkEvents;
 interface INetworkListManager;
 interface INetworkListManagerEvents;
+
+typedef [v1_enum] enum NLM_NETWORK_CLASS
+{
+    NLM_NETWORK_IDENTIFYING  = 0x01,
+    NLM_NETWORK_IDENTIFIED   = 0x02,
+    NLM_NETWORK_UNIDENTIFIED = 0x03
+} NLM_NETWORK_CLASS;
+
+typedef [v1_enum] enum NLM_INTERNET_CONNECTIVITY
+{
+    NLM_INTERNET_CONNECTIVITY_WEBHIJACK = 0x01,
+    NLM_INTERNET_CONNECTIVITY_PROXIED   = 0x02,
+    NLM_INTERNET_CONNECTIVITY_CORPORATE = 0x04
+} NLM_INTERNET_CONNECTIVITY;
 
 typedef [v1_enum] enum NLM_CONNECTIVITY
 {
@@ -389,4 +405,36 @@ interface INetwork : IDispatch
     [id(13)]
     HRESULT SetCategory(
         [in] NLM_NETWORK_CATEGORY NewCategory);
+}
+
+[
+    object,
+    oleautomation,
+    pointer_default(unique),
+    uuid(dcb00004-570f-4a9b-8d69-199fdba5723b)
+]
+interface INetworkEvents : IUnknown
+{
+    typedef enum NLM_NETWORK_PROPERTY_CHANGE
+    {
+        NLM_NETWORK_PROPERTY_CHANGE_CONNECTION     = 0x01,
+        NLM_NETWORK_PROPERTY_CHANGE_DESCRIPTION    = 0x02,
+        NLM_NETWORK_PROPERTY_CHANGE_NAME           = 0x04,
+        NLM_NETWORK_PROPERTY_CHANGE_ICON           = 0x08,
+        NLM_NETWORK_PROPERTY_CHANGE_CATEGORY_VALUE = 0x10
+    } NLM_NETWORK_PROPERTY_CHANGE;
+
+    HRESULT NetworkAdded (
+        [in] GUID networkId);
+
+    HRESULT NetworkDeleted (
+        [in] GUID networkId);
+
+    HRESULT NetworkConnectivityChanged (
+        [in] GUID networkId,
+        [in] NLM_CONNECTIVITY newConnectivity);
+
+    HRESULT NetworkPropertyChanged(
+        [in] GUID networkId,
+        [in] NLM_NETWORK_PROPERTY_CHANGE flags);
 }
