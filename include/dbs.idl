@@ -800,3 +800,28 @@ typedef struct tagDBCOLUMNINFO {
     BYTE          bScale;
     DBID          columnid;
 } DBCOLUMNINFO;
+
+typedef DWORD DBPARAMFLAGS;
+
+enum DBPARAMFLAGSENUM {
+    DBPARAMFLAGS_ISINPUT    = 0x001,
+    DBPARAMFLAGS_ISOUTPUT   = 0x002,
+    DBPARAMFLAGS_ISSIGNED   = 0x010,
+    DBPARAMFLAGS_ISNULLABLE = 0x040,
+    DBPARAMFLAGS_ISLONG     = 0x080
+};
+
+enum DBPARAMFLAGSENUM20 {
+    DBPARAMFLAGS_SCALEISNEGATIVE = 0x100
+};
+
+typedef struct tagDBPARAMINFO {
+    DBPARAMFLAGS dwFlags;
+    DBORDINAL    iOrdinal;
+    LPOLESTR     pwszName;
+    ITypeInfo   *pTypeInfo;
+    DBLENGTH     ulParamSize;
+    DBTYPE       wType;
+    BYTE         bPrecision;
+    BYTE         bScale;
+} DBPARAMINFO;
