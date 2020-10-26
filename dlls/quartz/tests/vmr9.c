@@ -257,7 +257,7 @@ static void test_common_interfaces(IBaseFilter *filter)
     check_interface(filter, &IID_IVMRFilterConfig, FALSE);
     check_interface(filter, &IID_IVMRMixerBitmap, FALSE);
     check_interface(filter, &IID_IVMRMixerControl, FALSE);
-    todo_wine check_interface(filter, &IID_IVMRMonitorConfig, FALSE);
+    check_interface(filter, &IID_IVMRMonitorConfig, FALSE);
     check_interface(filter, &IID_IVMRSurfaceAllocatorNotify, FALSE);
     check_interface(filter, &IID_IVMRWindowlessControl, FALSE);
 

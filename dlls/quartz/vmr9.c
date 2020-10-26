@@ -611,7 +611,7 @@ static HRESULT vmr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
         *out = &filter->IVMRMixerBitmap9_iface;
     else if (IsEqualGUID(iid, &IID_IVMRMixerControl9) && is_vmr9(filter) && filter->stream_count)
         *out = &filter->IVMRMixerControl9_iface;
-    else if (IsEqualGUID(iid, &IID_IVMRMonitorConfig))
+    else if (IsEqualGUID(iid, &IID_IVMRMonitorConfig) && !is_vmr9(filter))
         *out = &filter->IVMRMonitorConfig_iface;
     else if (IsEqualGUID(iid, &IID_IVMRMonitorConfig9)
             && filter->mode != VMR9Mode_Renderless && is_vmr9(filter))
