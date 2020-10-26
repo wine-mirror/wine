@@ -733,11 +733,7 @@ static void _expect_parse_error(IXMLDOMDocument *doc, HRESULT hr_exp, BOOL hr_to
     IXMLDOMParseError_Release(error);
 }
 
-static const WCHAR szComplete1[] = {
-    '<','?','x','m','l',' ',
-    'v','e','r','s','i','o','n','=','\'','1','.','0','\'','?','>','\n',
-    '<','o','p','e','n','>','<','/','o','p','e','n','>','\n',0
-};
+static const WCHAR szComplete1[] = L"<?xml version='1.0'?>\n<open></open>\n";
 static const char complete4A[] =
     "<?xml version=\'1.0\'?>\n"
     "<lc dl=\'str1\'>\n"
@@ -1148,10 +1144,7 @@ static const char attributes_map[] = {
 
 static const WCHAR nonexistent_fileW[] = L"c:\\Nonexistent.xml";
 
-static const WCHAR szElementXML4[] = {'<','E','l','e','T','e','s','t',' ','A','t','t','r','=','"','"','>',
-                                      '&','a','m','p',';','x',' ',0x2103,'<','/','E','l','e','T','e','s','t','>',0 };
-
-static const WCHAR szStrangeChars[] = {'&','x',' ',0x2103, 0};
+static const WCHAR szStrangeChars[] = L"&x \x2103";
 
 #define expect_bstr_eq_and_free(bstr, expect) { \
     BSTR bstrExp = alloc_str_from_narrow(expect); \
@@ -5872,7 +5865,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMElement_get_xml(pElement, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, szElementXML4 ), "incorrect element xml\n");
+                ok( !lstrcmpW( str, L"<EleTest Attr=\"\">&amp;x \x2103</EleTest>" ), "incorrect element xml\n");
                 SysFreeString(str);
 
                 hr = IXMLDOMElement_get_text(pElement, &str);

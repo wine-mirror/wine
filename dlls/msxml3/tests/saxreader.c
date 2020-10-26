@@ -1518,9 +1518,9 @@ static HRESULT WINAPI isaxattributes_getQName(
     const WCHAR **QName,
     int *QNameLength)
 {
-    static const WCHAR attrqnamesW[][15] = {{'a',':','a','t','t','r','1','j','u','n','k',0},
-                                            {'a','t','t','r','2','j','u','n','k',0},
-                                            {'a','t','t','r','3',0}};
+    static const WCHAR attrqnamesW[][15] = {L"a:attr1junk",
+                                            L"attr2junk",
+                                            L"attr3"};
     static const int attrqnamelen[] = {7, 5, 5};
 
     ok(index >= 0 && index <= 2, "invalid index received %d\n", index);
@@ -1609,9 +1609,9 @@ static HRESULT WINAPI isaxattributes_getTypeFromQName(
 static HRESULT WINAPI isaxattributes_getValue(ISAXAttributes* iface, int index,
     const WCHAR **value, int *nValue)
 {
-    static const WCHAR attrvaluesW[][10] = {{'a','1','j','u','n','k',0},
-                                            {'a','2','j','u','n','k',0},
-                                            {'<','&','"','>','\'',0}};
+    static const WCHAR attrvaluesW[][10] = {L"a1junk",
+                                            L"a2junk",
+                                            L"<&\">'"};
     static const int attrvalueslen[] = {2, 2, 5};
 
     ok(index >= 0 && index <= 2, "invalid index received %d\n", index);
@@ -3960,7 +3960,7 @@ static const struct writer_characters_t writer_characters[] = {
 
 static void test_mxwriter_characters(void)
 {
-    static const WCHAR embedded_nullbytes[] = {'a',0,'b',0,0,0,'c',0};
+    static const WCHAR embedded_nullbytes[] = L"a\0b\0\0\0c";
     const struct writer_characters_t *table = writer_characters;
     IVBSAXContentHandler *vb_content;
     ISAXContentHandler *content;
