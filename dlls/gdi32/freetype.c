@@ -3624,81 +3624,6 @@ static void unmap_font_file( struct font_mapping *mapping )
 
 static LONG load_VDMX(GdiFont*, LONG);
 
-static FT_Face OpenFontFace(GdiFont *font, Face *face, LONG width, LONG height)
-{
-    struct gdi_font *gdi_font = font->gdi_font;
-    FT_Error err;
-    FT_Face ft_face;
-    void *data_ptr;
-    DWORD data_size;
-
-    TRACE("%s/%p, %ld, %d x %d\n", debugstr_w(face->file), face->font_data_ptr, face->face_index, width, height);
-
-    if (face->file)
-    {
-        char *filename = wine_get_unix_file_name( face->file );
-        font->mapping = map_font_file( filename );
-        HeapFree( GetProcessHeap(), 0, filename );
-        if (!font->mapping)
-        {
-            WARN("failed to map %s\n", debugstr_w(face->file));
-            return 0;
-        }
-        data_ptr = font->mapping->data;
-        data_size = font->mapping->size;
-    }
-    else
-    {
-        data_ptr = face->font_data_ptr;
-        data_size = face->font_data_size;
-    }
-
-    err = pFT_New_Memory_Face(library, data_ptr, data_size, face->face_index, &ft_face);
-    if(err) {
-        ERR("FT_New_Face rets %d\n", err);
-	return 0;
-    }
-
-    /* set it here, as load_VDMX needs it */
-    font->ft_face = ft_face;
-    gdi_font->scalable = FT_IS_SCALABLE(ft_face);
-    gdi_font->face_index = face->face_index;
-
-    if(FT_IS_SCALABLE(ft_face)) {
-        FT_ULong len;
-        DWORD header;
-
-        /* load the VDMX table if we have one */
-        gdi_font->ppem = load_VDMX(font, height);
-        if(gdi_font->ppem == 0)
-            gdi_font->ppem = calc_ppem_for_height(ft_face, height);
-        TRACE("height %d => ppem %d\n", height, gdi_font->ppem);
-
-        if((err = pFT_Set_Pixel_Sizes(ft_face, 0, gdi_font->ppem)) != 0)
-            WARN("FT_Set_Pixel_Sizes %d, %d rets %x\n", 0, gdi_font->ppem, err);
-
-        /* see if it's a TTC */
-        len = sizeof(header);
-        if (!pFT_Load_Sfnt_Table(ft_face, 0, 0, (void*)&header, &len)) {
-            if (header == MS_TTCF_TAG)
-            {
-                len = sizeof(gdi_font->ttc_item_offset);
-                if (pFT_Load_Sfnt_Table(ft_face, 0, (3 + face->face_index) * sizeof(DWORD),
-                        (void*)&gdi_font->ttc_item_offset, &len))
-                    gdi_font->ttc_item_offset = 0;
-                else
-                    gdi_font->ttc_item_offset = GET_BE_DWORD(gdi_font->ttc_item_offset);
-            }
-        }
-    } else {
-        gdi_font->ppem = height;
-        if((err = pFT_Set_Pixel_Sizes(ft_face, width, height)) != 0)
-            WARN("FT_Set_Pixel_Sizes %d, %d rets %x\n", width, height, err);
-    }
-    return ft_face;
-}
-
-
 static UINT get_nearest_charset(const WCHAR *family_name, Face *face, UINT *cp)
 {
   /* Only get here if lfCharSet == DEFAULT_CHARSET or we couldn't find
@@ -4340,28 +4265,32 @@ static const char* get_opentype_script(const struct gdi_font *font)
     }
 }
 
-static const VOID * get_GSUB_vert_feature(const GdiFont *font)
+static const void *get_GSUB_vert_feature( struct gdi_font *font, void **GSUB_table )
 {
-    const GSUB_Header *header;
+    GSUB_Header *header;
     const GSUB_Script *script;
     const GSUB_LangSys *language;
     const GSUB_Feature *feature;
+    DWORD length = freetype_get_font_data( font, MS_GSUB_TAG, 0, NULL, 0 );
 
-    if (!font->GSUB_Table)
-        return NULL;
+    if (length == GDI_ERROR) return NULL;
 
-    header = font->GSUB_Table;
+    header = HeapAlloc( GetProcessHeap(), 0, length );
+    freetype_get_font_data( font, MS_GSUB_TAG, 0, header, length );
+    TRACE( "Loaded GSUB table of %i bytes\n", length );
 
-    script = GSUB_get_script_table(header, get_opentype_script(font->gdi_font));
+    script = GSUB_get_script_table(header, get_opentype_script(font));
     if (!script)
     {
         TRACE("Script not found\n");
+        HeapFree( GetProcessHeap(), 0, header );
         return NULL;
     }
     language = GSUB_get_lang_table(script, "xxxx"); /* Need to get Lang tag */
     if (!language)
     {
         TRACE("Language not found\n");
+        HeapFree( GetProcessHeap(), 0, header );
         return NULL;
     }
     feature  =  GSUB_get_feature(header, language, "vrt2");
@@ -4370,10 +4299,100 @@ static const VOID * get_GSUB_vert_feature(const GdiFont *font)
     if (!feature)
     {
         TRACE("vrt2/vert feature not found\n");
+        HeapFree( GetProcessHeap(), 0, header );
         return NULL;
     }
+    *GSUB_table = header;
     return feature;
 }
+
+static DWORD get_ttc_offset( FT_Face ft_face, UINT face_index )
+{
+    FT_ULong len;
+    DWORD header, offset;
+
+    /* see if it's a TTC */
+    len = sizeof(header);
+    if (pFT_Load_Sfnt_Table( ft_face, 0, 0, (void *)&header, &len )) return 0;
+    if (header != MS_TTCF_TAG) return 0;
+
+    len = sizeof(offset);
+    if (pFT_Load_Sfnt_Table( ft_face, 0, (3 + face_index) * sizeof(DWORD), (void *)&offset, &len ))
+        return 0;
+
+    return GET_BE_DWORD( offset );
+}
+
+static BOOL load_font( struct gdi_font *gdi_font )
+{
+    GdiFont *font = get_font_ptr( gdi_font );
+    INT width = 0, height;
+    FT_Face ft_face;
+    void *data_ptr;
+    SIZE_T data_size;
+
+    if (gdi_font->file[0])
+    {
+        char *filename = wine_get_unix_file_name( gdi_font->file );
+        font->mapping = map_font_file( filename );
+        HeapFree( GetProcessHeap(), 0, filename );
+        if (!font->mapping)
+        {
+            WARN("failed to map %s\n", debugstr_w(gdi_font->file));
+            return FALSE;
+        }
+        data_ptr = font->mapping->data;
+        data_size = font->mapping->size;
+    }
+    else
+    {
+        data_ptr = gdi_font->data_ptr;
+        data_size = gdi_font->data_size;
+    }
+
+    if (pFT_New_Memory_Face( library, data_ptr, data_size, gdi_font->face_index, &ft_face )) return FALSE;
+
+    font->ft_face = ft_face;
+    gdi_font->scalable = FT_IS_SCALABLE( ft_face );
+    if (!gdi_font->fs.fsCsb[0]) get_fontsig( ft_face, &gdi_font->fs );
+    if (!gdi_font->ntmFlags) gdi_font->ntmFlags = get_ntm_flags( ft_face );
+    if (!gdi_font->aa_flags) gdi_font->aa_flags = ADDFONT_AA_FLAGS( default_aa_flags );
+    if (!gdi_font->otm.otmpFamilyName)
+    {
+        WCHAR *family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
+        WCHAR *style_name = ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
+        WCHAR *full_name = ft_face_get_full_name( ft_face, GetSystemDefaultLangID() );
+
+        set_gdi_font_names( gdi_font, family_name, style_name, full_name );
+        HeapFree( GetProcessHeap(), 0, family_name );
+        HeapFree( GetProcessHeap(), 0, style_name );
+        HeapFree( GetProcessHeap(), 0, full_name );
+    }
+
+    if (gdi_font->scalable)
+    {
+        /* load the VDMX table if we have one */
+        gdi_font->ppem = load_VDMX( font, gdi_font->lf.lfHeight );
+        if (gdi_font->ppem == 0) gdi_font->ppem = calc_ppem_for_height( ft_face, gdi_font->lf.lfHeight );
+        TRACE( "height %d => ppem %d\n", gdi_font->lf.lfHeight, gdi_font->ppem );
+        height = gdi_font->ppem;
+        gdi_font->ttc_item_offset = get_ttc_offset( ft_face, gdi_font->face_index );
+    }
+    else
+    {
+        Bitmap_Size size;
+
+        get_bitmap_size( ft_face, &size );
+        width = size.x_ppem >> 6;
+        height = size.y_ppem >> 6;
+        gdi_font->ppem = height;
+    }
+
+    pFT_Set_Pixel_Sizes( ft_face, width, height );
+    pick_charmap( ft_face, gdi_font->charset );
+    return TRUE;
+}
+
 
 /*************************************************************
  * freetype_SelectFont
@@ -4386,7 +4405,7 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
     Face *face, *best, *best_bitmap;
     Family *family, *last_resort_family;
     const struct list *face_list;
-    INT height, width = 0;
+    INT height;
     unsigned int score = 0, new_score;
     signed int diff = 0, newdiff;
     BOOL bd, it, can_use_bitmap, want_vertical;
@@ -4694,7 +4713,6 @@ found_face:
 
     TRACE("not in cache\n");
     gdi_font = alloc_gdi_font( face->file, face->font_data_ptr, face->font_data_size );
-    ret = get_font_ptr( gdi_font );
 
     gdi_font->matrix = dcmat;
     gdi_font->lf = lf;
@@ -4702,6 +4720,11 @@ found_face:
     gdi_font->fake_italic = (it && !(face->ntmFlags & NTM_ITALIC));
     gdi_font->fake_bold = (bd && !(face->ntmFlags & NTM_BOLD));
     gdi_font->fs = face->fs;
+    gdi_font->face_index = face->face_index;
+    gdi_font->ntmFlags = face->ntmFlags;
+    gdi_font->aa_flags = HIWORD( face->flags );
+    set_gdi_font_names( gdi_font, psub ? psub->from.name : family->family_name,
+                        face->style_name, face->full_name );
 
     if(csi.fs.fsCsb[0]) {
         gdi_font->charset = lf.lfCharSet;
@@ -4746,46 +4769,20 @@ found_face:
         /* The jump between unscaled and doubled is delayed by 1 */
         else if (scale == 2 && scaled_height - height > (face->size.height / 4 - 1)) scale--;
         gdi_font->scale_y = scale;
-
-        width = face->size.x_ppem >> 6;
-        height = face->size.y_ppem >> 6;
     }
     TRACE("font scale y: %f\n", gdi_font->scale_y);
 
-    ret->ft_face = OpenFontFace(ret, face, width, height);
-
-    if (!ret->ft_face)
+    if (!load_font( gdi_font ))
     {
         free_gdi_font( gdi_font );
         return NULL;
     }
-
-    gdi_font->ntmFlags = face->ntmFlags;
-    gdi_font->aa_flags = HIWORD( face->flags );
-
-    pick_charmap( ret->ft_face, gdi_font->charset );
-
-    set_gdi_font_names( gdi_font, psub ? psub->from.name : family->family_name,
-                        face->style_name, face->full_name );
-    create_child_font_list(ret);
+    ret = get_font_ptr( gdi_font );
 
     if (face->flags & ADDFONT_VERTICAL_FONT) /* We need to try to load the GSUB table */
-    {
-        int length = freetype_get_font_data(gdi_font, MS_GSUB_TAG , 0, NULL, 0);
-        if (length != GDI_ERROR)
-        {
-            ret->GSUB_Table = HeapAlloc(GetProcessHeap(),0,length);
-            freetype_get_font_data(gdi_font, MS_GSUB_TAG , 0, ret->GSUB_Table, length);
-            TRACE("Loaded GSUB table of %i bytes\n",length);
-            ret->vert_feature = get_GSUB_vert_feature(ret);
-            if (!ret->vert_feature)
-            {
-                TRACE("Vertical feature not found\n");
-                HeapFree(GetProcessHeap(), 0, ret->GSUB_Table);
-                ret->GSUB_Table = NULL;
-            }
-        }
-    }
+        ret->vert_feature = get_GSUB_vert_feature( gdi_font, &ret->GSUB_Table );
+
+    create_child_font_list(ret);
 
     TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
 
@@ -4949,8 +4946,6 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
                            NEWTEXTMETRICEXW *pntm)
 {
     struct gdi_font *gdi_font;
-    GdiFont *font;
-    LONG width, height;
 
     if (face->cached_enum_data)
     {
@@ -4961,24 +4956,16 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
     }
 
     gdi_font = alloc_gdi_font( face->file, face->font_data_ptr, face->font_data_size );
-    font = get_font_ptr( gdi_font );
+    gdi_font->lf.lfHeight = 100;
+    gdi_font->face_index = face->face_index;
+    gdi_font->ntmFlags = face->ntmFlags;
+    set_gdi_font_names( gdi_font, family_name, face->style_name, face->full_name );
 
-    if(face->scalable) {
-        height = 100;
-        width = 0;
-    } else {
-        height = face->size.y_ppem >> 6;
-        width = face->size.x_ppem >> 6;
-    }
-
-    if (!(font->ft_face = OpenFontFace(font, face, width, height)))
+    if (!load_font( gdi_font ))
     {
         free_gdi_font(gdi_font);
         return;
     }
-
-    set_gdi_font_names( gdi_font, family_name, face->style_name, face->full_name );
-    gdi_font->ntmFlags = face->ntmFlags;
 
     if (freetype_set_outline_text_metrics(gdi_font))
     {
@@ -6899,25 +6886,23 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
     child_face = best_face ? best_face : child->face;
 
     child_font = alloc_gdi_font( child_face->file, child_face->font_data_ptr, child_face->font_data_size );
-    child->font = get_font_ptr( child_font );
-    child->font->ft_face = OpenFontFace( child->font, child_face, 0, -gdi_font->ppem );
-    if(!child->font->ft_face)
-    {
-        free_gdi_font(child_font);
-        child->font = NULL;
-        return FALSE;
-    }
-
     child_font->fake_italic = italic && !( child_face->ntmFlags & NTM_ITALIC );
     child_font->fake_bold = bold && !( child_face->ntmFlags & NTM_BOLD );
     child_font->lf = gdi_font->lf;
     child_font->matrix = gdi_font->matrix;
     child_font->can_use_bitmap = gdi_font->can_use_bitmap;
+    child_font->face_index = child_face->face_index;
     child_font->ntmFlags = child_face->ntmFlags;
     child_font->aa_flags = HIWORD( child_face->flags );
     child_font->scale_y = gdi_font->scale_y;
     set_gdi_font_names( child_font, child_face->family->family_name,
                         child_face->style_name, child_face->full_name );
+    if (!load_font( child_font ))
+    {
+        free_gdi_font(child_font);
+        return FALSE;
+    }
+    child->font = get_font_ptr( child_font );
     child->font->base_font = font;
     TRACE("created child font %p for base %p\n", child->font, font);
     return TRUE;
