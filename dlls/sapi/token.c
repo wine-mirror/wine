@@ -372,28 +372,28 @@ static HRESULT WINAPI token_category_EnumValues( ISpObjectTokenCategory *iface,
 
 static HRESULT parse_cat_id( const WCHAR *str, HKEY *root, const WCHAR **sub_key )
 {
-    static const WCHAR HKLM[] = {'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E','\\'};
-    static const WCHAR HKCU[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R','\\'};
     struct table
     {
         const WCHAR *name;
-        int size;
+        unsigned int len;
         HKEY key;
     } table[] =
     {
-        { HKLM, sizeof(HKLM), HKEY_LOCAL_MACHINE },
-        { HKCU, sizeof(HKCU), HKEY_CURRENT_USER },
+#define X(s)  s, ARRAY_SIZE(s) - 1
+        { X(L"HKEY_LOCAL_MACHINE\\"), HKEY_LOCAL_MACHINE },
+        { X(L"HKEY_CURRENT_USER\\"), HKEY_CURRENT_USER },
         { NULL }
+#undef X
     };
     struct table *ptr;
     int len = lstrlenW( str );
 
     for (ptr = table; ptr->name; ptr++)
     {
-        if (len >= ptr->size / sizeof(ptr->name[0]) && !memcmp( str, ptr->name, ptr->size ))
+        if (len >= ptr->len && !wcsncmp( str, ptr->name, ptr->len ))
         {
             *root = ptr->key;
-            *sub_key = str + ptr->size / sizeof(ptr->name[0]);
+            *sub_key = str + ptr->len;
             return S_OK;
         }
     }
