@@ -323,6 +323,7 @@ static void test_ChangeDisplaySettingsEx(void)
 {
     static const DWORD registry_fields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
             DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
+    static const DWORD depths[] = {8, 16, 32};
     DPI_AWARENESS_CONTEXT context = NULL;
     UINT primary, device, test, mode;
     UINT device_size, device_count;
@@ -600,9 +601,127 @@ static void test_ChangeDisplaySettingsEx(void)
         ok(count == old_count, "Expect monitor count %d, got %d\n", old_count, count);
     }
 
+    /* Test changing to a mode with depth set but with zero width and height */
+    /* This test is only ran for non-primary adapters for now as it may detach the adapters on Wine */
+    for (device = 1; device < device_count; ++device)
+    {
+        for (test = 0; test < ARRAY_SIZE(depths); ++test)
+        {
+            /* Find the native resolution */
+            memset(&dm, 0, sizeof(dm));
+            memset(&dm2, 0, sizeof(dm2));
+            dm2.dmSize = sizeof(dm2);
+            for (mode = 0; EnumDisplaySettingsExA(devices[device].name, mode, &dm2, 0); ++mode)
+            {
+                if (dm2.dmBitsPerPel == depths[test]
+                    && dm2.dmPelsWidth > dm.dmPelsWidth && dm2.dmPelsHeight > dm.dmPelsHeight)
+                    dm = dm2;
+            }
+            if (dm.dmBitsPerPel != depths[test])
+            {
+                skip("Depth %u is unsupported for %s.\n", depths[test], devices[device].name);
+                continue;
+            }
+
+            /* Find the second resolution */
+            memset(&dm2, 0, sizeof(dm2));
+            dm2.dmSize = sizeof(dm2);
+            for (mode = 0; EnumDisplaySettingsExA(devices[device].name, mode, &dm2, 0); ++mode)
+            {
+                if (dm2.dmBitsPerPel == depths[test]
+                    && dm2.dmPelsWidth != dm.dmPelsWidth && dm2.dmPelsHeight != dm.dmPelsHeight)
+                    break;
+            }
+            if (dm2.dmBitsPerPel != depths[test]
+                || dm2.dmPelsWidth == dm.dmPelsWidth || dm2.dmPelsHeight == dm.dmPelsHeight)
+            {
+                skip("Failed to find the second mode for %s.\n", devices[device].name);
+                continue;
+            }
+
+            /* Find the third resolution */
+            memset(&dm3, 0, sizeof(dm3));
+            dm3.dmSize = sizeof(dm3);
+            for (mode = 0; EnumDisplaySettingsExA(devices[device].name, mode, &dm3, 0); ++mode)
+            {
+                if (dm3.dmBitsPerPel == depths[test]
+                    && dm3.dmPelsWidth != dm.dmPelsWidth && dm3.dmPelsHeight != dm.dmPelsHeight
+                    && dm3.dmPelsWidth != dm2.dmPelsWidth && dm3.dmPelsHeight != dm2.dmPelsHeight)
+                    break;
+            }
+            if (dm3.dmBitsPerPel != depths[test]
+                || dm3.dmPelsWidth == dm.dmPelsWidth || dm3.dmPelsHeight == dm.dmPelsHeight
+                || dm3.dmPelsWidth == dm2.dmPelsWidth || dm3.dmPelsHeight == dm2.dmPelsHeight)
+            {
+                skip("Failed to find the third mode for %s.\n", devices[device].name);
+                continue;
+            }
+
+            /* Change the current mode to the third mode first */
+            res = ChangeDisplaySettingsExA(devices[device].name, &dm3, NULL, CDS_RESET, NULL);
+            ok(res == DISP_CHANGE_SUCCESSFUL
+               || broken(res == DISP_CHANGE_FAILED), /* Win8 TestBots */
+               "ChangeDisplaySettingsExA %s returned unexpected %d.\n", devices[device].name, res);
+            if (res != DISP_CHANGE_SUCCESSFUL)
+            {
+                win_skip("Failed to change display mode for %s.\n", devices[device].name);
+                continue;
+            }
+            flush_events();
+            expect_dm(dm3, devices[device].name, test);
+
+            /* Change the registry mode to the second mode */
+            res = ChangeDisplaySettingsExA(devices[device].name, &dm2, NULL, CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
+            ok(res == DISP_CHANGE_SUCCESSFUL
+               || broken(res == DISP_CHANGE_BADFLAGS), /* Win10 32bit */
+               "ChangeDisplaySettingsExA %s returned unexpected %d.\n", devices[device].name, res);
+
+            /* Change to a mode with depth set but with zero width and height */
+            memset(&dm, 0, sizeof(dm));
+            dm.dmSize = sizeof(dm);
+            dm.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+            dm.dmBitsPerPel = depths[test];
+            res = ChangeDisplaySettingsExA(devices[device].name, &dm, NULL, CDS_RESET, NULL);
+            ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned unexpected %d.\n",
+               devices[device].name, res);
+            flush_events();
+
+            dd.cb = sizeof(dd);
+            res = EnumDisplayDevicesA(NULL, devices[device].index, &dd, 0);
+            ok(res, "EnumDisplayDevicesA %s failed, error %#x.\n", devices[device].name, GetLastError());
+            todo_wine ok(dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP, "Expect %s attached.\n",
+              devices[device].name);
+            if (!(dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
+                continue;
+
+            memset(&dm, 0, sizeof(dm));
+            dm.dmSize = sizeof(dm);
+            res = EnumDisplaySettingsA(devices[device].name, ENUM_CURRENT_SETTINGS, &dm);
+            ok(res, "Device %s EnumDisplaySettingsA failed, error %#x.\n", devices[device].name, GetLastError());
+            todo_wine_if(depths[test] != 32)
+            ok(dm.dmBitsPerPel == depths[test], "Device %s expect dmBitsPerPel %u, got %u.\n",
+               devices[device].name, depths[test], dm.dmBitsPerPel);
+            /* 2008 resets to the resolution in the registry. Newer versions of Windows doesn't
+             * change the current resolution */
+            ok(dm.dmPelsWidth == dm3.dmPelsWidth || broken(dm.dmPelsWidth == dm2.dmPelsWidth),
+               "Device %s expect dmPelsWidth %u, got %u.\n",
+               devices[device].name, dm3.dmPelsWidth, dm.dmPelsWidth);
+            ok(dm.dmPelsHeight == dm3.dmPelsHeight || broken(dm.dmPelsHeight == dm2.dmPelsHeight),
+               "Device %s expect dmPelsHeight %u, got %u.\n",
+               devices[device].name, dm3.dmPelsHeight, dm.dmPelsHeight);
+        }
+    }
+
     /* Detach all non-primary adapters to avoid position conflicts */
     for (device = 1; device < device_count; ++device)
     {
+        dd.cb = sizeof(dd);
+        res = EnumDisplayDevicesA(NULL, devices[device].index, &dd, 0);
+        ok(res, "EnumDisplayDevicesA %s failed, error %#x.\n", devices[device].name, GetLastError());
+        /* Already detached by previous tests */
+        if (!(dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
+            continue;
+
         old_count = GetSystemMetrics(SM_CMONITORS);
 
         memset(&dm, 0, sizeof(dm));
