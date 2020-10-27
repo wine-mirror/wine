@@ -280,11 +280,15 @@ struct decoder_frame
     WICColor palette[256];
 };
 
+#define DECODER_BLOCK_OPTION_MASK 0x0001000F
+#define DECODER_BLOCK_FULL_STREAM 0x80000000
+#define DECODER_BLOCK_READER_CLSID 0x40000000
 struct decoder_block
 {
     ULONGLONG offset;
     ULONGLONG length;
     DWORD options;
+    GUID reader_clsid;
 };
 
 struct decoder
@@ -305,11 +309,13 @@ struct decoder_funcs
     void (CDECL *destroy)(struct decoder* This);
 };
 
+HRESULT CDECL stream_getsize(IStream *stream, ULONGLONG *size);
 HRESULT CDECL stream_read(IStream *stream, void *buffer, ULONG read, ULONG *bytes_read);
 HRESULT CDECL stream_seek(IStream *stream, LONGLONG ofs, DWORD origin, ULONGLONG *new_position);
 
 struct win32_funcs
 {
+    HRESULT (CDECL *stream_getsize)(IStream *stream, ULONGLONG *size);
     HRESULT (CDECL *stream_read)(IStream *stream, void *buffer, ULONG read, ULONG *bytes_read);
     HRESULT (CDECL *stream_seek)(IStream *stream, LONGLONG ofs, DWORD origin, ULONGLONG *new_position);
 };
@@ -326,6 +332,7 @@ HRESULT CDECL decoder_get_color_context(struct decoder* This, UINT frame, UINT n
 void CDECL decoder_destroy(struct decoder *This);
 
 HRESULT CDECL png_decoder_create(struct decoder_info *info, struct decoder **result);
+HRESULT CDECL tiff_decoder_create(struct decoder_info *info, struct decoder **result);
 
 struct unix_funcs
 {

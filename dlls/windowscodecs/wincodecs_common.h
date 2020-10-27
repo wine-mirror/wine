@@ -158,3 +158,22 @@ HRESULT read_png_chunk(IStream *stream, BYTE *type, BYTE **data, ULONG *data_siz
 
     return S_OK;
 }
+
+void reverse_bgr8(UINT bytesperpixel, LPBYTE bits, UINT width, UINT height, INT stride)
+{
+    UINT x, y;
+    BYTE *pixel, temp;
+
+    for (y=0; y<height; y++)
+    {
+        pixel = bits + stride * y;
+
+        for (x=0; x<width; x++)
+        {
+            temp = pixel[2];
+            pixel[2] = pixel[0];
+            pixel[0] = temp;
+            pixel += bytesperpixel;
+        }
+    }
+}

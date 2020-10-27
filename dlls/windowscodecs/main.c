@@ -191,6 +191,19 @@ HRESULT write_source(IWICBitmapFrameEncode *iface,
     return hr;
 }
 
+HRESULT CDECL stream_getsize(IStream *stream, ULONGLONG *size)
+{
+    STATSTG statstg;
+    HRESULT hr;
+
+    hr = IStream_Stat(stream, &statstg, STATFLAG_NONAME);
+
+    if (SUCCEEDED(hr))
+        *size = statstg.cbSize.QuadPart;
+
+    return hr;
+}
+
 HRESULT CDECL stream_read(IStream *stream, void *buffer, ULONG read, ULONG *bytes_read)
 {
     return IStream_Read(stream, buffer, read, bytes_read);
@@ -208,25 +221,6 @@ HRESULT CDECL stream_seek(IStream *stream, LONGLONG ofs, DWORD origin, ULONGLONG
         *new_position = pos_large.QuadPart;
 
     return hr;
-}
-
-void reverse_bgr8(UINT bytesperpixel, LPBYTE bits, UINT width, UINT height, INT stride)
-{
-    UINT x, y;
-    BYTE *pixel, temp;
-
-    for (y=0; y<height; y++)
-    {
-        pixel = bits + stride * y;
-
-        for (x=0; x<width; x++)
-        {
-            temp = pixel[2];
-            pixel[2] = pixel[0];
-            pixel[0] = temp;
-            pixel += bytesperpixel;
-        }
-    }
 }
 
 HRESULT get_pixelformat_bpp(const GUID *pixelformat, UINT *bpp)

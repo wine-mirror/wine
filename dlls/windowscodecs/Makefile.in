@@ -23,6 +23,7 @@ C_SRCS = \
 	info.c \
 	jpegformat.c \
 	libpng.c \
+	libtiff.c \
 	main.c \
 	metadatahandler.c \
 	metadataquery.c \

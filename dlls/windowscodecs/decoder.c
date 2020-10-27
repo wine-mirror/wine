@@ -216,9 +216,11 @@ static HRESULT WINAPI CommonDecoder_GetFrameCount(IWICBitmapDecoder *iface,
     CommonDecoder *This = impl_from_IWICBitmapDecoder(iface);
     if (!pCount) return E_INVALIDARG;
 
-    if (!This->stream) return WINCODEC_ERR_WRONGSTATE;
+    if (This->stream)
+        *pCount = This->file_info.frame_count;
+    else
+        *pCount = 0;
 
-    *pCount = This->file_info.frame_count;
     return S_OK;
 }
 
@@ -606,23 +608,69 @@ static HRESULT WINAPI CommonDecoderFrame_Block_GetReaderByIndex(IWICMetadataBloc
 
     if (SUCCEEDED(hr))
     {
-        ULARGE_INTEGER offset, length;
-
-        offset.QuadPart = This->metadata_blocks[nIndex].offset;
-        length.QuadPart = This->metadata_blocks[nIndex].length;
-        hr = IWICStream_InitializeFromIStreamRegion(stream, This->parent->stream,
-            offset, length);
-
-        if (SUCCEEDED(hr))
-            hr = ImagingFactory_CreateInstance(&IID_IWICComponentFactory, (void**)&factory);
-
-        if (SUCCEEDED(hr))
+        if (This->metadata_blocks[nIndex].options & DECODER_BLOCK_FULL_STREAM)
         {
-            hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
-                &This->parent->decoder_info.block_format, NULL, This->metadata_blocks[nIndex].options,
-                (IStream*)stream, ppIMetadataReader);
+            LARGE_INTEGER offset;
+            offset.QuadPart = This->metadata_blocks[nIndex].offset;
 
-            IWICComponentFactory_Release(factory);
+            hr = IWICStream_InitializeFromIStream(stream, This->parent->stream);
+
+            if (SUCCEEDED(hr))
+                hr = IWICStream_Seek(stream, offset, STREAM_SEEK_SET, NULL);
+        }
+        else
+        {
+            ULARGE_INTEGER offset, length;
+
+            offset.QuadPart = This->metadata_blocks[nIndex].offset;
+            length.QuadPart = This->metadata_blocks[nIndex].length;
+
+            hr = IWICStream_InitializeFromIStreamRegion(stream, This->parent->stream,
+                offset, length);
+        }
+
+        if (This->metadata_blocks[nIndex].options & DECODER_BLOCK_READER_CLSID)
+        {
+            IWICMetadataReader *reader;
+            IWICPersistStream *persist;
+            if (SUCCEEDED(hr))
+            {
+                hr = create_instance(&This->metadata_blocks[nIndex].reader_clsid,
+                    &IID_IWICMetadataReader, (void**)&reader);
+            }
+
+            if (SUCCEEDED(hr))
+            {
+                hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICPersistStream, (void**)&persist);
+
+                if (SUCCEEDED(hr))
+                {
+                    hr = IWICPersistStream_LoadEx(persist, (IStream*)stream, NULL,
+                        This->metadata_blocks[nIndex].options & DECODER_BLOCK_OPTION_MASK);
+
+                    IWICPersistStream_Release(persist);
+                }
+
+                if (SUCCEEDED(hr))
+                    *ppIMetadataReader = reader;
+                else
+                    IWICMetadataReader_Release(reader);
+            }
+        }
+        else
+        {
+            if (SUCCEEDED(hr))
+                hr = ImagingFactory_CreateInstance(&IID_IWICComponentFactory, (void**)&factory);
+
+            if (SUCCEEDED(hr))
+            {
+                hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
+                    &This->parent->decoder_info.block_format, NULL,
+                    This->metadata_blocks[nIndex].options & DECODER_BLOCK_OPTION_MASK,
+                    (IStream*)stream, ppIMetadataReader);
+
+                IWICComponentFactory_Release(factory);
+            }
         }
 
         IWICStream_Release(stream);

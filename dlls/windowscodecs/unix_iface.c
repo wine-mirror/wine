@@ -40,6 +40,7 @@ static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 static const struct unix_funcs *unix_funcs;
 
 static const struct win32_funcs win32_funcs = {
+    stream_getsize,
     stream_read,
     stream_seek
 };

@@ -47,6 +47,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 static const struct win32_funcs *win32_funcs;
 
+HRESULT CDECL stream_getsize(IStream *stream, ULONGLONG *size)
+{
+    return win32_funcs->stream_getsize(stream, size);
+}
+
 HRESULT CDECL stream_read(IStream *stream, void *buffer, ULONG read, ULONG *bytes_read)
 {
     return win32_funcs->stream_read(stream, buffer, read, bytes_read);
@@ -61,6 +66,9 @@ HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *in
 {
     if (IsEqualGUID(decoder_clsid, &CLSID_WICPngDecoder))
         return png_decoder_create(info, result);
+
+    if (IsEqualGUID(decoder_clsid, &CLSID_WICTiffDecoder))
+        return tiff_decoder_create(info, result);
 
     return E_NOTIMPL;
 }
