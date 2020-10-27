@@ -487,11 +487,6 @@ struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_T data_
         HeapFree( GetProcessHeap(), 0, font );
         return NULL;
     }
-    if (font_funcs && !font_funcs->alloc_font( font ))
-    {
-        free_gdi_font( font );
-        return NULL;
-    }
     return font;
 }
 

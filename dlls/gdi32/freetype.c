@@ -3667,18 +3667,6 @@ static UINT get_nearest_charset(const WCHAR *family_name, Face *face, UINT *cp)
 }
 
 /*************************************************************
- * freetype_alloc_font
- */
-static BOOL CDECL freetype_alloc_font( struct gdi_font *font )
-{
-    GdiFont *ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
-    list_init(&ret->child_fonts);
-    ret->gdi_font = font;
-    font->private = ret;
-    return TRUE;
-}
-
-/*************************************************************
  * freetype_destroy_font
  */
 static void CDECL freetype_destroy_font( struct gdi_font *gdi_font )
@@ -4325,11 +4313,16 @@ static DWORD get_ttc_offset( FT_Face ft_face, UINT face_index )
 
 static BOOL load_font( struct gdi_font *gdi_font )
 {
-    GdiFont *font = get_font_ptr( gdi_font );
+    GdiFont *font;
     INT width = 0, height;
     FT_Face ft_face;
     void *data_ptr;
     SIZE_T data_size;
+
+    if (!(font = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*font) ))) return FALSE;
+    gdi_font->private = font;
+    font->gdi_font = gdi_font;
+    list_init( &font->child_fonts );
 
     if (gdi_font->file[0])
     {
@@ -7294,7 +7287,6 @@ static const struct font_backend_funcs font_funcs =
     freetype_add_font,
     freetype_add_mem_font,
     freetype_remove_font,
-    freetype_alloc_font,
     freetype_get_font_data,
     freetype_get_glyph_index,
     freetype_get_default_glyph,
