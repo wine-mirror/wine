@@ -928,7 +928,8 @@ void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
   ME_DisplayItem *para, *para_end;
   PARAFORMAT2 *curFmt;
 
-  if (pFmt->cbSize < sizeof(PARAFORMAT)) {
+  if (pFmt->cbSize < sizeof(PARAFORMAT))
+  {
     pFmt->dwMask = 0;
     return;
   }
@@ -951,13 +952,14 @@ void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
     CHECK_FIELD(PFM_RIGHTINDENT, dxRightIndent);
     CHECK_FIELD(PFM_OFFSET, dxOffset);
     CHECK_FIELD(PFM_ALIGNMENT, wAlignment);
-    if (pFmt->dwMask & PFM_TABSTOPS) {
+    if (pFmt->dwMask & PFM_TABSTOPS)
+    {
       if (pFmt->cTabCount != para->member.para.fmt.cTabCount ||
           memcmp(pFmt->rgxTabs, curFmt->rgxTabs, curFmt->cTabCount*sizeof(int)))
         pFmt->dwMask &= ~PFM_TABSTOPS;
     }
 
-    if (pFmt->dwMask >= sizeof(PARAFORMAT2))
+    if (pFmt->cbSize >= sizeof(PARAFORMAT2))
     {
       pFmt->dwMask &= ~((pFmt->wEffects ^ curFmt->wEffects) << 16);
       CHECK_FIELD(PFM_SPACEBEFORE, dySpaceBefore);
