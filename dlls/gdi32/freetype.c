@@ -3008,302 +3008,6 @@ static void delete_external_font_keys(void)
     if(winnt_key) RegCloseKey(winnt_key);
 }
 
-static WCHAR *get_ttf_file_name( LPCWSTR font_file, LPCWSTR font_path )
-{
-    WCHAR *fullname;
-    int file_len;
-
-    if (!font_file) return NULL;
-
-    file_len = strlenW( font_file );
-
-    if (font_path && font_path[0])
-    {
-        int path_len = strlenW( font_path );
-        fullname = HeapAlloc( GetProcessHeap(), 0, (file_len + path_len + 2) * sizeof(WCHAR) );
-        if (!fullname) return NULL;
-        memcpy( fullname, font_path, path_len * sizeof(WCHAR) );
-        fullname[path_len] = '\\';
-        memcpy( fullname + path_len + 1, font_file, (file_len + 1) * sizeof(WCHAR) );
-        return fullname;
-    }
-    return get_full_path_name( font_file );
-}
-
-#include <pshpack1.h>
-struct fontdir
-{
-    WORD   num_of_resources;
-    WORD   res_id;
-    WORD   dfVersion;
-    DWORD  dfSize;
-    CHAR   dfCopyright[60];
-    WORD   dfType;
-    WORD   dfPoints;
-    WORD   dfVertRes;
-    WORD   dfHorizRes;
-    WORD   dfAscent;
-    WORD   dfInternalLeading;
-    WORD   dfExternalLeading;
-    BYTE   dfItalic;
-    BYTE   dfUnderline;
-    BYTE   dfStrikeOut;
-    WORD   dfWeight;
-    BYTE   dfCharSet;
-    WORD   dfPixWidth;
-    WORD   dfPixHeight;
-    BYTE   dfPitchAndFamily;
-    WORD   dfAvgWidth;
-    WORD   dfMaxWidth;
-    BYTE   dfFirstChar;
-    BYTE   dfLastChar;
-    BYTE   dfDefaultChar;
-    BYTE   dfBreakChar;
-    WORD   dfWidthBytes;
-    DWORD  dfDevice;
-    DWORD  dfFace;
-    DWORD  dfReserved;
-    CHAR   szFaceName[LF_FACESIZE];
-};
-
-#include <poppack.h>
-
-static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEXW pelf,
-                           NEWTEXTMETRICEXW *pntm);
-
-static BOOL get_fontdir( const WCHAR *dos_name, struct fontdir *fd )
-{
-    FT_Face ft_face;
-    Face *face = NULL;
-    char *unix_name;
-    WCHAR *family_name;
-    ENUMLOGFONTEXW elf;
-    NEWTEXTMETRICEXW ntm;
-
-    if (!(unix_name = wine_get_unix_file_name( dos_name ))) return FALSE;
-    ft_face = new_ft_face( unix_name, NULL, 0, 0, FALSE );
-    HeapFree( GetProcessHeap(), 0, unix_name );
-    if (!ft_face) return FALSE;
-    face = create_face( ft_face, 0, dos_name, NULL, 0, 0 );
-    if (face)
-    {
-        family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
-        GetEnumStructs( face, family_name, &elf, &ntm );
-        release_face( face );
-        HeapFree( GetProcessHeap(), 0, family_name );
-    }
-    pFT_Done_Face( ft_face );
-
-    if (!face) return FALSE;
-    if (!(ntm.ntmTm.tmPitchAndFamily & TMPF_TRUETYPE)) return FALSE;
-
-    memset( fd, 0, sizeof(*fd) );
-
-    fd->num_of_resources  = 1;
-    fd->res_id            = 0;
-    fd->dfVersion         = 0x200;
-    fd->dfSize            = sizeof(*fd);
-    strcpy( fd->dfCopyright, "Wine fontdir" );
-    fd->dfType            = 0x4003;  /* 0x0080 set if private */
-    fd->dfPoints          = ntm.ntmTm.ntmSizeEM;
-    fd->dfVertRes         = 72;
-    fd->dfHorizRes        = 72;
-    fd->dfAscent          = ntm.ntmTm.tmAscent;
-    fd->dfInternalLeading = ntm.ntmTm.tmInternalLeading;
-    fd->dfExternalLeading = ntm.ntmTm.tmExternalLeading;
-    fd->dfItalic          = ntm.ntmTm.tmItalic;
-    fd->dfUnderline       = ntm.ntmTm.tmUnderlined;
-    fd->dfStrikeOut       = ntm.ntmTm.tmStruckOut;
-    fd->dfWeight          = ntm.ntmTm.tmWeight;
-    fd->dfCharSet         = ntm.ntmTm.tmCharSet;
-    fd->dfPixWidth        = 0;
-    fd->dfPixHeight       = ntm.ntmTm.tmHeight;
-    fd->dfPitchAndFamily  = ntm.ntmTm.tmPitchAndFamily;
-    fd->dfAvgWidth        = ntm.ntmTm.tmAveCharWidth;
-    fd->dfMaxWidth        = ntm.ntmTm.tmMaxCharWidth;
-    fd->dfFirstChar       = ntm.ntmTm.tmFirstChar;
-    fd->dfLastChar        = ntm.ntmTm.tmLastChar;
-    fd->dfDefaultChar     = ntm.ntmTm.tmDefaultChar;
-    fd->dfBreakChar       = ntm.ntmTm.tmBreakChar;
-    fd->dfWidthBytes      = 0;
-    fd->dfDevice          = 0;
-    fd->dfFace            = FIELD_OFFSET( struct fontdir, szFaceName );
-    fd->dfReserved        = 0;
-    WideCharToMultiByte( CP_ACP, 0, elf.elfLogFont.lfFaceName, -1, fd->szFaceName, LF_FACESIZE, NULL, NULL );
-
-    return TRUE;
-}
-
-#define NE_FFLAGS_LIBMODULE     0x8000
-#define NE_OSFLAGS_WINDOWS      0x02
-
-static const char dos_string[0x40] = "This is a TrueType resource file";
-static const char FONTRES[] = {'F','O','N','T','R','E','S',':'};
-
-#include <pshpack2.h>
-
-struct ne_typeinfo
-{
-    WORD type_id;
-    WORD count;
-    DWORD res;
-};
-
-struct ne_nameinfo
-{
-    WORD off;
-    WORD len;
-    WORD flags;
-    WORD id;
-    DWORD res;
-};
-
-struct rsrc_tab
-{
-    WORD align;
-    struct ne_typeinfo fontdir_type;
-    struct ne_nameinfo fontdir_name;
-    struct ne_typeinfo scalable_type;
-    struct ne_nameinfo scalable_name;
-    WORD end_of_rsrc;
-    BYTE fontdir_res_name[8];
-};
-
-#include <poppack.h>
-
-static BOOL create_fot( const WCHAR *resource, const WCHAR *font_file, const struct fontdir *fontdir )
-{
-    BOOL ret = FALSE;
-    HANDLE file;
-    DWORD size, written;
-    BYTE *ptr, *start;
-    BYTE import_name_len, res_name_len, non_res_name_len, font_file_len;
-    char *font_fileA, *last_part, *ext;
-    IMAGE_DOS_HEADER dos;
-    IMAGE_OS2_HEADER ne =
-    {
-        IMAGE_OS2_SIGNATURE, 5, 1, 0, 0, 0, NE_FFLAGS_LIBMODULE, 0,
-        0, 0, 0, 0, 0, 0,
-        0, sizeof(ne), sizeof(ne), 0, 0, 0, 0,
-        0, 4, 2, NE_OSFLAGS_WINDOWS, 0, 0, 0, 0, 0x300
-    };
-    struct rsrc_tab rsrc_tab =
-    {
-        4,
-        { 0x8007, 1, 0 },
-        { 0, 0, 0x0c50, 0x2c, 0 },
-        { 0x80cc, 1, 0 },
-        { 0, 0, 0x0c50, 0x8001, 0 },
-        0,
-        { 7,'F','O','N','T','D','I','R'}
-    };
-
-    memset( &dos, 0, sizeof(dos) );
-    dos.e_magic = IMAGE_DOS_SIGNATURE;
-    dos.e_lfanew = sizeof(dos) + sizeof(dos_string);
-
-    /* import name is last part\0, resident name is last part without extension
-       non-resident name is "FONTRES:" + lfFaceName */
-
-    font_file_len = WideCharToMultiByte( CP_ACP, 0, font_file, -1, NULL, 0, NULL, NULL );
-    font_fileA = HeapAlloc( GetProcessHeap(), 0, font_file_len );
-    WideCharToMultiByte( CP_ACP, 0, font_file, -1, font_fileA, font_file_len, NULL, NULL );
-
-    last_part = strrchr( font_fileA, '\\' );
-    if (last_part) last_part++;
-    else last_part = font_fileA;
-    import_name_len = strlen( last_part ) + 1;
-
-    ext = strchr( last_part, '.' );
-    if (ext) res_name_len = ext - last_part;
-    else res_name_len = import_name_len - 1;
-
-    non_res_name_len = sizeof( FONTRES ) + strlen( fontdir->szFaceName );
-
-    ne.ne_cbnrestab = 1 + non_res_name_len + 2 + 1; /* len + string + (WORD) ord_num + 1 byte eod */
-    ne.ne_restab = ne.ne_rsrctab + sizeof(rsrc_tab);
-    ne.ne_modtab = ne.ne_imptab = ne.ne_restab + 1 + res_name_len + 2 + 3; /* len + string + (WORD) ord_num + 3 bytes eod */
-    ne.ne_enttab = ne.ne_imptab + 1 + import_name_len; /* len + string */
-    ne.ne_cbenttab = 2;
-    ne.ne_nrestab = ne.ne_enttab + ne.ne_cbenttab + 2 + dos.e_lfanew; /* there are 2 bytes of 0 after entry tab */
-
-    rsrc_tab.scalable_name.off = (ne.ne_nrestab + ne.ne_cbnrestab + 0xf) >> 4;
-    rsrc_tab.scalable_name.len = (font_file_len + 0xf) >> 4;
-    rsrc_tab.fontdir_name.off  = rsrc_tab.scalable_name.off + rsrc_tab.scalable_name.len;
-    rsrc_tab.fontdir_name.len  = (fontdir->dfSize + 0xf) >> 4;
-
-    size = (rsrc_tab.fontdir_name.off + rsrc_tab.fontdir_name.len) << 4;
-    start = ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
-
-    if (!ptr)
-    {
-        HeapFree( GetProcessHeap(), 0, font_fileA );
-        return FALSE;
-    }
-
-    memcpy( ptr, &dos, sizeof(dos) );
-    memcpy( ptr + sizeof(dos), dos_string, sizeof(dos_string) );
-    memcpy( ptr + dos.e_lfanew, &ne, sizeof(ne) );
-
-    ptr = start + dos.e_lfanew + ne.ne_rsrctab;
-    memcpy( ptr, &rsrc_tab, sizeof(rsrc_tab) );
-
-    ptr = start + dos.e_lfanew + ne.ne_restab;
-    *ptr++ = res_name_len;
-    memcpy( ptr, last_part, res_name_len );
-
-    ptr = start + dos.e_lfanew + ne.ne_imptab;
-    *ptr++ = import_name_len;
-    memcpy( ptr, last_part, import_name_len );
-
-    ptr = start + ne.ne_nrestab;
-    *ptr++ = non_res_name_len;
-    memcpy( ptr, FONTRES, sizeof(FONTRES) );
-    memcpy( ptr + sizeof(FONTRES), fontdir->szFaceName, strlen( fontdir->szFaceName ) );
-
-    ptr = start + (rsrc_tab.scalable_name.off << 4);
-    memcpy( ptr, font_fileA, font_file_len );
-
-    ptr = start + (rsrc_tab.fontdir_name.off << 4);
-    memcpy( ptr, fontdir, fontdir->dfSize );
-
-    file = CreateFileW( resource, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL );
-    if (file != INVALID_HANDLE_VALUE)
-    {
-        if (WriteFile( file, start, size, &written, NULL ) && written == size)
-            ret = TRUE;
-        CloseHandle( file );
-    }
-
-    HeapFree( GetProcessHeap(), 0, start );
-    HeapFree( GetProcessHeap(), 0, font_fileA );
-
-    return ret;
-}
-
-/*************************************************************
- * freetype_CreateScalableFontResource
- *
- */
-static BOOL CDECL freetype_CreateScalableFontResource( DWORD hidden, LPCWSTR resource,
-                                                       LPCWSTR font_file, LPCWSTR font_path )
-{
-    WCHAR *filename = get_ttf_file_name( font_file, font_path );
-    struct fontdir fontdir;
-    BOOL ret = FALSE;
-
-    if (!filename || !get_fontdir( filename, &fontdir ))
-        SetLastError( ERROR_INVALID_PARAMETER );
-    else
-    {
-        if (hidden) fontdir.dfType |= 0x80;
-        ret = create_fot( resource, font_file, &fontdir );
-    }
-
-    HeapFree( GetProcessHeap(), 0, filename );
-    return ret;
-}
-
 static inline BOOL is_dbcs_ansi_cp(UINT ansi_cp)
 {
     return ( ansi_cp == 932       /* CP932 for Japanese */
@@ -4311,7 +4015,10 @@ static DWORD get_ttc_offset( FT_Face ft_face, UINT face_index )
     return GET_BE_DWORD( offset );
 }
 
-static BOOL load_font( struct gdi_font *gdi_font )
+/*************************************************************
+ * freetype_load_font
+ */
+static BOOL CDECL freetype_load_font( struct gdi_font *gdi_font )
 {
     GdiFont *font;
     INT width = 0, height;
@@ -4765,7 +4472,7 @@ found_face:
     }
     TRACE("font scale y: %f\n", gdi_font->scale_y);
 
-    if (!load_font( gdi_font ))
+    if (!freetype_load_font( gdi_font ))
     {
         free_gdi_font( gdi_font );
         return NULL;
@@ -4954,7 +4661,7 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
     gdi_font->ntmFlags = face->ntmFlags;
     set_gdi_font_names( gdi_font, family_name, face->style_name, face->full_name );
 
-    if (!load_font( gdi_font ))
+    if (!freetype_load_font( gdi_font ))
     {
         free_gdi_font(gdi_font);
         return;
@@ -6890,7 +6597,7 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
     child_font->scale_y = gdi_font->scale_y;
     set_gdi_font_names( child_font, child_face->family->family_name,
                         child_face->style_name, child_face->full_name );
-    if (!load_font( child_font ))
+    if (!freetype_load_font( child_font ))
     {
         free_gdi_font(child_font);
         return FALSE;
@@ -7283,10 +6990,10 @@ static const struct font_backend_funcs font_funcs =
     freetype_GetCharWidthInfo,
     freetype_GetFontUnicodeRanges,
     freetype_SelectFont,
-    freetype_CreateScalableFontResource,
     freetype_add_font,
     freetype_add_mem_font,
     freetype_remove_font,
+    freetype_load_font,
     freetype_get_font_data,
     freetype_get_glyph_index,
     freetype_get_default_glyph,
