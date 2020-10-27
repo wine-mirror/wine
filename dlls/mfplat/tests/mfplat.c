@@ -1818,6 +1818,7 @@ static void test_system_memory_buffer(void)
     HRESULT hr;
     DWORD length, max;
     BYTE *data, *data2;
+    IUnknown *unk;
 
     hr = MFCreateMemoryBuffer(1024, NULL);
     ok(hr == E_INVALIDARG || hr == E_POINTER, "got 0x%08x\n", hr);
@@ -1835,6 +1836,9 @@ static void test_system_memory_buffer(void)
 
     hr = MFCreateMemoryBuffer(1024, &buffer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFGetService, (void **)&unk);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaBuffer_GetMaxLength(buffer, NULL);
     ok(hr == E_INVALIDARG || hr == E_POINTER, "got 0x%08x\n", hr);
@@ -5155,6 +5159,7 @@ static void test_MFCreate2DMediaBuffer(void)
     IMF2DBuffer *_2dbuffer;
     IMFMediaBuffer *buffer;
     int i, pitch, pitch2;
+    IUnknown *unk;
     HRESULT hr;
     BOOL ret;
 
@@ -5176,6 +5181,10 @@ static void test_MFCreate2DMediaBuffer(void)
 
     hr = pMFCreate2DMediaBuffer(2, 3, MAKEFOURCC('N','V','1','2'), FALSE, &buffer);
     ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFGetService, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
 
     /* Full backing buffer size, with 64 bytes per row alignment.  */
     hr = IMFMediaBuffer_GetMaxLength(buffer, &max_length);
@@ -5405,6 +5414,7 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     HRESULT hr;
     IMFMediaType *media_type;
     unsigned int i;
+    IUnknown *unk;
 
     if (!pMFCreateMediaBufferFromMediaType)
     {
@@ -5436,6 +5446,9 @@ static void test_MFCreateMediaBufferFromMediaType(void)
         ok(hr == S_OK || broken(FAILED(hr)) /* Win8 */, "Unexpected hr %#x.\n", hr);
         if (FAILED(hr))
             break;
+
+        hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFGetService, (void **)&unk);
+        ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
 
         hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
         ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);

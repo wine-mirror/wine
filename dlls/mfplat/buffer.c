@@ -31,6 +31,7 @@ struct memory_buffer
 {
     IMFMediaBuffer IMFMediaBuffer_iface;
     IMF2DBuffer2 IMF2DBuffer2_iface;
+    IMFGetService IMFGetService_iface;
     LONG refcount;
 
     BYTE *data;
@@ -86,6 +87,11 @@ static inline struct memory_buffer *impl_from_IMFMediaBuffer(IMFMediaBuffer *ifa
 static struct memory_buffer *impl_from_IMF2DBuffer2(IMF2DBuffer2 *iface)
 {
     return CONTAINING_RECORD(iface, struct memory_buffer, IMF2DBuffer2_iface);
+}
+
+static struct memory_buffer *impl_from_IMFGetService(IMFGetService *iface)
+{
+    return CONTAINING_RECORD(iface, struct memory_buffer, IMFGetService_iface);
 }
 
 static inline struct sample *impl_from_IMFSample(IMFSample *iface)
@@ -239,6 +245,10 @@ static HRESULT WINAPI memory_1d_2d_buffer_QueryInterface(IMFMediaBuffer *iface, 
             IsEqualIID(riid, &IID_IMF2DBuffer))
     {
         *out = &buffer->IMF2DBuffer2_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFGetService))
+    {
+        *out = &buffer->IMFGetService_iface;
     }
     else
     {
@@ -511,6 +521,39 @@ static const IMF2DBuffer2Vtbl memory_2d_buffer_vtbl =
     memory_2d_buffer_Copy2DTo,
 };
 
+static HRESULT WINAPI memory_2d_buffer_gs_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
+{
+    struct memory_buffer *buffer = impl_from_IMFGetService(iface);
+    return IMFMediaBuffer_QueryInterface(&buffer->IMFMediaBuffer_iface, riid, obj);
+}
+
+static ULONG WINAPI memory_2d_buffer_gs_AddRef(IMFGetService *iface)
+{
+    struct memory_buffer *buffer = impl_from_IMFGetService(iface);
+    return IMFMediaBuffer_AddRef(&buffer->IMFMediaBuffer_iface);
+}
+
+static ULONG WINAPI memory_2d_buffer_gs_Release(IMFGetService *iface)
+{
+    struct memory_buffer *buffer = impl_from_IMFGetService(iface);
+    return IMFMediaBuffer_Release(&buffer->IMFMediaBuffer_iface);
+}
+
+static HRESULT WINAPI memory_2d_buffer_gs_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    return E_NOTIMPL;
+}
+
+static const IMFGetServiceVtbl memory_2d_buffer_gs_vtbl =
+{
+    memory_2d_buffer_gs_QueryInterface,
+    memory_2d_buffer_gs_AddRef,
+    memory_2d_buffer_gs_Release,
+    memory_2d_buffer_gs_GetService,
+};
+
 static HRESULT memory_buffer_init(struct memory_buffer *buffer, DWORD max_length, DWORD alignment,
         const IMFMediaBufferVtbl *vtbl)
 {
@@ -620,6 +663,7 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
     }
 
     object->IMF2DBuffer2_iface.lpVtbl = &memory_2d_buffer_vtbl;
+    object->IMFGetService_iface.lpVtbl = &memory_2d_buffer_gs_vtbl;
     object->_2d.plane_size = plane_size;
     object->_2d.width = stride;
     object->_2d.height = height;
