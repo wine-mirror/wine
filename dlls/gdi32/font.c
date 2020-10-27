@@ -5375,6 +5375,28 @@ static BOOL remove_font_resource( LPCWSTR file, DWORD flags )
     return ret;
 }
 
+void load_system_bitmap_fonts(void)
+{
+    static const WCHAR keyW[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s',0};
+    static const WCHAR fontsW[] = {'F','O','N','T','S','.','F','O','N',0};
+    static const WCHAR oemfontW[] = {'O','E','M','F','O','N','T','.','F','O','N',0};
+    static const WCHAR fixedfonW[] = {'F','I','X','E','D','F','O','N','.','F','O','N',0};
+    static const WCHAR * const fonts[] = { fontsW, oemfontW, fixedfonW };
+
+    HKEY hkey;
+    WCHAR data[MAX_PATH];
+    DWORD i, dlen, type;
+
+    if (RegOpenKeyW( HKEY_CURRENT_CONFIG, keyW, &hkey )) return;
+    for (i = 0; i < ARRAY_SIZE(fonts); i++)
+    {
+        dlen = sizeof(data);
+        if (!RegQueryValueExW( hkey, fonts[i], 0, &type, (BYTE *)data, &dlen ) && type == REG_SZ)
+            add_system_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
+    }
+    RegCloseKey( hkey );
+}
+
 /***********************************************************************
  *           AddFontResourceExW    (GDI32.@)
  */

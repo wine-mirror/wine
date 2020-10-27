@@ -340,18 +340,6 @@ static const WCHAR winnt_font_reg_key[] = {'S','o','f','t','w','a','r','e','\\',
                                            'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                            'F','o','n','t','s','\0'};
 
-static const WCHAR system_fonts_reg_key[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
-static const WCHAR FixedSys_Value[] = {'F','I','X','E','D','F','O','N','.','F','O','N','\0'};
-static const WCHAR System_Value[] = {'F','O','N','T','S','.','F','O','N','\0'};
-static const WCHAR OEMFont_Value[] = {'O','E','M','F','O','N','T','.','F','O','N','\0'};
-
-static const WCHAR * const SystemFontValues[] = {
-    System_Value,
-    OEMFont_Value,
-    FixedSys_Value,
-    NULL
-};
-
 static const WCHAR external_fonts_reg_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
                                                'F','o','n','t','s','\\','E','x','t','e','r','n','a','l',' ','F','o','n','t','s','\0'};
 
@@ -2861,30 +2849,6 @@ static void load_mac_fonts(void)
 
 #endif
 
-static void load_system_fonts(void)
-{
-    HKEY hkey;
-    WCHAR data[MAX_PATH], pathW[MAX_PATH];
-    const WCHAR * const *value;
-    DWORD dlen, type;
-
-    if(RegOpenKeyW(HKEY_CURRENT_CONFIG, system_fonts_reg_key, &hkey) == ERROR_SUCCESS) {
-        for(value = SystemFontValues; *value; value++) { 
-            dlen = sizeof(data);
-            if(RegQueryValueExW(hkey, *value, 0, &type, (void*)data, &dlen) == ERROR_SUCCESS &&
-               type == REG_SZ) {
-                get_fonts_win_dir_path( data, pathW );
-                if (!freetype_add_font( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE ))
-                {
-                    get_fonts_data_dir_path( data, pathW );
-                    freetype_add_font( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
-                }
-            }
-        }
-        RegCloseKey(hkey);
-    }
-}
-
 static WCHAR *get_full_path_name(const WCHAR *name)
 {
     WCHAR *full_path;
@@ -3456,8 +3420,7 @@ static void init_font_list(void)
 
     delete_external_font_keys();
 
-    /* load the system bitmap fonts */
-    load_system_fonts();
+    load_system_bitmap_fonts();
 
     /* load in the fonts from %WINDOWSDIR%\\Fonts first of all */
     GetWindowsDirectoryW(path, ARRAY_SIZE(path));
