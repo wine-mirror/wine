@@ -389,8 +389,8 @@ struct font_backend_funcs
     void  (CDECL *destroy_font)( struct gdi_font *font );
 };
 
-extern void get_font_dir( WCHAR *path ) DECLSPEC_HIDDEN;
 extern void load_system_bitmap_fonts(void) DECLSPEC_HIDDEN;
+extern void load_file_system_fonts(void) DECLSPEC_HIDDEN;
 extern void load_registry_fonts(void) DECLSPEC_HIDDEN;
 
 extern struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_T data_size ) DECLSPEC_HIDDEN;

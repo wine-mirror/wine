@@ -359,34 +359,24 @@ CRITICAL_SECTION font_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 #define WINE_FONT_DIR "fonts"
 #endif
 
-void get_font_dir( WCHAR *path )
+static void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
 {
-    static const WCHAR slashW[] = {'\\',0};
-    static const WCHAR fontsW[] = {'\\','f','o','n','t','s',0};
+    static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\\',0};
     static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
     static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
 
     if (GetEnvironmentVariableW( winedatadirW, path, MAX_PATH ))
     {
-        const char fontdir[] = WINE_FONT_DIR;
-        strcatW( path, slashW );
+        const char fontdir[] = "\\" WINE_FONT_DIR "\\";
         MultiByteToWideChar( CP_ACP, 0, fontdir, -1, path + strlenW(path), MAX_PATH - strlenW(path) );
     }
     else if (GetEnvironmentVariableW( winebuilddirW, path, MAX_PATH ))
     {
         strcatW( path, fontsW );
     }
+    strcatW( path, file );
     if (path[5] == ':') memmove( path, path + 4, (strlenW(path) - 3) * sizeof(WCHAR) );
     else path[1] = '\\';  /* change \??\ to \\?\ */
-}
-
-static void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
-{
-    static const WCHAR slashW[] = {'\\',0};
-
-    get_font_dir( path );
-    strcatW( path, slashW );
-    strcatW( path, file );
 }
 
 static void get_fonts_win_dir_path( const WCHAR *file, WCHAR *path )
@@ -5400,6 +5390,56 @@ void load_system_bitmap_fonts(void)
             add_system_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
     }
     RegCloseKey( hkey );
+}
+
+static void load_directory_fonts( WCHAR *path, UINT flags )
+{
+    HANDLE handle;
+    WIN32_FIND_DATAW data;
+    WCHAR *p;
+
+    p = path + strlenW(path) - 1;
+    TRACE( "loading fonts from %s\n", debugstr_w(path) );
+    handle = FindFirstFileW( path, &data );
+    if (handle == INVALID_HANDLE_VALUE) return;
+    do
+    {
+        if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+        strcpyW( p, data.cFileName );
+        font_funcs->add_font( path, flags );
+    } while (FindNextFileW( handle, &data ));
+    FindClose( handle );
+}
+
+void load_file_system_fonts(void)
+{
+    static const WCHAR pathW[] = {'P','a','t','h',0};
+    static const WCHAR slashstarW[] = {'\\','*',0};
+    static const WCHAR starW[] = {'*',0};
+    WCHAR *ptr, *next, path[MAX_PATH], value[1024];
+    DWORD len = ARRAY_SIZE(value);
+
+    /* Windows directory */
+    get_fonts_win_dir_path( starW, path );
+    load_directory_fonts( path, ADDFONT_ADD_TO_CACHE );
+
+    /* Wine data directory */
+    get_fonts_data_dir_path( starW, path );
+    load_directory_fonts( path, ADDFONT_ADD_TO_CACHE | ADDFONT_EXTERNAL_FONT );
+
+    /* custom paths */
+    /* @@ Wine registry key: HKCU\Software\Wine\Fonts */
+    if (!RegQueryValueExW( wine_fonts_key, pathW, NULL, NULL, (BYTE *)value, &len ))
+    {
+        for (ptr = value; ptr; ptr = next)
+        {
+            if ((next = strchrW( ptr, ';' ))) *next++ = 0;
+            if (next && next - ptr < 2) continue;
+            lstrcpynW( path, ptr, MAX_PATH - 2 );
+            strcatW( path, slashstarW );
+            load_directory_fonts( path, ADDFONT_ADD_TO_CACHE | ADDFONT_EXTERNAL_FONT );
+        }
+    }
 }
 
 void load_registry_fonts(void)

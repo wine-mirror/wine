@@ -329,7 +329,6 @@ static struct list font_list = LIST_INIT(font_list);
 
 static const struct font_backend_funcs font_funcs;
 
-static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\0'};
 static const WCHAR win9x_font_reg_key[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
                                            'W','i','n','d','o','w','s','\\',
                                            'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
@@ -2545,6 +2544,7 @@ skip_internal:
     list_add_tail(&system_links, &system_font_link->entry);
 }
 
+#ifdef __ANDROID__
 static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
 {
     DIR *dir;
@@ -2585,16 +2585,7 @@ static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
     closedir(dir);
     return TRUE;
 }
-
-static void read_font_dir( const WCHAR *dirname, BOOL external_fonts )
-{
-    char *unixname = wine_get_unix_file_name( dirname );
-    if (unixname)
-    {
-        ReadFontDir( unixname, external_fonts );
-        HeapFree( GetProcessHeap(), 0, unixname );
-    }
-}
+#endif
 
 #ifdef SONAME_LIBFONTCONFIG
 
@@ -3407,24 +3398,9 @@ sym_not_found:
 
 static void init_font_list(void)
 {
-    static const WCHAR pathW[] = {'P','a','t','h',0};
-    HKEY hkey;
-    WCHAR path[MAX_PATH];
-    char *unixname;
-
     delete_external_font_keys();
-
     load_system_bitmap_fonts();
-
-    /* load in the fonts from %WINDOWSDIR%\\Fonts first of all */
-    GetWindowsDirectoryW(path, ARRAY_SIZE(path));
-    strcatW(path, fontsW);
-    read_font_dir( path, FALSE );
-
-    /* load the wine fonts */
-    get_font_dir( path );
-    read_font_dir( path, TRUE );
-
+    load_file_system_fonts();
     load_registry_fonts();
 
 #ifdef SONAME_LIBFONTCONFIG
@@ -3434,49 +3410,6 @@ static void init_font_list(void)
 #elif defined(__ANDROID__)
     ReadFontDir("/system/fonts", TRUE);
 #endif
-
-    /* then look in any directories that we've specified in the config file */
-    /* @@ Wine registry key: HKCU\Software\Wine\Fonts */
-    if(RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts", &hkey) == ERROR_SUCCESS)
-    {
-        DWORD len;
-        LPWSTR valueW;
-        LPSTR valueA, ptr;
-
-        if (RegQueryValueExW( hkey, pathW, NULL, NULL, NULL, &len ) == ERROR_SUCCESS)
-        {
-            len += sizeof(WCHAR);
-            valueW = HeapAlloc( GetProcessHeap(), 0, len );
-            if (RegQueryValueExW( hkey, pathW, NULL, NULL, (LPBYTE)valueW, &len ) == ERROR_SUCCESS)
-            {
-                len = WideCharToMultiByte( CP_UNIXCP, 0, valueW, -1, NULL, 0, NULL, NULL );
-                valueA = HeapAlloc( GetProcessHeap(), 0, len );
-                WideCharToMultiByte( CP_UNIXCP, 0, valueW, -1, valueA, len, NULL, NULL );
-                TRACE( "got font path %s\n", debugstr_a(valueA) );
-                ptr = valueA;
-                while (ptr)
-                {
-                    const char* home;
-                    LPSTR next = strchr( ptr, ':' );
-                    if (next) *next++ = 0;
-                    if (ptr[0] == '~' && ptr[1] == '/' && (home = getenv( "HOME" )) &&
-                        (unixname = HeapAlloc( GetProcessHeap(), 0, strlen(ptr) + strlen(home) )))
-                    {
-                        strcpy( unixname, home );
-                        strcat( unixname, ptr + 1 );
-                        ReadFontDir( unixname, TRUE );
-                        HeapFree( GetProcessHeap(), 0, unixname );
-                    }
-                    else
-                        ReadFontDir( ptr, TRUE );
-                    ptr = next;
-                }
-                HeapFree( GetProcessHeap(), 0, valueA );
-            }
-            HeapFree( GetProcessHeap(), 0, valueW );
-        }
-        RegCloseKey(hkey);
-    }
 }
 
 static BOOL move_to_front(const WCHAR *name)
