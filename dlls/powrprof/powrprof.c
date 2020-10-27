@@ -45,20 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(powrprof);
  * implementing these functions is going to have to wait until somebody can
  * cobble together some sane test input. */
 
-static const WCHAR szPowerCfgSubKey[] = { 'S', 'o', 'f', 't', 'w', 'a', 'r', 'e',
-	'\\', 'M', 'i', 'c', 'r', 'o', 's', 'o', 'f', 't', '\\', 'W', 'i',
-	'n', 'd', 'o', 'w', 's', '\\', 'C', 'u', 'r', 'r', 'e', 'n', 't',
-	'V', 'e', 'r', 's', 'i', 'o', 'n', '\\', 'C', 'o', 'n', 't', 'r',
-	'o', 'l', 's', ' ', 'F', 'o', 'l', 'd', 'e', 'r', '\\', 'P', 'o',
-	'w', 'e', 'r', 'C', 'f', 'g', 0 };
-static const WCHAR szSemaphoreName[] = { 'P', 'o', 'w', 'e', 'r', 'P', 'r', 'o',
-	'f', 'i', 'l', 'e', 'R', 'e', 'g', 'i', 's', 't', 'r', 'y', 'S',
-	'e', 'm', 'a', 'p', 'h', 'o', 'r', 'e', 0 };
-static const WCHAR szDiskMax[] = { 'D', 'i', 's', 'k', 'S', 'p', 'i', 'n', 'd',
-	'o', 'w', 'n', 'M', 'a', 'x', 0 };
-static const WCHAR szDiskMin[] = { 'D', 'i', 's', 'k', 'S', 'p', 'i', 'n', 'd',
-	'o', 'w', 'n', 'M', 'i', 'n', 0 };
-static const WCHAR szLastID[] = { 'L', 'a', 's', 't', 'I', 'D', 0 };
+static const WCHAR szPowerCfgSubKey[] = L"Software\\Microsoft\\Windows\\CurrentVersion\\Controls Folder\\PowerCfg";
 static HANDLE PPRegSemaphore = NULL;
 
 NTSTATUS WINAPI CallNtPowerInformation(
@@ -172,7 +159,7 @@ BOOLEAN WINAPI GetPwrDiskSpindownRange(PUINT RangeMax, PUINT RangeMin)
       return TRUE;
    }
 
-   r = RegQueryValueExW(hKey, szDiskMax, 0, 0, lpValue, &cbValue);
+   r = RegQueryValueExW(hKey, L"DiskSpindownMax", 0, 0, lpValue, &cbValue);
    if (r != ERROR_SUCCESS) {
       TRACE("Couldn't open DiskSpinDownMax: %d\n", r);
       TRACE("Using default: 3600\n");
@@ -183,7 +170,7 @@ BOOLEAN WINAPI GetPwrDiskSpindownRange(PUINT RangeMax, PUINT RangeMin)
 
    cbValue = sizeof(lpValue);
 
-   r = RegQueryValueExW(hKey, szDiskMin, 0, 0, lpValue, &cbValue);
+   r = RegQueryValueExW(hKey, L"DiskSpindownMin", 0, 0, lpValue, &cbValue);
    if (r != ERROR_SUCCESS) {
       TRACE("Couldn't open DiskSpinDownMin: %d\n", r);
       TRACE("Using default: 3\n");
@@ -360,14 +347,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
          } else {
             BYTE lpValue[40];
             DWORD cbValue = sizeof(lpValue);
-            r = RegQueryValueExW(hKey, szLastID, 0, 0, lpValue, &cbValue);
+            r = RegQueryValueExW(hKey, L"LastID", 0, 0, lpValue, &cbValue);
             if (r != ERROR_SUCCESS) {
                TRACE("Couldn't open registry entry HKLM\\%s\\LastID, using some sane(?) defaults\n", debugstr_w(szPowerCfgSubKey));
             }
             RegCloseKey(hKey);
          }
 
-         PPRegSemaphore = CreateSemaphoreW(NULL, 1, 1, szSemaphoreName);
+         PPRegSemaphore = CreateSemaphoreW(NULL, 1, 1, L"PowerProfileRegistrySemaphore");
          if (PPRegSemaphore == NULL) {
             ERR("Couldn't create Semaphore: %d\n", GetLastError());
             return FALSE;
