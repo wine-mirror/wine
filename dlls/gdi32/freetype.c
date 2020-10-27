@@ -768,10 +768,6 @@ static char **expand_mac_font(const char *path)
 
 #endif /* HAVE_CARBON_CARBON_H */
 
-static inline BOOL is_win9x(void)
-{
-    return GetVersion() & 0x80000000;
-}
 /* 
    This function builds an FT_Fixed from a double. It fails if the absolute
    value of the float number is greater than 32768.
@@ -3411,10 +3407,8 @@ sym_not_found:
 
 static void init_font_list(void)
 {
-    static const WCHAR dot_fonW[] = {'.','f','o','n','\0'};
     static const WCHAR pathW[] = {'P','a','t','h',0};
     HKEY hkey;
-    DWORD valuelen, datalen, i = 0, type, dlen, vlen;
     WCHAR path[MAX_PATH];
     char *unixname;
 
@@ -3431,52 +3425,7 @@ static void init_font_list(void)
     get_font_dir( path );
     read_font_dir( path, TRUE );
 
-    /* now look under HKLM\Software\Microsoft\Windows[ NT]\CurrentVersion\Fonts
-       for any fonts not installed in %WINDOWSDIR%\Fonts.  They will have their
-       full path as the entry.  Also look for any .fon fonts, since ReadFontDir
-       will skip these. */
-    if(RegOpenKeyW(HKEY_LOCAL_MACHINE,
-                   is_win9x() ? win9x_font_reg_key : winnt_font_reg_key,
-                   &hkey) == ERROR_SUCCESS)
-    {
-        LPWSTR data, valueW;
-        RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                         &valuelen, &datalen, NULL, NULL);
-
-        valuelen++; /* returned value doesn't include room for '\0' */
-        valueW = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(WCHAR));
-        data = HeapAlloc(GetProcessHeap(), 0, datalen * sizeof(WCHAR));
-        if (valueW && data)
-        {
-            dlen = datalen * sizeof(WCHAR);
-            vlen = valuelen;
-            while(RegEnumValueW(hkey, i++, valueW, &vlen, NULL, &type, (LPBYTE)data,
-                                &dlen) == ERROR_SUCCESS)
-            {
-                if(data[0] && (data[1] == ':'))
-                {
-                    freetype_add_font( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE);
-                }
-                else if(dlen / 2 >= 6 && !strcmpiW(data + dlen / 2 - 5, dot_fonW))
-                {
-                    WCHAR pathW[MAX_PATH];
-
-                    get_fonts_win_dir_path( data, pathW );
-                    if (!freetype_add_font( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE ))
-                    {
-                        get_fonts_data_dir_path( data, pathW );
-                        freetype_add_font( pathW, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
-                    }
-                }
-                /* reset dlen and vlen */
-                dlen = datalen;
-                vlen = valuelen;
-            }
-        }
-        HeapFree(GetProcessHeap(), 0, data);
-        HeapFree(GetProcessHeap(), 0, valueW);
-        RegCloseKey(hkey);
-    }
+    load_registry_fonts();
 
 #ifdef SONAME_LIBFONTCONFIG
     load_fontconfig_fonts();

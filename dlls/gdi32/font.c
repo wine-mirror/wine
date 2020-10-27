@@ -109,6 +109,11 @@ static inline INT INTERNAL_YWSTODS(DC *dc, INT height)
     return pt[1].y - pt[0].y;
 }
 
+static inline BOOL is_win9x(void)
+{
+    return GetVersion() & 0x80000000;
+}
+
 static inline WCHAR *strdupW( const WCHAR *p )
 {
     WCHAR *ret;
@@ -375,7 +380,7 @@ void get_font_dir( WCHAR *path )
     else path[1] = '\\';  /* change \??\ to \\?\ */
 }
 
-void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
+static void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
 {
     static const WCHAR slashW[] = {'\\',0};
 
@@ -384,7 +389,7 @@ void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
     strcatW( path, file );
 }
 
-void get_fonts_win_dir_path( const WCHAR *file, WCHAR *path )
+static void get_fonts_win_dir_path( const WCHAR *file, WCHAR *path )
 {
     static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\\',0};
 
@@ -5393,6 +5398,46 @@ void load_system_bitmap_fonts(void)
         dlen = sizeof(data);
         if (!RegQueryValueExW( hkey, fonts[i], 0, &type, (BYTE *)data, &dlen ) && type == REG_SZ)
             add_system_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
+    }
+    RegCloseKey( hkey );
+}
+
+void load_registry_fonts(void)
+{
+    static const WCHAR dot_fonW[] = {'.','f','o','n',0};
+    static const WCHAR win9x_key[] = {'S','o','f','t','w','a','r','e','\\',
+                                      'M','i','c','r','o','s','o','f','t','\\',
+                                      'W','i','n','d','o','w','s','\\',
+                                      'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                      'F','o','n','t','s',0};
+    static const WCHAR winnt_key[] = {'S','o','f','t','w','a','r','e','\\',
+                                      'M','i','c','r','o','s','o','f','t','\\',
+                                      'W','i','n','d','o','w','s',' ','N','T','\\',
+                                      'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                      'F','o','n','t','s',0};
+    WCHAR value[MAX_PATH], data[MAX_PATH];
+    DWORD i = 0, type, dlen, vlen;
+    HKEY hkey;
+
+    /* Look under HKLM\Software\Microsoft\Windows[ NT]\CurrentVersion\Fonts
+       for any fonts not installed in %WINDOWSDIR%\Fonts.  They will have their
+       full path as the entry.  Also look for any .fon fonts, since ReadFontDir
+       will skip these. */
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, is_win9x() ? win9x_key : winnt_key, &hkey ))
+        return;
+
+    vlen = ARRAY_SIZE(value);
+    dlen = sizeof(data);
+    while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, (LPBYTE)data, &dlen ))
+    {
+        dlen /= sizeof(WCHAR);
+        if (data[0] && data[1] == ':')
+            add_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
+        else if (dlen >= 6 && !strcmpiW( data + dlen - 5, dot_fonW ))
+            add_system_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
+
+        vlen = ARRAY_SIZE(value);
+        dlen = sizeof(data);
     }
     RegCloseKey( hkey );
 }
