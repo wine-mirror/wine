@@ -388,7 +388,7 @@ static const IMFMediaStreamVtbl media_stream_vtbl =
    the user throws at us through gstreamer's caps negotiation. */
 static HRESULT media_stream_connect_to_sink(struct media_stream *stream)
 {
-    GstCaps *source_caps = gst_pad_get_current_caps(stream->their_src);
+    GstCaps *source_caps = gst_pad_query_caps(stream->their_src, NULL);
     const gchar *stream_type;
 
     if (!source_caps)
