@@ -242,7 +242,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate) DECLS
 void ME_Repaint(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_RewrapRepaint(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_UpdateRepaint(ME_TextEditor *editor, BOOL update_now) DECLSPEC_HIDDEN;
-void ME_EnsureVisible(ME_TextEditor *editor, ME_Cursor *pCursor) DECLSPEC_HIDDEN;
+void editor_ensure_visible( ME_TextEditor *editor, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
 void ME_InvalidateSelection(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 BOOL ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator) DECLSPEC_HIDDEN;
 int  ME_twips2pointsX(const ME_Context *c, int x) DECLSPEC_HIDDEN;

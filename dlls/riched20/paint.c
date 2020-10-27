@@ -117,7 +117,7 @@ void ME_UpdateRepaint(ME_TextEditor *editor, BOOL update_now)
     ME_UpdateScrollBar(editor);
 
   /* Ensure that the cursor is visible */
-  ME_EnsureVisible(editor, &editor->pCursors[0]);
+  editor_ensure_visible( editor, &editor->pCursors[0] );
 
   ITextHost_TxViewChange(editor->texthost, update_now);
 
@@ -1269,19 +1269,17 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
   }
 }
 
-void ME_EnsureVisible(ME_TextEditor *editor, ME_Cursor *pCursor)
+void editor_ensure_visible( ME_TextEditor *editor, ME_Cursor *cursor )
 {
-  ME_Run *pRun = &pCursor->pRun->member.run;
-  ME_DisplayItem *pRow = ME_FindItemBack(pCursor->pRun, diStartRow);
-  ME_DisplayItem *pPara = pCursor->pPara;
+  ME_Run *run = &cursor->pRun->member.run;
+  ME_Row *row = row_from_cursor( cursor );
+  ME_Paragraph *para = &cursor->pPara->member.para;
   int x, y, yheight;
 
-  assert(pRow);
-  assert(pPara);
 
   if (editor->styleFlags & ES_AUTOHSCROLL)
   {
-    x = pRun->pt.x + ME_PointFromChar(editor, pRun, pCursor->nOffset, TRUE);
+    x = run->pt.x + ME_PointFromChar( editor, run, cursor->nOffset, TRUE );
     if (x > editor->horz_si.nPos + editor->sizeWindow.cx)
       x = x + 1 - editor->sizeWindow.cx;
     else if (x > editor->horz_si.nPos)
@@ -1292,14 +1290,15 @@ void ME_EnsureVisible(ME_TextEditor *editor, ME_Cursor *pCursor)
       ME_HScrollAbs(editor, x);
       return;
     }
-  } else {
-    if (~editor->styleFlags & ES_AUTOVSCROLL)
-      return;
+  }
+  else
+  {
+    if (~editor->styleFlags & ES_AUTOVSCROLL) return;
     x = editor->horz_si.nPos;
   }
 
-  y = pPara->member.para.pt.y + pRow->member.row.pt.y;
-  yheight = pRow->member.row.nHeight;
+  y = para->pt.y + row->pt.y;
+  yheight = row->nHeight;
 
   if (y < editor->vert_si.nPos)
     ME_ScrollAbs(editor, x, y);

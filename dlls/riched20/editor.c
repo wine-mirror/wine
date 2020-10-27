@@ -4095,7 +4095,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return len;
   }
   case EM_SCROLLCARET:
-    ME_EnsureVisible(editor, &editor->pCursors[0]);
+    editor_ensure_visible( editor, &editor->pCursors[0] );
     return 0;
   case WM_SETFONT:
   {

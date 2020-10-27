@@ -1176,13 +1176,11 @@ void ME_MouseMove(ME_TextEditor *editor, int x, int y)
 
   if (editor->nSelectionType != stPosition &&
       memcmp(&editor->pCursors[1], &editor->pCursors[3], sizeof(ME_Cursor)))
-  {
       /* The scroll the cursor towards the other end, since it was the one
        * extended by ME_ExtendAnchorSelection */
-      ME_EnsureVisible(editor, &editor->pCursors[1]);
-  } else {
-      ME_EnsureVisible(editor, &editor->pCursors[0]);
-  }
+      editor_ensure_visible( editor, &editor->pCursors[1] );
+  else
+      editor_ensure_visible( editor, &editor->pCursors[0] );
 
   ME_InvalidateSelection(editor);
   update_caret(editor);
@@ -1520,7 +1518,7 @@ ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend, BOOL ctrl)
   ME_InvalidateSelection(editor);
   ME_Repaint(editor);
   hide_caret(editor);
-  ME_EnsureVisible(editor, &tmp_curs);
+  editor_ensure_visible( editor, &tmp_curs );
   update_caret(editor);
   ME_SendSelChange(editor);
   return success;
