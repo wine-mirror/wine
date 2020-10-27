@@ -836,7 +836,7 @@ static HRESULT BindFunction_call(script_ctx_t *ctx, FunctionInstance *func, IDis
 
     call_argc = function->argc + argc;
     if(call_argc) {
-        call_args = heap_alloc(function->argc * sizeof(*function->args));
+        call_args = heap_alloc(call_argc * sizeof(*call_args));
         if(!call_args)
             return E_OUTOFMEMORY;
 
