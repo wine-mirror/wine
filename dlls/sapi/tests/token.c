@@ -54,7 +54,6 @@ static void test_token_category(void)
     ISpObjectTokenCategory *cat;
     IEnumSpObjectTokens *enum_tokens;
     HRESULT hr;
-    WCHAR bogus[] = {'b','o','g','u','s',0};
     ULONG count;
 
     hr = CoCreateInstance( &CLSID_SpObjectTokenCategory, NULL, CLSCTX_INPROC_SERVER,
@@ -64,7 +63,7 @@ static void test_token_category(void)
     hr = ISpObjectTokenCategory_EnumTokens( cat, NULL, NULL, &enum_tokens );
     ok( hr == SPERR_UNINITIALIZED, "got %08x\n", hr );
 
-    hr = ISpObjectTokenCategory_SetId( cat, bogus, FALSE );
+    hr = ISpObjectTokenCategory_SetId( cat, L"bogus", FALSE );
     ok( hr == SPERR_INVALID_REGISTRY_KEY, "got %08x\n", hr );
 
     hr = ISpObjectTokenCategory_SetId( cat, SPCAT_VOICES, FALSE );
