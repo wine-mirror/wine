@@ -2739,21 +2739,16 @@ class VkRegistry(object):
 
     def _match_object_types(self):
         """ Matches each handle with the correct object type. """
-        for handle in self.handles:
-            if not handle.is_required() or handle.is_alias():
-                continue
-            for value in self.enums["VkObjectType"].values:
-                if value.comment == handle.name:
-                    handle.object_type = value.name
-                    break
-            else:
-                LOGGER.warning("No object type found for {}".format(handle.name))
+        # Use upper case comparison for simplicity.
+        object_types = {}
+        for value in self.enums["VkObjectType"].values:
+            object_name = "VK" + value.name[len("VK_OBJECT_TYPE"):].replace("_", "")
+            object_types[object_name] = value.name
 
         for handle in self.handles:
-            if not handle.is_required() or not handle.is_alias():
+            if not handle.is_required():
                 continue
-            # Use the object type of the alias
-            handle.object_type = handle.alias.object_type
+            handle.object_type = object_types.get(handle.name.upper())
             if not handle.object_type:
                 LOGGER.warning("No object type found for {}".format(handle.name))
 
