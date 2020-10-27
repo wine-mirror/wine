@@ -1044,37 +1044,53 @@ static void ME_ExtendAnchorSelection(ME_TextEditor *editor)
   {
       /* Extend the left side of selection */
       editor->pCursors[1] = tmp_cursor;
-      if (editor->nSelectionType == stWord)
-          ME_MoveCursorWords(editor, &editor->pCursors[1], -1);
-      else
+      switch (editor->nSelectionType)
       {
-          ME_DisplayItem *pItem;
-          ME_DIType searchType = ((editor->nSelectionType == stLine) ?
-                                  diStartRowOrParagraph:diParagraph);
-          pItem = ME_FindItemBack(editor->pCursors[1].pRun, searchType);
-          editor->pCursors[1].pRun = ME_FindItemFwd(pItem, diRun);
-          editor->pCursors[1].pPara = ME_GetParagraph(editor->pCursors[1].pRun);
+      case stWord:
+          ME_MoveCursorWords(editor, &editor->pCursors[1], -1);
+          break;
+
+      case stLine:
+      {
+          ME_Row *row = row_from_cursor( editor->pCursors + 1 );
+          row_first_cursor( row, editor->pCursors + 1 );
+          break;
+      }
+
+      case stParagraph:
+          editor->pCursors[1].pRun = run_get_di( para_first_run( &editor->pCursors[1].pPara->member.para ) );
           editor->pCursors[1].nOffset = 0;
+          break;
+
+      default:
+          break;
       }
   }
   else if (curOfs >= anchorEndOfs)
   {
       /* Extend the right side of selection */
       editor->pCursors[0] = tmp_cursor;
-      if (editor->nSelectionType == stWord)
-          ME_MoveCursorWords(editor, &editor->pCursors[0], +1);
-      else
+      switch (editor->nSelectionType)
       {
-          ME_DisplayItem *pItem;
-          ME_DIType searchType = ((editor->nSelectionType == stLine) ?
-                                  diStartRowOrParagraphOrEnd:diParagraphOrEnd);
-          pItem = ME_FindItemFwd(editor->pCursors[0].pRun, searchType);
-          if (pItem->type == diTextEnd)
-              editor->pCursors[0].pRun = ME_FindItemBack(pItem, diRun);
-          else
-              editor->pCursors[0].pRun = ME_FindItemFwd(pItem, diRun);
-          editor->pCursors[0].pPara = ME_GetParagraph(editor->pCursors[0].pRun);
-          editor->pCursors[0].nOffset = 0;
+      case stWord:
+          ME_MoveCursorWords( editor, &editor->pCursors[0], +1 );
+          break;
+
+      case stLine:
+      {
+          ME_Row *row = row_from_cursor( editor->pCursors );
+          row_end_cursor( row, editor->pCursors, TRUE );
+          break;
+      }
+
+      case stParagraph:
+          editor->pCursors[0].pRun = run_get_di( para_end_run( &editor->pCursors[0].pPara->member.para ) );
+          editor->pCursors[0].pPara = para_get_di( editor->pCursors[0].pRun->member.run.para );
+          editor->pCursors[0].nOffset = editor->pCursors[0].pRun->member.run.len;
+          break;
+
+      default:
+          break;
       }
   }
 }
