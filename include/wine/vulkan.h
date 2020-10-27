@@ -67,6 +67,8 @@
 #define VK_KHR_SWAPCHAIN_EXTENSION_NAME "VK_KHR_swapchain"
 #define VK_KHR_WIN32_SURFACE_SPEC_VERSION 6
 #define VK_KHR_WIN32_SURFACE_EXTENSION_NAME "VK_KHR_win32_surface"
+#define VK_EXT_DEBUG_REPORT_SPEC_VERSION 9
+#define VK_EXT_DEBUG_REPORT_EXTENSION_NAME "VK_EXT_debug_report"
 #define VK_NV_GLSL_SHADER_SPEC_VERSION 1
 #define VK_NV_GLSL_SHADER_EXTENSION_NAME "VK_NV_glsl_shader"
 #define VK_EXT_DEPTH_RANGE_UNRESTRICTED_SPEC_VERSION 1
@@ -413,6 +415,7 @@ VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkBuffer)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkBufferView)
 VK_DEFINE_HANDLE(VkCommandBuffer)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkCommandPool)
+VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkDebugReportCallbackEXT)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkDebugUtilsMessengerEXT)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkDescriptorPool)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkDescriptorSet)
@@ -1022,6 +1025,61 @@ typedef enum VkCullModeFlagBits
     VK_CULL_MODE_FRONT_AND_BACK = 0x00000003,
     VK_CULL_MODE_FLAG_BITS_MAX_ENUM = 0x7fffffff,
 } VkCullModeFlagBits;
+
+typedef enum VkDebugReportFlagBitsEXT
+{
+    VK_DEBUG_REPORT_INFORMATION_BIT_EXT = 0x00000001,
+    VK_DEBUG_REPORT_WARNING_BIT_EXT = 0x00000002,
+    VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT = 0x00000004,
+    VK_DEBUG_REPORT_ERROR_BIT_EXT = 0x00000008,
+    VK_DEBUG_REPORT_DEBUG_BIT_EXT = 0x00000010,
+    VK_DEBUG_REPORT_FLAG_BITS_EXT_MAX_ENUM = 0x7fffffff,
+} VkDebugReportFlagBitsEXT;
+
+typedef enum VkDebugReportObjectTypeEXT
+{
+    VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT = 0,
+    VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT = 1,
+    VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT = 2,
+    VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT = 3,
+    VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT = 4,
+    VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT = 5,
+    VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT = 6,
+    VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT = 7,
+    VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT = 8,
+    VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT = 9,
+    VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT = 10,
+    VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT = 11,
+    VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT = 12,
+    VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT = 13,
+    VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT = 14,
+    VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT = 15,
+    VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT = 16,
+    VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT = 17,
+    VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT = 18,
+    VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT = 19,
+    VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT = 20,
+    VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT = 21,
+    VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT = 22,
+    VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT = 23,
+    VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT = 24,
+    VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT = 25,
+    VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT = 26,
+    VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT = 27,
+    VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT = 28,
+    VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_EXT = 28,
+    VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_KHR_EXT = 29,
+    VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_MODE_KHR_EXT = 30,
+    VK_DEBUG_REPORT_OBJECT_TYPE_VALIDATION_CACHE_EXT_EXT = 33,
+    VK_DEBUG_REPORT_OBJECT_TYPE_VALIDATION_CACHE_EXT = 33,
+    VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT = 1000085000,
+    VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION_EXT = 1000156000,
+    VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR_EXT = 1000165000,
+    VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_KHR_EXT = VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_EXT,
+    VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION_KHR_EXT = VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION_EXT,
+    VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV_EXT = VK_DEBUG_REPORT_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR_EXT,
+    VK_DEBUG_REPORT_OBJECT_TYPE_EXT_MAX_ENUM = 0x7fffffff,
+} VkDebugReportObjectTypeEXT;
 
 typedef enum VkDebugUtilsMessageSeverityFlagBitsEXT
 {
@@ -1959,6 +2017,7 @@ typedef enum VkObjectType
     VK_OBJECT_TYPE_COMMAND_POOL = 25,
     VK_OBJECT_TYPE_SURFACE_KHR = 1000000000,
     VK_OBJECT_TYPE_SWAPCHAIN_KHR = 1000001000,
+    VK_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT = 1000011000,
     VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE = 1000085000,
     VK_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT = 1000128000,
     VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION = 1000156000,
@@ -2334,6 +2393,7 @@ typedef enum VkResult
     VK_ERROR_INVALID_EXTERNAL_HANDLE = -1000072003,
     VK_ERROR_OUT_OF_POOL_MEMORY = -1000069000,
     VK_ERROR_INVALID_SHADER_NV = -1000012000,
+    VK_ERROR_VALIDATION_FAILED_EXT = -1000011001,
     VK_ERROR_OUT_OF_DATE_KHR = -1000001004,
     VK_ERROR_NATIVE_WINDOW_IN_USE_KHR = -1000000001,
     VK_ERROR_SURFACE_LOST_KHR = -1000000000,
@@ -2652,6 +2712,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR = 1000001000,
     VK_STRUCTURE_TYPE_PRESENT_INFO_KHR = 1000001001,
     VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR = 1000009000,
+    VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT = 1000011000,
     VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_RASTERIZATION_ORDER_AMD = 1000018000,
     VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_IMAGE_CREATE_INFO_NV = 1000026000,
     VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_BUFFER_CREATE_INFO_NV = 1000026001,
@@ -2959,6 +3020,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_4444_FORMATS_FEATURES_EXT = 1000340000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES,
+    VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
     VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO_KHR = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES_KHR = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES_KHR = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES,
@@ -3206,6 +3268,15 @@ typedef void* (VKAPI_PTR * PFN_vkAllocationFunction)(
     size_t size,
     size_t alignment,
     VkSystemAllocationScope allocationScope);
+typedef VkBool32 (VKAPI_PTR * PFN_vkDebugReportCallbackEXT)(
+    VkDebugReportFlagsEXT flags,
+    VkDebugReportObjectTypeEXT objectType,
+    uint64_t object,
+    size_t location,
+    int32_t messageCode,
+    const char *pLayerPrefix,
+    const char *pMessage,
+    void *pUserData);
 typedef struct VkDebugUtilsMessengerCallbackDataEXT VkDebugUtilsMessengerCallbackDataEXT;
 typedef VkBool32 (VKAPI_PTR * PFN_vkDebugUtilsMessengerCallbackEXT)(
     VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -5081,6 +5152,15 @@ typedef struct VkConformanceVersion
     uint8_t patch;
 } VkConformanceVersion;
 typedef VkConformanceVersion VkConformanceVersionKHR;
+
+typedef struct VkDebugReportCallbackCreateInfoEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkDebugReportFlagsEXT flags;
+    PFN_vkDebugReportCallbackEXT pfnCallback;
+    void *pUserData;
+} VkDebugReportCallbackCreateInfoEXT;
 
 typedef struct VkDebugUtilsObjectNameInfoEXT
 {
@@ -7840,6 +7920,7 @@ typedef VkResult (VKAPI_PTR *PFN_vkCreateBuffer)(VkDevice, const VkBufferCreateI
 typedef VkResult (VKAPI_PTR *PFN_vkCreateBufferView)(VkDevice, const VkBufferViewCreateInfo *, const VkAllocationCallbacks *, VkBufferView *);
 typedef VkResult (VKAPI_PTR *PFN_vkCreateCommandPool)(VkDevice, const VkCommandPoolCreateInfo *, const VkAllocationCallbacks *, VkCommandPool *);
 typedef VkResult (VKAPI_PTR *PFN_vkCreateComputePipelines)(VkDevice, VkPipelineCache, uint32_t, const VkComputePipelineCreateInfo *, const VkAllocationCallbacks *, VkPipeline *);
+typedef VkResult (VKAPI_PTR *PFN_vkCreateDebugReportCallbackEXT)(VkInstance, const VkDebugReportCallbackCreateInfoEXT *, const VkAllocationCallbacks *, VkDebugReportCallbackEXT *);
 typedef VkResult (VKAPI_PTR *PFN_vkCreateDebugUtilsMessengerEXT)(VkInstance, const VkDebugUtilsMessengerCreateInfoEXT *, const VkAllocationCallbacks *, VkDebugUtilsMessengerEXT *);
 typedef VkResult (VKAPI_PTR *PFN_vkCreateDescriptorPool)(VkDevice, const VkDescriptorPoolCreateInfo *, const VkAllocationCallbacks *, VkDescriptorPool *);
 typedef VkResult (VKAPI_PTR *PFN_vkCreateDescriptorSetLayout)(VkDevice, const VkDescriptorSetLayoutCreateInfo *, const VkAllocationCallbacks *, VkDescriptorSetLayout *);
@@ -7871,10 +7952,12 @@ typedef VkResult (VKAPI_PTR *PFN_vkCreateShaderModule)(VkDevice, const VkShaderM
 typedef VkResult (VKAPI_PTR *PFN_vkCreateSwapchainKHR)(VkDevice, const VkSwapchainCreateInfoKHR *, const VkAllocationCallbacks *, VkSwapchainKHR *);
 typedef VkResult (VKAPI_PTR *PFN_vkCreateValidationCacheEXT)(VkDevice, const VkValidationCacheCreateInfoEXT *, const VkAllocationCallbacks *, VkValidationCacheEXT *);
 typedef VkResult (VKAPI_PTR *PFN_vkCreateWin32SurfaceKHR)(VkInstance, const VkWin32SurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
+typedef void (VKAPI_PTR *PFN_vkDebugReportMessageEXT)(VkInstance, VkDebugReportFlagsEXT, VkDebugReportObjectTypeEXT, uint64_t, size_t, int32_t, const char *, const char *);
 typedef void (VKAPI_PTR *PFN_vkDestroyAccelerationStructureNV)(VkDevice, VkAccelerationStructureKHR, const VkAllocationCallbacks *);
 typedef void (VKAPI_PTR *PFN_vkDestroyBuffer)(VkDevice, VkBuffer, const VkAllocationCallbacks *);
 typedef void (VKAPI_PTR *PFN_vkDestroyBufferView)(VkDevice, VkBufferView, const VkAllocationCallbacks *);
 typedef void (VKAPI_PTR *PFN_vkDestroyCommandPool)(VkDevice, VkCommandPool, const VkAllocationCallbacks *);
+typedef void (VKAPI_PTR *PFN_vkDestroyDebugReportCallbackEXT)(VkInstance, VkDebugReportCallbackEXT, const VkAllocationCallbacks *);
 typedef void (VKAPI_PTR *PFN_vkDestroyDebugUtilsMessengerEXT)(VkInstance, VkDebugUtilsMessengerEXT, const VkAllocationCallbacks *);
 typedef void (VKAPI_PTR *PFN_vkDestroyDescriptorPool)(VkDevice, VkDescriptorPool, const VkAllocationCallbacks *);
 typedef void (VKAPI_PTR *PFN_vkDestroyDescriptorSetLayout)(VkDevice, VkDescriptorSetLayout, const VkAllocationCallbacks *);
@@ -8186,6 +8269,7 @@ VkResult VKAPI_CALL vkCreateBuffer(VkDevice device, const VkBufferCreateInfo *pC
 VkResult VKAPI_CALL vkCreateBufferView(VkDevice device, const VkBufferViewCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkBufferView *pView);
 VkResult VKAPI_CALL vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkCommandPool *pCommandPool);
 VkResult VKAPI_CALL vkCreateComputePipelines(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkComputePipelineCreateInfo *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines);
+VkResult VKAPI_CALL vkCreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackEXT *pCallback);
 VkResult VKAPI_CALL vkCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pMessenger);
 VkResult VKAPI_CALL vkCreateDescriptorPool(VkDevice device, const VkDescriptorPoolCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDescriptorPool *pDescriptorPool);
 VkResult VKAPI_CALL vkCreateDescriptorSetLayout(VkDevice device, const VkDescriptorSetLayoutCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDescriptorSetLayout *pSetLayout);
@@ -8217,10 +8301,12 @@ VkResult VKAPI_CALL vkCreateShaderModule(VkDevice device, const VkShaderModuleCr
 VkResult VKAPI_CALL vkCreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSwapchainKHR *pSwapchain);
 VkResult VKAPI_CALL vkCreateValidationCacheEXT(VkDevice device, const VkValidationCacheCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkValidationCacheEXT *pValidationCache);
 VkResult VKAPI_CALL vkCreateWin32SurfaceKHR(VkInstance instance, const VkWin32SurfaceCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface);
+void VKAPI_CALL vkDebugReportMessageEXT(VkInstance instance, VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char *pLayerPrefix, const char *pMessage);
 void VKAPI_CALL vkDestroyAccelerationStructureNV(VkDevice device, VkAccelerationStructureKHR accelerationStructure, const VkAllocationCallbacks *pAllocator);
 void VKAPI_CALL vkDestroyBuffer(VkDevice device, VkBuffer buffer, const VkAllocationCallbacks *pAllocator);
 void VKAPI_CALL vkDestroyBufferView(VkDevice device, VkBufferView bufferView, const VkAllocationCallbacks *pAllocator);
 void VKAPI_CALL vkDestroyCommandPool(VkDevice device, VkCommandPool commandPool, const VkAllocationCallbacks *pAllocator);
+void VKAPI_CALL vkDestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks *pAllocator);
 void VKAPI_CALL vkDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks *pAllocator);
 void VKAPI_CALL vkDestroyDescriptorPool(VkDevice device, VkDescriptorPool descriptorPool, const VkAllocationCallbacks *pAllocator);
 void VKAPI_CALL vkDestroyDescriptorSetLayout(VkDevice device, VkDescriptorSetLayout descriptorSetLayout, const VkAllocationCallbacks *pAllocator);

@@ -3126,6 +3126,24 @@ VkResult convert_VkInstanceCreateInfo_struct_chain(const void *pNext, VkInstance
         case VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO:
             break;
 
+        case VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT:
+        {
+            const VkDebugReportCallbackCreateInfoEXT *in = (const VkDebugReportCallbackCreateInfoEXT *)in_header;
+            VkDebugReportCallbackCreateInfoEXT *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->flags = in->flags;
+            out->pfnCallback = in->pfnCallback;
+            out->pUserData = in->pUserData;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT:
         {
             const VkDebugUtilsMessengerCreateInfoEXT *in = (const VkDebugUtilsMessengerCreateInfoEXT *)in_header;
@@ -6210,10 +6228,13 @@ static const struct vulkan_func vk_device_dispatch_table[] =
 
 static const struct vulkan_func vk_instance_dispatch_table[] =
 {
+    {"vkCreateDebugReportCallbackEXT", &wine_vkCreateDebugReportCallbackEXT},
     {"vkCreateDebugUtilsMessengerEXT", &wine_vkCreateDebugUtilsMessengerEXT},
     {"vkCreateDevice", &wine_vkCreateDevice},
     {"vkCreateHeadlessSurfaceEXT", &wine_vkCreateHeadlessSurfaceEXT},
     {"vkCreateWin32SurfaceKHR", &wine_vkCreateWin32SurfaceKHR},
+    {"vkDebugReportMessageEXT", &wine_vkDebugReportMessageEXT},
+    {"vkDestroyDebugReportCallbackEXT", &wine_vkDestroyDebugReportCallbackEXT},
     {"vkDestroyDebugUtilsMessengerEXT", &wine_vkDestroyDebugUtilsMessengerEXT},
     {"vkDestroyInstance", &wine_vkDestroyInstance},
     {"vkDestroySurfaceKHR", &wine_vkDestroySurfaceKHR},
@@ -6457,6 +6478,7 @@ static const char * const vk_device_extensions[] =
 
 static const char * const vk_instance_extensions[] =
 {
+    "VK_EXT_debug_report",
     "VK_EXT_debug_utils",
     "VK_EXT_headless_surface",
     "VK_EXT_swapchain_colorspace",
@@ -6497,6 +6519,7 @@ BOOL wine_vk_is_type_wrapped(VkObjectType type)
     return FALSE ||
         type == VK_OBJECT_TYPE_COMMAND_BUFFER ||
         type == VK_OBJECT_TYPE_COMMAND_POOL ||
+        type == VK_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT ||
         type == VK_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT ||
         type == VK_OBJECT_TYPE_DEVICE ||
         type == VK_OBJECT_TYPE_INSTANCE ||
@@ -6512,6 +6535,8 @@ uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle)
         return (uint64_t) (uintptr_t) ((VkCommandBuffer) (uintptr_t) handle)->command_buffer;
     case VK_OBJECT_TYPE_COMMAND_POOL:
         return (uint64_t) wine_cmd_pool_from_handle(handle)->command_pool;
+    case VK_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT:
+        return (uint64_t) wine_debug_report_callback_from_handle(handle)->debug_callback;
     case VK_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT:
         return (uint64_t) wine_debug_utils_messenger_from_handle(handle)->debug_messenger;
     case VK_OBJECT_TYPE_DEVICE:

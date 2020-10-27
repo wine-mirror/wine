@@ -97,6 +97,18 @@ struct VkDevice_T
 
 struct wine_debug_utils_messenger;
 
+struct wine_debug_report_callback
+{
+    struct VkInstance_T *instance; /* parent */
+    VkDebugReportCallbackEXT debug_callback; /* native callback object */
+
+    /* application callback + data */
+    PFN_vkDebugReportCallbackEXT user_callback;
+    void *user_data;
+
+    struct wine_vk_mapping mapping;
+};
+
 struct VkInstance_T
 {
     struct wine_vk_base base;
@@ -115,6 +127,8 @@ struct VkInstance_T
 
     struct wine_debug_utils_messenger *utils_messengers;
     uint32_t utils_messenger_count;
+
+    struct wine_debug_report_callback default_callback;
 
     unsigned int quirks;
 
@@ -185,6 +199,18 @@ static inline VkDebugUtilsMessengerEXT wine_debug_utils_messenger_to_handle(
         struct wine_debug_utils_messenger *debug_messenger)
 {
     return (VkDebugUtilsMessengerEXT)(uintptr_t)debug_messenger;
+}
+
+static inline struct wine_debug_report_callback *wine_debug_report_callback_from_handle(
+        VkDebugReportCallbackEXT handle)
+{
+    return (struct wine_debug_report_callback *)(uintptr_t)handle;
+}
+
+static inline VkDebugReportCallbackEXT wine_debug_report_callback_to_handle(
+        struct wine_debug_report_callback *debug_messenger)
+{
+    return (VkDebugReportCallbackEXT)(uintptr_t)debug_messenger;
 }
 
 void *wine_vk_get_device_proc_addr(const char *name) DECLSPEC_HIDDEN;
