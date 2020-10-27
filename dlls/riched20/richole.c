@@ -5846,7 +5846,7 @@ void ME_GetOLEObjectSize(const ME_Context *c, ME_Run *run, SIZE *pSize)
   }
 }
 
-void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run *run, BOOL selected)
+void draw_ole( ME_Context *c, int x, int y, ME_Run *run, BOOL selected )
 {
   IDataObject*  ido;
   FORMATETC     fmt;

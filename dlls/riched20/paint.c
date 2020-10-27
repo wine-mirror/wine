@@ -359,8 +359,8 @@ static void draw_text( ME_Context *c, ME_Run *run, int x, int y, BOOL selected, 
 }
 
 
-static void ME_DrawTextWithStyle(ME_Context *c, ME_Run *run, int x, int y,
-                                 int nSelFrom, int nSelTo, int ymin, int cy)
+static void draw_text_with_style( ME_Context *c, ME_Run *run, int x, int y,
+                                  int nSelFrom, int nSelTo, int ymin, int cy )
 {
   HDC hDC = c->hDC;
   int yOffset = 0;
@@ -434,16 +434,16 @@ static void ME_DebugWrite(HDC hDC, const POINT *pt, LPCWSTR szText) {
   SetTextColor(hDC, color);
 }
 
-static void ME_DrawRun( ME_Context *c, int x, int y, ME_Run *run, ME_Paragraph *para )
+static void draw_run( ME_Context *c, int x, int y, ME_Cursor *cursor )
 {
-  ME_DisplayItem *start;
-  int runofs = run->nCharOfs+para->nCharOfs;
+  ME_Row *row;
+  ME_Run *run = &cursor->pRun->member.run;
+  int runofs = run_char_ofs( run, cursor->nOffset );
   int nSelFrom, nSelTo;
 
-  if (run->nFlags & MERF_HIDDEN)
-    return;
+  if (run->nFlags & MERF_HIDDEN) return;
 
-  start = ME_FindItemBack( run_get_di( run ), diStartRow );
+  row = row_from_cursor( cursor );
   ME_GetSelectionOfs(c->editor, &nSelFrom, &nSelTo);
 
   /* Draw selected end-of-paragraph mark */
@@ -452,8 +452,7 @@ static void ME_DrawRun( ME_Context *c, int x, int y, ME_Run *run, ME_Paragraph *
     if (runofs >= nSelFrom && runofs < nSelTo)
     {
       draw_space( c, run, x, y, TRUE, FALSE,
-                  c->pt.y + para->pt.y + start->member.row.pt.y,
-                  start->member.row.nHeight );
+                  c->pt.y + run->para->pt.y + row->pt.y, row->nHeight );
     }
     return;
   }
@@ -463,19 +462,15 @@ static void ME_DrawRun( ME_Context *c, int x, int y, ME_Run *run, ME_Paragraph *
     BOOL selected = runofs >= nSelFrom && runofs < nSelTo;
 
     draw_space( c, run, x, y, selected, TRUE,
-                c->pt.y + para->pt.y + start->member.row.pt.y,
-                start->member.row.nHeight );
+                c->pt.y + run->para->pt.y + row->pt.y, row->nHeight );
     return;
   }
 
   if (run->nFlags & MERF_GRAPHICS)
-    ME_DrawOLE(c, x, y, run, (runofs >= nSelFrom) && (runofs < nSelTo));
+    draw_ole( c, x, y, run, (runofs >= nSelFrom) && (runofs < nSelTo) );
   else
-  {
-    ME_DrawTextWithStyle(c, run, x, y, nSelFrom - runofs, nSelTo - runofs,
-                         c->pt.y + para->pt.y + start->member.row.pt.y,
-                         start->member.row.nHeight);
-  }
+    draw_text_with_style( c, run, x, y, nSelFrom - runofs, nSelTo - runofs,
+                          c->pt.y + run->para->pt.y + row->pt.y, row->nHeight );
 }
 
 /* The documented widths are in points (72 dpi), but converting them to
@@ -1001,8 +996,14 @@ static void draw_paragraph( ME_Context *c, ME_Paragraph *para )
           FrameRect(c->hDC, &rc, GetSysColorBrush(COLOR_GRAYTEXT));
         }
         if (visible)
-          ME_DrawRun( c, c->pt.x + run->pt.x,
-                      c->pt.y + para->pt.y + run->pt.y + baseline, run, para );
+        {
+          ME_Cursor cursor;
+
+          cursor.pRun = run_get_di( run );
+          cursor.pPara = para_get_di( para );
+          cursor.nOffset = 0;
+          draw_run( c, c->pt.x + run->pt.x, c->pt.y + para->pt.y + run->pt.y + baseline, &cursor );
+        }
         if (me_debug)
         {
           static const WCHAR wszRunDebug[] = {'[','%','d',':','%','x',']',' ','%','l','s',0};
