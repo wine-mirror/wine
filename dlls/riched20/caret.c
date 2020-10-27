@@ -405,8 +405,8 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
           }
           if (pThisCur->nOffset == run->len)
           {
-            pThisCur->pRun = ME_FindItemFwd(pThisCur->pRun, diRunOrParagraphOrEnd);
-            assert(pThisCur->pRun->type == diRun);
+            pThisCur->pRun = run_get_di( run_next( &pThisCur->pRun->member.run ) );
+            assert( pThisCur->pRun );
             pThisCur->nOffset = 0;
           }
         }
