@@ -67,6 +67,7 @@ struct media_source
     IMFByteStream *byte_stream;
     struct media_stream **streams;
     ULONG stream_count;
+    IMFPresentationDescriptor *pres_desc;
     GstBus *bus;
     GstElement *container;
     GstElement *decodebin;
@@ -673,12 +674,12 @@ static HRESULT WINAPI media_source_CreatePresentationDescriptor(IMFMediaSource *
 {
     struct media_source *source = impl_from_IMFMediaSource(iface);
 
-    FIXME("(%p)->(%p): stub\n", source, descriptor);
+    TRACE("(%p)->(%p)\n", source, descriptor);
 
     if (source->state == SOURCE_SHUTDOWN)
         return MF_E_SHUTDOWN;
 
-    return E_NOTIMPL;
+    return IMFPresentationDescriptor_Clone(source->pres_desc, descriptor);
 }
 
 static HRESULT WINAPI media_source_Start(IMFMediaSource *iface, IMFPresentationDescriptor *descriptor,
@@ -741,6 +742,8 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
     if (source->their_sink)
         gst_object_unref(GST_OBJECT(source->their_sink));
 
+    if (source->pres_desc)
+        IMFPresentationDescriptor_Release(source->pres_desc);
     if (source->event_queue)
         IMFMediaEventQueue_Shutdown(source->event_queue);
     if (source->byte_stream)
@@ -841,6 +844,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
         GST_STATIC_PAD_TEMPLATE("mf_src", GST_PAD_SRC, GST_PAD_ALWAYS, GST_STATIC_CAPS_ANY);
 
     struct media_source *object = heap_alloc_zero(sizeof(*object));
+    IMFStreamDescriptor **descriptors = NULL;
     unsigned int i;
     HRESULT hr;
     int ret;
@@ -928,6 +932,25 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
         gst_sample_unref(preroll);
     }
 
+    /* init presentation descriptor */
+
+    descriptors = heap_alloc(object->stream_count * sizeof(IMFStreamDescriptor*));
+    for (i = 0; i < object->stream_count; i++)
+    {
+        IMFMediaStream_GetStreamDescriptor(&object->streams[i]->IMFMediaStream_iface, &descriptors[i]);
+    }
+
+    if (FAILED(hr = MFCreatePresentationDescriptor(object->stream_count, descriptors, &object->pres_desc)))
+        goto fail;
+
+    for (i = 0; i < object->stream_count; i++)
+    {
+        IMFPresentationDescriptor_SelectStream(object->pres_desc, i);
+        IMFStreamDescriptor_Release(descriptors[i]);
+    }
+    heap_free(descriptors);
+    descriptors = NULL;
+
     object->state = SOURCE_STOPPED;
 
     *out_media_source = object;
@@ -936,6 +959,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     fail:
     WARN("Failed to construct MFMediaSource, hr %#x.\n", hr);
 
+    heap_free(descriptors);
     IMFMediaSource_Release(&object->IMFMediaSource_iface);
     return hr;
 }

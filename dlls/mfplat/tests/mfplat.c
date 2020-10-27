@@ -574,10 +574,7 @@ static void test_source_resolver(void)
     ok(obj_type == MF_OBJECT_MEDIASOURCE, "got %d\n", obj_type);
 
     hr = IMFMediaSource_CreatePresentationDescriptor(mediasource, &descriptor);
-todo_wine
     ok(hr == S_OK, "Failed to get presentation descriptor, hr %#x.\n", hr);
-    if (FAILED(hr))
-        goto skip_source_tests;
     ok(descriptor != NULL, "got %p\n", descriptor);
 
     hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(descriptor, 0, &selected, &sd);
@@ -597,6 +594,7 @@ todo_wine
     ok(hr == S_OK, "Failed to get current media type, hr %#x.\n", hr);
     hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &guid);
     ok(hr == S_OK, "Failed to get media sub type, hr %#x.\n", hr);
+todo_wine
     ok(IsEqualGUID(&guid, &MFVideoFormat_M4S2), "Unexpected sub type %s.\n", debugstr_guid(&guid));
     IMFMediaType_Release(media_type);
 
@@ -605,7 +603,10 @@ todo_wine
 
     var.vt = VT_EMPTY;
     hr = IMFMediaSource_Start(mediasource, descriptor, &GUID_NULL, &var);
+todo_wine
     ok(hr == S_OK, "Failed to start media source, hr %#x.\n", hr);
+    if (FAILED(hr))
+        goto skip_source_tests;
 
     get_event((IMFMediaEventGenerator *)mediasource, MENewStream, &var);
     ok(var.vt == VT_UNKNOWN, "Unexpected value type %u from MENewStream event.\n", var.vt);
@@ -668,10 +669,9 @@ todo_wine
 
     get_event((IMFMediaEventGenerator *)mediasource, MEEndOfPresentation, NULL);
 
+skip_source_tests:
     IMFMediaTypeHandler_Release(handler);
     IMFPresentationDescriptor_Release(descriptor);
-
-skip_source_tests:
 
     hr = IMFMediaSource_Shutdown(mediasource);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);

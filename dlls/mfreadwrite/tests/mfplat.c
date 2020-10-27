@@ -627,14 +627,13 @@ static void test_source_reader(void)
     stream = get_resource_stream("test.wav");
 
     hr = MFCreateSourceReaderFromByteStream(stream, NULL, &reader);
-todo_wine
-    ok(hr == S_OK, "Failed to create source reader, hr %#x.\n", hr);
-
     if (FAILED(hr))
     {
+        skip("MFCreateSourceReaderFromByteStream() failed, is G-Streamer missing?\n");
         IMFByteStream_Release(stream);
         return;
     }
+    ok(hr == S_OK, "Failed to create source reader, hr %#x.\n", hr);
 
     /* Access underlying media source object. */
     hr = IMFSourceReader_GetServiceForStream(reader, MF_SOURCE_READER_MEDIASOURCE, &GUID_NULL, &IID_IMFMediaSource,
@@ -723,7 +722,10 @@ todo_wine
 
     hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &actual_index, &stream_flags,
             &timestamp, &sample);
+todo_wine
     ok(hr == S_OK, "Failed to get a sample, hr %#x.\n", hr);
+    if (hr != S_OK)
+        goto skip_read_sample;
     ok(actual_index == 0, "Unexpected stream index %u\n", actual_index);
     ok(!stream_flags, "Unexpected stream flags %#x.\n", stream_flags);
     IMFSample_Release(sample);
@@ -784,6 +786,8 @@ todo_wine
     ok(stream_flags == MF_SOURCE_READERF_ENDOFSTREAM, "Unexpected stream flags %#x.\n", stream_flags);
     ok(!sample, "Unexpected sample object.\n");
 
+skip_read_sample:
+
     /* Flush. */
     hr = IMFSourceReader_Flush(reader, MF_SOURCE_READER_FIRST_VIDEO_STREAM);
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
@@ -814,10 +818,11 @@ todo_wine
     IMFSourceReaderCallback_Release(&callback->IMFSourceReaderCallback_iface);
 
     hr = MFCreateSourceReaderFromByteStream(stream, attributes, &reader);
+todo_wine
     ok(hr == S_OK, "Failed to create source reader, hr %#x.\n", hr);
     IMFAttributes_Release(attributes);
-
-    IMFSourceReader_Release(reader);
+    if (hr == S_OK)
+        IMFSourceReader_Release(reader);
 
     IMFByteStream_Release(stream);
 }
