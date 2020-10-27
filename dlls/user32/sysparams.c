@@ -3182,6 +3182,22 @@ LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND 
         return DISP_CHANGE_BADMODE;
     }
 
+    if (!is_detached_mode(devmode) && (!devmode->dmPelsWidth || !devmode->dmPelsHeight))
+    {
+        memset(&dm, 0, sizeof(dm));
+        dm.dmSize = sizeof(dm);
+        if (!EnumDisplaySettingsExW(devname, ENUM_CURRENT_SETTINGS, &dm, 0))
+        {
+            ERR("Current mode not found!\n");
+            return DISP_CHANGE_BADMODE;
+        }
+
+        if (!devmode->dmPelsWidth)
+            devmode->dmPelsWidth = dm.dmPelsWidth;
+        if (!devmode->dmPelsHeight)
+            devmode->dmPelsHeight = dm.dmPelsHeight;
+    }
+
     ret = USER_Driver->pChangeDisplaySettingsEx(devname, devmode, hwnd, flags, lparam);
     if (ret != DISP_CHANGE_SUCCESSFUL)
         ERR("Changing %s display settings returned %d.\n", wine_dbgstr_w(devname), ret);

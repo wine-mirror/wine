@@ -602,8 +602,7 @@ static void test_ChangeDisplaySettingsEx(void)
     }
 
     /* Test changing to a mode with depth set but with zero width and height */
-    /* This test is only ran for non-primary adapters for now as it may detach the adapters on Wine */
-    for (device = 1; device < device_count; ++device)
+    for (device = 0; device < device_count; ++device)
     {
         for (test = 0; test < ARRAY_SIZE(depths); ++test)
         {
@@ -689,10 +688,8 @@ static void test_ChangeDisplaySettingsEx(void)
             dd.cb = sizeof(dd);
             res = EnumDisplayDevicesA(NULL, devices[device].index, &dd, 0);
             ok(res, "EnumDisplayDevicesA %s failed, error %#x.\n", devices[device].name, GetLastError());
-            todo_wine ok(dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP, "Expect %s attached.\n",
-              devices[device].name);
-            if (!(dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
-                continue;
+            ok(dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP, "Expect %s attached.\n",
+               devices[device].name);
 
             memset(&dm, 0, sizeof(dm));
             dm.dmSize = sizeof(dm);
@@ -715,13 +712,6 @@ static void test_ChangeDisplaySettingsEx(void)
     /* Detach all non-primary adapters to avoid position conflicts */
     for (device = 1; device < device_count; ++device)
     {
-        dd.cb = sizeof(dd);
-        res = EnumDisplayDevicesA(NULL, devices[device].index, &dd, 0);
-        ok(res, "EnumDisplayDevicesA %s failed, error %#x.\n", devices[device].name, GetLastError());
-        /* Already detached by previous tests */
-        if (!(dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
-            continue;
-
         old_count = GetSystemMetrics(SM_CMONITORS);
 
         memset(&dm, 0, sizeof(dm));
