@@ -886,7 +886,7 @@ static void ME_WrapTextParagraph( ME_TextEditor *editor, ME_Context *c, ME_Parag
   linespace = ME_GetParaLineSpace( c, para );
 
   ME_BeginRow( &wc );
-  run = &ME_FindItemFwd( para_get_di( para ), diRun )->member.run;
+  run = para_first_run( para );
   while (run)
   {
     run = ME_WrapHandleRun( &wc, run );
