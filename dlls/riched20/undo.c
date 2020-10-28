@@ -335,13 +335,11 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, struct undo_item *undo)
   case undo_set_para_fmt:
   {
     ME_Cursor tmp;
-    ME_DisplayItem *para;
     cursor_from_char_ofs( editor, undo->u.set_para_fmt.pos, &tmp );
-    para = ME_FindItemBack(tmp.pRun, diParagraph);
-    add_undo_set_para_fmt( editor, &para->member.para );
-    para->member.para.fmt = undo->u.set_para_fmt.fmt;
-    para->member.para.border = undo->u.set_para_fmt.border;
-    para_mark_rewrap( editor, &para->member.para );
+    add_undo_set_para_fmt( editor, &tmp.pPara->member.para );
+    tmp.pPara->member.para.fmt = undo->u.set_para_fmt.fmt;
+    tmp.pPara->member.para.border = undo->u.set_para_fmt.border;
+    para_mark_rewrap( editor, &tmp.pPara->member.para );
     break;
   }
   case undo_set_char_fmt:
