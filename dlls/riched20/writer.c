@@ -1148,7 +1148,8 @@ static BOOL ME_StreamOutText(ME_TextEditor *editor, ME_OutStream *pStream,
 
     nChars -= nLen;
     cursor.nOffset = 0;
-    cursor.pRun = ME_FindItemFwd(cursor.pRun, diRun);
+    cursor.pRun = run_next_all_paras( &cursor.pRun->member.run ) ?
+        run_get_di( run_next_all_paras( &cursor.pRun->member.run ) ) : NULL;
   }
 
   heap_free(buffer);
