@@ -760,6 +760,55 @@ static NTSTATUS dispatch_ioctl( struct dispatch_context *context )
     return STATUS_SUCCESS;
 }
 
+/* process a volume information request for a given device */
+static NTSTATUS dispatch_volume( struct dispatch_context *context )
+{
+    IO_STACK_LOCATION *irpsp;
+    IRP *irp;
+    void *out_buff = NULL;
+    DEVICE_OBJECT *device;
+    FILE_OBJECT *file = wine_server_get_ptr( context->params.volume.file );
+    ULONG out_size = context->params.volume.out_size;
+
+    if (!file) return STATUS_INVALID_HANDLE;
+
+    device = IoGetAttachedDevice( file->DeviceObject );
+
+    TRACE( "class 0x%x device %p file %p in_size %u out_size %u\n",
+           context->params.volume.info_class, device, file, context->in_size, out_size );
+
+    if (!(out_buff = HeapAlloc( GetProcessHeap(), 0, out_size ))) return STATUS_NO_MEMORY;
+
+    irp = IoAllocateIrp( device->StackSize, FALSE );
+    if (!irp)
+    {
+        HeapFree( GetProcessHeap(), 0, out_buff );
+        return STATUS_NO_MEMORY;
+    }
+
+    irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->MajorFunction = IRP_MJ_QUERY_VOLUME_INFORMATION;
+    irpsp->Parameters.QueryVolume.FsInformationClass = context->params.volume.info_class;
+    irpsp->Parameters.QueryVolume.Length = out_size;
+    irpsp->DeviceObject = NULL;
+    irpsp->CompletionRoutine = NULL;
+    irpsp->FileObject = file;
+    irp->AssociatedIrp.SystemBuffer = out_buff;
+    irp->RequestorMode = KernelMode;
+    irp->UserBuffer = out_buff;
+    irp->UserIosb = NULL;
+    irp->UserEvent = NULL;
+    irp->Tail.Overlay.Thread = (PETHREAD)KeGetCurrentThread();
+    irp->Tail.Overlay.OriginalFileObject = file;
+    irp->RequestorMode = UserMode;
+    context->in_buff = NULL;
+
+    irp->Flags |= IRP_DEALLOCATE_BUFFER;  /* deallocate out_buff */
+    dispatch_irp( device, irp, context );
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS dispatch_free( struct dispatch_context *context )
 {
     void *obj = wine_server_get_ptr( context->params.free.obj );
@@ -791,6 +840,7 @@ static const dispatch_func dispatch_funcs[] =
     dispatch_write,    /* IRP_CALL_WRITE */
     dispatch_flush,    /* IRP_CALL_FLUSH */
     dispatch_ioctl,    /* IRP_CALL_IOCTL */
+    dispatch_volume,   /* IRP_CALL_VOLUME */
     dispatch_free,     /* IRP_CALL_FREE */
     dispatch_cancel    /* IRP_CALL_CANCEL */
 };

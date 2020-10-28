@@ -207,6 +207,7 @@ static int device_file_write( struct fd *fd, struct async *async, file_pos_t pos
 static int device_file_flush( struct fd *fd, struct async *async );
 static int device_file_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static void device_file_reselect_async( struct fd *fd, struct async_queue *queue );
+static int device_file_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class );
 
 static const struct object_ops device_file_ops =
 {
@@ -241,7 +242,7 @@ static const struct fd_ops device_file_fd_ops =
     device_file_write,                /* write */
     device_file_flush,                /* flush */
     default_fd_get_file_info,         /* get_file_info */
-    no_fd_get_volume_info,            /* get_volume_info */
+    device_file_get_volume_info,      /* get_volume_info */
     device_file_ioctl,                /* ioctl */
     default_fd_queue_async,           /* queue_async */
     device_file_reselect_async        /* reselect_async */
@@ -594,6 +595,10 @@ static int fill_irp_params( struct device_manager *manager, struct irp_call *irp
         irp->params.ioctl.file     = get_kernel_object_ptr( manager, &irp->file->obj );
         irp->params.ioctl.out_size = irp->iosb->out_size;
         break;
+    case IRP_CALL_VOLUME:
+        irp->params.volume.file     = get_kernel_object_ptr( manager, &irp->file->obj );
+        irp->params.volume.out_size = irp->iosb->out_size;
+        break;
     }
 
     *params = irp->params;
@@ -629,6 +634,17 @@ static int queue_irp( struct device_file *file, const irp_params_t *params, stru
 static enum server_fd_type device_file_get_fd_type( struct fd *fd )
 {
     return FD_TYPE_DEVICE;
+}
+
+static int device_file_get_volume_info( struct fd *fd, struct async *async, unsigned int info_class )
+{
+    struct device_file *file = get_fd_user( fd );
+    irp_params_t params;
+
+    memset( &params, 0, sizeof(params) );
+    params.volume.type = IRP_CALL_VOLUME;
+    params.volume.info_class = info_class;
+    return queue_irp( file, &params, async );
 }
 
 static int device_file_read( struct fd *fd, struct async *async, file_pos_t pos )

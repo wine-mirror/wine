@@ -502,6 +502,7 @@ static void test_object_info(void)
     char buffer[200];
     OBJECT_NAME_INFORMATION *name_info = (OBJECT_NAME_INFORMATION *)buffer;
     OBJECT_TYPE_INFORMATION *type_info = (OBJECT_TYPE_INFORMATION *)buffer;
+    FILE_FS_VOLUME_INFORMATION *volume_info = (FILE_FS_VOLUME_INFORMATION *)buffer;
     FILE_NAME_INFORMATION *file_info = (FILE_NAME_INFORMATION *)buffer;
     HANDLE file;
     NTSTATUS status;
@@ -519,6 +520,9 @@ static void test_object_info(void)
             "wrong name %s\n", debugstr_wn(type_info->TypeName.Buffer, type_info->TypeName.Length / sizeof(WCHAR)));
 
     status = NtQueryInformationFile(device, &io, buffer, sizeof(buffer), FileNameInformation);
+    todo_wine ok(status == STATUS_INVALID_DEVICE_REQUEST, "got %#x\n", status);
+
+    status = NtQueryVolumeInformationFile(device, &io, buffer, sizeof(buffer), FileFsVolumeInformation);
     todo_wine ok(status == STATUS_INVALID_DEVICE_REQUEST, "got %#x\n", status);
 
     file = CreateFileA("\\\\.\\WineTestDriver\\subfile", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
@@ -553,6 +557,13 @@ static void test_object_info(void)
     ok(!status, "got %#x\n", status);
     ok(compare_unicode_string(file_info->FileName, file_info->FileNameLength, L"\\subfile"),
             "wrong name %s\n", debugstr_wn(file_info->FileName, file_info->FileNameLength / sizeof(WCHAR)));
+
+    status = NtQueryVolumeInformationFile(file, &io, buffer, sizeof(buffer), FileFsVolumeInformation);
+    ok(!status, "got %#x\n", status);
+    ok(volume_info->VolumeSerialNumber == 0xdeadbeef,
+            "wrong serial number 0x%08x\n", volume_info->VolumeSerialNumber);
+    ok(compare_unicode_string(volume_info->VolumeLabel, volume_info->VolumeLabelLength, L"WineTestDriver"),
+            "wrong name %s\n", debugstr_wn(volume_info->VolumeLabel, volume_info->VolumeLabelLength / sizeof(WCHAR)));
 
     CloseHandle(file);
 

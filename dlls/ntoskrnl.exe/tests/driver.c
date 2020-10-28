@@ -2467,6 +2467,47 @@ static NTSTATUS WINAPI driver_QueryInformation(DEVICE_OBJECT *device, IRP *irp)
     return ret;
 }
 
+static NTSTATUS WINAPI driver_QueryVolumeInformation(DEVICE_OBJECT *device, IRP *irp)
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    ULONG length = stack->Parameters.QueryVolume.Length;
+    NTSTATUS ret;
+
+    switch (stack->Parameters.QueryVolume.FsInformationClass)
+    {
+    case FileFsVolumeInformation:
+    {
+        FILE_FS_VOLUME_INFORMATION *info = irp->AssociatedIrp.SystemBuffer;
+        static const WCHAR label[] = L"WineTestDriver";
+        ULONG serial = 0xdeadbeef;
+
+        if (length < sizeof(FILE_FS_VOLUME_INFORMATION))
+        {
+            ret = STATUS_INFO_LENGTH_MISMATCH;
+            break;
+        }
+
+        info->VolumeCreationTime.QuadPart = 0;
+        info->VolumeSerialNumber = serial;
+        info->VolumeLabelLength = min( lstrlenW(label) * sizeof(WCHAR),
+                                       length - offsetof( FILE_FS_VOLUME_INFORMATION, VolumeLabel ) );
+        info->SupportsObjects = TRUE;
+        memcpy( info->VolumeLabel, label, info->VolumeLabelLength );
+
+        irp->IoStatus.Information = offsetof( FILE_FS_VOLUME_INFORMATION, VolumeLabel ) + info->VolumeLabelLength;
+        ret = STATUS_SUCCESS;
+        break;
+    }
+    default:
+        ret = STATUS_NOT_IMPLEMENTED;
+        break;
+    }
+
+    irp->IoStatus.Status = ret;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    return ret;
+}
+
 static NTSTATUS WINAPI driver_Close(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
@@ -2509,6 +2550,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL]    = driver_IoControl;
     driver->MajorFunction[IRP_MJ_FLUSH_BUFFERS]     = driver_FlushBuffers;
     driver->MajorFunction[IRP_MJ_QUERY_INFORMATION] = driver_QueryInformation;
+    driver->MajorFunction[IRP_MJ_QUERY_VOLUME_INFORMATION] = driver_QueryVolumeInformation;
     driver->MajorFunction[IRP_MJ_CLOSE]             = driver_Close;
 
     RtlInitUnicodeString(&nameW, L"IoDriverObjectType");

@@ -696,6 +696,7 @@ enum irp_type
     IRP_CALL_WRITE,
     IRP_CALL_FLUSH,
     IRP_CALL_IOCTL,
+    IRP_CALL_VOLUME,
     IRP_CALL_FREE,
     IRP_CALL_CANCEL
 };
@@ -748,6 +749,14 @@ typedef union
         int              __pad;
         client_ptr_t     file;      /* opaque ptr for the file object */
     } ioctl;
+    struct
+    {
+        enum irp_type    type;      /* IRP_CALL_VOLUME */
+        unsigned int     info_class;/* information class */
+        data_size_t      out_size;  /* needed output size */
+        int              __pad;
+        client_ptr_t     file;      /* opaque ptr for the file object */
+    } volume;
     struct
     {
         enum irp_type    type;      /* IRP_CALL_FREE */

@@ -680,6 +680,7 @@ enum irp_type
     IRP_CALL_WRITE,
     IRP_CALL_FLUSH,
     IRP_CALL_IOCTL,
+    IRP_CALL_VOLUME,
     IRP_CALL_FREE,
     IRP_CALL_CANCEL
 };
@@ -732,6 +733,14 @@ typedef union
         int              __pad;
         client_ptr_t     file;
     } ioctl;
+    struct
+    {
+        enum irp_type    type;
+        unsigned int     info_class;
+        data_size_t      out_size;
+        int              __pad;
+        client_ptr_t     file;
+    } volume;
     struct
     {
         enum irp_type    type;
@@ -6269,7 +6278,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 676
+#define SERVER_PROTOCOL_VERSION 677
 
 /* ### protocol_version end ### */
 

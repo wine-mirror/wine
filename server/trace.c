@@ -381,6 +381,12 @@ static void dump_irp_params( const char *prefix, const irp_params_t *data )
         dump_uint64( ",file=", &data->ioctl.file );
         fputc( '}', stderr );
         break;
+    case IRP_CALL_VOLUME:
+        fprintf( stderr, "%s{VOLUME,class=%u,out_size=%u", prefix,
+                 data->volume.info_class, data->volume.out_size );
+        dump_uint64( ",file=", &data->volume.file );
+        fputc( '}', stderr );
+        break;
     case IRP_CALL_FREE:
         fprintf( stderr, "%s{FREE", prefix );
         dump_uint64( ",obj=", &data->free.obj );
