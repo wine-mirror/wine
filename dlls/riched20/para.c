@@ -33,7 +33,7 @@ static ME_Paragraph *para_create( ME_TextEditor *editor )
 {
     ME_DisplayItem *item = ME_MakeDI(diParagraph);
 
-    ME_SetDefaultParaFormat(editor, &item->member.para.fmt);
+    editor_set_default_para_fmt( editor, &item->member.para.fmt );
     item->member.para.nFlags = MEPF_REWRAP;
 
     return &item->member.para;
@@ -459,7 +459,7 @@ static void para_num_clear_list( ME_TextEditor *editor, ME_Paragraph *para, cons
     } while (para_num_same_list( &para->fmt, orig_fmt ));
 }
 
-static BOOL ME_SetParaFormat(ME_TextEditor *editor, ME_Paragraph *para, const PARAFORMAT2 *pFmt)
+static BOOL para_set_fmt( ME_TextEditor *editor, ME_Paragraph *para, const PARAFORMAT2 *pFmt )
 {
   PARAFORMAT2 copy;
   DWORD dwMask;
@@ -782,10 +782,10 @@ ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_fir
   ME_Remove( run_get_di( end_run ) );
   ME_DestroyDisplayItem( run_get_di( end_run) );
 
-  if (editor->pLastSelStartPara == para_get_di( next ))
-    editor->pLastSelStartPara = para_get_di( para );
-  if (editor->pLastSelEndPara == para_get_di( next ))
-    editor->pLastSelEndPara = para_get_di( para );
+  if (editor->last_sel_start_para == next)
+    editor->last_sel_start_para = para;
+  if (editor->last_sel_end_para == next)
+    editor->last_sel_end_para = para;
 
   para->next_para = next->next_para;
   next->next_para->member.para.prev_para = para_get_di( para );
@@ -868,18 +868,18 @@ void ME_DumpParaStyleToBuf(const PARAFORMAT2 *pFmt, char buf[2048])
 #undef DUMP_EFFECT
 }
 
-void
-ME_GetSelectionParas(ME_TextEditor *editor, ME_DisplayItem **para, ME_DisplayItem **para_end)
+void editor_get_selection_paras( ME_TextEditor *editor, ME_Paragraph **para, ME_Paragraph **para_end )
 {
   ME_Cursor *pEndCursor = &editor->pCursors[1];
 
-  *para = editor->pCursors[0].pPara;
-  *para_end = editor->pCursors[1].pPara;
+  *para = &editor->pCursors[0].pPara->member.para;
+  *para_end = &editor->pCursors[1].pPara->member.para;
   if (*para == *para_end)
     return;
 
-  if ((*para_end)->member.para.nCharOfs < (*para)->member.para.nCharOfs) {
-    ME_DisplayItem *tmp = *para;
+  if ((*para_end)->nCharOfs < (*para)->nCharOfs)
+  {
+    ME_Paragraph *tmp = *para;
 
     *para = *para_end;
     *para_end = tmp;
@@ -889,79 +889,77 @@ ME_GetSelectionParas(ME_TextEditor *editor, ME_DisplayItem **para, ME_DisplayIte
   /* The paragraph at the end of a non-empty selection isn't included
    * if the selection ends at the start of the paragraph. */
   if (!pEndCursor->pRun->member.run.nCharOfs && !pEndCursor->nOffset)
-    *para_end = (*para_end)->member.para.prev_para;
+    *para_end = para_prev( *para_end );
 }
 
 
-BOOL ME_SetSelectionParaFormat(ME_TextEditor *editor, const PARAFORMAT2 *pFmt)
+BOOL editor_set_selection_para_fmt( ME_TextEditor *editor, const PARAFORMAT2 *fmt )
 {
-  ME_DisplayItem *para, *para_end;
+    ME_Paragraph *para, *para_end;
 
-  ME_GetSelectionParas(editor, &para, &para_end);
+    editor_get_selection_paras( editor, &para, &para_end );
 
-  do {
-    ME_SetParaFormat(editor, &para->member.para, pFmt);
-    if (para == para_end)
-      break;
-    para = para->member.para.next_para;
-  } while(1);
+    do
+    {
+        para_set_fmt( editor, para, fmt );
+        if (para == para_end) break;
+        para = para_next( para );
+    } while(1);
 
-  return TRUE;
+    return TRUE;
 }
 
-static void ME_GetParaFormat(ME_TextEditor *editor,
-                             const ME_DisplayItem *para,
-                             PARAFORMAT2 *pFmt)
+static void para_copy_fmt( const ME_Paragraph *para, PARAFORMAT2 *fmt )
 {
-  UINT cbSize = pFmt->cbSize;
-  if (pFmt->cbSize >= sizeof(PARAFORMAT2)) {
-    *pFmt = para->member.para.fmt;
-  } else {
-    CopyMemory(pFmt, &para->member.para.fmt, pFmt->cbSize);
-    pFmt->dwMask &= PFM_ALL;
-  }
-  pFmt->cbSize = cbSize;
+    UINT size = fmt->cbSize;
+
+    if (fmt->cbSize >= sizeof(PARAFORMAT2))
+        *fmt = para->fmt;
+    else
+    {
+        memcpy( fmt, &para->fmt, fmt->cbSize );
+        fmt->dwMask &= PFM_ALL;
+    }
+    fmt->cbSize = size;
 }
 
-void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
+void editor_get_selection_para_fmt( ME_TextEditor *editor, PARAFORMAT2 *fmt )
 {
-  ME_DisplayItem *para, *para_end;
-  PARAFORMAT2 *curFmt;
+  ME_Paragraph *para, *para_end;
 
-  if (pFmt->cbSize < sizeof(PARAFORMAT))
+  if (fmt->cbSize < sizeof(PARAFORMAT))
   {
-    pFmt->dwMask = 0;
+    fmt->dwMask = 0;
     return;
   }
 
-  ME_GetSelectionParas(editor, &para, &para_end);
+  editor_get_selection_paras( editor, &para, &para_end );
 
-  ME_GetParaFormat(editor, para, pFmt);
+  para_copy_fmt( para, fmt );
 
   /* Invalidate values that change across the selected paragraphs. */
   while (para != para_end)
   {
-    para = para->member.para.next_para;
-    curFmt = &para->member.para.fmt;
+    para = para_next( para );
 
 #define CHECK_FIELD(m, f) \
-    if (pFmt->f != curFmt->f) pFmt->dwMask &= ~(m);
+    if (fmt->f != para->fmt.f) fmt->dwMask &= ~(m);
 
     CHECK_FIELD(PFM_NUMBERING, wNumbering);
     CHECK_FIELD(PFM_STARTINDENT, dxStartIndent);
     CHECK_FIELD(PFM_RIGHTINDENT, dxRightIndent);
     CHECK_FIELD(PFM_OFFSET, dxOffset);
     CHECK_FIELD(PFM_ALIGNMENT, wAlignment);
-    if (pFmt->dwMask & PFM_TABSTOPS)
+    if (fmt->dwMask & PFM_TABSTOPS)
     {
-      if (pFmt->cTabCount != para->member.para.fmt.cTabCount ||
-          memcmp(pFmt->rgxTabs, curFmt->rgxTabs, curFmt->cTabCount*sizeof(int)))
-        pFmt->dwMask &= ~PFM_TABSTOPS;
+      if (fmt->cTabCount != para->fmt.cTabCount ||
+          memcmp(fmt->rgxTabs, para->fmt.rgxTabs, para->fmt.cTabCount * sizeof(int) ))
+        fmt->dwMask &= ~PFM_TABSTOPS;
     }
 
-    if (pFmt->cbSize >= sizeof(PARAFORMAT2))
+    if (fmt->cbSize >= sizeof(PARAFORMAT2))
     {
-      pFmt->dwMask &= ~((pFmt->wEffects ^ curFmt->wEffects) << 16);
+      fmt->dwMask &= ~((fmt->wEffects ^ para->fmt.wEffects) << 16);
       CHECK_FIELD(PFM_SPACEBEFORE, dySpaceBefore);
       CHECK_FIELD(PFM_SPACEAFTER, dySpaceAfter);
       CHECK_FIELD(PFM_LINESPACING, dyLineSpacing);
@@ -980,7 +978,7 @@ void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
   }
 }
 
-void ME_SetDefaultParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt)
+void editor_set_default_para_fmt( ME_TextEditor *editor, PARAFORMAT2 *pFmt )
 {
     const PARAFORMAT2 *host_fmt;
     HRESULT hr;

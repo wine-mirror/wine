@@ -204,15 +204,15 @@ void para_range_invalidate( ME_TextEditor *editor, ME_Paragraph *start_para, ME_
 void ME_SendRequestResize(ME_TextEditor *editor, BOOL force) DECLSPEC_HIDDEN;
 
 /* para.c */
+void editor_get_selection_paras(ME_TextEditor *editor, ME_Paragraph **para, ME_Paragraph **para_end ) DECLSPEC_HIDDEN;
+void editor_get_selection_para_fmt( ME_TextEditor *editor, PARAFORMAT2 *fmt ) DECLSPEC_HIDDEN;
+void editor_set_default_para_fmt(ME_TextEditor *editor, PARAFORMAT2 *pFmt) DECLSPEC_HIDDEN;
+BOOL editor_set_selection_para_fmt( ME_TextEditor *editor, const PARAFORMAT2 *fmt ) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_GetParagraph(ME_DisplayItem *run) DECLSPEC_HIDDEN;
-void ME_GetSelectionParas(ME_TextEditor *editor, ME_DisplayItem **para, ME_DisplayItem **para_end) DECLSPEC_HIDDEN;
 void ME_MakeFirstParagraph(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_DumpParaStyle(ME_Paragraph *s) DECLSPEC_HIDDEN;
 void ME_DumpParaStyleToBuf(const PARAFORMAT2 *pFmt, char buf[2048]) DECLSPEC_HIDDEN;
-BOOL ME_SetSelectionParaFormat(ME_TextEditor *editor, const PARAFORMAT2 *pFmt) DECLSPEC_HIDDEN;
-void ME_GetSelectionParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt) DECLSPEC_HIDDEN;
 void ME_MarkAllForWrapping(ME_TextEditor *editor) DECLSPEC_HIDDEN;
-void ME_SetDefaultParaFormat(ME_TextEditor *editor, PARAFORMAT2 *pFmt) DECLSPEC_HIDDEN;
 int get_total_width(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 ME_Cell *para_cell( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 void para_destroy( ME_TextEditor *editor, ME_Paragraph *item ) DECLSPEC_HIDDEN;

@@ -1312,8 +1312,8 @@ void editor_ensure_visible( ME_TextEditor *editor, ME_Cursor *cursor )
 void
 ME_InvalidateSelection(ME_TextEditor *editor)
 {
-  ME_DisplayItem *sel_start, *sel_end;
-  ME_DisplayItem *repaint_start = NULL, *repaint_end = NULL;
+  ME_Paragraph *sel_start, *sel_end;
+  ME_Paragraph *repaint_start = NULL, *repaint_end = NULL;
   int nStart, nEnd;
   int len = ME_GetTextLength(editor);
 
@@ -1323,41 +1323,47 @@ ME_InvalidateSelection(ME_TextEditor *editor)
   if (nStart == nEnd && editor->nLastSelStart == editor->nLastSelEnd)
     return;
   ME_WrapMarkedParagraphs(editor);
-  ME_GetSelectionParas(editor, &sel_start, &sel_end);
-  assert(sel_start->type == diParagraph);
-  assert(sel_end->type == diParagraph);
+  editor_get_selection_paras( editor, &sel_start, &sel_end );
+
   /* last selection markers aren't always updated, which means
    * they can point past the end of the document */
-  if (editor->nLastSelStart > len || editor->nLastSelEnd > len) {
-    repaint_start = ME_FindItemFwd(editor->pBuffer->pFirst, diParagraph);
-    repaint_end = editor->pBuffer->pLast->member.para.prev_para;
-  } else {
+  if (editor->nLastSelStart > len || editor->nLastSelEnd > len)
+  {
+    repaint_start = editor_first_para( editor );
+    repaint_end = para_prev( editor_end_para( editor ) );
+  }
+  else
+  {
     /* if the start part of selection is being expanded or contracted... */
-    if (nStart < editor->nLastSelStart) {
+    if (nStart < editor->nLastSelStart)
+    {
       repaint_start = sel_start;
-      repaint_end = editor->pLastSelStartPara;
-    } else if (nStart > editor->nLastSelStart) {
-      repaint_start = editor->pLastSelStartPara;
+      repaint_end = editor->last_sel_start_para;
+    }
+    else if (nStart > editor->nLastSelStart)
+    {
+      repaint_start = editor->last_sel_start_para;
       repaint_end = sel_start;
     }
 
     /* if the end part of selection is being contracted or expanded... */
-    if (nEnd < editor->nLastSelEnd) {
+    if (nEnd < editor->nLastSelEnd)
+    {
       if (!repaint_start) repaint_start = sel_end;
-      repaint_end = editor->pLastSelEndPara;
-    } else if (nEnd > editor->nLastSelEnd) {
-      if (!repaint_start) repaint_start = editor->pLastSelEndPara;
+      repaint_end = editor->last_sel_end_para;
+    }
+    else if (nEnd > editor->nLastSelEnd)
+    {
+      if (!repaint_start) repaint_start = editor->last_sel_end_para;
       repaint_end = sel_end;
     }
   }
 
   if (repaint_start)
-    para_range_invalidate( editor, &repaint_start->member.para, &repaint_end->member.para );
+    para_range_invalidate( editor, repaint_start, repaint_end );
   /* remember the last invalidated position */
   ME_GetSelectionOfs(editor, &editor->nLastSelStart, &editor->nLastSelEnd);
-  ME_GetSelectionParas(editor, &editor->pLastSelStartPara, &editor->pLastSelEndPara);
-  assert(editor->pLastSelStartPara->type == diParagraph);
-  assert(editor->pLastSelEndPara->type == diParagraph);
+  editor_get_selection_paras( editor, &editor->last_sel_start_para, &editor->last_sel_end_para );
 }
 
 BOOL

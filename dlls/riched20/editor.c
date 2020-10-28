@@ -678,7 +678,7 @@ void ME_RTFParAttrHook(RTF_Info *info)
     {
       PARAFORMAT2 fmt;
       fmt.cbSize = sizeof(fmt);
-      ME_GetSelectionParaFormat(info->editor, &fmt);
+      editor_get_selection_para_fmt( info->editor, &fmt );
       info->fmt.dwMask |= PFM_STARTINDENT | PFM_OFFSET;
       info->fmt.dxStartIndent = fmt.dxStartIndent;
       info->fmt.dxOffset = fmt.dxOffset;
@@ -713,7 +713,7 @@ void ME_RTFParAttrHook(RTF_Info *info)
     {
       PARAFORMAT2 fmt;
       fmt.cbSize = sizeof(fmt);
-      ME_GetSelectionParaFormat(info->editor, &fmt);
+      editor_get_selection_para_fmt( info->editor, &fmt );
       memcpy(info->fmt.rgxTabs, fmt.rgxTabs,
              fmt.cTabCount * sizeof(fmt.rgxTabs[0]));
       info->fmt.cTabCount = fmt.cTabCount;
@@ -1637,7 +1637,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
                           ME_GetTextLength(editor), FALSE);
     from = to = 0;
     ME_ClearTempStyle(editor);
-    ME_SetDefaultParaFormat(editor, &editor->pCursors[0].pPara->member.para.fmt);
+    editor_set_default_para_fmt( editor, &editor->pCursors[0].pPara->member.para.fmt );
   }
 
 
@@ -2533,7 +2533,7 @@ static BOOL handle_enter(ME_TextEditor *editor)
                     ME_InsertTextFromCursor(editor, 0, &endl, 1,
                     editor->pCursors[0].pRun->member.run.style);
                     para = editor->pBuffer->pFirst->member.para.next_para;
-                    ME_SetDefaultParaFormat(editor, &para->member.para.fmt);
+                    editor_set_default_para_fmt( editor, &para->member.para.fmt );
                     para->member.para.nFlags = 0;
                     para_mark_rewrap( editor, &para->member.para );
                     editor->pCursors[0].pPara = para;
@@ -3131,7 +3131,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->nUndoMode = umAddToUndo;
   ed->nParagraphs = 1;
   ed->nLastSelStart = ed->nLastSelEnd = 0;
-  ed->pLastSelStartPara = ed->pLastSelEndPara = ed->pCursors[0].pPara;
+  ed->last_sel_start_para = ed->last_sel_end_para = &ed->pCursors[0].pPara->member.para;
   ed->bHideSelection = FALSE;
   ed->pfnWordBreak = NULL;
   ed->lpOleCallback = NULL;
@@ -4027,14 +4027,14 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_SETPARAFORMAT:
   {
-    BOOL result = ME_SetSelectionParaFormat(editor, (PARAFORMAT2 *)lParam);
+    BOOL result = editor_set_selection_para_fmt( editor, (PARAFORMAT2 *)lParam );
     ME_WrapMarkedParagraphs(editor);
     ME_UpdateScrollBar(editor);
     ME_CommitUndo(editor);
     return result;
   }
   case EM_GETPARAFORMAT:
-    ME_GetSelectionParaFormat(editor, (PARAFORMAT2 *)lParam);
+    editor_get_selection_para_fmt( editor, (PARAFORMAT2 *)lParam );
     return ((PARAFORMAT2 *)lParam)->dwMask;
   case EM_GETFIRSTVISIBLELINE:
   {
