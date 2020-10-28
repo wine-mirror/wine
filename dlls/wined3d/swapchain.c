@@ -1319,11 +1319,12 @@ static HRESULT wined3d_swapchain_state_init(struct wined3d_swapchain_state *stat
     }
 
     GetWindowRect(window, &state->original_window_rect);
+    state->wined3d = wined3d;
     state->device_window = window;
     state->parent = parent;
 
     if (desc->flags & WINED3D_SWAPCHAIN_REGISTER_STATE)
-        wined3d_swapchain_state_register(state, wined3d);
+        wined3d_swapchain_state_register(state);
 
     return hr;
 }

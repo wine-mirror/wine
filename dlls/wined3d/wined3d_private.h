@@ -5072,6 +5072,7 @@ void wined3d_unordered_access_view_vk_update(struct wined3d_unordered_access_vie
 
 struct wined3d_swapchain_state
 {
+    struct wined3d *wined3d;
     struct wined3d_swapchain_desc desc;
     struct wined3d_swapchain_state_parent *parent;
 
@@ -5085,8 +5086,7 @@ struct wined3d_swapchain_state
 };
 
 void wined3d_swapchain_state_cleanup(struct wined3d_swapchain_state *state) DECLSPEC_HIDDEN;
-void wined3d_swapchain_state_register(struct wined3d_swapchain_state *state,
-        struct wined3d *wined3d) DECLSPEC_HIDDEN;
+void wined3d_swapchain_state_register(struct wined3d_swapchain_state *state) DECLSPEC_HIDDEN;
 void wined3d_swapchain_state_restore_from_fullscreen(struct wined3d_swapchain_state *state,
         HWND window, const RECT *window_rect) DECLSPEC_HIDDEN;
 HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state *state,
