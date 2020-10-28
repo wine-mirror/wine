@@ -6654,29 +6654,23 @@ done:
 }
 
 /*************************************************************
- * freetype_GetCharWidthInfo
+ * freetype_get_char_width_info
  */
-static BOOL CDECL freetype_GetCharWidthInfo( struct gdi_font *gdi_font, struct char_width_info *info )
+static BOOL CDECL freetype_get_char_width_info( struct gdi_font *font, struct char_width_info *info )
 {
-    GdiFont *font = get_font_ptr(gdi_font);
+    FT_Face face = get_font_ptr(font)->ft_face;
     TT_HoriHeader *pHori;
 
     TRACE("%p, %p\n", font, info);
 
-    if (gdi_font->scalable &&
-        (pHori = pFT_Get_Sfnt_Table(font->ft_face, ft_sfnt_hhea)))
+    if ((pHori = pFT_Get_Sfnt_Table(face, ft_sfnt_hhea)))
     {
-        FT_Fixed em_scale;
-        em_scale = MulDiv(gdi_font->ppem, 1 << 16, font->ft_face->units_per_EM);
+        FT_Fixed em_scale = MulDiv(font->ppem, 1 << 16, face->units_per_EM);
         info->lsb = (SHORT)pFT_MulFix(pHori->min_Left_Side_Bearing,  em_scale);
         info->rsb = (SHORT)pFT_MulFix(pHori->min_Right_Side_Bearing, em_scale);
+        return TRUE;
     }
-    else
-        info->lsb = info->rsb = 0;
-
-    info->unk = 0;
-
-    return TRUE;
+    return FALSE;
 }
 
 
@@ -6973,7 +6967,6 @@ static const struct font_backend_funcs font_funcs =
 {
     freetype_EnumFonts,
     freetype_FontIsLinked,
-    freetype_GetCharWidthInfo,
     freetype_SelectFont,
     freetype_add_font,
     freetype_add_mem_font,
@@ -6984,6 +6977,7 @@ static const struct font_backend_funcs font_funcs =
     freetype_get_default_glyph,
     freetype_get_glyph_outline,
     freetype_get_unicode_ranges,
+    freetype_get_char_width_info,
     freetype_set_outline_text_metrics,
     freetype_set_bitmap_text_metrics,
     freetype_get_kerning_pairs,

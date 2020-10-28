@@ -1053,13 +1053,19 @@ static BOOL CDECL font_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *bu
 static BOOL CDECL font_GetCharWidthInfo( PHYSDEV dev, void *ptr )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    struct char_width_info *info = ptr;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetCharWidthInfo );
         return dev->funcs->pGetCharWidthInfo( dev, ptr );
     }
-    return font_funcs->pGetCharWidthInfo( physdev->font, ptr );
+
+    info->unk = 0;
+    if (!physdev->font->scalable || !font_funcs->get_char_width_info( physdev->font, info ))
+        info->lsb = info->rsb = 0;
+
+    return TRUE;
 }
 
 
