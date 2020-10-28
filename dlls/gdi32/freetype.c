@@ -6680,12 +6680,16 @@ static BOOL CDECL freetype_GetCharWidthInfo( struct gdi_font *gdi_font, struct c
 }
 
 
-/* Retrieve a list of supported Unicode ranges for a given font.
+/*************************************************************
+ * freetype_get_unicode_ranges
+ *
+ * Retrieve a list of supported Unicode ranges for a given font.
  * Can be called with NULL gs to calculate the buffer size. Returns
  * the number of ranges found.
  */
-static DWORD get_font_unicode_ranges(FT_Face face, GLYPHSET *gs)
+static DWORD CDECL freetype_get_unicode_ranges( struct gdi_font *font, GLYPHSET *gs )
 {
+    FT_Face face = get_font_ptr(font)->ft_face;
     DWORD num_ranges = 0;
 
     if (face->charmap->encoding == FT_ENCODING_UNICODE)
@@ -6742,24 +6746,6 @@ static DWORD get_font_unicode_ranges(FT_Face face, GLYPHSET *gs)
     }
 
     return num_ranges;
-}
-
-/*************************************************************
- * freetype_GetFontUnicodeRanges
- */
-static DWORD CDECL freetype_GetFontUnicodeRanges( struct gdi_font *font, GLYPHSET *glyphset )
-{
-    DWORD size, num_ranges;
-
-    num_ranges = get_font_unicode_ranges(get_font_ptr(font)->ft_face, glyphset);
-    size = sizeof(GLYPHSET) + sizeof(WCRANGE) * (num_ranges - 1);
-    if (glyphset)
-    {
-        glyphset->cbThis = size;
-        glyphset->cRanges = num_ranges;
-        glyphset->flAccel = 0;
-    }
-    return size;
 }
 
 /*************************************************************
@@ -6988,7 +6974,6 @@ static const struct font_backend_funcs font_funcs =
     freetype_EnumFonts,
     freetype_FontIsLinked,
     freetype_GetCharWidthInfo,
-    freetype_GetFontUnicodeRanges,
     freetype_SelectFont,
     freetype_add_font,
     freetype_add_mem_font,
@@ -6998,6 +6983,7 @@ static const struct font_backend_funcs font_funcs =
     freetype_get_glyph_index,
     freetype_get_default_glyph,
     freetype_get_glyph_outline,
+    freetype_get_unicode_ranges,
     freetype_set_outline_text_metrics,
     freetype_set_bitmap_text_metrics,
     freetype_get_kerning_pairs,

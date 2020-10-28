@@ -1118,13 +1118,23 @@ static BOOL CDECL font_GetFontRealizationInfo( PHYSDEV dev, void *ptr )
 static DWORD CDECL font_GetFontUnicodeRanges( PHYSDEV dev, GLYPHSET *glyphset )
 {
     struct font_physdev *physdev = get_font_dev( dev );
+    DWORD size, num_ranges;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pGetFontUnicodeRanges );
         return dev->funcs->pGetFontUnicodeRanges( dev, glyphset );
     }
-    return font_funcs->pGetFontUnicodeRanges( physdev->font, glyphset );
+
+    num_ranges = font_funcs->get_unicode_ranges( physdev->font, glyphset );
+    size = offsetof( GLYPHSET, ranges[num_ranges] );
+    if (glyphset)
+    {
+        glyphset->cbThis = size;
+        glyphset->cRanges = num_ranges;
+        glyphset->flAccel = 0;
+    }
+    return size;
 }
 
 

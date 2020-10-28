@@ -367,7 +367,6 @@ struct font_backend_funcs
     BOOL  (CDECL *pEnumFonts)( LOGFONTW *lf, FONTENUMPROCW proc, LPARAM lparam );
     BOOL  (CDECL *pFontIsLinked)( struct gdi_font *font );
     BOOL  (CDECL *pGetCharWidthInfo)( struct gdi_font *font, struct char_width_info *info );
-    DWORD (CDECL *pGetFontUnicodeRanges)( struct gdi_font *font, GLYPHSET *glyphset );
     struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont, UINT *aa_flags, UINT default_aa_flags );
 
     INT   (CDECL *add_font)( const WCHAR *file, DWORD flags );
@@ -381,6 +380,7 @@ struct font_backend_funcs
     UINT  (CDECL *get_default_glyph)( struct gdi_font *gdi_font );
     DWORD (CDECL *get_glyph_outline)( struct gdi_font *font, UINT glyph, UINT format,
                                       GLYPHMETRICS *gm, ABC *abc, DWORD buflen, void *buf, const MAT2 *mat );
+    DWORD (CDECL *get_unicode_ranges)( struct gdi_font *font, GLYPHSET *gs );
     BOOL  (CDECL *set_outline_text_metrics)( struct gdi_font *font );
     BOOL  (CDECL *set_bitmap_text_metrics)( struct gdi_font *font );
     DWORD (CDECL *get_kerning_pairs)( struct gdi_font *gdi_font, KERNINGPAIR **kern_pair );
