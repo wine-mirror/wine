@@ -846,7 +846,7 @@ static void draw_table_borders( ME_Context *c, ME_Paragraph *para )
       rowY = c->pt.y + para->pt.y;
       if (para->fmt.dwMask & PFM_SPACEBEFORE)
         rowY += ME_twips2pointsY(c, para->fmt.dySpaceBefore);
-      nHeight = ME_FindItemFwd( para_get_di( para ), diStartRow )->member.row.nHeight;
+      nHeight = para_first_row( para )->nHeight;
       rowBottom = rowY + nHeight;
 
       /* Draw horizontal lines */
