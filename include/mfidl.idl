@@ -1147,6 +1147,22 @@ interface IMFVideoSampleAllocatorCallback : IUnknown
     );
 }
 
+[
+    object,
+    uuid(545b3a48-3283-4f62-866f-a62d8f598f9f),
+    local,
+    pointer_default(unique)
+]
+interface IMFVideoSampleAllocatorEx : IMFVideoSampleAllocator
+{
+    HRESULT InitializeSampleAllocatorEx(
+        DWORD initial_sample_count,
+        DWORD max_sample_count,
+        IMFAttributes *attributes,
+        IMFMediaType *media_type
+    );
+}
+
 enum
 {
     MF_ACTIVATE_CUSTOM_MIXER_ALLOWFAIL = 0x00000001,
