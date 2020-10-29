@@ -2799,7 +2799,7 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
         !(ctrl_is_down && !editor->bEmulateVersion10))
     {
       ME_DisplayItem *para;
-      BOOL bSelectedRow = FALSE;
+      BOOL selected_row = FALSE;
 
       para = cursor.pPara;
       if (ME_IsSelection(editor) &&
@@ -2808,11 +2808,11 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
           para->member.para.prev_para->type == diParagraph)
       {
         para = para->member.para.prev_para;
-        bSelectedRow = TRUE;
+        selected_row = TRUE;
       }
       if (ME_IsInTable(para))
       {
-        ME_TabPressedInTable(editor, bSelectedRow);
+        table_handle_tab( editor, selected_row );
         ME_CommitUndo(editor);
         return 0;
       }
