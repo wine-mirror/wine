@@ -924,11 +924,13 @@ struct testfilter
     LONGLONG current_position;
     LONGLONG stop_position;
     const AM_MEDIA_TYPE *preferred_mt;
+    HANDLE wait_state_event;
     HRESULT get_duration_hr;
     HRESULT get_stop_position_hr;
     HRESULT set_positions_hr;
     HRESULT init_stream_hr;
     HRESULT cleanup_stream_hr;
+    HRESULT wait_state_hr;
 };
 
 static inline struct testfilter *impl_from_BaseFilter(struct strmbase_filter *iface)
@@ -947,6 +949,7 @@ static struct strmbase_pin *testfilter_get_pin(struct strmbase_filter *iface, un
 static void testfilter_destroy(struct strmbase_filter *iface)
 {
     struct testfilter *filter = impl_from_BaseFilter(iface);
+    CloseHandle(filter->wait_state_event);
     strmbase_source_cleanup(&filter->source);
     strmbase_filter_cleanup(&filter->filter);
 }
@@ -971,12 +974,27 @@ static HRESULT testfilter_cleanup_stream(struct strmbase_filter *iface)
     return filter->cleanup_stream_hr;
 }
 
+static HRESULT testfilter_wait_state(struct strmbase_filter *iface, DWORD timeout)
+{
+    struct testfilter *filter = impl_from_BaseFilter(iface);
+    HRESULT hr;
+
+    LeaveCriticalSection(&filter->filter.csFilter);
+    WaitForSingleObject(filter->wait_state_event, timeout);
+    EnterCriticalSection(&filter->filter.csFilter);
+
+    hr = filter->wait_state_hr;
+
+    return hr;
+}
+
 static const struct strmbase_filter_ops testfilter_ops =
 {
     .filter_get_pin = testfilter_get_pin,
     .filter_destroy = testfilter_destroy,
     .filter_init_stream = testfilter_init_stream,
     .filter_cleanup_stream = testfilter_cleanup_stream,
+    .filter_wait_state = testfilter_wait_state,
 };
 
 static inline struct testfilter *impl_from_base_pin(struct strmbase_pin *iface)
@@ -1060,6 +1078,7 @@ static void testfilter_init(struct testfilter *filter)
     strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
     strmbase_source_init(&filter->source, &filter->filter, L"", &testsource_ops);
     filter->stop_position = 0x8000000000000000ULL;
+    filter->wait_state_event = CreateEventW(NULL, TRUE, TRUE, NULL);
 }
 
 static inline struct testfilter *impl_from_IMediaSeeking(IMediaSeeking *iface)
@@ -2319,11 +2338,25 @@ static void test_initialize(void)
     IUnknown_Release(graph_inner_unk);
 }
 
+static IAMMultiMediaStream *mmstream_mmstream;
+static STREAM_STATE mmstream_state;
+
+static DWORD CALLBACK mmstream_set_state(void *param)
+{
+    HRESULT hr;
+
+    hr = IAMMultiMediaStream_SetState(mmstream_mmstream, mmstream_state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    return 0;
+}
+
 static void test_set_state(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
     struct testfilter source;
     IGraphBuilder *graph;
+    HANDLE thread;
     HRESULT hr;
     ULONG ref;
 
@@ -2353,6 +2386,42 @@ static void test_set_state(void)
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    source.wait_state_hr = E_FAIL;
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    source.wait_state_hr = S_OK;
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    source.wait_state_hr = VFW_S_STATE_INTERMEDIATE;
+    ResetEvent(source.wait_state_event);
+
+    mmstream_mmstream = mmstream;
+    mmstream_state = STREAMSTATE_RUN;
+    thread = CreateThread(NULL, 0, mmstream_set_state, NULL, 0, NULL);
+
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "SetState returned prematurely.\n");
+
+    EnterCriticalSection(&source.filter.csFilter);
+    source.wait_state_hr = S_OK;
+    SetEvent(source.wait_state_event);
+    LeaveCriticalSection(&source.filter.csFilter);
+
+    ok(!WaitForSingleObject(thread, 2000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    source.init_stream_hr = E_FAIL;
+    source.wait_state_hr = VFW_S_STATE_INTERMEDIATE;
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+    source.init_stream_hr = S_OK;
+    source.wait_state_hr = S_OK;
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     source.cleanup_stream_hr = E_FAIL;
@@ -2368,6 +2437,13 @@ static void test_set_state(void)
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
     source.cleanup_stream_hr = S_OK;
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    source.wait_state_hr = VFW_S_STATE_INTERMEDIATE;
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    source.wait_state_hr = S_OK;
 
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %d.\n", ref);

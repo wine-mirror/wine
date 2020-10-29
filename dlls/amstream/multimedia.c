@@ -156,7 +156,11 @@ static HRESULT WINAPI multimedia_stream_SetState(IAMMultiMediaStream *iface, STR
     {
         hr = IMediaControl_Run(This->media_control);
         if (SUCCEEDED(hr))
+        {
+            FILTER_STATE state;
+            IMediaControl_GetState(This->media_control, INFINITE, (OAFilterState *)&state);
             hr = S_OK;
+        }
     }
     else if (new_state == STREAMSTATE_STOP)
         hr = IMediaControl_Stop(This->media_control);
