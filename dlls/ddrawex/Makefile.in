@@ -9,3 +9,5 @@ C_SRCS = \
 	surface.c
 
 IDL_SRCS = ddrawex.idl
+
+RC_SRCS = version.rc
