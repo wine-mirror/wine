@@ -378,10 +378,11 @@ struct font_backend_funcs
     BOOL  (CDECL *load_font)( struct gdi_font *gdi_font );
     DWORD (CDECL *get_font_data)( struct gdi_font *gdi_font, DWORD table, DWORD offset,
                                   void *buf, DWORD count );
-    BOOL  (CDECL *get_glyph_index)( struct gdi_font *gdi_font, UINT *glyph );
+    BOOL  (CDECL *get_glyph_index)( struct gdi_font *gdi_font, UINT *glyph, BOOL use_encoding );
     UINT  (CDECL *get_default_glyph)( struct gdi_font *gdi_font );
     DWORD (CDECL *get_glyph_outline)( struct gdi_font *font, UINT glyph, UINT format,
-                                      GLYPHMETRICS *gm, ABC *abc, DWORD buflen, void *buf, const MAT2 *mat );
+                                      GLYPHMETRICS *gm, ABC *abc, DWORD buflen, void *buf,
+                                      const MAT2 *mat, BOOL tategaki );
     DWORD (CDECL *get_unicode_ranges)( struct gdi_font *font, GLYPHSET *gs );
     BOOL  (CDECL *get_char_width_info)( struct gdi_font *font, struct char_width_info *info );
     BOOL  (CDECL *set_outline_text_metrics)( struct gdi_font *font );
@@ -402,12 +403,7 @@ extern struct gdi_font *find_cached_gdi_font( const LOGFONTW *lf, const FMAT2 *m
 static inline const WCHAR *get_gdi_font_name( struct gdi_font *font ) { return (WCHAR *)font->otm.otmpFamilyName; }
 extern void set_gdi_font_names( struct gdi_font *font, const WCHAR *family_name, const WCHAR *style_name,
                                 const WCHAR *full_name ) DECLSPEC_HIDDEN;
-extern BOOL get_gdi_font_glyph_metrics( struct gdi_font *font, UINT index,
-                                        GLYPHMETRICS *gm, ABC *abc ) DECLSPEC_HIDDEN;
-extern void set_gdi_font_glyph_metrics( struct gdi_font *font, UINT index,
-                                        const GLYPHMETRICS *gm, const ABC *abc ) DECLSPEC_HIDDEN;
 extern void *get_GSUB_vert_feature( struct gdi_font *font ) DECLSPEC_HIDDEN;
-extern UINT get_GSUB_vert_glyph( struct gdi_font *font, UINT glyph ) DECLSPEC_HIDDEN;
 extern void font_init(void) DECLSPEC_HIDDEN;
 extern CRITICAL_SECTION font_cs DECLSPEC_HIDDEN;
 

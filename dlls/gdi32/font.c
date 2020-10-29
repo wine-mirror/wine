@@ -540,7 +540,7 @@ struct glyph_metrics
 #define GM_BLOCK_SIZE 128
 
 /* TODO: GGO format support */
-BOOL get_gdi_font_glyph_metrics( struct gdi_font *font, UINT index, GLYPHMETRICS *gm, ABC *abc )
+static BOOL get_gdi_font_glyph_metrics( struct gdi_font *font, UINT index, GLYPHMETRICS *gm, ABC *abc )
 {
     UINT block = index / GM_BLOCK_SIZE;
     UINT entry = index % GM_BLOCK_SIZE;
@@ -559,7 +559,8 @@ BOOL get_gdi_font_glyph_metrics( struct gdi_font *font, UINT index, GLYPHMETRICS
     return FALSE;
 }
 
-void set_gdi_font_glyph_metrics( struct gdi_font *font, UINT index, const GLYPHMETRICS *gm, const ABC *abc )
+static void set_gdi_font_glyph_metrics( struct gdi_font *font, UINT index,
+                                        const GLYPHMETRICS *gm, const ABC *abc )
 {
     UINT block = index / GM_BLOCK_SIZE;
     UINT entry = index % GM_BLOCK_SIZE;
@@ -903,8 +904,9 @@ static UINT GSUB_apply_feature( GSUB_Header *header, GSUB_Feature *feature, UINT
     return glyph;
 }
 
-UINT get_GSUB_vert_glyph( struct gdi_font *font, UINT glyph )
+static UINT get_GSUB_vert_glyph( struct gdi_font *font, UINT glyph )
 {
+    if (!glyph) return glyph;
     if (!font->gsub_table) return glyph;
     return GSUB_apply_feature( font->gsub_table, font->vert_feature, glyph );
 }
@@ -1283,6 +1285,128 @@ static BOOL CDECL font_EnumFonts( PHYSDEV dev, LOGFONTW *lf, FONTENUMPROCW proc,
 }
 
 
+static BOOL check_unicode_tategaki( WCHAR ch )
+{
+    extern const unsigned short vertical_orientation_table[] DECLSPEC_HIDDEN;
+    unsigned short orientation = vertical_orientation_table[vertical_orientation_table[vertical_orientation_table[ch >> 8]+((ch >> 4) & 0x0f)]+ (ch & 0xf)];
+
+    /* We only reach this code if typographical substitution did not occur */
+    /* Type: U or Type: Tu */
+    return (orientation ==  1 || orientation == 3);
+}
+
+static UINT get_glyph_index_symbol( struct gdi_font *font, UINT glyph )
+{
+    UINT index;
+
+    if (glyph < 0x100) glyph += 0xf000;
+    /* there are a number of old pre-Unicode "broken" TTFs, which
+       do have symbols at U+00XX instead of U+f0XX */
+    index = glyph;
+    font_funcs->get_glyph_index( font, &index, FALSE );
+    if (!index)
+    {
+        index = glyph - 0xf000;
+        font_funcs->get_glyph_index( font, &index, FALSE );
+    }
+    return index;
+}
+
+static UINT get_glyph_index( struct gdi_font *font, UINT glyph )
+{
+    WCHAR wc = glyph;
+    char ch;
+    BOOL used;
+
+    if (font_funcs->get_glyph_index( font, &glyph, TRUE )) return glyph;
+
+    if (font->codepage == CP_SYMBOL)
+    {
+        glyph = get_glyph_index_symbol( font, wc );
+        if (!glyph)
+        {
+            if (WideCharToMultiByte( CP_ACP, 0, &wc, 1, &ch, 1, NULL, NULL ))
+                glyph = get_glyph_index_symbol( font, (unsigned char)ch );
+        }
+    }
+    else if (WideCharToMultiByte( font->codepage, 0, &wc, 1, &ch, 1, NULL, &used ) && !used)
+    {
+        glyph = (unsigned char)ch;
+        font_funcs->get_glyph_index( font, &glyph, FALSE );
+    }
+    return glyph;
+}
+
+static UINT get_glyph_index_linked( struct gdi_font **font, UINT glyph )
+{
+    struct gdi_font *child;
+    UINT res;
+
+    if ((res = get_glyph_index( *font, glyph ))) return res;
+    if (glyph < 32) return 0;  /* don't check linked fonts for control characters */
+
+    LIST_FOR_EACH_ENTRY( child, &(*font)->child_fonts, struct gdi_font, entry )
+    {
+        if (!child->private && !font_funcs->load_font( child )) continue;
+        if ((res = get_glyph_index( child, glyph )))
+        {
+            *font = child;
+            return res;
+        }
+    }
+    return 0;
+}
+
+static DWORD get_glyph_outline( struct gdi_font *font, UINT glyph, UINT format,
+                                GLYPHMETRICS *gm_ret, ABC *abc_ret, DWORD buflen, void *buf,
+                                const MAT2 *mat )
+{
+    GLYPHMETRICS gm;
+    ABC abc;
+    DWORD ret = 1;
+    UINT index = glyph;
+    BOOL tategaki = (*get_gdi_font_name( font ) == '@');
+
+    if (format & GGO_GLYPH_INDEX)
+    {
+        /* Windows bitmap font, e.g. Small Fonts, uses ANSI character code
+           as glyph index. "Treasure Adventure Game" depends on this. */
+        font_funcs->get_glyph_index( font, &index, FALSE );
+        /* TODO: Window also turns off tategaki for glyphs passed in by index
+            if their unicode code points fall outside of the range that is
+            rotated. */
+    }
+    else
+    {
+        index = get_glyph_index_linked( &font, glyph );
+        if (tategaki)
+        {
+            UINT orig = index;
+            index = get_GSUB_vert_glyph( font, index );
+            if (index == orig) tategaki = check_unicode_tategaki( glyph );
+        }
+    }
+
+    format &= ~(GGO_GLYPH_INDEX | GGO_UNHINTED);
+
+    if (mat && !memcmp( mat, &identity, sizeof(*mat) )) mat = NULL;
+
+    if (format == GGO_METRICS && !mat && get_gdi_font_glyph_metrics( font, index, &gm, &abc ))
+        goto done;
+
+    ret = font_funcs->get_glyph_outline( font, index, format, &gm, &abc, buflen, buf, mat, tategaki );
+    if (ret == GDI_ERROR) return ret;
+
+    if ((format == GGO_METRICS || format == GGO_BITMAP || format ==  WINE_GGO_GRAY16_BITMAP) && !mat)
+        set_gdi_font_glyph_metrics( font, index, &gm, &abc );
+
+done:
+    if (gm_ret) *gm_ret = gm;
+    if (abc_ret) *abc_ret = abc;
+    return ret;
+}
+
+
 /*************************************************************
  * font_FontIsLinked
  */
@@ -1305,7 +1429,6 @@ static BOOL CDECL font_FontIsLinked( PHYSDEV dev )
 static BOOL CDECL font_GetCharABCWidths( PHYSDEV dev, UINT first, UINT last, ABC *buffer )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    GLYPHMETRICS gm;
     UINT c;
 
     if (!physdev->font)
@@ -1318,7 +1441,7 @@ static BOOL CDECL font_GetCharABCWidths( PHYSDEV dev, UINT first, UINT last, ABC
 
     EnterCriticalSection( &font_cs );
     for (c = first; c <= last; c++, buffer++)
-        font_funcs->get_glyph_outline( physdev->font, c, GGO_METRICS, &gm, buffer, 0, NULL, &identity );
+        get_glyph_outline( physdev->font, c, GGO_METRICS, NULL, buffer, 0, NULL, NULL );
     LeaveCriticalSection( &font_cs );
     return TRUE;
 }
@@ -1330,7 +1453,6 @@ static BOOL CDECL font_GetCharABCWidths( PHYSDEV dev, UINT first, UINT last, ABC
 static BOOL CDECL font_GetCharABCWidthsI( PHYSDEV dev, UINT first, UINT count, WORD *gi, ABC *buffer )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    GLYPHMETRICS gm;
     UINT c;
 
     if (!physdev->font)
@@ -1343,8 +1465,8 @@ static BOOL CDECL font_GetCharABCWidthsI( PHYSDEV dev, UINT first, UINT count, W
 
     EnterCriticalSection( &font_cs );
     for (c = 0; c < count; c++, buffer++)
-        font_funcs->get_glyph_outline( physdev->font, gi ? gi[c] : first + c, GGO_METRICS | GGO_GLYPH_INDEX,
-                                       &gm, buffer, 0, NULL, &identity );
+        get_glyph_outline( physdev->font, gi ? gi[c] : first + c, GGO_METRICS | GGO_GLYPH_INDEX,
+                           NULL, buffer, 0, NULL, NULL );
     LeaveCriticalSection( &font_cs );
     return TRUE;
 }
@@ -1356,7 +1478,6 @@ static BOOL CDECL font_GetCharABCWidthsI( PHYSDEV dev, UINT first, UINT count, W
 static BOOL CDECL font_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *buffer )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    GLYPHMETRICS gm;
     ABC abc;
     UINT c;
 
@@ -1371,8 +1492,7 @@ static BOOL CDECL font_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *bu
     EnterCriticalSection( &font_cs );
     for (c = first; c <= last; c++)
     {
-        if (font_funcs->get_glyph_outline( physdev->font, c, GGO_METRICS,
-                                           &gm, &abc, 0, NULL, &identity ) == GDI_ERROR)
+        if (get_glyph_outline( physdev->font, c, GGO_METRICS, NULL, &abc, 0, NULL, NULL ) == GDI_ERROR)
             buffer[c - first] = 0;
         else
             buffer[c - first] = abc.abcA + abc.abcB + abc.abcC;
@@ -1508,7 +1628,7 @@ static DWORD CDECL font_GetGlyphIndices( PHYSDEV dev, const WCHAR *str, INT coun
     {
         UINT glyph = str[i];
 
-        if (!font_funcs->get_glyph_index( physdev->font, &glyph ))
+        if (!font_funcs->get_glyph_index( physdev->font, &glyph, TRUE ))
         {
             glyph = 0;
             if (physdev->font->codepage == CP_SYMBOL)
@@ -1545,7 +1665,6 @@ static DWORD CDECL font_GetGlyphOutline( PHYSDEV dev, UINT glyph, UINT format,
 {
     struct font_physdev *physdev = get_font_dev( dev );
     DWORD ret;
-    ABC abc;
 
     if (!physdev->font)
     {
@@ -1553,7 +1672,7 @@ static DWORD CDECL font_GetGlyphOutline( PHYSDEV dev, UINT glyph, UINT format,
         return dev->funcs->pGetGlyphOutline( dev, glyph, format, gm, buflen, buf, mat );
     }
     EnterCriticalSection( &font_cs );
-    ret = font_funcs->get_glyph_outline( physdev->font, glyph, format, gm, &abc, buflen, buf, mat );
+    ret = get_glyph_outline( physdev->font, glyph, format, gm, NULL, buflen, buf, mat );
     LeaveCriticalSection( &font_cs );
     return ret;
 }
@@ -1719,7 +1838,6 @@ static UINT CDECL font_GetTextCharsetInfo( PHYSDEV dev, FONTSIGNATURE *fs, DWORD
 static BOOL CDECL font_GetTextExtentExPoint( PHYSDEV dev, const WCHAR *str, INT count, INT *dxs )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    GLYPHMETRICS gm;
     INT i, pos;
     ABC abc;
 
@@ -1734,7 +1852,7 @@ static BOOL CDECL font_GetTextExtentExPoint( PHYSDEV dev, const WCHAR *str, INT 
     EnterCriticalSection( &font_cs );
     for (i = pos = 0; i < count; i++)
     {
-        font_funcs->get_glyph_outline( physdev->font, str[i], GGO_METRICS, &gm, &abc, 0, NULL, &identity );
+        get_glyph_outline( physdev->font, str[i], GGO_METRICS, NULL, &abc, 0, NULL, NULL );
         pos += abc.abcA + abc.abcB + abc.abcC;
         dxs[i] = pos;
     }
@@ -1749,7 +1867,6 @@ static BOOL CDECL font_GetTextExtentExPoint( PHYSDEV dev, const WCHAR *str, INT 
 static BOOL CDECL font_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, INT count, INT *dxs )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    GLYPHMETRICS gm;
     INT i, pos;
     ABC abc;
 
@@ -1764,8 +1881,8 @@ static BOOL CDECL font_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, 
     EnterCriticalSection( &font_cs );
     for (i = pos = 0; i < count; i++)
     {
-        font_funcs->get_glyph_outline( physdev->font, indices[i], GGO_METRICS | GGO_GLYPH_INDEX,
-                                       &gm, &abc, 0, NULL, &identity );
+        get_glyph_outline( physdev->font, indices[i], GGO_METRICS | GGO_GLYPH_INDEX,
+                           NULL, &abc, 0, NULL, NULL );
         pos += abc.abcA + abc.abcB + abc.abcC;
         dxs[i] = pos;
     }

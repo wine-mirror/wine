@@ -423,7 +423,6 @@ static const WCHAR font_mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N'
 static const WCHAR szDefaultFallbackLink[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0};
 
 static BOOL map_font_family(const WCHAR *orig, const WCHAR *repl);
-static BOOL get_glyph_index_linked( struct gdi_font *font, UINT c, struct gdi_font **linked_font, FT_UInt *glyph, BOOL *vert);
 static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font );
 static BOOL CDECL freetype_set_bitmap_text_metrics( struct gdi_font *font );
 static void remove_face_from_cache( Face *face );
@@ -4622,29 +4621,6 @@ static void FTVectorToPOINTFX(FT_Vector *vec, POINTFX *pt)
     pt->y.fract |= ((pt->y.fract >> 6) | (pt->y.fract >> 12));
 }
 
-/***************************************************
- * According to the MSDN documentation on WideCharToMultiByte,
- * certain codepages cannot set the default_used parameter.
- * This returns TRUE if the codepage can set that parameter, false else
- * so that calls to WideCharToMultiByte don't fail with ERROR_INVALID_PARAMETER
- */
-static BOOL codepage_sets_default_used(UINT codepage)
-{
-   switch (codepage)
-   {
-       case CP_UTF7:
-       case CP_UTF8:
-       case CP_SYMBOL:
-           return FALSE;
-       default:
-           return TRUE;
-   }
-}
-
-/*
- * GSUB Table handling functions
- */
-
 static FT_UInt get_glyph_index_symbol(const GdiFont *font, UINT glyph)
 {
     FT_UInt ret;
@@ -4658,67 +4634,14 @@ static FT_UInt get_glyph_index_symbol(const GdiFont *font, UINT glyph)
     return ret;
 }
 
-static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
-{
-    struct gdi_font *gdi_font = font->gdi_font;
-    FT_UInt ret;
-    WCHAR wc;
-    char buf;
-
-    if (font->ft_face->charmap->encoding == FT_ENCODING_NONE)
-    {
-        BOOL default_used;
-        BOOL *default_used_pointer;
-
-        default_used_pointer = NULL;
-        default_used = FALSE;
-        if (codepage_sets_default_used(gdi_font->codepage))
-            default_used_pointer = &default_used;
-        wc = (WCHAR)glyph;
-        if (!WideCharToMultiByte(gdi_font->codepage, 0, &wc, 1, &buf, sizeof(buf), NULL, default_used_pointer) ||
-            default_used)
-        {
-            if (gdi_font->codepage == CP_SYMBOL)
-            {
-                ret = get_glyph_index_symbol(font, glyph);
-                if (!ret)
-                {
-                    if (WideCharToMultiByte(CP_ACP, 0, &wc, 1, &buf, 1, NULL, NULL))
-                        ret = get_glyph_index_symbol(font, buf);
-                }
-            }
-            else
-                ret = 0;
-        }
-        else
-            ret = pFT_Get_Char_Index(font->ft_face, (unsigned char)buf);
-        TRACE("%04x (%02x) -> ret %d def_used %d\n", glyph, (unsigned char)buf, ret, default_used);
-        return ret;
-    }
-
-    if (font->ft_face->charmap->encoding == FT_ENCODING_MS_SYMBOL)
-    {
-        ret = get_glyph_index_symbol(font, glyph);
-        if (!ret)
-        {
-            wc = (WCHAR)glyph;
-            if (WideCharToMultiByte(CP_ACP, 0, &wc, 1, &buf, 1, NULL, NULL))
-                ret = get_glyph_index_symbol(font, (unsigned char)buf);
-        }
-        return ret;
-    }
-
-    return pFT_Get_Char_Index(font->ft_face, glyph);
-}
-
 /*************************************************************
  * freetype_get_glyph_index
  */
-static BOOL CDECL freetype_get_glyph_index( struct gdi_font *gdi_font, UINT *glyph )
+static BOOL CDECL freetype_get_glyph_index( struct gdi_font *gdi_font, UINT *glyph, BOOL use_encoding )
 {
     GdiFont *font = get_font_ptr( gdi_font );
 
-    if (font->ft_face->charmap->encoding == FT_ENCODING_NONE) return FALSE;
+    if (!use_encoding ^ (font->ft_face->charmap->encoding == FT_ENCODING_NONE)) return FALSE;
 
     if (font->ft_face->charmap->encoding == FT_ENCODING_MS_SYMBOL)
     {
@@ -4748,7 +4671,7 @@ static UINT CDECL freetype_get_default_glyph( struct gdi_font *gdi_font )
     if ((pOS2 = pFT_Get_Sfnt_Table( font->ft_face, ft_sfnt_os2 )))
     {
         UINT glyph = pOS2->usDefaultChar;
-        freetype_get_glyph_index( gdi_font, &glyph );
+        freetype_get_glyph_index( gdi_font, &glyph, TRUE );
         return glyph;
     }
     if (!pFT_Get_WinFNT_Header( font->ft_face, &winfnt )) return winfnt.default_char + winfnt.first_char;
@@ -4760,12 +4683,6 @@ static inline BOOL is_identity_FMAT2(const FMAT2 *matrix)
 {
     static const FMAT2 identity = { 1.0, 0.0, 0.0, 1.0 };
     return !memcmp(matrix, &identity, sizeof(FMAT2));
-}
-
-static inline BOOL is_identity_MAT2(const MAT2 *matrix)
-{
-    static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
-    return !memcmp(matrix, &identity, sizeof(MAT2));
 }
 
 static inline FT_Vector normalize_vector(FT_Vector *vec)
@@ -4877,7 +4794,7 @@ static BOOL get_transform_matrices( struct gdi_font *font, BOOL vertical, const 
     }
 
     /* Extra transformation specified by caller */
-    if (!is_identity_MAT2( user_transform ))
+    if (user_transform)
     {
         FT_Matrix user_mat;
         user_mat.xx = FT_FixedFromFIXED( user_transform->eM11 );
@@ -4930,17 +4847,6 @@ static inline BYTE get_max_level( UINT format )
     case GGO_GRAY8_BITMAP: return 64;
     }
     return 255;
-}
-
-extern const unsigned short vertical_orientation_table[] DECLSPEC_HIDDEN;
-
-static BOOL check_unicode_tategaki(WCHAR uchar)
-{
-    unsigned short orientation = vertical_orientation_table[vertical_orientation_table[vertical_orientation_table[uchar >> 8]+((uchar >> 4) & 0x0f)]+ (uchar & 0xf)];
-
-    /* We only reach this code if typographical substitution did not occur */
-    /* Type: U or Type: Tu */
-    return (orientation ==  1 || orientation == 3);
 }
 
 static FT_Vector get_advance_metric(struct gdi_font *incoming_font, struct gdi_font *font,
@@ -5660,61 +5566,28 @@ static FT_Int get_load_flags( UINT format )
 /*************************************************************
  * freetype_get_glyph_outline
  */
-static DWORD CDECL freetype_get_glyph_outline( struct gdi_font *incoming_gdi_font, UINT glyph, UINT format,
+static DWORD CDECL freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT format,
                                                GLYPHMETRICS *lpgm, ABC *abc, DWORD buflen, void *buf,
-                                               const MAT2 *lpmat )
+                                               const MAT2 *lpmat, BOOL tategaki )
 {
-    GLYPHMETRICS gm;
-    GdiFont *incoming_font = get_font_ptr( incoming_gdi_font );
-    FT_Face ft_face = incoming_font->ft_face;
-    GdiFont *font = incoming_font;
-    struct gdi_font *gdi_font = font->gdi_font;
+    struct gdi_font *base_font = font->base_font ? font->base_font : font;
+    FT_Face ft_face = get_font_ptr( base_font )->ft_face;
     FT_Glyph_Metrics metrics;
-    FT_UInt glyph_index;
-    DWORD needed = 0;
     FT_Error err;
     FT_BBox bbox;
     FT_Int load_flags = get_load_flags(format);
     FT_Matrix matrices[3];
     BOOL needsTransform = FALSE;
-    BOOL tategaki = (*get_gdi_font_name(gdi_font) == '@');
     BOOL vertical_metrics;
 
     TRACE("%p, %04x, %08x, %p, %08x, %p, %p\n", font, glyph, format, lpgm,
 	  buflen, buf, lpmat);
 
     TRACE("font transform %f %f %f %f\n",
-          gdi_font->matrix.eM11, gdi_font->matrix.eM12,
-          gdi_font->matrix.eM21, gdi_font->matrix.eM22);
+          font->matrix.eM11, font->matrix.eM12,
+          font->matrix.eM21, font->matrix.eM22);
 
-    if(format & GGO_GLYPH_INDEX) {
-        if(font->ft_face->charmap->encoding == FT_ENCODING_NONE) {
-            /* Windows bitmap font, e.g. Small Fonts, uses ANSI character code
-               as glyph index. "Treasure Adventure Game" depends on this. */
-            glyph_index = pFT_Get_Char_Index(font->ft_face, glyph);
-            TRACE("translate glyph index %04x -> %04x\n", glyph, glyph_index);
-        } else
-            glyph_index = glyph;
-	format &= ~GGO_GLYPH_INDEX;
-        /* TODO: Window also turns off tategaki for glyphs passed in by index
-            if their unicode code points fall outside of the range that is
-            rotated. */
-    } else {
-        BOOL vert;
-        get_glyph_index_linked(incoming_gdi_font, glyph, &gdi_font, &glyph_index, &vert);
-        font = get_font_ptr( gdi_font );
-        ft_face = font->ft_face;
-        if (!vert && tategaki)
-            tategaki = check_unicode_tategaki(glyph);
-    }
-
-    format &= ~GGO_UNHINTED;
-
-    if (format == GGO_METRICS && is_identity_MAT2(lpmat) &&
-        get_gdi_font_glyph_metrics( gdi_font, glyph_index, lpgm, abc ))
-        return 1; /* FIXME */
-
-    needsTransform = get_transform_matrices( gdi_font, tategaki, lpmat, matrices );
+    needsTransform = get_transform_matrices( font, tategaki, lpmat, matrices );
 
     vertical_metrics = (tategaki && FT_HAS_VERTICAL(ft_face));
     /* there is a freetype bug where vertical metrics are only
@@ -5725,31 +5598,31 @@ static DWORD CDECL freetype_get_glyph_outline( struct gdi_font *incoming_gdi_fon
     if (needsTransform || format != GGO_BITMAP) load_flags |= FT_LOAD_NO_BITMAP;
     if (vertical_metrics) load_flags |= FT_LOAD_VERTICAL_LAYOUT;
 
-    err = pFT_Load_Glyph(ft_face, glyph_index, load_flags);
+    err = pFT_Load_Glyph(ft_face, glyph, load_flags);
     if (err && !(load_flags & FT_LOAD_NO_HINTING))
     {
-        WARN("Failed to load glyph %#x, retrying without hinting. Error %#x.\n", glyph_index, err);
+        WARN("Failed to load glyph %#x, retrying without hinting. Error %#x.\n", glyph, err);
         load_flags |= FT_LOAD_NO_HINTING;
-        err = pFT_Load_Glyph(ft_face, glyph_index, load_flags);
+        err = pFT_Load_Glyph(ft_face, glyph, load_flags);
     }
 
     if(err) {
-        WARN("Failed to load glyph %#x, error %#x.\n", glyph_index, err);
+        WARN("Failed to load glyph %#x, error %#x.\n", glyph, err);
         return GDI_ERROR;
     }
 
     metrics = ft_face->glyph->metrics;
-    if(gdi_font->fake_bold) {
-        if (!get_bold_glyph_outline(ft_face->glyph, gdi_font->ppem, &metrics) && metrics.width)
+    if(font->fake_bold) {
+        if (!get_bold_glyph_outline(ft_face->glyph, font->ppem, &metrics) && metrics.width)
             metrics.width += 1 << 6;
     }
 
     /* Some poorly-created fonts contain glyphs that exceed the boundaries set
      * by the text metrics. The proper behavior is to clip the glyph metrics to
      * fit within the maximums specified in the text metrics. */
-    if (freetype_set_outline_text_metrics(incoming_gdi_font) ||
-        freetype_set_bitmap_text_metrics(incoming_gdi_font)) {
-        TEXTMETRICW *ptm = &incoming_gdi_font->otm.otmTextMetrics;
+    if (freetype_set_outline_text_metrics(base_font) ||
+        freetype_set_bitmap_text_metrics(base_font)) {
+        TEXTMETRICW *ptm = &base_font->otm.otmTextMetrics;
         INT top = min( metrics.horiBearingY, ptm->tmAscent << 6 );
         INT bottom = max( metrics.horiBearingY - metrics.height, -(ptm->tmDescent << 6) );
         metrics.horiBearingY = top;
@@ -5760,96 +5633,76 @@ static DWORD CDECL freetype_get_glyph_outline( struct gdi_font *incoming_gdi_fon
     }
 
     bbox = get_transformed_bbox( &metrics, needsTransform, matrices );
-    compute_metrics( incoming_gdi_font, gdi_font, bbox, &metrics,
-                     tategaki, vertical_metrics, needsTransform, matrices,
-                     &gm, abc );
-
-    if ((format == GGO_METRICS || format == GGO_BITMAP || format ==  WINE_GGO_GRAY16_BITMAP) &&
-        is_identity_MAT2(lpmat)) /* don't cache custom transforms */
-        set_gdi_font_glyph_metrics( gdi_font, glyph_index, &gm, abc );
-
-    if(format == GGO_METRICS)
-    {
-        *lpgm = gm;
-        return 1; /* FIXME */
-    }
-
-    if(ft_face->glyph->format != ft_glyph_format_outline &&
-       (format == GGO_NATIVE || format == GGO_BEZIER))
-    {
-        TRACE("loaded a bitmap\n");
-	return GDI_ERROR;
-    }
+    compute_metrics( base_font, font, bbox, &metrics, tategaki,
+                     vertical_metrics, needsTransform, matrices, lpgm, abc );
 
     switch (format)
     {
+    case GGO_METRICS:
+        return 1;  /* FIXME */
+
     case GGO_BITMAP:
-        needed = get_mono_glyph_bitmap( ft_face->glyph, bbox, gdi_font->fake_bold,
-                                        needsTransform, matrices, buflen, buf );
-        break;
+        return get_mono_glyph_bitmap( ft_face->glyph, bbox, font->fake_bold,
+                                      needsTransform, matrices, buflen, buf );
 
     case GGO_GRAY2_BITMAP:
     case GGO_GRAY4_BITMAP:
     case GGO_GRAY8_BITMAP:
     case WINE_GGO_GRAY16_BITMAP:
-        needed = get_antialias_glyph_bitmap( ft_face->glyph, bbox, format, gdi_font->fake_bold,
-                                             needsTransform, matrices, buflen, buf );
-	break;
+        return get_antialias_glyph_bitmap( ft_face->glyph, bbox, format, font->fake_bold,
+                                           needsTransform, matrices, buflen, buf );
 
     case WINE_GGO_HRGB_BITMAP:
     case WINE_GGO_HBGR_BITMAP:
     case WINE_GGO_VRGB_BITMAP:
     case WINE_GGO_VBGR_BITMAP:
-        needed = get_subpixel_glyph_bitmap( ft_face->glyph, bbox, format, gdi_font->fake_bold,
-                                            needsTransform, matrices, &gm, buflen, buf );
-        break;
+        return get_subpixel_glyph_bitmap( ft_face->glyph, bbox, format, font->fake_bold,
+                                          needsTransform, matrices, lpgm, buflen, buf );
 
     case GGO_NATIVE:
-      {
-        FT_Outline *outline = &ft_face->glyph->outline;
+        if (ft_face->glyph->format == ft_glyph_format_outline)
+        {
+            FT_Outline *outline = &ft_face->glyph->outline;
+            UINT needed;
 
-        if(buflen == 0) buf = NULL;
+            if (buflen == 0) buf = NULL;
 
-        if (needsTransform && buf)
-            pFT_Outline_Transform( outline, &matrices[matrix_vert] );
+            if (needsTransform && buf)
+                pFT_Outline_Transform( outline, &matrices[matrix_vert] );
 
-        needed = get_native_glyph_outline(outline, buflen, NULL);
+            needed = get_native_glyph_outline(outline, buflen, NULL);
 
-        if (!buf || !buflen)
-            break;
-        if (needed > buflen)
-            return GDI_ERROR;
+            if (!buf || !buflen) return needed;
+            if (needed > buflen) return GDI_ERROR;
+            return get_native_glyph_outline(outline, buflen, buf);
+        }
+        TRACE("loaded a bitmap\n");
+        return GDI_ERROR;
 
-        get_native_glyph_outline(outline, buflen, buf);
-        break;
-      }
     case GGO_BEZIER:
-      {
-        FT_Outline *outline = &ft_face->glyph->outline;
-        if(buflen == 0) buf = NULL;
+        if (ft_face->glyph->format == ft_glyph_format_outline)
+        {
+            FT_Outline *outline = &ft_face->glyph->outline;
+            UINT needed;
 
-        if (needsTransform && buf)
-            pFT_Outline_Transform( outline, &matrices[matrix_vert] );
+            if (buflen == 0) buf = NULL;
 
-        needed = get_bezier_glyph_outline(outline, buflen, NULL);
+            if (needsTransform && buf)
+                pFT_Outline_Transform( outline, &matrices[matrix_vert] );
 
-        if (!buf || !buflen)
-            break;
-        if (needed > buflen)
-            return GDI_ERROR;
+            needed = get_bezier_glyph_outline(outline, buflen, NULL);
 
-        get_bezier_glyph_outline(outline, buflen, buf);
-        break;
-      }
+            if (!buf || !buflen) return needed;
+            if (needed > buflen) return GDI_ERROR;
+            return get_bezier_glyph_outline(outline, buflen, buf);
+        }
+        TRACE("loaded a bitmap\n");
+        return GDI_ERROR;
 
     default:
         FIXME("Unsupported format %d\n", format);
 	return GDI_ERROR;
     }
-    if (needed != GDI_ERROR)
-        *lpgm = gm;
-
-    return needed;
 }
 
 /*************************************************************
@@ -6207,47 +6060,6 @@ static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font )
     return TRUE;
 }
 
-
-static BOOL get_glyph_index_linked( struct gdi_font *gdi_font, UINT c, struct gdi_font **linked_font,
-                                    FT_UInt *glyph, BOOL* vert)
-{
-    GdiFont *font = get_font_ptr( gdi_font );
-    FT_UInt g,o;
-    struct gdi_font *child;
-
-    if (gdi_font->base_font) gdi_font = gdi_font->base_font;
-    *linked_font = gdi_font;
-
-    if((*glyph = get_glyph_index(font, c)))
-    {
-        o = *glyph;
-        *glyph = get_GSUB_vert_glyph(gdi_font, *glyph);
-        *vert = (o != *glyph);
-        return TRUE;
-    }
-
-    if (c < 32) goto done;  /* don't check linked fonts for control characters */
-
-    LIST_FOR_EACH_ENTRY( child, &gdi_font->child_fonts, struct gdi_font, entry )
-    {
-        if (!child->private && !freetype_load_font( child )) continue;
-
-        g = get_glyph_index(get_font_ptr(child), c);
-        o = g;
-        g = get_GSUB_vert_glyph(child, g);
-        if(g)
-        {
-            *glyph = g;
-            *linked_font = child;
-            *vert = (o != g);
-            return TRUE;
-        }
-    }
-
-done:
-    *vert = FALSE;
-    return FALSE;
-}
 
 /*************************************************************
  * freetype_get_char_width_info
