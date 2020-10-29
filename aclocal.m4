@@ -28,7 +28,7 @@ dnl Like AC_CHECK_TOOL but without the broken fallback to non-prefixed name
 dnl
 AC_DEFUN([WINE_CHECK_HOST_TOOL],
 [AS_VAR_SET_IF([ac_tool_prefix],
-  AC_CHECK_PROG([$1],[${ac_tool_prefix}$2],[${ac_tool_prefix}$2],,[$4]))
+  [AC_CHECK_PROG([$1],[${ac_tool_prefix}$2],[${ac_tool_prefix}$2],,[$4])])
 AS_VAR_IF([ac_cv_prog_$1],[],
   [AS_VAR_IF([cross_compiling],[yes],[],
     [AS_UNSET([ac_cv_prog_$1])
