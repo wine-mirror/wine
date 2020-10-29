@@ -340,6 +340,9 @@ struct gdi_font
     BOOL                   fake_italic : 1;
     BOOL                   fake_bold : 1;
     BOOL                   scalable : 1;
+    struct gdi_font       *base_font;
+    void                  *gsub_table;
+    void                  *vert_feature;
     void                  *data_ptr;
     SIZE_T                 data_size;
     FILETIME               writetime;
@@ -403,6 +406,8 @@ extern BOOL get_gdi_font_glyph_metrics( struct gdi_font *font, UINT index,
                                         GLYPHMETRICS *gm, ABC *abc ) DECLSPEC_HIDDEN;
 extern void set_gdi_font_glyph_metrics( struct gdi_font *font, UINT index,
                                         const GLYPHMETRICS *gm, const ABC *abc ) DECLSPEC_HIDDEN;
+extern void *get_GSUB_vert_feature( struct gdi_font *font ) DECLSPEC_HIDDEN;
+extern UINT get_GSUB_vert_glyph( struct gdi_font *font, UINT glyph ) DECLSPEC_HIDDEN;
 extern void font_init(void) DECLSPEC_HIDDEN;
 extern CRITICAL_SECTION font_cs DECLSPEC_HIDDEN;
 

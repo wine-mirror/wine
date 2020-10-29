@@ -296,9 +296,6 @@ struct tagGdiFont {
     /* the following members can be accessed without locking, they are never modified after creation */
     FT_Face ft_face;
     struct font_mapping *mapping;
-    GdiFont *base_font;
-    VOID *GSUB_Table;
-    const VOID *vert_feature;
 };
 
 static inline GdiFont *get_font_ptr( struct gdi_font *font ) { return font->private; }
@@ -429,7 +426,7 @@ static const WCHAR font_mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N'
 static const WCHAR szDefaultFallbackLink[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0};
 
 static BOOL map_font_family(const WCHAR *orig, const WCHAR *repl);
-static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font, FT_UInt *glyph, BOOL *vert);
+static BOOL get_glyph_index_linked( struct gdi_font *font, UINT c, struct gdi_font **linked_font, FT_UInt *glyph, BOOL *vert);
 static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font );
 static BOOL CDECL freetype_set_bitmap_text_metrics( struct gdi_font *font );
 static void remove_face_from_cache( Face *face );
@@ -468,103 +465,6 @@ static const WCHAR system_link[] = {'S','o','f','t','w','a','r','e','\\','M','i'
  * cga80woa.fon=cga80850.fon
  * cga40woa.fon=cga40850.fon
  */
-
-/* These are all structures needed for the GSUB table */
-
-
-typedef struct {
-    DWORD version;
-    WORD ScriptList;
-    WORD FeatureList;
-    WORD LookupList;
-} GSUB_Header;
-
-typedef struct {
-    CHAR ScriptTag[4];
-    WORD Script;
-} GSUB_ScriptRecord;
-
-typedef struct {
-    WORD ScriptCount;
-    GSUB_ScriptRecord ScriptRecord[1];
-} GSUB_ScriptList;
-
-typedef struct {
-    CHAR LangSysTag[4];
-    WORD LangSys;
-} GSUB_LangSysRecord;
-
-typedef struct {
-    WORD DefaultLangSys;
-    WORD LangSysCount;
-    GSUB_LangSysRecord LangSysRecord[1];
-} GSUB_Script;
-
-typedef struct {
-    WORD LookupOrder; /* Reserved */
-    WORD ReqFeatureIndex;
-    WORD FeatureCount;
-    WORD FeatureIndex[1];
-} GSUB_LangSys;
-
-typedef struct {
-    CHAR FeatureTag[4];
-    WORD Feature;
-} GSUB_FeatureRecord;
-
-typedef struct {
-    WORD FeatureCount;
-    GSUB_FeatureRecord FeatureRecord[1];
-} GSUB_FeatureList;
-
-typedef struct {
-    WORD FeatureParams; /* Reserved */
-    WORD LookupCount;
-    WORD LookupListIndex[1];
-} GSUB_Feature;
-
-typedef struct {
-    WORD LookupCount;
-    WORD Lookup[1];
-} GSUB_LookupList;
-
-typedef struct {
-    WORD LookupType;
-    WORD LookupFlag;
-    WORD SubTableCount;
-    WORD SubTable[1];
-} GSUB_LookupTable;
-
-typedef struct {
-    WORD CoverageFormat;
-    WORD GlyphCount;
-    WORD GlyphArray[1];
-} GSUB_CoverageFormat1;
-
-typedef struct {
-    WORD Start;
-    WORD End;
-    WORD StartCoverageIndex;
-} GSUB_RangeRecord;
-
-typedef struct {
-    WORD CoverageFormat;
-    WORD RangeCount;
-    GSUB_RangeRecord RangeRecord[1];
-} GSUB_CoverageFormat2;
-
-typedef struct {
-    WORD SubstFormat; /* = 1 */
-    WORD Coverage;
-    WORD DeltaGlyphID;
-} GSUB_SingleSubstFormat1;
-
-typedef struct {
-    WORD SubstFormat; /* = 2 */
-    WORD Coverage;
-    WORD GlyphCount;
-    WORD Substitute[1];
-}GSUB_SingleSubstFormat2;
 
 #ifdef HAVE_CARBON_CARBON_H
 static char *find_cache_dir(void)
@@ -3389,7 +3289,6 @@ static void CDECL freetype_destroy_font( struct gdi_font *gdi_font )
 
     if (font->ft_face) pFT_Done_Face(font->ft_face);
     if (font->mapping) unmap_font_file( font->mapping );
-    HeapFree(GetProcessHeap(), 0, font->GSUB_Table);
     HeapFree(GetProcessHeap(), 0, font);
 }
 
@@ -3860,143 +3759,6 @@ end:
     return family;
 }
 #endif
-
-static const GSUB_Script* GSUB_get_script_table( const GSUB_Header* header, const char* tag)
-{
-    const GSUB_ScriptList *script;
-    const GSUB_Script *deflt = NULL;
-    int i;
-    script = (const GSUB_ScriptList*)((const BYTE*)header + GET_BE_WORD(header->ScriptList));
-
-    TRACE("%i scripts in this font\n",GET_BE_WORD(script->ScriptCount));
-    for (i = 0; i < GET_BE_WORD(script->ScriptCount); i++)
-    {
-        const GSUB_Script *scr;
-        int offset;
-
-        offset = GET_BE_WORD(script->ScriptRecord[i].Script);
-        scr = (const GSUB_Script*)((const BYTE*)script + offset);
-
-        if (strncmp(script->ScriptRecord[i].ScriptTag, tag,4)==0)
-            return scr;
-        if (strncmp(script->ScriptRecord[i].ScriptTag, "dflt",4)==0)
-            deflt = scr;
-    }
-    return deflt;
-}
-
-static const GSUB_LangSys* GSUB_get_lang_table( const GSUB_Script* script, const char* tag)
-{
-    int i;
-    int offset;
-    const GSUB_LangSys *Lang;
-
-    TRACE("Deflang %x, LangCount %i\n",GET_BE_WORD(script->DefaultLangSys), GET_BE_WORD(script->LangSysCount));
-
-    for (i = 0; i < GET_BE_WORD(script->LangSysCount) ; i++)
-    {
-        offset = GET_BE_WORD(script->LangSysRecord[i].LangSys);
-        Lang = (const GSUB_LangSys*)((const BYTE*)script + offset);
-
-        if ( strncmp(script->LangSysRecord[i].LangSysTag,tag,4)==0)
-            return Lang;
-    }
-    offset = GET_BE_WORD(script->DefaultLangSys);
-    if (offset)
-    {
-        Lang = (const GSUB_LangSys*)((const BYTE*)script + offset);
-        return Lang;
-    }
-    return NULL;
-}
-
-static const GSUB_Feature * GSUB_get_feature(const GSUB_Header *header, const GSUB_LangSys *lang, const char* tag)
-{
-    int i;
-    const GSUB_FeatureList *feature;
-    feature = (const GSUB_FeatureList*)((const BYTE*)header + GET_BE_WORD(header->FeatureList));
-
-    TRACE("%i features\n",GET_BE_WORD(lang->FeatureCount));
-    for (i = 0; i < GET_BE_WORD(lang->FeatureCount); i++)
-    {
-        int index = GET_BE_WORD(lang->FeatureIndex[i]);
-        if (strncmp(feature->FeatureRecord[index].FeatureTag,tag,4)==0)
-        {
-            const GSUB_Feature *feat;
-            feat = (const GSUB_Feature*)((const BYTE*)feature + GET_BE_WORD(feature->FeatureRecord[index].Feature));
-            return feat;
-        }
-    }
-    return NULL;
-}
-
-static const char* get_opentype_script(const struct gdi_font *font)
-{
-    /*
-     * I am not sure if this is the correct way to generate our script tag
-     */
-
-    switch (font->charset)
-    {
-        case ANSI_CHARSET: return "latn";
-        case BALTIC_CHARSET: return "latn"; /* ?? */
-        case CHINESEBIG5_CHARSET: return "hani";
-        case EASTEUROPE_CHARSET: return "latn"; /* ?? */
-        case GB2312_CHARSET: return "hani";
-        case GREEK_CHARSET: return "grek";
-        case HANGUL_CHARSET: return "hang";
-        case RUSSIAN_CHARSET: return "cyrl";
-        case SHIFTJIS_CHARSET: return "kana";
-        case TURKISH_CHARSET: return "latn"; /* ?? */
-        case VIETNAMESE_CHARSET: return "latn";
-        case JOHAB_CHARSET: return "latn"; /* ?? */
-        case ARABIC_CHARSET: return "arab";
-        case HEBREW_CHARSET: return "hebr";
-        case THAI_CHARSET: return "thai";
-        default: return "latn";
-    }
-}
-
-static const void *get_GSUB_vert_feature( struct gdi_font *font, void **GSUB_table )
-{
-    GSUB_Header *header;
-    const GSUB_Script *script;
-    const GSUB_LangSys *language;
-    const GSUB_Feature *feature;
-    DWORD length = freetype_get_font_data( font, MS_GSUB_TAG, 0, NULL, 0 );
-
-    if (length == GDI_ERROR) return NULL;
-
-    header = HeapAlloc( GetProcessHeap(), 0, length );
-    freetype_get_font_data( font, MS_GSUB_TAG, 0, header, length );
-    TRACE( "Loaded GSUB table of %i bytes\n", length );
-
-    script = GSUB_get_script_table(header, get_opentype_script(font));
-    if (!script)
-    {
-        TRACE("Script not found\n");
-        HeapFree( GetProcessHeap(), 0, header );
-        return NULL;
-    }
-    language = GSUB_get_lang_table(script, "xxxx"); /* Need to get Lang tag */
-    if (!language)
-    {
-        TRACE("Language not found\n");
-        HeapFree( GetProcessHeap(), 0, header );
-        return NULL;
-    }
-    feature  =  GSUB_get_feature(header, language, "vrt2");
-    if (!feature)
-        feature  =  GSUB_get_feature(header, language, "vert");
-    if (!feature)
-    {
-        TRACE("vrt2/vert feature not found\n");
-        HeapFree( GetProcessHeap(), 0, header );
-        return NULL;
-    }
-    *GSUB_table = header;
-    return feature;
-}
 
 static DWORD get_ttc_offset( FT_Face ft_face, UINT face_index )
 {
@@ -4480,7 +4242,7 @@ found_face:
     ret = get_font_ptr( gdi_font );
 
     if (face->flags & ADDFONT_VERTICAL_FONT) /* We need to try to load the GSUB table */
-        ret->vert_feature = get_GSUB_vert_feature( gdi_font, &ret->GSUB_Table );
+        gdi_font->vert_feature = get_GSUB_vert_feature( gdi_font );
 
     create_child_font_list(ret);
 
@@ -4875,125 +4637,6 @@ static BOOL codepage_sets_default_used(UINT codepage)
  * GSUB Table handling functions
  */
 
-static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
-{
-    const GSUB_CoverageFormat1* cf1;
-
-    cf1 = table;
-
-    if (GET_BE_WORD(cf1->CoverageFormat) == 1)
-    {
-        int count = GET_BE_WORD(cf1->GlyphCount);
-        int i;
-        TRACE("Coverage Format 1, %i glyphs\n",count);
-        for (i = 0; i < count; i++)
-            if (glyph == GET_BE_WORD(cf1->GlyphArray[i]))
-                return i;
-        return -1;
-    }
-    else if (GET_BE_WORD(cf1->CoverageFormat) == 2)
-    {
-        const GSUB_CoverageFormat2* cf2;
-        int i;
-        int count;
-        cf2 = (const GSUB_CoverageFormat2*)cf1;
-
-        count = GET_BE_WORD(cf2->RangeCount);
-        TRACE("Coverage Format 2, %i ranges\n",count);
-        for (i = 0; i < count; i++)
-        {
-            if (glyph < GET_BE_WORD(cf2->RangeRecord[i].Start))
-                return -1;
-            if ((glyph >= GET_BE_WORD(cf2->RangeRecord[i].Start)) &&
-                (glyph <= GET_BE_WORD(cf2->RangeRecord[i].End)))
-            {
-                return (GET_BE_WORD(cf2->RangeRecord[i].StartCoverageIndex) +
-                    glyph - GET_BE_WORD(cf2->RangeRecord[i].Start));
-            }
-        }
-        return -1;
-    }
-    else
-        ERR("Unknown CoverageFormat %i\n",GET_BE_WORD(cf1->CoverageFormat));
-
-    return -1;
-}
-
-static FT_UInt GSUB_apply_feature(const GSUB_Header * header, const GSUB_Feature* feature, UINT glyph)
-{
-    int i;
-    int offset;
-    const GSUB_LookupList *lookup;
-    lookup = (const GSUB_LookupList*)((const BYTE*)header + GET_BE_WORD(header->LookupList));
-
-    TRACE("%i lookups\n", GET_BE_WORD(feature->LookupCount));
-    for (i = 0; i < GET_BE_WORD(feature->LookupCount); i++)
-    {
-        const GSUB_LookupTable *look;
-        offset = GET_BE_WORD(lookup->Lookup[GET_BE_WORD(feature->LookupListIndex[i])]);
-        look = (const GSUB_LookupTable*)((const BYTE*)lookup + offset);
-        TRACE("type %i, flag %x, subtables %i\n",GET_BE_WORD(look->LookupType),GET_BE_WORD(look->LookupFlag),GET_BE_WORD(look->SubTableCount));
-        if (GET_BE_WORD(look->LookupType) != 1)
-            FIXME("We only handle SubType 1\n");
-        else
-        {
-            int j;
-
-            for (j = 0; j < GET_BE_WORD(look->SubTableCount); j++)
-            {
-                const GSUB_SingleSubstFormat1 *ssf1;
-                offset = GET_BE_WORD(look->SubTable[j]);
-                ssf1 = (const GSUB_SingleSubstFormat1*)((const BYTE*)look+offset);
-                if (GET_BE_WORD(ssf1->SubstFormat) == 1)
-                {
-                    int offset = GET_BE_WORD(ssf1->Coverage);
-                    TRACE("  subtype 1, delta %i\n", GET_BE_WORD(ssf1->DeltaGlyphID));
-                    if (GSUB_is_glyph_covered((const BYTE*)ssf1+offset, glyph) != -1)
-                    {
-                        TRACE("  Glyph 0x%x ->",glyph);
-                        glyph += GET_BE_WORD(ssf1->DeltaGlyphID);
-                        TRACE(" 0x%x\n",glyph);
-                    }
-                }
-                else
-                {
-                    const GSUB_SingleSubstFormat2 *ssf2;
-                    INT index;
-                    INT offset;
-
-                    ssf2 = (const GSUB_SingleSubstFormat2 *)ssf1;
-                    offset = GET_BE_WORD(ssf1->Coverage);
-                    TRACE("  subtype 2,  glyph count %i\n", GET_BE_WORD(ssf2->GlyphCount));
-                    index = GSUB_is_glyph_covered((const BYTE*)ssf2+offset, glyph);
-                    TRACE("  Coverage index %i\n",index);
-                    if (index != -1)
-                    {
-                        TRACE("    Glyph is 0x%x ->",glyph);
-                        glyph = GET_BE_WORD(ssf2->Substitute[index]);
-                        TRACE("0x%x\n",glyph);
-                    }
-                }
-            }
-        }
-    }
-    return glyph;
-}
-
-
-static FT_UInt get_GSUB_vert_glyph(const GdiFont *font, UINT glyph)
-{
-    const GSUB_Header *header;
-    const GSUB_Feature *feature;
-
-    if (!font->GSUB_Table)
-        return glyph;
-
-    header = font->GSUB_Table;
-    feature = font->vert_feature;
-
-    return GSUB_apply_feature(header, feature, glyph);
-}
-
 static FT_UInt get_glyph_index_symbol(const GdiFont *font, UINT glyph)
 {
     FT_UInt ret;
@@ -5081,10 +4724,7 @@ static BOOL CDECL freetype_get_glyph_index( struct gdi_font *gdi_font, UINT *gly
         }
         return TRUE;
     }
-
-    if ((*glyph = pFT_Get_Char_Index( font->ft_face, *glyph )))
-        *glyph = get_GSUB_vert_glyph( font, *glyph );
-
+    *glyph = pFT_Get_Char_Index( font->ft_face, *glyph );
     return TRUE;
 }
 
@@ -6053,9 +5693,9 @@ static DWORD CDECL freetype_get_glyph_outline( struct gdi_font *incoming_gdi_fon
             rotated. */
     } else {
         BOOL vert;
-        get_glyph_index_linked(incoming_font, glyph, &font, &glyph_index, &vert);
+        get_glyph_index_linked(incoming_gdi_font, glyph, &gdi_font, &glyph_index, &vert);
+        font = get_font_ptr( gdi_font );
         ft_face = font->ft_face;
-        gdi_font = font->gdi_font;
         if (!vert && tategaki)
             tategaki = check_unicode_tategaki(glyph);
     }
@@ -6595,6 +6235,7 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
     child_font->ntmFlags = child_face->ntmFlags;
     child_font->aa_flags = HIWORD( child_face->flags );
     child_font->scale_y = gdi_font->scale_y;
+    child_font->base_font = gdi_font;
     set_gdi_font_names( child_font, child_face->family->family_name,
                         child_face->style_name, child_face->full_name );
     if (!freetype_load_font( child_font ))
@@ -6603,25 +6244,24 @@ static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
         return FALSE;
     }
     child->font = get_font_ptr( child_font );
-    child->font->base_font = font;
     TRACE("created child font %p for base %p\n", child->font, font);
     return TRUE;
 }
 
-static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font, FT_UInt *glyph, BOOL* vert)
+static BOOL get_glyph_index_linked( struct gdi_font *gdi_font, UINT c, struct gdi_font **linked_font,
+                                    FT_UInt *glyph, BOOL* vert)
 {
+    GdiFont *font = get_font_ptr( gdi_font );
     FT_UInt g,o;
     CHILD_FONT *child_font;
 
-    if(font->base_font)
-        font = font->base_font;
-
-    *linked_font = font;
+    if (gdi_font->base_font) gdi_font = gdi_font->base_font;
+    *linked_font = gdi_font;
 
     if((*glyph = get_glyph_index(font, c)))
     {
         o = *glyph;
-        *glyph = get_GSUB_vert_glyph(font, *glyph);
+        *glyph = get_GSUB_vert_glyph(gdi_font, *glyph);
         *vert = (o != *glyph);
         return TRUE;
     }
@@ -6638,11 +6278,11 @@ static BOOL get_glyph_index_linked(GdiFont *font, UINT c, GdiFont **linked_font,
             continue;
         g = get_glyph_index(child_font->font, c);
         o = g;
-        g = get_GSUB_vert_glyph(child_font->font, g);
+        g = get_GSUB_vert_glyph(child_font->font->gdi_font, g);
         if(g)
         {
             *glyph = g;
-            *linked_font = child_font->font;
+            *linked_font = child_font->font->gdi_font;
             *vert = (o != g);
             return TRUE;
         }
