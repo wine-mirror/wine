@@ -5,3 +5,5 @@ EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	dpwsockx_main.c
+
+RC_SRCS = version.rc
