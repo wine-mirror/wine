@@ -10340,11 +10340,11 @@ msgstr ""
 msgid "Namibia Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:216
+#: dlls/tzres/tzres.rc:218
 msgid "Tonga Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:217
+#: dlls/tzres/tzres.rc:219
 msgid "Tonga Daylight Time"
 msgstr ""
 
@@ -10398,11 +10398,11 @@ msgstr ""
 msgid "Newfoundland Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:240
+#: dlls/tzres/tzres.rc:242
 msgid "West Pacific Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:241
+#: dlls/tzres/tzres.rc:243
 msgid "West Pacific Daylight Time"
 msgstr ""
 
@@ -10454,11 +10454,11 @@ msgstr ""
 msgid "Middle East Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:214
+#: dlls/tzres/tzres.rc:216
 msgid "Tokyo Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:215
+#: dlls/tzres/tzres.rc:217
 msgid "Tokyo Daylight Time"
 msgstr ""
 
@@ -10542,7 +10542,7 @@ msgstr ""
 msgid "Myanmar Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:226 dlls/tzres/tzres.rc:227
+#: dlls/tzres/tzres.rc:228 dlls/tzres/tzres.rc:229
 msgid "Coordinated Universal Time"
 msgstr ""
 
@@ -10564,11 +10564,11 @@ msgstr "&Státusz sor"
 msgid "GTB Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:218
+#: dlls/tzres/tzres.rc:220
 msgid "Turkey Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:219
+#: dlls/tzres/tzres.rc:221
 msgid "Turkey Daylight Time"
 msgstr ""
 
@@ -10596,11 +10596,11 @@ msgstr ""
 msgid "Taipei Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:236
+#: dlls/tzres/tzres.rc:238
 msgid "W. Europe Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:237
+#: dlls/tzres/tzres.rc:239
 msgid "W. Europe Daylight Time"
 msgstr ""
 
@@ -10676,11 +10676,11 @@ msgstr ""
 msgid "Mountain Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:222
+#: dlls/tzres/tzres.rc:224
 msgid "US Eastern Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:223
+#: dlls/tzres/tzres.rc:225
 msgid "US Eastern Daylight Time"
 msgstr ""
 
@@ -10712,11 +10712,11 @@ msgstr ""
 msgid "Central America Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:224
+#: dlls/tzres/tzres.rc:226
 msgid "US Mountain Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:225
+#: dlls/tzres/tzres.rc:227
 msgid "US Mountain Daylight Time"
 msgstr ""
 
@@ -10752,11 +10752,11 @@ msgstr ""
 msgid "Afghanistan Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:242
+#: dlls/tzres/tzres.rc:244
 msgid "Yakutsk Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:243
+#: dlls/tzres/tzres.rc:245
 msgid "Yakutsk Daylight Time"
 msgstr ""
 
@@ -10783,6 +10783,18 @@ msgstr ""
 #: dlls/tzres/tzres.rc:39
 msgid "Arabian Daylight Time"
 msgstr ""
+
+#: dlls/tzres/tzres.rc:214
+#, fuzzy
+#| msgid "Date and time"
+msgid "Tocantins Standard Time"
+msgstr "Dátum és idő"
+
+#: dlls/tzres/tzres.rc:215
+#, fuzzy
+#| msgid "Date and time"
+msgid "Tocantins Daylight Time"
+msgstr "Dátum és idő"
 
 #: dlls/tzres/tzres.rc:190
 msgid "Russian Standard Time"
@@ -10832,11 +10844,11 @@ msgstr ""
 msgid "Greenwich Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:220
+#: dlls/tzres/tzres.rc:222
 msgid "Ulaanbaatar Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:221
+#: dlls/tzres/tzres.rc:223
 msgid "Ulaanbaatar Daylight Time"
 msgstr ""
 
@@ -10864,11 +10876,11 @@ msgstr ""
 msgid "SA Pacific Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:238
+#: dlls/tzres/tzres.rc:240
 msgid "West Asia Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:239
+#: dlls/tzres/tzres.rc:241
 msgid "West Asia Daylight Time"
 msgstr ""
 
@@ -10914,11 +10926,11 @@ msgstr ""
 msgid "Bahia Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:228
+#: dlls/tzres/tzres.rc:230
 msgid "Venezuela Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:229
+#: dlls/tzres/tzres.rc:231
 msgid "Venezuela Daylight Time"
 msgstr ""
 
@@ -11042,11 +11054,11 @@ msgstr ""
 msgid "Mauritius Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:230
+#: dlls/tzres/tzres.rc:232
 msgid "Vladivostok Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:231
+#: dlls/tzres/tzres.rc:233
 msgid "Vladivostok Daylight Time"
 msgstr ""
 
@@ -11112,11 +11124,11 @@ msgstr ""
 msgid "Central Pacific Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:234
+#: dlls/tzres/tzres.rc:236
 msgid "W. Central Africa Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:235
+#: dlls/tzres/tzres.rc:237
 msgid "W. Central Africa Daylight Time"
 msgstr ""
 
@@ -11136,11 +11148,11 @@ msgstr ""
 msgid "E. Australia Daylight Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:232
+#: dlls/tzres/tzres.rc:234
 msgid "W. Australia Standard Time"
 msgstr ""
 
-#: dlls/tzres/tzres.rc:233
+#: dlls/tzres/tzres.rc:235
 msgid "W. Australia Daylight Time"
 msgstr ""
 

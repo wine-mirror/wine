@@ -9951,11 +9951,11 @@ msgstr "나미비아 표준 시간"
 msgid "Namibia Daylight Time"
 msgstr "나미비아 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:216
+#: dlls/tzres/tzres.rc:218
 msgid "Tonga Standard Time"
 msgstr "통가 표준 시간"
 
-#: dlls/tzres/tzres.rc:217
+#: dlls/tzres/tzres.rc:219
 msgid "Tonga Daylight Time"
 msgstr "통가 일괄 절약 시간"
 
@@ -10007,11 +10007,11 @@ msgstr "뉴펀들랜드 표준 시간"
 msgid "Newfoundland Daylight Time"
 msgstr "뉴펀들랜드 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:240
+#: dlls/tzres/tzres.rc:242
 msgid "West Pacific Standard Time"
 msgstr "서태평양 표준 시간"
 
-#: dlls/tzres/tzres.rc:241
+#: dlls/tzres/tzres.rc:243
 msgid "West Pacific Daylight Time"
 msgstr "서태평양 일광 절약 시간"
 
@@ -10063,11 +10063,11 @@ msgstr "중동 표준 시간"
 msgid "Middle East Daylight Time"
 msgstr "중동 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:214
+#: dlls/tzres/tzres.rc:216
 msgid "Tokyo Standard Time"
 msgstr "도쿄 표준 시간"
 
-#: dlls/tzres/tzres.rc:215
+#: dlls/tzres/tzres.rc:217
 msgid "Tokyo Daylight Time"
 msgstr "도쿄 일광 절약 시간"
 
@@ -10151,7 +10151,7 @@ msgstr "미얀마 표준 시간"
 msgid "Myanmar Daylight Time"
 msgstr "미얀마 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:226 dlls/tzres/tzres.rc:227
+#: dlls/tzres/tzres.rc:228 dlls/tzres/tzres.rc:229
 msgid "Coordinated Universal Time"
 msgstr "협정 세계시"
 
@@ -10171,11 +10171,11 @@ msgstr "GTB 표준 시간"
 msgid "GTB Daylight Time"
 msgstr "GTB 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:218
+#: dlls/tzres/tzres.rc:220
 msgid "Turkey Standard Time"
 msgstr "터키 표준 시간"
 
-#: dlls/tzres/tzres.rc:219
+#: dlls/tzres/tzres.rc:221
 msgid "Turkey Daylight Time"
 msgstr "터키 일광 절약 시간"
 
@@ -10203,11 +10203,11 @@ msgstr "타이베이 표준 시간"
 msgid "Taipei Daylight Time"
 msgstr "타이베이 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:236
+#: dlls/tzres/tzres.rc:238
 msgid "W. Europe Standard Time"
 msgstr "서유럽 표준 시간"
 
-#: dlls/tzres/tzres.rc:237
+#: dlls/tzres/tzres.rc:239
 msgid "W. Europe Daylight Time"
 msgstr "서유럽 일광 절약 시간"
 
@@ -10283,11 +10283,11 @@ msgstr "산지 표준 시간"
 msgid "Mountain Daylight Time"
 msgstr "산지 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:222
+#: dlls/tzres/tzres.rc:224
 msgid "US Eastern Standard Time"
 msgstr "미국 동부 표준 시간"
 
-#: dlls/tzres/tzres.rc:223
+#: dlls/tzres/tzres.rc:225
 msgid "US Eastern Daylight Time"
 msgstr "미국 동부 일광 절약 시간"
 
@@ -10319,11 +10319,11 @@ msgstr "중앙 아메리카 표준 시간"
 msgid "Central America Daylight Time"
 msgstr "중앙 아메리카 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:224
+#: dlls/tzres/tzres.rc:226
 msgid "US Mountain Standard Time"
 msgstr "미국 산지 표준 시간"
 
-#: dlls/tzres/tzres.rc:225
+#: dlls/tzres/tzres.rc:227
 msgid "US Mountain Daylight Time"
 msgstr "미국 산지 일광 절약 시간"
 
@@ -10359,11 +10359,11 @@ msgstr "아프가니스탄 표준 시간"
 msgid "Afghanistan Daylight Time"
 msgstr "아프가니스탄 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:242
+#: dlls/tzres/tzres.rc:244
 msgid "Yakutsk Standard Time"
 msgstr "야쿠츠크 표준 시간"
 
-#: dlls/tzres/tzres.rc:243
+#: dlls/tzres/tzres.rc:245
 msgid "Yakutsk Daylight Time"
 msgstr "야쿠츠크 일광 절약 시간"
 
@@ -10390,6 +10390,18 @@ msgstr "아라비아 표준 시간"
 #: dlls/tzres/tzres.rc:39
 msgid "Arabian Daylight Time"
 msgstr "아라비아 일광 절약 시간"
+
+#: dlls/tzres/tzres.rc:214
+#, fuzzy
+#| msgid "Mountain Standard Time"
+msgid "Tocantins Standard Time"
+msgstr "산지 표준 시간"
+
+#: dlls/tzres/tzres.rc:215
+#, fuzzy
+#| msgid "Mountain Daylight Time"
+msgid "Tocantins Daylight Time"
+msgstr "산지 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:190
 msgid "Russian Standard Time"
@@ -10439,11 +10451,11 @@ msgstr "그리니치 표준 시간"
 msgid "Greenwich Daylight Time"
 msgstr "그리니치 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:220
+#: dlls/tzres/tzres.rc:222
 msgid "Ulaanbaatar Standard Time"
 msgstr "울란바토르 표준 시간"
 
-#: dlls/tzres/tzres.rc:221
+#: dlls/tzres/tzres.rc:223
 msgid "Ulaanbaatar Daylight Time"
 msgstr "울란바토르 일광 절약 시간"
 
@@ -10471,11 +10483,11 @@ msgstr "SA 태평양 표준 시간"
 msgid "SA Pacific Daylight Time"
 msgstr "SA 태평양 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:238
+#: dlls/tzres/tzres.rc:240
 msgid "West Asia Standard Time"
 msgstr "서아시아 표준 시간"
 
-#: dlls/tzres/tzres.rc:239
+#: dlls/tzres/tzres.rc:241
 msgid "West Asia Daylight Time"
 msgstr "서아시아 일광 절약 시간"
 
@@ -10519,11 +10531,11 @@ msgstr "바이아 표준 시간"
 msgid "Bahia Daylight Time"
 msgstr "바이아 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:228
+#: dlls/tzres/tzres.rc:230
 msgid "Venezuela Standard Time"
 msgstr "베네수엘라 표준 시간"
 
-#: dlls/tzres/tzres.rc:229
+#: dlls/tzres/tzres.rc:231
 msgid "Venezuela Daylight Time"
 msgstr "베네수엘라 일광 절약 시간"
 
@@ -10643,11 +10655,11 @@ msgstr "모리셔스 표준 시간"
 msgid "Mauritius Daylight Time"
 msgstr "모리셔스 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:230
+#: dlls/tzres/tzres.rc:232
 msgid "Vladivostok Standard Time"
 msgstr "블라디보스토크 표준 시간"
 
-#: dlls/tzres/tzres.rc:231
+#: dlls/tzres/tzres.rc:233
 msgid "Vladivostok Daylight Time"
 msgstr "블라디보스토크 일광 절약 시간"
 
@@ -10711,11 +10723,11 @@ msgstr "중앙 태평양 표준 시간"
 msgid "Central Pacific Daylight Time"
 msgstr "중앙 태평양 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:234
+#: dlls/tzres/tzres.rc:236
 msgid "W. Central Africa Standard Time"
 msgstr "중앙아프리카 서부 표준 시간"
 
-#: dlls/tzres/tzres.rc:235
+#: dlls/tzres/tzres.rc:237
 msgid "W. Central Africa Daylight Time"
 msgstr "중앙아프리카 서부 일광 절약 시간"
 
@@ -10735,11 +10747,11 @@ msgstr "오스트레일리아 동부 표준 시간"
 msgid "E. Australia Daylight Time"
 msgstr "오스트레일리아 동부 일광 절약 시간"
 
-#: dlls/tzres/tzres.rc:232
+#: dlls/tzres/tzres.rc:234
 msgid "W. Australia Standard Time"
 msgstr "오스트레일리아 서부 표준 시간"
 
-#: dlls/tzres/tzres.rc:233
+#: dlls/tzres/tzres.rc:235
 msgid "W. Australia Daylight Time"
 msgstr "오스트레일리아 서부 일광 절약 시간"
 

@@ -9909,11 +9909,11 @@ msgstr "Namibijos juostinis laikas"
 msgid "Namibia Daylight Time"
 msgstr "Namibijos vasaros laikas"
 
-#: dlls/tzres/tzres.rc:216
+#: dlls/tzres/tzres.rc:218
 msgid "Tonga Standard Time"
 msgstr "Tongos juostinis laikas"
 
-#: dlls/tzres/tzres.rc:217
+#: dlls/tzres/tzres.rc:219
 msgid "Tonga Daylight Time"
 msgstr "Tongos vasaros laikas"
 
@@ -9965,11 +9965,11 @@ msgstr "Niufaundlando juostinis laikas"
 msgid "Newfoundland Daylight Time"
 msgstr "Niufaundlando vasaros laikas"
 
-#: dlls/tzres/tzres.rc:240
+#: dlls/tzres/tzres.rc:242
 msgid "West Pacific Standard Time"
 msgstr "Vakarų Ramiojo vandenyno juostinis laikas"
 
-#: dlls/tzres/tzres.rc:241
+#: dlls/tzres/tzres.rc:243
 msgid "West Pacific Daylight Time"
 msgstr "Vakarų Ramiojo vandenyno vasaros laikas"
 
@@ -10021,11 +10021,11 @@ msgstr "Vidurinių Rytų juostinis laikas"
 msgid "Middle East Daylight Time"
 msgstr "Vidurinių Rytų vasaros laikas"
 
-#: dlls/tzres/tzres.rc:214
+#: dlls/tzres/tzres.rc:216
 msgid "Tokyo Standard Time"
 msgstr "Tokijo juostinis laikas"
 
-#: dlls/tzres/tzres.rc:215
+#: dlls/tzres/tzres.rc:217
 msgid "Tokyo Daylight Time"
 msgstr "Tokijo vasaros laikas"
 
@@ -10101,7 +10101,7 @@ msgstr "Mianmaro juostinis laikas"
 msgid "Myanmar Daylight Time"
 msgstr "Mianmaro vasaros laikas"
 
-#: dlls/tzres/tzres.rc:226 dlls/tzres/tzres.rc:227
+#: dlls/tzres/tzres.rc:228 dlls/tzres/tzres.rc:229
 msgid "Coordinated Universal Time"
 msgstr "Pasaulinis koordinuotasis laikas"
 
@@ -10121,11 +10121,11 @@ msgstr "GTB juostinis laikas"
 msgid "GTB Daylight Time"
 msgstr "GTB vasaros laikas"
 
-#: dlls/tzres/tzres.rc:218
+#: dlls/tzres/tzres.rc:220
 msgid "Turkey Standard Time"
 msgstr "Turkijos juostinis laikas"
 
-#: dlls/tzres/tzres.rc:219
+#: dlls/tzres/tzres.rc:221
 msgid "Turkey Daylight Time"
 msgstr "Turkijos vasaros laikas"
 
@@ -10153,11 +10153,11 @@ msgstr "Taipėjaus juostinis laikas"
 msgid "Taipei Daylight Time"
 msgstr "Taipėjaus vasaros laikas"
 
-#: dlls/tzres/tzres.rc:236
+#: dlls/tzres/tzres.rc:238
 msgid "W. Europe Standard Time"
 msgstr "Vakarinės Europos juostinis laikas"
 
-#: dlls/tzres/tzres.rc:237
+#: dlls/tzres/tzres.rc:239
 msgid "W. Europe Daylight Time"
 msgstr "Vakarinės Europos vasaros laikas"
 
@@ -10233,11 +10233,11 @@ msgstr "Kalnų juostinis laikas"
 msgid "Mountain Daylight Time"
 msgstr "Kalnų vasaros laikas"
 
-#: dlls/tzres/tzres.rc:222
+#: dlls/tzres/tzres.rc:224
 msgid "US Eastern Standard Time"
 msgstr "JAV Rytinis juostinis laikas"
 
-#: dlls/tzres/tzres.rc:223
+#: dlls/tzres/tzres.rc:225
 msgid "US Eastern Daylight Time"
 msgstr "JAV Rytinis vasaros laikas"
 
@@ -10265,11 +10265,11 @@ msgstr "Centrinės Amerikos juostinis laikas"
 msgid "Central America Daylight Time"
 msgstr "Centrinės Amerikos vasaros laikas"
 
-#: dlls/tzres/tzres.rc:224
+#: dlls/tzres/tzres.rc:226
 msgid "US Mountain Standard Time"
 msgstr "JAV Kalnų juostinis laikas"
 
-#: dlls/tzres/tzres.rc:225
+#: dlls/tzres/tzres.rc:227
 msgid "US Mountain Daylight Time"
 msgstr "JAV Kalnų vasaros laikas"
 
@@ -10305,11 +10305,11 @@ msgstr "Afganistano juostinis laikas"
 msgid "Afghanistan Daylight Time"
 msgstr "Afganistano vasaros laikas"
 
-#: dlls/tzres/tzres.rc:242
+#: dlls/tzres/tzres.rc:244
 msgid "Yakutsk Standard Time"
 msgstr "Jakutsko juostinis laikas"
 
-#: dlls/tzres/tzres.rc:243
+#: dlls/tzres/tzres.rc:245
 msgid "Yakutsk Daylight Time"
 msgstr "Jakutsko vasaros laikas"
 
@@ -10336,6 +10336,18 @@ msgstr "Arabų juostinis laikas"
 #: dlls/tzres/tzres.rc:39
 msgid "Arabian Daylight Time"
 msgstr "Arabų vasaros laikas"
+
+#: dlls/tzres/tzres.rc:214
+#, fuzzy
+#| msgid "Mountain Standard Time"
+msgid "Tocantins Standard Time"
+msgstr "Kalnų juostinis laikas"
+
+#: dlls/tzres/tzres.rc:215
+#, fuzzy
+#| msgid "Mountain Daylight Time"
+msgid "Tocantins Daylight Time"
+msgstr "Kalnų vasaros laikas"
 
 #: dlls/tzres/tzres.rc:190
 msgid "Russian Standard Time"
@@ -10385,11 +10397,11 @@ msgstr "Grinvičo juostinis laikas"
 msgid "Greenwich Daylight Time"
 msgstr "Grinvičo vasaros laikas"
 
-#: dlls/tzres/tzres.rc:220
+#: dlls/tzres/tzres.rc:222
 msgid "Ulaanbaatar Standard Time"
 msgstr "Ulan Batoro juostinis laikas"
 
-#: dlls/tzres/tzres.rc:221
+#: dlls/tzres/tzres.rc:223
 msgid "Ulaanbaatar Daylight Time"
 msgstr "Ulan Batoro vasaros laikas"
 
@@ -10417,11 +10429,11 @@ msgstr "PA Ramiojo vandenyno juostinis laikas"
 msgid "SA Pacific Daylight Time"
 msgstr "PA Ramiojo vandenyno vasaros laikas"
 
-#: dlls/tzres/tzres.rc:238
+#: dlls/tzres/tzres.rc:240
 msgid "West Asia Standard Time"
 msgstr "Vakarų Azijos juostinis laikas"
 
-#: dlls/tzres/tzres.rc:239
+#: dlls/tzres/tzres.rc:241
 msgid "West Asia Daylight Time"
 msgstr "Vakarų Azijos vasaros laikas"
 
@@ -10465,11 +10477,11 @@ msgstr "Bahijos juostinis laikas"
 msgid "Bahia Daylight Time"
 msgstr "Bahijos vasaros laikas"
 
-#: dlls/tzres/tzres.rc:228
+#: dlls/tzres/tzres.rc:230
 msgid "Venezuela Standard Time"
 msgstr "Venesuelos juostinis laikas"
 
-#: dlls/tzres/tzres.rc:229
+#: dlls/tzres/tzres.rc:231
 msgid "Venezuela Daylight Time"
 msgstr "Venesuelos vasaros laikas"
 
@@ -10577,11 +10589,11 @@ msgstr "Mauricijaus juostinis laikas"
 msgid "Mauritius Daylight Time"
 msgstr "Mauricijaus vasaros laikas"
 
-#: dlls/tzres/tzres.rc:230
+#: dlls/tzres/tzres.rc:232
 msgid "Vladivostok Standard Time"
 msgstr "Vladivostoko juostinis laikas"
 
-#: dlls/tzres/tzres.rc:231
+#: dlls/tzres/tzres.rc:233
 msgid "Vladivostok Daylight Time"
 msgstr "Vladivostoko vasaros laikas"
 
@@ -10641,11 +10653,11 @@ msgstr "Vidurio Ramiojo vandenyno juostinis laikas"
 msgid "Central Pacific Daylight Time"
 msgstr "Vidurio Ramiojo vandenyno vasaros laikas"
 
-#: dlls/tzres/tzres.rc:234
+#: dlls/tzres/tzres.rc:236
 msgid "W. Central Africa Standard Time"
 msgstr "V. Vidurio Afrikos juostinis laikas"
 
-#: dlls/tzres/tzres.rc:235
+#: dlls/tzres/tzres.rc:237
 msgid "W. Central Africa Daylight Time"
 msgstr "V. Vidurio Afrikos vasaros laikas"
 
@@ -10665,11 +10677,11 @@ msgstr "R. Australijos juostinis laikas"
 msgid "E. Australia Daylight Time"
 msgstr "R. Australijos vasaros laikas"
 
-#: dlls/tzres/tzres.rc:232
+#: dlls/tzres/tzres.rc:234
 msgid "W. Australia Standard Time"
 msgstr "V. Australijos juostinis laikas"
 
-#: dlls/tzres/tzres.rc:233
+#: dlls/tzres/tzres.rc:235
 msgid "W. Australia Daylight Time"
 msgstr "V. Australijos vasaros laikas"
 

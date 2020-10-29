@@ -3552,6 +3552,18 @@ HKLM,%CurrentVersionNT%\Time Zones\Tasmania Standard Time,"MUI_Dlt",,"@tzres.dll
 HKLM,%CurrentVersionNT%\Time Zones\Tasmania Standard Time,"MUI_Std",,"@tzres.dll,-36016"
 HKLM,%CurrentVersionNT%\Time Zones\Tasmania Standard Time,"Std",,"Tasmania Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Tasmania Standard Time,"TZI",1,a8,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Tocantins Standard Time,"Display",,"America/Araguaina"
+HKLM,%CurrentVersionNT%\Time Zones\Tocantins Standard Time,"Dlt",,"Tocantins Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Tocantins Standard Time,"MUI_Dlt",,"@tzres.dll,-43073"
+HKLM,%CurrentVersionNT%\Time Zones\Tocantins Standard Time,"MUI_Std",,"@tzres.dll,-43072"
+HKLM,%CurrentVersionNT%\Time Zones\Tocantins Standard Time,"Std",,"Tocantins Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Tocantins Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Tocantins Standard Time\Dynamic DST,"2011",1,b4,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Tocantins Standard Time\Dynamic DST,"2012",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,01,00,00,00,01,00,00,00,00,00,00,00,00,00,00,00,0a,00,00,00,03,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Tocantins Standard Time\Dynamic DST,"2013",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,02,00,00,00,03,00,00,00,00,00,00,00,00,00,00,00,01,00,02,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Tocantins Standard Time\Dynamic DST,"2014",1,b4,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Tocantins Standard Time\Dynamic DST,"FirstEntry",0x10001,"2011"
+HKLM,%CurrentVersionNT%\Time Zones\Tocantins Standard Time\Dynamic DST,"LastEntry",0x10001,"2014"
 HKLM,%CurrentVersionNT%\Time Zones\Tokyo Standard Time,"Display",,"Asia/Tokyo"
 HKLM,%CurrentVersionNT%\Time Zones\Tokyo Standard Time,"Dlt",,"Tokyo Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Tokyo Standard Time,"MUI_Dlt",,"@tzres.dll,-16241"

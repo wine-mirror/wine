@@ -9900,11 +9900,11 @@ msgstr "නැමීබියාවේ සම්මත වෙලාව"
 msgid "Namibia Daylight Time"
 msgstr "නැමීබියාවේ දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:216
+#: dlls/tzres/tzres.rc:218
 msgid "Tonga Standard Time"
 msgstr "ටොන්ගාවේ සම්මත වෙලාව"
 
-#: dlls/tzres/tzres.rc:217
+#: dlls/tzres/tzres.rc:219
 msgid "Tonga Daylight Time"
 msgstr "ටොන්ගාවේ දිවා ආලෝකය වෙලාව"
 
@@ -9956,11 +9956,11 @@ msgstr "නිව්ෆවුන්ඩ්ලන්තයේ සම්මත ව�
 msgid "Newfoundland Daylight Time"
 msgstr "නිව්ෆවුන්ඩ්ලන්තයේ දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:240
+#: dlls/tzres/tzres.rc:242
 msgid "West Pacific Standard Time"
 msgstr "බටහිර පැසිෆිකයේ සම්මත වෙලාව"
 
-#: dlls/tzres/tzres.rc:241
+#: dlls/tzres/tzres.rc:243
 msgid "West Pacific Daylight Time"
 msgstr "බටහිර පැසිෆිකයේ දිවා ආලෝකය වෙලාව"
 
@@ -10012,11 +10012,11 @@ msgstr "මැද පෙරදිගයේ සම්මත වෙලාව"
 msgid "Middle East Daylight Time"
 msgstr "මැද පෙරදිගයේ දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:214
+#: dlls/tzres/tzres.rc:216
 msgid "Tokyo Standard Time"
 msgstr "ටෝකියෝවේ සම්මත වෙලාව"
 
-#: dlls/tzres/tzres.rc:215
+#: dlls/tzres/tzres.rc:217
 msgid "Tokyo Daylight Time"
 msgstr "ටෝකියෝවේ දිවා ආලෝකය වෙලාව"
 
@@ -10100,7 +10100,7 @@ msgstr "මියන්මාරයේ සම්මත වෙලාව"
 msgid "Myanmar Daylight Time"
 msgstr "මියන්මාරයේ දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:226 dlls/tzres/tzres.rc:227
+#: dlls/tzres/tzres.rc:228 dlls/tzres/tzres.rc:229
 msgid "Coordinated Universal Time"
 msgstr "සම්බන්ධිත විශ්ව වෙලාව"
 
@@ -10120,11 +10120,11 @@ msgstr "GTB සම්මත වෙලාව"
 msgid "GTB Daylight Time"
 msgstr "GTB දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:218
+#: dlls/tzres/tzres.rc:220
 msgid "Turkey Standard Time"
 msgstr "තුර්කියේ සම්මත වෙලාව"
 
-#: dlls/tzres/tzres.rc:219
+#: dlls/tzres/tzres.rc:221
 msgid "Turkey Daylight Time"
 msgstr "තුර්කියේ දිවා ආලෝකය වෙලාව"
 
@@ -10152,11 +10152,11 @@ msgstr "තායිපේයේ සම්මත වෙලාව"
 msgid "Taipei Daylight Time"
 msgstr "තායිපේයේ දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:236
+#: dlls/tzres/tzres.rc:238
 msgid "W. Europe Standard Time"
 msgstr "බටහිර යුරෝපයේ සම්මත වෙලාව"
 
-#: dlls/tzres/tzres.rc:237
+#: dlls/tzres/tzres.rc:239
 msgid "W. Europe Daylight Time"
 msgstr "බටහිර යුරෝපයේ දිවා ආලෝකය වෙලාව"
 
@@ -10232,11 +10232,11 @@ msgstr "කන්දේ සම්මත වෙලාව"
 msgid "Mountain Daylight Time"
 msgstr "කන්දේ දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:222
+#: dlls/tzres/tzres.rc:224
 msgid "US Eastern Standard Time"
 msgstr "එක්සත් ජනපදයේ නැගෙනහිරේ සම්මත වෙලාව"
 
-#: dlls/tzres/tzres.rc:223
+#: dlls/tzres/tzres.rc:225
 msgid "US Eastern Daylight Time"
 msgstr "එක්සත් ජනපදයේ නැගෙනහිරේ දිවා ආලෝකය වෙලාව"
 
@@ -10268,11 +10268,11 @@ msgstr "මධ්‍යම ඇමරිකාවේ සම්මත වෙලා
 msgid "Central America Daylight Time"
 msgstr "මධ්‍යම ඇමරිකාවේ දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:224
+#: dlls/tzres/tzres.rc:226
 msgid "US Mountain Standard Time"
 msgstr "එක්සත් ජනපදයේ කන්දේ සම්මත වෙලාව"
 
-#: dlls/tzres/tzres.rc:225
+#: dlls/tzres/tzres.rc:227
 msgid "US Mountain Daylight Time"
 msgstr "එක්සත් ජනපදයේ කන්දේ දිවා ආලෝකය වෙලාව"
 
@@ -10308,11 +10308,11 @@ msgstr "ඇෆ්ඝනිස්ථානයේ සම්මත වෙලාව"
 msgid "Afghanistan Daylight Time"
 msgstr "ඇෆ්ඝනිස්ථානයේ දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:242
+#: dlls/tzres/tzres.rc:244
 msgid "Yakutsk Standard Time"
 msgstr "යකුට්ස්ක් සම්මත වෙලාව"
 
-#: dlls/tzres/tzres.rc:243
+#: dlls/tzres/tzres.rc:245
 msgid "Yakutsk Daylight Time"
 msgstr "යකුට්ස්ක් දිවා ආලෝකය වෙලාව"
 
@@ -10339,6 +10339,18 @@ msgstr "අරාබි ජාතිකයේ සම්මත වෙලාව"
 #: dlls/tzres/tzres.rc:39
 msgid "Arabian Daylight Time"
 msgstr "අරාබි ජාතිකයේ දිවා ආලෝකය වෙලාව"
+
+#: dlls/tzres/tzres.rc:214
+#, fuzzy
+#| msgid "Mountain Standard Time"
+msgid "Tocantins Standard Time"
+msgstr "කන්දේ සම්මත වෙලාව"
+
+#: dlls/tzres/tzres.rc:215
+#, fuzzy
+#| msgid "Mountain Daylight Time"
+msgid "Tocantins Daylight Time"
+msgstr "කන්දේ දිවා ආලෝකය වෙලාව"
 
 #: dlls/tzres/tzres.rc:190
 msgid "Russian Standard Time"
@@ -10388,11 +10400,11 @@ msgstr "ග්රිනිච් සම්මත වෙලාව"
 msgid "Greenwich Daylight Time"
 msgstr "ග්රිනිච් දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:220
+#: dlls/tzres/tzres.rc:222
 msgid "Ulaanbaatar Standard Time"
 msgstr "උලාන්බාටර් සම්මත වෙලාව"
 
-#: dlls/tzres/tzres.rc:221
+#: dlls/tzres/tzres.rc:223
 msgid "Ulaanbaatar Daylight Time"
 msgstr "උලාන්බාටර් දිවා ආලෝකය වෙලාව"
 
@@ -10420,11 +10432,11 @@ msgstr "SA පැසිෆිකයේ සම්මත වෙලාව"
 msgid "SA Pacific Daylight Time"
 msgstr "SA පැසිෆිකයේ දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:238
+#: dlls/tzres/tzres.rc:240
 msgid "West Asia Standard Time"
 msgstr "බටහිර ආසියාවේ සම්මත වෙලාව"
 
-#: dlls/tzres/tzres.rc:239
+#: dlls/tzres/tzres.rc:241
 msgid "West Asia Daylight Time"
 msgstr "බටහිර ආසියාවේ දිවා ආලෝකය වෙලාව"
 
@@ -10468,11 +10480,11 @@ msgstr "බහියාවේ සම්මත වෙලාව"
 msgid "Bahia Daylight Time"
 msgstr "බහියාවේ දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:228
+#: dlls/tzres/tzres.rc:230
 msgid "Venezuela Standard Time"
 msgstr "වෙනිසියුලාවේ සම්මත වෙලාව"
 
-#: dlls/tzres/tzres.rc:229
+#: dlls/tzres/tzres.rc:231
 msgid "Venezuela Daylight Time"
 msgstr "වෙනිසියුලාවේ දිවා ආලෝකය වෙලාව"
 
@@ -10592,11 +10604,11 @@ msgstr "මෞරිටුයුස් සම්මත වෙලාව"
 msgid "Mauritius Daylight Time"
 msgstr "මෞරිටුයුස් දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:230
+#: dlls/tzres/tzres.rc:232
 msgid "Vladivostok Standard Time"
 msgstr "ලාඩිවොස්ටොක් සම්මත වෙලාව"
 
-#: dlls/tzres/tzres.rc:231
+#: dlls/tzres/tzres.rc:233
 msgid "Vladivostok Daylight Time"
 msgstr "ලාඩිවොස්ටොක් දිවා ආලෝකය වෙලාව"
 
@@ -10660,11 +10672,11 @@ msgstr "මධ්‍යම පැසිෆිකයේ සම්මත වෙල
 msgid "Central Pacific Daylight Time"
 msgstr "මධ්‍යම පැසිෆිකයේ දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:234
+#: dlls/tzres/tzres.rc:236
 msgid "W. Central Africa Standard Time"
 msgstr "බටහිර මධ්‍යම අප්රිකාවේ සම්මත වෙලාව"
 
-#: dlls/tzres/tzres.rc:235
+#: dlls/tzres/tzres.rc:237
 msgid "W. Central Africa Daylight Time"
 msgstr "බටහිර මධ්‍යම අප්රිකාවේ දිවා ආලෝකය වෙලාව"
 
@@ -10684,11 +10696,11 @@ msgstr "නැගෙනහිර ඔස්ට්රාලියාවේ සම�
 msgid "E. Australia Daylight Time"
 msgstr "නැගෙනහිර ඔස්ට්රාලියාවේ දිවා ආලෝකය වෙලාව"
 
-#: dlls/tzres/tzres.rc:232
+#: dlls/tzres/tzres.rc:234
 msgid "W. Australia Standard Time"
 msgstr "බටහිර ඕස්ට්රේලියාවේ සම්මත වෙලාව"
 
-#: dlls/tzres/tzres.rc:233
+#: dlls/tzres/tzres.rc:235
 msgid "W. Australia Daylight Time"
 msgstr "බටහිර ඕස්ට්රේලියාවේ දිවා ආලෝකය වෙලාව"
 
