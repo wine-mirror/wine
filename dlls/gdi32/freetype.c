@@ -291,9 +291,6 @@ typedef struct {
 
 struct tagGdiFont {
     struct gdi_font *gdi_font;
-    struct list child_fonts;
-
-    /* the following members can be accessed without locking, they are never modified after creation */
     FT_Face ft_face;
     struct font_mapping *mapping;
 };
@@ -3276,16 +3273,6 @@ static UINT get_nearest_charset(const WCHAR *family_name, Face *face, UINT *cp)
 static void CDECL freetype_destroy_font( struct gdi_font *gdi_font )
 {
     GdiFont *font = get_font_ptr( gdi_font );
-    CHILD_FONT *child, *child_next;
-
-    LIST_FOR_EACH_ENTRY_SAFE( child, child_next, &font->child_fonts, CHILD_FONT, entry )
-    {
-        list_remove(&child->entry);
-        if(child->font)
-            free_gdi_font(child->font->gdi_font);
-        release_face( child->face );
-        HeapFree(GetProcessHeap(), 0, child);
-    }
 
     if (font->ft_face) pFT_Done_Face(font->ft_face);
     if (font->mapping) unmap_font_file( font->mapping );
@@ -3501,40 +3488,72 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 }
 
 /*************************************************************
+ * add_child_font
+ */
+static void add_child_font( struct gdi_font *font, Face *face )
+{
+    struct gdi_font *child;
+    Face *child_face, *best_face = NULL;
+    UINT penalty = 0, new_penalty = 0;
+    BOOL bold, italic, bd, it;
+
+    italic = !!font->lf.lfItalic;
+    bold = font->lf.lfWeight > FW_MEDIUM;
+
+    LIST_FOR_EACH_ENTRY( child_face, get_face_list_from_family( face->family ), Face, entry )
+    {
+        it = !!(child_face->ntmFlags & NTM_ITALIC);
+        bd = !!(child_face->ntmFlags & NTM_BOLD);
+        new_penalty = ( it ^ italic ) + ( bd ^ bold );
+        if (!best_face || new_penalty < penalty)
+        {
+            penalty = new_penalty;
+            best_face = child_face;
+        }
+    }
+    if (best_face) face = best_face;
+
+    child = alloc_gdi_font( face->file, face->font_data_ptr, face->font_data_size );
+    child->fake_italic = italic && !(face->ntmFlags & NTM_ITALIC);
+    child->fake_bold = bold && !(face->ntmFlags & NTM_BOLD);
+    child->lf = font->lf;
+    child->matrix = font->matrix;
+    child->can_use_bitmap = font->can_use_bitmap;
+    child->face_index = face->face_index;
+    child->ntmFlags = face->ntmFlags;
+    child->aa_flags = HIWORD( face->flags );
+    child->scale_y = font->scale_y;
+    child->base_font = font;
+    set_gdi_font_names( child, face->family->family_name, face->style_name, face->full_name );
+
+    list_add_tail( &font->child_fonts, &child->entry );
+    TRACE( "created child font %p for base %p\n", child, font );
+}
+
+/*************************************************************
  * create_child_font_list
  */
-static BOOL create_child_font_list(GdiFont *font)
+static void create_child_font_list( struct gdi_font *font )
 {
-    struct gdi_font *gdi_font = font->gdi_font;
-    BOOL ret = FALSE;
     SYSTEM_LINKS *font_link;
-    CHILD_FONT *font_link_entry, *new_child;
+    CHILD_FONT *font_link_entry;
     FontSubst *psub;
     const WCHAR* font_name;
 
-    psub = get_font_subst(&font_subst_list, get_gdi_font_name(gdi_font), -1);
-    font_name = psub ? psub->to.name : get_gdi_font_name(gdi_font);
+    psub = get_font_subst(&font_subst_list, get_gdi_font_name(font), -1);
+    font_name = psub ? psub->to.name : get_gdi_font_name(font);
     font_link = find_font_link(font_name);
     if (font_link != NULL)
     {
         TRACE("found entry in system list\n");
         LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
-        {
-            new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
-            new_child->face = font_link_entry->face;
-            new_child->font = NULL;
-            new_child->face->refcount++;
-            list_add_tail(&font->child_fonts, &new_child->entry);
-            TRACE("font %s %ld\n", debugstr_w(new_child->face->file), new_child->face->face_index);
-        }
-        ret = TRUE;
+            add_child_font( font, font_link_entry->face );
     }
     /*
      * if not SYMBOL or OEM then we also get all the fonts for Microsoft
      * Sans Serif.  This is how asian windows get default fallbacks for fonts
      */
-    if (is_dbcs_ansi_cp(GetACP()) && gdi_font->charset != SYMBOL_CHARSET &&
-        gdi_font->charset != OEM_CHARSET &&
+    if (is_dbcs_ansi_cp(GetACP()) && font->charset != SYMBOL_CHARSET && font->charset != OEM_CHARSET &&
         strcmpiW(font_name,szDefaultFallbackLink) != 0)
     {
         font_link = find_font_link(szDefaultFallbackLink);
@@ -3542,19 +3561,9 @@ static BOOL create_child_font_list(GdiFont *font)
         {
             TRACE("found entry in default fallback list\n");
             LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
-            {
-                new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
-                new_child->face = font_link_entry->face;
-                new_child->font = NULL;
-                new_child->face->refcount++;
-                list_add_tail(&font->child_fonts, &new_child->entry);
-                TRACE("font %s %ld\n", debugstr_w(new_child->face->file), new_child->face->face_index);
-            }
-            ret = TRUE;
+                add_child_font( font, font_link_entry->face );
         }
     }
-
-    return ret;
 }
 
 static BOOL select_charmap(FT_Face ft_face, FT_Encoding encoding)
@@ -3791,7 +3800,6 @@ static BOOL CDECL freetype_load_font( struct gdi_font *gdi_font )
     if (!(font = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*font) ))) return FALSE;
     gdi_font->private = font;
     font->gdi_font = gdi_font;
-    list_init( &font->child_fonts );
 
     if (gdi_font->file[0])
     {
@@ -4244,7 +4252,7 @@ found_face:
     if (face->flags & ADDFONT_VERTICAL_FONT) /* We need to try to load the GSUB table */
         gdi_font->vert_feature = get_GSUB_vert_feature( gdi_font );
 
-    create_child_font_list(ret);
+    create_child_font_list( gdi_font );
 
     TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
 
@@ -6199,61 +6207,13 @@ static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font )
     return TRUE;
 }
 
-static BOOL load_child_font(GdiFont *font, CHILD_FONT *child)
-{
-    struct gdi_font *gdi_font = font->gdi_font;
-    struct gdi_font *child_font;
-    const struct list *face_list;
-    Face *child_face = NULL, *best_face = NULL;
-    UINT penalty = 0, new_penalty = 0;
-    BOOL bold, italic, bd, it;
-
-    italic = !!gdi_font->lf.lfItalic;
-    bold = gdi_font->lf.lfWeight > FW_MEDIUM;
-
-    face_list = get_face_list_from_family( child->face->family );
-    LIST_FOR_EACH_ENTRY( child_face, face_list, Face, entry )
-    {
-        it = !!(child_face->ntmFlags & NTM_ITALIC);
-        bd = !!(child_face->ntmFlags & NTM_BOLD);
-        new_penalty = ( it ^ italic ) + ( bd ^ bold );
-        if (!best_face || new_penalty < penalty)
-        {
-            penalty = new_penalty;
-            best_face = child_face;
-        }
-    }
-    child_face = best_face ? best_face : child->face;
-
-    child_font = alloc_gdi_font( child_face->file, child_face->font_data_ptr, child_face->font_data_size );
-    child_font->fake_italic = italic && !( child_face->ntmFlags & NTM_ITALIC );
-    child_font->fake_bold = bold && !( child_face->ntmFlags & NTM_BOLD );
-    child_font->lf = gdi_font->lf;
-    child_font->matrix = gdi_font->matrix;
-    child_font->can_use_bitmap = gdi_font->can_use_bitmap;
-    child_font->face_index = child_face->face_index;
-    child_font->ntmFlags = child_face->ntmFlags;
-    child_font->aa_flags = HIWORD( child_face->flags );
-    child_font->scale_y = gdi_font->scale_y;
-    child_font->base_font = gdi_font;
-    set_gdi_font_names( child_font, child_face->family->family_name,
-                        child_face->style_name, child_face->full_name );
-    if (!freetype_load_font( child_font ))
-    {
-        free_gdi_font(child_font);
-        return FALSE;
-    }
-    child->font = get_font_ptr( child_font );
-    TRACE("created child font %p for base %p\n", child->font, font);
-    return TRUE;
-}
 
 static BOOL get_glyph_index_linked( struct gdi_font *gdi_font, UINT c, struct gdi_font **linked_font,
                                     FT_UInt *glyph, BOOL* vert)
 {
     GdiFont *font = get_font_ptr( gdi_font );
     FT_UInt g,o;
-    CHILD_FONT *child_font;
+    struct gdi_font *child;
 
     if (gdi_font->base_font) gdi_font = gdi_font->base_font;
     *linked_font = gdi_font;
@@ -6268,21 +6228,17 @@ static BOOL get_glyph_index_linked( struct gdi_font *gdi_font, UINT c, struct gd
 
     if (c < 32) goto done;  /* don't check linked fonts for control characters */
 
-    LIST_FOR_EACH_ENTRY(child_font, &font->child_fonts, CHILD_FONT, entry)
+    LIST_FOR_EACH_ENTRY( child, &gdi_font->child_fonts, struct gdi_font, entry )
     {
-        if(!child_font->font)
-            if(!load_child_font(font, child_font))
-                continue;
+        if (!child->private && !freetype_load_font( child )) continue;
 
-        if(!child_font->font->ft_face)
-            continue;
-        g = get_glyph_index(child_font->font, c);
+        g = get_glyph_index(get_font_ptr(child), c);
         o = g;
-        g = get_GSUB_vert_glyph(child_font->font->gdi_font, g);
+        g = get_GSUB_vert_glyph(child, g);
         if(g)
         {
             *glyph = g;
-            *linked_font = child_font->font->gdi_font;
+            *linked_font = child;
             *vert = (o != g);
             return TRUE;
         }
@@ -6380,14 +6336,6 @@ static DWORD CDECL freetype_get_unicode_ranges( struct gdi_font *font, GLYPHSET 
     }
 
     return num_ranges;
-}
-
-/*************************************************************
- * freetype_FontIsLinked
- */
-static BOOL CDECL freetype_FontIsLinked( struct gdi_font *font )
-{
-    return !list_empty( &get_font_ptr(font)->child_fonts );
 }
 
 /*************************************************************************
@@ -6606,7 +6554,6 @@ static DWORD CDECL freetype_get_kerning_pairs( struct gdi_font *gdi_font, KERNIN
 static const struct font_backend_funcs font_funcs =
 {
     freetype_EnumFonts,
-    freetype_FontIsLinked,
     freetype_SelectFont,
     freetype_add_font,
     freetype_add_mem_font,

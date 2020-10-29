@@ -317,6 +317,7 @@ struct gdi_font
     int                    kern_count;
     /* the following members can be accessed without locking, they are never modified after creation */
     void                  *private;  /* font backend private data */
+    struct list            child_fonts;
     DWORD                  handle;
     DWORD                  cache_num;
     DWORD                  hash;
@@ -368,7 +369,6 @@ struct gdi_font
 struct font_backend_funcs
 {
     BOOL  (CDECL *pEnumFonts)( LOGFONTW *lf, FONTENUMPROCW proc, LPARAM lparam );
-    BOOL  (CDECL *pFontIsLinked)( struct gdi_font *font );
     struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont, UINT *aa_flags, UINT default_aa_flags );
 
     INT   (CDECL *add_font)( const WCHAR *file, DWORD flags );

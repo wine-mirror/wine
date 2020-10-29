@@ -473,6 +473,7 @@ struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_T data_
     font->matrix.eM11 = font->matrix.eM22 = 1.0;
     font->scale_y = 1.0;
     font->kern_count = -1;
+    list_init( &font->child_fonts );
 
     if (file)
     {
@@ -501,9 +502,15 @@ struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_T data_
 void free_gdi_font( struct gdi_font *font )
 {
     DWORD i;
+    struct gdi_font *child, *child_next;
 
     if (font->private) font_funcs->destroy_font( font );
     free_font_handle( font->handle );
+    LIST_FOR_EACH_ENTRY_SAFE( child, child_next, &font->child_fonts, struct gdi_font, entry )
+    {
+        list_remove( &child->entry );
+        free_gdi_font( child );
+    }
     for (i = 0; i < font->gm_size; i++) HeapFree( GetProcessHeap(), 0, font->gm[i] );
     HeapFree( GetProcessHeap(), 0, font->otm.otmpFamilyName );
     HeapFree( GetProcessHeap(), 0, font->otm.otmpStyleName );
@@ -1282,17 +1289,13 @@ static BOOL CDECL font_EnumFonts( PHYSDEV dev, LOGFONTW *lf, FONTENUMPROCW proc,
 static BOOL CDECL font_FontIsLinked( PHYSDEV dev )
 {
     struct font_physdev *physdev = get_font_dev( dev );
-    BOOL ret;
 
     if (!physdev->font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pFontIsLinked );
         return dev->funcs->pFontIsLinked( dev );
     }
-    EnterCriticalSection( &font_cs );
-    ret = font_funcs->pFontIsLinked( physdev->font );
-    LeaveCriticalSection( &font_cs );
-    return ret;
+    return !list_empty( &physdev->font->child_fonts );
 }
 
 
