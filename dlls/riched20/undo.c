@@ -438,7 +438,7 @@ BOOL ME_Undo(ME_TextEditor *editor)
       destroy_undo_item( undo );
   }
 
-  ME_MoveCursorFromTableRowStartParagraph(editor);
+  table_move_from_row_start( editor );
   add_undo( editor, undo_end_transaction );
   ME_CheckTablesForCorruption(editor);
   editor->nUndoStackSize--;
@@ -475,7 +475,7 @@ BOOL ME_Redo(ME_TextEditor *editor)
       list_remove( &undo->entry );
       destroy_undo_item( undo );
   }
-  ME_MoveCursorFromTableRowStartParagraph(editor);
+  table_move_from_row_start( editor );
   add_undo( editor, undo_end_transaction );
   ME_CheckTablesForCorruption(editor);
   editor->nUndoMode = nMode;

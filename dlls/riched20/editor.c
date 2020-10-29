@@ -2690,7 +2690,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
       }
       else
         return TRUE;
-      ME_MoveCursorFromTableRowStartParagraph(editor);
+      table_move_from_row_start( editor );
       ME_UpdateSelectionLinkAttribute(editor);
       ME_UpdateRepaint(editor, FALSE);
       ME_SendRequestResize(editor, FALSE);

@@ -629,16 +629,17 @@ void table_handle_tab( ME_TextEditor *editor, BOOL selected_row )
 
 /* Make sure the cursor is not in the hidden table row start paragraph
  * without a selection. */
-void ME_MoveCursorFromTableRowStartParagraph(ME_TextEditor *editor)
+void table_move_from_row_start( ME_TextEditor *editor )
 {
-  ME_DisplayItem *para = editor->pCursors[0].pPara;
-  if (para == editor->pCursors[1].pPara &&
-      para->member.para.nFlags & MEPF_ROWSTART) {
+  ME_Paragraph *para = &editor->pCursors[0].pPara->member.para;
+
+  if (para == &editor->pCursors[1].pPara->member.para && para->nFlags & MEPF_ROWSTART)
+  {
     /* The cursors should not be at the hidden start row paragraph without
      * a selection, so the cursor is moved into the first cell. */
-    para = para->member.para.next_para;
-    editor->pCursors[0].pPara = para;
-    editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
+    para = para_next( para );
+    editor->pCursors[0].pPara = para_get_di( para );
+    editor->pCursors[0].pRun = run_get_di( para_first_run( para ) );
     editor->pCursors[0].nOffset = 0;
     editor->pCursors[1] = editor->pCursors[0];
   }

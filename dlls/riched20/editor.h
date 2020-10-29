@@ -302,6 +302,7 @@ ME_Paragraph *table_insert_cell( ME_TextEditor *editor, ME_Cursor *cursor ) DECL
 ME_Paragraph *table_insert_row_end( ME_TextEditor *editor, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_insert_row_start( ME_TextEditor *editor, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_insert_row_start_at_para( ME_TextEditor *editor, ME_Paragraph *para ) DECLSPEC_HIDDEN;
+void table_move_from_row_start( ME_TextEditor *editor ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_outer_para( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 void table_protect_partial_deletion( ME_TextEditor *editor, ME_Cursor *c, int *num_chars ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_row_end( ME_Paragraph *para ) DECLSPEC_HIDDEN;
@@ -309,7 +310,6 @@ ME_Cell *table_row_end_cell( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Cell *table_row_first_cell( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_row_start( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 void ME_CheckTablesForCorruption(ME_TextEditor *editor) DECLSPEC_HIDDEN;
-void ME_MoveCursorFromTableRowStartParagraph(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 struct RTFTable *ME_MakeTableDef(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_InitTableDef(ME_TextEditor *editor, struct RTFTable *tableDef) DECLSPEC_HIDDEN;
 static inline ME_DisplayItem *cell_get_di(ME_Cell *cell)
