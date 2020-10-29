@@ -144,7 +144,7 @@ static void value_free( struct value val )
 %%
 
 condition:
-    expression 
+    expression
         {
             COND_input* cond = (COND_input*) info;
             cond->result = $1;
@@ -157,7 +157,7 @@ condition:
     ;
 
 expression:
-    boolean_term 
+    boolean_term
         {
             $$ = $1;
         }
@@ -318,7 +318,7 @@ value:
         {
             COND_input* cond = (COND_input*) info;
             INSTALLSTATE install = INSTALLSTATE_UNKNOWN, action = INSTALLSTATE_UNKNOWN;
-      
+
             if(MSI_GetComponentStateW(cond->package, $2, &install, &action ) != ERROR_SUCCESS)
             {
                 $$.type = VALUE_LITERAL;
@@ -335,7 +335,7 @@ value:
         {
             COND_input* cond = (COND_input*) info;
             INSTALLSTATE install = INSTALLSTATE_UNKNOWN, action = INSTALLSTATE_UNKNOWN;
-      
+
             if(MSI_GetComponentStateW(cond->package, $2, &install, &action ) != ERROR_SUCCESS)
             {
                 $$.type = VALUE_LITERAL;
@@ -352,7 +352,7 @@ value:
         {
             COND_input* cond = (COND_input*) info;
             INSTALLSTATE install, action;
-      
+
             if (MSI_GetFeatureStateW(cond->package, $2, &install, &action ) != ERROR_SUCCESS)
             {
                 $$.type = VALUE_LITERAL;
@@ -369,7 +369,7 @@ value:
         {
             COND_input* cond = (COND_input*) info;
             INSTALLSTATE install = INSTALLSTATE_UNKNOWN, action = INSTALLSTATE_UNKNOWN;
-      
+
             if(MSI_GetFeatureStateW(cond->package, $2, &install, &action ) != ERROR_SUCCESS)
             {
                 $$.type = VALUE_LITERAL;
@@ -501,8 +501,8 @@ static INT compare_string( LPCWSTR a, INT operator, LPCWSTR b, BOOL convert )
         return compare_substring( a, operator, b );
 
     /* null and empty string are equivalent */
-    if (!a) a = szEmpty;
-    if (!b) b = szEmpty;
+    if (!a) a = L"";
+    if (!b) b = L"";
 
     if (convert && str_is_number(a) && str_is_number(b))
         return compare_int( wcstol(a, NULL, 10), operator, wcstol(b, NULL, 10) );
@@ -581,7 +581,7 @@ static INT compare_int( INT a, INT operator, INT b )
 
 static int COND_IsIdent( WCHAR x )
 {
-    return( COND_IsAlpha( x ) || COND_IsNumber( x ) || ( x == '_' ) 
+    return( COND_IsAlpha( x ) || COND_IsNumber( x ) || ( x == '_' )
             || ( x == '#' ) || (x == '.') );
 }
 
@@ -591,24 +591,24 @@ static int COND_GetOperator( COND_input *cond )
         const WCHAR str[4];
         int id;
     } table[] = {
-        { {'~','<','=',0}, COND_ILE },
-        { {'~','>','<',0}, COND_ISS },
-        { {'~','>','>',0}, COND_IRHS },
-        { {'~','<','>',0}, COND_INE },
-        { {'~','>','=',0}, COND_IGE },
-        { {'~','<','<',0}, COND_ILHS },
-        { {'~','=',0},     COND_IEQ },
-        { {'~','<',0},     COND_ILT },
-        { {'~','>',0},     COND_IGT },
-        { {'>','=',0},     COND_GE  },
-        { {'>','<',0},     COND_SS  },
-        { {'<','<',0},     COND_LHS },
-        { {'<','>',0},     COND_NE  },
-        { {'<','=',0},     COND_LE  },
-        { {'>','>',0},     COND_RHS },
-        { {'>',0},         COND_GT  },
-        { {'<',0},         COND_LT  },
-        { {0},             0        }
+        { L"~<=", COND_ILE },
+        { L"~><", COND_ISS },
+        { L"~>>", COND_IRHS },
+        { L"~<>", COND_INE },
+        { L"~>=", COND_IGE },
+        { L"~<<", COND_ILHS },
+        { L"~=",  COND_IEQ },
+        { L"~<",  COND_ILT },
+        { L"~>",  COND_IGT },
+        { L">=",  COND_GE },
+        { L"><",  COND_SS },
+        { L"<<",  COND_LHS },
+        { L"<>",  COND_NE },
+        { L"<=",  COND_LE },
+        { L">>",  COND_RHS },
+        { L">",   COND_GT },
+        { L"<",   COND_LT },
+        { L"",    0 }
     };
     LPCWSTR p = &cond->str[cond->n];
     int i = 0, len;
@@ -672,31 +672,24 @@ static int COND_GetOne( struct cond_str *str, COND_input *cond )
     }
     else if( COND_IsAlpha( ch ) )
     {
-        static const WCHAR szNot[] = {'N','O','T',0};
-        static const WCHAR szAnd[] = {'A','N','D',0};
-        static const WCHAR szXor[] = {'X','O','R',0};
-        static const WCHAR szEqv[] = {'E','Q','V',0};
-        static const WCHAR szImp[] = {'I','M','P',0};
-        static const WCHAR szOr[] = {'O','R',0};
-
         while( COND_IsIdent( str->data[len] ) )
             len++;
         rc = COND_IDENT;
 
         if ( len == 3 )
         {
-            if ( !wcsnicmp( str->data, szNot, len ) )
+            if ( !wcsnicmp( str->data, L"NOT", len ) )
                 rc = COND_NOT;
-            else if( !wcsnicmp( str->data, szAnd, len ) )
+            else if( !wcsnicmp( str->data, L"AND", len ) )
                 rc = COND_AND;
-            else if( !wcsnicmp( str->data, szXor, len ) )
+            else if( !wcsnicmp( str->data, L"XOR", len ) )
                 rc = COND_XOR;
-            else if( !wcsnicmp( str->data, szEqv, len ) )
+            else if( !wcsnicmp( str->data, L"EQV", len ) )
                 rc = COND_EQV;
-            else if( !wcsnicmp( str->data, szImp, len ) )
+            else if( !wcsnicmp( str->data, L"IMP", len ) )
                 rc = COND_IMP;
         }
-        else if( (len == 2) && !wcsnicmp( str->data, szOr, len ) )
+        else if( (len == 2) && !wcsnicmp( str->data, L"OR", len ) )
             rc = COND_OR;
     }
     else if( COND_IsNumber( ch ) )
@@ -725,7 +718,7 @@ static int cond_lex( void *COND_lval, COND_input *cond )
     do {
         rc = COND_GetOne( str, cond );
     } while (rc == COND_SPACE);
-    
+
     return rc;
 }
 
