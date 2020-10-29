@@ -376,8 +376,10 @@ static const struct column col_sid[] =
 };
 static const struct column col_sounddevice[] =
 {
+    { L"DeviceID",     CIM_STRING },
     { L"Manufacturer", CIM_STRING },
     { L"Name",         CIM_STRING },
+    { L"PNPDeviceID",  CIM_STRING },
     { L"ProductName",  CIM_STRING },
     { L"Status",       CIM_STRING },
     { L"StatusInfo",   CIM_UINT16 },
@@ -766,8 +768,10 @@ struct record_sid
 };
 struct record_sounddevice
 {
+    const WCHAR *deviceid;
     const WCHAR *manufacturer;
     const WCHAR *name;
+    const WCHAR *pnpdeviceid;
     const WCHAR *productname;
     const WCHAR *status;
     UINT16       statusinfo;
@@ -886,10 +890,7 @@ static const struct record_quickfixengineering data_quickfixengineering[] =
 {
     { L"http://winehq.org", L"KB1234567" },
 };
-static const struct record_sounddevice data_sounddevice[] =
-{
-    { L"The Wine Project", L"Wine Audio Device", L"Wine Audio Device", L"OK", 3 /* enabled */ }
-};
+
 static const struct record_stdregprov data_stdregprov[] =
 {
     { reg_create_key, reg_enum_key, reg_enum_values, reg_get_stringvalue }
@@ -3830,7 +3831,7 @@ static enum fill_status fill_systemenclosure( struct table *table, const struct 
     return status;
 }
 
-static WCHAR *get_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
+static WCHAR *get_videocontroller_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
 {
     static const WCHAR fmtW[] = L"PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\0&DEADBEEF&0&DEAD";
     UINT len = sizeof(fmtW) + 2;
@@ -3846,7 +3847,7 @@ static WCHAR *get_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
 #define HW_VENDOR_VMWARE 0x15ad
 #define HW_VENDOR_INTEL  0x8086
 
-static const WCHAR *get_installeddriver( UINT vendorid )
+static const WCHAR *get_videocontroller_installeddriver( UINT vendorid )
 {
     /* FIXME: wined3d has a better table, but we cannot access this information through dxgi */
 
@@ -3856,12 +3857,32 @@ static const WCHAR *get_installeddriver( UINT vendorid )
     return L"wine.dll";
 }
 
+static BOOL get_dxgi_adapter_desc( DXGI_ADAPTER_DESC *desc )
+{
+    IDXGIFactory *factory;
+    IDXGIAdapter *adapter;
+    HRESULT hr;
+
+    memset( desc, 0, sizeof(*desc) );
+    hr = CreateDXGIFactory( &IID_IDXGIFactory, (void **)&factory );
+    if (FAILED( hr )) return FALSE;
+
+    hr = IDXGIFactory_EnumAdapters( factory, 0, &adapter );
+    if (FAILED( hr ))
+    {
+        IDXGIFactory_Release( factory );
+        return FALSE;
+    }
+
+    hr = IDXGIAdapter_GetDesc( adapter, desc );
+    IDXGIAdapter_Release( adapter );
+    IDXGIFactory_Release( factory );
+    return SUCCEEDED( hr );
+}
+
 static enum fill_status fill_videocontroller( struct table *table, const struct expr *cond )
 {
     struct record_videocontroller *rec;
-    HRESULT hr;
-    IDXGIFactory *factory = NULL;
-    IDXGIAdapter *adapter = NULL;
     DXGI_ADAPTER_DESC desc;
     UINT row = 0, hres = 1024, vres = 768, vidmem = 512 * 1024 * 1024;
     const WCHAR *name = L"VideoController1";
@@ -3870,22 +3891,13 @@ static enum fill_status fill_videocontroller( struct table *table, const struct 
 
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
-    memset (&desc, 0, sizeof(desc));
-    hr = CreateDXGIFactory( &IID_IDXGIFactory, (void **)&factory );
-    if (FAILED(hr)) goto done;
-
-    hr = IDXGIFactory_EnumAdapters( factory, 0, &adapter );
-    if (FAILED(hr)) goto done;
-
-    hr = IDXGIAdapter_GetDesc( adapter, &desc );
-    if (SUCCEEDED(hr))
+    if (get_dxgi_adapter_desc( &desc ))
     {
         if (desc.DedicatedVideoMemory > UINT_MAX) vidmem = 0xfff00000;
         else vidmem = desc.DedicatedVideoMemory;
         name = desc.Description;
     }
 
-done:
     rec = (struct record_videocontroller *)table->data;
     rec->adapter_compatibility = L"(Standard display types)";
     rec->adapter_dactype       = L"Integrated RAMDAC";
@@ -3902,9 +3914,9 @@ done:
     rec->device_id             = L"VideoController1";
     rec->driverdate            = L"20170101000000.000000+000";
     rec->driverversion         = L"1.0";
-    rec->installeddriver       = get_installeddriver( desc.VendorId );
+    rec->installeddriver       = get_videocontroller_installeddriver( desc.VendorId );
     rec->name                  = heap_strdupW( name );
-    rec->pnpdevice_id          = get_pnpdeviceid( &desc );
+    rec->pnpdevice_id          = get_videocontroller_pnpdeviceid( &desc );
     rec->status                = L"OK";
     rec->videoarchitecture     = 2; /* Unknown */
     rec->videomemorytype       = 2; /* Unknown */
@@ -3916,9 +3928,44 @@ done:
 
     TRACE("created %u rows\n", row);
     table->num_rows = row;
+    return status;
+}
 
-    if (adapter) IDXGIAdapter_Release( adapter );
-    if (factory) IDXGIFactory_Release( factory );
+static WCHAR *get_sounddevice_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
+{
+    static const WCHAR fmtW[] = L"HDAUDIO\\FUNC_01&VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%04X\\0&DEADBEEF&0&DEAD";
+    UINT len = sizeof(fmtW) + 2;
+    WCHAR *ret;
+
+    if (!(ret = heap_alloc( len * sizeof(WCHAR) ))) return NULL;
+    swprintf( ret, len, fmtW, desc->VendorId, desc->DeviceId, desc->SubSysId, desc->Revision );
+    return ret;
+}
+
+static enum fill_status fill_sounddevice( struct table *table, const struct expr *cond )
+{
+    struct record_sounddevice *rec;
+    DXGI_ADAPTER_DESC desc;
+    UINT row = 0;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+
+    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
+    get_dxgi_adapter_desc( &desc );
+
+    rec = (struct record_sounddevice *)table->data;
+    rec->deviceid = get_sounddevice_pnpdeviceid( &desc );
+    rec->manufacturer = L"The Wine Project";
+    rec->name = L"Wine Audio Device";
+    rec->pnpdeviceid = get_sounddevice_pnpdeviceid( &desc );
+    rec->productname = L"Wine Audio Device";
+    rec->status = L"OK";
+    rec->statusinfo = 3;
+    if (!match_row( table, row, cond, &status )) free_row_values( table, row );
+    else row++;
+
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
     return status;
 }
 
@@ -3960,7 +4007,7 @@ static struct table builtin_classes[] =
     { L"Win32_QuickFixEngineering", C(col_quickfixengineering), D(data_quickfixengineering) },
     { L"Win32_SID", C(col_sid), 0, 0, NULL, fill_sid },
     { L"Win32_Service", C(col_service), 0, 0, NULL, fill_service },
-    { L"Win32_SoundDevice", C(col_sounddevice), D(data_sounddevice) },
+    { L"Win32_SoundDevice", C(col_sounddevice), 0, 0, NULL, fill_sounddevice },
     { L"Win32_SystemEnclosure", C(col_systemenclosure), 0, 0, NULL, fill_systemenclosure },
     { L"Win32_VideoController", C(col_videocontroller), 0, 0, NULL, fill_videocontroller },
     { L"Win32_WinSAT", C(col_winsat), D(data_winsat) },
