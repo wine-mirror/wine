@@ -7,3 +7,5 @@ C_SRCS = \
 	main.c
 
 IDL_SRCS = dx8vb.idl
+
+RC_SRCS = version.rc
