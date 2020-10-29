@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-10-14 12:00+0300\n"
+"PO-Revision-Date: 2020-10-29 23:45+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -10338,16 +10338,12 @@ msgid "Arabian Daylight Time"
 msgstr "Arabų vasaros laikas"
 
 #: dlls/tzres/tzres.rc:214
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Tocantins Standard Time"
-msgstr "Kalnų juostinis laikas"
+msgstr "Tokantinso juostinis laikas"
 
 #: dlls/tzres/tzres.rc:215
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Tocantins Daylight Time"
-msgstr "Kalnų vasaros laikas"
+msgstr "Tokantinso vasaros laikas"
 
 #: dlls/tzres/tzres.rc:190
 msgid "Russian Standard Time"
