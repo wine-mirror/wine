@@ -440,7 +440,6 @@ BOOL ME_Undo(ME_TextEditor *editor)
 
   table_move_from_row_start( editor );
   add_undo( editor, undo_end_transaction );
-  ME_CheckTablesForCorruption(editor);
   editor->nUndoStackSize--;
   editor->nUndoMode = nMode;
   ME_UpdateRepaint(editor, FALSE);
@@ -477,7 +476,6 @@ BOOL ME_Redo(ME_TextEditor *editor)
   }
   table_move_from_row_start( editor );
   add_undo( editor, undo_end_transaction );
-  ME_CheckTablesForCorruption(editor);
   editor->nUndoMode = nMode;
   ME_UpdateRepaint(editor, FALSE);
   return TRUE;

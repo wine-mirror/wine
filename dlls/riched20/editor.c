@@ -1735,7 +1735,6 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
           if (parser.tableDef) parser.tableDef->row_start = NULL;
         }
       }
-      ME_CheckTablesForCorruption(editor);
       RTFDestroy(&parser);
 
       if (parser.stackTop > 0)
@@ -2515,7 +2514,6 @@ static BOOL handle_enter(ME_TextEditor *editor)
                     editor->pCursors[0].nOffset = 0;
                     editor->pCursors[1] = editor->pCursors[0];
                     ME_CommitUndo(editor);
-                    ME_CheckTablesForCorruption(editor);
                     ME_UpdateRepaint(editor, FALSE);
                     return TRUE;
                 }
@@ -2541,7 +2539,6 @@ static BOOL handle_enter(ME_TextEditor *editor)
                     editor->pCursors[1] = editor->pCursors[0];
                     para->member.para.next_para->member.para.nFlags |= MEPF_ROWSTART;
                     ME_CommitCoalescingUndo(editor);
-                    ME_CheckTablesForCorruption(editor);
                     ME_UpdateRepaint(editor, FALSE);
                     return TRUE;
                 }

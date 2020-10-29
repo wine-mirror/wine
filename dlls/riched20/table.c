@@ -54,8 +54,6 @@
 #include "editor.h"
 #include "rtf.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(richedit_lists);
-
 static const WCHAR cr_lf[] = {'\r', '\n', 0};
 
 static ME_Paragraph* table_insert_end_para( ME_TextEditor *editor, ME_Cursor *cursor,
@@ -212,93 +210,6 @@ ME_Paragraph *cell_end_para( ME_Cell *cell )
     if (!next) return cell_first_para( cell ); /* End of row */
 
     return &ME_FindItemBack( cell_get_di( next ), diParagraph )->member.para;
-}
-
-/* Make a bunch of assertions to make sure tables haven't been corrupted.
- *
- * These invariants may not hold true in the middle of streaming in rich text
- * or during an undo and redo of streaming in rich text. It should be safe to
- * call this method after an event is processed.
- */
-void ME_CheckTablesForCorruption(ME_TextEditor *editor)
-{
-  if(TRACE_ON(richedit_lists))
-  {
-    TRACE("---\n");
-    ME_DumpDocument(editor->pBuffer);
-  }
-#ifndef NDEBUG
-  {
-    ME_DisplayItem *p, *pPrev;
-    pPrev = editor->pBuffer->pFirst;
-    p = pPrev->next;
-    if (!editor->bEmulateVersion10) /* v4.1 */
-    {
-      while (p->type == diParagraph)
-      {
-        assert(p->member.para.fmt.dwMask & PFM_TABLE);
-        assert(p->member.para.fmt.dwMask & PFM_TABLEROWDELIMITER);
-        if (p->member.para.pCell)
-        {
-          assert(p->member.para.nFlags & MEPF_CELL);
-          assert(p->member.para.fmt.wEffects & PFE_TABLE);
-        }
-        if (p->member.para.pCell != pPrev->member.para.pCell)
-        {
-          /* There must be a diCell in between the paragraphs if pCell changes. */
-          ME_DisplayItem *pCell = ME_FindItemBack(p, diCell);
-          assert(pCell);
-          assert(ME_FindItemBack(p, diRun) == ME_FindItemBack(pCell, diRun));
-        }
-        if (p->member.para.nFlags & MEPF_ROWEND)
-        {
-          /* ROWEND must come after a cell. */
-          assert(pPrev->member.para.pCell);
-          assert(p->member.para.pCell
-                 == pPrev->member.para.pCell->member.cell.parent_cell);
-          assert(p->member.para.fmt.wEffects & PFE_TABLEROWDELIMITER);
-        }
-        else if (p->member.para.pCell)
-        {
-          assert(!(p->member.para.fmt.wEffects & PFE_TABLEROWDELIMITER));
-          assert(pPrev->member.para.pCell ||
-                 pPrev->member.para.nFlags & MEPF_ROWSTART);
-          if (pPrev->member.para.pCell &&
-              !(pPrev->member.para.nFlags & MEPF_ROWSTART))
-          {
-            assert(p->member.para.pCell->member.cell.parent_cell
-                   == pPrev->member.para.pCell->member.cell.parent_cell);
-            if (pPrev->member.para.pCell != p->member.para.pCell)
-              assert(pPrev->member.para.pCell
-                     == p->member.para.pCell->member.cell.prev_cell);
-          }
-        }
-        else if (!(p->member.para.nFlags & MEPF_ROWSTART))
-        {
-          assert(!(p->member.para.fmt.wEffects & PFE_TABLEROWDELIMITER));
-          /* ROWSTART must be followed by a cell. */
-          assert(!(p->member.para.nFlags & MEPF_CELL));
-          /* ROWSTART must be followed by a cell. */
-          assert(!(pPrev->member.para.nFlags & MEPF_ROWSTART));
-        }
-        pPrev = p;
-        p = p->member.para.next_para;
-      }
-    } else { /* v1.0 - 3.0 */
-      while (p->type == diParagraph)
-      {
-        assert(!(p->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND|MEPF_CELL)));
-        assert(p->member.para.fmt.dwMask & PFM_TABLE);
-        assert(!(p->member.para.fmt.wEffects & PFE_TABLEROWDELIMITER));
-        assert(!p->member.para.pCell);
-        p = p->member.para.next_para;
-      }
-      return;
-    }
-    assert(p->type == diTextEnd);
-    assert(!pPrev->member.para.pCell);
-  }
-#endif
 }
 
 BOOL ME_IsInTable(ME_DisplayItem *pItem)

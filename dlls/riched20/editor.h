@@ -309,7 +309,6 @@ ME_Paragraph *table_row_end( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Cell *table_row_end_cell( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Cell *table_row_first_cell( ME_Paragraph *para ) DECLSPEC_HIDDEN;
 ME_Paragraph *table_row_start( ME_Paragraph *para ) DECLSPEC_HIDDEN;
-void ME_CheckTablesForCorruption(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 struct RTFTable *ME_MakeTableDef(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_InitTableDef(ME_TextEditor *editor, struct RTFTable *tableDef) DECLSPEC_HIDDEN;
 static inline ME_DisplayItem *cell_get_di(ME_Cell *cell)
