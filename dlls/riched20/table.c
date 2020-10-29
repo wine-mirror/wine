@@ -429,16 +429,14 @@ ME_Paragraph* table_append_row( ME_TextEditor *editor, ME_Paragraph *table_row )
 {
   WCHAR endl = '\r', tab = '\t';
   ME_Run *run;
-  PARAFORMAT2 *pFmt;
   int i;
 
-  assert(table_row);
   if (!editor->bEmulateVersion10) /* v4.1 */
   {
-    ME_DisplayItem *insertedCell, *cell;
-    ME_Paragraph *para, *prev_table_end;
+    ME_Cell *new_cell, *cell;
+    ME_Paragraph *para, *prev_table_end, *new_row_start;
 
-    cell = ME_FindItemFwd( para_get_di( table_row_start( table_row ) ), diCell );
+    cell = table_row_first_cell( table_row );
     prev_table_end = table_row_end( table_row );
     para = para_next( prev_table_end );
     run = para_first_run( para );
@@ -446,38 +444,37 @@ ME_Paragraph* table_append_row( ME_TextEditor *editor, ME_Paragraph *table_row )
     editor->pCursors[0].pRun = run_get_di( run );
     editor->pCursors[0].nOffset = 0;
     editor->pCursors[1] = editor->pCursors[0];
-    para = table_insert_row_start( editor, editor->pCursors );
-    insertedCell = ME_FindItemFwd( para_get_di( para ), diCell );
+    new_row_start = table_insert_row_start( editor, editor->pCursors );
+    new_cell = table_row_first_cell( new_row_start );
     /* Copy cell properties */
-    insertedCell->member.cell.nRightBoundary = cell->member.cell.nRightBoundary;
-    insertedCell->member.cell.border = cell->member.cell.border;
-    while (cell->member.cell.next_cell)
+    new_cell->nRightBoundary = cell->nRightBoundary;
+    new_cell->border = cell->border;
+    while (cell_next( cell ))
     {
-      cell = cell->member.cell.next_cell;
+      cell = cell_next( cell );
       para = table_insert_cell( editor, editor->pCursors );
-      insertedCell = ME_FindItemBack( para_get_di( para ), diCell );
+      new_cell = para_cell( para );
       /* Copy cell properties */
-      insertedCell->member.cell.nRightBoundary = cell->member.cell.nRightBoundary;
-      insertedCell->member.cell.border = cell->member.cell.border;
+      new_cell->nRightBoundary = cell->nRightBoundary;
+      new_cell->border = cell->border;
     };
     para = table_insert_row_end( editor, editor->pCursors );
     para->fmt = prev_table_end->fmt;
     /* return the table row start for the inserted paragraph */
-    return para_next( &ME_FindItemFwd( cell, diParagraph )->member.para );
+    return new_row_start;
   }
   else /* v1.0 - 3.0 */
   {
     run = para_end_run( table_row );
-    pFmt = &table_row->fmt;
-    assert(pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE);
+    assert( para_in_table( table_row ) );
     editor->pCursors[0].pPara = para_get_di( table_row );
     editor->pCursors[0].pRun = run_get_di( run );
     editor->pCursors[0].nOffset = 0;
     editor->pCursors[1] = editor->pCursors[0];
     ME_InsertTextFromCursor( editor, 0, &endl, 1, run->style );
     run = &editor->pCursors[0].pRun->member.run;
-    for (i = 0; i < pFmt->cTabCount; i++)
-      ME_InsertTextFromCursor(editor, 0, &tab, 1, run->style);
+    for (i = 0; i < table_row->fmt.cTabCount; i++)
+      ME_InsertTextFromCursor( editor, 0, &tab, 1, run->style );
 
     return para_next( table_row );
   }
