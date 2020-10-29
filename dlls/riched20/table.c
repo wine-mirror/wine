@@ -315,123 +315,113 @@ BOOL ME_IsInTable(ME_DisplayItem *pItem)
 }
 
 /* Table rows should either be deleted completely or not at all. */
-void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, ME_Cursor *c, int *nChars)
+void table_protect_partial_deletion( ME_TextEditor *editor, ME_Cursor *c, int *num_chars )
 {
-  int nOfs = ME_GetCursorOfs(c);
+  int start_ofs = ME_GetCursorOfs( c );
   ME_Cursor c2 = *c;
-  ME_DisplayItem *this_para = c->pPara;
-  ME_DisplayItem *end_para;
+  ME_Paragraph *this_para = &c->pPara->member.para, *end_para;
 
-  ME_MoveCursorChars(editor, &c2, *nChars, FALSE);
-  end_para = c2.pPara;
-  if (c2.pRun->member.run.nFlags & MERF_ENDPARA) {
+  ME_MoveCursorChars( editor, &c2, *num_chars, FALSE );
+  end_para = &c2.pPara->member.para;
+  if (c2.pRun->member.run.nFlags & MERF_ENDPARA)
+  {
     /* End offset might be in the middle of the end paragraph run.
      * If this is the case, then we need to use the next paragraph as the last
      * paragraphs.
      */
-    int remaining = nOfs + *nChars - c2.pRun->member.run.nCharOfs
-                    - end_para->member.para.nCharOfs;
+    int remaining = start_ofs + *num_chars - c2.pRun->member.run.nCharOfs - end_para->nCharOfs;
     if (remaining)
     {
-      assert(remaining < c2.pRun->member.run.len);
-      end_para = end_para->member.para.next_para;
+      assert( remaining < c2.pRun->member.run.len );
+      end_para = para_next( end_para );
     }
   }
-  if (!editor->bEmulateVersion10) { /* v4.1 */
-    if (this_para->member.para.pCell != end_para->member.para.pCell ||
-        ((this_para->member.para.nFlags|end_para->member.para.nFlags)
-         & (MEPF_ROWSTART|MEPF_ROWEND)))
+  if (!editor->bEmulateVersion10) /* v4.1 */
+  {
+    if (para_cell( this_para ) != para_cell( end_para ) ||
+        ((this_para->nFlags | end_para->nFlags) & (MEPF_ROWSTART | MEPF_ROWEND)))
     {
       while (this_para != end_para)
       {
-        ME_DisplayItem *next_para = this_para->member.para.next_para;
-        BOOL bTruancateDeletion = FALSE;
-        if (this_para->member.para.nFlags & MEPF_ROWSTART) {
+        ME_Paragraph *next_para = para_next( this_para );
+        BOOL truancate_del = FALSE;
+        if (this_para->nFlags & MEPF_ROWSTART)
+        {
           /* The following while loop assumes that next_para is MEPF_ROWSTART,
-           * so moving back one paragraph let's it be processed as the start
+           * so moving back one paragraph lets it be processed as the start
            * of the row. */
           next_para = this_para;
-          this_para = this_para->member.para.prev_para;
-        } else if (next_para->member.para.pCell != this_para->member.para.pCell
-                   || this_para->member.para.nFlags & MEPF_ROWEND)
+          this_para = para_prev( this_para );
+        }
+        else if (para_cell( next_para) != para_cell( this_para ) || this_para->nFlags & MEPF_ROWEND)
         {
           /* Start of the deletion from after the start of the table row. */
-          bTruancateDeletion = TRUE;
+          truancate_del = TRUE;
         }
-        while (!bTruancateDeletion &&
-               next_para->member.para.nFlags & MEPF_ROWSTART)
+        while (!truancate_del && next_para->nFlags & MEPF_ROWSTART)
         {
-          next_para = table_row_end( &next_para->member.para )->next_para;
-          if (next_para->member.para.nCharOfs > nOfs + *nChars)
+          next_para = para_next( table_row_end( next_para ) );
+          if (next_para->nCharOfs > start_ofs + *num_chars)
           {
             /* End of deletion is not past the end of the table row. */
-            next_para = this_para->member.para.next_para;
+            next_para = para_next( this_para );
             /* Delete the end paragraph preceding the table row if the
              * preceding table row will be empty. */
-            if (this_para->member.para.nCharOfs >= nOfs)
-            {
-              next_para = next_para->member.para.next_para;
-            }
-            bTruancateDeletion = TRUE;
-          } else {
-            this_para = next_para->member.para.prev_para;
+            if (this_para->nCharOfs >= start_ofs) next_para = para_next( next_para );
+            truancate_del = TRUE;
           }
+          else this_para = para_prev( next_para );
         }
-        if (bTruancateDeletion)
+        if (truancate_del)
         {
-          ME_Run *end_run = &ME_FindItemBack(next_para, diRun)->member.run;
-          int nCharsNew = (next_para->member.para.nCharOfs - nOfs
-                           - end_run->len);
-          nCharsNew = max(nCharsNew, 0);
-          assert(nCharsNew <= *nChars);
-          *nChars = nCharsNew;
+          ME_Run *end_run = para_end_run( para_prev( next_para ) );
+          int new_chars = next_para->nCharOfs - start_ofs - end_run->len;
+          new_chars = max( new_chars, 0 );
+          assert( new_chars <= *num_chars);
+          *num_chars = new_chars;
           break;
         }
         this_para = next_para;
       }
     }
-  } else { /* v1.0 - 3.0 */
-    ME_DisplayItem *pRun;
-    int nCharsToBoundary;
+  }
+  else /* v1.0 - 3.0 */
+  {
+    ME_Run *run;
+    int chars_to_boundary;
 
-    if ((this_para->member.para.nCharOfs != nOfs || this_para == end_para) &&
-        this_para->member.para.fmt.dwMask & PFM_TABLE &&
-        this_para->member.para.fmt.wEffects & PFE_TABLE)
+    if ((this_para->nCharOfs != start_ofs || this_para == end_para) && para_in_table( this_para ))
     {
-      pRun = c->pRun;
+      run = &c->pRun->member.run;
       /* Find the next tab or end paragraph to use as a delete boundary */
-      while (!(pRun->member.run.nFlags & (MERF_TAB|MERF_ENDPARA)))
-        pRun = ME_FindItemFwd(pRun, diRun);
-      nCharsToBoundary = pRun->member.run.nCharOfs
-                         - c->pRun->member.run.nCharOfs
-                         - c->nOffset;
-      *nChars = min(*nChars, nCharsToBoundary);
-    } else if (end_para->member.para.fmt.dwMask & PFM_TABLE &&
-               end_para->member.para.fmt.wEffects & PFE_TABLE)
+      while (!(run->nFlags & (MERF_TAB | MERF_ENDPARA)))
+        run = run_next( run );
+      chars_to_boundary = run->nCharOfs - c->pRun->member.run.nCharOfs - c->nOffset;
+      *num_chars = min( *num_chars, chars_to_boundary );
+    }
+    else if (para_in_table( end_para ))
     {
       /* The deletion starts from before the row, so don't join it with
        * previous non-empty paragraphs. */
-      ME_DisplayItem *curPara;
-      pRun = NULL;
-      if (nOfs > this_para->member.para.nCharOfs) {
-        pRun = ME_FindItemBack(end_para, diRun);
-        curPara = end_para->member.para.prev_para;
-      }
-      if (!pRun) {
-        pRun = ME_FindItemFwd(end_para, diRun);
-        curPara = end_para;
-      }
-      if (pRun)
+      ME_Paragraph *cur_para;
+      run = NULL;
+      if (start_ofs > this_para->nCharOfs)
       {
-        nCharsToBoundary = curPara->member.para.nCharOfs
-                           + pRun->member.run.nCharOfs
-                           - nOfs;
-        if (nCharsToBoundary >= 0)
-          *nChars = min(*nChars, nCharsToBoundary);
+          cur_para = para_prev( end_para );
+          run = para_end_run( cur_para );
+      }
+      if (!run)
+      {
+        cur_para = end_para;
+        run = para_first_run( end_para );
+      }
+      if (run)
+      {
+        chars_to_boundary = cur_para->nCharOfs + run->nCharOfs - start_ofs;
+        if (chars_to_boundary >= 0) *num_chars = min( *num_chars, chars_to_boundary );
       }
     }
-    if (*nChars < 0)
-      *nChars = 0;
+    if (*num_chars < 0) *num_chars = 0;
   }
 }
 

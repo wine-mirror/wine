@@ -306,12 +306,11 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
 
   if (!bForce)
   {
-    ME_ProtectPartialTableDeletion(editor, &c, &nChars);
-    if (nChars == 0)
-      return FALSE;
+    table_protect_partial_deletion( editor, &c, &nChars );
+    if (nChars == 0) return FALSE;
   }
 
-  while(nChars > 0)
+  while (nChars > 0)
   {
     ME_Run *run;
     cursor_from_char_ofs( editor, nOfs + nChars, &c );
