@@ -1983,6 +1983,30 @@ void WINAPI wine_vkDebugReportMessageEXT(VkInstance instance, VkDebugReportFlags
         instance->instance, flags, object_type, object, location, code, layer_prefix, message);
 }
 
+VkResult WINAPI wine_vkDebugMarkerSetObjectTagEXT(VkDevice device, const VkDebugMarkerObjectTagInfoEXT *tag_info)
+{
+    VkDebugMarkerObjectTagInfoEXT wine_tag_info;
+
+    TRACE("%p, %p\n", device, tag_info);
+
+    wine_tag_info = *tag_info;
+    wine_tag_info.object = wine_vk_unwrap_handle(tag_info->objectType, tag_info->object);
+
+    return thunk_vkDebugMarkerSetObjectTagEXT(device, &wine_tag_info);
+}
+
+VkResult WINAPI wine_vkDebugMarkerSetObjectNameEXT(VkDevice device, const VkDebugMarkerObjectNameInfoEXT *name_info)
+{
+    VkDebugMarkerObjectNameInfoEXT wine_name_info;
+
+    TRACE("%p, %p\n", device, name_info);
+
+    wine_name_info = *name_info;
+    wine_name_info.object = wine_vk_unwrap_handle(name_info->objectType, name_info->object);
+
+    return thunk_vkDebugMarkerSetObjectNameEXT(device, &wine_name_info);
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
 {
     TRACE("%p, %u, %p\n", hinst, reason, reserved);

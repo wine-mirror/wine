@@ -1044,6 +1044,30 @@ static inline void convert_VkSwapchainCreateInfoKHR_win_to_host(const VkSwapchai
     out->oldSwapchain = in->oldSwapchain;
 }
 
+static inline void convert_VkDebugMarkerObjectNameInfoEXT_win_to_host(const VkDebugMarkerObjectNameInfoEXT *in, VkDebugMarkerObjectNameInfoEXT_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->objectType = in->objectType;
+    out->object = in->object;
+    out->pObjectName = in->pObjectName;
+}
+
+static inline void convert_VkDebugMarkerObjectTagInfoEXT_win_to_host(const VkDebugMarkerObjectTagInfoEXT *in, VkDebugMarkerObjectTagInfoEXT_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->objectType = in->objectType;
+    out->object = in->object;
+    out->tagName = in->tagName;
+    out->tagSize = in->tagSize;
+    out->pTag = in->pTag;
+}
+
 static inline VkMappedMemoryRange_host *convert_VkMappedMemoryRange_array_win_to_host(const VkMappedMemoryRange *in, uint32_t count)
 {
     VkMappedMemoryRange_host *out;
@@ -3706,6 +3730,24 @@ void WINAPI wine_vkCmdCopyQueryPoolResults(VkCommandBuffer commandBuffer, VkQuer
     commandBuffer->device->funcs.p_vkCmdCopyQueryPoolResults(commandBuffer->command_buffer, queryPool, firstQuery, queryCount, dstBuffer, dstOffset, stride, flags);
 }
 
+static void WINAPI wine_vkCmdDebugMarkerBeginEXT(VkCommandBuffer commandBuffer, const VkDebugMarkerMarkerInfoEXT *pMarkerInfo)
+{
+    TRACE("%p, %p\n", commandBuffer, pMarkerInfo);
+    commandBuffer->device->funcs.p_vkCmdDebugMarkerBeginEXT(commandBuffer->command_buffer, pMarkerInfo);
+}
+
+static void WINAPI wine_vkCmdDebugMarkerEndEXT(VkCommandBuffer commandBuffer)
+{
+    TRACE("%p\n", commandBuffer);
+    commandBuffer->device->funcs.p_vkCmdDebugMarkerEndEXT(commandBuffer->command_buffer);
+}
+
+static void WINAPI wine_vkCmdDebugMarkerInsertEXT(VkCommandBuffer commandBuffer, const VkDebugMarkerMarkerInfoEXT *pMarkerInfo)
+{
+    TRACE("%p, %p\n", commandBuffer, pMarkerInfo);
+    commandBuffer->device->funcs.p_vkCmdDebugMarkerInsertEXT(commandBuffer->command_buffer, pMarkerInfo);
+}
+
 void WINAPI wine_vkCmdDispatch(VkCommandBuffer commandBuffer, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)
 {
     TRACE("%p, %u, %u, %u\n", commandBuffer, groupCountX, groupCountY, groupCountZ);
@@ -4617,6 +4659,34 @@ VkResult WINAPI wine_vkCreateWin32SurfaceKHR(VkInstance instance, const VkWin32S
 {
     TRACE("%p, %p, %p, %p\n", instance, pCreateInfo, pAllocator, pSurface);
     return instance->funcs.p_vkCreateWin32SurfaceKHR(instance->instance, pCreateInfo, NULL, pSurface);
+}
+
+VkResult thunk_vkDebugMarkerSetObjectNameEXT(VkDevice device, const VkDebugMarkerObjectNameInfoEXT *pNameInfo)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult result;
+    VkDebugMarkerObjectNameInfoEXT_host pNameInfo_host;
+    convert_VkDebugMarkerObjectNameInfoEXT_win_to_host(pNameInfo, &pNameInfo_host);
+    result = device->funcs.p_vkDebugMarkerSetObjectNameEXT(device->device, &pNameInfo_host);
+
+    return result;
+#else
+    return device->funcs.p_vkDebugMarkerSetObjectNameEXT(device->device, pNameInfo);
+#endif
+}
+
+VkResult thunk_vkDebugMarkerSetObjectTagEXT(VkDevice device, const VkDebugMarkerObjectTagInfoEXT *pTagInfo)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult result;
+    VkDebugMarkerObjectTagInfoEXT_host pTagInfo_host;
+    convert_VkDebugMarkerObjectTagInfoEXT_win_to_host(pTagInfo, &pTagInfo_host);
+    result = device->funcs.p_vkDebugMarkerSetObjectTagEXT(device->device, &pTagInfo_host);
+
+    return result;
+#else
+    return device->funcs.p_vkDebugMarkerSetObjectTagEXT(device->device, pTagInfo);
+#endif
 }
 
 static void WINAPI wine_vkDestroyAccelerationStructureNV(VkDevice device, VkAccelerationStructureKHR accelerationStructure, const VkAllocationCallbacks *pAllocator)
@@ -5988,6 +6058,9 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdCopyImageToBuffer", &wine_vkCmdCopyImageToBuffer},
     {"vkCmdCopyImageToBuffer2KHR", &wine_vkCmdCopyImageToBuffer2KHR},
     {"vkCmdCopyQueryPoolResults", &wine_vkCmdCopyQueryPoolResults},
+    {"vkCmdDebugMarkerBeginEXT", &wine_vkCmdDebugMarkerBeginEXT},
+    {"vkCmdDebugMarkerEndEXT", &wine_vkCmdDebugMarkerEndEXT},
+    {"vkCmdDebugMarkerInsertEXT", &wine_vkCmdDebugMarkerInsertEXT},
     {"vkCmdDispatch", &wine_vkCmdDispatch},
     {"vkCmdDispatchBase", &wine_vkCmdDispatchBase},
     {"vkCmdDispatchBaseKHR", &wine_vkCmdDispatchBaseKHR},
@@ -6103,6 +6176,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCreateShaderModule", &wine_vkCreateShaderModule},
     {"vkCreateSwapchainKHR", &wine_vkCreateSwapchainKHR},
     {"vkCreateValidationCacheEXT", &wine_vkCreateValidationCacheEXT},
+    {"vkDebugMarkerSetObjectNameEXT", &wine_vkDebugMarkerSetObjectNameEXT},
+    {"vkDebugMarkerSetObjectTagEXT", &wine_vkDebugMarkerSetObjectTagEXT},
     {"vkDestroyAccelerationStructureNV", &wine_vkDestroyAccelerationStructureNV},
     {"vkDestroyBuffer", &wine_vkDestroyBuffer},
     {"vkDestroyBufferView", &wine_vkDestroyBufferView},
@@ -6347,6 +6422,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_conditional_rendering",
     "VK_EXT_conservative_rasterization",
     "VK_EXT_custom_border_color",
+    "VK_EXT_debug_marker",
     "VK_EXT_depth_clip_enable",
     "VK_EXT_depth_range_unrestricted",
     "VK_EXT_descriptor_indexing",
