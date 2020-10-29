@@ -472,6 +472,17 @@ static HRESULT WINAPI multimedia_stream_OpenFile(IAMMultiMediaStream *iface,
         }
     }
 
+    if (SUCCEEDED(ret) && (flags & AMMSF_NOCLOCK))
+    {
+        IMediaFilter *media_filter;
+
+        if (SUCCEEDED(ret = IGraphBuilder_QueryInterface(This->graph, &IID_IMediaFilter, (void **)&media_filter)))
+        {
+            ret = IMediaFilter_SetSyncSource(media_filter, NULL);
+            IMediaFilter_Release(media_filter);
+        }
+    }
+
     IMediaStreamFilter_SupportSeeking(This->filter, This->type == STREAMTYPE_READ);
 
     if (SUCCEEDED(ret) && (flags & AMMSF_RUN))
