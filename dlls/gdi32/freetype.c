@@ -281,21 +281,21 @@ typedef struct tagFamily {
     struct list *replacement;
 } Family;
 
-typedef struct tagGdiFont GdiFont;
-
 typedef struct {
     struct list entry;
     Face *face;
-    GdiFont *font;
 } CHILD_FONT;
 
-struct tagGdiFont {
-    struct gdi_font *gdi_font;
+struct font_private_data
+{
     FT_Face ft_face;
     struct font_mapping *mapping;
 };
 
-static inline GdiFont *get_font_ptr( struct gdi_font *font ) { return font->private; }
+static inline FT_Face get_ft_face( struct gdi_font *font )
+{
+    return ((struct font_private_data *)font->private)->ft_face;
+}
 
 typedef struct {
     struct list entry;
@@ -2274,7 +2274,6 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
 
             child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
             child_font->face = face;
-            child_font->font = NULL;
             font_link->fs.fsCsb[0] |= face->fs.fsCsb[0];
             font_link->fs.fsCsb[1] |= face->fs.fsCsb[1];
             TRACE("Adding file %s index %ld\n", debugstr_w(child_font->face->file),
@@ -2355,7 +2354,6 @@ static void init_system_links(void)
 
                 child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
                 child_font->face = face;
-                child_font->font = NULL;
                 font_link->fs.fsCsb[0] |= face->fs.fsCsb[0];
                 font_link->fs.fsCsb[1] |= face->fs.fsCsb[1];
                 TRACE("Adding file %s index %ld\n",
@@ -2414,7 +2412,6 @@ skip_internal:
     {
         child_font = HeapAlloc(GetProcessHeap(), 0, sizeof(*child_font));
         child_font->face = face;
-        child_font->font = NULL;
         system_font_link->fs.fsCsb[0] |= face->fs.fsCsb[0];
         system_font_link->fs.fsCsb[1] |= face->fs.fsCsb[1];
         TRACE("Found Tahoma in %s index %ld\n",
@@ -2430,7 +2427,6 @@ skip_internal:
             CHILD_FONT *new_child;
             new_child = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_child));
             new_child->face = font_link_entry->face;
-            new_child->font = NULL;
             new_child->face->refcount++;
             system_font_link->fs.fsCsb[0] |= font_link_entry->face->fs.fsCsb[0];
             system_font_link->fs.fsCsb[1] |= font_link_entry->face->fs.fsCsb[1];
@@ -3222,7 +3218,7 @@ static void unmap_font_file( struct font_mapping *mapping )
     }
 }
 
-static LONG load_VDMX(GdiFont*, LONG);
+static LONG load_VDMX(struct gdi_font *font, LONG height);
 
 static UINT get_nearest_charset(const WCHAR *family_name, Face *face, UINT *cp)
 {
@@ -3269,13 +3265,13 @@ static UINT get_nearest_charset(const WCHAR *family_name, Face *face, UINT *cp)
 /*************************************************************
  * freetype_destroy_font
  */
-static void CDECL freetype_destroy_font( struct gdi_font *gdi_font )
+static void CDECL freetype_destroy_font( struct gdi_font *font )
 {
-    GdiFont *font = get_font_ptr( gdi_font );
+    struct font_private_data *data = font->private;
 
-    if (font->ft_face) pFT_Done_Face(font->ft_face);
-    if (font->mapping) unmap_font_file( font->mapping );
-    HeapFree(GetProcessHeap(), 0, font);
+    if (data->ft_face) pFT_Done_Face( data->ft_face );
+    if (data->mapping) unmap_font_file( data->mapping );
+    HeapFree( GetProcessHeap(), 0, data );
 }
 
 /*************************************************************
@@ -3284,7 +3280,7 @@ static void CDECL freetype_destroy_font( struct gdi_font *gdi_font )
 static DWORD CDECL freetype_get_font_data( struct gdi_font *font, DWORD table, DWORD offset,
                                            void *buf, DWORD cbData)
 {
-    FT_Face ft_face = get_font_ptr(font)->ft_face;
+    FT_Face ft_face = get_ft_face( font );
     FT_ULong len;
     FT_Error err;
 
@@ -3354,9 +3350,8 @@ typedef struct {
     WORD yMin;
 } VDMX_vTable;
 
-static LONG load_VDMX(GdiFont *font, LONG height)
+static LONG load_VDMX(struct gdi_font *font, LONG height)
 {
-    struct gdi_font *gdi_font = font->gdi_font;
     VDMX_Header hdr;
     VDMX_group group;
     BYTE devXRatio, devYRatio;
@@ -3365,7 +3360,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
     LONG ppem = 0;
     int i;
 
-    result = freetype_get_font_data(gdi_font, MS_VDMX_TAG, 0, &hdr, sizeof(hdr));
+    result = freetype_get_font_data(font, MS_VDMX_TAG, 0, &hdr, sizeof(hdr));
 
     if(result == GDI_ERROR) /* no vdmx table present, use linear scaling */
 	return ppem;
@@ -3382,7 +3377,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 	Ratios ratio;
 
 	offset = sizeof(hdr) + (i * sizeof(Ratios));
-	freetype_get_font_data(gdi_font, MS_VDMX_TAG, offset, &ratio, sizeof(Ratios));
+	freetype_get_font_data(font, MS_VDMX_TAG, offset, &ratio, sizeof(Ratios));
 	offset = -1;
 
 	TRACE("Ratios[%d] %d  %d : %d -> %d\n", i, ratio.bCharSet, ratio.xRatio, ratio.yStartRatio, ratio.yEndRatio);
@@ -3399,7 +3394,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 		WORD group_offset;
 
 		offset = sizeof(hdr) + numRatios * sizeof(ratio) + i * sizeof(group_offset);
-		freetype_get_font_data(gdi_font, MS_VDMX_TAG, offset, &group_offset, sizeof(group_offset));
+		freetype_get_font_data(font, MS_VDMX_TAG, offset, &group_offset, sizeof(group_offset));
 		offset = GET_BE_WORD(group_offset);
 		break;
 	    }
@@ -3407,7 +3402,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 
     if(offset == -1) return 0;
 
-    if(freetype_get_font_data(gdi_font, MS_VDMX_TAG, offset, &group, sizeof(group)) != GDI_ERROR) {
+    if(freetype_get_font_data(font, MS_VDMX_TAG, offset, &group, sizeof(group)) != GDI_ERROR) {
 	USHORT recs;
 	BYTE startsz, endsz;
 	WORD *vTable;
@@ -3419,7 +3414,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 	TRACE("recs=%d  startsz=%d  endsz=%d\n", recs, startsz, endsz);
 
 	vTable = HeapAlloc(GetProcessHeap(), 0, recs * sizeof(VDMX_vTable));
-	result = freetype_get_font_data(gdi_font, MS_VDMX_TAG, offset + sizeof(group), vTable, recs * sizeof(VDMX_vTable));
+	result = freetype_get_font_data(font, MS_VDMX_TAG, offset + sizeof(group), vTable, recs * sizeof(VDMX_vTable));
 	if(result == GDI_ERROR) {
 	    FIXME("Failed to retrieve vTable\n");
 	    goto end;
@@ -3432,9 +3427,9 @@ static LONG load_VDMX(GdiFont *font, LONG height)
                 ppem = GET_BE_WORD(vTable[i * 3]);
 
 		if(yMax + -yMin == height) {
-		    gdi_font->yMax = yMax;
-		    gdi_font->yMin = yMin;
-                    TRACE("ppem %d found; height=%d  yMax=%d  yMin=%d\n", ppem, height, gdi_font->yMax, gdi_font->yMin);
+		    font->yMax = yMax;
+		    font->yMin = yMin;
+                    TRACE("ppem %d found; height=%d  yMax=%d  yMin=%d\n", ppem, height, font->yMax, font->yMin);
 		    break;
 		}
 		if(yMax + -yMin > height) {
@@ -3442,14 +3437,14 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 			ppem = 0;
 			goto end; /* failed */
 		    }
-		    gdi_font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
-		    gdi_font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
+		    font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
+		    font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
                     ppem = GET_BE_WORD(vTable[i * 3]);
-                    TRACE("ppem %d found; height=%d  yMax=%d  yMin=%d\n", ppem, height, gdi_font->yMax, gdi_font->yMin);
+                    TRACE("ppem %d found; height=%d  yMax=%d  yMin=%d\n", ppem, height, font->yMax, font->yMin);
 		    break;
 		}
 	    }
-	    if(!gdi_font->yMax) {
+	    if(!font->yMax) {
 		ppem = 0;
 		TRACE("ppem not found for height %d\n", height);
 	    }
@@ -3472,9 +3467,9 @@ static LONG load_VDMX(GdiFont *font, LONG height)
                 }
 
 		if(yPelHeight == ppem) {
-		    gdi_font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
-		    gdi_font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
-                    TRACE("ppem %d found; yMax=%d  yMin=%d\n", ppem, gdi_font->yMax, gdi_font->yMin);
+		    font->yMax = GET_BE_WORD(vTable[(i * 3) + 1]);
+		    font->yMin = GET_BE_WORD(vTable[(i * 3) + 2]);
+                    TRACE("ppem %d found; yMax=%d  yMin=%d\n", ppem, font->yMax, font->yMin);
 		    break;
 		}
 	    }
@@ -3639,9 +3634,9 @@ static FT_Encoding pick_charmap( FT_Face face, int charset )
     return *encs;
 }
 
-static BOOL get_gasp_flags( struct gdi_font *gdi_font, WORD *flags )
+static BOOL get_gasp_flags( struct gdi_font *font, WORD *flags )
 {
-    GdiFont *font = get_font_ptr( gdi_font );
+    FT_Face ft_face = get_ft_face( font );
     DWORD size;
     WORD buf[16]; /* Enough for seven ranges before we need to alloc */
     WORD *alloced = NULL, *ptr = buf;
@@ -3649,7 +3644,7 @@ static BOOL get_gasp_flags( struct gdi_font *gdi_font, WORD *flags )
     BOOL ret = FALSE;
 
     *flags = 0;
-    size = freetype_get_font_data( gdi_font, MS_GASP_TAG,  0, NULL, 0 );
+    size = freetype_get_font_data( font, MS_GASP_TAG,  0, NULL, 0 );
     if (size == GDI_ERROR) return FALSE;
     if (size < 4 * sizeof(WORD)) return FALSE;
     if (size > sizeof(buf))
@@ -3658,7 +3653,7 @@ static BOOL get_gasp_flags( struct gdi_font *gdi_font, WORD *flags )
         if (!ptr) return FALSE;
     }
 
-    freetype_get_font_data( gdi_font, MS_GASP_TAG, 0, ptr, size );
+    freetype_get_font_data( font, MS_GASP_TAG, 0, ptr, size );
 
     version  = GET_BE_WORD( *ptr++ );
     num_recs = GET_BE_WORD( *ptr++ );
@@ -3672,10 +3667,10 @@ static BOOL get_gasp_flags( struct gdi_font *gdi_font, WORD *flags )
     while (num_recs--)
     {
         *flags = GET_BE_WORD( *(ptr + 1) );
-        if (font->ft_face->size->metrics.y_ppem <= GET_BE_WORD( *ptr )) break;
+        if (ft_face->size->metrics.y_ppem <= GET_BE_WORD( *ptr )) break;
         ptr += 2;
     }
-    TRACE( "got flags %04x for ppem %d\n", *flags, font->ft_face->size->metrics.y_ppem );
+    TRACE( "got flags %04x for ppem %d\n", *flags, ft_face->size->metrics.y_ppem );
     ret = TRUE;
 
 done:
@@ -3788,64 +3783,63 @@ static DWORD get_ttc_offset( FT_Face ft_face, UINT face_index )
 /*************************************************************
  * freetype_load_font
  */
-static BOOL CDECL freetype_load_font( struct gdi_font *gdi_font )
+static BOOL CDECL freetype_load_font( struct gdi_font *font )
 {
-    GdiFont *font;
+    struct font_private_data *data;
     INT width = 0, height;
     FT_Face ft_face;
     void *data_ptr;
     SIZE_T data_size;
 
-    if (!(font = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*font) ))) return FALSE;
-    gdi_font->private = font;
-    font->gdi_font = gdi_font;
+    if (!(data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) ))) return FALSE;
+    font->private = data;
 
-    if (gdi_font->file[0])
+    if (font->file[0])
     {
-        char *filename = wine_get_unix_file_name( gdi_font->file );
-        font->mapping = map_font_file( filename );
+        char *filename = wine_get_unix_file_name( font->file );
+        data->mapping = map_font_file( filename );
         HeapFree( GetProcessHeap(), 0, filename );
-        if (!font->mapping)
+        if (!data->mapping)
         {
-            WARN("failed to map %s\n", debugstr_w(gdi_font->file));
+            WARN("failed to map %s\n", debugstr_w(font->file));
             return FALSE;
         }
-        data_ptr = font->mapping->data;
-        data_size = font->mapping->size;
+        data_ptr = data->mapping->data;
+        data_size = data->mapping->size;
     }
     else
     {
-        data_ptr = gdi_font->data_ptr;
-        data_size = gdi_font->data_size;
+        data_ptr = font->data_ptr;
+        data_size = font->data_size;
     }
 
-    if (pFT_New_Memory_Face( library, data_ptr, data_size, gdi_font->face_index, &ft_face )) return FALSE;
+    if (pFT_New_Memory_Face( library, data_ptr, data_size, font->face_index, &ft_face )) return FALSE;
 
-    font->ft_face = ft_face;
-    gdi_font->scalable = FT_IS_SCALABLE( ft_face );
-    if (!gdi_font->fs.fsCsb[0]) get_fontsig( ft_face, &gdi_font->fs );
-    if (!gdi_font->ntmFlags) gdi_font->ntmFlags = get_ntm_flags( ft_face );
-    if (!gdi_font->aa_flags) gdi_font->aa_flags = ADDFONT_AA_FLAGS( default_aa_flags );
-    if (!gdi_font->otm.otmpFamilyName)
+    data->ft_face = ft_face;
+    font->scalable = FT_IS_SCALABLE( ft_face );
+    if (!font->fs.fsCsb[0]) get_fontsig( ft_face, &font->fs );
+    if (!font->ntmFlags) font->ntmFlags = get_ntm_flags( ft_face );
+    if (!font->aa_flags) font->aa_flags = ADDFONT_AA_FLAGS( default_aa_flags );
+    if (!font->otm.otmpFamilyName)
     {
         WCHAR *family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
         WCHAR *style_name = ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
         WCHAR *full_name = ft_face_get_full_name( ft_face, GetSystemDefaultLangID() );
 
-        set_gdi_font_names( gdi_font, family_name, style_name, full_name );
+        set_gdi_font_names( font, family_name, style_name, full_name );
         HeapFree( GetProcessHeap(), 0, family_name );
         HeapFree( GetProcessHeap(), 0, style_name );
         HeapFree( GetProcessHeap(), 0, full_name );
     }
 
-    if (gdi_font->scalable)
+    if (font->scalable)
     {
         /* load the VDMX table if we have one */
-        gdi_font->ppem = load_VDMX( font, gdi_font->lf.lfHeight );
-        if (gdi_font->ppem == 0) gdi_font->ppem = calc_ppem_for_height( ft_face, gdi_font->lf.lfHeight );
-        TRACE( "height %d => ppem %d\n", gdi_font->lf.lfHeight, gdi_font->ppem );
-        height = gdi_font->ppem;
-        gdi_font->ttc_item_offset = get_ttc_offset( ft_face, gdi_font->face_index );
+        font->ppem = load_VDMX( font, font->lf.lfHeight );
+        if (font->ppem == 0) font->ppem = calc_ppem_for_height( ft_face, font->lf.lfHeight );
+        TRACE( "height %d => ppem %d\n", font->lf.lfHeight, font->ppem );
+        height = font->ppem;
+        font->ttc_item_offset = get_ttc_offset( ft_face, font->face_index );
     }
     else
     {
@@ -3854,11 +3848,11 @@ static BOOL CDECL freetype_load_font( struct gdi_font *gdi_font )
         get_bitmap_size( ft_face, &size );
         width = size.x_ppem >> 6;
         height = size.y_ppem >> 6;
-        gdi_font->ppem = height;
+        font->ppem = height;
     }
 
     pFT_Set_Pixel_Sizes( ft_face, width, height );
-    pick_charmap( ft_face, gdi_font->charset );
+    pick_charmap( ft_face, font->charset );
     return TRUE;
 }
 
@@ -3869,8 +3863,7 @@ static BOOL CDECL freetype_load_font( struct gdi_font *gdi_font )
 static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *aa_flags,
                                                     UINT default_aa_flags )
 {
-    struct gdi_font *gdi_font;
-    GdiFont *ret;
+    struct gdi_font *font;
     Face *face, *best, *best_bitmap;
     Family *family, *last_resort_family;
     const struct list *face_list;
@@ -3925,9 +3918,8 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
                                         dcmat.eM21, dcmat.eM22);
 
     /* check the cache first */
-    if ((gdi_font = find_cached_gdi_font( &lf, &dcmat, can_use_bitmap ))) {
-        ret = get_font_ptr( gdi_font );
-        TRACE("returning cached gdiFont(%p) for hFont %p\n", ret, hfont);
+    if ((font = find_cached_gdi_font( &lf, &dcmat, can_use_bitmap ))) {
+        TRACE("returning cached gdiFont(%p) for hFont %p\n", font, hfont);
         goto done;
     }
 
@@ -4181,31 +4173,31 @@ found_face:
     height = lf.lfHeight;
 
     TRACE("not in cache\n");
-    gdi_font = alloc_gdi_font( face->file, face->font_data_ptr, face->font_data_size );
+    font = alloc_gdi_font( face->file, face->font_data_ptr, face->font_data_size );
 
-    gdi_font->matrix = dcmat;
-    gdi_font->lf = lf;
-    gdi_font->can_use_bitmap = can_use_bitmap;
-    gdi_font->fake_italic = (it && !(face->ntmFlags & NTM_ITALIC));
-    gdi_font->fake_bold = (bd && !(face->ntmFlags & NTM_BOLD));
-    gdi_font->fs = face->fs;
-    gdi_font->face_index = face->face_index;
-    gdi_font->ntmFlags = face->ntmFlags;
-    gdi_font->aa_flags = HIWORD( face->flags );
-    set_gdi_font_names( gdi_font, psub ? psub->from.name : family->family_name,
+    font->matrix = dcmat;
+    font->lf = lf;
+    font->can_use_bitmap = can_use_bitmap;
+    font->fake_italic = (it && !(face->ntmFlags & NTM_ITALIC));
+    font->fake_bold = (bd && !(face->ntmFlags & NTM_BOLD));
+    font->fs = face->fs;
+    font->face_index = face->face_index;
+    font->ntmFlags = face->ntmFlags;
+    font->aa_flags = HIWORD( face->flags );
+    set_gdi_font_names( font, psub ? psub->from.name : family->family_name,
                         face->style_name, face->full_name );
 
     if(csi.fs.fsCsb[0]) {
-        gdi_font->charset = lf.lfCharSet;
-        gdi_font->codepage = csi.ciACP;
+        font->charset = lf.lfCharSet;
+        font->codepage = csi.ciACP;
     }
     else
-        gdi_font->charset = get_nearest_charset( family->family_name, face, &gdi_font->codepage );
+        font->charset = get_nearest_charset( family->family_name, face, &font->codepage );
 
     TRACE( "Chosen: %s (%s/%p:%ld)\n", debugstr_w(face->full_name), debugstr_w(face->file),
            face->font_data_ptr, face->face_index );
 
-    gdi_font->aveWidth = height ? lf.lfWidth : 0;
+    font->aveWidth = height ? lf.lfWidth : 0;
 
     if(!face->scalable) {
         /* Windows uses integer scaling factors for bitmap fonts */
@@ -4213,18 +4205,17 @@ found_face:
         struct gdi_font *cachedfont;
 
         /* FIXME: rotation of bitmap fonts is ignored */
-        height = abs(GDI_ROUND( (double)height * gdi_font->matrix.eM22 ));
-        if (gdi_font->aveWidth)
-            gdi_font->aveWidth = (double)gdi_font->aveWidth * gdi_font->matrix.eM11;
-        gdi_font->matrix.eM11 = gdi_font->matrix.eM22 = 1.0;
+        height = abs(GDI_ROUND( (double)height * font->matrix.eM22 ));
+        if (font->aveWidth)
+            font->aveWidth = (double)font->aveWidth * font->matrix.eM11;
+        font->matrix.eM11 = font->matrix.eM22 = 1.0;
         dcmat.eM11 = dcmat.eM22 = 1.0;
         /* As we changed the matrix, we need to search the cache for the font again,
          * otherwise we might explode the cache. */
         if((cachedfont = find_cached_gdi_font( &lf, &dcmat, can_use_bitmap ))) {
             TRACE("Found cached font after non-scalable matrix rescale!\n");
-            free_gdi_font( gdi_font );
-            gdi_font = cachedfont;
-            ret = get_font_ptr( gdi_font );
+            free_gdi_font( font );
+            font = cachedfont;
             goto done;
         }
 
@@ -4237,27 +4228,26 @@ found_face:
         if (scale > 2 && scaled_height - height > face->size.height / 4) scale--;
         /* The jump between unscaled and doubled is delayed by 1 */
         else if (scale == 2 && scaled_height - height > (face->size.height / 4 - 1)) scale--;
-        gdi_font->scale_y = scale;
+        font->scale_y = scale;
     }
-    TRACE("font scale y: %f\n", gdi_font->scale_y);
+    TRACE("font scale y: %f\n", font->scale_y);
 
-    if (!freetype_load_font( gdi_font ))
+    if (!freetype_load_font( font ))
     {
-        free_gdi_font( gdi_font );
+        free_gdi_font( font );
         return NULL;
     }
-    ret = get_font_ptr( gdi_font );
 
     if (face->flags & ADDFONT_VERTICAL_FONT) /* We need to try to load the GSUB table */
-        gdi_font->vert_feature = get_GSUB_vert_feature( gdi_font );
+        font->vert_feature = get_GSUB_vert_feature( font );
 
-    create_child_font_list( gdi_font );
+    create_child_font_list( font );
 
-    TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
+    TRACE("caching: gdiFont=%p  hfont=%p\n", font, hfont);
 
-    cache_gdi_font( gdi_font );
+    cache_gdi_font( font );
 done:
-    if (ret)
+    if (font)
     {
         switch (lf.lfQuality)
         {
@@ -4268,7 +4258,7 @@ done:
         case CLEARTYPE_QUALITY:
         case CLEARTYPE_NATURAL_QUALITY:
         default:
-            if (!*aa_flags) *aa_flags = gdi_font->aa_flags;
+            if (!*aa_flags) *aa_flags = font->aa_flags;
             if (!*aa_flags) *aa_flags = default_aa_flags;
 
             /* fixup the antialiasing flags for that font */
@@ -4285,10 +4275,10 @@ done:
             case GGO_GRAY4_BITMAP:
             case GGO_GRAY8_BITMAP:
             case WINE_GGO_GRAY16_BITMAP:
-                if ((!antialias_fakes || (!gdi_font->fake_bold && !gdi_font->fake_italic)) && is_hinting_enabled())
+                if ((!antialias_fakes || (!font->fake_bold && !font->fake_italic)) && is_hinting_enabled())
                 {
                     WORD gasp_flags;
-                    if (get_gasp_flags( gdi_font, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
+                    if (get_gasp_flags( font, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
                     {
                         TRACE( "font %s %d aa disabled by GASP\n",
                                debugstr_w(lf.lfFaceName), lf.lfHeight );
@@ -4299,7 +4289,7 @@ done:
         }
         TRACE( "%p %s %d aa %x\n", hfont, debugstr_w(lf.lfFaceName), lf.lfHeight, *aa_flags );
     }
-    return gdi_font;
+    return font;
 }
 
 static INT load_script_name( UINT id, WCHAR buffer[LF_FACESIZE] )
@@ -4414,7 +4404,7 @@ static UINT get_font_type( const NEWTEXTMETRICEXW *ntm )
 static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEXW pelf,
                            NEWTEXTMETRICEXW *pntm)
 {
-    struct gdi_font *gdi_font;
+    struct gdi_font *font;
 
     if (face->cached_enum_data)
     {
@@ -4424,33 +4414,33 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
         return;
     }
 
-    gdi_font = alloc_gdi_font( face->file, face->font_data_ptr, face->font_data_size );
-    gdi_font->lf.lfHeight = 100;
-    gdi_font->face_index = face->face_index;
-    gdi_font->ntmFlags = face->ntmFlags;
-    set_gdi_font_names( gdi_font, family_name, face->style_name, face->full_name );
+    font = alloc_gdi_font( face->file, face->font_data_ptr, face->font_data_size );
+    font->lf.lfHeight = 100;
+    font->face_index = face->face_index;
+    font->ntmFlags = face->ntmFlags;
+    set_gdi_font_names( font, family_name, face->style_name, face->full_name );
 
-    if (!freetype_load_font( gdi_font ))
+    if (!freetype_load_font( font ))
     {
-        free_gdi_font(gdi_font);
+        free_gdi_font(font);
         return;
     }
 
-    if (freetype_set_outline_text_metrics(gdi_font))
+    if (freetype_set_outline_text_metrics(font))
     {
-        memcpy(&pntm->ntmTm, &gdi_font->otm.otmTextMetrics, sizeof(TEXTMETRICW));
+        memcpy(&pntm->ntmTm, &font->otm.otmTextMetrics, sizeof(TEXTMETRICW));
 
-        pntm->ntmTm.ntmSizeEM = gdi_font->otm.otmEMSquare;
-        pntm->ntmTm.ntmCellHeight = gdi_font->ntmCellHeight;
-        pntm->ntmTm.ntmAvgWidth = gdi_font->ntmAvgWidth;
+        pntm->ntmTm.ntmSizeEM = font->otm.otmEMSquare;
+        pntm->ntmTm.ntmCellHeight = font->ntmCellHeight;
+        pntm->ntmTm.ntmAvgWidth = font->ntmAvgWidth;
 
-        lstrcpynW(pelf->elfLogFont.lfFaceName, (WCHAR *)gdi_font->otm.otmpFamilyName, LF_FACESIZE);
-        lstrcpynW(pelf->elfFullName, (WCHAR *)gdi_font->otm.otmpFaceName, LF_FULLFACESIZE);
-        lstrcpynW(pelf->elfStyle, (WCHAR *)gdi_font->otm.otmpStyleName, LF_FACESIZE);
+        lstrcpynW(pelf->elfLogFont.lfFaceName, (WCHAR *)font->otm.otmpFamilyName, LF_FACESIZE);
+        lstrcpynW(pelf->elfFullName, (WCHAR *)font->otm.otmpFaceName, LF_FULLFACESIZE);
+        lstrcpynW(pelf->elfStyle, (WCHAR *)font->otm.otmpStyleName, LF_FACESIZE);
     }
-    else if (freetype_set_bitmap_text_metrics( gdi_font ))
+    else if (freetype_set_bitmap_text_metrics( font ))
     {
-        memcpy(&pntm->ntmTm, &gdi_font->otm.otmTextMetrics, sizeof(TEXTMETRICW));
+        memcpy(&pntm->ntmTm, &font->otm.otmTextMetrics, sizeof(TEXTMETRICW));
 
         pntm->ntmTm.ntmSizeEM = pntm->ntmTm.tmHeight - pntm->ntmTm.tmInternalLeading;
         pntm->ntmTm.ntmCellHeight = pntm->ntmTm.tmHeight;
@@ -4487,7 +4477,7 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
         face->cached_enum_data->ntm = *pntm;
     }
 
-    free_gdi_font(gdi_font);
+    free_gdi_font(font);
 }
 
 static BOOL family_matches(Family *family, const WCHAR *face_name)
@@ -4621,15 +4611,16 @@ static void FTVectorToPOINTFX(FT_Vector *vec, POINTFX *pt)
     pt->y.fract |= ((pt->y.fract >> 6) | (pt->y.fract >> 12));
 }
 
-static FT_UInt get_glyph_index_symbol(const GdiFont *font, UINT glyph)
+static FT_UInt get_glyph_index_symbol( struct gdi_font *font, UINT glyph )
 {
+    FT_Face ft_face = get_ft_face( font );
     FT_UInt ret;
 
     if (glyph < 0x100) glyph += 0xf000;
     /* there are a number of old pre-Unicode "broken" TTFs, which
        do have symbols at U+00XX instead of U+f0XX */
-    if (!(ret = pFT_Get_Char_Index(font->ft_face, glyph)))
-        ret = pFT_Get_Char_Index(font->ft_face, glyph - 0xf000);
+    if (!(ret = pFT_Get_Char_Index(ft_face, glyph)))
+        ret = pFT_Get_Char_Index(ft_face, glyph - 0xf000);
 
     return ret;
 }
@@ -4637,13 +4628,13 @@ static FT_UInt get_glyph_index_symbol(const GdiFont *font, UINT glyph)
 /*************************************************************
  * freetype_get_glyph_index
  */
-static BOOL CDECL freetype_get_glyph_index( struct gdi_font *gdi_font, UINT *glyph, BOOL use_encoding )
+static BOOL CDECL freetype_get_glyph_index( struct gdi_font *font, UINT *glyph, BOOL use_encoding )
 {
-    GdiFont *font = get_font_ptr( gdi_font );
+    FT_Face ft_face = get_ft_face( font );
 
-    if (!use_encoding ^ (font->ft_face->charmap->encoding == FT_ENCODING_NONE)) return FALSE;
+    if (!use_encoding ^ (ft_face->charmap->encoding == FT_ENCODING_NONE)) return FALSE;
 
-    if (font->ft_face->charmap->encoding == FT_ENCODING_MS_SYMBOL)
+    if (ft_face->charmap->encoding == FT_ENCODING_MS_SYMBOL)
     {
         if (!(*glyph = get_glyph_index_symbol( font, *glyph )))
         {
@@ -4655,26 +4646,26 @@ static BOOL CDECL freetype_get_glyph_index( struct gdi_font *gdi_font, UINT *gly
         }
         return TRUE;
     }
-    *glyph = pFT_Get_Char_Index( font->ft_face, *glyph );
+    *glyph = pFT_Get_Char_Index( ft_face, *glyph );
     return TRUE;
 }
 
 /*************************************************************
  * freetype_get_default_glyph
  */
-static UINT CDECL freetype_get_default_glyph( struct gdi_font *gdi_font )
+static UINT CDECL freetype_get_default_glyph( struct gdi_font *font )
 {
-    GdiFont *font = get_font_ptr( gdi_font );
+    FT_Face ft_face = get_ft_face( font );
     FT_WinFNT_HeaderRec winfnt;
     TT_OS2 *pOS2;
 
-    if ((pOS2 = pFT_Get_Sfnt_Table( font->ft_face, ft_sfnt_os2 )))
+    if ((pOS2 = pFT_Get_Sfnt_Table( ft_face, ft_sfnt_os2 )))
     {
         UINT glyph = pOS2->usDefaultChar;
-        freetype_get_glyph_index( gdi_font, &glyph, TRUE );
+        freetype_get_glyph_index( font, &glyph, TRUE );
         return glyph;
     }
-    if (!pFT_Get_WinFNT_Header( font->ft_face, &winfnt )) return winfnt.default_char + winfnt.first_char;
+    if (!pFT_Get_WinFNT_Header( ft_face, &winfnt )) return winfnt.default_char + winfnt.first_char;
     return 32;
 }
 
@@ -4873,7 +4864,7 @@ static FT_Vector get_advance_metric(struct gdi_font *incoming_font, struct gdi_f
         !(incoming_font->otm.otmTextMetrics.tmPitchAndFamily & TMPF_FIXED_PITCH)) {
         UINT avg_advance;
         em_scale = MulDiv(incoming_font->ppem, 1 << 16,
-                          get_font_ptr(incoming_font)->ft_face->units_per_EM);
+                          get_ft_face(incoming_font)->units_per_EM);
         avg_advance = pFT_MulFix(incoming_font->ntmAvgWidth, em_scale);
         fixed_pitch_full = (avg_advance > 0 &&
                             (base_advance + 63) >> 6 ==
@@ -5571,7 +5562,7 @@ static DWORD CDECL freetype_get_glyph_outline( struct gdi_font *font, UINT glyph
                                                const MAT2 *lpmat, BOOL tategaki )
 {
     struct gdi_font *base_font = font->base_font ? font->base_font : font;
-    FT_Face ft_face = get_font_ptr( base_font )->ft_face;
+    FT_Face ft_face = get_ft_face( base_font );
     FT_Glyph_Metrics metrics;
     FT_Error err;
     FT_BBox bbox;
@@ -5580,8 +5571,7 @@ static DWORD CDECL freetype_get_glyph_outline( struct gdi_font *font, UINT glyph
     BOOL needsTransform = FALSE;
     BOOL vertical_metrics;
 
-    TRACE("%p, %04x, %08x, %p, %08x, %p, %p\n", font, glyph, format, lpgm,
-	  buflen, buf, lpmat);
+    TRACE("%p, %04x, %08x, %p, %08x, %p, %p\n", font, glyph, format, lpgm, buflen, buf, lpmat);
 
     TRACE("font transform %f %f %f %f\n",
           font->matrix.eM11, font->matrix.eM12,
@@ -5710,7 +5700,7 @@ static DWORD CDECL freetype_get_glyph_outline( struct gdi_font *font, UINT glyph
  */
 static BOOL CDECL freetype_set_bitmap_text_metrics( struct gdi_font *font )
 {
-    FT_Face ft_face = get_font_ptr( font )->ft_face;
+    FT_Face ft_face = get_ft_face( font );
     FT_WinFNT_HeaderRec winfnt_header;
 
     if (font->otm.otmSize) return TRUE;  /* already set */
@@ -5788,7 +5778,7 @@ static BOOL face_has_symbol_charmap(FT_Face ft_face)
  */
 static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font )
 {
-    FT_Face ft_face = get_font_ptr( font )->ft_face;
+    FT_Face ft_face = get_ft_face( font );
     UINT needed;
     TT_OS2 *pOS2;
     TT_HoriHeader *pHori;
@@ -6060,20 +6050,19 @@ static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font )
     return TRUE;
 }
 
-
 /*************************************************************
  * freetype_get_char_width_info
  */
 static BOOL CDECL freetype_get_char_width_info( struct gdi_font *font, struct char_width_info *info )
 {
-    FT_Face face = get_font_ptr(font)->ft_face;
+    FT_Face ft_face = get_ft_face( font );
     TT_HoriHeader *pHori;
 
     TRACE("%p, %p\n", font, info);
 
-    if ((pHori = pFT_Get_Sfnt_Table(face, ft_sfnt_hhea)))
+    if ((pHori = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_hhea)))
     {
-        FT_Fixed em_scale = MulDiv(font->ppem, 1 << 16, face->units_per_EM);
+        FT_Fixed em_scale = MulDiv(font->ppem, 1 << 16, ft_face->units_per_EM);
         info->lsb = (SHORT)pFT_MulFix(pHori->min_Left_Side_Bearing,  em_scale);
         info->rsb = (SHORT)pFT_MulFix(pHori->min_Right_Side_Bearing, em_scale);
         return TRUE;
@@ -6091,19 +6080,19 @@ static BOOL CDECL freetype_get_char_width_info( struct gdi_font *font, struct ch
  */
 static DWORD CDECL freetype_get_unicode_ranges( struct gdi_font *font, GLYPHSET *gs )
 {
-    FT_Face face = get_font_ptr(font)->ft_face;
+    FT_Face ft_face = get_ft_face( font );
     DWORD num_ranges = 0;
 
-    if (face->charmap->encoding == FT_ENCODING_UNICODE)
+    if (ft_face->charmap->encoding == FT_ENCODING_UNICODE)
     {
         FT_UInt glyph_code;
         FT_ULong char_code, char_code_prev;
 
         glyph_code = 0;
-        char_code_prev = char_code = pFT_Get_First_Char(face, &glyph_code);
+        char_code_prev = char_code = pFT_Get_First_Char(ft_face, &glyph_code);
 
         TRACE("face encoding FT_ENCODING_UNICODE, number of glyphs %ld, first glyph %u, first char %04lx\n",
-               face->num_glyphs, glyph_code, char_code);
+               ft_face->num_glyphs, glyph_code, char_code);
 
         if (!glyph_code) return 0;
 
@@ -6138,12 +6127,12 @@ static DWORD CDECL freetype_get_unicode_ranges( struct gdi_font *font, GLYPHSET 
                 gs->cGlyphsSupported++;
             }
             char_code_prev = char_code;
-            char_code = pFT_Get_Next_Char(face, char_code, &glyph_code);
+            char_code = pFT_Get_Next_Char(ft_face, char_code, &glyph_code);
         }
     }
     else
     {
-        DWORD encoding = RtlUlongByteSwap(face->charmap->encoding);
+        DWORD encoding = RtlUlongByteSwap(ft_face->charmap->encoding);
         FIXME("encoding %s not supported\n", debugstr_an((char *)&encoding, 4));
     }
 
@@ -6194,16 +6183,16 @@ struct TT_kern_pair
     short  value;
 };
 
-static DWORD parse_format0_kern_subtable(GdiFont *font,
+static DWORD parse_format0_kern_subtable(struct gdi_font *font,
                                          const struct TT_format0_kern_subtable *tt_f0_ks,
                                          const USHORT *glyph_to_char,
                                          KERNINGPAIR *kern_pair, DWORD cPairs)
 {
-    struct gdi_font *gdi_font = font->gdi_font;
+    FT_Face ft_face = get_ft_face( font );
     USHORT i, nPairs;
     const struct TT_kern_pair *tt_kern_pair;
 
-    TRACE("font height %d, units_per_EM %d\n", gdi_font->ppem, font->ft_face->units_per_EM);
+    TRACE("font height %d, units_per_EM %d\n", font->ppem, ft_face->units_per_EM);
 
     nPairs = GET_BE_WORD(tt_f0_ks->nPairs);
 
@@ -6223,18 +6212,18 @@ static DWORD parse_format0_kern_subtable(GdiFont *font,
         kern_pair->wFirst = glyph_to_char[GET_BE_WORD(tt_kern_pair[i].left)];
         kern_pair->wSecond = glyph_to_char[GET_BE_WORD(tt_kern_pair[i].right)];
         /* this algorithm appears to better match what Windows does */
-        kern_pair->iKernAmount = (short)GET_BE_WORD(tt_kern_pair[i].value) * gdi_font->ppem;
+        kern_pair->iKernAmount = (short)GET_BE_WORD(tt_kern_pair[i].value) * font->ppem;
         if (kern_pair->iKernAmount < 0)
         {
-            kern_pair->iKernAmount -= font->ft_face->units_per_EM / 2;
-            kern_pair->iKernAmount -= gdi_font->ppem;
+            kern_pair->iKernAmount -= ft_face->units_per_EM / 2;
+            kern_pair->iKernAmount -= font->ppem;
         }
         else if (kern_pair->iKernAmount > 0)
         {
-            kern_pair->iKernAmount += font->ft_face->units_per_EM / 2;
-            kern_pair->iKernAmount += gdi_font->ppem;
+            kern_pair->iKernAmount += ft_face->units_per_EM / 2;
+            kern_pair->iKernAmount += font->ppem;
         }
-        kern_pair->iKernAmount /= font->ft_face->units_per_EM;
+        kern_pair->iKernAmount /= ft_face->units_per_EM;
 
         TRACE("left %u right %u value %d\n",
                kern_pair->wFirst, kern_pair->wSecond, kern_pair->iKernAmount);
@@ -6248,9 +6237,9 @@ static DWORD parse_format0_kern_subtable(GdiFont *font,
 /*************************************************************
  * freetype_get_kerning_pairs
  */
-static DWORD CDECL freetype_get_kerning_pairs( struct gdi_font *gdi_font, KERNINGPAIR **pairs )
+static DWORD CDECL freetype_get_kerning_pairs( struct gdi_font *font, KERNINGPAIR **pairs )
 {
-    GdiFont *font = get_font_ptr(gdi_font);
+    FT_Face ft_face = get_ft_face( font );
     DWORD length, count = 0;
     void *buf;
     const struct TT_kern_table *tt_kern_table;
@@ -6258,7 +6247,7 @@ static DWORD CDECL freetype_get_kerning_pairs( struct gdi_font *gdi_font, KERNIN
     USHORT i, nTables;
     USHORT *glyph_to_char;
 
-    length = freetype_get_font_data(gdi_font, MS_KERN_TAG, 0, NULL, 0);
+    length = freetype_get_font_data(font, MS_KERN_TAG, 0, NULL, 0);
 
     if (length == GDI_ERROR)
     {
@@ -6269,7 +6258,7 @@ static DWORD CDECL freetype_get_kerning_pairs( struct gdi_font *gdi_font, KERNIN
     buf = HeapAlloc(GetProcessHeap(), 0, length);
     if (!buf) return 0;
 
-    freetype_get_font_data(gdi_font, MS_KERN_TAG, 0, buf, length);
+    freetype_get_font_data(font, MS_KERN_TAG, 0, buf, length);
 
     /* build a glyph index to char code map */
     glyph_to_char = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(USHORT) * 65536);
@@ -6279,16 +6268,16 @@ static DWORD CDECL freetype_get_kerning_pairs( struct gdi_font *gdi_font, KERNIN
         return 0;
     }
 
-    if (font->ft_face->charmap->encoding == FT_ENCODING_UNICODE)
+    if (ft_face->charmap->encoding == FT_ENCODING_UNICODE)
     {
         FT_UInt glyph_code;
         FT_ULong char_code;
 
         glyph_code = 0;
-        char_code = pFT_Get_First_Char(font->ft_face, &glyph_code);
+        char_code = pFT_Get_First_Char(ft_face, &glyph_code);
 
         TRACE("face encoding FT_ENCODING_UNICODE, number of glyphs %ld, first glyph %u, first char %lu\n",
-               font->ft_face->num_glyphs, glyph_code, char_code);
+               ft_face->num_glyphs, glyph_code, char_code);
 
         while (glyph_code)
         {
@@ -6301,12 +6290,12 @@ static DWORD CDECL freetype_get_kerning_pairs( struct gdi_font *gdi_font, KERNIN
             if (glyph_code <= 65535 && !glyph_to_char[glyph_code])
                 glyph_to_char[glyph_code] = (USHORT)char_code;
 
-            char_code = pFT_Get_Next_Char(font->ft_face, char_code, &glyph_code);
+            char_code = pFT_Get_Next_Char(ft_face, char_code, &glyph_code);
         }
     }
     else
     {
-        DWORD encoding = RtlUlongByteSwap(font->ft_face->charmap->encoding);
+        DWORD encoding = RtlUlongByteSwap(ft_face->charmap->encoding);
         ULONG n;
 
         FIXME("encoding %s not supported\n", debugstr_an((char *)&encoding, 4));
