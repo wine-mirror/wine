@@ -3064,11 +3064,21 @@ out_unknown:
     IUnknown_Release(unknown);
 }
 
+struct advise_time_cookie
+{
+    LONGLONG base;
+    LONGLONG offset;
+    HANDLE event;
+    HANDLE advise_time_called_event;
+    BOOL unadvise_called;
+};
+
 struct testclock
 {
     IReferenceClock IReferenceClock_iface;
     LONG refcount;
     LONGLONG time;
+    struct advise_time_cookie *advise_time_cookie;
     HRESULT get_time_hr;
 };
 
@@ -3112,7 +3122,19 @@ static HRESULT WINAPI testclock_GetTime(IReferenceClock *iface, REFERENCE_TIME *
 
 static HRESULT WINAPI testclock_AdviseTime(IReferenceClock *iface, REFERENCE_TIME base, REFERENCE_TIME offset, HEVENT event, DWORD_PTR *cookie)
 {
-    SetEvent((HANDLE)event);
+    struct testclock *clock = impl_from_IReferenceClock(iface);
+    if (clock->advise_time_cookie)
+    {
+        clock->advise_time_cookie->base = base;
+        clock->advise_time_cookie->offset = offset;
+        clock->advise_time_cookie->event = (HANDLE)event;
+        SetEvent(clock->advise_time_cookie->advise_time_called_event);
+    }
+    else
+    {
+        SetEvent((HANDLE)event);
+    }
+    *cookie = (DWORD_PTR)clock->advise_time_cookie;
     return S_OK;
 }
 
@@ -3124,8 +3146,9 @@ static HRESULT WINAPI testclock_AdvisePeriodic(IReferenceClock *iface, REFERENCE
 
 static HRESULT WINAPI testclock_Unadvise(IReferenceClock *iface, DWORD_PTR cookie)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    if (cookie)
+        ((struct advise_time_cookie *)cookie)->unadvise_called = TRUE;
+    return S_OK;
 }
 
 static IReferenceClockVtbl testclock_vtbl =
@@ -6685,6 +6708,155 @@ static void test_mediastreamfilter_reference_time_to_stream_time(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+struct mediastreamfilter_wait_until_params
+{
+    IMediaStreamFilter *filter;
+    REFERENCE_TIME time;
+    HRESULT expected_hr;
+};
+
+static DWORD CALLBACK mediastreamfilter_wait_until(void *p)
+{
+    struct mediastreamfilter_wait_until_params *params = (struct mediastreamfilter_wait_until_params *)p;
+    HRESULT hr;
+
+    hr = IMediaStreamFilter_WaitUntil(params->filter, params->time);
+    ok(hr == params->expected_hr, "Got hr %#x.\n", hr);
+
+    return 0;
+}
+
+static void test_mediastreamfilter_wait_until(void)
+{
+    struct mediastreamfilter_wait_until_params params1;
+    struct mediastreamfilter_wait_until_params params2;
+    struct advise_time_cookie cookie1 = { 0 };
+    struct advise_time_cookie cookie2 = { 0 };
+    IMediaStreamFilter *filter;
+    struct testclock clock;
+    HANDLE thread1;
+    HANDLE thread2;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = CoCreateInstance(&CLSID_MediaStreamFilter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMediaStreamFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    testclock_init(&clock);
+    cookie1.advise_time_called_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    cookie2.advise_time_called_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    hr = IMediaStreamFilter_Run(filter, 12345678);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStreamFilter_WaitUntil(filter, 23456789);
+    ok(hr == E_FAIL, "Got hr %#x.\n", hr);
+
+    hr = IMediaStreamFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStreamFilter_SetSyncSource(filter, &clock.IReferenceClock_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    clock.advise_time_cookie = &cookie1;
+
+    params1.filter = filter;
+    params1.time = 23456789;
+    params1.expected_hr = S_OK;
+    thread1 = CreateThread(NULL, 0, mediastreamfilter_wait_until, &params1, 0, NULL);
+    ok(!WaitForSingleObject(cookie1.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
+    ok(WaitForSingleObject(thread1, 100) == WAIT_TIMEOUT, "WaitUntil returned prematurely.\n");
+
+    ok(cookie1.base == 23456789, "Got base %s.\n", wine_dbgstr_longlong(cookie1.base));
+    ok(cookie1.offset == 12345678, "Got offset %s.\n", wine_dbgstr_longlong(cookie1.offset));
+    ok(!!cookie1.event, "Expected non-NULL event.\n");
+
+    SetEvent(cookie1.event);
+
+    ok(!WaitForSingleObject(thread1, 2000), "Wait timed out.\n");
+    CloseHandle(thread1);
+
+    ok(!cookie1.unadvise_called, "Unexpected Unadvise call.\n");
+
+    hr = IMediaStreamFilter_Run(filter, 12345678);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    clock.time = 30000000;
+
+    clock.advise_time_cookie = &cookie1;
+
+    params1.filter = filter;
+    params1.time = 23456789;
+    params1.expected_hr = S_OK;
+    thread1 = CreateThread(NULL, 0, mediastreamfilter_wait_until, &params1, 0, NULL);
+    ok(!WaitForSingleObject(cookie1.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
+    ok(WaitForSingleObject(thread1, 100) == WAIT_TIMEOUT, "WaitUntil returned prematurely.\n");
+
+    ok(cookie1.base == 23456789, "Got base %s.\n", wine_dbgstr_longlong(cookie1.base));
+    ok(cookie1.offset == 12345678, "Got offset %s.\n", wine_dbgstr_longlong(cookie1.offset));
+    ok(!!cookie1.event, "Expected non-NULL event.\n");
+
+    clock.advise_time_cookie = &cookie2;
+
+    params2.filter = filter;
+    params2.time = 11111111;
+    params2.expected_hr = S_OK;
+    thread2 = CreateThread(NULL, 0, mediastreamfilter_wait_until, &params2, 0, NULL);
+    ok(!WaitForSingleObject(cookie2.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
+    ok(WaitForSingleObject(thread2, 100) == WAIT_TIMEOUT, "WaitUntil returned prematurely.\n");
+
+    ok(cookie2.base == 11111111, "Got base %s.\n", wine_dbgstr_longlong(cookie2.base));
+    ok(cookie2.offset == 12345678, "Got offset %s.\n", wine_dbgstr_longlong(cookie2.offset));
+    ok(!!cookie2.event, "Expected non-NULL event.\n");
+
+    SetEvent(cookie1.event);
+
+    ok(!WaitForSingleObject(thread1, 2000), "Wait timed out.\n");
+    CloseHandle(thread1);
+
+    ok(WaitForSingleObject(thread2, 100) == WAIT_TIMEOUT, "WaitUntil returned prematurely.\n");
+
+    SetEvent(cookie2.event);
+
+    ok(!WaitForSingleObject(thread2, 2000), "Wait timed out.\n");
+    CloseHandle(thread2);
+
+    clock.advise_time_cookie = &cookie1;
+
+    params1.filter = filter;
+    params1.time = 23456789;
+    params1.expected_hr = S_FALSE;
+    thread1 = CreateThread(NULL, 0, mediastreamfilter_wait_until, &params1, 0, NULL);
+    ok(!WaitForSingleObject(cookie1.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
+    ok(WaitForSingleObject(thread1, 100) == WAIT_TIMEOUT, "WaitUntil returned prematurely.\n");
+
+    clock.advise_time_cookie = &cookie2;
+
+    params2.filter = filter;
+    params2.time = 23456789;
+    params2.expected_hr = S_FALSE;
+    thread2 = CreateThread(NULL, 0, mediastreamfilter_wait_until, &params2, 0, NULL);
+    ok(!WaitForSingleObject(cookie2.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
+    ok(WaitForSingleObject(thread2, 100) == WAIT_TIMEOUT, "WaitUntil returned prematurely.\n");
+
+    hr = IMediaStreamFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(cookie1.unadvise_called, "Expected Unadvise to be called.\n");
+    ok(cookie2.unadvise_called, "Expected Unadvise to be called.\n");
+
+    ok(!WaitForSingleObject(thread1, 2000), "Wait timed out.\n");
+    CloseHandle(thread1);
+    ok(!WaitForSingleObject(thread2, 2000), "Wait timed out.\n");
+    CloseHandle(thread2);
+
+    CloseHandle(cookie1.advise_time_called_event);
+    CloseHandle(cookie2.advise_time_called_event);
+
+    ref = IMediaStreamFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_ddrawstream_getsetdirectdraw(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
@@ -8330,6 +8502,7 @@ START_TEST(amstream)
     test_mediastreamfilter_get_stop_position();
     test_mediastreamfilter_get_current_stream_time();
     test_mediastreamfilter_reference_time_to_stream_time();
+    test_mediastreamfilter_wait_until();
 
     CoUninitialize();
 }

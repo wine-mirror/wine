@@ -21,6 +21,7 @@
 #define COBJMACROS
 #include "amstream_private.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
@@ -175,6 +176,16 @@ struct filter
     IAMMediaStream *seekable_stream;
     FILTER_STATE state;
     REFERENCE_TIME start_time;
+    struct list free_events;
+    struct list used_events;
+};
+
+struct event
+{
+    struct list entry;
+    HANDLE event;
+    DWORD_PTR cookie;
+    BOOL interrupted;
 };
 
 static inline struct filter *impl_from_IMediaStreamFilter(IMediaStreamFilter *iface)
@@ -225,6 +236,15 @@ static ULONG WINAPI filter_Release(IMediaStreamFilter *iface)
 
     if (!refcount)
     {
+        struct list *entry;
+
+        while ((entry = list_head(&filter->free_events)))
+        {
+            struct event *event = LIST_ENTRY(entry, struct event, entry);
+            list_remove(entry);
+            CloseHandle(event->event);
+            free(event);
+        }
         for (i = 0; i < filter->nb_streams; ++i)
         {
             IAMMediaStream_JoinFilter(filter->streams[i], NULL);
@@ -261,12 +281,23 @@ static void set_state(struct filter *filter, FILTER_STATE state)
 static HRESULT WINAPI filter_Stop(IMediaStreamFilter *iface)
 {
     struct filter *filter = impl_from_IMediaStreamFilter(iface);
+    struct event *event;
 
     TRACE("iface %p.\n", iface);
 
     EnterCriticalSection(&filter->cs);
 
     set_state(filter, State_Stopped);
+
+    LIST_FOR_EACH_ENTRY(event, &filter->used_events, struct event, entry)
+    {
+        if (!event->interrupted)
+        {
+            event->interrupted = TRUE;
+            IReferenceClock_Unadvise(filter->clock, event->cookie);
+            SetEvent(event->event);
+        }
+    }
 
     LeaveCriticalSection(&filter->cs);
 
@@ -664,11 +695,59 @@ static HRESULT WINAPI filter_GetCurrentStreamTime(IMediaStreamFilter *iface, REF
     return S_OK;
 }
 
-static HRESULT WINAPI filter_WaitUntil(IMediaStreamFilter *iface, REFERENCE_TIME WaitStreamTime)
+static HRESULT WINAPI filter_WaitUntil(IMediaStreamFilter *iface, REFERENCE_TIME time)
 {
-    FIXME("(%p)->(%s): Stub!\n", iface, wine_dbgstr_longlong(WaitStreamTime));
+    struct filter *filter = impl_from_IMediaStreamFilter(iface);
+    struct event *event;
+    struct list *entry;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("filter %p, time %s.\n", iface, wine_dbgstr_longlong(time));
+
+    EnterCriticalSection(&filter->cs);
+
+    if (!filter->clock)
+    {
+        LeaveCriticalSection(&filter->cs);
+        return E_FAIL;
+    }
+
+    if ((entry = list_head(&filter->free_events)))
+    {
+        list_remove(entry);
+        event = LIST_ENTRY(entry, struct event, entry);
+    }
+    else
+    {
+        event = calloc(1, sizeof(struct event));
+        event->event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+        entry = &event->entry;
+    }
+
+    hr = IReferenceClock_AdviseTime(filter->clock, time, filter->start_time, (HEVENT)event->event, &event->cookie);
+    if (FAILED(hr))
+    {
+        list_add_tail(&filter->free_events, entry);
+        LeaveCriticalSection(&filter->cs);
+        return hr;
+    }
+
+    event->interrupted = FALSE;
+    list_add_tail(&filter->used_events, entry);
+
+    LeaveCriticalSection(&filter->cs);
+    WaitForSingleObject(event->event, INFINITE);
+    EnterCriticalSection(&filter->cs);
+
+    hr = event->interrupted ? S_FALSE : S_OK;
+
+    list_remove(entry);
+    list_add_tail(&filter->free_events, entry);
+
+    LeaveCriticalSection(&filter->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI filter_Flush(IMediaStreamFilter *iface, BOOL bCancelEOS)
@@ -948,6 +1027,8 @@ HRESULT filter_create(IUnknown *outer, void **out)
     object->IMediaStreamFilter_iface.lpVtbl = &filter_vtbl;
     object->IMediaSeeking_iface.lpVtbl = &filter_seeking_vtbl;
     object->refcount = 1;
+    list_init(&object->free_events);
+    list_init(&object->used_events);
     InitializeCriticalSection(&object->cs);
     object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MediaStreamFilter.cs");
 
