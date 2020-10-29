@@ -795,15 +795,16 @@ static HRESULT WINAPI filter_seeking_GetDuration(IMediaSeeking *iface, LONGLONG 
 
     EnterCriticalSection(&filter->cs);
 
-    if (!(seeking = get_seeking(filter->seekable_stream)))
-    {
-        LeaveCriticalSection(&filter->cs);
+    seeking = get_seeking(filter->seekable_stream);
+
+    LeaveCriticalSection(&filter->cs);
+
+    if (!seeking)
         return E_NOTIMPL;
-    }
+
     hr = IMediaSeeking_GetDuration(seeking, duration);
     IMediaSeeking_Release(seeking);
 
-    LeaveCriticalSection(&filter->cs);
     return hr;
 }
 
@@ -817,15 +818,16 @@ static HRESULT WINAPI filter_seeking_GetStopPosition(IMediaSeeking *iface, LONGL
 
     EnterCriticalSection(&filter->cs);
 
-    if (!(seeking = get_seeking(filter->seekable_stream)))
-    {
-        LeaveCriticalSection(&filter->cs);
+    seeking = get_seeking(filter->seekable_stream);
+
+    LeaveCriticalSection(&filter->cs);
+
+    if (!seeking)
         return E_NOTIMPL;
-    }
+
     hr = IMediaSeeking_GetStopPosition(seeking, stop);
     IMediaSeeking_Release(seeking);
 
-    LeaveCriticalSection(&filter->cs);
     return hr;
 }
 
@@ -860,17 +862,14 @@ static HRESULT WINAPI filter_seeking_SetPositions(IMediaSeeking *iface, LONGLONG
 
     seeking = get_seeking(filter->seekable_stream);
 
+    LeaveCriticalSection(&filter->cs);
+
     if (!seeking)
-    {
-        LeaveCriticalSection(&filter->cs);
         return E_NOTIMPL;
-    }
 
     hr = IMediaSeeking_SetPositions(seeking, current_ptr, current_flags, stop_ptr, stop_flags);
 
     IMediaSeeking_Release(seeking);
-
-    LeaveCriticalSection(&filter->cs);
 
     return hr;
 }
