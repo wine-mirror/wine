@@ -78,6 +78,12 @@ typedef struct tagMIDISource {
     DWORD startTime;
 } MIDISource;
 
+typedef struct {
+    UInt16 devID;
+    UInt16 length;
+    Byte data[];
+} MIDIMessage;
+
 static CRITICAL_SECTION midiInLock; /* Critical section for MIDI In */
 static CFStringRef MIDIInThreadPortName = NULL;
 
@@ -797,16 +803,22 @@ static DWORD MIDIIn_Reset(WORD wDevID)
  *  Call from CoreMIDI IO threaded callback,
  *  we can't call Wine debug channels, critical section or anything using NtCurrentTeb here.
  */
-void MIDIIn_SendMessage(MIDIMessage msg)
+void MIDIIn_SendMessage(UInt16 devID, const void *buffer, UInt16 length)
 {
-    CFDataRef data;
+    MIDIMessage msg;
+    CFMutableDataRef data;
 
     CFMessagePortRef messagePort;
     messagePort = CFMessagePortCreateRemote(kCFAllocatorDefault, MIDIInThreadPortName);
 
-    data = CFDataCreate(kCFAllocatorDefault, (UInt8 *) &msg, sizeof(msg));
+    msg.devID = devID;
+    msg.length = length;
+
+    data = CFDataCreateMutable(kCFAllocatorDefault, sizeof(msg) + length);
     if (data)
     {
+        CFDataAppendBytes(data, (UInt8 *) &msg, sizeof(msg));
+        CFDataAppendBytes(data, buffer, length);
         CFMessagePortSendRequest(messagePort, 0, data, 0.0, 0.0, NULL, NULL);
         CFRelease(data);
     }

@@ -57,15 +57,12 @@ void CoreMIDI_GetObjectName(MIDIObjectRef obj, char *name, int size)
 void MIDIIn_ReadProc(const MIDIPacketList *pktlist, void *refCon, void *connRefCon)
 {
     unsigned int i;
-    MIDIMessage msg;
 
     MIDIPacket *packet = (MIDIPacket *)pktlist->packet;
     for (i = 0; i < pktlist->numPackets; ++i) {
-        msg.devID = *((UInt16 *)connRefCon);
-        msg.length = packet->length;
-        memcpy(msg.data, packet->data, sizeof(packet->data));
+        UInt16 devID = *((UInt16 *)connRefCon);
 
-        MIDIIn_SendMessage(msg);
+        MIDIIn_SendMessage(devID, packet->data, packet->length);
 
         packet = MIDIPacketNext(packet);
     }
