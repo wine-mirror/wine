@@ -6839,6 +6839,35 @@ static void test_mediastreamfilter_wait_until(void)
     ok(!WaitForSingleObject(cookie2.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
     ok(WaitForSingleObject(thread2, 100) == WAIT_TIMEOUT, "WaitUntil returned prematurely.\n");
 
+    hr = IMediaStreamFilter_Flush(filter, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(cookie1.unadvise_called, "Expected Unadvise to be called.\n");
+    ok(cookie2.unadvise_called, "Expected Unadvise to be called.\n");
+
+    ok(!WaitForSingleObject(thread1, 2000), "Wait timed out.\n");
+    CloseHandle(thread1);
+    ok(!WaitForSingleObject(thread2, 2000), "Wait timed out.\n");
+    CloseHandle(thread2);
+
+    clock.advise_time_cookie = &cookie1;
+
+    params1.filter = filter;
+    params1.time = 23456789;
+    params1.expected_hr = S_FALSE;
+    thread1 = CreateThread(NULL, 0, mediastreamfilter_wait_until, &params1, 0, NULL);
+    ok(!WaitForSingleObject(cookie1.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
+    ok(WaitForSingleObject(thread1, 100) == WAIT_TIMEOUT, "WaitUntil returned prematurely.\n");
+
+    clock.advise_time_cookie = &cookie2;
+
+    params2.filter = filter;
+    params2.time = 23456789;
+    params2.expected_hr = S_FALSE;
+    thread2 = CreateThread(NULL, 0, mediastreamfilter_wait_until, &params2, 0, NULL);
+    ok(!WaitForSingleObject(cookie2.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
+    ok(WaitForSingleObject(thread2, 100) == WAIT_TIMEOUT, "WaitUntil returned prematurely.\n");
+
     hr = IMediaStreamFilter_Stop(filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 

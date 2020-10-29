@@ -750,11 +750,28 @@ static HRESULT WINAPI filter_WaitUntil(IMediaStreamFilter *iface, REFERENCE_TIME
     return hr;
 }
 
-static HRESULT WINAPI filter_Flush(IMediaStreamFilter *iface, BOOL bCancelEOS)
+static HRESULT WINAPI filter_Flush(IMediaStreamFilter *iface, BOOL cancel_eos)
 {
-    FIXME("(%p)->(%d): Stub!\n", iface, bCancelEOS);
+    struct filter *filter = impl_from_IMediaStreamFilter(iface);
+    struct event *event;
 
-    return E_NOTIMPL;
+    TRACE("filter %p, cancel_eos %d.\n", iface, cancel_eos);
+
+    EnterCriticalSection(&filter->cs);
+
+    LIST_FOR_EACH_ENTRY(event, &filter->used_events, struct event, entry)
+    {
+        if (!event->interrupted)
+        {
+            event->interrupted = TRUE;
+            IReferenceClock_Unadvise(filter->clock, event->cookie);
+            SetEvent(event->event);
+        }
+    }
+
+    LeaveCriticalSection(&filter->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI filter_EndOfStream(IMediaStreamFilter *iface)
