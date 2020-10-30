@@ -5649,7 +5649,7 @@ static void test_MFCreateDXSurfaceBuffer(void)
 
     if (!pMFCreateDXSurfaceBuffer)
     {
-        skip("MFCreateDXSurfaceBuffer is not available.\n");
+        win_skip("MFCreateDXSurfaceBuffer is not available.\n");
         return;
     }
 
@@ -5670,6 +5670,9 @@ static void test_MFCreateDXSurfaceBuffer(void)
     ok(backbuffer != NULL, "The back buffer is NULL\n");
 
     IDirect3DSwapChain9_Release(swapchain);
+
+    hr = pMFCreateDXSurfaceBuffer(&IID_IUnknown, (IUnknown *)backbuffer, FALSE, &buffer);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = pMFCreateDXSurfaceBuffer(&IID_IDirect3DSurface9, (IUnknown *)backbuffer, FALSE, &buffer);
     ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
@@ -5763,6 +5766,12 @@ static void test_MFCreateDXSurfaceBuffer(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(data[0] == 0xab, "Unexpected leading byte.\n");
     IMF2DBuffer2_Unlock2D(_2dbuffer2);
+
+    hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(data[0] == 0xab, "Unexpected leading byte.\n");
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMF2DBuffer2_Lock2DSize(_2dbuffer2, MF2DBuffer_LockFlags_ReadWrite, &data, &pitch, &data2, &length);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
