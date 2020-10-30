@@ -134,6 +134,77 @@ static void get_virtual_rect(RECT *rect)
     rect->bottom = rect->top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
 }
 
+static BOOL equal_mode_rect(const DEVMODEW *mode1, const DEVMODEW *mode2)
+{
+    return mode1->dmPosition.x == mode2->dmPosition.x
+            && mode1->dmPosition.y == mode2->dmPosition.y
+            && mode1->dmPelsWidth == mode2->dmPelsWidth
+            && mode1->dmPelsHeight == mode2->dmPelsHeight;
+}
+
+/* Free original_modes after finished using it */
+static BOOL save_display_modes(DEVMODEW **original_modes, unsigned int *display_count)
+{
+    unsigned int number, size = 2, count = 0, index = 0;
+    DISPLAY_DEVICEW display_device;
+    DEVMODEW *modes, *tmp;
+
+    if (!(modes = heap_alloc(size * sizeof(*modes))))
+        return FALSE;
+
+    display_device.cb = sizeof(display_device);
+    while (EnumDisplayDevicesW(NULL, index++, &display_device, 0))
+    {
+        /* Skip software devices */
+        if (swscanf(display_device.DeviceName, L"\\\\.\\DISPLAY%u", &number) != 1)
+            continue;
+
+        if (!(display_device.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
+            continue;
+
+        if (count >= size)
+        {
+            size *= 2;
+            if (!(tmp = heap_realloc(modes, size * sizeof(*modes))))
+            {
+                heap_free(modes);
+                return FALSE;
+            }
+            modes = tmp;
+        }
+
+        memset(&modes[count], 0, sizeof(modes[count]));
+        modes[count].dmSize = sizeof(modes[count]);
+        if (!EnumDisplaySettingsW(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &modes[count]))
+        {
+            heap_free(modes);
+            return FALSE;
+        }
+
+        lstrcpyW(modes[count++].dmDeviceName, display_device.DeviceName);
+    }
+
+    *original_modes = modes;
+    *display_count = count;
+    return TRUE;
+}
+
+static BOOL restore_display_modes(DEVMODEW *modes, unsigned int count)
+{
+    unsigned int index;
+    LONG ret;
+
+    for (index = 0; index < count; ++index)
+    {
+        ret = ChangeDisplaySettingsExW(modes[index].dmDeviceName, &modes[index], NULL,
+                CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
+        if (ret != DISP_CHANGE_SUCCESSFUL)
+            return FALSE;
+    }
+    ret = ChangeDisplaySettingsExW(NULL, NULL, NULL, 0, NULL);
+    return ret == DISP_CHANGE_SUCCESSFUL;
+}
+
 /* try to make sure pending X events have been processed before continuing */
 static void flush_events(void)
 {
@@ -6897,6 +6968,360 @@ static void test_colour_space_support(IUnknown *device, BOOL is_d3d12)
     ok(ref_count == !is_d3d12, "Factory has %u references left.\n", ref_count);
 }
 
+static void test_mode_change(IUnknown *device, BOOL is_d3d12)
+{
+    unsigned int user32_width = 0, user32_height = 0, d3d_width = 0, d3d_height = 0;
+    unsigned int display_count = 0, mode_idx = 0, adapter_idx, output_idx;
+    DEVMODEW *original_modes = NULL, old_devmode, devmode, devmode2;
+    DXGI_SWAP_CHAIN_DESC swapchain_desc, swapchain_desc2;
+    IDXGIOutput *output, *second_output = NULL;
+    WCHAR second_monitor_name[CCHDEVICENAME];
+    IDXGISwapChain *swapchain, *swapchain2;
+    DXGI_OUTPUT_DESC output_desc;
+    IDXGIAdapter *adapter;
+    IDXGIFactory *factory;
+    BOOL fullscreen, ret;
+    LONG change_ret;
+    ULONG refcount;
+    HRESULT hr;
+
+    memset(&devmode, 0, sizeof(devmode));
+    devmode.dmSize = sizeof(devmode);
+    ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+    ok(equal_mode_rect(&devmode, &registry_mode), "Got a different mode.\n");
+    ret = EnumDisplaySettingsW(NULL, ENUM_REGISTRY_SETTINGS, &devmode);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+    ok(equal_mode_rect(&devmode, &registry_mode), "Got a different mode.\n");
+
+    while (EnumDisplaySettingsW(NULL, mode_idx++, &devmode))
+    {
+        if (devmode.dmPelsWidth == registry_mode.dmPelsWidth
+                && devmode.dmPelsHeight == registry_mode.dmPelsHeight)
+            continue;
+
+        if (!d3d_width && !d3d_height)
+        {
+            d3d_width = devmode.dmPelsWidth;
+            d3d_height = devmode.dmPelsHeight;
+            continue;
+        }
+
+        if (devmode.dmPelsWidth == d3d_width && devmode.dmPelsHeight == d3d_height)
+            continue;
+
+        user32_width = devmode.dmPelsWidth;
+        user32_height = devmode.dmPelsHeight;
+        break;
+    }
+    if (!user32_width || !user32_height)
+    {
+        skip("Failed to find three different display modes for the primary output.\n");
+        return;
+    }
+
+    ret = save_display_modes(&original_modes, &display_count);
+    ok(ret, "Failed to save original display modes.\n");
+
+    get_factory(device, is_d3d12, &factory);
+
+    /* Test that no mode restorations if no mode changes actually happened */
+    change_ret = ChangeDisplaySettingsW(&devmode, CDS_UPDATEREGISTRY | CDS_NORESET);
+    ok(change_ret == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsW failed with %d.\n", change_ret);
+
+    swapchain_desc.BufferDesc.Width = registry_mode.dmPelsWidth;
+    swapchain_desc.BufferDesc.Height = registry_mode.dmPelsHeight;
+    swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+    swapchain_desc.BufferDesc.RefreshRate.Denominator = 1;
+    swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = is_d3d12 ? 2 : 1;
+    swapchain_desc.OutputWindow = CreateWindowA("static", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
+    swapchain_desc.Windowed = TRUE;
+    swapchain_desc.SwapEffect = is_d3d12 ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
+    ok(hr == S_OK, "CreateSwapChain failed, hr %#x.\n", hr);
+    refcount = IDXGISwapChain_Release(swapchain);
+    ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+
+    memset(&devmode2, 0, sizeof(devmode2));
+    devmode2.dmSize = sizeof(devmode2);
+    ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode2);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+    ok(equal_mode_rect(&devmode2, &registry_mode), "Got a different mode.\n");
+    ret = restore_display_modes(original_modes, display_count);
+    ok(ret, "Failed to restore display modes.\n");
+
+    /* If current display settings are different than the display settings in registry before
+     * calling SetFullscreenState() */
+    change_ret = ChangeDisplaySettingsW(&devmode, CDS_UPDATEREGISTRY | CDS_NORESET);
+    ok(change_ret == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsW failed with %d.\n", change_ret);
+
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
+    ok(hr == S_OK, "CreateSwapChain failed, hr %#x.\n", hr);
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+    ok(hr == DXGI_ERROR_UNSUPPORTED /* Win7 */
+            || hr == S_OK /* Win8~Win10 1909 */
+            || hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE, /* Win10 2004 */
+            "Got unexpected hr %#x.\n", hr);
+
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    refcount = IDXGISwapChain_Release(swapchain);
+    ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+    ret = restore_display_modes(original_modes, display_count);
+    ok(ret, "Failed to restore display modes.\n");
+
+    /* Test that mode restorations use display settings in the registry with a fullscreen device */
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
+    ok(hr == S_OK, "CreateSwapChain failed, hr %#x.\n", hr);
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+    if (FAILED(hr))
+    {
+        skip("SetFullscreenState failed, hr %#x.\n", hr);
+        refcount = IDXGISwapChain_Release(swapchain);
+        ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+        goto done;
+    }
+
+    change_ret = ChangeDisplaySettingsW(&devmode, CDS_UPDATEREGISTRY | CDS_NORESET);
+    ok(change_ret == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsW failed with %d.\n", change_ret);
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode2);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+    todo_wine ok(equal_mode_rect(&devmode2, &devmode), "Got a different mode.\n");
+    ret = EnumDisplaySettingsW(NULL, ENUM_REGISTRY_SETTINGS, &devmode2);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+    ok(equal_mode_rect(&devmode2, &devmode), "Got a different mode.\n");
+    refcount = IDXGISwapChain_Release(swapchain);
+    ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+    ret = restore_display_modes(original_modes, display_count);
+    ok(ret, "Failed to restore display modes.\n");
+
+    for (adapter_idx = 0; SUCCEEDED(IDXGIFactory_EnumAdapters(factory, adapter_idx, &adapter)); ++adapter_idx)
+    {
+        for (output_idx = 0; SUCCEEDED(IDXGIAdapter_EnumOutputs(adapter, output_idx, &output)); ++output_idx)
+        {
+            hr = IDXGIOutput_GetDesc(output, &output_desc);
+            ok(hr == S_OK, "Adapter %u output %u: Got unexpected hr %#x.\n", adapter_idx, output_idx, hr);
+
+            if ((adapter_idx || output_idx) && output_desc.AttachedToDesktop)
+            {
+                second_output = output;
+                break;
+            }
+
+            IDXGIOutput_Release(output);
+        }
+
+        IDXGIAdapter_Release(adapter);
+        if (second_output)
+            break;
+    }
+
+    if (!second_output)
+    {
+        skip("Following tests require two monitors.\n");
+        goto done;
+    }
+    lstrcpyW(second_monitor_name, output_desc.DeviceName);
+
+    memset(&old_devmode, 0, sizeof(old_devmode));
+    old_devmode.dmSize = sizeof(old_devmode);
+    ret = EnumDisplaySettingsW(second_monitor_name, ENUM_CURRENT_SETTINGS, &old_devmode);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+
+    mode_idx = 0;
+    d3d_width = 0;
+    d3d_height = 0;
+    user32_width = 0;
+    user32_height = 0;
+    while (EnumDisplaySettingsW(second_monitor_name, mode_idx++, &devmode))
+    {
+        if (devmode.dmPelsWidth == old_devmode.dmPelsWidth
+                && devmode.dmPelsHeight == old_devmode.dmPelsHeight)
+            continue;
+
+        if (!d3d_width && !d3d_height)
+        {
+            d3d_width = devmode.dmPelsWidth;
+            d3d_height = devmode.dmPelsHeight;
+            continue;
+        }
+
+        if (devmode.dmPelsWidth == d3d_width && devmode.dmPelsHeight == d3d_height)
+            continue;
+
+        user32_width = devmode.dmPelsWidth;
+        user32_height = devmode.dmPelsHeight;
+        break;
+    }
+    if (!user32_width || !user32_height)
+    {
+        skip("Failed to find three different display modes for the second output.\n");
+        goto done;
+    }
+
+    /* Test that mode restorations for non-primary outputs upon fullscreen state changes */
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
+    ok(hr == S_OK, "CreateSwapChain failed, hr %#x.\n", hr);
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    change_ret = ChangeDisplaySettingsExW(second_monitor_name, &devmode, NULL, CDS_RESET, NULL);
+    ok(change_ret == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExW failed with %d.\n", change_ret);
+    ret = EnumDisplaySettingsW(second_monitor_name, ENUM_CURRENT_SETTINGS, &devmode2);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+    if (devmode2.dmPelsWidth == old_devmode.dmPelsWidth
+            && devmode2.dmPelsHeight == old_devmode.dmPelsHeight)
+    {
+        skip("Failed to change display settings of the second monitor.\n");
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        refcount = IDXGISwapChain_Release(swapchain);
+        ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+        goto done;
+    }
+
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ret = EnumDisplaySettingsW(second_monitor_name, ENUM_CURRENT_SETTINGS, &devmode2);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+    todo_wine ok(equal_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
+    ret = EnumDisplaySettingsW(second_monitor_name, ENUM_REGISTRY_SETTINGS, &devmode2);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+    ok(equal_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
+    hr = IDXGIOutput_GetDesc(second_output, &output_desc);
+    ok(hr == S_OK, "GetDesc failed, hr %#x.\n", hr);
+    todo_wine ok(output_desc.DesktopCoordinates.right - output_desc.DesktopCoordinates.left ==
+            old_devmode.dmPelsWidth, "Expected width %u, got %u.\n", old_devmode.dmPelsWidth,
+            output_desc.DesktopCoordinates.right - output_desc.DesktopCoordinates.left);
+    todo_wine ok(output_desc.DesktopCoordinates.bottom - output_desc.DesktopCoordinates.top ==
+            old_devmode.dmPelsHeight, "Expected height %u, got %u.\n", old_devmode.dmPelsHeight,
+            output_desc.DesktopCoordinates.bottom - output_desc.DesktopCoordinates.top);
+
+    refcount = IDXGISwapChain_Release(swapchain);
+    ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+    ret = restore_display_modes(original_modes, display_count);
+    ok(ret, "Failed to restore display modes.\n");
+
+    /* Test that mode restorations for non-primary outputs use display settings in the registry */
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
+    ok(hr == S_OK, "CreateSwapChain failed, hr %#x.\n", hr);
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+    ok(hr == S_OK, "SetFullscreenState failed, hr %#x.\n", hr);
+
+    change_ret = ChangeDisplaySettingsExW(second_monitor_name, &devmode, NULL,
+            CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
+    ok(change_ret == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExW failed with %d.\n", change_ret);
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+    ok(hr == S_OK, "SetFullscreenState failed, hr %#x.\n", hr);
+
+    ret = EnumDisplaySettingsW(second_monitor_name, ENUM_CURRENT_SETTINGS, &devmode2);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+    todo_wine ok(devmode2.dmPelsWidth == devmode.dmPelsWidth && devmode2.dmPelsHeight == devmode.dmPelsHeight,
+            "Expected resolution %ux%u, got %ux%u.\n", devmode.dmPelsWidth, devmode.dmPelsHeight,
+            devmode2.dmPelsWidth, devmode2.dmPelsHeight);
+    ret = EnumDisplaySettingsW(second_monitor_name, ENUM_REGISTRY_SETTINGS, &devmode2);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+    ok(devmode2.dmPelsWidth == devmode.dmPelsWidth && devmode2.dmPelsHeight == devmode.dmPelsHeight,
+            "Expected resolution %ux%u, got %ux%u.\n", devmode.dmPelsWidth, devmode.dmPelsHeight,
+            devmode2.dmPelsWidth, devmode2.dmPelsHeight);
+    hr = IDXGIOutput_GetDesc(second_output, &output_desc);
+    ok(hr == S_OK, "GetDesc failed, hr %#x.\n", hr);
+    todo_wine ok(output_desc.DesktopCoordinates.right - output_desc.DesktopCoordinates.left ==
+            devmode.dmPelsWidth, "Expected width %u, got %u.\n", devmode.dmPelsWidth,
+            output_desc.DesktopCoordinates.right - output_desc.DesktopCoordinates.left);
+    todo_wine ok(output_desc.DesktopCoordinates.bottom - output_desc.DesktopCoordinates.top ==
+            devmode.dmPelsHeight, "Expected height %u, got %u.\n", devmode.dmPelsHeight,
+            output_desc.DesktopCoordinates.bottom - output_desc.DesktopCoordinates.top);
+
+    refcount = IDXGISwapChain_Release(swapchain);
+    ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+    ret = restore_display_modes(original_modes, display_count);
+    ok(ret, "Failed to restore display modes.\n");
+
+    /* Test that mode restorations for non-primary outputs on fullscreen state changes when there
+     * are two fullscreen swapchains on different outputs */
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
+    ok(hr == S_OK, "CreateSwapChain failed, hr %#x.\n", hr);
+
+    swapchain_desc2 = swapchain_desc;
+    swapchain_desc.BufferDesc.Width = d3d_width;
+    swapchain_desc.BufferDesc.Height = d3d_height;
+    swapchain_desc2.OutputWindow = CreateWindowA("static", "dxgi_test2", 0,
+            old_devmode.dmPosition.x, old_devmode.dmPosition.y, 400, 200, 0, 0, 0, 0);
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc2, &swapchain2);
+    ok(hr == S_OK, "CreateSwapChain failed, hr %#x.\n", hr);
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+    ok(hr == S_OK, "SetFullscreenState failed, hr %#x.\n", hr);
+    hr = IDXGISwapChain_SetFullscreenState(swapchain2, TRUE, NULL);
+    if (FAILED(hr))
+    {
+        skip("SetFullscreenState failed, hr %#x.\n", hr);
+        refcount = IDXGISwapChain_Release(swapchain2);
+        ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+        hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+        ok(hr == S_OK, "SetFullscreenState failed, hr %#x.\n", hr);
+        refcount = IDXGISwapChain_Release(swapchain);
+        ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+        goto done;
+    }
+
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+    ok(hr == S_OK, "SetFullscreenState failed, hr %#x.\n", hr);
+    hr = IDXGISwapChain_GetFullscreenState(swapchain, &fullscreen, NULL);
+    ok(hr == S_OK, "GetFullscreenState failed, hr %#x.\n", hr);
+    ok(!fullscreen, "Expected swapchain not fullscreen.\n");
+    hr = IDXGISwapChain_GetFullscreenState(swapchain2, &fullscreen, NULL);
+    ok(hr == S_OK, "GetFullscreenState failed, hr %#x.\n", hr);
+    ok(fullscreen, "Expected swapchain fullscreen.\n");
+
+    ret = EnumDisplaySettingsW(second_monitor_name, ENUM_CURRENT_SETTINGS, &devmode2);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+    ok(equal_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
+    ret = EnumDisplaySettingsW(second_monitor_name, ENUM_REGISTRY_SETTINGS, &devmode2);
+    ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
+    ok(equal_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
+    hr = IDXGIOutput_GetDesc(second_output, &output_desc);
+    ok(hr == S_OK, "GetDesc failed, hr %#x.\n", hr);
+    ok(output_desc.DesktopCoordinates.right - output_desc.DesktopCoordinates.left ==
+            old_devmode.dmPelsWidth, "Expected width %u, got %u.\n", old_devmode.dmPelsWidth,
+            output_desc.DesktopCoordinates.right - output_desc.DesktopCoordinates.left);
+    ok(output_desc.DesktopCoordinates.bottom - output_desc.DesktopCoordinates.top ==
+            old_devmode.dmPelsHeight, "Expected height %u, got %u.\n", old_devmode.dmPelsHeight,
+            output_desc.DesktopCoordinates.bottom - output_desc.DesktopCoordinates.top);
+
+    hr = IDXGISwapChain_SetFullscreenState(swapchain2, FALSE, NULL);
+    ok(hr == S_OK, "SetFullscreenState failed, hr %#x.\n", hr);
+    refcount = IDXGISwapChain_Release(swapchain2);
+    ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+    refcount = IDXGISwapChain_Release(swapchain);
+    ok(!refcount, "IDXGISwapChain has %u references left.\n", refcount);
+    DestroyWindow(swapchain_desc2.OutputWindow);
+    ret = restore_display_modes(original_modes, display_count);
+    ok(ret, "Failed to restore display modes.\n");
+
+done:
+    if (second_output)
+        IDXGIOutput_Release(second_output);
+    DestroyWindow(swapchain_desc.OutputWindow);
+    refcount = IDXGIFactory_Release(factory);
+    ok(refcount == !is_d3d12, "Got unexpected refcount %u.\n", refcount);
+    ret = restore_display_modes(original_modes, display_count);
+    ok(ret, "Failed to restore display modes.\n");
+    heap_free(original_modes);
+}
+
 static void run_on_d3d10(void (*test_func)(IUnknown *device, BOOL is_d3d12))
 {
     IDXGIDevice *device;
@@ -7013,6 +7438,7 @@ START_TEST(dxgi)
     run_on_d3d10(test_get_containing_output);
     run_on_d3d10(test_window_association);
     run_on_d3d10(test_default_fullscreen_target_output);
+    run_on_d3d10(test_mode_change);
 
     if (!(d3d12_module = LoadLibraryA("d3d12.dll")))
     {
@@ -7042,6 +7468,7 @@ START_TEST(dxgi)
     run_on_d3d12(test_get_containing_output);
     run_on_d3d12(test_window_association);
     run_on_d3d12(test_default_fullscreen_target_output);
+    run_on_d3d12(test_mode_change);
 
     FreeLibrary(d3d12_module);
 }
