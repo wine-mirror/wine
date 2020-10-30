@@ -601,3 +601,133 @@ IMFMediaType *mf_media_type_from_caps(const GstCaps *caps)
 
     return media_type;
 }
+
+GstCaps *caps_from_mf_media_type(IMFMediaType *type)
+{
+    GUID major_type;
+    GUID subtype;
+    GstCaps *output = NULL;
+
+    if (FAILED(IMFMediaType_GetMajorType(type, &major_type)))
+        return NULL;
+    if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
+        return NULL;
+
+    if (IsEqualGUID(&major_type, &MFMediaType_Video))
+    {
+        UINT64 frame_rate = 0, frame_size = 0;
+        DWORD width, height;
+        GstVideoFormat format = GST_VIDEO_FORMAT_UNKNOWN;
+        GUID subtype_base;
+        GstVideoInfo info;
+        unsigned int i;
+
+        if (FAILED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size)))
+            return NULL;
+        width = frame_size >> 32;
+        height = frame_size;
+
+        output = gst_caps_new_empty_simple("video/x-raw");
+
+        for (i = 0; i < ARRAY_SIZE(uncompressed_video_formats); i++)
+        {
+            if (IsEqualGUID(uncompressed_video_formats[i].subtype, &subtype))
+            {
+                format = uncompressed_video_formats[i].format;
+                break;
+            }
+        }
+
+        subtype_base = subtype;
+        subtype_base.Data1 = 0;
+        if (format == GST_VIDEO_FORMAT_UNKNOWN && IsEqualGUID(&MFVideoFormat_Base, &subtype_base))
+            format = gst_video_format_from_fourcc(subtype.Data1);
+
+        if (format == GST_VIDEO_FORMAT_UNKNOWN)
+        {
+            FIXME("Unrecognized format %s\n", debugstr_guid(&subtype));
+            return NULL;
+        }
+
+        gst_video_info_set_format(&info, format, width, height);
+        output = gst_video_info_to_caps(&info);
+
+        if (frame_size)
+        {
+            gst_caps_set_simple(output, "width", G_TYPE_INT, width, NULL);
+            gst_caps_set_simple(output, "height", G_TYPE_INT, height, NULL);
+        }
+        if (SUCCEEDED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_RATE, &frame_rate)))
+        {
+            /* Darksiders: Warmastered Edition uses a MF_MT_FRAME_RATE of 0,
+               and gstreamer won't accept an undefined number as the framerate. */
+            if (!(DWORD32)frame_rate)
+                frame_rate = 1;
+            gst_caps_set_simple(output, "framerate", GST_TYPE_FRACTION, (DWORD32)(frame_rate >> 32), (DWORD32) frame_rate, NULL);
+        }
+        return output;
+    }
+    else if (IsEqualGUID(&major_type, &MFMediaType_Audio))
+    {
+        DWORD rate, channels, channel_mask, bitrate;
+
+        if (IsEqualGUID(&subtype, &MFAudioFormat_Float))
+        {
+            output = gst_caps_new_empty_simple("audio/x-raw");
+
+            gst_caps_set_simple(output, "format", G_TYPE_STRING, "F32LE", NULL);
+            gst_caps_set_simple(output, "layout", G_TYPE_STRING, "interleaved", NULL);
+        }
+        else if (IsEqualGUID(&subtype, &MFAudioFormat_PCM))
+        {
+            DWORD bits_per_sample;
+
+            if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_BITS_PER_SAMPLE, &bits_per_sample)))
+            {
+                char format[6];
+                char type;
+
+                type = bits_per_sample > 8 ? 'S' : 'U';
+
+                output = gst_caps_new_empty_simple("audio/x-raw");
+
+                sprintf(format, "%c%u%s", type, bits_per_sample, bits_per_sample > 8 ? "LE" : "");
+
+                gst_caps_set_simple(output, "format", G_TYPE_STRING, format, NULL);
+            }
+            else
+            {
+                ERR("Bits per sample not set.\n");
+                return NULL;
+            }
+        }
+        else
+        {
+            FIXME("Unrecognized subtype %s\n", debugstr_guid(&subtype));
+            return NULL;
+        }
+
+        if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &rate)))
+        {
+            gst_caps_set_simple(output, "rate", G_TYPE_INT, rate, NULL);
+        }
+        if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_NUM_CHANNELS, &channels)))
+        {
+            gst_caps_set_simple(output, "channels", G_TYPE_INT, channels, NULL);
+        }
+        if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_CHANNEL_MASK, &channel_mask)))
+        {
+            gst_caps_set_simple(output, "channel-mask", GST_TYPE_BITMASK, (guint64) channel_mask, NULL);
+        }
+
+        if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_AVG_BITRATE, &bitrate)))
+        {
+            gst_caps_set_simple(output, "bitrate", G_TYPE_INT, bitrate, NULL);
+        }
+
+        return output;
+    }
+
+    FIXME("Unrecognized major type %s\n", debugstr_guid(&major_type));
+    return NULL;
+}
