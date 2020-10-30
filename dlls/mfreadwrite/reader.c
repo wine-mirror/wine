@@ -439,7 +439,8 @@ static HRESULT source_reader_new_stream_handler(struct source_reader *reader, IM
                 }
 
                 if (reader->streams[i].requests)
-                    source_reader_request_sample(reader, &reader->streams[i]);
+                    if (FAILED(source_reader_request_sample(reader, &reader->streams[i])))
+                        WakeAllConditionVariable(&reader->sample_event);
             }
             break;
         }
@@ -1780,10 +1781,16 @@ static HRESULT source_reader_read_sample(struct source_reader *reader, DWORD ind
                     stream->requests++;
                     if (FAILED(hr = source_reader_request_sample(reader, stream)))
                         WARN("Failed to request a sample, hr %#x.\n", hr);
+                    if (stream->stream && !(stream->flags & STREAM_FLAG_SAMPLE_REQUESTED))
+                    {
+                        *stream_flags = MF_SOURCE_READERF_ERROR;
+                        *timestamp = 0;
+                        break;
+                    }
                     SleepConditionVariableCS(&reader->sample_event, &reader->cs, INFINITE);
                 }
-
-                source_reader_get_read_result(reader, stream, flags, &hr, actual_index, stream_flags,
+                if (SUCCEEDED(hr))
+                    source_reader_get_read_result(reader, stream, flags, &hr, actual_index, stream_flags,
                        timestamp, sample);
             }
         }

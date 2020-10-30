@@ -158,12 +158,17 @@ static HRESULT WINAPI test_media_stream_GetStreamDescriptor(IMFMediaStream *ifac
     return S_OK;
 }
 
+static BOOL fail_request_sample;
+
 static HRESULT WINAPI test_media_stream_RequestSample(IMFMediaStream *iface, IUnknown *token)
 {
     struct test_media_stream *stream = impl_from_IMFMediaStream(iface);
     IMFMediaBuffer *buffer;
     IMFSample *sample;
     HRESULT hr;
+
+    if (fail_request_sample)
+        return E_NOTIMPL;
 
     hr = MFCreateSample(&sample);
     ok(hr == S_OK, "Failed to create a sample, hr %#x.\n", hr);
@@ -977,6 +982,27 @@ static void test_source_reader_from_media_source(void)
     ok(hr == MF_E_NOTACCEPTING, "Unexpected hr %#x.\n", hr);
 
     IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
+
+    /* RequestSample failure. */
+    source = create_test_source();
+    ok(!!source, "Failed to create test source.\n");
+
+    fail_request_sample = TRUE;
+
+    hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
+    ok(hr == S_OK, "Failed to create source reader, hr %#x.\n", hr);
+
+    hr = IMFSourceReader_SetStreamSelection(reader, 0, TRUE);
+    ok(hr == S_OK, "Failed to select a stream, hr %#x.\n", hr);
+
+    hr = IMFSourceReader_ReadSample(reader, 0, 0, &actual_index, &stream_flags, &timestamp, &sample);
+    ok(hr == E_NOTIMPL, "Unexpected ReadSample result, hr %#x.\n", hr);
+
+    IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
+
+    fail_request_sample = FALSE;
 }
 
 START_TEST(mfplat)
