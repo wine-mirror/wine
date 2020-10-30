@@ -2348,11 +2348,11 @@ void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event)
 
     if (can_activate_window(hwnd) && !(style & WS_MINIMIZE))
     {
-        /* simulate a mouse click on the caption to find out
+        /* simulate a mouse click on the menu to find out
          * whether the window wants to be activated */
         LRESULT ma = SendMessageW(hwnd, WM_MOUSEACTIVATE,
                                   (WPARAM)GetAncestor(hwnd, GA_ROOT),
-                                  MAKELONG(HTCAPTION,WM_LBUTTONDOWN));
+                                  MAKELONG(HTMENU, WM_LBUTTONDOWN));
         if (ma != MA_NOACTIVATEANDEAT && ma != MA_NOACTIVATE)
         {
             TRACE("setting foreground window to %p\n", hwnd);
