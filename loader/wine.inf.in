@@ -3320,6 +3320,27 @@ HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"MUI_Dlt",,"@tzres.dll,
 HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"MUI_Std",,"@tzres.dll,-8832"
 HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"Std",,"Magadan Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"TZI",1,a8,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time,"Display",,"America/Punta_Arenas"
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time,"Dlt",,"Magallanes Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time,"MUI_Dlt",,"@tzres.dll,-13121"
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time,"MUI_Std",,"@tzres.dll,-13120"
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time,"Std",,"Magallanes Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"2005",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,02,00,00,00,00,00,00,00,00,00,00,00,0a,00,00,00,02,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"2006",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,02,00,00,00,00,00,00,00,00,00,00,00,0a,00,00,00,03,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"2007",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,02,00,00,00,00,00,00,00,00,00,00,00,0a,00,00,00,02,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"2008",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00,00,00,0a,00,00,00,02,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"2009",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,03,00,00,00,00,00,00,00,00,00,00,00,0a,00,00,00,02,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"2010",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,00,00,00,00,00,00,00,00,00,00,0a,00,00,00,02,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"2011",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,05,00,00,00,02,00,00,00,00,00,00,00,00,00,00,00,08,00,00,00,03,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"2012",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,05,00,00,00,00,00,00,00,00,00,00,00,09,00,00,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"2013",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,05,00,00,00,00,00,00,00,00,00,00,00,09,00,00,00,02,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"2014",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,05,00,00,00,00,00,00,00,00,00,00,00,09,00,00,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"2015",1,b4,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"2016",1,f0,00,00,00,00,00,00,00,c4,ff,ff,ff,00,00,05,00,00,00,03,00,00,00,00,00,00,00,00,00,00,00,08,00,00,00,02,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"2017",1,b4,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"FirstEntry",0x10001,"2005"
+HKLM,%CurrentVersionNT%\Time Zones\Magallanes Standard Time\Dynamic DST,"LastEntry",0x10001,"2017"
 HKLM,%CurrentVersionNT%\Time Zones\Marquesas Standard Time,"Display",,"Pacific/Marquesas"
 HKLM,%CurrentVersionNT%\Time Zones\Marquesas Standard Time,"Dlt",,"Marquesas Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Marquesas Standard Time,"MUI_Dlt",,"@tzres.dll,-20737"
