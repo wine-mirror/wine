@@ -551,6 +551,85 @@ struct gdi_font_family *find_family_from_any_name( const WCHAR *name )
     return NULL;
 }
 
+static BOOL add_family_replacement( const WCHAR *new_name, const WCHAR *replace )
+{
+    struct gdi_font_family *new_family, *family;
+    struct gdi_font_face *face;
+    WCHAR new_name_vert[LF_FACESIZE], replace_vert[LF_FACESIZE];
+
+    if (!(family = find_family_from_any_name( replace )))
+    {
+        TRACE( "%s is not available. Skip this replacement.\n", debugstr_w(replace) );
+        return FALSE;
+    }
+
+    if (!(new_family = create_family( new_name, NULL ))) return FALSE;
+    new_family->replacement = &family->faces;
+    TRACE( "mapping %s to %s\n", debugstr_w(replace), debugstr_w(new_name) );
+
+    /* also add replacement for vertical font if necessary */
+    if (replace[0] == '@') return TRUE;
+    if (list_empty( &family->faces )) return TRUE;
+    face = LIST_ENTRY( list_head(&family->faces), struct gdi_font_face, entry );
+    if (!(face->fs.fsCsb[0] & FS_DBCS_MASK)) return TRUE;
+
+    new_name_vert[0] = '@';
+    lstrcpynW( new_name_vert + 1, new_name, LF_FACESIZE - 1 );
+    if (find_family_from_any_name( new_name_vert )) return TRUE;  /* already exists */
+
+    replace_vert[0] = '@';
+    lstrcpynW( replace_vert + 1, replace, LF_FACESIZE - 1 );
+    add_family_replacement( new_name_vert, replace_vert );
+    return TRUE;
+}
+
+/*
+ * The replacement list is a way to map an entire font
+ * family onto another family.  For example adding
+ *
+ * [HKCU\Software\Wine\Fonts\Replacements]
+ * "Wingdings"="Winedings"
+ *
+ * would enumerate the Winedings font both as Winedings and
+ * Wingdings.  However if a real Wingdings font is present the
+ * replacement does not take place.
+ */
+void load_gdi_font_replacements(void)
+{
+    HKEY hkey;
+    DWORD i = 0, type, dlen, vlen;
+    WCHAR value[LF_FACESIZE], data[1024];
+
+    /* @@ Wine registry key: HKCU\Software\Wine\Fonts\Replacements */
+    if (RegOpenKeyA( wine_fonts_key, "Replacements", &hkey )) return;
+
+    dlen = sizeof(data);
+    vlen = ARRAY_SIZE(value);
+    while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, (BYTE *)data, &dlen ))
+    {
+        /* "NewName"="Oldname" */
+        if (!find_family_from_any_name( value ))
+        {
+            if (type == REG_MULTI_SZ)
+            {
+                WCHAR *replace = data;
+                while (*replace)
+                {
+                    if (add_family_replacement( value, replace )) break;
+                    replace += strlenW(replace) + 1;
+                }
+            }
+            else if (type == REG_SZ) add_family_replacement( value, data );
+        }
+        else TRACE("%s is available. Skip this replacement.\n", debugstr_w(value));
+
+        /* reset dlen and vlen */
+        dlen = sizeof(data);
+        vlen = ARRAY_SIZE(value);
+    }
+    RegCloseKey( hkey );
+}
+
 struct gdi_font_face *create_face( const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
                                    UINT index, FONTSIGNATURE fs, DWORD ntmflags, DWORD version,
                                    DWORD flags, const struct bitmap_font_size *size )

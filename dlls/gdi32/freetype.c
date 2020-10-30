@@ -235,8 +235,6 @@ typedef struct {
 
 typedef struct gdi_font_face Face;
 
-#define FS_DBCS_MASK (FS_JISJAPAN|FS_CHINESESIMP|FS_WANSUNG|FS_CHINESETRAD|FS_JOHAB)
-
 typedef struct gdi_font_family Family;
 
 typedef struct {
@@ -365,7 +363,6 @@ static const WCHAR font_mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N'
 
 static const WCHAR szDefaultFallbackLink[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0};
 
-static BOOL map_font_family(const WCHAR *orig, const WCHAR *repl);
 static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font );
 static BOOL CDECL freetype_set_bitmap_text_metrics( struct gdi_font *font );
 static void remove_face_from_cache( Face *face );
@@ -1735,117 +1732,6 @@ static void DumpFontList(void)
     }
 }
 
-static BOOL map_vertical_font_family(const WCHAR *orig, const WCHAR *repl, const Family *family)
-{
-    Face *face;
-    BOOL ret = FALSE;
-    WCHAR *at_orig, *at_repl = NULL;
-
-    face = LIST_ENTRY(list_head(&family->faces), Face, entry);
-    if (!face || !(face->fs.fsCsb[0] & FS_DBCS_MASK))
-        return FALSE;
-
-    at_orig = get_vertical_name( strdupW( orig ) );
-    if (at_orig && !find_family_from_any_name(at_orig))
-    {
-        at_repl = get_vertical_name( strdupW( repl ) );
-        if (at_repl)
-            ret = map_font_family(at_orig, at_repl);
-    }
-
-    HeapFree(GetProcessHeap(), 0, at_orig);
-    HeapFree(GetProcessHeap(), 0, at_repl);
-
-    return ret;
-}
-
-static BOOL map_font_family(const WCHAR *orig, const WCHAR *repl)
-{
-    Family *family = find_family_from_any_name(repl);
-    if (family != NULL)
-    {
-        Family *new_family = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_family));
-        if (new_family != NULL)
-        {
-            TRACE("mapping %s to %s\n", debugstr_w(repl), debugstr_w(orig));
-            lstrcpynW( new_family->family_name, orig, LF_FACESIZE );
-            new_family->second_name[0] = 0;
-            list_init(&new_family->faces);
-            new_family->replacement = &family->faces;
-            list_add_tail(&font_list, &new_family->entry);
-
-            if (repl[0] != '@')
-                map_vertical_font_family(orig, repl, family);
-
-            return TRUE;
-        }
-    }
-    TRACE("%s is not available. Skip this replacement.\n", debugstr_w(repl));
-    return FALSE;
-}
-
-/***********************************************************
- * The replacement list is a way to map an entire font
- * family onto another family.  For example adding
- *
- * [HKCU\Software\Wine\Fonts\Replacements]
- * "Wingdings"="Winedings"
- *
- * would enumerate the Winedings font both as Winedings and
- * Wingdings.  However if a real Wingdings font is present the
- * replacement does not take place.
- * 
- */
-static void LoadReplaceList(void)
-{
-    HKEY hkey;
-    DWORD valuelen, datalen, i = 0, type, dlen, vlen;
-    LPWSTR value;
-    LPVOID data;
-
-    /* @@ Wine registry key: HKCU\Software\Wine\Fonts\Replacements */
-    if(RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts\\Replacements", &hkey) == ERROR_SUCCESS)
-    {
-        RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-			 &valuelen, &datalen, NULL, NULL);
-
-	valuelen++; /* returned value doesn't include room for '\0' */
-	value = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(WCHAR));
-	data = HeapAlloc(GetProcessHeap(), 0, datalen);
-
-	dlen = datalen;
-	vlen = valuelen;
-        while(RegEnumValueW(hkey, i++, value, &vlen, NULL, &type, data, &dlen) == ERROR_SUCCESS)
-        {
-            /* "NewName"="Oldname" */
-            if(!find_family_from_any_name(value))
-            {
-                if (type == REG_MULTI_SZ)
-                {
-                    WCHAR *replace = data;
-                    while(*replace)
-                    {
-                        if (map_font_family(value, replace))
-                            break;
-                        replace += strlenW(replace) + 1;
-                    }
-                }
-                else if (type == REG_SZ)
-                    map_font_family(value, data);
-            }
-            else
-	        TRACE("%s is available. Skip this replacement.\n", debugstr_w(value));
-
-	    /* reset dlen and vlen */
-	    dlen = datalen;
-	    vlen = valuelen;
-	}
-	HeapFree(GetProcessHeap(), 0, data);
-	HeapFree(GetProcessHeap(), 0, value);
-	RegCloseKey(hkey);
-    }
-}
-
 static const WCHAR *font_links_list[] =
 {
     Lucida_Sans_Unicode,
@@ -2780,7 +2666,7 @@ BOOL WineEngInit( const struct font_backend_funcs **funcs )
 
     DumpFontList();
     load_gdi_font_subst();
-    LoadReplaceList();
+    load_gdi_font_replacements();
 
     if(disposition == REG_CREATED_NEW_KEY)
         update_reg_entries();

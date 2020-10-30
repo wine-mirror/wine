@@ -405,6 +405,8 @@ struct gdi_font
 #define MS_TTCF_TAG MS_MAKE_TAG('t', 't', 'c', 'f')
 #define MS_VDMX_TAG MS_MAKE_TAG('V', 'D', 'M', 'X')
 
+#define FS_DBCS_MASK (FS_JISJAPAN | FS_CHINESESIMP | FS_WANSUNG | FS_CHINESETRAD | FS_JOHAB)
+
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_ALLOW_BITMAP  0x02
 #define ADDFONT_ADD_TO_CACHE  0x04
@@ -449,6 +451,7 @@ extern struct gdi_font_family *create_family( const WCHAR *name, const WCHAR *se
 extern void release_family( struct gdi_font_family *family ) DECLSPEC_HIDDEN;
 extern struct gdi_font_family *find_family_from_name( const WCHAR *name ) DECLSPEC_HIDDEN;
 extern struct gdi_font_family *find_family_from_any_name( const WCHAR *name ) DECLSPEC_HIDDEN;
+extern void load_gdi_font_replacements(void) DECLSPEC_HIDDEN;
 extern struct gdi_font_face *create_face( const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
                                           UINT index, FONTSIGNATURE fs, DWORD ntmflags,
                                           DWORD version, DWORD flags, const struct bitmap_font_size *size ) DECLSPEC_HIDDEN;
