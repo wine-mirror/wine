@@ -3361,6 +3361,8 @@ done:
     DestroyWindow(device_window);
     DestroyWindow(focus_window);
     UnregisterClassA("d3d8_test_wndproc_wc", GetModuleHandleA(NULL));
+    change_ret = ChangeDisplaySettingsExW(NULL, NULL, NULL, 0, NULL);
+    ok(change_ret == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExW failed with %d.\n", change_ret);
 }
 
 static void test_wndproc_windowed(void)
