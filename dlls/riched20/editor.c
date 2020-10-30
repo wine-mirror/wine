@@ -987,7 +987,7 @@ void ME_RTFSpecialCharHook(RTF_Info *info)
       /* else fall through since v4.1 treats rtfNestRow and rtfRow the same */
     case rtfRow:
     {
-      ME_DisplayItem *run;
+      ME_Run *run;
       ME_Paragraph *para;
       ME_Cell *cell;
       int i;
@@ -1042,14 +1042,14 @@ void ME_RTFSpecialCharHook(RTF_Info *info)
           cell->nRightBoundary = tableDef->cells[i - 1].rightBoundary;
         }
 
-        run = ME_FindItemFwd( cell_get_di( cell) , diRun );
-        if (info->editor->pCursors[0].pRun != run ||
+        run = para_first_run( cell_first_para( cell ) );
+        if (&info->editor->pCursors[0].pRun->member.run != run ||
             info->editor->pCursors[0].nOffset)
         {
           int nOfs, nChars;
           /* Delete inserted cells that aren't defined. */
-          info->editor->pCursors[1].pRun = run;
-          info->editor->pCursors[1].pPara = ME_GetParagraph(run);
+          info->editor->pCursors[1].pRun = run_get_di( run );
+          info->editor->pCursors[1].pPara = para_get_di( run->para );
           info->editor->pCursors[1].nOffset = 0;
           nOfs = ME_GetCursorOfs(&info->editor->pCursors[1]);
           nChars = ME_GetCursorOfs(&info->editor->pCursors[0]) - nOfs;
