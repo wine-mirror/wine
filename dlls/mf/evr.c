@@ -335,19 +335,36 @@ static HRESULT WINAPI video_stream_sink_GetMediaTypeHandler(IMFStreamSink *iface
 static HRESULT WINAPI video_stream_sink_ProcessSample(IMFStreamSink *iface, IMFSample *sample)
 {
     struct video_stream *stream = impl_from_IMFStreamSink(iface);
+    LONGLONG timestamp;
+    HRESULT hr = S_OK;
 
-    FIXME("%p, %p.\n", iface, sample);
+    TRACE("%p, %p.\n", iface, sample);
 
     EnterCriticalSection(&stream->cs);
-    if (stream->flags & EVR_STREAM_PREROLLING)
+
+    if (!stream->parent)
+        hr = MF_E_STREAMSINK_REMOVED;
+    else if (!stream->parent->clock)
+        hr = MF_E_NO_CLOCK;
+    else if (FAILED(hr = IMFSample_GetSampleTime(sample, &timestamp)))
     {
-        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkPrerolled, &GUID_NULL, S_OK, NULL);
-        stream->flags &= ~EVR_STREAM_PREROLLING;
-        stream->flags |= EVR_STREAM_PREROLLED;
+        WARN("No sample timestamp, hr %#x.\n", hr);
     }
+    else if (stream->parent->state == EVR_STATE_RUNNING)
+    {
+        IMFTransform_ProcessInput(stream->parent->mixer, stream->id, sample, 0);
+
+        if (stream->flags & EVR_STREAM_PREROLLING)
+        {
+            IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkPrerolled, &GUID_NULL, S_OK, NULL);
+            stream->flags &= ~EVR_STREAM_PREROLLING;
+            stream->flags |= EVR_STREAM_PREROLLED;
+        }
+    }
+
     LeaveCriticalSection(&stream->cs);
 
-    return E_NOTIMPL;
+    return hr;
 }
 
 static HRESULT WINAPI video_stream_sink_PlaceMarker(IMFStreamSink *iface, MFSTREAMSINK_MARKER_TYPE marker_type,
