@@ -4435,6 +4435,8 @@ done:
     CloseHandle(thread_params.test_finished);
     CloseHandle(thread_params.window_created);
     UnregisterClassA("d3d9_test_wndproc_wc", GetModuleHandleA(NULL));
+    change_ret = ChangeDisplaySettingsExW(NULL, NULL, NULL, 0, NULL);
+    ok(change_ret == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExW failed with %d.\n", change_ret);
 }
 
 static void test_wndproc_windowed(void)
