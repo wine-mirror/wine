@@ -396,6 +396,110 @@ static void get_fonts_win_dir_path( const WCHAR *file, WCHAR *path )
     strcatW( path, file );
 }
 
+/* font substitutions */
+
+struct gdi_font_subst
+{
+    struct list entry;
+    int         from_charset;
+    int         to_charset;
+    WCHAR       names[1];
+};
+
+static struct list font_subst_list = LIST_INIT(font_subst_list);
+
+static inline WCHAR *get_subst_to_name( struct gdi_font_subst *subst )
+{
+    return subst->names + strlenW( subst->names ) + 1;
+}
+
+static void dump_gdi_font_subst(void)
+{
+    struct gdi_font_subst *subst;
+
+    LIST_FOR_EACH_ENTRY( subst, &font_subst_list, struct gdi_font_subst, entry )
+    {
+        if (subst->from_charset != -1 || subst->to_charset != -1)
+	    TRACE("%s,%d -> %s,%d\n", debugstr_w(subst->names),
+                  subst->from_charset, debugstr_w(get_subst_to_name(subst)), subst->to_charset);
+	else
+	    TRACE("%s -> %s\n", debugstr_w(subst->names), debugstr_w(get_subst_to_name(subst)));
+    }
+}
+
+const WCHAR *get_gdi_font_subst( const WCHAR *from_name, int from_charset, int *to_charset )
+{
+    struct gdi_font_subst *subst;
+
+    LIST_FOR_EACH_ENTRY( subst, &font_subst_list, struct gdi_font_subst, entry )
+    {
+        if (!strcmpiW(subst->names, from_name) &&
+           (subst->from_charset == from_charset || subst->from_charset == -1))
+        {
+            if (to_charset) *to_charset = subst->to_charset;
+            return get_subst_to_name( subst );
+        }
+    }
+    return NULL;
+}
+
+BOOL add_gdi_font_subst( const WCHAR *from_name, int from_charset, const WCHAR *to_name, int to_charset )
+{
+    struct gdi_font_subst *subst;
+    int len = strlenW( from_name ) + strlenW( to_name ) + 2;
+
+    if (get_gdi_font_subst( from_name, from_charset, NULL )) return FALSE;  /* already exists */
+
+    if (!(subst = HeapAlloc( GetProcessHeap(), 0,
+                             offsetof( struct gdi_font_subst, names[len] ))))
+        return FALSE;
+    strcpyW( subst->names, from_name );
+    strcpyW( get_subst_to_name(subst), to_name );
+    subst->from_charset = from_charset;
+    subst->to_charset = to_charset;
+    list_add_tail( &font_subst_list, &subst->entry );
+    return TRUE;
+}
+
+void load_gdi_font_subst(void)
+{
+    HKEY hkey;
+    DWORD i = 0, type, dlen, vlen;
+    WCHAR value[64], data[64], *p;
+
+    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes",
+                     &hkey)) return;
+
+    dlen = sizeof(data);
+    vlen = ARRAY_SIZE(value);
+    while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, (BYTE *)data, &dlen ))
+    {
+        int from_charset = -1, to_charset = -1;
+
+        TRACE("Got %s=%s\n", debugstr_w(value), debugstr_w(data));
+        if ((p = strrchrW( value, ',' )) && p[1])
+        {
+            *p++ = 0;
+            from_charset = strtolW( p, NULL, 10 );
+        }
+        if ((p = strrchrW( data, ',' )) && p[1])
+        {
+            *p++ = 0;
+            to_charset = strtolW( p, NULL, 10 );
+        }
+
+        /* Win 2000 doesn't allow mapping between different charsets
+           or mapping of DEFAULT_CHARSET */
+        if ((!from_charset || to_charset == from_charset) && to_charset != DEFAULT_CHARSET)
+            add_gdi_font_subst( value, from_charset, data, to_charset );
+
+        /* reset dlen and vlen */
+        dlen = sizeof(data);
+        vlen = ARRAY_SIZE(value);
+    }
+    RegCloseKey( hkey );
+}
+
 /* realized font objects */
 
 #define FIRST_FONT_HANDLE 1
@@ -2162,6 +2266,7 @@ void font_init(void)
 
     update_codepage();
     WineEngInit( &font_funcs );
+    dump_gdi_font_subst();
 }
 
 

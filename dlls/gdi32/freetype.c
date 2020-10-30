@@ -317,8 +317,6 @@ struct enum_charset_list {
 
 static struct list system_links = LIST_INIT(system_links);
 
-static struct list font_subst_list = LIST_INIT(font_subst_list);
-
 static struct list font_list = LIST_INIT(font_list);
 
 static const struct font_backend_funcs font_funcs;
@@ -384,17 +382,6 @@ static const WCHAR *default_sans_list[] =
 static const WCHAR *default_serif = times_new_roman;
 static const WCHAR *default_fixed = courier_new;
 static const WCHAR *default_sans = arial;
-
-typedef struct {
-    WCHAR *name;
-    INT charset;
-} NameCs;
-
-typedef struct tagFontSubst {
-    struct list entry;
-    NameCs from;
-    NameCs to;
-} FontSubst;
 
 /* Registry font cache key and value names */
 static const WCHAR wine_fonts_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
@@ -781,21 +768,6 @@ static Family *find_family_from_any_name(const WCHAR *name)
     return NULL;
 }
 
-static void DumpSubstList(void)
-{
-    FontSubst *psub;
-
-    LIST_FOR_EACH_ENTRY(psub, &font_subst_list, FontSubst, entry)
-    {
-        if(psub->from.charset != -1 || psub->to.charset != -1)
-	    TRACE("%s:%d -> %s:%d\n", debugstr_w(psub->from.name),
-	      psub->from.charset, debugstr_w(psub->to.name), psub->to.charset);
-	else
-	    TRACE("%s -> %s\n", debugstr_w(psub->from.name),
-		  debugstr_w(psub->to.name));
-    }
-}
-
 static LPWSTR strdupW(LPCWSTR p)
 {
     LPWSTR ret;
@@ -803,60 +775,6 @@ static LPWSTR strdupW(LPCWSTR p)
     ret = HeapAlloc(GetProcessHeap(), 0, len);
     memcpy(ret, p, len);
     return ret;
-}
-
-static FontSubst *get_font_subst(const struct list *subst_list, const WCHAR *from_name,
-                                 INT from_charset)
-{
-    FontSubst *element;
-
-    LIST_FOR_EACH_ENTRY(element, subst_list, FontSubst, entry)
-    {
-        if(!strcmpiW(element->from.name, from_name) &&
-           (element->from.charset == from_charset ||
-            element->from.charset == -1))
-            return element;
-    }
-
-    return NULL;
-}
-
-#define ADD_FONT_SUBST_FORCE  1
-
-static BOOL add_font_subst(struct list *subst_list, FontSubst *subst, INT flags)
-{
-    FontSubst *from_exist, *to_exist;
-
-    from_exist = get_font_subst(subst_list, subst->from.name, subst->from.charset);
-
-    if(from_exist && (flags & ADD_FONT_SUBST_FORCE))
-    {
-        list_remove(&from_exist->entry);
-        HeapFree(GetProcessHeap(), 0, from_exist->from.name);
-        HeapFree(GetProcessHeap(), 0, from_exist->to.name);
-        HeapFree(GetProcessHeap(), 0, from_exist);
-        from_exist = NULL;
-    }
-
-    if(!from_exist)
-    {
-        to_exist = get_font_subst(subst_list, subst->to.name, subst->to.charset);
-
-        if(to_exist)
-        {
-            HeapFree(GetProcessHeap(), 0, subst->to.name);
-            subst->to.name = strdupW(to_exist->to.name);
-        }
-            
-        list_add_tail(subst_list, &subst->entry);
-
-        return TRUE;
-    }
-
-    HeapFree(GetProcessHeap(), 0, subst->from.name);
-    HeapFree(GetProcessHeap(), 0, subst->to.name);
-    HeapFree(GetProcessHeap(), 0, subst);
-    return FALSE;
 }
 
 static WCHAR *towstr(UINT cp, const char *str)
@@ -868,67 +786,6 @@ static WCHAR *towstr(UINT cp, const char *str)
     wstr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     MultiByteToWideChar(cp, 0, str, -1, wstr, len);
     return wstr;
-}
-
-static void split_subst_info(NameCs *nc, LPSTR str)
-{
-    CHAR *p = strrchr(str, ',');
-
-    nc->charset = -1;
-    if(p && *(p+1)) {
-        nc->charset = strtol(p+1, NULL, 10);
-	*p = '\0';
-    }
-    nc->name = towstr(CP_ACP, str);
-}
-
-static void LoadSubstList(void)
-{
-    FontSubst *psub;
-    HKEY hkey;
-    DWORD valuelen, datalen, i = 0, type, dlen, vlen;
-    LPSTR value;
-    LPVOID data;
-
-    if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
-		   "Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes",
-		   &hkey) == ERROR_SUCCESS) {
-
-        RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-			 &valuelen, &datalen, NULL, NULL);
-
-	valuelen++; /* returned value doesn't include room for '\0' */
-	value = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(CHAR));
-	data = HeapAlloc(GetProcessHeap(), 0, datalen);
-
-	dlen = datalen;
-	vlen = valuelen;
-	while(RegEnumValueA(hkey, i++, value, &vlen, NULL, &type, data,
-			    &dlen) == ERROR_SUCCESS) {
-	    TRACE("Got %s=%s\n", debugstr_a(value), debugstr_a(data));
-
-	    psub = HeapAlloc(GetProcessHeap(), 0, sizeof(*psub));
-	    split_subst_info(&psub->from, value);
-	    split_subst_info(&psub->to, data);
-
-	    /* Win 2000 doesn't allow mapping between different charsets
-	       or mapping of DEFAULT_CHARSET */
-	    if ((psub->from.charset && psub->to.charset != psub->from.charset) ||
-	       psub->to.charset == DEFAULT_CHARSET) {
-	        HeapFree(GetProcessHeap(), 0, psub->to.name);
-		HeapFree(GetProcessHeap(), 0, psub->from.name);
-		HeapFree(GetProcessHeap(), 0, psub);
-	    } else {
-	        add_font_subst(&font_subst_list, psub, 0);
-	    }
-	    /* reset dlen and vlen */
-	    dlen = datalen;
-	    vlen = valuelen;
-	}
-	HeapFree(GetProcessHeap(), 0, data);
-	HeapFree(GetProcessHeap(), 0, value);
-	RegCloseKey(hkey);
-    }
 }
 
 
@@ -1320,7 +1177,11 @@ static Family *create_family( WCHAR *family_name, WCHAR *second_name )
     Family * const family = HeapAlloc( GetProcessHeap(), 0, sizeof(*family) );
     family->refcount = 1;
     lstrcpynW( family->family_name, family_name, LF_FACESIZE );
-    if (second_name) lstrcpynW( family->second_name, second_name, LF_FACESIZE );
+    if (second_name)
+    {
+        lstrcpynW( family->second_name, second_name, LF_FACESIZE );
+        add_gdi_font_subst( second_name, -1, family_name, -1 );
+    }
     else family->second_name[0] = 0;
     list_init( &family->faces );
     family->replacement = &family->faces;
@@ -1468,16 +1329,6 @@ static void load_font_list_from_cache(HKEY hkey_font_cache)
 
         family = create_family( family_name, second_name );
 
-        if (second_name)
-        {
-            FontSubst *subst = HeapAlloc(GetProcessHeap(), 0, sizeof(*subst));
-            subst->from.name = strdupW( second_name );
-            subst->from.charset = -1;
-            subst->to.name = strdupW(family_name);
-            subst->to.charset = -1;
-            add_font_subst(&font_subst_list, subst, 0);
-        }
-
         load_face(hkey_family, family, buffer, sizeof(buffer), TRUE);
 
         HeapFree( GetProcessHeap(), 0, family_name );
@@ -1622,15 +1473,7 @@ static Family *get_family( FT_Face ft_face, BOOL vertical )
     }
 
     if ((family = find_family_from_name( family_name ))) family->refcount++;
-    else if ((family = create_family( family_name, second_name )) && second_name)
-    {
-        FontSubst *subst = HeapAlloc( GetProcessHeap(), 0, sizeof(*subst) );
-        subst->from.name = strdupW( second_name );
-        subst->from.charset = -1;
-        subst->to.name = strdupW( family_name );
-        subst->to.charset = -1;
-        add_font_subst( &font_subst_list, subst, 0 );
-    }
+    else family = create_family( family_name, second_name );
 
     HeapFree( GetProcessHeap(), 0, family_name );
     HeapFree( GetProcessHeap(), 0, second_name );
@@ -2208,7 +2051,6 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
 {
     const WCHAR *value;
     int i;
-    FontSubst *psub;
     Family *family;
     Face *face;
     const WCHAR *file;
@@ -2217,9 +2059,8 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
     {
         SYSTEM_LINKS *font_link;
 
-        psub = get_font_subst(&font_subst_list, name, -1);
         /* Don't store fonts that are only substitutes for other fonts */
-        if(psub)
+        if (get_gdi_font_subst( name, -1, NULL ))
         {
             TRACE("%s: Internal SystemLink entry for substituted font, ignoring\n", debugstr_w(name));
             return;
@@ -2240,12 +2081,8 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
             const struct list *face_list;
             CHILD_FONT *child_font;
 
-            value = values[i];
-            if (!strcmpiW(name,value))
-                continue;
-            psub = get_font_subst(&font_subst_list, value, -1);
-            if(psub)
-                value = psub->to.name;
+            if (!strcmpiW( name, values[i] )) continue;
+            if (!(value = get_gdi_font_subst( values[i], -1, NULL ))) value = values[i];
             family = find_family_from_name(value);
             if (!family)
                 continue;
@@ -2295,13 +2132,13 @@ static void init_system_links(void)
     DWORD type, max_val, max_data, val_len, data_len, index;
     WCHAR *value, *data;
     WCHAR *entry, *next;
+    const WCHAR *shelldlg_name;
     SYSTEM_LINKS *font_link, *system_font_link;
     CHILD_FONT *child_font;
     static const WCHAR tahoma_ttf[] = {'t','a','h','o','m','a','.','t','t','f',0};
     static const WCHAR System[] = {'S','y','s','t','e','m',0};
     static const WCHAR MS_Shell_Dlg[] = {'M','S',' ','S','h','e','l','l',' ','D','l','g',0};
     Face *face;
-    FontSubst *psub;
     UINT i, j;
 
     if(RegOpenKeyW(HKEY_LOCAL_MACHINE, system_link, &hkey) == ERROR_SUCCESS)
@@ -2314,9 +2151,8 @@ static void init_system_links(void)
         index = 0;
         while(RegEnumValueW(hkey, index++, value, &val_len, NULL, &type, (LPBYTE)data, &data_len) == ERROR_SUCCESS)
         {
-            psub = get_font_subst(&font_subst_list, value, -1);
             /* Don't store fonts that are only substitutes for other fonts */
-            if(psub)
+            if (get_gdi_font_subst( value, -1, NULL ))
             {
                 TRACE("%s: SystemLink entry for substituted font, ignoring\n", debugstr_w(value));
                 goto next;
@@ -2327,23 +2163,18 @@ static void init_system_links(void)
             list_init(&font_link->links);
             for(entry = data; (char*)entry < (char*)data + data_len && *entry != 0; entry = next)
             {
-                WCHAR *face_name;
+                const WCHAR *face_name = NULL;
+                WCHAR *p;
                 CHILD_FONT *child_font;
 
                 TRACE("%s: %s\n", debugstr_w(value), debugstr_w(entry));
 
                 next = entry + strlenW(entry) + 1;
-                
-                face_name = strchrW(entry, ',');
-                if(face_name)
+                if ((p = strchrW(entry, ',')))
                 {
-                    *face_name++ = 0;
-                    while(isspaceW(*face_name))
-                        face_name++;
-
-                    psub = get_font_subst(&font_subst_list, face_name, -1);
-                    if(psub)
-                        face_name = psub->to.name;
+                    *p++ = 0;
+                    while (isspaceW(*p)) p++;
+                    if (!(face_name = get_gdi_font_subst( p, -1, NULL ))) face_name = p;
                 }
                 face = find_face_from_filename(entry, face_name);
                 if(!face)
@@ -2372,26 +2203,25 @@ static void init_system_links(void)
     }
 
 
-    psub = get_font_subst(&font_subst_list, MS_Shell_Dlg, -1);
-    if (!psub) {
+    if (!(shelldlg_name = get_gdi_font_subst( MS_Shell_Dlg, -1, NULL ))) {
         WARN("could not find FontSubstitute for MS Shell Dlg\n");
         goto skip_internal;
     }
 
     for (i = 0; i < ARRAY_SIZE(font_links_defaults_list); i++)
     {
-        const FontSubst *psub2;
-        psub2 = get_font_subst(&font_subst_list, font_links_defaults_list[i].shelldlg, -1);
+        const WCHAR *subst = get_gdi_font_subst( font_links_defaults_list[i].shelldlg, -1, NULL );
 
-        if ((!strcmpiW(font_links_defaults_list[i].shelldlg, psub->to.name) || (psub2 && !strcmpiW(psub2->to.name,psub->to.name))))
+        if ((!strcmpiW(font_links_defaults_list[i].shelldlg, shelldlg_name) ||
+             (subst && !strcmpiW( subst, shelldlg_name ))))
         {
             for (j = 0; j < ARRAY_SIZE(font_links_list); j++)
                 populate_system_links(font_links_list[j], font_links_defaults_list[i].substitutes);
 
-            if (!strcmpiW(psub->to.name, font_links_defaults_list[i].substitutes[0]))
-                populate_system_links(psub->to.name, font_links_defaults_list[i].substitutes);
+            if (!strcmpiW( shelldlg_name, font_links_defaults_list[i].substitutes[0] ))
+                populate_system_links( shelldlg_name, font_links_defaults_list[i].substitutes );
         }
-        else if (strcmpiW(psub->to.name, font_links_defaults_list[i].substitutes[0]))
+        else if (strcmpiW( shelldlg_name, font_links_defaults_list[i].substitutes[0] ))
         {
             populate_system_links(font_links_defaults_list[i].substitutes[0], NULL);
         }
@@ -3096,8 +2926,7 @@ BOOL WineEngInit( const struct font_backend_funcs **funcs )
     reorder_font_list();
 
     DumpFontList();
-    LoadSubstList();
-    DumpSubstList();
+    load_gdi_font_subst();
     LoadReplaceList();
 
     if(disposition == REG_CREATED_NEW_KEY)
@@ -3531,11 +3360,10 @@ static void create_child_font_list( struct gdi_font *font )
 {
     SYSTEM_LINKS *font_link;
     CHILD_FONT *font_link_entry;
-    FontSubst *psub;
-    const WCHAR* font_name;
+    const WCHAR *font_name;
 
-    psub = get_font_subst(&font_subst_list, get_gdi_font_name(font), -1);
-    font_name = psub ? psub->to.name : get_gdi_font_name(font);
+    if (!(font_name = get_gdi_font_subst( get_gdi_font_name(font), -1, NULL )))
+        font_name = get_gdi_font_name( font );
     font_link = find_font_link(font_name);
     if (font_link != NULL)
     {
@@ -3874,7 +3702,7 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
     LOGFONTW lf;
     CHARSETINFO csi;
     FMAT2 dcmat;
-    FontSubst *psub = NULL;
+    const WCHAR *orig_name = NULL;
     const SYSTEM_LINKS *font_link;
 
     GetObjectW( hfont, sizeof(lf), &lf );
@@ -3950,14 +3778,14 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
     if(lf.lfFaceName[0] != '\0') {
         CHILD_FONT *font_link_entry;
         LPWSTR FaceName = lf.lfFaceName;
+        int subst_charset;
+        const WCHAR *subst = get_gdi_font_subst( FaceName, lf.lfCharSet, &subst_charset );
 
-        psub = get_font_subst(&font_subst_list, FaceName, lf.lfCharSet);
-
-	if(psub) {
+	if(subst) {
 	    TRACE("substituting %s,%d -> %s,%d\n", debugstr_w(FaceName), lf.lfCharSet,
-		  debugstr_w(psub->to.name), (psub->to.charset != -1) ? psub->to.charset : lf.lfCharSet);
-	    if (psub->to.charset != -1)
-		lf.lfCharSet = psub->to.charset;
+		  debugstr_w(subst), (subst_charset != -1) ? subst_charset : lf.lfCharSet);
+	    if (subst_charset != -1) lf.lfCharSet = subst_charset;
+            orig_name = FaceName;
 	}
 
 	/* We want a match on name and charset or just name if
@@ -3968,7 +3796,7 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
 	*/
         LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
             if (!strncmpiW( family->family_name, FaceName, LF_FACESIZE - 1 ) ||
-                (psub && !strncmpiW( family->family_name, psub->to.name, LF_FACESIZE - 1 )))
+                (subst && !strncmpiW( family->family_name, subst, LF_FACESIZE - 1 )))
             {
                 font_link = find_font_link( family->family_name );
                 face_list = get_face_list_from_family(family);
@@ -4009,7 +3837,7 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
         LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
         {
             if(!strncmpiW(font_link->font_name, FaceName, LF_FACESIZE - 1) ||
-               (psub && !strncmpiW(font_link->font_name,psub->to.name, LF_FACESIZE - 1)))
+               (subst && !strncmpiW( font_link->font_name, subst, LF_FACESIZE - 1 )))
             {
                 TRACE("found entry in system list\n");
                 LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
@@ -4030,7 +3858,7 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
         }
     }
 
-    psub = NULL; /* substitution is no more relevant */
+    orig_name = NULL; /* substitution is no longer relevant */
 
     /* If requested charset was DEFAULT_CHARSET then try using charset
        corresponding to the current ansi codepage */
@@ -4184,7 +4012,7 @@ found_face:
     font->face_index = face->face_index;
     font->ntmFlags = face->ntmFlags;
     font->aa_flags = HIWORD( face->flags );
-    set_gdi_font_names( font, psub ? psub->from.name : family->family_name,
+    set_gdi_font_names( font, orig_name ? orig_name : family->family_name,
                         face->style_name, face->full_name );
 
     if(csi.fs.fsCsb[0]) {
@@ -4573,21 +4401,22 @@ static BOOL CDECL freetype_EnumFonts( LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM
 
     EnterCriticalSection( &font_cs );
     if(plf->lfFaceName[0]) {
-        WCHAR *face_name = plf->lfFaceName;
-        FontSubst *psub = get_font_subst(&font_subst_list, plf->lfFaceName, plf->lfCharSet);
+        const WCHAR *face_name = get_gdi_font_subst( plf->lfFaceName, plf->lfCharSet, NULL );
+        const WCHAR *orig_name = NULL;
 
-        if(psub) {
-            TRACE("substituting %s -> %s\n", debugstr_w(plf->lfFaceName),
-                  debugstr_w(psub->to.name));
-            face_name = psub->to.name;
+        if (face_name)
+        {
+            orig_name = plf->lfFaceName;
+            TRACE("substituting %s -> %s\n", debugstr_w(plf->lfFaceName), debugstr_w(face_name));
         }
+        else face_name = plf->lfFaceName;
 
         LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
             if (!family_matches(family, face_name)) continue;
             face_list = get_face_list_from_family(family);
             LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
                 if (!face_matches( family->family_name, face, face_name )) continue;
-                if (!enum_face_charsets(family, face, &enum_charsets, proc, lparam, psub ? psub->from.name : NULL)) return FALSE;
+                if (!enum_face_charsets(family, face, &enum_charsets, proc, lparam, orig_name)) return FALSE;
 	    }
 	}
     } else {

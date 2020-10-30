@@ -395,6 +395,10 @@ extern void load_system_bitmap_fonts(void) DECLSPEC_HIDDEN;
 extern void load_file_system_fonts(void) DECLSPEC_HIDDEN;
 extern void load_registry_fonts(void) DECLSPEC_HIDDEN;
 
+extern const WCHAR *get_gdi_font_subst( const WCHAR *from_name, int from_charset, int *to_charset ) DECLSPEC_HIDDEN;
+extern BOOL add_gdi_font_subst( const WCHAR *from_name, int from_charset, const WCHAR *to_name, int to_charset ) DECLSPEC_HIDDEN;
+extern void load_gdi_font_subst(void) DECLSPEC_HIDDEN;
+
 extern struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_T data_size ) DECLSPEC_HIDDEN;
 extern void free_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern void cache_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
