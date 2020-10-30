@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-10-29 23:45+0200\n"
+"PO-Revision-Date: 2020-10-30 23:36+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -9902,16 +9902,12 @@ msgid "Iran Daylight Time"
 msgstr "Irano vasaros laikas"
 
 #: dlls/tzres/tzres.rc:200
-#, fuzzy
-#| msgid "Haiti Standard Time"
 msgid "Saint Pierre Standard Time"
-msgstr "Haičio juostinis laikas"
+msgstr "Sen Pjero juostinis laikas"
 
 #: dlls/tzres/tzres.rc:201
-#, fuzzy
-#| msgid "Haiti Daylight Time"
 msgid "Saint Pierre Daylight Time"
-msgstr "Haičio vasaros laikas"
+msgstr "Sen Pjero vasaros laikas"
 
 #: dlls/tzres/tzres.rc:166
 msgid "Namibia Standard Time"
@@ -10002,16 +9998,12 @@ msgid "Azerbaijan Daylight Time"
 msgstr "Azerbaidžano vasaros laikas"
 
 #: dlls/tzres/tzres.rc:146
-#, fuzzy
-#| msgid "Magadan Standard Time"
 msgid "Magallanes Standard Time"
-msgstr "Magadano juostinis laikas"
+msgstr "Magelano juostinis laikas"
 
 #: dlls/tzres/tzres.rc:147
-#, fuzzy
-#| msgid "Magadan Daylight Time"
 msgid "Magallanes Daylight Time"
-msgstr "Magadano vasaros laikas"
+msgstr "Magelano vasaros laikas"
 
 #: dlls/tzres/tzres.rc:202
 msgid "Samoa Standard Time"
