@@ -517,7 +517,7 @@ struct gdi_font_family *create_family( const WCHAR *name, const WCHAR *second_na
     }
     else family->second_name[0] = 0;
     list_init( &family->faces );
-    family->replacement = &family->faces;
+    family->replacement = NULL;
     list_add_tail( &font_list, &family->entry );
     return family;
 }
@@ -527,6 +527,7 @@ void release_family( struct gdi_font_family *family )
     if (--family->refcount) return;
     assert( list_empty( &family->faces ));
     list_remove( &family->entry );
+    if (family->replacement) release_family( family->replacement );
     HeapFree( GetProcessHeap(), 0, family );
 }
 
@@ -564,7 +565,8 @@ static BOOL add_family_replacement( const WCHAR *new_name, const WCHAR *replace 
     }
 
     if (!(new_family = create_family( new_name, NULL ))) return FALSE;
-    new_family->replacement = &family->faces;
+    new_family->replacement = family;
+    family->refcount++;
     TRACE( "mapping %s to %s\n", debugstr_w(replace), debugstr_w(new_name) );
 
     /* also add replacement for vertical font if necessary */

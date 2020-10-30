@@ -307,12 +307,12 @@ struct glyph_metrics;
 
 struct gdi_font_family
 {
-    struct list  entry;
-    unsigned int refcount;
-    WCHAR        family_name[LF_FACESIZE];
-    WCHAR        second_name[LF_FACESIZE];
-    struct list  faces;
-    struct list *replacement;
+    struct list             entry;
+    unsigned int            refcount;
+    WCHAR                   family_name[LF_FACESIZE];
+    WCHAR                   second_name[LF_FACESIZE];
+    struct list             faces;
+    struct gdi_font_family *replacement;
 };
 
 struct bitmap_font_size

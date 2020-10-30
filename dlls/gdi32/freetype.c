@@ -662,10 +662,8 @@ static BOOL is_subpixel_rendering_enabled( void )
 
 static const struct list *get_face_list_from_family(const Family *family)
 {
-    if (!list_empty(&family->faces))
-        return &family->faces;
-    else
-        return family->replacement;
+    if (family->replacement) return &family->replacement->faces;
+    return &family->faces;
 }
 
 static Face *find_face_from_filename(const WCHAR *file_name, const WCHAR *face_name)
