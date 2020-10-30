@@ -265,21 +265,14 @@ typedef struct tagFace {
     BOOL scalable;
     Bitmap_Size size;     /* set if face is a bitmap */
     DWORD flags;          /* ADDFONT flags */
-    struct tagFamily *family;
+    struct gdi_font_family *family;
     /* Cached data for Enum */
     struct enum_data *cached_enum_data;
 } Face;
 
 #define FS_DBCS_MASK (FS_JISJAPAN|FS_CHINESESIMP|FS_WANSUNG|FS_CHINESETRAD|FS_JOHAB)
 
-typedef struct tagFamily {
-    struct list entry;
-    unsigned int refcount;
-    WCHAR family_name[LF_FACESIZE];
-    WCHAR second_name[LF_FACESIZE];
-    struct list faces;
-    struct list *replacement;
-} Family;
+typedef struct gdi_font_family Family;
 
 typedef struct {
     struct list entry;
@@ -316,8 +309,6 @@ struct enum_charset_list {
 };
 
 static struct list system_links = LIST_INIT(system_links);
-
-static struct list font_list = LIST_INIT(font_list);
 
 static const struct font_backend_funcs font_funcs;
 
@@ -745,29 +736,6 @@ static Face *find_face_from_filename(const WCHAR *file_name, const WCHAR *face_n
     return NULL;
 }
 
-static Family *find_family_from_name(const WCHAR *name)
-{
-    Family *family;
-
-    LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
-        if (!strncmpiW( family->family_name, name, LF_FACESIZE - 1 )) return family;
-
-    return NULL;
-}
-
-static Family *find_family_from_any_name(const WCHAR *name)
-{
-    Family *family;
-
-    LIST_FOR_EACH_ENTRY(family, &font_list, Family, entry)
-    {
-        if (!strncmpiW( family->family_name, name, LF_FACESIZE - 1 )) return family;
-        if (!strncmpiW( family->second_name, name, LF_FACESIZE - 1 )) return family;
-    }
-
-    return NULL;
-}
-
 static LPWSTR strdupW(LPCWSTR p)
 {
     LPWSTR ret;
@@ -1076,14 +1044,6 @@ static inline BOOL faces_equal( const Face *f1, const Face *f2 )
     return !memcmp( &f1->fs, &f2->fs, sizeof(f1->fs) );
 }
 
-static void release_family( Family *family )
-{
-    if (--family->refcount) return;
-    assert( list_empty( &family->faces ));
-    list_remove( &family->entry );
-    HeapFree( GetProcessHeap(), 0, family );
-}
-
 static void release_face( Face *face )
 {
     if (--face->refcount) return;
@@ -1166,28 +1126,6 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
     family->refcount++;
     face->refcount++;
     return TRUE;
-}
-
-/****************************************************************
- * NB This function stores the ptrs to the strings to save copying.
- * Don't free them after calling.
- */
-static Family *create_family( WCHAR *family_name, WCHAR *second_name )
-{
-    Family * const family = HeapAlloc( GetProcessHeap(), 0, sizeof(*family) );
-    family->refcount = 1;
-    lstrcpynW( family->family_name, family_name, LF_FACESIZE );
-    if (second_name)
-    {
-        lstrcpynW( family->second_name, second_name, LF_FACESIZE );
-        add_gdi_font_subst( second_name, -1, family_name, -1 );
-    }
-    else family->second_name[0] = 0;
-    list_init( &family->faces );
-    family->replacement = &family->faces;
-    list_add_tail( &font_list, &family->entry );
-
-    return family;
 }
 
 struct cached_face

@@ -443,7 +443,7 @@ const WCHAR *get_gdi_font_subst( const WCHAR *from_name, int from_charset, int *
     return NULL;
 }
 
-BOOL add_gdi_font_subst( const WCHAR *from_name, int from_charset, const WCHAR *to_name, int to_charset )
+static BOOL add_gdi_font_subst( const WCHAR *from_name, int from_charset, const WCHAR *to_name, int to_charset )
 {
     struct gdi_font_subst *subst;
     int len = strlenW( from_name ) + strlenW( to_name ) + 2;
@@ -498,6 +498,57 @@ void load_gdi_font_subst(void)
         vlen = ARRAY_SIZE(value);
     }
     RegCloseKey( hkey );
+}
+
+/* font families */
+
+struct list font_list = LIST_INIT(font_list);
+
+struct gdi_font_family *create_family( const WCHAR *name, const WCHAR *second_name )
+{
+    struct gdi_font_family *family = HeapAlloc( GetProcessHeap(), 0, sizeof(*family) );
+
+    family->refcount = 1;
+    lstrcpynW( family->family_name, name, LF_FACESIZE );
+    if (second_name && second_name[0])
+    {
+        lstrcpynW( family->second_name, second_name, LF_FACESIZE );
+        add_gdi_font_subst( second_name, -1, name, -1 );
+    }
+    else family->second_name[0] = 0;
+    list_init( &family->faces );
+    family->replacement = &family->faces;
+    list_add_tail( &font_list, &family->entry );
+    return family;
+}
+
+void release_family( struct gdi_font_family *family )
+{
+    if (--family->refcount) return;
+    assert( list_empty( &family->faces ));
+    list_remove( &family->entry );
+    HeapFree( GetProcessHeap(), 0, family );
+}
+
+struct gdi_font_family *find_family_from_name( const WCHAR *name )
+{
+    struct gdi_font_family *family;
+
+    LIST_FOR_EACH_ENTRY( family, &font_list, struct gdi_font_family, entry )
+        if (!strncmpiW( family->family_name, name, LF_FACESIZE - 1 )) return family;
+    return NULL;
+}
+
+struct gdi_font_family *find_family_from_any_name( const WCHAR *name )
+{
+    struct gdi_font_family *family;
+
+    LIST_FOR_EACH_ENTRY( family, &font_list, struct gdi_font_family, entry )
+    {
+        if (!strncmpiW( family->family_name, name, LF_FACESIZE - 1 )) return family;
+        if (!strncmpiW( family->second_name, name, LF_FACESIZE - 1 )) return family;
+    }
+    return NULL;
 }
 
 /* realized font objects */
