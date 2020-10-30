@@ -225,16 +225,6 @@ MAKE_FUNCPTR(FcPatternGetString);
 #define GASP_GRIDFIT 0x01
 #define GASP_DOGRAY  0x02
 
-/* This is basically a copy of FT_Bitmap_Size with an extra element added */
-typedef struct {
-    FT_Short height;
-    FT_Short width;
-    FT_Pos size;
-    FT_Pos x_ppem;
-    FT_Pos y_ppem;
-    FT_Short internal_leading;
-} Bitmap_Size;
-
 /* FT_Bitmap_Size gained 3 new elements between FreeType 2.1.4 and 2.1.5
    So to let this compile on older versions of FreeType we'll define the
    new structure here. */
@@ -243,32 +233,7 @@ typedef struct {
     FT_Pos size, x_ppem, y_ppem;
 } My_FT_Bitmap_Size;
 
-struct enum_data
-{
-    ENUMLOGFONTEXW elf;
-    NEWTEXTMETRICEXW ntm;
-    DWORD type;
-};
-
-typedef struct tagFace {
-    struct list entry;
-    unsigned int refcount;
-    WCHAR *style_name;
-    WCHAR *full_name;
-    WCHAR *file;
-    void *font_data_ptr;
-    DWORD font_data_size;
-    FT_Long face_index;
-    FONTSIGNATURE fs;
-    DWORD ntmFlags;
-    FT_Fixed font_version;
-    BOOL scalable;
-    Bitmap_Size size;     /* set if face is a bitmap */
-    DWORD flags;          /* ADDFONT flags */
-    struct gdi_font_family *family;
-    /* Cached data for Enum */
-    struct enum_data *cached_enum_data;
-} Face;
+typedef struct gdi_font_face Face;
 
 #define FS_DBCS_MASK (FS_JISJAPAN|FS_CHINESESIMP|FS_WANSUNG|FS_CHINESETRAD|FS_JOHAB)
 
@@ -1086,9 +1051,9 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
     {
         if (faces_equal( face, cursor ))
         {
-            TRACE( "Already loaded face %s in family %s, original version %lx, new version %lx\n",
+            TRACE( "Already loaded face %s in family %s, original version %x, new version %x\n",
                    debugstr_w(face->full_name), debugstr_w(family->family_name),
-                   cursor->font_version, face->font_version );
+                   cursor->version, face->version );
 
             if (face->file && !strcmpiW( face->file, cursor->file ))
             {
@@ -1097,7 +1062,7 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
                       debugstr_w(face->file), cursor->refcount);
                 return FALSE;
             }
-            if (face->font_version <= cursor->font_version)
+            if (face->version <= cursor->version)
             {
                 TRACE("Original font %s is newer so skipping %s\n",
                       debugstr_w(cursor->file), debugstr_w(face->file));
@@ -1130,19 +1095,14 @@ static BOOL insert_face_in_family_list( Face *face, Family *family )
 
 struct cached_face
 {
-    DWORD         index;
-    DWORD         flags;
-    DWORD         ntmflags;
-    DWORD         version;
-    DWORD         width;
-    DWORD         height;
-    DWORD         size;
-    DWORD         x_ppem;
-    DWORD         y_ppem;
-    DWORD         internal_leading;
-    FONTSIGNATURE fs;
-    WCHAR         full_name[1];
-    /* WCHAR      file_name[]; */
+    DWORD                   index;
+    DWORD                   flags;
+    DWORD                   ntmflags;
+    DWORD                   version;
+    struct bitmap_font_size size;
+    FONTSIGNATURE           fs;
+    WCHAR                   full_name[1];
+    /* WCHAR                file_name[]; */
 };
 
 static void load_face(HKEY hkey_family, Family *family, void *buffer, DWORD buffer_size, BOOL scalable)
@@ -1161,27 +1121,11 @@ static void load_face(HKEY hkey_family, Family *family, void *buffer, DWORD buff
         {
             ((DWORD *)buffer)[needed / sizeof(DWORD)] = 0;
 
-            face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
-            face->cached_enum_data = NULL;
-            face->family = NULL;
-            face->refcount = 1;
-            face->style_name = strdupW( name );
-            face->face_index = cached->index;
-            face->flags = cached->flags;
-            face->ntmFlags = cached->ntmflags;
-            face->font_version = cached->version;
-            face->size.width = cached->width;
-            face->size.height = cached->height;
-            face->size.size = cached->size;
-            face->size.x_ppem = cached->x_ppem;
-            face->size.y_ppem = cached->y_ppem;
-            face->size.internal_leading = cached->internal_leading;
-            face->fs = cached->fs;
-            face->full_name = strdupW( cached->full_name );
-            face->file = strdupW( cached->full_name + strlenW(cached->full_name) + 1 );
-            face->scalable = scalable;
-            if (!face->scalable)
-                TRACE("Adding bitmap size h %d w %d size %ld x_ppem %ld y_ppem %ld\n",
+            face = create_face( name, cached->full_name, cached->full_name + strlenW(cached->full_name) + 1,
+                                cached->index, cached->fs, cached->ntmflags, cached->version,
+                                cached->flags, scalable ? NULL : &cached->size );
+            if (!scalable)
+                TRACE("Adding bitmap size h %d w %d size %d x_ppem %d y_ppem %d\n",
                       face->size.height, face->size.width, face->size.size >> 6,
                       face->size.x_ppem >> 6, face->size.y_ppem >> 6);
 
@@ -1327,17 +1271,9 @@ static void add_face_to_cache(Face *face)
     cached->index = face->face_index;
     cached->flags = face->flags;
     cached->ntmflags = face->ntmFlags;
-    cached->version = face->font_version;
+    cached->version = face->version;
     cached->fs = face->fs;
-    if (!face->scalable)
-    {
-        cached->width = face->size.width;
-        cached->height = face->size.height;
-        cached->size = face->size.size;
-        cached->x_ppem = face->size.x_ppem;
-        cached->y_ppem = face->size.y_ppem;
-        cached->internal_leading = face->size.internal_leading;
-    }
+    if (!face->scalable) cached->size = face->size;
     strcpyW( cached->full_name, face->full_name );
     len = strlenW( face->full_name ) + 1;
     strcpyW( cached->full_name + len, face->file );
@@ -1453,7 +1389,7 @@ static inline DWORD get_ntm_flags( FT_Face ft_face )
     return flags;
 }
 
-static inline void get_bitmap_size( FT_Face ft_face, Bitmap_Size *face_size )
+static inline void get_bitmap_size( FT_Face ft_face, struct bitmap_font_size *face_size )
 {
     My_FT_Bitmap_Size *size;
     FT_WinFNT_HeaderRec winfnt_header;
@@ -1539,55 +1475,29 @@ static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
     }
 }
 
-static Face *create_face( FT_Face ft_face, FT_Long face_index, const WCHAR *filename,
-                          void *font_data_ptr, DWORD font_data_size, DWORD flags )
+static Face *create_face_from_ft_face( FT_Face ft_face, FT_Long face_index,
+                                       const WCHAR *filename, DWORD flags )
 {
-    Face *face = HeapAlloc( GetProcessHeap(), 0, sizeof(*face) );
+    struct bitmap_font_size size;
+    struct gdi_font_face *face;
+    FONTSIGNATURE fs;
+    WCHAR *style_name = ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
+    WCHAR *full_name = ft_face_get_full_name( ft_face, GetSystemDefaultLangID() );
 
-    face->refcount = 1;
-    face->style_name = ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
-    face->full_name = ft_face_get_full_name( ft_face, GetSystemDefaultLangID() );
-    if (flags & ADDFONT_VERTICAL_FONT) face->full_name = get_vertical_name( face->full_name );
-
-    if (filename)
-    {
-        face->file = strdupW( filename );
-        face->font_data_ptr = NULL;
-        face->font_data_size = 0;
-    }
-    else
-    {
-        face->file = NULL;
-        face->font_data_ptr = font_data_ptr;
-        face->font_data_size = font_data_size;
-    }
-
-    face->face_index = face_index;
-    get_fontsig( ft_face, &face->fs );
-    face->ntmFlags = get_ntm_flags( ft_face );
-    face->font_version = get_font_version( ft_face );
-
-    if (FT_IS_SCALABLE( ft_face ))
-    {
-        memset( &face->size, 0, sizeof(face->size) );
-        face->scalable = TRUE;
-    }
-    else
-    {
-        get_bitmap_size( ft_face, &face->size );
-        face->scalable = FALSE;
-    }
-
+    if (flags & ADDFONT_VERTICAL_FONT) full_name = get_vertical_name( full_name );
+    get_fontsig( ft_face, &fs );
+    if (!FT_IS_SCALABLE( ft_face )) get_bitmap_size( ft_face, &size );
     if (!HIWORD( flags )) flags |= ADDFONT_AA_FLAGS( default_aa_flags );
-    face->flags  = flags;
-    face->family = NULL;
-    face->cached_enum_data = NULL;
+
+    face = create_face( style_name, full_name, filename, face_index, fs,
+                        get_ntm_flags( ft_face ), get_font_version( ft_face ),
+                        flags, FT_IS_SCALABLE(ft_face) ? NULL : &size );
 
     TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
-          face->fs.fsCsb[0], face->fs.fsCsb[1],
-          face->fs.fsUsb[0], face->fs.fsUsb[1],
-          face->fs.fsUsb[2], face->fs.fsUsb[3]);
+          fs.fsCsb[0], fs.fsCsb[1], fs.fsUsb[0], fs.fsUsb[1], fs.fsUsb[2], fs.fsUsb[3]);
 
+    HeapFree( GetProcessHeap(), 0, style_name );
+    HeapFree( GetProcessHeap(), 0, full_name );
     return face;
 }
 
@@ -1597,7 +1507,12 @@ static void AddFaceToList(FT_Face ft_face, const WCHAR *file, void *font_data_pt
     Face *face;
     Family *family;
 
-    face = create_face( ft_face, face_index, file, font_data_ptr, font_data_size, flags );
+    face = create_face_from_ft_face( ft_face, face_index, file, flags );
+    if (face && !file)
+    {
+        face->data_ptr = font_data_ptr;
+        face->data_size = font_data_size;
+    }
     family = get_family( ft_face, flags & ADDFONT_VERTICAL_FONT );
 
     if (insert_face_in_family_list( face, family ))
@@ -2051,7 +1966,7 @@ static void populate_system_links(const WCHAR *name, const WCHAR *const *values)
             child_font->face = face;
             font_link->fs.fsCsb[0] |= face->fs.fsCsb[0];
             font_link->fs.fsCsb[1] |= face->fs.fsCsb[1];
-            TRACE("Adding file %s index %ld\n", debugstr_w(child_font->face->file),
+            TRACE("Adding file %s index %u\n", debugstr_w(child_font->face->file),
                   child_font->face->face_index);
             list_add_tail(&font_link->links, &child_font->entry);
 
@@ -2125,7 +2040,7 @@ static void init_system_links(void)
                 child_font->face = face;
                 font_link->fs.fsCsb[0] |= face->fs.fsCsb[0];
                 font_link->fs.fsCsb[1] |= face->fs.fsCsb[1];
-                TRACE("Adding file %s index %ld\n",
+                TRACE("Adding file %s index %u\n",
                       debugstr_w(child_font->face->file), child_font->face->face_index);
                 list_add_tail(&font_link->links, &child_font->entry);
             }
@@ -2182,7 +2097,7 @@ skip_internal:
         child_font->face = face;
         system_font_link->fs.fsCsb[0] |= face->fs.fsCsb[0];
         system_font_link->fs.fsCsb[1] |= face->fs.fsCsb[1];
-        TRACE("Found Tahoma in %s index %ld\n",
+        TRACE("Found Tahoma in %s index %u\n",
               debugstr_w(child_font->face->file), child_font->face->face_index);
         list_add_tail(&system_font_link->links, &child_font->entry);
     }
@@ -3274,7 +3189,7 @@ static void add_child_font( struct gdi_font *font, Face *face )
     }
     if (best_face) face = best_face;
 
-    child = alloc_gdi_font( face->file, face->font_data_ptr, face->font_data_size );
+    child = alloc_gdi_font( face->file, face->data_ptr, face->data_size );
     child->fake_italic = italic && !(face->ntmFlags & NTM_ITALIC);
     child->fake_bold = bold && !(face->ntmFlags & NTM_BOLD);
     child->lf = font->lf;
@@ -3609,7 +3524,7 @@ static BOOL CDECL freetype_load_font( struct gdi_font *font )
     }
     else
     {
-        Bitmap_Size size;
+        struct bitmap_font_size size;
 
         get_bitmap_size( ft_face, &size );
         width = size.x_ppem >> 6;
@@ -3939,7 +3854,7 @@ found_face:
     height = lf.lfHeight;
 
     TRACE("not in cache\n");
-    font = alloc_gdi_font( face->file, face->font_data_ptr, face->font_data_size );
+    font = alloc_gdi_font( face->file, face->data_ptr, face->data_size );
 
     font->matrix = dcmat;
     font->lf = lf;
@@ -3960,8 +3875,8 @@ found_face:
     else
         font->charset = get_nearest_charset( family->family_name, face, &font->codepage );
 
-    TRACE( "Chosen: %s (%s/%p:%ld)\n", debugstr_w(face->full_name), debugstr_w(face->file),
-           face->font_data_ptr, face->face_index );
+    TRACE( "Chosen: %s (%s/%p:%u)\n", debugstr_w(face->full_name), debugstr_w(face->file),
+           face->data_ptr, face->face_index );
 
     font->aveWidth = height ? lf.lfWidth : 0;
 
@@ -4180,7 +4095,7 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
         return;
     }
 
-    font = alloc_gdi_font( face->file, face->font_data_ptr, face->font_data_size );
+    font = alloc_gdi_font( face->file, face->data_ptr, face->data_size );
     font->lf.lfHeight = 100;
     font->face_index = face->face_index;
     font->ntmFlags = face->ntmFlags;

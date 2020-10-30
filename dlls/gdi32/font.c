@@ -551,6 +551,26 @@ struct gdi_font_family *find_family_from_any_name( const WCHAR *name )
     return NULL;
 }
 
+struct gdi_font_face *create_face( const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
+                                   UINT index, FONTSIGNATURE fs, DWORD ntmflags, DWORD version,
+                                   DWORD flags, const struct bitmap_font_size *size )
+{
+    struct gdi_font_face *face = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*face) );
+
+    face->refcount   = 1;
+    face->style_name = strdupW( style );
+    face->full_name  = strdupW( fullname );
+    face->face_index = index;
+    face->fs         = fs;
+    face->ntmFlags   = ntmflags;
+    face->version    = version;
+    face->flags      = flags;
+    if (file) face->file = strdupW( file );
+    if (size) face->size = *size;
+    else face->scalable = TRUE;
+    return face;
+}
+
 /* realized font objects */
 
 #define FIRST_FONT_HANDLE 1

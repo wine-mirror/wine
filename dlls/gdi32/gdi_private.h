@@ -315,6 +315,42 @@ struct gdi_font_family
     struct list *replacement;
 };
 
+struct bitmap_font_size
+{
+    int  width;
+    int  height;
+    int  size;
+    int  x_ppem;
+    int  y_ppem;
+    int  internal_leading;
+};
+
+struct gdi_font_enum_data
+{
+    ENUMLOGFONTEXW elf;
+    NEWTEXTMETRICEXW ntm;
+};
+
+struct gdi_font_face
+{
+    struct list   entry;
+    unsigned int  refcount;
+    WCHAR        *style_name;
+    WCHAR        *full_name;
+    WCHAR        *file;
+    void         *data_ptr;
+    SIZE_T        data_size;
+    UINT          face_index;
+    FONTSIGNATURE fs;
+    DWORD         ntmFlags;
+    DWORD         version;
+    DWORD         flags;                 /* ADDFONT flags */
+    BOOL          scalable;
+    struct bitmap_font_size    size;     /* set if face is a bitmap */
+    struct gdi_font_family    *family;
+    struct gdi_font_enum_data *cached_enum_data;
+};
+
 struct gdi_font
 {
     struct list            entry;
@@ -413,6 +449,9 @@ extern struct gdi_font_family *create_family( const WCHAR *name, const WCHAR *se
 extern void release_family( struct gdi_font_family *family ) DECLSPEC_HIDDEN;
 extern struct gdi_font_family *find_family_from_name( const WCHAR *name ) DECLSPEC_HIDDEN;
 extern struct gdi_font_family *find_family_from_any_name( const WCHAR *name ) DECLSPEC_HIDDEN;
+extern struct gdi_font_face *create_face( const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
+                                          UINT index, FONTSIGNATURE fs, DWORD ntmflags,
+                                          DWORD version, DWORD flags, const struct bitmap_font_size *size ) DECLSPEC_HIDDEN;
 
 extern struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_T data_size ) DECLSPEC_HIDDEN;
 extern void free_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
