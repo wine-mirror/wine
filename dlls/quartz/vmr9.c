@@ -60,6 +60,7 @@ struct quartz_vmr
 
     IAMCertifiedOutputProtection IAMCertifiedOutputProtection_iface;
     IAMFilterMiscFlags IAMFilterMiscFlags_iface;
+    IVMRAspectRatioControl9 IVMRAspectRatioControl9_iface;
     IVMRFilterConfig IVMRFilterConfig_iface;
     IVMRFilterConfig9 IVMRFilterConfig9_iface;
     IVMRMixerBitmap9 IVMRMixerBitmap9_iface;
@@ -603,6 +604,8 @@ static HRESULT vmr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
         *out = &filter->IAMCertifiedOutputProtection_iface;
     else if (IsEqualGUID(iid, &IID_IAMFilterMiscFlags))
         *out = &filter->IAMFilterMiscFlags_iface;
+    else if (IsEqualGUID(iid, &IID_IVMRAspectRatioControl9) && is_vmr9(filter))
+        *out = &filter->IVMRAspectRatioControl9_iface;
     else if (IsEqualGUID(iid, &IID_IVMRFilterConfig) && !is_vmr9(filter))
         *out = &filter->IVMRFilterConfig_iface;
     else if (IsEqualGUID(iid, &IID_IVMRFilterConfig9) && is_vmr9(filter))
@@ -2396,6 +2399,62 @@ static const IVMRMixerBitmap9Vtbl mixer_bitmap9_vtbl =
     mixer_bitmap9_GetAlphaBitmapParameters,
 };
 
+static inline struct quartz_vmr *impl_from_IVMRAspectRatioControl9(IVMRAspectRatioControl9 *iface)
+{
+    return CONTAINING_RECORD(iface, struct quartz_vmr, IVMRAspectRatioControl9_iface);
+}
+
+static HRESULT WINAPI aspect_ratio_control9_QueryInterface(IVMRAspectRatioControl9 *iface, REFIID iid, void **out)
+{
+    struct quartz_vmr *filter = impl_from_IVMRAspectRatioControl9(iface);
+    return IUnknown_QueryInterface(filter->renderer.filter.outer_unk, iid, out);
+}
+
+static ULONG WINAPI aspect_ratio_control9_AddRef(IVMRAspectRatioControl9 *iface)
+{
+    struct quartz_vmr *filter = impl_from_IVMRAspectRatioControl9(iface);
+    return IUnknown_AddRef(filter->renderer.filter.outer_unk);
+}
+
+static ULONG WINAPI aspect_ratio_control9_Release(IVMRAspectRatioControl9 *iface)
+{
+    struct quartz_vmr *filter = impl_from_IVMRAspectRatioControl9(iface);
+    return IUnknown_Release(filter->renderer.filter.outer_unk);
+}
+
+static HRESULT WINAPI aspect_ratio_control9_GetAspectRatioMode(IVMRAspectRatioControl9 *iface, DWORD *mode)
+{
+    struct quartz_vmr *filter = impl_from_IVMRAspectRatioControl9(iface);
+
+    TRACE("filter %p, mode %p.\n", filter, mode);
+
+    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    *mode = filter->aspect_mode;
+    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    return S_OK;
+}
+
+static HRESULT WINAPI aspect_ratio_control9_SetAspectRatioMode(IVMRAspectRatioControl9 *iface, DWORD mode)
+{
+    struct quartz_vmr *filter = impl_from_IVMRAspectRatioControl9(iface);
+
+    TRACE("filter %p, mode %u.\n", filter, mode);
+
+    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    filter->aspect_mode = mode;
+    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    return S_OK;
+}
+
+static const IVMRAspectRatioControl9Vtbl aspect_ratio_control9_vtbl =
+{
+    aspect_ratio_control9_QueryInterface,
+    aspect_ratio_control9_AddRef,
+    aspect_ratio_control9_Release,
+    aspect_ratio_control9_GetAspectRatioMode,
+    aspect_ratio_control9_SetAspectRatioMode,
+};
+
 static inline struct quartz_vmr *impl_from_IOverlay(IOverlay *iface)
 {
     return CONTAINING_RECORD(iface, struct quartz_vmr, IOverlay_iface);
@@ -2522,6 +2581,7 @@ static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
     strmbase_renderer_init(&object->renderer, outer, clsid, L"VMR Input0", &renderer_ops);
     object->IAMCertifiedOutputProtection_iface.lpVtbl = &IAMCertifiedOutputProtection_Vtbl;
     object->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
+    object->IVMRAspectRatioControl9_iface.lpVtbl = &aspect_ratio_control9_vtbl;
     object->IVMRFilterConfig_iface.lpVtbl = &VMR7_FilterConfig_Vtbl;
     object->IVMRFilterConfig9_iface.lpVtbl = &VMR9_FilterConfig_Vtbl;
     object->IVMRMixerBitmap9_iface.lpVtbl = &mixer_bitmap9_vtbl;

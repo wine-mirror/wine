@@ -242,7 +242,7 @@ static void test_common_interfaces(IBaseFilter *filter)
     check_interface(filter, &IID_IQualityControl, TRUE);
     todo_wine check_interface(filter, &IID_IQualProp, TRUE);
     check_interface(filter, &IID_IUnknown, TRUE);
-    todo_wine check_interface(filter, &IID_IVMRAspectRatioControl9, TRUE);
+    check_interface(filter, &IID_IVMRAspectRatioControl9, TRUE);
     todo_wine check_interface(filter, &IID_IVMRDeinterlaceControl9, TRUE);
     check_interface(filter, &IID_IVMRFilterConfig9, TRUE);
     check_interface(filter, &IID_IVMRMixerBitmap9, TRUE);
@@ -3851,6 +3851,7 @@ static void test_windowless_size(void)
     };
     IBaseFilter *filter = create_vmr9(VMR9Mode_Windowless);
     LONG width, height, aspect_width, aspect_height;
+    IVMRAspectRatioControl9 *aspect_ratio_control;
     IVMRWindowlessControl9 *windowless_control;
     IFilterGraph2 *graph = create_graph();
     VMR9AspectRatioMode aspect_mode;
@@ -3864,6 +3865,7 @@ static void test_windowless_size(void)
     IPin *pin;
 
     IBaseFilter_QueryInterface(filter, &IID_IVMRWindowlessControl9, (void **)&windowless_control);
+    IBaseFilter_QueryInterface(filter, &IID_IVMRAspectRatioControl9, (void **)&aspect_ratio_control);
     IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
     IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
     testfilter_init(&source);
@@ -3899,6 +3901,11 @@ static void test_windowless_size(void)
 
     aspect_mode = 0xdeadbeef;
     hr = IVMRWindowlessControl9_GetAspectRatioMode(windowless_control, &aspect_mode);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(aspect_mode == VMR9ARMode_None, "Got mode %u.\n", aspect_mode);
+
+    aspect_mode = 0xdeadbeef;
+    hr = IVMRAspectRatioControl9_GetAspectRatioMode(aspect_ratio_control, &aspect_mode);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(aspect_mode == VMR9ARMode_None, "Got mode %u.\n", aspect_mode);
 
@@ -3956,13 +3963,24 @@ static void test_windowless_size(void)
     SetRect(&expect, 0, 0, 640, 480);
     ok(EqualRect(&src, &expect), "Got window rect %s.\n", wine_dbgstr_rect(&src));
 
-    hr = IVMRWindowlessControl9_SetAspectRatioMode(windowless_control, VMR9ARMode_LetterBox);
+    hr = IVMRAspectRatioControl9_SetAspectRatioMode(aspect_ratio_control, VMR9ARMode_LetterBox);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     aspect_mode = 0xdeadbeef;
     hr = IVMRWindowlessControl9_GetAspectRatioMode(windowless_control, &aspect_mode);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(aspect_mode == VMR9ARMode_LetterBox, "Got mode %u.\n", aspect_mode);
+
+    hr = IVMRWindowlessControl9_SetAspectRatioMode(windowless_control, VMR9ARMode_None);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    aspect_mode = 0xdeadbeef;
+    hr = IVMRAspectRatioControl9_GetAspectRatioMode(aspect_ratio_control, &aspect_mode);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(aspect_mode == VMR9ARMode_None, "Got mode %u.\n", aspect_mode);
+
+    hr = IVMRWindowlessControl9_SetAspectRatioMode(windowless_control, VMR9ARMode_LetterBox);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     memset(&src, 0xcc, sizeof(src));
     memset(&dst, 0xcc, sizeof(dst));
@@ -3993,6 +4011,7 @@ out:
     IMemInputPin_Release(input);
     IPin_Release(pin);
     IVMRWindowlessControl9_Release(windowless_control);
+    IVMRAspectRatioControl9_Release(aspect_ratio_control);
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     DestroyWindow(window);
