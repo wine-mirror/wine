@@ -702,7 +702,7 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
 
         if (can_activate_window(hwnd))
         {
-            /* simulate a mouse click on the caption to find out
+            /* simulate a mouse click on the menu to find out
              * whether the window wants to be activated */
             LRESULT ma = SendMessageW( hwnd, WM_MOUSEACTIVATE,
                                        (WPARAM)GetAncestor( hwnd, GA_ROOT ),
