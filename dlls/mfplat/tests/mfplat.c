@@ -615,19 +615,15 @@ todo_wine
     get_event((IMFMediaEventGenerator *)video_stream, MEStreamStarted, NULL);
     sample_count = 10;
 
-    /* Request one beyond EOS, otherwise EndOfStream isn't queued. */
-    for (i = 0; i <= sample_count; ++i)
+    for (i = 0; i < sample_count; ++i)
     {
         hr = IMFMediaStream_RequestSample(video_stream, NULL);
         if (i == sample_count)
             break;
-todo_wine
         ok(hr == S_OK, "Failed to request sample %u, hr %#x.\n", i + 1, hr);
         if (hr != S_OK)
             break;
     }
-    if (FAILED(hr))
-        goto skip_source_tests;
 
     for (i = 0; i < sample_count; ++i)
     {
@@ -661,14 +657,25 @@ todo_wine
     }
 
     if (i == sample_count)
+    {
+        IMFMediaEvent *event;
+
+        /* MEEndOfStream isn't queued until after a one request beyond the last frame is submitted */
+        Sleep(100);
+        hr = IMFMediaEventGenerator_GetEvent((IMFMediaEventGenerator *)video_stream, MF_EVENT_FLAG_NO_WAIT, &event);
+        ok (hr == MF_E_NO_EVENTS_AVAILABLE, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFMediaStream_RequestSample(video_stream, NULL);
+        ok (hr == S_OK || hr == MF_E_END_OF_STREAM, "Unexpected hr %#x.\n", hr);
         get_event((IMFMediaEventGenerator *)video_stream, MEEndOfStream, NULL);
+    }
+
 
     hr = IMFMediaStream_RequestSample(video_stream, NULL);
     ok(hr == MF_E_END_OF_STREAM, "Unexpected hr %#x.\n", hr);
 
     get_event((IMFMediaEventGenerator *)mediasource, MEEndOfPresentation, NULL);
 
-skip_source_tests:
     IMFMediaStream_Release(video_stream);
     IMFMediaTypeHandler_Release(handler);
     IMFPresentationDescriptor_Release(descriptor);

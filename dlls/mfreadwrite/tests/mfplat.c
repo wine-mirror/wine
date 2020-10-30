@@ -727,7 +727,6 @@ static void test_source_reader(void)
 
     hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &actual_index, &stream_flags,
             &timestamp, &sample);
-todo_wine
     ok(hr == S_OK, "Failed to get a sample, hr %#x.\n", hr);
     if (hr != S_OK)
         goto skip_read_sample;
@@ -753,8 +752,23 @@ todo_wine
             &timestamp, &sample);
     ok(hr == S_OK, "Failed to get a sample, hr %#x.\n", hr);
     ok(actual_index == 0, "Unexpected stream index %u\n", actual_index);
+    /* TODO: gstreamer outputs .wav sample in increments of 4096, instead of 4410 */
+todo_wine
+{
     ok(stream_flags == MF_SOURCE_READERF_ENDOFSTREAM, "Unexpected stream flags %#x.\n", stream_flags);
     ok(!sample, "Unexpected sample object.\n");
+}
+    if(!stream_flags)
+    {
+        IMFSample_Release(sample);
+
+        hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &actual_index, &stream_flags,
+                &timestamp, &sample);
+        ok(hr == S_OK, "Failed to get a sample, hr %#x.\n", hr);
+        ok(actual_index == 0, "Unexpected stream index %u\n", actual_index);
+        ok(stream_flags == MF_SOURCE_READERF_ENDOFSTREAM, "Unexpected stream flags %#x.\n", stream_flags);
+        ok(!sample, "Unexpected sample object.\n");
+    }
 
     hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, MF_SOURCE_READER_CONTROLF_DRAIN,
             &actual_index, &stream_flags, &timestamp, &sample);

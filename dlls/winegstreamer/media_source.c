@@ -58,11 +58,13 @@ struct media_stream
         STREAM_RUNNING,
     } state;
     DWORD stream_id;
+    BOOL eos;
 };
 
 enum source_async_op
 {
     SOURCE_ASYNC_START,
+    SOURCE_ASYNC_REQUEST_SAMPLE,
 };
 
 struct source_async_command
@@ -78,6 +80,11 @@ struct source_async_command
             GUID format;
             PROPVARIANT position;
         } start;
+        struct
+        {
+            struct media_stream *stream;
+            IUnknown *token;
+        } request_sample;
     } u;
 };
 
@@ -311,6 +318,8 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
                     GST_SEEK_TYPE_SET, position->u.hVal.QuadPart / 100, GST_SEEK_TYPE_NONE, 0);
 
             gst_pad_push_event(stream->my_sink, seek_event);
+
+            stream->eos = FALSE;
         }
 
         if (selected)
@@ -334,6 +343,61 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
     gst_element_set_state(source->container, GST_STATE_PLAYING);
 }
 
+static void dispatch_end_of_presentation(struct media_source *source)
+{
+    PROPVARIANT empty = {.vt = VT_EMPTY};
+    unsigned int i;
+
+    /* A stream has ended, check whether all have */
+    for (i = 0; i < source->stream_count; i++)
+    {
+        struct media_stream *stream = source->streams[i];
+
+        if (stream->state != STREAM_INACTIVE && !stream->eos)
+            return;
+    }
+
+    IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MEEndOfPresentation, &GUID_NULL, S_OK, &empty);
+}
+
+static void wait_on_sample(struct media_stream *stream, IUnknown *token)
+{
+    PROPVARIANT empty_var = {.vt = VT_EMPTY};
+    GstSample *gst_sample;
+    GstBuffer *buffer;
+    IMFSample *sample;
+
+    TRACE("%p, %p\n", stream, token);
+
+    g_signal_emit_by_name(stream->appsink, "pull-sample", &gst_sample);
+    if (gst_sample)
+    {
+        buffer = gst_sample_get_buffer(gst_sample);
+
+        TRACE("PTS = %llu\n", (unsigned long long int) GST_BUFFER_PTS(buffer));
+
+        sample = mf_sample_from_gst_buffer(buffer);
+        gst_sample_unref(gst_sample);
+
+        if (token)
+            IMFSample_SetUnknown(sample, &MFSampleExtension_Token, token);
+
+        IMFMediaEventQueue_QueueEventParamUnk(stream->event_queue, MEMediaSample, &GUID_NULL, S_OK, (IUnknown *)sample);
+        IMFSample_Release(sample);
+    }
+    else
+    {
+        g_object_get(stream->appsink, "eos", &stream->eos, NULL);
+        if (stream->eos)
+        {
+            if (token)
+                IUnknown_Release(token);
+            IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEEndOfStream, &GUID_NULL, S_OK, &empty_var);
+            dispatch_end_of_presentation(stream->parent_source);
+        }
+    }
+}
+
 static HRESULT WINAPI source_async_commands_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct media_source *source = impl_from_async_commands_callback_IMFAsyncCallback(iface);
@@ -352,6 +416,9 @@ static HRESULT WINAPI source_async_commands_Invoke(IMFAsyncCallback *iface, IMFA
     {
         case SOURCE_ASYNC_START:
             start_pipeline(source, command);
+            break;
+        case SOURCE_ASYNC_REQUEST_SAMPLE:
+            wait_on_sample(command->u.request_sample.stream, command->u.request_sample.token);
             break;
     }
 
@@ -640,13 +707,37 @@ static HRESULT WINAPI media_stream_GetStreamDescriptor(IMFMediaStream* iface, IM
 static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown *token)
 {
     struct media_stream *stream = impl_from_IMFMediaStream(iface);
+    struct source_async_command *command;
+    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", iface, token);
 
     if (stream->state == STREAM_SHUTDOWN)
         return MF_E_SHUTDOWN;
 
-    return E_NOTIMPL;
+    if (stream->state == STREAM_INACTIVE)
+    {
+        WARN("Stream isn't active\n");
+        return MF_E_MEDIA_SOURCE_WRONGSTATE;
+    }
+
+    if (stream->eos)
+    {
+        return MF_E_END_OF_STREAM;
+    }
+
+    if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_REQUEST_SAMPLE, &command)))
+    {
+        command->u.request_sample.stream = stream;
+        if (token)
+            IUnknown_AddRef(token);
+        command->u.request_sample.token = token;
+
+        /* Once pause support is added, this will need to put into a stream queue, and synchronization will need to be added*/
+        hr = MFPutWorkItem(stream->parent_source->async_commands_queue, &stream->parent_source->async_commands_callback, &command->IUnknown_iface);
+    }
+
+    return hr;
 }
 
 static const IMFMediaStreamVtbl media_stream_vtbl =
@@ -729,6 +820,7 @@ static HRESULT new_media_stream(struct media_source *source, GstPad *pad, DWORD 
     object->stream_id = stream_id;
 
     object->state = STREAM_INACTIVE;
+    object->eos = FALSE;
 
     if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
         goto fail;

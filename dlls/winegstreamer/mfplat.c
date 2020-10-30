@@ -731,3 +731,72 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
     FIXME("Unrecognized major type %s\n", debugstr_guid(&major_type));
     return NULL;
 }
+
+/* IMFSample = GstBuffer
+   IMFBuffer = GstMemory */
+
+/* TODO: Future optimization could be to create a custom
+   IMFMediaBuffer wrapper around GstMemory, and to utilize
+   gst_memory_new_wrapped on IMFMediaBuffer data.  However,
+   this wouldn't work if we allow the callers to allocate
+   the buffers. */
+
+IMFSample* mf_sample_from_gst_buffer(GstBuffer *gst_buffer)
+{
+    IMFMediaBuffer *mf_buffer = NULL;
+    GstMapInfo map_info = {0};
+    LONGLONG duration, time;
+    BYTE *mapped_buf = NULL;
+    IMFSample *out = NULL;
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateSample(&out)))
+        goto done;
+
+    duration = GST_BUFFER_DURATION(gst_buffer);
+    time = GST_BUFFER_PTS(gst_buffer);
+
+    if (FAILED(hr = IMFSample_SetSampleDuration(out, duration / 100)))
+        goto done;
+
+    if (FAILED(hr = IMFSample_SetSampleTime(out, time / 100)))
+        goto done;
+
+    if (!gst_buffer_map(gst_buffer, &map_info, GST_MAP_READ))
+    {
+        hr = E_FAIL;
+        goto done;
+    }
+
+    if (FAILED(hr = MFCreateMemoryBuffer(map_info.maxsize, &mf_buffer)))
+        goto done;
+
+    if (FAILED(hr = IMFMediaBuffer_Lock(mf_buffer, &mapped_buf, NULL, NULL)))
+        goto done;
+
+    memcpy(mapped_buf, map_info.data, map_info.size);
+
+    if (FAILED(hr = IMFMediaBuffer_Unlock(mf_buffer)))
+        goto done;
+
+    if (FAILED(hr = IMFMediaBuffer_SetCurrentLength(mf_buffer, map_info.size)))
+        goto done;
+
+    if (FAILED(hr = IMFSample_AddBuffer(out, mf_buffer)))
+        goto done;
+
+done:
+    if (mf_buffer)
+        IMFMediaBuffer_Release(mf_buffer);
+    if (map_info.data)
+        gst_buffer_unmap(gst_buffer, &map_info);
+    if (FAILED(hr))
+    {
+        ERR("Failed to copy IMFSample to GstBuffer, hr = %#x\n", hr);
+        if (out)
+            IMFSample_Release(out);
+        out = NULL;
+    }
+
+    return out;
+}
