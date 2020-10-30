@@ -157,9 +157,31 @@ static void video_presenter_get_native_video_size(struct video_presenter *presen
 
 static HRESULT video_presenter_invalidate_media_type(struct video_presenter *presenter)
 {
+    IMFMediaType *media_type;
+    unsigned int idx = 0;
+    HRESULT hr;
+
     video_presenter_get_native_video_size(presenter);
 
-    return S_OK;
+    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(presenter->mixer, 0, idx++, &media_type)))
+    {
+        /* FIXME: check that d3d device supports this format */
+
+        /* FIXME: potentially adjust frame size */
+
+        if (SUCCEEDED(IMFTransform_SetOutputType(presenter->mixer, 0, media_type, MFT_SET_TYPE_TEST_ONLY)))
+        {
+            /* FIXME: should keep a copy internally too */
+
+            hr = IMFTransform_SetOutputType(presenter->mixer, 0, media_type, 0);
+            IMFMediaType_Release(media_type);
+            break;
+        }
+
+        IMFMediaType_Release(media_type);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
