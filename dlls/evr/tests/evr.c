@@ -1468,17 +1468,13 @@ todo_wine
     IDirect3DSurface9_Release(surface);
 
     hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&unk);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        IUnknown_Release(unk);
+    IUnknown_Release(unk);
 
     hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaBuffer_Unlock(buffer);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     IMFSample_Release(sample);

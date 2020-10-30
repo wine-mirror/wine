@@ -306,27 +306,28 @@ static HRESULT sample_allocator_create_samples(struct sample_allocator *allocato
     for (i = 0; i < sample_count; ++i)
     {
         struct queued_sample *queued_sample = heap_alloc(sizeof(*queued_sample));
+        IMFMediaBuffer *buffer;
 
-        if (service)
+        if (SUCCEEDED(hr = MFCreateVideoSampleFromSurface(NULL, &sample)))
         {
-            if (SUCCEEDED(hr = IDirectXVideoProcessorService_CreateSurface(service, width, height, 0, format,
-                    D3DPOOL_DEFAULT, 0, DXVA2_VideoProcessorRenderTarget, &surface, NULL)))
+            if (service)
             {
-                hr = MFCreateVideoSampleFromSurface((IUnknown *)surface, &sample);
-                IDirect3DSurface9_Release(surface);
-            }
-        }
-        else
-        {
-            IMFMediaBuffer *buffer;
-
-            if (SUCCEEDED(hr = MFCreateVideoSampleFromSurface(NULL, &sample)))
-            {
-                if (SUCCEEDED(hr = MFCreate2DMediaBuffer(width, height, format, FALSE, &buffer)))
+                if (SUCCEEDED(hr = IDirectXVideoProcessorService_CreateSurface(service, width, height,
+                        0, format, D3DPOOL_DEFAULT, 0, DXVA2_VideoProcessorRenderTarget, &surface, NULL)))
                 {
-                    hr = IMFSample_AddBuffer(sample, buffer);
-                    IMFMediaBuffer_Release(buffer);
+                    hr = MFCreateDXSurfaceBuffer(&IID_IDirect3DSurface9, (IUnknown *)surface, FALSE, &buffer);
+                    IDirect3DSurface9_Release(surface);
                 }
+            }
+            else
+            {
+                hr = MFCreate2DMediaBuffer(width, height, format, FALSE, &buffer);
+            }
+
+            if (SUCCEEDED(hr))
+            {
+                hr = IMFSample_AddBuffer(sample, buffer);
+                IMFMediaBuffer_Release(buffer);
             }
         }
 
