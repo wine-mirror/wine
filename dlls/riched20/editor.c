@@ -2426,30 +2426,27 @@ ME_FilterEvent(ME_TextEditor *editor, UINT msg, WPARAM* wParam, LPARAM* lParam)
 
 static void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor)
 {
-  ME_DisplayItem *startPara, *endPara;
-  ME_DisplayItem *prev_para;
-  ME_Cursor *from, *to;
-  ME_Cursor start;
-  int nChars;
+  ME_Paragraph *start_para, *end_para;
+  ME_Cursor *from, *to, start;
+  int num_chars;
 
   if (!editor->AutoURLDetect_bEnable) return;
 
   ME_GetSelection(editor, &from, &to);
 
   /* Find paragraph previous to the one that contains start cursor */
-  startPara = from->pPara;
-  prev_para = startPara->member.para.prev_para;
-  if (prev_para->type == diParagraph) startPara = prev_para;
+  start_para = &from->pPara->member.para;
+  if (para_prev( start_para )) start_para = para_prev( start_para );
 
   /* Find paragraph that contains end cursor */
-  endPara = to->pPara->member.para.next_para;
+  end_para = para_next( &to->pPara->member.para );
 
-  start.pPara = startPara;
-  start.pRun = ME_FindItemFwd(startPara, diRun);
+  start.pPara = para_get_di( start_para );
+  start.pRun = run_get_di( para_first_run( start_para ) );
   start.nOffset = 0;
-  nChars = endPara->member.para.nCharOfs - startPara->member.para.nCharOfs;
+  num_chars = end_para->nCharOfs - start_para->nCharOfs;
 
-  ME_UpdateLinkAttribute(editor, &start, nChars);
+  ME_UpdateLinkAttribute( editor, &start, num_chars );
 }
 
 static BOOL handle_enter(ME_TextEditor *editor)
