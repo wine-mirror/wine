@@ -7,7 +7,7 @@
 @ stub MFConvertFromFP16Array
 @ stub MFConvertToFP16Array
 @ stdcall -import MFCopyImage(ptr long ptr long long long)
-@ stub MFCreateDXSurfaceBuffer
+@ stdcall -import MFCreateDXSurfaceBuffer(ptr ptr long ptr)
 @ stub MFCreateVideoMediaType
 @ stub MFCreateVideoMediaTypeFromBitMapInfoHeader
 @ stdcall -import MFCreateVideoMediaTypeFromSubtype(ptr ptr)
