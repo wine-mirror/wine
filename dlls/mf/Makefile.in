@@ -6,6 +6,7 @@ DELAYIMPORTS = evr
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
+	copier.c \
 	evr.c \
 	main.c \
 	samplegrabber.c \
