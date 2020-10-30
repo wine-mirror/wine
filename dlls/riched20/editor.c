@@ -1928,11 +1928,11 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
 
     while (cursor.pRun && ME_GetCursorOfs(&cursor) + nLen <= nMax)
     {
-      ME_DisplayItem *pCurItem = cursor.pRun;
+      ME_Run *run = &cursor.pRun->member.run;
       int nCurStart = cursor.nOffset;
       int nMatched = 0;
     
-      while (pCurItem && ME_CharCompare( *get_text( &pCurItem->member.run, nCurStart + nMatched ), text[nMatched], (flags & FR_MATCHCASE)))
+      while (run && ME_CharCompare( *get_text( run, nCurStart + nMatched ), text[nMatched], (flags & FR_MATCHCASE)))
       {
         if ((flags & FR_WHOLEWORD) && iswalnum(wLastChar))
           break;
@@ -1940,21 +1940,21 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
         nMatched++;
         if (nMatched == nLen)
         {
-          ME_DisplayItem *pNextItem = pCurItem;
+          ME_Run *next_run = run;
           int nNextStart = nCurStart;
           WCHAR wNextChar;
 
           /* Check to see if next character is a whitespace */
           if (flags & FR_WHOLEWORD)
           {
-            if (nCurStart + nMatched == pCurItem->member.run.len)
+            if (nCurStart + nMatched == run->len)
             {
-              pNextItem = ME_FindItemFwd(pCurItem, diRun);
+              next_run = run_next_all_paras( run );
               nNextStart = -nMatched;
             }
 
-            if (pNextItem)
-              wNextChar = *get_text( &pNextItem->member.run, nNextStart + nMatched );
+            if (next_run)
+              wNextChar = *get_text( next_run, nNextStart + nMatched );
             else
               wNextChar = ' ';
 
@@ -1971,22 +1971,28 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
           TRACE("found at %d-%d\n", cursor.nOffset, cursor.nOffset + nLen);
           return cursor.nOffset;
         }
-        if (nCurStart + nMatched == pCurItem->member.run.len)
+        if (nCurStart + nMatched == run->len)
         {
-          pCurItem = ME_FindItemFwd(pCurItem, diRun);
+          run = run_next_all_paras( run );
           nCurStart = -nMatched;
         }
       }
-      if (pCurItem)
-        wLastChar = *get_text( &pCurItem->member.run, nCurStart + nMatched );
+      if (run)
+        wLastChar = *get_text( run, nCurStart + nMatched );
       else
         wLastChar = ' ';
 
       cursor.nOffset++;
       if (cursor.nOffset == cursor.pRun->member.run.len)
       {
-        ME_NextRun(&cursor.pPara, &cursor.pRun, TRUE);
-        cursor.nOffset = 0;
+        if (run_next_all_paras( &cursor.pRun->member.run ))
+        {
+          cursor.pRun = run_get_di( run_next_all_paras( &cursor.pRun->member.run ) );
+          cursor.pPara = para_get_di( cursor.pRun->member.run.para );
+          cursor.nOffset = 0;
+        }
+        else
+          cursor.pRun = NULL;
       }
     }
   }
@@ -2003,19 +2009,20 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
 
     while (cursor.pRun && ME_GetCursorOfs(&cursor) - nLen >= nMin)
     {
-      ME_DisplayItem *pCurItem = cursor.pRun;
-      ME_DisplayItem *pCurPara = cursor.pPara;
+      ME_Run *run = &cursor.pRun->member.run;
+      ME_Paragraph *para = &cursor.pPara->member.para;
       int nCurEnd = cursor.nOffset;
       int nMatched = 0;
 
-      if (nCurEnd == 0)
+      if (nCurEnd == 0 && run_prev_all_paras( run ))
       {
-        ME_PrevRun(&pCurPara, &pCurItem, TRUE);
-        nCurEnd = pCurItem->member.run.len;
+        run = run_prev_all_paras( run );
+        para = run->para;
+        nCurEnd = run->len;
       }
 
-      while (pCurItem && ME_CharCompare( *get_text( &pCurItem->member.run, nCurEnd - nMatched - 1 ),
-                                         text[nLen - nMatched - 1], (flags & FR_MATCHCASE) ))
+      while (run && ME_CharCompare( *get_text( run, nCurEnd - nMatched - 1 ),
+                                    text[nLen - nMatched - 1], (flags & FR_MATCHCASE) ))
       {
         if ((flags & FR_WHOLEWORD) && iswalnum(wLastChar))
           break;
@@ -2023,7 +2030,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
         nMatched++;
         if (nMatched == nLen)
         {
-          ME_DisplayItem *pPrevItem = pCurItem;
+          ME_Run *prev_run = run;
           int nPrevEnd = nCurEnd;
           WCHAR wPrevChar;
           int nStart;
@@ -2033,22 +2040,18 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
           {
             if (nPrevEnd - nMatched == 0)
             {
-              pPrevItem = ME_FindItemBack(pCurItem, diRun);
-              if (pPrevItem)
-                nPrevEnd = pPrevItem->member.run.len + nMatched;
+              prev_run = run_prev_all_paras( run );
+              if (prev_run) nPrevEnd = prev_run->len + nMatched;
             }
 
-            if (pPrevItem)
-              wPrevChar = *get_text( &pPrevItem->member.run, nPrevEnd - nMatched - 1 );
-            else
-              wPrevChar = ' ';
+            if (prev_run) wPrevChar = *get_text( prev_run, nPrevEnd - nMatched - 1 );
+            else wPrevChar = ' ';
 
             if (iswalnum(wPrevChar))
               break;
           }
 
-          nStart = pCurPara->member.para.nCharOfs
-                   + pCurItem->member.run.nCharOfs + nCurEnd - nMatched;
+          nStart = para->nCharOfs + run->nCharOfs + nCurEnd - nMatched;
           if (chrgText)
           {
             chrgText->cpMin = nStart;
@@ -2059,22 +2062,32 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
         }
         if (nCurEnd - nMatched == 0)
         {
-          ME_PrevRun(&pCurPara, &pCurItem, TRUE);
+            if (run_prev_all_paras( run ))
+            {
+                run = run_prev_all_paras( run );
+                para = run->para;
+            }
           /* Don't care about pCurItem becoming NULL here; it's already taken
            * care of in the exterior loop condition */
-          nCurEnd = pCurItem->member.run.len + nMatched;
+          nCurEnd = run->len + nMatched;
         }
       }
-      if (pCurItem)
-        wLastChar = *get_text( &pCurItem->member.run, nCurEnd - nMatched - 1 );
+      if (run)
+        wLastChar = *get_text( run, nCurEnd - nMatched - 1 );
       else
         wLastChar = ' ';
 
       cursor.nOffset--;
       if (cursor.nOffset < 0)
       {
-        ME_PrevRun(&cursor.pPara, &cursor.pRun, TRUE);
-        cursor.nOffset = cursor.pRun->member.run.len;
+        if (run_prev_all_paras( &cursor.pRun->member.run ) )
+        {
+          cursor.pRun = run_get_di( run_prev_all_paras( &cursor.pRun->member.run ) );
+          cursor.pPara = para_get_di( cursor.pRun->member.run.para );
+          cursor.nOffset = cursor.pRun->member.run.len;
+        }
+        else
+          cursor.pRun = NULL;
       }
     }
   }
