@@ -1446,6 +1446,84 @@ static UINT get_GSUB_vert_glyph( struct gdi_font *font, UINT glyph )
     return GSUB_apply_feature( font->gsub_table, font->vert_feature, glyph );
 }
 
+static void add_child_font( struct gdi_font *font, const WCHAR *family_name )
+{
+    struct gdi_font *child;
+    struct gdi_font_family *family;
+    struct gdi_font_face *child_face, *best_face = NULL;
+    UINT penalty = 0, new_penalty = 0;
+    BOOL bold, italic, bd, it;
+
+    italic = !!font->lf.lfItalic;
+    bold = font->lf.lfWeight > FW_MEDIUM;
+
+    if (!(family = find_family_from_name( family_name ))) return;
+
+    LIST_FOR_EACH_ENTRY( child_face, get_family_face_list(family), struct gdi_font_face, entry )
+    {
+        it = !!(child_face->ntmFlags & NTM_ITALIC);
+        bd = !!(child_face->ntmFlags & NTM_BOLD);
+        new_penalty = ( it ^ italic ) + ( bd ^ bold );
+        if (!best_face || new_penalty < penalty)
+        {
+            penalty = new_penalty;
+            best_face = child_face;
+        }
+    }
+    if (!best_face) return;
+
+    child = alloc_gdi_font( best_face->file, best_face->data_ptr, best_face->data_size );
+    child->fake_italic = italic && !(best_face->ntmFlags & NTM_ITALIC);
+    child->fake_bold = bold && !(best_face->ntmFlags & NTM_BOLD);
+    child->lf = font->lf;
+    child->matrix = font->matrix;
+    child->can_use_bitmap = font->can_use_bitmap;
+    child->face_index = best_face->face_index;
+    child->ntmFlags = best_face->ntmFlags;
+    child->aa_flags = HIWORD( best_face->flags );
+    child->scale_y = font->scale_y;
+    child->aveWidth = font->aveWidth;
+    child->charset = font->charset;
+    child->codepage = font->codepage;
+    child->base_font = font;
+    set_gdi_font_names( child, family_name, best_face->style_name, best_face->full_name );
+
+    list_add_tail( &font->child_fonts, &child->entry );
+    TRACE( "created child font %p for base %p\n", child, font );
+}
+
+void create_child_font_list( struct gdi_font *font )
+{
+    static const WCHAR szDefaultFallbackLink[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0};
+    struct gdi_font_link *font_link;
+    struct gdi_font_link_entry *entry;
+    const WCHAR* font_name;
+
+    if (!(font_name = get_gdi_font_subst( get_gdi_font_name(font), -1, NULL )))
+        font_name = get_gdi_font_name( font );
+
+    if ((font_link = find_gdi_font_link( font_name )))
+    {
+        TRACE("found entry in system list\n");
+        LIST_FOR_EACH_ENTRY( entry, &font_link->links, struct gdi_font_link_entry, entry )
+            add_child_font( font, entry->family_name );
+    }
+    /*
+     * if not SYMBOL or OEM then we also get all the fonts for Microsoft
+     * Sans Serif.  This is how asian windows get default fallbacks for fonts
+     */
+    if (is_dbcs_ansi_cp(GetACP()) && font->charset != SYMBOL_CHARSET && font->charset != OEM_CHARSET &&
+        strcmpiW( font_name, szDefaultFallbackLink ) != 0)
+    {
+        if ((font_link = find_gdi_font_link( szDefaultFallbackLink )))
+        {
+            TRACE("found entry in default fallback list\n");
+            LIST_FOR_EACH_ENTRY( entry, &font_link->links, struct gdi_font_link_entry, entry )
+                add_child_font( font, entry->family_name );
+        }
+    }
+}
+
 /* font cache */
 
 static struct list gdi_font_list = LIST_INIT( gdi_font_list );

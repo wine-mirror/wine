@@ -338,8 +338,6 @@ static BOOL antialias_fakes = TRUE;
 
 static const WCHAR font_mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N','T','_','M','U','T','E','X','_','_','\0'};
 
-static const WCHAR szDefaultFallbackLink[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0};
-
 static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font );
 static BOOL CDECL freetype_set_bitmap_text_metrics( struct gdi_font *font );
 static void remove_face_from_cache( Face *face );
@@ -2136,14 +2134,6 @@ static void delete_external_font_keys(void)
     if(winnt_key) RegCloseKey(winnt_key);
 }
 
-static inline BOOL is_dbcs_ansi_cp(UINT ansi_cp)
-{
-    return ( ansi_cp == 932       /* CP932 for Japanese */
-            || ansi_cp == 936     /* CP936 for Chinese Simplified */
-            || ansi_cp == 949     /* CP949 for Korean */
-            || ansi_cp == 950 );  /* CP950 for Chinese Traditional */
-}
-
 static BOOL init_freetype(void)
 {
     ft_handle = dlopen(SONAME_LIBFREETYPE, RTLD_NOW);
@@ -2710,87 +2700,6 @@ static LONG load_VDMX(struct gdi_font *font, LONG height)
     }
 
     return ppem;
-}
-
-/*************************************************************
- * add_child_font
- */
-static void add_child_font( struct gdi_font *font, const WCHAR *family_name )
-{
-    struct gdi_font *child;
-    Family *family;
-    Face *child_face, *best_face = NULL;
-    UINT penalty = 0, new_penalty = 0;
-    BOOL bold, italic, bd, it;
-
-    italic = !!font->lf.lfItalic;
-    bold = font->lf.lfWeight > FW_MEDIUM;
-
-    if (!(family = find_family_from_name( family_name ))) return;
-
-    LIST_FOR_EACH_ENTRY( child_face, get_face_list_from_family( family ), Face, entry )
-    {
-        it = !!(child_face->ntmFlags & NTM_ITALIC);
-        bd = !!(child_face->ntmFlags & NTM_BOLD);
-        new_penalty = ( it ^ italic ) + ( bd ^ bold );
-        if (!best_face || new_penalty < penalty)
-        {
-            penalty = new_penalty;
-            best_face = child_face;
-        }
-    }
-    if (!best_face) return;
-
-    child = alloc_gdi_font( best_face->file, best_face->data_ptr, best_face->data_size );
-    child->fake_italic = italic && !(best_face->ntmFlags & NTM_ITALIC);
-    child->fake_bold = bold && !(best_face->ntmFlags & NTM_BOLD);
-    child->lf = font->lf;
-    child->matrix = font->matrix;
-    child->can_use_bitmap = font->can_use_bitmap;
-    child->face_index = best_face->face_index;
-    child->ntmFlags = best_face->ntmFlags;
-    child->aa_flags = HIWORD( best_face->flags );
-    child->scale_y = font->scale_y;
-    child->base_font = font;
-    set_gdi_font_names( child, family_name, best_face->style_name, best_face->full_name );
-
-    list_add_tail( &font->child_fonts, &child->entry );
-    TRACE( "created child font %p for base %p\n", child, font );
-}
-
-/*************************************************************
- * create_child_font_list
- */
-static void create_child_font_list( struct gdi_font *font )
-{
-    struct gdi_font_link *font_link;
-    struct gdi_font_link_entry *entry;
-    const WCHAR* font_name;
-
-    if (!(font_name = get_gdi_font_subst( get_gdi_font_name(font), -1, NULL )))
-        font_name = get_gdi_font_name( font );
-    font_link = find_gdi_font_link(font_name);
-    if (font_link != NULL)
-    {
-        TRACE("found entry in system list\n");
-        LIST_FOR_EACH_ENTRY( entry, &font_link->links, struct gdi_font_link_entry, entry )
-            add_child_font( font, entry->family_name );
-    }
-    /*
-     * if not SYMBOL or OEM then we also get all the fonts for Microsoft
-     * Sans Serif.  This is how asian windows get default fallbacks for fonts
-     */
-    if (is_dbcs_ansi_cp(GetACP()) && font->charset != SYMBOL_CHARSET && font->charset != OEM_CHARSET &&
-        strcmpiW(font_name,szDefaultFallbackLink) != 0)
-    {
-        font_link = find_gdi_font_link(szDefaultFallbackLink);
-        if (font_link != NULL)
-        {
-            TRACE("found entry in default fallback list\n");
-            LIST_FOR_EACH_ENTRY( entry, &font_link->links, struct gdi_font_link_entry, entry )
-                add_child_font( font, entry->family_name );
-        }
-    }
 }
 
 static BOOL select_charmap(FT_Face ft_face, FT_Encoding encoding)
