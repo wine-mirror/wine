@@ -325,12 +325,6 @@ struct bitmap_font_size
     int  internal_leading;
 };
 
-struct gdi_font_enum_data
-{
-    ENUMLOGFONTEXW elf;
-    NEWTEXTMETRICEXW ntm;
-};
-
 struct gdi_font_face
 {
     struct list   entry;
@@ -431,7 +425,6 @@ struct gdi_font
 
 struct font_backend_funcs
 {
-    BOOL  (CDECL *pEnumFonts)( LOGFONTW *lf, FONTENUMPROCW proc, LPARAM lparam );
     struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont, UINT *aa_flags, UINT default_aa_flags );
 
     INT   (CDECL *add_font)( const WCHAR *file, DWORD flags );
@@ -485,7 +478,6 @@ extern struct gdi_font *create_gdi_font( const struct gdi_font_face *face, const
                                          const LOGFONTW *lf ) DECLSPEC_HIDDEN;
 extern void *get_GSUB_vert_feature( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern void font_init(void) DECLSPEC_HIDDEN;
-extern CRITICAL_SECTION font_cs DECLSPEC_HIDDEN;
 
 /* freetype.c */
 
