@@ -214,6 +214,11 @@ static const WCHAR system_link[] = {'S','o','f','t','w','a','r','e','\\','M','i'
 static const WCHAR Lucida_Sans_Unicode[] = {'L','u','c','i','d','a',' ','S','a','n','s',' ','U','n','i','c','o','d','e',0};
 static const WCHAR Microsoft_Sans_Serif[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0 };
 static const WCHAR Tahoma[] = {'T','a','h','o','m','a',0};
+static const WCHAR MS_UI_Gothic[] = {'M','S',' ','U','I',' ','G','o','t','h','i','c',0};
+static const WCHAR SimSun[] = {'S','i','m','S','u','n',0};
+static const WCHAR Gulim[] = {'G','u','l','i','m',0};
+static const WCHAR PMingLiU[] = {'P','M','i','n','g','L','i','U',0};
+static const WCHAR Batang[] = {'B','a','t','a','n','g',0};
 
 static const struct nls_update_font_list
 {
@@ -461,7 +466,7 @@ static BOOL add_gdi_font_subst( const WCHAR *from_name, int from_charset, const 
     return TRUE;
 }
 
-void load_gdi_font_subst(void)
+static void load_gdi_font_subst(void)
 {
     HKEY hkey;
     DWORD i = 0, type, dlen, vlen;
@@ -552,6 +557,36 @@ struct gdi_font_family *find_family_from_any_name( const WCHAR *name )
     return NULL;
 }
 
+static const struct list *get_family_face_list( const struct gdi_font_family *family )
+{
+    return family->replacement ? &family->replacement->faces : &family->faces;
+}
+
+static struct gdi_font_face *find_face_from_filename( const WCHAR *file_name, const WCHAR *family_name )
+{
+    struct gdi_font_family *family;
+    struct gdi_font_face *face;
+    const WCHAR *file;
+
+    TRACE( "looking for file %s name %s\n", debugstr_w(file_name), debugstr_w(family_name) );
+
+    LIST_FOR_EACH_ENTRY( family, &font_list, struct gdi_font_family, entry )
+    {
+        if (family_name && strncmpiW( family_name, family->family_name, LF_FACESIZE - 1 )) continue;
+        LIST_FOR_EACH_ENTRY( face, get_family_face_list(family), struct gdi_font_face, entry )
+        {
+            if (!face->file) continue;
+            file = strrchrW(face->file, '\\');
+            if (!file) file = face->file;
+            else file++;
+            if (strcmpiW( file, file_name )) continue;
+            face->refcount++;
+            return face;
+	}
+    }
+    return NULL;
+}
+
 static BOOL add_family_replacement( const WCHAR *new_name, const WCHAR *replace )
 {
     struct gdi_font_family *new_family, *family;
@@ -596,7 +631,7 @@ static BOOL add_family_replacement( const WCHAR *new_name, const WCHAR *replace 
  * Wingdings.  However if a real Wingdings font is present the
  * replacement does not take place.
  */
-void load_gdi_font_replacements(void)
+static void load_gdi_font_replacements(void)
 {
     HKEY hkey;
     DWORD i = 0, type, dlen, vlen;
@@ -650,6 +685,250 @@ struct gdi_font_face *create_face( const WCHAR *style, const WCHAR *fullname, co
     if (size) face->size = *size;
     else face->scalable = TRUE;
     return face;
+}
+
+/* font links */
+
+static struct list font_links = LIST_INIT(font_links);
+
+struct gdi_font_link *find_gdi_font_link( const WCHAR *name )
+{
+    struct gdi_font_link *link;
+
+    LIST_FOR_EACH_ENTRY( link, &font_links, struct gdi_font_link, entry )
+        if (!strncmpiW( link->name, name, LF_FACESIZE - 1 )) return link;
+    return NULL;
+}
+
+struct gdi_font_family *find_family_from_font_links( const WCHAR *name, const WCHAR *subst,
+                                                     FONTSIGNATURE fs )
+{
+    struct gdi_font_link *link;
+    struct gdi_font_link_entry *entry;
+    struct gdi_font_family *family;
+
+    LIST_FOR_EACH_ENTRY( link, &font_links, struct gdi_font_link, entry )
+    {
+        if (!strncmpiW( link->name, name, LF_FACESIZE - 1) ||
+            (subst && !strncmpiW( link->name, subst, LF_FACESIZE - 1 )))
+        {
+            TRACE("found entry in system list\n");
+            LIST_FOR_EACH_ENTRY( entry, &link->links, struct gdi_font_link_entry, entry )
+            {
+                const struct gdi_font_link *links;
+
+                family = find_family_from_name( entry->family_name );
+                if (!fs.fsCsb[0]) return family;
+                if (fs.fsCsb[0] & entry->fs.fsCsb[0]) return family;
+                if ((links = find_gdi_font_link( family->family_name )) && fs.fsCsb[0] & links->fs.fsCsb[0])
+                    return family;
+            }
+        }
+    }
+    return NULL;
+}
+
+static struct gdi_font_link *add_gdi_font_link( const WCHAR *name )
+{
+    struct gdi_font_link *link = find_gdi_font_link( name );
+
+    if (link) return link;
+    if ((link = HeapAlloc( GetProcessHeap(), 0, sizeof(*link) )))
+    {
+        lstrcpynW( link->name, name, LF_FACESIZE );
+        memset( &link->fs, 0, sizeof(link->fs) );
+        list_init( &link->links );
+        list_add_tail( &font_links, &link->entry );
+    }
+    return link;
+}
+
+static void add_gdi_font_link_entry( struct gdi_font_link *link, const WCHAR *family_name, FONTSIGNATURE fs )
+{
+    struct gdi_font_link_entry *entry;
+
+    entry = HeapAlloc( GetProcessHeap(), 0, sizeof(*entry) );
+    lstrcpynW( entry->family_name, family_name, LF_FACESIZE );
+    entry->fs = fs;
+    link->fs.fsCsb[0] |= fs.fsCsb[0];
+    link->fs.fsCsb[1] |= fs.fsCsb[1];
+    list_add_tail( &link->links, &entry->entry );
+}
+
+static const WCHAR * const font_links_list[] =
+{
+    Lucida_Sans_Unicode,
+    Microsoft_Sans_Serif,
+    Tahoma
+};
+
+static const struct font_links_defaults_list
+{
+    /* Keyed off substitution for "MS Shell Dlg" */
+    const WCHAR *shelldlg;
+    /* Maximum of four substitutes, plus terminating NULL pointer */
+    const WCHAR *substitutes[5];
+} font_links_defaults_list[] =
+{
+    /* Non East-Asian */
+    { Tahoma, /* FIXME unverified ordering */
+      { MS_UI_Gothic, SimSun, Gulim, PMingLiU, NULL }
+    },
+    /* Below lists are courtesy of
+     * http://blogs.msdn.com/michkap/archive/2005/06/18/430507.aspx
+     */
+    /* Japanese */
+    { MS_UI_Gothic,
+      { MS_UI_Gothic, PMingLiU, SimSun, Gulim, NULL }
+    },
+    /* Chinese Simplified */
+    { SimSun,
+      { SimSun, PMingLiU, MS_UI_Gothic, Batang, NULL }
+    },
+    /* Korean */
+    { Gulim,
+      { Gulim, PMingLiU, MS_UI_Gothic, SimSun, NULL }
+    },
+    /* Chinese Traditional */
+    { PMingLiU,
+      { PMingLiU, SimSun, MS_UI_Gothic, Batang, NULL }
+    }
+};
+
+static void populate_system_links( const WCHAR *name, const WCHAR * const *values )
+{
+    struct gdi_font_family *family;
+    struct gdi_font_face *face;
+    struct gdi_font_link *font_link;
+    const WCHAR *file, *value;
+
+    /* Don't store fonts that are only substitutes for other fonts */
+    if (get_gdi_font_subst( name, -1, NULL ))
+    {
+        TRACE( "%s: Internal SystemLink entry for substituted font, ignoring\n", debugstr_w(name) );
+        return;
+    }
+    font_link = add_gdi_font_link( name );
+    for ( ; *values; values++)
+    {
+        if  (!strcmpiW( name, *values )) continue;
+        if (!(value = get_gdi_font_subst( *values, -1, NULL ))) value = *values;
+        if (!(family = find_family_from_name( value ))) continue;
+        /* use first extant filename for this Family */
+        LIST_FOR_EACH_ENTRY( face, get_family_face_list(family), struct gdi_font_face, entry )
+        {
+            if (!face->file) continue;
+            file = strrchrW(face->file, '\\');
+            if (!file) file = face->file;
+            else file++;
+            if ((face = find_face_from_filename( file, value )))
+            {
+                add_gdi_font_link_entry( font_link, face->family->family_name, face->fs );
+                TRACE( "added internal SystemLink for %s to %s in %s\n",
+                       debugstr_w(name), debugstr_w(value), debugstr_w(file) );
+            }
+            else TRACE( "Unable to find file %s face name %s\n", debugstr_w(file), debugstr_w(value) );
+            break;
+        }
+    }
+}
+
+static void load_system_links(void)
+{
+    static const WCHAR system_link[] = {'S','o','f','t','w','a','r','e','\\',
+                                        'M','i','c','r','o','s','o','f','t','\\',
+                                        'W','i','n','d','o','w','s',' ','N','T','\\',
+                                        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                        'F','o','n','t','L','i','n','k','\\',
+                                        'S','y','s','t','e','m','L','i','n','k',0};
+    static const WCHAR tahoma_ttf[] = {'t','a','h','o','m','a','.','t','t','f',0};
+    static const WCHAR System[] = {'S','y','s','t','e','m',0};
+    static const WCHAR MS_Shell_Dlg[] = {'M','S',' ','S','h','e','l','l',' ','D','l','g',0};
+    HKEY hkey;
+    DWORD i, j;
+    const WCHAR *shelldlg_name;
+    struct gdi_font_link *font_link, *system_font_link;
+    struct gdi_font_face *face;
+
+    if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, system_link, &hkey ))
+    {
+        WCHAR value[MAX_PATH], data[1024];
+        DWORD type, val_len, data_len;
+        WCHAR *entry, *next;
+
+        val_len = ARRAY_SIZE(value);
+        data_len = sizeof(data);
+        i = 0;
+        while (!RegEnumValueW( hkey, i++, value, &val_len, NULL, &type, (LPBYTE)data, &data_len))
+        {
+            /* Don't store fonts that are only substitutes for other fonts */
+            if (!get_gdi_font_subst( value, -1, NULL ))
+            {
+                font_link = add_gdi_font_link( value );
+                for (entry = data; (char *)entry < (char *)data + data_len && *entry; entry = next)
+                {
+                    const WCHAR *family_name = NULL;
+                    WCHAR *p;
+
+                    TRACE("%s: %s\n", debugstr_w(value), debugstr_w(entry));
+
+                    next = entry + strlenW(entry) + 1;
+                    if ((p = strchrW( entry, ',' )))
+                    {
+                        *p++ = 0;
+                        while (isspaceW(*p)) p++;
+                        if (!(family_name = get_gdi_font_subst( p, -1, NULL ))) family_name = p;
+                    }
+                    if ((face = find_face_from_filename( entry, family_name )))
+                    {
+                        add_gdi_font_link_entry( font_link, face->family->family_name, face->fs );
+                        TRACE("Adding file %s index %u\n", debugstr_w(face->file), face->face_index);
+                    }
+                    else TRACE( "Unable to find file %s family %s\n",
+                                debugstr_w(entry), debugstr_w(family_name) );
+                }
+            }
+            else TRACE("%s: SystemLink entry for substituted font, ignoring\n", debugstr_w(value));
+
+            val_len = ARRAY_SIZE(value);
+            data_len = sizeof(data);
+        }
+        RegCloseKey( hkey );
+    }
+
+    if ((shelldlg_name = get_gdi_font_subst( MS_Shell_Dlg, -1, NULL )))
+    {
+        for (i = 0; i < ARRAY_SIZE(font_links_defaults_list); i++)
+        {
+            const WCHAR *subst = get_gdi_font_subst( font_links_defaults_list[i].shelldlg, -1, NULL );
+
+            if ((!strcmpiW( font_links_defaults_list[i].shelldlg, shelldlg_name ) ||
+                 (subst && !strcmpiW( subst, shelldlg_name ))))
+            {
+                for (j = 0; j < ARRAY_SIZE(font_links_list); j++)
+                    populate_system_links( font_links_list[j], font_links_defaults_list[i].substitutes );
+                if (!strcmpiW(shelldlg_name, font_links_defaults_list[i].substitutes[0]))
+                    populate_system_links( shelldlg_name, font_links_defaults_list[i].substitutes );
+            }
+        }
+    }
+    else WARN( "could not find FontSubstitute for MS Shell Dlg\n" );
+
+    /* Explicitly add an entry for the system font, this links to Tahoma and any links
+       that Tahoma has */
+
+    system_font_link = add_gdi_font_link( System );
+    if ((face = find_face_from_filename( tahoma_ttf, Tahoma )))
+    {
+        add_gdi_font_link_entry( system_font_link, face->family->family_name, face->fs );
+        TRACE("Found Tahoma in %s index %u\n", debugstr_w(face->file), face->face_index);
+    }
+    if ((font_link = find_gdi_font_link( Tahoma )))
+    {
+        struct gdi_font_link_entry *entry;
+        LIST_FOR_EACH_ENTRY( entry, &font_link->links, struct gdi_font_link_entry, entry )
+            add_gdi_font_link_entry( system_font_link, entry->family_name, entry->fs );
+    }
 }
 
 /* realized font objects */
@@ -2418,6 +2697,9 @@ void font_init(void)
 
     update_codepage();
     WineEngInit( &font_funcs );
+    load_gdi_font_subst();
+    load_gdi_font_replacements();
+    load_system_links();
     dump_gdi_font_subst();
 }
 

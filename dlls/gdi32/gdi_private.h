@@ -351,6 +351,21 @@ struct gdi_font_face
     struct gdi_font_enum_data *cached_enum_data;
 };
 
+struct gdi_font_link
+{
+    struct list            entry;
+    struct list            links;
+    WCHAR                  name[LF_FACESIZE];
+    FONTSIGNATURE          fs;
+};
+
+struct gdi_font_link_entry
+{
+    struct list            entry;
+    FONTSIGNATURE          fs;
+    WCHAR                  family_name[LF_FACESIZE];
+};
+
 struct gdi_font
 {
     struct list            entry;
@@ -444,17 +459,19 @@ extern void load_file_system_fonts(void) DECLSPEC_HIDDEN;
 extern void load_registry_fonts(void) DECLSPEC_HIDDEN;
 
 extern const WCHAR *get_gdi_font_subst( const WCHAR *from_name, int from_charset, int *to_charset ) DECLSPEC_HIDDEN;
-extern void load_gdi_font_subst(void) DECLSPEC_HIDDEN;
 
 extern struct list font_list DECLSPEC_HIDDEN;
 extern struct gdi_font_family *create_family( const WCHAR *name, const WCHAR *second_name ) DECLSPEC_HIDDEN;
 extern void release_family( struct gdi_font_family *family ) DECLSPEC_HIDDEN;
 extern struct gdi_font_family *find_family_from_name( const WCHAR *name ) DECLSPEC_HIDDEN;
 extern struct gdi_font_family *find_family_from_any_name( const WCHAR *name ) DECLSPEC_HIDDEN;
-extern void load_gdi_font_replacements(void) DECLSPEC_HIDDEN;
 extern struct gdi_font_face *create_face( const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
                                           UINT index, FONTSIGNATURE fs, DWORD ntmflags,
                                           DWORD version, DWORD flags, const struct bitmap_font_size *size ) DECLSPEC_HIDDEN;
+
+extern struct gdi_font_link *find_gdi_font_link( const WCHAR *name ) DECLSPEC_HIDDEN;
+extern struct gdi_font_family *find_family_from_font_links( const WCHAR *name, const WCHAR *subst,
+                                                            FONTSIGNATURE fs ) DECLSPEC_HIDDEN;
 
 extern struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_T data_size ) DECLSPEC_HIDDEN;
 extern void free_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
