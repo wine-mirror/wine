@@ -667,6 +667,24 @@ static void load_gdi_font_replacements(void)
     RegCloseKey( hkey );
 }
 
+static void dump_gdi_font_list(void)
+{
+    struct gdi_font_family *family;
+    struct gdi_font_face *face;
+
+    LIST_FOR_EACH_ENTRY( family, &font_list, struct gdi_font_family, entry )
+    {
+        TRACE( "Family: %s\n", debugstr_w(family->family_name) );
+        LIST_FOR_EACH_ENTRY( face, &family->faces, struct gdi_font_face, entry )
+        {
+            TRACE( "\t%s\t%s\t%08x", debugstr_w(face->style_name), debugstr_w(face->full_name),
+                   face->fs.fsCsb[0] );
+            if (!face->scalable) TRACE(" %d", face->size.height );
+            TRACE("\n");
+	}
+    }
+}
+
 struct gdi_font_face *create_face( const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
                                    UINT index, FONTSIGNATURE fs, DWORD ntmflags, DWORD version,
                                    DWORD flags, const struct bitmap_font_size *size )
@@ -2778,6 +2796,7 @@ void font_init(void)
     load_gdi_font_subst();
     load_gdi_font_replacements();
     load_system_links();
+    dump_gdi_font_list();
     dump_gdi_font_subst();
 }
 

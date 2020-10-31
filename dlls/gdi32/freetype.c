@@ -1653,23 +1653,6 @@ static INT CDECL freetype_remove_font( const WCHAR *file, DWORD flags )
     return count;
 }
 
-static void DumpFontList(void)
-{
-    Family *family;
-    Face *face;
-
-    LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
-        TRACE( "Family: %s\n", debugstr_w(family->family_name) );
-        LIST_FOR_EACH_ENTRY( face, &family->faces, Face, entry ) {
-            TRACE( "\t%s\t%s\t%08x", debugstr_w(face->style_name), debugstr_w(face->full_name),
-                   face->fs.fsCsb[0] );
-            if(!face->scalable)
-                TRACE(" %d", face->size.height);
-            TRACE("\n");
-	}
-    }
-}
-
 #ifdef __ANDROID__
 static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
 {
@@ -2320,8 +2303,6 @@ BOOL WineEngInit( const struct font_backend_funcs **funcs )
         load_font_list_from_cache(hkey_font_cache);
 
     reorder_font_list();
-
-    DumpFontList();
 
     if(disposition == REG_CREATED_NEW_KEY)
         update_reg_entries();
