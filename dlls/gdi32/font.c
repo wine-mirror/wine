@@ -1016,7 +1016,7 @@ static void free_font_handle( DWORD handle )
     }
 }
 
-struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_T data_size )
+static struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_T data_size )
 {
     UINT len = file ? strlenW(file) : 0;
     struct gdi_font *font = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -1081,6 +1081,25 @@ void set_gdi_font_names( struct gdi_font *font, const WCHAR *family_name, const 
     font->otm.otmpFamilyName = (char *)strdupW( family_name );
     font->otm.otmpStyleName = (char *)strdupW( style_name );
     font->otm.otmpFaceName = (char *)strdupW( full_name );
+}
+
+struct gdi_font *create_gdi_font( const struct gdi_font_face *face, const WCHAR *family_name,
+                                  const LOGFONTW *lf )
+{
+    struct gdi_font *font;
+
+    if (!(font = alloc_gdi_font( face->file, face->data_ptr, face->data_size ))) return NULL;
+    font->fs = face->fs;
+    font->lf = *lf;
+    font->fake_italic = (lf->lfItalic && !(face->ntmFlags & NTM_ITALIC));
+    font->fake_bold = (lf->lfWeight > 550 && !(face->ntmFlags & NTM_BOLD));
+    font->scalable = face->scalable;
+    font->face_index = face->face_index;
+    font->ntmFlags = face->ntmFlags;
+    font->aa_flags = HIWORD( face->flags );
+    if (!family_name) family_name = face->family->family_name;
+    set_gdi_font_names( font, family_name, face->style_name, face->full_name );
+    return font;
 }
 
 struct glyph_metrics
@@ -1490,22 +1509,14 @@ static void add_child_font( struct gdi_font *font, const WCHAR *family_name )
     }
     if (!best_face) return;
 
-    child = alloc_gdi_font( best_face->file, best_face->data_ptr, best_face->data_size );
-    child->fake_italic = italic && !(best_face->ntmFlags & NTM_ITALIC);
-    child->fake_bold = bold && !(best_face->ntmFlags & NTM_BOLD);
-    child->lf = font->lf;
+    if (!(child = create_gdi_font( best_face, family_name, &font->lf ))) return;
     child->matrix = font->matrix;
     child->can_use_bitmap = font->can_use_bitmap;
-    child->face_index = best_face->face_index;
-    child->ntmFlags = best_face->ntmFlags;
-    child->aa_flags = HIWORD( best_face->flags );
     child->scale_y = font->scale_y;
     child->aveWidth = font->aveWidth;
     child->charset = font->charset;
     child->codepage = font->codepage;
     child->base_font = font;
-    set_gdi_font_names( child, family_name, best_face->style_name, best_face->full_name );
-
     list_add_tail( &font->child_fonts, &child->entry );
     TRACE( "created child font %p for base %p\n", child, font );
 }

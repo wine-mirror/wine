@@ -474,7 +474,6 @@ extern struct gdi_font_family *find_family_from_font_links( const WCHAR *name, c
                                                             FONTSIGNATURE fs ) DECLSPEC_HIDDEN;
 extern void create_child_font_list( struct gdi_font *font ) DECLSPEC_HIDDEN;
 
-extern struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_T data_size ) DECLSPEC_HIDDEN;
 extern void free_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern void cache_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern struct gdi_font *find_cached_gdi_font( const LOGFONTW *lf, const FMAT2 *matrix,
@@ -482,6 +481,8 @@ extern struct gdi_font *find_cached_gdi_font( const LOGFONTW *lf, const FMAT2 *m
 static inline const WCHAR *get_gdi_font_name( struct gdi_font *font ) { return (WCHAR *)font->otm.otmpFamilyName; }
 extern void set_gdi_font_names( struct gdi_font *font, const WCHAR *family_name, const WCHAR *style_name,
                                 const WCHAR *full_name ) DECLSPEC_HIDDEN;
+extern struct gdi_font *create_gdi_font( const struct gdi_font_face *face, const WCHAR *family_name,
+                                         const LOGFONTW *lf ) DECLSPEC_HIDDEN;
 extern void *get_GSUB_vert_feature( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern void font_init(void) DECLSPEC_HIDDEN;
 extern CRITICAL_SECTION font_cs DECLSPEC_HIDDEN;

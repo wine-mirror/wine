@@ -3274,20 +3274,10 @@ found_face:
     height = lf.lfHeight;
 
     TRACE("not in cache\n");
-    font = alloc_gdi_font( face->file, face->data_ptr, face->data_size );
+    font = create_gdi_font( face, orig_name, &lf );
 
     font->matrix = dcmat;
-    font->lf = lf;
     font->can_use_bitmap = can_use_bitmap;
-    font->fake_italic = (it && !(face->ntmFlags & NTM_ITALIC));
-    font->fake_bold = (bd && !(face->ntmFlags & NTM_BOLD));
-    font->fs = face->fs;
-    font->face_index = face->face_index;
-    font->ntmFlags = face->ntmFlags;
-    font->aa_flags = HIWORD( face->flags );
-    set_gdi_font_names( font, orig_name ? orig_name : family->family_name,
-                        face->style_name, face->full_name );
-
     if(csi.fs.fsCsb[0]) {
         font->charset = lf.lfCharSet;
         font->codepage = csi.ciACP;
@@ -3506,6 +3496,7 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
                            NEWTEXTMETRICEXW *pntm)
 {
     struct gdi_font *font;
+    LOGFONTW lf = { .lfHeight = 100 };
 
     if (face->cached_enum_data)
     {
@@ -3515,11 +3506,7 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
         return;
     }
 
-    font = alloc_gdi_font( face->file, face->data_ptr, face->data_size );
-    font->lf.lfHeight = 100;
-    font->face_index = face->face_index;
-    font->ntmFlags = face->ntmFlags;
-    set_gdi_font_names( font, family_name, face->style_name, face->full_name );
+    if (!(font = create_gdi_font( face, family_name, &lf ))) return;
 
     if (!freetype_load_font( font ))
     {
