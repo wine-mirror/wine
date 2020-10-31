@@ -3168,6 +3168,42 @@ VkResult convert_VkInstanceCreateInfo_struct_chain(const void *pNext, VkInstance
             break;
         }
 
+        case VK_STRUCTURE_TYPE_VALIDATION_FLAGS_EXT:
+        {
+            const VkValidationFlagsEXT *in = (const VkValidationFlagsEXT *)in_header;
+            VkValidationFlagsEXT *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->disabledValidationCheckCount = in->disabledValidationCheckCount;
+            out->pDisabledValidationChecks = in->pDisabledValidationChecks;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT:
+        {
+            const VkValidationFeaturesEXT *in = (const VkValidationFeaturesEXT *)in_header;
+            VkValidationFeaturesEXT *out;
+
+            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->enabledValidationFeatureCount = in->enabledValidationFeatureCount;
+            out->pEnabledValidationFeatures = in->pEnabledValidationFeatures;
+            out->disabledValidationFeatureCount = in->disabledValidationFeatureCount;
+            out->pDisabledValidationFeatures = in->pDisabledValidationFeatures;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT:
         {
             const VkDebugUtilsMessengerCreateInfoEXT *in = (const VkDebugUtilsMessengerCreateInfoEXT *)in_header;
@@ -6558,6 +6594,8 @@ static const char * const vk_instance_extensions[] =
     "VK_EXT_debug_utils",
     "VK_EXT_headless_surface",
     "VK_EXT_swapchain_colorspace",
+    "VK_EXT_validation_features",
+    "VK_EXT_validation_flags",
     "VK_KHR_device_group_creation",
     "VK_KHR_external_fence_capabilities",
     "VK_KHR_external_memory_capabilities",
