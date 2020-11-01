@@ -598,21 +598,18 @@ static IInternetBindInfo InstallCallbackBindInfo = { &InstallCallbackBindInfoVtb
 
 static void append_url_params( WCHAR *url )
 {
-    static const WCHAR arch_formatW[] = {'?','a','r','c','h','='};
-    static const WCHAR v_formatW[] = {'&','v','='};
-    static const WCHAR winevW[] = {'&','w','i','n','e','v','='};
     DWORD size = INTERNET_MAX_URL_LENGTH * sizeof(WCHAR);
     DWORD len = lstrlenW(url);
 
-    memcpy(url+len, arch_formatW, sizeof(arch_formatW));
-    len += ARRAY_SIZE(arch_formatW);
+    lstrcpyW(url+len, L"?arch=");
+    len += lstrlenW(L"?arch=");
     len += MultiByteToWideChar(CP_ACP, 0, GECKO_ARCH, sizeof(GECKO_ARCH),
                                url+len, size/sizeof(WCHAR)-len)-1;
-    memcpy(url+len, v_formatW, sizeof(v_formatW));
-    len += ARRAY_SIZE(v_formatW);
+    lstrcpyW(url+len, L"&v=");
+    len += lstrlenW(L"&v=");
     len += MultiByteToWideChar(CP_ACP, 0, addon->version, -1, url+len, size/sizeof(WCHAR)-len)-1;
-    memcpy(url+len, winevW, sizeof(winevW));
-    len += ARRAY_SIZE(winevW);
+    lstrcpyW(url+len, L"&winev=");
+    len += lstrlenW(L"&winev=");
     MultiByteToWideChar(CP_ACP, 0, wine_get_version(), -1, url+len, size/sizeof(WCHAR)-len);
 }
 
