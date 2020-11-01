@@ -255,7 +255,6 @@ struct OLEFontImpl
   IPersistStream              IPersistStream_iface;
   IConnectionPointContainer   IConnectionPointContainer_iface;
   IPersistPropertyBag         IPersistPropertyBag_iface;
-  IPersistStreamInit          IPersistStreamInit_iface;
   /*
    * Reference count for that instance of the class.
    */
@@ -309,11 +308,6 @@ static inline OLEFontImpl *impl_from_IConnectionPointContainer( IConnectionPoint
 static inline OLEFontImpl *impl_from_IPersistPropertyBag( IPersistPropertyBag *iface )
 {
     return CONTAINING_RECORD(iface, OLEFontImpl, IPersistPropertyBag_iface);
-}
-
-static inline OLEFontImpl *impl_from_IPersistStreamInit( IPersistStreamInit *iface )
-{
-    return CONTAINING_RECORD(iface, OLEFontImpl, IPersistStreamInit_iface);
 }
 
 
@@ -490,10 +484,6 @@ static HRESULT WINAPI OLEFontImpl_QueryInterface(
   else if (IsEqualGUID(&IID_IPersistPropertyBag, riid))
   {
     *ppvObject = &this->IPersistPropertyBag_iface;
-  }
-  else if (IsEqualGUID(&IID_IPersistStreamInit, riid))
-  {
-    *ppvObject = &this->IPersistStreamInit_iface;
   }
 
   if (!*ppvObject)
@@ -2057,86 +2047,6 @@ static const IPersistPropertyBagVtbl OLEFontImpl_IPersistPropertyBag_VTable =
 };
 
 /************************************************************************
- * OLEFontImpl implementation of IPersistStreamInit.
- */
-static HRESULT WINAPI OLEFontImpl_IPersistStreamInit_QueryInterface(
-   IPersistStreamInit *iface, REFIID riid, LPVOID *ppvObj
-) {
-  OLEFontImpl *this = impl_from_IPersistStreamInit(iface);
-  return IFont_QueryInterface(&this->IFont_iface,riid,ppvObj);
-}
-
-static ULONG WINAPI OLEFontImpl_IPersistStreamInit_AddRef(
-   IPersistStreamInit *iface
-) {
-  OLEFontImpl *this = impl_from_IPersistStreamInit(iface);
-  return IFont_AddRef(&this->IFont_iface);
-}
-
-static ULONG WINAPI OLEFontImpl_IPersistStreamInit_Release(
-   IPersistStreamInit *iface
-) {
-  OLEFontImpl *this = impl_from_IPersistStreamInit(iface);
-  return IFont_Release(&this->IFont_iface);
-}
-
-static HRESULT WINAPI OLEFontImpl_IPersistStreamInit_GetClassID(
-   IPersistStreamInit *iface, CLSID *classid
-) {
-  FIXME("(%p,%p), stub!\n", iface, classid);
-  return E_FAIL;
-}
-
-static HRESULT WINAPI OLEFontImpl_IPersistStreamInit_IsDirty(
-   IPersistStreamInit *iface
-) {
-  FIXME("(%p), stub!\n", iface);
-  return E_FAIL;
-}
-
-static HRESULT WINAPI OLEFontImpl_IPersistStreamInit_Load(
-   IPersistStreamInit *iface, LPSTREAM pStm
-) {
-  FIXME("(%p,%p), stub!\n", iface, pStm);
-  return E_FAIL;
-}
-
-static HRESULT WINAPI OLEFontImpl_IPersistStreamInit_Save(
-   IPersistStreamInit *iface, LPSTREAM pStm, BOOL fClearDirty
-) {
-  FIXME("(%p,%p,%d), stub!\n", iface, pStm, fClearDirty);
-  return E_FAIL;
-}
-
-static HRESULT WINAPI OLEFontImpl_IPersistStreamInit_GetSizeMax(
-   IPersistStreamInit *iface, ULARGE_INTEGER *pcbSize
-) {
-  FIXME("(%p,%p), stub!\n", iface, pcbSize);
-  return E_FAIL;
-}
-
-static HRESULT WINAPI OLEFontImpl_IPersistStreamInit_InitNew(
-   IPersistStreamInit *iface
-) {
-  FIXME("(%p), stub!\n", iface);
-  return S_OK;
-}
-
-static const IPersistStreamInitVtbl OLEFontImpl_IPersistStreamInit_VTable = 
-{
-  OLEFontImpl_IPersistStreamInit_QueryInterface,
-  OLEFontImpl_IPersistStreamInit_AddRef,
-  OLEFontImpl_IPersistStreamInit_Release,
-
-  OLEFontImpl_IPersistStreamInit_GetClassID,
-  OLEFontImpl_IPersistStreamInit_IsDirty,
-  OLEFontImpl_IPersistStreamInit_Load,
-  OLEFontImpl_IPersistStreamInit_Save,
-  OLEFontImpl_IPersistStreamInit_GetSizeMax,
-  OLEFontImpl_IPersistStreamInit_InitNew
-};
-
-/************************************************************************
  * OLEFontImpl_Construct
  *
  * This method will construct a new instance of the OLEFontImpl
@@ -2159,7 +2069,6 @@ static OLEFontImpl* OLEFontImpl_Construct(const FONTDESC *fontDesc)
   newObject->IPersistStream_iface.lpVtbl = &OLEFontImpl_IPersistStream_VTable;
   newObject->IConnectionPointContainer_iface.lpVtbl = &OLEFontImpl_IConnectionPointContainer_VTable;
   newObject->IPersistPropertyBag_iface.lpVtbl = &OLEFontImpl_IPersistPropertyBag_VTable;
-  newObject->IPersistStreamInit_iface.lpVtbl = &OLEFontImpl_IPersistStreamInit_VTable;
 
   newObject->ref = 1;
 

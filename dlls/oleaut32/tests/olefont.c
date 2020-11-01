@@ -188,6 +188,7 @@ static void test_QueryInterface(void)
     LPVOID pvObj = NULL;
     HRESULT hr;
     IFont*  font = NULL;
+    IPersistStreamInit *persistStreamInit = NULL;
     LONG ref;
 
     hr = pOleCreateFontIndirect(NULL, &IID_IFont, NULL);
@@ -211,6 +212,10 @@ static void test_QueryInterface(void)
     IFont_Release(font);
 
     ok(pvObj != NULL,"IFont_QI does return NULL, instead of a ptr\n");
+
+    /* IFont never had IPersistStreamInit */
+    hr = IFont_QueryInterface(font, &IID_IPersistStreamInit, (void**)&persistStreamInit);
+    EXPECT_HR(hr, E_NOINTERFACE);
 
     IFont_Release(font);
     IFont_Release(font);
