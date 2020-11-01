@@ -80,32 +80,7 @@ HINSTANCE hInst;
 static WCHAR btnRemove[MAX_STRING_LEN];
 static WCHAR btnModifyRemove[MAX_STRING_LEN];
 
-static const WCHAR openW[] = {'o','p','e','n',0};
-
-/* names of registry keys */
-static const WCHAR BackSlashW[] = { '\\', 0 };
-static const WCHAR DisplayNameW[] = {'D','i','s','p','l','a','y','N','a','m','e',0};
-static const WCHAR DisplayIconW[] = {'D','i','s','p','l','a','y','I','c','o','n',0};
-static const WCHAR DisplayVersionW[] = {'D','i','s','p','l','a','y','V','e','r','s','i','o','n',0};
-static const WCHAR PublisherW[] = {'P','u','b','l','i','s','h','e','r',0};
-static const WCHAR ContactW[] = {'C','o','n','t','a','c','t',0};
-static const WCHAR HelpLinkW[] = {'H','e','l','p','L','i','n','k',0};
-static const WCHAR HelpTelephoneW[] = {'H','e','l','p','T','e','l','e','p','h','o','n','e',0};
-static const WCHAR ModifyPathW[] = {'M','o','d','i','f','y','P','a','t','h',0};
-static const WCHAR NoModifyW[] = {'N','o','M','o','d','i','f','y',0};
-static const WCHAR ReadmeW[] = {'R','e','a','d','m','e',0};
-static const WCHAR URLUpdateInfoW[] = {'U','R','L','U','p','d','a','t','e','I','n','f','o',0};
-static const WCHAR CommentsW[] = {'C','o','m','m','e','n','t','s',0};
-static const WCHAR UninstallCommandlineW[] = {'U','n','i','n','s','t','a','l','l','S','t','r','i','n','g',0};
-static const WCHAR WindowsInstallerW[] = {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
-static const WCHAR SystemComponentW[] = {'S','y','s','t','e','m','C','o','m','p','o','n','e','n','t',0};
-
-static const WCHAR PathUninstallW[] = {
-        'S','o','f','t','w','a','r','e','\\',
-        'M','i','c','r','o','s','o','f','t','\\',
-        'W','i','n','d','o','w','s','\\',
-        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-        'U','n','i','n','s','t','a','l','l',0 };
+static const WCHAR PathUninstallW[] = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 
 /******************************************************************************
  * Name       : DllMain
@@ -184,7 +159,7 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
     {
         RegOpenKeyExW(root, subKeyName, 0, KEY_READ, &hkeyApp);
         size = sizeof(value);
-        if (!RegQueryValueExW(hkeyApp, SystemComponentW, NULL, &dwType, (LPBYTE)&value, &size)
+        if (!RegQueryValueExW(hkeyApp, L"SystemComponent", NULL, &dwType, (BYTE *)&value, &size)
             && dwType == REG_DWORD && value == 1)
         {
             RegCloseKey(hkeyApp);
@@ -193,22 +168,21 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
         }
         displen = 0;
         uninstlen = 0;
-        if (!RegQueryValueExW(hkeyApp, DisplayNameW, 0, 0, NULL, &displen))
+        if (!RegQueryValueExW(hkeyApp, L"DisplayName", 0, 0, NULL, &displen))
         {
             size = sizeof(value);
-            if (!RegQueryValueExW(hkeyApp, WindowsInstallerW, NULL, &dwType, (LPBYTE)&value, &size)
+            if (!RegQueryValueExW(hkeyApp, L"WindowsInstaller", NULL, &dwType, (BYTE *)&value, &size)
                 && dwType == REG_DWORD && value == 1)
             {
-                static const WCHAR fmtW[] = {'m','s','i','e','x','e','c',' ','/','x','%','s',0};
-                int len = lstrlenW(fmtW) + lstrlenW(subKeyName);
+                int len = lstrlenW(L"msiexec /x%s") + lstrlenW(subKeyName);
 
                 if (!(command = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR)))) goto err;
-                wsprintfW(command, fmtW, subKeyName);
+                wsprintfW(command, L"msiexec /x%s", subKeyName);
             }
-            else if (!RegQueryValueExW(hkeyApp, UninstallCommandlineW, 0, 0, NULL, &uninstlen))
+            else if (!RegQueryValueExW(hkeyApp, L"UninstallString", 0, 0, NULL, &uninstlen))
             {
                 if (!(command = HeapAlloc(GetProcessHeap(), 0, uninstlen))) goto err;
-                RegQueryValueExW(hkeyApp, UninstallCommandlineW, 0, 0, (LPBYTE)command, &uninstlen);
+                RegQueryValueExW(hkeyApp, L"UninstallString", 0, 0, (BYTE *)command, &uninstlen);
             }
             else
             {
@@ -225,12 +199,11 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
             if (!info->title)
                 goto err;
 
-            RegQueryValueExW(hkeyApp, DisplayNameW, 0, 0, (LPBYTE)info->title,
-                &displen);
+            RegQueryValueExW(hkeyApp, L"DisplayName", 0, 0, (BYTE *)info->title, &displen);
 
             /* now get DisplayIcon */
             displen = 0;
-            RegQueryValueExW(hkeyApp, DisplayIconW, 0, 0, NULL, &displen);
+            RegQueryValueExW(hkeyApp, L"DisplayIcon", 0, 0, NULL, &displen);
 
             if (displen == 0)
                 info->icon = 0;
@@ -241,8 +214,7 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
                 if (!info->icon)
                     goto err;
 
-                RegQueryValueExW(hkeyApp, DisplayIconW, 0, 0, (LPBYTE)info->icon,
-                    &displen);
+                RegQueryValueExW(hkeyApp, L"DisplayIcon", 0, 0, (BYTE *)info->icon, &displen);
 
                 /* separate the index from the icon name, if supplied */
                 iconPtr = wcschr(info->icon, ',');
@@ -254,21 +226,21 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
                 }
             }
 
-            info->publisher = get_reg_str(hkeyApp, PublisherW);
-            info->version = get_reg_str(hkeyApp, DisplayVersionW);
-            info->contact = get_reg_str(hkeyApp, ContactW);
-            info->helplink = get_reg_str(hkeyApp, HelpLinkW);
-            info->helptelephone = get_reg_str(hkeyApp, HelpTelephoneW);
-            info->readme = get_reg_str(hkeyApp, ReadmeW);
-            info->urlupdateinfo = get_reg_str(hkeyApp, URLUpdateInfoW);
-            info->comments = get_reg_str(hkeyApp, CommentsW);
+            info->publisher = get_reg_str(hkeyApp, L"Publisher");
+            info->version = get_reg_str(hkeyApp, L"DisplayVersion");
+            info->contact = get_reg_str(hkeyApp, L"Contact");
+            info->helplink = get_reg_str(hkeyApp, L"HelpLink");
+            info->helptelephone = get_reg_str(hkeyApp, L"HelpTelephone");
+            info->readme = get_reg_str(hkeyApp, L"Readme");
+            info->urlupdateinfo = get_reg_str(hkeyApp, L"URLUpdateInfo");
+            info->comments = get_reg_str(hkeyApp, L"Comments");
 
             /* Check if NoModify is set */
             dwType = REG_DWORD;
             dwNoModify = 0;
             displen = sizeof(DWORD);
 
-            if (RegQueryValueExW(hkeyApp, NoModifyW, NULL, &dwType, (LPBYTE)&dwNoModify, &displen)
+            if (RegQueryValueExW(hkeyApp, L"NoModify", NULL, &dwType, (BYTE *)&dwNoModify, &displen)
                 != ERROR_SUCCESS)
             {
                 dwNoModify = 0;
@@ -282,19 +254,18 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
             if (!dwNoModify)
             {
                 size = sizeof(value);
-                if (!RegQueryValueExW(hkeyApp, WindowsInstallerW, NULL, &dwType, (LPBYTE)&value, &size)
+                if (!RegQueryValueExW(hkeyApp, L"WindowsInstaller", NULL, &dwType, (BYTE *)&value, &size)
                     && dwType == REG_DWORD && value == 1)
                 {
-                    static const WCHAR fmtW[] = {'m','s','i','e','x','e','c',' ','/','i','%','s',0};
-                    int len = lstrlenW(fmtW) + lstrlenW(subKeyName);
+                    int len = lstrlenW(L"msiexec /i%s") + lstrlenW(subKeyName);
 
                     if (!(info->path_modify = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR)))) goto err;
-                    wsprintfW(info->path_modify, fmtW, subKeyName);
+                    wsprintfW(info->path_modify, L"msiexec /i%s", subKeyName);
                 }
-                else if (!RegQueryValueExW(hkeyApp, ModifyPathW, 0, 0, NULL, &displen))
+                else if (!RegQueryValueExW(hkeyApp, L"ModifyPath", 0, 0, NULL, &displen))
                 {
                     if (!(info->path_modify = HeapAlloc(GetProcessHeap(), 0, displen))) goto err;
-                    RegQueryValueExW(hkeyApp, ModifyPathW, 0, 0, (LPBYTE)info->path_modify, &displen);
+                    RegQueryValueExW(hkeyApp, L"ModifyPath", 0, 0, (BYTE *)info->path_modify, &displen);
                 }
             }
 
@@ -440,8 +411,6 @@ static void UpdateButtons(HWND hWnd)
  */
 static void InstallProgram(HWND hWnd)
 {
-    static const WCHAR filters[] = {'%','s','%','c','*','i','n','s','t','a','l','*','.','e','x','e',';','*','s','e','t','u','p','*','.','e','x','e',';','*','.','m','s','i','%','c','%','s','%','c','*','.','e','x','e','%','c','%','s','%','c','*','.','*','%','c',0}
-;
     OPENFILENAMEW ofn;
     WCHAR titleW[MAX_STRING_LEN];
     WCHAR filter_installs[MAX_STRING_LEN];
@@ -455,8 +424,8 @@ static void InstallProgram(HWND hWnd)
     LoadStringW(hInst, IDS_FILTER_PROGRAMS, filter_programs, ARRAY_SIZE(filter_programs));
     LoadStringW(hInst, IDS_FILTER_ALL, filter_all, ARRAY_SIZE(filter_all));
 
-    swprintf( FilterBufferW, MAX_PATH, filters, filter_installs, 0, 0,
-               filter_programs, 0, 0, filter_all, 0, 0 );
+    swprintf( FilterBufferW, MAX_PATH, L"%s%c*instal*.exe;*setup*.exe;*.msi%c%s%c*.exe%c%s%c*.*%c",
+              filter_installs, 0, 0, filter_programs, 0, 0, filter_all, 0, 0 );
     memset(&ofn, 0, sizeof(OPENFILENAMEW));
     ofn.lStructSize = sizeof(OPENFILENAMEW);
     ofn.hwndOwner = hWnd;
@@ -476,7 +445,7 @@ static void InstallProgram(HWND hWnd)
         SHELLEXECUTEINFOW sei;
         memset(&sei, 0, sizeof(sei));
         sei.cbSize = sizeof(sei);
-        sei.lpVerb = openW;
+        sei.lpVerb = L"open";
         sei.nShow = SW_SHOWDEFAULT;
         sei.fMask = 0;
         sei.lpFile = ofn.lpstrFile;
@@ -609,7 +578,7 @@ static INT_PTR CALLBACK SupportInfoDlgProc(HWND hWnd, UINT msg, WPARAM wParam, L
                 if (iter->id == (int) lParam)
                 {
                     lstrcpyW(key, PathUninstallW);
-                    lstrcatW(key, BackSlashW);
+                    lstrcatW(key, L"\\");
                     lstrcatW(key, iter->regkey);
 
                     /* check the application's registry entries */
@@ -959,18 +928,15 @@ static void StartApplet(HWND hWnd)
 
 static LONG start_params(const WCHAR *params)
 {
-    static const WCHAR install_geckoW[] = {'i','n','s','t','a','l','l','_','g','e','c','k','o',0};
-    static const WCHAR install_monoW[] = {'i','n','s','t','a','l','l','_','m','o','n','o',0};
-
     if(!params)
         return FALSE;
 
-    if(!wcscmp(params, install_geckoW)) {
+    if(!wcscmp(params, L"install_gecko")) {
         install_addon(ADDON_GECKO);
         return TRUE;
     }
 
-    if(!wcscmp(params, install_monoW)) {
+    if(!wcscmp(params, L"install_mono")) {
         install_addon(ADDON_MONO);
         return TRUE;
     }
