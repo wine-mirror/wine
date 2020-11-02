@@ -3679,6 +3679,42 @@ static void test_stream_descriptor(void)
     IMFMediaTypeHandler_Release(type_handler);
 
     IMFStreamDescriptor_Release(stream_desc);
+
+    /* Major type is returned for first entry. */
+    hr = MFCreateMediaType(&media_types[0]);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = MFCreateMediaType(&media_types[1]);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_types[0], &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetGUID(media_types[1], &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateStreamDescriptor(0, 2, media_types, &stream_desc);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFStreamDescriptor_GetMediaTypeHandler(stream_desc, &type_handler);
+    ok(hr == S_OK, "Failed to get type handler, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, &major_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(IsEqualGUID(&major_type, &MFMediaType_Audio), "Unexpected major type %s.\n", wine_dbgstr_guid(&major_type));
+
+    hr = IMFMediaType_SetGUID(media_types[0], &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetGUID(media_types[1], &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(type_handler, &major_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(IsEqualGUID(&major_type, &MFMediaType_Video), "Unexpected major type %s.\n", wine_dbgstr_guid(&major_type));
+
+    IMFMediaType_Release(media_types[0]);
+    IMFMediaType_Release(media_types[1]);
+
+    IMFMediaTypeHandler_Release(type_handler);
+    IMFStreamDescriptor_Release(stream_desc);
 }
 
 static void test_MFCalculateImageSize(void)

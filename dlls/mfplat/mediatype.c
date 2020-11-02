@@ -2003,10 +2003,8 @@ static HRESULT WINAPI mediatype_handler_GetMajorType(IMFMediaTypeHandler *iface,
     TRACE("%p, %p.\n", iface, type);
 
     EnterCriticalSection(&stream_desc->attributes.cs);
-    if (stream_desc->current_type)
-        hr = IMFMediaType_GetGUID(stream_desc->current_type, &MF_MT_MAJOR_TYPE, type);
-    else
-        hr = MF_E_ATTRIBUTENOTFOUND;
+    hr = IMFMediaType_GetGUID(stream_desc->current_type ? stream_desc->current_type :
+            stream_desc->media_types[0], &MF_MT_MAJOR_TYPE, type);
     LeaveCriticalSection(&stream_desc->attributes.cs);
 
     return hr;
