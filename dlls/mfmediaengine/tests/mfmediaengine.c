@@ -265,16 +265,19 @@ todo_wine
 
     /* Preload mode is still accessible. */
     state = IMFMediaEngine_GetPreload(media_engine);
-todo_wine
     ok(!state, "Unexpected state %d.\n", state);
 
     hr = IMFMediaEngine_SetPreload(media_engine, MF_MEDIA_ENGINE_PRELOAD_AUTOMATIC);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     state = IMFMediaEngine_GetPreload(media_engine);
-todo_wine
     ok(state == MF_MEDIA_ENGINE_PRELOAD_AUTOMATIC, "Unexpected state %d.\n", state);
+
+    hr = IMFMediaEngine_SetPreload(media_engine, 100);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    state = IMFMediaEngine_GetPreload(media_engine);
+    ok(state == 100, "Unexpected state %d.\n", state);
 
     hr = IMFMediaEngine_GetBuffered(media_engine, &time_range);
 todo_wine

@@ -87,6 +87,7 @@ struct media_engine
     MF_MEDIA_ENGINE_ERR error_code;
     HRESULT extended_code;
     MF_MEDIA_ENGINE_READY ready_state;
+    MF_MEDIA_ENGINE_PRELOAD preload;
     IMFMediaSession *session;
     IMFSourceResolver *resolver;
     BSTR current_source;
@@ -717,16 +718,29 @@ static USHORT WINAPI media_engine_GetNetworkState(IMFMediaEngine *iface)
 
 static MF_MEDIA_ENGINE_PRELOAD WINAPI media_engine_GetPreload(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    MF_MEDIA_ENGINE_PRELOAD preload;
 
-    return MF_MEDIA_ENGINE_PRELOAD_NONE;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&engine->cs);
+    preload = engine->preload;
+    LeaveCriticalSection(&engine->cs);
+
+    return preload;
 }
 
 static HRESULT WINAPI media_engine_SetPreload(IMFMediaEngine *iface, MF_MEDIA_ENGINE_PRELOAD preload)
 {
-    FIXME("(%p, %d): stub.\n", iface, preload);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %d.\n", iface, preload);
+
+    EnterCriticalSection(&engine->cs);
+    engine->preload = preload;
+    LeaveCriticalSection(&engine->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_engine_GetBuffered(IMFMediaEngine *iface, IMFMediaTimeRange **buffered)
