@@ -186,6 +186,22 @@ static void test_sscanf( void )
     ok( ret == 1, "Error with format \"%s\"\n","%*[a-cd-dg-e]%c");
     ok( buffer[0] == 'h', "Error with \"abcefgdh\" \"%c\"\n", buffer[0]);
 
+    ret = p_sscanf("-123", "%[-0-9]", buffer);
+    ok( ret == 1, "Error with format \"%s\"\n", "%[-0-9]");
+    ok( strcmp("-123", buffer) == 0, "Error with \"-123\" \"%s\"\n", buffer);
+
+    ret = p_sscanf("-321", "%[0-9-]", buffer);
+    ok( ret == 1, "Error with format \"%s\"\n", "%[0-9-]");
+    ok( strcmp("-321", buffer) == 0, "Error with \"-321\" \"%s\"\n", buffer);
+
+    ret = p_sscanf("-4123", "%[1-2-4]", buffer);
+    ok( ret == 1, "Error with format \"%s\"\n", "%[1-2-4]");
+    ok( strcmp("-412", buffer) == 0, "Error with \"-412\" \"%s\"\n", buffer);
+
+    ret = p_sscanf("-456123", "%[1-2-45-6]", buffer);
+    ok( ret == 1, "Error with format \"%s\"\n", "%[1-2-45-6]");
+    ok( strcmp("-45612", buffer) == 0, "Error with \"-45612\" \"%s\"\n", buffer);
+
     buffer1[0] = 'b';
     ret = p_sscanf("a","%s%s", buffer, buffer1);
     ok( ret == 1, "expected 1, got %u\n", ret);
