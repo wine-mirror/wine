@@ -352,6 +352,12 @@ static void create_avi_file(const COMMON_AVI_HEADERS *cah, char *filename)
     CloseHandle(hFile);
 }
 
+static ULONG get_file_refcount(PAVIFILE file)
+{
+    AVIFileAddRef(file);
+    return AVIFileRelease(file);
+}
+
 static void test_default_data(void)
 {
     COMMON_AVI_HEADERS cah;
@@ -363,6 +369,7 @@ static void test_default_data(void)
     PAVISTREAM pStream1;
     AVISTREAMINFOA asi0, asi1;
     WAVEFORMATEX wfx;
+    ULONG refcount;
 
     GetTempPathA(MAX_PATH, filename);
     strcpy(filename+strlen(filename), testfilename);
@@ -443,9 +450,34 @@ static void test_default_data(void)
     ok(wfx.nAvgBytesPerSec == 22050, "got %u (expected 22050)\n",wfx.nAvgBytesPerSec);
     ok(wfx.nBlockAlign == 2, "got %u (expected 2)\n",wfx.nBlockAlign);
 
+    refcount = get_file_refcount(pFile);
+    ok(refcount == 3, "got %u (expected 3)\n", refcount);
+
     AVIStreamRelease(pStream0);
+
+    refcount = get_file_refcount(pFile);
+    ok(refcount == 2, "got %u (expected 2)\n", refcount);
+
+    AVIStreamAddRef(pStream1);
+
+    refcount = get_file_refcount(pFile);
+    ok(refcount == 2, "got %u (expected 2)\n", refcount);
+
     AVIStreamRelease(pStream1);
-    AVIFileRelease(pFile);
+    AVIStreamRelease(pStream1);
+
+    refcount = get_file_refcount(pFile);
+    ok(refcount == 1, "got %u (expected 1)\n", refcount);
+
+    refcount = AVIStreamRelease(pStream1);
+    ok(refcount == (ULONG)-1, "got %u (expected 4294967295)\n", refcount);
+
+    refcount = get_file_refcount(pFile);
+    ok(refcount == 1, "got %u (expected 1)\n", refcount);
+
+    refcount = AVIFileRelease(pFile);
+    ok(refcount == 0, "got %u (expected 0)\n", refcount);
+
     ok(DeleteFileA(filename) !=0, "Deleting file %s failed\n", filename);
 }
 

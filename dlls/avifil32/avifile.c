@@ -699,7 +699,7 @@ static ULONG WINAPI IAVIStream_fnAddRef(IAVIStream *iface)
   TRACE("(%p) ref=%d\n", This, ref);
 
   /* also add ref to parent, so that it doesn't kill us */
-  if (This->paf != NULL)
+  if (This->paf != NULL && ref == 1)
     IAVIFile_AddRef(&This->paf->IAVIFile_iface);
 
   return ref;
@@ -712,7 +712,7 @@ static ULONG WINAPI IAVIStream_fnRelease(IAVIStream *iface)
 
   TRACE("(%p) ref=%d\n", This, ref);
 
-  if (This->paf != NULL)
+  if (This->paf != NULL && ref == 0)
     IAVIFile_Release(&This->paf->IAVIFile_iface);
 
   return ref;
