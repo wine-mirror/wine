@@ -3451,8 +3451,9 @@ static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM
   int x,y;
   BOOL isExact;
   ME_Cursor cursor; /* The start of the clicked text. */
-
+  ME_Run *run;
   ENLINK info;
+
   x = (short)LOWORD(lParam);
   y = (short)HIWORD(lParam);
   ME_CharFromPos(editor, x, y, &cursor, &isExact);
@@ -3460,8 +3461,6 @@ static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM
 
   if (is_link( &cursor.pRun->member.run ))
   { /* The clicked run has CFE_LINK set */
-    ME_DisplayItem *di;
-
     info.nmhdr.hwndFrom = NULL;
     info.nmhdr.idFrom = 0;
     info.nmhdr.code = EN_LINK;
@@ -3472,15 +3471,15 @@ static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM
 
     /* find the first contiguous run with CFE_LINK set */
     info.chrg.cpMin = ME_GetCursorOfs(&cursor);
-    di = cursor.pRun;
-    while (ME_PrevRun( NULL, &di, FALSE ) && is_link( &di->member.run ))
-        info.chrg.cpMin -= di->member.run.len;
+    run = &cursor.pRun->member.run;
+    while ((run = run_prev( run )) && is_link( run ))
+        info.chrg.cpMin -= run->len;
 
     /* find the last contiguous run with CFE_LINK set */
     info.chrg.cpMax = ME_GetCursorOfs(&cursor) + cursor.pRun->member.run.len;
-    di = cursor.pRun;
-    while (ME_NextRun( NULL, &di, FALSE ) && is_link( &di->member.run ))
-        info.chrg.cpMax += di->member.run.len;
+    run = &cursor.pRun->member.run;
+    while ((run = run_next( run )) && is_link( run ))
+        info.chrg.cpMax += run->len;
 
     ITextHost_TxNotify(editor->texthost, info.nmhdr.code, &info);
   }
