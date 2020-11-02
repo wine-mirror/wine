@@ -1235,12 +1235,22 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
 
     struct media_source *object = heap_alloc_zero(sizeof(*object));
     IMFStreamDescriptor **descriptors = NULL;
+    DWORD bytestream_caps;
     unsigned int i;
     HRESULT hr;
     int ret;
 
     if (!object)
         return E_OUTOFMEMORY;
+
+    if (FAILED(hr = IMFByteStream_GetCapabilities(bytestream, &bytestream_caps)))
+        return hr;
+
+    if (!(bytestream_caps & MFBYTESTREAM_IS_SEEKABLE))
+    {
+        FIXME("Non-seekable bytestreams not supported.\n");
+        return MF_E_BYTESTREAM_NOT_SEEKABLE;
+    }
 
     object->IMFMediaSource_iface.lpVtbl = &IMFMediaSource_vtbl;
     object->async_commands_callback.lpVtbl = &source_async_commands_callback_vtbl;
