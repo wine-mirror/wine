@@ -4044,25 +4044,24 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return ((PARAFORMAT2 *)lParam)->dwMask;
   case EM_GETFIRSTVISIBLELINE:
   {
-    ME_DisplayItem *p = editor->pBuffer->pFirst;
+    ME_Paragraph *para = editor_first_para( editor );
+    ME_Row *row;
     int y = editor->vert_si.nPos;
-    int ypara = 0;
     int count = 0;
-    int ystart, yend;
-    while(p) {
-      p = ME_FindItemFwd(p, diStartRowOrParagraphOrEnd);
-      if (p->type == diTextEnd)
-        break;
-      if (p->type == diParagraph) {
-        ypara = p->member.para.pt.y;
-        continue;
-      }
-      ystart = ypara + p->member.row.pt.y;
-      yend = ystart + p->member.row.nHeight;
-      if (y < yend) {
-        break;
-      }
+
+    while (para_next( para ))
+    {
+      if (y < para->pt.y + para->nHeight) break;
+      count += para->nRows;
+      para = para_next( para );
+    }
+
+    row = para_first_row( para );
+    while (row)
+    {
+      if (y < para->pt.y + row->pt.y + row->nHeight) break;
       count++;
+      row = row_next( row );
     }
     return count;
   }
