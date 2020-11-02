@@ -82,39 +82,27 @@ void row_end_cursor( ME_Row *row, ME_Cursor *cursor, BOOL include_eop )
     cursor->nOffset = (item->type == diStartRow || include_eop) ? cursor->pRun->member.run.len : 0;
 }
 
-/* I'm sure these functions would simplify some code in caret ops etc,
- * I just didn't remember them when I wrote that code
- */ 
-
 ME_DisplayItem *ME_RowStart(ME_DisplayItem *item) {
   return ME_FindItemBackOrHere(item, diStartRow);
 }
 
-/*
-ME_DisplayItem *ME_RowEnd(ME_DisplayItem *item) {
-  ME_DisplayItem *item2 = ME_FindItemFwd(item, diStartRowOrParagraphOrEnd);
-  if (!item2) return NULL;
-  return ME_FindItemBack(item, diRun);
-}
-*/
-
-ME_DisplayItem *
-ME_FindRowWithNumber(ME_TextEditor *editor, int nRow)
+ME_Row *row_from_row_number( ME_TextEditor *editor, int row_num )
 {
-  ME_DisplayItem *item = ME_FindItemFwd(editor->pBuffer->pFirst, diParagraph);
-  int nCount = 0;
+    ME_Paragraph *para = editor_first_para( editor );
+    ME_Row *row;
+    int count = 0;
 
-  while (item->type == diParagraph &&
-         nCount + item->member.para.nRows <= nRow)
-  {
-    nCount += item->member.para.nRows;
-    item = item->member.para.next_para;
-  }
-  if (item->type != diParagraph)
-    return NULL;
-  for (item = ME_FindItemFwd(item, diStartRow); item && nCount < nRow; nCount++)
-    item = ME_FindItemFwd(item, diStartRow);
-  return item;
+    while (para_next( para ) && count + para->nRows <= row_num)
+    {
+        count += para->nRows;
+        para = para_next( para );
+    }
+    if (!para_next( para )) return NULL;
+
+    for (row = para_first_row( para ); row && count < row_num; count++)
+        row = row_next( row );
+
+    return row;
 }
 
 

@@ -115,11 +115,11 @@ void row_end_cursor( ME_Row *row, ME_Cursor *cursor, BOOL include_eop ) DECLSPEC
 void row_first_cursor( ME_Row *row, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
 ME_Run *row_first_run( ME_Row *row ) DECLSPEC_HIDDEN;
 ME_Row *row_from_cursor( ME_Cursor *cursor ) DECLSPEC_HIDDEN;
+ME_Row *row_from_row_number( ME_TextEditor *editor, int row_num ) DECLSPEC_HIDDEN;
 ME_Row *row_next( ME_Row *row ) DECLSPEC_HIDDEN;
 ME_Run *row_next_run( ME_Row *row, ME_Run *run ) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_RowStart(ME_DisplayItem *item) DECLSPEC_HIDDEN;
 /* ME_DisplayItem *ME_RowEnd(ME_DisplayItem *item); */
-ME_DisplayItem *ME_FindRowWithNumber(ME_TextEditor *editor, int nRow) DECLSPEC_HIDDEN;
 int ME_RowNumberFromCharOfs(ME_TextEditor *editor, int nOfs) DECLSPEC_HIDDEN;
 static inline ME_DisplayItem *row_get_di( ME_Row *row )
 {

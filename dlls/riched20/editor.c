@@ -4237,26 +4237,32 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_GETLINE:
   {
-    ME_DisplayItem *run;
+    ME_Row *row;
+    ME_Run *run;
     const unsigned int nMaxChars = *(WORD *) lParam;
     unsigned int nCharsLeft = nMaxChars;
     char *dest = (char *) lParam;
     BOOL wroteNull = FALSE;
+    ME_Cursor start, end;
 
     TRACE("EM_GETLINE: row=%d, nMaxChars=%d (%s)\n", (int) wParam, nMaxChars,
           unicode ? "Unicode" : "Ansi");
 
-    run = ME_FindRowWithNumber(editor, wParam);
-    if (run == NULL)
-      return 0;
+    row = row_from_row_number( editor, wParam );
+    if (row == NULL) return 0;
 
-    while (nCharsLeft && (run = ME_FindItemFwd(run, diRunOrStartRow))
-           && run->type == diRun)
+    row_first_cursor( row, &start );
+    row_end_cursor( row, &end, TRUE );
+    run = &start.pRun->member.run;
+    while (nCharsLeft)
     {
-      WCHAR *str = get_text( &run->member.run, 0 );
+      WCHAR *str;
       unsigned int nCopy;
+      int ofs = (run == &start.pRun->member.run) ? start.nOffset : 0;
+      int len = (run == &end.pRun->member.run) ? end.nOffset : run->len;
 
-      nCopy = min(nCharsLeft, run->member.run.len);
+      str = get_text( run, ofs );
+      nCopy = min( nCharsLeft, len );
 
       if (unicode)
         memcpy(dest, str, nCopy * sizeof(WCHAR));
@@ -4265,6 +4271,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
                                     nCharsLeft, NULL, NULL);
       dest += nCopy * (unicode ? sizeof(WCHAR) : 1);
       nCharsLeft -= nCopy;
+      if (run == &end.pRun->member.run) break;
+      run = row_next_run( row, run );
     }
 
     /* append line termination, space allowing */
@@ -4321,20 +4329,18 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_LINEINDEX:
   {
-    ME_DisplayItem *item, *para;
-    int nCharOfs;
+    ME_Row *row;
+    ME_Cursor cursor;
+    int ofs;
     
-    if (wParam == -1)
-      item = ME_FindItemBack(editor->pCursors[0].pRun, diStartRow);
-    else
-      item = ME_FindRowWithNumber(editor, wParam);
-    if (!item)
-      return -1;
-    para = ME_GetParagraph(item);
-    item = ME_FindItemFwd(item, diRun);
-    nCharOfs = para->member.para.nCharOfs + item->member.run.nCharOfs;
-    TRACE("EM_LINEINDEX: nCharOfs==%d\n", nCharOfs);
-    return nCharOfs;
+    if (wParam == -1) row = row_from_cursor( editor->pCursors );
+    else row = row_from_row_number( editor, wParam );
+    if (!row) return -1;
+
+    row_first_cursor( row, &cursor );
+    ofs = ME_GetCursorOfs( &cursor );
+    TRACE( "EM_LINEINDEX: nCharOfs==%d\n", ofs );
+    return ofs;
   }
   case EM_LINELENGTH:
   {
