@@ -1035,12 +1035,14 @@ static HRESULT WINAPI media_source_GetCharacteristics(IMFMediaSource *iface, DWO
 {
     struct media_source *source = impl_from_IMFMediaSource(iface);
 
-    FIXME("(%p)->(%p): stub\n", source, characteristics);
+    TRACE("(%p)->(%p)\n", source, characteristics);
 
     if (source->state == SOURCE_SHUTDOWN)
         return MF_E_SHUTDOWN;
 
-    return E_NOTIMPL;
+    *characteristics = MFMEDIASOURCE_CAN_SEEK;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_source_CreatePresentationDescriptor(IMFMediaSource *iface, IMFPresentationDescriptor **descriptor)
