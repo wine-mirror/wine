@@ -897,13 +897,13 @@ void ME_RTFTblAttrHook(RTF_Info *info)
       if (cellNum >= MAX_TABLE_CELLS)
         break;
       info->tableDef->cells[cellNum].rightBoundary = info->rtfParam;
-      if (cellNum < MAX_TAB_STOPS) {
+      if (cellNum < MAX_TAB_STOPS)
+      {
         /* Tab stops were used to store cell positions before v4.1 but v4.1
          * still seems to set the tabstops without using them. */
-        ME_DisplayItem *para = info->editor->pCursors[0].pPara;
-        PARAFORMAT2 *pFmt = &para->member.para.fmt;
-        pFmt->rgxTabs[cellNum] &= ~0x00FFFFFF;
-        pFmt->rgxTabs[cellNum] |= 0x00FFFFFF & info->rtfParam;
+        PARAFORMAT2 *fmt = &info->editor->pCursors[0].pPara->member.para.fmt;
+        fmt->rgxTabs[cellNum] &= ~0x00FFFFFF;
+        fmt->rgxTabs[cellNum] |= 0x00FFFFFF & info->rtfParam;
       }
       info->tableDef->numCellsDefined++;
       break;
@@ -2795,7 +2795,7 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
   if ((unsigned)wstr >= ' ' || wstr == '\t')
   {
     ME_Cursor cursor = editor->pCursors[0];
-    ME_DisplayItem *para = cursor.pPara;
+    ME_Paragraph *para = &cursor.pPara->member.para;
     int from, to;
     BOOL ctrl_is_down = GetKeyState(VK_CONTROL) & 0x8000;
     ME_GetSelectionOfs(editor, &from, &to);
@@ -2803,38 +2803,40 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
         /* v4.1 allows tabs to be inserted with ctrl key down */
         !(ctrl_is_down && !editor->bEmulateVersion10))
     {
-      ME_DisplayItem *para;
       BOOL selected_row = FALSE;
 
-      para = cursor.pPara;
       if (ME_IsSelection(editor) &&
           cursor.pRun->member.run.nCharOfs + cursor.nOffset == 0 &&
-          to == ME_GetCursorOfs(&editor->pCursors[0]) &&
-          para->member.para.prev_para->type == diParagraph)
+          to == ME_GetCursorOfs(&editor->pCursors[0]) && para_prev( para ))
       {
-        para = para->member.para.prev_para;
+        para = para_prev( para );
         selected_row = TRUE;
       }
-      if (ME_IsInTable(para))
+      if (para_in_table( para ))
       {
         table_handle_tab( editor, selected_row );
         ME_CommitUndo(editor);
         return 0;
       }
-    } else if (!editor->bEmulateVersion10) { /* v4.1 */
-      if (para->member.para.nFlags & MEPF_ROWEND) {
-        if (from == to) {
-          para = para->member.para.next_para;
-          if (para->member.para.nFlags & MEPF_ROWSTART)
-            para = para->member.para.next_para;
-          editor->pCursors[0].pPara = para;
-          editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
+    }
+    else if (!editor->bEmulateVersion10) /* v4.1 */
+    {
+      if (para->nFlags & MEPF_ROWEND)
+      {
+        if (from == to)
+        {
+          para = para_next( para );
+          if (para->nFlags & MEPF_ROWSTART) para = para_next( para );
+          editor->pCursors[0].pPara = para_get_di( para );
+          editor->pCursors[0].pRun = run_get_di( para_first_run( para ) );
           editor->pCursors[0].nOffset = 0;
           editor->pCursors[1] = editor->pCursors[0];
         }
       }
-    } else { /* v1.0 - 3.0 */
-      if (ME_IsInTable(cursor.pRun) &&
+    }
+    else /* v1.0 - 3.0 */
+    {
+      if (para_in_table( para ) &&
           cursor.pRun->member.run.nFlags & MERF_ENDPARA &&
           from == to)
       {
