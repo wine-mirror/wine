@@ -639,12 +639,12 @@ _FUNCTION_ {
                     while(*format && (*format != ']')) {
 			/* According to msdn:
 			 * "Note that %[a-z] and %[z-a] are interpreted as equivalent to %[abcde...z]." */
-			if((*format == '-') && (*(format + 1) != ']')) {
-			    if ((*(format - 1)) < *(format + 1))
-				RtlSetBits(&bitMask, *(format - 1) +1 , *(format + 1) - *(format - 1));
-			    else
-				RtlSetBits(&bitMask, *(format + 1)    , *(format - 1) - *(format + 1));			      
-			    format++;
+                        if(format[1] == '-' && format[2] && format[2] != ']') {
+                            if (format[0] < format[2])
+                                RtlSetBits(&bitMask, format[0], format[2] - format[0] + 1);
+                            else
+                                RtlSetBits(&bitMask, format[2], format[0] - format[2] + 1);
+			    format += 2;
 			} else
 			    RtlSetBits(&bitMask, *format, 1);
 			format++;
