@@ -3914,9 +3914,9 @@ static void test_ec_complete(void)
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
-    todo_wine ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
-    todo_wine ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
 
     filter1.IMediaSeeking_iface.lpVtbl = NULL;
@@ -4157,7 +4157,7 @@ static void test_graph_seeking(void)
     filter1.support_testguid = TRUE;
 
     hr = IMediaSeeking_GetDuration(seeking, &time);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
 
     hr = IMediaSeeking_SetTimeFormat(seeking, &testguid);
     todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
@@ -4269,8 +4269,8 @@ static void test_graph_seeking(void)
 
     hr = IMediaSeeking_GetCapabilities(seeking, &caps);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(caps == (AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetDuration), "Got caps %#x.\n", caps);
-    todo_wine ok(!filter1.seeking_ref, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    ok(caps == (AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetDuration), "Got caps %#x.\n", caps);
+    ok(!filter1.seeking_ref, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
     ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
 
     filter1.support_media_time = TRUE;
