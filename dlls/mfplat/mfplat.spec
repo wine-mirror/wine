@@ -90,7 +90,7 @@
 @ stub MFEndGetHostByName
 @ stdcall MFEndRegisterWorkQueueWithMMCSS(ptr ptr) rtworkq.RtwqEndRegisterWorkQueueWithMMCSS
 @ stdcall MFEndUnregisterWorkQueueWithMMCSS(ptr) rtworkq.RtwqEndUnregisterWorkQueueWithMMCSS
-@ stub MFFrameRateToAverageTimePerFrame
+@ stdcall MFFrameRateToAverageTimePerFrame(long long ptr)
 @ stub MFFreeAdaptersAddresses
 @ stub MFGetAdaptersAddresses
 @ stdcall MFGetAttributesAsBlob(ptr ptr long)

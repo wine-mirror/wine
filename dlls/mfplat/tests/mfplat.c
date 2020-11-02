@@ -5865,6 +5865,52 @@ static void test_MFCreateTrackedSample(void)
     IMFTrackedSample_Release(tracked_sample);
 }
 
+static void test_MFFrameRateToAverageTimePerFrame(void)
+{
+    static const struct frame_rate_test
+    {
+        unsigned int numerator;
+        unsigned int denominator;
+        UINT64 avgtime;
+    } frame_rate_tests[] =
+    {
+        { 60000, 1001, 166833 },
+        { 30000, 1001, 333667 },
+        { 24000, 1001, 417188 },
+        { 60, 1, 166667 },
+        { 30, 1, 333333 },
+        { 50, 1, 200000 },
+        { 25, 1, 400000 },
+        { 24, 1, 416667 },
+
+        { 39, 1, 256410 },
+        { 120, 1, 83333 },
+    };
+    unsigned int i;
+    UINT64 avgtime;
+    HRESULT hr;
+
+    avgtime = 1;
+    hr = MFFrameRateToAverageTimePerFrame(0, 0, &avgtime);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!avgtime, "Unexpected frame time.\n");
+
+    avgtime = 1;
+    hr = MFFrameRateToAverageTimePerFrame(0, 1001, &avgtime);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!avgtime, "Unexpected frame time.\n");
+
+    for (i = 0; i < ARRAY_SIZE(frame_rate_tests); ++i)
+    {
+        avgtime = 0;
+        hr = MFFrameRateToAverageTimePerFrame(frame_rate_tests[i].numerator,
+                frame_rate_tests[i].denominator, &avgtime);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(avgtime == frame_rate_tests[i].avgtime, "%u: unexpected frame time %s, expected %s.\n",
+                i, wine_dbgstr_longlong(avgtime), wine_dbgstr_longlong(frame_rate_tests[i].avgtime));
+    }
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -5923,6 +5969,7 @@ START_TEST(mfplat)
     test_MFCreateMFVideoFormatFromMFMediaType();
     test_MFCreateDXSurfaceBuffer();
     test_MFCreateTrackedSample();
+    test_MFFrameRateToAverageTimePerFrame();
 
     CoUninitialize();
 }
