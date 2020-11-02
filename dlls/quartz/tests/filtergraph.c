@@ -1181,7 +1181,8 @@ struct testfilter
     IMediaSeeking IMediaSeeking_iface;
     LONG seeking_ref;
     DWORD seek_caps;
-    BOOL support_testguid;
+    BOOL support_testguid, support_media_time;
+    GUID time_format;
     LONGLONG seek_duration, seek_current, seek_stop;
     double seek_rate;
 
@@ -1578,6 +1579,8 @@ static HRESULT WINAPI testseek_IsFormatSupported(IMediaSeeking *iface, const GUI
     if (winetest_debug > 1) trace("%p->IsFormatSupported(%s)\n", iface, wine_dbgstr_guid(format));
     if (IsEqualGUID(format, &testguid) && !filter->support_testguid)
         return S_FALSE;
+    if (IsEqualGUID(format, &TIME_FORMAT_MEDIA_TIME) && !filter->support_media_time)
+        return S_FALSE;
     return S_OK;
 }
 
@@ -1603,8 +1606,10 @@ static HRESULT WINAPI testseek_SetTimeFormat(IMediaSeeking *iface, const GUID *f
 {
     struct testfilter *filter = impl_from_IMediaSeeking(iface);
     if (winetest_debug > 1) trace("%p->SetTimeFormat(%s)\n", iface, wine_dbgstr_guid(format));
+    ok(!IsEqualGUID(format, &GUID_NULL), "Got unexpected GUID_NULL.\n");
     if (IsEqualGUID(format, &testguid) && !filter->support_testguid)
         return E_INVALIDARG;
+    filter->time_format = *format;
     return S_OK;
 }
 
@@ -1841,6 +1846,8 @@ static void testfilter_init(struct testfilter *filter, struct testpin *pins, int
 
     filter->state = State_Stopped;
     filter->expect_stop_prev = filter->expect_run_prev = State_Paused;
+    filter->support_media_time = TRUE;
+    filter->time_format = TIME_FORMAT_MEDIA_TIME;
 }
 
 static HRESULT WINAPI testfilter_cf_QueryInterface(IClassFactory *iface, REFIID iid, void **out)
@@ -3751,8 +3758,8 @@ static HRESULT check_ec_complete(IFilterGraph2 *graph, IBaseFilter *filter)
 
 static void test_ec_complete(void)
 {
-    struct testpin filter1_pin, filter2_pin, filter3_pin, source_pins[3];
-    struct testfilter filter1, filter2, filter3, source;
+    struct testpin filter1_pin, filter2_pin, filter3_pin;
+    struct testfilter filter1, filter2, filter3;
 
     IFilterGraph2 *graph = create_graph();
     IMediaEventSink *eventsink;
@@ -3768,10 +3775,6 @@ static void test_ec_complete(void)
     testfilter_init(&filter1, &filter1_pin, 1);
     testfilter_init(&filter2, &filter2_pin, 1);
     testfilter_init(&filter3, &filter3_pin, 1);
-    testsource_init(&source_pins[0], NULL, 0);
-    testsource_init(&source_pins[1], NULL, 0);
-    testsource_init(&source_pins[2], NULL, 0);
-    testfilter_init(&source, source_pins, 3);
 
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&eventsrc);
@@ -3780,10 +3783,6 @@ static void test_ec_complete(void)
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, &filter2.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, &filter3.IBaseFilter_iface, NULL);
-    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
-    IFilterGraph2_ConnectDirect(graph, &source_pins[0].IPin_iface, &filter1_pin.IPin_iface, NULL);
-    IFilterGraph2_ConnectDirect(graph, &source_pins[1].IPin_iface, &filter2_pin.IPin_iface, NULL);
-    IFilterGraph2_ConnectDirect(graph, &source_pins[2].IPin_iface, &filter3_pin.IPin_iface, NULL);
 
     /* EC_COMPLETE is only delivered to the user after all renderers deliver it. */
 
@@ -3883,7 +3882,6 @@ static void test_ec_complete(void)
     IFilterGraph2_RemoveFilter(graph, &filter3.IBaseFilter_iface);
     filter1.misc_flags = 0;
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
-    IFilterGraph2_ConnectDirect(graph, &source_pins[0].IPin_iface, &filter1_pin.IPin_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
     ok(hr == E_ABORT, "Got hr %#x.\n", hr);
@@ -3893,7 +3891,6 @@ static void test_ec_complete(void)
     filter1.IAMFilterMiscFlags_iface.lpVtbl = NULL;
     filter1.IMediaSeeking_iface.lpVtbl = &testseek_vtbl;
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
-    IFilterGraph2_ConnectDirect(graph, &source_pins[0].IPin_iface, &filter1_pin.IPin_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -3912,12 +3909,21 @@ static void test_ec_complete(void)
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
     ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
 
+    filter1_pin.dir = PINDIR_INPUT;
+    filter1.support_media_time = FALSE;
+    IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
+
+    hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
+    todo_wine ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    todo_wine ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
+
     filter1.IMediaSeeking_iface.lpVtbl = NULL;
     filter1_pin.dir = PINDIR_INPUT;
     filter1.pin_count = 1;
     filter1_pin.QueryInternalConnections_hr = S_OK;
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
-    IFilterGraph2_ConnectDirect(graph, &source_pins[0].IPin_iface, &filter1_pin.IPin_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
     ok(hr == E_ABORT, "Got hr %#x.\n", hr);
@@ -4146,6 +4152,21 @@ static void test_graph_seeking(void)
      * renderer. */
 
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
+    filter1.IMediaSeeking_iface.lpVtbl = &testseek_vtbl;
+    filter1.support_media_time = FALSE;
+    filter1.support_testguid = TRUE;
+
+    hr = IMediaSeeking_GetDuration(seeking, &time);
+    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_SetTimeFormat(seeking, &testguid);
+    todo_wine ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+
+    IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
+    filter1.support_media_time = TRUE;
+    filter1.support_testguid = FALSE;
+
+    IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, &filter2.IBaseFilter_iface, NULL);
     filter1.IMediaSeeking_iface.lpVtbl = &testseek_vtbl;
     filter2.IMediaSeeking_iface.lpVtbl = &testseek_vtbl;
@@ -4211,6 +4232,10 @@ static void test_graph_seeking(void)
     filter1.support_testguid = TRUE;
     hr = IMediaSeeking_SetTimeFormat(seeking, &testguid);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(IsEqualGUID(&filter1.time_format, &testguid), "Got format %s.\n",
+            debugstr_guid(&filter1.time_format));
+    ok(IsEqualGUID(&filter2.time_format, &TIME_FORMAT_MEDIA_TIME),
+            "Got format %s.\n", debugstr_guid(&filter2.time_format));
 
     hr = IMediaSeeking_GetTimeFormat(seeking, &format);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -4225,8 +4250,53 @@ static void test_graph_seeking(void)
     hr = IMediaSeeking_IsUsingTimeFormat(seeking, &testguid);
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IMediaSeeking_SetTimeFormat(seeking, &TIME_FORMAT_MEDIA_TIME);
+    hr = IMediaSeeking_GetCapabilities(seeking, &caps);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#x.\n", caps);
+    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
+
+    filter2.support_testguid = TRUE;
+    hr = IMediaSeeking_SetTimeFormat(seeking, &testguid);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&filter1.time_format, &TIME_FORMAT_MEDIA_TIME),
+            "Got format %s.\n", debugstr_guid(&filter1.time_format));
+    todo_wine ok(IsEqualGUID(&filter2.time_format, &testguid),
+            "Got format %s.\n", debugstr_guid(&filter2.time_format));
+
+    filter1.support_media_time = FALSE;
+    flush_cached_seeking(graph, &filter1);
+
+    hr = IMediaSeeking_GetCapabilities(seeking, &caps);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(caps == (AM_SEEKING_CanDoSegments | AM_SEEKING_CanGetDuration), "Got caps %#x.\n", caps);
+    todo_wine ok(!filter1.seeking_ref, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
+
+    filter1.support_media_time = TRUE;
+    filter1.support_testguid = FALSE;
+    flush_cached_seeking(graph, &filter1);
+
+    hr = IMediaSeeking_GetCapabilities(seeking, &caps);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(caps == AM_SEEKING_CanDoSegments, "Got caps %#x.\n", caps);
+    ok(filter1.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
+    ok(filter2.seeking_ref > 0, "Unexpected seeking refcount %d.\n", filter2.seeking_ref);
+
+    ok(IsEqualGUID(&filter1.time_format, &TIME_FORMAT_MEDIA_TIME),
+            "Got format %s.\n", debugstr_guid(&filter1.time_format));
+    todo_wine ok(IsEqualGUID(&filter2.time_format, &testguid),
+            "Got format %s.\n", debugstr_guid(&filter2.time_format));
+    hr = IMediaSeeking_GetTimeFormat(seeking, &format);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(IsEqualGUID(&format, &testguid), "Got format %s.\n", wine_dbgstr_guid(&format));
+
+    hr = IMediaSeeking_SetTimeFormat(seeking, &TIME_FORMAT_NONE);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSeeking_GetTimeFormat(seeking, &format);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(IsEqualGUID(&format, &TIME_FORMAT_MEDIA_TIME), "Got format %s.\n", wine_dbgstr_guid(&format));
 
     time = 0xdeadbeef;
     hr = IMediaSeeking_ConvertTimeFormat(seeking, &time, &testguid, 0x123456789a, &testguid);
