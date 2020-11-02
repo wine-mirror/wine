@@ -1237,6 +1237,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
 
     struct media_source *object = heap_alloc_zero(sizeof(*object));
     IMFStreamDescriptor **descriptors = NULL;
+    gint64 total_pres_time = 0;
     DWORD bytestream_caps;
     unsigned int i;
     HRESULT hr;
@@ -1356,6 +1357,25 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     }
     heap_free(descriptors);
     descriptors = NULL;
+
+    for (i = 0; i < object->stream_count; i++)
+    {
+        gint64 stream_pres_time;
+        if (gst_pad_query_duration(object->streams[i]->their_src, GST_FORMAT_TIME, &stream_pres_time))
+        {
+            TRACE("Stream %u has duration %llu\n", i, (unsigned long long int) stream_pres_time);
+
+            if (stream_pres_time > total_pres_time)
+                total_pres_time = stream_pres_time;
+        }
+        else
+        {
+            WARN("Unable to get presentation time of stream %u\n", i);
+        }
+    }
+
+    if (object->stream_count)
+        IMFPresentationDescriptor_SetUINT64(object->pres_desc, &MF_PD_DURATION, total_pres_time / 100);
 
     object->state = SOURCE_STOPPED;
 
