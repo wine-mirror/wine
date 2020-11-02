@@ -4291,27 +4291,24 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_GETLINECOUNT:
   {
-    ME_DisplayItem *item = editor->pBuffer->pLast;
-    int nRows = editor->total_rows;
-    ME_DisplayItem *prev_para = NULL, *last_para = NULL;
+    int count = editor->total_rows;
+    ME_Run *prev_run, *last_run;
 
-    last_para = ME_FindItemBack(item, diRun);
-    prev_para = ME_FindItemBack(last_para, diRun);
-    assert(last_para);
-    assert(last_para->member.run.nFlags & MERF_ENDPARA);
-    if (editor->bEmulateVersion10 && prev_para &&
-        last_para->member.run.nCharOfs == 0 &&
-        prev_para->member.run.len == 1 &&
-        *get_text( &prev_para->member.run, 0 ) == '\r')
+    last_run = para_end_run( para_prev( editor_end_para( editor ) ) );
+    prev_run = run_prev_all_paras( last_run );
+
+    if (editor->bEmulateVersion10 && prev_run && last_run->nCharOfs == 0 &&
+        prev_run->len == 1 && *get_text( prev_run, 0 ) == '\r')
     {
       /* In 1.0 emulation, the last solitary \r at the very end of the text
          (if one exists) is NOT a line break.
          FIXME: this is an ugly hack. This should have a more regular model. */
-      nRows--;
+      count--;
     }
 
-    TRACE("EM_GETLINECOUNT: nRows==%d\n", nRows);
-    return max(1, nRows);
+    count = max(1, count);
+    TRACE("EM_GETLINECOUNT: count==%d\n", count);
+    return count;
   }
   case EM_LINEFROMCHAR:
   {
