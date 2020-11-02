@@ -1013,6 +1013,29 @@ static void test_source_reader_from_media_source(void)
     hr = IMFSourceReader_ReadSample(reader, 0, 0, &actual_index, &stream_flags, &timestamp, &sample);
     ok(hr == E_NOTIMPL, "Unexpected ReadSample result, hr %#x.\n", hr);
 
+    actual_index = ~0u;
+    stream_flags = 0;
+    hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &actual_index, &stream_flags,
+            &timestamp, &sample);
+    ok(hr == E_NOTIMPL, "Unexpected ReadSample result, hr %#x.\n", hr);
+    ok(actual_index == 0, "Unexpected index %u.\n", actual_index);
+    ok(stream_flags == MF_SOURCE_READERF_ERROR, "Unexpected flags %#x.\n", stream_flags);
+
+    actual_index = ~0u;
+    stream_flags = 0;
+    hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &actual_index, &stream_flags,
+            &timestamp, &sample);
+    ok(hr == E_NOTIMPL, "Unexpected ReadSample result, hr %#x.\n", hr);
+    ok(actual_index == 0, "Unexpected index %u.\n", actual_index);
+    ok(stream_flags == MF_SOURCE_READERF_ERROR, "Unexpected flags %#x.\n", stream_flags);
+
+    actual_index = ~0u;
+    stream_flags = 0;
+    hr = IMFSourceReader_ReadSample(reader, 0, 0, &actual_index, &stream_flags, &timestamp, &sample);
+    ok(hr == E_NOTIMPL, "Unexpected ReadSample result, hr %#x.\n", hr);
+    ok(actual_index == 0, "Unexpected index %u.\n", actual_index);
+    ok(stream_flags == MF_SOURCE_READERF_ERROR, "Unexpected flags %#x.\n", stream_flags);
+
     IMFSourceReader_Release(reader);
     IMFMediaSource_Release(source);
 
