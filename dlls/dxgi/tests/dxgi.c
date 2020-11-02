@@ -7097,7 +7097,7 @@ static void test_mode_change(IUnknown *device, BOOL is_d3d12)
 
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode2);
     ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
-    todo_wine ok(equal_mode_rect(&devmode2, &devmode), "Got a different mode.\n");
+    ok(equal_mode_rect(&devmode2, &devmode), "Got a different mode.\n");
     ret = EnumDisplaySettingsW(NULL, ENUM_REGISTRY_SETTINGS, &devmode2);
     ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
     ok(equal_mode_rect(&devmode2, &devmode), "Got a different mode.\n");
@@ -7196,16 +7196,16 @@ static void test_mode_change(IUnknown *device, BOOL is_d3d12)
 
     ret = EnumDisplaySettingsW(second_monitor_name, ENUM_CURRENT_SETTINGS, &devmode2);
     ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
-    todo_wine ok(equal_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
+    ok(equal_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
     ret = EnumDisplaySettingsW(second_monitor_name, ENUM_REGISTRY_SETTINGS, &devmode2);
     ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
     ok(equal_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
     hr = IDXGIOutput_GetDesc(second_output, &output_desc);
     ok(hr == S_OK, "GetDesc failed, hr %#x.\n", hr);
-    todo_wine ok(output_desc.DesktopCoordinates.right - output_desc.DesktopCoordinates.left ==
+    ok(output_desc.DesktopCoordinates.right - output_desc.DesktopCoordinates.left ==
             old_devmode.dmPelsWidth, "Expected width %u, got %u.\n", old_devmode.dmPelsWidth,
             output_desc.DesktopCoordinates.right - output_desc.DesktopCoordinates.left);
-    todo_wine ok(output_desc.DesktopCoordinates.bottom - output_desc.DesktopCoordinates.top ==
+    ok(output_desc.DesktopCoordinates.bottom - output_desc.DesktopCoordinates.top ==
             old_devmode.dmPelsHeight, "Expected height %u, got %u.\n", old_devmode.dmPelsHeight,
             output_desc.DesktopCoordinates.bottom - output_desc.DesktopCoordinates.top);
 
@@ -7228,7 +7228,7 @@ static void test_mode_change(IUnknown *device, BOOL is_d3d12)
 
     ret = EnumDisplaySettingsW(second_monitor_name, ENUM_CURRENT_SETTINGS, &devmode2);
     ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
-    todo_wine ok(devmode2.dmPelsWidth == devmode.dmPelsWidth && devmode2.dmPelsHeight == devmode.dmPelsHeight,
+    ok(devmode2.dmPelsWidth == devmode.dmPelsWidth && devmode2.dmPelsHeight == devmode.dmPelsHeight,
             "Expected resolution %ux%u, got %ux%u.\n", devmode.dmPelsWidth, devmode.dmPelsHeight,
             devmode2.dmPelsWidth, devmode2.dmPelsHeight);
     ret = EnumDisplaySettingsW(second_monitor_name, ENUM_REGISTRY_SETTINGS, &devmode2);
@@ -7238,10 +7238,10 @@ static void test_mode_change(IUnknown *device, BOOL is_d3d12)
             devmode2.dmPelsWidth, devmode2.dmPelsHeight);
     hr = IDXGIOutput_GetDesc(second_output, &output_desc);
     ok(hr == S_OK, "GetDesc failed, hr %#x.\n", hr);
-    todo_wine ok(output_desc.DesktopCoordinates.right - output_desc.DesktopCoordinates.left ==
+    ok(output_desc.DesktopCoordinates.right - output_desc.DesktopCoordinates.left ==
             devmode.dmPelsWidth, "Expected width %u, got %u.\n", devmode.dmPelsWidth,
             output_desc.DesktopCoordinates.right - output_desc.DesktopCoordinates.left);
-    todo_wine ok(output_desc.DesktopCoordinates.bottom - output_desc.DesktopCoordinates.top ==
+    ok(output_desc.DesktopCoordinates.bottom - output_desc.DesktopCoordinates.top ==
             devmode.dmPelsHeight, "Expected height %u, got %u.\n", devmode.dmPelsHeight,
             output_desc.DesktopCoordinates.bottom - output_desc.DesktopCoordinates.top);
 

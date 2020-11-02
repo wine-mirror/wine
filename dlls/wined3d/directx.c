@@ -1320,67 +1320,155 @@ HRESULT CDECL wined3d_output_get_display_mode(const struct wined3d_output *outpu
     return WINED3D_OK;
 }
 
+static BOOL equal_display_mode(const DEVMODEW *mode1, const DEVMODEW *mode2)
+{
+    if (mode1->dmFields & mode2->dmFields & DM_PELSWIDTH
+            && mode1->dmPelsWidth != mode2->dmPelsWidth)
+        return FALSE;
+
+    if (mode1->dmFields & mode2->dmFields & DM_PELSHEIGHT
+            && mode1->dmPelsHeight != mode2->dmPelsHeight)
+        return FALSE;
+
+    if (mode1->dmFields & mode2->dmFields & DM_BITSPERPEL
+            && mode1->dmBitsPerPel != mode2->dmBitsPerPel)
+        return FALSE;
+
+    if (mode1->dmFields & mode2->dmFields & DM_DISPLAYFLAGS
+            && mode1->u2.dmDisplayFlags != mode2->u2.dmDisplayFlags)
+        return FALSE;
+
+    if (mode1->dmFields & mode2->dmFields & DM_DISPLAYFREQUENCY
+            && mode1->dmDisplayFrequency != mode2->dmDisplayFrequency)
+        return FALSE;
+
+    if (mode1->dmFields & mode2->dmFields & DM_DISPLAYORIENTATION
+            && mode1->u1.s2.dmDisplayOrientation != mode2->u1.s2.dmDisplayOrientation)
+        return FALSE;
+
+    if (mode1->dmFields & mode2->dmFields & DM_POSITION
+            && (mode1->u1.s2.dmPosition.x != mode2->u1.s2.dmPosition.x
+            || mode1->u1.s2.dmPosition.y != mode2->u1.s2.dmPosition.y))
+        return FALSE;
+
+    return TRUE;
+}
+
+HRESULT CDECL wined3d_restore_display_modes(struct wined3d *wined3d)
+{
+    unsigned int adapter_idx, output_idx = 0;
+    DEVMODEW current_mode, registry_mode;
+    struct wined3d_adapter *adapter;
+    DISPLAY_DEVICEW display_device;
+    struct wined3d_output *output;
+    BOOL do_mode_change = FALSE;
+    LONG ret;
+
+    TRACE("wined3d %p.\n", wined3d);
+
+    memset(&current_mode, 0, sizeof(current_mode));
+    memset(&registry_mode, 0, sizeof(registry_mode));
+    current_mode.dmSize = sizeof(current_mode);
+    registry_mode.dmSize = sizeof(registry_mode);
+    display_device.cb = sizeof(display_device);
+    while (EnumDisplayDevicesW(NULL, output_idx++, &display_device, 0))
+    {
+        if (!EnumDisplaySettingsExW(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &current_mode, 0))
+        {
+            ERR("Failed to read the current display mode for %s.\n",
+                    wine_dbgstr_w(display_device.DeviceName));
+            return WINED3DERR_NOTAVAILABLE;
+        }
+
+        if (!EnumDisplaySettingsExW(display_device.DeviceName, ENUM_REGISTRY_SETTINGS, &registry_mode, 0))
+        {
+            ERR("Failed to read the registry display mode for %s.\n",
+                    wine_dbgstr_w(display_device.DeviceName));
+            return WINED3DERR_NOTAVAILABLE;
+        }
+
+        if (!equal_display_mode(&current_mode, &registry_mode))
+        {
+            do_mode_change = TRUE;
+            break;
+        }
+    }
+
+    if (do_mode_change)
+    {
+        ret = ChangeDisplaySettingsExW(NULL, NULL, NULL, 0, NULL);
+        if (ret != DISP_CHANGE_SUCCESSFUL)
+        {
+            ERR("Failed to restore all outputs to their registry display settings, error %d.\n", ret);
+            return WINED3DERR_NOTAVAILABLE;
+        }
+    }
+    else
+    {
+        TRACE("Skipping redundant mode setting call.\n");
+    }
+
+    for (adapter_idx = 0; adapter_idx < wined3d->adapter_count; ++adapter_idx)
+    {
+        adapter = wined3d->adapters[adapter_idx];
+        for (output_idx = 0; output_idx < adapter->output_count; ++output_idx)
+        {
+            output = &adapter->outputs[output_idx];
+
+            if (!EnumDisplaySettingsExW(output->device_name, ENUM_CURRENT_SETTINGS, &current_mode, 0))
+            {
+                ERR("Failed to read the current display mode for %s.\n",
+                        wine_dbgstr_w(output->device_name));
+                return WINED3DERR_NOTAVAILABLE;
+            }
+
+            output->screen_format = pixelformat_for_depth(current_mode.dmBitsPerPel);
+        }
+    }
+
+    return WINED3D_OK;
+}
+
 HRESULT CDECL wined3d_output_set_display_mode(struct wined3d_output *output,
         const struct wined3d_display_mode *mode)
 {
+    enum wined3d_format_id new_format_id;
+    const struct wined3d_format *format;
     DEVMODEW new_mode, current_mode;
     LONG ret;
-    enum wined3d_format_id new_format_id;
 
     TRACE("output %p, mode %p.\n", output, mode);
+    TRACE("mode %ux%u@%u %s %#x.\n", mode->width, mode->height, mode->refresh_rate,
+            debug_d3dformat(mode->format_id), mode->scanline_ordering);
 
     memset(&new_mode, 0, sizeof(new_mode));
     new_mode.dmSize = sizeof(new_mode);
     memset(&current_mode, 0, sizeof(current_mode));
     current_mode.dmSize = sizeof(current_mode);
-    if (mode)
+
+    format = wined3d_get_format(output->adapter, mode->format_id, WINED3D_BIND_RENDER_TARGET);
+
+    new_mode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+    new_mode.dmBitsPerPel = format->byte_count * CHAR_BIT;
+    new_mode.dmPelsWidth = mode->width;
+    new_mode.dmPelsHeight = mode->height;
+    new_mode.dmDisplayFrequency = mode->refresh_rate;
+    if (mode->refresh_rate)
+        new_mode.dmFields |= DM_DISPLAYFREQUENCY;
+    if (mode->scanline_ordering != WINED3D_SCANLINE_ORDERING_UNKNOWN)
     {
-        const struct wined3d_format *format;
-
-        TRACE("mode %ux%u@%u %s %#x.\n", mode->width, mode->height, mode->refresh_rate,
-                debug_d3dformat(mode->format_id), mode->scanline_ordering);
-
-        format = wined3d_get_format(output->adapter, mode->format_id, WINED3D_BIND_RENDER_TARGET);
-
-        new_mode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-        new_mode.dmBitsPerPel = format->byte_count * CHAR_BIT;
-        new_mode.dmPelsWidth = mode->width;
-        new_mode.dmPelsHeight = mode->height;
-
-        new_mode.dmDisplayFrequency = mode->refresh_rate;
-        if (mode->refresh_rate)
-            new_mode.dmFields |= DM_DISPLAYFREQUENCY;
-
-        if (mode->scanline_ordering != WINED3D_SCANLINE_ORDERING_UNKNOWN)
-        {
-            new_mode.dmFields |= DM_DISPLAYFLAGS;
-            if (mode->scanline_ordering == WINED3D_SCANLINE_ORDERING_INTERLACED)
-                new_mode.u2.dmDisplayFlags |= DM_INTERLACED;
-        }
-        new_format_id = mode->format_id;
+        new_mode.dmFields |= DM_DISPLAYFLAGS;
+        if (mode->scanline_ordering == WINED3D_SCANLINE_ORDERING_INTERLACED)
+            new_mode.u2.dmDisplayFlags |= DM_INTERLACED;
     }
-    else
-    {
-        if (!EnumDisplaySettingsW(output->device_name, ENUM_REGISTRY_SETTINGS, &new_mode))
-        {
-            ERR("Failed to read mode from registry.\n");
-            return WINED3DERR_NOTAVAILABLE;
-        }
-        new_format_id = pixelformat_for_depth(new_mode.dmBitsPerPel);
-    }
+    new_format_id = mode->format_id;
 
     /* Only change the mode if necessary. */
     if (!EnumDisplaySettingsW(output->device_name, ENUM_CURRENT_SETTINGS, &current_mode))
     {
         ERR("Failed to get current display mode.\n");
     }
-    else if (current_mode.dmPelsWidth == new_mode.dmPelsWidth
-            && current_mode.dmPelsHeight == new_mode.dmPelsHeight
-            && current_mode.dmBitsPerPel == new_mode.dmBitsPerPel
-            && (current_mode.dmDisplayFrequency == new_mode.dmDisplayFrequency
-            || !(new_mode.dmFields & DM_DISPLAYFREQUENCY))
-            && (current_mode.u2.dmDisplayFlags == new_mode.u2.dmDisplayFlags
-            || !(new_mode.dmFields & DM_DISPLAYFLAGS)))
+    else if (equal_display_mode(&current_mode, &new_mode))
     {
         TRACE("Skipping redundant mode setting call.\n");
         output->screen_format = new_format_id;

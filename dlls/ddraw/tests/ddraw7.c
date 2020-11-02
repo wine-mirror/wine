@@ -3819,7 +3819,7 @@ static void test_coop_level_mode_set_multi(void)
 
     ret = EnumDisplaySettingsW(second_monitor_name, ENUM_CURRENT_SETTINGS, &devmode2);
     ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
-    todo_wine ok(compare_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
+    ok(compare_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
     ret = EnumDisplaySettingsW(second_monitor_name, ENUM_REGISTRY_SETTINGS, &devmode2);
     ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
     ok(compare_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
@@ -3840,7 +3840,7 @@ static void test_coop_level_mode_set_multi(void)
 
     ret = EnumDisplaySettingsW(second_monitor_name, ENUM_CURRENT_SETTINGS, &devmode2);
     ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
-    todo_wine ok(compare_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
+    ok(compare_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
     ret = EnumDisplaySettingsW(second_monitor_name, ENUM_REGISTRY_SETTINGS, &devmode2);
     ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
     ok(compare_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
@@ -3865,7 +3865,7 @@ static void test_coop_level_mode_set_multi(void)
 
     ret = EnumDisplaySettingsW(second_monitor_name, ENUM_CURRENT_SETTINGS, &devmode2);
     ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
-    todo_wine ok(devmode2.dmPelsWidth == devmode.dmPelsWidth && devmode2.dmPelsHeight == devmode.dmPelsHeight,
+    ok(devmode2.dmPelsWidth == devmode.dmPelsWidth && devmode2.dmPelsHeight == devmode.dmPelsHeight,
             "Expected resolution %ux%u, got %ux%u.\n", devmode.dmPelsWidth, devmode.dmPelsHeight,
             devmode2.dmPelsWidth, devmode2.dmPelsHeight);
     ret = EnumDisplaySettingsW(second_monitor_name, ENUM_REGISTRY_SETTINGS, &devmode2);
@@ -3895,7 +3895,7 @@ static void test_coop_level_mode_set_multi(void)
 
     ret = EnumDisplaySettingsW(second_monitor_name, ENUM_CURRENT_SETTINGS, &devmode2);
     ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
-    todo_wine ok(compare_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
+    ok(compare_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
     ret = EnumDisplaySettingsW(second_monitor_name, ENUM_REGISTRY_SETTINGS, &devmode2);
     ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
     ok(compare_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
@@ -3926,7 +3926,7 @@ static void test_coop_level_mode_set_multi(void)
 
     ret = EnumDisplaySettingsW(second_monitor_name, ENUM_CURRENT_SETTINGS, &devmode2);
     ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
-    todo_wine ok(compare_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
+    ok(compare_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");
     ret = EnumDisplaySettingsW(second_monitor_name, ENUM_REGISTRY_SETTINGS, &devmode2);
     ok(ret, "EnumDisplaySettingsW failed, error %#x.\n", GetLastError());
     ok(compare_mode_rect(&devmode2, &old_devmode), "Got a different mode.\n");

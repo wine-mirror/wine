@@ -28,8 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 void wined3d_swapchain_cleanup(struct wined3d_swapchain *swapchain)
 {
-    struct wined3d_output *output;
-    HRESULT hr = E_FAIL;
+    HRESULT hr;
     UINT i;
 
     TRACE("Destroying swapchain %p.\n", swapchain);
@@ -71,9 +70,7 @@ void wined3d_swapchain_cleanup(struct wined3d_swapchain *swapchain)
     {
         if (swapchain->state.desc.auto_restore_display_mode)
         {
-            output = wined3d_swapchain_get_output(swapchain);
-            if (!output || FAILED(hr = wined3d_output_set_display_mode(output,
-                    &swapchain->state.original_mode)))
+            if (FAILED(hr = wined3d_restore_display_modes(swapchain->device->wined3d)))
                 ERR("Failed to restore display mode, hr %#x.\n", hr);
 
             if (swapchain->state.desc.flags & WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT)
@@ -1543,8 +1540,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
 err:
     if (displaymode_set)
     {
-        if (FAILED(wined3d_output_set_display_mode(desc->output,
-                &swapchain->state.original_mode)))
+        if (FAILED(wined3d_restore_display_modes(device->wined3d)))
             ERR("Failed to restore display mode.\n");
     }
 
@@ -1791,13 +1787,6 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
     if (!(focus_messages = device->wined3d->flags & WINED3D_FOCUS_MESSAGES))
         filter = wined3d_filter_messages(window, TRUE);
 
-    output = wined3d_swapchain_get_output(swapchain);
-    if (!output)
-    {
-        ERR("Failed to get output from swapchain %p.\n", swapchain);
-        return;
-    }
-
     if (activate)
     {
         SystemParametersInfoW(SPI_GETSCREENSAVEACTIVE, 0, &screensaver_active, 0);
@@ -1813,6 +1802,13 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
              *
              * Guild Wars 1 wants a WINDOWPOSCHANGED message on the device window to
              * resume drawing after a focus loss. */
+            output = wined3d_swapchain_get_output(swapchain);
+            if (!output)
+            {
+                ERR("Failed to get output from swapchain %p.\n", swapchain);
+                return;
+            }
+
             if (SUCCEEDED(hr = wined3d_output_get_desc(output, &output_desc)))
                 SetWindowPos(window, NULL, output_desc.desktop_rect.left,
                         output_desc.desktop_rect.top, swapchain->state.desc.backbuffer_width,
@@ -1823,6 +1819,13 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
 
         if (device->wined3d->flags & WINED3D_RESTORE_MODE_ON_ACTIVATE)
         {
+            output = wined3d_swapchain_get_output(swapchain);
+            if (!output)
+            {
+                ERR("Failed to get output from swapchain %p.\n", swapchain);
+                return;
+            }
+
             if (FAILED(hr = wined3d_output_set_display_mode(output,
                     &swapchain->state.d3d_mode)))
                 ERR("Failed to set display mode, hr %#x.\n", hr);
@@ -1839,8 +1842,8 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
             device->restore_screensaver = FALSE;
         }
 
-        if (FAILED(hr = wined3d_output_set_display_mode(output, NULL)))
-            ERR("Failed to set display mode, hr %#x.\n", hr);
+        if (FAILED(hr = wined3d_restore_display_modes(device->wined3d)))
+            ERR("Failed to restore display modes, hr %#x.\n", hr);
 
         swapchain->reapply_mode = TRUE;
 
@@ -1974,9 +1977,9 @@ static HRESULT wined3d_swapchain_state_set_display_mode(struct wined3d_swapchain
 
     if (output != state->desc.output)
     {
-        if (FAILED(hr = wined3d_output_set_display_mode(state->desc.output, &state->original_mode)))
+        if (FAILED(hr = wined3d_restore_display_modes(state->wined3d)))
         {
-            WARN("Failed to set display mode, hr %#x.\n", hr);
+            WARN("Failed to restore display modes, hr %#x.\n", hr);
             return hr;
         }
 
@@ -2199,6 +2202,9 @@ HRESULT CDECL wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_st
         if (mode)
         {
             actual_mode = *mode;
+            if (FAILED(hr = wined3d_swapchain_state_set_display_mode(state, swapchain_desc->output,
+                    &actual_mode)))
+                return hr;
         }
         else
         {
@@ -2210,16 +2216,19 @@ HRESULT CDECL wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_st
                 actual_mode.format_id = adapter_format_from_backbuffer_format(swapchain_desc->output->adapter,
                         swapchain_desc->backbuffer_format);
                 actual_mode.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
+                if (FAILED(hr = wined3d_swapchain_state_set_display_mode(state, swapchain_desc->output,
+                        &actual_mode)))
+                    return hr;
             }
             else
             {
-                actual_mode = state->original_mode;
+                if (FAILED(hr = wined3d_restore_display_modes(state->wined3d)))
+                {
+                    WARN("Failed to restore display modes for all outputs, hr %#x.\n", hr);
+                    return hr;
+                }
             }
         }
-
-        if (FAILED(hr = wined3d_swapchain_state_set_display_mode(state, swapchain_desc->output,
-                &actual_mode)))
-            return hr;
     }
     else
     {

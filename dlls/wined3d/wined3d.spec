@@ -15,6 +15,7 @@
 @ cdecl wined3d_incref(ptr)
 @ cdecl wined3d_register_software_device(ptr ptr)
 @ cdecl wined3d_register_window(ptr ptr ptr long)
+@ cdecl wined3d_restore_display_modes(ptr)
 @ cdecl wined3d_unregister_windows(ptr)
 
 @ cdecl wined3d_adapter_get_identifier(ptr long ptr)
