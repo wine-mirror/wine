@@ -681,12 +681,15 @@ static HRESULT WINAPI media_stream_GetMediaSource(IMFMediaStream *iface, IMFMedi
 {
     struct media_stream *stream = impl_from_IMFMediaStream(iface);
 
-    FIXME("stub (%p)->(%p)\n", stream, source);
+    TRACE("(%p)->(%p)\n", stream, source);
 
     if (stream->state == STREAM_SHUTDOWN)
         return MF_E_SHUTDOWN;
 
-    return E_NOTIMPL;
+    IMFMediaSource_AddRef(&stream->parent_source->IMFMediaSource_iface);
+    *source = &stream->parent_source->IMFMediaSource_iface;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_stream_GetStreamDescriptor(IMFMediaStream* iface, IMFStreamDescriptor **descriptor)
