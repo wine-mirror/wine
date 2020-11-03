@@ -65,6 +65,7 @@ static UINT font_smoothing = GGO_BITMAP;
 static UINT subpixel_orientation = GGO_GRAY4_BITMAP;
 static BOOL antialias_fakes = TRUE;
 
+static void add_face_to_cache( struct gdi_font_face *face );
 static void remove_face_from_cache( struct gdi_font_face *face );
 
   /* Device -> World size conversion */
@@ -554,7 +555,7 @@ static void load_gdi_font_subst(void)
 
 struct list font_list = LIST_INIT(font_list);
 
-struct gdi_font_family *create_family( const WCHAR *name, const WCHAR *second_name )
+static struct gdi_font_family *create_family( const WCHAR *name, const WCHAR *second_name )
 {
     struct gdi_font_family *family = HeapAlloc( GetProcessHeap(), 0, sizeof(*family) );
 
@@ -581,7 +582,7 @@ void release_family( struct gdi_font_family *family )
     HeapFree( GetProcessHeap(), 0, family );
 }
 
-struct gdi_font_family *find_family_from_name( const WCHAR *name )
+static struct gdi_font_family *find_family_from_name( const WCHAR *name )
 {
     struct gdi_font_family *family;
 
@@ -752,26 +753,6 @@ static void reorder_font_list(void)
     default_sans = set_default_family( default_sans_list );
 }
 
-struct gdi_font_face *create_face( const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
-                                   UINT index, FONTSIGNATURE fs, DWORD ntmflags, DWORD version,
-                                   DWORD flags, const struct bitmap_font_size *size )
-{
-    struct gdi_font_face *face = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*face) );
-
-    face->refcount   = 1;
-    face->style_name = strdupW( style );
-    face->full_name  = strdupW( fullname );
-    face->face_index = index;
-    face->fs         = fs;
-    face->ntmFlags   = ntmflags;
-    face->version    = version;
-    face->flags      = flags;
-    if (file) face->file = strdupW( file );
-    if (size) face->size = *size;
-    else face->scalable = TRUE;
-    return face;
-}
-
 void release_face( struct gdi_font_face *face )
 {
     if (--face->refcount) return;
@@ -815,7 +796,7 @@ static inline int style_order( const struct gdi_font_face *face )
     }
 }
 
-BOOL insert_face_in_family_list( struct gdi_font_face *face, struct gdi_font_family *family )
+static BOOL insert_face_in_family_list( struct gdi_font_face *face, struct gdi_font_family *family )
 {
     struct gdi_font_face *cursor;
 
@@ -864,6 +845,90 @@ BOOL insert_face_in_family_list( struct gdi_font_face *face, struct gdi_font_fam
     return TRUE;
 }
 
+static struct gdi_font_face *create_face( struct gdi_font_family *family, const WCHAR *style,
+                                          const WCHAR *fullname, const WCHAR *file,
+                                          void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,
+                                          DWORD ntmflags, DWORD version, DWORD flags,
+                                          const struct bitmap_font_size *size )
+{
+    struct gdi_font_face *face = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*face) );
+
+    face->refcount   = 1;
+    face->style_name = strdupW( style );
+    face->full_name  = strdupW( fullname );
+    face->face_index = index;
+    face->fs         = fs;
+    face->ntmFlags   = ntmflags;
+    face->version    = version;
+    face->flags      = flags;
+    face->data_ptr   = data_ptr;
+    face->data_size  = data_size;
+    if (file) face->file = strdupW( file );
+    if (size) face->size = *size;
+    else face->scalable = TRUE;
+    if (insert_face_in_family_list( face, family )) return face;
+    release_face( face );
+    return NULL;
+}
+
+int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
+                  const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
+                  void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,
+                  DWORD ntmflags, DWORD version, DWORD flags,
+                  const struct bitmap_font_size *size )
+{
+    struct gdi_font_face *face;
+    struct gdi_font_family *family;
+    int ret = 0;
+
+    if ((family = find_family_from_name( family_name ))) family->refcount++;
+    else if (!(family = create_family( family_name, second_name ))) return ret;
+
+    if ((face = create_face( family, style, fullname, file, data_ptr, data_size,
+                             index, fs, ntmflags, version, flags, size )))
+    {
+        if (flags & ADDFONT_ADD_TO_CACHE) add_face_to_cache( face );
+        release_face( face );
+    }
+    release_family( family );
+    ret++;
+
+    if (fs.fsCsb[0] & FS_DBCS_MASK)
+    {
+        WCHAR vert_family[LF_FACESIZE], vert_second[LF_FACESIZE], vert_full[LF_FULLFACESIZE];
+
+        vert_family[0] = '@';
+        lstrcpynW( vert_family + 1, family_name, LF_FACESIZE - 1 );
+
+        if (second_name && second_name[0])
+        {
+            vert_second[0] = '@';
+            lstrcpynW( vert_second + 1, second_name, LF_FACESIZE - 1 );
+        }
+        else vert_second[0] = 0;
+
+        if (fullname)
+        {
+            vert_full[0] = '@';
+            lstrcpynW( vert_full + 1, fullname, LF_FULLFACESIZE - 1 );
+            fullname = vert_full;
+        }
+
+        if ((family = find_family_from_name( vert_family ))) family->refcount++;
+        else if (!(family = create_family( vert_family, vert_second ))) return ret;
+
+        if ((face = create_face( family, style, fullname, file, data_ptr, data_size,
+                                 index, fs, ntmflags, version, flags | ADDFONT_VERTICAL_FONT, size )))
+        {
+            if (flags & ADDFONT_ADD_TO_CACHE) add_face_to_cache( face );
+            release_face( face );
+        }
+        release_family( family );
+        ret++;
+    }
+    return ret;
+}
+
 /* font cache */
 
 struct cached_face
@@ -894,22 +959,23 @@ static void load_face_from_cache( HKEY hkey_family, struct gdi_font_family *fami
         if (type == REG_BINARY && needed > sizeof(*cached))
         {
             ((DWORD *)buffer)[needed / sizeof(DWORD)] = 0;
+            if ((face = create_face( family, name, cached->full_name,
+                                     cached->full_name + strlenW(cached->full_name) + 1,
+                                     NULL, 0, cached->index, cached->fs, cached->ntmflags, cached->version,
+                                     cached->flags, scalable ? NULL : &cached->size )))
+            {
+                if (!scalable)
+                    TRACE("Adding bitmap size h %d w %d size %d x_ppem %d y_ppem %d\n",
+                          face->size.height, face->size.width, face->size.size >> 6,
+                          face->size.x_ppem >> 6, face->size.y_ppem >> 6);
 
-            face = create_face( name, cached->full_name, cached->full_name + strlenW(cached->full_name) + 1,
-                                cached->index, cached->fs, cached->ntmflags, cached->version,
-                                cached->flags, scalable ? NULL : &cached->size );
-            if (!scalable)
-                TRACE("Adding bitmap size h %d w %d size %d x_ppem %d y_ppem %d\n",
-                      face->size.height, face->size.width, face->size.size >> 6,
-                      face->size.x_ppem >> 6, face->size.y_ppem >> 6);
+                TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
+                      face->fs.fsCsb[0], face->fs.fsCsb[1],
+                      face->fs.fsUsb[0], face->fs.fsUsb[1],
+                      face->fs.fsUsb[2], face->fs.fsUsb[3]);
 
-            TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
-                  face->fs.fsCsb[0], face->fs.fsCsb[1],
-                  face->fs.fsUsb[0], face->fs.fsUsb[1],
-                  face->fs.fsUsb[2], face->fs.fsUsb[3]);
-
-            insert_face_in_family_list( face, family );
-            release_face( face );
+                release_face( face );
+            }
         }
         size = sizeof(name);
         needed = buffer_size - sizeof(DWORD);
@@ -990,7 +1056,7 @@ static void load_font_list_from_cache(void)
     reorder_vertical_fonts();
 }
 
-void add_face_to_cache( struct gdi_font_face *face )
+static void add_face_to_cache( struct gdi_font_face *face )
 {
     HKEY hkey_family, hkey_face;
     DWORD len, buffer[1024];

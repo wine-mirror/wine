@@ -456,16 +456,14 @@ extern void load_registry_fonts(void) DECLSPEC_HIDDEN;
 extern const WCHAR *get_gdi_font_subst( const WCHAR *from_name, int from_charset, int *to_charset ) DECLSPEC_HIDDEN;
 
 extern struct list font_list DECLSPEC_HIDDEN;
-extern struct gdi_font_family *create_family( const WCHAR *name, const WCHAR *second_name ) DECLSPEC_HIDDEN;
 extern void release_family( struct gdi_font_family *family ) DECLSPEC_HIDDEN;
-extern struct gdi_font_family *find_family_from_name( const WCHAR *name ) DECLSPEC_HIDDEN;
 extern struct gdi_font_family *find_family_from_any_name( const WCHAR *name ) DECLSPEC_HIDDEN;
-extern struct gdi_font_face *create_face( const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
-                                          UINT index, FONTSIGNATURE fs, DWORD ntmflags,
-                                          DWORD version, DWORD flags, const struct bitmap_font_size *size ) DECLSPEC_HIDDEN;
 extern void release_face( struct gdi_font_face *face ) DECLSPEC_HIDDEN;
-extern BOOL insert_face_in_family_list( struct gdi_font_face *face, struct gdi_font_family *family ) DECLSPEC_HIDDEN;
-extern void add_face_to_cache( struct gdi_font_face *face ) DECLSPEC_HIDDEN;
+extern int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
+                         const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
+                         void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,
+                         DWORD ntmflags, DWORD version, DWORD flags,
+                         const struct bitmap_font_size *size ) DECLSPEC_HIDDEN;
 
 extern struct gdi_font_link *find_gdi_font_link( const WCHAR *name ) DECLSPEC_HIDDEN;
 extern struct gdi_font_family *find_family_from_font_links( const WCHAR *name, const WCHAR *subst,

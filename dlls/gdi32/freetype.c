@@ -876,55 +876,6 @@ static WCHAR *ft_face_get_full_name( FT_Face ft_face, LANGID langid )
     return full_name;
 }
 
-static WCHAR *get_vertical_name( WCHAR *name )
-{
-    SIZE_T length;
-    if (!name) return NULL;
-    if (name[0] == '@') return name;
-
-    length = strlenW( name ) + 1;
-    name = HeapReAlloc( GetProcessHeap(), 0, name, (length + 1) * sizeof(WCHAR) );
-    memmove( name + 1, name, length * sizeof(WCHAR) );
-    name[0] = '@';
-    return name;
-}
-
-static Family *get_family( FT_Face ft_face, BOOL vertical )
-{
-    Family *family;
-    WCHAR *family_name, *second_name;
-
-    family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
-    second_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) );
-
-    /* try to find another secondary name, preferring the lowest langids */
-    if (!strcmpiW( family_name, second_name ))
-    {
-        HeapFree( GetProcessHeap(), 0, second_name );
-        second_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL) );
-    }
-
-    if (!strcmpiW( family_name, second_name ))
-    {
-        HeapFree( GetProcessHeap(), 0, second_name );
-        second_name = NULL;
-    }
-
-    if (vertical)
-    {
-        family_name = get_vertical_name( family_name );
-        second_name = get_vertical_name( second_name );
-    }
-
-    if ((family = find_family_from_name( family_name ))) family->refcount++;
-    else family = create_family( family_name, second_name );
-
-    HeapFree( GetProcessHeap(), 0, family_name );
-    HeapFree( GetProcessHeap(), 0, second_name );
-
-    return family;
-}
-
 static inline FT_Fixed get_font_version( FT_Face ft_face )
 {
     FT_Fixed version = 0;
@@ -1045,54 +996,45 @@ static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
     }
 }
 
-static Face *create_face_from_ft_face( FT_Face ft_face, FT_Long face_index,
-                                       const WCHAR *filename, DWORD flags )
+static int AddFaceToList(FT_Face ft_face, const WCHAR *file, void *data_ptr, SIZE_T data_size,
+                         FT_Long face_index, DWORD flags )
 {
     struct bitmap_font_size size;
-    struct gdi_font_face *face;
     FONTSIGNATURE fs;
+    int ret;
+    WCHAR *family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
+    WCHAR *second_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) );
     WCHAR *style_name = ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
     WCHAR *full_name = ft_face_get_full_name( ft_face, GetSystemDefaultLangID() );
 
-    if (flags & ADDFONT_VERTICAL_FONT) full_name = get_vertical_name( full_name );
+    /* try to find another secondary name, preferring the lowest langids */
+    if (!strcmpiW( family_name, second_name ))
+    {
+        HeapFree( GetProcessHeap(), 0, second_name );
+        second_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL) );
+    }
+    if (!strcmpiW( family_name, second_name ))
+    {
+        HeapFree( GetProcessHeap(), 0, second_name );
+        second_name = NULL;
+    }
+
     get_fontsig( ft_face, &fs );
     if (!FT_IS_SCALABLE( ft_face )) get_bitmap_size( ft_face, &size );
     if (!HIWORD( flags )) flags |= ADDFONT_AA_FLAGS( default_aa_flags );
 
-    face = create_face( style_name, full_name, filename, face_index, fs,
-                        get_ntm_flags( ft_face ), get_font_version( ft_face ),
+    ret = add_gdi_face( family_name, second_name, style_name, full_name, file, data_ptr, data_size,
+                        face_index, fs, get_ntm_flags( ft_face ), get_font_version( ft_face ),
                         flags, FT_IS_SCALABLE(ft_face) ? NULL : &size );
 
     TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
           fs.fsCsb[0], fs.fsCsb[1], fs.fsUsb[0], fs.fsUsb[1], fs.fsUsb[2], fs.fsUsb[3]);
 
+    HeapFree( GetProcessHeap(), 0, family_name );
+    HeapFree( GetProcessHeap(), 0, second_name );
     HeapFree( GetProcessHeap(), 0, style_name );
     HeapFree( GetProcessHeap(), 0, full_name );
-    return face;
-}
-
-static void AddFaceToList(FT_Face ft_face, const WCHAR *file, void *font_data_ptr, DWORD font_data_size,
-                          FT_Long face_index, DWORD flags )
-{
-    Face *face;
-    Family *family;
-
-    face = create_face_from_ft_face( ft_face, face_index, file, flags );
-    if (face && !file)
-    {
-        face->data_ptr = font_data_ptr;
-        face->data_size = font_data_size;
-    }
-    family = get_family( ft_face, flags & ADDFONT_VERTICAL_FONT );
-
-    if (insert_face_in_family_list( face, family ))
-    {
-        if (flags & ADDFONT_ADD_TO_CACHE)
-            add_face_to_cache( face );
-        TRACE( "Added face %s to family %s\n", debugstr_w(face->full_name), debugstr_w(family->family_name) );
-    }
-    release_face( face );
-    release_family( family );
+    return ret;
 }
 
 static FT_Face new_ft_face( const char *file, void *font_data_ptr, DWORD font_data_size,
@@ -1206,8 +1148,6 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
     if (!dos_name && unix_name) dos_name = filename = wine_get_dos_file_name( unix_name );
 
     do {
-        FONTSIGNATURE fs;
-
         ft_face = new_ft_face( unix_name, font_data_ptr, font_data_size, face_index, flags & ADDFONT_ALLOW_BITMAP );
         if (!ft_face) break;
 
@@ -1218,16 +1158,7 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
             break;
         }
 
-        AddFaceToList(ft_face, dos_name, font_data_ptr, font_data_size, face_index, flags);
-        ++ret;
-
-        get_fontsig(ft_face, &fs);
-        if (fs.fsCsb[0] & FS_DBCS_MASK)
-        {
-            AddFaceToList(ft_face, dos_name, font_data_ptr, font_data_size, face_index,
-                          flags | ADDFONT_VERTICAL_FONT);
-            ++ret;
-        }
+        ret += AddFaceToList(ft_face, dos_name, font_data_ptr, font_data_size, face_index, flags);
 
 	num_faces = ft_face->num_faces;
 	pFT_Done_Face(ft_face);
