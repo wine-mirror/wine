@@ -509,7 +509,7 @@
 @ stub -arch=arm ?_Copy_str@exception@std@@AAAXPBD@Z
 @ stub -arch=i386 ?_Copy_str@exception@std@@AAEXPBD@Z
 @ stub -arch=win64 ?_Copy_str@exception@std@@AEAAXPEBD@Z
-@ stub ?_CurrentContext@_Context@details@Concurrency@@SA?AV123@XZ
+@ cdecl ?_CurrentContext@_Context@details@Concurrency@@SA?AV123@XZ() _Context__CurrentContext
 @ stub ?_Current_node@location@Concurrency@@SA?AV12@XZ
 @ stub -arch=arm ?_Destroy@_AsyncTaskCollection@details@Concurrency@@EAAXXZ
 @ stub -arch=i386 ?_Destroy@_AsyncTaskCollection@details@Concurrency@@EAEXXZ

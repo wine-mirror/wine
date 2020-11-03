@@ -327,7 +327,7 @@
 @ stub -arch=win64 ?_ConcRT_Trace@details@Concurrency@@YAXHPEB_WZZ
 @ stub -arch=i386 ?_Confirm_cancel@_Cancellation_beacon@details@Concurrency@@QAE_NXZ
 @ stub -arch=win64 ?_Confirm_cancel@_Cancellation_beacon@details@Concurrency@@QEAA_NXZ
-@ stub ?_CurrentContext@_Context@details@Concurrency@@SA?AV123@XZ
+@ cdecl ?_CurrentContext@_Context@details@Concurrency@@SA?AV123@XZ() msvcr120.?_CurrentContext@_Context@details@Concurrency@@SA?AV123@XZ
 @ stub ?_Current_node@location@Concurrency@@SA?AV12@XZ
 @ stub -arch=i386 ?_Destroy@_AsyncTaskCollection@details@Concurrency@@EAEXXZ
 @ stub -arch=win64 ?_Destroy@_AsyncTaskCollection@details@Concurrency@@EEAAXXZ

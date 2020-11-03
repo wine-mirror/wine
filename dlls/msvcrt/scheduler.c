@@ -68,6 +68,10 @@ typedef struct {
 #define call_Context_dtor(this, flags) CALL_VTBL_FUNC(this, 20, \
         Context*, (Context*, unsigned int), (this, flags))
 
+typedef struct {
+    Context *context;
+} _Context;
+
 union allocator_cache_entry {
     struct _free {
         int depth;
@@ -277,6 +281,16 @@ unsigned int __cdecl Context_VirtualProcessorId(void)
     TRACE("()\n");
     return ctx ? call_Context_GetVirtualProcessorId(ctx) : -1;
 }
+
+#if _MSVCR_VER > 100
+/* ?_CurrentContext@_Context@details@Concurrency@@SA?AV123@XZ */
+_Context *__cdecl _Context__CurrentContext(_Context *ret)
+{
+    TRACE("(%p)\n", ret);
+    ret->context = Context_CurrentContext();
+    return ret;
+}
+#endif
 
 DEFINE_THISCALL_WRAPPER(ExternalContextBase_GetId, 4)
 unsigned int __thiscall ExternalContextBase_GetId(const ExternalContextBase *this)

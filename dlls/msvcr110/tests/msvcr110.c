@@ -31,6 +31,16 @@
 
 #include <locale.h>
 
+typedef void (*vtable_ptr)(void);
+
+typedef struct {
+    const vtable_ptr *vtable;
+} Context;
+
+typedef struct {
+    Context *ctx;
+} _Context;
+
 static char* (CDECL *p_setlocale)(int category, const char* locale);
 static size_t (CDECL *p___strncnt)(const char *str, size_t count);
 
@@ -38,6 +48,9 @@ static unsigned int (CDECL *p_CurrentScheduler_GetNumberOfVirtualProcessors)(voi
 static unsigned int (CDECL *p__CurrentScheduler__GetNumberOfVirtualProcessors)(void);
 static unsigned int (CDECL *p_CurrentScheduler_Id)(void);
 static unsigned int (CDECL *p__CurrentScheduler__Id)(void);
+
+static Context* (__cdecl *p_Context_CurrentContext)(void);
+static _Context* (__cdecl *p__Context__CurrentContext)(_Context*);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(module,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -59,6 +72,17 @@ static BOOL init(void)
     SET(p__CurrentScheduler__GetNumberOfVirtualProcessors, "?_GetNumberOfVirtualProcessors@_CurrentScheduler@details@Concurrency@@SAIXZ");
     SET(p_CurrentScheduler_Id, "?Id@CurrentScheduler@Concurrency@@SAIXZ");
     SET(p__CurrentScheduler__Id, "?_Id@_CurrentScheduler@details@Concurrency@@SAIXZ");
+
+    SET(p__Context__CurrentContext, "?_CurrentContext@_Context@details@Concurrency@@SA?AV123@XZ");
+
+    if(sizeof(void*) == 8)
+    {
+        SET(p_Context_CurrentContext, "?CurrentContext@Context@Concurrency@@SAPEAV12@XZ");
+    }
+    else
+    {
+        SET(p_Context_CurrentContext, "?CurrentContext@Context@Concurrency@@SAPAV12@XZ");
+    }
 
     return TRUE;
 }
@@ -146,10 +170,25 @@ static void test___strncnt(void)
     }
 }
 
+static void test_CurrentContext(void)
+{
+    _Context _ctx, *ret;
+    Context *ctx;
+
+    ctx = p_Context_CurrentContext();
+    ok(!!ctx, "got NULL\n");
+
+    memset(&_ctx, 0xcc, sizeof(_ctx));
+    ret = p__Context__CurrentContext(&_ctx);
+    ok(_ctx.ctx == ctx, "expected %p, got %p\n", ctx, _ctx.ctx);
+    ok(ret == &_ctx, "expected %p, got %p\n", &_ctx, ret);
+}
+
 START_TEST(msvcr110)
 {
     if (!init()) return;
     test_CurrentScheduler(); /* MUST be first (at least among Concurrency tests) */
     test_setlocale();
     test___strncnt();
+    test_CurrentContext();
 }
