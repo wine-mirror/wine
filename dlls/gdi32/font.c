@@ -38,6 +38,7 @@
 #include "resource.h"
 #include "wine/exception.h"
 #include "wine/heap.h"
+#include "wine/rbtree.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -3581,42 +3582,6 @@ static void init_font_options(void)
         }
         RegCloseKey( key );
     }
-}
-
-/***********************************************************************
- *              font_init
- */
-void font_init(void)
-{
-    static const WCHAR mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N','T','_','M','U','T','E','X','_','_',0};
-    HANDLE mutex;
-    DWORD disposition;
-
-    if (RegCreateKeyExA( HKEY_CURRENT_USER, "Software\\Wine\\Fonts", 0, NULL, 0,
-                         KEY_ALL_ACCESS, NULL, &wine_fonts_key, NULL ))
-        return;
-
-    init_font_options();
-    update_codepage();
-    if (!WineEngInit( &font_funcs )) return;
-
-    if (!(mutex = CreateMutexW( NULL, FALSE, mutex_nameW ))) return;
-    WaitForSingleObject( mutex, INFINITE );
-
-    RegCreateKeyExA( wine_fonts_key, "Cache", 0, NULL, REG_OPTION_VOLATILE,
-                     KEY_ALL_ACCESS, NULL, &wine_fonts_cache_key, &disposition );
-
-    if (disposition == REG_CREATED_NEW_KEY) font_funcs->load_fonts();
-    else load_font_list_from_cache();
-
-    ReleaseMutex( mutex );
-
-    reorder_font_list();
-    load_gdi_font_subst();
-    load_gdi_font_replacements();
-    load_system_links();
-    dump_gdi_font_list();
-    dump_gdi_font_subst();
 }
 
 
@@ -7441,7 +7406,7 @@ static BOOL remove_font_resource( LPCWSTR file, DWORD flags )
     return ret;
 }
 
-void load_system_bitmap_fonts(void)
+static void load_system_bitmap_fonts(void)
 {
     static const WCHAR keyW[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s',0};
     static const WCHAR fontsW[] = {'F','O','N','T','S','.','F','O','N',0};
@@ -7482,7 +7447,7 @@ static void load_directory_fonts( WCHAR *path, UINT flags )
     FindClose( handle );
 }
 
-void load_file_system_fonts(void)
+static void load_file_system_fonts(void)
 {
     static const WCHAR pathW[] = {'P','a','t','h',0};
     static const WCHAR slashstarW[] = {'\\','*',0};
@@ -7513,7 +7478,121 @@ void load_file_system_fonts(void)
     }
 }
 
-void load_registry_fonts(void)
+struct external_key
+{
+    struct wine_rb_entry entry;
+    BOOL                 found;
+    WCHAR                value[LF_FULLFACESIZE + 12];
+    WCHAR                path[1];
+};
+
+static int compare_external_key( const void *key, const struct wine_rb_entry *entry )
+{
+    return strcmpiW( key, WINE_RB_ENTRY_VALUE( entry, struct external_key, entry )->value );
+}
+
+static struct wine_rb_tree external_keys = { compare_external_key };
+
+static HKEY load_external_font_keys(void)
+{
+    static const WCHAR externalW[] = {'E','x','t','e','r','n','a','l',' ','F','o','n','t','s',0};
+    WCHAR value[LF_FULLFACESIZE + 12], path[MAX_PATH];
+    DWORD i = 0, type, dlen, vlen;
+    struct external_key *key;
+    HKEY hkey;
+
+    if (RegCreateKeyW( wine_fonts_key, externalW, &hkey )) return 0;
+
+    vlen = ARRAY_SIZE(value);
+    dlen = sizeof(path);
+    while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, (BYTE *)path, &dlen ))
+    {
+        if (type != REG_SZ) goto next;
+        dlen /= sizeof(WCHAR);
+        if (!(key = HeapAlloc( GetProcessHeap(), 0, offsetof(struct external_key, path[dlen]) ))) break;
+        key->found = FALSE;
+        strcpyW( key->value, value );
+        strcpyW( key->path, path );
+        wine_rb_put( &external_keys, value, &key->entry );
+    next:
+        vlen = ARRAY_SIZE(value);
+        dlen = sizeof(path);
+    }
+    return hkey;
+}
+
+static void update_external_font_keys( HKEY hkey )
+{
+    static const WCHAR win9x_keyW[] = {'S','o','f','t','w','a','r','e','\\',
+                                       'M','i','c','r','o','s','o','f','t','\\',
+                                       'W','i','n','d','o','w','s','\\',
+                                       'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                       'F','o','n','t','s',0};
+    static const WCHAR winnt_keyW[] = {'S','o','f','t','w','a','r','e','\\',
+                                       'M','i','c','r','o','s','o','f','t','\\',
+                                       'W','i','n','d','o','w','s',' ','N','T','\\',
+                                       'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                       'F','o','n','t','s',0};
+    static const WCHAR TrueType[] = {' ','(','T','r','u','e','T','y','p','e',')',0};
+    HKEY winnt_key = 0, win9x_key = 0;
+    struct gdi_font_family *family;
+    struct gdi_font_face *face;
+    struct wine_rb_entry *entry;
+    struct external_key *key, *next;
+    DWORD len;
+    BOOL skip;
+    WCHAR value[LF_FULLFACESIZE + 12], path[MAX_PATH];
+    WCHAR *file;
+
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, winnt_keyW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &winnt_key, NULL );
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, win9x_keyW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &win9x_key, NULL );
+
+    /* enumerate the fonts and add external ones to the two keys */
+
+    LIST_FOR_EACH_ENTRY( family, &font_list, struct gdi_font_family, entry )
+    {
+        LIST_FOR_EACH_ENTRY( face, &family->faces, struct gdi_font_face, entry )
+        {
+            if (!(face->flags & ADDFONT_EXTERNAL_FONT)) continue;
+
+            strcpyW( value, face->full_name );
+            if (face->scalable) strcatW( value, TrueType );
+
+            if (GetFullPathNameW( face->file, MAX_PATH, path, NULL ))
+                file = path;
+            else if ((file = strrchrW( face->file, '\\' )))
+                file++;
+            else
+                file = face->file;
+
+            skip = FALSE;
+            if ((entry = wine_rb_get( &external_keys, value )))
+            {
+                struct external_key *key = WINE_RB_ENTRY_VALUE( entry, struct external_key, entry );
+                skip = key->found && !strcmpiW( key->path, file );
+                wine_rb_remove_key( &external_keys, value );
+                HeapFree( GetProcessHeap(), 0, key );
+            }
+            if (skip) continue;
+            len = (strlenW(file) + 1) * sizeof(WCHAR);
+            RegSetValueExW( winnt_key, value, 0, REG_SZ, (BYTE *)file, len );
+            RegSetValueExW( win9x_key, value, 0, REG_SZ, (BYTE *)file, len );
+            RegSetValueExW( hkey, value, 0, REG_SZ, (BYTE *)file, len );
+        }
+    }
+    WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR( key, next, &external_keys, struct external_key, entry )
+    {
+        RegDeleteValueW( win9x_key, key->value );
+        RegDeleteValueW( winnt_key, key->value );
+        RegDeleteValueW( hkey, key->value );
+        wine_rb_remove_key( &external_keys, key->value );
+        HeapFree( GetProcessHeap(), 0, key );
+    }
+    RegCloseKey( win9x_key );
+    RegCloseKey( winnt_key );
+}
+
+static void load_registry_fonts(void)
 {
     static const WCHAR dot_fonW[] = {'.','f','o','n',0};
     static const WCHAR win9x_key[] = {'S','o','f','t','w','a','r','e','\\',
@@ -7526,8 +7605,9 @@ void load_registry_fonts(void)
                                       'W','i','n','d','o','w','s',' ','N','T','\\',
                                       'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                       'F','o','n','t','s',0};
-    WCHAR value[MAX_PATH], data[MAX_PATH];
+    WCHAR value[LF_FULLFACESIZE + 12], data[MAX_PATH];
     DWORD i = 0, type, dlen, vlen;
+    struct wine_rb_entry *entry;
     HKEY hkey;
 
     /* Look under HKLM\Software\Microsoft\Windows[ NT]\CurrentVersion\Fonts
@@ -7541,16 +7621,71 @@ void load_registry_fonts(void)
     dlen = sizeof(data);
     while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, (LPBYTE)data, &dlen ))
     {
+        if (type != REG_SZ) goto next;
         dlen /= sizeof(WCHAR);
+        if ((entry = wine_rb_get( &external_keys, value )))
+        {
+            struct external_key *key = WINE_RB_ENTRY_VALUE( entry, struct external_key, entry );
+            if (!strcmpiW( key->path, data ))
+            {
+                key->found = TRUE;
+                goto next;
+            }
+        }
         if (data[0] && data[1] == ':')
             add_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
         else if (dlen >= 6 && !strcmpiW( data + dlen - 5, dot_fonW ))
             add_system_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
-
+    next:
         vlen = ARRAY_SIZE(value);
         dlen = sizeof(data);
     }
     RegCloseKey( hkey );
+}
+
+/***********************************************************************
+ *              font_init
+ */
+void font_init(void)
+{
+    static const WCHAR mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N','T','_','M','U','T','E','X','_','_',0};
+    HANDLE mutex;
+    DWORD disposition;
+
+    if (RegCreateKeyExA( HKEY_CURRENT_USER, "Software\\Wine\\Fonts", 0, NULL, 0,
+                         KEY_ALL_ACCESS, NULL, &wine_fonts_key, NULL ))
+        return;
+
+    init_font_options();
+    update_codepage();
+    if (!WineEngInit( &font_funcs )) return;
+
+    if (!(mutex = CreateMutexW( NULL, FALSE, mutex_nameW ))) return;
+    WaitForSingleObject( mutex, INFINITE );
+
+    RegCreateKeyExA( wine_fonts_key, "Cache", 0, NULL, REG_OPTION_VOLATILE,
+                     KEY_ALL_ACCESS, NULL, &wine_fonts_cache_key, &disposition );
+
+    if (disposition == REG_CREATED_NEW_KEY)
+    {
+        HKEY key = load_external_font_keys();
+        load_system_bitmap_fonts();
+        load_file_system_fonts();
+        load_registry_fonts();
+        font_funcs->load_fonts();
+        update_external_font_keys( key );
+        RegCloseKey( key );
+    }
+    else load_font_list_from_cache();
+
+    ReleaseMutex( mutex );
+
+    reorder_font_list();
+    load_gdi_font_subst();
+    load_gdi_font_replacements();
+    load_system_links();
+    dump_gdi_font_list();
+    dump_gdi_font_subst();
 }
 
 /***********************************************************************

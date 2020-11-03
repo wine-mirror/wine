@@ -250,19 +250,6 @@ static inline FT_Face get_ft_face( struct gdi_font *font )
 
 static const struct font_backend_funcs font_funcs;
 
-static const WCHAR win9x_font_reg_key[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-                                           'W','i','n','d','o','w','s','\\',
-                                           'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                           'F','o','n','t','s','\0'};
-
-static const WCHAR winnt_font_reg_key[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-                                           'W','i','n','d','o','w','s',' ','N','T','\\',
-                                           'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                           'F','o','n','t','s','\0'};
-
-static const WCHAR external_fonts_reg_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                               'F','o','n','t','s','\\','E','x','t','e','r','n','a','l',' ','F','o','n','t','s','\0'};
-
 static const WCHAR SymbolW[] = {'S','y','m','b','o','l','\0'};
 
 struct font_mapping
@@ -1511,177 +1498,6 @@ static void load_mac_fonts(void)
 
 #endif
 
-static WCHAR *get_full_path_name(const WCHAR *name)
-{
-    WCHAR *full_path;
-    DWORD len;
-
-    if (!(len = GetFullPathNameW(name, 0, NULL, NULL)))
-    {
-        ERR("GetFullPathNameW() failed, name %s.\n", debugstr_w(name));
-        return NULL;
-    }
-
-    if (!(full_path = HeapAlloc(GetProcessHeap(), 0, len * sizeof(*full_path))))
-    {
-        ERR("Could not get memory.\n");
-        return NULL;
-    }
-
-    if (GetFullPathNameW(name, len, full_path, NULL) != len - 1)
-    {
-        ERR("Unexpected GetFullPathNameW() result, name %s.\n", debugstr_w(name));
-        HeapFree(GetProcessHeap(), 0, full_path);
-        return NULL;
-    }
-
-    return full_path;
-}
-
-/*************************************************************
- *
- * This adds registry entries for any externally loaded fonts
- * (fonts from fontconfig or FontDirs).  It also deletes entries
- * of no longer existing fonts.
- *
- */
-static void update_reg_entries(void)
-{
-    HKEY winnt_key = 0, win9x_key = 0, external_key = 0;
-    LPWSTR valueW;
-    DWORD len;
-    Family *family;
-    Face *face;
-    WCHAR *file, *path;
-    static const WCHAR TrueType[] = {' ','(','T','r','u','e','T','y','p','e',')','\0'};
-
-    if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, winnt_font_reg_key,
-                       0, NULL, 0, KEY_ALL_ACCESS, NULL, &winnt_key, NULL) != ERROR_SUCCESS) {
-        ERR("Can't create Windows font reg key\n");
-        goto end;
-    }
-
-    if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, win9x_font_reg_key,
-                       0, NULL, 0, KEY_ALL_ACCESS, NULL, &win9x_key, NULL) != ERROR_SUCCESS) {
-        ERR("Can't create Windows font reg key\n");
-        goto end;
-    }
-
-    if(RegCreateKeyExW(HKEY_CURRENT_USER, external_fonts_reg_key,
-                       0, NULL, 0, KEY_ALL_ACCESS, NULL, &external_key, NULL) != ERROR_SUCCESS) {
-        ERR("Can't create external font reg key\n");
-        goto end;
-    }
-
-    /* enumerate the fonts and add external ones to the two keys */
-
-    LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
-        LIST_FOR_EACH_ENTRY( face, &family->faces, Face, entry ) {
-            if (!(face->flags & ADDFONT_EXTERNAL_FONT)) continue;
-
-            len = strlenW( face->full_name ) + 1;
-            if (face->scalable)
-                len += ARRAY_SIZE(TrueType);
-
-            valueW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-            strcpyW( valueW, face->full_name );
-
-            if (face->scalable)
-                strcatW(valueW, TrueType);
-
-            if ((path = get_full_path_name(face->file)))
-            {
-                file = path;
-            }
-            else if ((file = strrchrW(face->file, '\\')))
-            {
-                file++;
-            }
-            else
-            {
-                file = face->file;
-            }
-
-            len = strlenW(file) + 1;
-            RegSetValueExW(winnt_key, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
-            RegSetValueExW(win9x_key, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
-            RegSetValueExW(external_key, valueW, 0, REG_SZ, (BYTE*)file, len * sizeof(WCHAR));
-
-            HeapFree(GetProcessHeap(), 0, path);
-            HeapFree(GetProcessHeap(), 0, valueW);
-        }
-    }
- end:
-    if(external_key) RegCloseKey(external_key);
-    if(win9x_key) RegCloseKey(win9x_key);
-    if(winnt_key) RegCloseKey(winnt_key);
-}
-
-static void delete_external_font_keys(void)
-{
-    HKEY winnt_key = 0, win9x_key = 0, external_key = 0;
-    DWORD dlen, plen, vlen, datalen, valuelen, i, type, path_type;
-    LPWSTR valueW;
-    LPVOID data;
-    BYTE *path;
-
-    if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, winnt_font_reg_key,
-                       0, NULL, 0, KEY_ALL_ACCESS, NULL, &winnt_key, NULL) != ERROR_SUCCESS) {
-        ERR("Can't create Windows font reg key\n");
-        goto end;
-    }
-
-    if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, win9x_font_reg_key,
-                       0, NULL, 0, KEY_ALL_ACCESS, NULL, &win9x_key, NULL) != ERROR_SUCCESS) {
-        ERR("Can't create Windows font reg key\n");
-        goto end;
-    }
-
-    if(RegCreateKeyW(HKEY_CURRENT_USER, external_fonts_reg_key, &external_key) != ERROR_SUCCESS) {
-        ERR("Can't create external font reg key\n");
-        goto end;
-    }
-
-    /* Delete all external fonts added last time */
-
-    RegQueryInfoKeyW(external_key, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                     &valuelen, &datalen, NULL, NULL);
-    valuelen++; /* returned value doesn't include room for '\0' */
-    valueW = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(WCHAR));
-    data = HeapAlloc(GetProcessHeap(), 0, datalen);
-    path = HeapAlloc(GetProcessHeap(), 0, datalen);
-
-    dlen = datalen;
-    vlen = valuelen;
-    i = 0;
-    while(RegEnumValueW(external_key, i++, valueW, &vlen, NULL, &type, data,
-                        &dlen) == ERROR_SUCCESS) {
-        plen = dlen;
-        if (RegQueryValueExW(winnt_key, valueW, 0, &path_type, path, &plen) == ERROR_SUCCESS &&
-            type == path_type && dlen == plen && !memcmp(data, path, plen))
-            RegDeleteValueW(winnt_key, valueW);
-
-        plen = dlen;
-        if (RegQueryValueExW(win9x_key, valueW, 0, &path_type, path, &plen) == ERROR_SUCCESS &&
-            type == path_type && dlen == plen && !memcmp(data, path, plen))
-            RegDeleteValueW(win9x_key, valueW);
-
-        /* reset dlen and vlen */
-        dlen = datalen;
-        vlen = valuelen;
-    }
-    HeapFree(GetProcessHeap(), 0, path);
-    HeapFree(GetProcessHeap(), 0, data);
-    HeapFree(GetProcessHeap(), 0, valueW);
-
-    /* Delete the old external fonts key */
-    RegCloseKey(external_key);
-    RegDeleteKeyW(HKEY_CURRENT_USER, external_fonts_reg_key);
-
- end:
-    if(win9x_key) RegCloseKey(win9x_key);
-    if(winnt_key) RegCloseKey(winnt_key);
-}
 
 static BOOL init_freetype(void)
 {
@@ -1772,11 +1588,6 @@ sym_not_found:
  */
 static void CDECL freetype_load_fonts(void)
 {
-    delete_external_font_keys();
-    load_system_bitmap_fonts();
-    load_file_system_fonts();
-    load_registry_fonts();
-
 #ifdef SONAME_LIBFONTCONFIG
     load_fontconfig_fonts();
 #elif defined(HAVE_CARBON_CARBON_H)
@@ -1784,8 +1595,6 @@ static void CDECL freetype_load_fonts(void)
 #elif defined(__ANDROID__)
     ReadFontDir("/system/fonts", TRUE);
 #endif
-
-    update_reg_entries();
 }
 
 /*************************************************************
