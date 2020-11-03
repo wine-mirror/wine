@@ -33,7 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wscript);
 
 #define BUILDVERSION 16535
-static const WCHAR wshVersionW[] = {'5','.','8'};
+static const WCHAR wshVersionW[] = L"5.8";
 
 VARIANT_BOOL wshInteractive =
 #ifndef CSCRIPT_BUILD
