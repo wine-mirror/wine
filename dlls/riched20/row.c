@@ -82,10 +82,6 @@ void row_end_cursor( ME_Row *row, ME_Cursor *cursor, BOOL include_eop )
     cursor->nOffset = (item->type == diStartRow || include_eop) ? cursor->pRun->member.run.len : 0;
 }
 
-ME_DisplayItem *ME_RowStart(ME_DisplayItem *item) {
-  return ME_FindItemBackOrHere(item, diStartRow);
-}
-
 ME_Row *row_from_row_number( ME_TextEditor *editor, int row_num )
 {
     ME_Paragraph *para = editor_first_para( editor );
