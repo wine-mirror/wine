@@ -331,6 +331,10 @@ static void test_INetworkListManager( void )
     hr = IConnectionPointContainer_FindConnectionPoint( cpc, &IID_INetworkConnectionEvents, &pt );
     ok( hr == S_OK || hr == CO_E_FAILEDTOIMPERSONATE, "got %08x\n", hr );
     if (hr == S_OK) IConnectionPoint_Release( pt );
+
+    hr = IConnectionPointContainer_FindConnectionPoint( cpc, &IID_INetworkEvents, &pt );
+    ok( hr == S_OK, "got %08x\n", hr );
+    IConnectionPoint_Release( pt );
     IConnectionPointContainer_Release( cpc );
 
     network_iter = NULL;

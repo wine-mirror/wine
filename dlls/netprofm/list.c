@@ -84,6 +84,7 @@ struct list_manager
     struct connection_point list_mgr_cp;
     struct connection_point cost_mgr_cp;
     struct connection_point conn_mgr_cp;
+    struct connection_point events_cp;
 };
 
 struct sink_entry
@@ -1110,6 +1111,7 @@ static ULONG WINAPI list_manager_Release(
 
         TRACE( "destroying %p\n", mgr );
 
+        connection_point_release( &mgr->events_cp );
         connection_point_release( &mgr->conn_mgr_cp );
         connection_point_release( &mgr->cost_mgr_cp );
         connection_point_release( &mgr->list_mgr_cp );
@@ -1394,6 +1396,8 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
         ret = &This->cost_mgr_cp;
     else if (IsEqualGUID( riid, &IID_INetworkConnectionEvents ))
         ret = &This->conn_mgr_cp;
+    else if (IsEqualGUID( riid, &IID_INetworkEvents))
+        ret = &This->events_cp;
     else
     {
         FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
@@ -1783,6 +1787,8 @@ HRESULT list_manager_create( void **obj )
     connection_point_init( &mgr->cost_mgr_cp, &IID_INetworkCostManagerEvents,
                            &mgr->IConnectionPointContainer_iface);
     connection_point_init( &mgr->conn_mgr_cp, &IID_INetworkConnectionEvents,
+                           &mgr->IConnectionPointContainer_iface );
+    connection_point_init( &mgr->events_cp, &IID_INetworkEvents,
                            &mgr->IConnectionPointContainer_iface );
 
     *obj = &mgr->INetworkListManager_iface;
