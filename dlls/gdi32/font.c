@@ -225,6 +225,42 @@ static const WCHAR Gulim[] = {'G','u','l','i','m',0};
 static const WCHAR PMingLiU[] = {'P','M','i','n','g','L','i','U',0};
 static const WCHAR Batang[] = {'B','a','t','a','n','g',0};
 
+static const WCHAR arial[] = {'A','r','i','a','l',0};
+static const WCHAR bitstream_vera_sans[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','a','n','s',0};
+static const WCHAR bitstream_vera_sans_mono[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','a','n','s',' ','M','o','n','o',0};
+static const WCHAR bitstream_vera_serif[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','e','r','i','f',0};
+static const WCHAR courier_new[] = {'C','o','u','r','i','e','r',' ','N','e','w',0};
+static const WCHAR liberation_mono[] = {'L','i','b','e','r','a','t','i','o','n',' ','M','o','n','o',0};
+static const WCHAR liberation_sans[] = {'L','i','b','e','r','a','t','i','o','n',' ','S','a','n','s',0};
+static const WCHAR liberation_serif[] = {'L','i','b','e','r','a','t','i','o','n',' ','S','e','r','i','f',0};
+static const WCHAR times_new_roman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
+
+static const WCHAR * const default_serif_list[] =
+{
+    times_new_roman,
+    liberation_serif,
+    bitstream_vera_serif,
+    NULL
+};
+static const WCHAR * const default_fixed_list[] =
+{
+    courier_new,
+    liberation_mono,
+    bitstream_vera_sans_mono,
+    NULL
+};
+static const WCHAR * const default_sans_list[] =
+{
+    arial,
+    liberation_sans,
+    bitstream_vera_sans,
+    NULL
+};
+
+const WCHAR *default_serif = times_new_roman;
+const WCHAR *default_fixed = courier_new;
+const WCHAR *default_sans = arial;
+
 static const struct nls_update_font_list
 {
     UINT ansi_cp, oem_cp;
@@ -689,6 +725,28 @@ static void dump_gdi_font_list(void)
             TRACE("\n");
 	}
     }
+}
+
+static const WCHAR *set_default_family( const WCHAR * const *name_list )
+{
+    struct gdi_font_family *family;
+    const WCHAR * const *entry;
+
+    for (entry = name_list; *entry; entry++)
+    {
+        if (!(family = find_family_from_name( *entry ))) continue;
+        list_remove( &family->entry );
+        list_add_head( &font_list, &family->entry );
+        return *entry;
+    }
+    return *name_list;
+}
+
+static void reorder_font_list(void)
+{
+    default_serif = set_default_family( default_serif_list );
+    default_fixed = set_default_family( default_fixed_list );
+    default_sans = set_default_family( default_sans_list );
 }
 
 struct gdi_font_face *create_face( const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
@@ -3187,6 +3245,7 @@ void font_init(void)
     init_font_options();
     update_codepage();
     WineEngInit( &font_funcs );
+    reorder_font_list();
     load_gdi_font_subst();
     load_gdi_font_replacements();
     load_system_links();

@@ -479,6 +479,9 @@ extern struct gdi_font *create_gdi_font( const struct gdi_font_face *face, const
                                          const LOGFONTW *lf ) DECLSPEC_HIDDEN;
 extern void *get_GSUB_vert_feature( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern void font_init(void) DECLSPEC_HIDDEN;
+extern const WCHAR *default_serif DECLSPEC_HIDDEN;
+extern const WCHAR *default_fixed DECLSPEC_HIDDEN;
+extern const WCHAR *default_sans DECLSPEC_HIDDEN;
 
 /* freetype.c */
 

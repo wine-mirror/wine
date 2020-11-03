@@ -263,45 +263,7 @@ static const WCHAR winnt_font_reg_key[] = {'S','o','f','t','w','a','r','e','\\',
 static const WCHAR external_fonts_reg_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
                                                'F','o','n','t','s','\\','E','x','t','e','r','n','a','l',' ','F','o','n','t','s','\0'};
 
-/* Interesting and well-known (frequently-assumed!) font names */
-static const WCHAR arial[] = {'A','r','i','a','l',0};
-static const WCHAR bitstream_vera_sans[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','a','n','s',0};
-static const WCHAR bitstream_vera_sans_mono[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','a','n','s',' ','M','o','n','o',0};
-static const WCHAR bitstream_vera_serif[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','e','r','i','f',0};
-static const WCHAR courier_new[] = {'C','o','u','r','i','e','r',' ','N','e','w',0};
-static const WCHAR liberation_mono[] = {'L','i','b','e','r','a','t','i','o','n',' ','M','o','n','o',0};
-static const WCHAR liberation_sans[] = {'L','i','b','e','r','a','t','i','o','n',' ','S','a','n','s',0};
-static const WCHAR liberation_serif[] = {'L','i','b','e','r','a','t','i','o','n',' ','S','e','r','i','f',0};
-static const WCHAR times_new_roman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
 static const WCHAR SymbolW[] = {'S','y','m','b','o','l','\0'};
-
-static const WCHAR *default_serif_list[] =
-{
-    times_new_roman,
-    liberation_serif,
-    bitstream_vera_serif,
-    NULL
-};
-
-static const WCHAR *default_fixed_list[] =
-{
-    courier_new,
-    liberation_mono,
-    bitstream_vera_sans_mono,
-    NULL
-};
-
-static const WCHAR *default_sans_list[] =
-{
-    arial,
-    liberation_sans,
-    bitstream_vera_sans,
-    NULL
-};
-
-static const WCHAR *default_serif = times_new_roman;
-static const WCHAR *default_fixed = courier_new;
-static const WCHAR *default_sans = arial;
 
 /* Registry font cache key and value names */
 static const WCHAR wine_fonts_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
@@ -2205,41 +2167,6 @@ static void init_font_list(void)
 #endif
 }
 
-static BOOL move_to_front(const WCHAR *name)
-{
-    Family *family, *cursor2;
-    LIST_FOR_EACH_ENTRY_SAFE(family, cursor2, &font_list, Family, entry)
-    {
-        if (!strncmpiW( family->family_name, name, LF_FACESIZE - 1 ))
-        {
-            list_remove(&family->entry);
-            list_add_head(&font_list, &family->entry);
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
-static const WCHAR *set_default(const WCHAR **name_list)
-{
-    const WCHAR **entry = name_list;
-
-    while (*entry)
-    {
-        if (move_to_front(*entry)) return *entry;
-        entry++;
-    }
-
-    return *name_list;
-}
-
-static void reorder_font_list(void)
-{
-    default_serif = set_default( default_serif_list );
-    default_fixed = set_default( default_fixed_list );
-    default_sans = set_default( default_sans_list );
-}
-
 /*************************************************************
  *    WineEngInit
  *
@@ -2271,8 +2198,6 @@ BOOL WineEngInit( const struct font_backend_funcs **funcs )
         init_font_list();
     else
         load_font_list_from_cache(hkey_font_cache);
-
-    reorder_font_list();
 
     if(disposition == REG_CREATED_NEW_KEY)
         update_reg_entries();
