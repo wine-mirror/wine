@@ -552,6 +552,9 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
             if (video_src)
                 IMFTopologyNode_Release(video_src);
         }
+
+        if (SUCCEEDED(hr))
+            hr = IMFMediaSession_SetTopology(engine->session, MFSESSION_SETTOPOLOGY_IMMEDIATE, topology);
     }
 
     if (topology)
