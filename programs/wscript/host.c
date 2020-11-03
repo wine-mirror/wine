@@ -76,8 +76,7 @@ static void print_string(const WCHAR *string)
     len = lstrlenW(string);
     ret = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), string, len, &count, NULL);
     if(ret) {
-        static const WCHAR crnlW[] = {'\r','\n'};
-        WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), crnlW, ARRAY_SIZE(crnlW), &count, NULL);
+        WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), L"\r\n", lstrlenW(L"\r\n"), &count, NULL);
         return;
     }
 
