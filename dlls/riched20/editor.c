@@ -5160,7 +5160,7 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
                 const ME_Cursor *start, int srcChars, BOOL bCRLF,
                 BOOL bEOP)
 {
-  ME_DisplayItem *pRun, *pNextRun;
+  ME_Run *run, *next_run;
   const WCHAR *pStart = buffer;
   const WCHAR cr_lf[] = {'\r', '\n', 0};
   const WCHAR *str;
@@ -5169,18 +5169,15 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
   /* bCRLF flag is only honored in 2.0 and up. 1.0 must always return text verbatim */
   if (editor->bEmulateVersion10) bCRLF = FALSE;
 
-  pRun = start->pRun;
-  assert(pRun);
-  pNextRun = ME_FindItemFwd(pRun, diRun);
+  run = &start->pRun->member.run;
+  next_run = run_next_all_paras( run );
 
-  nLen = pRun->member.run.len - start->nOffset;
-  str = get_text( &pRun->member.run, start->nOffset );
+  nLen = run->len - start->nOffset;
+  str = get_text( run, start->nOffset );
 
-  while (srcChars && buflen && pNextRun)
+  while (srcChars && buflen && next_run)
   {
-    int nFlags = pRun->member.run.nFlags;
-
-    if (bCRLF && nFlags & MERF_ENDPARA && ~nFlags & MERF_ENDCELL)
+    if (bCRLF && run->nFlags & MERF_ENDPARA && ~run->nFlags & MERF_ENDCELL)
     {
       if (buflen == 1) break;
       /* FIXME: native fails to reduce srcChars here for WM_GETTEXT or
@@ -5189,7 +5186,9 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
       srcChars -= min(nLen, srcChars);
       nLen = 2;
       str = cr_lf;
-    } else {
+    }
+    else
+    {
       nLen = min(nLen, srcChars);
       srcChars -= nLen;
     }
@@ -5201,14 +5200,14 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
 
     buffer += nLen;
 
-    pRun = pNextRun;
-    pNextRun = ME_FindItemFwd(pRun, diRun);
+    run = next_run;
+    next_run = run_next_all_paras( run );
 
-    nLen = pRun->member.run.len;
-    str = get_text( &pRun->member.run, 0 );
+    nLen = run->len;
+    str = get_text( run, 0 );
   }
   /* append '\r' to the last paragraph. */
-  if (pRun->next->type == diTextEnd && bEOP)
+  if (run == para_end_run( para_prev( editor_end_para( editor ) ) ) && bEOP)
   {
     *buffer = '\r';
     buffer ++;
