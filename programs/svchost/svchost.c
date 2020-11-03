@@ -37,8 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(svchost);
 static const WCHAR service_reg_path[] = L"System\\CurrentControlSet\\Services";
 static const WCHAR svchost_path[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Svchost";
 
-static const CHAR service_main[] = "ServiceMain";
-
 /* Allocate and initialize a WSTR containing the queried value */
 static LPWSTR GetRegValue(HKEY service_key, const WCHAR *value_name)
 {
@@ -162,14 +160,14 @@ static BOOL AddServiceElem(LPWSTR service_name,
     }
 
     /* Look for alternate to default ServiceMain entry point */
-    ret = RegQueryValueExA(service_hkey, service_main, NULL, NULL, NULL, &reg_size);
+    ret = RegQueryValueExA(service_hkey, "ServiceMain", NULL, NULL, NULL, &reg_size);
     if (ret == ERROR_SUCCESS)
     {
         /* Add space for potentially missing NULL terminator, allocate, and
          * fill with the registry value */
         size = reg_size + 1;
         dll_service_main = HeapAlloc(GetProcessHeap(), 0, size);
-        ret = RegQueryValueExA(service_hkey, service_main, NULL, NULL,
+        ret = RegQueryValueExA(service_hkey, "ServiceMain", NULL, NULL,
                 (LPBYTE)dll_service_main, &reg_size);
         if (ret != ERROR_SUCCESS)
         {
@@ -196,7 +194,7 @@ static BOOL AddServiceElem(LPWSTR service_name,
     else
     {
         service_main_func =
-            (LPSERVICE_MAIN_FUNCTIONW) GetProcAddress(library, service_main);
+            (LPSERVICE_MAIN_FUNCTIONW) GetProcAddress(library, "ServiceMain");
     }
     if (!service_main_func)
     {
