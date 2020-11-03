@@ -39,6 +39,9 @@ static unsigned int (CDECL *p__CurrentScheduler__GetNumberOfVirtualProcessors)(v
 static unsigned int (CDECL *p_CurrentScheduler_Id)(void);
 static unsigned int (CDECL *p__CurrentScheduler__Id)(void);
 
+#define SETNOFAIL(x,y) x = (void*)GetProcAddress(module,y)
+#define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
+
 static BOOL init(void)
 {
     HMODULE module;
@@ -50,12 +53,12 @@ static BOOL init(void)
         return FALSE;
     }
 
-    p_setlocale = (void*)GetProcAddress(module, "setlocale");
-    p___strncnt = (void*)GetProcAddress(module, "__strncnt");
-    p_CurrentScheduler_GetNumberOfVirtualProcessors = (void*)GetProcAddress(module, "?GetNumberOfVirtualProcessors@CurrentScheduler@Concurrency@@SAIXZ");
-    p__CurrentScheduler__GetNumberOfVirtualProcessors = (void*)GetProcAddress(module, "?_GetNumberOfVirtualProcessors@_CurrentScheduler@details@Concurrency@@SAIXZ");
-    p_CurrentScheduler_Id = (void*)GetProcAddress(module, "?Id@CurrentScheduler@Concurrency@@SAIXZ");
-    p__CurrentScheduler__Id = (void*)GetProcAddress(module, "?_Id@_CurrentScheduler@details@Concurrency@@SAIXZ");
+    SET(p_setlocale, "setlocale");
+    SET(p___strncnt, "__strncnt");
+    SET(p_CurrentScheduler_GetNumberOfVirtualProcessors, "?GetNumberOfVirtualProcessors@CurrentScheduler@Concurrency@@SAIXZ");
+    SET(p__CurrentScheduler__GetNumberOfVirtualProcessors, "?_GetNumberOfVirtualProcessors@_CurrentScheduler@details@Concurrency@@SAIXZ");
+    SET(p_CurrentScheduler_Id, "?Id@CurrentScheduler@Concurrency@@SAIXZ");
+    SET(p__CurrentScheduler__Id, "?_Id@_CurrentScheduler@details@Concurrency@@SAIXZ");
 
     return TRUE;
 }
