@@ -42,10 +42,6 @@ static const CHAR  emptyA[]     = "";
 static const CHAR  fmt_comA[]   = "com%d";
 static const CHAR  str_colonA[] = ":";
 
-static const WCHAR com1W[]      = {'c','o','m','1',0};
-static const WCHAR emptyW[]     = {0};
-static const WCHAR str_colonW[] = {':',0};
-
 /* ################# */
 
 static LPCSTR load_functions(void)
@@ -202,7 +198,7 @@ static void test_drvCommConfigDialogW(void)
 
     ZeroMemory(pCC, sizeof(pCC));
     SetLastError(0xdeadbeef);
-    res = pCommConfigDialogW(emptyW, NULL, pCC);
+    res = pCommConfigDialogW(L"", NULL, pCC);
     ok( res == ERROR_INSUFFICIENT_BUFFER,
         "returned %u with %u (expected ERROR_INSUFFICIENT_BUFFER)\n",
         res, GetLastError());
@@ -211,7 +207,7 @@ static void test_drvCommConfigDialogW(void)
     ZeroMemory(pCC, sizeof(pCC));
     pCC[0].dwSize = sizeof(COMMCONFIG);
     SetLastError(0xdeadbeef);
-    res = pCommConfigDialogW(emptyW, NULL, pCC);
+    res = pCommConfigDialogW(L"", NULL, pCC);
     ok( res == ERROR_BADKEY, "returned %u with %u (expected ERROR_BADKEY)\n",
         res, GetLastError());
 
@@ -334,7 +330,7 @@ static void test_drvGetDefaultCommConfigW(void)
     len = sizeof(COMMCONFIG) -1;
     ZeroMemory(pCC, sizeof(pCC));
     SetLastError(0xdeadbeef);
-    res = pGetDefaultCommConfigW(com1W, pCC, &len);
+    res = pGetDefaultCommConfigW(L"com1", pCC, &len);
     if (res == ERROR_CALL_NOT_IMPLEMENTED) {
         win_skip("*W not implemented\n");
         return;
@@ -366,7 +362,7 @@ static void test_drvGetDefaultCommConfigW(void)
         /* a name with a colon is invalid */
         if (res == ERROR_SUCCESS) {
             lstrcatA(bufferA, str_colonA);
-            lstrcatW(bufferW, str_colonW);
+            lstrcatW(bufferW, L":");
             len = sizeof(pCC);
             ZeroMemory(pCC, sizeof(pCC));
             res = pGetDefaultCommConfigW(bufferW, pCC, &len);
@@ -380,7 +376,7 @@ static void test_drvGetDefaultCommConfigW(void)
     len = sizeof(pCC);
     ZeroMemory(pCC, sizeof(pCC));
     SetLastError(0xdeadbeef);
-    res = pGetDefaultCommConfigW(emptyW, pCC, &len);
+    res = pGetDefaultCommConfigW(L"", pCC, &len);
     ok( res == ERROR_BADKEY,
         "returned %u with %u and %u for %s (expected ERROR_BADKEY)\n",
         res, GetLastError(), len, emptyA);
@@ -397,14 +393,14 @@ static void test_drvGetDefaultCommConfigW(void)
 
     len = sizeof(pCC);
     SetLastError(0xdeadbeef);
-    res = pGetDefaultCommConfigW(com1W, NULL, &len);
+    res = pGetDefaultCommConfigW(L"com1", NULL, &len);
     ok( res == ERROR_INVALID_PARAMETER,
         "returned %u with %u and %u (expected ERROR_INVALID_PARAMETER)\n",
         res, GetLastError(), len);
 
 
     SetLastError(0xdeadbeef);
-    res = pGetDefaultCommConfigW(com1W, pCC, NULL);
+    res = pGetDefaultCommConfigW(L"com1", pCC, NULL);
     ok( res == ERROR_INVALID_PARAMETER,
         "returned %u with %u (expected ERROR_INVALID_PARAMETER)\n",
         res, GetLastError());
