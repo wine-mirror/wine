@@ -265,12 +265,6 @@ static const WCHAR external_fonts_reg_key[] = {'S','o','f','t','w','a','r','e','
 
 static const WCHAR SymbolW[] = {'S','y','m','b','o','l','\0'};
 
-/* Registry font cache key and value names */
-static const WCHAR wine_fonts_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                       'F','o','n','t','s',0};
-static const WCHAR wine_fonts_cache_key[] = {'C','a','c','h','e',0};
-
-
 struct font_mapping
 {
     struct list entry;
@@ -284,11 +278,9 @@ struct font_mapping
 static struct list mappings_list = LIST_INIT( mappings_list );
 
 static UINT default_aa_flags;
-static HKEY hkey_font_cache;
 
 static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font );
 static BOOL CDECL freetype_set_bitmap_text_metrics( struct gdi_font *font );
-static void remove_face_from_cache( Face *face );
 
 /****************************************
  *   Notes on .fon files
@@ -882,311 +874,6 @@ static WCHAR *ft_face_get_full_name( FT_Face ft_face, LANGID langid )
 
     WARN( "full name not found, using %s instead\n", debugstr_w(full_name) );
     return full_name;
-}
-
-static inline BOOL faces_equal( const Face *f1, const Face *f2 )
-{
-    if (strcmpiW( f1->full_name, f2->full_name )) return FALSE;
-    if (f1->scalable) return TRUE;
-    if (f1->size.y_ppem != f2->size.y_ppem) return FALSE;
-    return !memcmp( &f1->fs, &f2->fs, sizeof(f1->fs) );
-}
-
-static void release_face( Face *face )
-{
-    if (--face->refcount) return;
-    if (face->family)
-    {
-        if (face->flags & ADDFONT_ADD_TO_CACHE) remove_face_from_cache( face );
-        list_remove( &face->entry );
-        release_family( face->family );
-    }
-    HeapFree( GetProcessHeap(), 0, face->file );
-    HeapFree( GetProcessHeap(), 0, face->style_name );
-    HeapFree( GetProcessHeap(), 0, face->full_name );
-    HeapFree( GetProcessHeap(), 0, face->cached_enum_data );
-    HeapFree( GetProcessHeap(), 0, face );
-}
-
-static inline int style_order(const Face *face)
-{
-    switch (face->ntmFlags & (NTM_REGULAR | NTM_BOLD | NTM_ITALIC))
-    {
-    case NTM_REGULAR:
-        return 0;
-    case NTM_BOLD:
-        return 1;
-    case NTM_ITALIC:
-        return 2;
-    case NTM_BOLD | NTM_ITALIC:
-        return 3;
-    default:
-        WARN( "Don't know how to order face %s with flags 0x%08x\n", debugstr_w(face->full_name), face->ntmFlags );
-        return 9999;
-    }
-}
-
-static BOOL insert_face_in_family_list( Face *face, Family *family )
-{
-    Face *cursor;
-
-    LIST_FOR_EACH_ENTRY( cursor, &family->faces, Face, entry )
-    {
-        if (faces_equal( face, cursor ))
-        {
-            TRACE( "Already loaded face %s in family %s, original version %x, new version %x\n",
-                   debugstr_w(face->full_name), debugstr_w(family->family_name),
-                   cursor->version, face->version );
-
-            if (face->file && !strcmpiW( face->file, cursor->file ))
-            {
-                cursor->refcount++;
-                TRACE("Font %s already in list, refcount now %d\n",
-                      debugstr_w(face->file), cursor->refcount);
-                return FALSE;
-            }
-            if (face->version <= cursor->version)
-            {
-                TRACE("Original font %s is newer so skipping %s\n",
-                      debugstr_w(cursor->file), debugstr_w(face->file));
-                return FALSE;
-            }
-            else
-            {
-                TRACE("Replacing original %s with %s\n",
-                      debugstr_w(cursor->file), debugstr_w(face->file));
-                list_add_before( &cursor->entry, &face->entry );
-                face->family = family;
-                family->refcount++;
-                face->refcount++;
-                release_face( cursor );
-                return TRUE;
-            }
-        }
-
-        if (style_order( face ) < style_order( cursor )) break;
-    }
-
-    TRACE( "Adding face %s in family %s from %s\n", debugstr_w(face->full_name),
-           debugstr_w(family->family_name), debugstr_w(face->file) );
-    list_add_before( &cursor->entry, &face->entry );
-    face->family = family;
-    family->refcount++;
-    face->refcount++;
-    return TRUE;
-}
-
-struct cached_face
-{
-    DWORD                   index;
-    DWORD                   flags;
-    DWORD                   ntmflags;
-    DWORD                   version;
-    struct bitmap_font_size size;
-    FONTSIGNATURE           fs;
-    WCHAR                   full_name[1];
-    /* WCHAR                file_name[]; */
-};
-
-static void load_face(HKEY hkey_family, Family *family, void *buffer, DWORD buffer_size, BOOL scalable)
-{
-    DWORD type, size, needed, index = 0;
-    Face *face;
-    HKEY hkey_strike;
-    WCHAR name[256];
-    struct cached_face *cached = (struct cached_face *)buffer;
-
-    size = sizeof(name);
-    needed = buffer_size - sizeof(DWORD);
-    while (!RegEnumValueW( hkey_family, index++, name, &size, NULL, &type, buffer, &needed ))
-    {
-        if (type == REG_BINARY && needed > sizeof(*cached))
-        {
-            ((DWORD *)buffer)[needed / sizeof(DWORD)] = 0;
-
-            face = create_face( name, cached->full_name, cached->full_name + strlenW(cached->full_name) + 1,
-                                cached->index, cached->fs, cached->ntmflags, cached->version,
-                                cached->flags, scalable ? NULL : &cached->size );
-            if (!scalable)
-                TRACE("Adding bitmap size h %d w %d size %d x_ppem %d y_ppem %d\n",
-                      face->size.height, face->size.width, face->size.size >> 6,
-                      face->size.x_ppem >> 6, face->size.y_ppem >> 6);
-
-            TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
-                  face->fs.fsCsb[0], face->fs.fsCsb[1],
-                  face->fs.fsUsb[0], face->fs.fsUsb[1],
-                  face->fs.fsUsb[2], face->fs.fsUsb[3]);
-
-            if (insert_face_in_family_list(face, family))
-                TRACE( "Added face %s to family %s\n", debugstr_w(face->full_name), debugstr_w(family->family_name) );
-
-            release_face( face );
-        }
-        size = sizeof(name);
-        needed = buffer_size - sizeof(DWORD);
-    }
-
-    /* load bitmap strikes */
-
-    index = 0;
-    needed = buffer_size;
-    while (!RegEnumKeyExW(hkey_family, index++, buffer, &needed, NULL, NULL, NULL, NULL))
-    {
-        if (!RegOpenKeyExW(hkey_family, buffer, 0, KEY_ALL_ACCESS, &hkey_strike))
-        {
-            load_face(hkey_strike, family, buffer, buffer_size, FALSE);
-            RegCloseKey(hkey_strike);
-        }
-        needed = buffer_size;
-    }
-}
-
-/* move vertical fonts after their horizontal counterpart */
-/* assumes that font_list is already sorted by family name */
-static void reorder_vertical_fonts(void)
-{
-    Family *family, *next, *vert_family;
-    struct list *ptr, *vptr;
-    struct list vertical_families = LIST_INIT( vertical_families );
-
-    LIST_FOR_EACH_ENTRY_SAFE( family, next, &font_list, Family, entry )
-    {
-        if (family->family_name[0] != '@') continue;
-        list_remove( &family->entry );
-        list_add_tail( &vertical_families, &family->entry );
-    }
-
-    ptr = list_head( &font_list );
-    vptr = list_head( &vertical_families );
-    while (ptr && vptr)
-    {
-        family = LIST_ENTRY( ptr, Family, entry );
-        vert_family = LIST_ENTRY( vptr, Family, entry );
-        if (strcmpiW( family->family_name, vert_family->family_name + 1 ) > 0)
-        {
-            list_remove( vptr );
-            list_add_before( ptr, vptr );
-            vptr = list_head( &vertical_families );
-        }
-        else ptr = list_next( &font_list, ptr );
-    }
-    list_move_tail( &font_list, &vertical_families );
-}
-
-static void load_font_list_from_cache(HKEY hkey_font_cache)
-{
-    DWORD size, family_index = 0;
-    Family *family;
-    HKEY hkey_family;
-    WCHAR buffer[4096];
-
-    size = sizeof(buffer);
-    while (!RegEnumKeyExW(hkey_font_cache, family_index++, buffer, &size, NULL, NULL, NULL, NULL))
-    {
-        WCHAR *second_name = NULL;
-        WCHAR *family_name = strdupW( buffer );
-
-        RegOpenKeyExW(hkey_font_cache, family_name, 0, KEY_ALL_ACCESS, &hkey_family);
-        TRACE("opened family key %s\n", debugstr_w(family_name));
-        size = sizeof(buffer);
-        if (!RegQueryValueExW( hkey_family, NULL, NULL, NULL, (BYTE *)buffer, &size ))
-            second_name = strdupW( buffer );
-
-        family = create_family( family_name, second_name );
-
-        load_face(hkey_family, family, buffer, sizeof(buffer), TRUE);
-
-        HeapFree( GetProcessHeap(), 0, family_name );
-        HeapFree( GetProcessHeap(), 0, second_name );
-
-        RegCloseKey(hkey_family);
-        release_family( family );
-        size = sizeof(buffer);
-    }
-
-    reorder_vertical_fonts();
-}
-
-static LONG create_font_cache_key(HKEY *hkey, DWORD *disposition)
-{
-    LONG ret;
-    HKEY hkey_wine_fonts;
-
-    /* We don't want to create the fonts key as volatile, so open this first */
-    ret = RegCreateKeyExW(HKEY_CURRENT_USER, wine_fonts_key, 0, NULL, 0,
-                          KEY_ALL_ACCESS, NULL, &hkey_wine_fonts, NULL);
-    if(ret != ERROR_SUCCESS)
-    {
-        WARN("Can't create %s\n", debugstr_w(wine_fonts_key));
-        return ret;
-    }
-
-    ret = RegCreateKeyExW(hkey_wine_fonts, wine_fonts_cache_key, 0, NULL, REG_OPTION_VOLATILE,
-                          KEY_ALL_ACCESS, NULL, hkey, disposition);
-    RegCloseKey(hkey_wine_fonts);
-    return ret;
-}
-
-static void add_face_to_cache(Face *face)
-{
-    HKEY hkey_family, hkey_face;
-    DWORD len, buffer[1024];
-    struct cached_face *cached = (struct cached_face *)buffer;
-
-    RegCreateKeyExW( hkey_font_cache, face->family->family_name, 0, NULL, REG_OPTION_VOLATILE,
-                     KEY_ALL_ACCESS, NULL, &hkey_family, NULL );
-    if (face->family->second_name[0])
-        RegSetValueExW( hkey_family, NULL, 0, REG_SZ, (BYTE *)face->family->second_name,
-                        (strlenW( face->family->second_name ) + 1) * sizeof(WCHAR) );
-
-    if (!face->scalable)
-    {
-        static const WCHAR fmtW[] = {'%','d',0};
-        WCHAR name[10];
-
-        sprintfW( name, fmtW, face->size.y_ppem );
-        RegCreateKeyExW( hkey_family, name, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS,
-                         NULL, &hkey_face, NULL);
-    }
-    else hkey_face = hkey_family;
-
-    memset( cached, 0, sizeof(*cached) );
-    cached->index = face->face_index;
-    cached->flags = face->flags;
-    cached->ntmflags = face->ntmFlags;
-    cached->version = face->version;
-    cached->fs = face->fs;
-    if (!face->scalable) cached->size = face->size;
-    strcpyW( cached->full_name, face->full_name );
-    len = strlenW( face->full_name ) + 1;
-    strcpyW( cached->full_name + len, face->file );
-    len += strlenW( face->file ) + 1;
-
-    RegSetValueExW( hkey_face, face->style_name, 0, REG_BINARY, (BYTE *)cached,
-                    offsetof( struct cached_face, full_name[len] ));
-
-    if (hkey_face != hkey_family) RegCloseKey(hkey_face);
-    RegCloseKey(hkey_family);
-}
-
-static void remove_face_from_cache( Face *face )
-{
-    HKEY hkey_family;
-
-    RegOpenKeyExW( hkey_font_cache, face->family->family_name, 0, KEY_ALL_ACCESS, &hkey_family );
-
-    if (face->scalable)
-    {
-        RegDeleteValueW( hkey_family, face->style_name );
-    }
-    else
-    {
-        static const WCHAR fmtW[] = {'%','d',0};
-        WCHAR name[10];
-        sprintfW( name, fmtW, face->size.y_ppem );
-        RegDeleteKeyW( hkey_family, name );
-    }
-    RegCloseKey(hkey_family);
 }
 
 static WCHAR *get_vertical_name( WCHAR *name )
@@ -2149,7 +1836,10 @@ sym_not_found:
     return FALSE;
 }
 
-static void init_font_list(void)
+/*************************************************************
+ * freetype_load_fonts
+ */
+static void CDECL freetype_load_fonts(void)
 {
     delete_external_font_keys();
     load_system_bitmap_fonts();
@@ -2163,24 +1853,8 @@ static void init_font_list(void)
 #elif defined(__ANDROID__)
     ReadFontDir("/system/fonts", TRUE);
 #endif
-}
 
-/*************************************************************
- * freetype_load_fonts
- */
-static void CDECL freetype_load_fonts(void)
-{
-    DWORD disposition;
-
-    create_font_cache_key(&hkey_font_cache, &disposition);
-
-    if(disposition == REG_CREATED_NEW_KEY)
-        init_font_list();
-    else
-        load_font_list_from_cache(hkey_font_cache);
-
-    if(disposition == REG_CREATED_NEW_KEY)
-        update_reg_entries();
+    update_reg_entries();
 }
 
 /*************************************************************

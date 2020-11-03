@@ -463,6 +463,9 @@ extern struct gdi_font_family *find_family_from_any_name( const WCHAR *name ) DE
 extern struct gdi_font_face *create_face( const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
                                           UINT index, FONTSIGNATURE fs, DWORD ntmflags,
                                           DWORD version, DWORD flags, const struct bitmap_font_size *size ) DECLSPEC_HIDDEN;
+extern void release_face( struct gdi_font_face *face ) DECLSPEC_HIDDEN;
+extern BOOL insert_face_in_family_list( struct gdi_font_face *face, struct gdi_font_family *family ) DECLSPEC_HIDDEN;
+extern void add_face_to_cache( struct gdi_font_face *face ) DECLSPEC_HIDDEN;
 
 extern struct gdi_font_link *find_gdi_font_link( const WCHAR *name ) DECLSPEC_HIDDEN;
 extern struct gdi_font_family *find_family_from_font_links( const WCHAR *name, const WCHAR *subst,
