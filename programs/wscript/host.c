@@ -33,8 +33,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wscript);
 
 #define BUILDVERSION 16535
-
-static const WCHAR wshNameW[] = {'W','i','n','d','o','w','s',' ','S','c','r','i','p','t',' ','H','o','s','t',0};
 static const WCHAR wshVersionW[] = {'5','.','8'};
 
 VARIANT_BOOL wshInteractive =
@@ -49,10 +47,8 @@ static HRESULT to_string(VARIANT *src, BSTR *dst)
     VARIANT v;
     HRESULT hres;
 
-    static const WCHAR nullW[] = {'n','u','l','l',0};
-
     if(V_VT(src) == VT_NULL) {
-        *dst = SysAllocString(nullW);
+        *dst = SysAllocString(L"null");
         return *dst ? S_OK : E_OUTOFMEMORY;
     }
 
@@ -73,9 +69,7 @@ static void print_string(const WCHAR *string)
     char *buf;
 
     if(wshInteractive) {
-        static const WCHAR windows_script_hostW[] =
-            {'W','i','n','d','o','w','s',' ','S','c','r','i','p','t',' ','H','o','s','t',0};
-        MessageBoxW(NULL, string, windows_script_hostW, MB_OK);
+        MessageBoxW(NULL, string, L"Windows Script Host", MB_OK);
         return;
     }
 
@@ -163,7 +157,7 @@ static HRESULT WINAPI Host_get_Name(IHost *iface, BSTR *out_Name)
 {
     WINE_TRACE("(%p)\n", out_Name);
 
-    if(!(*out_Name = SysAllocString(wshNameW)))
+    if(!(*out_Name = SysAllocString(L"Windows Script Host")))
 	return E_OUTOFMEMORY;
     return S_OK;
 }
