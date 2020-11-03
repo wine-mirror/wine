@@ -31,13 +31,6 @@ typedef struct {
     double value;
 } NumberInstance;
 
-static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
-static const WCHAR toLocaleStringW[] = {'t','o','L','o','c','a','l','e','S','t','r','i','n','g',0};
-static const WCHAR toFixedW[] = {'t','o','F','i','x','e','d',0};
-static const WCHAR toExponentialW[] = {'t','o','E','x','p','o','n','e','n','t','i','a','l',0};
-static const WCHAR toPrecisionW[] = {'t','o','P','r','e','c','i','s','i','o','n',0};
-static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
-
 #define NUMBER_TOSTRING_BUF_SIZE 64
 #define NUMBER_DTOA_SIZE 18
 
@@ -513,12 +506,12 @@ static HRESULT Number_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 }
 
 static const builtin_prop_t Number_props[] = {
-    {toExponentialW,         Number_toExponential,         PROPF_METHOD|1},
-    {toFixedW,               Number_toFixed,               PROPF_METHOD},
-    {toLocaleStringW,        Number_toLocaleString,        PROPF_METHOD},
-    {toPrecisionW,           Number_toPrecision,           PROPF_METHOD|1},
-    {toStringW,              Number_toString,              PROPF_METHOD|1},
-    {valueOfW,               Number_valueOf,               PROPF_METHOD}
+    {L"toExponential",       Number_toExponential,         PROPF_METHOD|1},
+    {L"toFixed",             Number_toFixed,               PROPF_METHOD},
+    {L"toLocaleString",      Number_toLocaleString,        PROPF_METHOD},
+    {L"toPrecision",         Number_toPrecision,           PROPF_METHOD|1},
+    {L"toString",            Number_toString,              PROPF_METHOD|1},
+    {L"valueOf",             Number_valueOf,               PROPF_METHOD}
 };
 
 static const builtin_info_t Number_info = {

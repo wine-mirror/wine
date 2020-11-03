@@ -44,56 +44,6 @@ typedef struct {
     LONG daylightBias;
 } DateInstance;
 
-static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
-static const WCHAR toLocaleStringW[] = {'t','o','L','o','c','a','l','e','S','t','r','i','n','g',0};
-static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
-static const WCHAR toISOStringW[] = {'t','o','I','S','O','S','t','r','i','n','g',0};
-static const WCHAR toUTCStringW[] = {'t','o','U','T','C','S','t','r','i','n','g',0};
-static const WCHAR toGMTStringW[] = {'t','o','G','M','T','S','t','r','i','n','g',0};
-static const WCHAR toDateStringW[] = {'t','o','D','a','t','e','S','t','r','i','n','g',0};
-static const WCHAR toTimeStringW[] = {'t','o','T','i','m','e','S','t','r','i','n','g',0};
-static const WCHAR toLocaleDateStringW[] = {'t','o','L','o','c','a','l','e','D','a','t','e','S','t','r','i','n','g',0};
-static const WCHAR toLocaleTimeStringW[] = {'t','o','L','o','c','a','l','e','T','i','m','e','S','t','r','i','n','g',0};
-static const WCHAR getTimeW[] = {'g','e','t','T','i','m','e',0};
-static const WCHAR getFullYearW[] = {'g','e','t','F','u','l','l','Y','e','a','r',0};
-static const WCHAR getUTCFullYearW[] = {'g','e','t','U','T','C','F','u','l','l','Y','e','a','r',0};
-static const WCHAR getMonthW[] = {'g','e','t','M','o','n','t','h',0};
-static const WCHAR getUTCMonthW[] = {'g','e','t','U','T','C','M','o','n','t','h',0};
-static const WCHAR getDateW[] = {'g','e','t','D','a','t','e',0};
-static const WCHAR getUTCDateW[] = {'g','e','t','U','T','C','D','a','t','e',0};
-static const WCHAR getDayW[] = {'g','e','t','D','a','y',0};
-static const WCHAR getUTCDayW[] = {'g','e','t','U','T','C','D','a','y',0};
-static const WCHAR getHoursW[] = {'g','e','t','H','o','u','r','s',0};
-static const WCHAR getUTCHoursW[] = {'g','e','t','U','T','C','H','o','u','r','s',0};
-static const WCHAR getMinutesW[] = {'g','e','t','M','i','n','u','t','e','s',0};
-static const WCHAR getUTCMinutesW[] = {'g','e','t','U','T','C','M','i','n','u','t','e','s',0};
-static const WCHAR getSecondsW[] = {'g','e','t','S','e','c','o','n','d','s',0};
-static const WCHAR getUTCSecondsW[] = {'g','e','t','U','T','C','S','e','c','o','n','d','s',0};
-static const WCHAR getMillisecondsW[] = {'g','e','t','M','i','l','l','i','s','e','c','o','n','d','s',0};
-static const WCHAR getUTCMillisecondsW[] = {'g','e','t','U','T','C','M','i','l','l','i','s','e','c','o','n','d','s',0};
-static const WCHAR getTimezoneOffsetW[] = {'g','e','t','T','i','m','e','z','o','n','e','O','f','f','s','e','t',0};
-static const WCHAR setTimeW[] = {'s','e','t','T','i','m','e',0};
-static const WCHAR setMillisecondsW[] = {'s','e','t','M','i','l','l','i','s','e','c','o','n','d','s',0};
-static const WCHAR setUTCMillisecondsW[] = {'s','e','t','U','T','C','M','i','l','l','i','s','e','c','o','n','d','s',0};
-static const WCHAR setSecondsW[] = {'s','e','t','S','e','c','o','n','d','s',0};
-static const WCHAR setUTCSecondsW[] = {'s','e','t','U','T','C','S','e','c','o','n','d','s',0};
-static const WCHAR setMinutesW[] = {'s','e','t','M','i','n','u','t','e','s',0};
-static const WCHAR setUTCMinutesW[] = {'s','e','t','U','T','C','M','i','n','u','t','e','s',0};
-static const WCHAR setHoursW[] = {'s','e','t','H','o','u','r','s',0};
-static const WCHAR setUTCHoursW[] = {'s','e','t','U','T','C','H','o','u','r','s',0};
-static const WCHAR setDateW[] = {'s','e','t','D','a','t','e',0};
-static const WCHAR setUTCDateW[] = {'s','e','t','U','T','C','D','a','t','e',0};
-static const WCHAR setMonthW[] = {'s','e','t','M','o','n','t','h',0};
-static const WCHAR setUTCMonthW[] = {'s','e','t','U','T','C','M','o','n','t','h',0};
-static const WCHAR setFullYearW[] = {'s','e','t','F','u','l','l','Y','e','a','r',0};
-static const WCHAR setUTCFullYearW[] = {'s','e','t','U','T','C','F','u','l','l','Y','e','a','r',0};
-static const WCHAR getYearW[] = {'g','e','t','Y','e','a','r',0};
-static const WCHAR setYearW[] = {'s','e','t','Y','e','a','r',0};
-
-static const WCHAR UTCW[] = {'U','T','C',0};
-static const WCHAR nowW[] = {'n','o','w',0};
-static const WCHAR parseW[] = {'p','a','r','s','e',0};
-
 static inline DateInstance *date_from_jsdisp(jsdisp_t *jsdisp)
 {
     return CONTAINING_RECORD(jsdisp, DateInstance, dispex);
@@ -1932,51 +1882,51 @@ static HRESULT Date_get_value(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
 }
 
 static const builtin_prop_t Date_props[] = {
-    {getDateW,               Date_getDate,               PROPF_METHOD},
-    {getDayW,                Date_getDay,                PROPF_METHOD},
-    {getFullYearW,           Date_getFullYear,           PROPF_METHOD},
-    {getHoursW,              Date_getHours,              PROPF_METHOD},
-    {getMillisecondsW,       Date_getMilliseconds,       PROPF_METHOD},
-    {getMinutesW,            Date_getMinutes,            PROPF_METHOD},
-    {getMonthW,              Date_getMonth,              PROPF_METHOD},
-    {getSecondsW,            Date_getSeconds,            PROPF_METHOD},
-    {getTimeW,               Date_getTime,               PROPF_METHOD},
-    {getTimezoneOffsetW,     Date_getTimezoneOffset,     PROPF_METHOD},
-    {getUTCDateW,            Date_getUTCDate,            PROPF_METHOD},
-    {getUTCDayW,             Date_getUTCDay,             PROPF_METHOD},
-    {getUTCFullYearW,        Date_getUTCFullYear,        PROPF_METHOD},
-    {getUTCHoursW,           Date_getUTCHours,           PROPF_METHOD},
-    {getUTCMillisecondsW,    Date_getUTCMilliseconds,    PROPF_METHOD},
-    {getUTCMinutesW,         Date_getUTCMinutes,         PROPF_METHOD},
-    {getUTCMonthW,           Date_getUTCMonth,           PROPF_METHOD},
-    {getUTCSecondsW,         Date_getUTCSeconds,         PROPF_METHOD},
-    {getYearW,               Date_getYear,               PROPF_METHOD},
-    {setDateW,               Date_setDate,               PROPF_METHOD|1},
-    {setFullYearW,           Date_setFullYear,           PROPF_METHOD|3},
-    {setHoursW,              Date_setHours,              PROPF_METHOD|4},
-    {setMillisecondsW,       Date_setMilliseconds,       PROPF_METHOD|1},
-    {setMinutesW,            Date_setMinutes,            PROPF_METHOD|3},
-    {setMonthW,              Date_setMonth,              PROPF_METHOD|2},
-    {setSecondsW,            Date_setSeconds,            PROPF_METHOD|2},
-    {setTimeW,               Date_setTime,               PROPF_METHOD|1},
-    {setUTCDateW,            Date_setUTCDate,            PROPF_METHOD|1},
-    {setUTCFullYearW,        Date_setUTCFullYear,        PROPF_METHOD|3},
-    {setUTCHoursW,           Date_setUTCHours,           PROPF_METHOD|4},
-    {setUTCMillisecondsW,    Date_setUTCMilliseconds,    PROPF_METHOD|1},
-    {setUTCMinutesW,         Date_setUTCMinutes,         PROPF_METHOD|3},
-    {setUTCMonthW,           Date_setUTCMonth,           PROPF_METHOD|2},
-    {setUTCSecondsW,         Date_setUTCSeconds,         PROPF_METHOD|2},
-    {setYearW,               Date_setYear,               PROPF_METHOD|1},
-    {toDateStringW,          Date_toDateString,          PROPF_METHOD},
-    {toGMTStringW,           Date_toGMTString,           PROPF_METHOD},
-    {toISOStringW,           Date_toISOString,           PROPF_METHOD|PROPF_ES5},
-    {toLocaleDateStringW,    Date_toLocaleDateString,    PROPF_METHOD},
-    {toLocaleStringW,        Date_toLocaleString,        PROPF_METHOD},
-    {toLocaleTimeStringW,    Date_toLocaleTimeString,    PROPF_METHOD},
-    {toStringW,              Date_toString,              PROPF_METHOD},
-    {toTimeStringW,          Date_toTimeString,          PROPF_METHOD},
-    {toUTCStringW,           Date_toUTCString,           PROPF_METHOD},
-    {valueOfW,               Date_valueOf,               PROPF_METHOD},
+    {L"getDate",             Date_getDate,               PROPF_METHOD},
+    {L"getDay",              Date_getDay,                PROPF_METHOD},
+    {L"getFullYear",         Date_getFullYear,           PROPF_METHOD},
+    {L"getHours",            Date_getHours,              PROPF_METHOD},
+    {L"getMilliseconds",     Date_getMilliseconds,       PROPF_METHOD},
+    {L"getMinutes",          Date_getMinutes,            PROPF_METHOD},
+    {L"getMonth",            Date_getMonth,              PROPF_METHOD},
+    {L"getSeconds",          Date_getSeconds,            PROPF_METHOD},
+    {L"getTime",             Date_getTime,               PROPF_METHOD},
+    {L"getTimezoneOffset",   Date_getTimezoneOffset,     PROPF_METHOD},
+    {L"getUTCDate",          Date_getUTCDate,            PROPF_METHOD},
+    {L"getUTCDay",           Date_getUTCDay,             PROPF_METHOD},
+    {L"getUTCFullYear",      Date_getUTCFullYear,        PROPF_METHOD},
+    {L"getUTCHours",         Date_getUTCHours,           PROPF_METHOD},
+    {L"getUTCMilliseconds",  Date_getUTCMilliseconds,    PROPF_METHOD},
+    {L"getUTCMinutes",       Date_getUTCMinutes,         PROPF_METHOD},
+    {L"getUTCMonth",         Date_getUTCMonth,           PROPF_METHOD},
+    {L"getUTCSeconds",       Date_getUTCSeconds,         PROPF_METHOD},
+    {L"getYear",             Date_getYear,               PROPF_METHOD},
+    {L"setDate",             Date_setDate,               PROPF_METHOD|1},
+    {L"setFullYear",         Date_setFullYear,           PROPF_METHOD|3},
+    {L"setHours",            Date_setHours,              PROPF_METHOD|4},
+    {L"setMilliseconds",     Date_setMilliseconds,       PROPF_METHOD|1},
+    {L"setMinutes",          Date_setMinutes,            PROPF_METHOD|3},
+    {L"setMonth",            Date_setMonth,              PROPF_METHOD|2},
+    {L"setSeconds",          Date_setSeconds,            PROPF_METHOD|2},
+    {L"setTime",             Date_setTime,               PROPF_METHOD|1},
+    {L"setUTCDate",          Date_setUTCDate,            PROPF_METHOD|1},
+    {L"setUTCFullYear",      Date_setUTCFullYear,        PROPF_METHOD|3},
+    {L"setUTCHours",         Date_setUTCHours,           PROPF_METHOD|4},
+    {L"setUTCMilliseconds",  Date_setUTCMilliseconds,    PROPF_METHOD|1},
+    {L"setUTCMinutes",       Date_setUTCMinutes,         PROPF_METHOD|3},
+    {L"setUTCMonth",         Date_setUTCMonth,           PROPF_METHOD|2},
+    {L"setUTCSeconds",       Date_setUTCSeconds,         PROPF_METHOD|2},
+    {L"setYear",             Date_setYear,               PROPF_METHOD|1},
+    {L"toDateString",        Date_toDateString,          PROPF_METHOD},
+    {L"toGMTString",         Date_toGMTString,           PROPF_METHOD},
+    {L"toISOString",         Date_toISOString,           PROPF_METHOD|PROPF_ES5},
+    {L"toLocaleDateString",  Date_toLocaleDateString,    PROPF_METHOD},
+    {L"toLocaleString",      Date_toLocaleString,        PROPF_METHOD},
+    {L"toLocaleTimeString",  Date_toLocaleTimeString,    PROPF_METHOD},
+    {L"toString",            Date_toString,              PROPF_METHOD},
+    {L"toTimeString",        Date_toTimeString,          PROPF_METHOD},
+    {L"toUTCString",         Date_toUTCString,           PROPF_METHOD},
+    {L"valueOf",             Date_valueOf,               PROPF_METHOD},
 };
 
 static const builtin_info_t Date_info = {
@@ -2513,9 +2463,9 @@ static HRESULT DateConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 }
 
 static const builtin_prop_t DateConstr_props[] = {
-    {UTCW,    DateConstr_UTC,    PROPF_METHOD},
-    {nowW,    DateConstr_now,    PROPF_HTML|PROPF_METHOD},
-    {parseW,  DateConstr_parse,  PROPF_METHOD}
+    {L"UTC",    DateConstr_UTC,    PROPF_METHOD},
+    {L"now",    DateConstr_now,    PROPF_HTML|PROPF_METHOD},
+    {L"parse",  DateConstr_parse,  PROPF_METHOD}
 };
 
 static const builtin_info_t DateConstr_info = {

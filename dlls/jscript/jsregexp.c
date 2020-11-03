@@ -34,30 +34,6 @@ typedef struct {
     jsval_t last_index_val;
 } RegExpInstance;
 
-static const WCHAR sourceW[] = {'s','o','u','r','c','e',0};
-static const WCHAR globalW[] = {'g','l','o','b','a','l',0};
-static const WCHAR ignoreCaseW[] = {'i','g','n','o','r','e','C','a','s','e',0};
-static const WCHAR multilineW[] = {'m','u','l','t','i','l','i','n','e',0};
-static const WCHAR lastIndexW[] = {'l','a','s','t','I','n','d','e','x',0};
-static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
-static const WCHAR execW[] = {'e','x','e','c',0};
-static const WCHAR testW[] = {'t','e','s','t',0};
-
-static const WCHAR leftContextW[] =
-    {'l','e','f','t','C','o','n','t','e','x','t',0};
-static const WCHAR rightContextW[] =
-    {'r','i','g','h','t','C','o','n','t','e','x','t',0};
-
-static const WCHAR idx1W[] = {'$','1',0};
-static const WCHAR idx2W[] = {'$','2',0};
-static const WCHAR idx3W[] = {'$','3',0};
-static const WCHAR idx4W[] = {'$','4',0};
-static const WCHAR idx5W[] = {'$','5',0};
-static const WCHAR idx6W[] = {'$','6',0};
-static const WCHAR idx7W[] = {'$','7',0};
-static const WCHAR idx8W[] = {'$','8',0};
-static const WCHAR idx9W[] = {'$','9',0};
-
 static inline RegExpInstance *regexp_from_jsdisp(jsdisp_t *jsdisp)
 {
     return CONTAINING_RECORD(jsdisp, RegExpInstance, dispex);
@@ -580,14 +556,14 @@ static void RegExp_destructor(jsdisp_t *dispex)
 }
 
 static const builtin_prop_t RegExp_props[] = {
-    {execW,                  RegExp_exec,                  PROPF_METHOD|1},
-    {globalW,                NULL,0,                       RegExp_get_global},
-    {ignoreCaseW,            NULL,0,                       RegExp_get_ignoreCase},
-    {lastIndexW,             NULL,0,                       RegExp_get_lastIndex,  RegExp_set_lastIndex},
-    {multilineW,             NULL,0,                       RegExp_get_multiline},
-    {sourceW,                NULL,0,                       RegExp_get_source},
-    {testW,                  RegExp_test,                  PROPF_METHOD|1},
-    {toStringW,              RegExp_toString,              PROPF_METHOD}
+    {L"exec",                RegExp_exec,                  PROPF_METHOD|1},
+    {L"global",              NULL,0,                       RegExp_get_global},
+    {L"ignoreCase",          NULL,0,                       RegExp_get_ignoreCase},
+    {L"lastIndex",           NULL,0,                       RegExp_get_lastIndex,  RegExp_set_lastIndex},
+    {L"multiline",           NULL,0,                       RegExp_get_multiline},
+    {L"source",              NULL,0,                       RegExp_get_source},
+    {L"test",                RegExp_test,                  PROPF_METHOD|1},
+    {L"toString",            RegExp_toString,              PROPF_METHOD}
 };
 
 static const builtin_info_t RegExp_info = {
@@ -600,11 +576,11 @@ static const builtin_info_t RegExp_info = {
 };
 
 static const builtin_prop_t RegExpInst_props[] = {
-    {globalW,                NULL,0,                       RegExp_get_global},
-    {ignoreCaseW,            NULL,0,                       RegExp_get_ignoreCase},
-    {lastIndexW,             NULL,0,                       RegExp_get_lastIndex,  RegExp_set_lastIndex},
-    {multilineW,             NULL,0,                       RegExp_get_multiline},
-    {sourceW,                NULL,0,                       RegExp_get_source}
+    {L"global",              NULL,0,                       RegExp_get_global},
+    {L"ignoreCase",          NULL,0,                       RegExp_get_ignoreCase},
+    {L"lastIndex",           NULL,0,                       RegExp_get_lastIndex,  RegExp_set_lastIndex},
+    {L"multiline",           NULL,0,                       RegExp_get_multiline},
+    {L"source",              NULL,0,                       RegExp_get_source}
 };
 
 static const builtin_info_t RegExpInst_info = {
@@ -970,17 +946,17 @@ static HRESULT RegExpConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
 }
 
 static const builtin_prop_t RegExpConstr_props[] = {
-    {idx1W,           NULL,0,  RegExpConstr_get_idx1,         builtin_set_const},
-    {idx2W,           NULL,0,  RegExpConstr_get_idx2,         builtin_set_const},
-    {idx3W,           NULL,0,  RegExpConstr_get_idx3,         builtin_set_const},
-    {idx4W,           NULL,0,  RegExpConstr_get_idx4,         builtin_set_const},
-    {idx5W,           NULL,0,  RegExpConstr_get_idx5,         builtin_set_const},
-    {idx6W,           NULL,0,  RegExpConstr_get_idx6,         builtin_set_const},
-    {idx7W,           NULL,0,  RegExpConstr_get_idx7,         builtin_set_const},
-    {idx8W,           NULL,0,  RegExpConstr_get_idx8,         builtin_set_const},
-    {idx9W,           NULL,0,  RegExpConstr_get_idx9,         builtin_set_const},
-    {leftContextW,    NULL,0,  RegExpConstr_get_leftContext,  builtin_set_const},
-    {rightContextW,   NULL,0,  RegExpConstr_get_rightContext, builtin_set_const}
+    {L"$1",           NULL,0,  RegExpConstr_get_idx1,         builtin_set_const},
+    {L"$2",           NULL,0,  RegExpConstr_get_idx2,         builtin_set_const},
+    {L"$3",           NULL,0,  RegExpConstr_get_idx3,         builtin_set_const},
+    {L"$4",           NULL,0,  RegExpConstr_get_idx4,         builtin_set_const},
+    {L"$5",           NULL,0,  RegExpConstr_get_idx5,         builtin_set_const},
+    {L"$6",           NULL,0,  RegExpConstr_get_idx6,         builtin_set_const},
+    {L"$7",           NULL,0,  RegExpConstr_get_idx7,         builtin_set_const},
+    {L"$8",           NULL,0,  RegExpConstr_get_idx8,         builtin_set_const},
+    {L"$9",           NULL,0,  RegExpConstr_get_idx9,         builtin_set_const},
+    {L"leftContext",  NULL,0,  RegExpConstr_get_leftContext,  builtin_set_const},
+    {L"rightContext", NULL,0,  RegExpConstr_get_rightContext, builtin_set_const}
 };
 
 static const builtin_info_t RegExpConstr_info = {

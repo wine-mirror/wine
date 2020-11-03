@@ -31,9 +31,6 @@ typedef struct {
     BOOL val;
 } BoolInstance;
 
-static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
-static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
-
 static inline BoolInstance *bool_from_jsdisp(jsdisp_t *jsdisp)
 {
     return CONTAINING_RECORD(jsdisp, BoolInstance, dispex);
@@ -114,8 +111,8 @@ static HRESULT Bool_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsign
 }
 
 static const builtin_prop_t Bool_props[] = {
-    {toStringW,              Bool_toString,             PROPF_METHOD},
-    {valueOfW,               Bool_valueOf,              PROPF_METHOD}
+    {L"toString",            Bool_toString,             PROPF_METHOD},
+    {L"valueOf",             Bool_valueOf,              PROPF_METHOD}
 };
 
 static const builtin_info_t Bool_info = {

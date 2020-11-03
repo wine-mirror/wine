@@ -26,9 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
-static const WCHAR parseW[] = {'p','a','r','s','e',0};
-static const WCHAR stringifyW[] = {'s','t','r','i','n','g','i','f','y',0};
-
 static const WCHAR nullW[] = {'n','u','l','l',0};
 static const WCHAR trueW[] = {'t','r','u','e',0};
 static const WCHAR falseW[] = {'f','a','l','s','e',0};
@@ -821,8 +818,8 @@ static HRESULT JSON_stringify(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 }
 
 static const builtin_prop_t JSON_props[] = {
-    {parseW,     JSON_parse,     PROPF_METHOD|2},
-    {stringifyW, JSON_stringify, PROPF_METHOD|3}
+    {L"parse",     JSON_parse,     PROPF_METHOD|2},
+    {L"stringify", JSON_stringify, PROPF_METHOD|3}
 };
 
 static const builtin_info_t JSON_info = {

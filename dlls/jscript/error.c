@@ -32,7 +32,6 @@ static const WCHAR descriptionW[] = {'d','e','s','c','r','i','p','t','i','o','n'
 static const WCHAR messageW[] = {'m','e','s','s','a','g','e',0};
 static const WCHAR nameW[] = {'n','a','m','e',0};
 static const WCHAR numberW[] = {'n','u','m','b','e','r',0};
-static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
 
 /* ECMA-262 3rd Edition    15.11.4.4 */
 static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
@@ -139,7 +138,7 @@ static HRESULT Error_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 }
 
 static const builtin_prop_t Error_props[] = {
-    {toStringW,                 Error_toString,                     PROPF_METHOD}
+    {L"toString",               Error_toString,                     PROPF_METHOD}
 };
 
 static const builtin_info_t Error_info = {

@@ -33,11 +33,6 @@ typedef struct {
     BOOL atend;
 } EnumeratorInstance;
 
-static const WCHAR atEndW[] = {'a','t','E','n','d',0};
-static const WCHAR itemW[] = {'i','t','e','m',0};
-static const WCHAR moveFirstW[] = {'m','o','v','e','F','i','r','s','t',0};
-static const WCHAR moveNextW[] = {'m','o','v','e','N','e','x','t',0};
-
 static inline EnumeratorInstance *enumerator_from_jsdisp(jsdisp_t *jsdisp)
 {
     return CONTAINING_RECORD(jsdisp, EnumeratorInstance, dispex);
@@ -177,10 +172,10 @@ static HRESULT Enumerator_moveNext(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
 }
 
 static const builtin_prop_t Enumerator_props[] = {
-    {atEndW,     Enumerator_atEnd,     PROPF_METHOD},
-    {itemW,      Enumerator_item,      PROPF_METHOD},
-    {moveFirstW, Enumerator_moveFirst, PROPF_METHOD},
-    {moveNextW,  Enumerator_moveNext,  PROPF_METHOD},
+    {L"atEnd",     Enumerator_atEnd,     PROPF_METHOD},
+    {L"item",      Enumerator_item,      PROPF_METHOD},
+    {L"moveFirst", Enumerator_moveFirst, PROPF_METHOD},
+    {L"moveNext",  Enumerator_moveNext,  PROPF_METHOD},
 };
 
 static const builtin_info_t Enumerator_info = {

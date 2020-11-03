@@ -95,10 +95,6 @@ static inline ArgumentsInstance *arguments_from_jsdisp(jsdisp_t *jsdisp)
 static const WCHAR prototypeW[] = {'p','r','o','t','o','t', 'y', 'p','e',0};
 
 static const WCHAR lengthW[] = {'l','e','n','g','t','h',0};
-static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
-static const WCHAR applyW[] = {'a','p','p','l','y',0};
-static const WCHAR bindW[] = {'b','i','n','d',0};
-static const WCHAR callW[] = {'c','a','l','l',0};
 static const WCHAR argumentsW[] = {'a','r','g','u','m','e','n','t','s',0};
 
 static HRESULT Arguments_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
@@ -546,12 +542,12 @@ static void Function_destructor(jsdisp_t *dispex)
 }
 
 static const builtin_prop_t Function_props[] = {
-    {applyW,                 Function_apply,                 PROPF_METHOD|2},
-    {argumentsW,             NULL, 0,                        Function_get_arguments},
-    {bindW,                  Function_bind,                  PROPF_METHOD|PROPF_ES5|1},
-    {callW,                  Function_call,                  PROPF_METHOD|1},
-    {lengthW,                NULL, 0,                        Function_get_length},
-    {toStringW,              Function_toString,              PROPF_METHOD}
+    {L"apply",               Function_apply,                 PROPF_METHOD|2},
+    {L"arguments",           NULL, 0,                        Function_get_arguments},
+    {L"bind",                Function_bind,                  PROPF_METHOD|PROPF_ES5|1},
+    {L"call",                Function_call,                  PROPF_METHOD|1},
+    {L"length",              NULL, 0,                        Function_get_length},
+    {L"toString",            Function_toString,              PROPF_METHOD}
 };
 
 static const builtin_info_t Function_info = {
@@ -564,8 +560,8 @@ static const builtin_info_t Function_info = {
 };
 
 static const builtin_prop_t FunctionInst_props[] = {
-    {argumentsW,             NULL, 0,                        Function_get_arguments},
-    {lengthW,                NULL, 0,                        Function_get_length}
+    {L"arguments",           NULL, 0,                        Function_get_arguments},
+    {L"length",              NULL, 0,                        Function_get_length}
 };
 
 static const builtin_info_t FunctionInst_info = {

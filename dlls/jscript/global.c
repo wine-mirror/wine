@@ -48,28 +48,8 @@ static const WCHAR RegExpErrorW[] = {'R','e','g','E','x','p','E','r','r','o','r'
 static const WCHAR ActiveXObjectW[] = {'A','c','t','i','v','e','X','O','b','j','e','c','t',0};
 static const WCHAR VBArrayW[] = {'V','B','A','r','r','a','y',0};
 static const WCHAR EnumeratorW[] = {'E','n','u','m','e','r','a','t','o','r',0};
-static const WCHAR escapeW[] = {'e','s','c','a','p','e',0};
-static const WCHAR evalW[] = {'e','v','a','l',0};
-static const WCHAR isNaNW[] = {'i','s','N','a','N',0};
-static const WCHAR isFiniteW[] = {'i','s','F','i','n','i','t','e',0};
-static const WCHAR parseIntW[] = {'p','a','r','s','e','I','n','t',0};
-static const WCHAR parseFloatW[] = {'p','a','r','s','e','F','l','o','a','t',0};
-static const WCHAR unescapeW[] = {'u','n','e','s','c','a','p','e',0};
-static const WCHAR _GetObjectW[] = {'G','e','t','O','b','j','e','c','t',0};
-static const WCHAR ScriptEngineW[] = {'S','c','r','i','p','t','E','n','g','i','n','e',0};
-static const WCHAR ScriptEngineMajorVersionW[] =
-    {'S','c','r','i','p','t','E','n','g','i','n','e','M','a','j','o','r','V','e','r','s','i','o','n',0};
-static const WCHAR ScriptEngineMinorVersionW[] =
-    {'S','c','r','i','p','t','E','n','g','i','n','e','M','i','n','o','r','V','e','r','s','i','o','n',0};
-static const WCHAR ScriptEngineBuildVersionW[] =
-    {'S','c','r','i','p','t','E','n','g','i','n','e','B','u','i','l','d','V','e','r','s','i','o','n',0};
-static const WCHAR CollectGarbageW[] = {'C','o','l','l','e','c','t','G','a','r','b','a','g','e',0};
 static const WCHAR MathW[] = {'M','a','t','h',0};
 static const WCHAR JSONW[] = {'J','S','O','N',0};
-static const WCHAR encodeURIW[] = {'e','n','c','o','d','e','U','R','I',0};
-static const WCHAR decodeURIW[] = {'d','e','c','o','d','e','U','R','I',0};
-static const WCHAR encodeURIComponentW[] = {'e','n','c','o','d','e','U','R','I','C','o','m','p','o','n','e','n','t',0};
-static const WCHAR decodeURIComponentW[] = {'d','e','c','o','d','e','U','R','I','C','o','m','p','o','n','e','n','t',0};
 
 static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
 
@@ -931,23 +911,23 @@ static HRESULT JSGlobal_decodeURIComponent(script_ctx_t *ctx, vdisp_t *jsthis, W
 }
 
 static const builtin_prop_t JSGlobal_props[] = {
-    {CollectGarbageW,            JSGlobal_CollectGarbage,            PROPF_METHOD},
-    {_GetObjectW,                JSGlobal_GetObject,                 PROPF_METHOD|2},
-    {ScriptEngineW,              JSGlobal_ScriptEngine,              PROPF_METHOD},
-    {ScriptEngineBuildVersionW,  JSGlobal_ScriptEngineBuildVersion,  PROPF_METHOD},
-    {ScriptEngineMajorVersionW,  JSGlobal_ScriptEngineMajorVersion,  PROPF_METHOD},
-    {ScriptEngineMinorVersionW,  JSGlobal_ScriptEngineMinorVersion,  PROPF_METHOD},
-    {decodeURIW,                 JSGlobal_decodeURI,                 PROPF_METHOD|1},
-    {decodeURIComponentW,        JSGlobal_decodeURIComponent,        PROPF_METHOD|1},
-    {encodeURIW,                 JSGlobal_encodeURI,                 PROPF_METHOD|1},
-    {encodeURIComponentW,        JSGlobal_encodeURIComponent,        PROPF_METHOD|1},
-    {escapeW,                    JSGlobal_escape,                    PROPF_METHOD|1},
-    {evalW,                      JSGlobal_eval,                      PROPF_METHOD|1},
-    {isFiniteW,                  JSGlobal_isFinite,                  PROPF_METHOD|1},
-    {isNaNW,                     JSGlobal_isNaN,                     PROPF_METHOD|1},
-    {parseFloatW,                JSGlobal_parseFloat,                PROPF_METHOD|1},
-    {parseIntW,                  JSGlobal_parseInt,                  PROPF_METHOD|2},
-    {unescapeW,                  JSGlobal_unescape,                  PROPF_METHOD|1}
+    {L"CollectGarbage",            JSGlobal_CollectGarbage,            PROPF_METHOD},
+    {L"GetObject",                 JSGlobal_GetObject,                 PROPF_METHOD|2},
+    {L"ScriptEngine",              JSGlobal_ScriptEngine,              PROPF_METHOD},
+    {L"ScriptEngineBuildVersion",  JSGlobal_ScriptEngineBuildVersion,  PROPF_METHOD},
+    {L"ScriptEngineMajorVersion",  JSGlobal_ScriptEngineMajorVersion,  PROPF_METHOD},
+    {L"ScriptEngineMinorVersion",  JSGlobal_ScriptEngineMinorVersion,  PROPF_METHOD},
+    {L"decodeURI",                 JSGlobal_decodeURI,                 PROPF_METHOD|1},
+    {L"decodeURIComponent",        JSGlobal_decodeURIComponent,        PROPF_METHOD|1},
+    {L"encodeURI",                 JSGlobal_encodeURI,                 PROPF_METHOD|1},
+    {L"encodeURIComponent",        JSGlobal_encodeURIComponent,        PROPF_METHOD|1},
+    {L"escape",                    JSGlobal_escape,                    PROPF_METHOD|1},
+    {L"eval",                      JSGlobal_eval,                      PROPF_METHOD|1},
+    {L"isFinite",                  JSGlobal_isFinite,                  PROPF_METHOD|1},
+    {L"isNaN",                     JSGlobal_isNaN,                     PROPF_METHOD|1},
+    {L"parseFloat",                JSGlobal_parseFloat,                PROPF_METHOD|1},
+    {L"parseInt",                  JSGlobal_parseInt,                  PROPF_METHOD|2},
+    {L"unescape",                  JSGlobal_unescape,                  PROPF_METHOD|1}
 };
 
 static const builtin_info_t JSGlobal_info = {
