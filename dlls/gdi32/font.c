@@ -60,6 +60,10 @@ static const struct font_backend_funcs *font_funcs;
 
 static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
 
+static UINT font_smoothing = GGO_BITMAP;
+static UINT subpixel_orientation = GGO_GRAY4_BITMAP;
+static BOOL antialias_fakes = TRUE;
+
   /* Device -> World size conversion */
 
 /* Performs a device to world transformation on the specified width (which
@@ -1636,6 +1640,7 @@ static void release_gdi_font( struct gdi_font *font )
     TRACE( "font %p\n", font );
 
     /* add it to the unused list */
+    EnterCriticalSection( &font_cs );
     list_add_head( &unused_gdi_font_list, &font->unused_entry );
     if (unused_font_count > UNUSED_CACHE_SIZE)
     {
@@ -1644,9 +1649,9 @@ static void release_gdi_font( struct gdi_font *font )
         list_remove( &font->entry );
         list_remove( &font->unused_entry );
         free_gdi_font( font );
-        return;
     }
-    unused_font_count++;
+    else unused_font_count++;
+    LeaveCriticalSection( &font_cs );
 }
 
 static void add_font_list(HKEY hkey, const struct nls_update_font_list *fl, int dpi)
@@ -2929,27 +2934,46 @@ static BOOL CDECL font_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )
  */
 static HFONT CDECL font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 {
-    UINT default_aa_flags = *aa_flags;
     struct font_physdev *physdev = get_font_dev( dev );
-    struct gdi_font *prev = physdev->font;
+    struct gdi_font *font = NULL, *prev = physdev->font;
     DC *dc = get_physdev_dc( dev );
-
-    if (!default_aa_flags)
-    {
-        PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectFont );
-        next->funcs->pSelectFont( next, hfont, &default_aa_flags );
-    }
 
     if (hfont)
     {
+        LOGFONTW lf;
+
+        GetObjectW( hfont, sizeof(lf), &lf );
+        switch (lf.lfQuality)
+        {
+        case NONANTIALIASED_QUALITY:
+            if (!*aa_flags) *aa_flags = GGO_BITMAP;
+            break;
+        case ANTIALIASED_QUALITY:
+            if (!*aa_flags) *aa_flags = GGO_GRAY4_BITMAP;
+            break;
+        }
+
         EnterCriticalSection( &font_cs );
-        physdev->font = font_funcs->pSelectFont( dc, hfont, aa_flags, default_aa_flags );
+
+        font = font_funcs->pSelectFont( dc, hfont );
+        if (font && !*aa_flags)
+        {
+            *aa_flags = font->aa_flags;
+            if (!*aa_flags)
+            {
+                if (lf.lfQuality == CLEARTYPE_QUALITY || lf.lfQuality == CLEARTYPE_NATURAL_QUALITY)
+                    *aa_flags = subpixel_orientation;
+                else
+                    *aa_flags = font_smoothing;
+            }
+            *aa_flags = font_funcs->get_aa_flags( font, *aa_flags, antialias_fakes );
+        }
+        TRACE( "%p %s %d aa %x\n", hfont, debugstr_w(lf.lfFaceName), lf.lfHeight, *aa_flags );
         LeaveCriticalSection( &font_cs );
     }
-    else physdev->font = NULL;  /* notification that the font has been changed by another driver */
-
+    physdev->font = font;
     if (prev) release_gdi_font( prev );
-    return physdev->font ? hfont : 0;
+    return font ? hfont : 0;
 }
 
 
@@ -3089,6 +3113,68 @@ const struct gdi_dc_funcs font_driver =
     GDI_PRIORITY_FONT_DRV           /* priority */
 };
 
+static DWORD get_key_value( HKEY key, const WCHAR *name, DWORD *value )
+{
+    WCHAR buf[12];
+    DWORD count = sizeof(buf), type, err;
+
+    err = RegQueryValueExW( key, name, NULL, &type, (BYTE *)buf, &count );
+    if (!err)
+    {
+        if (type == REG_DWORD) memcpy( value, buf, sizeof(*value) );
+        else *value = atoiW( buf );
+    }
+    return err;
+}
+
+static void init_font_options(void)
+{
+    static const WCHAR antialias_fake_bold_or_italic[] = { 'A','n','t','i','a','l','i','a','s','F','a','k','e',
+                                                           'B','o','l','d','O','r','I','t','a','l','i','c',0 };
+    static const WCHAR true_options[] = { 'y','Y','t','T','1',0 };
+    static const WCHAR desktopW[] = { 'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
+                                      'D','e','s','k','t','o','p',0 };
+    static const WCHAR smoothing[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g',0};
+    static const WCHAR smoothing_type[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g','T','y','p','e',0};
+    static const WCHAR smoothing_orientation[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g',
+                                                  'O','r','i','e','n','t','a','t','i','o','n',0};
+    HKEY key;
+    DWORD type, size, val;
+    WCHAR buffer[20];
+
+    size = sizeof(buffer);
+    if (!RegQueryValueExW( wine_fonts_key, antialias_fake_bold_or_italic, NULL,
+                           &type, (BYTE *)buffer, &size) && type == REG_SZ && size >= 1)
+    {
+        antialias_fakes = (strchrW(true_options, buffer[0]) != NULL);
+    }
+
+    if (!RegOpenKeyW( HKEY_CURRENT_USER, desktopW, &key ))
+    {
+        /* FIXME: handle vertical orientations even though Windows doesn't */
+        if (!get_key_value( key, smoothing_orientation, &val ))
+        {
+            switch (val)
+            {
+            case 0: /* FE_FONTSMOOTHINGORIENTATIONBGR */
+                subpixel_orientation = WINE_GGO_HBGR_BITMAP;
+                break;
+            case 1: /* FE_FONTSMOOTHINGORIENTATIONRGB */
+                subpixel_orientation = WINE_GGO_HRGB_BITMAP;
+                break;
+            }
+        }
+        if (!get_key_value( key, smoothing, &val ) && val /* enabled */)
+        {
+            if (!get_key_value( key, smoothing_type, &val ) && val == 2 /* FE_FONTSMOOTHINGCLEARTYPE */)
+                font_smoothing = subpixel_orientation;
+            else
+                font_smoothing = GGO_GRAY4_BITMAP;
+        }
+        RegCloseKey( key );
+    }
+}
+
 /***********************************************************************
  *              font_init
  */
@@ -3098,6 +3184,7 @@ void font_init(void)
                          KEY_ALL_ACCESS, NULL, &wine_fonts_key, NULL ))
         return;
 
+    init_font_options();
     update_codepage();
     WineEngInit( &font_funcs );
     load_gdi_font_subst();
@@ -3204,54 +3291,6 @@ static void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, NEWTEXTMETRIC
     ptmA->ntmTm.ntmCellHeight = ptmW->ntmTm.ntmCellHeight;
     ptmA->ntmTm.ntmAvgWidth = ptmW->ntmTm.ntmAvgWidth;
     memcpy(&ptmA->ntmFontSig, &ptmW->ntmFontSig, sizeof(FONTSIGNATURE));
-}
-
-static DWORD get_key_value( HKEY key, const WCHAR *name, DWORD *value )
-{
-    WCHAR buf[12];
-    DWORD count = sizeof(buf), type, err;
-
-    err = RegQueryValueExW( key, name, NULL, &type, (BYTE *)buf, &count );
-    if (!err)
-    {
-        if (type == REG_DWORD) memcpy( value, buf, sizeof(*value) );
-        else *value = atoiW( buf );
-    }
-    return err;
-}
-
-static UINT get_subpixel_orientation( HKEY key )
-{
-    static const WCHAR smoothing_orientation[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g',
-                                                  'O','r','i','e','n','t','a','t','i','o','n',0};
-    DWORD orient;
-
-    /* FIXME: handle vertical orientations even though Windows doesn't */
-    if (get_key_value( key, smoothing_orientation, &orient )) return GGO_GRAY4_BITMAP;
-
-    switch (orient)
-    {
-    case 0: /* FE_FONTSMOOTHINGORIENTATIONBGR */
-        return WINE_GGO_HBGR_BITMAP;
-    case 1: /* FE_FONTSMOOTHINGORIENTATIONRGB */
-        return WINE_GGO_HRGB_BITMAP;
-    }
-    return GGO_GRAY4_BITMAP;
-}
-
-static UINT get_default_smoothing( HKEY key )
-{
-    static const WCHAR smoothing[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g',0};
-    static const WCHAR smoothing_type[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g','T','y','p','e',0};
-    DWORD enabled, type;
-
-    if (get_key_value( key, smoothing, &enabled )) return 0;
-    if (!enabled) return GGO_BITMAP;
-
-    if (!get_key_value( key, smoothing_type, &type ) && type == 2 /* FE_FONTSMOOTHINGCLEARTYPE */)
-        return get_subpixel_orientation( key );
-
-    return GGO_GRAY4_BITMAP;
 }
 
 /* compute positions for text rendering, in device coords */
@@ -3805,52 +3844,6 @@ static BOOL FONT_DeleteObject( HGDIOBJ handle )
     if (!(obj = free_gdi_handle( handle ))) return FALSE;
     HeapFree( GetProcessHeap(), 0, obj );
     return TRUE;
-}
-
-
-/***********************************************************************
- *           nulldrv_SelectFont
- */
-HFONT CDECL nulldrv_SelectFont( PHYSDEV dev, HFONT font, UINT *aa_flags )
-{
-    static const WCHAR desktopW[] = { 'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
-                                      'D','e','s','k','t','o','p',0 };
-    static int orientation = -1, smoothing = -1;
-    LOGFONTW lf;
-    HKEY key;
-
-    if (*aa_flags) return 0;
-
-    GetObjectW( font, sizeof(lf), &lf );
-    switch (lf.lfQuality)
-    {
-    case NONANTIALIASED_QUALITY:
-        *aa_flags = GGO_BITMAP;
-        break;
-    case ANTIALIASED_QUALITY:
-        *aa_flags = GGO_GRAY4_BITMAP;
-        break;
-    case CLEARTYPE_QUALITY:
-    case CLEARTYPE_NATURAL_QUALITY:
-        if (orientation == -1)
-        {
-            if (RegOpenKeyW( HKEY_CURRENT_USER, desktopW, &key )) break;
-            orientation = get_subpixel_orientation( key );
-            RegCloseKey( key );
-        }
-        *aa_flags = orientation;
-        break;
-    default:
-        if (smoothing == -1)
-        {
-            if (RegOpenKeyW( HKEY_CURRENT_USER, desktopW, &key )) break;
-            smoothing = get_default_smoothing( key );
-            RegCloseKey( key );
-        }
-        *aa_flags = smoothing;
-        break;
-    }
-    return 0;
 }
 
 

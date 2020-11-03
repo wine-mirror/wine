@@ -323,7 +323,6 @@ static struct list mappings_list = LIST_INIT( mappings_list );
 
 static UINT default_aa_flags;
 static HKEY hkey_font_cache;
-static BOOL antialias_fakes = TRUE;
 
 static const WCHAR font_mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N','T','_','M','U','T','E','X','_','_','\0'};
 
@@ -2248,7 +2247,6 @@ static void reorder_font_list(void)
  */
 BOOL WineEngInit( const struct font_backend_funcs **funcs )
 {
-    HKEY hkey;
     DWORD disposition;
     HANDLE font_mutex;
 
@@ -2259,23 +2257,6 @@ BOOL WineEngInit( const struct font_backend_funcs **funcs )
 #endif
 
     *funcs = &font_funcs;
-
-    if (!RegOpenKeyExW(HKEY_CURRENT_USER, wine_fonts_key, 0, KEY_READ, &hkey))
-    {
-        static const WCHAR antialias_fake_bold_or_italic[] = { 'A','n','t','i','a','l','i','a','s','F','a','k','e',
-                                                               'B','o','l','d','O','r','I','t','a','l','i','c',0 };
-        static const WCHAR true_options[] = { 'y','Y','t','T','1',0 };
-        DWORD type, size;
-        WCHAR buffer[20];
-
-        size = sizeof(buffer);
-        if (!RegQueryValueExW(hkey, antialias_fake_bold_or_italic, NULL, &type, (BYTE*)buffer, &size) &&
-            type == REG_SZ && size >= 1)
-        {
-            antialias_fakes = (strchrW(true_options, buffer[0]) != NULL);
-        }
-        RegCloseKey(hkey);
-    }
 
     if((font_mutex = CreateMutexW(NULL, FALSE, font_mutex_nameW)) == NULL)
     {
@@ -2972,8 +2953,7 @@ static BOOL CDECL freetype_load_font( struct gdi_font *font )
 /*************************************************************
  * freetype_SelectFont
  */
-static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *aa_flags,
-                                                    UINT default_aa_flags )
+static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont )
 {
     struct gdi_font *font;
     Face *face, *best, *best_bitmap;
@@ -3032,7 +3012,7 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont, UINT *a
     /* check the cache first */
     if ((font = find_cached_gdi_font( &lf, &dcmat, can_use_bitmap ))) {
         TRACE("returning cached gdiFont(%p) for hFont %p\n", font, hfont);
-        goto done;
+        return font;
     }
 
     /* If lfFaceName is "Symbol" then Windows fixes up lfCharSet to
@@ -3295,8 +3275,7 @@ found_face:
         if((cachedfont = find_cached_gdi_font( &lf, &dcmat, can_use_bitmap ))) {
             TRACE("Found cached font after non-scalable matrix rescale!\n");
             free_gdi_font( font );
-            font = cachedfont;
-            goto done;
+            return cachedfont;
         }
 
         if (height != 0) height = diff;
@@ -3326,50 +3305,40 @@ found_face:
     TRACE("caching: gdiFont=%p  hfont=%p\n", font, hfont);
 
     cache_gdi_font( font );
-done:
-    if (font)
-    {
-        switch (lf.lfQuality)
-        {
-        case NONANTIALIASED_QUALITY:
-        case ANTIALIASED_QUALITY:
-            if (!*aa_flags) *aa_flags = default_aa_flags;
-            break;
-        case CLEARTYPE_QUALITY:
-        case CLEARTYPE_NATURAL_QUALITY:
-        default:
-            if (!*aa_flags) *aa_flags = font->aa_flags;
-            if (!*aa_flags) *aa_flags = default_aa_flags;
+    return font;
+}
 
-            /* fixup the antialiasing flags for that font */
-            switch (*aa_flags)
+/*************************************************************
+ * freetype_get_aa_flags
+ */
+static UINT CDECL freetype_get_aa_flags( struct gdi_font *font, UINT aa_flags, BOOL antialias_fakes )
+{
+    /* fixup the antialiasing flags for that font */
+    switch (aa_flags)
+    {
+    case WINE_GGO_HRGB_BITMAP:
+    case WINE_GGO_HBGR_BITMAP:
+    case WINE_GGO_VRGB_BITMAP:
+    case WINE_GGO_VBGR_BITMAP:
+        if (is_subpixel_rendering_enabled()) break;
+        aa_flags = GGO_GRAY4_BITMAP;
+        /* fall through */
+    case GGO_GRAY2_BITMAP:
+    case GGO_GRAY4_BITMAP:
+    case GGO_GRAY8_BITMAP:
+    case WINE_GGO_GRAY16_BITMAP:
+        if ((!antialias_fakes || (!font->fake_bold && !font->fake_italic)) && is_hinting_enabled())
+        {
+            WORD gasp_flags;
+            if (get_gasp_flags( font, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
             {
-            case WINE_GGO_HRGB_BITMAP:
-            case WINE_GGO_HBGR_BITMAP:
-            case WINE_GGO_VRGB_BITMAP:
-            case WINE_GGO_VBGR_BITMAP:
-                if (is_subpixel_rendering_enabled()) break;
-                *aa_flags = GGO_GRAY4_BITMAP;
-                /* fall through */
-            case GGO_GRAY2_BITMAP:
-            case GGO_GRAY4_BITMAP:
-            case GGO_GRAY8_BITMAP:
-            case WINE_GGO_GRAY16_BITMAP:
-                if ((!antialias_fakes || (!font->fake_bold && !font->fake_italic)) && is_hinting_enabled())
-                {
-                    WORD gasp_flags;
-                    if (get_gasp_flags( font, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
-                    {
-                        TRACE( "font %s %d aa disabled by GASP\n",
-                               debugstr_w(lf.lfFaceName), lf.lfHeight );
-                        *aa_flags = GGO_BITMAP;
-                    }
-                }
+                TRACE( "font %s %d aa disabled by GASP\n",
+                       debugstr_w(font->lf.lfFaceName), font->lf.lfHeight );
+                aa_flags = GGO_BITMAP;
             }
         }
-        TRACE( "%p %s %d aa %x\n", hfont, debugstr_w(lf.lfFaceName), lf.lfHeight, *aa_flags );
     }
-    return font;
+    return aa_flags;
 }
 
 static void FTVectorToPOINTFX(FT_Vector *vec, POINTFX *pt)
@@ -5131,6 +5100,7 @@ static const struct font_backend_funcs font_funcs =
     freetype_remove_font,
     freetype_load_font,
     freetype_get_font_data,
+    freetype_get_aa_flags,
     freetype_get_glyph_index,
     freetype_get_default_glyph,
     freetype_get_glyph_outline,

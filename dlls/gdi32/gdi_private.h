@@ -425,7 +425,7 @@ struct gdi_font
 
 struct font_backend_funcs
 {
-    struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont, UINT *aa_flags, UINT default_aa_flags );
+    struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont );
 
     INT   (CDECL *add_font)( const WCHAR *file, DWORD flags );
     INT   (CDECL *add_mem_font)( void *ptr, SIZE_T size, DWORD flags );
@@ -434,6 +434,7 @@ struct font_backend_funcs
     BOOL  (CDECL *load_font)( struct gdi_font *gdi_font );
     DWORD (CDECL *get_font_data)( struct gdi_font *gdi_font, DWORD table, DWORD offset,
                                   void *buf, DWORD count );
+    UINT  (CDECL *get_aa_flags)( struct gdi_font *font, UINT aa_flags, BOOL antialias_fakes );
     BOOL  (CDECL *get_glyph_index)( struct gdi_font *gdi_font, UINT *glyph, BOOL use_encoding );
     UINT  (CDECL *get_default_glyph)( struct gdi_font *gdi_font );
     DWORD (CDECL *get_glyph_outline)( struct gdi_font *font, UINT glyph, UINT format,
@@ -644,7 +645,6 @@ extern INT  CDECL nulldrv_SaveDC( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_ScaleViewportExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom, SIZE *size ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_ScaleWindowExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom, SIZE *size ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_SelectClipPath( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
-extern HFONT CDECL nulldrv_SelectFont( PHYSDEV dev, HFONT font, UINT *ggo_flags ) DECLSPEC_HIDDEN;
 extern INT CDECL nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD width, DWORD height,
                                             INT x_src, INT y_src, UINT start, UINT lines,
                                             const void *bits, BITMAPINFO *info, UINT coloruse ) DECLSPEC_HIDDEN;
