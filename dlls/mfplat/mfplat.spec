@@ -131,6 +131,7 @@
 @ stdcall MFJoinWorkQueue(long long ptr) rtworkq.RtwqJoinWorkQueue
 @ stdcall MFLockPlatform() rtworkq.RtwqLockPlatform
 @ stdcall MFLockWorkQueue(long) rtworkq.RtwqLockWorkQueue
+@ stdcall MFMapDXGIFormatToDX9Format(long)
 @ stdcall MFPutWaitingWorkItem(long long ptr ptr) rtworkq.RtwqPutWaitingWorkItem
 @ stdcall MFPutWorkItem(long ptr ptr)
 @ stdcall MFPutWorkItem2(long long ptr ptr)

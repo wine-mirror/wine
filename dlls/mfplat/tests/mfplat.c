@@ -108,6 +108,7 @@ static HRESULT (WINAPI *pMFCreateMediaBufferFromMediaType)(IMFMediaType *media_t
         DWORD min_alignment, IMFMediaBuffer **buffer);
 static HRESULT (WINAPI *pMFCreateDXSurfaceBuffer)(REFIID riid, IUnknown *surface, BOOL bottom_up, IMFMediaBuffer **buffer);
 static HRESULT (WINAPI *pMFCreateTrackedSample)(IMFTrackedSample **sample);
+static DWORD (WINAPI *pMFMapDXGIFormatToDX9Format)(DXGI_FORMAT dxgi_format);
 
 static HWND create_window(void)
 {
@@ -742,6 +743,7 @@ static void init_functions(void)
     X(MFCreateTransformActivate);
     X(MFGetPlaneSize);
     X(MFGetStrideForBitmapInfoHeader);
+    X(MFMapDXGIFormatToDX9Format);
     X(MFPutWaitingWorkItem);
     X(MFRegisterLocalByteStreamHandler);
     X(MFRegisterLocalSchemeHandler);
@@ -5911,6 +5913,76 @@ static void test_MFFrameRateToAverageTimePerFrame(void)
     }
 }
 
+static void test_MFMapDXGIFormatToDX9Format(void)
+{
+    static const struct format_pair
+    {
+        DXGI_FORMAT dxgi_format;
+        DWORD d3d9_format;
+    }
+    formats_map[] =
+    {
+        { DXGI_FORMAT_R32G32B32A32_FLOAT, D3DFMT_A32B32G32R32F },
+        { DXGI_FORMAT_R16G16B16A16_FLOAT, D3DFMT_A16B16G16R16F },
+        { DXGI_FORMAT_R16G16B16A16_UNORM, D3DFMT_A16B16G16R16 },
+        { DXGI_FORMAT_R16G16B16A16_SNORM, D3DFMT_Q16W16V16U16 },
+        { DXGI_FORMAT_R32G32_FLOAT, D3DFMT_G32R32F },
+        { DXGI_FORMAT_R10G10B10A2_UNORM, D3DFMT_A2B10G10R10 },
+        { DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, D3DFMT_A8R8G8B8 },
+        { DXGI_FORMAT_R8G8B8A8_SNORM, D3DFMT_Q8W8V8U8 },
+        { DXGI_FORMAT_R16G16_FLOAT, D3DFMT_G16R16F },
+        { DXGI_FORMAT_R16G16_UNORM, D3DFMT_G16R16 },
+        { DXGI_FORMAT_R16G16_SNORM, D3DFMT_V16U16 },
+        { DXGI_FORMAT_D32_FLOAT, D3DFMT_D32F_LOCKABLE },
+        { DXGI_FORMAT_R32_FLOAT, D3DFMT_R32F },
+        { DXGI_FORMAT_D24_UNORM_S8_UINT, D3DFMT_D24S8 },
+        { DXGI_FORMAT_R8G8_SNORM, D3DFMT_V8U8 },
+        { DXGI_FORMAT_R16_FLOAT, D3DFMT_R16F },
+        { DXGI_FORMAT_R16_UNORM, D3DFMT_L16 },
+        { DXGI_FORMAT_R8_UNORM, D3DFMT_L8 },
+        { DXGI_FORMAT_A8_UNORM, D3DFMT_A8 },
+        { DXGI_FORMAT_BC1_UNORM, D3DFMT_DXT1 },
+        { DXGI_FORMAT_BC1_UNORM_SRGB, D3DFMT_DXT1 },
+        { DXGI_FORMAT_BC2_UNORM, D3DFMT_DXT2 },
+        { DXGI_FORMAT_BC2_UNORM_SRGB, D3DFMT_DXT2 },
+        { DXGI_FORMAT_BC3_UNORM, D3DFMT_DXT4 },
+        { DXGI_FORMAT_BC3_UNORM_SRGB, D3DFMT_DXT4 },
+        { DXGI_FORMAT_B8G8R8A8_UNORM, D3DFMT_A8R8G8B8 },
+        { DXGI_FORMAT_B8G8R8X8_UNORM, D3DFMT_X8R8G8B8 },
+        { DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, D3DFMT_A8R8G8B8 },
+        { DXGI_FORMAT_B8G8R8X8_UNORM_SRGB, D3DFMT_X8R8G8B8 },
+        { DXGI_FORMAT_AYUV, MAKEFOURCC('A','Y','U','V') },
+        { DXGI_FORMAT_Y410, MAKEFOURCC('Y','4','1','0') },
+        { DXGI_FORMAT_Y416, MAKEFOURCC('Y','4','1','6') },
+        { DXGI_FORMAT_NV12, MAKEFOURCC('N','V','1','2') },
+        { DXGI_FORMAT_P010, MAKEFOURCC('P','0','1','0') },
+        { DXGI_FORMAT_P016, MAKEFOURCC('P','0','1','6') },
+        { DXGI_FORMAT_420_OPAQUE, MAKEFOURCC('4','2','0','O') },
+        { DXGI_FORMAT_YUY2, D3DFMT_YUY2 },
+        { DXGI_FORMAT_Y210, MAKEFOURCC('Y','2','1','0') },
+        { DXGI_FORMAT_Y216, MAKEFOURCC('Y','2','1','6') },
+        { DXGI_FORMAT_NV11, MAKEFOURCC('N','V','1','1') },
+        { DXGI_FORMAT_AI44, MAKEFOURCC('A','I','4','4') },
+        { DXGI_FORMAT_IA44, MAKEFOURCC('I','A','4','4') },
+        { DXGI_FORMAT_P8, D3DFMT_P8 },
+        { DXGI_FORMAT_A8P8, D3DFMT_A8P8 },
+    };
+    unsigned int i;
+    DWORD format;
+
+    if (!pMFMapDXGIFormatToDX9Format)
+    {
+        win_skip("MFMapDXGIFormatToDX9Format is not available.\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(formats_map); ++i)
+    {
+        format = pMFMapDXGIFormatToDX9Format(formats_map[i].dxgi_format);
+        ok(format == formats_map[i].d3d9_format, "Unexpected d3d9 format %#x, dxgi format %#x.\n", format, formats_map[i].dxgi_format);
+    }
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -5970,6 +6042,7 @@ START_TEST(mfplat)
     test_MFCreateDXSurfaceBuffer();
     test_MFCreateTrackedSample();
     test_MFFrameRateToAverageTimePerFrame();
+    test_MFMapDXGIFormatToDX9Format();
 
     CoUninitialize();
 }

@@ -3211,3 +3211,101 @@ HRESULT WINAPI MFFrameRateToAverageTimePerFrame(UINT32 numerator, UINT32 denomin
 
     return S_OK;
 }
+
+/***********************************************************************
+ *      MFMapDXGIFormatToDX9Format (mfplat.@)
+ */
+DWORD WINAPI MFMapDXGIFormatToDX9Format(DXGI_FORMAT dxgi_format)
+{
+    switch (dxgi_format)
+    {
+        case DXGI_FORMAT_R32G32B32A32_FLOAT:
+            return D3DFMT_A32B32G32R32F;
+        case DXGI_FORMAT_R16G16B16A16_FLOAT:
+            return D3DFMT_A16B16G16R16F;
+        case DXGI_FORMAT_R16G16B16A16_UNORM:
+            return D3DFMT_A16B16G16R16;
+        case DXGI_FORMAT_R16G16B16A16_SNORM:
+            return D3DFMT_Q16W16V16U16;
+        case DXGI_FORMAT_R32G32_FLOAT:
+            return D3DFMT_G32R32F;
+        case DXGI_FORMAT_R10G10B10A2_UNORM:
+            return D3DFMT_A2B10G10R10;
+        case DXGI_FORMAT_R8G8B8A8_SNORM:
+            return D3DFMT_Q8W8V8U8;
+        case DXGI_FORMAT_R16G16_FLOAT:
+            return D3DFMT_G16R16F;
+        case DXGI_FORMAT_R16G16_UNORM:
+            return D3DFMT_G16R16;
+        case DXGI_FORMAT_R16G16_SNORM:
+            return D3DFMT_V16U16;
+        case DXGI_FORMAT_D32_FLOAT:
+            return D3DFMT_D32F_LOCKABLE;
+        case DXGI_FORMAT_R32_FLOAT:
+            return D3DFMT_R32F;
+        case DXGI_FORMAT_D24_UNORM_S8_UINT:
+            return D3DFMT_D24S8;
+        case DXGI_FORMAT_R8G8_SNORM:
+            return D3DFMT_V8U8;
+        case DXGI_FORMAT_R16_FLOAT:
+            return D3DFMT_R16F;
+        case DXGI_FORMAT_D16_UNORM:
+            return D3DFMT_D16_LOCKABLE;
+        case DXGI_FORMAT_R16_UNORM:
+            return D3DFMT_L16;
+        case DXGI_FORMAT_R8_UNORM:
+            return D3DFMT_L8;
+        case DXGI_FORMAT_A8_UNORM:
+            return D3DFMT_A8;
+        case DXGI_FORMAT_BC1_UNORM:
+        case DXGI_FORMAT_BC1_UNORM_SRGB:
+            return D3DFMT_DXT1;
+        case DXGI_FORMAT_BC2_UNORM:
+        case DXGI_FORMAT_BC2_UNORM_SRGB:
+            return D3DFMT_DXT2;
+        case DXGI_FORMAT_BC3_UNORM:
+        case DXGI_FORMAT_BC3_UNORM_SRGB:
+            return D3DFMT_DXT4;
+        case DXGI_FORMAT_R8G8B8A8_UNORM:
+            return D3DFMT_A8B8G8R8;
+        case DXGI_FORMAT_B8G8R8A8_UNORM:
+        case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+            return D3DFMT_A8R8G8B8;
+        case DXGI_FORMAT_B8G8R8X8_UNORM:
+        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+            return D3DFMT_X8R8G8B8;
+        case DXGI_FORMAT_AYUV:
+            return MAKEFOURCC('A','Y','U','V');
+        case DXGI_FORMAT_Y410:
+            return MAKEFOURCC('Y','4','1','0');
+        case DXGI_FORMAT_Y416:
+            return MAKEFOURCC('Y','4','1','6');
+        case DXGI_FORMAT_NV12:
+            return MAKEFOURCC('N','V','1','2');
+        case DXGI_FORMAT_P010:
+            return MAKEFOURCC('P','0','1','0');
+        case DXGI_FORMAT_P016:
+            return MAKEFOURCC('P','0','1','6');
+        case DXGI_FORMAT_420_OPAQUE:
+            return MAKEFOURCC('4','2','0','O');
+        case DXGI_FORMAT_YUY2:
+            return D3DFMT_YUY2;
+        case DXGI_FORMAT_Y210:
+            return MAKEFOURCC('Y','2','1','0');
+        case DXGI_FORMAT_Y216:
+            return MAKEFOURCC('Y','2','1','6');
+        case DXGI_FORMAT_NV11:
+            return MAKEFOURCC('N','V','1','1');
+        case DXGI_FORMAT_AI44:
+            return MAKEFOURCC('A','I','4','4');
+        case DXGI_FORMAT_IA44:
+            return MAKEFOURCC('I','A','4','4');
+        case DXGI_FORMAT_P8:
+            return D3DFMT_P8;
+        case DXGI_FORMAT_A8P8:
+            return D3DFMT_A8P8;
+        default:
+            return 0;
+    }
+}
