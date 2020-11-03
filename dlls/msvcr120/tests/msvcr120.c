@@ -157,6 +157,16 @@ typedef struct
     double i;
 } _Dcomplex;
 
+typedef void (*vtable_ptr)(void);
+
+typedef struct {
+    const vtable_ptr *vtable;
+} Context;
+
+typedef struct {
+    Context *ctx;
+} _Context;
+
 static char* (CDECL *p_setlocale)(int category, const char* locale);
 static struct MSVCRT_lconv* (CDECL *p_localeconv)(void);
 static size_t (CDECL *p_wcstombs_s)(size_t *ret, char* dest, size_t sz, const wchar_t* src, size_t max);
@@ -208,6 +218,9 @@ static MSVCRT_bool (__thiscall *p__Condition_variable_wait_for)(_Condition_varia
 static void (__thiscall *p__Condition_variable_notify_one)(_Condition_variable*);
 static void (__thiscall *p__Condition_variable_notify_all)(_Condition_variable*);
 
+static Context* (__cdecl *p_Context_CurrentContext)(void);
+static _Context* (__cdecl *p__Context__CurrentContext)(_Context*);
+
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(module,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 
@@ -250,6 +263,7 @@ static BOOL init(void)
     SET(p_nexttowardl, "nexttowardl");
     SET(p_wctrans, "wctrans");
     SET(p_towctrans, "towctrans");
+    SET(p__Context__CurrentContext, "?_CurrentContext@_Context@details@Concurrency@@SA?AV123@XZ");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_critical_section_ctor,
                 "??0critical_section@Concurrency@@QEAA@XZ");
@@ -281,6 +295,8 @@ static BOOL init(void)
                 "?notify_one@_Condition_variable@details@Concurrency@@QEAAXXZ");
         SET(p__Condition_variable_notify_all,
                 "?notify_all@_Condition_variable@details@Concurrency@@QEAAXXZ");
+        SET(p_Context_CurrentContext,
+                "?CurrentContext@Context@Concurrency@@SAPEAV12@XZ");
     } else {
 #ifdef __arm__
         SET(p_critical_section_ctor,
@@ -345,6 +361,8 @@ static BOOL init(void)
         SET(p__Condition_variable_notify_all,
                 "?notify_all@_Condition_variable@details@Concurrency@@QAEXXZ");
 #endif
+        SET(p_Context_CurrentContext,
+                "?CurrentContext@Context@Concurrency@@SAPAV12@XZ");
     }
 
     init_thiscall_thunk();
@@ -1065,6 +1083,20 @@ static void test_towctrans(void)
     ok(ret == 'T', "towctrans('T', 1) returned %c, expected T\n", ret);
 }
 
+static void test_CurrentContext(void)
+{
+    _Context _ctx, *ret;
+    Context *ctx;
+
+    ctx = p_Context_CurrentContext();
+    ok(!!ctx, "got NULL\n");
+
+    memset(&_ctx, 0xcc, sizeof(_ctx));
+    ret = p__Context__CurrentContext(&_ctx);
+    ok(_ctx.ctx == ctx, "expected %p, got %p\n", ctx, _ctx.ctx);
+    ok(ret == &_ctx, "expected %p, got %p\n", &_ctx, ret);
+}
+
 START_TEST(msvcr120)
 {
     if (!init()) return;
@@ -1086,4 +1118,5 @@ START_TEST(msvcr120)
     test__Cbuild();
     test_nexttoward();
     test_towctrans();
+    test_CurrentContext();
 }
