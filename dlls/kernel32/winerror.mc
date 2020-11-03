@@ -3778,3 +3778,10 @@ SymbolicName=DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
 Language=ENU
 Resource is not currently available.
 .
+MessageId=0x4005
+Severity=CoError
+Facility=Null
+SymbolicName=E_FAIL
+Language=ENU
+Call failed.
+.

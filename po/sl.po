@@ -7026,6 +7026,12 @@ msgstr "Povezava je bila zavrnjena.\n"
 msgid "Not implemented.\n"
 msgstr "Ni podprto"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "Klic RPC je spodletel.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 #, fuzzy
 #| msgid "Message 0x%1 not found in file %2.\n"

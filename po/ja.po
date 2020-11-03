@@ -6919,6 +6919,12 @@ msgstr "相手側により接続がリセットされました。\n"
 msgid "Not implemented.\n"
 msgstr "未実装です。\n"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "RPC 呼び出しが失敗しました。\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "ファイルにデジタル署名がありません。\n"

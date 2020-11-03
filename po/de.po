@@ -6937,6 +6937,12 @@ msgstr "Verbindung von Gegenstelle zurückgesetzt.\n"
 msgid "Not implemented.\n"
 msgstr "Nicht implementiert.\n"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "RPC-Aufruf fehlgeschlagen.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Keine Signatur in Datei gefunden.\n"

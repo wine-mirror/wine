@@ -6955,6 +6955,12 @@ msgstr "Un igual ha restablert la connexió.\n"
 msgid "Not implemented.\n"
 msgstr "No implementat"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "La trucada RPC ha fallat.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "No s'ha trobat cap signatura en el fitxer.\n"

@@ -6945,6 +6945,12 @@ msgstr "Соединение закрыто удалённым узлом.\n"
 msgid "Not implemented.\n"
 msgstr "Не реализовано"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "Сбой RPC-вызова.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Подпись файла не обнаружена.\n"

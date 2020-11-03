@@ -6966,6 +6966,11 @@ msgstr "Pripojenie je aktícne.\n"
 msgid "Not implemented.\n"
 msgstr "Neimplementované"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+msgid "Call failed.\n"
+msgstr "Otvoriť súbor.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

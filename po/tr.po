@@ -6937,6 +6937,12 @@ msgstr "Bağlantı eş tarafından sıfırlandı.\n"
 msgid "Not implemented.\n"
 msgstr "Eklenmedi/Geliştirilmedi"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "RPC çağrısı başarısız.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Dosyada imza bulunamadı.\n"

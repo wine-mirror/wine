@@ -6927,6 +6927,11 @@ msgstr ""
 msgid "Not implemented.\n"
 msgstr "Nén co possibe"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+msgid "Call failed.\n"
+msgstr "Nén co possibe.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

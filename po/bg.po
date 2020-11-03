@@ -7088,6 +7088,11 @@ msgstr "LAN връзка.\n"
 msgid "Not implemented.\n"
 msgstr "Не е реализирано"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+msgid "Call failed.\n"
+msgstr "Отвори файл.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

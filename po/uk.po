@@ -6949,6 +6949,12 @@ msgstr "У з'єднанні відмовлено.\n"
 msgid "Not implemented.\n"
 msgstr "Не реалізовано"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "Creation failed.\n"
+msgid "Call failed.\n"
+msgstr "Помилка створення.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Відсутній підпис файла.\n"

@@ -1753,6 +1753,7 @@ static void test_message_system_errors(void)
     tests[] =
     {
         {E_NOTIMPL},
+        {E_FAIL},
         {DXGI_ERROR_INVALID_CALL, TRUE /* Available since Win8 */},
         {DXGI_ERROR_NOT_CURRENTLY_AVAILABLE, TRUE /* Available since Win8 */},
     };

@@ -6940,6 +6940,12 @@ msgstr "Conexão redefinida pelo cliente.\n"
 msgid "Not implemented.\n"
 msgstr "Não implementado.\n"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "Falha na chamada RPC.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Nenhuma Assinatura encontrada no arquivo.\n"

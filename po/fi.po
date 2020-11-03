@@ -6919,6 +6919,12 @@ msgstr "Vastapuoli nollasi yhteyden.\n"
 msgid "Not implemented.\n"
 msgstr "Ei toteutettu.\n"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "RPC-kutsu epäonnistui.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Tiedostosta ei löytynyt allekirjoitusta.\n"

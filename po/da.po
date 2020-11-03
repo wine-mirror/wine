@@ -7007,6 +7007,12 @@ msgstr "Forbindelse nægtet.\n"
 msgid "Not implemented.\n"
 msgstr "Ikke implementeret"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "RPC-kald mislykkedes.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 #, fuzzy
 #| msgid "Message 0x%1 not found in file %2.\n"

@@ -6878,6 +6878,12 @@ msgstr ""
 msgid "Not implemented.\n"
 msgstr "හදල නැහැ"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "RPC කෝල් එක බැරි උනා.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "ගොනුවේ අත්සනයක් නැහැ.\n"

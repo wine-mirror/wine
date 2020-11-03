@@ -6982,6 +6982,11 @@ msgstr "ใช้ไม่ได้ตอนนี้; .\n"
 msgid "Not implemented.\n"
 msgstr "ไม่พบแฟ้ม"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+msgid "Call failed.\n"
+msgstr "แฟ้ม.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

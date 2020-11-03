@@ -6793,6 +6793,10 @@ msgstr ""
 msgid "Not implemented.\n"
 msgstr ""
 
+#: dlls/kernel32/winerror.mc:3788
+msgid "Call failed.\n"
+msgstr ""
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

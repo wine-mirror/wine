@@ -6879,6 +6879,12 @@ msgstr "连接被重置。\n"
 msgid "Not implemented.\n"
 msgstr "尚未实现"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "RPC 调用失败。\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "未在文件内找到签名。\n"

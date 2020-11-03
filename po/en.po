@@ -6926,6 +6926,10 @@ msgstr "Connection reset by peer.\n"
 msgid "Not implemented.\n"
 msgstr "Not implemented.\n"
 
+#: dlls/kernel32/winerror.mc:3788
+msgid "Call failed.\n"
+msgstr "Call failed.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "No Signature found in file.\n"

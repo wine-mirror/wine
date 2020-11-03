@@ -6965,6 +6965,12 @@ msgstr "تم رفض الاتصال.\n"
 msgid "Not implemented.\n"
 msgstr "لم تنفّذ"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "فشل طلب RPC.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 #, fuzzy
 #| msgid "Message 0x%1 not found in file %2.\n"

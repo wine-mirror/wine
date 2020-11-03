@@ -6890,6 +6890,11 @@ msgstr "INFUORMAZIUN.\n"
 msgid "Not implemented.\n"
 msgstr "Na implementa"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+msgid "Call failed.\n"
+msgstr "Wine ag�d.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

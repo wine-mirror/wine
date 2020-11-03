@@ -6836,6 +6836,12 @@ msgstr ""
 msgid "Not implemented.\n"
 msgstr "Nun s'implementó"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "Open failed.\n"
+msgid "Call failed.\n"
+msgstr "Falló l'apertura.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

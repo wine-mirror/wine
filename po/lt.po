@@ -6931,6 +6931,12 @@ msgstr "Sujungimas nutrauktas kito serverio.\n"
 msgid "Not implemented.\n"
 msgstr "Nerealizuota.\n"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "RPC kreipinys nepavyko.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Joks parašas nerastas faile.\n"

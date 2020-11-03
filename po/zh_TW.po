@@ -6935,6 +6935,12 @@ msgstr "連線被拒。\n"
 msgid "Not implemented.\n"
 msgstr "未實作"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "RPC 呼叫失敗。\n"
+
 #: dlls/kernel32/winerror.mc:3760
 #, fuzzy
 #| msgid "Message 0x%1 not found in file %2.\n"

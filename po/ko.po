@@ -6919,6 +6919,12 @@ msgstr "피어가 연결을 초기화 했습니다.\n"
 msgid "Not implemented.\n"
 msgstr "구현되지 않음"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "RPC 호출 실패.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "서명 또는 인증서를 찾을 수 없습니다.\n"

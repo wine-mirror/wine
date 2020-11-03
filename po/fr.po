@@ -6991,6 +6991,12 @@ msgstr "Connexion fermée par le pair.\n"
 msgid "Not implemented.\n"
 msgstr "Non implémenté"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "Échec de l'appel RPC.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 #, fuzzy
 #| msgid "Message 0x%1 not found in file %2.\n"

@@ -7220,6 +7220,11 @@ msgstr "בהליכי התחברות אל %s.\n"
 msgid "Not implemented.\n"
 msgstr "לא מוטמע"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+msgid "Call failed.\n"
+msgstr "פתיחת קובץ.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr ""

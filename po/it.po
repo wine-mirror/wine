@@ -7033,6 +7033,12 @@ msgstr "Connessione rifiutata.\n"
 msgid "Not implemented.\n"
 msgstr "Non implementato"
 
+#: dlls/kernel32/winerror.mc:3788
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "Chiamata RPC fallita.\n"
+
 #: dlls/kernel32/winerror.mc:3760
 #, fuzzy
 #| msgid "Message 0x%1 not found in file %2.\n"
