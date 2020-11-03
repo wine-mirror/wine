@@ -302,6 +302,14 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
             IMFMediaEngineNotify_EventNotify(engine->callback, event_type == MEBufferingStarted ?
                     MF_MEDIA_ENGINE_EVENT_BUFFERINGSTARTED : MF_MEDIA_ENGINE_EVENT_BUFFERINGENDED, 0, 0);
             break;
+        case MESessionTopologyStatus:
+        {
+            UINT32 topo_status = 0;
+            IMFMediaEvent_GetUINT32(event, &MF_EVENT_TOPOLOGY_STATUS, &topo_status);
+            if (topo_status == MF_TOPOSTATUS_READY)
+                IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_CANPLAY, 0, 0);
+            break;
+        }
     }
 
 failed:
