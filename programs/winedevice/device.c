@@ -41,7 +41,7 @@ static const WCHAR servicesW[] = {'\\','R','e','g','i','s','t','r','y',
 
 extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
 
-static const WCHAR winedeviceW[] = {'w','i','n','e','d','e','v','i','c','e',0};
+static WCHAR winedeviceW[] = L"winedevice";
 static SERVICE_STATUS_HANDLE service_handle;
 static SC_HANDLE manager_handle;
 static HANDLE stop_event;
@@ -145,7 +145,7 @@ int __cdecl wmain( int argc, WCHAR *argv[] )
 {
     SERVICE_TABLE_ENTRYW service_table[2];
 
-    service_table[0].lpServiceName = (void *)winedeviceW;
+    service_table[0].lpServiceName = winedeviceW;
     service_table[0].lpServiceProc = ServiceMain;
     service_table[1].lpServiceName = NULL;
     service_table[1].lpServiceProc = NULL;
