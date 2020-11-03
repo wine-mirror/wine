@@ -68,6 +68,7 @@ enum media_engine_flags
     FLAGS_ENGINE_MUTED = 0x400,
     FLAGS_ENGINE_HAS_AUDIO = 0x800,
     FLAGS_ENGINE_HAS_VIDEO = 0x1000,
+    FLAGS_ENGINE_FIRST_FRAME = 0x2000,
 };
 
 struct media_engine
@@ -315,6 +316,10 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
             IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PLAYING, 0, 0);
             break;
         case MESessionEnded:
+
+            EnterCriticalSection(&engine->cs);
+            media_engine_set_flag(engine, FLAGS_ENGINE_FIRST_FRAME, FALSE);
+            LeaveCriticalSection(&engine->cs);
 
             IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_ENDED, 0, 0);
             break;
@@ -1351,6 +1356,12 @@ static HRESULT WINAPI media_engine_grabber_callback_OnClockStart(IMFSampleGrabbe
 static HRESULT WINAPI media_engine_grabber_callback_OnClockStop(IMFSampleGrabberSinkCallback *iface,
         MFTIME systime)
 {
+    struct media_engine *engine = impl_from_IMFSampleGrabberSinkCallback(iface);
+
+    EnterCriticalSection(&engine->cs);
+    media_engine_set_flag(engine, FLAGS_ENGINE_FIRST_FRAME, FALSE);
+    LeaveCriticalSection(&engine->cs);
+
     return S_OK;
 }
 
@@ -1382,6 +1393,18 @@ static HRESULT WINAPI media_engine_grabber_callback_OnProcessSample(IMFSampleGra
         REFGUID major_type, DWORD sample_flags, LONGLONG sample_time, LONGLONG sample_duration,
         const BYTE *buffer, DWORD sample_size)
 {
+    struct media_engine *engine = impl_from_IMFSampleGrabberSinkCallback(iface);
+
+    EnterCriticalSection(&engine->cs);
+
+    if (!(engine->flags & FLAGS_ENGINE_FIRST_FRAME))
+    {
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_FIRSTFRAMEREADY, 0, 0);
+        engine->flags |= FLAGS_ENGINE_FIRST_FRAME;
+    }
+
+    LeaveCriticalSection(&engine->cs);
+
     return S_OK;
 }
 
