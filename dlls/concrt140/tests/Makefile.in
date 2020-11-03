@@ -1,0 +1,4 @@
+TESTDLL   = concrt140.dll
+
+C_SRCS = \
+	concrt140.c
