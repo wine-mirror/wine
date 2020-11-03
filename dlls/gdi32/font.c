@@ -3238,13 +3238,22 @@ static void init_font_options(void)
  */
 void font_init(void)
 {
+    static const WCHAR mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N','T','_','M','U','T','E','X','_','_',0};
+    HANDLE mutex;
+
     if (RegCreateKeyExA( HKEY_CURRENT_USER, "Software\\Wine\\Fonts", 0, NULL, 0,
                          KEY_ALL_ACCESS, NULL, &wine_fonts_key, NULL ))
         return;
 
     init_font_options();
     update_codepage();
-    WineEngInit( &font_funcs );
+    if (!WineEngInit( &font_funcs )) return;
+
+    if (!(mutex = CreateMutexW( NULL, FALSE, mutex_nameW ))) return;
+    WaitForSingleObject( mutex, INFINITE );
+    font_funcs->load_fonts();
+    ReleaseMutex( mutex );
+
     reorder_font_list();
     load_gdi_font_subst();
     load_gdi_font_replacements();

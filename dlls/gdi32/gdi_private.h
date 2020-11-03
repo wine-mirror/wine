@@ -427,6 +427,7 @@ struct font_backend_funcs
 {
     struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont );
 
+    void  (CDECL *load_fonts)(void);
     INT   (CDECL *add_font)( const WCHAR *file, DWORD flags );
     INT   (CDECL *add_mem_font)( void *ptr, SIZE_T size, DWORD flags );
     BOOL  (CDECL *remove_font)( const WCHAR *file, DWORD flags );

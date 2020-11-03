@@ -286,8 +286,6 @@ static struct list mappings_list = LIST_INIT( mappings_list );
 static UINT default_aa_flags;
 static HKEY hkey_font_cache;
 
-static const WCHAR font_mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N','T','_','M','U','T','E','X','_','_','\0'};
-
 static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font );
 static BOOL CDECL freetype_set_bitmap_text_metrics( struct gdi_font *font );
 static void remove_face_from_cache( Face *face );
@@ -2168,29 +2166,11 @@ static void init_font_list(void)
 }
 
 /*************************************************************
- *    WineEngInit
- *
- * Initialize FreeType library and create a list of available faces
+ * freetype_load_fonts
  */
-BOOL WineEngInit( const struct font_backend_funcs **funcs )
+static void CDECL freetype_load_fonts(void)
 {
     DWORD disposition;
-    HANDLE font_mutex;
-
-    if(!init_freetype()) return FALSE;
-
-#ifdef SONAME_LIBFONTCONFIG
-    init_fontconfig();
-#endif
-
-    *funcs = &font_funcs;
-
-    if((font_mutex = CreateMutexW(NULL, FALSE, font_mutex_nameW)) == NULL)
-    {
-        ERR("Failed to create font mutex\n");
-        return FALSE;
-    }
-    WaitForSingleObject(font_mutex, INFINITE);
 
     create_font_cache_key(&hkey_font_cache, &disposition);
 
@@ -2201,8 +2181,22 @@ BOOL WineEngInit( const struct font_backend_funcs **funcs )
 
     if(disposition == REG_CREATED_NEW_KEY)
         update_reg_entries();
+}
 
-    ReleaseMutex(font_mutex);
+/*************************************************************
+ *    WineEngInit
+ *
+ * Initialize FreeType library and create a list of available faces
+ */
+BOOL WineEngInit( const struct font_backend_funcs **funcs )
+{
+    if(!init_freetype()) return FALSE;
+
+#ifdef SONAME_LIBFONTCONFIG
+    init_fontconfig();
+#endif
+
+    *funcs = &font_funcs;
     return TRUE;
 }
 
@@ -5020,6 +5014,7 @@ static DWORD CDECL freetype_get_kerning_pairs( struct gdi_font *font, KERNINGPAI
 static const struct font_backend_funcs font_funcs =
 {
     freetype_SelectFont,
+    freetype_load_fonts,
     freetype_add_font,
     freetype_add_mem_font,
     freetype_remove_font,
