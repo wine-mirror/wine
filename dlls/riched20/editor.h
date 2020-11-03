@@ -118,7 +118,7 @@ ME_Row *row_from_cursor( ME_Cursor *cursor ) DECLSPEC_HIDDEN;
 ME_Row *row_from_row_number( ME_TextEditor *editor, int row_num ) DECLSPEC_HIDDEN;
 ME_Row *row_next( ME_Row *row ) DECLSPEC_HIDDEN;
 ME_Run *row_next_run( ME_Row *row, ME_Run *run ) DECLSPEC_HIDDEN;
-int ME_RowNumberFromCharOfs(ME_TextEditor *editor, int nOfs) DECLSPEC_HIDDEN;
+int row_number_from_char_ofs( ME_TextEditor *editor, int ofs ) DECLSPEC_HIDDEN;
 static inline ME_DisplayItem *row_get_di( ME_Row *row )
 {
     return (ME_DisplayItem *)((ptrdiff_t)row - offsetof(ME_DisplayItem, member));

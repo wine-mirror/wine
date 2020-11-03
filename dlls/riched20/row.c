@@ -102,33 +102,28 @@ ME_Row *row_from_row_number( ME_TextEditor *editor, int row_num )
 }
 
 
-int
-ME_RowNumberFromCharOfs(ME_TextEditor *editor, int nOfs)
+int row_number_from_char_ofs( ME_TextEditor *editor, int ofs )
 {
-  ME_DisplayItem *item = ME_FindItemFwd(editor->pBuffer->pFirst, diParagraph);
-  int nRow = 0;
+    ME_Paragraph *para = editor_first_para( editor );
+    ME_Row *row;
+    ME_Cursor cursor;
+    int row_num = 0;
 
-  while (item->type == diParagraph &&
-         item->member.para.next_para->member.para.nCharOfs <= nOfs)
-  {
-    nRow += item->member.para.nRows;
-    item = item->member.para.next_para;
-  }
-  if (item->type == diParagraph)
-  {
-    ME_DisplayItem *next_para = item->member.para.next_para;
-
-    nOfs -= item->member.para.nCharOfs;
-    item = ME_FindItemFwd(item, diRun);
-    while ((item = ME_FindItemFwd(item, diStartRowOrParagraph)) != NULL)
+    while (para_next( para ) && para_next( para )->nCharOfs <= ofs)
     {
-      if (item == next_para)
-        break;
-      item = ME_FindItemFwd(item, diRun);
-      if (item->member.run.nCharOfs > nOfs)
-        break;
-      nRow++;
+        row_num += para->nRows;
+        para = para_next( para );
     }
-  }
-  return nRow;
+
+    if (para_next( para ))
+    {
+        for (row = para_first_row( para ); row; row = row_next( row ))
+        {
+            row_end_cursor( row, &cursor, TRUE );
+            if (ME_GetCursorOfs( &cursor ) > ofs ) break;
+            row_num++;
+        }
+    }
+
+    return row_num;
 }

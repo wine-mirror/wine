@@ -4312,17 +4312,13 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_LINEFROMCHAR:
   {
-    if (wParam == -1)
-      return ME_RowNumberFromCharOfs(editor, ME_GetCursorOfs(&editor->pCursors[1]));
-    else
-      return ME_RowNumberFromCharOfs(editor, wParam);
+    if (wParam == -1) wParam = ME_GetCursorOfs( editor->pCursors + 1 );
+    return row_number_from_char_ofs( editor, wParam );
   }
   case EM_EXLINEFROMCHAR:
   {
-    if (lParam == -1)
-      return ME_RowNumberFromCharOfs(editor, ME_GetCursorOfs(&editor->pCursors[1]));
-    else    
-      return ME_RowNumberFromCharOfs(editor, lParam);
+    if (lParam == -1) lParam = ME_GetCursorOfs( editor->pCursors + 1 );
+    return row_number_from_char_ofs( editor, lParam );
   }
   case EM_LINEINDEX:
   {
