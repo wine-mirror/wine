@@ -34,30 +34,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(svchost);
 
-/* Static strings used throughout svchost */
-static const WCHAR kd[] = {'-','k',0};
-
-static const WCHAR ks[] = {'/','k',0};
-
-static const WCHAR reg_separator[] = {'\\',0};
-
-static const WCHAR service_reg_path[] = {
-    'S','y','s','t','e','m',
-    '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
-    '\\','S','e','r','v','i','c','e','s',0};
-
-static const WCHAR parameters[] = {
-    'P','a','r','a','m','e','t','e','r','s',0};
-
-static const WCHAR service_dll[] = {
-    'S','e','r','v','i','c','e','D','l','l',0};
-
-static const WCHAR svchost_path[] = {
-    'S','o','f','t','w','a','r','e',
-    '\\','M','i','c','r','o','s','o','f','t',
-    '\\','W','i','n','d','o','w','s',' ','N','T',
-    '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
-    '\\','S','v','c','h','o','s','t',0};
+static const WCHAR service_reg_path[] = L"System\\CurrentControlSet\\Services";
+static const WCHAR svchost_path[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Svchost";
 
 static const CHAR service_main[] = "ServiceMain";
 
@@ -145,15 +123,14 @@ static BOOL AddServiceElem(LPWSTR service_name,
     WINE_TRACE("Adding element for %s\n", wine_dbgstr_w(service_name));
 
     /* Construct registry path to the service's parameters key */
-    size = (lstrlenW(service_reg_path) + lstrlenW(reg_separator) +
-            lstrlenW(service_name) + lstrlenW(reg_separator) +
-            lstrlenW(parameters) + 1);
+    size = lstrlenW(service_reg_path) + lstrlenW(L"\\") + lstrlenW(service_name) + lstrlenW(L"\\") +
+           lstrlenW(L"Parameters") + 1;
     service_param_key = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
     lstrcpyW(service_param_key, service_reg_path);
-    lstrcatW(service_param_key, reg_separator);
+    lstrcatW(service_param_key, L"\\");
     lstrcatW(service_param_key, service_name);
-    lstrcatW(service_param_key, reg_separator);
-    lstrcatW(service_param_key, parameters);
+    lstrcatW(service_param_key, L"\\");
+    lstrcatW(service_param_key, L"Parameters");
     service_param_key[size - 1] = '\0';
     ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, service_param_key, 0,
             KEY_READ, &service_hkey);
@@ -165,11 +142,11 @@ static BOOL AddServiceElem(LPWSTR service_name,
     }
 
     /* Find DLL associate with service from key */
-    dll_name_short = GetRegValue(service_hkey, service_dll);
+    dll_name_short = GetRegValue(service_hkey, L"ServiceDll");
     if (!dll_name_short)
     {
-        WINE_ERR("cannot find registry value %s for service %s\n",
-                wine_dbgstr_w(service_dll), wine_dbgstr_w(service_name));
+        WINE_ERR("cannot find registry value ServiceDll for service %s\n",
+                wine_dbgstr_w(service_name));
         RegCloseKey(service_hkey);
         goto cleanup;
     }
@@ -340,8 +317,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 
     for (option_index = 1; option_index < argc; option_index++)
     {
-        if (lstrcmpiW(argv[option_index], ks) == 0 ||
-                lstrcmpiW(argv[option_index], kd) == 0)
+        if (lstrcmpiW(argv[option_index], L"/k") == 0 || lstrcmpiW(argv[option_index], L"-k") == 0)
         {
             ++option_index;
             if (option_index >= argc)
