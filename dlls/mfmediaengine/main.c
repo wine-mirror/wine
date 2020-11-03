@@ -71,6 +71,11 @@ enum media_engine_flags
     FLAGS_ENGINE_FIRST_FRAME = 0x2000,
 };
 
+struct video_frame
+{
+    LONGLONG pts;
+};
+
 struct media_engine
 {
     IMFMediaEngine IMFMediaEngine_iface;
@@ -93,6 +98,7 @@ struct media_engine
     IMFMediaSession *session;
     IMFSourceResolver *resolver;
     BSTR current_source;
+    struct video_frame video_frame;
     CRITICAL_SECTION cs;
 };
 
@@ -319,6 +325,7 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
 
             EnterCriticalSection(&engine->cs);
             media_engine_set_flag(engine, FLAGS_ENGINE_FIRST_FRAME, FALSE);
+            engine->video_frame.pts = MINLONGLONG;
             LeaveCriticalSection(&engine->cs);
 
             IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_ENDED, 0, 0);
@@ -1264,11 +1271,28 @@ static HRESULT WINAPI media_engine_TransferVideoFrame(IMFMediaEngine *iface, IUn
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI media_engine_OnVideoStreamTick(IMFMediaEngine *iface, LONGLONG *time)
+static HRESULT WINAPI media_engine_OnVideoStreamTick(IMFMediaEngine *iface, LONGLONG *pts)
 {
-    FIXME("(%p, %p): stub.\n", iface, time);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, pts);
+
+    EnterCriticalSection(&engine->cs);
+
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (!pts)
+        hr = E_POINTER;
+    else
+    {
+        *pts = engine->video_frame.pts;
+        hr = *pts == MINLONGLONG ? S_FALSE : S_OK;
+    }
+
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static const IMFMediaEngineVtbl media_engine_vtbl =
@@ -1360,6 +1384,7 @@ static HRESULT WINAPI media_engine_grabber_callback_OnClockStop(IMFSampleGrabber
 
     EnterCriticalSection(&engine->cs);
     media_engine_set_flag(engine, FLAGS_ENGINE_FIRST_FRAME, FALSE);
+    engine->video_frame.pts = MINLONGLONG;
     LeaveCriticalSection(&engine->cs);
 
     return S_OK;
@@ -1402,6 +1427,7 @@ static HRESULT WINAPI media_engine_grabber_callback_OnProcessSample(IMFSampleGra
         IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_FIRSTFRAMEREADY, 0, 0);
         engine->flags |= FLAGS_ENGINE_FIRST_FRAME;
     }
+    engine->video_frame.pts = sample_time;
 
     LeaveCriticalSection(&engine->cs);
 
@@ -1469,6 +1495,7 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
     engine->playback_rate = 1.0;
     engine->volume = 1.0;
     engine->duration = NAN;
+    engine->video_frame.pts = MINLONGLONG;
     InitializeCriticalSection(&engine->cs);
 
     hr = IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_CALLBACK, &IID_IMFMediaEngineNotify,

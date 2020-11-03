@@ -394,6 +394,7 @@ static void test_Play(void)
     struct media_engine_notify notify_impl = {{&media_engine_notify_vtbl}, 1};
     IMFMediaEngineNotify *callback = &notify_impl.IMFMediaEngineNotify_iface;
     IMFMediaEngine *media_engine;
+    LONGLONG pts;
     HRESULT hr;
     BOOL ret;
 
@@ -401,6 +402,14 @@ static void test_Play(void)
 
     ret = IMFMediaEngine_IsPaused(media_engine);
     ok(ret, "Unexpected state %d.\n", ret);
+
+    hr = IMFMediaEngine_OnVideoStreamTick(media_engine, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    pts = 0;
+    hr = IMFMediaEngine_OnVideoStreamTick(media_engine, &pts);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+    ok(pts == MINLONGLONG, "Unexpected timestamp.\n");
 
     hr = IMFMediaEngine_Play(media_engine);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -413,6 +422,12 @@ static void test_Play(void)
 
     hr = IMFMediaEngine_Shutdown(media_engine);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaEngine_OnVideoStreamTick(media_engine, NULL);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaEngine_OnVideoStreamTick(media_engine, &pts);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     ret = IMFMediaEngine_IsPaused(media_engine);
     ok(!ret, "Unexpected state %d.\n", ret);
