@@ -4341,8 +4341,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_LINELENGTH:
   {
-    ME_DisplayItem *item, *item_end;
-    int nChars = 0, nThisLineOfs = 0, nNextLineOfs = 0;
+    ME_Row *row;
+    int start_ofs, end_ofs;
     ME_Cursor cursor;
 
     if (wParam > ME_GetTextLength(editor))
@@ -4353,20 +4353,13 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       return 0;
     }
     cursor_from_char_ofs( editor, wParam, &cursor );
-    item = ME_RowStart( cursor.pRun );
-    nThisLineOfs = run_char_ofs( &ME_FindItemFwd( item, diRun )->member.run, 0 );
-    item_end = ME_FindItemFwd(item, diStartRowOrParagraphOrEnd);
-    if (item_end->type == diStartRow)
-      nNextLineOfs = run_char_ofs( &ME_FindItemFwd( item_end, diRun )->member.run, 0 );
-    else
-    {
-      ME_DisplayItem *endRun = ME_FindItemBack(item_end, diRun);
-      assert(endRun && endRun->member.run.nFlags & MERF_ENDPARA);
-      nNextLineOfs = run_char_ofs( &endRun->member.run, 0 );
-    }
-    nChars = nNextLineOfs - nThisLineOfs;
-    TRACE("EM_LINELENGTH(%ld)==%d\n", wParam, nChars);
-    return nChars;
+    row = row_from_cursor( &cursor );
+    row_first_cursor( row, &cursor );
+    start_ofs = ME_GetCursorOfs( &cursor );
+    row_end_cursor( row, &cursor, FALSE );
+    end_ofs = ME_GetCursorOfs( &cursor );
+    TRACE( "EM_LINELENGTH(%ld)==%d\n", wParam, end_ofs - start_ofs );
+    return end_ofs - start_ofs;
   }
   case EM_EXLIMITTEXT:
   {
