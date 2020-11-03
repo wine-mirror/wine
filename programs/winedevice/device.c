@@ -32,12 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedevice);
 
-static const WCHAR servicesW[] = {'\\','R','e','g','i','s','t','r','y',
-                                  '\\','M','a','c','h','i','n','e',
-                                  '\\','S','y','s','t','e','m',
-                                  '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
-                                  '\\','S','e','r','v','i','c','e','s',
-                                  '\\',0};
+static const WCHAR servicesW[] = L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\";
 
 extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
 
