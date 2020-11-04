@@ -430,7 +430,6 @@ struct font_backend_funcs
     void  (CDECL *load_fonts)(void);
     INT   (CDECL *add_font)( const WCHAR *file, DWORD flags );
     INT   (CDECL *add_mem_font)( void *ptr, SIZE_T size, DWORD flags );
-    BOOL  (CDECL *remove_font)( const WCHAR *file, DWORD flags );
 
     BOOL  (CDECL *load_font)( struct gdi_font *gdi_font );
     DWORD (CDECL *get_font_data)( struct gdi_font *gdi_font, DWORD table, DWORD offset,
@@ -452,9 +451,7 @@ struct font_backend_funcs
 extern const WCHAR *get_gdi_font_subst( const WCHAR *from_name, int from_charset, int *to_charset ) DECLSPEC_HIDDEN;
 
 extern struct list font_list DECLSPEC_HIDDEN;
-extern void release_family( struct gdi_font_family *family ) DECLSPEC_HIDDEN;
 extern struct gdi_font_family *find_family_from_any_name( const WCHAR *name ) DECLSPEC_HIDDEN;
-extern void release_face( struct gdi_font_face *face ) DECLSPEC_HIDDEN;
 extern int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
                          const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
                          void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,

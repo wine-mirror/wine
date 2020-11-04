@@ -574,7 +574,7 @@ static struct gdi_font_family *create_family( const WCHAR *name, const WCHAR *se
     return family;
 }
 
-void release_family( struct gdi_font_family *family )
+static void release_family( struct gdi_font_family *family )
 {
     if (--family->refcount) return;
     assert( list_empty( &family->faces ));
@@ -754,7 +754,7 @@ static void reorder_font_list(void)
     default_sans = set_default_family( default_sans_list );
 }
 
-void release_face( struct gdi_font_face *face )
+static void release_face( struct gdi_font_face *face )
 {
     if (--face->refcount) return;
     if (face->family)
@@ -768,6 +768,33 @@ void release_face( struct gdi_font_face *face )
     HeapFree( GetProcessHeap(), 0, face->full_name );
     HeapFree( GetProcessHeap(), 0, face->cached_enum_data );
     HeapFree( GetProcessHeap(), 0, face );
+}
+
+static int remove_font( const WCHAR *file, DWORD flags )
+{
+    struct gdi_font_family *family, *family_next;
+    struct gdi_font_face *face, *face_next;
+    int count = 0;
+
+    EnterCriticalSection( &font_cs );
+    LIST_FOR_EACH_ENTRY_SAFE( family, family_next, &font_list, struct gdi_font_family, entry )
+    {
+        family->refcount++;
+        LIST_FOR_EACH_ENTRY_SAFE( face, face_next, &family->faces, struct gdi_font_face, entry )
+        {
+            if (!face->file) continue;
+            if (LOWORD(face->flags) != LOWORD(flags)) continue;
+            if (!strcmpiW( face->file, file ))
+            {
+                TRACE( "removing matching face %s refcount %d\n", debugstr_w(face->file), face->refcount );
+                release_face( face );
+                count++;
+            }
+	}
+        release_family( family );
+    }
+    LeaveCriticalSection( &font_cs );
+    return count;
 }
 
 static inline BOOL faces_equal( const struct gdi_font_face *f1, const struct gdi_font_face *f2 )
@@ -7351,15 +7378,10 @@ static BOOL remove_system_font_resource( LPCWSTR file, DWORD flags )
     int ret;
 
     get_fonts_win_dir_path( file, path );
-    EnterCriticalSection( &font_cs );
-    ret = font_funcs->remove_font( path, flags );
-    LeaveCriticalSection( &font_cs );
-    if (!ret)
+    if (!(ret = remove_font( path, flags )))
     {
         get_fonts_data_dir_path( file, path );
-        EnterCriticalSection( &font_cs );
-        ret = font_funcs->remove_font( path, flags );
-        LeaveCriticalSection( &font_cs );
+        ret = remove_font( path, flags );
     }
     return ret;
 }
@@ -7395,9 +7417,7 @@ static BOOL remove_font_resource( LPCWSTR file, DWORD flags )
         DWORD addfont_flags = ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_RESOURCE;
 
         if (!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
-        EnterCriticalSection( &font_cs );
-        ret = font_funcs->remove_font( path, addfont_flags );
-        LeaveCriticalSection( &font_cs );
+        ret = remove_font( path, addfont_flags );
     }
 
     if (!ret && !strchrW( file, '\\' ))

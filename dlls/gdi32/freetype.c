@@ -1178,34 +1178,6 @@ static INT CDECL freetype_add_mem_font( void *ptr, SIZE_T size, DWORD flags )
     return AddFontToList( NULL, NULL, ptr, size, flags );
 }
 
-/*************************************************************
- * freetype_remove_font
- */
-static INT CDECL freetype_remove_font( const WCHAR *file, DWORD flags )
-{
-    Family *family, *family_next;
-    Face *face, *face_next;
-    int count = 0;
-
-    LIST_FOR_EACH_ENTRY_SAFE( family, family_next, &font_list, Family, entry )
-    {
-        family->refcount++;
-        LIST_FOR_EACH_ENTRY_SAFE( face, face_next, &family->faces, Face, entry )
-        {
-            if (!face->file) continue;
-            if (LOWORD(face->flags) != LOWORD(flags)) continue;
-            if (!strcmpiW( face->file, file ))
-            {
-                TRACE( "removing matching face %s refcount %d\n", debugstr_w(face->file), face->refcount );
-                release_face( face );
-                count++;
-            }
-	}
-        release_family( family );
-    }
-    return count;
-}
-
 #ifdef __ANDROID__
 static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
 {
@@ -4431,7 +4403,6 @@ static const struct font_backend_funcs font_funcs =
     freetype_load_fonts,
     freetype_add_font,
     freetype_add_mem_font,
-    freetype_remove_font,
     freetype_load_font,
     freetype_get_font_data,
     freetype_get_aa_flags,
