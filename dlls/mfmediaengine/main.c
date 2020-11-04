@@ -74,6 +74,8 @@ enum media_engine_flags
 struct video_frame
 {
     LONGLONG pts;
+    UINT64 size;
+    TOPOID node_id;
 };
 
 struct media_engine
@@ -250,6 +252,42 @@ static struct media_engine *impl_from_IMFSampleGrabberSinkCallback(IMFSampleGrab
     return CONTAINING_RECORD(iface, struct media_engine, grabber_callback);
 }
 
+static void media_engine_get_frame_size(struct media_engine *engine, IMFTopology *topology)
+{
+    IMFMediaTypeHandler *handler;
+    IMFMediaType *media_type;
+    IMFStreamDescriptor *sd;
+    IMFTopologyNode *node;
+    HRESULT hr;
+
+    engine->video_frame.size = 0;
+
+    if (FAILED(IMFTopology_GetNodeByID(topology, engine->video_frame.node_id, &node)))
+        return;
+
+    hr = IMFTopologyNode_GetUnknown(node, &MF_TOPONODE_STREAM_DESCRIPTOR,
+            &IID_IMFStreamDescriptor, (void **)&sd);
+    IMFTopologyNode_Release(node);
+    if (FAILED(hr))
+        return;
+
+    hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &handler);
+    IMFStreamDescriptor_Release(sd);
+    if (FAILED(hr))
+        return;
+
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &media_type);
+    IMFMediaTypeHandler_Release(handler);
+    if (FAILED(hr))
+    {
+        WARN("Failed to get current media type %#x.\n", hr);
+        return;
+    }
+
+    IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &engine->video_frame.size);
+    IMFMediaType_Release(media_type);
+}
+
 static HRESULT WINAPI media_engine_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
@@ -312,9 +350,43 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
         case MESessionTopologyStatus:
         {
             UINT32 topo_status = 0;
+            IMFTopology *topology;
+            PROPVARIANT value;
+
             IMFMediaEvent_GetUINT32(event, &MF_EVENT_TOPOLOGY_STATUS, &topo_status);
-            if (topo_status == MF_TOPOSTATUS_READY)
-                IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_CANPLAY, 0, 0);
+            if (topo_status != MF_TOPOSTATUS_READY)
+                break;
+
+            value.vt = VT_EMPTY;
+            if (FAILED(IMFMediaEvent_GetValue(event, &value)))
+                break;
+
+            if (value.vt != VT_UNKNOWN)
+            {
+                PropVariantClear(&value);
+                break;
+            }
+
+            topology = (IMFTopology *)value.punkVal;
+
+            EnterCriticalSection(&engine->cs);
+
+            engine->ready_state = MF_MEDIA_ENGINE_READY_HAVE_METADATA;
+
+            media_engine_get_frame_size(engine, topology);
+
+            IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_DURATIONCHANGE, 0, 0);
+            IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_LOADEDMETADATA, 0, 0);
+
+            engine->ready_state = MF_MEDIA_ENGINE_READY_HAVE_ENOUGH_DATA;
+
+            IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_LOADEDDATA, 0, 0);
+            IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_CANPLAY, 0, 0);
+
+            LeaveCriticalSection(&engine->cs);
+
+            PropVariantClear(&value);
+
             break;
         }
         case MESessionStarted:
@@ -461,6 +533,9 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
     UINT64 duration;
     HRESULT hr;
 
+    engine->video_frame.node_id = 0;
+    engine->video_frame.size = 0;
+
     if (FAILED(hr = IMFMediaSource_CreatePresentationDescriptor(source, &pd)))
         return hr;
 
@@ -525,15 +600,6 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
     else
         engine->duration = INFINITY;
 
-    engine->ready_state = MF_MEDIA_ENGINE_READY_HAVE_METADATA;
-
-    IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_DURATIONCHANGE, 0, 0);
-    IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_LOADEDMETADATA, 0, 0);
-
-    engine->ready_state = MF_MEDIA_ENGINE_READY_HAVE_ENOUGH_DATA;
-
-    IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_LOADEDDATA, 0, 0);
-
     if (SUCCEEDED(hr = MFCreateTopology(&topology)))
     {
         IMFTopologyNode *sar_node = NULL, *audio_src = NULL;
@@ -574,6 +640,9 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
                 IMFTopology_AddNode(topology, grabber_node);
                 IMFTopologyNode_ConnectOutput(video_src, 0, grabber_node, 0);
             }
+
+            if (SUCCEEDED(hr))
+                IMFTopologyNode_GetTopoNodeID(video_src, &engine->video_frame.node_id);
 
             if (grabber_node)
                 IMFTopologyNode_Release(grabber_node);
@@ -1230,9 +1299,27 @@ static BOOL WINAPI media_engine_HasAudio(IMFMediaEngine *iface)
 
 static HRESULT WINAPI media_engine_GetNativeVideoSize(IMFMediaEngine *iface, DWORD *cx, DWORD *cy)
 {
-    FIXME("(%p, %p, %p): stub.\n", iface, cx, cy);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, cx, cy);
+
+    if (!cx && !cy)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&engine->cs);
+
+    if (!engine->video_frame.size)
+        hr = E_FAIL;
+    else
+    {
+        if (cx) *cx = engine->video_frame.size >> 32;
+        if (cy) *cy = engine->video_frame.size;
+    }
+
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_GetVideoAspectRatio(IMFMediaEngine *iface, DWORD *cx, DWORD *cy)
