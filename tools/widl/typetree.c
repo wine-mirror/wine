@@ -82,7 +82,7 @@ const char *type_get_name(const type_t *type, enum name_type name_type)
     case NAME_DEFAULT:
         return type->name;
     case NAME_C:
-        return type->c_name;
+        return type->c_name ? type->c_name : type->name;
     }
 
     assert(0);

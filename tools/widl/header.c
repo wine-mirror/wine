@@ -192,7 +192,7 @@ const char *get_name(const var_t *v)
     return v->name;
 }
 
-static void write_fields(FILE *h, var_list_t *fields)
+static void write_fields(FILE *h, var_list_t *fields, enum name_type name_type)
 {
     unsigned nameless_struct_cnt = 0, nameless_struct_i = 0, nameless_union_cnt = 0, nameless_union_i = 0;
     const char *name;
@@ -250,7 +250,7 @@ static void write_fields(FILE *h, var_list_t *fields)
         default:
             ;
         }
-        write_type_v(h, &v->declspec, TRUE, v->declonly, name, NAME_DEFAULT);
+        write_type_v(h, &v->declspec, TRUE, v->declonly, name, name_type);
         fprintf(h, ";\n");
     }
 }
@@ -322,7 +322,7 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
   if ((ds->qualifier & TYPE_QUALIFIER_CONST) && (type_is_alias(t) || !is_ptr(t)))
     fprintf(h, "const ");
 
-  if (type_is_alias(t)) fprintf(h, "%s", t->name);
+  if (!winrt_mode && type_is_alias(t)) fprintf(h, "%s", t->name);
   else {
     switch (type_get_type_detect_alias(t)) {
       case TYPE_ENUM:
@@ -347,9 +347,9 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
           t->written = TRUE;
           indentation++;
           if (type_get_type(t) != TYPE_STRUCT)
-            write_fields(h, type_encapsulated_union_get_fields(t));
+            write_fields(h, type_encapsulated_union_get_fields(t), name_type);
           else
-            write_fields(h, type_struct_get_fields(t));
+            write_fields(h, type_struct_get_fields(t), name_type);
           indent(h, -1);
           fprintf(h, "}");
         }
@@ -362,7 +362,7 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
           else fprintf(h, "union {\n");
           t->written = TRUE;
           indentation++;
-          write_fields(h, type_union_get_cases(t));
+          write_fields(h, type_union_get_cases(t), name_type);
           indent(h, -1);
           fprintf(h, "}");
         }
@@ -464,9 +464,13 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
         break;
       }
       case TYPE_ALIAS:
-        /* handled elsewhere */
-        assert(0);
+      {
+        const decl_spec_t *ds = type_alias_get_aliasee(t);
+        int in_namespace = ds && ds->type && ds->type->namespace && !is_global_namespace(ds->type->namespace);
+        if (!in_namespace) fprintf(h, "%s", t->name);
+        else write_type_left(h, ds, name_type, declonly, write_callconv);
         break;
+      }
     }
   }
 }
@@ -801,6 +805,8 @@ static void write_generic_handle_routines(FILE *header)
 
 static void write_typedef(FILE *header, type_t *type, int declonly)
 {
+  type_t *t = type_alias_get_aliasee_type(type);
+  if (winrt_mode && t->namespace && !is_global_namespace(t->namespace)) return;
   fprintf(header, "typedef ");
   write_type_v(header, type_alias_get_aliasee(type), FALSE, declonly, type->name, NAME_DEFAULT);
   fprintf(header, ";\n");
