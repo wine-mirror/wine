@@ -399,9 +399,8 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, struct undo_item *undo)
     new_para->border = undo->u.split_para.border;
     if (paraFlags)
     {
-      ME_DisplayItem *pCell = new_para->pCell;
-      pCell->member.cell.nRightBoundary = undo->u.split_para.cell_right_boundary;
-      pCell->member.cell.border = undo->u.split_para.cell_border;
+      para_cell( new_para )->nRightBoundary = undo->u.split_para.cell_right_boundary;
+      para_cell( new_para )->border = undo->u.split_para.cell_border;
     }
     break;
   }
