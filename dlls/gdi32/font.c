@@ -554,7 +554,7 @@ static void load_gdi_font_subst(void)
 
 /* font families */
 
-struct list font_list = LIST_INIT(font_list);
+static struct list font_list = LIST_INIT(font_list);
 
 static struct gdi_font_family *create_family( const WCHAR *name, const WCHAR *second_name )
 {
@@ -592,7 +592,7 @@ static struct gdi_font_family *find_family_from_name( const WCHAR *name )
     return NULL;
 }
 
-struct gdi_font_family *find_family_from_any_name( const WCHAR *name )
+static struct gdi_font_family *find_family_from_any_name( const WCHAR *name )
 {
     struct gdi_font_family *family;
 
@@ -1160,8 +1160,8 @@ struct gdi_font_link *find_gdi_font_link( const WCHAR *name )
     return NULL;
 }
 
-struct gdi_font_family *find_family_from_font_links( const WCHAR *name, const WCHAR *subst,
-                                                     FONTSIGNATURE fs )
+static struct gdi_font_family *find_family_from_font_links( const WCHAR *name, const WCHAR *subst,
+                                                            FONTSIGNATURE fs )
 {
     struct gdi_font_link *link;
     struct gdi_font_link_entry *entry;
@@ -1389,6 +1389,114 @@ static void load_system_links(void)
         LIST_FOR_EACH_ENTRY( entry, &font_link->links, struct gdi_font_link_entry, entry )
             add_gdi_font_link_entry( system_font_link, entry->family_name, entry->fs );
     }
+}
+
+/* font matching */
+
+static BOOL can_select_face( const struct gdi_font_face *face, FONTSIGNATURE fs, BOOL can_use_bitmap )
+{
+    struct gdi_font_link *font_link;
+
+    if (!face->scalable && !can_use_bitmap) return FALSE;
+    if (!fs.fsCsb[0]) return TRUE;
+    if (fs.fsCsb[0] & face->fs.fsCsb[0]) return TRUE;
+    if (!(font_link = find_gdi_font_link( face->family->family_name ))) return FALSE;
+    if (fs.fsCsb[0] & font_link->fs.fsCsb[0]) return TRUE;
+    return FALSE;
+}
+
+static struct gdi_font_face *find_best_matching_face( const struct gdi_font_family *family,
+                                                      const LOGFONTW *lf, FONTSIGNATURE fs,
+                                                      BOOL can_use_bitmap )
+{
+    struct gdi_font_face *face = NULL, *best = NULL, *best_bitmap = NULL;
+    unsigned int best_score = 4;
+    int best_diff = 0;
+    int it = !!lf->lfItalic;
+    int bd = lf->lfWeight > 550;
+    int height = lf->lfHeight;
+
+    LIST_FOR_EACH_ENTRY( face, get_family_face_list(family), struct gdi_font_face, entry )
+    {
+        int italic = !!(face->ntmFlags & NTM_ITALIC);
+        int bold = !!(face->ntmFlags & NTM_BOLD);
+        int score = (italic ^ it) + (bold ^ bd);
+
+        if (!can_select_face( face, fs, can_use_bitmap )) continue;
+        if (score > best_score) continue;
+        TRACE( "(it=%d, bd=%d) is selected for (it=%d, bd=%d)\n", italic, bold, it, bd );
+        best_score = score;
+        best = face;
+        if (best->scalable && best_score == 0) break;
+        if (!best->scalable)
+        {
+            int diff;
+            if (height > 0)
+                diff = height - (signed int)best->size.height;
+            else
+                diff = -height - ((signed int)best->size.height - best->size.internal_leading);
+            if (!best_bitmap ||
+                (best_diff > 0 && diff >= 0 && diff < best_diff) ||
+                (best_diff < 0 && diff > best_diff))
+            {
+                TRACE( "%d is better for %d diff was %d\n", best->size.height, height, best_diff );
+                best_diff = diff;
+                best_bitmap = best;
+                if (best_score == 0 && best_diff == 0) break;
+            }
+        }
+    }
+    if (!best) return NULL;
+    return best->scalable ? best : best_bitmap;
+}
+
+struct gdi_font_face *find_matching_face_by_name( const WCHAR *name, const WCHAR *subst, const LOGFONTW *lf,
+                                                  FONTSIGNATURE fs, BOOL can_use_bitmap )
+{
+    struct gdi_font_family *family;
+    struct gdi_font_face *face;
+
+    family = find_family_from_any_name( name );
+    if (family && (face = find_best_matching_face( family, lf, fs, can_use_bitmap ))) return face;
+    if (subst)
+    {
+        family = find_family_from_any_name( subst );
+        if (family && (face = find_best_matching_face( family, lf, fs, can_use_bitmap ))) return face;
+    }
+
+    /* search by full face name */
+    LIST_FOR_EACH_ENTRY( family, &font_list, struct gdi_font_family, entry )
+        LIST_FOR_EACH_ENTRY( face, get_family_face_list(family), struct gdi_font_face, entry )
+            if (!strncmpiW( face->full_name, name, LF_FACESIZE - 1 ) &&
+                can_select_face( face, fs, can_use_bitmap ))
+                return face;
+
+    if ((family = find_family_from_font_links( name, subst, fs )))
+    {
+        if ((face = find_best_matching_face( family, lf, fs, can_use_bitmap ))) return face;
+    }
+    return NULL;
+}
+
+struct gdi_font_face *find_any_face( const LOGFONTW *lf, FONTSIGNATURE fs,
+                                     BOOL can_use_bitmap, BOOL want_vertical )
+{
+    struct gdi_font_family *family;
+    struct gdi_font_face *face;
+
+    /* first try only scalable */
+    LIST_FOR_EACH_ENTRY( family, &font_list, struct gdi_font_family, entry )
+    {
+        if ((family->family_name[0] == '@') == !want_vertical) continue;
+        if ((face = find_best_matching_face( family, lf, fs, FALSE ))) return face;
+    }
+    if (!can_use_bitmap) return NULL;
+    LIST_FOR_EACH_ENTRY( family, &font_list, struct gdi_font_family, entry )
+    {
+        if ((family->family_name[0] == '@') == !want_vertical) continue;
+        if ((face = find_best_matching_face( family, lf, fs, can_use_bitmap ))) return face;
+    }
+    return NULL;
 }
 
 /* realized font objects */
@@ -1927,31 +2035,13 @@ static UINT get_GSUB_vert_glyph( struct gdi_font *font, UINT glyph )
 
 static void add_child_font( struct gdi_font *font, const WCHAR *family_name )
 {
+    FONTSIGNATURE fs = {{0}};
     struct gdi_font *child;
-    struct gdi_font_family *family;
-    struct gdi_font_face *child_face, *best_face = NULL;
-    UINT penalty = 0, new_penalty = 0;
-    BOOL bold, italic, bd, it;
+    struct gdi_font_face *face;
 
-    italic = !!font->lf.lfItalic;
-    bold = font->lf.lfWeight > FW_MEDIUM;
+    if (!(face = find_matching_face_by_name( family_name, NULL, &font->lf, fs, FALSE ))) return;
 
-    if (!(family = find_family_from_name( family_name ))) return;
-
-    LIST_FOR_EACH_ENTRY( child_face, get_family_face_list(family), struct gdi_font_face, entry )
-    {
-        it = !!(child_face->ntmFlags & NTM_ITALIC);
-        bd = !!(child_face->ntmFlags & NTM_BOLD);
-        new_penalty = ( it ^ italic ) + ( bd ^ bold );
-        if (!best_face || new_penalty < penalty)
-        {
-            penalty = new_penalty;
-            best_face = child_face;
-        }
-    }
-    if (!best_face) return;
-
-    if (!(child = create_gdi_font( best_face, family_name, &font->lf ))) return;
+    if (!(child = create_gdi_font( face, family_name, &font->lf ))) return;
     child->matrix = font->matrix;
     child->can_use_bitmap = font->can_use_bitmap;
     child->scale_y = font->scale_y;

@@ -557,12 +557,6 @@ static BOOL is_subpixel_rendering_enabled( void )
 }
 
 
-static const struct list *get_face_list_from_family(const Family *family)
-{
-    if (family->replacement) return &family->replacement->faces;
-    return &family->faces;
-}
-
 static LPWSTR strdupW(LPCWSTR p)
 {
     LPWSTR ret;
@@ -2077,7 +2071,7 @@ done:
 }
 
 #ifdef SONAME_LIBFONTCONFIG
-static Family* get_fontconfig_family(DWORD pitch_and_family, const CHARSETINFO *csi, BOOL want_vertical)
+static struct gdi_font_face *get_fontconfig_face( const LOGFONTW *lf, FONTSIGNATURE fs, BOOL want_vertical )
 {
     const char *name;
     WCHAR nameW[LF_FACESIZE];
@@ -2086,14 +2080,14 @@ static Family* get_fontconfig_family(DWORD pitch_and_family, const CHARSETINFO *
     FcResult result;
     FcBool r;
     int ret, i;
-    Family *family = NULL;
+    struct gdi_font_face *face = NULL;
 
-    if (!csi->fs.fsCsb[0]) return NULL;
+    if (!fs.fsCsb[0]) return NULL;
 
-    if((pitch_and_family & FIXED_PITCH) ||
-       (pitch_and_family & 0xF0) == FF_MODERN)
+    if((lf->lfPitchAndFamily & FIXED_PITCH) ||
+       (lf->lfPitchAndFamily & 0xF0) == FF_MODERN)
         name = "monospace";
-    else if((pitch_and_family & 0xF0) == FF_ROMAN)
+    else if((lf->lfPitchAndFamily & 0xF0) == FF_ROMAN)
         name = "serif";
     else
         name = "sans-serif";
@@ -2113,14 +2107,8 @@ static Family* get_fontconfig_family(DWORD pitch_and_family, const CHARSETINFO *
     best = pFcFontMatch(NULL, pat, &result);
     if (!best || result != FcResultMatch) goto end;
 
-    for (i = 0;
-         !family && pFcPatternGetString(best, FC_FAMILY, i, &str) == FcResultMatch;
-         i++)
+    for (i = 0; pFcPatternGetString(best, FC_FAMILY, i, &str) == FcResultMatch; i++)
     {
-        Face *face;
-        const struct gdi_font_link *font_link;
-        const struct list *face_list;
-
         if (!want_vertical)
         {
             ret = MultiByteToWideChar(CP_UTF8, 0, (const char*)str, -1,
@@ -2133,31 +2121,14 @@ static Family* get_fontconfig_family(DWORD pitch_and_family, const CHARSETINFO *
                                       nameW + 1, ARRAY_SIZE(nameW) - 1);
         }
         if (!ret) continue;
-        family = find_family_from_any_name(nameW);
-        if (!family) continue;
-
-        font_link = find_gdi_font_link( family->family_name );
-        face_list = get_face_list_from_family(family);
-        LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
-            if (!face->scalable)
-                continue;
-            if (csi->fs.fsCsb[0] & face->fs.fsCsb[0])
-                goto found;
-            if (font_link != NULL &&
-                csi->fs.fsCsb[0] & font_link->fs.fsCsb[0])
-                goto found;
-        }
-        family = NULL;
+        if ((face = find_matching_face_by_name( nameW, NULL, lf, fs, FALSE ))) break;
     }
-
-found:
-    if (family)
-        TRACE("got %s\n", wine_dbgstr_w(nameW));
+    if (face) TRACE("got %s\n", wine_dbgstr_w(nameW));
 
 end:
     pFcPatternDestroy(pat);
     pFcPatternDestroy(best);
-    return family;
+    return face;
 }
 #endif
 
@@ -2261,18 +2232,14 @@ static BOOL CDECL freetype_load_font( struct gdi_font *font )
 static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont )
 {
     struct gdi_font *font;
-    Face *face, *best, *best_bitmap;
-    Family *family, *last_resort_family;
-    const struct list *face_list;
+    Face *face;
+    Family *family;
     INT height;
-    unsigned int score = 0, new_score;
-    signed int diff = 0, newdiff;
-    BOOL bd, it, can_use_bitmap, want_vertical;
+    BOOL can_use_bitmap, want_vertical;
     LOGFONTW lf;
     CHARSETINFO csi;
     FMAT2 dcmat;
     const WCHAR *orig_name = NULL;
-    const struct gdi_font_link *font_link;
 
     GetObjectW( hfont, sizeof(lf), &lf );
     lf.lfWidth = abs(lf.lfWidth);
@@ -2328,9 +2295,6 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont )
     if(!strcmpiW(lf.lfFaceName, SymbolW))
         lf.lfCharSet = SYMBOL_CHARSET;
 
-    it = !!lf.lfItalic;
-    bd = lf.lfWeight > 550;
-
     if(!TranslateCharsetInfo((DWORD*)(INT_PTR)lf.lfCharSet, &csi, TCI_SRCCHARSET)) {
         switch(lf.lfCharSet) {
 	case DEFAULT_CHARSET:
@@ -2356,53 +2320,8 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont )
             orig_name = FaceName;
 	}
 
-	/* We want a match on name and charset or just name if
-	   charset was DEFAULT_CHARSET.  If the latter then
-	   we fixup the returned charset later in get_nearest_charset
-	   where we'll either use the charset of the current ansi codepage
-	   or if that's unavailable the first charset that the font supports.
-	*/
-        LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
-            if (!strncmpiW( family->family_name, FaceName, LF_FACESIZE - 1 ) ||
-                (subst && !strncmpiW( family->family_name, subst, LF_FACESIZE - 1 )))
-            {
-                font_link = find_gdi_font_link( family->family_name );
-                face_list = get_face_list_from_family(family);
-                LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
-                    if (!(face->scalable || can_use_bitmap))
-                        continue;
-                    if (csi.fs.fsCsb[0] & face->fs.fsCsb[0])
-                        goto found;
-                    if (font_link != NULL &&
-                        csi.fs.fsCsb[0] & font_link->fs.fsCsb[0])
-                        goto found;
-                    if (!csi.fs.fsCsb[0])
-                        goto found;
-                }
-            }
-	}
-
-        /* Search by full face name. */
-        LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
-            face_list = get_face_list_from_family(family);
-            LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
-                if (!strncmpiW( face->full_name, FaceName, LF_FACESIZE - 1 ) && (face->scalable || can_use_bitmap))
-                {
-                    if (csi.fs.fsCsb[0] & face->fs.fsCsb[0] || !csi.fs.fsCsb[0])
-                        goto found_face;
-                    font_link = find_gdi_font_link( family->family_name );
-                    if (font_link != NULL &&
-                        csi.fs.fsCsb[0] & font_link->fs.fsCsb[0])
-                        goto found_face;
-                }
-            }
-        }
-
-        /*
-	 * Try check the SystemLink list first for a replacement font.
-	 * We may find good replacements there.
-         */
-        if ((family = find_family_from_font_links( FaceName, subst, csi.fs ))) goto found;
+        if ((face = find_matching_face_by_name( FaceName, subst, &lf, csi.fs, can_use_bitmap )))
+            goto found_face;
     }
 
     orig_name = NULL; /* substitution is no longer relevant */
@@ -2433,119 +2352,25 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont )
         strcpyW(lf.lfFaceName, default_sans);
     else
         strcpyW(lf.lfFaceName, default_sans);
-    LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
-        if (!strncmpiW( family->family_name, lf.lfFaceName, LF_FACESIZE - 1 ))
-        {
-            font_link = find_gdi_font_link( family->family_name );
-            face_list = get_face_list_from_family(family);
-            LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
-                if (!(face->scalable || can_use_bitmap))
-                    continue;
-                if (csi.fs.fsCsb[0] & face->fs.fsCsb[0])
-                    goto found;
-                if (font_link != NULL && csi.fs.fsCsb[0] & font_link->fs.fsCsb[0])
-                    goto found;
-            }
-        }
-    }
+
+    if ((face = find_matching_face_by_name( lf.lfFaceName, NULL, &lf, csi.fs, can_use_bitmap )))
+        goto found_face;
 
 #ifdef SONAME_LIBFONTCONFIG
     /* Try FontConfig substitutions if the face isn't found */
-    family = get_fontconfig_family(lf.lfPitchAndFamily, &csi, want_vertical);
-    if (family) goto found;
+    if ((face = get_fontconfig_face( &lf, csi.fs, want_vertical ))) goto found_face;
 #endif
 
-    last_resort_family = NULL;
-    LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
-        font_link = find_gdi_font_link( family->family_name );
-        face_list = get_face_list_from_family(family);
-        LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
-            if(!(face->flags & ADDFONT_VERTICAL_FONT) == !want_vertical &&
-               (csi.fs.fsCsb[0] & face->fs.fsCsb[0] ||
-                (font_link != NULL && csi.fs.fsCsb[0] & font_link->fs.fsCsb[0]))) {
-                if(face->scalable)
-                    goto found;
-                if(can_use_bitmap && !last_resort_family)
-                    last_resort_family = family;
-            }            
-        }
-    }
-
-    if(last_resort_family) {
-        family = last_resort_family;
-        csi.fs.fsCsb[0] = 0;
-        goto found;
-    }
-
-    LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
-        face_list = get_face_list_from_family(family);
-        LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
-            if(face->scalable && !(face->flags & ADDFONT_VERTICAL_FONT) == !want_vertical) {
-                csi.fs.fsCsb[0] = 0;
-                WARN("just using first face for now\n");
-                goto found;
-            }
-            if(can_use_bitmap && !last_resort_family)
-                last_resort_family = family;
-        }
-    }
-    if(!last_resort_family) {
-        FIXME("can't find a single appropriate font - bailing\n");
-        return NULL;
-    }
-
-    WARN("could only find a bitmap font - this will probably look awful!\n");
-    family = last_resort_family;
+    if ((face = find_any_face( &lf, csi.fs, can_use_bitmap, want_vertical ))) goto found_face;
     csi.fs.fsCsb[0] = 0;
-
-found:
-
-    height = lf.lfHeight;
-
-    face = best = best_bitmap = NULL;
-    font_link = find_gdi_font_link( family->family_name );
-    face_list = get_face_list_from_family(family);
-    LIST_FOR_EACH_ENTRY(face, face_list, Face, entry)
-    {
-        if (csi.fs.fsCsb[0] & face->fs.fsCsb[0] ||
-            (font_link != NULL && csi.fs.fsCsb[0] & font_link->fs.fsCsb[0]) ||
-            !csi.fs.fsCsb[0])
-        {
-            BOOL italic, bold;
-
-            italic = (face->ntmFlags & NTM_ITALIC) ? 1 : 0;
-            bold = (face->ntmFlags & NTM_BOLD) ? 1 : 0;
-            new_score = (italic ^ it) + (bold ^ bd);
-            if(!best || new_score <= score)
-            {
-                TRACE("(it=%d, bd=%d) is selected for (it=%d, bd=%d)\n",
-                      italic, bold, it, bd);
-                score = new_score;
-                best = face;
-                if(best->scalable  && score == 0) break;
-                if(!best->scalable)
-                {
-                    if(height > 0)
-                        newdiff = height - (signed int)(best->size.height);
-                    else
-                        newdiff = -height - ((signed int)(best->size.height) - best->size.internal_leading);
-                    if(!best_bitmap || new_score < score ||
-                       (diff > 0 && newdiff < diff && newdiff >= 0) || (diff < 0 && newdiff > diff))
-                    {
-                        TRACE("%d is better for %d diff was %d\n", best->size.height, height, diff);
-                        diff = newdiff;
-                        best_bitmap = best;
-                        if(score == 0 && diff == 0) break;
-                    }
-                }
-            }
-        }
-    }
-    if(best)
-        face = best->scalable ? best : best_bitmap;
+    if ((face = find_any_face( &lf, csi.fs, can_use_bitmap, want_vertical ))) goto found_face;
+    if (want_vertical && (face = find_any_face( &lf, csi.fs, can_use_bitmap, FALSE ))) goto found_face;
+    FIXME("can't find a single appropriate font - bailing\n");
+    return NULL;
 
 found_face:
     height = lf.lfHeight;
+    family = face->family;
 
     TRACE("not in cache\n");
     font = create_gdi_font( face, orig_name, &lf );
@@ -2566,8 +2391,13 @@ found_face:
 
     if(!face->scalable) {
         /* Windows uses integer scaling factors for bitmap fonts */
-        INT scale, scaled_height;
+        INT scale, scaled_height, diff;
         struct gdi_font *cachedfont;
+
+        if (height > 0)
+            diff = height - (signed int)face->size.height;
+        else
+            diff = -height - ((signed int)face->size.height - face->size.internal_leading);
 
         /* FIXME: rotation of bitmap fonts is ignored */
         height = abs(GDI_ROUND( (double)height * font->matrix.eM22 ));

@@ -450,8 +450,6 @@ struct font_backend_funcs
 
 extern const WCHAR *get_gdi_font_subst( const WCHAR *from_name, int from_charset, int *to_charset ) DECLSPEC_HIDDEN;
 
-extern struct list font_list DECLSPEC_HIDDEN;
-extern struct gdi_font_family *find_family_from_any_name( const WCHAR *name ) DECLSPEC_HIDDEN;
 extern int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
                          const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
                          void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,
@@ -459,9 +457,11 @@ extern int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
                          const struct bitmap_font_size *size ) DECLSPEC_HIDDEN;
 
 extern struct gdi_font_link *find_gdi_font_link( const WCHAR *name ) DECLSPEC_HIDDEN;
-extern struct gdi_font_family *find_family_from_font_links( const WCHAR *name, const WCHAR *subst,
-                                                            FONTSIGNATURE fs ) DECLSPEC_HIDDEN;
 extern void create_child_font_list( struct gdi_font *font ) DECLSPEC_HIDDEN;
+extern struct gdi_font_face *find_matching_face_by_name( const WCHAR *name, const WCHAR *subst, const LOGFONTW *lf,
+                                                         FONTSIGNATURE fs, BOOL can_use_bitmap ) DECLSPEC_HIDDEN;
+extern struct gdi_font_face *find_any_face( const LOGFONTW *lf, FONTSIGNATURE fs,
+                                            BOOL can_use_bitmap, BOOL want_vertical ) DECLSPEC_HIDDEN;
 
 extern void free_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern void cache_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
