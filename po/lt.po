@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-10-30 23:36+0200\n"
+"PO-Revision-Date: 2020-11-04 09:28+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -6932,10 +6932,8 @@ msgid "Not implemented.\n"
 msgstr "Nerealizuota.\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "RPC call failed.\n"
 msgid "Call failed.\n"
-msgstr "RPC kreipinys nepavyko.\n"
+msgstr "Kreipinys nepavyko.\n"
 
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
