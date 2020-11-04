@@ -4126,7 +4126,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ME_SetDefaultCharFormat(editor, &fmt);
 
     ME_CommitUndo(editor);
-    ME_MarkAllForWrapping(editor);
+    editor_mark_rewrap_all( editor );
     ME_WrapMarkedParagraphs(editor);
     ME_UpdateScrollBar(editor);
     if (bRepaint)
@@ -4771,7 +4771,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       ME_SetDefaultFormatRect(editor);
       editor->bDefaultFormatRect = TRUE;
     }
-    ME_MarkAllForWrapping(editor);
+    editor_mark_rewrap_all( editor );
     ME_WrapMarkedParagraphs(editor);
     ME_UpdateScrollBar(editor);
     if (msg != EM_SETRECTNP)

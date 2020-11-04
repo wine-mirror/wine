@@ -225,18 +225,18 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   ME_DestroyContext(&c);
 }
 
-static void ME_MarkForWrapping(ME_TextEditor *editor, ME_DisplayItem *first, const ME_DisplayItem *last)
+static void para_mark_rewrap_paras( ME_TextEditor *editor, ME_Paragraph *first, const ME_Paragraph *end )
 {
-  while(first != last)
-  {
-    para_mark_rewrap( editor, &first->member.para );
-    first = first->member.para.next_para;
-  }
+    while (first != end)
+    {
+        para_mark_rewrap( editor, first );
+        first = para_next( first );
+    }
 }
 
-void ME_MarkAllForWrapping(ME_TextEditor *editor)
+void editor_mark_rewrap_all( ME_TextEditor *editor )
 {
-  ME_MarkForWrapping(editor, editor->pBuffer->pFirst->member.para.next_para, editor->pBuffer->pLast);
+    para_mark_rewrap_paras( editor, editor_first_para( editor ), editor_end_para( editor ) );
 }
 
 static void table_update_flags( ME_Paragraph *para )

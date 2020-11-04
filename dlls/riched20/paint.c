@@ -138,7 +138,7 @@ ME_RewrapRepaint(ME_TextEditor *editor)
   /* RewrapRepaint should be called whenever the control has changed in
    * looks, but not content. Like resizing. */
   
-  ME_MarkAllForWrapping(editor);
+  editor_mark_rewrap_all( editor );
   ME_WrapMarkedParagraphs(editor);
   ME_UpdateScrollBar(editor);
   ME_Repaint(editor);

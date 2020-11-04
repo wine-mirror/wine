@@ -536,5 +536,5 @@ void ME_SetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *mod)
     }
     ScriptFreeCache( &def->script_cache );
     ME_ReleaseStyle( style );
-    ME_MarkAllForWrapping( editor );
+    editor_mark_rewrap_all( editor );
 }
