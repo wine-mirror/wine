@@ -233,10 +233,6 @@ typedef struct {
     FT_Pos size, x_ppem, y_ppem;
 } My_FT_Bitmap_Size;
 
-typedef struct gdi_font_face Face;
-
-typedef struct gdi_font_family Family;
-
 struct font_private_data
 {
     FT_Face ft_face;
@@ -2131,14 +2127,9 @@ static BOOL CDECL freetype_load_font( struct gdi_font *font )
     if (!font->aa_flags) font->aa_flags = ADDFONT_AA_FLAGS( default_aa_flags );
     if (!font->otm.otmpFamilyName)
     {
-        WCHAR *family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
-        WCHAR *style_name = ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
-        WCHAR *full_name = ft_face_get_full_name( ft_face, GetSystemDefaultLangID() );
-
-        set_gdi_font_names( font, family_name, style_name, full_name );
-        HeapFree( GetProcessHeap(), 0, family_name );
-        HeapFree( GetProcessHeap(), 0, style_name );
-        HeapFree( GetProcessHeap(), 0, full_name );
+        font->otm.otmpFamilyName = (char *)ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
+        font->otm.otmpStyleName = (char *)ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
+        font->otm.otmpFaceName = (char *)ft_face_get_full_name( ft_face, GetSystemDefaultLangID() );
     }
 
     if (font->scalable)
@@ -3396,7 +3387,7 @@ static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font )
                                                           GetSystemDefaultLangID() )))
     {
         static const WCHAR fake_nameW[] = {'f','a','k','e',' ','n','a','m','e', 0};
-        FIXME("failed to read full_nameW for font %s!\n", wine_dbgstr_w(get_gdi_font_name(font)));
+        FIXME("failed to read full_nameW for font %s!\n", wine_dbgstr_w((WCHAR *)font->otm.otmpFamilyName));
         font->otm.otmpFullName = (char *)strdupW(fake_nameW);
     }
     needed = sizeof(font->otm) + (strlenW( (WCHAR *)font->otm.otmpFamilyName ) + 1 +

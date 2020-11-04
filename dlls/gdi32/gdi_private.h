@@ -303,18 +303,6 @@ struct char_width_info
 
 typedef struct { FLOAT eM11, eM12, eM21, eM22; } FMAT2;
 
-struct glyph_metrics;
-
-struct gdi_font_family
-{
-    struct list             entry;
-    unsigned int            refcount;
-    WCHAR                   family_name[LF_FACESIZE];
-    WCHAR                   second_name[LF_FACESIZE];
-    struct list             faces;
-    struct gdi_font_family *replacement;
-};
-
 struct bitmap_font_size
 {
     int  width;
@@ -323,41 +311,6 @@ struct bitmap_font_size
     int  x_ppem;
     int  y_ppem;
     int  internal_leading;
-};
-
-struct gdi_font_face
-{
-    struct list   entry;
-    unsigned int  refcount;
-    WCHAR        *style_name;
-    WCHAR        *full_name;
-    WCHAR        *file;
-    void         *data_ptr;
-    SIZE_T        data_size;
-    UINT          face_index;
-    FONTSIGNATURE fs;
-    DWORD         ntmFlags;
-    DWORD         version;
-    DWORD         flags;                 /* ADDFONT flags */
-    BOOL          scalable;
-    struct bitmap_font_size    size;     /* set if face is a bitmap */
-    struct gdi_font_family    *family;
-    struct gdi_font_enum_data *cached_enum_data;
-};
-
-struct gdi_font_link
-{
-    struct list            entry;
-    struct list            links;
-    WCHAR                  name[LF_FACESIZE];
-    FONTSIGNATURE          fs;
-};
-
-struct gdi_font_link_entry
-{
-    struct list            entry;
-    FONTSIGNATURE          fs;
-    WCHAR                  family_name[LF_FACESIZE];
 };
 
 struct gdi_font
@@ -453,9 +406,6 @@ extern int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
                          DWORD ntmflags, DWORD version, DWORD flags,
                          const struct bitmap_font_size *size ) DECLSPEC_HIDDEN;
 
-static inline const WCHAR *get_gdi_font_name( struct gdi_font *font ) { return (WCHAR *)font->otm.otmpFamilyName; }
-extern void set_gdi_font_names( struct gdi_font *font, const WCHAR *family_name, const WCHAR *style_name,
-                                const WCHAR *full_name ) DECLSPEC_HIDDEN;
 extern void font_init(void) DECLSPEC_HIDDEN;
 
 /* freetype.c */

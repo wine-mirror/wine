@@ -58,6 +58,36 @@ static inline struct font_physdev *get_font_dev( PHYSDEV dev )
     return (struct font_physdev *)dev;
 }
 
+struct gdi_font_family
+{
+    struct list             entry;
+    unsigned int            refcount;
+    WCHAR                   family_name[LF_FACESIZE];
+    WCHAR                   second_name[LF_FACESIZE];
+    struct list             faces;
+    struct gdi_font_family *replacement;
+};
+
+struct gdi_font_face
+{
+    struct list   entry;
+    unsigned int  refcount;
+    WCHAR        *style_name;
+    WCHAR        *full_name;
+    WCHAR        *file;
+    void         *data_ptr;
+    SIZE_T        data_size;
+    UINT          face_index;
+    FONTSIGNATURE fs;
+    DWORD         ntmFlags;
+    DWORD         version;
+    DWORD         flags;                 /* ADDFONT flags */
+    BOOL          scalable;
+    struct bitmap_font_size    size;     /* set if face is a bitmap */
+    struct gdi_font_family    *family;
+    struct gdi_font_enum_data *cached_enum_data;
+};
+
 static const struct font_backend_funcs *font_funcs;
 
 static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
@@ -1160,6 +1190,21 @@ static void remove_face_from_cache( struct gdi_font_face *face )
 
 /* font links */
 
+struct gdi_font_link
+{
+    struct list            entry;
+    struct list            links;
+    WCHAR                  name[LF_FACESIZE];
+    FONTSIGNATURE          fs;
+};
+
+struct gdi_font_link_entry
+{
+    struct list            entry;
+    FONTSIGNATURE          fs;
+    WCHAR                  family_name[LF_FACESIZE];
+};
+
 static struct list font_links = LIST_INIT(font_links);
 
 static struct gdi_font_link *find_gdi_font_link( const WCHAR *name )
@@ -1704,12 +1749,9 @@ static void free_gdi_font( struct gdi_font *font )
     HeapFree( GetProcessHeap(), 0, font );
 }
 
-void set_gdi_font_names( struct gdi_font *font, const WCHAR *family_name, const WCHAR *style_name,
-                         const WCHAR *full_name )
+static inline const WCHAR *get_gdi_font_name( struct gdi_font *font )
 {
-    font->otm.otmpFamilyName = (char *)strdupW( family_name );
-    font->otm.otmpStyleName = (char *)strdupW( style_name );
-    font->otm.otmpFaceName = (char *)strdupW( full_name );
+    return (WCHAR *)font->otm.otmpFamilyName;
 }
 
 static struct gdi_font *create_gdi_font( const struct gdi_font_face *face, const WCHAR *family_name,
@@ -1727,7 +1769,9 @@ static struct gdi_font *create_gdi_font( const struct gdi_font_face *face, const
     font->ntmFlags = face->ntmFlags;
     font->aa_flags = HIWORD( face->flags );
     if (!family_name) family_name = face->family->family_name;
-    set_gdi_font_names( font, family_name, face->style_name, face->full_name );
+    font->otm.otmpFamilyName = (char *)strdupW( family_name );
+    font->otm.otmpStyleName = (char *)strdupW( face->style_name );
+    font->otm.otmpFaceName = (char *)strdupW( face->full_name );
     return font;
 }
 
