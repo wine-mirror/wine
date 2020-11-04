@@ -173,14 +173,14 @@ static int find_split_point( ME_Context *c, int cx, ME_Run *run )
     return ME_CharFromPointContext( c, cx, run, FALSE, FALSE );
 }
 
-static ME_DisplayItem *ME_MakeRow(int height, int baseline, int width)
+static ME_Row *row_create( int height, int baseline, int width )
 {
   ME_DisplayItem *item = ME_MakeDI(diStartRow);
 
   item->member.row.nHeight = height;
   item->member.row.nBaseline = baseline;
   item->member.row.nWidth = width;
-  return item;
+  return &item->member.row;
 }
 
 static void ME_BeginRow(ME_WrapContext *wc)
@@ -284,7 +284,7 @@ static void layout_row( ME_Run *start, ME_Run *last )
 static void ME_InsertRowStart( ME_WrapContext *wc, ME_Run *last )
 {
     ME_Run *run;
-    ME_DisplayItem *row;
+    ME_Row *row;
     BOOL bSkippingSpaces = TRUE;
     int ascent = 0, descent = 0, width = 0, shift = 0, align = 0;
 
@@ -328,7 +328,7 @@ static void ME_InsertRowStart( ME_WrapContext *wc, ME_Run *last )
     }
 
     wc->para->nWidth = max( wc->para->nWidth, width );
-    row = ME_MakeRow( ascent + descent, ascent, width );
+    row = row_create( ascent + descent, ascent, width );
     if (wc->context->editor->bEmulateVersion10 && /* v1.0 - 3.0 */
         (wc->para->fmt.dwMask & PFM_TABLE) && (wc->para->fmt.wEffects & PFE_TABLE))
     {
@@ -336,11 +336,11 @@ static void ME_InsertRowStart( ME_WrapContext *wc, ME_Run *last )
          * back to where it should be. */
         wc->pt.y--;
         /* The height of the row is increased by the borders. */
-        row->member.row.nHeight += 2;
+        row->nHeight += 2;
     }
-    row->member.row.pt = wc->pt;
-    row->member.row.nLMargin = (!wc->nRow ? wc->nFirstMargin : wc->nLeftMargin);
-    row->member.row.nRMargin = wc->nRightMargin;
+    row->pt = wc->pt;
+    row->nLMargin = (!wc->nRow ? wc->nFirstMargin : wc->nLeftMargin);
+    row->nRMargin = wc->nRightMargin;
     assert(wc->para->fmt.dwMask & PFM_ALIGNMENT);
     align = wc->para->fmt.wAlignment;
     if (align == PFA_CENTER) shift = max((wc->nAvailWidth-width)/2, 0);
@@ -348,23 +348,23 @@ static void ME_InsertRowStart( ME_WrapContext *wc, ME_Run *last )
 
     if (wc->para->nFlags & MEPF_COMPLEX) layout_row( wc->pRowStart, last );
 
-    row->member.row.pt.x = row->member.row.nLMargin + shift;
+    row->pt.x = row->nLMargin + shift;
 
     for (run = wc->pRowStart; run; run = run_next( run ))
     {
-        run->pt.x += row->member.row.nLMargin+shift;
+        run->pt.x += row->nLMargin + shift;
         if (run == last) break;
     }
 
     if (wc->nRow == 0 && wc->para->fmt.wNumbering)
     {
         wc->para->para_num.pt.x = wc->nParaNumOffset + shift;
-        wc->para->para_num.pt.y = wc->pt.y + row->member.row.nBaseline;
+        wc->para->para_num.pt.y = wc->pt.y + row->nBaseline;
     }
 
-    ME_InsertBefore( run_get_di( wc->pRowStart ), row );
+    ME_InsertBefore( run_get_di( wc->pRowStart ), row_get_di( row ) );
     wc->nRow++;
-    wc->pt.y += row->member.row.nHeight;
+    wc->pt.y += row->nHeight;
     ME_BeginRow( wc );
 }
 
