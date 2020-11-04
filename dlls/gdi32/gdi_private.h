@@ -425,8 +425,6 @@ struct gdi_font
 
 struct font_backend_funcs
 {
-    struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont );
-
     void  (CDECL *load_fonts)(void);
     BOOL  (CDECL *enum_family_fallbacks)( DWORD pitch_and_family, int index, WCHAR buffer[LF_FACESIZE] );
     INT   (CDECL *add_font)( const WCHAR *file, DWORD flags );
@@ -449,29 +447,15 @@ struct font_backend_funcs
     void  (CDECL *destroy_font)( struct gdi_font *font );
 };
 
-extern const WCHAR *get_gdi_font_subst( const WCHAR *from_name, int from_charset, int *to_charset ) DECLSPEC_HIDDEN;
-
 extern int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
                          const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
                          void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,
                          DWORD ntmflags, DWORD version, DWORD flags,
                          const struct bitmap_font_size *size ) DECLSPEC_HIDDEN;
 
-extern struct gdi_font_link *find_gdi_font_link( const WCHAR *name ) DECLSPEC_HIDDEN;
-extern void create_child_font_list( struct gdi_font *font ) DECLSPEC_HIDDEN;
-extern struct gdi_font_face *find_matching_face( LOGFONTW *lf, CHARSETINFO *csi, BOOL can_use_bitmap,
-                                                 const WCHAR **orig_name ) DECLSPEC_HIDDEN;
-
-extern void free_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
-extern void cache_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
-extern struct gdi_font *find_cached_gdi_font( const LOGFONTW *lf, const FMAT2 *matrix,
-                                              BOOL can_use_bitmap ) DECLSPEC_HIDDEN;
 static inline const WCHAR *get_gdi_font_name( struct gdi_font *font ) { return (WCHAR *)font->otm.otmpFamilyName; }
 extern void set_gdi_font_names( struct gdi_font *font, const WCHAR *family_name, const WCHAR *style_name,
                                 const WCHAR *full_name ) DECLSPEC_HIDDEN;
-extern struct gdi_font *create_gdi_font( const struct gdi_font_face *face, const WCHAR *family_name,
-                                         const LOGFONTW *lf ) DECLSPEC_HIDDEN;
-extern void *get_GSUB_vert_feature( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern void font_init(void) DECLSPEC_HIDDEN;
 
 /* freetype.c */

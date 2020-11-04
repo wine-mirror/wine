@@ -250,8 +250,6 @@ static inline FT_Face get_ft_face( struct gdi_font *font )
 
 static const struct font_backend_funcs font_funcs;
 
-static const WCHAR SymbolW[] = {'S','y','m','b','o','l','\0'};
-
 struct font_mapping
 {
     struct list entry;
@@ -1714,48 +1712,6 @@ static void unmap_font_file( struct font_mapping *mapping )
 
 static LONG load_VDMX(struct gdi_font *font, LONG height);
 
-static UINT get_nearest_charset(const WCHAR *family_name, Face *face, UINT *cp)
-{
-  /* Only get here if lfCharSet == DEFAULT_CHARSET or we couldn't find
-     a single face with the requested charset.  The idea is to check if
-     the selected font supports the current ANSI codepage, if it does
-     return the corresponding charset, else return the first charset */
-
-    CHARSETINFO csi;
-    int acp = GetACP(), i;
-    DWORD fs0;
-
-    *cp = acp;
-    if(TranslateCharsetInfo((DWORD*)(INT_PTR)acp, &csi, TCI_SRCCODEPAGE))
-    {
-        const struct gdi_font_link *font_link;
-
-        if (csi.fs.fsCsb[0] & face->fs.fsCsb[0])
-	    return csi.ciCharset;
-
-        font_link = find_gdi_font_link(family_name);
-        if (font_link != NULL && csi.fs.fsCsb[0] & font_link->fs.fsCsb[0])
-	    return csi.ciCharset;
-    }
-
-    for(i = 0; i < 32; i++) {
-        fs0 = 1L << i;
-        if(face->fs.fsCsb[0] & fs0) {
-	    if(TranslateCharsetInfo(&fs0, &csi, TCI_SRCFONTSIG)) {
-                *cp = csi.ciACP;
-	        return csi.ciCharset;
-            }
-	    else
-                FIXME("TCI failing on %x\n", fs0);
-	}
-    }
-
-    FIXME("returning DEFAULT_CHARSET face->fs.fsCsb[0] = %08x file = %s\n",
-	  face->fs.fsCsb[0], debugstr_w(face->file));
-    *cp = acp;
-    return DEFAULT_CHARSET;
-}
-
 /*************************************************************
  * freetype_destroy_font
  */
@@ -2209,152 +2165,6 @@ static BOOL CDECL freetype_load_font( struct gdi_font *font )
     return TRUE;
 }
 
-
-/*************************************************************
- * freetype_SelectFont
- */
-static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont )
-{
-    struct gdi_font *font;
-    Face *face;
-    INT height;
-    BOOL can_use_bitmap;
-    LOGFONTW lf;
-    CHARSETINFO csi;
-    FMAT2 dcmat;
-    const WCHAR *orig_name = NULL;
-
-    GetObjectW( hfont, sizeof(lf), &lf );
-    lf.lfWidth = abs(lf.lfWidth);
-
-    can_use_bitmap = !!(GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_RA_ABLE);
-
-    TRACE("%s, h=%d, it=%d, weight=%d, PandF=%02x, charset=%d orient %d escapement %d\n",
-	  debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic,
-	  lf.lfWeight, lf.lfPitchAndFamily, lf.lfCharSet, lf.lfOrientation,
-	  lf.lfEscapement);
-
-    if(dc->GraphicsMode == GM_ADVANCED)
-    {
-        memcpy(&dcmat, &dc->xformWorld2Vport, sizeof(FMAT2));
-        /* Try to avoid not necessary glyph transformations */
-        if (dcmat.eM21 == 0.0 && dcmat.eM12 == 0.0 && dcmat.eM11 == dcmat.eM22)
-        {
-            lf.lfHeight *= fabs(dcmat.eM11);
-            lf.lfWidth *= fabs(dcmat.eM11);
-            dcmat.eM11 = dcmat.eM22 = dcmat.eM11 < 0 ? -1 : 1;
-        }
-    }
-    else
-    {
-        /* Windows 3.1 compatibility mode GM_COMPATIBLE has only limited
-           font scaling abilities. */
-        dcmat.eM11 = dcmat.eM22 = 1.0;
-        dcmat.eM21 = dcmat.eM12 = 0;
-        lf.lfOrientation = lf.lfEscapement;
-        if (dc->vport2WorldValid)
-        {
-            if (dc->xformWorld2Vport.eM11 * dc->xformWorld2Vport.eM22 < 0)
-                lf.lfOrientation = -lf.lfOrientation;
-            lf.lfHeight *= fabs(dc->xformWorld2Vport.eM22);
-            lf.lfWidth *= fabs(dc->xformWorld2Vport.eM22);
-        }
-    }
-
-    TRACE("DC transform %f %f %f %f\n", dcmat.eM11, dcmat.eM12,
-                                        dcmat.eM21, dcmat.eM22);
-
-    /* check the cache first */
-    if ((font = find_cached_gdi_font( &lf, &dcmat, can_use_bitmap ))) {
-        TRACE("returning cached gdiFont(%p) for hFont %p\n", font, hfont);
-        return font;
-    }
-
-    /* If lfFaceName is "Symbol" then Windows fixes up lfCharSet to
-       SYMBOL_CHARSET so that Symbol gets picked irrespective of the
-       original value lfCharSet.  Note this is a special case for
-       Symbol and doesn't happen at least for "Wingdings*" */
-
-    if(!strcmpiW(lf.lfFaceName, SymbolW))
-        lf.lfCharSet = SYMBOL_CHARSET;
-
-    if (!(face = find_matching_face( &lf, &csi, can_use_bitmap, &orig_name )))
-    {
-        FIXME("can't find a single appropriate font - bailing\n");
-        return NULL;
-    }
-    height = lf.lfHeight;
-
-    TRACE("not in cache\n");
-    font = create_gdi_font( face, orig_name, &lf );
-
-    font->matrix = dcmat;
-    font->can_use_bitmap = can_use_bitmap;
-    if(csi.fs.fsCsb[0]) {
-        font->charset = lf.lfCharSet;
-        font->codepage = csi.ciACP;
-    }
-    else
-        font->charset = get_nearest_charset( face->family->family_name, face, &font->codepage );
-
-    TRACE( "Chosen: %s (%s/%p:%u)\n", debugstr_w(face->full_name), debugstr_w(face->file),
-           face->data_ptr, face->face_index );
-
-    font->aveWidth = height ? lf.lfWidth : 0;
-
-    if(!face->scalable) {
-        /* Windows uses integer scaling factors for bitmap fonts */
-        INT scale, scaled_height, diff;
-        struct gdi_font *cachedfont;
-
-        if (height > 0)
-            diff = height - (signed int)face->size.height;
-        else
-            diff = -height - ((signed int)face->size.height - face->size.internal_leading);
-
-        /* FIXME: rotation of bitmap fonts is ignored */
-        height = abs(GDI_ROUND( (double)height * font->matrix.eM22 ));
-        if (font->aveWidth)
-            font->aveWidth = (double)font->aveWidth * font->matrix.eM11;
-        font->matrix.eM11 = font->matrix.eM22 = 1.0;
-        dcmat.eM11 = dcmat.eM22 = 1.0;
-        /* As we changed the matrix, we need to search the cache for the font again,
-         * otherwise we might explode the cache. */
-        if((cachedfont = find_cached_gdi_font( &lf, &dcmat, can_use_bitmap ))) {
-            TRACE("Found cached font after non-scalable matrix rescale!\n");
-            free_gdi_font( font );
-            return cachedfont;
-        }
-
-        if (height != 0) height = diff;
-        height += face->size.height;
-
-        scale = (height + face->size.height - 1) / face->size.height;
-        scaled_height = scale * face->size.height;
-        /* Only jump to the next height if the difference <= 25% original height */
-        if (scale > 2 && scaled_height - height > face->size.height / 4) scale--;
-        /* The jump between unscaled and doubled is delayed by 1 */
-        else if (scale == 2 && scaled_height - height > (face->size.height / 4 - 1)) scale--;
-        font->scale_y = scale;
-    }
-    TRACE("font scale y: %f\n", font->scale_y);
-
-    if (!freetype_load_font( font ))
-    {
-        free_gdi_font( font );
-        return NULL;
-    }
-
-    if (face->flags & ADDFONT_VERTICAL_FONT) /* We need to try to load the GSUB table */
-        font->vert_feature = get_GSUB_vert_feature( font );
-
-    create_child_font_list( font );
-
-    TRACE("caching: gdiFont=%p  hfont=%p\n", font, hfont);
-
-    cache_gdi_font( font );
-    return font;
-}
 
 /*************************************************************
  * freetype_get_aa_flags
@@ -4142,7 +3952,6 @@ static DWORD CDECL freetype_get_kerning_pairs( struct gdi_font *font, KERNINGPAI
 
 static const struct font_backend_funcs font_funcs =
 {
-    freetype_SelectFont,
     freetype_load_fonts,
     fontconfig_enum_family_fallbacks,
     freetype_add_font,
