@@ -212,19 +212,6 @@ ME_Paragraph *cell_end_para( ME_Cell *cell )
     return &ME_FindItemBack( cell_get_di( next ), diParagraph )->member.para;
 }
 
-BOOL ME_IsInTable(ME_DisplayItem *pItem)
-{
-  PARAFORMAT2 *pFmt;
-  if (!pItem)
-    return FALSE;
-  if (pItem->type == diRun)
-    pItem = ME_GetParagraph(pItem);
-  if (pItem->type != diParagraph)
-    return FALSE;
-  pFmt = &pItem->member.para.fmt;
-  return pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE;
-}
-
 /* Table rows should either be deleted completely or not at all. */
 void table_protect_partial_deletion( ME_TextEditor *editor, ME_Cursor *c, int *num_chars )
 {
@@ -504,7 +491,7 @@ void table_handle_tab( ME_TextEditor *editor, BOOL selected_row )
   }
   if (!editor->bEmulateVersion10) /* v4.1 */
   {
-    if (!ME_IsInTable(toCursor.pRun))
+    if (!para_in_table( &toCursor.pPara->member.para ))
     {
       editor->pCursors[0] = toCursor;
       editor->pCursors[1] = toCursor;
@@ -513,7 +500,7 @@ void table_handle_tab( ME_TextEditor *editor, BOOL selected_row )
   }
   else /* v1.0 - 3.0 */
   {
-    if (!ME_IsInTable(fromCursor.pRun))
+    if (!para_in_table( &fromCursor.pPara->member.para) )
     {
       editor->pCursors[0] = fromCursor;
       editor->pCursors[1] = fromCursor;
