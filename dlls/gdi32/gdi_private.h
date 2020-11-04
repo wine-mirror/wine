@@ -428,6 +428,7 @@ struct font_backend_funcs
     struct gdi_font * (CDECL *pSelectFont)( DC *dc, HFONT hfont );
 
     void  (CDECL *load_fonts)(void);
+    BOOL  (CDECL *enum_family_fallbacks)( DWORD pitch_and_family, int index, WCHAR buffer[LF_FACESIZE] );
     INT   (CDECL *add_font)( const WCHAR *file, DWORD flags );
     INT   (CDECL *add_mem_font)( void *ptr, SIZE_T size, DWORD flags );
 
@@ -474,9 +475,6 @@ extern struct gdi_font *create_gdi_font( const struct gdi_font_face *face, const
                                          const LOGFONTW *lf ) DECLSPEC_HIDDEN;
 extern void *get_GSUB_vert_feature( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern void font_init(void) DECLSPEC_HIDDEN;
-extern const WCHAR *default_serif DECLSPEC_HIDDEN;
-extern const WCHAR *default_fixed DECLSPEC_HIDDEN;
-extern const WCHAR *default_sans DECLSPEC_HIDDEN;
 
 /* freetype.c */
 

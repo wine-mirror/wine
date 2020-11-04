@@ -240,31 +240,24 @@ static const WCHAR liberation_sans[] = {'L','i','b','e','r','a','t','i','o','n',
 static const WCHAR liberation_serif[] = {'L','i','b','e','r','a','t','i','o','n',' ','S','e','r','i','f',0};
 static const WCHAR times_new_roman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
 
-static const WCHAR * const default_serif_list[] =
+static const WCHAR * const default_serif_list[3] =
 {
     times_new_roman,
     liberation_serif,
-    bitstream_vera_serif,
-    NULL
+    bitstream_vera_serif
 };
-static const WCHAR * const default_fixed_list[] =
+static const WCHAR * const default_fixed_list[3] =
 {
     courier_new,
     liberation_mono,
-    bitstream_vera_sans_mono,
-    NULL
+    bitstream_vera_sans_mono
 };
-static const WCHAR * const default_sans_list[] =
+static const WCHAR * const default_sans_list[3] =
 {
     arial,
     liberation_sans,
-    bitstream_vera_sans,
-    NULL
+    bitstream_vera_sans
 };
-
-const WCHAR *default_serif = times_new_roman;
-const WCHAR *default_fixed = courier_new;
-const WCHAR *default_sans = arial;
 
 static const struct nls_update_font_list
 {
@@ -732,26 +725,44 @@ static void dump_gdi_font_list(void)
     }
 }
 
-static const WCHAR *set_default_family( const WCHAR * const *name_list )
+static BOOL enum_fallbacks( DWORD pitch_and_family, int index, WCHAR buffer[LF_FACESIZE] )
+{
+    if (index < 3)
+    {
+        const WCHAR * const *defaults;
+
+        if ((pitch_and_family & FIXED_PITCH) || (pitch_and_family & 0xf0) == FF_MODERN)
+            defaults = default_fixed_list;
+        else if ((pitch_and_family & 0xf0) == FF_ROMAN)
+            defaults = default_serif_list;
+        else
+            defaults = default_sans_list;
+        lstrcpynW( buffer, defaults[index], LF_FACESIZE );
+        return TRUE;
+    }
+    return font_funcs->enum_family_fallbacks( pitch_and_family, index - 3, buffer );
+}
+
+static void set_default_family( DWORD pitch_and_family )
 {
     struct gdi_font_family *family;
-    const WCHAR * const *entry;
+    WCHAR name[LF_FACESIZE];
+    int i = 0;
 
-    for (entry = name_list; *entry; entry++)
+    while (enum_fallbacks( pitch_and_family, i++, name ))
     {
-        if (!(family = find_family_from_name( *entry ))) continue;
+        if (!(family = find_family_from_name( name ))) continue;
         list_remove( &family->entry );
         list_add_head( &font_list, &family->entry );
-        return *entry;
+        return;
     }
-    return *name_list;
 }
 
 static void reorder_font_list(void)
 {
-    default_serif = set_default_family( default_serif_list );
-    default_fixed = set_default_family( default_fixed_list );
-    default_sans = set_default_family( default_sans_list );
+    set_default_family( FF_ROMAN );
+    set_default_family( FF_MODERN );
+    set_default_family( FF_SWISS );
 }
 
 static void release_face( struct gdi_font_face *face )
@@ -1483,14 +1494,28 @@ struct gdi_font_face *find_any_face( const LOGFONTW *lf, FONTSIGNATURE fs,
 {
     struct gdi_font_family *family;
     struct gdi_font_face *face;
+    WCHAR name[LF_FACESIZE];
+    int i = 0;
 
-    /* first try only scalable */
+    /* first try the family fallbacks */
+    while (enum_fallbacks( lf->lfPitchAndFamily, i++, name ))
+    {
+        LIST_FOR_EACH_ENTRY( family, &font_list, struct gdi_font_family, entry )
+        {
+            if ((family->family_name[0] == '@') == !want_vertical) continue;
+            if (strcmpiW( family->family_name + want_vertical, name ) &&
+                strcmpiW( family->second_name + want_vertical, name )) continue;
+            if ((face = find_best_matching_face( family, lf, fs, FALSE ))) return face;
+        }
+    }
+    /* otherwise try only scalable */
     LIST_FOR_EACH_ENTRY( family, &font_list, struct gdi_font_family, entry )
     {
         if ((family->family_name[0] == '@') == !want_vertical) continue;
         if ((face = find_best_matching_face( family, lf, fs, FALSE ))) return face;
     }
     if (!can_use_bitmap) return NULL;
+    /* then also bitmap fonts */
     LIST_FOR_EACH_ENTRY( family, &font_list, struct gdi_font_family, entry )
     {
         if ((family->family_name[0] == '@') == !want_vertical) continue;

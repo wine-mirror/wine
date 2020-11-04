@@ -1218,6 +1218,9 @@ static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
 #ifdef SONAME_LIBFONTCONFIG
 
 static BOOL fontconfig_enabled;
+static FcPattern *pattern_serif;
+static FcPattern *pattern_fixed;
+static FcPattern *pattern_sans;
 
 static UINT parse_aa_pattern( FcPattern *pattern )
 {
@@ -1240,6 +1243,23 @@ static UINT parse_aa_pattern( FcPattern *pattern )
         }
     }
     return aa_flags;
+}
+
+static FcPattern *create_family_pattern( const char *name )
+{
+    FcPattern *ret, *pattern = pFcPatternCreate();
+    FcResult result;
+
+    pFcPatternAddString( pattern, FC_FAMILY, (const FcChar8 *)name );
+    pFcPatternAddString( pattern, FC_NAMELANG, (const FcChar8 *)"en-us" );
+    pFcPatternAddString( pattern, FC_PRGNAME, (const FcChar8 *)"wine" );
+    pFcConfigSubstitute( NULL, pattern, FcMatchPattern );
+    pFcDefaultSubstitute( pattern );
+    ret = pFcFontMatch( NULL, pattern, &result );
+    pFcPatternDestroy( pattern );
+    if (ret && result == FcResultMatch) return ret;
+    pFcPatternDestroy( ret );
+    return NULL;
 }
 
 static void init_fontconfig(void)
@@ -1281,6 +1301,9 @@ static void init_fontconfig(void)
             default_aa_flags = parse_aa_pattern( pattern );
             pFcPatternDestroy( pattern );
         }
+        pattern_serif = create_family_pattern( "serif" );
+        pattern_fixed = create_family_pattern( "monospace" );
+        pattern_sans = create_family_pattern( "sans" );
 
         TRACE( "enabled, default flags = %x\n", default_aa_flags );
         fontconfig_enabled = TRUE;
@@ -2070,67 +2093,28 @@ done:
     return ret;
 }
 
-#ifdef SONAME_LIBFONTCONFIG
-static struct gdi_font_face *get_fontconfig_face( const LOGFONTW *lf, FONTSIGNATURE fs, BOOL want_vertical )
+/*************************************************************
+ * fontconfig_enum_family_fallbacks
+ */
+static BOOL CDECL fontconfig_enum_family_fallbacks( DWORD pitch_and_family, int index,
+                                                    WCHAR buffer[LF_FACESIZE] )
 {
-    const char *name;
-    WCHAR nameW[LF_FACESIZE];
+#ifdef SONAME_LIBFONTCONFIG
+    FcPattern *pat;
     FcChar8 *str;
-    FcPattern *pat = NULL, *best = NULL;
-    FcResult result;
-    FcBool r;
-    int ret, i;
-    struct gdi_font_face *face = NULL;
 
-    if (!fs.fsCsb[0]) return NULL;
+    if ((pitch_and_family & FIXED_PITCH) || (pitch_and_family & 0xf0) == FF_MODERN) pat = pattern_fixed;
+    else if ((pitch_and_family & 0xf0) == FF_ROMAN) pat = pattern_serif;
+    else pat = pattern_sans;
 
-    if((lf->lfPitchAndFamily & FIXED_PITCH) ||
-       (lf->lfPitchAndFamily & 0xF0) == FF_MODERN)
-        name = "monospace";
-    else if((lf->lfPitchAndFamily & 0xF0) == FF_ROMAN)
-        name = "serif";
-    else
-        name = "sans-serif";
-
-    pat = pFcPatternCreate();
-    if (!pat) return NULL;
-    r = pFcPatternAddString(pat, FC_FAMILY, (const FcChar8 *)name);
-    if (!r) goto end;
-    r = pFcPatternAddString(pat, FC_NAMELANG, (const FcChar8 *)"en-us");
-    if (!r) goto end;
-    r = pFcPatternAddString(pat, FC_PRGNAME, (const FcChar8 *)"wine");
-    if (!r) goto end;
-    r = pFcConfigSubstitute(NULL, pat, FcMatchPattern);
-    if (!r) goto end;
-    pFcDefaultSubstitute(pat);
-
-    best = pFcFontMatch(NULL, pat, &result);
-    if (!best || result != FcResultMatch) goto end;
-
-    for (i = 0; pFcPatternGetString(best, FC_FAMILY, i, &str) == FcResultMatch; i++)
-    {
-        if (!want_vertical)
-        {
-            ret = MultiByteToWideChar(CP_UTF8, 0, (const char*)str, -1,
-                                      nameW, ARRAY_SIZE(nameW));
-        }
-        else
-        {
-            nameW[0] = '@';
-            ret = MultiByteToWideChar(CP_UTF8, 0, (const char*)str, -1,
-                                      nameW + 1, ARRAY_SIZE(nameW) - 1);
-        }
-        if (!ret) continue;
-        if ((face = find_matching_face_by_name( nameW, NULL, lf, fs, FALSE ))) break;
-    }
-    if (face) TRACE("got %s\n", wine_dbgstr_w(nameW));
-
-end:
-    pFcPatternDestroy(pat);
-    pFcPatternDestroy(best);
-    return face;
-}
+    if (!pat) return FALSE;
+    if (pFcPatternGetString( pat, FC_FAMILY, index, &str ) != FcResultMatch) return FALSE;
+    if (!MultiByteToWideChar( CP_UTF8, 0, (char *)str, -1, buffer, LF_FACESIZE ))
+        buffer[LF_FACESIZE - 1] = 0;
+    return TRUE;
 #endif
+    return FALSE;
+}
 
 static DWORD get_ttc_offset( FT_Face ft_face, UINT face_index )
 {
@@ -2339,27 +2323,6 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont )
     }
 
     want_vertical = (lf.lfFaceName[0] == '@');
-
-    /* Face families are in the top 4 bits of lfPitchAndFamily,
-       so mask with 0xF0 before testing */
-
-    if((lf.lfPitchAndFamily & FIXED_PITCH) ||
-       (lf.lfPitchAndFamily & 0xF0) == FF_MODERN)
-        strcpyW(lf.lfFaceName, default_fixed);
-    else if((lf.lfPitchAndFamily & 0xF0) == FF_ROMAN)
-        strcpyW(lf.lfFaceName, default_serif);
-    else if((lf.lfPitchAndFamily & 0xF0) == FF_SWISS)
-        strcpyW(lf.lfFaceName, default_sans);
-    else
-        strcpyW(lf.lfFaceName, default_sans);
-
-    if ((face = find_matching_face_by_name( lf.lfFaceName, NULL, &lf, csi.fs, can_use_bitmap )))
-        goto found_face;
-
-#ifdef SONAME_LIBFONTCONFIG
-    /* Try FontConfig substitutions if the face isn't found */
-    if ((face = get_fontconfig_face( &lf, csi.fs, want_vertical ))) goto found_face;
-#endif
 
     if ((face = find_any_face( &lf, csi.fs, can_use_bitmap, want_vertical ))) goto found_face;
     csi.fs.fsCsb[0] = 0;
@@ -4231,6 +4194,7 @@ static const struct font_backend_funcs font_funcs =
 {
     freetype_SelectFont,
     freetype_load_fonts,
+    fontconfig_enum_family_fallbacks,
     freetype_add_font,
     freetype_add_mem_font,
     freetype_load_font,
