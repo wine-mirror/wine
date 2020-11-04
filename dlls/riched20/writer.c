@@ -995,7 +995,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
                             const ME_Cursor *start, int nChars, int dwFormat)
 {
   ME_Cursor cursor = *start;
-  ME_DisplayItem *prev_para = NULL;
+  ME_Paragraph *prev_para = NULL;
   ME_Cursor endCur = cursor;
 
   ME_MoveCursorChars(editor, &endCur, nChars, TRUE);
@@ -1019,64 +1019,82 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
 
   /* TODO: section formatting properties */
 
-  do {
-    if (cursor.pPara != prev_para)
+  do
+  {
+    if (&cursor.pPara->member.para != prev_para)
     {
-      prev_para = cursor.pPara;
+      prev_para = &cursor.pPara->member.para;
       if (!stream_out_para_props( editor, pStream, &cursor.pPara->member.para ))
         return FALSE;
     }
 
     if (cursor.pRun == endCur.pRun && !endCur.nOffset)
       break;
+
     TRACE("flags %xh\n", cursor.pRun->member.run.nFlags);
     /* TODO: emit embedded objects */
-    if (cursor.pPara->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND))
+    if (cursor.pPara->member.para.nFlags & (MEPF_ROWSTART | MEPF_ROWEND))
       continue;
-    if (cursor.pRun->member.run.nFlags & MERF_GRAPHICS) {
+    if (cursor.pRun->member.run.nFlags & MERF_GRAPHICS)
+    {
       if (!stream_out_graphics(editor, pStream, &cursor.pRun->member.run))
         return FALSE;
-    } else if (cursor.pRun->member.run.nFlags & MERF_TAB) {
+    }
+    else if (cursor.pRun->member.run.nFlags & MERF_TAB)
+    {
       if (editor->bEmulateVersion10 && /* v1.0 - 3.0 */
-          cursor.pPara->member.para.fmt.dwMask & PFM_TABLE &&
-          cursor.pPara->member.para.fmt.wEffects & PFE_TABLE)
+          para_in_table( &cursor.pPara->member.para ))
       {
         if (!ME_StreamOutPrint(pStream, "\\cell "))
           return FALSE;
-      } else {
+      }
+      else
+      {
         if (!ME_StreamOutPrint(pStream, "\\tab "))
           return FALSE;
       }
-    } else if (cursor.pRun->member.run.nFlags & MERF_ENDCELL) {
-      if (pStream->nNestingLevel > 1) {
+    }
+    else if (cursor.pRun->member.run.nFlags & MERF_ENDCELL)
+    {
+      if (pStream->nNestingLevel > 1)
+      {
         if (!ME_StreamOutPrint(pStream, "\\nestcell "))
           return FALSE;
-      } else {
+      }
+      else
+      {
         if (!ME_StreamOutPrint(pStream, "\\cell "))
           return FALSE;
       }
       nChars--;
-    } else if (cursor.pRun->member.run.nFlags & MERF_ENDPARA) {
+    }
+    else if (cursor.pRun->member.run.nFlags & MERF_ENDPARA)
+    {
       if (!ME_StreamOutRTFCharProps(pStream, &cursor.pRun->member.run.style->fmt))
         return FALSE;
 
-      if (cursor.pPara->member.para.fmt.dwMask & PFM_TABLE &&
-          cursor.pPara->member.para.fmt.wEffects & PFE_TABLE &&
-          !(cursor.pPara->member.para.nFlags & (MEPF_ROWSTART|MEPF_ROWEND|MEPF_CELL)))
+      if (para_in_table( &cursor.pPara->member.para) &&
+          !(cursor.pPara->member.para.nFlags & (MEPF_ROWSTART | MEPF_ROWEND | MEPF_CELL)))
       {
         if (!ME_StreamOutPrint(pStream, "\\row\r\n"))
           return FALSE;
-      } else {
+      }
+      else
+      {
         if (!ME_StreamOutPrint(pStream, "\\par\r\n"))
           return FALSE;
       }
       /* Skip as many characters as required by current line break */
       nChars = max(0, nChars - cursor.pRun->member.run.len);
-    } else if (cursor.pRun->member.run.nFlags & MERF_ENDROW) {
+    }
+    else if (cursor.pRun->member.run.nFlags & MERF_ENDROW)
+    {
       if (!ME_StreamOutPrint(pStream, "\\line\r\n"))
         return FALSE;
       nChars--;
-    } else {
+    }
+    else
+    {
       int nEnd;
 
       TRACE("style %p\n", cursor.pRun->member.run.style);
