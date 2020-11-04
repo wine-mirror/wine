@@ -459,10 +459,8 @@ extern int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
 
 extern struct gdi_font_link *find_gdi_font_link( const WCHAR *name ) DECLSPEC_HIDDEN;
 extern void create_child_font_list( struct gdi_font *font ) DECLSPEC_HIDDEN;
-extern struct gdi_font_face *find_matching_face_by_name( const WCHAR *name, const WCHAR *subst, const LOGFONTW *lf,
-                                                         FONTSIGNATURE fs, BOOL can_use_bitmap ) DECLSPEC_HIDDEN;
-extern struct gdi_font_face *find_any_face( const LOGFONTW *lf, FONTSIGNATURE fs,
-                                            BOOL can_use_bitmap, BOOL want_vertical ) DECLSPEC_HIDDEN;
+extern struct gdi_font_face *find_matching_face( LOGFONTW *lf, CHARSETINFO *csi, BOOL can_use_bitmap,
+                                                 const WCHAR **orig_name ) DECLSPEC_HIDDEN;
 
 extern void free_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;
 extern void cache_gdi_font( struct gdi_font *font ) DECLSPEC_HIDDEN;

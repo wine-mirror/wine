@@ -1461,8 +1461,9 @@ static struct gdi_font_face *find_best_matching_face( const struct gdi_font_fami
     return best->scalable ? best : best_bitmap;
 }
 
-struct gdi_font_face *find_matching_face_by_name( const WCHAR *name, const WCHAR *subst, const LOGFONTW *lf,
-                                                  FONTSIGNATURE fs, BOOL can_use_bitmap )
+static struct gdi_font_face *find_matching_face_by_name( const WCHAR *name, const WCHAR *subst,
+                                                         const LOGFONTW *lf, FONTSIGNATURE fs,
+                                                         BOOL can_use_bitmap )
 {
     struct gdi_font_family *family;
     struct gdi_font_face *face;
@@ -1489,8 +1490,8 @@ struct gdi_font_face *find_matching_face_by_name( const WCHAR *name, const WCHAR
     return NULL;
 }
 
-struct gdi_font_face *find_any_face( const LOGFONTW *lf, FONTSIGNATURE fs,
-                                     BOOL can_use_bitmap, BOOL want_vertical )
+static struct gdi_font_face *find_any_face( const LOGFONTW *lf, FONTSIGNATURE fs,
+                                            BOOL can_use_bitmap, BOOL want_vertical )
 {
     struct gdi_font_family *family;
     struct gdi_font_face *face;
@@ -1521,6 +1522,59 @@ struct gdi_font_face *find_any_face( const LOGFONTW *lf, FONTSIGNATURE fs,
         if ((family->family_name[0] == '@') == !want_vertical) continue;
         if ((face = find_best_matching_face( family, lf, fs, can_use_bitmap ))) return face;
     }
+    return NULL;
+}
+
+struct gdi_font_face *find_matching_face( LOGFONTW *lf, CHARSETINFO *csi, BOOL can_use_bitmap,
+                                          const WCHAR **orig_name )
+{
+    BOOL want_vertical = (lf->lfFaceName[0] == '@');
+    struct gdi_font_face *face;
+
+    if (!TranslateCharsetInfo( (DWORD *)(INT_PTR)lf->lfCharSet, csi, TCI_SRCCHARSET ))
+    {
+        if (lf->lfCharSet != DEFAULT_CHARSET) FIXME( "Untranslated charset %d\n", lf->lfCharSet );
+        csi->fs.fsCsb[0] = 0;
+    }
+
+    if (lf->lfFaceName[0])
+    {
+        int subst_charset;
+        const WCHAR *subst = get_gdi_font_subst( lf->lfFaceName, lf->lfCharSet, &subst_charset );
+
+	if (subst)
+        {
+	    TRACE( "substituting %s,%d -> %s,%d\n", debugstr_w(lf->lfFaceName), lf->lfCharSet,
+                   debugstr_w(subst), (subst_charset != -1) ? subst_charset : lf->lfCharSet );
+	    if (subst_charset != -1) lf->lfCharSet = subst_charset;
+            *orig_name = lf->lfFaceName;
+	}
+
+        if ((face = find_matching_face_by_name( lf->lfFaceName, subst, lf, csi->fs, can_use_bitmap )))
+            return face;
+    }
+    *orig_name = NULL; /* substitution is no longer relevant */
+
+    /* If requested charset was DEFAULT_CHARSET then try using charset
+       corresponding to the current ansi codepage */
+    if (!csi->fs.fsCsb[0])
+    {
+        INT acp = GetACP();
+        if (!TranslateCharsetInfo( (DWORD *)(INT_PTR)acp, csi, TCI_SRCCODEPAGE ))
+        {
+            FIXME( "TCI failed on codepage %d\n", acp );
+            csi->fs.fsCsb[0] = 0;
+        }
+        else lf->lfCharSet = csi->ciCharset;
+    }
+
+    if ((face = find_any_face( lf, csi->fs, can_use_bitmap, want_vertical ))) return face;
+    if (csi->fs.fsCsb[0])
+    {
+        csi->fs.fsCsb[0] = 0;
+        if ((face = find_any_face( lf, csi->fs, can_use_bitmap, want_vertical ))) return face;
+    }
+    if (want_vertical && (face = find_any_face( lf, csi->fs, can_use_bitmap, FALSE ))) return face;
     return NULL;
 }
 

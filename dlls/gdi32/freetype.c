@@ -2217,9 +2217,8 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont )
 {
     struct gdi_font *font;
     Face *face;
-    Family *family;
     INT height;
-    BOOL can_use_bitmap, want_vertical;
+    BOOL can_use_bitmap;
     LOGFONTW lf;
     CHARSETINFO csi;
     FMAT2 dcmat;
@@ -2279,61 +2278,12 @@ static struct gdi_font * CDECL freetype_SelectFont( DC *dc, HFONT hfont )
     if(!strcmpiW(lf.lfFaceName, SymbolW))
         lf.lfCharSet = SYMBOL_CHARSET;
 
-    if(!TranslateCharsetInfo((DWORD*)(INT_PTR)lf.lfCharSet, &csi, TCI_SRCCHARSET)) {
-        switch(lf.lfCharSet) {
-	case DEFAULT_CHARSET:
-	    csi.fs.fsCsb[0] = 0;
-	    break;
-	default:
-	    FIXME("Untranslated charset %d\n", lf.lfCharSet);
-	    csi.fs.fsCsb[0] = 0;
-	    break;
-	}
-    }
-
-    family = NULL;
-    if(lf.lfFaceName[0] != '\0') {
-        LPWSTR FaceName = lf.lfFaceName;
-        int subst_charset;
-        const WCHAR *subst = get_gdi_font_subst( FaceName, lf.lfCharSet, &subst_charset );
-
-	if(subst) {
-	    TRACE("substituting %s,%d -> %s,%d\n", debugstr_w(FaceName), lf.lfCharSet,
-		  debugstr_w(subst), (subst_charset != -1) ? subst_charset : lf.lfCharSet);
-	    if (subst_charset != -1) lf.lfCharSet = subst_charset;
-            orig_name = FaceName;
-	}
-
-        if ((face = find_matching_face_by_name( FaceName, subst, &lf, csi.fs, can_use_bitmap )))
-            goto found_face;
-    }
-
-    orig_name = NULL; /* substitution is no longer relevant */
-
-    /* If requested charset was DEFAULT_CHARSET then try using charset
-       corresponding to the current ansi codepage */
-    if (!csi.fs.fsCsb[0])
+    if (!(face = find_matching_face( &lf, &csi, can_use_bitmap, &orig_name )))
     {
-        INT acp = GetACP();
-        if(!TranslateCharsetInfo((DWORD*)(INT_PTR)acp, &csi, TCI_SRCCODEPAGE)) {
-            FIXME("TCI failed on codepage %d\n", acp);
-            csi.fs.fsCsb[0] = 0;
-        } else
-            lf.lfCharSet = csi.ciCharset;
+        FIXME("can't find a single appropriate font - bailing\n");
+        return NULL;
     }
-
-    want_vertical = (lf.lfFaceName[0] == '@');
-
-    if ((face = find_any_face( &lf, csi.fs, can_use_bitmap, want_vertical ))) goto found_face;
-    csi.fs.fsCsb[0] = 0;
-    if ((face = find_any_face( &lf, csi.fs, can_use_bitmap, want_vertical ))) goto found_face;
-    if (want_vertical && (face = find_any_face( &lf, csi.fs, can_use_bitmap, FALSE ))) goto found_face;
-    FIXME("can't find a single appropriate font - bailing\n");
-    return NULL;
-
-found_face:
     height = lf.lfHeight;
-    family = face->family;
 
     TRACE("not in cache\n");
     font = create_gdi_font( face, orig_name, &lf );
@@ -2345,7 +2295,7 @@ found_face:
         font->codepage = csi.ciACP;
     }
     else
-        font->charset = get_nearest_charset( family->family_name, face, &font->codepage );
+        font->charset = get_nearest_charset( face->family->family_name, face, &font->codepage );
 
     TRACE( "Chosen: %s (%s/%p:%u)\n", debugstr_w(face->full_name), debugstr_w(face->file),
            face->data_ptr, face->face_index );
