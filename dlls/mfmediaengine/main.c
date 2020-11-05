@@ -1338,7 +1338,9 @@ static HRESULT WINAPI media_engine_GetNativeVideoSize(IMFMediaEngine *iface, DWO
 
     EnterCriticalSection(&engine->cs);
 
-    if (!engine->video_frame.size.cx && !engine->video_frame.size.cy)
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (!engine->video_frame.size.cx && !engine->video_frame.size.cy)
         hr = E_FAIL;
     else
     {

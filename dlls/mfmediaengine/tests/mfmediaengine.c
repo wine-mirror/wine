@@ -379,7 +379,6 @@ todo_wine
     ok(!state, "Unexpected state.\n");
 
     hr = IMFMediaEngine_GetNativeVideoSize(media_engine, &cx, &cy);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaEngine_GetVideoAspectRatio(media_engine, &cx, &cy);
