@@ -146,6 +146,7 @@ MAKE_FUNCPTR(FT_Library_Version);
 MAKE_FUNCPTR(FT_Load_Glyph);
 MAKE_FUNCPTR(FT_Load_Sfnt_Table);
 MAKE_FUNCPTR(FT_Matrix_Multiply);
+MAKE_FUNCPTR(FT_MulDiv);
 #ifdef FT_MULFIX_INLINED
 #define pFT_MulFix FT_MULFIX_INLINED
 #else
@@ -1509,6 +1510,7 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Load_Glyph)
     LOAD_FUNCPTR(FT_Load_Sfnt_Table)
     LOAD_FUNCPTR(FT_Matrix_Multiply)
+    LOAD_FUNCPTR(FT_MulDiv)
 #ifndef FT_MULFIX_INLINED
     LOAD_FUNCPTR(FT_MulFix)
 #endif
@@ -1635,11 +1637,9 @@ static LONG calc_ppem_for_height(FT_Face ft_face, LONG height)
     if(height > 0) {
         USHORT windescent = get_fixed_windescent(pOS2->usWinDescent);
         if(pOS2->usWinAscent + windescent == 0)
-            ppem = MulDiv(ft_face->units_per_EM, height,
-                          pHori->Ascender - pHori->Descender);
+            ppem = pFT_MulDiv(ft_face->units_per_EM, height, pHori->Ascender - pHori->Descender);
         else
-            ppem = MulDiv(ft_face->units_per_EM, height,
-                          pOS2->usWinAscent + windescent);
+            ppem = pFT_MulDiv(ft_face->units_per_EM, height, pOS2->usWinAscent + windescent);
         if(ppem > MAX_PPEM) {
             WARN("Ignoring too large height %d, ppem %d\n", height, ppem);
             ppem = 1;
@@ -2340,7 +2340,7 @@ static BOOL get_transform_matrices( struct gdi_font *font, BOOL vertical, const 
         FT_Matrix rotation_mat;
         FT_Vector angle;
 
-        pFT_Vector_Unit( &angle, MulDiv( 1 << 16, font->lf.lfOrientation, 10 ) );
+        pFT_Vector_Unit( &angle, pFT_MulDiv( 1 << 16, font->lf.lfOrientation, 10 ) );
         rotation_mat.xx =  angle.x;
         rotation_mat.xy = -angle.y;
         rotation_mat.yx =  angle.y;
@@ -2401,7 +2401,7 @@ static BOOL get_bold_glyph_outline(FT_GlyphSlot glyph, LONG ppem, FT_Glyph_Metri
     if(!pFT_Outline_Embolden)
         return FALSE;
 
-    strength = MulDiv(ppem, 1 << 6, 24);
+    strength = pFT_MulDiv(ppem, 1 << 6, 24);
     err = pFT_Outline_Embolden(&glyph->outline, strength);
     if(err) {
         TRACE("FT_Ouline_Embolden returns %d\n", err);
@@ -2452,8 +2452,7 @@ static FT_Vector get_advance_metric(struct gdi_font *incoming_font, struct gdi_f
     if (freetype_set_outline_text_metrics(incoming_font) &&
         !(incoming_font->otm.otmTextMetrics.tmPitchAndFamily & TMPF_FIXED_PITCH)) {
         UINT avg_advance;
-        em_scale = MulDiv(incoming_font->ppem, 1 << 16,
-                          get_ft_face(incoming_font)->units_per_EM);
+        em_scale = pFT_MulDiv(incoming_font->ppem, 1 << 16, get_ft_face(incoming_font)->units_per_EM);
         avg_advance = pFT_MulFix(incoming_font->ntmAvgWidth, em_scale);
         fixed_pitch_full = (avg_advance > 0 &&
                             (base_advance + 63) >> 6 ==
@@ -3395,7 +3394,7 @@ static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font )
                                   strlenW( (WCHAR *)font->otm.otmpFaceName ) + 1 +
                                   strlenW( (WCHAR *)font->otm.otmpFullName ) + 1) * sizeof(WCHAR);
 
-    em_scale = (FT_Fixed)MulDiv(font->ppem, 1 << 16, ft_face->units_per_EM);
+    em_scale = (FT_Fixed)pFT_MulDiv(font->ppem, 1 << 16, ft_face->units_per_EM);
 
     pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
     if(!pOS2) {
@@ -3651,7 +3650,7 @@ static BOOL CDECL freetype_get_char_width_info( struct gdi_font *font, struct ch
 
     if ((pHori = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_hhea)))
     {
-        FT_Fixed em_scale = MulDiv(font->ppem, 1 << 16, ft_face->units_per_EM);
+        FT_Fixed em_scale = pFT_MulDiv(font->ppem, 1 << 16, ft_face->units_per_EM);
         info->lsb = (SHORT)pFT_MulFix(pHori->min_Left_Side_Bearing,  em_scale);
         info->rsb = (SHORT)pFT_MulFix(pHori->min_Right_Side_Bearing, em_scale);
         return TRUE;
