@@ -325,6 +325,20 @@ typedef HRESULT (__stdcall *PD2D1_EFFECT_FACTORY)(IUnknown **effect);
 
 [
     object,
+    uuid(82237326-8111-4f7c-bcf4-b5c1175564fe),
+    local,
+]
+interface ID2D1GdiMetafileSink : IUnknown
+{
+    HRESULT ProcessRecord(
+        [in] DWORD type,
+        [in, optional] const void *data,
+        [in] DWORD size
+    );
+}
+
+[
+    object,
     uuid(483473d7-cd46-4f9d-9d3a-3112aa80159d),
     local,
 ]
