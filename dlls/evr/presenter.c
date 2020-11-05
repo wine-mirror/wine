@@ -71,6 +71,7 @@ struct video_presenter
 
     IDirect3DDeviceManager9 *device_manager;
     struct streaming_thread thread;
+    IMFMediaType *media_type;
     UINT reset_token;
     HWND video_window;
     MFVideoNormalizedRect src_rect;
@@ -168,6 +169,38 @@ static void video_presenter_get_native_video_size(struct video_presenter *presen
     IMFMediaType_Release(media_type);
 }
 
+static void video_presenter_reset_media_type(struct video_presenter *presenter)
+{
+    if (presenter->media_type)
+        IMFMediaType_Release(presenter->media_type);
+    presenter->media_type = NULL;
+
+    /* FIXME: release samples pool */
+}
+
+static HRESULT video_presenter_set_media_type(struct video_presenter *presenter, IMFMediaType *media_type)
+{
+    unsigned int flags;
+
+    if (!media_type)
+    {
+        video_presenter_reset_media_type(presenter);
+        return S_OK;
+    }
+
+    if (presenter->media_type && IMFMediaType_IsEqual(presenter->media_type, media_type, &flags) == S_OK)
+        return S_OK;
+
+    video_presenter_reset_media_type(presenter);
+
+    /* FIXME: allocate samples pool */
+
+    presenter->media_type = media_type;
+    IMFMediaType_AddRef(presenter->media_type);
+
+    return S_OK;
+}
+
 static HRESULT video_presenter_invalidate_media_type(struct video_presenter *presenter)
 {
     IMFMediaType *media_type;
@@ -182,16 +215,16 @@ static HRESULT video_presenter_invalidate_media_type(struct video_presenter *pre
 
         /* FIXME: potentially adjust frame size */
 
-        if (SUCCEEDED(IMFTransform_SetOutputType(presenter->mixer, 0, media_type, MFT_SET_TYPE_TEST_ONLY)))
-        {
-            /* FIXME: should keep a copy internally too */
+        hr = IMFTransform_SetOutputType(presenter->mixer, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
 
-            hr = IMFTransform_SetOutputType(presenter->mixer, 0, media_type, 0);
-            IMFMediaType_Release(media_type);
-            break;
-        }
+        if (SUCCEEDED(hr))
+            hr = video_presenter_set_media_type(presenter, media_type);
 
+        hr = IMFTransform_SetOutputType(presenter->mixer, 0, media_type, 0);
         IMFMediaType_Release(media_type);
+
+        if (SUCCEEDED(hr))
+            break;
     }
 
     return hr;
@@ -478,11 +511,29 @@ static HRESULT WINAPI video_presenter_ProcessMessage(IMFVideoPresenter *iface, M
     return hr;
 }
 
-static HRESULT WINAPI video_presenter_GetCurrentMediaType(IMFVideoPresenter *iface, IMFVideoMediaType **media_type)
+static HRESULT WINAPI video_presenter_GetCurrentMediaType(IMFVideoPresenter *iface,
+        IMFVideoMediaType **media_type)
 {
-    FIXME("%p, %p.\n", iface, media_type);
+    struct video_presenter *presenter = impl_from_IMFVideoPresenter(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, media_type);
+
+    EnterCriticalSection(&presenter->cs);
+
+    if (presenter->state == PRESENTER_STATE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (!presenter->media_type)
+        hr = MF_E_NOT_INITIALIZED;
+    else
+    {
+        hr = IMFMediaType_QueryInterface(presenter->media_type, &IID_IMFVideoMediaType,
+                (void **)media_type);
+    }
+
+    LeaveCriticalSection(&presenter->cs);
+
+    return hr;
 }
 
 static const IMFVideoPresenterVtbl video_presenter_vtbl =
