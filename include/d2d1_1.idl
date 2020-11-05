@@ -631,6 +631,23 @@ interface ID2D1CommandList : ID2D1Image
 
 [
     object,
+    uuid(2c1d867d-c290-41c8-ae7e-34a98702e9a5),
+    local,
+]
+interface ID2D1PrintControl : IUnknown
+{
+    HRESULT AddPage(
+        [in] ID2D1CommandList *list,
+        [in] D2D_SIZE_F size,
+        [in, optional] IStream *stream,
+        [out, optional] D2D1_TAG *tag1,
+        [out, optional] D2D1_TAG *tag2
+    );
+    HRESULT Close();
+}
+
+[
+    object,
     uuid(e8f7fe7a-191c-466d-ad95-975678bda998),
     local,
 ]
