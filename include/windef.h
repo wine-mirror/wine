@@ -31,6 +31,10 @@
 # endif /* STRICT */
 #endif /* NO_STRICT */
 
+#ifndef __has_attribute
+#define __has_attribute(x) 0
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -62,7 +66,7 @@ extern "C" {
 #   error You need to define __stdcall for your compiler
 #  endif
 # elif defined(__x86_64__) && defined (__GNUC__)
-#  if (__GNUC__ > 5) || ((__GNUC__ == 5) && (__GNUC_MINOR__ >= 3))
+#  if __has_attribute(__force_align_arg_pointer__)
 #   define __stdcall __attribute__((ms_abi)) __attribute__((__force_align_arg_pointer__))
 #  else
 #   define __stdcall __attribute__((ms_abi))
@@ -84,7 +88,7 @@ extern "C" {
 #   define __cdecl __attribute__((__cdecl__))
 #  endif
 # elif defined(__x86_64__) && defined (__GNUC__)
-#  if (__GNUC__ > 5) || ((__GNUC__ == 5) && (__GNUC_MINOR__ >= 3))
+#  if __has_attribute(__force_align_arg_pointer__)
 #   define __cdecl __attribute__((ms_abi)) __attribute__((__force_align_arg_pointer__))
 #  else
 #   define __cdecl __attribute__((ms_abi))
