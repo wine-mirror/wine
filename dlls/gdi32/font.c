@@ -2772,11 +2772,11 @@ static BOOL enum_face_charsets( const struct gdi_font_family *family, struct gdi
     {
         struct gdi_font_enum_data *data;
 
-        if (!(data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) ))) return FALSE;
-        if (!get_face_enum_data( face, &data->elf, &data->ntm ))
+        if (!(data = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data) )) ||
+            !get_face_enum_data( face, &data->elf, &data->ntm ))
         {
             HeapFree( GetProcessHeap(), 0, data );
-            return FALSE;
+            return TRUE;
         }
         face->cached_enum_data = data;
     }
