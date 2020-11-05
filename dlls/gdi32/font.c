@@ -940,11 +940,11 @@ static struct gdi_font_face *create_face( struct gdi_font_family *family, const 
     return NULL;
 }
 
-int add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
-                  const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
-                  void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,
-                  DWORD ntmflags, DWORD version, DWORD flags,
-                  const struct bitmap_font_size *size )
+static int CDECL add_gdi_face( const WCHAR *family_name, const WCHAR *second_name,
+                               const WCHAR *style, const WCHAR *fullname, const WCHAR *file,
+                               void *data_ptr, SIZE_T data_size, UINT index, FONTSIGNATURE fs,
+                               DWORD ntmflags, DWORD version, DWORD flags,
+                               const struct bitmap_font_size *size )
 {
     struct gdi_font_face *face;
     struct gdi_font_family *family;
@@ -8040,6 +8040,8 @@ static void load_registry_fonts(void)
     RegCloseKey( hkey );
 }
 
+static const struct font_callback_funcs callback_funcs = { add_gdi_face };
+
 /***********************************************************************
  *              font_init
  */
@@ -8055,7 +8057,7 @@ void font_init(void)
 
     init_font_options();
     update_codepage();
-    if (!WineEngInit( &font_funcs )) return;
+    if (__wine_init_unix_lib( gdi32_module, DLL_PROCESS_ATTACH, &callback_funcs, &font_funcs )) return;
 
     if (!(mutex = CreateMutexW( NULL, FALSE, mutex_nameW ))) return;
     WaitForSingleObject( mutex, INFINITE );

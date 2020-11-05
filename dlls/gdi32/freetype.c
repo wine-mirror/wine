@@ -21,6 +21,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 #include "wine/port.h"
 
@@ -102,15 +106,14 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "gdi_private.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/list.h"
 
 #include "resource.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(font);
-
 #ifdef HAVE_FREETYPE
+
+WINE_DEFAULT_DEBUG_CHANNEL(font);
 
 #ifndef HAVE_FT_TRUETYPEENGINETYPE
 typedef enum
@@ -247,7 +250,7 @@ static inline FT_Face get_ft_face( struct gdi_font *font )
     return ((struct font_private_data *)font->private)->ft_face;
 }
 
-static const struct font_backend_funcs font_funcs;
+static const struct font_callback_funcs *callback_funcs;
 
 struct font_mapping
 {
@@ -1028,9 +1031,10 @@ static int AddFaceToList(FT_Face ft_face, const WCHAR *file, void *data_ptr, SIZ
     if (!FT_IS_SCALABLE( ft_face )) get_bitmap_size( ft_face, &size );
     if (!HIWORD( flags )) flags |= ADDFONT_AA_FLAGS( default_aa_flags );
 
-    ret = add_gdi_face( family_name, second_name, style_name, full_name, file, data_ptr, data_size,
-                        face_index, fs, get_ntm_flags( ft_face ), get_font_version( ft_face ),
-                        flags, FT_IS_SCALABLE(ft_face) ? NULL : &size );
+    ret = callback_funcs->add_gdi_face( family_name, second_name, style_name, full_name, file,
+                                        data_ptr, data_size, face_index, fs, get_ntm_flags( ft_face ),
+                                        get_font_version( ft_face ), flags,
+                                        FT_IS_SCALABLE(ft_face) ? NULL : &size );
 
     TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
           fs.fsCsb[0], fs.fsCsb[1], fs.fsUsb[0], fs.fsUsb[1], fs.fsUsb[2], fs.fsUsb[3]);
@@ -1660,24 +1664,6 @@ static void CDECL freetype_load_fonts(void)
 #elif defined(__ANDROID__)
     ReadFontDir("/system/fonts", TRUE);
 #endif
-}
-
-/*************************************************************
- *    WineEngInit
- *
- * Initialize FreeType library and create a list of available faces
- */
-BOOL WineEngInit( const struct font_backend_funcs **funcs )
-{
-    if(!init_freetype()) return FALSE;
-
-#ifdef SONAME_LIBFONTCONFIG
-    init_fontconfig();
-#endif
-
-    *funcs = &font_funcs;
-    NtQueryDefaultLocale( FALSE, &system_lcid );
-    return TRUE;
 }
 
 /* Some fonts have large usWinDescent values, as a result of storing signed short
@@ -3471,10 +3457,10 @@ static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font )
         FIXME("failed to read full_nameW for font %s!\n", wine_dbgstr_w((WCHAR *)font->otm.otmpFamilyName));
         font->otm.otmpFullName = (char *)strdupW(fake_nameW);
     }
-    needed = sizeof(font->otm) + (strlenW( (WCHAR *)font->otm.otmpFamilyName ) + 1 +
-                                  strlenW( (WCHAR *)font->otm.otmpStyleName ) + 1 +
-                                  strlenW( (WCHAR *)font->otm.otmpFaceName ) + 1 +
-                                  strlenW( (WCHAR *)font->otm.otmpFullName ) + 1) * sizeof(WCHAR);
+    needed = sizeof(font->otm) + (lstrlenW( (WCHAR *)font->otm.otmpFamilyName ) + 1 +
+                                  lstrlenW( (WCHAR *)font->otm.otmpStyleName ) + 1 +
+                                  lstrlenW( (WCHAR *)font->otm.otmpFaceName ) + 1 +
+                                  lstrlenW( (WCHAR *)font->otm.otmpFullName ) + 1) * sizeof(WCHAR);
 
     em_scale = (FT_Fixed)pFT_MulDiv(font->ppem, 1 << 16, ft_face->units_per_EM);
 
@@ -4044,13 +4030,18 @@ static const struct font_backend_funcs font_funcs =
     freetype_destroy_font
 };
 
-#else /* HAVE_FREETYPE */
-
-/*************************************************************************/
-
-BOOL WineEngInit( const struct font_backend_funcs **funcs )
+NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
 {
-    return FALSE;
+    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
+
+    callback_funcs = ptr_in;
+    if (!init_freetype()) return STATUS_DLL_NOT_FOUND;
+#ifdef SONAME_LIBFONTCONFIG
+    init_fontconfig();
+#endif
+    NtQueryDefaultLocale( FALSE, &system_lcid );
+    *(const struct font_backend_funcs **)ptr_out = &font_funcs;
+    return STATUS_SUCCESS;
 }
 
 #endif /* HAVE_FREETYPE */
