@@ -93,6 +93,8 @@
 #endif
 #endif /* HAVE_FT2BUILD_H */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -1097,6 +1099,57 @@ fail:
     return NULL;
 }
 
+static WCHAR *get_dos_file_name( LPCSTR str )
+{
+    WCHAR *buffer;
+    SIZE_T len = strlen(str) + 1;
+
+    len += 8;  /* \??\unix prefix */
+    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return NULL;
+    if (wine_unix_to_nt_file_name( str, buffer, &len ))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+        return NULL;
+    }
+    if (buffer[5] == ':')
+    {
+        /* get rid of the \??\ prefix */
+        /* FIXME: should implement RtlNtPathNameToDosPathName and use that instead */
+        memmove( buffer, buffer + 4, (len - 4) * sizeof(WCHAR) );
+    }
+    else buffer[1] = '\\';
+    return buffer;
+}
+
+static char *get_unix_file_name( LPCWSTR dosW )
+{
+    UNICODE_STRING nt_name;
+    NTSTATUS status;
+    SIZE_T size = 256;
+    char *buffer;
+
+    if (!RtlDosPathNameToNtPathName_U( dosW, &nt_name, NULL, NULL )) return NULL;
+    for (;;)
+    {
+        if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+        {
+            RtlFreeUnicodeString( &nt_name );
+            return NULL;
+        }
+        status = wine_nt_to_unix_file_name( &nt_name, buffer, &size, FILE_OPEN_IF );
+        if (status != STATUS_BUFFER_TOO_SMALL) break;
+        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+    }
+    RtlFreeUnicodeString( &nt_name );
+    if (status && status != STATUS_NO_SUCH_FILE)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, buffer );
+        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( status );
+        return NULL;
+    }
+    return buffer;
+}
+
 static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *font_data_ptr,
                          DWORD font_data_size, DWORD flags)
 {
@@ -1129,7 +1182,7 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
     }
 #endif /* HAVE_CARBON_CARBON_H */
 
-    if (!dos_name && unix_name) dos_name = filename = wine_get_dos_file_name( unix_name );
+    if (!dos_name && unix_name) dos_name = filename = get_dos_file_name( unix_name );
 
     do {
         ft_face = new_ft_face( unix_name, font_data_ptr, font_data_size, face_index, flags & ADDFONT_ALLOW_BITMAP );
@@ -1157,7 +1210,7 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
 static INT CDECL freetype_add_font( const WCHAR *file, DWORD flags )
 {
     int ret = 0;
-    char *unixname = wine_get_unix_file_name( file );
+    char *unixname = get_unix_file_name( file );
 
     if (unixname)
     {
@@ -2110,7 +2163,7 @@ static BOOL CDECL freetype_load_font( struct gdi_font *font )
 
     if (font->file[0])
     {
-        char *filename = wine_get_unix_file_name( font->file );
+        char *filename = get_unix_file_name( font->file );
         data->mapping = map_font_file( filename );
         HeapFree( GetProcessHeap(), 0, filename );
         if (!data->mapping)
