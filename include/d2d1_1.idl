@@ -21,7 +21,6 @@ import "d2d1.idl";
 interface ID2D1DeviceContext;
 interface ID2D1StrokeStyle1;
 interface ID2D1PathGeometry1;
-interface ID2D1GdiMetafile;
 interface ID2D1Properties;
 interface IPrintDocumentPackageTarget;
 interface ID2D1PrintControl;
@@ -334,6 +333,21 @@ interface ID2D1GdiMetafileSink : IUnknown
         [in] DWORD type,
         [in, optional] const void *data,
         [in] DWORD size
+    );
+}
+
+[
+    object,
+    uuid(2f543dc3-cfc1-4211-864f-cfd91c6f3395),
+    local,
+]
+interface ID2D1GdiMetafile : ID2D1Resource
+{
+    HRESULT Stream(
+        [in] ID2D1GdiMetafileSink *sink
+    );
+    HRESULT GetBounds(
+        [out] D2D1_RECT_F *bounds
     );
 }
 
