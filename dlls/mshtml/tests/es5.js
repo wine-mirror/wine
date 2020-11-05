@@ -949,3 +949,8 @@ sync_test("preventExtensions", function() {
 
     ok(Object.preventExtensions.length === 1, "Object.preventExtensions.length = " + Object.preventExtensions.length);
 });
+
+sync_test("head_setter", function() {
+    document.head = "";
+    ok(typeof(document.head) === "object", "typeof(document.head) = " + typeof(document.head));
+});

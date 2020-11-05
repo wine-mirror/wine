@@ -1101,6 +1101,10 @@ static HRESULT builtin_propput(DispatchEx *This, func_info_t *func, DISPPARAMS *
     }
 
     if(!func->put_vtbl_off) {
+        if(dispex_compat_mode(This) >= COMPAT_MODE_IE9) {
+            WARN("No setter\n");
+            return S_OK;
+        }
         FIXME("No setter\n");
         return E_FAIL;
     }
