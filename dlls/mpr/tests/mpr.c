@@ -31,7 +31,7 @@ static void test_WNetGetUniversalName(void)
     DWORD drive_type, info_size, fail_size;
     char driveA[] = "A:\\";
     char driveandpathA[] = "A:\\file.txt";
-    WCHAR driveW[] = {'A',':','\\',0};
+    WCHAR driveW[] = L"A:\\";
 
     for(; *driveA <= 'Z'; ++*driveA,  ++*driveandpathA, ++*driveW){
         drive_type = GetDriveTypeW(driveW);
@@ -96,7 +96,7 @@ static void test_WNetGetRemoteName(void)
     DWORD drive_type, info_size, fail_size;
     char driveA[] = "A:\\";
     char driveandpathA[] = "A:\\file.txt";
-    WCHAR driveW[] = {'A',':','\\',0};
+    WCHAR driveW[] = L"A:\\";
 
     for(; *driveA <= 'Z'; ++*driveA,  ++*driveandpathA, ++*driveW){
         drive_type = GetDriveTypeW(driveW);

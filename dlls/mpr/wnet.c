@@ -126,29 +126,22 @@ static PWNetProviderTable providerTable;
 
 static void _tryLoadProvider(PCWSTR provider)
 {
-    static const WCHAR servicePrefix[] = { 'S','y','s','t','e','m','\\',
-     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-     'S','e','r','v','i','c','e','s','\\',0 };
-    static const WCHAR serviceFmt[] = { '%','s','%','s','\\',
-     'N','e','t','w','o','r','k','P','r','o','v','i','d','e','r',0 };
     WCHAR serviceName[MAX_PATH];
     HKEY hKey;
 
     TRACE("%s\n", debugstr_w(provider));
-    swprintf(serviceName, ARRAY_SIZE(serviceName), serviceFmt, servicePrefix, provider);
+    swprintf(serviceName, ARRAY_SIZE(serviceName), L"%s%s\\NetworkProvider",
+             L"System\\CurrentControlSet\\Services\\", provider);
     serviceName[ARRAY_SIZE(serviceName) - 1] = '\0';
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, serviceName, 0, KEY_READ, &hKey) ==
      ERROR_SUCCESS)
     {
-        static const WCHAR szProviderPath[] = { 'P','r','o','v','i','d','e','r',
-         'P','a','t','h',0 };
         WCHAR providerPath[MAX_PATH];
         DWORD type, size = sizeof(providerPath);
 
-        if (RegQueryValueExW(hKey, szProviderPath, NULL, &type,
-         (LPBYTE)providerPath, &size) == ERROR_SUCCESS && (type == REG_SZ || type == REG_EXPAND_SZ))
+        if (RegQueryValueExW(hKey, L"ProviderPath", NULL, &type, (BYTE *)providerPath, &size) == ERROR_SUCCESS
+            && (type == REG_SZ || type == REG_EXPAND_SZ))
         {
-            static const WCHAR szProviderName[] = { 'N','a','m','e',0 };
             PWSTR name = NULL;
 
             if (type == REG_EXPAND_SZ)
@@ -158,12 +151,12 @@ static void _tryLoadProvider(PCWSTR provider)
             }
 
             size = 0;
-            RegQueryValueExW(hKey, szProviderName, NULL, NULL, NULL, &size);
+            RegQueryValueExW(hKey, L"Name", NULL, NULL, NULL, &size);
             if (size)
             {
                 name = HeapAlloc(GetProcessHeap(), 0, size);
-                if (RegQueryValueExW(hKey, szProviderName, NULL, &type,
-                 (LPBYTE)name, &size) != ERROR_SUCCESS || type != REG_SZ)
+                if (RegQueryValueExW(hKey, L"Name", NULL, &type, (BYTE *)name, &size) != ERROR_SUCCESS
+                    || type != REG_SZ)
                 {
                     HeapFree(GetProcessHeap(), 0, name);
                     name = NULL;
@@ -252,7 +245,7 @@ static void _tryLoadProvider(PCWSTR provider)
             }
         }
         else
-            WARN("Couldn't open value %s\n", debugstr_w(szProviderPath));
+            WARN("Couldn't open value ProviderPath\n");
         RegCloseKey(hKey);
     }
     else
@@ -262,21 +255,14 @@ static void _tryLoadProvider(PCWSTR provider)
 
 void wnetInit(HINSTANCE hInstDll)
 {
-    static const WCHAR providerOrderKey[] = { 'S','y','s','t','e','m','\\',
-     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-     'C','o','n','t','r','o','l','\\',
-     'N','e','t','w','o','r','k','P','r','o','v','i','d','e','r','\\',
-     'O','r','d','e','r',0 };
-     static const WCHAR providerOrder[] = { 'P','r','o','v','i','d','e','r',
-      'O','r','d','e','r',0 };
     HKEY hKey;
 
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, providerOrderKey, 0, KEY_READ, &hKey)
-     == ERROR_SUCCESS)
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\NetworkProvider\\Order",
+                      0, KEY_READ, &hKey) == ERROR_SUCCESS)
     {
         DWORD size = 0;
 
-        RegQueryValueExW(hKey, providerOrder, NULL, NULL, NULL, &size);
+        RegQueryValueExW(hKey, L"ProviderOrder", NULL, NULL, NULL, &size);
         if (size)
         {
             PWSTR providers = HeapAlloc(GetProcessHeap(), 0, size);
@@ -285,8 +271,8 @@ void wnetInit(HINSTANCE hInstDll)
             {
                 DWORD type;
 
-                if (RegQueryValueExW(hKey, providerOrder, NULL, &type,
-                 (LPBYTE)providers, &size) == ERROR_SUCCESS && type == REG_SZ)
+                if (RegQueryValueExW(hKey, L"ProviderOrder", NULL, &type, (BYTE *)providers, &size)
+                    == ERROR_SUCCESS && type == REG_SZ)
                 {
                     PWSTR ptr;
                     DWORD numToAllocate;
@@ -1391,10 +1377,6 @@ static DWORD _enumerateConnectedW(PWNetEnumerator enumerator, DWORD* user_count,
     return ret;
 }
 
-static const WCHAR connectionType[] = { 'C','o','n','n','e','c','t','i','o','n','T','y','p','e',0 };
-static const WCHAR providerName[] = { 'P','r','o','v','i','d','e','r','N','a','m','e',0 };
-static const WCHAR remotePath[] = { 'R','e','m','o','t','e','P','a','t','h',0 };
-
 static WCHAR *get_reg_str(HKEY hkey, const WCHAR *value, DWORD *len)
 {
     DWORD type;
@@ -1457,7 +1439,7 @@ static DWORD _enumeratorRememberedW(PWNetEnumerator enumerator, DWORD* user_coun
         if (size_left > 0)
         {
             size = sizeof(DWORD);
-            RegQueryValueExW(connection, connectionType, NULL, NULL, (BYTE *)&net_buffer->dwType, &size);
+            RegQueryValueExW(connection, L"ConnectionType", NULL, NULL, (BYTE *)&net_buffer->dwType, &size);
             if (type != RESOURCETYPE_ANY && net_buffer->dwType != type)
             {
                 size_left += sizeof(NETRESOURCEW);
@@ -1485,7 +1467,7 @@ static DWORD _enumeratorRememberedW(PWNetEnumerator enumerator, DWORD* user_coun
         }
 
         registry_size = 0;
-        registry_string = get_reg_str(connection, providerName, &registry_size);
+        registry_string = get_reg_str(connection, L"ProviderName", &registry_size);
         if (registry_string)
         {
             full_size += registry_size;
@@ -1504,7 +1486,7 @@ static DWORD _enumeratorRememberedW(PWNetEnumerator enumerator, DWORD* user_coun
         }
 
         registry_size = 0;
-        registry_string = get_reg_str(connection, remotePath, &registry_size);
+        registry_string = get_reg_str(connection, L"RemotePath", &registry_size);
         if (registry_string)
         {
             full_size += registry_size;
@@ -2003,9 +1985,6 @@ static DWORD wnet_use_provider( struct use_connection_context *ctxt, NETRESOURCE
     return ret;
 }
 
-static const WCHAR providerType[] = { 'P','r','o','v','i','d','e','r','T','y','p','e',0 };
-static const WCHAR userName[] = { 'U','s','e','r','N','a','m','e',0 };
-
 static DWORD wnet_use_connection( struct use_connection_context *ctxt )
 {
     WNetProvider *provider = NULL;
@@ -2082,15 +2061,16 @@ static DWORD wnet_use_connection( struct use_connection_context *ctxt )
             {
                 DWORD dword_arg = RESOURCETYPE_DISK;
                 DWORD len = (lstrlenW(provider->name) + 1) * sizeof(WCHAR);
-                static const WCHAR empty[1] = {0};
 
-                RegSetValueExW(network, connectionType, 0, REG_DWORD, (const BYTE *)&dword_arg, sizeof(DWORD));
-                RegSetValueExW(network, providerName, 0, REG_SZ, (const BYTE *)provider->name, len);
-                RegSetValueExW(network, providerType, 0, REG_DWORD, (const BYTE *)&provider->dwNetType, sizeof(DWORD));
+                RegSetValueExW(network, L"ConnectionType", 0, REG_DWORD, (const BYTE *)&dword_arg,
+                               sizeof(DWORD));
+                RegSetValueExW(network, L"ProviderName", 0, REG_SZ, (const BYTE *)provider->name, len);
+                RegSetValueExW(network, L"ProviderType", 0, REG_DWORD,
+                               (const BYTE *)&provider->dwNetType, sizeof(DWORD));
                 len = (lstrlenW(netres.lpRemoteName) + 1) * sizeof(WCHAR);
-                RegSetValueExW(network, remotePath, 0, REG_SZ, (const BYTE *)netres.lpRemoteName, len);
-                len = sizeof(empty);
-                RegSetValueExW(network, userName, 0, REG_SZ, (const BYTE *)empty, len);
+                RegSetValueExW(network, L"RemotePath", 0, REG_SZ, (const BYTE *)netres.lpRemoteName, len);
+                len = sizeof(L"");
+                RegSetValueExW(network, L"UserName", 0, REG_SZ, (const BYTE *) L"", len);
                 RegCloseKey(network);
             }
 
