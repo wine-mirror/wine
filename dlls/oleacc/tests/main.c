@@ -715,12 +715,17 @@ static void test_AccessibleChildren(IAccessible *acc)
 
         ok(V_VT(children) == VT_I4, "V_VT(children) = %d\n", V_VT(children));
         ok(V_I4(children) == 1, "V_I4(children) = %d\n", V_I4(children));
+
+        ok(count == 1, "count = %d\n", count);
+        ok(V_VT(children+1) == VT_EMPTY, "V_VT(children+1) = %d\n", V_VT(children+1));
     }else {
         ok(V_VT(children) == VT_DISPATCH, "V_VT(children) = %d\n", V_VT(children));
         IDispatch_Release(V_DISPATCH(children));
+
+        ok(count == 2, "count = %d\n", count);
+        ok(V_VT(children+1) == VT_DISPATCH, "V_VT(children+1) = %d\n", V_VT(children+1));
+        IDispatch_Release(V_DISPATCH(children+1));
     }
-    ok(count == 1, "count = %d\n", count);
-    ok(V_VT(children+1) == VT_EMPTY, "V_VT(children+1) = %d\n", V_VT(children+1));
     ok(V_VT(children+2) == VT_EMPTY, "V_VT(children+2) = %d\n", V_VT(children+2));
 }
 
@@ -730,7 +735,7 @@ static void test_default_client_accessible_object(void)
     IDispatch *disp;
     IOleWindow *ow;
     IEnumVARIANT *ev;
-    HWND chld, hwnd, hwnd2;
+    HWND chld, btn, hwnd, hwnd2;
     HRESULT hr;
     VARIANT vid, v;
     BSTR str;
@@ -739,16 +744,59 @@ static void test_default_client_accessible_object(void)
     LONG l, left, top, width, height;
     ULONG fetched;
 
-    hwnd = CreateWindowA("oleacc_test", "test &t &junk", WS_OVERLAPPEDWINDOW,
+    hwnd = CreateWindowA("oleacc_test", "wnd &t &junk", WS_OVERLAPPEDWINDOW,
             0, 0, 100, 100, NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "CreateWindow failed\n");
-    chld = CreateWindowA("static", "message", WS_CHILD | WS_VISIBLE,
+    chld = CreateWindowA("static", "static &t &junk", WS_CHILD | WS_VISIBLE,
             0, 0, 50, 50, hwnd, NULL, NULL, NULL);
     ok(chld != NULL, "CreateWindow failed\n");
+    btn = CreateWindowA("BUTTON", "btn &t &junk", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+            50, 0, 50, 50, hwnd, NULL, NULL, NULL);
+    ok(btn != NULL, "CreateWindow failed\n");
 
     hr = CreateStdAccessibleObject(NULL, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
     ok(hr == E_FAIL, "got %x\n", hr);
 
+
+    /* Test the static message */
+    hr = CreateStdAccessibleObject(chld, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
+    ok(hr == S_OK, "got %x\n", hr);
+
+    V_VT(&vid) = VT_I4;
+    V_I4(&vid) = CHILDID_SELF;
+    hr = IAccessible_get_accName(acc, vid, &str);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(!lstrcmpW(str, L"static t &junk"), "name = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hr = IAccessible_get_accKeyboardShortcut(acc, vid, &str);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(!lstrcmpW(str, L"Alt+t"), "str = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IAccessible_Release(acc);
+
+
+    /* Test the button */
+    hr = CreateStdAccessibleObject(btn, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
+    ok(hr == S_OK, "got %x\n", hr);
+
+    V_VT(&vid) = VT_I4;
+    V_I4(&vid) = CHILDID_SELF;
+    hr = IAccessible_get_accName(acc, vid, &str);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(!lstrcmpW(str, L"btn t &junk"), "name = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hr = IAccessible_get_accKeyboardShortcut(acc, vid, &str);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(!lstrcmpW(str, L"Alt+t"), "str = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IAccessible_Release(acc);
+
+
+    /* Now we can test and destroy the top-level window */
     hr = CreateStdAccessibleObject(hwnd, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
     ok(hr == S_OK, "got %x\n", hr);
 
@@ -764,7 +812,7 @@ static void test_default_client_accessible_object(void)
 
     hr = IAccessible_get_accChildCount(acc, &l);
     ok(hr == S_OK, "got %x\n", hr);
-    ok(l == 1, "l = %d\n", l);
+    ok(l == 2, "l = %d\n", l);
 
     V_VT(&vid) = VT_I4;
     V_I4(&vid) = CHILDID_SELF;
@@ -810,7 +858,15 @@ static void test_default_client_accessible_object(void)
     V_I4(&vid) = CHILDID_SELF;
     hr = IAccessible_get_accName(acc, vid, &str);
     ok(hr == S_OK, "got %x\n", hr);
-    ok(!lstrcmpW(str, L"test t &junk"), "name = %s\n", wine_dbgstr_w(str));
+    /* Window names don't have keyboard shortcuts */
+    todo_wine ok(!lstrcmpW(str, L"wnd &t &junk") ||
+       broken(!lstrcmpW(str, L"wnd t &junk")), /* Windows < 10 1607 */
+       "name = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hr = IAccessible_get_accKeyboardShortcut(acc, vid, &str);
+    todo_wine ok(hr == S_FALSE || broken(hr == S_OK), "got %x\n", hr);
+    todo_wine ok(str == NULL || broken(!lstrcmpW(str, L"Alt+t")), "str = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     V_I4(&vid) = 1;
@@ -849,11 +905,6 @@ static void test_default_client_accessible_object(void)
     hr = IAccessible_get_accHelp(acc, vid, &str);
     ok(hr == S_FALSE, "got %x\n", hr);
     ok(!str, "str != NULL\n");
-
-    hr = IAccessible_get_accKeyboardShortcut(acc, vid, &str);
-    ok(hr == S_OK, "got %x\n", hr);
-    ok(!lstrcmpW(str, L"Alt+t"), "str = %s\n", wine_dbgstr_w(str));
-    SysFreeString(str);
 
     str = (void*)0xdeadbeef;
     hr = IAccessible_get_accDefaultAction(acc, vid, &str);
