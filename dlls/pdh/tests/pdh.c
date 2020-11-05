@@ -71,18 +71,12 @@ static void init_function_ptrs( void )
     GETFUNCPTR( PdhValidatePathExW )
 }
 
-static const WCHAR processor_time[] =
-    {'%',' ','P','r','o','c','e','s','s','o','r',' ','T','i','m','e',0};
-static const WCHAR uptime[] =
-    {'S','y','s','t','e','m',' ','U','p',' ','T','i','m','e',0};
+static const WCHAR processor_time[] = L"% Processor Time";
+static const WCHAR uptime[] = L"System Up Time";
 
-static const WCHAR system_uptime[] =
-    {'\\','S','y','s','t','e','m','\\','S','y','s','t','e','m',' ','U','p',' ','T','i','m','e',0};
-static const WCHAR nonexistent_counter[] =
-    {'\\','S','y','s','t','e','m','\\','S','y','s','t','e','m',' ','D','o','w','n',' ','T','i','m','e',0};
-static const WCHAR percentage_processor_time[] =
-    {'\\','P','r','o','c','e','s','s','o','r','(','_','T','o','t','a','l',')',
-     '\\','%',' ','P','r','o','c','e','s','s','o','r',' ','T','i','m','e',0};
+static const WCHAR system_uptime[] = L"\\System\\System Up Time";
+static const WCHAR nonexistent_counter[] = L"\\System\\System Down Time";
+static const WCHAR percentage_processor_time[] = L"\\Processor(_Total)\\% Processor Time";
 
 static void test_PdhOpenQueryA( void )
 {
@@ -630,15 +624,13 @@ static void test_PdhLookupPerfIndexByNameW( void )
     PDH_STATUS ret;
     DWORD index;
 
-    static const WCHAR no_counter[] = {'N','o',' ','C','o','u','n','t','e','r',0};
-
     ret = PdhLookupPerfIndexByNameW( NULL, NULL, NULL );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhLookupPerfIndexByNameW failed 0x%08x\n", ret);
 
     ret = PdhLookupPerfIndexByNameW( NULL, NULL, &index );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhLookupPerfIndexByNameW failed 0x%08x\n", ret);
 
-    ret = PdhLookupPerfIndexByNameW( NULL, no_counter, &index );
+    ret = PdhLookupPerfIndexByNameW( NULL, L"No Counter", &index );
     ok(ret == PDH_STRING_NOT_FOUND, "PdhLookupPerfIndexByNameW failed 0x%08x\n", ret);
 
     ret = PdhLookupPerfIndexByNameW( NULL, processor_time, NULL );
@@ -744,16 +736,13 @@ static void test_PdhValidatePathW( void )
 {
     PDH_STATUS ret;
 
-    static const WCHAR empty[] = {0};
-    static const WCHAR system[] = {'\\','S','y','s','t','e','m',0};
-
     ret = PdhValidatePathW( NULL );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhValidatePathW failed 0x%08x\n", ret);
 
-    ret = PdhValidatePathW( empty );
+    ret = PdhValidatePathW( L"" );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhValidatePathW failed 0x%08x\n", ret);
 
-    ret = PdhValidatePathW( system );
+    ret = PdhValidatePathW( L"\\System" );
     ok(ret == PDH_CSTATUS_BAD_COUNTERNAME, "PdhValidatePathW failed 0x%08x\n", ret);
 
     ret = PdhValidatePathW( uptime );
@@ -793,16 +782,13 @@ static void test_PdhValidatePathExW( void )
 {
     PDH_STATUS ret;
 
-    static const WCHAR empty[] = {0};
-    static const WCHAR system[] = {'\\','S','y','s','t','e','m',0};
-
     ret = pPdhValidatePathExW( NULL, NULL );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhValidatePathExW failed 0x%08x\n", ret);
 
-    ret = pPdhValidatePathExW( NULL, empty );
+    ret = pPdhValidatePathExW( NULL, L"" );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhValidatePathExW failed 0x%08x\n", ret);
 
-    ret = pPdhValidatePathExW( NULL, system );
+    ret = pPdhValidatePathExW( NULL, L"\\System" );
     ok(ret == PDH_CSTATUS_BAD_COUNTERNAME, "PdhValidatePathExW failed 0x%08x\n", ret);
 
     ret = pPdhValidatePathExW( NULL, uptime );

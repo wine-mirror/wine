@@ -174,12 +174,6 @@ struct source
     LONGLONG        base;                           /* samples per second */
 };
 
-static const WCHAR path_processor_time[] =
-    {'\\','P','r','o','c','e','s','s','o','r','(','_','T','o','t','a','l',')',
-     '\\','%',' ','P','r','o','c','e','s','s','o','r',' ','T','i','m','e',0};
-static const WCHAR path_uptime[] =
-    {'\\','S','y','s','t','e','m', '\\', 'S','y','s','t','e','m',' ','U','p',' ','T','i','m','e',0};
-
 static void CALLBACK collect_processor_time( struct counter *counter )
 {
     counter->two.largevalue = 500000; /* FIXME */
@@ -202,8 +196,8 @@ static void CALLBACK collect_uptime( struct counter *counter )
 /* counter source registry */
 static const struct source counter_sources[] =
 {
-    { 6,    path_processor_time,    collect_processor_time,     TYPE_PROCESSOR_TIME,    -5,     10000000 },
-    { 674,  path_uptime,            collect_uptime,             TYPE_UPTIME,            -3,     1000 }
+    { 6,   L"\\Processor(_Total)\\% Processor Time", collect_processor_time, TYPE_PROCESSOR_TIME, -5, 10000000 },
+    { 674, L"\\System\\System Up Time",              collect_uptime,         TYPE_UPTIME,         -3, 1000 }
 };
 
 static BOOL is_local_machine( const WCHAR *name, DWORD len )
@@ -1181,12 +1175,6 @@ done:
 PDH_STATUS WINAPI PdhMakeCounterPathW( PDH_COUNTER_PATH_ELEMENTS_W *e, LPWSTR buffer,
                                        LPDWORD buflen, DWORD flags )
 {
-    static const WCHAR bslash[] = {'\\',0};
-    static const WCHAR fslash[] = {'/',0};
-    static const WCHAR lparen[] = {'(',0};
-    static const WCHAR rparen[] = {')',0};
-    static const WCHAR fmt[]    = {'#','%','u',0};
-
     WCHAR path[PDH_MAX_COUNTER_NAME], instance[12];
     PDH_STATUS ret = ERROR_SUCCESS;
     DWORD len;
@@ -1201,26 +1189,25 @@ PDH_STATUS WINAPI PdhMakeCounterPathW( PDH_COUNTER_PATH_ELEMENTS_W *e, LPWSTR bu
     path[0] = 0;
     if (e->szMachineName)
     {
-        lstrcatW(path, bslash);
-        lstrcatW(path, bslash);
+        lstrcatW(path, L"\\\\");
         lstrcatW(path, e->szMachineName);
     }
-    lstrcatW(path, bslash);
+    lstrcatW(path, L"\\");
     lstrcatW(path, e->szObjectName);
     if (e->szInstanceName)
     {
-        lstrcatW(path, lparen);
+        lstrcatW(path, L"(");
         if (e->szParentInstance)
         {
             lstrcatW(path, e->szParentInstance);
-            lstrcatW(path, fslash);
+            lstrcatW(path, L"/");
         }
         lstrcatW(path, e->szInstanceName);
-        swprintf(instance, ARRAY_SIZE(instance), fmt, e->dwInstanceIndex);
+        swprintf(instance, ARRAY_SIZE(instance), L"#%u", e->dwInstanceIndex);
         lstrcatW(path, instance);
-        lstrcatW(path, rparen);
+        lstrcatW(path, L")");
     }
-    lstrcatW(path, bslash);
+    lstrcatW(path, L"\\");
     lstrcatW(path, e->szCounterName);
 
     len = lstrlenW(path) + 1;
