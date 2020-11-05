@@ -74,7 +74,8 @@ enum media_engine_flags
 struct video_frame
 {
     LONGLONG pts;
-    UINT64 size;
+    SIZE size;
+    SIZE ratio;
     TOPOID node_id;
 };
 
@@ -252,15 +253,34 @@ static struct media_engine *impl_from_IMFSampleGrabberSinkCallback(IMFSampleGrab
     return CONTAINING_RECORD(iface, struct media_engine, grabber_callback);
 }
 
+static unsigned int get_gcd(unsigned int a, unsigned int b)
+{
+    unsigned int m;
+
+    while (b)
+    {
+        m = a % b;
+        a = b;
+        b = m;
+    }
+
+    return a;
+}
+
 static void media_engine_get_frame_size(struct media_engine *engine, IMFTopology *topology)
 {
     IMFMediaTypeHandler *handler;
     IMFMediaType *media_type;
     IMFStreamDescriptor *sd;
     IMFTopologyNode *node;
+    unsigned int gcd;
+    UINT64 size;
     HRESULT hr;
 
-    engine->video_frame.size = 0;
+    engine->video_frame.size.cx = 0;
+    engine->video_frame.size.cy = 0;
+    engine->video_frame.ratio.cx = 1;
+    engine->video_frame.ratio.cy = 1;
 
     if (FAILED(IMFTopology_GetNodeByID(topology, engine->video_frame.node_id, &node)))
         return;
@@ -284,7 +304,17 @@ static void media_engine_get_frame_size(struct media_engine *engine, IMFTopology
         return;
     }
 
-    IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &engine->video_frame.size);
+    IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &size);
+
+    engine->video_frame.size.cx = size >> 32;
+    engine->video_frame.size.cy = size;
+
+    if ((gcd = get_gcd(engine->video_frame.size.cx, engine->video_frame.size.cy)))
+    {
+        engine->video_frame.ratio.cx = engine->video_frame.size.cx / gcd;
+        engine->video_frame.ratio.cy = engine->video_frame.size.cy / gcd;
+    }
+
     IMFMediaType_Release(media_type);
 }
 
@@ -533,8 +563,7 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
     UINT64 duration;
     HRESULT hr;
 
-    engine->video_frame.node_id = 0;
-    engine->video_frame.size = 0;
+    memset(&engine->video_frame, 0, sizeof(engine->video_frame));
 
     if (FAILED(hr = IMFMediaSource_CreatePresentationDescriptor(source, &pd)))
         return hr;
@@ -1309,12 +1338,12 @@ static HRESULT WINAPI media_engine_GetNativeVideoSize(IMFMediaEngine *iface, DWO
 
     EnterCriticalSection(&engine->cs);
 
-    if (!engine->video_frame.size)
+    if (!engine->video_frame.size.cx && !engine->video_frame.size.cy)
         hr = E_FAIL;
     else
     {
-        if (cx) *cx = engine->video_frame.size >> 32;
-        if (cy) *cy = engine->video_frame.size;
+        if (cx) *cx = engine->video_frame.size.cx;
+        if (cy) *cy = engine->video_frame.size.cy;
     }
 
     LeaveCriticalSection(&engine->cs);
@@ -1324,9 +1353,29 @@ static HRESULT WINAPI media_engine_GetNativeVideoSize(IMFMediaEngine *iface, DWO
 
 static HRESULT WINAPI media_engine_GetVideoAspectRatio(IMFMediaEngine *iface, DWORD *cx, DWORD *cy)
 {
-    FIXME("(%p, %p, %p): stub.\n", iface, cx, cy);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, cx, cy);
+
+    if (!cx && !cy)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&engine->cs);
+
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (!engine->video_frame.size.cx && !engine->video_frame.size.cy)
+        hr = E_FAIL;
+    else
+    {
+        if (cx) *cx = engine->video_frame.ratio.cx;
+        if (cy) *cy = engine->video_frame.ratio.cy;
+    }
+
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_Shutdown(IMFMediaEngine *iface)
