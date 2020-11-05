@@ -262,6 +262,7 @@ struct font_mapping
 static struct list mappings_list = LIST_INIT( mappings_list );
 
 static UINT default_aa_flags;
+static LCID system_lcid;
 
 static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font );
 static BOOL CDECL freetype_set_bitmap_text_metrics( struct gdi_font *font );
@@ -923,7 +924,6 @@ static inline void get_bitmap_size( FT_Face ft_face, struct bitmap_font_size *fa
 static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
 {
     TT_OS2 *os2;
-    CHARSETINFO csi;
     FT_WinFNT_HeaderRec winfnt_header;
     int i;
 
@@ -956,8 +956,25 @@ static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
         {
             TRACE("pix_h %d charset %d dpi %dx%d pt %d\n", winfnt_header.pixel_height, winfnt_header.charset,
                   winfnt_header.vertical_resolution,winfnt_header.horizontal_resolution, winfnt_header.nominal_point_size);
-            if (TranslateCharsetInfo( (DWORD*)(UINT_PTR)winfnt_header.charset, &csi, TCI_SRCCHARSET ))
-                *fs = csi.fs;
+            switch (winfnt_header.charset)
+            {
+            case ANSI_CHARSET:        fs->fsCsb[0] = FS_LATIN1; break;
+            case EASTEUROPE_CHARSET:  fs->fsCsb[0] = FS_LATIN2; break;
+            case RUSSIAN_CHARSET:     fs->fsCsb[0] = FS_CYRILLIC; break;
+            case GREEK_CHARSET:       fs->fsCsb[0] = FS_GREEK; break;
+            case TURKISH_CHARSET:     fs->fsCsb[0] = FS_TURKISH; break;
+            case HEBREW_CHARSET:      fs->fsCsb[0] = FS_HEBREW; break;
+            case ARABIC_CHARSET:      fs->fsCsb[0] = FS_ARABIC; break;
+            case BALTIC_CHARSET:      fs->fsCsb[0] = FS_BALTIC; break;
+            case VIETNAMESE_CHARSET:  fs->fsCsb[0] = FS_VIETNAMESE; break;
+            case THAI_CHARSET:        fs->fsCsb[0] = FS_THAI; break;
+            case SHIFTJIS_CHARSET:    fs->fsCsb[0] = FS_JISJAPAN; break;
+            case GB2312_CHARSET:      fs->fsCsb[0] = FS_CHINESESIMP; break;
+            case HANGEUL_CHARSET:     fs->fsCsb[0] = FS_WANSUNG; break;
+            case CHINESEBIG5_CHARSET: fs->fsCsb[0] = FS_CHINESETRAD; break;
+            case JOHAB_CHARSET:       fs->fsCsb[0] = FS_JOHAB; break;
+            case SYMBOL_CHARSET:      fs->fsCsb[0] = FS_SYMBOL; break;
+            }
         }
     }
 
@@ -988,21 +1005,23 @@ static int AddFaceToList(FT_Face ft_face, const WCHAR *file, void *data_ptr, SIZ
     struct bitmap_font_size size;
     FONTSIGNATURE fs;
     int ret;
-    WCHAR *family_name = ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
+    WCHAR *family_name = ft_face_get_family_name( ft_face, system_lcid );
     WCHAR *second_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) );
-    WCHAR *style_name = ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
-    WCHAR *full_name = ft_face_get_full_name( ft_face, GetSystemDefaultLangID() );
+    WCHAR *style_name = ft_face_get_style_name( ft_face, system_lcid );
+    WCHAR *full_name = ft_face_get_full_name( ft_face, system_lcid );
 
     /* try to find another secondary name, preferring the lowest langids */
-    if (!strcmpiW( family_name, second_name ))
+    if (!RtlCompareUnicodeStrings( family_name, lstrlenW(family_name),
+                                   second_name, lstrlenW(second_name), TRUE ))
     {
         HeapFree( GetProcessHeap(), 0, second_name );
         second_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL) );
-    }
-    if (!strcmpiW( family_name, second_name ))
-    {
-        HeapFree( GetProcessHeap(), 0, second_name );
-        second_name = NULL;
+        if (!RtlCompareUnicodeStrings( family_name, lstrlenW(family_name),
+                                       second_name, lstrlenW(second_name), TRUE ))
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, second_name );
+            second_name = NULL;
+        }
     }
 
     get_fontsig( ft_face, &fs );
@@ -1657,6 +1676,7 @@ BOOL WineEngInit( const struct font_backend_funcs **funcs )
 #endif
 
     *funcs = &font_funcs;
+    NtQueryDefaultLocale( FALSE, &system_lcid );
     return TRUE;
 }
 
@@ -2189,9 +2209,9 @@ static BOOL CDECL freetype_load_font( struct gdi_font *font )
     if (!font->aa_flags) font->aa_flags = ADDFONT_AA_FLAGS( default_aa_flags );
     if (!font->otm.otmpFamilyName)
     {
-        font->otm.otmpFamilyName = (char *)ft_face_get_family_name( ft_face, GetSystemDefaultLCID() );
-        font->otm.otmpStyleName = (char *)ft_face_get_style_name( ft_face, GetSystemDefaultLangID() );
-        font->otm.otmpFaceName = (char *)ft_face_get_full_name( ft_face, GetSystemDefaultLangID() );
+        font->otm.otmpFamilyName = (char *)ft_face_get_family_name( ft_face, system_lcid );
+        font->otm.otmpStyleName = (char *)ft_face_get_style_name( ft_face, system_lcid );
+        font->otm.otmpFaceName = (char *)ft_face_get_full_name( ft_face, system_lcid );
     }
 
     if (font->scalable)
@@ -3445,8 +3465,7 @@ static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font )
 
     /* note: we store actual pointers in the names instead of offsets,
        they are fixed up when returned to the app */
-    if (!(font->otm.otmpFullName = (char *)get_face_name( ft_face, TT_NAME_ID_UNIQUE_ID,
-                                                          GetSystemDefaultLangID() )))
+    if (!(font->otm.otmpFullName = (char *)get_face_name( ft_face, TT_NAME_ID_UNIQUE_ID, system_lcid )))
     {
         static const WCHAR fake_nameW[] = {'f','a','k','e',' ','n','a','m','e', 0};
         FIXME("failed to read full_nameW for font %s!\n", wine_dbgstr_w((WCHAR *)font->otm.otmpFamilyName));
@@ -3547,12 +3566,14 @@ static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font )
     if (face_has_symbol_charmap(ft_face) || (pOS2->usFirstCharIndex >= 0xf000 && pOS2->usFirstCharIndex < 0xf100))
     {
         TM.tmFirstChar = 0;
-        switch(GetACP())
+        switch (PRIMARYLANGID(system_lcid))
         {
-        case 1255: /* Hebrew */
+        case LANG_HEBREW:
             TM.tmLastChar = 0xf896;
             break;
-        case 1257: /* Baltic */
+        case LANG_ESTONIAN:
+        case LANG_LATVIAN:
+        case LANG_LITHUANIAN:
             TM.tmLastChar = 0xf8fd;
             break;
         default:
