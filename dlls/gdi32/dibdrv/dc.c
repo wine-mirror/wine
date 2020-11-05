@@ -23,10 +23,16 @@
 #include "gdi_private.h"
 #include "dibdrv.h"
 
+#include "wine/wgl.h"
+#include "wine/wgl_driver.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dib);
+
+extern BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT fmt, const PIXELFORMATDESCRIPTOR *pfd );
+
+static const struct osmesa_funcs *osmesa_funcs;
 
 static const DWORD bit_fields_888[3] = {0xff0000, 0x00ff00, 0x0000ff};
 static const DWORD bit_fields_555[3] = {0x7c00, 0x03e0, 0x001f};
@@ -389,6 +395,229 @@ static UINT CDECL dibdrv_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
     if (flags & DCB_DISABLE) pdev->bounds = NULL;
     else if (flags & DCB_ENABLE) pdev->bounds = rect;
     return DCB_RESET;  /* we don't have device-specific bounds */
+}
+
+struct wgl_context;
+
+static const struct
+{
+    BYTE color_bits;
+    BYTE red_bits, red_shift;
+    BYTE green_bits, green_shift;
+    BYTE blue_bits, blue_shift;
+    BYTE alpha_bits, alpha_shift;
+    BYTE accum_bits;
+    BYTE depth_bits;
+    BYTE stencil_bits;
+} pixel_formats[] =
+{
+    { 32,  8, 16, 8, 8,  8, 0,  8, 24,  16, 32, 8 },
+    { 32,  8, 16, 8, 8,  8, 0,  8, 24,  16, 16, 8 },
+    { 32,  8, 0,  8, 8,  8, 16, 8, 24,  16, 32, 8 },
+    { 32,  8, 0,  8, 8,  8, 16, 8, 24,  16, 16, 8 },
+    { 32,  8, 8,  8, 16, 8, 24, 8, 0,   16, 32, 8 },
+    { 32,  8, 8,  8, 16, 8, 24, 8, 0,   16, 16, 8 },
+    { 24,  8, 0,  8, 8,  8, 16, 0, 0,   16, 32, 8 },
+    { 24,  8, 0,  8, 8,  8, 16, 0, 0,   16, 16, 8 },
+    { 24,  8, 16, 8, 8,  8, 0,  0, 0,   16, 32, 8 },
+    { 24,  8, 16, 8, 8,  8, 0,  0, 0,   16, 16, 8 },
+    { 16,  5, 0,  6, 5,  5, 11, 0, 0,   16, 32, 8 },
+    { 16,  5, 0,  6, 5,  5, 11, 0, 0,   16, 16, 8 },
+};
+
+/**********************************************************************
+ *	     dibdrv_wglDescribePixelFormat
+ */
+static int WINAPI dibdrv_wglDescribePixelFormat( HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr )
+{
+    int ret = ARRAY_SIZE( pixel_formats );
+
+    if (!descr) return ret;
+    if (fmt <= 0 || fmt > ret) return 0;
+    if (size < sizeof(*descr)) return 0;
+
+    memset( descr, 0, sizeof(*descr) );
+    descr->nSize            = sizeof(*descr);
+    descr->nVersion         = 1;
+    descr->dwFlags          = PFD_SUPPORT_GDI | PFD_SUPPORT_OPENGL | PFD_DRAW_TO_BITMAP | PFD_GENERIC_FORMAT;
+    descr->iPixelType       = PFD_TYPE_RGBA;
+    descr->cColorBits       = pixel_formats[fmt - 1].color_bits;
+    descr->cRedBits         = pixel_formats[fmt - 1].red_bits;
+    descr->cRedShift        = pixel_formats[fmt - 1].red_shift;
+    descr->cGreenBits       = pixel_formats[fmt - 1].green_bits;
+    descr->cGreenShift      = pixel_formats[fmt - 1].green_shift;
+    descr->cBlueBits        = pixel_formats[fmt - 1].blue_bits;
+    descr->cBlueShift       = pixel_formats[fmt - 1].blue_shift;
+    descr->cAlphaBits       = pixel_formats[fmt - 1].alpha_bits;
+    descr->cAlphaShift      = pixel_formats[fmt - 1].alpha_shift;
+    descr->cAccumBits       = pixel_formats[fmt - 1].accum_bits;
+    descr->cAccumRedBits    = pixel_formats[fmt - 1].accum_bits / 4;
+    descr->cAccumGreenBits  = pixel_formats[fmt - 1].accum_bits / 4;
+    descr->cAccumBlueBits   = pixel_formats[fmt - 1].accum_bits / 4;
+    descr->cAccumAlphaBits  = pixel_formats[fmt - 1].accum_bits / 4;
+    descr->cDepthBits       = pixel_formats[fmt - 1].depth_bits;
+    descr->cStencilBits     = pixel_formats[fmt - 1].stencil_bits;
+    descr->cAuxBuffers      = 0;
+    descr->iLayerType       = PFD_MAIN_PLANE;
+    return ret;
+}
+
+/***********************************************************************
+ *		dibdrv_wglCopyContext
+ */
+static BOOL WINAPI dibdrv_wglCopyContext( struct wgl_context *src, struct wgl_context *dst, UINT mask )
+{
+    FIXME( "not supported yet\n" );
+    return FALSE;
+}
+
+/***********************************************************************
+ *		dibdrv_wglCreateContext
+ */
+static struct wgl_context * WINAPI dibdrv_wglCreateContext( HDC hdc )
+{
+    PIXELFORMATDESCRIPTOR descr;
+    int format = GetPixelFormat( hdc );
+
+    if (!format) format = 1;
+    if (!DescribePixelFormat( hdc, format, sizeof(descr), &descr )) return NULL;
+
+    if (!osmesa_funcs) return NULL;
+    return osmesa_funcs->create_context( hdc, &descr );
+}
+
+/***********************************************************************
+ *		dibdrv_wglDeleteContext
+ */
+static BOOL WINAPI dibdrv_wglDeleteContext( struct wgl_context *context )
+{
+    if (!osmesa_funcs) return FALSE;
+    return osmesa_funcs->delete_context( context );
+}
+
+/***********************************************************************
+ *		dibdrv_wglGetPixelFormat
+ */
+static int WINAPI dibdrv_wglGetPixelFormat( HDC hdc )
+{
+    DC *dc = get_dc_ptr( hdc );
+    int ret = 0;
+
+    if (dc)
+    {
+        ret = dc->pixel_format;
+        release_dc_ptr( dc );
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *		dibdrv_wglGetProcAddress
+ */
+static PROC WINAPI dibdrv_wglGetProcAddress( const char *proc )
+{
+    if (!strncmp( proc, "wgl", 3 )) return NULL;
+    if (!osmesa_funcs) return NULL;
+    return osmesa_funcs->get_proc_address( proc );
+}
+
+/***********************************************************************
+ *		dibdrv_wglMakeCurrent
+ */
+static BOOL WINAPI dibdrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
+{
+    HBITMAP bitmap;
+    BITMAPOBJ *bmp;
+    dib_info dib;
+    BOOL ret = FALSE;
+
+    if (!osmesa_funcs) return FALSE;
+    if (!context) return osmesa_funcs->make_current( NULL, NULL, 0, 0, 0, 0 );
+
+    bitmap = GetCurrentObject( hdc, OBJ_BITMAP );
+    bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
+    if (!bmp) return FALSE;
+
+    if (init_dib_info_from_bitmapobj( &dib, bmp ))
+    {
+        char *bits;
+        int width = dib.rect.right - dib.rect.left;
+        int height = dib.rect.bottom - dib.rect.top;
+
+        if (dib.stride < 0)
+            bits = (char *)dib.bits.ptr + (dib.rect.bottom - 1) * dib.stride;
+        else
+            bits = (char *)dib.bits.ptr + dib.rect.top * dib.stride;
+        bits += dib.rect.left * dib.bit_count / 8;
+
+        TRACE( "context %p bits %p size %ux%u\n", context, bits, width, height );
+
+        ret = osmesa_funcs->make_current( context, bits, width, height, dib.bit_count, dib.stride );
+    }
+    GDI_ReleaseObj( bitmap );
+    return ret;
+}
+
+/**********************************************************************
+ *	     dibdrv_wglSetPixelFormat
+ */
+static BOOL WINAPI dibdrv_wglSetPixelFormat( HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr )
+{
+    if (fmt <= 0 || fmt > ARRAY_SIZE( pixel_formats )) return FALSE;
+    return GdiSetPixelFormat( hdc, fmt, descr );
+}
+
+/***********************************************************************
+ *		dibdrv_wglShareLists
+ */
+static BOOL WINAPI dibdrv_wglShareLists( struct wgl_context *org, struct wgl_context *dest )
+{
+    FIXME( "not supported yet\n" );
+    return FALSE;
+}
+
+/***********************************************************************
+ *		dibdrv_wglSwapBuffers
+ */
+static BOOL WINAPI dibdrv_wglSwapBuffers( HDC hdc )
+{
+    return TRUE;
+}
+
+static struct opengl_funcs opengl_funcs =
+{
+    {
+        dibdrv_wglCopyContext,         /* p_wglCopyContext */
+        dibdrv_wglCreateContext,       /* p_wglCreateContext */
+        dibdrv_wglDeleteContext,       /* p_wglDeleteContext */
+        dibdrv_wglDescribePixelFormat, /* p_wglDescribePixelFormat */
+        dibdrv_wglGetPixelFormat,      /* p_wglGetPixelFormat */
+        dibdrv_wglGetProcAddress,      /* p_wglGetProcAddress */
+        dibdrv_wglMakeCurrent,         /* p_wglMakeCurrent */
+        dibdrv_wglSetPixelFormat,      /* p_wglSetPixelFormat */
+        dibdrv_wglShareLists,          /* p_wglShareLists */
+        dibdrv_wglSwapBuffers,         /* p_wglSwapBuffers */
+    }
+};
+
+/**********************************************************************
+ *	     dibdrv_wine_get_wgl_driver
+ */
+static struct opengl_funcs * CDECL dibdrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
+{
+    if (version != WINE_WGL_DRIVER_VERSION)
+    {
+        ERR( "version mismatch, opengl32 wants %u but dibdrv has %u\n", version, WINE_WGL_DRIVER_VERSION );
+        return NULL;
+    }
+    if (!osmesa_funcs && __wine_init_unix_lib( gdi32_module, DLL_PROCESS_ATTACH, NULL, &osmesa_funcs ))
+    {
+        static int warned;
+        if (!warned++) ERR( "OSMesa not available, no OpenGL bitmap support\n" );
+        return (void *)-1;
+    }
+    osmesa_funcs->get_gl_funcs( &opengl_funcs );
+    return &opengl_funcs;
 }
 
 const struct gdi_dc_funcs dib_driver =

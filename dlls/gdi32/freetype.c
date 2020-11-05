@@ -4030,10 +4030,8 @@ static const struct font_backend_funcs font_funcs =
     freetype_destroy_font
 };
 
-NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
+static NTSTATUS init_freetype_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
 {
-    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
-
     callback_funcs = ptr_in;
     if (!init_freetype()) return STATUS_DLL_NOT_FOUND;
 #ifdef SONAME_LIBFONTCONFIG
@@ -4044,4 +4042,19 @@ NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *p
     return STATUS_SUCCESS;
 }
 
+#else /* HAVE_FREETYPE */
+
+static NTSTATUS init_freetype_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
+{
+    return STATUS_DLL_NOT_FOUND;
+}
+
 #endif /* HAVE_FREETYPE */
+
+NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
+{
+    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
+
+    if (ptr_in) return init_freetype_lib( module, reason, ptr_in, ptr_out );
+    else return init_opengl_lib( module, reason, ptr_in, ptr_out );
+}

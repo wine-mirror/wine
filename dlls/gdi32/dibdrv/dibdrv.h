@@ -159,7 +159,6 @@ extern BOOL     CDECL dibdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *
                                          PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL dibdrv_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL dibdrv_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern struct opengl_funcs * CDECL dibdrv_wine_get_wgl_driver( PHYSDEV dev, UINT version ) DECLSPEC_HIDDEN;
 
 static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )
 {
@@ -290,3 +289,13 @@ static inline const RGBQUAD *get_dib_color_table( const dib_info *dib )
 {
     return dib->color_table ? dib->color_table : get_default_color_table( dib->bit_count );
 }
+
+struct osmesa_funcs
+{
+    void (CDECL *get_gl_funcs)( struct opengl_funcs *funcs );
+    struct wgl_context * (CDECL *create_context)( HDC hdc, const PIXELFORMATDESCRIPTOR *descr );
+    BOOL (CDECL *delete_context)( struct wgl_context *context );
+    PROC (CDECL *get_proc_address)( const char *proc );
+    BOOL (CDECL *make_current)( struct wgl_context *context, void *bits,
+                                int width, int height, int bpp, int stride );
+};

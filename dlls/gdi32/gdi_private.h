@@ -261,6 +261,8 @@ extern DWORD put_image_into_bitmap( BITMAPOBJ *bmp, HRGN clip, BITMAPINFO *info,
                                     struct bitblt_coords *dst ) DECLSPEC_HIDDEN;
 extern void dibdrv_set_window_surface( DC *dc, struct window_surface *surface ) DECLSPEC_HIDDEN;
 
+extern NTSTATUS init_opengl_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out ) DECLSPEC_HIDDEN;
+
 /* driver.c */
 extern const struct gdi_dc_funcs null_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs dib_driver DECLSPEC_HIDDEN;

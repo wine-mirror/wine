@@ -18,20 +18,25 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 #include "wine/port.h"
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "gdi_private.h"
 #include "dibdrv.h"
+#include "wine/wgl.h"
+#include "wine/wgl_driver.h"
+
+#ifdef SONAME_LIBOSMESA
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dib);
-
-#ifdef SONAME_LIBOSMESA
-
-#include "wine/wgl.h"
-#include "wine/wgl_driver.h"
 
 #define OSMESA_COLOR_INDEX	GL_COLOR_INDEX
 #define OSMESA_RGBA		GL_RGBA
@@ -45,12 +50,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(dib);
 
 typedef struct osmesa_context *OSMesaContext;
 
-extern BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT fmt, const PIXELFORMATDESCRIPTOR *pfd );
-
 struct wgl_context
 {
     OSMesaContext context;
-    int           format;
+    UINT          format;
 };
 
 static struct opengl_funcs opengl_funcs;
@@ -66,33 +69,6 @@ static void * (*pOSMesaGetProcAddress)( const char *funcName );
 static GLboolean (*pOSMesaMakeCurrent)( OSMesaContext ctx, void *buffer, GLenum type,
                                         GLsizei width, GLsizei height );
 static void (*pOSMesaPixelStore)( GLint pname, GLint value );
-
-static const struct
-{
-    UINT mesa;
-    BYTE color_bits;
-    BYTE red_bits, red_shift;
-    BYTE green_bits, green_shift;
-    BYTE blue_bits, blue_shift;
-    BYTE alpha_bits, alpha_shift;
-    BYTE accum_bits;
-    BYTE depth_bits;
-    BYTE stencil_bits;
-} pixel_formats[] =
-{
-    { OSMESA_BGRA,     32,  8, 16, 8, 8,  8, 0,  8, 24,  16, 32, 8 },
-    { OSMESA_BGRA,     32,  8, 16, 8, 8,  8, 0,  8, 24,  16, 16, 8 },
-    { OSMESA_RGBA,     32,  8, 0,  8, 8,  8, 16, 8, 24,  16, 32, 8 },
-    { OSMESA_RGBA,     32,  8, 0,  8, 8,  8, 16, 8, 24,  16, 16, 8 },
-    { OSMESA_ARGB,     32,  8, 8,  8, 16, 8, 24, 8, 0,   16, 32, 8 },
-    { OSMESA_ARGB,     32,  8, 8,  8, 16, 8, 24, 8, 0,   16, 16, 8 },
-    { OSMESA_RGB,      24,  8, 0,  8, 8,  8, 16, 0, 0,   16, 32, 8 },
-    { OSMESA_RGB,      24,  8, 0,  8, 8,  8, 16, 0, 0,   16, 16, 8 },
-    { OSMESA_BGR,      24,  8, 16, 8, 8,  8, 0,  0, 0,   16, 32, 8 },
-    { OSMESA_BGR,      24,  8, 16, 8, 8,  8, 0,  0, 0,   16, 16, 8 },
-    { OSMESA_RGB_565,  16,  5, 0,  6, 5,  5, 11, 0, 0,   16, 32, 8 },
-    { OSMESA_RGB_565,  16,  5, 0,  6, 5,  5, 11, 0, 0,   16, 16, 8 },
-};
 
 static BOOL init_opengl(void)
 {
@@ -140,119 +116,75 @@ failed:
     return FALSE;
 }
 
-/**********************************************************************
- *	     dibdrv_wglDescribePixelFormat
+/***********************************************************************
+ *		osmesa_get_gl_funcs
  */
-static int WINAPI dibdrv_wglDescribePixelFormat( HDC hdc, int fmt, UINT size, PIXELFORMATDESCRIPTOR *descr )
+static void CDECL osmesa_get_gl_funcs( struct opengl_funcs *funcs )
 {
-    int ret = ARRAY_SIZE( pixel_formats );
-
-    if (!descr) return ret;
-    if (fmt <= 0 || fmt > ret) return 0;
-    if (size < sizeof(*descr)) return 0;
-
-    memset( descr, 0, sizeof(*descr) );
-    descr->nSize            = sizeof(*descr);
-    descr->nVersion         = 1;
-    descr->dwFlags          = PFD_SUPPORT_GDI | PFD_SUPPORT_OPENGL | PFD_DRAW_TO_BITMAP | PFD_GENERIC_FORMAT;
-    descr->iPixelType       = PFD_TYPE_RGBA;
-    descr->cColorBits       = pixel_formats[fmt - 1].color_bits;
-    descr->cRedBits         = pixel_formats[fmt - 1].red_bits;
-    descr->cRedShift        = pixel_formats[fmt - 1].red_shift;
-    descr->cGreenBits       = pixel_formats[fmt - 1].green_bits;
-    descr->cGreenShift      = pixel_formats[fmt - 1].green_shift;
-    descr->cBlueBits        = pixel_formats[fmt - 1].blue_bits;
-    descr->cBlueShift       = pixel_formats[fmt - 1].blue_shift;
-    descr->cAlphaBits       = pixel_formats[fmt - 1].alpha_bits;
-    descr->cAlphaShift      = pixel_formats[fmt - 1].alpha_shift;
-    descr->cAccumBits       = pixel_formats[fmt - 1].accum_bits;
-    descr->cAccumRedBits    = pixel_formats[fmt - 1].accum_bits / 4;
-    descr->cAccumGreenBits  = pixel_formats[fmt - 1].accum_bits / 4;
-    descr->cAccumBlueBits   = pixel_formats[fmt - 1].accum_bits / 4;
-    descr->cAccumAlphaBits  = pixel_formats[fmt - 1].accum_bits / 4;
-    descr->cDepthBits       = pixel_formats[fmt - 1].depth_bits;
-    descr->cStencilBits     = pixel_formats[fmt - 1].stencil_bits;
-    descr->cAuxBuffers      = 0;
-    descr->iLayerType       = PFD_MAIN_PLANE;
-    return ret;
+    funcs->gl = opengl_funcs.gl;
 }
 
 /***********************************************************************
- *		dibdrv_wglCopyContext
+ *		osmesa_create_context
  */
-static BOOL WINAPI dibdrv_wglCopyContext( struct wgl_context *src, struct wgl_context *dst, UINT mask )
-{
-    FIXME( "not supported yet\n" );
-    return FALSE;
-}
-
-/***********************************************************************
- *		dibdrv_wglCreateContext
- */
-static struct wgl_context * WINAPI dibdrv_wglCreateContext( HDC hdc )
+static struct wgl_context * CDECL osmesa_create_context( HDC hdc, const PIXELFORMATDESCRIPTOR *descr )
 {
     struct wgl_context *context;
+    UINT gl_format;
 
-    if (!(context = HeapAlloc( GetProcessHeap(), 0, sizeof( *context )))) return NULL;
-    context->format = GetPixelFormat( hdc );
-    if (!context->format || context->format > ARRAY_SIZE( pixel_formats )) context->format = 1;
-
-    if (!(context->context = pOSMesaCreateContextExt( pixel_formats[context->format - 1].mesa,
-                                                      pixel_formats[context->format - 1].depth_bits,
-                                                      pixel_formats[context->format - 1].stencil_bits,
-                                                      pixel_formats[context->format - 1].accum_bits, 0 )))
+    switch (descr->cColorBits)
     {
-        HeapFree( GetProcessHeap(), 0, context );
+    case 32:
+        if (descr->cRedShift == 8) gl_format = OSMESA_ARGB;
+        else if (descr->cRedShift == 16) gl_format = OSMESA_BGRA;
+        else gl_format = OSMESA_RGBA;
+        break;
+    case 24:
+        gl_format = descr->cRedShift == 16 ? OSMESA_BGR : OSMESA_RGB;
+        break;
+    case 16:
+        gl_format = OSMESA_RGB_565;
+        break;
+    default:
+        return NULL;
+    }
+    if (!(context = RtlAllocateHeap( GetProcessHeap(), 0, sizeof( *context )))) return NULL;
+    context->format = gl_format;
+    if (!(context->context = pOSMesaCreateContextExt( gl_format, descr->cDepthBits, descr->cStencilBits,
+                                                      descr->cAccumBits, 0 )))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, context );
         return NULL;
     }
     return context;
 }
 
 /***********************************************************************
- *		dibdrv_wglDeleteContext
+ *		osmesa_delete_context
  */
-static BOOL WINAPI dibdrv_wglDeleteContext( struct wgl_context *context )
+static BOOL CDECL osmesa_delete_context( struct wgl_context *context )
 {
     pOSMesaDestroyContext( context->context );
-    HeapFree( GetProcessHeap(), 0, context );
+    RtlFreeHeap( GetProcessHeap(), 0, context );
     return TRUE;
 }
 
 /***********************************************************************
- *		dibdrv_wglGetPixelFormat
+ *		osmesa_get_proc_address
  */
-static int WINAPI dibdrv_wglGetPixelFormat( HDC hdc )
+static PROC CDECL osmesa_get_proc_address( const char *proc )
 {
-    DC *dc = get_dc_ptr( hdc );
-    int ret = 0;
-
-    if (dc)
-    {
-        ret = dc->pixel_format;
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-/***********************************************************************
- *		dibdrv_wglGetProcAddress
- */
-static PROC WINAPI dibdrv_wglGetProcAddress( const char *proc )
-{
-    if (!strncmp( proc, "wgl", 3 )) return NULL;
     return (PROC)pOSMesaGetProcAddress( proc );
 }
 
 /***********************************************************************
- *		dibdrv_wglMakeCurrent
+ *		osmesa_make_current
  */
-static BOOL WINAPI dibdrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
+static BOOL CDECL osmesa_make_current( struct wgl_context *context, void *bits,
+                                       int width, int height, int bpp, int stride )
 {
-    HBITMAP bitmap;
-    BITMAPOBJ *bmp;
-    dib_info dib;
+    BOOL ret;
     GLenum type;
-    BOOL ret = FALSE;
 
     if (!context)
     {
@@ -260,112 +192,37 @@ static BOOL WINAPI dibdrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
         return TRUE;
     }
 
-    if (GetPixelFormat( hdc ) != context->format)
-        FIXME( "mismatched pixel formats %u/%u not supported yet\n",
-               GetPixelFormat( hdc ), context->format );
-
-    bitmap = GetCurrentObject( hdc, OBJ_BITMAP );
-    bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
-    if (!bmp) return FALSE;
-
-    if (init_dib_info_from_bitmapobj( &dib, bmp ))
+    type = context->format == OSMESA_RGB_565 ? GL_UNSIGNED_SHORT_5_6_5 : GL_UNSIGNED_BYTE;
+    ret = pOSMesaMakeCurrent( context->context, bits, type, width, height );
+    if (ret)
     {
-        char *bits;
-        int width = dib.rect.right - dib.rect.left;
-        int height = dib.rect.bottom - dib.rect.top;
-
-        if (dib.stride < 0)
-            bits = (char *)dib.bits.ptr + (dib.rect.bottom - 1) * dib.stride;
-        else
-            bits = (char *)dib.bits.ptr + dib.rect.top * dib.stride;
-        bits += dib.rect.left * dib.bit_count / 8;
-
-        TRACE( "context %p bits %p size %ux%u\n", context, bits, width, height );
-
-        if (pixel_formats[context->format - 1].mesa == OSMESA_RGB_565)
-            type = GL_UNSIGNED_SHORT_5_6_5;
-        else
-            type = GL_UNSIGNED_BYTE;
-
-        ret = pOSMesaMakeCurrent( context->context, bits, type, width, height );
-        if (ret)
-        {
-            pOSMesaPixelStore( OSMESA_ROW_LENGTH, abs( dib.stride ) * 8 / dib.bit_count );
-            pOSMesaPixelStore( OSMESA_Y_UP, 1 );  /* Windows seems to assume bottom-up */
-        }
+        pOSMesaPixelStore( OSMESA_ROW_LENGTH, abs( stride ) * 8 / bpp );
+        pOSMesaPixelStore( OSMESA_Y_UP, 1 );  /* Windows seems to assume bottom-up */
     }
-    GDI_ReleaseObj( bitmap );
     return ret;
 }
 
-/**********************************************************************
- *	     dibdrv_wglSetPixelFormat
- */
-static BOOL WINAPI dibdrv_wglSetPixelFormat( HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr )
+static const struct osmesa_funcs osmesa_funcs =
 {
-    if (fmt <= 0 || fmt > ARRAY_SIZE( pixel_formats )) return FALSE;
-    return GdiSetPixelFormat( hdc, fmt, descr );
-}
-
-/***********************************************************************
- *		dibdrv_wglShareLists
- */
-static BOOL WINAPI dibdrv_wglShareLists( struct wgl_context *org, struct wgl_context *dest )
-{
-    FIXME( "not supported yet\n" );
-    return FALSE;
-}
-
-/***********************************************************************
- *		dibdrv_wglSwapBuffers
- */
-static BOOL WINAPI dibdrv_wglSwapBuffers( HDC hdc )
-{
-    return TRUE;
-}
-
-static struct opengl_funcs opengl_funcs =
-{
-    {
-        dibdrv_wglCopyContext,        /* p_wglCopyContext */
-        dibdrv_wglCreateContext,      /* p_wglCreateContext */
-        dibdrv_wglDeleteContext,      /* p_wglDeleteContext */
-        dibdrv_wglDescribePixelFormat,/* p_wglDescribePixelFormat */
-        dibdrv_wglGetPixelFormat,     /* p_wglGetPixelFormat */
-        dibdrv_wglGetProcAddress,     /* p_wglGetProcAddress */
-        dibdrv_wglMakeCurrent,        /* p_wglMakeCurrent */
-        dibdrv_wglSetPixelFormat,     /* p_wglSetPixelFormat */
-        dibdrv_wglShareLists,         /* p_wglShareLists */
-        dibdrv_wglSwapBuffers,        /* p_wglSwapBuffers */
-    }
+    osmesa_get_gl_funcs,
+    osmesa_create_context,
+    osmesa_delete_context,
+    osmesa_get_proc_address,
+    osmesa_make_current
 };
 
-/**********************************************************************
- *	     dibdrv_wine_get_wgl_driver
- */
-struct opengl_funcs * CDECL dibdrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
+NTSTATUS init_opengl_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
 {
-    if (version != WINE_WGL_DRIVER_VERSION)
-    {
-        ERR( "version mismatch, opengl32 wants %u but dibdrv has %u\n", version, WINE_WGL_DRIVER_VERSION );
-        return NULL;
-    }
-
-    if (!init_opengl()) return (void *)-1;
-
-    return &opengl_funcs;
+    if (!init_opengl()) return STATUS_DLL_NOT_FOUND;
+    *(const struct osmesa_funcs **)ptr_out = &osmesa_funcs;
+    return STATUS_SUCCESS;
 }
 
 #else  /* SONAME_LIBOSMESA */
 
-/**********************************************************************
- *	     dibdrv_wine_get_wgl_driver
- */
-struct opengl_funcs * CDECL dibdrv_wine_get_wgl_driver( PHYSDEV dev, UINT version )
+NTSTATUS init_opengl_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
 {
-    static int warned;
-    if (!warned++) ERR( "OSMesa not compiled in, no OpenGL bitmap support\n" );
-    return (void *)-1;
+    return STATUS_DLL_NOT_FOUND;
 }
 
 #endif  /* SONAME_LIBOSMESA */
