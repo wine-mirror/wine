@@ -561,14 +561,11 @@ static LPWSTR strdupW(LPCWSTR p)
     return ret;
 }
 
-static WCHAR *towstr(UINT cp, const char *str)
+static WCHAR *towstr(const char *str)
 {
-    int len;
-    WCHAR *wstr;
-
-    len = MultiByteToWideChar(cp, 0, str, -1, NULL, 0);
-    wstr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(cp, 0, str, -1, wstr, len);
+    DWORD len = strlen(str) + 1;
+    WCHAR *wstr = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+    RtlMultiByteToUnicodeN( wstr, len * sizeof(WCHAR), &len, str, len );
     return wstr;
 }
 
@@ -697,10 +694,21 @@ static const LANGID mac_langid_table[] =
     MAKELANGID(LANG_AZERI,SUBLANG_AZERI_LATIN),              /* TT_MAC_LANGID_AZERBAIJANI_ROMAN_SCRIPT */
 };
 
-static inline WORD get_mac_code_page( const FT_SfntName *name )
+static CPTABLEINFO *get_mac_code_page( const FT_SfntName *name )
 {
-    if (name->encoding_id == TT_MAC_ID_SIMPLIFIED_CHINESE) return 10008;  /* special case */
-    return 10000 + name->encoding_id;
+    static CPTABLEINFO tables[100];
+    int id = name->encoding_id;
+    USHORT *ptr;
+    SIZE_T size;
+
+    if (name->encoding_id == TT_MAC_ID_SIMPLIFIED_CHINESE) id = 8;  /* special case */
+    if (id >= ARRAY_SIZE(tables)) return NULL;
+    if (!tables[id].CodePage)
+    {
+        if (NtGetNlsSectionPtr( 11, 10000 + id, NULL, (void **)&ptr, &size )) return NULL;
+        RtlInitCodePageTable( ptr, &tables[id] );
+    }
+    return &tables[id];
 }
 
 static int match_name_table_language( const FT_SfntName *name, LANGID lang )
@@ -723,7 +731,7 @@ static int match_name_table_language( const FT_SfntName *name, LANGID lang )
         }
         break;
     case TT_PLATFORM_MACINTOSH:
-        if (!IsValidCodePage( get_mac_code_page( name ))) return 0;
+        if (!get_mac_code_page( name )) return 0;
         if (name->language_id >= ARRAY_SIZE( mac_langid_table )) return 0;
         name_lang = mac_langid_table[name->language_id];
         break;
@@ -754,8 +762,8 @@ static int match_name_table_language( const FT_SfntName *name, LANGID lang )
 static WCHAR *copy_name_table_string( const FT_SfntName *name )
 {
     WCHAR *ret;
-    WORD codepage;
-    int i;
+    CPTABLEINFO *cp;
+    DWORD i;
 
     switch (name->platform_id)
     {
@@ -767,11 +775,11 @@ static WCHAR *copy_name_table_string( const FT_SfntName *name )
         ret[i] = 0;
         return ret;
     case TT_PLATFORM_MACINTOSH:
-        codepage = get_mac_code_page( name );
-        i = MultiByteToWideChar( codepage, 0, (char *)name->string, name->string_len, NULL, 0 );
-        ret = HeapAlloc( GetProcessHeap(), 0, (i + 1) * sizeof(WCHAR) );
-        MultiByteToWideChar( codepage, 0, (char *)name->string, name->string_len, ret, i );
-        ret[i] = 0;
+        if (!(cp = get_mac_code_page( name ))) return NULL;
+        ret = RtlAllocateHeap( GetProcessHeap(), 0, (name->string_len + 1) * sizeof(WCHAR) );
+        RtlCustomCPToUnicodeN( cp, ret, name->string_len * sizeof(WCHAR), &i,
+                               (char *)name->string, name->string_len );
+        ret[i / sizeof(WCHAR)] = 0;
         return ret;
     }
     return NULL;
@@ -816,7 +824,7 @@ static WCHAR *ft_face_get_family_name( FT_Face ft_face, LANGID langid )
     if ((family_name = get_face_name( ft_face, TT_NAME_ID_FONT_FAMILY, langid )))
         return family_name;
 
-    return towstr( CP_ACP, ft_face->family_name );
+    return towstr( ft_face->family_name );
 }
 
 static WCHAR *ft_face_get_style_name( FT_Face ft_face, LANGID langid )
@@ -826,7 +834,7 @@ static WCHAR *ft_face_get_style_name( FT_Face ft_face, LANGID langid )
     if ((style_name = get_face_name( ft_face, TT_NAME_ID_FONT_SUBFAMILY, langid )))
         return style_name;
 
-    return towstr( CP_ACP, ft_face->style_name );
+    return towstr( ft_face->style_name );
 }
 
 static WCHAR *ft_face_get_full_name( FT_Face ft_face, LANGID langid )
@@ -2053,16 +2061,17 @@ static BOOL CDECL fontconfig_enum_family_fallbacks( DWORD pitch_and_family, int 
 {
 #ifdef SONAME_LIBFONTCONFIG
     FcPattern *pat;
-    FcChar8 *str;
+    char *str;
+    DWORD len;
 
     if ((pitch_and_family & FIXED_PITCH) || (pitch_and_family & 0xf0) == FF_MODERN) pat = pattern_fixed;
     else if ((pitch_and_family & 0xf0) == FF_ROMAN) pat = pattern_serif;
     else pat = pattern_sans;
 
     if (!pat) return FALSE;
-    if (pFcPatternGetString( pat, FC_FAMILY, index, &str ) != FcResultMatch) return FALSE;
-    if (!MultiByteToWideChar( CP_UTF8, 0, (char *)str, -1, buffer, LF_FACESIZE ))
-        buffer[LF_FACESIZE - 1] = 0;
+    if (pFcPatternGetString( pat, FC_FAMILY, index, (FcChar8 **)&str ) != FcResultMatch) return FALSE;
+    RtlUTF8ToUnicodeN( buffer, (LF_FACESIZE - 1) * sizeof(WCHAR), &len, str, strlen(str) );
+    buffer[len / sizeof(WCHAR)] = 0;
     return TRUE;
 #endif
     return FALSE;
@@ -2228,10 +2237,11 @@ static BOOL CDECL freetype_get_glyph_index( struct gdi_font *font, UINT *glyph, 
         if (!(*glyph = get_glyph_index_symbol( font, *glyph )))
         {
             WCHAR wc = *glyph;
+            DWORD len;
             char ch;
 
-            if (WideCharToMultiByte( CP_ACP, 0, &wc, 1, &ch, 1, NULL, NULL ))
-                *glyph = get_glyph_index_symbol( font, (unsigned char)ch );
+            RtlUnicodeToMultiByteN( &ch, 1, &len, &wc, sizeof(wc) );
+            if (len) *glyph = get_glyph_index_symbol( font, (unsigned char)ch );
         }
         return TRUE;
     }
