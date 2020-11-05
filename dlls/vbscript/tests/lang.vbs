@@ -1631,8 +1631,30 @@ sub test_identifiers
     Dim step
     step = "xx"
     Call ok(step = "xx", "step = " & step & " expected ""xx""")
+
+    Dim property
+    property = "xx"
+    Call ok(property = "xx", "property = " & property & " expected ""xx""")
 end sub
 call test_identifiers()
+
+Class class_test_identifiers_as_function_name
+    Sub Property ( par )
+    End Sub
+
+    Function Error( par )
+    End Function
+
+    Sub Default ()
+    End Sub
+
+    Function Explicit (par)
+        Explicit = par
+    End Function
+
+    Sub Step ( default )
+    End Sub
+End Class
 
 sub test_dotIdentifiers
     ' test keywords that can also be an identifier after a dot

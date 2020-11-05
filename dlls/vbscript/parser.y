@@ -490,11 +490,11 @@ ArgumentDecl
 /* these keywords may also be an identifier, depending on context */
 Identifier
     : tIdentifier    { $$ = $1; }
-    | tDEFAULT       { $$ = $1; }
-    | tERROR         { $$ = $1; }
-    | tEXPLICIT      { $$ = $1; }
-    | tPROPERTY      { $$ = $1; }
-    | tSTEP          { $$ = $1; }
+    | tDEFAULT       { ctx->last_token = tIdentifier; $$ = $1; }
+    | tERROR         { ctx->last_token = tIdentifier; $$ = $1; }
+    | tEXPLICIT      { ctx->last_token = tIdentifier; $$ = $1; }
+    | tPROPERTY      { ctx->last_token = tIdentifier; $$ = $1; }
+    | tSTEP          { ctx->last_token = tIdentifier; $$ = $1; }
 
 /* Most statements accept both new line and ':' as separators */
 StSep
