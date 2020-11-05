@@ -312,6 +312,15 @@ typedef struct D2D1_EFFECT_INPUT_DESCRIPTION
     D2D1_RECT_F inputRectangle;
 } D2D1_EFFECT_INPUT_DESCRIPTION;
 
+typedef struct D2D1_POINT_DESCRIPTION
+{
+    D2D1_POINT_2F point;
+    D2D1_POINT_2F unitTangentVector;
+    UINT32 endSegment;
+    UINT32 endFigure;
+    float lengthToEndSegment;
+} D2D1_POINT_DESCRIPTION;
+
 typedef HRESULT (__stdcall *PD2D1_EFFECT_FACTORY)(IUnknown **effect);
 
 [
