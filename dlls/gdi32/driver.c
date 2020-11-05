@@ -19,9 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <stdarg.h>
 #include <string.h>
@@ -42,7 +39,6 @@
 #include "ddk/d3dkmthk.h"
 
 #include "gdi_private.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -146,17 +142,17 @@ static BOOL is_display_device( LPCWSTR name )
     static const WCHAR display_deviceW[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y'};
     const WCHAR *p = name;
 
-    if (strncmpiW( name, display_deviceW, sizeof(display_deviceW) / sizeof(WCHAR) ))
+    if (wcsnicmp( name, display_deviceW, sizeof(display_deviceW) / sizeof(WCHAR) ))
         return FALSE;
 
     p += sizeof(display_deviceW) / sizeof(WCHAR);
 
-    if (!isdigitW( *p++ ))
+    if (!iswdigit( *p++ ))
         return FALSE;
 
     for (; *p; p++)
     {
-        if (!isdigitW( *p ))
+        if (!iswdigit( *p ))
             return FALSE;
     }
 
@@ -188,7 +184,7 @@ const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name )
     static const WCHAR displayW[] = { 'd','i','s','p','l','a','y',0 };
 
     /* display driver is a special case */
-    if (!strcmpiW( name, displayW ) || is_display_device( name )) return get_display_driver();
+    if (!wcsicmp( name, displayW ) || is_display_device( name )) return get_display_driver();
 
     if ((module = GetModuleHandleW( name )))
     {
@@ -542,7 +538,7 @@ static INT CDECL nulldrv_GetTextFace( PHYSDEV dev, INT size, LPWSTR name )
 
     if (GetObjectW( dc->hFont, sizeof(font), &font ))
     {
-        ret = strlenW( font.lfFaceName ) + 1;
+        ret = lstrlenW( font.lfFaceName ) + 1;
         if (name)
         {
             lstrcpynW( name, font.lfFaceName, size );
@@ -946,7 +942,7 @@ BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size )
     WCHAR *p;
 
     /* display is a special case */
-    if (!strcmpiW( device, displayW ) ||
+    if (!wcsicmp( device, displayW ) ||
         is_display_device( device ))
     {
         lstrcpynW( driver, displayW, size );
@@ -958,7 +954,7 @@ BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size )
         WARN("Unable to find %s in [devices] section of win.ini\n", debugstr_w(device));
         return FALSE;
     }
-    p = strchrW(driver, ',');
+    p = wcschr(driver, ',');
     if(!p)
     {
         WARN("%s entry in [devices] section of win.ini is malformed.\n", debugstr_w(device));
@@ -1399,10 +1395,10 @@ NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDI
         return STATUS_UNSUCCESSFUL;
 
     TRACE("DeviceName: %s\n", wine_dbgstr_w( desc->DeviceName ));
-    if (strncmpiW( desc->DeviceName, displayW, ARRAY_SIZE(displayW) ))
+    if (wcsnicmp( desc->DeviceName, displayW, ARRAY_SIZE(displayW) ))
         return STATUS_UNSUCCESSFUL;
 
-    index = strtolW( desc->DeviceName + ARRAY_SIZE(displayW), &end, 10 ) - 1;
+    index = wcstol( desc->DeviceName + ARRAY_SIZE(displayW), &end, 10 ) - 1;
     if (*end)
         return STATUS_UNSUCCESSFUL;
 
@@ -1414,7 +1410,7 @@ NTSTATUS WINAPI D3DKMTOpenAdapterFromGdiDisplayName( D3DKMT_OPENADAPTERFROMGDIDI
     mutex = get_display_device_init_mutex();
 
     size = sizeof( bufferW );
-    sprintfW( key_nameW, video_value_fmtW, index );
+    swprintf( key_nameW, MAX_PATH, video_value_fmtW, index );
     if (RegGetValueW( HKEY_LOCAL_MACHINE, video_keyW, key_nameW, RRF_RT_REG_SZ, NULL, bufferW, &size ))
         goto done;
 

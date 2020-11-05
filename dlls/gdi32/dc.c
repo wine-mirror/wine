@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -28,10 +26,10 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winreg.h"
+#include "winnls.h"
 #include "winternl.h"
 #include "winerror.h"
 #include "gdi_private.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dc);
@@ -641,7 +639,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
             ERR( "no device found for %s\n", debugstr_w(device) );
             return 0;
         }
-        strcpyW(buf, driver);
+        lstrcpyW(buf, driver);
     }
 
     if (!(funcs = DRIVER_load_driver( buf )))
@@ -701,7 +699,7 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
     if (initData)
     {
         /* don't convert initData for DISPLAY driver, it's not used */
-        if (!driverW.Buffer || strcmpiW( driverW.Buffer, displayW ))
+        if (!driverW.Buffer || wcsicmp( driverW.Buffer, displayW ))
             initDataW = GdiConvertToDevmodeW(initData);
     }
 

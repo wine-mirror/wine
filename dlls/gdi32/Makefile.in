@@ -6,6 +6,8 @@ EXTRAINCL = $(FREETYPE_CFLAGS) $(FONTCONFIG_CFLAGS)
 EXTRALIBS = $(CARBON_LIBS) $(APPKIT_LIBS)
 DELAYIMPORTS = usp10 setupapi
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	bidi.c \
 	bitblt.c \

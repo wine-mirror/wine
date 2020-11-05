@@ -45,8 +45,6 @@
  * HDMD - 14/4/1999
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <string.h>
 #include <fcntl.h>
