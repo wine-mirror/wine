@@ -2308,13 +2308,13 @@ static BOOL get_transform_matrices( struct gdi_font *font, BOOL vertical, const 
         width_ratio = font->scale_y;
 
     /* Scaling transform */
-    if (width_ratio != 1.0 || font->scale_y != 1.0)
+    if (width_ratio != 1.0 || font->scale_y != 1)
     {
         FT_Matrix scale_mat;
         scale_mat.xx = FT_FixedFromFloat( width_ratio );
         scale_mat.xy = 0;
         scale_mat.yx = 0;
-        scale_mat.yy = FT_FixedFromFloat( font->scale_y );
+        scale_mat.yy = font->scale_y << 16;
 
         pFT_Matrix_Multiply( &scale_mat, &matrices[matrix_unrotated] );
         needs_transform = TRUE;

@@ -335,7 +335,7 @@ struct gdi_font
     LOGFONTW               lf;
     FMAT2                  matrix;
     UINT                   face_index;
-    double                 scale_y;
+    INT                    scale_y;
     INT                    aveWidth;
     INT                    ppem;
     SHORT                  yMax;

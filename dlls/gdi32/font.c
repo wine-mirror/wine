@@ -1698,7 +1698,7 @@ static struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_
 
     font->refcount = 1;
     font->matrix.eM11 = font->matrix.eM22 = 1.0;
-    font->scale_y = 1.0;
+    font->scale_y = 1;
     font->kern_count = -1;
     list_init( &font->child_fonts );
 
@@ -3686,8 +3686,8 @@ static struct gdi_font *select_font( LOGFONTW *lf, FMAT2 dcmat, BOOL can_use_bit
         /* The jump between unscaled and doubled is delayed by 1 */
         else if (scale == 2 && scaled_height - height > (face->size.height / 4 - 1)) scale--;
         font->scale_y = scale;
+        TRACE("font scale y: %d\n", font->scale_y);
     }
-    TRACE("font scale y: %f\n", font->scale_y);
 
     if (!font_funcs->load_font( font ))
     {
