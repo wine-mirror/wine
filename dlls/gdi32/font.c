@@ -91,6 +91,7 @@ static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
 static UINT font_smoothing = GGO_BITMAP;
 static UINT subpixel_orientation = GGO_GRAY4_BITMAP;
 static BOOL antialias_fakes = TRUE;
+static struct font_gamma_ramp font_gamma_ramp;
 
 static void add_face_to_cache( struct gdi_font_face *face );
 static void remove_face_from_cache( struct gdi_font_face *face );
@@ -3878,7 +3879,7 @@ static DWORD get_key_value( HKEY key, const WCHAR *name, DWORD *value )
 static void init_font_options(void)
 {
     HKEY key;
-    DWORD type, size, val;
+    DWORD i, type, size, val, gamma = 1400;
     WCHAR buffer[20];
 
     size = sizeof(buffer);
@@ -3910,8 +3911,24 @@ static void init_font_options(void)
             else
                 font_smoothing = GGO_GRAY4_BITMAP;
         }
+        if (!get_key_value( key, L"FontSmoothingGamma", &val ) && val)
+        {
+            gamma = min( max( val, 1000 ), 2200 );
+        }
         RegCloseKey( key );
     }
+
+    /* Calibrating the difference between the registry value and the Wine gamma value.
+       This looks roughly similar to Windows Native with the same registry value.
+       MS GDI seems to be rasterizing the outline at a different rate than FreeType. */
+    gamma = 1000 * gamma / 1400;
+    for (i = 0; i < 256; i++)
+    {
+        font_gamma_ramp.encode[i] = pow( i / 255., 1000. / gamma ) * 255. + .5;
+        font_gamma_ramp.decode[i] = pow( i / 255., gamma / 1000. ) * 255. + .5;
+    }
+    font_gamma_ramp.gamma = gamma;
+    TRACE("gamma %d\n", font_gamma_ramp.gamma);
 }
 
 
@@ -4424,49 +4441,6 @@ static void update_font_code_page( DC *dc, HANDLE font )
     TRACE("charset %d => cp %d\n", charset, dc->font_code_page);
 }
 
-static BOOL WINAPI fill_font_gamma_ramp( INIT_ONCE *once, void *param, void **context )
-{
-    struct font_gamma_ramp *ramp = param;
-    const DWORD gamma_default = 1400;
-    DWORD  i, gamma;
-    HKEY key;
-
-    gamma = gamma_default;
-    if (RegOpenKeyW( HKEY_CURRENT_USER, L"Control Panel\\Desktop", &key ) == ERROR_SUCCESS)
-    {
-        if (get_key_value( key, L"FontSmoothingGamma", &gamma ) || gamma == 0)
-            gamma = gamma_default;
-        RegCloseKey( key );
-
-        gamma = min( max( gamma, 1000 ), 2200 );
-    }
-
-    /* Calibrating the difference between the registry value and the Wine gamma value.
-       This looks roughly similar to Windows Native with the same registry value.
-       MS GDI seems to be rasterizing the outline at a different rate than FreeType. */
-    gamma = 1000 * gamma / 1400;
-
-    for (i = 0; i < 256; i++)
-    {
-        ramp->encode[i] = pow( i / 255., 1000. / gamma ) * 255. + .5;
-        ramp->decode[i] = pow( i / 255., gamma / 1000. ) * 255. + .5;
-    }
-
-    ramp->gamma = gamma;
-    TRACE("gamma %d\n", ramp->gamma);
-
-    return TRUE;
-}
-
-static struct font_gamma_ramp *get_font_gamma_ramp( void )
-{
-    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
-    static struct font_gamma_ramp ramp;
-
-    InitOnceExecuteOnce( &init_once, fill_font_gamma_ramp, &ramp, NULL );
-    return &ramp;
-}
-
 /***********************************************************************
  *           FONT_SelectObject
  */
@@ -4493,7 +4467,7 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
         dc->aa_flags = aa_flags ? aa_flags : GGO_BITMAP;
         update_font_code_page( dc, handle );
         if (dc->font_gamma_ramp == NULL)
-            dc->font_gamma_ramp = get_font_gamma_ramp();
+            dc->font_gamma_ramp = &font_gamma_ramp;
         GDI_dec_ref_count( ret );
     }
     else GDI_dec_ref_count( handle );
