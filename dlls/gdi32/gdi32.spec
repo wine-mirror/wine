@@ -182,7 +182,7 @@
 @ stub GdiDeleteLocalObject
 # @ stub GdiDeleteSpoolFileHandle
 @ stdcall GdiDescribePixelFormat(long long long ptr)
-@ stub GdiDllInitialize
+@ stdcall GdiDllInitialize(ptr long ptr)
 @ stdcall GdiDrawStream(long long ptr)
 # @ stub GdiEndDocEMF
 # @ stub GdiEndPageEMF

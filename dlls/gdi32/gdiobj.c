@@ -672,6 +672,19 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     return TRUE;
 }
 
+
+/***********************************************************************
+ *           GdiDllInitialize
+ *
+ * Stub entry point, some games (CoD: Black Ops 3) call it directly.
+ */
+BOOL WINAPI GdiDllInitialize( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    FIXME("stub\n");
+    return TRUE;
+}
+
+
 static const char *gdi_obj_type( unsigned type )
 {
     switch ( type )
