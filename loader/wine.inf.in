@@ -2834,7 +2834,11 @@ HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time,"Dlt",,"Azerbaijan D
 HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time,"MUI_Dlt",,"@tzres.dll,-11313"
 HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time,"MUI_Std",,"@tzres.dll,-11312"
 HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time,"Std",,"Azerbaijan Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time,"TZI",1,10,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,05,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,04,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time,"TZI",1,10,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time\Dynamic DST,"2015",1,10,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,05,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,04,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time\Dynamic DST,"2016",1,10,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time\Dynamic DST,"FirstEntry",0x10001,"2015"
+HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time\Dynamic DST,"LastEntry",0x10001,"2016"
 HKLM,%CurrentVersionNT%\Time Zones\Azores Standard Time,"Display",,"Atlantic/Azores"
 HKLM,%CurrentVersionNT%\Time Zones\Azores Standard Time,"Dlt",,"Azores Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Azores Standard Time,"MUI_Dlt",,"@tzres.dll,-18833"
