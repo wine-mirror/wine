@@ -336,10 +336,10 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, struct undo_item *undo)
   {
     ME_Cursor tmp;
     cursor_from_char_ofs( editor, undo->u.set_para_fmt.pos, &tmp );
-    add_undo_set_para_fmt( editor, &tmp.pPara->member.para );
-    tmp.pPara->member.para.fmt = undo->u.set_para_fmt.fmt;
-    tmp.pPara->member.para.border = undo->u.set_para_fmt.border;
-    para_mark_rewrap( editor, &tmp.pPara->member.para );
+    add_undo_set_para_fmt( editor, tmp.para );
+    tmp.para->fmt = undo->u.set_para_fmt.fmt;
+    tmp.para->border = undo->u.set_para_fmt.border;
+    para_mark_rewrap( editor, tmp.para );
     break;
   }
   case undo_set_char_fmt:
@@ -371,7 +371,7 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, struct undo_item *undo)
   {
     ME_Cursor tmp;
     cursor_from_char_ofs( editor, undo->u.join_paras.pos, &tmp );
-    para_join( editor, &tmp.pPara->member.para, TRUE );
+    para_join( editor, tmp.para, TRUE );
     break;
   }
   case undo_split_para:
@@ -383,7 +383,7 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, struct undo_item *undo)
 
     cursor_from_char_ofs( editor, undo->u.split_para.pos, &tmp );
     if (tmp.nOffset) run_split( editor, &tmp );
-    this_para = &tmp.pPara->member.para;
+    this_para = tmp.para;
     bFixRowStart = this_para->nFlags & MEPF_ROWSTART;
     if (bFixRowStart)
     {
@@ -391,7 +391,7 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, struct undo_item *undo)
        * is correct. */
       this_para->nFlags &= ~MEPF_ROWSTART;
     }
-    new_para = para_split( editor, &tmp.pRun->member.run, tmp.pRun->member.run.style,
+    new_para = para_split( editor, tmp.run, tmp.run->style,
                            undo->u.split_para.eol_str->szData, undo->u.split_para.eol_str->nLen, paraFlags );
     if (bFixRowStart)
       new_para->nFlags |= MEPF_ROWSTART;

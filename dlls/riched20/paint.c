@@ -437,7 +437,7 @@ static void ME_DebugWrite(HDC hDC, const POINT *pt, LPCWSTR szText) {
 static void draw_run( ME_Context *c, int x, int y, ME_Cursor *cursor )
 {
   ME_Row *row;
-  ME_Run *run = &cursor->pRun->member.run;
+  ME_Run *run = cursor->run;
   int runofs = run_char_ofs( run, cursor->nOffset );
   int nSelFrom, nSelTo;
 
@@ -999,8 +999,8 @@ static void draw_paragraph( ME_Context *c, ME_Paragraph *para )
         {
           ME_Cursor cursor;
 
-          cursor.pRun = run_get_di( run );
-          cursor.pPara = para_get_di( para );
+          cursor.run = run;
+          cursor.para = para;
           cursor.nOffset = 0;
           draw_run( c, c->pt.x + run->pt.x, c->pt.y + para->pt.y + run->pt.y + baseline, &cursor );
         }
@@ -1271,9 +1271,9 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
 
 void editor_ensure_visible( ME_TextEditor *editor, ME_Cursor *cursor )
 {
-  ME_Run *run = &cursor->pRun->member.run;
+  ME_Run *run = cursor->run;
   ME_Row *row = row_from_cursor( cursor );
-  ME_Paragraph *para = &cursor->pPara->member.para;
+  ME_Paragraph *para = cursor->para;
   int x, y, yheight;
 
 

@@ -581,10 +581,10 @@ ME_Paragraph *para_split( ME_TextEditor *editor, ME_Run *run, ME_Style *style,
   /* Update selection cursors to point to the correct paragraph. */
   for (i = 0; i < editor->nCursors; i++)
   {
-    if (editor->pCursors[i].pPara == para_get_di( old_para ) &&
-        run->nCharOfs <= editor->pCursors[i].pRun->member.run.nCharOfs)
+    if (editor->pCursors[i].para == old_para &&
+        run->nCharOfs <= editor->pCursors[i].run->nCharOfs)
     {
-      editor->pCursors[i].pPara = para_get_di( new_para );
+      editor->pCursors[i].para = new_para;
     }
   }
 
@@ -708,10 +708,10 @@ ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_fir
 
   /* null char format operation to store the original char format for the ENDPARA run */
   ME_InitCharFormat2W(&fmt);
-  startCur.pPara = para_get_di( para );
-  startCur.pRun = run_get_di( end_run );
-  endCur.pPara = para_get_di( next );
-  endCur.pRun = run_get_di( next_first_run );
+  startCur.para = para;
+  startCur.run = end_run;
+  endCur.para = next;
+  endCur.run = next_first_run;
   startCur.nOffset = endCur.nOffset = 0;
 
   ME_SetCharFormat(editor, &startCur, &endCur, &fmt);
@@ -757,13 +757,13 @@ ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_fir
    * paragraph run, and point to the correct paragraph. */
   for (i = 0; i < editor->nCursors; i++)
   {
-    if (editor->pCursors[i].pRun == run_get_di( end_run ))
+    if (editor->pCursors[i].run == end_run)
     {
-      editor->pCursors[i].pRun = run_get_di( next_first_run );
+      editor->pCursors[i].run = next_first_run;
       editor->pCursors[i].nOffset = 0;
     }
-    else if (editor->pCursors[i].pPara == para_get_di( next ))
-      editor->pCursors[i].pPara = para_get_di( para );
+    else if (editor->pCursors[i].para == next)
+      editor->pCursors[i].para = para;
   }
 
   for (tmp_run = next_first_run; tmp_run; tmp_run = run_next( tmp_run ))
@@ -869,8 +869,8 @@ void editor_get_selection_paras( ME_TextEditor *editor, ME_Paragraph **para, ME_
 {
   ME_Cursor *pEndCursor = &editor->pCursors[1];
 
-  *para = &editor->pCursors[0].pPara->member.para;
-  *para_end = &editor->pCursors[1].pPara->member.para;
+  *para = editor->pCursors[0].para;
+  *para_end = editor->pCursors[1].para;
   if (*para == *para_end)
     return;
 
@@ -885,7 +885,7 @@ void editor_get_selection_paras( ME_TextEditor *editor, ME_Paragraph **para, ME_
 
   /* The paragraph at the end of a non-empty selection isn't included
    * if the selection ends at the start of the paragraph. */
-  if (!pEndCursor->pRun->member.run.nCharOfs && !pEndCursor->nOffset)
+  if (!pEndCursor->run->nCharOfs && !pEndCursor->nOffset)
     *para_end = para_prev( *para_end );
 }
 

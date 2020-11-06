@@ -348,7 +348,7 @@ static HGLOBAL get_unicode_text(ME_TextEditor *editor, const ME_Cursor *start, i
     int nEnd = ME_GetCursorOfs(start) + nChars;
 
     /* count paragraphs in range */
-    para = &start->pPara->member.para;
+    para = start->para;
     while ((para = para_next( para )) && para->nCharOfs <= nEnd)
         pars++;
 

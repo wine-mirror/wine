@@ -274,8 +274,8 @@ typedef struct tagME_TextBuffer
 
 typedef struct tagME_Cursor
 {
-  ME_DisplayItem *pPara;
-  ME_DisplayItem *pRun;
+  ME_Paragraph *para;
+  ME_Run *run;
   int nOffset;
 } ME_Cursor;
 

@@ -131,7 +131,7 @@ static ME_Run *split_run_extents( ME_WrapContext *wc, ME_Run *run, int nVChar )
 {
   ME_TextEditor *editor = wc->context->editor;
   ME_Run *run2;
-  ME_Cursor cursor = {para_get_di( wc->para ), run_get_di( run ), nVChar};
+  ME_Cursor cursor = { wc->para, run, nVChar };
 
   assert( run->nCharOfs != -1 );
   ME_CheckCharOffsets(editor);
@@ -141,7 +141,7 @@ static ME_Run *split_run_extents( ME_WrapContext *wc, ME_Run *run, int nVChar )
 
   run_split( editor, &cursor );
 
-  run2 = &cursor.pRun->member.run;
+  run2 = cursor.run;
   run2->script_analysis = run->script_analysis;
 
   shape_run( wc->context, run );
@@ -157,7 +157,7 @@ static ME_Run *split_run_extents( ME_WrapContext *wc, ME_Run *run, int nVChar )
         debugstr_run( run ), run->pt.x, run->pt.y,
         debugstr_run( run2 ), run2->pt.x, run2->pt.y);
 
-  return &cursor.pRun->member.run;
+  return cursor.run;
 }
 
 /******************************************************************************
@@ -777,7 +777,7 @@ static HRESULT itemize_para( ME_Context *c, ME_Paragraph *para )
 
         if (run->nCharOfs + run->len > items[cur_item+1].iCharPos)
         {
-            ME_Cursor cursor = {para_get_di( para ), run_get_di( run ), items[cur_item+1].iCharPos - run->nCharOfs};
+            ME_Cursor cursor = { para, run, items[cur_item + 1].iCharPos - run->nCharOfs };
             run_split( c->editor, &cursor );
         }
     }

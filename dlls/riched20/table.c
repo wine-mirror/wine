@@ -64,10 +64,10 @@ static ME_Paragraph* table_insert_end_para( ME_TextEditor *editor, ME_Cursor *cu
 
     if (cursor->nOffset) run_split( editor, cursor );
 
-    para = para_split( editor, &cursor->pRun->member.run, style, eol_str, eol_len, para_flags );
+    para = para_split( editor, cursor->run, style, eol_str, eol_len, para_flags );
     ME_ReleaseStyle( style );
-    cursor->pPara = para_get_di( para );
-    cursor->pRun = run_get_di( para_first_run( para ) );
+    cursor->para = para;
+    cursor->run = para_first_run( para );
     return para;
 }
 
@@ -84,13 +84,13 @@ ME_Paragraph* table_insert_row_start_at_para( ME_TextEditor *editor, ME_Paragrap
     ME_Paragraph *prev_para, *end_para, *start_row;
     ME_Cursor cursor;
 
-    cursor.pPara = para_get_di( para );
-    cursor.pRun = run_get_di( para_first_run( para ) );
+    cursor.para = para;
+    cursor.run = para_first_run( para );
     cursor.nOffset = 0;
 
     start_row = table_insert_row_start( editor, &cursor );
 
-    end_para = para_next( &editor->pCursors[0].pPara->member.para );
+    end_para = para_next( editor->pCursors[0].para );
     prev_para = para_next( start_row );
     para = para_next( prev_para );
 
@@ -220,20 +220,20 @@ void table_protect_partial_deletion( ME_TextEditor *editor, ME_Cursor *c, int *n
 {
   int start_ofs = ME_GetCursorOfs( c );
   ME_Cursor c2 = *c;
-  ME_Paragraph *this_para = &c->pPara->member.para, *end_para;
+  ME_Paragraph *this_para = c->para, *end_para;
 
   ME_MoveCursorChars( editor, &c2, *num_chars, FALSE );
-  end_para = &c2.pPara->member.para;
-  if (c2.pRun->member.run.nFlags & MERF_ENDPARA)
+  end_para = c2.para;
+  if (c2.run->nFlags & MERF_ENDPARA)
   {
     /* End offset might be in the middle of the end paragraph run.
      * If this is the case, then we need to use the next paragraph as the last
      * paragraphs.
      */
-    int remaining = start_ofs + *num_chars - c2.pRun->member.run.nCharOfs - end_para->nCharOfs;
+    int remaining = start_ofs + *num_chars - c2.run->nCharOfs - end_para->nCharOfs;
     if (remaining)
     {
-      assert( remaining < c2.pRun->member.run.len );
+      assert( remaining < c2.run->len );
       end_para = para_next( end_para );
     }
   }
@@ -293,11 +293,11 @@ void table_protect_partial_deletion( ME_TextEditor *editor, ME_Cursor *c, int *n
 
     if ((this_para->nCharOfs != start_ofs || this_para == end_para) && para_in_table( this_para ))
     {
-      run = &c->pRun->member.run;
+      run = c->run;
       /* Find the next tab or end paragraph to use as a delete boundary */
       while (!(run->nFlags & (MERF_TAB | MERF_ENDPARA)))
         run = run_next( run );
-      chars_to_boundary = run->nCharOfs - c->pRun->member.run.nCharOfs - c->nOffset;
+      chars_to_boundary = run->nCharOfs - c->run->nCharOfs - c->nOffset;
       *num_chars = min( *num_chars, chars_to_boundary );
     }
     else if (para_in_table( end_para ))
@@ -341,8 +341,8 @@ ME_Paragraph* table_append_row( ME_TextEditor *editor, ME_Paragraph *table_row )
     prev_table_end = table_row_end( table_row );
     para = para_next( prev_table_end );
     run = para_first_run( para );
-    editor->pCursors[0].pPara = para_get_di( para );
-    editor->pCursors[0].pRun = run_get_di( run );
+    editor->pCursors[0].para = para;
+    editor->pCursors[0].run = run;
     editor->pCursors[0].nOffset = 0;
     editor->pCursors[1] = editor->pCursors[0];
     new_row_start = table_insert_row_start( editor, editor->pCursors );
@@ -368,12 +368,12 @@ ME_Paragraph* table_append_row( ME_TextEditor *editor, ME_Paragraph *table_row )
   {
     run = para_end_run( table_row );
     assert( para_in_table( table_row ) );
-    editor->pCursors[0].pPara = para_get_di( table_row );
-    editor->pCursors[0].pRun = run_get_di( run );
+    editor->pCursors[0].para = table_row;
+    editor->pCursors[0].run = run;
     editor->pCursors[0].nOffset = 0;
     editor->pCursors[1] = editor->pCursors[0];
     ME_InsertTextFromCursor( editor, 0, &endl, 1, run->style );
-    run = &editor->pCursors[0].pRun->member.run;
+    run = editor->pCursors[0].run;
     for (i = 0; i < table_row->fmt.cTabCount; i++)
       ME_InsertTextFromCursor( editor, 0, &tab, 1, run->style );
 
@@ -410,8 +410,8 @@ static void table_select_next_cell_or_append( ME_TextEditor *editor, ME_Run *run
         para = table_append_row( editor, table_row_start( para ) );
         /* Put cursor at the start of the new table row */
         para = para_next( para );
-        editor->pCursors[0].pPara = para_get_di( para );
-        editor->pCursors[0].pRun = run_get_di( para_first_run( para ) );
+        editor->pCursors[0].para = para;
+        editor->pCursors[0].run = para_first_run( para );
         editor->pCursors[0].nOffset = 0;
         editor->pCursors[1] = editor->pCursors[0];
         ME_WrapMarkedParagraphs(editor);
@@ -419,11 +419,11 @@ static void table_select_next_cell_or_append( ME_TextEditor *editor, ME_Run *run
       }
     }
     /* Select cell */
-    editor->pCursors[1].pPara = para_get_di( cell_first_para( cell ) );
-    editor->pCursors[1].pRun = run_get_di( para_first_run( &editor->pCursors[1].pPara->member.para ) );
+    editor->pCursors[1].para = cell_first_para( cell );
+    editor->pCursors[1].run = para_first_run( editor->pCursors[1].para );
     editor->pCursors[1].nOffset = 0;
-    editor->pCursors[0].pPara = para_get_di( cell_end_para( cell ) );
-    editor->pCursors[0].pRun = run_get_di( para_end_run( &editor->pCursors[0].pPara->member.para ) );
+    editor->pCursors[0].para = cell_end_para( cell );
+    editor->pCursors[0].run = para_end_run( editor->pCursors[0].para );
     editor->pCursors[0].nOffset = 0;
   }
   else /* v1.0 - 3.0 */
@@ -443,8 +443,8 @@ static void table_select_next_cell_or_append( ME_TextEditor *editor, ME_Run *run
           if (para_in_table( para ))
           {
             run = para_first_run( para );
-            editor->pCursors[0].pPara = para_get_di( para );
-            editor->pCursors[0].pRun = run_get_di( run );
+            editor->pCursors[0].para = para;
+            editor->pCursors[0].run = run;
             editor->pCursors[0].nOffset = 0;
             i = 1;
           }
@@ -453,8 +453,8 @@ static void table_select_next_cell_or_append( ME_TextEditor *editor, ME_Run *run
             /* Insert table row */
             para = table_append_row( editor, para_prev( para ) );
             /* Put cursor at the start of the new table row */
-            editor->pCursors[0].pPara = para_get_di( para );
-            editor->pCursors[0].pRun = run_get_di( para_first_run( para ) );
+            editor->pCursors[0].para = para;
+            editor->pCursors[0].run = para_first_run( para );
             editor->pCursors[0].nOffset = 0;
             editor->pCursors[1] = editor->pCursors[0];
             ME_WrapMarkedParagraphs(editor);
@@ -464,8 +464,8 @@ static void table_select_next_cell_or_append( ME_TextEditor *editor, ME_Run *run
         else run = run_next( run );
       }
       if (i == 0) run = run_next_all_paras( run );
-      editor->pCursors[i].pRun = run_get_di( run );
-      editor->pCursors[i].pPara = para_get_di( run->para );
+      editor->pCursors[i].run = run;
+      editor->pCursors[i].para = run->para;
       editor->pCursors[i].nOffset = 0;
     }
   }
@@ -494,32 +494,32 @@ void table_handle_tab( ME_TextEditor *editor, BOOL selected_row )
   }
   if (!editor->bEmulateVersion10) /* v4.1 */
   {
-    if (!para_in_table( &toCursor.pPara->member.para ))
+    if (!para_in_table( toCursor.para ))
     {
       editor->pCursors[0] = toCursor;
       editor->pCursors[1] = toCursor;
     }
-    else table_select_next_cell_or_append( editor, &toCursor.pRun->member.run );
+    else table_select_next_cell_or_append( editor, toCursor.run );
   }
   else /* v1.0 - 3.0 */
   {
-    if (!para_in_table( &fromCursor.pPara->member.para) )
+    if (!para_in_table( fromCursor.para ))
     {
       editor->pCursors[0] = fromCursor;
       editor->pCursors[1] = fromCursor;
       /* FIXME: For some reason the caret is shown at the start of the
        *        previous paragraph in v1.0 to v3.0 */
     }
-    else if ((selected_row || !para_in_table( &toCursor.pPara->member.para )))
-      table_select_next_cell_or_append( editor, &fromCursor.pRun->member.run );
+    else if ((selected_row || !para_in_table( toCursor.para )))
+      table_select_next_cell_or_append( editor, fromCursor.run );
     else
     {
-      ME_Run *run = run_prev( &toCursor.pRun->member.run );
+      ME_Run *run = run_prev( toCursor.run );
 
       if (ME_IsSelection(editor) && !toCursor.nOffset && run && run->nFlags & MERF_TAB)
         table_select_next_cell_or_append( editor, run );
       else
-        table_select_next_cell_or_append( editor, &toCursor.pRun->member.run );
+        table_select_next_cell_or_append( editor, toCursor.run );
     }
   }
   ME_InvalidateSelection(editor);
@@ -532,15 +532,15 @@ void table_handle_tab( ME_TextEditor *editor, BOOL selected_row )
  * without a selection. */
 void table_move_from_row_start( ME_TextEditor *editor )
 {
-  ME_Paragraph *para = &editor->pCursors[0].pPara->member.para;
+  ME_Paragraph *para = editor->pCursors[0].para;
 
-  if (para == &editor->pCursors[1].pPara->member.para && para->nFlags & MEPF_ROWSTART)
+  if (para == editor->pCursors[1].para && para->nFlags & MEPF_ROWSTART)
   {
     /* The cursors should not be at the hidden start row paragraph without
      * a selection, so the cursor is moved into the first cell. */
     para = para_next( para );
-    editor->pCursors[0].pPara = para_get_di( para );
-    editor->pCursors[0].pRun = run_get_di( para_first_run( para ) );
+    editor->pCursors[0].para = para;
+    editor->pCursors[0].run = para_first_run( para );
     editor->pCursors[0].nOffset = 0;
     editor->pCursors[1] = editor->pCursors[0];
   }

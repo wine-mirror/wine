@@ -29,15 +29,15 @@ WINE_DECLARE_DEBUG_CHANNEL(richedit_lists);
 
 BOOL cursor_next_run( ME_Cursor *cursor, BOOL all_para )
 {
-    ME_DisplayItem *p = cursor->pRun->next;
+    ME_DisplayItem *p = run_get_di( cursor->run )->next;
 
     while (p->type != diTextEnd)
     {
         if (p->type == diParagraph && !all_para) return FALSE;
         else if (p->type == diRun)
         {
-            cursor->pRun = p;
-            cursor->pPara = para_get_di( cursor->pRun->member.run.para );
+            cursor->run = &p->member.run;
+            cursor->para = cursor->run->para;
             cursor->nOffset = 0;
             return TRUE;
         }
@@ -48,15 +48,15 @@ BOOL cursor_next_run( ME_Cursor *cursor, BOOL all_para )
 
 BOOL cursor_prev_run( ME_Cursor *cursor, BOOL all_para )
 {
-    ME_DisplayItem *p = cursor->pRun->prev;
+    ME_DisplayItem *p = run_get_di( cursor->run )->prev;
 
     while (p->type != diTextStart)
     {
         if (p->type == diParagraph && !all_para) return FALSE;
         else if (p->type == diRun)
         {
-            cursor->pRun = p;
-            cursor->pPara = para_get_di( cursor->pRun->member.run.para );
+            cursor->run = &p->member.run;
+            cursor->para = cursor->run->para;
             cursor->nOffset = 0;
             return TRUE;
         }
@@ -69,12 +69,12 @@ ME_Run *run_next( ME_Run *run )
 {
     ME_Cursor cursor;
 
-    cursor.pRun = run_get_di( run );
-    cursor.pPara = para_get_di( run->para );
+    cursor.run = run;
+    cursor.para = run->para;
     cursor.nOffset = 0;
 
     if (cursor_next_run( &cursor, FALSE ))
-        return &cursor.pRun->member.run;
+        return cursor.run;
 
     return NULL;
 }
@@ -83,12 +83,12 @@ ME_Run *run_prev( ME_Run *run )
 {
     ME_Cursor cursor;
 
-    cursor.pRun = run_get_di( run );
-    cursor.pPara = para_get_di( run->para );
+    cursor.run = run;
+    cursor.para = run->para;
     cursor.nOffset = 0;
 
     if (cursor_prev_run( &cursor, FALSE ))
-        return &cursor.pRun->member.run;
+        return cursor.run;
 
     return NULL;
 }
@@ -97,12 +97,12 @@ ME_Run *run_next_all_paras( ME_Run *run )
 {
     ME_Cursor cursor;
 
-    cursor.pRun = run_get_di( run );
-    cursor.pPara = para_get_di( run->para );
+    cursor.run = run;
+    cursor.para = run->para;
     cursor.nOffset = 0;
 
     if (cursor_next_run( &cursor, TRUE ))
-        return &cursor.pRun->member.run;
+        return cursor.run;
 
     return NULL;
 }
@@ -111,12 +111,12 @@ ME_Run *run_prev_all_paras( ME_Run *run )
 {
     ME_Cursor cursor;
 
-    cursor.pRun = run_get_di( run );
-    cursor.pPara = para_get_di( run->para );
+    cursor.run = run;
+    cursor.para = run->para;
     cursor.nOffset = 0;
 
     if (cursor_prev_run( &cursor, TRUE ))
-        return &cursor.pRun->member.run;
+        return cursor.run;
 
     return NULL;
 }
@@ -282,8 +282,8 @@ void cursor_from_char_ofs( ME_TextEditor *editor, int char_ofs, ME_Cursor *curso
 
     char_ofs -= run->nCharOfs;
 
-    cursor->pPara = para_get_di( para );
-    cursor->pRun = run_get_di( run );
+    cursor->para = para;
+    cursor->run = run;
     cursor->nOffset = char_ofs;
 }
 
@@ -304,9 +304,9 @@ void run_join( ME_TextEditor *editor, ME_Run *run )
   /* Update all cursors so that they don't contain the soon deleted run */
   for (i = 0; i < editor->nCursors; i++)
   {
-    if (&editor->pCursors[i].pRun->member.run == next)
+    if (editor->pCursors[i].run == next)
     {
-      editor->pCursors[i].pRun = run_get_di( run );
+      editor->pCursors[i].run = run;
       editor->pCursors[i].nOffset += run->len;
     }
   }
@@ -326,7 +326,7 @@ void run_join( ME_TextEditor *editor, ME_Run *run )
  */
 ME_Run *run_split( ME_TextEditor *editor, ME_Cursor *cursor )
 {
-    ME_Run *run = &cursor->pRun->member.run, *new_run;
+    ME_Run *run = cursor->run, *new_run;
     int i;
     int nOffset = cursor->nOffset;
 
@@ -337,7 +337,7 @@ ME_Run *run_split( ME_TextEditor *editor, ME_Cursor *cursor )
     new_run->len = run->len - nOffset;
     new_run->para = run->para;
     run->len = nOffset;
-    cursor->pRun = run_get_di( new_run );
+    cursor->run = new_run;
     cursor->nOffset = 0;
 
     ME_InsertBefore( run_get_di( run )->next, run_get_di( new_run ) );
@@ -346,10 +346,10 @@ ME_Run *run_split( ME_TextEditor *editor, ME_Cursor *cursor )
     ME_UpdateRunFlags( editor, new_run );
     for (i = 0; i < editor->nCursors; i++)
     {
-        if (editor->pCursors[i].pRun == run_get_di( run ) &&
+        if (editor->pCursors[i].run == run &&
             editor->pCursors[i].nOffset >= nOffset)
         {
-            editor->pCursors[i].pRun = run_get_di( new_run );
+            editor->pCursors[i].run = new_run;
             editor->pCursors[i].nOffset -= nOffset;
         }
     }
@@ -397,19 +397,19 @@ ME_Run *run_create( ME_Style *s, int flags )
 ME_Run *run_insert( ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
                     const WCHAR *str, int len, int flags )
 {
-  ME_Run *insert_before = &cursor->pRun->member.run, *run, *prev;
+  ME_Run *insert_before = cursor->run, *run, *prev;
 
   if (cursor->nOffset)
   {
     if (cursor->nOffset == insert_before->len)
     {
       insert_before = run_next_all_paras( insert_before );
-      if (!insert_before) insert_before = &cursor->pRun->member.run; /* Always insert before the final eop run */
+      if (!insert_before) insert_before = cursor->run; /* Always insert before the final eop run */
     }
     else
     {
       run_split( editor, cursor );
-      insert_before = &cursor->pRun->member.run;
+      insert_before = cursor->run;
     }
   }
 
@@ -433,10 +433,10 @@ ME_Run *run_insert( ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
 
     for (i = 0; i < editor->nCursors; i++)
     {
-      if (editor->pCursors[i].pRun == run_get_di( prev ) &&
+      if (editor->pCursors[i].run == prev &&
           editor->pCursors[i].nOffset == prev->len)
       {
-        editor->pCursors[i].pRun = run_get_di( run );
+        editor->pCursors[i].run = run;
         editor->pCursors[i].nOffset = len;
       }
     }
@@ -795,35 +795,35 @@ void ME_SetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
  */
 void ME_SetCharFormat( ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, CHARFORMAT2W *fmt )
 {
-  ME_Run *run, *start_run = &start->pRun->member.run, *end_run = NULL;
+  ME_Run *run, *start_run = start->run, *end_run = NULL;
 
-  if (end && start->pRun == end->pRun && start->nOffset == end->nOffset)
+  if (end && start->run == end->run && start->nOffset == end->nOffset)
     return;
 
-  if (start->nOffset == start->pRun->member.run.len)
-    start_run = run_next_all_paras( &start->pRun->member.run );
+  if (start->nOffset == start->run->len)
+    start_run = run_next_all_paras( start->run );
   else if (start->nOffset)
   {
     /* run_split() may or may not update the cursors, depending on whether they
      * are selection cursors, but we need to make sure they are valid. */
     int split_offset = start->nOffset;
     ME_Run *split_run = run_split( editor, start );
-    start_run = &start->pRun->member.run;
-    if (end && &end->pRun->member.run == split_run)
+    start_run = start->run;
+    if (end && end->run == split_run)
     {
-      end->pRun = start->pRun;
+      end->run = start->run;
       end->nOffset -= split_offset;
     }
   }
 
   if (end)
   {
-    if (end->nOffset == end->pRun->member.run.len)
-      end_run = run_next_all_paras( &end->pRun->member.run );
+    if (end->nOffset == end->run->len)
+      end_run = run_next_all_paras( end->run );
     else
     {
       if (end->nOffset) run_split( editor, end );
-      end_run = &end->pRun->member.run;
+      end_run = end->run;
     }
   }
 
@@ -893,16 +893,16 @@ void ME_GetCharFormat( ME_TextEditor *editor, const ME_Cursor *from,
   ME_Run *run, *run_end, *prev_run;
   CHARFORMAT2W tmp;
 
-  run = &from->pRun->member.run;
+  run = from->run;
   /* special case - if selection is empty, take previous char's formatting */
-  if (from->pRun == to->pRun && from->nOffset == to->nOffset)
+  if (from->run == to->run && from->nOffset == to->nOffset)
   {
     if (!from->nOffset && (prev_run = run_prev( run ))) run = prev_run;
     run_copy_char_fmt( run, fmt );
     return;
   }
 
-  run_end = &to->pRun->member.run;
+  run_end = to->run;
   if (!to->nOffset) run_end = run_prev_all_paras( run_end );
 
   run_copy_char_fmt( run, fmt );
