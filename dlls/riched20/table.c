@@ -96,7 +96,7 @@ ME_Paragraph* table_insert_row_start_at_para( ME_TextEditor *editor, ME_Paragrap
 
     while (para != end_para)
     {
-        para->pCell = cell_get_di( para_cell( prev_para ) );
+        para->cell = para_cell( prev_para );
         para->nFlags |= MEPF_CELL;
         para->nFlags &= ~(MEPF_ROWSTART | MEPF_ROWEND);
         para->fmt.dwMask |= PFM_TABLE | PFM_TABLEROWDELIMITER;
@@ -193,14 +193,12 @@ ME_Cell *cell_create( void )
 
 ME_Cell *cell_next( ME_Cell *cell )
 {
-    if (!cell->next_cell) return NULL;
-    return &cell->next_cell->member.cell;
+    return cell->next_cell;
 }
 
 ME_Cell *cell_prev( ME_Cell *cell )
 {
-    if (!cell->prev_cell) return NULL;
-    return &cell->prev_cell->member.cell;
+    return cell->prev_cell;
 }
 
 ME_Paragraph *cell_first_para( ME_Cell *cell )

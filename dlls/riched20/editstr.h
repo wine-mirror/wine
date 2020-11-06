@@ -206,7 +206,7 @@ typedef struct tagME_Paragraph
   PARAFORMAT2 fmt;
   ME_String *text;
 
-  struct tagME_DisplayItem *pCell; /* v4.1 */
+  struct tagME_Cell *cell; /* v4.1 */
   ME_BorderRect border;
 
   int nCharOfs;
@@ -228,7 +228,7 @@ typedef struct tagME_Cell /* v4.1 */
   POINT pt;
   int nHeight, nWidth;
   int yTextOffset; /* The text offset is caused by the largest top border. */
-  struct tagME_DisplayItem *prev_cell, *next_cell, *parent_cell;
+  struct tagME_Cell *prev_cell, *next_cell, *parent_cell;
 } ME_Cell;
 
 typedef struct tagME_Row

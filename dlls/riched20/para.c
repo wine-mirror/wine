@@ -126,8 +126,7 @@ BOOL para_in_table( ME_Paragraph *para )
 
 ME_Cell *para_cell( ME_Paragraph *para )
 {
-    if (!para->pCell) return NULL;
-    return &para->pCell->member.cell;
+    return para->cell;
 }
 
 ME_Row *para_first_row( ME_Paragraph *para )
@@ -625,13 +624,13 @@ ME_Paragraph *para_split( ME_TextEditor *editor, ME_Run *run, ME_Style *style,
     {
       ME_Cell *cell = cell_create();
       ME_InsertBefore( para_get_di( new_para ), cell_get_di( cell ) );
-      new_para->pCell = cell_get_di( cell );
+      new_para->cell = cell;
       cell->next_cell = NULL;
       if (paraFlags & MEPF_ROWSTART)
       {
         old_para->nFlags |= MEPF_ROWSTART;
         cell->prev_cell = NULL;
-        cell->parent_cell = old_para->pCell;
+        cell->parent_cell = old_para->cell;
         if (para_cell( old_para ))
           cell->nNestingLevel = para_cell( old_para )->nNestingLevel + 1;
         else
@@ -639,8 +638,8 @@ ME_Paragraph *para_split( ME_TextEditor *editor, ME_Run *run, ME_Style *style,
       }
       else
       {
-        cell->prev_cell = old_para->pCell;
-        cell_prev( cell )->next_cell = cell_get_di( cell );
+        cell->prev_cell = old_para->cell;
+        cell_prev( cell )->next_cell = cell;
         assert( old_para->nFlags & MEPF_CELL );
         assert( !(old_para->nFlags & MEPF_ROWSTART) );
         cell->nNestingLevel = cell_prev( cell )->nNestingLevel;
@@ -650,19 +649,19 @@ ME_Paragraph *para_split( ME_TextEditor *editor, ME_Run *run, ME_Style *style,
     else if (paraFlags & MEPF_ROWEND)
     {
       old_para->nFlags |= MEPF_ROWEND;
-      old_para->pCell = old_para->pCell->member.cell.parent_cell;
-      new_para->pCell = old_para->pCell;
+      old_para->cell = old_para->cell->parent_cell;
+      new_para->cell = old_para->cell;
       assert( para_prev( old_para )->nFlags & MEPF_CELL );
       assert( !(para_prev( old_para )->nFlags & MEPF_ROWSTART) );
-      if (new_para->pCell != para_next( new_para )->pCell
-          && para_next( new_para )->pCell
-          && !para_next( new_para )->pCell->member.cell.prev_cell)
+      if (new_para->cell != para_next( new_para )->cell
+          && para_next( new_para )->cell
+          && !cell_prev( para_next( new_para )->cell ))
       {
         /* Row starts just after the row that was ended. */
         new_para->nFlags |= MEPF_ROWSTART;
       }
     }
-    else new_para->pCell = old_para->pCell;
+    else new_para->cell = old_para->cell;
 
     table_update_flags( old_para );
     table_update_flags( new_para );
@@ -721,7 +720,7 @@ ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_fir
   {
     /* Table cell/row properties are always moved over from the removed para. */
     para->nFlags = next->nFlags;
-    para->pCell = next->pCell;
+    para->cell = next->cell;
 
     /* Remove cell boundary if it is between the end paragraph run and the next
      * paragraph display item. */
@@ -740,10 +739,8 @@ ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_fir
   if (cell)
   {
     ME_Remove( cell_get_di( cell ) );
-    if (cell_prev( cell ))
-        cell_prev( cell )->next_cell = cell_next( cell ) ? cell_get_di( cell_next( cell ) ) : NULL;
-    if (cell_next( cell ))
-        cell_next( cell )->prev_cell = cell_prev( cell ) ? cell_get_di( cell_prev( cell ) ) : NULL;
+    if (cell_prev( cell )) cell_prev( cell )->next_cell = cell_next( cell );
+    if (cell_next( cell )) cell_next( cell )->prev_cell = cell_prev( cell );
     ME_DestroyDisplayItem( cell_get_di( cell ) );
   }
 
