@@ -3613,6 +3613,27 @@ todo_wine
     ok(sink.state == State_Stopped, "Got state %u.\n", sink.state);
     ok(source.state == State_Stopped, "Got state %u.\n", source.state);
 
+    /* Same, but tear down the graph instead. */
+
+    sink.state_hr = S_FALSE;
+    sink.GetState_hr = VFW_S_STATE_INTERMEDIATE;
+    hr = IMediaControl_Run(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IMediaFilter_Release(filter);
+    IMediaControl_Release(control);
+    IMediaSeeking_Release(seeking);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    graph = create_graph();
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaSeeking, (void **)&seeking);
+    IFilterGraph2_AddFilter(graph, &sink.IBaseFilter_iface, NULL);
+    IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
+    IPin_Connect(&source_pin.IPin_iface, &sink_pin.IPin_iface, NULL);
+
     /* This logic doesn't apply when using IMediaFilter methods directly. */
 
     source.expect_run_prev = sink.expect_run_prev = State_Stopped;
@@ -3692,11 +3713,6 @@ todo_wine
     hr = IMediaControl_Run(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Running);
-todo_wine
-    ok(source.start_time > 0 && source.start_time < 500 * 10000,
-        "Got time %s.\n", wine_dbgstr_longlong(source.start_time));
-    ok(sink.start_time == source.start_time, "Expected time %s, got %s.\n",
-        wine_dbgstr_longlong(source.start_time), wine_dbgstr_longlong(sink.start_time));
 
     source.expect_stop_prev = sink.expect_stop_prev = State_Running;
     IMediaFilter_Release(filter);
