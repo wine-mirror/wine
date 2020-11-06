@@ -2053,6 +2053,10 @@ static void *wine_vk_get_global_proc_addr(const char *name)
  */
 void *native_vkGetInstanceProcAddrWINE(VkInstance instance, const char *name)
 {
+    wine_vk_init_once();
+    if (!vk_funcs)
+        return NULL;
+
     return vk_funcs->p_vkGetInstanceProcAddr(instance, name);
 }
 
