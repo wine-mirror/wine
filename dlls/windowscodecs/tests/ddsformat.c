@@ -941,7 +941,6 @@ static void test_dds_decoder_frame_properties(IWICBitmapFrameDecode *frame_decod
     hr = IWICBitmapFrameDecode_GetPixelFormat(frame_decode, &pixel_format);
     ok(hr == S_OK, "Test %u, frame %u: GetPixelFormat failed, hr %#x\n", i, frame_index, hr);
     if (hr != S_OK) return;
-    todo_wine_if(IsEqualGUID(test_data[i].expected_pixel_format, &GUID_WICPixelFormat96bppRGBFloat))
     ok(IsEqualGUID(&pixel_format, test_data[i].expected_pixel_format),
        "Test %u, frame %u: Expected pixel format %s, got %s\n",
        i, frame_index, debugstr_guid(test_data[i].expected_pixel_format), debugstr_guid(&pixel_format));
@@ -1076,7 +1075,6 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
     hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, 0, 0, NULL);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyPixels got unexpected hr %#x\n", i, frame_index, hr);
 
-    todo_wine_if(IsEqualGUID(test_data[i].expected_pixel_format, &GUID_WICPixelFormat96bppRGBFloat)) {
     hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect_test_a, stride, sizeof(buffer), buffer);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyPixels got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect_test_b, stride, sizeof(buffer), buffer);
@@ -1113,7 +1111,6 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
     ok(hr == WINCODEC_ERR_INSUFFICIENTBUFFER, "Test %u, frame %u: CopyPixels got unexpected hr %#x\n", i, frame_index, hr);
     hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect, stride, stride * rect.Height, buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyPixels got unexpected hr %#x\n", i, frame_index, hr);
-    }
 
     hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect, stride, sizeof(buffer), NULL);
     ok(hr == E_INVALIDARG, "Test %u, frame %u: CopyBlocks got unexpected hr %#x\n", i, frame_index, hr);
@@ -1126,7 +1123,6 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
         memcpy(pixels, test_data[i].data + block_offset, frame_size);
     }
 
-    todo_wine_if(IsEqualGUID(test_data[i].expected_pixel_format, &GUID_WICPixelFormat96bppRGBFloat)) {
     memset(buffer, 0, sizeof(buffer));
     hr = IWICBitmapFrameDecode_CopyPixels(frame, &rect, stride, sizeof(buffer), buffer);
     ok(hr == S_OK, "Test %u, frame %u: CopyPixels failed, hr %#x\n", i, frame_index, hr);
@@ -1151,7 +1147,6 @@ static void test_dds_decoder_frame_data(IWICBitmapFrameDecode* frame, IWICDdsFra
             ok(!memcmp(pixels, buffer, frame_size),
                "Test %u, frame %u: Pixels mismatch\n", i, frame_index);
         };
-    }
     }
 }
 

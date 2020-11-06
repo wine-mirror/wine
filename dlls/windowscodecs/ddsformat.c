@@ -251,7 +251,24 @@ static struct dds_format {
       &GUID_WICPixelFormatUndefined,        0,  DXGI_FORMAT_R8G8_UNORM },
     { { sizeof(DDS_PIXELFORMAT), DDPF_LUMINANCE, 0, 8,  0xFF,0,0,0 },
       &GUID_WICPixelFormat8bppGray,         8,  DXGI_FORMAT_R8_UNORM },
-    { { 0 }, &GUID_WICPixelFormatUndefined, 0,  DXGI_FORMAT_UNKNOWN }
+    { { 0 }, &GUID_WICPixelFormat8bppAlpha,          8,   DXGI_FORMAT_A8_UNORM },
+    { { 0 }, &GUID_WICPixelFormat8bppGray,           8,   DXGI_FORMAT_R8_UNORM },
+    { { 0 }, &GUID_WICPixelFormat16bppGray,          16,  DXGI_FORMAT_R16_UNORM },
+    { { 0 }, &GUID_WICPixelFormat16bppGrayHalf,      16,  DXGI_FORMAT_R16_FLOAT },
+    { { 0 }, &GUID_WICPixelFormat16bppBGR565,        16,  DXGI_FORMAT_B5G6R5_UNORM },
+    { { 0 }, &GUID_WICPixelFormat16bppBGRA5551,      16,  DXGI_FORMAT_B5G5R5A1_UNORM },
+    { { 0 }, &GUID_WICPixelFormat32bppGrayFloat,     32,  DXGI_FORMAT_R32_FLOAT },
+    { { 0 }, &GUID_WICPixelFormat32bppRGBA,          32,  DXGI_FORMAT_R8G8B8A8_UNORM },
+    { { 0 }, &GUID_WICPixelFormat32bppBGRA,          32,  DXGI_FORMAT_B8G8R8A8_UNORM },
+    { { 0 }, &GUID_WICPixelFormat32bppBGR,           32,  DXGI_FORMAT_B8G8R8X8_UNORM },
+    { { 0 }, &GUID_WICPixelFormat32bppR10G10B10A2,   32,  DXGI_FORMAT_R10G10B10A2_UNORM },
+    { { 0 }, &GUID_WICPixelFormat32bppRGBE,          32,  DXGI_FORMAT_R9G9B9E5_SHAREDEXP },
+    { { 0 }, &GUID_WICPixelFormat32bppRGBA1010102XR, 32,  DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM },
+    { { 0 }, &GUID_WICPixelFormat64bppRGBA,          64,  DXGI_FORMAT_R16G16B16A16_UNORM },
+    { { 0 }, &GUID_WICPixelFormat64bppRGBAHalf,      64,  DXGI_FORMAT_R16G16B16A16_FLOAT },
+    { { 0 }, &GUID_WICPixelFormat96bppRGBFloat,      96,  DXGI_FORMAT_R32G32B32_FLOAT },
+    { { 0 }, &GUID_WICPixelFormat128bppRGBAFloat,    128, DXGI_FORMAT_R32G32B32A32_FLOAT },
+    { { 0 }, &GUID_WICPixelFormatUndefined,          0,   DXGI_FORMAT_UNKNOWN }
 };
 
 static DXGI_FORMAT compressed_formats[] = {
@@ -449,6 +466,18 @@ static UINT get_bytes_per_block_from_format(DXGI_FORMAT format)
     }
 }
 
+static const GUID *dxgi_format_to_wic_format(DXGI_FORMAT dxgi_format)
+{
+    UINT i;
+    for (i = 0; i < ARRAY_SIZE(dds_format_table); i++)
+    {
+        if (dds_format_table[i].pixel_format.size == 0 &&
+            dds_format_table[i].dxgi_format == dxgi_format)
+            return dds_format_table[i].wic_format;
+    }
+    return &GUID_WICPixelFormatUndefined;
+}
+
 static BOOL is_compressed(DXGI_FORMAT format)
 {
     UINT i;
@@ -485,9 +514,8 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
                                  &GUID_WICPixelFormat32bppPBGRA : &GUID_WICPixelFormat32bppBGRA;
             info->pixel_format_bpp = 32;
         } else {
-            info->pixel_format = &GUID_WICPixelFormatUndefined;
-            info->pixel_format_bpp = 0;
-            FIXME("Pixel format is incorrect for uncompressed DDS image with extended header\n");
+            info->pixel_format = dxgi_format_to_wic_format(info->format);
+            info->pixel_format_bpp = get_bytes_per_block_from_format(info->format) * 8;
         }
     } else {
         format_info = get_dds_format(&header->ddspf);
