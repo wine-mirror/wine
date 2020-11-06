@@ -96,7 +96,7 @@ ME_Paragraph* table_insert_row_start_at_para( ME_TextEditor *editor, ME_Paragrap
 
     while (para != end_para)
     {
-        para->pCell = prev_para->pCell;
+        para->pCell = cell_get_di( para_cell( prev_para ) );
         para->nFlags |= MEPF_CELL;
         para->nFlags &= ~(MEPF_ROWSTART | MEPF_ROWEND);
         para->fmt.dwMask |= PFM_TABLE | PFM_TABLEROWDELIMITER;
@@ -128,32 +128,31 @@ ME_Paragraph* table_insert_row_end( ME_TextEditor *editor, ME_Cursor *cursor )
 
 ME_Paragraph* table_row_end( ME_Paragraph *para )
 {
-  ME_DisplayItem *cell;
-  assert( para );
+  ME_Cell *cell;
+
   if (para->nFlags & MEPF_ROWEND) return para;
   if (para->nFlags & MEPF_ROWSTART) para = para_next( para );
-  cell = para->pCell;
-  assert(cell && cell->type == diCell);
-  while (cell->member.cell.next_cell)
-    cell = cell->member.cell.next_cell;
+  cell = para_cell( para );
+  while (cell_next( cell ))
+    cell = cell_next( cell );
 
-  para = &ME_FindItemFwd( cell, diParagraph )->member.para;
+  para = &ME_FindItemFwd( cell_get_di( cell ), diParagraph )->member.para;
   assert( para && para->nFlags & MEPF_ROWEND );
   return para;
 }
 
 ME_Paragraph* table_row_start( ME_Paragraph *para )
 {
-  ME_DisplayItem *cell;
-  assert( para );
+  ME_Cell *cell;
+
   if (para->nFlags & MEPF_ROWSTART) return para;
   if (para->nFlags & MEPF_ROWEND) para = para_prev( para );
-  cell = para->pCell;
-  assert(cell && cell->type == diCell);
-  while (cell->member.cell.prev_cell)
-    cell = cell->member.cell.prev_cell;
+  cell = para_cell( para );
 
-  para = &ME_FindItemBack( cell, diParagraph )->member.para;
+  while (cell_prev( cell ))
+    cell = cell_prev( cell );
+
+  para = &ME_FindItemBack( cell_get_di( cell ), diParagraph )->member.para;
   assert( para && para->nFlags & MEPF_ROWSTART );
   return para;
 }
@@ -161,11 +160,11 @@ ME_Paragraph* table_row_start( ME_Paragraph *para )
 ME_Paragraph* table_outer_para( ME_Paragraph *para )
 {
   if (para->nFlags & MEPF_ROWEND) para = para_prev( para );
-  while (para->pCell)
+  while (para_cell( para ))
   {
     para = table_row_start( para );
-    if (!para->pCell) break;
-    para = &ME_FindItemBack( para->pCell, diParagraph )->member.para;
+    if (!para_cell( para )) break;
+    para = &ME_FindItemBack( cell_get_di( para_cell( para ) ), diParagraph )->member.para;
   }
   return para;
 }
