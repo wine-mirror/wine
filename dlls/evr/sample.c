@@ -103,6 +103,276 @@ static struct surface_buffer *impl_from_IMFGetService(IMFGetService *iface)
     return CONTAINING_RECORD(iface, struct surface_buffer, IMFGetService_iface);
 }
 
+struct tracked_async_result
+{
+    MFASYNCRESULT result;
+    LONG refcount;
+    IUnknown *object;
+    IUnknown *state;
+};
+
+static struct tracked_async_result *impl_from_IMFAsyncResult(IMFAsyncResult *iface)
+{
+    return CONTAINING_RECORD(iface, struct tracked_async_result, result.AsyncResult);
+}
+
+static HRESULT WINAPI tracked_async_result_QueryInterface(IMFAsyncResult *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFAsyncResult) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFAsyncResult_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI tracked_async_result_AddRef(IMFAsyncResult *iface)
+{
+    struct tracked_async_result *result = impl_from_IMFAsyncResult(iface);
+    ULONG refcount = InterlockedIncrement(&result->refcount);
+
+    TRACE("%p, %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI tracked_async_result_Release(IMFAsyncResult *iface)
+{
+    struct tracked_async_result *result = impl_from_IMFAsyncResult(iface);
+    ULONG refcount = InterlockedDecrement(&result->refcount);
+
+    TRACE("%p, %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        if (result->result.pCallback)
+            IMFAsyncCallback_Release(result->result.pCallback);
+        if (result->object)
+            IUnknown_Release(result->object);
+        if (result->state)
+            IUnknown_Release(result->state);
+        heap_free(result);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI tracked_async_result_GetState(IMFAsyncResult *iface, IUnknown **state)
+{
+    struct tracked_async_result *result = impl_from_IMFAsyncResult(iface);
+
+    TRACE("%p, %p.\n", iface, state);
+
+    if (!result->state)
+        return E_POINTER;
+
+    *state = result->state;
+    IUnknown_AddRef(*state);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI tracked_async_result_GetStatus(IMFAsyncResult *iface)
+{
+    struct tracked_async_result *result = impl_from_IMFAsyncResult(iface);
+
+    TRACE("%p.\n", iface);
+
+    return result->result.hrStatusResult;
+}
+
+static HRESULT WINAPI tracked_async_result_SetStatus(IMFAsyncResult *iface, HRESULT status)
+{
+    struct tracked_async_result *result = impl_from_IMFAsyncResult(iface);
+
+    TRACE("%p, %#x.\n", iface, status);
+
+    result->result.hrStatusResult = status;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI tracked_async_result_GetObject(IMFAsyncResult *iface, IUnknown **object)
+{
+    struct tracked_async_result *result = impl_from_IMFAsyncResult(iface);
+
+    TRACE("%p, %p.\n", iface, object);
+
+    if (!result->object)
+        return E_POINTER;
+
+    *object = result->object;
+    IUnknown_AddRef(*object);
+
+    return S_OK;
+}
+
+static IUnknown * WINAPI tracked_async_result_GetStateNoAddRef(IMFAsyncResult *iface)
+{
+    struct tracked_async_result *result = impl_from_IMFAsyncResult(iface);
+
+    TRACE("%p.\n", iface);
+
+    return result->state;
+}
+
+static const IMFAsyncResultVtbl tracked_async_result_vtbl =
+{
+    tracked_async_result_QueryInterface,
+    tracked_async_result_AddRef,
+    tracked_async_result_Release,
+    tracked_async_result_GetState,
+    tracked_async_result_GetStatus,
+    tracked_async_result_SetStatus,
+    tracked_async_result_GetObject,
+    tracked_async_result_GetStateNoAddRef,
+};
+
+static HRESULT create_async_result(IUnknown *object, IMFAsyncCallback *callback,
+        IUnknown *state, IMFAsyncResult **out)
+{
+    struct tracked_async_result *result;
+
+    result = heap_alloc_zero(sizeof(*result));
+    if (!result)
+        return E_OUTOFMEMORY;
+
+    result->result.AsyncResult.lpVtbl = &tracked_async_result_vtbl;
+    result->refcount = 1;
+    result->object = object;
+    if (result->object)
+        IUnknown_AddRef(result->object);
+    result->result.pCallback = callback;
+    if (result->result.pCallback)
+        IMFAsyncCallback_AddRef(result->result.pCallback);
+    result->state = state;
+    if (result->state)
+        IUnknown_AddRef(result->state);
+
+    *out = &result->result.AsyncResult;
+
+    return S_OK;
+}
+
+struct tracking_thread
+{
+    HANDLE hthread;
+    DWORD tid;
+    LONG refcount;
+};
+static struct tracking_thread tracking_thread;
+
+static CRITICAL_SECTION tracking_thread_cs = { NULL, -1, 0, 0, 0, 0 };
+
+enum tracking_thread_message
+{
+    TRACKM_STOP = WM_USER,
+    TRACKM_INVOKE = WM_USER + 1,
+};
+
+static DWORD CALLBACK tracking_thread_proc(void *arg)
+{
+    HANDLE ready_event = arg;
+    BOOL stop_thread = FALSE;
+    IMFAsyncResult *result;
+    MFASYNCRESULT *data;
+    MSG msg;
+
+    PeekMessageW(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+
+    SetEvent(ready_event);
+
+    while (!stop_thread)
+    {
+        MsgWaitForMultipleObjects(0, NULL, FALSE, INFINITE, QS_POSTMESSAGE);
+
+        while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            switch (msg.message)
+            {
+                case TRACKM_INVOKE:
+                    result = (IMFAsyncResult *)msg.lParam;
+                    data = (MFASYNCRESULT *)result;
+                    if (data->pCallback)
+                        IMFAsyncCallback_Invoke(data->pCallback, result);
+                    IMFAsyncResult_Release(result);
+                    break;
+
+                case TRACKM_STOP:
+                    stop_thread = TRUE;
+                    break;
+
+                default:
+                    ;
+            }
+        }
+    }
+
+    TRACE("Tracking thread exiting.\n");
+
+    return 0;
+}
+
+static void video_sample_create_tracking_thread(void)
+{
+    EnterCriticalSection(&tracking_thread_cs);
+
+    if (++tracking_thread.refcount == 1)
+    {
+        HANDLE ready_event;
+
+        ready_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+        if (!(tracking_thread.hthread = CreateThread(NULL, 0, tracking_thread_proc,
+                ready_event, 0, &tracking_thread.tid)))
+        {
+            WARN("Failed to create sample tracking thread.\n");
+            CloseHandle(ready_event);
+            return;
+        }
+
+        WaitForSingleObject(ready_event, INFINITE);
+        CloseHandle(ready_event);
+
+        TRACE("Create tracking thread %#x.\n", tracking_thread.tid);
+    }
+
+    LeaveCriticalSection(&tracking_thread_cs);
+}
+
+static void video_sample_stop_tracking_thread(void)
+{
+    EnterCriticalSection(&tracking_thread_cs);
+
+    if (!--tracking_thread.refcount)
+    {
+        PostThreadMessageW(tracking_thread.tid, TRACKM_STOP, 0, 0);
+        CloseHandle(tracking_thread.hthread);
+        memset(&tracking_thread, 0, sizeof(tracking_thread));
+    }
+
+    LeaveCriticalSection(&tracking_thread_cs);
+}
+
+static void video_sample_tracking_thread_invoke(IMFAsyncResult *result)
+{
+    if (!tracking_thread.tid)
+    {
+        WARN("Sample tracking thread is not initialized.\n");
+        return;
+    }
+
+    IMFAsyncResult_AddRef(result);
+    PostThreadMessageW(tracking_thread.tid, TRACKM_INVOKE, 0, (LPARAM)result);
+}
+
 struct sample_allocator
 {
     IMFVideoSampleAllocator IMFVideoSampleAllocator_iface;
@@ -628,14 +898,11 @@ static ULONG WINAPI video_sample_Release(IMFSample *iface)
 {
     struct video_sample *sample = impl_from_IMFSample(iface);
     ULONG refcount;
-    HRESULT hr;
 
     IMFSample_LockStore(sample->sample);
     if (sample->tracked_result && sample->tracked_refcount == (sample->refcount - 1))
     {
-        /* Call could fail if queue system is not initialized, it's not critical. */
-        if (FAILED(hr = MFInvokeCallback(sample->tracked_result)))
-            WARN("Failed to invoke tracking callback, hr %#x.\n", hr);
+        video_sample_tracking_thread_invoke(sample->tracked_result);
         IMFAsyncResult_Release(sample->tracked_result);
         sample->tracked_result = NULL;
         sample->tracked_refcount = 0;
@@ -648,6 +915,7 @@ static ULONG WINAPI video_sample_Release(IMFSample *iface)
 
     if (!refcount)
     {
+        video_sample_stop_tracking_thread();
         if (sample->sample)
             IMFSample_Release(sample->sample);
         heap_free(sample);
@@ -1132,7 +1400,7 @@ static HRESULT WINAPI tracked_video_sample_SetAllocator(IMFTrackedSample *iface,
         hr = MF_E_NOTACCEPTING;
     else
     {
-        if (SUCCEEDED(hr = MFCreateAsyncResult((IUnknown *)iface, sample_allocator, state, &sample->tracked_result)))
+        if (SUCCEEDED(hr = create_async_result((IUnknown *)iface, sample_allocator, state, &sample->tracked_result)))
         {
             /* Account for additional refcount brought by 'state' object. This threshold is used
                on Release() to invoke tracker callback.  */
@@ -1427,6 +1695,8 @@ HRESULT WINAPI MFCreateVideoSampleFromSurface(IUnknown *surface, IMFSample **sam
 
     if (buffer)
         IMFSample_AddBuffer(object->sample, buffer);
+
+    video_sample_create_tracking_thread();
 
     *sample = &object->IMFSample_iface;
 
