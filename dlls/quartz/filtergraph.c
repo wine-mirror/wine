@@ -1837,7 +1837,6 @@ static void CALLBACK async_run_cb(TP_CALLBACK_INSTANCE *instance, void *context,
     }
 
     LeaveCriticalSection(&graph->cs);
-    IUnknown_Release(graph->outer_unk);
 }
 
 static HRESULT WINAPI MediaControl_Run(IMediaControl *iface)
@@ -1897,7 +1896,6 @@ static HRESULT WINAPI MediaControl_Run(IMediaControl *iface)
             if (!graph->async_run_work)
                 graph->async_run_work = CreateThreadpoolWork(async_run_cb, graph, NULL);
             graph->needs_async_run = 1;
-            IUnknown_AddRef(graph->outer_unk);
             SubmitThreadpoolWork(graph->async_run_work);
         }
         else
@@ -5008,9 +5006,8 @@ static HRESULT WINAPI MediaFilter_Stop(IMediaFilter *iface)
 
     LeaveCriticalSection(&graph->cs);
 
-    /* Don't cancel the callback; it's holding a reference to the graph. */
     if (work)
-        WaitForThreadpoolWorkCallbacks(work, FALSE);
+        WaitForThreadpoolWorkCallbacks(work, TRUE);
 
     return hr;
 }
@@ -5059,9 +5056,8 @@ static HRESULT WINAPI MediaFilter_Pause(IMediaFilter *iface)
 
     LeaveCriticalSection(&graph->cs);
 
-    /* Don't cancel the callback; it's holding a reference to the graph. */
     if (work)
-        WaitForThreadpoolWorkCallbacks(work, FALSE);
+        WaitForThreadpoolWorkCallbacks(work, TRUE);
 
     return hr;
 }
