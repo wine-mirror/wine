@@ -2891,7 +2891,11 @@ HKLM,%CurrentVersionNT%\Time Zones\Caucasus Standard Time,"Dlt",,"Caucasus Dayli
 HKLM,%CurrentVersionNT%\Time Zones\Caucasus Standard Time,"MUI_Dlt",,"@tzres.dll,-29873"
 HKLM,%CurrentVersionNT%\Time Zones\Caucasus Standard Time,"MUI_Std",,"@tzres.dll,-29872"
 HKLM,%CurrentVersionNT%\Time Zones\Caucasus Standard Time,"Std",,"Caucasus Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Caucasus Standard Time,"TZI",1,10,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Caucasus Standard Time,"TZI",1,10,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Caucasus Standard Time\Dynamic DST,"2011",1,10,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Caucasus Standard Time\Dynamic DST,"2012",1,10,ff,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Caucasus Standard Time\Dynamic DST,"FirstEntry",0x10001,"2011"
+HKLM,%CurrentVersionNT%\Time Zones\Caucasus Standard Time\Dynamic DST,"LastEntry",0x10001,"2012"
 HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time,"Display",,"Australia/Adelaide"
 HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time,"Dlt",,"Cen. Australia Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time,"MUI_Dlt",,"@tzres.dll,-38929"
