@@ -5423,7 +5423,7 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor,
     }
 
     cursor.nOffset = 0;
-    if (!ME_NextRun(&cursor.pPara, &cursor.pRun, TRUE))
+    if (!cursor_next_run( &cursor, TRUE ))
       goto done;
   }
 

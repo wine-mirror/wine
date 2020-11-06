@@ -67,8 +67,6 @@ void ME_CharFormatFromLogFont(HDC hDC, const LOGFONTW *lf, CHARFORMAT2W *fmt) DE
 /* list.c */
 void ME_InsertBefore(ME_DisplayItem *diWhere, ME_DisplayItem *diWhat) DECLSPEC_HIDDEN;
 void ME_Remove(ME_DisplayItem *diWhere) DECLSPEC_HIDDEN;
-BOOL ME_NextRun(ME_DisplayItem **para, ME_DisplayItem **run, BOOL all_para) DECLSPEC_HIDDEN;
-BOOL ME_PrevRun(ME_DisplayItem **para, ME_DisplayItem **run, BOOL all_para) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_FindItemBack(ME_DisplayItem *di, ME_DIType nTypeOrClass) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_FindItemFwd(ME_DisplayItem *di, ME_DIType nTypeOrClass) DECLSPEC_HIDDEN;
 ME_DisplayItem *ME_FindItemBackOrHere(ME_DisplayItem *di, ME_DIType nTypeOrClass) DECLSPEC_HIDDEN;
@@ -126,7 +124,8 @@ static inline ME_DisplayItem *row_get_di( ME_Row *row )
 
 /* run.c */
 void cursor_from_char_ofs( ME_TextEditor *editor, int char_ofs, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
-
+BOOL cursor_next_run( ME_Cursor *cursor, BOOL all_para ) DECLSPEC_HIDDEN;
+BOOL cursor_prev_run( ME_Cursor *cursor, BOOL all_para ) DECLSPEC_HIDDEN;
 int run_char_ofs( ME_Run *run, int ofs ) DECLSPEC_HIDDEN;
 ME_Run *run_create( ME_Style *s, int nFlags ) DECLSPEC_HIDDEN;
 ME_Run *run_insert( ME_TextEditor *editor, ME_Cursor *cursor,

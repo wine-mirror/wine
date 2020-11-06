@@ -1107,7 +1107,7 @@ static BOOL ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream,
         return FALSE;
       cursor.nOffset = 0;
     }
-  } while (cursor.pRun != endCur.pRun && ME_NextRun(&cursor.pPara, &cursor.pRun, TRUE));
+  } while (cursor.pRun != endCur.pRun && cursor_next_run( &cursor, TRUE ));
 
   if (!ME_StreamOutMove(pStream, "}\0", 2))
     return FALSE;

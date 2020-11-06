@@ -27,42 +27,96 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 WINE_DECLARE_DEBUG_CHANNEL(richedit_check);
 WINE_DECLARE_DEBUG_CHANNEL(richedit_lists);
 
+BOOL cursor_next_run( ME_Cursor *cursor, BOOL all_para )
+{
+    ME_DisplayItem *p = cursor->pRun->next;
+
+    while (p->type != diTextEnd)
+    {
+        if (p->type == diParagraph && !all_para) return FALSE;
+        else if (p->type == diRun)
+        {
+            cursor->pRun = p;
+            cursor->pPara = para_get_di( cursor->pRun->member.run.para );
+            cursor->nOffset = 0;
+            return TRUE;
+        }
+        p = p->next;
+    }
+    return FALSE;
+}
+
+BOOL cursor_prev_run( ME_Cursor *cursor, BOOL all_para )
+{
+    ME_DisplayItem *p = cursor->pRun->prev;
+
+    while (p->type != diTextStart)
+    {
+        if (p->type == diParagraph && !all_para) return FALSE;
+        else if (p->type == diRun)
+        {
+            cursor->pRun = p;
+            cursor->pPara = para_get_di( cursor->pRun->member.run.para );
+            cursor->nOffset = 0;
+            return TRUE;
+        }
+        p = p->prev;
+    }
+    return FALSE;
+}
+
 ME_Run *run_next( ME_Run *run )
 {
-    ME_DisplayItem *item = run_get_di( run );
+    ME_Cursor cursor;
 
-    if (ME_NextRun( NULL, &item, FALSE ))
-        return &item->member.run;
+    cursor.pRun = run_get_di( run );
+    cursor.pPara = para_get_di( run->para );
+    cursor.nOffset = 0;
+
+    if (cursor_next_run( &cursor, FALSE ))
+        return &cursor.pRun->member.run;
 
     return NULL;
 }
 
 ME_Run *run_prev( ME_Run *run )
 {
-    ME_DisplayItem *item = run_get_di( run );
+    ME_Cursor cursor;
 
-    if (ME_PrevRun( NULL, &item, FALSE ))
-        return &item->member.run;
+    cursor.pRun = run_get_di( run );
+    cursor.pPara = para_get_di( run->para );
+    cursor.nOffset = 0;
+
+    if (cursor_prev_run( &cursor, FALSE ))
+        return &cursor.pRun->member.run;
 
     return NULL;
 }
 
 ME_Run *run_next_all_paras( ME_Run *run )
 {
-    ME_DisplayItem *item = run_get_di( run ), *dummy = para_get_di( run->para );
+    ME_Cursor cursor;
 
-    if (ME_NextRun( &dummy, &item, TRUE ))
-        return &item->member.run;
+    cursor.pRun = run_get_di( run );
+    cursor.pPara = para_get_di( run->para );
+    cursor.nOffset = 0;
+
+    if (cursor_next_run( &cursor, TRUE ))
+        return &cursor.pRun->member.run;
 
     return NULL;
 }
 
 ME_Run *run_prev_all_paras( ME_Run *run )
 {
-    ME_DisplayItem *item = run_get_di( run ), *dummy = para_get_di( run->para );
+    ME_Cursor cursor;
 
-    if (ME_PrevRun( &dummy, &item, TRUE ))
-        return &item->member.run;
+    cursor.pRun = run_get_di( run );
+    cursor.pPara = para_get_di( run->para );
+    cursor.nOffset = 0;
+
+    if (cursor_prev_run( &cursor, TRUE ))
+        return &cursor.pRun->member.run;
 
     return NULL;
 }
