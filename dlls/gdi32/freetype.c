@@ -3219,7 +3219,7 @@ static DWORD CDECL freetype_get_glyph_outline( struct gdi_font *font, UINT glyph
                                                const MAT2 *lpmat, BOOL tategaki )
 {
     struct gdi_font *base_font = font->base_font ? font->base_font : font;
-    FT_Face ft_face = get_ft_face( base_font );
+    FT_Face ft_face = get_ft_face( font );
     FT_Glyph_Metrics metrics;
     FT_Error err;
     FT_BBox bbox;
