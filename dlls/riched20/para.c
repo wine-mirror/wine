@@ -243,7 +243,7 @@ static void table_update_flags( ME_Paragraph *para )
 {
     para->fmt.dwMask |= PFM_TABLE | PFM_TABLEROWDELIMITER;
 
-    if (para->pCell) para->nFlags |= MEPF_CELL;
+    if (para_cell( para )) para->nFlags |= MEPF_CELL;
     else para->nFlags &= ~MEPF_CELL;
 
     if (para->nFlags & MEPF_ROWEND) para->fmt.wEffects |= PFE_TABLEROWDELIMITER;
@@ -623,29 +623,28 @@ ME_Paragraph *para_split( ME_TextEditor *editor, ME_Run *run, ME_Style *style,
   {
     if (paraFlags & (MEPF_ROWSTART | MEPF_CELL))
     {
-      ME_DisplayItem *cell = ME_MakeDI(diCell);
-      ME_InsertBefore( para_get_di( new_para ), cell );
-      new_para->pCell = cell;
-      cell->member.cell.next_cell = NULL;
+      ME_Cell *cell = cell_create();
+      ME_InsertBefore( para_get_di( new_para ), cell_get_di( cell ) );
+      new_para->pCell = cell_get_di( cell );
+      cell->next_cell = NULL;
       if (paraFlags & MEPF_ROWSTART)
       {
         old_para->nFlags |= MEPF_ROWSTART;
-        cell->member.cell.prev_cell = NULL;
-        cell->member.cell.parent_cell = old_para->pCell;
-        if (old_para->pCell)
-          cell->member.cell.nNestingLevel = old_para->pCell->member.cell.nNestingLevel + 1;
+        cell->prev_cell = NULL;
+        cell->parent_cell = old_para->pCell;
+        if (para_cell( old_para ))
+          cell->nNestingLevel = para_cell( old_para )->nNestingLevel + 1;
         else
-          cell->member.cell.nNestingLevel = 1;
+          cell->nNestingLevel = 1;
       }
       else
       {
-        cell->member.cell.prev_cell = old_para->pCell;
-        assert(cell->member.cell.prev_cell);
-        cell->member.cell.prev_cell->member.cell.next_cell = cell;
+        cell->prev_cell = old_para->pCell;
+        cell_prev( cell )->next_cell = cell_get_di( cell );
         assert( old_para->nFlags & MEPF_CELL );
         assert( !(old_para->nFlags & MEPF_ROWSTART) );
-        cell->member.cell.nNestingLevel = cell->member.cell.prev_cell->member.cell.nNestingLevel;
-        cell->member.cell.parent_cell = cell->member.cell.prev_cell->member.cell.parent_cell;
+        cell->nNestingLevel = cell_prev( cell )->nNestingLevel;
+        cell->parent_cell = cell_prev( cell )->parent_cell;
       }
     }
     else if (paraFlags & MEPF_ROWEND)
@@ -653,11 +652,11 @@ ME_Paragraph *para_split( ME_TextEditor *editor, ME_Run *run, ME_Style *style,
       old_para->nFlags |= MEPF_ROWEND;
       old_para->pCell = old_para->pCell->member.cell.parent_cell;
       new_para->pCell = old_para->pCell;
-      assert( old_para->prev_para->member.para.nFlags & MEPF_CELL );
-      assert( !(old_para->prev_para->member.para.nFlags & MEPF_ROWSTART) );
-      if (new_para->pCell != new_para->next_para->member.para.pCell
-          && new_para->next_para->member.para.pCell
-          && !new_para->next_para->member.para.pCell->member.cell.prev_cell)
+      assert( para_prev( old_para )->nFlags & MEPF_CELL );
+      assert( !(para_prev( old_para )->nFlags & MEPF_ROWSTART) );
+      if (new_para->pCell != para_next( new_para )->pCell
+          && para_next( new_para )->pCell
+          && !para_next( new_para )->pCell->member.cell.prev_cell)
       {
         /* Row starts just after the row that was ended. */
         new_para->nFlags |= MEPF_ROWSTART;
@@ -686,9 +685,10 @@ ME_Paragraph *para_split( ME_TextEditor *editor, ME_Run *run, ME_Style *style,
    specified in use_first_fmt */
 ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_first_fmt )
 {
-  ME_DisplayItem *tmp, *pCell = NULL;
+  ME_DisplayItem *tmp;
   ME_Paragraph *next = para_next( para );
   ME_Run *end_run, *next_first_run, *tmp_run;
+  ME_Cell *cell = NULL;
   int i, shift;
   int end_len;
   CHARFORMAT2W fmt;
@@ -729,22 +729,22 @@ ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_fir
     {
       if (tmp->type == diCell)
       {
-        pCell = tmp;
+        cell = &tmp->member.cell;
         break;
       }
     }
   }
 
-  add_undo_split_para( editor, next, eol_str, pCell ? &pCell->member.cell : NULL );
+  add_undo_split_para( editor, next, eol_str, cell );
 
-  if (pCell)
+  if (cell)
   {
-    ME_Remove( pCell );
-    if (pCell->member.cell.prev_cell)
-      pCell->member.cell.prev_cell->member.cell.next_cell = pCell->member.cell.next_cell;
-    if (pCell->member.cell.next_cell)
-      pCell->member.cell.next_cell->member.cell.prev_cell = pCell->member.cell.prev_cell;
-    ME_DestroyDisplayItem( pCell );
+    ME_Remove( cell_get_di( cell ) );
+    if (cell_prev( cell ))
+        cell_prev( cell )->next_cell = cell_next( cell ) ? cell_get_di( cell_next( cell ) ) : NULL;
+    if (cell_next( cell ))
+        cell_next( cell )->prev_cell = cell_prev( cell ) ? cell_get_di( cell_prev( cell ) ) : NULL;
+    ME_DestroyDisplayItem( cell_get_di( cell ) );
   }
 
   if (!use_first_fmt)

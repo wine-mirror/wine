@@ -185,6 +185,12 @@ ME_Cell *table_row_end_cell( ME_Paragraph *para )
     return cell_next( para_cell( para ) );
 }
 
+ME_Cell *cell_create( void )
+{
+    ME_DisplayItem *item = ME_MakeDI( diCell );
+    return &item->member.cell;
+}
+
 ME_Cell *cell_next( ME_Cell *cell )
 {
     if (!cell->next_cell) return NULL;

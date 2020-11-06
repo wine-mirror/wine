@@ -289,6 +289,7 @@ ME_Paragraph *editor_end_para( ME_TextEditor *editor ) DECLSPEC_HIDDEN;
 ME_Paragraph *editor_first_para( ME_TextEditor *editor ) DECLSPEC_HIDDEN;
 
 /* table.c */
+ME_Cell *cell_create( void ) DECLSPEC_HIDDEN;
 ME_Paragraph *cell_end_para( ME_Cell *cell ) DECLSPEC_HIDDEN;
 ME_Paragraph *cell_first_para( ME_Cell *cell ) DECLSPEC_HIDDEN;
 ME_Cell *cell_next( ME_Cell *cell ) DECLSPEC_HIDDEN;
