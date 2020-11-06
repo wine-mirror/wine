@@ -34,8 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dc);
 
-static const WCHAR displayW[] = { 'd','i','s','p','l','a','y',0 };
-
 static BOOL DC_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs dc_funcs =
@@ -699,7 +697,7 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
     if (initData)
     {
         /* don't convert initData for DISPLAY driver, it's not used */
-        if (!driverW.Buffer || wcsicmp( driverW.Buffer, displayW ))
+        if (!driverW.Buffer || wcsicmp( driverW.Buffer, L"display" ))
             initDataW = GdiConvertToDevmodeW(initData);
     }
 
@@ -754,7 +752,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
         funcs = physDev->funcs;
         release_dc_ptr( origDC );
     }
-    else funcs = DRIVER_load_driver( displayW );
+    else funcs = DRIVER_load_driver( L"display" );
 
     if (!(dc = alloc_dc_ptr( OBJ_MEMDC ))) return 0;
 

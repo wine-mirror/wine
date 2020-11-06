@@ -2836,7 +2836,6 @@ typedef struct wmf_in_emf_comment
 HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer, const BYTE *lpbBuffer, HDC hdcRef,
                                        const METAFILEPICT *lpmfp)
 {
-    static const WCHAR szDisplayW[] = { 'D','I','S','P','L','A','Y','\0' };
     HMETAFILE hmf = NULL;
     HENHMETAFILE ret = NULL;
     HDC hdc = NULL, hdcdisp = NULL;
@@ -2857,7 +2856,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer, const BYTE *lpbBuffer, HDC
     if (ret) return ret;
 
     if(!hdcRef)
-        hdcRef = hdcdisp = CreateDCW(szDisplayW, NULL, NULL, NULL);
+        hdcRef = hdcdisp = CreateDCW(L"DISPLAY", NULL, NULL, NULL);
 
     if (lpmfp)
     {

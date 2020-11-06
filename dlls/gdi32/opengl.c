@@ -33,7 +33,6 @@
 #include "gdi_private.h"
 
 
-static const WCHAR opengl32W[] = {'o','p','e','n','g','l','3','2','.','d','l','l',0};
 static HMODULE opengl32;
 static INT (WINAPI *wglChoosePixelFormat)(HDC,const PIXELFORMATDESCRIPTOR *);
 static INT (WINAPI *wglDescribePixelFormat)(HDC,INT,UINT,PIXELFORMATDESCRIPTOR*);
@@ -65,7 +64,7 @@ INT WINAPI ChoosePixelFormat( HDC hdc, const PIXELFORMATDESCRIPTOR *pfd )
 {
     if (!wglChoosePixelFormat)
     {
-        if (!opengl32) opengl32 = LoadLibraryW( opengl32W );
+        if (!opengl32) opengl32 = LoadLibraryW( L"opengl32.dll" );
         if (!(wglChoosePixelFormat = (void *)GetProcAddress( opengl32, "wglChoosePixelFormat" )))
             return 0;
     }
@@ -79,7 +78,7 @@ INT WINAPI DescribePixelFormat( HDC hdc, INT fmt, UINT size, PIXELFORMATDESCRIPT
 {
     if (!wglDescribePixelFormat)
     {
-        if (!opengl32) opengl32 = LoadLibraryW( opengl32W );
+        if (!opengl32) opengl32 = LoadLibraryW( L"opengl32.dll" );
         if (!(wglDescribePixelFormat = (void *)GetProcAddress( opengl32, "wglDescribePixelFormat" )))
             return 0;
     }
@@ -93,7 +92,7 @@ INT WINAPI GetPixelFormat( HDC hdc )
 {
     if (!wglGetPixelFormat)
     {
-        if (!opengl32) opengl32 = LoadLibraryW( opengl32W );
+        if (!opengl32) opengl32 = LoadLibraryW( L"opengl32.dll" );
         if (!(wglGetPixelFormat = (void *)GetProcAddress( opengl32, "wglGetPixelFormat" )))
             return 0;
     }
@@ -107,7 +106,7 @@ BOOL WINAPI SetPixelFormat( HDC hdc, INT fmt, const PIXELFORMATDESCRIPTOR *pfd )
 {
     if (!wglSetPixelFormat)
     {
-        if (!opengl32) opengl32 = LoadLibraryW( opengl32W );
+        if (!opengl32) opengl32 = LoadLibraryW( L"opengl32.dll" );
         if (!(wglSetPixelFormat = (void *)GetProcAddress( opengl32, "wglSetPixelFormat" )))
             return FALSE;
     }
@@ -121,7 +120,7 @@ BOOL WINAPI SwapBuffers( HDC hdc )
 {
     if (!wglSwapBuffers)
     {
-        if (!opengl32) opengl32 = LoadLibraryW( opengl32W );
+        if (!opengl32) opengl32 = LoadLibraryW( L"opengl32.dll" );
         if (!(wglSwapBuffers = (void *)GetProcAddress( opengl32, "wglSwapBuffers" )))
             return FALSE;
     }

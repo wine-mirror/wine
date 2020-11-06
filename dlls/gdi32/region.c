@@ -1437,14 +1437,13 @@ INT mirror_region( HRGN dst, HRGN src, INT width )
  */
 BOOL WINAPI MirrorRgn( HWND hwnd, HRGN hrgn )
 {
-    static const WCHAR user32W[] = {'u','s','e','r','3','2','.','d','l','l',0};
     static BOOL (WINAPI *pGetWindowRect)( HWND hwnd, LPRECT rect );
     RECT rect;
 
     /* yes, a HWND in gdi32, don't ask */
     if (!pGetWindowRect)
     {
-        HMODULE user32 = GetModuleHandleW(user32W);
+        HMODULE user32 = GetModuleHandleW(L"user32.dll");
         if (!user32) return FALSE;
         if (!(pGetWindowRect = (void *)GetProcAddress( user32, "GetWindowRect" ))) return FALSE;
     }

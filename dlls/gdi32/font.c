@@ -232,57 +232,23 @@ static const CHARSETINFO FONT_tci[MAXTCIINDEX] = {
   { SYMBOL_CHARSET, CP_SYMBOL, {{0,0,0,0},{FS_SYMBOL,0}} }
 };
 
-static const WCHAR win9x_font_reg_key[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-                                           'W','i','n','d','o','w','s','\\',
-                                           'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                           'F','o','n','t','s','\0'};
-
-static const WCHAR winnt_font_reg_key[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-                                           'W','i','n','d','o','w','s',' ','N','T','\\',
-                                           'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                           'F','o','n','t','s','\0'};
-
-static const WCHAR system_fonts_reg_key[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
-static const WCHAR system_link[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-                                    'W','i','n','d','o','w','s',' ','N','T','\\',
-                                    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','F','o','n','t','L','i','n','k','\\',
-                                    'S','y','s','t','e','m','L','i','n','k',0};
-static const WCHAR Lucida_Sans_Unicode[] = {'L','u','c','i','d','a',' ','S','a','n','s',' ','U','n','i','c','o','d','e',0};
-static const WCHAR Microsoft_Sans_Serif[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0 };
-static const WCHAR Tahoma[] = {'T','a','h','o','m','a',0};
-static const WCHAR MS_UI_Gothic[] = {'M','S',' ','U','I',' ','G','o','t','h','i','c',0};
-static const WCHAR SimSun[] = {'S','i','m','S','u','n',0};
-static const WCHAR Gulim[] = {'G','u','l','i','m',0};
-static const WCHAR PMingLiU[] = {'P','M','i','n','g','L','i','U',0};
-static const WCHAR Batang[] = {'B','a','t','a','n','g',0};
-
-static const WCHAR arial[] = {'A','r','i','a','l',0};
-static const WCHAR bitstream_vera_sans[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','a','n','s',0};
-static const WCHAR bitstream_vera_sans_mono[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','a','n','s',' ','M','o','n','o',0};
-static const WCHAR bitstream_vera_serif[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','e','r','i','f',0};
-static const WCHAR courier_new[] = {'C','o','u','r','i','e','r',' ','N','e','w',0};
-static const WCHAR liberation_mono[] = {'L','i','b','e','r','a','t','i','o','n',' ','M','o','n','o',0};
-static const WCHAR liberation_sans[] = {'L','i','b','e','r','a','t','i','o','n',' ','S','a','n','s',0};
-static const WCHAR liberation_serif[] = {'L','i','b','e','r','a','t','i','o','n',' ','S','e','r','i','f',0};
-static const WCHAR times_new_roman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
-
 static const WCHAR * const default_serif_list[3] =
 {
-    times_new_roman,
-    liberation_serif,
-    bitstream_vera_serif
+    L"Times New Roman",
+    L"Liberation Serif",
+    L"Bitstream Vera Serif"
 };
 static const WCHAR * const default_fixed_list[3] =
 {
-    courier_new,
-    liberation_mono,
-    bitstream_vera_sans_mono
+    L"Courier New",
+    L"Liberation Mono",
+    L"Bitstream Vera Sans Mono"
 };
 static const WCHAR * const default_sans_list[3] =
 {
-    arial,
-    liberation_sans,
-    bitstream_vera_sans
+    L"Arial",
+    L"Liberation Sans",
+    L"Bitstream Vera Sans"
 };
 
 static const struct nls_update_font_list
@@ -440,19 +406,11 @@ static CRITICAL_SECTION font_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
 {
-    static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\\',0};
-    static const WCHAR winedatadirW[] = {'W','I','N','E','D','A','T','A','D','I','R',0};
-    static const WCHAR winebuilddirW[] = {'W','I','N','E','B','U','I','L','D','D','I','R',0};
+    if (GetEnvironmentVariableW( L"WINEDATADIR", path, MAX_PATH ))
+        lstrcatW( path, L"\\" WINE_FONT_DIR "\\" );
+    else if (GetEnvironmentVariableW( L"WINEBUILDDIR", path, MAX_PATH ))
+        lstrcatW( path, L"\\fonts\\" );
 
-    if (GetEnvironmentVariableW( winedatadirW, path, MAX_PATH ))
-    {
-        const char fontdir[] = "\\" WINE_FONT_DIR "\\";
-        MultiByteToWideChar( CP_ACP, 0, fontdir, -1, path + lstrlenW(path), MAX_PATH - lstrlenW(path) );
-    }
-    else if (GetEnvironmentVariableW( winebuilddirW, path, MAX_PATH ))
-    {
-        lstrcatW( path, fontsW );
-    }
     lstrcatW( path, file );
     if (path[5] == ':') memmove( path, path + 4, (lstrlenW(path) - 3) * sizeof(WCHAR) );
     else path[1] = '\\';  /* change \??\ to \\?\ */
@@ -460,10 +418,8 @@ static void get_fonts_data_dir_path( const WCHAR *file, WCHAR *path )
 
 static void get_fonts_win_dir_path( const WCHAR *file, WCHAR *path )
 {
-    static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\\',0};
-
     GetWindowsDirectoryW( path, MAX_PATH );
-    lstrcatW( path, fontsW );
+    lstrcatW( path, L"\\fonts\\" );
     lstrcatW( path, file );
 }
 
@@ -538,7 +494,7 @@ static void load_gdi_font_subst(void)
     DWORD i = 0, type, dlen, vlen;
     WCHAR value[64], data[64], *p;
 
-    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes",
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes",
                      &hkey)) return;
 
     dlen = sizeof(data);
@@ -704,7 +660,7 @@ static void load_gdi_font_replacements(void)
     WCHAR value[LF_FACESIZE], data[1024];
 
     /* @@ Wine registry key: HKCU\Software\Wine\Fonts\Replacements */
-    if (RegOpenKeyA( wine_fonts_key, "Replacements", &hkey )) return;
+    if (RegOpenKeyW( wine_fonts_key, L"Replacements", &hkey )) return;
 
     dlen = sizeof(data);
     vlen = ARRAY_SIZE(value);
@@ -1137,10 +1093,9 @@ static void add_face_to_cache( struct gdi_font_face *face )
 
     if (!face->scalable)
     {
-        static const WCHAR fmtW[] = {'%','d',0};
         WCHAR name[10];
 
-        swprintf( name, ARRAY_SIZE(name), fmtW, face->size.y_ppem );
+        swprintf( name, ARRAY_SIZE(name), L"%d", face->size.y_ppem );
         RegCreateKeyExW( hkey_family, name, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS,
                          NULL, &hkey_face, NULL);
     }
@@ -1174,9 +1129,8 @@ static void remove_face_from_cache( struct gdi_font_face *face )
 
     if (!face->scalable)
     {
-        static const WCHAR fmtW[] = {'%','d',0};
         WCHAR name[10];
-        swprintf( name, ARRAY_SIZE(name), fmtW, face->size.y_ppem );
+        swprintf( name, ARRAY_SIZE(name), L"%d", face->size.y_ppem );
         RegDeleteKeyW( hkey_family, name );
     }
     else RegDeleteValueW( hkey_family, face->style_name );
@@ -1269,9 +1223,9 @@ static void add_gdi_font_link_entry( struct gdi_font_link *link, const WCHAR *fa
 
 static const WCHAR * const font_links_list[] =
 {
-    Lucida_Sans_Unicode,
-    Microsoft_Sans_Serif,
-    Tahoma
+    L"Lucida Sans Unicode",
+    L"Microsoft Sans Serif",
+    L"Tahoma"
 };
 
 static const struct font_links_defaults_list
@@ -1283,27 +1237,27 @@ static const struct font_links_defaults_list
 } font_links_defaults_list[] =
 {
     /* Non East-Asian */
-    { Tahoma, /* FIXME unverified ordering */
-      { MS_UI_Gothic, SimSun, Gulim, PMingLiU, NULL }
+    { L"Tahoma", /* FIXME unverified ordering */
+      { L"MS UI Gothic", L"SimSun", L"Gulim", L"PMingLiU", NULL }
     },
     /* Below lists are courtesy of
      * http://blogs.msdn.com/michkap/archive/2005/06/18/430507.aspx
      */
     /* Japanese */
-    { MS_UI_Gothic,
-      { MS_UI_Gothic, PMingLiU, SimSun, Gulim, NULL }
+    { L"MS UI Gothic",
+      { L"MS UI Gothic", L"PMingLiU", L"SimSun", L"Gulim", NULL }
     },
     /* Chinese Simplified */
-    { SimSun,
-      { SimSun, PMingLiU, MS_UI_Gothic, Batang, NULL }
+    { L"SimSun",
+      { L"SimSun", L"PMingLiU", L"MS UI Gothic", L"Batang", NULL }
     },
     /* Korean */
-    { Gulim,
-      { Gulim, PMingLiU, MS_UI_Gothic, SimSun, NULL }
+    { L"Gulim",
+      { L"Gulim", L"PMingLiU", L"MS UI Gothic", L"SimSun", NULL }
     },
     /* Chinese Traditional */
-    { PMingLiU,
-      { PMingLiU, SimSun, MS_UI_Gothic, Batang, NULL }
+    { L"PMingLiU",
+      { L"PMingLiU", L"SimSun", L"MS UI Gothic", L"Batang", NULL }
     }
 };
 
@@ -1347,22 +1301,14 @@ static void populate_system_links( const WCHAR *name, const WCHAR * const *value
 
 static void load_system_links(void)
 {
-    static const WCHAR system_link[] = {'S','o','f','t','w','a','r','e','\\',
-                                        'M','i','c','r','o','s','o','f','t','\\',
-                                        'W','i','n','d','o','w','s',' ','N','T','\\',
-                                        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                        'F','o','n','t','L','i','n','k','\\',
-                                        'S','y','s','t','e','m','L','i','n','k',0};
-    static const WCHAR tahoma_ttf[] = {'t','a','h','o','m','a','.','t','t','f',0};
-    static const WCHAR System[] = {'S','y','s','t','e','m',0};
-    static const WCHAR MS_Shell_Dlg[] = {'M','S',' ','S','h','e','l','l',' ','D','l','g',0};
     HKEY hkey;
     DWORD i, j;
     const WCHAR *shelldlg_name;
     struct gdi_font_link *font_link, *system_font_link;
     struct gdi_font_face *face;
 
-    if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, system_link, &hkey ))
+    if (!RegOpenKeyW( HKEY_LOCAL_MACHINE,
+                      L"Software\\Microsoft\\Windows NT\\CurrentVersion\\FontLink\\SystemLink", &hkey ))
     {
         WCHAR value[MAX_PATH], data[1024];
         DWORD type, val_len, data_len;
@@ -1408,7 +1354,7 @@ static void load_system_links(void)
         RegCloseKey( hkey );
     }
 
-    if ((shelldlg_name = get_gdi_font_subst( MS_Shell_Dlg, -1, NULL )))
+    if ((shelldlg_name = get_gdi_font_subst( L"MS Shell Dlg", -1, NULL )))
     {
         for (i = 0; i < ARRAY_SIZE(font_links_defaults_list); i++)
         {
@@ -1429,13 +1375,13 @@ static void load_system_links(void)
     /* Explicitly add an entry for the system font, this links to Tahoma and any links
        that Tahoma has */
 
-    system_font_link = add_gdi_font_link( System );
-    if ((face = find_face_from_filename( tahoma_ttf, Tahoma )))
+    system_font_link = add_gdi_font_link( L"System" );
+    if ((face = find_face_from_filename( L"tahoma.ttf", L"Tahoma" )))
     {
         add_gdi_font_link_entry( system_font_link, face->family->family_name, face->fs );
         TRACE("Found Tahoma in %s index %u\n", debugstr_w(face->file), face->face_index);
     }
-    if ((font_link = find_gdi_font_link( Tahoma )))
+    if ((font_link = find_gdi_font_link( L"Tahoma" )))
     {
         struct gdi_font_link_entry *entry;
         LIST_FOR_EACH_ENTRY( entry, &font_link->links, struct gdi_font_link_entry, entry )
@@ -2174,7 +2120,6 @@ static void add_child_font( struct gdi_font *font, const WCHAR *family_name )
 
 static void create_child_font_list( struct gdi_font *font )
 {
-    static const WCHAR szDefaultFallbackLink[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0};
     struct gdi_font_link *font_link;
     struct gdi_font_link_entry *entry;
     const WCHAR* font_name;
@@ -2193,9 +2138,9 @@ static void create_child_font_list( struct gdi_font *font )
      * Sans Serif.  This is how asian windows get default fallbacks for fonts
      */
     if (is_dbcs_ansi_cp(GetACP()) && font->charset != SYMBOL_CHARSET && font->charset != OEM_CHARSET &&
-        wcsicmp( font_name, szDefaultFallbackLink ) != 0)
+        wcsicmp( font_name, L"Microsoft Sans Serif" ) != 0)
     {
-        if ((font_link = find_gdi_font_link( szDefaultFallbackLink )))
+        if ((font_link = find_gdi_font_link( L"Microsoft Sans Serif" )))
         {
             TRACE("found entry in default fallback list\n");
             LIST_FOR_EACH_ENTRY( entry, &font_link->links, struct gdi_font_link_entry, entry )
@@ -2319,16 +2264,13 @@ static void set_value_key(HKEY hkey, const char *name, const char *value)
 
 static void update_font_association_info(UINT current_ansi_codepage)
 {
-    static const char *font_assoc_reg_key = "System\\CurrentControlSet\\Control\\FontAssoc";
-    static const char *assoc_charset_subkey = "Associated Charset";
-
     if (is_dbcs_ansi_cp(current_ansi_codepage))
     {
         HKEY hkey;
-        if (RegCreateKeyA(HKEY_LOCAL_MACHINE, font_assoc_reg_key, &hkey) == ERROR_SUCCESS)
+        if (RegCreateKeyW(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\FontAssoc", &hkey) == ERROR_SUCCESS)
         {
             HKEY hsubkey;
-            if (RegCreateKeyA(hkey, assoc_charset_subkey, &hsubkey) == ERROR_SUCCESS)
+            if (RegCreateKeyW(hkey, L"Associated Charset", &hsubkey) == ERROR_SUCCESS)
             {
                 switch (current_ansi_codepage)
                 {
@@ -2354,7 +2296,7 @@ static void update_font_association_info(UINT current_ansi_codepage)
         }
     }
     else
-        RegDeleteTreeA(HKEY_LOCAL_MACHINE, font_assoc_reg_key);
+        RegDeleteTreeW(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\FontAssoc");
 }
 
 static void set_multi_value_key(HKEY hkey, const WCHAR *name, const WCHAR *value, DWORD len)
@@ -2368,38 +2310,34 @@ static void set_multi_value_key(HKEY hkey, const WCHAR *name, const WCHAR *value
 static void update_font_system_link_info(UINT current_ansi_codepage)
 {
     static const WCHAR system_link_simplified_chinese[] =
-        {'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
-         'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','u','\0',
-         'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
-         'B','A','T','A','N','G','.','T','T','C',',','B','a','t','a','n','g','\0',
-         '\0'};
+        L"SIMSUN.TTC,SimSun\0"
+        L"MINGLIU.TTC,PMingLiu\0"
+        L"MSGOTHIC.TTC,MS UI Gothic\0"
+        L"BATANG.TTC,Batang\0";
     static const WCHAR system_link_traditional_chinese[] =
-        {'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','u','\0',
-         'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
-         'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
-         'B','A','T','A','N','G','.','T','T','C',',','B','a','t','a','n','g','\0',
-         '\0'};
+        L"MINGLIU.TTC,PMingLiu\0"
+        L"SIMSUN.TTC,SimSun\0"
+        L"MSGOTHIC.TTC,MS UI Gothic\0"
+        L"BATANG.TTC,Batang\0";
     static const WCHAR system_link_japanese[] =
-        {'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
-         'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','U','\0',
-         'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
-         'G','U','L','I','M','.','T','T','C',',','G','u','l','i','m','\0',
-         '\0'};
+        L"MSGOTHIC.TTC,MS UI Gothic\0"
+        L"MINGLIU.TTC,PMingLiU\0"
+        L"SIMSUN.TTC,SimSun\0"
+        L"GULIM.TTC,Gulim\0";
     static const WCHAR system_link_korean[] =
-        {'G','U','L','I','M','.','T','T','C',',','G','u','l','i','m','\0',
-         'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
-         'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','U','\0',
-         'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
-         '\0'};
+        L"GULIM.TTC,Gulim\0"
+        L"MSGOTHIC.TTC,MS UI Gothic\0"
+        L"MINGLIU.TTC,PMingLiU\0"
+        L"SIMSUN.TTC,SimSun\0";
     static const WCHAR system_link_non_cjk[] =
-        {'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
-         'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','U','\0',
-         'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
-         'G','U','L','I','M','.','T','T','C',',','G','u','l','i','m','\0',
-         '\0'};
+        L"MSGOTHIC.TTC,MS UI Gothic\0"
+        L"MINGLIU.TTC,PMingLiU\0"
+        L"SIMSUN.TTC,SimSun\0"
+        L"GULIM.TTC,Gulim\0";
     HKEY hkey;
 
-    if (RegCreateKeyW(HKEY_LOCAL_MACHINE, system_link, &hkey) == ERROR_SUCCESS)
+    if (!RegCreateKeyW(HKEY_LOCAL_MACHINE,
+                       L"Software\\Microsoft\\Windows NT\\CurrentVersion\\FontLink\\SystemLink", &hkey))
     {
         const WCHAR *link;
         DWORD len;
@@ -2426,16 +2364,15 @@ static void update_font_system_link_info(UINT current_ansi_codepage)
             link = system_link_non_cjk;
             len = sizeof(system_link_non_cjk);
         }
-        set_multi_value_key(hkey, Lucida_Sans_Unicode, link, len);
-        set_multi_value_key(hkey, Microsoft_Sans_Serif, link, len);
-        set_multi_value_key(hkey, Tahoma, link, len);
+        set_multi_value_key(hkey, L"Lucida Sans Unicode", link, len);
+        set_multi_value_key(hkey, L"Microsoft Sans Serif", link, len);
+        set_multi_value_key(hkey, L"Tahoma", link, len);
         RegCloseKey(hkey);
     }
 }
 
 static void update_codepage(void)
 {
-    static const WCHAR logpixels[] = { 'L','o','g','P','i','x','e','l','s',0 };
     char buf[40], cpbuf[40];
     HKEY hkey;
     DWORD len, type, size;
@@ -2447,7 +2384,7 @@ static void update_codepage(void)
     if (!screen_dpi) screen_dpi = 96;
 
     size = sizeof(DWORD);
-    if (RegQueryValueExW(wine_fonts_key, logpixels, NULL, &type, (BYTE *)&font_dpi, &size) ||
+    if (RegQueryValueExW(wine_fonts_key, L"LogPixels", NULL, &type, (BYTE *)&font_dpi, &size) ||
         type != REG_DWORD || size != sizeof(DWORD))
         font_dpi = 0;
 
@@ -2467,13 +2404,13 @@ static void update_codepage(void)
                ansi_cp, oem_cp, screen_dpi);
 
     RegSetValueExA(wine_fonts_key, "Codepages", 0, REG_SZ, (const BYTE *)cpbuf, strlen(cpbuf)+1);
-    RegSetValueExW(wine_fonts_key, logpixels, 0, REG_DWORD, (const BYTE *)&screen_dpi, sizeof(screen_dpi));
+    RegSetValueExW(wine_fonts_key, L"LogPixels", 0, REG_DWORD, (const BYTE *)&screen_dpi, sizeof(screen_dpi));
 
     for (i = 0; i < ARRAY_SIZE(nls_update_font_list); i++)
     {
         if (nls_update_font_list[i].ansi_cp == ansi_cp && nls_update_font_list[i].oem_cp == oem_cp)
         {
-            if (!RegCreateKeyW( HKEY_CURRENT_CONFIG, system_fonts_reg_key, &hkey ))
+            if (!RegCreateKeyW( HKEY_CURRENT_CONFIG, L"Software\\Fonts", &hkey ))
             {
                 RegSetValueExA(hkey, "OEMFONT.FON", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].oem,
                                strlen(nls_update_font_list[i].oem)+1);
@@ -2483,17 +2420,20 @@ static void update_codepage(void)
                                strlen(nls_update_font_list[i].system)+1);
                 RegCloseKey(hkey);
             }
-            if (!RegCreateKeyW( HKEY_LOCAL_MACHINE, winnt_font_reg_key, &hkey ))
+            if (!RegCreateKeyW( HKEY_LOCAL_MACHINE,
+                                L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts", &hkey ))
             {
                 add_font_list(hkey, &nls_update_font_list[i], screen_dpi);
                 RegCloseKey(hkey);
             }
-            if (!RegCreateKeyW( HKEY_LOCAL_MACHINE, win9x_font_reg_key, &hkey ))
+            if (!RegCreateKeyW( HKEY_LOCAL_MACHINE,
+                                L"Software\\Microsoft\\Windows\\CurrentVersion\\Fonts", &hkey ))
             {
                 add_font_list(hkey, &nls_update_font_list[i], screen_dpi);
                 RegCloseKey(hkey);
             }
-            if (!RegCreateKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes", &hkey ))
+            if (!RegCreateKeyW( HKEY_LOCAL_MACHINE,
+                                L"Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes", &hkey ))
             {
                 RegSetValueExA(hkey, "MS Shell Dlg", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].shelldlg,
                                strlen(nls_update_font_list[i].shelldlg)+1);
@@ -2520,7 +2460,7 @@ static void update_codepage(void)
         else
         {
             /* Delete the FontSubstitutes from other locales */
-            if (!RegCreateKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes", &hkey ))
+            if (!RegCreateKeyW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes", &hkey ))
             {
                 set_value_key(hkey, nls_update_font_list[i].arial_0.from, NULL);
                 set_value_key(hkey, nls_update_font_list[i].courier_new_0.from, NULL);
@@ -3609,7 +3549,6 @@ static void get_nearest_charset( const WCHAR *family_name, struct gdi_font_face 
 
 static struct gdi_font *select_font( LOGFONTW *lf, FMAT2 dcmat, BOOL can_use_bitmap )
 {
-    static const WCHAR SymbolW[] = {'S','y','m','b','o','l',0};
     struct gdi_font *font;
     struct gdi_font_face *face;
     INT height;
@@ -3620,7 +3559,7 @@ static struct gdi_font *select_font( LOGFONTW *lf, FMAT2 dcmat, BOOL can_use_bit
        SYMBOL_CHARSET so that Symbol gets picked irrespective of the
        original value lfCharSet.  Note this is a special case for
        Symbol and doesn't happen at least for "Wingdings*" */
-    if (!wcsicmp( lf->lfFaceName, SymbolW )) lf->lfCharSet = SYMBOL_CHARSET;
+    if (!wcsicmp( lf->lfFaceName, L"Symbol" )) lf->lfCharSet = SYMBOL_CHARSET;
 
     /* check the cache first */
     if ((font = find_cached_gdi_font( lf, &dcmat, can_use_bitmap )))
@@ -3938,30 +3877,21 @@ static DWORD get_key_value( HKEY key, const WCHAR *name, DWORD *value )
 
 static void init_font_options(void)
 {
-    static const WCHAR antialias_fake_bold_or_italic[] = { 'A','n','t','i','a','l','i','a','s','F','a','k','e',
-                                                           'B','o','l','d','O','r','I','t','a','l','i','c',0 };
-    static const WCHAR true_options[] = { 'y','Y','t','T','1',0 };
-    static const WCHAR desktopW[] = { 'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
-                                      'D','e','s','k','t','o','p',0 };
-    static const WCHAR smoothing[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g',0};
-    static const WCHAR smoothing_type[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g','T','y','p','e',0};
-    static const WCHAR smoothing_orientation[] = {'F','o','n','t','S','m','o','o','t','h','i','n','g',
-                                                  'O','r','i','e','n','t','a','t','i','o','n',0};
     HKEY key;
     DWORD type, size, val;
     WCHAR buffer[20];
 
     size = sizeof(buffer);
-    if (!RegQueryValueExW( wine_fonts_key, antialias_fake_bold_or_italic, NULL,
+    if (!RegQueryValueExW( wine_fonts_key, L"AntialiasFakeBoldOrItalic", NULL,
                            &type, (BYTE *)buffer, &size) && type == REG_SZ && size >= 1)
     {
-        antialias_fakes = (wcschr(true_options, buffer[0]) != NULL);
+        antialias_fakes = (wcschr(L"yYtT1", buffer[0]) != NULL);
     }
 
-    if (!RegOpenKeyW( HKEY_CURRENT_USER, desktopW, &key ))
+    if (!RegOpenKeyW( HKEY_CURRENT_USER, L"Control Panel\\Desktop", &key ))
     {
         /* FIXME: handle vertical orientations even though Windows doesn't */
-        if (!get_key_value( key, smoothing_orientation, &val ))
+        if (!get_key_value( key, L"FontSmoothingOrientation", &val ))
         {
             switch (val)
             {
@@ -3973,9 +3903,9 @@ static void init_font_options(void)
                 break;
             }
         }
-        if (!get_key_value( key, smoothing, &val ) && val /* enabled */)
+        if (!get_key_value( key, L"FontSmoothing", &val ) && val /* enabled */)
         {
-            if (!get_key_value( key, smoothing_type, &val ) && val == 2 /* FE_FONTSMOOTHINGCLEARTYPE */)
+            if (!get_key_value( key, L"FontSmoothingType", &val ) && val == 2 /* FE_FONTSMOOTHINGCLEARTYPE */)
                 font_smoothing = subpixel_orientation;
             else
                 font_smoothing = GGO_GRAY4_BITMAP;
@@ -4408,14 +4338,6 @@ static DWORD get_associated_charset_info(void)
 
     if (associated_charset == -1)
     {
-        static const WCHAR assoc_charset_reg_keyW[] = {'S','y','s','t','e','m','\\',
-            'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-            'C','o','n','t','r','o','l','\\','F','o','n','t','A','s','s','o','c','\\',
-            'A','s','s','o','c','i','a','t','e','d',' ','C','h','a','r','s','e','t','\0'};
-        static const WCHAR ansiW[] = {'A','N','S','I','(','0','0',')','\0'};
-        static const WCHAR oemW[] = {'O','E','M','(','F','F',')','\0'};
-        static const WCHAR symbolW[] = {'S','Y','M','B','O','L','(','0','2',')','\0'};
-        static const WCHAR yesW[] = {'Y','E','S','\0'};
         HKEY hkey;
         WCHAR dataW[32];
         DWORD type, data_len;
@@ -4423,22 +4345,22 @@ static DWORD get_associated_charset_info(void)
         associated_charset = 0;
 
         if (RegOpenKeyW(HKEY_LOCAL_MACHINE,
-                        assoc_charset_reg_keyW, &hkey) != ERROR_SUCCESS)
+                        L"System\\CurrentControlSet\\Control\\FontAssoc\\Associated Charset", &hkey))
             return 0;
 
         data_len = sizeof(dataW);
-        if (!RegQueryValueExW(hkey, ansiW, NULL, &type, (LPBYTE)dataW, &data_len) &&
-            type == REG_SZ && !wcsicmp(dataW, yesW))
+        if (!RegQueryValueExW(hkey, L"ANSI(00)", NULL, &type, (LPBYTE)dataW, &data_len) &&
+            type == REG_SZ && !wcsicmp(dataW, L"yes"))
             associated_charset |= ASSOC_CHARSET_ANSI;
 
         data_len = sizeof(dataW);
-        if (!RegQueryValueExW(hkey, oemW, NULL, &type, (LPBYTE)dataW, &data_len) &&
-            type == REG_SZ && !wcsicmp(dataW, yesW))
+        if (!RegQueryValueExW(hkey, L"OEM(FF)", NULL, &type, (LPBYTE)dataW, &data_len) &&
+            type == REG_SZ && !wcsicmp(dataW, L"yes"))
             associated_charset |= ASSOC_CHARSET_OEM;
 
         data_len = sizeof(dataW);
-        if (!RegQueryValueExW(hkey, symbolW, NULL, &type, (LPBYTE)dataW, &data_len) &&
-            type == REG_SZ && !wcsicmp(dataW, yesW))
+        if (!RegQueryValueExW(hkey, L"SYMBOL(02)", NULL, &type, (LPBYTE)dataW, &data_len) &&
+            type == REG_SZ && !wcsicmp(dataW, L"yes"))
             associated_charset |= ASSOC_CHARSET_SYMBOL;
 
         RegCloseKey(hkey);
@@ -4504,19 +4426,15 @@ static void update_font_code_page( DC *dc, HANDLE font )
 
 static BOOL WINAPI fill_font_gamma_ramp( INIT_ONCE *once, void *param, void **context )
 {
-    static const WCHAR desktopW[] = { 'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
-                                      'D','e','s','k','t','o','p',0 };
-    static const WCHAR smoothing_gamma[] = { 'F','o','n','t','S','m','o','o','t','h','i','n','g',
-                                             'G','a','m','m','a',0 };
     struct font_gamma_ramp *ramp = param;
     const DWORD gamma_default = 1400;
     DWORD  i, gamma;
     HKEY key;
 
     gamma = gamma_default;
-    if (RegOpenKeyW( HKEY_CURRENT_USER, desktopW, &key ) == ERROR_SUCCESS)
+    if (RegOpenKeyW( HKEY_CURRENT_USER, L"Control Panel\\Desktop", &key ) == ERROR_SUCCESS)
     {
-        if (get_key_value( key, smoothing_gamma, &gamma ) || gamma == 0)
+        if (get_key_value( key, L"FontSmoothingGamma", &gamma ) || gamma == 0)
             gamma = gamma_default;
         RegCloseKey( key );
 
@@ -6880,7 +6798,6 @@ static BOOL create_fot( const WCHAR *resource, const WCHAR *font_file, const str
 BOOL WINAPI CreateScalableFontResourceW( DWORD hidden, LPCWSTR resource_file,
                                          LPCWSTR font_file, LPCWSTR font_path )
 {
-    static const WCHAR backslashW[] = {'\\',0};
     struct fontdir fontdir = { 0 };
     struct gdi_font *font = NULL;
     WCHAR path[MAX_PATH];
@@ -6896,7 +6813,7 @@ BOOL WINAPI CreateScalableFontResourceW( DWORD hidden, LPCWSTR resource_file,
         int len = lstrlenW( font_path ) + lstrlenW( font_file ) + 2;
         if (len > MAX_PATH) goto done;
         lstrcpynW( path, font_path, MAX_PATH );
-        lstrcatW( path, backslashW );
+        lstrcatW( path, L"\\" );
         lstrcatW( path, font_file );
     }
     else if (!GetFullPathNameW( font_file, MAX_PATH, path, NULL )) goto done;
@@ -7801,17 +7718,12 @@ static BOOL remove_font_resource( LPCWSTR file, DWORD flags )
 
 static void load_system_bitmap_fonts(void)
 {
-    static const WCHAR keyW[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s',0};
-    static const WCHAR fontsW[] = {'F','O','N','T','S','.','F','O','N',0};
-    static const WCHAR oemfontW[] = {'O','E','M','F','O','N','T','.','F','O','N',0};
-    static const WCHAR fixedfonW[] = {'F','I','X','E','D','F','O','N','.','F','O','N',0};
-    static const WCHAR * const fonts[] = { fontsW, oemfontW, fixedfonW };
-
+    static const WCHAR * const fonts[] = { L"FONTS.FON", L"OEMFONT.FON", L"FIXEDFON.FON" };
     HKEY hkey;
     WCHAR data[MAX_PATH];
     DWORD i, dlen, type;
 
-    if (RegOpenKeyW( HKEY_CURRENT_CONFIG, keyW, &hkey )) return;
+    if (RegOpenKeyW( HKEY_CURRENT_CONFIG, L"Software\\Fonts", &hkey )) return;
     for (i = 0; i < ARRAY_SIZE(fonts); i++)
     {
         dlen = sizeof(data);
@@ -7842,30 +7754,27 @@ static void load_directory_fonts( WCHAR *path, UINT flags )
 
 static void load_file_system_fonts(void)
 {
-    static const WCHAR pathW[] = {'P','a','t','h',0};
-    static const WCHAR slashstarW[] = {'\\','*',0};
-    static const WCHAR starW[] = {'*',0};
     WCHAR *ptr, *next, path[MAX_PATH], value[1024];
     DWORD len = ARRAY_SIZE(value);
 
     /* Windows directory */
-    get_fonts_win_dir_path( starW, path );
+    get_fonts_win_dir_path( L"*", path );
     load_directory_fonts( path, ADDFONT_ADD_TO_CACHE );
 
     /* Wine data directory */
-    get_fonts_data_dir_path( starW, path );
+    get_fonts_data_dir_path( L"*", path );
     load_directory_fonts( path, ADDFONT_ADD_TO_CACHE | ADDFONT_EXTERNAL_FONT );
 
     /* custom paths */
     /* @@ Wine registry key: HKCU\Software\Wine\Fonts */
-    if (!RegQueryValueExW( wine_fonts_key, pathW, NULL, NULL, (BYTE *)value, &len ))
+    if (!RegQueryValueExW( wine_fonts_key, L"Path", NULL, NULL, (BYTE *)value, &len ))
     {
         for (ptr = value; ptr; ptr = next)
         {
             if ((next = wcschr( ptr, ';' ))) *next++ = 0;
             if (next && next - ptr < 2) continue;
             lstrcpynW( path, ptr, MAX_PATH - 2 );
-            lstrcatW( path, slashstarW );
+            lstrcatW( path, L"\\*" );
             load_directory_fonts( path, ADDFONT_ADD_TO_CACHE | ADDFONT_EXTERNAL_FONT );
         }
     }
@@ -7888,13 +7797,12 @@ static struct wine_rb_tree external_keys = { compare_external_key };
 
 static HKEY load_external_font_keys(void)
 {
-    static const WCHAR externalW[] = {'E','x','t','e','r','n','a','l',' ','F','o','n','t','s',0};
     WCHAR value[LF_FULLFACESIZE + 12], path[MAX_PATH];
     DWORD i = 0, type, dlen, vlen;
     struct external_key *key;
     HKEY hkey;
 
-    if (RegCreateKeyW( wine_fonts_key, externalW, &hkey )) return 0;
+    if (RegCreateKeyW( wine_fonts_key, L"External Fonts", &hkey )) return 0;
 
     vlen = ARRAY_SIZE(value);
     dlen = sizeof(path);
@@ -7916,17 +7824,6 @@ static HKEY load_external_font_keys(void)
 
 static void update_external_font_keys( HKEY hkey )
 {
-    static const WCHAR win9x_keyW[] = {'S','o','f','t','w','a','r','e','\\',
-                                       'M','i','c','r','o','s','o','f','t','\\',
-                                       'W','i','n','d','o','w','s','\\',
-                                       'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                       'F','o','n','t','s',0};
-    static const WCHAR winnt_keyW[] = {'S','o','f','t','w','a','r','e','\\',
-                                       'M','i','c','r','o','s','o','f','t','\\',
-                                       'W','i','n','d','o','w','s',' ','N','T','\\',
-                                       'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                       'F','o','n','t','s',0};
-    static const WCHAR TrueType[] = {' ','(','T','r','u','e','T','y','p','e',')',0};
     HKEY winnt_key = 0, win9x_key = 0;
     struct gdi_font_family *family;
     struct gdi_font_face *face;
@@ -7937,8 +7834,10 @@ static void update_external_font_keys( HKEY hkey )
     WCHAR value[LF_FULLFACESIZE + 12], path[MAX_PATH];
     WCHAR *file;
 
-    RegCreateKeyExW( HKEY_LOCAL_MACHINE, winnt_keyW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &winnt_key, NULL );
-    RegCreateKeyExW( HKEY_LOCAL_MACHINE, win9x_keyW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &win9x_key, NULL );
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts",
+                     0, NULL, 0, KEY_ALL_ACCESS, NULL, &winnt_key, NULL );
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion\\Fonts",
+                     0, NULL, 0, KEY_ALL_ACCESS, NULL, &win9x_key, NULL );
 
     /* enumerate the fonts and add external ones to the two keys */
 
@@ -7949,7 +7848,7 @@ static void update_external_font_keys( HKEY hkey )
             if (!(face->flags & ADDFONT_EXTERNAL_FONT)) continue;
 
             lstrcpyW( value, face->full_name );
-            if (face->scalable) lstrcatW( value, TrueType );
+            if (face->scalable) lstrcatW( value, L" (TrueType)" );
 
             if (GetFullPathNameW( face->file, MAX_PATH, path, NULL ))
                 file = path;
@@ -7987,17 +7886,6 @@ static void update_external_font_keys( HKEY hkey )
 
 static void load_registry_fonts(void)
 {
-    static const WCHAR dot_fonW[] = {'.','f','o','n',0};
-    static const WCHAR win9x_key[] = {'S','o','f','t','w','a','r','e','\\',
-                                      'M','i','c','r','o','s','o','f','t','\\',
-                                      'W','i','n','d','o','w','s','\\',
-                                      'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                      'F','o','n','t','s',0};
-    static const WCHAR winnt_key[] = {'S','o','f','t','w','a','r','e','\\',
-                                      'M','i','c','r','o','s','o','f','t','\\',
-                                      'W','i','n','d','o','w','s',' ','N','T','\\',
-                                      'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                      'F','o','n','t','s',0};
     WCHAR value[LF_FULLFACESIZE + 12], data[MAX_PATH];
     DWORD i = 0, type, dlen, vlen;
     struct wine_rb_entry *entry;
@@ -8007,7 +7895,9 @@ static void load_registry_fonts(void)
        for any fonts not installed in %WINDOWSDIR%\Fonts.  They will have their
        full path as the entry.  Also look for any .fon fonts, since ReadFontDir
        will skip these. */
-    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, is_win9x() ? win9x_key : winnt_key, &hkey ))
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE,
+                     is_win9x() ? L"Software\\Microsoft\\Windows\\CurrentVersion\\Fonts" :
+                     L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts", &hkey ))
         return;
 
     vlen = ARRAY_SIZE(value);
@@ -8027,7 +7917,7 @@ static void load_registry_fonts(void)
         }
         if (data[0] && data[1] == ':')
             add_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
-        else if (dlen >= 6 && !wcsicmp( data + dlen - 5, dot_fonW ))
+        else if (dlen >= 6 && !wcsicmp( data + dlen - 5, L".fon" ))
             add_system_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
     next:
         vlen = ARRAY_SIZE(value);
@@ -8043,11 +7933,10 @@ static const struct font_callback_funcs callback_funcs = { add_gdi_face };
  */
 void font_init(void)
 {
-    static const WCHAR mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N','T','_','M','U','T','E','X','_','_',0};
     HANDLE mutex;
     DWORD disposition;
 
-    if (RegCreateKeyExA( HKEY_CURRENT_USER, "Software\\Wine\\Fonts", 0, NULL, 0,
+    if (RegCreateKeyExW( HKEY_CURRENT_USER, L"Software\\Wine\\Fonts", 0, NULL, 0,
                          KEY_ALL_ACCESS, NULL, &wine_fonts_key, NULL ))
         return;
 
@@ -8055,10 +7944,10 @@ void font_init(void)
     update_codepage();
     if (__wine_init_unix_lib( gdi32_module, DLL_PROCESS_ATTACH, &callback_funcs, &font_funcs )) return;
 
-    if (!(mutex = CreateMutexW( NULL, FALSE, mutex_nameW ))) return;
+    if (!(mutex = CreateMutexW( NULL, FALSE, L"__WINE_FONT_MUTEX__" ))) return;
     WaitForSingleObject( mutex, INFINITE );
 
-    RegCreateKeyExA( wine_fonts_key, "Cache", 0, NULL, REG_OPTION_VOLATILE,
+    RegCreateKeyExW( wine_fonts_key, L"Cache", 0, NULL, REG_OPTION_VOLATILE,
                      KEY_ALL_ACCESS, NULL, &wine_fonts_cache_key, &disposition );
 
     if (disposition == REG_CREATED_NEW_KEY)
@@ -8281,14 +8170,11 @@ UINT WINAPI GetTextCharset(HDC hdc)
 LONG WINAPI GdiGetCharDimensions(HDC hdc, LPTEXTMETRICW lptm, LONG *height)
 {
     SIZE sz;
-    static const WCHAR alphabet[] = {
-        'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q',
-        'r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H',
-        'I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',0};
 
     if(lptm && !GetTextMetricsW(hdc, lptm)) return 0;
 
-    if(!GetTextExtentPointW(hdc, alphabet, 52, &sz)) return 0;
+    if(!GetTextExtentPointW(hdc, L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 52, &sz))
+        return 0;
 
     if (height) *height = sz.cy;
     return (sz.cx / 26 + 1) / 2;

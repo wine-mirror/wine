@@ -332,7 +332,6 @@ HDC WINAPI CreateEnhMetaFileW(
     LPCWSTR       description /* [in] optional description */
     )
 {
-    static const WCHAR displayW[] = {'D','I','S','P','L','A','Y',0};
     HDC ret, ref_dc;
     DC *dc;
     EMFDRV_PDEVICE *physDev;
@@ -378,7 +377,7 @@ HDC WINAPI CreateEnhMetaFileW(
     if (hdc)  /* if no ref, use current display */
         ref_dc = hdc;
     else
-        ref_dc = CreateDCW( displayW, NULL, NULL, NULL );
+        ref_dc = CreateDCW( L"DISPLAY", NULL, NULL, NULL );
 
     memset( physDev->dev_caps, 0, sizeof(physDev->dev_caps) );
     for (cap = 0; cap < ARRAY_SIZE( physDev->dev_caps ); cap++)
