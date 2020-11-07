@@ -43,6 +43,21 @@
 #ifdef HAVE_SYS_SYSCALL_H
 #include <sys/syscall.h>
 #endif
+#ifdef HAVE_SYS_SYSCTL_H
+#include <sys/sysctl.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_QUEUE_H
+#include <sys/queue.h>
+#endif
+#ifdef HAVE_SYS_USER_H
+#include <sys/user.h>
+#endif
+#ifdef HAVE_LIBPROCSTAT_H
+#include <libprocstat.h>
+#endif
 
 #define NONAMELESSUNION
 #include "ntstatus.h"
@@ -790,9 +805,9 @@ static void wow64_context_to_server( context_t *to, const WOW64_CONTEXT *from )
 
 #endif /* __x86_64__ */
 
-#ifdef linux
 BOOL get_thread_times(int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time, LARGE_INTEGER *user_time)
 {
+#ifdef linux
     unsigned long clocks_per_sec = sysconf( _SC_CLK_TCK );
     unsigned long usr, sys;
     const char *pos;
@@ -837,15 +852,44 @@ BOOL get_thread_times(int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time, LA
 
     ERR("Failed to parse %s\n", debugstr_a(buf));
     return FALSE;
-}
+#elif defined(HAVE_LIBPROCSTAT)
+    struct procstat *pstat;
+    struct kinfo_proc *kip;
+    unsigned int proc_count;
+    BOOL ret = FALSE;
+
+    pstat = procstat_open_sysctl();
+    if (!pstat)
+        return FALSE;
+    if (unix_tid == -1)
+        kip = procstat_getprocs(pstat, KERN_PROC_PID, unix_pid, &proc_count);
+    else
+        kip = procstat_getprocs(pstat, KERN_PROC_PID | KERN_PROC_INC_THREAD, unix_pid, &proc_count);
+    if (kip)
+    {
+        unsigned int i;
+        for (i = 0; i < proc_count; i++)
+        {
+            if (unix_tid == -1 || kip[i].ki_tid == unix_tid)
+            {
+                kernel_time->QuadPart = 10000000 * (ULONGLONG)kip[i].ki_rusage.ru_stime.tv_sec +
+                    10 * (ULONGLONG)kip[i].ki_rusage.ru_stime.tv_usec;
+                user_time->QuadPart = 10000000 * (ULONGLONG)kip[i].ki_rusage.ru_utime.tv_sec +
+                    10 * (ULONGLONG)kip[i].ki_rusage.ru_utime.tv_usec;
+                ret = TRUE;
+                break;
+            }
+        }
+        procstat_freeprocs(pstat, kip);
+    }
+    procstat_close(pstat);
+    return ret;
 #else
-BOOL get_thread_times(int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time, LARGE_INTEGER *user_time)
-{
     static int once;
     if (!once++) FIXME("not implemented on this platform\n");
     return FALSE;
-}
 #endif
+}
 
 /******************************************************************************
  *              NtQueryInformationThread  (NTDLL.@)
