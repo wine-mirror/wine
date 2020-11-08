@@ -262,6 +262,7 @@ struct decoder_info
 };
 
 #define DECODER_FLAGS_CAPABILITY_MASK 0x1f
+#define DECODER_FLAGS_UNSUPPORTED_COLOR_CONTEXT 0x80000000
 
 struct decoder_stat
 {
@@ -333,6 +334,7 @@ void CDECL decoder_destroy(struct decoder *This);
 
 HRESULT CDECL png_decoder_create(struct decoder_info *info, struct decoder **result);
 HRESULT CDECL tiff_decoder_create(struct decoder_info *info, struct decoder **result);
+HRESULT CDECL jpeg_decoder_create(struct decoder_info *info, struct decoder **result);
 
 struct unix_funcs
 {

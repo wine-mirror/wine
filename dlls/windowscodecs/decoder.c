@@ -460,6 +460,13 @@ static HRESULT WINAPI CommonDecoderFrame_GetColorContexts(IWICBitmapFrameDecode 
 
     if (!pcActualCount) return E_INVALIDARG;
 
+    if (This->parent->file_info.flags & DECODER_FLAGS_UNSUPPORTED_COLOR_CONTEXT)
+    {
+        FIXME("not supported for %s\n", wine_dbgstr_guid(&This->parent->decoder_info.clsid));
+        *pcActualCount = 0;
+        return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    }
+
     *pcActualCount = This->decoder_frame.num_color_contexts;
 
     if (This->decoder_frame.num_color_contexts && cCount && ppIColorContexts)

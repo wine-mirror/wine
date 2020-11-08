@@ -70,6 +70,9 @@ HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *in
     if (IsEqualGUID(decoder_clsid, &CLSID_WICTiffDecoder))
         return tiff_decoder_create(info, result);
 
+    if (IsEqualGUID(decoder_clsid, &CLSID_WICJpegDecoder))
+        return jpeg_decoder_create(info, result);
+
     return E_NOTIMPL;
 }
 
