@@ -1330,17 +1330,16 @@ static void test_GetCharABCWidths(void)
 
         memset(&lf, 0, sizeof(lf));
         lf.lfHeight = 20;
-        switch(i)
+        if (i == 1)
         {
-        case 1:
             strcpy(lf.lfFaceName, "Tahoma");
             code = 'a';
-            break;
-        case 2:
+        }
+        else
+        {
             strcpy(lf.lfFaceName, "Times New Roman");
             lf.lfItalic = TRUE;
             code = 'f';
-            break;
         }
         if (!is_truetype_font_installed(lf.lfFaceName))
         {
