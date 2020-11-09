@@ -16,9 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 
 #include "windef.h"
@@ -29,7 +26,6 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
@@ -111,11 +107,11 @@ static BOOL set_key_prov_info( const void *ctx, HCRYPTPROV prov )
 
     ptr = (WCHAR *)(prov_info + 1);
     prov_info->pwszContainerName = ptr;
-    strcpyW( prov_info->pwszContainerName, container );
+    lstrcpyW( prov_info->pwszContainerName, container );
 
     ptr += len_container;
     prov_info->pwszProvName = ptr;
-    strcpyW( prov_info->pwszProvName, name );
+    lstrcpyW( prov_info->pwszProvName, name );
 
     size = sizeof(prov_info->dwProvType);
     CryptGetProvParam( prov, PP_PROVTYPE, (BYTE *)&prov_info->dwProvType, &size, 0 );

@@ -25,7 +25,6 @@
 #include "winerror.h"
 #include "wincrypt.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
@@ -331,7 +330,7 @@ static LONG encodeBase64W(const BYTE *in_buf, int in_len, LPCWSTR sep,
 
     TRACE("bytes is %d, pad bytes is %d\n", bytes, pad_bytes);
     needed = bytes + pad_bytes;
-    needed += (needed / 64 + (needed % 64 ? 1 : 0)) * strlenW(sep);
+    needed += (needed / 64 + (needed % 64 ? 1 : 0)) * lstrlenW(sep);
     needed++;
 
     if (needed > *out_len)
@@ -351,8 +350,8 @@ static LONG encodeBase64W(const BYTE *in_buf, int in_len, LPCWSTR sep,
     {
         if (i && i % 64 == 0)
         {
-            strcpyW(ptr, sep);
-            ptr += strlenW(sep);
+            lstrcpyW(ptr, sep);
+            ptr += lstrlenW(sep);
         }
         /* first char is the first 6 bits of the first byte*/
         *ptr++ = b64[ ( d[0] >> 2) & 0x3f ];
@@ -395,7 +394,7 @@ static LONG encodeBase64W(const BYTE *in_buf, int in_len, LPCWSTR sep,
             *ptr++ = '=';
             break;
     }
-    strcpyW(ptr, sep);
+    lstrcpyW(ptr, sep);
 
     return ERROR_SUCCESS;
 }
@@ -436,9 +435,9 @@ static BOOL BinaryToBase64W(const BYTE *pbBinary,
     charsNeeded = 0;
     encodeBase64W(pbBinary, cbBinary, sep, NULL, &charsNeeded);
     if (header)
-        charsNeeded += strlenW(header) + strlenW(sep);
+        charsNeeded += lstrlenW(header) + lstrlenW(sep);
     if (trailer)
-        charsNeeded += strlenW(trailer) + strlenW(sep);
+        charsNeeded += lstrlenW(trailer) + lstrlenW(sep);
 
     if (pszString)
     {
@@ -449,18 +448,18 @@ static BOOL BinaryToBase64W(const BYTE *pbBinary,
 
             if (header)
             {
-                strcpyW(ptr, header);
-                ptr += strlenW(ptr);
-                strcpyW(ptr, sep);
-                ptr += strlenW(sep);
+                lstrcpyW(ptr, header);
+                ptr += lstrlenW(ptr);
+                lstrcpyW(ptr, sep);
+                ptr += lstrlenW(sep);
             }
             encodeBase64W(pbBinary, cbBinary, sep, ptr, &size);
             ptr += size - 1;
             if (trailer)
             {
-                strcpyW(ptr, trailer);
-                ptr += strlenW(ptr);
-                strcpyW(ptr, sep);
+                lstrcpyW(ptr, trailer);
+                ptr += lstrlenW(ptr);
+                lstrcpyW(ptr, sep);
             }
             *pcchString = charsNeeded - 1;
         }
@@ -912,27 +911,27 @@ static LONG Base64WithHeaderAndTrailerToBinaryW(LPCWSTR pszString,
     LPCWSTR trailerBegins;
     size_t dataLength;
 
-    if ((strlenW(header) + strlenW(trailer)) > cchString)
+    if ((lstrlenW(header) + lstrlenW(trailer)) > cchString)
     {
         return ERROR_INVALID_DATA;
     }
 
-    if (!(headerBegins = strstrW(pszString, header)))
+    if (!(headerBegins = wcsstr(pszString, header)))
     {
         TRACE("Can't find %s in %s.\n", debugstr_w(header), debugstr_wn(pszString, cchString));
         return ERROR_INVALID_DATA;
     }
 
-    dataBegins = headerBegins + strlenW(header);
-    if (!(dataBegins = strstrW(dataBegins, CERT_DELIMITER_W)))
+    dataBegins = headerBegins + lstrlenW(header);
+    if (!(dataBegins = wcsstr(dataBegins, CERT_DELIMITER_W)))
     {
         return ERROR_INVALID_DATA;
     }
-    dataBegins += strlenW(CERT_DELIMITER_W);
+    dataBegins += lstrlenW(CERT_DELIMITER_W);
     if (*dataBegins == '\r') dataBegins++;
     if (*dataBegins == '\n') dataBegins++;
 
-    if (!(trailerBegins = strstrW(dataBegins, trailer)))
+    if (!(trailerBegins = wcsstr(dataBegins, trailer)))
     {
         return ERROR_INVALID_DATA;
     }
@@ -1091,7 +1090,7 @@ BOOL WINAPI CryptStringToBinaryW(LPCWSTR pszString,
         return FALSE;
     }
     if (!cchString)
-        cchString = strlenW(pszString);
+        cchString = lstrlenW(pszString);
     ret = decoder(pszString, cchString, pbBinary, pcbBinary, pdwSkip, pdwFlags);
     if (ret)
         SetLastError(ret);

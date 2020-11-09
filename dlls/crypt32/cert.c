@@ -33,7 +33,6 @@
 #include "winnls.h"
 #include "rpc.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "crypt32_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
@@ -1125,10 +1124,10 @@ static BOOL container_matches_cert(PCCERT_CONTEXT pCert, LPCSTR container,
     if (matches)
     {
         keyProvInfo->pwszContainerName =
-         CryptMemAlloc((strlenW(containerW) + 1) * sizeof(WCHAR));
+         CryptMemAlloc((lstrlenW(containerW) + 1) * sizeof(WCHAR));
         if (keyProvInfo->pwszContainerName)
         {
-            strcpyW(keyProvInfo->pwszContainerName, containerW);
+            lstrcpyW(keyProvInfo->pwszContainerName, containerW);
             keyProvInfo->dwKeySpec = AT_SIGNATURE;
         }
         else
@@ -1805,13 +1804,10 @@ static BOOL compare_cert_by_name_str(PCCERT_CONTEXT pCertContext,
 
         if (str)
         {
-            LPWSTR ptr;
-
             CertNameToStrW(pCertContext->dwCertEncodingType, name,
              CERT_SIMPLE_NAME_STR, str, len);
-            for (ptr = str; *ptr; ptr++)
-                *ptr = tolowerW(*ptr);
-            if (strstrW(str, pvPara))
+            wcslwr(str);
+            if (wcsstr(str, pvPara))
                 ret = TRUE;
             CryptMemFree(str);
         }
@@ -1833,11 +1829,8 @@ static PCCERT_CONTEXT find_cert_by_name_str_a(HCERTSTORE store, DWORD dwType,
 
         if (str)
         {
-            LPWSTR ptr;
-
             MultiByteToWideChar(CP_ACP, 0, pvPara, -1, str, len);
-            for (ptr = str; *ptr; ptr++)
-                *ptr = tolowerW(*ptr);
+            wcslwr(str);
             found = cert_compare_certs_in_store(store, prev,
              compare_cert_by_name_str, dwType, dwFlags, str);
             CryptMemFree(str);
@@ -1857,17 +1850,13 @@ static PCCERT_CONTEXT find_cert_by_name_str_w(HCERTSTORE store, DWORD dwType,
 
     if (pvPara)
     {
-        DWORD len = strlenW(pvPara);
+        DWORD len = lstrlenW(pvPara);
         LPWSTR str = CryptMemAlloc((len + 1) * sizeof(WCHAR));
 
         if (str)
         {
-            LPCWSTR src;
-            LPWSTR dst;
-
-            for (src = pvPara, dst = str; *src; src++, dst++)
-                *dst = tolowerW(*src);
-            *dst = 0;
+            wcscpy( str, pvPara );
+            wcslwr( str );
            found = cert_compare_certs_in_store(store, prev,
             compare_cert_by_name_str, dwType, dwFlags, str);
            CryptMemFree(str);
@@ -2216,10 +2205,10 @@ static BOOL find_matching_rdn_attr(DWORD dwFlags, const CERT_NAME_INFO *name,
                      name->rgRDN[i].rgRDNAttr[j].Value.cbData)
                         match = FALSE;
                     else if (dwFlags & CERT_CASE_INSENSITIVE_IS_RDN_ATTRS_FLAG)
-                        match = !strncmpiW(nameStr, attrStr,
+                        match = !wcsnicmp(nameStr, attrStr,
                          attr->Value.cbData / sizeof(WCHAR));
                     else
-                        match = !strncmpW(nameStr, attrStr,
+                        match = !wcsncmp(nameStr, attrStr,
                          attr->Value.cbData / sizeof(WCHAR));
                     TRACE("%s : %s => %d\n",
                      debugstr_wn(nameStr, attr->Value.cbData / sizeof(WCHAR)),

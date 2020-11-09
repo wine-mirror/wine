@@ -18,11 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
@@ -119,7 +117,7 @@ HCRYPTOIDFUNCSET WINAPI CryptInitOIDFunctionSet(LPCSTR pszFuncName,
     EnterCriticalSection(&funcSetCS);
     LIST_FOR_EACH_ENTRY(cursor, &funcSets, struct OIDFunctionSet, next)
     {
-        if (!_strnicmp(pszFuncName, cursor->name, -1))
+        if (!stricmp(pszFuncName, cursor->name))
         {
             ret = cursor;
             break;
@@ -404,7 +402,7 @@ BOOL WINAPI CryptGetOIDFunctionAddress(HCRYPTOIDFUNCSET hFuncSet,
                 if (!IS_INTOID(pszOID))
                 {
                     if (!IS_INTOID(function->entry.pszOID) &&
-                     !_strnicmp(function->entry.pszOID, pszOID, -1))
+                     !stricmp(function->entry.pszOID, pszOID))
                     {
                         *ppvFuncAddr = function->entry.pvFuncAddr;
                         *phFuncAddr = NULL; /* FIXME: what should it be? */
@@ -1828,7 +1826,7 @@ PCCRYPT_OID_INFO WINAPI CryptFindOIDInfo(DWORD dwKeyType, void *pvKey,
         EnterCriticalSection(&oidInfoCS);
         LIST_FOR_EACH_ENTRY(info, &oidInfo, struct OIDInfo, entry)
         {
-            if (!lstrcmpW(info->info.pwszName, pvKey) &&
+            if (!wcscmp(info->info.pwszName, pvKey) &&
              (!dwGroupId || info->info.dwGroupId == dwGroupId))
             {
                 ret = &info->info;

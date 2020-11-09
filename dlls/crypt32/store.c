@@ -23,9 +23,6 @@
  * - Many flags, options and whatnot are unimplemented.
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <stdarg.h>
 #include "windef.h"
@@ -874,19 +871,19 @@ HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider,
                 FIXME("unimplemented type %d\n", LOWORD(lpszStoreProvider));
         }
     }
-    else if (!_strnicmp(lpszStoreProvider, sz_CERT_STORE_PROV_MEMORY, -1))
+    else if (!stricmp(lpszStoreProvider, sz_CERT_STORE_PROV_MEMORY))
         openFunc = CRYPT_MemOpenStore;
-    else if (!_strnicmp(lpszStoreProvider, sz_CERT_STORE_PROV_FILENAME_W, -1))
+    else if (!stricmp(lpszStoreProvider, sz_CERT_STORE_PROV_FILENAME_W))
         openFunc = CRYPT_FileOpenStore;
-    else if (!_strnicmp(lpszStoreProvider, sz_CERT_STORE_PROV_SYSTEM, -1))
+    else if (!stricmp(lpszStoreProvider, sz_CERT_STORE_PROV_SYSTEM))
         openFunc = CRYPT_SysOpenStoreW;
-    else if (!_strnicmp(lpszStoreProvider, sz_CERT_STORE_PROV_PKCS7, -1))
+    else if (!stricmp(lpszStoreProvider, sz_CERT_STORE_PROV_PKCS7))
         openFunc = CRYPT_PKCSOpenStore;
-    else if (!_strnicmp(lpszStoreProvider, sz_CERT_STORE_PROV_SERIALIZED, -1))
+    else if (!stricmp(lpszStoreProvider, sz_CERT_STORE_PROV_SERIALIZED))
         openFunc = CRYPT_SerializedOpenStore;
-    else if (!_strnicmp(lpszStoreProvider, sz_CERT_STORE_PROV_COLLECTION, -1))
+    else if (!stricmp(lpszStoreProvider, sz_CERT_STORE_PROV_COLLECTION))
         openFunc = CRYPT_CollectionOpenStore;
-    else if (!_strnicmp(lpszStoreProvider, sz_CERT_STORE_PROV_SYSTEM_REGISTRY, -1))
+    else if (!stricmp(lpszStoreProvider, sz_CERT_STORE_PROV_SYSTEM_REGISTRY))
         openFunc = CRYPT_SysRegOpenStoreW;
     else
     {

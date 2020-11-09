@@ -21,7 +21,6 @@
 #include "wincrypt.h"
 #include "winnls.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "crypt32_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
@@ -356,7 +355,7 @@ WINECRYPT_CERTSTORE *CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
         {
             static const WCHAR spc[] = { 's','p','c',0 };
             static const WCHAR p7c[] = { 'p','7','c',0 };
-            LPCWSTR ext = strrchrW(fileName, '.');
+            LPCWSTR ext = wcsrchr(fileName, '.');
 
             if (ext)
             {

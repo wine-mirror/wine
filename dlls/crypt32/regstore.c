@@ -132,7 +132,7 @@ static void CRYPT_RegReadSerializedFromReg(HKEY key, DWORD contextType,
                                     TRACE("comparing %s\n",
                                      debugstr_w(asciiHash));
                                     TRACE("with %s\n", debugstr_w(subKeyName));
-                                    if (!lstrcmpW(asciiHash, subKeyName))
+                                    if (!wcscmp(asciiHash, subKeyName))
                                     {
                                         TRACE("hash matches, adding\n");
                                         contextInterface->addContextToStore(
