@@ -915,11 +915,11 @@ static void test_default_mixer_type_negotiation(void)
     IDirect3DDevice9 *device;
     IMFMediaType *video_type;
     IMFTransform *transform;
+    DWORD index, count;
     GUID guid, *guids;
     IDirect3D9 *d3d;
     IUnknown *unk;
     HWND window;
-    DWORD count;
     HRESULT hr;
     UINT token;
 
@@ -1012,6 +1012,25 @@ static void test_default_mixer_type_negotiation(void)
     ok(media_type == media_type2, "Unexpected media type instance.\n");
     IMFMediaType_Release(media_type);
     IMFMediaType_Release(media_type2);
+
+    /* Check attributes on available output types. */
+    index = 0;
+    while (SUCCEEDED(IMFTransform_GetOutputAvailableType(transform, 0, index++, &media_type)))
+    {
+        UINT64 frame_size;
+        GUID subtype;
+        UINT32 value;
+
+        hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &subtype);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &frame_size);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        hr = IMFMediaType_GetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, &value);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        IMFMediaType_Release(media_type);
+    }
+    ok(index > 1, "Unexpected number of available types.\n");
 
     hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoProcessor, (void **)&processor);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);

@@ -653,7 +653,8 @@ static int rt_formats_sort_compare(const void *left, const void *right)
 }
 
 static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const DXVA2_VideoDesc *video_desc,
-        IDirectXVideoProcessorService *service, unsigned int device_count, const GUID *devices, unsigned int flags)
+        IMFMediaType *media_type, IDirectXVideoProcessorService *service, unsigned int device_count,
+        const GUID *devices, unsigned int flags)
 {
     unsigned int i, j, format_count, count;
     struct rt_format *rt_formats = NULL, *ptr;
@@ -706,9 +707,16 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
         {
             for (i = 0; i < count; ++i)
             {
+                IMFMediaType *rt_media_type;
+
                 subtype.Data1 = rt_formats[i].format;
                 mixer->output.rt_formats[i] = rt_formats[i];
-                MFCreateVideoMediaTypeFromSubtype(&subtype, (IMFVideoMediaType **)&mixer->output.rt_formats[i].media_type);
+
+                MFCreateMediaType(&rt_media_type);
+                IMFMediaType_CopyAllItems(media_type, (IMFAttributes *)rt_media_type);
+                IMFMediaType_SetGUID(rt_media_type, &MF_MT_SUBTYPE, &subtype);
+
+                mixer->output.rt_formats[i].media_type = rt_media_type;
             }
             mixer->output.rt_formats_count = count;
         }
@@ -785,8 +793,8 @@ static HRESULT WINAPI video_mixer_transform_SetInputType(IMFTransform *iface, DW
                     if (SUCCEEDED(hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(service, &video_desc,
                             &count, &guids)))
                     {
-                        if (SUCCEEDED(hr = video_mixer_collect_output_types(mixer, &video_desc, service, count,
-                                guids, flags)) && !(flags & MFT_SET_TYPE_TEST_ONLY))
+                        if (SUCCEEDED(hr = video_mixer_collect_output_types(mixer, &video_desc, media_type,
+                                service, count, guids, flags)) && !(flags & MFT_SET_TYPE_TEST_ONLY))
                         {
                             if (mixer->inputs[0].media_type)
                                 IMFMediaType_Release(mixer->inputs[0].media_type);
