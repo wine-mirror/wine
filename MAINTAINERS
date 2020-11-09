@@ -249,7 +249,7 @@ F:	dlls/gphoto2.ds/
 
 Uniscribe
 M:	Aric Stewart <aric@codeweavers.com>
-F:	dlls/usp10/
+F:	dlls/gdi32/uniscribe/
 
 URL Moniker
 M:	Jacek Caban <jacek@codeweavers.com>

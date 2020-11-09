@@ -2194,6 +2194,18 @@ static inline BOOL does_glyph_start_cluster(const SCRIPT_VISATTR *pva, const WOR
     return FALSE;
 }
 
+static DWORD get_sys_color(INT index)
+{
+    static DWORD (WINAPI *pGetSysColor)(INT index);
+
+    if (!pGetSysColor)
+    {
+        HMODULE user = GetModuleHandleW( L"user32.dll" );
+        if (user) pGetSysColor = (void *)GetProcAddress( user, "GetSysColor" );
+    }
+
+    return pGetSysColor(index);
+}
 
 static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
                            int iX,
@@ -2227,17 +2239,18 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
          (cEnd >= 0 && analysis->pItem[iItem].iCharPos >= cEnd))
             return S_OK;
 
-    CopyRect(&crc,prc);
+    if (prc)
+        memcpy(&crc, prc, sizeof(crc));
     if (fSelected)
     {
         BkMode = GetBkMode(analysis->hdc);
         SetBkMode( analysis->hdc, OPAQUE);
         BkColor = GetBkColor(analysis->hdc);
-        SetBkColor(analysis->hdc, GetSysColor(COLOR_HIGHLIGHT));
+        SetBkColor(analysis->hdc, get_sys_color(COLOR_HIGHLIGHT));
         if (!fDisabled)
         {
             TextColor = GetTextColor(analysis->hdc);
-            SetTextColor(analysis->hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
+            SetTextColor(analysis->hdc, get_sys_color(COLOR_HIGHLIGHTTEXT));
         }
     }
     if (analysis->glyphs[iItem].fallbackFont)
@@ -3449,7 +3462,7 @@ HRESULT WINAPI ScriptPlaceOpenType( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS 
             else
             {
                 INT width;
-                if (!GetCharWidthW(hdc, pwGlyphs[i], pwGlyphs[i], &width)) return S_FALSE;
+                if (!GetCharWidth32W(hdc, pwGlyphs[i], pwGlyphs[i], &width)) return S_FALSE;
                 abc.abcB = width;
                 abc.abcA = abc.abcC = 0;
             }

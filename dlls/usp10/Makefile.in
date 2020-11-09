@@ -1,19 +1,2 @@
 MODULE    = usp10.dll
 IMPORTLIB = usp10
-IMPORTS   = advapi32 user32 gdi32
-
-EXTRADLLFLAGS = -mno-cygwin
-
-C_SRCS = \
-	bidi.c \
-	bracket.c \
-	breaking.c \
-	direction.c \
-	indic.c \
-	indicsyllable.c \
-	linebreak.c \
-	mirror.c \
-	opentype.c \
-	shape.c \
-	shaping.c \
-	usp10.c

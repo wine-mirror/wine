@@ -463,6 +463,7 @@ my @dll_groups =
   "ext-ms-win-rtcore-gdi-devcaps-l1-1-0",
   "ext-ms-win-rtcore-gdi-object-l1-1-0",
   "ext-ms-win-rtcore-gdi-rgn-l1-1-0",
+  "usp10"
  ],
  [
   "combase",
