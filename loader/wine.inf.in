@@ -2843,6 +2843,12 @@ HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time,"MUI_Dlt",,"@tzres.
 HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time,"MUI_Std",,"@tzres.dll,-30368"
 HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time,"Std",,"AUS Eastern Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time,"TZI",1,a8,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time\Dynamic DST,"2005",1,a8,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time\Dynamic DST,"2006",1,a8,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time\Dynamic DST,"2007",1,a8,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time\Dynamic DST,"2008",1,a8,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time\Dynamic DST,"FirstEntry",0x10001,"2005"
+HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time\Dynamic DST,"LastEntry",0x10001,"2008"
 HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time,"Display",,"Asia/Baku"
 HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time,"Dlt",,"Azerbaijan Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Azerbaijan Standard Time,"MUI_Dlt",,"@tzres.dll,-11313"
@@ -2916,6 +2922,12 @@ HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time,"MUI_Dlt",,"@tzr
 HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time,"MUI_Std",,"@tzres.dll,-38928"
 HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time,"Std",,"Cen. Australia Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time,"TZI",1,c6,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time\Dynamic DST,"2005",1,c6,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time\Dynamic DST,"2006",1,c6,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time\Dynamic DST,"2007",1,c6,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time\Dynamic DST,"2008",1,c6,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,04,00,00,00,01,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time\Dynamic DST,"FirstEntry",0x10001,"2005"
+HKLM,%CurrentVersionNT%\Time Zones\Cen. Australia Standard Time\Dynamic DST,"LastEntry",0x10001,"2008"
 HKLM,%CurrentVersionNT%\Time Zones\Central America Standard Time,"Display",,"America/Guatemala"
 HKLM,%CurrentVersionNT%\Time Zones\Central America Standard Time,"Dlt",,"Central America Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Central America Standard Time,"MUI_Dlt",,"@tzres.dll,-36657"
@@ -3707,6 +3719,14 @@ HKLM,%CurrentVersionNT%\Time Zones\W. Australia Standard Time,"MUI_Dlt",,"@tzres
 HKLM,%CurrentVersionNT%\Time Zones\W. Australia Standard Time,"MUI_Std",,"@tzres.dll,-65376"
 HKLM,%CurrentVersionNT%\Time Zones\W. Australia Standard Time,"Std",,"W. Australia Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\W. Australia Standard Time,"TZI",1,20,fe,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\W. Australia Standard Time\Dynamic DST,"2005",1,20,fe,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\W. Australia Standard Time\Dynamic DST,"2006",1,20,fe,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,01,00,00,00,01,00,00,00,00,00,00,00,00,00,00,00,0c,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\W. Australia Standard Time\Dynamic DST,"2007",1,20,fe,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\W. Australia Standard Time\Dynamic DST,"2008",1,20,fe,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\W. Australia Standard Time\Dynamic DST,"2009",1,20,fe,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,01,00,04,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\W. Australia Standard Time\Dynamic DST,"2010",1,20,fe,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\W. Australia Standard Time\Dynamic DST,"FirstEntry",0x10001,"2005"
+HKLM,%CurrentVersionNT%\Time Zones\W. Australia Standard Time\Dynamic DST,"LastEntry",0x10001,"2010"
 HKLM,%CurrentVersionNT%\Time Zones\W. Central Africa Standard Time,"Display",,"Africa/Lagos"
 HKLM,%CurrentVersionNT%\Time Zones\W. Central Africa Standard Time,"Dlt",,"W. Central Africa Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\W. Central Africa Standard Time,"MUI_Dlt",,"@tzres.dll,-64977"
