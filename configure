@@ -7589,7 +7589,7 @@ fi
 
 
 
-for ac_header in sys/mount.h sys/statfs.h sys/user.h sys/vfs.h
+for ac_header in sys/conf.h sys/mount.h sys/statfs.h sys/user.h sys/vfs.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#include <sys/types.h>

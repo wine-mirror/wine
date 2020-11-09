@@ -99,6 +99,9 @@
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
+#ifdef HAVE_SYS_CONF_H
+#include <sys/conf.h>
+#endif
 #ifdef HAVE_SYS_MOUNT_H
 #include <sys/mount.h>
 #endif
@@ -6064,6 +6067,31 @@ static NTSTATUS get_device_info( int fd, FILE_FS_DEVICE_INFORMATION *info )
         case SCSI_TAPE_MAJOR:
             info->DeviceType = FILE_DEVICE_TAPE;
             break;
+        }
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__APPLE__)
+        {
+            int d_type;
+            if (ioctl(fd, FIODTYPE, &d_type) == 0)
+            {
+                switch(d_type)
+                {
+                case D_TAPE:
+                    info->DeviceType = FILE_DEVICE_TAPE;
+                    break;
+                case D_DISK:
+                    info->DeviceType = FILE_DEVICE_DISK;
+                    break;
+                case D_TTY:
+                    info->DeviceType = FILE_DEVICE_SERIAL_PORT;
+                    break;
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+                case D_MEM:
+                    info->DeviceType = FILE_DEVICE_NULL;
+                    break;
+#endif
+                }
+            /* no special d_type for parallel ports */
+            }
         }
 #endif
     }
