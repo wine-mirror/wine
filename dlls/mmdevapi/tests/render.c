@@ -2346,6 +2346,7 @@ static void test_endpointvolume(void)
 START_TEST(render)
 {
     HRESULT hr;
+    DWORD mode;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&mme);
@@ -2371,8 +2372,11 @@ START_TEST(render)
     test_formats(AUDCLNT_SHAREMODE_SHARED);
     test_references();
     test_marshal();
-    trace("Output to a MS-DOS console is particularly slow and disturbs timing.\n");
-    trace("Please redirect output to a file.\n");
+    if (GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &mode))
+    {
+        trace("Output to a MS-DOS console is particularly slow and disturbs timing.\n");
+        trace("Please redirect output to a file.\n");
+    }
     test_event();
     test_padding();
     test_clock(1);
