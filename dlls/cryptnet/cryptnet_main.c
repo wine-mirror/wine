@@ -888,7 +888,7 @@ static BOOL WINAPI HTTP_RetrieveEncodedObjectW(LPCWSTR pszURL,
                 {
                  L"application/x-x509-ca-cert", L"application/x-x509-email-cert",
                  L"application/x-x509-server-cert", L"application/x-x509-user-cert",
-                 L"application/x-pkcs7-certifcates", L"application/pkix-crl",
+                 L"application/x-pkcs7-certificates", L"application/pkix-crl",
                  L"application/x-pkcs7-crl", L"application/x-pkcs7-signature",
                  L"application/x-pkcs7-mime", NULL
                 };
