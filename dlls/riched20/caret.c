@@ -413,10 +413,8 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
 
       /* c = updated data now */
 
-      if (c.run == cursor.run)
-        ME_SkipAndPropagateCharOffset( run_get_di( c.run ), shift );
-      else
-        ME_PropagateCharOffset( run_get_di( c.run ), shift );
+      if (c.run == cursor.run) c.run->nCharOfs -= shift;
+      editor_propagate_char_ofs( NULL, c.run, shift );
 
       if (!cursor.run->len)
       {

@@ -137,54 +137,32 @@ BOOL ME_CanJoinRuns(const ME_Run *run1, const ME_Run *run2)
   return TRUE;
 }
 
-void ME_SkipAndPropagateCharOffset(ME_DisplayItem *p, int shift)
-{
-  p = ME_FindItemFwd(p, diRunOrParagraphOrEnd);
-  assert(p);
-  ME_PropagateCharOffset(p, shift);
-}
-
 /******************************************************************************
- * ME_PropagateCharOffsets
+ * editor_propagate_char_ofs
  *
  * Shifts (increases or decreases) character offset (relative to beginning of 
- * the document) of the part of the text starting from given place.  
+ * the document) of the part of the text starting from given place.
+ * Call with only one of para or run non-NULL.
  */ 
-void ME_PropagateCharOffset(ME_DisplayItem *p, int shift)
+void editor_propagate_char_ofs( ME_Paragraph *para, ME_Run *run, int shift )
 {
-	/* Runs in one paragraph contain character offset relative to their owning
-	 * paragraph. If we start the shifting from the run, we need to shift
-	 * all the relative offsets until the end of the paragraph
-	 */	 	    
-  if (p->type == diRun) /* propagate in all runs in this para */
-  {
-    TRACE("PropagateCharOffset(%s, %d)\n", debugstr_run( &p->member.run ), shift);
-    do {
-      p->member.run.nCharOfs += shift;
-      assert(p->member.run.nCharOfs >= 0);
-      p = ME_FindItemFwd(p, diRunOrParagraphOrEnd);
-    } while(p->type == diRun);
-  }
-	/* Runs in next paragraphs don't need their offsets updated, because they, 
-	 * again, those offsets are relative to their respective paragraphs.
-	 * Instead of that, we're updating paragraphs' character offsets.	  
-	 */	 	    
-  if (p->type == diParagraph) /* propagate in all next paras */
-  {
-    do {
-      p->member.para.nCharOfs += shift;
-      assert(p->member.para.nCharOfs >= 0);
-      p = p->member.para.next_para;
-    } while(p->type == diParagraph);
-  }
-  /* diTextEnd also has character offset in it, which makes finding text length
-   * easier. But it needs to be up to date first.
-   */
-  if (p->type == diTextEnd)
-  {
-    p->member.para.nCharOfs += shift;
-    assert(p->member.para.nCharOfs >= 0);
-  }
+    assert( !para ^ !run );
+
+    if (run)
+    {
+        para = para_next( run->para );
+        do
+        {
+            run->nCharOfs += shift;
+            run = run_next( run );
+        } while (run);
+    }
+
+    do
+    {
+        para->nCharOfs += shift;
+        para = para_next( para );
+    } while (para);
 }
 
 /******************************************************************************
@@ -422,7 +400,7 @@ ME_Run *run_insert( ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
   ME_InsertString( run->para->text, run->nCharOfs, str, len );
   ME_InsertBefore( run_get_di( insert_before ), run_get_di( run ) );
   TRACE("Shift length:%d\n", len);
-  ME_PropagateCharOffset( run_get_di( insert_before ), len );
+  editor_propagate_char_ofs( NULL, insert_before, len );
   para_mark_rewrap( editor, insert_before->para );
 
   /* Move any cursors that were at the end of the previous run to the end of the inserted run */

@@ -674,7 +674,7 @@ ME_Paragraph *para_split( ME_TextEditor *editor, ME_Run *run, ME_Style *style,
   para_mark_rewrap( editor, &new_para->prev_para->member.para );
 
   /* we've added the end run, so we need to modify nCharOfs in the next paragraphs */
-  ME_PropagateCharOffset( para_get_di( next_para ), eol_len );
+  editor_propagate_char_ofs( next_para, NULL, eol_len );
   editor->nParagraphs++;
 
   return new_para;
@@ -688,8 +688,7 @@ ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_fir
   ME_Paragraph *next = para_next( para );
   ME_Run *end_run, *next_first_run, *tmp_run;
   ME_Cell *cell = NULL;
-  int i, shift;
-  int end_len;
+  int i, end_len;
   CHARFORMAT2W fmt;
   ME_Cursor startCur, endCur;
   ME_String *eol_str;
@@ -751,8 +750,6 @@ ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_fir
     para->border = next->border;
   }
 
-  shift = next->nCharOfs - para->nCharOfs - end_len;
-
   /* Update selection cursors so they don't point to the removed end
    * paragraph run, and point to the correct paragraph. */
   for (i = 0; i < editor->nCursors; i++)
@@ -768,8 +765,7 @@ ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_fir
 
   for (tmp_run = next_first_run; tmp_run; tmp_run = run_next( tmp_run ))
   {
-    TRACE( "shifting %s by %d (previous %d)\n", debugstr_run( tmp_run ), shift, tmp_run->nCharOfs );
-    tmp_run->nCharOfs += shift;
+    tmp_run->nCharOfs += next->nCharOfs - para->nCharOfs - end_len;
     tmp_run->para = para;
   }
 
@@ -789,7 +785,7 @@ ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_fir
   ME_Remove( para_get_di(next) );
   para_destroy( editor, next );
 
-  ME_PropagateCharOffset( para->next_para, -end_len );
+  editor_propagate_char_ofs( para_next( para ), NULL, -end_len );
 
   ME_CheckCharOffsets(editor);
 

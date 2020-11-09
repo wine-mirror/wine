@@ -126,12 +126,12 @@ static inline ME_DisplayItem *row_get_di( ME_Row *row )
 void cursor_from_char_ofs( ME_TextEditor *editor, int char_ofs, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
 BOOL cursor_next_run( ME_Cursor *cursor, BOOL all_para ) DECLSPEC_HIDDEN;
 BOOL cursor_prev_run( ME_Cursor *cursor, BOOL all_para ) DECLSPEC_HIDDEN;
+void editor_propagate_char_ofs( ME_Paragraph *para, ME_Run *run, int shift ) DECLSPEC_HIDDEN;
 int run_char_ofs( ME_Run *run, int ofs ) DECLSPEC_HIDDEN;
 ME_Run *run_create( ME_Style *s, int nFlags ) DECLSPEC_HIDDEN;
 ME_Run *run_insert( ME_TextEditor *editor, ME_Cursor *cursor,
                     ME_Style *style, const WCHAR *str, int len, int flags ) DECLSPEC_HIDDEN;
 void ME_CheckCharOffsets(ME_TextEditor *editor) DECLSPEC_HIDDEN;
-void ME_PropagateCharOffset(ME_DisplayItem *p, int shift) DECLSPEC_HIDDEN;
 /* this one accounts for 1/2 char tolerance */
 int ME_CharFromPointContext(ME_Context *c, int cx, ME_Run *run, BOOL closest, BOOL visual_order) DECLSPEC_HIDDEN;
 int ME_CharFromPoint(ME_TextEditor *editor, int cx, ME_Run *run, BOOL closest, BOOL visual_order) DECLSPEC_HIDDEN;
@@ -147,7 +147,6 @@ ME_Run *run_split( ME_TextEditor *editor, ME_Cursor *cursor ) DECLSPEC_HIDDEN;
 void ME_UpdateRunFlags(ME_TextEditor *editor, ME_Run *run) DECLSPEC_HIDDEN;
 SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, int nLen,
                          int startx, int *pAscent, int *pDescent) DECLSPEC_HIDDEN;
-void ME_SkipAndPropagateCharOffset(ME_DisplayItem *p, int shift) DECLSPEC_HIDDEN;
 void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, CHARFORMAT2W *pFmt) DECLSPEC_HIDDEN;
 void ME_SetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt) DECLSPEC_HIDDEN;
 void ME_GetCharFormat(ME_TextEditor *editor, const ME_Cursor *from,
