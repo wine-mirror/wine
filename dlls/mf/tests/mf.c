@@ -3921,6 +3921,108 @@ static void test_sample_copier(void)
     IMFTransform_Release(copier);
 }
 
+static void sample_copier_process(IMFTransform *copier, IMFMediaBuffer *input_buffer,
+        IMFMediaBuffer *output_buffer)
+{
+    IMFSample *input_sample, *output_sample;
+    MFT_OUTPUT_DATA_BUFFER buffer;
+    DWORD status;
+    HRESULT hr;
+
+    hr = MFCreateSample(&input_sample);
+    ok(hr == S_OK, "Failed to create a sample, hr %#x.\n", hr);
+
+    hr = MFCreateSample(&output_sample);
+    ok(hr == S_OK, "Failed to create a sample, hr %#x.\n", hr);
+
+    hr = IMFSample_AddBuffer(input_sample, input_buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_AddBuffer(output_sample, output_buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_ProcessInput(copier, 0, input_sample, 0);
+    ok(hr == S_OK, "Failed to process input, hr %#x.\n", hr);
+
+    status = 0;
+    memset(&buffer, 0, sizeof(buffer));
+    buffer.pSample = output_sample;
+    hr = IMFTransform_ProcessOutput(copier, 0, 1, &buffer, &status);
+    ok(hr == S_OK, "Failed to get output, hr %#x.\n", hr);
+
+    IMFSample_Release(input_sample);
+    IMFSample_Release(output_sample);
+}
+
+static void test_sample_copier_output_processing(void)
+{
+    IMFMediaBuffer *input_buffer, *output_buffer;
+    MFT_OUTPUT_STREAM_INFO output_info;
+    IMFMediaType *mediatype;
+    IMFTransform *copier;
+    DWORD max_length;
+    HRESULT hr;
+    BYTE *ptr;
+
+    hr = MFCreateSampleCopierMFT(&copier);
+    ok(hr == S_OK, "Failed to create sample copier, hr %#x.\n", hr);
+
+    /* Configure for 16 x 16 of D3DFMT_X8R8G8B8. */
+    hr = MFCreateMediaType(&mediatype);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(mediatype, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(mediatype, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetUINT64(mediatype, &MF_MT_FRAME_SIZE, ((UINT64)16) << 32 | 16);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFTransform_SetInputType(copier, 0, mediatype, 0);
+    ok(hr == S_OK, "Failed to set input type, hr %#x.\n", hr);
+
+    hr = IMFTransform_SetOutputType(copier, 0, mediatype, 0);
+    ok(hr == S_OK, "Failed to set input type, hr %#x.\n", hr);
+
+    /* Source and destination are linear buffers, destination is twice as large. */
+    hr = IMFTransform_GetOutputStreamInfo(copier, 0, &output_info);
+    ok(hr == S_OK, "Failed to get output info, hr %#x.\n", hr);
+
+    hr = MFCreateAlignedMemoryBuffer(output_info.cbSize, output_info.cbAlignment, &output_buffer);
+    ok(hr == S_OK, "Failed to create media buffer, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_Lock(output_buffer, &ptr, &max_length, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    memset(ptr, 0xcc, max_length);
+    hr = IMFMediaBuffer_Unlock(output_buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateAlignedMemoryBuffer(output_info.cbSize, output_info.cbAlignment, &input_buffer);
+    ok(hr == S_OK, "Failed to create media buffer, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_Lock(input_buffer, &ptr, &max_length, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    memset(ptr, 0xaa, max_length);
+    hr = IMFMediaBuffer_Unlock(input_buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaBuffer_SetCurrentLength(input_buffer, 4);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    sample_copier_process(copier, input_buffer, output_buffer);
+
+    hr = IMFMediaBuffer_Lock(output_buffer, &ptr, &max_length, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(ptr[0] == 0xaa && ptr[4] == 0xcc, "Unexpected buffer contents.\n");
+
+    hr = IMFMediaBuffer_Unlock(output_buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFMediaType_Release(mediatype);
+    IMFTransform_Release(copier);
+}
+
 static void test_MFGetTopoNodeCurrentType(void)
 {
     IMFMediaType *media_type, *media_type2;
@@ -4020,5 +4122,6 @@ START_TEST(mf)
     test_MFGetSupportedMimeTypes();
     test_MFGetSupportedSchemes();
     test_sample_copier();
+    test_sample_copier_output_processing();
     test_MFGetTopoNodeCurrentType();
 }
