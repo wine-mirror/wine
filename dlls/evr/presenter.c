@@ -1207,13 +1207,18 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
     InitializeCriticalSection(&object->cs);
 
     if (FAILED(hr = DXVA2CreateDirect3DDeviceManager9(&object->reset_token, &object->device_manager)))
-        IUnknown_Release(&object->IUnknown_inner);
+        goto failed;
 
     if (FAILED(hr = video_presenter_init_d3d(object)))
-        IUnknown_Release(&object->IUnknown_inner);
+        goto failed;
 
-    if (SUCCEEDED(hr))
-        *out = &object->IUnknown_inner;
+    *out = &object->IUnknown_inner;
+
+    return S_OK;
+
+failed:
+
+    IUnknown_Release(&object->IUnknown_inner);
 
     return hr;
 }
