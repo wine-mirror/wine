@@ -151,7 +151,7 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
         FIXME( "flags %08x not supported\n", flags );
         return NULL;
     }
-    if (!unix_funcs)
+    if (!unix_funcs->import_cert_store)
     {
         FIXME( "(%p, %p, %08x)\n", pfx, password, flags );
         return NULL;

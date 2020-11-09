@@ -460,8 +460,10 @@ void init_empty_store(void) DECLSPEC_HIDDEN;
 #define IS_INTOID(x)    (((ULONG_PTR)(x) >> 16) == 0)
 
 /* Unix interface */
+
 struct unix_funcs
 {
+    BOOL (WINAPI *enum_root_certs)( void *buffer, SIZE_T size, SIZE_T *needed );
     BOOL (WINAPI *import_cert_store)( CRYPT_DATA_BLOB *pfx, const WCHAR *password, DWORD flags,
                                       void **key_ret, void ***chain_ret, DWORD *count_ret );
 };

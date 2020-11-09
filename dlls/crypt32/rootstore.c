@@ -46,114 +46,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
-#define INITIAL_CERT_BUFFER 1024
-
-struct DynamicBuffer
-{
-    DWORD allocated;
-    DWORD used;
-    BYTE *data;
-};
-
-static inline void reset_buffer(struct DynamicBuffer *buffer)
-{
-    buffer->used = 0;
-    if (buffer->data) buffer->data[0] = 0;
-}
-
-static BOOL add_line_to_buffer(struct DynamicBuffer *buffer, LPCSTR line)
-{
-    BOOL ret;
-
-    if (buffer->used + strlen(line) + 1 > buffer->allocated)
-    {
-        if (!buffer->allocated)
-        {
-            buffer->data = CryptMemAlloc(INITIAL_CERT_BUFFER);
-            if (buffer->data)
-            {
-                buffer->data[0] = 0;
-                buffer->allocated = INITIAL_CERT_BUFFER;
-            }
-        }
-        else
-        {
-            DWORD new_size = max(buffer->allocated * 2,
-             buffer->used + strlen(line) + 1);
-
-            buffer->data = CryptMemRealloc(buffer->data, new_size);
-            if (buffer->data)
-                buffer->allocated = new_size;
-        }
-    }
-    if (buffer->data)
-    {
-        strcpy((char *)buffer->data + strlen((char *)buffer->data), line);
-        /* Not strlen + 1, otherwise we'd count the NULL for every line's
-         * addition (but we overwrite the previous NULL character.)  Not an
-         * overrun, we allocate strlen + 1 bytes above.
-         */
-        buffer->used += strlen(line);
-        ret = TRUE;
-    }
-    else
-        ret = FALSE;
-    return ret;
-}
-
-/* Reads any base64-encoded certificates present in fp and adds them to store.
- * Returns TRUE if any certificates were successfully imported.
- */
-static BOOL import_base64_certs_from_fp(FILE *fp, HCERTSTORE store)
-{
-    char line[1024];
-    BOOL in_cert = FALSE;
-    struct DynamicBuffer saved_cert = { 0, 0, NULL };
-    int num_certs = 0;
-
-    TRACE("\n");
-    while (fgets(line, sizeof(line), fp))
-    {
-        static const char header[] = "-----BEGIN CERTIFICATE-----";
-        static const char trailer[] = "-----END CERTIFICATE-----";
-
-        if (!strncmp(line, header, strlen(header)))
-        {
-            TRACE("begin new certificate\n");
-            in_cert = TRUE;
-            reset_buffer(&saved_cert);
-        }
-        else if (!strncmp(line, trailer, strlen(trailer)))
-        {
-            DWORD size;
-
-            TRACE("end of certificate, adding cert\n");
-            in_cert = FALSE;
-            if (CryptStringToBinaryA((char *)saved_cert.data, saved_cert.used,
-             CRYPT_STRING_BASE64, NULL, &size, NULL, NULL))
-            {
-                LPBYTE buf = CryptMemAlloc(size);
-
-                if (buf)
-                {
-                    CryptStringToBinaryA((char *)saved_cert.data,
-                     saved_cert.used, CRYPT_STRING_BASE64, buf, &size, NULL,
-                     NULL);
-                    if (CertAddEncodedCertificateToStore(store,
-                     X509_ASN_ENCODING, buf, size, CERT_STORE_ADD_NEW, NULL))
-                        num_certs++;
-                    CryptMemFree(buf);
-                }
-            }
-        }
-        else if (in_cert)
-            add_line_to_buffer(&saved_cert, line);
-    }
-    CryptMemFree(saved_cert.data);
-    TRACE("Read %d certs\n", num_certs);
-    return num_certs > 0;
-}
-
 static const char *trust_status_to_str(DWORD status)
 {
     static const struct
@@ -290,146 +182,6 @@ static void check_and_store_certs(HCERTSTORE from, HCERTSTORE to)
     }
     TRACE("Added %d root certificates\n", root_count);
 }
-
-/* Reads the file fd, and imports any certificates in it into store.
- * Returns TRUE if any certificates were successfully imported.
- */
-static BOOL import_certs_from_file(int fd, HCERTSTORE store)
-{
-    BOOL ret = FALSE;
-    FILE *fp;
-
-    TRACE("\n");
-
-    fp = fdopen(fd, "r");
-    if (fp)
-    {
-        ret = import_base64_certs_from_fp(fp, store);
-        fclose(fp);
-    }
-    return ret;
-}
-
-static BOOL import_certs_from_path(LPCSTR path, HCERTSTORE store,
- BOOL allow_dir);
-
-static BOOL check_buffer_resize(char **ptr_buf, size_t *buf_size, size_t check_size)
-{
-    if (check_size > *buf_size)
-    {
-        *buf_size = check_size;
-
-        if (*ptr_buf)
-        {
-            char *realloc_buf = CryptMemRealloc(*ptr_buf, *buf_size);
-
-            if (!realloc_buf)
-                return FALSE;
-
-            *ptr_buf = realloc_buf;
-        }
-        else
-        {
-            *ptr_buf = CryptMemAlloc(*buf_size);
-            if (!*ptr_buf)
-                return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-/* Opens path, which must be a directory, and imports certificates from every
- * file in the directory into store.
- * Returns TRUE if any certificates were successfully imported.
- */
-static BOOL import_certs_from_dir(LPCSTR path, HCERTSTORE store)
-{
-#ifdef HAVE_READDIR
-    BOOL ret = FALSE;
-    DIR *dir;
-
-    TRACE("(%s, %p)\n", debugstr_a(path), store);
-
-    dir = opendir(path);
-    if (dir)
-    {
-        size_t path_len = strlen(path), bufsize = 0;
-        char *filebuf = NULL;
-
-        struct dirent *entry;
-        while ((entry = readdir(dir)))
-        {
-            if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
-            {
-                size_t name_len = strlen(entry->d_name);
-
-                if (!check_buffer_resize(&filebuf, &bufsize, path_len + 1 + name_len + 1))
-                {
-                    ERR("Path buffer (re)allocation failed with out of memory condition\n");
-                    break;
-                }
-                snprintf(filebuf, bufsize, "%s/%s", path, entry->d_name);
-                if (import_certs_from_path(filebuf, store, FALSE) && !ret)
-                    ret = TRUE;
-            }
-        }
-        CryptMemFree(filebuf);
-        closedir(dir);
-    }
-    return ret;
-#else
-    FIXME("not implemented without readdir available\n");
-    return FALSE;
-#endif
-}
-
-/* Opens path, which may be a file or a directory, and imports any certificates
- * it finds into store.
- * Returns TRUE if any certificates were successfully imported.
- */
-static BOOL import_certs_from_path(LPCSTR path, HCERTSTORE store,
- BOOL allow_dir)
-{
-    BOOL ret = FALSE;
-    int fd;
-
-    TRACE("(%s, %p, %d)\n", debugstr_a(path), store, allow_dir);
-
-    fd = open(path, O_RDONLY);
-    if (fd != -1)
-    {
-        struct stat st;
-
-        if (fstat(fd, &st) == 0)
-        {
-            if (S_ISREG(st.st_mode))
-                ret = import_certs_from_file(fd, store);
-            else if (S_ISDIR(st.st_mode))
-            {
-                if (allow_dir)
-                    ret = import_certs_from_dir(path, store);
-                else
-                    WARN("%s is a directory and directories are disallowed\n",
-                     debugstr_a(path));
-            }
-            else
-                ERR("%s: invalid file type\n", path);
-        }
-        close(fd);
-    }
-    return ret;
-}
-
-static const char * const CRYPT_knownLocations[] = {
- "/etc/ssl/certs/ca-certificates.crt",
- "/etc/ssl/certs",
- "/etc/pki/tls/certs/ca-bundle.crt",
- "/usr/share/ca-certificates/ca-bundle.crt",
- "/usr/local/share/certs/",
- "/etc/sfw/openssl/certs",
- "/etc/security/cacerts",  /* Android */
-};
 
 static const BYTE authenticode[] = {
 0x30,0x82,0x03,0xd6,0x30,0x82,0x02,0xbe,0xa0,0x03,0x02,0x01,0x02,0x02,0x01,0x01,
@@ -879,43 +631,24 @@ static void read_trusted_roots_from_known_locations(HCERTSTORE store)
 {
     HCERTSTORE from = CertOpenStore(CERT_STORE_PROV_MEMORY,
      X509_ASN_ENCODING, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+    SIZE_T needed, size = 2048;
+    void *buffer;
 
     if (from)
     {
-        DWORD i;
-        BOOL ret = FALSE;
-
-#ifdef HAVE_SECURITY_SECURITY_H
-        OSStatus status;
-        CFArrayRef rootCerts;
-
-        status = SecTrustCopyAnchorCertificates(&rootCerts);
-        if (status == noErr)
+        buffer = HeapAlloc( GetProcessHeap(), 0, size );
+        while (unix_funcs->enum_root_certs( buffer, size, &needed ))
         {
-            int i;
-            for (i = 0; i < CFArrayGetCount(rootCerts); i++)
+            if (needed > size)
             {
-                SecCertificateRef cert = (SecCertificateRef)CFArrayGetValueAtIndex(rootCerts, i);
-                CFDataRef certData;
-                if ((status = SecKeychainItemExport(cert, kSecFormatX509Cert, 0, NULL, &certData)) == noErr)
-                {
-                    if (CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
-                            CFDataGetBytePtr(certData), CFDataGetLength(certData),
-                            CERT_STORE_ADD_NEW, NULL))
-                        ret = TRUE;
-                    else
-                        WARN("adding root cert %d failed: %08x\n", i, GetLastError());
-                    CFRelease(certData);
-                }
-                else
-                    WARN("could not export certificate %d to X509 format: 0x%08x\n", i, (unsigned int)status);
+                HeapFree( GetProcessHeap(), 0, buffer );
+                buffer = HeapAlloc( GetProcessHeap(), 0, needed );
+                size = needed;
             }
-            CFRelease(rootCerts);
+            else CertAddEncodedCertificateToStore( store, X509_ASN_ENCODING, buffer, size,
+                                                   CERT_STORE_ADD_NEW, NULL );
         }
-#endif
-
-        for (i = 0; !ret && i < ARRAY_SIZE(CRYPT_knownLocations); i++)
-            ret = import_certs_from_path(CRYPT_knownLocations[i], from, TRUE);
+        HeapFree( GetProcessHeap(), 0, buffer );
         check_and_store_certs(from, store);
     }
     CertCloseStore(from, 0);

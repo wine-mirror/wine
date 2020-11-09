@@ -24,6 +24,15 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <unistd.h>
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#ifdef HAVE_SECURITY_SECURITY_H
+#include <Security/Security.h>
+#endif
 #ifdef SONAME_LIBGNUTLS
 #include <gnutls/pkcs12.h>
 #endif
@@ -297,9 +306,321 @@ error:
     return FALSE;
 }
 
-static const struct unix_funcs funcs =
+#endif /* SONAME_LIBGNUTLS */
+
+struct root_cert
 {
-    import_cert_store
+    struct list entry;
+    SIZE_T      size;
+    BYTE        data[1];
+};
+
+static struct list root_cert_list = LIST_INIT(root_cert_list);
+
+static BYTE *add_cert( SIZE_T size )
+{
+    struct root_cert *cert = malloc( offsetof( struct root_cert, data[size] ));
+
+    if (!cert) return NULL;
+    cert->size = size;
+    list_add_tail( &root_cert_list, &cert->entry );
+    return cert->data;
+}
+
+struct DynamicBuffer
+{
+    DWORD allocated;
+    DWORD used;
+    char *data;
+};
+
+static inline void reset_buffer(struct DynamicBuffer *buffer)
+{
+    buffer->used = 0;
+    if (buffer->data) buffer->data[0] = 0;
+}
+
+static void add_line_to_buffer(struct DynamicBuffer *buffer, LPCSTR line)
+{
+    if (buffer->used + strlen(line) + 1 > buffer->allocated)
+    {
+        DWORD new_size = max( max( buffer->allocated * 2, 1024 ), buffer->used + strlen(line) + 1 );
+        void *ptr = realloc( buffer->data, new_size );
+        if (!ptr) return;
+        buffer->data = ptr;
+        buffer->allocated = new_size;
+        if (!buffer->used) buffer->data[0] = 0;
+    }
+    strcpy( buffer->data + buffer->used, line );
+    buffer->used += strlen(line);
+}
+
+#define BASE64_DECODE_PADDING    0x100
+#define BASE64_DECODE_WHITESPACE 0x200
+#define BASE64_DECODE_INVALID    0x300
+
+static inline int decodeBase64Byte(char c)
+{
+    int ret = BASE64_DECODE_INVALID;
+
+    if (c >= 'A' && c <= 'Z')
+        ret = c - 'A';
+    else if (c >= 'a' && c <= 'z')
+        ret = c - 'a' + 26;
+    else if (c >= '0' && c <= '9')
+        ret = c - '0' + 52;
+    else if (c == '+')
+        ret = 62;
+    else if (c == '/')
+        ret = 63;
+    else if (c == '=')
+        ret = BASE64_DECODE_PADDING;
+    else if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+        ret = BASE64_DECODE_WHITESPACE;
+    return ret;
+}
+
+static BOOL base64_to_cert( const char *str )
+{
+    DWORD i, valid, out, hasPadding;
+    BYTE block[4], *data;
+
+    for (i = valid = out = hasPadding = 0; str[i]; i++)
+    {
+        int d = decodeBase64Byte( str[i] );
+        if (d == BASE64_DECODE_INVALID) return FALSE;
+        if (d == BASE64_DECODE_WHITESPACE) continue;
+
+        /* When padding starts, data is not acceptable */
+        if (hasPadding && d != BASE64_DECODE_PADDING) return FALSE;
+
+        /* Padding after a full block (like "VVVV=") is ok and stops decoding */
+        if (d == BASE64_DECODE_PADDING && (valid & 3) == 0) break;
+
+        valid++;
+        if (d == BASE64_DECODE_PADDING)
+        {
+            hasPadding = 1;
+            /* When padding reaches a full block, stop decoding */
+            if ((valid & 3) == 0) break;
+            continue;
+        }
+
+        /* out is incremented in the 4-char block as follows: "1-23" */
+        if ((valid & 3) != 2) out++;
+    }
+    /* Fail if the block has bad padding; omitting padding is fine */
+    if ((valid & 3) != 0 && hasPadding) return FALSE;
+
+    if (!(data = add_cert( out ))) return FALSE;
+    for (i = valid = out = 0; str[i]; i++)
+    {
+        int d = decodeBase64Byte( str[i] );
+        if (d == BASE64_DECODE_WHITESPACE) continue;
+        if (d == BASE64_DECODE_PADDING) break;
+        block[valid & 3] = d;
+        valid += 1;
+        switch (valid & 3)
+        {
+        case 1:
+            data[out++] = (block[0] << 2);
+            break;
+        case 2:
+            data[out-1] = (block[0] << 2) | (block[1] >> 4);
+            break;
+        case 3:
+            data[out++] = (block[1] << 4) | (block[2] >> 2);
+            break;
+        case 0:
+            data[out++] = (block[2] << 6) | (block[3] >> 0);
+            break;
+        }
+    }
+    return TRUE;
+}
+
+/* Reads the file fd, and imports any certificates in it into store. */
+static void import_certs_from_file( int fd )
+{
+    FILE *fp = fdopen(fd, "r");
+    char line[1024];
+    BOOL in_cert = FALSE;
+    struct DynamicBuffer saved_cert = { 0, 0, NULL };
+    int num_certs = 0;
+
+    if (!fp) return;
+    TRACE("\n");
+    while (fgets(line, sizeof(line), fp))
+    {
+        static const char header[] = "-----BEGIN CERTIFICATE-----";
+        static const char trailer[] = "-----END CERTIFICATE-----";
+
+        if (!strncmp(line, header, strlen(header)))
+        {
+            TRACE("begin new certificate\n");
+            in_cert = TRUE;
+            reset_buffer(&saved_cert);
+        }
+        else if (!strncmp(line, trailer, strlen(trailer)))
+        {
+            TRACE("end of certificate, adding cert\n");
+            in_cert = FALSE;
+            if (base64_to_cert( saved_cert.data )) num_certs++;
+        }
+        else if (in_cert) add_line_to_buffer(&saved_cert, line);
+    }
+    free( saved_cert.data );
+    TRACE("Read %d certs\n", num_certs);
+    fclose(fp);
+}
+
+static void import_certs_from_path(LPCSTR path, BOOL allow_dir);
+
+static BOOL check_buffer_resize(char **ptr_buf, size_t *buf_size, size_t check_size)
+{
+    if (check_size > *buf_size)
+    {
+        void *ptr = realloc(*ptr_buf, check_size);
+
+        if (!ptr) return FALSE;
+        *buf_size = check_size;
+        *ptr_buf = ptr;
+    }
+    return TRUE;
+}
+
+/* Opens path, which must be a directory, and imports certificates from every
+ * file in the directory into store.
+ * Returns TRUE if any certificates were successfully imported.
+ */
+static void import_certs_from_dir( LPCSTR path )
+{
+    DIR *dir;
+
+    dir = opendir(path);
+    if (dir)
+    {
+        size_t path_len = strlen(path), bufsize = 0;
+        char *filebuf = NULL;
+
+        struct dirent *entry;
+        while ((entry = readdir(dir)))
+        {
+            if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
+            {
+                size_t name_len = strlen(entry->d_name);
+
+                if (!check_buffer_resize(&filebuf, &bufsize, path_len + 1 + name_len + 1)) break;
+                snprintf(filebuf, bufsize, "%s/%s", path, entry->d_name);
+                import_certs_from_path(filebuf, FALSE);
+            }
+        }
+        free(filebuf);
+        closedir(dir);
+    }
+}
+
+/* Opens path, which may be a file or a directory, and imports any certificates
+ * it finds into store.
+ * Returns TRUE if any certificates were successfully imported.
+ */
+static void import_certs_from_path(LPCSTR path, BOOL allow_dir)
+{
+    int fd;
+
+    TRACE("(%s, %d)\n", debugstr_a(path), allow_dir);
+
+    fd = open(path, O_RDONLY);
+    if (fd != -1)
+    {
+        struct stat st;
+
+        if (fstat(fd, &st) == 0)
+        {
+            if (S_ISREG(st.st_mode))
+                import_certs_from_file(fd);
+            else if (S_ISDIR(st.st_mode))
+            {
+                if (allow_dir)
+                    import_certs_from_dir(path);
+                else
+                    WARN("%s is a directory and directories are disallowed\n",
+                     debugstr_a(path));
+            }
+            else
+                ERR("%s: invalid file type\n", path);
+        }
+        close(fd);
+    }
+}
+
+static const char * const CRYPT_knownLocations[] = {
+ "/etc/ssl/certs/ca-certificates.crt",
+ "/etc/ssl/certs",
+ "/etc/pki/tls/certs/ca-bundle.crt",
+ "/usr/share/ca-certificates/ca-bundle.crt",
+ "/usr/local/share/certs/",
+ "/etc/sfw/openssl/certs",
+ "/etc/security/cacerts",  /* Android */
+};
+
+static void load_root_certs(void)
+{
+    DWORD i;
+
+#ifdef HAVE_SECURITY_SECURITY_H
+    OSStatus status;
+    CFArrayRef rootCerts;
+
+    status = SecTrustCopyAnchorCertificates(&rootCerts);
+    if (status == noErr)
+    {
+        for (i = 0; i < CFArrayGetCount(rootCerts); i++)
+        {
+            SecCertificateRef cert = (SecCertificateRef)CFArrayGetValueAtIndex(rootCerts, i);
+            CFDataRef certData;
+            if ((status = SecKeychainItemExport(cert, kSecFormatX509Cert, 0, NULL, &certData)) == noErr)
+            {
+                BYTE *data = add_cert( CFDataGetLength(certData) );
+                if (data) memcpy( data, CFDataGetBytePtr(certData), CFDataGetLength(certData) );
+                CFRelease(certData);
+            }
+            else
+                WARN("could not export certificate %d to X509 format: 0x%08x\n", i, (unsigned int)status);
+        }
+        CFRelease(rootCerts);
+    }
+#endif
+
+    for (i = 0; i < ARRAY_SIZE(CRYPT_knownLocations) && list_empty(&root_cert_list); i++)
+        import_certs_from_path( CRYPT_knownLocations[i], TRUE );
+}
+
+static BOOL WINAPI enum_root_certs( void *buffer, SIZE_T size, SIZE_T *needed )
+{
+    static BOOL loaded;
+    struct list *ptr;
+    struct root_cert *cert;
+
+    if (!loaded) load_root_certs();
+    loaded = TRUE;
+
+    if (!(ptr = list_head( &root_cert_list ))) return FALSE;
+    cert = LIST_ENTRY( ptr, struct root_cert, entry );
+    *needed = cert->size;
+    if (cert->size <= size)
+    {
+        memcpy( buffer, cert->data, cert->size );
+        list_remove( &cert->entry );
+        free( cert );
+    }
+    return TRUE;
+}
+
+static struct unix_funcs funcs =
+{
+    enum_root_certs,
+    NULL
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
@@ -307,14 +628,16 @@ NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *p
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
-        if (!gnutls_initialize()) return STATUS_DLL_NOT_FOUND;
+#ifdef SONAME_LIBGNUTLS
+        if (gnutls_initialize()) funcs.import_cert_store = import_cert_store;
+#endif
         *(const struct unix_funcs **)ptr_out = &funcs;
         break;
     case DLL_PROCESS_DETACH:
+#ifdef SONAME_LIBGNUTLS
         if (libgnutls_handle) gnutls_uninitialize();
+#endif
         break;
     }
     return STATUS_SUCCESS;
 }
-
-#endif /* SONAME_LIBGNUTLS */
