@@ -33,6 +33,24 @@ ME_Row *row_next( ME_Row *row )
     return &item->member.row;
 }
 
+ME_Row *row_next_all_paras( ME_Row *row )
+{
+    ME_DisplayItem *item;
+
+    item = ME_FindItemFwd( row_get_di( row ), diStartRow );
+    if (!item) return NULL;
+    return &item->member.row;
+}
+
+ME_Row *row_prev_all_paras( ME_Row *row )
+{
+    ME_DisplayItem *item;
+
+    item = ME_FindItemBack( row_get_di( row ), diStartRow );
+    if (!item) return NULL;
+    return &item->member.row;
+}
+
 ME_Run *row_first_run( ME_Row *row )
 {
     ME_DisplayItem *item;
@@ -80,6 +98,14 @@ void row_end_cursor( ME_Row *row, ME_Cursor *cursor, BOOL include_eop )
     cursor->run = &run->member.run;
     cursor->para = cursor->run->para;
     cursor->nOffset = (item->type == diStartRow || include_eop) ? cursor->run->len : 0;
+}
+
+ME_Paragraph *row_para( ME_Row *row )
+{
+    ME_Cursor cursor;
+
+    row_first_cursor( row, &cursor );
+    return cursor.para;
 }
 
 ME_Row *row_from_row_number( ME_TextEditor *editor, int row_num )

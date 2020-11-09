@@ -1272,105 +1272,68 @@ ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs, BOOL 
   row_cursor( editor, &pItem->member.row, x, pCursor );
 }
 
-static void ME_ArrowPageUp(ME_TextEditor *editor, ME_Cursor *pCursor)
+static void ME_ArrowPageUp( ME_TextEditor *editor, ME_Cursor *cursor )
 {
-  ME_DisplayItem *p = ME_FindItemFwd(editor->pBuffer->pFirst, diStartRow);
+    ME_Row *row = para_first_row( editor_first_para( editor ) ), *last_row;
+    int x, yd, old_scroll_pos = editor->vert_si.nPos;
 
-  if (editor->vert_si.nPos < p->member.row.nHeight)
-  {
-    ME_SetCursorToStart(editor, pCursor);
-    /* Native clears seems to clear this x value on page up at the top
-     * of the text, but not on page down at the end of the text.
-     * Doesn't make sense, but we try to be bug for bug compatible. */
-    editor->nUDArrowX = -1;
-  } else {
-    ME_DisplayItem *pRun = run_get_di( pCursor->run );
-    ME_DisplayItem *pLast;
-    int x, y, yd, yp;
-    int yOldScrollPos = editor->vert_si.nPos;
+    if (editor->vert_si.nPos < row->nHeight)
+    {
+        ME_SetCursorToStart( editor, cursor );
+        /* Native clears seems to clear this x value on page up at the top
+         * of the text, but not on page down at the end of the text.
+         * Doesn't make sense, but we try to be bug for bug compatible. */
+        editor->nUDArrowX = -1;
+    }
+    else
+    {
+        x = ME_GetXForArrow( editor, cursor );
+        row = row_from_cursor( cursor );
 
-    x = ME_GetXForArrow(editor, pCursor);
+        ME_ScrollUp( editor, editor->sizeWindow.cy );
+        /* Only move the cursor by the amount scrolled. */
+        yd = cursor->para->pt.y + row->pt.y + editor->vert_si.nPos - old_scroll_pos;
+        last_row = row;
 
-    p = ME_FindItemBack(pRun, diStartRowOrParagraph);
-    assert(p->type == diStartRow);
-    yp = ME_FindItemBack(p, diParagraph)->member.para.pt.y;
-    y = yp + p->member.row.pt.y;
+        while ((row = row_prev_all_paras( row )))
+        {
+            if (row_para( row )->pt.y + row->pt.y < yd) break;
+            last_row = row;
+        }
 
-    ME_ScrollUp(editor, editor->sizeWindow.cy);
-    /* Only move the cursor by the amount scrolled. */
-    yd = y + editor->vert_si.nPos - yOldScrollPos;
-    pLast = p;
-
-    do {
-      p = ME_FindItemBack(p, diStartRowOrParagraph);
-      if (!p)
-        break;
-      if (p->type == diParagraph) { /* crossing paragraphs */
-        if (p->member.para.prev_para == NULL)
-          break;
-        yp = p->member.para.prev_para->member.para.pt.y;
-        continue;
-      }
-      y = yp + p->member.row.pt.y;
-      if (y < yd)
-        break;
-      pLast = p;
-    } while(1);
-
-    row_cursor( editor, &pLast->member.row, x, pCursor );
-  }
+        row_cursor( editor, last_row, x, cursor );
+    }
 }
 
-static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
+static void ME_ArrowPageDown( ME_TextEditor *editor, ME_Cursor *cursor )
 {
-  ME_DisplayItem *pLast;
-  int x, y;
+    ME_Row *row = para_end_row( para_prev( editor_end_para( editor ) ) ), *last_row;
+    int x, yd, old_scroll_pos = editor->vert_si.nPos;
 
-  /* Find y position of the last row */
-  pLast = editor->pBuffer->pLast;
-  y = pLast->member.para.prev_para->member.para.pt.y
-      + ME_FindItemBack(pLast, diStartRow)->member.row.pt.y;
+    x = ME_GetXForArrow( editor, cursor );
 
-  x = ME_GetXForArrow(editor, pCursor);
+    if (editor->vert_si.nPos >= row_para( row )->pt.y + row->pt.y - editor->sizeWindow.cy)
+        ME_SetCursorToEnd( editor, cursor, FALSE );
+    else
+    {
+        row = row_from_cursor( cursor );
 
-  if (editor->vert_si.nPos >= y - editor->sizeWindow.cy)
-  {
-    ME_SetCursorToEnd(editor, pCursor, FALSE);
-  } else {
-    ME_DisplayItem *pRun = run_get_di( pCursor->run );
-    ME_DisplayItem *p;
-    int yd, yp;
-    int yOldScrollPos = editor->vert_si.nPos;
+        /* For native richedit controls:
+         * v1.0 - v3.1 can only scroll down as far as the scrollbar lets us
+         * v4.1 can scroll past this position here. */
+        ME_ScrollDown( editor, editor->sizeWindow.cy );
+        /* Only move the cursor by the amount scrolled. */
+        yd = cursor->para->pt.y + row->pt.y + editor->vert_si.nPos - old_scroll_pos;
+        last_row = row;
 
-    p = ME_FindItemBack(pRun, diStartRowOrParagraph);
-    assert(p->type == diStartRow);
-    yp = ME_FindItemBack(p, diParagraph)->member.para.pt.y;
-    y = yp + p->member.row.pt.y;
+        while ((row = row_next_all_paras( row )))
+        {
+            if (row_para( row )->pt.y + row->pt.y >= yd) break;
+            last_row = row;
+        }
 
-    /* For native richedit controls:
-     * v1.0 - v3.1 can only scroll down as far as the scrollbar lets us
-     * v4.1 can scroll past this position here. */
-    ME_ScrollDown(editor, editor->sizeWindow.cy);
-    /* Only move the cursor by the amount scrolled. */
-    yd = y + editor->vert_si.nPos - yOldScrollPos;
-    pLast = p;
-
-    do {
-      p = ME_FindItemFwd(p, diStartRowOrParagraph);
-      if (!p)
-        break;
-      if (p->type == diParagraph) {
-        yp = p->member.para.pt.y;
-        continue;
-      }
-      y = yp + p->member.row.pt.y;
-      if (y >= yd)
-        break;
-      pLast = p;
-    } while(1);
-
-    row_cursor( editor, &pLast->member.row, x, pCursor );
-  }
+        row_cursor( editor, last_row, x, cursor );
+    }
 }
 
 static void ME_ArrowHome( ME_TextEditor *editor, ME_Cursor *cursor )
