@@ -1581,6 +1581,19 @@ Class class_test_identifiers_as_function_name
     End Sub
 End Class
 
+Class class_test_identifiers_as_property_name
+    Public Property Get Property()
+    End Property
+
+    Public Property Let Error(par)
+        Error = par
+    End Property
+
+    Public Property Set Default(par)
+        Set Default = par
+    End Property
+End Class
+
 sub test_dotIdentifiers
     ' test keywords that can also be an identifier after a dot
     Call ok(testObj.rem = 10, "testObj.rem = " & testObj.rem & " expected 10")
