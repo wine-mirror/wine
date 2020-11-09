@@ -105,18 +105,23 @@ static void test_D3DKMTOpenAdapterFromHdc(void)
     HDC hdc;
     DWORD i;
 
-    if (!pD3DKMTOpenAdapterFromHdc || pD3DKMTOpenAdapterFromHdc(NULL) == STATUS_PROCEDURE_NOT_FOUND)
+    if (!pD3DKMTOpenAdapterFromHdc)
     {
-        win_skip("D3DKMTOpenAdapterFromHdc() is unavailable.\n");
+        win_skip("D3DKMTOpenAdapterFromHdc() is missing.\n");
         return;
     }
 
     /* Invalid parameters */
-    status = pD3DKMTOpenAdapterFromHdc(NULL);
-    todo_wine ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
+    /* Passing a NULL pointer crashes on Windows 10 >= 2004 */
+    if (0) status = pD3DKMTOpenAdapterFromHdc(NULL);
 
     memset(&open_adapter_hdc_desc, 0, sizeof(open_adapter_hdc_desc));
     status = pD3DKMTOpenAdapterFromHdc(&open_adapter_hdc_desc);
+    if (status == STATUS_PROCEDURE_NOT_FOUND)
+    {
+        win_skip("D3DKMTOpenAdapterFromHdc() is not supported.\n");
+        return;
+    }
     todo_wine ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#x.\n", status);
 
     /* Open adapter */
