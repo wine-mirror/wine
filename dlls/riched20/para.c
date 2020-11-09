@@ -684,7 +684,6 @@ ME_Paragraph *para_split( ME_TextEditor *editor, ME_Run *run, ME_Style *style,
    specified in use_first_fmt */
 ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_first_fmt )
 {
-  ME_DisplayItem *tmp;
   ME_Paragraph *next = para_next( para );
   ME_Run *end_run, *next_first_run, *tmp_run;
   ME_Cell *cell = NULL;
@@ -717,20 +716,13 @@ ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_fir
 
   if (!editor->bEmulateVersion10) /* v4.1 */
   {
+    /* Remove cell boundary if it is between the end paragraph run and the next
+     * paragraph display item. */
+    if (para->cell != next->cell) cell = next->cell;
+
     /* Table cell/row properties are always moved over from the removed para. */
     para->nFlags = next->nFlags;
     para->cell = next->cell;
-
-    /* Remove cell boundary if it is between the end paragraph run and the next
-     * paragraph display item. */
-    for (tmp = run_get_di( end_run ); tmp != para_get_di( next ); tmp = tmp->next)
-    {
-      if (tmp->type == diCell)
-      {
-        cell = &tmp->member.cell;
-        break;
-      }
-    }
   }
 
   add_undo_split_para( editor, next, eol_str, cell );
