@@ -2074,9 +2074,7 @@ static BOOL CRYPT_AsnEncodeNumericString(const CERT_NAME_VALUE *value,
 
 static inline BOOL isprintableW(WCHAR wc)
 {
-    return iswalnum(wc) || iswspace(wc) || wc == '\'' || wc == '(' ||
-     wc == ')' || wc == '+' || wc == ',' || wc == '-' || wc == '.' ||
-     wc == '/' || wc == ':' || wc == '=' || wc == '?';
+    return wc && wcschr( L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 '()+,-./:=?", wc );
 }
 
 static BOOL CRYPT_AsnEncodePrintableString(const CERT_NAME_VALUE *value,
