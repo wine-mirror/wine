@@ -2823,6 +2823,20 @@ HKLM,%CurrentVersionNT%\Time Zones\AUS Central Standard Time,"MUI_Dlt",,"@tzres.
 HKLM,%CurrentVersionNT%\Time Zones\AUS Central Standard Time,"MUI_Std",,"@tzres.dll,-47024"
 HKLM,%CurrentVersionNT%\Time Zones\AUS Central Standard Time,"Std",,"AUS Central Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\AUS Central Standard Time,"TZI",1,c6,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Aus Central W. Standard Time,"Display",,"Australia/Eucla"
+HKLM,%CurrentVersionNT%\Time Zones\Aus Central W. Standard Time,"Dlt",,"Aus Central W. Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Aus Central W. Standard Time,"MUI_Dlt",,"@tzres.dll,-44673"
+HKLM,%CurrentVersionNT%\Time Zones\Aus Central W. Standard Time,"MUI_Std",,"@tzres.dll,-44672"
+HKLM,%CurrentVersionNT%\Time Zones\Aus Central W. Standard Time,"Std",,"Aus Central W. Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Aus Central W. Standard Time,"TZI",1,f3,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Aus Central W. Standard Time\Dynamic DST,"2005",1,f3,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Aus Central W. Standard Time\Dynamic DST,"2006",1,f3,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,01,00,00,00,01,00,00,00,00,00,00,00,00,00,00,00,0c,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Aus Central W. Standard Time\Dynamic DST,"2007",1,f3,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Aus Central W. Standard Time\Dynamic DST,"2008",1,f3,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Aus Central W. Standard Time\Dynamic DST,"2009",1,f3,fd,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,03,00,00,00,05,00,03,00,00,00,00,00,00,00,00,00,01,00,04,00,01,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Aus Central W. Standard Time\Dynamic DST,"2010",1,f3,fd,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Aus Central W. Standard Time\Dynamic DST,"FirstEntry",0x10001,"2005"
+HKLM,%CurrentVersionNT%\Time Zones\Aus Central W. Standard Time\Dynamic DST,"LastEntry",0x10001,"2010"
 HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time,"Display",,"Australia/Sydney"
 HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time,"Dlt",,"AUS Eastern Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\AUS Eastern Standard Time,"MUI_Dlt",,"@tzres.dll,-30369"
