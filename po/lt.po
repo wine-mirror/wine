@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-11-04 09:28+0200\n"
+"PO-Revision-Date: 2020-11-09 23:18+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -9954,16 +9954,12 @@ msgid "Central Asia Daylight Time"
 msgstr "Vidurio Azijos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:146
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "Lord Howe Standard Time"
-msgstr "Korėjos juostinis laikas"
+msgstr "Lordo Hau juostinis laikas"
 
 #: dlls/tzres/tzres.rc:147
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "Lord Howe Daylight Time"
-msgstr "Korėjos vasaros laikas"
+msgstr "Lordo Hau vasaros laikas"
 
 #: dlls/tzres/tzres.rc:40
 msgid "Arabic Standard Time"
@@ -10386,16 +10382,12 @@ msgid "Russian Daylight Time"
 msgstr "Rusijos vasaros laikas"
 
 #: dlls/tzres/tzres.rc:48
-#, fuzzy
-#| msgid "AUS Central Standard Time"
 msgid "Aus Central W. Standard Time"
-msgstr "AUS Centrinis juostinis laikas"
+msgstr "AUS Centrinis v. juostinis laikas"
 
 #: dlls/tzres/tzres.rc:49
-#, fuzzy
-#| msgid "AUS Central Daylight Time"
 msgid "Aus Central W. Daylight Time"
-msgstr "AUS Centrinis vasaros laikas"
+msgstr "AUS Centrinis v. vasaros laikas"
 
 #: dlls/tzres/tzres.rc:194
 msgid "Romance Standard Time"
