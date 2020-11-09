@@ -208,7 +208,6 @@ void editor_get_selection_para_fmt( ME_TextEditor *editor, PARAFORMAT2 *fmt ) DE
 void editor_mark_rewrap_all( ME_TextEditor *editor ) DECLSPEC_HIDDEN;
 void editor_set_default_para_fmt(ME_TextEditor *editor, PARAFORMAT2 *pFmt) DECLSPEC_HIDDEN;
 BOOL editor_set_selection_para_fmt( ME_TextEditor *editor, const PARAFORMAT2 *fmt ) DECLSPEC_HIDDEN;
-ME_DisplayItem *ME_GetParagraph(ME_DisplayItem *run) DECLSPEC_HIDDEN;
 void ME_MakeFirstParagraph(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_DumpParaStyle(ME_Paragraph *s) DECLSPEC_HIDDEN;
 void ME_DumpParaStyleToBuf(const PARAFORMAT2 *pFmt, char buf[2048]) DECLSPEC_HIDDEN;

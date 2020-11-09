@@ -1196,80 +1196,70 @@ static int ME_GetXForArrow(ME_TextEditor *editor, ME_Cursor *pCursor)
 }
 
 
-static void
-ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs, BOOL extend)
+static void cursor_move_line( ME_TextEditor *editor, ME_Cursor *cursor, BOOL up, BOOL extend )
 {
-  ME_DisplayItem *pRun = run_get_di( pCursor->run );
-  ME_Paragraph *old_para = pCursor->para, *new_para;
-  ME_DisplayItem *pItem;
-  int x = ME_GetXForArrow(editor, pCursor);
+    ME_Paragraph *old_para = cursor->para, *new_para;
+    ME_Row *row = row_from_cursor( cursor );
+    int x = ME_GetXForArrow( editor, cursor );
 
-  if (nRelOfs == -1)
-  {
-    /* start of this row */
-    pItem = ME_FindItemBack(pRun, diStartRow);
-    assert(pItem);
-    /* start of the previous row */
-    pItem = ME_FindItemBack(pItem, diStartRow);
-    if (!pItem) /* row not found */
+    if (up)
     {
-      if (extend)
-        ME_SetCursorToStart(editor, pCursor);
-      return;
+        /* start of the previous row */
+        row = row_prev_all_paras( row );
+        if (!row)
+        {
+            if (extend) ME_SetCursorToStart( editor, cursor );
+            return;
+        }
+        new_para = row_para( row );
+        if (old_para->nFlags & MEPF_ROWEND ||
+            (para_cell( old_para ) && para_cell( old_para ) != para_cell( new_para )))
+        {
+            /* Brought out of a cell */
+            new_para = para_prev( table_row_start( old_para ));
+            if (!new_para) return; /* At the top, so don't go anywhere. */
+            row = para_first_row( new_para );
+        }
+        if (new_para->nFlags & MEPF_ROWEND)
+        {
+            /* Brought into a table row */
+            ME_Cell *cell = table_row_end_cell( new_para );
+            while (x < cell->pt.x && cell_prev( cell ))
+                cell = cell_prev( cell );
+            if (cell_next( cell )) /* else - we are still at the end of the row */
+                row = para_end_row( cell_end_para( cell ) );
+        }
     }
-    new_para = &ME_GetParagraph(pItem)->member.para;
-    if (old_para->nFlags & MEPF_ROWEND ||
-        (para_cell( old_para ) && para_cell( old_para ) != para_cell( new_para )))
+    else
     {
-      /* Brought out of a cell */
-      new_para = para_prev( table_row_start( old_para ));
-      if (!new_para) return; /* At the top, so don't go anywhere. */
-      pItem = ME_FindItemFwd( para_get_di( new_para ), diStartRow);
+        /* start of the next row */
+        row = row_next_all_paras( row );
+        if (!row)
+        {
+            if (extend) ME_SetCursorToEnd( editor, cursor, TRUE );
+            return;
+        }
+        new_para = row_para( row );
+        if (old_para->nFlags & MEPF_ROWSTART ||
+            (para_cell( old_para ) && para_cell( old_para ) != para_cell( new_para )))
+        {
+            /* Brought out of a cell */
+            new_para = para_next( table_row_end( old_para ) );
+            if (!para_next( new_para )) return; /* At the bottom, so don't go anywhere. */
+            row = para_first_row( new_para );
+        }
+        if (new_para->nFlags & MEPF_ROWSTART)
+        {
+            /* Brought into a table row */
+            ME_Cell *cell = table_row_first_cell( new_para );
+            while (cell_next( cell ) && x >= cell_next( cell )->pt.x)
+                cell = cell_next( cell );
+            row = para_first_row( cell_first_para( cell ) );
+        }
     }
-    if (new_para->nFlags & MEPF_ROWEND)
-    {
-      /* Brought into a table row */
-      ME_Cell *cell = table_row_end_cell( new_para );
-      while (x < cell->pt.x && cell_prev( cell ))
-        cell = cell_prev( cell );
-      if (cell_next( cell )) /* else - we are still at the end of the row */
-        pItem = ME_FindItemBack( cell_get_di( cell_next( cell ) ), diStartRow );
-    }
-  }
-  else
-  {
-    /* start of the next row */
-    pItem = ME_FindItemFwd(pRun, diStartRow);
-    if (!pItem) /* row not found */
-    {
-      if (extend)
-        ME_SetCursorToEnd(editor, pCursor, TRUE);
-      return;
-    }
-    new_para = &ME_GetParagraph(pItem)->member.para;
-    if (old_para->nFlags & MEPF_ROWSTART ||
-        (para_cell( old_para ) && para_cell( old_para ) != para_cell( new_para )))
-    {
-      /* Brought out of a cell */
-      new_para = para_next( table_row_end( old_para ) );
-      if (!para_next( new_para )) return; /* At the bottom, so don't go anywhere. */
-      pItem = ME_FindItemFwd( para_get_di( new_para ), diStartRow );
-    }
-    if (new_para->nFlags & MEPF_ROWSTART)
-    {
-      /* Brought into a table row */
-      ME_Cell *cell = table_row_first_cell( new_para );
-      while (cell_next( cell ) && x >= cell_next( cell )->pt.x)
-        cell = cell_next( cell );
-      pItem = ME_FindItemFwd( cell_get_di( cell ), diStartRow );
-    }
-  }
-  if (!pItem)
-  {
-    /* row not found - ignore */
-    return;
-  }
-  row_cursor( editor, &pItem->member.row, x, pCursor );
+    if (!row) return;
+
+    row_cursor( editor, row, x, cursor );
 }
 
 static void ME_ArrowPageUp( ME_TextEditor *editor, ME_Cursor *cursor )
@@ -1434,10 +1424,10 @@ ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend, BOOL ctrl)
         success = ME_MoveCursorChars(editor, &tmp_curs, +1, extend);
       break;
     case VK_UP:
-      ME_MoveCursorLines(editor, &tmp_curs, -1, extend);
+      cursor_move_line( editor, &tmp_curs, TRUE, extend );
       break;
     case VK_DOWN:
-      ME_MoveCursorLines(editor, &tmp_curs, +1, extend);
+      cursor_move_line( editor, &tmp_curs, FALSE, extend );
       break;
     case VK_PRIOR:
       ME_ArrowPageUp(editor, &tmp_curs);

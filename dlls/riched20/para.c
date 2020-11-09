@@ -794,10 +794,6 @@ ME_Paragraph *para_join( ME_TextEditor *editor, ME_Paragraph *para, BOOL use_fir
   return para;
 }
 
-ME_DisplayItem *ME_GetParagraph(ME_DisplayItem *item) {
-  return ME_FindItemBackOrHere(item, diParagraph);
-}
-
 void ME_DumpParaStyleToBuf(const PARAFORMAT2 *pFmt, char buf[2048])
 {
   char *p;
