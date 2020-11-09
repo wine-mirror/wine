@@ -337,6 +337,14 @@ static void test_audioclient(void)
             trace("Initialize(duration=0) GetBufferSize is %u\n", num);
     }
 
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, pwfx, NULL);
+    ok(hr == AUDCLNT_E_ALREADY_INITIALIZED, "Calling Initialize twice returns %08x\n", hr);
+
+    hr = IAudioClient_Start(ac);
+    ok(hr == S_OK ||
+       broken(hr == AUDCLNT_E_DEVICE_INVALIDATED), /* Win10 >= 1607 */
+       "Start on a doubly initialized stream returns %08x\n", hr);
+
     IAudioClient_Release(ac);
 
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
@@ -405,9 +413,6 @@ static void test_audioclient(void)
     /* Native appears to add the engine period to the HW latency in shared mode */
     if(t2 == 0)
         win10 = TRUE;
-
-    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, pwfx, NULL);
-    ok(hr == AUDCLNT_E_ALREADY_INITIALIZED, "Calling Initialize twice returns %08x\n", hr);
 
     hr = IAudioClient_SetEventHandle(ac, NULL);
     ok(hr == E_INVALIDARG, "SetEventHandle(NULL) returns %08x\n", hr);
