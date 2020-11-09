@@ -984,11 +984,10 @@ BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
 
         if (!ret)
         {
-            static const WCHAR myW[] = { 'M','y',0 };
             HCERTSTORE hstore;
 
             hstore = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
-                                   CERT_SYSTEM_STORE_CURRENT_USER, myW);
+                                   CERT_SYSTEM_STORE_CURRENT_USER, L"My");
             if (hstore)
             {
                 cert_in_store = CertFindCertificateInStore(hstore, pCert->dwCertEncodingType, 0,
@@ -3670,7 +3669,7 @@ typedef RPC_STATUS (RPC_ENTRY *RpcStringFreeFunc)(unsigned char **);
 static HCRYPTPROV CRYPT_CreateKeyProv(void)
 {
     HCRYPTPROV hProv = 0;
-    HMODULE rpcrt = LoadLibraryA("rpcrt4");
+    HMODULE rpcrt = LoadLibraryW(L"rpcrt4");
 
     if (rpcrt)
     {

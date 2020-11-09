@@ -570,18 +570,13 @@ static DWORD CRYPT_AddPrefixW(LPCWSTR prefix, LPWSTR psz, DWORD csz)
     return chars;
 }
 
-static const WCHAR indent[] = { ' ',' ',' ',' ',' ',0 };
+static const WCHAR indent[] = L"     ";
 
 DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indentLevel,
  const CERT_NAME_BLOB *pName, DWORD dwStrType, LPWSTR psz, DWORD csz)
 {
     static const DWORD unsupportedFlags = CERT_NAME_STR_NO_QUOTING_FLAG |
      CERT_NAME_STR_ENABLE_T61_UNICODE_FLAG;
-    static const WCHAR commaSep[] = { ',',' ',0 };
-    static const WCHAR semiSep[] = { ';',' ',0 };
-    static const WCHAR crlfSep[] = { '\r','\n',0 };
-    static const WCHAR plusSep[] = { ' ','+',' ',0 };
-    static const WCHAR spaceSep[] = { ' ',0 };
     DWORD ret = 0, bytes = 0;
     BOOL bRet;
     CERT_NAME_INFO *info;
@@ -601,16 +596,16 @@ DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indentLevel,
         if(reverse && info->cRDN > 1) rdn += (info->cRDN - 1);
 
         if (dwStrType & CERT_NAME_STR_SEMICOLON_FLAG)
-            sep = semiSep;
+            sep = L"; ";
         else if (dwStrType & CERT_NAME_STR_CRLF_FLAG)
-            sep = crlfSep;
+            sep = L"\r\n";
         else
-            sep = commaSep;
+            sep = L", ";
         sepLen = lstrlenW(sep);
         if (dwStrType & CERT_NAME_STR_NO_PLUS_FLAG)
-            rdnSep = spaceSep;
+            rdnSep = L" ";
         else
-            rdnSep = plusSep;
+            rdnSep = L" + ";
         rdnSepLen = lstrlenW(rdnSep);
         for (i = 0; (!psz || ret < csz) && i < info->cRDN; i++)
         {
@@ -1069,25 +1064,20 @@ BOOL WINAPI CertStrToNameW(DWORD dwCertEncodingType, LPCWSTR pszX500,
                 }
                 else
                 {
-                    static const WCHAR commaSep[] = { ',',0 };
-                    static const WCHAR semiSep[] = { ';',0 };
-                    static const WCHAR crlfSep[] = { '\r','\n',0 };
-                    static const WCHAR allSepsWithoutPlus[] = { ',',';','\r','\n',0 };
-                    static const WCHAR allSeps[] = { '+',',',';','\r','\n',0 };
                     LPCWSTR sep;
                     WCHAR sep_used;
 
                     str++;
                     if (dwStrType & CERT_NAME_STR_COMMA_FLAG)
-                        sep = commaSep;
+                        sep = L",";
                     else if (dwStrType & CERT_NAME_STR_SEMICOLON_FLAG)
-                        sep = semiSep;
+                        sep = L";";
                     else if (dwStrType & CERT_NAME_STR_CRLF_FLAG)
-                        sep = crlfSep;
+                        sep = L"\r\n";
                     else if (dwStrType & CERT_NAME_STR_NO_PLUS_FLAG)
-                        sep = allSepsWithoutPlus;
+                        sep = L",;\r\n";
                     else
-                        sep = allSeps;
+                        sep = L"+,;\r\n";
                     ret = CRYPT_GetNextValueW(str, dwStrType, sep, &sep_used, &token,
                      ppszError);
                     if (ret)

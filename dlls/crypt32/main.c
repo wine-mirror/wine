@@ -255,12 +255,6 @@ HCRYPTPROV WINAPI DECLSPEC_HOTPATCH I_CryptGetDefaultCryptProv(ALG_ID algid)
 BOOL WINAPI I_CryptReadTrustedPublisherDWORDValueFromRegistry(LPCWSTR name,
  DWORD *value)
 {
-    static const WCHAR safer[] = { 
-     'S','o','f','t','w','a','r','e','\\','P','o','l','i','c','i','e','s','\\',
-     'M','i','c','r','o','s','o','f','t','\\','S','y','s','t','e','m',
-     'C','e','r','t','i','f','i','c','a','t','e','s','\\',
-     'T','r','u','s','t','e','d','P','u','b','l','i','s','h','e','r','\\',
-     'S','a','f','e','r',0 };
     HKEY key;
     LONG rc;
     BOOL ret = FALSE;
@@ -268,7 +262,7 @@ BOOL WINAPI I_CryptReadTrustedPublisherDWORDValueFromRegistry(LPCWSTR name,
     TRACE("(%s, %p)\n", debugstr_w(name), value);
 
     *value = 0;
-    rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, safer, &key);
+    rc = RegCreateKeyW(HKEY_LOCAL_MACHINE, L"Software\\Policies\\Microsoft\\SystemCertificates\\TrustedPublisher\\Safer", &key);
     if (rc == ERROR_SUCCESS)
     {
         DWORD size = sizeof(DWORD);

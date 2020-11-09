@@ -653,13 +653,6 @@ static HCERTSTORE create_root_store(void)
     return memStore;
 }
 
-static const WCHAR certs_root_pathW[] =
- {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-  'S','y','s','t','e','m','C','e','r','t','i','f','i','c','a','t','e','s','\\',
-  'R','o','o','t','\\', 'C','e','r','t','i','f','i','c','a','t','e','s', 0};
-static const WCHAR semaphoreW[] =
- {'c','r','y','p','t','3','2','_','r','o','o','t','_','s','e','m','a','p','h','o','r','e',0};
-
 void CRYPT_ImportSystemRootCertsToReg(void)
 {
     HCERTSTORE store = NULL;
@@ -672,7 +665,7 @@ void CRYPT_ImportSystemRootCertsToReg(void)
     if (root_certs_imported)
         return;
 
-    hsem = CreateSemaphoreW( NULL, 0, 1, semaphoreW);
+    hsem = CreateSemaphoreW( NULL, 0, 1, L"crypt32_root_semaphore");
     if (!hsem)
     {
         ERR("Failed to create semaphore\n");
@@ -685,7 +678,7 @@ void CRYPT_ImportSystemRootCertsToReg(void)
     {
         if ((store = create_root_store()))
         {
-            rc = RegCreateKeyExW(HKEY_LOCAL_MACHINE, certs_root_pathW, 0, NULL, 0,
+            rc = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\SystemCertificates\\Root\\Certificates", 0, NULL, 0,
                 KEY_ALL_ACCESS, NULL, &key, 0);
             if (!rc)
             {

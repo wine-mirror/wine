@@ -402,12 +402,9 @@ static WINECRYPT_CERTSTORE *CRYPT_MemOpenStore(HCRYPTPROV hCryptProv,
     return (WINECRYPT_CERTSTORE*)store;
 }
 
-static const WCHAR rootW[] = { 'R','o','o','t',0 };
-
 static WINECRYPT_CERTSTORE *CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
  DWORD dwFlags, const void *pvPara)
 {
-    static const WCHAR fmt[] = { '%','s','\\','%','s',0 };
     LPCWSTR storeName = pvPara;
     LPWSTR storePath;
     WINECRYPT_CERTSTORE *store = NULL;
@@ -429,7 +426,7 @@ static WINECRYPT_CERTSTORE *CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
         root = HKEY_LOCAL_MACHINE;
         base = CERT_LOCAL_MACHINE_SYSTEM_STORE_REGPATH;
         /* If the HKLM\Root certs are requested, expressing system certs into the registry */
-        if (!lstrcmpiW(storeName, rootW))
+        if (!lstrcmpiW(storeName, L"Root"))
             CRYPT_ImportSystemRootCertsToReg();
         break;
     case CERT_SYSTEM_STORE_CURRENT_USER:
@@ -482,7 +479,7 @@ static WINECRYPT_CERTSTORE *CRYPT_SysRegOpenStoreW(HCRYPTPROV hCryptProv,
         REGSAM sam = dwFlags & CERT_STORE_READONLY_FLAG ? KEY_READ :
             KEY_ALL_ACCESS;
 
-        wsprintfW(storePath, fmt, base, storeName);
+        wsprintfW(storePath, L"%s\\%s", base, storeName);
         if (dwFlags & CERT_STORE_OPEN_EXISTING_FLAG)
             rc = RegOpenKeyExW(root, storePath, 0, sam, &key);
         else
@@ -1352,7 +1349,7 @@ BOOL WINAPI CertEnumSystemStore(DWORD dwFlags, void *pvSystemStoreLocationPara,
      */
     if (ret && (dwFlags & CERT_SYSTEM_STORE_LOCATION_MASK) ==
      CERT_SYSTEM_STORE_LOCAL_MACHINE)
-        ret = pfnEnum(rootW, dwFlags, &info, NULL, pvArg);
+        ret = pfnEnum(L"Root", dwFlags, &info, NULL, pvArg);
     return ret;
 }
 

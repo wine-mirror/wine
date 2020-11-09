@@ -38,30 +38,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 #define X509_HEADER          "-----BEGIN X509 CRL-----"
 #define X509_TRAILER         "-----END X509 CRL-----"
 
-static const WCHAR CERT_HEADER_W[] = {
-'-','-','-','-','-','B','E','G','I','N',' ','C','E','R','T','I','F','I','C',
-'A','T','E','-','-','-','-','-',0 };
-static const WCHAR CERT_HEADER_START_W[] = {
-'-','-','-','-','-','B','E','G','I','N',' ',0 };
-static const WCHAR CERT_DELIMITER_W[] = {
-'-','-','-','-','-',0 };
-static const WCHAR CERT_TRAILER_W[] = {
-'-','-','-','-','-','E','N','D',' ','C','E','R','T','I','F','I','C','A','T',
-'E','-','-','-','-','-',0 };
-static const WCHAR CERT_TRAILER_START_W[] = {
-'-','-','-','-','-','E','N','D',' ',0 };
-static const WCHAR CERT_REQUEST_HEADER_W[] = {
-'-','-','-','-','-','B','E','G','I','N',' ','N','E','W',' ','C','E','R','T',
-'I','F','I','C','A','T','E',' ','R','E','Q','U','E','S','T','-','-','-','-','-',0 };
-static const WCHAR CERT_REQUEST_TRAILER_W[] = {
-'-','-','-','-','-','E','N','D',' ','N','E','W',' ','C','E','R','T','I','F',
-'I','C','A','T','E',' ','R','E','Q','U','E','S','T','-','-','-','-','-',0 };
-static const WCHAR X509_HEADER_W[] = {
-'-','-','-','-','-','B','E','G','I','N',' ','X','5','0','9',' ','C','R','L',
-'-','-','-','-','-',0 };
-static const WCHAR X509_TRAILER_W[] = {
-'-','-','-','-','-','E','N','D',' ','X','5','0','9',' ','C','R','L','-','-',
-'-','-','-',0 };
+static const WCHAR CERT_HEADER_W[] = L"-----BEGIN CERTIFICATE-----";
+static const WCHAR CERT_HEADER_START_W[] = L"-----BEGIN ";
+static const WCHAR CERT_DELIMITER_W[] = L"-----";
+static const WCHAR CERT_TRAILER_W[] = L"-----END CERTIFICATE-----";
+static const WCHAR CERT_TRAILER_START_W[] = L"-----END ";
+static const WCHAR CERT_REQUEST_HEADER_W[] = L"-----BEGIN NEW CERTIFICATE REQUEST-----";
+static const WCHAR CERT_REQUEST_TRAILER_W[] = L"-----END NEW CERTIFICATE REQUEST-----";
+static const WCHAR X509_HEADER_W[] = L"-----BEGIN X509 CRL-----";
+static const WCHAR X509_TRAILER_W[] = L"-----END X509 CRL-----";
 
 static const char b64[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -402,17 +387,16 @@ static LONG encodeBase64W(const BYTE *in_buf, int in_len, LPCWSTR sep,
 static BOOL BinaryToBase64W(const BYTE *pbBinary,
  DWORD cbBinary, DWORD dwFlags, LPWSTR pszString, DWORD *pcchString)
 {
-    static const WCHAR crlf[] = { '\r','\n',0 }, lf[] = { '\n',0 }, empty[] = {0};
     BOOL ret = TRUE;
     LPCWSTR header = NULL, trailer = NULL, sep;
     DWORD charsNeeded;
 
     if (dwFlags & CRYPT_STRING_NOCR)
-        sep = lf;
+        sep = L"\n";
     else if (dwFlags & CRYPT_STRING_NOCRLF)
-        sep = empty;
+        sep = L"";
     else
-        sep = crlf;
+        sep = L"\r\n";
     switch (dwFlags & 0x0fffffff)
     {
     case CRYPT_STRING_BASE64:
@@ -478,7 +462,7 @@ static BOOL BinaryToBase64W(const BYTE *pbBinary,
 
 static BOOL BinaryToHexW(const BYTE *bin, DWORD nbin, DWORD flags, LPWSTR str, DWORD *nstr)
 {
-    static const WCHAR hex[] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
+    static const WCHAR hex[] = L"0123456789abcdef";
     DWORD needed;
 
     if (flags & CRYPT_STRING_NOCRLF)

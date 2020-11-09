@@ -353,14 +353,12 @@ WINECRYPT_CERTSTORE *CRYPT_FileNameOpenStoreW(HCRYPTPROV hCryptProv,
         }
         else
         {
-            static const WCHAR spc[] = { 's','p','c',0 };
-            static const WCHAR p7c[] = { 'p','7','c',0 };
             LPCWSTR ext = wcsrchr(fileName, '.');
 
             if (ext)
             {
                 ext++;
-                if (!lstrcmpiW(ext, spc) || !lstrcmpiW(ext, p7c))
+                if (!lstrcmpiW(ext, L"spc") || !lstrcmpiW(ext, L"p7c"))
                     type = CERT_STORE_SAVE_AS_PKCS7;
             }
             if (!type)

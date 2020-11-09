@@ -68,8 +68,6 @@ static inline void CRYPT_CloseStores(DWORD cStores, HCERTSTORE *stores)
         CertCloseStore(stores[i], 0);
 }
 
-static const WCHAR rootW[] = { 'R','o','o','t',0 };
-
 /* Finds cert in store by comparing the cert's hashes. */
 static PCCERT_CONTEXT CRYPT_FindCertInStore(HCERTSTORE store,
  PCCERT_CONTEXT cert)
@@ -94,7 +92,7 @@ static BOOL CRYPT_CheckRestrictedRoot(HCERTSTORE store)
 
     if (store)
     {
-        HCERTSTORE rootStore = CertOpenSystemStoreW(0, rootW);
+        HCERTSTORE rootStore = CertOpenSystemStoreW(0, L"Root");
         PCCERT_CONTEXT cert = NULL, check;
 
         do {
@@ -119,17 +117,13 @@ HCERTCHAINENGINE CRYPT_CreateChainEngine(HCERTSTORE root, DWORD system_store, co
     CertificateChainEngine *engine;
     HCERTSTORE worldStores[4];
 
-    static const WCHAR caW[] = { 'C','A',0 };
-    static const WCHAR myW[] = { 'M','y',0 };
-    static const WCHAR trustW[] = { 'T','r','u','s','t',0 };
-
     if(!root) {
         if(config->cbSize >= sizeof(CERT_CHAIN_ENGINE_CONFIG) && config->hExclusiveRoot)
             root = CertDuplicateStore(config->hExclusiveRoot);
         else if (config->hRestrictedRoot)
             root = CertDuplicateStore(config->hRestrictedRoot);
         else
-            root = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, system_store, rootW);
+            root = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, system_store, L"Root");
         if(!root)
             return NULL;
     }
@@ -144,9 +138,9 @@ HCERTCHAINENGINE CRYPT_CreateChainEngine(HCERTSTORE root, DWORD system_store, co
     engine->hRoot = root;
     engine->hWorld = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
     worldStores[0] = CertDuplicateStore(engine->hRoot);
-    worldStores[1] = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, system_store, caW);
-    worldStores[2] = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, system_store, myW);
-    worldStores[3] = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, system_store, trustW);
+    worldStores[1] = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, system_store, L"CA");
+    worldStores[2] = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, system_store, L"My");
+    worldStores[3] = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, system_store, L"Trust");
 
     CRYPT_AddStoresToCollection(engine->hWorld, ARRAY_SIZE(worldStores), worldStores);
     CRYPT_AddStoresToCollection(engine->hWorld, config->cAdditionalStore, config->rghAdditionalStore);
