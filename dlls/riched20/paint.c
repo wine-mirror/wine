@@ -1015,26 +1015,24 @@ static void draw_paragraph( ME_Context *c, ME_Paragraph *para )
           ME_DebugWrite(c->hDC, &pt, buf);
         }
         break;
-      case diCell:
-        /* Clear any space at the bottom of the cell after the text. */
-        if (para->nFlags & (MEPF_ROWSTART|MEPF_ROWEND))
-          break;
-        y += height;
-        rc.top = c->pt.y + para->pt.y + para->nHeight;
-        rc.bottom = c->pt.y + p->member.cell.pt.y + p->member.cell.nHeight;
-        if (RectVisible(c->hDC, &rc))
-          PatBlt(c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
-        break;
       default:
         break;
     }
     no++;
   }
 
-  draw_table_borders( c, para );
-  draw_para_number( c, para );
+    if (para_cell( para ))
+    {
+        /* Clear any space at the bottom of the cell after the text. */
+        rc.top = c->pt.y + para->pt.y + para->nHeight;
+        rc.bottom = c->pt.y + cell->pt.y + cell->nHeight;
+        PatBlt( c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
+    }
 
-  SetTextAlign(c->hDC, align);
+    draw_table_borders( c, para );
+    draw_para_number( c, para );
+
+    SetTextAlign( c->hDC, align );
 }
 
 void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
