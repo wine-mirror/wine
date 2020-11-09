@@ -3322,6 +3322,18 @@ HKLM,%CurrentVersionNT%\Time Zones\Line Islands Standard Time,"MUI_Dlt",,"@tzres
 HKLM,%CurrentVersionNT%\Time Zones\Line Islands Standard Time,"MUI_Std",,"@tzres.dll,-16768"
 HKLM,%CurrentVersionNT%\Time Zones\Line Islands Standard Time,"Std",,"Line Islands Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\Line Islands Standard Time,"TZI",1,b8,fc,ff,ff,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Lord Howe Standard Time,"Display",,"Australia/Lord_Howe"
+HKLM,%CurrentVersionNT%\Time Zones\Lord Howe Standard Time,"Dlt",,"Lord Howe Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Lord Howe Standard Time,"MUI_Dlt",,"@tzres.dll,-8657"
+HKLM,%CurrentVersionNT%\Time Zones\Lord Howe Standard Time,"MUI_Std",,"@tzres.dll,-8656"
+HKLM,%CurrentVersionNT%\Time Zones\Lord Howe Standard Time,"Std",,"Lord Howe Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Lord Howe Standard Time,"TZI",1,8a,fd,ff,ff,00,00,00,00,e2,ff,ff,ff,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Lord Howe Standard Time\Dynamic DST,"2005",1,8a,fd,ff,ff,00,00,00,00,e2,ff,ff,ff,00,00,03,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Lord Howe Standard Time\Dynamic DST,"2006",1,8a,fd,ff,ff,00,00,00,00,e2,ff,ff,ff,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Lord Howe Standard Time\Dynamic DST,"2007",1,8a,fd,ff,ff,00,00,00,00,e2,ff,ff,ff,00,00,03,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Lord Howe Standard Time\Dynamic DST,"2008",1,8a,fd,ff,ff,00,00,00,00,e2,ff,ff,ff,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Lord Howe Standard Time\Dynamic DST,"FirstEntry",0x10001,"2005"
+HKLM,%CurrentVersionNT%\Time Zones\Lord Howe Standard Time\Dynamic DST,"LastEntry",0x10001,"2008"
 HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"Display",,"Asia/Magadan"
 HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"Dlt",,"Magadan Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Magadan Standard Time,"MUI_Dlt",,"@tzres.dll,-8833"
