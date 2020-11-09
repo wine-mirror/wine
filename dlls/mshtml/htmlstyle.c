@@ -415,7 +415,7 @@ static const style_tbl_entry_t style_tbl[] = {
         DISPID_A_DISPLAY
     },
     {
-        L"fileter",
+        L"filter",
         DISPID_IHTMLCSSSTYLEDECLARATION_FILTER,
         DISPID_A_FILTER
     },
