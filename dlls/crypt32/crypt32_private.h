@@ -459,7 +459,13 @@ void init_empty_store(void) DECLSPEC_HIDDEN;
  */
 #define IS_INTOID(x)    (((ULONG_PTR)(x) >> 16) == 0)
 
-BOOL gnutls_initialize(void) DECLSPEC_HIDDEN;
-void gnutls_uninitialize(void) DECLSPEC_HIDDEN;
+/* Unix interface */
+struct unix_funcs
+{
+    BOOL (WINAPI *import_cert_store)( CRYPT_DATA_BLOB *pfx, const WCHAR *password, DWORD flags,
+                                      void **key_ret, void ***chain_ret, DWORD *count_ret );
+};
+
+extern const struct unix_funcs *unix_funcs DECLSPEC_HIDDEN;
 
 #endif

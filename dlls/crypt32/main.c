@@ -23,6 +23,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "wincrypt.h"
 #include "winreg.h"
 #include "winuser.h"
@@ -34,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
 static HCRYPTPROV hDefProv;
 HINSTANCE hInstance;
+const struct unix_funcs *unix_funcs = NULL;
 
 static CRITICAL_SECTION prov_param_cs;
 static CRITICAL_SECTION_DEBUG prov_param_cs_debug =
@@ -45,18 +47,16 @@ static CRITICAL_SECTION_DEBUG prov_param_cs_debug =
 };
 static CRITICAL_SECTION prov_param_cs = { &prov_param_cs_debug, -1, 0, 0, 0, 0 };
 
-BOOL WINAPI DllMain(HINSTANCE hInst, DWORD fdwReason, PVOID pvReserved)
+BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, PVOID pvReserved)
 {
-    switch (fdwReason)
+    switch (reason)
     {
         case DLL_PROCESS_ATTACH:
             hInstance = hInst;
             DisableThreadLibraryCalls(hInst);
             init_empty_store();
             crypt_oid_init();
-#ifdef SONAME_LIBGNUTLS
-            gnutls_initialize();
-#endif
+            __wine_init_unix_lib( hInst, reason, NULL, &unix_funcs );
             break;
         case DLL_PROCESS_DETACH:
             if (pvReserved) break;
@@ -64,9 +64,7 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD fdwReason, PVOID pvReserved)
             crypt_sip_free();
             default_chain_engine_free();
             if (hDefProv) CryptReleaseContext(hDefProv, 0);
-#ifdef SONAME_LIBGNUTLS
-            gnutls_uninitialize();
-#endif
+            __wine_init_unix_lib( hInst, reason, NULL, NULL );
             break;
     }
     return TRUE;
