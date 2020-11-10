@@ -452,7 +452,7 @@ static inline void swap_pointers(void **p1, void **p2) {
 }
 
 /* INTERNAL: returns pthreadlocinfo struct */
-MSVCRT_pthreadlocinfo get_locinfo(void) {
+MSVCRT_pthreadlocinfo CDECL get_locinfo(void) {
     thread_data_t *data = msvcrt_get_thread_data();
 
     if(!data || !data->have_locale)
@@ -462,7 +462,7 @@ MSVCRT_pthreadlocinfo get_locinfo(void) {
 }
 
 /* INTERNAL: returns pthreadlocinfo struct */
-MSVCRT_pthreadmbcinfo get_mbcinfo(void) {
+MSVCRT_pthreadmbcinfo CDECL get_mbcinfo(void) {
     thread_data_t *data = msvcrt_get_thread_data();
 
     if(!data || !data->have_locale)

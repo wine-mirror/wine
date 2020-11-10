@@ -35,7 +35,7 @@ typedef struct {
  *
  * Return the thread local storage structure.
  */
-thread_data_t *msvcrt_get_thread_data(void)
+thread_data_t *CDECL msvcrt_get_thread_data(void)
 {
     thread_data_t *ptr;
     DWORD err = GetLastError();  /* need to preserve last error */
