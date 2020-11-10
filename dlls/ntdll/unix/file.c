@@ -1128,14 +1128,16 @@ static BOOLEAN get_dir_case_sensitivity_stat( const char *dir )
         !strncmp( stfs.f_mntfromname, "ciopfs", 5 ))
         return FALSE;
     /* msdosfs was case-insensitive since FreeBSD 8, if not earlier */
-    if (!strcmp( stfs.f_fstypename, "msdosfs" ))
+    if (!strcmp( stfs.f_fstypename, "msdosfs" ) ||
+        /* older CIFS protocol versions uppercase filename on the client,
+         * newer versions should be case-insensitive on the server anyway */
+        !strcmp( stfs.f_fstypename, "smbfs" ))
         return FALSE;
 #ifdef __APPLE__
     if (!strcmp( stfs.f_fstypename, "msdos" ) ||
         !strcmp( stfs.f_fstypename, "cd9660" ) ||
         !strcmp( stfs.f_fstypename, "udf" ) ||
-        !strcmp( stfs.f_fstypename, "ntfs" ) ||
-        !strcmp( stfs.f_fstypename, "smbfs" ))
+        !strcmp( stfs.f_fstypename, "ntfs" ))
         return FALSE;
 #ifdef _DARWIN_FEATURE_64_BIT_INODE
      if (!strcmp( stfs.f_fstypename, "hfs" ) && (stfs.f_fssubtype == 0 ||
