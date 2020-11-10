@@ -208,6 +208,7 @@ struct screen_buffer
 
 static void screen_buffer_dump( struct object *obj, int verbose );
 static void screen_buffer_destroy( struct object *obj );
+static int screen_buffer_add_queue( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *screen_buffer_get_fd( struct object *obj );
 static struct object *screen_buffer_open_file( struct object *obj, unsigned int access,
                                                unsigned int sharing, unsigned int options );
@@ -217,7 +218,7 @@ static const struct object_ops screen_buffer_ops =
     sizeof(struct screen_buffer),     /* size */
     screen_buffer_dump,               /* dump */
     no_get_type,                      /* get_type */
-    no_add_queue,                     /* add_queue */
+    screen_buffer_add_queue,          /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     NULL,                             /* satisfied */
@@ -704,6 +705,17 @@ static struct object *screen_buffer_open_file( struct object *obj, unsigned int 
                                                unsigned int sharing, unsigned int options )
 {
     return grab_object( obj );
+}
+
+static int screen_buffer_add_queue( struct object *obj, struct wait_queue_entry *entry )
+{
+    struct screen_buffer *screen_buffer = (struct screen_buffer*)obj;
+    if (!screen_buffer->input)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+    return add_queue( &screen_buffer->input->obj, entry );
 }
 
 static struct fd *screen_buffer_get_fd( struct object *obj )

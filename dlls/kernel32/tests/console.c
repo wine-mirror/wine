@@ -1019,7 +1019,6 @@ static void test_wait(HANDLE input, HANDLE orig_output)
     res = WaitForSingleObject(input, 0);
     ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
     res = WaitForSingleObject(output, 0);
-    todo_wine
     ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
     res = WaitForSingleObject(orig_output, 0);
     ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
@@ -1027,7 +1026,6 @@ static void test_wait(HANDLE input, HANDLE orig_output)
     ok(status == STATUS_TIMEOUT || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
        "NtWaitForSingleObject returned %x\n", status);
     status = NtWaitForSingleObject(output, FALSE, &zero);
-    todo_wine
     ok(status == STATUS_TIMEOUT || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
        "NtWaitForSingleObject returned %x\n", status);
 
@@ -1037,7 +1035,6 @@ static void test_wait(HANDLE input, HANDLE orig_output)
     res = WaitForSingleObject(input, 0);
     ok(!res, "WaitForSingleObject returned %x\n", res);
     res = WaitForSingleObject(output, 0);
-    todo_wine
     ok(!res, "WaitForSingleObject returned %x\n", res);
     res = WaitForSingleObject(orig_output, 0);
     ok(!res, "WaitForSingleObject returned %x\n", res);
@@ -1045,7 +1042,6 @@ static void test_wait(HANDLE input, HANDLE orig_output)
     ok(!status || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
        "NtWaitForSingleObject returned %x\n", status);
     status = NtWaitForSingleObject(output, FALSE, &zero);
-    todo_wine
     ok(!status || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
        "NtWaitForSingleObject returned %x\n", status);
 
