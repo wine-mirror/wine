@@ -70,6 +70,7 @@ struct video_presenter
     IMediaEventSink *event_sink;
 
     IDirect3DDeviceManager9 *device_manager;
+    IMFVideoSampleAllocator *allocator;
     struct streaming_thread thread;
     IMFMediaType *media_type;
     UINT reset_token;
@@ -175,12 +176,13 @@ static void video_presenter_reset_media_type(struct video_presenter *presenter)
         IMFMediaType_Release(presenter->media_type);
     presenter->media_type = NULL;
 
-    /* FIXME: release samples pool */
+    IMFVideoSampleAllocator_UninitializeSampleAllocator(presenter->allocator);
 }
 
 static HRESULT video_presenter_set_media_type(struct video_presenter *presenter, IMFMediaType *media_type)
 {
     unsigned int flags;
+    HRESULT hr;
 
     if (!media_type)
     {
@@ -193,12 +195,15 @@ static HRESULT video_presenter_set_media_type(struct video_presenter *presenter,
 
     video_presenter_reset_media_type(presenter);
 
-    /* FIXME: allocate samples pool */
+    if (SUCCEEDED(hr = IMFVideoSampleAllocator_InitializeSampleAllocator(presenter->allocator, 3, media_type)))
+    {
+        presenter->media_type = media_type;
+        IMFMediaType_AddRef(presenter->media_type);
+    }
+    else
+        WARN("Failed to initialize sample allocator, hr %#x.\n", hr);
 
-    presenter->media_type = media_type;
-    IMFMediaType_AddRef(presenter->media_type);
-
-    return S_OK;
+    return hr;
 }
 
 static HRESULT video_presenter_invalidate_media_type(struct video_presenter *presenter)
@@ -220,7 +225,9 @@ static HRESULT video_presenter_invalidate_media_type(struct video_presenter *pre
         if (SUCCEEDED(hr))
             hr = video_presenter_set_media_type(presenter, media_type);
 
-        hr = IMFTransform_SetOutputType(presenter->mixer, 0, media_type, 0);
+        if (SUCCEEDED(hr))
+            hr = IMFTransform_SetOutputType(presenter->mixer, 0, media_type, 0);
+
         IMFMediaType_Release(media_type);
 
         if (SUCCEEDED(hr))
@@ -388,9 +395,12 @@ static ULONG WINAPI video_presenter_inner_Release(IUnknown *iface)
     {
         video_presenter_end_streaming(presenter);
         video_presenter_clear_container(presenter);
+        video_presenter_reset_media_type(presenter);
         DeleteCriticalSection(&presenter->cs);
         if (presenter->device_manager)
             IDirect3DDeviceManager9_Release(presenter->device_manager);
+        if (presenter->allocator)
+            IMFVideoSampleAllocator_Release(presenter->allocator);
         heap_free(presenter);
     }
 
@@ -1178,6 +1188,11 @@ static HRESULT video_presenter_init_d3d(struct video_presenter *presenter)
     IDirect3DDevice9_Release(device);
     if (FAILED(hr))
         WARN("Failed to set new device for the manager, hr %#x.\n", hr);
+
+    if (SUCCEEDED(hr = MFCreateVideoSampleAllocator(&IID_IMFVideoSampleAllocator, (void **)&presenter->allocator)))
+    {
+        hr = IMFVideoSampleAllocator_SetDirectXManager(presenter->allocator, (IUnknown *)presenter->device_manager);
+    }
 
     return hr;
 }
