@@ -815,6 +815,9 @@ static HRESULT WINAPI sample_allocator_tracking_callback_Invoke(IMFAsyncCallback
 
     IUnknown_Release(sample);
 
+    if (allocator->callback)
+        IMFVideoSampleAllocatorNotify_NotifyRelease(allocator->callback);
+
     LeaveCriticalSection(&allocator->cs);
 
     return S_OK;
