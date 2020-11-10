@@ -19,10 +19,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "wine/test.h"
+#include <ntstatus.h>
+#define WIN32_NO_STATUS
 #include <windows.h>
 #include <winternl.h>
 #include <stdio.h>
+
+#include "wine/test.h"
 
 static void (WINAPI *pClosePseudoConsole)(HPCON);
 static HRESULT (WINAPI *pCreatePseudoConsole)(COORD,HANDLE,HANDLE,DWORD,HPCON*);
@@ -986,6 +989,72 @@ static void testWaitForConsoleInput(HANDLE input_handle)
 
     /* Clean up */
     CloseHandle(complete_event);
+}
+
+static void test_wait(HANDLE input, HANDLE orig_output)
+{
+    LARGE_INTEGER zero;
+    INPUT_RECORD ir;
+    HANDLE output;
+    DWORD res, count;
+    NTSTATUS status;
+    BOOL ret;
+
+    if (skip_nt) return;
+
+    memset(&ir, 0, sizeof(ir));
+    ir.EventType = MOUSE_EVENT;
+    ir.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
+    zero.QuadPart = 0;
+
+    output = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE,
+                                       FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                                       CONSOLE_TEXTMODE_BUFFER, NULL);
+    ok(output != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: %u\n", GetLastError());
+
+    ret = SetConsoleActiveScreenBuffer(output);
+    ok(ret, "SetConsoleActiveScreenBuffer failed: %u\n", GetLastError());
+    FlushConsoleInputBuffer(input);
+
+    res = WaitForSingleObject(input, 0);
+    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
+    res = WaitForSingleObject(output, 0);
+    todo_wine
+    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
+    res = WaitForSingleObject(orig_output, 0);
+    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
+    status = NtWaitForSingleObject(input, FALSE, &zero);
+    todo_wine
+    ok(status == STATUS_TIMEOUT || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
+       "NtWaitForSingleObject returned %x\n", status);
+    status = NtWaitForSingleObject(output, FALSE, &zero);
+    todo_wine
+    ok(status == STATUS_TIMEOUT || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
+       "NtWaitForSingleObject returned %x\n", status);
+
+    ret = WriteConsoleInputW(input, &ir, 1, &count);
+    ok(ret, "WriteConsoleInputW failed: %u\n", GetLastError());
+
+    res = WaitForSingleObject(input, 0);
+    ok(!res, "WaitForSingleObject returned %x\n", res);
+    res = WaitForSingleObject(output, 0);
+    todo_wine
+    ok(!res, "WaitForSingleObject returned %x\n", res);
+    res = WaitForSingleObject(orig_output, 0);
+    ok(!res, "WaitForSingleObject returned %x\n", res);
+    status = NtWaitForSingleObject(input, FALSE, &zero);
+    todo_wine
+    ok(!status || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
+       "NtWaitForSingleObject returned %x\n", status);
+    status = NtWaitForSingleObject(output, FALSE, &zero);
+    todo_wine
+    ok(!status || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
+       "NtWaitForSingleObject returned %x\n", status);
+
+    ret = SetConsoleActiveScreenBuffer(orig_output);
+    ok(ret, "SetConsoleActiveScreenBuffer failed: %u\n", GetLastError());
+
+    CloseHandle(output);
 }
 
 static void test_GetSetConsoleInputExeName(void)
@@ -4295,6 +4364,7 @@ START_TEST(console)
     if (!test_current) testScreenBuffer(hConOut);
     /* Test waiting for a console handle */
     testWaitForConsoleInput(hConIn);
+    test_wait(hConIn, hConOut);
 
     if (!test_current)
     {
