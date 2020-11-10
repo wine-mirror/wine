@@ -36,7 +36,6 @@ extern DWORD file_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen ) 
 extern void init_startup_info( RTL_USER_PROCESS_PARAMETERS *params ) DECLSPEC_HIDDEN;
 extern void init_locale(void) DECLSPEC_HIDDEN;
 extern void init_console(void) DECLSPEC_HIDDEN;
-extern HANDLE get_console_wait_handle( HANDLE handle ) DECLSPEC_HIDDEN;
 
 extern const WCHAR windows_dir[] DECLSPEC_HIDDEN;
 extern const WCHAR system_dir[] DECLSPEC_HIDDEN;

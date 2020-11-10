@@ -37,8 +37,8 @@
 #include "winnls.h"
 #include "winerror.h"
 #include "wincon.h"
+#include "winternl.h"
 #include "wine/condrv.h"
-#include "wine/server.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 #include "kernelbase.h"
@@ -56,7 +56,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 static CRITICAL_SECTION console_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static HANDLE console_connection;
-static HANDLE console_wait_event;
 static unsigned int console_flags;
 
 #define CONSOLE_INPUT_HANDLE    0x01
@@ -559,32 +558,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH FillConsoleOutputCharacterW( HANDLE handle, WCHAR 
                           written, sizeof(*written), NULL );
 }
 
-HANDLE get_console_wait_handle( HANDLE handle )
-{
-    HANDLE event = 0;
-
-    SERVER_START_REQ( get_console_wait_event )
-    {
-        req->handle = wine_server_obj_handle( console_handle_map( handle ));
-        if (!wine_server_call( req )) event = wine_server_ptr_handle( reply->event );
-    }
-    SERVER_END_REQ;
-    if (event)
-    {
-        if (InterlockedCompareExchangePointer( &console_wait_event, event, 0 )) NtClose( event );
-        handle = console_wait_event;
-    }
-    return handle;
-}
-
 
 /***********************************************************************
  *	FreeConsole   (kernelbase.@)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH FreeConsole(void)
 {
-    HANDLE event;
-
     RtlEnterCriticalSection( &console_section );
 
     NtClose( console_connection );
@@ -597,8 +576,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeConsole(void)
     if (console_flags & CONSOLE_OUTPUT_HANDLE) NtClose( GetStdHandle( STD_OUTPUT_HANDLE ));
     if (console_flags & CONSOLE_ERROR_HANDLE)  NtClose( GetStdHandle( STD_ERROR_HANDLE ));
     console_flags = 0;
-
-    if ((event = InterlockedExchangePointer( &console_wait_event, NULL ))) NtClose( event );
 
     RtlLeaveCriticalSection( &console_section );
     return TRUE;

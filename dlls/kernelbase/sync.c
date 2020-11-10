@@ -211,17 +211,14 @@ ULONGLONG WINAPI DECLSPEC_HOTPATCH GetTickCount64(void)
  ***********************************************************************/
 
 
-static HANDLE normalize_handle_if_console( HANDLE handle )
+static HANDLE normalize_std_handle( HANDLE handle )
 {
     if ((handle == (HANDLE)STD_INPUT_HANDLE) ||
         (handle == (HANDLE)STD_OUTPUT_HANDLE) ||
         (handle == (HANDLE)STD_ERROR_HANDLE))
-        handle = GetStdHandle( HandleToULong(handle) );
+        return GetStdHandle( HandleToULong(handle) );
 
-    /* even screen buffer console handles are waitable, and are
-     * handled as a handle to the console itself
-     */
-    return is_console_handle( handle ) ? get_console_wait_handle( handle ) : handle;
+    return handle;
 }
 
 
@@ -235,7 +232,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH RegisterWaitForSingleObjectEx( HANDLE handle, WA
 
     TRACE( "%p %p %p %d %d\n", handle, callback, context, timeout, flags );
 
-    handle = normalize_handle_if_console( handle );
+    handle = normalize_std_handle( handle );
     if (!set_ntstatus( RtlRegisterWait( &ret, handle, callback, context, timeout, flags ))) return NULL;
     return ret;
 }
@@ -340,7 +337,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH WaitForMultipleObjectsEx( DWORD count, const HAND
         SetLastError(ERROR_INVALID_PARAMETER);
         return WAIT_FAILED;
     }
-    for (i = 0; i < count; i++) hloc[i] = normalize_handle_if_console( handles[i] );
+    for (i = 0; i < count; i++) hloc[i] = normalize_std_handle( handles[i] );
 
     status = NtWaitForMultipleObjects( count, hloc, !wait_all, alertable,
                                        get_nt_timeout( &time, timeout ) );
