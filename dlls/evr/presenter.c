@@ -131,6 +131,13 @@ static struct video_presenter *impl_from_IMFVideoPositionMapper(IMFVideoPosition
     return CONTAINING_RECORD(iface, struct video_presenter, IMFVideoPositionMapper_iface);
 }
 
+static void video_presenter_notify_renderer(struct video_presenter *presenter,
+        LONG event, LONG_PTR param1, LONG_PTR param2)
+{
+    if (presenter->event_sink)
+        IMediaEventSink_Notify(presenter->event_sink, event, param1, param2);
+}
+
 static unsigned int get_gcd(unsigned int a, unsigned int b)
 {
     unsigned int m;
@@ -329,6 +336,9 @@ static HRESULT video_presenter_process_input(struct video_presenter *presenter)
 
     while (hr == S_OK)
     {
+        LONGLONG mixing_started, mixing_finished;
+        MFTIME systime;
+
         if (!(presenter->flags & PRESENTER_MIXER_HAS_INPUT))
             break;
 
@@ -341,6 +351,9 @@ static HRESULT video_presenter_process_input(struct video_presenter *presenter)
         memset(&buffer, 0, sizeof(buffer));
         buffer.pSample = sample;
 
+        if (presenter->clock)
+            IMFClock_GetCorrelatedTime(presenter->clock, 0, &mixing_started, &systime);
+
         if (FAILED(hr = IMFTransform_ProcessOutput(presenter->mixer, 0, 1, &buffer, &status)))
         {
             /* FIXME: failure path probably needs to handle some errors specifically */
@@ -350,6 +363,15 @@ static HRESULT video_presenter_process_input(struct video_presenter *presenter)
         }
         else
         {
+            if (presenter->clock)
+            {
+                LONGLONG latency;
+
+                IMFClock_GetCorrelatedTime(presenter->clock, 0, &mixing_finished, &systime);
+                latency = mixing_finished - mixing_started;
+                video_presenter_notify_renderer(presenter, EC_PROCESSING_LATENCY, (LONG_PTR)&latency, 0);
+            }
+
             if (buffer.pEvents)
                 IMFCollection_Release(buffer.pEvents);
 
