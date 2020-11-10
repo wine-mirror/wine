@@ -491,6 +491,7 @@ static NTSTATUS CDECL key_symmetric_init( struct key *key )
 
     switch (key->alg_id)
     {
+    case ALG_ID_3DES:
     case ALG_ID_AES:
         return STATUS_SUCCESS;
 
@@ -504,6 +505,18 @@ static gnutls_cipher_algorithm_t get_gnutls_cipher( const struct key *key )
 {
     switch (key->alg_id)
     {
+    case ALG_ID_3DES:
+        WARN( "handle block size\n" );
+        switch (key->u.s.mode)
+        {
+        case MODE_ID_CBC:
+            return GNUTLS_CIPHER_3DES_CBC;
+        default:
+            break;
+        }
+        FIXME( "3DES mode %u with key length %u not supported\n", key->u.s.mode, key->u.s.secret_len );
+        return GNUTLS_CIPHER_UNKNOWN;
+
     case ALG_ID_AES:
         WARN( "handle block size\n" );
         switch (key->u.s.mode)

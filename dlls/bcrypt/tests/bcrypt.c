@@ -639,6 +639,67 @@ static void test_aes(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 }
 
+static void test_3des(void)
+{
+    BCRYPT_KEY_LENGTHS_STRUCT key_lengths;
+    BCRYPT_ALG_HANDLE alg;
+    ULONG size, len;
+    UCHAR mode[64];
+    NTSTATUS ret;
+
+    alg = NULL;
+    ret = pBCryptOpenAlgorithmProvider(&alg, BCRYPT_3DES_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(alg != NULL, "alg not set\n");
+
+    len = size = 0;
+    ret = pBCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(len, "expected non-zero len\n");
+    ok(size == sizeof(len), "got %u\n", size);
+
+    len = size = 0;
+    ret = pBCryptGetProperty(alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(len == 8, "got %u\n", len);
+    ok(size == sizeof(len), "got %u\n", size);
+
+    size = 0;
+    ret = pBCryptGetProperty(alg, BCRYPT_CHAINING_MODE, mode, 0, &size, 0);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "got %08x\n", ret);
+    ok(size == 64, "got %u\n", size);
+
+    size = 0;
+    ret = pBCryptGetProperty(alg, BCRYPT_CHAINING_MODE, mode, sizeof(mode) - 1, &size, 0);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "got %08x\n", ret);
+    ok(size == 64, "got %u\n", size);
+
+    size = 0;
+    memset(mode, 0, sizeof(mode));
+    ret = pBCryptGetProperty(alg, BCRYPT_CHAINING_MODE, mode, sizeof(mode), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(!lstrcmpW((const WCHAR *)mode, BCRYPT_CHAIN_MODE_CBC), "got %s\n", wine_dbgstr_w((const WCHAR *)mode));
+    ok(size == 64, "got %u\n", size);
+
+    size = 0;
+    memset(&key_lengths, 0, sizeof(key_lengths));
+    ret = pBCryptGetProperty(alg, BCRYPT_KEY_LENGTHS, (UCHAR*)&key_lengths, sizeof(key_lengths), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(size == sizeof(key_lengths), "got %u\n", size);
+    ok(key_lengths.dwMinLength == 192, "Expected 192, got %d\n", key_lengths.dwMinLength);
+    ok(key_lengths.dwMaxLength == 192, "Expected 192, got %d\n", key_lengths.dwMaxLength);
+    ok(key_lengths.dwIncrement == 0, "Expected 0, got %d\n", key_lengths.dwIncrement);
+
+    memcpy(mode, BCRYPT_CHAIN_MODE_GCM, sizeof(BCRYPT_CHAIN_MODE_GCM));
+    ret = pBCryptSetProperty(alg, BCRYPT_CHAINING_MODE, mode, 0, 0);
+    ok(ret == STATUS_NOT_SUPPORTED, "got %08x\n", ret);
+
+    test_alg_name(alg, L"3DES");
+
+    ret = pBCryptCloseAlgorithmProvider(alg, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+}
+
 static void test_BCryptGenerateSymmetricKey(void)
 {
     static UCHAR secret[] =
@@ -2730,6 +2791,7 @@ START_TEST(bcrypt)
     test_BcryptHash();
     test_BcryptDeriveKeyPBKDF2();
     test_rng();
+    test_3des();
     test_aes();
     test_BCryptGenerateSymmetricKey();
     test_BCryptEncrypt();

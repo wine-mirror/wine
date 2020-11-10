@@ -101,6 +101,7 @@ static const struct
 }
 builtin_algorithms[] =
 {
+    {  BCRYPT_3DES_ALGORITHM,       BCRYPT_CIPHER_INTERFACE,                522,    0,    0 },
     {  BCRYPT_AES_ALGORITHM,        BCRYPT_CIPHER_INTERFACE,                654,    0,    0 },
     {  BCRYPT_SHA256_ALGORITHM,     BCRYPT_HASH_INTERFACE,                  286,   32,  512 },
     {  BCRYPT_SHA384_ALGORITHM,     BCRYPT_HASH_INTERFACE,                  382,   48, 1024 },
@@ -426,6 +427,7 @@ struct hash
     struct hash_impl  inner;
 };
 
+#define BLOCK_LENGTH_3DES       8
 #define BLOCK_LENGTH_AES        16
 
 static NTSTATUS generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
@@ -464,6 +466,46 @@ static NTSTATUS generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *
         return STATUS_SUCCESS;
     }
 
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS get_3des_property( enum mode_id mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
+{
+    if (!wcscmp( prop, BCRYPT_BLOCK_LENGTH ))
+    {
+        *ret_size = sizeof(ULONG);
+        if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
+        if (buf) *(ULONG *)buf = BLOCK_LENGTH_3DES;
+        return STATUS_SUCCESS;
+    }
+    if (!wcscmp( prop, BCRYPT_CHAINING_MODE ))
+    {
+        const WCHAR *str;
+        switch (mode)
+        {
+        case MODE_ID_CBC: str = BCRYPT_CHAIN_MODE_CBC; break;
+        default: return STATUS_NOT_IMPLEMENTED;
+        }
+
+        *ret_size = 64;
+        if (size < *ret_size) return STATUS_BUFFER_TOO_SMALL;
+        memcpy( buf, str, (lstrlenW(str) + 1) * sizeof(WCHAR) );
+        return STATUS_SUCCESS;
+    }
+    if (!wcscmp( prop, BCRYPT_KEY_LENGTHS ))
+    {
+        BCRYPT_KEY_LENGTHS_STRUCT *key_lengths = (void *)buf;
+        *ret_size = sizeof(*key_lengths);
+        if (key_lengths && size < *ret_size) return STATUS_BUFFER_TOO_SMALL;
+        if (key_lengths)
+        {
+            key_lengths->dwMinLength = 192;
+            key_lengths->dwMaxLength = 192;
+            key_lengths->dwIncrement = 0;
+        }
+        return STATUS_SUCCESS;
+    }
+    FIXME( "unsupported property %s\n", debugstr_w(prop) );
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -556,6 +598,9 @@ static NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop
 
     switch (alg->id)
     {
+    case ALG_ID_3DES:
+        return get_3des_property( alg->mode, prop, buf, size, ret_size );
+
     case ALG_ID_AES:
         return get_aes_property( alg->mode, prop, buf, size, ret_size );
 
@@ -577,6 +622,23 @@ static NTSTATUS set_alg_property( struct algorithm *alg, const WCHAR *prop, UCHA
 {
     switch (alg->id)
     {
+    case ALG_ID_3DES:
+        if (!wcscmp( prop, BCRYPT_CHAINING_MODE ))
+        {
+            if (!wcscmp( (WCHAR *)value, BCRYPT_CHAIN_MODE_CBC ))
+            {
+                alg->mode = MODE_ID_CBC;
+                return STATUS_SUCCESS;
+            }
+            else
+            {
+                FIXME( "unsupported mode %s\n", debugstr_w((WCHAR *)value) );
+                return STATUS_NOT_SUPPORTED;
+            }
+        }
+        FIXME( "unsupported 3des algorithm property %s\n", debugstr_w(prop) );
+        return STATUS_NOT_IMPLEMENTED;
+
     case ALG_ID_AES:
         if (!wcscmp( prop, BCRYPT_CHAINING_MODE ))
         {
@@ -624,6 +686,9 @@ static NTSTATUS get_key_property( const struct key *key, const WCHAR *prop, UCHA
 {
     switch (key->alg_id)
     {
+    case ALG_ID_3DES:
+        return get_3des_property( key->u.s.mode, prop, buf, size, ret_size );
+
     case ALG_ID_AES:
         if (!wcscmp( prop, BCRYPT_AUTH_TAG_LENGTH )) return STATUS_NOT_SUPPORTED;
         return get_aes_property( key->u.s.mode, prop, buf, size, ret_size );

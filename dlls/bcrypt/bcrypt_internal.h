@@ -113,6 +113,7 @@ struct object
 enum alg_id
 {
     /* cipher */
+    ALG_ID_3DES,
     ALG_ID_AES,
 
     /* hash */
