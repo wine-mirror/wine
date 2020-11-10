@@ -1122,7 +1122,7 @@ static BOOLEAN get_dir_case_sensitivity_stat( const char *dir )
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
     struct statfs stfs;
 
-    if (statfs( dir, &stfs ) == -1) return FALSE;
+    if (statfs( dir, &stfs ) == -1) return TRUE;
     /* Assume these file systems are always case insensitive on Mac OS.
      * For FreeBSD, only assume CIOPFS is case insensitive (AFAIK, Mac OS
      * is the only UNIX that supports case-insensitive lookup).
@@ -1159,12 +1159,12 @@ static BOOLEAN get_dir_case_sensitivity_stat( const char *dir )
 #elif defined(__NetBSD__)
     struct statvfs stfs;
 
-    if (statvfs( dir, &stfs ) == -1) return FALSE;
+    if (statvfs( dir, &stfs ) == -1) return TRUE;
     /* Only assume CIOPFS is case insensitive. */
     if (strcmp( stfs.f_fstypename, "fusefs" ) ||
         strncmp( stfs.f_mntfromname, "ciopfs", 5 ))
-        return TRUE;
-    return FALSE;
+        return FALSE;
+    return TRUE;
 
 #elif defined(__linux__)
     BOOLEAN sens = TRUE;
