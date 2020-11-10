@@ -6349,7 +6349,9 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
                     fs_type = MOUNTMGR_FS_TYPE_ISO9660;
                 else if (!strcmp( stfs.f_fstypename, "udf" ))
                     fs_type = MOUNTMGR_FS_TYPE_UDF;
-                else if (!strcmp( stfs.f_fstypename, "msdos" ))
+                else if (!strcmp( stfs.f_fstypename, "msdos" )) /* FreeBSD < 5, Apple */
+                    fs_type = MOUNTMGR_FS_TYPE_FAT32;
+                else if (!strcmp( stfs.f_fstypename, "msdosfs" )) /* FreeBSD >= 5 */
                     fs_type = MOUNTMGR_FS_TYPE_FAT32;
 #endif
             }
