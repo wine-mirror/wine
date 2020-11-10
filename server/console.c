@@ -60,7 +60,6 @@ struct console_input
     struct screen_buffer        *active;        /* active screen buffer */
     struct console_server       *server;        /* console server object */
     unsigned int                 last_id;       /* id of last created console buffer */
-    struct event                *event;         /* event to wait on for input queue */
     struct fd                   *fd;            /* for bare console, attached input fd */
     struct async_queue           ioctl_q;       /* ioctl queue */
     struct async_queue           read_q;        /* read queue */
@@ -371,17 +370,10 @@ static struct object *create_console_input(void)
     console_input->num_proc      = 0;
     console_input->active        = NULL;
     console_input->server        = NULL;
-    console_input->event         = create_event( NULL, NULL, 0, 1, 0, NULL );
     console_input->fd            = NULL;
     console_input->last_id       = 0;
     init_async_queue( &console_input->ioctl_q );
     init_async_queue( &console_input->read_q );
-
-    if (!console_input->event)
-    {
-        release_object( console_input );
-        return NULL;
-    }
 
     console_input->fd = alloc_pseudo_fd( &console_input_fd_ops, &console_input->obj,
                                          FILE_SYNCHRONOUS_IO_NONALERT );
@@ -626,8 +618,6 @@ static void console_input_destroy( struct object *obj )
 
     free_async_queue( &console_in->ioctl_q );
     free_async_queue( &console_in->read_q );
-    if (console_in->event)
-        release_object( console_in->event );
     if (console_in->fd)
         release_object( console_in->fd );
 }
@@ -1157,45 +1147,6 @@ struct object *create_console_device( struct object *root, const struct unicode_
     return create_named_object( root, &console_device_ops, name, attr, sd );
 }
 
-/* get console which renderer is 'current' */
-static int cgwe_enum( struct process* process, void* user)
-{
-    if (process->console && process->console->renderer == current)
-    {
-        *(struct console_input**)user = (struct console_input *)grab_object( process->console );
-        return 1;
-    }
-    return 0;
-}
-
-DECL_HANDLER(get_console_wait_event)
-{
-    struct console_input* console = NULL;
-    struct object *obj;
-
-    if (req->handle)
-    {
-        if (!(obj = get_handle_obj( current->process, req->handle, FILE_READ_PROPERTIES, NULL ))) return;
-        if (obj->ops == &console_input_ops)
-            console = (struct console_input *)grab_object( obj );
-        else if (obj->ops == &screen_buffer_ops)
-            console = (struct console_input *)grab_object( ((struct screen_buffer *)obj)->input );
-        else
-            set_error( STATUS_OBJECT_TYPE_MISMATCH );
-        release_object( obj );
-    }
-    else if (current->process->console)
-        console = (struct console_input *)grab_object( current->process->console );
-    else enum_processes(cgwe_enum, &console);
-
-    if (console)
-    {
-        reply->event = alloc_handle( current->process, console->event, EVENT_ALL_ACCESS, 0 );
-        release_object( console );
-    }
-    else set_error( STATUS_INVALID_PARAMETER );
-}
-
 /* retrieve the next pending console ioctl request */
 DECL_HANDLER(get_next_console_request)
 {
@@ -1212,9 +1163,6 @@ DECL_HANDLER(get_next_console_request)
         release_object( server );
         return;
     }
-
-    if (req->signal) set_event( server->console->event);
-    else reset_event( server->console->event );
 
     if (!req->signal) server->console->signaled = 0;
     else if (!server->console->signaled)

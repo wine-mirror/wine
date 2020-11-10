@@ -1788,20 +1788,6 @@ struct set_socket_deferred_reply
 
 
 
-struct get_console_wait_event_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-};
-struct get_console_wait_event_reply
-{
-    struct reply_header __header;
-    obj_handle_t event;
-    char __pad_12[4];
-};
-
-
-
 struct get_next_console_request_request
 {
     struct request_header __header;
@@ -5423,7 +5409,6 @@ enum request
     REQ_get_socket_info,
     REQ_enable_socket_event,
     REQ_set_socket_deferred,
-    REQ_get_console_wait_event,
     REQ_get_next_console_request,
     REQ_read_directory_changes,
     REQ_read_change,
@@ -5705,7 +5690,6 @@ union generic_request
     struct get_socket_info_request get_socket_info_request;
     struct enable_socket_event_request enable_socket_event_request;
     struct set_socket_deferred_request set_socket_deferred_request;
-    struct get_console_wait_event_request get_console_wait_event_request;
     struct get_next_console_request_request get_next_console_request_request;
     struct read_directory_changes_request read_directory_changes_request;
     struct read_change_request read_change_request;
@@ -5985,7 +5969,6 @@ union generic_reply
     struct get_socket_info_reply get_socket_info_reply;
     struct enable_socket_event_reply enable_socket_event_reply;
     struct set_socket_deferred_reply set_socket_deferred_reply;
-    struct get_console_wait_event_reply get_console_wait_event_reply;
     struct get_next_console_request_reply get_next_console_request_reply;
     struct read_directory_changes_reply read_directory_changes_reply;
     struct read_change_reply read_change_reply;
@@ -6205,7 +6188,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 651
+#define SERVER_PROTOCOL_VERSION 652
 
 /* ### protocol_version end ### */
 

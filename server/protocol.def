@@ -1444,14 +1444,6 @@ enum server_fd_type
 @END
 
 
-/* Get the input queue wait event */
-@REQ(get_console_wait_event)
-    obj_handle_t handle;        /* handle to the console */
-@REPLY
-    obj_handle_t event;
-@END
-
-
 /* Retrieve the next pending console ioctl request */
 @REQ(get_next_console_request)
     obj_handle_t handle;        /* console server handle */
