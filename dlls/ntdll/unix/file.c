@@ -1123,12 +1123,12 @@ static BOOLEAN get_dir_case_sensitivity_stat( const char *dir )
     struct statfs stfs;
 
     if (statfs( dir, &stfs ) == -1) return TRUE;
-    /* Assume these file systems are always case insensitive on Mac OS.
-     * For FreeBSD, only assume CIOPFS is case insensitive (AFAIK, Mac OS
-     * is the only UNIX that supports case-insensitive lookup).
-     */
+    /* Assume these file systems are always case insensitive.*/
     if (!strcmp( stfs.f_fstypename, "fusefs" ) &&
         !strncmp( stfs.f_mntfromname, "ciopfs", 5 ))
+        return FALSE;
+    /* msdosfs was case-insensitive since FreeBSD 8, if not earlier */
+    if (!strcmp( stfs.f_fstypename, "msdosfs" ))
         return FALSE;
 #ifdef __APPLE__
     if (!strcmp( stfs.f_fstypename, "msdos" ) ||
