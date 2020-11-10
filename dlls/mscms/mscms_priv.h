@@ -56,7 +56,17 @@ void release_transform( struct transform * ) DECLSPEC_HIDDEN;
 
 extern void free_handle_tables( void ) DECLSPEC_HIDDEN;
 
-extern BOOL get_tag_data( const struct profile *, TAGTYPE, DWORD, void *, DWORD * ) DECLSPEC_HIDDEN;
+struct tag_entry
+{
+    DWORD sig;
+    DWORD offset;
+    DWORD size;
+};
+
+extern DWORD get_tag_count( const struct profile * ) DECLSPEC_HIDDEN;
+extern BOOL get_tag_entry( const struct profile *, DWORD, struct tag_entry * ) DECLSPEC_HIDDEN;
+extern BOOL get_adjusted_tag( const struct profile *, TAGTYPE, struct tag_entry * ) DECLSPEC_HIDDEN;
+extern BOOL get_tag_data( const struct profile *, TAGTYPE, DWORD, void *, DWORD *, BOOL * ) DECLSPEC_HIDDEN;
 extern BOOL set_tag_data( const struct profile *, TAGTYPE, DWORD, const void *, DWORD * ) DECLSPEC_HIDDEN;
 extern void get_profile_header( const struct profile *, PROFILEHEADER * ) DECLSPEC_HIDDEN;
 extern void set_profile_header( const struct profile *, const PROFILEHEADER * ) DECLSPEC_HIDDEN;

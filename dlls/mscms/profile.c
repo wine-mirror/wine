@@ -347,13 +347,7 @@ BOOL WINAPI GetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset,
         release_profile( profile );
         return FALSE;
     }
-    if (!get_tag_data( profile, type, offset, buffer, size ))
-    {
-        release_profile( profile );
-        return FALSE;
-    }
-    ret = get_tag_data( profile, type, offset, buffer, size );
-    *ref = cmsTagLinkedTo( profile->cmsprofile, type ) != 0;
+    ret = get_tag_data( profile, type, offset, buffer, size, ref );
     release_profile( profile );
 #endif /* HAVE_LCMS2 */
     return ret;
@@ -382,8 +376,7 @@ BOOL WINAPI GetColorProfileElementTag( HPROFILE handle, DWORD index, PTAGTYPE ty
     BOOL ret = FALSE;
 #ifdef HAVE_LCMS2
     struct profile *profile = grab_profile( handle );
-    cmsInt32Number num_tags;
-    cmsTagSignature sig;
+    struct tag_entry tag;
 
     TRACE( "( %p, %d, %p )\n", handle, index, type );
 
@@ -394,17 +387,7 @@ BOOL WINAPI GetColorProfileElementTag( HPROFILE handle, DWORD index, PTAGTYPE ty
         release_profile( profile );
         return FALSE;
     }
-    num_tags = cmsGetTagCount( profile->cmsprofile );
-    if (num_tags < 0 || index > num_tags || index < 1)
-    {
-        release_profile( profile );
-        return FALSE;
-    }
-    if ((sig = cmsGetTagSignature( profile->cmsprofile, index - 1 )))
-    {
-        *type = sig;
-        ret = TRUE;
-    }
+    if ((ret = get_tag_entry( profile, index, &tag ))) *type = tag.sig;
     release_profile( profile );
 
 #endif /* HAVE_LCMS2 */
@@ -523,7 +506,6 @@ BOOL WINAPI GetCountColorProfileElements( HPROFILE handle, PDWORD count )
     BOOL ret = FALSE;
 #ifdef HAVE_LCMS2
     struct profile *profile = grab_profile( handle );
-    cmsInt32Number num_tags;
 
     TRACE( "( %p, %p )\n", handle, count );
 
@@ -534,11 +516,7 @@ BOOL WINAPI GetCountColorProfileElements( HPROFILE handle, PDWORD count )
         release_profile( profile );
         return FALSE;
     }
-    if ((num_tags = cmsGetTagCount( profile->cmsprofile )) >= 0)
-    {
-        *count = num_tags;
-        ret = TRUE;
-    }
+    *count = get_tag_count( profile );
     release_profile( profile );
 
 #endif /* HAVE_LCMS2 */
@@ -1151,6 +1129,7 @@ BOOL WINAPI IsColorProfileTagPresent( HPROFILE handle, TAGTYPE type, PBOOL prese
     BOOL ret = FALSE;
 #ifdef HAVE_LCMS2
     struct profile *profile = grab_profile( handle );
+    struct tag_entry tag;
 
     TRACE( "( %p, 0x%08x, %p )\n", handle, type, present );
 
@@ -1161,7 +1140,7 @@ BOOL WINAPI IsColorProfileTagPresent( HPROFILE handle, TAGTYPE type, PBOOL prese
         release_profile( profile );
         return FALSE;
     }
-    *present = (cmsIsTag( profile->cmsprofile, type ) != 0);
+    *present = get_adjusted_tag( profile, type, &tag );
     release_profile( profile );
     ret = TRUE;
 
