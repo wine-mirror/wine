@@ -3,7 +3,7 @@ MODULE    = user32.dll
 IMPORTLIB = user32
 IMPORTS   = setupapi gdi32 version sechost advapi32 kernelbase
 EXTRAINCL = $(PNG_CFLAGS)
-DELAYIMPORTS = hid imm32 usp10
+DELAYIMPORTS = hid imm32
 
 EXTRADLLFLAGS = -mno-cygwin
 
