@@ -66,6 +66,7 @@ struct video_presenter
     IMFRateSupport IMFRateSupport_iface;
     IMFGetService IMFGetService_iface;
     IMFVideoPositionMapper IMFVideoPositionMapper_iface;
+    IMFVideoSampleAllocatorNotify allocator_cb;
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
     LONG refcount;
@@ -131,6 +132,11 @@ static struct video_presenter *impl_from_IMFVideoPositionMapper(IMFVideoPosition
     return CONTAINING_RECORD(iface, struct video_presenter, IMFVideoPositionMapper_iface);
 }
 
+static struct video_presenter *impl_from_IMFVideoSampleAllocatorNotify(IMFVideoSampleAllocatorNotify *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_presenter, allocator_cb);
+}
+
 static void video_presenter_notify_renderer(struct video_presenter *presenter,
         LONG event, LONG_PTR param1, LONG_PTR param2)
 {
@@ -183,6 +189,18 @@ static void video_presenter_get_native_video_size(struct video_presenter *presen
     IMFMediaType_Release(media_type);
 }
 
+/* It is important this is called to reset callback too to break circular referencing,
+   when allocator keeps a reference of its container, that created it. */
+static void video_presenter_set_allocator_callback(struct video_presenter *presenter,
+        IMFVideoSampleAllocatorNotify *notify_cb)
+{
+    IMFVideoSampleAllocatorCallback *cb;
+
+    IMFVideoSampleAllocator_QueryInterface(presenter->allocator, &IID_IMFVideoSampleAllocatorCallback, (void **)&cb);
+    IMFVideoSampleAllocatorCallback_SetCallback(cb, notify_cb);
+    IMFVideoSampleAllocatorCallback_Release(cb);
+}
+
 static void video_presenter_reset_media_type(struct video_presenter *presenter)
 {
     if (presenter->media_type)
@@ -190,6 +208,7 @@ static void video_presenter_reset_media_type(struct video_presenter *presenter)
     presenter->media_type = NULL;
 
     IMFVideoSampleAllocator_UninitializeSampleAllocator(presenter->allocator);
+    video_presenter_set_allocator_callback(presenter, NULL);
 }
 
 static HRESULT video_presenter_set_media_type(struct video_presenter *presenter, IMFMediaType *media_type)
@@ -298,6 +317,8 @@ static HRESULT video_presenter_start_streaming(struct video_presenter *presenter
         return E_FAIL;
     }
 
+    video_presenter_set_allocator_callback(presenter, &presenter->allocator_cb);
+
     WaitForSingleObject(presenter->thread.ready_event, INFINITE);
     CloseHandle(presenter->thread.ready_event);
     presenter->thread.ready_event = NULL;
@@ -320,6 +341,7 @@ static HRESULT video_presenter_end_streaming(struct video_presenter *presenter)
     TRACE("Terminated streaming thread tid %#x.\n", presenter->thread.tid);
 
     memset(&presenter->thread, 0, sizeof(presenter->thread));
+    video_presenter_set_allocator_callback(presenter, NULL);
 
     return S_OK;
 }
@@ -1222,6 +1244,47 @@ static const IMFVideoPositionMapperVtbl video_presenter_position_mapper_vtbl =
     video_presenter_position_mapper_MapOutputCoordinateToInputStream,
 };
 
+static HRESULT WINAPI video_presenter_allocator_cb_QueryInterface(IMFVideoSampleAllocatorNotify *iface,
+        REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFVideoSampleAllocatorNotify) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFVideoSampleAllocatorNotify_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI video_presenter_allocator_cb_AddRef(IMFVideoSampleAllocatorNotify *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFVideoSampleAllocatorNotify(iface);
+    return IMFVideoPresenter_AddRef(&presenter->IMFVideoPresenter_iface);
+}
+
+static ULONG WINAPI video_presenter_allocator_cb_Release(IMFVideoSampleAllocatorNotify *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFVideoSampleAllocatorNotify(iface);
+    return IMFVideoPresenter_Release(&presenter->IMFVideoPresenter_iface);
+}
+
+static HRESULT WINAPI video_presenter_allocator_cb_NotifyRelease(IMFVideoSampleAllocatorNotify *iface)
+{
+    return E_NOTIMPL;
+}
+
+static const IMFVideoSampleAllocatorNotifyVtbl video_presenter_allocator_cb_vtbl =
+{
+    video_presenter_allocator_cb_QueryInterface,
+    video_presenter_allocator_cb_AddRef,
+    video_presenter_allocator_cb_Release,
+    video_presenter_allocator_cb_NotifyRelease,
+};
+
 HRESULT WINAPI MFCreateVideoPresenter(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -1290,6 +1353,7 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
     object->IMFRateSupport_iface.lpVtbl = &video_presenter_rate_support_vtbl;
     object->IMFGetService_iface.lpVtbl = &video_presenter_getservice_vtbl;
     object->IMFVideoPositionMapper_iface.lpVtbl = &video_presenter_position_mapper_vtbl;
+    object->allocator_cb.lpVtbl = &video_presenter_allocator_cb_vtbl;
     object->IUnknown_inner.lpVtbl = &video_presenter_inner_vtbl;
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;
