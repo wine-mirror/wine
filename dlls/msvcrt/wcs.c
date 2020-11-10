@@ -119,16 +119,22 @@ int CDECL MSVCRT_towlower(MSVCRT_wint_t c)
 
 INT CDECL MSVCRT__wcsicmp_l(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2, MSVCRT__locale_t locale)
 {
+    MSVCRT__locale_tstruct tmp = {0};
     MSVCRT_wchar_t c1, c2;
 
     if(!MSVCRT_CHECK_PMT(str1 != NULL) || !MSVCRT_CHECK_PMT(str2 != NULL))
         return MSVCRT__NLSCMPERROR;
+
+    if(!locale)
+        locale = get_current_locale_noalloc(&tmp);
 
     do
     {
         c1 = MSVCRT__towlower_l(*str1++, locale);
         c2 = MSVCRT__towlower_l(*str2++, locale);
     } while(c1 && (c1 == c2));
+
+    free_locale_noalloc(&tmp);
     return c1 - c2;
 }
 
@@ -146,19 +152,25 @@ INT CDECL MSVCRT__wcsicmp( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str
 INT CDECL MSVCRT__wcsnicmp_l(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2,
         MSVCRT_size_t n, MSVCRT__locale_t locale)
 {
+    MSVCRT__locale_tstruct tmp = {0};
     MSVCRT_wchar_t c1, c2;
 
     if (!n)
-            return 0;
+        return 0;
 
     if(!MSVCRT_CHECK_PMT(str1 != NULL) || !MSVCRT_CHECK_PMT(str2 != NULL))
         return MSVCRT__NLSCMPERROR;
+
+    if(!locale)
+        locale = get_current_locale_noalloc(&tmp);
 
     do
     {
         c1 = MSVCRT__towlower_l(*str1++, locale);
         c2 = MSVCRT__towlower_l(*str2++, locale);
     } while(--n && c1 && (c1 == c2));
+
+    free_locale_noalloc(&tmp);
     return c1 - c2;
 }
 
@@ -397,6 +409,7 @@ MSVCRT_wchar_t* CDECL MSVCRT__wcsupr( MSVCRT_wchar_t *str )
  */
 int CDECL MSVCRT__wcslwr_s_l( MSVCRT_wchar_t* str, MSVCRT_size_t n, MSVCRT__locale_t locale )
 {
+  MSVCRT__locale_tstruct tmp = {0};
   MSVCRT_wchar_t* ptr = str;
 
   if (!str || !n)
@@ -406,12 +419,21 @@ int CDECL MSVCRT__wcslwr_s_l( MSVCRT_wchar_t* str, MSVCRT_size_t n, MSVCRT__loca
     return MSVCRT_EINVAL;
   }
 
+  if(!locale)
+    locale = get_current_locale_noalloc(&tmp);
+
   while (n--)
   {
-    if (!*ptr) return 0;
+    if (!*ptr)
+    {
+      free_locale_noalloc(&tmp);
+      return 0;
+    }
     *ptr = MSVCRT__towlower_l(*ptr, locale);
     ptr++;
   }
+
+  free_locale_noalloc(&tmp);
 
   /* MSDN claims that the function should return and set errno to
    * ERANGE, which doesn't seem to be true based on the tests. */
