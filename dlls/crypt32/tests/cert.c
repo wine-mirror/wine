@@ -3886,17 +3886,19 @@ static void testAcquireCertPrivateKey(void)
 
     /* Missing private key */
     ret = pCryptAcquireCertificatePrivateKey(cert, 0, NULL, &csp, NULL, NULL);
-    ok(!ret && GetLastError() == CRYPT_E_NO_KEY_PROPERTY,
+    ok(!ret && (GetLastError() == CRYPT_E_NO_KEY_PROPERTY || GetLastError() == NTE_BAD_PROV_TYPE /* win10 */),
      "Expected CRYPT_E_NO_KEY_PROPERTY, got %08x\n", GetLastError());
     ret = pCryptAcquireCertificatePrivateKey(cert, 0, NULL, &csp, &keySpec,
      &callerFree);
-    ok(!ret && GetLastError() == CRYPT_E_NO_KEY_PROPERTY,
+    ok(!ret && (GetLastError() == CRYPT_E_NO_KEY_PROPERTY || GetLastError() == NTE_BAD_PROV_TYPE /* win10 */),
      "Expected CRYPT_E_NO_KEY_PROPERTY, got %08x\n", GetLastError());
     CertSetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, 0,
      &keyProvInfo);
     ret = pCryptAcquireCertificatePrivateKey(cert, 0, NULL, &csp, &keySpec,
      &callerFree);
-    ok(!ret && (GetLastError() == CRYPT_E_NO_KEY_PROPERTY || GetLastError() == NTE_BAD_KEYSET /* win8 */),
+    ok(!ret && (GetLastError() == CRYPT_E_NO_KEY_PROPERTY ||
+       GetLastError() == NTE_BAD_KEYSET /* win8 */ ||
+       GetLastError() == NTE_BAD_PROV_TYPE /* win10 */),
      "Expected CRYPT_E_NO_KEY_PROPERTY, got %08x\n", GetLastError());
 
     pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
