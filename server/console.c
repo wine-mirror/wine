@@ -54,6 +54,7 @@ struct history_line
 struct console_input
 {
     struct object                obj;           /* object header */
+    int                          signaled;      /* is console signaled */
     int                          num_proc;      /* number of processes attached to this console */
     struct thread               *renderer;      /* console renderer thread */
     struct screen_buffer        *active;        /* active screen buffer */
@@ -67,6 +68,7 @@ struct console_input
 
 static void console_input_dump( struct object *obj, int verbose );
 static void console_input_destroy( struct object *obj );
+static int console_input_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *console_input_get_fd( struct object *obj );
 static struct object *console_input_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr );
 static struct object *console_input_open_file( struct object *obj, unsigned int access,
@@ -77,9 +79,9 @@ static const struct object_ops console_input_ops =
     sizeof(struct console_input),     /* size */
     console_input_dump,               /* dump */
     no_get_type,                      /* get_type */
-    no_add_queue,                     /* add_queue */
-    NULL,                             /* remove_queue */
-    NULL,                             /* signaled */
+    add_queue,                        /* add_queue */
+    remove_queue,                     /* remove_queue */
+    console_input_signaled,           /* signaled */
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     console_input_get_fd,             /* get_fd */
@@ -338,6 +340,12 @@ static const struct fd_ops console_connection_fd_ops =
 
 static struct list screen_buffer_list = LIST_INIT(screen_buffer_list);
 
+static int console_input_signaled( struct object *obj, struct wait_queue_entry *entry )
+{
+    struct console_input *console = (struct console_input*)obj;
+    return console->signaled;
+}
+
 static struct fd *console_input_get_fd( struct object* obj )
 {
     struct console_input *console_input = (struct console_input*)obj;
@@ -358,6 +366,7 @@ static struct object *create_console_input(void)
         return NULL;
 
     console_input->renderer      = NULL;
+    console_input->signaled      = 0;
     console_input->num_proc      = 0;
     console_input->active        = NULL;
     console_input->server        = NULL;
@@ -1194,6 +1203,13 @@ DECL_HANDLER(get_next_console_request)
 
     if (req->signal) set_event( server->console->event);
     else reset_event( server->console->event );
+
+    if (!req->signal) server->console->signaled = 0;
+    else if (!server->console->signaled)
+    {
+        server->console->signaled = 1;
+        wake_up( &server->console->obj, 0 );
+    }
 
     if (req->read)
     {
