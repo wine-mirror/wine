@@ -629,7 +629,7 @@ static void read_trusted_roots_from_known_locations(HCERTSTORE store)
                 buffer = HeapAlloc( GetProcessHeap(), 0, needed );
                 size = needed;
             }
-            else CertAddEncodedCertificateToStore( store, X509_ASN_ENCODING, buffer, size,
+            else CertAddEncodedCertificateToStore( from, X509_ASN_ENCODING, buffer, needed,
                                                    CERT_STORE_ADD_NEW, NULL );
         }
         HeapFree( GetProcessHeap(), 0, buffer );
