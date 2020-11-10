@@ -40,6 +40,11 @@ enum presenter_state
     PRESENTER_STATE_PAUSED,
 };
 
+enum presenter_flags
+{
+    PRESENTER_MIXER_HAS_INPUT = 0x1,
+};
+
 enum streaming_thread_message
 {
     EVRM_STOP = WM_USER,
@@ -82,6 +87,7 @@ struct video_presenter
     SIZE native_ratio;
     unsigned int ar_mode;
     unsigned int state;
+    unsigned int flags;
     CRITICAL_SECTION cs;
 };
 
@@ -311,6 +317,50 @@ static HRESULT video_presenter_end_streaming(struct video_presenter *presenter)
     return S_OK;
 }
 
+static HRESULT video_presenter_process_input(struct video_presenter *presenter)
+{
+    MFT_OUTPUT_DATA_BUFFER buffer;
+    HRESULT hr = S_OK;
+    IMFSample *sample;
+    DWORD status;
+
+    if (!presenter->media_type)
+        return S_OK;
+
+    while (hr == S_OK)
+    {
+        if (!(presenter->flags & PRESENTER_MIXER_HAS_INPUT))
+            break;
+
+        if (FAILED(hr = IMFVideoSampleAllocator_AllocateSample(presenter->allocator, &sample)))
+        {
+            WARN("Failed to allocate a sample, hr %#x.\n", hr);
+            break;
+        }
+
+        memset(&buffer, 0, sizeof(buffer));
+        buffer.pSample = sample;
+
+        if (FAILED(hr = IMFTransform_ProcessOutput(presenter->mixer, 0, 1, &buffer, &status)))
+        {
+            /* FIXME: failure path probably needs to handle some errors specifically */
+            presenter->flags &= ~PRESENTER_MIXER_HAS_INPUT;
+            IMFSample_Release(sample);
+            break;
+        }
+        else
+        {
+            if (buffer.pEvents)
+                IMFCollection_Release(buffer.pEvents);
+
+            /* FIXME: for now drop output sample back to the pool */
+            IMFSample_Release(sample);
+        }
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
     struct video_presenter *presenter = impl_from_IUnknown(iface);
@@ -510,6 +560,10 @@ static HRESULT WINAPI video_presenter_ProcessMessage(IMFVideoPresenter *iface, M
             break;
         case MFVP_MESSAGE_ENDSTREAMING:
             hr = video_presenter_end_streaming(presenter);
+            break;
+        case MFVP_MESSAGE_PROCESSINPUTNOTIFY:
+            presenter->flags |= PRESENTER_MIXER_HAS_INPUT;
+            hr = video_presenter_process_input(presenter);
             break;
         default:
             FIXME("Unsupported message %u.\n", message);
