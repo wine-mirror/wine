@@ -31,8 +31,6 @@
 
 #include "mscms_priv.h"
 
-#ifdef HAVE_LCMS2
-
 static inline void adjust_endianness32( ULONG *ptr )
 {
 #ifndef WORDS_BIGENDIAN
@@ -165,5 +163,3 @@ BOOL set_tag_data( const struct profile *profile, TAGTYPE type, DWORD offset, co
     memcpy( profile->data + tag.offset + offset, buffer, *len );
     return TRUE;
 }
-
-#endif /* HAVE_LCMS2 */

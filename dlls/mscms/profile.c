@@ -334,8 +334,7 @@ BOOL WINAPI GetColorDirectoryW( PCWSTR machine, PWSTR buffer, PDWORD size )
 BOOL WINAPI GetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset, PDWORD size,
                                     PVOID buffer, PBOOL ref )
 {
-    BOOL ret = FALSE;
-#ifdef HAVE_LCMS2
+    BOOL ret;
     struct profile *profile = grab_profile( handle );
 
     TRACE( "( %p, 0x%08x, %d, %p, %p, %p )\n", handle, type, offset, size, buffer, ref );
@@ -349,7 +348,6 @@ BOOL WINAPI GetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset,
     }
     ret = get_tag_data( profile, type, offset, buffer, size, ref );
     release_profile( profile );
-#endif /* HAVE_LCMS2 */
     return ret;
 }
 
@@ -373,8 +371,7 @@ BOOL WINAPI GetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset,
  */
 BOOL WINAPI GetColorProfileElementTag( HPROFILE handle, DWORD index, PTAGTYPE type )
 {
-    BOOL ret = FALSE;
-#ifdef HAVE_LCMS2
+    BOOL ret;
     struct profile *profile = grab_profile( handle );
     struct tag_entry tag;
 
@@ -389,8 +386,6 @@ BOOL WINAPI GetColorProfileElementTag( HPROFILE handle, DWORD index, PTAGTYPE ty
     }
     if ((ret = get_tag_entry( profile, index, &tag ))) *type = tag.sig;
     release_profile( profile );
-
-#endif /* HAVE_LCMS2 */
     return ret;
 }
 
@@ -414,8 +409,6 @@ BOOL WINAPI GetColorProfileElementTag( HPROFILE handle, DWORD index, PTAGTYPE ty
  */
 BOOL WINAPI GetColorProfileFromHandle( HPROFILE handle, PBYTE buffer, PDWORD size )
 {
-    BOOL ret = FALSE;
-#ifdef HAVE_LCMS2
     struct profile *profile = grab_profile( handle );
     PROFILEHEADER header;
 
@@ -442,10 +435,7 @@ BOOL WINAPI GetColorProfileFromHandle( HPROFILE handle, PBYTE buffer, PDWORD siz
     *size = profile->size;
 
     release_profile( profile );
-    ret = TRUE;
-
-#endif /* HAVE_LCMS2 */
-    return ret;
+    return TRUE;
 }
 
 /******************************************************************************
@@ -466,7 +456,6 @@ BOOL WINAPI GetColorProfileFromHandle( HPROFILE handle, PBYTE buffer, PDWORD siz
  */
 BOOL WINAPI GetColorProfileHeader( HPROFILE handle, PPROFILEHEADER header )
 {
-#ifdef HAVE_LCMS2
     struct profile *profile = grab_profile( handle );
 
     TRACE( "( %p, %p )\n", handle, header );
@@ -481,10 +470,6 @@ BOOL WINAPI GetColorProfileHeader( HPROFILE handle, PPROFILEHEADER header )
     get_profile_header( profile, header );
     release_profile( profile );
     return TRUE;
-
-#else
-    return FALSE;
-#endif /* HAVE_LCMS2 */
 }
 
 /******************************************************************************
@@ -503,8 +488,6 @@ BOOL WINAPI GetColorProfileHeader( HPROFILE handle, PPROFILEHEADER header )
  */
 BOOL WINAPI GetCountColorProfileElements( HPROFILE handle, PDWORD count )
 {
-    BOOL ret = FALSE;
-#ifdef HAVE_LCMS2
     struct profile *profile = grab_profile( handle );
 
     TRACE( "( %p, %p )\n", handle, count );
@@ -518,9 +501,7 @@ BOOL WINAPI GetCountColorProfileElements( HPROFILE handle, PDWORD count )
     }
     *count = get_tag_count( profile );
     release_profile( profile );
-
-#endif /* HAVE_LCMS2 */
-    return ret;
+    return TRUE;
 }
 
 /******************************************************************************
@@ -1126,8 +1107,6 @@ BOOL WINAPI InstallColorProfileW( PCWSTR machine, PCWSTR profile )
  */
 BOOL WINAPI IsColorProfileTagPresent( HPROFILE handle, TAGTYPE type, PBOOL present )
 {
-    BOOL ret = FALSE;
-#ifdef HAVE_LCMS2
     struct profile *profile = grab_profile( handle );
     struct tag_entry tag;
 
@@ -1142,10 +1121,7 @@ BOOL WINAPI IsColorProfileTagPresent( HPROFILE handle, TAGTYPE type, PBOOL prese
     }
     *present = get_adjusted_tag( profile, type, &tag );
     release_profile( profile );
-    ret = TRUE;
-
-#endif /* HAVE_LCMS2 */
-    return ret;
+    return TRUE;
 }
 
 /******************************************************************************
@@ -1164,8 +1140,7 @@ BOOL WINAPI IsColorProfileTagPresent( HPROFILE handle, TAGTYPE type, PBOOL prese
  */
 BOOL WINAPI IsColorProfileValid( HPROFILE handle, PBOOL valid )
 {
-    BOOL ret = FALSE;
-#ifdef HAVE_LCMS2
+    BOOL ret;
     struct profile *profile = grab_profile( handle );
 
     TRACE( "( %p, %p )\n", handle, valid );
@@ -1179,8 +1154,6 @@ BOOL WINAPI IsColorProfileValid( HPROFILE handle, PBOOL valid )
     }
     if (profile->data) ret = *valid = TRUE;
     release_profile( profile );
-
-#endif /* HAVE_LCMS2 */
     return ret;
 }
 
@@ -1204,8 +1177,7 @@ BOOL WINAPI IsColorProfileValid( HPROFILE handle, PBOOL valid )
 BOOL WINAPI SetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset, PDWORD size,
                                     PVOID buffer )
 {
-    BOOL ret = FALSE;
-#ifdef HAVE_LCMS2
+    BOOL ret;
     struct profile *profile = grab_profile( handle );
 
     TRACE( "( %p, 0x%08x, %d, %p, %p )\n", handle, type, offset, size, buffer );
@@ -1219,7 +1191,6 @@ BOOL WINAPI SetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset,
     }
     ret = set_tag_data( profile, type, offset, buffer, size );
     release_profile( profile );
-#endif /* HAVE_LCMS2 */
     return ret;
 }
 
@@ -1238,7 +1209,6 @@ BOOL WINAPI SetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset,
  */
 BOOL WINAPI SetColorProfileHeader( HPROFILE handle, PPROFILEHEADER header )
 {
-#ifdef HAVE_LCMS2
     struct profile *profile = grab_profile( handle );
 
     TRACE( "( %p, %p )\n", handle, header );
@@ -1253,10 +1223,6 @@ BOOL WINAPI SetColorProfileHeader( HPROFILE handle, PPROFILEHEADER header )
     set_profile_header( profile, header );
     release_profile( profile );
     return TRUE;
-
-#else
-    return FALSE;
-#endif /* HAVE_LCMS2 */
 }
 
 /******************************************************************************
@@ -1374,8 +1340,9 @@ HPROFILE WINAPI OpenColorProfileA( PPROFILE profile, DWORD access, DWORD sharing
  */
 HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing, DWORD creation )
 {
-#ifdef HAVE_LCMS2
-    cmsHPROFILE cmsprofile = NULL;
+    struct profile prof;
+    HPROFILE hprof;
+    void *cmsprofile = NULL;
     char *data = NULL;
     HANDLE handle = INVALID_HANDLE_VALUE;
     DWORD size;
@@ -1391,7 +1358,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
         if (!(data = HeapAlloc( GetProcessHeap(), 0, profile->cbDataSize ))) return NULL;
         memcpy( data, profile->pProfileData, profile->cbDataSize );
 
-        if (!(cmsprofile = cmsOpenProfileFromMem( data, profile->cbDataSize )))
+        if (lcms_funcs && !(cmsprofile = lcms_funcs->open_profile( data, profile->cbDataSize )))
         {
             HeapFree( GetProcessHeap(), 0, data );
             return FALSE;
@@ -1453,7 +1420,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
             HeapFree( GetProcessHeap(), 0, data );
             return NULL;
         }
-        if (!(cmsprofile = cmsOpenProfileFromMem( data, size )))
+        if (lcms_funcs && !(cmsprofile = lcms_funcs->open_profile( data, size )))
         {
             CloseHandle( handle );
             HeapFree( GetProcessHeap(), 0, data );
@@ -1466,24 +1433,17 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
         return NULL;
     }
 
-    if (cmsprofile)
-    {
-        struct profile profile;
-        HPROFILE hprof;
+    prof.file       = handle;
+    prof.access     = access;
+    prof.data       = data;
+    prof.size       = size;
+    prof.cmsprofile = cmsprofile;
 
-        profile.file       = handle;
-        profile.access     = access;
-        profile.data       = data;
-        profile.size       = size;
-        profile.cmsprofile = cmsprofile;
+    if ((hprof = create_profile( &prof ))) return hprof;
 
-        if ((hprof = create_profile( &profile ))) return hprof;
-        HeapFree( GetProcessHeap(), 0, data );
-        cmsCloseProfile( cmsprofile );
-    }
+    if (cmsprofile) lcms_funcs->close_profile( cmsprofile );
+    HeapFree( GetProcessHeap(), 0, data );
     CloseHandle( handle );
-
-#endif /* HAVE_LCMS2 */
     return NULL;
 }
 
@@ -1501,14 +1461,8 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
  */
 BOOL WINAPI CloseColorProfile( HPROFILE profile )
 {
-    BOOL ret = FALSE;
-#ifdef HAVE_LCMS2
-
     TRACE( "( %p )\n", profile );
-    ret = close_profile( profile );
-
-#endif /* HAVE_LCMS2 */
-    return ret;
+    return close_profile( profile );
 }
 
 /******************************************************************************

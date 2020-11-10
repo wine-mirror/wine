@@ -7,6 +7,7 @@ EXTRALIBS = $(LCMS2_LIBS)
 C_SRCS = \
 	handle.c \
 	icc.c \
+	liblcms.c \
 	mscms_main.c \
 	profile.c \
 	stub.c \

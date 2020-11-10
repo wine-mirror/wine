@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifdef HAVE_LCMS2
-#include <lcms2.h>
-
 /*  A simple structure to tie together a pointer to an icc profile, an lcms
  *  color profile handle and a Windows file handle. If the profile is memory
  *  based the file handle field is set to INVALID_HANDLE_VALUE. The 'access'
@@ -34,12 +31,12 @@ struct profile
     DWORD       access;
     char       *data;
     DWORD       size;
-    cmsHPROFILE cmsprofile;
+    void       *cmsprofile;
 };
 
 struct transform
 {
-    cmsHTRANSFORM cmstransform;
+    void       *cmstransform;
 };
 
 extern HPROFILE create_profile( struct profile * ) DECLSPEC_HIDDEN;
@@ -71,6 +68,19 @@ extern BOOL set_tag_data( const struct profile *, TAGTYPE, DWORD, const void *, 
 extern void get_profile_header( const struct profile *, PROFILEHEADER * ) DECLSPEC_HIDDEN;
 extern void set_profile_header( const struct profile *, const PROFILEHEADER * ) DECLSPEC_HIDDEN;
 
-#endif /* HAVE_LCMS2 */
+struct lcms_funcs
+{
+    void * (CDECL *open_profile)( void *data, DWORD size );
+    void   (CDECL *close_profile)( void *profile );
+    void * (CDECL *create_transform)( void *output, void *target, DWORD intent );
+    void * (CDECL *create_multi_transform)( void *profiles, DWORD count, DWORD intent );
+    BOOL   (CDECL *translate_bits)( void *transform, void *srcbits, BMFORMAT input,
+                                    void *dstbits, BMFORMAT output, DWORD size );
+    BOOL   (CDECL *translate_colors)( void *transform, COLOR *in, DWORD count, COLORTYPE input_type,
+                                      COLOR *out, COLORTYPE output_type );
+    void   (CDECL *close_transform)( void *transform );
+};
+
+extern const struct lcms_funcs *lcms_funcs;
 
 extern const char *dbgstr_tag(DWORD) DECLSPEC_HIDDEN;
