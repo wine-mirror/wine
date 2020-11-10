@@ -1616,3 +1616,16 @@ HRESULT __RPC_STUB ICommandProperties_SetProperties_Stub(ICommandProperties* Thi
     FIXME("(%p)->(%d %p %d %p %p): stub\n", This, count, propertyset, total, propstatus, error);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK IConvertType_CanConvert_Proxy(IConvertType* This, DBTYPE from, DBTYPE to, DBCONVERTFLAGS flags)
+{
+    FIXME("(%p)->(%d %d 0x%08x): stub\n", This, from, to, flags);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IConvertType_CanConvert_Stub(IConvertType* This, DBTYPE from, DBTYPE to,
+    DBCONVERTFLAGS flags, IErrorInfo **error)
+{
+    FIXME("(%p)->(%d %d 0x%08x %p): stub\n", This, from, to, flags, error);
+    return E_NOTIMPL;
+}
