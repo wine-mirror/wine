@@ -953,6 +953,31 @@ void free_mbcinfo(MSVCRT_pthreadmbcinfo mbcinfo)
     MSVCRT_free(mbcinfo);
 }
 
+MSVCRT__locale_t CDECL get_current_locale_noalloc(MSVCRT__locale_t locale)
+{
+    thread_data_t *data = msvcrt_get_thread_data();
+
+    if(!data || !data->have_locale)
+    {
+        *locale = *MSVCRT_locale;
+    }
+    else
+    {
+        locale->locinfo = data->locinfo;
+        locale->mbcinfo = data->mbcinfo;
+    }
+
+    InterlockedIncrement(&locale->locinfo->refcount);
+    InterlockedIncrement(&locale->mbcinfo->refcount);
+    return locale;
+}
+
+void CDECL free_locale_noalloc(MSVCRT__locale_t locale)
+{
+    free_locinfo(locale->locinfo);
+    free_mbcinfo(locale->mbcinfo);
+}
+
 /*********************************************************************
  *      _get_current_locale (MSVCRT.@)
  */
@@ -962,11 +987,7 @@ MSVCRT__locale_t CDECL MSVCRT__get_current_locale(void)
     if(!loc)
         return NULL;
 
-    loc->locinfo = get_locinfo();
-    loc->mbcinfo = get_mbcinfo();
-    InterlockedIncrement(&loc->locinfo->refcount);
-    InterlockedIncrement(&loc->mbcinfo->refcount);
-    return loc;
+    return get_current_locale_noalloc(loc);
 }
 
 /*********************************************************************
@@ -977,8 +998,7 @@ void CDECL MSVCRT__free_locale(MSVCRT__locale_t locale)
     if (!locale)
         return;
 
-    free_locinfo(locale->locinfo);
-    free_mbcinfo(locale->mbcinfo);
+    free_locale_noalloc(locale);
     MSVCRT_free(locale);
 }
 
