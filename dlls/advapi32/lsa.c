@@ -105,6 +105,64 @@ static void* ADVAPI_GetDomainName(unsigned sz, unsigned ofs)
 }
 
 /******************************************************************************
+ * LsaGetUserName [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaGetUserName(PUNICODE_STRING *user_name, PUNICODE_STRING *domain_name)
+{
+    UNICODE_STRING *user;
+    DWORD user_size;
+
+    user_size = 0;
+    if (GetUserNameW(NULL, &user_size) || GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+       return STATUS_UNSUCCESSFUL;
+
+    user = heap_alloc(sizeof(*user) + user_size * sizeof(WCHAR));
+    if (!user) return STATUS_NO_MEMORY;
+
+    user->Buffer = (WCHAR *)(user + 1);
+    user->MaximumLength = user_size * sizeof(WCHAR);
+    user->Length = user->MaximumLength - sizeof(WCHAR);
+    if (!GetUserNameW(user->Buffer, &user_size))
+    {
+        heap_free(user);
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    if (domain_name)
+    {
+        UNICODE_STRING *domain;
+        WCHAR computer[MAX_COMPUTERNAME_LENGTH + 1];
+        DWORD domain_size;
+
+        domain_size = ARRAY_SIZE(computer);
+        if (!GetComputerNameW(computer, &domain_size))
+        {
+            heap_free(user);
+            return STATUS_UNSUCCESSFUL;
+        }
+
+        domain = heap_alloc(sizeof(*domain) + (domain_size + 1) * sizeof(WCHAR));
+        if (!domain)
+        {
+            heap_free(user);
+            return STATUS_NO_MEMORY;
+        }
+
+        domain->Buffer = (WCHAR *)(domain + 1);
+        domain->Length = domain_size * sizeof(WCHAR);
+        domain->MaximumLength = domain->Length + sizeof(WCHAR);
+        wcscpy(domain->Buffer, computer);
+
+        *domain_name = domain;
+    }
+
+    *user_name = user;
+
+    return STATUS_SUCCESS;
+}
+
+/******************************************************************************
  * LsaAddAccountRights [ADVAPI32.@]
  *
  */

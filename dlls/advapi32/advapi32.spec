@@ -463,7 +463,7 @@
 # @ stub LsaGetQuotasForAccount
 # @ stub LsaGetRemoteUserName
 @ stub LsaGetSystemAccessAccount
-# @ stub LsaGetUserName
+@ stdcall LsaGetUserName(ptr ptr)
 @ stub LsaICLookupNames
 # @ stub LsaICLookupNamesWithCreds
 @ stub LsaICLookupSids

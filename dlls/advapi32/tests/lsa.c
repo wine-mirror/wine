@@ -2,6 +2,7 @@
  * Unit tests for lsa functions
  *
  * Copyright (c) 2006 Robert Reif
+ * Copyright (c) 2020 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,6 +39,7 @@
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static BOOL (WINAPI *pGetSystemPreferredUILanguages)(DWORD, ULONG*, WCHAR*, ULONG*);
+static NTSTATUS (WINAPI *pLsaGetUserName)(PUNICODE_STRING *user, PUNICODE_STRING *domain);
 
 static void test_lsa(void)
 {
@@ -463,13 +465,59 @@ static void test_LsaLookupPrivilegeName(void)
     LsaFreeMemory(name);
 }
 
+static void test_LsaGetUserName(void)
+{
+    NTSTATUS status;
+    BOOL ret;
+    UNICODE_STRING *lsa_user, *lsa_domain;
+    WCHAR user[256], computer[256];
+    DWORD size;
+
+    if (!pLsaGetUserName)
+    {
+        skip("LsaGetUserName is not available on this platform\n");
+        return;
+    }
+
+    size = ARRAY_SIZE(user);
+    ret = GetUserNameW(user, &size);
+    ok(ret, "GetUserName error %u\n", GetLastError());
+
+    size = ARRAY_SIZE(computer);
+    ret = GetComputerNameW(computer, &size);
+    ok(ret, "GetComputerName error %u\n", GetLastError());
+
+    if (0) /* crashes under Windows */
+        status = pLsaGetUserName(NULL, NULL);
+
+    if (0) /* crashes under Windows */
+        status = pLsaGetUserName(NULL, &lsa_domain);
+
+    status = pLsaGetUserName(&lsa_user, NULL);
+    ok(!status, "got %#x\n", status);
+    check_unicode_string(lsa_user, user);
+    LsaFreeMemory(lsa_user);
+
+    status = pLsaGetUserName(&lsa_user, &lsa_domain);
+    ok(!status, "got %#x\n", status);
+    ok(!lstrcmpW(user, lsa_user->Buffer), "%s != %s\n", wine_dbgstr_w(user), wine_dbgstr_wn(lsa_user->Buffer, lsa_user->Length/sizeof(WCHAR)));
+    check_unicode_string(lsa_user, user);
+    check_unicode_string(lsa_domain, computer);
+    LsaFreeMemory(lsa_user);
+    LsaFreeMemory(lsa_domain);
+}
+
 START_TEST(lsa)
 {
-    HMODULE hkernel32 = GetModuleHandleA("kernel32");
+    HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
+    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+
     pGetSystemPreferredUILanguages = (void*)GetProcAddress(hkernel32, "GetSystemPreferredUILanguages");
+    pLsaGetUserName = (void *)GetProcAddress(hadvapi32, "LsaGetUserName");
 
     test_lsa();
     test_LsaLookupNames2();
     test_LsaLookupSids();
     test_LsaLookupPrivilegeName();
+    test_LsaGetUserName();
 }
