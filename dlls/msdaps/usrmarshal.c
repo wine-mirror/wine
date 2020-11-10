@@ -1589,3 +1589,30 @@ HRESULT __RPC_STUB IGetDataSource_GetDataSource_Stub(IGetDataSource* This, REFII
     FIXME("(%p)->(%s %p %p): stub\n", This, debugstr_guid(riid), datasource, error);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK ICommandProperties_GetProperties_Proxy(ICommandProperties* This, const ULONG count,
+    const DBPROPIDSET propertyidsets[], ULONG *sets_cnt, DBPROPSET **propertyset)
+{
+    FIXME("(%p)->(%d %p %p %p): stub\n", This, count, propertyidsets, sets_cnt, propertyset);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB ICommandProperties_GetProperties_Stub(ICommandProperties* This, const ULONG count,
+    const DBPROPIDSET *propertyidsets, ULONG *sets_cnt, DBPROPSET **propertyset, IErrorInfo **error)
+{
+    FIXME("(%p)->(%d %p %p %p %p): stub\n", This, count, propertyidsets, sets_cnt, propertyset, error);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK ICommandProperties_SetProperties_Proxy(ICommandProperties* This, ULONG count, DBPROPSET propertyset[])
+{
+    FIXME("(%p)->(%d %p): stub\n", This, count, propertyset);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB ICommandProperties_SetProperties_Stub(ICommandProperties* This, ULONG count,
+    DBPROPSET *propertyset, ULONG total, DBPROPSTATUS *propstatus, IErrorInfo **error)
+{
+    FIXME("(%p)->(%d %p %d %p %p): stub\n", This, count, propertyset, total, propstatus, error);
+    return E_NOTIMPL;
+}
