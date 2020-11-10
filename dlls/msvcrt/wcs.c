@@ -355,6 +355,7 @@ MSVCRT_wchar_t* CDECL MSVCRT__wcsset( MSVCRT_wchar_t* str, MSVCRT_wchar_t c )
 int CDECL MSVCRT__wcsupr_s_l( MSVCRT_wchar_t* str, MSVCRT_size_t n,
    MSVCRT__locale_t locale )
 {
+  MSVCRT__locale_tstruct tmp = {0};
   MSVCRT_wchar_t* ptr = str;
 
   if (!str || !n)
@@ -364,12 +365,21 @@ int CDECL MSVCRT__wcsupr_s_l( MSVCRT_wchar_t* str, MSVCRT_size_t n,
     return MSVCRT_EINVAL;
   }
 
+  if(!locale)
+    locale = get_current_locale_noalloc(&tmp);
+
   while (n--)
   {
-    if (!*ptr) return 0;
+    if (!*ptr)
+    {
+      free_locale_noalloc(&tmp);
+      return 0;
+    }
     *ptr = MSVCRT__towupper_l(*ptr, locale);
     ptr++;
   }
+
+  free_locale_noalloc(&tmp);
 
   /* MSDN claims that the function should return and set errno to
    * ERANGE, which doesn't seem to be true based on the tests. */
