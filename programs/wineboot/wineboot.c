@@ -820,18 +820,18 @@ static void create_environment_registry_keys( void )
 static void create_computer_name_keys(void)
 {
     struct addrinfo hints = {0}, *res;
-    char *dot, buffer[256];
+    char *dot, buffer[256], *name = buffer;
     HKEY key, subkey;
 
     if (gethostname( buffer, sizeof(buffer) )) return;
     hints.ai_flags = AI_CANONNAME;
-    if (getaddrinfo( buffer, NULL, &hints, &res )) return;
-    dot = strchr( res->ai_canonname, '.' );
+    if (!getaddrinfo( buffer, NULL, &hints, &res )) name = res->ai_canonname;
+    dot = strchr( name, '.' );
     if (dot) *dot++ = 0;
-    else dot = res->ai_canonname + strlen(res->ai_canonname);
+    else dot = name + strlen(name);
     SetComputerNameExA( ComputerNamePhysicalDnsDomain, dot );
-    SetComputerNameExA( ComputerNamePhysicalDnsHostname, res->ai_canonname );
-    freeaddrinfo( res );
+    SetComputerNameExA( ComputerNamePhysicalDnsHostname, name );
+    if (name != buffer) freeaddrinfo( res );
 
     if (RegOpenKeyW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\ComputerName", &key ))
         return;
