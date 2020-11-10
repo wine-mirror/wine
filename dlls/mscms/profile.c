@@ -18,10 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/debug.h"
-#include "wine/unicode.h"
-
 #include <stdarg.h>
 
 #include "windef.h"
@@ -32,6 +28,7 @@
 #include "winreg.h"
 #include "shlwapi.h"
 #include "icm.h"
+#include "wine/debug.h"
 
 #include "mscms_priv.h"
 
@@ -104,12 +101,6 @@ BOOL WINAPI AssociateColorProfileWithDeviceA( PCSTR machine, PCSTR profile, PCST
 
 static BOOL set_profile_device_key( PCWSTR file, const BYTE *value, DWORD size )
 {
-    static const WCHAR fmtW[] = {'%','c','%','c','%','c','%','c',0};
-    static const WCHAR icmW[] = {'S','o','f','t','w','a','r','e','\\',
-                                 'M','i','c','r','o','s','o','f','t','\\',
-                                 'W','i','n','d','o','w','s',' ','N','T','\\',
-                                 'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                 'I','C','M',0};
     PROFILEHEADER header;
     PROFILE profile;
     HPROFILE handle;
@@ -132,11 +123,13 @@ static BOOL set_profile_device_key( PCWSTR file, const BYTE *value, DWORD size )
         SetLastError( ERROR_INVALID_PROFILE );
         return FALSE;
     }
-    RegCreateKeyExW( HKEY_LOCAL_MACHINE, icmW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &icm_key, NULL );
+    RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ICM",
+                     0, NULL, 0, KEY_ALL_ACCESS, NULL, &icm_key, NULL );
 
     basename( file, basenameW );
-    sprintfW( classW, fmtW, (header.phClass >> 24) & 0xff, (header.phClass >> 16) & 0xff,
-                            (header.phClass >> 8) & 0xff,  header.phClass & 0xff );
+    swprintf( classW, ARRAY_SIZE(classW), L"%c%c%c%c",
+              (header.phClass >> 24) & 0xff, (header.phClass >> 16) & 0xff,
+              (header.phClass >> 8) & 0xff,  header.phClass & 0xff );
 
     RegCreateKeyExW( icm_key, classW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &class_key, NULL );
     if (value) RegSetValueExW( class_key, basenameW, 0, REG_BINARY, value, size );
@@ -287,8 +280,6 @@ BOOL WINAPI GetColorDirectoryA( PCSTR machine, PSTR buffer, PDWORD size )
 BOOL WINAPI GetColorDirectoryW( PCWSTR machine, PWSTR buffer, PDWORD size )
 {
     WCHAR colordir[MAX_PATH];
-    static const WCHAR colorsubdir[] =
-        {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\','c','o','l','o','r',0};
     DWORD len;
 
     TRACE( "( %p, %p )\n", buffer, size );
@@ -296,7 +287,7 @@ BOOL WINAPI GetColorDirectoryW( PCWSTR machine, PWSTR buffer, PDWORD size )
     if (machine || !size) return FALSE;
 
     GetSystemDirectoryW( colordir, ARRAY_SIZE( colordir ));
-    lstrcatW( colordir, colorsubdir );
+    lstrcatW( colordir, L"\\spool\\drivers\\color" );
 
     len = lstrlenW( colordir ) * sizeof(WCHAR);
 
@@ -573,9 +564,6 @@ BOOL WINAPI GetStandardColorSpaceProfileA( PCSTR machine, DWORD id, PSTR profile
  */
 BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profile, PDWORD size )
 {
-    static const WCHAR rgbprofilefile[] =
-        { '\\','s','r','g','b',' ','c','o','l','o','r',' ',
-          's','p','a','c','e',' ','p','r','o','f','i','l','e','.','i','c','m',0 };
     WCHAR rgbprofile[MAX_PATH];
     DWORD len = sizeof(rgbprofile);
 
@@ -605,7 +593,7 @@ BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profi
     {
         case LCS_sRGB:
         case LCS_WINDOWS_COLOR_SPACE: /* FIXME */
-            lstrcatW( rgbprofile, rgbprofilefile );
+            lstrcatW( rgbprofile, L"\\srgb color space profile.icm" );
             len = lstrlenW( rgbprofile ) * sizeof(WCHAR);
 
             if (*size < len)
@@ -917,7 +905,6 @@ exit:
 BOOL WINAPI EnumColorProfilesW( PCWSTR machine, PENUMTYPEW record, PBYTE buffer,
                                 PDWORD size, PDWORD number )
 {
-    static const WCHAR spec[] = {'\\','*','i','c','m',0};
     BOOL match, ret = FALSE;
     WCHAR colordir[MAX_PATH], glob[MAX_PATH], **profiles = NULL;
     DWORD i, len = sizeof(colordir), count = 0, totalsize = 0;
@@ -932,14 +919,14 @@ BOOL WINAPI EnumColorProfilesW( PCWSTR machine, PENUMTYPEW record, PBYTE buffer,
         record->dwVersion != ENUM_TYPE_VERSION) return FALSE;
 
     ret = GetColorDirectoryW( machine, colordir, &len );
-    if (!ret || len + sizeof(spec) > MAX_PATH)
+    if (!ret || len + ARRAY_SIZE(L"\\*icm") > MAX_PATH)
     {
         WARN( "Can't retrieve color directory\n" );
         return FALSE;
     }
 
     lstrcpyW( glob, colordir );
-    lstrcatW( glob, spec );
+    lstrcatW( glob, L"\\*icm" );
 
     find = FindFirstFileW( glob, &data );
     if (find == INVALID_HANDLE_VALUE) return FALSE;
@@ -1085,7 +1072,7 @@ BOOL WINAPI InstallColorProfileW( PCWSTR machine, PCWSTR profile )
     lstrcatW( dest, base );
 
     /* Is source equal to destination? */
-    if (!lstrcmpW( profile, dest )) return TRUE;
+    if (!wcscmp( profile, dest )) return TRUE;
 
     return CopyFileW( profile, dest, TRUE );
 }
@@ -1385,11 +1372,11 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
 
             if (!GetColorDirectoryW( NULL, NULL, &size ) && GetLastError() == ERROR_MORE_DATA)
             {
-                size += (strlenW( profile->pProfileData ) + 2) * sizeof(WCHAR);
+                size += (lstrlenW( profile->pProfileData ) + 2) * sizeof(WCHAR);
                 if (!(path = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
                 GetColorDirectoryW( NULL, path, &size );
                 PathAddBackslashW( path );
-                strcatW( path, profile->pProfileData );
+                lstrcatW( path, profile->pProfileData );
             }
             else return NULL;
             handle = CreateFileW( path, flags, sharing, NULL, creation, 0, NULL );

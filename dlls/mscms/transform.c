@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/debug.h"
-
 #include <stdarg.h>
 
 #include "windef.h"
@@ -29,6 +26,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "icm.h"
+#include "wine/debug.h"
 
 #include "mscms_priv.h"
 
