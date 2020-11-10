@@ -336,7 +336,7 @@ static void test_LsaLookupSids(void)
 {
     WCHAR langW[32];
     char user_buffer[64];
-    LSA_OBJECT_ATTRIBUTES attrs = {.Length = sizeof(attrs)};
+    LSA_OBJECT_ATTRIBUTES attrs = {sizeof(attrs)};
     TOKEN_USER *user = (TOKEN_USER *)user_buffer;
     WCHAR computer_name[64], user_name[64];
     LSA_REFERENCED_DOMAIN_LIST *list;
