@@ -1133,6 +1133,9 @@ static BOOLEAN get_dir_case_sensitivity_stat( const char *dir )
          * newer versions should be case-insensitive on the server anyway */
         !strcmp( stfs.f_fstypename, "smbfs" ))
         return FALSE;
+    /* no ntfs-3g: modern fusefs has no way to report the filesystem on FreeBSD
+     * no cd9660 or udf, they're case-sensitive on FreeBSD
+     */
 #ifdef __APPLE__
     if (!strcmp( stfs.f_fstypename, "msdos" ) ||
         !strcmp( stfs.f_fstypename, "cd9660" ) ||
