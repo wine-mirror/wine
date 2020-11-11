@@ -30,7 +30,7 @@ signature="$CHICAGO$"
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDlls
 UpdateInis=SystemIni
-CopyFiles=InfFiles,NlsFiles,SortFiles
+CopyFiles=ColorFiles,InfFiles,NlsFiles,SortFiles
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -54,7 +54,7 @@ AddReg=\
 RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin32,FakeDlls
 UpdateInis=SystemIni
-CopyFiles=InfFiles,NlsFiles,SortFiles
+CopyFiles=ColorFiles,InfFiles,NlsFiles,SortFiles
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -80,7 +80,7 @@ RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin64,FakeDlls
 WinePreInstall=Wow64
 UpdateInis=SystemIni
-CopyFiles=InfFiles,NlsFiles,SortFiles
+CopyFiles=ColorFiles,InfFiles,NlsFiles,SortFiles
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -107,7 +107,7 @@ RegisterDlls=RegisterDllsSection
 WineFakeDlls=FakeDllsWin64,FakeDlls
 WinePreInstall=Wow64
 UpdateInis=SystemIni
-CopyFiles=InfFiles,NlsFiles,SortFiles
+CopyFiles=ColorFiles,InfFiles,NlsFiles,SortFiles
 AddReg=\
     Classes,\
     ContentIndex,\
@@ -2667,14 +2667,12 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 [FakeDlls]
 ; create some directories first
 10,help,
-10,inf,
 10,logs,
 10,tasks,
 10,temp,
 11,catroot,
 11,mui,
 11,tasks,
-11,spool\drivers\color,
 11,spool\printers,
 10,,explorer.exe
 10,,hh.exe
@@ -4058,6 +4056,9 @@ HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-Solitaire-EnableGame",0x
 HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-SpiderSolitaire-EnableGame",0x10001,0x00000001
 HKLM,Software\Wine\LicenseInformation,"Shell-PremiumInBoxGames-Chess-EnableGame",0x10001,0x00000001
 
+[ColorFiles]
+srgb color space profile.icm,"@mscms.dll,-1"
+
 [InfFiles]
 winebus.inf,"@winebus.sys,-1"
 winehid.inf,"@winehid.sys,-1"
@@ -4145,6 +4146,7 @@ NlsFiles  = nls
 SortFiles = nls
 
 [DestinationDirs]
+ColorFiles = 23
 InfFiles  = 17
 NlsFiles  = 11
 SortFiles = 10,globalization\sorting
