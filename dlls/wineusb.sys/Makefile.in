@@ -6,3 +6,5 @@ EXTRADLLFLAGS = -Wl,--subsystem,native
 
 C_SRCS = \
 	wineusb.c
+
+RC_SRCS = wineusb.rc
