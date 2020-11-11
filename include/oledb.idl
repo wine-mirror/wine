@@ -74,6 +74,7 @@ typedef DWORD_PTR DBHASHVALUE;
 #include "cmdprp.idl"
 #include "cvttyp.idl"
 #include "cmdpre.idl"
+#include "rstchg.idl"
 
 cpp_quote("#include <accctrl.h>")
 
