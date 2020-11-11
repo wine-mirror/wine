@@ -1506,6 +1506,34 @@ static void test_GetSetStdHandle(void)
     ok(error == 0xdeadbeef, "wrong GetLastError() %d\n", error);
 }
 
+static void test_DuplicateConsoleHandle(void)
+{
+    HANDLE handle, event;
+    BOOL ret;
+
+    if (skip_nt) return;
+
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    /* duplicate an event handle with DuplicateConsoleHandle */
+    handle = DuplicateConsoleHandle(event, 0, FALSE, DUPLICATE_SAME_ACCESS);
+    ok(handle != NULL, "DuplicateConsoleHandle failed: %u\n", GetLastError());
+
+    ret = SetEvent(handle);
+    ok(ret, "SetEvent failed: %u\n", GetLastError());
+
+    ret = CloseConsoleHandle(handle);
+    todo_wine
+    ok(ret, "CloseConsoleHandle failed: %u\n", GetLastError());
+    ret = CloseConsoleHandle(event);
+    todo_wine
+    ok(ret, "CloseConsoleHandle failed: %u\n", GetLastError());
+
+    handle = DuplicateConsoleHandle((HANDLE)0xdeadbeef, 0, FALSE, DUPLICATE_SAME_ACCESS);
+    ok(handle == INVALID_HANDLE_VALUE, "DuplicateConsoleHandle failed: %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "last error = %u\n", GetLastError());
+}
+
 static void test_GetNumberOfConsoleInputEvents(HANDLE input_handle)
 {
     DWORD count;
@@ -4387,6 +4415,7 @@ START_TEST(console)
     test_OpenCON();
     test_VerifyConsoleIoHandle(hConOut);
     test_GetSetStdHandle();
+    test_DuplicateConsoleHandle();
     test_GetNumberOfConsoleInputEvents(hConIn);
     test_WriteConsoleInputA(hConIn);
     test_WriteConsoleInputW(hConIn);

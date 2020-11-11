@@ -113,13 +113,9 @@ BOOL WINAPI VerifyConsoleIoHandle(HANDLE handle)
 HANDLE WINAPI DuplicateConsoleHandle(HANDLE handle, DWORD access, BOOL inherit,
                                      DWORD options)
 {
-    HANDLE      ret;
-
-    if (!is_console_handle(handle) ||
-        !DuplicateHandle(GetCurrentProcess(), wine_server_ptr_handle(console_handle_unmap(handle)),
-                         GetCurrentProcess(), &ret, access, inherit, options))
-        return INVALID_HANDLE_VALUE;
-    return console_handle_map(ret);
+    HANDLE ret;
+    return DuplicateHandle(GetCurrentProcess(), handle, GetCurrentProcess(), &ret,
+                           access, inherit, options) ? ret : INVALID_HANDLE_VALUE;
 }
 
 /******************************************************************
