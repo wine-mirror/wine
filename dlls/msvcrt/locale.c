@@ -351,6 +351,11 @@ LCID MSVCRT_locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *s
     } else if (!MSVCRT__strnicmp(cp, ".OCP", 4)) {
         GetLocaleInfoW(lcid, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
                 (WCHAR *)&locale_cp, sizeof(DWORD)/sizeof(WCHAR));
+#if _MSVCR_VER >= 140
+    } else if (!MSVCRT__strnicmp(cp, ".UTF-8", 6)
+            || !MSVCRT__strnicmp(cp, ".UTF8", 5)) {
+        locale_cp = CP_UTF8;
+#endif
     } else {
         locale_cp = atoi(cp + 1);
     }
