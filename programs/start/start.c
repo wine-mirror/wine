@@ -75,11 +75,9 @@ static void fatal_error(const WCHAR *msg, DWORD error_code, const WCHAR *filenam
     DWORD_PTR args[1];
     LPVOID lpMsgBuf;
     int status;
-    static const WCHAR colonsW[] = { ':', ' ', 0 };
-    static const WCHAR newlineW[] = { '\n', 0 };
 
     output(msg);
-    output(colonsW);
+    output(L": ");
     args[0] = (DWORD_PTR)filename;
     status = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY,
                             NULL, error_code, 0, (LPWSTR)&lpMsgBuf, 0, (__ms_va_list *)args );
@@ -90,7 +88,7 @@ static void fatal_error(const WCHAR *msg, DWORD error_code, const WCHAR *filenam
     {
         output(lpMsgBuf);
         LocalFree((HLOCAL) lpMsgBuf);
-        output(newlineW);
+        output(L"\n");
     }
     ExitProcess(1);
 }
@@ -125,8 +123,6 @@ static WCHAR *build_args( int argc, WCHAR **argvW )
 {
 	int i, wlen = 1;
 	WCHAR *ret, *p;
-	static const WCHAR FormatQuotesW[] = { ' ', '\"', '%', 's', '\"', 0 };
-	static const WCHAR FormatW[] = { ' ', '%', 's', 0 };
 
 	for (i = 0; i < argc; i++ )
 	{
@@ -140,9 +136,9 @@ static WCHAR *build_args( int argc, WCHAR **argvW )
 	for (i = 0, p = ret; i < argc; i++ )
 	{
 		if (wcschr(argvW[i], ' '))
-                    p += swprintf(p, wlen - (p - ret), FormatQuotesW, argvW[i]);
+                    p += swprintf(p, wlen - (p - ret), L" \"%s\"", argvW[i]);
 		else
-                    p += swprintf(p, wlen - (p - ret), FormatW, argvW[i]);
+                    p += swprintf(p, wlen - (p - ret), L" %s", argvW[i]);
 	}
 	return ret;
 }
@@ -196,14 +192,6 @@ static BOOL search_path(const WCHAR *firstParam, WCHAR **full_path)
     /* Copied from WCMD_run_program() in programs/cmd/wcmdmain.c */
 
 #define MAXSTRING 8192
-    static const WCHAR slashW[] = {'\\','\0',};
-    static const WCHAR envPath[] = {'P','A','T','H','\0'};
-    static const WCHAR envPathExt[] = {'P','A','T','H','E','X','T','\0'};
-    static const WCHAR dfltPathExt[] = {'.','b','a','t',';',
-                                        '.','c','o','m',';',
-                                        '.','c','m','d',';',
-                                        '.','e','x','e','\0'};
-    static const WCHAR delims[] = {'/','\\',':','\0'};
 
     WCHAR  temp[MAX_PATH];
     WCHAR  pathtosearch[MAXSTRING];
@@ -216,13 +204,11 @@ static BOOL search_path(const WCHAR *firstParam, WCHAR **full_path)
     DWORD len;
 
     /* Calculate the search path and stem to search for */
-    if (wcspbrk (firstParam, delims) == NULL) {  /* No explicit path given, search path */
-        static const WCHAR curDir[] = {'.',';','\0'};
-        lstrcpyW(pathtosearch, curDir);
-        len = GetEnvironmentVariableW(envPath, &pathtosearch[2], ARRAY_SIZE(pathtosearch)-2);
+    if (wcspbrk (firstParam, L"/\\:") == NULL) {  /* No explicit path given, search path */
+        lstrcpyW(pathtosearch, L".;");
+        len = GetEnvironmentVariableW(L"PATH", &pathtosearch[2], ARRAY_SIZE(pathtosearch)-2);
         if ((len == 0) || (len >= ARRAY_SIZE(pathtosearch) - 2)) {
-            static const WCHAR curDir[] = {'.','\0'};
-            lstrcpyW (pathtosearch, curDir);
+            lstrcpyW (pathtosearch, L".");
         }
         if (wcschr(firstParam, '.') != NULL) extensionsupplied = TRUE;
         if (lstrlenW(firstParam) >= MAX_PATH) {
@@ -245,9 +231,9 @@ static BOOL search_path(const WCHAR *firstParam, WCHAR **full_path)
     }
 
     /* Now extract PATHEXT */
-    len = GetEnvironmentVariableW(envPathExt, pathext, ARRAY_SIZE(pathext));
+    len = GetEnvironmentVariableW(L"PATHEXT", pathext, ARRAY_SIZE(pathext));
     if ((len == 0) || (len >= ARRAY_SIZE(pathext))) {
-        lstrcpyW (pathext, dfltPathExt);
+        lstrcpyW (pathext, L".bat;.com;.cmd;.exe");
     }
 
     /* Loop through the search path, dir by dir */
@@ -294,7 +280,7 @@ static BOOL search_path(const WCHAR *firstParam, WCHAR **full_path)
         GetFullPathNameW(temp, MAX_PATH, thisDir, NULL);
 
         /* 1. If extension supplied, see if that file exists */
-        lstrcatW(thisDir, slashW);
+        lstrcatW(thisDir, L"\\");
         lstrcatW(thisDir, stemofsearch);
         pos = &thisDir[lstrlenW(thisDir)]; /* Pos = end of name */
 
@@ -309,9 +295,8 @@ static BOOL search_path(const WCHAR *firstParam, WCHAR **full_path)
         if (!found) {
             HANDLE          h;
             WIN32_FIND_DATAW finddata;
-            static const WCHAR allFiles[] = {'.','*','\0'};
 
-            lstrcatW(thisDir,allFiles);
+            lstrcatW(thisDir, L".*");
             h = FindFirstFileW(thisDir, &finddata);
             FindClose(h);
             if (h != INVALID_HANDLE_VALUE) {
@@ -365,31 +350,9 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 	WCHAR *parent_directory = NULL;
 	DWORD binary_type;
 
-	static const WCHAR bW[] = { '/', 'b', 0 };
-	static const WCHAR minW[] = { '/', 'm', 'i', 'n', 0 };
-	static const WCHAR maxW[] = { '/', 'm', 'a', 'x', 0 };
-	static const WCHAR lowW[] = { '/', 'l', 'o', 'w', 0 };
-	static const WCHAR normalW[] = { '/', 'n', 'o', 'r', 'm', 'a', 'l', 0 };
-	static const WCHAR highW[] = { '/', 'h', 'i', 'g', 'h', 0 };
-	static const WCHAR realtimeW[] = { '/', 'r', 'e', 'a', 'l', 't', 'i', 'm', 'e', 0 };
-	static const WCHAR abovenormalW[] = { '/', 'a', 'b', 'o', 'v', 'e', 'n', 'o', 'r', 'm', 'a', 'l', 0 };
-	static const WCHAR belownormalW[] = { '/', 'b', 'e', 'l', 'o', 'w', 'n', 'o', 'r', 'm', 'a', 'l', 0 };
-	static const WCHAR separateW[] = { '/', 's', 'e', 'p', 'a', 'r', 'a', 't', 'e', 0 };
-	static const WCHAR sharedW[] = { '/', 's', 'h', 'a', 'r', 'e', 'd', 0 };
-	static const WCHAR nodeW[] = { '/', 'n', 'o', 'd', 'e', 0 };
-	static const WCHAR affinityW[] = { '/', 'a', 'f', 'f', 'i', 'n', 'i', 't', 'y', 0 };
-	static const WCHAR wW[] = { '/', 'w', 0 };
-	static const WCHAR waitW[] = { '/', 'w', 'a', 'i', 't', 0 };
-	static const WCHAR helpW[] = { '/', '?', 0 };
-	static const WCHAR unixW[] = { '/', 'u', 'n', 'i', 'x', 0 };
-	static const WCHAR progIDOpenW[] =
-		{ '/', 'p', 'r', 'o', 'g', 'I', 'D', 'O', 'p', 'e', 'n', 0};
-	static const WCHAR openW[] = { 'o', 'p', 'e', 'n', 0 };
-	static const WCHAR cmdW[] = { 'c', 'm', 'd', '.', 'e', 'x', 'e', 0 };
-
 	memset(&sei, 0, sizeof(sei));
 	sei.cbSize = sizeof(sei);
-	sei.lpVerb = openW;
+        sei.lpVerb = L"open";
 	sei.nShow = SW_SHOWNORMAL;
 	/* Dunno what these mean, but it looks like winMe's start uses them */
 	sei.fMask = SEE_MASK_FLAG_DDEWAIT|
@@ -431,43 +394,43 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 			} else
 				sei.lpDirectory = argv[++i];
 		}
-		else if (is_option(argv[i], bW)) {
+                else if (is_option(argv[i], L"/b")) {
 			creation_flags &= ~CREATE_NEW_CONSOLE;
 		}
 		else if (argv[i][0] == '/' && (argv[i][1] == 'i' || argv[i][1] == 'I')) {
                     TRACE("/i is ignored\n"); /* FIXME */
 		}
-		else if (is_option(argv[i], minW)) {
+                else if (is_option(argv[i], L"/min")) {
 			sei.nShow = SW_SHOWMINIMIZED;
 		}
-		else if (is_option(argv[i], maxW)) {
+                else if (is_option(argv[i], L"/max")) {
 			sei.nShow = SW_SHOWMAXIMIZED;
 		}
-		else if (is_option(argv[i], lowW)) {
+                else if (is_option(argv[i], L"/low")) {
 			creation_flags |= IDLE_PRIORITY_CLASS;
 		}
-		else if (is_option(argv[i], normalW)) {
+                else if (is_option(argv[i], L"/normal")) {
 			creation_flags |= NORMAL_PRIORITY_CLASS;
 		}
-		else if (is_option(argv[i], highW)) {
+                else if (is_option(argv[i], L"/high")) {
 			creation_flags |= HIGH_PRIORITY_CLASS;
 		}
-		else if (is_option(argv[i], realtimeW)) {
+                else if (is_option(argv[i], L"/realtime")) {
 			creation_flags |= REALTIME_PRIORITY_CLASS;
 		}
-		else if (is_option(argv[i], abovenormalW)) {
+                else if (is_option(argv[i], L"/abovenormal")) {
 			creation_flags |= ABOVE_NORMAL_PRIORITY_CLASS;
 		}
-		else if (is_option(argv[i], belownormalW)) {
+                else if (is_option(argv[i], L"/belownormal")) {
 			creation_flags |= BELOW_NORMAL_PRIORITY_CLASS;
 		}
-		else if (is_option(argv[i], separateW)) {
+                else if (is_option(argv[i], L"/separate")) {
 			TRACE("/separate is ignored\n"); /* FIXME */
 		}
-		else if (is_option(argv[i], sharedW)) {
+                else if (is_option(argv[i], L"/shared")) {
 			TRACE("/shared is ignored\n"); /* FIXME */
 		}
-		else if (is_option(argv[i], nodeW)) {
+                else if (is_option(argv[i], L"/node")) {
 			if (i+1 == argc) {
 				WINE_ERR("you must specify a numa node for the /node option\n");
 				usage();
@@ -477,7 +440,7 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 				i++;
 			}
 		}
-		else if (is_option(argv[i], affinityW))
+                else if (is_option(argv[i], L"/affinity"))
 		{
 			if (i+1 == argc) {
 				WINE_ERR("you must specify a numa node for the /node option\n");
@@ -488,19 +451,19 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 				i++;
 			}
 		}
-		else if (is_option(argv[i], wW) || is_option(argv[i], waitW)) {
+                else if (is_option(argv[i], L"/w") || is_option(argv[i], L"/wait")) {
 			sei.fMask |= SEE_MASK_NOCLOSEPROCESS;
 		}
-		else if (is_option(argv[i], helpW)) {
+                else if (is_option(argv[i], L"/?")) {
 			usage();
 		}
 
 		/* Wine extensions */
 
-		else if (is_option(argv[i], unixW)) {
+                else if (is_option(argv[i], L"/unix")) {
                         unix_mode = TRUE;
 		}
-		else if (is_option(argv[i], progIDOpenW)) {
+                else if (is_option(argv[i], L"/progIDOpen")) {
                         progid_open = TRUE;
 		} else
 
@@ -520,7 +483,7 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 	if (i == argc) {
 		if (progid_open || unix_mode)
 			usage();
-		file = cmdW;
+                file = L"cmd.exe";
 	}
 	else
 		file = argv[i++];
@@ -570,13 +533,12 @@ int __cdecl wmain (int argc, WCHAR *argv[])
                     WCHAR *commandline;
                     STARTUPINFOW startup_info;
                     PROCESS_INFORMATION process_information;
-                    static const WCHAR commandlineformat[] = {'"','%','s','"','%','s',0};
 
                     /* explorer on windows always quotes the filename when running a binary on windows (see bug 5224) so we have to use CreateProcessW in this case */
 
                     commandline = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(sei.lpFile)+3+lstrlenW(sei.lpParameters))*sizeof(WCHAR));
                     swprintf(commandline, lstrlenW(sei.lpFile) + 3 + lstrlenW(sei.lpParameters),
-                             commandlineformat, sei.lpFile, sei.lpParameters);
+                             L"\"%s\"%s", sei.lpFile, sei.lpParameters);
 
                     ZeroMemory(&startup_info, sizeof(startup_info));
                     startup_info.cb = sizeof(startup_info);
@@ -604,12 +566,11 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 
         if (!ShellExecuteExW(&sei))
         {
-            static const WCHAR pathextW[] = {'P','A','T','H','E','X','T',0};
             const WCHAR *filename = sei.lpFile;
             DWORD size, filename_len;
             WCHAR *name, *env;
 
-            size = GetEnvironmentVariableW(pathextW, NULL, 0);
+            size = GetEnvironmentVariableW(L"PATHEXT", NULL, 0);
             if (size)
             {
                 WCHAR *start, *ptr;
@@ -617,7 +578,7 @@ int __cdecl wmain (int argc, WCHAR *argv[])
                 env = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
                 if (!env)
                     fatal_string_error(STRING_EXECFAIL, ERROR_OUTOFMEMORY, sei.lpFile);
-                GetEnvironmentVariableW(pathextW, env, size);
+                GetEnvironmentVariableW(L"PATHEXT", env, size);
 
                 filename_len = lstrlenW(filename);
                 name = HeapAlloc(GetProcessHeap(), 0, (filename_len + size) * sizeof(WCHAR));
