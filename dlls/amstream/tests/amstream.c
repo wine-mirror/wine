@@ -7951,12 +7951,14 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &stream_sample2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* Initial status is S_OK. */
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, 0, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_WAIT, INFINITE);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* Update changes the status to MS_S_PENDING. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
@@ -7966,6 +7968,7 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_WAIT, 100);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
+    /* Each Receive call changes the status of one queued sample to S_OK in the same order Update was called. */
     hr = IDirectDrawStreamSample_Update(stream_sample2, SSUPDATE_ASYNC, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
@@ -7996,6 +7999,7 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample2, 0, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* COMPSTAT_NOUPDATEOK removes the sample from the queue and changes the status to MS_S_NOUPDATE. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
@@ -8020,6 +8024,7 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample2, 0, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* COMPSTAT_ABORT removes the sample from the queue and changes the status to MS_S_NOUPDATE. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
@@ -8044,18 +8049,21 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample2, 0, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* COMPSTAT_WAIT has no effect when combined with COMPSTAT_NOUPDATEOK. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_NOUPDATEOK | COMPSTAT_WAIT, INFINITE);
     ok(hr == MS_S_NOUPDATE, "Got hr %#x.\n", hr);
 
+    /* COMPSTAT_WAIT has no effect when combined with COMPSTAT_ABORT. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_ABORT | COMPSTAT_WAIT, INFINITE);
     ok(hr == MS_S_NOUPDATE, "Got hr %#x.\n", hr);
 
+    /* EndOfStream changes the status of the queued samples to MS_S_ENDOFSTREAM. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
@@ -8068,6 +8076,7 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_WAIT, INFINITE);
     ok(hr == MS_S_ENDOFSTREAM, "Got hr %#x.\n", hr);
 
+    /* Update after EndOfStream changes the status to MS_S_ENDOFSTREAM. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
     ok(hr == MS_S_ENDOFSTREAM, "Got hr %#x.\n", hr);
 
@@ -8082,18 +8091,22 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* Continuous update can be canceled by COMPSTAT_NOUPDATEOK. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC | SSUPDATE_CONTINUOUS, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_NOUPDATEOK, 0);
     ok(hr == MS_S_NOUPDATE, "Got hr %#x.\n", hr);
 
+    /* Continuous update can be canceled by COMPSTAT_ABORT. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC | SSUPDATE_CONTINUOUS, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_ABORT, 0);
     ok(hr == MS_S_NOUPDATE, "Got hr %#x.\n", hr);
 
+    /* If a sample is in countinuous update mode, when Receive is called it's status remains MS_S_PENDING
+     * and the sample is moved to the end of the queue. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC | SSUPDATE_CONTINUOUS, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
@@ -8136,6 +8149,7 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_NOUPDATEOK, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* In continuous update mode, flushing does not affect the status. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC | SSUPDATE_CONTINUOUS, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
@@ -8151,6 +8165,7 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, 0, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
+    /* In continuous update mode, stopping and running the stream does not affect the status. */
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -8163,6 +8178,7 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, 0, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
+    /* In continuous update mode, EndOfStream changes the status to MS_S_ENDOFSTREAM. */
     hr = IPin_EndOfStream(pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -8174,6 +8190,7 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* COMPSTAT_WAIT resets the sample to the non-continuous update mode. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC | SSUPDATE_CONTINUOUS, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
@@ -8189,6 +8206,7 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, 0, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* In continuous update mode, CompletionStatus with COMPSTAT_WAIT returns when Receive is called. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC | SSUPDATE_CONTINUOUS, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
@@ -8216,6 +8234,7 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* CompletionStatus with COMPSTAT_WAIT returns when Receive is called. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
@@ -8235,6 +8254,7 @@ static void test_ddrawstreamsample_completion_status(void)
     ok(!WaitForSingleObject(thread, 2000), "Wait timed out.\n");
     CloseHandle(thread);
 
+    /* CompletionStatus with COMPSTAT_WAIT returns when EndOfStream is called. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
@@ -8256,6 +8276,7 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* Stopping and running the stream does not affect the status and does not remove the sample from the queue. */
     hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
@@ -8277,6 +8298,7 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, 0, 0);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* When the stream is stopped Update does not change the status. */
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
