@@ -1304,6 +1304,8 @@ static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *
     REFERENCE_TIME end_time = 0;
     STREAM_TIME start_stream_time;
     STREAM_TIME end_stream_time;
+    IMediaStreamFilter *filter;
+    STREAM_TIME current_time;
     BYTE *top_down_pointer;
     int top_down_stride;
     BYTE *pointer;
@@ -1321,6 +1323,17 @@ static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *
 
     EnterCriticalSection(&stream->cs);
 
+    if (stream->state == State_Stopped)
+    {
+        LeaveCriticalSection(&stream->cs);
+        return S_OK;
+    }
+    if (stream->flushing)
+    {
+        LeaveCriticalSection(&stream->cs);
+        return S_FALSE;
+    }
+
     bitmap_info = &((VIDEOINFOHEADER *)stream->mt.pbFormat)->bmiHeader;
 
     stride = ((bitmap_info->biWidth * bitmap_info->biBitCount + 31) & ~31) / 8;
@@ -1331,6 +1344,14 @@ static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *
 
     start_stream_time = start_time + stream->segment_start;
     end_stream_time = end_time + stream->segment_start;
+
+    filter = stream->filter;
+
+    LeaveCriticalSection(&stream->cs);
+    if (S_OK == IMediaStreamFilter_GetCurrentStreamTime(filter, &current_time)
+            && start_time >= current_time + 10000)
+        IMediaStreamFilter_WaitUntil(filter, start_time);
+    EnterCriticalSection(&stream->cs);
 
     for (;;)
     {
@@ -1360,7 +1381,6 @@ static HRESULT WINAPI ddraw_meminput_Receive(IMemInputPin *iface, IMediaSample *
             {
                 remove_queued_update(sample);
             }
-
             LeaveCriticalSection(&stream->cs);
             return S_OK;
         }

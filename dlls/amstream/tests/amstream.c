@@ -4178,6 +4178,46 @@ static DWORD CALLBACK ammediastream_receive(void *param)
     return 0;
 }
 
+struct ammediastream_receive_release_param
+{
+    IMemInputPin *mem_input_pin;
+    IMediaSample *media_sample;
+};
+
+static DWORD CALLBACK ammediastream_receive_release(void *p)
+{
+    struct ammediastream_receive_release_param *param = (struct ammediastream_receive_release_param *)p;
+    HRESULT hr;
+    ULONG ref;
+
+    hr = IMemInputPin_Receive(param->mem_input_pin, param->media_sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = IMediaSample_Release(param->media_sample);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    free(p);
+
+    return 0;
+}
+
+static HANDLE ammediastream_async_receive_time(struct testfilter *source,
+        REFERENCE_TIME start_time, REFERENCE_TIME end_time, const BYTE *input_data, DWORD input_length)
+{
+    struct ammediastream_receive_release_param *param;
+    IMediaSample *sample;
+    HRESULT hr;
+
+    sample = ammediastream_allocate_sample(source, input_data, input_length);
+    hr = IMediaSample_SetTime(sample, &start_time, &end_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    param = calloc(1, sizeof(*param));
+    param->mem_input_pin = source->source.pMemInputPin;
+    param->media_sample = sample;
+    return CreateThread(NULL, 0, ammediastream_receive_release, param, 0, NULL);
+}
+
 static IStreamSample *streamsample_sample;
 static DWORD streamsample_flags;
 static DWORD streamsample_timeout;
@@ -7529,13 +7569,17 @@ static void test_ddrawstreamsample_update(void)
     };
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
     IDirectDrawStreamSample *stream_sample;
+    struct advise_time_cookie cookie = {0};
     IDirectDrawMediaStream *ddraw_stream;
     IMediaControl *media_control;
     IDirectDrawSurface *surface;
     IMemInputPin *mem_input_pin;
     IMediaSample *media_sample;
     IMediaFilter *media_filter;
+    REFERENCE_TIME start_time;
+    REFERENCE_TIME end_time;
     struct testfilter source;
+    struct testclock clock;
     IGraphBuilder *graph;
     IMediaStream *stream;
     VIDEOINFO video_info;
@@ -7572,8 +7616,11 @@ static void test_ddrawstreamsample_update(void)
     testfilter_init(&source);
     hr = IGraphBuilder_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+    testclock_init(&clock);
     event = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(event != NULL, "Expected non-NULL event.");
+    cookie.advise_time_called_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(cookie.advise_time_called_event != NULL, "Expected non-NULL event.");
 
     hr = IMediaFilter_SetSyncSource(media_filter, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -7866,6 +7913,64 @@ static void test_ddrawstreamsample_update(void)
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaFilter_SetSyncSource(media_filter, &clock.IReferenceClock_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    for (i = 0; i < 5; ++i)
+        memcpy((BYTE *)desc.lpSurface + i * desc.lPitch, initial_data, 12);
+    hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawStreamSample_Update(stream_sample, SSUPDATE_ASYNC, NULL, NULL, 0);
+    ok(hr == MS_E_BUSY, "Got hr %#x.\n", hr);
+
+    clock.advise_time_cookie = &cookie;
+
+    media_sample = ammediastream_allocate_sample(&source, test_data, sizeof(test_data));
+    start_time = 11111111;
+    end_time = 11111111;
+    hr = IMediaSample_SetTime(media_sample, &start_time, &end_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ammediastream_mem_input_pin = mem_input_pin;
+    ammediastream_media_sample = media_sample;
+    ammediastream_sleep_time = 0;
+    ammediastream_expected_hr = S_OK;
+    thread = CreateThread(NULL, 0, ammediastream_receive, NULL, 0, NULL);
+    ok(!WaitForSingleObject(cookie.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
+
+    hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    for (i = 0; i < 5; ++i)
+        ok(memcmp((BYTE *)desc.lpSurface + i * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    SetEvent(cookie.event);
+
+    ok(!WaitForSingleObject(thread, 2000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    hr = IDirectDrawSurface_Lock(surface, NULL, &desc, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(memcmp((BYTE *)desc.lpSurface + 0 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 1 * desc.lPitch, &test_data[12], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 2 * desc.lPitch, &test_data[0], 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 3 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    ok(memcmp((BYTE *)desc.lpSurface + 4 * desc.lPitch, initial_data, 12) == 0, "Sample data didn't match.\n");
+    hr = IDirectDrawSurface_Unlock(surface, desc.lpSurface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = IMediaSample_Release(media_sample);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     IGraphBuilder_Disconnect(graph, pin);
     IGraphBuilder_Disconnect(graph, &source.source.pin.IPin_iface);
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
@@ -7877,6 +7982,7 @@ static void test_ddrawstreamsample_update(void)
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    CloseHandle(cookie.advise_time_called_event);
     CloseHandle(event);
     ref = IDirectDrawStreamSample_Release(stream_sample);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
@@ -7901,12 +8007,16 @@ static void test_ddrawstreamsample_completion_status(void)
 {
     static const BYTE test_data[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    struct advise_time_cookie cookie = { 0 };
     IDirectDrawStreamSample *stream_sample1;
     IDirectDrawStreamSample *stream_sample2;
     IDirectDrawMediaStream *ddraw_stream;
+    STREAM_TIME filter_start_time;
+    IMediaStreamFilter *filter;
     IMediaSample *media_sample;
     IMediaFilter *media_filter;
     struct testfilter source;
+    struct testclock clock;
     VIDEOINFO video_info;
     IGraphBuilder *graph;
     IMediaStream *stream;
@@ -7918,6 +8028,9 @@ static void test_ddrawstreamsample_completion_status(void)
 
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!filter, "Expected non-null filter.\n");
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
@@ -7932,6 +8045,8 @@ static void test_ddrawstreamsample_completion_status(void)
     testfilter_init(&source);
     hr = IGraphBuilder_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+    testclock_init(&clock);
+    cookie.advise_time_called_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     hr = IMediaFilter_SetSyncSource(media_filter, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -8311,9 +8426,172 @@ static void test_ddrawstreamsample_completion_status(void)
     hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_WAIT, INFINITE);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* When the wait time is less than 1ms the sample is updated immediately. */
+    hr = IMediaFilter_SetSyncSource(media_filter, &clock.IReferenceClock_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    clock.time = 12345678;
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStreamFilter_GetCurrentStreamTime(filter, &filter_start_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    clock.time = 12345678 - filter_start_time + 11111111;
+
+    clock.advise_time_cookie = &cookie;
+
+    hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
+    ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
+
+    thread = ammediastream_async_receive_time(&source,
+            11111111 + 9999, 11111111 + 9999, test_data, sizeof(test_data));
+    ok(!WaitForSingleObject(thread, 2000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, 0, INFINITE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* When the wait time is 1ms or greater AdviseTime is called
+     * with base equal to the sample start time and offset equal to the filter start time. */
+    hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
+    ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
+
+    thread = ammediastream_async_receive_time(&source,
+            11111111 + 10000, 11111111 + 10000, test_data, sizeof(test_data));
+    ok(!WaitForSingleObject(cookie.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
+
+    ok(cookie.base == 11111111 + 10000, "Got base %s.\n", wine_dbgstr_longlong(cookie.base));
+    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %s.\n", wine_dbgstr_longlong(cookie.offset));
+
+    hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, 0, 0);
+    ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
+
+    clock.time = 12345678 - filter_start_time + 11111111 + 10000;
+    SetEvent(cookie.event);
+
+    ok(!WaitForSingleObject(thread, 2000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, 0, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* NewSegment does not affect the values passed to AdviseTime. */
+    hr = IPin_NewSegment(pin, 22222222, 33333333, 1.0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
+    ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
+
+    thread = ammediastream_async_receive_time(&source,
+            11111111 + 20000, 11111111 + 20000, test_data, sizeof(test_data));
+    ok(!WaitForSingleObject(cookie.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
+
+    ok(cookie.base == 11111111 + 20000, "Got base %s.\n", wine_dbgstr_longlong(cookie.base));
+    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %s.\n", wine_dbgstr_longlong(cookie.offset));
+
+    hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_NOUPDATEOK, 0);
+    ok(hr == MS_S_NOUPDATE, "Got hr %#x.\n", hr);
+
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
+
+    clock.time = 12345678 - filter_start_time + 11111111 + 20000;
+    SetEvent(cookie.event);
+
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
+
+    /* COMPSTAT_NOUPDATEOK does not cause Receive to return.
+     * Receive waits for the next sample to be queued and updates it. */
+    hr = IDirectDrawStreamSample_Update(stream_sample1, 0, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(!WaitForSingleObject(thread, 2000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
+    ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
+
+    thread = ammediastream_async_receive_time(&source,
+            11111111 + 30000, 11111111 + 30000, test_data, sizeof(test_data));
+    ok(!WaitForSingleObject(cookie.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
+
+    ok(cookie.base == 11111111 + 30000, "Got base %s.\n", wine_dbgstr_longlong(cookie.base));
+    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %s.\n", wine_dbgstr_longlong(cookie.offset));
+
+    hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_NOUPDATEOK | COMPSTAT_WAIT, INFINITE);
+    ok(hr == MS_S_NOUPDATE, "Got hr %#x.\n", hr);
+
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
+
+    clock.time = 12345678 - filter_start_time + 11111111 + 30000;
+    SetEvent(cookie.event);
+
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
+
+    hr = IDirectDrawStreamSample_Update(stream_sample1, 0, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(!WaitForSingleObject(thread, 2000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    /* COMPSTAT_ABORT does not cause Receive to return.
+     * Receive waits for the next sample to be queued and updates it. */
+    hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
+    ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
+
+    thread = ammediastream_async_receive_time(&source,
+            11111111 + 40000, 11111111 + 40000, test_data, sizeof(test_data));
+    ok(!WaitForSingleObject(cookie.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
+
+    ok(cookie.base == 11111111 + 40000, "Got base %s.\n", wine_dbgstr_longlong(cookie.base));
+    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %s.\n", wine_dbgstr_longlong(cookie.offset));
+
+    hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, COMPSTAT_ABORT, 0);
+    ok(hr == MS_S_NOUPDATE, "Got hr %#x.\n", hr);
+
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
+
+    clock.time = 12345678 - filter_start_time + 11111111 + 40000;
+    SetEvent(cookie.event);
+
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
+
+    hr = IDirectDrawStreamSample_Update(stream_sample1, 0, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(!WaitForSingleObject(thread, 2000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    /* Stopping the stream causes Receive to return and leaves the sample with MS_S_PENDING status. */
+    hr = IDirectDrawStreamSample_Update(stream_sample1, SSUPDATE_ASYNC, NULL, NULL, 0);
+    ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
+
+    thread = ammediastream_async_receive_time(&source,
+            11111111 + 50000, 11111111 + 50000, test_data, sizeof(test_data));
+    ok(!WaitForSingleObject(cookie.advise_time_called_event, 2000), "Expected AdviseTime to be called.\n");
+    ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Receive returned prematurely.\n");
+
+    ok(cookie.base == 11111111 + 50000, "Got base %s.\n", wine_dbgstr_longlong(cookie.base));
+    ok(cookie.offset == 12345678 - filter_start_time, "Got offset %s.\n", wine_dbgstr_longlong(cookie.offset));
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(!WaitForSingleObject(thread, 2000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    hr = IDirectDrawStreamSample_CompletionStatus(stream_sample1, 0, 0);
+    ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
+
     IGraphBuilder_Disconnect(graph, pin);
     IGraphBuilder_Disconnect(graph, &source.source.pin.IPin_iface);
 
+    CloseHandle(cookie.advise_time_called_event);
     ref = IDirectDrawStreamSample_Release(stream_sample1);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IDirectDrawStreamSample_Release(stream_sample2);
@@ -8322,6 +8600,8 @@ static void test_ddrawstreamsample_completion_status(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     IMediaFilter_Release(media_filter);
     ref = IGraphBuilder_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStreamFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     IPin_Release(pin);
     IDirectDrawMediaStream_Release(ddraw_stream);
