@@ -616,6 +616,7 @@ SOURCES = \
 	rstinf.idl \
 	rstloc.idl \
 	rstnot.idl \
+	rstupd.idl \
 	rtutils.h \
 	rtworkq.idl \
 	sal.h \
