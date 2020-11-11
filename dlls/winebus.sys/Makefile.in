@@ -9,3 +9,5 @@ C_SRCS = \
 	bus_sdl.c \
 	bus_udev.c \
 	main.c
+
+RC_SRCS = winebus.rc

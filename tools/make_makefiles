@@ -73,7 +73,6 @@ my @source_vars = (
 );
 
 my (@makefiles, %makefiles);
-my @inf_files;
 my @nls_files;
 
 sub dirname($)
@@ -382,10 +381,6 @@ sub assign_sources_to_makefiles(@)
         {
             push @{${$make}{"=MANPAGES"}}, $name;
         }
-        elsif ($name =~ /\.inf\.in$/)
-        {
-            push @inf_files, $name unless $name eq "wine.inf.in";
-        }
         elsif ($name =~ /\.in$/)
         {
             push @{${$make}{"=IN_SRCS"}}, $name;
@@ -492,11 +487,10 @@ sub update_makefiles(@)
 sub update_wine_inf()
 {
     my @lines;
-    push @lines, "[InfFiles]", sort grep { s/\.in$//; } @inf_files;
-    push @lines, "\n[NlsFiles]", sort grep(!/^sort/, @nls_files);
+    push @lines, "[NlsFiles]", sort grep(!/^sort/, @nls_files);
     push @lines, "\n[SortFiles]", sort grep(/^sort/, @nls_files);
     push @lines, "\n[WineSourceDirs]\n";
-    replace_in_file "loader/wine.inf.in", '^\[InfFiles\]', '^\[WineSourceDirs\]', join( "\n", @lines );
+    replace_in_file "loader/wine.inf.in", '^\[NlsFiles\]', '^\[WineSourceDirs\]', join( "\n", @lines );
 }
 
 my $git_dir = $ENV{GIT_DIR} || ".git";

@@ -4059,7 +4059,7 @@ HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-SpiderSolitaire-EnableGa
 HKLM,Software\Wine\LicenseInformation,"Shell-PremiumInBoxGames-Chess-EnableGame",0x10001,0x00000001
 
 [InfFiles]
-winebus.inf
+winebus.inf,"@winebus.sys,-1"
 winehid.inf
 wineusb.inf
 
