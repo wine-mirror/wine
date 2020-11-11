@@ -34,8 +34,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wintab32);
 
 HWND hwndDefault = NULL;
-static const WCHAR
-  WC_TABLETCLASSNAME[] = {'W','i','n','e','T','a','b','l','e','t','C','l','a','s','s',0};
 static CRITICAL_SECTION_DEBUG csTablet_debug =
 {
     0, 0, &csTablet,
@@ -62,34 +60,26 @@ static VOID TABLET_Register(void)
     wndClass.cbWndExtra = 0;
     wndClass.hCursor = NULL;
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW +1);
-    wndClass.lpszClassName = WC_TABLETCLASSNAME;
+    wndClass.lpszClassName = L"WineTabletClass";
     RegisterClassW(&wndClass);
 }
 
 static VOID TABLET_Unregister(void)
 {
-    UnregisterClassW(WC_TABLETCLASSNAME, NULL);
+    UnregisterClassW(L"WineTabletClass", NULL);
 }
 
 static HMODULE load_graphics_driver(void)
 {
-    static const WCHAR display_device_guid_propW[] = {
-        '_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
-        'd','e','v','i','c','e','_','g','u','i','d',0 };
-    static const WCHAR key_pathW[] = {
-        'S','y','s','t','e','m','\\',
-        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-        'C','o','n','t','r','o','l','\\',
-        'V','i','d','e','o','\\','{',0};
-    static const WCHAR displayW[] = {'}','\\','0','0','0','0',0};
-    static const WCHAR driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
+    static const WCHAR key_pathW[] = L"System\\CurrentControlSet\\Control\\Video\\{";
+    static const WCHAR displayW[] = L"}\\0000";
 
     HMODULE ret = 0;
     HKEY hkey;
     DWORD size;
     WCHAR path[MAX_PATH];
     WCHAR key[ARRAY_SIZE(key_pathW) + ARRAY_SIZE(displayW) + 40];
-    UINT guid_atom = HandleToULong( GetPropW( GetDesktopWindow(), display_device_guid_propW ));
+    UINT guid_atom = HandleToULong( GetPropW( GetDesktopWindow(), L"__wine_display_device_guid" ));
 
     if (!guid_atom) return 0;
     memcpy( key, key_pathW, sizeof(key_pathW) );
@@ -97,7 +87,7 @@ static HMODULE load_graphics_driver(void)
     lstrcatW( key, displayW );
     if (RegOpenKeyW( HKEY_LOCAL_MACHINE, key, &hkey )) return 0;
     size = sizeof(path);
-    if (!RegQueryValueExW( hkey, driverW, NULL, NULL, (BYTE *)path, &size )) ret = LoadLibraryW( path );
+    if (!RegQueryValueExW( hkey, L"GraphicsDriver", NULL, NULL, (BYTE *)path, &size )) ret = LoadLibraryW( path );
     RegCloseKey( hkey );
     TRACE( "%s %p\n", debugstr_w(path), ret );
     return ret;
@@ -105,8 +95,6 @@ static HMODULE load_graphics_driver(void)
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
 {
-    static const WCHAR name[] = {'T','a','b','l','e','t',0};
-
     TRACE("%p, %x, %p\n",hInstDLL,fdwReason,lpReserved);
     switch (fdwReason)
     {
@@ -114,7 +102,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
             TRACE("Initialization\n");
             DisableThreadLibraryCalls(hInstDLL);
             TABLET_Register();
-            hwndDefault = CreateWindowW(WC_TABLETCLASSNAME, name,
+            hwndDefault = CreateWindowW(L"WineTabletClass", L"Tablet",
                                         WS_POPUPWINDOW,0,0,0,0,0,0,hInstDLL,0);
             if (hwndDefault)
             {
