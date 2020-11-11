@@ -4060,7 +4060,7 @@ HKLM,Software\Wine\LicenseInformation,"Shell-PremiumInBoxGames-Chess-EnableGame"
 
 [InfFiles]
 winebus.inf,"@winebus.sys,-1"
-winehid.inf
+winehid.inf,"@winehid.sys,-1"
 wineusb.inf
 
 [NlsFiles]
