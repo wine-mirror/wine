@@ -2910,6 +2910,7 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
     IMFMediaEventGenerator *event_source;
     IMFMediaEvent *event = NULL;
     MediaEventType event_type;
+    IUnknown *object = NULL;
     IMFMediaSource *source;
     IMFMediaStream *stream;
     PROPVARIANT value;
@@ -3056,6 +3057,21 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
             session_sink_invalidated(session, event_type == MESinkInvalidated ? event : NULL,
                     (IMFStreamSink *)event_source);
             LeaveCriticalSection(&session->cs);
+
+            break;
+        case MEQualityNotify:
+
+            if (session->quality_manager)
+            {
+                if (FAILED(IMFMediaEventGenerator_QueryInterface(event_source, &IID_IMFStreamSink, (void **)&object)))
+                    IMFMediaEventGenerator_QueryInterface(event_source, &IID_IMFTransform, (void **)&object);
+
+                if (object)
+                {
+                    IMFQualityManager_NotifyQualityEvent(session->quality_manager, object, event);
+                    IUnknown_Release(object);
+                }
+            }
 
             break;
         default:
