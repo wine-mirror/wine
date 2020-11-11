@@ -1743,6 +1743,15 @@ static HRESULT WINAPI video_renderer_event_sink_Notify(IMediaEventSink *iface, L
                 MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
         }
     }
+    else if (event >= EC_USER)
+    {
+        PROPVARIANT code;
+
+        code.vt = VT_I4;
+        code.lVal = event;
+        hr = IMFMediaEventQueue_QueueEventParamVar(renderer->event_queue, MERendererEvent,
+                &GUID_NULL, S_OK, &code);
+    }
     else
     {
         WARN("Unhandled event %d.\n", event);
