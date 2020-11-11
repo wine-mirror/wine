@@ -2815,6 +2815,9 @@ static void test_quality_manager(void)
     hr = MFCreateStandardQualityManager(&manager);
     ok(hr == S_OK, "Failed to create quality manager, hr %#x.\n", hr);
 
+    hr = IMFQualityManager_NotifyPresentationClock(manager, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
     IMFQualityManager_Release(manager);
 }
 

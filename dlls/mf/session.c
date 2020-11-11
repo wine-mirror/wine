@@ -303,6 +303,9 @@ struct quality_manager
 {
     IMFQualityManager IMFQualityManager_iface;
     LONG refcount;
+
+    IMFPresentationClock *clock;
+    CRITICAL_SECTION cs;
 };
 
 static inline struct media_session *impl_from_IMFMediaSession(IMFMediaSession *iface)
@@ -3393,6 +3396,12 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
         goto failed;
     }
 
+    if (object->quality_manager && FAILED(hr = IMFQualityManager_NotifyPresentationClock(object->quality_manager,
+            object->clock)))
+    {
+        goto failed;
+    }
+
     *session = &object->IMFMediaSession_iface;
 
     return S_OK;
@@ -4459,6 +4468,9 @@ static ULONG WINAPI standard_quality_manager_Release(IMFQualityManager *iface)
 
     if (!refcount)
     {
+        if (manager->clock)
+            IMFPresentationClock_Release(manager->clock);
+        DeleteCriticalSection(&manager->cs);
         heap_free(manager);
     }
 
@@ -4475,9 +4487,21 @@ static HRESULT WINAPI standard_quality_manager_NotifyTopology(IMFQualityManager 
 static HRESULT WINAPI standard_quality_manager_NotifyPresentationClock(IMFQualityManager *iface,
         IMFPresentationClock *clock)
 {
-    FIXME("%p, %p stub.\n", iface, clock);
+    struct quality_manager *manager = impl_from_IMFQualityManager(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, clock);
+
+    if (!clock)
+        return E_POINTER;
+
+    EnterCriticalSection(&manager->cs);
+    if (manager->clock)
+        IMFPresentationClock_Release(manager->clock);
+    manager->clock = clock;
+    IMFPresentationClock_AddRef(manager->clock);
+    LeaveCriticalSection(&manager->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI standard_quality_manager_NotifyProcessInput(IMFQualityManager *iface, IMFTopologyNode *node,
@@ -4536,6 +4560,7 @@ HRESULT WINAPI MFCreateStandardQualityManager(IMFQualityManager **manager)
 
     object->IMFQualityManager_iface.lpVtbl = &standard_quality_manager_vtbl;
     object->refcount = 1;
+    InitializeCriticalSection(&object->cs);
 
     *manager = &object->IMFQualityManager_iface;
 
