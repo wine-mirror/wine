@@ -1629,3 +1629,27 @@ HRESULT __RPC_STUB IConvertType_CanConvert_Stub(IConvertType* This, DBTYPE from,
     FIXME("(%p)->(%d %d 0x%08x %p): stub\n", This, from, to, flags, error);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK ICommandPrepare_Prepare_Proxy(ICommandPrepare* This, ULONG runs)
+{
+    FIXME("(%p)->(%d): stub\n", This, runs);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB ICommandPrepare_Prepare_Stub(ICommandPrepare* This, ULONG runs, IErrorInfo **error)
+{
+    FIXME("(%p)->(%d %p): stub\n", This, runs, error);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK ICommandPrepare_Unprepare_Proxy(ICommandPrepare* This)
+{
+    FIXME("(%p)->(): stub\n", This);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB ICommandPrepare_Unprepare_Stub(ICommandPrepare* This, IErrorInfo **error)
+{
+    FIXME("(%p)->(%p): stub\n", This, error);
+    return E_NOTIMPL;
+}

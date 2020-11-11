@@ -73,6 +73,7 @@ typedef DWORD_PTR DBHASHVALUE;
 #include "cmdstrm.idl"
 #include "cmdprp.idl"
 #include "cvttyp.idl"
+#include "cmdpre.idl"
 
 cpp_quote("#include <accctrl.h>")
 
