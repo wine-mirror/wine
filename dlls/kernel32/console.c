@@ -125,12 +125,7 @@ HANDLE WINAPI DuplicateConsoleHandle(HANDLE handle, DWORD access, BOOL inherit,
  */
 BOOL WINAPI CloseConsoleHandle(HANDLE handle)
 {
-    if (!is_console_handle(handle)) 
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    return CloseHandle(wine_server_ptr_handle(console_handle_unmap(handle)));
+    return CloseHandle(handle);
 }
 
 /******************************************************************

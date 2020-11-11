@@ -1523,10 +1523,8 @@ static void test_DuplicateConsoleHandle(void)
     ok(ret, "SetEvent failed: %u\n", GetLastError());
 
     ret = CloseConsoleHandle(handle);
-    todo_wine
     ok(ret, "CloseConsoleHandle failed: %u\n", GetLastError());
     ret = CloseConsoleHandle(event);
-    todo_wine
     ok(ret, "CloseConsoleHandle failed: %u\n", GetLastError());
 
     handle = DuplicateConsoleHandle((HANDLE)0xdeadbeef, 0, FALSE, DUPLICATE_SAME_ACCESS);
