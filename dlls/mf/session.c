@@ -2465,7 +2465,7 @@ static struct sample *transform_create_sample(IMFSample *sample)
     return sample_entry;
 }
 
-static HRESULT transform_node_pull_samples(struct topo_node *node)
+static HRESULT transform_node_pull_samples(const struct media_session *session, struct topo_node *node)
 {
     MFT_OUTPUT_STREAM_INFO stream_info;
     MFT_OUTPUT_DATA_BUFFER *buffers;
@@ -2518,6 +2518,9 @@ static HRESULT transform_node_pull_samples(struct topo_node *node)
 
         if (SUCCEEDED(hr) && !(buffers[i].dwStatus & MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE))
         {
+            if (session->quality_manager)
+                IMFQualityManager_NotifyProcessOutput(session->quality_manager, node->node, i, buffers[i].pSample);
+
             queued_sample = transform_create_sample(buffers[i].pSample);
             list_add_tail(&node->u.transform.outputs[i].samples, &queued_sample->entry);
         }
@@ -2544,6 +2547,9 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
     unsigned int i;
     HRESULT hr;
 
+    if (session->quality_manager)
+        IMFQualityManager_NotifyProcessInput(session->quality_manager, node, input, sample);
+
     IMFTopologyNode_GetNodeType(node, &node_type);
     IMFTopologyNode_GetTopoNodeID(node, &node_id);
 
@@ -2569,7 +2575,7 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
             break;
         case MF_TOPOLOGY_TRANSFORM_NODE:
 
-            transform_node_pull_samples(topo_node);
+            transform_node_pull_samples(session, topo_node);
 
             sample_entry = transform_create_sample(sample);
             list_add_tail(&topo_node->u.transform.inputs[input].samples, &sample_entry->entry);
@@ -2603,7 +2609,7 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
                     WARN("Drain command failed for transform, hr %#x.\n", hr);
             }
 
-            transform_node_pull_samples(topo_node);
+            transform_node_pull_samples(session, topo_node);
 
             /* Remaining unprocessed input has been discarded, now queue markers for every output. */
             if (drain)
@@ -4532,7 +4538,7 @@ static HRESULT WINAPI standard_quality_manager_NotifyPresentationClock(IMFQualit
 static HRESULT WINAPI standard_quality_manager_NotifyProcessInput(IMFQualityManager *iface, IMFTopologyNode *node,
         LONG input_index, IMFSample *sample)
 {
-    FIXME("%p, %p, %d, %p stub.\n", iface, node, input_index, sample);
+    TRACE("%p, %p, %d, %p stub.\n", iface, node, input_index, sample);
 
     return E_NOTIMPL;
 }
@@ -4540,7 +4546,7 @@ static HRESULT WINAPI standard_quality_manager_NotifyProcessInput(IMFQualityMana
 static HRESULT WINAPI standard_quality_manager_NotifyProcessOutput(IMFQualityManager *iface, IMFTopologyNode *node,
         LONG output_index, IMFSample *sample)
 {
-    FIXME("%p, %p, %d, %p stub.\n", iface, node, output_index, sample);
+    TRACE("%p, %p, %d, %p stub.\n", iface, node, output_index, sample);
 
     return E_NOTIMPL;
 }
