@@ -222,7 +222,18 @@ static void gnutls_log( int level, const char *msg )
 
 static BOOL gnutls_initialize(void)
 {
+    const char *env_str;
     int ret;
+
+    if ((env_str = getenv("GNUTLS_SYSTEM_PRIORITY_FILE")))
+    {
+        WARN("GNUTLS_SYSTEM_PRIORITY_FILE is %s.\n", debugstr_a(env_str));
+    }
+    else
+    {
+        WARN("Setting GNUTLS_SYSTEM_PRIORITY_FILE to \"/dev/null\".\n");
+        setenv("GNUTLS_SYSTEM_PRIORITY_FILE", "/dev/null", 0);
+    }
 
     if (!(libgnutls_handle = dlopen( SONAME_LIBGNUTLS, RTLD_NOW )))
     {
