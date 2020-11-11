@@ -236,13 +236,8 @@ static void test_GetColorProfileElement( char *standardprofile )
         BOOL ret, ref;
         DWORD size;
         TAGTYPE tag = 0x63707274;  /* 'cprt' */
-        static char buffer[51];
-        static const char expect[] =
-            { 0x74, 0x65, 0x78, 0x74, 0x00, 0x00, 0x00, 0x00, 0x43, 0x6f, 0x70,
-              0x79, 0x72, 0x69, 0x67, 0x68, 0x74, 0x20, 0x28, 0x63, 0x29, 0x20,
-              0x31, 0x39, 0x39, 0x38, 0x20, 0x48, 0x65, 0x77, 0x6c, 0x65, 0x74,
-              0x74, 0x2d, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x72, 0x64, 0x20, 0x43,
-              0x6f, 0x6d, 0x70, 0x61, 0x6e, 0x79, 0x00 };
+        char buffer[256];
+        static const char expect[] = "text\0\0\0\0Copyright";
 
         profile.dwType = PROFILE_FILENAME;
         profile.pProfileData = standardprofile;
@@ -270,7 +265,7 @@ static void test_GetColorProfileElement( char *standardprofile )
         ret = pGetColorProfileElement( handle, tag, 0, &size, buffer, &ref );
         ok( ret, "GetColorProfileElement() failed %u\n", GetLastError() );
         ok( size > 0, "wrong size\n" );
-        ok( !memcmp( buffer, expect, sizeof(expect) ), "Unexpected tag data\n" );
+        ok( !memcmp( buffer, expect, sizeof(expect)-1 ), "Unexpected tag data\n" );
 
         pCloseColorProfile( handle );
     }
@@ -309,7 +304,7 @@ static void test_GetColorProfileElementTag( char *standardprofile )
 
         /* Functional checks */
 
-        ret = pGetColorProfileElementTag( handle, index, &tag );
+        while ((ret = pGetColorProfileElementTag( handle, index, &tag )) && tag != expect) index++;
         ok( ret && tag == expect, "GetColorProfileElementTag() failed (%d)\n",
             GetLastError() );
 
@@ -321,20 +316,11 @@ static void test_GetColorProfileFromHandle( char *testprofile )
 {
     if (testprofile)
     {
+        PROFILEHEADER *header;
         PROFILE profile;
         HPROFILE handle;
         DWORD size;
         BOOL ret;
-        static const unsigned char expect[] =
-            { 0x00, 0x00, 0x0c, 0x48, 0x4c, 0x69, 0x6e, 0x6f, 0x02, 0x10, 0x00,
-              0x00, 0x6d, 0x6e, 0x74, 0x72, 0x52, 0x47, 0x42, 0x20, 0x58, 0x59,
-              0x5a, 0x20, 0x07, 0xce, 0x00, 0x02, 0x00, 0x09, 0x00, 0x06, 0x00,
-              0x31, 0x00, 0x00, 0x61, 0x63, 0x73, 0x70, 0x4d, 0x53, 0x46, 0x54,
-              0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x43, 0x20, 0x73, 0x52, 0x47,
-              0x42, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-              0x00, 0x00, 0x00, 0x00, 0xf6, 0xd6, 0x00, 0x01, 0x00, 0x00, 0x00,
-              0x00, 0xd3, 0x2d, 0x48, 0x50, 0x20, 0x20 };
-
         unsigned char *buffer;
 
         profile.dwType = PROFILE_FILENAME;
@@ -366,7 +352,16 @@ static void test_GetColorProfileFromHandle( char *testprofile )
             ret = pGetColorProfileFromHandle( handle, buffer, &size );
             ok( ret && size > 0, "GetColorProfileFromHandle() failed (%d)\n", GetLastError() );
 
-            ok( !memcmp( buffer, expect, sizeof(expect) ), "Unexpected header data\n" );
+            header = (PROFILEHEADER *)buffer;
+            ok( header->phClass == 0x72746e6d, "wrong phClass %x\n", header->phClass );
+            ok( header->phDataColorSpace == 0x20424752, "wrong phDataColorSpace %x\n", header->phDataColorSpace );
+            ok( header->phConnectionSpace  == 0x205a5958, "wrong phConnectionSpace %x\n", header->phConnectionSpace );
+            ok( header->phSignature == 0x70736361, "wrong phSignature %x\n", header->phSignature );
+            ok( header->phProfileFlags == 0x00000000, "wrong phProfileFlags %x\n", header->phProfileFlags );
+            ok( header->phRenderingIntent == 0x00000000, "wrong phRenderingIntent %x\n", header->phRenderingIntent );
+            ok( header->phIlluminant.ciexyzX == 0xd6f60000, "wrong phIlluminant.ciexyzX %x\n", header->phIlluminant.ciexyzX );
+            ok( header->phIlluminant.ciexyzY == 0x00000100, "wrong phIlluminant.ciexyzY %x\n", header->phIlluminant.ciexyzY );
+            ok( header->phIlluminant.ciexyzZ == 0x2dd30000, "wrong phIlluminant.ciexyzZ %x\n", header->phIlluminant.ciexyzZ );
 
             HeapFree( GetProcessHeap(), 0, buffer );
         }
@@ -410,7 +405,15 @@ static void test_GetColorProfileHeader( char *testprofile )
         ret = pGetColorProfileHeader( handle, &header );
         ok( ret, "GetColorProfileHeader() failed (%d)\n", GetLastError() );
 
-        ok( !memcmp( &header, rgbheader, sizeof(rgbheader) ), "Unexpected header data\n" );
+        ok( header.phClass == 0x6d6e7472, "wrong phClass %x\n", header.phClass );
+        ok( header.phDataColorSpace == 0x52474220, "wrong phDataColorSpace %x\n", header.phDataColorSpace );
+        ok( header.phConnectionSpace  == 0x58595a20, "wrong phConnectionSpace %x\n", header.phConnectionSpace );
+        ok( header.phSignature == 0x61637370, "wrong phSignature %x\n", header.phSignature );
+        ok( header.phProfileFlags == 0x00000000, "wrong phProfileFlags %x\n", header.phProfileFlags );
+        ok( header.phRenderingIntent == 0x00000000, "wrong phRenderingIntent %x\n", header.phRenderingIntent );
+        ok( header.phIlluminant.ciexyzX == 0x0000f6d6, "wrong phIlluminant.ciexyzX %x\n", header.phIlluminant.ciexyzX );
+        ok( header.phIlluminant.ciexyzY == 0x00010000, "wrong phIlluminant.ciexyzY %x\n", header.phIlluminant.ciexyzY );
+        ok( header.phIlluminant.ciexyzZ == 0x0000d32d, "wrong phIlluminant.ciexyzZ %x\n", header.phIlluminant.ciexyzZ );
 
         pCloseColorProfile( handle );
     }
@@ -423,7 +426,7 @@ static void test_GetCountColorProfileElements( char *standardprofile )
         PROFILE profile;
         HPROFILE handle;
         BOOL ret;
-        DWORD count, expect = 17;
+        DWORD count;
 
         profile.dwType = PROFILE_FILENAME;
         profile.pProfileData = standardprofile;
@@ -445,8 +448,8 @@ static void test_GetCountColorProfileElements( char *standardprofile )
         /* Functional checks */
 
         ret = pGetCountColorProfileElements( handle, &count );
-        ok( ret && count == expect,
-            "GetCountColorProfileElements() failed (%d)\n", GetLastError() );
+        ok( ret && count > 15 && count < 20,
+            "GetCountColorProfileElements() failed (%d) %u\n", GetLastError(), count );
 
         pCloseColorProfile( handle );
     }
@@ -1020,7 +1023,7 @@ static void test_SetColorProfileElement( char *testprofile )
 
         TAGTYPE tag = 0x63707274;  /* 'cprt' */
         static char data[] = "(c) The Wine Project";
-        static char buffer[51];
+        char buffer[256];
 
         profile.dwType = PROFILE_FILENAME;
         profile.pProfileData = testprofile;
