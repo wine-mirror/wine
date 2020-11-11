@@ -1093,13 +1093,12 @@ static BOOL BuildAFM(FILE *file)
  */
 static BOOL ReadAFMFile(LPCWSTR filename)
 {
-    static const WCHAR rW[] = {'r',0};
     FILE    *f;
     BOOL    retval;
 
     TRACE("%s\n", debugstr_w(filename));
 
-    f = _wfopen(filename, rW);
+    f = _wfopen(filename, L"r");
     if (f == NULL)
     {
     	WARN("%s: %s\n", debugstr_w(filename), strerror(errno));
@@ -1120,8 +1119,6 @@ static BOOL ReadAFMFile(LPCWSTR filename)
  */
 static BOOL ReadAFMDir(LPCSTR dirname)
 {
-    static const WCHAR starW[] = {'*',0};
-    static const WCHAR afmW[] = {'.','a','f','m',0};
     WCHAR *path = wine_get_dos_file_name( dirname );
     struct _wfinddata_t data;
     intptr_t handle;
@@ -1138,7 +1135,7 @@ static BOOL ReadAFMDir(LPCSTR dirname)
     HeapFree( GetProcessHeap(), 0, path );
     p = filename + lstrlenW(filename);
     *p++ = '\\';
-    lstrcpyW( p, starW );
+    lstrcpyW( p, L"*" );
 
     handle = _wfindfirst( filename, &data );
     if (handle != -1)
@@ -1146,7 +1143,7 @@ static BOOL ReadAFMDir(LPCSTR dirname)
         do
         {
             WCHAR *ext = wcschr( data.name, '.' );
-            if (!ext || wcsicmp(ext, afmW)) continue;
+            if (!ext || wcsicmp(ext, L".afm")) continue;
             lstrcpyW( p, data.name );
             if (!(ret = ReadAFMFile( filename ))) break;
         } while (!_wfindnext( handle, &data ));
@@ -1170,7 +1167,6 @@ static BOOL ReadAFMDir(LPCSTR dirname)
  */
 BOOL PSDRV_GetType1Metrics(void)
 {
-    static const WCHAR pathW[] = {'A','F','M','P','a','t','h',0};
     HKEY hkey;
     DWORD len;
     LPWSTR valueW;
@@ -1180,11 +1176,11 @@ BOOL PSDRV_GetType1Metrics(void)
     if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts", &hkey) != ERROR_SUCCESS)
         return TRUE;
 
-    if (RegQueryValueExW( hkey, pathW, NULL, NULL, NULL, &len ) == ERROR_SUCCESS)
+    if (RegQueryValueExW( hkey, L"AFMPath", NULL, NULL, NULL, &len ) == ERROR_SUCCESS)
     {
         len += sizeof(WCHAR);
         valueW = HeapAlloc( PSDRV_Heap, 0, len );
-        if (RegQueryValueExW( hkey, pathW, NULL, NULL, (LPBYTE)valueW, &len ) == ERROR_SUCCESS)
+        if (RegQueryValueExW( hkey, L"AFMPath", NULL, NULL, (BYTE *)valueW, &len ) == ERROR_SUCCESS)
         {
             len = WideCharToMultiByte( CP_UNIXCP, 0, valueW, -1, NULL, 0, NULL, NULL );
             valueA = HeapAlloc( PSDRV_Heap, 0, len );

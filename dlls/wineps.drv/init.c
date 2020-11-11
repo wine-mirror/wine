@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 static const PSDRV_DEVMODE DefaultDevmode =
 {
   { /* dmPublic */
-/* dmDeviceName */      {'W','i','n','e',' ','P','o','s','t','S','c','r','i','p','t',' ','D','r','i','v','e','r',0},
+/* dmDeviceName */      L"Wine PostScript Driver",
 /* dmSpecVersion */	0x30a,
 /* dmDriverVersion */	0x001,
 /* dmSize */		sizeof(DEVMODEW),
@@ -66,7 +66,7 @@ static const PSDRV_DEVMODE DefaultDevmode =
 /* dmYResolution */	300,
 /* dmTTOption */	DMTT_SUBDEV,
 /* dmCollate */		DMCOLLATE_FALSE,
-/* dmFormName */	{'L','e','t','t','e','r',0},
+/* dmFormName */        L"Letter",
 /* dmLogPixels */	0,
 /* dmBitsPerPel */	0,
 /* dmPelsWidth */	0,

@@ -227,8 +227,6 @@ typedef struct
 static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
                                            WPARAM wParam, LPARAM lParam)
 {
-  static const WCHAR resW[] = {'%','d',0};
-  static const WCHAR resxyW[] = {'%','d','x','%','d',0};
   PSDRV_DLGINFO *di;
   int i, Cursel;
   PAGESIZE *ps;
@@ -280,7 +278,7 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
         WCHAR buf[256];
 
         res = di->pi->ppd->DefaultResolution;
-        len = swprintf(buf, ARRAY_SIZE(buf), resW, res);
+        len = swprintf(buf, ARRAY_SIZE(buf), L"%d", res);
         buf[len++] = ' ';
         LoadStringW(PSDRV_hInstance, IDS_DPI, buf + len, ARRAY_SIZE(buf) - len);
         SendDlgItemMessageW(hwnd, IDD_QUALITY, CB_ADDSTRING, 0, (LPARAM)buf);
@@ -310,9 +308,9 @@ static INT_PTR CALLBACK PSDRV_PaperDlgProc(HWND hwnd, UINT msg,
             DWORD idx;
 
             if (res->resx == res->resy)
-                len = swprintf(buf, ARRAY_SIZE(buf), resW, res->resx);
+                len = swprintf(buf, ARRAY_SIZE(buf), L"%d", res->resx);
             else
-                len = swprintf(buf, ARRAY_SIZE(buf), resxyW, res->resx, res->resy);
+                len = swprintf(buf, ARRAY_SIZE(buf), L"%dx%d", res->resx, res->resy);
             buf[len++] = ' ';
             LoadStringW(PSDRV_hInstance, IDS_DPI, buf + len, ARRAY_SIZE(buf) - len);
             idx = SendDlgItemMessageW(hwnd, IDD_QUALITY, CB_ADDSTRING, 0, (LPARAM)buf);
@@ -552,7 +550,6 @@ INT CDECL PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput
     PSDRV_DLGINFO di;
     PSDRV_DEVMODE dlgdm;
     WCHAR SetupW[64];
-    static const WCHAR PAPERW[] = {'P','A','P','E','R','\0'};
 
     LoadStringW(PSDRV_hInstance, IDS_SETUP, SetupW, ARRAY_SIZE(SetupW));
     hinstComctl32 = LoadLibraryA("comctl32.dll");
@@ -565,7 +562,7 @@ INT CDECL PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput
     di.dlgdm = &dlgdm;
     psp.dwSize = sizeof(psp);
     psp.hInstance = PSDRV_hInstance;
-    psp.u.pszTemplate = PAPERW;
+    psp.u.pszTemplate = L"PAPER";
     psp.u2.pszIcon = NULL;
     psp.pfnDlgProc = PSDRV_PaperDlgProc;
     psp.lParam = (LPARAM)&di;
