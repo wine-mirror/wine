@@ -2832,6 +2832,8 @@ HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode *doc, nsIDOMNode *nsnode, ev
         doc->event_vector[eid] = TRUE;
         eid = EVENTID_BLUR;
         break;
+    case EVENTID_LAST:
+        return S_OK;
     default:
         break;
     }
