@@ -37,6 +37,7 @@ static void fetch_console_output_(unsigned int line)
 
     if (console_output_count == sizeof(console_output)) return;
 
+    memset(&o, 0, sizeof(o));
     o.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     ret = ReadFile(console_pipe, console_output + console_output_count,
                    sizeof(console_output) - console_output_count, NULL, &o);
