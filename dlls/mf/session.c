@@ -42,7 +42,9 @@ enum session_command
     SESSION_CMD_START,
     SESSION_CMD_PAUSE,
     SESSION_CMD_STOP,
-    SESSION_CMD_END, /* Internal use only. */
+    /* Internally used commands. */
+    SESSION_CMD_END,
+    SESSION_CMD_QM_NOTIFY_TOPOLOGY,
 };
 
 struct session_op
@@ -62,6 +64,10 @@ struct session_op
             GUID time_format;
             PROPVARIANT start_position;
         } start;
+        struct
+        {
+            IMFTopology *topology;
+        } notify_topology;
     } u;
     struct list entry;
 };
@@ -491,6 +497,10 @@ static ULONG WINAPI session_op_Release(IUnknown *iface)
                 break;
             case SESSION_CMD_START:
                 PropVariantClear(&op->u.start.start_position);
+                break;
+            case SESSION_CMD_QM_NOTIFY_TOPOLOGY:
+                if (op->u.notify_topology.topology)
+                    IMFTopology_Release(op->u.notify_topology.topology);
                 break;
             default:
                 ;
@@ -1301,8 +1311,20 @@ static HRESULT session_set_current_topology(struct media_session *session, IMFTo
     DWORD caps, object_flags;
     struct media_sink *sink;
     struct topo_node *node;
+    struct session_op *op;
     IMFMediaEvent *event;
     HRESULT hr;
+
+    if (session->quality_manager)
+    {
+        if (SUCCEEDED(create_session_op(SESSION_CMD_QM_NOTIFY_TOPOLOGY, &op)))
+        {
+            op->u.notify_topology.topology = topology;
+            IMFTopology_AddRef(op->u.notify_topology.topology);
+            session_submit_command(session, op);
+            IUnknown_Release(&op->IUnknown_iface);
+        }
+    }
 
     if (FAILED(hr = IMFTopology_CloneFrom(session->presentation.current_topology, topology)))
     {
@@ -1928,6 +1950,9 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
             break;
         case SESSION_CMD_CLOSE:
             session_close(session);
+            break;
+        case SESSION_CMD_QM_NOTIFY_TOPOLOGY:
+            IMFQualityManager_NotifyTopology(session->quality_manager, op->u.notify_topology.topology);
             break;
         default:
             ;
@@ -4481,7 +4506,7 @@ static HRESULT WINAPI standard_quality_manager_NotifyTopology(IMFQualityManager 
 {
     FIXME("%p, %p stub.\n", iface, topology);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI standard_quality_manager_NotifyPresentationClock(IMFQualityManager *iface,
