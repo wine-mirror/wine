@@ -26,7 +26,7 @@
 #include "wine/server.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(conhost);
+WINE_DEFAULT_DEBUG_CHANNEL(console);
 
 static const char_info_t empty_char_info = { ' ', 0x0007 };  /* white on black space */
 

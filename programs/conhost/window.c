@@ -27,7 +27,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(conhost);
+WINE_DEFAULT_DEBUG_CHANNEL(console);
 
 #define WM_UPDATE_CONFIG  (WM_USER + 1)
 
