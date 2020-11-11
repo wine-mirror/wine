@@ -21,6 +21,7 @@
 #include "mf_private.h"
 #include "uuids.h"
 #include "evr.h"
+#include "evcode.h"
 #include "d3d9.h"
 #include "initguid.h"
 #include "dxva2api.h"
@@ -1723,9 +1724,34 @@ static ULONG WINAPI video_renderer_event_sink_Release(IMediaEventSink *iface)
 
 static HRESULT WINAPI video_renderer_event_sink_Notify(IMediaEventSink *iface, LONG event, LONG_PTR param1, LONG_PTR param2)
 {
-    FIXME("%p, %d, %ld, %ld.\n", iface, event, param1, param2);
+    struct video_renderer *renderer = impl_from_IMediaEventSink(iface);
+    HRESULT hr = S_OK;
+    unsigned int idx;
 
-    return E_NOTIMPL;
+    TRACE("%p, %d, %ld, %ld.\n", iface, event, param1, param2);
+
+    EnterCriticalSection(&renderer->cs);
+
+    if (event == EC_SAMPLE_NEEDED)
+    {
+        idx = param1;
+        if (idx >= renderer->stream_count)
+            hr = MF_E_INVALIDSTREAMNUMBER;
+        else
+        {
+            hr = IMFMediaEventQueue_QueueEventParamVar(renderer->streams[idx]->event_queue,
+                MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
+        }
+    }
+    else
+    {
+        WARN("Unhandled event %d.\n", event);
+        hr = MF_E_UNEXPECTED;
+    }
+
+    LeaveCriticalSection(&renderer->cs);
+
+    return hr;
 }
 
 static const IMediaEventSinkVtbl media_event_sink_vtbl =
