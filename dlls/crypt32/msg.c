@@ -3194,6 +3194,18 @@ static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
+    case CMSG_SIGNER_AUTH_ATTR_PARAM:
+        if (msg->u.signed_data.info)
+        {
+            if (dwIndex >= msg->u.signed_data.info->cSignerInfo)
+                SetLastError(CRYPT_E_INVALID_INDEX);
+            else
+                ret = CRYPT_CopyAttr(pvData, pcbData,
+                 &msg->u.signed_data.info->rgSignerInfo[dwIndex].AuthAttrs);
+        }
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
     case CMSG_SIGNER_UNAUTH_ATTR_PARAM:
         if (msg->u.signed_data.info)
         {
