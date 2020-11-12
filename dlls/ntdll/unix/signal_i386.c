@@ -1688,15 +1688,18 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "movl %esp,%ebx\n\t"
                    "cmpl %esp,%esi\n\t"
                    "cmovbl %esi,%esp\n\t"
+                   "pushl 20(%ebx)\n\t"          /* func */
+                   "pushl 16(%ebx)\n\t"          /* arg2 */
+                   "pushl 12(%ebx)\n\t"          /* arg1 */
+                   "movl 8(%ebx),%ebx\n\t"       /* ctx */
                    "movl $0x00010007,(%esi)\n\t" /* context.ContextFlags = CONTEXT_FULL */
                    "pushl %esi\n\t"              /* context */
                    "pushl $0xfffffffe\n\t"
                    "call " __ASM_STDCALL("NtGetContextThread",8) "\n\t"
                    "movl $0xc0,0xb0(%esi)\n"     /* context.Eax = STATUS_USER_APC */
-                   "movl 20(%ebx),%eax\n\t"      /* func */
-                   "movl 16(%ebx),%ecx\n\t"      /* arg2 */
-                   "movl 12(%ebx),%edx\n\t"      /* arg1 */
-                   "movl 8(%ebx),%ebx\n\t"       /* ctx */
+                   "popl %edx\n\t"
+                   "popl %ecx\n\t"
+                   "popl %eax\n\t"
                    "leal -20(%esi),%esp\n\t"
                    "movl %eax,16(%esp)\n"        /* func */
                    "2:\tmovl %ecx,12(%esp)\n\t"  /* arg2 */
