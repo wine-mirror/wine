@@ -3089,10 +3089,9 @@ static PropertyItem *get_property(IWICMetadataReader *reader, const GUID *guid, 
 
 static PropertyItem *get_gif_comment(IWICMetadataReader *reader)
 {
-    static const WCHAR textentryW[] = { 'T','e','x','t','E','n','t','r','y',0 };
     PropertyItem *comment;
 
-    comment = get_property(reader, &GUID_MetadataFormatGifComment, textentryW);
+    comment = get_property(reader, &GUID_MetadataFormatGifComment, L"TextEntry");
     if (comment)
         comment->id = PropertyTagExifUserComment;
 
@@ -3101,17 +3100,15 @@ static PropertyItem *get_gif_comment(IWICMetadataReader *reader)
 
 static PropertyItem *get_gif_loopcount(IWICMetadataReader *reader)
 {
-    static const WCHAR applicationW[] = { 'A','p','p','l','i','c','a','t','i','o','n',0 };
-    static const WCHAR dataW[] = { 'D','a','t','a',0 };
     PropertyItem *appext = NULL, *appdata = NULL, *loop = NULL;
 
-    appext = get_property(reader, &GUID_MetadataFormatAPE, applicationW);
+    appext = get_property(reader, &GUID_MetadataFormatAPE, L"Application");
     if (appext)
     {
         if (appext->type == PropertyTagTypeByte && appext->length == 11 &&
             (!memcmp(appext->value, "NETSCAPE2.0", 11) || !memcmp(appext->value, "ANIMEXTS1.0", 11)))
         {
-            appdata = get_property(reader, &GUID_MetadataFormatAPE, dataW);
+            appdata = get_property(reader, &GUID_MetadataFormatAPE, L"Data");
             if (appdata)
             {
                 if (appdata->type == PropertyTagTypeByte && appdata->length == 4)
@@ -3142,10 +3139,9 @@ static PropertyItem *get_gif_loopcount(IWICMetadataReader *reader)
 
 static PropertyItem *get_gif_background(IWICMetadataReader *reader)
 {
-    static const WCHAR backgroundW[] = { 'B','a','c','k','g','r','o','u','n','d','C','o','l','o','r','I','n','d','e','x',0 };
     PropertyItem *background;
 
-    background = get_property(reader, &GUID_MetadataFormatLSD, backgroundW);
+    background = get_property(reader, &GUID_MetadataFormatLSD, L"BackgroundColorIndex");
     if (background)
         background->id = PropertyTagIndexBackground;
 
@@ -3154,14 +3150,13 @@ static PropertyItem *get_gif_background(IWICMetadataReader *reader)
 
 static PropertyItem *get_gif_palette(IWICBitmapDecoder *decoder, IWICMetadataReader *reader)
 {
-    static const WCHAR global_flagW[] = { 'G','l','o','b','a','l','C','o','l','o','r','T','a','b','l','e','F','l','a','g',0 };
     HRESULT hr;
     IWICImagingFactory *factory;
     IWICPalette *palette;
     UINT count = 0;
     WICColor colors[256];
 
-    if (!get_bool_property(reader, &GUID_MetadataFormatLSD, global_flagW))
+    if (!get_bool_property(reader, &GUID_MetadataFormatLSD, L"GlobalColorTableFlag"))
         return NULL;
 
     hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
@@ -3209,13 +3204,11 @@ static PropertyItem *get_gif_palette(IWICBitmapDecoder *decoder, IWICMetadataRea
 
 static PropertyItem *get_gif_transparent_idx(IWICMetadataReader *reader)
 {
-    static const WCHAR transparency_flagW[] = { 'T','r','a','n','s','p','a','r','e','n','c','y','F','l','a','g',0 };
-    static const WCHAR colorW[] = { 'T','r','a','n','s','p','a','r','e','n','t','C','o','l','o','r','I','n','d','e','x',0 };
     PropertyItem *index = NULL;
 
-    if (get_bool_property(reader, &GUID_MetadataFormatGCE, transparency_flagW))
+    if (get_bool_property(reader, &GUID_MetadataFormatGCE, L"TransparencyFlag"))
     {
-        index = get_property(reader, &GUID_MetadataFormatGCE, colorW);
+        index = get_property(reader, &GUID_MetadataFormatGCE, L"TransparentColorIndex");
         if (index)
             index->id = PropertyTagIndexTransparent;
     }
@@ -3264,7 +3257,6 @@ static LONG get_gif_frame_property(IWICBitmapFrameDecode *frame, const GUID *for
 
 static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UINT active_frame)
 {
-    static const WCHAR delayW[] = { 'D','e','l','a','y',0 };
     HRESULT hr;
     IWICBitmapFrameDecode *frame;
     IWICMetadataBlockReader *block_reader;
@@ -3293,7 +3285,7 @@ static void gif_metadata_reader(GpBitmap *bitmap, IWICBitmapDecoder *decoder, UI
                 hr = IWICBitmapDecoder_GetFrame(decoder, i, &frame);
                 if (hr == S_OK)
                 {
-                    value[i] = get_gif_frame_property(frame, &GUID_MetadataFormatGCE, delayW);
+                    value[i] = get_gif_frame_property(frame, &GUID_MetadataFormatGCE, L"Delay");
                     IWICBitmapFrameDecode_Release(frame);
                 }
                 else value[i] = 0;
@@ -3799,11 +3791,8 @@ static GpStatus select_frame_wic(GpImage *image, UINT active_frame)
 static HRESULT get_gif_frame_rect(IWICBitmapFrameDecode *frame,
         UINT *left, UINT *top, UINT *width, UINT *height)
 {
-    static const WCHAR leftW[] = {'L','e','f','t',0};
-    static const WCHAR topW[] = {'T','o','p',0};
-
-    *left = get_gif_frame_property(frame, &GUID_MetadataFormatIMD, leftW);
-    *top = get_gif_frame_property(frame, &GUID_MetadataFormatIMD, topW);
+    *left = get_gif_frame_property(frame, &GUID_MetadataFormatIMD, L"Left");
+    *top = get_gif_frame_property(frame, &GUID_MetadataFormatIMD, L"Top");
 
     return IWICBitmapFrameDecode_GetSize(frame, width, height);
 }
@@ -3885,8 +3874,6 @@ static DWORD get_gif_background_color(GpBitmap *bitmap)
 
 static GpStatus select_frame_gif(GpImage* image, UINT active_frame)
 {
-    static const WCHAR disposalW[] = {'D','i','s','p','o','s','a','l',0};
-
     GpBitmap *bitmap = (GpBitmap*)image;
     IWICBitmapFrameDecode *frame;
     int cur_frame=0, disposal;
@@ -3898,7 +3885,7 @@ static GpStatus select_frame_gif(GpImage* image, UINT active_frame)
         hr = IWICBitmapDecoder_GetFrame(bitmap->image.decoder, image->current_frame, &frame);
         if(FAILED(hr))
             return hresult_to_status(hr);
-        disposal = get_gif_frame_property(frame, &GUID_MetadataFormatGCE, disposalW);
+        disposal = get_gif_frame_property(frame, &GUID_MetadataFormatGCE, L"Disposal");
         IWICBitmapFrameDecode_Release(frame);
 
         if(disposal == GIF_DISPOSE_RESTORE_TO_BKGND)
@@ -3911,7 +3898,7 @@ static GpStatus select_frame_gif(GpImage* image, UINT active_frame)
         hr = IWICBitmapDecoder_GetFrame(bitmap->image.decoder, cur_frame, &frame);
         if(FAILED(hr))
             return hresult_to_status(hr);
-        disposal = get_gif_frame_property(frame, &GUID_MetadataFormatGCE, disposalW);
+        disposal = get_gif_frame_property(frame, &GUID_MetadataFormatGCE, L"Disposal");
 
         if(disposal==GIF_DISPOSE_UNSPECIFIED || disposal==GIF_DISPOSE_DO_NOT_DISPOSE) {
             hr = blit_gif_frame(bitmap, frame, cur_frame==0);
@@ -4852,59 +4839,59 @@ GpStatus WINGDIPAPI GdipSetImagePalette(GpImage *image,
  */
 
 /* ImageCodecInfo creation routines taken from libgdiplus */
-static const WCHAR bmp_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'B', 'M', 'P', 0}; /* Built-in BMP */
-static const WCHAR bmp_extension[] = {'*','.','B', 'M', 'P',';', '*','.', 'D','I', 'B',';', '*','.', 'R', 'L', 'E',0}; /* *.BMP;*.DIB;*.RLE */
-static const WCHAR bmp_mimetype[] = {'i', 'm', 'a','g', 'e', '/', 'b', 'm', 'p', 0}; /* image/bmp */
-static const WCHAR bmp_format[] = {'B', 'M', 'P', 0}; /* BMP */
+static const WCHAR bmp_codecname[] = L"Built-in BMP";
+static const WCHAR bmp_extension[] = L"*.BMP;*.DIB;*.RLE";
+static const WCHAR bmp_mimetype[] = L"image/bmp";
+static const WCHAR bmp_format[] = L"BMP";
 static const BYTE bmp_sig_pattern[] = { 0x42, 0x4D };
 static const BYTE bmp_sig_mask[] = { 0xFF, 0xFF };
 
-static const WCHAR jpeg_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'J','P','E','G', 0};
-static const WCHAR jpeg_extension[] = {'*','.','J','P','G',';', '*','.','J','P','E','G',';', '*','.','J','P','E',';', '*','.','J','F','I','F',0};
-static const WCHAR jpeg_mimetype[] = {'i','m','a','g','e','/','j','p','e','g', 0};
-static const WCHAR jpeg_format[] = {'J','P','E','G',0};
+static const WCHAR jpeg_codecname[] = L"Built-in JPEG";
+static const WCHAR jpeg_extension[] = L"*.JPG;*.JPEG;*.JPE;*.JFIF";
+static const WCHAR jpeg_mimetype[] = L"image/jpeg";
+static const WCHAR jpeg_format[] = L"JPEG";
 static const BYTE jpeg_sig_pattern[] = { 0xFF, 0xD8 };
 static const BYTE jpeg_sig_mask[] = { 0xFF, 0xFF };
 
-static const WCHAR gif_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'G','I','F', 0};
-static const WCHAR gif_extension[] = {'*','.','G','I','F',0};
-static const WCHAR gif_mimetype[] = {'i','m','a','g','e','/','g','i','f', 0};
-static const WCHAR gif_format[] = {'G','I','F',0};
+static const WCHAR gif_codecname[] = L"Built-in GIF";
+static const WCHAR gif_extension[] = L"*.GIF";
+static const WCHAR gif_mimetype[] = L"image/gif";
+static const WCHAR gif_format[] = L"GIF";
 static const BYTE gif_sig_pattern[12] = "GIF87aGIF89a";
 static const BYTE gif_sig_mask[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
-static const WCHAR tiff_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'T','I','F','F', 0};
-static const WCHAR tiff_extension[] = {'*','.','T','I','F','F',';','*','.','T','I','F',0};
-static const WCHAR tiff_mimetype[] = {'i','m','a','g','e','/','t','i','f','f', 0};
-static const WCHAR tiff_format[] = {'T','I','F','F',0};
+static const WCHAR tiff_codecname[] = L"Built-in TIFF";
+static const WCHAR tiff_extension[] = L"*.TIFF;*.TIF";
+static const WCHAR tiff_mimetype[] = L"image/tiff";
+static const WCHAR tiff_format[] = L"TIFF";
 static const BYTE tiff_sig_pattern[] = {0x49,0x49,42,0,0x4d,0x4d,0,42};
 static const BYTE tiff_sig_mask[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
-static const WCHAR emf_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'E','M','F', 0};
-static const WCHAR emf_extension[] = {'*','.','E','M','F',0};
-static const WCHAR emf_mimetype[] = {'i','m','a','g','e','/','x','-','e','m','f', 0};
-static const WCHAR emf_format[] = {'E','M','F',0};
+static const WCHAR emf_codecname[] = L"Built-in EMF";
+static const WCHAR emf_extension[] = L"*.EMF";
+static const WCHAR emf_mimetype[] = L"image/x-emf";
+static const WCHAR emf_format[] = L"EMF";
 static const BYTE emf_sig_pattern[] = { 0x01, 0x00, 0x00, 0x00 };
 static const BYTE emf_sig_mask[] = { 0xFF, 0xFF, 0xFF, 0xFF };
 
-static const WCHAR wmf_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'W','M','F', 0};
-static const WCHAR wmf_extension[] = {'*','.','W','M','F',0};
-static const WCHAR wmf_mimetype[] = {'i','m','a','g','e','/','x','-','w','m','f', 0};
-static const WCHAR wmf_format[] = {'W','M','F',0};
+static const WCHAR wmf_codecname[] = L"Built-in WMF";
+static const WCHAR wmf_extension[] = L"*.WMF";
+static const WCHAR wmf_mimetype[] = L"image/x-wmf";
+static const WCHAR wmf_format[] = L"WMF";
 static const BYTE wmf_sig_pattern[] = { 0xd7, 0xcd };
 static const BYTE wmf_sig_mask[] = { 0xFF, 0xFF };
 
-static const WCHAR png_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'P','N','G', 0};
-static const WCHAR png_extension[] = {'*','.','P','N','G',0};
-static const WCHAR png_mimetype[] = {'i','m','a','g','e','/','p','n','g', 0};
-static const WCHAR png_format[] = {'P','N','G',0};
+static const WCHAR png_codecname[] = L"Built-in PNG";
+static const WCHAR png_extension[] = L"*.PNG";
+static const WCHAR png_mimetype[] = L"image/png";
+static const WCHAR png_format[] = L"PNG";
 static const BYTE png_sig_pattern[] = { 137, 80, 78, 71, 13, 10, 26, 10, };
 static const BYTE png_sig_mask[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
-static const WCHAR ico_codecname[] = {'B', 'u', 'i','l', 't', '-','i', 'n', ' ', 'I','C','O', 0};
-static const WCHAR ico_extension[] = {'*','.','I','C','O',0};
-static const WCHAR ico_mimetype[] = {'i','m','a','g','e','/','x','-','i','c','o','n', 0};
-static const WCHAR ico_format[] = {'I','C','O',0};
+static const WCHAR ico_codecname[] = L"Built-in ICO";
+static const WCHAR ico_extension[] = L"*.ICO";
+static const WCHAR ico_mimetype[] = L"image/x-icon";
+static const WCHAR ico_format[] = L"ICO";
 static const BYTE ico_sig_pattern[] = { 0x00, 0x00, 0x01, 0x00 };
 static const BYTE ico_sig_mask[] = { 0xFF, 0xFF, 0xFF, 0xFF };
 

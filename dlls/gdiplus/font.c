@@ -961,16 +961,14 @@ GpStatus WINGDIPAPI GdipIsStyleAvailable(GDIPCONST GpFontFamily* family,
  */
 GpStatus WINGDIPAPI GdipGetGenericFontFamilyMonospace(GpFontFamily **nativeFamily)
 {
-    static const WCHAR CourierNew[] = {'C','o','u','r','i','e','r',' ','N','e','w','\0'};
-    static const WCHAR LiberationMono[] = {'L','i','b','e','r','a','t','i','o','n',' ','M','o','n','o','\0'};
     GpStatus stat;
 
     if (nativeFamily == NULL) return InvalidParameter;
 
-    stat = GdipCreateFontFamilyFromName(CourierNew, NULL, nativeFamily);
+    stat = GdipCreateFontFamilyFromName(L"Courier New", NULL, nativeFamily);
 
     if (stat == FontFamilyNotFound)
-        stat = GdipCreateFontFamilyFromName(LiberationMono, NULL, nativeFamily);
+        stat = GdipCreateFontFamilyFromName(L"Liberation Mono", NULL, nativeFamily);
 
     if (stat == FontFamilyNotFound)
         ERR("Missing 'Courier New' font\n");
@@ -992,18 +990,16 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilyMonospace(GpFontFamily **nativeFamil
  */
 GpStatus WINGDIPAPI GdipGetGenericFontFamilySerif(GpFontFamily **nativeFamily)
 {
-    static const WCHAR TimesNewRoman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n','\0'};
-    static const WCHAR LiberationSerif[] = {'L','i','b','e','r','a','t','i','o','n',' ','S','e','r','i','f','\0'};
     GpStatus stat;
 
     TRACE("(%p)\n", nativeFamily);
 
     if (nativeFamily == NULL) return InvalidParameter;
 
-    stat = GdipCreateFontFamilyFromName(TimesNewRoman, NULL, nativeFamily);
+    stat = GdipCreateFontFamilyFromName(L"Times New Roman", NULL, nativeFamily);
 
     if (stat == FontFamilyNotFound)
-        stat = GdipCreateFontFamilyFromName(LiberationSerif, NULL, nativeFamily);
+        stat = GdipCreateFontFamilyFromName(L"Liberation Serif", NULL, nativeFamily);
 
     if (stat == FontFamilyNotFound)
         ERR("Missing 'Times New Roman' font\n");
@@ -1026,18 +1022,16 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilySerif(GpFontFamily **nativeFamily)
 GpStatus WINGDIPAPI GdipGetGenericFontFamilySansSerif(GpFontFamily **nativeFamily)
 {
     GpStatus stat;
-    static const WCHAR MicrosoftSansSerif[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
-    static const WCHAR Tahoma[] = {'T','a','h','o','m','a','\0'};
 
     TRACE("(%p)\n", nativeFamily);
 
     if (nativeFamily == NULL) return InvalidParameter;
 
-    stat = GdipCreateFontFamilyFromName(MicrosoftSansSerif, NULL, nativeFamily);
+    stat = GdipCreateFontFamilyFromName(L"Microsoft Sans Serif", NULL, nativeFamily);
 
     if (stat == FontFamilyNotFound)
         /* FIXME: Microsoft Sans Serif is not installed on Wine. */
-        stat = GdipCreateFontFamilyFromName(Tahoma, NULL, nativeFamily);
+        stat = GdipCreateFontFamilyFromName(L"Tahoma", NULL, nativeFamily);
 
     return stat;
 }
