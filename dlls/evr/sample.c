@@ -459,7 +459,6 @@ static void sample_allocator_release_samples(struct sample_allocator *allocator)
     LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &allocator->used_samples, struct queued_sample, entry)
     {
         list_remove(&iter->entry);
-        IMFSample_Release(iter->sample);
         heap_free(iter);
     }
 }
@@ -676,8 +675,10 @@ static HRESULT WINAPI sample_allocator_AllocateSample(IMFVideoSampleAllocator *i
             list_add_tail(&allocator->used_samples, head);
             allocator->free_sample_count--;
 
+            /* Reference counter is not increased when sample is returned, so next release could trigger
+               tracking condition. This is balanced by incremented reference counter when sample is returned
+               back to the free list. */
             *out = sample;
-            IMFSample_AddRef(*out);
         }
     }
 
@@ -816,6 +817,7 @@ static HRESULT WINAPI sample_allocator_tracking_callback_Invoke(IMFAsyncCallback
         {
             list_remove(&iter->entry);
             list_add_tail(&allocator->free_samples, &iter->entry);
+            IMFSample_AddRef(iter->sample);
             allocator->free_sample_count++;
             break;
         }

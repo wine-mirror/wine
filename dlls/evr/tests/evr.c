@@ -1326,13 +1326,13 @@ static void test_MFCreateVideoSampleAllocator(void)
     IDirect3DSurface9 *surface;
     IDirect3DDevice9 *device;
     IMFMediaBuffer *buffer;
+    LONG refcount, count;
     unsigned int token;
     IMFGetService *gs;
     IDirect3D9 *d3d;
     IUnknown *unk;
     HWND window;
     HRESULT hr;
-    LONG count;
     BYTE *data;
 
     hr = MFCreateVideoSampleAllocator(&IID_IUnknown, (void **)&unk);
@@ -1397,7 +1397,7 @@ todo_wine
     sample = NULL;
     hr = IMFVideoSampleAllocator_AllocateSample(allocator, &sample);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(get_refcount(sample) == 3, "Unexpected refcount %u.\n", get_refcount(sample));
+    refcount = get_refcount(sample);
 
     hr = IMFVideoSampleAllocator_AllocateSample(allocator, &sample2);
     ok(hr == MF_E_SAMPLEALLOCATOR_EMPTY, "Unexpected hr %#x.\n", hr);
@@ -1405,8 +1405,7 @@ todo_wine
     /* Reinitialize with active sample. */
     hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 4, video_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
-    ok(get_refcount(sample) == 3, "Unexpected refcount %u.\n", get_refcount(sample));
+    ok(refcount == get_refcount(sample), "Unexpected refcount %u.\n", get_refcount(sample));
 
     hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_cb, &count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
