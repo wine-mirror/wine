@@ -796,15 +796,23 @@ static HRESULT WINAPI sample_allocator_tracking_callback_Invoke(IMFAsyncCallback
 {
     struct sample_allocator *allocator = impl_from_IMFAsyncCallback(iface);
     struct queued_sample *iter;
-    IUnknown *sample = NULL;
+    IUnknown *object = NULL;
+    IMFSample *sample = NULL;
+    HRESULT hr;
+
+    if (FAILED(IMFAsyncResult_GetObject(result, &object)))
+        return E_UNEXPECTED;
+
+    hr = IUnknown_QueryInterface(object, &IID_IMFSample, (void **)&sample);
+    IUnknown_Release(object);
+    if (FAILED(hr))
+        return E_UNEXPECTED;
 
     EnterCriticalSection(&allocator->cs);
 
-    IMFAsyncResult_GetObject(result, (IUnknown **)&sample);
-
     LIST_FOR_EACH_ENTRY(iter, &allocator->used_samples, struct queued_sample, entry)
     {
-        if (sample == (IUnknown *)iter->sample)
+        if (sample == iter->sample)
         {
             list_remove(&iter->entry);
             list_add_tail(&allocator->free_samples, &iter->entry);
@@ -813,7 +821,7 @@ static HRESULT WINAPI sample_allocator_tracking_callback_Invoke(IMFAsyncCallback
         }
     }
 
-    IUnknown_Release(sample);
+    IMFSample_Release(sample);
 
     if (allocator->callback)
         IMFVideoSampleAllocatorNotify_NotifyRelease(allocator->callback);
