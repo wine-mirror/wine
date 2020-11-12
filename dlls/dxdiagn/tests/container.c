@@ -819,7 +819,7 @@ static void test_DxDiag_SystemInfo(void)
         {L"szProcessorEnglish", VT_BSTR},
     };
 
-    IDxDiagContainer *container;
+    IDxDiagContainer *container, *container2;
     HRESULT hr;
 
     if (!create_root_IDxDiagContainer())
@@ -828,6 +828,9 @@ static void test_DxDiag_SystemInfo(void)
         return;
     }
 
+    hr = IDxDiagContainer_GetChildContainer(pddc, L"", &container2);
+    ok(hr == E_INVALIDARG, "Expected IDxDiagContainer::GetChildContainer to return E_INVALIDARG, got 0x%08x\n", hr);
+
     hr = IDxDiagContainer_GetChildContainer(pddc, L"DxDiag_SystemInfo", &container);
     ok(hr == S_OK, "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
 
@@ -835,6 +838,14 @@ static void test_DxDiag_SystemInfo(void)
     {
         trace("Testing container DxDiag_SystemInfo\n");
         test_container_properties(container, property_tests, ARRAY_SIZE(property_tests));
+
+        container2 = NULL;
+        hr = IDxDiagContainer_GetChildContainer(container, L"", &container2);
+        ok(hr == S_OK, "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
+        ok(container2 != NULL, "Expected container2 != NULL\n");
+        ok(container2 != container, "Expected container != container2\n");
+
+        IDxDiagContainer_Release(container2);
         IDxDiagContainer_Release(container);
     }
 
@@ -954,8 +965,8 @@ static void test_DxDiag_SoundDevices(void)
 
     for (i = 0; i < count; i++)
     {
+        IDxDiagContainer *child, *child2;
         WCHAR child_container[256];
-        IDxDiagContainer *child;
 
         hr = IDxDiagContainer_EnumChildContainerNames(sound_cont, i, child_container, ARRAY_SIZE(child_container));
         ok(hr == S_OK, "Expected IDxDiagContainer::EnumChildContainerNames to return S_OK, got 0x%08x\n", hr);
@@ -966,6 +977,13 @@ static void test_DxDiag_SoundDevices(void)
         trace("Testing container %s\n", wine_dbgstr_w(child_container));
         test_container_properties(child, property_tests, ARRAY_SIZE(property_tests));
 
+        child2 = NULL;
+        hr = IDxDiagContainer_GetChildContainer(child, L"", &child2);
+        ok(hr == S_OK, "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
+        ok(child2 != NULL, "Expected child2 != NULL\n");
+        ok(child2 != child, "Expected child != child2\n");
+
+        IDxDiagContainer_Release(child2);
         IDxDiagContainer_Release(child);
     }
 
