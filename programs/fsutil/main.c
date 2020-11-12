@@ -38,11 +38,11 @@ static void output_write(const WCHAR *str, DWORD wlen)
          * back to WriteFile(), assuming the console encoding is still the right
          * one in that case.
          */
-        len = WideCharToMultiByte(GetConsoleOutputCP(), 0, str, wlen, NULL, 0, NULL, NULL);
+        len = WideCharToMultiByte(CP_ACP, 0, str, wlen, NULL, 0, NULL, NULL);
         msgA = HeapAlloc(GetProcessHeap(), 0, len * sizeof(char));
         if (!msgA) return;
 
-        WideCharToMultiByte(GetConsoleOutputCP(), 0, str, wlen, msgA, len, NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, str, wlen, msgA, len, NULL, NULL);
         WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), msgA, len, &count, FALSE);
         HeapFree(GetProcessHeap(), 0, msgA);
     }
