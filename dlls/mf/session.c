@@ -45,6 +45,7 @@ enum session_command
     /* Internally used commands. */
     SESSION_CMD_END,
     SESSION_CMD_QM_NOTIFY_TOPOLOGY,
+    SESSION_CMD_SA_READY,
 };
 
 struct session_op
@@ -68,6 +69,10 @@ struct session_op
         {
             IMFTopology *topology;
         } notify_topology;
+        struct
+        {
+            TOPOID node_id;
+        } sa_ready;
     } u;
     struct list entry;
 };
@@ -148,6 +153,7 @@ enum topo_node_flags
 struct topo_node
 {
     struct list entry;
+    struct media_session *session;
     MF_TOPOLOGY_TYPE type;
     TOPOID node_id;
     IMFTopologyNode *node;
@@ -171,7 +177,9 @@ struct topo_node
         struct
         {
             unsigned int requests;
+            IMFVideoSampleAllocatorNotify notify_cb;
             IMFVideoSampleAllocator *allocator;
+            IMFVideoSampleAllocatorCallback *allocator_cb;
         } sink;
         struct
         {
@@ -398,6 +406,11 @@ static struct sink_notification *impl_sink_notification_from_IUnknown(IUnknown *
 static struct quality_manager *impl_from_IMFQualityManager(IMFQualityManager *iface)
 {
     return CONTAINING_RECORD(iface, struct quality_manager, IMFQualityManager_iface);
+}
+
+static struct topo_node *impl_node_from_IMFVideoSampleAllocatorNotify(IMFVideoSampleAllocatorNotify *iface)
+{
+    return CONTAINING_RECORD(iface, struct topo_node, u.sink.notify_cb);
 }
 
 /* IMFLocalMFTRegistration */
@@ -746,6 +759,11 @@ static void release_topo_node(struct topo_node *node)
         case MF_TOPOLOGY_OUTPUT_NODE:
             if (node->u.sink.allocator)
                 IMFVideoSampleAllocator_Release(node->u.sink.allocator);
+            if (node->u.sink.allocator_cb)
+            {
+                IMFVideoSampleAllocatorCallback_SetCallback(node->u.sink.allocator_cb, NULL);
+                IMFVideoSampleAllocatorCallback_Release(node->u.sink.allocator_cb);
+            }
             break;
         default:
             ;
@@ -802,6 +820,19 @@ static void session_clear_presentation(struct media_session *session)
         list_remove(&op->entry);
         IUnknown_Release(&op->IUnknown_iface);
     }
+}
+
+static struct topo_node *session_get_node_by_id(const struct media_session *session, TOPOID id)
+{
+    struct topo_node *node;
+
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+    {
+        if (node->node_id == id)
+            return node;
+    }
+
+    return NULL;
 }
 
 static void session_start(struct media_session *session, const GUID *time_format, const PROPVARIANT *start_position)
@@ -1204,6 +1235,56 @@ static HRESULT session_get_stream_sink_type(IMFStreamSink *sink, IMFMediaType **
     return hr;
 }
 
+static HRESULT WINAPI node_sample_allocator_cb_QueryInterface(IMFVideoSampleAllocatorNotify *iface,
+        REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFVideoSampleAllocatorNotify) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFVideoSampleAllocatorNotify_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI node_sample_allocator_cb_AddRef(IMFVideoSampleAllocatorNotify *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI node_sample_allocator_cb_Release(IMFVideoSampleAllocatorNotify *iface)
+{
+    return 1;
+}
+
+static HRESULT session_request_sample_from_node(struct media_session *session, IMFTopologyNode *node, DWORD output);
+
+static HRESULT WINAPI node_sample_allocator_cb_NotifyRelease(IMFVideoSampleAllocatorNotify *iface)
+{
+    struct topo_node *topo_node = impl_node_from_IMFVideoSampleAllocatorNotify(iface);
+    struct session_op *op;
+
+    if (SUCCEEDED(create_session_op(SESSION_CMD_SA_READY, &op)))
+    {
+        op->u.sa_ready.node_id = topo_node->node_id;
+        MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &topo_node->session->commands_callback, &op->IUnknown_iface);
+        IUnknown_Release(&op->IUnknown_iface);
+    }
+
+    return S_OK;
+}
+
+static const IMFVideoSampleAllocatorNotifyVtbl node_sample_allocator_cb_vtbl =
+{
+    node_sample_allocator_cb_QueryInterface,
+    node_sample_allocator_cb_AddRef,
+    node_sample_allocator_cb_Release,
+    node_sample_allocator_cb_NotifyRelease,
+};
+
 static HRESULT session_append_node(struct media_session *session, IMFTopologyNode *node)
 {
     struct topo_node *topo_node;
@@ -1220,10 +1301,13 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
     IMFTopologyNode_GetTopoNodeID(node, &topo_node->node_id);
     topo_node->node = node;
     IMFTopologyNode_AddRef(topo_node->node);
+    topo_node->session = session;
 
     switch (topo_node->type)
     {
         case MF_TOPOLOGY_OUTPUT_NODE:
+            topo_node->u.sink.notify_cb.lpVtbl = &node_sample_allocator_cb_vtbl;
+
             if (FAILED(hr = IMFTopologyNode_GetObject(node, &object)))
             {
                 WARN("Node %s does not have associated object.\n", wine_dbgstr_longlong(topo_node->node_id));
@@ -1245,6 +1329,10 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
                         &IID_IMFVideoSampleAllocator, (void **)&topo_node->u.sink.allocator)))
                     {
                         IMFVideoSampleAllocator_InitializeSampleAllocator(topo_node->u.sink.allocator, 2, media_type);
+                        IMFVideoSampleAllocator_QueryInterface(topo_node->u.sink.allocator,
+                                &IID_IMFVideoSampleAllocatorCallback, (void **)&topo_node->u.sink.allocator_cb);
+                        IMFVideoSampleAllocatorCallback_SetCallback(topo_node->u.sink.allocator_cb,
+                                &topo_node->u.sink.notify_cb);
                     }
                     IMFMediaType_Release(media_type);
                 }
@@ -1955,6 +2043,9 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
 {
     struct session_op *op = impl_op_from_IUnknown(IMFAsyncResult_GetStateNoAddRef(result));
     struct media_session *session = impl_from_commands_callback_IMFAsyncCallback(iface);
+    struct topo_node *topo_node;
+    IMFTopologyNode *upstream_node;
+    unsigned int upstream_output;
 
     EnterCriticalSection(&session->cs);
 
@@ -1984,6 +2075,18 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
             break;
         case SESSION_CMD_QM_NOTIFY_TOPOLOGY:
             IMFQualityManager_NotifyTopology(session->quality_manager, op->u.notify_topology.topology);
+            break;
+        case SESSION_CMD_SA_READY:
+            topo_node = session_get_node_by_id(session, op->u.sa_ready.node_id);
+
+            if (topo_node->u.sink.requests)
+            {
+                if (SUCCEEDED(IMFTopologyNode_GetInput(topo_node->node, 0, &upstream_node, &upstream_output)))
+                {
+                    session_request_sample_from_node(session, upstream_node, upstream_output);
+                    IMFTopologyNode_Release(upstream_node);
+                }
+            }
             break;
         default:
             ;
@@ -2463,19 +2566,6 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
     }
 }
 
-static struct topo_node *session_get_node_by_id(struct media_session *session, TOPOID id)
-{
-    struct topo_node *node;
-
-    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
-    {
-        if (node->node_id == id)
-            return node;
-    }
-
-    return NULL;
-}
-
 static DWORD transform_node_get_stream_id(struct topo_node *node, BOOL output, DWORD index)
 {
     unsigned int *map = output ? node->u.transform.output_map : node->u.transform.input_map;
@@ -2496,6 +2586,47 @@ static struct sample *transform_create_sample(IMFSample *sample)
     return sample_entry;
 }
 
+static HRESULT transform_get_external_output_sample(const struct media_session *session, struct topo_node *transform,
+        unsigned int output_index, const MFT_OUTPUT_STREAM_INFO *stream_info, IMFSample **sample)
+{
+    IMFTopologyNode *downstream_node;
+    unsigned int downstream_input;
+    IMFMediaBuffer *buffer = NULL;
+    struct topo_node *topo_node;
+    TOPOID node_id;
+    HRESULT hr;
+
+    if (FAILED(IMFTopologyNode_GetOutput(transform->node, output_index, &downstream_node, &downstream_input)))
+    {
+        WARN("Failed to get connected node for output %u.\n", output_index);
+        return MF_E_UNEXPECTED;
+    }
+
+    IMFTopologyNode_GetTopoNodeID(downstream_node, &node_id);
+    IMFTopologyNode_Release(downstream_node);
+
+    topo_node = session_get_node_by_id(session, node_id);
+
+    if (topo_node->type == MF_TOPOLOGY_OUTPUT_NODE && topo_node->u.sink.allocator)
+    {
+        hr = IMFVideoSampleAllocator_AllocateSample(topo_node->u.sink.allocator, sample);
+    }
+    else
+    {
+        hr = MFCreateAlignedMemoryBuffer(stream_info->cbSize, stream_info->cbAlignment, &buffer);
+        if (SUCCEEDED(hr))
+            hr = MFCreateSample(sample);
+
+        if (SUCCEEDED(hr))
+            hr = IMFSample_AddBuffer(*sample, buffer);
+
+        if (buffer)
+            IMFMediaBuffer_Release(buffer);
+    }
+
+    return hr;
+}
+
 static HRESULT transform_node_pull_samples(const struct media_session *session, struct topo_node *node)
 {
     MFT_OUTPUT_STREAM_INFO stream_info;
@@ -2503,7 +2634,7 @@ static HRESULT transform_node_pull_samples(const struct media_session *session, 
     struct sample *queued_sample;
     DWORD status = 0;
     unsigned int i;
-    HRESULT hr;
+    HRESULT hr = E_UNEXPECTED;
 
     if (!(buffers = heap_calloc(node->u.transform.output_count, sizeof(*buffers))))
         return E_OUTOFMEMORY;
@@ -2521,19 +2652,7 @@ static HRESULT transform_node_pull_samples(const struct media_session *session, 
 
         if (!(stream_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES))
         {
-            IMFMediaBuffer *buffer = NULL;
-
-            hr = MFCreateAlignedMemoryBuffer(stream_info.cbSize, stream_info.cbAlignment, &buffer);
-            if (SUCCEEDED(hr))
-                hr = MFCreateSample(&buffers[i].pSample);
-
-            if (SUCCEEDED(hr))
-                hr = IMFSample_AddBuffer(buffers[i].pSample, buffer);
-
-            if (buffer)
-                IMFMediaBuffer_Release(buffer);
-
-            if (FAILED(hr))
+            if (FAILED(hr = transform_get_external_output_sample(session, node, i, &stream_info, &buffers[i].pSample)))
                 break;
         }
     }
