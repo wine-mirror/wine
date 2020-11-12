@@ -65,6 +65,20 @@ coclass SpObjectToken
 }
 
 [
+    uuid(715d9c59-4442-11d2-9605-00c04f8ee628),
+    helpstring("Speech Stream"),
+    progid("SAPI.SpStream.1"),
+    vi_progid("SAPI.SpStream"),
+    threading(both),
+    restricted,
+    hidden
+]
+coclass SpStream
+{
+    interface ISpStream;
+}
+
+[
     uuid(96749377-3391-11d2-9ee3-00c04f797396),
     helpstring("Speech Voice"),
     progid("SAPI.SpVoice.1"),

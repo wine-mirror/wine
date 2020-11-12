@@ -6,6 +6,7 @@ EXTRADLLFLAGS = -mno-cygwin
 C_SRCS = \
 	automation.c \
 	main.c \
+	stream.c \
 	token.c \
 	tts.c
 

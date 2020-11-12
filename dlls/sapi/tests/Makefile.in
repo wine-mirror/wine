@@ -3,5 +3,6 @@ IMPORTS   = ole32 user32 advapi32
 
 C_SRCS = \
 	automation.c \
+	stream.c \
 	token.c \
 	tts.c
