@@ -922,6 +922,110 @@ cleanup:
     IDxDiagProvider_Release(pddp);
 }
 
+static void test_DxDiag_SoundDevices(void)
+{
+    static const struct property_test property_tests[] =
+    {
+        {L"szDescription", VT_BSTR},
+        {L"szGuidDeviceID", VT_BSTR},
+        {L"szDriverName", VT_BSTR},
+        {L"szDriverPath", VT_BSTR},
+    };
+
+    IDxDiagContainer *sound_cont = NULL;
+    DWORD count, i;
+    HRESULT hr;
+
+    if (!create_root_IDxDiagContainer())
+    {
+        skip("Unable to create the root IDxDiagContainer\n");
+        return;
+    }
+
+    hr = IDxDiagContainer_GetChildContainer(pddc, L"DxDiag_DirectSound.DxDiag_SoundDevices", &sound_cont);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
+
+    hr = IDxDiagContainer_GetNumberOfProps(sound_cont, &count);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetNumberOfProps to return S_OK, got 0x%08x\n", hr);
+    ok(count == 0, "Expected count to be 0, got %u\n", count);
+
+    hr = IDxDiagContainer_GetNumberOfChildContainers(sound_cont, &count);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetNumberOfChildContainers to return S_OK, got 0x%08x\n", hr);
+
+    for (i = 0; i < count; i++)
+    {
+        WCHAR child_container[256];
+        IDxDiagContainer *child;
+
+        hr = IDxDiagContainer_EnumChildContainerNames(sound_cont, i, child_container, ARRAY_SIZE(child_container));
+        ok(hr == S_OK, "Expected IDxDiagContainer::EnumChildContainerNames to return S_OK, got 0x%08x\n", hr);
+
+        hr = IDxDiagContainer_GetChildContainer(sound_cont, child_container, &child);
+        ok(hr == S_OK, "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
+
+        trace("Testing container %s\n", wine_dbgstr_w(child_container));
+        test_container_properties(child, property_tests, ARRAY_SIZE(property_tests));
+
+        IDxDiagContainer_Release(child);
+    }
+
+    IDxDiagContainer_Release(sound_cont);
+    IDxDiagContainer_Release(pddc);
+    IDxDiagProvider_Release(pddp);
+}
+
+static void test_DxDiag_SoundCaptureDevices(void)
+{
+    static const struct property_test property_tests[] =
+    {
+        {L"szDescription", VT_BSTR},
+        {L"szGuidDeviceID", VT_BSTR},
+        {L"szDriverName", VT_BSTR},
+        {L"szDriverPath", VT_BSTR},
+    };
+
+    IDxDiagContainer *sound_cont = NULL;
+    DWORD count, i;
+    HRESULT hr;
+
+    if (!create_root_IDxDiagContainer())
+    {
+        skip("Unable to create the root IDxDiagContainer\n");
+        return;
+    }
+
+    hr = IDxDiagContainer_GetChildContainer(pddc, L"DxDiag_DirectSound.DxDiag_SoundCaptureDevices", &sound_cont);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
+
+    hr = IDxDiagContainer_GetNumberOfProps(sound_cont, &count);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetNumberOfProps to return S_OK, got 0x%08x\n", hr);
+    ok(count == 0, "Expected count to be 0, got %u\n", count);
+
+    hr = IDxDiagContainer_GetNumberOfChildContainers(sound_cont, &count);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetNumberOfChildContainers to return S_OK, got 0x%08x\n", hr);
+
+    for (i = 0; i < count; i++)
+    {
+        WCHAR child_container[256];
+        IDxDiagContainer *child;
+
+        hr = IDxDiagContainer_EnumChildContainerNames(sound_cont, i, child_container, ARRAY_SIZE(child_container));
+        ok(hr == S_OK, "Expected IDxDiagContainer::EnumChildContainerNames to return S_OK, got 0x%08x\n", hr);
+
+        hr = IDxDiagContainer_GetChildContainer(sound_cont, child_container, &child);
+        ok(hr == S_OK, "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
+
+        trace("Testing container %s\n", wine_dbgstr_w(child_container));
+        test_container_properties(child, property_tests, ARRAY_SIZE(property_tests));
+
+        IDxDiagContainer_Release(child);
+    }
+
+    IDxDiagContainer_Release(sound_cont);
+    IDxDiagContainer_Release(pddc);
+    IDxDiagProvider_Release(pddp);
+}
+
 START_TEST(container)
 {
     CoInitialize(NULL);
@@ -936,5 +1040,7 @@ START_TEST(container)
     test_root_children();
     test_DxDiag_SystemInfo();
     test_DxDiag_DisplayDevices();
+    test_DxDiag_SoundDevices();
+    test_DxDiag_SoundCaptureDevices();
     CoUninitialize();
 }
