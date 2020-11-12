@@ -283,6 +283,36 @@ static const struct object_ops console_device_ops =
     no_destroy                        /* destroy */
 };
 
+static void input_device_dump( struct object *obj, int verbose );
+static struct object *input_device_open_file( struct object *obj, unsigned int access,
+                                              unsigned int sharing, unsigned int options );
+static int input_device_add_queue( struct object *obj, struct wait_queue_entry *entry );
+static struct fd *input_device_get_fd( struct object *obj );
+
+static const struct object_ops input_device_ops =
+{
+    sizeof(struct object),            /* size */
+    input_device_dump,                /* dump */
+    console_device_get_type,          /* get_type */
+    input_device_add_queue,           /* add_queue */
+    NULL,                             /* remove_queue */
+    NULL,                             /* signaled */
+    no_satisfied,                     /* satisfied */
+    no_signal,                        /* signal */
+    input_device_get_fd,              /* get_fd */
+    no_map_access,                    /* map_access */
+    default_get_sd,                   /* get_sd */
+    default_set_sd,                   /* set_sd */
+    no_get_full_name,                 /* get_full_name */
+    no_lookup_name,                   /* lookup_name */
+    directory_link_name,              /* link_name */
+    default_unlink_name,              /* unlink_name */
+    input_device_open_file,           /* open_file */
+    no_kernel_obj_list,               /* get_kernel_obj_list */
+    no_close_handle,                  /* close_handle */
+    no_destroy                        /* destroy */
+};
+
 struct console_connection
 {
     struct object         obj;         /* object header */
@@ -1065,6 +1095,7 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
     static const WCHAR consoleW[]       = {'C','o','n','s','o','l','e'};
     static const WCHAR current_inW[]    = {'C','u','r','r','e','n','t','I','n'};
     static const WCHAR current_outW[]   = {'C','u','r','r','e','n','t','O','u','t'};
+    static const WCHAR inputW[]         = {'I','n','p','u','t'};
     static const WCHAR screen_bufferW[] = {'S','c','r','e','e','n','B','u','f','f','e','r'};
     static const WCHAR serverW[]        = {'S','e','r','v','e','r'};
 
@@ -1094,6 +1125,12 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
     {
         name->len = 0;
         return grab_object( obj );
+    }
+
+    if (name->len == sizeof(inputW) && !memcmp( name->str, inputW, name->len ))
+    {
+        name->len = 0;
+        return alloc_object( &input_device_ops );
     }
 
     if (name->len == sizeof(screen_bufferW) && !memcmp( name->str, screen_bufferW, name->len ))
@@ -1139,6 +1176,37 @@ static struct object *console_device_open_file( struct object *obj, unsigned int
         return NULL;
     }
     return is_output ? grab_object( current->process->console->active ) : grab_object( current->process->console );
+}
+
+static void input_device_dump( struct object *obj, int verbose )
+{
+    fputs( "console Input device\n", stderr );
+}
+
+static int input_device_add_queue( struct object *obj, struct wait_queue_entry *entry )
+{
+    if (!current->process->console)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+    return add_queue( &current->process->console->obj, entry );
+}
+
+static struct fd *input_device_get_fd( struct object *obj )
+{
+    if (!current->process->console)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+    return get_obj_fd( &current->process->console->obj );
+}
+
+static struct object *input_device_open_file( struct object *obj, unsigned int access,
+                                              unsigned int sharing, unsigned int options )
+{
+    return grab_object( obj );
 }
 
 struct object *create_console_device( struct object *root, const struct unicode_str *name,
