@@ -47,14 +47,13 @@ static int hostname_vprintfW(const WCHAR *msg, __ms_va_list va_args)
          * back to WriteFile(), assuming the console encoding is still the right
          * one in that case.
          */
-        len = WideCharToMultiByte(GetConsoleOutputCP(), 0, msg_buffer, wlen,
+        len = WideCharToMultiByte(CP_ACP, 0, msg_buffer, wlen,
             NULL, 0, NULL, NULL);
         msgA = HeapAlloc(GetProcessHeap(), 0, len);
         if (!msgA)
             return 0;
 
-        WideCharToMultiByte(GetConsoleOutputCP(), 0, msg_buffer, wlen, msgA, len,
-            NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, msg_buffer, wlen, msgA, len, NULL, NULL);
         WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), msgA, len, &count, FALSE);
         HeapFree(GetProcessHeap(), 0, msgA);
     }
