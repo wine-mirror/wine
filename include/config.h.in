@@ -1346,9 +1346,6 @@
 /* Define to the soname of the libGLESv2 library. */
 #undef SONAME_LIBGLESV2
 
-/* Define to the soname of the libGLU library. */
-#undef SONAME_LIBGLU
-
 /* Define to the soname of the libgnutls library. */
 #undef SONAME_LIBGNUTLS
 

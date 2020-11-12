@@ -855,7 +855,6 @@ with_freetype
 with_gettext
 with_gettextpo
 with_gphoto
-with_glu
 with_gnutls
 with_gsm
 with_gssapi
@@ -2594,7 +2593,6 @@ Optional Packages:
   --without-gettext       do not use gettext
   --with-gettextpo        use the GetTextPO library to rebuild po files
   --without-gphoto        do not use gphoto (Digital Camera support)
-  --without-glu           do not use the GLU library
   --without-gnutls        do not use GnuTLS (schannel support)
   --without-gsm           do not use libgsm (GSM 06.10 codec support)
   --without-gssapi        do not use GSSAPI (Kerberos SSP support)
@@ -3986,12 +3984,6 @@ fi
 # Check whether --with-gphoto was given.
 if test "${with_gphoto+set}" = set; then :
   withval=$with_gphoto;
-fi
-
-
-# Check whether --with-glu was given.
-if test "${with_glu+set}" = set; then :
-  withval=$with_glu;
 fi
 
 
@@ -12563,74 +12555,6 @@ _ACEOF
 
        OPENGL_LIBS="-lGL"
 fi
-        if test "x$with_glu" != "xno"
-        then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lGLU" >&5
-$as_echo_n "checking for -lGLU... " >&6; }
-if ${ac_cv_lib_soname_GLU+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lGLU $OPENGL_LIBS $X_LIBS -lm $X_EXTRA_LIBS $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char gluLookAt ();
-int
-main ()
-{
-return gluLookAt ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_GLU=`$ac_cv_path_LDD conftest.exe | grep "GLU" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_GLU=`$OTOOL -L conftest$ac_exeext | grep "libGLU\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libGLU\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_GLU=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libGLU\\.$LIBEXT" | sed -e "s/^.*\\[\\(libGLU\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_GLU:+false} :; then :
-  ac_cv_lib_soname_GLU=`$LDD conftest$ac_exeext | grep "libGLU\\.$LIBEXT" | sed -e "s/^.*\(libGLU\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else
-  ac_cv_lib_soname_GLU=
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if ${ac_cv_lib_soname_GLU:+false} :; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_GLU" >&5
-$as_echo "$ac_cv_lib_soname_GLU" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBGLU "$ac_cv_lib_soname_GLU"
-_ACEOF
-
-
-fi
-            if test "x$ac_cv_lib_soname_GLU" = "x"; then :
-  case "x$with_glu" in
-  x)   as_fn_append wine_notices "|libGLU ${notice_platform}development files not found, GLU won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "libGLU ${notice_platform}development files not found, GLU won't be supported.
-This is an error since --with-glu was requested." "$LINENO" 5 ;;
-esac
-
-fi
-        fi
-
         if test "x$with_osmesa" != "xno"
         then
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lOSMesa" >&5

@@ -20,6 +20,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
 #include <stdarg.h>
 
 #include "windef.h"
@@ -91,51 +92,6 @@ static const struct { GLuint err; const char *str; } errors[] =
     { GLU_NURBS_ERROR37, "duplicate point on piecewise linear trimming curve" },
 };
 
-typedef void (*_GLUfuncptr)(void);
-
-static void  (*p_gluBeginCurve)( GLUnurbs* nurb );
-static void  (*p_gluBeginSurface)( GLUnurbs* nurb );
-static void  (*p_gluBeginTrim)( GLUnurbs* nurb );
-static void  (*p_gluDeleteNurbsRenderer)( GLUnurbs* nurb );
-static void  (*p_gluEndCurve)( GLUnurbs* nurb );
-static void  (*p_gluEndSurface)( GLUnurbs* nurb );
-static void  (*p_gluEndTrim)( GLUnurbs* nurb );
-static void  (*p_gluGetNurbsProperty)( GLUnurbs* nurb, GLenum property, GLfloat* data );
-static void  (*p_gluLoadSamplingMatrices)( GLUnurbs* nurb, const GLfloat *model, const GLfloat *perspective, const GLint *view );
-static GLUnurbs* (*p_gluNewNurbsRenderer)(void);
-static void  (*p_gluNurbsCallback)( GLUnurbs* nurb, GLenum which, _GLUfuncptr CallBackFunc );
-static void  (*p_gluNurbsCurve)( GLUnurbs* nurb, GLint knotCount, GLfloat *knots, GLint stride, GLfloat *control, GLint order, GLenum type );
-static void  (*p_gluNurbsProperty)( GLUnurbs* nurb, GLenum property, GLfloat value );
-static void  (*p_gluNurbsSurface)( GLUnurbs* nurb, GLint sKnotCount, GLfloat* sKnots, GLint tKnotCount, GLfloat* tKnots, GLint sStride, GLint tStride, GLfloat* control, GLint sOrder, GLint tOrder, GLenum type );
-static void  (*p_gluPwlCurve)( GLUnurbs* nurb, GLint count, GLfloat* data, GLint stride, GLenum type );
-
-static void *libglu_handle;
-static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
-
-static BOOL WINAPI load_libglu( INIT_ONCE *once, void *param, void **context )
-{
-#ifdef SONAME_LIBGLU
-    if ((libglu_handle = dlopen( SONAME_LIBGLU, RTLD_NOW )))
-        TRACE( "loaded %s\n", SONAME_LIBGLU );
-    else
-        ERR( "Failed to load %s: %s\n", SONAME_LIBGLU, dlerror() );
-#else
-    ERR( "libGLU is needed but support was not included at build time\n" );
-#endif
-    return libglu_handle != NULL;
-}
-
-static void *load_glufunc( const char *name )
-{
-    void *ret;
-
-    if (!InitOnceExecuteOnce( &init_once, load_libglu, NULL, NULL )) return NULL;
-    if (!(ret = dlsym( libglu_handle, name ))) ERR( "Can't find %s\n", name );
-    return ret;
-}
-
-#define LOAD_FUNCPTR(f) (p_##f || (p_##f = load_glufunc( #f )))
-
 
 /***********************************************************************
  *		gluErrorString (GLU32.@)
@@ -173,8 +129,8 @@ const WCHAR * WINAPI wine_gluErrorUnicodeStringEXT( GLenum errCode )
  */
 GLUnurbs * WINAPI wine_gluNewNurbsRenderer(void)
 {
-    if (!LOAD_FUNCPTR( gluNewNurbsRenderer )) return NULL;
-    return p_gluNewNurbsRenderer();
+    ERR( "Nurbs renderer is not supported, please report\n" );
+    return NULL;
 }
 
 /***********************************************************************
@@ -182,8 +138,7 @@ GLUnurbs * WINAPI wine_gluNewNurbsRenderer(void)
  */
 void WINAPI wine_gluDeleteNurbsRenderer( GLUnurbs *nobj )
 {
-    if (!LOAD_FUNCPTR( gluDeleteNurbsRenderer )) return;
-    p_gluDeleteNurbsRenderer( nobj );
+    assert( 0 );
 }
 
 /***********************************************************************
@@ -192,8 +147,7 @@ void WINAPI wine_gluDeleteNurbsRenderer( GLUnurbs *nobj )
 void WINAPI wine_gluLoadSamplingMatrices( GLUnurbs *nobj, const GLfloat modelMatrix[16],
                                           const GLfloat projMatrix[16], const GLint viewport[4] )
 {
-    if (!LOAD_FUNCPTR( gluLoadSamplingMatrices )) return;
-    p_gluLoadSamplingMatrices( nobj, modelMatrix, projMatrix, viewport );
+    assert( 0 );
 }
 
 /***********************************************************************
@@ -201,8 +155,7 @@ void WINAPI wine_gluLoadSamplingMatrices( GLUnurbs *nobj, const GLfloat modelMat
  */
 void WINAPI wine_gluNurbsProperty( GLUnurbs *nobj, GLenum property, GLfloat value )
 {
-    if (!LOAD_FUNCPTR( gluNurbsProperty )) return;
-    p_gluNurbsProperty( nobj, property, value );
+    assert( 0 );
 }
 
 /***********************************************************************
@@ -210,8 +163,7 @@ void WINAPI wine_gluNurbsProperty( GLUnurbs *nobj, GLenum property, GLfloat valu
  */
 void WINAPI wine_gluGetNurbsProperty( GLUnurbs *nobj, GLenum property, GLfloat *value )
 {
-    if (!LOAD_FUNCPTR( gluGetNurbsProperty )) return;
-    p_gluGetNurbsProperty( nobj, property, value );
+    assert( 0 );
 }
 
 /***********************************************************************
@@ -219,8 +171,7 @@ void WINAPI wine_gluGetNurbsProperty( GLUnurbs *nobj, GLenum property, GLfloat *
  */
 void WINAPI wine_gluBeginCurve( GLUnurbs *nobj )
 {
-    if (!LOAD_FUNCPTR( gluBeginCurve )) return;
-    p_gluBeginCurve( nobj );
+    assert( 0 );
 }
 
 /***********************************************************************
@@ -228,8 +179,7 @@ void WINAPI wine_gluBeginCurve( GLUnurbs *nobj )
  */
 void WINAPI wine_gluEndCurve( GLUnurbs *nobj )
 {
-    if (!LOAD_FUNCPTR( gluEndCurve )) return;
-    p_gluEndCurve( nobj );
+    assert( 0 );
 }
 
 /***********************************************************************
@@ -238,8 +188,7 @@ void WINAPI wine_gluEndCurve( GLUnurbs *nobj )
 void WINAPI wine_gluNurbsCurve( GLUnurbs *nobj, GLint nknots, GLfloat *knot,
                                 GLint stride, GLfloat *ctlarray, GLint order, GLenum type )
 {
-    if (!LOAD_FUNCPTR( gluNurbsCurve )) return;
-    p_gluNurbsCurve( nobj, nknots, knot, stride, ctlarray, order, type );
+    assert( 0 );
 }
 
 /***********************************************************************
@@ -247,8 +196,7 @@ void WINAPI wine_gluNurbsCurve( GLUnurbs *nobj, GLint nknots, GLfloat *knot,
  */
 void WINAPI wine_gluBeginSurface( GLUnurbs *nobj )
 {
-    if (!LOAD_FUNCPTR( gluBeginSurface )) return;
-    p_gluBeginSurface( nobj );
+    assert( 0 );
 }
 
 /***********************************************************************
@@ -256,8 +204,7 @@ void WINAPI wine_gluBeginSurface( GLUnurbs *nobj )
  */
 void WINAPI wine_gluEndSurface( GLUnurbs *nobj )
 {
-    if (!LOAD_FUNCPTR( gluEndSurface )) return;
-    p_gluEndSurface( nobj );
+    assert( 0 );
 }
 
 /***********************************************************************
@@ -267,9 +214,7 @@ void WINAPI wine_gluNurbsSurface( GLUnurbs *nobj, GLint sknot_count, float *skno
                                   GLfloat *tknot, GLint s_stride, GLint t_stride, GLfloat *ctlarray,
                                   GLint sorder, GLint torder, GLenum type )
 {
-    if (!LOAD_FUNCPTR( gluNurbsSurface )) return;
-    p_gluNurbsSurface( nobj, sknot_count, sknot, tknot_count, tknot,
-                       s_stride, t_stride, ctlarray, sorder, torder, type );
+    assert( 0 );
 }
 
 /***********************************************************************
@@ -277,8 +222,7 @@ void WINAPI wine_gluNurbsSurface( GLUnurbs *nobj, GLint sknot_count, float *skno
  */
 void WINAPI wine_gluBeginTrim( GLUnurbs *nobj )
 {
-    if (!LOAD_FUNCPTR( gluBeginTrim )) return;
-    p_gluBeginTrim( nobj );
+    assert( 0 );
 }
 
 /***********************************************************************
@@ -286,8 +230,7 @@ void WINAPI wine_gluBeginTrim( GLUnurbs *nobj )
  */
 void WINAPI wine_gluEndTrim( GLUnurbs *nobj )
 {
-    if (!LOAD_FUNCPTR( gluEndTrim )) return;
-    p_gluEndTrim( nobj );
+    assert( 0 );
 }
 
 /***********************************************************************
@@ -295,8 +238,7 @@ void WINAPI wine_gluEndTrim( GLUnurbs *nobj )
  */
 void WINAPI wine_gluPwlCurve( GLUnurbs *nobj, GLint count, GLfloat *array, GLint stride, GLenum type )
 {
-    if (!LOAD_FUNCPTR( gluPwlCurve )) return;
-    p_gluPwlCurve( nobj, count, array, stride, type );
+    assert( 0 );
 }
 
 /***********************************************************************
@@ -304,9 +246,7 @@ void WINAPI wine_gluPwlCurve( GLUnurbs *nobj, GLint count, GLfloat *array, GLint
  */
 void WINAPI wine_gluNurbsCallback( GLUnurbs *nobj, GLenum which, void (CALLBACK *fn)(void) )
 {
-    if (!LOAD_FUNCPTR( gluNurbsCallback )) return;
-    /* FIXME: callback calling convention */
-    p_gluNurbsCallback( nobj, which, (_GLUfuncptr)fn );
+    assert( 0 );
 }
 
 /***********************************************************************
@@ -338,4 +278,20 @@ GLboolean WINAPI wine_gluCheckExtension( const GLubyte *extName, const GLubyte *
         list = strchr( list, ' ' );
     }
     return GLU_FALSE;
+}
+
+/***********************************************************************
+ *		DllMain
+ */
+BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, LPVOID reserved )
+{
+    switch (reason)
+    {
+        case DLL_WINE_PREATTACH:
+            return FALSE;    /* prefer native version */
+        case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls( instance );
+            break;
+    }
+    return TRUE;
 }
