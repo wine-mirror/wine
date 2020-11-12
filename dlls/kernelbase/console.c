@@ -254,8 +254,7 @@ static BOOL init_console_std_handles( BOOL override_all )
         if (std_out && std_err) return TRUE;
     }
 
-    /* FIXME: Use unbound console handle */
-    RtlInitUnicodeString( &name, L"\\Device\\ConDrv\\CurrentOut" );
+    RtlInitUnicodeString( &name, L"\\Device\\ConDrv\\Output" );
     status = NtCreateFile( &handle, FILE_READ_DATA | FILE_WRITE_DATA | SYNCHRONIZE | FILE_READ_ATTRIBUTES |
                            FILE_WRITE_ATTRIBUTES, &attr, &iosb, NULL, FILE_ATTRIBUTE_NORMAL,
                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_CREATE,
