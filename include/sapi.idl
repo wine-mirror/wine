@@ -653,6 +653,24 @@ interface IEnumSpObjectTokens : IUnknown
 
 [
     object,
+    uuid(93384e18-5014-43d5-adbb-a78e055926bd),
+    helpstring("ISpResourceManager"),
+    pointer_default(unique),
+    restricted
+]
+interface ISpResourceManager : IServiceProvider
+{
+    HRESULT SetObject([in] REFGUID guidServiceId,
+                      [in] IUnknown *pUnkObject);
+    HRESULT GetObject([in] REFGUID guidServiceId,
+                      [in] REFCLSID ObjectCLSID,
+                      [in] REFIID ObjectIID,
+                      [in] BOOL fReleaseWhenLastExternalRefReleased,
+                      [out, iid_is(ObjectIID)] void** ppObject);
+}
+
+[
+    object,
     uuid(1a5c0354-b621-4b5a-8791-d306ed379e53),
     local,
     pointer_default(unique),
@@ -1076,6 +1094,20 @@ library SpeechLib
         interface ISpObjectToken;
         [default] interface ISpDataKey;
     }
+
+    [
+        uuid(96749373-3391-11d2-9ee3-00c04f797396),
+        helpstring("Resource Manager"),
+        progid("SAPI.SpResourceManager.1"),
+        vi_progid("SAPI.SpResourceManager"),
+        threading(both),
+        restricted,
+        hidden
+    ]
+    coclass SpResourceManager
+    {
+        [default] interface ISpResourceManager;
+    };
 
     [
         uuid(3bee4890-4fe9-4a37-8c1e-5e7e12791c1f)
