@@ -326,23 +326,15 @@ static int __cdecl dbmodeprop_compare(const void *a, const void *b)
 
 static HRESULT convert_dbproperty_mode(const WCHAR *src, VARIANT *dest)
 {
-    static const WCHAR readW[] = {'R','e','a','d',0};
-    static const WCHAR readwriteW[] = {'R','e','a','d','W','r','i','t','e',0};
-    static const WCHAR sharedenynoneW[] = {'S','h','a','r','e',' ','D','e','n','y',' ','N','o','n','e',0};
-    static const WCHAR sharedenyreadW[] = {'S','h','a','r','e',' ','D','e','n','y',' ','R','e','a','d',0};
-    static const WCHAR sharedenywriteW[] = {'S','h','a','r','e',' ','D','e','n','y',' ','W','r','i','t','e',0};
-    static const WCHAR shareexclusiveW[] = {'S','h','a','r','e',' ','E','x','c','l','u','s','i','v','e',0};
-    static const WCHAR writeW[] = {'W','r','i','t','e',0};
-
-    struct mode_propval mode_propvals[] =
+    static const struct mode_propval mode_propvals[] =
     {
-        { readW, DB_MODE_READ },
-        { readwriteW, DB_MODE_READWRITE },
-        { sharedenynoneW, DB_MODE_SHARE_DENY_NONE },
-        { sharedenyreadW, DB_MODE_SHARE_DENY_READ },
-        { sharedenywriteW, DB_MODE_SHARE_DENY_WRITE },
-        { shareexclusiveW, DB_MODE_SHARE_EXCLUSIVE },
-        { writeW, DB_MODE_WRITE },
+        { L"Read", DB_MODE_READ },
+        { L"ReadWrite", DB_MODE_READWRITE },
+        { L"Share Deny None", DB_MODE_SHARE_DENY_NONE },
+        { L"Share Deny Read", DB_MODE_SHARE_DENY_READ },
+        { L"Share Deny Write", DB_MODE_SHARE_DENY_WRITE },
+        { L"Share Exclusive", DB_MODE_SHARE_EXCLUSIVE },
+        { L"Write", DB_MODE_WRITE },
     };
     struct mode_propval *prop;
 
@@ -358,59 +350,35 @@ static HRESULT convert_dbproperty_mode(const WCHAR *src, VARIANT *dest)
     return E_FAIL;
 }
 
-static const WCHAR asyncW[]  = {'A','s','y','n','c','h','r','o','n','o','u','s',' ','P','r','o','c','e','s','s','i','n','g',0};
-static const WCHAR bindW[]  = {'B','i','n','d',' ','F','l','a','g','s',0};
-static const WCHAR cacheW[]  = {'C','a','c','h','e',' ','A','u','t','h','e','n','i','c','a','t','i','o','n',0};
-static const WCHAR conn_timeout[] = {'C','o','n','n','e','c','t',' ','T','i','m','e','o','u','t',0};
-static const WCHAR datasourceW[] = {'D','a','t','a',' ','S','o','u','r','c','e',0};
-static const WCHAR encryptW[] = {'E','n','c','r','y','p','t',' ','P','a','s','s','w','o','r','d',0};
-static const WCHAR extendedW[] = {'E','x','t','e','n','d','e','d',' ','P','r','o','p','e','r','t','i','e','s',0};
-static const WCHAR gen_timeout[] = {'G','e','n','e','r','a','l',' ','T','i','m','e','o','u','t',0};
-static const WCHAR impersonW[] = {'I','m','p','e','r','s','o','n','a','t','i','o','n',' ','L','e','v','e','l',0};
-static const WCHAR initcatW[] = {'I','n','i','t','i','a','l',' ','C','a','t','a','l','o','g',0};
-static const WCHAR integratedW[] = {'I','n','t','e','g','r','a','t','e','d',' ','S','e','c','u','r','i','t','y',0};
-static const WCHAR localeIDW[] = {'L','o','c','a','l','e',' ','I','d','e','n','t','i','f','i','e','r',0};
-static const WCHAR locationW[] = {'L','o','c','a','t','i','o','n',0};
-static const WCHAR lockownerW[] = {'L','o','c','k',' ','O','w','n','e','r',0};
-static const WCHAR maskpassW[] = {'M','a','s','k',' ','P','a','s','s','w','o','r','d',0};
-static const WCHAR modeW[] = {'M','o','d','e',0};
-static const WCHAR oledbservW[] = {'O','L','E',' ','D','B',' ','S','e','r','v','i','c','i','e','s',0};
-static const WCHAR passwordW[] = {'P','a','s','s','w','o','r','d',0};
-static const WCHAR persistW[]  = {'P','e','r','s','i','s','t',' ','S','e','c','u','r','i','t','y',' ','I','n','f','o',0};
-static const WCHAR persistEncW[]  = {'P','e','r','s','i','s','t',' ','E','n','c','r','y','p','t','e','d',0};
-static const WCHAR promptW[] = {'P','r','o','m','p','t',0};
-static const WCHAR protectW[]  = {'P','r','o','t','e','c','t','i','o','n',' ','l','e','v','e','l',0};
-static const WCHAR useridW[] = {'U','s','e','r',' ','I','D',0};
-static const WCHAR winhandleW[] = {'W','i','n','d','o','w',' ','H','a','n','d','l','e',0};
-
-static const struct dbproperty dbproperties[] = {
-    { asyncW,      DBPROP_INIT_ASYNCH,                     DBPROPOPTIONS_OPTIONAL, VT_I4 },
-    { bindW,       DBPROP_INIT_BINDFLAGS,                  DBPROPOPTIONS_OPTIONAL, VT_I4 },
-    { cacheW,      DBPROP_AUTH_CACHE_AUTHINFO,             DBPROPOPTIONS_OPTIONAL, VT_BOOL },
-    { conn_timeout,DBPROP_INIT_TIMEOUT,                    DBPROPOPTIONS_OPTIONAL, VT_I4 },
-    { datasourceW, DBPROP_INIT_DATASOURCE,                 DBPROPOPTIONS_REQUIRED, VT_BSTR },
-    { extendedW,   DBPROP_INIT_PROVIDERSTRING,             DBPROPOPTIONS_REQUIRED, VT_BSTR },
-    { encryptW,    DBPROP_AUTH_ENCRYPT_PASSWORD,           DBPROPOPTIONS_REQUIRED, VT_BOOL },
-    { gen_timeout, DBPROP_INIT_GENERALTIMEOUT,             DBPROPOPTIONS_OPTIONAL, VT_I4 },
-    { impersonW,   DBPROP_INIT_IMPERSONATION_LEVEL,        DBPROPOPTIONS_OPTIONAL, VT_I4 },
-    { initcatW,    DBPROP_CATALOGLOCATION,                 DBPROPOPTIONS_OPTIONAL, VT_BSTR },
-    { integratedW, DBPROP_AUTH_INTEGRATED,                 DBPROPOPTIONS_OPTIONAL, VT_BSTR },
-    { localeIDW,   DBPROP_INIT_LCID,                       DBPROPOPTIONS_OPTIONAL, VT_I4 },
-    { locationW,   DBPROP_INIT_LOCATION,                   DBPROPOPTIONS_OPTIONAL, VT_BSTR },
-    { lockownerW,  DBPROP_INIT_LOCKOWNER,                  DBPROPOPTIONS_OPTIONAL, VT_BSTR },
-    { maskpassW,   DBPROP_AUTH_MASK_PASSWORD,              DBPROPOPTIONS_OPTIONAL, VT_BOOL },
-    { modeW,       DBPROP_INIT_MODE,                       DBPROPOPTIONS_OPTIONAL, VT_I4, convert_dbproperty_mode },
-    { oledbservW,  DBPROP_INIT_OLEDBSERVICES,              DBPROPOPTIONS_OPTIONAL, VT_I4 },
-    { passwordW,   DBPROP_AUTH_PASSWORD,                   DBPROPOPTIONS_OPTIONAL, VT_BSTR },
-    { persistEncW, DBPROP_AUTH_PERSIST_ENCRYPTED,          DBPROPOPTIONS_OPTIONAL, VT_BOOL },
-    { persistW,    DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO, DBPROPOPTIONS_OPTIONAL, VT_BOOL },
-    { promptW,     DBPROP_INIT_PROMPT,                     DBPROPOPTIONS_OPTIONAL, VT_I2 },
-    { protectW,    DBPROP_INIT_PROTECTION_LEVEL,           DBPROPOPTIONS_OPTIONAL, VT_I4 },
-    { useridW,     DBPROP_AUTH_USERID,                     DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+static const struct dbproperty dbproperties[] =
+{
+    { L"Asynchronous Processing", DBPROP_INIT_ASYNCH,                     DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { L"Bind Flags",              DBPROP_INIT_BINDFLAGS,                  DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { L"Cache Authentication",    DBPROP_AUTH_CACHE_AUTHINFO,             DBPROPOPTIONS_OPTIONAL, VT_BOOL },
+    { L"Connect Timeout",         DBPROP_INIT_TIMEOUT,                    DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { L"Data Source",             DBPROP_INIT_DATASOURCE,                 DBPROPOPTIONS_REQUIRED, VT_BSTR },
+    { L"Extended Properties",     DBPROP_INIT_PROVIDERSTRING,             DBPROPOPTIONS_REQUIRED, VT_BSTR },
+    { L"Encrypt Password",        DBPROP_AUTH_ENCRYPT_PASSWORD,           DBPROPOPTIONS_REQUIRED, VT_BOOL },
+    { L"General Timeout",         DBPROP_INIT_GENERALTIMEOUT,             DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { L"Impersonation Level",     DBPROP_INIT_IMPERSONATION_LEVEL,        DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { L"Initial Catalog",         DBPROP_CATALOGLOCATION,                 DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+    { L"Integrated Security",     DBPROP_AUTH_INTEGRATED,                 DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+    { L"Locale Identifier",       DBPROP_INIT_LCID,                       DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { L"Location",                DBPROP_INIT_LOCATION,                   DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+    { L"Lock Owner",              DBPROP_INIT_LOCKOWNER,                  DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+    { L"Mask Password",           DBPROP_AUTH_MASK_PASSWORD,              DBPROPOPTIONS_OPTIONAL, VT_BOOL },
+    { L"Mode",                    DBPROP_INIT_MODE,                       DBPROPOPTIONS_OPTIONAL, VT_I4, convert_dbproperty_mode },
+    { L"OLE DB Services",         DBPROP_INIT_OLEDBSERVICES,              DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { L"Password",                DBPROP_AUTH_PASSWORD,                   DBPROPOPTIONS_OPTIONAL, VT_BSTR },
+    { L"Persist Encrypted",       DBPROP_AUTH_PERSIST_ENCRYPTED,          DBPROPOPTIONS_OPTIONAL, VT_BOOL },
+    { L"Persist Security Info",   DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO, DBPROPOPTIONS_OPTIONAL, VT_BOOL },
+    { L"Prompt",                  DBPROP_INIT_PROMPT,                     DBPROPOPTIONS_OPTIONAL, VT_I2 },
+    { L"Protection level",        DBPROP_INIT_PROTECTION_LEVEL,           DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { L"User ID",                 DBPROP_AUTH_USERID,                     DBPROPOPTIONS_OPTIONAL, VT_BSTR },
 #ifndef _WIN64
-    { winhandleW,  DBPROP_INIT_HWND,                       DBPROPOPTIONS_OPTIONAL, VT_I4 },
+    { L"Window Handle",           DBPROP_INIT_HWND,                       DBPROPOPTIONS_OPTIONAL, VT_I4 },
 #else
-    { winhandleW,  DBPROP_INIT_HWND,                       DBPROPOPTIONS_OPTIONAL, VT_I8 },
+    { L"Window Handle",           DBPROP_INIT_HWND,                       DBPROPOPTIONS_OPTIONAL, VT_I8 },
 #endif
 };
 
@@ -467,7 +435,6 @@ static HRESULT parse_init_string(const WCHAR *initstring, struct dbprops *props)
     start = initstring;
     while (start && (eq = wcschr(start, '=')))
     {
-        static const WCHAR providerW[] = {'P','r','o','v','i','d','e','r',0};
         WCHAR *delim, quote;
         BSTR value, name;
 
@@ -500,7 +467,7 @@ static HRESULT parse_init_string(const WCHAR *initstring, struct dbprops *props)
         }
         start = delim;
 
-        if (!wcsicmp(name, providerW))
+        if (!wcsicmp(name, L"Provider"))
         {
             SysFreeString(name);
             SysFreeString(value);
@@ -576,7 +543,6 @@ static HRESULT get_dbpropset_from_proplist(struct dbprops *props, DBPROPSET **pr
 
         if (!descr)
         {
-            static const WCHAR eqW[] = {'=',0};
             BSTR str;
             int len;
 
@@ -584,7 +550,7 @@ static HRESULT get_dbpropset_from_proplist(struct dbprops *props, DBPROPSET **pr
             len = SysStringLen(pair->name) + SysStringLen(pair->value) + 1 /* for '=' */;
             str = SysAllocStringLen(NULL, len);
             lstrcpyW(str, pair->name);
-            lstrcatW(str, eqW);
+            lstrcatW(str, L"=");
             lstrcatW(str, pair->value);
 
             (*propset)->cProperties++;
@@ -663,8 +629,7 @@ static WCHAR *strstriW(const WCHAR *str, const WCHAR *sub)
 
 HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPWSTR initstring, REFIID riid, IUnknown **datasource)
 {
-    static const WCHAR providerW[] = {'P','r','o','v','i','d','e','r','=',0};
-    static const WCHAR msdasqlW[] = {'M','S','D','A','S','Q','L',0};
+    static const WCHAR providerW[] = L"Provider=";
     BOOL datasource_created = FALSE;
     IDBProperties *dbprops;
     DBPROPSET *propset;
@@ -703,7 +668,7 @@ HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPWSTR initstring, REFIID
     }
     else
     {
-        hr = CLSIDFromProgID(msdasqlW, &provclsid);
+        hr = CLSIDFromProgID(L"MSDASQL", &provclsid);
         if (FAILED(hr))
             ERR("ODBC provider for OLE DB not registered\n");
     }
@@ -879,8 +844,7 @@ static void free_dbpropinfoset(ULONG count, DBPROPINFOSET *propinfoset)
 static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, IUnknown *datasource,
                                 boolean include_pass, LPWSTR *init_string)
 {
-    static const WCHAR provW[] = {'P','r','o','v','i','d','e','r','=',0};
-    static const WCHAR colW[] = {';',0};
+    static const WCHAR providerW[] = L"Provider=";
     datainit *This = impl_from_IDataInitialize(iface);
     DBPROPINFOSET *propinfoset;
     IDBProperties *props;
@@ -935,7 +899,7 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     IDBProperties_Release(props);
 
     /* check if we need to skip password */
-    len = lstrlenW(progid) + lstrlenW(provW) + 1; /* including ';' */
+    len = lstrlenW(progid) + lstrlenW(providerW) + 1; /* including ';' */
     for (i = 0; i < count; i++)
     {
         WCHAR *descr = get_propinfo_descr(&propset->rgProperties[i], propinfoset);
@@ -956,9 +920,9 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
     *init_string[0] = 0;
 
     /* provider name */
-    lstrcatW(*init_string, provW);
+    lstrcatW(*init_string, providerW);
     lstrcatW(*init_string, progid);
-    lstrcatW(*init_string, colW);
+    lstrcatW(*init_string, L";");
     CoTaskMemFree(progid);
 
     for (i = 0; i < count; i++)
@@ -970,11 +934,10 @@ static HRESULT WINAPI datainit_GetInitializationString(IDataInitialize *iface, I
         descr = get_propinfo_descr(&propset->rgProperties[i], propinfoset);
         if (descr)
         {
-            static const WCHAR eqW[] = {'=',0};
             lstrcatW(*init_string, descr);
-            lstrcatW(*init_string, eqW);
+            lstrcatW(*init_string, L"=");
             write_propvalue_str(*init_string, &propset->rgProperties[i]);
-            lstrcatW(*init_string, colW);
+            lstrcatW(*init_string, L";");
         }
     }
 

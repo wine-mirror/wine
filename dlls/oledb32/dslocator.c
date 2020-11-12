@@ -277,7 +277,6 @@ static void create_connections_columns(HWND lv)
 
 static void add_connections_providers(HWND lv)
 {
-    static const WCHAR oledbprov[] = {'\\','O','L','E',' ','D','B',' ','P','r','o','v','i','d','e','r',0};
     LONG res;
     HKEY key = NULL, subkey;
     DWORD index = 0;
@@ -296,7 +295,7 @@ static void add_connections_providers(HWND lv)
         WCHAR description[MAX_PATH];
 
         lstrcpyW(guidkey, provider);
-        lstrcatW(guidkey, oledbprov);
+        lstrcatW(guidkey, L"\\OLE DB Provider");
 
         res = RegOpenKeyW(key, guidkey, &subkey);
         if (res == ERROR_SUCCESS)

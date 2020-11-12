@@ -670,11 +670,7 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         {
             WCHAR szBuff[39];
             const GUID *id = src;
-            static const WCHAR format[] = {
-                '{','%','0','8','X','-','%','0','4','X','-','%','0','4','X','-',
-                '%','0','2','X','%','0','2','X','-',
-                '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','}',0};
-            wsprintfW(szBuff, format,
+            wsprintfW(szBuff, L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
                 id->Data1, id->Data2, id->Data3,
                 id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
                 id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
@@ -705,18 +701,14 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         case DBTYPE_DBTIMESTAMP:
         {
             WCHAR szBuff[64];
-            static const WCHAR format1[] = {
-                  '%','0','4','d','-','%','0','2','d','-','%','0','2','d',' ','%','0','2','d',':','%','0','2','d',
-                  ':','%','0','2','d', 0};
-            static const WCHAR format2[] = {
-                  '%','0','4','d','-','%','0','2','d','-','%','0','2','d',' ','%','0','2','d',':','%','0','2','d',
-                  ':','%','0','2','d','.','%','0','9','d', 0};
             DBTIMESTAMP *ts = src;
 
             if(ts->fraction == 0)
-                wsprintfW(szBuff, format1, ts->year, ts->month, ts->day, ts->hour, ts->minute, ts->second);
+                wsprintfW(szBuff, L"%04d-%02d-%02d %02d:%02d:%02d", ts->year, ts->month, ts->day, ts->hour,
+                        ts->minute, ts->second);
             else
-                wsprintfW(szBuff, format2, ts->year, ts->month, ts->day, ts->hour, ts->minute, ts->second, ts->fraction );
+                wsprintfW(szBuff, L"%04d-%02d-%02d %02d:%02d:%02d.%09d", ts->year, ts->month, ts->day, ts->hour,
+                        ts->minute, ts->second, ts->fraction );
             *d = SysAllocString(szBuff);
             hr = *d ? S_OK : E_OUTOFMEMORY;
             break;
