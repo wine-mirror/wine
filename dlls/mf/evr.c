@@ -84,6 +84,7 @@ struct video_renderer
 
     IMFTransform *mixer;
     IMFVideoPresenter *presenter;
+    HWND window;
     IUnknown *device_manager;
     unsigned int flags;
     unsigned int state;
@@ -1098,12 +1099,17 @@ static HRESULT video_renderer_create_mixer(IMFAttributes *attributes, IMFTransfo
     return CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)out);
 }
 
-static HRESULT video_renderer_create_presenter(IMFAttributes *attributes, IMFVideoPresenter **out)
+static HRESULT video_renderer_create_presenter(struct video_renderer *renderer, IMFAttributes *attributes,
+        IMFVideoPresenter **out)
 {
     unsigned int flags = 0;
     IMFActivate *activate;
+    UINT64 value;
     CLSID clsid;
     HRESULT hr;
+
+    if (attributes && SUCCEEDED(IMFAttributes_GetUINT64(attributes, &MF_ACTIVATE_VIDEO_WINDOW, &value)))
+        renderer->window = UlongToHandle(value);
 
     if (attributes && SUCCEEDED(IMFAttributes_GetUnknown(attributes, &MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_ACTIVATE,
             &IID_IMFActivate, (void **)&activate)))
@@ -1193,7 +1199,14 @@ static HRESULT video_renderer_configure_mixer(struct video_renderer *renderer)
 static HRESULT video_renderer_configure_presenter(struct video_renderer *renderer)
 {
     IMFTopologyServiceLookupClient *lookup_client;
+    IMFVideoDisplayControl *control;
     HRESULT hr;
+
+    if (SUCCEEDED(IMFVideoPresenter_QueryInterface(renderer->presenter, &IID_IMFVideoDisplayControl, (void **)&control)))
+    {
+        IMFVideoDisplayControl_SetVideoWindow(control, renderer->window);
+        IMFVideoDisplayControl_Release(control);
+    }
 
     if (SUCCEEDED(hr = IMFVideoPresenter_QueryInterface(renderer->presenter, &IID_IMFTopologyServiceLookupClient,
             (void **)&lookup_client)))
@@ -1270,7 +1283,7 @@ static HRESULT WINAPI video_renderer_InitializeRenderer(IMFVideoRenderer *iface,
 
     if (presenter)
         IMFVideoPresenter_AddRef(presenter);
-    else if (FAILED(hr = video_renderer_create_presenter(NULL, &presenter)))
+    else if (FAILED(hr = video_renderer_create_presenter(renderer, NULL, &presenter)))
     {
         WARN("Failed to create default presenter, hr %#x.\n", hr);
         IMFTransform_Release(mixer);
@@ -2141,7 +2154,7 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
     if (FAILED(hr = video_renderer_create_mixer(attributes, &mixer)))
         goto failed;
 
-    if (FAILED(hr = video_renderer_create_presenter(attributes, &presenter)))
+    if (FAILED(hr = video_renderer_create_presenter(object, attributes, &presenter)))
         goto failed;
 
     if (FAILED(hr = video_renderer_initialize(object, mixer, presenter)))

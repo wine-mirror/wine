@@ -56,6 +56,16 @@ static void _expect_ref(IUnknown* obj, ULONG expected_refcount, int line)
             expected_refcount);
 }
 
+static HWND create_window(void)
+{
+    RECT r = {0, 0, 640, 480};
+
+    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
+
+    return CreateWindowA("static", "mf_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
+}
+
 static WCHAR *load_resource(const WCHAR *name)
 {
     static WCHAR pathW[MAX_PATH];
@@ -3235,6 +3245,7 @@ static void test_evr(void)
     IMFMediaSink *sink, *sink2;
     IMFAttributes *attributes;
     IMFActivate *activate;
+    HWND window, window2;
     DWORD flags, count;
     LONG sample_count;
     IMFGetService *gs;
@@ -3257,6 +3268,32 @@ static void test_evr(void)
 
     hr = MFCreateVideoRendererActivate(NULL, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    /* Window */
+    window = create_window();
+    hr = MFCreateVideoRendererActivate(window, &activate);
+    ok(hr == S_OK, "Failed to create activate object, hr %#x.\n", hr);
+
+    hr = IMFActivate_GetUINT64(activate, &MF_ACTIVATE_VIDEO_WINDOW, &value);
+    ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
+    ok(UlongToHandle(value) == window, "Unexpected value.\n");
+
+    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFGetService((IUnknown *)sink, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDisplayControl,
+            (void **)&display_control);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    window2 = NULL;
+    hr = IMFVideoDisplayControl_GetVideoWindow(display_control, &window2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(window2 == window, "Unexpected window %p.\n", window2);
+
+    IMFVideoDisplayControl_Release(display_control);
+    IMFMediaSink_Release(sink);
+    IMFActivate_Release(activate);
+    DestroyWindow(window);
 
     hr = MFCreateVideoRendererActivate(NULL, &activate);
     ok(hr == S_OK, "Failed to create activate object, hr %#x.\n", hr);
