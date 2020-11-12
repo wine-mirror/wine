@@ -215,20 +215,6 @@ static RTL_USER_PROCESS_PARAMETERS *create_process_params( const WCHAR *filename
         params->hStdError  = NtCurrentTeb()->Peb->ProcessParameters->hStdError;
     }
 
-    if (flags & CREATE_NEW_CONSOLE)
-    {
-        /* this is temporary (for console handles). We have no way to control that the handle is invalid in child process otherwise */
-        if (is_console_handle(params->hStdInput))  params->hStdInput  = INVALID_HANDLE_VALUE;
-        if (is_console_handle(params->hStdOutput)) params->hStdOutput = INVALID_HANDLE_VALUE;
-        if (is_console_handle(params->hStdError))  params->hStdError  = INVALID_HANDLE_VALUE;
-    }
-    else
-    {
-        if (is_console_handle(params->hStdInput))  params->hStdInput  = (HANDLE)((UINT_PTR)params->hStdInput & ~3);
-        if (is_console_handle(params->hStdOutput)) params->hStdOutput = (HANDLE)((UINT_PTR)params->hStdOutput & ~3);
-        if (is_console_handle(params->hStdError))  params->hStdError  = (HANDLE)((UINT_PTR)params->hStdError & ~3);
-    }
-
     params->dwX             = startup->dwX;
     params->dwY             = startup->dwY;
     params->dwXSize         = startup->dwXSize;
