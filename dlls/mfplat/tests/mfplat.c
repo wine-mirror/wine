@@ -502,15 +502,6 @@ static void test_source_resolver(void)
             &obj_type, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
-    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, MF_RESOLUTION_MEDIASOURCE, NULL,
-            &obj_type, (IUnknown **)&mediasource);
-    ok(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE, "got 0x%08x\n", hr);
-    if (hr == S_OK) IMFMediaSource_Release(mediasource);
-
-    hr = IMFSourceResolver_CreateObjectFromByteStream(resolver, stream, NULL, MF_RESOLUTION_BYTESTREAM, NULL,
-            &obj_type, (IUnknown **)&mediasource);
-    ok(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE, "got 0x%08x\n", hr);
-
     IMFByteStream_Release(stream);
 
     /* Create from URL. */
