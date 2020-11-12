@@ -171,6 +171,7 @@ struct topo_node
         struct
         {
             unsigned int requests;
+            IMFVideoSampleAllocator *allocator;
         } sink;
         struct
         {
@@ -742,6 +743,10 @@ static void release_topo_node(struct topo_node *node)
             heap_free(node->u.transform.input_map);
             heap_free(node->u.transform.output_map);
             break;
+        case MF_TOPOLOGY_OUTPUT_NODE:
+            if (node->u.sink.allocator)
+                IMFVideoSampleAllocator_Release(node->u.sink.allocator);
+            break;
         default:
             ;
     }
@@ -1185,10 +1190,25 @@ static HRESULT session_set_transform_stream_info(struct topo_node *node)
     return hr;
 }
 
+static HRESULT session_get_stream_sink_type(IMFStreamSink *sink, IMFMediaType **media_type)
+{
+    IMFMediaTypeHandler *handler;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = IMFStreamSink_GetMediaTypeHandler(sink, &handler)))
+    {
+        hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, media_type);
+        IMFMediaTypeHandler_Release(handler);
+    }
+
+    return hr;
+}
+
 static HRESULT session_append_node(struct media_session *session, IMFTopologyNode *node)
 {
     struct topo_node *topo_node;
     IMFMediaSink *media_sink;
+    IMFMediaType *media_type;
     IMFStreamDescriptor *sd;
     HRESULT hr = S_OK;
     IUnknown *object;
@@ -1217,7 +1237,18 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
             if (FAILED(hr = IMFStreamSink_GetMediaSink(topo_node->object.sink_stream, &media_sink)))
                 break;
 
-            hr = session_add_media_sink(session, node, media_sink);
+            if (SUCCEEDED(hr = session_add_media_sink(session, node, media_sink)))
+            {
+                if (SUCCEEDED(session_get_stream_sink_type(topo_node->object.sink_stream, &media_type)))
+                {
+                    if (SUCCEEDED(MFGetService(topo_node->object.object, &MR_VIDEO_ACCELERATION_SERVICE,
+                        &IID_IMFVideoSampleAllocator, (void **)&topo_node->u.sink.allocator)))
+                    {
+                        IMFVideoSampleAllocator_InitializeSampleAllocator(topo_node->u.sink.allocator, 2, media_type);
+                    }
+                    IMFMediaType_Release(media_type);
+                }
+            }
             IMFMediaSink_Release(media_sink);
 
             break;
