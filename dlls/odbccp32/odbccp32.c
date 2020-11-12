@@ -338,10 +338,40 @@ fail:
     return FALSE;
 }
 
+static WORD map_request(WORD request)
+{
+    switch (request)
+    {
+    case ODBC_ADD_DSN:
+    case ODBC_ADD_SYS_DSN:
+        return ODBC_ADD_DSN;
+
+    case ODBC_CONFIG_DSN:
+    case ODBC_CONFIG_SYS_DSN:
+        return ODBC_CONFIG_DSN;
+
+    case ODBC_REMOVE_DSN:
+    case ODBC_REMOVE_SYS_DSN:
+        return ODBC_REMOVE_DSN;
+
+    default:
+        FIXME("unhandled request %u\n", request);
+        return 0;
+    }
+}
+
+static UWORD get_config_mode(WORD request)
+{
+    if (request == ODBC_ADD_DSN || request == ODBC_CONFIG_DSN || request == ODBC_REMOVE_DSN) return ODBC_USER_DSN;
+    return ODBC_SYSTEM_DSN;
+}
+
 BOOL WINAPI SQLConfigDataSourceW(HWND hwnd, WORD request, LPCWSTR driver, LPCWSTR attributes)
 {
     HMODULE mod;
     BOOL ret = FALSE;
+    UWORD config_mode_prev = config_mode;
+    WORD mapped_request;
 
     TRACE("%p, %d, %s, %s\n", hwnd, request, debugstr_w(driver), debugstr_w(attributes));
     if (TRACE_ON(odbc))
@@ -353,15 +383,23 @@ BOOL WINAPI SQLConfigDataSourceW(HWND hwnd, WORD request, LPCWSTR driver, LPCWST
 
     clear_errors();
 
+    mapped_request = map_request(request);
+    if (!mapped_request)
+        return FALSE;
+
     mod = load_config_driver(driver);
     if (!mod)
         return FALSE;
 
+    config_mode = get_config_mode(request);
+
     pConfigDSNW = (void*)GetProcAddress(mod, "ConfigDSNW");
     if(pConfigDSNW)
-        ret = pConfigDSNW(hwnd, request, driver, attributes);
+        ret = pConfigDSNW(hwnd, mapped_request, driver, attributes);
     else
         ERR("Failed to find ConfigDSNW\n");
+
+    config_mode = config_mode_prev;
 
     if (!ret)
         push_error(ODBC_ERROR_REQUEST_FAILED, odbc_error_request_failed);
@@ -376,6 +414,8 @@ BOOL WINAPI SQLConfigDataSource(HWND hwnd, WORD request, LPCSTR driver, LPCSTR a
     HMODULE mod;
     BOOL ret = FALSE;
     WCHAR *driverW;
+    UWORD config_mode_prev = config_mode;
+    WORD mapped_request;
 
     TRACE("%p, %d, %s, %s\n", hwnd, request, debugstr_a(driver), debugstr_a(attributes));
 
@@ -387,6 +427,10 @@ BOOL WINAPI SQLConfigDataSource(HWND hwnd, WORD request, LPCSTR driver, LPCSTR a
     }
 
     clear_errors();
+
+    mapped_request = map_request(request);
+    if (!mapped_request)
+        return FALSE;
 
     driverW = heap_strdupAtoW(driver);
     if (!driverW)
@@ -402,11 +446,13 @@ BOOL WINAPI SQLConfigDataSource(HWND hwnd, WORD request, LPCSTR driver, LPCSTR a
         return FALSE;
     }
 
+    config_mode = get_config_mode(request);
+
     pConfigDSN = (void*)GetProcAddress(mod, "ConfigDSN");
     if (pConfigDSN)
     {
         TRACE("Calling ConfigDSN\n");
-        ret = pConfigDSN(hwnd, request, driver, attributes);
+        ret = pConfigDSN(hwnd, mapped_request, driver, attributes);
     }
     else
     {
@@ -418,10 +464,12 @@ BOOL WINAPI SQLConfigDataSource(HWND hwnd, WORD request, LPCSTR driver, LPCSTR a
 
             attr = SQLInstall_strdup_multi(attributes);
             if(attr)
-                ret = pConfigDSNW(hwnd, request, driverW, attr);
+                ret = pConfigDSNW(hwnd, mapped_request, driverW, attr);
             heap_free(attr);
         }
     }
+
+    config_mode = config_mode_prev;
 
     if (!ret)
         push_error(ODBC_ERROR_REQUEST_FAILED, odbc_error_request_failed);
