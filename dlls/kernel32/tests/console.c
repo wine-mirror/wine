@@ -84,6 +84,25 @@ static void init_function_pointers(void)
 #undef KERNEL32_GET_PROC
 }
 
+static HANDLE create_unbound_handle(BOOL output, BOOL test_status)
+{
+    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
+    IO_STATUS_BLOCK iosb;
+    UNICODE_STRING name;
+    HANDLE handle;
+    NTSTATUS status;
+
+    attr.ObjectName = &name;
+    attr.Attributes = OBJ_INHERIT;
+    RtlInitUnicodeString( &name, output ? L"\\Device\\ConDrv\\Output" : L"\\Device\\ConDrv\\Input" );
+    status = NtCreateFile( &handle, FILE_READ_DATA | FILE_WRITE_DATA | SYNCHRONIZE | FILE_READ_ATTRIBUTES |
+                           FILE_WRITE_ATTRIBUTES, &attr, &iosb, NULL, FILE_ATTRIBUTE_NORMAL,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_CREATE,
+                           FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+    if (test_status) ok(!status, "NtCreateFile failed: %#x\n", status);
+    return status ? NULL : handle;
+}
+
 /* FIXME: this could be optimized on a speed point of view */
 static void resetContent(HANDLE hCon, COORD sbSize, BOOL content)
 {
@@ -993,9 +1012,9 @@ static void testWaitForConsoleInput(HANDLE input_handle)
 
 static void test_wait(HANDLE input, HANDLE orig_output)
 {
+    HANDLE output, unbound_output, unbound_input;
     LARGE_INTEGER zero;
     INPUT_RECORD ir;
-    HANDLE output;
     DWORD res, count;
     NTSTATUS status;
     BOOL ret;
@@ -1016,11 +1035,18 @@ static void test_wait(HANDLE input, HANDLE orig_output)
     ok(ret, "SetConsoleActiveScreenBuffer failed: %u\n", GetLastError());
     FlushConsoleInputBuffer(input);
 
+    unbound_output = create_unbound_handle(TRUE, TRUE);
+    unbound_input = create_unbound_handle(FALSE, TRUE);
+
     res = WaitForSingleObject(input, 0);
     ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
     res = WaitForSingleObject(output, 0);
     ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
     res = WaitForSingleObject(orig_output, 0);
+    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
+    res = WaitForSingleObject(unbound_output, 0);
+    ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
+    res = WaitForSingleObject(unbound_input, 0);
     ok(res == WAIT_TIMEOUT, "WaitForSingleObject returned %x\n", res);
     status = NtWaitForSingleObject(input, FALSE, &zero);
     ok(status == STATUS_TIMEOUT || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
@@ -1038,6 +1064,10 @@ static void test_wait(HANDLE input, HANDLE orig_output)
     ok(!res, "WaitForSingleObject returned %x\n", res);
     res = WaitForSingleObject(orig_output, 0);
     ok(!res, "WaitForSingleObject returned %x\n", res);
+    res = WaitForSingleObject(unbound_output, 0);
+    ok(!res, "WaitForSingleObject returned %x\n", res);
+    res = WaitForSingleObject(unbound_input, 0);
+    ok(!res, "WaitForSingleObject returned %x\n", res);
     status = NtWaitForSingleObject(input, FALSE, &zero);
     ok(!status || broken(status == STATUS_ACCESS_DENIED /* win2k8 */),
        "NtWaitForSingleObject returned %x\n", status);
@@ -1048,6 +1078,8 @@ static void test_wait(HANDLE input, HANDLE orig_output)
     ret = SetConsoleActiveScreenBuffer(orig_output);
     ok(ret, "SetConsoleActiveScreenBuffer failed: %u\n", GetLastError());
 
+    CloseHandle(unbound_input);
+    CloseHandle(unbound_output);
     CloseHandle(output);
 }
 
@@ -1386,12 +1418,6 @@ static void test_CreateFileW(void)
         ret = CreateFileW(cf_table[index].input ? L"\\??\\CONIN$" : L"\\??\\CONOUT$", cf_table[index].access,
                           FILE_SHARE_READ|FILE_SHARE_WRITE, &sa,
                           cf_table[index].creation, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (!index && ret == INVALID_HANDLE_VALUE)
-        {
-            win_skip("Skipping NT path tests, not supported on this Windows version\n");
-            skip_nt = TRUE;
-            continue;
-        }
         if (cf_table[index].gle)
             ok(ret == INVALID_HANDLE_VALUE && GetLastError() == cf_table[index].gle,
                "CreateFileW to returned %p %u for index %d\n", ret, GetLastError(), index);
@@ -3749,14 +3775,15 @@ static void test_GetConsoleScreenBufferInfoEx(HANDLE std_output)
 
 static void test_FreeConsole(void)
 {
+    HANDLE handle, unbound_output = NULL;
+    DWORD size, mode;
     WCHAR title[16];
-    HANDLE handle;
-    DWORD size;
     HWND hwnd;
     UINT cp;
     BOOL ret;
 
     ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != NULL, "ConsoleHandle is NULL\n");
+    if (!skip_nt) unbound_output = create_unbound_handle(TRUE, TRUE);
 
     ret = FreeConsole();
     ok(ret, "FreeConsole failed: %u\n", GetLastError());
@@ -3836,6 +3863,12 @@ static void test_FreeConsole(void)
     SetStdHandle( STD_INPUT_HANDLE, NULL );
     handle = GetConsoleInputWaitHandle();
     ok(!handle, "GetConsoleInputWaitHandle returned %p\n", handle);
+
+    ret = GetConsoleMode(unbound_output, &mode);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+       "GetConsoleMode returned %x %u\n", ret, GetLastError());
+
+    CloseHandle(unbound_output);
 }
 
 static void test_SetConsoleScreenBufferInfoEx(HANDLE std_output)
@@ -4241,7 +4274,7 @@ static void test_pseudo_console(void)
 
 START_TEST(console)
 {
-    HANDLE hConIn, hConOut, revert_output = NULL;
+    HANDLE hConIn, hConOut, revert_output = NULL, unbound_output;
     BOOL ret, test_current;
     CONSOLE_SCREEN_BUFFER_INFO	sbi;
     BOOL using_pseudo_console;
@@ -4327,6 +4360,13 @@ START_TEST(console)
                                      (const BYTE *) old_font, strlen(old_font) + 1);
             ok(err == ERROR_SUCCESS, "Unable to restore default console font, error %d\n", err);
         }
+    }
+
+    unbound_output = create_unbound_handle(TRUE, FALSE);
+    if (!unbound_output)
+    {
+        win_skip("Skipping NT path tests, not supported on this Windows version\n");
+        skip_nt = TRUE;
     }
 
     if (test_current)
@@ -4449,4 +4489,5 @@ START_TEST(console)
     }
     else if (revert_output) SetConsoleActiveScreenBuffer(revert_output);
 
+    CloseHandle(unbound_output);
 }
