@@ -3151,6 +3151,12 @@ static BOOL CDecodeSignedMsg_GetParam(CDecodeMsg *msg, DWORD dwParamType,
         else
             SetLastError(CRYPT_E_INVALID_MSG_TYPE);
         break;
+    case CMSG_ENCODED_MESSAGE:
+        if (msg->msg_data.pbData)
+            ret = CRYPT_CopyParam(pvData, pcbData, msg->msg_data.pbData, msg->msg_data.cbData);
+        else
+            SetLastError(CRYPT_E_INVALID_MSG_TYPE);
+        break;
     case CMSG_ENCODED_SIGNER:
         if (msg->u.signed_data.info)
         {
