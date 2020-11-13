@@ -2207,7 +2207,7 @@ static ULONG WINAPI video_mixer_quality_advise_AddRef(IMFQualityAdvise *iface)
     return IMFTransform_AddRef(&mixer->IMFTransform_iface);
 }
 
-static ULONG WINAPI video_mixer_quality_Release(IMFQualityAdvise *iface)
+static ULONG WINAPI video_mixer_quality_advise_Release(IMFQualityAdvise *iface)
 {
     struct video_mixer *mixer = impl_from_IMFQualityAdvise(iface);
     return IMFTransform_Release(&mixer->IMFTransform_iface);
@@ -2252,7 +2252,7 @@ static const IMFQualityAdviseVtbl video_mixer_quality_advise_vtbl =
 {
     video_mixer_quality_advise_QueryInterface,
     video_mixer_quality_advise_AddRef,
-    video_mixer_quality_Release,
+    video_mixer_quality_advise_Release,
     video_mixer_quality_advise_SetDropMode,
     video_mixer_quality_advise_SetQualityLevel,
     video_mixer_quality_advise_GetDropMode,
