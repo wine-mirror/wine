@@ -461,17 +461,16 @@ static void test_default_mixer(void)
     hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&transform);
     ok(hr == S_OK, "Failed to create default mixer, hr %#x.\n", hr);
 
-    hr = IMFTransform_QueryInterface(transform, &IID_IMFQualityAdvise, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IMFTransform_QueryInterface(transform, &IID_IMFClockStateSink, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IMFTransform_QueryInterface(transform, &IID_IMFTopologyServiceLookupClient, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
+    check_interface(transform, &IID_IMFQualityAdvise, TRUE);
+    check_interface(transform, &IID_IMFClockStateSink, TRUE);
+    check_interface(transform, &IID_IMFTopologyServiceLookupClient, TRUE);
+    check_interface(transform, &IID_IMFGetService, TRUE);
+    check_interface(transform, &IID_IMFAttributes, TRUE);
+    check_interface(transform, &IID_IMFVideoMixerBitmap, TRUE);
+    check_interface(transform, &IID_IMFVideoPositionMapper, TRUE);
+    check_interface(transform, &IID_IMFVideoProcessor, TRUE);
+    check_interface(transform, &IID_IMFVideoMixerControl, TRUE);
+    check_interface(transform, &IID_IMFVideoDeviceID, TRUE);
 
     hr = IMFTransform_QueryInterface(transform, &IID_IMFGetService, (void **)&gs);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -533,22 +532,6 @@ todo_wine
     IUnknown_Release(unk);
 
     IMFGetService_Release(gs);
-
-    hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoMixerBitmap, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoPositionMapper, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoProcessor, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoMixerControl, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
 
     hr = IMFTransform_SetOutputBounds(transform, 100, 10);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -1117,13 +1100,16 @@ static void test_default_presenter(void)
     if (FAILED(hr))
         return;
 
-    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IQualProp, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoPositionMapper, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
+    check_interface(presenter, &IID_IQualProp, TRUE);
+    check_interface(presenter, &IID_IMFVideoPositionMapper, TRUE);
+    check_interface(presenter, &IID_IMFTopologyServiceLookupClient, TRUE);
+    check_interface(presenter, &IID_IMFVideoDisplayControl, TRUE);
+    check_interface(presenter, &IID_IMFRateSupport, TRUE);
+    check_interface(presenter, &IID_IMFGetService, TRUE);
+    check_interface(presenter, &IID_IMFClockStateSink, TRUE);
+    check_interface(presenter, &IID_IMFVideoPresenter, TRUE);
+    check_interface(presenter, &IID_IMFVideoDeviceID, TRUE);
+    check_interface(presenter, &IID_IMFQualityAdvise, TRUE);
 
     hr = MFGetService((IUnknown *)presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPositionMapper, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -1140,14 +1126,6 @@ static void test_default_presenter(void)
     ok(IsEqualIID(&iid, &IID_IDirect3DDevice9), "Unexpected id %s.\n", wine_dbgstr_guid(&iid));
 
     IMFVideoDeviceID_Release(deviceid);
-
-    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
 
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFGetService, (void **)&gs);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);

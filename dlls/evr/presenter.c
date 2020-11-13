@@ -67,6 +67,7 @@ struct video_presenter
     IMFGetService IMFGetService_iface;
     IMFVideoPositionMapper IMFVideoPositionMapper_iface;
     IQualProp IQualProp_iface;
+    IMFQualityAdvise IMFQualityAdvise_iface;
     IMFVideoSampleAllocatorNotify allocator_cb;
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
@@ -144,6 +145,11 @@ static struct video_presenter *impl_from_IMFVideoSampleAllocatorNotify(IMFVideoS
 static struct video_presenter *impl_from_IQualProp(IQualProp *iface)
 {
     return CONTAINING_RECORD(iface, struct video_presenter, IQualProp_iface);
+}
+
+static struct video_presenter *impl_from_IMFQualityAdvise(IMFQualityAdvise *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_presenter, IMFQualityAdvise_iface);
 }
 
 static void video_presenter_notify_renderer(struct video_presenter *presenter,
@@ -469,6 +475,10 @@ static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFI
     else if (IsEqualIID(riid, &IID_IQualProp))
     {
         *obj = &presenter->IQualProp_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFQualityAdvise))
+    {
+        *obj = &presenter->IMFQualityAdvise_iface;
     }
     else
     {
@@ -1418,6 +1428,75 @@ static const IQualPropVtbl video_presenter_qualprop_vtbl =
     video_presenter_qualprop_get_DevSyncOffset,
 };
 
+static HRESULT WINAPI video_presenter_quality_advise_QueryInterface(IMFQualityAdvise *iface, REFIID riid, void **out)
+{
+    struct video_presenter *presenter = impl_from_IMFQualityAdvise(iface);
+    return IMFVideoPresenter_QueryInterface(&presenter->IMFVideoPresenter_iface, riid, out);
+}
+
+static ULONG WINAPI video_presenter_quality_advise_AddRef(IMFQualityAdvise *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFQualityAdvise(iface);
+    return IMFVideoPresenter_AddRef(&presenter->IMFVideoPresenter_iface);
+}
+
+static ULONG WINAPI video_presenter_quality_advise_Release(IMFQualityAdvise *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFQualityAdvise(iface);
+    return IMFVideoPresenter_Release(&presenter->IMFVideoPresenter_iface);
+}
+
+static HRESULT WINAPI video_presenter_quality_advise_SetDropMode(IMFQualityAdvise *iface,
+        MF_QUALITY_DROP_MODE mode)
+{
+    FIXME("%p, %u.\n", iface, mode);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_quality_advise_SetQualityLevel(IMFQualityAdvise *iface,
+        MF_QUALITY_LEVEL level)
+{
+    FIXME("%p, %u.\n", iface, level);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_quality_advise_GetDropMode(IMFQualityAdvise *iface,
+        MF_QUALITY_DROP_MODE *mode)
+{
+    FIXME("%p, %p.\n", iface, mode);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_quality_advise_GetQualityLevel(IMFQualityAdvise *iface,
+        MF_QUALITY_LEVEL *level)
+{
+    FIXME("%p, %p.\n", iface, level);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_quality_advise_DropTime(IMFQualityAdvise *iface, LONGLONG interval)
+{
+    FIXME("%p, %s.\n", iface, wine_dbgstr_longlong(interval));
+
+    return E_NOTIMPL;
+}
+
+static const IMFQualityAdviseVtbl video_presenter_quality_advise_vtbl =
+{
+    video_presenter_quality_advise_QueryInterface,
+    video_presenter_quality_advise_AddRef,
+    video_presenter_quality_advise_Release,
+    video_presenter_quality_advise_SetDropMode,
+    video_presenter_quality_advise_SetQualityLevel,
+    video_presenter_quality_advise_GetDropMode,
+    video_presenter_quality_advise_GetQualityLevel,
+    video_presenter_quality_advise_DropTime,
+};
+
 HRESULT WINAPI MFCreateVideoPresenter(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -1487,6 +1566,7 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
     object->IMFGetService_iface.lpVtbl = &video_presenter_getservice_vtbl;
     object->IMFVideoPositionMapper_iface.lpVtbl = &video_presenter_position_mapper_vtbl;
     object->IQualProp_iface.lpVtbl = &video_presenter_qualprop_vtbl;
+    object->IMFQualityAdvise_iface.lpVtbl = &video_presenter_quality_advise_vtbl;
     object->allocator_cb.lpVtbl = &video_presenter_allocator_cb_vtbl;
     object->IUnknown_inner.lpVtbl = &video_presenter_inner_vtbl;
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
