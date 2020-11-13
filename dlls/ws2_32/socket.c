@@ -3485,7 +3485,7 @@ static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int n
             {
                 ov->Internal = sock_error_to_ntstatus( get_sock_error( s, FD_CONNECT_BIT  ));
                 ov->InternalHigh = 0;
-                if (cvalue) WS_AddCompletion( s, cvalue, ov->Internal, ov->InternalHigh, FALSE );
+                if (cvalue) WS_AddCompletion( s, cvalue, ov->Internal, ov->InternalHigh, TRUE );
                 if (ov->hEvent) NtSetEvent( ov->hEvent, NULL );
                 status = STATUS_PENDING;
             }

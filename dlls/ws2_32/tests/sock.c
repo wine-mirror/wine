@@ -7182,11 +7182,13 @@ static void test_ConnectEx(void)
     SOCKET connector = INVALID_SOCKET;
     struct sockaddr_in address, conaddress;
     int addrlen;
-    OVERLAPPED overlapped;
+    OVERLAPPED overlapped, *olp;
     LPFN_CONNECTEX pConnectEx;
     GUID connectExGuid = WSAID_CONNECTEX;
+    HANDLE previous_port, io_port;
     DWORD bytesReturned;
     char buffer[1024];
+    ULONG_PTR key;
     BOOL bret;
     DWORD dwret;
     int iret;
@@ -7305,18 +7307,39 @@ static void test_ConnectEx(void)
 
     address.sin_port = htons(1);
 
+    previous_port = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
+    ok( previous_port != NULL, "Failed to create completion port %u\n", GetLastError());
+
+    io_port = CreateIoCompletionPort((HANDLE)connector, previous_port, 125, 0);
+    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+
+    bret = SetFileCompletionNotificationModes((HANDLE)connector, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
+    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
+
     bret = pConnectEx(connector, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, &overlapped);
     ok(bret == FALSE && GetLastError() == ERROR_IO_PENDING, "ConnectEx to bad destination failed: "
         "returned %d + errno %d\n", bret, GetLastError());
     dwret = WaitForSingleObject(overlapped.hEvent, 15000);
     ok(dwret == WAIT_OBJECT_0, "Waiting for connect event failed with %d + errno %d\n", dwret, GetLastError());
 
+    bytesReturned = 0xdeadbeef;
+    bret = GetQueuedCompletionStatus( io_port, &bytesReturned, &key, &olp, 200 );
+    ok(!bret && GetLastError() == ERROR_CONNECTION_REFUSED, "Got unexpected bret %#x, GetLastError() %u.\n",
+            bret, GetLastError());
+    ok(key == 125, "Key is %lu\n", key);
+    ok(!bytesReturned, "Number of bytes transferred is %u\n", bytesReturned);
+    ok(olp == &overlapped, "Overlapped structure is at %p\n", olp);
+
     bret = GetOverlappedResult((HANDLE)connector, &overlapped, &bytesReturned, FALSE);
     ok(bret == FALSE && GetLastError() == ERROR_CONNECTION_REFUSED,
        "Connecting to a disconnected host returned error %d - %d\n", bret, WSAGetLastError());
 
+    CloseHandle(io_port);
+
     WSACloseEvent(overlapped.hEvent);
     closesocket(connector);
+
+    CloseHandle(previous_port);
 }
 
 static void test_AcceptEx(void)
@@ -10557,7 +10580,6 @@ START_TEST( sock )
 
     test_WSAAsyncGetServByPort();
     test_WSAAsyncGetServByName();
-
     test_completion_port();
     test_address_list_query();
 
