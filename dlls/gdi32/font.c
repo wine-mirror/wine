@@ -1493,19 +1493,20 @@ static struct gdi_font_face *find_any_face( const LOGFONTW *lf, FONTSIGNATURE fs
 {
     struct gdi_font_family *family;
     struct gdi_font_face *face;
-    WCHAR name[LF_FACESIZE];
+    WCHAR name[LF_FACESIZE + 1];
     int i = 0;
 
     /* first try the family fallbacks */
     while (enum_fallbacks( lf->lfPitchAndFamily, i++, name ))
     {
-        WINE_RB_FOR_EACH_ENTRY( family, &family_name_tree, struct gdi_font_family, name_entry )
+        if (want_vertical)
         {
-            if ((family->family_name[0] == '@') == !want_vertical) continue;
-            if (wcsicmp( family->family_name + want_vertical, name ) &&
-                wcsicmp( family->second_name + want_vertical, name )) continue;
-            if ((face = find_best_matching_face( family, lf, fs, FALSE ))) return face;
+            memmove(name + 1, name, min(lstrlenW(name), LF_FACESIZE));
+            name[0] = '@';
         }
+
+        if (!(family = find_family_from_any_name(name))) continue;
+        if ((face = find_best_matching_face( family, lf, fs, FALSE ))) return face;
     }
     /* otherwise try only scalable */
     WINE_RB_FOR_EACH_ENTRY( family, &family_name_tree, struct gdi_font_family, name_entry )
