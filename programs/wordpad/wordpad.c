@@ -536,36 +536,6 @@ static void on_fontlist_modified(LPWSTR wszNewFaceName)
         set_font(wszNewFaceName);
 }
 
-static void add_font(LPCWSTR fontName, DWORD fontType, HWND hListWnd, const NEWTEXTMETRICEXW *ntmc)
-{
-    COMBOBOXEXITEMW cbItem;
-    WCHAR buffer[MAX_PATH];
-    int fontHeight = 0;
-
-    cbItem.mask = CBEIF_TEXT;
-    cbItem.pszText = buffer;
-    cbItem.cchTextMax = MAX_STRING_LEN;
-    cbItem.iItem = 0;
-
-    while(SendMessageW(hListWnd, CBEM_GETITEMW, 0, (LPARAM)&cbItem))
-    {
-        if(lstrcmpiW(cbItem.pszText, fontName) <= 0)
-            cbItem.iItem++;
-        else
-            break;
-    }
-    cbItem.pszText = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(fontName) + 1)*sizeof(WCHAR) );
-    lstrcpyW( cbItem.pszText, fontName );
-
-    cbItem.mask |= CBEIF_LPARAM;
-    if(fontType & RASTER_FONTTYPE)
-        fontHeight = ntmc->ntmTm.tmHeight - ntmc->ntmTm.tmInternalLeading;
-
-    cbItem.lParam = MAKELONG(fontType,fontHeight);
-    SendMessageW(hListWnd, CBEM_INSERTITEMW, 0, (LPARAM)&cbItem);
-    HeapFree( GetProcessHeap(), 0, cbItem.pszText );
-}
-
 static void dialog_choose_font(void)
 {
     CHOOSEFONTW cf;
@@ -614,36 +584,132 @@ static void dialog_choose_font(void)
     }
 }
 
+struct font_desc
+{
+    WCHAR *name;
+    LPARAM lParam;
+};
+
+struct font_array
+{
+    struct font_desc *fonts;
+    size_t count;
+    size_t capacity;
+};
+
+static BOOL array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
+{
+    size_t new_capacity, max_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~(SIZE_T)0 / size;
+    if (count > max_capacity)
+        return FALSE;
+
+    new_capacity = max(4, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = max_capacity;
+
+    new_elements = *elements ? HeapReAlloc(GetProcessHeap(), 0, *elements, new_capacity * size) :
+            HeapAlloc(GetProcessHeap(), 0, new_capacity * size);
+    if (!new_elements)
+        return FALSE;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+
+    return TRUE;
+}
+
+static void add_font(struct font_array *fonts, LPCWSTR fontName, DWORD fontType, const NEWTEXTMETRICEXW *ntmc)
+{
+    int fontHeight = 0;
+    size_t idx;
+
+    if (!array_reserve((void **)&fonts->fonts, &fonts->capacity, fonts->count + 1, sizeof(*fonts->fonts)))
+        return;
+
+    if (fontType & RASTER_FONTTYPE)
+        fontHeight = ntmc->ntmTm.tmHeight - ntmc->ntmTm.tmInternalLeading;
+
+    idx = fonts->count;
+    fonts->fonts[idx].name = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(fontName) + 1)*sizeof(WCHAR) );
+    lstrcpyW( fonts->fonts[idx].name, fontName );
+    fonts->fonts[idx].lParam = MAKELONG(fontType, fontHeight);
+
+    fonts->count++;
+}
 
 static int CALLBACK enum_font_proc(const LOGFONTW *lpelfe, const TEXTMETRICW *lpntme,
                             DWORD FontType, LPARAM lParam)
 {
-    HWND hListWnd = (HWND) lParam;
+    struct font_array *fonts = (void *)lParam;
 
     if (lpelfe->lfFaceName[0] == '@') return 1;  /* ignore vertical fonts */
 
-    if(SendMessageW(hListWnd, CB_FINDSTRINGEXACT, -1, (LPARAM)lpelfe->lfFaceName) == CB_ERR)
-    {
-
-        add_font(lpelfe->lfFaceName, FontType, hListWnd, (const NEWTEXTMETRICEXW*)lpntme);
-    }
+    add_font(fonts, lpelfe->lfFaceName, FontType, (const NEWTEXTMETRICEXW *)lpntme);
 
     return 1;
 }
 
+static int fonts_desc_compare(const void *a, const void *b)
+{
+    const struct font_desc *left = a, *right = b;
+    return lstrcmpiW(left->name, right->name);
+}
+
 static void populate_font_list(HWND hListWnd)
 {
+    struct font_array font_array = { 0 };
     HDC hdc = GetDC(hMainWnd);
     LOGFONTW fontinfo;
     HWND hListEditWnd = (HWND)SendMessageW(hListWnd, CBEM_GETEDITCONTROL, 0, 0);
     CHARFORMAT2W fmt;
+    size_t i, j;
 
     fontinfo.lfCharSet = DEFAULT_CHARSET;
     *fontinfo.lfFaceName = '\0';
     fontinfo.lfPitchAndFamily = 0;
 
-    EnumFontFamiliesExW(hdc, &fontinfo, enum_font_proc,
-                        (LPARAM)hListWnd, 0);
+    /* Collect font names, sort, remove duplicates. */
+    EnumFontFamiliesExW(hdc, &fontinfo, enum_font_proc, (LPARAM)&font_array, 0);
+
+    qsort(font_array.fonts, font_array.count, sizeof(*font_array.fonts), fonts_desc_compare);
+
+    for (i = 1, j = 0; i < font_array.count; ++i)
+    {
+        if (!lstrcmpiW(font_array.fonts[i].name, font_array.fonts[j].name))
+        {
+            HeapFree(GetProcessHeap(), 0, font_array.fonts[i].name);
+            font_array.fonts[i].name = NULL;
+        }
+        else if (++j != i)
+        {
+            font_array.fonts[j] = font_array.fonts[i];
+            font_array.fonts[i].name = NULL;
+        }
+    }
+    font_array.count = j + 1;
+
+    for (i = 0; i < font_array.count; ++i)
+    {
+        COMBOBOXEXITEMW cbitem = { 0 };
+
+        cbitem.mask = CBEIF_TEXT | CBEIF_LPARAM;
+        cbitem.pszText = font_array.fonts[i].name;
+        cbitem.iItem = -1;
+        cbitem.lParam = font_array.fonts[i].lParam;
+
+        SendMessageW(hListWnd, CBEM_INSERTITEMW, 0, (LPARAM)&cbitem);
+
+        HeapFree(GetProcessHeap(), 0, font_array.fonts[i].name);
+    }
+    HeapFree(GetProcessHeap(), 0, font_array.fonts);
 
     ZeroMemory(&fmt, sizeof(fmt));
     fmt.cbSize = sizeof(fmt);
