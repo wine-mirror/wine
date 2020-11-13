@@ -342,8 +342,8 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
   };
 
   WIN32_FILE_ATTRIBUTE_DATA fileInfo;
-  WCHAR  outputparam[MAX_PATH];
-  WCHAR  finaloutput[MAX_PATH];
+  WCHAR  outputparam[MAXSTRING];
+  WCHAR  finaloutput[MAXSTRING];
   WCHAR  fullfilename[MAX_PATH];
   WCHAR  thisoutput[MAX_PATH];
   WCHAR  *filepart       = NULL;
