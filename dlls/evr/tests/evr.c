@@ -1122,6 +1122,10 @@ static void test_default_presenter(void)
     if (FAILED(hr))
         return;
 
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IQualProp, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoPositionMapper, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IUnknown_Release(unk);
