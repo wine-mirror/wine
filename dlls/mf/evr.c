@@ -76,6 +76,7 @@ struct video_renderer
     IMFTopologyServiceLookup IMFTopologyServiceLookup_iface;
     IMediaEventSink IMediaEventSink_iface;
     IMFAttributes IMFAttributes_iface;
+    IMFQualityAdvise IMFQualityAdvise_iface;
     LONG refcount;
 
     IMFMediaEventQueue *event_queue;
@@ -139,6 +140,11 @@ static struct video_renderer *impl_from_IMediaEventSink(IMediaEventSink *iface)
 static struct video_renderer *impl_from_IMFAttributes(IMFAttributes *iface)
 {
     return CONTAINING_RECORD(iface, struct video_renderer, IMFAttributes_iface);
+}
+
+static struct video_renderer *impl_from_IMFQualityAdvise(IMFQualityAdvise *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_renderer, IMFQualityAdvise_iface);
 }
 
 static struct video_stream *impl_from_IMFStreamSink(IMFStreamSink *iface)
@@ -656,6 +662,10 @@ static HRESULT WINAPI video_renderer_sink_QueryInterface(IMFMediaSink *iface, RE
     else if (IsEqualIID(riid, &IID_IMFAttributes))
     {
         *obj = &renderer->IMFAttributes_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFQualityAdvise))
+    {
+        *obj = &renderer->IMFQualityAdvise_iface;
     }
     else
     {
@@ -2120,6 +2130,75 @@ static const IMFAttributesVtbl video_renderer_attributes_vtbl =
     video_renderer_attributes_CopyAllItems,
 };
 
+static HRESULT WINAPI video_renderer_quality_advise_QueryInterface(IMFQualityAdvise *iface, REFIID riid, void **out)
+{
+    struct video_renderer *renderer = impl_from_IMFQualityAdvise(iface);
+    return IMFMediaSink_QueryInterface(&renderer->IMFMediaSink_iface, riid, out);
+}
+
+static ULONG WINAPI video_renderer_quality_advise_AddRef(IMFQualityAdvise *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFQualityAdvise(iface);
+    return IMFMediaSink_AddRef(&renderer->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI video_renderer_quality_Release(IMFQualityAdvise *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFQualityAdvise(iface);
+    return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI video_renderer_quality_advise_SetDropMode(IMFQualityAdvise *iface,
+        MF_QUALITY_DROP_MODE mode)
+{
+    FIXME("%p, %u.\n", iface, mode);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_renderer_quality_advise_SetQualityLevel(IMFQualityAdvise *iface,
+        MF_QUALITY_LEVEL level)
+{
+    FIXME("%p, %u.\n", iface, level);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_renderer_quality_advise_GetDropMode(IMFQualityAdvise *iface,
+        MF_QUALITY_DROP_MODE *mode)
+{
+    FIXME("%p, %p.\n", iface, mode);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_renderer_quality_advise_GetQualityLevel(IMFQualityAdvise *iface,
+        MF_QUALITY_LEVEL *level)
+{
+    FIXME("%p, %p.\n", iface, level);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_renderer_quality_advise_DropTime(IMFQualityAdvise *iface, LONGLONG interval)
+{
+    FIXME("%p, %s.\n", iface, wine_dbgstr_longlong(interval));
+
+    return E_NOTIMPL;
+}
+
+static const IMFQualityAdviseVtbl video_renderer_quality_advise_vtbl =
+{
+    video_renderer_quality_advise_QueryInterface,
+    video_renderer_quality_advise_AddRef,
+    video_renderer_quality_Release,
+    video_renderer_quality_advise_SetDropMode,
+    video_renderer_quality_advise_SetQualityLevel,
+    video_renderer_quality_advise_GetDropMode,
+    video_renderer_quality_advise_GetQualityLevel,
+    video_renderer_quality_advise_DropTime,
+};
+
 static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
 {
     struct video_renderer *object;
@@ -2141,6 +2220,7 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
     object->IMFTopologyServiceLookup_iface.lpVtbl = &video_renderer_service_lookup_vtbl;
     object->IMediaEventSink_iface.lpVtbl = &media_event_sink_vtbl;
     object->IMFAttributes_iface.lpVtbl = &video_renderer_attributes_vtbl;
+    object->IMFQualityAdvise_iface.lpVtbl = &video_renderer_quality_advise_vtbl;
     object->refcount = 1;
     InitializeCriticalSection(&object->cs);
 
