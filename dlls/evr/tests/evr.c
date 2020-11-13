@@ -1096,18 +1096,13 @@ done:
 
 static void test_default_presenter(void)
 {
-    D3DDEVICE_CREATION_PARAMETERS device_params = { 0 };
-    D3DPRESENT_PARAMETERS present_params = { 0 };
     IMFVideoDisplayControl *display_control;
-    IDirect3DSwapChain9 *swapchain;
     IMFVideoPresenter *presenter;
     IMFRateSupport *rate_support;
-    IDirect3DDevice9 *d3d_device;
     IDirect3DDeviceManager9 *dm;
     IMFVideoDeviceID *deviceid;
     IMFGetService *gs;
     HWND hwnd, hwnd2;
-    HANDLE handle;
     IUnknown *unk;
     DWORD flags;
     float rate;
@@ -1176,33 +1171,6 @@ static void test_default_presenter(void)
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    hr = IDirect3DDeviceManager9_OpenDeviceHandle(dm, &handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = IDirect3DDeviceManager9_LockDevice(dm, handle, &d3d_device, FALSE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = IDirect3DDevice9_GetCreationParameters(d3d_device, &device_params);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(device_params.hFocusWindow == GetDesktopWindow(), "Unexpected window %p.\n", device_params.hFocusWindow);
-
-    hr = IDirect3DDevice9_GetSwapChain(d3d_device, 0, &swapchain);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_params);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    ok(present_params.hDeviceWindow == GetDesktopWindow(), "Unexpected device window.\n");
-    ok(present_params.Windowed, "Unexpected windowed mode.\n");
-    ok(present_params.SwapEffect == D3DSWAPEFFECT_COPY, "Unexpected swap effect.\n");
-    ok(present_params.Flags & D3DPRESENTFLAG_VIDEO, "Unexpected flags %#x.\n", present_params.Flags);
-    ok(present_params.PresentationInterval == D3DPRESENT_INTERVAL_IMMEDIATE, "Unexpected present interval.\n");
-
-    IDirect3DDevice9_Release(d3d_device);
-
-    hr = IDirect3DDeviceManager9_UnlockDevice(dm, handle, FALSE);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
     /* Video window */
     hwnd = create_window();
     ok(!!hwnd, "Failed to create a test window.\n");
@@ -1228,15 +1196,6 @@ static void test_default_presenter(void)
     hr = IMFVideoDisplayControl_GetVideoWindow(display_control, &hwnd2);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(hwnd2 == hwnd, "Unexpected window %p.\n", hwnd2);
-
-    /* Video position */
-    hr = IDirect3DDeviceManager9_CloseDeviceHandle(dm, handle);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    IDirect3DDeviceManager9_Release(dm);
-
-    IMFVideoDisplayControl_Release(display_control);
-    IMFGetService_Release(gs);
 
     /* Rate support. */
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFRateSupport, (void **)&rate_support);
@@ -1920,6 +1879,92 @@ static void test_presenter_ar_mode(void)
     IMFVideoDisplayControl_Release(display_control);
 }
 
+static void test_presenter_video_window(void)
+{
+    D3DDEVICE_CREATION_PARAMETERS device_params = { 0 };
+    IMFVideoDisplayControl *display_control;
+    IDirect3DDeviceManager9 *dm;
+    IDirect3DDevice9 *d3d_device;
+    HANDLE hdevice;
+    HRESULT hr;
+    IDirect3DSwapChain9 *swapchain;
+    D3DPRESENT_PARAMETERS present_params = { 0 };
+    HWND window;
+
+    hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoDisplayControl, (void **)&display_control);
+    ok(hr == S_OK, "Failed to create default presenter, hr %#x.\n", hr);
+
+    hr = MFGetService((IUnknown *)display_control, &MR_VIDEO_ACCELERATION_SERVICE,
+         &IID_IDirect3DDeviceManager9, (void **)&dm);
+
+    hr = IDirect3DDeviceManager9_OpenDeviceHandle(dm, &hdevice);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_LockDevice(dm, hdevice, &d3d_device, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetCreationParameters(d3d_device, &device_params);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(device_params.hFocusWindow == GetDesktopWindow(), "Unexpected window %p.\n", device_params.hFocusWindow);
+
+    hr = IDirect3DDevice9_GetSwapChain(d3d_device, 0, &swapchain);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_params);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ok(present_params.hDeviceWindow == GetDesktopWindow(), "Unexpected device window.\n");
+    ok(present_params.Windowed, "Unexpected windowed mode.\n");
+    ok(present_params.SwapEffect == D3DSWAPEFFECT_COPY, "Unexpected swap effect.\n");
+    ok(present_params.Flags & D3DPRESENTFLAG_VIDEO, "Unexpected flags %#x.\n", present_params.Flags);
+    ok(present_params.PresentationInterval == D3DPRESENT_INTERVAL_IMMEDIATE, "Unexpected present interval.\n");
+
+    IDirect3DSwapChain9_Release(swapchain);
+    IDirect3DDevice9_Release(d3d_device);
+
+    hr = IDirect3DDeviceManager9_UnlockDevice(dm, hdevice, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Setting window. */
+    hr = IMFVideoDisplayControl_GetVideoWindow(display_control, &window);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!window, "Unexpected window %p.\n", window);
+
+    window = create_window();
+
+    hr = IMFVideoDisplayControl_SetVideoWindow(display_control, window);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Device is not recreated or reset on window change. */
+    hr = IDirect3DDeviceManager9_LockDevice(dm, hdevice, &d3d_device, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetSwapChain(d3d_device, 0, &swapchain);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_params);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ok(present_params.hDeviceWindow == GetDesktopWindow(), "Unexpected device window.\n");
+    ok(present_params.Windowed, "Unexpected windowed mode.\n");
+    ok(present_params.SwapEffect == D3DSWAPEFFECT_COPY, "Unexpected swap effect.\n");
+    ok(present_params.Flags & D3DPRESENTFLAG_VIDEO, "Unexpected flags %#x.\n", present_params.Flags);
+    ok(present_params.PresentationInterval == D3DPRESENT_INTERVAL_IMMEDIATE, "Unexpected present interval.\n");
+
+    IDirect3DSwapChain9_Release(swapchain);
+    IDirect3DDevice9_Release(d3d_device);
+
+    hr = IDirect3DDeviceManager9_UnlockDevice(dm, hdevice, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_CloseDeviceHandle(dm, hdevice);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFVideoDisplayControl_Release(display_control);
+
+    DestroyWindow(window);
+}
+
 static void test_mixer_output_rectangle(void)
 {
     IMFVideoMixerControl *mixer_control;
@@ -2370,6 +2415,7 @@ START_TEST(evr)
     test_presenter_video_position();
     test_presenter_native_video_size();
     test_presenter_ar_mode();
+    test_presenter_video_window();
     test_mixer_output_rectangle();
     test_mixer_zorder();
     test_mixer_samples();

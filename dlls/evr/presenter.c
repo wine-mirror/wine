@@ -77,6 +77,9 @@ struct video_presenter
     IMediaEventSink *event_sink;
 
     IDirect3DDeviceManager9 *device_manager;
+    IDirect3DSwapChain9 *swapchain;
+    HANDLE hdevice;
+
     IMFVideoSampleAllocator *allocator;
     struct streaming_thread thread;
     IMFMediaType *media_type;
@@ -162,6 +165,19 @@ static unsigned int get_gcd(unsigned int a, unsigned int b)
     }
 
     return a;
+}
+
+static HRESULT video_presenter_get_device(struct video_presenter *presenter, IDirect3DDevice9 **device)
+{
+    HRESULT hr;
+
+    if (!presenter->hdevice)
+    {
+        if (FAILED(hr = IDirect3DDeviceManager9_OpenDeviceHandle(presenter->device_manager, &presenter->hdevice)))
+            return hr;
+    }
+
+    return IDirect3DDeviceManager9_LockDevice(presenter->device_manager, presenter->hdevice, device, TRUE);
 }
 
 static void video_presenter_get_native_video_size(struct video_presenter *presenter)
@@ -501,8 +517,13 @@ static ULONG WINAPI video_presenter_inner_Release(IUnknown *iface)
         video_presenter_clear_container(presenter);
         video_presenter_reset_media_type(presenter);
         DeleteCriticalSection(&presenter->cs);
+        if (presenter->swapchain)
+            IDirect3DSwapChain9_Release(presenter->swapchain);
         if (presenter->device_manager)
+        {
+            IDirect3DDeviceManager9_CloseDeviceHandle(presenter->device_manager, presenter->hdevice);
             IDirect3DDeviceManager9_Release(presenter->device_manager);
+        }
         if (presenter->allocator)
             IMFVideoSampleAllocator_Release(presenter->allocator);
         heap_free(presenter);
@@ -995,9 +1016,32 @@ static HRESULT WINAPI video_presenter_control_GetAspectRatioMode(IMFVideoDisplay
     return S_OK;
 }
 
+static HRESULT video_presenter_create_swapchain(struct video_presenter *presenter)
+{
+    D3DPRESENT_PARAMETERS present_params = { 0 };
+    IDirect3DDevice9 *d3d_device;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = video_presenter_get_device(presenter, &d3d_device)))
+    {
+        present_params.hDeviceWindow = presenter->video_window;
+        present_params.Windowed = TRUE;
+        present_params.SwapEffect = D3DSWAPEFFECT_COPY;
+        present_params.Flags = D3DPRESENTFLAG_VIDEO;
+        present_params.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
+        hr = IDirect3DDevice9_CreateAdditionalSwapChain(d3d_device, &present_params, &presenter->swapchain);
+
+        IDirect3DDevice9_Release(d3d_device);
+        IDirect3DDeviceManager9_UnlockDevice(presenter->device_manager, presenter->hdevice, FALSE);
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI video_presenter_control_SetVideoWindow(IMFVideoDisplayControl *iface, HWND window)
 {
     struct video_presenter *presenter = impl_from_IMFVideoDisplayControl(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p, %p.\n", iface, window);
 
@@ -1005,10 +1049,16 @@ static HRESULT WINAPI video_presenter_control_SetVideoWindow(IMFVideoDisplayCont
         return E_INVALIDARG;
 
     EnterCriticalSection(&presenter->cs);
-    presenter->video_window = window;
+    if (presenter->video_window != window)
+    {
+        if (presenter->swapchain)
+            IDirect3DSwapChain9_Release(presenter->swapchain);
+        presenter->video_window = window;
+        hr = video_presenter_create_swapchain(presenter);
+    }
     LeaveCriticalSection(&presenter->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI video_presenter_control_GetVideoWindow(IMFVideoDisplayControl *iface, HWND *window)
