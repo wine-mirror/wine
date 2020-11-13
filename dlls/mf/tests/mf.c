@@ -56,6 +56,21 @@ static void _expect_ref(IUnknown* obj, ULONG expected_refcount, int line)
             expected_refcount);
 }
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 static HWND create_window(void)
 {
     RECT r = {0, 0, 640, 480};
@@ -1028,7 +1043,6 @@ static void test_MFGetService(void)
 
 static void test_sequencer_source(void)
 {
-    IMFMediaSourceTopologyProvider *provider;
     IMFSequencerSource *seq_source;
     HRESULT hr;
 
@@ -1038,9 +1052,7 @@ static void test_sequencer_source(void)
     hr = MFCreateSequencerSource(NULL, &seq_source);
     ok(hr == S_OK, "Failed to create sequencer source, hr %#x.\n", hr);
 
-    hr = IMFSequencerSource_QueryInterface(seq_source, &IID_IMFMediaSourceTopologyProvider, (void **)&provider);
-    ok(hr == S_OK, "Failed to get provider interface, hr %#x.\n", hr);
-    IMFMediaSourceTopologyProvider_Release(provider);
+    check_interface(seq_source, &IID_IMFMediaSourceTopologyProvider, TRUE);
 
     IMFSequencerSource_Release(seq_source);
 
@@ -1743,7 +1755,6 @@ static void test_presentation_clock(void)
     MFTIME systime, time;
     LONGLONG clock_time;
     MFCLOCK_STATE state;
-    IMFTimer *timer;
     unsigned int i;
     DWORD value;
     float rate;
@@ -1755,6 +1766,12 @@ static void test_presentation_clock(void)
 
     hr = MFCreatePresentationClock(&clock);
     ok(hr == S_OK, "Failed to create presentation clock, hr %#x.\n", hr);
+
+    check_interface(clock, &IID_IMFTimer, TRUE);
+    check_interface(clock, &IID_IMFRateControl, TRUE);
+    check_interface(clock, &IID_IMFPresentationClock, TRUE);
+    check_interface(clock, &IID_IMFShutdown, TRUE);
+    check_interface(clock, &IID_IMFClock, TRUE);
 
     hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFRateControl, (void **)&rate_control);
     ok(hr == S_OK, "Failed to get rate control interface, hr %#x.\n", hr);
@@ -1945,10 +1962,6 @@ static void test_presentation_clock(void)
 
     IMFRateControl_Release(rate_control);
 
-    hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFTimer, (void **)&timer);
-    ok(hr == S_OK, "Failed to get timer interface, hr %#x.\n", hr);
-    IMFTimer_Release(timer);
-
     hr = IMFPresentationClock_QueryInterface(clock, &IID_IMFShutdown, (void **)&shutdown);
     ok(hr == S_OK, "Failed to get shutdown interface, hr %#x.\n", hr);
 
@@ -2084,7 +2097,6 @@ static void test_sample_grabber(void)
     IMFPresentationTimeSource *time_source;
     IMFPresentationClock *clock, *clock2;
     IMFStreamSink *stream, *stream2;
-    IMFClockStateSink *clocksink;
     IMFMediaEventGenerator *eg;
     IMFMediaSink *sink, *sink2;
     DWORD flags, count, id;
@@ -2135,9 +2147,7 @@ static void test_sample_grabber(void)
     hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, &stream);
     ok(hr == S_OK, "Failed to get sink stream, hr %#x.\n", hr);
 
-    hr = IMFStreamSink_QueryInterface(stream, &IID_IMFMediaEventGenerator, (void **)&unk);
-    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
-    IUnknown_Release(unk);
+    check_interface(stream, &IID_IMFMediaEventGenerator, TRUE);
 
     hr = IMFStreamSink_GetIdentifier(stream, &id);
     ok(hr == S_OK, "Failed to get stream id, hr %#x.\n", hr);
@@ -2163,9 +2173,7 @@ static void test_sample_grabber(void)
     hr = IMFMediaSink_RemoveStreamSink(sink, 1);
     ok(hr == MF_E_STREAMSINKS_FIXED, "Unexpected hr %#x.\n", hr);
 
-    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFClockStateSink, (void **)&clocksink);
-    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
-    IMFClockStateSink_Release(clocksink);
+    check_interface(sink, &IID_IMFClockStateSink, TRUE);
 
     /* Event generator. */
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFMediaEventGenerator, (void **)&eg);
@@ -2915,14 +2923,9 @@ if (SUCCEEDED(hr))
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(flags == (MEDIASINK_FIXED_STREAMS | MEDIASINK_CAN_PREROLL), "Unexpected flags %#x.\n", flags);
 
-    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFMediaSinkPreroll, (void **)&unk);
-    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
-    IUnknown_Release(unk);
-
-    /* Events */
-    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFMediaEventGenerator, (void **)&unk);
-    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
-    IUnknown_Release(unk);
+    check_interface(sink, &IID_IMFMediaSinkPreroll, TRUE);
+    check_interface(sink, &IID_IMFMediaEventGenerator, TRUE);
+    check_interface(sink, &IID_IMFClockStateSink, TRUE);
 
     /* Clock */
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFClockStateSink, (void **)&state_sink);
@@ -2971,9 +2974,7 @@ todo_wine
     hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, &stream_sink);
     ok(hr == S_OK, "Failed to get a stream, hr %#x.\n", hr);
 
-    hr = IMFStreamSink_QueryInterface(stream_sink, &IID_IMFMediaEventGenerator, (void **)&unk);
-    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
-    IUnknown_Release(unk);
+    check_interface(stream_sink, &IID_IMFMediaEventGenerator, TRUE);
 
     hr = IMFStreamSink_GetIdentifier(stream_sink, &id);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -3236,12 +3237,9 @@ static void test_evr(void)
     IMFStreamSink *stream_sink, *stream_sink2;
     IMFVideoDisplayControl *display_control;
     IMFMediaType *media_type, *media_type2;
-    IMFMediaEventGenerator *ev_generator;
     IMFVideoSampleAllocator *allocator;
     IMFMediaTypeHandler *type_handler;
     IMFVideoRenderer *video_renderer;
-    IMFClockStateSink *clock_sink;
-    IMFMediaSinkPreroll *preroll;
     IMFMediaSink *sink, *sink2;
     IMFAttributes *attributes;
     IMFActivate *activate;
@@ -3280,6 +3278,12 @@ static void test_evr(void)
 
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    check_interface(sink, &IID_IMFMediaSinkPreroll, TRUE);
+    check_interface(sink, &IID_IMFVideoRenderer, TRUE);
+    check_interface(sink, &IID_IMFMediaEventGenerator, TRUE);
+    check_interface(sink, &IID_IMFClockStateSink, TRUE);
+    check_interface(sink, &IID_IMFGetService, TRUE);
 
     hr = MFGetService((IUnknown *)sink, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDisplayControl,
             (void **)&display_control);
@@ -3442,22 +3446,6 @@ static void test_evr(void)
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(flags == (MEDIASINK_CAN_PREROLL | MEDIASINK_CLOCK_REQUIRED), "Unexpected flags %#x.\n", flags);
-
-    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFMediaSinkPreroll, (void **)&preroll);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IMFMediaSinkPreroll_Release(preroll);
-
-    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFVideoRenderer, (void **)&video_renderer);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IMFVideoRenderer_Release(video_renderer);
-
-    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFMediaEventGenerator, (void **)&ev_generator);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IMFMediaEventGenerator_Release(ev_generator);
-
-    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFClockStateSink, (void **)&clock_sink);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IMFClockStateSink_Release(clock_sink);
 
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFGetService, (void **)&gs);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
