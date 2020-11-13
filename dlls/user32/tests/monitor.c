@@ -284,7 +284,7 @@ struct device_info
 };
 
 #define expect_dm(a, b, c) _expect_dm(__LINE__, a, b, c)
-static void _expect_dm(INT line, DEVMODEA expected, const CHAR *device, DWORD test)
+static void _expect_dm(INT line, const DEVMODEA *expected, const CHAR *device, DWORD test)
 {
     DEVMODEA dm;
     BOOL ret;
@@ -295,27 +295,27 @@ static void _expect_dm(INT line, DEVMODEA expected, const CHAR *device, DWORD te
     ret = EnumDisplaySettingsA(device, ENUM_CURRENT_SETTINGS, &dm);
     ok_(__FILE__, line)(ret, "Device %s test %d EnumDisplaySettingsA failed, error %#x\n", device, test, GetLastError());
 
-    ok_(__FILE__, line)((dm.dmFields & expected.dmFields) == expected.dmFields,
-            "Device %s test %d expect dmFields to contain %#x, got %#x\n", device, test, expected.dmFields, dm.dmFields);
+    ok_(__FILE__, line)((dm.dmFields & expected->dmFields) == expected->dmFields,
+            "Device %s test %d expect dmFields to contain %#x, got %#x\n", device, test, expected->dmFields, dm.dmFields);
     /* Wine doesn't support changing color depth yet */
-    todo_wine_if(expected.dmFields & DM_BITSPERPEL && expected.dmBitsPerPel != 32 && expected.dmBitsPerPel != 24)
-    ok_(__FILE__, line)(!(expected.dmFields & DM_BITSPERPEL) || dm.dmBitsPerPel == expected.dmBitsPerPel,
-            "Device %s test %d expect dmBitsPerPel %u, got %u\n", device, test, expected.dmBitsPerPel, dm.dmBitsPerPel);
-    ok_(__FILE__, line)(!(expected.dmFields & DM_PELSWIDTH) || dm.dmPelsWidth == expected.dmPelsWidth,
-            "Device %s test %d expect dmPelsWidth %u, got %u\n", device, test, expected.dmPelsWidth, dm.dmPelsWidth);
-    ok_(__FILE__, line)(!(expected.dmFields & DM_PELSHEIGHT) || dm.dmPelsHeight == expected.dmPelsHeight,
-            "Device %s test %d expect dmPelsHeight %u, got %u\n", device, test, expected.dmPelsHeight, dm.dmPelsHeight);
-    ok_(__FILE__, line)(!(expected.dmFields & DM_POSITION) || dm.dmPosition.x == expected.dmPosition.x,
-            "Device %s test %d expect dmPosition.x %d, got %d\n", device, test, expected.dmPosition.x, dm.dmPosition.x);
-    ok_(__FILE__, line)(!(expected.dmFields & DM_POSITION) || dm.dmPosition.y == expected.dmPosition.y,
-            "Device %s test %d expect dmPosition.y %d, got %d\n", device, test, expected.dmPosition.y, dm.dmPosition.y);
-    ok_(__FILE__, line)(!(expected.dmFields & DM_DISPLAYFREQUENCY) ||
-            dm.dmDisplayFrequency == expected.dmDisplayFrequency,
-            "Device %s test %d expect dmDisplayFrequency %u, got %u\n", device, test, expected.dmDisplayFrequency,
+    todo_wine_if(expected->dmFields & DM_BITSPERPEL && expected->dmBitsPerPel != 32 && expected->dmBitsPerPel != 24)
+    ok_(__FILE__, line)(!(expected->dmFields & DM_BITSPERPEL) || dm.dmBitsPerPel == expected->dmBitsPerPel,
+            "Device %s test %d expect dmBitsPerPel %u, got %u\n", device, test, expected->dmBitsPerPel, dm.dmBitsPerPel);
+    ok_(__FILE__, line)(!(expected->dmFields & DM_PELSWIDTH) || dm.dmPelsWidth == expected->dmPelsWidth,
+            "Device %s test %d expect dmPelsWidth %u, got %u\n", device, test, expected->dmPelsWidth, dm.dmPelsWidth);
+    ok_(__FILE__, line)(!(expected->dmFields & DM_PELSHEIGHT) || dm.dmPelsHeight == expected->dmPelsHeight,
+            "Device %s test %d expect dmPelsHeight %u, got %u\n", device, test, expected->dmPelsHeight, dm.dmPelsHeight);
+    ok_(__FILE__, line)(!(expected->dmFields & DM_POSITION) || dm.dmPosition.x == expected->dmPosition.x,
+            "Device %s test %d expect dmPosition.x %d, got %d\n", device, test, expected->dmPosition.x, dm.dmPosition.x);
+    ok_(__FILE__, line)(!(expected->dmFields & DM_POSITION) || dm.dmPosition.y == expected->dmPosition.y,
+            "Device %s test %d expect dmPosition.y %d, got %d\n", device, test, expected->dmPosition.y, dm.dmPosition.y);
+    ok_(__FILE__, line)(!(expected->dmFields & DM_DISPLAYFREQUENCY) ||
+            dm.dmDisplayFrequency == expected->dmDisplayFrequency,
+            "Device %s test %d expect dmDisplayFrequency %u, got %u\n", device, test, expected->dmDisplayFrequency,
             dm.dmDisplayFrequency);
-    ok_(__FILE__, line)(!(expected.dmFields & DM_DISPLAYORIENTATION) ||
-            dm.dmDisplayOrientation == expected.dmDisplayOrientation,
-            "Device %s test %d expect dmDisplayOrientation %d, got %d\n", device, test, expected.dmDisplayOrientation,
+    ok_(__FILE__, line)(!(expected->dmFields & DM_DISPLAYORIENTATION) ||
+            dm.dmDisplayOrientation == expected->dmDisplayOrientation,
+            "Device %s test %d expect dmDisplayOrientation %d, got %d\n", device, test, expected->dmDisplayOrientation,
             dm.dmDisplayOrientation);
 }
 
@@ -667,7 +667,7 @@ static void test_ChangeDisplaySettingsEx(void)
                 continue;
             }
             flush_events();
-            expect_dm(dm3, devices[device].name, test);
+            expect_dm(&dm3, devices[device].name, test);
 
             /* Change the registry mode to the second mode */
             res = ChangeDisplaySettingsExA(devices[device].name, &dm2, NULL, CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
@@ -765,7 +765,7 @@ static void test_ChangeDisplaySettingsEx(void)
             }
 
             flush_events();
-            expect_dm(dm, devices[device].name, mode);
+            expect_dm(&dm, devices[device].name, mode);
         }
 
         /* Restore settings */
@@ -838,7 +838,7 @@ static void test_ChangeDisplaySettingsEx(void)
         }
 
         flush_events();
-        expect_dm(dm, devices[device].name, 0);
+        expect_dm(&dm, devices[device].name, 0);
 
         /* Test specifying only position, width and height */
         memset(&dm, 0, sizeof(dm));
@@ -883,7 +883,7 @@ static void test_ChangeDisplaySettingsEx(void)
         ok(dm.dmBitsPerPel, "Expected dmBitsPerPel not zero.\n");
         ok(dm.dmDisplayFrequency, "Expected dmDisplayFrequency not zero.\n");
 
-        expect_dm(dm, devices[device].name, 0);
+        expect_dm(&dm, devices[device].name, 0);
     }
 
     /* Test dmPosition */
@@ -955,7 +955,7 @@ static void test_ChangeDisplaySettingsEx(void)
             ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned unexpected %d\n", devices[1].name, res);
 
             dm2.dmPosition.x = dm.dmPosition.x + dm.dmPelsWidth;
-            expect_dm(dm2, devices[1].name, 0);
+            expect_dm(&dm2, devices[1].name, 0);
 
             /* Test placing the secondary adapter to all sides of the primary adapter */
             for (test = 0; test < 8; ++test)
@@ -1014,7 +1014,7 @@ static void test_ChangeDisplaySettingsEx(void)
                 }
 
                 flush_events();
-                expect_dm(dm2, devices[1].name, test);
+                expect_dm(&dm2, devices[1].name, test);
             }
 
             /* Test automatic position update when other adapters change resolution */
@@ -1079,7 +1079,7 @@ static void test_ChangeDisplaySettingsEx(void)
             ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s mode %d returned unexpected %d.\n",
                     devices[device].name, mode, res);
             flush_events();
-            expect_dm(dm2, devices[device].name, mode);
+            expect_dm(&dm2, devices[device].name, mode);
 
             /* EnumDisplaySettingsEx without EDS_ROTATEDMODE reports modes with current orientation */
             memset(&dm3, 0, sizeof(dm3));
@@ -1125,7 +1125,7 @@ static void test_ChangeDisplaySettingsEx(void)
             broken(res == DISP_CHANGE_FAILED), /* win8 TestBot */
             "ChangeDisplaySettingsExA returned unexpected %d\n", res);
     for (device = 0; device < device_count; ++device)
-        expect_dm(devices[device].original_mode, devices[device].name, 0);
+        expect_dm(&devices[device].original_mode, devices[device].name, 0);
 
     heap_free(devices);
 }
