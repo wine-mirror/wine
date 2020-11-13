@@ -618,29 +618,39 @@ static const struct list *get_family_face_list( const struct gdi_font_family *fa
     return family->replacement ? &family->replacement->faces : &family->faces;
 }
 
+static struct gdi_font_face *family_find_face_from_filename( struct gdi_font_family *family, const WCHAR *file_name )
+{
+    struct gdi_font_face *face;
+    const WCHAR *file;
+    LIST_FOR_EACH_ENTRY( face, get_family_face_list(family), struct gdi_font_face, entry )
+    {
+        if (!face->file) continue;
+        file = wcsrchr(face->file, '\\');
+        if (!file) file = face->file;
+        else file++;
+        if (wcsicmp( file, file_name )) continue;
+        face->refcount++;
+        return face;
+    }
+    return NULL;
+}
+
 static struct gdi_font_face *find_face_from_filename( const WCHAR *file_name, const WCHAR *family_name )
 {
     struct gdi_font_family *family;
     struct gdi_font_face *face;
-    const WCHAR *file;
 
     TRACE( "looking for file %s name %s\n", debugstr_w(file_name), debugstr_w(family_name) );
 
-    WINE_RB_FOR_EACH_ENTRY( family, &family_name_tree, struct gdi_font_family, name_entry )
+    if (!family_name)
     {
-        if (family_name && wcsnicmp( family_name, family->family_name, LF_FACESIZE - 1 )) continue;
-        LIST_FOR_EACH_ENTRY( face, get_family_face_list(family), struct gdi_font_face, entry )
-        {
-            if (!face->file) continue;
-            file = wcsrchr(face->file, '\\');
-            if (!file) file = face->file;
-            else file++;
-            if (wcsicmp( file, file_name )) continue;
-            face->refcount++;
-            return face;
-	}
+        WINE_RB_FOR_EACH_ENTRY( family, &family_name_tree, struct gdi_font_family, name_entry )
+            if ((face = family_find_face_from_filename( family, file_name ))) return face;
+        return NULL;
     }
-    return NULL;
+
+    if (!(family = find_family_from_name( family_name ))) return NULL;
+    return family_find_face_from_filename( family, file_name );
 }
 
 static BOOL add_family_replacement( const WCHAR *new_name, const WCHAR *replace )
