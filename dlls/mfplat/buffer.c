@@ -941,6 +941,18 @@ static HRESULT create_d3d9_surface_buffer(IUnknown *surface, BOOL bottom_up, IMF
 {
     struct memory_buffer *object;
     D3DSURFACE_DESC desc;
+    unsigned int stride;
+    GUID subtype;
+    BOOL is_yuv;
+
+    IDirect3DSurface9_GetDesc((IDirect3DSurface9 *)surface, &desc);
+    TRACE("format %#x, %u x %u.\n", desc.Format, desc.Width, desc.Height);
+
+    memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
+    subtype.Data1 = desc.Format;
+
+    if (!(stride = mf_format_get_stride(&subtype, desc.Width, &is_yuv)))
+        return MF_E_INVALIDMEDIATYPE;
 
     object = heap_alloc_zero(sizeof(*object));
     if (!object)
@@ -954,11 +966,8 @@ static HRESULT create_d3d9_surface_buffer(IUnknown *surface, BOOL bottom_up, IMF
     object->d3d9_surface.surface = (IDirect3DSurface9 *)surface;
     IUnknown_AddRef(surface);
 
-    IDirect3DSurface9_GetDesc(object->d3d9_surface.surface, &desc);
-    TRACE("format %#x, %u x %u.\n", desc.Format, desc.Width, desc.Height);
-
     MFGetPlaneSize(desc.Format, desc.Width, desc.Height, &object->_2d.plane_size);
-    object->_2d.width = desc.Width;
+    object->_2d.width = stride;
     object->_2d.height = desc.Height;
     object->max_length = object->_2d.plane_size;
 
