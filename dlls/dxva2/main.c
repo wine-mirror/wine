@@ -218,13 +218,60 @@ static HRESULT WINAPI video_processor_GetFilterPropertyRange(IDirectXVideoProces
     return E_NOTIMPL;
 }
 
+static BOOL intersect_rect(RECT *dest, const RECT *src1, const RECT *src2)
+{
+    if (IsRectEmpty(src1) || IsRectEmpty(src2) ||
+        (src1->left >= src2->right) || (src2->left >= src1->right) ||
+        (src1->top >= src2->bottom) || (src2->top >= src1->bottom))
+    {
+        SetRectEmpty(dest);
+        return FALSE;
+    }
+    dest->left   = max(src1->left, src2->left);
+    dest->right  = min(src1->right, src2->right);
+    dest->top    = max(src1->top, src2->top);
+    dest->bottom = min(src1->bottom, src2->bottom);
+
+    return TRUE;
+}
+
 static HRESULT WINAPI video_processor_VideoProcessBlt(IDirectXVideoProcessor *iface, IDirect3DSurface9 *rt,
         const DXVA2_VideoProcessBltParams *params, const DXVA2_VideoSample *samples, UINT sample_count,
         HANDLE *complete_handle)
 {
-    FIXME("%p, %p, %p, %p, %u, %p.\n", iface, rt, params, samples, sample_count, complete_handle);
+    IDirect3DDevice9 *device;
+    unsigned int i;
+    RECT dst_rect;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p, %p, %u, %p.\n", iface, rt, params, samples, sample_count, complete_handle);
+
+    if (FAILED(hr = IDirect3DSurface9_GetDevice(rt, &device)))
+    {
+        WARN("Failed to get surface device, hr %#x.\n", hr);
+        return hr;
+    }
+
+    /* FIXME: use specified color */
+    IDirect3DDevice9_ColorFill(device, rt, NULL, 0);
+
+    for (i = 0; i < sample_count; ++i)
+    {
+        dst_rect = params->TargetRect;
+
+        if (!intersect_rect(&dst_rect, &dst_rect, &samples[i].DstRect))
+            continue;
+
+        if (FAILED(hr = IDirect3DDevice9_StretchRect(device, samples[i].SrcSurface, &samples[i].SrcRect,
+                rt, &dst_rect, D3DTEXF_POINT)))
+        {
+            WARN("Failed to copy sample %u, hr %#x.\n", i, hr);
+        }
+    }
+
+    IDirect3DDevice9_Release(device);
+
+    return S_OK;
 }
 
 static const IDirectXVideoProcessorVtbl video_processor_vtbl =
