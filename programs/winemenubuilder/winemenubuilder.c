@@ -2657,7 +2657,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
 
             executableW = assoc_query(ASSOCSTR_EXECUTABLE, extensionW, openW);
             if (executableW)
-                openWithIconA = extract_icon(executableW, 0, NULL, FALSE);
+                openWithIconA = compute_native_identifier(0, executableW);
 
             friendlyAppNameW = assoc_query(ASSOCSTR_FRIENDLYAPPNAME, extensionW, openW);
             if (friendlyAppNameW)
@@ -2728,6 +2728,12 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
                     }
                     HeapFree(GetProcessHeap(), 0, desktopPath);
                 }
+            }
+
+            if (hasChanged && openWithIconA)
+            {
+                char *outputIconA = extract_icon(executableW, 0, openWithIconA, FALSE);
+                HeapFree(GetProcessHeap(), 0, outputIconA);
             }
 
         end:
