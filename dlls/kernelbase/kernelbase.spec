@@ -959,7 +959,7 @@
 @ stdcall MoveFileExW(wstr wstr long)
 # @ stub MoveFileWithProgressTransactedW
 @ stdcall MoveFileWithProgressW(wstr wstr ptr ptr long)
-@ stdcall MulDiv(long long long) kernel32.MulDiv
+@ stdcall MulDiv(long long long)
 @ stdcall MultiByteToWideChar(long long str long ptr long)
 # @ stub NamedPipeEventEnum
 # @ stub NamedPipeEventSelect

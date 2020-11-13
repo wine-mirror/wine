@@ -63,6 +63,32 @@ BOOL WINAPI DllMainCRTStartup( HANDLE inst, DWORD reason, LPVOID reserved )
 
 
 /***********************************************************************
+ *           MulDiv   (kernelbase.@)
+ */
+INT WINAPI MulDiv( INT a, INT b, INT c )
+{
+    LONGLONG ret;
+
+    if (!c) return -1;
+
+    /* We want to deal with a positive divisor to simplify the logic. */
+    if (c < 0)
+    {
+        a = -a;
+        c = -c;
+    }
+
+    /* If the result is positive, we "add" to round. else, we subtract to round. */
+    if ((a < 0 && b < 0) || (a >= 0 && b >= 0))
+        ret = (((LONGLONG)a * b) + (c / 2)) / c;
+    else
+        ret = (((LONGLONG)a * b) - (c / 2)) / c;
+
+    if (ret > 2147483647 || ret < -2147483647) return -1;
+    return ret;
+}
+
+/***********************************************************************
  *          AppPolicyGetProcessTerminationMethod (KERNELBASE.@)
  */
 LONG WINAPI AppPolicyGetProcessTerminationMethod(HANDLE token, AppPolicyProcessTerminationMethod *policy)
