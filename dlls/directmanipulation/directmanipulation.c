@@ -610,7 +610,7 @@ static HRESULT WINAPI viewport_SetViewportOptions(IDirectManipulationViewport2 *
 {
     struct directviewport *This = impl_from_IDirectManipulationViewport2(iface);
     FIXME("%p, %d\n", This, options);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI viewport_AddConfiguration(IDirectManipulationViewport2 *iface, DIRECTMANIPULATION_CONFIGURATION configuration)
