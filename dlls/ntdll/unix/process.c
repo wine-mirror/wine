@@ -1744,6 +1744,16 @@ NTSTATUS WINAPI NtResumeProcess( HANDLE handle )
 }
 
 
+/**********************************************************************
+ *           NtDebugActiveProcess  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtDebugActiveProcess( HANDLE process, HANDLE debug_object )
+{
+    FIXME( "(%p %p), stub!\n", process, debug_object );
+    return STATUS_SUCCESS;
+}
+
+
 /***********************************************************************
  *           __wine_make_process_system   (NTDLL.@)
  *

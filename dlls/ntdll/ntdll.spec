@@ -190,7 +190,7 @@
 @ stdcall -syscall NtCreateUserProcess(ptr ptr long long ptr ptr long long ptr ptr ptr)
 # @ stub NtCreateWaitablePort
 @ stdcall -arch=win32,arm64 NtCurrentTeb()
-# @ stub NtDebugActiveProcess
+@ stdcall -syscall NtDebugActiveProcess(long long)
 # @ stub NtDebugContinue
 @ stdcall -syscall NtDelayExecution(long ptr)
 @ stdcall -syscall NtDeleteAtom(long)
@@ -1195,7 +1195,7 @@
 @ stub ZwCreateToken
 @ stdcall -private -syscall ZwCreateUserProcess(ptr ptr long long ptr ptr long long ptr ptr ptr) NtCreateUserProcess
 # @ stub ZwCreateWaitablePort
-# @ stub ZwDebugActiveProcess
+@ stdcall -private -syscall ZwDebugActiveProcess(long long) NtDebugActiveProcess
 # @ stub ZwDebugContinue
 @ stdcall -private -syscall ZwDelayExecution(long ptr) NtDelayExecution
 @ stdcall -private -syscall ZwDeleteAtom(long) NtDeleteAtom
