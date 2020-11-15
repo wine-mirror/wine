@@ -1139,11 +1139,9 @@ static BOOL ME_StreamOutText(ME_TextEditor *editor, ME_OutStream *pStream,
 
     if (!editor->bEmulateVersion10 && cursor.run->nFlags & MERF_ENDPARA)
     {
-      static const WCHAR szEOL[] = { '\r', '\n' };
-
       /* richedit 2.0 - all line breaks are \r\n */
       if (dwFormat & SF_UNICODE)
-        success = ME_StreamOutMove(pStream, (const char *)szEOL, sizeof(szEOL));
+        success = ME_StreamOutMove(pStream, (const char *)L"\r\n", 2 * sizeof(WCHAR));
       else
         success = ME_StreamOutMove(pStream, "\r\n", 2);
     } else {
