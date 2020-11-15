@@ -720,11 +720,6 @@ static HRESULT WINAPI FilterGraph2_RemoveFilter(IFilterGraph2 *iface, IBaseFilte
             }
 
             TRACE("Removing filter %s.\n", debugstr_w(entry->name));
-            IBaseFilter_GetState(pFilter, 0, &state);
-            if (state == State_Running)
-                IBaseFilter_Pause(pFilter);
-            if (state != State_Stopped)
-                IBaseFilter_Stop(pFilter);
 
             hr = IBaseFilter_EnumPins(pFilter, &penumpins);
             if (SUCCEEDED(hr)) {

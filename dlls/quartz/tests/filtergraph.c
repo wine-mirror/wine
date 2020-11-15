@@ -3721,14 +3721,12 @@ todo_wine
 
     hr = IFilterGraph2_RemoveFilter(graph, &dummy.IBaseFilter_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(dummy.state == State_Paused, "Got state %#x.\n", dummy.state);
+    ok(dummy.state == State_Paused, "Got state %#x.\n", dummy.state);
 
     hr = IFilterGraph2_AddFilter(graph, &dummy.IBaseFilter_iface, L"dummy");
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(dummy.state == State_Paused, "Got state %#x.\n", dummy.state);
+    ok(dummy.state == State_Paused, "Got state %#x.\n", dummy.state);
 
-    if (dummy.state == State_Stopped)
-        dummy.expect_stop_prev = State_Stopped;
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     check_filter_state(graph, State_Stopped);
