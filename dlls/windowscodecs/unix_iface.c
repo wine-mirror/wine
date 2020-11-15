@@ -143,3 +143,53 @@ HRESULT get_unix_decoder(const CLSID *decoder_clsid, struct decoder_info *info, 
 
     return hr;
 }
+
+struct encoder_wrapper
+{
+    struct encoder win32_encoder;
+    struct encoder *unix_encoder;
+};
+
+static inline struct encoder_wrapper *impl_from_encoder(struct encoder* iface)
+{
+    return CONTAINING_RECORD(iface, struct encoder_wrapper, win32_encoder);
+}
+
+void CDECL encoder_wrapper_destroy(struct encoder* iface)
+{
+    struct encoder_wrapper* This = impl_from_encoder(iface);
+    unix_funcs->encoder_destroy(This->unix_encoder);
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
+static const struct encoder_funcs encoder_wrapper_vtable = {
+    encoder_wrapper_destroy
+};
+
+HRESULT get_unix_encoder(const CLSID *encoder_clsid, struct encoder_info *info, struct encoder **result)
+{
+    HRESULT hr;
+    struct encoder_wrapper *wrapper;
+    struct encoder *unix_encoder;
+
+    init_unixlib();
+
+    hr = unix_funcs->encoder_create(encoder_clsid, info, &unix_encoder);
+
+    if (SUCCEEDED(hr))
+    {
+        wrapper = HeapAlloc(GetProcessHeap(), 0, sizeof(*wrapper));
+
+        if (!wrapper)
+        {
+            unix_funcs->encoder_destroy(unix_encoder);
+            return E_OUTOFMEMORY;
+        }
+
+        wrapper->win32_encoder.vtable = &encoder_wrapper_vtable;
+        wrapper->unix_encoder = unix_encoder;
+        *result = &wrapper->win32_encoder;
+    }
+
+    return hr;
+}

@@ -309,9 +309,6 @@ static CRITICAL_SECTION_DEBUG init_png_cs_debug =
 };
 static CRITICAL_SECTION init_png_cs = { &init_png_cs_debug, -1, 0, 0, 0, 0 };
 
-static const WCHAR wszPngInterlaceOption[] = {'I','n','t','e','r','l','a','c','e','O','p','t','i','o','n',0};
-static const WCHAR wszPngFilterOption[] = {'F','i','l','t','e','r','O','p','t','i','o','n',0};
-
 static void *load_libpng(void)
 {
     void *result;
@@ -392,6 +389,14 @@ static void user_warning_fn(png_structp png_ptr, png_const_charp warning_message
     WARN("PNG warning: %s\n", debugstr_a(warning_message));
 }
 
+static const WCHAR wszPngInterlaceOption[] = {'I','n','t','e','r','l','a','c','e','O','p','t','i','o','n',0};
+static const WCHAR wszPngFilterOption[] = {'F','i','l','t','e','r','O','p','t','i','o','n',0};
+
+static const PROPBAG2 encoder_option_properties[ENCODER_OPTION_END] = {
+    { PROPBAG2_TYPE_DATA, VT_BOOL, 0, 0, (LPOLESTR)wszPngInterlaceOption },
+    { PROPBAG2_TYPE_DATA, VT_UI1,  0, 0, (LPOLESTR)wszPngFilterOption }
+};
+
 struct png_pixelformat {
     const WICPixelFormatGUID *guid;
     UINT bpp;
@@ -426,6 +431,8 @@ typedef struct PngEncoder {
     IStream *stream;
     png_structp png_ptr;
     png_infop info_ptr;
+    struct encoder *encoder;
+    struct encoder_info encoder_info;
     UINT frame_count;
     BOOL frame_initialized;
     const struct png_pixelformat *format;
@@ -964,6 +971,7 @@ static ULONG WINAPI PngEncoder_Release(IWICBitmapEncoder *iface)
         if (This->stream)
             IStream_Release(This->stream);
         HeapFree(GetProcessHeap(), 0, This->data);
+        encoder_destroy(This->encoder);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -1045,17 +1053,19 @@ static HRESULT WINAPI PngEncoder_Initialize(IWICBitmapEncoder *iface,
 
 static HRESULT WINAPI PngEncoder_GetContainerFormat(IWICBitmapEncoder *iface, GUID *format)
 {
+    PngEncoder *This = impl_from_IWICBitmapEncoder(iface);
     TRACE("(%p,%p)\n", iface, format);
 
     if (!format)
         return E_INVALIDARG;
 
-    memcpy(format, &GUID_ContainerFormatPng, sizeof(*format));
+    memcpy(format, &This->encoder_info.container_format, sizeof(*format));
     return S_OK;
 }
 
 static HRESULT WINAPI PngEncoder_GetEncoderInfo(IWICBitmapEncoder *iface, IWICBitmapEncoderInfo **info)
 {
+    PngEncoder *This = impl_from_IWICBitmapEncoder(iface);
     IWICComponentInfo *comp_info;
     HRESULT hr;
 
@@ -1063,7 +1073,7 @@ static HRESULT WINAPI PngEncoder_GetEncoderInfo(IWICBitmapEncoder *iface, IWICBi
 
     if (!info) return E_INVALIDARG;
 
-    hr = CreateComponentInfo(&CLSID_WICPngEncoder, &comp_info);
+    hr = CreateComponentInfo(&This->encoder_info.clsid, &comp_info);
     if (hr == S_OK)
     {
         hr = IWICComponentInfo_QueryInterface(comp_info, &IID_IWICBitmapEncoderInfo, (void **)info);
@@ -1112,11 +1122,8 @@ static HRESULT WINAPI PngEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 {
     PngEncoder *This = impl_from_IWICBitmapEncoder(iface);
     HRESULT hr;
-    static const PROPBAG2 opts[2] =
-    {
-        { PROPBAG2_TYPE_DATA, VT_BOOL, 0, 0, (LPOLESTR)wszPngInterlaceOption },
-        { PROPBAG2_TYPE_DATA, VT_UI1,  0, 0, (LPOLESTR)wszPngFilterOption },
-    };
+    DWORD opts_length;
+    PROPBAG2 opts[6];
 
     TRACE("(%p,%p,%p)\n", iface, ppIFrameEncode, ppIEncoderOptions);
 
@@ -1136,7 +1143,12 @@ static HRESULT WINAPI PngEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 
     if (ppIEncoderOptions)
     {
-        hr = CreatePropertyBag2(opts, ARRAY_SIZE(opts), ppIEncoderOptions);
+        for (opts_length = 0; This->encoder_info.encoder_options[opts_length] < ENCODER_OPTION_END; opts_length++)
+        {
+            opts[opts_length] = encoder_option_properties[This->encoder_info.encoder_options[opts_length]];
+        }
+
+        hr = CreatePropertyBag2(opts, opts_length, ppIEncoderOptions);
         if (FAILED(hr))
         {
             LeaveCriticalSection(&This->lock);
@@ -1214,6 +1226,14 @@ HRESULT PngEncoder_CreateInstance(REFIID iid, void** ppv)
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(PngEncoder));
     if (!This) return E_OUTOFMEMORY;
+
+    ret = get_unix_encoder(&CLSID_WICPngEncoder, &This->encoder_info, &This->encoder);
+
+    if (FAILED(ret))
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        return ret;
+    }
 
     This->IWICBitmapEncoder_iface.lpVtbl = &PngEncoder_Vtbl;
     This->IWICBitmapFrameEncode_iface.lpVtbl = &PngEncoder_FrameVtbl;

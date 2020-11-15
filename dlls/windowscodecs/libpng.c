@@ -611,11 +611,66 @@ HRESULT CDECL png_decoder_create(struct decoder_info *info, struct decoder **res
     return S_OK;
 }
 
+struct png_encoder
+{
+    struct encoder encoder;
+};
+
+static inline struct png_encoder *impl_from_encoder(struct encoder* iface)
+{
+    return CONTAINING_RECORD(iface, struct png_encoder, encoder);
+}
+
+static void CDECL png_encoder_destroy(struct encoder *encoder)
+{
+    struct png_encoder *This = impl_from_encoder(encoder);
+    RtlFreeHeap(GetProcessHeap(), 0, This);
+}
+
+static const struct encoder_funcs png_encoder_vtable = {
+    png_encoder_destroy
+};
+
+HRESULT CDECL png_encoder_create(struct encoder_info *info, struct encoder **result)
+{
+    struct png_encoder *This;
+
+    if (!load_libpng())
+    {
+        ERR("Failed reading PNG because unable to find %s\n",SONAME_LIBPNG);
+        return E_FAIL;
+    }
+
+    This = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*This));
+
+    if (!This)
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    This->encoder.vtable = &png_encoder_vtable;
+    *result = &This->encoder;
+
+    info->container_format = GUID_ContainerFormatPng;
+    info->clsid = CLSID_WICPngEncoder;
+    info->encoder_options[0] = ENCODER_OPTION_INTERLACE;
+    info->encoder_options[1] = ENCODER_OPTION_FILTER;
+    info->encoder_options[2] = ENCODER_OPTION_END;
+
+    return S_OK;
+}
+
 #else
 
 HRESULT CDECL png_decoder_create(struct decoder_info *info, struct decoder **result)
 {
     ERR("Trying to load PNG picture, but PNG support is not compiled in.\n");
+    return E_FAIL;
+}
+
+HRESULT CDECL png_encoder_create(struct encoder_info *info, struct encoder **result)
+{
+    ERR("Trying to save PNG picture, but PNG support is not compiled in.\n");
     return E_FAIL;
 }
 

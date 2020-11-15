@@ -76,6 +76,14 @@ HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *in
     return E_NOTIMPL;
 }
 
+HRESULT CDECL encoder_create(const CLSID *encoder_clsid, struct encoder_info *info, struct encoder **result)
+{
+    if (IsEqualGUID(encoder_clsid, &CLSID_WICPngEncoder))
+        return png_encoder_create(info, result);
+
+    return E_NOTIMPL;
+}
+
 static const struct unix_funcs unix_funcs = {
     decoder_create,
     decoder_initialize,
@@ -83,7 +91,9 @@ static const struct unix_funcs unix_funcs = {
     decoder_copy_pixels,
     decoder_get_metadata_blocks,
     decoder_get_color_context,
-    decoder_destroy
+    decoder_destroy,
+    encoder_create,
+    encoder_destroy
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )

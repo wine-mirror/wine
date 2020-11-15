@@ -332,9 +332,40 @@ HRESULT CDECL decoder_get_color_context(struct decoder* This, UINT frame, UINT n
     BYTE **data, DWORD *datasize);
 void CDECL decoder_destroy(struct decoder *This);
 
+struct encoder_funcs;
+
+/* sync with encoder_option_properties */
+enum encoder_option
+{
+    ENCODER_OPTION_INTERLACE,
+    ENCODER_OPTION_FILTER,
+    ENCODER_OPTION_END
+};
+
+struct encoder_info
+{
+    GUID container_format;
+    CLSID clsid;
+    DWORD encoder_options[7];
+};
+
+struct encoder
+{
+    const struct encoder_funcs *vtable;
+};
+
+struct encoder_funcs
+{
+    void (CDECL *destroy)(struct encoder* This);
+};
+
+void CDECL encoder_destroy(struct encoder* This);
+
 HRESULT CDECL png_decoder_create(struct decoder_info *info, struct decoder **result);
 HRESULT CDECL tiff_decoder_create(struct decoder_info *info, struct decoder **result);
 HRESULT CDECL jpeg_decoder_create(struct decoder_info *info, struct decoder **result);
+
+HRESULT CDECL png_encoder_create(struct encoder_info *info, struct encoder **result);
 
 struct unix_funcs
 {
@@ -348,9 +379,12 @@ struct unix_funcs
     HRESULT (CDECL *decoder_get_color_context)(struct decoder* This, UINT frame, UINT num,
         BYTE **data, DWORD *datasize);
     void (CDECL *decoder_destroy)(struct decoder* This);
+    HRESULT (CDECL *encoder_create)(const CLSID *encoder_clsid, struct encoder_info *info, struct encoder **result);
+    void (CDECL *encoder_destroy)(struct encoder* This);
 };
 
 HRESULT get_unix_decoder(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result);
+HRESULT get_unix_encoder(const CLSID *encoder_clsid, struct encoder_info *info, struct encoder **result);
 
 extern HRESULT CommonDecoder_CreateInstance(struct decoder *decoder,
     const struct decoder_info *decoder_info, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
