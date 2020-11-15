@@ -5310,13 +5310,13 @@ static int __cdecl wchar_comp( const void *key, const void *elem )
 static BOOL isurlneutral( WCHAR c )
 {
     /* NB this list is sorted */
-    static const WCHAR neutral_chars[] = {'!','\"','\'','(',')',',','-','.',':',';','<','>','?','[',']','{','}'};
+    static const WCHAR neutral_chars[] = L"!\"'(),-.:;<>?[]{}";
 
     /* Some shortcuts */
     if (isalnum( c )) return FALSE;
-    if (c > neutral_chars[ARRAY_SIZE( neutral_chars ) - 1]) return FALSE;
+    if (c > L'}') return FALSE;
 
-    return !!bsearch( &c, neutral_chars, ARRAY_SIZE( neutral_chars ), sizeof(c), wchar_comp );
+    return !!bsearch( &c, neutral_chars, ARRAY_SIZE( neutral_chars ) - 1, sizeof(c), wchar_comp );
 }
 
 /**
