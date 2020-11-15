@@ -5433,23 +5433,25 @@ done:
 static BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, const ME_Cursor *start, int nChars)
 {
 #define MAX_PREFIX_LEN 9
+#define X(str)  str, ARRAY_SIZE(str) - 1
   struct prefix_s {
     const WCHAR text[MAX_PREFIX_LEN];
     int length;
   }prefixes[] = {
-    {{'p','r','o','s','p','e','r','o',':'}, 9},
-    {{'t','e','l','n','e','t',':'}, 7},
-    {{'g','o','p','h','e','r',':'}, 7},
-    {{'m','a','i','l','t','o',':'}, 7},
-    {{'h','t','t','p','s',':'}, 6},
-    {{'f','i','l','e',':'}, 5},
-    {{'n','e','w','s',':'}, 5},
-    {{'w','a','i','s',':'}, 5},
-    {{'n','n','t','p',':'}, 5},
-    {{'h','t','t','p',':'}, 5},
-    {{'w','w','w','.'}, 4},
-    {{'f','t','p',':'}, 4},
+    {X(L"prospero:")},
+    {X(L"telnet:")},
+    {X(L"gopher:")},
+    {X(L"mailto:")},
+    {X(L"https:")},
+    {X(L"file:")},
+    {X(L"news:")},
+    {X(L"wais:")},
+    {X(L"nntp:")},
+    {X(L"http:")},
+    {X(L"www.")},
+    {X(L"ftp:")},
   };
+#undef X
   WCHAR bufferW[MAX_PREFIX_LEN + 1];
   unsigned int i;
 
