@@ -62,6 +62,11 @@ HRESULT CDECL stream_seek(IStream *stream, LONGLONG ofs, DWORD origin, ULONGLONG
     return win32_funcs->stream_seek(stream, ofs, origin, new_position);
 }
 
+HRESULT CDECL stream_write(IStream *stream, const void *buffer, ULONG write, ULONG *bytes_written)
+{
+    return win32_funcs->stream_write(stream, buffer, write, bytes_written);
+}
+
 HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result)
 {
     if (IsEqualGUID(decoder_clsid, &CLSID_WICPngDecoder))
@@ -93,6 +98,12 @@ static const struct unix_funcs unix_funcs = {
     decoder_get_color_context,
     decoder_destroy,
     encoder_create,
+    encoder_initialize,
+    encoder_get_supported_format,
+    encoder_create_frame,
+    encoder_write_lines,
+    encoder_commit_frame,
+    encoder_commit_file,
     encoder_destroy
 };
 

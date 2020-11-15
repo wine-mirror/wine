@@ -42,7 +42,8 @@ static const struct unix_funcs *unix_funcs;
 static const struct win32_funcs win32_funcs = {
     stream_getsize,
     stream_read,
-    stream_seek
+    stream_seek,
+    stream_write
 };
 
 static BOOL WINAPI load_unixlib( INIT_ONCE *once, void *param, void **context )
@@ -155,6 +156,42 @@ static inline struct encoder_wrapper *impl_from_encoder(struct encoder* iface)
     return CONTAINING_RECORD(iface, struct encoder_wrapper, win32_encoder);
 }
 
+HRESULT CDECL encoder_wrapper_initialize(struct encoder* iface, IStream* stream)
+{
+    struct encoder_wrapper* This = impl_from_encoder(iface);
+    return unix_funcs->encoder_initialize(This->unix_encoder, stream);
+}
+
+HRESULT CDECL encoder_wrapper_get_supported_format(struct encoder* iface, GUID *pixel_format, DWORD *bpp, BOOL *indexed)
+{
+    struct encoder_wrapper* This = impl_from_encoder(iface);
+    return unix_funcs->encoder_get_supported_format(This->unix_encoder, pixel_format, bpp, indexed);
+}
+
+HRESULT CDECL encoder_wrapper_create_frame(struct encoder* iface, const struct encoder_frame *frame)
+{
+    struct encoder_wrapper* This = impl_from_encoder(iface);
+    return unix_funcs->encoder_create_frame(This->unix_encoder, frame);
+}
+
+HRESULT CDECL encoder_wrapper_write_lines(struct encoder* iface, BYTE *data, DWORD line_count, DWORD stride)
+{
+    struct encoder_wrapper* This = impl_from_encoder(iface);
+    return unix_funcs->encoder_write_lines(This->unix_encoder, data, line_count, stride);
+}
+
+HRESULT CDECL encoder_wrapper_commit_frame(struct encoder* iface)
+{
+    struct encoder_wrapper* This = impl_from_encoder(iface);
+    return unix_funcs->encoder_commit_frame(This->unix_encoder);
+}
+
+HRESULT CDECL encoder_wrapper_commit_file(struct encoder* iface)
+{
+    struct encoder_wrapper* This = impl_from_encoder(iface);
+    return unix_funcs->encoder_commit_file(This->unix_encoder);
+}
+
 void CDECL encoder_wrapper_destroy(struct encoder* iface)
 {
     struct encoder_wrapper* This = impl_from_encoder(iface);
@@ -163,6 +200,12 @@ void CDECL encoder_wrapper_destroy(struct encoder* iface)
 }
 
 static const struct encoder_funcs encoder_wrapper_vtable = {
+    encoder_wrapper_initialize,
+    encoder_wrapper_get_supported_format,
+    encoder_wrapper_create_frame,
+    encoder_wrapper_write_lines,
+    encoder_wrapper_commit_frame,
+    encoder_wrapper_commit_file,
     encoder_wrapper_destroy
 };
 

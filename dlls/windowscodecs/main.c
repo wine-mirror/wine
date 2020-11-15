@@ -223,6 +223,11 @@ HRESULT CDECL stream_seek(IStream *stream, LONGLONG ofs, DWORD origin, ULONGLONG
     return hr;
 }
 
+HRESULT CDECL stream_write(IStream *stream, const void *buffer, ULONG write, ULONG *bytes_written)
+{
+    return IStream_Write(stream, buffer, write, bytes_written);
+}
+
 HRESULT get_pixelformat_bpp(const GUID *pixelformat, UINT *bpp)
 {
     HRESULT hr;

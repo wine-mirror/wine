@@ -15,6 +15,7 @@ C_SRCS = \
 	converter.c \
 	ddsformat.c \
 	decoder.c \
+	encoder.c \
 	fliprotate.c \
 	gifformat.c \
 	icnsformat.c \

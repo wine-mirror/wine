@@ -48,6 +48,36 @@ void CDECL decoder_destroy(struct decoder *decoder)
     decoder->vtable->destroy(decoder);
 }
 
+HRESULT CDECL encoder_initialize(struct encoder *encoder, IStream *stream)
+{
+    return encoder->vtable->initialize(encoder, stream);
+}
+
+HRESULT CDECL encoder_get_supported_format(struct encoder* encoder, GUID *pixel_format, DWORD *bpp, BOOL *indexed)
+{
+    return encoder->vtable->get_supported_format(encoder, pixel_format, bpp, indexed);
+}
+
+HRESULT CDECL encoder_create_frame(struct encoder* encoder, const struct encoder_frame *frame)
+{
+    return encoder->vtable->create_frame(encoder, frame);
+}
+
+HRESULT CDECL encoder_write_lines(struct encoder* encoder, BYTE *data, DWORD line_count, DWORD stride)
+{
+    return encoder->vtable->write_lines(encoder, data, line_count, stride);
+}
+
+HRESULT CDECL encoder_commit_frame(struct encoder* encoder)
+{
+    return encoder->vtable->commit_frame(encoder);
+}
+
+HRESULT CDECL encoder_commit_file(struct encoder* encoder)
+{
+    return encoder->vtable->commit_file(encoder);
+}
+
 void CDECL encoder_destroy(struct encoder *encoder)
 {
     encoder->vtable->destroy(encoder);

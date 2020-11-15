@@ -313,12 +313,14 @@ struct decoder_funcs
 HRESULT CDECL stream_getsize(IStream *stream, ULONGLONG *size);
 HRESULT CDECL stream_read(IStream *stream, void *buffer, ULONG read, ULONG *bytes_read);
 HRESULT CDECL stream_seek(IStream *stream, LONGLONG ofs, DWORD origin, ULONGLONG *new_position);
+HRESULT CDECL stream_write(IStream *stream, const void *buffer, ULONG write, ULONG *bytes_written);
 
 struct win32_funcs
 {
     HRESULT (CDECL *stream_getsize)(IStream *stream, ULONGLONG *size);
     HRESULT (CDECL *stream_read)(IStream *stream, void *buffer, ULONG read, ULONG *bytes_read);
     HRESULT (CDECL *stream_seek)(IStream *stream, LONGLONG ofs, DWORD origin, ULONGLONG *new_position);
+    HRESULT (CDECL *stream_write)(IStream *stream, const void *buffer, ULONG write, ULONG *bytes_written);
 };
 
 HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result);
@@ -342,11 +344,28 @@ enum encoder_option
     ENCODER_OPTION_END
 };
 
+#define ENCODER_FLAGS_MULTI_FRAME 0x1
+
 struct encoder_info
 {
+    DWORD flags;
     GUID container_format;
     CLSID clsid;
     DWORD encoder_options[7];
+};
+
+struct encoder_frame
+{
+    GUID pixel_format;
+    UINT width, height;
+    UINT bpp;
+    BOOL indexed;
+    double dpix, dpiy;
+    DWORD num_colors;
+    WICColor palette[256];
+    /* encoder options */
+    BOOL interlace;
+    DWORD filter;
 };
 
 struct encoder
@@ -356,9 +375,21 @@ struct encoder
 
 struct encoder_funcs
 {
+    HRESULT (CDECL *initialize)(struct encoder* This, IStream *stream);
+    HRESULT (CDECL *get_supported_format)(struct encoder* This, GUID *pixel_format, DWORD *bpp, BOOL *indexed);
+    HRESULT (CDECL *create_frame)(struct encoder* This, const struct encoder_frame *frame);
+    HRESULT (CDECL *write_lines)(struct encoder* This, BYTE *data, DWORD line_count, DWORD stride);
+    HRESULT (CDECL *commit_frame)(struct encoder* This);
+    HRESULT (CDECL *commit_file)(struct encoder* This);
     void (CDECL *destroy)(struct encoder* This);
 };
 
+HRESULT CDECL encoder_initialize(struct encoder* This, IStream *stream);
+HRESULT CDECL encoder_get_supported_format(struct encoder* This, GUID *pixel_format, DWORD *bpp, BOOL *indexed);
+HRESULT CDECL encoder_create_frame(struct encoder* This, const struct encoder_frame *frame);
+HRESULT CDECL encoder_write_lines(struct encoder* This, BYTE *data, DWORD line_count, DWORD stride);
+HRESULT CDECL encoder_commit_frame(struct encoder* This);
+HRESULT CDECL encoder_commit_file(struct encoder* This);
 void CDECL encoder_destroy(struct encoder* This);
 
 HRESULT CDECL png_decoder_create(struct decoder_info *info, struct decoder **result);
@@ -380,6 +411,12 @@ struct unix_funcs
         BYTE **data, DWORD *datasize);
     void (CDECL *decoder_destroy)(struct decoder* This);
     HRESULT (CDECL *encoder_create)(const CLSID *encoder_clsid, struct encoder_info *info, struct encoder **result);
+    HRESULT (CDECL *encoder_initialize)(struct encoder* This, IStream *stream);
+    HRESULT (CDECL *encoder_get_supported_format)(struct encoder* This, GUID *pixel_format, DWORD *bpp, BOOL *indexed);
+    HRESULT (CDECL *encoder_create_frame)(struct encoder* This, const struct encoder_frame *frame);
+    HRESULT (CDECL *encoder_write_lines)(struct encoder* This, BYTE *data, DWORD line_count, DWORD stride);
+    HRESULT (CDECL *encoder_commit_frame)(struct encoder* This);
+    HRESULT (CDECL *encoder_commit_file)(struct encoder* This);
     void (CDECL *encoder_destroy)(struct encoder* This);
 };
 
@@ -388,5 +425,8 @@ HRESULT get_unix_encoder(const CLSID *encoder_clsid, struct encoder_info *info, 
 
 extern HRESULT CommonDecoder_CreateInstance(struct decoder *decoder,
     const struct decoder_info *decoder_info, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
+
+extern HRESULT CommonEncoder_CreateInstance(struct encoder *encoder,
+    const struct encoder_info *encoder_info, REFIID iid, void** ppv) DECLSPEC_HIDDEN;
 
 #endif /* WINCODECS_PRIVATE_H */
