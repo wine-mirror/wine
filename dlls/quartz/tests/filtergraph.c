@@ -801,6 +801,8 @@ struct testpin
     AM_MEDIA_TYPE *request_mt, *accept_mt;
     const struct testpin *require_connected_pin;
 
+    BOOL require_stopped_disconnect;
+
     HRESULT Connect_hr;
     HRESULT EnumMediaTypes_hr;
     HRESULT QueryInternalConnections_hr;
@@ -957,6 +959,9 @@ static HRESULT WINAPI testpin_Disconnect(IPin *iface)
 
     if (!pin->peer)
         return S_FALSE;
+
+    if (pin->require_stopped_disconnect && pin->filter->state != State_Stopped)
+        return VFW_E_NOT_STOPPED;
 
     IPin_Release(pin->peer);
     pin->peer = NULL;
@@ -2885,6 +2890,7 @@ static void test_connect_direct(void)
     struct testfilter source, sink, parser1, parser2;
 
     IFilterGraph2 *graph = create_graph();
+    IMediaControl *control;
     AM_MEDIA_TYPE mt;
     HRESULT hr;
 
@@ -2903,6 +2909,12 @@ static void test_connect_direct(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_AddFilter(graph, &sink.IBaseFilter_iface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* The filter graph does not prevent connection while it is running; only
+     * individual filters do. */
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    hr = IMediaControl_Pause(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, NULL);
@@ -2998,6 +3010,14 @@ todo_wine
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* Test Reconnect[Ex](). */
+
+    hr = IFilterGraph2_Reconnect(graph, &source_pin.IPin_iface);
+    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Reconnect(graph, &sink_pin.IPin_iface);
+    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_Reconnect(graph, &source_pin.IPin_iface);
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
@@ -3097,17 +3117,35 @@ todo_wine
     ok(!source_pin.peer, "Got peer %p.\n", source_pin.peer);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
-    /* Or when the graph is destroyed. */
+    /* If the filter cannot be disconnected, then RemoveFilter() fails. */
+
     hr = IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, NULL);
+    hr = IFilterGraph2_ConnectDirect(graph, &source_pin.IPin_iface, &sink_pin.IPin_iface, &mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
-    ok(!source_pin.mt, "Got mt %p.\n", source_pin.mt);
-    ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
-    IPin_AddRef(sink_pin.peer = &source_pin.IPin_iface);
+    sink_pin.peer = &source_pin.IPin_iface;
+    IPin_AddRef(sink_pin.peer);
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    source_pin.require_stopped_disconnect = TRUE;
+    hr = IFilterGraph2_RemoveFilter(graph, &source.IBaseFilter_iface);
+    todo_wine ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
+    ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
+
+    sink_pin.peer = &source_pin.IPin_iface;
+    IPin_AddRef(sink_pin.peer);
+    source_pin.require_stopped_disconnect = FALSE;
+    sink_pin.require_stopped_disconnect = TRUE;
+    hr = IFilterGraph2_RemoveFilter(graph, &source.IBaseFilter_iface);
+    todo_wine ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
+    ok(sink_pin.peer == &source_pin.IPin_iface, "Got peer %p.\n", sink_pin.peer);
+
+    /* Filters are stopped, and pins disconnected, when the graph is destroyed. */
+
+    IMediaControl_Release(control);
     hr = IFilterGraph2_Release(graph);
     ok(!hr, "Got outstanding refcount %d.\n", hr);
     ok(source.ref == 1, "Got outstanding refcount %d.\n", source.ref);
