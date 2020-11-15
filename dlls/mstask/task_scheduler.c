@@ -124,7 +124,6 @@ static inline BOOL is_file(const WIN32_FIND_DATAW *data)
 
 static HRESULT WINAPI EnumWorkItems_Next(IEnumWorkItems *iface, ULONG count, LPWSTR **names, ULONG *fetched)
 {
-    static const WCHAR tasksW[] = { '\\','T','a','s','k','s','\\','*',0 };
     EnumWorkItemsImpl *This = impl_from_IEnumWorkItems(iface);
     WCHAR path[MAX_PATH];
     WIN32_FIND_DATAW data;
@@ -146,7 +145,7 @@ static HRESULT WINAPI EnumWorkItems_Next(IEnumWorkItems *iface, ULONG count, LPW
     if (This->handle == INVALID_HANDLE_VALUE)
     {
         GetWindowsDirectoryW(path, MAX_PATH);
-        lstrcatW(path, tasksW);
+        lstrcatW(path, L"\\Tasks\\*");
         This->handle = FindFirstFileW(path, &data);
         if (This->handle == INVALID_HANDLE_VALUE)
             return S_FALSE;
@@ -417,8 +416,6 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_Activate(ITaskScheduler *iface,
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_Delete(ITaskScheduler *iface, LPCWSTR name)
 {
-    static const WCHAR tasksW[] = { '\\','T','a','s','k','s','\\',0 };
-    static const WCHAR jobW[] = { '.','j','o','b',0 };
     WCHAR task_name[MAX_PATH];
 
     TRACE("%p, %s\n", iface, debugstr_w(name));
@@ -426,9 +423,9 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_Delete(ITaskScheduler *iface, LPCWST
     if (wcschr(name, '.')) return E_INVALIDARG;
 
     GetWindowsDirectoryW(task_name, MAX_PATH);
-    lstrcatW(task_name, tasksW);
+    lstrcatW(task_name, L"\\Tasks\\");
     lstrcatW(task_name, name);
-    lstrcatW(task_name, jobW);
+    lstrcatW(task_name, L".job");
 
     if (!DeleteFileW(task_name))
         return HRESULT_FROM_WIN32(GetLastError());
@@ -459,8 +456,6 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_NewWorkItem(
 
 static HRESULT WINAPI MSTASK_ITaskScheduler_AddWorkItem(ITaskScheduler *iface, LPCWSTR name, IScheduledWorkItem *item)
 {
-    static const WCHAR tasksW[] = { '\\','T','a','s','k','s','\\',0 };
-    static const WCHAR jobW[] = { '.','j','o','b',0 };
     WCHAR task_name[MAX_PATH];
     IPersistFile *pfile;
     HRESULT hr;
@@ -470,9 +465,9 @@ static HRESULT WINAPI MSTASK_ITaskScheduler_AddWorkItem(ITaskScheduler *iface, L
     if (wcschr(name, '.')) return E_INVALIDARG;
 
     GetWindowsDirectoryW(task_name, MAX_PATH);
-    lstrcatW(task_name, tasksW);
+    lstrcatW(task_name, L"\\Tasks\\");
     lstrcatW(task_name, name);
-    lstrcatW(task_name, jobW);
+    lstrcatW(task_name, L".job");
 
     hr = IScheduledWorkItem_QueryInterface(item, &IID_IPersistFile, (void **)&pfile);
     if (hr == S_OK)

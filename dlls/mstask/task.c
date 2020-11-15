@@ -1617,8 +1617,8 @@ static BOOL write_unicode_string(HANDLE hfile, const WCHAR *str)
 
 static HRESULT WINAPI MSTASK_IPersistFile_Save(IPersistFile *iface, LPCOLESTR task_name, BOOL remember)
 {
-    static WCHAR authorW[] = { 'W','i','n','e',0 };
-    static WCHAR commentW[] = { 'C','r','e','a','t','e','d',' ','b','y',' ','W','i','n','e',0 };
+    static WCHAR authorW[] = L"Wine";
+    static WCHAR commentW[] = L"Created by Wine";
     FIXDLEN_DATA fixed;
     WORD word, user_data_size = 0;
     HANDLE hfile;
@@ -1883,8 +1883,6 @@ static const IPersistFileVtbl MSTASK_IPersistFileVtbl =
 
 HRESULT TaskConstructor(ITaskService *service, const WCHAR *name, ITask **task)
 {
-    static const WCHAR tasksW[] = { '\\','T','a','s','k','s','\\',0 };
-    static const WCHAR jobW[] = { '.','j','o','b',0 };
     TaskImpl *This;
     WCHAR task_name[MAX_PATH];
     ITaskDefinition *taskdef;
@@ -1896,9 +1894,9 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *name, ITask **task)
     if (wcschr(name, '.')) return E_INVALIDARG;
 
     GetWindowsDirectoryW(task_name, MAX_PATH);
-    lstrcatW(task_name, tasksW);
+    lstrcatW(task_name, L"\\Tasks\\");
     lstrcatW(task_name, name);
-    lstrcatW(task_name, jobW);
+    lstrcatW(task_name, L".job");
 
     hr = ITaskService_NewTask(service, 0, &taskdef);
     if (hr != S_OK) return hr;
