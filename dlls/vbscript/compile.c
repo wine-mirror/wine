@@ -1674,9 +1674,6 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
     unsigned i;
     HRESULT hres;
 
-    static const WCHAR class_initializeW[] = {'c','l','a','s','s','_','i','n','i','t','i','a','l','i','z','e',0};
-    static const WCHAR class_terminateW[] = {'c','l','a','s','s','_','t','e','r','m','i','n','a','t','e',0};
-
     if(lookup_dim_decls(ctx, class_decl->name) || lookup_funcs_name(ctx, class_decl->name)
             || lookup_const_decls(ctx, class_decl->name, FALSE) || lookup_class_name(ctx, class_decl->name)) {
         FIXME("%s: redefinition\n", debugstr_w(class_decl->name));
@@ -1722,14 +1719,14 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
             }
         }
 
-        if(!wcsicmp(class_initializeW, func_decl->name)) {
+        if(!wcsicmp(L"class_initialize", func_decl->name)) {
             if(func_decl->type != FUNC_SUB) {
                 FIXME("class initializer is not sub\n");
                 return E_FAIL;
             }
 
             class_desc->class_initialize_id = i;
-        }else  if(!wcsicmp(class_terminateW, func_decl->name)) {
+        }else  if(!wcsicmp(L"class_terminate", func_decl->name)) {
             if(func_decl->type != FUNC_SUB) {
                 FIXME("class terminator is not sub\n");
                 return E_FAIL;

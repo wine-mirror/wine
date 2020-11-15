@@ -337,8 +337,7 @@ static void skip_spaces(parser_ctx_t *ctx)
 
 static int comment_line(parser_ctx_t *ctx)
 {
-    static const WCHAR newlineW[] = {'\n','\r',0};
-    ctx->ptr = wcspbrk(ctx->ptr, newlineW);
+    ctx->ptr = wcspbrk(ctx->ptr, L"\n\r");
     if(ctx->ptr)
         ctx->ptr++;
     else

@@ -37,9 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
     {0x10200490,0xfa38,0x11d0,{0xac,0x0e,0x00,0xa0,0xc9,0xf,0xff,0xc0}};
 
-static const WCHAR emptyW[] = {0};
-static const WCHAR vbscriptW[] = {'V','B','S','c','r','i','p','t',0};
-
 #define BP_GET      1
 #define BP_GETPUT   2
 
@@ -600,21 +597,21 @@ static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, unsigned type, BSTR o
         if(orig_title && *orig_title) {
             WCHAR *ptr;
 
-            title = title_buf = heap_alloc(sizeof(vbscriptW) + (lstrlenW(orig_title)+2)*sizeof(WCHAR));
+            title = title_buf = heap_alloc(sizeof(L"VBScript") + (lstrlenW(orig_title)+2)*sizeof(WCHAR));
             if(!title)
                 return E_OUTOFMEMORY;
 
-            memcpy(title_buf, vbscriptW, sizeof(vbscriptW));
-            ptr = title_buf + ARRAY_SIZE(vbscriptW)-1;
+            memcpy(title_buf, L"VBScript", sizeof(L"VBScript"));
+            ptr = title_buf + ARRAY_SIZE(L"VBScript")-1;
 
             *ptr++ = ':';
             *ptr++ = ' ';
             lstrcpyW(ptr, orig_title);
         }else {
-            title = vbscriptW;
+            title = L"VBScript";
         }
     }else {
-        title = orig_title ? orig_title : emptyW;
+        title = orig_title ? orig_title : L"";
     }
 
     hres = IActiveScriptSiteWindow_GetWindow(acts_window, &hwnd);
@@ -2203,19 +2200,6 @@ static HRESULT Global_DatePart(BuiltinDisp *This, VARIANT *arg, unsigned args_cn
 
 static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    static const WCHAR ByteW[]     = {'B', 'y', 't', 'e', 0};
-    static const WCHAR IntegerW[]  = {'I', 'n', 't', 'e', 'g', 'e', 'r', 0};
-    static const WCHAR LongW[]     = {'L', 'o', 'n', 'g', 0};
-    static const WCHAR SingleW[]   = {'S', 'i', 'n', 'g', 'l', 'e', 0};
-    static const WCHAR DoubleW[]   = {'D', 'o', 'u', 'b', 'l', 'e', 0};
-    static const WCHAR CurrencyW[] = {'C', 'u', 'r', 'r', 'e', 'n', 'c', 'y', 0};
-    static const WCHAR DecimalW[]  = {'D', 'e', 'c', 'i', 'm', 'a', 'l', 0};
-    static const WCHAR DateW[]     = {'D', 'a', 't', 'e', 0};
-    static const WCHAR StringW[]   = {'S', 't', 'r', 'i', 'n', 'g', 0};
-    static const WCHAR BooleanW[]  = {'B', 'o', 'o', 'l', 'e', 'a', 'n', 0};
-    static const WCHAR EmptyW[]    = {'E', 'm', 'p', 't', 'y', 0};
-    static const WCHAR NullW[]     = {'N', 'u', 'l', 'l', 0};
-
     TRACE("(%s)\n", debugstr_variant(arg));
 
     assert(args_cnt == 1);
@@ -2225,29 +2209,29 @@ static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cn
 
     switch(V_VT(arg)) {
         case VT_UI1:
-            return return_string(res, ByteW);
+            return return_string(res, L"Byte");
         case VT_I2:
-            return return_string(res, IntegerW);
+            return return_string(res, L"Integer");
         case VT_I4:
-            return return_string(res, LongW);
+            return return_string(res, L"Long");
         case VT_R4:
-            return return_string(res, SingleW);
+            return return_string(res, L"Single");
         case VT_R8:
-            return return_string(res, DoubleW);
+            return return_string(res, L"Double");
         case VT_CY:
-            return return_string(res, CurrencyW);
+            return return_string(res, L"Currency");
         case VT_DECIMAL:
-            return return_string(res, DecimalW);
+            return return_string(res, L"Decimal");
         case VT_DATE:
-            return return_string(res, DateW);
+            return return_string(res, L"Date");
         case VT_BSTR:
-            return return_string(res, StringW);
+            return return_string(res, L"String");
         case VT_BOOL:
-            return return_string(res, BooleanW);
+            return return_string(res, L"Boolean");
         case VT_EMPTY:
-            return return_string(res, EmptyW);
+            return return_string(res, L"Empty");
         case VT_NULL:
-            return return_string(res, NullW);
+            return return_string(res, L"Null");
         default:
             FIXME("arg %s not supported\n", debugstr_variant(arg));
             return E_NOTIMPL;
@@ -2665,7 +2649,7 @@ static HRESULT Global_ScriptEngine(BuiltinDisp *This, VARIANT *arg, unsigned arg
 
     assert(args_cnt == 0);
 
-    return return_string(res, vbscriptW);
+    return return_string(res, L"VBScript");
 }
 
 static HRESULT Global_ScriptEngineMajorVersion(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

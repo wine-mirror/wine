@@ -52,10 +52,9 @@ static HRESULT init_regexp_typeinfo(regexp_tid_t tid)
     HRESULT hres;
 
     if(!typelib) {
-        static const WCHAR vbscript_dll3W[] = {'v','b','s','c','r','i','p','t','.','d','l','l','\\','3',0};
         ITypeLib *tl;
 
-        hres = LoadTypeLib(vbscript_dll3W, &tl);
+        hres = LoadTypeLib(L"vbscript.dll\\3", &tl);
         if(FAILED(hres)) {
             ERR("LoadRegTypeLib failed: %08x\n", hres);
             return hres;
