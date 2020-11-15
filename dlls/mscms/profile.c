@@ -615,7 +615,6 @@ BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profi
 
 static BOOL header_from_file( LPCWSTR file, PPROFILEHEADER header )
 {
-    static const WCHAR slash[] = {'\\',0};
     BOOL ret;
     PROFILE profile;
     WCHAR path[MAX_PATH];
@@ -628,13 +627,13 @@ static BOOL header_from_file( LPCWSTR file, PPROFILEHEADER header )
         WARN( "Can't retrieve color directory\n" );
         return FALSE;
     }
-    if (size + sizeof(slash) + sizeof(WCHAR) * lstrlenW( file ) > sizeof(path))
+    if (size + sizeof(L"\\") + sizeof(WCHAR) * lstrlenW( file ) > sizeof(path))
     {
         WARN( "Filename too long\n" );
         return FALSE;
     }
 
-    lstrcatW( path, slash );
+    lstrcatW( path, L"\\" );
     lstrcatW( path, file );
 
     profile.dwType = PROFILE_FILENAME;
@@ -1058,7 +1057,6 @@ BOOL WINAPI InstallColorProfileW( PCWSTR machine, PCWSTR profile )
 {
     WCHAR dest[MAX_PATH], base[MAX_PATH];
     DWORD size = sizeof(dest);
-    static const WCHAR slash[] = { '\\', 0 };
 
     TRACE( "( %s )\n", debugstr_w(profile) );
 
@@ -1068,7 +1066,7 @@ BOOL WINAPI InstallColorProfileW( PCWSTR machine, PCWSTR profile )
 
     basename( profile, base );
 
-    lstrcatW( dest, slash );
+    lstrcatW( dest, L"\\" );
     lstrcatW( dest, base );
 
     /* Is source equal to destination? */
