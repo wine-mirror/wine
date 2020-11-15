@@ -184,7 +184,7 @@ static void connections_on_initdialog(HWND hwnd)
 
     TRACE("ProxyEnable = %x\n", enabled);
     TRACE("ProxyServer = %s\n", wine_dbgstr_w(address));
-    TRACE("AutoConfigURL = %s\n", wine_dbgstr_w(auto_config_url));
+    TRACE("AutoConfigURL = %s\n", wine_dbgstr_w(pac_url));
 
     if(enabled)
     {
