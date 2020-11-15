@@ -789,7 +789,7 @@ struct testpin
     IPin IPin_iface;
     LONG ref;
     PIN_DIRECTION dir;
-    IBaseFilter *filter;
+    struct testfilter *filter;
     IPin *peer;
     AM_MEDIA_TYPE *mt;
     WCHAR name[10];
@@ -804,6 +804,40 @@ struct testpin
     HRESULT Connect_hr;
     HRESULT EnumMediaTypes_hr;
     HRESULT QueryInternalConnections_hr;
+};
+
+struct testfilter
+{
+    IBaseFilter IBaseFilter_iface;
+    LONG ref;
+    IFilterGraph *graph;
+    WCHAR *name;
+    IReferenceClock *clock;
+
+    IEnumPins IEnumPins_iface;
+    struct testpin *pins;
+    unsigned int pin_count, enum_idx;
+
+    FILTER_STATE state;
+    REFERENCE_TIME start_time;
+    HRESULT state_hr, GetState_hr, seek_hr;
+    FILTER_STATE expect_stop_prev, expect_run_prev;
+
+    IAMFilterMiscFlags IAMFilterMiscFlags_iface;
+    ULONG misc_flags;
+
+    IMediaSeeking IMediaSeeking_iface;
+    LONG seeking_ref;
+    DWORD seek_caps;
+    BOOL support_testguid, support_media_time;
+    GUID time_format;
+    LONGLONG seek_duration, seek_current, seek_stop;
+    double seek_rate;
+
+    IReferenceClock IReferenceClock_iface;
+
+    IFileSourceFilter IFileSourceFilter_iface;
+    WCHAR filename[MAX_PATH];
 };
 
 static inline struct testpin *impl_from_IEnumMediaTypes(IEnumMediaTypes *iface)
@@ -954,8 +988,8 @@ static HRESULT WINAPI testpin_QueryPinInfo(IPin *iface, PIN_INFO *info)
     struct testpin *pin = impl_from_IPin(iface);
     if (winetest_debug > 1) trace("%p->QueryPinInfo()\n", pin);
 
-    info->pFilter = pin->filter;
-    IBaseFilter_AddRef(pin->filter);
+    info->pFilter = &pin->filter->IBaseFilter_iface;
+    IBaseFilter_AddRef(info->pFilter);
     info->dir = pin->dir;
     wcscpy(info->achName, pin->name);
     return S_OK;
@@ -1157,40 +1191,6 @@ static void testsource_init(struct testpin *pin, const AM_MEDIA_TYPE *types, int
     pin->types = types;
     pin->type_count = type_count;
 }
-
-struct testfilter
-{
-    IBaseFilter IBaseFilter_iface;
-    LONG ref;
-    IFilterGraph *graph;
-    WCHAR *name;
-    IReferenceClock *clock;
-
-    IEnumPins IEnumPins_iface;
-    struct testpin *pins;
-    unsigned int pin_count, enum_idx;
-
-    FILTER_STATE state;
-    REFERENCE_TIME start_time;
-    HRESULT state_hr, GetState_hr, seek_hr;
-    FILTER_STATE expect_stop_prev, expect_run_prev;
-
-    IAMFilterMiscFlags IAMFilterMiscFlags_iface;
-    ULONG misc_flags;
-
-    IMediaSeeking IMediaSeeking_iface;
-    LONG seeking_ref;
-    DWORD seek_caps;
-    BOOL support_testguid, support_media_time;
-    GUID time_format;
-    LONGLONG seek_duration, seek_current, seek_stop;
-    double seek_rate;
-
-    IReferenceClock IReferenceClock_iface;
-
-    IFileSourceFilter IFileSourceFilter_iface;
-    WCHAR filename[MAX_PATH];
-};
 
 static inline struct testfilter *impl_from_IEnumPins(IEnumPins *iface)
 {
@@ -1842,7 +1842,7 @@ static void testfilter_init(struct testfilter *filter, struct testpin *pins, int
     filter->pins = pins;
     filter->pin_count = pin_count;
     for (i = 0; i < pin_count; i++)
-        pins[i].filter = &filter->IBaseFilter_iface;
+        pins[i].filter = filter;
 
     filter->state = State_Stopped;
     filter->expect_stop_prev = filter->expect_run_prev = State_Paused;
@@ -3231,9 +3231,6 @@ static void test_filter_state(void)
 
     IFilterGraph2_QueryInterface(graph, &IID_IMediaFilter, (void **)&filter);
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
-
-    source_pin.filter = &source.IBaseFilter_iface;
-    sink_pin.filter = &sink.IBaseFilter_iface;
 
     IFilterGraph2_AddFilter(graph, &source.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, &sink.IBaseFilter_iface, NULL);
