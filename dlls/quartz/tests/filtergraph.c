@@ -3130,7 +3130,7 @@ todo_wine
 
     source_pin.require_stopped_disconnect = TRUE;
     hr = IFilterGraph2_RemoveFilter(graph, &source.IBaseFilter_iface);
-    todo_wine ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(!sink_pin.peer, "Got peer %p.\n", sink_pin.peer);
 
@@ -3139,7 +3139,7 @@ todo_wine
     source_pin.require_stopped_disconnect = FALSE;
     sink_pin.require_stopped_disconnect = TRUE;
     hr = IFilterGraph2_RemoveFilter(graph, &source.IBaseFilter_iface);
-    todo_wine ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
     ok(source_pin.peer == &sink_pin.IPin_iface, "Got peer %p.\n", source_pin.peer);
     ok(sink_pin.peer == &source_pin.IPin_iface, "Got peer %p.\n", sink_pin.peer);
 
