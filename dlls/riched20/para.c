@@ -150,7 +150,6 @@ ME_Row *para_end_row( ME_Paragraph *para )
 
 void ME_MakeFirstParagraph(ME_TextEditor *editor)
 {
-  static const WCHAR cr_lf[] = {'\r','\n',0};
   ME_Context c;
   CHARFORMAT2W cf;
   const CHARFORMATW *host_cf;
@@ -202,7 +201,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   }
 
   eol_len = editor->bEmulateVersion10 ? 2 : 1;
-  para->text = ME_MakeStringN( cr_lf, eol_len );
+  para->text = ME_MakeStringN( L"\r\n", eol_len );
 
   run = run_create( style, MERF_ENDPARA );
   run->nCharOfs = 0;
@@ -280,7 +279,6 @@ static ME_String *para_num_get_str( ME_Paragraph *para, WORD num )
     /* max 4 Roman letters (representing '8') / decade + '(' + ')' */
     ME_String *str = ME_MakeStringEmpty( 20 + 2 );
     WCHAR *p;
-    static const WCHAR fmtW[] = {'%', 'd', 0};
     static const WORD letter_base[] = { 1, 26, 26 * 26, 26 * 26 * 26 };
     /* roman_base should start on a '5' not a '1', otherwise the 'total' code will need adjusting.
        'N' and 'O' are what MS uses for 5000 and 10000, their version doesn't work well above 30000,
@@ -309,7 +307,7 @@ static ME_String *para_num_get_str( ME_Paragraph *para, WORD num )
     {
     case PFN_ARABIC:
     default:
-        p += swprintf( p, 20, fmtW, num );
+        p += swprintf( p, 20, L"%d", num );
         break;
 
     case PFN_LCLETTER:
@@ -393,9 +391,6 @@ void para_num_init( ME_Context *c, ME_Paragraph *para )
 {
     ME_Style *style;
     CHARFORMAT2W cf;
-    static const WCHAR bullet_font[] = {'S','y','m','b','o','l',0};
-    static const WCHAR bullet_str[] = {0xb7, 0};
-    static const WCHAR spaceW[] = {' ', 0};
     SIZE sz;
 
     if (!para->fmt.wNumbering) return;
@@ -409,7 +404,7 @@ void para_num_init( ME_Context *c, ME_Paragraph *para )
         {
             cf.cbSize = sizeof(cf);
             cf.dwMask = CFM_FACE | CFM_CHARSET;
-            memcpy( cf.szFaceName, bullet_font, sizeof(bullet_font) );
+            lstrcpyW( cf.szFaceName, L"Symbol" );
             cf.bCharSet = SYMBOL_CHARSET;
             style = ME_ApplyStyle( c->editor, style, &cf );
         }
@@ -426,13 +421,13 @@ void para_num_init( ME_Context *c, ME_Paragraph *para )
         if (para->fmt.wNumbering != PFN_BULLET)
             para->para_num.text = para_num_get_str( para, para_num_get_num( para ) );
         else
-            para->para_num.text = ME_MakeStringConst( bullet_str, 1 );
+            para->para_num.text = ME_MakeStringConst( L"\x00b7", 1 );
     }
 
     select_style( c, para->para_num.style );
     GetTextExtentPointW( c->hDC, para->para_num.text->szData, para->para_num.text->nLen, &sz );
     para->para_num.width = sz.cx;
-    GetTextExtentPointW( c->hDC, spaceW, 1, &sz );
+    GetTextExtentPointW( c->hDC, L" ", 1, &sz );
     para->para_num.width += sz.cx;
 }
 

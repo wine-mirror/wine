@@ -3004,9 +3004,8 @@ static void textfont_reset_to_default(ITextFontImpl *font)
             font->props[id].l = GetSystemDefaultLCID();
             break;
         case FONT_NAME: {
-            static const WCHAR sysW[] = {'S','y','s','t','e','m',0};
             SysFreeString(font->props[id].str);
-            font->props[id].str = SysAllocString(sysW);
+            font->props[id].str = SysAllocString(L"System");
             break;
         }
         case FONT_WEIGHT:

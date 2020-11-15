@@ -54,8 +54,6 @@
 #include "editor.h"
 #include "rtf.h"
 
-static const WCHAR cr_lf[] = {'\r', '\n', 0};
-
 static ME_Paragraph* table_insert_end_para( ME_TextEditor *editor, ME_Cursor *cursor,
                                             const WCHAR *eol_str, int eol_len, int para_flags )
 {
@@ -75,7 +73,7 @@ ME_Paragraph* table_insert_row_start( ME_TextEditor *editor, ME_Cursor *cursor )
 {
     ME_Paragraph *para;
 
-    para = table_insert_end_para( editor, cursor, cr_lf, 2, MEPF_ROWSTART );
+    para = table_insert_end_para( editor, cursor, L"\r\n", 2, MEPF_ROWSTART );
     return para_prev( para );
 }
 
@@ -122,7 +120,7 @@ ME_Paragraph* table_insert_row_end( ME_TextEditor *editor, ME_Cursor *cursor )
 {
     ME_Paragraph *para;
 
-    para = table_insert_end_para( editor, cursor, cr_lf, 2, MEPF_ROWEND );
+    para = table_insert_end_para( editor, cursor, L"\r\n", 2, MEPF_ROWEND );
     return para_prev( para );
 }
 

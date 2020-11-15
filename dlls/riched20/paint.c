@@ -972,10 +972,9 @@ static void draw_paragraph( ME_Context *c, ME_Paragraph *para )
         }
         if (me_debug)
         {
-          static const WCHAR wszRowDebug[] = {'r','o','w','[','%','d',']',0};
           WCHAR buf[128];
           POINT pt = c->pt;
-          wsprintfW(buf, wszRowDebug, no);
+          wsprintfW( buf, L"row[%d]", no );
           pt.y = 12+y;
           ME_DebugWrite(c->hDC, &pt, buf);
         }
@@ -1006,12 +1005,11 @@ static void draw_paragraph( ME_Context *c, ME_Paragraph *para )
         }
         if (me_debug)
         {
-          static const WCHAR wszRunDebug[] = {'[','%','d',':','%','x',']',' ','%','l','s',0};
           WCHAR buf[2560];
           POINT pt;
           pt.x = c->pt.x + run->pt.x;
           pt.y = c->pt.y + para->pt.y + run->pt.y;
-          wsprintfW(buf, wszRunDebug, no, p->member.run.nFlags, get_text( &p->member.run, 0 ));
+          wsprintfW( buf, L"[%d:%x] %ls", no, p->member.run.nFlags, get_text( &p->member.run, 0 ));
           ME_DebugWrite(c->hDC, &pt, buf);
         }
         break;

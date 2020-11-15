@@ -665,7 +665,6 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset, BOOL visu
 SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, int nLen,
                          int startx, int *pAscent, int *pDescent)
 {
-  static const WCHAR spaceW[] = {' ',0};
   SIZE size;
 
   nLen = min( nLen, run->len );
@@ -673,7 +672,7 @@ SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, i
   if (run->nFlags & MERF_ENDPARA)
   {
       nLen = min( nLen, 1 );
-      ME_GetTextExtent(c, spaceW, nLen, run->style, &size);
+      ME_GetTextExtent( c, L" ", nLen, run->style, &size );
   }
   else if (para->nFlags & MEPF_COMPLEX)
   {
