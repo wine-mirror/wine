@@ -31,16 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(inetcpl);
 
-static const WCHAR auto_config_url[] = {'A','u','t','o','C','o','n','f','i','g','U','R','L',0};
-static const WCHAR internet_settings[] = {'S','o','f','t','w','a','r','e','\\',
-    'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
-    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-    'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s',0};
-static const WCHAR proxy_enable[] = {'P','r','o','x','y','E','n','a','b','l','e',0};
-static const WCHAR proxy_server[] = {'P','r','o','x','y','S','e','r','v','e','r',0};
-static const WCHAR connections[] = {'C','o','n','n','e','c','t','i','o','n','s',0};
-static const WCHAR default_connection_settings[] = {'D','e','f','a','u','l','t',
-    'C','o','n','n','e','c','t','i','o','n','S','e','t','t','i','n','g','s',0};
+static const WCHAR internet_settings[] = L"Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings";
 
 static BOOL initdialog_done;
 
@@ -71,7 +62,7 @@ static DWORD create_connection_settings(BOOL manual_proxy, const WCHAR *proxy_se
     DWORD pac_url_len;
 
     size += sizeof(DWORD);
-    if(proxy_server)
+    if(L"ProxyServer")
     {
         proxy_server_len = WideCharToMultiByte(CP_UTF8, 0, proxy_server, -1,
                 NULL, 0, NULL, NULL);
@@ -139,26 +130,26 @@ static void connections_on_initdialog(HWND hwnd)
         return;
 
     size = sizeof(enabled);
-    res = RegQueryValueExW(hkey, proxy_enable, NULL, &type, (BYTE*)&enabled, &size);
+    res = RegQueryValueExW(hkey, L"ProxyEnable", NULL, &type, (BYTE*)&enabled, &size);
     if(res || type != REG_DWORD)
         enabled = 0;
     size = sizeof(address);
-    res = RegQueryValueExW(hkey, proxy_server, NULL, &type, (BYTE*)address, &size);
+    res = RegQueryValueExW(hkey, L"ProxyServer", NULL, &type, (BYTE*)address, &size);
     if(res || type != REG_SZ)
         address[0] = 0;
     size = sizeof(pac_url);
-    res = RegQueryValueExW(hkey, auto_config_url, NULL, &type, (BYTE*)pac_url, &size);
+    res = RegQueryValueExW(hkey, L"AutoConfigURL", NULL, &type, (BYTE*)pac_url, &size);
     if(res || type != REG_SZ)
         pac_url[0] = 0;
 
-    res = RegOpenKeyW(hkey, connections, &con);
+    res = RegOpenKeyW(hkey, L"Connections", &con);
     RegCloseKey(hkey);
     if(!res)
     {
         connection_settings *settings = NULL;
         size = 0;
 
-        while((res = RegQueryValueExW(con, default_connection_settings, NULL, &type,
+        while((res = RegQueryValueExW(con, L"DefaultConnectionSettings", NULL, &type,
                         (BYTE*)settings, &size)) == ERROR_MORE_DATA || !settings)
         {
             connection_settings *new_settings = heap_realloc(settings, size);
@@ -264,7 +255,7 @@ static INT_PTR connections_on_notify(HWND hwnd, WPARAM wparam, LPARAM lparam)
         return FALSE;
 
     use_proxy = IsDlgButtonChecked(hwnd, IDC_USE_PROXY_SERVER);
-    res = RegSetValueExW(hkey, proxy_enable, 0, REG_DWORD,
+    res = RegSetValueExW(hkey, L"ProxyEnable", 0, REG_DWORD,
             (BYTE*)&use_proxy, sizeof(use_proxy));
     if(res)
     {
@@ -286,12 +277,12 @@ static INT_PTR connections_on_notify(HWND hwnd, WPARAM wparam, LPARAM lparam)
             proxy[proxy_len] = 0;
         }
 
-        res = RegSetValueExW(hkey, proxy_server, 0, REG_SZ,
+        res = RegSetValueExW(hkey, L"ProxyServer", 0, REG_SZ,
                 (BYTE*)proxy, (proxy_len+port_len)*sizeof(WCHAR));
     }
     else
     {
-        res = RegDeleteValueW(hkey, proxy_server);
+        res = RegDeleteValueW(hkey, L"ProxyServer");
         if(res == ERROR_FILE_NOT_FOUND)
             res = ERROR_SUCCESS;
     }
@@ -308,12 +299,12 @@ static INT_PTR connections_on_notify(HWND hwnd, WPARAM wparam, LPARAM lparam)
     if(!pac_script_len) use_pac_script = FALSE;
     if(use_pac_script)
     {
-        res = RegSetValueExW(hkey, auto_config_url, 0, REG_SZ,
+        res = RegSetValueExW(hkey, L"AutoConfigURL", 0, REG_SZ,
                 (BYTE*)pac_script, pac_script_len*sizeof(WCHAR));
     }
     else
     {
-        res = RegDeleteValueW(hkey, auto_config_url);
+        res = RegDeleteValueW(hkey, L"AutoConfigURL");
         if(res == ERROR_FILE_NOT_FOUND)
             res = ERROR_SUCCESS;
     }
@@ -326,7 +317,7 @@ static INT_PTR connections_on_notify(HWND hwnd, WPARAM wparam, LPARAM lparam)
 
     use_wpad = IsDlgButtonChecked(hwnd, IDC_USE_WPAD);
 
-    res = RegCreateKeyExW(hkey, connections, 0, NULL, 0, KEY_WRITE, NULL, &con, NULL);
+    res = RegCreateKeyExW(hkey, L"Connections", 0, NULL, 0, KEY_WRITE, NULL, &con, NULL);
     RegCloseKey(hkey);
     if(res)
         return FALSE;
@@ -339,7 +330,7 @@ static INT_PTR connections_on_notify(HWND hwnd, WPARAM wparam, LPARAM lparam)
         return FALSE;
     }
 
-    res = RegSetValueExW(con, default_connection_settings, 0, REG_BINARY,
+    res = RegSetValueExW(con, L"DefaultConnectionSettings", 0, REG_BINARY,
             (BYTE*)default_connection, size);
     heap_free(default_connection);
     RegCloseKey(con);
