@@ -38,9 +38,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
-static const WCHAR device_name_fmtW[] = {'\\','D','e','v','i','c','e',
-    '\\','H','I','D','#','%','p','&','%','p',0};
-
 NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT **device)
 {
     WCHAR dev_name[255];
@@ -48,7 +45,7 @@ NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRAT
     NTSTATUS status;
     BASE_DEVICE_EXTENSION *ext;
 
-    swprintf(dev_name, ARRAY_SIZE(dev_name), device_name_fmtW, driver->DriverObject, native_device);
+    swprintf(dev_name, ARRAY_SIZE(dev_name), L"\\Device\\HID#%p&%p", driver->DriverObject, native_device);
     RtlInitUnicodeString( &nameW, dev_name );
 
     TRACE("Create base hid device %s\n", debugstr_w(dev_name));
@@ -76,7 +73,6 @@ NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRAT
 
 NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
 {
-    static const WCHAR backslashW[] = {'\\',0};
     WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
     SP_DEVINFO_DATA Data;
     UNICODE_STRING nameW;
@@ -91,7 +87,7 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
     RtlInitUnicodeString( &nameW, ext->device_name);
 
     lstrcpyW(device_instance_id, ext->device_id);
-    lstrcatW(device_instance_id, backslashW);
+    lstrcatW(device_instance_id, L"\\");
     lstrcatW(device_instance_id, ext->instance_id);
 
     devinfo = SetupDiCreateDeviceInfoList(&GUID_DEVCLASS_HIDCLASS, NULL);
