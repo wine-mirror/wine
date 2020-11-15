@@ -772,7 +772,6 @@ static void test_InstallColorProfileA( char *standardprofile, char *testprofile 
     {
         CHAR dest[MAX_PATH], base[MAX_PATH];
         DWORD size = sizeof(dest);
-        CHAR slash[] = "\\";
         HANDLE handle;
 
         SetLastError(0xdeadbeef);
@@ -789,7 +788,7 @@ static void test_InstallColorProfileA( char *standardprofile, char *testprofile 
 
         MSCMS_basenameA( testprofile, base );
 
-        lstrcatA( dest, slash );
+        lstrcatA( dest, "\\" );
         lstrcatA( dest, base );
 
         /* Check if the profile is really there */ 
@@ -1157,7 +1156,6 @@ static void test_UninstallColorProfileA( char *testprofile )
     {
         CHAR dest[MAX_PATH], base[MAX_PATH];
         DWORD size = sizeof(dest);
-        CHAR slash[] = "\\";
         HANDLE handle;
 
         SetLastError(0xdeadbeef);
@@ -1174,7 +1172,7 @@ static void test_UninstallColorProfileA( char *testprofile )
 
         MSCMS_basenameA( testprofile, base );
 
-        lstrcatA( dest, slash );
+        lstrcatA( dest, "\\" );
         lstrcatA( dest, base );
 
         ret = pUninstallColorProfileA( NULL, dest, TRUE );
