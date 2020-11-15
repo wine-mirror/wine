@@ -4076,6 +4076,9 @@ static void output_dependencies( struct makefile *make )
     }
     else output_stub_makefile( make );
 
+    /* disable implicit rules */
+    output( ".SUFFIXES:\n" );
+
     fclose( output_file );
     output_file = NULL;
     rename_temp_file( output_file_name );
