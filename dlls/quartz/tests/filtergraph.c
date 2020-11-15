@@ -3708,6 +3708,35 @@ todo_wine
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* Add and remove a filter while the graph is running. */
+
+    hr = IFilterGraph2_AddFilter(graph, &dummy.IBaseFilter_iface, L"dummy");
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(dummy.state == State_Stopped, "Got state %#x.\n", dummy.state);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Paused);
+    ok(dummy.state == State_Paused, "Got state %#x.\n", dummy.state);
+
+    hr = IFilterGraph2_RemoveFilter(graph, &dummy.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(dummy.state == State_Paused, "Got state %#x.\n", dummy.state);
+
+    hr = IFilterGraph2_AddFilter(graph, &dummy.IBaseFilter_iface, L"dummy");
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(dummy.state == State_Paused, "Got state %#x.\n", dummy.state);
+
+    if (dummy.state == State_Stopped)
+        dummy.expect_stop_prev = State_Stopped;
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    check_filter_state(graph, State_Stopped);
+
+    hr = IFilterGraph2_RemoveFilter(graph, &dummy.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(dummy.state == State_Stopped, "Got state %#x.\n", dummy.state);
+
     /* Destroying the graph while it's running stops all filters. */
 
     hr = IMediaControl_Run(control);
