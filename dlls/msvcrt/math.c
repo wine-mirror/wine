@@ -3873,7 +3873,8 @@ double CDECL MSVCR120_fdim(double x, double y)
  */
 int CDECL MSVCR120__fdsign(float x)
 {
-    return signbit(x) ? 0x8000 : 0;
+    union { float f; UINT32 i; } u = { x };
+    return (u.i >> 16) & 0x8000;
 }
 
 /*********************************************************************
@@ -3881,7 +3882,8 @@ int CDECL MSVCR120__fdsign(float x)
  */
 int CDECL MSVCR120__dsign(double x)
 {
-    return signbit(x) ? 0x8000 : 0;
+    union { double f; UINT64 i; } u = { x };
+    return (u.i >> 48) & 0x8000;
 }
 
 
