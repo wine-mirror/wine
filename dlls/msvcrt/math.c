@@ -235,7 +235,8 @@ int CDECL MSVCRT__fpclassf( float num )
  */
 int CDECL MSVCRT__finitef( float num )
 {
-    return finitef(num) != 0; /* See comment for _isnan() */
+    union { float f; UINT32 i; } u = { num };
+    return (u.i & 0x7fffffff) < 0x7f800000;
 }
 
 /*********************************************************************
@@ -2138,7 +2139,8 @@ double CDECL MSVCRT__copysign(double num, double sign)
  */
 int CDECL MSVCRT__finite(double num)
 {
-  return isfinite(num) != 0; /* See comment for _isnan() */
+    union { double f; UINT64 i; } u = { num };
+    return (u.i & ~0ull >> 1) < 0x7ffull << 52;
 }
 
 /*********************************************************************
