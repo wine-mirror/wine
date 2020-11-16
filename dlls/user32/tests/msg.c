@@ -15964,15 +15964,15 @@ static void test_PostMessage(void)
     flush_events();
 }
 
-static LPARAM g_broadcast_lparam;
+static WPARAM g_broadcast_wparam;
 static LRESULT WINAPI broadcast_test_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
 
     if (wParam == 0xbaadbeef)
-        g_broadcast_lparam = wParam;
+        g_broadcast_wparam = wParam;
     else
-        g_broadcast_lparam = 0;
+        g_broadcast_wparam = 0;
 
     return CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
 }
@@ -16040,7 +16040,7 @@ static void test_broadcast(void)
         }
 
         /* send, broadcast */
-        g_broadcast_lparam = 0xdead;
+        g_broadcast_wparam = 0xdead;
         ret = SendMessageTimeoutA(HWND_BROADCAST, messages[i], 0xbaadbeef, 0, SMTO_NORMAL, 2000, NULL);
         if (!ret && GetLastError() == ERROR_TIMEOUT)
             win_skip("broadcasting test %d, timeout\n", i);
@@ -16048,18 +16048,18 @@ static void test_broadcast(void)
         {
             if (messages[i] < WM_USER || messages[i] >= 0xc000)
             {
-                ok(g_broadcast_lparam == 0xbaadbeef, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
-                    g_broadcast_lparam, GetLastError());
+                ok(g_broadcast_wparam == 0xbaadbeef, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
+                    g_broadcast_wparam, GetLastError());
             }
             else
             {
-                ok(g_broadcast_lparam == 0xdead, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
-                    g_broadcast_lparam, GetLastError());
+                ok(g_broadcast_wparam == 0xdead, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
+                    g_broadcast_wparam, GetLastError());
             }
         }
 
         /* send, topmost */
-        g_broadcast_lparam = 0xdead;
+        g_broadcast_wparam = 0xdead;
         ret = SendMessageTimeoutA(HWND_TOPMOST, messages[i], 0xbaadbeef, 0, SMTO_NORMAL, 2000, NULL);
         if (!ret && GetLastError() == ERROR_TIMEOUT)
             win_skip("broadcasting test %d, timeout\n", i);
@@ -16067,13 +16067,13 @@ static void test_broadcast(void)
         {
             if (messages[i] < WM_USER || messages[i] >= 0xc000)
             {
-                ok(g_broadcast_lparam == 0xbaadbeef, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
-                    g_broadcast_lparam, GetLastError());
+                ok(g_broadcast_wparam == 0xbaadbeef, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
+                    g_broadcast_wparam, GetLastError());
             }
             else
             {
-                ok(g_broadcast_lparam == 0xdead, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
-                    g_broadcast_lparam, GetLastError());
+                ok(g_broadcast_wparam == 0xdead, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
+                    g_broadcast_wparam, GetLastError());
             }
         }
     }
