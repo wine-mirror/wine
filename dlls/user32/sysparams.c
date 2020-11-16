@@ -548,7 +548,18 @@ static BOOL init_entry_string( struct sysparam_entry *entry, const WCHAR *str )
 HDC get_display_dc(void)
 {
     EnterCriticalSection( &display_dc_section );
-    if (!display_dc) display_dc = CreateDCW( L"DISPLAY", NULL, NULL, NULL );
+    if (!display_dc)
+    {
+        HDC dc;
+
+        LeaveCriticalSection( &display_dc_section );
+        dc = CreateDCW( L"DISPLAY", NULL, NULL, NULL );
+        EnterCriticalSection( &display_dc_section );
+        if (display_dc)
+            DeleteDC(dc);
+        else
+            display_dc = dc;
+    }
     return display_dc;
 }
 
