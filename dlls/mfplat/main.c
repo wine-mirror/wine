@@ -33,6 +33,7 @@
 #include "ole2.h"
 #include "propsys.h"
 #include "dxgi.h"
+#include "uuids.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -1543,18 +1544,28 @@ const char *debugstr_attr(const GUID *guid)
         X(MF_TOPONODE_MARKIN_HERE),
         X(MF_MT_H264_SUPPORTED_SYNC_FRAME_TYPES),
         X(MF_TOPONODE_MARKOUT_HERE),
+        X(EVRConfig_ForceBob),
         X(MF_TOPONODE_DECODER),
+        X(EVRConfig_AllowDropToBob),
         X(MF_TOPOLOGY_PROJECTSTART),
+        X(EVRConfig_ForceThrottle),
         X(MF_VIDEO_MAX_MB_PER_SEC),
         X(MF_TOPOLOGY_PROJECTSTOP),
         X(MF_SINK_WRITER_ENCODER_CONFIG),
+        X(EVRConfig_AllowDropToThrottle),
         X(MF_TOPOLOGY_NO_MARKIN_MARKOUT),
+        X(EVRConfig_ForceHalfInterlace),
+        X(EVRConfig_AllowDropToHalfInterlace),
+        X(EVRConfig_ForceScaling),
         X(MF_MT_H264_CAPABILITIES),
+        X(EVRConfig_AllowScaling),
         X(MF_SOURCE_READER_ENABLE_TRANSCODE_ONLY_TRANSFORMS),
         X(MFT_PREFERRED_ENCODER_PROFILE),
+        X(EVRConfig_ForceBatching),
+        X(EVRConfig_AllowBatching),
         X(MF_TOPOLOGY_DYNAMIC_CHANGE_NOT_ALLOWED),
-        X(MF_MT_MPEG2_PROFILE),
         X(MF_MT_VIDEO_PROFILE),
+        X(MF_MT_MPEG2_PROFILE),
         X(MF_MT_DV_AAUX_CTRL_PACK_1),
         X(MF_MT_ALPHA_MODE),
         X(MF_MT_MPEG2_TIMECODE),
@@ -1743,8 +1754,8 @@ const char *debugstr_attr(const GUID *guid)
         X(MF_TOPONODE_DISABLE_PREROLL),
         X(MF_MT_VIDEO_3D_FORMAT),
         X(MF_EVENT_STREAM_METADATA_KEYDATA),
-        X(MF_SOURCE_READER_D3D_MANAGER),
         X(MF_SINK_WRITER_D3D_MANAGER),
+        X(MF_SOURCE_READER_D3D_MANAGER),
         X(MFSampleExtension_3DVideo),
         X(MF_MT_H264_USAGE),
         X(MF_MEDIA_ENGINE_EME_CALLBACK),
