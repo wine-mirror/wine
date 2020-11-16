@@ -15976,6 +15976,16 @@ static LRESULT WINAPI broadcast_test_proc(HWND hwnd, UINT message, WPARAM wParam
 
     return CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
 }
+static WNDPROC *g_oldproc_sub;
+static WPARAM *g_broadcast_sub_wparam;
+static LRESULT WINAPI broadcast_test_sub_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    int sub_index = GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+
+    g_broadcast_sub_wparam[sub_index] = (wParam == 0xbaadbeef) ? wParam : 0;
+
+    return CallWindowProcA(g_oldproc_sub[sub_index], hwnd, message, wParam, lParam);
+}
 
 static void test_broadcast(void)
 {
@@ -15988,9 +15998,35 @@ static void test_broadcast(void)
         0xc000, /* lowest possible atom returned by RegisterWindowMessage */
         0xffff,
     };
+    static const struct
+    {
+        LONG style;
+        BOOL receive;
+        BOOL todo;
+    } bcast_expect[] =
+    {
+        {WS_OVERLAPPED,             TRUE, TRUE},
+        {WS_OVERLAPPED|WS_DLGFRAME, TRUE},
+        {WS_OVERLAPPED|WS_BORDER,   TRUE},
+        {WS_OVERLAPPED|WS_CAPTION,  TRUE},
+        {WS_CHILD,                  FALSE},
+        {WS_CHILD|WS_DLGFRAME,      FALSE},
+        {WS_CHILD|WS_BORDER,        FALSE},
+        {WS_CHILD|WS_CAPTION,       FALSE},
+        {WS_CHILD|WS_POPUP,         TRUE},
+        {WS_POPUP,                  TRUE},
+        {WS_POPUP|WS_DLGFRAME,      TRUE},
+        {WS_POPUP|WS_BORDER,        TRUE},
+        {WS_POPUP|WS_CAPTION,       TRUE},
+    };
     WNDPROC oldproc;
-    unsigned int i;
+    unsigned int i, j;
     HWND hwnd;
+    HWND *hwnd_sub;
+
+    hwnd_sub = HeapAlloc( GetProcessHeap(), 0, ARRAY_SIZE(bcast_expect) * sizeof(*hwnd_sub) );
+    g_oldproc_sub = HeapAlloc( GetProcessHeap(), 0, ARRAY_SIZE(bcast_expect) * sizeof(*g_oldproc_sub) );
+    g_broadcast_sub_wparam = HeapAlloc( GetProcessHeap(), 0, ARRAY_SIZE(bcast_expect) * sizeof(*g_broadcast_sub_wparam) );
 
     hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, NULL);
     ok(hwnd != NULL, "got %p\n", hwnd);
@@ -16027,9 +16063,28 @@ static void test_broadcast(void)
         ok(ret == msg_expected, "%d: message %04x, got %d, error %d\n", i, messages[i], ret, GetLastError());
         if (msg_expected)
             ok(msg.hwnd == hwnd, "%d: got %p\n", i, msg.hwnd);
+    }
+
+    for (j = 0; j < ARRAY_SIZE(bcast_expect); j++)
+    {
+        hwnd_sub[j] = CreateWindowA("static", NULL, bcast_expect[j].style, 0, 0, 0, 0, hwnd, 0, 0, NULL);
+        ok(hwnd_sub[j] != NULL, "got %p\n", hwnd_sub[j]);
+        /* CreateWindow adds extra style flags, so call SetWindowLong to clear some of those. */
+        SetWindowLongA(hwnd_sub[j], GWL_STYLE, bcast_expect[j].style);
+
+        g_oldproc_sub[j] = (WNDPROC)SetWindowLongPtrA(hwnd_sub[j], GWLP_WNDPROC, (LONG_PTR)broadcast_test_sub_proc);
+        SetWindowLongPtrA(hwnd_sub[j], GWLP_USERDATA, (LONG_PTR)j);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(messages); i++)
+    {
+        BOOL ret;
+        BOOL msg_expected = (messages[i] < WM_USER || messages[i] >= 0xc000);
 
         /* send, broadcast */
         g_broadcast_wparam = 0xdead;
+        for (j = 0; j < ARRAY_SIZE(bcast_expect); j++)
+            g_broadcast_sub_wparam[j] = 0xdead;
         ret = SendMessageTimeoutA(HWND_BROADCAST, messages[i], 0xbaadbeef, 0, SMTO_NORMAL, 2000, NULL);
         if (!ret && GetLastError() == ERROR_TIMEOUT)
             win_skip("broadcasting test %d, timeout\n", i);
@@ -16038,10 +16093,20 @@ static void test_broadcast(void)
             WPARAM wparam_expected = msg_expected ? 0xbaadbeef : 0xdead;
             ok(g_broadcast_wparam == wparam_expected, "%d: message %04x, got %#lx, error %d\n",
                 i, messages[i], g_broadcast_wparam, GetLastError());
+            for (j = 0; j < ARRAY_SIZE(bcast_expect); j++)
+            {
+                wparam_expected = (msg_expected && bcast_expect[j].receive) ? 0xbaadbeef : 0xdead;
+                todo_wine_if (msg_expected && bcast_expect[j].todo)
+                ok(g_broadcast_sub_wparam[j] == wparam_expected,
+                    "%d,%d: message %04x, got %#lx, error %d\n", i, j, messages[i],
+                    g_broadcast_sub_wparam[j], GetLastError());
+            }
         }
 
         /* send, topmost */
         g_broadcast_wparam = 0xdead;
+        for (j = 0; j < ARRAY_SIZE(bcast_expect); j++)
+            g_broadcast_sub_wparam[j] = 0xdead;
         ret = SendMessageTimeoutA(HWND_TOPMOST, messages[i], 0xbaadbeef, 0, SMTO_NORMAL, 2000, NULL);
         if (!ret && GetLastError() == ERROR_TIMEOUT)
             win_skip("broadcasting test %d, timeout\n", i);
@@ -16050,8 +16115,23 @@ static void test_broadcast(void)
             WPARAM wparam_expected = msg_expected ? 0xbaadbeef : 0xdead;
             ok(g_broadcast_wparam == wparam_expected, "%d: message %04x, got %#lx, error %d\n",
                 i, messages[i], g_broadcast_wparam, GetLastError());
+            for (j = 0; j < ARRAY_SIZE(bcast_expect); j++)
+            {
+                wparam_expected = (msg_expected && bcast_expect[j].receive) ? 0xbaadbeef : 0xdead;
+                todo_wine_if (msg_expected && bcast_expect[j].todo)
+                ok(g_broadcast_sub_wparam[j] == wparam_expected,
+                    "%d,%d: message %04x, got %#lx, error %d\n", i, j, messages[i],
+                    g_broadcast_sub_wparam[j], GetLastError());
+            }
         }
     }
+
+    for (j = 0; j < ARRAY_SIZE(bcast_expect); j++)
+        DestroyWindow(hwnd_sub[j]);
+
+    HeapFree(GetProcessHeap(), 0, g_broadcast_sub_wparam);
+    HeapFree(GetProcessHeap(), 0, g_oldproc_sub);
+    HeapFree(GetProcessHeap(), 0, hwnd_sub);
 
     DestroyWindow(hwnd);
 }
