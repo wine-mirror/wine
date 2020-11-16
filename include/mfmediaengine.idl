@@ -76,6 +76,8 @@ typedef enum MF_MEDIA_ENGINE_CANPLAY
     MF_MEDIA_ENGINE_CANPLAY_PROBABLY,
 } MF_MEDIA_ENGINE_CANPLAY;
 
+cpp_quote("#ifndef _MFVideoNormalizedRect_")
+cpp_quote("#define _MFVideoNormalizedRect_")
 typedef struct MFVideoNormalizedRect
 {
     float left;
@@ -83,6 +85,7 @@ typedef struct MFVideoNormalizedRect
     float right;
     float bottom;
 } MFVideoNormalizedRect;
+cpp_quote("#endif")
 
 typedef enum MF_MEDIA_ENGINE_CREATEFLAGS
 {
