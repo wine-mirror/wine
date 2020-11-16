@@ -242,12 +242,10 @@ int CDECL MSVCRT__finitef( float num )
 /*********************************************************************
  *      _isnanf (MSVCRT.@)
  */
-INT CDECL MSVCRT__isnanf( float num )
+int CDECL MSVCRT__isnanf( float num )
 {
-    /* Some implementations return -1 for true(glibc), msvcrt/crtdll return 1.
-     * Do the same, as the result may be used in calculations
-     */
-    return isnan(num) != 0;
+    union { float f; UINT32 i; } u = { num };
+    return (u.i & 0x7fffffff) > 0x7f800000;
 }
 
 /*********************************************************************
@@ -2234,12 +2232,10 @@ int CDECL MSVCRT_fesetenv(const MSVCRT_fenv_t *env)
 /*********************************************************************
  *		_isnan (MSVCRT.@)
  */
-INT CDECL MSVCRT__isnan(double num)
+int CDECL MSVCRT__isnan(double num)
 {
-  /* Some implementations return -1 for true(glibc), msvcrt/crtdll return 1.
-   * Do the same, as the result may be used in calculations
-   */
-  return isnan(num) != 0;
+    union { double f; UINT64 i; } u = { num };
+    return (u.i & ~0ull >> 1) > 0x7ffull << 52;
 }
 
 /*********************************************************************
