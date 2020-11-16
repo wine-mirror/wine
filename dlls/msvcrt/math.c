@@ -209,6 +209,28 @@ float CDECL MSVCRT__logbf( float num )
 #ifndef __i386__
 
 /*********************************************************************
+ *      _fpclassf (MSVCRT.@)
+ */
+int CDECL MSVCRT__fpclassf( float num )
+{
+    union { float f; UINT32 i; } u = { num };
+    int e = u.i >> 23 & 0xff;
+    int s = u.i >> 31;
+
+    switch (e)
+    {
+    case 0:
+        if (u.i << 1) return s ? MSVCRT__FPCLASS_ND : MSVCRT__FPCLASS_PD;
+        return s ? MSVCRT__FPCLASS_NZ : MSVCRT__FPCLASS_PZ;
+    case 0xff:
+        if (u.i << 9) return ((u.i >> 22) & 1) ? MSVCRT__FPCLASS_QNAN : MSVCRT__FPCLASS_SNAN;
+        return s ? MSVCRT__FPCLASS_NINF : MSVCRT__FPCLASS_PINF;
+    default:
+        return s ? MSVCRT__FPCLASS_NN : MSVCRT__FPCLASS_PN;
+    }
+}
+
+/*********************************************************************
  *      _finitef (MSVCRT.@)
  */
 int CDECL MSVCRT__finitef( float num )
@@ -1391,35 +1413,21 @@ __ASM_GLOBAL_FUNC(MSVCRT__ftol,
  */
 int CDECL MSVCRT__fpclass(double num)
 {
-#if defined(HAVE_FPCLASS) || defined(fpclass)
-  switch (fpclass( num ))
-  {
-  case FP_SNAN:  return MSVCRT__FPCLASS_SNAN;
-  case FP_QNAN:  return MSVCRT__FPCLASS_QNAN;
-  case FP_NINF:  return MSVCRT__FPCLASS_NINF;
-  case FP_PINF:  return MSVCRT__FPCLASS_PINF;
-  case FP_NDENORM: return MSVCRT__FPCLASS_ND;
-  case FP_PDENORM: return MSVCRT__FPCLASS_PD;
-  case FP_NZERO: return MSVCRT__FPCLASS_NZ;
-  case FP_PZERO: return MSVCRT__FPCLASS_PZ;
-  case FP_NNORM: return MSVCRT__FPCLASS_NN;
-  case FP_PNORM: return MSVCRT__FPCLASS_PN;
-  default: return MSVCRT__FPCLASS_PN;
-  }
-#elif defined (fpclassify)
-  switch (fpclassify( num ))
-  {
-  case FP_NAN: return MSVCRT__FPCLASS_QNAN;
-  case FP_INFINITE: return signbit(num) ? MSVCRT__FPCLASS_NINF : MSVCRT__FPCLASS_PINF;
-  case FP_SUBNORMAL: return signbit(num) ?MSVCRT__FPCLASS_ND : MSVCRT__FPCLASS_PD;
-  case FP_ZERO: return signbit(num) ? MSVCRT__FPCLASS_NZ : MSVCRT__FPCLASS_PZ;
-  }
-  return signbit(num) ? MSVCRT__FPCLASS_NN : MSVCRT__FPCLASS_PN;
-#else
-  if (!isfinite(num))
-    return MSVCRT__FPCLASS_QNAN;
-  return num == 0.0 ? MSVCRT__FPCLASS_PZ : (num < 0 ? MSVCRT__FPCLASS_NN : MSVCRT__FPCLASS_PN);
-#endif
+    union { double f; UINT64 i; } u = { num };
+    int e = u.i >> 52 & 0x7ff;
+    int s = u.i >> 63;
+
+    switch (e)
+    {
+    case 0:
+        if (u.i << 1) return s ? MSVCRT__FPCLASS_ND : MSVCRT__FPCLASS_PD;
+        return s ? MSVCRT__FPCLASS_NZ : MSVCRT__FPCLASS_PZ;
+    case 0x7ff:
+        if (u.i << 12) return ((u.i >> 51) & 1) ? MSVCRT__FPCLASS_QNAN : MSVCRT__FPCLASS_SNAN;
+        return s ? MSVCRT__FPCLASS_NINF : MSVCRT__FPCLASS_PINF;
+    default:
+        return s ? MSVCRT__FPCLASS_NN : MSVCRT__FPCLASS_PN;
+    }
 }
 
 /*********************************************************************

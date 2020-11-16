@@ -324,7 +324,7 @@
 @ cdecl -arch=!i386 _finitef(float) MSVCRT__finitef
 @ cdecl _flushall() MSVCRT__flushall
 @ cdecl _fpclass(double) MSVCRT__fpclass
-@ stub _fpclassf
+@ cdecl -arch=!i386 _fpclassf(float) MSVCRT__fpclassf
 @ cdecl -arch=i386,x86_64,arm,arm64 _fpieee_flt(long ptr ptr)
 @ cdecl _fpreset()
 @ cdecl _fputc_nolock(long ptr) MSVCRT__fputc_nolock
@@ -946,7 +946,7 @@
 @ cdecl _o__findnext64i32(long ptr) MSVCRT__findnext64i32
 @ cdecl _o__flushall() MSVCRT__flushall
 @ cdecl _o__fpclass(double) MSVCRT__fpclass
-@ stub _o__fpclassf
+@ cdecl -arch=!i386 _o__fpclassf(float) MSVCRT__fpclassf
 @ cdecl _o__fputc_nolock(long ptr) MSVCRT__fputc_nolock
 @ cdecl _o__fputchar(long) MSVCRT__fputchar
 @ cdecl _o__fputwc_nolock(long ptr) MSVCRT__fputwc_nolock

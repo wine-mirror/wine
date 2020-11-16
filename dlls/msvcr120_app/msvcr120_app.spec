@@ -1099,7 +1099,7 @@
 @ cdecl _flushall() msvcr120._flushall
 @ extern _fmode msvcr120._fmode
 @ cdecl _fpclass(double) msvcr120._fpclass
-# stub -arch=x86_64 _fpclassf
+@ cdecl -arch=!i386 _fpclassf(float) msvcr120._fpclassf
 @ cdecl -arch=i386,x86_64,arm,arm64 _fpieee_flt(long ptr ptr) msvcr120._fpieee_flt
 @ cdecl _fpreset() msvcr120._fpreset
 @ stub _fprintf_l

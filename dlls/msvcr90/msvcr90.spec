@@ -473,7 +473,7 @@
 @ cdecl _flushall() MSVCRT__flushall
 @ extern _fmode MSVCRT__fmode
 @ cdecl _fpclass(double) MSVCRT__fpclass
-# stub -arch=win64 _fpclassf(float)
+@ cdecl -arch=!i386 _fpclassf(float) MSVCRT__fpclassf
 @ cdecl -arch=i386,x86_64,arm,arm64 _fpieee_flt(long ptr ptr)
 @ cdecl _fpreset()
 @ stub _fprintf_l

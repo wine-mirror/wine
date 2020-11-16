@@ -282,7 +282,7 @@
 @ cdecl _o__findnext64i32(long ptr) ucrtbase._o__findnext64i32
 @ cdecl _o__flushall() ucrtbase._o__flushall
 @ cdecl _o__fpclass(double) ucrtbase._o__fpclass
-@ stub _o__fpclassf
+@ cdecl -arch=!i386 _o__fpclassf(float) ucrtbase._o__fpclassf
 @ cdecl _o__fputc_nolock(long ptr) ucrtbase._o__fputc_nolock
 @ cdecl _o__fputchar(long) ucrtbase._o__fputchar
 @ cdecl _o__fputwc_nolock(long ptr) ucrtbase._o__fputwc_nolock

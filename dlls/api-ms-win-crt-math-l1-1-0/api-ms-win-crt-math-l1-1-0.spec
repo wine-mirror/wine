@@ -79,7 +79,7 @@
 @ cdecl _finite(double) ucrtbase._finite
 @ cdecl -arch=!i386 _finitef(float) ucrtbase._finitef
 @ cdecl _fpclass(double) ucrtbase._fpclass
-@ stub _fpclassf
+@ cdecl -arch=!i386 _fpclassf(float) ucrtbase._fpclassf
 @ cdecl -arch=i386 -ret64 _ftol() ucrtbase._ftol
 @ cdecl -arch=win64 _get_FMA3_enable() ucrtbase._get_FMA3_enable
 @ cdecl _hypot(double double) ucrtbase._hypot

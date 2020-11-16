@@ -2167,7 +2167,6 @@ AC_CHECK_FUNCS(\
 	finitef \
 	fnmatch \
 	fork \
-	fpclass \
 	fstatfs \
 	fstatvfs \
 	futimens \
