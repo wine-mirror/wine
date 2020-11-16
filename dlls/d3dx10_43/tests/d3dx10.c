@@ -1460,8 +1460,6 @@ static void test_get_image_info(void)
 
     /* D3DX10GetImageInfoFromResource tests */
 
-    todo_wine
-    {
     hr = D3DX10GetImageInfoFromResourceW(NULL, NULL, NULL, &image_info, NULL);
     ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
     hr = D3DX10GetImageInfoFromResourceW(NULL, L"deadbeaf", NULL, &image_info, NULL);
@@ -1470,20 +1468,19 @@ static void test_get_image_info(void)
     ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
     hr = D3DX10GetImageInfoFromResourceA(NULL, "deadbeaf", NULL, &image_info, NULL);
     ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
-    }
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
     {
         resource_module = create_resource_module(test_resource_name, test_image[i].data, test_image[i].size);
 
         hr = D3DX10GetImageInfoFromResourceW(resource_module, test_resource_name, NULL, &image_info, NULL);
-        todo_wine
+        todo_wine_if(test_image[i].expected.ImageFileFormat == D3DX10_IFF_WMP)
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (hr == S_OK)
             check_image_info(&image_info, i, __LINE__);
 
         hr = D3DX10GetImageInfoFromResourceA(resource_module, get_str_a(test_resource_name), NULL, &image_info, NULL);
-        todo_wine
+        todo_wine_if(test_image[i].expected.ImageFileFormat == D3DX10_IFF_WMP)
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (hr == S_OK)
             check_image_info(&image_info, i, __LINE__);

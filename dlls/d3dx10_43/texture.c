@@ -148,6 +148,22 @@ done:
     return hr;
 }
 
+static HRESULT load_resource(HMODULE module, HRSRC res_info, void **buffer, DWORD *size)
+{
+    HGLOBAL resource;
+
+    if (!(*size = SizeofResource(module, res_info)))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    if (!(resource = LoadResource(module, res_info)))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    if (!(*buffer = LockResource(resource)))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    return S_OK;
+}
+
 HRESULT WINAPI D3DX10GetImageInfoFromFileA(const char *src_file, ID3DX10ThreadPump *pump, D3DX10_IMAGE_INFO *info,
         HRESULT *result)
 {
@@ -201,19 +217,61 @@ HRESULT WINAPI D3DX10GetImageInfoFromFileW(const WCHAR *src_file, ID3DX10ThreadP
 HRESULT WINAPI D3DX10GetImageInfoFromResourceA(HMODULE module, const char *resource, ID3DX10ThreadPump *pump,
         D3DX10_IMAGE_INFO *info, HRESULT *result)
 {
-    FIXME("module %p, resource %s, pump %p, info %p, result %p\n",
+    HRSRC res_info;
+    void *buffer;
+    HRESULT hr;
+    DWORD size;
+
+    TRACE("module %p, resource %s, pump %p, info %p, result %p.\n",
             module, debugstr_a(resource), pump, info, result);
 
-    return E_NOTIMPL;
+    if (!resource || !info)
+        return D3DX10_ERR_INVALID_DATA;
+
+    res_info = FindResourceA(module, resource, (const char *)RT_RCDATA);
+    if (!res_info)
+    {
+        /* Try loading the resource as bitmap data */
+        res_info = FindResourceA(module, resource, (const char *)RT_BITMAP);
+        if (!res_info)
+            return D3DX10_ERR_INVALID_DATA;
+    }
+
+    hr = load_resource(module, res_info, &buffer, &size);
+    if (FAILED(hr))
+        return D3DX10_ERR_INVALID_DATA;
+
+    return D3DX10GetImageInfoFromMemory(buffer, size, pump, info, result);
 }
 
 HRESULT WINAPI D3DX10GetImageInfoFromResourceW(HMODULE module, const WCHAR *resource, ID3DX10ThreadPump *pump,
         D3DX10_IMAGE_INFO *info, HRESULT *result)
 {
-    FIXME("module %p, resource %s, pump %p, info %p, result %p\n",
+    unsigned int size;
+    HRSRC res_info;
+    void *buffer;
+    HRESULT hr;
+
+    TRACE("module %p, resource %s, pump %p, info %p, result %p.\n",
             module, debugstr_w(resource), pump, info, result);
 
-    return E_NOTIMPL;
+    if (!resource || !info)
+        return D3DX10_ERR_INVALID_DATA;
+
+    res_info = FindResourceW(module, resource, (const WCHAR *)RT_RCDATA);
+    if (!res_info)
+    {
+        /* Try loading the resource as bitmap data */
+        res_info = FindResourceW(module, resource, (const WCHAR *)RT_BITMAP);
+        if (!res_info)
+            return D3DX10_ERR_INVALID_DATA;
+    }
+
+    hr = load_resource(module, res_info, &buffer, &size);
+    if (FAILED(hr))
+        return D3DX10_ERR_INVALID_DATA;
+
+    return D3DX10GetImageInfoFromMemory(buffer, size, pump, info, result);
 }
 
 HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX10ThreadPump *pump,
