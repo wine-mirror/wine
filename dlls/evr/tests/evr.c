@@ -2324,11 +2324,9 @@ static void test_mixer_samples(void)
 
     buffers[0].pSample = sample;
     hr = IMFTransform_ProcessOutput(mixer, 0, 1, buffers, &status);
-todo_wine
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "Unexpected hr %#x.\n", hr);
 
     color = get_surface_color(surface, 0, 0);
-todo_wine
     ok(color == D3DCOLOR_ARGB(0x10, 0xff, 0x00, 0x00), "Unexpected color %#x.\n", color);
 
     /* Streaming is not started yet. Output is colored black, but only if desired timestamps were set. */
