@@ -327,14 +327,13 @@ static LPCWSTR COMBOEX_GetText(const COMBOEX_INFO *infoPtr, CBE_ITEMDATA *item)
 
 static void COMBOEX_GetComboFontSize (const COMBOEX_INFO *infoPtr, SIZE *size)
 {
-    static const WCHAR strA[] = { 'A', 0 };
     HFONT nfont, ofont;
     HDC mydc;
 
     mydc = GetDC (0); /* why the entire screen???? */
     nfont = (HFONT)SendMessageW (infoPtr->hwndCombo, WM_GETFONT, 0, 0);
     ofont = SelectObject (mydc, nfont);
-    GetTextExtentPointW (mydc, strA, 1, size);
+    GetTextExtentPointW (mydc, L"A", 1, size);
     SelectObject (mydc, ofont);
     ReleaseDC (0, mydc);
     TRACE("selected font hwnd=%p, height=%d\n", nfont, size->cy);
@@ -948,7 +947,6 @@ static INT COMBOEX_SetItemHeight (COMBOEX_INFO const *infoPtr, INT index, UINT h
 
 static LRESULT COMBOEX_Create (HWND hwnd, CREATESTRUCTA const *cs)
 {
-    static const WCHAR NIL[] = { 0 };
     COMBOEX_INFO *infoPtr;
     LOGFONTW mylogfont;
     RECT win_rect;
@@ -991,7 +989,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, CREATESTRUCTA const *cs)
     /* We also need to place the edit control at the proper location    */
     /* (allow space for the icons).                                     */
 
-    infoPtr->hwndCombo = CreateWindowW (WC_COMBOBOXW, NIL,
+    infoPtr->hwndCombo = CreateWindowW (WC_COMBOBOXW, L"",
                          WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VSCROLL |
                          CBS_NOINTEGRALHEIGHT | CBS_DROPDOWNLIST |
 			 WS_CHILD | WS_VISIBLE | CBS_OWNERDRAWFIXED |
@@ -1009,7 +1007,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, CREATESTRUCTA const *cs)
      * It is created only for CBS_DROPDOWN style
      */
     if ((cs->style & CBS_DROPDOWNLIST) == CBS_DROPDOWN) {
-	infoPtr->hwndEdit = CreateWindowExW (0, WC_EDITW, NIL,
+	infoPtr->hwndEdit = CreateWindowExW (0, WC_EDITW, L"",
 		    WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | ES_AUTOHSCROLL,
 		    0, 0, 0, 0,  /* will set later */
 		    infoPtr->hwndCombo,
@@ -1257,11 +1255,10 @@ static BOOL COMBOEX_WM_DeleteItem (COMBOEX_INFO *infoPtr, DELETEITEMSTRUCT const
 
 static LRESULT COMBOEX_DrawItem (COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT const *dis)
 {
-    static const WCHAR nil[] = { 0 };
     CBE_ITEMDATA *item = NULL;
     SIZE txtsize;
     RECT rect;
-    LPCWSTR str = nil;
+    LPCWSTR str = L"";
     UINT xbase, x, y;
     INT len;
     COLORREF nbkc, ntxc, bkc, txc;
@@ -1399,7 +1396,7 @@ static LRESULT COMBOEX_DrawItem (COMBOEX_INFO *infoPtr, DRAWITEMSTRUCT const *di
 
     /* setup pointer to text to be drawn */
     str = COMBOEX_GetText(infoPtr, item);
-    if (!str) str = nil;
+    if (!str) str = L"";
 
     len = lstrlenW (str);
     GetTextExtentPoint32W (dis->hDC, str, len, &txtsize);
@@ -1537,12 +1534,11 @@ static LRESULT COMBOEX_Enable (COMBOEX_INFO *infoPtr, BOOL enable)
 
 static LRESULT COMBOEX_MeasureItem (COMBOEX_INFO const *infoPtr, MEASUREITEMSTRUCT *mis)
 {
-    static const WCHAR strW[] = { 'W', 0 };
     SIZE mysize;
     HDC hdc;
 
     hdc = GetDC (0);
-    GetTextExtentPointW (hdc, strW, 1, &mysize);
+    GetTextExtentPointW (hdc, L"W", 1, &mysize);
     ReleaseDC (0, hdc);
     mis->itemHeight = mysize.cy + CBE_EXTRA;
 

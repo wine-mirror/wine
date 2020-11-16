@@ -232,7 +232,7 @@ typedef enum
 #define GETHOTIMAGELIST(infoPtr, id) TOOLBAR_GetImageList(infoPtr->himlHot, infoPtr->cimlHot, id)
 #define GETDISIMAGELIST(infoPtr, id) TOOLBAR_GetImageList(infoPtr->himlDis, infoPtr->cimlDis, id)
 
-static const WCHAR themeClass[] = { 'T','o','o','l','b','a','r',0 };
+static const WCHAR themeClass[] = L"Toolbar";
 
 static BOOL TOOLBAR_GetButtonInfo(const TOOLBAR_INFO *infoPtr, NMTOOLBARW *nmtb);
 static BOOL TOOLBAR_IsButtonRemovable(const TOOLBAR_INFO *infoPtr, int iItem, const CUSTOMBUTTON *btnInfo);

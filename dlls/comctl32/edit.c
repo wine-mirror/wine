@@ -3031,19 +3031,16 @@ static LRESULT EDIT_WM_Char(EDITSTATE *es, WCHAR c)
 			if (es->style & ES_READONLY) {
 				EDIT_MoveHome(es, FALSE, FALSE);
 				EDIT_MoveDown_ML(es, FALSE);
-			} else {
-				static const WCHAR cr_lfW[] = {'\r','\n'};
-				EDIT_EM_ReplaceSel(es, TRUE, cr_lfW, 2, TRUE, TRUE);
-			}
+			} else
+				EDIT_EM_ReplaceSel(es, TRUE, L"\r\n", 2, TRUE, TRUE);
 		}
 		break;
 	case '\t':
 		if ((es->style & ES_MULTILINE) && !(es->style & ES_READONLY))
 		{
-			static const WCHAR tabW[] = {'\t'};
                         if (EDIT_IsInsideDialog(es))
                             break;
-			EDIT_EM_ReplaceSel(es, TRUE, tabW, 1, TRUE, TRUE);
+			EDIT_EM_ReplaceSel(es, TRUE, L"\t", 1, TRUE, TRUE);
 		}
 		break;
 	case VK_BACK:

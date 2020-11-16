@@ -200,7 +200,7 @@ typedef struct _TREEITEM    /* HTREEITEM is a _TREEINFO *. */
 #define GETTXTCOLOR(x)  ((x) == CLR_NONE    ? comctl32_color.clrWindowText : (x))
 #define GETINSCOLOR(x)  ((x) == CLR_DEFAULT ? comctl32_color.clrBtnText    : (x))
 
-static const WCHAR themeClass[] = { 'T','r','e','e','v','i','e','w',0 };
+static const WCHAR themeClass[] = L"Treeview";
 
 
 typedef VOID (*TREEVIEW_ItemEnumFunc)(TREEVIEW_INFO *, TREEVIEW_ITEM *,LPVOID);

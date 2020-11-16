@@ -145,7 +145,6 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
 {
     unsigned int size, title_size;
     static const WORD fontsize = 0x7fff;
-    static const WCHAR emptyW[] = { 0 };
     const WCHAR *titleW = NULL;
     DLGTEMPLATE *template;
     WCHAR pathW[MAX_PATH];
@@ -162,7 +161,7 @@ static DLGTEMPLATE *create_taskdialog_template(const TASKDIALOGCONFIG *taskconfi
     else
         titleW = taskconfig->pszWindowTitle;
     if (!titleW)
-        titleW = emptyW;
+        titleW = L"";
     title_size = (lstrlenW(titleW) + 1) * sizeof(WCHAR);
 
     size = sizeof(DLGTEMPLATE) + 2 * sizeof(WORD);
@@ -1205,7 +1204,7 @@ static void taskdialog_destroy(struct taskdialog_info *dialog_info)
 
 static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    static const WCHAR taskdialog_info_propnameW[] = {'T','a','s','k','D','i','a','l','o','g','I','n','f','o',0};
+    static const WCHAR taskdialog_info_propnameW[] = L"TaskDialogInfo";
     struct taskdialog_info *dialog_info;
     LRESULT result;
 

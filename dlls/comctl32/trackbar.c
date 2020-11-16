@@ -97,7 +97,7 @@ typedef struct
 #define TIC_SELECTIONMARKMIN    0x100
 #define TIC_SELECTIONMARK       (TIC_SELECTIONMARKMAX | TIC_SELECTIONMARKMIN)
 
-static const WCHAR themeClass[] = { 'T','r','a','c','k','b','a','r',0 };
+static const WCHAR themeClass[] = L"Trackbar";
 
 static inline int 
 notify_customdraw (const TRACKBAR_INFO *infoPtr, NMCUSTOMDRAW *pnmcd, int stage)
@@ -851,7 +851,6 @@ static void
 TRACKBAR_UpdateToolTip (const TRACKBAR_INFO *infoPtr)
 {
     WCHAR buf[80];
-    static const WCHAR fmt[] = { '%', 'l', 'd', 0 };
     TTTOOLINFOW ti;
     POINT pt;
     RECT rcClient;
@@ -864,7 +863,7 @@ TRACKBAR_UpdateToolTip (const TRACKBAR_INFO *infoPtr)
     ti.hwnd   = infoPtr->hwndSelf;
     ti.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
 
-    wsprintfW (buf, fmt, infoPtr->lPos);
+    wsprintfW (buf, L"%ld", infoPtr->lPos);
     ti.lpszText = buf;
     SendMessageW (infoPtr->hwndToolTip, TTM_UPDATETIPTEXTW, 0, (LPARAM)&ti);
 

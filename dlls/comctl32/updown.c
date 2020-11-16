@@ -306,8 +306,6 @@ static BOOL UPDOWN_GetBuddyInt (UPDOWN_INFO *infoPtr)
  */
 static BOOL UPDOWN_SetBuddyInt (const UPDOWN_INFO *infoPtr)
 {
-    static const WCHAR fmt_hex[] = { '0', 'x', '%', '0', '4', 'X', 0 };
-    static const WCHAR fmt_dec_oct[] = { '%', 'd', '\0' };
     const WCHAR *fmt;
     WCHAR txt[20], txt_old[20] = { 0 };
     int len;
@@ -323,7 +321,7 @@ static BOOL UPDOWN_SetBuddyInt (const UPDOWN_INFO *infoPtr)
     }
 
     /* Regular window, so set caption to the number */
-    fmt = (infoPtr->Base == 16) ? fmt_hex : fmt_dec_oct;
+    fmt = (infoPtr->Base == 16) ? L"0x%04X" : L"%d";
     len = wsprintfW(txt, fmt, infoPtr->CurVal);
 
 
@@ -892,7 +890,6 @@ static void UPDOWN_HandleMouseEvent (UPDOWN_INFO *infoPtr, UINT msg, INT x, INT 
 static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UPDOWN_INFO *infoPtr = UPDOWN_GetInfoPtr (hwnd);
-    static const WCHAR themeClass[] = {'S','p','i','n',0};
     HTHEME theme;
 
     TRACE("hwnd=%p msg=%04x wparam=%08lx lparam=%08lx\n", hwnd, message, wParam, lParam);
@@ -932,7 +929,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    if (infoPtr->dwStyle & UDS_AUTOBUDDY)
 		UPDOWN_SetBuddy (infoPtr, GetWindow (hwnd, GW_HWNDPREV));
 
-	    OpenThemeData (hwnd, themeClass);
+	    OpenThemeData (hwnd, L"Spin");
 
 	    TRACE("UpDown Ctrl creation, hwnd=%p\n", hwnd);
 	    }
@@ -968,7 +965,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
         case WM_THEMECHANGED:
             theme = GetWindowTheme (hwnd);
             CloseThemeData (theme);
-            OpenThemeData (hwnd, themeClass);
+            OpenThemeData (hwnd, L"Spin");
             InvalidateRect (hwnd, NULL, FALSE);
             break;
 

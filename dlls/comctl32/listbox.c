@@ -1690,8 +1690,7 @@ static LRESULT LISTBOX_InsertString( LB_DESCR *descr, INT index, LPCWSTR str )
 
     if (HAS_STRINGS(descr))
     {
-        static const WCHAR empty_stringW[] = { 0 };
-        if (!str) str = empty_stringW;
+        if (!str) str = L"";
         if (!(new_str = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(str) + 1) * sizeof(WCHAR) )))
         {
             SEND_NOTIFICATION( descr, LBN_ERRSPACE );
@@ -1881,16 +1880,14 @@ static LRESULT LISTBOX_Directory( LB_DESCR *descr, UINT attrib,
                 WCHAR buffer[270];
                 if (entry.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
                 {
-                    static const WCHAR bracketW[]  = { ']',0 };
-                    static const WCHAR dotW[] = { '.',0 };
                     if (!(attrib & DDL_DIRECTORY) ||
-                        !lstrcmpW( entry.cFileName, dotW )) continue;
+                        !lstrcmpW( entry.cFileName, L"." )) continue;
                     buffer[0] = '[';
                     if (!long_names && entry.cAlternateFileName[0])
                         lstrcpyW( buffer + 1, entry.cAlternateFileName );
                     else
                         lstrcpyW( buffer + 1, entry.cFileName );
-                    lstrcatW(buffer, bracketW);
+                    lstrcatW(buffer, L"]");
                 }
                 else  /* not a directory */
                 {
@@ -3164,7 +3161,6 @@ void LISTBOX_Register(void)
 
 void COMBOLBOX_Register(void)
 {
-    static const WCHAR combolboxW[] = {'C','o','m','b','o','L','B','o','x',0};
     WNDCLASSW wndClass;
 
     memset(&wndClass, 0, sizeof(wndClass));
@@ -3174,6 +3170,6 @@ void COMBOLBOX_Register(void)
     wndClass.cbWndExtra = sizeof(LB_DESCR *);
     wndClass.hCursor = LoadCursorW(0, (LPWSTR)IDC_ARROW);
     wndClass.hbrBackground = NULL;
-    wndClass.lpszClassName = combolboxW;
+    wndClass.lpszClassName = L"ComboLBox";
     RegisterClassW(&wndClass);
 }

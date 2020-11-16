@@ -40,7 +40,7 @@ LRESULT CALLBACK THEMING_DialogSubclassProc (HWND hWnd, UINT msg,
                                              ULONG_PTR dwRefData)
 {
     HTHEME theme = GetWindowTheme ( hWnd );
-    static const WCHAR themeClass[] = { 'W','i','n','d','o','w',0 };
+    static const WCHAR themeClass[] = L"Window";
     BOOL themingActive = IsThemeDialogTextureEnabled (hWnd);
     BOOL doTheming = themingActive && (theme != NULL);
     LRESULT result;

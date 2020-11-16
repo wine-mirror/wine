@@ -529,7 +529,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
                                          WPARAM wParam, LPARAM lParam)
 {
     PROGRESS_INFO *infoPtr;
-    static const WCHAR themeClass[] = {'P','r','o','g','r','e','s','s',0};
+    static const WCHAR themeClass[] = L"Progress";
     HTHEME theme;
 
     TRACE("hwnd=%p msg=%04x wparam=%lx lParam=%lx\n", hwnd, message, wParam, lParam);

@@ -126,7 +126,7 @@ extern int MONTHCAL_CalculateDayOfWeek(SYSTEMTIME *date, BOOL inplace);
 
 static BOOL DATETIME_SendSimpleNotify (const DATETIME_INFO *infoPtr, UINT code);
 static BOOL DATETIME_SendDateTimeChangeNotify (const DATETIME_INFO *infoPtr);
-static const WCHAR allowedformatchars[] = {'d', 'h', 'H', 'm', 'M', 's', 't', 'y', 'X', 0};
+static const WCHAR allowedformatchars[] = L"dhHmMstyX";
 static const int maxrepetition [] = {4,2,2,2,4,2,2,4,-1};
 
 /* valid date limits */

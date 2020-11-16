@@ -93,9 +93,7 @@ static const WORD wPattern55AA[] =
     0x5555, 0xaaaa, 0x5555, 0xaaaa
 };
 
-static const WCHAR strCC32SubclassInfo[] = {
-    'C','C','3','2','S','u','b','c','l','a','s','s','I','n','f','o',0
-};
+static const WCHAR strCC32SubclassInfo[] = L"CC32SubclassInfo";
 
 static void unregister_versioned_classes(void)
 {
@@ -1738,7 +1736,7 @@ HRESULT WINAPI LoadIconMetric(HINSTANCE hinst, const WCHAR *name, int size, HICO
     return LoadIconWithScaleDown(hinst, name, cx, cy, icon);
 }
 
-static const WCHAR strMRUList[] = { 'M','R','U','L','i','s','t',0 };
+static const WCHAR strMRUList[] = L"MRUList";
 
 /**************************************************************************
  * Alloc [COMCTL32.71]
