@@ -28,20 +28,6 @@ TYPELIB typelib;
 static const WCHAR wszTypeLib[] = { 'T','Y','P','E','L','I','B','\0' };
 
 static const WCHAR wszFailed[] = { '<','f','a','i','l','e','d','>','\0' };
-static const WCHAR wszSpace[] = { ' ','\0' };
-static const WCHAR wszAsterix[] = { '*','\0' };
-static const WCHAR wszComa[] = { ',','\0' };
-static const WCHAR wszEquals[] = { '=','\0' };
-static const WCHAR wszSemicolon[] = { ';','\0' };
-static const WCHAR wszNewLine[] = { '\n','\0' };
-static const WCHAR wszOpenBrackets1[] = { '[','\0' };
-static const WCHAR wszCloseBrackets1[] = { ']','\0' };
-static const WCHAR wszOpenBrackets2[] = { '(','\0' };
-static const WCHAR wszCloseBrackets2[] = { ')','\0' };
-static const WCHAR wszOpenBrackets3[] = { '{','\0' };
-static const WCHAR wszCloseBrackets3[] = { '}','\0' };
-static const WCHAR wszInvertedComa[] = { '"','\0' };
-static const WCHAR wszColon[] = { ':','\0' };
 
 static const WCHAR wszUUID[] = { 'u','u','i','d','\0' };
 static const WCHAR wszOdl[] = { 'o','d','l','\0' };
@@ -214,10 +200,10 @@ static void AddToTLDataStrWithTabsW(TYPELIB_DATA *pTLData, WCHAR *wszSource)
     if(!lineLen) return;
     while(*pSourcePos)
     {
-        if(*pSourcePos == *wszNewLine) newLinesNo++;
+        if(*pSourcePos == L'\n') newLinesNo++;
         pSourcePos += 1;
     }
-    if(*(pSourcePos - 1) != *wszNewLine) newLinesNo++;
+    if(*(pSourcePos - 1) != L'\n') newLinesNo++;
 
     pTLData->idl = HeapReAlloc(GetProcessHeap(), 0, pTLData->idl,
             sizeof(WCHAR)*(pTLData->idlLen+lineLen+4*newLinesNo+1));
@@ -226,7 +212,7 @@ static void AddToTLDataStrWithTabsW(TYPELIB_DATA *pTLData, WCHAR *wszSource)
     pSourceBeg = wszSource;
     while(newLinesNo)
     {
-        if(*pSourcePos != *wszNewLine && *pSourcePos)
+        if(*pSourcePos != L'\n' && *pSourcePos)
         {
             pSourcePos += 1;
             continue;
@@ -242,10 +228,10 @@ static void AddToTLDataStrWithTabsW(TYPELIB_DATA *pTLData, WCHAR *wszSource)
         }
         else lineLen = lstrlenW(pSourceBeg);
 
-        pTLData->idl[pTLData->idlLen] = *wszSpace;
-        pTLData->idl[pTLData->idlLen+1] = *wszSpace;
-        pTLData->idl[pTLData->idlLen+2] = *wszSpace;
-        pTLData->idl[pTLData->idlLen+3] = *wszSpace;
+        pTLData->idl[pTLData->idlLen] = L' ';
+        pTLData->idl[pTLData->idlLen+1] = L' ';
+        pTLData->idl[pTLData->idlLen+2] = L' ';
+        pTLData->idl[pTLData->idlLen+3] = L' ';
         memcpy(&pTLData->idl[pTLData->idlLen+4], pSourceBeg, sizeof(WCHAR)*lineLen);
         pTLData->idlLen += lineLen + 4;
         pTLData->idl[pTLData->idlLen] = '\0';
@@ -269,7 +255,7 @@ static TYPELIB_DATA *InitializeTLData(void)
 static void AddSpaces(TYPELIB_DATA *pTLData, int tabSize)
 {
     for(; tabSize>0; tabSize--)
-        AddToTLDataStrW(pTLData, wszSpace);
+        AddToTLDataStrW(pTLData, L" ");
 }
 
 static void AddChildrenData(HTREEITEM hParent, TYPELIB_DATA *pData)
@@ -341,13 +327,13 @@ static void CreateTypeInfo(WCHAR *wszAddTo, WCHAR *wszAddAfter, TYPEDESC tdesc, 
         break;
 	case VT_SAFEARRAY:
 	AddToStrW(wszAddTo, wszVT_SAFEARRAY);
-	AddToStrW(wszAddTo, wszOpenBrackets2);
+        AddToStrW(wszAddTo, L"(");
         CreateTypeInfo(wszAddTo, wszAddAfter, *U(tdesc).lptdesc, pTypeInfo);
-        AddToStrW(wszAddTo, wszCloseBrackets2);
+        AddToStrW(wszAddTo, L")");
 	break;
         case VT_PTR:
         CreateTypeInfo(wszAddTo, wszAddAfter, *U(tdesc).lptdesc, pTypeInfo);
-        AddToStrW(wszAddTo, wszAsterix);
+        AddToStrW(wszAddTo, L"*");
         break;
         case VT_USERDEFINED:
         hRes = ITypeInfo_GetRefTypeInfo(pTypeInfo,
@@ -396,33 +382,30 @@ static int EnumVars(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
         if(pVarDesc->memid < MIN_VAR_ID)
         {
 
-            AddToTLDataStrW(tld, wszOpenBrackets1);
+            AddToTLDataStrW(tld, L"[");
             AddToTLDataStrW(tld, wszId);
-            AddToTLDataStrW(tld, wszOpenBrackets2);
+            AddToTLDataStrW(tld, L"(");
             wsprintfW(wszText, wszFormat, pVarDesc->memid);
             AddToTLDataStrW(tld, wszText);
             memset(wszText, 0, sizeof(wszText));
-            AddToTLDataStrW(tld, wszCloseBrackets2);
+            AddToTLDataStrW(tld, L")");
 
             if(pVarDesc->wVarFlags & VARFLAG_FREADONLY)
             {
-                AddToTLDataStrW(tld, wszComa);
-                AddToTLDataStrW(tld, wszSpace);
+                AddToTLDataStrW(tld, L", ");
                 AddToTLDataStrW(tld, wszReadOnly);
             }
-            AddToTLDataStrW(tld, wszCloseBrackets1);
-            AddToTLDataStrW(tld, wszNewLine);
+            AddToTLDataStrW(tld, L"]\n");
         }
 
         memset(wszText, 0, sizeof(wszText));
         memset(wszAfter, 0, sizeof(wszAfter));
         CreateTypeInfo(wszText, wszAfter, pVarDesc->elemdescVar.tdesc, pTypeInfo);
-        AddToStrW(wszText, wszSpace);
+        AddToStrW(wszText, L" ");
         if (bstrName) AddToStrW(wszText, bstrName);
         AddToStrW(wszText, wszAfter);
         AddToTLDataStrW(tld, wszText);
-        AddToTLDataStrW(tld, wszSemicolon);
-        AddToTLDataStrW(tld, wszNewLine);
+        AddToTLDataStrW(tld, L";\n");
 
         SendMessageW(typelib.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
         SysFreeString(bstrName);
@@ -468,23 +451,21 @@ static int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
             if (VariantChangeType(&var, U(*pVarDesc).lpvarValue, 0, VT_BSTR) == S_OK)
             {
                 AddToStrW(wszText, wszConst);
-                AddToStrW(wszText, wszSpace);
-                AddToStrW(wszAfter, wszSpace);
-                AddToStrW(wszAfter, wszEquals);
-                AddToStrW(wszAfter, wszSpace);
+                AddToStrW(wszText, L" ");
+                AddToStrW(wszAfter, L" = ");
                 AddToStrW(wszAfter, V_BSTR(&var));
             }
         }
 
         CreateTypeInfo(wszText, wszAfter, pVarDesc->elemdescVar.tdesc, pTypeInfo);
-        AddToStrW(wszText, wszSpace);
+        AddToStrW(wszText, L" ");
         AddToStrW(wszText, bstrName);
         AddToStrW(wszText, wszAfter);
         AddToTLDataStrW(tld, bstrName);
         AddToTLDataStrW(tld, wszAfter);
 	if (i<cVars-1)
-            AddToTLDataStrW(tld, wszComa);
-        AddToTLDataStrW(tld, wszNewLine);
+            AddToTLDataStrW(tld, L",");
+        AddToTLDataStrW(tld, L"\n");
 
         SendMessageW(typelib.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
         SysFreeString(bstrName);
@@ -537,13 +518,13 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
         bFirst = TRUE;
         if(pFuncDesc->memid < MIN_FUNC_ID || pTypeAttr->wTypeFlags & TYPEFLAG_FDUAL)
         {
-            AddToTLDataStrW(tld, wszOpenBrackets1);
+            AddToTLDataStrW(tld, L"[");
             bFirst = FALSE;
             AddToTLDataStrW(tld, wszId);
-            AddToTLDataStrW(tld, wszOpenBrackets2);
+            AddToTLDataStrW(tld, L"(");
             wsprintfW(wszText, wszFormat, pFuncDesc->memid);
             AddToTLDataStrW(tld, wszText);
-            AddToTLDataStrW(tld, wszCloseBrackets2);
+            AddToTLDataStrW(tld, L")");
             memset(wszText, 0, sizeof(wszText));
         }
 
@@ -551,32 +532,20 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
         switch(pFuncDesc->invkind)
         {
             case INVOKE_PROPERTYGET:
-                if(bFirst) AddToTLDataStrW(tld, wszOpenBrackets1);
-                else
-                {
-                    AddToTLDataStrW(tld, wszComa);
-                    AddToTLDataStrW(tld, wszSpace);
-                }
+                if(bFirst) AddToTLDataStrW(tld, L"[");
+                else AddToTLDataStrW(tld, L", ");
                 bFirst = FALSE;
                 AddToTLDataStrW(tld, wszPropGet);
                 break;
             case INVOKE_PROPERTYPUT:
-                if(bFirst) AddToTLDataStrW(tld, wszOpenBrackets1);
-                else
-                {
-                    AddToTLDataStrW(tld, wszComa);
-                    AddToTLDataStrW(tld, wszSpace);
-                }
+                if(bFirst) AddToTLDataStrW(tld, L"[");
+                else AddToTLDataStrW(tld, L", ");
                 bFirst = FALSE;
                 AddToTLDataStrW(tld, wszPropPut);
                 break;
             case INVOKE_PROPERTYPUTREF:
-                if(bFirst) AddToTLDataStrW(tld, wszOpenBrackets1);
-                else
-                {
-                    AddToTLDataStrW(tld, wszComa);
-                    AddToTLDataStrW(tld, wszSpace);
-                }
+                if(bFirst) AddToTLDataStrW(tld, L"[");
+                else AddToTLDataStrW(tld, L", ");
                 bFirst = FALSE;
                 AddToTLDataStrW(tld, wszPropPutRef);
                 break;
@@ -584,25 +553,15 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
         }
         if(SysStringLen(bstrHelpString))
         {
-            if(bFirst) AddToTLDataStrW(tld, wszOpenBrackets1);
-            else
-            {
-                AddToTLDataStrW(tld, wszComa);
-                AddToTLDataStrW(tld, wszSpace);
-            }
+            if(bFirst) AddToTLDataStrW(tld, L"[");
+            else AddToTLDataStrW(tld, L", ");
             bFirst = FALSE;
             AddToTLDataStrW(tld, wszHelpstring);
-            AddToTLDataStrW(tld, wszOpenBrackets2);
-            AddToTLDataStrW(tld, wszInvertedComa);
+            AddToTLDataStrW(tld, L"(\"");
             AddToTLDataStrW(tld, bstrHelpString);
-            AddToTLDataStrW(tld, wszInvertedComa);
-            AddToTLDataStrW(tld, wszCloseBrackets2);
+            AddToTLDataStrW(tld, L"\")");
         }
-        if(!bFirst)
-        {
-            AddToTLDataStrW(tld, wszCloseBrackets1);
-            AddToTLDataStrW(tld, wszNewLine);
-        }
+        if(!bFirst) AddToTLDataStrW(tld, L"]\n");
 
         if(pTypeAttr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION) {
             AddToTLDataStrW(tld, wszVT_HRESULT);
@@ -623,33 +582,32 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
         }
         SysFreeString(bstrParamNames[0]);
 
-        AddToTLDataStrW(tld, wszSpace);
+        AddToTLDataStrW(tld, L" ");
         if(pFuncDesc->memid >= MIN_FUNC_ID)
         {
             AddToTLDataStrW(tld, wszStdCall);
-            AddToTLDataStrW(tld, wszSpace);
+            AddToTLDataStrW(tld, L" ");
         }
         if (bstrName) AddToTLDataStrW(tld, bstrName);
-        AddToTLDataStrW(tld, wszOpenBrackets2);
+        AddToTLDataStrW(tld, L"(");
 
         for(j=0; j<pFuncDesc->cParams; j++)
         {
-            if(j != 0) AddToTLDataStrW(tld, wszComa);
+            if(j != 0) AddToTLDataStrW(tld, L",");
             if(pFuncDesc->cParams != 1)
             {
-                AddToTLDataStrW(tld, wszNewLine);
+                AddToTLDataStrW(tld, L"\n");
                 AddSpaces(tld, TAB_SIZE);
             }
             bFirst = TRUE;
 #define ENUM_PARAM_FLAG(x)\
             if(U(pFuncDesc->lprgelemdescParam[j]).paramdesc.wParamFlags & x) \
             {\
-                if(bFirst) AddToTLDataStrW(tld,\
-                        wszOpenBrackets1);\
+                if(bFirst)\
+                    AddToTLDataStrW(tld, L"[");\
                 else\
                 {\
-                    AddToTLDataStrW(tld, wszComa);\
-                    AddToTLDataStrW(tld, wszSpace);\
+                    AddToTLDataStrW(tld, L", ");\
                 }\
                 bFirst = FALSE;\
                 AddToTLDataStrW(tld, wsz##x);\
@@ -665,31 +623,22 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
             {
 		VARIANT var, *param=&U(pFuncDesc->lprgelemdescParam[j]).paramdesc.pparamdescex->varDefaultValue;
 		VariantInit(&var);
-                if(bFirst) AddToTLDataStrW(tld,
-                        wszOpenBrackets1);
-                else
-                {
-                    AddToTLDataStrW(tld, wszComa);
-                    AddToTLDataStrW(tld, wszSpace);
-                }
+                if(bFirst) AddToTLDataStrW(tld, L"[");
+                else AddToTLDataStrW(tld, L", ");
                 bFirst = FALSE;
                 AddToTLDataStrW(tld, wszDefaultValue);
-                AddToTLDataStrW(tld, wszOpenBrackets2);
+                AddToTLDataStrW(tld, L"(");
 		if (V_VT(param) == VT_BSTR)
 		{
-		    AddToTLDataStrW(tld, wszInvertedComa);
+                    AddToTLDataStrW(tld, L"\"");
 		    AddToTLDataStrW(tld, V_BSTR(param));
-		    AddToTLDataStrW(tld, wszInvertedComa);
+                    AddToTLDataStrW(tld, L"\"");
 		} else if (VariantChangeType(&var, param, 0, VT_BSTR) == S_OK)
 		    AddToTLDataStrW(tld, V_BSTR(&var));
-                AddToTLDataStrW(tld, wszCloseBrackets2);
+                AddToTLDataStrW(tld, L")");
             }
 
-            if(!bFirst)
-            {
-                AddToTLDataStrW(tld, wszCloseBrackets1);
-                AddToTLDataStrW(tld, wszSpace);
-            }
+            if(!bFirst) AddToTLDataStrW(tld, L"] ");
 
             memset(wszText, 0, sizeof(wszText));
             memset(wszAfter, 0, sizeof(wszAfter));
@@ -697,7 +646,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
                     pTypeInfo);
             AddToTLDataStrW(tld, wszText);
             AddToTLDataStrW(tld, wszAfter);
-            AddToTLDataStrW(tld, wszSpace);
+            AddToTLDataStrW(tld, L" ");
             if (j+1 < namesNo) {
                 if (bstrParamNames[j+1])
                 {
@@ -708,9 +657,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
                 AddToTLDataStrW(tld, szRhs);
             }
         }
-        AddToTLDataStrW(tld, wszCloseBrackets2);
-        AddToTLDataStrW(tld, wszSemicolon);
-        AddToTLDataStrW(tld, wszNewLine);
+        AddToTLDataStrW(tld, L");\n");
 
         SendMessageW(typelib.hTree, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
         HeapFree(GetProcessHeap(), 0, bstrParamNames);
@@ -821,12 +768,11 @@ static void EnumCoclassImplTypes(ITypeInfo *pTypeInfo,
 #define ENUM_IMPLTYPEFLAG(x)\
         if(flags & x) \
         {\
-            if(bFirst) AddToTLDataStrW(pTLData,\
-                    wszOpenBrackets1);\
+            if(bFirst)\
+                AddToTLDataStrW(pTLData, L"[");\
             else\
             {\
-                AddToTLDataStrW(pTLData, wszComa);\
-                AddToTLDataStrW(pTLData, wszSpace);\
+                AddToTLDataStrW(pTLData, L", ");\
             }\
             bFirst = FALSE;\
             AddToTLDataStrW(pTLData, wsz##x);\
@@ -835,21 +781,17 @@ static void EnumCoclassImplTypes(ITypeInfo *pTypeInfo,
         ENUM_IMPLTYPEFLAG(IMPLTYPEFLAG_FSOURCE);
         ENUM_IMPLTYPEFLAG(IMPLTYPEFLAG_FRESTRICTED);
         if(!bFirst)
-        {
-            AddToTLDataStrW(pTLData, wszCloseBrackets1);
-            AddToTLDataStrW(pTLData, wszSpace);
-        }
+            AddToTLDataStrW(pTLData, L"] ");
 
         if(pTypeAttr->typekind == TKIND_INTERFACE ||
                 (pTypeAttr->wTypeFlags & TYPEFLAG_FDUAL))
             AddToTLDataStrW(pTLData, wszTKIND_INTERFACE);
         else if(pTypeAttr->typekind == TKIND_DISPATCH)
             AddToTLDataStrW(pTLData, wszTKIND_DISPATCH);
-        AddToTLDataStrW(pTLData, wszSpace);
+        AddToTLDataStrW(pTLData, L" ");
 
         AddToTLDataStrW(pTLData, bstrName);
-        AddToTLDataStrW(pTLData, wszSemicolon);
-        AddToTLDataStrW(pTLData, wszNewLine);
+        AddToTLDataStrW(pTLData, L";\n");
 
         SysFreeString(bstrName);
         ITypeInfo_ReleaseTypeAttr(pRefTypeInfo, pTypeAttr);
@@ -871,7 +813,7 @@ static void AddIdlData(HTREEITEM hCur, TYPELIB_DATA *pTLData)
         tvi.hItem = hCur;
         SendMessageW(typelib.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
         if(!((TYPELIB_DATA*)(tvi.lParam))->bHide) {
-            AddToTLDataStrW(pTLData, wszNewLine);
+            AddToTLDataStrW(pTLData, L"\n");
             AddToTLDataStrWithTabsW(pTLData, ((TYPELIB_DATA*)(tvi.lParam))->idl);
         }
         hCur = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
@@ -893,7 +835,7 @@ static void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
             TVGN_CHILD, (LPARAM)hFirst);
 
     AddToTLDataStrWithTabsW(pTLData, wszPredefinition);
-    AddToTLDataStrW(pTLData, wszNewLine);
+    AddToTLDataStrW(pTLData, L"\n");
 
     hCur = hFirst;
     memset(&tvi, 0, sizeof(TVITEMW));
@@ -907,9 +849,9 @@ static void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
         if(((TYPELIB_DATA*)(tvi.lParam))->bPredefine &&
                 !((TYPELIB_DATA*)(tvi.lParam))->bHide)
         {
-            AddToStrW(wszText, wszSemicolon);
+            AddToStrW(wszText, L";");
             AddToTLDataStrWithTabsW(pTLData, wszText);
-            AddToTLDataStrW(pTLData, wszNewLine);
+            AddToTLDataStrW(pTLData, L"\n");
         }
         hCur = (HTREEITEM)SendMessageW(typelib.hTree, TVM_GETNEXTITEM,
                 TVGN_NEXT, (LPARAM)hCur);
@@ -951,51 +893,44 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
         = { 'r','e','v','e','r','s','e','b','i','n','d','\0' };
     const WCHAR wszTYPEFLAG_FPROXY[] = { 'p','r','o','x','y','\0' };
 
-    AddToTLDataStrW(pTLData, wszOpenBrackets1);
-    AddToTLDataStrW(pTLData, wszNewLine);
+    AddToTLDataStrW(pTLData, L"[\n");
     if(pTypeAttr->typekind != TKIND_DISPATCH)
     {
         AddSpaces(pTLData, TAB_SIZE);
         AddToTLDataStrW(pTLData, wszOdl);
-        AddToTLDataStrW(pTLData, wszComa);
-        AddToTLDataStrW(pTLData, wszNewLine);
+        AddToTLDataStrW(pTLData, L",\n");
     }
     AddSpaces(pTLData, TAB_SIZE);
     AddToTLDataStrW(pTLData, wszUUID);
-    AddToTLDataStrW(pTLData, wszOpenBrackets2);
+    AddToTLDataStrW(pTLData, L"(");
     StringFromGUID2(&(pTypeAttr->guid), wszGuid, MAX_LOAD_STRING);
     wszGuid[lstrlenW(wszGuid)-1] = '\0';
     AddToTLDataStrW(pTLData, &wszGuid[1]);
-    AddToTLDataStrW(pTLData, wszCloseBrackets2);
+    AddToTLDataStrW(pTLData, L")");
     if(wszHelpString)
     {
-        AddToTLDataStrW(pTLData, wszComa);
-        AddToTLDataStrW(pTLData, wszNewLine);
+        AddToTLDataStrW(pTLData, L",\n");
         AddSpaces(pTLData, TAB_SIZE);
         AddToTLDataStrW(pTLData, wszHelpstring);
-        AddToTLDataStrW(pTLData, wszOpenBrackets2);
-        AddToTLDataStrW(pTLData, wszInvertedComa);
+        AddToTLDataStrW(pTLData, L"(\"");
         AddToTLDataStrW(pTLData, wszHelpString);
-        AddToTLDataStrW(pTLData, wszInvertedComa);
-        AddToTLDataStrW(pTLData, wszCloseBrackets2);
+        AddToTLDataStrW(pTLData, L"\")");
     }
     if(ulHelpContext)
     {
-        AddToTLDataStrW(pTLData, wszComa);
-        AddToTLDataStrW(pTLData, wszNewLine);
+        AddToTLDataStrW(pTLData, L",\n");
         AddSpaces(pTLData, TAB_SIZE);
         AddToTLDataStrW(pTLData, wszHelpcontext);
-        AddToTLDataStrW(pTLData, wszOpenBrackets2);
+        AddToTLDataStrW(pTLData, L"(");
         wsprintfW(wszHelpContext, wszFormat, ulHelpContext);
         AddToTLDataStrW(pTLData, wszHelpContext);
-        AddToTLDataStrW(pTLData, wszCloseBrackets2);
+        AddToTLDataStrW(pTLData, L")");
     }
     if(pTypeAttr->wTypeFlags)
     {
 #define ENUM_FLAGS(x) if(pTypeAttr->wTypeFlags & x)\
         {\
-            AddToTLDataStrW(pTLData, wszComa);\
-            AddToTLDataStrW(pTLData, wszNewLine);\
+            AddToTLDataStrW(pTLData, L",\n");\
             AddSpaces(pTLData, TAB_SIZE);\
             AddToTLDataStrW(pTLData, wsz##x);\
         }
@@ -1014,17 +949,14 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
         ENUM_FLAGS(TYPEFLAG_FREVERSEBIND);
         ENUM_FLAGS(TYPEFLAG_FPROXY);
     }
-    AddToTLDataStrW(pTLData, wszNewLine);
-    AddToTLDataStrW(pTLData, wszCloseBrackets1);
-    AddToTLDataStrW(pTLData, wszNewLine);
+    AddToTLDataStrW(pTLData, L"\n]\n");
     if(pTypeAttr->typekind != TKIND_DISPATCH) AddToTLDataStrW(pTLData, wszInterface);
     else AddToTLDataStrW(pTLData, wszDispinterface);
     AddToTLDataStrW(pTLData, wszName);
-    AddToTLDataStrW(pTLData, wszSpace);
+    AddToTLDataStrW(pTLData, L" ");
     if(cImplTypes && pTypeAttr->typekind != TKIND_DISPATCH)
     {
-        AddToTLDataStrW(pTLData, wszColon);
-        AddToTLDataStrW(pTLData, wszSpace);
+        AddToTLDataStrW(pTLData, L": ");
 
         ITypeInfo_GetRefTypeOfImplType(pTypeInfo, 0, &hRefType);
         if (SUCCEEDED(ITypeInfo_GetRefTypeInfo(pTypeInfo, hRefType, &pRefTypeInfo)))
@@ -1032,7 +964,7 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
             ITypeInfo_GetDocumentation(pRefTypeInfo, MEMBERID_NIL, &bstrName,
                 NULL, NULL, NULL);
             AddToTLDataStrW(pTLData, bstrName);
-            AddToTLDataStrW(pTLData, wszSpace);
+            AddToTLDataStrW(pTLData, L" ");
 
             SysFreeString(bstrName);
             ITypeInfo_Release(pRefTypeInfo);
@@ -1040,12 +972,9 @@ static void CreateInterfaceInfo(ITypeInfo *pTypeInfo, int cImplTypes, WCHAR *wsz
         else
             AddToTLDataStrW(pTLData, wszFailed);
     }
-    AddToTLDataStrW(pTLData, wszOpenBrackets3);
-    AddToTLDataStrW(pTLData, wszNewLine);
+    AddToTLDataStrW(pTLData, L"{\n");
 
-    AddToStrW(pTLData->wszInsertAfter, wszCloseBrackets3);
-    AddToStrW(pTLData->wszInsertAfter, wszSemicolon);
-    AddToStrW(pTLData->wszInsertAfter, wszNewLine);
+    AddToStrW(pTLData->wszInsertAfter, L"};\n");
 }
 
 static void CreateTypedefHeader(ITypeInfo *pTypeInfo,
@@ -1059,31 +988,23 @@ static void CreateTypedefHeader(ITypeInfo *pTypeInfo,
     AddToTLDataStrW(pTLData, wszTypedef);
     if(memcmp(&pTypeAttr->guid, &GUID_NULL, sizeof(GUID)))
     {
-        AddToTLDataStrW(pTLData, wszOpenBrackets1);
+        AddToTLDataStrW(pTLData, L"[");
         bFirst = FALSE;
         AddToTLDataStrW(pTLData, wszUUID);
-        AddToTLDataStrW(pTLData, wszOpenBrackets2);
+        AddToTLDataStrW(pTLData, L"(");
         StringFromGUID2(&(pTypeAttr->guid), wszGuid, MAX_LOAD_STRING);
         wszGuid[lstrlenW(wszGuid)-1] = '\0';
         AddToTLDataStrW(pTLData, &wszGuid[1]);
-        AddToTLDataStrW(pTLData, wszCloseBrackets2);
+        AddToTLDataStrW(pTLData, L")");
     }
     if(pTypeAttr->typekind == TKIND_ALIAS)
     {
-        if(bFirst) AddToTLDataStrW(pTLData, wszOpenBrackets1);
-        else
-        {
-            AddToTLDataStrW(pTLData, wszComa);
-            AddToTLDataStrW(pTLData, wszSpace);
-        }
+        if(bFirst) AddToTLDataStrW(pTLData, L"[");
+        else AddToTLDataStrW(pTLData, L", ");
         bFirst = FALSE;
         AddToTLDataStrW(pTLData, wszPublic);
     }
-    if(!bFirst)
-    {
-        AddToTLDataStrW(pTLData, wszCloseBrackets1);
-        AddToTLDataStrW(pTLData, wszNewLine);
-    }
+    if(!bFirst) AddToTLDataStrW(pTLData, L"]\n");
 }
 
 static void CreateCoclassHeader(ITypeInfo *pTypeInfo,
@@ -1094,46 +1015,39 @@ static void CreateCoclassHeader(ITypeInfo *pTypeInfo,
     const WCHAR wszNoncreatable[]
         = { 'n','o','n','c','r','e','a','t','a','b','l','e','\0' };
 
-    AddToTLDataStrW(pTLData, wszOpenBrackets1);
-    AddToTLDataStrW(pTLData, wszNewLine);
+    AddToTLDataStrW(pTLData, L"[\n");
 
     AddSpaces(pTLData, TAB_SIZE);
     AddToTLDataStrW(pTLData, wszUUID);
-    AddToTLDataStrW(pTLData, wszOpenBrackets2);
+    AddToTLDataStrW(pTLData, L"(");
     StringFromGUID2(&(pTypeAttr->guid), wszGuid, MAX_LOAD_STRING);
     wszGuid[lstrlenW(wszGuid)-1] = '\0';
     AddToTLDataStrW(pTLData, &wszGuid[1]);
-    AddToTLDataStrW(pTLData, wszCloseBrackets2);
+    AddToTLDataStrW(pTLData, L")");
 
     if(SUCCEEDED(ITypeInfo_GetDocumentation(pTypeInfo, MEMBERID_NIL, NULL,
             &bstrHelpString, NULL, NULL)))
     {
         if(SysStringLen(bstrHelpString))
         {
-            AddToTLDataStrW(pTLData, wszComa);
-            AddToTLDataStrW(pTLData, wszNewLine);
+            AddToTLDataStrW(pTLData, L",\n");
             AddSpaces(pTLData, TAB_SIZE);
             AddToTLDataStrW(pTLData, wszHelpstring);
-            AddToTLDataStrW(pTLData, wszOpenBrackets2);
-            AddToTLDataStrW(pTLData, wszInvertedComa);
+            AddToTLDataStrW(pTLData, L"(\"");
             AddToTLDataStrW(pTLData, bstrHelpString);
-            AddToTLDataStrW(pTLData, wszInvertedComa);
-            AddToTLDataStrW(pTLData, wszCloseBrackets2);
+            AddToTLDataStrW(pTLData, L"\")");
         }
         SysFreeString(bstrHelpString);
     }
 
     if(!(pTypeAttr->wTypeFlags & TYPEFLAG_FCANCREATE))
     {
-        AddToTLDataStrW(pTLData, wszComa);
-        AddToTLDataStrW(pTLData, wszNewLine);
+        AddToTLDataStrW(pTLData, L",\n");
         AddSpaces(pTLData, TAB_SIZE);
         AddToTLDataStrW(pTLData, wszNoncreatable);
     }
 
-    AddToTLDataStrW(pTLData, wszNewLine);
-    AddToTLDataStrW(pTLData, wszCloseBrackets1);
-    AddToTLDataStrW(pTLData, wszNewLine);
+    AddToTLDataStrW(pTLData, L"\n]\n");
 }
 
 static int PopulateTree(void)
@@ -1215,19 +1129,14 @@ static int PopulateTree(void)
     U(tvis).item.lParam = (LPARAM) tld;
     AddToTLDataStrW(tld, wszGeneratedInfo);
     AddToTLDataStrW(tld, typelib.wszFileName);
-    AddToTLDataStrW(tld, wszNewLine);
-    AddToTLDataStrW(tld, wszNewLine);
-    AddToTLDataStrW(tld, wszOpenBrackets1);
-    AddToTLDataStrW(tld, wszNewLine);
+    AddToTLDataStrW(tld, L"\n\n[\n");
     AddSpaces(tld, TAB_SIZE);
     AddToTLDataStrW(tld, wszUUID);
-    AddToTLDataStrW(tld, wszOpenBrackets2);
+    AddToTLDataStrW(tld, L"(");
     StringFromGUID2(&(pTLibAttr->guid), wszText, MAX_LOAD_STRING);
     wszText[lstrlenW(wszText)-1] = '\0';
     AddToTLDataStrW(tld, &wszText[1]);
-    AddToTLDataStrW(tld, wszCloseBrackets2);
-    AddToTLDataStrW(tld, wszComa);
-    AddToTLDataStrW(tld, wszNewLine);
+    AddToTLDataStrW(tld, L"),\n");
     AddSpaces(tld, TAB_SIZE);
     wsprintfW(wszText, wszFormat2, pTLibAttr->wMajorVerNum, pTLibAttr->wMinorVerNum);
     AddToTLDataStrW(tld, wszText);
@@ -1235,28 +1144,20 @@ static int PopulateTree(void)
     if (bstrData)
     {
         /* helpstring is optional */
-        AddToTLDataStrW(tld, wszComa);
-        AddToTLDataStrW(tld, wszNewLine);
+        AddToTLDataStrW(tld, L",\n");
         AddSpaces(tld, TAB_SIZE);
         AddToTLDataStrW(tld, wszHelpstring);
-        AddToTLDataStrW(tld, wszOpenBrackets2);
-        AddToTLDataStrW(tld, wszInvertedComa);
+        AddToTLDataStrW(tld, L"(\"");
         AddToTLDataStrW(tld, bstrData);
-        AddToTLDataStrW(tld, wszInvertedComa);
-        AddToTLDataStrW(tld, wszCloseBrackets2);
+        AddToTLDataStrW(tld, L"\")");
     }
 
-    AddToTLDataStrW(tld, wszNewLine);
-    AddToTLDataStrW(tld, wszCloseBrackets1);
-    AddToTLDataStrW(tld, wszNewLine);
+    AddToTLDataStrW(tld, L"\n]\n");
     AddToTLDataStrW(tld, wszLibrary);
     if (bstrName) AddToTLDataStrW(tld, bstrName);
-    AddToTLDataStrW(tld, wszNewLine);
-    AddToTLDataStrW(tld, wszOpenBrackets3);
-    AddToTLDataStrW(tld, wszNewLine);
+    AddToTLDataStrW(tld, L"\n{\n");
 
-    AddToStrW(tld->wszInsertAfter, wszCloseBrackets3);
-    AddToStrW(tld->wszInsertAfter, wszSemicolon);
+    AddToStrW(tld->wszInsertAfter, L"};");
 
     wsprintfW(wszText, wszFormat, bstrName, bstrData);
     SysFreeString(bstrName);
@@ -1285,13 +1186,10 @@ static int PopulateTree(void)
 
                 CreateTypedefHeader(pTypeInfo, pTypeAttr, tld);
                 AddToTLDataStrW(tld, &wszTKIND_ENUM[lstrlenW(wszTKIND_ALIAS)]);
-                AddToTLDataStrW(tld, wszOpenBrackets3);
-                AddToTLDataStrW(tld,wszNewLine);
-                AddToStrW(tld->wszInsertAfter, wszCloseBrackets3);
-                AddToStrW(tld->wszInsertAfter, wszSpace);
+                AddToTLDataStrW(tld, L"{\n");
+                AddToStrW(tld->wszInsertAfter, L"} ");
                 AddToStrW(tld->wszInsertAfter, bstrName);
-                AddToStrW(tld->wszInsertAfter, wszSemicolon);
-                AddToStrW(tld->wszInsertAfter, wszNewLine);
+                AddToStrW(tld->wszInsertAfter, L";\n");
 
                 bInsert = FALSE;
                 hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
@@ -1303,15 +1201,11 @@ static int PopulateTree(void)
                 AddToTLDataStrW(tld, wszTKIND_RECORD);
                 AddToTLDataStrW(tld, wszTag);
                 AddToTLDataStrW(tld, bstrName);
-                AddToTLDataStrW(tld, wszSpace);
-                AddToTLDataStrW(tld, wszOpenBrackets3);
-                AddToTLDataStrW(tld, wszNewLine);
+                AddToTLDataStrW(tld, L" {\n");
 
-                AddToStrW(tld->wszInsertAfter, wszCloseBrackets3);
-                AddToStrW(tld->wszInsertAfter, wszSpace);
+                AddToStrW(tld->wszInsertAfter, L"} ");
                 AddToStrW(tld->wszInsertAfter, bstrName);
-                AddToStrW(tld->wszInsertAfter, wszSemicolon);
-                AddToStrW(tld->wszInsertAfter, wszNewLine);
+                AddToStrW(tld->wszInsertAfter, L";\n");
 
                 AddToStrW(wszText, wszTKIND_RECORD);
                 AddToStrW(wszText, bstrName);
@@ -1335,15 +1229,11 @@ static int PopulateTree(void)
                 CreateCoclassHeader(pTypeInfo, pTypeAttr, tld);
                 AddToTLDataStrW(tld, wszTKIND_COCLASS);
                 AddToTLDataStrW(tld, bstrName);
-                AddToTLDataStrW(tld, wszSpace);
-                AddToTLDataStrW(tld, wszOpenBrackets3);
-                AddToTLDataStrW(tld, wszNewLine);
+                AddToTLDataStrW(tld, L" {\n");
 
                 EnumCoclassImplTypes(pTypeInfo, pTypeAttr->cImplTypes, tld);
 
-                AddToStrW(tld->wszInsertAfter, wszCloseBrackets3);
-                AddToStrW(tld->wszInsertAfter, wszSemicolon);
-                AddToStrW(tld->wszInsertAfter, wszNewLine);
+                AddToStrW(tld->wszInsertAfter, L"};\n");
 
                 bInsert = FALSE;
                 hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
@@ -1371,8 +1261,7 @@ static int PopulateTree(void)
                 tld = InitializeTLData();
                 U(tvis).item.lParam = (LPARAM) tld;
                 AddToTLDataStrW(tld, wszProperties);
-                AddToTLDataStrW(tld, wszColon);
-                AddToTLDataStrW(tld, wszNewLine);
+                AddToTLDataStrW(tld, L":\n");
                 tvis.hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
                 EnumVars(pTypeInfo, pTypeAttr->cVars, tvis.hParent);
                 AddChildrenData(tvis.hParent, tld);
@@ -1382,8 +1271,7 @@ static int PopulateTree(void)
                 tld = InitializeTLData();
                 U(tvis).item.lParam = (LPARAM) tld;
                 AddToTLDataStrW(tld, wszMethods);
-                AddToTLDataStrW(tld, wszColon);
-                AddToTLDataStrW(tld, wszNewLine);
+                AddToTLDataStrW(tld, L":\n");
                 tvis.hParent = TreeView_InsertItemW(typelib.hTree, &tvis);
                 EnumFuncs(pTypeInfo, pTypeAttr, tvis.hParent);
                 AddChildrenData(tvis.hParent, tld);
@@ -1424,14 +1312,13 @@ static int PopulateTree(void)
             case TKIND_ALIAS:
                 AddToStrW(wszText, wszTKIND_ALIAS);
                 CreateTypeInfo(wszText, wszAfter, pTypeAttr->tdescAlias, pTypeInfo);
-                AddToStrW(wszText, wszSpace);
+                AddToStrW(wszText, L" ");
                 AddToStrW(wszText, bstrName);
                 AddToStrW(wszText, wszAfter);
 
                 CreateTypedefHeader(pTypeInfo, pTypeAttr, tld);
                 AddToTLDataStrW(tld, &wszText[lstrlenW(wszTKIND_ALIAS)]);
-                AddToTLDataStrW(tld, wszSemicolon);
-                AddToTLDataStrW(tld, wszNewLine);
+                AddToTLDataStrW(tld, L";\n");
                 break;
             default:
                 lstrcpyW(wszText, bstrName);
@@ -1484,7 +1371,7 @@ void UpdateData(HTREEITEM item)
     SendMessageW(typelib.hTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
     if(!tvi.lParam)
     {
-        SetWindowTextW(typelib.hEdit, wszSpace);
+        SetWindowTextW(typelib.hEdit, L" ");
         return;
     }
 
