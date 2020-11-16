@@ -3678,35 +3678,32 @@ LDOUBLE CDECL MSVCR120_truncl(LDOUBLE x)
 
 /*********************************************************************
  *      _dclass (MSVCR120.@)
+ *
+ * Copied from musl: src/math/__fpclassify.c
  */
 short CDECL MSVCR120__dclass(double x)
 {
-    switch (MSVCRT__fpclass(x)) {
-    case MSVCRT__FPCLASS_QNAN:
-    case MSVCRT__FPCLASS_SNAN:
-        return MSVCRT_FP_NAN;
-    case MSVCRT__FPCLASS_NINF:
-    case MSVCRT__FPCLASS_PINF:
-        return MSVCRT_FP_INFINITE;
-    case MSVCRT__FPCLASS_ND:
-    case MSVCRT__FPCLASS_PD:
-        return MSVCRT_FP_SUBNORMAL;
-    case MSVCRT__FPCLASS_NN:
-    case MSVCRT__FPCLASS_PN:
-    default:
-        return MSVCRT_FP_NORMAL;
-    case MSVCRT__FPCLASS_NZ:
-    case MSVCRT__FPCLASS_PZ:
-        return MSVCRT_FP_ZERO;
-    }
+    union { double f; UINT64 i; } u = { x };
+    int e = u.i >> 52 & 0x7ff;
+
+    if (!e) return u.i << 1 ? MSVCRT_FP_SUBNORMAL : MSVCRT_FP_ZERO;
+    if (e == 0x7ff) return (u.i << 12) ? MSVCRT_FP_NAN : MSVCRT_FP_INFINITE;
+    return MSVCRT_FP_NORMAL;
 }
 
 /*********************************************************************
  *      _fdclass (MSVCR120.@)
+ *
+ * Copied from musl: src/math/__fpclassifyf.c
  */
 short CDECL MSVCR120__fdclass(float x)
 {
-    return MSVCR120__dclass(x);
+    union { float f; UINT32 i; } u = { x };
+    int e = u.i >> 23 & 0xff;
+
+    if (!e) return u.i << 1 ? MSVCRT_FP_SUBNORMAL : MSVCRT_FP_ZERO;
+    if (e == 0xff) return u.i << 9 ? MSVCRT_FP_NAN : MSVCRT_FP_INFINITE;
+    return MSVCRT_FP_NORMAL;
 }
 
 /*********************************************************************
@@ -3730,7 +3727,7 @@ short CDECL MSVCR120__dtest(double *x)
  */
 short CDECL MSVCR120__fdtest(float *x)
 {
-    return MSVCR120__dclass(*x);
+    return MSVCR120__fdclass(*x);
 }
 
 /*********************************************************************
