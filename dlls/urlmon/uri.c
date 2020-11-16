@@ -173,7 +173,6 @@ typedef struct {
     DWORD           host_len;
     Uri_HOST_TYPE   host_type;
 
-    BOOL            has_ipv6;
     ipv6_address    ipv6_address;
 
     BOOL            has_port;
@@ -1699,7 +1698,6 @@ static BOOL parse_ipv6address(const WCHAR **ptr, parse_data *data) {
     }
 
     data->host_type = Uri_HOST_IPV6;
-    data->has_ipv6 = TRUE;
     data->ipv6_address = ip;
 
     TRACE("(%p %p): Found valid IPv6 literal %s len=%d\n", ptr, data, debugstr_wn(start, *ptr-start), (int)(*ptr-start));
