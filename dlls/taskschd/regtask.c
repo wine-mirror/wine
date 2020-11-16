@@ -357,11 +357,10 @@ HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, ITaskDefinit
     }
     else
     {
-        static const WCHAR languages[] = { 0 };
         DWORD count = 0;
         WCHAR *xml = NULL;
 
-        hr = SchRpcRetrieveTask(full_name, languages, &count, &xml);
+        hr = SchRpcRetrieveTask(full_name, L"", &count, &xml);
         if (hr != S_OK || (hr = ITaskDefinition_put_XmlText(definition, xml)) != S_OK)
         {
             heap_free(full_name);

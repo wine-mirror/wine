@@ -203,7 +203,6 @@ static HRESULT WINAPI TaskFolder_CreateFolder(ITaskFolder *iface, BSTR path, VAR
 
 WCHAR *get_full_path(const WCHAR *parent, const WCHAR *path)
 {
-    static const WCHAR bslash[] = { '\\', 0 };
     WCHAR *folder_path;
     int len = 0;
 
@@ -224,7 +223,7 @@ WCHAR *get_full_path(const WCHAR *parent, const WCHAR *path)
     {
         len = lstrlenW(folder_path);
         if (!len || folder_path[len - 1] != '\\')
-            lstrcatW(folder_path, bslash);
+            lstrcatW(folder_path, L"\\");
 
         while (*path == '\\') path++;
         lstrcatW(folder_path, path);
@@ -232,7 +231,7 @@ WCHAR *get_full_path(const WCHAR *parent, const WCHAR *path)
 
     len = lstrlenW(folder_path);
     if (!len)
-        lstrcatW(folder_path, bslash);
+        lstrcatW(folder_path, L"\\");
 
     return folder_path;
 }
