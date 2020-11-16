@@ -231,6 +231,21 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
         IUnknown_Release(unk);
 }
 
+#define check_service_interface(a, b, c, d) check_service_interface_(__LINE__, a, b, c, d)
+static void check_service_interface_(unsigned int line, void *iface_ptr, REFGUID service, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = MFGetService(iface, service, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 static void test_interfaces(void)
 {
     IBaseFilter *filter = create_evr();
@@ -449,7 +464,6 @@ static void test_default_mixer(void)
     DXVA2_ValueRange range;
     DXVA2_Fixed32 dxva_value;
     DWORD flags, value, count;
-    IMFGetService *gs;
     COLORREF color;
     unsigned int i;
     DWORD ids[16];
@@ -471,22 +485,12 @@ static void test_default_mixer(void)
     check_interface(transform, &IID_IMFVideoProcessor, TRUE);
     check_interface(transform, &IID_IMFVideoMixerControl, TRUE);
     check_interface(transform, &IID_IMFVideoDeviceID, TRUE);
+    check_service_interface(transform, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerBitmap, TRUE);
+    check_service_interface(transform, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoProcessor, TRUE);
+    check_service_interface(transform, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerControl, TRUE);
+    check_service_interface(transform, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoPositionMapper, TRUE);
 
-    hr = IMFTransform_QueryInterface(transform, &IID_IMFGetService, (void **)&gs);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFGetService_GetService(gs, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerBitmap, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IMFGetService_GetService(gs, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoProcessor, (void **)&processor);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFGetService_GetService(gs, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerControl, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
-
-    if (SUCCEEDED(IMFGetService_GetService(gs, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerControl2, (void **)&mixer_control2)))
+    if (SUCCEEDED(MFGetService((IUnknown *)transform, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerControl2, (void **)&mixer_control2)))
     {
         hr = IMFVideoMixerControl2_GetMixingPrefs(mixer_control2, NULL);
         ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
@@ -497,6 +501,9 @@ static void test_default_mixer(void)
 
         IMFVideoMixerControl2_Release(mixer_control2);
     }
+
+    hr = MFGetService((IUnknown *)transform, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoProcessor, (void **)&processor);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoProcessor_GetBackgroundColor(processor, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
@@ -526,12 +533,6 @@ todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Unexpected hr %#x.\n", hr);
 
     IMFVideoProcessor_Release(processor);
-
-    hr = IMFGetService_GetService(gs, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoPositionMapper, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
-
-    IMFGetService_Release(gs);
 
     hr = IMFTransform_SetOutputBounds(transform, 100, 10);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -1123,9 +1124,7 @@ static void test_default_presenter(void)
     IMFRateSupport *rate_support;
     IDirect3DDeviceManager9 *dm;
     IMFVideoDeviceID *deviceid;
-    IMFGetService *gs;
     HWND hwnd, hwnd2;
-    IUnknown *unk;
     DWORD flags;
     float rate;
     HRESULT hr;
@@ -1149,10 +1148,11 @@ static void test_default_presenter(void)
     check_interface(presenter, &IID_IMFVideoPresenter, TRUE);
     check_interface(presenter, &IID_IMFVideoDeviceID, TRUE);
     check_interface(presenter, &IID_IMFQualityAdvise, TRUE);
-
-    hr = MFGetService((IUnknown *)presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPositionMapper, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
+    check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPositionMapper, TRUE);
+    check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDisplayControl, TRUE);
+    todo_wine check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPresenter, TRUE);
+    todo_wine check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFClockStateSink, TRUE);
+    check_service_interface(presenter, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, TRUE);
 
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDeviceID, (void **)&deviceid);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -1166,10 +1166,7 @@ static void test_default_presenter(void)
 
     IMFVideoDeviceID_Release(deviceid);
 
-    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFGetService, (void **)&gs);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFGetService_GetService(gs, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDisplayControl, (void **)&display_control);
+    hr = MFGetService((IUnknown *)presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDisplayControl, (void **)&display_control);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoDisplayControl_GetRenderingPrefs(display_control, NULL);
@@ -1182,7 +1179,7 @@ static void test_default_presenter(void)
 
     IMFVideoDisplayControl_Release(display_control);
 
-    hr = IMFGetService_GetService(gs, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, (void **)&dm);
+    hr = MFGetService((IUnknown *)presenter, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, (void **)&dm);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
@@ -1461,9 +1458,7 @@ todo_wine
     hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    hr = MFGetService((IUnknown *)buffer, &MR_BUFFER_SERVICE, &IID_IDirect3DSurface9, (void **)&surface);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IDirect3DSurface9_Release(surface);
+    check_service_interface(buffer, &MR_BUFFER_SERVICE, &IID_IDirect3DSurface9, TRUE);
 
     hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
