@@ -168,7 +168,7 @@ void X11DRV_Settings_Init(void)
     depths = screen_bpp == 32 ? depths_32 : depths_24;
 
     nores_handler.name = "NoRes";
-    nores_handler.priority = 0;
+    nores_handler.priority = 1;
     nores_handler.get_id = nores_get_id;
     nores_handler.get_modes = nores_get_modes;
     nores_handler.free_modes = nores_free_modes;
