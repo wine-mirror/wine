@@ -16002,10 +16002,9 @@ static void test_broadcast(void)
     {
         LONG style;
         BOOL receive;
-        BOOL todo;
     } bcast_expect[] =
     {
-        {WS_OVERLAPPED,             TRUE, TRUE},
+        {WS_OVERLAPPED,             TRUE},
         {WS_OVERLAPPED|WS_DLGFRAME, TRUE},
         {WS_OVERLAPPED|WS_BORDER,   TRUE},
         {WS_OVERLAPPED|WS_CAPTION,  TRUE},
@@ -16096,7 +16095,6 @@ static void test_broadcast(void)
             for (j = 0; j < ARRAY_SIZE(bcast_expect); j++)
             {
                 wparam_expected = (msg_expected && bcast_expect[j].receive) ? 0xbaadbeef : 0xdead;
-                todo_wine_if (msg_expected && bcast_expect[j].todo)
                 ok(g_broadcast_sub_wparam[j] == wparam_expected,
                     "%d,%d: message %04x, got %#lx, error %d\n", i, j, messages[i],
                     g_broadcast_sub_wparam[j], GetLastError());
@@ -16118,7 +16116,6 @@ static void test_broadcast(void)
             for (j = 0; j < ARRAY_SIZE(bcast_expect); j++)
             {
                 wparam_expected = (msg_expected && bcast_expect[j].receive) ? 0xbaadbeef : 0xdead;
-                todo_wine_if (msg_expected && bcast_expect[j].todo)
                 ok(g_broadcast_sub_wparam[j] == wparam_expected,
                     "%d,%d: message %04x, got %#lx, error %d\n", i, j, messages[i],
                     g_broadcast_sub_wparam[j], GetLastError());

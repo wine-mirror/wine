@@ -552,7 +552,8 @@ LRESULT WINAPI MessageWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 static BOOL CALLBACK broadcast_message_callback( HWND hwnd, LPARAM lparam )
 {
     struct send_message_info *info = (struct send_message_info *)lparam;
-    if (!(GetWindowLongW( hwnd, GWL_STYLE ) & (WS_POPUP|WS_CAPTION))) return TRUE;
+    if ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_POPUP|WS_CHILD)) == WS_CHILD)
+        return TRUE;
     switch(info->type)
     {
     case MSG_UNICODE:
