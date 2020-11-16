@@ -16001,6 +16001,7 @@ static void test_broadcast(void)
     for (i = 0; i < ARRAY_SIZE(messages); i++)
     {
         BOOL ret;
+        BOOL msg_expected = (messages[i] < WM_USER || messages[i] >= 0xc000);
         MSG msg;
 
         flush_events();
@@ -16013,15 +16014,9 @@ static void test_broadcast(void)
 
         memset(&msg, 0xab, sizeof(msg));
         ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
-        if (messages[i] < WM_USER || messages[i] >= 0xc000)
-        {
-            ok(ret, "%d: message %04x, got %d, error %d\n", i, messages[i], ret, GetLastError());
+        ok(ret == msg_expected, "%d: message %04x, got %d, error %d\n", i, messages[i], ret, GetLastError());
+        if (msg_expected)
             ok(msg.hwnd == hwnd, "%d: got %p\n", i, msg.hwnd);
-        }
-        else
-        {
-            ok(!ret, "%d: message %04x, got %d, error %d\n", i, messages[i], ret, GetLastError());
-        }
 
         /* post, topmost */
         ret = PostMessageA(HWND_TOPMOST, messages[i], 0, 0);
@@ -16029,15 +16024,9 @@ static void test_broadcast(void)
 
         memset(&msg, 0xab, sizeof(msg));
         ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
-        if (messages[i] < WM_USER || messages[i] >= 0xc000)
-        {
-            ok(ret, "%d: message %04x, got %d, error %d\n", i, messages[i], ret, GetLastError());
+        ok(ret == msg_expected, "%d: message %04x, got %d, error %d\n", i, messages[i], ret, GetLastError());
+        if (msg_expected)
             ok(msg.hwnd == hwnd, "%d: got %p\n", i, msg.hwnd);
-        }
-        else
-        {
-            ok(!ret, "%d: got %d, error %d\n", i, ret, GetLastError());
-        }
 
         /* send, broadcast */
         g_broadcast_wparam = 0xdead;
@@ -16046,16 +16035,9 @@ static void test_broadcast(void)
             win_skip("broadcasting test %d, timeout\n", i);
         else
         {
-            if (messages[i] < WM_USER || messages[i] >= 0xc000)
-            {
-                ok(g_broadcast_wparam == 0xbaadbeef, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
-                    g_broadcast_wparam, GetLastError());
-            }
-            else
-            {
-                ok(g_broadcast_wparam == 0xdead, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
-                    g_broadcast_wparam, GetLastError());
-            }
+            WPARAM wparam_expected = msg_expected ? 0xbaadbeef : 0xdead;
+            ok(g_broadcast_wparam == wparam_expected, "%d: message %04x, got %#lx, error %d\n",
+                i, messages[i], g_broadcast_wparam, GetLastError());
         }
 
         /* send, topmost */
@@ -16065,16 +16047,9 @@ static void test_broadcast(void)
             win_skip("broadcasting test %d, timeout\n", i);
         else
         {
-            if (messages[i] < WM_USER || messages[i] >= 0xc000)
-            {
-                ok(g_broadcast_wparam == 0xbaadbeef, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
-                    g_broadcast_wparam, GetLastError());
-            }
-            else
-            {
-                ok(g_broadcast_wparam == 0xdead, "%d: message %04x, got %#lx, error %d\n", i, messages[i],
-                    g_broadcast_wparam, GetLastError());
-            }
+            WPARAM wparam_expected = msg_expected ? 0xbaadbeef : 0xdead;
+            ok(g_broadcast_wparam == wparam_expected, "%d: message %04x, got %#lx, error %d\n",
+                i, messages[i], g_broadcast_wparam, GetLastError());
         }
     }
 
