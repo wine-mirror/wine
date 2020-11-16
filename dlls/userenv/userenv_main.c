@@ -418,7 +418,6 @@ BOOL WINAPI GetUserProfileDirectoryA( HANDLE hToken, LPSTR lpProfileDir,
 BOOL WINAPI GetUserProfileDirectoryW( HANDLE hToken, LPWSTR lpProfileDir,
                      LPDWORD lpcchSize )
 {
-    static const WCHAR slashW[] = {'\\',0};
     TOKEN_USER *t;
     WCHAR *userW = NULL, *dirW = NULL;
     DWORD len, dir_len, domain_len;
@@ -459,7 +458,7 @@ BOOL WINAPI GetUserProfileDirectoryW( HANDLE hToken, LPWSTR lpProfileDir,
         goto done;
     }
     lstrcpyW( lpProfileDir, dirW );
-    lstrcatW( lpProfileDir, slashW );
+    lstrcatW( lpProfileDir, L"\\" );
     lstrcatW( lpProfileDir, userW );
     *lpcchSize = len;
     ret = TRUE;
@@ -533,11 +532,8 @@ end:
     return ret;
 }
 
-static const WCHAR ProfileListW[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','P','r','o','f','i','l','e','L','i','s','t',0};
-
 BOOL WINAPI GetProfilesDirectoryW( LPWSTR lpProfilesDir, LPDWORD lpcchSize )
 {
-    static const WCHAR ProfilesDirectory[] = {'P','r','o','f','i','l','e','s','D','i','r','e','c','t','o','r','y',0};
     LONG l;
     HKEY key;
     BOOL ret = FALSE;
@@ -552,13 +548,15 @@ BOOL WINAPI GetProfilesDirectoryW( LPWSTR lpProfilesDir, LPDWORD lpcchSize )
         return FALSE;
     }
 
-    l = RegOpenKeyExW(HKEY_LOCAL_MACHINE, ProfileListW, 0, KEY_READ, &key);
+    l = RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+                      L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList",
+                      0, KEY_READ, &key);
     if (l)
     {
         SetLastError(l);
         return FALSE;
     }
-    l = RegQueryValueExW(key, ProfilesDirectory, NULL, NULL, NULL, &len);
+    l = RegQueryValueExW(key, L"ProfilesDirectory", NULL, NULL, NULL, &len);
     if (l)
     {
         SetLastError(l);
@@ -570,7 +568,7 @@ BOOL WINAPI GetProfilesDirectoryW( LPWSTR lpProfilesDir, LPDWORD lpcchSize )
         SetLastError(ERROR_OUTOFMEMORY);
         goto end;
     }
-    l = RegQueryValueExW(key, ProfilesDirectory, NULL, NULL,
+    l = RegQueryValueExW(key, L"ProfilesDirectory", NULL, NULL,
                              (BYTE *)unexpanded_profiles_dir, &len);
     if (l)
     {
