@@ -70,6 +70,21 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
     ok_(__FILE__,line)(rc == ref, "Unexpected refcount %d, expected %d.\n", rc, ref);
 }
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 static HRESULT (WINAPI *pD3D11CreateDevice)(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,
         const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version, ID3D11Device **device_out,
         D3D_FEATURE_LEVEL *obtained_feature_level, ID3D11DeviceContext **immediate_context);
@@ -867,8 +882,8 @@ if(0)
     hr = MFCreateMediaType(&mediatype);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    hr = IMFMediaType_QueryInterface(mediatype, &IID_IMFVideoMediaType, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    check_interface(mediatype, &IID_IMFVideoMediaType, FALSE);
+
     hr = IMFMediaType_QueryInterface(mediatype, &IID_IUnknown, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(unk == (IUnknown *)mediatype, "Unexpected pointer.\n");
@@ -899,13 +914,9 @@ if(0)
 
     hr = MFCreateVideoMediaTypeFromSubtype(&MFVideoFormat_RGB555, &video_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    hr = IMFVideoMediaType_QueryInterface(video_type, &IID_IMFMediaType, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
 
-    hr = IMFVideoMediaType_QueryInterface(video_type, &IID_IMFVideoMediaType, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
+    check_interface(video_type, &IID_IMFMediaType, TRUE);
+    check_interface(video_type, &IID_IMFVideoMediaType, TRUE);
 
     /* Major and subtype are set on creation. */
     hr = IMFVideoMediaType_GetCount(video_type, &count);
@@ -917,8 +928,7 @@ if(0)
     hr = IMFVideoMediaType_GetCount(video_type, &count);
     ok(!count, "Unexpected attribute count %#x.\n", hr);
 
-    hr = IMFVideoMediaType_QueryInterface(video_type, &IID_IMFVideoMediaType, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    check_interface(video_type, &IID_IMFVideoMediaType, FALSE);
 
     IMFVideoMediaType_Release(video_type);
 
@@ -928,8 +938,8 @@ if(0)
     hr = MFCreateMediaType(&mediatype);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    hr = IMFMediaType_QueryInterface(mediatype, &IID_IMFAudioMediaType, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    check_interface(mediatype, &IID_IMFAudioMediaType, FALSE);
+
     hr = IMFMediaType_QueryInterface(mediatype, &IID_IUnknown, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(unk == (IUnknown *)mediatype, "Unexpected pointer.\n");
@@ -1620,17 +1630,10 @@ static void test_MFCreateMFByteStreamOnStream(void)
     ref = IMFByteStream_Release(bytestream2);
     ok(ref == 2, "got %u\n", ref);
 
-    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFByteStreamBuffering, (void **)&unknown);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFByteStreamCacheControl, (void **)&unknown);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFMediaEventGenerator, (void **)&unknown);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFGetService, (void **)&unknown);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    check_interface(bytestream, &IID_IMFByteStreamBuffering, FALSE);
+    check_interface(bytestream, &IID_IMFByteStreamCacheControl, FALSE);
+    check_interface(bytestream, &IID_IMFMediaEventGenerator, FALSE);
+    check_interface(bytestream, &IID_IMFGetService, FALSE);
 
     hr = IMFByteStream_GetCapabilities(bytestream, &caps);
     ok(hr == S_OK, "Failed to get stream capabilities, hr %#x.\n", hr);
@@ -1666,7 +1669,6 @@ static void test_file_stream(void)
     WCHAR pathW[MAX_PATH];
     DWORD caps, count;
     WCHAR *filename;
-    IUnknown *unk;
     HRESULT hr;
     WCHAR *str;
     BOOL eos;
@@ -1680,18 +1682,10 @@ static void test_file_stream(void)
                       MF_FILEFLAGS_NONE, filename, &bytestream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFByteStreamBuffering, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFByteStreamCacheControl, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFMediaEventGenerator, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFByteStream_QueryInterface(bytestream, &IID_IMFGetService, (void **)&unk);
-    ok(hr == S_OK, "Failed to get interface pointer, hr %#x.\n", hr);
-    IUnknown_Release(unk);
+    check_interface(bytestream, &IID_IMFByteStreamBuffering, FALSE);
+    check_interface(bytestream, &IID_IMFByteStreamCacheControl, FALSE);
+    check_interface(bytestream, &IID_IMFMediaEventGenerator, FALSE);
+    check_interface(bytestream, &IID_IMFGetService, TRUE);
 
     hr = IMFByteStream_GetCapabilities(bytestream, &caps);
     ok(hr == S_OK, "Failed to get stream capabilities, hr %#x.\n", hr);
@@ -1818,7 +1812,6 @@ static void test_system_memory_buffer(void)
     HRESULT hr;
     DWORD length, max;
     BYTE *data, *data2;
-    IUnknown *unk;
 
     hr = MFCreateMemoryBuffer(1024, NULL);
     ok(hr == E_INVALIDARG || hr == E_POINTER, "got 0x%08x\n", hr);
@@ -1837,8 +1830,7 @@ static void test_system_memory_buffer(void)
     hr = MFCreateMemoryBuffer(1024, &buffer);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFGetService, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    check_interface(buffer, &IID_IMFGetService, FALSE);
 
     hr = IMFMediaBuffer_GetMaxLength(buffer, NULL);
     ok(hr == E_INVALIDARG || hr == E_POINTER, "got 0x%08x\n", hr);
@@ -4443,7 +4435,6 @@ static void test_create_property_store(void)
     PROPVARIANT value = {0};
     PROPERTYKEY key;
     ULONG refcount;
-    IUnknown *unk;
     DWORD count;
     HRESULT hr;
 
@@ -4458,10 +4449,8 @@ static void test_create_property_store(void)
     ok(store2 != store, "Expected different store objects.\n");
     IPropertyStore_Release(store2);
 
-    hr = IPropertyStore_QueryInterface(store, &IID_IPropertyStoreCache, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
-    hr = IPropertyStore_QueryInterface(store, &IID_IPersistSerializedPropStorage, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    check_interface(store, &IID_IPropertyStoreCache, FALSE);
+    check_interface(store, &IID_IPersistSerializedPropStorage, FALSE);
 
     hr = IPropertyStore_GetCount(store, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
@@ -5195,7 +5184,6 @@ static void test_MFCreate2DMediaBuffer(void)
     IMF2DBuffer *_2dbuffer;
     IMFMediaBuffer *buffer;
     int i, pitch, pitch2;
-    IUnknown *unk;
     HRESULT hr;
     BOOL ret;
 
@@ -5218,9 +5206,7 @@ static void test_MFCreate2DMediaBuffer(void)
     hr = pMFCreate2DMediaBuffer(2, 3, MAKEFOURCC('N','V','1','2'), FALSE, &buffer);
     ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
 
-    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFGetService, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
+    check_interface(buffer, &IID_IMFGetService, TRUE);
 
     /* Full backing buffer size, with 64 bytes per row alignment.  */
     hr = IMFMediaBuffer_GetMaxLength(buffer, &max_length);
@@ -5450,7 +5436,6 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     HRESULT hr;
     IMFMediaType *media_type;
     unsigned int i;
-    IUnknown *unk;
 
     if (!pMFCreateMediaBufferFromMediaType)
     {
@@ -5483,8 +5468,7 @@ static void test_MFCreateMediaBufferFromMediaType(void)
         if (FAILED(hr))
             break;
 
-        hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFGetService, (void **)&unk);
-        ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+        check_interface(buffer, &IID_IMFGetService, FALSE);
 
         hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
         ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
@@ -5827,7 +5811,6 @@ done:
 static void test_MFCreateTrackedSample(void)
 {
     IMFTrackedSample *tracked_sample;
-    IMFDesiredSample *desired_sample;
     IMFSample *sample;
     IUnknown *unk;
     HRESULT hr;
@@ -5852,8 +5835,7 @@ static void test_MFCreateTrackedSample(void)
 
     IMFSample_Release(sample);
 
-    hr = IMFTrackedSample_QueryInterface(tracked_sample, &IID_IMFDesiredSample, (void **)&desired_sample);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    check_interface(tracked_sample, &IID_IMFDesiredSample, FALSE);
 
     IMFTrackedSample_Release(tracked_sample);
 }
