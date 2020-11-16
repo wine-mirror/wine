@@ -5623,6 +5623,63 @@ static void test_ddrawstream_new_segment(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_ddrawstream_get_time_per_frame(void)
+{
+    IAMMultiMediaStream *mmstream = create_ammultimediastream();
+    IDirectDrawMediaStream *ddraw_stream;
+    struct testfilter source;
+    STREAM_TIME frame_time;
+    IGraphBuilder *graph;
+    IMediaStream *stream;
+    VIDEOINFO video_info;
+    AM_MEDIA_TYPE mt;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(graph != NULL, "Expected non-NULL graph.\n");
+    testfilter_init(&source);
+    hr = IGraphBuilder_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawMediaStream_GetTimePerFrame(ddraw_stream, NULL);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    hr = IDirectDrawMediaStream_GetTimePerFrame(ddraw_stream, &frame_time);
+    ok(hr == MS_E_NOSTREAM, "Got hr %#x.\n", hr);
+
+    video_info = rgb32_video_info;
+    video_info.AvgTimePerFrame = 12345678;
+    mt = rgb32_mt;
+    mt.pbFormat = (BYTE *)&video_info;
+    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    frame_time = 0xdeadbeefdeadbeef;
+    hr = IDirectDrawMediaStream_GetTimePerFrame(ddraw_stream, &frame_time);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(frame_time == 12345678, "Got frame time %s.\n", wine_dbgstr_longlong(frame_time));
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IGraphBuilder_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IPin_Release(pin);
+    IDirectDrawMediaStream_Release(ddraw_stream);
+    ref = IMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void check_ammediastream_join_am_multi_media_stream(const CLSID *clsid)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
@@ -8813,6 +8870,7 @@ START_TEST(amstream)
     test_ddrawstream_receive();
     test_ddrawstream_begin_flush_end_flush();
     test_ddrawstream_new_segment();
+    test_ddrawstream_get_time_per_frame();
 
     test_ddrawstreamsample_get_media_stream();
     test_ddrawstreamsample_update();

@@ -717,11 +717,28 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_CreateSample(IDirectDrawMedia
 }
 
 static HRESULT WINAPI ddraw_IDirectDrawMediaStream_GetTimePerFrame(IDirectDrawMediaStream *iface,
-        STREAM_TIME *pFrameTime)
+        STREAM_TIME *frame_time)
 {
-    FIXME("(%p)->(%p) stub!\n", iface, pFrameTime);
+    struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("stream %p, frame_time %p.\n", stream, frame_time);
+
+    if (!frame_time)
+        return E_POINTER;
+
+    EnterCriticalSection(&stream->cs);
+
+    if (!stream->peer)
+    {
+        LeaveCriticalSection(&stream->cs);
+        return MS_E_NOSTREAM;
+    }
+
+    *frame_time = ((VIDEOINFO *)stream->mt.pbFormat)->AvgTimePerFrame;
+
+    LeaveCriticalSection(&stream->cs);
+
+    return S_OK;
 }
 
 static const struct IDirectDrawMediaStreamVtbl ddraw_IDirectDrawMediaStream_Vtbl =
