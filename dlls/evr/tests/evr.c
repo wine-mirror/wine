@@ -1150,8 +1150,14 @@ static void test_default_presenter(void)
     check_interface(presenter, &IID_IMFQualityAdvise, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPositionMapper, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDisplayControl, TRUE);
-    todo_wine check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPresenter, TRUE);
-    todo_wine check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFClockStateSink, TRUE);
+    check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPresenter, TRUE);
+    check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFClockStateSink, TRUE);
+    check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFTopologyServiceLookupClient, TRUE);
+    check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IQualProp, TRUE);
+    check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFRateSupport, TRUE);
+    check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFGetService, TRUE);
+    check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDeviceID, TRUE);
+    check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFQualityAdvise, TRUE);
     check_service_interface(presenter, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, TRUE);
 
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDeviceID, (void **)&deviceid);
