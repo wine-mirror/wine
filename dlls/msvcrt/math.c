@@ -170,8 +170,9 @@ int CDECL MSVCRT__set_FMA3_enable(int flag)
  */
 float CDECL MSVCRT__chgsignf( float num )
 {
-    /* FIXME: +-infinity,Nan not tested */
-    return -num;
+    union { float f; UINT32 i; } u = { num };
+    u.i ^= 0x80000000;
+    return u.f;
 }
 
 /*********************************************************************
@@ -1786,8 +1787,9 @@ double CDECL MSVCRT__cabs(struct MSVCRT__complex num)
  */
 double CDECL MSVCRT__chgsign(double num)
 {
-  /* FIXME: +-infinity,Nan not tested */
-  return -num;
+    union { double f; UINT64 i; } u = { num };
+    u.i ^= 1ull << 63;
+    return u.f;
 }
 
 /*********************************************************************
