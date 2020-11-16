@@ -2075,6 +2075,7 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
             break;
         case SESSION_CMD_QM_NOTIFY_TOPOLOGY:
             IMFQualityManager_NotifyTopology(session->quality_manager, op->u.notify_topology.topology);
+            session_command_complete(session);
             break;
         case SESSION_CMD_SA_READY:
             topo_node = session_get_node_by_id(session, op->u.sa_ready.node_id);
