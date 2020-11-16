@@ -790,6 +790,45 @@ static void test_surface_sample(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!count, "Unexpected attribute count %u.\n", count);
 
+    /* Attributes are cleared. */
+    hr = IMFSample_SetUnknown(sample, &MFSampleExtension_Token, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetCount(sample, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count == 1, "Unexpected attribute count %u.\n", count);
+
+    hr = IMFSample_SetSampleTime(sample, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetSampleTime(sample, &time1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_SetSampleDuration(sample, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetSampleDuration(sample, &duration);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_SetSampleFlags(sample, 0x1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFDesiredSample_Clear(desired_sample);
+
+    hr = IMFSample_GetCount(sample, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!count, "Unexpected attribute count %u.\n", count);
+
+    hr = IMFSample_GetSampleTime(sample, &time1);
+    ok(hr == MF_E_NO_SAMPLE_TIMESTAMP, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetSampleDuration(sample, &duration);
+    ok(hr == MF_E_NO_SAMPLE_DURATION, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetSampleFlags(sample, &flags);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(flags == 0, "Unexpected flags %#x.\n", flags);
+
     IMFDesiredSample_Release(desired_sample);
 
     hr = IMFSample_GetCount(sample, &count);
