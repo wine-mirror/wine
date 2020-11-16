@@ -78,9 +78,6 @@ static PROFILE *MRUProfile[N_CACHED_PROFILES]={NULL};
 /* Check for comments in profile */
 #define IS_ENTRY_COMMENT(str)  ((str)[0] == ';')
 
-static const WCHAR emptystringW[] = {0};
-static const WCHAR wininiW[] = { 'w','i','n','.','i','n','i',0 };
-
 static CRITICAL_SECTION PROFILE_CritSect;
 static CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -725,16 +722,15 @@ static BOOL PROFILE_Open( LPCWSTR filename, BOOL write_access )
        }
 
     if (!filename)
-	filename = wininiW;
+        filename = L"win.ini";
 
     if ((RtlDetermineDosPathNameType_U(filename) == RELATIVE_PATH) &&
         !wcschr(filename, '\\') && !wcschr(filename, '/'))
     {
-        static const WCHAR wszSeparator[] = {'\\', 0};
         WCHAR windirW[MAX_PATH];
         GetWindowsDirectoryW( windirW, MAX_PATH );
         lstrcpyW(buffer, windirW);
-        lstrcatW(buffer, wszSeparator);
+        lstrcatW(buffer, L"\\");
         lstrcatW(buffer, filename);
     }
     else
@@ -1015,17 +1011,14 @@ static BOOL PROFILE_SetString( LPCWSTR section_name, LPCWSTR key_name,
 
 static HKEY open_file_mapping_key( const WCHAR *filename )
 {
-    static const WCHAR mapping_pathW[] = {'S','o','f','t','w','a','r','e',
-            '\\','M','i','c','r','o','s','o','f','t',
-            '\\','W','i','n','d','o','w','s',' ','N','T',
-            '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
-            '\\','I','n','i','F','i','l','e','M','a','p','p','i','n','g',0};
     static HKEY mapping_key;
     HKEY key;
 
     EnterCriticalSection( &PROFILE_CritSect );
 
-    if (!mapping_key && RegOpenKeyExW( HKEY_LOCAL_MACHINE, mapping_pathW, 0, KEY_WOW64_64KEY, &mapping_key ))
+    if (!mapping_key && RegOpenKeyExW( HKEY_LOCAL_MACHINE,
+                                       L"Software\\Microsoft\\Windows NT\\CurrentVersion\\IniFileMapping",
+                                       0, KEY_WOW64_64KEY, &mapping_key ))
         mapping_key = NULL;
 
     LeaveCriticalSection( &PROFILE_CritSect );
@@ -1073,7 +1066,6 @@ static WCHAR *get_key_value( HKEY key, const WCHAR *value )
 
 static HKEY open_mapped_key( const WCHAR *path, BOOL write )
 {
-    static const WCHAR softwareW[] = {'S','o','f','t','w','a','r','e','\\',0};
     static const WCHAR usrW[] = {'U','S','R',':'};
     static const WCHAR sysW[] = {'S','Y','S',':'};
     WCHAR *combined_path;
@@ -1099,9 +1091,9 @@ static HKEY open_mapped_key( const WCHAR *path, BOOL write )
     {
         p += 4;
         if (!(combined_path = HeapAlloc( GetProcessHeap(), 0,
-                                         (ARRAY_SIZE( softwareW ) + lstrlenW( p )) * sizeof(WCHAR) )))
+                                         (ARRAY_SIZE( L"Software\\" ) + lstrlenW( p )) * sizeof(WCHAR) )))
             return NULL;
-        lstrcpyW( combined_path, softwareW );
+        lstrcpyW( combined_path, L"Software\\" );
         lstrcatW( combined_path, p );
         if (write)
             res = RegCreateKeyExW( HKEY_LOCAL_MACHINE, combined_path, 0, NULL,
@@ -1120,7 +1112,6 @@ static HKEY open_mapped_key( const WCHAR *path, BOOL write )
 static BOOL get_mapped_section_key( const WCHAR *filename, const WCHAR *section,
                                     const WCHAR *name, BOOL write, HKEY *ret_key )
 {
-    static const WCHAR backslashW[] = {'\\',0};
     WCHAR *path = NULL, *combined_path;
     HKEY key, subkey = NULL;
 
@@ -1145,7 +1136,7 @@ static BOOL get_mapped_section_key( const WCHAR *filename, const WCHAR *section,
                                                 (lstrlenW( path ) + lstrlenW( section ) + 2) * sizeof(WCHAR) )))
                 {
                     lstrcpyW( combined_path, path );
-                    lstrcatW( combined_path, backslashW );
+                    lstrcatW( combined_path, L"\\" );
                     lstrcatW( combined_path, section );
                 }
                 HeapFree( GetProcessHeap(), 0, path );
@@ -1336,7 +1327,7 @@ UINT WINAPI GetProfileIntA( LPCSTR section, LPCSTR entry, INT def_val )
  */
 UINT WINAPI GetProfileIntW( LPCWSTR section, LPCWSTR entry, INT def_val )
 {
-    return GetPrivateProfileIntW( section, entry, def_val, wininiW );
+    return GetPrivateProfileIntW( section, entry, def_val, L"win.ini" );
 }
 
 /***********************************************************************
@@ -1346,7 +1337,6 @@ INT WINAPI GetPrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
 				     LPCWSTR def_val, LPWSTR buffer,
 				     UINT len, LPCWSTR filename )
 {
-    static const WCHAR emptyW[] = {0};
     int		ret;
     LPWSTR	defval_tmp = NULL;
     const WCHAR *p;
@@ -1356,7 +1346,7 @@ INT WINAPI GetPrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
           debugstr_w(def_val), buffer, len, debugstr_w(filename));
 
     if (!buffer || !len) return 0;
-    if (!def_val) def_val = emptyW;
+    if (!def_val) def_val = L"";
     if (!section) return GetPrivateProfileSectionNamesW( buffer, len, filename );
     if (!entry)
     {
@@ -1491,8 +1481,7 @@ INT WINAPI GetProfileStringA( LPCSTR section, LPCSTR entry, LPCSTR def_val,
 INT WINAPI GetProfileStringW( LPCWSTR section, LPCWSTR entry,
 			      LPCWSTR def_val, LPWSTR buffer, UINT len )
 {
-    return GetPrivateProfileStringW( section, entry, def_val,
-				     buffer, len, wininiW );
+    return GetPrivateProfileStringW( section, entry, def_val, buffer, len, L"win.ini" );
 }
 
 /***********************************************************************
@@ -1510,7 +1499,7 @@ BOOL WINAPI WriteProfileStringA( LPCSTR section, LPCSTR entry,
 BOOL WINAPI WriteProfileStringW( LPCWSTR section, LPCWSTR entry,
                                      LPCWSTR string )
 {
-    return WritePrivateProfileStringW( section, entry, string, wininiW );
+    return WritePrivateProfileStringW( section, entry, string, L"win.ini" );
 }
 
 
@@ -1524,7 +1513,7 @@ UINT WINAPI GetPrivateProfileIntW( LPCWSTR section, LPCWSTR entry,
     UNICODE_STRING bufferW;
     ULONG result;
 
-    if (GetPrivateProfileStringW( section, entry, emptystringW, buffer, ARRAY_SIZE( buffer ),
+    if (GetPrivateProfileStringW( section, entry, L"", buffer, ARRAY_SIZE( buffer ),
                                   filename ) == 0)
         return def_val;
 
@@ -1638,7 +1627,7 @@ INT WINAPI GetProfileSectionA( LPCSTR section, LPSTR buffer, DWORD len )
  */
 INT WINAPI GetProfileSectionW( LPCWSTR section, LPWSTR buffer, DWORD len )
 {
-    return GetPrivateProfileSectionW( section, buffer, len, wininiW );
+    return GetPrivateProfileSectionW( section, buffer, len, L"win.ini" );
 }
 
 
@@ -1858,7 +1847,7 @@ BOOL WINAPI WriteProfileSectionA( LPCSTR section, LPCSTR keys_n_values)
  */
 BOOL WINAPI WriteProfileSectionW( LPCWSTR section, LPCWSTR keys_n_values)
 {
-   return WritePrivateProfileSectionW(section, keys_n_values, wininiW);
+   return WritePrivateProfileSectionW(section, keys_n_values, L"win.ini");
 }
 
 

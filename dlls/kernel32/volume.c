@@ -210,7 +210,7 @@ static enum fs_type VOLUME_ReadCDSuperblock( HANDLE handle, BYTE *buff )
  */
 BOOL WINAPI SetVolumeLabelW( LPCWSTR root, LPCWSTR label )
 {
-    WCHAR device[] = {'\\','\\','.','\\','A',':',0};
+    WCHAR device[] = L"\\\\.\\A:";
     HANDLE handle;
     enum fs_type type = FS_UNKNOWN;
 
@@ -266,7 +266,7 @@ BOOL WINAPI SetVolumeLabelW( LPCWSTR root, LPCWSTR label )
     case DRIVE_REMOVABLE:
     case DRIVE_FIXED:
         {
-            WCHAR labelW[] = {'A',':','\\','.','w','i','n','d','o','w','s','-','l','a','b','e','l',0};
+            WCHAR labelW[] = L"A:\\.windows-label";
 
             labelW[0] = device[4];
 

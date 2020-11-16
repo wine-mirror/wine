@@ -45,9 +45,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);
 
-static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
-static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
-
 /******************************************************************************
  * GetConsoleWindow [KERNEL32.@] Get hwnd of the console window.
  *
@@ -79,7 +76,7 @@ HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creat
 
     TRACE("(%s, 0x%08x, %d, %u)\n", debugstr_w(name), access, inherit, creation);
 
-    if (!name || (wcsicmp( coninW, name ) && wcsicmp( conoutW, name )) || creation != OPEN_EXISTING)
+    if (!name || (wcsicmp( L"CONIN$", name ) && wcsicmp( L"CONOUT$", name )) || creation != OPEN_EXISTING)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return INVALID_HANDLE_VALUE;

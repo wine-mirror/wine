@@ -165,8 +165,6 @@ BOOL WINAPI SetDllDirectoryW( LPCWSTR dir )
  */
 BOOL WINAPI GetBinaryTypeW( LPCWSTR name, LPDWORD type )
 {
-    static const WCHAR comW[] = { '.','c','o','m',0 };
-    static const WCHAR pifW[] = { '.','p','i','f',0 };
     HANDLE hfile, mapping;
     NTSTATUS status;
     const WCHAR *ptr;
@@ -226,12 +224,12 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR name, LPDWORD type )
     case STATUS_INVALID_IMAGE_NOT_MZ:
         if ((ptr = wcsrchr( name, '.' )))
         {
-            if (!wcsicmp( ptr, comW ))
+            if (!wcsicmp( ptr, L".com" ))
             {
                 *type = SCS_DOS_BINARY;
                 return TRUE;
             }
-            if (!wcsicmp( ptr, pifW ))
+            if (!wcsicmp( ptr, L".pif" ))
             {
                 *type = SCS_PIF_BINARY;
                 return TRUE;

@@ -44,8 +44,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
-static const WCHAR krnl386W[] = {'k','r','n','l','3','8','6','.','e','x','e','1','6',0};
-
 /***********************************************************************
  *              create_file_OF
  *
@@ -452,7 +450,7 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
         static DeviceIoProc (*vxd_get_proc)(HANDLE);
         DeviceIoProc proc = NULL;
 
-        if (!vxd_get_proc) vxd_get_proc = (void *)GetProcAddress( GetModuleHandleW(krnl386W),
+        if (!vxd_get_proc) vxd_get_proc = (void *)GetProcAddress( GetModuleHandleW(L"krnl386.exe16"),
                                                                   "__wine_vxd_get_proc" );
         if (vxd_get_proc) proc = vxd_get_proc( hDevice );
         if (proc) return proc( dwIoControlCode, lpvInBuffer, cbInBuffer,

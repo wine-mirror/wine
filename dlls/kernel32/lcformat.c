@@ -672,9 +672,8 @@ static INT NLS_GetDateTimeFormatW(LCID lcid, DWORD dwFlags,
 
       if (szAdd == buff && buff[0] == '\0')
       {
-        static const WCHAR fmtW[] = {'%','.','*','d',0};
         /* We have a numeric value to add */
-        swprintf(buff, ARRAY_SIZE(buff), fmtW, count, dwVal);
+        swprintf(buff, ARRAY_SIZE(buff), L"%.*d", count, dwVal);
       }
 
       dwLen = szAdd ? lstrlenW(szAdd) : 0;
