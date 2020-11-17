@@ -197,28 +197,43 @@ static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern
         case DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF: {
             DISPPARAMS dp = {NULL, NULL, 1, 0};
             BOOL needs_release;
-            VARIANT put_val;
+            VARIANT buf[6];
             HRESULT hres;
+            INT i;
 
-            if(arg_cnt(params)) {
-                FIXME("arguments not implemented\n");
-                return E_NOTIMPL;
+            dp.cArgs = arg_cnt(params) + 1;
+            if(dp.cArgs > ARRAY_SIZE(buf)) {
+                dp.rgvarg = heap_alloc(dp.cArgs*sizeof(VARIANT));
+                if(!dp.rgvarg)
+                    return E_OUTOFMEMORY;
+            }else {
+                dp.rgvarg = buf;
             }
 
-            hres = get_propput_arg(This->desc->ctx, params, flags, &put_val, &needs_release);
-            if(FAILED(hres))
+            hres = get_propput_arg(This->desc->ctx, params, flags, dp.rgvarg, &needs_release);
+            if(FAILED(hres)) {
+                if(dp.rgvarg != buf)
+                    heap_free(dp.rgvarg);
                 return hres;
+            }
 
-            dp.rgvarg = &put_val;
-            func = This->desc->funcs[id].entries[V_VT(&put_val) == VT_DISPATCH ? VBDISP_SET : VBDISP_LET];
+            func = This->desc->funcs[id].entries[V_VT(dp.rgvarg) == VT_DISPATCH ? VBDISP_SET : VBDISP_LET];
             if(!func) {
                 FIXME("no letter/setter\n");
+                if(dp.rgvarg != buf)
+                    heap_free(dp.rgvarg);
                 return DISP_E_MEMBERNOTFOUND;
+            }
+
+            for(i=1; i < dp.cArgs; i++) {
+                dp.rgvarg[i]=params->rgvarg[params->cNamedArgs+i-1];
             }
 
             hres = exec_script(This->desc->ctx, extern_caller, func, This, &dp, NULL);
             if(needs_release)
-                VariantClear(&put_val);
+                VariantClear(dp.rgvarg);
+            if(dp.rgvarg != buf)
+                heap_free(dp.rgvarg);
             return hres;
         }
         default:
