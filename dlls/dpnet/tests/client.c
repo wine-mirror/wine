@@ -33,7 +33,7 @@ static IDirectPlay8Peer* peer = NULL;
 static IDirectPlay8Client* client = NULL;
 static IDirectPlay8LobbiedApplication* lobbied = NULL;
 static const GUID appguid = { 0xcd0c3d4b, 0xe15e, 0x4cf2, { 0x9e, 0xa8, 0x6e, 0x1d, 0x65, 0x48, 0xc5, 0xa5 } };
-static const WCHAR localhost[] = {'1','2','7','.','0','.','0','.','1',0};
+static const WCHAR localhost[] = L"127.0.0.1";
 
 static HRESULT   lastAsyncCode   = E_FAIL;
 static DPNHANDLE lastAsyncHandle = 0xdeadbeef;
@@ -91,7 +91,7 @@ static HRESULT WINAPI DirectPlayLobbyClientMessageHandler(void *context, DWORD m
 
 static void create_server(void)
 {
-    static WCHAR sessionname[] = {'w','i','n','e','g','a','m','e','s','s','e','r','v','e','r',0};
+    static WCHAR sessionname[] = L"winegamesserver";
     HRESULT hr;
     IDirectPlay8Address *localaddr = NULL;
     DPN_APPLICATION_DESC appdesc;
@@ -473,9 +473,9 @@ static void test_player_info(void)
 {
     HRESULT hr;
     DPN_PLAYER_INFO info;
-    WCHAR name[] = {'w','i','n','e',0};
-    WCHAR name2[] = {'w','i','n','e','2',0};
-    WCHAR data[] = {'X','X','X','X',0};
+    WCHAR name[] = L"wine";
+    WCHAR name2[] = L"wine2";
+    WCHAR data[] = L"XXXX";
 
     ZeroMemory( &info, sizeof(DPN_PLAYER_INFO) );
     info.dwSize = sizeof(DPN_PLAYER_INFO);
@@ -876,9 +876,9 @@ static void test_player_info_peer(void)
 {
     HRESULT hr;
     DPN_PLAYER_INFO info;
-    WCHAR name[] = {'w','i','n','e',0};
-    WCHAR name2[] = {'w','i','n','e','2',0};
-    WCHAR data[] = {'X','X','X','X',0};
+    WCHAR name[] = L"wine";
+    WCHAR name2[] = L"wine2";
+    WCHAR data[] = L"XXXX";
 
     ZeroMemory( &info, sizeof(DPN_PLAYER_INFO) );
     info.dwSize = sizeof(DPN_PLAYER_INFO);

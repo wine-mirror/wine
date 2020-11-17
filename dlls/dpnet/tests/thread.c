@@ -119,7 +119,6 @@ static void test_enum_hosts(void)
     IDirectPlay8ThreadPool *pool1 = NULL;
     DPN_APPLICATION_DESC appdesc;
     DPNHANDLE async = 0, async2 = 0;
-    static const WCHAR localhost[] = {'1','2','7','.','0','.','0','.','1',0};
     DWORD threadcnt, threadorig;
 
     enumevent = CreateEventA( NULL, TRUE, FALSE, NULL);
@@ -163,8 +162,8 @@ static void test_enum_hosts(void)
     hr = IDirectPlay8Address_SetSP(host, &CLSID_DP8SP_TCPIP);
     ok(hr == S_OK, "IDirectPlay8Address_SetSP failed with 0x%08x\n", hr);
 
-    hr = IDirectPlay8Address_AddComponent(host, DPNA_KEY_HOSTNAME, localhost, sizeof(localhost),
-                                                         DPNA_DATATYPE_STRING);
+    hr = IDirectPlay8Address_AddComponent(host, DPNA_KEY_HOSTNAME, L"127.0.0.1", sizeof(L"127.0.0.1"),
+                                          DPNA_DATATYPE_STRING);
     ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08x\n", hr);
 
     hr = IDirectPlay8Client_EnumHosts(client, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async, 0);

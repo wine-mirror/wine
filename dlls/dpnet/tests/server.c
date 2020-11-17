@@ -28,7 +28,7 @@
 
 /* {CD0C3D4B-E15E-4CF2-9EA8-6E1D6548C5A5} */
 static const GUID appguid = { 0xcd0c3d4b, 0xe15e, 0x4cf2, { 0x9e, 0xa8, 0x6e, 0x1d, 0x65, 0x48, 0xc5, 0xa5 } };
-static WCHAR sessionname[] = {'w','i','n','e','g','a','m','e','s','s','e','r','v','e','r',0};
+static WCHAR sessionname[] = L"winegamesserver";
 
 static BOOL nCreatePlayer;
 static BOOL nDestroyPlayer;
@@ -106,9 +106,9 @@ static void test_server_info(void)
 {
     HRESULT hr;
     DPN_PLAYER_INFO info;
-    WCHAR name[] = {'w','i','n','e',0};
-    WCHAR name2[] = {'w','i','n','e','2',0};
-    WCHAR data[] = {'X','X','X','X',0};
+    WCHAR name[] = L"wine";
+    WCHAR name2[] = L"wine2";
+    WCHAR data[] = L"XXXX";
     IDirectPlay8Server *server = NULL;
 
     hr = CoCreateInstance( &CLSID_DirectPlay8Server, NULL, CLSCTX_ALL, &IID_IDirectPlay8Server, (LPVOID*)&server);
@@ -235,13 +235,6 @@ done:
 
 HRESULT set_firewall( enum firewall_op op )
 {
-    static const WCHAR dpnsvrW[] =
-        {'d','p','n','s','v','r','.','e','x','e',0};
-    static const WCHAR separator[] = {'\\',0};
-    static const WCHAR clientW[] =
-        {'d','p','n','e','t','_','c','l','i','e','n','t',0};
-    static const WCHAR serverW[] =
-        {'d','p','n','e','t','_','s','e','r','v','e','r',0};
     HRESULT hr, init;
     INetFwMgr *mgr = NULL;
     INetFwPolicy *policy = NULL;
@@ -262,8 +255,7 @@ HRESULT set_firewall( enum firewall_op op )
         SysFreeString( image );
         return E_FAIL;
     }
-    lstrcatW(path, separator);
-    lstrcatW(path, dpnsvrW);
+    lstrcatW(path, L"\\dpnsvr.exe");
 
     init = CoInitializeEx( 0, COINIT_APARTMENTTHREADED );
 
@@ -291,7 +283,7 @@ HRESULT set_firewall( enum firewall_op op )
     hr = INetFwAuthorizedApplication_put_ProcessImageFileName( app, image );
     if (hr != S_OK) goto done;
 
-    name = SysAllocString( clientW );
+    name = SysAllocString( L"dpnet_client" );
     hr = INetFwAuthorizedApplication_put_Name( app, name );
     SysFreeString( name );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -316,7 +308,7 @@ HRESULT set_firewall( enum firewall_op op )
     hr = INetFwAuthorizedApplication_put_ProcessImageFileName( app, image );
     if (hr != S_OK) goto done;
 
-    name = SysAllocString( serverW );
+    name = SysAllocString( L"dpnet_server" );
     hr = INetFwAuthorizedApplication_put_Name( app, name );
     SysFreeString( name );
     ok( hr == S_OK, "got %08x\n", hr );

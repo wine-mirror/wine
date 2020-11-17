@@ -128,12 +128,9 @@ static HRESULT WINAPI IDirectPlay8PeerImpl_Initialize(IDirectPlay8Peer *iface,
 HRESULT enum_services_providers(const GUID * const service, DPN_SERVICE_PROVIDER_INFO * const info_buffer,
         DWORD * const buf_size, DWORD * const returned)
 {
-    static const WCHAR serviceproviders[] = {'S','O','F','T','W','A','R','E','\\','M','i','c','r','o','s','o','f','t','\\',
-                                      'D','i','r','e','c','t','P','l','a','y','8','\\',
-                                      'S','e','r','v','i','c','e',' ','P','r','o','v','i','d','e','r','s',0};
-    static const WCHAR friendly[] = {'F','r','i','e','n','d','l','y',' ','N','a','m','e',0};
-    static const WCHAR dp_adapterW[] = {'L','o','c','a','l',' ','A','r','e','a',' ','C','o','n','n','e','c','t','i','o','n',
-                                        ' ','-',' ','I','P','v','4',0};
+    static const WCHAR serviceproviders[] = L"SOFTWARE\\Microsoft\\DirectPlay8\\Service Providers";
+    static const WCHAR friendly[] = L"Friendly Name";
+    static const WCHAR dp_adapterW[] = L"Local Area Connection - IPv4";
     static const GUID adapter_guid = {0x4ce725f6, 0xd3c0, 0xdade, {0xba, 0x6f, 0x11, 0xf9, 0x65, 0xbc, 0x42, 0x99}};
     DWORD req_size = 0;
     LONG res;

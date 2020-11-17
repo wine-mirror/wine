@@ -26,7 +26,7 @@
 
 /* {6733C6E8-A0D6-450E-8C18-CEACF331DC27} */
 static const GUID IID_Random = {0x6733c6e8, 0xa0d6, 0x450e, { 0x8c, 0x18, 0xce, 0xac, 0xf3, 0x31, 0xdc, 0x27 } };
-static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
+static const WCHAR localhost[] = L"localhost";
 
 static void create_directplay_address(void)
 {
@@ -72,7 +72,6 @@ static void create_directplay_address(void)
 
 static void address_addcomponents(void)
 {
-    static const WCHAR UNKNOWN[] = { 'u','n','k','n','o','w','n',0 };
     static const char testing[] = "testing";
     HRESULT hr;
     IDirectPlay8Address *localaddr = NULL;
@@ -92,10 +91,10 @@ static void address_addcomponents(void)
         WCHAR *name = NULL;
 
         /* We can add any Component to the Address interface not just the predefined ones. */
-        hr = IDirectPlay8Address_AddComponent(localaddr, UNKNOWN, &IID_Random, sizeof(GUID), DPNA_DATATYPE_GUID);
+        hr = IDirectPlay8Address_AddComponent(localaddr, L"unknown", &IID_Random, sizeof(GUID), DPNA_DATATYPE_GUID);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        hr = IDirectPlay8Address_AddComponent(localaddr, UNKNOWN, &IID_Random, sizeof(GUID)+1, DPNA_DATATYPE_GUID);
+        hr = IDirectPlay8Address_AddComponent(localaddr, L"unknown", &IID_Random, sizeof(GUID)+1, DPNA_DATATYPE_GUID);
         ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);
 
         hr = IDirectPlay8Address_AddComponent(localaddr, DPNA_KEY_HOSTNAME, &localhost, sizeof(localhost)+2, DPNA_DATATYPE_STRING);
@@ -150,31 +149,31 @@ static void address_addcomponents(void)
         ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
         size = sizeof(GUID)-1;
-        hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, NULL, &size, &type);
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, L"unknown", NULL, &size, &type);
         ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
         size = sizeof(GUID);
-        hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, NULL, &size, &type);
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, L"unknown", NULL, &size, &type);
         ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
-        hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, &compguid, NULL, &type);
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, L"unknown", &compguid, NULL, &type);
         ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
         size = sizeof(GUID)-1;
-        hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, &compguid, &size, NULL);
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, L"unknown", &compguid, &size, NULL);
         ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
         size = sizeof(GUID);
-        hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, &compguid, &size, NULL);
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, L"unknown", &compguid, &size, NULL);
         ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
         size = sizeof(GUID)-1;
-        hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, &compguid, &size, &type);
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, L"unknown", &compguid, &size, &type);
         ok(hr == DPNERR_BUFFERTOOSMALL, "got 0x%08x\n", hr);
         ok(size == sizeof(GUID), "got %d\n", size);
 
         size = sizeof(GUID);
-        hr = IDirectPlay8Address_GetComponentByName(localaddr, UNKNOWN, &compguid, &size, &type);
+        hr = IDirectPlay8Address_GetComponentByName(localaddr, L"unknown", &compguid, &size, &type);
         ok(IsEqualGUID(&compguid, &IID_Random), "incorrect guid\n");
         ok(size == sizeof(GUID), "incorrect size got %d\n", size);
         ok(type == DPNA_DATATYPE_GUID, "incorrect type\n");
