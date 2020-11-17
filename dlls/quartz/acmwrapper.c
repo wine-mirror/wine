@@ -500,8 +500,10 @@ static void acm_wrapper_destroy(struct strmbase_filter *iface)
 static HRESULT acm_wrapper_init_stream(struct strmbase_filter *iface)
 {
     struct acm_wrapper *filter = impl_from_strmbase_filter(iface);
+    HRESULT hr;
 
-    BaseOutputPinImpl_Active(&filter->source);
+    if (filter->source.pin.peer && FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
+        ERR("Failed to commit allocator, hr %#x.\n", hr);
     return S_OK;
 }
 
@@ -509,7 +511,8 @@ static HRESULT acm_wrapper_cleanup_stream(struct strmbase_filter *iface)
 {
     struct acm_wrapper *filter = impl_from_strmbase_filter(iface);
 
-    BaseOutputPinImpl_Inactive(&filter->source);
+    if (filter->source.pin.peer)
+        IMemAllocator_Decommit(filter->source.pAllocator);
     return S_OK;
 }
 
