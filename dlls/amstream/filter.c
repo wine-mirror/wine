@@ -848,9 +848,25 @@ static HRESULT WINAPI filter_seeking_CheckCapabilities(IMediaSeeking *iface, DWO
 
 static HRESULT WINAPI filter_seeking_IsFormatSupported(IMediaSeeking *iface, const GUID *format)
 {
-    FIXME("iface %p, format %s, stub!\n", iface, debugstr_guid(format));
+    struct filter *filter = impl_from_IMediaSeeking(iface);
+    IMediaSeeking *seeking;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("filter %p, format %s.\n", filter, debugstr_guid(format));
+
+    EnterCriticalSection(&filter->cs);
+
+    seeking = get_seeking(filter->seekable_stream);
+
+    LeaveCriticalSection(&filter->cs);
+
+    if (!seeking)
+        return E_NOTIMPL;
+
+    hr = IMediaSeeking_IsFormatSupported(seeking, format);
+    IMediaSeeking_Release(seeking);
+
+    return hr;
 }
 
 static HRESULT WINAPI filter_seeking_QueryPreferredFormat(IMediaSeeking *iface, GUID *format)

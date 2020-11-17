@@ -981,6 +981,7 @@ struct testfilter
     HRESULT init_stream_hr;
     HRESULT cleanup_stream_hr;
     HRESULT wait_state_hr;
+    HRESULT is_format_supported_hr;
 };
 
 static inline struct testfilter *impl_from_BaseFilter(struct strmbase_filter *iface)
@@ -1168,8 +1169,12 @@ static HRESULT WINAPI testsource_seeking_CheckCapabilities(IMediaSeeking *iface,
 
 static HRESULT WINAPI testsource_seeking_IsFormatSupported(IMediaSeeking *iface, const GUID *format)
 {
-    ok(0, "Unexpected call.\n");
-    return E_NOTIMPL;
+    struct testfilter *filter = impl_from_IMediaSeeking(iface);
+
+    ok(IsEqualGUID(format, &TIME_FORMAT_MEDIA_TIME),
+            "Got format %s.\n", wine_dbgstr_guid(format));
+
+    return filter->is_format_supported_hr;
 }
 
 static HRESULT WINAPI testsource_seeking_QueryPreferredFormat(IMediaSeeking *iface, GUID *format)
@@ -6409,11 +6414,22 @@ static void check_mediastreamfilter_get_stop_position(IMediaSeeking *seeking, st
         ok(stop == 0xdeadbeefdeadbeefULL, "Got stop position %s.\n", wine_dbgstr_longlong(stop));
 }
 
+static void check_mediastreamfilter_is_format_supported(IMediaSeeking *seeking, struct testfilter *source1,
+        struct testfilter *source2, struct testfilter *source3, HRESULT source2_hr, HRESULT expected_hr)
+{
+    HRESULT hr;
+
+    source2->is_format_supported_hr = source2_hr;
+    hr = IMediaSeeking_IsFormatSupported(seeking, &TIME_FORMAT_MEDIA_TIME);
+    ok(hr == expected_hr, "Got hr %#x.\n", hr);
+}
+
 static void test_mediastreamfilter_seeking(void)
 {
     check_mediastreamfilter_seeking(check_mediastreamfilter_set_positions);
     check_mediastreamfilter_seeking(check_mediastreamfilter_get_duration);
     check_mediastreamfilter_seeking(check_mediastreamfilter_get_stop_position);
+    check_mediastreamfilter_seeking(check_mediastreamfilter_is_format_supported);
 }
 
 static void test_mediastreamfilter_get_current_stream_time(void)
