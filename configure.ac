@@ -2698,8 +2698,6 @@ AC_CHECK_FUNCS(\
 	expm1f \
 	fma \
 	fmaf \
-	ilogb \
-	ilogbf \
 	j0 \
 	j1 \
 	jn \

@@ -4402,32 +4402,53 @@ double CDECL MSVCR120_creal(_Dcomplex z)
     return z.x;
 }
 
+/*********************************************************************
+ *      ilogb (MSVCR120.@)
+ *
+ * Copied from musl: src/math/ilogb.c
+ */
 int CDECL MSVCR120_ilogb(double x)
 {
-    if (!x) return MSVCRT_FP_ILOGB0;
-    if (isnan(x)) return MSVCRT_FP_ILOGBNAN;
-    if (isinf(x)) return MSVCRT_INT_MAX;
+    union { double f; UINT64 i; } u = { x };
+    int e = u.i >> 52 & 0x7ff;
 
-#ifdef HAVE_ILOGB
-    return ilogb(x);
-#else
-    return logb(x);
-#endif
+    if (!e)
+    {
+        u.i <<= 12;
+        if (u.i == 0) return MSVCRT_FP_ILOGB0;
+        /* subnormal x */
+        for (e = -0x3ff; u.i >> 63 == 0; e--, u.i <<= 1);
+        return e;
+    }
+    if (e == 0x7ff) return u.i << 12 ? MSVCRT_FP_ILOGBNAN : MSVCRT_INT_MAX;
+    return e - 0x3ff;
 }
 
+/*********************************************************************
+ *      ilogbf (MSVCR120.@)
+ *
+ * Copied from musl: src/math/ilogbf.c
+ */
 int CDECL MSVCR120_ilogbf(float x)
 {
-    if (!x) return MSVCRT_FP_ILOGB0;
-    if (isnan(x)) return MSVCRT_FP_ILOGBNAN;
-    if (isinf(x)) return MSVCRT_INT_MAX;
+    union { float f; UINT32 i; } u = { x };
+    int e = u.i >> 23 & 0xff;
 
-#ifdef HAVE_ILOGBF
-    return ilogbf(x);
-#else
-    return logbf(x);
-#endif
+    if (!e)
+    {
+        u.i <<= 9;
+        if (u.i == 0) return MSVCRT_FP_ILOGB0;
+        /* subnormal x */
+        for (e = -0x7f; u.i >> 31 == 0; e--, u.i <<= 1);
+        return e;
+    }
+    if (e == 0xff) return u.i << 9 ? MSVCRT_FP_ILOGBNAN : MSVCRT_INT_MAX;
+    return e - 0x7f;
 }
 
+/*********************************************************************
+ *      ilogbl (MSVCR120.@)
+ */
 int CDECL MSVCR120_ilogbl(LDOUBLE x)
 {
     return MSVCR120_ilogb(x);
