@@ -53,18 +53,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-#ifndef HAVE_FINITE
-#define finite(x) isfinite(x)
-#endif
-#ifndef HAVE_FINITEF
-#define finitef(x) isfinite(x)
-#endif
-
-/* FIXME: Does not work with -NAN and -0. */
-#ifndef signbit
-#define signbit(x) ((x) < 0)
-#endif
-
 #define _DOMAIN         1       /* domain error in argument */
 #define _SING           2       /* singularity */
 #define _OVERFLOW       3       /* range overflow */
@@ -199,7 +187,7 @@ float CDECL MSVCRT__copysignf( float x, float y )
  */
 float CDECL MSVCRT__nextafterf( float num, float next )
 {
-    if (!finitef(num) || !finitef(next)) *MSVCRT__errno() = MSVCRT_EDOM;
+    if (!isfinite(num) || !isfinite(next)) *MSVCRT__errno() = MSVCRT_EDOM;
     return nextafterf( num, next );
 }
 
@@ -293,7 +281,7 @@ float CDECL MSVCRT_acosf( float x )
                 return 2 * pio2_lo + 2 * pio2_hi + 7.5231638453e-37;
             return 0;
         }
-        if (MSVCRT__isnanf(x)) return x;
+        if (isnan(x)) return x;
         return math_error(_DOMAIN, "acosf", x, 0, 0 / (x - x));
     }
     /* |x| < 0.5 */
@@ -351,7 +339,7 @@ float CDECL MSVCRT_asinf( float x )
     if (ix >= 0x3f800000) {  /* |x| >= 1 */
         if (ix == 0x3f800000)  /* |x| == 1 */
             return x * pio2 + 7.5231638453e-37;  /* asin(+-1) = +-pi/2 with inexact */
-        if (MSVCRT__isnanf(x)) return x;
+        if (isnan(x)) return x;
         return math_error(_DOMAIN, "asinf", x, 0, 0 / (x - x));
     }
     if (ix < 0x3f000000) {  /* |x| < 0.5 */
@@ -401,14 +389,14 @@ float CDECL MSVCRT_atanf( float x )
     int id;
 
 #if _MSVCR_VER == 0
-    if (MSVCRT__isnanf(x)) return math_error(_DOMAIN, "atanf", x, 0, x);
+    if (isnan(x)) return math_error(_DOMAIN, "atanf", x, 0, x);
 #endif
 
     ix = *(unsigned int*)&x;
     sign = ix >> 31;
     ix &= 0x7fffffff;
     if (ix >= 0x4c800000) {  /* if |x| >= 2**26 */
-        if (MSVCRT__isnanf(x))
+        if (isnan(x))
             return x;
         z = atanhi[3] + 7.5231638453e-37;
         return sign ? -z : z;
@@ -466,7 +454,7 @@ float CDECL MSVCRT_atan2f( float y, float x )
     float z;
     unsigned int m, ix, iy;
 
-    if (MSVCRT__isnanf(x) || MSVCRT__isnanf(y))
+    if (isnan(x) || isnan(y))
         return x + y;
     ix = *(unsigned int*)&x;
     iy = *(unsigned int*)&y;
@@ -530,7 +518,7 @@ float CDECL MSVCRT_atan2f( float y, float x )
 float CDECL MSVCRT_cosf( float x )
 {
   float ret = cosf(x);
-  if (!finitef(x)) return math_error(_DOMAIN, "cosf", x, 0, ret);
+  if (!isfinite(x)) return math_error(_DOMAIN, "cosf", x, 0, ret);
   return ret;
 }
 
@@ -551,8 +539,8 @@ float CDECL MSVCRT_expf( float x )
 {
   float ret = expf(x);
   if (isnan(x)) return math_error(_DOMAIN, "expf", x, 0, ret);
-  if (finitef(x) && !ret) return math_error(_UNDERFLOW, "expf", x, 0, ret);
-  if (finitef(x) && !finitef(ret)) return math_error(_OVERFLOW, "expf", x, 0, ret);
+  if (isfinite(x) && !ret) return math_error(_UNDERFLOW, "expf", x, 0, ret);
+  if (isfinite(x) && !isfinite(ret)) return math_error(_OVERFLOW, "expf", x, 0, ret);
   return ret;
 }
 
@@ -562,7 +550,7 @@ float CDECL MSVCRT_expf( float x )
 float CDECL MSVCRT_fmodf( float x, float y )
 {
   float ret = fmodf(x, y);
-  if (!finitef(x) || !finitef(y)) return math_error(_DOMAIN, "fmodf", x, 0, ret);
+  if (!isfinite(x) || !isfinite(y)) return math_error(_DOMAIN, "fmodf", x, 0, ret);
   return ret;
 }
 
@@ -595,9 +583,9 @@ float CDECL MSVCRT_powf( float x, float y )
 {
   float z = powf(x,y);
   if (x < 0 && y != floorf(y)) return math_error(_DOMAIN, "powf", x, y, z);
-  if (!x && finitef(y) && y < 0) return math_error(_SING, "powf", x, y, z);
-  if (finitef(x) && finitef(y) && !finitef(z)) return math_error(_OVERFLOW, "powf", x, y, z);
-  if (x && finitef(x) && finitef(y) && !z) return math_error(_UNDERFLOW, "powf", x, y, z);
+  if (!x && isfinite(y) && y < 0) return math_error(_SING, "powf", x, y, z);
+  if (isfinite(x) && isfinite(y) && !isfinite(z)) return math_error(_OVERFLOW, "powf", x, y, z);
+  if (x && isfinite(x) && isfinite(y) && !z) return math_error(_UNDERFLOW, "powf", x, y, z);
   return z;
 }
 
@@ -607,7 +595,7 @@ float CDECL MSVCRT_powf( float x, float y )
 float CDECL MSVCRT_sinf( float x )
 {
   float ret = sinf(x);
-  if (!finitef(x)) return math_error(_DOMAIN, "sinf", x, 0, ret);
+  if (!isfinite(x)) return math_error(_DOMAIN, "sinf", x, 0, ret);
   return ret;
 }
 
@@ -699,7 +687,7 @@ float CDECL MSVCRT_sqrtf( float x )
 float CDECL MSVCRT_tanf( float x )
 {
   float ret = tanf(x);
-  if (!finitef(x)) return math_error(_DOMAIN, "tanf", x, 0, ret);
+  if (!isfinite(x)) return math_error(_DOMAIN, "tanf", x, 0, ret);
   return ret;
 }
 
@@ -709,7 +697,7 @@ float CDECL MSVCRT_tanf( float x )
 float CDECL MSVCRT_tanhf( float x )
 {
   float ret = tanhf(x);
-  if (!finitef(x)) return math_error(_DOMAIN, "tanhf", x, 0, ret);
+  if (!isfinite(x)) return math_error(_DOMAIN, "tanhf", x, 0, ret);
   return ret;
 }
 
@@ -3379,7 +3367,7 @@ float CDECL MSVCR120_exp2f(float x)
 {
 #ifdef HAVE_EXP2F
     float ret = exp2f(x);
-    if (finitef(x) && !finitef(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
+    if (isfinite(x) && !isfinite(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
     return ret;
 #else
     return MSVCR120_exp2(x);
@@ -3418,7 +3406,7 @@ float CDECL MSVCR120_expm1f(float x)
 #else
     float ret = exp(x) - 1;
 #endif
-    if (finitef(x) && !finitef(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
+    if (isfinite(x) && !isfinite(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
     return ret;
 }
 
@@ -4089,7 +4077,7 @@ float CDECL MSVCR120_atanhf(float x)
 
     ret = atanhf(x);
 
-    if (!finitef(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
+    if (!isfinite(ret)) *MSVCRT__errno() = MSVCRT_ERANGE;
     return ret;
 #else
     return MSVCR120_atanh(x);
@@ -4144,7 +4132,7 @@ double CDECL MSVCR120_remainder(double x, double y)
 {
 #ifdef HAVE_REMAINDER
     /* this matches 64-bit Windows.  32-bit Windows is slightly different */
-    if(!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+    if(!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
     if(isnan(y) || y==0.0) *MSVCRT__errno() = MSVCRT_EDOM;
     return remainder(x, y);
 #else
@@ -4160,7 +4148,7 @@ float CDECL MSVCR120_remainderf(float x, float y)
 {
 #ifdef HAVE_REMAINDERF
     /* this matches 64-bit Windows.  32-bit Windows is slightly different */
-    if(!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+    if(!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
     if(isnan(y) || y==0.0f) *MSVCRT__errno() = MSVCRT_EDOM;
     return remainderf(x, y);
 #else
@@ -4183,7 +4171,7 @@ LDOUBLE CDECL MSVCR120_remainderl(LDOUBLE x, LDOUBLE y)
 double CDECL MSVCR120_remquo(double x, double y, int *quo)
 {
 #ifdef HAVE_REMQUO
-    if(!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+    if(!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
     if(isnan(y) || y==0.0) *MSVCRT__errno() = MSVCRT_EDOM;
     return remquo(x, y, quo);
 #else
@@ -4198,7 +4186,7 @@ double CDECL MSVCR120_remquo(double x, double y, int *quo)
 float CDECL MSVCR120_remquof(float x, float y, int *quo)
 {
 #ifdef HAVE_REMQUOF
-    if(!finitef(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+    if(!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
     if(isnan(y) || y==0.0f) *MSVCRT__errno() = MSVCRT_EDOM;
     return remquof(x, y, quo);
 #else

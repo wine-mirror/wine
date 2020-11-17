@@ -28,10 +28,6 @@
 #define FUNC_NAME(func) func ## _a
 #endif
 
-#ifndef signbit
-#define signbit(x) ((x) < 0)
-#endif
-
 struct FUNC_NAME(_str_ctx) {
     MSVCRT_size_t len;
     APICHAR *buf;

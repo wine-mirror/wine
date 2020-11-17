@@ -232,10 +232,56 @@ static const union {
 #define FP_ZERO       0
 
 short __cdecl _dclass(double);
-#define isfinite(x) (_finite(x))
-#define isinf(x)    (!(_finite(x) || _isnan(x)))
-#define isnan(x)    (_isnan(x))
-#define isnormal(x) (!!(_fpclass((double)(x)) & (_FPCLASS_NN|_FPCLASS_PN)))
+short __cdecl _fdclass(float);
+int   __cdecl _dsign(double);
+int   __cdecl _fdsign(float);
+
+static inline int __isnanf(float x)
+{
+    union { float x; unsigned int i; } u = { x };
+    return (u.i & 0x7fffffff) > 0x7f800000;
+}
+static inline int __isnan(double x)
+{
+    union { double x; unsigned __int64 i; } u = { x };
+    return (u.i & ~0ull >> 1) > 0x7ffull << 52;
+}
+static inline int __isinff(float x)
+{
+    union { float x; unsigned int i; } u = { x };
+    return (u.i & 0x7fffffff) == 0x7f800000;
+}
+static inline int __isinf(double x)
+{
+    union { double x; unsigned __int64 i; } u = { x };
+    return (u.i & ~0ull >> 1) == 0x7ffull << 52;
+}
+static inline int __isnormalf(float x)
+{
+    union { float x; unsigned int i; } u = { x };
+    return ((u.i + 0x00800000) & 0x7fffffff) >= 0x01000000;
+}
+static inline int __isnormal(double x)
+{
+    union { double x; unsigned __int64 i; } u = { x };
+    return ((u.i + (1ull << 52)) & ~0ull >> 1) >= 1ull << 53;
+}
+static inline int __signbitf(float x)
+{
+    union { float x; unsigned int i; } u = { x };
+    return (int)(u.i >> 31);
+}
+static inline int __signbit(double x)
+{
+    union { double x; unsigned __int64 i; } u = { x };
+    return (int)(u.i >> 63);
+}
+
+#define isinf(x)    (sizeof(x) == sizeof(float) ? __isinff(x) : __isinf(x))
+#define isnan(x)    (sizeof(x) == sizeof(float) ? __isnanf(x) : __isnan(x))
+#define isnormal(x) (sizeof(x) == sizeof(float) ? __isnormalf(x) : __isnormal(x))
+#define signbit(x)  (sizeof(x) == sizeof(float) ? __signbitf(x) : __signbit(x))
+#define isfinite(x) (!isinf(x) && !isnan(x))
 
 #ifdef __cplusplus
 }
