@@ -236,6 +236,7 @@ static const struct object_ops screen_buffer_ops =
     screen_buffer_destroy             /* destroy */
 };
 
+static int screen_buffer_write( struct fd *fd, struct async *async, file_pos_t pos );
 static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
 static const struct fd_ops screen_buffer_fd_ops =
@@ -244,7 +245,7 @@ static const struct fd_ops screen_buffer_fd_ops =
     default_poll_event,           /* poll_event */
     console_get_fd_type,          /* get_fd_type */
     no_fd_read,                   /* read */
-    no_fd_write,                  /* write */
+    screen_buffer_write,          /* write */
     no_fd_flush,                  /* flush */
     no_fd_get_file_info,          /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
@@ -916,6 +917,31 @@ static int console_input_flush( struct fd *fd, struct async *async )
     return queue_host_ioctl( console->server, IOCTL_CONDRV_FLUSH, 0, NULL, NULL );
 }
 
+static int screen_buffer_write( struct fd *fd, struct async *async, file_pos_t pos )
+{
+    struct screen_buffer *screen_buffer = get_fd_user( fd );
+    struct iosb *iosb;
+
+    if (!screen_buffer->input || !screen_buffer->input->server)
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return 0;
+    }
+
+    if (!queue_host_ioctl( screen_buffer->input->server, IOCTL_CONDRV_WRITE_FILE,
+                           screen_buffer->id, async, &screen_buffer->ioctl_q ))
+        return 0;
+
+    /* we can't use default async handling, because write result is not
+     * compatible with ioctl result */
+    iosb = async_get_iosb( async );
+    iosb->status = STATUS_SUCCESS;
+    iosb->result = iosb->in_size;
+    async_terminate( async, iosb->result ? STATUS_ALERTED : STATUS_SUCCESS );
+    release_object( iosb );
+    return 1;
+}
+
 static int screen_buffer_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct screen_buffer *screen_buffer = get_fd_user( fd );
@@ -1336,20 +1362,28 @@ DECL_HANDLER(get_next_console_request)
         if (ioctl->async)
         {
             iosb = async_get_iosb( ioctl->async );
-            iosb->status = status;
-            iosb->out_size = min( iosb->out_size, get_req_data_size() );
-            if (iosb->out_size)
+            if (iosb->status == STATUS_PENDING)
             {
-                if ((iosb->out_data = memdup( get_req_data(), iosb->out_size )))
+                iosb->status = status;
+                iosb->out_size = min( iosb->out_size, get_req_data_size() );
+                if (iosb->out_size)
                 {
-                    iosb->result = iosb->out_size;
-                    status = STATUS_ALERTED;
+                    if ((iosb->out_data = memdup( get_req_data(), iosb->out_size )))
+                    {
+                        iosb->result = iosb->out_size;
+                        status = STATUS_ALERTED;
+                    }
+                    else if (!status)
+                    {
+                        iosb->status = STATUS_NO_MEMORY;
+                        iosb->out_size = 0;
+                    }
                 }
-                else if (!status)
-                {
-                    iosb->status = STATUS_NO_MEMORY;
-                    iosb->out_size = 0;
-                }
+            }
+            else
+            {
+                release_object( ioctl->async );
+                ioctl->async = NULL;
             }
         }
         console_host_ioctl_terminate( ioctl, status );
