@@ -1008,9 +1008,13 @@ static void testfilter_destroy(struct strmbase_filter *iface)
 static HRESULT testfilter_init_stream(struct strmbase_filter *iface)
 {
     struct testfilter *filter = impl_from_BaseFilter(iface);
+    HRESULT hr;
 
-    if (SUCCEEDED(filter->init_stream_hr))
-        BaseOutputPinImpl_Active(&filter->source);
+    if (SUCCEEDED(filter->init_stream_hr) && filter->source.pin.peer)
+    {
+        hr = IMemAllocator_Commit(filter->source.pAllocator);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    }
 
     return filter->init_stream_hr;
 }
@@ -1018,9 +1022,13 @@ static HRESULT testfilter_init_stream(struct strmbase_filter *iface)
 static HRESULT testfilter_cleanup_stream(struct strmbase_filter *iface)
 {
     struct testfilter *filter = impl_from_BaseFilter(iface);
+    HRESULT hr;
 
-    if (SUCCEEDED(filter->cleanup_stream_hr))
-        BaseOutputPinImpl_Inactive(&filter->source);
+    if (SUCCEEDED(filter->cleanup_stream_hr) && filter->source.pin.peer)
+    {
+        hr = IMemAllocator_Decommit(filter->source.pAllocator);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    }
 
     return filter->cleanup_stream_hr;
 }
