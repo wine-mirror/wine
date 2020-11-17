@@ -1300,11 +1300,8 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(size == sizeof(buffer), "Got size %d.\n", size);
     ok(!memcmp(bih, &expect_bih, sizeof(BITMAPINFOHEADER)), "Bitmap headers didn't match.\n");
-    if (0) /* FIXME: Rendering is currently broken on Wine. */
-    {
-        for (i = 0; i < 32 * 16; ++i)
-            ok((data[i] & 0xffffff) == 0x555555, "Got unexpected color %08x at %u.\n", data[i], i);
-    }
+    for (i = 0; i < 32 * 16; ++i)
+        ok((data[i] & 0xffffff) == 0x555555, "Got unexpected color %08x at %u.\n", data[i], i);
 
     hr = IMediaControl_Run(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1316,11 +1313,8 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(size == sizeof(buffer), "Got size %d.\n", size);
     ok(!memcmp(bih, &expect_bih, sizeof(BITMAPINFOHEADER)), "Bitmap headers didn't match.\n");
-    if (0) /* FIXME: Rendering is currently broken on Wine. */
-    {
-        for (i = 0; i < 32 * 16; ++i)
-            ok((data[i] & 0xffffff) == 0x555555, "Got unexpected color %08x at %u.\n", data[i], i);
-    }
+    for (i = 0; i < 32 * 16; ++i)
+        ok((data[i] & 0xffffff) == 0x555555, "Got unexpected color %08x at %u.\n", data[i], i);
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
