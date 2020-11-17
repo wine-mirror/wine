@@ -1258,7 +1258,7 @@ static HRESULT WINAPI video_presenter_getservice_GetService(IMFGetService *iface
 
     FIXME("Unimplemented service %s.\n", debugstr_guid(service));
 
-    return E_NOTIMPL;
+    return MF_E_UNSUPPORTED_SERVICE;
 }
 
 static const IMFGetServiceVtbl video_presenter_getservice_vtbl =

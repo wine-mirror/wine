@@ -1129,6 +1129,7 @@ static void test_default_presenter(void)
     IDirect3DDeviceManager9 *dm;
     IMFVideoDeviceID *deviceid;
     HWND hwnd, hwnd2;
+    IUnknown *unk;
     DWORD flags;
     float rate;
     HRESULT hr;
@@ -1162,7 +1163,11 @@ static void test_default_presenter(void)
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFGetService, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDeviceID, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFQualityAdvise, TRUE);
+    check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFTransform, FALSE);
     check_service_interface(presenter, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, TRUE);
+
+    hr = MFGetService((IUnknown *)presenter, &MR_VIDEO_MIXER_SERVICE, &IID_IUnknown, (void **)&unk);
+    ok(hr == MF_E_UNSUPPORTED_SERVICE, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDeviceID, (void **)&deviceid);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
