@@ -265,11 +265,6 @@ static HRESULT SendFurther(struct strmbase_sink *sink, SendPinFunc func, void *a
     return hr;
 }
 
-HRESULT strmbase_pin_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
-{
-    return VFW_S_NO_MORE_ITEMS;
-}
-
 static HRESULT WINAPI pin_QueryInterface(IPin *iface, REFIID iid, void **out)
 {
     struct strmbase_pin *pin = impl_from_IPin(iface);

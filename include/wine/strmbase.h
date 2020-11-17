@@ -106,8 +106,6 @@ struct strmbase_sink_ops
 };
 
 /* Base Pin */
-HRESULT strmbase_pin_get_media_type(struct strmbase_pin *pin, unsigned int index, AM_MEDIA_TYPE *mt);
-
 HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(struct strmbase_source *pin,
         IMediaSample **sample, REFERENCE_TIME *start, REFERENCE_TIME *stop, DWORD flags);
 HRESULT WINAPI BaseOutputPinImpl_InitAllocator(struct strmbase_source *pin, IMemAllocator **allocator);

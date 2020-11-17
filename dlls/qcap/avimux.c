@@ -1475,7 +1475,6 @@ static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_interface = sink_query_interface,
     .base.pin_query_accept = sink_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnReceive = AviMuxIn_Receive,
     .sink_connect = avi_mux_sink_connect,
     .sink_disconnect = avi_mux_sink_disconnect,

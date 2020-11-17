@@ -542,7 +542,6 @@ static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_interface = dsound_render_sink_query_interface,
     .base.pin_query_accept = dsound_render_sink_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnReceive = dsound_render_sink_Receive,
     .sink_connect = dsound_render_sink_connect,
     .sink_disconnect = dsound_render_sink_disconnect,

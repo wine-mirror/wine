@@ -410,7 +410,6 @@ static void sink_disconnect(struct strmbase_sink *iface)
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = sink_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .base.pin_query_interface = sink_query_interface,
     .pfnReceive = AVICompressorIn_Receive,
     .sink_connect = sink_connect,

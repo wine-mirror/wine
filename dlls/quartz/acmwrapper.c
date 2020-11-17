@@ -324,7 +324,6 @@ static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_interface = acm_wrapper_sink_query_interface,
     .base.pin_query_accept = acm_wrapper_sink_query_accept,
-    .base.pin_get_media_type = strmbase_pin_get_media_type,
     .pfnReceive = acm_wrapper_sink_Receive,
     .sink_connect = acm_wrapper_sink_connect,
     .sink_disconnect = acm_wrapper_sink_disconnect,
