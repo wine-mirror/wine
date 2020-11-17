@@ -2074,7 +2074,7 @@ int CDECL _controlfp_s(unsigned int *cur, unsigned int newval, unsigned int mask
 int CDECL MSVCRT_fegetenv(MSVCRT_fenv_t *env)
 {
     env->control = _controlfp(0, 0) & (MSVCRT__EM_INEXACT | MSVCRT__EM_UNDERFLOW |
-            MSVCRT__EM_OVERFLOW | MSVCRT__EM_ZERODIVIDE | MSVCRT__EM_INVALID);
+            MSVCRT__EM_OVERFLOW | MSVCRT__EM_ZERODIVIDE | MSVCRT__EM_INVALID | MSVCRT__RC_CHOP);
     env->status = _statusfp();
     return 0;
 }
@@ -2193,12 +2193,18 @@ int CDECL MSVCRT_fesetenv(const MSVCRT_fenv_t *env)
 
     __asm__ __volatile__( "fnstenv %0" : "=m" (fenv) );
 
-    fenv.control_word &= ~0x3d;
+    fenv.control_word &= ~0xc3d;
     if (env->control & MSVCRT__EM_INVALID) fenv.control_word |= 0x1;
     if (env->control & MSVCRT__EM_ZERODIVIDE) fenv.control_word |= 0x4;
     if (env->control & MSVCRT__EM_OVERFLOW) fenv.control_word |= 0x8;
     if (env->control & MSVCRT__EM_UNDERFLOW) fenv.control_word |= 0x10;
     if (env->control & MSVCRT__EM_INEXACT) fenv.control_word |= 0x20;
+    switch (env->control & MSVCRT__MCW_RC)
+    {
+        case MSVCRT__RC_UP|MSVCRT__RC_DOWN: fenv.control_word |= 0xc00; break;
+        case MSVCRT__RC_UP:                 fenv.control_word |= 0x800; break;
+        case MSVCRT__RC_DOWN:               fenv.control_word |= 0x400; break;
+    }
 
     fenv.status_word &= ~0x3d;
     if (env->status & MSVCRT__SW_INVALID) fenv.status_word |= 0x1;
@@ -2213,14 +2219,19 @@ int CDECL MSVCRT_fesetenv(const MSVCRT_fenv_t *env)
     if (sse2_supported)
     {
         DWORD fpword;
-
         __asm__ __volatile__( "stmxcsr %0" : "=m" (fpword) );
-        fpword &= ~0x1e80;
+        fpword &= ~0x7e80;
         if (env->control & MSVCRT__EM_INVALID) fpword |= 0x80;
         if (env->control & MSVCRT__EM_ZERODIVIDE) fpword |= 0x200;
         if (env->control & MSVCRT__EM_OVERFLOW) fpword |= 0x400;
         if (env->control & MSVCRT__EM_UNDERFLOW) fpword |= 0x800;
         if (env->control & MSVCRT__EM_INEXACT) fpword |= 0x1000;
+        switch (env->control & MSVCRT__MCW_RC)
+        {
+            case MSVCRT__RC_CHOP: fpword |= 0x6000; break;
+            case MSVCRT__RC_UP:   fpword |= 0x4000; break;
+            case MSVCRT__RC_DOWN: fpword |= 0x2000; break;
+        }
         __asm__ __volatile__( "ldmxcsr %0" : : "m" (fpword) );
     }
 
