@@ -174,13 +174,13 @@ static HRESULT WINAPI multimedia_stream_SetState(IAMMultiMediaStream *iface, STR
     return hr;
 }
 
-static HRESULT WINAPI multimedia_stream_GetTime(IAMMultiMediaStream *iface, STREAM_TIME *pCurrentTime)
+static HRESULT WINAPI multimedia_stream_GetTime(IAMMultiMediaStream *iface, STREAM_TIME *time)
 {
-    struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
+    struct multimedia_stream *stream = impl_from_IAMMultiMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, pCurrentTime);
+    TRACE("stream %p, time %p.\n", stream, time);
 
-    return E_NOTIMPL;
+    return IMediaStreamFilter_GetCurrentStreamTime(stream->filter, time);
 }
 
 static HRESULT WINAPI multimedia_stream_GetDuration(IAMMultiMediaStream *iface, STREAM_TIME *duration)
