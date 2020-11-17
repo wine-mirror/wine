@@ -2292,6 +2292,22 @@ static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsign
         if (in_size % sizeof(WCHAR) || *out_size) return STATUS_INVALID_PARAMETER;
         return write_console( screen_buffer, in_data, in_size / sizeof(WCHAR) );
 
+    case IOCTL_CONDRV_WRITE_FILE:
+        {
+            unsigned int len;
+            WCHAR *buf;
+            NTSTATUS status;
+
+            len = MultiByteToWideChar( screen_buffer->console->output_cp, 0, in_data, in_size,
+                                       NULL, 0 );
+            if (!len) return STATUS_SUCCESS;
+            if (!(buf = malloc( len * sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
+            MultiByteToWideChar( screen_buffer->console->output_cp, 0, in_data, in_size, buf, len );
+            status = write_console( screen_buffer, buf, len );
+            free( buf );
+            return status;
+        }
+
     case IOCTL_CONDRV_WRITE_OUTPUT:
         if ((*out_size != sizeof(DWORD) && *out_size != sizeof(SMALL_RECT)) ||
             in_size < sizeof(struct condrv_output_params))

@@ -1634,17 +1634,12 @@ BOOL WINAPI ReadConsoleW( HANDLE handle, void *buffer, DWORD length, DWORD *coun
 BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleA( HANDLE handle, const void *buffer, DWORD length,
                                              DWORD *written, void *reserved )
 {
-    UINT cp = GetConsoleOutputCP();
-    LPWSTR strW;
-    DWORD lenW;
     BOOL ret;
 
-    if (written) *written = 0;
-    lenW = MultiByteToWideChar( cp, 0, buffer, length, NULL, 0 );
-    if (!(strW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) ))) return FALSE;
-    MultiByteToWideChar( cp, 0, buffer, length, strW, lenW );
-    ret = WriteConsoleW( handle, strW, lenW, written, 0 );
-    HeapFree( GetProcessHeap(), 0, strW );
+    TRACE( "(%p,%s,%d,%p,%p)\n", handle, debugstr_an(buffer, length), length, written, reserved );
+
+    ret = console_ioctl( handle, IOCTL_CONDRV_WRITE_FILE, (void *)buffer, length, NULL, 0, NULL );
+    if (written) *written = ret ? length : 0;
     return ret;
 }
 
