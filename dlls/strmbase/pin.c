@@ -702,46 +702,6 @@ HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(struct strmbase_source *This,
     return hr;
 }
 
-/* replaces OutputPin_CommitAllocator */
-HRESULT WINAPI BaseOutputPinImpl_Active(struct strmbase_source *This)
-{
-    HRESULT hr;
-
-    TRACE("(%p)->()\n", This);
-
-    EnterCriticalSection(&This->pin.filter->csFilter);
-    {
-        if (!This->pin.peer || !This->pMemInputPin)
-            hr = VFW_E_NOT_CONNECTED;
-        else
-            hr = IMemAllocator_Commit(This->pAllocator);
-    }
-    LeaveCriticalSection(&This->pin.filter->csFilter);
-
-    TRACE("--> %08x\n", hr);
-    return hr;
-}
-
-/* replaces OutputPin_DecommitAllocator */
-HRESULT WINAPI BaseOutputPinImpl_Inactive(struct strmbase_source *This)
-{
-    HRESULT hr;
-
-    TRACE("(%p)->()\n", This);
-
-    EnterCriticalSection(&This->pin.filter->csFilter);
-    {
-        if (!This->pin.peer || !This->pMemInputPin)
-            hr = VFW_E_NOT_CONNECTED;
-        else
-            hr = IMemAllocator_Decommit(This->pAllocator);
-    }
-    LeaveCriticalSection(&This->pin.filter->csFilter);
-
-    TRACE("--> %08x\n", hr);
-    return hr;
-}
-
 HRESULT WINAPI BaseOutputPinImpl_InitAllocator(struct strmbase_source *This, IMemAllocator **pMemAlloc)
 {
     return CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER, &IID_IMemAllocator, (LPVOID*)pMemAlloc);

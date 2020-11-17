@@ -110,8 +110,6 @@ HRESULT strmbase_pin_get_media_type(struct strmbase_pin *pin, unsigned int index
 
 HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(struct strmbase_source *pin,
         IMediaSample **sample, REFERENCE_TIME *start, REFERENCE_TIME *stop, DWORD flags);
-HRESULT WINAPI BaseOutputPinImpl_Active(struct strmbase_source *pin);
-HRESULT WINAPI BaseOutputPinImpl_Inactive(struct strmbase_source *pin);
 HRESULT WINAPI BaseOutputPinImpl_InitAllocator(struct strmbase_source *pin, IMemAllocator **allocator);
 HRESULT WINAPI BaseOutputPinImpl_DecideAllocator(struct strmbase_source *pin, IMemInputPin *peer, IMemAllocator **allocator);
 HRESULT WINAPI BaseOutputPinImpl_AttemptConnection(struct strmbase_source *pin, IPin *peer, const AM_MEDIA_TYPE *mt);
