@@ -780,25 +780,25 @@ static void test_unconnected_filter_state(void)
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IBaseFilter_Pause(filter);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == State_Paused, "Got state %u.\n", state);
+    ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IBaseFilter_Run(filter, 0);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == State_Running, "Got state %u.\n", state);
+    ok(state == State_Running, "Got state %u.\n", state);
 
     hr = IBaseFilter_Pause(filter);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == State_Paused, "Got state %u.\n", state);
+    ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IBaseFilter_Stop(filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -808,11 +808,11 @@ static void test_unconnected_filter_state(void)
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IBaseFilter_Run(filter, 0);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == State_Running, "Got state %u.\n", state);
+    ok(state == State_Running, "Got state %u.\n", state);
 
     hr = IBaseFilter_Stop(filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

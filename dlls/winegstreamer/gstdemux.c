@@ -1438,7 +1438,7 @@ static HRESULT gstdemux_init_stream(struct strmbase_filter *iface)
     unsigned int i;
 
     if (!filter->container)
-        return VFW_E_NOT_CONNECTED;
+        return S_OK;
 
     for (i = 0; i < filter->source_count; ++i)
     {
@@ -1489,7 +1489,7 @@ static HRESULT gstdemux_start_stream(struct strmbase_filter *iface, REFERENCE_TI
     GstStateChangeReturn ret;
 
     if (!filter->container)
-        return VFW_E_NOT_CONNECTED;
+        return S_OK;
 
     if ((ret = gst_element_set_state(filter->container, GST_STATE_PLAYING)) == GST_STATE_CHANGE_FAILURE)
     {
@@ -1507,7 +1507,7 @@ static HRESULT gstdemux_stop_stream(struct strmbase_filter *iface)
     GstStateChangeReturn ret;
 
     if (!filter->container)
-        return VFW_E_NOT_CONNECTED;
+        return S_OK;
 
     if ((ret = gst_element_set_state(filter->container, GST_STATE_PAUSED)) == GST_STATE_CHANGE_FAILURE)
     {
