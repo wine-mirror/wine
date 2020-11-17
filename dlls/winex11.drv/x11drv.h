@@ -563,9 +563,9 @@ struct x11drv_win_data
     HWND        hwnd;           /* hwnd that this private data belongs to */
     Window      whole_window;   /* X window for the complete window */
     Window      client_window;  /* X window for the client area */
-    RECT        window_rect;    /* USER window rectangle relative to parent */
-    RECT        whole_rect;     /* X window rectangle for the whole window relative to parent */
-    RECT        client_rect;    /* client area relative to parent */
+    RECT        window_rect;    /* USER window rectangle relative to win32 parent window client area */
+    RECT        whole_rect;     /* X window rectangle for the whole window relative to win32 parent window client area */
+    RECT        client_rect;    /* client area relative to win32 parent window client area */
     XIC         xic;            /* X input context */
     BOOL        managed : 1;    /* is window managed? */
     BOOL        mapped : 1;     /* is window mapped? (in either normal or iconic state) */
