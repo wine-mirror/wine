@@ -1154,6 +1154,7 @@ static void test_default_presenter(void)
     check_interface(presenter, &IID_IMFVideoDeviceID, TRUE);
     check_interface(presenter, &IID_IMFQualityAdvise, TRUE);
     check_interface(presenter, &IID_IDirect3DDeviceManager9, TRUE);
+    todo_wine check_interface(presenter, &IID_IMFQualityAdviseLimits, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPositionMapper, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDisplayControl, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPresenter, TRUE);
