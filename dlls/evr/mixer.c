@@ -1650,11 +1650,13 @@ static HRESULT WINAPI video_mixer_getservice_GetService(IMFGetService *iface, RE
         {
             return IMFGetService_QueryInterface(iface, riid, obj);
         }
+
+        return E_NOINTERFACE;
     }
 
     FIXME("Unsupported service %s, riid %s.\n", debugstr_guid(service), debugstr_guid(riid));
 
-    return E_NOTIMPL;
+    return MF_E_UNSUPPORTED_SERVICE;
 }
 
 static const IMFGetServiceVtbl video_mixer_getservice_vtbl =

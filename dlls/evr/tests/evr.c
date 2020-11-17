@@ -489,6 +489,10 @@ static void test_default_mixer(void)
     check_service_interface(transform, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoProcessor, TRUE);
     check_service_interface(transform, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerControl, TRUE);
     check_service_interface(transform, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoPositionMapper, TRUE);
+    check_service_interface(transform, &MR_VIDEO_MIXER_SERVICE, &IID_IMFTransform, FALSE);
+
+    hr = MFGetService((IUnknown *)transform, &MR_VIDEO_RENDER_SERVICE, &IID_IUnknown, (void **)&unk);
+    ok(hr == MF_E_UNSUPPORTED_SERVICE, "Unexpected hr %#x.\n", hr);
 
     if (SUCCEEDED(MFGetService((IUnknown *)transform, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerControl2, (void **)&mixer_control2)))
     {
