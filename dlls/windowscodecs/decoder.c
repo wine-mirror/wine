@@ -95,6 +95,7 @@ static ULONG WINAPI CommonDecoder_Release(IWICBitmapDecoder *iface)
             IStream_Release(This->stream);
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
+        decoder_destroy(This->decoder);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
