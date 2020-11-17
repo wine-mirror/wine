@@ -746,13 +746,10 @@ static HRESULT send_frame(IMemInputPin *sink)
     return ret;
 }
 
-static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
+static void test_filter_state(IMemInputPin *input, IMediaControl *control)
 {
-    IMediaControl *control;
     OAFilterState state;
     HRESULT hr;
-
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
 
     hr = send_frame(input);
     ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
@@ -833,8 +830,6 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     /* The DirectSound renderer will silently refuse to transition to running
      * if it hasn't finished pausing yet. Once it does it reports itself as
      * completely paused. */
-
-    IMediaControl_Release(control);
 }
 
 static void test_connect_pin(void)
@@ -860,6 +855,7 @@ static void test_connect_pin(void)
     IBaseFilter *filter = create_dsound_render();
     struct testfilter source;
     IMemAllocator *allocator;
+    IMediaControl *control;
     IFilterGraph2 *graph;
     IMemInputPin *input;
     AM_MEDIA_TYPE mt;
@@ -872,6 +868,7 @@ static void test_connect_pin(void)
     CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (void **)&graph);
     IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, L"source");
     IFilterGraph2_AddFilter(graph, filter, L"sink");
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
 
     IBaseFilter_FindPin(filter, sink_id, &pin);
 
@@ -913,7 +910,7 @@ static void test_connect_pin(void)
     hr = IMemInputPin_ReceiveCanBlock(input);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    test_filter_state(input, graph);
+    test_filter_state(input, control);
 
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -934,6 +931,7 @@ static void test_connect_pin(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     IMemInputPin_Release(input);
     IPin_Release(pin);
+    IMediaControl_Release(control);
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(filter);

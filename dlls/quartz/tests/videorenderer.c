@@ -823,16 +823,13 @@ static HRESULT join_thread_(int line, HANDLE thread)
 }
 #define join_thread(a) join_thread_(__LINE__, a)
 
-static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
+static void test_filter_state(IMemInputPin *input, IMediaControl *control)
 {
     IMemAllocator *allocator;
-    IMediaControl *control;
     IMediaSample *sample;
     OAFilterState state;
     HANDLE thread;
     HRESULT hr;
-
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
 
     thread = send_frame(input);
     hr = join_thread(thread);
@@ -961,17 +958,13 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IMemAllocator_Release(allocator);
-    IMediaControl_Release(control);
 }
 
-static void test_flushing(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
+static void test_flushing(IPin *pin, IMemInputPin *input, IMediaControl *control)
 {
-    IMediaControl *control;
     OAFilterState state;
     HANDLE thread;
     HRESULT hr;
-
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
 
     hr = IMediaControl_Pause(control);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
@@ -1022,20 +1015,16 @@ static void test_flushing(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    IMediaControl_Release(control);
 }
 
-static void test_sample_time(IBaseFilter *filter, IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
+static void test_sample_time(IBaseFilter *filter, IPin *pin, IMemInputPin *input, IMediaControl *control)
 {
-    IMediaControl *control;
     IMediaSeeking *seeking;
     REFERENCE_TIME time;
     OAFilterState state;
     HANDLE thread;
     HRESULT hr;
 
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     IBaseFilter_QueryInterface(filter, &IID_IMediaSeeking, (void **)&seeking);
 
     hr = IMediaControl_Pause(control);
@@ -1108,7 +1097,6 @@ static void test_sample_time(IBaseFilter *filter, IPin *pin, IMemInputPin *input
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IMediaSeeking_Release(seeking);
-    IMediaControl_Release(control);
 }
 
 static unsigned int check_ec_complete(IMediaEvent *eventsrc, DWORD timeout)
@@ -1134,16 +1122,14 @@ static unsigned int check_ec_complete(IMediaEvent *eventsrc, DWORD timeout)
     return ret;
 }
 
-static void test_eos(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
+static void test_eos(IPin *pin, IMemInputPin *input, IMediaControl *control)
 {
-    IMediaControl *control;
     IMediaEvent *eventsrc;
     OAFilterState state;
     HRESULT hr;
     BOOL ret;
 
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaEvent, (void **)&eventsrc);
+    IMediaControl_QueryInterface(control, &IID_IMediaEvent, (void **)&eventsrc);
 
     hr = IMediaControl_Pause(control);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
@@ -1246,15 +1232,13 @@ static void test_eos(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
     ok(!ret, "Got unexpected EC_COMPLETE.\n");
 
     IMediaEvent_Release(eventsrc);
-    IMediaControl_Release(control);
 }
 
 static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
-        IFilterGraph2 *graph, const BITMAPINFOHEADER *expect_bih)
+        IMediaControl *control, const BITMAPINFOHEADER *expect_bih)
 {
     LONG buffer[(sizeof(BITMAPINFOHEADER) + 32 * 16 * 2) / 4];
     const BITMAPINFOHEADER *bih = (BITMAPINFOHEADER *)buffer;
-    IMediaControl *control;
     OAFilterState state;
     IBasicVideo *video;
     unsigned int i;
@@ -1262,7 +1246,6 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
     HRESULT hr;
     LONG size;
 
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     IBaseFilter_QueryInterface(filter, &IID_IBasicVideo, (void **)&video);
 
     hr = IBasicVideo_GetCurrentImage(video, NULL, NULL);
@@ -1321,7 +1304,6 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IBasicVideo_Release(video);
-    IMediaControl_Release(control);
 }
 
 static void test_connect_pin(void)
@@ -1347,6 +1329,7 @@ static void test_connect_pin(void)
     IFilterGraph2 *graph = create_graph();
     struct testfilter source;
     IMemAllocator *allocator;
+    IMediaControl *control;
     IMemInputPin *input;
     AM_MEDIA_TYPE mt;
     IPin *pin, *peer;
@@ -1366,6 +1349,7 @@ static void test_connect_pin(void)
 
     IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, filter, NULL);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
 
     IBaseFilter_FindPin(filter, L"In", &pin);
 
@@ -1424,11 +1408,11 @@ static void test_connect_pin(void)
     hr = IMemInputPin_ReceiveCanBlock(input);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    test_filter_state(input, graph);
-    test_flushing(pin, input, graph);
-    test_sample_time(filter, pin, input, graph);
-    test_eos(pin, input, graph);
-    test_current_image(filter, input, graph, &vih.bmiHeader);
+    test_filter_state(input, control);
+    test_flushing(pin, input, control);
+    test_sample_time(filter, pin, input, control);
+    test_eos(pin, input, control);
+    test_current_image(filter, input, control, &vih.bmiHeader);
 
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1449,6 +1433,7 @@ static void test_connect_pin(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     IMemInputPin_Release(input);
     IPin_Release(pin);
+    IMediaControl_Release(control);
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(filter);

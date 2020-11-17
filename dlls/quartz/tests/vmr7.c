@@ -1022,16 +1022,13 @@ static HRESULT join_thread_(int line, HANDLE thread)
 }
 #define join_thread(a) join_thread_(__LINE__, a)
 
-static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
+static void test_filter_state(IMemInputPin *input, IMediaControl *control)
 {
     IMemAllocator *allocator;
-    IMediaControl *control;
     IMediaSample *sample;
     OAFilterState state;
     HANDLE thread;
     HRESULT hr;
-
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
 
     thread = send_frame(input);
     hr = join_thread(thread);
@@ -1163,18 +1160,14 @@ static void test_filter_state(IMemInputPin *input, IFilterGraph2 *graph)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IMemAllocator_Release(allocator);
-    IMediaControl_Release(control);
 }
 
-static void test_flushing(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
+static void test_flushing(IPin *pin, IMemInputPin *input, IMediaControl *control)
 {
     IMemAllocator *allocator;
-    IMediaControl *control;
     OAFilterState state;
     HANDLE thread;
     HRESULT hr;
-
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
 
     hr = IMemInputPin_GetAllocator(input, &allocator);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1233,19 +1226,16 @@ static void test_flushing(IPin *pin, IMemInputPin *input, IFilterGraph2 *graph)
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    IMediaControl_Release(control);
 }
 
 static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
-        IFilterGraph2 *graph, const BITMAPINFOHEADER *req_bih)
+        IMediaControl *control, const BITMAPINFOHEADER *req_bih)
 {
     LONG buffer[(sizeof(BITMAPINFOHEADER) + 32 * 16 * 4) / 4];
     const BITMAPINFOHEADER *bih = (BITMAPINFOHEADER *)buffer;
     const DWORD *data = (DWORD *)((char *)buffer + sizeof(BITMAPINFOHEADER));
     BITMAPINFOHEADER expect_bih = *req_bih;
     IMemAllocator *allocator;
-    IMediaControl *control;
     OAFilterState state;
     IBasicVideo *video;
     unsigned int i;
@@ -1258,7 +1248,6 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
     expect_bih.biBitCount = 32;
     expect_bih.biSizeImage = 32 * 16 * 4;
 
-    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     IBaseFilter_QueryInterface(filter, &IID_IBasicVideo, (void **)&video);
 
     hr = IBasicVideo_GetCurrentImage(video, NULL, NULL);
@@ -1337,7 +1326,6 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IBasicVideo_Release(video);
-    IMediaControl_Release(control);
 }
 
 static void test_connect_pin(void)
@@ -1363,6 +1351,7 @@ static void test_connect_pin(void)
     IFilterGraph2 *graph = create_graph();
     struct testfilter source;
     IMemAllocator *allocator;
+    IMediaControl *control;
     IMemInputPin *input;
     AM_MEDIA_TYPE mt;
     IPin *pin, *peer;
@@ -1382,6 +1371,7 @@ static void test_connect_pin(void)
 
     IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, NULL);
     IFilterGraph2_AddFilter(graph, filter, NULL);
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
 
     IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
 
@@ -1469,9 +1459,9 @@ static void test_connect_pin(void)
     hr = IMemInputPin_ReceiveCanBlock(input);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    test_filter_state(input, graph);
-    test_flushing(pin, input, graph);
-    test_current_image(filter, input, graph, &vih.bmiHeader);
+    test_filter_state(input, control);
+    test_flushing(pin, input, control);
+    test_current_image(filter, input, control, &vih.bmiHeader);
 
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1490,6 +1480,7 @@ static void test_connect_pin(void)
 
     IMemInputPin_Release(input);
     IPin_Release(pin);
+    IMediaControl_Release(control);
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(filter);
