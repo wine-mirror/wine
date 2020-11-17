@@ -238,7 +238,7 @@ static HRESULT JSGlobal_isFinite(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         if(FAILED(hres))
             return hres;
 
-        ret = is_finite(n);
+        ret = isfinite(n);
     }
 
     if(r)

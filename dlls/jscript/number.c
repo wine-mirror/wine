@@ -247,7 +247,7 @@ static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 
     val = number->value;
 
-    if(radix==10 || !is_finite(val)) {
+    if(radix==10 || !isfinite(val)) {
         hres = to_string(ctx, jsval_number(val), &str);
         if(FAILED(hres))
             return hres;
@@ -373,7 +373,7 @@ static HRESULT Number_toFixed(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     }
 
     val = number->value;
-    if(!is_finite(val)) {
+    if(!isfinite(val)) {
         hres = to_string(ctx, jsval_number(val), &str);
         if(FAILED(hres))
             return hres;
@@ -414,7 +414,7 @@ static HRESULT Number_toExponential(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     }
 
     val = number->value;
-    if(!is_finite(val)) {
+    if(!isfinite(val)) {
         hres = to_string(ctx, jsval_number(val), &str);
         if(FAILED(hres))
             return hres;
@@ -455,7 +455,7 @@ static HRESULT Number_toPrecision(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     }
 
     val = number->value;
-    if(!is_finite(val) || !prec) {
+    if(!isfinite(val) || !prec) {
         hres = to_string(ctx, jsval_number(val), &str);
         if(FAILED(hres))
             return hres;

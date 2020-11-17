@@ -700,7 +700,7 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsval_t val)
     }
     case JSV_NUMBER: {
         double n = get_number(value);
-        if(is_finite(n)) {
+        if(isfinite(n)) {
             const WCHAR *ptr;
             jsstr_t *str;
 
