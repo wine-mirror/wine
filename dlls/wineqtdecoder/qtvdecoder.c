@@ -561,16 +561,18 @@ static void video_decoder_destroy(struct strmbase_filter *iface)
 
 static HRESULT video_decoder_init_stream(struct strmbase_filter *iface)
 {
-    QTVDecoderImpl *This = impl_from_strmbase_filter(iface);
+    QTVDecoderImpl *filter = impl_from_strmbase_filter(iface);
+    HRESULT hr;
 
     OSErr err = noErr;
     ICMDecompressionSessionOptionsRef sessionOptions = NULL;
     ICMDecompressionTrackingCallbackRecord trackingCallbackRecord;
 
     trackingCallbackRecord.decompressionTrackingCallback = trackingCallback;
-    trackingCallbackRecord.decompressionTrackingRefCon = (void*)This;
+    trackingCallbackRecord.decompressionTrackingRefCon = filter;
 
-    err = ICMDecompressionSessionCreate(NULL, This->hImageDescription, sessionOptions, This->outputBufferAttributes, &trackingCallbackRecord, &This->decompressionSession);
+    err = ICMDecompressionSessionCreate(NULL, filter->hImageDescription, sessionOptions,
+            filter->outputBufferAttributes, &trackingCallbackRecord, &filter->decompressionSession);
 
     if (err != noErr)
     {
@@ -578,18 +580,24 @@ static HRESULT video_decoder_init_stream(struct strmbase_filter *iface)
         return E_FAIL;
     }
 
-    return BaseOutputPinImpl_Active(&This->source);
+    if (filter->source.pin.peer && FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
+        ERR("Failed to commit allocator, hr %#x.\n", hr);
+
+    return S_OK;
 }
 
 static HRESULT video_decoder_cleanup_stream(struct strmbase_filter *iface)
 {
-    QTVDecoderImpl* This = impl_from_strmbase_filter(iface);
+    QTVDecoderImpl *filter = impl_from_strmbase_filter(iface);
 
-    if (This->decompressionSession)
-        ICMDecompressionSessionRelease(This->decompressionSession);
-    This->decompressionSession = NULL;
+    if (filter->decompressionSession)
+        ICMDecompressionSessionRelease(filter->decompressionSession);
+    filter->decompressionSession = NULL;
 
-    return BaseOutputPinImpl_Inactive(&This->source);
+    if (filter->source.pin.peer)
+        IMemAllocator_Decommit(filter->source.pAllocator);
+
+    return S_OK;
 }
 
 static const struct strmbase_filter_ops filter_ops =

@@ -278,25 +278,21 @@ static void qt_splitter_destroy(struct strmbase_filter *iface)
 static HRESULT qt_splitter_start_stream(struct strmbase_filter *iface, REFERENCE_TIME time)
 {
     QTSplitter *filter = impl_from_strmbase_filter(iface);
-    HRESULT hr = VFW_E_NOT_CONNECTED, pin_hr;
+    HRESULT hr;
 
     EnterCriticalSection(&filter->csReceive);
 
-    if (filter->pVideo_Pin)
-    {
-        if (SUCCEEDED(pin_hr = BaseOutputPinImpl_Active(&filter->pVideo_Pin->pin)))
-            hr = pin_hr;
-    }
-    if (filter->pAudio_Pin)
-    {
-        if (SUCCEEDED(pin_hr = BaseOutputPinImpl_Active(&filter->pAudio_Pin->pin)))
-            hr = pin_hr;
-    }
+    if (filter->pVideo_Pin && filter->pVideo_Pin->pin.pin.peer
+            && FAILED(hr = IMemAllocator_Commit(filter->pVideo_Pin->pin.pAllocator)))
+        ERR("Failed to commit video allocator, hr %#x.\n", hr);
+    if (filter->pAudio_Pin && filter->pAudio_Pin->pin.pin.peer
+            && FAILED(hr = IMemAllocator_Commit(filter->pAudio_Pin->pin.pAllocator)))
+        ERR("Failed to commit audio allocator, hr %#x.\n", hr);
     SetEvent(filter->runEvent);
 
     LeaveCriticalSection(&filter->csReceive);
 
-    return hr;
+    return S_OK;
 }
 
 static HRESULT qt_splitter_cleanup_stream(struct strmbase_filter *iface)
