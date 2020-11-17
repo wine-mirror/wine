@@ -717,10 +717,14 @@ float CDECL MSVCRT_ceilf( float x )
 
 /*********************************************************************
  *      fabsf (MSVCRT.@)
+ *
+ * Copied from musl: src/math/fabsf.c
  */
 float CDECL MSVCRT_fabsf( float x )
 {
-  return fabsf(x);
+    union { float f; UINT32 i; } u = { x };
+    u.i &= 0x7fffffff;
+    return u.f;
 }
 
 /*********************************************************************
@@ -1610,10 +1614,14 @@ float CDECL MSVCRT_fmaf( float x, float y, float z )
 
 /*********************************************************************
  *		fabs (MSVCRT.@)
+ *
+ * Copied from musl: src/math/fabsf.c
  */
 double CDECL MSVCRT_fabs( double x )
 {
-  return fabs(x);
+    union { double f; UINT64 i; } u = { x };
+    u.i &= ~0ull >> 1;
+    return u.f;
 }
 
 /*********************************************************************
