@@ -1630,7 +1630,7 @@
 @ stdcall -import WriteConsoleOutputCharacterW(long ptr long long ptr)
 @ stdcall -import WriteConsoleOutputW(long ptr long long ptr)
 @ stdcall -import WriteConsoleW(long ptr long ptr ptr)
-@ stdcall WriteFile(long ptr long ptr ptr) KERNEL32_WriteFile
+@ stdcall -import WriteFile(long ptr long ptr ptr)
 @ stdcall -import WriteFileEx(long ptr long ptr ptr)
 @ stdcall -import WriteFileGather(long ptr long ptr ptr)
 @ stdcall WritePrivateProfileSectionA(str str str)

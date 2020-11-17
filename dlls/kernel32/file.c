@@ -306,17 +306,6 @@ BOOL WINAPI KERNEL32_ReadFile( HANDLE file, LPVOID buffer, DWORD count,
 }
 
 
-/*************************************************************************
- *           WriteFile   (KERNEL32.@)
- */
-BOOL WINAPI KERNEL32_WriteFile( HANDLE file, LPCVOID buffer, DWORD count,
-                                LPDWORD result, LPOVERLAPPED overlapped )
-{
-    if (is_console_handle( file )) return WriteConsoleA( file, buffer, count, result, NULL );
-    return WriteFile( file, buffer, count, result, overlapped );
-}
-
-
 /***********************************************************************
  *           DosDateTimeToFileTime   (KERNEL32.@)
  */
