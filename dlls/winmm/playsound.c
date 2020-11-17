@@ -55,12 +55,11 @@ static HMMIO	get_mmioFromFile(LPCWSTR lpszName)
     HMMIO       ret;
     WCHAR       buf[256];
     LPWSTR      dummy;
-    static const WCHAR dotwav[] = {'.','w','a','v',0};
 
     ret = mmioOpenW((LPWSTR)lpszName, NULL,
                     MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
     if (ret != 0) return ret;
-    if (SearchPathW(NULL, lpszName, dotwav, ARRAY_SIZE(buf), buf, &dummy))
+    if (SearchPathW(NULL, lpszName, L".wav", ARRAY_SIZE(buf), buf, &dummy))
     {
         return mmioOpenW(buf, NULL,
                          MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
@@ -76,21 +75,12 @@ static HMMIO	get_mmioFromProfile(UINT uFlags, LPCWSTR lpszName)
     HKEY        hRegSnd, hRegApp, hScheme, hSnd;
     DWORD       err, type, count;
 
-    static const WCHAR  wszSounds[] = {'S','o','u','n','d','s',0};
-    static const WCHAR  wszDefault[] = {'D','e','f','a','u','l','t',0};
-    static const WCHAR  wszKey[] = {'A','p','p','E','v','e','n','t','s','\\',
-                                    'S','c','h','e','m','e','s','\\',
-                                    'A','p','p','s',0};
-    static const WCHAR  wszDotDefault[] = {'.','D','e','f','a','u','l','t',0};
-    static const WCHAR  wszDotCurrent[] = {'.','C','u','r','r','e','n','t',0};
-    static const WCHAR  wszNull[] = {0};
-
     TRACE("searching in SystemSound list for %s\n", debugstr_w(lpszName));
-    GetProfileStringW(wszSounds, lpszName, wszNull, str, ARRAY_SIZE(str));
+    GetProfileStringW(L"Sounds", lpszName, L"", str, ARRAY_SIZE(str));
     if (!*str)
     {
 	if (uFlags & SND_NODEFAULT) goto next;
-	GetProfileStringW(wszSounds, wszDefault, wszNull, str, ARRAY_SIZE(str));
+	GetProfileStringW(L"Sounds", L"Default", L"", str, ARRAY_SIZE(str));
 	if (!*str) goto next;
     }
     for (ptr = str; *ptr && *ptr != ','; ptr++);
@@ -102,7 +92,7 @@ static HMMIO	get_mmioFromProfile(UINT uFlags, LPCWSTR lpszName)
      *      HKCU\AppEvents\Schemes\Apps\.Default
      *      HKCU\AppEvents\Schemes\Apps\<AppName>
      */
-    if (RegOpenKeyW(HKEY_CURRENT_USER, wszKey, &hRegSnd) != 0) goto none;
+    if (RegOpenKeyW(HKEY_CURRENT_USER, L"AppEvents\\Schemes\\Apps", &hRegSnd) != 0) goto none;
     if (uFlags & SND_APPLICATION)
     {
         DWORD len;
@@ -124,7 +114,7 @@ static HMMIO	get_mmioFromProfile(UINT uFlags, LPCWSTR lpszName)
     }
     else
     {
-        err = RegOpenKeyW(hRegSnd, wszDotDefault, &hRegApp);
+        err = RegOpenKeyW(hRegSnd, L".Default", &hRegApp);
     }
     RegCloseKey(hRegSnd);
     if (err != 0) goto none;
@@ -132,10 +122,10 @@ static HMMIO	get_mmioFromProfile(UINT uFlags, LPCWSTR lpszName)
     RegCloseKey(hRegApp);
     if (err != 0) goto none;
     /* what's the difference between .Current and .Default ? */
-    err = RegOpenKeyW(hScheme, wszDotDefault, &hSnd);
+    err = RegOpenKeyW(hScheme, L".Default", &hSnd);
     if (err != 0)
     {
-        err = RegOpenKeyW(hScheme, wszDotCurrent, &hSnd);
+        err = RegOpenKeyW(hScheme, L".Current", &hSnd);
         RegCloseKey(hScheme);
         if (err != 0)
             goto none;
@@ -279,11 +269,10 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
 
     /* if resource, grab it */
     if ((wps->fdwSound & SND_RESOURCE) == SND_RESOURCE) {
-        static const WCHAR wszWave[] = {'W','A','V','E',0};
         HRSRC	hRes;
         HGLOBAL	hGlob;
 
-        if ((hRes = FindResourceW(wps->hMod, wps->pszSound, wszWave)) == 0 ||
+        if ((hRes = FindResourceW(wps->hMod, wps->pszSound, L"WAVE")) == 0 ||
             (hGlob = LoadResource(wps->hMod, hRes)) == 0)
             goto errCleanUp;
         if ((data = LockResource(hGlob)) == NULL) {
@@ -310,32 +299,23 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     {
         if ((wps->fdwSound & SND_ALIAS_ID) == SND_ALIAS_ID)
         {
-            static const WCHAR  wszSystemAsterisk[] = {'S','y','s','t','e','m','A','s','t','e','r','i','s','k',0};
-            static const WCHAR  wszSystemDefault[] = {'S','y','s','t','e','m','D','e','f','a','u','l','t',0};
-            static const WCHAR  wszSystemExclamation[] = {'S','y','s','t','e','m','E','x','c','l','a','m','a','t','i','o','n',0};
-            static const WCHAR  wszSystemExit[] = {'S','y','s','t','e','m','E','x','i','t',0};
-            static const WCHAR  wszSystemHand[] = {'S','y','s','t','e','m','H','a','n','d',0};
-            static const WCHAR  wszSystemQuestion[] = {'S','y','s','t','e','m','Q','u','e','s','t','i','o','n',0};
-            static const WCHAR  wszSystemStart[] = {'S','y','s','t','e','m','S','t','a','r','t',0};
-            static const WCHAR  wszSystemWelcome[] = {'S','y','s','t','e','m','W','e','l','c','o','m','e',0};
-
             wps->fdwSound &= ~(SND_ALIAS_ID ^ SND_ALIAS);
             if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMASTERISK)
-                wps->pszSound = wszSystemAsterisk;
+                wps->pszSound = L"SystemAsterisk";
             else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMDEFAULT)
-                wps->pszSound = wszSystemDefault;
+                wps->pszSound = L"SystemDefault";
             else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMEXCLAMATION)
-                wps->pszSound = wszSystemExclamation;
+                wps->pszSound = L"SystemExclamation";
             else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMEXIT)
-                wps->pszSound = wszSystemExit;
+                wps->pszSound = L"SystemExit";
             else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMHAND)
-                wps->pszSound = wszSystemHand;
+                wps->pszSound = L"SystemHand";
             else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMQUESTION)
-                wps->pszSound = wszSystemQuestion;
+                wps->pszSound = L"SystemQuestion";
             else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMSTART)
-                wps->pszSound = wszSystemStart;
+                wps->pszSound = L"SystemStart";
             else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMWELCOME)
-                wps->pszSound = wszSystemWelcome;
+                wps->pszSound = L"SystemWelcome";
             else goto errCleanUp;
         }
         hmmio = get_mmioFromProfile(wps->fdwSound, wps->pszSound);

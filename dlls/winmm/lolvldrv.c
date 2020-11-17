@@ -498,9 +498,6 @@ static void MMDRV_Init(void)
     char *drvA;
     HRESULT init_hr, hr;
 
-    static const WCHAR wine_info_deviceW[] = {'W','i','n','e',' ',
-        'i','n','f','o',' ','d','e','v','i','c','e',0};
-
     TRACE("()\n");
 
     init_hr = CoInitialize(NULL);
@@ -512,7 +509,7 @@ static void MMDRV_Init(void)
         goto exit;
     }
 
-    hr = IMMDeviceEnumerator_GetDevice(devenum, wine_info_deviceW, &device);
+    hr = IMMDeviceEnumerator_GetDevice(devenum, L"Wine info device", &device);
     IMMDeviceEnumerator_Release(devenum);
     if(FAILED(hr)){
         ERR("GetDevice failed: %08x\n", hr);

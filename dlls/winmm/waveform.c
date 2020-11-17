@@ -2458,7 +2458,6 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
 {
     HANDLE evt = arg;
     HRESULT hr;
-    static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
 
     hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     if(FAILED(hr)){
@@ -2480,7 +2479,7 @@ static DWORD WINAPI WINMM_DevicesThreadProc(void *arg)
         FreeLibraryAndExitThread(g_devthread_module, 1);
     }
 
-    g_devices_hwnd = CreateWindowW(messageW, NULL, 0, 0, 0, 0, 0,
+    g_devices_hwnd = CreateWindowW(L"Message", NULL, 0, 0, 0, 0, 0,
             HWND_MESSAGE, NULL, NULL, NULL);
     if(!g_devices_hwnd){
         WARN("CreateWindow failed: %d\n", GetLastError());

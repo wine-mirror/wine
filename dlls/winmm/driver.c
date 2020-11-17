@@ -46,8 +46,6 @@ static CRITICAL_SECTION_DEBUG mmdriver_lock_debug =
 static CRITICAL_SECTION mmdriver_lock = { &mmdriver_lock_debug, -1, 0, 0, 0, 0 };
 
 static LPWINE_DRIVER   lpDrvItemList  /* = NULL */;
-static const WCHAR HKLM_BASE[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-                                  'W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
 
 static void DRIVER_Dump(const char *comment)
 {
@@ -246,12 +244,11 @@ BOOL	DRIVER_GetLibName(LPCWSTR keyName, LPCWSTR sectName, LPWSTR buf, int sz)
 {
     HKEY	hKey, hSecKey;
     DWORD	bufLen, lRet;
-    static const WCHAR wszSystemIni[] = {'S','Y','S','T','E','M','.','I','N','I',0};
-    WCHAR       wsznull = '\0';
 
     TRACE("registry: %s, %s, %p, %d\n", debugstr_w(keyName), debugstr_w(sectName), buf, sz);
 
-    lRet = RegOpenKeyExW(HKEY_LOCAL_MACHINE, HKLM_BASE, 0, KEY_QUERY_VALUE, &hKey);
+    lRet = RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion",
+                         0, KEY_QUERY_VALUE, &hKey);
     if (lRet == ERROR_SUCCESS) {
 	lRet = RegOpenKeyExW(hKey, sectName, 0, KEY_QUERY_VALUE, &hSecKey);
 	if (lRet == ERROR_SUCCESS) {
@@ -266,7 +263,7 @@ BOOL	DRIVER_GetLibName(LPCWSTR keyName, LPCWSTR sectName, LPWSTR buf, int sz)
     /* default to system.ini if we can't find it in the registry,
      * to support native installations where system.ini is still used */
     TRACE("system.ini: %s, %s, %p, %d\n", debugstr_w(keyName), debugstr_w(sectName), buf, sz);
-    return GetPrivateProfileStringW(sectName, keyName, &wsznull, buf, sz / sizeof(WCHAR), wszSystemIni);
+    return GetPrivateProfileStringW(sectName, keyName, L"", buf, sz / sizeof(WCHAR), L"SYSTEM.INI");
 }
 
 /**************************************************************************
@@ -391,12 +388,11 @@ HDRVR WINAPI OpenDriver(LPCWSTR lpDriverName, LPCWSTR lpSectionName, LPARAM lPar
     DRIVER_Dump("BEFORE:");
 
     if (lsn == NULL) {
-        static const WCHAR wszDrivers32[] = {'D','r','i','v','e','r','s','3','2',0};
 	lstrcpynW(libName, lpDriverName, ARRAY_SIZE(libName));
 
 	if ((lpDrv = DRIVER_TryOpenDriver32(libName, lParam)))
 	    goto the_end;
-	lsn = wszDrivers32;
+	lsn = L"Drivers32";
     }
     if (DRIVER_GetLibName(lpDriverName, lsn, libName, sizeof(libName)) &&
 	(lpDrv = DRIVER_TryOpenDriver32(libName, lParam)))
