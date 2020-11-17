@@ -553,7 +553,7 @@ static void test_openclose(HWND hwnd)
     MCIDEVICEID wDeviceID;
     MCI_PARMS_UNION parm;
     MCIERROR err;
-    char drive[] = {'a',':','\\','X','\0'};
+    char drive[] = "a:\\X";
     if (ok_open == MCIERR_CANNOT_LOAD_DRIVER) {
         /* todo_wine Every open below should yield this same error. */
         skip("CD-ROM device likely not installed or disabled.\n");
