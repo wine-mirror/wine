@@ -1272,7 +1272,18 @@ static HRESULT WINAPI video_mixer_transform_ProcessOutput(IMFTransform *iface, D
             }
 
             if (SUCCEEDED(hr))
+            {
                 video_mixer_render(mixer, surface);
+
+                timestamp = duration = 0;
+                if (SUCCEEDED(IMFSample_GetSampleTime(mixer->inputs[0].sample, &timestamp)))
+                {
+                    IMFSample_SetSampleTime(buffers->pSample, timestamp);
+
+                    IMFSample_GetSampleDuration(mixer->inputs[0].sample, &duration);
+                    IMFSample_SetSampleDuration(buffers->pSample, duration);
+                }
+            }
 
             if (SUCCEEDED(hr))
             {

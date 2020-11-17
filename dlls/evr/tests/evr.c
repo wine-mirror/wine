@@ -2219,13 +2219,14 @@ static void test_mixer_samples(void)
     IMFDesiredSample *desired;
     IDirect3DDevice9 *device;
     IMFMediaType *video_type;
-    DWORD color, status;
+    DWORD count, flags, color, status;
     IMFTransform *mixer;
-    IMFSample *sample;
+    IMFSample *sample, *sample2;
     IDirect3D9 *d3d;
     HWND window;
     UINT token;
     HRESULT hr;
+    LONGLONG pts, duration;
 
     window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
@@ -2394,6 +2395,57 @@ static void test_mixer_samples(void)
 
     hr = IMFTransform_ProcessInput(mixer, 5, sample, 0);
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    /* ProcessOutput() sets sample time and duration. */
+    hr = MFCreateVideoSampleFromSurface((IUnknown *)surface, &sample2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_SetUINT32(sample2, &IID_IMFSample, 1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_SetSampleFlags(sample2, 0x123);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetSampleTime(sample2, &pts);
+    ok(hr == MF_E_NO_SAMPLE_TIMESTAMP, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetSampleDuration(sample2, &duration);
+    ok(hr == MF_E_NO_SAMPLE_DURATION, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_SetSampleTime(sample, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_SetSampleDuration(sample, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    memset(buffers, 0, sizeof(buffers));
+    buffers[0].pSample = sample2;
+    hr = IMFTransform_ProcessOutput(mixer, 0, 1, buffers, &status);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_GetSampleTime(sample2, &pts);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!pts, "Unexpected sample time.\n");
+
+    hr = IMFSample_GetSampleDuration(sample2, &duration);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!duration, "Unexpected duration\n");
+
+    /* Flags are not copied. */
+    hr = IMFSample_GetSampleFlags(sample2, &flags);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(flags == 0x123, "Unexpected flags %#x.\n", flags);
+
+    /* Attributes are not removed. */
+    hr = IMFSample_GetCount(sample2, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count == 1, "Unexpected attribute count %u.\n", count);
+
+    hr = IMFSample_GetCount(sample, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!count, "Unexpected attribute count %u.\n", count);
+
+    IMFSample_Release(sample2);
 
     hr = IMFTransform_ProcessMessage(mixer, MFT_MESSAGE_COMMAND_DRAIN, 0);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
