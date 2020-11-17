@@ -2390,20 +2390,29 @@ struct _I10_OUTPUT_DATA {
  */
 int CDECL MSVCRT_I10_OUTPUT(MSVCRT__LDOUBLE ld80, int prec, int flag, struct _I10_OUTPUT_DATA *data)
 {
-    static const char inf_str[] = "1#INF";
-    static const char nan_str[] = "1#QNAN";
-
-    /* MS' long double type wants 12 bytes for Intel's 80 bit FP format.
-     * Some UNIX have sizeof(long double) == 16, yet only 80 bit are used.
-     * Assume long double uses 80 bit FP, never seen 128 bit FP. */
-    long double ld = 0;
+    struct fpnum num;
     double d;
     char format[8];
     char buf[I10_OUTPUT_MAX_PREC+9]; /* 9 = strlen("0.e+0000") + '\0' */
     char *p;
 
-    memcpy(&ld, &ld80, 10);
-    d = ld;
+    if ((ld80.x80[2] & 0x7fff) == 0x7fff)
+    {
+        if (ld80.x80[0] == 0 && ld80.x80[1] == 0x80000000)
+            strcpy( data->str, "1#INF" );
+        else
+            strcpy( data->str, (ld80.x80[1] & 0x40000000) ? "1#QNAN" : "1#SNAN" );
+        data->pos = 1;
+        data->sign = (ld80.x80[2] & 0x8000) ? '-' : ' ';
+        data->len = strlen(data->str);
+        return 0;
+    }
+
+    num.sign = (ld80.x80[2] & 0x8000) ? -1 : 1;
+    num.exp  = (ld80.x80[2] & 0x7fff) - 0x3fff - 63;
+    num.m    = ld80.x80[0] | ((ULONGLONG)ld80.x80[1] << 32);
+    num.mod  = FP_ROUND_EVEN;
+    fpnum_double( &num, &d );
     TRACE("(%lf %d %x %p)\n", d, prec, flag, data);
 
     if(d<0) {
@@ -2411,22 +2420,6 @@ int CDECL MSVCRT_I10_OUTPUT(MSVCRT__LDOUBLE ld80, int prec, int flag, struct _I1
         d = -d;
     } else
         data->sign = ' ';
-
-    if(isinf(d)) {
-        data->pos = 1;
-        data->len = 5;
-        memcpy(data->str, inf_str, sizeof(inf_str));
-
-        return 0;
-    }
-
-    if(isnan(d)) {
-        data->pos = 1;
-        data->len = 6;
-        memcpy(data->str, nan_str, sizeof(nan_str));
-
-        return 0;
-    }
 
     if(flag&1) {
         int exp = 1+floor(log10(d));
