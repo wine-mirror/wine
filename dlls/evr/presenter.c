@@ -68,6 +68,7 @@ struct video_presenter
     IMFVideoPositionMapper IMFVideoPositionMapper_iface;
     IQualProp IQualProp_iface;
     IMFQualityAdvise IMFQualityAdvise_iface;
+    IDirect3DDeviceManager9 IDirect3DDeviceManager9_iface;
     IMFVideoSampleAllocatorNotify allocator_cb;
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
@@ -150,6 +151,11 @@ static struct video_presenter *impl_from_IQualProp(IQualProp *iface)
 static struct video_presenter *impl_from_IMFQualityAdvise(IMFQualityAdvise *iface)
 {
     return CONTAINING_RECORD(iface, struct video_presenter, IMFQualityAdvise_iface);
+}
+
+static struct video_presenter *impl_from_IDirect3DDeviceManager9(IDirect3DDeviceManager9 *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_presenter, IDirect3DDeviceManager9_iface);
 }
 
 static void video_presenter_notify_renderer(struct video_presenter *presenter,
@@ -479,6 +485,10 @@ static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFI
     else if (IsEqualIID(riid, &IID_IMFQualityAdvise))
     {
         *obj = &presenter->IMFQualityAdvise_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IDirect3DDeviceManager9))
+    {
+        *obj = &presenter->IDirect3DDeviceManager9_iface;
     }
     else
     {
@@ -1486,6 +1496,85 @@ static const IMFQualityAdviseVtbl video_presenter_quality_advise_vtbl =
     video_presenter_quality_advise_DropTime,
 };
 
+static HRESULT WINAPI video_presenter_device_manager_QueryInterface(IDirect3DDeviceManager9 *iface,
+        REFIID riid, void **obj)
+{
+    struct video_presenter *presenter = impl_from_IDirect3DDeviceManager9(iface);
+    return IMFVideoPresenter_QueryInterface(&presenter->IMFVideoPresenter_iface, riid, obj);
+}
+
+static ULONG WINAPI video_presenter_device_manager_AddRef(IDirect3DDeviceManager9 *iface)
+{
+    struct video_presenter *presenter = impl_from_IDirect3DDeviceManager9(iface);
+    return IMFVideoPresenter_AddRef(&presenter->IMFVideoPresenter_iface);
+}
+
+static ULONG WINAPI video_presenter_device_manager_Release(IDirect3DDeviceManager9 *iface)
+{
+    struct video_presenter *presenter = impl_from_IDirect3DDeviceManager9(iface);
+    return IMFVideoPresenter_Release(&presenter->IMFVideoPresenter_iface);
+}
+
+static HRESULT WINAPI video_presenter_device_manager_ResetDevice(IDirect3DDeviceManager9 *iface,
+        IDirect3DDevice9 *device, UINT token)
+{
+    struct video_presenter *presenter = impl_from_IDirect3DDeviceManager9(iface);
+    return IDirect3DDeviceManager9_ResetDevice(presenter->device_manager, device, token);
+}
+
+static HRESULT WINAPI video_presenter_device_manager_OpenDeviceHandle(IDirect3DDeviceManager9 *iface, HANDLE *hdevice)
+{
+    struct video_presenter *presenter = impl_from_IDirect3DDeviceManager9(iface);
+    return IDirect3DDeviceManager9_OpenDeviceHandle(presenter->device_manager, hdevice);
+}
+
+static HRESULT WINAPI video_presenter_device_manager_CloseDeviceHandle(IDirect3DDeviceManager9 *iface, HANDLE hdevice)
+{
+    struct video_presenter *presenter = impl_from_IDirect3DDeviceManager9(iface);
+    return IDirect3DDeviceManager9_CloseDeviceHandle(presenter->device_manager, hdevice);
+}
+
+static HRESULT WINAPI video_presenter_device_manager_TestDevice(IDirect3DDeviceManager9 *iface, HANDLE hdevice)
+{
+    struct video_presenter *presenter = impl_from_IDirect3DDeviceManager9(iface);
+    return IDirect3DDeviceManager9_TestDevice(presenter->device_manager, hdevice);
+}
+
+static HRESULT WINAPI video_presenter_device_manager_LockDevice(IDirect3DDeviceManager9 *iface, HANDLE hdevice,
+        IDirect3DDevice9 **device, BOOL block)
+{
+    struct video_presenter *presenter = impl_from_IDirect3DDeviceManager9(iface);
+    return IDirect3DDeviceManager9_LockDevice(presenter->device_manager, hdevice, device, block);
+}
+
+static HRESULT WINAPI video_presenter_device_manager_UnlockDevice(IDirect3DDeviceManager9 *iface, HANDLE hdevice,
+        BOOL savestate)
+{
+    struct video_presenter *presenter = impl_from_IDirect3DDeviceManager9(iface);
+    return IDirect3DDeviceManager9_UnlockDevice(presenter->device_manager, hdevice, savestate);
+}
+
+static HRESULT WINAPI video_presenter_device_manager_GetVideoService(IDirect3DDeviceManager9 *iface, HANDLE hdevice,
+        REFIID riid, void **service)
+{
+    struct video_presenter *presenter = impl_from_IDirect3DDeviceManager9(iface);
+    return IDirect3DDeviceManager9_GetVideoService(presenter->device_manager, hdevice, riid, service);
+}
+
+static const IDirect3DDeviceManager9Vtbl video_presenter_device_manager_vtbl =
+{
+    video_presenter_device_manager_QueryInterface,
+    video_presenter_device_manager_AddRef,
+    video_presenter_device_manager_Release,
+    video_presenter_device_manager_ResetDevice,
+    video_presenter_device_manager_OpenDeviceHandle,
+    video_presenter_device_manager_CloseDeviceHandle,
+    video_presenter_device_manager_TestDevice,
+    video_presenter_device_manager_LockDevice,
+    video_presenter_device_manager_UnlockDevice,
+    video_presenter_device_manager_GetVideoService,
+};
+
 HRESULT WINAPI MFCreateVideoPresenter(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -1558,6 +1647,7 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
     object->IMFQualityAdvise_iface.lpVtbl = &video_presenter_quality_advise_vtbl;
     object->allocator_cb.lpVtbl = &video_presenter_allocator_cb_vtbl;
     object->IUnknown_inner.lpVtbl = &video_presenter_inner_vtbl;
+    object->IDirect3DDeviceManager9_iface.lpVtbl = &video_presenter_device_manager_vtbl;
     object->outer_unk = outer ? outer : &object->IUnknown_inner;
     object->refcount = 1;
     object->src_rect.right = object->src_rect.bottom = 1.0f;

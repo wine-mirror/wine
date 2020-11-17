@@ -1128,8 +1128,8 @@ static void test_default_presenter(void)
     IMFRateSupport *rate_support;
     IDirect3DDeviceManager9 *dm;
     IMFVideoDeviceID *deviceid;
+    IUnknown *unk, *unk2;
     HWND hwnd, hwnd2;
-    IUnknown *unk;
     DWORD flags;
     float rate;
     HRESULT hr;
@@ -1153,6 +1153,7 @@ static void test_default_presenter(void)
     check_interface(presenter, &IID_IMFVideoPresenter, TRUE);
     check_interface(presenter, &IID_IMFVideoDeviceID, TRUE);
     check_interface(presenter, &IID_IMFQualityAdvise, TRUE);
+    check_interface(presenter, &IID_IDirect3DDeviceManager9, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPositionMapper, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDisplayControl, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPresenter, TRUE);
@@ -1164,7 +1165,23 @@ static void test_default_presenter(void)
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDeviceID, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFQualityAdvise, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFTransform, FALSE);
+    check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IDirect3DDeviceManager9, TRUE);
     check_service_interface(presenter, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, TRUE);
+
+    /* Query arbitrary supported interface back from device manager wrapper. */
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IDirect3DDeviceManager9, (void **)&dm);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IDirect3DDeviceManager9_QueryInterface(dm, &IID_IQualProp, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+    hr = IDirect3DDeviceManager9_QueryInterface(dm, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(unk == unk2, "Unexpected interface.\n");
+    IUnknown_Release(unk2);
+    IUnknown_Release(unk);
+    IDirect3DDeviceManager9_Release(dm);
 
     hr = MFGetService((IUnknown *)presenter, &MR_VIDEO_MIXER_SERVICE, &IID_IUnknown, (void **)&unk);
     ok(hr == MF_E_UNSUPPORTED_SERVICE, "Unexpected hr %#x.\n", hr);
