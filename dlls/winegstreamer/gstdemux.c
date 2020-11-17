@@ -1432,7 +1432,6 @@ static void gstdemux_destroy(struct strmbase_filter *iface)
 static HRESULT gstdemux_init_stream(struct strmbase_filter *iface)
 {
     struct gstdemux *filter = impl_from_strmbase_filter(iface);
-    HRESULT hr = VFW_E_NOT_CONNECTED, pin_hr;
     const SourceSeeking *seeking;
     GstStateChangeReturn ret;
     unsigned int i;
@@ -1442,12 +1441,11 @@ static HRESULT gstdemux_init_stream(struct strmbase_filter *iface)
 
     for (i = 0; i < filter->source_count; ++i)
     {
-        if (SUCCEEDED(pin_hr = BaseOutputPinImpl_Active(&filter->sources[i]->pin)))
-            hr = pin_hr;
-    }
+        HRESULT hr;
 
-    if (FAILED(hr))
-        return hr;
+        if (filter->sources[i]->pin.pin.peer && FAILED(hr = IMemAllocator_Commit(filter->sources[i]->pin.pAllocator)))
+            ERR("Failed to commit allocator, hr %#x.\n", hr);
+    }
 
     if (filter->no_more_pads_event)
         ResetEvent(filter->no_more_pads_event);
@@ -1480,7 +1478,7 @@ static HRESULT gstdemux_init_stream(struct strmbase_filter *iface)
                 stop_type, seeking->llStop * 100));
     }
 
-    return hr;
+    return S_OK;
 }
 
 static HRESULT gstdemux_start_stream(struct strmbase_filter *iface, REFERENCE_TIME time)
