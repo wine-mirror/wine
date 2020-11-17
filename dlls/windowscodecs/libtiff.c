@@ -1127,7 +1127,7 @@ static HRESULT CDECL tiff_decoder_get_metadata_blocks(struct decoder *iface,
     result.options |= WICPersistOptionNoCacheStream|DECODER_BLOCK_FULL_STREAM|DECODER_BLOCK_READER_CLSID;
     result.reader_clsid = CLSID_WICIfdMetadataReader;
 
-    *blocks = malloc(sizeof(**blocks));
+    *blocks = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(**blocks));
     **blocks = result;
 
     return S_OK;
