@@ -942,10 +942,26 @@ static const IMFAttributesVtbl video_stream_attributes_vtbl =
     video_stream_attributes_CopyAllItems,
 };
 
+static BOOL video_renderer_is_mixer_d3d_aware(const struct video_renderer *renderer)
+{
+    IMFAttributes *attributes;
+    unsigned int value = 0;
+    BOOL ret;
+
+    if (FAILED(IMFTransform_QueryInterface(renderer->mixer, &IID_IMFAttributes, (void **)&attributes)))
+        return FALSE;
+
+    ret = SUCCEEDED(IMFAttributes_GetUINT32(attributes, &MF_SA_D3D_AWARE, &value)) && value;
+    IMFAttributes_Release(attributes);
+    return ret;
+}
+
 static HRESULT video_renderer_stream_create(struct video_renderer *renderer, unsigned int id,
         struct video_stream **ret)
 {
     struct video_stream *stream;
+    IMFAttributes *attributes;
+    unsigned int value;
     HRESULT hr;
 
     if (!(stream = heap_alloc_zero(sizeof(*stream))))
@@ -967,6 +983,16 @@ static HRESULT video_renderer_stream_create(struct video_renderer *renderer, uns
     stream->parent = renderer;
     IMFMediaSink_AddRef(&stream->parent->IMFMediaSink_iface);
     stream->id = id;
+
+    if (video_renderer_is_mixer_d3d_aware(renderer))
+        IMFAttributes_SetUINT32(stream->attributes, &MF_SA_D3D_AWARE, 1);
+
+    if (SUCCEEDED(IMFTransform_GetInputStreamAttributes(renderer->mixer, id, &attributes)))
+    {
+        if (SUCCEEDED(IMFAttributes_GetUINT32(attributes, &MF_SA_REQUIRED_SAMPLE_COUNT, &value)))
+            IMFAttributes_SetUINT32(stream->attributes, &MF_SA_REQUIRED_SAMPLE_COUNT, value);
+        IMFAttributes_Release(attributes);
+    }
 
     *ret = stream;
 
@@ -1491,7 +1517,6 @@ static HRESULT video_renderer_create_presenter(struct video_renderer *renderer, 
 static HRESULT video_renderer_configure_mixer(struct video_renderer *renderer)
 {
     IMFTopologyServiceLookupClient *lookup_client;
-    IMFAttributes *attributes;
     HRESULT hr;
 
     if (SUCCEEDED(hr = IMFTransform_QueryInterface(renderer->mixer, &IID_IMFTopologyServiceLookupClient,
@@ -1537,21 +1562,16 @@ static HRESULT video_renderer_configure_mixer(struct video_renderer *renderer)
     }
 
     /* Set device manager that presenter should have created. */
-    if (SUCCEEDED(IMFTransform_QueryInterface(renderer->mixer, &IID_IMFAttributes, (void **)&attributes)))
+    if (video_renderer_is_mixer_d3d_aware(renderer))
     {
         IDirect3DDeviceManager9 *device_manager;
-        unsigned int value;
 
-        if (SUCCEEDED(IMFAttributes_GetUINT32(attributes, &MF_SA_D3D_AWARE, &value)) && value)
+        if (SUCCEEDED(MFGetService((IUnknown *)renderer->presenter, &MR_VIDEO_ACCELERATION_SERVICE,
+                &IID_IDirect3DDeviceManager9, (void **)&device_manager)))
         {
-            if (SUCCEEDED(MFGetService((IUnknown *)renderer->presenter, &MR_VIDEO_ACCELERATION_SERVICE,
-                    &IID_IDirect3DDeviceManager9, (void **)&device_manager)))
-            {
-                IMFTransform_ProcessMessage(renderer->mixer, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)device_manager);
-                IDirect3DDeviceManager9_Release(device_manager);
-            }
+            IMFTransform_ProcessMessage(renderer->mixer, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)device_manager);
+            IDirect3DDeviceManager9_Release(device_manager);
         }
-        IMFAttributes_Release(attributes);
     }
 
     return hr;

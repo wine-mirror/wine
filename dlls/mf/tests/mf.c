@@ -3341,7 +3341,6 @@ static void test_evr(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     hr = IMFAttributes_GetCount(attributes, &count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine {
     ok(count == 2, "Unexpected count %u.\n", count);
     value = 0;
     hr = IMFAttributes_GetUINT32(attributes, &MF_SA_REQUIRED_SAMPLE_COUNT, &value);
@@ -3351,7 +3350,7 @@ todo_wine {
     hr = IMFAttributes_GetUINT32(attributes, &MF_SA_D3D_AWARE, &value);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(value == 1, "Unexpected attribute value %u.\n", value);
-}
+
     hr = IMFAttributes_QueryInterface(attributes, &IID_IMFStreamSink, (void **)&unk);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IUnknown_Release(unk);
