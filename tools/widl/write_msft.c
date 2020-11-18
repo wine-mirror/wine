@@ -1276,6 +1276,7 @@ static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
 
     guidoffset = ctl2_alloc_guid(typelib, &guidentry);
     if(vt == VT_BSTR)
+        /* TODO midl appears to share a single reference if the same string is used as custdata in multiple places */
         write_string_value(typelib, &data_out, value);
     else
         write_int_value(typelib, &data_out, vt, *(int*)value);
@@ -1291,6 +1292,25 @@ static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
     return S_OK;
 }
 
+static HRESULT set_custdata_attr(msft_typelib_t *typelib, attr_custdata_t *custdata, int *offset)
+{
+    switch(custdata->pval->type) {
+        case EXPR_STRLIT:
+        case EXPR_WSTRLIT:
+            set_custdata(typelib, &custdata->id, VT_BSTR, custdata->pval->u.sval, offset);
+            break;
+        case EXPR_HEXNUM:
+        case EXPR_NUM:
+            set_custdata(typelib, &custdata->id, VT_I4, &custdata->pval->u.lval, offset);
+            break;
+        default:
+            error("custom() attribute with unknown type\n");
+            break;
+    }
+
+    return S_OK;
+}
+
 static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
 {
     int offset, name_offset;
@@ -1298,12 +1318,14 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
     int i, id, next_idx;
     int decoded_size, extra_attr = 0;
     int num_params = 0, num_optional = 0, num_defaults = 0;
+    int has_arg_custdata = 0;
     var_t *arg;
     unsigned char *namedata;
     const attr_t *attr;
     unsigned int funcflags = 0, callconv = 4 /* CC_STDCALL */;
     unsigned int funckind, invokekind = 1 /* INVOKE_FUNC */;
     int help_context = 0, help_string_context = 0, help_string_offset = -1;
+    int func_custdata_offset = -1;
     int entry = -1, entry_is_ord = 0;
     int lcid_retval_count = 0;
 
@@ -1337,6 +1359,8 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
                 num_defaults++;
             else if(attr->type == ATTR_OPTIONAL)
                 num_optional++;
+            else if(attr->type == ATTR_CUSTOM)
+                has_arg_custdata = 1;
         }
       }
 
@@ -1349,6 +1373,9 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
         switch(attr->type) {
         case ATTR_BINDABLE:
             funcflags |= 0x4; /* FUNCFLAG_FBINDABLE */
+            break;
+        case ATTR_CUSTOM:
+            set_custdata_attr(typeinfo->typelib, attr->u.pval, &func_custdata_offset);
             break;
         case ATTR_DEFAULTBIND:
             funcflags |= 0x20; /* FUNCFLAG_FDEFAULTBIND */
@@ -1430,6 +1457,10 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
         }
     }
 
+    if(has_arg_custdata || func_custdata_offset != -1) {
+        extra_attr = max(extra_attr, 7 + num_params);
+    }
+
     /* allocate type data space for us */
     typedata_size = 0x18 + extra_attr * sizeof(int) + (num_params * (num_defaults ? 16 : 12));
 
@@ -1476,6 +1507,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
     typedata[2] = funcflags;
     typedata[3] = ((52 /*sizeof(FUNCDESC)*/ + decoded_size) << 16) | typeinfo->typeinfo->cbSizeVft;
     typedata[4] = (next_idx << 16) | (callconv << 8) | (invokekind << 3) | funckind;
+    if(has_arg_custdata || func_custdata_offset != -1) typedata[4] |= 0x0080;
     if(num_defaults) typedata[4] |= 0x1000;
     if(entry_is_ord) typedata[4] |= 0x2000;
     typedata[5] = (num_optional << 16) | num_params;
@@ -1486,6 +1518,10 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
     typedata[3] += (24 /*sizeof(PARAMDESCEX)*/ * num_defaults) << 16;
 
     switch(extra_attr) {
+    default:
+        if(extra_attr > 7 + num_params) warning("unknown number of optional attrs\n");
+        /* typedata[13..+num_params] = arg_custdata_offset handled in below loop */
+    case 7: typedata[12] = func_custdata_offset;
     case 6: typedata[11] = help_string_context;
     case 5: typedata[10] = -1;
     case 4: typedata[9] = -1;
@@ -1494,8 +1530,6 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
     case 1: typedata[6] = help_context;
     case 0:
         break;
-    default:
-        warning("unknown number of optional attrs\n");
     }
 
     if (type_function_get_args(func->declspec.type))
@@ -1506,12 +1540,16 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
         int paramflags = 0;
         int *paramdata = typedata + 6 + extra_attr + (num_defaults ? num_params : 0) + i * 3;
         int *defaultdata = num_defaults ? typedata + 6 + extra_attr + i : NULL;
+        int arg_custdata_offset = -1;
 
         if(defaultdata) *defaultdata = -1;
 
 	    encode_var(typeinfo->typelib, arg->declspec.type, arg, paramdata, &decoded_size);
         if (arg->attrs) LIST_FOR_EACH_ENTRY( attr, arg->attrs, const attr_t, entry ) {
             switch(attr->type) {
+            case ATTR_CUSTOM:
+                set_custdata_attr(typeinfo->typelib, attr->u.pval, &arg_custdata_offset);
+                break;
             case ATTR_DEFAULTVALUE:
               {
                 paramflags |= 0x30; /* PARAMFLAG_FHASDEFAULT | PARAMFLAG_FOPT */
@@ -1538,6 +1576,9 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
             default:
                 chat("unhandled param attr %d\n", attr->type);
                 break;
+            }
+            if(extra_attr > 7 + i) {
+                typedata[13+i] = arg_custdata_offset;
             }
         }
 	paramdata[1] = -1;
@@ -1621,6 +1662,7 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
 {
     int offset, id;
     unsigned int typedata_size;
+    int extra_attr = 0;
     INT *typedata;
     unsigned int var_datawidth, var_alignment = 0;
     int var_type_size, var_kind = 0 /* VAR_PERINSTANCE */; 
@@ -1629,6 +1671,7 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     const attr_t *attr;
     unsigned char *namedata;
     int var_num = (typeinfo->typeinfo->cElement >> 16) & 0xffff;
+    int var_custdata_offset = -1;
 
     if (!var->name)
         var->name = gen_name();
@@ -1642,6 +1685,10 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
         switch(attr->type) {
         case ATTR_BINDABLE:
             varflags |= 0x04; /* VARFLAG_FBINDABLE */
+            break;
+        case ATTR_CUSTOM:
+            extra_attr = max(extra_attr,4);
+            set_custdata_attr(typeinfo->typelib, attr->u.pval, &var_custdata_offset);
             break;
         case ATTR_DEFAULTBIND:
             varflags |= 0x20; /* VARFLAG_FDEFAULTBIND */
@@ -1686,7 +1733,7 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     }
 
     /* allocate type data space for us */
-    typedata_size = 0x14;
+    typedata_size = 0x14 + extra_attr * sizeof(int);
 
     if (!typeinfo->var_data) {
         typeinfo->var_data = xmalloc(0x100);
@@ -1761,6 +1808,18 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
 
     /* add type description size to total required allocation */
     typedata[3] += var_type_size << 16 | var_kind;
+
+    switch(extra_attr) {
+    case 5: typedata[9] = -1 /*help_string_context*/;
+    case 4: typedata[8] = var_custdata_offset;
+    case 3: typedata[7] = -1;
+    case 2: typedata[6] = -1 /*help_string_offset*/;
+    case 1: typedata[5] = -1 /*help_context*/;
+    case 0:
+        break;
+    default:
+        warning("unknown number of optional attrs\n");
+    }
 
     /* fix type alignment */
     alignment = (typeinfo->typeinfo->typekind >> 11) & 0x1f;
@@ -1871,7 +1930,9 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
             if (kind == TKIND_COCLASS)
                 typeinfo->flags |= 0x20; /* TYPEFLAG_FCONTROL */
             break;
-
+        case ATTR_CUSTOM:
+            set_custdata_attr(typelib, attr->u.pval, &typeinfo->oCustData);
+            break;
         case ATTR_DLLNAME:
           {
             int offset = ctl2_alloc_string(typelib, attr->u.pval);
@@ -2700,6 +2761,7 @@ int create_msft_typelib(typelib_t *typelib)
     msft_typelib_t *msft;
     int failed = 0;
     const statement_t *stmt;
+    const attr_t *attr;
     time_t cur_time;
     char *time_override;
     unsigned int version = 7 << 24 | 555; /* 7.00.0555 */
@@ -2747,6 +2809,16 @@ int create_msft_typelib(typelib_t *typelib)
     set_help_string_dll(msft);
     set_help_string_context(msft);
     
+    if (typelib->attrs) LIST_FOR_EACH_ENTRY( attr, typelib->attrs, const attr_t, entry ) {
+        switch(attr->type) {
+        case ATTR_CUSTOM:
+            set_custdata_attr(msft, attr->u.pval, &msft->typelib_header.CustomDataOffset);
+            break;
+        default:
+            break;
+        }
+    }
+
     /* midl adds two sets of custom data to the library: the current unix time
        and midl's version number */
     time_override = getenv( "WIDL_TIME_OVERRIDE");
