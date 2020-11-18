@@ -339,6 +339,7 @@ static const struct keyword attr_keywords[] =
 	{"context_handle_noserialize",  tCONTEXTHANDLENOSERIALIZE,  0},
 	{"context_handle_serialize",    tCONTEXTHANDLENOSERIALIZE,  0},
 	{"control",                     tCONTROL,                   0},
+	{"custom",                      tCUSTOM,                    0},
 	{"decode",                      tDECODE,                    0},
 	{"defaultbind",                 tDEFAULTBIND,               0},
 	{"defaultcollelem",             tDEFAULTCOLLELEM,           0},
@@ -431,7 +432,6 @@ static const struct keyword attr_keywords[] =
 };
 
 /* attributes TODO:
-    custom
     first_is
     last_is
     max_is

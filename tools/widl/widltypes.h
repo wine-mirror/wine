@@ -37,6 +37,7 @@ typedef GUID UUID;
 
 typedef struct _loc_info_t loc_info_t;
 typedef struct _attr_t attr_t;
+typedef struct _attr_custdata_t attr_custdata_t;
 typedef struct _expr_t expr_t;
 typedef struct _type_t type_t;
 typedef struct _var_t var_t;
@@ -84,6 +85,7 @@ enum attr_type
     ATTR_COMMSTATUS,
     ATTR_CONTEXTHANDLE,
     ATTR_CONTROL,
+    ATTR_CUSTOM,
     ATTR_DECODE,
     ATTR_DEFAULT,
     ATTR_DEFAULTBIND,
@@ -336,6 +338,11 @@ struct _expr_t {
   int cval;
   /* parser-internal */
   struct list entry;
+};
+
+struct _attr_custdata_t {
+  GUID id;
+  expr_t *pval;
 };
 
 struct struct_details
