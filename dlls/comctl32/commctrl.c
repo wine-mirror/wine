@@ -124,12 +124,12 @@ BOOL WINAPI RegisterClassNameW(const WCHAR *class)
     }
     classes[] =
     {
-        { {'B','u','t','t','o','n',0}, BUTTON_Register },
-        { {'C','o','m','b','o','B','o','x',0}, COMBO_Register },
-        { {'C','o','m','b','o','L','B','o','x',0}, COMBOLBOX_Register },
-        { {'E','d','i','t',0}, EDIT_Register },
-        { {'L','i','s','t','B','o','x',0}, LISTBOX_Register },
-        { {'S','t','a','t','i','c',0}, STATIC_Register },
+        { L"Button",    BUTTON_Register },
+        { L"ComboBox",  COMBO_Register },
+        { L"ComboLBox", COMBOLBOX_Register },
+        { L"Edit",      EDIT_Register },
+        { L"ListBox",   LISTBOX_Register },
+        { L"Static",    STATIC_Register },
     };
 
     int min = 0, max = ARRAY_SIZE(classes) - 1;

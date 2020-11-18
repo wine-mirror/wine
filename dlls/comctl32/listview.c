@@ -4731,7 +4731,7 @@ static void LISTVIEW_DrawItemPart(LISTVIEW_INFO *infoPtr, LVITEMW *item, const N
 static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, ITERATOR *subitems, POINT pos, DWORD cdmode)
 {
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
-    static WCHAR callbackW[] = { '(', 'c', 'a', 'l', 'l', 'b', 'a', 'c', 'k', ')', 0 };
+    static WCHAR callbackW[] = L"(callback)";
     DWORD cdsubitemmode = CDRF_DODEFAULT;
     RECT *focus, rcBox;
     NMLVCUSTOMDRAW nmlvcd;

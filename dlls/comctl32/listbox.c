@@ -1919,8 +1919,8 @@ static LRESULT LISTBOX_Directory( LB_DESCR *descr, UINT attrib,
         /* scan drives */
         if (attrib & DDL_DRIVES)
         {
-            WCHAR buffer[] = {'[','-','a','-',']',0};
-            WCHAR root[] = {'A',':','\\',0};
+            WCHAR buffer[] = L"[-a-]";
+            WCHAR root[] = L"A:\\";
             int drive;
             for (drive = 0; drive < 26; drive++, buffer[2]++, root[0]++)
             {

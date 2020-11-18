@@ -1539,12 +1539,12 @@ TRACKBAR_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
 
     	if (infoPtr->hwndToolTip) {
             TTTOOLINFOW ti;
-            WCHAR wEmpty = 0;
+            WCHAR wEmpty[] = L"";
             ZeroMemory (&ti, sizeof(ti));
             ti.cbSize   = sizeof(ti);
      	    ti.uFlags   = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
 	    ti.hwnd     = hwnd;
-            ti.lpszText = &wEmpty;
+            ti.lpszText = wEmpty;
 
             SendMessageW (infoPtr->hwndToolTip, TTM_ADDTOOLW, 0, (LPARAM)&ti);
 	 }

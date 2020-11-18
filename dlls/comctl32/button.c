@@ -2427,7 +2427,7 @@ static void draw_split_button_dropdown_glyph(const BUTTON_INFO *infoPtr, HDC hdc
         /* infoPtr->glyph is a character code from Marlett */
         HFONT font, old_font;
         LOGFONTW logfont = { 0, 0, 0, 0, FW_NORMAL, 0, 0, 0, SYMBOL_CHARSET, 0, 0, 0, 0,
-                             { 'M','a','r','l','e','t','t',0 } };
+                             L"Marlett" };
         if (infoPtr->glyph_size.cy)
         {
             /* BCSS_STRETCH preserves aspect ratio, uses minimum as size */
