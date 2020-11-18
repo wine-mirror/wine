@@ -708,7 +708,7 @@ int CDECL __crtLCMapStringA(
     if (!in_len) return 0;
     if (in_len > ARRAY_SIZE(buf_in))
     {
-        in = malloc(in_len * sizeof(WCHAR));
+        in = MSVCRT_malloc(in_len * sizeof(WCHAR));
         if (!in) return 0;
     }
 
@@ -726,7 +726,7 @@ int CDECL __crtLCMapStringA(
     out_len = r;
     if (r > ARRAY_SIZE(buf_out))
     {
-        out = malloc(r * sizeof(WCHAR));
+        out = MSVCRT_malloc(r * sizeof(WCHAR));
         if (!out)
         {
             r = 0;
@@ -740,8 +740,8 @@ int CDECL __crtLCMapStringA(
     r = WideCharToMultiByte(codepage, 0, out, out_len, dst, dstlen, NULL, NULL);
 
 done:
-    if (in != buf_in) free(in);
-    if (out != buf_out) free(out);
+    if (in != buf_in) MSVCRT_free(in);
+    if (out != buf_out) MSVCRT_free(out);
     return r;
 }
 
