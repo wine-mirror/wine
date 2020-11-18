@@ -407,6 +407,11 @@ static inline BOOL set_lc_locale_name(MSVCRT_pthreadlocinfo locinfo, int cat)
     WCHAR buf[100];
     int len;
 
+    locinfo->lc_category[cat].wrefcount = MSVCRT_malloc(sizeof(int));
+    if(!locinfo->lc_category[cat].wrefcount)
+        return FALSE;
+    *locinfo->lc_category[cat].wrefcount = 1;
+
     len = GetLocaleInfoW(lcid, LOCALE_SISO639LANGNAME
             |LOCALE_NOUSEROVERRIDE, buf, 100);
     if(!len) return FALSE;
@@ -931,6 +936,7 @@ void free_locinfo(MSVCRT_pthreadlocinfo locinfo)
     for(i=MSVCRT_LC_MIN+1; i<=MSVCRT_LC_MAX; i++) {
         MSVCRT_free(locinfo->lc_category[i].locale);
         MSVCRT_free(locinfo->lc_category[i].refcount);
+        MSVCRT_free(locinfo->lc_category[i].wrefcount);
 #if _MSVCR_VER >= 110
         MSVCRT_free(locinfo->lc_name[i]);
 #endif
