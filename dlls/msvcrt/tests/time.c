@@ -47,7 +47,8 @@ typedef struct {
     const char *date;
     const char *time;
     LCID lcid;
-    int  unk[2];
+    int unk;
+    int refcount;
 } __lc_time_data;
 
 static __time32_t (__cdecl *p_mkgmtime32)(struct tm*);
@@ -824,8 +825,8 @@ static void test_strftime(void)
         return;
     }
 
-    /* TODO: find meaning of unk[0] */
-    time_data.unk[0] = 1;
+    /* TODO: find meaning of unk */
+    time_data.unk = 1;
     for (i=0; i<ARRAY_SIZE(tests_td); i++)
     {
         time_data.short_date = tests_td[i].short_date;
