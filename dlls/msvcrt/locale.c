@@ -1166,11 +1166,10 @@ void CDECL MSVCRT__free_locale(MSVCRT__locale_t locale)
     MSVCRT_free(locale);
 }
 
-static inline BOOL category_needs_update(int cat, int user_cat,
+static inline BOOL category_needs_update(int cat,
         const MSVCRT_threadlocinfo *locinfo, LCID lcid, unsigned short cp)
 {
     if(!locinfo) return TRUE;
-    if(user_cat!=cat && user_cat!=MSVCRT_LC_ALL) return FALSE;
     return lcid!=locinfo->lc_handle[cat] || cp!=locinfo->lc_id[cat].wCodePage;
 }
 
@@ -1336,6 +1335,18 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         }
     }
 
+    for(i=1; i<6; i++) {
+        if(category!=MSVCRT_LC_ALL && category!=i) {
+            if(old_locinfo) {
+                lcid[i] = old_locinfo->lc_handle[i];
+                cp[i] = old_locinfo->lc_id[i].wCodePage;
+            } else {
+                lcid[i] = 0;
+                cp[i] = 0;
+            }
+        }
+    }
+
     locinfo = MSVCRT_malloc(sizeof(MSVCRT_threadlocinfo));
     if(!locinfo)
         return NULL;
@@ -1350,11 +1361,11 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         return NULL;
     }
 
-    if(!category_needs_update(MSVCRT_LC_COLLATE, category, old_locinfo,
+    if(!category_needs_update(MSVCRT_LC_COLLATE, old_locinfo,
                 lcid[MSVCRT_LC_COLLATE], cp[MSVCRT_LC_COLLATE])) {
         copy_threadlocinfo_category(locinfo, old_locinfo, MSVCRT_LC_COLLATE);
         locinfo->lc_collate_cp = old_locinfo->lc_collate_cp;
-    } else if(lcid[MSVCRT_LC_COLLATE] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_COLLATE)) {
+    } else if(lcid[MSVCRT_LC_COLLATE]) {
         if(!update_threadlocinfo_category(lcid[MSVCRT_LC_COLLATE],
                     cp[MSVCRT_LC_COLLATE], locinfo, MSVCRT_LC_COLLATE)) {
             free_locinfo(locinfo);
@@ -1376,7 +1387,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         return NULL;
     }
 
-    if(!category_needs_update(MSVCRT_LC_CTYPE, category, old_locinfo,
+    if(!category_needs_update(MSVCRT_LC_CTYPE, old_locinfo,
                 lcid[MSVCRT_LC_CTYPE], cp[MSVCRT_LC_CTYPE])) {
         copy_threadlocinfo_category(locinfo, old_locinfo, MSVCRT_LC_CTYPE);
         locinfo->lc_codepage = old_locinfo->lc_codepage;
@@ -1389,7 +1400,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         locinfo->pcumap = old_locinfo->pcumap;
         if(locinfo->ctype1_refcount)
             InterlockedIncrement(locinfo->ctype1_refcount);
-    } else if(lcid[MSVCRT_LC_CTYPE] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_CTYPE)) {
+    } else if(lcid[MSVCRT_LC_CTYPE]) {
         CPINFO cp_info;
         int j;
 
@@ -1463,22 +1474,15 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         }
     }
 
-    if(!category_needs_update(MSVCRT_LC_MONETARY, category, old_locinfo,
+    if(!category_needs_update(MSVCRT_LC_MONETARY, old_locinfo,
                 lcid[MSVCRT_LC_MONETARY], cp[MSVCRT_LC_MONETARY]) &&
-            !category_needs_update(MSVCRT_LC_NUMERIC, category, old_locinfo,
+            !category_needs_update(MSVCRT_LC_NUMERIC, old_locinfo,
                 lcid[MSVCRT_LC_NUMERIC], cp[MSVCRT_LC_NUMERIC])) {
         locinfo->lconv = old_locinfo->lconv;
         locinfo->lconv_intl_refcount = old_locinfo->lconv_intl_refcount;
         if(locinfo->lconv_intl_refcount)
             InterlockedIncrement(locinfo->lconv_intl_refcount);
-    } else if((lcid[MSVCRT_LC_MONETARY] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_MONETARY)) ||
-            (lcid[MSVCRT_LC_NUMERIC] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_NUMERIC))
-            || (!category_needs_update(MSVCRT_LC_MONETARY, category, old_locinfo,
-                    lcid[MSVCRT_LC_MONETARY], cp[MSVCRT_LC_MONETARY])
-                && old_locinfo->lc_handle[MSVCRT_LC_MONETARY])
-            || (!category_needs_update(MSVCRT_LC_NUMERIC, category, old_locinfo,
-                    lcid[MSVCRT_LC_NUMERIC], cp[MSVCRT_LC_NUMERIC])
-                && old_locinfo->lc_handle[MSVCRT_LC_NUMERIC])) {
+    } else if(lcid[MSVCRT_LC_MONETARY] || lcid[MSVCRT_LC_NUMERIC]) {
         locinfo->lconv = MSVCRT_malloc(sizeof(struct MSVCRT_lconv));
         locinfo->lconv_intl_refcount = MSVCRT_malloc(sizeof(int));
         if(!locinfo->lconv || !locinfo->lconv_intl_refcount) {
@@ -1502,7 +1506,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         return NULL;
     }
 
-    if(!category_needs_update(MSVCRT_LC_MONETARY, category, old_locinfo,
+    if(!category_needs_update(MSVCRT_LC_MONETARY, old_locinfo,
                 lcid[MSVCRT_LC_MONETARY], cp[MSVCRT_LC_MONETARY])) {
         copy_threadlocinfo_category(locinfo, old_locinfo, MSVCRT_LC_MONETARY);
         locinfo->lconv_mon_refcount = old_locinfo->lconv_mon_refcount;
@@ -1533,7 +1537,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
             locinfo->lconv->_W_negative_sign = old_locinfo->lconv->_W_negative_sign;
 #endif
         }
-    } else if(lcid[MSVCRT_LC_MONETARY] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_MONETARY)) {
+    } else if(lcid[MSVCRT_LC_MONETARY]) {
         if(!update_threadlocinfo_category(lcid[MSVCRT_LC_MONETARY],
                     cp[MSVCRT_LC_MONETARY], locinfo, MSVCRT_LC_MONETARY)) {
             free_locinfo(locinfo);
@@ -1777,7 +1781,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         return NULL;
     }
 
-    if(!category_needs_update(MSVCRT_LC_NUMERIC, category, old_locinfo,
+    if(!category_needs_update(MSVCRT_LC_NUMERIC, old_locinfo,
                 lcid[MSVCRT_LC_NUMERIC], cp[MSVCRT_LC_NUMERIC])) {
         copy_threadlocinfo_category(locinfo, old_locinfo, MSVCRT_LC_NUMERIC);
         locinfo->lconv_num_refcount = old_locinfo->lconv_num_refcount;
@@ -1792,7 +1796,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
             locinfo->lconv->_W_thousands_sep = old_locinfo->lconv->_W_thousands_sep;
 #endif
         }
-    } else if(lcid[MSVCRT_LC_NUMERIC] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_NUMERIC)) {
+    } else if(lcid[MSVCRT_LC_NUMERIC]) {
         if(!update_threadlocinfo_category(lcid[MSVCRT_LC_NUMERIC],
                     cp[MSVCRT_LC_NUMERIC], locinfo, MSVCRT_LC_NUMERIC)) {
             free_locinfo(locinfo);
@@ -1884,13 +1888,13 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         return NULL;
     }
 
-    if(!category_needs_update(MSVCRT_LC_TIME, category, old_locinfo,
+    if(!category_needs_update(MSVCRT_LC_TIME, old_locinfo,
                 lcid[MSVCRT_LC_TIME], cp[MSVCRT_LC_TIME])) {
         copy_threadlocinfo_category(locinfo, old_locinfo, MSVCRT_LC_TIME);
         locinfo->lc_time_curr = old_locinfo->lc_time_curr;
         if(locinfo->lc_time_curr != &cloc_time_data)
             InterlockedIncrement(&locinfo->lc_time_curr->refcount);
-    } else if(lcid[MSVCRT_LC_TIME] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_TIME)) {
+    } else if(lcid[MSVCRT_LC_TIME]) {
         if(!update_threadlocinfo_category(lcid[MSVCRT_LC_TIME],
                     cp[MSVCRT_LC_TIME], locinfo, MSVCRT_LC_TIME)) {
             free_locinfo(locinfo);
