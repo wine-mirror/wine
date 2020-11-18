@@ -1512,9 +1512,9 @@ HRESULT node_transform_node_params(const xmlnode *This, IXMLDOMNode *stylesheet,
     xmlnode *sheet;
 
     if (!libxslt_handle) return E_NOTIMPL;
-    if (!stylesheet || !p) return E_INVALIDARG;
+    if (!stylesheet || (!p && !stream)) return E_INVALIDARG;
 
-    *p = NULL;
+    if (p) *p = NULL;
 
     sheet = get_node_obj(stylesheet);
     if(!sheet) return E_FAIL;
@@ -1572,7 +1572,7 @@ HRESULT node_transform_node_params(const xmlnode *This, IXMLDOMNode *stylesheet,
     else
         xmlFreeDoc(sheet_doc);
 
-    if(!*p) *p = SysAllocStringLen(NULL, 0);
+    if (p && !*p) *p = SysAllocStringLen(NULL, 0);
 
     return hr;
 #else

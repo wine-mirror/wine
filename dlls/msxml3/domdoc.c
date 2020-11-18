@@ -1524,8 +1524,10 @@ static HRESULT WINAPI domdoc_transformNodeToObject(
     case VT_UNKNOWN:
     case VT_DISPATCH:
     {
+        ISequentialStream *stream;
         IXMLDOMDocument *doc;
         HRESULT hr;
+        BSTR str;
 
         if (!V_UNKNOWN(&output))
             return E_INVALIDARG;
@@ -1535,13 +1537,18 @@ static HRESULT WINAPI domdoc_transformNodeToObject(
         if (IUnknown_QueryInterface(V_UNKNOWN(&output), &IID_IXMLDOMDocument, (void **)&doc) == S_OK)
         {
             VARIANT_BOOL b;
-            BSTR str;
 
             if (FAILED(hr = node_transform_node(&This->node, stylesheet, &str)))
                 return hr;
 
             hr = IXMLDOMDocument_loadXML(doc, str, &b);
             SysFreeString(str);
+            return hr;
+        }
+        else if (IUnknown_QueryInterface(V_UNKNOWN(&output), &IID_ISequentialStream, (void**)&stream) == S_OK)
+        {
+            hr = node_transform_node_params(&This->node, stylesheet, NULL, stream, NULL);
+            ISequentialStream_Release(stream);
             return hr;
         }
         else

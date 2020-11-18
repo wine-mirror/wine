@@ -13030,7 +13030,12 @@ static void test_transformNodeToObject(void)
 {
     IUnknown transformdest = { &transformdestvtbl };
     IXMLDOMDocument *doc, *doc2, *doc3;
+    ISequentialStream *sstream;
+    LARGE_INTEGER off;
+    WCHAR buffer[256];
+    IStream *istream;
     VARIANT_BOOL b;
+    ULONG nread;
     HRESULT hr;
     VARIANT v;
 
@@ -13062,6 +13067,51 @@ static void test_transformNodeToObject(void)
     V_DISPATCH(&v) = (IDispatch *)doc3;
     hr = IXMLDOMDocument_transformNodeToObject(doc, (IXMLDOMNode *)doc2, v);
     ok(hr == S_OK, "Failed to transform node, hr %#x.\n", hr);
+
+    /* IStream */
+    istream = SHCreateMemStream(NULL, 0);
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown *)istream;
+    hr = IXMLDOMDocument_transformNodeToObject(doc, (IXMLDOMNode *)doc2, v);
+    ok(hr == S_OK, "Failed to transform node, hr %#x.\n", hr);
+
+    off.QuadPart = 0;
+    hr = IStream_Seek(istream, off, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Failed to seek, hr %#x.\n", hr);
+
+    nread = 0;
+    memset(buffer, 0xcc, sizeof(buffer));
+    hr = IStream_Read(istream, buffer, sizeof(buffer), &nread);
+    ok(hr == S_OK, "Failed to read, hr %#x.\n", hr);
+    buffer[nread/2] = 0;
+    ok(buffer[0] == 0xfeff, "got %x\n", buffer[0]);
+    ok(compareIgnoreReturns(&buffer[1], _bstr_(szTransformOutput)), "got output %s\n", wine_dbgstr_w(buffer));
+    IStream_Release(istream);
+
+    /* ISequentialStream */
+    istream = SHCreateMemStream(NULL, 0);
+    sstream = NULL;
+    hr = IStream_QueryInterface(istream, &IID_ISequentialStream, (void**)&sstream);
+    ok(hr == S_OK, "Failed to QI, hr %#x.\n", hr);
+
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown *)sstream;
+    hr = IXMLDOMDocument_transformNodeToObject(doc, (IXMLDOMNode *)doc2, v);
+    ok(hr == S_OK, "Failed to transform node, hr %#x.\n", hr);
+
+    off.QuadPart = 0;
+    hr = IStream_Seek(istream, off, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "Failed to seek, hr %#x.\n", hr);
+
+    nread = 0;
+    memset(buffer, 0xcc, sizeof(buffer));
+    hr = ISequentialStream_Read(sstream, buffer, sizeof(buffer), &nread);
+    ok(hr == S_OK, "Failed to read, hr %#x.\n", hr);
+    buffer[nread/2] = 0;
+    ok(buffer[0] == 0xfeff, "got %x\n", buffer[0]);
+    ok(compareIgnoreReturns(&buffer[1], _bstr_(szTransformOutput)), "got output %s\n", wine_dbgstr_w(buffer));
+    ISequentialStream_Release(sstream);
+    IStream_Release(istream);
 
     IXMLDOMDocument_Release(doc3);
     IXMLDOMDocument_Release(doc2);
