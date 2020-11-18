@@ -52,7 +52,7 @@ static const struct {
     {L"aqua",     0x00ffff},
     {L"black",    0x000000},
     {L"blue",     0x0000ff},
-    {L"fushsia",  0xff00ff},
+    {L"fuchsia",  0xff00ff},
     {L"gray",     0x808080},
     {L"green",    0x008000},
     {L"lime",     0x00ff00},
