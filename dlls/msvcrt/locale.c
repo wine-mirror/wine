@@ -585,26 +585,21 @@ static BOOL update_threadlocinfo_category(LCID lcid, unsigned short cp,
     return TRUE;
 }
 
-/* INTERNAL: swap pointers values */
-static inline void swap_pointers(void **p1, void **p2) {
-    void *hlp;
-
-    hlp = *p1;
-    *p1 = *p2;
-    *p2 = hlp;
-}
-
-/* INTERNAL: returns pthreadlocinfo struct */
-MSVCRT_pthreadlocinfo CDECL get_locinfo(void) {
+static MSVCRT_pthreadlocinfo* CDECL get_locinfo_ptr(void) {
     thread_data_t *data = msvcrt_get_thread_data();
 
     if(!data || !data->have_locale)
-        return MSVCRT_locale->locinfo;
+        return &MSVCRT_locale->locinfo;
 
-    return data->locinfo;
+    return &data->locinfo;
 }
 
-/* INTERNAL: returns pthreadlocinfo struct */
+/* INTERNAL: returns threadlocinfo struct */
+MSVCRT_pthreadlocinfo CDECL get_locinfo(void) {
+    return *get_locinfo_ptr();
+}
+
+/* INTERNAL: returns pthreadmbcinfo struct */
 MSVCRT_pthreadmbcinfo CDECL get_mbcinfo(void) {
     thread_data_t *data = msvcrt_get_thread_data();
 
@@ -1996,8 +1991,8 @@ MSVCRT__locale_t CDECL MSVCRT__wcreate_locale(int category, const MSVCRT_wchar_t
  */
 char* CDECL MSVCRT_setlocale(int category, const char* locale)
 {
-    MSVCRT_pthreadlocinfo locinfo = get_locinfo();
-    MSVCRT_pthreadlocinfo newlocinfo;
+    MSVCRT_pthreadlocinfo *plocinfo = get_locinfo_ptr();
+    MSVCRT_pthreadlocinfo locinfo = *plocinfo, newlocinfo;
 
     if(category<MSVCRT_LC_MIN || category>MSVCRT_LC_MAX)
         return NULL;
@@ -2015,152 +2010,29 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
         return NULL;
     }
 
-    _lock_locales();
-
     if(locale[0] != 'C' || locale[1] != '\0')
         initial_locale = FALSE;
 
-    if(locinfo->lc_handle[MSVCRT_LC_COLLATE]!=newlocinfo->lc_handle[MSVCRT_LC_COLLATE]
-            || locinfo->lc_id[MSVCRT_LC_COLLATE].wCodePage!=newlocinfo->lc_id[MSVCRT_LC_COLLATE].wCodePage) {
-        locinfo->lc_collate_cp = newlocinfo->lc_collate_cp;
-        locinfo->lc_handle[MSVCRT_LC_COLLATE] =
-            newlocinfo->lc_handle[MSVCRT_LC_COLLATE];
-        locinfo->lc_id[MSVCRT_LC_COLLATE] =
-            newlocinfo->lc_id[MSVCRT_LC_COLLATE];
-
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_COLLATE].wrefcount,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_COLLATE].wrefcount);
-#if _MSVCR_VER >= 110
-        swap_pointers((void**)&locinfo->lc_name[MSVCRT_LC_COLLATE],
-                (void**)&newlocinfo->lc_name[MSVCRT_LC_COLLATE]);
-#endif
-    }
-    if(newlocinfo->lc_category[MSVCRT_LC_COLLATE].locale) {
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_COLLATE].locale,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_COLLATE].locale);
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_COLLATE].refcount,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_COLLATE].refcount);
-    }
-
-    if(locinfo->lc_handle[MSVCRT_LC_CTYPE]!=newlocinfo->lc_handle[MSVCRT_LC_CTYPE]
-            || locinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage!=newlocinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage) {
-        locinfo->lc_handle[MSVCRT_LC_CTYPE] =
-            newlocinfo->lc_handle[MSVCRT_LC_CTYPE];
-        locinfo->lc_id[MSVCRT_LC_CTYPE] =
-            newlocinfo->lc_id[MSVCRT_LC_CTYPE];
-
-        locinfo->lc_codepage = newlocinfo->lc_codepage;
-        locinfo->lc_clike = newlocinfo->lc_clike;
-        locinfo->mb_cur_max = newlocinfo->mb_cur_max;
-
-        swap_pointers((void**)&locinfo->ctype1_refcount,
-                (void**)&newlocinfo->ctype1_refcount);
-        swap_pointers((void**)&locinfo->ctype1, (void**)&newlocinfo->ctype1);
-        swap_pointers((void**)&locinfo->pctype, (void**)&newlocinfo->pctype);
-        swap_pointers((void**)&locinfo->pclmap, (void**)&newlocinfo->pclmap);
-        swap_pointers((void**)&locinfo->pcumap, (void**)&newlocinfo->pcumap);
-
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_CTYPE].wrefcount,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_CTYPE].wrefcount);
-#if _MSVCR_VER >= 110
-        swap_pointers((void**)&locinfo->lc_name[MSVCRT_LC_CTYPE],
-                (void**)&newlocinfo->lc_name[MSVCRT_LC_CTYPE]);
-#endif
-    }
-    if(newlocinfo->lc_category[MSVCRT_LC_CTYPE].locale) {
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_CTYPE].locale,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_CTYPE].locale);
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_CTYPE].refcount,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_CTYPE].refcount);
-    }
-
-    if(locinfo->lc_handle[MSVCRT_LC_MONETARY]!=newlocinfo->lc_handle[MSVCRT_LC_MONETARY]
-            || locinfo->lc_id[MSVCRT_LC_MONETARY].wCodePage!=newlocinfo->lc_id[MSVCRT_LC_MONETARY].wCodePage) {
-        locinfo->lc_handle[MSVCRT_LC_MONETARY] =
-            newlocinfo->lc_handle[MSVCRT_LC_MONETARY];
-        locinfo->lc_id[MSVCRT_LC_MONETARY] =
-            newlocinfo->lc_id[MSVCRT_LC_MONETARY];
-
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_MONETARY].wrefcount,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_MONETARY].wrefcount);
-#if _MSVCR_VER >= 110
-        swap_pointers((void**)&locinfo->lc_name[MSVCRT_LC_MONETARY],
-                (void**)&newlocinfo->lc_name[MSVCRT_LC_MONETARY]);
-#endif
-    }
-    if(newlocinfo->lc_category[MSVCRT_LC_MONETARY].locale) {
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_MONETARY].locale,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_MONETARY].locale);
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_MONETARY].refcount,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_MONETARY].refcount);
-    }
-
-    if(locinfo->lc_handle[MSVCRT_LC_NUMERIC]!=newlocinfo->lc_handle[MSVCRT_LC_NUMERIC]
-            || locinfo->lc_id[MSVCRT_LC_NUMERIC].wCodePage!=newlocinfo->lc_id[MSVCRT_LC_NUMERIC].wCodePage) {
-        locinfo->lc_handle[MSVCRT_LC_NUMERIC] =
-            newlocinfo->lc_handle[MSVCRT_LC_NUMERIC];
-        locinfo->lc_id[MSVCRT_LC_NUMERIC] =
-            newlocinfo->lc_id[MSVCRT_LC_NUMERIC];
-
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_NUMERIC].wrefcount,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_NUMERIC].wrefcount);
-#if _MSVCR_VER >= 110
-        swap_pointers((void**)&locinfo->lc_name[MSVCRT_LC_NUMERIC],
-                (void**)&newlocinfo->lc_name[MSVCRT_LC_NUMERIC]);
-#endif
-    }
-    swap_pointers((void**)&locinfo->lconv, (void**)&newlocinfo->lconv);
-    swap_pointers((void**)&locinfo->lconv_num_refcount, (void**)&newlocinfo->lconv_num_refcount);
-    swap_pointers((void**)&locinfo->lconv_mon_refcount, (void**)&newlocinfo->lconv_mon_refcount);
-    swap_pointers((void**)&locinfo->lconv_intl_refcount, (void**)&newlocinfo->lconv_intl_refcount);
-    if(newlocinfo->lc_category[MSVCRT_LC_NUMERIC].locale) {
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_NUMERIC].locale,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_NUMERIC].locale);
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_NUMERIC].refcount,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_NUMERIC].refcount);
-    }
-
-    if(locinfo->lc_handle[MSVCRT_LC_TIME]!=newlocinfo->lc_handle[MSVCRT_LC_TIME]
-            || locinfo->lc_id[MSVCRT_LC_TIME].wCodePage!=newlocinfo->lc_id[MSVCRT_LC_TIME].wCodePage) {
-        locinfo->lc_handle[MSVCRT_LC_TIME] =
-            newlocinfo->lc_handle[MSVCRT_LC_TIME];
-        locinfo->lc_id[MSVCRT_LC_TIME] =
-            newlocinfo->lc_id[MSVCRT_LC_TIME];
-        swap_pointers((void**)&locinfo->lc_time_curr,
-                (void**)&newlocinfo->lc_time_curr);
-
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_TIME].wrefcount,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_TIME].wrefcount);
-#if _MSVCR_VER >= 110
-        swap_pointers((void**)&locinfo->lc_name[MSVCRT_LC_TIME],
-                (void**)&newlocinfo->lc_name[MSVCRT_LC_TIME]);
-#endif
-    }
-    if(newlocinfo->lc_category[MSVCRT_LC_TIME].locale) {
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_TIME].locale,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_TIME].locale);
-        swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_TIME].refcount,
-                (void**)&newlocinfo->lc_category[MSVCRT_LC_TIME].refcount);
-    }
-
-    free_locinfo(newlocinfo);
+    _lock_locales();
+    free_locinfo(locinfo);
+    *plocinfo = newlocinfo;
     _unlock_locales();
 
-    if(locinfo == MSVCRT_locale->locinfo) {
+    if(newlocinfo == MSVCRT_locale->locinfo) {
         int i;
 
-        MSVCRT___lc_codepage = locinfo->lc_codepage;
-        MSVCRT___lc_collate_cp = locinfo->lc_collate_cp;
-        MSVCRT___mb_cur_max = locinfo->mb_cur_max;
-        MSVCRT__pctype = locinfo->pctype;
+        MSVCRT___lc_codepage = newlocinfo->lc_codepage;
+        MSVCRT___lc_collate_cp = newlocinfo->lc_collate_cp;
+        MSVCRT___mb_cur_max = newlocinfo->mb_cur_max;
+        MSVCRT__pctype = newlocinfo->pctype;
         for(i=MSVCRT_LC_MIN; i<=MSVCRT_LC_MAX; i++)
             MSVCRT___lc_handle[i] = MSVCRT_locale->locinfo->lc_handle[i];
     }
 
     if(category == MSVCRT_LC_ALL)
-        return construct_lc_all(locinfo);
+        return construct_lc_all(newlocinfo);
 
-    return locinfo->lc_category[category].locale;
+    return newlocinfo->lc_category[category].locale;
 }
 
 /*********************************************************************
