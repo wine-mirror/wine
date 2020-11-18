@@ -357,7 +357,7 @@ LCID MSVCRT_locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *s
         locale_cp = CP_UTF8;
 #endif
     } else {
-        locale_cp = atoi(cp + 1);
+        locale_cp = MSVCRT_atoi(cp + 1);
     }
     if (!IsValidCodePage(locale_cp))
         return -1;
@@ -1118,7 +1118,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
     LCID lcid[6] = { 0 };
     unsigned short cp[6] = { 0 };
     const char *locale_name[6] = { 0 };
-    int locale_len[6] = { 0 };
+    int val, locale_len[6] = { 0 };
     char buf[256];
     BOOL sname;
 #if _MSVCR_VER >= 100
@@ -1437,65 +1437,65 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_IINTLCURRDIGITS
-                    |LOCALE_NOUSEROVERRIDE, buf, 256))
-            locinfo->lconv->int_frac_digits = atoi(buf);
+        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_IINTLCURRDIGITS
+                          |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
+            locinfo->lconv->int_frac_digits = val;
         else {
             free_locinfo(locinfo);
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_ICURRDIGITS
-                    |LOCALE_NOUSEROVERRIDE, buf, 256))
-            locinfo->lconv->frac_digits = atoi(buf);
+        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_ICURRDIGITS
+                          |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
+            locinfo->lconv->frac_digits = val;
         else {
             free_locinfo(locinfo);
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSYMPRECEDES
-                    |LOCALE_NOUSEROVERRIDE, buf, 256))
-            locinfo->lconv->p_cs_precedes = atoi(buf);
+        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSYMPRECEDES
+                          |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
+            locinfo->lconv->p_cs_precedes = val;
         else {
             free_locinfo(locinfo);
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSEPBYSPACE
-                    |LOCALE_NOUSEROVERRIDE, buf, 256))
-            locinfo->lconv->p_sep_by_space = atoi(buf);
+        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSEPBYSPACE
+                          |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
+            locinfo->lconv->p_sep_by_space = val;
         else {
             free_locinfo(locinfo);
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSYMPRECEDES
-                    |LOCALE_NOUSEROVERRIDE, buf, 256))
-            locinfo->lconv->n_cs_precedes = atoi(buf);
+        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSYMPRECEDES
+                          |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
+            locinfo->lconv->n_cs_precedes = val;
         else {
             free_locinfo(locinfo);
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSEPBYSPACE
-                    |LOCALE_NOUSEROVERRIDE, buf, 256))
-            locinfo->lconv->n_sep_by_space = atoi(buf);
+        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSEPBYSPACE
+                          |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
+            locinfo->lconv->n_sep_by_space = val;
         else {
             free_locinfo(locinfo);
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSIGNPOSN
-                    |LOCALE_NOUSEROVERRIDE, buf, 256))
-            locinfo->lconv->p_sign_posn = atoi(buf);
+        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSIGNPOSN
+                          |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
+            locinfo->lconv->p_sign_posn = val;
         else {
             free_locinfo(locinfo);
             return NULL;
         }
 
-        if(GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSIGNPOSN
-                    |LOCALE_NOUSEROVERRIDE, buf, 256))
-            locinfo->lconv->n_sign_posn = atoi(buf);
+        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSIGNPOSN
+                          |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
+            locinfo->lconv->n_sign_posn = val;
         else {
             free_locinfo(locinfo);
             return NULL;

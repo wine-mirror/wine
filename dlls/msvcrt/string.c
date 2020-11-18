@@ -2441,7 +2441,7 @@ int CDECL MSVCRT_I10_OUTPUT(MSVCRT__LDOUBLE ld80, int prec, int flag, struct _I1
     MSVCRT_sprintf(buf, format, d);
 
     buf[1] = buf[0];
-    data->pos = atoi(buf+prec+3);
+    data->pos = MSVCRT_atoi(buf+prec+3);
     if(buf[1] != '0')
         data->pos++;
 
