@@ -1117,6 +1117,22 @@ void free_mbcinfo(MSVCRT_pthreadmbcinfo mbcinfo)
     MSVCRT_free(mbcinfo);
 }
 
+/*********************************************************************
+ *      _lock_locales (UCRTBASE.@)
+ */
+void CDECL _lock_locales(void)
+{
+    _mlock(_SETLOCALE_LOCK);
+}
+
+/*********************************************************************
+ *      _unlock_locales (UCRTBASE.@)
+ */
+void CDECL _unlock_locales(void)
+{
+    _munlock(_SETLOCALE_LOCK);
+}
+
 MSVCRT__locale_t CDECL get_current_locale_noalloc(MSVCRT__locale_t locale)
 {
     thread_data_t *data = msvcrt_get_thread_data();
@@ -1124,6 +1140,7 @@ MSVCRT__locale_t CDECL get_current_locale_noalloc(MSVCRT__locale_t locale)
 
     if(!data || !data->have_locale)
     {
+        _lock_locales();
         *locale = *MSVCRT_locale;
     }
     else
@@ -1144,6 +1161,8 @@ MSVCRT__locale_t CDECL get_current_locale_noalloc(MSVCRT__locale_t locale)
     if(locale->locinfo->ctype1_refcount)
         InterlockedIncrement(locale->locinfo->ctype1_refcount);
     InterlockedIncrement(&locale->locinfo->lc_time_curr->refcount);
+    if(locale->locinfo == MSVCRT_locale->locinfo)
+        _unlock_locales();
 
     InterlockedIncrement(&locale->mbcinfo->refcount);
     return locale;
@@ -1928,22 +1947,6 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
     }
 
     return locinfo;
-}
-
-/*********************************************************************
- *      _lock_locales (UCRTBASE.@)
- */
-void CDECL _lock_locales(void)
-{
-    _mlock(_SETLOCALE_LOCK);
-}
-
-/*********************************************************************
- *      _unlock_locales (UCRTBASE.@)
- */
-void CDECL _unlock_locales(void)
-{
-    _munlock(_SETLOCALE_LOCK);
 }
 
 /*********************************************************************
