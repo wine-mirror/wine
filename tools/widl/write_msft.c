@@ -1263,18 +1263,25 @@ static void write_default_value(msft_typelib_t *typelib, type_t *type, expr_t *e
 static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
                             int vt, const void *value, int *offset)
 {
-    MSFT_GuidEntry guidentry;
     int guidoffset;
     int custoffset;
     int *custdata;
     int data_out;
+    int hash_key;
 
-    guidentry.guid = *guid;
+    hash_key = ctl2_hash_guid(guid);
+    guidoffset = ctl2_find_guid(typelib, hash_key, guid);
+    if(guidoffset == -1) {
+        /* add GUID that was not already present */
+        MSFT_GuidEntry guidentry;
+        guidentry.guid = *guid;
 
-    guidentry.hreftype = -1;
-    guidentry.next_hash = -1;
+        guidentry.hreftype = -1;
+        guidentry.next_hash = -1;
 
-    guidoffset = ctl2_alloc_guid(typelib, &guidentry);
+        guidoffset = ctl2_alloc_guid(typelib, &guidentry);
+    }
+
     if(vt == VT_BSTR)
         /* TODO midl appears to share a single reference if the same string is used as custdata in multiple places */
         write_string_value(typelib, &data_out, value);
