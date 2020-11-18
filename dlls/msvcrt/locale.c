@@ -1247,8 +1247,12 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
             free_locinfo(locinfo);
             return NULL;
         }
-    } else
-        locinfo->lc_category[MSVCRT_LC_COLLATE].locale = MSVCRT__strdup("C");
+    } else {
+        if(!init_category_name("C", 1, locinfo, MSVCRT_LC_COLLATE)) {
+            free_locinfo(locinfo);
+            return NULL;
+        }
+    }
 
     if(locale_name[MSVCRT_LC_CTYPE] &&
             !init_category_name(locale_name[MSVCRT_LC_CTYPE],
@@ -1325,7 +1329,10 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         locinfo->lc_clike = 1;
         locinfo->mb_cur_max = 1;
         locinfo->pctype = MSVCRT__ctype+1;
-        locinfo->lc_category[MSVCRT_LC_CTYPE].locale = MSVCRT__strdup("C");
+        if(!init_category_name("C", 1, locinfo, MSVCRT_LC_CTYPE)) {
+            free_locinfo(locinfo);
+            return NULL;
+        }
 
         for(i=0; i<256; i++) {
             if(locinfo->pctype[i] & MSVCRT__LEADBYTE)
@@ -1617,7 +1624,10 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         locinfo->lconv->_W_negative_sign[0] = '\0';
 #endif
 
-        locinfo->lc_category[MSVCRT_LC_MONETARY].locale = MSVCRT__strdup("C");
+        if(!init_category_name("C", 1, locinfo, MSVCRT_LC_MONETARY)) {
+            free_locinfo(locinfo);
+            return NULL;
+        }
     }
 
     if(locale_name[MSVCRT_LC_NUMERIC] &&
@@ -1735,7 +1745,10 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         locinfo->lconv->_W_thousands_sep[0] = '\0';
 #endif
 
-        locinfo->lc_category[MSVCRT_LC_NUMERIC].locale = MSVCRT__strdup("C");
+        if (!init_category_name("C", 1, locinfo, MSVCRT_LC_NUMERIC)) {
+            free_locinfo(locinfo);
+            return NULL;
+        }
     }
 
     if(locale_name[MSVCRT_LC_TIME] &&
@@ -1767,7 +1780,10 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
     } else {
-        locinfo->lc_category[MSVCRT_LC_TIME].locale = MSVCRT__strdup("C");
+        if(!init_category_name("C", 1, locinfo, MSVCRT_LC_TIME)) {
+            free_locinfo(locinfo);
+            return NULL;
+        }
         locinfo->lc_time_curr = &cloc_time_data;
     }
 

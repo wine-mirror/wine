@@ -2036,15 +2036,11 @@ static void test__get_current_locale(void)
                 "same locale name pointers for LC_COLLATE\n");
         ok(l->locinfo->lc_category[LC_COLLATE].refcount != l2->locinfo->lc_category[LC_COLLATE].refcount,
                 "same refcount pointers for LC_COLLATE\n");
-        ok(!!l->locinfo->lc_category[LC_COLLATE].refcount, "null refcount pointer for LC_COLLATE\n");
-        if(l->locinfo->lc_category[LC_COLLATE].refcount)
-            ok(*l->locinfo->lc_category[LC_COLLATE].refcount == 1, "refcount = %d\n",
-                    *l->locinfo->lc_category[LC_COLLATE].refcount);
-        ok(!!l2->locinfo->lc_category[LC_COLLATE].refcount, "null refcount pointer for LC_COLLATE\n");
-        if(l2->locinfo->lc_category[LC_COLLATE].refcount)
-            ok(*l2->locinfo->lc_category[LC_COLLATE].refcount == 2, "refcount = %d\n",
-                    *l2->locinfo->lc_category[LC_COLLATE].refcount);
+        ok(*l2->locinfo->lc_category[LC_COLLATE].refcount == 2, "refcount = %d\n",
+                *l2->locinfo->lc_category[LC_COLLATE].refcount);
     }
+    ok(*l->locinfo->lc_category[LC_COLLATE].refcount == 1, "refcount = %d\n",
+            *l->locinfo->lc_category[LC_COLLATE].refcount);
     for(i = LC_CTYPE; i <= LC_MAX; i++) {
         ok(l->locinfo->lc_category[i].locale == l2->locinfo->lc_category[i].locale,
                 "different locale name pointers for category %d\n", i);
@@ -2107,15 +2103,11 @@ static void test__get_current_locale(void)
                     "same locale name pointers for category %d\n", i);
             ok(l->locinfo->lc_category[i].refcount != l2->locinfo->lc_category[i].refcount,
                     "same refcount pointers for category %d\n", i);
-            ok(!!l->locinfo->lc_category[i].refcount, "null refcount pointer for category %d\n", i);
-            if(l->locinfo->lc_category[i].refcount)
-                ok(*l->locinfo->lc_category[i].refcount == 1, "refcount = %d for category %d\n",
-                        *l->locinfo->lc_category[i].refcount, i);
-            ok(!!l2->locinfo->lc_category[i].refcount, "null refcount pointer for category %d\n", i);
-            if(l2->locinfo->lc_category[i].refcount)
-                ok(*l2->locinfo->lc_category[i].refcount == 2, "refcount = %d for category %d\n",
-                        *l2->locinfo->lc_category[i].refcount, i);
+            ok(*l2->locinfo->lc_category[i].refcount == 2, "refcount = %d for category %d\n",
+                    *l2->locinfo->lc_category[i].refcount, i);
         }
+        ok(*l->locinfo->lc_category[i].refcount == 1, "refcount = %d for category %d\n",
+                *l->locinfo->lc_category[i].refcount, i);
     }
     for(i = LC_MONETARY; i <= LC_MAX; i++) {
         ok(l->locinfo->lc_category[i].locale == l2->locinfo->lc_category[i].locale,
@@ -2186,15 +2178,11 @@ static void test__get_current_locale(void)
                     "same locale name pointers for category %d\n", i);
             ok(l->locinfo->lc_category[i].refcount != l2->locinfo->lc_category[i].refcount,
                     "same refcount pointers for category %d\n", i);
-            ok(!!l->locinfo->lc_category[i].refcount, "null refcount pointer for category %d\n", i);
-            if(l->locinfo->lc_category[i].refcount)
-                ok(*l->locinfo->lc_category[i].refcount == 1, "refcount = %d for category %d\n",
-                        *l->locinfo->lc_category[i].refcount, i);
-            ok(!!l2->locinfo->lc_category[i].refcount, "null refcount pointer for category %d\n", i);
-            if(l2->locinfo->lc_category[i].refcount)
-                ok(*l2->locinfo->lc_category[i].refcount == 2, "refcount = %d for category %d\n",
-                        *l2->locinfo->lc_category[i].refcount, i);
+            ok(*l2->locinfo->lc_category[i].refcount == 2, "refcount = %d for category %d\n",
+                    *l2->locinfo->lc_category[i].refcount, i);
         }
+        ok(*l->locinfo->lc_category[i].refcount == 1, "refcount = %d for category %d\n",
+                *l->locinfo->lc_category[i].refcount, i);
     }
     for(i = LC_NUMERIC; i <= LC_MAX; i++) {
         ok(l->locinfo->lc_category[i].locale == l2->locinfo->lc_category[i].locale,
@@ -2273,15 +2261,11 @@ static void test__get_current_locale(void)
                     "same locale name pointers for category %d\n", i);
             ok(l->locinfo->lc_category[i].refcount != l2->locinfo->lc_category[i].refcount,
                     "same refcount pointers for category %d\n", i);
-            ok(!!l->locinfo->lc_category[i].refcount, "null refcount pointer for category %d\n", i);
-            if(l->locinfo->lc_category[i].refcount)
-                ok(*l->locinfo->lc_category[i].refcount == 1, "refcount = %d for category %d\n",
-                        *l->locinfo->lc_category[i].refcount, i);
-            ok(!!l2->locinfo->lc_category[i].refcount, "null refcount pointer for category %d\n", i);
-            if(l2->locinfo->lc_category[i].refcount)
-                ok(*l2->locinfo->lc_category[i].refcount == 2, "refcount = %d for category %d\n",
-                        *l2->locinfo->lc_category[i].refcount, i);
+            ok(*l2->locinfo->lc_category[i].refcount == 2, "refcount = %d for category %d\n",
+                    *l2->locinfo->lc_category[i].refcount, i);
         }
+        ok(*l->locinfo->lc_category[i].refcount == 1, "refcount = %d for category %d\n",
+                *l->locinfo->lc_category[i].refcount, i);
     }
     ok(l->locinfo->lc_category[LC_TIME].locale == l2->locinfo->lc_category[LC_TIME].locale,
             "different locale name pointers for LC_TIME\n");
@@ -2353,21 +2337,17 @@ static void test__get_current_locale(void)
         ok(l2->locinfo->refcount == 2, "refcount = %d\n", l2->locinfo->refcount);
     }
 
-    todo_wine {
-        for(i = LC_MIN+1; i <= LC_MAX; i++) {
+    for(i = LC_MIN+1; i <= LC_MAX; i++) {
+        todo_wine {
             ok(l->locinfo->lc_category[i].locale != l2->locinfo->lc_category[i].locale,
                     "same locale name pointers for category %d\n", i);
             ok(l->locinfo->lc_category[i].refcount != l2->locinfo->lc_category[i].refcount,
                     "same refcount pointers for category %d\n", i);
-            ok(!!l->locinfo->lc_category[i].refcount, "null refcount pointer for category %d\n", i);
-            if(l->locinfo->lc_category[i].refcount)
-                ok(*l->locinfo->lc_category[i].refcount == 1, "refcount = %d for category %d\n",
-                        *l->locinfo->lc_category[i].refcount, i);
-            ok(!!l2->locinfo->lc_category[i].refcount, "null refcount pointer for category %d\n", i);
-            if(l2->locinfo->lc_category[i].refcount)
-                ok(*l2->locinfo->lc_category[i].refcount == 2, "refcount = %d for category %d\n",
-                        *l2->locinfo->lc_category[i].refcount, i);
+            ok(*l2->locinfo->lc_category[i].refcount == 2, "refcount = %d for category %d\n",
+                    *l2->locinfo->lc_category[i].refcount, i);
         }
+        ok(*l->locinfo->lc_category[i].refcount == 1, "refcount = %d for category %d\n",
+                *l->locinfo->lc_category[i].refcount, i);
     }
 
     todo_wine {
