@@ -3242,14 +3242,14 @@ static void test_evr(void)
     IMFVideoRenderer *video_renderer;
     IMFMediaSink *sink, *sink2;
     IMFAttributes *attributes;
+    DWORD flags, count, value;
     IMFActivate *activate;
     HWND window, window2;
-    DWORD flags, count;
     LONG sample_count;
     IMFGetService *gs;
     IMFSample *sample;
     IUnknown *unk;
-    UINT64 value;
+    UINT64 window3;
     HRESULT hr;
     GUID guid;
 
@@ -3272,9 +3272,9 @@ static void test_evr(void)
     hr = MFCreateVideoRendererActivate(window, &activate);
     ok(hr == S_OK, "Failed to create activate object, hr %#x.\n", hr);
 
-    hr = IMFActivate_GetUINT64(activate, &MF_ACTIVATE_VIDEO_WINDOW, &value);
+    hr = IMFActivate_GetUINT64(activate, &MF_ACTIVATE_VIDEO_WINDOW, &window3);
     ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
-    ok(UlongToHandle(value) == window, "Unexpected value.\n");
+    ok(UlongToHandle(window3) == window, "Unexpected value.\n");
 
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -3307,9 +3307,9 @@ static void test_evr(void)
     ok(hr == S_OK, "Failed to get attribute count, hr %#x.\n", hr);
     ok(count == 1, "Unexpected count %u.\n", count);
 
-    hr = IMFActivate_GetUINT64(activate, &MF_ACTIVATE_VIDEO_WINDOW, &value);
+    hr = IMFActivate_GetUINT64(activate, &MF_ACTIVATE_VIDEO_WINDOW, &window3);
     ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
-    ok(!value, "Unexpected value.\n");
+    ok(!window3, "Unexpected value.\n");
 
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
     ok(hr == S_OK, "Failed to activate, hr %#x.\n", hr);
@@ -3336,6 +3336,26 @@ static void test_evr(void)
     /* Primary stream type handler. */
     hr = IMFMediaSink_GetStreamSinkById(sink, 0, &stream_sink);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFStreamSink_QueryInterface(stream_sink, &IID_IMFAttributes, (void **)&attributes);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFAttributes_GetCount(attributes, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine {
+    ok(count == 2, "Unexpected count %u.\n", count);
+    value = 0;
+    hr = IMFAttributes_GetUINT32(attributes, &MF_SA_REQUIRED_SAMPLE_COUNT, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value == 1, "Unexpected attribute value %u.\n", value);
+    value = 0;
+    hr = IMFAttributes_GetUINT32(attributes, &MF_SA_D3D_AWARE, &value);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value == 1, "Unexpected attribute value %u.\n", value);
+}
+    hr = IMFAttributes_QueryInterface(attributes, &IID_IMFStreamSink, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+    IMFAttributes_Release(attributes);
 
     hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &type_handler);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
