@@ -1725,6 +1725,31 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
+    {   "http://[::5efe:1.2.3.4]", 0, S_OK, FALSE,
+        {
+            {"http://[::5efe:1.2.3.4]/",S_OK,FALSE},
+            {"[::5efe:1.2.3.4]",S_OK,FALSE},
+            {"http://[::5efe:1.2.3.4]/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"::5efe:1.2.3.4",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,FALSE},
+            {"/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"http://[::5efe:1.2.3.4]",S_OK,FALSE},
+            {"http",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+        },
+        {
+            {Uri_HOST_IPV6,S_OK,FALSE},
+            {80,S_OK,FALSE},
+            {URL_SCHEME_HTTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
     /* Windows doesn't do anything to IPv6's in unknown schemes. */
     {   "zip://[0001:0:000:0004:0005:0006:001.002.003.000]", 0, S_OK, FALSE,
         {
