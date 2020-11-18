@@ -2084,7 +2084,7 @@ static void test__get_current_locale(void)
         todo_wine ok(*l->locinfo->lconv_mon_refcount == 3, "refcount = %d\n", *l->locinfo->lconv_mon_refcount);
 
     ok(l->locinfo->lc_time_curr == l2->locinfo->lc_time_curr, "different lc_time_curr pointers\n");
-    todo_wine ok(l->locinfo->lc_time_curr->unk == 1, "unk = %d\n", l->locinfo->lc_time_curr->unk);
+    ok(l->locinfo->lc_time_curr->unk == 1, "unk = %d\n", l->locinfo->lc_time_curr->unk);
     todo_wine ok(l->locinfo->lc_time_curr->refcount == 3, "refcount = %d\n", l->locinfo->lc_time_curr->refcount);
 
     p__free_locale(l2);
@@ -2159,7 +2159,7 @@ static void test__get_current_locale(void)
         todo_wine ok(*l->locinfo->lconv_mon_refcount == 3, "refcount = %d\n", *l->locinfo->lconv_mon_refcount);
 
     ok(l->locinfo->lc_time_curr == l2->locinfo->lc_time_curr, "different lc_time_curr pointers\n");
-    todo_wine ok(l->locinfo->lc_time_curr->unk == 1, "unk = %d\n", l->locinfo->lc_time_curr->unk);
+    ok(l->locinfo->lc_time_curr->unk == 1, "unk = %d\n", l->locinfo->lc_time_curr->unk);
     todo_wine ok(l->locinfo->lc_time_curr->refcount == 3, "refcount = %d\n", l->locinfo->lc_time_curr->refcount);
 
     p__free_locale(l2);
@@ -2240,7 +2240,7 @@ static void test__get_current_locale(void)
     ok(!l2->locinfo->lconv_mon_refcount, "nonnull refcount pointer for C locale\n");
 
     ok(l->locinfo->lc_time_curr == l2->locinfo->lc_time_curr, "different lc_time_curr pointers\n");
-    todo_wine ok(l->locinfo->lc_time_curr->unk == 1, "unk = %d\n", l->locinfo->lc_time_curr->unk);
+    ok(l->locinfo->lc_time_curr->unk == 1, "unk = %d\n", l->locinfo->lc_time_curr->unk);
     todo_wine ok(l->locinfo->lc_time_curr->refcount == 3, "refcount = %d\n", l->locinfo->lc_time_curr->refcount);
 
     p__free_locale(l2);
@@ -2322,7 +2322,7 @@ static void test__get_current_locale(void)
     ok(!l2->locinfo->lconv_mon_refcount, "nonnull refcount pointer for C locale\n");
 
     ok(l->locinfo->lc_time_curr == l2->locinfo->lc_time_curr, "different lc_time_curr pointers\n");
-    todo_wine ok(l->locinfo->lc_time_curr->unk == 1, "unk = %d\n", l->locinfo->lc_time_curr->unk);
+    ok(l->locinfo->lc_time_curr->unk == 1, "unk = %d\n", l->locinfo->lc_time_curr->unk);
     todo_wine ok(l->locinfo->lc_time_curr->refcount == 3, "refcount = %d\n", l->locinfo->lc_time_curr->refcount);
 
     p__free_locale(l2);

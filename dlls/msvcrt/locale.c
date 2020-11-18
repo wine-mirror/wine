@@ -109,7 +109,7 @@ MSVCRT___lc_time_data cloc_time_data =
 #if _MSVCR_VER < 110
     MAKELCID(LANG_ENGLISH, SORT_DEFAULT),
 #endif
-    {1, 0},
+    1, 0,
     {{sun, mon, tue, wed, thu, fri, sat,
       sunday, monday, tuesday, wednesday, thursday, friday, saturday,
       jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec,
@@ -1103,7 +1103,8 @@ void free_locinfo(MSVCRT_pthreadlocinfo locinfo)
         MSVCRT_free((void*)locinfo->pcumap);
     }
 
-    if(locinfo->lc_time_curr != &cloc_time_data)
+    if(locinfo->lc_time_curr && locinfo->lc_time_curr != &cloc_time_data
+            && !InterlockedDecrement(&locinfo->lc_time_curr->refcount))
         MSVCRT_free(locinfo->lc_time_curr);
 
     MSVCRT_free(locinfo);
@@ -1237,6 +1238,8 @@ static MSVCRT___lc_time_data* create_time_data(LCID lcid)
 #else
     cur->lcid = lcid;
 #endif
+    cur->unk = 1;
+    cur->refcount = 1;
 
     return cur;
 }
@@ -1889,6 +1892,9 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
     if(!category_needs_update(MSVCRT_LC_TIME, category, old_locinfo,
                 lcid[MSVCRT_LC_TIME], cp[MSVCRT_LC_TIME])) {
         copy_threadlocinfo_category(locinfo, old_locinfo, MSVCRT_LC_TIME);
+        locinfo->lc_time_curr = old_locinfo->lc_time_curr;
+        if(locinfo->lc_time_curr != &cloc_time_data)
+            InterlockedIncrement(&locinfo->lc_time_curr->refcount);
     } else if(lcid[MSVCRT_LC_TIME] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_TIME)) {
         if(!update_threadlocinfo_category(lcid[MSVCRT_LC_TIME],
                     cp[MSVCRT_LC_TIME], locinfo, MSVCRT_LC_TIME)) {
