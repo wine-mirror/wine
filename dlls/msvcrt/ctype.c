@@ -396,7 +396,7 @@ int CDECL MSVCRT_isblank(int c)
  */
 int CDECL MSVCRT___isascii(int c)
 {
-  return isascii((unsigned)c);
+  return ((unsigned)c < 0x80);
 }
 
 /*********************************************************************
@@ -421,7 +421,7 @@ int CDECL MSVCRT_iswascii(MSVCRT_wchar_t c)
  */
 int CDECL MSVCRT___iscsym(int c)
 {
-  return (c < 127 && (isalnum(c) || c == '_'));
+  return (c < 127 && (MSVCRT_isalnum(c) || c == '_'));
 }
 
 /*********************************************************************
@@ -429,7 +429,7 @@ int CDECL MSVCRT___iscsym(int c)
  */
 int CDECL MSVCRT___iscsymf(int c)
 {
-  return (c < 127 && (isalpha(c) || c == '_'));
+  return (c < 127 && (MSVCRT_isalpha(c) || c == '_'));
 }
 
 /*********************************************************************

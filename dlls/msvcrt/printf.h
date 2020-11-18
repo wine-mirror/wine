@@ -57,7 +57,7 @@ static inline const APICHAR* FUNC_NAME(pf_parse_int)(const APICHAR *fmt, int *va
 {
     *val = 0;
 
-    while(isdigit(*fmt)) {
+    while (*fmt >= '0' && *fmt <= '9') {
         *val *= 10;
         *val += *fmt++ - '0';
     }
@@ -1041,7 +1041,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 flags.LeftAlign = TRUE;
                 flags.FieldLength = -flags.FieldLength;
             }
-        } else while(isdigit(*p)) {
+        } else while (*p >= '0' && *p <= '9') {
             flags.FieldLength *= 10;
             flags.FieldLength += *p++ - '0';
         }
@@ -1059,7 +1059,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                     i = -1;
 
                 flags.Precision = pf_args(args_ctx, i, VT_INT, valist).get_int;
-            } else while(isdigit(*p)) {
+            } else while (*p >= '0' && *p <= '9') {
                 flags.Precision *= 10;
                 flags.Precision += *p++ - '0';
             }

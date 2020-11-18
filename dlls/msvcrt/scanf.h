@@ -28,7 +28,6 @@
 #define _EOF_ MSVCRT_WEOF
 #define _EOF_RET (short)MSVCRT_WEOF
 #define _ISSPACE_(c) MSVCRT_iswspace(c)
-#define _ISDIGIT_(c) MSVCRT_iswdigit(c)
 #define _WIDE2SUPPORTED_(c) c /* No conversion needed (wide to wide) */
 #define _CHAR2SUPPORTED_(c) c /* FIXME: convert char to wide char */
 #define _CHAR2DIGIT_(c, base) wchar2digit((c), (base))
@@ -37,8 +36,7 @@
 #define _CHAR_ char
 #define _EOF_ MSVCRT_EOF
 #define _EOF_RET MSVCRT_EOF
-#define _ISSPACE_(c) isspace(c)
-#define _ISDIGIT_(c) isdigit(c)
+#define _ISSPACE_(c) MSVCRT_isspace(c)
 #define _WIDE2SUPPORTED_(c) c /* FIXME: convert wide char to char */
 #define _CHAR2SUPPORTED_(c) c /* No conversion needed (char to char) */
 #define _CHAR2DIGIT_(c, base) char2digit((c), (base))
@@ -260,7 +258,7 @@ _FUNCTION_ {
 	    /* read prefix (if any) */
 	    while (!prefix_finished) {
                 /* look for width specification */
-                while (_ISDIGIT_(*format)) {
+                while (*format >= '0' && *format <= '9') {
                     width *= 10;
                     width += *format++ - '0';
                 }
@@ -721,7 +719,6 @@ _FUNCTION_ {
 #undef _EOF_
 #undef _EOF_RET
 #undef _ISSPACE_
-#undef _ISDIGIT_
 #undef _CHAR2SUPPORTED_
 #undef _WIDE2SUPPORTED_
 #undef _CHAR2DIGIT_
