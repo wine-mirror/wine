@@ -1265,6 +1265,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
     if(!category_needs_update(MSVCRT_LC_COLLATE, category, old_locinfo,
                 lcid[MSVCRT_LC_COLLATE], cp[MSVCRT_LC_COLLATE])) {
         copy_threadlocinfo_category(locinfo, old_locinfo, MSVCRT_LC_COLLATE);
+        locinfo->lc_collate_cp = old_locinfo->lc_collate_cp;
     } else if(lcid[MSVCRT_LC_COLLATE] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_COLLATE)) {
         if(!update_threadlocinfo_category(lcid[MSVCRT_LC_COLLATE],
                     cp[MSVCRT_LC_COLLATE], locinfo, MSVCRT_LC_COLLATE)) {
