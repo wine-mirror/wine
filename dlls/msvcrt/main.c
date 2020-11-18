@@ -110,7 +110,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         msvcrt_destroy_heap();
         return FALSE;
     }
-    msvcrt_init_math();
+    msvcrt_init_math(hinstDLL);
     msvcrt_init_io();
     msvcrt_init_console();
     msvcrt_init_args();
