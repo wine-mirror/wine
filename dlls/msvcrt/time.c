@@ -127,11 +127,11 @@ void CDECL MSVCRT__tzset(void)
         }else if(*tz == '+') {
             tz++;
         }
-        MSVCRT___timezone = strtol(tz, &tz, 10)*3600;
+        MSVCRT___timezone = MSVCRT_strtol(tz, &tz, 10)*3600;
         if(*tz == ':') {
-            MSVCRT___timezone += strtol(tz+1, &tz, 10)*60;
+            MSVCRT___timezone += MSVCRT_strtol(tz+1, &tz, 10)*60;
             if(*tz == ':')
-                MSVCRT___timezone += strtol(tz+1, &tz, 10);
+                MSVCRT___timezone += MSVCRT_strtol(tz+1, &tz, 10);
         }
         if(neg_zone)
             MSVCRT___timezone = -MSVCRT___timezone;

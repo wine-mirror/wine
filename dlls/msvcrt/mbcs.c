@@ -124,7 +124,7 @@ static inline MSVCRT_size_t u_strlen( const unsigned char *str )
 
 static inline unsigned char* u_strncat( unsigned char* dst, const unsigned char* src, MSVCRT_size_t len )
 {
-  return (unsigned char*)strncat( (char*)dst, (const char*)src, len);
+  return (unsigned char*)MSVCRT_strncat( (char*)dst, (const char*)src, len);
 }
 
 static inline int u_strcmp( const unsigned char *s1, const unsigned char *s2 )
@@ -154,7 +154,7 @@ static inline unsigned char *u_strchr( const unsigned char *s, unsigned char x )
 
 static inline unsigned char *u_strrchr( const unsigned char *s, unsigned char x )
 {
-  return (unsigned char*) strrchr( (const char*)s, x );
+  return (unsigned char*) MSVCRT_strrchr( (const char*)s, x );
 }
 
 static inline unsigned char *u__strset( unsigned char *s, unsigned char c )
