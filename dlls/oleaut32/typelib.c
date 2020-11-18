@@ -2599,6 +2599,9 @@ static void MSFT_DoVars(TLBContext *pcx, ITypeInfoImpl *pTI, int cFuncs,
         if(reclength > FIELD_OFFSET(MSFT_VarRecord, HelpString))
             ptvd->HelpString = MSFT_ReadString(pcx, pVarRec->HelpString);
 
+        if (reclength > FIELD_OFFSET(MSFT_VarRecord, oCustData))
+            MSFT_CustData(pcx, pVarRec->oCustData, &ptvd->custdata_list);
+
         if(reclength > FIELD_OFFSET(MSFT_VarRecord, HelpStringContext))
             ptvd->HelpStringContext = pVarRec->HelpStringContext;
 

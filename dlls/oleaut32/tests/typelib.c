@@ -6130,6 +6130,154 @@ static const type_info info[] = {
     },
   },
   { /* vars */ },
+},
+{
+  "custdata_interface",
+  "{786ee4ff-c5dd-4bf4-9578-0d22fb5369cc}",
+  /*kind*/ TKIND_INTERFACE, /*flags*/ TYPEFLAG_FDISPATCHABLE, /*align*/ TYPE_ALIGNMENT(custdata_interface*), /*size*/ sizeof(custdata_interface*),
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 8, /*#func*/ 1, /*#var*/ 0,
+  /*#custdata*/ 1, {
+    { "{c8768723-e6d2-4442-b039-92e9c82429c4}", { VT_BSTR, { .value_str = "ITypeInfo2::GetCustData interface" } } },
+  },
+  { /* funcs */
+    {
+      /*id*/ 0x60020000, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 7, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_HRESULT, -1, PARAMFLAG_NONE}, /* ret */
+      /*#custdata*/ 1, {
+        { "{c8768723-e6d2-4442-b039-92e9c82429c4}", { VT_BSTR, { .value_str = "ITypeInfo2::GetFuncCustData custdata_interface::test_method" } } },
+      },
+      { /* params */
+        {VT_INT, -1, PARAMFLAG_FIN, /*#custdata*/ 1, {
+          { "{c8768723-e6d2-4442-b039-92e9c82429c4}", { VT_BSTR, { .value_str = "ITypeInfo2::GetParamCustData custdata_interface::test_method(x)" } } },
+        } },
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_method",
+        "x",
+        NULL,
+      },
+    },
+  },
+  { /* vars */ },
+},
+{
+  "custdata_enum",
+  "{6ca99f5e-c86a-42ad-a5ee-5bd4c8e5553c}",
+  /*kind*/ TKIND_ENUM, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 2,
+  /*#custdata*/ 1, {
+    { "{c8768723-e6d2-4442-b039-92e9c82429c4}", { VT_BSTR, { .value_str = "ITypeInfo2::GetCustData enum" } } },
+  },
+  { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "One", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 0 } } },
+      /*#custdata*/ 1, {
+        { "{c8768723-e6d2-4442-b039-92e9c82429c4}", { VT_BSTR, { .value_str = "ITypeInfo2::GetVarCustData enum" } } },
+      },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+    {
+      /*id*/ 0x40000001, /*name*/ "Two", /*flags*/ 0, /*kind*/ VAR_CONST,
+      { .varValue = { VT_I4, { .value_int = 1 } } },
+      /*#custdata*/ 0, {},
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
+},
+{
+  "custdata_struct",
+  "{62fabe17-f733-4b09-b859-3f455dcda450}",
+  /*kind*/ TKIND_RECORD, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(struct custdata_struct), /*size*/ sizeof(struct custdata_struct),
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 1,
+  /*#custdata*/ 1, {
+    { "{c8768723-e6d2-4442-b039-92e9c82429c4}", { VT_BSTR, { .value_str = "ITypeInfo2::GetCustData struct" } } },
+  },
+  { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "test_field", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 0 },
+      /*#custdata*/ 1, {
+        { "{c8768723-e6d2-4442-b039-92e9c82429c4}", { VT_BSTR, { .value_str = "ITypeInfo2::GetVarCustData struct" } } },
+      },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
+},
+{
+  "custdata_union",
+  "{00000000-0000-0000-0000-000000000000}",
+  /*kind*/ TKIND_UNION, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(union custdata_union), /*size*/ sizeof(union custdata_union),
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 1,
+  /*#custdata*/ 1, {
+    { "{c8768723-e6d2-4442-b039-92e9c82429c4}", { VT_BSTR, { .value_str = "ITypeInfo2::GetCustData union" } } },
+  },
+  { /* funcs */ },
+  { /* vars */
+    {
+      /*id*/ 0x40000000, /*name*/ "test_field", /*flags*/ 0, /*kind*/ VAR_PERINSTANCE,
+      { .oInst = 0 },
+      /*#custdata*/ 1, {
+        { "{c8768723-e6d2-4442-b039-92e9c82429c4}", { VT_BSTR, { .value_str = "ITypeInfo2::GetVarCustData union" } } },
+      },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
+},
+{
+  "custdata_typedef",
+  "{d58744d6-63f9-467c-87e5-c95158098b18}",
+  /*kind*/ TKIND_ALIAS, /*flags*/ 0, /*align*/ TYPE_ALIGNMENT(custdata_typedef), /*size*/ sizeof(custdata_typedef),
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 0, /*#func*/ 0, /*#var*/ 0,
+  /*#custdata*/ 1, {
+    { "{c8768723-e6d2-4442-b039-92e9c82429c4}", { VT_BSTR, { .value_str = "ITypeInfo2::GetCustData typedef" } } },
+  },
+  { /* funcs */ },
+  { /* vars */ },
+},
+{
+  "custdata_dispatch",
+  "{bffc216e-2159-465a-80df-b85fd4f4f122}",
+  /*kind*/ TKIND_DISPATCH, /*flags*/ TYPEFLAG_FDISPATCHABLE, /*align*/ TYPE_ALIGNMENT(custdata_dispatch*), /*size*/ sizeof(custdata_dispatch*),
+  /*helpctx*/ 0x0000, /*version*/ 0x00000000, /*#vtbl*/ 7, /*#func*/ 1, /*#var*/ 1,
+  /*#custdata*/ 1, {
+    { "{c8768723-e6d2-4442-b039-92e9c82429c4}", { VT_BSTR, { .value_str = "ITypeInfo2::GetCustData dispinterface" } } },
+  },
+  { /* funcs */
+    {
+      /*id*/ 0x1, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
+      /*#custdata*/ 1, {
+        { "{c8768723-e6d2-4442-b039-92e9c82429c4}", { VT_BSTR, { .value_str = "ITypeInfo2::GetFuncCustData dispinterface method" } } },
+      },
+      { /* params */
+        {VT_INT, -1, PARAMFLAG_FIN, /*#custdata*/ 1, {
+          { "{c8768723-e6d2-4442-b039-92e9c82429c4}", { VT_BSTR, { .value_str = "ITypeInfo2::GetParamCustData test_dispatch::test_method(x)" } } },
+        } },
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test_method",
+        "x",
+        NULL,
+      },
+    },
+  },
+  { /* vars */
+    {
+      /*id*/ 0x0, /*name*/ "test_property", /*flags*/ 0, /*kind*/ VAR_DISPATCH,
+      { /* DUMMYUNIONNAME unused*/ },
+      /*#custdata*/ 1, {
+        { "{c8768723-e6d2-4442-b039-92e9c82429c4}", { VT_BSTR, { .value_str = "ITypeInfo2::GetVarCustData dispinterface property" } } },
+      },
+      {VT_INT, -1, PARAMFLAG_NONE}, /* ret */
+    },
+  },
 }
 };
 
