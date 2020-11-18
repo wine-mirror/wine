@@ -2067,19 +2067,19 @@ static void test__get_current_locale(void)
 
     ok(l->locinfo->lconv == l2->locinfo->lconv, "different lconv pointers\n");
     ok(l->locinfo->lconv_intl_refcount == l2->locinfo->lconv_intl_refcount, "different lconv_intl_refcount pointers\n");
-    todo_wine ok(!!l->locinfo->lconv_intl_refcount, "null refcount pointer in non-C locale\n");
+    ok(!!l->locinfo->lconv_intl_refcount, "null refcount pointer in non-C locale\n");
     if(l->locinfo->lconv_intl_refcount)
         todo_wine ok(*l->locinfo->lconv_intl_refcount == 3, "refcount = %d\n", *l->locinfo->lconv_intl_refcount);
 
     ok(l->locinfo->lconv->decimal_point == l2->locinfo->lconv->decimal_point, "different LC_NUMERIC pointers\n");
     ok(l->locinfo->lconv_num_refcount == l2->locinfo->lconv_num_refcount, "different lconv_num_refcount pointers\n");
-    todo_wine ok(!!l->locinfo->lconv_num_refcount, "null refcount pointer in non-C locale\n");
+    ok(!!l->locinfo->lconv_num_refcount, "null refcount pointer in non-C locale\n");
     if(l->locinfo->lconv_num_refcount)
         todo_wine ok(*l->locinfo->lconv_num_refcount == 3, "refcount = %d\n", *l->locinfo->lconv_num_refcount);
 
     ok(l->locinfo->lconv->currency_symbol == l2->locinfo->lconv->currency_symbol, "different LC_MONETARY pointers\n");
     ok(l->locinfo->lconv_mon_refcount == l2->locinfo->lconv_mon_refcount, "different lconv_mon_refcount pointers\n");
-    todo_wine ok(!!l->locinfo->lconv_mon_refcount, "null refcount pointer in non-C locale\n");
+    ok(!!l->locinfo->lconv_mon_refcount, "null refcount pointer in non-C locale\n");
     if(l->locinfo->lconv_mon_refcount)
         todo_wine ok(*l->locinfo->lconv_mon_refcount == 3, "refcount = %d\n", *l->locinfo->lconv_mon_refcount);
 
@@ -2142,19 +2142,19 @@ static void test__get_current_locale(void)
 
     ok(l->locinfo->lconv == l2->locinfo->lconv, "different lconv pointers\n");
     ok(l->locinfo->lconv_intl_refcount == l2->locinfo->lconv_intl_refcount, "different lconv_intl_refcount pointers\n");
-    todo_wine ok(!!l->locinfo->lconv_intl_refcount, "null refcount pointer in non-C locale\n");
+    ok(!!l->locinfo->lconv_intl_refcount, "null refcount pointer in non-C locale\n");
     if(l->locinfo->lconv_intl_refcount)
         todo_wine ok(*l->locinfo->lconv_intl_refcount == 3, "refcount = %d\n", *l->locinfo->lconv_intl_refcount);
 
     ok(l->locinfo->lconv->decimal_point == l2->locinfo->lconv->decimal_point, "different LC_NUMERIC pointers\n");
     ok(l->locinfo->lconv_num_refcount == l2->locinfo->lconv_num_refcount, "different lconv_num_refcount pointers\n");
-    todo_wine ok(!!l->locinfo->lconv_num_refcount, "null refcount pointer in non-C locale\n");
+    ok(!!l->locinfo->lconv_num_refcount, "null refcount pointer in non-C locale\n");
     if(l->locinfo->lconv_num_refcount)
         todo_wine ok(*l->locinfo->lconv_num_refcount == 3, "refcount = %d\n", *l->locinfo->lconv_num_refcount);
 
     ok(l->locinfo->lconv->currency_symbol == l2->locinfo->lconv->currency_symbol, "different LC_MONETARY pointers\n");
     ok(l->locinfo->lconv_mon_refcount == l2->locinfo->lconv_mon_refcount, "different lconv_mon_refcount pointers\n");
-    todo_wine ok(!!l->locinfo->lconv_mon_refcount, "null refcount pointer in non-C locale\n");
+    ok(!!l->locinfo->lconv_mon_refcount, "null refcount pointer in non-C locale\n");
     if(l->locinfo->lconv_mon_refcount)
         todo_wine ok(*l->locinfo->lconv_mon_refcount == 3, "refcount = %d\n", *l->locinfo->lconv_mon_refcount);
 
@@ -2218,17 +2218,15 @@ static void test__get_current_locale(void)
     todo_wine {
         ok(l->locinfo->lconv != l2->locinfo->lconv, "same lconv pointers\n");
         ok(l->locinfo->lconv_intl_refcount != l2->locinfo->lconv_intl_refcount, "same lconv_intl_refcount pointers\n");
-        ok(!!l->locinfo->lconv_intl_refcount, "null refcount pointer in non-C locale\n");
-        if(l->locinfo->lconv_intl_refcount)
-            ok(*l->locinfo->lconv_intl_refcount == 1, "refcount = %d\n", *l->locinfo->lconv_intl_refcount);
-        ok(!!l2->locinfo->lconv_intl_refcount, "null refcount pointer for C locale\n");
-        if(l2->locinfo->lconv_intl_refcount)
-            ok(*l2->locinfo->lconv_intl_refcount == 2, "refcount = %d\n", *l2->locinfo->lconv_intl_refcount);
     }
+    ok(!!l->locinfo->lconv_intl_refcount, "null refcount pointer in non-C locale\n");
+    ok(*l->locinfo->lconv_intl_refcount == 1, "refcount = %d\n", *l->locinfo->lconv_intl_refcount);
+    ok(!!l2->locinfo->lconv_intl_refcount, "null refcount pointer for C locale\n");
+    todo_wine ok(*l2->locinfo->lconv_intl_refcount == 2, "refcount = %d\n", *l2->locinfo->lconv_intl_refcount);
 
     ok(l->locinfo->lconv->decimal_point == l2->locinfo->lconv->decimal_point, "different LC_NUMERIC pointers\n");
     ok(l->locinfo->lconv_num_refcount == l2->locinfo->lconv_num_refcount, "different lconv_num_refcount pointers\n");
-    todo_wine ok(!!l->locinfo->lconv_num_refcount, "null refcount pointer in non-C locale\n");
+    ok(!!l->locinfo->lconv_num_refcount, "null refcount pointer in non-C locale\n");
     if(l->locinfo->lconv_num_refcount)
         todo_wine ok(*l->locinfo->lconv_num_refcount == 3, "refcount = %d\n", *l->locinfo->lconv_num_refcount);
 
