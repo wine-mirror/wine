@@ -1035,7 +1035,7 @@ static inline BOOL set_lc_locale_name(MSVCRT_pthreadlocinfo locinfo, int cat)
 #endif
 
 static inline BOOL category_needs_update(int cat, int user_cat,
-        MSVCRT_pthreadlocinfo locinfo, LCID lcid, unsigned short cp)
+        const MSVCRT_threadlocinfo *locinfo, LCID lcid, unsigned short cp)
 {
     if(!locinfo) return TRUE;
     if(user_cat!=cat && user_cat!=MSVCRT_LC_ALL) return FALSE;
@@ -1106,7 +1106,7 @@ static MSVCRT___lc_time_data* create_time_data(LCID lcid)
 }
 
 static MSVCRT_pthreadlocinfo create_locinfo(int category,
-        const char *locale, MSVCRT_pthreadlocinfo old_locinfo)
+        const char *locale, const MSVCRT_threadlocinfo *old_locinfo)
 {
     static const char collate[] = "COLLATE=";
     static const char ctype[] = "CTYPE=";
