@@ -23,6 +23,9 @@
 #include <olectl.h>
 #include <msado15_backcompat.h>
 #include "wine/test.h"
+#include "msdasql.h"
+
+DEFINE_GUID(DBPROPSET_ROWSET,            0xc8b522be, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
 
 #define MAKE_ADO_HRESULT( err ) MAKE_HRESULT( SEVERITY_ERROR, FACILITY_CONTROL, err )
 
@@ -285,6 +288,348 @@ static void test_Recordset(void)
 
     Field_Release( field );
     Fields_Release( fields );
+    _Recordset_Release( recordset );
+}
+
+/* This interface is queried for but is not documented anywhere. */
+DEFINE_GUID(UKN_INTERFACE, 0x6f1e39e1, 0x05c6, 0x11d0, 0xa7, 0x8b, 0x00, 0xaa, 0x00, 0xa3, 0xf0, 0x0d);
+
+struct test_rowset
+{
+    IRowset IRowset_iface;
+    IRowsetInfo IRowsetInfo_iface;
+    IColumnsInfo IColumnsInfo_iface;
+    LONG refs;
+};
+
+static inline struct test_rowset *impl_from_IRowset( IRowset *iface )
+{
+    return CONTAINING_RECORD( iface, struct test_rowset, IRowset_iface );
+}
+
+static inline struct test_rowset *impl_from_IRowsetInfo( IRowsetInfo *iface )
+{
+    return CONTAINING_RECORD( iface, struct test_rowset, IRowsetInfo_iface );
+}
+
+static inline struct test_rowset *impl_from_IColumnsInfo( IColumnsInfo *iface )
+{
+    return CONTAINING_RECORD( iface, struct test_rowset, IColumnsInfo_iface );
+}
+
+static HRESULT WINAPI rowset_info_QueryInterface(IRowsetInfo *iface, REFIID riid, void **obj)
+{
+    struct test_rowset *rowset = impl_from_IRowsetInfo( iface );
+    return IRowset_QueryInterface(&rowset->IRowset_iface, riid, obj);
+}
+
+static ULONG WINAPI rowset_info_AddRef(IRowsetInfo *iface)
+{
+    struct test_rowset *rowset = impl_from_IRowsetInfo( iface );
+    return IRowset_AddRef(&rowset->IRowset_iface);
+}
+
+static ULONG WINAPI rowset_info_Release(IRowsetInfo *iface)
+{
+    struct test_rowset *rowset = impl_from_IRowsetInfo( iface );
+    return IRowset_Release(&rowset->IRowset_iface);
+}
+
+static HRESULT WINAPI rowset_info_GetProperties(IRowsetInfo *iface, const ULONG count,
+        const DBPROPIDSET propertyidsets[], ULONG *out_count, DBPROPSET **propertysets1)
+{
+    ok( count == 2, "got %d\n", count );
+
+    ok( IsEqualIID(&DBPROPSET_ROWSET, &propertyidsets[0].guidPropertySet), "got %s\n", wine_dbgstr_guid(&propertyidsets[0].guidPropertySet));
+    ok( propertyidsets[0].cPropertyIDs == 17, "got %d\n", propertyidsets[0].cPropertyIDs );
+
+    ok( IsEqualIID(&DBPROPSET_PROVIDERROWSET, &propertyidsets[1].guidPropertySet), "got %s\n", wine_dbgstr_guid(&propertyidsets[1].guidPropertySet));
+    ok( propertyidsets[1].cPropertyIDs == 1, "got %d\n", propertyidsets[1].cPropertyIDs );
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_info_GetReferencedRowset(IRowsetInfo *iface, DBORDINAL ordinal,
+        REFIID riid, IUnknown **unk)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_info_GetSpecification(IRowsetInfo *iface, REFIID riid,
+        IUnknown **specification)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const struct IRowsetInfoVtbl rowset_info =
+{
+    rowset_info_QueryInterface,
+    rowset_info_AddRef,
+    rowset_info_Release,
+    rowset_info_GetProperties,
+    rowset_info_GetReferencedRowset,
+    rowset_info_GetSpecification
+};
+
+static HRESULT WINAPI column_info_QueryInterface(IColumnsInfo *iface, REFIID riid, void **obj)
+{
+    struct test_rowset *rowset = impl_from_IColumnsInfo( iface );
+    return IRowset_QueryInterface(&rowset->IRowset_iface, riid, obj);
+}
+
+static ULONG WINAPI column_info_AddRef(IColumnsInfo *iface)
+{
+    struct test_rowset *rowset = impl_from_IColumnsInfo( iface );
+    return IRowset_AddRef(&rowset->IRowset_iface);
+}
+
+static ULONG WINAPI column_info_Release(IColumnsInfo *iface)
+{
+    struct test_rowset *rowset = impl_from_IColumnsInfo( iface );
+    return IRowset_Release(&rowset->IRowset_iface);
+}
+
+static HRESULT WINAPI column_info_GetColumnInfo(IColumnsInfo *This, DBORDINAL *columns,
+        DBCOLUMNINFO **colinfo, OLECHAR **stringsbuffer)
+{
+    DBCOLUMNINFO *dbcolumn;
+    *columns = 1;
+
+    *stringsbuffer = CoTaskMemAlloc(sizeof(L"Column1"));
+    lstrcpyW(*stringsbuffer, L"Column1");
+
+    dbcolumn = CoTaskMemAlloc(sizeof(DBCOLUMNINFO));
+
+    dbcolumn->pwszName = *stringsbuffer;
+    dbcolumn->pTypeInfo = NULL;
+    dbcolumn->iOrdinal = 1;
+    dbcolumn->dwFlags = DBCOLUMNFLAGS_MAYBENULL;
+    dbcolumn->ulColumnSize = 5;
+    dbcolumn->wType = DBTYPE_I4;
+    dbcolumn->bPrecision = 1;
+    dbcolumn->bScale = 1;
+    dbcolumn->columnid.eKind = DBKIND_NAME;
+    dbcolumn->columnid.uName.pwszName = *stringsbuffer;
+
+    *colinfo = dbcolumn;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI column_info_MapColumnIDs(IColumnsInfo *This, DBORDINAL column_ids,
+        const DBID *dbids, DBORDINAL *columns)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const struct IColumnsInfoVtbl column_info =
+{
+    column_info_QueryInterface,
+    column_info_AddRef,
+    column_info_Release,
+    column_info_GetColumnInfo,
+    column_info_MapColumnIDs,
+};
+
+static HRESULT WINAPI rowset_QueryInterface(IRowset *iface, REFIID riid, void **obj)
+{
+    struct test_rowset *rowset = impl_from_IRowset( iface );
+
+    *obj = NULL;
+
+    if (IsEqualIID(riid, &IID_IRowset) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        trace("Requested interface IID_IRowset\n");
+        *obj = &rowset->IRowset_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IRowsetInfo))
+    {
+        trace("Requested interface IID_IRowsetInfo\n");
+        *obj = &rowset->IRowsetInfo_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IColumnsInfo))
+    {
+        trace("Requested interface IID_IColumnsInfo\n");
+        *obj = &rowset->IColumnsInfo_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IRowsetLocate))
+    {
+        trace("Requested interface IID_IRowsetLocate\n");
+        return E_NOINTERFACE;
+    }
+    else if (IsEqualIID(riid, &IID_IDBAsynchStatus))
+    {
+        trace("Requested interface IID_IDBAsynchStatus\n");
+        return E_NOINTERFACE;
+    }
+    else if (IsEqualIID(riid, &IID_IAccessor))
+    {
+        trace("Requested interface IID_IAccessor\n");
+        return E_NOINTERFACE;
+    }
+    else if (IsEqualIID(riid, &UKN_INTERFACE))
+    {
+        trace("Unknown interface\n");
+        return E_NOINTERFACE;
+    }
+
+    if(*obj) {
+        IUnknown_AddRef((IUnknown*)*obj);
+        return S_OK;
+    }
+
+    ok(0, "Unsupported interface %s\n", wine_dbgstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI rowset_AddRef(IRowset *iface)
+{
+    struct test_rowset *rowset = impl_from_IRowset( iface );
+    return InterlockedIncrement( &rowset->refs );
+}
+
+static ULONG WINAPI rowset_Release(IRowset *iface)
+{
+    struct test_rowset *rowset = impl_from_IRowset( iface );
+    /* Object not allocated no need to destroy */
+    return InterlockedDecrement( &rowset->refs );
+}
+
+static HRESULT WINAPI rowset_AddRefRows(IRowset *iface, DBCOUNTITEM cRows, const HROW rghRows[],
+    DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_GetData(IRowset *iface, HROW hRow, HACCESSOR hAccessor, void *pData)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_GetNextRows(IRowset *iface, HCHAPTER hReserved, DBROWOFFSET lRowsOffset,
+    DBROWCOUNT cRows, DBCOUNTITEM *pcRowObtained, HROW **prghRows)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_ReleaseRows(IRowset *iface, DBCOUNTITEM cRows, const HROW rghRows[],
+    DBROWOPTIONS rgRowOptions[], DBREFCOUNT rgRefCounts[], DBROWSTATUS rgRowStatus[])
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rowset_RestartPosition(IRowset *iface, HCHAPTER hReserved)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const struct IRowsetVtbl rowset_vtbl =
+{
+    rowset_QueryInterface,
+    rowset_AddRef,
+    rowset_Release,
+    rowset_AddRefRows,
+    rowset_GetData,
+    rowset_GetNextRows,
+    rowset_ReleaseRows,
+    rowset_RestartPosition
+};
+
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
+static void test_ADORecordsetConstruction(void)
+{
+    _Recordset *recordset;
+    ADORecordsetConstruction *construct;
+    Fields *fields = NULL;
+    Field *field;
+    struct test_rowset testrowset;
+    IRowset *rowset;
+    HRESULT hr;
+    LONG ref, count;
+
+    hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Recordset_QueryInterface( recordset, &IID_ADORecordsetConstruction, (void**)&construct );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    if (FAILED(hr))
+    {
+        goto done;
+    }
+
+    testrowset.IRowset_iface.lpVtbl = &rowset_vtbl;
+    testrowset.IRowsetInfo_iface.lpVtbl = &rowset_info;
+    testrowset.IColumnsInfo_iface.lpVtbl = &column_info;
+    testrowset.refs = 1;
+
+    rowset = &testrowset.IRowset_iface;
+
+    ref = get_refcount( rowset );
+    ok( ref == 1, "got %d\n", ref );
+    hr = ADORecordsetConstruction_put_Rowset( construct, (IUnknown*)rowset );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+
+    ref = get_refcount( rowset );
+    ok( ref == 2, "got %d\n", ref );
+
+    hr = _Recordset_get_Fields( recordset, &fields );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( fields != NULL, "NULL value\n");
+
+    ref = get_refcount( rowset );
+    ok( ref == 2, "got %d\n", ref );
+
+    count = -1;
+    hr = Fields_get_Count( fields, &count );
+    ok( count == 1, "got %d\n", count );
+    if (count > 0)
+    {
+        VARIANT index;
+        LONG size;
+        DataTypeEnum type;
+
+        V_VT( &index ) = VT_BSTR;
+        V_BSTR( &index ) = SysAllocString( L"Column1" );
+
+        hr = Fields_get_Item( fields, index, &field );
+        ok( hr == S_OK, "got %08x\n", hr );
+
+        hr = Field_get_Type( field, &type );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( type == adInteger, "got %d\n", type );
+        size = -1;
+        hr = Field_get_DefinedSize( field, &size );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( size == 5, "got %d\n", size );
+
+        VariantClear(&index);
+
+        Field_Release(field);
+    }
+
+    ref = get_refcount(rowset);
+    ok( ref == 2, "got %d\n", ref );
+
+    Fields_Release(fields);
+
+    ADORecordsetConstruction_Release(construct);
+
+done:
     _Recordset_Release( recordset );
 }
 
@@ -1136,6 +1481,7 @@ START_TEST(msado15)
 {
     CoInitialize( NULL );
     test_Connection();
+    test_ADORecordsetConstruction();
     test_ConnectionPoint();
     test_Fields();
     test_Recordset();
