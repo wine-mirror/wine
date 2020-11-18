@@ -624,21 +624,8 @@ HRESULT WINAPI MFCreateTransformActivate(IMFActivate **activate)
     return create_transform_activate(NULL, activate);
 }
 
-static const WCHAR transform_keyW[] = {'M','e','d','i','a','F','o','u','n','d','a','t','i','o','n','\\',
-                                 'T','r','a','n','s','f','o','r','m','s',0};
-static const WCHAR categories_keyW[] = {'M','e','d','i','a','F','o','u','n','d','a','t','i','o','n','\\',
-                                 'T','r','a','n','s','f','o','r','m','s','\\',
-                                 'C','a','t','e','g','o','r','i','e','s',0};
-static const WCHAR inputtypesW[]  = {'I','n','p','u','t','T','y','p','e','s',0};
-static const WCHAR outputtypesW[] = {'O','u','t','p','u','t','T','y','p','e','s',0};
-static const WCHAR attributesW[] = {'A','t','t','r','i','b','u','t','e','s',0};
-static const WCHAR mftflagsW[] = {'M','F','T','F','l','a','g','s',0};
-static const WCHAR szGUIDFmt[] =
-{
-    '%','0','8','x','-','%','0','4','x','-','%','0','4','x','-','%','0',
-    '2','x','%','0','2','x','-','%','0','2','x','%','0','2','x','%','0','2',
-    'x','%','0','2','x','%','0','2','x','%','0','2','x',0
-};
+static const WCHAR transform_keyW[] = L"MediaFoundation\\Transforms";
+static const WCHAR categories_keyW[] = L"MediaFoundation\\Transforms\\Categories";
 
 static const BYTE guid_conv_table[256] =
 {
@@ -653,10 +640,10 @@ static const BYTE guid_conv_table[256] =
 
 static WCHAR* GUIDToString(WCHAR *str, REFGUID guid)
 {
-    swprintf(str, 39, szGUIDFmt, guid->Data1, guid->Data2,
-        guid->Data3, guid->Data4[0], guid->Data4[1],
-        guid->Data4[2], guid->Data4[3], guid->Data4[4],
-        guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+    swprintf(str, 39, L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+            guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1],
+            guid->Data4[2], guid->Data4[3], guid->Data4[4], guid->Data4[5],
+            guid->Data4[6], guid->Data4[7]);
 
     return str;
 }
@@ -733,7 +720,6 @@ static HRESULT register_transform(const CLSID *clsid, const WCHAR *name, UINT32 
         UINT32 cinput, const MFT_REGISTER_TYPE_INFO *input_types, UINT32 coutput,
         const MFT_REGISTER_TYPE_INFO *output_types, IMFAttributes *attributes)
 {
-    static const WCHAR reg_format[] = {'%','s','\\','%','s',0};
     HRESULT hr = S_OK;
     HKEY hclsid = 0;
     WCHAR buffer[64];
@@ -742,7 +728,7 @@ static HRESULT register_transform(const CLSID *clsid, const WCHAR *name, UINT32 
     UINT8 *blob;
 
     GUIDToString(buffer, clsid);
-    swprintf(str, ARRAY_SIZE(str), reg_format, transform_keyW, buffer);
+    swprintf(str, ARRAY_SIZE(str), L"%s\\%s", transform_keyW, buffer);
 
     if ((ret = RegCreateKeyW(HKEY_CLASSES_ROOT, str, &hclsid)))
         hr = HRESULT_FROM_WIN32(ret);
@@ -757,14 +743,14 @@ static HRESULT register_transform(const CLSID *clsid, const WCHAR *name, UINT32 
     if (SUCCEEDED(hr) && cinput && input_types)
     {
         size = cinput * sizeof(MFT_REGISTER_TYPE_INFO);
-        if ((ret = RegSetValueExW(hclsid, inputtypesW, 0, REG_BINARY, (BYTE *)input_types, size)))
+        if ((ret = RegSetValueExW(hclsid, L"InputTypes", 0, REG_BINARY, (BYTE *)input_types, size)))
             hr = HRESULT_FROM_WIN32(ret);
     }
 
     if (SUCCEEDED(hr) && coutput && output_types)
     {
         size = coutput * sizeof(MFT_REGISTER_TYPE_INFO);
-        if ((ret = RegSetValueExW(hclsid, outputtypesW, 0, REG_BINARY, (BYTE *)output_types, size)))
+        if ((ret = RegSetValueExW(hclsid, L"OutputTypes", 0, REG_BINARY, (BYTE *)output_types, size)))
             hr = HRESULT_FROM_WIN32(ret);
     }
 
@@ -776,7 +762,7 @@ static HRESULT register_transform(const CLSID *clsid, const WCHAR *name, UINT32 
             {
                 if (SUCCEEDED(hr = MFGetAttributesAsBlob(attributes, blob, size)))
                 {
-                    if ((ret = RegSetValueExW(hclsid, attributesW, 0, REG_BINARY, blob, size)))
+                    if ((ret = RegSetValueExW(hclsid, L"Attributes", 0, REG_BINARY, blob, size)))
                         hr = HRESULT_FROM_WIN32(ret);
                 }
                 heap_free(blob);
@@ -788,7 +774,7 @@ static HRESULT register_transform(const CLSID *clsid, const WCHAR *name, UINT32 
 
     if (SUCCEEDED(hr) && flags)
     {
-        if ((ret = RegSetValueExW(hclsid, mftflagsW, 0, REG_DWORD, (BYTE *)&flags, sizeof(flags))))
+        if ((ret = RegSetValueExW(hclsid, L"MFTFlags", 0, REG_DWORD, (BYTE *)&flags, sizeof(flags))))
             hr = HRESULT_FROM_WIN32(ret);
     }
 
@@ -798,7 +784,6 @@ static HRESULT register_transform(const CLSID *clsid, const WCHAR *name, UINT32 
 
 static HRESULT register_category(CLSID *clsid, GUID *category)
 {
-    static const WCHAR reg_format[] = {'%','s','\\','%','s','\\','%','s',0};
     HKEY htmp1;
     WCHAR guid1[64], guid2[64];
     WCHAR str[350];
@@ -806,7 +791,7 @@ static HRESULT register_category(CLSID *clsid, GUID *category)
     GUIDToString(guid1, category);
     GUIDToString(guid2, clsid);
 
-    swprintf(str, ARRAY_SIZE(str), reg_format, categories_keyW, guid1, guid2);
+    swprintf(str, ARRAY_SIZE(str), L"%s\\%s\\%s", categories_keyW, guid1, guid2);
 
     if (RegCreateKeyW(HKEY_CLASSES_ROOT, str, &htmp1))
         return E_FAIL;
@@ -1157,13 +1142,13 @@ static HRESULT mft_collect_machine_reg(struct list *mfts, const GUID *category, 
         if (!GUIDFromString(clsidW, &mft.clsid))
             goto next;
 
-        mft_get_reg_flags(clsidW, mftflagsW, &mft.flags);
+        mft_get_reg_flags(clsidW, L"MFTFlags", &mft.flags);
 
         if (output_type)
-            mft_get_reg_type_info(clsidW, outputtypesW, &mft.output_types, &mft.output_types_count);
+            mft_get_reg_type_info(clsidW, L"OutputTypes", &mft.output_types, &mft.output_types_count);
 
         if (input_type)
-            mft_get_reg_type_info(clsidW, inputtypesW, &mft.input_types, &mft.input_types_count);
+            mft_get_reg_type_info(clsidW, L"InputTypes", &mft.input_types, &mft.input_types_count);
 
         if (!mft_is_type_info_match(&mft, category, flags, plugin_control, input_type, output_type))
         {
@@ -6139,7 +6124,7 @@ static HRESULT resolver_create_scheme_handler(const WCHAR *scheme, DWORD flags, 
 
 static HRESULT resolver_get_scheme_handler(const WCHAR *url, DWORD flags, IMFSchemeHandler **handler)
 {
-    static const WCHAR fileschemeW[] = {'f','i','l','e',':',0};
+    static const WCHAR fileschemeW[] = L"file:";
     const WCHAR *ptr = url;
     unsigned int len;
     WCHAR *scheme;
