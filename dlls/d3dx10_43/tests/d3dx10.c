@@ -626,6 +626,43 @@ static ID3D10Device *create_device(void)
     return NULL;
 }
 
+static HMODULE create_resource_module(const WCHAR *filename, const void *data, unsigned int size)
+{
+    WCHAR resource_module_path[MAX_PATH], current_module_path[MAX_PATH];
+    HANDLE resource;
+    HMODULE module;
+    BOOL ret;
+
+    if (!temp_dir[0])
+        GetTempPathW(ARRAY_SIZE(temp_dir), temp_dir);
+    lstrcpyW(resource_module_path, temp_dir);
+    lstrcatW(resource_module_path, filename);
+
+    GetModuleFileNameW(NULL, current_module_path, ARRAY_SIZE(current_module_path));
+    ret = CopyFileW(current_module_path, resource_module_path, FALSE);
+    ok(ret, "CopyFileW failed, error %u.\n", GetLastError());
+    SetFileAttributesW(resource_module_path, FILE_ATTRIBUTE_NORMAL);
+
+    resource = BeginUpdateResourceW(resource_module_path, TRUE);
+    UpdateResourceW(resource, (LPCWSTR)RT_RCDATA, filename, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), (void *)data, size);
+    EndUpdateResourceW(resource, FALSE);
+
+    module = LoadLibraryExW(resource_module_path, NULL, LOAD_LIBRARY_AS_DATAFILE);
+
+    return module;
+}
+
+static void delete_resource_module(const WCHAR *filename, HMODULE module)
+{
+    WCHAR path[MAX_PATH];
+
+    FreeLibrary(module);
+
+    lstrcpyW(path, temp_dir);
+    lstrcatW(path, filename);
+    DeleteFileW(path);
+}
+
 static void check_image_info(D3DX10_IMAGE_INFO *image_info, unsigned int i, unsigned int line)
 {
     ok_(__FILE__, line)(image_info->Width == test_image[i].expected.Width,
@@ -1364,8 +1401,10 @@ static void test_D3DX10CreateAsyncResourceLoader(void)
 
 static void test_get_image_info(void)
 {
+    static const WCHAR test_resource_name[] = L"resource.data";
     static const WCHAR test_filename[] = L"image.data";
     D3DX10_IMAGE_INFO image_info;
+    HMODULE resource_module;
     WCHAR path[MAX_PATH];
     unsigned int i;
     DWORD dword;
@@ -1416,6 +1455,40 @@ static void test_get_image_info(void)
             check_image_info(&image_info, i, __LINE__);
 
         delete_file(test_filename);
+    }
+
+
+    /* D3DX10GetImageInfoFromResource tests */
+
+    todo_wine
+    {
+    hr = D3DX10GetImageInfoFromResourceW(NULL, NULL, NULL, &image_info, NULL);
+    ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+    hr = D3DX10GetImageInfoFromResourceW(NULL, L"deadbeaf", NULL, &image_info, NULL);
+    ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+    hr = D3DX10GetImageInfoFromResourceA(NULL, NULL, NULL, &image_info, NULL);
+    ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+    hr = D3DX10GetImageInfoFromResourceA(NULL, "deadbeaf", NULL, &image_info, NULL);
+    ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test_image); ++i)
+    {
+        resource_module = create_resource_module(test_resource_name, test_image[i].data, test_image[i].size);
+
+        hr = D3DX10GetImageInfoFromResourceW(resource_module, test_resource_name, NULL, &image_info, NULL);
+        todo_wine
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        if (hr == S_OK)
+            check_image_info(&image_info, i, __LINE__);
+
+        hr = D3DX10GetImageInfoFromResourceA(resource_module, get_str_a(test_resource_name), NULL, &image_info, NULL);
+        todo_wine
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        if (hr == S_OK)
+            check_image_info(&image_info, i, __LINE__);
+
+        delete_resource_module(test_resource_name, resource_module);
     }
 
     CoUninitialize();
