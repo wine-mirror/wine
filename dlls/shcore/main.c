@@ -555,7 +555,9 @@ static HRESULT WINAPI shstream_QueryInterface(IStream *iface, REFIID riid, void 
 
     TRACE("(%p)->(%s, %p)\n", stream, debugstr_guid(riid), out);
 
-    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IStream))
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IStream) ||
+        IsEqualIID(riid, &IID_ISequentialStream))
     {
         *out = iface;
         IStream_AddRef(iface);
