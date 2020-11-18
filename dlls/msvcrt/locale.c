@@ -400,6 +400,33 @@ static BOOL init_category_name(const char *name, int len,
     return TRUE;
 }
 
+#if _MSVCR_VER >= 110
+static inline BOOL set_lc_locale_name(MSVCRT_pthreadlocinfo locinfo, int cat)
+{
+    LCID lcid = locinfo->lc_handle[cat];
+    WCHAR buf[100];
+    int len;
+
+    len = GetLocaleInfoW(lcid, LOCALE_SISO639LANGNAME
+            |LOCALE_NOUSEROVERRIDE, buf, 100);
+    if(!len) return FALSE;
+
+    if(LocaleNameToLCID(buf, 0) != lcid)
+        len = LCIDToLocaleName(lcid, buf, 100, 0);
+
+    if(!len || !(locinfo->lc_name[cat] = MSVCRT_malloc(len*sizeof(MSVCRT_wchar_t))))
+        return FALSE;
+
+    memcpy(locinfo->lc_name[cat], buf, len*sizeof(MSVCRT_wchar_t));
+    return TRUE;
+}
+#else
+static inline BOOL set_lc_locale_name(MSVCRT_pthreadlocinfo locinfo, int cat)
+{
+    return TRUE;
+}
+#endif
+
 /* INTERNAL: Set lc_handle, lc_id and lc_category in threadlocinfo struct */
 static BOOL update_threadlocinfo_category(LCID lcid, unsigned short cp,
         MSVCRT_pthreadlocinfo locinfo, int category)
@@ -428,6 +455,8 @@ static BOOL update_threadlocinfo_category(LCID lcid, unsigned short cp,
     locinfo->lc_id[category].wCodePage = cp;
 
     locinfo->lc_handle[category] = lcid;
+
+    set_lc_locale_name(locinfo, category);
 
     if(!locinfo->lc_category[category].locale) {
         int len = 0;
@@ -1007,33 +1036,6 @@ void CDECL MSVCRT__free_locale(MSVCRT__locale_t locale)
     MSVCRT_free(locale);
 }
 
-#if _MSVCR_VER >= 110
-static inline BOOL set_lc_locale_name(MSVCRT_pthreadlocinfo locinfo, int cat)
-{
-    LCID lcid = locinfo->lc_handle[cat];
-    WCHAR buf[100];
-    int len;
-
-    len = GetLocaleInfoW(lcid, LOCALE_SISO639LANGNAME
-            |LOCALE_NOUSEROVERRIDE, buf, 100);
-    if(!len) return FALSE;
-
-    if(LocaleNameToLCID(buf, 0) != lcid)
-        len = LCIDToLocaleName(lcid, buf, 100, 0);
-
-    if(!len || !(locinfo->lc_name[cat] = MSVCRT_malloc(len*sizeof(MSVCRT_wchar_t))))
-        return FALSE;
-
-    memcpy(locinfo->lc_name[cat], buf, len*sizeof(MSVCRT_wchar_t));
-    return TRUE;
-}
-#else
-static inline BOOL set_lc_locale_name(MSVCRT_pthreadlocinfo locinfo, int cat)
-{
-    return TRUE;
-}
-#endif
-
 static inline BOOL category_needs_update(int cat, int user_cat,
         const MSVCRT_threadlocinfo *locinfo, LCID lcid, unsigned short cp)
 {
@@ -1242,11 +1244,6 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         }
 
         locinfo->lc_collate_cp = locinfo->lc_id[MSVCRT_LC_COLLATE].wCodePage;
-
-        if(!set_lc_locale_name(locinfo, MSVCRT_LC_COLLATE)) {
-            free_locinfo(locinfo);
-            return NULL;
-        }
     } else {
         if(!init_category_name("C", 1, locinfo, MSVCRT_LC_COLLATE)) {
             free_locinfo(locinfo);
@@ -1308,11 +1305,6 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         for(i=0; cp_info.LeadByte[i+1]!=0; i+=2)
             for(j=cp_info.LeadByte[i]; j<=cp_info.LeadByte[i+1]; j++)
                 locinfo->ctype1[j+1] |= MSVCRT__LEADBYTE;
-
-        if(!set_lc_locale_name(locinfo, MSVCRT_LC_CTYPE)) {
-            free_locinfo(locinfo);
-            return NULL;
-        }
 
         for(i=0; i<256; i++) {
             if(locinfo->pctype[i] & MSVCRT__LEADBYTE)
@@ -1563,11 +1555,6 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 #endif
-
-        if(!set_lc_locale_name(locinfo, MSVCRT_LC_MONETARY)) {
-            free_locinfo(locinfo);
-            return NULL;
-        }
     } else {
         locinfo->lconv->int_curr_symbol = MSVCRT_malloc(sizeof(char));
         locinfo->lconv->currency_symbol = MSVCRT_malloc(sizeof(char));
@@ -1711,11 +1698,6 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 #endif
-
-        if(!set_lc_locale_name(locinfo, MSVCRT_LC_NUMERIC)) {
-            free_locinfo(locinfo);
-            return NULL;
-        }
     } else {
         locinfo->lconv->decimal_point = MSVCRT_malloc(sizeof(char[2]));
         locinfo->lconv->thousands_sep = MSVCRT_malloc(sizeof(char));
@@ -1765,11 +1747,6 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
     } else if(lcid[MSVCRT_LC_TIME] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_TIME)) {
         if(!update_threadlocinfo_category(lcid[MSVCRT_LC_TIME],
                     cp[MSVCRT_LC_TIME], locinfo, MSVCRT_LC_TIME)) {
-            free_locinfo(locinfo);
-            return NULL;
-        }
-
-        if(!set_lc_locale_name(locinfo, MSVCRT_LC_TIME)) {
             free_locinfo(locinfo);
             return NULL;
         }
