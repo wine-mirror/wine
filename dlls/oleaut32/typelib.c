@@ -5288,6 +5288,7 @@ static HRESULT TLB_copy_all_custdata(const struct list *custdata_list, CUSTDATA 
     TLBCustData *pCData;
     unsigned int ct;
     CUSTDATAITEM *cdi;
+    HRESULT hr = S_OK;
 
     ct = list_count(custdata_list);
 
@@ -5300,11 +5301,13 @@ static HRESULT TLB_copy_all_custdata(const struct list *custdata_list, CUSTDATA 
     cdi = pCustData->prgCustData;
     LIST_FOR_EACH_ENTRY(pCData, custdata_list, TLBCustData, entry){
         cdi->guid = *TLB_get_guid_null(pCData->guid);
-        VariantCopy(&cdi->varValue, &pCData->data);
+        VariantInit(&cdi->varValue);
+        hr = VariantCopy(&cdi->varValue, &pCData->data);
+        if(FAILED(hr)) break;
         ++cdi;
     }
 
-    return S_OK;
+    return hr;
 }
 
 
