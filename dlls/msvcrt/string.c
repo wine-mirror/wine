@@ -2422,7 +2422,7 @@ int CDECL MSVCRT_I10_OUTPUT(MSVCRT__LDOUBLE ld80, int prec, int flag, struct _I1
         data->sign = ' ';
 
     if(flag&1) {
-        int exp = 1+floor(log10(d));
+        int exp = 1 + MSVCRT_floor(MSVCRT_log10(d));
 
         prec += exp;
         if(exp < 0)

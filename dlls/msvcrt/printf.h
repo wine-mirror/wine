@@ -606,7 +606,7 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
     if(flags->Precision == -1)
         flags->Precision = 6;
 
-    v = frexp(v, &e2);
+    v = MSVCRT_frexp(v, &e2);
     if(v) {
         m = (ULONGLONG)1 << (MANT_BITS - 1);
         m |= (*(ULONGLONG*)&v & (((ULONGLONG)1 << (MANT_BITS - 1)) - 1));
@@ -638,7 +638,7 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
     if(!b->data[bnum_idx(b, b->e-1)])
         first_limb_len = 1;
     else
-        first_limb_len = floor(log10(b->data[bnum_idx(b, b->e - 1)])) + 1;
+        first_limb_len = MSVCRT_floor(MSVCRT_log10(b->data[bnum_idx(b, b->e - 1)])) + 1;
     radix_pos = first_limb_len + LIMB_DIGITS + e10;
 
     round_pos = flags->Precision;
@@ -703,7 +703,7 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
                 if(!b->data[bnum_idx(b, b->e-1)])
                     i = 1;
                 else
-                    i = floor(log10(b->data[bnum_idx(b, b->e-1)])) + 1;
+                    i = MSVCRT_floor(MSVCRT_log10(b->data[bnum_idx(b, b->e-1)])) + 1;
                 if(i != first_limb_len) {
                     first_limb_len = i;
                     radix_pos++;
