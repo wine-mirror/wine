@@ -26,6 +26,7 @@
 #include "wine/port.h"
 
 #include <stdio.h>
+#include <stdarg.h>
 #define __USE_ISOC9X 1
 #define __USE_ISOC99 1
 #include <math.h>
