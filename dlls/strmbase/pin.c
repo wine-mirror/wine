@@ -887,6 +887,13 @@ static HRESULT WINAPI sink_Disconnect(IPin *iface)
 
     EnterCriticalSection(&pin->pin.filter->csFilter);
 
+    if (pin->pin.filter->state != State_Stopped)
+    {
+        LeaveCriticalSection(&pin->pin.filter->csFilter);
+        WARN("Filter is not stopped; returning VFW_E_NOT_STOPPED.\n");
+        return VFW_E_NOT_STOPPED;
+    }
+
     if (pin->pin.peer)
     {
         if (pin->pFuncsTable->sink_disconnect)
