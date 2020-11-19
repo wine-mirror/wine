@@ -98,6 +98,7 @@ static const struct object_ops console_input_ops =
 };
 
 static enum server_fd_type console_get_fd_type( struct fd *fd );
+static int console_input_read( struct fd *fd, struct async *async, file_pos_t pos );
 static int console_input_flush( struct fd *fd, struct async *async );
 static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
@@ -106,7 +107,7 @@ static const struct fd_ops console_input_fd_ops =
     default_fd_get_poll_events,   /* get_poll_events */
     default_poll_event,           /* poll_event */
     console_get_fd_type,          /* get_fd_type */
-    no_fd_read,                   /* read */
+    console_input_read,           /* read */
     no_fd_write,                  /* write */
     console_input_flush,          /* flush */
     no_fd_get_file_info,          /* get_file_info */
@@ -911,6 +912,18 @@ static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *
         }
         return queue_host_ioctl( console->server, code, 0, async, &console->ioctl_q );
     }
+}
+
+static int console_input_read( struct fd *fd, struct async *async, file_pos_t pos )
+{
+    struct console_input *console = get_fd_user( fd );
+
+    if (!console->server)
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return 0;
+    }
+    return queue_host_ioctl( console->server, IOCTL_CONDRV_READ_FILE, 0, async, &console->ioctl_q );
 }
 
 static int console_input_flush( struct fd *fd, struct async *async )
