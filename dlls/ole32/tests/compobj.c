@@ -4296,7 +4296,6 @@ static void test_oletlsdata(void)
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     flags = get_oletlsflags();
-todo_wine
     ok(flags & OLETLS_APARTMENTTHREADED && !(flags & OLETLS_DISABLE_OLE1DDE), "Unexpected flags %#x.\n", flags);
     CoUninitialize();
     flags = get_oletlsflags();
@@ -4305,7 +4304,6 @@ todo_wine
     hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     flags = get_oletlsflags();
-todo_wine
     ok(flags & OLETLS_APARTMENTTHREADED && flags & OLETLS_DISABLE_OLE1DDE, "Unexpected flags %#x.\n", flags);
     CoUninitialize();
     flags = get_oletlsflags();
@@ -4315,7 +4313,6 @@ todo_wine
     hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     flags = get_oletlsflags();
-todo_wine
     ok(flags & OLETLS_MULTITHREADED && flags & OLETLS_DISABLE_OLE1DDE, "Unexpected flags %#x.\n", flags);
 
     /* Implicit case. */

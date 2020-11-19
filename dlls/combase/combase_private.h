@@ -66,6 +66,9 @@ HRESULT open_appidkey_from_clsid(REFCLSID clsid, REGSAM access, HKEY *subkey) DE
 enum tlsdata_flags
 {
     OLETLS_UUIDINITIALIZED = 0x2,
+    OLETLS_DISABLE_OLE1DDE = 0x40,
+    OLETLS_APARTMENTTHREADED = 0x80,
+    OLETLS_MULTITHREADED = 0x100,
 };
 
 /* this is what is stored in TEB->ReservedForOle */

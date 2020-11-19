@@ -556,6 +556,8 @@ static struct apartment *apartment_get_or_create(DWORD model)
 
     if (!apt)
     {
+        com_get_tlsdata(&data);
+
         if (model & COINIT_APARTMENTTHREADED)
         {
             EnterCriticalSection(&apt_cs);
@@ -567,6 +569,10 @@ static struct apartment *apartment_get_or_create(DWORD model)
                 apt->main = TRUE;
                 TRACE("Created main-threaded apartment with OXID %s\n", wine_dbgstr_longlong(apt->oxid));
             }
+
+            data->flags |= OLETLS_APARTMENTTHREADED;
+            if (model & COINIT_DISABLE_OLE1DDE)
+                data->flags |= OLETLS_DISABLE_OLE1DDE;
 
             LeaveCriticalSection(&apt_cs);
 
@@ -588,11 +594,12 @@ static struct apartment *apartment_get_or_create(DWORD model)
             else
                 mta = apartment_construct(model);
 
+            data->flags |= OLETLS_MULTITHREADED | OLETLS_DISABLE_OLE1DDE;
+
             apt = mta;
 
             LeaveCriticalSection(&apt_cs);
         }
-        com_get_tlsdata(&data);
         data->apt = apt;
     }
 
@@ -1146,6 +1153,7 @@ void leave_apartment(struct tlsdata *data)
             WARN( "Uninitializing apartment while Ole is still initialized\n" );
         apartment_release(data->apt);
         data->apt = NULL;
+        data->flags &= ~(OLETLS_DISABLE_OLE1DDE | OLETLS_APARTMENTTHREADED | OLETLS_MULTITHREADED);
     }
 }
 
