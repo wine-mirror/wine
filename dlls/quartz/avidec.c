@@ -565,6 +565,9 @@ static HRESULT avi_decompressor_init_stream(struct strmbase_filter *iface)
     LRESULT res;
     HRESULT hr;
 
+    if (!filter->source.pin.peer)
+        return S_OK;
+
     filter->late = -1;
 
     source_format = (VIDEOINFOHEADER *)filter->sink.pin.mt.pbFormat;
@@ -574,7 +577,7 @@ static HRESULT avi_decompressor_init_stream(struct strmbase_filter *iface)
         return E_FAIL;
     }
 
-    if (filter->source.pin.peer && FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
+    if (FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
         ERR("Failed to commit allocator, hr %#x.\n", hr);
 
     return S_OK;
@@ -585,14 +588,16 @@ static HRESULT avi_decompressor_cleanup_stream(struct strmbase_filter *iface)
     struct avi_decompressor *filter = impl_from_strmbase_filter(iface);
     LRESULT res;
 
+    if (!filter->source.pin.peer)
+        return S_OK;
+
     if (filter->hvid && (res = ICDecompressEnd(filter->hvid)))
     {
         ERR("ICDecompressEnd() failed, error %ld.\n", res);
         return E_FAIL;
     }
 
-    if (filter->source.pin.peer)
-        IMemAllocator_Decommit(filter->source.pAllocator);
+    IMemAllocator_Decommit(filter->source.pAllocator);
 
     return S_OK;
 }

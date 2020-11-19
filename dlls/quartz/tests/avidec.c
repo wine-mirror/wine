@@ -692,25 +692,25 @@ static void test_unconnected_filter_state(void)
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IBaseFilter_Pause(filter);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == State_Paused, "Got state %u.\n", state);
+    ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IBaseFilter_Run(filter, 0);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == State_Running, "Got state %u.\n", state);
+    ok(state == State_Running, "Got state %u.\n", state);
 
     hr = IBaseFilter_Pause(filter);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == State_Paused, "Got state %u.\n", state);
+    ok(state == State_Paused, "Got state %u.\n", state);
 
     hr = IBaseFilter_Stop(filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -720,11 +720,11 @@ static void test_unconnected_filter_state(void)
     ok(state == State_Stopped, "Got state %u.\n", state);
 
     hr = IBaseFilter_Run(filter, 0);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IBaseFilter_GetState(filter, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(state == State_Running, "Got state %u.\n", state);
+    ok(state == State_Running, "Got state %u.\n", state);
 
     hr = IBaseFilter_Stop(filter);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -956,7 +956,7 @@ static void test_connect_pin(void)
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Pause(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, &req_mt);
     ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
     hr = IMediaControl_Stop(control);
