@@ -1,4 +1,3 @@
-EXTRADEFS = -DUSE_MSVCRT_PREFIX
 MODULE    = msvcrt40.dll
 
 EXTRADLLFLAGS = -mno-cygwin
