@@ -2276,7 +2276,7 @@ static struct strarray get_default_imports( const struct makefile *make )
 /*******************************************************************
  *         add_crt_import
  */
-static const char *add_crt_import( const struct makefile *make, struct strarray *imports )
+static void add_crt_import( const struct makefile *make, struct strarray *imports, struct strarray *defs )
 {
     unsigned int i;
     const char *crt_dll = NULL;
@@ -2289,10 +2289,28 @@ static const char *add_crt_import( const struct makefile *make, struct strarray 
     }
     if (!crt_dll && !strarray_exists( &make->extradllflags, "-nodefaultlibs" ))
     {
-        crt_dll = !make->testdll && !make->staticlib ? "ucrtbase" : "msvcrt";
-        strarray_add( imports, crt_dll );
+        if (make->module &&
+            (!strncmp( make->module, "msvcr", 5 ) ||
+             !strncmp( make->module, "ucrt", 4 ) ||
+             !strcmp( make->module, "crtdll.dll" )))
+        {
+            crt_dll = make->module;
+        }
+        else
+        {
+            crt_dll = !make->testdll && !make->staticlib ? "ucrtbase" : "msvcrt";
+            strarray_add( imports, crt_dll );
+        }
     }
-    return crt_dll;
+
+    if (!defs) return;
+    if (crt_dll && !strncmp( crt_dll, "ucrt", 4 )) strarray_add( defs, "-D_UCRT" );
+    else
+    {
+        unsigned int version = 0;
+        if (crt_dll) sscanf( crt_dll, "msvcr%u", &version );
+        strarray_add( defs, strmake( "-D_MSVCR_VER=%u", version ));
+    }
 }
 
 
@@ -3034,7 +3052,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     const char *debug_file;
 
     if (!imports.count) imports = make->imports;
-    else if (make->use_msvcrt) add_crt_import( make, &imports );
+    else if (make->use_msvcrt) add_crt_import( make, &imports, NULL );
 
     if (!dll_flags.count) dll_flags = make->extradllflags;
     all_libs = add_import_libs( make, &dep_libs, imports, 0, 0 );
@@ -4200,19 +4218,7 @@ static void load_sources( struct makefile *make )
         make->use_msvcrt = 1;
     }
 
-    if (make->use_msvcrt)
-    {
-        const char *crt_dll = add_crt_import( make, &make->imports );
-
-        if (crt_dll && !strncmp( crt_dll, "ucrt", 4 )) strarray_add( &make->define_args, "-D_UCRT" );
-        else
-        {
-            unsigned int msvcrt_version = 0;
-
-            if (crt_dll) sscanf( crt_dll, "msvcr%u", &msvcrt_version );
-            strarray_add( &make->define_args, strmake( "-D_MSVCR_VER=%u", msvcrt_version ));
-        }
-    }
+    if (make->use_msvcrt) add_crt_import( make, &make->imports, &make->define_args );
 
     LIST_FOR_EACH_ENTRY( file, &make->includes, struct incl_file, entry ) parse_file( make, file, 0 );
     LIST_FOR_EACH_ENTRY( file, &make->sources, struct incl_file, entry ) get_dependencies( file, file );

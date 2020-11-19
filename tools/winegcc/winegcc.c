@@ -1224,7 +1224,13 @@ static void build(struct options* opts)
         add_library(opts, lib_dirs, files, "winecrt0");
         if (opts->use_msvcrt)
         {
-            if (!crt_lib) add_library(opts, lib_dirs, files, "ucrtbase");
+            if (!crt_lib)
+            {
+                if (strncmp( output_name, "msvcr", 5 ) &&
+                    strncmp( output_name, "ucrt", 4 ) &&
+                    strcmp( output_name, "crtdll.dll" ))
+                    add_library(opts, lib_dirs, files, "ucrtbase");
+            }
             else strarray_add(files, strmake("-a%s", crt_lib));
         }
         if (opts->win16_app) add_library(opts, lib_dirs, files, "kernel");
