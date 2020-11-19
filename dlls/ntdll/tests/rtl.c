@@ -3599,6 +3599,71 @@ static void test_DbgPrint(void)
     RtlRemoveVectoredExceptionHandler( handler );
 }
 
+static BOOL test_heap_destroy_dbgstr = FALSE;
+static BOOL test_heap_destroy_break = FALSE;
+
+static LONG CALLBACK test_heap_destroy_except_handler( EXCEPTION_POINTERS *eptrs )
+{
+    if (eptrs->ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT)
+    {
+#if defined( __i386__ )
+        eptrs->ContextRecord->Eip += 1;
+        test_heap_destroy_break = TRUE;
+        return (LONG)EXCEPTION_CONTINUE_EXECUTION;
+#elif defined( __x86_64__ )
+        eptrs->ContextRecord->Rip += 1;
+        test_heap_destroy_break = TRUE;
+        return (LONG)EXCEPTION_CONTINUE_EXECUTION;
+#endif
+    }
+
+    if (eptrs->ExceptionRecord->ExceptionCode == DBG_PRINTEXCEPTION_C)
+    {
+        test_heap_destroy_dbgstr = TRUE;
+        return (LONG)EXCEPTION_CONTINUE_EXECUTION;
+    }
+
+    return (LONG)EXCEPTION_CONTINUE_SEARCH;
+}
+
+/* partially copied from ntdll/heap.c */
+#define HEAP_VALIDATE_PARAMS 0x40000000
+
+struct heap
+{
+    DWORD_PTR unknown1[2];
+    DWORD     unknown2[2];
+    DWORD_PTR unknown3[4];
+    DWORD     unknown4;
+    DWORD_PTR unknown5[2];
+    DWORD     unknown6[3];
+    DWORD_PTR unknown7[2];
+    DWORD     flags;
+    DWORD     force_flags;
+    DWORD_PTR unknown8[6];
+};
+
+static void test_RtlDestroyHeap(void)
+{
+    const struct heap invalid = {{0, 0}, {0, HEAP_VALIDATE_PARAMS}, {0, 0, 0, 0}, 0, {0, 0}, {0, 0, 0}, {0, 0}, HEAP_VALIDATE_PARAMS, 0, {0}};
+    HANDLE heap = (HANDLE)&invalid, ret;
+    PEB *Peb = NtCurrentTeb()->Peb;
+    BOOL debugged;
+    void *handler = RtlAddVectoredExceptionHandler( TRUE, test_heap_destroy_except_handler );
+
+    test_heap_destroy_dbgstr = FALSE;
+    test_heap_destroy_break = FALSE;
+    debugged = Peb->BeingDebugged;
+    Peb->BeingDebugged = TRUE;
+    ret = RtlDestroyHeap( heap );
+    ok( ret == heap, "RtlDestroyHeap(%p) returned %p\n", heap, ret );
+    ok( test_heap_destroy_dbgstr, "HeapDestroy didn't call OutputDebugStrA\n" );
+    ok( test_heap_destroy_break, "HeapDestroy didn't call DbgBreakPoint\n" );
+    Peb->BeingDebugged = debugged;
+
+    RtlRemoveVectoredExceptionHandler( handler );
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -3640,4 +3705,5 @@ START_TEST(rtl)
     test_RtlMakeSelfRelativeSD();
     test_LdrRegisterDllNotification();
     test_DbgPrint();
+    test_RtlDestroyHeap();
 }
