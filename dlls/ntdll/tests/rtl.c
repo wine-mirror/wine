@@ -3541,19 +3541,19 @@ static void test_DbgPrint(void)
     test_dbg_print_except_ret = (LONG)EXCEPTION_EXECUTE_HANDLER;
     status = DbgPrint( "test_DbgPrint: %s", "Hello World" );
     ok( !status, "DbgPrint returned %x\n", status );
-    todo_wine ok( test_dbg_print_except, "DBG_PRINTEXCEPTION_C not received\n" );
+    ok( test_dbg_print_except, "DBG_PRINTEXCEPTION_C not received\n" );
 
     test_dbg_print_except = FALSE;
     test_dbg_print_except_ret = (LONG)EXCEPTION_CONTINUE_EXECUTION;
     status = DbgPrint( "test_DbgPrint: %s", "Hello World" );
     ok( !status, "DbgPrint returned %x\n", status );
-    todo_wine ok( test_dbg_print_except, "DBG_PRINTEXCEPTION_C not received\n" );
+    ok( test_dbg_print_except, "DBG_PRINTEXCEPTION_C not received\n" );
 
     test_dbg_print_except = FALSE;
     test_dbg_print_except_ret = (LONG)EXCEPTION_CONTINUE_SEARCH;
     status = DbgPrint( "test_DbgPrint: %s", "Hello World" );
     ok( !status, "DbgPrint returned %x\n", status );
-    todo_wine ok( test_dbg_print_except, "DBG_PRINTEXCEPTION_C not received\n" );
+    ok( test_dbg_print_except, "DBG_PRINTEXCEPTION_C not received\n" );
 
 
     /* FIXME: NtSetDebugFilterState / DbgSetDebugFilterState are probably what's controlling these */
@@ -3562,7 +3562,7 @@ static void test_DbgPrint(void)
     test_dbg_print_except_ret = (LONG)EXCEPTION_EXECUTE_HANDLER;
     status = DbgPrintEx( 0, DPFLTR_ERROR_LEVEL, "test_DbgPrint: %s", "Hello World" );
     ok( !status, "DbgPrintEx returned %x\n", status );
-    todo_wine ok( test_dbg_print_except, "DBG_PRINTEXCEPTION_C not received\n" );
+    ok( test_dbg_print_except, "DBG_PRINTEXCEPTION_C not received\n" );
 
     test_dbg_print_except = FALSE;
     test_dbg_print_except_ret = (LONG)EXCEPTION_EXECUTE_HANDLER;
@@ -3574,7 +3574,7 @@ static void test_DbgPrint(void)
     test_dbg_print_except_ret = (LONG)EXCEPTION_EXECUTE_HANDLER;
     status = DbgPrintEx( 0, DPFLTR_MASK|(1 << DPFLTR_ERROR_LEVEL), "test_DbgPrint: %s", "Hello World" );
     ok( !status, "DbgPrintEx returned %x\n", status );
-    todo_wine ok( test_dbg_print_except, "DBG_PRINTEXCEPTION_C not received\n" );
+    ok( test_dbg_print_except, "DBG_PRINTEXCEPTION_C not received\n" );
 
     test_dbg_print_except = FALSE;
     test_dbg_print_except_ret = (LONG)EXCEPTION_EXECUTE_HANDLER;
@@ -3587,13 +3587,13 @@ static void test_DbgPrint(void)
     test_dbg_print_except_ret = (LONG)EXCEPTION_EXECUTE_HANDLER;
     status = test_vDbgPrintEx( 0, 0xFFFFFFFF, "test_DbgPrint: %s", "Hello World" );
     ok( !status, "vDbgPrintEx returned %x\n", status );
-    todo_wine ok( test_dbg_print_except, "DBG_PRINTEXCEPTION_C not received\n" );
+    ok( test_dbg_print_except, "DBG_PRINTEXCEPTION_C not received\n" );
 
     test_dbg_print_except = FALSE;
     test_dbg_print_except_ret = (LONG)EXCEPTION_EXECUTE_HANDLER;
     status = test_vDbgPrintExWithPrefix( "test_", 0, 0xFFFFFFFF, "DbgPrint: %s", "Hello World" );
     ok( !status, "vDbgPrintExWithPrefix returned %x\n", status );
-    todo_wine ok( test_dbg_print_except, "DBG_PRINTEXCEPTION_C not received\n" );
+    ok( test_dbg_print_except, "DBG_PRINTEXCEPTION_C not received\n" );
 
     Peb->BeingDebugged = debugged;
     RtlRemoveVectoredExceptionHandler( handler );
