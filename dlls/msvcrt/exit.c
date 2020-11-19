@@ -314,7 +314,7 @@ void CDECL MSVCRT__wassert(const MSVCRT_wchar_t* str, const MSVCRT_wchar_t* file
 /*********************************************************************
  *		_assert (MSVCRT.@)
  */
-void CDECL MSVCRT__assert(const char* str, const char* file, unsigned int line)
+void CDECL _assert(const char* str, const char* file, unsigned int line)
 {
     MSVCRT_wchar_t strW[1024], fileW[1024];
 

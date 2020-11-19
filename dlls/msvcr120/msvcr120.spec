@@ -1028,7 +1028,7 @@
 @ cdecl _aligned_realloc(ptr long long)
 @ stub _aligned_recalloc
 @ cdecl _amsg_exit(long)
-@ cdecl _assert(str str long) MSVCRT__assert
+@ cdecl _assert(str str long)
 @ cdecl _atodbl(ptr str) MSVCRT__atodbl
 @ cdecl _atodbl_l(ptr str ptr) MSVCRT__atodbl_l
 @ cdecl _atof_l(str ptr) MSVCRT__atof_l
@@ -1828,7 +1828,7 @@
 @ cdecl _vscwprintf_l(wstr ptr ptr) MSVCRT__vscwprintf_l
 @ cdecl _vscwprintf_p(wstr ptr) MSVCRT__vscwprintf_p
 @ cdecl _vscwprintf_p_l(wstr ptr ptr) MSVCRT__vscwprintf_p_l
-@ cdecl -norelay _vsnprintf(ptr long str ptr) MSVCRT_vsnprintf
+@ cdecl -norelay _vsnprintf(ptr long str ptr)
 @ cdecl _vsnprintf_c(ptr long str ptr) MSVCRT_vsnprintf_c
 @ cdecl _vsnprintf_c_l(ptr long str ptr ptr) MSVCRT_vsnprintf_c_l
 @ cdecl _vsnprintf_l(ptr long str ptr ptr) MSVCRT_vsnprintf_l
@@ -2285,12 +2285,12 @@
 @ cdecl mbstowcs_s(ptr ptr long str long) MSVCRT__mbstowcs_s
 @ cdecl mbtowc(ptr str long) MSVCRT_mbtowc
 @ cdecl memchr(ptr long long) MSVCRT_memchr
-@ cdecl memcmp(ptr ptr long) MSVCRT_memcmp
-@ cdecl memcpy(ptr ptr long) MSVCRT_memcpy
+@ cdecl memcmp(ptr ptr long)
+@ cdecl memcpy(ptr ptr long)
 @ cdecl memcpy_s(ptr long ptr long) MSVCRT_memcpy_s
-@ cdecl memmove(ptr ptr long) MSVCRT_memmove
+@ cdecl memmove(ptr ptr long)
 @ cdecl memmove_s(ptr long ptr long) MSVCRT_memmove_s
-@ cdecl memset(ptr long long) MSVCRT_memset
+@ cdecl memset(ptr long long)
 @ cdecl modf(double ptr) MSVCRT_modf
 @ cdecl -arch=!i386 modff(float ptr) MSVCRT_modff
 @ cdecl nan(str) MSVCR120_nan
@@ -2363,18 +2363,18 @@
 @ cdecl srand(long) MSVCRT_srand
 @ varargs sscanf(str str) MSVCRT_sscanf
 @ varargs sscanf_s(str str) MSVCRT_sscanf_s
-@ cdecl strcat(str str) MSVCRT_strcat
+@ cdecl strcat(str str)
 @ cdecl strcat_s(str long str) MSVCRT_strcat_s
-@ cdecl strchr(str long) MSVCRT_strchr
-@ cdecl strcmp(str str) MSVCRT_strcmp
+@ cdecl strchr(str long)
+@ cdecl strcmp(str str)
 @ cdecl strcoll(str str) MSVCRT_strcoll
-@ cdecl strcpy(ptr str) MSVCRT_strcpy
+@ cdecl strcpy(ptr str)
 @ cdecl strcpy_s(ptr long str) MSVCRT_strcpy_s
 @ cdecl strcspn(str str) MSVCRT_strcspn
 @ cdecl strerror(long) MSVCRT_strerror
 @ cdecl strerror_s(ptr long long) MSVCRT_strerror_s
 @ cdecl strftime(ptr long str ptr) MSVCRT_strftime
-@ cdecl strlen(str) MSVCRT_strlen
+@ cdecl strlen(str)
 @ cdecl strncat(str str long) MSVCRT_strncat
 @ cdecl strncat_s(str long str long) MSVCRT_strncat_s
 @ cdecl strncmp(str str long) MSVCRT_strncmp

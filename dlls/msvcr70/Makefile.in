@@ -1,8 +1,10 @@
-EXTRADEFS = -D_MSVCR_VER=70
+EXTRADEFS = -D_CRTIMP=
 MODULE    = msvcr70.dll
 IMPORTLIB = msvcr70
+IMPORTS   = ntdll
 DELAYIMPORTS = advapi32 user32
 PARENTSRC = ../msvcrt
+EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	console.c \

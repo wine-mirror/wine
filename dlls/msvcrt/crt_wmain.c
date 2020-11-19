@@ -22,10 +22,6 @@
 #pragma makedep implib
 #endif
 
-#if _MSVCR_VER >= 140
-#define _UCRT
-#endif
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <process.h>

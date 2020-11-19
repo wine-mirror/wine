@@ -21,7 +21,6 @@
  *       handler and non atomic heap operations
  */
 
-#include "config.h"
 #include "msvcrt.h"
 #include "mtdll.h"
 #include "wine/debug.h"

@@ -156,7 +156,7 @@
 @ cdecl __stdio_common_vfwscanf(int64 ptr wstr ptr ptr) MSVCRT__stdio_common_vfwscanf
 @ cdecl __stdio_common_vsnprintf_s(int64 ptr long long str ptr ptr) MSVCRT__stdio_common_vsnprintf_s
 @ cdecl __stdio_common_vsnwprintf_s(int64 ptr long long wstr ptr ptr) MSVCRT__stdio_common_vsnwprintf_s
-@ cdecl -norelay __stdio_common_vsprintf(int64 ptr long str ptr ptr) MSVCRT__stdio_common_vsprintf
+@ cdecl -norelay __stdio_common_vsprintf(int64 ptr long str ptr ptr)
 @ cdecl __stdio_common_vsprintf_p(int64 ptr long str ptr ptr) MSVCRT__stdio_common_vsprintf_p
 @ cdecl __stdio_common_vsprintf_s(int64 ptr long str ptr ptr) MSVCRT__stdio_common_vsprintf_s
 @ cdecl __stdio_common_vsscanf(int64 ptr long str ptr ptr) MSVCRT__stdio_common_vsscanf
@@ -189,7 +189,7 @@
 @ stub _aligned_offset_recalloc
 @ cdecl _aligned_realloc(ptr long long)
 @ stub _aligned_recalloc
-@ cdecl _assert(str str long) MSVCRT__assert
+@ cdecl _assert(str str long)
 @ cdecl _atodbl(ptr str) MSVCRT__atodbl
 @ cdecl _atodbl_l(ptr str ptr) MSVCRT__atodbl_l
 @ cdecl _atof_l(str ptr) MSVCRT__atof_l
@@ -820,7 +820,7 @@
 @ cdecl _o___stdio_common_vfwscanf(int64 ptr wstr ptr ptr) MSVCRT__stdio_common_vfwscanf
 @ cdecl _o___stdio_common_vsnprintf_s(int64 ptr long long str ptr ptr) MSVCRT__stdio_common_vsnprintf_s
 @ cdecl _o___stdio_common_vsnwprintf_s(int64 ptr long long wstr ptr ptr) MSVCRT__stdio_common_vsnwprintf_s
-@ cdecl _o___stdio_common_vsprintf(int64 ptr long str ptr ptr) MSVCRT__stdio_common_vsprintf
+@ cdecl _o___stdio_common_vsprintf(int64 ptr long str ptr ptr) __stdio_common_vsprintf
 @ cdecl _o___stdio_common_vsprintf_p(int64 ptr long str ptr ptr) MSVCRT__stdio_common_vsprintf_p
 @ cdecl _o___stdio_common_vsprintf_s(int64 ptr long str ptr ptr) MSVCRT__stdio_common_vsprintf_s
 @ cdecl _o___stdio_common_vsscanf(int64 ptr long str ptr ptr) MSVCRT__stdio_common_vsscanf
@@ -1718,7 +1718,7 @@
 @ cdecl _o_mbstowcs_s(ptr ptr long str long) MSVCRT__mbstowcs_s
 @ cdecl _o_mbtowc(ptr str long) MSVCRT_mbtowc
 @ cdecl _o_memcpy_s(ptr long ptr long) MSVCRT_memcpy_s
-@ cdecl _o_memset(ptr long long) MSVCRT_memset
+@ cdecl _o_memset(ptr long long) memset
 @ cdecl _o_modf(double ptr) MSVCRT_modf
 @ cdecl -arch=!i386 _o_modff(float ptr) MSVCRT_modff
 @ cdecl _o_nan(str) MSVCR120_nan
@@ -2421,12 +2421,12 @@
 @ cdecl mbstowcs_s(ptr ptr long str long) MSVCRT__mbstowcs_s
 @ cdecl mbtowc(ptr str long) MSVCRT_mbtowc
 @ cdecl memchr(ptr long long) MSVCRT_memchr
-@ cdecl memcmp(ptr ptr long) MSVCRT_memcmp
-@ cdecl memcpy(ptr ptr long) MSVCRT_memcpy
+@ cdecl memcmp(ptr ptr long)
+@ cdecl memcpy(ptr ptr long)
 @ cdecl memcpy_s(ptr long ptr long) MSVCRT_memcpy_s
-@ cdecl memmove(ptr ptr long) MSVCRT_memmove
+@ cdecl memmove(ptr ptr long)
 @ cdecl memmove_s(ptr long ptr long) MSVCRT_memmove_s
-@ cdecl memset(ptr long long) MSVCRT_memset
+@ cdecl memset(ptr long long)
 @ cdecl modf(double ptr) MSVCRT_modf
 @ cdecl -arch=!i386 modff(float ptr) MSVCRT_modff
 @ cdecl nan(str) MSVCR120_nan
@@ -2494,18 +2494,18 @@
 @ cdecl sqrt(double) MSVCRT_sqrt
 @ cdecl -arch=!i386 sqrtf(float) MSVCRT_sqrtf
 @ cdecl srand(long) MSVCRT_srand
-@ cdecl strcat(str str) MSVCRT_strcat
+@ cdecl strcat(str str)
 @ cdecl strcat_s(str long str) MSVCRT_strcat_s
-@ cdecl strchr(str long) MSVCRT_strchr
-@ cdecl strcmp(str str) MSVCRT_strcmp
+@ cdecl strchr(str long)
+@ cdecl strcmp(str str)
 @ cdecl strcoll(str str) MSVCRT_strcoll
-@ cdecl strcpy(ptr str) MSVCRT_strcpy
+@ cdecl strcpy(ptr str)
 @ cdecl strcpy_s(ptr long str) MSVCRT_strcpy_s
 @ cdecl strcspn(str str) MSVCRT_strcspn
 @ cdecl strerror(long) MSVCRT_strerror
 @ cdecl strerror_s(ptr long long) MSVCRT_strerror_s
 @ cdecl strftime(ptr long str ptr) MSVCRT_strftime
-@ cdecl strlen(str) MSVCRT_strlen
+@ cdecl strlen(str)
 @ cdecl strncat(str str long) MSVCRT_strncat
 @ cdecl strncat_s(str long str long) MSVCRT_strncat_s
 @ cdecl strncmp(str str long) MSVCRT_strncmp

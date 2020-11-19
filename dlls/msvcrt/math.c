@@ -35,16 +35,9 @@
  * ====================================================
  */
 
-#include "config.h"
-#include "wine/port.h"
 
 #include <stdio.h>
-#define __USE_ISOC9X 1
-#define __USE_ISOC99 1
 #include <math.h>
-#ifdef HAVE_IEEEFP_H
-#include <ieeefp.h>
-#endif
 
 #include "msvcrt.h"
 #include "winternl.h"
@@ -323,7 +316,7 @@ static float asinf_R(float z)
                  pS2 = -8.6563630030e-03,
                  qS1 = -7.0662963390e-01;
 
-    float_t p, q;
+    float p, q;
     p = z * (pS0 + z * (pS1 + z * pS2));
     q = 1.0f + z * qS1;
     return p / q;

@@ -21,10 +21,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define _ISOC99_SOURCE
-#include "config.h"
-#include "wine/port.h"
-
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -1153,7 +1149,7 @@ int CDECL MSVCRT_strcoll_l( const char* str1, const char* str2, MSVCRT__locale_t
         locinfo = locale->locinfo;
 
     if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
-        return MSVCRT_strcmp(str1, str2);
+        return strcmp(str1, str2);
     return CompareStringA(locinfo->lc_handle[MSVCRT_LC_COLLATE], 0, str1, -1, str2, -1)-CSTR_EQUAL;
 }
 
@@ -1263,7 +1259,7 @@ char* __cdecl MSVCRT_strncpy(char *dst, const char *src, MSVCRT_size_t len)
 /*********************************************************************
  *      strcpy (MSVCRT.@)
  */
-char* CDECL MSVCRT_strcpy(char *dst, const char *src)
+char* CDECL strcpy(char *dst, const char *src)
 {
     char *ret = dst;
     while ((*dst++ = *src++));
@@ -1324,7 +1320,7 @@ int CDECL MSVCRT_strcat_s( char* dst, MSVCRT_size_t elem, const char* src )
 /*********************************************************************
  *      strcat (MSVCRT.@)
  */
-char* __cdecl MSVCRT_strcat( char *dst, const char *src )
+char* __cdecl strcat( char *dst, const char *src )
 {
     char *d = dst;
     while (*d) d++;
@@ -1502,7 +1498,7 @@ int CDECL MSVCRT__atoldbl(MSVCRT__LDOUBLE *value, const char *str)
 /*********************************************************************
  *              strlen (MSVCRT.@)
  */
-MSVCRT_size_t __cdecl MSVCRT_strlen(const char *str)
+size_t __cdecl strlen(const char *str)
 {
     const char *s = str;
     while (*s) s++;
@@ -2461,7 +2457,7 @@ int CDECL MSVCRT_I10_OUTPUT(MSVCRT__LDOUBLE ld80, int prec, int flag, struct _I1
 /*********************************************************************
  *                  memcmp (MSVCRT.@)
  */
-int __cdecl MSVCRT_memcmp(const void *ptr1, const void *ptr2, MSVCRT_size_t n)
+int __cdecl memcmp(const void *ptr1, const void *ptr2, size_t n)
 {
     const unsigned char *p1, *p2;
 
@@ -2481,7 +2477,7 @@ int __cdecl MSVCRT_memcmp(const void *ptr1, const void *ptr2, MSVCRT_size_t n)
 #else
 # define MERGE(w1, sh1, w2, sh2) ((w1 >> sh1) | (w2 << sh2))
 #endif
-void * __cdecl MSVCRT_memmove(void *dst, const void *src, MSVCRT_size_t n)
+void * __cdecl memmove(void *dst, const void *src, size_t n)
 {
     unsigned char *d = dst;
     const unsigned char *s = src;
@@ -2580,15 +2576,15 @@ void * __cdecl MSVCRT_memmove(void *dst, const void *src, MSVCRT_size_t n)
 /*********************************************************************
  *                  memcpy   (MSVCRT.@)
  */
-void * __cdecl MSVCRT_memcpy(void *dst, const void *src, MSVCRT_size_t n)
+void * __cdecl memcpy(void *dst, const void *src, size_t n)
 {
-    return MSVCRT_memmove(dst, src, n);
+    return memmove(dst, src, n);
 }
 
 /*********************************************************************
  *		    memset (MSVCRT.@)
  */
-void* __cdecl MSVCRT_memset(void *dst, int c, MSVCRT_size_t n)
+void* __cdecl memset(void *dst, int c, size_t n)
 {
     volatile unsigned char *d = dst;  /* avoid gcc optimizations */
     while (n--) *d++ = c;
@@ -2598,7 +2594,7 @@ void* __cdecl MSVCRT_memset(void *dst, int c, MSVCRT_size_t n)
 /*********************************************************************
  *		    strchr (MSVCRT.@)
  */
-char* __cdecl MSVCRT_strchr(const char *str, int c)
+char* __cdecl strchr(const char *str, int c)
 {
     do
     {
@@ -2631,7 +2627,7 @@ void* __cdecl MSVCRT_memchr(const void *ptr, int c, MSVCRT_size_t n)
 /*********************************************************************
  *                  strcmp (MSVCRT.@)
  */
-int __cdecl MSVCRT_strcmp(const char *str1, const char *str2)
+int __cdecl strcmp(const char *str1, const char *str2)
 {
     while (*str1 && *str1 == *str2) { str1++; str2++; }
     if ((unsigned char)*str1 > (unsigned char)*str2) return 1;
@@ -2721,7 +2717,7 @@ char* __cdecl MSVCRT_strstr(const char *haystack, const char *needle)
     MSVCRT_size_t i, j, len, needle_len, lps_len;
     BYTE lps[256];
 
-    needle_len = MSVCRT_strlen(needle);
+    needle_len = strlen(needle);
     if (!needle_len) return (char*)haystack;
     lps_len = needle_len > ARRAY_SIZE(lps) ? ARRAY_SIZE(lps) : needle_len;
 

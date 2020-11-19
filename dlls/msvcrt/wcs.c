@@ -18,8 +18,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#include "config.h"
-#include "wine/port.h"
 
 #include <limits.h>
 #include <stdio.h>
@@ -832,11 +830,12 @@ printf_arg arg_clbk_positional(void *ctx, int pos, int type, __ms_va_list *valis
     return args[pos];
 }
 
+#if _MSVCR_VER < 140
+
 /*********************************************************************
  *              _vsnprintf (MSVCRT.@)
  */
-int CDECL MSVCRT_vsnprintf( char *str, MSVCRT_size_t len,
-                            const char *format, __ms_va_list valist )
+int CDECL _vsnprintf( char *str, size_t len, const char *format, __ms_va_list valist )
 {
     static const char nullbyte = '\0';
     struct _str_ctx_a ctx = {len, str};
@@ -848,7 +847,7 @@ int CDECL MSVCRT_vsnprintf( char *str, MSVCRT_size_t len,
     return ret;
 }
 
-#if _MSVCR_VER>=140
+#else
 
 static int puts_clbk_str_c99_a(void *ctx, int len, const char *str)
 {
@@ -873,8 +872,8 @@ static int puts_clbk_str_c99_a(void *ctx, int len, const char *str)
 /*********************************************************************
  *              __stdio_common_vsprintf (UCRTBASE.@)
  */
-int CDECL MSVCRT__stdio_common_vsprintf( unsigned __int64 options, char *str, MSVCRT_size_t len, const char *format,
-                                         MSVCRT__locale_t locale, __ms_va_list valist )
+int CDECL __stdio_common_vsprintf( unsigned __int64 options, char *str, size_t len, const char *format,
+                                   _locale_t locale, __ms_va_list valist )
 {
     static const char nullbyte = '\0';
     struct _str_ctx_a ctx = {len, str};
@@ -883,7 +882,7 @@ int CDECL MSVCRT__stdio_common_vsprintf( unsigned __int64 options, char *str, MS
     if (options & ~UCRTBASE_PRINTF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
     ret = pf_printf_a(puts_clbk_str_c99_a,
-            &ctx, format, locale, options & UCRTBASE_PRINTF_MASK, arg_clbk_valist, NULL, &valist);
+            &ctx, format, (MSVCRT__locale_t)locale, options & UCRTBASE_PRINTF_MASK, arg_clbk_valist, NULL, &valist);
     puts_clbk_str_a(&ctx, 1, &nullbyte);
 
     if(!str)
@@ -1118,7 +1117,7 @@ int CDECL MSVCRT__stdio_common_vsprintf_s( unsigned __int64 options,
  */
 int CDECL MSVCRT_vsprintf( char *str, const char *format, __ms_va_list valist)
 {
-    return MSVCRT_vsnprintf(str, INT_MAX, format, valist);
+    return vsnprintf(str, INT_MAX, format, valist);
 }
 
 /*********************************************************************
@@ -1126,7 +1125,7 @@ int CDECL MSVCRT_vsprintf( char *str, const char *format, __ms_va_list valist)
  */
 int CDECL MSVCRT_vsprintf_s( char *str, MSVCRT_size_t num, const char *format, __ms_va_list valist)
 {
-    return MSVCRT_vsnprintf(str, num, format, valist);
+    return vsnprintf(str, num, format, valist);
 }
 
 /*********************************************************************
@@ -1134,7 +1133,7 @@ int CDECL MSVCRT_vsprintf_s( char *str, MSVCRT_size_t num, const char *format, _
  */
 int CDECL MSVCRT__vscprintf( const char *format, __ms_va_list valist )
 {
-    return MSVCRT_vsnprintf( NULL, INT_MAX, format, valist );
+    return MSVCRT_vsnprintf_l( NULL, INT_MAX, format, NULL, valist );
 }
 
 /*********************************************************************
@@ -1192,7 +1191,7 @@ int WINAPIV MSVCRT__snprintf(char *str, MSVCRT_size_t len, const char *format, .
     int retval;
     __ms_va_list valist;
     __ms_va_start(valist, format);
-    retval = MSVCRT_vsnprintf(str, len, format, valist);
+    retval = vsnprintf(str, len, format, valist);
     __ms_va_end(valist);
     return retval;
 }
@@ -1530,7 +1529,7 @@ int WINAPIV MSVCRT_sprintf( char *str, const char *format, ... )
     int r;
 
     __ms_va_start( ap, format );
-    r = MSVCRT_vsnprintf( str, INT_MAX, format, ap );
+    r = vsnprintf( str, INT_MAX, format, ap );
     __ms_va_end( ap );
     return r;
 }
@@ -1544,7 +1543,7 @@ int WINAPIV MSVCRT_sprintf_s( char *str, MSVCRT_size_t num, const char *format, 
     int r;
 
     __ms_va_start( ap, format );
-    r = MSVCRT_vsnprintf( str, num, format, ap );
+    r = vsnprintf( str, num, format, ap );
     __ms_va_end( ap );
     return r;
 }

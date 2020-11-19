@@ -216,7 +216,7 @@
 @ extern -arch=i386 _adjust_fdiv MSVCRT__adjust_fdiv
 @ extern _aexit_rtn
 @ cdecl _amsg_exit(long)
-@ cdecl _assert(str str long) MSVCRT__assert
+@ cdecl _assert(str str long)
 @ cdecl _atodbl(ptr str) MSVCRT__atodbl
 @ cdecl -ret64 _atoi64(str) MSVCRT__atoi64
 @ cdecl _atoldbl(ptr str) MSVCRT__atoldbl
@@ -548,7 +548,7 @@
 @ cdecl _unloaddll(long)
 @ cdecl _unlock(long)
 @ cdecl _utime(str ptr)
-@ cdecl _vsnprintf(ptr long str ptr) MSVCRT_vsnprintf
+@ cdecl _vsnprintf(ptr long str ptr)
 @ cdecl _vsnwprintf(ptr long wstr ptr) MSVCRT_vsnwprintf
 @ cdecl _waccess(wstr long) MSVCRT__waccess
 @ cdecl _wasctime(ptr) MSVCRT__wasctime
@@ -729,10 +729,10 @@
 @ cdecl mbstowcs(ptr str long) MSVCRT_mbstowcs
 @ cdecl mbtowc(ptr str long) MSVCRT_mbtowc
 @ cdecl memchr(ptr long long) MSVCRT_memchr
-@ cdecl memcmp(ptr ptr long) MSVCRT_memcmp
-@ cdecl memcpy(ptr ptr long) MSVCRT_memcpy
-@ cdecl memmove(ptr ptr long) MSVCRT_memmove
-@ cdecl memset(ptr long long) MSVCRT_memset
+@ cdecl memcmp(ptr ptr long)
+@ cdecl memcpy(ptr ptr long)
+@ cdecl memmove(ptr ptr long)
+@ cdecl memset(ptr long long)
 @ cdecl mktime(ptr) MSVCRT_mktime
 @ cdecl modf(double ptr) MSVCRT_modf
 @ cdecl perror(str) MSVCRT_perror
@@ -761,15 +761,15 @@
 @ cdecl sqrt(double) MSVCRT_sqrt
 @ cdecl srand(long) MSVCRT_srand
 @ varargs sscanf(str str) MSVCRT_sscanf
-@ cdecl strcat(str str) MSVCRT_strcat
-@ cdecl strchr(str long) MSVCRT_strchr
-@ cdecl strcmp(str str) MSVCRT_strcmp
+@ cdecl strcat(str str)
+@ cdecl strchr(str long)
+@ cdecl strcmp(str str)
 @ cdecl strcoll(str str) MSVCRT_strcoll
-@ cdecl strcpy(ptr str) MSVCRT_strcpy
+@ cdecl strcpy(ptr str)
 @ cdecl strcspn(str str) MSVCRT_strcspn
 @ cdecl strerror(long) MSVCRT_strerror
 @ cdecl strftime(ptr long str ptr) MSVCRT_strftime
-@ cdecl strlen(str) MSVCRT_strlen
+@ cdecl strlen(str)
 @ cdecl strncat(str str long) MSVCRT_strncat
 @ cdecl strncmp(str str long) MSVCRT_strncmp
 @ cdecl strncpy(ptr str long) MSVCRT_strncpy

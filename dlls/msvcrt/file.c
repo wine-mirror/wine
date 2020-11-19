@@ -26,15 +26,10 @@
  * Use the file flag hints O_SEQUENTIAL, O_RANDOM, O_SHORT_LIVED
  */
 
-#include "config.h"
-#include "wine/port.h"
 
 #define __iob_func mingw___iob_func
 #include <stdarg.h>
 #include <stdio.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <sys/types.h>
 #include <limits.h>
 

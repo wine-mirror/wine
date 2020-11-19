@@ -26,7 +26,6 @@
  *  open file handles, sometimes not. The docs are confusing
  * -No check for maximum path/argument/environment size is done
  */
-#include "config.h"
 
 #include <stdarg.h>
 

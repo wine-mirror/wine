@@ -129,7 +129,7 @@ static inline unsigned char* u_strncat( unsigned char* dst, const unsigned char*
 
 static inline int u_strcmp( const unsigned char *s1, const unsigned char *s2 )
 {
-  return MSVCRT_strcmp( (const char*)s1, (const char*)s2 );
+  return strcmp( (const char*)s1, (const char*)s2 );
 }
 
 static inline int u_strcasecmp( const unsigned char *s1, const unsigned char *s2 )

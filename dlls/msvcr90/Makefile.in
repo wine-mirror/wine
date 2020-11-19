@@ -1,8 +1,10 @@
-EXTRADEFS = -D_MSVCR_VER=90
+EXTRADEFS = -D_CRTIMP=
 MODULE    = msvcr90.dll
 IMPORTLIB = msvcr90
+IMPORTS   = ntdll
 DELAYIMPORTS = advapi32 user32
 PARENTSRC = ../msvcrt
+EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
 	console.c \
