@@ -28,6 +28,8 @@
 static const DWORD test_handler = mmioFOURCC('w','t','s','t');
 static const GUID test_subtype = {mmioFOURCC('w','t','s','t'),0x0000,0x0010,{0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71}};
 
+static int testmode;
+
 static IBaseFilter *create_avi_dec(void)
 {
     IBaseFilter *filter = NULL;
@@ -50,11 +52,13 @@ static ULONG get_refcount(void *iface)
     return IUnknown_Release(unknown);
 }
 
-static BITMAPINFOHEADER sink_bih;
+static BITMAPINFOHEADER sink_bitmap_info, source_bitmap_info;
 
 static LRESULT CALLBACK vfw_driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
         LPARAM lparam1, LPARAM lparam2)
 {
+    static int in_begin;
+
     if (winetest_debug > 1)
         trace("id %#lx, driver %p, msg %#x, lparam1 %#lx, lparam2 %#lx.\n",
                 id, driver, msg, lparam1, lparam2);
@@ -77,7 +81,7 @@ static LRESULT CALLBACK vfw_driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
         if (!out)
             return sizeof(BITMAPINFOHEADER);
 
-        ok(!memcmp(in, &sink_bih, sizeof(BITMAPINFOHEADER)), "Input types didn't match.\n");
+        ok(!memcmp(in, &sink_bitmap_info, sizeof(BITMAPINFOHEADER)), "Input types didn't match.\n");
 
         out->biSize = sizeof(BITMAPINFOHEADER);
         out->biCompression = mmioFOURCC('I','4','2','0');
@@ -108,8 +112,57 @@ static LRESULT CALLBACK vfw_driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
         return ICERR_UNSUPPORTED;
 
     case ICM_DECOMPRESS_BEGIN:
-    case ICM_DECOMPRESS_END:
+    {
+        BITMAPINFOHEADER *out = (BITMAPINFOHEADER *)lparam2;
+        BITMAPINFOHEADER *in = (BITMAPINFOHEADER *)lparam1;
+
+        ok(!memcmp(in, &sink_bitmap_info, sizeof(BITMAPINFOHEADER)),
+                "Input types didn't match.\n");
+        todo_wine ok(!memcmp(out, &source_bitmap_info, sizeof(BITMAPINFOHEADER)),
+                "Output types didn't match.\n");
+        ok(!in_begin, "Got multiple ICM_DECOMPRESS_BEGIN messages.\n");
+        in_begin = 1;
         return ICERR_OK;
+    }
+
+    case ICM_DECOMPRESS_END:
+        ok(in_begin, "Got unmatched ICM_DECOMPRESS_END message.\n");
+        in_begin = 0;
+        return ICERR_OK;
+
+    case ICM_DECOMPRESS:
+    {
+        BITMAPINFOHEADER expect_sink_format = sink_bitmap_info;
+        ICDECOMPRESS *params = (ICDECOMPRESS *)lparam1;
+        BYTE *output = params->lpOutput, expect[200];
+        unsigned int i;
+
+        ok(in_begin, "Got ICM_DECOMPRESS without ICM_DECOMPRESS_BEGIN.\n");
+
+        ok(lparam2 == sizeof(ICDECOMPRESS), "Got size %Iu.\n", lparam2);
+
+        if (testmode == 5 || testmode == 6)
+            ok(params->dwFlags == ICDECOMPRESS_NOTKEYFRAME, "Got flags %#x.\n", params->dwFlags);
+        else if (testmode == 3)
+            ok(params->dwFlags == ICDECOMPRESS_PREROLL, "Got flags %#x.\n", params->dwFlags);
+        else
+            ok(params->dwFlags == 0, "Got flags %#x.\n", params->dwFlags);
+
+        expect_sink_format.biSizeImage = 200;
+        ok(!memcmp(params->lpbiInput, &expect_sink_format, sizeof(BITMAPINFOHEADER)),
+                "Input types didn't match.\n");
+        ok(!memcmp(params->lpbiOutput, &source_bitmap_info, sizeof(BITMAPINFOHEADER)),
+                "Output types didn't match.\n");
+        ok(!params->ckid, "Got chunk id %#x.\n", params->ckid);
+
+        for (i = 0; i < 200; ++i)
+            expect[i] = i;
+        ok(!memcmp(params->lpInput, expect, 200), "Data didn't match.\n");
+        for (i = 0; i < 32 * 24 * 12 / 8; ++i)
+            output[i] = 111 - i;
+
+        return ICERR_OK;
+    }
 
     case ICM_GETINFO:
     {
@@ -743,6 +796,7 @@ struct testfilter
     struct strmbase_source source;
     struct strmbase_sink sink;
     const AM_MEDIA_TYPE *mt;
+    unsigned int got_sample;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -821,16 +875,49 @@ static HRESULT testsink_get_media_type(struct strmbase_pin *iface, unsigned int 
 static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
 {
     struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
-    Quality q = {Famine, 500, 100 * 10000, 240 * 10000};
-    IQualityControl *qc;
+    BYTE *data, expect[32 * 24 * 12 / 8];
+    REFERENCE_TIME start, stop;
+    LONG size, i;
     HRESULT hr;
 
-    IPin_QueryInterface(filter->sink.pin.peer, &IID_IQualityControl, (void **)&qc);
+    ++filter->got_sample;
 
-    hr = IQualityControl_Notify(qc, &filter->filter.IBaseFilter_iface, q);
+    size = IMediaSample_GetSize(sample);
+    ok(size == 32 * 24 * 12 / 8, "Got size %u.\n", size);
+    size = IMediaSample_GetActualDataLength(sample);
+    ok(size == 32 * 24 * 12 / 8, "Got valid size %u.\n", size);
+
+    hr = IMediaSample_GetPointer(sample, &data);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+    for (i = 0; i < size; ++i)
+        expect[i] = 111 - i;
+    ok(!memcmp(data, expect, size), "Data didn't match.\n");
 
-    IQualityControl_Release(qc);
+    hr = IMediaSample_GetTime(sample, &start, &stop);
+    if (testmode == 0)
+    {
+        ok(hr == VFW_E_SAMPLE_TIME_NOT_SET, "Got hr %#x.\n", hr);
+    }
+    else if (testmode == 1)
+    {
+        ok(hr == VFW_S_NO_STOP_TIME, "Got hr %#x.\n", hr);
+        ok(start == 20000, "Got start time %s.\n", wine_dbgstr_longlong(start));
+    }
+    else
+    {
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(start == 20000, "Got start time %s.\n", wine_dbgstr_longlong(start));
+        ok(stop == 30000, "Got stop time %s.\n", wine_dbgstr_longlong(stop));
+    }
+
+    hr = IMediaSample_GetMediaTime(sample, &start, &stop);
+    todo_wine ok(hr == VFW_E_MEDIA_TIME_NOT_SET, "Got hr %#x.\n", hr);
+    hr = IMediaSample_IsDiscontinuity(sample);
+    todo_wine_if (testmode == 5) ok(hr == (testmode == 4) ? S_OK : S_FALSE, "Got hr %#x.\n", hr);
+    hr = IMediaSample_IsPreroll(sample);
+    todo_wine_if (testmode == 3) ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = IMediaSample_IsSyncPoint(sample);
+    todo_wine_if (testmode == 5 || testmode == 6) ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     return S_OK;
 }
@@ -900,6 +987,119 @@ static void test_sink_allocator(IMemInputPin *input)
 
     IMemAllocator_Release(req_allocator);
     IMemAllocator_Release(ret_allocator);
+}
+
+static void test_sample_processing(IMediaControl *control, IMemInputPin *input, struct testfilter *sink)
+{
+    REFERENCE_TIME start, stop;
+    IMemAllocator *allocator;
+    IMediaSample *sample;
+    LONG size, i;
+    HRESULT hr;
+    BYTE *data;
+
+    hr = IMemInputPin_ReceiveCanBlock(input);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#x.\n", hr);
+
+    hr = IMemAllocator_Commit(allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaSample_GetPointer(sample, &data);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    size = IMediaSample_GetSize(sample);
+    ok(size == 256, "Got size %d.\n", size);
+    for (i = 0; i < 200; ++i)
+        data[i] = i;
+    hr = IMediaSample_SetActualDataLength(sample, 200);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    start = 10000;
+    stop = 20000;
+    hr = IMediaSample_SetMediaTime(sample, &start, &stop);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaSample_SetSyncPoint(sample, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testmode = 0;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(sink->got_sample == 1, "Got %u calls to Receive().\n", sink->got_sample);
+    sink->got_sample = 0;
+
+    start = 20000;
+    hr = IMediaSample_SetTime(sample, &start, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testmode = 1;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(sink->got_sample == 1, "Got %u calls to Receive().\n", sink->got_sample);
+    sink->got_sample = 0;
+
+    stop = 30000;
+    hr = IMediaSample_SetTime(sample, &start, &stop);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testmode = 2;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(sink->got_sample == 1, "Got %u calls to Receive().\n", sink->got_sample);
+    sink->got_sample = 0;
+
+    hr = IMediaSample_SetPreroll(sample, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testmode = 3;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!sink->got_sample, "Got %u calls to Receive().\n", sink->got_sample);
+
+    hr = IMediaSample_SetPreroll(sample, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaSample_SetDiscontinuity(sample, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testmode = 4;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(sink->got_sample == 1, "Got %u calls to Receive().\n", sink->got_sample);
+    sink->got_sample = 0;
+
+    hr = IMediaSample_SetSyncPoint(sample, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testmode = 5;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!sink->got_sample, "Got %u calls to Receive().\n", sink->got_sample);
+
+    hr = IMediaSample_SetDiscontinuity(sample, FALSE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testmode = 6;
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!sink->got_sample, "Got %u calls to Receive().\n", sink->got_sample);
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+
+    IMediaSample_Release(sample);
+    IMemAllocator_Release(allocator);
 }
 
 static void test_connect_pin(void)
@@ -988,7 +1188,7 @@ static void test_connect_pin(void)
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    sink_bih = req_format.bmiHeader;
+    sink_bitmap_info = req_format.bmiHeader;
 
     hr = IPin_EnumMediaTypes(source, &enummt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1102,12 +1302,16 @@ static void test_connect_pin(void)
     ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
     FreeMediaType(&mt);
 
+    source_bitmap_info = ((VIDEOINFOHEADER *)req_mt.pbFormat)->bmiHeader;
+
     hr = IMediaControl_Pause(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IFilterGraph2_Disconnect(graph, source);
     ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    test_sample_processing(control, meminput, &testsink);
 
     hr = IFilterGraph2_Disconnect(graph, source);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
