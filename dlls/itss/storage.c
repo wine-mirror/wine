@@ -639,7 +639,6 @@ HRESULT ITSS_StgOpenStorage(
     IStorage** ppstgOpen)
 {
     struct chmFile *chmfile;
-    static const WCHAR szRoot[] = { '/', 0 };
 
     TRACE("%s\n", debugstr_w(pwcsName) );
 
@@ -647,7 +646,7 @@ HRESULT ITSS_StgOpenStorage(
     if( !chmfile )
         return E_FAIL;
 
-    return ITSS_create_chm_storage( chmfile, szRoot, ppstgOpen );
+    return ITSS_create_chm_storage( chmfile, L"/", ppstgOpen );
 }
 
 /************************************************************************/

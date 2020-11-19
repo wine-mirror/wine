@@ -203,31 +203,6 @@ static BOOL _unmarshal_uuid(unsigned char **pData,
     return _unmarshal_uchar_array(pData, pDataLen, dest, 16);
 }
 
-/* names of sections essential to decompression */
-static const WCHAR _CHMU_RESET_TABLE[] = {
-':',':','D','a','t','a','S','p','a','c','e','/',
-        'S','t','o','r','a','g','e','/',
-        'M','S','C','o','m','p','r','e','s','s','e','d','/',
-        'T','r','a','n','s','f','o','r','m','/',
-        '{','7','F','C','2','8','9','4','0','-','9','D','3','1',
-          '-','1','1','D','0','-','9','B','2','7','-',
-          '0','0','A','0','C','9','1','E','9','C','7','C','}','/',
-        'I','n','s','t','a','n','c','e','D','a','t','a','/',
-        'R','e','s','e','t','T','a','b','l','e',0
-};
-static const WCHAR _CHMU_LZXC_CONTROLDATA[] = {
-':',':','D','a','t','a','S','p','a','c','e','/',
-        'S','t','o','r','a','g','e','/',
-        'M','S','C','o','m','p','r','e','s','s','e','d','/',
-        'C','o','n','t','r','o','l','D','a','t','a',0
-};
-static const WCHAR _CHMU_CONTENT[] = {
-':',':','D','a','t','a','S','p','a','c','e','/',
-        'S','t','o','r','a','g','e','/',
-        'M','S','C','o','m','p','r','e','s','s','e','d','/',
-        'C','o','n','t','e','n','t',0
-};
-
 /*
  * structures local to this module
  */
@@ -766,15 +741,17 @@ struct chmFile *chm_openW(const WCHAR *filename)
 
     /* prefetch most commonly needed unit infos */
     if (CHM_RESOLVE_SUCCESS != chm_resolve_object(newHandle,
-                                                  _CHMU_RESET_TABLE,
+                                                  L"::DataSpace/Storage/MSCompressed/Transform/"
+                                                  "{7FC28940-9D31-11D0-9B27-00A0C91E9C7C}/"
+                                                  "InstanceData/ResetTable",
                                                   &newHandle->rt_unit)    ||
         newHandle->rt_unit.space == CHM_COMPRESSED                        ||
         CHM_RESOLVE_SUCCESS != chm_resolve_object(newHandle,
-                                                  _CHMU_CONTENT,
+                                                  L"::DataSpace/Storage/MSCompressed/Content",
                                                   &newHandle->cn_unit)    ||
         newHandle->cn_unit.space == CHM_COMPRESSED                        ||
         CHM_RESOLVE_SUCCESS != chm_resolve_object(newHandle,
-                                                  _CHMU_LZXC_CONTROLDATA,
+                                                  L"::DataSpace/Storage/MSCompressed/ControlData",
                                                   &uiLzxc)                ||
         uiLzxc.space == CHM_COMPRESSED)
     {

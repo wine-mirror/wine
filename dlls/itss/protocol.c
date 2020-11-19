@@ -231,8 +231,6 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     int res;
     HRESULT hres;
 
-    static const WCHAR separator[] = {':',':',0};
-
     TRACE("(%p)->(%s %p %p %08x %lx)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
 
@@ -260,7 +258,7 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         return hres;
     }
 
-    p = wcsstr(file_name, separator);
+    p = wcsstr(file_name, L"::");
     if(!p) {
         WARN("invalid url\n");
         HeapFree(GetProcessHeap(), 0, file_name);
@@ -480,13 +478,11 @@ static HRESULT WINAPI ITSProtocolInfo_CombineUrl(IInternetProtocolInfo *iface,
     LPCWSTR base_end, ptr;
     DWORD rel_len;
 
-    static const WCHAR separator[] = {':',':',0};
-
     TRACE("(%p)->(%s %s %08x %p %d %p %d)\n", This, debugstr_w(pwzBaseUrl),
             debugstr_w(pwzRelativeUrl), dwCombineFlags, pwzResult, cchResult,
             pcchResult, dwReserved);
 
-    base_end = wcsstr(pwzBaseUrl, separator);
+    base_end = wcsstr(pwzBaseUrl, L"::");
     if(!base_end)
         return 0x80041001;
     base_end += 2;
