@@ -1037,7 +1037,7 @@ GpStatus WINGDIPAPI GdipGetGenericFontFamilySansSerif(GpFontFamily **nativeFamil
 }
 
 /*****************************************************************************
- * GdipGetGenericFontFamilySansSerif [GDIPLUS.@]
+ * GdipNewPrivateFontCollection [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipNewPrivateFontCollection(GpFontCollection** fontCollection)
 {
