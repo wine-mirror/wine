@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <float.h>
 
 #define COBJMACROS
 
@@ -66,6 +67,21 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
     expected_hr = supported ? S_OK : E_NOINTERFACE;
 
     hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+#define check_service_interface(a, b, c, d) check_service_interface_(__LINE__, a, b, c, d)
+static void check_service_interface_(unsigned int line, void *iface_ptr, REFGUID service, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = MFGetService(iface, service, iid, (void **)&unk);
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
@@ -2097,6 +2113,7 @@ static void test_sample_grabber(void)
     IMFPresentationTimeSource *time_source;
     IMFPresentationClock *clock, *clock2;
     IMFStreamSink *stream, *stream2;
+    IMFRateSupport *rate_support;
     IMFMediaEventGenerator *eg;
     IMFMediaSink *sink, *sink2;
     DWORD flags, count, id;
@@ -2104,6 +2121,7 @@ static void test_sample_grabber(void)
     IMFMediaEvent *event;
     ULONG refcount;
     IUnknown *unk;
+    float rate;
     HRESULT hr;
     GUID guid;
 
@@ -2136,6 +2154,53 @@ static void test_sample_grabber(void)
     hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
     ok(hr == S_OK, "Failed to activate object, hr %#x.\n", hr);
 
+    check_interface(sink, &IID_IMFClockStateSink, TRUE);
+    check_interface(sink, &IID_IMFMediaEventGenerator, TRUE);
+    check_interface(sink, &IID_IMFGetService, TRUE);
+    check_interface(sink, &IID_IMFRateSupport, TRUE);
+    check_service_interface(sink, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, TRUE);
+
+    if (SUCCEEDED(MFGetService((IUnknown *)sink, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rate_support)))
+    {
+        hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_FORWARD, FALSE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(rate == FLT_MAX, "Unexpected rate %f.\n", rate);
+
+        hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_FORWARD, TRUE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(rate == FLT_MAX, "Unexpected rate %f.\n", rate);
+
+        hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_REVERSE, FALSE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(rate == -FLT_MAX, "Unexpected rate %f.\n", rate);
+
+        hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_REVERSE, TRUE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(rate == -FLT_MAX, "Unexpected rate %f.\n", rate);
+
+        hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_FORWARD, FALSE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(rate == 0.0f, "Unexpected rate %f.\n", rate);
+
+        hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_FORWARD, TRUE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(rate == 0.0f, "Unexpected rate %f.\n", rate);
+
+        hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_REVERSE, FALSE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(rate == 0.0f, "Unexpected rate %f.\n", rate);
+
+        hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_REVERSE, TRUE, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(rate == 0.0f, "Unexpected rate %f.\n", rate);
+
+        hr = IMFRateSupport_IsRateSupported(rate_support, TRUE, 1.0f, &rate);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(rate == 1.0f, "Unexpected rate %f.\n", rate);
+
+        IMFRateSupport_Release(rate_support);
+    }
+
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
     ok(hr == S_OK, "Failed to get sink flags, hr %#x.\n", hr);
     ok(flags & MEDIASINK_FIXED_STREAMS, "Unexpected flags %#x.\n", flags);
@@ -2148,6 +2213,7 @@ static void test_sample_grabber(void)
     ok(hr == S_OK, "Failed to get sink stream, hr %#x.\n", hr);
 
     check_interface(stream, &IID_IMFMediaEventGenerator, TRUE);
+    check_interface(stream, &IID_IMFMediaTypeHandler, TRUE);
 
     hr = IMFStreamSink_GetIdentifier(stream, &id);
     ok(hr == S_OK, "Failed to get stream id, hr %#x.\n", hr);

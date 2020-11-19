@@ -18,6 +18,8 @@
 
 #define COBJMACROS
 
+#include <float.h>
+
 #include "mfidl.h"
 #include "mf_private.h"
 
@@ -61,6 +63,8 @@ struct sample_grabber
     IMFMediaSink IMFMediaSink_iface;
     IMFClockStateSink IMFClockStateSink_iface;
     IMFMediaEventGenerator IMFMediaEventGenerator_iface;
+    IMFGetService IMFGetService_iface;
+    IMFRateSupport IMFRateSupport_iface;
     IMFStreamSink IMFStreamSink_iface;
     IMFMediaTypeHandler IMFMediaTypeHandler_iface;
     IMFAsyncCallback timer_callback;
@@ -115,6 +119,16 @@ static struct sample_grabber *impl_from_IMFClockStateSink(IMFClockStateSink *ifa
 static struct sample_grabber *impl_from_IMFMediaEventGenerator(IMFMediaEventGenerator *iface)
 {
     return CONTAINING_RECORD(iface, struct sample_grabber, IMFMediaEventGenerator_iface);
+}
+
+static struct sample_grabber *impl_from_IMFGetService(IMFGetService *iface)
+{
+    return CONTAINING_RECORD(iface, struct sample_grabber, IMFGetService_iface);
+}
+
+static struct sample_grabber *impl_from_IMFRateSupport(IMFRateSupport *iface)
+{
+    return CONTAINING_RECORD(iface, struct sample_grabber, IMFRateSupport_iface);
 }
 
 static struct sample_grabber *impl_from_IMFStreamSink(IMFStreamSink *iface)
@@ -773,6 +787,14 @@ static HRESULT WINAPI sample_grabber_sink_QueryInterface(IMFMediaSink *iface, RE
     {
         *obj = &grabber->IMFMediaEventGenerator_iface;
     }
+    else if (IsEqualIID(riid, &IID_IMFGetService))
+    {
+        *obj = &grabber->IMFGetService_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFRateSupport))
+    {
+        *obj = &grabber->IMFRateSupport_iface;
+    }
     else
     {
         WARN("Unsupported %s.\n", debugstr_guid(riid));
@@ -1249,6 +1271,109 @@ static const IMFClockStateSinkVtbl sample_grabber_clock_sink_vtbl =
     sample_grabber_clock_sink_OnClockSetRate,
 };
 
+static HRESULT WINAPI sample_grabber_getservice_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
+{
+    struct sample_grabber *grabber = impl_from_IMFGetService(iface);
+    return IMFMediaSink_QueryInterface(&grabber->IMFMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI sample_grabber_getservice_AddRef(IMFGetService *iface)
+{
+    struct sample_grabber *grabber = impl_from_IMFGetService(iface);
+    return IMFMediaSink_AddRef(&grabber->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI sample_grabber_getservice_Release(IMFGetService *iface)
+{
+    struct sample_grabber *grabber = impl_from_IMFGetService(iface);
+    return IMFMediaSink_Release(&grabber->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI sample_grabber_getservice_GetService(IMFGetService *iface, REFGUID service,
+        REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(service, &MF_RATE_CONTROL_SERVICE))
+    {
+        if (IsEqualIID(riid, &IID_IMFRateSupport))
+            return IMFGetService_QueryInterface(iface, riid, obj);
+
+        return E_NOINTERFACE;
+    }
+
+    FIXME("Unsupported service %s, riid %s.\n", debugstr_guid(service), debugstr_guid(riid));
+
+    return MF_E_UNSUPPORTED_SERVICE;
+}
+
+static const IMFGetServiceVtbl sample_grabber_getservice_vtbl =
+{
+    sample_grabber_getservice_QueryInterface,
+    sample_grabber_getservice_AddRef,
+    sample_grabber_getservice_Release,
+    sample_grabber_getservice_GetService,
+};
+
+static HRESULT WINAPI sample_grabber_rate_support_QueryInterface(IMFRateSupport *iface, REFIID riid, void **obj)
+{
+    struct sample_grabber *grabber = impl_from_IMFRateSupport(iface);
+    return IMFMediaSink_QueryInterface(&grabber->IMFMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI sample_grabber_rate_support_AddRef(IMFRateSupport *iface)
+{
+    struct sample_grabber *grabber = impl_from_IMFRateSupport(iface);
+    return IMFMediaSink_AddRef(&grabber->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI sample_grabber_rate_support_Release(IMFRateSupport *iface)
+{
+    struct sample_grabber *grabber = impl_from_IMFRateSupport(iface);
+    return IMFMediaSink_Release(&grabber->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI sample_grabber_rate_support_GetSlowestRate(IMFRateSupport *iface, MFRATE_DIRECTION direction,
+        BOOL thin, float *rate)
+{
+    TRACE("%p, %d, %d, %p.\n", iface, direction, thin, rate);
+
+    *rate = 0.0f;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI sample_grabber_rate_support_GetFastestRate(IMFRateSupport *iface, MFRATE_DIRECTION direction,
+        BOOL thin, float *rate)
+{
+    TRACE("%p, %d, %d, %p.\n", iface, direction, thin, rate);
+
+    *rate = direction == MFRATE_REVERSE ? -FLT_MAX : FLT_MAX;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI sample_grabber_rate_support_IsRateSupported(IMFRateSupport *iface, BOOL thin, float rate,
+        float *ret_rate)
+{
+    TRACE("%p, %d, %f, %p.\n", iface, thin, rate, ret_rate);
+
+    if (ret_rate)
+        *ret_rate = rate;
+
+    return S_OK;
+}
+
+static const IMFRateSupportVtbl sample_grabber_rate_support_vtbl =
+{
+    sample_grabber_rate_support_QueryInterface,
+    sample_grabber_rate_support_AddRef,
+    sample_grabber_rate_support_Release,
+    sample_grabber_rate_support_GetSlowestRate,
+    sample_grabber_rate_support_GetFastestRate,
+    sample_grabber_rate_support_IsRateSupported,
+};
+
 static HRESULT sample_grabber_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
 {
     struct sample_grabber_activate_context *context = user_context;
@@ -1272,6 +1397,8 @@ static HRESULT sample_grabber_create_object(IMFAttributes *attributes, void *use
     object->IMFMediaSink_iface.lpVtbl = &sample_grabber_sink_vtbl;
     object->IMFClockStateSink_iface.lpVtbl = &sample_grabber_clock_sink_vtbl;
     object->IMFMediaEventGenerator_iface.lpVtbl = &sample_grabber_sink_events_vtbl;
+    object->IMFGetService_iface.lpVtbl = &sample_grabber_getservice_vtbl;
+    object->IMFRateSupport_iface.lpVtbl = &sample_grabber_rate_support_vtbl;
     object->IMFStreamSink_iface.lpVtbl = &sample_grabber_stream_vtbl;
     object->IMFMediaTypeHandler_iface.lpVtbl = &sample_grabber_stream_type_handler_vtbl;
     object->timer_callback.lpVtbl = &sample_grabber_stream_timer_callback_vtbl;
