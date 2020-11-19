@@ -211,10 +211,9 @@ int CDECL ___mb_cur_max_l_func(MSVCRT__locale_t locale)
 /*********************************************************************
  * INTERNAL: _setmbcp_l
  */
-int _setmbcp_l(int cp, LCID lcid, MSVCRT_pthreadmbcinfo mbcinfo)
+MSVCRT_threadmbcinfo* create_mbcinfo(int cp, LCID lcid, MSVCRT_threadmbcinfo *old_mbcinfo)
 {
-  const char format[] = ".%d";
-
+  MSVCRT_threadmbcinfo *mbcinfo;
   int newcp;
   CPINFO cpi;
   BYTE *bytes;
@@ -225,8 +224,16 @@ int _setmbcp_l(int cp, LCID lcid, MSVCRT_pthreadmbcinfo mbcinfo)
   int ret;
   int i;
 
+  if(old_mbcinfo && cp==old_mbcinfo->mbcodepage
+          && (lcid==-1 || lcid==old_mbcinfo->mblcid)) {
+    InterlockedIncrement(&old_mbcinfo->refcount);
+    return old_mbcinfo;
+  }
+
+  mbcinfo = MSVCRT_malloc(sizeof(MSVCRT_threadmbcinfo));
   if(!mbcinfo)
-      mbcinfo = get_mbcinfo();
+    return NULL;
+  mbcinfo->refcount = 1;
 
   switch (cp)
   {
@@ -250,7 +257,7 @@ int _setmbcp_l(int cp, LCID lcid, MSVCRT_pthreadmbcinfo mbcinfo)
   }
 
   if(lcid == -1) {
-    MSVCRT_sprintf(bufA, format, newcp);
+    MSVCRT_sprintf(bufA, ".%d", newcp);
     mbcinfo->mblcid = MSVCRT_locale_to_LCID(bufA, NULL, NULL);
   } else {
     mbcinfo->mblcid = lcid;
@@ -265,8 +272,8 @@ int _setmbcp_l(int cp, LCID lcid, MSVCRT_pthreadmbcinfo mbcinfo)
   if (!GetCPInfo(newcp, &cpi))
   {
     WARN("Codepage %d not found\n", newcp);
-    *MSVCRT__errno() = MSVCRT_EINVAL;
-    return -1;
+    MSVCRT_free(mbcinfo);
+    return NULL;
   }
 
   /* setup the _mbctype */
@@ -370,10 +377,7 @@ int _setmbcp_l(int cp, LCID lcid, MSVCRT_pthreadmbcinfo mbcinfo)
   }
 
   mbcinfo->mbcodepage = newcp;
-  if(MSVCRT_locale && mbcinfo == MSVCRT_locale->mbcinfo)
-    memcpy(MSVCRT_mbctype, MSVCRT_locale->mbcinfo->mbctype, sizeof(MSVCRT_mbctype));
-
-  return 0;
+  return mbcinfo;
 }
 
 /*********************************************************************
@@ -381,7 +385,21 @@ int _setmbcp_l(int cp, LCID lcid, MSVCRT_pthreadmbcinfo mbcinfo)
  */
 int CDECL _setmbcp(int cp)
 {
-    return _setmbcp_l(cp, -1, NULL);
+    MSVCRT_threadmbcinfo **old_mbcinfo = get_mbcinfo_ptr();
+    MSVCRT_threadmbcinfo *mbcinfo;
+
+    mbcinfo = create_mbcinfo(cp, -1, *old_mbcinfo);
+    if(!mbcinfo) {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return -1;
+    }
+
+    free_mbcinfo(*old_mbcinfo);
+    *old_mbcinfo = mbcinfo;
+
+    if(mbcinfo == MSVCRT_locale->mbcinfo)
+        memcpy(MSVCRT_mbctype, MSVCRT_locale->mbcinfo->mbctype, sizeof(MSVCRT_mbctype));
+    return 0;
 }
 
 /*********************************************************************

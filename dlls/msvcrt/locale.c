@@ -597,14 +597,18 @@ MSVCRT_pthreadlocinfo CDECL get_locinfo(void) {
     return *get_locinfo_ptr();
 }
 
-/* INTERNAL: returns pthreadmbcinfo struct */
-MSVCRT_pthreadmbcinfo CDECL get_mbcinfo(void) {
+MSVCRT_pthreadmbcinfo* CDECL get_mbcinfo_ptr(void) {
     thread_data_t *data = msvcrt_get_thread_data();
 
     if(!data || !data->have_locale)
-        return MSVCRT_locale->mbcinfo;
+        return &MSVCRT_locale->mbcinfo;
 
-    return data->mbcinfo;
+    return &data->mbcinfo;
+}
+
+/* INTERNAL: returns pthreadmbcinfo struct */
+MSVCRT_pthreadmbcinfo CDECL get_mbcinfo(void) {
+    return *get_mbcinfo_ptr();
 }
 
 /* INTERNAL: constructs string returned by setlocale */
@@ -1964,16 +1968,13 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
         return NULL;
     }
 
-    loc->mbcinfo = MSVCRT_malloc(sizeof(MSVCRT_threadmbcinfo));
+    loc->mbcinfo = create_mbcinfo(loc->locinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage,
+            loc->locinfo->lc_handle[MSVCRT_LC_CTYPE], NULL);
     if(!loc->mbcinfo) {
         free_locinfo(loc->locinfo);
         MSVCRT_free(loc);
         return NULL;
     }
-
-    loc->mbcinfo->refcount = 1;
-    _setmbcp_l(loc->locinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage,
-            loc->locinfo->lc_handle[MSVCRT_LC_CTYPE], loc->mbcinfo);
     return loc;
 }
 

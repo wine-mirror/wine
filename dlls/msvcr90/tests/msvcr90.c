@@ -130,6 +130,7 @@ static int (__cdecl *p_fflush_nolock)(FILE*);
 static size_t (__cdecl *p_mbstowcs)(wchar_t*, const char*, size_t);
 static size_t (__cdecl *p_wcstombs)(char*, const wchar_t*, size_t);
 static char* (__cdecl *p_setlocale)(int, const char*);
+static int (__cdecl *p__setmbcp)(int);
 static int (__cdecl *p__fpieee_flt)(ULONG, EXCEPTION_POINTERS*, int (__cdecl *handler)(_FPIEEE_RECORD*));
 static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
 static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t, _locale_t);
@@ -159,6 +160,16 @@ struct __lc_time_data {
 /* make sure we use the correct errno */
 #undef errno
 #define errno (*p_errno())
+
+typedef struct threadmbcinfostruct {
+    int refcount;
+    int mbcodepage;
+    int ismbcodepage;
+    int mblcid;
+    unsigned short mbulinfo[6];
+    unsigned char mbctype[257];
+    unsigned char mbcasemap[256];
+} threadmbcinfo;
 
 /* type info */
 typedef struct __type_info
@@ -415,6 +426,7 @@ static BOOL init(void)
     SET(p_mbstowcs, "mbstowcs");
     SET(p_wcstombs, "wcstombs");
     SET(p_setlocale, "setlocale");
+    SET(p__setmbcp, "_setmbcp");
     SET(p__fpieee_flt, "_fpieee_flt");
     SET(p__memicmp, "_memicmp");
     SET(p__memicmp_l, "_memicmp_l");
@@ -1979,8 +1991,12 @@ static void test____mb_cur_max_l_func(void)
 
 static void test__get_current_locale(void)
 {
-    _locale_t l = p__get_current_locale(), l2 = p__get_current_locale();
+    _locale_t l, l2;
     int i;
+
+    ok(!p__setmbcp(1252), "_setmbcp failed\n");
+    l = p__get_current_locale();
+    l2 = p__get_current_locale();
 
     ok(!strcmp(l->locinfo->lc_category[LC_COLLATE].locale, "C"),
             "LC_COLLATE = \"%s\"\n", l->locinfo->lc_category[LC_COLLATE].locale);
@@ -1992,6 +2008,7 @@ static void test__get_current_locale(void)
             "LC_NUMERIC = \"%s\"\n", l->locinfo->lc_category[LC_NUMERIC].locale);
     ok(!strcmp(l->locinfo->lc_category[LC_TIME].locale, "C"),
             "LC_TIME = \"%s\"\n", l->locinfo->lc_category[LC_TIME].locale);
+    ok(l->mbcinfo->mbcodepage == 1252, "mbcodepage = %d\n", l->mbcinfo->mbcodepage);
 
     ok(l->locinfo->refcount == 3, "refcount = %d\n", l->locinfo->refcount);
 
@@ -2001,6 +2018,7 @@ static void test__get_current_locale(void)
         p__free_locale(l2);
         return;
     }
+    ok(!p__setmbcp(932), "_setmbcp failed\n");
 
     ok(!strcmp(l->locinfo->lc_category[LC_COLLATE].locale, "C"),
             "LC_COLLATE = \"%s\"\n", l->locinfo->lc_category[LC_COLLATE].locale);
@@ -2012,6 +2030,7 @@ static void test__get_current_locale(void)
             "LC_NUMERIC = \"%s\"\n", l->locinfo->lc_category[LC_NUMERIC].locale);
     ok(!strcmp(l->locinfo->lc_category[LC_TIME].locale, "C"),
             "LC_TIME = \"%s\"\n", l->locinfo->lc_category[LC_TIME].locale);
+    ok(l->mbcinfo->mbcodepage == 1252, "mbcodepage = %d\n", l->mbcinfo->mbcodepage);
 
     ok(l->locinfo->refcount == 2, "refcount = %d\n", l->locinfo->refcount);
     ok(l->locinfo == l2->locinfo, "different locinfo pointers\n");
@@ -2143,9 +2162,7 @@ static void test__get_current_locale(void)
 
     p__free_locale(l2);
 
-    trace("before: %s\n", p_setlocale(LC_ALL, NULL));
-    trace("current locale is: %s\n", p_setlocale(LC_MONETARY, "C"));
-    trace("after: %s\n", p_setlocale(LC_ALL, NULL));
+    p_setlocale(LC_MONETARY, "C");
     l2 = p__get_current_locale();
 
     ok(l->locinfo->refcount == 1, "refcount = %d\n", l->locinfo->refcount);
