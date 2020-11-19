@@ -29,8 +29,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* MT */
-#define LOCK_HEAP   _mlock( _HEAP_LOCK )
-#define UNLOCK_HEAP _munlock( _HEAP_LOCK )
+#define LOCK_HEAP   _lock( _HEAP_LOCK )
+#define UNLOCK_HEAP _unlock( _HEAP_LOCK )
 
 /* _aligned */
 #define SAVED_PTR(x) ((void *)((DWORD_PTR)((char *)x - sizeof(void *)) & \

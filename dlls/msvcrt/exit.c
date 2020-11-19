@@ -26,8 +26,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* MT */
-#define LOCK_EXIT   _mlock(_EXIT_LOCK1)
-#define UNLOCK_EXIT _munlock(_EXIT_LOCK1)
+#define LOCK_EXIT   _lock(_EXIT_LOCK1)
+#define UNLOCK_EXIT _unlock(_EXIT_LOCK1)
 
 static MSVCRT_purecall_handler purecall_handler = NULL;
 

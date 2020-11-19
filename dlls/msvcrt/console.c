@@ -32,8 +32,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 
 /* MT */
-#define LOCK_CONSOLE   _mlock(_CONIO_LOCK)
-#define UNLOCK_CONSOLE _munlock(_CONIO_LOCK)
+#define LOCK_CONSOLE   _lock(_CONIO_LOCK)
+#define UNLOCK_CONSOLE _unlock(_CONIO_LOCK)
 
 static HANDLE MSVCRT_console_in = INVALID_HANDLE_VALUE;
 static HANDLE MSVCRT_console_out= INVALID_HANDLE_VALUE;

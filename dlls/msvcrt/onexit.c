@@ -51,13 +51,13 @@ int __cdecl _register_onexit_function(_onexit_table_t *table, _onexit_t func)
     if (!table)
         return -1;
 
-    _mlock(_EXIT_LOCK1);
+    _lock(_EXIT_LOCK1);
     if (!table->_first)
     {
         table->_first = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 32 * sizeof(void *));
         if (!table->_first)
         {
-            _munlock(_EXIT_LOCK1);
+            _unlock(_EXIT_LOCK1);
             return -1;
         }
         table->_last = table->_first;
@@ -71,7 +71,7 @@ int __cdecl _register_onexit_function(_onexit_table_t *table, _onexit_t func)
         _PVFV *tmp = HeapReAlloc(GetProcessHeap(), 0, table->_first, 2 * len * sizeof(void *));
         if (!tmp)
         {
-            _munlock(_EXIT_LOCK1);
+            _unlock(_EXIT_LOCK1);
             return -1;
         }
         table->_first = tmp;
@@ -81,7 +81,7 @@ int __cdecl _register_onexit_function(_onexit_table_t *table, _onexit_t func)
 
     *table->_last = (_PVFV)func;
     table->_last++;
-    _munlock(_EXIT_LOCK1);
+    _unlock(_EXIT_LOCK1);
     return 0;
 }
 
@@ -97,10 +97,10 @@ int __cdecl _execute_onexit_table(_onexit_table_t *table)
     if (!table)
         return -1;
 
-    _mlock(_EXIT_LOCK1);
+    _lock(_EXIT_LOCK1);
     if (!table->_first || table->_first >= table->_last)
     {
-        _munlock(_EXIT_LOCK1);
+        _unlock(_EXIT_LOCK1);
         return 0;
     }
     copy._first = table->_first;
@@ -108,7 +108,7 @@ int __cdecl _execute_onexit_table(_onexit_table_t *table)
     copy._end   = table->_end;
     memset(table, 0, sizeof(*table));
     _initialize_onexit_table(table);
-    _munlock(_EXIT_LOCK1);
+    _unlock(_EXIT_LOCK1);
 
     for (func = copy._last - 1; func >= copy._first; func--)
     {

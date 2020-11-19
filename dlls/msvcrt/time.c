@@ -111,7 +111,7 @@ void CDECL MSVCRT__tzset(void)
     char *tz = MSVCRT_getenv("TZ");
     BOOL error;
 
-    _mlock(_TIME_LOCK);
+    _lock(_TIME_LOCK);
     if(tz && tz[0]) {
         BOOL neg_zone = FALSE;
 
@@ -158,7 +158,7 @@ void CDECL MSVCRT__tzset(void)
                     sizeof(tzname_dst), NULL, &error) || error)
             *MSVCRT__tzname[0] = 0;
     }
-    _munlock(_TIME_LOCK);
+    _unlock(_TIME_LOCK);
 }
 
 static void _tzset_init(void)
@@ -166,12 +166,12 @@ static void _tzset_init(void)
     static BOOL init = FALSE;
 
     if(!init) {
-        _mlock(_TIME_LOCK);
+        _lock(_TIME_LOCK);
         if(!init) {
             MSVCRT__tzset();
             init = TRUE;
         }
-        _munlock(_TIME_LOCK);
+        _unlock(_TIME_LOCK);
     }
 }
 

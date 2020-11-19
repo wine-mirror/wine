@@ -1122,7 +1122,7 @@ void free_mbcinfo(MSVCRT_pthreadmbcinfo mbcinfo)
  */
 void CDECL _lock_locales(void)
 {
-    _mlock(_SETLOCALE_LOCK);
+    _lock(_SETLOCALE_LOCK);
 }
 
 /*********************************************************************
@@ -1130,7 +1130,7 @@ void CDECL _lock_locales(void)
  */
 void CDECL _unlock_locales(void)
 {
-    _munlock(_SETLOCALE_LOCK);
+    _unlock(_SETLOCALE_LOCK);
 }
 
 MSVCRT__locale_t CDECL get_current_locale_noalloc(MSVCRT__locale_t locale)

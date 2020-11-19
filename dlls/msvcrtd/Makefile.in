@@ -1,4 +1,4 @@
-EXTRADEFS = -D_MT -D_MSVCR_VER=0
+EXTRADEFS = -D_MSVCR_VER=0
 MODULE    = msvcrtd.dll
 IMPORTLIB = msvcrtd
 PARENTSRC = ../msvcrt
