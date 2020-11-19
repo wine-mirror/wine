@@ -63,17 +63,22 @@ HRESULT open_appidkey_from_clsid(REFCLSID clsid, REGSAM access, HKEY *subkey) DE
 
 #define CHARS_IN_GUID 39
 
+enum tlsdata_flags
+{
+    OLETLS_UUIDINITIALIZED = 0x2,
+};
+
 /* this is what is stored in TEB->ReservedForOle */
 struct tlsdata
 {
     struct apartment *apt;
     IErrorInfo       *errorinfo;
-    DWORD             thread_seqid;/* returned with CoGetCurrentProcess */
-    DWORD             apt_mask;    /* apartment mask (+0Ch on x86) */
+    DWORD             thread_seqid;  /* returned with CoGetCurrentProcess */
+    DWORD             flags;         /* tlsdata_flags (+0Ch on x86) */
     void             *unknown0;
-    DWORD             inits;        /* number of times CoInitializeEx called */
-    DWORD             ole_inits;    /* number of times OleInitialize called */
-    GUID              causality_id; /* unique identifier for each COM call */
+    DWORD             inits;         /* number of times CoInitializeEx called */
+    DWORD             ole_inits;     /* number of times OleInitialize called */
+    GUID              causality_id;  /* unique identifier for each COM call */
     LONG              pending_call_count_client; /* number of client calls pending */
     LONG              pending_call_count_server; /* number of server calls pending */
     DWORD             unknown;

@@ -2547,7 +2547,10 @@ HRESULT WINAPI CoGetCurrentLogicalThreadId(GUID *id)
         return hr;
 
     if (IsEqualGUID(&tlsdata->causality_id, &GUID_NULL))
+    {
         CoCreateGuid(&tlsdata->causality_id);
+        tlsdata->flags |= OLETLS_UUIDINITIALIZED;
+    }
 
     *id = tlsdata->causality_id;
 

@@ -45,24 +45,24 @@ DEFINE_OLEGUID( CLSID_DfMarshal, 0x0000030b, 0, 0 );
 struct oletls
 {
     struct apartment *apt;
-    IErrorInfo       *errorinfo;   /* see errorinfo.c */
-    DWORD             thread_seqid;/* returned with CoGetCurrentProcess */
-    DWORD             apt_mask;    /* apartment mask (+0Ch on x86) */
-    void            *unknown0;
-    DWORD            inits;        /* number of times CoInitializeEx called */
-    DWORD            ole_inits;    /* number of times OleInitialize called */
-    GUID             causality_id; /* unique identifier for each COM call */
-    LONG             pending_call_count_client; /* number of client calls pending */
-    LONG             pending_call_count_server; /* number of server calls pending */
-    DWORD            unknown;
-    IObjContext     *context_token; /* (+38h on x86) */
-    IUnknown        *call_state;    /* current call context (+3Ch on x86) */
-    DWORD            unknown2[46];
-    IUnknown        *cancel_object; /* cancel object set by CoSetCancelObject (+F8h on x86) */
-    IUnknown        *state;       /* see CoSetState */
-    struct list      spies;         /* Spies installed with CoRegisterInitializeSpy */
-    DWORD            spies_lock;
-    DWORD            cancelcount;
+    IErrorInfo       *errorinfo;     /* see errorinfo.c */
+    DWORD             thread_seqid;  /* returned with CoGetCurrentProcess */
+    DWORD             flags;         /* tlsdata_flags (+0Ch on x86) */
+    void             *unknown0;
+    DWORD             inits;         /* number of times CoInitializeEx called */
+    DWORD             ole_inits;     /* number of times OleInitialize called */
+    GUID              causality_id;  /* unique identifier for each COM call */
+    LONG              pending_call_count_client; /* number of client calls pending */
+    LONG              pending_call_count_server; /* number of server calls pending */
+    DWORD             unknown;
+    IObjContext      *context_token; /* (+38h on x86) */
+    IUnknown         *call_state;    /* current call context (+3Ch on x86) */
+    DWORD             unknown2[46];
+    IUnknown         *cancel_object; /* cancel object set by CoSetCancelObject (+F8h on x86) */
+    IUnknown         *state;         /* see CoSetState */
+    struct list       spies;         /* Spies installed with CoRegisterInitializeSpy */
+    DWORD             spies_lock;
+    DWORD             cancelcount;
 };
 
 /* Global Interface Table Functions */

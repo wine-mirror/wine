@@ -36,6 +36,7 @@
 #include "ctxtcall.h"
 
 #include "wine/test.h"
+#include "winternl.h"
 #include "initguid.h"
 
 #define DEFINE_EXPECT(func) \
@@ -4245,6 +4246,100 @@ static void test_call_cancellation(void)
     ok(hr == CO_E_CANCEL_DISABLED, "Unexpected hr %#x.\n", hr);
 }
 
+enum oletlsflags
+{
+    OLETLS_UUIDINITIALIZED = 0x2,
+    OLETLS_DISABLE_OLE1DDE = 0x40,
+    OLETLS_APARTMENTTHREADED = 0x80,
+    OLETLS_MULTITHREADED = 0x100,
+};
+
+struct oletlsdata
+{
+    void *threadbase;
+    void *smallocator;
+    DWORD id;
+    DWORD flags;
+};
+
+static DWORD get_oletlsflags(void)
+{
+    struct oletlsdata *data = NtCurrentTeb()->ReservedForOle;
+    return data ? data->flags : 0;
+}
+
+static DWORD CALLBACK oletlsdata_test_thread(void *arg)
+{
+    IUnknown *unk;
+    DWORD flags;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_InternetZoneManager, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    /* Flag is not set for implicit MTA. */
+    flags = get_oletlsflags();
+    ok(!(flags & OLETLS_MULTITHREADED), "Unexpected flags %#x.\n", flags);
+
+    return 0;
+}
+
+static void test_oletlsdata(void)
+{
+    HANDLE thread;
+    DWORD flags;
+    HRESULT hr;
+    GUID guid;
+
+    /* STA */
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    flags = get_oletlsflags();
+todo_wine
+    ok(flags & OLETLS_APARTMENTTHREADED && !(flags & OLETLS_DISABLE_OLE1DDE), "Unexpected flags %#x.\n", flags);
+    CoUninitialize();
+    flags = get_oletlsflags();
+    ok(!(flags & (OLETLS_APARTMENTTHREADED | OLETLS_MULTITHREADED | OLETLS_DISABLE_OLE1DDE)), "Unexpected flags %#x.\n", flags);
+
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    flags = get_oletlsflags();
+todo_wine
+    ok(flags & OLETLS_APARTMENTTHREADED && flags & OLETLS_DISABLE_OLE1DDE, "Unexpected flags %#x.\n", flags);
+    CoUninitialize();
+    flags = get_oletlsflags();
+    ok(!(flags & (OLETLS_APARTMENTTHREADED | OLETLS_MULTITHREADED | OLETLS_DISABLE_OLE1DDE)), "Unexpected flags %#x.\n", flags);
+
+    /* MTA */
+    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    flags = get_oletlsflags();
+todo_wine
+    ok(flags & OLETLS_MULTITHREADED && flags & OLETLS_DISABLE_OLE1DDE, "Unexpected flags %#x.\n", flags);
+
+    /* Implicit case. */
+    thread = CreateThread(NULL, 0, oletlsdata_test_thread, NULL, 0, &flags);
+    ok(thread != NULL, "Failed to create a test thread, error %d.\n", GetLastError());
+    ok(!WaitForSingleObject(thread, 5000), "Wait timed out.\n");
+    CloseHandle(thread);
+
+    CoUninitialize();
+    flags = get_oletlsflags();
+    ok(!(flags & (OLETLS_APARTMENTTHREADED | OLETLS_MULTITHREADED | OLETLS_DISABLE_OLE1DDE)), "Unexpected flags %#x.\n", flags);
+
+    /* Thread ID. */
+    flags = get_oletlsflags();
+    ok(!(flags & OLETLS_UUIDINITIALIZED), "Unexpected flags %#x.\n", flags);
+
+    hr = CoGetCurrentLogicalThreadId(&guid);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    flags = get_oletlsflags();
+    ok(flags & OLETLS_UUIDINITIALIZED && !(flags & (OLETLS_APARTMENTTHREADED | OLETLS_MULTITHREADED)),
+            "Unexpected flags %#x.\n", flags);
+}
+
 START_TEST(compobj)
 {
     init_funcs();
@@ -4254,6 +4349,7 @@ START_TEST(compobj)
     lstrcatA(testlib, "\\testlib.dll");
     extract_resource("testlib.dll", "TESTDLL", testlib);
 
+    test_oletlsdata();
     test_ProgIDFromCLSID();
     test_CLSIDFromProgID();
     test_CLSIDFromString();
