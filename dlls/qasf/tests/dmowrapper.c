@@ -1445,6 +1445,8 @@ static void test_filter_state(IMediaControl *control)
     OAFilterState state;
     HRESULT hr;
 
+    got_Flush = 0;
+
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(state == State_Stopped, "Got state %u.\n", state);
@@ -1782,6 +1784,13 @@ static void test_connect_pin(void)
     hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, &req_mt);
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
 
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, &req_mt);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     ok(!testdmo_input_mt_set, "Input type should not be set.\n");
 
     req_mt.lSampleSize = 123;
@@ -1800,6 +1809,13 @@ static void test_connect_pin(void)
     ok(testdmo_input_mt_set, "Input type should be set.\n");
     ok(compare_media_types(&testdmo_input_mt, &req_mt), "Media types didn't match.\n");
 
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, sink);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     test_sink_allocator(meminput);
 
     /* Test source connection. */
@@ -1816,6 +1832,14 @@ static void test_connect_pin(void)
     /* Exact connection. */
 
     req_mt = mt2;
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -1830,6 +1854,13 @@ static void test_connect_pin(void)
 
     ok(testdmo_output_mt_set, "Output type should be set.\n");
     ok(compare_media_types(&testdmo_output_mt, &req_mt), "Media types didn't match.\n");
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, source);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     test_filter_state(control);
     test_sample_processing(control, meminput);
