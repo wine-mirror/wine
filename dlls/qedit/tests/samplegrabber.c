@@ -769,6 +769,7 @@ static void test_connect_pin(void)
     IPin *sink, *source, *peer;
     IEnumMediaTypes *enummt;
     ISampleGrabber *grabber;
+    IMediaControl *control;
     AM_MEDIA_TYPE mt, *pmt;
     IFilterGraph2 *graph;
     HRESULT hr;
@@ -781,6 +782,7 @@ static void test_connect_pin(void)
     IFilterGraph2_AddFilter(graph, &testsource.filter.IBaseFilter_iface, L"source");
     IFilterGraph2_AddFilter(graph, &testsink.filter.IBaseFilter_iface, L"sink");
     IFilterGraph2_AddFilter(graph, filter, L"sample grabber");
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     IBaseFilter_FindPin(filter, L"In", &sink);
     IBaseFilter_FindPin(filter, L"Out", &source);
     IBaseFilter_QueryInterface(filter, &IID_ISampleGrabber, (void **)&grabber);
@@ -802,6 +804,13 @@ static void test_connect_pin(void)
     hr = IPin_ConnectionMediaType(sink, &mt);
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, &req_mt);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, &req_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -813,6 +822,13 @@ static void test_connect_pin(void)
     hr = IPin_ConnectionMediaType(sink, &mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, sink);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = ISampleGrabber_GetConnectedMediaType(grabber, NULL);
     ok(hr == E_POINTER, "Got hr %#x.\n", hr);
@@ -874,6 +890,13 @@ static void test_connect_pin(void)
 
     /* Exact connection. */
 
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     req_mt.bTemporalCompression = FALSE;
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
@@ -892,6 +915,13 @@ static void test_connect_pin(void)
     ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
     ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
     ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, source);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_Disconnect(graph, source);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1025,6 +1055,7 @@ static void test_connect_pin(void)
 
     IPin_Release(sink);
     IPin_Release(source);
+    IMediaControl_Release(control);
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ISampleGrabber_Release(grabber);
