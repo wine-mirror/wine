@@ -104,7 +104,12 @@ static LRESULT CALLBACK vfw_driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
     }
 
     case ICM_DECOMPRESS_GET_PALETTE:
+    case ICM_DECOMPRESS_SET_PALETTE:
         return ICERR_UNSUPPORTED;
+
+    case ICM_DECOMPRESS_BEGIN:
+    case ICM_DECOMPRESS_END:
+        return ICERR_OK;
 
     case ICM_GETINFO:
     {
@@ -950,6 +955,13 @@ static void test_connect_pin(void)
     hr = IPin_ConnectionMediaType(sink, &mt);
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
+    hr = IMediaControl_Pause(control);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, &req_mt);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     req_mt.subtype = MEDIASUBTYPE_RGB24;
     hr = IFilterGraph2_ConnectDirect(graph, &testsource.source.pin.IPin_iface, sink, &req_mt);
     ok(hr == VFW_E_TYPE_NOT_ACCEPTED, "Got hr %#x.\n", hr);
@@ -968,6 +980,13 @@ static void test_connect_pin(void)
     ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
     ok(compare_media_types(&testsource.source.pin.mt, &req_mt), "Media types didn't match.\n");
     FreeMediaType(&mt);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, sink);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     sink_bih = req_format.bmiHeader;
 
@@ -1061,6 +1080,14 @@ static void test_connect_pin(void)
     /* Exact connection. */
 
     CopyMediaType(&req_mt, &source_mt);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -1074,6 +1101,13 @@ static void test_connect_pin(void)
     ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
     ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
     FreeMediaType(&mt);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, source);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_Disconnect(graph, source);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

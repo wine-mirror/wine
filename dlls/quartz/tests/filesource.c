@@ -1296,6 +1296,7 @@ static void test_connect_pin(void)
     AM_MEDIA_TYPE mt, *source_mt;
     struct testsink testsink;
     IEnumMediaTypes *enummt;
+    IMediaControl *control;
     IFilterGraph2 *graph;
     IPin *source, *peer;
     BYTE my_format = 1;
@@ -1308,6 +1309,7 @@ static void test_connect_pin(void)
             &IID_IFilterGraph2, (void **)&graph);
     IFilterGraph2_AddFilter(graph, &testsink.filter.IBaseFilter_iface, L"sink");
     IFilterGraph2_AddFilter(graph, filter, L"file source");
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     load_file(filter, filename);
     IBaseFilter_FindPin(filter, L"Output", &source);
 
@@ -1325,6 +1327,13 @@ static void test_connect_pin(void)
 
     /* Test exact connection. */
 
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.pin.pin.IPin_iface, &req_mt);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.pin.pin.IPin_iface, &req_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -1337,6 +1346,13 @@ static void test_connect_pin(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
     ok(compare_media_types(&testsink.pin.pin.mt, &req_mt), "Media types didn't match.\n");
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, source);
+    ok(hr == VFW_E_NOT_STOPPED, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IFilterGraph2_Disconnect(graph, source);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1449,6 +1465,7 @@ static void test_connect_pin(void)
 
     CoTaskMemFree(source_mt);
     IPin_Release(source);
+    IMediaControl_Release(control);
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ref = IBaseFilter_Release(filter);
