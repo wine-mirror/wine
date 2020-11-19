@@ -204,11 +204,6 @@ static HRESULT WINAPI avi_decompressor_sink_Receive(struct strmbase_sink *iface,
     else
         IMediaSample_SetTime(pOutSample, NULL, NULL);
 
-    if (IMediaSample_GetMediaTime(pSample, &tStart, &tStop) == S_OK)
-        IMediaSample_SetMediaTime(pOutSample, &tStart, &tStop);
-    else
-        IMediaSample_SetMediaTime(pOutSample, NULL, NULL);
-
     hr = IMemInputPin_Receive(This->source.pMemInputPin, pOutSample);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED)
         ERR("Error sending sample (%x)\n", hr);

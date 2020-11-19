@@ -911,7 +911,7 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     }
 
     hr = IMediaSample_GetMediaTime(sample, &start, &stop);
-    todo_wine ok(hr == VFW_E_MEDIA_TIME_NOT_SET, "Got hr %#x.\n", hr);
+    ok(hr == VFW_E_MEDIA_TIME_NOT_SET, "Got hr %#x.\n", hr);
     hr = IMediaSample_IsDiscontinuity(sample);
     todo_wine_if (testmode == 5) ok(hr == (testmode == 4) ? S_OK : S_FALSE, "Got hr %#x.\n", hr);
     hr = IMediaSample_IsPreroll(sample);
