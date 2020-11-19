@@ -3077,8 +3077,8 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     output_filename( "-shared" );
     output_filename( source->filename );
     output_filename( obj_name );
-    if ((debug_file = get_debug_file( make, output_file )))
-        output_filename( strmake( "-Wl,--debug-file,%s", debug_file ));
+    if ((debug_file = get_debug_file( make, dll_name )))
+        output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
     output_filenames( all_libs );
     output_filename( make->is_cross ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
@@ -3293,7 +3293,7 @@ static void output_module( struct makefile *make )
         strarray_add( &make->all_targets, strmake( "%s", make->module ));
         add_install_rule( make, make->module, strmake( "%s", make->module ),
                           strmake( "c$(dlldir)/%s", make->module ));
-        debug_file = get_debug_file( make, module_path );
+        debug_file = get_debug_file( make, make->module );
         output( "%s:", module_path );
     }
     else if (*dll_ext)
@@ -3316,7 +3316,7 @@ static void output_module( struct makefile *make )
         strarray_add( &make->all_targets, make->module );
         add_install_rule( make, make->module, make->module,
                           strmake( "p$(%s)/%s", spec_file ? "dlldir" : "bindir", make->module ));
-        debug_file = get_debug_file( make, module_path );
+        debug_file = get_debug_file( make, make->module );
         output( "%s:", module_path );
     }
 
@@ -3337,7 +3337,7 @@ static void output_module( struct makefile *make )
     output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, make->is_cross ? make->crossobj_files : make->object_files );
     output_filenames_obj_dir( make, make->res_files );
-    if (debug_file) output_filename( strmake( "-Wl,--debug-file,%s", debug_file ));
+    if (debug_file) output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
     output_filenames( all_libs );
     output_filename( make->is_cross ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
@@ -3551,8 +3551,8 @@ static void output_test_module( struct makefile *make )
     output_filenames( make->extradllflags );
     output_filenames_obj_dir( make, make->is_cross ? make->crossobj_files : make->object_files );
     output_filenames_obj_dir( make, make->res_files );
-    if ((debug_file = get_debug_file( make, output_file )))
-        output_filename( strmake( "-Wl,--debug-file,%s", debug_file ));
+    if ((debug_file = get_debug_file( make, testmodule )))
+        output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
     output_filenames( all_libs );
     output_filename( make->is_cross ? "$(CROSSLDFLAGS)" : "$(LDFLAGS)" );
     output( "\n" );
