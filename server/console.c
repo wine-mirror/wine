@@ -867,7 +867,15 @@ static struct object *create_console_server( void )
 
 static int is_blocking_read_ioctl( unsigned int code )
 {
-    return code == IOCTL_CONDRV_READ_INPUT || code == IOCTL_CONDRV_READ_CONSOLE;
+    switch (code)
+    {
+    case IOCTL_CONDRV_READ_INPUT:
+    case IOCTL_CONDRV_READ_CONSOLE:
+    case IOCTL_CONDRV_READ_FILE:
+        return 1;
+    default:
+        return 0;
+    }
 }
 
 static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )

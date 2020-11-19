@@ -1585,24 +1585,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH WriteConsoleOutputCharacterW( HANDLE handle, LPCWS
 /***********************************************************************
  *            ReadConsoleA   (kernelbase.@)
  */
-BOOL WINAPI ReadConsoleA( HANDLE handle, void *buffer, DWORD length, DWORD *ret_count, void *reserved )
+BOOL WINAPI ReadConsoleA( HANDLE handle, void *buffer, DWORD length, DWORD *count, void *reserved )
 {
-    LPWSTR strW = HeapAlloc( GetProcessHeap(), 0, length * sizeof(WCHAR) );
-    DWORD count = 0;
-    BOOL ret;
-
-    if (!strW)
+    if (length > INT_MAX)
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
     }
-    if ((ret = ReadConsoleW( handle, strW, length, &count, NULL )))
-    {
-        count = WideCharToMultiByte( GetConsoleCP(), 0, strW, count, buffer, length, NULL, NULL );
-        if (ret_count) *ret_count = count;
-    }
-    HeapFree( GetProcessHeap(), 0, strW );
-    return ret;
+
+    return console_ioctl( handle, IOCTL_CONDRV_READ_FILE, NULL, 0, buffer, length, count );
 }
 
 

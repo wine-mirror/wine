@@ -20,6 +20,7 @@
  */
 
 #include <assert.h>
+#include <limits.h>
 
 #include "conhost.h"
 
@@ -450,14 +451,44 @@ static NTSTATUS read_console_input( struct console *console, size_t out_size )
 
 static void read_from_buffer( struct console *console, size_t out_size )
 {
-    out_size = min( out_size, console->read_buffer_count * sizeof(WCHAR) );
-    read_complete( console, STATUS_SUCCESS, console->read_buffer, out_size, console->record_count != 0  );
-    if (out_size / sizeof(WCHAR) < console->read_buffer_count)
+    size_t len, read_len = 0;
+    char *buf = NULL;
+
+    switch( console->read_ioctl )
     {
-        memmove( console->read_buffer, console->read_buffer + out_size / sizeof(WCHAR),
-                 console->read_buffer_count * sizeof(WCHAR) - out_size );
+    case IOCTL_CONDRV_READ_CONSOLE:
+        out_size = min( out_size, console->read_buffer_count * sizeof(WCHAR) );
+        read_complete( console, STATUS_SUCCESS, console->read_buffer, out_size, console->record_count != 0  );
+        read_len = out_size / sizeof(WCHAR);
+        break;
+    case IOCTL_CONDRV_READ_FILE:
+        read_len = len = 0;
+        while (read_len < console->read_buffer_count && len < out_size)
+        {
+            len += WideCharToMultiByte( console->input_cp, 0, console->read_buffer + read_len, 1, NULL, 0, NULL, NULL );
+            read_len++;
+        }
+        if (len)
+        {
+            if (!(buf = malloc( len )))
+            {
+                read_complete( console, STATUS_NO_MEMORY, NULL, 0, console->record_count != 0  );
+                return;
+            }
+            WideCharToMultiByte( console->input_cp, 0, console->read_buffer, read_len, buf, len, NULL, NULL );
+        }
+        len = min( out_size, len );
+        read_complete( console, STATUS_SUCCESS, buf, len, console->record_count != 0  );
+        free( buf );
+        break;
     }
-    if (!(console->read_buffer_count -= out_size / sizeof(WCHAR)))
+
+    if (read_len < console->read_buffer_count)
+    {
+        memmove( console->read_buffer, console->read_buffer + read_len,
+                 (console->read_buffer_count - read_len) * sizeof(WCHAR) );
+    }
+    if (!(console->read_buffer_count -= read_len))
         free( console->read_buffer );
 }
 
@@ -1184,6 +1215,7 @@ static NTSTATUS process_console_input( struct console *console )
         if (console->record_count) read_console_input( console, console->pending_read );
         return STATUS_SUCCESS;
     case IOCTL_CONDRV_READ_CONSOLE:
+    case IOCTL_CONDRV_READ_FILE:
         break;
     default:
         return STATUS_SUCCESS;
@@ -1244,9 +1276,17 @@ static NTSTATUS process_console_input( struct console *console )
         else if (ir.Event.KeyEvent.uChar.UnicodeChar && !(ir.Event.KeyEvent.dwControlKeyState & LEFT_ALT_PRESSED))
             edit_line_insert( console, &ir.Event.KeyEvent.uChar.UnicodeChar, 1 );
 
-        if (!(console->mode & ENABLE_LINE_INPUT) && ctx->status == STATUS_PENDING &&
-            ctx->len >= console->pending_read / sizeof(WCHAR))
-            ctx->status = STATUS_SUCCESS;
+        if (!(console->mode & ENABLE_LINE_INPUT) && ctx->status == STATUS_PENDING)
+        {
+            if (console->read_ioctl == IOCTL_CONDRV_READ_FILE)
+            {
+                if (WideCharToMultiByte(console->input_cp, 0, ctx->buf, ctx->len, NULL, 0, NULL, NULL)
+                    >= console->pending_read)
+                    ctx->status = STATUS_SUCCESS;
+            }
+            else if (ctx->len >= console->pending_read / sizeof(WCHAR))
+                ctx->status = STATUS_SUCCESS;
+    }
     }
 
     if (console->record_count > i) memmove( console->records, console->records + i,
@@ -1285,10 +1325,17 @@ static NTSTATUS process_console_input( struct console *console )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS read_console( struct console *console, size_t out_size )
+static NTSTATUS read_console( struct console *console, unsigned int ioctl, size_t out_size )
 {
     TRACE("\n");
 
+    if (out_size > INT_MAX)
+    {
+        read_complete( console, STATUS_NO_MEMORY, NULL, 0, console->record_count );
+        return STATUS_NO_MEMORY;
+    }
+
+    console->read_ioctl = ioctl;
     if (!out_size || console->read_buffer_count)
     {
         read_from_buffer( console, out_size );
@@ -1301,7 +1348,6 @@ static NTSTATUS read_console( struct console *console, size_t out_size )
     console->edit_line.status = STATUS_PENDING;
     if (edit_line_grow( console, 1 )) console->edit_line.buf[0] = 0;
 
-    console->read_ioctl = IOCTL_CONDRV_READ_CONSOLE;
     console->pending_read = out_size;
     return process_console_input( console );
 }
@@ -2368,7 +2414,13 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
     case IOCTL_CONDRV_READ_CONSOLE:
         if (in_size || *out_size % sizeof(WCHAR)) return STATUS_INVALID_PARAMETER;
         ensure_tty_input_thread( console );
-        status = read_console( console, *out_size );
+        status = read_console( console, code, *out_size );
+        *out_size = 0;
+        return status;
+
+    case IOCTL_CONDRV_READ_FILE:
+        ensure_tty_input_thread( console );
+        status = read_console( console, code, *out_size );
         *out_size = 0;
         return status;
 
