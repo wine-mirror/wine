@@ -150,9 +150,12 @@ enum req_type
     REQ_FILL_CHAR,
     REQ_GET_INPUT,
     REQ_READ_CONSOLE,
+    REQ_READ_CONSOLE_A,
+    REQ_READ_CONSOLE_FILE,
     REQ_SCROLL,
     REQ_SET_ACTIVE,
     REQ_SET_CURSOR,
+    REQ_SET_INPUT_CP,
     REQ_SET_INPUT_MODE,
     REQ_SET_OUTPUT_MODE,
     REQ_SET_TITLE,
@@ -170,6 +173,7 @@ struct pseudoconsole_req
         COORD coord;
         HANDLE handle;
         DWORD mode;
+        int cp;
         size_t size;
         struct
         {
@@ -362,6 +366,18 @@ static void child_set_output_mode(DWORD mode)
     ok(ret, "WriteFile failed: %u\n", GetLastError());
 }
 
+static void child_set_input_cp(int cp)
+{
+    struct pseudoconsole_req req;
+    DWORD count;
+    BOOL ret;
+
+    req.type = REQ_SET_INPUT_CP;
+    req.u.cp = cp;
+    ret = WriteFile(child_pipe, &req, sizeof(req), &count, NULL);
+    ok(ret, "WriteFile failed: %u\n", GetLastError());
+}
+
 static void child_read_console(HANDLE pipe, size_t size)
 {
     struct pseudoconsole_req req;
@@ -369,6 +385,30 @@ static void child_read_console(HANDLE pipe, size_t size)
     BOOL ret;
 
     req.type = REQ_READ_CONSOLE;
+    req.u.size = size;
+    ret = WriteFile(pipe, &req, sizeof(req), &count, NULL);
+    ok(ret, "WriteFile failed: %u\n", GetLastError());
+}
+
+static void child_read_console_a(HANDLE pipe, size_t size)
+{
+    struct pseudoconsole_req req;
+    DWORD count;
+    BOOL ret;
+
+    req.type = REQ_READ_CONSOLE_A;
+    req.u.size = size;
+    ret = WriteFile(pipe, &req, sizeof(req), &count, NULL);
+    ok(ret, "WriteFile failed: %u\n", GetLastError());
+}
+
+static void child_read_console_file(HANDLE pipe, size_t size)
+{
+    struct pseudoconsole_req req;
+    DWORD count;
+    BOOL ret;
+
+    req.type = REQ_READ_CONSOLE_FILE;
     req.u.size = size;
     ret = WriteFile(pipe, &req, sizeof(req), &count, NULL);
     ok(ret, "WriteFile failed: %u\n", GetLastError());
@@ -388,6 +428,22 @@ static void child_expect_read_result_(unsigned int line, HANDLE pipe, const WCHA
                        count, exlen * sizeof(WCHAR));
     buf[count / sizeof(WCHAR)] = 0;
     ok_(__FILE__,line)(!memcmp(expect, buf, count), "unexpected data %s\n", wine_dbgstr_w(buf));
+}
+
+#define child_expect_read_result_a(a,b) child_expect_read_result_a_(__LINE__,a,b)
+static void child_expect_read_result_a_(unsigned int line, HANDLE pipe, const char *expect)
+{
+    size_t exlen = strlen(expect);
+    char buf[4096];
+    DWORD count;
+    BOOL ret;
+
+    ret = ReadFile(pipe, buf, sizeof(buf), &count, NULL);
+    ok_(__FILE__,line)(ret, "ReadFile failed: %u\n", GetLastError());
+    todo_wine_if(exlen && expect[exlen - 1] == '\xcc')
+    ok_(__FILE__,line)(count == exlen, "got %u, expected %u\n", count, exlen);
+    buf[count] = 0;
+    ok_(__FILE__,line)(!memcmp(expect, buf, count), "unexpected data %s\n", wine_dbgstr_a(buf));
 }
 
 static void expect_input(unsigned int event_type, INPUT_RECORD *record)
@@ -1015,6 +1071,48 @@ static void test_read_console(void)
     child_expect_read_result(child_pipe, L"yz");
     expect_empty_output();
 
+    child_set_input_cp(932);
+
+    child_read_console_a(child_pipe, 2);
+    write_console_pipe("\xe3\x81\x81");
+    child_expect_read_result_a(child_pipe, "\x82\x9f");
+    expect_empty_output();
+
+    child_read_console_a(child_pipe, 1);
+    write_console_pipe("\xe3\x81\x81""a");
+    child_expect_read_result_a(child_pipe, "\x82\xcc");
+    child_read_console_a(child_pipe, 1);
+    child_expect_read_result_a(child_pipe, "a");
+    expect_empty_output();
+
+    child_read_console_a(child_pipe, 2);
+    write_console_pipe("a\xe3\x81\x81""b");
+    child_expect_read_result_a(child_pipe, "a\x82\xcc");
+    child_read_console_a(child_pipe, 1);
+    child_expect_read_result_a(child_pipe, "b");
+    expect_empty_output();
+
+    child_read_console_file(child_pipe, 2);
+    write_console_pipe("\xe3\x81\x81");
+    child_expect_read_result_a(child_pipe, "\x82\x9f");
+    expect_empty_output();
+
+    child_read_console_file(child_pipe, 1);
+    write_console_pipe("\xe3\x81\x81""a");
+    child_expect_read_result_a(child_pipe, "\x82\xcc");
+    child_read_console_file(child_pipe, 1);
+    child_expect_read_result_a(child_pipe, "a");
+    expect_empty_output();
+
+    child_read_console_file(child_pipe, 2);
+    write_console_pipe("a\xe3\x81\x81""b");
+    child_expect_read_result_a(child_pipe, "a\x82\xcc");
+    child_read_console_file(child_pipe, 1);
+    child_expect_read_result_a(child_pipe, "b");
+    expect_empty_output();
+
+    child_set_input_cp(437);
+
     child_set_input_mode(child_pipe, ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
                          ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT | ENABLE_INSERT_MODE |
                          ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS | ENABLE_AUTO_POSITION);
@@ -1209,6 +1307,24 @@ static void child_process(HANDLE pipe)
             ok(ret, "WriteFile failed: %u\n", GetLastError());
             break;
 
+        case REQ_READ_CONSOLE_A:
+            count = req->u.size;
+            memset(buf, 0xcc, sizeof(buf));
+            ret = ReadConsoleA(input, buf, count, &count, NULL );
+            ok(ret, "ReadConsoleA failed: %u\n", GetLastError());
+            ret = WriteFile(pipe, buf, count, NULL, NULL);
+            ok(ret, "WriteFile failed: %u\n", GetLastError());
+            break;
+
+        case REQ_READ_CONSOLE_FILE:
+            count = req->u.size;
+            memset(buf, 0xcc, sizeof(buf));
+            ret = ReadFile(input, buf, count, &count, NULL );
+            ok(ret, "ReadFile failed: %u\n", GetLastError());
+            ret = WriteFile(pipe, buf, count, NULL, NULL);
+            ok(ret, "WriteFile failed: %u\n", GetLastError());
+            break;
+
         case REQ_SCROLL:
             ret = ScrollConsoleScreenBufferW(output, &req->u.scroll.rect, NULL, req->u.scroll.dst, &req->u.scroll.fill);
             ok(ret, "ScrollConsoleScreenBuffer failed: %u\n", GetLastError());
@@ -1229,6 +1345,11 @@ static void child_process(HANDLE pipe)
         case REQ_SET_CURSOR:
             ret = SetConsoleCursorPosition(output, req->u.coord);
             ok(ret, "SetConsoleCursorPosition failed: %u\n", GetLastError());
+            break;
+
+        case REQ_SET_INPUT_CP:
+            ret = SetConsoleCP(req->u.cp);
+            ok(ret, "SetConsoleCP failed: %u\n", GetLastError());
             break;
 
         case REQ_SET_INPUT_MODE:
