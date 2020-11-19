@@ -1205,7 +1205,7 @@
 @ stdcall -import ReadConsoleOutputW(long ptr long long ptr)
 @ stdcall -import ReadConsoleW(long ptr long ptr ptr)
 @ stdcall -import ReadDirectoryChangesW(long ptr long long long ptr ptr ptr)
-@ stdcall ReadFile(long ptr long ptr ptr) KERNEL32_ReadFile
+@ stdcall -import ReadFile(long ptr long ptr ptr)
 @ stdcall -import ReadFileEx(long ptr long ptr ptr)
 @ stdcall -import ReadFileScatter(long ptr long ptr ptr)
 @ stdcall -import ReadProcessMemory(long ptr ptr long ptr)
