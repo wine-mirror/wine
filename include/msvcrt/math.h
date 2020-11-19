@@ -201,21 +201,10 @@ float __cdecl _hypotf(float, float);
 int __cdecl _matherr(struct _exception*);
 double __cdecl _cabs(struct _complex);
 
-#ifndef HUGE_VAL
-#  if defined(__GNUC__) && (__GNUC__ >= 3)
-#    define HUGE_VAL    (__extension__ 0x1.0p2047)
-#  else
-static const union {
-    unsigned char __c[8];
-    double __d;
-} __huge_val = { { 0, 0, 0, 0, 0, 0, 0xf0, 0x7f } };
-#    define HUGE_VAL    (__huge_val.__d)
-#  endif
-#endif
-
 #if (defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))) || defined(__clang__)
 # define INFINITY __builtin_inff()
 # define NAN      __builtin_nanf("")
+# define HUGE_VAL __builtin_huge_val()
 #else
 static const union {
     unsigned int __i;
@@ -223,6 +212,7 @@ static const union {
 } __inff = { 0x7f800000 }, __nanf = { 0x7fc00000 };
 # define INFINITY (__inff.__f)
 # define NAN      (__nanf.__f)
+# define HUGE_VAL ((double)INFINITY)
 #endif
 
 #define FP_INFINITE   1
