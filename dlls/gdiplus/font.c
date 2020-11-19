@@ -117,6 +117,15 @@ typedef struct
 
 static GpFontCollection installedFontCollection = {0};
 
+static CRITICAL_SECTION font_cs;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &font_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": font_cs") }
+};
+static CRITICAL_SECTION font_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 /*******************************************************************************
  * GdipCreateFont [GDIPLUS.@]
  *
@@ -1648,6 +1657,7 @@ GpStatus WINGDIPAPI GdipNewInstalledFontCollection(
     if (!fontCollection)
         return InvalidParameter;
 
+    EnterCriticalSection( &font_cs );
     if (installedFontCollection.count == 0)
     {
         struct add_font_param param;
@@ -1665,11 +1675,13 @@ GpStatus WINGDIPAPI GdipNewInstalledFontCollection(
         {
             free_installed_fonts();
             DeleteDC(param.hdc);
+            LeaveCriticalSection( &font_cs );
             return param.stat;
         }
 
         DeleteDC(param.hdc);
     }
+    LeaveCriticalSection( &font_cs );
 
     *fontCollection = &installedFontCollection;
 
