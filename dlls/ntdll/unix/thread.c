@@ -1137,10 +1137,12 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         if (ret_len) *ret_len = sizeof(BOOLEAN);
         return STATUS_SUCCESS;
 
+    case ThreadEnableAlignmentFaultFixup:
+        return STATUS_INVALID_INFO_CLASS;
+
     case ThreadPriority:
     case ThreadBasePriority:
     case ThreadImpersonationToken:
-    case ThreadEnableAlignmentFaultFixup:
     case ThreadEventPair_Reusable:
     case ThreadZeroTlsCell:
     case ThreadPerformanceCount:
@@ -1316,11 +1318,16 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 #endif
     }
 
+    case ThreadEnableAlignmentFaultFixup:
+        if (length != sizeof(BOOLEAN)) return STATUS_INFO_LENGTH_MISMATCH;
+        if (!data) return STATUS_ACCESS_VIOLATION;
+        FIXME( "ThreadEnableAlignmentFaultFixup stub!\n" );
+        return STATUS_SUCCESS;
+
     case ThreadBasicInformation:
     case ThreadTimes:
     case ThreadPriority:
     case ThreadDescriptorTableEntry:
-    case ThreadEnableAlignmentFaultFixup:
     case ThreadEventPair_Reusable:
     case ThreadPerformanceCount:
     case ThreadAmILastThread:

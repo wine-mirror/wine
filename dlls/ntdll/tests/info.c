@@ -2505,6 +2505,37 @@ static void test_NtGetCurrentProcessorNumber(void)
     ok(status == STATUS_SUCCESS, "got 0x%x (expected STATUS_SUCCESS)\n", status);
 }
 
+static void test_ThreadEnableAlignmentFaultFixup(void)
+{
+    NTSTATUS status;
+    ULONG dummy;
+
+    dummy = 0;
+    status = NtQueryInformationThread( GetCurrentThread(), ThreadEnableAlignmentFaultFixup, &dummy, sizeof(ULONG), NULL );
+    ok( status == STATUS_INVALID_INFO_CLASS || broken(STATUS_NOT_IMPLEMENTED), "Expected STATUS_INVALID_INFO_CLASS, got %08x\n", status );
+    status = NtQueryInformationThread( GetCurrentThread(), ThreadEnableAlignmentFaultFixup, &dummy, 1, NULL );
+    ok( status == STATUS_INVALID_INFO_CLASS || broken(STATUS_NOT_IMPLEMENTED), "Expected STATUS_INVALID_INFO_CLASS, got %08x\n", status );
+
+    dummy = 1;
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadEnableAlignmentFaultFixup, &dummy, sizeof(ULONG) );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
+    status = pNtSetInformationThread( (HANDLE)0xdeadbeef, ThreadEnableAlignmentFaultFixup, NULL, 0 );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
+    status = pNtSetInformationThread( (HANDLE)0xdeadbeef, ThreadEnableAlignmentFaultFixup, NULL, 1 );
+    ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08x\n", status );
+    status = pNtSetInformationThread( (HANDLE)0xdeadbeef, ThreadEnableAlignmentFaultFixup, &dummy, 1 );
+    todo_wine ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08x\n", status );
+    status = pNtSetInformationThread( GetCurrentProcess(), ThreadEnableAlignmentFaultFixup, &dummy, 1 );
+    todo_wine ok( status == STATUS_OBJECT_TYPE_MISMATCH, "Expected STATUS_OBJECT_TYPE_MISMATCH, got %08x\n", status );
+    dummy = 1;
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadEnableAlignmentFaultFixup, &dummy, 1 );
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
+
+    dummy = 0;
+    status = pNtSetInformationThread( GetCurrentProcess(), ThreadEnableAlignmentFaultFixup, &dummy, 8 );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
+}
+
 static DWORD WINAPI start_address_thread(void *arg)
 {
     PRTL_THREAD_START_ROUTINE entry;
@@ -2774,4 +2805,6 @@ START_TEST(info)
     test_readvirtualmemory();
     test_queryvirtualmemory();
     test_NtGetCurrentProcessorNumber();
+
+    test_ThreadEnableAlignmentFaultFixup();
 }
