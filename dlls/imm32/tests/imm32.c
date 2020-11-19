@@ -1099,10 +1099,9 @@ static void test_ImmDefaultHwnd(void)
 
 static BOOL CALLBACK is_ime_window_proc(HWND hWnd, LPARAM param)
 {
-    static const WCHAR imeW[] = {'I','M','E',0};
     WCHAR class_nameW[16];
     HWND *ime_window = (HWND *)param;
-    if (GetClassNameW(hWnd, class_nameW, ARRAY_SIZE(class_nameW)) && !lstrcmpW(class_nameW, imeW))
+    if (GetClassNameW(hWnd, class_nameW, ARRAY_SIZE(class_nameW)) && !lstrcmpW(class_nameW, L"IME"))
     {
         *ime_window = hWnd;
         return FALSE;
@@ -1562,9 +1561,6 @@ static LRESULT CALLBACK processkey_wnd_proc( HWND hWnd, UINT msg, WPARAM wParam,
 
 static void test_ime_processkey(void)
 {
-    WCHAR classNameW[] = {'P','r','o','c','e','s','s', 'K','e','y','T','e','s','t','C','l','a','s','s',0};
-    WCHAR windowNameW[] = {'P','r','o','c','e','s','s', 'K','e','y',0};
-
     MSG msg;
     WNDCLASSW wclass;
     HANDLE hInstance = GetModuleHandleW(NULL);
@@ -1573,7 +1569,7 @@ static void test_ime_processkey(void)
     INT rc;
     HWND hWndTest;
 
-    wclass.lpszClassName = classNameW;
+    wclass.lpszClassName = L"ProcessKeyTestClass";
     wclass.style         = CS_HREDRAW | CS_VREDRAW;
     wclass.lpfnWndProc   = processkey_wnd_proc;
     wclass.hInstance     = hInstance;
@@ -1589,7 +1585,7 @@ static void test_ime_processkey(void)
     }
 
     /* create the test window that will receive the keystrokes */
-    hWndTest = CreateWindowW(wclass.lpszClassName, windowNameW,
+    hWndTest = CreateWindowW(wclass.lpszClassName, L"ProcessKey",
                              WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, 100, 100,
                              NULL, NULL, hInstance, NULL);
 

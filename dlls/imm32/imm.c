@@ -99,14 +99,8 @@ typedef struct _tagIMMThreadData {
 static struct list ImmHklList = LIST_INIT(ImmHklList);
 static struct list ImmThreadDataList = LIST_INIT(ImmThreadDataList);
 
-static const WCHAR szwWineIMCProperty[] = {'W','i','n','e','I','m','m','H','I','M','C','P','r','o','p','e','r','t','y',0};
-
-static const WCHAR szImeFileW[] = {'I','m','e',' ','F','i','l','e',0};
-static const WCHAR szLayoutTextW[] = {'L','a','y','o','u','t',' ','T','e','x','t',0};
-static const WCHAR szImeRegFmt[] = {'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','C','o','n','t','r','o','l','\\','K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','s','\\','%','0','8','l','x',0};
-
-static const WCHAR szwIME[] = {'I','M','E',0};
-static const WCHAR szwDefaultIME[] = {'D','e','f','a','u','l','t',' ','I','M','E',0};
+static const WCHAR szwWineIMCProperty[] = L"WineImmHIMCProperty";
+static const WCHAR szImeRegFmt[] = L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\%08lx";
 
 static CRITICAL_SECTION threaddata_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -297,23 +291,15 @@ static void IMM_FreeThreadData(void)
 
 static HMODULE load_graphics_driver(void)
 {
-    static const WCHAR display_device_guid_propW[] = {
-        '_','_','w','i','n','e','_','d','i','s','p','l','a','y','_',
-        'd','e','v','i','c','e','_','g','u','i','d',0 };
-    static const WCHAR key_pathW[] = {
-        'S','y','s','t','e','m','\\',
-        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-        'C','o','n','t','r','o','l','\\',
-        'V','i','d','e','o','\\','{',0};
-    static const WCHAR displayW[] = {'}','\\','0','0','0','0',0};
-    static const WCHAR driverW[] = {'G','r','a','p','h','i','c','s','D','r','i','v','e','r',0};
+    static const WCHAR key_pathW[] = L"System\\CurrentControlSet\\Control\\Video\\{";
+    static const WCHAR displayW[] = L"}\\0000";
 
     HMODULE ret = 0;
     HKEY hkey;
     DWORD size;
     WCHAR path[MAX_PATH];
     WCHAR key[ARRAY_SIZE( key_pathW ) + ARRAY_SIZE( displayW ) + 40];
-    UINT guid_atom = HandleToULong( GetPropW( GetDesktopWindow(), display_device_guid_propW ));
+    UINT guid_atom = HandleToULong( GetPropW( GetDesktopWindow(), L"__wine_display_device_guid" ));
 
     if (!guid_atom) return 0;
     memcpy( key, key_pathW, sizeof(key_pathW) );
@@ -321,7 +307,8 @@ static HMODULE load_graphics_driver(void)
     lstrcatW( key, displayW );
     if (RegOpenKeyW( HKEY_LOCAL_MACHINE, key, &hkey )) return 0;
     size = sizeof(path);
-    if (!RegQueryValueExW( hkey, driverW, NULL, NULL, (BYTE *)path, &size )) ret = LoadLibraryW( path );
+    if (!RegQueryValueExW( hkey, L"GraphicsDriver", NULL, NULL, (BYTE *)path, &size ))
+        ret = LoadLibraryW( path );
     RegCloseKey( hkey );
     TRACE( "%s %p\n", debugstr_w(path), ret );
     return ret;
@@ -1642,7 +1629,7 @@ static BOOL needs_ime_window(HWND hwnd)
 {
     WCHAR classW[8];
 
-    if (GetClassNameW(hwnd, classW, ARRAY_SIZE(classW)) && !lstrcmpW(classW, szwIME))
+    if (GetClassNameW(hwnd, classW, ARRAY_SIZE(classW)) && !lstrcmpW(classW, L"IME"))
         return FALSE;
     if (GetClassLongPtrW(hwnd, GCL_STYLE) & CS_IME) return FALSE;
 
@@ -1680,7 +1667,7 @@ BOOL WINAPI __wine_register_window(HWND hwnd)
     {
         /* Do not create the window inside of a critical section */
         LeaveCriticalSection(&threaddata_cs);
-        new = CreateWindowExW( 0, szwIME, szwDefaultIME,
+        new = CreateWindowExW( 0, L"IME", L"Default IME",
                                WS_POPUP | WS_DISABLED | WS_CLIPSIBLINGS,
                                0, 0, 1, 1, 0, 0, 0, 0);
         /* thread_data is in the current thread so we can assume it's still valid */
@@ -1785,13 +1772,11 @@ UINT WINAPI ImmGetDescriptionA(
  */
 UINT WINAPI ImmGetDescriptionW(HKL hKL, LPWSTR lpszDescription, UINT uBufLen)
 {
-  static const WCHAR name[] = { 'W','i','n','e',' ','X','I','M',0 };
-
   FIXME("(%p, %p, %d): semi stub\n", hKL, lpszDescription, uBufLen);
 
   if (!hKL) return 0;
-  if (!uBufLen) return lstrlenW( name );
-  lstrcpynW( lpszDescription, name, uBufLen );
+  if (!uBufLen) return lstrlenW(L"Wine XIM" );
+  lstrcpynW( lpszDescription, L"Wine XIM", uBufLen );
   return lstrlenW( lpszDescription );
 }
 
@@ -1872,7 +1857,7 @@ UINT WINAPI ImmGetIMEFileNameW(HKL hKL, LPWSTR lpszFileName, UINT uBufLen)
     }
 
     length = 0;
-    rc = RegGetValueW(hkey, NULL, szImeFileW, RRF_RT_REG_SZ, NULL, NULL, &length);
+    rc = RegGetValueW(hkey, NULL, L"Ime File", RRF_RT_REG_SZ, NULL, NULL, &length);
 
     if (rc != ERROR_SUCCESS)
     {
@@ -1892,7 +1877,7 @@ UINT WINAPI ImmGetIMEFileNameW(HKL hKL, LPWSTR lpszFileName, UINT uBufLen)
             return length / sizeof(WCHAR);
     }
 
-    RegGetValueW(hkey, NULL, szImeFileW, RRF_RT_REG_SZ, NULL, lpszFileName, &length);
+    RegGetValueW(hkey, NULL, L"Ime File", RRF_RT_REG_SZ, NULL, lpszFileName, &length);
 
     RegCloseKey(hkey);
 
@@ -2111,10 +2096,10 @@ HKL WINAPI ImmInstallIMEW(
 
     if (rc == ERROR_SUCCESS)
     {
-        rc = RegSetValueExW(hkey, szImeFileW, 0, REG_SZ, (const BYTE*)lpszIMEFileName,
+        rc = RegSetValueExW(hkey, L"Ime File", 0, REG_SZ, (const BYTE*)lpszIMEFileName,
                             (lstrlenW(lpszIMEFileName) + 1) * sizeof(WCHAR));
         if (rc == ERROR_SUCCESS)
-            rc = RegSetValueExW(hkey, szLayoutTextW, 0, REG_SZ, (const BYTE*)lpszLayoutText,
+            rc = RegSetValueExW(hkey, L"Layout Text", 0, REG_SZ, (const BYTE*)lpszLayoutText,
                                 (lstrlenW(lpszLayoutText) + 1) * sizeof(WCHAR));
         RegCloseKey(hkey);
         return hkl;
