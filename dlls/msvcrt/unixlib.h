@@ -21,8 +21,6 @@
 #ifndef __UNIXLIB_H
 #define __UNIXLIB_H
 
-#include "msvcrt.h"
-
 struct unix_funcs
 {
     double          (CDECL *acosh)(double x);
@@ -62,13 +60,13 @@ struct unix_funcs
     double          (CDECL *j0)(double num);
     double          (CDECL *j1)(double num);
     double          (CDECL *jn)(int n, double num);
-    double          (CDECL *ldexp)(double x, MSVCRT_long exp);
+    double          (CDECL *ldexp)(double x, int exp);
     double          (CDECL *lgamma)(double x);
     float           (CDECL *lgammaf)(float x);
-    MSVCRT_longlong (CDECL *llrint)(double x);
-    MSVCRT_longlong (CDECL *llrintf)(float x);
-    MSVCRT_longlong (CDECL *llround)(double x);
-    MSVCRT_longlong (CDECL *llroundf)(float x);
+    __int64         (CDECL *llrint)(double x);
+    __int64         (CDECL *llrintf)(float x);
+    __int64         (CDECL *llround)(double x);
+    __int64         (CDECL *llroundf)(float x);
     double          (CDECL *log)(double x);
     float           (CDECL *logf)(float x);
     double          (CDECL *log10)(double x);
@@ -79,10 +77,10 @@ struct unix_funcs
     float           (CDECL *log2f)(float x);
     double          (CDECL *logb)(double x);
     float           (CDECL *logbf)(float x);
-    MSVCRT_long     (CDECL *lrint)(double x);
-    MSVCRT_long     (CDECL *lrintf)(float x);
-    MSVCRT_long     (CDECL *lround)(double x);
-    MSVCRT_long     (CDECL *lroundf)(float x);
+    int             (CDECL *lrint)(double x);
+    int             (CDECL *lrintf)(float x);
+    int             (CDECL *lround)(double x);
+    int             (CDECL *lroundf)(float x);
     double          (CDECL *modf)(double x, double *iptr);
     float           (CDECL *modff)(float x, float *iptr);
     double          (CDECL *nearbyint)(double num);

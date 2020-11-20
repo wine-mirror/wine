@@ -443,7 +443,7 @@ static double CDECL unix_jn(int n, double num)
 /*********************************************************************
  *      ldexp
  */
-static double CDECL unix_ldexp(double num, MSVCRT_long exp)
+static double CDECL unix_ldexp(double num, int exp)
 {
     return ldexp( num, exp );
 }
@@ -477,7 +477,7 @@ static float CDECL unix_lgammaf(float x)
 /*********************************************************************
  *      llrint
  */
-static MSVCRT_longlong CDECL unix_llrint(double x)
+static __int64 CDECL unix_llrint(double x)
 {
     return llrint(x);
 }
@@ -485,7 +485,7 @@ static MSVCRT_longlong CDECL unix_llrint(double x)
 /*********************************************************************
  *      llrintf
  */
-static MSVCRT_longlong CDECL unix_llrintf(float x)
+static __int64 CDECL unix_llrintf(float x)
 {
     return llrintf(x);
 }
@@ -589,7 +589,7 @@ static float CDECL unix_logbf( float x )
 /*********************************************************************
  *      lrint
  */
-static MSVCRT_long CDECL unix_lrint(double x)
+static int CDECL unix_lrint(double x)
 {
     return lrint(x);
 }
@@ -597,7 +597,7 @@ static MSVCRT_long CDECL unix_lrint(double x)
 /*********************************************************************
  *      lrintf
  */
-static MSVCRT_long CDECL unix_lrintf(float x)
+static int CDECL unix_lrintf(float x)
 {
     return lrintf(x);
 }
@@ -795,7 +795,7 @@ static float CDECL unix_roundf(float x)
 /*********************************************************************
  *      lround
  */
-static MSVCRT_long CDECL unix_lround(double x)
+static int CDECL unix_lround(double x)
 {
 #ifdef HAVE_LROUND
     return lround(x);
@@ -807,7 +807,7 @@ static MSVCRT_long CDECL unix_lround(double x)
 /*********************************************************************
  *      lroundf
  */
-static MSVCRT_long CDECL unix_lroundf(float x)
+static int CDECL unix_lroundf(float x)
 {
 #ifdef HAVE_LROUNDF
     return lroundf(x);
@@ -819,7 +819,7 @@ static MSVCRT_long CDECL unix_lroundf(float x)
 /*********************************************************************
  *      llround
  */
-static MSVCRT_longlong CDECL unix_llround(double x)
+static __int64 CDECL unix_llround(double x)
 {
 #ifdef HAVE_LLROUND
     return llround(x);
@@ -831,7 +831,7 @@ static MSVCRT_longlong CDECL unix_llround(double x)
 /*********************************************************************
  *      llroundf
  */
-static MSVCRT_longlong CDECL unix_llroundf(float x)
+static __int64 CDECL unix_llroundf(float x)
 {
 #ifdef HAVE_LLROUNDF
     return llroundf(x);
