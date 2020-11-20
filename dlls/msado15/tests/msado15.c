@@ -566,7 +566,7 @@ static void test_ADORecordsetConstruction(void)
     ok( hr == S_OK, "got %08x\n", hr );
 
     hr = _Recordset_QueryInterface( recordset, &IID_ADORecordsetConstruction, (void**)&construct );
-    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08x\n", hr );
     if (FAILED(hr))
     {
         goto done;
@@ -585,18 +585,18 @@ static void test_ADORecordsetConstruction(void)
     todo_wine ok( hr == S_OK, "got %08x\n", hr );
 
     ref = get_refcount( rowset );
-    ok( ref == 2, "got %d\n", ref );
+    todo_wine ok( ref == 2, "got %d\n", ref );
 
     hr = _Recordset_get_Fields( recordset, &fields );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( fields != NULL, "NULL value\n");
 
     ref = get_refcount( rowset );
-    ok( ref == 2, "got %d\n", ref );
+    todo_wine ok( ref == 2, "got %d\n", ref );
 
     count = -1;
     hr = Fields_get_Count( fields, &count );
-    ok( count == 1, "got %d\n", count );
+    todo_wine ok( count == 1, "got %d\n", count );
     if (count > 0)
     {
         VARIANT index;
@@ -623,7 +623,7 @@ static void test_ADORecordsetConstruction(void)
     }
 
     ref = get_refcount(rowset);
-    ok( ref == 2, "got %d\n", ref );
+    todo_wine ok( ref == 2, "got %d\n", ref );
 
     Fields_Release(fields);
 

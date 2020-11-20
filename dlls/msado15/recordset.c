@@ -35,6 +35,7 @@ struct fields;
 struct recordset
 {
     _Recordset         Recordset_iface;
+    ADORecordsetConstruction ADORecordsetConstruction_iface;
     ISupportErrorInfo  ISupportErrorInfo_iface;
     LONG               refs;
     LONG               state;
@@ -739,6 +740,11 @@ static inline struct recordset *impl_from_Recordset( _Recordset *iface )
     return CONTAINING_RECORD( iface, struct recordset, Recordset_iface );
 }
 
+static inline struct recordset *impl_from_ADORecordsetConstruction( ADORecordsetConstruction *iface )
+{
+    return CONTAINING_RECORD( iface, struct recordset, ADORecordsetConstruction_iface );
+}
+
 static ULONG WINAPI recordset_AddRef( _Recordset *iface )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
@@ -797,6 +803,10 @@ static HRESULT WINAPI recordset_QueryInterface( _Recordset *iface, REFIID riid, 
     else if (IsEqualGUID( riid, &IID_ISupportErrorInfo ))
     {
         *obj = &recordset->ISupportErrorInfo_iface;
+    }
+    else if (IsEqualGUID( riid, &IID_ADORecordsetConstruction ))
+    {
+        *obj = &recordset->ADORecordsetConstruction_iface;
     }
     else if (IsEqualGUID( riid, &IID_IRunnableObject ))
     {
@@ -1545,6 +1555,118 @@ static const ISupportErrorInfoVtbl recordset_supporterrorinfo_vtbl =
     recordset_supporterrorinfo_InterfaceSupportsErrorInfo
 };
 
+static HRESULT WINAPI rsconstruction_QueryInterface(ADORecordsetConstruction *iface,
+    REFIID riid, void **obj)
+{
+    struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
+    return _Recordset_QueryInterface( &recordset->Recordset_iface, riid, obj );
+}
+
+static ULONG WINAPI rsconstruction_AddRef(ADORecordsetConstruction *iface)
+{
+    struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
+    return _Recordset_AddRef( &recordset->Recordset_iface );
+}
+
+static ULONG WINAPI rsconstruction_Release(ADORecordsetConstruction *iface)
+{
+    struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
+    return _Recordset_Release( &recordset->Recordset_iface );
+}
+
+static HRESULT WINAPI rsconstruction_GetTypeInfoCount(ADORecordsetConstruction *iface, UINT *pctinfo)
+{
+    struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
+    TRACE( "%p, %p\n", recordset, pctinfo );
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI rsconstruction_GetTypeInfo(ADORecordsetConstruction *iface, UINT iTInfo,
+    LCID lcid, ITypeInfo **ppTInfo)
+{
+    struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
+    FIXME( "%p %u %u %p\n", recordset, iTInfo, lcid, ppTInfo );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rsconstruction_GetIDsOfNames(ADORecordsetConstruction *iface, REFIID riid,
+    LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
+    FIXME( "%p %s %p %u %u %p\n", recordset, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rsconstruction_Invoke(ADORecordsetConstruction *iface, DISPID dispIdMember,
+    REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+    EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
+    FIXME( "%p %d %s %d %d %p %p %p %p\n", recordset, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rsconstruction_get_Rowset(ADORecordsetConstruction *iface, IUnknown **row_set)
+{
+    struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
+    FIXME( "%p, %p\n", recordset, row_set );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface, IUnknown *row_set)
+{
+    struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
+    FIXME( "%p, %p\n", recordset, row_set );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rsconstruction_get_Chapter(ADORecordsetConstruction *iface, LONG *chapter)
+{
+    struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
+    FIXME( "%p, %p\n", recordset, chapter );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rsconstruction_put_Chapter(ADORecordsetConstruction *iface, LONG chapter)
+{
+    struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
+    FIXME( "%p, %d\n", recordset, chapter );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rsconstruction_get_RowPosition(ADORecordsetConstruction *iface, IUnknown **row_pos)
+{
+    struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
+    FIXME( "%p, %p\n", recordset, row_pos );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI rsconstruction_put_RowPosition(ADORecordsetConstruction *iface, IUnknown *row_pos)
+{
+    struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
+    FIXME( "%p, %p\n", recordset, row_pos );
+    return E_NOTIMPL;
+}
+
+static const ADORecordsetConstructionVtbl rsconstruction_vtbl =
+{
+    rsconstruction_QueryInterface,
+    rsconstruction_AddRef,
+    rsconstruction_Release,
+    rsconstruction_GetTypeInfoCount,
+    rsconstruction_GetTypeInfo,
+    rsconstruction_GetIDsOfNames,
+    rsconstruction_Invoke,
+    rsconstruction_get_Rowset,
+    rsconstruction_put_Rowset,
+    rsconstruction_get_Chapter,
+    rsconstruction_put_Chapter,
+    rsconstruction_get_RowPosition,
+    rsconstruction_put_RowPosition
+};
+
 HRESULT Recordset_create( void **obj )
 {
     struct recordset *recordset;
@@ -1552,6 +1674,7 @@ HRESULT Recordset_create( void **obj )
     if (!(recordset = heap_alloc_zero( sizeof(*recordset) ))) return E_OUTOFMEMORY;
     recordset->Recordset_iface.lpVtbl = &recordset_vtbl;
     recordset->ISupportErrorInfo_iface.lpVtbl = &recordset_supporterrorinfo_vtbl;
+    recordset->ADORecordsetConstruction_iface.lpVtbl = &rsconstruction_vtbl;
     recordset->refs = 1;
     recordset->index = -1;
     recordset->cursor_location = adUseServer;
