@@ -23,6 +23,7 @@
 #define WIN32_NO_STATUS
 #include <windows.h>
 #include <winternl.h>
+#include <winioctl.h>
 #include <stdio.h>
 
 #include "wine/test.h"
@@ -3945,8 +3946,10 @@ static void test_console_title(void)
 static void test_file_info(HANDLE input, HANDLE output)
 {
     FILE_STANDARD_INFORMATION std_info;
+    FILE_FS_DEVICE_INFORMATION fs_info;
     LARGE_INTEGER size;
     IO_STATUS_BLOCK io;
+    DWORD type;
     NTSTATUS status;
     BOOL ret;
 
@@ -3965,6 +3968,23 @@ static void test_file_info(HANDLE input, HANDLE output)
     ret = GetFileSizeEx(output, &size);
     ok(!ret && GetLastError() == ERROR_INVALID_FUNCTION,
        "GetFileSizeEx returned %x(%u)\n", ret, GetLastError());
+
+    status = NtQueryVolumeInformationFile(input, &io, &fs_info, sizeof(fs_info), FileFsDeviceInformation);
+    ok(!status, "NtQueryVolumeInformationFile failed: %#x\n", status);
+    ok(fs_info.DeviceType == FILE_DEVICE_CONSOLE, "DeviceType = %u\n", fs_info.DeviceType);
+    ok(fs_info.Characteristics == FILE_DEVICE_ALLOW_APPCONTAINER_TRAVERSAL,
+       "Characteristics = %x\n", fs_info.Characteristics);
+
+    status = NtQueryVolumeInformationFile(output, &io, &fs_info, sizeof(fs_info), FileFsDeviceInformation);
+    ok(!status, "NtQueryVolumeInformationFile failed: %#x\n", status);
+    ok(fs_info.DeviceType == FILE_DEVICE_CONSOLE, "DeviceType = %u\n", fs_info.DeviceType);
+    ok(fs_info.Characteristics == FILE_DEVICE_ALLOW_APPCONTAINER_TRAVERSAL,
+       "Characteristics = %x\n", fs_info.Characteristics);
+
+    type = GetFileType(input);
+    ok(type == FILE_TYPE_CHAR, "GetFileType returned %u\n", type);
+    type = GetFileType(output);
+    ok(type == FILE_TYPE_CHAR, "GetFileType returned %u\n", type);
 }
 
 static void test_AttachConsole_child(DWORD console_pid)
