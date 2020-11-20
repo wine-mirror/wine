@@ -32,6 +32,10 @@
 
 #include "mf_private.h"
 
+#include "initguid.h"
+
+DEFINE_GUID(_MF_TOPONODE_IMFActivate, 0x33706f4a, 0x309a, 0x49be, 0xa8, 0xdd, 0xe7, 0xc0, 0x87, 0x5e, 0xb6, 0x79);
+
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 enum session_command
@@ -682,6 +686,9 @@ static HRESULT session_bind_output_nodes(IMFTopology *topology)
 
                         IMFMediaSink_Release(media_sink);
                     }
+
+                    if (SUCCEEDED(hr))
+                        IMFTopologyNode_SetUnknown(node, &_MF_TOPONODE_IMFActivate, (IUnknown *)activate);
 
                     IMFActivate_Release(activate);
                 }
