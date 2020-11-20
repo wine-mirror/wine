@@ -1635,21 +1635,29 @@ static HRESULT WINAPI AudioClient_SetClientProperties(IAudioClient3 *iface,
         const AudioClientProperties *prop)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    const Win8AudioClientProperties *legacy_prop = (const Win8AudioClientProperties *)prop;
 
     TRACE("(%p)->(%p)\n", This, prop);
 
-    if(!prop)
+    if(!legacy_prop)
         return E_POINTER;
 
-    if(prop->cbSize != sizeof(*prop))
+    if(legacy_prop->cbSize == sizeof(AudioClientProperties)){
+        TRACE("{ bIsOffload: %u, eCategory: 0x%x, Options: 0x%x }\n",
+                legacy_prop->bIsOffload,
+                legacy_prop->eCategory,
+                prop->Options);
+    }else if(legacy_prop->cbSize == sizeof(Win8AudioClientProperties)){
+        TRACE("{ bIsOffload: %u, eCategory: 0x%x }\n",
+                legacy_prop->bIsOffload,
+                legacy_prop->eCategory);
+    }else{
+        WARN("Unsupported Size = %d\n", legacy_prop->cbSize);
         return E_INVALIDARG;
+    }
 
-    TRACE("{ bIsOffload: %u, eCategory: 0x%x, Options: 0x%x }\n",
-            prop->bIsOffload,
-            prop->eCategory,
-            prop->Options);
 
-    if(prop->bIsOffload)
+    if(legacy_prop->bIsOffload)
         return AUDCLNT_E_ENDPOINT_OFFLOAD_NOT_CAPABLE;
 
     return S_OK;

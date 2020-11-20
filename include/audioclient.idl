@@ -126,6 +126,14 @@ typedef struct _AudioClientProperties
     AUDCLNT_STREAMOPTIONS Options;
 } AudioClientProperties;
 
+typedef struct _Win8AudioClientProperties
+{
+    UINT32 cbSize;
+    BOOL bIsOffload;
+    AUDIO_STREAM_CATEGORY eCategory;
+    /* Options field added in Win 8.1 */
+} Win8AudioClientProperties;
+
 [
     local,
     pointer_default(unique),

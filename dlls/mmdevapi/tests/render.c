@@ -276,6 +276,7 @@ static void test_audioclient(void)
         hr = IAudioClient2_SetClientProperties(ac2, NULL);
         ok(hr == E_POINTER, "SetClientProperties with NULL props gave wrong error: %08x\n", hr);
 
+        /* invalid cbSize */
         client_props.cbSize = 0;
         client_props.bIsOffload = FALSE;
         client_props.eCategory = AudioCategory_BackgroundCapableMedia;
@@ -284,7 +285,8 @@ static void test_audioclient(void)
         hr = IAudioClient2_SetClientProperties(ac2, &client_props);
         ok(hr == E_INVALIDARG, "SetClientProperties with invalid cbSize gave wrong error: %08x\n", hr);
 
-        client_props.cbSize = sizeof(client_props);
+        /* offload consistency */
+        client_props.cbSize = sizeof(client_props) - sizeof(client_props.Options);
         client_props.bIsOffload = TRUE;
 
         hr = IAudioClient2_SetClientProperties(ac2, &client_props);
@@ -293,9 +295,17 @@ static void test_audioclient(void)
         else
             ok(hr == S_OK, "SetClientProperties(offload) failed: %08x\n", hr);
 
+        /* disable offload */
         client_props.bIsOffload = FALSE;
         hr = IAudioClient2_SetClientProperties(ac2, &client_props);
         ok(hr == S_OK, "SetClientProperties failed: %08x\n", hr);
+
+        /* Options field added in Win 8.1 */
+        client_props.cbSize = sizeof(client_props);
+        hr = IAudioClient2_SetClientProperties(ac2, &client_props);
+        ok(hr == S_OK ||
+                broken(hr == E_INVALIDARG) /* <= win8 */,
+                "SetClientProperties failed: %08x\n", hr);
 
         IAudioClient2_Release(ac2);
     }
