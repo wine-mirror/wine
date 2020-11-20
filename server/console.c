@@ -98,6 +98,7 @@ static const struct object_ops console_input_ops =
 };
 
 static enum server_fd_type console_get_fd_type( struct fd *fd );
+static void console_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class );
 static int console_input_read( struct fd *fd, struct async *async, file_pos_t pos );
 static int console_input_flush( struct fd *fd, struct async *async );
 static int console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
@@ -110,7 +111,7 @@ static const struct fd_ops console_input_fd_ops =
     console_input_read,           /* read */
     no_fd_write,                  /* write */
     console_input_flush,          /* flush */
-    no_fd_get_file_info,          /* get_file_info */
+    console_get_file_info,        /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
     console_input_ioctl,          /* ioctl */
     default_fd_queue_async,       /* queue_async */
@@ -248,7 +249,7 @@ static const struct fd_ops screen_buffer_fd_ops =
     no_fd_read,                   /* read */
     screen_buffer_write,          /* write */
     no_fd_flush,                  /* flush */
-    no_fd_get_file_info,          /* get_file_info */
+    console_get_file_info,        /* get_file_info */
     no_fd_get_volume_info,        /* get_volume_info */
     screen_buffer_ioctl,          /* ioctl */
     default_fd_queue_async,       /* queue_async */
@@ -418,6 +419,11 @@ static struct fd *console_input_get_fd( struct object* obj )
 static enum server_fd_type console_get_fd_type( struct fd *fd )
 {
     return FD_TYPE_CHAR;
+}
+
+static void console_get_file_info( struct fd *fd, obj_handle_t handle, unsigned int info_class )
+{
+    set_error( STATUS_INVALID_DEVICE_REQUEST );
 }
 
 static struct object *create_console_input(void)

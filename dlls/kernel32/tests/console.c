@@ -3942,6 +3942,33 @@ static void test_console_title(void)
     }
 }
 
+static void test_file_info(HANDLE input, HANDLE output)
+{
+    FILE_STANDARD_INFORMATION std_info;
+    LARGE_INTEGER size;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    BOOL ret;
+
+    if (skip_nt) return;
+
+    status = NtQueryInformationFile(input, &io, &std_info, sizeof(std_info), FileStandardInformation);
+    ok(status == STATUS_INVALID_DEVICE_REQUEST, "NtQueryInformationFile returned: %#x\n", status);
+
+    status = NtQueryInformationFile(output, &io, &std_info, sizeof(std_info), FileStandardInformation);
+    ok(status == STATUS_INVALID_DEVICE_REQUEST, "NtQueryInformationFile returned: %#x\n", status);
+
+    ret = GetFileSizeEx(input, &size);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_FUNCTION,
+       "GetFileSizeEx returned %x(%u)\n", ret, GetLastError());
+
+    ret = GetFileSizeEx(output, &size);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_FUNCTION,
+       "GetFileSizeEx returned %x(%u)\n", ret, GetLastError());
+}
+
 static void test_AttachConsole_child(DWORD console_pid)
 {
     HANDLE pipe_in, pipe_out;
@@ -4479,6 +4506,7 @@ START_TEST(console)
     }
     test_GetConsoleScreenBufferInfoEx(hConOut);
     test_SetConsoleScreenBufferInfoEx(hConOut);
+    test_file_info(hConIn, hConOut);
     test_console_title();
     if (!test_current)
     {
