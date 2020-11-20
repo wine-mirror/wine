@@ -1188,13 +1188,14 @@ static void test_media_session(void)
     IMFAttributes *attributes;
     IMFMediaSession *session;
     IMFTopology *topology;
+    IMFShutdown *shutdown;
     PROPVARIANT propvar;
+    DWORD status, caps;
     IMFGetService *gs;
     IMFClock *clock;
     IUnknown *unk;
     HRESULT hr;
     float rate;
-    DWORD caps;
     BOOL thin;
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
@@ -1275,8 +1276,23 @@ todo_wine
     hr = MFCreateMediaSession(NULL, &session);
     ok(hr == S_OK, "Failed to create media session, hr %#x.\n", hr);
 
+    hr = IMFMediaSession_GetClock(session, &clock);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFClock_QueryInterface(clock, &IID_IMFShutdown, (void **)&shutdown);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFShutdown_GetShutdownStatus(shutdown, &status);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    hr = IMFShutdown_GetShutdownStatus(shutdown, &status);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(status == MFSHUTDOWN_COMPLETED, "Unexpected shutdown status %u.\n", status);
+
+    IMFShutdown_Release(shutdown);
 
     hr = IMFMediaSession_ClearTopologies(session);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
