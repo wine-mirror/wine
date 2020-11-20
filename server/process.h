@@ -132,8 +132,6 @@ extern void detach_debugged_processes( struct thread *debugger );
 extern void enum_processes( int (*cb)(struct process*, void*), void *user);
 
 /* console functions */
-extern obj_handle_t inherit_console( struct thread *parent_thread, obj_handle_t handle,
-                                     struct process *process, obj_handle_t hconin );
 extern int free_console( struct process *process );
 extern struct thread *console_get_renderer( struct console_input *console );
 

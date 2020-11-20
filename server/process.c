@@ -1254,15 +1254,9 @@ DECL_HANDLER(new_process)
     connect_process_winstation( process, parent_thread, parent );
 
     /* set the process console */
-    if (!(req->create_flags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE)))
-    {
-        /* FIXME: some better error checking should be done...
-         * like if hConOut and hConIn are console handles, then they should be on the same
-         * physical console
-         */
-        info->data->console = inherit_console( parent_thread, info->data->console,
-                                               process, req->inherit_all ? info->data->hstdin : 0 );
-    }
+    if (info->data->console > 3)
+        info->data->console = duplicate_handle( parent, info->data->console, process,
+                                                0, 0, DUPLICATE_SAME_ACCESS );
 
     if (!req->inherit_all && !(req->create_flags & CREATE_NEW_CONSOLE))
     {

@@ -595,36 +595,6 @@ int free_console( struct process *process )
     return 1;
 }
 
-/* let process inherit the console from parent... this handle two cases :
- *	1/ generic console inheritance
- *	2/ parent is a renderer which launches process, and process should attach to the console
- *	   rendered by parent
- */
-obj_handle_t inherit_console( struct thread *parent_thread, obj_handle_t handle, struct process *process,
-                              obj_handle_t hconin )
-{
-    struct console_input *console = NULL;
-
-    if (handle) return duplicate_handle( current->process, handle, process, 0, 0, DUP_HANDLE_SAME_ACCESS );
-
-    /* if parent is a renderer, then attach current process to its console
-     * a bit hacky....
-     */
-    if (hconin && parent_thread)
-    {
-        /* FIXME: should we check some access rights ? */
-        if (!(console = (struct console_input *)get_handle_obj( parent_thread->process, hconin,
-                                                                0, &console_input_ops )))
-            clear_error();  /* ignore error */
-    }
-    if (!console) return 0;
-
-    process->console = console;
-    console->num_proc++;
-    return alloc_handle( process, process->console,
-                         SYNCHRONIZE | GENERIC_READ | GENERIC_WRITE, 0 );
-}
-
 struct thread *console_get_renderer( struct console_input *console )
 {
     return console->renderer;
