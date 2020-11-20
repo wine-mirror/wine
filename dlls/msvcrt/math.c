@@ -1511,7 +1511,7 @@ MSVCRT_longlong CDECL MSVCRT_llabs( MSVCRT_longlong n )
 /*********************************************************************
  *		imaxabs (MSVCR120.@)
  */
-MSVCRT_intmax_t CDECL MSVCRT_imaxabs( MSVCRT_intmax_t n )
+intmax_t CDECL MSVCRT_imaxabs( intmax_t n )
 {
     return n >= 0 ? n : -n;
 }
@@ -1770,7 +1770,7 @@ double CDECL MSVCRT_ldexp(double num, MSVCRT_long exp)
 /*********************************************************************
  *		_cabs (MSVCRT.@)
  */
-double CDECL MSVCRT__cabs(struct MSVCRT__complex num)
+double CDECL MSVCRT__cabs(struct _complex num)
 {
   return MSVCRT_sqrt(num.x * num.x + num.y * num.y);
 }
@@ -2720,7 +2720,7 @@ int CDECL MSVCRT__gcvt_s(char *buff, MSVCRT_size_t size, double number, int digi
 unsigned __int64 CDECL MSVCRT_div(int num, int denom)
 {
     union {
-        MSVCRT_div_t div;
+        div_t div;
         unsigned __int64 uint64;
     } ret;
 
@@ -2734,9 +2734,9 @@ unsigned __int64 CDECL MSVCRT_div(int num, int denom)
  * VERSION
  *	[!i386] Non-x86 can't run win32 apps so we don't need binary compatibility
  */
-MSVCRT_div_t CDECL MSVCRT_div(int num, int denom)
+div_t CDECL MSVCRT_div(int num, int denom)
 {
-    MSVCRT_div_t ret;
+    div_t ret;
 
     ret.quot = num / denom;
     ret.rem = num % denom;
@@ -2754,7 +2754,7 @@ MSVCRT_div_t CDECL MSVCRT_div(int num, int denom)
 unsigned __int64 CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
 {
     union {
-        MSVCRT_ldiv_t ldiv;
+        ldiv_t ldiv;
         unsigned __int64 uint64;
     } ret;
 
@@ -2768,9 +2768,9 @@ unsigned __int64 CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
  * VERSION
  *	[!i386] Non-x86 can't run win32 apps so we don't need binary compatibility
  */
-MSVCRT_ldiv_t CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
+ldiv_t CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
 {
-    MSVCRT_ldiv_t ret;
+    ldiv_t ret;
 
     ret.quot = num / denom;
     ret.rem = num % denom;
@@ -2782,9 +2782,9 @@ MSVCRT_ldiv_t CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
 /*********************************************************************
  *		lldiv (MSVCR100.@)
  */
-MSVCRT_lldiv_t CDECL MSVCRT_lldiv(MSVCRT_longlong num, MSVCRT_longlong denom)
+lldiv_t CDECL MSVCRT_lldiv(MSVCRT_longlong num, MSVCRT_longlong denom)
 {
-  MSVCRT_lldiv_t ret;
+  lldiv_t ret;
 
   ret.quot = num / denom;
   ret.rem = num % denom;

@@ -80,7 +80,7 @@ double      __cdecl _difftime64(__time64_t,__time64_t);
 struct tm*  __cdecl _gmtime32(const __time32_t*);
 struct tm*  __cdecl _gmtime64(const __time64_t*);
 struct tm*  __cdecl _localtime32(const __time32_t*);
-errno_t     __cdecl _localtime32_s(struct tm*, const __time64_t*);
+errno_t     __cdecl _localtime32_s(struct tm*, const __time32_t*);
 struct tm*  __cdecl _localtime64(const __time64_t*);
 errno_t     __cdecl _localtime64_s(struct tm*, const __time64_t*);
 __time32_t  __cdecl _mktime32(struct tm*);

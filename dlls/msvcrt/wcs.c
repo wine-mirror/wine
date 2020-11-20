@@ -2070,7 +2070,7 @@ MSVCRT_size_t CDECL MSVCRT_wcrtomb( char *dst, MSVCRT_wchar_t ch, MSVCRT_mbstate
 /*********************************************************************
  *		_iswctype_l (MSVCRT.@)
  */
-INT CDECL MSVCRT__iswctype_l( MSVCRT_wchar_t wc, MSVCRT_wctype_t type, MSVCRT__locale_t locale )
+INT CDECL MSVCRT__iswctype_l( MSVCRT_wchar_t wc, wctype_t type, MSVCRT__locale_t locale )
 {
     WORD ct;
 
@@ -2088,7 +2088,7 @@ INT CDECL MSVCRT__iswctype_l( MSVCRT_wchar_t wc, MSVCRT_wctype_t type, MSVCRT__l
 /*********************************************************************
  *		iswctype    (MSVCRT.@)
  */
-INT CDECL MSVCRT_iswctype( MSVCRT_wchar_t wc, MSVCRT_wctype_t type )
+INT CDECL MSVCRT_iswctype( MSVCRT_wchar_t wc, wctype_t type )
 {
     return MSVCRT__iswctype_l( wc, type, NULL );
 }

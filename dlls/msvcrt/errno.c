@@ -460,7 +460,7 @@ void CDECL _seterrormode(int mode)
  *		_invalid_parameter (MSVCRT.@)
  */
 void __cdecl MSVCRT__invalid_parameter(const MSVCRT_wchar_t *expr, const MSVCRT_wchar_t *func,
-                                       const MSVCRT_wchar_t *file, unsigned int line, MSVCRT_uintptr_t arg)
+                                       const MSVCRT_wchar_t *file, unsigned int line, uintptr_t arg)
 {
 #if _MSVCR_VER >= 140
     thread_data_t *data = msvcrt_get_thread_data();
@@ -475,7 +475,7 @@ void __cdecl MSVCRT__invalid_parameter(const MSVCRT_wchar_t *expr, const MSVCRT_
     if (invalid_parameter_handler) invalid_parameter_handler( expr, func, file, line, arg );
     else
     {
-        ERR( "%s:%u %s: %s %lx\n", debugstr_w(file), line, debugstr_w(func), debugstr_w(expr), arg );
+        ERR( "%s:%u %s: %s %Ix\n", debugstr_w(file), line, debugstr_w(func), debugstr_w(expr), arg );
 #if _MSVCR_VER >= 80
         RaiseException( STATUS_INVALID_CRUNTIME_PARAMETER, EXCEPTION_NONCONTINUABLE, 0, NULL );
 #endif

@@ -2527,7 +2527,7 @@ int CDECL MSVCRT__open_osfhandle(MSVCRT_intptr_t handle, int oflags)
   flags |= split_oflags(oflags);
 
   fd = msvcrt_alloc_fd((HANDLE)handle, flags);
-  TRACE(":handle (%ld) fd (%d) flags 0x%08x\n", handle, fd, flags);
+  TRACE(":handle (%Iu) fd (%d) flags 0x%08x\n", handle, fd, flags);
   return fd;
 }
 
@@ -4402,7 +4402,7 @@ MSVCRT_size_t CDECL MSVCRT__fread_nolock_s(void *buf, MSVCRT_size_t buf_size, MS
 {
     size_t bytes_left, buf_pos;
 
-    TRACE("(%p %lu %lu %lu %p)\n", buf, buf_size, elem_size, count, stream);
+    TRACE("(%p %Iu %Iu %Iu %p)\n", buf, buf_size, elem_size, count, stream);
 
     if(!MSVCRT_CHECK_PMT(stream != NULL)) {
         if(buf && buf_size)
@@ -4540,7 +4540,7 @@ int CDECL MSVCRT_freopen_s(MSVCRT_FILE** pFile,
 /*********************************************************************
  *		fsetpos (MSVCRT.@)
  */
-int CDECL MSVCRT_fsetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
+int CDECL MSVCRT_fsetpos(MSVCRT_FILE* file, fpos_t *pos)
 {
   int ret;
 
@@ -4646,7 +4646,7 @@ LONG CDECL MSVCRT__ftell_nolock(MSVCRT_FILE* file)
 /*********************************************************************
  *		fgetpos (MSVCRT.@)
  */
-int CDECL MSVCRT_fgetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
+int CDECL MSVCRT_fgetpos(MSVCRT_FILE* file, fpos_t *pos)
 {
     *pos = MSVCRT__ftelli64(file);
     if(*pos == -1)

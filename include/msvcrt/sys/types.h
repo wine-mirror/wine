@@ -23,7 +23,11 @@
 #include <corecrt.h>
 
 #ifndef _DEV_T_DEFINED
+# ifdef _CRTDLL
+typedef unsigned short _dev_t;
+# else
 typedef unsigned int   _dev_t;
+# endif
 #define _DEV_T_DEFINED
 #endif
 

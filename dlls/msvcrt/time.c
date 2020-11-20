@@ -23,6 +23,8 @@
  */
 
 #include <stdlib.h>
+#include <time.h>
+#include <sys/timeb.h>
 
 #include "msvcrt.h"
 #include "mtdll.h"
@@ -723,7 +725,7 @@ int CDECL _wstrtime_s(MSVCRT_wchar_t* time, MSVCRT_size_t size)
 /*********************************************************************
  *		clock (MSVCRT.@)
  */
-MSVCRT_clock_t CDECL MSVCRT_clock(void)
+clock_t CDECL MSVCRT_clock(void)
 {
     LARGE_INTEGER systime;
 
@@ -765,7 +767,7 @@ double CDECL MSVCRT_difftime(MSVCRT___time32_t time1, MSVCRT___time32_t time2)
 /*********************************************************************
  *		_ftime64 (MSVCRT.@)
  */
-void CDECL MSVCRT__ftime64(struct MSVCRT___timeb64 *buf)
+void CDECL MSVCRT__ftime64(struct __timeb64 *buf)
 {
   FILETIME ft;
   ULONGLONG time;
@@ -785,7 +787,7 @@ void CDECL MSVCRT__ftime64(struct MSVCRT___timeb64 *buf)
 /*********************************************************************
  *		_ftime64_s (MSVCRT.@)
  */
-int CDECL MSVCRT__ftime64_s(struct MSVCRT___timeb64 *buf)
+int CDECL MSVCRT__ftime64_s(struct __timeb64 *buf)
 {
     if (!MSVCRT_CHECK_PMT( buf != NULL )) return MSVCRT_EINVAL;
     MSVCRT__ftime64(buf);
@@ -795,9 +797,9 @@ int CDECL MSVCRT__ftime64_s(struct MSVCRT___timeb64 *buf)
 /*********************************************************************
  *		_ftime32 (MSVCRT.@)
  */
-void CDECL MSVCRT__ftime32(struct MSVCRT___timeb32 *buf)
+void CDECL MSVCRT__ftime32(struct __timeb32 *buf)
 {
-    struct MSVCRT___timeb64 buf64;
+    struct __timeb64 buf64;
 
     MSVCRT__ftime64( &buf64 );
     buf->time     = buf64.time;
@@ -809,7 +811,7 @@ void CDECL MSVCRT__ftime32(struct MSVCRT___timeb32 *buf)
 /*********************************************************************
  *		_ftime32_s (MSVCRT.@)
  */
-int CDECL MSVCRT__ftime32_s(struct MSVCRT___timeb32 *buf)
+int CDECL MSVCRT__ftime32_s(struct __timeb32 *buf)
 {
     if (!MSVCRT_CHECK_PMT( buf != NULL )) return MSVCRT_EINVAL;
     MSVCRT__ftime32(buf);
@@ -820,12 +822,12 @@ int CDECL MSVCRT__ftime32_s(struct MSVCRT___timeb32 *buf)
  *		_ftime (MSVCRT.@)
  */
 #ifdef _WIN64
-void CDECL MSVCRT__ftime(struct MSVCRT___timeb64 *buf)
+void CDECL MSVCRT__ftime(struct __timeb64 *buf)
 {
     MSVCRT__ftime64( buf );
 }
 #else
-void CDECL MSVCRT__ftime(struct MSVCRT___timeb32 *buf)
+void CDECL MSVCRT__ftime(struct __timeb32 *buf)
 {
     MSVCRT__ftime32( buf );
 }
@@ -837,7 +839,7 @@ void CDECL MSVCRT__ftime(struct MSVCRT___timeb32 *buf)
 MSVCRT___time64_t CDECL MSVCRT__time64(MSVCRT___time64_t *buf)
 {
     MSVCRT___time64_t curtime;
-    struct MSVCRT___timeb64 tb;
+    struct __timeb64 tb;
 
     MSVCRT__ftime64(&tb);
 
@@ -851,7 +853,7 @@ MSVCRT___time64_t CDECL MSVCRT__time64(MSVCRT___time64_t *buf)
 MSVCRT___time32_t CDECL MSVCRT__time32(MSVCRT___time32_t *buf)
 {
     MSVCRT___time32_t curtime;
-    struct MSVCRT___timeb64 tb;
+    struct __timeb64 tb;
 
     MSVCRT__ftime64(&tb);
 
@@ -1544,13 +1546,13 @@ static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *f
         const struct MSVCRT_tm *mstm, MSVCRT___lc_time_data *time_data, MSVCRT__locale_t loc)
 {
 #if _MSVCR_VER <= 90
-    TRACE("(%p %ld %s %p %p %p)\n", str, max, format, mstm, time_data, loc);
+    TRACE("(%p %Iu %s %p %p %p)\n", str, max, format, mstm, time_data, loc);
     return strftime_impl(str, max, format, mstm, time_data, loc);
 #else
     MSVCRT_wchar_t *s, *fmt;
     MSVCRT_size_t len;
 
-    TRACE("(%p %ld %s %p %p %p)\n", str, max, format, mstm, time_data, loc);
+    TRACE("(%p %Iu %s %p %p %p)\n", str, max, format, mstm, time_data, loc);
 
     if (!MSVCRT_CHECK_PMT(str != NULL)) return 0;
     if (!MSVCRT_CHECK_PMT(max != 0)) return 0;
@@ -1612,7 +1614,7 @@ static MSVCRT_size_t wcsftime_helper( MSVCRT_wchar_t *str, MSVCRT_size_t max,
     char *s, *fmt;
     MSVCRT_size_t len;
 
-    TRACE("%p %ld %s %p %p %p\n", str, max, debugstr_w(format), mstm, time_data, loc);
+    TRACE("%p %Iu %s %p %p %p\n", str, max, debugstr_w(format), mstm, time_data, loc);
 
     len = MSVCRT__wcstombs_l( NULL, format, 0, loc ) + 1;
     if (!(fmt = MSVCRT_malloc( len ))) return 0;
@@ -1629,7 +1631,7 @@ static MSVCRT_size_t wcsftime_helper( MSVCRT_wchar_t *str, MSVCRT_size_t max,
     MSVCRT_free( fmt );
     return len;
 #else
-    TRACE("%p %ld %s %p %p %p\n", str, max, debugstr_w(format), mstm, time_data, loc);
+    TRACE("%p %Iu %s %p %p %p\n", str, max, debugstr_w(format), mstm, time_data, loc);
     return strftime_impl(str, max, format, mstm, time_data, loc);
 #endif
 }
