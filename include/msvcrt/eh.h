@@ -22,7 +22,7 @@
 
 #include <corecrt.h>
 
-#if !defined(__cplusplus) && !defined(__WINE_MSVCRT_TEST)
+#ifndef __cplusplus
 #error "eh.h is meant only for C++ applications"
 #endif
 

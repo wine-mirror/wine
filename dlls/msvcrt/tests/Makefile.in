@@ -1,5 +1,4 @@
 TESTDLL   = msvcrt.dll
-EXTRAINCL = -I$(srcdir)/..
 IMPORTS   = advapi32
 
 C_SRCS = \
@@ -8,7 +7,6 @@ C_SRCS = \
 	dir.c \
 	environ.c \
 	file.c \
-	headers.c \
 	heap.c \
 	locale.c \
 	misc.c \
