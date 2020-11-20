@@ -1343,21 +1343,22 @@ static UINT parse_aa_pattern( FcPattern *pattern )
     return aa_flags;
 }
 
-static FcPattern *create_family_pattern( const char *name )
+static FcPattern *create_family_pattern( const char *name, FcPattern **cached )
 {
-    FcPattern *ret, *pattern = pFcPatternCreate();
+    FcPattern *ret = NULL, *tmp, *pattern = pFcPatternCreate();
     FcResult result;
-
+    if (*cached) return *cached;
     pFcPatternAddString( pattern, FC_FAMILY, (const FcChar8 *)name );
     pFcPatternAddString( pattern, FC_NAMELANG, (const FcChar8 *)"en-us" );
     pFcPatternAddString( pattern, FC_PRGNAME, (const FcChar8 *)"wine" );
     pFcConfigSubstitute( NULL, pattern, FcMatchPattern );
     pFcDefaultSubstitute( pattern );
-    ret = pFcFontMatch( NULL, pattern, &result );
+    tmp = pFcFontMatch( NULL, pattern, &result );
     pFcPatternDestroy( pattern );
-    if (ret && result == FcResultMatch) return ret;
-    pFcPatternDestroy( ret );
-    return NULL;
+    if (result != FcResultMatch) pFcPatternDestroy( tmp );
+    else if ((ret = InterlockedCompareExchangePointer( (void **)cached, tmp, NULL ))) pFcPatternDestroy( tmp );
+    else ret = tmp;
+    return ret;
 }
 
 static void fontconfig_add_font( FcPattern *pattern, DWORD flags )
@@ -1458,9 +1459,6 @@ static void init_fontconfig(void)
             default_aa_flags = parse_aa_pattern( pattern );
             pFcPatternDestroy( pattern );
         }
-        pattern_serif = create_family_pattern( "serif" );
-        pattern_fixed = create_family_pattern( "monospace" );
-        pattern_sans = create_family_pattern( "sans" );
 
         TRACE( "enabled, default flags = %x\n", default_aa_flags );
         fontconfig_enabled = TRUE;
@@ -2213,9 +2211,9 @@ static BOOL CDECL fontconfig_enum_family_fallbacks( DWORD pitch_and_family, int 
     char *str;
     DWORD len;
 
-    if ((pitch_and_family & FIXED_PITCH) || (pitch_and_family & 0xf0) == FF_MODERN) pat = pattern_fixed;
-    else if ((pitch_and_family & 0xf0) == FF_ROMAN) pat = pattern_serif;
-    else pat = pattern_sans;
+    if ((pitch_and_family & FIXED_PITCH) || (pitch_and_family & 0xf0) == FF_MODERN) pat = create_family_pattern( "monospace", &pattern_fixed );
+    else if ((pitch_and_family & 0xf0) == FF_ROMAN) pat = create_family_pattern( "serif", &pattern_serif );
+    else pat = create_family_pattern( "sans", &pattern_sans );
 
     if (!pat) return FALSE;
     if (pFcPatternGetString( pat, FC_FAMILY, index, (FcChar8 **)&str ) != FcResultMatch) return FALSE;
