@@ -23,6 +23,7 @@
 #define COBJMACROS
 #include "objbase.h"
 #include "msado15_backcompat.h"
+#include "oledb.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -46,6 +47,7 @@ struct recordset
     VARIANT           *data;
     CursorLocationEnum cursor_location;
     CursorTypeEnum     cursor_type;
+    IRowset           *row_set;
 };
 
 struct fields
@@ -756,6 +758,8 @@ static ULONG WINAPI recordset_AddRef( _Recordset *iface )
 static void close_recordset( struct recordset *recordset )
 {
     ULONG row, col, col_count;
+
+    if ( recordset->row_set ) IRowset_Release( recordset->row_set );
 
     if (!recordset->fields) return;
     col_count = get_column_count( recordset );
@@ -1611,15 +1615,31 @@ static HRESULT WINAPI rsconstruction_Invoke(ADORecordsetConstruction *iface, DIS
 static HRESULT WINAPI rsconstruction_get_Rowset(ADORecordsetConstruction *iface, IUnknown **row_set)
 {
     struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
-    FIXME( "%p, %p\n", recordset, row_set );
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE( "%p, %p\n", recordset, row_set );
+
+    hr = IRowset_QueryInterface(recordset->row_set, &IID_IUnknown, (void**)row_set);
+    if ( FAILED(hr) ) return E_FAIL;
+
+    return S_OK;
 }
 
-static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface, IUnknown *row_set)
+static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface, IUnknown *unk)
 {
     struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
-    FIXME( "%p, %p\n", recordset, row_set );
-    return E_NOTIMPL;
+    HRESULT hr;
+    IRowset *rowset;
+
+    TRACE( "%p, %p\n", recordset, unk );
+
+    hr = IUnknown_QueryInterface(unk, &IID_IRowset, (void**)&rowset);
+    if ( FAILED(hr) ) return E_FAIL;
+
+    if ( recordset->row_set ) IRowset_Release( recordset->row_set );
+    recordset->row_set = rowset;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI rsconstruction_get_Chapter(ADORecordsetConstruction *iface, LONG *chapter)
@@ -1679,6 +1699,7 @@ HRESULT Recordset_create( void **obj )
     recordset->index = -1;
     recordset->cursor_location = adUseServer;
     recordset->cursor_type = adOpenForwardOnly;
+    recordset->row_set = NULL;
 
     *obj = &recordset->Recordset_iface;
     TRACE( "returning iface %p\n", *obj );
