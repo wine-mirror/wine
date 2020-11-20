@@ -37,6 +37,7 @@
 
 
 #include <stdio.h>
+#include <fenv.h>
 #include <fpieee.h>
 #include <math.h>
 
@@ -2065,11 +2066,11 @@ int CDECL _controlfp_s(unsigned int *cur, unsigned int newval, unsigned int mask
 /*********************************************************************
  *		fegetenv (MSVCR120.@)
  */
-int CDECL MSVCRT_fegetenv(MSVCRT_fenv_t *env)
+int CDECL MSVCRT_fegetenv(fenv_t *env)
 {
-    env->control = _controlfp(0, 0) & (MSVCRT__EM_INEXACT | MSVCRT__EM_UNDERFLOW |
+    env->_Fe_ctl = _controlfp(0, 0) & (MSVCRT__EM_INEXACT | MSVCRT__EM_UNDERFLOW |
             MSVCRT__EM_OVERFLOW | MSVCRT__EM_ZERODIVIDE | MSVCRT__EM_INVALID | MSVCRT__RC_CHOP);
-    env->status = _statusfp();
+    env->_Fe_stat = _statusfp();
     return 0;
 }
 #endif
@@ -2160,7 +2161,7 @@ void CDECL _fpreset(void)
 /*********************************************************************
  *              fesetenv (MSVCR120.@)
  */
-int CDECL MSVCRT_fesetenv(const MSVCRT_fenv_t *env)
+int CDECL MSVCRT_fesetenv(const fenv_t *env)
 {
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
     struct {
@@ -2180,7 +2181,7 @@ int CDECL MSVCRT_fesetenv(const MSVCRT_fenv_t *env)
 
     TRACE( "(%p)\n", env );
 
-    if (!env->control && !env->status) {
+    if (!env->_Fe_ctl && !env->_Fe_stat) {
         _fpreset();
         return 0;
     }
@@ -2188,12 +2189,12 @@ int CDECL MSVCRT_fesetenv(const MSVCRT_fenv_t *env)
     __asm__ __volatile__( "fnstenv %0" : "=m" (fenv) );
 
     fenv.control_word &= ~0xc3d;
-    if (env->control & MSVCRT__EM_INVALID) fenv.control_word |= 0x1;
-    if (env->control & MSVCRT__EM_ZERODIVIDE) fenv.control_word |= 0x4;
-    if (env->control & MSVCRT__EM_OVERFLOW) fenv.control_word |= 0x8;
-    if (env->control & MSVCRT__EM_UNDERFLOW) fenv.control_word |= 0x10;
-    if (env->control & MSVCRT__EM_INEXACT) fenv.control_word |= 0x20;
-    switch (env->control & MSVCRT__MCW_RC)
+    if (env->_Fe_ctl & MSVCRT__EM_INVALID) fenv.control_word |= 0x1;
+    if (env->_Fe_ctl & MSVCRT__EM_ZERODIVIDE) fenv.control_word |= 0x4;
+    if (env->_Fe_ctl & MSVCRT__EM_OVERFLOW) fenv.control_word |= 0x8;
+    if (env->_Fe_ctl & MSVCRT__EM_UNDERFLOW) fenv.control_word |= 0x10;
+    if (env->_Fe_ctl & MSVCRT__EM_INEXACT) fenv.control_word |= 0x20;
+    switch (env->_Fe_ctl & MSVCRT__MCW_RC)
     {
         case MSVCRT__RC_UP|MSVCRT__RC_DOWN: fenv.control_word |= 0xc00; break;
         case MSVCRT__RC_UP:                 fenv.control_word |= 0x800; break;
@@ -2201,11 +2202,11 @@ int CDECL MSVCRT_fesetenv(const MSVCRT_fenv_t *env)
     }
 
     fenv.status_word &= ~0x3d;
-    if (env->status & MSVCRT__SW_INVALID) fenv.status_word |= 0x1;
-    if (env->status & MSVCRT__SW_ZERODIVIDE) fenv.status_word |= 0x4;
-    if (env->status & MSVCRT__SW_OVERFLOW) fenv.status_word |= 0x8;
-    if (env->status & MSVCRT__SW_UNDERFLOW) fenv.status_word |= 0x10;
-    if (env->status & MSVCRT__SW_INEXACT) fenv.status_word |= 0x20;
+    if (env->_Fe_stat & FE_INVALID) fenv.status_word |= 0x1;
+    if (env->_Fe_stat & FE_DIVBYZERO) fenv.status_word |= 0x4;
+    if (env->_Fe_stat & FE_OVERFLOW) fenv.status_word |= 0x8;
+    if (env->_Fe_stat & FE_UNDERFLOW) fenv.status_word |= 0x10;
+    if (env->_Fe_stat & FE_INEXACT) fenv.status_word |= 0x20;
 
     __asm__ __volatile__( "fldenv %0" : : "m" (fenv) : "st", "st(1)",
             "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)" );
@@ -2215,12 +2216,12 @@ int CDECL MSVCRT_fesetenv(const MSVCRT_fenv_t *env)
         DWORD fpword;
         __asm__ __volatile__( "stmxcsr %0" : "=m" (fpword) );
         fpword &= ~0x7e80;
-        if (env->control & MSVCRT__EM_INVALID) fpword |= 0x80;
-        if (env->control & MSVCRT__EM_ZERODIVIDE) fpword |= 0x200;
-        if (env->control & MSVCRT__EM_OVERFLOW) fpword |= 0x400;
-        if (env->control & MSVCRT__EM_UNDERFLOW) fpword |= 0x800;
-        if (env->control & MSVCRT__EM_INEXACT) fpword |= 0x1000;
-        switch (env->control & MSVCRT__MCW_RC)
+        if (env->_Fe_ctl & MSVCRT__EM_INVALID) fpword |= 0x80;
+        if (env->_Fe_ctl & MSVCRT__EM_ZERODIVIDE) fpword |= 0x200;
+        if (env->_Fe_ctl & MSVCRT__EM_OVERFLOW) fpword |= 0x400;
+        if (env->_Fe_ctl & MSVCRT__EM_UNDERFLOW) fpword |= 0x800;
+        if (env->_Fe_ctl & MSVCRT__EM_INEXACT) fpword |= 0x1000;
+        switch (env->_Fe_ctl & MSVCRT__MCW_RC)
         {
             case MSVCRT__RC_CHOP: fpword |= 0x6000; break;
             case MSVCRT__RC_UP:   fpword |= 0x4000; break;
@@ -3833,11 +3834,11 @@ double CDECL MSVCR120_acosh(double x)
 {
     if (x < 1)
     {
-        MSVCRT_fenv_t env;
+        fenv_t env;
 
         *MSVCRT__errno() = MSVCRT_EDOM;
         MSVCRT_fegetenv(&env);
-        env.status |= MSVCRT__SW_INVALID;
+        env._Fe_stat |= FE_INVALID;
         MSVCRT_fesetenv(&env);
         return NAN;
     }
@@ -3851,11 +3852,11 @@ float CDECL MSVCR120_acoshf(float x)
 {
     if (x < 1)
     {
-        MSVCRT_fenv_t env;
+        fenv_t env;
 
         *MSVCRT__errno() = MSVCRT_EDOM;
         MSVCRT_fegetenv(&env);
-        env.status |= MSVCRT__SW_INVALID;
+        env._Fe_stat |= FE_INVALID;
         MSVCRT_fesetenv(&env);
         return NAN;
     }
@@ -3878,13 +3879,13 @@ double CDECL MSVCR120_atanh(double x)
     double ret;
 
     if (x > 1 || x < -1) {
-        MSVCRT_fenv_t env;
+        fenv_t env;
 
         *MSVCRT__errno() = MSVCRT_EDOM;
 
         /* on Linux atanh returns -NAN in this case */
         MSVCRT_fegetenv(&env);
-        env.status |= MSVCRT__SW_INVALID;
+        env._Fe_stat |= FE_INVALID;
         MSVCRT_fesetenv(&env);
         return NAN;
     }
@@ -3902,12 +3903,12 @@ float CDECL MSVCR120_atanhf(float x)
     float ret;
 
     if (x > 1 || x < -1) {
-        MSVCRT_fenv_t env;
+        fenv_t env;
 
         *MSVCRT__errno() = MSVCRT_EDOM;
 
         MSVCRT_fegetenv(&env);
-        env.status |= MSVCRT__SW_INVALID;
+        env._Fe_stat |= FE_INVALID;
         MSVCRT_fesetenv(&env);
         return NAN;
     }
@@ -4084,7 +4085,7 @@ double CDECL _except1(DWORD fpe, _FP_OPERATION_CODE op, double arg, double res, 
 {
     ULONG_PTR exception_arg;
     DWORD exception = 0;
-    MSVCRT_fenv_t env;
+    fenv_t env;
     DWORD fpword = 0;
     WORD operation;
 
@@ -4101,43 +4102,43 @@ double CDECL _except1(DWORD fpe, _FP_OPERATION_CODE op, double arg, double res, 
     if (fpe & 0x1) { /* overflow */
         if ((fpe == 0x1 && (cw & 0x8)) || (fpe==0x11 && (cw & 0x28))) {
             /* 32-bit version also sets SW_INEXACT here */
-            env.status |= MSVCRT__SW_OVERFLOW;
-            if (fpe & 0x10) env.status |= MSVCRT__SW_INEXACT;
+            env._Fe_stat |= FE_OVERFLOW;
+            if (fpe & 0x10) env._Fe_stat |= FE_INEXACT;
             res = signbit(res) ? -INFINITY : INFINITY;
         } else {
             exception = EXCEPTION_FLT_OVERFLOW;
         }
     } else if (fpe & 0x2) { /* underflow */
         if ((fpe == 0x2 && (cw & 0x10)) || (fpe==0x12 && (cw & 0x30))) {
-            env.status |= MSVCRT__SW_UNDERFLOW;
-            if (fpe & 0x10) env.status |= MSVCRT__SW_INEXACT;
+            env._Fe_stat |= FE_UNDERFLOW;
+            if (fpe & 0x10) env._Fe_stat |= FE_INEXACT;
             res = signbit(res) ? -0.0 : 0.0;
         } else {
             exception = EXCEPTION_FLT_UNDERFLOW;
         }
     } else if (fpe & 0x4) { /* zerodivide */
         if ((fpe == 0x4 && (cw & 0x4)) || (fpe==0x14 && (cw & 0x24))) {
-            env.status |= MSVCRT__SW_ZERODIVIDE;
-            if (fpe & 0x10) env.status |= MSVCRT__SW_INEXACT;
+            env._Fe_stat |= FE_DIVBYZERO;
+            if (fpe & 0x10) env._Fe_stat |= FE_INEXACT;
         } else {
             exception = EXCEPTION_FLT_DIVIDE_BY_ZERO;
         }
     } else if (fpe & 0x8) { /* invalid */
         if (fpe == 0x8 && (cw & 0x1)) {
-            env.status |= MSVCRT__SW_INVALID;
+            env._Fe_stat |= FE_INVALID;
         } else {
             exception = EXCEPTION_FLT_INVALID_OPERATION;
         }
     } else if (fpe & 0x10) { /* inexact */
         if (fpe == 0x10 && (cw & 0x20)) {
-            env.status |= MSVCRT__SW_INEXACT;
+            env._Fe_stat |= FE_INEXACT;
         } else {
             exception = EXCEPTION_FLT_INEXACT_RESULT;
         }
     }
 
     if (exception)
-        env.status = 0;
+        env._Fe_stat = 0;
     MSVCRT_fesetenv(&env);
     if (exception)
         RaiseException(exception, 0, 1, &exception_arg);

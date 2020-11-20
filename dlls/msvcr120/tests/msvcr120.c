@@ -148,12 +148,6 @@ struct MSVCRT_lconv
 
 typedef struct
 {
-    unsigned int control;
-    unsigned int status;
-} fenv_t;
-
-typedef struct
-{
     double r;
     double i;
 } _Dcomplex;
@@ -798,13 +792,13 @@ static void test_feenv(void)
     ret = p_fegetenv(&env);
     ok(!ret, "fegetenv returned %x\n", ret);
     p_fesetround(FE_UPWARD);
-    ok(env.control == (_EM_INEXACT|_EM_UNDERFLOW|_EM_OVERFLOW|_EM_ZERODIVIDE|_EM_INVALID),
-            "env.control = %x\n", env.control);
-    ok(!env.status, "env.status = %x\n", env.status);
+    ok(env._Fe_ctl == (_EM_INEXACT|_EM_UNDERFLOW|_EM_OVERFLOW|_EM_ZERODIVIDE|_EM_INVALID),
+            "env._Fe_ctl = %lx\n", env._Fe_ctl);
+    ok(!env._Fe_stat, "env._Fe_stat = %lx\n", env._Fe_stat);
     ret = p_fegetenv(&env2);
     ok(!ret, "fegetenv returned %x\n", ret);
-    ok(env2.control == (_EM_INEXACT|_EM_UNDERFLOW|_EM_OVERFLOW|_EM_ZERODIVIDE|_EM_INVALID | FE_UPWARD),
-            "env2.control = %x\n", env2.control);
+    ok(env2._Fe_ctl == (_EM_INEXACT|_EM_UNDERFLOW|_EM_OVERFLOW|_EM_ZERODIVIDE|_EM_INVALID | FE_UPWARD),
+            "env2._Fe_ctl = %lx\n", env2._Fe_ctl);
     ret = p_fesetenv(&env);
     ok(!ret, "fesetenv returned %x\n", ret);
     ret = p_fegetround();

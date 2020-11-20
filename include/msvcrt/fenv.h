@@ -13,10 +13,26 @@
 #define FE_DOWNWARD    _RC_DOWN
 #define FE_TOWARDZERO  _RC_CHOP
 
+#define FE_INEXACT     _SW_INEXACT
+#define FE_UNDERFLOW   _SW_UNDERFLOW
+#define FE_OVERFLOW    _SW_OVERFLOW
+#define FE_DIVBYZERO   _SW_ZERODIVIDE
+#define FE_INVALID     _SW_INVALID
+#define FE_ALL_EXCEPT  (FE_DIVBYZERO | FE_INEXACT | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+typedef struct
+{
+    __msvcrt_ulong _Fe_ctl;
+    __msvcrt_ulong _Fe_stat;
+} fenv_t;
+
+_ACRTIMP int __cdecl fegetenv(fenv_t*);
+_ACRTIMP int __cdecl fesetenv(const fenv_t*);
+_ACRTIMP int __cdecl fegetround(void);
 _ACRTIMP int __cdecl fesetround(int);
 
 #ifdef __cplusplus
