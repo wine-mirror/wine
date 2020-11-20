@@ -783,12 +783,69 @@ static void release_topo_node(struct topo_node *node)
     heap_free(node);
 }
 
+static void session_shutdown_current_topology(struct media_session *session)
+{
+    unsigned int shutdown, force_shutdown;
+    MF_TOPOLOGY_TYPE node_type;
+    IMFStreamSink *stream_sink;
+    IMFTopology *topology;
+    IMFTopologyNode *node;
+    IMFActivate *activate;
+    IMFMediaSink *sink;
+    IUnknown *object;
+    WORD idx = 0;
+
+    topology = session->presentation.current_topology;
+    force_shutdown = session->state == SESSION_STATE_SHUT_DOWN;
+
+    /* FIXME: should handle async MFTs, but these are not supported by the rest of the pipeline currently. */
+
+    while (SUCCEEDED(IMFTopology_GetNode(topology, idx++, &node)))
+    {
+        if (SUCCEEDED(IMFTopologyNode_GetNodeType(node, &node_type)) &&
+                node_type == MF_TOPOLOGY_OUTPUT_NODE)
+        {
+            shutdown = 1;
+            IMFTopologyNode_GetUINT32(node, &MF_TOPONODE_NOSHUTDOWN_ON_REMOVE, &shutdown);
+
+            if (force_shutdown || shutdown)
+            {
+                if (SUCCEEDED(IMFTopologyNode_GetUnknown(node, &_MF_TOPONODE_IMFActivate, &IID_IMFActivate,
+                        (void **)&activate)))
+                {
+                    IMFActivate_ShutdownObject(activate);
+                    IMFActivate_Release(activate);
+                }
+                else if (SUCCEEDED(IMFTopologyNode_GetObject(node, &object)))
+                {
+                    if (SUCCEEDED(IUnknown_QueryInterface(object, &IID_IMFStreamSink, (void **)&stream_sink)))
+                    {
+                        if (SUCCEEDED(IMFStreamSink_GetMediaSink(stream_sink, &sink)))
+                        {
+                            IMFMediaSink_Shutdown(sink);
+                            IMFMediaSink_Release(sink);
+                        }
+
+                        IMFStreamSink_Release(stream_sink);
+                    }
+
+                    IUnknown_Release(object);
+                }
+            }
+        }
+
+        IMFTopologyNode_Release(node);
+    }
+}
+
 static void session_clear_presentation(struct media_session *session)
 {
     struct media_source *source, *source2;
     struct media_sink *sink, *sink2;
     struct topo_node *node, *node2;
     struct session_op *op, *op2;
+
+    session_shutdown_current_topology(session);
 
     IMFTopology_Clear(session->presentation.current_topology);
     session->presentation.topo_status = MF_TOPOSTATUS_INVALID;
@@ -1790,7 +1847,7 @@ static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
     struct media_session *session = impl_from_IMFMediaSession(iface);
     HRESULT hr = S_OK;
 
-    FIXME("%p.\n", iface);
+    TRACE("%p.\n", iface);
 
     EnterCriticalSection(&session->cs);
     if (SUCCEEDED(hr = session_is_shut_down(session)))
@@ -1802,6 +1859,7 @@ static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
         MFShutdownObject((IUnknown *)session->clock);
         IMFPresentationClock_Release(session->clock);
         session->clock = NULL;
+        session_clear_presentation(session);
     }
     LeaveCriticalSection(&session->cs);
 
