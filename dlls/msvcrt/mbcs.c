@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <limits.h>
+#include <mbctype.h>
 
 #include "msvcrt.h"
 #include "winnls.h"

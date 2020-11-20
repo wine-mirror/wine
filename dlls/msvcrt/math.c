@@ -37,6 +37,7 @@
 
 
 #include <stdio.h>
+#include <fpieee.h>
 #include <math.h>
 
 #include "msvcrt.h"

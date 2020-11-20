@@ -23,6 +23,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <mbctype.h>
+#include <wctype.h>
 
 #include "windef.h"
 #include "winbase.h"
