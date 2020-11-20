@@ -1393,9 +1393,9 @@ static void load_fontconfig_fonts(void)
 {
     FcPattern *pat;
     FcFontSet *fontset;
-    int i, len;
+    const char *format;
+    int i;
     char *file;
-    const char *ext;
 
     if (!fontconfig_enabled) return;
 
@@ -1418,25 +1418,29 @@ static void load_fontconfig_fonts(void)
 
         pFcConfigSubstitute( NULL, fontset->fonts[i], FcMatchFont );
 
-        /* We're just interested in OT/TT fonts for now, so this hack just
-           picks up the scalable fonts without extensions .pf[ab] to save time
-           loading every other font */
-
         if(pFcPatternGetBool(fontset->fonts[i], FC_SCALABLE, 0, &scalable) == FcResultMatch && !scalable)
         {
             TRACE("not scalable\n");
             continue;
         }
 
+        if (pFcPatternGetString( fontset->fonts[i], FC_FONTFORMAT, 0, (FcChar8 **)&format ) != FcResultMatch)
+        {
+            TRACE( "ignoring unknown font format %s\n", debugstr_a(file) );
+            continue;
+        }
+
+        if (!strcmp( format, "Type 1" ))
+        {
+            TRACE( "ignoring Type 1 font %s\n", debugstr_a(file) );
+            continue;
+        }
+
         aa_flags = parse_aa_pattern( fontset->fonts[i] );
         TRACE("fontconfig: %s aa %x\n", file, aa_flags);
 
-        len = strlen( file );
-        if(len < 4) continue;
-        ext = &file[ len - 3 ];
-        if(_strnicmp(ext, "pfa", -1) && _strnicmp(ext, "pfb", -1))
-            AddFontToList(NULL, file, NULL, 0,
-                          ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE | ADDFONT_AA_FLAGS(aa_flags) );
+	AddFontToList( NULL, file, NULL, 0,
+		       ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE | ADDFONT_AA_FLAGS(aa_flags) );
     }
     pFcFontSetDestroy(fontset);
     pFcPatternDestroy(pat);
