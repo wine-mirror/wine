@@ -1002,50 +1002,6 @@ static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
     }
 }
 
-static int AddFaceToList(FT_Face ft_face, const WCHAR *file, void *data_ptr, SIZE_T data_size,
-                         FT_Long face_index, DWORD flags )
-{
-    struct bitmap_font_size size;
-    FONTSIGNATURE fs;
-    int ret;
-    WCHAR *family_name = ft_face_get_family_name( ft_face, system_lcid );
-    WCHAR *second_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) );
-    WCHAR *style_name = ft_face_get_style_name( ft_face, system_lcid );
-    WCHAR *full_name = ft_face_get_full_name( ft_face, system_lcid );
-
-    /* try to find another secondary name, preferring the lowest langids */
-    if (!RtlCompareUnicodeStrings( family_name, lstrlenW(family_name),
-                                   second_name, lstrlenW(second_name), TRUE ))
-    {
-        RtlFreeHeap( GetProcessHeap(), 0, second_name );
-        second_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL) );
-        if (!RtlCompareUnicodeStrings( family_name, lstrlenW(family_name),
-                                       second_name, lstrlenW(second_name), TRUE ))
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, second_name );
-            second_name = NULL;
-        }
-    }
-
-    get_fontsig( ft_face, &fs );
-    if (!FT_IS_SCALABLE( ft_face )) get_bitmap_size( ft_face, &size );
-    if (!HIWORD( flags )) flags |= ADDFONT_AA_FLAGS( default_aa_flags );
-
-    ret = callback_funcs->add_gdi_face( family_name, second_name, style_name, full_name, file,
-                                        data_ptr, data_size, face_index, fs, get_ntm_flags( ft_face ),
-                                        get_font_version( ft_face ), flags,
-                                        FT_IS_SCALABLE(ft_face) ? NULL : &size );
-
-    TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
-          fs.fsCsb[0], fs.fsCsb[1], fs.fsUsb[0], fs.fsUsb[1], fs.fsUsb[2], fs.fsUsb[3]);
-
-    RtlFreeHeap( GetProcessHeap(), 0, family_name );
-    RtlFreeHeap( GetProcessHeap(), 0, second_name );
-    RtlFreeHeap( GetProcessHeap(), 0, style_name );
-    RtlFreeHeap( GetProcessHeap(), 0, full_name );
-    return ret;
-}
-
 static FT_Face new_ft_face( const char *file, void *font_data_ptr, DWORD font_data_size,
                             FT_Long face_index, BOOL allow_bitmap )
 {
@@ -1122,6 +1078,68 @@ fail:
     return NULL;
 }
 
+static int add_unix_face( const char *unix_name, const WCHAR *file, void *data_ptr, SIZE_T data_size,
+                          DWORD face_index, DWORD flags, DWORD *num_faces )
+{
+    struct bitmap_font_size size;
+    FONTSIGNATURE fs;
+    FT_Face ft_face;
+    WCHAR *family_name, *second_name, *style_name, *full_name;
+    int ret;
+
+    if (num_faces) *num_faces = 0;
+
+    if (!(ft_face = new_ft_face( unix_name, data_ptr, data_size, face_index, flags & ADDFONT_ALLOW_BITMAP )))
+        return 0;
+
+    if (ft_face->family_name[0] == '.') /* Ignore fonts with names beginning with a dot */
+    {
+        TRACE("Ignoring %s since its family name begins with a dot\n", debugstr_a(unix_name));
+        pFT_Done_Face( ft_face );
+        return 0;
+    }
+
+    family_name = ft_face_get_family_name( ft_face, system_lcid );
+    second_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) );
+    style_name = ft_face_get_style_name( ft_face, system_lcid );
+    full_name = ft_face_get_full_name( ft_face, system_lcid );
+
+    /* try to find another secondary name, preferring the lowest langids */
+    if (!RtlCompareUnicodeStrings( family_name, lstrlenW(family_name),
+                                   second_name, lstrlenW(second_name), TRUE ))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, second_name );
+        second_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL) );
+        if (!RtlCompareUnicodeStrings( family_name, lstrlenW(family_name),
+                                       second_name, lstrlenW(second_name), TRUE ))
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, second_name );
+            second_name = NULL;
+        }
+    }
+
+    get_fontsig( ft_face, &fs );
+    if (!FT_IS_SCALABLE( ft_face )) get_bitmap_size( ft_face, &size );
+    if (!HIWORD( flags )) flags |= ADDFONT_AA_FLAGS( default_aa_flags );
+
+    ret = callback_funcs->add_gdi_face( family_name, second_name, style_name, full_name, file,
+                                        data_ptr, data_size, face_index, fs, get_ntm_flags( ft_face ),
+                                        get_font_version( ft_face ), flags,
+                                        FT_IS_SCALABLE(ft_face) ? NULL : &size );
+
+    TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
+          fs.fsCsb[0], fs.fsCsb[1], fs.fsUsb[0], fs.fsUsb[1], fs.fsUsb[2], fs.fsUsb[3]);
+
+    RtlFreeHeap( GetProcessHeap(), 0, family_name );
+    RtlFreeHeap( GetProcessHeap(), 0, second_name );
+    RtlFreeHeap( GetProcessHeap(), 0, style_name );
+    RtlFreeHeap( GetProcessHeap(), 0, full_name );
+
+    if (num_faces) *num_faces = ft_face->num_faces;
+    pFT_Done_Face( ft_face );
+    return ret;
+}
+
 static WCHAR *get_dos_file_name( LPCSTR str )
 {
     WCHAR *buffer;
@@ -1176,8 +1194,7 @@ static char *get_unix_file_name( LPCWSTR dosW )
 static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *font_data_ptr,
                          DWORD font_data_size, DWORD flags)
 {
-    FT_Face ft_face;
-    FT_Long face_index = 0, num_faces;
+    DWORD face_index = 0, num_faces;
     INT ret = 0;
     WCHAR *filename = NULL;
 
@@ -1207,22 +1224,10 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
 
     if (!dos_name && unix_name) dos_name = filename = get_dos_file_name( unix_name );
 
-    do {
-        ft_face = new_ft_face( unix_name, font_data_ptr, font_data_size, face_index, flags & ADDFONT_ALLOW_BITMAP );
-        if (!ft_face) break;
+    do
+        ret += add_unix_face( unix_name, dos_name, font_data_ptr, font_data_size, face_index, flags, &num_faces );
+    while (num_faces > ++face_index);
 
-        if(ft_face->family_name[0] == '.') /* Ignore fonts with names beginning with a dot */
-        {
-            TRACE("Ignoring %s since its family name begins with a dot\n", debugstr_a(unix_name));
-            pFT_Done_Face(ft_face);
-            break;
-        }
-
-        ret += AddFaceToList(ft_face, dos_name, font_data_ptr, font_data_size, face_index, flags);
-
-	num_faces = ft_face->num_faces;
-	pFT_Done_Face(ft_face);
-    } while(num_faces > ++face_index);
     RtlFreeHeap( GetProcessHeap(), 0, filename );
     return ret;
 }
