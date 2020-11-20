@@ -37,7 +37,6 @@ C_SRCS = \
 	scaler.c \
 	stream.c \
 	tgaformat.c \
-	tiffformat.c \
 	ungif.c \
 	unix_iface.c \
 	unix_lib.c \

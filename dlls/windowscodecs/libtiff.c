@@ -143,8 +143,13 @@ static tsize_t tiff_stream_read(thandle_t client_data, tdata_t data, tsize_t siz
 
 static tsize_t tiff_stream_write(thandle_t client_data, tdata_t data, tsize_t size)
 {
-    FIXME("stub\n");
-    return 0;
+    IStream *stream = (IStream*)client_data;
+    ULONG bytes_written;
+    HRESULT hr;
+
+    hr = stream_write(stream, data, size, &bytes_written);
+    if (FAILED(hr)) bytes_written = 0;
+    return bytes_written;
 }
 
 static toff_t tiff_stream_seek(thandle_t client_data, toff_t offset, int whence)
@@ -1176,11 +1181,262 @@ HRESULT CDECL tiff_decoder_create(struct decoder_info *info, struct decoder **re
     return S_OK;
 }
 
+struct tiff_encode_format {
+    const WICPixelFormatGUID *guid;
+    int photometric;
+    int bps;
+    int samples;
+    int bpp;
+    int extra_sample;
+    int extra_sample_type;
+    int reverse_bgr;
+    int indexed;
+};
+
+static const struct tiff_encode_format formats[] = {
+    {&GUID_WICPixelFormat24bppBGR, 2, 8, 3, 24, 0, 0, 1},
+    {&GUID_WICPixelFormat24bppRGB, 2, 8, 3, 24, 0, 0, 0},
+    {&GUID_WICPixelFormatBlackWhite, 1, 1, 1, 1, 0, 0, 0},
+    {&GUID_WICPixelFormat4bppGray, 1, 4, 1, 4, 0, 0, 0},
+    {&GUID_WICPixelFormat8bppGray, 1, 8, 1, 8, 0, 0, 0},
+    {&GUID_WICPixelFormat32bppBGRA, 2, 8, 4, 32, 1, 2, 1},
+    {&GUID_WICPixelFormat32bppPBGRA, 2, 8, 4, 32, 1, 1, 1},
+    {&GUID_WICPixelFormat48bppRGB, 2, 16, 3, 48, 0, 0, 0},
+    {&GUID_WICPixelFormat64bppRGBA, 2, 16, 4, 64, 1, 2, 0},
+    {&GUID_WICPixelFormat64bppPRGBA, 2, 16, 4, 64, 1, 1, 0},
+    {&GUID_WICPixelFormat1bppIndexed, 3, 1, 1, 1, 0, 0, 0, 1},
+    {&GUID_WICPixelFormat4bppIndexed, 3, 4, 1, 4, 0, 0, 0, 1},
+    {&GUID_WICPixelFormat8bppIndexed, 3, 8, 1, 8, 0, 0, 0, 1},
+    {0}
+};
+
+typedef struct tiff_encoder {
+    struct encoder encoder;
+    TIFF *tiff;
+    const struct tiff_encode_format *format;
+    struct encoder_frame encoder_frame;
+    DWORD num_frames;
+    DWORD lines_written;
+} tiff_encoder;
+
+static inline struct tiff_encoder *impl_from_encoder(struct encoder* iface)
+{
+    return CONTAINING_RECORD(iface, struct tiff_encoder, encoder);
+}
+
+static HRESULT CDECL tiff_encoder_initialize(struct encoder* iface, IStream *stream)
+{
+    struct tiff_encoder* This = impl_from_encoder(iface);
+    TIFF *tiff;
+
+    tiff = tiff_open_stream(stream, "w");
+
+    if (!tiff)
+        return E_FAIL;
+
+    This->tiff = tiff;
+
+    return S_OK;
+}
+
+static HRESULT CDECL tiff_encoder_get_supported_format(struct encoder *iface,
+    GUID *pixel_format, DWORD *bpp, BOOL *indexed)
+{
+    int i;
+
+    if (IsEqualGUID(pixel_format, &GUID_WICPixelFormat2bppIndexed))
+        *pixel_format = GUID_WICPixelFormat4bppIndexed;
+
+    for (i=0; formats[i].guid; i++)
+    {
+        if (IsEqualGUID(formats[i].guid, pixel_format))
+            break;
+    }
+
+    if (!formats[i].guid) i = 0;
+
+    *pixel_format = *formats[i].guid;
+    *bpp = formats[i].bpp;
+    *indexed = formats[i].indexed;
+
+    return S_OK;
+}
+
+static HRESULT CDECL tiff_encoder_create_frame(struct encoder* iface, const struct encoder_frame *frame)
+{
+    struct tiff_encoder* This = impl_from_encoder(iface);
+    int i;
+
+    if (This->num_frames != 0)
+        pTIFFWriteDirectory(This->tiff);
+
+    This->num_frames++;
+    This->lines_written = 0;
+    This->encoder_frame = *frame;
+
+    for (i=0; formats[i].guid; i++)
+    {
+        if (IsEqualGUID(formats[i].guid, &frame->pixel_format))
+            break;
+    }
+
+    This->format = &formats[i];
+
+    pTIFFSetField(This->tiff, TIFFTAG_PHOTOMETRIC, (uint16)This->format->photometric);
+    pTIFFSetField(This->tiff, TIFFTAG_PLANARCONFIG, (uint16)1);
+    pTIFFSetField(This->tiff, TIFFTAG_BITSPERSAMPLE, (uint16)This->format->bps);
+    pTIFFSetField(This->tiff, TIFFTAG_SAMPLESPERPIXEL, (uint16)This->format->samples);
+
+    if (This->format->extra_sample)
+    {
+        uint16 extra_samples;
+        extra_samples = This->format->extra_sample_type;
+
+        pTIFFSetField(This->tiff, TIFFTAG_EXTRASAMPLES, (uint16)1, &extra_samples);
+    }
+
+    pTIFFSetField(This->tiff, TIFFTAG_IMAGEWIDTH, (uint32)frame->width);
+    pTIFFSetField(This->tiff, TIFFTAG_IMAGELENGTH, (uint32)frame->height);
+
+    if (frame->dpix != 0.0 && frame->dpiy != 0.0)
+    {
+        pTIFFSetField(This->tiff, TIFFTAG_RESOLUTIONUNIT, (uint16)2); /* Inch */
+        pTIFFSetField(This->tiff, TIFFTAG_XRESOLUTION, (float)frame->dpix);
+        pTIFFSetField(This->tiff, TIFFTAG_YRESOLUTION, (float)frame->dpiy);
+    }
+
+    if (This->format->bpp <= 8 && frame->num_colors && This->format->indexed)
+    {
+        uint16 red[256], green[256], blue[256];
+        UINT i;
+
+        for (i = 0; i < frame->num_colors; i++)
+        {
+            red[i] = (frame->palette[i] >> 8) & 0xff00;
+            green[i] = frame->palette[i] & 0xff00;
+            blue[i] = (frame->palette[i] << 8) & 0xff00;
+        }
+
+        pTIFFSetField(This->tiff, TIFFTAG_COLORMAP, red, green, blue);
+    }
+
+    return S_OK;
+}
+
+static HRESULT CDECL tiff_encoder_write_lines(struct encoder* iface,
+    BYTE *data, DWORD line_count, DWORD stride)
+{
+    struct tiff_encoder* This = impl_from_encoder(iface);
+    BYTE *row_data, *swapped_data = NULL;
+    UINT i, j, line_size;
+
+    line_size = ((This->encoder_frame.width * This->format->bpp)+7)/8;
+
+    if (This->format->reverse_bgr)
+    {
+        swapped_data = malloc(line_size);
+        if (!swapped_data)
+            return E_OUTOFMEMORY;
+    }
+
+    for (i=0; i<line_count; i++)
+    {
+        row_data = data + i * stride;
+
+        if (This->format->reverse_bgr && This->format->bps == 8)
+        {
+            memcpy(swapped_data, row_data, line_size);
+            for (j=0; j<line_size; j += This->format->samples)
+            {
+                BYTE temp;
+                temp = swapped_data[j];
+                swapped_data[j] = swapped_data[j+2];
+                swapped_data[j+2] = temp;
+            }
+            row_data = swapped_data;
+        }
+
+        pTIFFWriteScanline(This->tiff, (tdata_t)row_data, i+This->lines_written, 0);
+    }
+
+    This->lines_written += line_count;
+
+    return S_OK;
+}
+
+static HRESULT CDECL tiff_encoder_commit_frame(struct encoder* iface)
+{
+    return S_OK;
+}
+
+static HRESULT CDECL tiff_encoder_commit_file(struct encoder* iface)
+{
+    struct tiff_encoder* This = impl_from_encoder(iface);
+
+    pTIFFClose(This->tiff);
+    This->tiff = NULL;
+
+    return S_OK;
+}
+
+static void CDECL tiff_encoder_destroy(struct encoder* iface)
+{
+    struct tiff_encoder *This = impl_from_encoder(iface);
+
+    if (This->tiff) pTIFFClose(This->tiff);
+    RtlFreeHeap(GetProcessHeap(), 0, This);
+}
+
+static const struct encoder_funcs tiff_encoder_vtable = {
+    tiff_encoder_initialize,
+    tiff_encoder_get_supported_format,
+    tiff_encoder_create_frame,
+    tiff_encoder_write_lines,
+    tiff_encoder_commit_frame,
+    tiff_encoder_commit_file,
+    tiff_encoder_destroy
+};
+
+HRESULT CDECL tiff_encoder_create(struct encoder_info *info, struct encoder **result)
+{
+    struct tiff_encoder *This;
+
+    if (!load_libtiff())
+    {
+        ERR("Failed writing TIFF because unable to load %s\n",SONAME_LIBTIFF);
+        return E_FAIL;
+    }
+
+    This = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*This));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->encoder.vtable = &tiff_encoder_vtable;
+    This->tiff = NULL;
+    This->num_frames = 0;
+
+    info->flags = ENCODER_FLAGS_MULTI_FRAME;
+    info->container_format = GUID_ContainerFormatTiff;
+    info->clsid = CLSID_WICTiffEncoder;
+    info->encoder_options[0] = ENCODER_OPTION_COMPRESSION_METHOD;
+    info->encoder_options[1] = ENCODER_OPTION_COMPRESSION_QUALITY;
+    info->encoder_options[2] = ENCODER_OPTION_END;
+
+    *result = &This->encoder;
+
+    return S_OK;
+}
+
 #else /* !SONAME_LIBTIFF */
 
 HRESULT CDECL tiff_decoder_create(struct decoder_info *info, struct decoder **result)
 {
     ERR("Trying to load TIFF picture, but Wine was compiled without TIFF support.\n");
+    return E_FAIL;
+}
+
+HRESULT CDECL tiff_encoder_create(struct encoder_info *info, struct encoder **result)
+{
+    ERR("Trying to save TIFF picture, but Wine was compiled without TIFF support.\n");
     return E_FAIL;
 }
 
