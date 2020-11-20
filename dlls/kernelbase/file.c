@@ -3047,12 +3047,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetFileSizeEx( HANDLE file, PLARGE_INTEGER size )
     FILE_STANDARD_INFORMATION info;
     IO_STATUS_BLOCK io;
 
-    if (is_console_handle( file ))
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return FALSE;
-    }
-
     if (!set_ntstatus( NtQueryInformationFile( file, &io, &info, sizeof(info), FileStandardInformation )))
         return FALSE;
 

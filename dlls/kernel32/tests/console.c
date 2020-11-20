@@ -3959,12 +3959,10 @@ static void test_file_info(HANDLE input, HANDLE output)
     ok(status == STATUS_INVALID_DEVICE_REQUEST, "NtQueryInformationFile returned: %#x\n", status);
 
     ret = GetFileSizeEx(input, &size);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_FUNCTION,
        "GetFileSizeEx returned %x(%u)\n", ret, GetLastError());
 
     ret = GetFileSizeEx(output, &size);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_FUNCTION,
        "GetFileSizeEx returned %x(%u)\n", ret, GetLastError());
 }
