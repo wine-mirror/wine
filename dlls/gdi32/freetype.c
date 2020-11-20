@@ -190,6 +190,20 @@ MAKE_FUNCPTR(FcPatternDestroy);
 MAKE_FUNCPTR(FcPatternGetBool);
 MAKE_FUNCPTR(FcPatternGetInteger);
 MAKE_FUNCPTR(FcPatternGetString);
+MAKE_FUNCPTR(FcConfigGetFontDirs);
+MAKE_FUNCPTR(FcConfigGetCurrent);
+MAKE_FUNCPTR(FcCacheCopySet);
+MAKE_FUNCPTR(FcCacheNumSubdir);
+MAKE_FUNCPTR(FcCacheSubdir);
+MAKE_FUNCPTR(FcDirCacheRead);
+MAKE_FUNCPTR(FcDirCacheUnload);
+MAKE_FUNCPTR(FcStrListCreate);
+MAKE_FUNCPTR(FcStrListDone);
+MAKE_FUNCPTR(FcStrListNext);
+MAKE_FUNCPTR(FcStrSetAdd);
+MAKE_FUNCPTR(FcStrSetCreate);
+MAKE_FUNCPTR(FcStrSetDestroy);
+MAKE_FUNCPTR(FcStrSetMember);
 #ifndef FC_NAMELANG
 #define FC_NAMELANG "namelang"
 #endif
@@ -1346,6 +1360,51 @@ static FcPattern *create_family_pattern( const char *name )
     return NULL;
 }
 
+static void fontconfig_add_font( FcPattern *pattern, DWORD flags )
+{
+    const char *unix_name, *format;
+    WCHAR *dos_name;
+    FcBool scalable;
+    DWORD aa_flags;
+    int face_index;
+
+    TRACE( "(%p %#x)\n", pattern, flags );
+
+    if (pFcPatternGetString( pattern, FC_FILE, 0, (FcChar8 **)&unix_name ) != FcResultMatch)
+        return;
+
+    if (pFcPatternGetBool( pattern, FC_SCALABLE, 0, &scalable ) != FcResultMatch)
+        scalable = FALSE;
+
+    if (pFcPatternGetString( pattern, FC_FONTFORMAT, 0, (FcChar8 **)&format ) != FcResultMatch)
+    {
+        TRACE( "ignoring unknown font format %s\n", debugstr_a(unix_name) );
+        return;
+    }
+
+    if (!strcmp( format, "Type 1" ))
+    {
+        TRACE( "ignoring Type 1 font %s\n", debugstr_a(unix_name) );
+        return;
+    }
+
+    if (!scalable && !(flags & ADDFONT_ALLOW_BITMAP))
+    {
+        TRACE( "ignoring non-scalable font %s\n", debugstr_a(unix_name) );
+        return;
+    }
+
+    if (!(aa_flags = parse_aa_pattern( pattern ))) aa_flags = default_aa_flags;
+    flags |= ADDFONT_AA_FLAGS(aa_flags);
+
+    if (pFcPatternGetInteger( pattern, FC_INDEX, 0, &face_index ) != FcResultMatch)
+        face_index = 0;
+
+    dos_name = get_dos_file_name( unix_name );
+    add_unix_face( unix_name, dos_name, NULL, 0, face_index, flags, NULL );
+    RtlFreeHeap( GetProcessHeap(), 0, dos_name );
+}
+
 static void init_fontconfig(void)
 {
     void *fc_handle = dlopen(SONAME_LIBFONTCONFIG, RTLD_NOW);
@@ -1369,6 +1428,20 @@ static void init_fontconfig(void)
     LOAD_FUNCPTR(FcPatternGetBool);
     LOAD_FUNCPTR(FcPatternGetInteger);
     LOAD_FUNCPTR(FcPatternGetString);
+    LOAD_FUNCPTR(FcConfigGetFontDirs);
+    LOAD_FUNCPTR(FcConfigGetCurrent);
+    LOAD_FUNCPTR(FcCacheCopySet);
+    LOAD_FUNCPTR(FcCacheNumSubdir);
+    LOAD_FUNCPTR(FcCacheSubdir);
+    LOAD_FUNCPTR(FcDirCacheRead);
+    LOAD_FUNCPTR(FcDirCacheUnload);
+    LOAD_FUNCPTR(FcStrListCreate);
+    LOAD_FUNCPTR(FcStrListDone);
+    LOAD_FUNCPTR(FcStrListNext);
+    LOAD_FUNCPTR(FcStrSetAdd);
+    LOAD_FUNCPTR(FcStrSetCreate);
+    LOAD_FUNCPTR(FcStrSetDestroy);
+    LOAD_FUNCPTR(FcStrSetMember);
 #undef LOAD_FUNCPTR
 
     if (pFcInit())
@@ -1394,61 +1467,69 @@ static void init_fontconfig(void)
     }
 }
 
-static void load_fontconfig_fonts(void)
+static void fontconfig_add_fonts_from_dir_list( FcConfig *config, FcStrList *dir_list, FcStrSet *done_set, DWORD flags )
 {
-    FcPattern *pat;
-    FcFontSet *fontset;
-    const char *format;
+    const FcChar8 *dir;
+    FcFontSet *font_set;
+    FcStrList *subdir_list = NULL;
+    FcStrSet *subdir_set = NULL;
+    FcCache *cache = NULL;
     int i;
-    char *file;
+
+    TRACE( "(%p %p %p %#x)\n", config, dir_list, done_set, flags );
+
+    while ((dir = pFcStrListNext( dir_list )))
+    {
+        if (pFcStrSetMember( done_set, dir )) continue;
+
+        TRACE( "adding fonts from %s\n", dir );
+        if (!(cache = pFcDirCacheRead( dir, FcFalse, config ))) continue;
+
+        if (!(font_set = pFcCacheCopySet( cache ))) goto done;
+        for (i = 0; i < font_set->nfont; i++)
+            fontconfig_add_font( font_set->fonts[i], flags );
+        pFcFontSetDestroy( font_set );
+        font_set = NULL;
+
+        if (!(subdir_set = pFcStrSetCreate())) goto done;
+        for (i = 0; i < pFcCacheNumSubdir( cache ); i++)
+            pFcStrSetAdd( subdir_set, pFcCacheSubdir( cache, i ) );
+        pFcDirCacheUnload( cache );
+        cache = NULL;
+
+        if (!(subdir_list = pFcStrListCreate( subdir_set ))) goto done;
+        pFcStrSetDestroy( subdir_set );
+        subdir_set = NULL;
+
+        pFcStrSetAdd( done_set, dir );
+        fontconfig_add_fonts_from_dir_list( config, subdir_list, done_set, flags );
+        pFcStrListDone( subdir_list );
+        subdir_list = NULL;
+    }
+
+done:
+    if (font_set) pFcFontSetDestroy( font_set );
+    if (subdir_list) pFcStrListDone( subdir_list );
+    if (subdir_set) pFcStrSetDestroy( subdir_set );
+    if (cache) pFcDirCacheUnload( cache );
+}
+
+static void load_fontconfig_fonts( void )
+{
+    FcStrList *dir_list = NULL;
+    FcStrSet *done_set = NULL;
+    FcConfig *config;
 
     if (!fontconfig_enabled) return;
+    if (!(config = pFcConfigGetCurrent())) goto done;
+    if (!(done_set = pFcStrSetCreate())) goto done;
+    if (!(dir_list = pFcConfigGetFontDirs( config ))) goto done;
 
-    pat = pFcPatternCreate();
-    if (!pat) return;
+    fontconfig_add_fonts_from_dir_list( config, dir_list, done_set, ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE );
 
-    fontset = pFcFontList(NULL, pat, NULL);
-    if (!fontset)
-    {
-        pFcPatternDestroy(pat);
-        return;
-    }
-
-    for(i = 0; i < fontset->nfont; i++) {
-        FcBool scalable;
-        DWORD aa_flags;
-
-        if(pFcPatternGetString(fontset->fonts[i], FC_FILE, 0, (FcChar8**)&file) != FcResultMatch)
-            continue;
-
-        pFcConfigSubstitute( NULL, fontset->fonts[i], FcMatchFont );
-
-        if(pFcPatternGetBool(fontset->fonts[i], FC_SCALABLE, 0, &scalable) == FcResultMatch && !scalable)
-        {
-            TRACE("not scalable\n");
-            continue;
-        }
-
-        if (pFcPatternGetString( fontset->fonts[i], FC_FONTFORMAT, 0, (FcChar8 **)&format ) != FcResultMatch)
-        {
-            TRACE( "ignoring unknown font format %s\n", debugstr_a(file) );
-            continue;
-        }
-
-        if (!strcmp( format, "Type 1" ))
-        {
-            TRACE( "ignoring Type 1 font %s\n", debugstr_a(file) );
-            continue;
-        }
-
-        aa_flags = parse_aa_pattern( fontset->fonts[i] );
-        TRACE("fontconfig: %s aa %x\n", file, aa_flags);
-
-	AddFontToList( NULL, file, NULL, 0,
-		       ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE | ADDFONT_AA_FLAGS(aa_flags) );
-    }
-    pFcFontSetDestroy(fontset);
-    pFcPatternDestroy(pat);
+done:
+    if (dir_list) pFcStrListDone( dir_list );
+    if (done_set) pFcStrSetDestroy( done_set );
 }
 
 #elif defined(HAVE_CARBON_CARBON_H)
