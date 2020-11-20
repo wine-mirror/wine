@@ -542,6 +542,28 @@ test_image[] =
 
 static WCHAR temp_dir[MAX_PATH];
 
+static DXGI_FORMAT block_compressed_formats[] =
+{
+    DXGI_FORMAT_BC1_TYPELESS,  DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC1_UNORM_SRGB,
+    DXGI_FORMAT_BC2_TYPELESS,  DXGI_FORMAT_BC2_UNORM, DXGI_FORMAT_BC2_UNORM_SRGB,
+    DXGI_FORMAT_BC3_TYPELESS,  DXGI_FORMAT_BC3_UNORM, DXGI_FORMAT_BC3_UNORM_SRGB,
+    DXGI_FORMAT_BC4_TYPELESS,  DXGI_FORMAT_BC4_UNORM, DXGI_FORMAT_BC4_SNORM,
+    DXGI_FORMAT_BC5_TYPELESS,  DXGI_FORMAT_BC5_UNORM, DXGI_FORMAT_BC5_SNORM,
+    DXGI_FORMAT_BC6H_TYPELESS, DXGI_FORMAT_BC6H_UF16, DXGI_FORMAT_BC6H_SF16,
+    DXGI_FORMAT_BC7_TYPELESS,  DXGI_FORMAT_BC7_UNORM, DXGI_FORMAT_BC7_UNORM_SRGB
+};
+
+static BOOL is_block_compressed(DXGI_FORMAT format)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(block_compressed_formats); ++i)
+        if (format == block_compressed_formats[i])
+            return TRUE;
+
+    return FALSE;
+}
+
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
     int x = *(int *)&f;
@@ -692,6 +714,93 @@ static void check_image_info(D3DX10_IMAGE_INFO *image_info, unsigned int i, unsi
     ok_(__FILE__, line)(image_info->ImageFileFormat == test_image[i].expected.ImageFileFormat,
             "Test %u: Got unexpected ImageFileFormat %u, expected %u.\n",
             i, image_info->ImageFileFormat, test_image[i].expected.ImageFileFormat);
+}
+
+static void check_resource_info(ID3D10Resource *resource, unsigned int i, unsigned int line)
+{
+    unsigned int expected_mip_levels, expected_width, expected_height, max_dimension;
+    D3D10_RESOURCE_DIMENSION resource_dimension;
+    D3D10_TEXTURE2D_DESC desc_2d;
+    D3D10_TEXTURE3D_DESC desc_3d;
+    ID3D10Texture2D *texture_2d;
+    ID3D10Texture3D *texture_3d;
+    HRESULT hr;
+
+    expected_width = test_image[i].expected.Width;
+    expected_height = test_image[i].expected.Height;
+    if (is_block_compressed(test_image[i].expected.Format))
+    {
+        expected_width = (expected_width + 3) & ~3;
+        expected_height = (expected_height + 3) & ~3;
+    }
+    expected_mip_levels = 0;
+    max_dimension = max(expected_width, expected_height);
+    while (max_dimension)
+    {
+        ++expected_mip_levels;
+        max_dimension >>= 1;
+    }
+
+    ID3D10Resource_GetType(resource, &resource_dimension);
+    ok(resource_dimension == test_image[i].expected.ResourceDimension,
+            "Test %u: Got unexpected ResourceDimension %u, expected %u.\n",
+            i, resource_dimension, test_image[i].expected.ResourceDimension);
+
+    switch (resource_dimension)
+    {
+        case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
+            hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture_2d);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+            ID3D10Texture2D_GetDesc(texture_2d, &desc_2d);
+            ok_(__FILE__, line)(desc_2d.Width == expected_width,
+                    "Test %u: Got unexpected Width %u, expected %u.\n",
+                    i, desc_2d.Width, expected_width);
+            ok_(__FILE__, line)(desc_2d.Height == expected_height,
+                    "Test %u: Got unexpected Height %u, expected %u.\n",
+                    i, desc_2d.Height, expected_height);
+            ok_(__FILE__, line)(desc_2d.MipLevels == expected_mip_levels,
+                    "Test %u: Got unexpected MipLevels %u, expected %u.\n",
+                    i, desc_2d.MipLevels, expected_mip_levels);
+            ok_(__FILE__, line)(desc_2d.ArraySize == test_image[i].expected.ArraySize,
+                    "Test %u: Got unexpected ArraySize %u, expected %u.\n",
+                    i, desc_2d.ArraySize, test_image[i].expected.ArraySize);
+            ok_(__FILE__, line)(desc_2d.Format == test_image[i].expected.Format,
+                    "Test %u: Got unexpected Format %u, expected %u.\n",
+                    i, desc_2d.Format, test_image[i].expected.Format);
+            ok_(__FILE__, line)(desc_2d.MiscFlags == test_image[i].expected.MiscFlags,
+                    "Test %u: Got unexpected MiscFlags %u, expected %u.\n",
+                    i, desc_2d.MiscFlags, test_image[i].expected.MiscFlags);
+            ID3D10Texture2D_Release(texture_2d);
+            break;
+
+        case D3D10_RESOURCE_DIMENSION_TEXTURE3D:
+            hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture3D, (void **)&texture_3d);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+            ID3D10Texture3D_GetDesc(texture_3d, &desc_3d);
+            ok_(__FILE__, line)(desc_3d.Width == expected_width,
+                    "Test %u: Got unexpected Width %u, expected %u.\n",
+                    i, desc_3d.Width, expected_width);
+            ok_(__FILE__, line)(desc_3d.Height == expected_height,
+                    "Test %u: Got unexpected Height %u, expected %u.\n",
+                    i, desc_3d.Height, expected_height);
+            ok_(__FILE__, line)(desc_3d.Depth == test_image[i].expected.Depth,
+                    "Test %u: Got unexpected Depth %u, expected %u.\n",
+                    i, desc_3d.Depth, test_image[i].expected.Depth);
+            ok_(__FILE__, line)(desc_3d.MipLevels == expected_mip_levels,
+                    "Test %u: Got unexpected MipLevels %u, expected %u.\n",
+                    i, desc_3d.MipLevels, expected_mip_levels);
+            ok_(__FILE__, line)(desc_3d.Format == test_image[i].expected.Format,
+                    "Test %u: Got unexpected Format %u, expected %u.\n",
+                    i, desc_3d.Format, test_image[i].expected.Format);
+            ok_(__FILE__, line)(desc_3d.MiscFlags == test_image[i].expected.MiscFlags,
+                    "Test %u: Got unexpected MiscFlags %u, expected %u.\n",
+                    i, desc_3d.MiscFlags, test_image[i].expected.MiscFlags);
+            ID3D10Texture3D_Release(texture_3d);
+            break;
+
+        default:
+            break;
+    }
 }
 
 static void test_D3DX10UnsetAllDeviceObjects(void)
@@ -1491,6 +1600,50 @@ static void test_get_image_info(void)
     CoUninitialize();
 }
 
+static void test_create_texture(void)
+{
+    ID3D10Resource *resource;
+    ID3D10Device *device;
+    unsigned int i;
+    HRESULT hr;
+
+    device = create_device();
+    if (!device)
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    CoInitialize(NULL);
+
+    /* D3DX10CreateTextureFromMemory tests */
+
+    todo_wine
+    {
+    hr = D3DX10CreateTextureFromMemory(device, NULL, 0, NULL, NULL, &resource, NULL);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = D3DX10CreateTextureFromMemory(device, NULL, sizeof(test_bmp_1bpp), NULL, NULL, &resource, NULL);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = D3DX10CreateTextureFromMemory(device, test_bmp_1bpp, 0, NULL, NULL, &resource, NULL);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = D3DX10CreateTextureFromMemory(device, test_bmp_1bpp, sizeof(test_bmp_1bpp) - 1, NULL, NULL, &resource, NULL);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test_image); ++i)
+    {
+        hr = D3DX10CreateTextureFromMemory(device, test_image[i].data, test_image[i].size, NULL, NULL, &resource, NULL);
+        todo_wine
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        if (hr == S_OK)
+            check_resource_info(resource, i, __LINE__);
+    }
+
+    CoUninitialize();
+
+    ID3D10Device_Release(device);
+}
+
 START_TEST(d3dx10)
 {
     test_D3DX10UnsetAllDeviceObjects();
@@ -1498,4 +1651,5 @@ START_TEST(d3dx10)
     test_D3DX10CreateAsyncFileLoader();
     test_D3DX10CreateAsyncResourceLoader();
     test_get_image_info();
+    test_create_texture();
 }
