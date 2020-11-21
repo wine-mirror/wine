@@ -1096,6 +1096,9 @@ struct testfilter
     struct strmbase_sink sink;
     IAsyncReader IAsyncReader_iface, *reader;
     const AM_MEDIA_TYPE *mt;
+    HANDLE eos_event;
+    unsigned int sample_count, eos_count, new_segment_count;
+    REFERENCE_TIME seek_start, seek_end;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -1119,6 +1122,7 @@ static void testfilter_destroy(struct strmbase_filter *iface)
     strmbase_source_cleanup(&filter->source);
     strmbase_sink_cleanup(&filter->sink);
     strmbase_filter_cleanup(&filter->filter);
+    CloseHandle(filter->eos_event);
 }
 
 static const struct strmbase_filter_ops testfilter_ops =
@@ -1200,6 +1204,60 @@ static HRESULT testsink_get_media_type(struct strmbase_pin *iface, unsigned int 
 
 static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
 {
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    REFERENCE_TIME start, end;
+    IMediaSeeking *seeking;
+    HRESULT hr;
+
+    hr = IMediaSample_GetTime(sample, &start, &end);
+    todo_wine_if (hr == VFW_S_NO_STOP_TIME) ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    if (winetest_debug > 1)
+        trace("%04x: Got sample with timestamps %I64d-%I64d.\n", GetCurrentThreadId(), start, end);
+
+    ok(filter->new_segment_count, "Expected NewSegment() before Receive().\n");
+
+    IPin_QueryInterface(iface->pin.peer, &IID_IMediaSeeking, (void **)&seeking);
+    hr = IMediaSeeking_GetPositions(seeking, &start, &end);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine_if (start != filter->seek_start)
+        ok(start == filter->seek_start, "Expected start position %I64u, got %I64u.\n", filter->seek_start, start);
+    ok(end == filter->seek_end, "Expected end position %I64u, got %I64u.\n", filter->seek_end, end);
+    IMediaSeeking_Release(seeking);
+
+    ok(!filter->eos_count, "Got a sample after EOS.\n");
+    ++filter->sample_count;
+    return S_OK;
+}
+
+static HRESULT testsink_eos(struct strmbase_sink *iface)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+
+    if (winetest_debug > 1)
+        trace("%04x: Got EOS.\n", GetCurrentThreadId());
+
+    ok(!filter->eos_count, "Got %u EOS events.\n", filter->eos_count + 1);
+    ++filter->eos_count;
+    SetEvent(filter->eos_event);
+    return S_OK;
+}
+
+static HRESULT testsink_new_segment(struct strmbase_sink *iface,
+        REFERENCE_TIME start, REFERENCE_TIME end, double rate)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    IMediaSeeking *seeking;
+    HRESULT hr;
+
+    ++filter->new_segment_count;
+
+    IPin_QueryInterface(iface->pin.peer, &IID_IMediaSeeking, (void **)&seeking);
+    hr = IMediaSeeking_GetPositions(seeking, &filter->seek_start, &filter->seek_end);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(rate == 1.0, "Got rate %.16e.\n", rate);
+    IMediaSeeking_Release(seeking);
+
     return S_OK;
 }
 
@@ -1209,6 +1267,8 @@ static const struct strmbase_sink_ops testsink_ops =
     .base.pin_query_accept = testsink_query_accept,
     .base.pin_get_media_type = testsink_get_media_type,
     .pfnReceive = testsink_Receive,
+    .sink_eos = testsink_eos,
+    .sink_new_segment = testsink_new_segment,
 };
 
 static struct testfilter *impl_from_IAsyncReader(IAsyncReader *iface)
@@ -1296,6 +1356,7 @@ static void testfilter_init(struct testfilter *filter)
     strmbase_source_init(&filter->source, &filter->filter, L"source", &testsource_ops);
     strmbase_sink_init(&filter->sink, &filter->filter, L"sink", &testsink_ops, NULL);
     filter->IAsyncReader_iface.lpVtbl = &async_reader_vtbl;
+    filter->eos_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 }
 
 static void test_connect_pin(void)
@@ -1746,6 +1807,94 @@ static void test_seeking(void)
     ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 }
 
+static void test_streaming(void)
+{
+    const WCHAR *filename = load_resource(L"test.mp3");
+    IBaseFilter *filter = create_mpeg_splitter();
+    IFilterGraph2 *graph = connect_input(filter, filename);
+    struct testfilter testsink;
+    REFERENCE_TIME start, end;
+    IMediaSeeking *seeking;
+    IMediaControl *control;
+    IPin *source;
+    HRESULT hr;
+    ULONG ref;
+    DWORD ret;
+
+    testfilter_init(&testsink);
+    IFilterGraph2_AddFilter(graph, &testsink.filter.IBaseFilter_iface, L"sink");
+    IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
+    IBaseFilter_FindPin(filter, L"Audio", &source);
+    IPin_QueryInterface(source, &IID_IMediaSeeking, (void **)&seeking);
+
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(WaitForSingleObject(testsink.eos_event, 100) == WAIT_TIMEOUT, "Expected timeout.\n");
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(!WaitForSingleObject(testsink.eos_event, 1000), "Did not receive EOS.\n");
+    ok(WaitForSingleObject(testsink.eos_event, 100) == WAIT_TIMEOUT, "Got more than one EOS.\n");
+    ok(testsink.sample_count, "Expected at least one sample.\n");
+
+    testsink.sample_count = testsink.eos_count = 0;
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(!WaitForSingleObject(testsink.eos_event, 1000), "Did not receive EOS.\n");
+    ok(WaitForSingleObject(testsink.eos_event, 100) == WAIT_TIMEOUT, "Got more than one EOS.\n");
+    ok(testsink.sample_count, "Expected at least one sample.\n");
+
+    testsink.sample_count = testsink.eos_count = 0;
+    start = 100 * 10000;
+    end = 300 * 10000;
+    hr = IMediaSeeking_SetPositions(seeking, &start, AM_SEEKING_AbsolutePositioning,
+            &end, AM_SEEKING_AbsolutePositioning);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(!WaitForSingleObject(testsink.eos_event, 1000), "Did not receive EOS.\n");
+    ok(WaitForSingleObject(testsink.eos_event, 100) == WAIT_TIMEOUT, "Got more than one EOS.\n");
+    ok(testsink.sample_count, "Expected at least one sample.\n");
+
+    start = end = 0xdeadbeef;
+    hr = IMediaSeeking_GetPositions(seeking, &start, &end);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(start == testsink.seek_start, "Expected start position %I64u, got %I64u.\n", testsink.seek_start, start);
+    ok(end == testsink.seek_end, "Expected end position %I64u, got %I64u.\n", testsink.seek_end, end);
+
+    testsink.sample_count = testsink.eos_count = 0;
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(!WaitForSingleObject(testsink.eos_event, 1000), "Did not receive EOS.\n");
+    ok(WaitForSingleObject(testsink.eos_event, 100) == WAIT_TIMEOUT, "Got more than one EOS.\n");
+    ok(testsink.sample_count, "Expected at least one sample.\n");
+
+    start = end = 0xdeadbeef;
+    hr = IMediaSeeking_GetPositions(seeking, &start, &end);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(start == testsink.seek_start, "Expected start position %I64u, got %I64u.\n", testsink.seek_start, start);
+    ok(end == testsink.seek_end, "Expected end position %I64u, got %I64u.\n", testsink.seek_end, end);
+
+    IMediaSeeking_Release(seeking);
+    IPin_Release(source);
+    IMediaControl_Release(control);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&testsink.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+}
+
 START_TEST(mpegsplit)
 {
     IBaseFilter *filter;
@@ -1770,6 +1919,7 @@ START_TEST(mpegsplit)
     test_unconnected_filter_state();
     test_connect_pin();
     test_seeking();
+    test_streaming();
 
     CoUninitialize();
 }
