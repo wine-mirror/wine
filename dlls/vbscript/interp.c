@@ -963,12 +963,7 @@ static HRESULT interp_set_member(exec_ctx_t *ctx)
 
     TRACE("%s\n", debugstr_w(identifier));
 
-    if(arg_cnt) {
-        FIXME("arguments not supported\n");
-        return E_NOTIMPL;
-    }
-
-    hres = stack_assume_disp(ctx, 1, &obj);
+    hres = stack_assume_disp(ctx, arg_cnt+1, &obj);
     if(FAILED(hres))
         return hres;
 
@@ -977,7 +972,7 @@ static HRESULT interp_set_member(exec_ctx_t *ctx)
         return E_FAIL;
     }
 
-    hres = stack_assume_disp(ctx, 0, NULL);
+    hres = stack_assume_disp(ctx, arg_cnt, NULL);
     if(FAILED(hres))
         return hres;
 
@@ -989,7 +984,7 @@ static HRESULT interp_set_member(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    stack_popn(ctx, 2);
+    stack_popn(ctx, arg_cnt+2);
     return S_OK;
 }
 
