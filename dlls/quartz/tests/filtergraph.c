@@ -4401,13 +4401,13 @@ static void test_graph_seeking(void)
 
     filter1.seek_hr = filter2.seek_hr = 0xbeef;
     hr = IMediaSeeking_GetDuration(seeking, &time);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x23456, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter1.seek_hr = E_NOTIMPL;
     filter2.seek_hr = S_OK;
     hr = IMediaSeeking_GetDuration(seeking, &time);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x12345, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter1.seek_hr = 0xdeadbeef;

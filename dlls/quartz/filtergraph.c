@@ -2237,36 +2237,45 @@ static HRESULT WINAPI MediaSeeking_SetTimeFormat(IMediaSeeking *iface, const GUI
     return S_OK;
 }
 
-static HRESULT WINAPI FoundDuration(struct filter_graph *This, IMediaSeeking *seek, DWORD_PTR pduration)
+static HRESULT WINAPI MediaSeeking_GetDuration(IMediaSeeking *iface, LONGLONG *duration)
 {
-    HRESULT hr;
-    LONGLONG duration = 0, *pdur = (LONGLONG*)pduration;
+    struct filter_graph *graph = impl_from_IMediaSeeking(iface);
+    HRESULT hr = E_NOTIMPL, filter_hr;
+    LONGLONG filter_duration;
+    struct filter *filter;
 
-    hr = IMediaSeeking_GetDuration(seek, &duration);
-    if (FAILED(hr))
-        return hr;
+    TRACE("graph %p, duration %p.\n", graph, duration);
 
-    if (*pdur < duration)
-        *pdur = duration;
-    return hr;
-}
-
-static HRESULT WINAPI MediaSeeking_GetDuration(IMediaSeeking *iface, LONGLONG *pDuration)
-{
-    struct filter_graph *This = impl_from_IMediaSeeking(iface);
-    HRESULT hr;
-
-    TRACE("(%p/%p)->(%p)\n", This, iface, pDuration);
-
-    if (!pDuration)
+    if (!duration)
         return E_POINTER;
 
-    EnterCriticalSection(&This->cs);
-    *pDuration = 0;
-    hr = all_renderers_seek(This, FoundDuration, (DWORD_PTR)pDuration);
-    LeaveCriticalSection(&This->cs);
+    *duration = 0;
 
-    TRACE("--->%08x\n", hr);
+    EnterCriticalSection(&graph->cs);
+
+    LIST_FOR_EACH_ENTRY(filter, &graph->filters, struct filter, entry)
+    {
+        update_seeking(filter);
+        if (!filter->seeking)
+            continue;
+
+        filter_hr = IMediaSeeking_GetDuration(filter->seeking, &filter_duration);
+        if (SUCCEEDED(filter_hr))
+        {
+            hr = S_OK;
+            *duration = max(*duration, filter_duration);
+        }
+        else if (filter_hr != E_NOTIMPL)
+        {
+            LeaveCriticalSection(&graph->cs);
+            return filter_hr;
+        }
+    }
+
+    LeaveCriticalSection(&graph->cs);
+
+    TRACE("Returning hr %#x, duration %s (%s seconds).\n", hr,
+            wine_dbgstr_longlong(*duration), debugstr_time(*duration));
     return hr;
 }
 
