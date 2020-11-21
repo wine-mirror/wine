@@ -1623,7 +1623,7 @@ static HRESULT WINAPI testseek_GetDuration(IMediaSeeking *iface, LONGLONG *durat
     struct testfilter *filter = impl_from_IMediaSeeking(iface);
     if (winetest_debug > 1) trace("%p->GetDuration()\n", iface);
     *duration = filter->seek_duration;
-    return S_OK;
+    return filter->seek_hr;
 }
 
 static HRESULT WINAPI testseek_GetStopPosition(IMediaSeeking *iface, LONGLONG *stop)
@@ -4399,6 +4399,26 @@ static void test_graph_seeking(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x23456, "Got time %s.\n", wine_dbgstr_longlong(time));
 
+    filter1.seek_hr = filter2.seek_hr = 0xbeef;
+    hr = IMediaSeeking_GetDuration(seeking, &time);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time == 0x23456, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    filter1.seek_hr = E_NOTIMPL;
+    filter2.seek_hr = S_OK;
+    hr = IMediaSeeking_GetDuration(seeking, &time);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(time == 0x12345, "Got time %s.\n", wine_dbgstr_longlong(time));
+
+    filter1.seek_hr = 0xdeadbeef;
+    hr = IMediaSeeking_GetDuration(seeking, &time);
+    ok(hr == 0xdeadbeef, "Got hr %#x.\n", hr);
+
+    filter1.seek_hr = filter2.seek_hr = E_NOTIMPL;
+    hr = IMediaSeeking_GetDuration(seeking, &time);
+    ok(hr == E_NOTIMPL, "Got hr %#x.\n", hr);
+    filter1.seek_hr = filter2.seek_hr = S_OK;
+
     flush_cached_seeking(graph, &filter1);
     flush_cached_seeking(graph, &filter2);
 
@@ -4420,6 +4440,7 @@ static void test_graph_seeking(void)
     ok(time == 0x65432, "Got time %s.\n", wine_dbgstr_longlong(time));
 
     filter1.seek_hr = E_NOTIMPL;
+    filter2.seek_hr = S_OK;
     hr = IMediaSeeking_GetStopPosition(seeking, &time);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(time == 0x54321, "Got time %s.\n", wine_dbgstr_longlong(time));
@@ -4470,6 +4491,7 @@ static void test_graph_seeking(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     filter1.seek_hr = E_NOTIMPL;
+    filter2.seek_hr = S_OK;
     hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning,
             &stop, AM_SEEKING_AbsolutePositioning);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
