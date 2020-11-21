@@ -1220,8 +1220,7 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     IPin_QueryInterface(iface->pin.peer, &IID_IMediaSeeking, (void **)&seeking);
     hr = IMediaSeeking_GetPositions(seeking, &start, &end);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine_if (start != filter->seek_start)
-        ok(start == filter->seek_start, "Expected start position %I64u, got %I64u.\n", filter->seek_start, start);
+    ok(start == filter->seek_start, "Expected start position %I64u, got %I64u.\n", filter->seek_start, start);
     ok(end == filter->seek_end, "Expected end position %I64u, got %I64u.\n", filter->seek_end, end);
     IMediaSeeking_Release(seeking);
 
@@ -1863,7 +1862,7 @@ static void test_streaming(void)
     start = end = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &start, &end);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(start == testsink.seek_start, "Expected start position %I64u, got %I64u.\n", testsink.seek_start, start);
+    ok(start == testsink.seek_start, "Expected start position %I64u, got %I64u.\n", testsink.seek_start, start);
     ok(end == testsink.seek_end, "Expected end position %I64u, got %I64u.\n", testsink.seek_end, end);
 
     testsink.sample_count = testsink.eos_count = 0;
@@ -1879,7 +1878,7 @@ static void test_streaming(void)
     start = end = 0xdeadbeef;
     hr = IMediaSeeking_GetPositions(seeking, &start, &end);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(start == testsink.seek_start, "Expected start position %I64u, got %I64u.\n", testsink.seek_start, start);
+    ok(start == testsink.seek_start, "Expected start position %I64u, got %I64u.\n", testsink.seek_start, start);
     ok(end == testsink.seek_end, "Expected end position %I64u, got %I64u.\n", testsink.seek_end, end);
 
     IMediaSeeking_Release(seeking);

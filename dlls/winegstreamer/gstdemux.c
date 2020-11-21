@@ -1897,33 +1897,6 @@ static ULONG WINAPI GST_Seeking_Release(IMediaSeeking *iface)
     return IPin_Release(&This->pin.pin.IPin_iface);
 }
 
-static HRESULT WINAPI GST_Seeking_GetCurrentPosition(IMediaSeeking *iface, REFERENCE_TIME *pos)
-{
-    struct gstdemux_source *This = impl_from_IMediaSeeking(iface);
-
-    TRACE("(%p)->(%p)\n", This, pos);
-
-    if (!pos)
-        return E_POINTER;
-
-    mark_wine_thread();
-
-    if (This->pin.pin.filter->state == State_Stopped)
-    {
-        *pos = This->seek.llCurrent;
-        TRACE("Cached value\n");
-        return S_OK;
-    }
-
-    if (!gst_pad_query_position(This->their_src, GST_FORMAT_TIME, pos)) {
-        WARN("Could not query position\n");
-        return E_NOTIMPL;
-    }
-    *pos /= 100;
-    This->seek.llCurrent = *pos;
-    return S_OK;
-}
-
 static GstSeekType type_from_flags(DWORD flags)
 {
     switch (flags & AM_SEEKING_PositioningBitsMask) {
@@ -1997,7 +1970,7 @@ static const IMediaSeekingVtbl GST_Seeking_Vtbl =
     SourceSeekingImpl_SetTimeFormat,
     SourceSeekingImpl_GetDuration,
     SourceSeekingImpl_GetStopPosition,
-    GST_Seeking_GetCurrentPosition,
+    SourceSeekingImpl_GetCurrentPosition,
     SourceSeekingImpl_ConvertTimeFormat,
     GST_Seeking_SetPositions,
     SourceSeekingImpl_GetPositions,
