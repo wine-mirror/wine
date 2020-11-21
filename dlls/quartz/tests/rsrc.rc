@@ -20,7 +20,7 @@
 
 #include "windef.h"
 
-/* ffmpeg -f lavfi -i smptebars -t 1 -r 1 -f avi -vcodec rawvideo -pix_fmt yuv420p -vf scale=32x24 test.avi */
+/* ffmpeg -f lavfi -i smptebars -t 5 -r 1 -f avi -vcodec rawvideo -pix_fmt yuv420p -vf scale=32x24 test.avi */
 /* @makedep: test.avi */
 test.avi RCDATA "test.avi"
 
