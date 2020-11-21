@@ -1772,6 +1772,17 @@ end class
 
 Class TestPropParam
     Public oDict
+    Public gotNothing
+    Public m_obj
+
+    Public Property Set bar(obj)
+        Set m_obj = obj
+    End Property
+    Public Property Set foo(par,obj)
+        Set m_obj = obj
+        if obj is Nothing Then gotNothing = True
+        oDict = par
+    End Property
     Public Property Let Key(oldKey,newKey)
         oDict = oldKey & newKey
     End Property
@@ -1790,6 +1801,11 @@ x.three(1,2) = 3
 call ok(x.oDict = "123","x.oDict = " & x.oDict & " expected 123")
 x.ten(1,2,3,4,5,6,7,8,9) = 0
 call ok(x.oDict = "1234567890","x.oDict = " & x.oDict & " expected 1234567890")
+Set x.bar = Nothing
+call ok(x.gotNothing=Empty,"x.gotNothing = " & x.gotNothing  & " expected Empty")
+Set x.foo("123") = Nothing
+call ok(x.oDict = "123","x.oDict = " & x.oDict & " expected 123")
+call ok(x.gotNothing=True,"x.gotNothing = " & x.gotNothing  & " expected true")
 
 set x = new TestPropSyntax
 set x.prop = new TestPropSyntax
