@@ -608,19 +608,20 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
     const IMAGE_EXPORT_DIRECTORY *exports;
     DWORD exp_size;
     WINE_MODREF *wm;
-    WCHAR mod_name[32];
+    WCHAR buffer[32], *mod_name = buffer;
     const char *end = strrchr(forward, '.');
     FARPROC proc = NULL;
 
     if (!end) return NULL;
-    if ((end - forward) * sizeof(WCHAR) >= sizeof(mod_name)) return NULL;
+    if ((end - forward) * sizeof(WCHAR) > sizeof(buffer) - sizeof(dllW))
+    {
+        if (!(mod_name = RtlAllocateHeap( GetProcessHeap(), 0, (end - forward + sizeof(dllW)) * sizeof(WCHAR) )))
+            return NULL;
+    }
     ascii_to_unicode( mod_name, forward, end - forward );
     mod_name[end - forward] = 0;
     if (!wcschr( mod_name, '.' ))
-    {
-        if ((end - forward) * sizeof(WCHAR) >= sizeof(mod_name) - sizeof(dllW)) return NULL;
         memcpy( mod_name + (end - forward), dllW, sizeof(dllW) );
-    }
 
     if (!(wm = find_basename_module( mod_name )))
     {
@@ -642,6 +643,7 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
 
         if (!wm)
         {
+            if (mod_name != buffer) RtlFreeHeap( GetProcessHeap(), 0, mod_name );
             ERR( "module not found for forward '%s' used by %s\n",
                  forward, debugstr_w(get_modref(module)->ldr.FullDllName.Buffer) );
             return NULL;
@@ -664,6 +666,7 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
             forward, debugstr_w(get_modref(module)->ldr.FullDllName.Buffer),
             debugstr_w(get_modref(module)->ldr.BaseDllName.Buffer) );
     }
+    if (mod_name != buffer) RtlFreeHeap( GetProcessHeap(), 0, mod_name );
     return proc;
 }
 
