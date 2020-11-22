@@ -1631,9 +1631,9 @@ static NTSTATUS set_file_times( int fd, const LARGE_INTEGER *mtime, const LARGE_
 static inline void get_file_times( const struct stat *st, LARGE_INTEGER *mtime, LARGE_INTEGER *ctime,
                                    LARGE_INTEGER *atime, LARGE_INTEGER *creation )
 {
-    mtime->QuadPart = st->st_mtime * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
-    ctime->QuadPart = st->st_ctime * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
-    atime->QuadPart = st->st_atime * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+    mtime->QuadPart = ticks_from_time_t( st->st_mtime );
+    ctime->QuadPart = ticks_from_time_t( st->st_ctime );
+    atime->QuadPart = ticks_from_time_t( st->st_atime );
 #ifdef HAVE_STRUCT_STAT_ST_MTIM
     mtime->QuadPart += st->st_mtim.tv_nsec / 100;
 #elif defined(HAVE_STRUCT_STAT_ST_MTIMESPEC)
@@ -1650,14 +1650,14 @@ static inline void get_file_times( const struct stat *st, LARGE_INTEGER *mtime, 
     atime->QuadPart += st->st_atimespec.tv_nsec / 100;
 #endif
 #ifdef HAVE_STRUCT_STAT_ST_BIRTHTIME
-    creation->QuadPart = st->st_birthtime * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+    creation->QuadPart = ticks_from_time_t( st->st_birthtime );
 #ifdef HAVE_STRUCT_STAT_ST_BIRTHTIM
     creation->QuadPart += st->st_birthtim.tv_nsec / 100;
 #elif defined(HAVE_STRUCT_STAT_ST_BIRTHTIMESPEC)
     creation->QuadPart += st->st_birthtimespec.tv_nsec / 100;
 #endif
 #elif defined(HAVE_STRUCT_STAT___ST_BIRTHTIME)
-    creation->QuadPart = st->__st_birthtime * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
+    creation->QuadPart = ticks_from_time_t( st->__st_birthtime );
 #ifdef HAVE_STRUCT_STAT___ST_BIRTHTIM
     creation->QuadPart += st->__st_birthtim.tv_nsec / 100;
 #endif

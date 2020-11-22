@@ -1362,6 +1362,18 @@ static void test_file_basic_information(void)
     ok ( U(io).Status == STATUS_SUCCESS, "can't set system attribute, io.Status is %x\n", U(io).Status );
 
     memset(&fbi2, 0, sizeof(fbi2));
+    fbi2.LastAccessTime.QuadPart = 0x200deadcafebeef;
+    U(io).Status = 0xdeadbeef;
+    res = pNtSetInformationFile(h, &io, &fbi2, sizeof(fbi2), FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't set system attribute, NtSetInformationFile returned %x\n", res );
+    ok ( U(io).Status == STATUS_SUCCESS, "can't set system attribute, io.Status is %x\n", U(io).Status );
+    res = pNtQueryInformationFile(h, &io, &fbi, sizeof(fbi), FileBasicInformation);
+    ok ( res == STATUS_SUCCESS, "can't get system attribute, NtQueryInformationFile returned %x\n", res );
+    ok ( U(io).Status == STATUS_SUCCESS, "can't get system attribute, io.Status is %x\n", U(io).Status );
+    ok ( fbi2.LastAccessTime.QuadPart == fbi.LastAccessTime.QuadPart,
+         "large access time set/get does not match.\n" );
+
+    memset(&fbi2, 0, sizeof(fbi2));
     res = pNtQueryInformationFile(h, &io, &fbi2, sizeof fbi2, FileBasicInformation);
     ok ( res == STATUS_SUCCESS, "can't get attributes, res %x\n", res);
     ok ( fbi2.LastWriteTime.QuadPart == fbi.LastWriteTime.QuadPart, "unexpected write time.\n");

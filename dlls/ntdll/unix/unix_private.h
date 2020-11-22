@@ -249,7 +249,14 @@ extern void WINAPI DECLSPEC_NORETURN call_raise_user_exception_dispatcher( NTSTA
 
 #define TICKSPERSEC 10000000
 #define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)86400)
-#define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
+
+static inline ULONGLONG ticks_from_time_t( time_t time )
+{
+    if (sizeof(time_t) == sizeof(int))  /* time_t may be signed */
+        return ((ULONGLONG)(ULONG)time + SECS_1601_TO_1970) * TICKSPERSEC;
+    else
+        return ((ULONGLONG)time + SECS_1601_TO_1970) * TICKSPERSEC;
+}
 
 static inline const char *debugstr_us( const UNICODE_STRING *us )
 {
