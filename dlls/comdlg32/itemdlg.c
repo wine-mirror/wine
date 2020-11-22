@@ -48,10 +48,6 @@ DEFINE_GUID(IID_IFileDialogCustomizeAlt, 0x8016B7B3, 0x3D49, 0x4504, 0xA0,0xAA, 
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
-static const WCHAR notifysink_childW[] = {'n','f','s','_','c','h','i','l','d',0};
-static const WCHAR floatnotifysinkW[] = {'F','l','o','a','t','N','o','t','i','f','y','S','i','n','k',0};
-static const WCHAR radiobuttonlistW[] = {'R','a','d','i','o','B','u','t','t','o','n','L','i','s','t',0};
-
 enum ITEMDLG_TYPE {
     ITEMDLG_TYPE_OPEN,
     ITEMDLG_TYPE_SAVE
@@ -555,8 +551,6 @@ static HRESULT on_default_action(FileDialogImpl *This)
         /* Add the proper extension */
         if(open_action == ONOPEN_OPEN)
         {
-            static const WCHAR dotW[] = {'.',0};
-
             if(This->dlg_type == ITEMDLG_TYPE_SAVE)
             {
                 WCHAR extbuf[MAX_PATH], *newext = NULL;
@@ -567,7 +561,7 @@ static HRESULT on_default_action(FileDialogImpl *This)
                 }
                 else if(This->default_ext)
                 {
-                    lstrcpyW(extbuf, dotW);
+                    lstrcpyW(extbuf, L".");
                     lstrcatW(extbuf, This->default_ext);
                     newext = extbuf;
                 }
@@ -586,7 +580,7 @@ static HRESULT on_default_action(FileDialogImpl *This)
                 {
                     if(This->default_ext)
                     {
-                        lstrcatW(canon_filename, dotW);
+                        lstrcatW(canon_filename, L".");
                         lstrcatW(canon_filename, This->default_ext);
 
                         if(!PathFileExistsW(canon_filename))
@@ -1122,7 +1116,7 @@ static LRESULT CALLBACK notifysink_proc(HWND hwnd, UINT message, WPARAM wparam, 
     case WM_COMMAND:          return notifysink_on_wm_command(This, hwnd, wparam, lparam);
     case WM_NOTIFY:           return notifysink_on_wm_notify(This, hwnd, wparam, lparam);
     case WM_SIZE:
-        hwnd_child = GetPropW(hwnd, notifysink_childW);
+        hwnd_child = GetPropW(hwnd, L"nfs_child");
         ctrl = (customctrl*)GetWindowLongPtrW(hwnd_child, GWLP_USERDATA);
         if(ctrl && ctrl->type != IDLG_CCTRL_VISUALGROUP)
         {
@@ -1151,7 +1145,7 @@ static HRESULT cctrl_create_new(FileDialogImpl *This, DWORD id,
     else
         parent_hwnd = This->cctrls_hwnd;
 
-    ns_hwnd = CreateWindowExW(0, floatnotifysinkW, NULL, wsflags,
+    ns_hwnd = CreateWindowExW(0, L"FloatNotifySink", NULL, wsflags,
                               0, 0, This->cctrl_width, height, parent_hwnd,
                               (HMENU)This->cctrl_next_dlgid, COMDLG32_hInstance, This);
     control_hwnd = CreateWindowExW(ctrl_exflags, wndclass, text, wsflags | ctrl_wsflags,
@@ -1167,7 +1161,7 @@ static HRESULT cctrl_create_new(FileDialogImpl *This, DWORD id,
         return E_FAIL;
     }
 
-    SetPropW(ns_hwnd, notifysink_childW, control_hwnd);
+    SetPropW(ns_hwnd, L"nfs_child", control_hwnd);
 
     ctrl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(customctrl));
     if(!ctrl)
@@ -1492,8 +1486,7 @@ static HRESULT init_custom_controls(FileDialogImpl *This)
 {
     WNDCLASSW wc;
     HDC hdc;
-    static const WCHAR ctrl_container_classname[] =
-        {'i','d','l','g','_','c','o','n','t','a','i','n','e','r','_','p','a','n','e',0};
+    static const WCHAR ctrl_container_classname[] = L"idlg_container_pane";
 
     InitCommonControlsEx(NULL);
 
@@ -1537,7 +1530,7 @@ static HRESULT init_custom_controls(FileDialogImpl *This)
     SetWindowLongW(This->cctrls_hwnd, GWL_STYLE, WS_TABSTOP);
 
     /* Register class for  */
-    if( !GetClassInfoW(COMDLG32_hInstance, floatnotifysinkW, &wc) ||
+    if (!GetClassInfoW(COMDLG32_hInstance, L"FloatNotifySink", &wc) ||
         wc.hInstance != COMDLG32_hInstance)
     {
         wc.style            = CS_HREDRAW | CS_VREDRAW;
@@ -1549,13 +1542,13 @@ static HRESULT init_custom_controls(FileDialogImpl *This)
         wc.hCursor          = LoadCursorW(0, (LPWSTR)IDC_ARROW);
         wc.hbrBackground    = (HBRUSH)(COLOR_BTNFACE + 1);
         wc.lpszMenuName     = NULL;
-        wc.lpszClassName    = floatnotifysinkW;
+        wc.lpszClassName    = L"FloatNotifySink";
 
         if (!RegisterClassW(&wc))
             ERR("Failed to register FloatNotifySink window class.\n");
     }
 
-    if( !GetClassInfoW(COMDLG32_hInstance, radiobuttonlistW, &wc) ||
+    if (!GetClassInfoW(COMDLG32_hInstance, L"RadioButtonList", &wc) ||
         wc.hInstance != COMDLG32_hInstance)
     {
         wc.style            = CS_HREDRAW | CS_VREDRAW;
@@ -1567,7 +1560,7 @@ static HRESULT init_custom_controls(FileDialogImpl *This)
         wc.hCursor          = LoadCursorW(0, (LPWSTR)IDC_ARROW);
         wc.hbrBackground    = (HBRUSH)(COLOR_BTNFACE + 1);
         wc.lpszMenuName     = NULL;
-        wc.lpszClassName    = radiobuttonlistW;
+        wc.lpszClassName    = L"RadioButtonList";
 
         if (!RegisterClassW(&wc))
             ERR("Failed to register RadioButtonList window class.\n");
@@ -1970,12 +1963,9 @@ static void update_control_text(FileDialogImpl *This)
 
 static LRESULT CALLBACK dropdown_subclass_proc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
 {
-    static const WCHAR prop_this[] = {'i','t','e','m','d','l','g','_','T','h','i','s',0};
-    static const WCHAR prop_oldwndproc[] = {'i','t','e','m','d','l','g','_','o','l','d','w','n','d','p','r','o','c',0};
-
     if (umessage == WM_LBUTTONDOWN)
     {
-        FileDialogImpl *This = GetPropW(hwnd, prop_this);
+        FileDialogImpl *This = GetPropW(hwnd, L"itemdlg_This");
 
         SendMessageW(hwnd, BM_SETCHECK, BST_CHECKED, 0);
         show_opendropdown(This);
@@ -1984,7 +1974,7 @@ static LRESULT CALLBACK dropdown_subclass_proc(HWND hwnd, UINT umessage, WPARAM 
         return 0;
     }
 
-    return CallWindowProcW((WNDPROC)GetPropW(hwnd, prop_oldwndproc), hwnd, umessage, wparam, lparam);
+    return CallWindowProcW((WNDPROC)GetPropW(hwnd, L"itemdlg_oldwndproc"), hwnd, umessage, wparam, lparam);
 }
 
 static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
@@ -2047,9 +2037,6 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
         HWND dropdown_hwnd;
         LOGFONTW lfw, lfw_marlett;
         HFONT dialog_font;
-        static const WCHAR marlett[] = {'M','a','r','l','e','t','t',0};
-        static const WCHAR prop_this[] = {'i','t','e','m','d','l','g','_','T','h','i','s',0};
-        static const WCHAR prop_oldwndproc[] = {'i','t','e','m','d','l','g','_','o','l','d','w','n','d','p','r','o','c',0};
 
         dropdown_hwnd = GetDlgItem(This->dlg_hwnd, psh1);
 
@@ -2059,7 +2046,7 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
         GetObjectW(dialog_font, sizeof(lfw), &lfw);
 
         memset(&lfw_marlett, 0, sizeof(lfw_marlett));
-        lstrcpyW(lfw_marlett.lfFaceName, marlett);
+        lstrcpyW(lfw_marlett.lfFaceName, L"Marlett");
         lfw_marlett.lfHeight = lfw.lfHeight;
         lfw_marlett.lfCharSet = SYMBOL_CHARSET;
 
@@ -2068,8 +2055,8 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
         SendMessageW(dropdown_hwnd, WM_SETFONT, (LPARAM)This->hfont_opendropdown, 0);
 
         /* Subclass button so we can handle LBUTTONDOWN */
-        SetPropW(dropdown_hwnd, prop_this, This);
-        SetPropW(dropdown_hwnd, prop_oldwndproc,
+        SetPropW(dropdown_hwnd, L"itemdlg_This", This);
+        SetPropW(dropdown_hwnd, L"itemdlg_oldwndproc",
             (HANDLE)SetWindowLongPtrW(dropdown_hwnd, GWLP_WNDPROC, (LONG_PTR)dropdown_subclass_proc));
     }
 
@@ -3837,7 +3824,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddRadioButtonList(IFileDialogCusto
     HRESULT hr;
     TRACE("%p (%d)\n", This, dwIDCtl);
 
-    hr =  cctrl_create_new(This, dwIDCtl, NULL, radiobuttonlistW, 0, 0, 0, &ctrl);
+    hr =  cctrl_create_new(This, dwIDCtl, NULL, L"RadioButtonList", 0, 0, 0, &ctrl);
     if(SUCCEEDED(hr))
     {
         ctrl->type = IDLG_CCTRL_RADIOBUTTONLIST;

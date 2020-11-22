@@ -141,13 +141,8 @@ static WNDPROC lpfnStaticWndProc;
 static WNDPROC edit_wndproc;
 /* the text of the fake document to render for the Page Setup dialog */
 static WCHAR wszFakeDocumentText[1024];
-static const WCHAR pd32_collateW[] = { 'P', 'D', '3', '2', '_', 'C', 'O', 'L', 'L', 'A', 'T', 'E', 0 };
-static const WCHAR pd32_nocollateW[] = { 'P', 'D', '3', '2', '_', 'N', 'O', 'C', 'O', 'L', 'L', 'A', 'T', 'E', 0 };
-static const WCHAR pd32_portraitW[] = { 'P', 'D', '3', '2', '_', 'P', 'O', 'R', 'T', 'R', 'A', 'I', 'T', 0 };
-static const WCHAR pd32_landscapeW[] = { 'P', 'D', '3', '2', '_', 'L', 'A', 'N', 'D', 'S', 'C', 'A', 'P', 'E', 0 };
-static const WCHAR printdlg_prop[] = {'_','_','W','I','N','E','_','P','R','I','N','T','D','L','G','D','A','T','A',0};
-static const WCHAR pagesetupdlg_prop[] = { '_', '_', 'W', 'I', 'N', 'E', '_', 'P', 'A', 'G', 'E',
-                                           'S', 'E', 'T', 'U', 'P', 'D', 'L', 'G', 'D', 'A', 'T', 'A', 0 };
+static const WCHAR printdlg_prop[] = L"__WINE_PRINTDLGDATA";
+static const WCHAR pagesetupdlg_prop[] = L"__WINE_PAGESETUPDLGDATA";
 
 
 static LPWSTR strdupW(LPCWSTR p)
@@ -735,7 +730,7 @@ static BOOL PRINTDLG_UpdatePrintDlgW(HWND hDlg,
             lppd->Flags &= ~PD_SELECTION;
 
 	if (IsDlgButtonChecked(hDlg, chx1) == BST_CHECKED) {/* Print to file */
-	    static WCHAR file[] = {'F','I','L','E',':',0};
+	    static WCHAR file[] = L"FILE:";
 	    lppd->Flags |= PD_PRINTTOFILE;
 	    pi->pPortName = file;
 	}
@@ -1039,7 +1034,6 @@ static void PRINTDLG_UpdatePrinterInfoTextsW(HWND hDlg, const PRINTER_INFO_2W *p
 {
     WCHAR   StatusMsg[256];
     WCHAR   ResourceString[256];
-    static const WCHAR emptyW[] = {0};
     int    i;
 
     /* Status Message */
@@ -1067,7 +1061,7 @@ static void PRINTDLG_UpdatePrinterInfoTextsW(HWND hDlg, const PRINTER_INFO_2W *p
         SetDlgItemTextW(hDlg, stc14, pi->pLocation);
     else
         SetDlgItemTextW(hDlg, stc14, pi->pPortName);
-    SetDlgItemTextW(hDlg, stc13, pi->pComment ? pi->pComment : emptyW);
+    SetDlgItemTextW(hDlg, stc13, pi->pComment ? pi->pComment : L"");
 }
 
 
@@ -1582,15 +1576,15 @@ static LRESULT PRINTDLG_WMInitDialogW(HWND hDlg,
     /* We load these with LoadImage because they are not a standard
        size and we don't want them rescaled */
     PrintStructures->hCollateIcon =
-      LoadImageW(COMDLG32_hInstance, pd32_collateW, IMAGE_ICON, 0, 0, 0);
+      LoadImageW(COMDLG32_hInstance, L"PD32_COLLATE", IMAGE_ICON, 0, 0, 0);
     PrintStructures->hNoCollateIcon =
-      LoadImageW(COMDLG32_hInstance, pd32_nocollateW, IMAGE_ICON, 0, 0, 0);
+      LoadImageW(COMDLG32_hInstance, L"PD32_NOCOLLATE", IMAGE_ICON, 0, 0, 0);
 
     /* These can be done with LoadIcon */
     PrintStructures->hPortraitIcon =
-      LoadIconW(COMDLG32_hInstance, pd32_portraitW);
+      LoadIconW(COMDLG32_hInstance, L"PD32_PORTRAIT");
     PrintStructures->hLandscapeIcon =
-      LoadIconW(COMDLG32_hInstance, pd32_landscapeW);
+      LoadIconW(COMDLG32_hInstance, L"PD32_LANDSCAPE");
 
     /* display the collate/no_collate icon */
     SendDlgItemMessageW(hDlg, ico3, STM_SETIMAGE, IMAGE_ICON,
@@ -2140,8 +2134,6 @@ static HGLOBAL PRINTDLG_GetDlgTemplateW(const PRINTDLGW *lppd)
 {
     HRSRC hResInfo;
     HGLOBAL hDlgTmpl;
-    static const WCHAR xpsetup[] = { 'P','R','I','N','T','3','2','_','S','E','T','U','P',0};
-    static const WCHAR xprint[] = { 'P','R','I','N','T','3','2',0};
 
     if (lppd->Flags & PD_PRINTSETUP) {
 	if(lppd->Flags & PD_ENABLESETUPTEMPLATEHANDLE) {
@@ -2151,7 +2143,7 @@ static HGLOBAL PRINTDLG_GetDlgTemplateW(const PRINTDLGW *lppd)
 				     lppd->lpSetupTemplateName, (LPWSTR)RT_DIALOG);
 	    hDlgTmpl = LoadResource(lppd->hInstance, hResInfo);
 	} else {
-	    hResInfo = FindResourceW(COMDLG32_hInstance, xpsetup, (LPWSTR)RT_DIALOG);
+	    hResInfo = FindResourceW(COMDLG32_hInstance, L"PRINT32_SETUP", (LPWSTR)RT_DIALOG);
 	    hDlgTmpl = LoadResource(COMDLG32_hInstance, hResInfo);
 	}
     } else {
@@ -2163,7 +2155,7 @@ static HGLOBAL PRINTDLG_GetDlgTemplateW(const PRINTDLGW *lppd)
 				     (LPWSTR)RT_DIALOG);
 	    hDlgTmpl = LoadResource(lppd->hInstance, hResInfo);
 	} else {
-	    hResInfo = FindResourceW(COMDLG32_hInstance, xprint, (LPWSTR)RT_DIALOG);
+	    hResInfo = FindResourceW(COMDLG32_hInstance, L"PRINT32", (LPWSTR)RT_DIALOG);
 	    hDlgTmpl = LoadResource(COMDLG32_hInstance, hResInfo);
 	}
     }
@@ -2608,7 +2600,7 @@ static WCHAR get_decimal_sep(void)
 
     if(!sep)
     {
-        WCHAR buf[] = {'.', 0};
+        WCHAR buf[] = L".";
         GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buf, ARRAY_SIZE(buf));
         sep = buf[0];
     }
@@ -2617,25 +2609,21 @@ static WCHAR get_decimal_sep(void)
 
 static void size2str(const pagesetup_data *data, DWORD size, LPWSTR strout)
 {
-    static const WCHAR integer_fmt[] = {'%','d',0};
-    static const WCHAR hundredths_fmt[] = {'%','d','%','c','%','0','2','d',0};
-    static const WCHAR thousandths_fmt[] = {'%','d','%','c','%','0','3','d',0};
-
     /* FIXME use LOCALE_SDECIMAL when the edit parsing code can cope */
 
     if (is_metric(data))
     {
         if(size % 100)
-            wsprintfW(strout, hundredths_fmt, size / 100, get_decimal_sep(), size % 100);
+            wsprintfW(strout, L"%d%c%02d", size / 100, get_decimal_sep(), size % 100);
         else
-            wsprintfW(strout, integer_fmt, size / 100);
+            wsprintfW(strout, L"%d", size / 100);
     }
     else
     {
         if(size % 1000)
-            wsprintfW(strout, thousandths_fmt, size / 1000, get_decimal_sep(), size % 1000);
+            wsprintfW(strout, L"%d%c%03d", size / 1000, get_decimal_sep(), size % 1000);
         else
-            wsprintfW(strout, integer_fmt, size / 1000);
+            wsprintfW(strout, L"%d", size / 1000);
 
     }
 }

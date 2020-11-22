@@ -43,9 +43,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 #define BUFFILE 512
 #define BUFFILEALLOC 512 * sizeof(WCHAR)
 
-static const WCHAR FILE_star[] = {'*','.','*', 0};
-static const WCHAR FILE_bslash[] = {'\\', 0};
-static const WCHAR FILE_specc[] = {'%','c',':', 0};
 static const int fldrHeight = 16;
 static const int fldrWidth = 20;
 
@@ -167,7 +164,7 @@ static LPCWSTR FD31_GetFileType(LPCWSTR cfptr, LPCWSTR fptr, const WORD index)
 	  return fptr;
 	fptr += lstrlenW(fptr) + 1;
     }
-  return FILE_star; /* FIXME */
+  return L"*.*"; /* FIXME */
 }
 
 /***********************************************************************
@@ -210,7 +207,7 @@ static BOOL FD31_ScanDir(const OPENFILENAMEW *ofn, HWND hWnd, LPCWSTR newPath)
     }
 
     /* list of directories */
-    lstrcpyW(buffer, FILE_star);
+    lstrcpyW(buffer, L"*.*");
 
     if (GetDlgItem(hWnd, lst2) != 0) {
         lRet = DlgDirListW(hWnd, buffer, lst2, stc1, DDL_EXCLUSIVE | DDL_DIRECTORY);
@@ -429,7 +426,7 @@ static LRESULT FD31_DirListDblClick( const FD31_DATA *lfs )
       tmpstr[lstrlenW(tmpstr) - 1] = 0;
       lstrcpyW(tmpstr,tmpstr+1);
     }
-  lstrcatW(tmpstr, FILE_bslash);
+  lstrcatW(tmpstr, L"\\");
 
   FD31_ScanDir(lfs->ofnW, hWnd, tmpstr);
   /* notify the app */
@@ -515,7 +512,7 @@ static LRESULT FD31_TestPath( const FD31_DATA *lfs, LPWSTR path )
 
     pstr2 = path + lstrlenW(path);
     if (pBeginFileName == NULL || *(pBeginFileName + 1) != 0)
-        lstrcatW(path, FILE_bslash);
+        lstrcatW(path, L"\\");
 
     /* if ScanDir succeeds, we have changed the directory */
     if (FD31_ScanDir(lfs->ofnW, hWnd, path))
@@ -627,7 +624,7 @@ static LRESULT FD31_DiskChange( const FD31_DATA *lfs )
     pstr = heap_alloc(BUFFILEALLOC);
     SendDlgItemMessageW(hWnd, cmb2, CB_GETLBTEXT, lRet,
                          (LPARAM)pstr);
-    wsprintfW(diskname, FILE_specc, pstr[2]);
+    wsprintfW(diskname, L"%c:", pstr[2]);
     heap_free(pstr);
 
     return FD31_Validate( lfs, diskname, cmb2, lRet, TRUE );

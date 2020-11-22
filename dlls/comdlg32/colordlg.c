@@ -63,9 +63,6 @@ static const COLORREF predefcolors[6][8]=
    0x00808040L, 0x00C0C0C0L, 0x00400040L, 0x00FFFFFFL },
 };
 
-static const WCHAR szColourDialogProp[] = {
-    'c','o','l','o','u','r','d','i','a','l','o','g','p','r','o','p',0 };
-
 /* Chose Color PRIVATE Structure:
  *
  * This structure is duplicated in the 16 bit code with
@@ -866,7 +863,7 @@ static LRESULT CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam )
    lpp->lpcc = cc;
    lpp->hwndSelf = hDlg;
 
-   SetPropW( hDlg, szColourDialogProp, lpp );
+   SetPropW( hDlg, L"colourdialogprop", lpp );
 
    if (!(lpp->lpcc->Flags & CC_SHOWHELP))
       ShowWindow(GetDlgItem(hDlg, pshHelp), SW_HIDE);
@@ -1194,7 +1191,7 @@ static INT_PTR CALLBACK ColorDlgProc( HWND hDlg, UINT message,
 {
 
  int res;
- CCPRIV *lpp = GetPropW( hDlg, szColourDialogProp );
+ CCPRIV *lpp = GetPropW( hDlg, L"colourdialogprop" );
 
  if (message != WM_INITDIALOG)
  {
@@ -1220,7 +1217,7 @@ static INT_PTR CALLBACK ColorDlgProc( HWND hDlg, UINT message,
 	                DeleteDC(lpp->hdcMem);
 	                DeleteObject(lpp->hbmMem);
                         heap_free(lpp);
-                        RemovePropW( hDlg, szColourDialogProp );
+                        RemovePropW( hDlg, L"colourdialogprop" );
 	                break;
 	  case WM_COMMAND:
 	                if (CC_WMCommand(lpp, wParam, lParam, HIWORD(wParam), (HWND) lParam))
@@ -1301,8 +1298,7 @@ BOOL WINAPI ChooseColorW( CHOOSECOLORW *lpChCol )
     {
 	HRSRC hResInfo;
 	HGLOBAL hDlgTmpl;
-	static const WCHAR wszCHOOSE_COLOR[] = {'C','H','O','O','S','E','_','C','O','L','O','R',0};
-	if (!(hResInfo = FindResourceW(COMDLG32_hInstance, wszCHOOSE_COLOR, (LPWSTR)RT_DIALOG)))
+        if (!(hResInfo = FindResourceW(COMDLG32_hInstance, L"CHOOSE_COLOR", (LPWSTR)RT_DIALOG)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
 	    return FALSE;
