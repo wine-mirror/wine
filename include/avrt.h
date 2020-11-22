@@ -43,7 +43,7 @@ HANDLE WINAPI AvSetMmThreadCharacteristicsW(LPCWSTR TaskName, LPDWORD TaskIndex)
 #define AvSetMmThreadCharacteristics WINELIB_NAME_AW(AvSetMmThreadCharacteristics)
 
 HANDLE WINAPI AvSetMmMaxThreadCharacteristicsA(LPCSTR FirstTask, LPCSTR SecondTask, LPDWORD TaskIndex);
-HANDLE WINAPI AvSetMmMaxThreadCharacteristicsW(LPCSTR FirstTask, LPCSTR SecondTask, LPDWORD TaskIndex);
+HANDLE WINAPI AvSetMmMaxThreadCharacteristicsW(LPCWSTR FirstTask, LPCWSTR SecondTask, LPDWORD TaskIndex);
 #define AvSetMmMaxThreadCharacteristics WINELIB_NAME_AW(AvSetMmMaxThreadCharacteristics)
 
 BOOL WINAPI AvRevertMmThreadCharacteristics(HANDLE AvrtHandle);
