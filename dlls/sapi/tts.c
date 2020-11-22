@@ -517,7 +517,7 @@ static HRESULT WINAPI spvoice_GetInfo(ISpVoice *iface, SPEVENTSOURCEINFO *info)
 
 static HRESULT WINAPI spvoice_SetOutput(ISpVoice *iface, IUnknown *unk, BOOL changes)
 {
-    FIXME("(%p, %p, %d: stub.\n)", iface, unk, changes);
+    FIXME("(%p, %p, %d): stub.\n", iface, unk, changes);
 
     return E_NOTIMPL;
 }
