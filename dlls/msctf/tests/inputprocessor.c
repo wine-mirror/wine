@@ -63,7 +63,7 @@ static BOOL test_ShouldDeactivate = FALSE;
 static DWORD tmSinkCookie;
 static DWORD dmSinkCookie;
 static DWORD documentStatus;
-static DWORD key_trace_sink_cookie, ui_element_sink_cookie, profile_activation_sink_cookie;
+static DWORD key_trace_sink_cookie, ui_element_sink_cookie, profile_activation_sink_cookie, active_lang_sink_cookie;
 static DWORD fake_service_onactivated_flags = 0;
 static ITfDocumentMgr *test_CurrentFocus = NULL;
 static ITfDocumentMgr *test_PrevFocus = NULL;
@@ -801,6 +801,45 @@ static const ITfTransitoryExtensionSinkVtbl TfTransitoryExtensionSinkVtbl = {
 
 static ITfTransitoryExtensionSink TfTransitoryExtensionSink = { &TfTransitoryExtensionSinkVtbl };
 
+static HRESULT WINAPI TfActiveLanguageProfileNotifySink_QueryInterface(ITfActiveLanguageProfileNotifySink *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_ITfActiveLanguageProfileNotifySink, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TfActiveLanguageProfileNotifySink_AddRef(ITfActiveLanguageProfileNotifySink *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI TfActiveLanguageProfileNotifySink_Release(ITfActiveLanguageProfileNotifySink *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI TfActiveLanguageProfileNotifySink_OnActivated(ITfActiveLanguageProfileNotifySink *iface, REFCLSID clsid,
+        REFGUID guidProfile, BOOL activated)
+{
+    trace("Got OnActivated: {clsid %s, guidProfile %s, activated %d}\n", wine_dbgstr_guid(clsid),
+            wine_dbgstr_guid(guidProfile), activated);
+
+    return S_OK;
+}
+
+static const ITfActiveLanguageProfileNotifySinkVtbl TfActiveLanguageProfileNotifySinkVtbl = {
+    TfActiveLanguageProfileNotifySink_QueryInterface,
+    TfActiveLanguageProfileNotifySink_AddRef,
+    TfActiveLanguageProfileNotifySink_Release,
+    TfActiveLanguageProfileNotifySink_OnActivated
+};
+
+static ITfActiveLanguageProfileNotifySink TfActiveLanguageProfileNotifySink = { &TfActiveLanguageProfileNotifySinkVtbl };
+
 /********************************************************************************************
  * Stub text service for testing
  ********************************************************************************************/
@@ -1231,6 +1270,10 @@ static void test_ThreadMgrAdviseSinks(void)
                               &profile_activation_sink_cookie);
     ok(hr == S_OK, "Failed to Advise ITfInputProcessorProfileActivationSink\n");
 
+    hr = ITfSource_AdviseSink(source, &IID_ITfActiveLanguageProfileNotifySink, (IUnknown*)&TfActiveLanguageProfileNotifySink,
+                              &active_lang_sink_cookie);
+    ok(hr == S_OK, "Failed to Advise ITfActiveLanguageProfileNotifySink\n");
+
     ITfSource_Release(source);
 }
 
@@ -1257,6 +1300,9 @@ static void test_ThreadMgrUnadviseSinks(void)
 
     hr = ITfSource_UnadviseSink(source, profile_activation_sink_cookie);
     ok(hr == S_OK, "Failed to unadvise ITfInputProcessorProfileActivationSink\n");
+
+    hr = ITfSource_UnadviseSink(source, active_lang_sink_cookie);
+    ok(hr == S_OK, "Failed to unadvise ITfActiveLanguageProfileNotifySink\n");
 
     ITfSource_Release(source);
 }
