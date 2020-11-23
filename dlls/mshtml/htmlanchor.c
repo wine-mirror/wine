@@ -65,27 +65,23 @@ HTMLOuterWindow *get_target_window(HTMLOuterWindow *window, nsAString *target_st
     const PRUnichar *target;
     HRESULT hres;
 
-    static const WCHAR _parentW[] = {'_','p','a','r','e','n','t',0};
-    static const WCHAR _selfW[] = {'_','s','e','l','f',0};
-    static const WCHAR _topW[] = {'_','t','o','p',0};
-
     *use_new_window = FALSE;
 
     nsAString_GetData(target_str, &target);
     TRACE("%s\n", debugstr_w(target));
 
-    if(!*target || !wcsicmp(target, _selfW)) {
+    if(!*target || !wcsicmp(target, L"_self")) {
         IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
         return window;
     }
 
-    if(!wcsicmp(target, _topW)) {
+    if(!wcsicmp(target, L"_top")) {
         get_top_window(window, &top_window);
         IHTMLWindow2_AddRef(&top_window->base.IHTMLWindow2_iface);
         return top_window;
     }
 
-    if(!wcsicmp(target, _parentW)) {
+    if(!wcsicmp(target, L"_parent")) {
         if(!window->parent) {
             WARN("Window has no parent, treat as self\n");
             IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);

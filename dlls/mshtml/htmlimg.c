@@ -303,8 +303,6 @@ static HRESULT WINAPI HTMLImgElement_get_src(IHTMLImgElement *iface, BSTR *p)
     nsresult nsres;
     HRESULT hres = S_OK;
 
-    static const WCHAR blockedW[] = {'B','L','O','C','K','E','D',':',':',0};
-
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&src_str, NULL);
@@ -312,9 +310,9 @@ static HRESULT WINAPI HTMLImgElement_get_src(IHTMLImgElement *iface, BSTR *p)
     if(NS_SUCCEEDED(nsres)) {
         nsAString_GetData(&src_str, &src);
 
-        if(!wcsnicmp(src, blockedW, ARRAY_SIZE(blockedW)-1)) {
+        if(!wcsnicmp(src, L"BLOCKED::", ARRAY_SIZE(L"BLOCKED::")-1)) {
             TRACE("returning BLOCKED::\n");
-            *p = SysAllocString(blockedW);
+            *p = SysAllocString(L"BLOCKED::");
             if(!*p)
                 hres = E_OUTOFMEMORY;
         }else {

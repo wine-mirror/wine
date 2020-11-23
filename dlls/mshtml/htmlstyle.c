@@ -35,20 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-static const WCHAR blinkW[] = {'b','l','i','n','k',0};
-static const WCHAR dashedW[] = {'d','a','s','h','e','d',0};
-static const WCHAR dottedW[] = {'d','o','t','t','e','d',0};
-static const WCHAR doubleW[] = {'d','o','u','b','l','e',0};
-static const WCHAR grooveW[] = {'g','r','o','o','v','e',0};
-static const WCHAR insetW[]  = {'i','n','s','e','t',0};
-static const WCHAR line_throughW[] = {'l','i','n','e','-','t','h','r','o','u','g','h',0};
-static const WCHAR noneW[] = {'n','o','n','e',0};
-static const WCHAR outsetW[] = {'o','u','t','s','e','t',0};
-static const WCHAR overlineW[] = {'o','v','e','r','l','i','n','e',0};
-static const WCHAR ridgeW[]  = {'r','i','d','g','e',0};
-static const WCHAR solidW[]  = {'s','o','l','i','d',0};
-static const WCHAR underlineW[] = {'u','n','d','e','r','l','i','n','e',0};
-
 static const WCHAR *font_style_values[] = {
     L"italic",
     L"normal",
@@ -124,8 +110,6 @@ static const WCHAR *overflow_values[] = {
 #define ATTR_REMOVE_COMMA   0x0010
 #define ATTR_NO_NULL        0x0020
 #define ATTR_COMPAT_IE10    0x0040
-
-static const WCHAR pxW[] = {'p','x',0};
 
 typedef struct {
     const WCHAR *name;
@@ -708,9 +692,6 @@ static const style_tbl_entry_t style_tbl[] = {
 
 C_ASSERT(ARRAY_SIZE(style_tbl) == STYLEID_MAX_VALUE);
 
-static const WCHAR px_formatW[] = {'%','d','p','x',0};
-static const WCHAR emptyW[] = {0};
-
 static const style_tbl_entry_t *lookup_style_tbl(CSSStyle *style, const WCHAR *name)
 {
     int c, i, min = 0, max = ARRAY_SIZE(style_tbl)-1;
@@ -798,7 +779,7 @@ static HRESULT set_nsstyle_property(nsIDOMCSSStyleDeclaration *nsstyle, styleid_
     nsresult nsres;
 
     nsAString_InitDepend(&str_name, style_tbl[sid].name);
-    nsAString_InitDepend(&str_empty, emptyW);
+    nsAString_InitDepend(&str_empty, L"");
     nsres = nsIDOMCSSStyleDeclaration_SetProperty(nsstyle, &str_name, value, &str_empty);
     nsAString_Finish(&str_name);
     nsAString_Finish(&str_empty);
@@ -837,7 +818,7 @@ static inline HRESULT set_style_property(CSSStyle *style, styleid_t sid, const W
             }
             if(!*iter) {
                 WARN("invalid value %s\n", debugstr_w(value));
-                nsAString_InitDepend(&value_str, emptyW);
+                nsAString_InitDepend(&value_str, L"");
                 set_nsstyle_property(style->nsstyle, sid, &value_str);
                 nsAString_Finish(&value_str);
                 return E_INVALIDARG;
@@ -1027,12 +1008,11 @@ static HRESULT check_style_attr_value(HTMLStyle *This, styleid_t sid, LPCWSTR ex
 
 static inline HRESULT set_style_pos(HTMLStyle *This, styleid_t sid, float value)
 {
-    static const WCHAR szFormat[] = {'%','.','0','f','p','x',0};
     WCHAR szValue[25];
 
     value = floor(value);
 
-    swprintf(szValue, ARRAY_SIZE(szValue), szFormat, value);
+    swprintf(szValue, ARRAY_SIZE(szValue), L"%.0fpx", value);
 
     return set_style_property(&This->css_style, sid, szValue);
 }
@@ -1041,7 +1021,7 @@ static HRESULT set_style_pxattr(HTMLStyle *style, styleid_t sid, LONG value)
 {
     WCHAR value_str[16];
 
-    swprintf(value_str, ARRAY_SIZE(value_str), px_formatW, value);
+    swprintf(value_str, ARRAY_SIZE(value_str), L"%dpx", value);
 
     return set_style_property(&style->css_style, sid, value_str);
 }
@@ -1068,7 +1048,7 @@ static HRESULT get_nsstyle_pos(HTMLStyle *This, styleid_t sid, float *p)
         {
             *p = wcstol(value, &ptr, 10);
 
-            if(*ptr && wcscmp(ptr, pxW))
+            if(*ptr && wcscmp(ptr, L"px"))
             {
                 nsAString_Finish(&str_value);
                 FIXME("only px values are currently supported\n");
@@ -1108,7 +1088,7 @@ static HRESULT get_nsstyle_pixel_val(HTMLStyle *This, styleid_t sid, LONG *p)
             }
         }
 
-        if(!ptr || (*ptr && wcscmp(ptr, pxW)))
+        if(!ptr || (*ptr && wcscmp(ptr, L"px")))
             *p = 0;
     }
 
@@ -1118,11 +1098,11 @@ static HRESULT get_nsstyle_pixel_val(HTMLStyle *This, styleid_t sid, LONG *p)
 
 static BOOL is_valid_border_style(BSTR v)
 {
-    return !v || wcsicmp(v, noneW)   == 0 || wcsicmp(v, dottedW) == 0 ||
-        wcsicmp(v, dashedW) == 0 || wcsicmp(v, solidW)  == 0 ||
-        wcsicmp(v, doubleW) == 0 || wcsicmp(v, grooveW) == 0 ||
-        wcsicmp(v, ridgeW)  == 0 || wcsicmp(v, insetW)  == 0 ||
-        wcsicmp(v, outsetW) == 0;
+    return !v || wcsicmp(v, L"none")   == 0 || wcsicmp(v, L"dotted") == 0 ||
+        wcsicmp(v, L"dashed") == 0 || wcsicmp(v, L"solid")  == 0 ||
+        wcsicmp(v, L"double") == 0 || wcsicmp(v, L"groove") == 0 ||
+        wcsicmp(v, L"ridge")  == 0 || wcsicmp(v, L"inset")  == 0 ||
+        wcsicmp(v, L"outset") == 0;
 }
 
 static void *HTMLStyle_QI(CSSStyle *css_style, REFIID riid)
@@ -1514,7 +1494,7 @@ static HRESULT WINAPI HTMLStyle_put_textDecorationNone(IHTMLStyle *iface, VARIAN
 
     TRACE("(%p)->(%x)\n", This, v);
 
-    return set_style_property(&This->css_style, STYLEID_TEXT_DECORATION, v ? noneW : emptyW);
+    return set_style_property(&This->css_style, STYLEID_TEXT_DECORATION, v ? L"none" : L"");
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecorationNone(IHTMLStyle *iface, VARIANT_BOOL *p)
@@ -1523,7 +1503,7 @@ static HRESULT WINAPI HTMLStyle_get_textDecorationNone(IHTMLStyle *iface, VARIAN
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, noneW, p);
+    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, L"none", p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textDecorationUnderline(IHTMLStyle *iface, VARIANT_BOOL v)
@@ -1532,7 +1512,7 @@ static HRESULT WINAPI HTMLStyle_put_textDecorationUnderline(IHTMLStyle *iface, V
 
     TRACE("(%p)->(%x)\n", This, v);
 
-    return set_style_property(&This->css_style, STYLEID_TEXT_DECORATION, v ? underlineW : emptyW);
+    return set_style_property(&This->css_style, STYLEID_TEXT_DECORATION, v ? L"underline" : L"");
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecorationUnderline(IHTMLStyle *iface, VARIANT_BOOL *p)
@@ -1541,7 +1521,7 @@ static HRESULT WINAPI HTMLStyle_get_textDecorationUnderline(IHTMLStyle *iface, V
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, underlineW, p);
+    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, L"underline", p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textDecorationOverline(IHTMLStyle *iface, VARIANT_BOOL v)
@@ -1550,7 +1530,7 @@ static HRESULT WINAPI HTMLStyle_put_textDecorationOverline(IHTMLStyle *iface, VA
 
     TRACE("(%p)->(%x)\n", This, v);
 
-    return set_style_property(&This->css_style, STYLEID_TEXT_DECORATION, v ? overlineW : emptyW);
+    return set_style_property(&This->css_style, STYLEID_TEXT_DECORATION, v ? L"overline" : L"");
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecorationOverline(IHTMLStyle *iface, VARIANT_BOOL *p)
@@ -1559,7 +1539,7 @@ static HRESULT WINAPI HTMLStyle_get_textDecorationOverline(IHTMLStyle *iface, VA
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, overlineW, p);
+    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, L"overline", p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textDecorationLineThrough(IHTMLStyle *iface, VARIANT_BOOL v)
@@ -1568,7 +1548,7 @@ static HRESULT WINAPI HTMLStyle_put_textDecorationLineThrough(IHTMLStyle *iface,
 
     TRACE("(%p)->(%x)\n", This, v);
 
-    return set_style_property(&This->css_style, STYLEID_TEXT_DECORATION, v ? line_throughW : emptyW);
+    return set_style_property(&This->css_style, STYLEID_TEXT_DECORATION, v ? L"line-through" : L"");
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecorationLineThrough(IHTMLStyle *iface, VARIANT_BOOL *p)
@@ -1577,7 +1557,7 @@ static HRESULT WINAPI HTMLStyle_get_textDecorationLineThrough(IHTMLStyle *iface,
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, line_throughW, p);
+    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, L"line-through", p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textDecorationBlink(IHTMLStyle *iface, VARIANT_BOOL v)
@@ -1586,7 +1566,7 @@ static HRESULT WINAPI HTMLStyle_put_textDecorationBlink(IHTMLStyle *iface, VARIA
 
     TRACE("(%p)->(%x)\n", This, v);
 
-    return set_style_property(&This->css_style, STYLEID_TEXT_DECORATION, v ? blinkW : emptyW);
+    return set_style_property(&This->css_style, STYLEID_TEXT_DECORATION, v ? L"blink" : L"");
 }
 
 static HRESULT WINAPI HTMLStyle_get_textDecorationBlink(IHTMLStyle *iface, VARIANT_BOOL *p)
@@ -1595,7 +1575,7 @@ static HRESULT WINAPI HTMLStyle_get_textDecorationBlink(IHTMLStyle *iface, VARIA
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, blinkW, p);
+    return check_style_attr_value(This, STYLEID_TEXT_DECORATION, L"blink", p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_verticalAlign(IHTMLStyle *iface, VARIANT v)
@@ -2117,7 +2097,6 @@ static HRESULT WINAPI HTMLStyle_get_borderLeftWidth(IHTMLStyle *iface, VARIANT *
 static HRESULT WINAPI HTMLStyle_put_borderStyle(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    static const WCHAR styleWindowInset[]  = {'w','i','n','d','o','w','-','i','n','s','e','t',0};
     HRESULT hres = S_OK;
     BSTR pstyle;
     int i=0;
@@ -2130,7 +2109,7 @@ static HRESULT WINAPI HTMLStyle_put_borderStyle(IHTMLStyle *iface, BSTR v)
         if(v[i] == (WCHAR)' ')
         {
             pstyle = SysAllocStringLen(&v[last], (i-last));
-            if( !(is_valid_border_style(pstyle) || wcsicmp(styleWindowInset, pstyle) == 0))
+            if( !(is_valid_border_style(pstyle) || wcsicmp(L"window-inset", pstyle) == 0))
             {
                 TRACE("1. Invalid style (%s)\n", debugstr_w(pstyle));
                 hres = E_INVALIDARG;
@@ -2144,7 +2123,7 @@ static HRESULT WINAPI HTMLStyle_put_borderStyle(IHTMLStyle *iface, BSTR v)
     if(hres == S_OK)
     {
         pstyle = SysAllocStringLen(&v[last], i-last);
-        if( !(is_valid_border_style(pstyle) || wcsicmp(styleWindowInset, pstyle) == 0))
+        if( !(is_valid_border_style(pstyle) || wcsicmp(L"window-inset", pstyle) == 0))
         {
             TRACE("2. Invalid style (%s)\n", debugstr_w(pstyle));
             hres = E_INVALIDARG;
@@ -2755,13 +2734,11 @@ static void set_opacity(HTMLStyle *This, const WCHAR *val)
     nsAString name_str, val_str, empty_str;
     nsresult nsres;
 
-    static const WCHAR opacityW[] = {'o','p','a','c','i','t','y',0};
-
     TRACE("%s\n", debugstr_w(val));
 
-    nsAString_InitDepend(&name_str, opacityW);
+    nsAString_InitDepend(&name_str, L"opacity");
     nsAString_InitDepend(&val_str, val);
-    nsAString_InitDepend(&empty_str, emptyW);
+    nsAString_InitDepend(&empty_str, L"");
 
     nsres = nsIDOMCSSStyleDeclaration_SetProperty(This->css_style.nsstyle, &name_str, &val_str, &empty_str);
     if(NS_FAILED(nsres))
@@ -2784,7 +2761,7 @@ static void update_filter(HTMLStyle *This)
     ptr = This->elem->filter;
     TRACE("%s\n", debugstr_w(ptr));
     if(!ptr) {
-        set_opacity(This, emptyW);
+        set_opacity(This, L"");
         return;
     }
 
@@ -2807,7 +2784,6 @@ static void update_filter(HTMLStyle *This)
         }
 
         if(ptr2 + ARRAY_SIZE(alphaW) == ptr && !memcmp(ptr2, alphaW, sizeof(alphaW))) {
-            static const WCHAR formatW[] = {'%','f',0};
             static const WCHAR opacityW[] = {'o','p','a','c','i','t','y','='};
 
             ptr++;
@@ -2839,7 +2815,7 @@ static void update_filter(HTMLStyle *This)
                         }
                     }
 
-                    swprintf(buf, ARRAY_SIZE(buf), formatW, fval * 0.01f);
+                    swprintf(buf, ARRAY_SIZE(buf), L"%f", fval * 0.01f);
                     set_opacity(This, buf);
                 }else {
                     FIXME("unknown param %s\n", debugstr_wn(ptr2, ptr-ptr2));
@@ -5137,10 +5113,8 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionX(IHTMLCSSSt
         nsAString_GetData(&pos_str, &pos);
         posy = wcschr(pos, ' ');
         if(!posy) {
-            static const WCHAR zero_pxW[] = {' ','0','p','x',0};
-
             TRACE("no space in %s\n", debugstr_w(pos));
-            posy = zero_pxW;
+            posy = L" 0px";
         }
 
         posy_len = lstrlenW(posy);
@@ -5234,11 +5208,9 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionY(IHTMLCSSSt
         if(space) {
             space++;
         }else {
-            static const WCHAR zero_pxW[] = {'0','p','x',' ',0};
-
             TRACE("no space in %s\n", debugstr_w(pos));
-            pos = zero_pxW;
-            space = pos + ARRAY_SIZE(zero_pxW)-1;
+            pos = L"0px ";
+            space = pos + ARRAY_SIZE(L"0px ")-1;
         }
 
         posx_len = space-pos;
@@ -6521,8 +6493,6 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_layoutFlow(IHTMLCSSStyleDeclar
     return E_NOTIMPL;
 }
 
-static const WCHAR zoomW[] = {'z','o','o','m',0};
-
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_zoom(IHTMLCSSStyleDeclaration *iface, VARIANT v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
@@ -6536,7 +6506,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_zoom(IHTMLCSSStyleDeclaration 
     if(V_VT(&v) != VT_I4 || V_I4(&v) != 1)
         WARN("stub for %s\n", debugstr_variant(&v));
 
-    hres = dispex_get_dprop_ref(&This->dispex, zoomW, TRUE, &var);
+    hres = dispex_get_dprop_ref(&This->dispex, L"zoom", TRUE, &var);
     if(FAILED(hres))
         return hres;
 
@@ -6551,7 +6521,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_zoom(IHTMLCSSStyleDeclaration 
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    hres = dispex_get_dprop_ref(&This->dispex, zoomW, FALSE, &var);
+    hres = dispex_get_dprop_ref(&This->dispex, L"zoom", FALSE, &var);
     if(hres == DISP_E_UNKNOWNNAME) {
         V_VT(p) = VT_BSTR;
         V_BSTR(p) = NULL;

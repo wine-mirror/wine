@@ -115,8 +115,6 @@ HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret)
     unsigned int i;
     int rgb = -1;
 
-    static const WCHAR formatW[] = {'#','%','0','2','x','%','0','2','x','%','0','2','x',0};
-
     if(!color || !*color) {
         *ret = NULL;
         return S_OK;
@@ -135,7 +133,7 @@ HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret)
     if(!*ret)
         return E_OUTOFMEMORY;
 
-    swprintf(*ret, 8, formatW, rgb>>16, (rgb>>8)&0xff, rgb&0xff);
+    swprintf(*ret, 8, L"#%02x%02x%02x", rgb>>16, (rgb>>8)&0xff, rgb&0xff);
 
     TRACE("%s -> %s\n", debugstr_w(color), debugstr_w(*ret));
     return S_OK;
@@ -150,9 +148,8 @@ BOOL variant_to_nscolor(const VARIANT *v, nsAString *nsstr)
 
     case VT_I4: {
         PRUnichar buf[10];
-        static const WCHAR formatW[] = {'#','%','x',0};
 
-        wsprintfW(buf, formatW, V_I4(v));
+        wsprintfW(buf, L"#%x", V_I4(v));
         nsAString_Init(nsstr, buf);
         return TRUE;
     }
@@ -576,13 +573,6 @@ static HRESULT WINAPI HTMLBodyElement_get_onunload(IHTMLBodyElement *iface, VARI
     return E_NOTIMPL;
 }
 
-static const WCHAR autoW[] = {'a','u','t','o',0};
-static const WCHAR hiddenW[] = {'h','i','d','d','e','n',0};
-static const WCHAR scrollW[] = {'s','c','r','o','l','l',0};
-static const WCHAR visibleW[] = {'v','i','s','i','b','l','e',0};
-static const WCHAR yesW[] = {'y','e','s',0};
-static const WCHAR noW[] = {'n','o',0};
-
 static HRESULT WINAPI HTMLBodyElement_put_scroll(IHTMLBodyElement *iface, BSTR v)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
@@ -591,12 +581,12 @@ static HRESULT WINAPI HTMLBodyElement_put_scroll(IHTMLBodyElement *iface, BSTR v
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
     /* Emulate with CSS visibility attribute */
-    if(!wcscmp(v, yesW)) {
-        val = scrollW;
-    }else if(!wcscmp(v, autoW)) {
-        val = visibleW;
-    }else if(!wcscmp(v, noW)) {
-        val = hiddenW;
+    if(!wcscmp(v, L"yes")) {
+        val = L"scroll";
+    }else if(!wcscmp(v, L"auto")) {
+        val = L"visible";
+    }else if(!wcscmp(v, L"no")) {
+        val = L"hidden";
     }else {
         WARN("Invalid argument %s\n", debugstr_w(v));
         return E_INVALIDARG;
@@ -622,12 +612,12 @@ static HRESULT WINAPI HTMLBodyElement_get_scroll(IHTMLBodyElement *iface, BSTR *
     if(!overflow || !*overflow) {
         *p = NULL;
         hres = S_OK;
-    }else if(!wcscmp(overflow, visibleW) || !wcscmp(overflow, autoW)) {
-        ret = autoW;
-    }else if(!wcscmp(overflow, scrollW)) {
-        ret = yesW;
-    }else if(!wcscmp(overflow, hiddenW)) {
-        ret = noW;
+    }else if(!wcscmp(overflow, L"visible") || !wcscmp(overflow, L"auto")) {
+        ret = L"auto";
+    }else if(!wcscmp(overflow, L"scroll")) {
+        ret = L"yes";
+    }else if(!wcscmp(overflow, L"hidden")) {
+        ret = L"no";
     }else {
         TRACE("Defaulting %s to NULL\n", debugstr_w(overflow));
         *p = NULL;

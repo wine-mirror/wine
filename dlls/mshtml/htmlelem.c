@@ -860,13 +860,11 @@ HRESULT attr_value_to_string(VARIANT *v)
 {
     HRESULT hres;
 
-    static const WCHAR nullW[] = {'n','u','l','l',0};
-
     switch(V_VT(v)) {
     case VT_BSTR:
         break;
     case VT_NULL:
-        V_BSTR(v) = SysAllocString(nullW);
+        V_BSTR(v) = SysAllocString(L"null");
         if(!V_BSTR(v))
             return E_OUTOFMEMORY;
         V_VT(v) = VT_BSTR;
@@ -1043,10 +1041,8 @@ static HRESULT WINAPI HTMLElement_get_tagName(IHTMLElement *iface, BSTR *p)
     TRACE("(%p)->(%p)\n", This, p);
 
     if(!This->dom_element) {
-        static const WCHAR comment_tagW[] = {'!',0};
-
         TRACE("comment element\n");
-        *p = SysAllocString(comment_tagW);
+        *p = SysAllocString(L"!");
         return *p ? S_OK : E_OUTOFMEMORY;
     }
 
@@ -1314,8 +1310,6 @@ static HRESULT WINAPI HTMLElement_get_document(IHTMLElement *iface, IDispatch **
     return S_OK;
 }
 
-static const WCHAR titleW[] = {'t','i','t','l','e',0};
-
 static HRESULT WINAPI HTMLElement_put_title(IHTMLElement *iface, BSTR v)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
@@ -1328,7 +1322,7 @@ static HRESULT WINAPI HTMLElement_put_title(IHTMLElement *iface, BSTR v)
         VARIANT *var;
         HRESULT hres;
 
-        hres = dispex_get_dprop_ref(&This->node.event_target.dispex, titleW, TRUE, &var);
+        hres = dispex_get_dprop_ref(&This->node.event_target.dispex, L"title", TRUE, &var);
         if(FAILED(hres))
             return hres;
 
@@ -1359,7 +1353,7 @@ static HRESULT WINAPI HTMLElement_get_title(IHTMLElement *iface, BSTR *p)
         VARIANT *var;
         HRESULT hres;
 
-        hres = dispex_get_dprop_ref(&This->node.event_target.dispex, titleW, FALSE, &var);
+        hres = dispex_get_dprop_ref(&This->node.event_target.dispex, L"title", FALSE, &var);
         if(hres == DISP_E_UNKNOWNNAME) {
             *p = NULL;
         }else if(V_VT(var) != VT_BSTR) {
@@ -1377,15 +1371,13 @@ static HRESULT WINAPI HTMLElement_get_title(IHTMLElement *iface, BSTR *p)
     return return_nsstr(nsres, &title_str, p);
 }
 
-static const WCHAR languageW[] = {'l','a','n','g','u','a','g','e',0};
-
 static HRESULT WINAPI HTMLElement_put_language(IHTMLElement *iface, BSTR v)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    return elem_string_attr_setter(This, languageW, v);
+    return elem_string_attr_setter(This, L"language", v);
 }
 
 static HRESULT WINAPI HTMLElement_get_language(IHTMLElement *iface, BSTR *p)
@@ -1394,7 +1386,7 @@ static HRESULT WINAPI HTMLElement_get_language(IHTMLElement *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return elem_string_attr_getter(This, languageW, TRUE, p);
+    return elem_string_attr_getter(This, L"language", TRUE, p);
 }
 
 static HRESULT WINAPI HTMLElement_put_onselectstart(IHTMLElement *iface, VARIANT v)
@@ -1845,12 +1837,7 @@ static HRESULT insert_adjacent_node(HTMLElement *This, const WCHAR *where, nsIDO
     nsresult nsres;
     HRESULT hres = S_OK;
 
-    static const WCHAR beforebeginW[] = {'b','e','f','o','r','e','b','e','g','i','n',0};
-    static const WCHAR afterbeginW[] = {'a','f','t','e','r','b','e','g','i','n',0};
-    static const WCHAR beforeendW[] = {'b','e','f','o','r','e','e','n','d',0};
-    static const WCHAR afterendW[] = {'a','f','t','e','r','e','n','d',0};
-
-    if (!wcsicmp(where, beforebeginW)) {
+    if (!wcsicmp(where, L"beforebegin")) {
         nsIDOMNode *parent;
 
         nsres = nsIDOMNode_GetParentNode(This->node.nsnode, &parent);
@@ -1862,7 +1849,7 @@ static HRESULT insert_adjacent_node(HTMLElement *This, const WCHAR *where, nsIDO
 
         nsres = nsIDOMNode_InsertBefore(parent, nsnode, This->node.nsnode, &ret_nsnode);
         nsIDOMNode_Release(parent);
-    }else if(!wcsicmp(where, afterbeginW)) {
+    }else if(!wcsicmp(where, L"afterbegin")) {
         nsIDOMNode *first_child;
 
         nsres = nsIDOMNode_GetFirstChild(This->node.nsnode, &first_child);
@@ -1875,9 +1862,9 @@ static HRESULT insert_adjacent_node(HTMLElement *This, const WCHAR *where, nsIDO
 
         if (first_child)
             nsIDOMNode_Release(first_child);
-    }else if (!wcsicmp(where, beforeendW)) {
+    }else if (!wcsicmp(where, L"beforeend")) {
         nsres = nsIDOMNode_AppendChild(This->node.nsnode, nsnode, &ret_nsnode);
-    }else if (!wcsicmp(where, afterendW)) {
+    }else if (!wcsicmp(where, L"afterend")) {
         nsIDOMNode *next_sibling, *parent;
 
         nsres = nsIDOMNode_GetParentNode(This->node.nsnode, &parent);
@@ -2806,7 +2793,7 @@ static HRESULT WINAPI HTMLElement2_put_accessKey(IHTMLElement2 *iface, BSTR v)
     HTMLElement *This = impl_from_IHTMLElement2(iface);
     VARIANT var;
 
-    static WCHAR accessKeyW[] = {'a','c','c','e','s','s','K','e','y',0};
+    static WCHAR accessKeyW[] = L"accessKey";
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
@@ -3016,9 +3003,7 @@ static HRESULT WINAPI HTMLElement2_get_readyState(IHTMLElement2 *iface, VARIANT 
         if(FAILED(hres))
             return hres;
     }else {
-        static const WCHAR completeW[] = {'c','o','m','p','l','e','t','e',0};
-
-        str = SysAllocString(completeW);
+        str = SysAllocString(L"complete");
         if(!str)
             return E_OUTOFMEMORY;
     }
@@ -3750,8 +3735,6 @@ static HRESULT WINAPI HTMLElement3_get_hideFocus(IHTMLElement3 *iface, VARIANT_B
     return E_NOTIMPL;
 }
 
-static const WCHAR disabledW[] = {'d','i','s','a','b','l','e','d',0};
-
 static HRESULT WINAPI HTMLElement3_put_disabled(IHTMLElement3 *iface, VARIANT_BOOL v)
 {
     HTMLElement *This = impl_from_IHTMLElement3(iface);
@@ -3763,7 +3746,7 @@ static HRESULT WINAPI HTMLElement3_put_disabled(IHTMLElement3 *iface, VARIANT_BO
     if(This->node.vtbl->put_disabled)
         return This->node.vtbl->put_disabled(&This->node, v);
 
-    hres = dispex_get_dprop_ref(&This->node.event_target.dispex, disabledW, TRUE, &var);
+    hres = dispex_get_dprop_ref(&This->node.event_target.dispex, L"disabled", TRUE, &var);
     if(FAILED(hres))
         return hres;
 
@@ -3784,7 +3767,7 @@ static HRESULT WINAPI HTMLElement3_get_disabled(IHTMLElement3 *iface, VARIANT_BO
     if(This->node.vtbl->get_disabled)
         return This->node.vtbl->get_disabled(&This->node, p);
 
-    hres = dispex_get_dprop_ref(&This->node.event_target.dispex, disabledW, FALSE, &var);
+    hres = dispex_get_dprop_ref(&This->node.event_target.dispex, L"disabled", FALSE, &var);
     if(hres == DISP_E_UNKNOWNNAME) {
         *p = VARIANT_FALSE;
         return S_OK;
@@ -5095,9 +5078,7 @@ HRESULT elem_unique_id(unsigned id, BSTR *p)
 {
     WCHAR buf[32];
 
-    static const WCHAR formatW[] = {'m','s','_','_','i','d','%','u',0};
-
-    swprintf(buf, ARRAY_SIZE(buf), formatW, id);
+    swprintf(buf, ARRAY_SIZE(buf), L"ms__id%u", id);
     *p = SysAllocString(buf);
     return *p ? S_OK : E_OUTOFMEMORY;
 }

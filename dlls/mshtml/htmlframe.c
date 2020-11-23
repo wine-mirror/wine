@@ -34,11 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-static const WCHAR autoW[] = {'a','u','t','o',0};
-static const WCHAR yesW[] = {'y','e','s',0};
-static const WCHAR noW[] = {'n','o',0};
-static const WCHAR pxW[] = {'p','x',0};
-
 static HRESULT set_frame_doc(HTMLFrameBase *frame, nsIDOMDocument *nsdoc)
 {
     mozIDOMWindowProxy *mozwindow;
@@ -343,7 +338,7 @@ static HRESULT WINAPI HTMLFrameBase_get_marginWidth(IHTMLFrameBase *iface, VARIA
         if(*str) {
             BSTR ret;
 
-            end = wcsstr(str, pxW);
+            end = wcsstr(str, L"px");
             if(!end)
                 end = str+lstrlenW(str);
             ret = SysAllocStringLen(str, end-str);
@@ -410,7 +405,7 @@ static HRESULT WINAPI HTMLFrameBase_get_marginHeight(IHTMLFrameBase *iface, VARI
         if(*str) {
             BSTR ret;
 
-            end = wcsstr(str, pxW);
+            end = wcsstr(str, L"px");
             if(!end)
                 end = str+lstrlenW(str);
             ret = SysAllocStringLen(str, end-str);
@@ -455,7 +450,7 @@ static HRESULT WINAPI HTMLFrameBase_put_scrolling(IHTMLFrameBase *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!(!wcsicmp(v, yesW) || !wcsicmp(v, noW) || !wcsicmp(v, autoW)))
+    if(!(!wcsicmp(v, L"yes") || !wcsicmp(v, L"no") || !wcsicmp(v, L"auto")))
         return E_INVALIDARG;
 
     if(This->nsframe) {
@@ -509,7 +504,7 @@ static HRESULT WINAPI HTMLFrameBase_get_scrolling(IHTMLFrameBase *iface, BSTR *p
     if(*strdata)
         *p = SysAllocString(strdata);
     else
-        *p = SysAllocString(autoW);
+        *p = SysAllocString(L"auto");
 
     nsAString_Finish(&nsstr);
 

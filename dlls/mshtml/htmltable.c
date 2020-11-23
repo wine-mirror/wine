@@ -1191,8 +1191,7 @@ static HRESULT WINAPI HTMLTable_put_cellSpacing(IHTMLTable *iface, VARIANT v)
         nsAString_InitDepend(&nsstr, V_BSTR(&v));
         break;
     case VT_I4: {
-        static const WCHAR formatW[] = {'%','d',0};
-        swprintf(buf, ARRAY_SIZE(buf), formatW, V_I4(&v));
+        swprintf(buf, ARRAY_SIZE(buf), L"%d", V_I4(&v));
         nsAString_InitDepend(&nsstr, buf);
         break;
     }

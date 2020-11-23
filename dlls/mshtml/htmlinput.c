@@ -44,8 +44,6 @@ struct HTMLInputElement {
     nsIDOMHTMLInputElement *nsinput;
 };
 
-static const WCHAR forW[] = {'f','o','r',0};
-
 static inline HTMLInputElement *impl_from_IHTMLInputElement(IHTMLInputElement *iface)
 {
     return CONTAINING_RECORD(iface, HTMLInputElement, IHTMLInputElement_iface);
@@ -1302,11 +1300,9 @@ static HRESULT WINAPI HTMLInputTextElement2_setSelectionRange(IHTMLInputTextElem
     nsAString none_str;
     nsresult nsres;
 
-    static const WCHAR noneW[] = {'n','o','n','e',0};
-
     TRACE("(%p)->(%d %d)\n", This, start, end);
 
-    nsAString_InitDepend(&none_str, noneW);
+    nsAString_InitDepend(&none_str, L"none");
     nsres = nsIDOMHTMLInputElement_SetSelectionRange(This->nsinput, start, end, &none_str);
     nsAString_Finish(&none_str);
     if(NS_FAILED(nsres)) {
@@ -1387,19 +1383,12 @@ static BOOL HTMLInputElement_is_text_edit(HTMLDOMNode *iface)
     nsresult nsres;
     BOOL ret = FALSE;
 
-    static const WCHAR buttonW[] = {'b','u','t','t','o','n',0};
-    static const WCHAR hiddenW[] = {'h','i','d','d','e','n',0};
-    static const WCHAR passwordW[] = {'p','a','s','s','w','o','r','d',0};
-    static const WCHAR resetW[] = {'r','e','s','e','t',0};
-    static const WCHAR submitW[] = {'s','u','b','m','i','t',0};
-    static const WCHAR textW[] = {'t','e','x','t',0};
-
     nsAString_Init(&nsstr, NULL);
     nsres = nsIDOMHTMLInputElement_GetType(This->nsinput, &nsstr);
     if(NS_SUCCEEDED(nsres)) {
         nsAString_GetData(&nsstr, &type);
-        ret = !wcscmp(type, buttonW) || !wcscmp(type, hiddenW) || !wcscmp(type, passwordW)
-            || !wcscmp(type, resetW) || !wcscmp(type, submitW) || !wcscmp(type, textW);
+        ret = !wcscmp(type, L"button") || !wcscmp(type, L"hidden") || !wcscmp(type, L"password")
+            || !wcscmp(type, L"reset") || !wcscmp(type, L"submit") || !wcscmp(type, L"text");
     }
     nsAString_Finish(&nsstr);
     return ret;
@@ -1557,7 +1546,7 @@ static HRESULT WINAPI HTMLLabelElement_put_htmlFor(IHTMLLabelElement *iface, BST
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    nsAString_InitDepend(&for_str, forW);
+    nsAString_InitDepend(&for_str, L"for");
     nsAString_InitDepend(&val_str, v);
     nsres = nsIDOMElement_SetAttribute(This->element.dom_element, &for_str, &val_str);
     nsAString_Finish(&for_str);
@@ -1576,7 +1565,7 @@ static HRESULT WINAPI HTMLLabelElement_get_htmlFor(IHTMLLabelElement *iface, BST
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return elem_string_attr_getter(&This->element, forW, FALSE, p);
+    return elem_string_attr_getter(&This->element, L"for", FALSE, p);
 }
 
 static HRESULT WINAPI HTMLLabelElement_put_accessKey(IHTMLLabelElement *iface, BSTR v)

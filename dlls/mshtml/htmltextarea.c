@@ -101,13 +101,11 @@ static HRESULT WINAPI HTMLTextAreaElement_Invoke(IHTMLTextAreaElement *iface, DI
 
 static HRESULT WINAPI HTMLTextAreaElement_get_type(IHTMLTextAreaElement *iface, BSTR *p)
 {
-    static const WCHAR textareaW[] = {'t','e','x','t','a','r','e','a',0};
-
     HTMLTextAreaElement *This = impl_from_IHTMLTextAreaElement(iface);
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = SysAllocString(textareaW);
+    *p = SysAllocString(L"textarea");
     if(!*p)
         return E_OUTOFMEMORY;
     return S_OK;

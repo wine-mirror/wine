@@ -227,19 +227,14 @@ static HRESULT WINAPI HTMLFormElement_get_dir(IHTMLFormElement *iface, BSTR *p)
 
 static HRESULT WINAPI HTMLFormElement_put_encoding(IHTMLFormElement *iface, BSTR v)
 {
-    static const WCHAR urlencodedW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
-        'x','-','w','w','w','-','f','o','r','m','-','u','r','l','e','n','c','o','d','e','d',0};
-    static const WCHAR dataW[] = {'m','u','l','t','i','p','a','r','t','/',
-        'f','o','r','m','-','d','a','t','a',0};
-    static const WCHAR plainW[] = {'t','e','x','t','/','p','l','a','i','n',0};
-
     HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     nsAString encoding_str;
     nsresult nsres;
 
     TRACE("(%p)->(%s)\n", This, wine_dbgstr_w(v));
 
-    if(lstrcmpiW(v, urlencodedW) && lstrcmpiW(v, dataW) && lstrcmpiW(v, plainW)) {
+    if(lstrcmpiW(v, L"application/x-www-form-urlencoded") && lstrcmpiW(v, L"multipart/form-data")
+            && lstrcmpiW(v, L"text/plain")) {
         WARN("incorrect enctype\n");
         return E_INVALIDARG;
     }
@@ -268,16 +263,13 @@ static HRESULT WINAPI HTMLFormElement_get_encoding(IHTMLFormElement *iface, BSTR
 
 static HRESULT WINAPI HTMLFormElement_put_method(IHTMLFormElement *iface, BSTR v)
 {
-    static const WCHAR postW[] = {'P','O','S','T',0};
-    static const WCHAR getW[] = {'G','E','T',0};
-
     HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
     nsAString method_str;
     nsresult nsres;
 
     TRACE("(%p)->(%s)\n", This, wine_dbgstr_w(v));
 
-    if(lstrcmpiW(v, postW) && lstrcmpiW(v, getW)) {
+    if(lstrcmpiW(v, L"POST") && lstrcmpiW(v, L"GET")) {
         WARN("unrecognized method\n");
         return E_INVALIDARG;
     }

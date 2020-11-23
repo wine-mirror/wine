@@ -978,8 +978,6 @@ static HRESULT WINAPI HTMLWindow2_open(IHTMLWindow2 *iface, BSTR url, BSTR name,
     IUri *uri;
     HRESULT hres;
 
-    static const WCHAR _selfW[] = {'_','s','e','l','f',0};
-
     TRACE("(%p)->(%s %s %s %x %p)\n", This, debugstr_w(url), debugstr_w(name),
           debugstr_w(features), replace, pomWindowResult);
     if(features)
@@ -991,7 +989,7 @@ static HRESULT WINAPI HTMLWindow2_open(IHTMLWindow2 *iface, BSTR url, BSTR name,
         return E_UNEXPECTED;
 
     if(name && *name == '_') {
-        if(!wcscmp(name, _selfW)) {
+        if(!wcscmp(name, L"_self")) {
             if((features && *features) || replace)
                 FIXME("Unsupported arguments for _self target\n");
 
@@ -1440,14 +1438,12 @@ static HRESULT WINAPI HTMLWindow2_toString(IHTMLWindow2 *iface, BSTR *String)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
 
-    static const WCHAR objectW[] = {'[','o','b','j','e','c','t',']',0};
-
     TRACE("(%p)->(%p)\n", This, String);
 
     if(!String)
         return E_INVALIDARG;
 
-    *String = SysAllocString(objectW);
+    *String = SysAllocString(L"[object]");
     return *String ? S_OK : E_OUTOFMEMORY;
 }
 
