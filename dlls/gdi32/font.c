@@ -97,6 +97,24 @@ static struct font_gamma_ramp font_gamma_ramp;
 static void add_face_to_cache( struct gdi_font_face *face );
 static void remove_face_from_cache( struct gdi_font_face *face );
 
+static inline WCHAR facename_tolower( WCHAR c )
+{
+    if (c >= 'A' && c <= 'Z') return c - 'A' + 'a';
+    else if (c > 127) return RtlDowncaseUnicodeChar( c );
+    else return c;
+}
+
+static inline int facename_compare( const WCHAR *str1, const WCHAR *str2, SIZE_T len )
+{
+    while (len--)
+    {
+        WCHAR c1 = facename_tolower( *str1++ ), c2 = facename_tolower( *str2++ );
+        if (c1 != c2) return c1 - c2;
+        else if (!c1) return 0;
+    }
+    return 0;
+}
+
   /* Device -> World size conversion */
 
 /* Performs a device to world transformation on the specified width (which
@@ -465,7 +483,7 @@ static const WCHAR *get_gdi_font_subst( const WCHAR *from_name, int from_charset
 
     LIST_FOR_EACH_ENTRY( subst, &font_subst_list, struct gdi_font_subst, entry )
     {
-        if (!wcsicmp(subst->names, from_name) &&
+        if (!facename_compare( subst->names, from_name, -1 ) &&
            (subst->from_charset == from_charset || subst->from_charset == -1))
         {
             if (to_charset) *to_charset = subst->to_charset;
@@ -538,19 +556,19 @@ static int family_namecmp( const WCHAR *str1, const WCHAR *str2 )
 {
     int prio1, prio2, vert1 = (str1[0] == '@' ? 1 : 0), vert2 = (str2[0] == '@' ? 1 : 0);
 
-    if (!wcsnicmp( str1, ff_swiss_default, LF_FACESIZE - 1 )) prio1 = 0;
-    else if (!wcsnicmp( str1, ff_modern_default, LF_FACESIZE - 1 )) prio1 = 1;
-    else if (!wcsnicmp( str1, ff_roman_default, LF_FACESIZE - 1 )) prio1 = 2;
+    if (!facename_compare( str1, ff_swiss_default, LF_FACESIZE - 1 )) prio1 = 0;
+    else if (!facename_compare( str1, ff_modern_default, LF_FACESIZE - 1 )) prio1 = 1;
+    else if (!facename_compare( str1, ff_roman_default, LF_FACESIZE - 1 )) prio1 = 2;
     else prio1 = 3;
 
-    if (!wcsnicmp( str2, ff_swiss_default, LF_FACESIZE - 1 )) prio2 = 0;
-    else if (!wcsnicmp( str2, ff_modern_default, LF_FACESIZE - 1 )) prio2 = 1;
-    else if (!wcsnicmp( str2, ff_roman_default, LF_FACESIZE - 1 )) prio2 = 2;
+    if (!facename_compare( str2, ff_swiss_default, LF_FACESIZE - 1 )) prio2 = 0;
+    else if (!facename_compare( str2, ff_modern_default, LF_FACESIZE - 1 )) prio2 = 1;
+    else if (!facename_compare( str2, ff_roman_default, LF_FACESIZE - 1 )) prio2 = 2;
     else prio2 = 3;
 
     if (prio1 != prio2) return prio1 - prio2;
     if (vert1 != vert2) return vert1 - vert2;
-    return wcsnicmp( str1 + vert1, str2 + vert2, LF_FACESIZE - 1 );
+    return facename_compare( str1 + vert1, str2 + vert2, LF_FACESIZE - 1 );
 }
 
 static int family_name_compare( const void *key, const struct wine_rb_entry *entry )
@@ -837,7 +855,7 @@ static int remove_font( const WCHAR *file, DWORD flags )
 
 static inline BOOL faces_equal( const struct gdi_font_face *f1, const struct gdi_font_face *f2 )
 {
-    if (wcsicmp( f1->full_name, f2->full_name )) return FALSE;
+    if (facename_compare( f1->full_name, f2->full_name, -1 )) return FALSE;
     if (f1->scalable) return TRUE;
     if (f1->size.y_ppem != f2->size.y_ppem) return FALSE;
     return !memcmp( &f1->fs, &f2->fs, sizeof(f1->fs) );
@@ -1173,7 +1191,7 @@ static struct gdi_font_link *find_gdi_font_link( const WCHAR *name )
     struct gdi_font_link *link;
 
     LIST_FOR_EACH_ENTRY( link, &font_links, struct gdi_font_link, entry )
-        if (!wcsnicmp( link->name, name, LF_FACESIZE - 1 )) return link;
+        if (!facename_compare( link->name, name, LF_FACESIZE - 1 )) return link;
     return NULL;
 }
 
@@ -1186,8 +1204,8 @@ static struct gdi_font_family *find_family_from_font_links( const WCHAR *name, c
 
     LIST_FOR_EACH_ENTRY( link, &font_links, struct gdi_font_link, entry )
     {
-        if (!wcsnicmp( link->name, name, LF_FACESIZE - 1) ||
-            (subst && !wcsnicmp( link->name, subst, LF_FACESIZE - 1 )))
+        if (!facename_compare( link->name, name, LF_FACESIZE - 1 ) ||
+            (subst && !facename_compare( link->name, subst, LF_FACESIZE - 1 )))
         {
             TRACE("found entry in system list\n");
             LIST_FOR_EACH_ENTRY( entry, &link->links, struct gdi_font_link_entry, entry )
@@ -1288,7 +1306,7 @@ static void populate_system_links( const WCHAR *name, const WCHAR * const *value
     font_link = add_gdi_font_link( name );
     for ( ; *values; values++)
     {
-        if  (!wcsicmp( name, *values )) continue;
+        if  (!facename_compare( name, *values, -1 )) continue;
         if (!(value = get_gdi_font_subst( *values, -1, NULL ))) value = *values;
         if (!(family = find_family_from_name( value ))) continue;
         /* use first extant filename for this Family */
@@ -1371,12 +1389,12 @@ static void load_system_links(void)
         {
             const WCHAR *subst = get_gdi_font_subst( font_links_defaults_list[i].shelldlg, -1, NULL );
 
-            if ((!wcsicmp( font_links_defaults_list[i].shelldlg, shelldlg_name ) ||
-                 (subst && !wcsicmp( subst, shelldlg_name ))))
+            if ((!facename_compare( font_links_defaults_list[i].shelldlg, shelldlg_name, -1 ) ||
+                 (subst && !facename_compare( subst, shelldlg_name, -1 ))))
             {
                 for (j = 0; j < ARRAY_SIZE(font_links_list); j++)
                     populate_system_links( font_links_list[j], font_links_defaults_list[i].substitutes );
-                if (!wcsicmp(shelldlg_name, font_links_defaults_list[i].substitutes[0]))
+                if (!facename_compare(shelldlg_name, font_links_defaults_list[i].substitutes[0], -1))
                     populate_system_links( shelldlg_name, font_links_defaults_list[i].substitutes );
             }
         }
@@ -1477,7 +1495,7 @@ static struct gdi_font_face *find_matching_face_by_name( const WCHAR *name, cons
     /* search by full face name */
     WINE_RB_FOR_EACH_ENTRY( family, &family_name_tree, struct gdi_font_family, name_entry )
         LIST_FOR_EACH_ENTRY( face, get_family_face_list(family), struct gdi_font_face, entry )
-            if (!wcsnicmp( face->full_name, name, LF_FACESIZE - 1 ) &&
+            if (!facename_compare( face->full_name, name, LF_FACESIZE - 1 ) &&
                 can_select_face( face, fs, can_use_bitmap ))
                 return face;
 
@@ -2150,7 +2168,7 @@ static void create_child_font_list( struct gdi_font *font )
      * Sans Serif.  This is how asian windows get default fallbacks for fonts
      */
     if (is_dbcs_ansi_cp(GetACP()) && font->charset != SYMBOL_CHARSET && font->charset != OEM_CHARSET &&
-        wcsicmp( font_name, L"Microsoft Sans Serif" ) != 0)
+        facename_compare( font_name, L"Microsoft Sans Serif", -1 ) != 0)
     {
         if ((font_link = find_gdi_font_link( L"Microsoft Sans Serif" )))
         {
@@ -2175,7 +2193,7 @@ static BOOL fontcmp( const struct gdi_font *font, DWORD hash, const LOGFONTW *lf
     if (memcmp( &font->matrix, matrix, sizeof(*matrix))) return TRUE;
     if (memcmp( &font->lf, lf, offsetof(LOGFONTW, lfFaceName))) return TRUE;
     if (!font->can_use_bitmap != !can_use_bitmap) return TRUE;
-    return wcsicmp( font->lf.lfFaceName, lf->lfFaceName);
+    return facename_compare( font->lf.lfFaceName, lf->lfFaceName, -1 );
 }
 
 static DWORD hash_font( const LOGFONTW *lf, const FMAT2 *matrix, BOOL can_use_bitmap )
@@ -2696,16 +2714,16 @@ static BOOL family_matches( struct gdi_font_family *family, const WCHAR *face_na
 {
     struct gdi_font_face *face;
 
-    if (!wcsnicmp( face_name, family->family_name, LF_FACESIZE - 1 )) return TRUE;
+    if (!facename_compare( face_name, family->family_name, LF_FACESIZE - 1 )) return TRUE;
     LIST_FOR_EACH_ENTRY( face, get_family_face_list(family), struct gdi_font_face, entry )
-        if (!wcsnicmp( face_name, face->full_name, LF_FACESIZE - 1 )) return TRUE;
+        if (!facename_compare( face_name, face->full_name, LF_FACESIZE - 1 )) return TRUE;
     return FALSE;
 }
 
 static BOOL face_matches( const WCHAR *family_name, struct gdi_font_face *face, const WCHAR *face_name )
 {
-    if (!wcsnicmp( face_name, family_name, LF_FACESIZE - 1)) return TRUE;
-    return !wcsnicmp( face_name, face->full_name, LF_FACESIZE - 1 );
+    if (!facename_compare( face_name, family_name, LF_FACESIZE - 1)) return TRUE;
+    return !facename_compare( face_name, face->full_name, LF_FACESIZE - 1 );
 }
 
 static BOOL enum_face_charsets( const struct gdi_font_family *family, struct gdi_font_face *face,
@@ -3571,7 +3589,7 @@ static struct gdi_font *select_font( LOGFONTW *lf, FMAT2 dcmat, BOOL can_use_bit
        SYMBOL_CHARSET so that Symbol gets picked irrespective of the
        original value lfCharSet.  Note this is a special case for
        Symbol and doesn't happen at least for "Wingdings*" */
-    if (!wcsicmp( lf->lfFaceName, L"Symbol" )) lf->lfCharSet = SYMBOL_CHARSET;
+    if (!facename_compare( lf->lfFaceName, L"Symbol", -1 )) lf->lfCharSet = SYMBOL_CHARSET;
 
     /* check the cache first */
     if ((font = find_cached_gdi_font( lf, &dcmat, can_use_bitmap )))
@@ -7775,7 +7793,7 @@ struct external_key
 
 static int compare_external_key( const void *key, const struct wine_rb_entry *entry )
 {
-    return wcsicmp( key, WINE_RB_ENTRY_VALUE( entry, struct external_key, entry )->value );
+    return facename_compare( key, WINE_RB_ENTRY_VALUE( entry, struct external_key, entry )->value, -1 );
 }
 
 static struct wine_rb_tree external_keys = { compare_external_key };

@@ -7282,7 +7282,7 @@ static void test_lang_names(void)
             wcscpy( font_w.lfFaceName, L"Wine POLICE D'\xc9" "CRITURE (fr)" );
             memset( &efnd_w, 0, sizeof(efnd_w) );
             EnumFontFamiliesExW( dc, &font_w, enum_fullname_data_proc_w, (LPARAM)&efnd_w, 0 );
-            todo_wine ok( efnd_w.total == 1, "%d: EnumFontFamiliesExW unexpected count %u.\n", i, efnd_w.total );
+            ok( efnd_w.total == 1, "%d: EnumFontFamiliesExW unexpected count %u.\n", i, efnd_w.total );
         }
 
         strcpy( font.lfFaceName, "Wine Lang Cond (ko)" );
