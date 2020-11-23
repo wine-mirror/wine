@@ -309,6 +309,25 @@ static DWORD icmp_get_reply(int sid, unsigned char *buffer, DWORD send_time, voi
     if (res==0)
         SetLastError(IP_REQ_TIMED_OUT);
 done:
+    if (res)
+    {
+        /* Move the data so there's no gap between it and the ICMP_ECHO_REPLY array */
+        DWORD gap_size = endbuf - (char*)ier;
+
+        if (gap_size)
+        {
+            memmove(ier, endbuf, ((char*)reply_buf + reply_size) - endbuf);
+
+            /* Fix the pointers */
+            while (ier-- != reply_buf)
+            {
+                ier->Data = (char*)ier->Data - gap_size;
+                if (ier->Options.OptionsData)
+                    ier->Options.OptionsData -= gap_size;
+            }
+        }
+    }
+
     HeapFree(GetProcessHeap(), 0, buffer);
     TRACE("received %d replies\n",res);
     return res;
