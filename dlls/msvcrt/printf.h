@@ -601,8 +601,6 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
     ULONGLONG m;
     DWORD l;
 
-    TRACE("floating point argument: %.16le\n", v);
-
     if(flags->Precision == -1)
         flags->Precision = 6;
 
@@ -972,8 +970,6 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
     BOOL three_digit_exp = MSVCRT__get_output_format() != MSVCRT__TWO_DIGIT_EXPONENT;
     BOOL standard_rounding = FALSE;
 #endif
-
-    TRACE("Format is: %s\n", FUNC_NAME(debugstr)(fmt));
 
     if (!MSVCRT_CHECK_PMT(fmt != NULL))
         return -1;
