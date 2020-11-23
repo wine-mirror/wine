@@ -996,7 +996,11 @@ static void testIcmpSendEcho(void)
     address = htonl(INADDR_LOOPBACK);
     ret = IcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, replydata, replysz, 1000);
     error = GetLastError();
-    if (ret)
+    if (!ret)
+    {
+        skip ("Failed to ping with error %d, is lo interface down?.\n", error);
+    }
+    else if (winetest_debug > 1)
     {
         PICMP_ECHO_REPLY pong = (PICMP_ECHO_REPLY) replydata;
         trace ("send addr  : %s\n", ntoa(address));
@@ -1007,10 +1011,6 @@ static void testIcmpSendEcho(void)
         trace ("recv size  : %u\n", pong->DataSize);
         trace ("ttl        : %u\n", pong->Options.Ttl);
         trace ("flags      : 0x%x\n", pong->Options.Flags);
-    }
-    else
-    {
-        skip ("Failed to ping with error %d, is lo interface down?.\n", error);
     }
 
     /* check reply data */
