@@ -7269,12 +7269,21 @@ static void test_lang_names(void)
         /* either because it's the primary language, or because it's a secondary */
         ok( efnd.total == min( 2, i + 1 ), "%d: EnumFontFamiliesExA unexpected count %u.\n", i, efnd.total );
 
-        strcpy( font.lfFaceName, "Wine Lang Cond (fr)" );
-        memset( &efnd, 0, sizeof(efnd) );
-        EnumFontFamiliesExA( dc, &font, enum_fullname_data_proc, (LPARAM)&efnd, 0 );
+        wcscpy( font_w.lfFaceName, L"Wine Police d'\xe9" "criture (fr)" );
+        memset( &efnd_w, 0, sizeof(efnd_w) );
+        EnumFontFamiliesExW( dc, &font_w, enum_fullname_data_proc_w, (LPARAM)&efnd_w, 0 );
         /* as wine_langnames3.sfd does not specify (en) name, (fr) is preferred */
-        if (i == 2) ok( efnd.total == 1, "%d: EnumFontFamiliesExA unexpected count %u.\n", i, efnd.total );
-        else ok( efnd.total == 0, "%d: EnumFontFamiliesExA unexpected count %u.\n", i, efnd.total );
+        if (i == 2) ok( efnd_w.total == 1, "%d: EnumFontFamiliesExW unexpected count %u.\n", i, efnd_w.total );
+        else ok( efnd_w.total == 0, "%d: EnumFontFamiliesExW unexpected count %u.\n", i, efnd_w.total );
+
+        /* case matching should not depend on the current locale */
+        if (i == 2)
+        {
+            wcscpy( font_w.lfFaceName, L"Wine POLICE D'\xc9" "CRITURE (fr)" );
+            memset( &efnd_w, 0, sizeof(efnd_w) );
+            EnumFontFamiliesExW( dc, &font_w, enum_fullname_data_proc_w, (LPARAM)&efnd_w, 0 );
+            todo_wine ok( efnd_w.total == 1, "%d: EnumFontFamiliesExW unexpected count %u.\n", i, efnd_w.total );
+        }
 
         strcpy( font.lfFaceName, "Wine Lang Cond (ko)" );
         memset( &efnd, 0, sizeof(efnd) );
