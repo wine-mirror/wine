@@ -325,6 +325,20 @@ done:
                 if (ier->Options.OptionsData)
                     ier->Options.OptionsData -= gap_size;
             }
+
+            /* According to MSDN, the reply buffer needs to hold space for a IO_STATUS_BLOCK,
+               found at the very end of the reply. This is confirmed on Windows XP, but Vista
+               and later do not store it anywhere and in fact don't even require it at all.
+
+               However, in case old apps analyze this IO_STATUS_BLOCK and expect it, we mimic
+               it and write it out if there's enough space available in the buffer. */
+            if (gap_size >= sizeof(IO_STATUS_BLOCK))
+            {
+                IO_STATUS_BLOCK *io = (IO_STATUS_BLOCK*)((char*)reply_buf + reply_size - sizeof(IO_STATUS_BLOCK));
+
+                io->Pointer = NULL;  /* Always NULL or STATUS_SUCCESS */
+                io->Information = reply_size - gap_size;
+            }
         }
     }
 
