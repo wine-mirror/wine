@@ -2925,11 +2925,11 @@ static void test_sar(void)
 {
     IMFPresentationClock *present_clock, *present_clock2;
     IMFMediaType *mediatype, *mediatype2, *mediatype3;
+    IMFClockStateSink *state_sink, *state_sink2;
     IMFMediaTypeHandler *handler, *handler2;
     IMFPresentationTimeSource *time_source;
     IMFSimpleAudioVolume *simple_volume;
     IMFAudioStreamVolume *stream_volume;
-    IMFClockStateSink *state_sink;
     IMFMediaSink *sink, *sink2;
     IMFStreamSink *stream_sink;
     IMFAttributes *attributes;
@@ -2967,6 +2967,14 @@ todo_wine
 
 if (SUCCEEDED(hr))
 {
+    hr = IMFPresentationTimeSource_QueryInterface(time_source, &IID_IMFClockStateSink, (void **)&state_sink2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFPresentationTimeSource_QueryInterface(time_source, &IID_IMFClockStateSink, (void **)&state_sink);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(state_sink == state_sink2, "Unexpected clock sink.\n");
+    IMFClockStateSink_Release(state_sink2);
+    IMFClockStateSink_Release(state_sink);
+
     hr = IMFPresentationTimeSource_GetUnderlyingClock(time_source, &clock);
     ok(hr == MF_E_NO_CLOCK, "Unexpected hr %#x.\n", hr);
 
@@ -3008,6 +3016,9 @@ if (SUCCEEDED(hr))
     check_interface(sink, &IID_IMFMediaSinkPreroll, TRUE);
     check_interface(sink, &IID_IMFMediaEventGenerator, TRUE);
     check_interface(sink, &IID_IMFClockStateSink, TRUE);
+    check_interface(sink, &IID_IMFGetService, TRUE);
+    todo_wine check_interface(sink, &IID_IMFPresentationTimeSource, TRUE);
+    check_service_interface(sink, &MR_POLICY_VOLUME_SERVICE, &IID_IMFSimpleAudioVolume, TRUE);
 
     /* Clock */
     hr = IMFMediaSink_QueryInterface(sink, &IID_IMFClockStateSink, (void **)&state_sink);
@@ -3057,6 +3068,8 @@ todo_wine
     ok(hr == S_OK, "Failed to get a stream, hr %#x.\n", hr);
 
     check_interface(stream_sink, &IID_IMFMediaEventGenerator, TRUE);
+    check_interface(stream_sink, &IID_IMFMediaTypeHandler, TRUE);
+    todo_wine check_interface(stream_sink, &IID_IMFGetService, TRUE);
 
     hr = IMFStreamSink_GetIdentifier(stream_sink, &id);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
