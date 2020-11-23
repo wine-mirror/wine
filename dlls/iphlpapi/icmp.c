@@ -443,6 +443,50 @@ DWORD WINAPI IcmpSendEcho(
     DWORD                    Timeout
     )
 {
+    return IcmpSendEcho2Ex(IcmpHandle, NULL, NULL, NULL, 0, DestinationAddress,
+            RequestData, RequestSize, RequestOptions, ReplyBuffer, ReplySize, Timeout);
+}
+
+/***********************************************************************
+ *		IcmpSendEcho2 (IPHLPAPI.@)
+ */
+DWORD WINAPI IcmpSendEcho2(
+    HANDLE                   IcmpHandle,
+    HANDLE                   Event,
+    PIO_APC_ROUTINE          ApcRoutine,
+    PVOID                    ApcContext,
+    IPAddr                   DestinationAddress,
+    LPVOID                   RequestData,
+    WORD                     RequestSize,
+    PIP_OPTION_INFORMATION   RequestOptions,
+    LPVOID                   ReplyBuffer,
+    DWORD                    ReplySize,
+    DWORD                    Timeout
+    )
+{
+    return IcmpSendEcho2Ex(IcmpHandle, Event, ApcRoutine, ApcContext, 0,
+            DestinationAddress, RequestData, RequestSize, RequestOptions,
+            ReplyBuffer, ReplySize, Timeout);
+}
+
+/***********************************************************************
+ *		IcmpSendEcho2Ex (IPHLPAPI.@)
+ */
+DWORD WINAPI IcmpSendEcho2Ex(
+    HANDLE                   IcmpHandle,
+    HANDLE                   Event,
+    PIO_APC_ROUTINE          ApcRoutine,
+    PVOID                    ApcContext,
+    IPAddr                   SourceAddress,
+    IPAddr                   DestinationAddress,
+    LPVOID                   RequestData,
+    WORD                     RequestSize,
+    PIP_OPTION_INFORMATION   RequestOptions,
+    LPVOID                   ReplyBuffer,
+    DWORD                    ReplySize,
+    DWORD                    Timeout
+    )
+{
     icmp_t* icp=(icmp_t*)IcmpHandle;
     struct icmp* icmp_header;
     struct sockaddr_in addr;
@@ -450,6 +494,10 @@ DWORD WINAPI IcmpSendEcho(
     unsigned char *buffer;
     int reqsize, repsize;
     DWORD send_time;
+
+    TRACE("(%p, %p, %p, %p, %08x, %08x, %p, %d, %p, %p, %d, %d)\n", IcmpHandle,
+            Event, ApcRoutine, ApcContext, SourceAddress, DestinationAddress, RequestData,
+            RequestSize, RequestOptions, ReplyBuffer, ReplySize, Timeout);
 
     if (IcmpHandle==INVALID_HANDLE_VALUE) {
         /* FIXME: in fact win98 seems to ignore the handle value !!! */
@@ -470,6 +518,22 @@ DWORD WINAPI IcmpSendEcho(
 
     if (!DestinationAddress) {
         SetLastError(ERROR_INVALID_NETNAME);
+        return 0;
+    }
+
+    if (Event)
+    {
+        FIXME("unsupported for events\n");
+        return 0;
+    }
+    if (ApcRoutine)
+    {
+        FIXME("unsupported for APCs\n");
+        return 0;
+    }
+    if (SourceAddress)
+    {
+        FIXME("unsupported for source addresses\n");
         return 0;
     }
 
@@ -569,83 +633,6 @@ DWORD WINAPI IcmpSendEcho(
     }
 
     return icmp_get_reply(icp->sid, buffer, send_time, ReplyBuffer, ReplySize, Timeout);
-}
-
-/***********************************************************************
- *		IcmpSendEcho2 (IPHLPAPI.@)
- */
-DWORD WINAPI IcmpSendEcho2(
-    HANDLE                   IcmpHandle,
-    HANDLE                   Event,
-    PIO_APC_ROUTINE          ApcRoutine,
-    PVOID                    ApcContext,
-    IPAddr                   DestinationAddress,
-    LPVOID                   RequestData,
-    WORD                     RequestSize,
-    PIP_OPTION_INFORMATION   RequestOptions,
-    LPVOID                   ReplyBuffer,
-    DWORD                    ReplySize,
-    DWORD                    Timeout
-    )
-{
-    TRACE("(%p, %p, %p, %p, %08x, %p, %d, %p, %p, %d, %d): stub\n", IcmpHandle,
-            Event, ApcRoutine, ApcContext, DestinationAddress, RequestData,
-            RequestSize, RequestOptions, ReplyBuffer, ReplySize, Timeout);
-
-    if (Event)
-    {
-        FIXME("unsupported for events\n");
-        return 0;
-    }
-    if (ApcRoutine)
-    {
-        FIXME("unsupported for APCs\n");
-        return 0;
-    }
-    return IcmpSendEcho(IcmpHandle, DestinationAddress, RequestData,
-            RequestSize, RequestOptions, ReplyBuffer, ReplySize, Timeout);
-}
-
-/***********************************************************************
- *		IcmpSendEcho2Ex (IPHLPAPI.@)
- */
-DWORD WINAPI IcmpSendEcho2Ex(
-    HANDLE                   IcmpHandle,
-    HANDLE                   Event,
-    PIO_APC_ROUTINE          ApcRoutine,
-    PVOID                    ApcContext,
-    IPAddr                   SourceAddress,
-    IPAddr                   DestinationAddress,
-    LPVOID                   RequestData,
-    WORD                     RequestSize,
-    PIP_OPTION_INFORMATION   RequestOptions,
-    LPVOID                   ReplyBuffer,
-    DWORD                    ReplySize,
-    DWORD                    Timeout
-    )
-{
-    TRACE("(%p, %p, %p, %p, %08x, %08x, %p, %d, %p, %p, %d, %d): stub\n", IcmpHandle,
-            Event, ApcRoutine, ApcContext, SourceAddress, DestinationAddress, RequestData,
-            RequestSize, RequestOptions, ReplyBuffer, ReplySize, Timeout);
-
-    if (Event)
-    {
-        FIXME("unsupported for events\n");
-        return 0;
-    }
-    if (ApcRoutine)
-    {
-        FIXME("unsupported for APCs\n");
-        return 0;
-    }
-    if (SourceAddress)
-    {
-        FIXME("unsupported for source addresses\n");
-        return 0;
-    }
-
-    return IcmpSendEcho(IcmpHandle, DestinationAddress, RequestData,
-            RequestSize, RequestOptions, ReplyBuffer, ReplySize, Timeout);
 }
 
 /*
