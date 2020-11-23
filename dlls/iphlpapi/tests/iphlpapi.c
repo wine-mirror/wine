@@ -1027,6 +1027,8 @@ static void testIcmpSendEcho(void)
     ok(reply->Status == IP_SUCCESS, "Expect status:0x%08x, got:0x%08x\n", IP_SUCCESS, reply->Status);
     ok(reply->DataSize == sizeof(senddata), "Got size:%d\n", reply->DataSize);
     ok(!memcmp(senddata, reply->Data, min(sizeof(senddata), reply->DataSize)), "Data mismatch\n");
+
+    IcmpCloseHandle(icmp);
 }
 
 /*
