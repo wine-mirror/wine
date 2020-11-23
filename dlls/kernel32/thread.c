@@ -33,8 +33,11 @@
 #include "kernel_private.h"
 
 
+/***********************************************************************
+ *           BaseThreadInitThunk (KERNEL32.@)
+ */
 #ifdef __i386__
-__ASM_STDCALL_FUNC( __fastcall_BaseThreadInitThunk, 12,
+__ASM_FASTCALL_FUNC( BaseThreadInitThunk, 12,
                     "pushl %ebp\n\t"
                     __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                     __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
@@ -50,16 +53,12 @@ __ASM_STDCALL_FUNC( __fastcall_BaseThreadInitThunk, 12,
                     "call *%edx\n\t"
                     "movl %eax,(%esp)\n\t"
                     "call " __ASM_STDCALL( "RtlExitUserThread", 4 ))
-#endif
-
-/***********************************************************************
- *           BaseThreadInitThunk (KERNEL32.@)
- */
+#else
 void __fastcall BaseThreadInitThunk( DWORD unknown, LPTHREAD_START_ROUTINE entry, void *arg )
 {
     RtlExitUserThread( entry( arg ) );
 }
-
+#endif
 
 /***********************************************************************
  *           FreeLibraryAndExitThread (KERNEL32.@)
