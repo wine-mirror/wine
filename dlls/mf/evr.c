@@ -2137,6 +2137,12 @@ static HRESULT WINAPI video_renderer_event_sink_Notify(IMediaEventSink *iface, L
                 MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
         }
     }
+    else if (event == EC_DISPLAY_CHANGED)
+    {
+        for (idx = 0; idx < renderer->stream_count; ++idx)
+            IMFMediaEventQueue_QueueEventParamVar(renderer->streams[idx]->event_queue,
+                    MEStreamSinkDeviceChanged, &GUID_NULL, S_OK, NULL);
+    }
     else if (event >= EC_USER)
     {
         PROPVARIANT code;
