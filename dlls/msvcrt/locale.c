@@ -1155,7 +1155,11 @@ MSVCRT__locale_t CDECL get_current_locale_noalloc(MSVCRT__locale_t locale)
 
     InterlockedIncrement(&locale->locinfo->refcount);
     for(i=MSVCRT_LC_MIN+1; i<=MSVCRT_LC_MAX; i++)
+    {
         InterlockedIncrement(locale->locinfo->lc_category[i].refcount);
+        if(locale->locinfo->lc_category[i].wrefcount)
+            InterlockedIncrement(locale->locinfo->lc_category[i].wrefcount);
+    }
     if(locale->locinfo->lconv_intl_refcount)
         InterlockedIncrement(locale->locinfo->lconv_intl_refcount);
     if(locale->locinfo->lconv_num_refcount)
