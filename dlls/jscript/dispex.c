@@ -1843,9 +1843,7 @@ HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const built
     dispex_prop_t *prop;
     HRESULT hres;
 
-    static const WCHAR prototypeW[] = {'p','r','o','t','o','t','y','p','e',0};
-
-    hres = find_prop_name_prot(constr, string_hash(prototypeW), prototypeW, &prop);
+    hres = find_prop_name_prot(constr, string_hash(L"prototype"), L"prototype", &prop);
     if(SUCCEEDED(hres) && prop && prop->type!=PROP_DELETED) {
         jsval_t val;
 
@@ -2148,9 +2146,7 @@ HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, jsval_t val)
 {
     WCHAR buf[12];
 
-    static const WCHAR formatW[] = {'%','d',0};
-
-    swprintf(buf, ARRAY_SIZE(buf), formatW, idx);
+    swprintf(buf, ARRAY_SIZE(buf), L"%d", idx);
     return jsdisp_propput_name(obj, buf, val);
 }
 
@@ -2213,9 +2209,7 @@ HRESULT jsdisp_get_idx(jsdisp_t *obj, DWORD idx, jsval_t *r)
     dispex_prop_t *prop;
     HRESULT hres;
 
-    static const WCHAR formatW[] = {'%','d',0};
-
-    swprintf(name, ARRAY_SIZE(name), formatW, idx);
+    swprintf(name, ARRAY_SIZE(name), L"%d", idx);
 
     hres = find_prop_name_prot(obj, string_hash(name), name, &prop);
     if(FAILED(hres))
@@ -2265,13 +2259,12 @@ HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t *val
 
 HRESULT jsdisp_delete_idx(jsdisp_t *obj, DWORD idx)
 {
-    static const WCHAR formatW[] = {'%','d',0};
     WCHAR buf[12];
     dispex_prop_t *prop;
     BOOL b;
     HRESULT hres;
 
-    swprintf(buf, ARRAY_SIZE(buf), formatW, idx);
+    swprintf(buf, ARRAY_SIZE(buf), L"%d", idx);
 
     hres = find_prop_name(obj, string_hash(buf), buf, &prop);
     if(FAILED(hres) || !prop)

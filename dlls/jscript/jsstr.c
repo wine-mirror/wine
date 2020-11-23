@@ -315,15 +315,13 @@ HRESULT jsstr_to_bstr(jsstr_t *str, BSTR *r)
 
 BOOL init_strings(void)
 {
-    static const WCHAR NaNW[] = { 'N','a','N',0 };
-    static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
     WCHAR *ptr;
 
     if(!(empty_str = jsstr_alloc_buf(0, &ptr)))
         return FALSE;
-    if(!(nan_str = jsstr_alloc(NaNW)))
+    if(!(nan_str = jsstr_alloc(L"NaN")))
         return FALSE;
-    if(!(undefined_str = jsstr_alloc(undefinedW)))
+    if(!(undefined_str = jsstr_alloc(L"undefined")))
         return FALSE;
     if(!(null_bstr_str = jsstr_alloc_buf(0, &ptr)))
         return FALSE;

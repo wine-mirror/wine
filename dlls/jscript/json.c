@@ -26,12 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
-static const WCHAR nullW[] = {'n','u','l','l',0};
-static const WCHAR trueW[] = {'t','r','u','e',0};
-static const WCHAR falseW[] = {'f','a','l','s','e',0};
-
-static const WCHAR toJSONW[] = {'t','o','J','S','O','N',0};
-
 typedef struct {
     const WCHAR *ptr;
     const WCHAR *end;
@@ -107,19 +101,19 @@ static HRESULT parse_json_value(json_parse_ctx_t *ctx, jsval_t *r)
 
     /* JSONNullLiteral */
     case 'n':
-        if(!is_keyword(ctx, nullW))
+        if(!is_keyword(ctx, L"null"))
             break;
         *r = jsval_null();
         return S_OK;
 
     /* JSONBooleanLiteral */
     case 't':
-        if(!is_keyword(ctx, trueW))
+        if(!is_keyword(ctx, L"true"))
             break;
         *r = jsval_bool(TRUE);
         return S_OK;
     case 'f':
-        if(!is_keyword(ctx, falseW))
+        if(!is_keyword(ctx, L"false"))
             break;
         *r = jsval_bool(FALSE);
         return S_OK;
@@ -476,9 +470,8 @@ static HRESULT json_quote(stringify_ctx_t *ctx, const WCHAR *ptr, size_t len)
             break;
         default:
             if(*ptr < ' ') {
-                static const WCHAR formatW[] = {'\\','u','%','0','4','x',0};
                 WCHAR buf[7];
-                swprintf(buf, ARRAY_SIZE(buf), formatW, *ptr);
+                swprintf(buf, ARRAY_SIZE(buf), L"\\u%04x", *ptr);
                 if(!append_string(ctx, buf))
                     return E_OUTOFMEMORY;
             }else {
@@ -538,10 +531,10 @@ static HRESULT stringify_array(stringify_ctx_t *ctx, jsdisp_t *obj)
             hres = stringify(ctx, val);
             if(FAILED(hres))
                 return hres;
-            if(hres == S_FALSE && !append_string(ctx, nullW))
+            if(hres == S_FALSE && !append_string(ctx, L"null"))
                 return E_OUTOFMEMORY;
         }else if(hres == DISP_E_UNKNOWNNAME) {
-            if(!append_string(ctx, nullW))
+            if(!append_string(ctx, L"null"))
                 return E_OUTOFMEMORY;
         }else {
             return hres;
@@ -668,7 +661,7 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsval_t val)
         if(!obj)
             return S_FALSE;
 
-        hres = jsdisp_get_id(obj, toJSONW, 0, &id);
+        hres = jsdisp_get_id(obj, L"toJSON", 0, &id);
         jsdisp_release(obj);
         if(hres == S_OK)
             FIXME("Use toJSON.\n");
@@ -682,11 +675,11 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsval_t val)
 
     switch(jsval_type(value)) {
     case JSV_NULL:
-        if(!append_string(ctx, nullW))
+        if(!append_string(ctx, L"null"))
             hres = E_OUTOFMEMORY;
         break;
     case JSV_BOOL:
-        if(!append_string(ctx, get_bool(value) ? trueW : falseW))
+        if(!append_string(ctx, get_bool(value) ? L"true" : L"false"))
             hres = E_OUTOFMEMORY;
         break;
     case JSV_STRING: {
@@ -714,7 +707,7 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsval_t val)
             hres = ptr && !append_string_len(ctx, ptr, jsstr_length(str)) ? E_OUTOFMEMORY : S_OK;
             jsstr_release(str);
         }else {
-            if(!append_string(ctx, nullW))
+            if(!append_string(ctx, L"null"))
                 hres = E_OUTOFMEMORY;
         }
         break;

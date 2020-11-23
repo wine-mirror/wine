@@ -27,14 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
-static const WCHAR booleanW[] = {'b','o','o','l','e','a','n',0};
-static const WCHAR functionW[] = {'f','u','n','c','t','i','o','n',0};
-static const WCHAR numberW[] = {'n','u','m','b','e','r',0};
-static const WCHAR objectW[] = {'o','b','j','e','c','t',0};
-static const WCHAR stringW[] = {'s','t','r','i','n','g',0};
-static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
-static const WCHAR unknownW[] = {'u','n','k','n','o','w','n',0};
-
 struct _except_frame_t {
     unsigned stack_top;
     scope_chain_t *scope;
@@ -632,7 +624,6 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
             if(scope->frame) {
                 function_code_t *func = scope->frame->function;
                 local_ref_t *ref = lookup_local(func, identifier);
-                static const WCHAR argumentsW[] = {'a','r','g','u','m','e','n','t','s',0};
 
                 if(ref) {
                     ret->type = EXPRVAL_STACK_REF;
@@ -641,7 +632,7 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
                     return S_OK;
                 }
 
-                if(!wcscmp(identifier, argumentsW)) {
+                if(!wcscmp(identifier, L"arguments")) {
                     hres = detach_variable_object(ctx, scope->frame, FALSE);
                     if(FAILED(hres))
                         return hres;
@@ -1631,8 +1622,6 @@ static HRESULT interp_instanceof(script_ctx_t *ctx)
     BOOL ret = FALSE;
     HRESULT hres;
 
-    static const WCHAR prototypeW[] = {'p','r','o','t','o','t', 'y', 'p','e',0};
-
     v = stack_pop(ctx);
     if(!is_object_instance(v) || !get_object(v)) {
         jsval_release(v);
@@ -1647,7 +1636,7 @@ static HRESULT interp_instanceof(script_ctx_t *ctx)
     }
 
     if(is_class(obj, JSCLASS_FUNCTION)) {
-        hres = jsdisp_propget_name(obj, prototypeW, &prot);
+        hres = jsdisp_propget_name(obj, L"prototype", &prot);
     }else {
         hres = JS_E_FUNCTION_EXPECTED;
     }
@@ -1945,30 +1934,30 @@ static HRESULT typeof_string(jsval_t v, const WCHAR **ret)
 {
     switch(jsval_type(v)) {
     case JSV_UNDEFINED:
-        *ret = undefinedW;
+        *ret = L"undefined";
         break;
     case JSV_NULL:
-        *ret = objectW;
+        *ret = L"object";
         break;
     case JSV_OBJECT: {
         jsdisp_t *dispex;
 
         if(get_object(v) && (dispex = iface_to_jsdisp(get_object(v)))) {
-            *ret = is_class(dispex, JSCLASS_FUNCTION) ? functionW : objectW;
+            *ret = is_class(dispex, JSCLASS_FUNCTION) ? L"function" : L"object";
             jsdisp_release(dispex);
         }else {
-            *ret = objectW;
+            *ret = L"object";
         }
         break;
     }
     case JSV_STRING:
-        *ret = stringW;
+        *ret = L"string";
         break;
     case JSV_NUMBER:
-        *ret = numberW;
+        *ret = L"number";
         break;
     case JSV_BOOL:
-        *ret = booleanW;
+        *ret = L"boolean";
         break;
     case JSV_VARIANT:
         FIXME("unhandled variant %s\n", debugstr_variant(get_variant(v)));
@@ -1994,7 +1983,7 @@ static HRESULT interp_typeofid(script_ctx_t *ctx)
     hres = exprval_propget(ctx, &ref, &v);
     exprval_release(&ref);
     if(FAILED(hres))
-        return stack_push_string(ctx, unknownW);
+        return stack_push_string(ctx, L"unknown");
 
     hres = typeof_string(v, &ret);
     jsval_release(v);
@@ -2756,13 +2745,11 @@ static HRESULT unwind_exception(script_ctx_t *ctx, HRESULT exception_hres)
         jsdisp_t *error_obj;
         jsval_t msg;
 
-        static const WCHAR messageW[] = {'m','e','s','s','a','g','e',0};
-
         WARN("Exception %08x %s", exception_hres, debugstr_jsval(ei->valid_value ? ei->value : jsval_undefined()));
         if(ei->valid_value && jsval_type(ei->value) == JSV_OBJECT) {
             error_obj = to_jsdisp(get_object(ei->value));
             if(error_obj) {
-                hres = jsdisp_propget_name(error_obj, messageW, &msg);
+                hres = jsdisp_propget_name(error_obj, L"message", &msg);
                 if(SUCCEEDED(hres)) {
                     WARN(" (message %s)", debugstr_jsval(msg));
                     jsval_release(msg);

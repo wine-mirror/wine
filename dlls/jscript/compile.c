@@ -719,15 +719,13 @@ static HRESULT compile_delete_expression(compiler_ctx_t *ctx, unary_expression_t
     case EXPR_IDENT:
         return push_instr_bstr(ctx, OP_delete_ident, ((identifier_expression_t*)expr->expression)->identifier);
     default: {
-        static const WCHAR fixmeW[] = {'F','I','X','M','E',0};
-
         WARN("invalid delete, unimplemented exception message\n");
 
         hres = compile_expression(ctx, expr->expression, TRUE);
         if(FAILED(hres))
             return hres;
 
-        return push_instr_uint_str(ctx, OP_throw_type, JS_E_INVALID_DELETE, fixmeW);
+        return push_instr_uint_str(ctx, OP_throw_type, JS_E_INVALID_DELETE, L"FIXME");
     }
     }
 

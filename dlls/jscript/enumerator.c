@@ -328,15 +328,13 @@ HRESULT create_enumerator_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, 
 {
     EnumeratorInstance *enumerator;
     HRESULT hres;
-    static const WCHAR EnumeratorW[] = {'E','n','u','m','e','r','a','t','o','r',0};
 
     hres = alloc_enumerator(ctx, object_prototype, &enumerator);
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_constructor(ctx, EnumeratorConstr_value,
-                                     EnumeratorW, &EnumeratorConstr_info,
-                                     PROPF_CONSTR|7, &enumerator->dispex, ret);
+    hres = create_builtin_constructor(ctx, EnumeratorConstr_value, L"Enumerator",
+            &EnumeratorConstr_info, PROPF_CONSTR|7, &enumerator->dispex, ret);
     jsdisp_release(&enumerator->dispex);
 
     return hres;

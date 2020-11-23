@@ -57,9 +57,6 @@ static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 {
     BoolInstance *bool;
 
-    static const WCHAR trueW[] = {'t','r','u','e',0};
-    static const WCHAR falseW[] = {'f','a','l','s','e',0};
-
     TRACE("\n");
 
     if(!(bool = bool_this(jsthis)))
@@ -68,7 +65,7 @@ static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     if(r) {
         jsstr_t *val;
 
-        val = jsstr_alloc(bool->val ? trueW : falseW);
+        val = jsstr_alloc(bool->val ? L"true" : L"false");
         if(!val)
             return E_OUTOFMEMORY;
 
@@ -197,13 +194,11 @@ HRESULT create_bool_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp
     BoolInstance *bool;
     HRESULT hres;
 
-    static const WCHAR BooleanW[] = {'B','o','o','l','e','a','n',0};
-
     hres = alloc_bool(ctx, object_prototype, &bool);
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_constructor(ctx, BoolConstr_value, BooleanW, NULL,
+    hres = create_builtin_constructor(ctx, BoolConstr_value, L"Boolean", NULL,
             PROPF_CONSTR|1, &bool->dispex, ret);
 
     jsdisp_release(&bool->dispex);

@@ -190,13 +190,11 @@ HRESULT create_activex_constr(script_ctx_t *ctx, jsdisp_t **ret)
     jsdisp_t *prototype;
     HRESULT hres;
 
-    static const WCHAR ActiveXObjectW[] = {'A','c','t','i','v','e','X','O','b','j','e','c','t',0};
-
     hres = create_object(ctx, NULL, &prototype);
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_function(ctx, ActiveXObject_value, ActiveXObjectW, NULL,
+    hres = create_builtin_function(ctx, ActiveXObject_value, L"ActiveXObject", NULL,
             PROPF_CONSTR|1, prototype, ret);
 
     jsdisp_release(prototype);

@@ -352,11 +352,6 @@ static HRESULT create_match_array(script_ctx_t *ctx, jsstr_t *input_str,
     DWORD i;
     HRESULT hres = S_OK;
 
-    static const WCHAR indexW[] = {'i','n','d','e','x',0};
-    static const WCHAR inputW[] = {'i','n','p','u','t',0};
-    static const WCHAR lastIndexW[] = {'l','a','s','t','I','n','d','e','x',0};
-    static const WCHAR zeroW[] = {'0',0};
-
     input = jsstr_flatten(input_str);
     if(!input)
         return E_OUTOFMEMORY;
@@ -382,15 +377,15 @@ static HRESULT create_match_array(script_ctx_t *ctx, jsstr_t *input_str,
     }
 
     while(SUCCEEDED(hres)) {
-        hres = jsdisp_propput_name(array, indexW, jsval_number(result->cp-input-result->match_len));
+        hres = jsdisp_propput_name(array, L"index", jsval_number(result->cp-input-result->match_len));
         if(FAILED(hres))
             break;
 
-        hres = jsdisp_propput_name(array, lastIndexW, jsval_number(result->cp-input));
+        hres = jsdisp_propput_name(array, L"lastIndex", jsval_number(result->cp-input));
         if(FAILED(hres))
             break;
 
-        hres = jsdisp_propput_name(array, inputW, jsval_string(jsstr_addref(input_str)));
+        hres = jsdisp_propput_name(array, L"input", jsval_string(jsstr_addref(input_str)));
         if(FAILED(hres))
             break;
 
@@ -399,7 +394,7 @@ static HRESULT create_match_array(script_ctx_t *ctx, jsstr_t *input_str,
             hres = E_OUTOFMEMORY;
             break;
         }
-        hres = jsdisp_propput_name(array, zeroW, jsval_string(str));
+        hres = jsdisp_propput_name(array, L"0", jsval_string(str));
         jsstr_release(str);
         break;
     }
@@ -698,10 +693,6 @@ HRESULT create_regexp_var(script_ctx_t *ctx, jsval_t src_arg, jsval_t *flags_arg
 
 HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, jsstr_t *jsstr, jsval_t *r)
 {
-    static const WCHAR indexW[] = {'i','n','d','e','x',0};
-    static const WCHAR inputW[] = {'i','n','p','u','t',0};
-    static const WCHAR lastIndexW[] = {'l','a','s','t','I','n','d','e','x',0};
-
     RegExpInstance *regexp = regexp_from_jsdisp(re);
     match_result_t *match_result;
     unsigned match_cnt, i;
@@ -778,16 +769,16 @@ HRESULT regexp_string_match(script_ctx_t *ctx, jsdisp_t *re, jsstr_t *jsstr, jsv
     }
 
     while(SUCCEEDED(hres)) {
-        hres = jsdisp_propput_name(array, indexW, jsval_number(match_result[match_cnt-1].index));
+        hres = jsdisp_propput_name(array, L"index", jsval_number(match_result[match_cnt-1].index));
         if(FAILED(hres))
             break;
 
-        hres = jsdisp_propput_name(array, lastIndexW,
+        hres = jsdisp_propput_name(array, L"lastIndex",
                 jsval_number(match_result[match_cnt-1].index + match_result[match_cnt-1].length));
         if(FAILED(hres))
             break;
 
-        hres = jsdisp_propput_name(array, inputW, jsval_string(jsstr));
+        hres = jsdisp_propput_name(array, L"input", jsval_string(jsstr));
         break;
     }
 
@@ -973,13 +964,11 @@ HRESULT create_regexp_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdi
     RegExpInstance *regexp;
     HRESULT hres;
 
-    static const WCHAR RegExpW[] = {'R','e','g','E','x','p',0};
-
     hres = alloc_regexp(ctx, object_prototype, &regexp);
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_constructor(ctx, RegExpConstr_value, RegExpW, &RegExpConstr_info,
+    hres = create_builtin_constructor(ctx, RegExpConstr_value, L"RegExp", &RegExpConstr_info,
             PROPF_CONSTR|2, &regexp->dispex, ret);
 
     jsdisp_release(&regexp->dispex);

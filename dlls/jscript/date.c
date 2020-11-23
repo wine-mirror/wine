@@ -431,18 +431,6 @@ static SYSTEMTIME create_systemtime(DOUBLE time)
 
 static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, jsval_t *r)
 {
-    static const WCHAR formatW[] = { '%','s',' ','%','s',' ','%','d',' ',
-        '%','0','2','d',':','%','0','2','d',':','%','0','2','d',' ',
-        'U','T','C','%','c','%','0','2','d','%','0','2','d',' ','%','d','%','s',0 };
-    static const WCHAR formatUTCW[] = { '%','s',' ','%','s',' ','%','d',' ',
-        '%','0','2','d',':','%','0','2','d',':','%','0','2','d',' ',
-        'U','T','C',' ','%','d','%','s',0 };
-    static const WCHAR formatNoOffsetW[] = { '%','s',' ','%','s',' ',
-        '%','d',' ','%','0','2','d',':','%','0','2','d',':',
-        '%','0','2','d',' ','%','d','%','s',0 };
-    static const WCHAR ADW[] = { 0 };
-    static const WCHAR BCW[] = { ' ','B','.','C','.',0 };
-
     static const DWORD week_ids[] = { LOCALE_SABBREVDAYNAME7, LOCALE_SABBREVDAYNAME1,
         LOCALE_SABBREVDAYNAME2, LOCALE_SABBREVDAYNAME3, LOCALE_SABBREVDAYNAME4,
         LOCALE_SABBREVDAYNAME5, LOCALE_SABBREVDAYNAME6 };
@@ -490,18 +478,18 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
         }
 
         if(!show_offset)
-            swprintf(buf, ARRAY_SIZE(buf), formatNoOffsetW, week, month, day,
+            swprintf(buf, ARRAY_SIZE(buf), L"%s %s %d %02d:%02d:%02d %d%s", week, month, day,
                     (int)hour_from_time(time), (int)min_from_time(time),
-                    (int)sec_from_time(time), year, formatAD?ADW:BCW);
+                    (int)sec_from_time(time), year, formatAD?L"":L" B.C.");
         else if(offset)
-            swprintf(buf, ARRAY_SIZE(buf), formatW, week, month, day,
+            swprintf(buf, ARRAY_SIZE(buf), L"%s %s %d %02d:%02d:%02d UTC%c%02d%02d %d%s", week, month, day,
                     (int)hour_from_time(time), (int)min_from_time(time),
                     (int)sec_from_time(time), sign, offset/60, offset%60,
-                    year, formatAD?ADW:BCW);
+                    year, formatAD?L"":L" B.C.");
         else
-            swprintf(buf, ARRAY_SIZE(buf), formatUTCW, week, month, day,
+            swprintf(buf, ARRAY_SIZE(buf), L"%s %s %d %02d:%02d:%02d UTC %d%s", week, month, day,
                     (int)hour_from_time(time), (int)min_from_time(time),
-                    (int)sec_from_time(time), year, formatAD?ADW:BCW);
+                    (int)sec_from_time(time), year, formatAD?L"":L" B.C.");
 
         date_jsstr = jsstr_alloc(buf);
         if(!date_jsstr)
@@ -588,11 +576,6 @@ static HRESULT Date_toISOString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     WCHAR buf[64], *p = buf;
     double year;
 
-    static const WCHAR short_year_formatW[] = {'%','0','4','d',0};
-    static const WCHAR long_year_formatW[] = {'%','0','6','d',0};
-    static const WCHAR formatW[] = {'-','%','0','2','d','-','%','0','2','d',
-        'T','%','0','2','d',':','%','0','2','d',':','%','0','2','d','.','%','0','3','d','Z',0};
-
     TRACE("\n");
 
     if(!(date = date_this(jsthis)))
@@ -606,15 +589,15 @@ static HRESULT Date_toISOString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 
     if(year < 0) {
         *p++ = '-';
-        p += swprintf(p, ARRAY_SIZE(buf) - 1, long_year_formatW, -(int)year);
+        p += swprintf(p, ARRAY_SIZE(buf) - 1, L"%06d", -(int)year);
     }else if(year > 9999) {
         *p++ = '+';
-        p += swprintf(p, ARRAY_SIZE(buf) - 1, long_year_formatW, (int)year);
+        p += swprintf(p, ARRAY_SIZE(buf) - 1, L"%06d", (int)year);
     }else {
-        p += swprintf(p, ARRAY_SIZE(buf), short_year_formatW, (int)year);
+        p += swprintf(p, ARRAY_SIZE(buf), L"%04d", (int)year);
     }
 
-    swprintf(p, ARRAY_SIZE(buf) - (p - buf), formatW,
+    swprintf(p, ARRAY_SIZE(buf) - (p - buf), L"-%02d-%02dT%02d:%02d:%02d.%03dZ",
              (int)month_from_time(date->time) + 1, (int)date_from_time(date->time),
              (int)hour_from_time(date->time), (int)min_from_time(date->time),
              (int)sec_from_time(date->time), (int)ms_from_time(date->time));
@@ -645,11 +628,6 @@ static HRESULT Date_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsi
 
 static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
 {
-    static const WCHAR formatADW[] = { '%','s',',',' ','%','d',' ','%','s',' ','%','d',' ',
-        '%','0','2','d',':','%','0','2','d',':','%','0','2','d',' ','U','T','C',0 };
-    static const WCHAR formatBCW[] = { '%','s',',',' ','%','d',' ','%','s',' ','%','d',' ','B','.','C','.',' ',
-        '%','0','2','d',':','%','0','2','d',':','%','0','2','d',' ','U','T','C',0 };
-
     static const DWORD week_ids[] = { LOCALE_SABBREVDAYNAME7, LOCALE_SABBREVDAYNAME1,
         LOCALE_SABBREVDAYNAME2, LOCALE_SABBREVDAYNAME3, LOCALE_SABBREVDAYNAME4,
         LOCALE_SABBREVDAYNAME5, LOCALE_SABBREVDAYNAME6 };
@@ -694,8 +672,9 @@ static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis, jsva
 
         day = date_from_time(date->time);
 
-        swprintf(buf, ARRAY_SIZE(buf), formatAD ? formatADW : formatBCW, week, day, month, year,
-                (int)hour_from_time(date->time), (int)min_from_time(date->time),
+        swprintf(buf, ARRAY_SIZE(buf),
+                formatAD ? L"%s, %d %s %d %02d:%02d:%02d UTC" : L"%s, %d %s %d B.C. %02d:%02d:%02d UTC",
+                week, day, month, year, (int)hour_from_time(date->time), (int)min_from_time(date->time),
                 (int)sec_from_time(date->time));
 
         date_str = jsstr_alloc(buf);
@@ -725,9 +704,6 @@ static HRESULT Date_toGMTString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
 /* ECMA-262 3rd Edition    15.9.5.3 */
 static HRESULT dateobj_to_date_string(DateInstance *date, jsval_t *r)
 {
-    static const WCHAR formatADW[] = { '%','s',' ','%','s',' ','%','d',' ','%','d',0 };
-    static const WCHAR formatBCW[] = { '%','s',' ','%','s',' ','%','d',' ','%','d',' ','B','.','C','.',0 };
-
     static const DWORD week_ids[] = { LOCALE_SABBREVDAYNAME7, LOCALE_SABBREVDAYNAME1,
         LOCALE_SABBREVDAYNAME2, LOCALE_SABBREVDAYNAME3, LOCALE_SABBREVDAYNAME4,
         LOCALE_SABBREVDAYNAME5, LOCALE_SABBREVDAYNAME6 };
@@ -771,7 +747,8 @@ static HRESULT dateobj_to_date_string(DateInstance *date, jsval_t *r)
 
         day = date_from_time(time);
 
-        swprintf(buf, ARRAY_SIZE(buf), formatAD ? formatADW : formatBCW, week, month, day, year);
+        swprintf(buf, ARRAY_SIZE(buf), formatAD ? L"%s %s %d %d" : L"%s %s %d %d B.C.", week, month,
+                day, year);
 
         date_str = jsstr_alloc(buf);
         if(!date_str)
@@ -797,10 +774,6 @@ static HRESULT Date_toDateString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 static HRESULT Date_toTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    static const WCHAR formatW[] = { '%','0','2','d',':','%','0','2','d',':','%','0','2','d',
-        ' ','U','T','C','%','c','%','0','2','d','%','0','2','d',0 };
-    static const WCHAR formatUTCW[] = { '%','0','2','d',':','%','0','2','d',
-        ':','%','0','2','d',' ','U','T','C',0 };
     DateInstance *date;
     jsstr_t *date_str;
     WCHAR buf[32];
@@ -832,11 +805,11 @@ static HRESULT Date_toTimeString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         else sign = '-';
 
         if(offset)
-            swprintf(buf, ARRAY_SIZE(buf), formatW, (int)hour_from_time(time),
+            swprintf(buf, ARRAY_SIZE(buf), L"%02d:%02d:%02d UTC%c%02d%02d", (int)hour_from_time(time),
                     (int)min_from_time(time), (int)sec_from_time(time),
                     sign, offset/60, offset%60);
         else
-            swprintf(buf, ARRAY_SIZE(buf), formatUTCW, (int)hour_from_time(time),
+            swprintf(buf, ARRAY_SIZE(buf), L"%02d:%02d:%02d UTC", (int)hour_from_time(time),
                     (int)min_from_time(time), (int)sec_from_time(time));
 
         date_str = jsstr_alloc(buf);
@@ -2482,13 +2455,11 @@ HRESULT create_date_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp
     jsdisp_t *date;
     HRESULT hres;
 
-    static const WCHAR DateW[] = {'D','a','t','e',0};
-
     hres = create_date(ctx, object_prototype, 0.0, &date);
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_constructor(ctx, DateConstr_value, DateW, &DateConstr_info,
+    hres = create_builtin_constructor(ctx, DateConstr_value, L"Date", &DateConstr_info,
             PROPF_CONSTR|7, date, ret);
 
     jsdisp_release(date);

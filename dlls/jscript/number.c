@@ -317,7 +317,6 @@ static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
             if(log_radix==0)
                 buf[idx] = 0;
             else {
-                static const WCHAR formatW[] = {'(','e','%','c','%','d',')',0};
                 WCHAR ch;
 
                 if(log_radix<0) {
@@ -325,7 +324,7 @@ static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
                     ch = '-';
                 }
                 else ch = '+';
-                swprintf(&buf[idx], ARRAY_SIZE(buf) - idx, formatW, ch, (int)log_radix);
+                swprintf(&buf[idx], ARRAY_SIZE(buf) - idx, L"(e%c%d)", ch, (int)log_radix);
             }
         }
         else buf[idx] = '\0';
@@ -608,14 +607,12 @@ HRESULT create_number_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdi
     NumberInstance *number;
     HRESULT hres;
 
-    static const WCHAR NumberW[] = {'N','u','m','b','e','r',0};
-
     hres = alloc_number(ctx, object_prototype, &number);
     if(FAILED(hres))
         return hres;
 
     number->value = 0;
-    hres = create_builtin_constructor(ctx, NumberConstr_value, NumberW, NULL,
+    hres = create_builtin_constructor(ctx, NumberConstr_value, L"Number", NULL,
             PROPF_CONSTR|1, &number->dispex, ret);
 
     jsdisp_release(&number->dispex);

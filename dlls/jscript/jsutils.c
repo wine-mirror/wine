@@ -388,9 +388,6 @@ HRESULT to_primitive(script_ctx_t *ctx, jsval_t val, jsval_t *ret, hint_t hint)
         DISPID id;
         HRESULT hres;
 
-        static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
-        static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
-
         if(!get_object(val)) {
             *ret = jsval_null();
             return S_OK;
@@ -405,7 +402,7 @@ HRESULT to_primitive(script_ctx_t *ctx, jsval_t val, jsval_t *ret, hint_t hint)
 
         /* Native implementation doesn't throw TypeErrors, returns strange values */
 
-        hres = jsdisp_get_id(jsdisp, hint == HINT_STRING ? toStringW : valueOfW, 0, &id);
+        hres = jsdisp_get_id(jsdisp, hint == HINT_STRING ? L"toString" : L"valueOf", 0, &id);
         if(SUCCEEDED(hres)) {
             hres = jsdisp_call(jsdisp, id, DISPATCH_METHOD, 0, NULL, &prim);
             if(FAILED(hres)) {
@@ -421,7 +418,7 @@ HRESULT to_primitive(script_ctx_t *ctx, jsval_t val, jsval_t *ret, hint_t hint)
             }
         }
 
-        hres = jsdisp_get_id(jsdisp, hint == HINT_STRING ? valueOfW : toStringW, 0, &id);
+        hres = jsdisp_get_id(jsdisp, hint == HINT_STRING ? L"valueOf" : L"toString", 0, &id);
         if(SUCCEEDED(hres)) {
             hres = jsdisp_call(jsdisp, id, DISPATCH_METHOD, 0, NULL, &prim);
             if(FAILED(hres)) {
@@ -712,12 +709,10 @@ HRESULT to_uint32(script_ctx_t *ctx, jsval_t val, UINT32 *ret)
 
 HRESULT double_to_string(double n, jsstr_t **str)
 {
-    static const WCHAR InfinityW[] = {'-','I','n','f','i','n','i','t','y',0};
-
     if(isnan(n)) {
         *str = jsstr_nan();
     }else if(isinf(n)) {
-        *str = jsstr_alloc(n<0 ? InfinityW : InfinityW+1);
+        *str = jsstr_alloc(n<0 ? L"-Infinity" : L"Infinity");
     }else if(is_int32(n)) {
         WCHAR buf[12];
         _ltow_s(n, buf, ARRAY_SIZE(buf), 10);
@@ -744,16 +739,12 @@ HRESULT double_to_string(double n, jsstr_t **str)
 /* ECMA-262 3rd Edition    9.8 */
 HRESULT to_string(script_ctx_t *ctx, jsval_t val, jsstr_t **str)
 {
-    static const WCHAR nullW[] = {'n','u','l','l',0};
-    static const WCHAR trueW[] = {'t','r','u','e',0};
-    static const WCHAR falseW[] = {'f','a','l','s','e',0};
-
     switch(jsval_type(val)) {
     case JSV_UNDEFINED:
         *str = jsstr_undefined();
         return S_OK;
     case JSV_NULL:
-        *str = jsstr_alloc(nullW);
+        *str = jsstr_alloc(L"null");
         break;
     case JSV_NUMBER:
         return double_to_string(get_number(val), str);
@@ -773,7 +764,7 @@ HRESULT to_string(script_ctx_t *ctx, jsval_t val, jsstr_t **str)
         return hres;
     }
     case JSV_BOOL:
-        *str = jsstr_alloc(get_bool(val) ? trueW : falseW);
+        *str = jsstr_alloc(get_bool(val) ? L"true" : L"false");
         break;
     default:
         FIXME("unsupported %s\n", debugstr_jsval(val));

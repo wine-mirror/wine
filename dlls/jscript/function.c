@@ -92,11 +92,6 @@ static inline ArgumentsInstance *arguments_from_jsdisp(jsdisp_t *jsdisp)
     return CONTAINING_RECORD(jsdisp, ArgumentsInstance, jsdisp);
 }
 
-static const WCHAR prototypeW[] = {'p','r','o','t','o','t', 'y', 'p','e',0};
-
-static const WCHAR lengthW[] = {'l','e','n','g','t','h',0};
-static const WCHAR argumentsW[] = {'a','r','g','u','m','e','n','t','s',0};
-
 static HRESULT Arguments_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -191,8 +186,6 @@ HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame)
     ArgumentsInstance *args;
     HRESULT hres;
 
-    static const WCHAR caleeW[] = {'c','a','l','l','e','e',0};
-
     args = heap_alloc_zero(sizeof(*args));
     if(!args)
         return E_OUTOFMEMORY;
@@ -207,13 +200,13 @@ HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame)
     args->argc = frame->argc;
     args->frame = frame;
 
-    hres = jsdisp_define_data_property(&args->jsdisp, lengthW, PROPF_WRITABLE | PROPF_CONFIGURABLE,
+    hres = jsdisp_define_data_property(&args->jsdisp, L"length", PROPF_WRITABLE | PROPF_CONFIGURABLE,
                                        jsval_number(args->argc));
     if(SUCCEEDED(hres))
-        hres = jsdisp_define_data_property(&args->jsdisp, caleeW, PROPF_WRITABLE | PROPF_CONFIGURABLE,
+        hres = jsdisp_define_data_property(&args->jsdisp, L"callee", PROPF_WRITABLE | PROPF_CONFIGURABLE,
                                            jsval_obj(&args->function->function.dispex));
     if(SUCCEEDED(hres))
-        hres = jsdisp_propput(frame->base_scope->jsobj, argumentsW, PROPF_WRITABLE, jsval_obj(&args->jsdisp));
+        hres = jsdisp_propput(frame->base_scope->jsobj, L"arguments", PROPF_WRITABLE, jsval_obj(&args->jsdisp));
     if(FAILED(hres)) {
         jsdisp_release(&args->jsdisp);
         return hres;
@@ -232,7 +225,7 @@ void detach_arguments_object(jsdisp_t *args_disp)
 
     /* Reset arguments value to cut the reference cycle. Note that since all activation contexts have
      * their own arguments property, it's impossible to use prototype's one during name lookup */
-    jsdisp_propput_name(frame->base_scope->jsobj, argumentsW, jsval_undefined());
+    jsdisp_propput_name(frame->base_scope->jsobj, L"arguments", jsval_undefined());
     arguments->frame = NULL;
 
     /* Don't bother coppying arguments if call frame holds the last reference. */
@@ -307,7 +300,7 @@ static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, unsigned *a
     DWORD length, i;
     HRESULT hres;
 
-    hres = jsdisp_propget_name(arg_array, lengthW, &val);
+    hres = jsdisp_propget_name(arg_array, L"length", &val);
     if(FAILED(hres))
         return hres;
 
@@ -673,10 +666,10 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
         return hres;
 
     if(builtin_info)
-        hres = jsdisp_define_data_property(&function->function.dispex, lengthW, 0,
+        hres = jsdisp_define_data_property(&function->function.dispex, L"length", 0,
                                            jsval_number(function->function.length));
     if(SUCCEEDED(hres))
-        hres = jsdisp_define_data_property(&function->function.dispex, prototypeW, 0, jsval_obj(prototype));
+        hres = jsdisp_define_data_property(&function->function.dispex, L"prototype", 0, jsval_obj(prototype));
     if(FAILED(hres)) {
         jsdisp_release(&function->function.dispex);
         return hres;
@@ -691,9 +684,7 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
 
 static HRESULT set_constructor_prop(script_ctx_t *ctx, jsdisp_t *constr, jsdisp_t *prot)
 {
-    static const WCHAR constructorW[] = {'c','o','n','s','t','r','u','c','t','o','r',0};
-
-    return jsdisp_define_data_property(prot, constructorW, PROPF_WRITABLE | PROPF_CONFIGURABLE,
+    return jsdisp_define_data_property(prot, L"constructor", PROPF_WRITABLE | PROPF_CONFIGURABLE,
                                        jsval_obj(constr));
 }
 
@@ -795,7 +786,7 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_cod
     hres = create_function(ctx, NULL, &InterpretedFunctionVtbl, sizeof(InterpretedFunction), PROPF_CONSTR,
                            FALSE, NULL, (void**)&function);
     if(SUCCEEDED(hres)) {
-        hres = jsdisp_define_data_property(&function->function.dispex, prototypeW, PROPF_WRITABLE,
+        hres = jsdisp_define_data_property(&function->function.dispex, L"prototype", PROPF_WRITABLE,
                                            jsval_obj(prototype));
         if(SUCCEEDED(hres))
             hres = set_constructor_prop(ctx, &function->function.dispex, prototype);
@@ -850,12 +841,7 @@ static HRESULT BindFunction_call(script_ctx_t *ctx, FunctionInstance *func, IDis
 
 static HRESULT BindFunction_toString(FunctionInstance *function, jsstr_t **ret)
 {
-    static const WCHAR native_functionW[] =
-        {'\n','f','u','n','c','t','i','o','n','(',')',' ','{','\n',
-         ' ',' ',' ',' ','[','n','a','t','i','v','e',' ','c','o','d','e',']','\n',
-         '}','\n',0};
-
-    *ret = jsstr_alloc(native_functionW);
+    *ret = jsstr_alloc(L"\nfunction() {\n    [native code]\n}\n");
     return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
@@ -928,7 +914,7 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
 
     static const WCHAR function_anonymousW[] = {'f','u','n','c','t','i','o','n',' ','a','n','o','n','y','m','o','u','s','('};
     static const WCHAR function_beginW[] = {')',' ','{','\n'};
-    static const WCHAR function_endW[] = {'\n','}',0};
+    static const WCHAR function_endW[] = L"\n}";
 
     if(argc) {
         params = heap_alloc(argc*sizeof(*params));
@@ -1038,22 +1024,20 @@ HRESULT init_function_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
     NativeFunction *prot, *constr;
     HRESULT hres;
 
-    static const WCHAR FunctionW[] = {'F','u','n','c','t','i','o','n',0};
-
     hres = create_function(ctx, &Function_info, &NativeFunctionVtbl, sizeof(NativeFunction), PROPF_CONSTR,
                            TRUE, object_prototype, (void**)&prot);
     if(FAILED(hres))
         return hres;
 
     prot->proc = FunctionProt_value;
-    prot->name = prototypeW;
+    prot->name = L"prototype";
 
     hres = create_function(ctx, &FunctionInst_info, &NativeFunctionVtbl, sizeof(NativeFunction), PROPF_CONSTR|1,
                            TRUE, &prot->function.dispex, (void**)&constr);
     if(SUCCEEDED(hres)) {
         constr->proc = FunctionConstr_value;
-        constr->name = FunctionW;
-        hres = jsdisp_define_data_property(&constr->function.dispex, prototypeW, 0, jsval_obj(&prot->function.dispex));
+        constr->name = L"Function";
+        hres = jsdisp_define_data_property(&constr->function.dispex, L"prototype", 0, jsval_obj(&prot->function.dispex));
         if(SUCCEEDED(hres))
             hres = set_constructor_prop(ctx, &constr->function.dispex, &prot->function.dispex);
         if(FAILED(hres))

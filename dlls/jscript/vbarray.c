@@ -326,13 +326,11 @@ HRESULT create_vbarray_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsd
     VBArrayInstance *vbarray;
     HRESULT hres;
 
-    static const WCHAR VBArrayW[] = {'V','B','A','r','r','a','y',0};
-
     hres = alloc_vbarray(ctx, object_prototype, &vbarray);
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_constructor(ctx, VBArrayConstr_value, VBArrayW, NULL, PROPF_CONSTR|1, &vbarray->dispex, ret);
+    hres = create_builtin_constructor(ctx, VBArrayConstr_value, L"VBArray", NULL, PROPF_CONSTR|1, &vbarray->dispex, ret);
 
     jsdisp_release(&vbarray->dispex);
     return hres;
