@@ -1387,7 +1387,7 @@ class VkParam(object):
                 self.format_conv = "wine_dbgstr_longlong({0})"
             elif self.type in ["uint16_t", "uint32_t", "VkBool32"]:
                 self.format_str = "%u"
-            elif self.type in ["uint64_t", "VkDeviceSize"]:
+            elif self.type in ["uint64_t", "VkDeviceAddress", "VkDeviceSize"]:
                 self.format_str = "0x%s"
                 self.format_conv = "wine_dbgstr_longlong({0})"
             elif self.type == "HANDLE":
