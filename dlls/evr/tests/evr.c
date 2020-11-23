@@ -1165,6 +1165,7 @@ static void test_default_presenter(void)
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFGetService, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDeviceID, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFQualityAdvise, TRUE);
+    todo_wine check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFQualityAdviseLimits, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFTransform, FALSE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IDirect3DDeviceManager9, TRUE);
     check_service_interface(presenter, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, TRUE);
@@ -2010,6 +2011,67 @@ static void test_presenter_video_window(void)
     DestroyWindow(window);
 }
 
+static void test_presenter_quality_control(void)
+{
+    IMFQualityAdviseLimits *qa_limits;
+    IMFVideoPresenter *presenter;
+    MF_QUALITY_DROP_MODE mode;
+    IMFQualityAdvise *advise;
+    MF_QUALITY_LEVEL level;
+    HRESULT hr;
+
+    hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter);
+    ok(hr == S_OK, "Failed to create default presenter, hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFQualityAdviseLimits, (void **)&qa_limits);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFQualityAdvise, (void **)&advise);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+if (qa_limits)
+{
+    hr = IMFQualityAdviseLimits_GetMaximumDropMode(qa_limits, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFQualityAdviseLimits_GetMaximumDropMode(qa_limits, &mode);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(mode == MF_DROP_MODE_NONE, "Unexpected mode %d.\n", mode);
+
+    hr = IMFQualityAdviseLimits_GetMinimumQualityLevel(qa_limits, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFQualityAdviseLimits_GetMinimumQualityLevel(qa_limits, &level);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(level == MF_QUALITY_NORMAL, "Unexpected level %d.\n", level);
+
+    IMFQualityAdviseLimits_Release(qa_limits);
+}
+
+todo_wine {
+    mode = 1;
+    hr = IMFQualityAdvise_GetDropMode(advise, &mode);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(mode == MF_DROP_MODE_NONE, "Unexpected mode %d.\n", mode);
+
+    level = 1;
+    hr = IMFQualityAdvise_GetQualityLevel(advise, &level);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(level == MF_QUALITY_NORMAL, "Unexpected mode %d.\n", level);
+
+    hr = IMFQualityAdvise_SetDropMode(advise, MF_DROP_MODE_1);
+    ok(hr == MF_E_NO_MORE_DROP_MODES, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFQualityAdvise_SetQualityLevel(advise, MF_QUALITY_NORMAL_MINUS_1);
+    ok(hr == MF_E_NO_MORE_QUALITY_LEVELS, "Unexpected hr %#x.\n", hr);
+}
+
+    IMFQualityAdvise_Release(advise);
+
+    IMFVideoPresenter_Release(presenter);
+}
+
 static void test_mixer_output_rectangle(void)
 {
     IMFVideoMixerControl *mixer_control;
@@ -2511,6 +2573,7 @@ START_TEST(evr)
     test_presenter_native_video_size();
     test_presenter_ar_mode();
     test_presenter_video_window();
+    test_presenter_quality_control();
     test_mixer_output_rectangle();
     test_mixer_zorder();
     test_mixer_samples();
