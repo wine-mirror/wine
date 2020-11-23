@@ -858,7 +858,7 @@ fail:
 static HRESULT media_stream_init_desc(struct media_stream *stream)
 {
     GstCaps *current_caps = gst_pad_get_current_caps(stream->their_src);
-    IMFMediaTypeHandler *type_handler;
+    IMFMediaTypeHandler *type_handler = NULL;
     IMFMediaType **stream_types = NULL;
     IMFMediaType *stream_type = NULL;
     DWORD type_count = 0;
