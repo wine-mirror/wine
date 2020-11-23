@@ -695,6 +695,30 @@ static void test_enum_filters(void)
     hr = IEnumFilters_Reset(enum1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    hr = IEnumFilters_Skip(enum1, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Skip(enum1, 1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Skip(enum1, 2);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Skip(enum1, 1);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Skip(enum1, 2);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Skip(enum1, 1);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Reset(enum1);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     hr = IEnumFilters_Next(enum1, 1, filters, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(filters[0] == filter2, "Got filter %p.\n", filters[0]);

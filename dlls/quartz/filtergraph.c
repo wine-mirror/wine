@@ -331,7 +331,7 @@ static HRESULT WINAPI EnumFilters_Skip(IEnumFilters *iface, ULONG count)
     while (count--)
     {
         if (!(enum_filters->cursor = list_next(&enum_filters->graph->filters, enum_filters->cursor)))
-            return S_FALSE;
+            return count ? S_FALSE : S_OK;
     }
 
     return S_OK;
