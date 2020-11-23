@@ -876,8 +876,6 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
     LONG l;
     HRESULT hres;
 
-    static const PRUnichar imgW[] = {'I','M','G',0};
-
     TRACE("(%p)->(%s %s %p)\n", This, debugstr_variant(&width),
             debugstr_variant(&height), img_elem);
 
@@ -890,7 +888,7 @@ static HRESULT WINAPI HTMLImageElementFactory_create(IHTMLImageElementFactory *i
 
     *img_elem = NULL;
 
-    hres = create_nselem(doc, imgW, &nselem);
+    hres = create_nselem(doc, L"IMG", &nselem);
     if(FAILED(hres))
         return hres;
 

@@ -1210,8 +1210,6 @@ static BOOL get_script_guid(HTMLInnerWindow *window, nsIDOMHTMLScriptElement *ns
     BOOL ret = FALSE;
     nsresult nsres;
 
-    static const PRUnichar languageW[] = {'l','a','n','g','u','a','g','e',0};
-
     nsAString_Init(&val_str, NULL);
 
     nsres = nsIDOMHTMLScriptElement_GetType(nsscript, &val_str);
@@ -1231,7 +1229,7 @@ static BOOL get_script_guid(HTMLInnerWindow *window, nsIDOMHTMLScriptElement *ns
     nsres = nsIDOMHTMLScriptElement_QueryInterface(nsscript, &IID_nsIDOMElement, (void**)&nselem);
     assert(nsres == NS_OK);
 
-    nsres = get_elem_attr_value(nselem, languageW, &val_str, &language);
+    nsres = get_elem_attr_value(nselem, L"language", &val_str, &language);
     nsIDOMElement_Release(nselem);
     if(NS_SUCCEEDED(nsres)) {
         if(*language) {
@@ -1554,14 +1552,12 @@ void bind_event_scripts(HTMLDocumentNode *doc)
     nsresult nsres;
     HRESULT hres;
 
-    static const PRUnichar selectorW[] = {'s','c','r','i','p','t','[','e','v','e','n','t',']',0};
-
     TRACE("%p\n", doc);
 
     if(!doc->nsdoc)
         return;
 
-    nsAString_InitDepend(&selector_str, selectorW);
+    nsAString_InitDepend(&selector_str, L"script[event]");
     nsres = nsIDOMHTMLDocument_QuerySelectorAll(doc->nsdoc, &selector_str, &node_list);
     nsAString_Finish(&selector_str);
     if(NS_FAILED(nsres)) {

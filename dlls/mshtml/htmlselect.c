@@ -538,8 +538,6 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
     HTMLDOMNode *node;
     HRESULT hres;
 
-    static const PRUnichar optionW[] = {'O','P','T','I','O','N',0};
-
     TRACE("(%p)->(%s %s %s %s %p)\n", This, debugstr_variant(&text), debugstr_variant(&value),
           debugstr_variant(&defaultselected), debugstr_variant(&selected), optelem);
 
@@ -550,7 +548,7 @@ static HRESULT WINAPI HTMLOptionElementFactory_create(IHTMLOptionElementFactory 
 
     *optelem = NULL;
 
-    hres = create_nselem(This->window->doc, optionW, &nselem);
+    hres = create_nselem(This->window->doc, L"OPTION", &nselem);
     if(FAILED(hres))
         return hres;
 

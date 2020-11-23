@@ -456,11 +456,9 @@ static HRESULT WINAPI HTMLFormElement_submit(IHTMLFormElement *iface)
     if(NS_SUCCEEDED(nsres)) {
         const PRUnichar *method;
 
-        static const PRUnichar postW[] = {'p','o','s','t',0};
-
         nsAString_GetData(&method_str, &method);
         TRACE("method is %s\n", debugstr_w(method));
-        is_post_submit = !wcsicmp(method, postW);
+        is_post_submit = !wcsicmp(method, L"post");
     }
     nsAString_Finish(&method_str);
 
@@ -661,8 +659,6 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
     nsresult nsres;
     HRESULT hres = DISP_E_UNKNOWNNAME;
 
-    static const PRUnichar nameW[] = {'n','a','m','e',0};
-
     TRACE("(%p)->(%s %x %p)\n", This, wine_dbgstr_w(name), grfdex, pid);
 
     nsres = nsIDOMHTMLFormElement_GetElements(This->nsform, &elements);
@@ -731,7 +727,7 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
         }
 
         /* compare by name attr */
-        nsres = get_elem_attr_value(elem, nameW, &name_str, &str);
+        nsres = get_elem_attr_value(elem, L"name", &name_str, &str);
         nsIDOMElement_Release(elem);
         if(NS_SUCCEEDED(nsres)) {
             if(!wcsicmp(str, name)) {

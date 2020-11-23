@@ -5720,9 +5720,7 @@ HRESULT create_document_node(nsIDOMHTMLDocument *nsdoc, GeckoBrowser *browser, H
         nsAString mode_str;
         nsresult nsres;
 
-        static const PRUnichar onW[] = {'o','n',0};
-
-        nsAString_InitDepend(&mode_str, onW);
+        nsAString_InitDepend(&mode_str, L"on");
         nsres = nsIDOMHTMLDocument_SetDesignMode(doc->nsdoc, &mode_str);
         nsAString_Finish(&mode_str);
         if(NS_FAILED(nsres))

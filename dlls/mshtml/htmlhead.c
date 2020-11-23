@@ -448,11 +448,10 @@ static HRESULT WINAPI HTMLMetaElement_put_httpEquiv(IHTMLMetaElement *iface, BST
 static HRESULT WINAPI HTMLMetaElement_get_httpEquiv(IHTMLMetaElement *iface, BSTR *p)
 {
     HTMLMetaElement *This = impl_from_IHTMLMetaElement(iface);
-    static const PRUnichar httpEquivW[] = {'h','t','t','p','-','e','q','u','i','v',0};
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return elem_string_attr_getter(&This->element, httpEquivW, TRUE, p);
+    return elem_string_attr_getter(&This->element, L"http-equiv", TRUE, p);
 }
 
 static HRESULT WINAPI HTMLMetaElement_put_content(IHTMLMetaElement *iface, BSTR v)
@@ -465,11 +464,10 @@ static HRESULT WINAPI HTMLMetaElement_put_content(IHTMLMetaElement *iface, BSTR 
 static HRESULT WINAPI HTMLMetaElement_get_content(IHTMLMetaElement *iface, BSTR *p)
 {
     HTMLMetaElement *This = impl_from_IHTMLMetaElement(iface);
-    static const PRUnichar contentW[] = {'c','o','n','t','e','n','t',0};
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return elem_string_attr_getter(&This->element, contentW, TRUE, p);
+    return elem_string_attr_getter(&This->element, L"content", TRUE, p);
 }
 
 static HRESULT WINAPI HTMLMetaElement_put_name(IHTMLMetaElement *iface, BSTR v)
@@ -482,11 +480,10 @@ static HRESULT WINAPI HTMLMetaElement_put_name(IHTMLMetaElement *iface, BSTR v)
 static HRESULT WINAPI HTMLMetaElement_get_name(IHTMLMetaElement *iface, BSTR *p)
 {
     HTMLMetaElement *This = impl_from_IHTMLMetaElement(iface);
-    static const PRUnichar nameW[] = {'n','a','m','e',0};
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return elem_string_attr_getter(&This->element, nameW, TRUE, p);
+    return elem_string_attr_getter(&This->element, L"name", TRUE, p);
 }
 
 static HRESULT WINAPI HTMLMetaElement_put_url(IHTMLMetaElement *iface, BSTR v)

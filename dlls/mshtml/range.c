@@ -1674,9 +1674,6 @@ static HRESULT exec_indent(HTMLTxtRange *This, VARIANT *in, VARIANT *out)
     nsIDOMDocumentFragment *fragment;
     nsIDOMNode *tmp;
 
-    static const PRUnichar blockquoteW[] = {'B','L','O','C','K','Q','U','O','T','E',0};
-    static const PRUnichar pW[] = {'P',0};
-
     TRACE("(%p)->(%p %p)\n", This, in, out);
 
     if(!This->doc->nsdoc) {
@@ -1684,8 +1681,8 @@ static HRESULT exec_indent(HTMLTxtRange *This, VARIANT *in, VARIANT *out)
         return E_NOTIMPL;
     }
 
-    create_nselem(This->doc, blockquoteW, &blockquote_elem);
-    create_nselem(This->doc, pW, &p_elem);
+    create_nselem(This->doc, L"BLOCKQUOTE", &blockquote_elem);
+    create_nselem(This->doc, L"P", &p_elem);
 
     nsIDOMRange_ExtractContents(This->nsrange, &fragment);
     nsIDOMElement_AppendChild(p_elem, (nsIDOMNode*)fragment, &tmp);

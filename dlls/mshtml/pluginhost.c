@@ -279,11 +279,7 @@ static HRESULT fill_props(nsIDOMElement *nselem, PropertyBag *prop_bag)
     nsresult nsres;
     HRESULT hres = S_OK;
 
-    static const PRUnichar nameW[] = {'n','a','m','e',0};
-    static const PRUnichar paramW[] = {'p','a','r','a','m',0};
-    static const PRUnichar valueW[] = {'v','a','l','u','e',0};
-
-    nsAString_InitDepend(&name_str, paramW);
+    nsAString_InitDepend(&name_str, L"param");
     nsres = nsIDOMElement_GetElementsByTagName(nselem, &name_str, &params);
     nsAString_Finish(&name_str);
     if(NS_FAILED(nsres))
@@ -307,9 +303,9 @@ static HRESULT fill_props(nsIDOMElement *nselem, PropertyBag *prop_bag)
             break;
         }
 
-        nsres = get_elem_attr_value(param_elem, nameW, &name_str, &name);
+        nsres = get_elem_attr_value(param_elem, L"name", &name_str, &name);
         if(NS_SUCCEEDED(nsres)) {
-            nsres = get_elem_attr_value(param_elem, valueW, &value_str, &value);
+            nsres = get_elem_attr_value(param_elem, L"value", &value_str, &value);
             if(NS_SUCCEEDED(nsres)) {
                 hres = add_prop(prop_bag, name, value);
                 nsAString_Finish(&value_str);
@@ -2297,9 +2293,7 @@ static BOOL get_elem_clsid(nsIDOMElement *elem, CLSID *clsid)
     nsresult nsres;
     BOOL ret = FALSE;
 
-    static const PRUnichar classidW[] = {'c','l','a','s','s','i','d',0};
-
-    nsres = get_elem_attr_value(elem, classidW, &val_str, &val);
+    nsres = get_elem_attr_value(elem, L"classid", &val_str, &val);
     if(NS_SUCCEEDED(nsres)) {
         if(*val)
             ret = parse_classid(val, clsid);
@@ -2535,9 +2529,7 @@ static void check_codebase(HTMLInnerWindow *window, nsIDOMElement *nselem)
     nsresult nsres;
     HRESULT hres;
 
-    static const PRUnichar codebaseW[] = {'c','o','d','e','b','a','s','e',0};
-
-    nsres = get_elem_attr_value(nselem, codebaseW, &val_str, &val);
+    nsres = get_elem_attr_value(nselem, L"codebase", &val_str, &val);
     if(NS_SUCCEEDED(nsres)) {
         if(*val) {
             hres = CoInternetCombineUrlEx(window->base.outer_window->uri, val, 0, &uri, 0);

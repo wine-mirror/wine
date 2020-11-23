@@ -657,13 +657,10 @@ static HRESULT exec_italic(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *in,
 
 static HRESULT query_justify(HTMLDocumentNode *doc, OLECMD *cmd)
 {
-    static const PRUnichar justifycenterW[] = {'j','u','s','t','i','f','y','c','e','n','t','e','r',0};
-    static const PRUnichar justifyrightW[] = {'j','u','s','t','i','f','y','r','i','g','h','t',0};
-
     switch(cmd->cmdID) {
     case IDM_JUSTIFYCENTER:
         TRACE("(%p) IDM_JUSTIFYCENTER\n", doc);
-        cmd->cmdf = query_align_status(doc, justifycenterW);
+        cmd->cmdf = query_align_status(doc, L"justifycenter");
         break;
     case IDM_JUSTIFYLEFT:
         TRACE("(%p) IDM_JUSTIFYLEFT\n", doc);
@@ -675,7 +672,7 @@ static HRESULT query_justify(HTMLDocumentNode *doc, OLECMD *cmd)
         break;
     case IDM_JUSTIFYRIGHT:
         TRACE("(%p) IDM_JUSTIFYRIGHT\n", doc);
-        cmd->cmdf = query_align_status(doc, justifyrightW);
+        cmd->cmdf = query_align_status(doc, L"justifyright");
         break;
     }
 
