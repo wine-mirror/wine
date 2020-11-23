@@ -1022,7 +1022,7 @@ static void session_pause(struct media_session *session)
     {
         case SESSION_STATE_STARTED:
 
-            /* Transition in two steps - pause clock, wait for sinks and pause sources. */
+            /* Transition in two steps - pause the clock, wait for sinks, then pause sources. */
             if (SUCCEEDED(hr = IMFPresentationClock_Pause(session->clock)))
                 session->state = SESSION_STATE_PAUSING_SINKS;
 
@@ -1061,7 +1061,7 @@ static void session_stop(struct media_session *session)
         case SESSION_STATE_STARTED:
         case SESSION_STATE_PAUSED:
 
-            /* Transition in two steps - pause clock, wait for sinks and pause sources. */
+            /* Transition in two steps - stop the clock, wait for sinks, then stop sources. */
             IMFPresentationClock_GetTime(session->clock, &session->presentation.clock_stop_time);
             if (SUCCEEDED(hr = IMFPresentationClock_Stop(session->clock)))
                 session->state = SESSION_STATE_STOPPING_SINKS;
