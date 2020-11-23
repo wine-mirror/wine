@@ -299,7 +299,6 @@ static DWORD icmp_get_reply(int sid, unsigned char *buffer, DWORD send_time, voi
             }
 
             /* Prepare for the next packet */
-            endbuf-=ier->DataSize;
             ier++;
 
             /* Check out whether there is more but don't wait this time */
