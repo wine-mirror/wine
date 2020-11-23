@@ -288,6 +288,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc(IDXGIOutput6 *iface, DXGI_O
 {
     struct dxgi_output *output = impl_from_IDXGIOutput6(iface);
     struct wined3d_output_desc wined3d_desc;
+    enum wined3d_display_rotation rotation;
+    struct wined3d_display_mode mode;
     HRESULT hr;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
@@ -297,18 +299,26 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc(IDXGIOutput6 *iface, DXGI_O
 
     wined3d_mutex_lock();
     hr = wined3d_output_get_desc(output->wined3d_output, &wined3d_desc);
-    wined3d_mutex_unlock();
-
     if (FAILED(hr))
     {
         WARN("Failed to get output desc, hr %#x.\n", hr);
+        wined3d_mutex_unlock();
         return hr;
     }
+
+    hr = wined3d_output_get_display_mode(output->wined3d_output, &mode, &rotation);
+    if (FAILED(hr))
+    {
+        WARN("Failed to get output display mode, hr %#x.\n", hr);
+        wined3d_mutex_unlock();
+        return hr;
+    }
+    wined3d_mutex_unlock();
 
     memcpy(desc->DeviceName, wined3d_desc.device_name, sizeof(desc->DeviceName));
     desc->DesktopCoordinates = wined3d_desc.desktop_rect;
     desc->AttachedToDesktop = wined3d_desc.attached_to_desktop;
-    desc->Rotation = wined3d_desc.rotation;
+    desc->Rotation = rotation;
     desc->Monitor = wined3d_desc.monitor;
 
     return S_OK;
@@ -550,6 +560,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc1(IDXGIOutput6 *iface,
 {
     struct dxgi_output *output = impl_from_IDXGIOutput6(iface);
     struct wined3d_output_desc wined3d_desc;
+    enum wined3d_display_rotation rotation;
+    struct wined3d_display_mode mode;
     HRESULT hr;
 
     FIXME("iface %p, desc %p semi-stub!\n", iface, desc);
@@ -559,6 +571,20 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc1(IDXGIOutput6 *iface,
 
     wined3d_mutex_lock();
     hr = wined3d_output_get_desc(output->wined3d_output, &wined3d_desc);
+    if (FAILED(hr))
+    {
+        WARN("Failed to get output desc, hr %#x.\n", hr);
+        wined3d_mutex_unlock();
+        return hr;
+    }
+
+    hr = wined3d_output_get_display_mode(output->wined3d_output, &mode, &rotation);
+    if (FAILED(hr))
+    {
+        WARN("Failed to get output display mode, hr %#x.\n", hr);
+        wined3d_mutex_unlock();
+        return hr;
+    }
     wined3d_mutex_unlock();
 
     if (FAILED(hr))
@@ -570,7 +596,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc1(IDXGIOutput6 *iface,
     memcpy(desc->DeviceName, wined3d_desc.device_name, sizeof(desc->DeviceName));
     desc->DesktopCoordinates = wined3d_desc.desktop_rect;
     desc->AttachedToDesktop = wined3d_desc.attached_to_desktop;
-    desc->Rotation = wined3d_desc.rotation;
+    desc->Rotation = rotation;
     desc->Monitor = wined3d_desc.monitor;
 
     /* FIXME: fill this from monitor EDID */

@@ -2157,7 +2157,6 @@ struct wined3d_output_desc
     WCHAR device_name[CCHDEVICENAME];
     RECT desktop_rect;
     BOOL attached_to_desktop;
-    enum wined3d_display_rotation rotation;
     HMONITOR monitor;
 };
 

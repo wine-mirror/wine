@@ -1002,15 +1002,13 @@ static BOOL CALLBACK enum_monitor_proc(HMONITOR monitor, HDC hdc, RECT *rect, LP
 HRESULT CDECL wined3d_output_get_desc(const struct wined3d_output *output,
         struct wined3d_output_desc *desc)
 {
-    struct wined3d_display_mode mode;
-
     TRACE("output %p, desc %p.\n", output, desc);
 
     memset(desc, 0, sizeof(*desc));
     desc->ordinal = output->ordinal;
     lstrcpyW(desc->device_name, output->device_name);
     EnumDisplayMonitors(NULL, NULL, enum_monitor_proc, (LPARAM)desc);
-    return wined3d_output_get_display_mode(output, &mode, &desc->rotation);
+    return WINED3D_OK;
 }
 
 /* FIXME: GetAdapterModeCount and EnumAdapterModes currently only returns modes
