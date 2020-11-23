@@ -322,6 +322,9 @@ static HRESULT WINAPI EnumFilters_Skip(IEnumFilters *iface, ULONG count)
 
     TRACE("enum_filters %p, count %u.\n", enum_filters, count);
 
+    if (enum_filters->version != enum_filters->graph->version)
+        return VFW_E_ENUM_OUT_OF_SYNC;
+
     if (!enum_filters->cursor)
         return S_FALSE;
 

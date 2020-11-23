@@ -683,6 +683,9 @@ static void test_enum_filters(void)
     hr = IEnumFilters_Next(enum1, 1, filters, NULL);
     ok(hr == VFW_E_ENUM_OUT_OF_SYNC, "Got hr %#x.\n", hr);
 
+    hr = IEnumFilters_Skip(enum1, 1);
+    ok(hr == VFW_E_ENUM_OUT_OF_SYNC, "Got hr %#x.\n", hr);
+
     hr = IEnumFilters_Reset(enum1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
