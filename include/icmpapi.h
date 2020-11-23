@@ -30,13 +30,83 @@ HANDLE WINAPI IcmpCreateFile(
     VOID
     );
 
+HANDLE WINAPI Icmp6CreateFile(
+    VOID
+    );
+
 BOOL WINAPI IcmpCloseHandle(
     HANDLE  IcmpHandle
+    );
+
+DWORD WINAPI IcmpParseReplies(
+    LPVOID                 ReplyBuffer,
+    DWORD                  ReplySize
+    );
+
+DWORD WINAPI Icmp6ParseReplies(
+    LPVOID                 ReplyBuffer,
+    DWORD                  ReplySize
     );
 
 DWORD WINAPI IcmpSendEcho(
     HANDLE                 IcmpHandle,
     IPAddr                 DestinationAddress,
+    LPVOID                 RequestData,
+    WORD                   RequestSize,
+    PIP_OPTION_INFORMATION RequestOptions,
+    LPVOID                 ReplyBuffer,
+    DWORD                  ReplySize,
+    DWORD                  Timeout
+    );
+
+DWORD WINAPI IcmpSendEcho2(
+    HANDLE                 IcmpHandle,
+    HANDLE                 Event,
+#ifdef __WINE_WINTERNL_H
+    PIO_APC_ROUTINE        ApcRoutine,
+#else
+    FARPROC                ApcRoutine,
+#endif
+    PVOID                  ApcContext,
+    IPAddr                 DestinationAddress,
+    LPVOID                 RequestData,
+    WORD                   RequestSize,
+    PIP_OPTION_INFORMATION RequestOptions,
+    LPVOID                 ReplyBuffer,
+    DWORD                  ReplySize,
+    DWORD                  Timeout
+    );
+
+DWORD WINAPI IcmpSendEcho2Ex(
+    HANDLE                 IcmpHandle,
+    HANDLE                 Event,
+#ifdef __WINE_WINTERNL_H
+    PIO_APC_ROUTINE        ApcRoutine,
+#else
+    FARPROC                ApcRoutine,
+#endif
+    PVOID                  ApcContext,
+    IPAddr                 SourceAddress,
+    IPAddr                 DestinationAddress,
+    LPVOID                 RequestData,
+    WORD                   RequestSize,
+    PIP_OPTION_INFORMATION RequestOptions,
+    LPVOID                 ReplyBuffer,
+    DWORD                  ReplySize,
+    DWORD                  Timeout
+    );
+
+DWORD WINAPI Icmp6SendEcho2(
+    HANDLE                 IcmpHandle,
+    HANDLE                 Event,
+#ifdef __WINE_WINTERNL_H
+    PIO_APC_ROUTINE        ApcRoutine,
+#else
+    FARPROC                ApcRoutine,
+#endif
+    PVOID                  ApcContext,
+    struct sockaddr_in6*   SourceAddress,
+    struct sockaddr_in6*   DestinationAddress,
     LPVOID                 RequestData,
     WORD                   RequestSize,
     PIP_OPTION_INFORMATION RequestOptions,
