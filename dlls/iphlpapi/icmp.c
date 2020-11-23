@@ -144,6 +144,177 @@ static int in_cksum(u_short *addr, int len)
     return(answer);
 }
 
+/* Receive a reply (IPv4); this function uses, takes ownership of and will always free `buffer` */
+static DWORD icmp_get_reply(int sid, unsigned char *buffer, DWORD send_time, void *reply_buf, DWORD reply_size, DWORD timeout)
+{
+    int repsize = MAXIPLEN + MAXICMPLEN + min(65535, reply_size);
+    struct icmp *icmp_header = (struct icmp*)buffer;
+    char *endbuf = (char*)reply_buf + reply_size;
+    struct ip *ip_header = (struct ip*)buffer;
+    struct icmp_echo_reply *ier = reply_buf;
+    unsigned short id, seq, cksum;
+    struct sockaddr_in addr;
+    int ip_header_len = 0;
+    socklen_t addrlen;
+    struct pollfd fdr;
+    DWORD recv_time;
+    int res;
+
+    id = icmp_header->icmp_id;
+    seq = icmp_header->icmp_seq;
+    cksum = icmp_header->icmp_cksum;
+    fdr.fd = sid;
+    fdr.events = POLLIN;
+    addrlen = sizeof(addr);
+
+    while (poll(&fdr,1,timeout)>0) {
+        recv_time = GetTickCount();
+        res=recvfrom(sid, buffer, repsize, 0, (struct sockaddr*)&addr, &addrlen);
+        TRACE("received %d bytes from %s\n",res, inet_ntoa(addr.sin_addr));
+        ier->Status=IP_REQ_TIMED_OUT;
+
+        /* Check whether we should ignore this packet */
+        if ((ip_header->ip_p==IPPROTO_ICMP) && (res>=sizeof(struct ip)+ICMP_MINLEN)) {
+            ip_header_len=ip_header->ip_hl << 2;
+            icmp_header=(struct icmp*)(((char*)ip_header)+ip_header_len);
+            TRACE("received an ICMP packet of type,code=%d,%d\n",icmp_header->icmp_type,icmp_header->icmp_code);
+            if (icmp_header->icmp_type==ICMP_ECHOREPLY) {
+                if ((icmp_header->icmp_id==id) && (icmp_header->icmp_seq==seq))
+                {
+                    ier->Status=IP_SUCCESS;
+                    SetLastError(NO_ERROR);
+                }
+            } else {
+                switch (icmp_header->icmp_type) {
+                case ICMP_UNREACH:
+                    switch (icmp_header->icmp_code) {
+                    case ICMP_UNREACH_HOST:
+#ifdef ICMP_UNREACH_HOST_UNKNOWN
+                    case ICMP_UNREACH_HOST_UNKNOWN:
+#endif
+#ifdef ICMP_UNREACH_ISOLATED
+                    case ICMP_UNREACH_ISOLATED:
+#endif
+#ifdef ICMP_UNREACH_HOST_PROHIB
+		    case ICMP_UNREACH_HOST_PROHIB:
+#endif
+#ifdef ICMP_UNREACH_TOSHOST
+                    case ICMP_UNREACH_TOSHOST:
+#endif
+                        ier->Status=IP_DEST_HOST_UNREACHABLE;
+                        break;
+                    case ICMP_UNREACH_PORT:
+                        ier->Status=IP_DEST_PORT_UNREACHABLE;
+                        break;
+                    case ICMP_UNREACH_PROTOCOL:
+                        ier->Status=IP_DEST_PROT_UNREACHABLE;
+                        break;
+                    case ICMP_UNREACH_SRCFAIL:
+                        ier->Status=IP_BAD_ROUTE;
+                        break;
+                    default:
+                        ier->Status=IP_DEST_NET_UNREACHABLE;
+                    }
+                    break;
+                case ICMP_TIMXCEED:
+                    if (icmp_header->icmp_code==ICMP_TIMXCEED_REASS)
+                        ier->Status=IP_TTL_EXPIRED_REASSEM;
+                    else
+                        ier->Status=IP_TTL_EXPIRED_TRANSIT;
+                    break;
+                case ICMP_PARAMPROB:
+                    ier->Status=IP_PARAM_PROBLEM;
+                    break;
+                case ICMP_SOURCEQUENCH:
+                    ier->Status=IP_SOURCE_QUENCH;
+                    break;
+                }
+                if (ier->Status!=IP_REQ_TIMED_OUT) {
+                    struct ip* rep_ip_header;
+                    struct icmp* rep_icmp_header;
+                    /* The ICMP header size of all the packets we accept is the same */
+                    rep_ip_header=(struct ip*)(((char*)icmp_header)+ICMP_MINLEN);
+                    rep_icmp_header=(struct icmp*)(((char*)rep_ip_header)+(rep_ip_header->ip_hl << 2));
+
+		    /* Make sure that this is really a reply to our packet */
+                    if (ip_header_len+ICMP_MINLEN+(rep_ip_header->ip_hl << 2)+ICMP_MINLEN>ip_header->ip_len) {
+			ier->Status=IP_REQ_TIMED_OUT;
+                    } else if ((rep_icmp_header->icmp_type!=ICMP_ECHO) ||
+                        (rep_icmp_header->icmp_code!=0) ||
+                        (rep_icmp_header->icmp_id!=id) ||
+                        /* windows doesn't check this checksum, else tracert */
+                        /* behind a Linux 2.2 masquerading firewall would fail*/
+                        /* (rep_icmp_header->icmp_cksum!=cksum) || */
+                        (rep_icmp_header->icmp_seq!=seq)) {
+                        /* This was not a reply to one of our packets after all */
+                        TRACE("skipping type,code=%d,%d id,seq=%d,%d cksum=%d\n",
+                            rep_icmp_header->icmp_type,rep_icmp_header->icmp_code,
+                            rep_icmp_header->icmp_id,rep_icmp_header->icmp_seq,
+                            rep_icmp_header->icmp_cksum);
+                        TRACE("expected type,code=8,0 id,seq=%d,%d cksum=%d\n",
+                            id,seq,
+                            cksum);
+			ier->Status=IP_REQ_TIMED_OUT;
+		    }
+                }
+	    }
+	}
+
+        if (ier->Status==IP_REQ_TIMED_OUT) {
+            /* This packet was not for us.
+             * Decrease the timeout so that we don't enter an endless loop even
+             * if we get flooded with ICMP packets that are not for us.
+             */
+            DWORD t = (recv_time - send_time);
+            if (timeout > t) timeout -= t;
+            else             timeout = 0;
+            continue;
+        } else {
+            /* Check free space, should be large enough for an ICMP_ECHO_REPLY and remainning icmp data */
+            if (endbuf-(char *)ier < sizeof(struct icmp_echo_reply)+(res-ip_header_len-ICMP_MINLEN)) {
+                res=ier-(ICMP_ECHO_REPLY *)reply_buf;
+                SetLastError(IP_GENERAL_FAILURE);
+                goto done;
+            }
+            /* This is a reply to our packet */
+            memcpy(&ier->Address,&ip_header->ip_src,sizeof(IPAddr));
+            /* Status is already set */
+            ier->RoundTripTime= recv_time - send_time;
+            ier->DataSize=res-ip_header_len-ICMP_MINLEN;
+            ier->Reserved=0;
+            ier->Data=endbuf-ier->DataSize;
+            memcpy(ier->Data, ((char *)ip_header)+ip_header_len+ICMP_MINLEN, ier->DataSize);
+            ier->Options.Ttl=ip_header->ip_ttl;
+            ier->Options.Tos=ip_header->ip_tos;
+            ier->Options.Flags=ip_header->ip_off >> 13;
+            ier->Options.OptionsSize=ip_header_len-sizeof(struct ip);
+            if (ier->Options.OptionsSize!=0) {
+                ier->Options.OptionsData=(unsigned char *) ier->Data-ier->Options.OptionsSize;
+                /* FIXME: We are supposed to rearrange the option's 'source route' data */
+                memcpy(ier->Options.OptionsData, ((char *)ip_header)+ip_header_len, ier->Options.OptionsSize);
+                endbuf=(char*)ier->Options.OptionsData;
+            } else {
+                ier->Options.OptionsData=NULL;
+                endbuf=ier->Data;
+            }
+
+            /* Prepare for the next packet */
+            endbuf-=ier->DataSize;
+            ier++;
+
+            /* Check out whether there is more but don't wait this time */
+            timeout=0;
+        }
+    }
+    res=ier-(ICMP_ECHO_REPLY*)reply_buf;
+    if (res==0)
+        SetLastError(IP_REQ_TIMED_OUT);
+done:
+    HeapFree(GetProcessHeap(), 0, buffer);
+    TRACE("received %d replies\n",res);
+    return res;
+}
+
 
 
 /*
@@ -273,20 +444,12 @@ DWORD WINAPI IcmpSendEcho(
     )
 {
     icmp_t* icp=(icmp_t*)IcmpHandle;
+    struct icmp* icmp_header;
+    struct sockaddr_in addr;
+    unsigned short id, seq;
     unsigned char *buffer;
     int reqsize, repsize;
-
-    struct icmp_echo_reply* ier;
-    struct ip* ip_header;
-    struct icmp* icmp_header;
-    char* endbuf;
-    int ip_header_len;
-    struct pollfd fdr;
-    DWORD send_time,recv_time;
-    struct sockaddr_in addr;
-    socklen_t addrlen;
-    unsigned short id,seq,cksum;
-    int res;
+    DWORD send_time;
 
     if (IcmpHandle==INVALID_HANDLE_VALUE) {
         /* FIXME: in fact win98 seems to ignore the handle value !!! */
@@ -331,7 +494,7 @@ DWORD WINAPI IcmpSendEcho(
     icmp_header->icmp_id=id;
     icmp_header->icmp_seq=seq;
     memcpy(buffer+ICMP_MINLEN, RequestData, RequestSize);
-    icmp_header->icmp_cksum=cksum=in_cksum((u_short*)buffer,reqsize);
+    icmp_header->icmp_cksum=in_cksum((u_short*)buffer,reqsize);
 
     addr.sin_family=AF_INET;
     addr.sin_addr.s_addr=DestinationAddress;
@@ -372,15 +535,6 @@ DWORD WINAPI IcmpSendEcho(
         icp->default_opts.OptionsSize=IP_OPTS_DEFAULT;
     }
 
-    /* Get ready for receiving the reply
-     * Do it before we send the request to minimize the risk of introducing delays
-     */
-    fdr.fd = icp->sid;
-    fdr.events = POLLIN;
-    addrlen=sizeof(addr);
-    ier=ReplyBuffer;
-    endbuf=(char *) ReplyBuffer+ReplySize;
-
     /* Send the packet */
     TRACE("Sending %d bytes (RequestSize=%d) to %s\n", reqsize, RequestSize, inet_ntoa(addr.sin_addr));
 #if 0
@@ -394,8 +548,7 @@ DWORD WINAPI IcmpSendEcho(
 #endif
 
     send_time = GetTickCount();
-    res=sendto(icp->sid, buffer, reqsize, 0, (struct sockaddr*)&addr, sizeof(addr));
-    if (res<0) {
+    if (sendto(icp->sid, buffer, reqsize, 0, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
         if (errno==EMSGSIZE)
             SetLastError(IP_PACKET_TOO_BIG);
         else {
@@ -415,155 +568,7 @@ DWORD WINAPI IcmpSendEcho(
         return 0;
     }
 
-    /* Get the reply */
-    ip_header=(struct ip*)buffer;
-    ip_header_len=0; /* because gcc was complaining */
-    while (poll(&fdr,1,Timeout)>0) {
-        recv_time = GetTickCount();
-        res=recvfrom(icp->sid, buffer, repsize, 0, (struct sockaddr*)&addr, &addrlen);
-        TRACE("received %d bytes from %s\n",res, inet_ntoa(addr.sin_addr));
-        ier->Status=IP_REQ_TIMED_OUT;
-
-        /* Check whether we should ignore this packet */
-        if ((ip_header->ip_p==IPPROTO_ICMP) && (res>=sizeof(struct ip)+ICMP_MINLEN)) {
-            ip_header_len=ip_header->ip_hl << 2;
-            icmp_header=(struct icmp*)(((char*)ip_header)+ip_header_len);
-            TRACE("received an ICMP packet of type,code=%d,%d\n",icmp_header->icmp_type,icmp_header->icmp_code);
-            if (icmp_header->icmp_type==ICMP_ECHOREPLY) {
-                if ((icmp_header->icmp_id==id) && (icmp_header->icmp_seq==seq))
-                {
-                    ier->Status=IP_SUCCESS;
-                    SetLastError(NO_ERROR);
-                }
-            } else {
-                switch (icmp_header->icmp_type) {
-                case ICMP_UNREACH:
-                    switch (icmp_header->icmp_code) {
-                    case ICMP_UNREACH_HOST:
-#ifdef ICMP_UNREACH_HOST_UNKNOWN
-                    case ICMP_UNREACH_HOST_UNKNOWN:
-#endif
-#ifdef ICMP_UNREACH_ISOLATED
-                    case ICMP_UNREACH_ISOLATED:
-#endif
-#ifdef ICMP_UNREACH_HOST_PROHIB
-		    case ICMP_UNREACH_HOST_PROHIB:
-#endif
-#ifdef ICMP_UNREACH_TOSHOST
-                    case ICMP_UNREACH_TOSHOST:
-#endif
-                        ier->Status=IP_DEST_HOST_UNREACHABLE;
-                        break;
-                    case ICMP_UNREACH_PORT:
-                        ier->Status=IP_DEST_PORT_UNREACHABLE;
-                        break;
-                    case ICMP_UNREACH_PROTOCOL:
-                        ier->Status=IP_DEST_PROT_UNREACHABLE;
-                        break;
-                    case ICMP_UNREACH_SRCFAIL:
-                        ier->Status=IP_BAD_ROUTE;
-                        break;
-                    default:
-                        ier->Status=IP_DEST_NET_UNREACHABLE;
-                    }
-                    break;
-                case ICMP_TIMXCEED:
-                    if (icmp_header->icmp_code==ICMP_TIMXCEED_REASS)
-                        ier->Status=IP_TTL_EXPIRED_REASSEM;
-                    else
-                        ier->Status=IP_TTL_EXPIRED_TRANSIT;
-                    break;
-                case ICMP_PARAMPROB:
-                    ier->Status=IP_PARAM_PROBLEM;
-                    break;
-                case ICMP_SOURCEQUENCH:
-                    ier->Status=IP_SOURCE_QUENCH;
-                    break;
-                }
-                if (ier->Status!=IP_REQ_TIMED_OUT) {
-                    struct ip* rep_ip_header;
-                    struct icmp* rep_icmp_header;
-                    /* The ICMP header size of all the packets we accept is the same */
-                    rep_ip_header=(struct ip*)(((char*)icmp_header)+ICMP_MINLEN);
-                    rep_icmp_header=(struct icmp*)(((char*)rep_ip_header)+(rep_ip_header->ip_hl << 2));
-
-		    /* Make sure that this is really a reply to our packet */
-                    if (ip_header_len+ICMP_MINLEN+(rep_ip_header->ip_hl << 2)+ICMP_MINLEN>ip_header->ip_len) {
-			ier->Status=IP_REQ_TIMED_OUT;
-                    } else if ((rep_icmp_header->icmp_type!=ICMP_ECHO) ||
-                        (rep_icmp_header->icmp_code!=0) ||
-                        (rep_icmp_header->icmp_id!=id) ||
-                        /* windows doesn't check this checksum, else tracert */
-                        /* behind a Linux 2.2 masquerading firewall would fail*/
-                        /* (rep_icmp_header->icmp_cksum!=cksum) || */
-                        (rep_icmp_header->icmp_seq!=seq)) {
-                        /* This was not a reply to one of our packets after all */
-                        TRACE("skipping type,code=%d,%d id,seq=%d,%d cksum=%d\n",
-                            rep_icmp_header->icmp_type,rep_icmp_header->icmp_code,
-                            rep_icmp_header->icmp_id,rep_icmp_header->icmp_seq,
-                            rep_icmp_header->icmp_cksum);
-                        TRACE("expected type,code=8,0 id,seq=%d,%d cksum=%d\n",
-                            id,seq,
-                            cksum);
-			ier->Status=IP_REQ_TIMED_OUT;
-		    }
-                }
-	    }
-	}
-
-        if (ier->Status==IP_REQ_TIMED_OUT) {
-            /* This packet was not for us.
-             * Decrease the timeout so that we don't enter an endless loop even
-             * if we get flooded with ICMP packets that are not for us.
-             */
-            DWORD t = (recv_time - send_time);
-            if (Timeout > t) Timeout -= t;
-            else             Timeout = 0;
-            continue;
-        } else {
-            /* Check free space, should be large enough for an ICMP_ECHO_REPLY and remainning icmp data */
-            if (endbuf-(char *)ier < sizeof(struct icmp_echo_reply)+(res-ip_header_len-ICMP_MINLEN)) {
-                res=ier-(ICMP_ECHO_REPLY *)ReplyBuffer;
-                SetLastError(IP_GENERAL_FAILURE);
-                goto done;
-            }
-            /* This is a reply to our packet */
-            memcpy(&ier->Address,&ip_header->ip_src,sizeof(IPAddr));
-            /* Status is already set */
-            ier->RoundTripTime= recv_time - send_time;
-            ier->DataSize=res-ip_header_len-ICMP_MINLEN;
-            ier->Reserved=0;
-            ier->Data=endbuf-ier->DataSize;
-            memcpy(ier->Data, ((char *)ip_header)+ip_header_len+ICMP_MINLEN, ier->DataSize);
-            ier->Options.Ttl=ip_header->ip_ttl;
-            ier->Options.Tos=ip_header->ip_tos;
-            ier->Options.Flags=ip_header->ip_off >> 13;
-            ier->Options.OptionsSize=ip_header_len-sizeof(struct ip);
-            if (ier->Options.OptionsSize!=0) {
-                ier->Options.OptionsData=(unsigned char *) ier->Data-ier->Options.OptionsSize;
-                /* FIXME: We are supposed to rearrange the option's 'source route' data */
-                memcpy(ier->Options.OptionsData, ((char *)ip_header)+ip_header_len, ier->Options.OptionsSize);
-                endbuf=(char*)ier->Options.OptionsData;
-            } else {
-                ier->Options.OptionsData=NULL;
-                endbuf=ier->Data;
-            }
-
-            /* Prepare for the next packet */
-            endbuf-=ier->DataSize;
-            ier++;
-
-            /* Check out whether there is more but don't wait this time */
-            Timeout=0;
-        }
-    }
-    res=ier-(ICMP_ECHO_REPLY*)ReplyBuffer;
-    if (res==0)
-        SetLastError(IP_REQ_TIMED_OUT);
-done:
-    HeapFree(GetProcessHeap(), 0, buffer);
-    TRACE("received %d replies\n",res);
-    return res;
+    return icmp_get_reply(icp->sid, buffer, send_time, ReplyBuffer, ReplySize, Timeout);
 }
 
 /***********************************************************************
