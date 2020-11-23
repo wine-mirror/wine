@@ -886,13 +886,12 @@ static void test_source_reader_from_media_source(void)
     hr = IMFSourceReader_SetStreamSelection(reader, 2, TRUE);
     ok(hr == S_OK, "Failed to select a stream, hr %#x.\n", hr);
 
-    for (i = 0; i < 2 * TEST_SOURCE_NUM_STREAMS; ++i)
+    for (i = 0; i < TEST_SOURCE_NUM_STREAMS + 1; ++i)
     {
         hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_ANY_STREAM, 0, &actual_index, &stream_flags,
                 &timestamp, &sample);
         ok(hr == S_OK, "Failed to get a sample, hr %#x.\n", hr);
-        ok(actual_index == (i < TEST_SOURCE_NUM_STREAMS ? i : 0), "%d: Unexpected stream index %u\n",
-                i, actual_index);
+        ok(actual_index == i % TEST_SOURCE_NUM_STREAMS, "%d: Unexpected stream index %u\n", i, actual_index);
         ok(!stream_flags, "Unexpected stream flags %#x.\n", stream_flags);
         ok(timestamp == 123, "Unexpected timestamp.\n");
         ok(!!sample, "Expected sample object.\n");
@@ -905,13 +904,12 @@ static void test_source_reader_from_media_source(void)
     hr = IMFSourceReader_SetStreamSelection(reader, 0, TRUE);
     ok(hr == S_OK, "Failed to select a stream, hr %#x.\n", hr);
 
-    for (i = 0; i < 2 * TEST_SOURCE_NUM_STREAMS; ++i)
+    for (i = 0; i < TEST_SOURCE_NUM_STREAMS + 1; ++i)
     {
         hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_ANY_STREAM, 0, &actual_index, &stream_flags,
                 &timestamp, &sample);
         ok(hr == S_OK, "Failed to get a sample, hr %#x.\n", hr);
-        ok(actual_index == (i < TEST_SOURCE_NUM_STREAMS ? i : 0), "%d: Unexpected stream index %u\n",
-                i, actual_index);
+        ok(actual_index == i % TEST_SOURCE_NUM_STREAMS, "%d: Unexpected stream index %u\n", i, actual_index);
         ok(!stream_flags, "Unexpected stream flags %#x.\n", stream_flags);
         ok(timestamp == 123, "Unexpected timestamp.\n");
         ok(!!sample, "Expected sample object.\n");
