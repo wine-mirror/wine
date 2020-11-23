@@ -326,7 +326,7 @@ static HRESULT WINAPI EnumFilters_Skip(IEnumFilters *iface, ULONG count)
         return VFW_E_ENUM_OUT_OF_SYNC;
 
     if (!enum_filters->cursor)
-        return S_FALSE;
+        return E_INVALIDARG;
 
     while (count--)
     {

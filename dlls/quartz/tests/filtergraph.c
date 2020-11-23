@@ -677,6 +677,12 @@ static void test_enum_filters(void)
     hr = IEnumFilters_Next(enum1, 1, filters, NULL);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
+    hr = IEnumFilters_Skip(enum1, 0);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Skip(enum1, 1);
+    ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
+
     IFilterGraph2_AddFilter(graph, filter1, NULL);
     IFilterGraph2_AddFilter(graph, filter2, NULL);
 
