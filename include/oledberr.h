@@ -83,6 +83,9 @@
 
 #define DB_E_MISMATCHEDPROVIDER             0x80040e75
 
+#define DB_S_BOOKMARKSKIPPED                0x00040ec3
+#define DB_S_NONEXTROWSET                   0x00040ec5
+#define DB_S_ENDOFROWSET                    0x00040ec6
 #define DB_S_ERRORSOCCURRED                 0x00040eda
 
 #endif /* __WINE_OLEDBERR_H */
