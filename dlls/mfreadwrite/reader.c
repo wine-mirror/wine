@@ -1906,9 +1906,11 @@ static HRESULT WINAPI src_reader_GetServiceForStream(IMFSourceReader *iface, DWO
 {
     struct source_reader *reader = impl_from_IMFSourceReader(iface);
     IUnknown *obj = NULL;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE("%p, %#x, %s, %s, %p\n", iface, index, debugstr_guid(service), debugstr_guid(riid), object);
+
+    EnterCriticalSection(&reader->cs);
 
     switch (index)
     {
@@ -1916,25 +1918,47 @@ static HRESULT WINAPI src_reader_GetServiceForStream(IMFSourceReader *iface, DWO
             obj = (IUnknown *)reader->source;
             break;
         default:
-            FIXME("Unsupported index %#x.\n", index);
-            return E_NOTIMPL;
+            if (index == MF_SOURCE_READER_FIRST_VIDEO_STREAM)
+                index = reader->first_video_stream_index;
+            else if (index == MF_SOURCE_READER_FIRST_AUDIO_STREAM)
+                index = reader->first_audio_stream_index;
+
+            if (index >= reader->stream_count)
+                hr = MF_E_INVALIDSTREAMNUMBER;
+            else
+            {
+                obj = (IUnknown *)reader->streams[index].decoder;
+                if (!obj) hr = E_NOINTERFACE;
+            }
+            break;
     }
 
-    if (IsEqualGUID(service, &GUID_NULL))
-    {
-        hr = IUnknown_QueryInterface(obj, riid, object);
-    }
-    else
-    {
-        IMFGetService *gs;
+    if (obj)
+        IUnknown_AddRef(obj);
 
-        hr = IUnknown_QueryInterface(obj, &IID_IMFGetService, (void **)&gs);
-        if (SUCCEEDED(hr))
+    LeaveCriticalSection(&reader->cs);
+
+    if (obj)
+    {
+        if (IsEqualGUID(service, &GUID_NULL))
         {
-            hr = IMFGetService_GetService(gs, service, riid, object);
-            IMFGetService_Release(gs);
+            hr = IUnknown_QueryInterface(obj, riid, object);
+        }
+        else
+        {
+            IMFGetService *gs;
+
+            hr = IUnknown_QueryInterface(obj, &IID_IMFGetService, (void **)&gs);
+            if (SUCCEEDED(hr))
+            {
+                hr = IMFGetService_GetService(gs, service, riid, object);
+                IMFGetService_Release(gs);
+            }
         }
     }
+
+    if (obj)
+        IUnknown_Release(obj);
 
     return hr;
 }
