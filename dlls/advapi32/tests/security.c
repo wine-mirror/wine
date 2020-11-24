@@ -5195,7 +5195,7 @@ static void test_CreateRestrictedToken(void)
     TOKEN_TYPE type;
     BOOL is_member;
     DWORD size;
-    LUID luid;
+    LUID luid = { 0, 0 };
     BOOL ret;
     DWORD i;
 
