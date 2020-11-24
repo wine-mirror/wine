@@ -1194,39 +1194,6 @@ typedef enum _ALTERNATIVE_ARCHITECTURE_TYPE
 #define NX_SUPPORT_POLICY_OPTIN         2
 #define NX_SUPPORT_POLICY_OPTOUT        3
 
-#define XSTATE_LEGACY_FLOATING_POINT        0
-#define XSTATE_LEGACY_SSE                   1
-#define XSTATE_GSSE                         2
-
-#define XSTATE_MASK_LEGACY_FLOATING_POINT   (1 << XSTATE_LEGACY_FLOATING_POINT)
-#define XSTATE_MASK_LEGACY_SSE              (1 << XSTATE_LEGACY_SSE)
-#define XSTATE_MASK_LEGACY                  (XSTATE_MASK_LEGACY_FLOATING_POINT | XSTATE_MASK_LEGACY_SSE)
-#define XSTATE_MASK_GSSE                    (1 << XSTATE_GSSE)
-
-#define MAXIMUM_XSTATE_FEATURES             64
-
-typedef struct _XSTATE_FEATURE
-{
-    ULONG Offset;
-    ULONG Size;
-} XSTATE_FEATURE, *PXSTATE_FEATURE;
-
-typedef struct _XSTATE_CONFIGURATION
-{
-    ULONG64 EnabledFeatures;
-    ULONG64 EnabledVolatileFeatures;
-    ULONG Size;
-    ULONG OptimizedSave:1;
-    ULONG CompactionEnabled:1;
-    XSTATE_FEATURE Features[MAXIMUM_XSTATE_FEATURES];
-
-    ULONG64 EnabledSupervisorFeatures;
-    ULONG64 AlignedFeatures;
-    ULONG AllFeatureSize;
-    ULONG AllFeatures[MAXIMUM_XSTATE_FEATURES];
-    ULONG64 EnabledUserVisibleSupervisorFeatures;
-} XSTATE_CONFIGURATION, *PXSTATE_CONFIGURATION;
-
 typedef struct _KUSER_SHARED_DATA {
     ULONG TickCountLowDeprecated;                          /* 0x000 */
     ULONG TickCountMultiplier;                             /* 0x004 */
@@ -1835,20 +1802,6 @@ HANDLE    WINAPI PsGetCurrentThreadId(void);
 HANDLE    WINAPI PsGetProcessInheritedFromUniqueProcessId(PEPROCESS);
 BOOLEAN   WINAPI PsGetVersion(ULONG*,ULONG*,ULONG*,UNICODE_STRING*);
 NTSTATUS  WINAPI PsTerminateSystemThread(NTSTATUS);
-
-#if defined(__x86_64__) || defined(__i386__)
-NTSTATUS  WINAPI RtlCopyExtendedContext(CONTEXT_EX*,ULONG,CONTEXT_EX*);
-NTSTATUS  WINAPI RtlInitializeExtendedContext(void*,ULONG,CONTEXT_EX**);
-NTSTATUS  WINAPI RtlInitializeExtendedContext2(void*,ULONG,CONTEXT_EX**,ULONG64);
-ULONG64   WINAPI RtlGetEnabledExtendedFeatures(ULONG64);
-NTSTATUS  WINAPI RtlGetExtendedContextLength(ULONG,ULONG*);
-NTSTATUS  WINAPI RtlGetExtendedContextLength2(ULONG,ULONG*,ULONG64);
-void *    WINAPI RtlLocateLegacyContext(CONTEXT_EX*,ULONG*);
-void *    WINAPI RtlLocateExtendedFeature(CONTEXT_EX*,ULONG,ULONG*);
-void *    WINAPI RtlLocateExtendedFeature2(CONTEXT_EX*,ULONG,XSTATE_CONFIGURATION*,ULONG*);
-ULONG64   WINAPI RtlGetExtendedFeaturesMask(CONTEXT_EX*);
-void      WINAPI RtlSetExtendedFeaturesMask(CONTEXT_EX*,ULONG64);
-#endif
 
 #ifdef __x86_64__
 void      WINAPI RtlCopyMemoryNonTemporal(void*,const void*,SIZE_T);

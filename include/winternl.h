@@ -3660,6 +3660,20 @@ NTSYSAPI NTSTATUS  WINAPI RtlpUnWaitCriticalSection(RTL_CRITICAL_SECTION *);
 NTSYSAPI NTSTATUS  WINAPI vDbgPrintEx(ULONG,ULONG,LPCSTR,__ms_va_list);
 NTSYSAPI NTSTATUS  WINAPI vDbgPrintExWithPrefix(LPCSTR,ULONG,ULONG,LPCSTR,__ms_va_list);
 
+#if defined(__x86_64__) || defined(__i386__)
+NTSYSAPI NTSTATUS  WINAPI RtlCopyExtendedContext(CONTEXT_EX*,ULONG,CONTEXT_EX*);
+NTSYSAPI NTSTATUS  WINAPI RtlInitializeExtendedContext(void*,ULONG,CONTEXT_EX**);
+NTSYSAPI NTSTATUS  WINAPI RtlInitializeExtendedContext2(void*,ULONG,CONTEXT_EX**,ULONG64);
+NTSYSAPI ULONG64   WINAPI RtlGetEnabledExtendedFeatures(ULONG64);
+NTSYSAPI NTSTATUS  WINAPI RtlGetExtendedContextLength(ULONG,ULONG*);
+NTSYSAPI NTSTATUS  WINAPI RtlGetExtendedContextLength2(ULONG,ULONG*,ULONG64);
+NTSYSAPI void *    WINAPI RtlLocateLegacyContext(CONTEXT_EX*,ULONG*);
+NTSYSAPI void *    WINAPI RtlLocateExtendedFeature(CONTEXT_EX*,ULONG,ULONG*);
+NTSYSAPI void *    WINAPI RtlLocateExtendedFeature2(CONTEXT_EX*,ULONG,XSTATE_CONFIGURATION*,ULONG*);
+NTSYSAPI ULONG64   WINAPI RtlGetExtendedFeaturesMask(CONTEXT_EX*);
+NTSYSAPI void      WINAPI RtlSetExtendedFeaturesMask(CONTEXT_EX*,ULONG64);
+#endif
+
 NTSYSAPI int __cdecl _strnicmp(LPCSTR,LPCSTR,size_t);
 
 /* 32-bit only functions */
