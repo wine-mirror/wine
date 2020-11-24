@@ -239,7 +239,7 @@ static HRESULT WINAPI filesinkfilter_SetFileName(IFileSinkFilter *iface,
     struct file_writer *filter = impl_from_IFileSinkFilter(iface);
     WCHAR *new_filename;
 
-    TRACE("filter %p, filename %s, mt %p, stub!\n", filter, debugstr_w(filename), mt);
+    TRACE("filter %p, filename %s, mt %p.\n", filter, debugstr_w(filename), mt);
     strmbase_dump_media_type(mt);
 
     if (mt)
