@@ -1036,7 +1036,7 @@ static DWORD CALLBACK deviceloop_thread(void *args)
         HKEY key;
         static const WCHAR szPath[] = {'m','a','p',0};
 
-        if (!RegOpenKeyExW(driver_key, szPath, 0, KEY_ENUMERATE_SUB_KEYS, &key))
+        if (!RegOpenKeyExW(driver_key, szPath, 0, KEY_QUERY_VALUE, &key))
         {
             DWORD index = 0;
             CHAR *buffer = NULL;
