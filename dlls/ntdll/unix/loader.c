@@ -810,11 +810,15 @@ static NTSTATUS fixup_ntdll_imports( const char *name, HMODULE module )
 {
     const IMAGE_NT_HEADERS *nt;
     const IMAGE_IMPORT_DESCRIPTOR *descr;
+    const IMAGE_DATA_DIRECTORY *dir;
     const IMAGE_THUNK_DATA *import_list;
     IMAGE_THUNK_DATA *thunk_list;
 
     nt = get_rva( module, ((IMAGE_DOS_HEADER *)module)->e_lfanew );
-    descr = get_rva( module, nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].VirtualAddress );
+    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
+    if (!dir->VirtualAddress || !dir->Size) return STATUS_SUCCESS;
+
+    descr = get_rva( module, dir->VirtualAddress );
     for (; descr->Name && descr->FirstThunk; descr++)
     {
         thunk_list = get_rva( module, descr->FirstThunk );
