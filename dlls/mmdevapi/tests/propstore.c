@@ -33,14 +33,7 @@
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
 
 static const WCHAR software_renderW[] =
-    { 'S','o','f','t','w','a','r','e','\\',
-      'M','i','c','r','o','s','o','f','t','\\',
-      'W','i','n','d','o','w','s','\\',
-      'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-      'M','M','D','e','v','i','c','e','s','\\',
-      'A','u','d','i','o','\\',
-      'R','e','n','d','e','r',0 };
-static const WCHAR propertiesW[] = {'P','r','o','p','e','r','t','i','e','s',0};
+    L"Software\\Microsoft\\Windows\\CurrentVersion\\MMDevices\\Audio\\Render";
 
 
 static void test_propertystore(IPropertyStore *store)
@@ -138,7 +131,7 @@ static void test_setvalue_on_wow64(IPropertyStore *store)
     static const PROPERTYKEY PKEY_Bogus = {
         {0x1da5d803, 0xd492, 0x4edd, {0x8c, 0x23, 0xe0, 0xc0, 0xff, 0xee, 0x7f, 0x00}}, 0x7f
     };
-    static const WCHAR bogusW[] = {'{','1','D','A','5','D','8','0','3','-','D','4','9','2','-','4','E','D','D','-','8','C','2','3','-','E','0','C','0','F','F','E','E','7','F','0','0','}',',','1','2','7',0};
+    static const WCHAR bogusW[] = L"{1DA5D803-D492-4EDD-8C23-E0C0FFEE7F00},127";
 
     PropVariantInit(&pv);
 
@@ -172,7 +165,7 @@ static void test_setvalue_on_wow64(IPropertyStore *store)
     ret = RegOpenKeyExW(root, guidW, 0, KEY_READ|KEY_WOW64_64KEY, &devkey);
     ok(ret == ERROR_SUCCESS, "Couldn't open mmdevice guid key: %u\n", ret);
 
-    ret = RegOpenKeyExW(devkey, propertiesW, 0, KEY_READ|KEY_WOW64_64KEY, &props);
+    ret = RegOpenKeyExW(devkey, L"Properties", 0, KEY_READ|KEY_WOW64_64KEY, &props);
     ok(ret == ERROR_SUCCESS, "Couldn't open mmdevice property key: %u\n", ret);
 
     /* Note: the registry key exists even without calling IPropStore::Commit */

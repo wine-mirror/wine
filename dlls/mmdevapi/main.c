@@ -47,8 +47,7 @@ static HINSTANCE instance;
 
 DriverFuncs drvs;
 
-const WCHAR drv_keyW[] = {'S','o','f','t','w','a','r','e','\\',
-    'W','i','n','e','\\','D','r','i','v','e','r','s',0};
+const WCHAR drv_keyW[] = L"Software\\Wine\\Drivers";
 
 static const char *get_priority_string(int prio)
 {
@@ -68,12 +67,10 @@ static const char *get_priority_string(int prio)
 static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
 {
     WCHAR driver_module[264];
-    static const WCHAR wineW[] = {'w','i','n','e',0};
-    static const WCHAR dotdrvW[] = {'.','d','r','v',0};
 
-    lstrcpyW(driver_module, wineW);
+    lstrcpyW(driver_module, L"wine");
     lstrcatW(driver_module, name);
-    lstrcatW(driver_module, dotdrvW);
+    lstrcatW(driver_module, L".drv");
 
     TRACE("Attempting to load %s\n", wine_dbgstr_w(driver_module));
 
@@ -106,11 +103,7 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
 
 static BOOL WINAPI init_driver(INIT_ONCE *once, void *param, void **context)
 {
-    static const WCHAR drv_value[] = {'A','u','d','i','o',0};
-
-    static WCHAR default_list[] = {'p','u','l','s','e',',','a','l','s','a',',','o','s','s',',',
-        'c','o','r','e','a','u','d','i','o',',','a','n','d','r','o','i','d',0};
-
+    static WCHAR default_list[] = L"pulse,alsa,oss,coreaudio,android";
     DriverFuncs driver;
     HKEY key;
     WCHAR reg_list[256], *p, *next, *driver_list = default_list;
@@ -118,8 +111,7 @@ static BOOL WINAPI init_driver(INIT_ONCE *once, void *param, void **context)
     if(RegOpenKeyW(HKEY_CURRENT_USER, drv_keyW, &key) == ERROR_SUCCESS){
         DWORD size = sizeof(reg_list);
 
-        if(RegQueryValueExW(key, drv_value, 0, NULL, (BYTE*)reg_list,
-                    &size) == ERROR_SUCCESS){
+        if(RegQueryValueExW(key, L"Audio", 0, NULL, (BYTE*)reg_list, &size) == ERROR_SUCCESS){
             if(reg_list[0] == '\0'){
                 TRACE("User explicitly chose no driver\n");
                 RegCloseKey(key);
