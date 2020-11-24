@@ -279,3 +279,31 @@ HRESULT TiffEncoder_CreateInstance(REFIID iid, void** ppv)
 
     return hr;
 }
+
+HRESULT JpegDecoder_CreateInstance(REFIID iid, void** ppv)
+{
+    HRESULT hr;
+    struct decoder *decoder;
+    struct decoder_info decoder_info;
+
+    hr = get_unix_decoder(&CLSID_WICJpegDecoder, &decoder_info, &decoder);
+
+    if (SUCCEEDED(hr))
+        hr = CommonDecoder_CreateInstance(decoder, &decoder_info, iid, ppv);
+
+    return hr;
+}
+
+HRESULT JpegEncoder_CreateInstance(REFIID iid, void** ppv)
+{
+    HRESULT hr;
+    struct encoder *encoder;
+    struct encoder_info encoder_info;
+
+    hr = get_unix_encoder(&CLSID_WICJpegEncoder, &encoder_info, &encoder);
+
+    if (SUCCEEDED(hr))
+        hr = CommonEncoder_CreateInstance(encoder, &encoder_info, iid, ppv);
+
+    return hr;
+}

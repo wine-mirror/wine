@@ -22,7 +22,6 @@ C_SRCS = \
 	icoformat.c \
 	imgfactory.c \
 	info.c \
-	jpegformat.c \
 	libjpeg.c \
 	libpng.c \
 	libtiff.c \

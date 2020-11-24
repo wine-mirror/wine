@@ -343,6 +343,12 @@ enum encoder_option
     ENCODER_OPTION_FILTER,
     ENCODER_OPTION_COMPRESSION_METHOD,
     ENCODER_OPTION_COMPRESSION_QUALITY,
+    ENCODER_OPTION_IMAGE_QUALITY,
+    ENCODER_OPTION_BITMAP_TRANSFORM,
+    ENCODER_OPTION_LUMINANCE,
+    ENCODER_OPTION_CHROMINANCE,
+    ENCODER_OPTION_YCRCB_SUBSAMPLING,
+    ENCODER_OPTION_SUPPRESS_APP0,
     ENCODER_OPTION_END
 };
 
@@ -400,6 +406,7 @@ HRESULT CDECL jpeg_decoder_create(struct decoder_info *info, struct decoder **re
 
 HRESULT CDECL png_encoder_create(struct encoder_info *info, struct encoder **result);
 HRESULT CDECL tiff_encoder_create(struct encoder_info *info, struct encoder **result);
+HRESULT CDECL jpeg_encoder_create(struct encoder_info *info, struct encoder **result);
 
 struct unix_funcs
 {

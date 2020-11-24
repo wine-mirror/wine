@@ -453,11 +453,324 @@ HRESULT CDECL jpeg_decoder_create(struct decoder_info *info, struct decoder **re
     return S_OK;
 }
 
+typedef struct jpeg_compress_format {
+    const WICPixelFormatGUID *guid;
+    int bpp;
+    int num_components;
+    J_COLOR_SPACE color_space;
+    int swap_rgb;
+} jpeg_compress_format;
+
+static const jpeg_compress_format compress_formats[] = {
+    { &GUID_WICPixelFormat24bppBGR, 24, 3, JCS_RGB, 1 },
+    { &GUID_WICPixelFormat32bppCMYK, 32, 4, JCS_CMYK },
+    { &GUID_WICPixelFormat8bppGray, 8, 1, JCS_GRAYSCALE },
+    { 0 }
+};
+
+struct jpeg_encoder
+{
+    struct encoder encoder;
+    IStream *stream;
+    BOOL cinfo_initialized;
+    struct jpeg_compress_struct cinfo;
+    struct jpeg_error_mgr jerr;
+    struct jpeg_destination_mgr dest_mgr;
+    struct encoder_frame encoder_frame;
+    const jpeg_compress_format *format;
+    BYTE dest_buffer[1024];
+};
+
+static inline struct jpeg_encoder *impl_from_encoder(struct encoder* iface)
+{
+    return CONTAINING_RECORD(iface, struct jpeg_encoder, encoder);
+}
+
+static inline struct jpeg_encoder *encoder_from_compress(j_compress_ptr compress)
+{
+    return CONTAINING_RECORD(compress, struct jpeg_encoder, cinfo);
+}
+
+static void dest_mgr_init_destination(j_compress_ptr cinfo)
+{
+    struct jpeg_encoder *This = encoder_from_compress(cinfo);
+
+    This->dest_mgr.next_output_byte = This->dest_buffer;
+    This->dest_mgr.free_in_buffer = sizeof(This->dest_buffer);
+}
+
+static jpeg_boolean dest_mgr_empty_output_buffer(j_compress_ptr cinfo)
+{
+    struct jpeg_encoder *This = encoder_from_compress(cinfo);
+    HRESULT hr;
+    ULONG byteswritten;
+
+    hr = stream_write(This->stream, This->dest_buffer,
+        sizeof(This->dest_buffer), &byteswritten);
+
+    if (hr != S_OK || byteswritten == 0)
+    {
+        ERR("Failed writing data, hr=%x\n", hr);
+        return FALSE;
+    }
+
+    This->dest_mgr.next_output_byte = This->dest_buffer;
+    This->dest_mgr.free_in_buffer = sizeof(This->dest_buffer);
+    return TRUE;
+}
+
+static void dest_mgr_term_destination(j_compress_ptr cinfo)
+{
+    struct jpeg_encoder *This = encoder_from_compress(cinfo);
+    ULONG byteswritten;
+    HRESULT hr;
+
+    if (This->dest_mgr.free_in_buffer != sizeof(This->dest_buffer))
+    {
+        hr = stream_write(This->stream, This->dest_buffer,
+            sizeof(This->dest_buffer) - This->dest_mgr.free_in_buffer, &byteswritten);
+
+        if (hr != S_OK || byteswritten == 0)
+            ERR("Failed writing data, hr=%x\n", hr);
+    }
+}
+
+HRESULT CDECL jpeg_encoder_initialize(struct encoder* iface, IStream *stream)
+{
+    struct jpeg_encoder *This = impl_from_encoder(iface);
+    jmp_buf jmpbuf;
+
+    pjpeg_std_error(&This->jerr);
+
+    This->jerr.error_exit = error_exit_fn;
+    This->jerr.emit_message = emit_message_fn;
+
+    This->cinfo.err = &This->jerr;
+
+    This->cinfo.client_data = jmpbuf;
+
+    if (setjmp(jmpbuf))
+        return E_FAIL;
+
+    pjpeg_CreateCompress(&This->cinfo, JPEG_LIB_VERSION, sizeof(struct jpeg_compress_struct));
+
+    This->stream = stream;
+
+    This->dest_mgr.next_output_byte = This->dest_buffer;
+    This->dest_mgr.free_in_buffer = sizeof(This->dest_buffer);
+
+    This->dest_mgr.init_destination = dest_mgr_init_destination;
+    This->dest_mgr.empty_output_buffer = dest_mgr_empty_output_buffer;
+    This->dest_mgr.term_destination = dest_mgr_term_destination;
+
+    This->cinfo.dest = &This->dest_mgr;
+
+    This->cinfo_initialized = TRUE;
+
+    return S_OK;
+}
+
+HRESULT CDECL jpeg_encoder_get_supported_format(struct encoder* iface, GUID *pixel_format,
+    DWORD *bpp, BOOL *indexed)
+{
+    int i;
+
+    for (i=0; compress_formats[i].guid; i++)
+    {
+        if (memcmp(compress_formats[i].guid, pixel_format, sizeof(GUID)) == 0)
+            break;
+    }
+
+    if (!compress_formats[i].guid) i = 0;
+
+    *pixel_format = *compress_formats[i].guid;
+    *bpp = compress_formats[i].bpp;
+    *indexed = FALSE;
+
+    return S_OK;
+}
+
+HRESULT CDECL jpeg_encoder_create_frame(struct encoder* iface, const struct encoder_frame *frame)
+{
+    struct jpeg_encoder *This = impl_from_encoder(iface);
+    jmp_buf jmpbuf;
+    int i;
+
+    This->encoder_frame = *frame;
+
+    if (setjmp(jmpbuf))
+        return E_FAIL;
+
+    This->cinfo.client_data = jmpbuf;
+
+    for (i=0; compress_formats[i].guid; i++)
+    {
+        if (memcmp(compress_formats[i].guid, &frame->pixel_format, sizeof(GUID)) == 0)
+            break;
+    }
+    This->format = &compress_formats[i];
+
+    This->cinfo.image_width = frame->width;
+    This->cinfo.image_height = frame->height;
+    This->cinfo.input_components = This->format->num_components;
+    This->cinfo.in_color_space = This->format->color_space;
+
+    pjpeg_set_defaults(&This->cinfo);
+
+    if (frame->dpix != 0.0 && frame->dpiy != 0.0)
+    {
+        This->cinfo.density_unit = 1; /* dots per inch */
+        This->cinfo.X_density = frame->dpix;
+        This->cinfo.Y_density = frame->dpiy;
+    }
+
+    pjpeg_start_compress(&This->cinfo, TRUE);
+
+    return S_OK;
+}
+
+HRESULT CDECL jpeg_encoder_write_lines(struct encoder* iface, BYTE *data,
+    DWORD line_count, DWORD stride)
+{
+    struct jpeg_encoder *This = impl_from_encoder(iface);
+    jmp_buf jmpbuf;
+    BYTE *swapped_data = NULL, *current_row;
+    UINT line;
+    int row_size;
+
+    if (setjmp(jmpbuf))
+    {
+        free(swapped_data);
+        return E_FAIL;
+    }
+
+    This->cinfo.client_data = jmpbuf;
+
+    row_size = This->format->bpp / 8 * This->encoder_frame.width;
+
+    if (This->format->swap_rgb)
+    {
+        swapped_data = malloc(row_size);
+        if (!swapped_data)
+            return E_OUTOFMEMORY;
+    }
+
+    for (line=0; line < line_count; line++)
+    {
+        if (This->format->swap_rgb)
+        {
+            UINT x;
+
+            memcpy(swapped_data, data + (stride * line), row_size);
+
+            for (x=0; x < This->encoder_frame.width; x++)
+            {
+                BYTE b;
+
+                b = swapped_data[x*3];
+                swapped_data[x*3] = swapped_data[x*3+2];
+                swapped_data[x*3+2] = b;
+            }
+
+            current_row = swapped_data;
+        }
+        else
+            current_row = data + (stride * line);
+
+        if (!pjpeg_write_scanlines(&This->cinfo, &current_row, 1))
+        {
+            ERR("failed writing scanlines\n");
+            free(swapped_data);
+            return E_FAIL;
+        }
+    }
+
+    free(swapped_data);
+
+    return S_OK;
+}
+
+HRESULT CDECL jpeg_encoder_commit_frame(struct encoder* iface)
+{
+    struct jpeg_encoder *This = impl_from_encoder(iface);
+    jmp_buf jmpbuf;
+
+    if (setjmp(jmpbuf))
+        return E_FAIL;
+
+    This->cinfo.client_data = jmpbuf;
+
+    pjpeg_finish_compress(&This->cinfo);
+
+    return S_OK;
+}
+
+HRESULT CDECL jpeg_encoder_commit_file(struct encoder* iface)
+{
+    return S_OK;
+}
+
+void CDECL jpeg_encoder_destroy(struct encoder* iface)
+{
+    struct jpeg_encoder *This = impl_from_encoder(iface);
+    if (This->cinfo_initialized)
+        pjpeg_destroy_compress(&This->cinfo);
+    RtlFreeHeap(GetProcessHeap(), 0, This);
+};
+
+static const struct encoder_funcs jpeg_encoder_vtable = {
+    jpeg_encoder_initialize,
+    jpeg_encoder_get_supported_format,
+    jpeg_encoder_create_frame,
+    jpeg_encoder_write_lines,
+    jpeg_encoder_commit_frame,
+    jpeg_encoder_commit_file,
+    jpeg_encoder_destroy
+};
+
+HRESULT CDECL jpeg_encoder_create(struct encoder_info *info, struct encoder **result)
+{
+    struct jpeg_encoder *This;
+
+    if (!load_libjpeg())
+    {
+        ERR("Failed writing JPEG because unable to find %s\n", SONAME_LIBJPEG);
+        return E_FAIL;
+    }
+
+    This = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(struct jpeg_encoder));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->encoder.vtable = &jpeg_encoder_vtable;
+    This->stream = NULL;
+    This->cinfo_initialized = FALSE;
+    *result = &This->encoder;
+
+    info->flags = 0;
+    info->container_format = GUID_ContainerFormatJpeg;
+    info->clsid = CLSID_WICJpegEncoder;
+    info->encoder_options[0] = ENCODER_OPTION_IMAGE_QUALITY;
+    info->encoder_options[1] = ENCODER_OPTION_BITMAP_TRANSFORM;
+    info->encoder_options[2] = ENCODER_OPTION_LUMINANCE;
+    info->encoder_options[3] = ENCODER_OPTION_CHROMINANCE;
+    info->encoder_options[4] = ENCODER_OPTION_YCRCB_SUBSAMPLING;
+    info->encoder_options[5] = ENCODER_OPTION_SUPPRESS_APP0;
+    info->encoder_options[6] = ENCODER_OPTION_END;
+
+    return S_OK;
+}
+
 #else /* !defined(SONAME_LIBJPEG) */
 
 HRESULT CDECL jpeg_decoder_create(struct decoder_info *info, struct decoder **result)
 {
     ERR("Trying to load JPEG picture, but JPEG support is not compiled in.\n");
+    return E_FAIL;
+}
+
+HRESULT CDECL jpeg_encoder_create(struct encoder_info *info, struct encoder **result)
+{
+    ERR("Trying to save JPEG picture, but JPEG support is not compiled in.\n");
     return E_FAIL;
 }
 
