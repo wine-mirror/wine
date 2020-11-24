@@ -83,6 +83,28 @@
 #define __ASM_STDCALL_FUNC(name,args,code) __ASM_DEFINE_FUNC(__ASM_STDCALL(#name,args),code)
 #define __ASM_FASTCALL_FUNC(name,args,code) __ASM_DEFINE_FUNC(__ASM_FASTCALL(#name,args),code)
 
+/* import variables */
+
+#ifdef _WIN64
+#define __ASM_DEFINE_IMPORT(name) \
+    __ASM_BLOCK_BEGIN(__LINE__) \
+    asm(".data\n\t.balign 8\n\t.globl __imp_" name "\n__imp_" name ":\n\t.quad " name "\n\t.text"); \
+    __ASM_BLOCK_END
+#else
+#define __ASM_DEFINE_IMPORT(name) \
+    __ASM_BLOCK_BEGIN(__LINE__) \
+    asm(".data\n\t.balign 4\n\t.globl __imp_" name "\n__imp_" name ":\n\t.long " name "\n\t.text"); \
+    __ASM_BLOCK_END
+#endif
+
+#ifdef _WIN32
+#define __ASM_GLOBAL_IMPORT(name) __ASM_DEFINE_IMPORT(__ASM_NAME(#name))
+#define __ASM_STDCALL_IMPORT(name,args) __ASM_DEFINE_IMPORT(__ASM_STDCALL(#name,args))
+#else
+#define __ASM_GLOBAL_IMPORT(name) /* nothing */
+#define __ASM_STDCALL_IMPORT(name,args) /* nothing */
+#endif
+
 /* fastcall support */
 
 #if defined(__i386__) && !defined(_WIN32)
