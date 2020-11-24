@@ -85,7 +85,7 @@ static void vfw_capture_destroy(struct strmbase_filter *iface)
     if (filter->init)
     {
         if (filter->filter.state != State_Stopped)
-            filter->device->ops->stop_stream(filter->device);
+            filter->device->ops->cleanup_stream(filter->device);
         filter->device->ops->destroy(filter->device);
     }
 
