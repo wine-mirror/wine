@@ -491,8 +491,6 @@ static void process_meta_element(HTMLDocumentNode *doc, nsIDOMHTMLMetaElement *m
     nsAString http_equiv_str, content_str;
     nsresult nsres;
 
-    static const WCHAR x_ua_compatibleW[] = {'x','-','u','a','-','c','o','m','p','a','t','i','b','l','e',0};
-
     nsAString_Init(&http_equiv_str, NULL);
     nsAString_Init(&content_str, NULL);
     nsres = nsIDOMHTMLMetaElement_GetHttpEquiv(meta_element, &http_equiv_str);
@@ -507,7 +505,7 @@ static void process_meta_element(HTMLDocumentNode *doc, nsIDOMHTMLMetaElement *m
 
         TRACE("%s: %s\n", debugstr_w(http_equiv), debugstr_w(content));
 
-        if(!wcsicmp(http_equiv, x_ua_compatibleW)) {
+        if(!wcsicmp(http_equiv, L"x-ua-compatible")) {
             compat_mode_t document_mode;
             if(parse_ua_compatible(content, &document_mode))
                 set_document_mode(doc, document_mode, TRUE);

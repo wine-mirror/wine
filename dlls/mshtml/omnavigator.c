@@ -1137,11 +1137,9 @@ static HRESULT WINAPI OmNavigator_get_appCodeName(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
 
-    static const WCHAR mozillaW[] = {'M','o','z','i','l','l','a',0};
-
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = SysAllocString(mozillaW);
+    *p = SysAllocString(L"Mozilla");
     return S_OK;
 }
 
@@ -1149,14 +1147,9 @@ static HRESULT WINAPI OmNavigator_get_appName(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
 
-    static const WCHAR app_nameW[] =
-        {'M','i','c','r','o','s','o','f','t',' ',
-         'I','n','t','e','r','n','e','t',' ',
-         'E','x','p','l','o','r','e','r',0};
-
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = SysAllocString(app_nameW);
+    *p = SysAllocString(L"Microsoft Internet Explorer");
     if(!*p)
         return E_OUTOFMEMORY;
 
@@ -1294,14 +1287,12 @@ static HRESULT WINAPI OmNavigator_toString(IOmNavigator *iface, BSTR *String)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
 
-    static const WCHAR objectW[] = {'[','o','b','j','e','c','t',']',0};
-
     TRACE("(%p)->(%p)\n", This, String);
 
     if(!String)
         return E_INVALIDARG;
 
-    *String = SysAllocString(objectW);
+    *String = SysAllocString(L"[object]");
     return *String ? S_OK : E_OUTOFMEMORY;
 }
 
@@ -1309,16 +1300,13 @@ static HRESULT WINAPI OmNavigator_get_cpuClass(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
 
-    static const WCHAR cpu_classW[] =
-#ifdef _WIN64
-        {'x','6','4',0};
-#else
-        {'x','8','6',0};
-#endif
-
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = SysAllocString(cpu_classW);
+#ifdef _WIN64
+    *p = SysAllocString(L"x64");
+#else
+    *p = SysAllocString(L"x86");
+#endif
     return *p ? S_OK : E_OUTOFMEMORY;
 }
 
@@ -1379,15 +1367,13 @@ static HRESULT WINAPI OmNavigator_get_platform(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
 
-#ifdef _WIN64
-    static const WCHAR platformW[] = {'W','i','n','6','4',0};
-#else
-    static const WCHAR platformW[] = {'W','i','n','3','2',0};
-#endif
-
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = SysAllocString(platformW);
+#ifdef _WIN64
+    *p = SysAllocString(L"Win64");
+#else
+    *p = SysAllocString(L"Win32");
+#endif
     return S_OK;
 }
 
@@ -1395,12 +1381,10 @@ static HRESULT WINAPI OmNavigator_get_appMinorVersion(IOmNavigator *iface, BSTR 
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
 
-    static const WCHAR zeroW[] = {'0',0};
-
     TRACE("(%p)->(%p)\n", This, p);
 
     /* NOTE: MSIE returns "0" or values like ";SP2;". Returning "0" should be enough. */
-    *p = SysAllocString(zeroW);
+    *p = SysAllocString(L"0");
     return S_OK;
 }
 

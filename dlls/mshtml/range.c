@@ -33,9 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-static const WCHAR brW[] = {'b','r',0};
-static const WCHAR hrW[] = {'h','r',0};
-
 typedef struct {
     DispatchEx dispex;
     IHTMLTxtRange     IHTMLTxtRange_iface;
@@ -93,34 +90,20 @@ static HTMLTxtRange *get_range_object(HTMLDocumentNode *doc, IHTMLTxtRange *ifac
 
 static range_unit_t string_to_unit(LPCWSTR str)
 {
-    static const WCHAR characterW[] =
-        {'c','h','a','r','a','c','t','e','r',0};
-    static const WCHAR wordW[] =
-        {'w','o','r','d',0};
-    static const WCHAR sentenceW[] =
-        {'s','e','n','t','e','n','c','e',0};
-    static const WCHAR texteditW[] =
-        {'t','e','x','t','e','d','i','t',0};
-
-    if(!wcsicmp(str, characterW))  return RU_CHAR;
-    if(!wcsicmp(str, wordW))       return RU_WORD;
-    if(!wcsicmp(str, sentenceW))   return RU_SENTENCE;
-    if(!wcsicmp(str, texteditW))   return RU_TEXTEDIT;
+    if(!wcsicmp(str, L"character"))  return RU_CHAR;
+    if(!wcsicmp(str, L"word"))       return RU_WORD;
+    if(!wcsicmp(str, L"sentence"))   return RU_SENTENCE;
+    if(!wcsicmp(str, L"textedit"))   return RU_TEXTEDIT;
 
     return RU_UNKNOWN;
 }
 
 static int string_to_nscmptype(LPCWSTR str)
 {
-    static const WCHAR seW[] = {'S','t','a','r','t','T','o','E','n','d',0};
-    static const WCHAR ssW[] = {'S','t','a','r','t','T','o','S','t','a','r','t',0};
-    static const WCHAR esW[] = {'E','n','d','T','o','S','t','a','r','t',0};
-    static const WCHAR eeW[] = {'E','n','d','T','o','E','n','d',0};
-
-    if(!wcsicmp(str, seW))  return NS_START_TO_END;
-    if(!wcsicmp(str, ssW))  return NS_START_TO_START;
-    if(!wcsicmp(str, esW))  return NS_END_TO_START;
-    if(!wcsicmp(str, eeW))  return NS_END_TO_END;
+    if(!wcsicmp(str, L"StartToEnd"))  return NS_START_TO_END;
+    if(!wcsicmp(str, L"StartToStart"))  return NS_START_TO_START;
+    if(!wcsicmp(str, L"EndToStart"))  return NS_END_TO_START;
+    if(!wcsicmp(str, L"EndToEnd"))  return NS_END_TO_END;
 
     return -1;
 }
@@ -450,10 +433,10 @@ static void wstrbuf_append_node(wstrbuf_t *buf, nsIDOMNode *node, BOOL ignore_te
         break;
     }
     case ELEMENT_NODE:
-        if(is_elem_tag(node, brW)) {
+        if(is_elem_tag(node, L"br")) {
             static const WCHAR endlW[] = {'\r','\n'};
             wstrbuf_append_len(buf, endlW, 2);
-        }else if(is_elem_tag(node, hrW)) {
+        }else if(is_elem_tag(node, L"hr")) {
             static const WCHAR endl2W[] = {'\r','\n','\r','\n'};
             wstrbuf_append_len(buf, endl2W, 4);
         }
@@ -617,7 +600,7 @@ static WCHAR move_next_char(rangepoint_t *iter)
             if(!node)
                 break;
 
-            if(is_elem_tag(node, brW)) {
+            if(is_elem_tag(node, L"br")) {
                 if(cspace) {
                     nsIDOMNode_Release(node);
                     free_rangepoint(iter);
@@ -627,7 +610,7 @@ static WCHAR move_next_char(rangepoint_t *iter)
 
                 cspace = '\n';
                 init_rangepoint(&last_space, iter->node, iter->off+1);
-            }else if(is_elem_tag(node, hrW)) {
+            }else if(is_elem_tag(node, L"hr")) {
                 nsIDOMNode_Release(node);
                 if(cspace) {
                     free_rangepoint(iter);
@@ -707,12 +690,12 @@ static WCHAR move_prev_char(rangepoint_t *iter)
             if(!node)
                 break;
 
-            if(is_elem_tag(node, brW)) {
+            if(is_elem_tag(node, L"br")) {
                 if(cspace)
                     free_rangepoint(&last_space);
                 cspace = '\n';
                 init_rangepoint(&last_space, iter->node, iter->off-1);
-            }else if(is_elem_tag(node, hrW)) {
+            }else if(is_elem_tag(node, L"hr")) {
                 nsIDOMNode_Release(node);
                 if(cspace) {
                     free_rangepoint(iter);
@@ -947,8 +930,7 @@ static HRESULT WINAPI HTMLTxtRange_get_htmlText(IHTMLTxtRange *iface, BSTR *p)
     }
 
     if(!*p) {
-        static const WCHAR emptyW[] = {0};
-        *p = SysAllocString(emptyW);
+        *p = SysAllocString(L"");
     }
 
     TRACE("return %s\n", debugstr_w(*p));

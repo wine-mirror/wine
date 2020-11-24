@@ -67,11 +67,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define SCRIPTLANGUAGEVERSION_HTML 0x400
 #define SCRIPTLANGUAGEVERSION_ES5  0x102
 
-static const WCHAR documentW[] = {'d','o','c','u','m','e','n','t',0};
-static const WCHAR windowW[] = {'w','i','n','d','o','w',0};
-static const WCHAR script_endW[] = {'<','/','S','C','R','I','P','T','>',0};
-static const WCHAR emptyW[] = {0};
-
 struct ScriptHost {
     IActiveScriptSite              IActiveScriptSite_iface;
     IActiveScriptSiteInterruptPoll IActiveScriptSiteInterruptPoll_iface;
@@ -201,7 +196,7 @@ static BOOL init_script_engine(ScriptHost *script_host)
         return FALSE;
     }
 
-    hres = IActiveScript_AddNamedItem(script_host->script, windowW,
+    hres = IActiveScript_AddNamedItem(script_host->script, L"window",
             SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
     if(SUCCEEDED(hres)) {
         V_VT(&var) = VT_BOOL;
@@ -357,7 +352,7 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
 
     *ppiunkItem = NULL;
 
-    if(wcscmp(pstrName, windowW))
+    if(wcscmp(pstrName, L"window"))
         return DISP_E_MEMBERNOTFOUND;
 
     if(!This->window)
@@ -800,7 +795,7 @@ static void parse_elem_text(ScriptHost *script_host, HTMLScriptElement *script_e
     VariantInit(&var);
     memset(&excepinfo, 0, sizeof(excepinfo));
     TRACE(">>>\n");
-    hres = IActiveScriptParse_ParseScriptText(script_host->parse, text, windowW, NULL, script_endW,
+    hres = IActiveScriptParse_ParseScriptText(script_host->parse, text, L"window", NULL, L"</SCRIPT>",
                                               0, 0, SCRIPTTEXT_ISVISIBLE|SCRIPTTEXT_HOSTMANAGESSOURCE,
                                               &var, &excepinfo);
     if(SUCCEEDED(hres))
@@ -1169,17 +1164,10 @@ static GUID get_default_script_guid(HTMLInnerWindow *window)
 
 static BOOL get_guid_from_type(LPCWSTR type, GUID *guid)
 {
-    static const WCHAR text_javascriptW[] =
-        {'t','e','x','t','/','j','a','v','a','s','c','r','i','p','t',0};
-    static const WCHAR text_jscriptW[] =
-        {'t','e','x','t','/','j','s','c','r','i','p','t',0};
-    static const WCHAR text_vbscriptW[] =
-        {'t','e','x','t','/','v','b','s','c','r','i','p','t',0};
-
     /* FIXME: Handle more types */
-    if(!wcsicmp(type, text_javascriptW) || !wcsicmp(type, text_jscriptW)) {
+    if(!wcsicmp(type, L"text/javascript") || !wcsicmp(type, L"text/jscript")) {
         *guid = CLSID_JScript;
-    }else if(!wcsicmp(type, text_vbscriptW)) {
+    }else if(!wcsicmp(type, L"text/vbscript")) {
         *guid = CLSID_VBScript;
     }else {
         FIXME("Unknown type %s\n", debugstr_w(type));
@@ -1306,8 +1294,6 @@ IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
     IDispatch *disp;
     HRESULT hres;
 
-    static const WCHAR delimiterW[] = {'\"',0};
-
     TRACE("%s\n", debugstr_w(text));
 
     for(ptr = text; iswalnum(*ptr); ptr++);
@@ -1347,8 +1333,8 @@ IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
     if(!script_host || !script_host->parse_proc)
         return NULL;
 
-    hres = IActiveScriptParseProcedure2_ParseProcedureText(script_host->parse_proc, ptr, NULL, emptyW,
-            NULL, NULL, delimiterW, 0 /* FIXME */, 0,
+    hres = IActiveScriptParseProcedure2_ParseProcedureText(script_host->parse_proc, ptr, NULL, L"",
+            NULL, NULL, L"\"", 0 /* FIXME */, 0,
             SCRIPTPROC_HOSTMANAGESSOURCE|SCRIPTPROC_IMPLICIT_THIS|SCRIPTPROC_IMPLICIT_PARENTS, &disp);
     if(FAILED(hres)) {
         WARN("ParseProcedureText failed: %08x\n", hres);
@@ -1365,8 +1351,6 @@ HRESULT exec_script(HTMLInnerWindow *window, const WCHAR *code, const WCHAR *lan
     EXCEPINFO ei;
     GUID guid;
     HRESULT hres;
-
-    static const WCHAR delimW[] = {'"',0};
 
     if(!get_guid_from_language(lang, &guid)) {
         WARN("Could not find script GUID\n");
@@ -1386,7 +1370,7 @@ HRESULT exec_script(HTMLInnerWindow *window, const WCHAR *code, const WCHAR *lan
 
     memset(&ei, 0, sizeof(ei));
     TRACE(">>>\n");
-    hres = IActiveScriptParse_ParseScriptText(script_host->parse, code, NULL, NULL, delimW, 0, 0, SCRIPTTEXT_ISVISIBLE, ret, &ei);
+    hres = IActiveScriptParse_ParseScriptText(script_host->parse, code, NULL, NULL, L"\"", 0, 0, SCRIPTTEXT_ISVISIBLE, ret, &ei);
     if(SUCCEEDED(hres))
         TRACE("<<<\n");
     else
@@ -1403,7 +1387,7 @@ IDispatch *get_script_disp(ScriptHost *script_host)
     if(!script_host->script)
         return NULL;
 
-    hres = IActiveScript_GetScriptDispatch(script_host->script, windowW, &disp);
+    hres = IActiveScript_GetScriptDispatch(script_host->script, L"window", &disp);
     if(FAILED(hres))
         return NULL;
 
@@ -1429,10 +1413,10 @@ static EventTarget *find_event_target(HTMLDocumentNode *doc, HTMLScriptElement *
     nsAString_GetData(&target_id_str, &target_id);
     if(!*target_id) {
         FIXME("Empty for attribute\n");
-    }else if(!wcscmp(target_id, documentW)) {
+    }else if(!wcscmp(target_id, L"document")) {
         event_target = &doc->node.event_target;
         htmldoc_addref(&doc->basedoc);
-    }else if(!wcscmp(target_id, windowW)) {
+    }else if(!wcscmp(target_id, L"window")) {
         if(doc->window) {
             event_target = &doc->window->event_target;
             IDispatchEx_AddRef(&event_target->dispex.IDispatchEx_iface);
@@ -1519,7 +1503,7 @@ static IDispatch *parse_event_elem(HTMLDocumentNode *doc, HTMLScriptElement *scr
 
         nsAString_GetData(&nsstr, &text);
         hres = IActiveScriptParseProcedure2_ParseProcedureText(script_host->parse_proc, text, args,
-                emptyW, NULL, NULL, script_endW, 0, 0,
+                L"", NULL, NULL, L"</SCRIPT>", 0, 0,
                 SCRIPTPROC_HOSTMANAGESSOURCE|SCRIPTPROC_IMPLICIT_THIS|SCRIPTPROC_IMPLICIT_PARENTS, &disp);
         if(FAILED(hres))
             disp = NULL;

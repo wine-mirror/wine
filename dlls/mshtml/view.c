@@ -36,11 +36,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define TIMER_ID 0x1000
 
-static const WCHAR wszInternetExplorer_Server[] =
-    {'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r','_','S','e','r','v','e','r',0};
-
-static const WCHAR wszTooltipData[] = {'t','o','o','l','t','i','p','_','d','a','t','a',0};
-
 static ATOM serverwnd_class = 0;
 
 typedef struct {
@@ -98,11 +93,10 @@ void update_title(HTMLDocumentObj *This)
 
     hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget, (void**)&olecmd);
     if(SUCCEEDED(hres)) {
-        static const WCHAR empty[] = {0};
         VARIANT title;
 
         V_VT(&title) = VT_BSTR;
-        V_BSTR(&title) = SysAllocString(empty);
+        V_BSTR(&title) = SysAllocString(L"");
         IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETTITLE, OLECMDEXECOPT_DONTPROMPTUSER,
                                &title, NULL);
         SysFreeString(V_BSTR(&title));
@@ -163,13 +157,11 @@ static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 {
     HTMLDocumentObj *This;
 
-    static const WCHAR wszTHIS[] = {'T','H','I','S',0};
-
     if(msg == WM_CREATE) {
         This = *(HTMLDocumentObj**)lParam;
-        SetPropW(hwnd, wszTHIS, This);
+        SetPropW(hwnd, L"THIS", This);
     }else {
-        This = GetPropW(hwnd, wszTHIS);
+        This = GetPropW(hwnd, L"THIS");
     }
 
     switch(msg) {
@@ -214,7 +206,7 @@ static void register_serverwnd_class(void)
         CS_DBLCLKS,
         serverwnd_proc,
         0, 0, NULL, NULL, NULL, NULL, NULL,
-        wszInternetExplorer_Server,
+        L"Internet Explorer_Server",
         NULL,
     };
     wndclass.hInstance = hInst;
@@ -267,7 +259,7 @@ static HRESULT activate_window(HTMLDocumentObj *This)
                 posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
                 SWP_NOACTIVATE | SWP_SHOWWINDOW);
     }else {
-        CreateWindowExW(0, wszInternetExplorer_Server, NULL,
+        CreateWindowExW(0, L"Internet Explorer_Server", NULL,
                 WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                 posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
                 parent_hwnd, NULL, hInst, This);
@@ -336,7 +328,7 @@ static HRESULT activate_window(HTMLDocumentObj *This)
 
 static LRESULT WINAPI tooltips_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    tooltip_data *data = GetPropW(hwnd, wszTooltipData);
+    tooltip_data *data = GetPropW(hwnd, L"tooltip_data");
 
     TRACE("%d %p\n", msg, data);
 
@@ -366,7 +358,7 @@ static void create_tooltips_window(HTMLDocumentObj *This)
     data->doc = This;
     data->proc = (WNDPROC)GetWindowLongPtrW(This->tooltips_hwnd, GWLP_WNDPROC);
 
-    SetPropW(This->tooltips_hwnd, wszTooltipData, data);
+    SetPropW(This->tooltips_hwnd, L"tooltip_data", data);
 
     SetWindowLongPtrW(This->tooltips_hwnd, GWLP_WNDPROC, (LONG_PTR)tooltips_proc);
 

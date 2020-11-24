@@ -1173,21 +1173,17 @@ static HRESULT create_tspan_element(HTMLDocumentNode *doc, nsIDOMSVGElement *nse
     return S_OK;
 }
 
-static const WCHAR circleW[] = {'c','i','r','c','l','e',0};
-static const WCHAR svgW[] = {'s','v','g',0};
-static const WCHAR tspanW[] = {'t','s','p','a','n',0};
-
 HRESULT create_svg_element(HTMLDocumentNode *doc, nsIDOMSVGElement *dom_element, const WCHAR *tag_name, HTMLElement **elem)
 {
     SVGElement *svg_element;
 
     TRACE("%s\n", debugstr_w(tag_name));
 
-    if(!wcscmp(tag_name, svgW))
+    if(!wcscmp(tag_name, L"svg"))
         return create_viewport_element(doc, dom_element, elem);
-    if(!wcscmp(tag_name, circleW))
+    if(!wcscmp(tag_name, L"circle"))
         return create_circle_element(doc, dom_element, elem);
-    if(!wcscmp(tag_name, tspanW))
+    if(!wcscmp(tag_name, L"tspan"))
         return create_tspan_element(doc, dom_element, elem);
 
     svg_element = heap_alloc_zero(sizeof(*svg_element));

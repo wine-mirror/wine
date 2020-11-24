@@ -1488,12 +1488,11 @@ static nsresult NSAPI nsChannel_IsNoStoreResponse(nsIHttpChannel *iface, cpp_boo
     http_header_t *header;
 
     static const WCHAR cache_controlW[] = {'C','a','c','h','e','-','C','o','n','t','r','o','l'};
-    static const WCHAR no_storeW[] = {'n','o','-','s','t','o','r','e',0};
 
     TRACE("(%p)->(%p)\n", This, _retval);
 
     header = find_http_header(&This->response_headers, cache_controlW, ARRAY_SIZE(cache_controlW));
-    *_retval = header && !wcsicmp(header->data, no_storeW);
+    *_retval = header && !wcsicmp(header->data, L"no-store");
     return NS_OK;
 }
 

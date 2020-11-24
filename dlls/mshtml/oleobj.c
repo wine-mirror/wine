@@ -231,19 +231,12 @@ static void load_settings(HTMLDocumentObj *doc)
     DWORD val, size;
     LONG res;
 
-    static const WCHAR ie_keyW[] = {
-        'S','O','F','T','W','A','R','E','\\',
-        'M','i','c','r','o','s','o','f','t','\\',
-        'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r',0};
-    static const WCHAR zoomW[] = {'Z','o','o','m',0};
-    static const WCHAR zoom_factorW[] = {'Z','o','o','m','F','a','c','t','o','r',0};
-
-    res = RegOpenKeyW(HKEY_CURRENT_USER, ie_keyW, &settings_key);
+    res = RegOpenKeyW(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Internet Explorer", &settings_key);
     if(res != ERROR_SUCCESS)
         return;
 
     size = sizeof(val);
-    res = RegGetValueW(settings_key, zoomW, zoom_factorW, RRF_RT_REG_DWORD, NULL, &val, &size);
+    res = RegGetValueW(settings_key, L"Zoom", L"ZoomFactor", RRF_RT_REG_DWORD, NULL, &val, &size);
     RegCloseKey(settings_key);
     if(res == ERROR_SUCCESS)
         set_viewer_zoom(doc->nscontainer, (float)val/100000);

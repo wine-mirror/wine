@@ -46,8 +46,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 /* Undocumented notification, see tests */
 #define CMDID_EXPLORER_UPDATEHISTORY 38
 
-static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
-
 typedef struct {
     task_t header;
     HTMLDocumentObj *doc;
@@ -893,7 +891,7 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, IStream 
 
     TRACE("(%p)->(%p)\n", This, pStm);
 
-    hres = CreateURLMoniker(NULL, about_blankW, &mon);
+    hres = CreateURLMoniker(NULL, L"about:blank", &mon);
     if(FAILED(hres)) {
         WARN("CreateURLMoniker failed: %08x\n", hres);
         return hres;
@@ -950,7 +948,7 @@ static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
 
     TRACE("(%p)\n", This);
 
-    hres = CreateURLMoniker(NULL, about_blankW, &mon);
+    hres = CreateURLMoniker(NULL, L"about:blank", &mon);
     if(FAILED(hres)) {
         WARN("CreateURLMoniker failed: %08x\n", hres);
         return hres;
@@ -1171,7 +1169,6 @@ static HRESULT WINAPI HlinkTarget_Navigate(IHlinkTarget *iface, DWORD grfHLNF, L
         FIXME("JumpLocation not supported\n");
 
     if(!This->doc_obj->client) {
-        static const WCHAR szOpen[] = {'o','p','e','n',0};
         HRESULT hres;
         BSTR uri;
 
@@ -1179,7 +1176,7 @@ static HRESULT WINAPI HlinkTarget_Navigate(IHlinkTarget *iface, DWORD grfHLNF, L
         if (FAILED(hres))
             return hres;
 
-        ShellExecuteW(NULL, szOpen, uri, NULL, NULL, SW_SHOW);
+        ShellExecuteW(NULL, L"open", uri, NULL, NULL, SW_SHOW);
         SysFreeString(uri);
         return S_OK;
     }

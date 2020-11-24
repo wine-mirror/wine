@@ -45,9 +45,6 @@ static CRITICAL_SECTION_DEBUG cs_dispex_static_data_dbg =
 };
 static CRITICAL_SECTION cs_dispex_static_data = { &cs_dispex_static_data_dbg, -1, 0, 0, 0, 0 };
 
-
-static const WCHAR objectW[] = {'[','o','b','j','e','c','t',']',0};
-
 typedef struct {
     IID iid;
     VARIANT default_value;
@@ -700,7 +697,7 @@ static HRESULT dispex_value(DispatchEx *This, LCID lcid, WORD flags, DISPPARAMS 
     switch(flags) {
     case DISPATCH_PROPERTYGET:
         V_VT(res) = VT_BSTR;
-        V_BSTR(res) = SysAllocString(objectW);
+        V_BSTR(res) = SysAllocString(L"[object]");
         if(!V_BSTR(res))
             return E_OUTOFMEMORY;
         break;
@@ -1283,7 +1280,7 @@ static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
         if(func->id == DISPID_VALUE) {
             BSTR ret;
 
-            ret = SysAllocString(objectW);
+            ret = SysAllocString(L"[object]");
             if(!ret)
                 return E_OUTOFMEMORY;
 

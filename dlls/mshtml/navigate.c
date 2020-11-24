@@ -46,9 +46,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define UTF8_STR "utf-8"
 #define UTF16_STR "utf-16"
 
-static const WCHAR emptyW[] = {0};
-static const WCHAR text_htmlW[] = {'t','e','x','t','/','h','t','m','l',0};
-
 struct nsProtocolStream {
     nsIInputStream nsIInputStream_iface;
 
@@ -799,14 +796,12 @@ static HRESULT process_response_headers(nsChannelBSC *This, const WCHAR *headers
     http_header_t *iter;
     HRESULT hres;
 
-    static const WCHAR content_typeW[] = {'c','o','n','t','e','n','t','-','t','y','p','e',0};
-
     hres = parse_headers(headers, &This->nschannel->response_headers);
     if(FAILED(hres))
         return hres;
 
     LIST_FOR_EACH_ENTRY(iter, &This->nschannel->response_headers, http_header_t, entry) {
-        if(!wcsicmp(iter->header, content_typeW))
+        if(!wcsicmp(iter->header, L"content-type"))
             parse_content_type(This, iter->data);
     }
 
@@ -1116,7 +1111,7 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
                 WCHAR *mime;
 
                 hres = FindMimeFromData(NULL, NULL, This->nsstream->buf, This->nsstream->buf_size,
-                        This->is_doc_channel ? text_htmlW : NULL, 0, &mime, 0);
+                        This->is_doc_channel ? L"text/html" : NULL, 0, &mime, 0);
                 if(FAILED(hres))
                     return hres;
 
@@ -1750,14 +1745,11 @@ static HRESULT nsChannelBSC_beginning_transaction(BSCallback *bsc, WCHAR **addit
     DWORD len = 0;
     WCHAR *ptr;
 
-    static const WCHAR content_lengthW[] =
-        {'C','o','n','t','e','n','t','-','L','e','n','g','t','h',0};
-
     if(!This->nschannel)
         return S_FALSE;
 
     LIST_FOR_EACH_ENTRY(iter, &This->nschannel->request_headers, http_header_t, entry) {
-        if(wcscmp(iter->header, content_lengthW))
+        if(wcscmp(iter->header, L"Content-Length"))
             len += lstrlenW(iter->header) + 2 /* ": " */ + lstrlenW(iter->data) + 2 /* "\r\n" */;
     }
 
@@ -1769,7 +1761,7 @@ static HRESULT nsChannelBSC_beginning_transaction(BSCallback *bsc, WCHAR **addit
         return E_OUTOFMEMORY;
 
     LIST_FOR_EACH_ENTRY(iter, &This->nschannel->request_headers, http_header_t, entry) {
-        if(!wcscmp(iter->header, content_lengthW))
+        if(!wcscmp(iter->header, L"Content-Length"))
             continue;
 
         len = lstrlenW(iter->header);
@@ -1986,8 +1978,6 @@ static void navigate_javascript_proc(task_t *_task)
     BSTR code;
     HRESULT hres;
 
-    static const WCHAR jscriptW[] = {'j','s','c','r','i','p','t',0};
-
     task->window->readystate = READYSTATE_COMPLETE;
 
     hres = IUri_GetPath(task->uri, &code);
@@ -2003,7 +1993,7 @@ static void navigate_javascript_proc(task_t *_task)
     set_download_state(window->browser->doc, 1);
 
     V_VT(&v) = VT_EMPTY;
-    hres = exec_script(window->base.inner_window, code, jscriptW, &v);
+    hres = exec_script(window->base.inner_window, code, L"jscript", &v);
     SysFreeString(code);
     if(SUCCEEDED(hres) && V_VT(&v) != VT_EMPTY) {
         FIXME("javascirpt URL returned %s\n", debugstr_variant(&v));
@@ -2064,8 +2054,7 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
     BSTR frag;
     nsresult nsres;
     HRESULT hres;
-
-    static const WCHAR selector_formatW[] = {'a','[','i','d','=','"','%','s','"',']',0};
+    static const WCHAR selector_formatW[] = L"a[id=\"%s\"]";
 
     set_current_uri(window, uri);
 
@@ -2310,7 +2299,7 @@ HRESULT navigate_new_window(HTMLOuterWindow *window, IUri *uri, const WCHAR *nam
         if(SUCCEEDED(hres)) {
             hres = ITargetFramePriv2_AggregatedNavigation2(target_frame_priv,
                     HLNF_DISABLEWINDOWRESTRICTIONS|HLNF_OPENINNEWWINDOW, bind_ctx, &bsc->bsc.IBindStatusCallback_iface,
-                    name, uri, emptyW);
+                    name, uri, L"");
             ITargetFramePriv2_Release(target_frame_priv);
 
             if(SUCCEEDED(hres))
@@ -2377,8 +2366,7 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url, nsChannel *nschanne
         IHlink_SetMonikerReference(hlink, HLINKSETF_TARGET, mon, NULL);
 
         if(hlnf & HLNF_OPENINNEWWINDOW) {
-            static const WCHAR wszBlank[] = {'_','b','l','a','n','k',0};
-            IHlink_SetTargetFrameName(hlink, wszBlank); /* FIXME */
+            IHlink_SetTargetFrameName(hlink, L"_blank"); /* FIXME */
         }
 
         hres = IHlinkFrame_Navigate(hlink_frame, hlnf, bindctx,

@@ -315,22 +315,20 @@ static LRESULT WINAPI hidden_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 static HWND create_thread_hwnd(void)
 {
     static ATOM hidden_wnd_class = 0;
-    static const WCHAR wszInternetExplorer_Hidden[] = {'I','n','t','e','r','n','e','t',
-            ' ','E','x','p','l','o','r','e','r','_','H','i','d','d','e','n',0};
 
     if(!hidden_wnd_class) {
         WNDCLASSEXW wndclass = {
             sizeof(WNDCLASSEXW), 0,
             hidden_proc,
             0, 0, hInst, NULL, NULL, NULL, NULL,
-            wszInternetExplorer_Hidden,
+            L"Internet Explorer_Hidden",
             NULL
         };
 
         hidden_wnd_class = RegisterClassExW(&wndclass);
     }
 
-    return CreateWindowExW(0, wszInternetExplorer_Hidden, NULL, WS_POPUP,
+    return CreateWindowExW(0, L"Internet Explorer_Hidden", NULL, WS_POPUP,
                            0, 0, 0, 0, NULL, NULL, hInst, NULL);
 }
 

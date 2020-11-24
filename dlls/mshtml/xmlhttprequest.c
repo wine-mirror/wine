@@ -117,22 +117,18 @@ static void detach_xhr_event_listener(XMLHttpReqEventListener *event_listener)
     nsAString str;
     nsresult nsres;
 
-    static const WCHAR loadW[] = {'l','o','a','d',0};
-    static const WCHAR readystatechangeW[] =
-        {'o','n','r','e','a','d','y','s','t','a','t','e','c','h','a','n','g','e',0};
-
     nsres = nsIXMLHttpRequest_QueryInterface(event_listener->xhr->nsxhr, &IID_nsIDOMEventTarget, (void**)&event_target);
     assert(nsres == NS_OK);
 
     if(event_listener->readystatechange_event) {
-        nsAString_InitDepend(&str, readystatechangeW);
+        nsAString_InitDepend(&str, L"onreadystatechange");
         nsres = nsIDOMEventTarget_RemoveEventListener(event_target, &str, &event_listener->nsIDOMEventListener_iface, FALSE);
         nsAString_Finish(&str);
         assert(nsres == NS_OK);
     }
 
     if(event_listener->load_event) {
-        nsAString_InitDepend(&str, loadW);
+        nsAString_InitDepend(&str, L"load");
         nsres = nsIDOMEventTarget_RemoveEventListener(event_target, &str, &event_listener->nsIDOMEventListener_iface, FALSE);
         nsAString_Finish(&str);
         assert(nsres == NS_OK);
@@ -756,10 +752,8 @@ static inline HTMLXMLHttpRequest *impl_from_DispatchEx(DispatchEx *iface)
 
 static HRESULT HTMLXMLHttpRequest_get_dispid(DispatchEx *dispex, BSTR name, DWORD flags, DISPID *dispid)
 {
-    static const WCHAR onloadW[] = {'o','n','l','o','a','d',0};
-
     /* onload event handler property is supported, but not exposed by any interface. We implement as a custom property. */
-    if(!wcscmp(onloadW, name)) {
+    if(!wcscmp(L"onload", name)) {
         *dispid = MSHTML_DISPID_HTMLXMLHTTPREQUEST_ONLOAD;
         return S_OK;
     }
@@ -811,17 +805,14 @@ static void HTMLXMLHttpRequest_bind_event(DispatchEx *dispex, eventid_t eid)
     nsAString type_str;
     nsresult nsres;
 
-    static const WCHAR readystatechangeW[] = {'r','e','a','d','y','s','t','a','t','e','c','h','a','n','g','e',0};
-    static const WCHAR loadW[] = {'l','o','a','d',0};
-
     TRACE("(%p)\n", This);
 
     switch(eid) {
     case EVENTID_READYSTATECHANGE:
-        type_name = readystatechangeW;
+        type_name = L"readystatechange";
         break;
     case EVENTID_LOAD:
-        type_name = loadW;
+        type_name = L"load";
         break;
     default:
         return;

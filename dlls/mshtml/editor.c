@@ -92,9 +92,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define DOM_VK_HOME     VK_HOME
 #define DOM_VK_END      VK_END
 
-static const WCHAR fontW[] = {'f','o','n','t',0};
-static const WCHAR sizeW[] = {'s','i','z','e',0};
-
 void set_dirty(GeckoBrowser *browser, VARIANT_BOOL dirty)
 {
     nsresult nsres;
@@ -286,13 +283,13 @@ static void get_font_size(HTMLDocumentNode *doc, WCHAR *ret)
             nsIDOMElement_GetTagName(elem, &tag_str);
             nsAString_GetData(&tag_str, &tag);
 
-            if(!wcsicmp(tag, fontW)) {
+            if(!wcsicmp(tag, L"font")) {
                 nsAString val_str;
                 const PRUnichar *val;
 
                 TRACE("found font tag %p\n", elem);
 
-                get_elem_attr_value(elem, sizeW, &val_str, &val);
+                get_elem_attr_value(elem, L"size", &val_str, &val);
                 if(*val) {
                     TRACE("found size %s\n", debugstr_w(val));
                     lstrcpyW(ret, val);
@@ -340,9 +337,9 @@ static void set_font_size(HTMLDocumentNode *doc, LPCWSTR size)
         }
     }
 
-    create_nselem(doc, fontW, &elem);
+    create_nselem(doc, L"font", &elem);
 
-    nsAString_InitDepend(&size_str, sizeW);
+    nsAString_InitDepend(&size_str, L"size");
     nsAString_InitDepend(&val_str, size);
 
     nsIDOMElement_SetAttribute(elem, &size_str, &val_str);
@@ -358,7 +355,7 @@ static void set_font_size(HTMLDocumentNode *doc, LPCWSTR size)
         nsISelection_Collapse(nsselection, (nsIDOMNode*)elem, 0);
     }else {
         /* Remove all size attributes from the range */
-        remove_child_attr(elem, fontW, &size_str);
+        remove_child_attr(elem, L"font", &size_str);
         nsISelection_SelectAllChildren(nsselection, (nsIDOMNode*)elem);
     }
 
@@ -606,8 +603,7 @@ static HRESULT exec_fontsize(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *i
         switch(V_VT(in)) {
         case VT_I4: {
             WCHAR size[10];
-            static const WCHAR format[] = {'%','d',0};
-            wsprintfW(size, format, V_I4(in));
+            wsprintfW(size, L"%d", V_I4(in));
             set_font_size(doc, size);
             break;
         }
@@ -956,14 +952,6 @@ static HRESULT query_edit_status(HTMLDocumentNode *doc, OLECMD *cmd)
 
 static INT_PTR CALLBACK hyperlink_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    static const WCHAR wszOther[] = {'(','o','t','h','e','r',')',0};
-    static const WCHAR wszFile[] = {'f','i','l','e',':',0};
-    static const WCHAR wszFtp[] = {'f','t','p',':',0};
-    static const WCHAR wszHttp[] = {'h','t','t','p',':',0};
-    static const WCHAR wszHttps[] = {'h','t','t','p','s',':',0};
-    static const WCHAR wszMailto[] = {'m','a','i','l','t','o',':',0};
-    static const WCHAR wszNews[] = {'n','e','w','s',':',0};
-
     switch (msg)
     {
         case WM_INITDIALOG:
@@ -975,13 +963,13 @@ static INT_PTR CALLBACK hyperlink_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LP
 
             SetWindowLongPtrW(hwnd, DWLP_USER, lparam);
 
-            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)wszOther);
-            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)wszFile);
-            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)wszFtp);
-            def_idx = SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)wszHttp);
-            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)wszHttps);
-            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)wszMailto);
-            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)wszNews);
+            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)L"(other)");
+            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)L"file:");
+            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)L"ftp:");
+            def_idx = SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)L"http:");
+            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)L"https:");
+            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)L"mailto:");
+            SendMessageW(hwndCB, CB_INSERTSTRING, -1, (LPARAM)L"news:");
             SendMessageW(hwndCB, CB_SETCURSEL, def_idx, 0);
 
             /* force the updating of the URL edit box */
@@ -1025,7 +1013,7 @@ static INT_PTR CALLBACK hyperlink_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LP
                     type = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
                     SendMessageW((HWND)lparam, CB_GETLBTEXT, item, (LPARAM)type);
 
-                    if (!wcscmp(type, wszOther))
+                    if (!wcscmp(type, L"(other)"))
                         *type = '\0';
 
                     /* get current URL */
@@ -1044,7 +1032,7 @@ static INT_PTR CALLBACK hyperlink_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LP
                     if (*type != '\0')
                     {
                         memcpy(url, type, (lstrlenW(type) + 1) * sizeof(WCHAR));
-                        if (wcscmp(type, wszMailto) && wcscmp(type, wszNews))
+                        if (wcscmp(type, L"mailto:") && wcscmp(type, L"news:"))
                             memcpy(url + lstrlenW(type), wszSlashSlash, sizeof(wszSlashSlash));
                     }
 
@@ -1075,9 +1063,6 @@ static HRESULT exec_hyperlink(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *
     INT ret;
     HRESULT hres = E_FAIL;
 
-    static const WCHAR aW[] = {'a',0};
-    static const WCHAR hrefW[] = {'h','r','e','f',0};
-
     TRACE("%p, 0x%x, %p, %p\n", doc, cmdexecopt, in, out);
 
     if (cmdexecopt == OLECMDEXECOPT_DONTPROMPTUSER)
@@ -1106,9 +1091,9 @@ static HRESULT exec_hyperlink(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *
         return E_FAIL;
 
     /* create an element for the link */
-    create_nselem(doc, aW, &anchor_elem);
+    create_nselem(doc, L"a", &anchor_elem);
 
-    nsAString_InitDepend(&href_str, hrefW);
+    nsAString_InitDepend(&href_str, L"href");
     nsAString_InitDepend(&ns_url, url);
     nsIDOMElement_SetAttribute(anchor_elem, &href_str, &ns_url);
     nsAString_Finish(&href_str);
@@ -1257,9 +1242,7 @@ HRESULT setup_edit_mode(HTMLDocumentObj *doc)
         mon = doc->basedoc.window->mon;
         IMoniker_AddRef(mon);
     }else {
-        static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
-
-        hres = CreateURLMoniker(NULL, about_blankW, &mon);
+        hres = CreateURLMoniker(NULL, L"about:blank", &mon);
         if(FAILED(hres)) {
             FIXME("CreateURLMoniker failed: %08x\n", hres);
             return hres;

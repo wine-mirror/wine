@@ -210,15 +210,12 @@ static HRESULT WINAPI HTMLSelectionObject_get_type(IHTMLSelectionObject *iface, 
     HTMLSelectionObject *This = impl_from_IHTMLSelectionObject(iface);
     cpp_bool collapsed = TRUE;
 
-    static const WCHAR wszNone[] = {'N','o','n','e',0};
-    static const WCHAR wszText[] = {'T','e','x','t',0};
-
     TRACE("(%p)->(%p)\n", This, p);
 
     if(This->nsselection)
         nsISelection_GetIsCollapsed(This->nsselection, &collapsed);
 
-    *p = SysAllocString(collapsed ? wszNone : wszText); /* FIXME: control */
+    *p = SysAllocString(collapsed ? L"None" : L"Text"); /* FIXME: control */
     TRACE("ret %s\n", debugstr_w(*p));
     return S_OK;
 }
@@ -308,12 +305,10 @@ static HRESULT WINAPI HTMLSelectionObject2_get_typeDetail(IHTMLSelectionObject2 
 {
     HTMLSelectionObject *This = impl_from_IHTMLSelectionObject2(iface);
 
-    static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
-
     FIXME("(%p)->(%p) semi-stub\n", This, p);
 
     /* FIXME: We should try to use ISelectionServicesListener::GetTypeDetail here. */
-    *p = SysAllocString(undefinedW);
+    *p = SysAllocString(L"undefined");
     return *p ? S_OK : E_OUTOFMEMORY;
 }
 

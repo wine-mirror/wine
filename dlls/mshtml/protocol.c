@@ -342,12 +342,7 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
     DWORD data_len;
     BYTE *data;
     HRESULT hres;
-
-    static const WCHAR html_begin[] = {0xfeff,'<','H','T','M','L','>',0};
-    static const WCHAR html_end[] = {'<','/','H','T','M','L','>',0};
-    static const WCHAR wszBlank[] = {'b','l','a','n','k',0};
     static const WCHAR wszAbout[] = {'a','b','o','u','t',':'};
-    static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
 
     /* NOTE:
      * the about protocol seems not to work as I would expect. It creates html document
@@ -370,11 +365,11 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
 
     if(lstrlenW(szUrl) >= ARRAY_SIZE(wszAbout) && !memcmp(wszAbout, szUrl, sizeof(wszAbout))) {
         text = szUrl + ARRAY_SIZE(wszAbout);
-        if(!wcscmp(wszBlank, text))
+        if(!wcscmp(L"blank", text))
             text = NULL;
     }
 
-    data_len = sizeof(html_begin)+sizeof(html_end)-sizeof(WCHAR)
+    data_len = sizeof(L"\xfeff<HTML>")+sizeof(L"</HTML>")-sizeof(WCHAR)
         + (text ? lstrlenW(text)*sizeof(WCHAR) : 0);
     data = heap_alloc(data_len);
     if(!data)
@@ -384,14 +379,14 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
     This->data = data;
     This->data_len = data_len;
 
-    memcpy(This->data, html_begin, sizeof(html_begin));
+    lstrcpyW((LPWSTR)This->data, L"\xfeff<HTML>");
     if(text)
         lstrcatW((LPWSTR)This->data, text);
-    lstrcatW((LPWSTR)This->data, html_end);
+    lstrcatW((LPWSTR)This->data, L"</HTML>");
 
     This->cur = 0;
 
-    IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_MIMETYPEAVAILABLE, wszTextHtml);
+    IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_MIMETYPEAVAILABLE, L"text/html");
 
     IInternetProtocolSink_ReportData(pOIProtSink,
             BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION | BSCF_DATAFULLYAVAILABLE,
