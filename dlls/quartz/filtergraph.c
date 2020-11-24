@@ -1397,7 +1397,7 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *source, I
 
     EnterCriticalSection(&graph->cs);
 
-    hr = autoplug(graph, source, sink, FALSE, 0);
+    hr = autoplug(graph, source, sink, TRUE, 0);
 
     LeaveCriticalSection(&graph->cs);
 
