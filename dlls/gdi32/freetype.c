@@ -1468,7 +1468,7 @@ static void init_fontconfig(void)
 static void fontconfig_add_fonts_from_dir_list( FcConfig *config, FcStrList *dir_list, FcStrSet *done_set, DWORD flags )
 {
     const FcChar8 *dir;
-    FcFontSet *font_set;
+    FcFontSet *font_set = NULL;
     FcStrList *subdir_list = NULL;
     FcStrSet *subdir_set = NULL;
     FcCache *cache = NULL;
