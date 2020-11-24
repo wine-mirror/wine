@@ -297,6 +297,13 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
     if (str) CFStringToWSTR(str, serial_string, ARRAY_SIZE(serial_string));
     uid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDLocationIDKey)));
 
+    if (IOHIDDeviceOpen(IOHIDDevice, 0) != kIOReturnSuccess)
+    {
+        ERR("Failed to open HID device %p (vid %04x, pid %04x)\n", IOHIDDevice, vid, pid);
+        return;
+    }
+    IOHIDDeviceScheduleWithRunLoop(IOHIDDevice, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+
     if (IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_GamePad) ||
        IOHIDDeviceConformsTo(IOHIDDevice, kHIDPage_GenericDesktop, kHIDUsage_GD_Joystick))
     {
@@ -365,6 +372,8 @@ static void handle_RemovalCallback(void *context, IOReturn result, void *sender,
     IOHIDDeviceRegisterInputReportCallback(IOHIDDevice, NULL, 0, NULL, NULL);
     /* Note: Yes, we leak the buffer. But according to research there is no
              safe way to deallocate that buffer. */
+    IOHIDDeviceUnscheduleFromRunLoop(IOHIDDevice, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+    IOHIDDeviceClose(IOHIDDevice, 0);
     device = bus_find_hid_device(&iohid_vtbl, IOHIDDevice);
     if (device)
     {
@@ -383,13 +392,6 @@ static DWORD CALLBACK runloop_thread(void *args)
     IOHIDManagerRegisterDeviceMatchingCallback(hid_manager, handle_DeviceMatchingCallback, NULL);
     IOHIDManagerRegisterDeviceRemovalCallback(hid_manager, handle_RemovalCallback, NULL);
     IOHIDManagerScheduleWithRunLoop(hid_manager, run_loop, kCFRunLoopDefaultMode);
-    if (IOHIDManagerOpen( hid_manager, 0 ) != kIOReturnSuccess)
-    {
-        ERR("Couldn't open IOHIDManager.\n");
-        IOHIDManagerUnscheduleFromRunLoop(hid_manager, run_loop, kCFRunLoopDefaultMode);
-        CFRelease(hid_manager);
-        return 0;
-    }
 
     CFRunLoopRun();
     TRACE("Run Loop exiting\n");
