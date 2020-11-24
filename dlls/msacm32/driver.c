@@ -434,12 +434,10 @@ LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARA
                 if (!pConfigInfo) {
                     ERR("OOM while supplying DRVCONFIGINFO for DRV_CONFIGURE, using NULL\n");
                 } else {
-                    static const WCHAR drivers32[] = {'D','r','i','v','e','r','s','3','2','\0'};
-
                     pConfigInfo->dwDCISize = iStructSize;
 
-                    section_name = HeapAlloc(MSACM_hHeap, 0, (lstrlenW(drivers32) + 1) * sizeof(WCHAR));
-                    if (section_name) lstrcpyW(section_name, drivers32);
+                    section_name = HeapAlloc(MSACM_hHeap, 0, sizeof(L"Drivers32"));
+                    if (section_name) lstrcpyW(section_name, L"Drivers32");
                     pConfigInfo->lpszDCISectionName = section_name;
                     alias_name = HeapAlloc(MSACM_hHeap, 0, (lstrlenW(pAlias) + 1) * sizeof(WCHAR));
                     if (alias_name) lstrcpyW(alias_name, pAlias);

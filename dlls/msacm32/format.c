@@ -93,7 +93,6 @@ static BOOL CALLBACK MSACM_FillFormatTagsCB(HACMDRIVERID hadid,
 		afd.cbwfx = paftd->cbFormatSize;
 
 		for (i = 0; i < paftd->cStandardFormats; i++) {
-                    static const WCHAR fmtW[] = {'%','d',' ','K','o','/','s','\0'};
                     int j, index;
 
 		    afd.dwFormatIndex = i;
@@ -105,7 +104,7 @@ static BOOL CALLBACK MSACM_FillFormatTagsCB(HACMDRIVERID hadid,
                        for (j = len; j < ACMFORMATTAGDETAILS_FORMATTAG_CHARS; j++)
                            buffer[j] = ' ';
                        wsprintfW(buffer + ACMFORMATTAGDETAILS_FORMATTAG_CHARS,
-                                 fmtW, (afd.pwfx->nAvgBytesPerSec + 512) / 1024);
+                                 L"%d Ko/s", (afd.pwfx->nAvgBytesPerSec + 512) / 1024);
                        index = SendDlgItemMessageW(affd->hWnd,
                                            IDD_ACMFORMATCHOOSE_CMB_FORMAT,
                                            CB_ADDSTRING, 0, (LPARAM)buffer);
@@ -213,19 +212,17 @@ static MMRESULT MSACM_GetWFX(HWND hWnd, PACMFORMATCHOOSEW afc)
     return affd.ret;
 }
 
-static const WCHAR fmt_prop[] = {'a','c','m','p','r','o','p','\0'};
-
 static INT_PTR CALLBACK FormatChooseDlgProc(HWND hWnd, UINT msg,
                                             WPARAM wParam, LPARAM lParam)
 {
-    PACMFORMATCHOOSEW   afc = (PACMFORMATCHOOSEW)GetPropW(hWnd, fmt_prop);
+    ACMFORMATCHOOSEW *afc = (ACMFORMATCHOOSEW *)GetPropW(hWnd, L"acmprop");
 
     TRACE("hwnd=%p msg=%i 0x%08lx 0x%08lx\n", hWnd, msg, wParam, lParam);
 
     switch (msg) {
     case WM_INITDIALOG:
 	afc = (PACMFORMATCHOOSEW)lParam;
-	SetPropW(hWnd, fmt_prop, (HANDLE)afc);
+	SetPropW(hWnd, L"acmprop", (HANDLE)afc);
 	MSACM_FillFormatTags(hWnd, afc);
 	MSACM_FillFormat(hWnd, afc);
 	if ((afc->fdwStyle & ~(ACMFORMATCHOOSE_STYLEF_CONTEXTHELP|
@@ -431,8 +428,6 @@ MMRESULT WINAPI acmFormatDetailsA(HACMDRIVER had, PACMFORMATDETAILSA pafd,
 MMRESULT WINAPI acmFormatDetailsW(HACMDRIVER had, PACMFORMATDETAILSW pafd, DWORD fdwDetails)
 {
     MMRESULT			mmr;
-    static const WCHAR		fmt1[] = {'%','d',' ','H','z',0};
-    static const WCHAR		fmt2[] = {';',' ','%','d',' ','b','i','t','s',0};
     ACMFORMATTAGDETAILSW	aftd = {0};
 
     TRACE("(%p, %p, %d)\n", had, pafd, fdwDetails);
@@ -497,9 +492,9 @@ MMRESULT WINAPI acmFormatDetailsW(HACMDRIVER had, PACMFORMATDETAILSW pafd, DWORD
     }
 
     if (mmr == MMSYSERR_NOERROR && pafd->szFormat[0] == 0) {
-	wsprintfW(pafd->szFormat, fmt1, pafd->pwfx->nSamplesPerSec);
+	wsprintfW(pafd->szFormat, L"%d Hz", pafd->pwfx->nSamplesPerSec);
 	if (pafd->pwfx->wBitsPerSample) {
-	    wsprintfW(pafd->szFormat + lstrlenW(pafd->szFormat), fmt2,
+	    wsprintfW(pafd->szFormat + lstrlenW(pafd->szFormat), L"; %d bits",
 		      pafd->pwfx->wBitsPerSample);
 	}
         MultiByteToWideChar(CP_ACP, 0, (pafd->pwfx->nChannels == 1) ? "; Mono" : "; Stereo", -1,
