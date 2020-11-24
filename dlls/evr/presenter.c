@@ -306,17 +306,43 @@ static HRESULT video_presenter_set_media_type(struct video_presenter *presenter,
 
 static HRESULT video_presenter_invalidate_media_type(struct video_presenter *presenter)
 {
-    IMFMediaType *media_type;
+    IMFMediaType *media_type, *candidate_type;
     unsigned int idx = 0;
+    UINT64 frame_size;
+    MFVideoArea aperture;
+    RECT rect;
     HRESULT hr;
+
+    if (FAILED(hr = MFCreateMediaType(&media_type)))
+        return hr;
 
     video_presenter_get_native_video_size(presenter);
 
-    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(presenter->mixer, 0, idx++, &media_type)))
+    rect = presenter->dst_rect;
+    if (rect.left == 0 && rect.right == 0 && rect.bottom == 0 && rect.top == 0)
+    {
+        rect.right = presenter->native_size.cx;
+        rect.bottom = presenter->native_size.cy;
+    }
+
+    aperture.Area.cx = rect.right - rect.left;
+    aperture.Area.cy = rect.bottom - rect.top;
+    aperture.OffsetX.value = 0;
+    aperture.OffsetX.fract = 0;
+    aperture.OffsetY.value = 0;
+    aperture.OffsetY.fract = 0;
+    frame_size = (UINT64)aperture.Area.cx << 32 | aperture.Area.cy;
+
+    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(presenter->mixer, 0, idx++, &candidate_type)))
     {
         /* FIXME: check that d3d device supports this format */
 
-        /* FIXME: potentially adjust frame size */
+        if (FAILED(hr = IMFMediaType_CopyAllItems(candidate_type, (IMFAttributes *)media_type)))
+            WARN("Failed to clone a media type, hr %#x.\n", hr);
+        IMFMediaType_Release(candidate_type);
+
+        IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, frame_size);
+        IMFMediaType_SetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE, (UINT8 *)&aperture, sizeof(aperture));
 
         hr = IMFTransform_SetOutputType(presenter->mixer, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
 
@@ -326,11 +352,11 @@ static HRESULT video_presenter_invalidate_media_type(struct video_presenter *pre
         if (SUCCEEDED(hr))
             hr = IMFTransform_SetOutputType(presenter->mixer, 0, media_type, 0);
 
-        IMFMediaType_Release(media_type);
-
         if (SUCCEEDED(hr))
             break;
     }
+
+    IMFMediaType_Release(media_type);
 
     return hr;
 }

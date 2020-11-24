@@ -2072,6 +2072,137 @@ todo_wine {
     IMFVideoPresenter_Release(presenter);
 }
 
+static void get_output_aperture(IMFTransform *mixer, SIZE *frame_size, MFVideoArea *aperture)
+{
+    IMFMediaType *media_type;
+    UINT64 size;
+    HRESULT hr;
+
+    memset(frame_size, 0xcc, sizeof(*frame_size));
+    memset(aperture, 0xcc, sizeof(*aperture));
+
+    hr = IMFTransform_GetOutputCurrentType(mixer, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &size);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    frame_size->cx = size >> 32;
+    frame_size->cy = size;
+
+    hr = IMFMediaType_GetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE, (UINT8 *)aperture, sizeof(*aperture), NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFMediaType_Release(media_type);
+}
+
+static void test_presenter_media_type(void)
+{
+    IMFTopologyServiceLookupClient *lookup_client;
+    IMFVideoPresenter *presenter;
+    struct test_host host;
+    IMFMediaType *input_type;
+    IDirect3DDeviceManager9 *manager;
+    HRESULT hr;
+    IMFTransform *mixer;
+    IDirect3D9 *d3d;
+    IDirect3DDevice9 *device;
+    unsigned int token;
+    SIZE frame_size;
+    HWND window;
+    MFVideoArea aperture;
+    IMFVideoDisplayControl *display_control;
+    RECT dst;
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = DXVA2CreateDirect3DDeviceManager9(&token, &manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_ResetDevice(manager, device, token);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateVideoPresenter(NULL, &IID_IDirect3DDevice9, &IID_IMFVideoPresenter, (void **)&presenter);
+    ok(hr == S_OK, "Failed to create default presenter, hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFVideoDisplayControl, (void **)&display_control);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateVideoMixer(NULL, &IID_IDirect3DDevice9, &IID_IMFTransform, (void **)&mixer);
+    ok(hr == S_OK, "Failed to create a mixer, hr %#x.\n", hr);
+
+    input_type = create_video_type(&MFVideoFormat_RGB32);
+
+    hr = IMFMediaType_SetUINT64(input_type, &MF_MT_FRAME_SIZE, (UINT64)100 << 32 | 50);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetUINT32(input_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_ProcessMessage(mixer, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetInputType(mixer, 0, input_type, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFTopologyServiceLookupClient, (void **)&lookup_client);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    init_test_host(&host, mixer, presenter);
+
+    hr = IMFTopologyServiceLookupClient_InitServicePointers(lookup_client, &host.IMFTopologyServiceLookup_iface);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoDisplayControl_SetVideoWindow(display_control, window);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoPresenter_ProcessMessage(presenter, MFVP_MESSAGE_INVALIDATEMEDIATYPE, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    get_output_aperture(mixer, &frame_size, &aperture);
+    ok(frame_size.cx == 100 && frame_size.cy == 50, "Unexpected frame size %u x %u.\n", frame_size.cx, frame_size.cy);
+    ok(aperture.Area.cx == 100 && aperture.Area.cy == 50, "Unexpected size %u x %u.\n", aperture.Area.cx, aperture.Area.cy);
+    ok(!aperture.OffsetX.value && !aperture.OffsetX.fract && !aperture.OffsetY.value && !aperture.OffsetY.fract,
+            "Unexpected offset %u x %u.\n", aperture.OffsetX.value, aperture.OffsetY.value);
+
+    SetRect(&dst, 1, 2, 200, 300);
+    hr = IMFVideoDisplayControl_SetVideoPosition(display_control, NULL, &dst);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    get_output_aperture(mixer, &frame_size, &aperture);
+todo_wine {
+    ok(frame_size.cx == 199 && frame_size.cy == 298, "Unexpected frame size %u x %u.\n", frame_size.cx, frame_size.cy);
+    ok(aperture.Area.cx == 199 && aperture.Area.cy == 298, "Unexpected size %u x %u.\n", aperture.Area.cx, aperture.Area.cy);
+}
+    ok(!aperture.OffsetX.value && !aperture.OffsetX.fract && !aperture.OffsetY.value && !aperture.OffsetY.fract,
+            "Unexpected offset %u x %u.\n", aperture.OffsetX.value, aperture.OffsetY.value);
+
+    hr = IMFVideoDisplayControl_SetAspectRatioMode(display_control, MFVideoARMode_None);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    get_output_aperture(mixer, &frame_size, &aperture);
+todo_wine {
+    ok(frame_size.cx == 199 && frame_size.cy == 298, "Unexpected frame size %u x %u.\n", frame_size.cx, frame_size.cy);
+    ok(aperture.Area.cx == 199 && aperture.Area.cy == 298, "Unexpected size %u x %u.\n", aperture.Area.cx, aperture.Area.cy);
+}
+    ok(!aperture.OffsetX.value && !aperture.OffsetX.fract && !aperture.OffsetY.value && !aperture.OffsetY.fract,
+            "Unexpected offset %u x %u.\n", aperture.OffsetX.value, aperture.OffsetY.value);
+
+    IMFVideoDisplayControl_Release(display_control);
+    IMFVideoPresenter_Release(presenter);
+    IMFTransform_Release(mixer);
+
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 static void test_mixer_output_rectangle(void)
 {
     IMFVideoMixerControl *mixer_control;
@@ -2574,6 +2705,7 @@ START_TEST(evr)
     test_presenter_ar_mode();
     test_presenter_video_window();
     test_presenter_quality_control();
+    test_presenter_media_type();
     test_mixer_output_rectangle();
     test_mixer_zorder();
     test_mixer_samples();
