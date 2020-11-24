@@ -52,17 +52,17 @@ static PWINE_ACMNOTIFYWND MSACM_pLastACMNotifyWnd = NULL;
 
 static void MSACM_ReorderDriversByPriority(void);
 
+static const WCHAR drvkey[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Drivers32";
+static const WCHAR baseKey[] = L"Software\\Microsoft\\AudioCompressionManager\\DriverCache\\";
+static const WCHAR basePriorityKey[] =
+    L"Software\\Microsoft\\Multimedia\\Audio Compression Manager\\Priority v4.00";
+
 /***********************************************************************
  *           MSACM_RegisterDriverFromRegistry()
  */
 PWINE_ACMDRIVERID MSACM_RegisterDriverFromRegistry(LPCWSTR pszRegEntry)
 {
     static const WCHAR msacmW[] = {'M','S','A','C','M','.'};
-    static const WCHAR drvkey[] = {'S','o','f','t','w','a','r','e','\\',
-				   'M','i','c','r','o','s','o','f','t','\\',
-				   'W','i','n','d','o','w','s',' ','N','T','\\',
-				   'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-				   'D','r','i','v','e','r','s','3','2','\0'};
     WCHAR buf[2048];
     DWORD bufLen, lRet;
     HKEY hKey;
@@ -181,9 +181,6 @@ errCleanUp:
  */
 static	LPWSTR	MSACM_GetRegistryKey(const WINE_ACMDRIVERID* padid)
 {
-    static const WCHAR	baseKey[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-                                     'A','u','d','i','o','C','o','m','p','r','e','s','s','i','o','n','M','a','n','a','g','e','r','\\',
-                                     'D','r','i','v','e','r','C','a','c','h','e','\\','\0'};
     LPWSTR	ret;
     int		len;
 
@@ -354,11 +351,6 @@ void MSACM_RegisterAllDrivers(void)
     static const WCHAR msacmW[] = {'M','S','A','C','M','.'};
     static const WCHAR drv32[] = {'d','r','i','v','e','r','s','3','2','\0'};
     static const WCHAR sys[] = {'s','y','s','t','e','m','.','i','n','i','\0'};
-    static const WCHAR drvkey[] = {'S','o','f','t','w','a','r','e','\\',
-				   'M','i','c','r','o','s','o','f','t','\\',
-				   'W','i','n','d','o','w','s',' ','N','T','\\',
-				   'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-				   'D','r','i','v','e','r','s','3','2','\0'};
     DWORD i, cnt, bufLen, lRet, type;
     WCHAR buf[2048], valname[64], *name, *s;
     FILETIME lastWrite;
@@ -565,13 +557,6 @@ static void MSACM_ReorderDriversByPriority(void)
     if (iNumDrivers > 1)
     {
         LONG lError;
-        static const WCHAR basePriorityKey[] = {
-            'S','o','f','t','w','a','r','e','\\',
-            'M','i','c','r','o','s','o','f','t','\\',
-            'M','u','l','t','i','m','e','d','i','a','\\',
-            'A','u','d','i','o',' ','C','o','m','p','r','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
-            'P','r','i','o','r','i','t','y',' ','v','4','.','0','0','\0'
-        };
         unsigned int i;
         LONG lBufferLength;
         WCHAR szBuffer[256];
@@ -666,13 +651,6 @@ void MSACM_WriteCurrentPriorities(void)
 {
     LONG lError;
     HKEY hPriorityKey;
-    static const WCHAR basePriorityKey[] = {
-        'S','o','f','t','w','a','r','e','\\',
-        'M','i','c','r','o','s','o','f','t','\\',
-        'M','u','l','t','i','m','e','d','i','a','\\',
-        'A','u','d','i','o',' ','C','o','m','p','r','e','s','s','i','o','n',' ','M','a','n','a','g','e','r','\\',
-        'P','r','i','o','r','i','t','y',' ','v','4','.','0','0','\0'
-    };
     PWINE_ACMDRIVERID padid;
     DWORD dwPriorityCounter;
     static const WCHAR priorityTmpl[] = {'P','r','i','o','r','i','t','y','%','l','d','\0'};
