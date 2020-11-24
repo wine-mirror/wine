@@ -634,7 +634,7 @@ BOOL WINAPI IsBadStringPtrA( LPCSTR str, UINT_PTR max )
     __ENDTRY
     return FALSE;
 }
-
+__ASM_STDCALL_IMPORT(IsBadStringPtrA,8)
 
 /*************************************************************
  *            IsBadStringPtrW
@@ -656,6 +656,7 @@ BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT_PTR max )
     __ENDTRY
     return FALSE;
 }
+__ASM_STDCALL_IMPORT(IsBadStringPtrW,8)
 
 
 /**********************************************************************

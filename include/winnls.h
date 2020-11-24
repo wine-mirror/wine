@@ -24,10 +24,12 @@
 extern "C" {
 #endif
 
+#ifndef WINNORMALIZEAPI
 #ifndef _NORMALIZE_
-# define WINNORMALIZEAPI DECLSPEC_HIDDEN
+# define WINNORMALIZEAPI DECLSPEC_IMPORT
 #else
 # define WINNORMALIZEAPI
+#endif
 #endif
 
 /* Country codes */

@@ -23,15 +23,16 @@
 #include "winbase.h"
 #include "delayloadhandler.h"
 
-void *WINAPI ResolveDelayLoadedAPI( void* base, const IMAGE_DELAYLOAD_DESCRIPTOR* desc,
-                                    PDELAYLOAD_FAILURE_DLL_CALLBACK dllhook,
-                                    PDELAYLOAD_FAILURE_SYSTEM_ROUTINE syshook,
-                                    IMAGE_THUNK_DATA* addr, ULONG flags );
-void *WINAPI DelayLoadFailureHook( LPCSTR name, LPCSTR function );
+WINBASEAPI void *WINAPI DelayLoadFailureHook( LPCSTR name, LPCSTR function );
 
 #ifdef _WIN32
 
 extern IMAGE_DOS_HEADER __ImageBase;
+
+WINBASEAPI void *WINAPI ResolveDelayLoadedAPI( void* base, const IMAGE_DELAYLOAD_DESCRIPTOR* desc,
+                                               PDELAYLOAD_FAILURE_DLL_CALLBACK dllhook,
+                                               PDELAYLOAD_FAILURE_SYSTEM_ROUTINE syshook,
+                                               IMAGE_THUNK_DATA* addr, ULONG flags );
 
 FARPROC WINAPI __delayLoadHelper2( const IMAGE_DELAYLOAD_DESCRIPTOR *descr, IMAGE_THUNK_DATA *addr )
 {

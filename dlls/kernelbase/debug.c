@@ -314,6 +314,7 @@ void WINAPI DECLSPEC_HOTPATCH RaiseException( DWORD code, DWORD flags, DWORD cou
 
     RtlRaiseException( &record );
 }
+__ASM_STDCALL_IMPORT(RaiseException,16)
 
 
 /***********************************************************************
