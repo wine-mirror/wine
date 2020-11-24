@@ -42,9 +42,9 @@ typedef void (__cdecl *__sighandler_t)(int);
 #define SIG_IGN ((__sighandler_t)1)
 #define SIG_ERR ((__sighandler_t)-1)
 
-void** __cdecl __pxcptinfoptrs(void);
-__sighandler_t __cdecl signal(int sig, __sighandler_t func);
-int __cdecl raise(int sig);
+_ACRTIMP void** __cdecl __pxcptinfoptrs(void);
+_ACRTIMP __sighandler_t __cdecl signal(int sig, __sighandler_t func);
+_ACRTIMP int __cdecl raise(int sig);
 
 #ifdef __cplusplus
 }

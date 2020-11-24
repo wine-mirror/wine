@@ -143,14 +143,14 @@ typedef _JBTYPE jmp_buf[_JBLEN];
 extern "C" {
 #endif
 
-void __cdecl longjmp(jmp_buf,int);
+_ACRTIMP void __cdecl longjmp(jmp_buf,int);
 
 #ifdef _WIN64
 # ifdef _UCRT
 #  define _setjmpex __intrinsic_setjmpex
 # endif
 # ifdef __GNUC__
-int __cdecl __attribute__ ((__nothrow__,__returns_twice__)) _setjmpex(jmp_buf,void*);
+_ACRTIMP int __cdecl __attribute__ ((__nothrow__,__returns_twice__)) _setjmpex(jmp_buf,void*);
 # define setjmp(buf)   _setjmpex(buf,__builtin_frame_address(0))
 # define setjmpex(buf) _setjmpex(buf,__builtin_frame_address(0))
 # endif
@@ -159,9 +159,9 @@ int __cdecl __attribute__ ((__nothrow__,__returns_twice__)) _setjmpex(jmp_buf,vo
 #  define _setjmp __intrinsic_setjmp
 # endif
 # ifdef __GNUC__
-int __cdecl __attribute__ ((__nothrow__,__returns_twice__)) _setjmp(jmp_buf);
+_ACRTIMP int __cdecl __attribute__ ((__nothrow__,__returns_twice__)) _setjmp(jmp_buf);
 # else
-int __cdecl _setjmp(jmp_buf);
+_ACRTIMP int __cdecl _setjmp(jmp_buf);
 # endif
 #endif  /* _WIN64 */
 

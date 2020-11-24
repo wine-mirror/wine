@@ -83,26 +83,26 @@ extern "C" {
 
 #if defined(__i386__) || defined(_UCRT)
 
-extern unsigned int* __cdecl __p__osver(void);
-#define _osver             (*__p__osver())
-extern unsigned int* __cdecl __p__winver(void);
-#define _winver            (*__p__winver())
-extern unsigned int* __cdecl __p__winmajor(void);
-#define _winmajor          (*__p__winmajor())
-extern unsigned int* __cdecl __p__winminor(void);
-#define _winminor          (*__p__winminor())
-extern int*          __cdecl __p___argc(void);
-#define __argc             (*__p___argc())
-extern char***       __cdecl __p___argv(void);
-#define __argv             (*__p___argv())
-extern wchar_t***    __cdecl __p___wargv(void);
-#define __wargv            (*__p___wargv())
-extern char***       __cdecl __p__environ(void);
-#define _environ           (*__p__environ())
-extern wchar_t***    __cdecl __p__wenviron(void);
-#define _wenviron          (*__p__wenviron())
-extern int*          __cdecl __p__fmode(void);
-#define _fmode             (*__p__fmode())
+_ACRTIMP unsigned int* __cdecl __p__osver(void);
+_ACRTIMP unsigned int* __cdecl __p__winver(void);
+_ACRTIMP unsigned int* __cdecl __p__winmajor(void);
+_ACRTIMP unsigned int* __cdecl __p__winminor(void);
+_ACRTIMP int*          __cdecl __p___argc(void);
+_ACRTIMP char***       __cdecl __p___argv(void);
+_ACRTIMP wchar_t***    __cdecl __p___wargv(void);
+_ACRTIMP char***       __cdecl __p__environ(void);
+_ACRTIMP wchar_t***    __cdecl __p__wenviron(void);
+_ACRTIMP int*          __cdecl __p__fmode(void);
+#define _osver               (*__p__osver())
+#define _winver              (*__p__winver())
+#define _winmajor            (*__p__winmajor())
+#define _winminor            (*__p__winminor())
+#define __argc               (*__p___argc())
+#define __argv               (*__p___argv())
+#define __wargv              (*__p___wargv())
+#define _environ             (*__p__environ())
+#define _wenviron            (*__p__wenviron())
+#define _fmode               (*__p__fmode())
 
 #else  /* __i386__ */
 
@@ -119,22 +119,22 @@ extern unsigned int _fmode;
 
 #endif  /* __i386__ */
 
-extern int            __cdecl ___mb_cur_max_func(void);
-#define __mb_cur_max        ___mb_cur_max_func()
-extern __msvcrt_ulong* __cdecl __doserrno(void);
-#define _doserrno           (*__doserrno())
-extern int*           __cdecl _errno(void);
-#define errno               (*_errno())
+_ACRTIMP int             __cdecl ___mb_cur_max_func(void);
+#define __mb_cur_max             ___mb_cur_max_func()
+_ACRTIMP __msvcrt_ulong* __cdecl __doserrno(void);
+#define _doserrno              (*__doserrno())
+_ACRTIMP int*            __cdecl _errno(void);
+#define errno                  (*_errno())
 
 /* FIXME: We need functions to access these:
  * int _sys_nerr;
  * char** _sys_errlist;
  */
 
-errno_t       __cdecl _get_doserrno(int*);
-errno_t       __cdecl _get_errno(int*);
-errno_t       __cdecl _set_doserrno(int);
-errno_t       __cdecl _set_errno(int);
+_ACRTIMP errno_t       __cdecl _get_doserrno(int*);
+_ACRTIMP errno_t       __cdecl _get_errno(int*);
+_ACRTIMP errno_t       __cdecl _set_doserrno(int);
+_ACRTIMP errno_t       __cdecl _set_errno(int);
 
 #ifndef _CRT_ONEXIT_T_DEFINED
 #define _CRT_ONEXIT_T_DEFINED
@@ -142,94 +142,94 @@ typedef int (__cdecl *_onexit_t)(void);
 #endif
 
 
-int           __cdecl _atodbl(_CRT_DOUBLE*,char*);
-int           __cdecl _atodbl_l(_CRT_DOUBLE*,char*,_locale_t);
-int           __cdecl _atoflt(_CRT_FLOAT*,char*);
-int           __cdecl _atoflt_l(_CRT_FLOAT*,char*,_locale_t);
-__int64       __cdecl _atoi64(const char*);
-long double   __cdecl _atold(const char*);
-int           __cdecl _atoldbl(_LDOUBLE*,char*);
-void          __cdecl _beep(unsigned int,unsigned int);
-char*         __cdecl _ecvt(double,int,int*,int*);
-char*         __cdecl _fcvt(double,int,int*,int*);
-char*         __cdecl _fullpath(char*,const char*,size_t);
-char*         __cdecl _gcvt(double,int,char*);
-errno_t       __cdecl _gcvt_s(char*, size_t, double, int);
-char*         __cdecl _i64toa(__int64,char*,int);
-errno_t       __cdecl _i64toa_s(__int64, char*, size_t, int);
-char*         __cdecl _itoa(int,char*,int);
-errno_t       __cdecl _itoa_s(int,char*,size_t,int);
-char*         __cdecl _ltoa(__msvcrt_long,char*,int);
-errno_t       __cdecl _ltoa_s(__msvcrt_long, char*, size_t, int);
-__msvcrt_ulong __cdecl _lrotl(__msvcrt_ulong,int);
-__msvcrt_ulong __cdecl _lrotr(__msvcrt_ulong,int);
-void          __cdecl _makepath(char*,const char*,const char*,const char*,const char*);
-int           __cdecl _makepath_s(char*,size_t,const char*,const char*,const char*,const char*);
-size_t        __cdecl _mbstrlen(const char*);
-_onexit_t     __cdecl _onexit(_onexit_t);
-int           __cdecl _putenv(const char*);
-unsigned int  __cdecl _rotl(unsigned int,int);
-unsigned int  __cdecl _rotr(unsigned int,int);
-void          __cdecl _searchenv(const char*,const char*,char*);
-int           __cdecl _set_error_mode(int);
-void          __cdecl _seterrormode(int);
-void          __cdecl _sleep(__msvcrt_ulong);
-void          __cdecl _splitpath(const char*,char*,char*,char*,char*);
-void          __cdecl _swab(char*,char*,int);
-char*         __cdecl _ui64toa(unsigned __int64,char*,int);
-errno_t       __cdecl _ui64toa_s(unsigned __int64,char*,size_t,int);
-char*         __cdecl _ultoa(__msvcrt_ulong,char*,int);
-errno_t       __cdecl _ultoa_s(__msvcrt_ulong,char*,size_t,int);
+_ACRTIMP int           __cdecl _atodbl(_CRT_DOUBLE*,char*);
+_ACRTIMP int           __cdecl _atodbl_l(_CRT_DOUBLE*,char*,_locale_t);
+_ACRTIMP int           __cdecl _atoflt(_CRT_FLOAT*,char*);
+_ACRTIMP int           __cdecl _atoflt_l(_CRT_FLOAT*,char*,_locale_t);
+_ACRTIMP __int64       __cdecl _atoi64(const char*);
+_ACRTIMP long double   __cdecl _atold(const char*);
+_ACRTIMP int           __cdecl _atoldbl(_LDOUBLE*,char*);
+_ACRTIMP void          __cdecl _beep(unsigned int,unsigned int);
+_ACRTIMP char*         __cdecl _ecvt(double,int,int*,int*);
+_ACRTIMP char*         __cdecl _fcvt(double,int,int*,int*);
+_ACRTIMP char*         __cdecl _fullpath(char*,const char*,size_t);
+_ACRTIMP char*         __cdecl _gcvt(double,int,char*);
+_ACRTIMP errno_t       __cdecl _gcvt_s(char*, size_t, double, int);
+_ACRTIMP char*         __cdecl _i64toa(__int64,char*,int);
+_ACRTIMP errno_t       __cdecl _i64toa_s(__int64, char*, size_t, int);
+_ACRTIMP char*         __cdecl _itoa(int,char*,int);
+_ACRTIMP errno_t       __cdecl _itoa_s(int,char*,size_t,int);
+_ACRTIMP char*         __cdecl _ltoa(__msvcrt_long,char*,int);
+_ACRTIMP errno_t       __cdecl _ltoa_s(__msvcrt_long, char*, size_t, int);
+_ACRTIMP __msvcrt_ulong __cdecl _lrotl(__msvcrt_ulong,int);
+_ACRTIMP __msvcrt_ulong __cdecl _lrotr(__msvcrt_ulong,int);
+_ACRTIMP void          __cdecl _makepath(char*,const char*,const char*,const char*,const char*);
+_ACRTIMP int           __cdecl _makepath_s(char*,size_t,const char*,const char*,const char*,const char*);
+_ACRTIMP size_t        __cdecl _mbstrlen(const char*);
+_ACRTIMP _onexit_t     __cdecl _onexit(_onexit_t);
+_ACRTIMP int           __cdecl _putenv(const char*);
+_ACRTIMP unsigned int  __cdecl _rotl(unsigned int,int);
+_ACRTIMP unsigned int  __cdecl _rotr(unsigned int,int);
+_ACRTIMP void          __cdecl _searchenv(const char*,const char*,char*);
+_ACRTIMP int           __cdecl _set_error_mode(int);
+_ACRTIMP void          __cdecl _seterrormode(int);
+_ACRTIMP void          __cdecl _sleep(__msvcrt_ulong);
+_ACRTIMP void          __cdecl _splitpath(const char*,char*,char*,char*,char*);
+_ACRTIMP void          __cdecl _swab(char*,char*,int);
+_ACRTIMP char*         __cdecl _ui64toa(unsigned __int64,char*,int);
+_ACRTIMP errno_t       __cdecl _ui64toa_s(unsigned __int64,char*,size_t,int);
+_ACRTIMP char*         __cdecl _ultoa(__msvcrt_ulong,char*,int);
+_ACRTIMP errno_t       __cdecl _ultoa_s(__msvcrt_ulong,char*,size_t,int);
 
 _ACRTIMP DECLSPEC_NORETURN void __cdecl _Exit(int);
 _ACRTIMP DECLSPEC_NORETURN void __cdecl _exit(int);
 _ACRTIMP DECLSPEC_NORETURN void __cdecl abort(void);
-int           __cdecl abs(int);
-int           __cdecl atexit(void (__cdecl *)(void));
-double        __cdecl atof(const char*);
-int           __cdecl atoi(const char*);
-int           __cdecl _atoi_l(const char*,_locale_t);
-__msvcrt_long __cdecl atol(const char*);
-__int64       __cdecl atoll(const char*);
-void*         __cdecl calloc(size_t,size_t);
+_ACRTIMP int           __cdecl abs(int);
+_ACRTIMP int           __cdecl atexit(void (__cdecl *)(void));
+_ACRTIMP double        __cdecl atof(const char*);
+_ACRTIMP int           __cdecl atoi(const char*);
+_ACRTIMP int           __cdecl _atoi_l(const char*,_locale_t);
+_ACRTIMP __msvcrt_long __cdecl atol(const char*);
+_ACRTIMP __int64       __cdecl atoll(const char*);
+_ACRTIMP void*         __cdecl calloc(size_t,size_t);
 #ifndef __i386__
-div_t  __cdecl div(int,int);
-ldiv_t __cdecl ldiv(__msvcrt_long,__msvcrt_long);
+_ACRTIMP div_t  __cdecl div(int,int);
+_ACRTIMP ldiv_t __cdecl ldiv(__msvcrt_long,__msvcrt_long);
 #endif
-lldiv_t       __cdecl lldiv(__int64,__int64);
+_ACRTIMP lldiv_t       __cdecl lldiv(__int64,__int64);
 _ACRTIMP DECLSPEC_NORETURN void __cdecl exit(int);
-void          __cdecl free(void*);
-char*         __cdecl getenv(const char*);
-__msvcrt_long __cdecl labs(__msvcrt_long);
-__int64       __cdecl llabs(__int64);
-void*         __cdecl malloc(size_t);
-int           __cdecl mblen(const char*,size_t);
-void          __cdecl perror(const char*);
-int           __cdecl rand(void);
-errno_t       __cdecl rand_s(unsigned int*);
-void*         __cdecl realloc(void*,size_t);
-void          __cdecl srand(unsigned int);
-float         __cdecl strtof(const char*,char**);
-double        __cdecl strtod(const char*,char**);
-__msvcrt_long __cdecl strtol(const char*,char**,int);
-__msvcrt_ulong __cdecl strtoul(const char*,char**,int);
-__int64       __cdecl strtoll_l(const char*,char**,int,_locale_t);
-unsigned __int64 __cdecl strtoull_l(const char*,char**,int,_locale_t);
-__int64       __cdecl strtoimax(const char*,char**,int);
-__int64       __cdecl strtoimax_l(const char*,char**,int,_locale_t);
-unsigned __int64 __cdecl strtoumax(const char*,char**,int);
-unsigned __int64 __cdecl strtoumax_l(const char*,char**,int,_locale_t);
-__int64       __cdecl _strtoi64(const char*,char**,int);
-__int64       __cdecl _strtoi64_l(const char*,char**,int,_locale_t);
-unsigned __int64 __cdecl _strtoui64(const char*,char**,int);
-unsigned __int64 __cdecl _strtoui64_l(const char*,char**,int,_locale_t);
-int           __cdecl system(const char*);
-void*         __cdecl bsearch(const void*,const void*,size_t,size_t,int (__cdecl *)(const void*,const void*));
-void          __cdecl qsort(void*,size_t,size_t,int (__cdecl *)(const void*,const void*));
+_ACRTIMP void          __cdecl free(void*);
+_ACRTIMP char*         __cdecl getenv(const char*);
+_ACRTIMP __msvcrt_long __cdecl labs(__msvcrt_long);
+_ACRTIMP __int64       __cdecl llabs(__int64);
+_ACRTIMP void*         __cdecl malloc(size_t);
+_ACRTIMP int           __cdecl mblen(const char*,size_t);
+_ACRTIMP void          __cdecl perror(const char*);
+_ACRTIMP int           __cdecl rand(void);
+_ACRTIMP errno_t       __cdecl rand_s(unsigned int*);
+_ACRTIMP void*         __cdecl realloc(void*,size_t);
+_ACRTIMP void          __cdecl srand(unsigned int);
+_ACRTIMP float         __cdecl strtof(const char*,char**);
+_ACRTIMP double        __cdecl strtod(const char*,char**);
+_ACRTIMP __msvcrt_long __cdecl strtol(const char*,char**,int);
+_ACRTIMP __msvcrt_ulong __cdecl strtoul(const char*,char**,int);
+_ACRTIMP __int64       __cdecl strtoll_l(const char*,char**,int,_locale_t);
+_ACRTIMP unsigned __int64 __cdecl strtoull_l(const char*,char**,int,_locale_t);
+_ACRTIMP __int64       __cdecl strtoimax(const char*,char**,int);
+_ACRTIMP __int64       __cdecl strtoimax_l(const char*,char**,int,_locale_t);
+_ACRTIMP unsigned __int64 __cdecl strtoumax(const char*,char**,int);
+_ACRTIMP unsigned __int64 __cdecl strtoumax_l(const char*,char**,int,_locale_t);
+_ACRTIMP __int64       __cdecl _strtoi64(const char*,char**,int);
+_ACRTIMP __int64       __cdecl _strtoi64_l(const char*,char**,int,_locale_t);
+_ACRTIMP unsigned __int64 __cdecl _strtoui64(const char*,char**,int);
+_ACRTIMP unsigned __int64 __cdecl _strtoui64_l(const char*,char**,int,_locale_t);
+_ACRTIMP int           __cdecl system(const char*);
+_ACRTIMP void*         __cdecl bsearch(const void*,const void*,size_t,size_t,int (__cdecl *)(const void*,const void*));
+_ACRTIMP void          __cdecl qsort(void*,size_t,size_t,int (__cdecl *)(const void*,const void*));
 
 typedef void (__cdecl *_invalid_parameter_handler)(const wchar_t*, const wchar_t*, const wchar_t*, unsigned, uintptr_t);
-_invalid_parameter_handler __cdecl _set_invalid_parameter_handler(_invalid_parameter_handler);
-_invalid_parameter_handler __cdecl _get_invalid_parameter_handler(void);
+_ACRTIMP _invalid_parameter_handler __cdecl _set_invalid_parameter_handler(_invalid_parameter_handler);
+_ACRTIMP _invalid_parameter_handler __cdecl _get_invalid_parameter_handler(void);
 _ACRTIMP _invalid_parameter_handler __cdecl _get_thread_local_invalid_parameter_handler(void);
 _ACRTIMP _invalid_parameter_handler __cdecl _set_thread_local_invalid_parameter_handler(_invalid_parameter_handler);
 void __cdecl _invalid_parameter(const wchar_t *expr, const wchar_t *func, const wchar_t *file,

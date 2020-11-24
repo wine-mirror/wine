@@ -230,7 +230,7 @@ typedef struct {
 
 struct _EXCEPTION_POINTERS;
 
-int __cdecl _fpieee_flt(__msvcrt_ulong _ExceptionCode,struct _EXCEPTION_POINTERS *_PtExceptionPtr,int (__cdecl *_Handler)(_FPIEEE_RECORD *));
+_ACRTIMP int __cdecl _fpieee_flt(__msvcrt_ulong _ExceptionCode,struct _EXCEPTION_POINTERS *_PtExceptionPtr,int (__cdecl *_Handler)(_FPIEEE_RECORD *));
 
 #ifdef __cplusplus
 }

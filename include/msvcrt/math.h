@@ -45,107 +45,107 @@ struct _complex
 };
 #endif /* _COMPLEX_DEFINED */
 
-double __cdecl sin(double);
-double __cdecl cos(double);
-double __cdecl tan(double);
-double __cdecl sinh(double);
-double __cdecl cosh(double);
-double __cdecl tanh(double);
-double __cdecl asin(double);
-double __cdecl acos(double);
-double __cdecl atan(double);
-double __cdecl atan2(double, double);
-double __cdecl asinh(double);
-double __cdecl acosh(double);
-double __cdecl atanh(double);
-double __cdecl exp(double);
-double __cdecl log(double);
-double __cdecl log10(double);
-double __cdecl pow(double, double);
-double __cdecl sqrt(double);
-double __cdecl ceil(double);
-double __cdecl floor(double);
-double __cdecl fabs(double);
-double __cdecl ldexp(double, int);
-double __cdecl frexp(double, int*);
-double __cdecl modf(double, double*);
-double __cdecl fmod(double, double);
-double __cdecl fmin(double, double);
-double __cdecl fmax(double, double);
-double __cdecl erf(double);
+_ACRTIMP double __cdecl sin(double);
+_ACRTIMP double __cdecl cos(double);
+_ACRTIMP double __cdecl tan(double);
+_ACRTIMP double __cdecl sinh(double);
+_ACRTIMP double __cdecl cosh(double);
+_ACRTIMP double __cdecl tanh(double);
+_ACRTIMP double __cdecl asin(double);
+_ACRTIMP double __cdecl acos(double);
+_ACRTIMP double __cdecl atan(double);
+_ACRTIMP double __cdecl atan2(double, double);
+_ACRTIMP double __cdecl asinh(double);
+_ACRTIMP double __cdecl acosh(double);
+_ACRTIMP double __cdecl atanh(double);
+_ACRTIMP double __cdecl exp(double);
+_ACRTIMP double __cdecl log(double);
+_ACRTIMP double __cdecl log10(double);
+_ACRTIMP double __cdecl pow(double, double);
+_ACRTIMP double __cdecl sqrt(double);
+_ACRTIMP double __cdecl ceil(double);
+_ACRTIMP double __cdecl floor(double);
+_ACRTIMP double __cdecl fabs(double);
+_ACRTIMP double __cdecl ldexp(double, int);
+_ACRTIMP double __cdecl frexp(double, int*);
+_ACRTIMP double __cdecl modf(double, double*);
+_ACRTIMP double __cdecl fmod(double, double);
+_ACRTIMP double __cdecl fmin(double, double);
+_ACRTIMP double __cdecl fmax(double, double);
+_ACRTIMP double __cdecl erf(double);
 
-double __cdecl _hypot(double, double);
-double __cdecl _j0(double);
-double __cdecl _j1(double);
-double __cdecl _jn(int, double);
-double __cdecl _y0(double);
-double __cdecl _y1(double);
-double __cdecl _yn(int, double);
+_ACRTIMP double __cdecl _hypot(double, double);
+_ACRTIMP double __cdecl _j0(double);
+_ACRTIMP double __cdecl _j1(double);
+_ACRTIMP double __cdecl _jn(int, double);
+_ACRTIMP double __cdecl _y0(double);
+_ACRTIMP double __cdecl _y1(double);
+_ACRTIMP double __cdecl _yn(int, double);
 
-double __cdecl cbrt(double);
-double __cdecl exp2(double);
-double __cdecl log2(double);
-double __cdecl rint(double);
-double __cdecl round(double);
-double __cdecl trunc(double);
+_ACRTIMP double __cdecl cbrt(double);
+_ACRTIMP double __cdecl exp2(double);
+_ACRTIMP double __cdecl log2(double);
+_ACRTIMP double __cdecl rint(double);
+_ACRTIMP double __cdecl round(double);
+_ACRTIMP double __cdecl trunc(double);
 
-float __cdecl cbrtf(float);
-float __cdecl exp2f(float);
-float __cdecl log2f(float);
-float __cdecl rintf(float);
-float __cdecl roundf(float);
-float __cdecl truncf(float);
+_ACRTIMP float __cdecl cbrtf(float);
+_ACRTIMP float __cdecl exp2f(float);
+_ACRTIMP float __cdecl log2f(float);
+_ACRTIMP float __cdecl rintf(float);
+_ACRTIMP float __cdecl roundf(float);
+_ACRTIMP float __cdecl truncf(float);
 
-long __cdecl lrint(double);
-long __cdecl lrintf(float);
-long __cdecl lround(double);
-long __cdecl lroundf(float);
+_ACRTIMP __msvcrt_long __cdecl lrint(double);
+_ACRTIMP __msvcrt_long __cdecl lrintf(float);
+_ACRTIMP __msvcrt_long __cdecl lround(double);
+_ACRTIMP __msvcrt_long __cdecl lroundf(float);
 
 _ACRTIMP double __cdecl scalbn(double,int);
 _ACRTIMP float  __cdecl scalbnf(float,int);
 
-double __cdecl _copysign (double, double);
-double __cdecl _chgsign (double);
-double __cdecl _scalb(double, __msvcrt_long);
-double __cdecl _logb(double);
-double __cdecl _nextafter(double, double);
-int    __cdecl _finite(double);
-int    __cdecl _isnan(double);
-int    __cdecl _fpclass(double);
+_ACRTIMP double __cdecl _copysign (double, double);
+_ACRTIMP double __cdecl _chgsign (double);
+_ACRTIMP double __cdecl _scalb(double, __msvcrt_long);
+_ACRTIMP double __cdecl _logb(double);
+_ACRTIMP double __cdecl _nextafter(double, double);
+_ACRTIMP int    __cdecl _finite(double);
+_ACRTIMP int    __cdecl _isnan(double);
+_ACRTIMP int    __cdecl _fpclass(double);
 
 #ifndef __i386__
 
-float __cdecl sinf(float);
-float __cdecl cosf(float);
-float __cdecl tanf(float);
-float __cdecl sinhf(float);
-float __cdecl coshf(float);
-float __cdecl tanhf(float);
-float __cdecl asinf(float);
-float __cdecl acosf(float);
-float __cdecl atanf(float);
-float __cdecl atan2f(float, float);
-float __cdecl asinhf(float);
-float __cdecl acoshf(float);
-float __cdecl atanhf(float);
-float __cdecl expf(float);
-float __cdecl logf(float);
-float __cdecl log10f(float);
-float __cdecl powf(float, float);
-float __cdecl sqrtf(float);
-float __cdecl ceilf(float);
-float __cdecl floorf(float);
-float __cdecl fabsf(float);
-float __cdecl frexpf(float, int*);
-float __cdecl modff(float, float*);
-float __cdecl fmodf(float, float);
+_ACRTIMP float __cdecl sinf(float);
+_ACRTIMP float __cdecl cosf(float);
+_ACRTIMP float __cdecl tanf(float);
+_ACRTIMP float __cdecl sinhf(float);
+_ACRTIMP float __cdecl coshf(float);
+_ACRTIMP float __cdecl tanhf(float);
+_ACRTIMP float __cdecl asinf(float);
+_ACRTIMP float __cdecl acosf(float);
+_ACRTIMP float __cdecl atanf(float);
+_ACRTIMP float __cdecl atan2f(float, float);
+_ACRTIMP float __cdecl asinhf(float);
+_ACRTIMP float __cdecl acoshf(float);
+_ACRTIMP float __cdecl atanhf(float);
+_ACRTIMP float __cdecl expf(float);
+_ACRTIMP float __cdecl logf(float);
+_ACRTIMP float __cdecl log10f(float);
+_ACRTIMP float __cdecl powf(float, float);
+_ACRTIMP float __cdecl sqrtf(float);
+_ACRTIMP float __cdecl ceilf(float);
+_ACRTIMP float __cdecl floorf(float);
+_ACRTIMP float __cdecl fabsf(float);
+_ACRTIMP float __cdecl frexpf(float, int*);
+_ACRTIMP float __cdecl modff(float, float*);
+_ACRTIMP float __cdecl fmodf(float, float);
 
-float __cdecl _copysignf(float, float);
-float __cdecl _chgsignf(float);
-float __cdecl _logbf(float);
-int   __cdecl _finitef(float);
-int   __cdecl _isnanf(float);
-int   __cdecl _fpclassf(float);
+_ACRTIMP float __cdecl _copysignf(float, float);
+_ACRTIMP float __cdecl _chgsignf(float);
+_ACRTIMP float __cdecl _logbf(float);
+_ACRTIMP int   __cdecl _finitef(float);
+_ACRTIMP int   __cdecl _isnanf(float);
+_ACRTIMP int   __cdecl _fpclassf(float);
 
 #else
 
@@ -193,13 +193,11 @@ _ACRTIMP float  __cdecl copysignf(float, float);
 #define copysignf(x,y) _copysignf(x,y)
 #endif
 
-double __cdecl nearbyint(double);
-float __cdecl nearbyintf(float);
-
-float __cdecl _hypotf(float, float);
-
-int __cdecl _matherr(struct _exception*);
-double __cdecl _cabs(struct _complex);
+_ACRTIMP double __cdecl nearbyint(double);
+_ACRTIMP float __cdecl nearbyintf(float);
+_ACRTIMP float __cdecl _hypotf(float, float);
+_ACRTIMP int __cdecl _matherr(struct _exception*);
+_ACRTIMP double __cdecl _cabs(struct _complex);
 
 #if (defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 3)))) || defined(__clang__)
 # define INFINITY __builtin_inff()
@@ -221,10 +219,10 @@ static const union {
 #define FP_SUBNORMAL -2
 #define FP_ZERO       0
 
-short __cdecl _dclass(double);
-short __cdecl _fdclass(float);
-int   __cdecl _dsign(double);
-int   __cdecl _fdsign(float);
+_ACRTIMP short __cdecl _dclass(double);
+_ACRTIMP short __cdecl _fdclass(float);
+_ACRTIMP int   __cdecl _dsign(double);
+_ACRTIMP int   __cdecl _fdsign(float);
 
 static inline int __isnanf(float x)
 {

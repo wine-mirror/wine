@@ -14,23 +14,23 @@
 extern "C" {
 #endif
 
-char* __cdecl _cgets(char*);
-int   WINAPIV _cprintf(const char*,...);
-int   __cdecl _cputs(const char*);
-int   WINAPIV _cscanf(const char*,...);
-int   __cdecl _getch(void);
-int   __cdecl _getche(void);
-int   __cdecl _kbhit(void);
-int   __cdecl _putch(int);
-int   __cdecl _ungetch(int);
+_ACRTIMP char* __cdecl _cgets(char*);
+_ACRTIMP int   WINAPIV _cprintf(const char*,...);
+_ACRTIMP int   __cdecl _cputs(const char*);
+_ACRTIMP int   WINAPIV _cscanf(const char*,...);
+_ACRTIMP int   __cdecl _getch(void);
+_ACRTIMP int   __cdecl _getche(void);
+_ACRTIMP int   __cdecl _kbhit(void);
+_ACRTIMP int   __cdecl _putch(int);
+_ACRTIMP int   __cdecl _ungetch(int);
 
 #ifdef _M_IX86
-int            __cdecl _inp(unsigned short);
-__msvcrt_ulong __cdecl _inpd(unsigned short);
-unsigned short __cdecl _inpw(unsigned short);
-int            __cdecl _outp(unsigned short, int);
-__msvcrt_ulong __cdecl _outpd(unsigned short, __msvcrt_ulong);
-unsigned short __cdecl _outpw(unsigned short, unsigned short);
+_ACRTIMP int            __cdecl _inp(unsigned short);
+_ACRTIMP __msvcrt_ulong __cdecl _inpd(unsigned short);
+_ACRTIMP unsigned short __cdecl _inpw(unsigned short);
+_ACRTIMP int            __cdecl _outp(unsigned short, int);
+_ACRTIMP __msvcrt_ulong __cdecl _outpd(unsigned short, __msvcrt_ulong);
+_ACRTIMP unsigned short __cdecl _outpw(unsigned short, unsigned short);
 #endif
 
 #ifdef __cplusplus
@@ -53,8 +53,8 @@ static inline unsigned short outpw(unsigned short i, unsigned short j) { return 
 #endif
 
 #if defined(__GNUC__) && (__GNUC__ < 4)
-extern int WINAPIV cprintf(const char*,...) __attribute__((alias("_cprintf"),format(printf,1,2)));
-extern int WINAPIV cscanf(const char*,...) __attribute__((alias("_cscanf"),format(scanf,1,2)));
+_ACRTIMP int WINAPIV cprintf(const char*,...) __attribute__((alias("_cprintf"),format(printf,1,2)));
+_ACRTIMP int WINAPIV cscanf(const char*,...) __attribute__((alias("_cscanf"),format(scanf,1,2)));
 #else
 #define cprintf _cprintf
 #define cscanf _cscanf

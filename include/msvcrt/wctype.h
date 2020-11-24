@@ -49,23 +49,23 @@ extern "C" {
 
 #ifndef _WCTYPE_DEFINED
 #define _WCTYPE_DEFINED
-int __cdecl is_wctype(wint_t,wctype_t);
-int __cdecl isleadbyte(int);
-int __cdecl iswalnum(wint_t);
-int __cdecl iswalpha(wint_t);
-int __cdecl iswascii(wint_t);
-int __cdecl iswcntrl(wint_t);
-int __cdecl iswctype(wint_t,wctype_t);
-int __cdecl iswdigit(wint_t);
-int __cdecl iswgraph(wint_t);
-int __cdecl iswlower(wint_t);
-int __cdecl iswprint(wint_t);
-int __cdecl iswpunct(wint_t);
-int __cdecl iswspace(wint_t);
-int __cdecl iswupper(wint_t);
-int __cdecl iswxdigit(wint_t);
-wchar_t __cdecl towlower(wchar_t);
-wchar_t __cdecl towupper(wchar_t);
+_ACRTIMP int __cdecl is_wctype(wint_t,wctype_t);
+_ACRTIMP int __cdecl isleadbyte(int);
+_ACRTIMP int __cdecl iswalnum(wint_t);
+_ACRTIMP int __cdecl iswalpha(wint_t);
+_ACRTIMP int __cdecl iswascii(wint_t);
+_ACRTIMP int __cdecl iswcntrl(wint_t);
+_ACRTIMP int __cdecl iswctype(wint_t,wctype_t);
+_ACRTIMP int __cdecl iswdigit(wint_t);
+_ACRTIMP int __cdecl iswgraph(wint_t);
+_ACRTIMP int __cdecl iswlower(wint_t);
+_ACRTIMP int __cdecl iswprint(wint_t);
+_ACRTIMP int __cdecl iswpunct(wint_t);
+_ACRTIMP int __cdecl iswspace(wint_t);
+_ACRTIMP int __cdecl iswupper(wint_t);
+_ACRTIMP int __cdecl iswxdigit(wint_t);
+_ACRTIMP wchar_t __cdecl towlower(wchar_t);
+_ACRTIMP wchar_t __cdecl towupper(wchar_t);
 #endif /* _WCTYPE_DEFINED */
 
 typedef wchar_t wctrans_t;

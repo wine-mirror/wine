@@ -24,6 +24,7 @@
 #endif
 
 #include <corecrt.h>
+#include <wine/asm.h>
 
 double __cdecl sin(double);
 double __cdecl cos(double);
@@ -48,9 +49,21 @@ float powf(float x, float y) { return pow(x, y); }
 float sqrtf(float x) { return sqrt(x); }
 float floorf(float x) { return floor(x); }
 float ceilf(float x) { return ceil(x); }
+__ASM_GLOBAL_IMPORT(sinf)
+__ASM_GLOBAL_IMPORT(cosf)
+__ASM_GLOBAL_IMPORT(tanf)
+__ASM_GLOBAL_IMPORT(atan2f)
+__ASM_GLOBAL_IMPORT(expf)
+__ASM_GLOBAL_IMPORT(logf)
+__ASM_GLOBAL_IMPORT(powf)
+__ASM_GLOBAL_IMPORT(sqrtf)
+__ASM_GLOBAL_IMPORT(floorf)
+__ASM_GLOBAL_IMPORT(ceilf)
 #endif
 
 #if _MSVCR_VER < 120
 double exp2(double x) { return pow(2.0, x); }
 float exp2f(float x) { return powf(2.0f, x); }
+__ASM_GLOBAL_IMPORT(exp2)
+__ASM_GLOBAL_IMPORT(exp2f)
 #endif

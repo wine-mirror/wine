@@ -54,8 +54,8 @@ struct __timeb64
 extern "C" {
 #endif
 
-void __cdecl _ftime32(struct __timeb32*);
-void __cdecl _ftime64(struct __timeb64*);
+_ACRTIMP void __cdecl _ftime32(struct __timeb32*);
+_ACRTIMP void __cdecl _ftime64(struct __timeb64*);
 
 #ifdef __cplusplus
 }

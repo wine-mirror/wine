@@ -47,12 +47,12 @@ struct __utimbuf64
 extern "C" {
 #endif
 
-int __cdecl _futime32(int,struct __utimbuf32*);
-int __cdecl _futime64(int,struct __utimbuf64*);
-int __cdecl _utime32(const char*,struct __utimbuf32*);
-int __cdecl _utime64(const char*,struct __utimbuf64*);
-int __cdecl _wutime32(const wchar_t*,struct __utimbuf32*);
-int __cdecl _wutime64(const wchar_t*,struct __utimbuf64*);
+_ACRTIMP int __cdecl _futime32(int,struct __utimbuf32*);
+_ACRTIMP int __cdecl _futime64(int,struct __utimbuf64*);
+_ACRTIMP int __cdecl _utime32(const char*,struct __utimbuf32*);
+_ACRTIMP int __cdecl _utime64(const char*,struct __utimbuf64*);
+_ACRTIMP int __cdecl _wutime32(const wchar_t*,struct __utimbuf32*);
+_ACRTIMP int __cdecl _wutime64(const wchar_t*,struct __utimbuf64*);
 
 #ifdef _USE_32BIT_TIME_T
 static inline int _futime(int fd, struct _utimbuf *buf) { return _futime32(fd, (struct __utimbuf32*)buf); }

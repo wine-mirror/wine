@@ -62,17 +62,17 @@ struct tm;
 extern "C" {
 #endif
 
-char*         __cdecl setlocale(int,const char*);
-struct lconv* __cdecl localeconv(void);
-size_t        __cdecl _Strftime(char*,size_t,const char*,const struct tm*,void*);
-int           __cdecl _configthreadlocale(int);
-_locale_t     __cdecl _get_current_locale(void);
-_locale_t     __cdecl _create_locale(int, const char*);
-void          __cdecl _free_locale(_locale_t);
+_ACRTIMP char*         __cdecl setlocale(int,const char*);
+_ACRTIMP struct lconv* __cdecl localeconv(void);
+_ACRTIMP size_t        __cdecl _Strftime(char*,size_t,const char*,const struct tm*,void*);
+_ACRTIMP int           __cdecl _configthreadlocale(int);
+_ACRTIMP _locale_t     __cdecl _get_current_locale(void);
+_ACRTIMP _locale_t     __cdecl _create_locale(int, const char*);
+_ACRTIMP void          __cdecl _free_locale(_locale_t);
 
 #ifndef _WLOCALE_DEFINED
 #define _WLOCALE_DEFINED
-wchar_t* __cdecl _wsetlocale(int,const wchar_t*);
+_ACRTIMP wchar_t* __cdecl _wsetlocale(int,const wchar_t*);
 #endif /* _WLOCALE_DEFINED */
 
 #ifdef __cplusplus

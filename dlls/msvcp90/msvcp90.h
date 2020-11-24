@@ -40,8 +40,6 @@ typedef SSIZE_T streamsize;
 #endif
 
 void __cdecl _invalid_parameter_noinfo(void);
-void __cdecl _invalid_parameter(const wchar_t*, const wchar_t*,
-        const wchar_t*, unsigned int, uintptr_t);
 BOOL __cdecl __uncaught_exception(void);
 int __cdecl _callnewh(size_t);
 

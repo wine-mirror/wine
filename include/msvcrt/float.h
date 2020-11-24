@@ -134,27 +134,27 @@ extern "C" {
 #define _CW_DEFAULT (_RC_NEAR + _PC_64 + _EM_INVALID + _EM_ZERODIVIDE + _EM_OVERFLOW + _EM_UNDERFLOW + _EM_INEXACT + _EM_DENORMAL)
 #endif
 
-unsigned int __cdecl _clearfp(void);
-unsigned int __cdecl _statusfp(void);
+_ACRTIMP unsigned int __cdecl _clearfp(void);
+_ACRTIMP unsigned int __cdecl _statusfp(void);
 _ACRTIMP int __cdecl __fpe_flt_rounds(void);
-unsigned int __cdecl _control87(unsigned int, unsigned int);
-unsigned int __cdecl _controlfp(unsigned int, unsigned int);
-errno_t __cdecl _controlfp_s(unsigned int *, unsigned int, unsigned int);
+_ACRTIMP unsigned int __cdecl _control87(unsigned int, unsigned int);
+_ACRTIMP unsigned int __cdecl _controlfp(unsigned int, unsigned int);
+_ACRTIMP errno_t __cdecl _controlfp_s(unsigned int *, unsigned int, unsigned int);
 #ifdef __i386__
-int __cdecl __control87_2(unsigned int, unsigned int, unsigned int *, unsigned int *);
+_ACRTIMP int __cdecl __control87_2(unsigned int, unsigned int, unsigned int *, unsigned int *);
 #endif
 
-double __cdecl _copysign (double, double);
-double __cdecl _chgsign (double);
-double __cdecl _scalb(double, __msvcrt_long);
-double __cdecl _logb(double);
-double __cdecl _nextafter(double, double);
-int    __cdecl _finite(double);
-int    __cdecl _isnan(double);
-int    __cdecl _fpclass(double);
+_ACRTIMP double __cdecl _copysign (double, double);
+_ACRTIMP double __cdecl _chgsign (double);
+_ACRTIMP double __cdecl _scalb(double, __msvcrt_long);
+_ACRTIMP double __cdecl _logb(double);
+_ACRTIMP double __cdecl _nextafter(double, double);
+_ACRTIMP int    __cdecl _finite(double);
+_ACRTIMP int    __cdecl _isnan(double);
+_ACRTIMP int    __cdecl _fpclass(double);
 
 #ifdef __x86_64__
-float __cdecl _scalbf(float, __msvcrt_long);
+_ACRTIMP float __cdecl _scalbf(float, __msvcrt_long);
 #endif
 
 #ifdef __cplusplus

@@ -43,10 +43,10 @@ extern "C" {
 #define _timezone (*__p__timezone())
 #define _tzname (__p__tzname())
 
-int *   __cdecl __p__daylight(void);
-__msvcrt_long *  __cdecl __p__dstbias(void);
-__msvcrt_long *  __cdecl __p__timezone(void);
-char ** __cdecl __p__tzname(void);
+_ACRTIMP int *   __cdecl __p__daylight(void);
+_ACRTIMP __msvcrt_long *  __cdecl __p__dstbias(void);
+_ACRTIMP __msvcrt_long *  __cdecl __p__timezone(void);
+_ACRTIMP char ** __cdecl __p__tzname(void);
 #else
 extern int _daylight;
 extern __msvcrt_long _dstbias;
@@ -63,31 +63,31 @@ extern char *_tzname;
 #define _time32      time
 #endif
 
-unsigned    __cdecl _getsystime(struct tm*);
-unsigned    __cdecl _setsystime(struct tm*,unsigned);
-char*       __cdecl _strdate(char*);
-errno_t     __cdecl _strdate_s(char*,size_t);
-char*       __cdecl _strtime(char*);
-errno_t     __cdecl _strtime_s(char*,size_t);
-void        __cdecl _tzset(void);
+_ACRTIMP unsigned    __cdecl _getsystime(struct tm*);
+_ACRTIMP unsigned    __cdecl _setsystime(struct tm*,unsigned);
+_ACRTIMP char*       __cdecl _strdate(char*);
+_ACRTIMP errno_t     __cdecl _strdate_s(char*,size_t);
+_ACRTIMP char*       __cdecl _strtime(char*);
+_ACRTIMP errno_t     __cdecl _strtime_s(char*,size_t);
+_ACRTIMP void        __cdecl _tzset(void);
 
-char*       __cdecl asctime(const struct tm*);
-clock_t     __cdecl clock(void);
-char*       __cdecl _ctime32(const __time32_t*);
-char*       __cdecl _ctime64(const __time64_t*);
-double      __cdecl _difftime32(__time32_t,__time32_t);
-double      __cdecl _difftime64(__time64_t,__time64_t);
-struct tm*  __cdecl _gmtime32(const __time32_t*);
-struct tm*  __cdecl _gmtime64(const __time64_t*);
-struct tm*  __cdecl _localtime32(const __time32_t*);
-errno_t     __cdecl _localtime32_s(struct tm*, const __time32_t*);
-struct tm*  __cdecl _localtime64(const __time64_t*);
-errno_t     __cdecl _localtime64_s(struct tm*, const __time64_t*);
-__time32_t  __cdecl _mktime32(struct tm*);
-__time64_t  __cdecl _mktime64(struct tm*);
-size_t      __cdecl strftime(char*,size_t,const char*,const struct tm*);
-__time32_t  __cdecl _time32(__time32_t*);
-__time64_t  __cdecl _time64(__time64_t*);
+_ACRTIMP char*       __cdecl asctime(const struct tm*);
+_ACRTIMP clock_t     __cdecl clock(void);
+_ACRTIMP char*       __cdecl _ctime32(const __time32_t*);
+_ACRTIMP char*       __cdecl _ctime64(const __time64_t*);
+_ACRTIMP double      __cdecl _difftime32(__time32_t,__time32_t);
+_ACRTIMP double      __cdecl _difftime64(__time64_t,__time64_t);
+_ACRTIMP struct tm*  __cdecl _gmtime32(const __time32_t*);
+_ACRTIMP struct tm*  __cdecl _gmtime64(const __time64_t*);
+_ACRTIMP struct tm*  __cdecl _localtime32(const __time32_t*);
+_ACRTIMP errno_t     __cdecl _localtime32_s(struct tm*, const __time32_t*);
+_ACRTIMP struct tm*  __cdecl _localtime64(const __time64_t*);
+_ACRTIMP errno_t     __cdecl _localtime64_s(struct tm*, const __time64_t*);
+_ACRTIMP __time32_t  __cdecl _mktime32(struct tm*);
+_ACRTIMP __time64_t  __cdecl _mktime64(struct tm*);
+_ACRTIMP size_t      __cdecl strftime(char*,size_t,const char*,const struct tm*);
+_ACRTIMP __time32_t  __cdecl _time32(__time32_t*);
+_ACRTIMP __time64_t  __cdecl _time64(__time64_t*);
 
 #ifndef _USE_32BIT_TIME_T
 static inline char* ctime(const time_t *t) { return _ctime64(t); }

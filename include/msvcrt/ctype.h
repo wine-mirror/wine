@@ -18,30 +18,30 @@ extern "C" {
 #define WEOF        (wint_t)(0xFFFF)
 #endif
 
-int __cdecl __isascii(int);
-int __cdecl __iscsym(int);
-int __cdecl __iscsymf(int);
-int __cdecl __toascii(int);
-int __cdecl _isblank_l(int,_locale_t);
-int __cdecl _isctype(int,int);
-int __cdecl _tolower(int);
-int __cdecl _tolower_l(int,_locale_t);
-int __cdecl _toupper(int);
-int __cdecl _toupper_l(int,_locale_t);
-int __cdecl isalnum(int);
-int __cdecl isalpha(int);
-int __cdecl isblank(int);
-int __cdecl iscntrl(int);
-int __cdecl isdigit(int);
-int __cdecl isgraph(int);
-int __cdecl islower(int);
-int __cdecl isprint(int);
-int __cdecl ispunct(int);
-int __cdecl isspace(int);
-int __cdecl isupper(int);
-int __cdecl isxdigit(int);
-int __cdecl tolower(int);
-int __cdecl toupper(int);
+_ACRTIMP int __cdecl __isascii(int);
+_ACRTIMP int __cdecl __iscsym(int);
+_ACRTIMP int __cdecl __iscsymf(int);
+_ACRTIMP int __cdecl __toascii(int);
+_ACRTIMP int __cdecl _isblank_l(int,_locale_t);
+_ACRTIMP int __cdecl _isctype(int,int);
+_ACRTIMP int __cdecl _tolower(int);
+_ACRTIMP int __cdecl _tolower_l(int,_locale_t);
+_ACRTIMP int __cdecl _toupper(int);
+_ACRTIMP int __cdecl _toupper_l(int,_locale_t);
+_ACRTIMP int __cdecl isalnum(int);
+_ACRTIMP int __cdecl isalpha(int);
+_ACRTIMP int __cdecl isblank(int);
+_ACRTIMP int __cdecl iscntrl(int);
+_ACRTIMP int __cdecl isdigit(int);
+_ACRTIMP int __cdecl isgraph(int);
+_ACRTIMP int __cdecl islower(int);
+_ACRTIMP int __cdecl isprint(int);
+_ACRTIMP int __cdecl ispunct(int);
+_ACRTIMP int __cdecl isspace(int);
+_ACRTIMP int __cdecl isupper(int);
+_ACRTIMP int __cdecl isxdigit(int);
+_ACRTIMP int __cdecl tolower(int);
+_ACRTIMP int __cdecl toupper(int);
 
 #ifdef __cplusplus
 }

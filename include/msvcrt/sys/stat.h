@@ -196,19 +196,19 @@ extern "C" {
 # endif
 #endif
 
-int __cdecl _fstat32(int, struct _stat32*);
-int __cdecl _fstat32i64(int, struct _stat32i64*);
-int __cdecl _fstat64(int,struct _stat64*);
-int __cdecl _fstat64i32(int,struct _stat64i32*);
-int __cdecl _stat32(const char*, struct _stat32*);
-int __cdecl _stat32i64(const char*, struct _stat32i64*);
-int __cdecl _stat64(const char*,struct _stat64*);
-int __cdecl _stat64i32(const char*,struct _stat64i32*);
-int __cdecl _umask(int);
-int __cdecl _wstat32(const wchar_t*,struct _stat32*);
-int __cdecl _wstat32i64(const wchar_t*, struct _stat32i64*);
-int __cdecl _wstat64(const wchar_t*,struct _stat64*);
-int __cdecl _wstat64i32(const wchar_t*,struct _stat64i32*);
+_ACRTIMP int __cdecl _fstat32(int, struct _stat32*);
+_ACRTIMP int __cdecl _fstat32i64(int, struct _stat32i64*);
+_ACRTIMP int __cdecl _fstat64(int,struct _stat64*);
+_ACRTIMP int __cdecl _fstat64i32(int,struct _stat64i32*);
+_ACRTIMP int __cdecl _stat32(const char*, struct _stat32*);
+_ACRTIMP int __cdecl _stat32i64(const char*, struct _stat32i64*);
+_ACRTIMP int __cdecl _stat64(const char*,struct _stat64*);
+_ACRTIMP int __cdecl _stat64i32(const char*,struct _stat64i32*);
+_ACRTIMP int __cdecl _umask(int);
+_ACRTIMP int __cdecl _wstat32(const wchar_t*,struct _stat32*);
+_ACRTIMP int __cdecl _wstat32i64(const wchar_t*, struct _stat32i64*);
+_ACRTIMP int __cdecl _wstat64(const wchar_t*,struct _stat64*);
+_ACRTIMP int __cdecl _wstat64i32(const wchar_t*,struct _stat64i32*);
 
 #ifdef __cplusplus
 }

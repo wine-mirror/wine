@@ -41,44 +41,44 @@ typedef struct _iobuf
 #define WEOF        (wint_t)(0xFFFF)
 #endif
 
-FILE *__cdecl __acrt_iob_func(unsigned index);
+_ACRTIMP FILE *__cdecl __acrt_iob_func(unsigned index);
 
 #define stdin  (__acrt_iob_func(0))
 #define stdout (__acrt_iob_func(1))
 #define stderr (__acrt_iob_func(2))
 
-wint_t   __cdecl _fgetwc_nolock(FILE*);
-wint_t   __cdecl _fgetwchar(void);
-wint_t   __cdecl _fputwc_nolock(wint_t,FILE*);
-wint_t   __cdecl _fputwchar(wint_t);
-wint_t   __cdecl _getwc_nolock(FILE*);
-wchar_t* __cdecl _getws(wchar_t*);
-wint_t   __cdecl _putwc_nolock(wint_t,FILE*);
-int      __cdecl _putws(const wchar_t*);
-wint_t   __cdecl _ungetwc_nolock(wint_t,FILE*);
-FILE*    __cdecl _wfdopen(int,const wchar_t*);
-FILE*    __cdecl _wfopen(const wchar_t*,const wchar_t*);
-errno_t  __cdecl _wfopen_s(FILE**,const wchar_t*,const wchar_t*);
-FILE*    __cdecl _wfreopen(const wchar_t*,const wchar_t*,FILE*);
-FILE*    __cdecl _wfsopen(const wchar_t*,const wchar_t*,int);
-void     __cdecl _wperror(const wchar_t*);
-FILE*    __cdecl _wpopen(const wchar_t*,const wchar_t*);
-int      __cdecl _wremove(const wchar_t*);
-wchar_t* __cdecl _wtempnam(const wchar_t*,const wchar_t*);
-wchar_t* __cdecl _wtmpnam(wchar_t*);
+_ACRTIMP wint_t   __cdecl _fgetwc_nolock(FILE*);
+_ACRTIMP wint_t   __cdecl _fgetwchar(void);
+_ACRTIMP wint_t   __cdecl _fputwc_nolock(wint_t,FILE*);
+_ACRTIMP wint_t   __cdecl _fputwchar(wint_t);
+_ACRTIMP wint_t   __cdecl _getwc_nolock(FILE*);
+_ACRTIMP wchar_t* __cdecl _getws(wchar_t*);
+_ACRTIMP wint_t   __cdecl _putwc_nolock(wint_t,FILE*);
+_ACRTIMP int      __cdecl _putws(const wchar_t*);
+_ACRTIMP wint_t   __cdecl _ungetwc_nolock(wint_t,FILE*);
+_ACRTIMP FILE*    __cdecl _wfdopen(int,const wchar_t*);
+_ACRTIMP FILE*    __cdecl _wfopen(const wchar_t*,const wchar_t*);
+_ACRTIMP errno_t  __cdecl _wfopen_s(FILE**,const wchar_t*,const wchar_t*);
+_ACRTIMP FILE*    __cdecl _wfreopen(const wchar_t*,const wchar_t*,FILE*);
+_ACRTIMP FILE*    __cdecl _wfsopen(const wchar_t*,const wchar_t*,int);
+_ACRTIMP void     __cdecl _wperror(const wchar_t*);
+_ACRTIMP FILE*    __cdecl _wpopen(const wchar_t*,const wchar_t*);
+_ACRTIMP int      __cdecl _wremove(const wchar_t*);
+_ACRTIMP wchar_t* __cdecl _wtempnam(const wchar_t*,const wchar_t*);
+_ACRTIMP wchar_t* __cdecl _wtmpnam(wchar_t*);
 
-wint_t   __cdecl fgetwc(FILE*);
-wchar_t* __cdecl fgetws(wchar_t*,int,FILE*);
-wint_t   __cdecl fputwc(wint_t,FILE*);
-int      __cdecl fputws(const wchar_t*,FILE*);
-int      __cdecl fputws(const wchar_t*,FILE*);
-wint_t   __cdecl getwc(FILE*);
-wint_t   __cdecl getwchar(void);
-wchar_t* __cdecl getws(wchar_t*);
-wint_t   __cdecl putwc(wint_t,FILE*);
-wint_t   __cdecl putwchar(wint_t);
-int      __cdecl putws(const wchar_t*);
-wint_t   __cdecl ungetwc(wint_t,FILE*);
+_ACRTIMP wint_t   __cdecl fgetwc(FILE*);
+_ACRTIMP wchar_t* __cdecl fgetws(wchar_t*,int,FILE*);
+_ACRTIMP wint_t   __cdecl fputwc(wint_t,FILE*);
+_ACRTIMP int      __cdecl fputws(const wchar_t*,FILE*);
+_ACRTIMP int      __cdecl fputws(const wchar_t*,FILE*);
+_ACRTIMP wint_t   __cdecl getwc(FILE*);
+_ACRTIMP wint_t   __cdecl getwchar(void);
+_ACRTIMP wchar_t* __cdecl getws(wchar_t*);
+_ACRTIMP wint_t   __cdecl putwc(wint_t,FILE*);
+_ACRTIMP wint_t   __cdecl putwchar(wint_t);
+_ACRTIMP int      __cdecl putws(const wchar_t*);
+_ACRTIMP wint_t   __cdecl ungetwc(wint_t,FILE*);
 
 #ifdef _UCRT
 
@@ -361,8 +361,8 @@ _ACRTIMP int WINAPIV wprintf(const wchar_t*,...);
 _ACRTIMP int WINAPIV wprintf_s(const wchar_t*,...);
 
 #ifdef _CRT_NON_CONFORMING_SWPRINTFS
-int WINAPIV swprintf(wchar_t*,const wchar_t*,...);
-int __cdecl vswprintf(wchar_t*,const wchar_t*,__ms_va_list);
+_ACRTIMP int WINAPIV swprintf(wchar_t*,const wchar_t*,...);
+_ACRTIMP int __cdecl vswprintf(wchar_t*,const wchar_t*,__ms_va_list);
 #else  /*  _CRT_NON_CONFORMING_SWPRINTFS */
 static inline int vswprintf(wchar_t *buffer, size_t size, const wchar_t *format, __ms_va_list args) { return _vsnwprintf(buffer,size,format,args); }
 static inline int WINAPIV swprintf(wchar_t *buffer, size_t size, const wchar_t *format, ...)

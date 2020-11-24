@@ -53,10 +53,10 @@ extern "C" {
 
 #ifndef _STDIO_DEFINED
 # ifdef __i386__
-FILE* __cdecl __p__iob(void);
+_ACRTIMP FILE* __cdecl __p__iob(void);
 #  define _iob (__p__iob())
 # else
-FILE* __cdecl __iob_func(void);
+_ACRTIMP FILE* __cdecl __iob_func(void);
 #  define _iob (__iob_func())
 # endif
 #endif /* _STDIO_DEFINED */
@@ -66,81 +66,81 @@ FILE* __cdecl __iob_func(void);
 
 #ifndef _STDIO_DEFINED
 #define _STDIO_DEFINED
-int    __cdecl _fcloseall(void);
-FILE*  __cdecl _fdopen(int,const char*);
-int    __cdecl _fgetchar(void);
-int    __cdecl _filbuf(FILE*);
-int    __cdecl _fileno(FILE*);
-int    __cdecl _flsbuf(int,FILE*);
-int    __cdecl _flushall(void);
-int    __cdecl _fputchar(int);
-FILE*  __cdecl _fsopen(const char*,const char*,int);
-int    __cdecl _get_printf_count_output(void);
-int    __cdecl _getmaxstdio(void);
-int    __cdecl _getw(FILE*);
-int    __cdecl _pclose(FILE*);
-FILE*  __cdecl _popen(const char*,const char*);
-int    __cdecl _putw(int,FILE*);
-int    __cdecl _rmtmp(void);
-int    __cdecl _set_printf_count_output(int);
-int    __cdecl _setmaxstdio(int);
-char*  __cdecl _tempnam(const char*,const char*);
-int    __cdecl _unlink(const char*);
+_ACRTIMP int    __cdecl _fcloseall(void);
+_ACRTIMP FILE*  __cdecl _fdopen(int,const char*);
+_ACRTIMP int    __cdecl _fgetchar(void);
+_ACRTIMP int    __cdecl _filbuf(FILE*);
+_ACRTIMP int    __cdecl _fileno(FILE*);
+_ACRTIMP int    __cdecl _flsbuf(int,FILE*);
+_ACRTIMP int    __cdecl _flushall(void);
+_ACRTIMP int    __cdecl _fputchar(int);
+_ACRTIMP FILE*  __cdecl _fsopen(const char*,const char*,int);
+_ACRTIMP int    __cdecl _get_printf_count_output(void);
+_ACRTIMP int    __cdecl _getmaxstdio(void);
+_ACRTIMP int    __cdecl _getw(FILE*);
+_ACRTIMP int    __cdecl _pclose(FILE*);
+_ACRTIMP FILE*  __cdecl _popen(const char*,const char*);
+_ACRTIMP int    __cdecl _putw(int,FILE*);
+_ACRTIMP int    __cdecl _rmtmp(void);
+_ACRTIMP int    __cdecl _set_printf_count_output(int);
+_ACRTIMP int    __cdecl _setmaxstdio(int);
+_ACRTIMP char*  __cdecl _tempnam(const char*,const char*);
+_ACRTIMP int    __cdecl _unlink(const char*);
 
-size_t __cdecl _fread_nolock(void*,size_t,size_t,FILE*);
-size_t __cdecl _fread_nolock_s(void*,size_t,size_t,size_t,FILE*);
-size_t __cdecl _fwrite_nolock(const void*,size_t,size_t,FILE*);
-int    __cdecl _fclose_nolock(FILE*);
-int    __cdecl _fflush_nolock(FILE*);
-int    __cdecl _fgetc_nolock(FILE*);
-int    __cdecl _fputc_nolock(int,FILE*);
-int    __cdecl _fseek_nolock(FILE*,__msvcrt_long,int);
-int    __cdecl _fseeki64_nolock(FILE*,__int64,int);
-__msvcrt_long __cdecl _ftell_nolock(FILE*);
-__int64 __cdecl _ftelli64_nolock(FILE*);
-int    __cdecl _getc_nolock(FILE*);
-int    __cdecl _putc_nolock(int,FILE*);
-int    __cdecl _ungetc_nolock(int,FILE*);
+_ACRTIMP size_t __cdecl _fread_nolock(void*,size_t,size_t,FILE*);
+_ACRTIMP size_t __cdecl _fread_nolock_s(void*,size_t,size_t,size_t,FILE*);
+_ACRTIMP size_t __cdecl _fwrite_nolock(const void*,size_t,size_t,FILE*);
+_ACRTIMP int    __cdecl _fclose_nolock(FILE*);
+_ACRTIMP int    __cdecl _fflush_nolock(FILE*);
+_ACRTIMP int    __cdecl _fgetc_nolock(FILE*);
+_ACRTIMP int    __cdecl _fputc_nolock(int,FILE*);
+_ACRTIMP int    __cdecl _fseek_nolock(FILE*,__msvcrt_long,int);
+_ACRTIMP int    __cdecl _fseeki64_nolock(FILE*,__int64,int);
+_ACRTIMP __msvcrt_long __cdecl _ftell_nolock(FILE*);
+_ACRTIMP __int64 __cdecl _ftelli64_nolock(FILE*);
+_ACRTIMP int    __cdecl _getc_nolock(FILE*);
+_ACRTIMP int    __cdecl _putc_nolock(int,FILE*);
+_ACRTIMP int    __cdecl _ungetc_nolock(int,FILE*);
 
-void   __cdecl clearerr(FILE*);
-errno_t __cdecl clearerr_s(FILE*);
-int    __cdecl fclose(FILE*);
-int    __cdecl feof(FILE*);
-int    __cdecl ferror(FILE*);
-int    __cdecl fflush(FILE*);
-int    __cdecl fgetc(FILE*);
-int    __cdecl fgetpos(FILE*,fpos_t*);
-char*  __cdecl fgets(char*,int,FILE*);
-FILE*  __cdecl fopen(const char*,const char*);
-errno_t __cdecl fopen_s(FILE**,const char*,const char*);
-int    __cdecl fputc(int,FILE*);
-int    __cdecl fputs(const char*,FILE*);
-size_t __cdecl fread(void*,size_t,size_t,FILE*);
-size_t __cdecl fread_s(void*,size_t,size_t,size_t,FILE*);
-FILE*  __cdecl freopen(const char*,const char*,FILE*);
-int    __cdecl fseek(FILE*,__msvcrt_long,int);
-int    __cdecl _fseeki64(FILE*,__int64,int);
-int    __cdecl fsetpos(FILE*,fpos_t*);
-__msvcrt_long __cdecl ftell(FILE*);
-__int64 __cdecl _ftelli64(FILE*);
-size_t __cdecl fwrite(const void*,size_t,size_t,FILE*);
-int    __cdecl getc(FILE*);
-int    __cdecl getchar(void);
-char*  __cdecl gets(char*);
-void   __cdecl perror(const char*);
-int    __cdecl putc(int,FILE*);
-int    __cdecl putchar(int);
-int    __cdecl puts(const char*);
-int    __cdecl remove(const char*);
-int    __cdecl rename(const char*,const char*);
-void   __cdecl rewind(FILE*);
-void   __cdecl setbuf(FILE*,char*);
-int    __cdecl setvbuf(FILE*,char*,int,size_t);
-FILE*  __cdecl tmpfile(void);
-char*  __cdecl tmpnam(char*);
-int    __cdecl ungetc(int,FILE*);
-unsigned int __cdecl _get_output_format(void);
-unsigned int __cdecl _set_output_format(void);
+_ACRTIMP void   __cdecl clearerr(FILE*);
+_ACRTIMP errno_t __cdecl clearerr_s(FILE*);
+_ACRTIMP int    __cdecl fclose(FILE*);
+_ACRTIMP int    __cdecl feof(FILE*);
+_ACRTIMP int    __cdecl ferror(FILE*);
+_ACRTIMP int    __cdecl fflush(FILE*);
+_ACRTIMP int    __cdecl fgetc(FILE*);
+_ACRTIMP int    __cdecl fgetpos(FILE*,fpos_t*);
+_ACRTIMP char*  __cdecl fgets(char*,int,FILE*);
+_ACRTIMP FILE*  __cdecl fopen(const char*,const char*);
+_ACRTIMP errno_t __cdecl fopen_s(FILE**,const char*,const char*);
+_ACRTIMP int    __cdecl fputc(int,FILE*);
+_ACRTIMP int    __cdecl fputs(const char*,FILE*);
+_ACRTIMP size_t __cdecl fread(void*,size_t,size_t,FILE*);
+_ACRTIMP size_t __cdecl fread_s(void*,size_t,size_t,size_t,FILE*);
+_ACRTIMP FILE*  __cdecl freopen(const char*,const char*,FILE*);
+_ACRTIMP int    __cdecl fseek(FILE*,__msvcrt_long,int);
+_ACRTIMP int    __cdecl _fseeki64(FILE*,__int64,int);
+_ACRTIMP int    __cdecl fsetpos(FILE*,fpos_t*);
+_ACRTIMP __msvcrt_long __cdecl ftell(FILE*);
+_ACRTIMP __int64 __cdecl _ftelli64(FILE*);
+_ACRTIMP size_t __cdecl fwrite(const void*,size_t,size_t,FILE*);
+_ACRTIMP int    __cdecl getc(FILE*);
+_ACRTIMP int    __cdecl getchar(void);
+_ACRTIMP char*  __cdecl gets(char*);
+_ACRTIMP void   __cdecl perror(const char*);
+_ACRTIMP int    __cdecl putc(int,FILE*);
+_ACRTIMP int    __cdecl putchar(int);
+_ACRTIMP int    __cdecl puts(const char*);
+_ACRTIMP int    __cdecl remove(const char*);
+_ACRTIMP int    __cdecl rename(const char*,const char*);
+_ACRTIMP void   __cdecl rewind(FILE*);
+_ACRTIMP void   __cdecl setbuf(FILE*,char*);
+_ACRTIMP int    __cdecl setvbuf(FILE*,char*,int,size_t);
+_ACRTIMP FILE*  __cdecl tmpfile(void);
+_ACRTIMP char*  __cdecl tmpnam(char*);
+_ACRTIMP int    __cdecl ungetc(int,FILE*);
+_ACRTIMP unsigned int __cdecl _get_output_format(void);
+_ACRTIMP unsigned int __cdecl _set_output_format(void);
 
 #ifdef _UCRT
 
@@ -394,7 +394,7 @@ _ACRTIMP int __cdecl vprintf_s(const char*,__ms_va_list);
 _ACRTIMP int __cdecl vsprintf(char*,const char*,__ms_va_list);
 _ACRTIMP int __cdecl vsprintf_s(char*,size_t,const char*,__ms_va_list);
 
-int __cdecl _vsnprintf(char*,size_t,const char*,__ms_va_list);
+_ACRTIMP int __cdecl _vsnprintf(char*,size_t,const char*,__ms_va_list);
 static inline int vsnprintf(char *buffer, size_t size, const char *format, __ms_va_list args) { return _vsnprintf(buffer,size,format,args); }
 
 _ACRTIMP int WINAPIV _snscanf_l(const char*,size_t,const char*,_locale_t,...);

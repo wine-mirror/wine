@@ -86,22 +86,22 @@ struct _wfinddata64_t {
 extern "C" {
 #endif
 
-int      __cdecl _waccess(const wchar_t*,int);
-int      __cdecl _wchmod(const wchar_t*,int);
-int      __cdecl _wcreat(const wchar_t*,int);
-intptr_t __cdecl _wfindfirst32(const wchar_t*,struct _wfinddata32_t*);
-intptr_t __cdecl _wfindfirst32i64(const wchar_t*, struct _wfinddata32i64_t*);
-intptr_t __cdecl _wfindfirst64(const wchar_t*,struct _wfinddata64_t*);
-intptr_t __cdecl _wfindfirst64i32(const wchar_t*, struct _wfinddata64i32_t*);
-int      __cdecl _wfindnext32(intptr_t,struct _wfinddata32_t*);
-int      __cdecl _wfindnext32i64(intptr_t,struct _wfinddata32i64_t*);
-int      __cdecl _wfindnext64(intptr_t,struct _wfinddata64_t*);
-int      __cdecl _wfindnext64i32(intptr_t,struct _wfinddata64i32_t*);
-wchar_t* __cdecl _wmktemp(wchar_t*);
-int      WINAPIV _wopen(const wchar_t*,int,...);
-int      __cdecl _wrename(const wchar_t*,const wchar_t*);
-int      WINAPIV _wsopen(const wchar_t*,int,int,...);
-int      __cdecl _wunlink(const wchar_t*);
+_ACRTIMP int      __cdecl _waccess(const wchar_t*,int);
+_ACRTIMP int      __cdecl _wchmod(const wchar_t*,int);
+_ACRTIMP int      __cdecl _wcreat(const wchar_t*,int);
+_ACRTIMP intptr_t __cdecl _wfindfirst32(const wchar_t*,struct _wfinddata32_t*);
+_ACRTIMP intptr_t __cdecl _wfindfirst32i64(const wchar_t*, struct _wfinddata32i64_t*);
+_ACRTIMP intptr_t __cdecl _wfindfirst64(const wchar_t*,struct _wfinddata64_t*);
+_ACRTIMP intptr_t __cdecl _wfindfirst64i32(const wchar_t*, struct _wfinddata64i32_t*);
+_ACRTIMP int      __cdecl _wfindnext32(intptr_t,struct _wfinddata32_t*);
+_ACRTIMP int      __cdecl _wfindnext32i64(intptr_t,struct _wfinddata32i64_t*);
+_ACRTIMP int      __cdecl _wfindnext64(intptr_t,struct _wfinddata64_t*);
+_ACRTIMP int      __cdecl _wfindnext64i32(intptr_t,struct _wfinddata64i32_t*);
+_ACRTIMP wchar_t* __cdecl _wmktemp(wchar_t*);
+_ACRTIMP int      WINAPIV _wopen(const wchar_t*,int,...);
+_ACRTIMP int      __cdecl _wrename(const wchar_t*,const wchar_t*);
+_ACRTIMP int      WINAPIV _wsopen(const wchar_t*,int,int,...);
+_ACRTIMP int      __cdecl _wunlink(const wchar_t*);
 
 #ifdef __cplusplus
 }

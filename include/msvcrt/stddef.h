@@ -33,8 +33,8 @@
 extern "C" {
 #endif
 
-__msvcrt_ulong __cdecl __threadid(void);
-__msvcrt_ulong __cdecl __threadhandle(void);
+_ACRTIMP __msvcrt_ulong __cdecl __threadid(void);
+_ACRTIMP __msvcrt_ulong __cdecl __threadhandle(void);
 #define _threadid    (__threadid())
 
 #ifdef __cplusplus
