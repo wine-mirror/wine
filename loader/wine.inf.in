@@ -780,6 +780,11 @@ HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{6BF52A52-394A-11d3-B1
 HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{6BF52A52-394A-11d3-B153-00C04F79FAA6},"Locale",2,"*"
 HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{6BF52A52-394A-11d3-B153-00C04F79FAA6},"Version",2,"12,0,7601,18840"
 
+; URL Associations
+HKCU,Software\Microsoft\Windows\Shell\Associations\UrlAssociations\ftp\UserChoice,"ProgId",,"ftp"
+HKCU,Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice,"ProgId",,"http"
+HKCU,Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice,"ProgId",,"https"
+
 [Nls]
 HKLM,System\CurrentControlSet\Control\Nls\Language,"0401",,"l_intl.nls"
 HKLM,System\CurrentControlSet\Control\Nls\Language,"0402",,"l_intl.nls"

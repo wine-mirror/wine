@@ -288,7 +288,7 @@ static void test_IApplicationAssociationRegistration_QueryCurrentDefault(IApplic
     ok(hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), "got 0x%x\n", hr);
 
     hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, httpW, AT_URLPROTOCOL, AL_EFFECTIVE, &assocprog);
-    todo_wine ok(hr == S_OK, "got 0x%x\n", hr);
+    ok(hr == S_OK, "got 0x%x\n", hr);
     trace("%s\n", wine_dbgstr_w(assocprog));
 
     CoTaskMemFree(assocprog);
