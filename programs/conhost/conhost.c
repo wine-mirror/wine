@@ -428,6 +428,7 @@ static NTSTATUS read_complete( struct console *console, NTSTATUS status, const v
     }
     SERVER_END_REQ;
     if (status && (console->read_ioctl || status != STATUS_INVALID_HANDLE)) ERR( "failed: %#x\n", status );
+    console->signaled = signal;
     console->read_ioctl = 0;
     console->pending_read = 0;
     return status;
@@ -1218,6 +1219,9 @@ static NTSTATUS process_console_input( struct console *console )
     case IOCTL_CONDRV_READ_FILE:
         break;
     default:
+        assert( !console->read_ioctl );
+        if (console->record_count && !console->signaled)
+            read_complete( console, STATUS_PENDING, NULL, 0, TRUE ); /* signal server */
         return STATUS_SUCCESS;
     }
 
@@ -2534,11 +2538,12 @@ static NTSTATUS process_console_ioctls( struct console *console )
     {
         if (status) out_size = 0;
 
+        console->signaled = console->record_count != 0;
         SERVER_START_REQ( get_next_console_request )
         {
             req->handle = wine_server_obj_handle( console->server );
             req->status = status;
-            req->signal = console->record_count != 0;
+            req->signal = console->signaled;
             wine_server_add_data( req, ioctl_buffer, out_size );
             wine_server_set_reply( req, ioctl_buffer, ioctl_buffer_size );
             status = wine_server_call( req );

@@ -80,6 +80,7 @@ struct console
     INPUT_RECORD          *records;             /* input records */
     unsigned int           record_count;        /* number of input records */
     unsigned int           record_size;         /* size of input records buffer */
+    int                    signaled;            /* is server in signaled state */
     WCHAR                 *read_buffer;         /* buffer of data available for read */
     size_t                 read_buffer_count;   /* size of available data */
     size_t                 read_buffer_size;    /* size of buffer */
