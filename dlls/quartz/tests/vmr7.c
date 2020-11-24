@@ -1181,7 +1181,7 @@ static void test_flushing(IPin *pin, IMemInputPin *input, IMediaControl *control
     thread = send_frame(input);
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
 
-    hr = IMediaControl_GetState(control, 0, &state);
+    hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_BeginFlush(pin);
@@ -1201,9 +1201,14 @@ static void test_flushing(IPin *pin, IMemInputPin *input, IMediaControl *control
 
     hr = IMediaControl_GetState(control, 0, &state);
     todo_wine ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %#x.\n", state);
 
     thread = send_frame(input);
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
+
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(state == State_Paused, "Got state %#x.\n", state);
 
     hr = IMediaControl_Run(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -2108,8 +2113,8 @@ static void test_video_window_messages(IVideoWindow *window, HWND hwnd, HWND our
     params.message = WM_SYSCOLORCHANGE;
     thread = CreateThread(NULL, 0, notify_message_proc, &params, 0, NULL);
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block.\n");
-    ret = GetQueueStatus(QS_SENDMESSAGE | QS_POSTMESSAGE);
-    ok(ret == ((QS_SENDMESSAGE << 16) | QS_SENDMESSAGE), "Got unexpected status %#x.\n", ret);
+    ret = MsgWaitForMultipleObjects(0, NULL, FALSE, 1000, QS_SENDMESSAGE);
+    ok(!ret, "Did not find a sent message.\n");
 
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
     ok(!WaitForSingleObject(thread, 1000), "Wait timed out.\n");
