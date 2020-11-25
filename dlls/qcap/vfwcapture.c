@@ -344,8 +344,14 @@ static HRESULT WINAPI AMStreamConfig_GetFormat(IAMStreamConfig *iface, AM_MEDIA_
     if (!(*mt = CoTaskMemAlloc(sizeof(**mt))))
         return E_OUTOFMEMORY;
 
-    if (SUCCEEDED(hr = capture_funcs->get_format(filter->device, *mt)))
+    EnterCriticalSection(&filter->filter.csFilter);
+
+    if (filter->source.pin.peer)
+        hr = CopyMediaType(*mt, &filter->source.pin.mt);
+    else if (SUCCEEDED(hr = capture_funcs->get_format(filter->device, *mt)))
         strmbase_dump_media_type(*mt);
+
+    LeaveCriticalSection(&filter->filter.csFilter);
     return hr;
 }
 
