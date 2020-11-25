@@ -2775,7 +2775,7 @@ static DWORD CALLBACK test_CoWaitForMultipleHandles_thread(LPVOID arg)
     ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
     hr = CoWaitForMultipleHandles(0, 200, 1, &thread, &index);
     ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
-    ok(index == WAIT_OBJECT_0, "cowait_unmarshal_thread didn't finish");
+    ok(index == WAIT_OBJECT_0, "cowait_unmarshal_thread didn't finish\n");
     CloseHandle(thread);
 
     hr = CoRegisterMessageFilter(NULL, NULL);
