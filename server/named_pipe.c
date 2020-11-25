@@ -1371,7 +1371,7 @@ DECL_HANDLER(create_named_pipe)
             set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
             return;
         }
-        if (!(root = get_directory_obj( current->process, objattr->rootdir ))) return;
+        if (!(root = get_handle_obj( current->process, objattr->rootdir, 0, NULL ))) return;
     }
 
     pipe = create_named_object( root, &named_pipe_ops, &name, objattr->attributes | OBJ_OPENIF, NULL );

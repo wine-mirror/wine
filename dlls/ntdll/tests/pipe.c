@@ -65,6 +65,7 @@ typedef struct {
 #endif
 
 static NTSTATUS (WINAPI *pNtFsControlFile) (HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, PVOID apc_context, PIO_STATUS_BLOCK io, ULONG code, PVOID in_buffer, ULONG in_size, PVOID out_buffer, ULONG out_size);
+static NTSTATUS (WINAPI *pNtCreateDirectoryObject)(HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *);
 static NTSTATUS (WINAPI *pNtCreateNamedPipeFile) (PHANDLE handle, ULONG access,
                                         POBJECT_ATTRIBUTES attr, PIO_STATUS_BLOCK iosb,
                                         ULONG sharing, ULONG dispo, ULONG options,
@@ -73,6 +74,7 @@ static NTSTATUS (WINAPI *pNtCreateNamedPipeFile) (PHANDLE handle, ULONG access,
                                         ULONG inbound_quota, ULONG outbound_quota,
                                         PLARGE_INTEGER timeout);
 static NTSTATUS (WINAPI *pNtQueryInformationFile) (IN HANDLE FileHandle, OUT PIO_STATUS_BLOCK IoStatusBlock, OUT PVOID FileInformation, IN ULONG Length, IN FILE_INFORMATION_CLASS FileInformationClass);
+static NTSTATUS (WINAPI *pNtQueryObject)(HANDLE, OBJECT_INFORMATION_CLASS, void *, ULONG, ULONG *);
 static NTSTATUS (WINAPI *pNtQueryVolumeInformationFile)(HANDLE handle, PIO_STATUS_BLOCK io, void *buffer, ULONG length, FS_INFORMATION_CLASS info_class);
 static NTSTATUS (WINAPI *pNtSetInformationFile) (HANDLE handle, PIO_STATUS_BLOCK io, PVOID ptr, ULONG len, FILE_INFORMATION_CLASS class);
 static NTSTATUS (WINAPI *pNtCancelIoFile) (HANDLE hFile, PIO_STATUS_BLOCK io_status);
@@ -94,8 +96,10 @@ static BOOL init_func_ptrs(void)
                         }
 
     loadfunc(NtFsControlFile)
+    loadfunc(NtCreateDirectoryObject)
     loadfunc(NtCreateNamedPipeFile)
     loadfunc(NtQueryInformationFile)
+    loadfunc(NtQueryObject)
     loadfunc(NtQueryVolumeInformationFile)
     loadfunc(NtSetInformationFile)
     loadfunc(NtCancelIoFile)
@@ -2405,13 +2409,19 @@ static void test_security_info(void)
 static void test_empty_name(void)
 {
     HANDLE hdirectory, hpipe, hwrite, handle;
+    OBJECT_TYPE_INFORMATION *type_info;
+    OBJECT_NAME_INFORMATION *name_info;
     OBJECT_ATTRIBUTES attr;
     LARGE_INTEGER timeout;
     UNICODE_STRING name;
     IO_STATUS_BLOCK io;
     DWORD data, length;
+    char buffer[1024];
     NTSTATUS status;
     BOOL ret;
+
+    type_info = (OBJECT_TYPE_INFORMATION *)buffer;
+    name_info = (OBJECT_NAME_INFORMATION *)buffer;
 
     hpipe = hwrite = NULL;
 
@@ -2438,12 +2448,16 @@ static void test_empty_name(void)
             &io, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_CREATE, FILE_SYNCHRONOUS_IO_NONALERT,
             0, 0, 0, 3, 4096, 4096, &timeout);
     todo_wine ok(status == STATUS_OBJECT_NAME_INVALID, "Got unexpected status %#x.\n", status);
-
+    if (!status)
+        CloseHandle(hpipe);
     CloseHandle(hdirectory);
 
     pRtlInitUnicodeString(&name, L"\\Device\\NamedPipe\\");
     attr.RootDirectory            = 0;
     attr.ObjectName               = &name;
+
+    status = pNtCreateDirectoryObject(&hdirectory, GENERIC_READ | SYNCHRONIZE, &attr);
+    todo_wine ok(status == STATUS_OBJECT_TYPE_MISMATCH, "Got unexpected status %#x.\n", status);
 
     status = NtCreateFile(&hdirectory, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
@@ -2454,10 +2468,18 @@ static void test_empty_name(void)
     name.MaximumLength = 0;
     attr.RootDirectory = hdirectory;
 
+    hpipe = NULL;
     status = pNtCreateNamedPipeFile(&hpipe, GENERIC_READ | SYNCHRONIZE, &attr,
             &io, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_CREATE, FILE_SYNCHRONOUS_IO_NONALERT,
             0, 0, 0, 3, 4096, 4096, &timeout);
-    todo_wine ok(!status, "Got unexpected status %#x.\n", status);
+    ok(!status, "Got unexpected status %#x.\n", status);
+    type_info->TypeName.Buffer = NULL;
+    status = pNtQueryObject(hpipe, ObjectTypeInformation, type_info, sizeof(buffer), NULL);
+    ok(!status, "Got unexpected status %#x.\n", status);
+    ok(type_info->TypeName.Buffer && !wcscmp(type_info->TypeName.Buffer, L"File"),
+            "Got unexpected type %s.\n", debugstr_w(type_info->TypeName.Buffer));
+    status = pNtQueryObject(hpipe, ObjectNameInformation, name_info, sizeof(buffer), NULL);
+    todo_wine ok(status == STATUS_OBJECT_PATH_INVALID, "Got unexpected status %#x.\n", status);
 
     status = pNtCreateNamedPipeFile(&handle, GENERIC_READ | SYNCHRONIZE, &attr,
             &io, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT,
@@ -2468,6 +2490,14 @@ static void test_empty_name(void)
     status = NtCreateFile(&hwrite, GENERIC_WRITE | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
     todo_wine ok(!status, "Got unexpected status %#x.\n", status);
+
+    type_info->TypeName.Buffer = NULL;
+    status = pNtQueryObject(hwrite, ObjectTypeInformation, type_info, sizeof(buffer), NULL);
+    todo_wine ok(!status, "Got unexpected status %#x.\n", status);
+    todo_wine ok(type_info->TypeName.Buffer && !wcscmp(type_info->TypeName.Buffer, L"File"),
+            "Got unexpected type %s.\n", debugstr_w(type_info->TypeName.Buffer));
+    status = pNtQueryObject(hwrite, ObjectNameInformation, name_info, sizeof(buffer), NULL);
+    todo_wine ok(status == STATUS_OBJECT_PATH_INVALID, "Got unexpected status %#x.\n", status);
 
     attr.RootDirectory = hpipe;
     status = NtCreateFile(&handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,

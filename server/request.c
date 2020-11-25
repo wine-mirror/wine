@@ -66,6 +66,7 @@
 #include "process.h"
 #include "thread.h"
 #include "security.h"
+#include "handle.h"
 #define WANT_REQUEST_HANDLERS
 #include "request.h"
 
@@ -205,7 +206,7 @@ const struct object_attributes *get_req_object_attributes( const struct security
     }
     if (root && attr->rootdir && attr->name_len)
     {
-        if (!(*root = get_directory_obj( current->process, attr->rootdir ))) return NULL;
+        if (!(*root = get_handle_obj( current->process, attr->rootdir, 0, NULL ))) return NULL;
     }
     *sd = attr->sd_len ? (const struct security_descriptor *)(attr + 1) : NULL;
     name->len = attr->name_len;
