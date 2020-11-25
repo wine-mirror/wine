@@ -24986,6 +24986,7 @@ static void test_null_format(void)
         {600, 320, 0x0000ff00},
     };
     IDirect3DSurface9 *original_rt, *small_rt, *null_rt, *small_null_rt;
+    struct surface_readback rb;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
     unsigned int i;
@@ -25101,13 +25102,15 @@ static void test_null_format(void)
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
+    get_rt_readback(original_rt, &rb);
     for (i = 0; i < ARRAY_SIZE(expected_colors); ++i)
     {
-        color = getPixelColor(device, expected_colors[i].x, expected_colors[i].y);
+        color = get_readback_color(&rb, expected_colors[i].x, expected_colors[i].y);
         ok(color_match(color, expected_colors[i].color, 1),
                 "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
                 expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
     }
+    release_surface_readback(&rb);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
