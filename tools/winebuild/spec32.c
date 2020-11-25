@@ -50,6 +50,13 @@ int needs_get_pc_thunk = 0;
 
 static const char builtin_signature[32] = "Wine builtin DLL";
 static const char fakedll_signature[32] = "Wine placeholder DLL";
+static struct strarray spec_extra_ld_symbols = { 0 }; /* list of extra symbols that ld should resolve */
+
+/* add a symbol to the list of extra symbols that ld must resolve */
+void add_spec_extra_ld_symbol( const char *name )
+{
+    strarray_add( &spec_extra_ld_symbols, name, NULL );
+}
 
 static unsigned int hash_filename( const char *name )
 {
@@ -610,6 +617,7 @@ void output_exports( DLLSPEC *spec )
 void output_module( DLLSPEC *spec )
 {
     int machine = 0;
+    int i;
     unsigned int page_size = get_page_size();
     const char *data_dirs[16] = { NULL };
 
@@ -688,6 +696,10 @@ void output_module( DLLSPEC *spec )
     output( "\t.long 0\n" );              /* SizeOfCode */
     output( "\t.long 0\n" );              /* SizeOfInitializedData */
     output( "\t.long 0\n" );              /* SizeOfUninitializedData */
+
+    for (i = 0; i < spec_extra_ld_symbols.count; i++)
+        output( "\t.globl %s\n", asm_name(spec_extra_ld_symbols.str[i]) );
+
     /* note: we expand the AddressOfEntryPoint field on 64-bit by overwriting the BaseOfCode field */
     output( "\t%s %s\n",                  /* AddressOfEntryPoint */
             get_asm_ptr_keyword(), spec->init_func ? asm_name(spec->init_func) : "0" );

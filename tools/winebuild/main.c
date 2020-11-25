@@ -397,11 +397,22 @@ static const char *get_default_entry_point( const DLLSPEC *spec )
     if (spec->characteristics & IMAGE_FILE_DLL) return "DllMain";
     if (spec->subsystem == IMAGE_SUBSYSTEM_NATIVE) return "DriverEntry";
     if (spec->type == SPEC_WIN16)
+    {
+        add_spec_extra_ld_symbol("WinMain16");
         return "__wine_spec_exe16_entry";
+    }
     else if (spec->unicode_app)
+    {
+        /* __wine_spec_exe_wentry always calls wmain */
+        add_spec_extra_ld_symbol("wmain");
         return "__wine_spec_exe_wentry";
+    }
     else
+    {
+        /* __wine_spec_exe_entry always calls main */
+        add_spec_extra_ld_symbol("main");
         return "__wine_spec_exe_entry";
+    }
 }
 
 /* parse options from the argv array and remove all the recognized ones */

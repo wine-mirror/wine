@@ -300,6 +300,7 @@ extern void output_gnu_stack_note(void);
 extern void add_import_dll( const char *name, const char *filename );
 extern void add_delayed_import( const char *name );
 extern void add_extra_ld_symbol( const char *name );
+extern void add_spec_extra_ld_symbol( const char *name );
 extern void read_undef_symbols( DLLSPEC *spec, char **argv );
 extern void resolve_imports( DLLSPEC *spec );
 extern int is_undefined( const char *name );
