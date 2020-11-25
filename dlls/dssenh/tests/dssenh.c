@@ -702,7 +702,7 @@ static void test_cipher_modes(const struct ciphermode_test *tests, int testLen)
     result = CryptDeriveKey(hProv, CALG_RC2, hHash, 40 << 16, &pKey);
     if (!result)
     {
-        skip("skipping ciper modes tests\n");
+        skip("skipping cipher mode tests\n");
         return;
     }
     ok(result, "Expected a derived key.\n");
