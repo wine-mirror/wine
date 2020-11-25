@@ -1023,7 +1023,7 @@ static size_t pack_message( HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
     case WM_DEVICECHANGE:
     {
         DEV_BROADCAST_HDR *header = (DEV_BROADCAST_HDR *)lparam;
-        push_data( data, header, header->dbch_size );
+        if ((wparam & 0x8000) && header) push_data( data, header, header->dbch_size );
         return 0;
     }
     case WM_WINE_KEYBOARD_LL_HOOK:
@@ -1426,6 +1426,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         if (!get_buffer_space( buffer, sizeof(BOOL) )) return FALSE;
         break;
     case WM_DEVICECHANGE:
+        if (!(*wparam & 0x8000)) return TRUE;
         minsize = sizeof(DEV_BROADCAST_HDR);
         break;
     case WM_WINE_KEYBOARD_LL_HOOK:
