@@ -2479,7 +2479,7 @@ static void test_empty_name(void)
     ok(type_info->TypeName.Buffer && !wcscmp(type_info->TypeName.Buffer, L"File"),
             "Got unexpected type %s.\n", debugstr_w(type_info->TypeName.Buffer));
     status = pNtQueryObject(hpipe, ObjectNameInformation, name_info, sizeof(buffer), NULL);
-    todo_wine ok(status == STATUS_OBJECT_PATH_INVALID, "Got unexpected status %#x.\n", status);
+    ok(status == STATUS_OBJECT_PATH_INVALID, "Got unexpected status %#x.\n", status);
 
     status = pNtCreateNamedPipeFile(&handle, GENERIC_READ | SYNCHRONIZE, &attr,
             &io, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT,

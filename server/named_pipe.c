@@ -105,6 +105,7 @@ struct named_pipe_device_file
 
 static void named_pipe_dump( struct object *obj, int verbose );
 static unsigned int named_pipe_map_access( struct object *obj, unsigned int access );
+static WCHAR *named_pipe_get_full_name( struct object *obj, data_size_t *ret_len );
 static int named_pipe_link_name( struct object *obj, struct object_name *name, struct object *parent );
 static struct object *named_pipe_open_file( struct object *obj, unsigned int access,
                                             unsigned int sharing, unsigned int options );
@@ -124,7 +125,7 @@ static const struct object_ops named_pipe_ops =
     named_pipe_map_access,        /* map_access */
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
-    default_get_full_name,        /* get_full_name */
+    named_pipe_get_full_name,     /* get_full_name */
     no_lookup_name,               /* lookup_name */
     named_pipe_link_name,         /* link_name */
     default_unlink_name,          /* unlink_name */
@@ -326,6 +327,15 @@ static unsigned int named_pipe_map_access( struct object *obj, unsigned int acce
     if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
     if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL;
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
+static WCHAR *named_pipe_get_full_name( struct object *obj, data_size_t *ret_len )
+{
+    WCHAR *ret;
+
+    if (!(ret = default_get_full_name( obj, ret_len )))
+        set_error( STATUS_OBJECT_PATH_INVALID );
+    return ret;
 }
 
 static void pipe_server_dump( struct object *obj, int verbose )
