@@ -4534,7 +4534,7 @@ static void test_swapchain_parameters(void)
              * the draw on the screen right away (Aero on or off doesn't matter), but
              * Present with DXGI_PRESENT_DO_NOT_SEQUENCE will show the modifications.
              *
-             * Note that if the application doesn't have focused creating a fullscreen
+             * Note that if the application doesn't have focus creating a fullscreen
              * swapchain returns DXGI_STATUS_OCCLUDED and we get a windowed swapchain,
              * so use the Windowed property of the swapchain that was actually created. */
             expected_usage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_BACK_BUFFER | DXGI_USAGE_READ_ONLY;
