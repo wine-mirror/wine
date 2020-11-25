@@ -405,12 +405,16 @@ static const char *get_default_entry_point( const DLLSPEC *spec )
     {
         /* __wine_spec_exe_wentry always calls wmain */
         add_spec_extra_ld_symbol("wmain");
+        if (spec->subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+            add_spec_extra_ld_symbol("wWinMain");
         return "__wine_spec_exe_wentry";
     }
     else
     {
         /* __wine_spec_exe_entry always calls main */
         add_spec_extra_ld_symbol("main");
+        if (spec->subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+            add_spec_extra_ld_symbol("WinMain");
         return "__wine_spec_exe_entry";
     }
 }
