@@ -3674,7 +3674,9 @@ NTSYSAPI ULONG64   WINAPI RtlGetExtendedFeaturesMask(CONTEXT_EX*);
 NTSYSAPI void      WINAPI RtlSetExtendedFeaturesMask(CONTEXT_EX*,ULONG64);
 #endif
 
+#ifndef __WINE_USE_MSVCRT
 NTSYSAPI int __cdecl _strnicmp(LPCSTR,LPCSTR,size_t);
+#endif
 
 /* 32-bit only functions */
 
