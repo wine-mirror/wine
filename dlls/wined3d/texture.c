@@ -5398,7 +5398,10 @@ static void ffp_blitter_clear_rendertargets(struct wined3d_device *device, unsig
     {
         gl_info->gl_ops.gl.p_glDepthMask(GL_TRUE);
         context_invalidate_state(context, STATE_DEPTH_STENCIL);
-        gl_info->gl_ops.gl.p_glClearDepth(depth);
+        if (gl_info->supported[ARB_ES2_COMPATIBILITY])
+            GL_EXTCALL(glClearDepthf(depth));
+        else
+            gl_info->gl_ops.gl.p_glClearDepth(depth);
         checkGLcall("glClearDepth");
         clear_mask = clear_mask | GL_DEPTH_BUFFER_BIT;
     }
