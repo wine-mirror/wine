@@ -99,11 +99,6 @@ struct video_capture_device
 
     struct strmbase_source *pin;
     int fd, mmap;
-
-    HANDLE thread;
-    FILTER_STATE state;
-    CONDITION_VARIABLE state_cv;
-    CRITICAL_SECTION state_cs;
 };
 
 static int xioctl(int fd, int request, void * arg)
@@ -119,8 +114,6 @@ static int xioctl(int fd, int request, void * arg)
 
 static void v4l_device_destroy(struct video_capture_device *device)
 {
-    device->state_cs.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&device->state_cs);
     if (device->fd != -1)
         video_close(device->fd);
     if (device->caps_count)
@@ -330,62 +323,19 @@ static void reverse_image(struct video_capture_device *device, LPBYTE output, co
     }
 }
 
-static DWORD WINAPI ReadThread(void *arg)
+static BOOL v4l_device_read_frame(struct video_capture_device *device, BYTE *data)
 {
-    struct video_capture_device *device = arg;
-    HRESULT hr;
-    IMediaSample *pSample = NULL;
-    unsigned char *pTarget;
-
-    for (;;)
+    while (video_read(device->fd, device->image_data, device->image_size) < 0)
     {
-        EnterCriticalSection(&device->state_cs);
-
-        while (device->state == State_Paused)
-            SleepConditionVariableCS(&device->state_cv, &device->state_cs, INFINITE);
-
-        if (device->state == State_Stopped)
+        if (errno != EAGAIN)
         {
-            LeaveCriticalSection(&device->state_cs);
-            break;
-        }
-
-        LeaveCriticalSection(&device->state_cs);
-
-        hr = BaseOutputPinImpl_GetDeliveryBuffer(device->pin, &pSample, NULL, NULL, 0);
-        if (SUCCEEDED(hr))
-        {
-            int len;
-            
-            IMediaSample_SetActualDataLength(pSample, device->image_size);
-
-            len = IMediaSample_GetActualDataLength(pSample);
-            TRACE("Data length: %d KB\n", len / 1024);
-
-            IMediaSample_GetPointer(pSample, &pTarget);
-
-            while (video_read(device->fd, device->image_data, device->image_size) == -1)
-            {
-                if (errno != EAGAIN)
-                {
-                    ERR("Failed to read frame: %s\n", strerror(errno));
-                    break;
-                }
-            }
-
-            reverse_image(device, pTarget, device->image_data);
-            hr = IMemInputPin_Receive(device->pin->pMemInputPin, pSample);
-            IMediaSample_Release(pSample);
-        }
-
-        if (FAILED(hr) && hr != VFW_E_NOT_CONNECTED)
-        {
-            TRACE("Return %x, stop IFilterGraph\n", hr);
-            break;
+            ERR("Failed to read frame: %s\n", strerror(errno));
+            return FALSE;
         }
     }
 
-    return 0;
+    reverse_image(device, data, device->image_data);
+    return TRUE;
 }
 
 static void v4l_device_init_stream(struct video_capture_device *device)
@@ -407,36 +357,11 @@ static void v4l_device_init_stream(struct video_capture_device *device)
         if (FAILED(hr = IMemAllocator_Commit(device->pin->pAllocator)))
             ERR("Failed to commit allocator, hr %#x.\n", hr);
     }
-
-    device->state = State_Paused;
-    device->thread = CreateThread(NULL, 0, ReadThread, device, 0, NULL);
-}
-
-static void v4l_device_start_stream(struct video_capture_device *device)
-{
-    EnterCriticalSection(&device->state_cs);
-    device->state = State_Running;
-    LeaveCriticalSection(&device->state_cs);
-}
-
-static void v4l_device_stop_stream(struct video_capture_device *device)
-{
-    EnterCriticalSection(&device->state_cs);
-    device->state = State_Paused;
-    LeaveCriticalSection(&device->state_cs);
 }
 
 static void v4l_device_cleanup_stream(struct video_capture_device *device)
 {
     HRESULT hr;
-
-    EnterCriticalSection(&device->state_cs);
-    device->state = State_Stopped;
-    LeaveCriticalSection(&device->state_cs);
-    WakeConditionVariable(&device->state_cv);
-    WaitForSingleObject(device->thread, INFINITE);
-    CloseHandle(device->thread);
-    device->thread = NULL;
 
     hr = IMemAllocator_Decommit(device->pin->pAllocator);
     if (hr != S_OK && hr != VFW_E_NOT_COMMITTED)
@@ -638,10 +563,6 @@ struct video_capture_device *v4l_device_create(struct strmbase_source *pin, USHO
     }
 
     device->pin = pin;
-    device->state = State_Stopped;
-    InitializeConditionVariable(&device->state_cv);
-    InitializeCriticalSection(&device->state_cs);
-    device->state_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": video_capture_device.state_cs");
 
     TRACE("Format: %d bpp - %dx%d.\n", device->current_caps->video_info.bmiHeader.biBitCount,
             device->current_caps->video_info.bmiHeader.biWidth,
@@ -667,9 +588,8 @@ const struct video_capture_funcs v4l_funcs =
     .get_prop_range = v4l_device_get_prop_range,
     .get_prop = v4l_device_get_prop,
     .set_prop = v4l_device_set_prop,
+    .read_frame = v4l_device_read_frame,
     .init_stream = v4l_device_init_stream,
-    .start_stream = v4l_device_start_stream,
-    .stop_stream = v4l_device_stop_stream,
     .cleanup_stream = v4l_device_cleanup_stream,
 };
 

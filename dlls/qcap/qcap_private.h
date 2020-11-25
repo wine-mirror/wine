@@ -54,9 +54,8 @@ struct video_capture_funcs
             LONG *min, LONG *max, LONG *step, LONG *default_value, LONG *flags);
     HRESULT (*get_prop)(struct video_capture_device *device, VideoProcAmpProperty property, LONG *value, LONG *flags);
     HRESULT (*set_prop)(struct video_capture_device *device, VideoProcAmpProperty property, LONG value, LONG flags);
+    BOOL (*read_frame)(struct video_capture_device *device, BYTE *data);
     void (*init_stream)(struct video_capture_device *device);
-    void (*start_stream)(struct video_capture_device *device);
-    void (*stop_stream)(struct video_capture_device *device);
     void (*cleanup_stream)(struct video_capture_device *device);
 };
 

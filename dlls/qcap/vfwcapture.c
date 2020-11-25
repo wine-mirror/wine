@@ -34,10 +34,19 @@ struct vfw_capture
     IPersistPropertyBag IPersistPropertyBag_iface;
     BOOL init;
 
-    struct video_capture_device *device;
-
     struct strmbase_source source;
     IKsPropertySet IKsPropertySet_iface;
+
+    struct video_capture_device *device;
+
+    /* FIXME: It would be nice to avoid duplicating this variable with strmbase.
+     * However, synchronization is tricky; we need access to be protected by a
+     * separate lock. */
+    FILTER_STATE state;
+    CONDITION_VARIABLE state_cv;
+    CRITICAL_SECTION state_cs;
+
+    HANDLE thread;
 };
 
 static inline struct vfw_capture *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -96,6 +105,8 @@ static void vfw_capture_destroy(struct strmbase_filter *iface)
         IPin_Disconnect(filter->source.pin.peer);
         IPin_Disconnect(&filter->source.pin.IPin_iface);
     }
+    filter->state_cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&filter->state_cs);
     strmbase_source_cleanup(&filter->source);
     strmbase_filter_cleanup(&filter->filter);
     CoTaskMemFree(filter);
@@ -121,11 +132,71 @@ static HRESULT vfw_capture_query_interface(struct strmbase_filter *iface, REFIID
     return S_OK;
 }
 
+static DWORD WINAPI stream_thread(void *arg)
+{
+    struct vfw_capture *filter = arg;
+    const VIDEOINFOHEADER *format = (const VIDEOINFOHEADER *)filter->source.pin.mt.pbFormat;
+    const unsigned int image_size = format->bmiHeader.biWidth
+            * format->bmiHeader.biHeight * format->bmiHeader.biBitCount / 8;
+
+    for (;;)
+    {
+        IMediaSample *sample;
+        HRESULT hr;
+        BYTE *data;
+
+        EnterCriticalSection(&filter->state_cs);
+
+        while (filter->state == State_Paused)
+            SleepConditionVariableCS(&filter->state_cv, &filter->state_cs, INFINITE);
+
+        if (filter->state == State_Stopped)
+        {
+            LeaveCriticalSection(&filter->state_cs);
+            break;
+        }
+
+        LeaveCriticalSection(&filter->state_cs);
+
+        if (FAILED(hr = BaseOutputPinImpl_GetDeliveryBuffer(&filter->source, &sample, NULL, NULL, 0)))
+        {
+            ERR("Failed to get sample, hr %#x.\n", hr);
+            break;
+        }
+
+        IMediaSample_SetActualDataLength(sample, image_size);
+        IMediaSample_GetPointer(sample, &data);
+
+        if (!capture_funcs->read_frame(filter->device, data))
+        {
+            IMediaSample_Release(sample);
+            break;
+        }
+
+        hr = IMemInputPin_Receive(filter->source.pMemInputPin, sample);
+        IMediaSample_Release(sample);
+        if (FAILED(hr))
+        {
+            ERR("IMemInputPin::Receive() returned %#x.\n", hr);
+            break;
+        }
+    }
+
+    return 0;
+}
+
 static HRESULT vfw_capture_init_stream(struct strmbase_filter *iface)
 {
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
 
     capture_funcs->init_stream(filter->device);
+
+    EnterCriticalSection(&filter->state_cs);
+    filter->state = State_Paused;
+    LeaveCriticalSection(&filter->state_cs);
+
+    filter->thread = CreateThread(NULL, 0, stream_thread, filter, 0, NULL);
+
     return S_OK;
 }
 
@@ -133,7 +204,10 @@ static HRESULT vfw_capture_start_stream(struct strmbase_filter *iface, REFERENCE
 {
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
 
-    capture_funcs->start_stream(filter->device);
+    EnterCriticalSection(&filter->state_cs);
+    filter->state = State_Running;
+    LeaveCriticalSection(&filter->state_cs);
+    WakeConditionVariable(&filter->state_cv);
     return S_OK;
 }
 
@@ -141,13 +215,24 @@ static HRESULT vfw_capture_stop_stream(struct strmbase_filter *iface)
 {
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
 
-    capture_funcs->stop_stream(filter->device);
+    EnterCriticalSection(&filter->state_cs);
+    filter->state = State_Paused;
+    LeaveCriticalSection(&filter->state_cs);
     return S_OK;
 }
 
 static HRESULT vfw_capture_cleanup_stream(struct strmbase_filter *iface)
 {
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
+
+    EnterCriticalSection(&filter->state_cs);
+    filter->state = State_Stopped;
+    LeaveCriticalSection(&filter->state_cs);
+    WakeConditionVariable(&filter->state_cv);
+
+    WaitForSingleObject(filter->thread, INFINITE);
+    CloseHandle(filter->thread);
+    filter->thread = NULL;
 
     capture_funcs->cleanup_stream(filter->device);
     return S_OK;
@@ -708,6 +793,11 @@ HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out)
     strmbase_source_init(&object->source, &object->filter, source_name, &source_ops);
 
     object->IKsPropertySet_iface.lpVtbl = &IKsPropertySet_VTable;
+
+    object->state = State_Stopped;
+    InitializeConditionVariable(&object->state_cv);
+    InitializeCriticalSection(&object->state_cs);
+    object->state_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": vfw_capture.state_cs");
 
     TRACE("Created VFW capture filter %p.\n", object);
     ObjectRefCount(TRUE);
