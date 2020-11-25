@@ -4565,17 +4565,14 @@ static void test_ReOpenFile(void)
     ok(file != INVALID_HANDLE_VALUE, "failed to create pipe, error %u\n", GetLastError());
 
     new = pReOpenFile(file, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
-    todo_wine ok(new != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+    ok(new != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
 
     ret = WriteFile(file, "foo", 4, &size, NULL);
-    todo_wine ok(ret, "failed to write file, error %u\n", GetLastError());
+    ok(ret, "failed to write file, error %u\n", GetLastError());
     ret = ReadFile(new, buffer, sizeof(buffer), &size, NULL);
-    todo_wine ok(ret, "failed to read file, error %u\n", GetLastError());
-    if (ret)
-    {
-        ok(size == 4, "got size %u\n", size);
-        ok(!strcmp(buffer, "foo"), "got wrong data\n");
-    }
+    ok(ret, "failed to read file, error %u\n", GetLastError());
+    ok(size == 4, "got size %u\n", size);
+    ok(!strcmp(buffer, "foo"), "got wrong data\n");
 
     CloseHandle(new);
     CloseHandle(file);

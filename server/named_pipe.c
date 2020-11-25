@@ -152,6 +152,10 @@ static void pipe_end_get_file_info( struct fd *fd, obj_handle_t handle, unsigned
 
 /* server end functions */
 static void pipe_server_dump( struct object *obj, int verbose );
+static struct object *pipe_server_lookup_name( struct object *obj, struct unicode_str *name,
+                                               unsigned int attr, struct object *root );
+static struct object *pipe_server_open_file( struct object *obj, unsigned int access,
+                                             unsigned int sharing, unsigned int options );
 static void pipe_server_destroy( struct object *obj);
 static int pipe_server_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 
@@ -170,10 +174,10 @@ static const struct object_ops pipe_server_ops =
     pipe_end_get_sd,              /* get_sd */
     pipe_end_set_sd,              /* set_sd */
     pipe_end_get_full_name,       /* get_full_name */
-    no_lookup_name,               /* lookup_name */
+    pipe_server_lookup_name,      /* lookup_name */
     no_link_name,                 /* link_name */
     NULL,                         /* unlink_name */
-    no_open_file,                 /* open_file */
+    pipe_server_open_file,        /* open_file */
     no_kernel_obj_list,           /* get_kernel_obj_list */
     fd_close_handle,              /* close_handle */
     pipe_server_destroy           /* destroy */
@@ -447,6 +451,23 @@ static void pipe_end_destroy( struct object *obj )
     free_async_queue( &pipe_end->write_q );
     if (pipe_end->fd) release_object( pipe_end->fd );
     if (pipe_end->pipe) release_object( pipe_end->pipe );
+}
+
+static struct object *pipe_server_lookup_name( struct object *obj, struct unicode_str *name,
+                                               unsigned int attr, struct object *root )
+{
+    if (name && name->len)
+        set_error( STATUS_OBJECT_NAME_INVALID );
+
+    return NULL;
+}
+
+static struct object *pipe_server_open_file( struct object *obj, unsigned int access,
+                                             unsigned int sharing, unsigned int options )
+{
+    struct pipe_server *server = (struct pipe_server *)obj;
+
+    return server->pipe_end.pipe->obj.ops->open_file( &server->pipe_end.pipe->obj, access, sharing, options );
 }
 
 static void pipe_server_destroy( struct object *obj )

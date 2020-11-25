@@ -2487,39 +2487,48 @@ static void test_empty_name(void)
     todo_wine ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "Got unexpected status %#x.\n", status);
 
     attr.RootDirectory = hpipe;
+    pRtlInitUnicodeString(&name, L"a");
     status = NtCreateFile(&hwrite, GENERIC_WRITE | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
-    todo_wine ok(!status, "Got unexpected status %#x.\n", status);
+    ok(status == STATUS_OBJECT_NAME_INVALID, "Got unexpected status %#x.\n", status);
+
+    name.Buffer = NULL;
+    name.Length = 0;
+    name.MaximumLength = 0;
+    attr.RootDirectory = hpipe;
+    status = NtCreateFile(&hwrite, GENERIC_WRITE | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &attr, &io, NULL, 0,
+            FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+    ok(!status, "Got unexpected status %#x.\n", status);
 
     type_info->TypeName.Buffer = NULL;
     status = pNtQueryObject(hwrite, ObjectTypeInformation, type_info, sizeof(buffer), NULL);
-    todo_wine ok(!status, "Got unexpected status %#x.\n", status);
-    todo_wine ok(type_info->TypeName.Buffer && !wcscmp(type_info->TypeName.Buffer, L"File"),
+    ok(!status, "Got unexpected status %#x.\n", status);
+    ok(type_info->TypeName.Buffer && !wcscmp(type_info->TypeName.Buffer, L"File"),
             "Got unexpected type %s.\n", debugstr_w(type_info->TypeName.Buffer));
     status = pNtQueryObject(hwrite, ObjectNameInformation, name_info, sizeof(buffer), NULL);
-    todo_wine ok(status == STATUS_OBJECT_PATH_INVALID, "Got unexpected status %#x.\n", status);
+    ok(status == STATUS_OBJECT_PATH_INVALID, "Got unexpected status %#x.\n", status);
 
     attr.RootDirectory = hpipe;
     status = NtCreateFile(&handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN,
             FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
-    todo_wine ok(status == STATUS_PIPE_NOT_AVAILABLE, "Got unexpected status %#x.\n", status);
+    ok(status == STATUS_PIPE_NOT_AVAILABLE, "Got unexpected status %#x.\n", status);
 
     attr.RootDirectory = hpipe;
     status = NtCreateFile(&handle, GENERIC_WRITE | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
-    todo_wine ok(status == STATUS_PIPE_NOT_AVAILABLE, "Got unexpected status %#x.\n", status);
+    ok(status == STATUS_PIPE_NOT_AVAILABLE, "Got unexpected status %#x.\n", status);
 
     data = 0xdeadbeef;
     ret = WriteFile(hwrite, &data, sizeof(data), &length, NULL);
-    todo_wine ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
-    todo_wine ok(length == sizeof(data), "Got unexpected length %#x.\n", length);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(length == sizeof(data), "Got unexpected length %#x.\n", length);
 
     data = 0;
     ret = ReadFile(hpipe, &data, sizeof(data), &length, NULL);
-    todo_wine ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
-    todo_wine ok(length == sizeof(data), "Got unexpected length %#x.\n", length);
-    todo_wine ok(data == 0xdeadbeef, "Got unexpected data %#x.\n", data);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(length == sizeof(data), "Got unexpected length %#x.\n", length);
+    ok(data == 0xdeadbeef, "Got unexpected data %#x.\n", data);
 
     CloseHandle(hwrite);
     CloseHandle(hpipe);
