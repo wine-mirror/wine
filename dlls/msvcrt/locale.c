@@ -601,15 +601,6 @@ void CDECL _unlock_locales(void)
     _unlock(_SETLOCALE_LOCK);
 }
 
-static MSVCRT_pthreadlocinfo* CDECL get_locinfo_ptr(void) {
-    thread_data_t *data = msvcrt_get_thread_data();
-
-    if(!data || !(data->locale_flags & LOCALE_THREAD))
-        return &MSVCRT_locale->locinfo;
-
-    return &data->locinfo;
-}
-
 static void CDECL grab_locinfo(MSVCRT_pthreadlocinfo locinfo)
 {
     int i;
@@ -2041,8 +2032,8 @@ MSVCRT__locale_t CDECL MSVCRT__wcreate_locale(int category, const MSVCRT_wchar_t
  */
 char* CDECL MSVCRT_setlocale(int category, const char* locale)
 {
-    MSVCRT_pthreadlocinfo *plocinfo = get_locinfo_ptr();
-    MSVCRT_pthreadlocinfo locinfo = *plocinfo, newlocinfo;
+    thread_data_t *data = msvcrt_get_thread_data();
+    MSVCRT_pthreadlocinfo locinfo = get_locinfo(), newlocinfo;
 
     if(category<MSVCRT_LC_MIN || category>MSVCRT_LC_MAX)
         return NULL;
@@ -2063,13 +2054,19 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
     if(locale[0] != 'C' || locale[1] != '\0')
         initial_locale = FALSE;
 
-    _lock_locales();
-    free_locinfo(locinfo);
-    *plocinfo = newlocinfo;
-    _unlock_locales();
-
-    if(newlocinfo == MSVCRT_locale->locinfo) {
+    if(data->locale_flags & LOCALE_THREAD)
+    {
+        if(data->locale_flags & LOCALE_FREE)
+            free_locinfo(data->locinfo);
+        data->locinfo = newlocinfo;
+    }
+    else
+    {
         int i;
+
+        _lock_locales();
+        free_locinfo(MSVCRT_locale->locinfo);
+        MSVCRT_locale->locinfo = newlocinfo;
 
         MSVCRT___lc_codepage = newlocinfo->lc_codepage;
         MSVCRT___lc_collate_cp = newlocinfo->lc_collate_cp;
@@ -2077,12 +2074,14 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
         MSVCRT__pctype = newlocinfo->pctype;
         for(i=MSVCRT_LC_MIN; i<=MSVCRT_LC_MAX; i++)
             MSVCRT___lc_handle[i] = MSVCRT_locale->locinfo->lc_handle[i];
+        _unlock_locales();
+        update_thread_locale(data);
     }
 
     if(category == MSVCRT_LC_ALL)
-        return construct_lc_all(newlocinfo);
+        return construct_lc_all(data->locinfo);
 
-    return newlocinfo->lc_category[category].locale;
+    return data->locinfo->lc_category[category].locale;
 }
 
 /*********************************************************************
