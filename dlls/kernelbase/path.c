@@ -2944,7 +2944,7 @@ HRESULT WINAPI UrlUnescapeW(WCHAR *url, WCHAR *unescaped, DWORD *unescaped_len, 
         else if (*src == '%' && isxdigit(*(src + 1)) && isxdigit(*(src + 2)) && !stop_unescaping)
         {
             INT ih;
-            WCHAR buf[5] = {'0','x',0};
+            WCHAR buf[5] = L"0x";
             memcpy(buf + 2, src + 1, 2*sizeof(WCHAR));
             buf[4] = 0;
             StrToIntExW(buf, STIF_SUPPORT_HEX, &ih);

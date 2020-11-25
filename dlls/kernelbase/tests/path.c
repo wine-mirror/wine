@@ -546,9 +546,9 @@ static void test_PathAllocCombine(void)
 
 static void test_PathCchCombine(void)
 {
-    WCHAR expected[PATHCCH_MAX_CCH] = {'C', ':', '\\', 'a', 0};
-    WCHAR p1[PATHCCH_MAX_CCH] = {'C', ':', '\\', 0};
-    WCHAR p2[PATHCCH_MAX_CCH] = {'a', 0};
+    WCHAR expected[PATHCCH_MAX_CCH] = L"C:\\a";
+    WCHAR p1[PATHCCH_MAX_CCH] = L"C:\\";
+    WCHAR p2[PATHCCH_MAX_CCH] = L"a";
     WCHAR output[PATHCCH_MAX_CCH];
     HRESULT hr;
     INT i;
@@ -607,9 +607,9 @@ static void test_PathCchCombine(void)
 
 static void test_PathCchCombineEx(void)
 {
-    WCHAR expected[MAX_PATH] = {'C',':','\\','a',0};
-    WCHAR p1[MAX_PATH] = {'C',':','\\',0};
-    WCHAR p2[MAX_PATH] = {'a',0};
+    WCHAR expected[MAX_PATH] = L"C:\\a";
+    WCHAR p1[MAX_PATH] = L"C:\\";
+    WCHAR p2[MAX_PATH] = L"a";
     WCHAR output[MAX_PATH];
     HRESULT hr;
     int i;

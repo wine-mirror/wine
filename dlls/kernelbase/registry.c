@@ -2775,7 +2775,6 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
     /* Parse the value and load the string. */
     {
         WCHAR *pComma = wcsrchr(pwszExpandedBuffer, ','), *pNewBuffer;
-        const WCHAR backslashW[] = {'\\',0};
         UINT uiStringId;
         DWORD baseDirLen;
         int reqChars;
@@ -2802,7 +2801,7 @@ LSTATUS WINAPI RegLoadMUIStringW(HKEY hKey, LPCWSTR pwszValue, LPWSTR pwszBuffer
         if (baseDirLen) {
             lstrcpyW(pwszTempBuffer, pwszBaseDir);
             if (pwszBaseDir[baseDirLen - 1] != '\\')
-                lstrcatW(pwszTempBuffer, backslashW);
+                lstrcatW(pwszTempBuffer, L"\\");
         }
         lstrcatW(pwszTempBuffer, pwszExpandedBuffer + 1);
 
