@@ -19,6 +19,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
+#include <dbt.h>
 #include "winsvc.h"
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -142,6 +143,7 @@ void __cdecl plugplay_send_event( DWORD code, const BYTE *data, unsigned int siz
     struct event *event;
 
     BroadcastSystemMessageW( BSF_FORCEIFHUNG | BSF_QUERY, NULL, WM_DEVICECHANGE, code, (LPARAM)data );
+    BroadcastSystemMessageW( BSF_FORCEIFHUNG | BSF_QUERY, NULL, WM_DEVICECHANGE, DBT_DEVNODES_CHANGED, 0 );
 
     EnterCriticalSection( &plugplay_cs );
 
