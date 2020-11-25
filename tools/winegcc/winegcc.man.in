@@ -72,6 +72,8 @@ Do not add the winecrt0 library when linking.
 .IP \fB-Wb,\fIoption\fR
 Pass an option to winebuild.  If \fIoption\fR contains
 commas, it is split into multiple options at the commas.
+.IP \fB-Wl,--out-implib,\fIlib.a\fR
+When linking a dll, also create its corresponding import library.
 .SH ENVIRONMENT
 .TP
 .B WINEBUILD
