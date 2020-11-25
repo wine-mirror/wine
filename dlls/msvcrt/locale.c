@@ -1099,8 +1099,8 @@ void free_locinfo(MSVCRT_pthreadlocinfo locinfo)
         MSVCRT_free((void*)locinfo->pcumap);
     }
 
-    if(locinfo->lc_time_curr && locinfo->lc_time_curr != &cloc_time_data
-            && !InterlockedDecrement(&locinfo->lc_time_curr->refcount))
+    if(locinfo->lc_time_curr && !InterlockedDecrement(&locinfo->lc_time_curr->refcount)
+            && locinfo->lc_time_curr != &cloc_time_data)
         MSVCRT_free(locinfo->lc_time_curr);
 
     if(InterlockedDecrement(&locinfo->refcount))
@@ -1932,8 +1932,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
                 lcid[MSVCRT_LC_TIME], cp[MSVCRT_LC_TIME])) {
         copy_threadlocinfo_category(locinfo, old_locinfo, MSVCRT_LC_TIME);
         locinfo->lc_time_curr = old_locinfo->lc_time_curr;
-        if(locinfo->lc_time_curr != &cloc_time_data)
-            InterlockedIncrement(&locinfo->lc_time_curr->refcount);
+        InterlockedIncrement(&locinfo->lc_time_curr->refcount);
     } else if(lcid[MSVCRT_LC_TIME]) {
         if(!update_threadlocinfo_category(lcid[MSVCRT_LC_TIME],
                     cp[MSVCRT_LC_TIME], locinfo, MSVCRT_LC_TIME)) {
@@ -1952,6 +1951,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
         locinfo->lc_time_curr = &cloc_time_data;
+        InterlockedIncrement(&locinfo->lc_time_curr->refcount);
     }
 
     return locinfo;
