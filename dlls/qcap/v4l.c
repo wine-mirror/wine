@@ -209,9 +209,10 @@ static HRESULT v4l_device_set_format(struct video_capture_device *device, const 
     return set_caps(device, caps);
 }
 
-static HRESULT v4l_device_get_format(struct video_capture_device *device, AM_MEDIA_TYPE *mt)
+static void v4l_device_get_format(struct video_capture_device *device, AM_MEDIA_TYPE *mt, VIDEOINFOHEADER *format)
 {
-    return CopyMediaType(mt, &device->current_caps->media_type);
+    *mt = device->current_caps->media_type;
+    *format = device->current_caps->video_info;
 }
 
 static HRESULT v4l_device_get_media_type(struct video_capture_device *device,

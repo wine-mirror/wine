@@ -337,6 +337,7 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
 static HRESULT WINAPI AMStreamConfig_GetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE **mt)
 {
     struct vfw_capture *filter = impl_from_IAMStreamConfig(iface);
+    VIDEOINFOHEADER *format;
     HRESULT hr;
 
     TRACE("filter %p, mt %p.\n", filter, mt);
@@ -347,11 +348,30 @@ static HRESULT WINAPI AMStreamConfig_GetFormat(IAMStreamConfig *iface, AM_MEDIA_
     EnterCriticalSection(&filter->filter.csFilter);
 
     if (filter->source.pin.peer)
+    {
         hr = CopyMediaType(*mt, &filter->source.pin.mt);
-    else if (SUCCEEDED(hr = capture_funcs->get_format(filter->device, *mt)))
-        strmbase_dump_media_type(*mt);
+    }
+    else
+    {
+        if ((format = CoTaskMemAlloc(sizeof(VIDEOINFOHEADER))))
+        {
+            capture_funcs->get_format(filter->device, *mt, format);
+            (*mt)->cbFormat = sizeof(VIDEOINFOHEADER);
+            (*mt)->pbFormat = (BYTE *)format;
+            hr = S_OK;
+        }
+        else
+        {
+            hr = E_OUTOFMEMORY;
+        }
+    }
 
     LeaveCriticalSection(&filter->filter.csFilter);
+
+    if (SUCCEEDED(hr))
+        strmbase_dump_media_type(*mt);
+    else
+        CoTaskMemFree(*mt);
     return hr;
 }
 
