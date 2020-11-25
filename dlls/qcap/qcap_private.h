@@ -48,7 +48,7 @@ struct video_capture_funcs
     HRESULT (*set_format)(struct video_capture_device *device, const AM_MEDIA_TYPE *mt);
     HRESULT (*get_format)(struct video_capture_device *device, AM_MEDIA_TYPE *mt);
     HRESULT (*get_media_type)(struct video_capture_device *device, unsigned int index, AM_MEDIA_TYPE *mt);
-    HRESULT (*get_caps)(struct video_capture_device *device, LONG index, AM_MEDIA_TYPE *mt,
+    void (*get_caps)(struct video_capture_device *device, LONG index, AM_MEDIA_TYPE *mt,
             VIDEOINFOHEADER *format, VIDEO_STREAM_CONFIG_CAPS *caps);
     LONG (*get_caps_count)(struct video_capture_device *device);
     HRESULT (*get_prop_range)(struct video_capture_device *device, VideoProcAmpProperty property,
