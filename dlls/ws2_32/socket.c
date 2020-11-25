@@ -7646,7 +7646,7 @@ static struct WS_hostent *WS_create_he(char *name, int aliases, int aliases_size
      * First set the pointer for aliases, second set the pointers for addresses.
      * Third fill the addresses indexes, fourth jump aliases names size.
      * Fifth fill the hostname.
-     * NOTE: This method is valid for OS version's >= XP.
+     * NOTE: This method is valid for OS versions >= XP.
      */
     p = (char *)(p_to + 1);
     p_to->h_aliases = (char **)p;
