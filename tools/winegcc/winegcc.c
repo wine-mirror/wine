@@ -1255,8 +1255,6 @@ static void build(struct options* opts)
             entry_point = (is_pe && opts->target_cpu == CPU_x86) ? "DriverEntry@8" : "DriverEntry";
         else if (opts->use_msvcrt && !opts->shared && !opts->win16_app)
             entry_point = opts->unicode_app ? "wmainCRTStartup" : "mainCRTStartup";
-        else if (!is_pe && !opts->shared && opts->unicode_app)
-            entry_point = "__wine_spec_exe_wentry";
     }
     else entry_point = opts->entry_point;
 
@@ -1268,6 +1266,8 @@ static void build(struct options* opts)
     spec_o_name = get_temp_file(output_name, ".spec.o");
     if (opts->force_pointer_size)
         strarray_add(spec_args, strmake("-m%u", 8 * opts->force_pointer_size ));
+    if(opts->unicode_app)
+        strarray_add(spec_args, "-municode");
     strarray_add(spec_args, "-D_REENTRANT");
     if (opts->pic && !is_pe) strarray_add(spec_args, "-fPIC");
     strarray_add(spec_args, opts->shared ? "--dll" : "--exe");

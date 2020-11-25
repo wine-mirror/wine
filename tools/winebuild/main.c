@@ -396,8 +396,12 @@ static const char *get_default_entry_point( const DLLSPEC *spec )
 {
     if (spec->characteristics & IMAGE_FILE_DLL) return "DllMain";
     if (spec->subsystem == IMAGE_SUBSYSTEM_NATIVE) return "DriverEntry";
-    if (spec->type == SPEC_WIN16) return "__wine_spec_exe16_entry";
-    return "__wine_spec_exe_entry";
+    if (spec->type == SPEC_WIN16)
+        return "__wine_spec_exe16_entry";
+    else if (spec->unicode_app)
+        return "__wine_spec_exe_wentry";
+    else
+        return "__wine_spec_exe_entry";
 }
 
 /* parse options from the argv array and remove all the recognized ones */
@@ -448,6 +452,7 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             else if (!strcmp( optarg, "thumb" )) thumb_mode = 1;
             else if (!strcmp( optarg, "no-cygwin" )) use_msvcrt = 1;
             else if (!strcmp( optarg, "unix" )) unix_lib = 1;
+            else if (!strcmp( optarg, "unicode" )) spec->unicode_app = 1;
             else if (!strncmp( optarg, "cpu=", 4 )) cpu_option = xstrdup( optarg + 4 );
             else if (!strncmp( optarg, "fpu=", 4 )) fpu_option = xstrdup( optarg + 4 );
             else if (!strncmp( optarg, "arch=", 5 )) arch_option = xstrdup( optarg + 5 );
