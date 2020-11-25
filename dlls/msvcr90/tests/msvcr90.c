@@ -1213,8 +1213,8 @@ static void test_getptd(void)
     todo_wine ok(ptd->have_locale == 1, "ptd->have_locale = %x\n", ptd->have_locale);
     p_configthreadlocale(1);
     todo_wine ok(mbcinfo == ptd->mbcinfo, "ptd->mbcinfo != mbcinfo\n");
-    todo_wine ok(locinfo == ptd->locinfo, "ptd->locinfo != locinfo\n");
-    todo_wine ok(ptd->have_locale == 3, "ptd->have_locale = %x\n", ptd->have_locale);
+    ok(locinfo == ptd->locinfo, "ptd->locinfo != locinfo\n");
+    ok(ptd->have_locale == 3, "ptd->have_locale = %x\n", ptd->have_locale);
     ok(p_get_terminate() == ptd->terminate_handler, "ptd->terminate_handler != _get_terminate()\n");
     ok(p_get_unexpected() == ptd->unexpected_handler, "ptd->unexpected_handler != _get_unexpected()\n");
 }

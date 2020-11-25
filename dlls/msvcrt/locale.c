@@ -588,7 +588,7 @@ static BOOL update_threadlocinfo_category(LCID lcid, unsigned short cp,
 static MSVCRT_pthreadlocinfo* CDECL get_locinfo_ptr(void) {
     thread_data_t *data = msvcrt_get_thread_data();
 
-    if(!data || !data->have_locale)
+    if(!data || !(data->locale_flags & LOCALE_THREAD))
         return &MSVCRT_locale->locinfo;
 
     return &data->locinfo;
@@ -602,7 +602,7 @@ MSVCRT_pthreadlocinfo CDECL get_locinfo(void) {
 MSVCRT_pthreadmbcinfo* CDECL get_mbcinfo_ptr(void) {
     thread_data_t *data = msvcrt_get_thread_data();
 
-    if(!data || !data->have_locale)
+    if(!data || !(data->locale_flags & LOCALE_THREAD))
         return &MSVCRT_locale->mbcinfo;
 
     return &data->mbcinfo;
@@ -1142,7 +1142,7 @@ MSVCRT__locale_t CDECL get_current_locale_noalloc(MSVCRT__locale_t locale)
     thread_data_t *data = msvcrt_get_thread_data();
     int i;
 
-    if(!data || !data->have_locale)
+    if(!data || !(data->locale_flags & LOCALE_THREAD))
     {
         _lock_locales();
         *locale = *MSVCRT_locale;
@@ -2101,39 +2101,35 @@ MSVCRT_wchar_t* CDECL MSVCRT__wsetlocale(int category, const MSVCRT_wchar_t* wlo
 int CDECL _configthreadlocale(int type)
 {
     thread_data_t *data = msvcrt_get_thread_data();
-    MSVCRT__locale_t locale;
     int ret;
 
     if(!data)
         return -1;
 
-    ret = (data->have_locale ? MSVCRT__ENABLE_PER_THREAD_LOCALE : MSVCRT__DISABLE_PER_THREAD_LOCALE);
+    ret = (data->locale_flags & LOCALE_THREAD ? MSVCRT__ENABLE_PER_THREAD_LOCALE :
+            MSVCRT__DISABLE_PER_THREAD_LOCALE);
+    if(ret == type)
+        return ret;
+
+    if(data->locale_flags & LOCALE_FREE)
+    {
+        free_locinfo(data->locinfo);
+        free_mbcinfo(data->mbcinfo);
+        data->locale_flags &= ~LOCALE_FREE;
+    }
 
     if(type == MSVCRT__ENABLE_PER_THREAD_LOCALE) {
-        if(!data->have_locale) {
-            /* Copy current global locale */
-            locale = MSVCRT__create_locale(MSVCRT_LC_ALL, MSVCRT_setlocale(MSVCRT_LC_ALL, NULL));
-            if(!locale)
-                return -1;
+        MSVCRT__locale_tstruct locale;
 
-            data->locinfo = locale->locinfo;
-            data->mbcinfo = locale->mbcinfo;
-            data->have_locale = TRUE;
-            MSVCRT_free(locale);
-        }
-
+        get_current_locale_noalloc(&locale);
+        data->locinfo = locale.locinfo;
+        data->mbcinfo = locale.mbcinfo;
+        data->locale_flags = LOCALE_FREE | LOCALE_THREAD;
         return ret;
     }
 
     if(type == MSVCRT__DISABLE_PER_THREAD_LOCALE) {
-        if(data->have_locale) {
-            free_locinfo(data->locinfo);
-            free_mbcinfo(data->mbcinfo);
-            data->locinfo = MSVCRT_locale->locinfo;
-            data->mbcinfo = MSVCRT_locale->mbcinfo;
-            data->have_locale = FALSE;
-        }
-
+        data->locale_flags = 0;
         return ret;
     }
 
