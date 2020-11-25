@@ -374,17 +374,14 @@ static void fill_caps(__u32 pixelformat, __u32 width, __u32 height,
 }
 
 static HRESULT v4l_device_get_caps(struct video_capture_device *device, LONG index,
-        AM_MEDIA_TYPE **type, VIDEO_STREAM_CONFIG_CAPS *vscc)
+        AM_MEDIA_TYPE *type, VIDEOINFOHEADER *format, VIDEO_STREAM_CONFIG_CAPS *vscc)
 {
     if (index >= device->caps_count)
         return S_FALSE;
 
-    *type = CreateMediaType(&device->caps[index].media_type);
-    if (!*type)
-        return E_OUTOFMEMORY;
-
-    if (vscc)
-        memcpy(vscc, &device->caps[index].config, sizeof(VIDEO_STREAM_CONFIG_CAPS));
+    *vscc = device->caps[index].config;
+    *type = device->caps[index].media_type;
+    *format = device->caps[index].video_info;
     return S_OK;
 }
 

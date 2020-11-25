@@ -375,10 +375,34 @@ static HRESULT WINAPI AMStreamConfig_GetStreamCaps(IAMStreamConfig *iface,
         int index, AM_MEDIA_TYPE **pmt, BYTE *vscc)
 {
     struct vfw_capture *filter = impl_from_IAMStreamConfig(iface);
+    VIDEOINFOHEADER *format;
+    AM_MEDIA_TYPE *mt;
+    HRESULT hr;
 
     TRACE("filter %p, index %d, pmt %p, vscc %p.\n", filter, index, pmt, vscc);
 
-    return capture_funcs->get_caps(filter->device, index, pmt, (VIDEO_STREAM_CONFIG_CAPS *)vscc);
+    if (!(mt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
+        return E_OUTOFMEMORY;
+
+    if (!(format = CoTaskMemAlloc(sizeof(VIDEOINFOHEADER))))
+    {
+        CoTaskMemFree(mt);
+        return E_OUTOFMEMORY;
+    }
+
+    if ((hr = capture_funcs->get_caps(filter->device, index, mt,
+            format, (VIDEO_STREAM_CONFIG_CAPS *)vscc)) == S_OK)
+    {
+        mt->cbFormat = sizeof(VIDEOINFOHEADER);
+        mt->pbFormat = (BYTE *)format;
+        *pmt = mt;
+    }
+    else
+    {
+        CoTaskMemFree(format);
+        CoTaskMemFree(mt);
+    }
+    return hr;
 }
 
 static const IAMStreamConfigVtbl IAMStreamConfig_VTable =
