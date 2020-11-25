@@ -97,6 +97,7 @@ struct v4l_device
     LONG caps_count;
 
     int image_size, image_pitch;
+    BYTE *image_data;
 
     struct strmbase_source *pin;
     int fd, mmap;
@@ -133,6 +134,7 @@ static void v4l_device_destroy(struct video_capture_device *iface)
         video_close(device->fd);
     if (device->caps_count)
         heap_free(device->caps);
+    heap_free(device->image_data);
     heap_free(device);
 }
 
@@ -174,13 +176,21 @@ static HRESULT v4l_device_check_format(struct video_capture_device *iface, const
     return E_FAIL;
 }
 
-static BOOL set_caps(struct v4l_device *device, const struct caps *caps)
+static HRESULT set_caps(struct v4l_device *device, const struct caps *caps)
 {
     struct v4l2_format format = {0};
-    LONG width, height;
+    LONG width, height, image_size;
+    BYTE *image_data;
 
     width = caps->video_info.bmiHeader.biWidth;
     height = caps->video_info.bmiHeader.biHeight;
+    image_size = width * height * caps->video_info.bmiHeader.biBitCount / 8;
+
+    if (!(image_data = heap_alloc(image_size)))
+    {
+        ERR("Failed to allocate memory.\n");
+        return E_OUTOFMEMORY;
+    }
 
     format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     format.fmt.pix.pixelformat = caps->pixelformat;
@@ -192,14 +202,16 @@ static BOOL set_caps(struct v4l_device *device, const struct caps *caps)
             || format.fmt.pix.height != height)
     {
         ERR("Failed to set pixel format: %s.\n", strerror(errno));
-        return FALSE;
+        heap_free(image_data);
+        return VFW_E_TYPE_NOT_ACCEPTED;
     }
 
     device->current_caps = caps;
-    device->image_size = width * height * caps->video_info.bmiHeader.biBitCount / 8;
+    device->image_size = image_size;
     device->image_pitch = width * caps->video_info.bmiHeader.biBitCount / 8;
-
-    return TRUE;
+    heap_free(device->image_data);
+    device->image_data = image_data;
+    return S_OK;
 }
 
 static HRESULT v4l_device_set_format(struct video_capture_device *iface, const AM_MEDIA_TYPE *mt)
@@ -214,10 +226,7 @@ static HRESULT v4l_device_set_format(struct video_capture_device *iface, const A
     if (device->current_caps == caps)
         return S_OK;
 
-    if (!set_caps(device, caps))
-        return VFW_E_TYPE_NOT_ACCEPTED;
-
-    return S_OK;
+    return set_caps(device, caps);
 }
 
 static HRESULT v4l_device_get_format(struct video_capture_device *iface, AM_MEDIA_TYPE *mt)
@@ -344,13 +353,7 @@ static DWORD WINAPI ReadThread(void *arg)
     struct v4l_device *device = arg;
     HRESULT hr;
     IMediaSample *pSample = NULL;
-    unsigned char *pTarget, *image_data;
-
-    if (!(image_data = heap_alloc(device->image_size)))
-    {
-        ERR("Failed to allocate memory.\n");
-        return 0;
-    }
+    unsigned char *pTarget;
 
     for (;;)
     {
@@ -379,7 +382,7 @@ static DWORD WINAPI ReadThread(void *arg)
 
             IMediaSample_GetPointer(pSample, &pTarget);
 
-            while (video_read(device->fd, image_data, device->image_size) == -1)
+            while (video_read(device->fd, device->image_data, device->image_size) == -1)
             {
                 if (errno != EAGAIN)
                 {
@@ -388,7 +391,7 @@ static DWORD WINAPI ReadThread(void *arg)
                 }
             }
 
-            reverse_image(device, pTarget, image_data);
+            reverse_image(device, pTarget, device->image_data);
             hr = IMemInputPin_Receive(device->pin->pMemInputPin, pSample);
             IMediaSample_Release(pSample);
         }
@@ -400,7 +403,6 @@ static DWORD WINAPI ReadThread(void *arg)
         }
     }
 
-    heap_free(image_data);
     return 0;
 }
 
@@ -550,6 +552,7 @@ struct video_capture_device *v4l_device_create(struct strmbase_source *pin, USHO
     struct v4l_device *device;
     BOOL have_libv4l2;
     char path[20];
+    HRESULT hr;
     int fd, i;
 
     have_libv4l2 = video_init();
@@ -671,10 +674,9 @@ struct video_capture_device *v4l_device_create(struct strmbase_source *pin, USHO
     for (i = 0; i < device->caps_count; ++i)
         device->caps[i].media_type.pbFormat = (BYTE *)&device->caps[i].video_info;
 
-    if (!set_caps(device, &device->caps[0]))
+    if (FAILED(hr = set_caps(device, &device->caps[0])))
     {
-        ERR("Failed to set pixel format: %s\n", strerror(errno));
-        if (!have_libv4l2)
+        if (hr == VFW_E_TYPE_NOT_ACCEPTED && !have_libv4l2)
             ERR_(winediag)("You may need libv4l2 to use this device.\n");
         goto error;
     }
