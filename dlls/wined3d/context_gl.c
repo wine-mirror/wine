@@ -627,7 +627,8 @@ static struct fbo_entry *wined3d_context_gl_find_fbo_entry(struct wined3d_contex
     struct fbo_entry *entry;
 
     if (depth_stencil->resource && depth_stencil->resource->type != WINED3D_RTYPE_BUFFER
-            && render_targets[0].resource && render_targets[0].resource->type != WINED3D_RTYPE_BUFFER)
+            && render_targets[0].resource && render_targets[0].resource->type != WINED3D_RTYPE_BUFFER
+            && render_targets[0].resource->format->id != WINED3DFMT_NULL)
     {
         rt_texture = wined3d_texture_from_resource(render_targets[0].resource);
         rt_level = render_targets[0].sub_resource_idx % rt_texture->level_count;
