@@ -888,7 +888,7 @@ START_TEST(job)
      */
     hres = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     if (FAILED(hres)) {
-        ok(0, "CoInitializeEx faied: %0x\n", hres);
+        ok(0, "CoInitializeEx failed: %0x\n", hres);
         return;
     }
 
