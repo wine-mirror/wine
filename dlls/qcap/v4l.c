@@ -97,7 +97,6 @@ struct video_capture_device
     int image_size, image_pitch;
     BYTE *image_data;
 
-    struct strmbase_source *pin;
     int fd, mmap;
 };
 
@@ -338,37 +337,6 @@ static BOOL v4l_device_read_frame(struct video_capture_device *device, BYTE *dat
     return TRUE;
 }
 
-static void v4l_device_init_stream(struct video_capture_device *device)
-{
-    ALLOCATOR_PROPERTIES req_props, ret_props;
-    HRESULT hr;
-
-    req_props.cBuffers = 3;
-    req_props.cbBuffer = device->image_size;
-    req_props.cbAlign = 1;
-    req_props.cbPrefix = 0;
-
-    hr = IMemAllocator_SetProperties(device->pin->pAllocator, &req_props, &ret_props);
-    if (FAILED(hr))
-        ERR("Failed to set allocator properties (buffer size %u), hr %#x.\n", req_props.cbBuffer, hr);
-
-    if (SUCCEEDED(hr))
-    {
-        if (FAILED(hr = IMemAllocator_Commit(device->pin->pAllocator)))
-            ERR("Failed to commit allocator, hr %#x.\n", hr);
-    }
-}
-
-static void v4l_device_cleanup_stream(struct video_capture_device *device)
-{
-    HRESULT hr;
-
-    hr = IMemAllocator_Decommit(device->pin->pAllocator);
-    if (hr != S_OK && hr != VFW_E_NOT_COMMITTED)
-        ERR("Failed to decommit allocator, hr %#x.\n", hr);
-}
-
-
 static void fill_caps(__u32 pixelformat, __u32 width, __u32 height,
         __u32 max_fps, __u32 min_fps, struct caps *caps)
 {
@@ -425,7 +393,7 @@ static LONG v4l_device_get_caps_count(struct video_capture_device *device)
     return device->caps_count;
 }
 
-struct video_capture_device *v4l_device_create(struct strmbase_source *pin, USHORT index)
+struct video_capture_device *v4l_device_create(USHORT index)
 {
     struct v4l2_frmsizeenum frmsize = {0};
     struct video_capture_device *device;
@@ -562,8 +530,6 @@ struct video_capture_device *v4l_device_create(struct strmbase_source *pin, USHO
         goto error;
     }
 
-    device->pin = pin;
-
     TRACE("Format: %d bpp - %dx%d.\n", device->current_caps->video_info.bmiHeader.biBitCount,
             device->current_caps->video_info.bmiHeader.biWidth,
             device->current_caps->video_info.bmiHeader.biHeight);
@@ -589,13 +555,11 @@ const struct video_capture_funcs v4l_funcs =
     .get_prop = v4l_device_get_prop,
     .set_prop = v4l_device_set_prop,
     .read_frame = v4l_device_read_frame,
-    .init_stream = v4l_device_init_stream,
-    .cleanup_stream = v4l_device_cleanup_stream,
 };
 
 #else
 
-static struct video_capture_device *v4l_device_create(struct strmbase_source *pin, USHORT index)
+static struct video_capture_device *v4l_device_create(USHORT index)
 {
     ERR("v4l2 was not present at compilation time.\n");
     return NULL;

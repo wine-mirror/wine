@@ -94,11 +94,7 @@ static void vfw_capture_destroy(struct strmbase_filter *iface)
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
 
     if (filter->init)
-    {
-        if (filter->filter.state != State_Stopped)
-            capture_funcs->cleanup_stream(filter->device);
         capture_funcs->destroy(filter->device);
-    }
 
     if (filter->source.pin.peer)
     {
@@ -132,12 +128,17 @@ static HRESULT vfw_capture_query_interface(struct strmbase_filter *iface, REFIID
     return S_OK;
 }
 
+static unsigned int get_image_size(struct vfw_capture *filter)
+{
+    const VIDEOINFOHEADER *format = (const VIDEOINFOHEADER *)filter->source.pin.mt.pbFormat;
+
+    return format->bmiHeader.biWidth * format->bmiHeader.biHeight * format->bmiHeader.biBitCount / 8;
+}
+
 static DWORD WINAPI stream_thread(void *arg)
 {
     struct vfw_capture *filter = arg;
-    const VIDEOINFOHEADER *format = (const VIDEOINFOHEADER *)filter->source.pin.mt.pbFormat;
-    const unsigned int image_size = format->bmiHeader.biWidth
-            * format->bmiHeader.biHeight * format->bmiHeader.biBitCount / 8;
+    const unsigned int image_size = get_image_size(filter);
 
     for (;;)
     {
@@ -188,8 +189,21 @@ static DWORD WINAPI stream_thread(void *arg)
 static HRESULT vfw_capture_init_stream(struct strmbase_filter *iface)
 {
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
+    ALLOCATOR_PROPERTIES req_props, ret_props;
+    HRESULT hr;
 
-    capture_funcs->init_stream(filter->device);
+    req_props.cBuffers = 3;
+    req_props.cbBuffer = get_image_size(filter);
+    req_props.cbAlign = 1;
+    req_props.cbPrefix = 0;
+    if (FAILED(hr = IMemAllocator_SetProperties(filter->source.pAllocator, &req_props, &ret_props)))
+    {
+        ERR("Failed to set allocator properties (buffer size %u), hr %#x.\n", req_props.cbBuffer, hr);
+        return hr;
+    }
+
+    if (FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
+        ERR("Failed to commit allocator, hr %#x.\n", hr);
 
     EnterCriticalSection(&filter->state_cs);
     filter->state = State_Paused;
@@ -224,6 +238,7 @@ static HRESULT vfw_capture_stop_stream(struct strmbase_filter *iface)
 static HRESULT vfw_capture_cleanup_stream(struct strmbase_filter *iface)
 {
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
+    HRESULT hr;
 
     EnterCriticalSection(&filter->state_cs);
     filter->state = State_Stopped;
@@ -234,7 +249,10 @@ static HRESULT vfw_capture_cleanup_stream(struct strmbase_filter *iface)
     CloseHandle(filter->thread);
     filter->thread = NULL;
 
-    capture_funcs->cleanup_stream(filter->device);
+    hr = IMemAllocator_Decommit(filter->source.pAllocator);
+    if (hr != S_OK && hr != VFW_E_NOT_COMMITTED)
+        ERR("Failed to decommit allocator, hr %#x.\n", hr);
+
     return S_OK;
 }
 
@@ -478,7 +496,7 @@ static HRESULT WINAPI PPB_Load(IPersistPropertyBag *iface, IPropertyBag *bag, IE
     if (FAILED(hr = IPropertyBag_Read(bag, VFWIndex, &var, error_log)))
         return hr;
 
-    if (!(filter->device = capture_funcs->create(&filter->source, V_I4(&var))))
+    if (!(filter->device = capture_funcs->create(V_I4(&var))))
         return E_FAIL;
 
     filter->init = TRUE;
