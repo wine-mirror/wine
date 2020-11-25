@@ -1174,20 +1174,11 @@ MSVCRT__locale_t CDECL get_current_locale_noalloc(MSVCRT__locale_t locale)
 {
     thread_data_t *data = msvcrt_get_thread_data();
 
-    if(!data || !(data->locale_flags & LOCALE_THREAD))
-    {
-        _lock_locales();
-        *locale = *MSVCRT_locale;
-    }
-    else
-    {
-        locale->locinfo = data->locinfo;
-        locale->mbcinfo = data->mbcinfo;
-    }
+    update_thread_locale(data);
+    locale->locinfo = data->locinfo;
+    locale->mbcinfo = data->mbcinfo;
 
     grab_locinfo(locale->locinfo);
-    if(locale->locinfo == MSVCRT_locale->locinfo)
-        _unlock_locales();
     InterlockedIncrement(&locale->mbcinfo->refcount);
     return locale;
 }
