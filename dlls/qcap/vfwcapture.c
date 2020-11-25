@@ -658,7 +658,20 @@ static HRESULT source_get_media_type(struct strmbase_pin *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
     struct vfw_capture *filter = impl_from_strmbase_pin(pin);
-    return capture_funcs->get_media_type(filter->device, index, mt);
+    VIDEOINFOHEADER *format;
+    HRESULT hr;
+
+    if (!(format = CoTaskMemAlloc(sizeof(*format))))
+        return E_OUTOFMEMORY;
+
+    if ((hr = capture_funcs->get_media_type(filter->device, index, mt, format)) != S_OK)
+    {
+        CoTaskMemFree(format);
+        return hr;
+    }
+    mt->cbFormat = sizeof(VIDEOINFOHEADER);
+    mt->pbFormat = (BYTE *)format;
+    return S_OK;
 }
 
 static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)

@@ -216,7 +216,7 @@ static void v4l_device_get_format(struct video_capture_device *device, AM_MEDIA_
 }
 
 static HRESULT v4l_device_get_media_type(struct video_capture_device *device,
-        unsigned int index, AM_MEDIA_TYPE *mt)
+        unsigned int index, AM_MEDIA_TYPE *mt, VIDEOINFOHEADER *format)
 {
     unsigned int caps_count = (device->current_caps) ? 1 : device->caps_count;
 
@@ -224,9 +224,16 @@ static HRESULT v4l_device_get_media_type(struct video_capture_device *device,
         return VFW_S_NO_MORE_ITEMS;
 
     if (device->current_caps)
-        return CopyMediaType(mt, &device->current_caps->media_type);
-
-    return CopyMediaType(mt, &device->caps[index].media_type);
+    {
+        *mt = device->current_caps->media_type;
+        *format = device->current_caps->video_info;
+    }
+    else
+    {
+        *mt = device->caps[index].media_type;
+        *format = device->caps[index].video_info;
+    }
+    return S_OK;
 }
 
 static __u32 v4l2_cid_from_qcap_property(VideoProcAmpProperty property)
