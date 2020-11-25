@@ -1210,9 +1210,9 @@ static void test_getptd(void)
     ok(p_fpecode() == &ptd->fpecode, "ptd->fpecode is incorrect\n");
     mbcinfo = ptd->mbcinfo;
     locinfo = ptd->locinfo;
-    todo_wine ok(ptd->have_locale == 1, "ptd->have_locale = %x\n", ptd->have_locale);
+    ok(ptd->have_locale == 1, "ptd->have_locale = %x\n", ptd->have_locale);
     p_configthreadlocale(1);
-    todo_wine ok(mbcinfo == ptd->mbcinfo, "ptd->mbcinfo != mbcinfo\n");
+    ok(mbcinfo == ptd->mbcinfo, "ptd->mbcinfo != mbcinfo\n");
     ok(locinfo == ptd->locinfo, "ptd->locinfo != locinfo\n");
     ok(ptd->have_locale == 3, "ptd->have_locale = %x\n", ptd->have_locale);
     ok(p_get_terminate() == ptd->terminate_handler, "ptd->terminate_handler != _get_terminate()\n");

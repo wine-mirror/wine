@@ -585,6 +585,22 @@ static BOOL update_threadlocinfo_category(LCID lcid, unsigned short cp,
     return TRUE;
 }
 
+/*********************************************************************
+ *      _lock_locales (UCRTBASE.@)
+ */
+void CDECL _lock_locales(void)
+{
+    _lock(_SETLOCALE_LOCK);
+}
+
+/*********************************************************************
+ *      _unlock_locales (UCRTBASE.@)
+ */
+void CDECL _unlock_locales(void)
+{
+    _unlock(_SETLOCALE_LOCK);
+}
+
 static MSVCRT_pthreadlocinfo* CDECL get_locinfo_ptr(void) {
     thread_data_t *data = msvcrt_get_thread_data();
 
@@ -594,18 +610,64 @@ static MSVCRT_pthreadlocinfo* CDECL get_locinfo_ptr(void) {
     return &data->locinfo;
 }
 
+static void CDECL grab_locinfo(MSVCRT_pthreadlocinfo locinfo)
+{
+    int i;
+
+    InterlockedIncrement(&locinfo->refcount);
+    for(i=MSVCRT_LC_MIN+1; i<=MSVCRT_LC_MAX; i++)
+    {
+        InterlockedIncrement(locinfo->lc_category[i].refcount);
+        if(locinfo->lc_category[i].wrefcount)
+            InterlockedIncrement(locinfo->lc_category[i].wrefcount);
+    }
+    if(locinfo->lconv_intl_refcount)
+        InterlockedIncrement(locinfo->lconv_intl_refcount);
+    if(locinfo->lconv_num_refcount)
+        InterlockedIncrement(locinfo->lconv_num_refcount);
+    if(locinfo->lconv_mon_refcount)
+        InterlockedIncrement(locinfo->lconv_mon_refcount);
+    if(locinfo->ctype1_refcount)
+        InterlockedIncrement(locinfo->ctype1_refcount);
+    InterlockedIncrement(&locinfo->lc_time_curr->refcount);
+}
+
+static void CDECL update_thread_locale(thread_data_t *data)
+{
+    if((data->locale_flags & LOCALE_FREE) && ((data->locale_flags & LOCALE_THREAD) ||
+                (data->locinfo == MSVCRT_locale->locinfo && data->mbcinfo == MSVCRT_locale->mbcinfo)))
+        return;
+
+    if(data->locale_flags & LOCALE_FREE)
+    {
+        free_locinfo(data->locinfo);
+        free_mbcinfo(data->mbcinfo);
+    }
+
+    _lock_locales();
+    data->locinfo = MSVCRT_locale->locinfo;
+    grab_locinfo(data->locinfo);
+    _unlock_locales();
+
+    _lock(_MB_CP_LOCK);
+    data->mbcinfo = MSVCRT_locale->mbcinfo;
+    InterlockedIncrement(&data->mbcinfo->refcount);
+    _unlock(_MB_CP_LOCK);
+
+    data->locale_flags |= LOCALE_FREE;
+}
+
 /* INTERNAL: returns threadlocinfo struct */
 MSVCRT_pthreadlocinfo CDECL get_locinfo(void) {
-    return *get_locinfo_ptr();
+    thread_data_t *data = msvcrt_get_thread_data();
+    update_thread_locale(data);
+    return data->locinfo;
 }
 
 /* INTERNAL: returns pthreadmbcinfo struct */
 MSVCRT_pthreadmbcinfo CDECL get_mbcinfo(void) {
     thread_data_t *data = msvcrt_get_thread_data();
-
-    if(!data || !(data->locale_flags & LOCALE_THREAD))
-        return MSVCRT_locale->mbcinfo;
-
+    update_thread_locale(data);
     return data->mbcinfo;
 }
 
@@ -1117,26 +1179,9 @@ void free_mbcinfo(MSVCRT_pthreadmbcinfo mbcinfo)
     MSVCRT_free(mbcinfo);
 }
 
-/*********************************************************************
- *      _lock_locales (UCRTBASE.@)
- */
-void CDECL _lock_locales(void)
-{
-    _lock(_SETLOCALE_LOCK);
-}
-
-/*********************************************************************
- *      _unlock_locales (UCRTBASE.@)
- */
-void CDECL _unlock_locales(void)
-{
-    _unlock(_SETLOCALE_LOCK);
-}
-
 MSVCRT__locale_t CDECL get_current_locale_noalloc(MSVCRT__locale_t locale)
 {
     thread_data_t *data = msvcrt_get_thread_data();
-    int i;
 
     if(!data || !(data->locale_flags & LOCALE_THREAD))
     {
@@ -1149,25 +1194,9 @@ MSVCRT__locale_t CDECL get_current_locale_noalloc(MSVCRT__locale_t locale)
         locale->mbcinfo = data->mbcinfo;
     }
 
-    InterlockedIncrement(&locale->locinfo->refcount);
-    for(i=MSVCRT_LC_MIN+1; i<=MSVCRT_LC_MAX; i++)
-    {
-        InterlockedIncrement(locale->locinfo->lc_category[i].refcount);
-        if(locale->locinfo->lc_category[i].wrefcount)
-            InterlockedIncrement(locale->locinfo->lc_category[i].wrefcount);
-    }
-    if(locale->locinfo->lconv_intl_refcount)
-        InterlockedIncrement(locale->locinfo->lconv_intl_refcount);
-    if(locale->locinfo->lconv_num_refcount)
-        InterlockedIncrement(locale->locinfo->lconv_num_refcount);
-    if(locale->locinfo->lconv_mon_refcount)
-        InterlockedIncrement(locale->locinfo->lconv_mon_refcount);
-    if(locale->locinfo->ctype1_refcount)
-        InterlockedIncrement(locale->locinfo->ctype1_refcount);
-    InterlockedIncrement(&locale->locinfo->lc_time_curr->refcount);
+    grab_locinfo(locale->locinfo);
     if(locale->locinfo == MSVCRT_locale->locinfo)
         _unlock_locales();
-
     InterlockedIncrement(&locale->mbcinfo->refcount);
     return locale;
 }
