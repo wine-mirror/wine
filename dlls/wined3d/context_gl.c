@@ -91,6 +91,8 @@ static void wined3d_context_gl_bind_fbo(struct wined3d_context_gl *context_gl, G
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
 
+    TRACE("context_gl %p, target %#x, fbo %u.\n", context_gl, target, fbo);
+
     switch (target)
     {
         case GL_READ_FRAMEBUFFER:
