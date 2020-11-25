@@ -2408,7 +2408,7 @@ static void test_security_info(void)
 
 static void test_empty_name(void)
 {
-    HANDLE hdirectory, hpipe, hwrite, handle;
+    HANDLE hdirectory, hpipe, hpipe2, hwrite, hwrite2, handle;
     OBJECT_TYPE_INFORMATION *type_info;
     OBJECT_NAME_INFORMATION *name_info;
     OBJECT_ATTRIBUTES attr;
@@ -2486,6 +2486,11 @@ static void test_empty_name(void)
             0, 0, 0, 1, 4096, 4096, &timeout);
     todo_wine ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "Got unexpected status %#x.\n", status);
 
+    status = pNtCreateNamedPipeFile(&hpipe2, GENERIC_READ | SYNCHRONIZE, &attr,
+            &io, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_CREATE, FILE_SYNCHRONOUS_IO_NONALERT,
+            0, 0, 0, 3, 4096, 4096, &timeout);
+    ok(!status, "Got unexpected status %#x.\n", status);
+
     attr.RootDirectory = hpipe;
     pRtlInitUnicodeString(&name, L"a");
     status = NtCreateFile(&hwrite, GENERIC_WRITE | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &attr, &io, NULL, 0,
@@ -2519,8 +2524,18 @@ static void test_empty_name(void)
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
     ok(status == STATUS_PIPE_NOT_AVAILABLE, "Got unexpected status %#x.\n", status);
 
+    attr.RootDirectory = hpipe2;
+    status = NtCreateFile(&hwrite2, GENERIC_WRITE | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &attr, &io, NULL, 0,
+            FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+    ok(!status, "Got unexpected status %#x.\n", status);
+
     data = 0xdeadbeef;
     ret = WriteFile(hwrite, &data, sizeof(data), &length, NULL);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(length == sizeof(data), "Got unexpected length %#x.\n", length);
+
+    data = 0xfeedcafe;
+    ret = WriteFile(hwrite2, &data, sizeof(data), &length, NULL);
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
     ok(length == sizeof(data), "Got unexpected length %#x.\n", length);
 
@@ -2530,9 +2545,17 @@ static void test_empty_name(void)
     ok(length == sizeof(data), "Got unexpected length %#x.\n", length);
     ok(data == 0xdeadbeef, "Got unexpected data %#x.\n", data);
 
+    data = 0;
+    ret = ReadFile(hpipe2, &data, sizeof(data), &length, NULL);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(length == sizeof(data), "Got unexpected length %#x.\n", length);
+    ok(data == 0xfeedcafe, "Got unexpected data %#x.\n", data);
+
     CloseHandle(hwrite);
     CloseHandle(hpipe);
     CloseHandle(hdirectory);
+    CloseHandle(hpipe2);
+    CloseHandle(hwrite2);
 }
 
 START_TEST(pipe)
