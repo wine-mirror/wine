@@ -1771,7 +1771,7 @@ static void test_GetMouseMovePointsEx_process(void)
 
     if (winstation1 == NULL && GetLastError() == ERROR_ACCESS_DENIED)
     {
-        win_skip("not enough priviledges for CreateWindowStation\n");
+        win_skip("not enough privileges for CreateWindowStation\n");
         CloseDesktop( desk0 );
         CloseWindowStation( winstation0 );
         return;
