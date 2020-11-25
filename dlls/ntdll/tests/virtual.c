@@ -643,6 +643,116 @@ static void test_user_shared_data(void)
     }
 }
 
+static void perform_relocations( void *module, INT_PTR delta )
+{
+    IMAGE_NT_HEADERS *nt;
+    IMAGE_BASE_RELOCATION *rel, *end;
+    const IMAGE_DATA_DIRECTORY *relocs;
+    const IMAGE_SECTION_HEADER *sec;
+    ULONG protect_old[96], i;
+
+    nt = RtlImageNtHeader( module );
+    relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+    if (!relocs->VirtualAddress || !relocs->Size) return;
+    sec = (const IMAGE_SECTION_HEADER *)((const char *)&nt->OptionalHeader +
+                                         nt->FileHeader.SizeOfOptionalHeader);
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
+    {
+        void *addr = (char *)module + sec[i].VirtualAddress;
+        SIZE_T size = sec[i].SizeOfRawData;
+        NtProtectVirtualMemory( NtCurrentProcess(), &addr,
+                                &size, PAGE_READWRITE, &protect_old[i] );
+    }
+    rel = (IMAGE_BASE_RELOCATION *)((char *)module + relocs->VirtualAddress);
+    end = (IMAGE_BASE_RELOCATION *)((char *)rel + relocs->Size);
+    while (rel && rel < end - 1 && rel->SizeOfBlock)
+        rel = LdrProcessRelocationBlock( (char *)module + rel->VirtualAddress,
+                                         (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
+                                         (USHORT *)(rel + 1), delta );
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
+    {
+        void *addr = (char *)module + sec[i].VirtualAddress;
+        SIZE_T size = sec[i].SizeOfRawData;
+        NtProtectVirtualMemory( NtCurrentProcess(), &addr,
+                                &size, protect_old[i], &protect_old[i] );
+    }
+}
+
+
+static void test_syscalls(void)
+{
+    HMODULE module = GetModuleHandleW( L"ntdll.dll" );
+    HANDLE handle;
+    NTSTATUS status;
+    NTSTATUS (WINAPI *pNtClose)(HANDLE);
+    WCHAR path[MAX_PATH];
+    HANDLE file, mapping;
+    INT_PTR delta;
+    void *ptr;
+
+    /* initial image */
+    pNtClose = (void *)GetProcAddress( module, "NtClose" );
+    handle = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( handle != 0, "CreateEventWfailed %u\n", GetLastError() );
+    status = pNtClose( handle );
+    ok( !status, "NtClose failed %x\n", status );
+    status = pNtClose( handle );
+    ok( status == STATUS_INVALID_HANDLE, "NtClose failed %x\n", status );
+
+    /* syscall thunk copy */
+    ptr = VirtualAlloc( NULL, 0x1000, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+    ok( ptr != NULL, "VirtualAlloc failed\n" );
+    memcpy( ptr, pNtClose, 32 );
+    pNtClose = ptr;
+    handle = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( handle != 0, "CreateEventWfailed %u\n", GetLastError() );
+    status = pNtClose( handle );
+    ok( !status, "NtClose failed %x\n", status );
+    status = pNtClose( handle );
+    ok( status == STATUS_INVALID_HANDLE, "NtClose failed %x\n", status );
+    VirtualFree( ptr, 0, MEM_FREE );
+
+    /* new mapping */
+    GetModuleFileNameW( module, path, MAX_PATH );
+    file = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "can't open %s: %u\n", wine_dbgstr_w(path), GetLastError() );
+    mapping = CreateFileMappingW( file, NULL, SEC_IMAGE | PAGE_READONLY, 0, 0, NULL );
+    ok( mapping != NULL, "CreateFileMappingW failed err %u\n", GetLastError() );
+    ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+    ok( ptr != NULL, "MapViewOfFile failed err %u\n", GetLastError() );
+    CloseHandle( mapping );
+    CloseHandle( file );
+    delta = (char *)ptr - (char *)module;
+
+    if (memcmp( ptr, module, 0x1000 ))
+    {
+        skip( "modules are not identical (non-PE build?)\n" );
+        UnmapViewOfFile( ptr );
+        return;
+    }
+    perform_relocations( ptr, delta );
+    pNtClose = (void *)GetProcAddress( module, "NtClose" );
+    if (!memcmp( pNtClose, (char *)pNtClose + delta, 32 ))
+    {
+        pNtClose = (void *)((char *)pNtClose + delta);
+        handle = CreateEventW( NULL, FALSE, FALSE, NULL );
+        ok( handle != 0, "CreateEventWfailed %u\n", GetLastError() );
+        status = pNtClose( handle );
+        ok( !status, "NtClose failed %x\n", status );
+        status = pNtClose( handle );
+        ok( status == STATUS_INVALID_HANDLE, "NtClose failed %x\n", status );
+    }
+    else
+    {
+#ifdef __x86_64__
+        ok( 0, "syscall thunk relocated\n" );
+#else
+        skip( "syscall thunk relocated\n" );
+#endif
+    }
+    UnmapViewOfFile( ptr );
+}
+
 START_TEST(virtual)
 {
     HMODULE mod;
@@ -678,4 +788,5 @@ START_TEST(virtual)
     test_RtlCreateUserStack();
     test_NtMapViewOfSection();
     test_user_shared_data();
+    test_syscalls();
 }

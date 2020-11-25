@@ -2582,6 +2582,12 @@ TEB *virtual_alloc_first_teb(void)
         exit(1);
     }
 
+#ifdef __x86_64__  /* sneak in a syscall dispatcher pointer at a fixed address (7ffe1000) */
+    ptr = (char *)user_shared_data + page_size;
+    anon_mmap_fixed( ptr, page_size, PROT_READ | PROT_WRITE, 0 );
+    *(void **)ptr = __wine_syscall_dispatcher;
+#endif
+
     NtAllocateVirtualMemory( NtCurrentProcess(), &teb_block, 0, &total,
                              MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE );
     teb_block_pos = 30;
