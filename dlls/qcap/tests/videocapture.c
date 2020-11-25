@@ -296,6 +296,191 @@ static void test_misc_flags(IBaseFilter *filter)
     IAMFilterMiscFlags_Release(misc_flags);
 }
 
+struct testfilter
+{
+    struct strmbase_filter filter;
+    struct strmbase_sink sink;
+};
+
+static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, filter);
+}
+
+static struct strmbase_pin *testfilter_get_pin(struct strmbase_filter *iface, unsigned int index)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface);
+    if (!index)
+        return &filter->sink.pin;
+    return NULL;
+}
+
+static void testfilter_destroy(struct strmbase_filter *iface)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface);
+    strmbase_sink_cleanup(&filter->sink);
+    strmbase_filter_cleanup(&filter->filter);
+}
+
+static const struct strmbase_filter_ops testfilter_ops =
+{
+    .filter_get_pin = testfilter_get_pin,
+    .filter_destroy = testfilter_destroy,
+};
+
+static HRESULT testsink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
+
+    if (IsEqualGUID(iid, &IID_IMemInputPin))
+        *out = &filter->sink.IMemInputPin_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
+{
+    return S_OK;
+}
+
+static const struct strmbase_sink_ops testsink_ops =
+{
+    .base.pin_query_interface = testsink_query_interface,
+    .pfnReceive = testsink_Receive,
+};
+
+static void testfilter_init(struct testfilter *filter)
+{
+    static const GUID clsid = {0xabacab};
+    memset(filter, 0, sizeof(*filter));
+    strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
+    strmbase_sink_init(&filter->sink, &filter->filter, L"sink", &testsink_ops, NULL);
+}
+
+static void test_connect_pin(IBaseFilter *filter, IPin *source)
+{
+    AM_MEDIA_TYPE req_mt, default_mt, mt, *mts[2];
+    IAMStreamConfig *stream_config;
+    struct testfilter testsink;
+    IEnumMediaTypes *enummt;
+    IFilterGraph2 *graph;
+    ULONG count, ref;
+    HRESULT hr;
+    IPin *peer;
+
+    CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFilterGraph2, (void **)&graph);
+    testfilter_init(&testsink);
+    IFilterGraph2_AddFilter(graph, &testsink.filter.IBaseFilter_iface, L"sink");
+    IFilterGraph2_AddFilter(graph, filter, L"source");
+    hr = IPin_QueryInterface(source, &IID_IAMStreamConfig, (void **)&stream_config);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    peer = (IPin *)0xdeadbeef;
+    hr = IPin_ConnectedTo(source, &peer);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+    ok(!peer, "Got peer %p.\n", peer);
+
+    hr = IPin_ConnectionMediaType(source, &mt);
+    ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
+
+    hr = IPin_EnumMediaTypes(source, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumMediaTypes_Next(enummt, 2, mts, &count);
+    ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
+    CopyMediaType(&req_mt, mts[count - 1]);
+    CopyMediaType(&default_mt, mts[0]);
+    DeleteMediaType(mts[0]);
+    if (count > 1)
+        DeleteMediaType(mts[1]);
+    IEnumMediaTypes_Release(enummt);
+
+    hr = IAMStreamConfig_GetFormat(stream_config, &mts[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(mts[0], &default_mt), "Media types didn't match.\n");
+    DeleteMediaType(mts[0]);
+
+    hr = IFilterGraph2_ConnectDirect(graph, source, &testsink.sink.pin.IPin_iface, &req_mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IPin_ConnectedTo(source, &peer);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(peer == &testsink.sink.pin.IPin_iface, "Got peer %p.\n", peer);
+    IPin_Release(peer);
+
+    hr = IPin_ConnectionMediaType(source, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
+    ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
+    FreeMediaType(&mt);
+
+    hr = IAMStreamConfig_GetFormat(stream_config, &mts[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(mts[0], &req_mt), "Media types didn't match.\n");
+    DeleteMediaType(mts[0]);
+
+    hr = IPin_EnumMediaTypes(source, &enummt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IEnumMediaTypes_Next(enummt, 1, mts, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(mts[0], &default_mt), "Media types didn't match.\n");
+    DeleteMediaType(mts[0]);
+    IEnumMediaTypes_Release(enummt);
+
+    hr = IFilterGraph2_Disconnect(graph, source);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_Disconnect(graph, source);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(testsink.sink.pin.peer == source, "Got peer %p.\n", testsink.sink.pin.peer);
+    IFilterGraph2_Disconnect(graph, &testsink.sink.pin.IPin_iface);
+
+    hr = IAMStreamConfig_GetFormat(stream_config, &mts[0]);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(compare_media_types(mts[0], &default_mt), "Media types didn't match.\n");
+    DeleteMediaType(mts[0]);
+
+    FreeMediaType(&req_mt);
+    FreeMediaType(&default_mt);
+    IAMStreamConfig_Release(stream_config);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(&testsink.filter.IBaseFilter_iface);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
+static void test_connection(IMoniker *moniker)
+{
+    IEnumPins *enum_pins;
+    IBaseFilter *filter;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    hr = IMoniker_BindToObject(moniker, NULL, NULL, &IID_IBaseFilter, (void **)&filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    while (IEnumPins_Next(enum_pins, 1, &pin, NULL) == S_OK)
+    {
+        PIN_DIRECTION dir;
+        IPin_QueryDirection(pin, &dir);
+        if (dir == PINDIR_OUTPUT)
+        {
+            test_connect_pin(filter, pin);
+        }
+        IPin_Release(pin);
+    }
+
+    IEnumPins_Release(enum_pins);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 START_TEST(videocapture)
 {
     ICreateDevEnum *dev_enum;
@@ -329,17 +514,21 @@ START_TEST(videocapture)
         trace("Testing device %s.\n", wine_dbgstr_w(name));
         CoTaskMemFree(name);
 
-        hr = IMoniker_BindToObject(moniker, NULL, NULL, &IID_IBaseFilter, (void**)&filter);
-        if (hr == S_OK)
+        if (FAILED(hr = IMoniker_BindToObject(moniker, NULL, NULL, &IID_IBaseFilter, (void **)&filter)))
         {
-            test_filter_interfaces(filter);
-            test_pins(filter);
-            test_misc_flags(filter);
-            ref = IBaseFilter_Release(filter);
-            ok(!ref, "Got outstanding refcount %d.\n", ref);
+            skip("Failed to open device %s, hr %#x.\n", debugstr_w(name), hr);
+            IMoniker_Release(moniker);
+            continue;
         }
-        else
-            skip("Failed to open capture device, hr=%#x.\n", hr);
+
+        test_filter_interfaces(filter);
+        test_pins(filter);
+        test_misc_flags(filter);
+
+        ref = IBaseFilter_Release(filter);
+        ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+        test_connection(moniker);
 
         IMoniker_Release(moniker);
     }
