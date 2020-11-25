@@ -2128,40 +2128,17 @@ int CDECL _configthreadlocale(int type)
     thread_data_t *data = msvcrt_get_thread_data();
     int ret;
 
-    if(!data)
-        return -1;
-
     ret = (data->locale_flags & LOCALE_THREAD ? MSVCRT__ENABLE_PER_THREAD_LOCALE :
             MSVCRT__DISABLE_PER_THREAD_LOCALE);
-    if(ret == type)
-        return ret;
 
-    if(data->locale_flags & LOCALE_FREE)
-    {
-        free_locinfo(data->locinfo);
-        free_mbcinfo(data->mbcinfo);
-        data->locale_flags &= ~LOCALE_FREE;
-    }
+    if(type == MSVCRT__ENABLE_PER_THREAD_LOCALE)
+        data->locale_flags |= LOCALE_THREAD;
+    else if(type == MSVCRT__DISABLE_PER_THREAD_LOCALE)
+        data->locale_flags &= ~LOCALE_THREAD;
+    else if(type)
+        ret = -1;
 
-    if(type == MSVCRT__ENABLE_PER_THREAD_LOCALE) {
-        MSVCRT__locale_tstruct locale;
-
-        get_current_locale_noalloc(&locale);
-        data->locinfo = locale.locinfo;
-        data->mbcinfo = locale.mbcinfo;
-        data->locale_flags = LOCALE_FREE | LOCALE_THREAD;
-        return ret;
-    }
-
-    if(type == MSVCRT__DISABLE_PER_THREAD_LOCALE) {
-        data->locale_flags = 0;
-        return ret;
-    }
-
-    if(!type)
-        return ret;
-
-    return -1;
+    return ret;
 }
 #endif
 
