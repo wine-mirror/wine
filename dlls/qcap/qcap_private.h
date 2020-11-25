@@ -40,13 +40,9 @@ HRESULT file_writer_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT smart_tee_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
 
-struct video_capture_device
+struct video_capture_funcs
 {
-    const struct video_capture_device_ops *ops;
-};
-
-struct video_capture_device_ops
-{
+    struct video_capture_device *(*create)(struct strmbase_source *pin, USHORT index);
     void (*destroy)(struct video_capture_device *device);
     HRESULT (*check_format)(struct video_capture_device *device, const AM_MEDIA_TYPE *mt);
     HRESULT (*set_format)(struct video_capture_device *device, const AM_MEDIA_TYPE *mt);
@@ -64,6 +60,6 @@ struct video_capture_device_ops
     void (*cleanup_stream)(struct video_capture_device *device);
 };
 
-struct video_capture_device *v4l_device_create(struct strmbase_source *pin, USHORT card);
+extern const struct video_capture_funcs v4l_funcs;
 
 #endif
