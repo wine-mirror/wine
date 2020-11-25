@@ -5862,7 +5862,7 @@ static void test_GetGlyphOutline_character(void)
     ok(ret != GDI_ERROR, "GetGlyphOutlineW failed for glyph index 0x3\n");
 
     ret = GetGlyphOutlineW(hdc, 0xFFFF, GGO_METRICS|GGO_GLYPH_INDEX, &gm2, 0, NULL, &mat);
-    ok(ret == GDI_ERROR, "GetGlyphOutlineW for nonexistent glyph index 0xFFFF has succeded\n");
+    ok(ret == GDI_ERROR, "GetGlyphOutlineW for nonexistent glyph index 0xFFFF has succeeded\n");
 
     ret = GetGlyphOutlineW(hdc, 0x10003, GGO_METRICS|GGO_GLYPH_INDEX, &gm2, 0, NULL, &mat);
     ok(ret != GDI_ERROR, "GetGlyphOutlineW for index 0x10003 has failed\n");
