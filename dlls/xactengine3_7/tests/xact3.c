@@ -51,13 +51,13 @@ struct xact_interfaces
     {&CLSID_XACTEngine30, &IID_IXACT3Engine31, E_NOINTERFACE},
     {&CLSID_XACTEngine30, &IID_IXACT3Engine,   E_NOINTERFACE },
 
-    /* Version 3.1 to 3.4 use the same inteface */
+    /* Version 3.1 to 3.4 use the same interface */
     {&CLSID_XACTEngine31, &IID_IXACT3Engine31, S_OK },
     {&CLSID_XACTEngine32, &IID_IXACT3Engine31, S_OK },
     {&CLSID_XACTEngine33, &IID_IXACT3Engine31, S_OK },
     {&CLSID_XACTEngine34, &IID_IXACT3Engine31, S_OK },
 
-    /* Version 3.5 to 3.7 use the same inteface */
+    /* Version 3.5 to 3.7 use the same interface */
     {&CLSID_XACTEngine35, &IID_IXACT3Engine31, E_NOINTERFACE },
     {&CLSID_XACTEngine35, &IID_IXACT3Engine,   S_OK },
 
