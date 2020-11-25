@@ -49,7 +49,7 @@ static void symlink_dump( struct object *obj, int verbose );
 static struct object_type *symlink_get_type( struct object *obj );
 static unsigned int symlink_map_access( struct object *obj, unsigned int access );
 static struct object *symlink_lookup_name( struct object *obj, struct unicode_str *name,
-                                           unsigned int attr );
+                                           unsigned int attr, struct object *root );
 static void symlink_destroy( struct object *obj );
 
 static const struct object_ops symlink_ops =
@@ -94,7 +94,7 @@ static struct object_type *symlink_get_type( struct object *obj )
 }
 
 static struct object *symlink_lookup_name( struct object *obj, struct unicode_str *name,
-                                           unsigned int attr )
+                                           unsigned int attr, struct object *root )
 {
     struct symlink *symlink = (struct symlink *)obj;
     struct unicode_str target_str, name_left;
@@ -104,6 +104,7 @@ static struct object *symlink_lookup_name( struct object *obj, struct unicode_st
 
     if (!name) return NULL;
     if (!name->len && (attr & OBJ_OPENLINK)) return NULL;
+    if (obj == root) return NULL;
 
     target_str.str = symlink->target;
     target_str.len = symlink->len;

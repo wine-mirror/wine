@@ -1082,7 +1082,7 @@ static void test_symboliclink(void)
     NTSTATUS status;
     UNICODE_STRING str, target;
     OBJECT_ATTRIBUTES attr;
-    HANDLE dir, link, h;
+    HANDLE dir, link, h, h2;
     IO_STATUS_BLOCK iosb;
 
     /* No name and/or no attributes */
@@ -1177,6 +1177,68 @@ static void test_symboliclink(void)
     ok(status == STATUS_SUCCESS, "Failed to open NUL device(%08x)\n", status);
 
     pNtClose(h);
+    pNtClose(link);
+    pNtClose(dir);
+
+    InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
+    RtlInitUnicodeString(&str, L"\\BaseNamedObjects\\om.c-test");
+    status = pNtCreateDirectoryObject(&dir, DIRECTORY_QUERY, &attr);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+
+    RtlInitUnicodeString(&str, L"\\DosDevices\\test_link");
+    RtlInitUnicodeString(&target, L"\\BaseNamedObjects");
+    status = pNtCreateSymbolicLinkObject(&link, SYMBOLIC_LINK_QUERY, &attr, &target);
+    ok(status == STATUS_SUCCESS && !!link, "Got unexpected status %#x.\n", status);
+
+    status = NtCreateFile(&h, GENERIC_READ | SYNCHRONIZE, &attr, &iosb, NULL, 0,
+            FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "Got unexpected status %#x.\n", status);
+
+    status = pNtOpenSymbolicLinkObject( &h, SYMBOLIC_LINK_QUERY, &attr );
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    pNtClose(h);
+
+    InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
+    RtlInitUnicodeString( &str, L"\\BaseNamedObjects\\om.c-test\\" );
+    status = NtCreateFile(&h, GENERIC_READ | SYNCHRONIZE, &attr, &iosb, NULL, 0,
+            FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
+    ok(status == STATUS_OBJECT_NAME_INVALID, "Got unexpected status %#x.\n", status);
+
+    InitializeObjectAttributes(&attr, &str, 0, link, NULL);
+    RtlInitUnicodeString( &str, L"om.c-test\\test_object" );
+    status = pNtCreateMutant( &h, GENERIC_ALL, &attr, FALSE );
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "Got unexpected status %#x.\n", status);
+
+    InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
+    RtlInitUnicodeString( &str, L"\\DosDevices\\test_link\\om.c-test\\test_object" );
+    status = pNtCreateMutant( &h, GENERIC_ALL, &attr, FALSE );
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    status = pNtOpenMutant( &h2, GENERIC_ALL, &attr );
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    pNtClose(h2);
+    RtlInitUnicodeString( &str, L"\\BaseNamedObjects\\om.c-test\\test_object" );
+    status = pNtCreateMutant( &h2, GENERIC_ALL, &attr, FALSE );
+    ok(status == STATUS_OBJECT_NAME_COLLISION, "Got unexpected status %#x.\n", status);
+
+    InitializeObjectAttributes(&attr, &str, 0, link, NULL);
+    RtlInitUnicodeString( &str, L"om.c-test\\test_object" );
+    status = pNtOpenMutant( &h2, GENERIC_ALL, &attr );
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "Got unexpected status %#x.\n", status);
+
+    pNtClose(h);
+
+    status = pNtOpenMutant( &h, GENERIC_ALL, &attr );
+    ok(status == STATUS_OBJECT_TYPE_MISMATCH, "Got unexpected status %#x.\n", status);
+
+    InitializeObjectAttributes(&attr, &str, 0, dir, NULL);
+    RtlInitUnicodeString( &str, L"test_object" );
+    status = pNtCreateMutant( &h, GENERIC_ALL, &attr, FALSE );
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    status = pNtOpenMutant( &h2, GENERIC_ALL, &attr );
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    pNtClose(h);
+    pNtClose(h2);
+
     pNtClose(link);
     pNtClose(dir);
 }

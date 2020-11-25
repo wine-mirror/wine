@@ -83,7 +83,7 @@ struct directory
 static void directory_dump( struct object *obj, int verbose );
 static struct object_type *directory_get_type( struct object *obj );
 static struct object *directory_lookup_name( struct object *obj, struct unicode_str *name,
-                                             unsigned int attr );
+                                             unsigned int attr, struct object *root );
 static void directory_destroy( struct object *obj );
 
 static const struct object_ops directory_ops =
@@ -139,7 +139,7 @@ static struct object_type *directory_get_type( struct object *obj )
 }
 
 static struct object *directory_lookup_name( struct object *obj, struct unicode_str *name,
-                                             unsigned int attr )
+                                             unsigned int attr, struct object *root )
 {
     struct directory *dir = (struct directory *)obj;
     struct object *found;

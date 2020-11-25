@@ -83,7 +83,7 @@ struct object_ops
     /* get the object full name */
     WCHAR *(*get_full_name)(struct object *, data_size_t *);
     /* lookup a name if an object has a namespace */
-    struct object *(*lookup_name)(struct object *, struct unicode_str *,unsigned int);
+    struct object *(*lookup_name)(struct object *, struct unicode_str *,unsigned int,struct object *);
     /* link an object's name into a parent object */
     int (*link_name)(struct object *, struct object_name *, struct object *);
     /* unlink an object's name from its parent */
@@ -165,7 +165,8 @@ extern int default_set_sd( struct object *obj, const struct security_descriptor 
 extern int set_sd_defaults_from_token( struct object *obj, const struct security_descriptor *sd,
                                        unsigned int set_info, struct token *token );
 extern WCHAR *no_get_full_name( struct object *obj, data_size_t *ret_len );
-extern struct object *no_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attributes );
+extern struct object *no_lookup_name( struct object *obj, struct unicode_str *name,
+                                      unsigned int attributes, struct object *root );
 extern int no_link_name( struct object *obj, struct object_name *name, struct object *parent );
 extern void default_unlink_name( struct object *obj, struct object_name *name );
 extern struct object *no_open_file( struct object *obj, unsigned int access, unsigned int sharing,

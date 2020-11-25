@@ -186,7 +186,7 @@ struct mailslot_device_file
 static void mailslot_device_dump( struct object *obj, int verbose );
 static struct object_type *mailslot_device_get_type( struct object *obj );
 static struct object *mailslot_device_lookup_name( struct object *obj, struct unicode_str *name,
-                                                   unsigned int attr );
+                                                   unsigned int attr, struct object *root );
 static struct object *mailslot_device_open_file( struct object *obj, unsigned int access,
                                                  unsigned int sharing, unsigned int options );
 static void mailslot_device_destroy( struct object *obj );
@@ -395,7 +395,7 @@ static struct object_type *mailslot_device_get_type( struct object *obj )
 }
 
 static struct object *mailslot_device_lookup_name( struct object *obj, struct unicode_str *name,
-                                                   unsigned int attr )
+                                                   unsigned int attr, struct object *root )
 {
     struct mailslot_device *device = (struct mailslot_device*)obj;
     struct object *found;

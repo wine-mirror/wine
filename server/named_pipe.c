@@ -239,7 +239,7 @@ static const struct fd_ops pipe_client_fd_ops =
 static void named_pipe_device_dump( struct object *obj, int verbose );
 static struct object_type *named_pipe_device_get_type( struct object *obj );
 static struct object *named_pipe_device_lookup_name( struct object *obj,
-    struct unicode_str *name, unsigned int attr );
+    struct unicode_str *name, unsigned int attr, struct object *root );
 static struct object *named_pipe_device_open_file( struct object *obj, unsigned int access,
                                                    unsigned int sharing, unsigned int options );
 static void named_pipe_device_destroy( struct object *obj );
@@ -468,7 +468,7 @@ static struct object_type *named_pipe_device_get_type( struct object *obj )
 }
 
 static struct object *named_pipe_device_lookup_name( struct object *obj, struct unicode_str *name,
-                                                     unsigned int attr )
+                                                     unsigned int attr, struct object *root )
 {
     struct named_pipe_device *device = (struct named_pipe_device*)obj;
     struct object *found;

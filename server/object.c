@@ -241,14 +241,14 @@ struct object *lookup_named_object( struct object *root, const struct unicode_st
         /* skip leading backslash */
         name_tmp.str++;
         name_tmp.len -= sizeof(WCHAR);
-        parent = get_root_directory();
+        parent = root = get_root_directory();
     }
 
     if (!name_tmp.len) ptr = NULL;  /* special case for empty path */
 
     clear_error();
 
-    while ((obj = parent->ops->lookup_name( parent, ptr, attr )))
+    while ((obj = parent->ops->lookup_name( parent, ptr, attr, root )))
     {
         /* move to the next element */
         release_object ( parent );
@@ -670,7 +670,7 @@ WCHAR *no_get_full_name( struct object *obj, data_size_t *ret_len )
 }
 
 struct object *no_lookup_name( struct object *obj, struct unicode_str *name,
-                               unsigned int attr )
+                               unsigned int attr, struct object *root )
 {
     if (!name) set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return NULL;

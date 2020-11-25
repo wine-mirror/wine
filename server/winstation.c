@@ -46,7 +46,7 @@ static void winstation_dump( struct object *obj, int verbose );
 static struct object_type *winstation_get_type( struct object *obj );
 static int winstation_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static struct object *winstation_lookup_name( struct object *obj, struct unicode_str *name,
-                                              unsigned int attr );
+                                              unsigned int attr, struct object *root );
 static void winstation_destroy( struct object *obj );
 static unsigned int winstation_map_access( struct object *obj, unsigned int access );
 static void desktop_dump( struct object *obj, int verbose );
@@ -155,7 +155,7 @@ static int winstation_close_handle( struct object *obj, struct process *process,
 }
 
 static struct object *winstation_lookup_name( struct object *obj, struct unicode_str *name,
-                                              unsigned int attr )
+                                              unsigned int attr, struct object *root )
 {
     struct winstation *winstation = (struct winstation *)obj;
     struct object *found;

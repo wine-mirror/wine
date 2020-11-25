@@ -69,7 +69,8 @@ static void console_input_dump( struct object *obj, int verbose );
 static void console_input_destroy( struct object *obj );
 static int console_input_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *console_input_get_fd( struct object *obj );
-static struct object *console_input_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr );
+static struct object *console_input_lookup_name( struct object *obj, struct unicode_str *name,
+                                               unsigned int attr, struct object *root );
 static struct object *console_input_open_file( struct object *obj, unsigned int access,
                                                unsigned int sharing, unsigned int options );
 
@@ -143,7 +144,8 @@ static void console_server_dump( struct object *obj, int verbose );
 static void console_server_destroy( struct object *obj );
 static int console_server_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *console_server_get_fd( struct object *obj );
-static struct object *console_server_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr );
+static struct object *console_server_lookup_name( struct object *obj, struct unicode_str *name,
+                                                unsigned int attr, struct object *root );
 static struct object *console_server_open_file( struct object *obj, unsigned int access,
                                                 unsigned int sharing, unsigned int options );
 
@@ -259,7 +261,8 @@ static const struct fd_ops screen_buffer_fd_ops =
 
 static struct object_type *console_device_get_type( struct object *obj );
 static void console_device_dump( struct object *obj, int verbose );
-static struct object *console_device_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr );
+static struct object *console_device_lookup_name( struct object *obj, struct unicode_str *name,
+                                                unsigned int attr, struct object *root );
 static struct object *console_device_open_file( struct object *obj, unsigned int access,
                                                 unsigned int sharing, unsigned int options );
 
@@ -355,7 +358,8 @@ struct console_connection
 
 static void console_connection_dump( struct object *obj, int verbose );
 static struct fd *console_connection_get_fd( struct object *obj );
-static struct object *console_connection_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr );
+static struct object *console_connection_lookup_name( struct object *obj, struct unicode_str *name,
+                                                    unsigned int attr, struct object *root );
 static struct object *console_connection_open_file( struct object *obj, unsigned int access,
                                                     unsigned int sharing, unsigned int options );
 static int console_connection_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
@@ -709,7 +713,8 @@ static struct object *create_console_connection( struct console_input *console )
     return &connection->obj;
 }
 
-static struct object *console_input_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr )
+static struct object *console_input_lookup_name( struct object *obj, struct unicode_str *name,
+                                                 unsigned int attr, struct object *root )
 {
     struct console_input *console = (struct console_input *)obj;
     static const WCHAR connectionW[]    = {'C','o','n','n','e','c','t','i','o','n'};
@@ -793,7 +798,8 @@ static void console_server_destroy( struct object *obj )
     if (server->fd) release_object( server->fd );
 }
 
-static struct object *console_server_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr )
+static struct object *console_server_lookup_name( struct object *obj, struct unicode_str *name,
+                                                  unsigned int attr, struct object *root )
 {
     struct console_server *server = (struct console_server*)obj;
     static const WCHAR referenceW[] = {'R','e','f','e','r','e','n','c','e'};
@@ -1117,7 +1123,8 @@ static struct fd *console_connection_get_fd( struct object *obj )
     return (struct fd *)grab_object( connection->fd );
 }
 
-static struct object *console_connection_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr )
+static struct object *console_connection_lookup_name( struct object *obj, struct unicode_str *name,
+                                                      unsigned int attr, struct object *root )
 {
     static const WCHAR referenceW[] = {'R','e','f','e','r','e','n','c','e'};
 
@@ -1165,7 +1172,8 @@ static void console_device_dump( struct object *obj, int verbose )
     fputs( "Console device\n", stderr );
 }
 
-static struct object *console_device_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr )
+static struct object *console_device_lookup_name( struct object *obj, struct unicode_str *name,
+                                                  unsigned int attr, struct object *root )
 {
     static const WCHAR connectionW[]    = {'C','o','n','n','e','c','t','i','o','n'};
     static const WCHAR consoleW[]       = {'C','o','n','s','o','l','e'};
