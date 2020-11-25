@@ -28,6 +28,7 @@
 #include <mbctype.h>
 
 #include "msvcrt.h"
+#include "mtdll.h"
 #include "winnls.h"
 #include "wine/debug.h"
 
@@ -209,9 +210,6 @@ int CDECL ___mb_cur_max_l_func(MSVCRT__locale_t locale)
 }
 #endif
 
-/*********************************************************************
- * INTERNAL: _setmbcp_l
- */
 MSVCRT_threadmbcinfo* create_mbcinfo(int cp, LCID lcid, MSVCRT_threadmbcinfo *old_mbcinfo)
 {
   MSVCRT_threadmbcinfo *mbcinfo;
@@ -386,20 +384,30 @@ MSVCRT_threadmbcinfo* create_mbcinfo(int cp, LCID lcid, MSVCRT_threadmbcinfo *ol
  */
 int CDECL _setmbcp(int cp)
 {
-    MSVCRT_threadmbcinfo **old_mbcinfo = get_mbcinfo_ptr();
+    thread_data_t *data = msvcrt_get_thread_data();
     MSVCRT_threadmbcinfo *mbcinfo;
 
-    mbcinfo = create_mbcinfo(cp, -1, *old_mbcinfo);
-    if(!mbcinfo) {
+    mbcinfo = create_mbcinfo(cp, -1, get_mbcinfo());
+    if(!mbcinfo)
+    {
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return -1;
     }
 
-    free_mbcinfo(*old_mbcinfo);
-    *old_mbcinfo = mbcinfo;
-
-    if(mbcinfo == MSVCRT_locale->mbcinfo)
+    if(data->locale_flags & LOCALE_THREAD)
+    {
+        if(data->locale_flags & LOCALE_FREE)
+            free_mbcinfo(data->mbcinfo);
+        data->mbcinfo = mbcinfo;
+    }
+    else
+    {
+        _lock(_MB_CP_LOCK);
+        free_mbcinfo(MSVCRT_locale->mbcinfo);
+        MSVCRT_locale->mbcinfo = mbcinfo;
         memcpy(MSVCRT_mbctype, MSVCRT_locale->mbcinfo->mbctype, sizeof(MSVCRT_mbctype));
+        _unlock(_MB_CP_LOCK);
+    }
     return 0;
 }
 

@@ -599,18 +599,14 @@ MSVCRT_pthreadlocinfo CDECL get_locinfo(void) {
     return *get_locinfo_ptr();
 }
 
-MSVCRT_pthreadmbcinfo* CDECL get_mbcinfo_ptr(void) {
+/* INTERNAL: returns pthreadmbcinfo struct */
+MSVCRT_pthreadmbcinfo CDECL get_mbcinfo(void) {
     thread_data_t *data = msvcrt_get_thread_data();
 
     if(!data || !(data->locale_flags & LOCALE_THREAD))
-        return &MSVCRT_locale->mbcinfo;
+        return MSVCRT_locale->mbcinfo;
 
-    return &data->mbcinfo;
-}
-
-/* INTERNAL: returns pthreadmbcinfo struct */
-MSVCRT_pthreadmbcinfo CDECL get_mbcinfo(void) {
-    return *get_mbcinfo_ptr();
+    return data->mbcinfo;
 }
 
 /* INTERNAL: constructs string returned by setlocale */
