@@ -718,15 +718,15 @@ BOOL16 WINAPI TimerCount16( TIMERINFO *pTimerInfo )
  */
 BOOL16 WINAPI SystemHeapInfo16( SYSHEAPINFO *pHeapInfo )
 {
-    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
-    HANDLE16 oldDS = stack16->ds;
+    HANDLE16 oldDS = CURRENT_DS;
     WORD user = LoadLibrary16( "USER.EXE" );
     WORD gdi = LoadLibrary16( "GDI.EXE" );
-    stack16->ds = user;
+
+    CURRENT_DS = user;
     pHeapInfo->wUserFreePercent = (int)LocalCountFree16() * 100 / LocalHeapSize16();
-    stack16->ds = gdi;
+    CURRENT_DS = gdi;
     pHeapInfo->wGDIFreePercent  = (int)LocalCountFree16() * 100 / LocalHeapSize16();
-    stack16->ds = oldDS;
+    CURRENT_DS = oldDS;
     pHeapInfo->hUserSegment = user;
     pHeapInfo->hGDISegment  = gdi;
     FreeLibrary16( user );

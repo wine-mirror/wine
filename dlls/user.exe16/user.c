@@ -1394,11 +1394,10 @@ DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count,
  */
 DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wParam3)
 {
-    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
-    HANDLE16 oldDS = stack16->ds;
+    HANDLE16 oldDS = CURRENT_DS;
     DWORD ret = (DWORD)-1;
 
-    stack16->ds = USER_HeapSel;
+    CURRENT_DS = USER_HeapSel;
     switch (wReqType)
     {
     case USUD_LOCALALLOC:
@@ -1419,7 +1418,7 @@ DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPa
     default:
         WARN("wReqType %04x (unknown)\n", wReqType);
     }
-    stack16->ds = oldDS;
+    CURRENT_DS = oldDS;
     return ret;
 }
 
@@ -1787,32 +1786,31 @@ UINT16 WINAPI RealizePalette16( HDC16 hdc )
  */
 WORD WINAPI GetFreeSystemResources16( WORD resType )
 {
-    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
-    HANDLE16 oldDS = stack16->ds;
+    HANDLE16 oldDS = CURRENT_DS;
     int userPercent, gdiPercent;
 
     switch(resType)
     {
     case GFSR_USERRESOURCES:
-        stack16->ds = USER_HeapSel;
+        CURRENT_DS = USER_HeapSel;
         userPercent = (int)LocalCountFree16() * 100 / LocalHeapSize16();
         gdiPercent  = 100;
-        stack16->ds = oldDS;
+        CURRENT_DS = oldDS;
         break;
 
     case GFSR_GDIRESOURCES:
-        stack16->ds = gdi_inst;
+        CURRENT_DS = gdi_inst;
         gdiPercent  = (int)LocalCountFree16() * 100 / LocalHeapSize16();
         userPercent = 100;
-        stack16->ds = oldDS;
+        CURRENT_DS = oldDS;
         break;
 
     case GFSR_SYSTEMRESOURCES:
-        stack16->ds = USER_HeapSel;
+        CURRENT_DS = USER_HeapSel;
         userPercent = (int)LocalCountFree16() * 100 / LocalHeapSize16();
-        stack16->ds = gdi_inst;
+        CURRENT_DS = gdi_inst;
         gdiPercent  = (int)LocalCountFree16() * 100 / LocalHeapSize16();
-        stack16->ds = oldDS;
+        CURRENT_DS = oldDS;
         break;
 
     default:

@@ -1276,7 +1276,7 @@ void WINAPI __regs_K32Thk1632Epilog( CONTEXT *context )
    if (   code[5] == 0xFF && code[6] == 0x55 && code[7] == 0xFC
        && code[13] == 0x66 && code[14] == 0xCB)
    {
-      STACK16FRAME *frame16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+      STACK16FRAME *frame16 = CURRENT_STACK16;
       char *stack16 = (char *)(frame16 + 1);
       DWORD argSize = frame16->ebp - (DWORD)stack16;
       char *stack32 = (char *)frame16->frame32 - argSize;

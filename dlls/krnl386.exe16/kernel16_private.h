@@ -169,9 +169,6 @@ extern THHOOK *pThhook DECLSPEC_HIDDEN;
     (((offset)+(size) <= pModule->mapping_size) ? \
      (memcpy( buffer, (const char *)pModule->mapping + (offset), (size) ), TRUE) : FALSE)
 
-#define CURRENT_STACK16 ((STACK16FRAME*)MapSL(PtrToUlong(NtCurrentTeb()->WOW32Reserved)))
-#define CURRENT_DS      (CURRENT_STACK16->ds)
-
 /* push bytes on the 16-bit stack of a thread; return a segptr to the first pushed byte */
 static inline SEGPTR stack16_push( int size )
 {

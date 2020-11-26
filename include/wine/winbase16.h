@@ -23,6 +23,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winnls.h>
+#include <winternl.h>
 #include <wine/windef16.h>
 
 #include <pshpack1.h>
@@ -560,5 +561,8 @@ UINT16      WINAPI _lwrite16(HFILE16,LPCSTR,UINT16);
 BOOL16      WINAPI WritePrivateProfileSection16(LPCSTR,LPCSTR,LPCSTR);
 BOOL16      WINAPI WritePrivateProfileStruct16(LPCSTR,LPCSTR,LPVOID,UINT16,LPCSTR);
 BOOL16      WINAPI WriteProfileSection16(LPCSTR,LPCSTR);
+
+#define CURRENT_STACK16 ((STACK16FRAME *)MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved))
+#define CURRENT_DS      (CURRENT_STACK16->ds)
 
 #endif /* __WINE_WINE_WINBASE16_H */
