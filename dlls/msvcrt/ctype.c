@@ -147,7 +147,7 @@ const unsigned short* CDECL MSVCRT___pctype_func(void)
  */
 int CDECL MSVCRT__isctype_l(int c, int type, MSVCRT__locale_t locale)
 {
-  MSVCRT_pthreadlocinfo locinfo;
+  pthreadlocinfo locinfo;
 
   if(!locale)
     locinfo = get_locinfo();
@@ -437,7 +437,7 @@ int CDECL MSVCRT___iscsymf(int c)
  */
 int CDECL MSVCRT__toupper_l(int c, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     unsigned char str[2], *p = str, ret[2];
 
     if(!locale)
@@ -491,7 +491,7 @@ int CDECL MSVCRT__toupper(int c)
  */
 int CDECL MSVCRT__tolower_l(int c, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     unsigned char str[2], *p = str, ret[2];
 
     if(!locale)

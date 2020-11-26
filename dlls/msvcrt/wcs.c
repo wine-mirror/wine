@@ -90,7 +90,7 @@ MSVCRT_wchar_t* CDECL MSVCRT__wcsdup( const MSVCRT_wchar_t* str )
  */
 int CDECL MSVCRT__towlower_l(MSVCRT_wint_t c, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     MSVCRT_wchar_t ret;
 
     if(!locale)
@@ -197,7 +197,7 @@ INT CDECL MSVCRT__wcsnicmp(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str
  */
 int CDECL MSVCRT__wcsicoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
 
     if(!locale)
         locinfo = get_locinfo();
@@ -239,7 +239,7 @@ INT CDECL MSVCRT__wcsicoll( const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* st
 int CDECL MSVCRT__wcsnicoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2,
 			      MSVCRT_size_t count, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
 
     if(!locale)
         locinfo = get_locinfo();
@@ -509,7 +509,7 @@ int CDECL MSVCRT_wcsncmp(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2,
 int CDECL MSVCRT__wcsncoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2,
 			      MSVCRT_size_t count, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
 
     if(!locale)
         locinfo = get_locinfo();
@@ -550,7 +550,7 @@ static void strtod_wstr_unget(void *ctx)
 double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
         MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     const MSVCRT_wchar_t *beg, *p;
     struct fpnum fp;
     double ret;
@@ -585,7 +585,7 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
 static MSVCRT_size_t MSVCRT_wcsrtombs_l(char *mbstr, const MSVCRT_wchar_t **wcstr,
         MSVCRT_size_t count, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     MSVCRT_size_t tmp = 0;
     BOOL used_default = FALSE;
     BOOL *pused_default;
@@ -1866,7 +1866,7 @@ int CDECL MSVCRT_wcscmp(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2)
  */
 int CDECL MSVCRT__wcscoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* str2, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
 
     if(!locale)
         locinfo = get_locinfo();
@@ -1947,7 +1947,7 @@ MSVCRT_wchar_t * CDECL MSVCRT_wcstok( MSVCRT_wchar_t *str, const MSVCRT_wchar_t 
 int CDECL MSVCRT__wctomb_s_l(int *len, char *mbchar, MSVCRT_size_t size,
         MSVCRT_wchar_t wch, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     BOOL error = FALSE;
     BOOL *perror;
     int mblen;
@@ -2796,7 +2796,7 @@ MSVCRT_size_t CDECL MSVCRT_wcsnlen(const MSVCRT_wchar_t *s, MSVCRT_size_t maxlen
  */
 int CDECL MSVCRT__towupper_l(MSVCRT_wint_t c, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     MSVCRT_wchar_t ret;
 
     if(!locale)
@@ -2913,7 +2913,7 @@ __int64 CDECL MSVCRT__wtoi64(const MSVCRT_wchar_t *str)
 MSVCRT_size_t CDECL MSVCRT__wcsxfrm_l(MSVCRT_wchar_t *dest, const MSVCRT_wchar_t *src,
         MSVCRT_size_t len, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     int i, ret;
 
     if(!MSVCRT_CHECK_PMT(src)) return INT_MAX;

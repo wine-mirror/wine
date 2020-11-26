@@ -199,7 +199,7 @@ int CDECL MSVCRT____mb_cur_max_func(void)
  */
 int CDECL ___mb_cur_max_l_func(MSVCRT__locale_t locale)
 {
-  MSVCRT_pthreadlocinfo locinfo;
+  pthreadlocinfo locinfo;
 
   if(!locale)
     locinfo = get_locinfo();
@@ -2362,7 +2362,7 @@ MSVCRT_size_t CDECL MSVCRT_mbrlen(const char *str, MSVCRT_size_t len, MSVCRT_mbs
  */
 MSVCRT_size_t CDECL _mbstrlen_l(const char* str, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
 
     if(!locale)
         locinfo = get_locinfo();
@@ -2396,7 +2396,7 @@ MSVCRT_size_t CDECL _mbstrlen(const char* str)
  */
 int CDECL MSVCRT_mbtowc_l(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     MSVCRT_wchar_t tmpdst = '\0';
 
     if(!locale)
@@ -2461,7 +2461,7 @@ MSVCRT_wint_t CDECL btowc(int c)
 MSVCRT_size_t CDECL MSVCRT_mbrtowc(MSVCRT_wchar_t *dst, const char *str,
         MSVCRT_size_t n, MSVCRT_mbstate_t *state)
 {
-    MSVCRT_pthreadlocinfo locinfo = get_locinfo();
+    pthreadlocinfo locinfo = get_locinfo();
     MSVCRT_mbstate_t s = (state ? *state : 0);
     char tmpstr[2];
     int len = 0;
@@ -2508,7 +2508,7 @@ MSVCRT_size_t CDECL MSVCRT_mbrtowc(MSVCRT_wchar_t *dst, const char *str,
 MSVCRT_size_t CDECL MSVCRT__mbstowcs_l(MSVCRT_wchar_t *wcstr, const char *mbstr,
         MSVCRT_size_t count, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     MSVCRT_size_t i, size;
 
     if(!mbstr) {

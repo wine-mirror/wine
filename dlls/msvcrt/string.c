@@ -55,7 +55,7 @@ char* CDECL MSVCRT__strdup(const char* str)
  */
 int CDECL MSVCRT__strlwr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     char *ptr = str;
 
     if (!str || !len)
@@ -134,7 +134,7 @@ char* CDECL MSVCRT__strlwr(char *str)
  */
 int CDECL MSVCRT__strupr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     char *ptr = str;
 
     if (!str || !len)
@@ -607,7 +607,7 @@ static inline int hex2int(char c)
 }
 
 static struct fpnum fpnum_parse16(MSVCRT_wchar_t get(void *ctx), void unget(void *ctx),
-        void *ctx, int sign, MSVCRT_pthreadlocinfo locinfo)
+        void *ctx, int sign, pthreadlocinfo locinfo)
 {
     BOOL found_digit = FALSE, found_dp = FALSE;
     enum fpmod round = FP_ROUND_ZERO;
@@ -738,7 +738,7 @@ static inline BOOL bnum_to_mant(struct bnum *b, ULONGLONG *m)
 }
 
 static struct fpnum fpnum_parse_bnum(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
-        void *ctx, MSVCRT_pthreadlocinfo locinfo, BOOL ldouble, struct bnum *b)
+        void *ctx, pthreadlocinfo locinfo, BOOL ldouble, struct bnum *b)
 {
 #if _MSVCR_VER >= 140
     MSVCRT_wchar_t _infinity[] = { 'i', 'n', 'f', 'i', 'n', 'i', 't', 'y', 0 };
@@ -970,7 +970,7 @@ static struct fpnum fpnum_parse_bnum(MSVCRT_wchar_t (*get)(void *ctx), void (*un
 }
 
 struct fpnum fpnum_parse(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
-       void *ctx, MSVCRT_pthreadlocinfo locinfo, BOOL ldouble)
+       void *ctx, pthreadlocinfo locinfo, BOOL ldouble)
 {
     if(!ldouble) {
         BYTE bnum_data[FIELD_OFFSET(struct bnum, data[BNUM_PREC64])];
@@ -1002,7 +1002,7 @@ static void strtod_str_unget(void *ctx)
 
 static inline double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale, int *perr)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     const char *beg, *p;
     struct fpnum fp;
     double ret;
@@ -1142,7 +1142,7 @@ int CDECL MSVCRT__atodbl(MSVCRT__CRT_DOUBLE *value, char *str)
  */
 int CDECL MSVCRT_strcoll_l( const char* str1, const char* str2, MSVCRT__locale_t locale )
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
 
     if(!locale)
         locinfo = get_locinfo();
@@ -1167,7 +1167,7 @@ int CDECL MSVCRT_strcoll( const char* str1, const char* str2 )
  */
 int CDECL MSVCRT__stricoll_l( const char* str1, const char* str2, MSVCRT__locale_t locale )
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
 
     if(!locale)
         locinfo = get_locinfo();
@@ -1193,7 +1193,7 @@ int CDECL MSVCRT__stricoll( const char* str1, const char* str2 )
  */
 int CDECL MSVCRT__strncoll_l( const char* str1, const char* str2, MSVCRT_size_t count, MSVCRT__locale_t locale )
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
 
     if(!locale)
         locinfo = get_locinfo();
@@ -1220,7 +1220,7 @@ int CDECL MSVCRT__strncoll( const char* str1, const char* str2, MSVCRT_size_t co
  */
 int CDECL MSVCRT__strnicoll_l( const char* str1, const char* str2, MSVCRT_size_t count, MSVCRT__locale_t locale )
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
 
     if(!locale)
         locinfo = get_locinfo();
@@ -1386,7 +1386,7 @@ char* __cdecl MSVCRT_strncat(char *dst, const char *src, MSVCRT_size_t len)
 MSVCRT_size_t CDECL MSVCRT__strxfrm_l( char *dest, const char *src,
         MSVCRT_size_t len, MSVCRT__locale_t locale )
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     int ret;
 
     if(!MSVCRT_CHECK_PMT(src)) return INT_MAX;
@@ -1440,7 +1440,7 @@ MSVCRT_size_t CDECL MSVCRT_strxfrm( char *dest, const char *src, MSVCRT_size_t l
 int CDECL __STRINGTOLD_L( MSVCRT__LDOUBLE *value, char **endptr,
         const char *str, int flags, MSVCRT__locale_t locale )
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     const char *beg, *p;
     int err, ret = 0;
     struct fpnum fp;
@@ -2652,7 +2652,7 @@ int __cdecl MSVCRT_strncmp(const char *str1, const char *str2, MSVCRT_size_t len
 int __cdecl MSVCRT__strnicmp_l(const char *s1, const char *s2,
         MSVCRT_size_t count, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     int c1, c2;
 
     if(s1==NULL || s2==NULL)

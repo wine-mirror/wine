@@ -149,7 +149,7 @@
 
 #if (!defined(SECURE) && !defined(STRING_LEN) && (!defined(CONSOLE) || !defined(WIDE_SCANF)))
 struct _STRTOD_NAME_(strtod_scanf_ctx) {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
 #ifdef STRING
     const _CHAR_ *file;
 #else
@@ -196,7 +196,7 @@ static void _STRTOD_NAME_(strtod_scanf_unget)(void *ctx)
 #endif
 
 _FUNCTION_ {
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     int rd = 0, consumed = 0;
     int nch;
     if (!*format) return 0;

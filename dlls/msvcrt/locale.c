@@ -98,7 +98,7 @@ static const MSVCRT_wchar_t cloc_time[] = {'H','H',':','m','m',':','s','s',0};
 static const MSVCRT_wchar_t en_us[] = {'e','n','-','U','S',0};
 #endif
 
-MSVCRT___lc_time_data cloc_time_data =
+__lc_time_data cloc_time_data =
 {
     {{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",
       "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
@@ -466,8 +466,8 @@ LCID MSVCRT_locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *s
     return lcid;
 }
 
-static void copy_threadlocinfo_category(MSVCRT_pthreadlocinfo locinfo,
-        const MSVCRT_threadlocinfo *old_locinfo, int category)
+static void copy_threadlocinfo_category(pthreadlocinfo locinfo,
+        const threadlocinfo *old_locinfo, int category)
 {
     locinfo->lc_handle[category] = old_locinfo->lc_handle[category];
     locinfo->lc_id[category] = old_locinfo->lc_id[category];
@@ -485,7 +485,7 @@ static void copy_threadlocinfo_category(MSVCRT_pthreadlocinfo locinfo,
 }
 
 static BOOL init_category_name(const char *name, int len,
-        MSVCRT_pthreadlocinfo locinfo, int category)
+        pthreadlocinfo locinfo, int category)
 {
     locinfo->lc_category[category].locale = MSVCRT_malloc(len+1);
     locinfo->lc_category[category].refcount = MSVCRT_malloc(sizeof(int));
@@ -505,7 +505,7 @@ static BOOL init_category_name(const char *name, int len,
 }
 
 #if _MSVCR_VER >= 110
-static inline BOOL set_lc_locale_name(MSVCRT_pthreadlocinfo locinfo, int cat)
+static inline BOOL set_lc_locale_name(pthreadlocinfo locinfo, int cat)
 {
     LCID lcid = locinfo->lc_handle[cat];
     WCHAR buf[100];
@@ -530,7 +530,7 @@ static inline BOOL set_lc_locale_name(MSVCRT_pthreadlocinfo locinfo, int cat)
     return TRUE;
 }
 #else
-static inline BOOL set_lc_locale_name(MSVCRT_pthreadlocinfo locinfo, int cat)
+static inline BOOL set_lc_locale_name(pthreadlocinfo locinfo, int cat)
 {
     return TRUE;
 }
@@ -538,7 +538,7 @@ static inline BOOL set_lc_locale_name(MSVCRT_pthreadlocinfo locinfo, int cat)
 
 /* INTERNAL: Set lc_handle, lc_id and lc_category in threadlocinfo struct */
 static BOOL update_threadlocinfo_category(LCID lcid, unsigned short cp,
-        MSVCRT_pthreadlocinfo locinfo, int category)
+        pthreadlocinfo locinfo, int category)
 {
     char buf[256], *p;
 
@@ -601,7 +601,7 @@ void CDECL _unlock_locales(void)
     _unlock(_SETLOCALE_LOCK);
 }
 
-static void CDECL grab_locinfo(MSVCRT_pthreadlocinfo locinfo)
+static void CDECL grab_locinfo(pthreadlocinfo locinfo)
 {
     int i;
 
@@ -649,7 +649,7 @@ static void CDECL update_thread_locale(thread_data_t *data)
 }
 
 /* INTERNAL: returns threadlocinfo struct */
-MSVCRT_pthreadlocinfo CDECL get_locinfo(void) {
+pthreadlocinfo CDECL get_locinfo(void) {
     thread_data_t *data = msvcrt_get_thread_data();
     update_thread_locale(data);
     return data->locinfo;
@@ -663,7 +663,7 @@ MSVCRT_pthreadmbcinfo CDECL get_mbcinfo(void) {
 }
 
 /* INTERNAL: constructs string returned by setlocale */
-static inline char* construct_lc_all(MSVCRT_pthreadlocinfo locinfo) {
+static inline char* construct_lc_all(pthreadlocinfo locinfo) {
     static char current_lc_all[MAX_LOCALE_LENGTH];
 
     int i;
@@ -694,7 +694,7 @@ static inline char* construct_lc_all(MSVCRT_pthreadlocinfo locinfo) {
  */
 char* CDECL _Getdays(void)
 {
-    MSVCRT___lc_time_data *cur = get_locinfo()->lc_time_curr;
+    __lc_time_data *cur = get_locinfo()->lc_time_curr;
     int i, len, size = 0;
     char *out;
 
@@ -731,7 +731,7 @@ char* CDECL _Getdays(void)
  */
 MSVCRT_wchar_t* CDECL _W_Getdays(void)
 {
-    MSVCRT___lc_time_data *cur = get_locinfo()->lc_time_curr;
+    __lc_time_data *cur = get_locinfo()->lc_time_curr;
     MSVCRT_wchar_t *out;
     int i, len, size = 0;
 
@@ -768,7 +768,7 @@ MSVCRT_wchar_t* CDECL _W_Getdays(void)
  */
 char* CDECL _Getmonths(void)
 {
-    MSVCRT___lc_time_data *cur = get_locinfo()->lc_time_curr;
+    __lc_time_data *cur = get_locinfo()->lc_time_curr;
     int i, len, size = 0;
     char *out;
 
@@ -805,7 +805,7 @@ char* CDECL _Getmonths(void)
  */
 MSVCRT_wchar_t* CDECL _W_Getmonths(void)
 {
-    MSVCRT___lc_time_data *cur = get_locinfo()->lc_time_curr;
+    __lc_time_data *cur = get_locinfo()->lc_time_curr;
     MSVCRT_wchar_t *out;
     int i, len, size = 0;
 
@@ -842,8 +842,8 @@ MSVCRT_wchar_t* CDECL _W_Getmonths(void)
  */
 void* CDECL _Gettnames(void)
 {
-    MSVCRT___lc_time_data *ret, *cur = get_locinfo()->lc_time_curr;
-    unsigned int i, len, size = sizeof(MSVCRT___lc_time_data);
+    __lc_time_data *ret, *cur = get_locinfo()->lc_time_curr;
+    unsigned int i, len, size = sizeof(__lc_time_data);
 
     TRACE("\n");
 
@@ -1062,8 +1062,8 @@ int CDECL ___lc_collate_cp_func(void)
     return get_locinfo()->lc_collate_cp;
 }
 
-/* INTERNAL: frees MSVCRT_pthreadlocinfo struct */
-void free_locinfo(MSVCRT_pthreadlocinfo locinfo)
+/* INTERNAL: frees pthreadlocinfo struct */
+void free_locinfo(pthreadlocinfo locinfo)
 {
     int i;
 
@@ -1195,13 +1195,13 @@ void CDECL MSVCRT__free_locale(MSVCRT__locale_t locale)
 }
 
 static inline BOOL category_needs_update(int cat,
-        const MSVCRT_threadlocinfo *locinfo, LCID lcid, unsigned short cp)
+        const threadlocinfo *locinfo, LCID lcid, unsigned short cp)
 {
     if(!locinfo) return TRUE;
     return lcid!=locinfo->lc_handle[cat] || cp!=locinfo->lc_id[cat].wCodePage;
 }
 
-static MSVCRT___lc_time_data* create_time_data(LCID lcid)
+static __lc_time_data* create_time_data(LCID lcid)
 {
     static const DWORD time_data[] = {
         LOCALE_SABBREVDAYNAME7, LOCALE_SABBREVDAYNAME1, LOCALE_SABBREVDAYNAME2,
@@ -1221,10 +1221,10 @@ static MSVCRT___lc_time_data* create_time_data(LCID lcid)
         LOCALE_STIMEFORMAT
     };
 
-    MSVCRT___lc_time_data *cur;
+    __lc_time_data *cur;
     int i, ret, size;
 
-    size = sizeof(MSVCRT___lc_time_data);
+    size = sizeof(__lc_time_data);
     for(i=0; i<ARRAY_SIZE(time_data); i++) {
         ret = GetLocaleInfoA(lcid, time_data[i], NULL, 0);
         if(!ret)
@@ -1266,8 +1266,8 @@ static MSVCRT___lc_time_data* create_time_data(LCID lcid)
     return cur;
 }
 
-static MSVCRT_pthreadlocinfo create_locinfo(int category,
-        const char *locale, const MSVCRT_threadlocinfo *old_locinfo)
+static pthreadlocinfo create_locinfo(int category,
+        const char *locale, const threadlocinfo *old_locinfo)
 {
     static const char collate[] = "COLLATE=";
     static const char ctype[] = "CTYPE=";
@@ -1275,7 +1275,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
     static const char numeric[] = "NUMERIC=";
     static const char time[] = "TIME=";
 
-    MSVCRT_pthreadlocinfo locinfo;
+    pthreadlocinfo locinfo;
     LCID lcid[6] = { 0 };
     unsigned short cp[6] = { 0 };
     const char *locale_name[6] = { 0 };
@@ -1375,11 +1375,11 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         }
     }
 
-    locinfo = MSVCRT_malloc(sizeof(MSVCRT_threadlocinfo));
+    locinfo = MSVCRT_malloc(sizeof(threadlocinfo));
     if(!locinfo)
         return NULL;
 
-    memset(locinfo, 0, sizeof(MSVCRT_threadlocinfo));
+    memset(locinfo, 0, sizeof(threadlocinfo));
     locinfo->refcount = 1;
 
     if(locale_name[MSVCRT_LC_COLLATE] &&
@@ -2005,7 +2005,7 @@ MSVCRT__locale_t CDECL MSVCRT__wcreate_locale(int category, const MSVCRT_wchar_t
 char* CDECL MSVCRT_setlocale(int category, const char* locale)
 {
     thread_data_t *data = msvcrt_get_thread_data();
-    MSVCRT_pthreadlocinfo locinfo = get_locinfo(), newlocinfo;
+    pthreadlocinfo locinfo = get_locinfo(), newlocinfo;
 
     if(category<MSVCRT_LC_MIN || category>MSVCRT_LC_MAX)
         return NULL;

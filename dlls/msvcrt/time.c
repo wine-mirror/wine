@@ -1016,7 +1016,7 @@ static inline BOOL strftime_int(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCRT_s
 }
 
 static inline BOOL strftime_format(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCRT_size_t max,
-        const struct MSVCRT_tm *mstm, MSVCRT___lc_time_data *time_data, const STRFTIME_CHAR *format)
+        const struct MSVCRT_tm *mstm, __lc_time_data *time_data, const STRFTIME_CHAR *format)
 {
     MSVCRT_size_t count;
     BOOL ret = TRUE;
@@ -1192,7 +1192,7 @@ static inline BOOL strftime_tzdiff(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCR
 
 static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
         const STRFTIME_CHAR *format, const struct MSVCRT_tm *mstm,
-        MSVCRT___lc_time_data *time_data, MSVCRT__locale_t loc)
+        __lc_time_data *time_data, MSVCRT__locale_t loc)
 {
     MSVCRT_size_t ret, tmp;
     BOOL alternate;
@@ -1543,7 +1543,7 @@ einval_error:
 }
 
 static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *format,
-        const struct MSVCRT_tm *mstm, MSVCRT___lc_time_data *time_data, MSVCRT__locale_t loc)
+        const struct MSVCRT_tm *mstm, __lc_time_data *time_data, MSVCRT__locale_t loc)
 {
 #if _MSVCR_VER <= 90
     TRACE("(%p %Iu %s %p %p %p)\n", str, max, format, mstm, time_data, loc);
@@ -1592,7 +1592,7 @@ MSVCRT_size_t CDECL MSVCRT__strftime_l( char *str, MSVCRT_size_t max, const char
  *		_Strftime (MSVCRT.@)
  */
 MSVCRT_size_t CDECL _Strftime(char *str, MSVCRT_size_t max, const char *format,
-        const struct MSVCRT_tm *mstm, MSVCRT___lc_time_data *time_data)
+        const struct MSVCRT_tm *mstm, __lc_time_data *time_data)
 {
     return strftime_helper(str, max, format, mstm, time_data, NULL);
 }
@@ -1608,7 +1608,7 @@ MSVCRT_size_t CDECL MSVCRT_strftime( char *str, MSVCRT_size_t max, const char *f
 
 static MSVCRT_size_t wcsftime_helper( MSVCRT_wchar_t *str, MSVCRT_size_t max,
         const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm,
-        MSVCRT___lc_time_data *time_data, MSVCRT__locale_t loc )
+        __lc_time_data *time_data, MSVCRT__locale_t loc )
 {
 #if _MSVCR_VER <= 90
     char *s, *fmt;
@@ -1660,7 +1660,7 @@ MSVCRT_size_t CDECL MSVCRT_wcsftime( MSVCRT_wchar_t *str, MSVCRT_size_t max,
  */
 MSVCRT_size_t CDECL _Wcsftime(MSVCRT_wchar_t *str, MSVCRT_size_t max,
         const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm,
-        MSVCRT___lc_time_data *time_data)
+        __lc_time_data *time_data)
 {
     return wcsftime_helper(str, max, format, mstm, time_data, NULL);
 }
