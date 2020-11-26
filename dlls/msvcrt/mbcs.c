@@ -88,7 +88,7 @@ static const unsigned char mbctombb_932_kana[] = {
 
 static MSVCRT_wchar_t msvcrt_mbc_to_wc_l(unsigned int ch, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadmbcinfo mbcinfo;
+    pthreadmbcinfo mbcinfo;
     MSVCRT_wchar_t chW;
     char mbch[2];
     int n_chars;
@@ -210,9 +210,9 @@ int CDECL ___mb_cur_max_l_func(MSVCRT__locale_t locale)
 }
 #endif
 
-MSVCRT_threadmbcinfo* create_mbcinfo(int cp, LCID lcid, MSVCRT_threadmbcinfo *old_mbcinfo)
+threadmbcinfo* create_mbcinfo(int cp, LCID lcid, threadmbcinfo *old_mbcinfo)
 {
-  MSVCRT_threadmbcinfo *mbcinfo;
+  threadmbcinfo *mbcinfo;
   int newcp;
   CPINFO cpi;
   BYTE *bytes;
@@ -229,7 +229,7 @@ MSVCRT_threadmbcinfo* create_mbcinfo(int cp, LCID lcid, MSVCRT_threadmbcinfo *ol
     return old_mbcinfo;
   }
 
-  mbcinfo = MSVCRT_malloc(sizeof(MSVCRT_threadmbcinfo));
+  mbcinfo = MSVCRT_malloc(sizeof(threadmbcinfo));
   if(!mbcinfo)
     return NULL;
   mbcinfo->refcount = 1;
@@ -385,7 +385,7 @@ MSVCRT_threadmbcinfo* create_mbcinfo(int cp, LCID lcid, MSVCRT_threadmbcinfo *ol
 int CDECL _setmbcp(int cp)
 {
     thread_data_t *data = msvcrt_get_thread_data();
-    MSVCRT_threadmbcinfo *mbcinfo;
+    threadmbcinfo *mbcinfo;
 
     mbcinfo = create_mbcinfo(cp, -1, get_mbcinfo());
     if(!mbcinfo)
@@ -619,7 +619,7 @@ unsigned char* CDECL _mbsninc(const unsigned char* str, MSVCRT_size_t num)
 MSVCRT_size_t CDECL _mbsnlen_l(const unsigned char *str,
         MSVCRT_size_t maxsize, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadmbcinfo mbcinfo;
+    pthreadmbcinfo mbcinfo;
     MSVCRT_size_t i = 0, len = 0;
 
     if(!locale)
@@ -903,7 +903,7 @@ unsigned char* CDECL _mbsnbcpy(unsigned char* dst, const unsigned char* src, MSV
  */
 int CDECL _mbscmp_l(const unsigned char* str, const unsigned char* cmp, MSVCRT__locale_t locale)
 {
-  MSVCRT_pthreadmbcinfo mbcinfo;
+  pthreadmbcinfo mbcinfo;
 
   if (!str || !cmp) return INT_MAX;
 
@@ -941,7 +941,7 @@ int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp, MSVCRT__lo
  */
 int CDECL _mbsnbicoll_l(const unsigned char *str1, const unsigned char *str2, MSVCRT_size_t len, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadmbcinfo mbcinfo;
+    pthreadmbcinfo mbcinfo;
 
     if(!locale)
         mbcinfo = get_mbcinfo();
@@ -987,7 +987,7 @@ int CDECL _mbsicoll(const unsigned char* str, const unsigned char* cmp)
  */
 int CDECL _mbsnbcoll_l(const unsigned char *str1, const unsigned char *str2, MSVCRT_size_t len, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadmbcinfo mbcinfo;
+    pthreadmbcinfo mbcinfo;
 
     if(!locale)
         mbcinfo = get_mbcinfo();
@@ -1326,7 +1326,7 @@ unsigned char* CDECL _mbsrchr(const unsigned char* s, unsigned int x)
 unsigned char* CDECL _mbstok_s_l(unsigned char *str, const unsigned char *delim,
         unsigned char **ctx, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadmbcinfo mbcinfo;
+    pthreadmbcinfo mbcinfo;
     unsigned int c;
 
     if(!MSVCRT_CHECK_PMT(delim != NULL)) return NULL;
@@ -1426,7 +1426,7 @@ unsigned int CDECL _mbbtombc(unsigned int c)
  */
 int CDECL _ismbbkana_l(unsigned int c, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadmbcinfo mbcinfo;
+    pthreadmbcinfo mbcinfo;
 
     if(locale)
         mbcinfo = locale->mbcinfo;
@@ -1640,7 +1640,7 @@ int CDECL _ismbckata(unsigned int c)
  */
 int CDECL _ismbblead_l(unsigned int c, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadmbcinfo mbcinfo;
+    pthreadmbcinfo mbcinfo;
 
     if(!locale)
         mbcinfo = get_mbcinfo();
@@ -1663,7 +1663,7 @@ int CDECL _ismbblead(unsigned int c)
  */
 int CDECL _ismbbtrail_l(unsigned int c, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadmbcinfo mbcinfo;
+    pthreadmbcinfo mbcinfo;
 
     if(!locale)
         mbcinfo = get_mbcinfo();
@@ -2723,7 +2723,7 @@ unsigned int CDECL _mbctokata(unsigned int c)
  */
 int CDECL _ismbcl0_l(unsigned int c, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadmbcinfo mbcinfo;
+    pthreadmbcinfo mbcinfo;
 
     if(!locale)
         mbcinfo = get_mbcinfo();
@@ -2752,7 +2752,7 @@ int CDECL _ismbcl0(unsigned int c)
  */
 int CDECL _ismbcl1_l(unsigned int c, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadmbcinfo mbcinfo;
+    pthreadmbcinfo mbcinfo;
 
     if(!locale)
         mbcinfo = get_mbcinfo();
@@ -2781,7 +2781,7 @@ int CDECL _ismbcl1(unsigned int c)
  */
 int CDECL _ismbcl2_l(unsigned int c, MSVCRT__locale_t locale)
 {
-    MSVCRT_pthreadmbcinfo mbcinfo;
+    pthreadmbcinfo mbcinfo;
 
     if(!locale)
         mbcinfo = get_mbcinfo();

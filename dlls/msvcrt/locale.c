@@ -656,7 +656,7 @@ pthreadlocinfo CDECL get_locinfo(void) {
 }
 
 /* INTERNAL: returns pthreadmbcinfo struct */
-MSVCRT_pthreadmbcinfo CDECL get_mbcinfo(void) {
+pthreadmbcinfo CDECL get_mbcinfo(void) {
     thread_data_t *data = msvcrt_get_thread_data();
     update_thread_locale(data);
     return data->mbcinfo;
@@ -1139,8 +1139,8 @@ void free_locinfo(pthreadlocinfo locinfo)
     MSVCRT_free(locinfo);
 }
 
-/* INTERNAL: frees MSVCRT_pthreadmbcinfo struct */
-void free_mbcinfo(MSVCRT_pthreadmbcinfo mbcinfo)
+/* INTERNAL: frees pthreadmbcinfo struct */
+void free_mbcinfo(pthreadmbcinfo mbcinfo)
 {
     if(!mbcinfo)
         return;
