@@ -2297,9 +2297,14 @@ int CDECL MSVCRT__wsopen_dispatch( const MSVCRT_wchar_t* path, int oflags, int s
 
   if (oflags & (MSVCRT__O_WTEXT|MSVCRT__O_U16TEXT|MSVCRT__O_U8TEXT))
   {
+      LARGE_INTEGER size = {{0}};
+
+      if ((access & GENERIC_WRITE) && (creation==OPEN_EXISTING || creation==OPEN_ALWAYS))
+          GetFileSizeEx(hand, &size);
+
       if ((access & GENERIC_WRITE) && (creation==CREATE_NEW
                   || creation==CREATE_ALWAYS || creation==TRUNCATE_EXISTING
-                  || (creation==OPEN_ALWAYS && GetLastError()==ERROR_ALREADY_EXISTS)))
+                  || ((creation==OPEN_EXISTING || creation==OPEN_ALWAYS) && !size.QuadPart)))
       {
           if (oflags & MSVCRT__O_U8TEXT)
           {
