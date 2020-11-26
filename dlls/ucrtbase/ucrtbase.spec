@@ -1582,7 +1582,7 @@
 @ cdecl -ret64 _o_atoll(str) MSVCRT_atoll
 @ cdecl _o_bsearch(ptr ptr long long ptr) MSVCRT_bsearch
 @ cdecl _o_bsearch_s(ptr ptr long long ptr ptr) MSVCRT_bsearch_s
-@ cdecl _o_btowc(long) MSVCRT_btowc
+@ cdecl _o_btowc(long) btowc
 @ cdecl _o_calloc(long long) MSVCRT_calloc
 @ cdecl _o_cbrt(double) MSVCR120_cbrt
 @ cdecl _o_cbrtf(float) MSVCR120_cbrtf
@@ -2176,7 +2176,7 @@
 @ cdecl -ret64 atoll(str) MSVCRT_atoll
 @ cdecl bsearch(ptr ptr long long ptr) MSVCRT_bsearch
 @ cdecl bsearch_s(ptr ptr long long ptr ptr) MSVCRT_bsearch_s
-@ cdecl btowc(long) MSVCRT_btowc
+@ cdecl btowc(long)
 @ stub c16rtomb
 @ stub c32rtomb
 @ stub cabs

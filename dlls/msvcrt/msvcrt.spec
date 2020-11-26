@@ -1258,7 +1258,7 @@
 @ cdecl atol(str) MSVCRT_atol
 @ cdecl bsearch(ptr ptr long long ptr) MSVCRT_bsearch
 @ cdecl bsearch_s(ptr ptr long long ptr ptr) MSVCRT_bsearch_s
-@ cdecl btowc(long) MSVCRT_btowc
+@ cdecl btowc(long)
 @ cdecl calloc(long long) MSVCRT_calloc
 @ cdecl ceil(double) MSVCRT_ceil
 @ cdecl -arch=!i386 ceilf(float) MSVCRT_ceilf

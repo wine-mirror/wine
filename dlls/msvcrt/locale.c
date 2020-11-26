@@ -989,25 +989,6 @@ int CDECL __crtGetLocaleInfoEx( const WCHAR *locale, LCTYPE type, MSVCRT_wchar_t
 #endif
 
 /*********************************************************************
- *              btowc(MSVCRT.@)
- */
-MSVCRT_wint_t CDECL MSVCRT_btowc(int c)
-{
-    unsigned char letter = c;
-    MSVCRT_wchar_t ret;
-
-    if(c == MSVCRT_EOF)
-        return MSVCRT_WEOF;
-    if(!get_locinfo()->lc_codepage)
-        return c & 255;
-    if(!MultiByteToWideChar(get_locinfo()->lc_codepage,
-                MB_ERR_INVALID_CHARS, (LPCSTR)&letter, 1, &ret, 1))
-        return MSVCRT_WEOF;
-
-    return ret;
-}
-
-/*********************************************************************
  *              __crtGetStringTypeW(MSVCRT.@)
  *
  * This function was accepting different number of arguments in older

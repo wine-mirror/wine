@@ -2035,7 +2035,7 @@
 @ cdecl -ret64 atoll(str) MSVCRT_atoll
 @ cdecl bsearch(ptr ptr long long ptr) MSVCRT_bsearch
 @ cdecl bsearch_s(ptr ptr long long ptr ptr) MSVCRT_bsearch_s
-@ cdecl btowc(long) MSVCRT_btowc
+@ cdecl btowc(long)
 @ stub cabs
 @ stub cabsf
 @ stub cabsl
