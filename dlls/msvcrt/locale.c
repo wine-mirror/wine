@@ -2148,14 +2148,4 @@ wctrans_t CDECL MSVCR120_wctrans(const char *property)
         return 1;
     return 0;
 }
-
-/*********************************************************************
- *      towctrans (MSVCR120.@)
- */
-MSVCRT_wint_t CDECL MSVCR120_towctrans(MSVCRT_wint_t c, wctrans_t category)
-{
-    if(category == 1)
-        return MSVCRT__towupper_l(c, NULL);
-    return MSVCRT__towlower_l(c, NULL);
-}
 #endif

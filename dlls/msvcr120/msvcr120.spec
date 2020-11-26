@@ -2414,7 +2414,7 @@
 @ cdecl tmpnam_s(ptr long) MSVCRT_tmpnam_s
 @ cdecl tolower(long) MSVCRT_tolower
 @ cdecl toupper(long) MSVCRT_toupper
-@ cdecl towctrans(long long) MSVCR120_towctrans
+@ cdecl towctrans(long long)
 @ cdecl towlower(long) MSVCRT_towlower
 @ cdecl towupper(long) MSVCRT_towupper
 @ cdecl trunc(double) MSVCR120_trunc

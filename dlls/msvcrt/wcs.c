@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
+#include <wctype.h>
 #include "msvcrt.h"
 #include "winnls.h"
 #include "wtypes.h"
@@ -134,6 +135,16 @@ INT CDECL MSVCRT__wcsicmp_l(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *st
 
     free_locale_noalloc(&tmp);
     return c1 - c2;
+}
+
+/*********************************************************************
+ *      towctrans (MSVCR120.@)
+ */
+wint_t CDECL towctrans(wint_t c, wctrans_t category)
+{
+    if(category == 1)
+        return MSVCRT__towupper_l(c, NULL);
+    return MSVCRT__towlower_l(c, NULL);
 }
 
 /*********************************************************************
