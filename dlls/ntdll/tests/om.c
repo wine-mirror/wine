@@ -2060,17 +2060,17 @@ static void test_process(void)
     cid.UniqueProcess = 0;
     cid.UniqueThread = 0;
     status = pNtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, &attr, &cid );
-    todo_wine ok( status == STATUS_INVALID_CID, "NtOpenProcess returned %x\n", status );
+    ok( status == STATUS_INVALID_CID, "NtOpenProcess returned %x\n", status );
 
     cid.UniqueProcess = ULongToHandle( 0xdeadbeef );
     cid.UniqueThread = ULongToHandle( 0xdeadbeef );
     status = pNtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, &attr, &cid );
-    todo_wine ok( status == STATUS_INVALID_CID, "NtOpenProcess returned %x\n", status );
+    ok( status == STATUS_INVALID_CID, "NtOpenProcess returned %x\n", status );
 
     cid.UniqueProcess = ULongToHandle( GetCurrentThreadId() );
     cid.UniqueThread = 0;
     status = pNtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, &attr, &cid );
-    todo_wine ok( status == STATUS_INVALID_CID, "NtOpenProcess returned %x\n", status );
+    ok( status == STATUS_INVALID_CID, "NtOpenProcess returned %x\n", status );
 
     cid.UniqueProcess = ULongToHandle( GetCurrentProcessId() );
     cid.UniqueThread = 0;

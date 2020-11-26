@@ -778,7 +778,7 @@ struct process *get_process_from_id( process_id_t id )
     struct object *obj = get_ptid_entry( id );
 
     if (obj && obj->ops == &process_ops) return (struct process *)grab_object( obj );
-    set_error( STATUS_INVALID_PARAMETER );
+    set_error( STATUS_INVALID_CID );
     return NULL;
 }
 
