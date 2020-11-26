@@ -259,9 +259,9 @@ static LPITEMIDLIST _ILCreateCPanelApplet(LPCSTR name, LPCSTR displayName,
     memcpy(pidl->mkid.abID, &tmp, 2+size0);
 
     p = &((PIDLDATA*)pidl->mkid.abID)->u.cpanel;
-    strcpy(p->szName, name);
-    strcpy(p->szName+tmp.u.cpanel.offsDispName, displayName);
-    strcpy(p->szName+tmp.u.cpanel.offsComment, comment);
+    memcpy(p->szName, name, strlen(name) + 1);
+    memcpy(p->szName+tmp.u.cpanel.offsDispName, displayName, strlen(displayName) + 1);
+    memcpy(p->szName+tmp.u.cpanel.offsComment, comment, strlen(comment) + 1);
 
     *(WORD*)((char*)pidl+(size+2)) = 0;
 
@@ -1077,7 +1077,7 @@ static HRESULT WINAPI IShellExecuteHookA_fnExecute(IShellExecuteHookA *iface,
 	return E_INVALIDARG;
 
     path[0] = '\"';
-    lstrcpyA(path+1, pcpanel->szName);
+    memcpy(path+1, pcpanel->szName, strlen(pcpanel->szName) + 1);
 
     /* pass applet name to Control_RunDLL to distinguish between applets in one .cpl file */
     lstrcatA(path, "\" ");
