@@ -298,6 +298,7 @@ struct tagSYSLEVEL;
 
 struct kernel_thread_data
 {
+    SEGPTR              stack;          /* 16-bit stack pointer */
     WORD                stack_sel;      /* 16-bit stack selector */
     WORD                htask16;        /* Win16 task handle */
     DWORD               sys_count[4];   /* syslevel mutex entry counters */

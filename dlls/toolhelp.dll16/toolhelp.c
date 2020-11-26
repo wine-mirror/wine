@@ -491,8 +491,8 @@ BOOL16 WINAPI TaskNext16( TASKENTRY *lpte )
     lpte->hTaskParent   = pTask->hParent;
     lpte->hInst         = pTask->hInstance;
     lpte->hModule       = pTask->hModule;
-    lpte->wSS           = SELECTOROF( pTask->teb->WOW32Reserved );
-    lpte->wSP           = OFFSETOF( pTask->teb->WOW32Reserved );
+    lpte->wSS           = SELECTOROF( pTask->teb->SystemReserved1[0] );
+    lpte->wSP           = OFFSETOF( pTask->teb->SystemReserved1[0] );
     lpte->wStackTop     = pInstData->stacktop;
     lpte->wStackMinimum = pInstData->stackmin;
     lpte->wStackBottom  = pInstData->stackbottom;

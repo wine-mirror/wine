@@ -1229,7 +1229,7 @@ void WINAPI __regs_K32Thk1632Prolog( CONTEXT *context )
       DWORD argSize = context->Ebp - context->Esp;
       char *stack16 = (char *)context->Esp - 4;
       STACK16FRAME *frame16 = (STACK16FRAME *)stack16 - 1;
-      STACK32FRAME *frame32 = NtCurrentTeb()->WOW32Reserved;
+      STACK32FRAME *frame32 = (STACK32FRAME *)kernel_get_thread_data()->stack;
       char *stack32 = (char *)frame32 - argSize;
       WORD  stackSel  = SELECTOROF(frame32->frame16);
       DWORD stackBase = GetSelectorBase(stackSel);
@@ -1282,7 +1282,7 @@ void WINAPI __regs_K32Thk1632Epilog( CONTEXT *context )
       TRACE("before SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %04x:%04x\n",
             context->Ebp, context->Esp, CURRENT_SS, CURRENT_SP);
 
-      NtCurrentTeb()->WOW32Reserved = frame16->frame32;
+      kernel_get_thread_data()->stack = (SEGPTR)frame16->frame32;
 
       context->Esp = (DWORD)stack16 + nArgsPopped;
       context->Ebp = frame16->ebp;
