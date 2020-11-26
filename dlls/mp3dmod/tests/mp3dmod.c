@@ -377,9 +377,8 @@ static void test_aggregation(void)
 
 static void test_stream_info(void)
 {
-    static const MPEGLAYER3WAVEFORMAT input_format =
+    MPEGLAYER3WAVEFORMAT input_format =
     {
-        .wfx.nChannels = 2,
         .wfx.nSamplesPerSec = 48000,
     };
     DMO_MEDIA_TYPE input_mt =
@@ -391,13 +390,9 @@ static void test_stream_info(void)
         .pbFormat = (BYTE *)&input_format,
     };
 
-    static const WAVEFORMATEX output_format =
+    WAVEFORMATEX output_format =
     {
-        .nChannels = 1,
         .nSamplesPerSec = 48000,
-        .nAvgBytesPerSec = 2 * 48000,
-        .nBlockAlign = 2,
-        .wBitsPerSample = 16,
     };
     DMO_MEDIA_TYPE output_mt =
     {
@@ -407,6 +402,7 @@ static void test_stream_info(void)
     };
 
     DWORD input_count, output_count, flags, size, lookahead, alignment;
+    WORD channels, depth;
     IMediaObject *dmo;
     HRESULT hr;
 
@@ -434,29 +430,49 @@ static void test_stream_info(void)
     hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &alignment);
     ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#x.\n", hr);
 
-    hr = IMediaObject_SetInputType(dmo, 0, &input_mt, 0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    for (channels = 1; channels <= 2; ++channels)
+    {
+        input_format.wfx.nChannels = channels;
+        output_format.nChannels = channels;
 
-    hr = IMediaObject_GetInputSizeInfo(dmo, 0, &size, &lookahead, &alignment);
-    ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#x.\n", hr);
-    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &alignment);
-    ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#x.\n", hr);
+        hr = IMediaObject_SetInputType(dmo, 0, &input_mt, 0);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, 0);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+        hr = IMediaObject_GetInputSizeInfo(dmo, 0, &size, &lookahead, &alignment);
+        ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#x.\n", hr);
+        hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &alignment);
+        ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#x.\n", hr);
 
-    size = lookahead = alignment = 0xdeadbeef;
-    hr = IMediaObject_GetInputSizeInfo(dmo, 0, &size, &lookahead, &alignment);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!size, "Got size %u.\n", size);
-    ok(lookahead == 0xdeadbeef, "Got lookahead %u.\n", lookahead);
-    ok(alignment == 1, "Got alignment %u.\n", alignment);
+        for (depth = 8; depth <= 16; depth += 8)
+        {
+            output_format.wBitsPerSample = depth;
+            output_format.nBlockAlign = channels * depth / 8;
+            output_format.nAvgBytesPerSec = 48000 * output_format.nBlockAlign;
 
-    size = alignment = 0xdeadbeef;
-    hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &alignment);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(size == 1152 * 4, "Got size %u.\n", size);
-    ok(alignment == 1, "Got alignment %u.\n", alignment);
+            hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, 0);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+            size = lookahead = alignment = 0xdeadbeef;
+            hr = IMediaObject_GetInputSizeInfo(dmo, 0, &size, &lookahead, &alignment);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(!size || broken(size == output_format.nBlockAlign) /* Vista */,
+                    "Got size %u for %u channels, depth %u.\n", size, channels, depth);
+            ok(lookahead == 0xdeadbeef, "Got lookahead %u.\n", lookahead);
+            ok(alignment == 1, "Got alignment %u.\n", alignment);
+
+            size = alignment = 0xdeadbeef;
+            hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &alignment);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            /* Vista returns the expected size; all later versions act as if
+             * channels == 2 for some reason. */
+            ok(size >= channels * 1152 * depth / 8,
+                    "Got size %u for %u channels, depth %u.\n", size, channels, depth);
+            ok(alignment == 1, "Got alignment %u.\n", alignment);
+        }
+
+        hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_CLEAR);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    }
 
     IMediaObject_Release(dmo);
 }
