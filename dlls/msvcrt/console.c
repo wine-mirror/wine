@@ -567,7 +567,7 @@ int WINAPIV _cwprintf(const MSVCRT_wchar_t* format, ...)
  *		__conio_common_vcprintf (UCRTBASE.@)
  */
 int CDECL MSVCRT__conio_common_vcprintf(unsigned __int64 options, const char* format,
-                                        MSVCRT__locale_t locale, __ms_va_list valist)
+                                        _locale_t locale, __ms_va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
@@ -579,7 +579,7 @@ int CDECL MSVCRT__conio_common_vcprintf(unsigned __int64 options, const char* fo
  *		__conio_common_vcwprintf (UCRTBASE.@)
  */
 int CDECL MSVCRT__conio_common_vcwprintf(unsigned __int64 options, const MSVCRT_wchar_t* format,
-                                         MSVCRT__locale_t locale, __ms_va_list valist)
+                                         _locale_t locale, __ms_va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));

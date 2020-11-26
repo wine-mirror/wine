@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 #define MAX_ELEM_LEN 64 /* Max length of country/language/CP string */
 #define MAX_LOCALE_LENGTH 256
-MSVCRT__locale_t MSVCRT_locale = NULL;
+_locale_t MSVCRT_locale = NULL;
 unsigned short *MSVCRT__pctype = NULL;
 unsigned int MSVCRT___lc_codepage = 0;
 int MSVCRT___lc_collate_cp = 0;
@@ -1151,7 +1151,7 @@ void free_mbcinfo(pthreadmbcinfo mbcinfo)
     MSVCRT_free(mbcinfo);
 }
 
-MSVCRT__locale_t CDECL get_current_locale_noalloc(MSVCRT__locale_t locale)
+_locale_t CDECL get_current_locale_noalloc(_locale_t locale)
 {
     thread_data_t *data = msvcrt_get_thread_data();
 
@@ -1164,7 +1164,7 @@ MSVCRT__locale_t CDECL get_current_locale_noalloc(MSVCRT__locale_t locale)
     return locale;
 }
 
-void CDECL free_locale_noalloc(MSVCRT__locale_t locale)
+void CDECL free_locale_noalloc(_locale_t locale)
 {
     free_locinfo(locale->locinfo);
     free_mbcinfo(locale->mbcinfo);
@@ -1173,9 +1173,9 @@ void CDECL free_locale_noalloc(MSVCRT__locale_t locale)
 /*********************************************************************
  *      _get_current_locale (MSVCRT.@)
  */
-MSVCRT__locale_t CDECL MSVCRT__get_current_locale(void)
+_locale_t CDECL MSVCRT__get_current_locale(void)
 {
-    MSVCRT__locale_t loc = MSVCRT_malloc(sizeof(MSVCRT__locale_tstruct));
+    _locale_t loc = MSVCRT_malloc(sizeof(_locale_tstruct));
     if(!loc)
         return NULL;
 
@@ -1185,7 +1185,7 @@ MSVCRT__locale_t CDECL MSVCRT__get_current_locale(void)
 /*********************************************************************
  *      _free_locale (MSVCRT.@)
  */
-void CDECL MSVCRT__free_locale(MSVCRT__locale_t locale)
+void CDECL MSVCRT__free_locale(_locale_t locale)
 {
     if (!locale)
         return;
@@ -1948,11 +1948,11 @@ static pthreadlocinfo create_locinfo(int category,
 /*********************************************************************
  *      _create_locale (MSVCRT.@)
  */
-MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
+_locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 {
-    MSVCRT__locale_t loc;
+    _locale_t loc;
 
-    loc = MSVCRT_malloc(sizeof(MSVCRT__locale_tstruct));
+    loc = MSVCRT_malloc(sizeof(_locale_tstruct));
     if(!loc)
         return NULL;
 
@@ -1976,9 +1976,9 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 /*********************************************************************
  *      _wcreate_locale (MSVCR110.@)
  */
-MSVCRT__locale_t CDECL MSVCRT__wcreate_locale(int category, const MSVCRT_wchar_t *locale)
+_locale_t CDECL MSVCRT__wcreate_locale(int category, const MSVCRT_wchar_t *locale)
 {
-    MSVCRT__locale_t loc;
+    _locale_t loc;
     MSVCRT_size_t len;
     char *str;
 

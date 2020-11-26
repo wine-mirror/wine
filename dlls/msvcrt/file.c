@@ -5157,7 +5157,7 @@ static int puts_clbk_file_w(void *file, int len, const MSVCRT_wchar_t *str)
 }
 
 static int vfprintf_helper(DWORD options, MSVCRT_FILE* file, const char *format,
-        MSVCRT__locale_t locale, __ms_va_list valist)
+        _locale_t locale, __ms_va_list valist)
 {
     printf_arg args_ctx[MSVCRT__ARGMAX+1];
     BOOL tmp_buf;
@@ -5189,7 +5189,7 @@ static int vfprintf_helper(DWORD options, MSVCRT_FILE* file, const char *format,
 }
 
 static int vfwprintf_helper(DWORD options, MSVCRT_FILE* file, const MSVCRT_wchar_t *format,
-        MSVCRT__locale_t locale, __ms_va_list valist)
+        _locale_t locale, __ms_va_list valist)
 {
     printf_arg args_ctx[MSVCRT__ARGMAX+1];
     BOOL tmp_buf;
@@ -5224,7 +5224,7 @@ static int vfwprintf_helper(DWORD options, MSVCRT_FILE* file, const MSVCRT_wchar
  *    _vfprintf_s_l (MSVCRT.@)
  */
 int CDECL MSVCRT__vfprintf_s_l(MSVCRT_FILE* file, const char *format,
-        MSVCRT__locale_t locale, __ms_va_list valist)
+        _locale_t locale, __ms_va_list valist)
 {
     return vfprintf_helper(MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER, file, format, locale, valist);
 }
@@ -5233,7 +5233,7 @@ int CDECL MSVCRT__vfprintf_s_l(MSVCRT_FILE* file, const char *format,
  *    _vfwprintf_s_l (MSVCRT.@)
  */
 int CDECL MSVCRT__vfwprintf_s_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format,
-        MSVCRT__locale_t locale, __ms_va_list valist)
+        _locale_t locale, __ms_va_list valist)
 {
     return vfwprintf_helper(MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER, file, format, locale, valist);
 }
@@ -5276,7 +5276,7 @@ int CDECL MSVCRT_vfwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __
  *              __stdio_common_vfprintf (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vfprintf(unsigned __int64 options, MSVCRT_FILE *file, const char *format,
-                                        MSVCRT__locale_t locale, __ms_va_list valist)
+                                        _locale_t locale, __ms_va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
@@ -5288,7 +5288,7 @@ int CDECL MSVCRT__stdio_common_vfprintf(unsigned __int64 options, MSVCRT_FILE *f
  *              __stdio_common_vfprintf_s (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vfprintf_s(unsigned __int64 options, MSVCRT_FILE *file, const char *format,
-                                          MSVCRT__locale_t locale, __ms_va_list valist)
+                                          _locale_t locale, __ms_va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
@@ -5301,7 +5301,7 @@ int CDECL MSVCRT__stdio_common_vfprintf_s(unsigned __int64 options, MSVCRT_FILE 
  *              __stdio_common_vfwprintf (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vfwprintf(unsigned __int64 options, MSVCRT_FILE *file, const MSVCRT_wchar_t *format,
-                                         MSVCRT__locale_t locale, __ms_va_list valist)
+                                         _locale_t locale, __ms_va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
@@ -5313,7 +5313,7 @@ int CDECL MSVCRT__stdio_common_vfwprintf(unsigned __int64 options, MSVCRT_FILE *
  *              __stdio_common_vfwprintf_s (UCRTBASE.@)
  */
 int CDECL MSVCRT__stdio_common_vfwprintf_s(unsigned __int64 options, MSVCRT_FILE *file, const MSVCRT_wchar_t *format,
-                                           MSVCRT__locale_t locale, __ms_va_list valist)
+                                           _locale_t locale, __ms_va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
@@ -5328,7 +5328,7 @@ int CDECL MSVCRT__stdio_common_vfwprintf_s(unsigned __int64 options, MSVCRT_FILE
  *    _vfprintf_l (MSVCRT.@)
  */
 int CDECL MSVCRT__vfprintf_l(MSVCRT_FILE* file, const char *format,
-        MSVCRT__locale_t locale, __ms_va_list valist)
+        _locale_t locale, __ms_va_list valist)
 {
     return vfprintf_helper(0, file, format, locale, valist);
 }
@@ -5337,7 +5337,7 @@ int CDECL MSVCRT__vfprintf_l(MSVCRT_FILE* file, const char *format,
  *              _vfwprintf_l (MSVCRT.@)
  */
 int CDECL MSVCRT__vfwprintf_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format,
-        MSVCRT__locale_t locale, __ms_va_list valist)
+        _locale_t locale, __ms_va_list valist)
 {
     return vfwprintf_helper(0, file, format, locale, valist);
 }
@@ -5346,7 +5346,7 @@ int CDECL MSVCRT__vfwprintf_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format,
  *    _vfprintf_p_l (MSVCRT.@)
  */
 int CDECL MSVCRT__vfprintf_p_l(MSVCRT_FILE* file, const char *format,
-        MSVCRT__locale_t locale, __ms_va_list valist)
+        _locale_t locale, __ms_va_list valist)
 {
     return vfprintf_helper(MSVCRT_PRINTF_POSITIONAL_PARAMS | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
             file, format, locale, valist);
@@ -5364,7 +5364,7 @@ int CDECL MSVCRT__vfprintf_p(MSVCRT_FILE* file, const char *format, __ms_va_list
  *    _vfwprintf_p_l (MSVCRT.@)
  */
 int CDECL MSVCRT__vfwprintf_p_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format,
-        MSVCRT__locale_t locale, __ms_va_list valist)
+        _locale_t locale, __ms_va_list valist)
 {
     return vfwprintf_helper(MSVCRT_PRINTF_POSITIONAL_PARAMS | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
             file, format, locale, valist);
@@ -5465,7 +5465,7 @@ int WINAPIV MSVCRT_fwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, .
 /*********************************************************************
  *              _fwprintf_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__fwprintf_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, ...)
+int WINAPIV MSVCRT__fwprintf_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;

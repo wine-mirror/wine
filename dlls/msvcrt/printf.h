@@ -109,7 +109,7 @@ static inline int FUNC_NAME(pf_fill)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ct
 #ifndef PRINTF_HELPERS
 #define PRINTF_HELPERS
 static inline int wcstombs_len(char *mbstr, const MSVCRT_wchar_t *wcstr,
-        int len, MSVCRT__locale_t locale)
+        int len, _locale_t locale)
 {
     char buf[MSVCRT_MB_LEN_MAX];
     int i, r, mblen = 0;
@@ -123,7 +123,7 @@ static inline int wcstombs_len(char *mbstr, const MSVCRT_wchar_t *wcstr,
 }
 
 static inline int mbstowcs_len(MSVCRT_wchar_t *wcstr, const char *mbstr,
-        int len, MSVCRT__locale_t locale)
+        int len, _locale_t locale)
 {
     int i, r, wlen = 0;
     WCHAR buf;
@@ -138,7 +138,7 @@ static inline int mbstowcs_len(MSVCRT_wchar_t *wcstr, const char *mbstr,
 #endif
 
 static inline int FUNC_NAME(pf_output_wstr)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const MSVCRT_wchar_t *str, int len, MSVCRT__locale_t locale)
+        const MSVCRT_wchar_t *str, int len, _locale_t locale)
 {
 #ifdef PRINTF_WIDE
     return pf_puts(puts_ctx, len, str);
@@ -160,7 +160,7 @@ static inline int FUNC_NAME(pf_output_wstr)(FUNC_NAME(puts_clbk) pf_puts, void *
 }
 
 static inline int FUNC_NAME(pf_output_str)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const char *str, int len, MSVCRT__locale_t locale)
+        const char *str, int len, _locale_t locale)
 {
 #ifdef PRINTF_WIDE
     LPWSTR out;
@@ -182,7 +182,7 @@ static inline int FUNC_NAME(pf_output_str)(FUNC_NAME(puts_clbk) pf_puts, void *p
 }
 
 static inline int FUNC_NAME(pf_output_format_wstr)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const MSVCRT_wchar_t *str, int len, pf_flags *flags, MSVCRT__locale_t locale)
+        const MSVCRT_wchar_t *str, int len, pf_flags *flags, _locale_t locale)
 {
     int r, ret;
 
@@ -212,7 +212,7 @@ static inline int FUNC_NAME(pf_output_format_wstr)(FUNC_NAME(puts_clbk) pf_puts,
 }
 
 static inline int FUNC_NAME(pf_output_format_str)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const char *str, int len, pf_flags *flags, MSVCRT__locale_t locale)
+        const char *str, int len, pf_flags *flags, _locale_t locale)
 {
     int r, ret;
 
@@ -242,7 +242,7 @@ static inline int FUNC_NAME(pf_output_format_str)(FUNC_NAME(puts_clbk) pf_puts, 
 }
 
 static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const void *str, int len, pf_flags *flags, MSVCRT__locale_t locale, BOOL legacy_wide)
+        const void *str, int len, pf_flags *flags, _locale_t locale, BOOL legacy_wide)
 {
     BOOL api_is_wide = sizeof(APICHAR) == sizeof(MSVCRT_wchar_t);
     BOOL complement_is_narrow = legacy_wide ? api_is_wide : FALSE;
@@ -268,7 +268,7 @@ static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void
 }
 
 static inline int FUNC_NAME(pf_output_special_fp)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        double v, pf_flags *flags, MSVCRT__locale_t locale,
+        double v, pf_flags *flags, _locale_t locale,
         BOOL legacy_msvcrt_compat, BOOL three_digit_exp)
 {
     APICHAR pfx[16], sfx[8], *p;
@@ -397,7 +397,7 @@ static inline int FUNC_NAME(pf_output_special_fp)(FUNC_NAME(puts_clbk) pf_puts, 
 }
 
 static inline int FUNC_NAME(pf_output_hex_fp)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        double v, pf_flags *flags, MSVCRT__locale_t locale, BOOL standard_rounding)
+        double v, pf_flags *flags, _locale_t locale, BOOL standard_rounding)
 {
     const APICHAR digits[2][16] = {
         { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' },
@@ -588,7 +588,7 @@ static inline void FUNC_NAME(pf_integer_conv)(APICHAR *buf, pf_flags *flags, LON
 }
 
 static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        double v, pf_flags *flags, MSVCRT__locale_t locale, BOOL three_digit_exp,
+        double v, pf_flags *flags, _locale_t locale, BOOL three_digit_exp,
         BOOL standard_rounding)
 {
     int e2, e10 = 0, round_pos, round_limb, radix_pos, first_limb_len, i, len, r, ret;
@@ -951,7 +951,7 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
 }
 
 int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const APICHAR *fmt,
-        MSVCRT__locale_t locale, DWORD options,
+        _locale_t locale, DWORD options,
         args_clbk pf_args, void *args_ctx, __ms_va_list *valist)
 {
     const APICHAR *q, *p = fmt;

@@ -53,7 +53,7 @@ char* CDECL MSVCRT__strdup(const char* str)
 /*********************************************************************
  *		_strlwr_s_l (MSVCRT.@)
  */
-int CDECL MSVCRT__strlwr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t locale)
+int CDECL MSVCRT__strlwr_s_l(char *str, MSVCRT_size_t len, _locale_t locale)
 {
     pthreadlocinfo locinfo;
     char *ptr = str;
@@ -114,7 +114,7 @@ int CDECL MSVCRT__strlwr_s(char *str, MSVCRT_size_t len)
 /*********************************************************************
  *		_strlwr_l (MSVCRT.@)
  */
-char* CDECL _strlwr_l(char *str, MSVCRT__locale_t locale)
+char* CDECL _strlwr_l(char *str, _locale_t locale)
 {
     MSVCRT__strlwr_s_l(str, -1, locale);
     return str;
@@ -132,7 +132,7 @@ char* CDECL MSVCRT__strlwr(char *str)
 /*********************************************************************
  *              _strupr_s_l (MSVCRT.@)
  */
-int CDECL MSVCRT__strupr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t locale)
+int CDECL MSVCRT__strupr_s_l(char *str, MSVCRT_size_t len, _locale_t locale)
 {
     pthreadlocinfo locinfo;
     char *ptr = str;
@@ -193,7 +193,7 @@ int CDECL MSVCRT__strupr_s(char *str, MSVCRT_size_t len)
 /*********************************************************************
  *              _strupr_l (MSVCRT.@)
  */
-char* CDECL MSVCRT__strupr_l(char *str, MSVCRT__locale_t locale)
+char* CDECL MSVCRT__strupr_l(char *str, _locale_t locale)
 {
     MSVCRT__strupr_s_l(str, -1, locale);
     return str;
@@ -1000,7 +1000,7 @@ static void strtod_str_unget(void *ctx)
     (*p)--;
 }
 
-static inline double strtod_helper(const char *str, char **end, MSVCRT__locale_t locale, int *perr)
+static inline double strtod_helper(const char *str, char **end, _locale_t locale, int *perr)
 {
     pthreadlocinfo locinfo;
     const char *beg, *p;
@@ -1040,7 +1040,7 @@ static inline double strtod_helper(const char *str, char **end, MSVCRT__locale_t
 /*********************************************************************
  *		strtod_l  (MSVCRT.@)
  */
-double CDECL MSVCRT_strtod_l(const char *str, char **end, MSVCRT__locale_t locale)
+double CDECL MSVCRT_strtod_l(const char *str, char **end, _locale_t locale)
 {
     return strtod_helper(str, end, locale, NULL);
 }
@@ -1058,7 +1058,7 @@ double CDECL MSVCRT_strtod( const char *str, char **end )
 /*********************************************************************
  *		strtof_l  (MSVCR120.@)
  */
-float CDECL MSVCRT__strtof_l( const char *str, char **end, MSVCRT__locale_t locale )
+float CDECL MSVCRT__strtof_l( const char *str, char **end, _locale_t locale )
 {
     return MSVCRT_strtod_l(str, end, locale);
 }
@@ -1084,7 +1084,7 @@ double CDECL MSVCRT_atof( const char *str )
 /*********************************************************************
  *		_atof_l  (MSVCRT.@)
  */
-double CDECL MSVCRT__atof_l( const char *str, MSVCRT__locale_t locale)
+double CDECL MSVCRT__atof_l( const char *str, _locale_t locale)
 {
     return MSVCRT_strtod_l(str, NULL, locale);
 }
@@ -1092,7 +1092,7 @@ double CDECL MSVCRT__atof_l( const char *str, MSVCRT__locale_t locale)
 /*********************************************************************
  *		_atoflt_l  (MSVCRT.@)
  */
-int CDECL MSVCRT__atoflt_l( MSVCRT__CRT_FLOAT *value, char *str, MSVCRT__locale_t locale)
+int CDECL MSVCRT__atoflt_l( MSVCRT__CRT_FLOAT *value, char *str, _locale_t locale)
 {
     double d;
     int err;
@@ -1117,7 +1117,7 @@ int CDECL MSVCRT__atoflt(MSVCRT__CRT_FLOAT *value, char *str)
 /*********************************************************************
  *              _atodbl_l  (MSVCRT.@)
  */
-int CDECL MSVCRT__atodbl_l(MSVCRT__CRT_DOUBLE *value, char *str, MSVCRT__locale_t locale)
+int CDECL MSVCRT__atodbl_l(MSVCRT__CRT_DOUBLE *value, char *str, _locale_t locale)
 {
     int err;
 
@@ -1140,7 +1140,7 @@ int CDECL MSVCRT__atodbl(MSVCRT__CRT_DOUBLE *value, char *str)
 /*********************************************************************
  *		_strcoll_l (MSVCRT.@)
  */
-int CDECL MSVCRT_strcoll_l( const char* str1, const char* str2, MSVCRT__locale_t locale )
+int CDECL MSVCRT_strcoll_l( const char* str1, const char* str2, _locale_t locale )
 {
     pthreadlocinfo locinfo;
 
@@ -1165,7 +1165,7 @@ int CDECL MSVCRT_strcoll( const char* str1, const char* str2 )
 /*********************************************************************
  *		_stricoll_l (MSVCRT.@)
  */
-int CDECL MSVCRT__stricoll_l( const char* str1, const char* str2, MSVCRT__locale_t locale )
+int CDECL MSVCRT__stricoll_l( const char* str1, const char* str2, _locale_t locale )
 {
     pthreadlocinfo locinfo;
 
@@ -1191,7 +1191,7 @@ int CDECL MSVCRT__stricoll( const char* str1, const char* str2 )
 /*********************************************************************
  *              _strncoll_l (MSVCRT.@)
  */
-int CDECL MSVCRT__strncoll_l( const char* str1, const char* str2, MSVCRT_size_t count, MSVCRT__locale_t locale )
+int CDECL MSVCRT__strncoll_l( const char* str1, const char* str2, MSVCRT_size_t count, _locale_t locale )
 {
     pthreadlocinfo locinfo;
 
@@ -1218,7 +1218,7 @@ int CDECL MSVCRT__strncoll( const char* str1, const char* str2, MSVCRT_size_t co
 /*********************************************************************
  *              _strnicoll_l (MSVCRT.@)
  */
-int CDECL MSVCRT__strnicoll_l( const char* str1, const char* str2, MSVCRT_size_t count, MSVCRT__locale_t locale )
+int CDECL MSVCRT__strnicoll_l( const char* str1, const char* str2, MSVCRT_size_t count, _locale_t locale )
 {
     pthreadlocinfo locinfo;
 
@@ -1384,7 +1384,7 @@ char* __cdecl MSVCRT_strncat(char *dst, const char *src, MSVCRT_size_t len)
  *		_strxfrm_l (MSVCRT.@)
  */
 MSVCRT_size_t CDECL MSVCRT__strxfrm_l( char *dest, const char *src,
-        MSVCRT_size_t len, MSVCRT__locale_t locale )
+        MSVCRT_size_t len, _locale_t locale )
 {
     pthreadlocinfo locinfo;
     int ret;
@@ -1438,7 +1438,7 @@ MSVCRT_size_t CDECL MSVCRT_strxfrm( char *dest, const char *src, MSVCRT_size_t l
  *		__STRINGTOLD_L (MSVCR80.@)
  */
 int CDECL __STRINGTOLD_L( MSVCRT__LDOUBLE *value, char **endptr,
-        const char *str, int flags, MSVCRT__locale_t locale )
+        const char *str, int flags, _locale_t locale )
 {
     pthreadlocinfo locinfo;
     const char *beg, *p;
@@ -1477,7 +1477,7 @@ int CDECL __STRINGTOLD( MSVCRT__LDOUBLE *value, char **endptr, const char *str, 
 /********************************************************************
  *              _atoldbl_l (MSVCRT.@)
  */
-int CDECL MSVCRT__atoldbl_l( MSVCRT__LDOUBLE *value, const char *str, MSVCRT__locale_t locale )
+int CDECL MSVCRT__atoldbl_l( MSVCRT__LDOUBLE *value, const char *str, _locale_t locale )
 {
     char *endptr;
     switch(__STRINGTOLD_L( value, &endptr, str, 0, locale ))
@@ -1524,7 +1524,7 @@ MSVCRT_size_t CDECL MSVCRT_strnlen(const char *s, MSVCRT_size_t maxlen)
  *
  * FIXME: locale parameter is ignored
  */
-__int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCRT__locale_t locale)
+__int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, _locale_t locale)
 {
     const char *p = nptr;
     BOOL negative = FALSE;
@@ -1604,7 +1604,7 @@ __int64 CDECL MSVCRT_strtoi64(const char *nptr, char **endptr, int base)
 /*********************************************************************
  *  _atoi_l (MSVCRT.@)
  */
-int __cdecl MSVCRT__atoi_l(const char *str, MSVCRT__locale_t locale)
+int __cdecl MSVCRT__atoi_l(const char *str, _locale_t locale)
 {
     __int64 ret = MSVCRT_strtoi64_l(str, NULL, 10, locale);
 
@@ -1656,7 +1656,7 @@ int CDECL MSVCRT_atoi(const char *str)
 /******************************************************************
  *      _atoi64_l (MSVCRT.@)
  */
-__int64 CDECL MSVCRT__atoi64_l(const char *str, MSVCRT__locale_t locale)
+__int64 CDECL MSVCRT__atoi64_l(const char *str, _locale_t locale)
 {
     return MSVCRT_strtoi64_l(str, NULL, 10, locale);
 }
@@ -1672,7 +1672,7 @@ __int64 CDECL MSVCRT__atoi64(const char *str)
 /******************************************************************
  *      _atol_l (MSVCRT.@)
  */
-MSVCRT_long CDECL MSVCRT__atol_l(const char *str, MSVCRT__locale_t locale)
+MSVCRT_long CDECL MSVCRT__atol_l(const char *str, _locale_t locale)
 {
     __int64 ret = MSVCRT_strtoi64_l(str, NULL, 10, locale);
 
@@ -1703,7 +1703,7 @@ MSVCRT_long CDECL MSVCRT_atol(const char *str)
 /******************************************************************
  *      _atoll_l (MSVCR120.@)
  */
-MSVCRT_longlong CDECL MSVCRT__atoll_l(const char* str, MSVCRT__locale_t locale)
+MSVCRT_longlong CDECL MSVCRT__atoll_l(const char* str, _locale_t locale)
 {
     return MSVCRT_strtoi64_l(str, NULL, 10, locale);
 }
@@ -1722,7 +1722,7 @@ MSVCRT_longlong CDECL MSVCRT_atoll(const char* str)
  *		_strtol_l (MSVCRT.@)
  */
 MSVCRT_long CDECL MSVCRT__strtol_l(const char* nptr,
-        char** end, int base, MSVCRT__locale_t locale)
+        char** end, int base, _locale_t locale)
 {
     __int64 ret = MSVCRT_strtoi64_l(nptr, end, base, locale);
 
@@ -1748,7 +1748,7 @@ MSVCRT_long CDECL MSVCRT_strtol(const char* nptr, char** end, int base)
 /******************************************************************
  *		_strtoul_l (MSVCRT.@)
  */
-MSVCRT_ulong CDECL MSVCRT_strtoul_l(const char* nptr, char** end, int base, MSVCRT__locale_t locale)
+MSVCRT_ulong CDECL MSVCRT_strtoul_l(const char* nptr, char** end, int base, _locale_t locale)
 {
     __int64 ret = MSVCRT_strtoi64_l(nptr, end, base, locale);
 
@@ -1776,7 +1776,7 @@ MSVCRT_ulong CDECL MSVCRT_strtoul(const char* nptr, char** end, int base)
  *
  * FIXME: locale parameter is ignored
  */
-unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int base, MSVCRT__locale_t locale)
+unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int base, _locale_t locale)
 {
     const char *p = nptr;
     BOOL negative = FALSE;
@@ -2650,7 +2650,7 @@ int __cdecl MSVCRT_strncmp(const char *str1, const char *str2, MSVCRT_size_t len
  *                  _strnicmp_l   (MSVCRT.@)
  */
 int __cdecl MSVCRT__strnicmp_l(const char *s1, const char *s2,
-        MSVCRT_size_t count, MSVCRT__locale_t locale)
+        MSVCRT_size_t count, _locale_t locale)
 {
     pthreadlocinfo locinfo;
     int c1, c2;
@@ -2689,7 +2689,7 @@ int __cdecl MSVCRT__strnicmp_l(const char *s1, const char *s2,
 /*********************************************************************
  *                  _stricmp_l   (MSVCRT.@)
  */
-int __cdecl MSVCRT__stricmp_l(const char *s1, const char *s2, MSVCRT__locale_t locale)
+int __cdecl MSVCRT__stricmp_l(const char *s1, const char *s2, _locale_t locale)
 {
     return MSVCRT__strnicmp_l(s1, s2, -1, locale);
 }
@@ -2756,7 +2756,7 @@ char* __cdecl MSVCRT_strstr(const char *haystack, const char *needle)
 /*********************************************************************
  *                  _memicmp_l   (MSVCRT.@)
  */
-int __cdecl MSVCRT__memicmp_l(const char *s1, const char *s2, MSVCRT_size_t len, MSVCRT__locale_t locale)
+int __cdecl MSVCRT__memicmp_l(const char *s1, const char *s2, MSVCRT_size_t len, _locale_t locale)
 {
     int ret = 0;
 

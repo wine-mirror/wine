@@ -86,7 +86,7 @@ static const unsigned char mbctombb_932_kana[] = {
   0xd2,0xd3,0xac,0xd4,0xad,0xd5,0xae,0xd6,0xd7,0xd8,0xd9,0xda,0xdb,0xdc,0xdc,0xb2,
   0xb4,0xa6,0xdd,0xb3,0xb6,0xb9};
 
-static MSVCRT_wchar_t msvcrt_mbc_to_wc_l(unsigned int ch, MSVCRT__locale_t locale)
+static MSVCRT_wchar_t msvcrt_mbc_to_wc_l(unsigned int ch, _locale_t locale)
 {
     pthreadmbcinfo mbcinfo;
     MSVCRT_wchar_t chW;
@@ -197,7 +197,7 @@ int CDECL MSVCRT____mb_cur_max_func(void)
 /*********************************************************************
  *		___mb_cur_max_l_func  (MSVCR80.@)
  */
-int CDECL ___mb_cur_max_l_func(MSVCRT__locale_t locale)
+int CDECL ___mb_cur_max_l_func(_locale_t locale)
 {
   pthreadlocinfo locinfo;
 
@@ -422,7 +422,7 @@ int CDECL _getmbcp(void)
 /*********************************************************************
  *		_mbsnextc_l(MSVCRT.@)
  */
-unsigned int CDECL _mbsnextc_l(const unsigned char* str, MSVCRT__locale_t locale)
+unsigned int CDECL _mbsnextc_l(const unsigned char* str, _locale_t locale)
 {
   if(_ismbblead_l(*str, locale))
     return *str << 8 | str[1];
@@ -617,7 +617,7 @@ unsigned char* CDECL _mbsninc(const unsigned char* str, MSVCRT_size_t num)
  *              _mbsnlen_l(MSVCRT.@)
  */
 MSVCRT_size_t CDECL _mbsnlen_l(const unsigned char *str,
-        MSVCRT_size_t maxsize, MSVCRT__locale_t locale)
+        MSVCRT_size_t maxsize, _locale_t locale)
 {
     pthreadmbcinfo mbcinfo;
     MSVCRT_size_t i = 0, len = 0;
@@ -655,7 +655,7 @@ MSVCRT_size_t CDECL _mbslen(const unsigned char* str)
 /*********************************************************************
  *              _mbslen_l(MSVCRT.@)
  */
-MSVCRT_size_t CDECL _mbslen_l(const unsigned char* str, MSVCRT__locale_t locale)
+MSVCRT_size_t CDECL _mbslen_l(const unsigned char* str, _locale_t locale)
 {
     return _mbsnlen_l(str, -1, locale);
 }
@@ -672,7 +672,7 @@ MSVCRT_size_t CDECL _mbsnlen(const unsigned char* str, MSVCRT_size_t maxsize)
  *              _mbccpy_s_l(MSVCRT.@)
  */
 int CDECL _mbccpy_s_l(unsigned char* dest, MSVCRT_size_t maxsize,
-        int *copied, const unsigned char* src, MSVCRT__locale_t locale)
+        int *copied, const unsigned char* src, _locale_t locale)
 {
     if(copied) *copied = 0;
     if(!MSVCRT_CHECK_PMT(dest != NULL && maxsize >= 1)) return MSVCRT_EINVAL;
@@ -714,7 +714,7 @@ void CDECL _mbccpy(unsigned char* dest, const unsigned char* src)
  *              _mbccpy_l(MSVCRT.@)
  */
 void CDECL _mbccpy_l(unsigned char* dest, const unsigned char* src,
-        MSVCRT__locale_t locale)
+        _locale_t locale)
 {
     _mbccpy_s_l(dest, 2, NULL, src, locale);
 }
@@ -778,7 +778,7 @@ unsigned char* CDECL _mbsncpy(unsigned char* dst, const unsigned char* src, MSVC
  * string with 0
  */
 int CDECL _mbsnbcpy_s_l(unsigned char* dst, MSVCRT_size_t size,
-        const unsigned char* src, MSVCRT_size_t n, MSVCRT__locale_t locale)
+        const unsigned char* src, MSVCRT_size_t n, _locale_t locale)
 {
     MSVCRT_size_t pos = 0;
 
@@ -849,7 +849,7 @@ int CDECL _mbsnbcpy_s(unsigned char* dst, MSVCRT_size_t size, const unsigned cha
  *              _mbscpy_s_l(MSVCRT.@)
  */
 int CDECL _mbscpy_s_l(unsigned char *dst, MSVCRT_size_t size,
-        const unsigned char *src, MSVCRT__locale_t locale)
+        const unsigned char *src, _locale_t locale)
 {
     return _mbsnbcpy_s_l(dst, size, src, -1, locale);
 }
@@ -901,7 +901,7 @@ unsigned char* CDECL _mbsnbcpy(unsigned char* dst, const unsigned char* src, MSV
 /*********************************************************************
  *		_mbscmp_l(MSVCRT.@)
  */
-int CDECL _mbscmp_l(const unsigned char* str, const unsigned char* cmp, MSVCRT__locale_t locale)
+int CDECL _mbscmp_l(const unsigned char* str, const unsigned char* cmp, _locale_t locale)
 {
   pthreadmbcinfo mbcinfo;
 
@@ -931,7 +931,7 @@ int CDECL _mbscmp_l(const unsigned char* str, const unsigned char* cmp, MSVCRT__
 /*********************************************************************
  *		_mbscmp(MSVCRT.@)
  */
-int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp, MSVCRT__locale_t locale)
+int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp, _locale_t locale)
 {
     return _mbscmp_l(str, cmp, NULL);
 }
@@ -939,7 +939,7 @@ int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp, MSVCRT__lo
 /*********************************************************************
  *              _mbsnbicoll_l(MSVCRT.@)
  */
-int CDECL _mbsnbicoll_l(const unsigned char *str1, const unsigned char *str2, MSVCRT_size_t len, MSVCRT__locale_t locale)
+int CDECL _mbsnbicoll_l(const unsigned char *str1, const unsigned char *str2, MSVCRT_size_t len, _locale_t locale)
 {
     pthreadmbcinfo mbcinfo;
 
@@ -956,7 +956,7 @@ int CDECL _mbsnbicoll_l(const unsigned char *str1, const unsigned char *str2, MS
 /*********************************************************************
  *              _mbsicoll_l(MSVCRT.@)
  */
-int CDECL _mbsicoll_l(const unsigned char *str1, const unsigned char *str2, MSVCRT__locale_t locale)
+int CDECL _mbsicoll_l(const unsigned char *str1, const unsigned char *str2, _locale_t locale)
 {
     return _mbsnbicoll_l(str1, str2, -1, locale);
 }
@@ -985,7 +985,7 @@ int CDECL _mbsicoll(const unsigned char* str, const unsigned char* cmp)
 /*********************************************************************
  *              _mbsnbcoll_l(MSVCRT.@)
  */
-int CDECL _mbsnbcoll_l(const unsigned char *str1, const unsigned char *str2, MSVCRT_size_t len, MSVCRT__locale_t locale)
+int CDECL _mbsnbcoll_l(const unsigned char *str1, const unsigned char *str2, MSVCRT_size_t len, _locale_t locale)
 {
     pthreadmbcinfo mbcinfo;
 
@@ -1002,7 +1002,7 @@ int CDECL _mbsnbcoll_l(const unsigned char *str1, const unsigned char *str2, MSV
 /*********************************************************************
  *              _mbscoll_l(MSVCRT.@)
  */
-int CDECL _mbscoll_l(const unsigned char *str1, const unsigned char *str2, MSVCRT__locale_t locale)
+int CDECL _mbscoll_l(const unsigned char *str1, const unsigned char *str2, _locale_t locale)
 {
     return _mbsnbcoll_l(str1, str2, -1, locale);
 }
@@ -1211,7 +1211,7 @@ unsigned char * CDECL _mbscat( unsigned char *dst, const unsigned char *src )
  *		_mbscat_s_l (MSVCRT.@)
  */
 int CDECL _mbscat_s_l( unsigned char *dst, MSVCRT_size_t size,
-        const unsigned char *src, MSVCRT__locale_t locale )
+        const unsigned char *src, _locale_t locale )
 {
     MSVCRT_size_t i, j;
     int ret = 0;
@@ -1324,7 +1324,7 @@ unsigned char* CDECL _mbsrchr(const unsigned char* s, unsigned int x)
  *              _mbstok_s_l(MSVCRT.@)
  */
 unsigned char* CDECL _mbstok_s_l(unsigned char *str, const unsigned char *delim,
-        unsigned char **ctx, MSVCRT__locale_t locale)
+        unsigned char **ctx, _locale_t locale)
 {
     pthreadmbcinfo mbcinfo;
     unsigned int c;
@@ -1378,7 +1378,7 @@ unsigned char* CDECL _mbstok_s(unsigned char *str,
  *              _mbstok_l(MSVCRT.@)
  */
 unsigned char* CDECL _mbstok_l(unsigned char *str,
-        const unsigned char *delim, MSVCRT__locale_t locale)
+        const unsigned char *delim, _locale_t locale)
 {
     return _mbstok_s_l(str, delim, &msvcrt_get_thread_data()->mbstok_next, locale);
 }
@@ -1424,7 +1424,7 @@ unsigned int CDECL _mbbtombc(unsigned int c)
 /*********************************************************************
  *		_ismbbkana_l(MSVCRT.@)
  */
-int CDECL _ismbbkana_l(unsigned int c, MSVCRT__locale_t locale)
+int CDECL _ismbbkana_l(unsigned int c, _locale_t locale)
 {
     pthreadmbcinfo mbcinfo;
 
@@ -1452,7 +1452,7 @@ int CDECL _ismbbkana(unsigned int c)
 /*********************************************************************
  *              _ismbcdigit_l(MSVCRT.@)
  */
-int CDECL _ismbcdigit_l(unsigned int ch, MSVCRT__locale_t locale)
+int CDECL _ismbcdigit_l(unsigned int ch, _locale_t locale)
 {
     return MSVCRT__iswdigit_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
 }
@@ -1468,7 +1468,7 @@ int CDECL _ismbcdigit(unsigned int ch)
 /*********************************************************************
  *              _ismbcgraph_l(MSVCRT.@)
  */
-int CDECL _ismbcgraph_l(unsigned int ch, MSVCRT__locale_t locale)
+int CDECL _ismbcgraph_l(unsigned int ch, _locale_t locale)
 {
     return MSVCRT__iswgraph_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
 }
@@ -1484,7 +1484,7 @@ int CDECL _ismbcgraph(unsigned int ch)
 /*********************************************************************
  *              _ismbcalpha_l (MSVCRT.@)
  */
-int CDECL _ismbcalpha_l(unsigned int ch, MSVCRT__locale_t locale)
+int CDECL _ismbcalpha_l(unsigned int ch, _locale_t locale)
 {
     return MSVCRT__iswalpha_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
 }
@@ -1500,7 +1500,7 @@ int CDECL _ismbcalpha(unsigned int ch)
 /*********************************************************************
  *              _ismbclower_l (MSVCRT.@)
  */
-int CDECL _ismbclower_l(unsigned int ch, MSVCRT__locale_t locale)
+int CDECL _ismbclower_l(unsigned int ch, _locale_t locale)
 {
     return MSVCRT__iswlower_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
 }
@@ -1516,7 +1516,7 @@ int CDECL _ismbclower(unsigned int ch)
 /*********************************************************************
  *              _ismbcupper_l (MSVCRT.@)
  */
-int CDECL _ismbcupper_l(unsigned int ch, MSVCRT__locale_t locale)
+int CDECL _ismbcupper_l(unsigned int ch, _locale_t locale)
 {
     return MSVCRT__iswupper_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
 }
@@ -1547,7 +1547,7 @@ int CDECL _ismbcsymbol(unsigned int ch)
 /*********************************************************************
  *              _ismbcalnum_l (MSVCRT.@)
  */
-int CDECL _ismbcalnum_l(unsigned int ch, MSVCRT__locale_t locale)
+int CDECL _ismbcalnum_l(unsigned int ch, _locale_t locale)
 {
     return MSVCRT__iswalnum_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
 }
@@ -1563,7 +1563,7 @@ int CDECL _ismbcalnum(unsigned int ch)
 /*********************************************************************
  *              _ismbcspace_l (MSVCRT.@)
  */
-int CDECL _ismbcspace_l(unsigned int ch, MSVCRT__locale_t locale)
+int CDECL _ismbcspace_l(unsigned int ch, _locale_t locale)
 {
     return MSVCRT__iswspace_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
 }
@@ -1579,7 +1579,7 @@ int CDECL _ismbcspace(unsigned int ch)
 /*********************************************************************
  *              _ismbcprint_l (MSVCRT.@)
  */
-int CDECL _ismbcprint_l(unsigned int ch, MSVCRT__locale_t locale)
+int CDECL _ismbcprint_l(unsigned int ch, _locale_t locale)
 {
     return MSVCRT__iswprint_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
 }
@@ -1595,7 +1595,7 @@ int CDECL _ismbcprint(unsigned int ch)
 /*********************************************************************
  *              _ismbcpunct_l (MSVCRT.@)
  */
-int CDECL _ismbcpunct_l(unsigned int ch, MSVCRT__locale_t locale)
+int CDECL _ismbcpunct_l(unsigned int ch, _locale_t locale)
 {
     return MSVCRT__iswpunct_l( msvcrt_mbc_to_wc_l(ch, locale), locale );
 }
@@ -1638,7 +1638,7 @@ int CDECL _ismbckata(unsigned int c)
 /*********************************************************************
  *		_ismbblead_l(MSVCRT.@)
  */
-int CDECL _ismbblead_l(unsigned int c, MSVCRT__locale_t locale)
+int CDECL _ismbblead_l(unsigned int c, _locale_t locale)
 {
     pthreadmbcinfo mbcinfo;
 
@@ -1661,7 +1661,7 @@ int CDECL _ismbblead(unsigned int c)
 /*********************************************************************
  *              _ismbbtrail_l(MSVCRT.@)
  */
-int CDECL _ismbbtrail_l(unsigned int c, MSVCRT__locale_t locale)
+int CDECL _ismbbtrail_l(unsigned int c, _locale_t locale)
 {
     pthreadmbcinfo mbcinfo;
 
@@ -1684,7 +1684,7 @@ int CDECL _ismbbtrail(unsigned int c)
 /*********************************************************************
  *              _ismbclegal_l(MSVCRT.@)
  */
-int CDECL _ismbclegal_l(unsigned int c, MSVCRT__locale_t locale)
+int CDECL _ismbclegal_l(unsigned int c, _locale_t locale)
 {
     return _ismbblead_l(HIBYTE(c), locale) && _ismbbtrail_l(LOBYTE(c), locale);
 }
@@ -1735,7 +1735,7 @@ int CDECL _ismbstrail(const unsigned char* start, const unsigned char* str)
 /*********************************************************************
  *		_mbbtype_l(MSVCRT.@)
  */
-int CDECL _mbbtype_l(unsigned char c, int type, MSVCRT__locale_t locale)
+int CDECL _mbbtype_l(unsigned char c, int type, _locale_t locale)
 {
     if (type == 1)
         return _ismbbtrail_l(c, locale) ? _MBC_TRAIL : _MBC_ILLEGAL;
@@ -2152,7 +2152,7 @@ int CDECL _mbsupr_s(unsigned char* s, MSVCRT_size_t len)
  *              _mbsspn_l (MSVCRT.@)
  */
 MSVCRT_size_t CDECL _mbsspn_l(const unsigned char* string,
-        const unsigned char* set, MSVCRT__locale_t locale)
+        const unsigned char* set, _locale_t locale)
 {
     const unsigned char *p, *q;
 
@@ -2203,7 +2203,7 @@ unsigned char* CDECL _mbsspnp(const unsigned char* string, const unsigned char* 
  *		_mbscspn_l (MSVCRT.@)
  */
 MSVCRT_size_t CDECL _mbscspn_l(const unsigned char* str,
-        const unsigned char* cmp, MSVCRT__locale_t locale)
+        const unsigned char* cmp, _locale_t locale)
 {
     const unsigned char *p, *q;
 
@@ -2360,7 +2360,7 @@ MSVCRT_size_t CDECL MSVCRT_mbrlen(const char *str, MSVCRT_size_t len, MSVCRT_mbs
 /*********************************************************************
  *		_mbstrlen_l(MSVCRT.@)
  */
-MSVCRT_size_t CDECL _mbstrlen_l(const char* str, MSVCRT__locale_t locale)
+MSVCRT_size_t CDECL _mbstrlen_l(const char* str, _locale_t locale)
 {
     pthreadlocinfo locinfo;
 
@@ -2394,7 +2394,7 @@ MSVCRT_size_t CDECL _mbstrlen(const char* str)
 /*********************************************************************
  *		_mbtowc_l(MSVCRT.@)
  */
-int CDECL MSVCRT_mbtowc_l(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n, MSVCRT__locale_t locale)
+int CDECL MSVCRT_mbtowc_l(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n, _locale_t locale)
 {
     pthreadlocinfo locinfo;
     MSVCRT_wchar_t tmpdst = '\0';
@@ -2506,7 +2506,7 @@ MSVCRT_size_t CDECL MSVCRT_mbrtowc(MSVCRT_wchar_t *dst, const char *str,
  *		_mbstowcs_l(MSVCRT.@)
  */
 MSVCRT_size_t CDECL MSVCRT__mbstowcs_l(MSVCRT_wchar_t *wcstr, const char *mbstr,
-        MSVCRT_size_t count, MSVCRT__locale_t locale)
+        MSVCRT_size_t count, _locale_t locale)
 {
     pthreadlocinfo locinfo;
     MSVCRT_size_t i, size;
@@ -2580,7 +2580,7 @@ MSVCRT_size_t CDECL MSVCRT_mbstowcs(MSVCRT_wchar_t *wcstr,
  */
 int CDECL MSVCRT__mbstowcs_s_l(MSVCRT_size_t *ret, MSVCRT_wchar_t *wcstr,
         MSVCRT_size_t size, const char *mbstr,
-        MSVCRT_size_t count, MSVCRT__locale_t locale)
+        MSVCRT_size_t count, _locale_t locale)
 {
     MSVCRT_size_t conv;
     int err = 0;
@@ -2721,7 +2721,7 @@ unsigned int CDECL _mbctokata(unsigned int c)
 /*********************************************************************
  *		_ismbcl0_l (MSVCRT.@)
  */
-int CDECL _ismbcl0_l(unsigned int c, MSVCRT__locale_t locale)
+int CDECL _ismbcl0_l(unsigned int c, _locale_t locale)
 {
     pthreadmbcinfo mbcinfo;
 
@@ -2750,7 +2750,7 @@ int CDECL _ismbcl0(unsigned int c)
 /*********************************************************************
  *		_ismbcl1_l (MSVCRT.@)
  */
-int CDECL _ismbcl1_l(unsigned int c, MSVCRT__locale_t locale)
+int CDECL _ismbcl1_l(unsigned int c, _locale_t locale)
 {
     pthreadmbcinfo mbcinfo;
 
@@ -2779,7 +2779,7 @@ int CDECL _ismbcl1(unsigned int c)
 /*********************************************************************
  *		_ismbcl2_l (MSVCRT.@)
  */
-int CDECL _ismbcl2_l(unsigned int c, MSVCRT__locale_t locale)
+int CDECL _ismbcl2_l(unsigned int c, _locale_t locale)
 {
     pthreadmbcinfo mbcinfo;
 

@@ -1192,7 +1192,7 @@ static inline BOOL strftime_tzdiff(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCR
 
 static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
         const STRFTIME_CHAR *format, const struct MSVCRT_tm *mstm,
-        __lc_time_data *time_data, MSVCRT__locale_t loc)
+        __lc_time_data *time_data, _locale_t loc)
 {
     MSVCRT_size_t ret, tmp;
     BOOL alternate;
@@ -1543,7 +1543,7 @@ einval_error:
 }
 
 static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *format,
-        const struct MSVCRT_tm *mstm, __lc_time_data *time_data, MSVCRT__locale_t loc)
+        const struct MSVCRT_tm *mstm, __lc_time_data *time_data, _locale_t loc)
 {
 #if _MSVCR_VER <= 90
     TRACE("(%p %Iu %s %p %p %p)\n", str, max, format, mstm, time_data, loc);
@@ -1582,7 +1582,7 @@ static MSVCRT_size_t strftime_helper(char *str, MSVCRT_size_t max, const char *f
  *     _strftime_l (MSVCR80.@)
  */
 MSVCRT_size_t CDECL MSVCRT__strftime_l( char *str, MSVCRT_size_t max, const char *format,
-        const struct MSVCRT_tm *mstm, MSVCRT__locale_t loc )
+        const struct MSVCRT_tm *mstm, _locale_t loc )
 {
     return strftime_helper(str, max, format, mstm, NULL, loc);
 }
@@ -1608,7 +1608,7 @@ MSVCRT_size_t CDECL MSVCRT_strftime( char *str, MSVCRT_size_t max, const char *f
 
 static MSVCRT_size_t wcsftime_helper( MSVCRT_wchar_t *str, MSVCRT_size_t max,
         const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm,
-        __lc_time_data *time_data, MSVCRT__locale_t loc )
+        __lc_time_data *time_data, _locale_t loc )
 {
 #if _MSVCR_VER <= 90
     char *s, *fmt;
@@ -1640,7 +1640,7 @@ static MSVCRT_size_t wcsftime_helper( MSVCRT_wchar_t *str, MSVCRT_size_t max,
  *              _wcsftime_l (MSVCRT.@)
  */
 MSVCRT_size_t CDECL MSVCRT__wcsftime_l( MSVCRT_wchar_t *str, MSVCRT_size_t max,
-        const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm, MSVCRT__locale_t loc )
+        const MSVCRT_wchar_t *format, const struct MSVCRT_tm *mstm, _locale_t loc )
 {
     return wcsftime_helper(str, max, format, mstm, NULL, loc);
 }
