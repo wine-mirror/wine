@@ -5360,7 +5360,7 @@ static void test_thread_context(void)
     /* Pc is somewhere close to the NtGetContextThread implementation */
     ok( (char *)context.Pc >= (char *)pNtGetContextThread - 0x40000 &&
         (char *)context.Pc <= (char *)pNtGetContextThread + 0x40000,
-        "wrong Pc %08x/%08x\n", context.Pc, (DWORD)pNtGetContextThread );
+        "wrong Pc %p/%p\n", (void *)context.Pc, pNtGetContextThread );
 #undef COMPARE
 }
 
