@@ -794,6 +794,7 @@ static void session_shutdown_current_topology(struct media_session *session)
     IMFMediaSink *sink;
     IUnknown *object;
     WORD idx = 0;
+    HRESULT hr;
 
     topology = session->presentation.current_topology;
     force_shutdown = session->state == SESSION_STATE_SHUT_DOWN;
@@ -813,7 +814,8 @@ static void session_shutdown_current_topology(struct media_session *session)
                 if (SUCCEEDED(IMFTopologyNode_GetUnknown(node, &_MF_TOPONODE_IMFActivate, &IID_IMFActivate,
                         (void **)&activate)))
                 {
-                    IMFActivate_ShutdownObject(activate);
+                    if (FAILED(hr = IMFActivate_ShutdownObject(activate)))
+                        WARN("Failed to shut down activation object for the sink, hr %#x.\n", hr);
                     IMFActivate_Release(activate);
                 }
                 else if (SUCCEEDED(IMFTopologyNode_GetObject(node, &object)))
@@ -1392,7 +1394,11 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
                     if (SUCCEEDED(MFGetService(topo_node->object.object, &MR_VIDEO_ACCELERATION_SERVICE,
                         &IID_IMFVideoSampleAllocator, (void **)&topo_node->u.sink.allocator)))
                     {
-                        IMFVideoSampleAllocator_InitializeSampleAllocator(topo_node->u.sink.allocator, 2, media_type);
+                        if (FAILED(hr = IMFVideoSampleAllocator_InitializeSampleAllocator(topo_node->u.sink.allocator,
+                                2, media_type)))
+                        {
+                            WARN("Failed to initialize sample allocator for the stream, hr %#x.\n", hr);
+                        }
                         IMFVideoSampleAllocator_QueryInterface(topo_node->u.sink.allocator,
                                 &IID_IMFVideoSampleAllocatorCallback, (void **)&topo_node->u.sink.allocator_cb);
                         IMFVideoSampleAllocatorCallback_SetCallback(topo_node->u.sink.allocator_cb,
