@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <fenv.h>
 #include <fpieee.h>
+#include <locale.h>
 #include <math.h>
 
 #include "msvcrt.h"

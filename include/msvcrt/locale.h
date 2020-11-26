@@ -53,6 +53,16 @@ struct lconv
     char n_sep_by_space;
     char p_sign_posn;
     char n_sign_posn;
+#if _MSVCR_VER >= 100
+    wchar_t* _W_decimal_point;
+    wchar_t* _W_thousands_sep;
+    wchar_t* _W_int_curr_symbol;
+    wchar_t* _W_currency_symbol;
+    wchar_t* _W_mon_decimal_point;
+    wchar_t* _W_mon_thousands_sep;
+    wchar_t* _W_positive_sign;
+    wchar_t* _W_negative_sign;
+#endif
 };
 #endif /* _LCONV_DEFINED */
 

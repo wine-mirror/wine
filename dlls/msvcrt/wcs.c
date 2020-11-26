@@ -20,6 +20,7 @@
  */
 
 #include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>

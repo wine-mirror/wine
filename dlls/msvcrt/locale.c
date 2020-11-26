@@ -199,7 +199,7 @@ static char cloc_dec_point[] = ".";
 static MSVCRT_wchar_t emptyW[] = {0};
 static MSVCRT_wchar_t cloc_dec_pointW[] = {'.', 0};
 #endif
-static struct MSVCRT_lconv cloc_lconv =
+static struct lconv cloc_lconv =
 {
     cloc_dec_point, empty, empty, empty, empty, empty, empty, empty, empty, empty,
     CHAR_MAX, CHAR_MAX, CHAR_MAX, CHAR_MAX, CHAR_MAX, CHAR_MAX, CHAR_MAX, CHAR_MAX,
@@ -1006,7 +1006,7 @@ BOOL CDECL __crtGetStringTypeW(DWORD unk, DWORD type,
 /*********************************************************************
  *		localeconv (MSVCRT.@)
  */
-struct MSVCRT_lconv * CDECL MSVCRT_localeconv(void)
+struct lconv* CDECL MSVCRT_localeconv(void)
 {
     return get_locinfo()->lconv;
 }
@@ -1511,7 +1511,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
         if(locinfo->lconv_intl_refcount)
             InterlockedIncrement(locinfo->lconv_intl_refcount);
     } else if(lcid[MSVCRT_LC_MONETARY] || lcid[MSVCRT_LC_NUMERIC]) {
-        locinfo->lconv = MSVCRT_malloc(sizeof(struct MSVCRT_lconv));
+        locinfo->lconv = MSVCRT_malloc(sizeof(struct lconv));
         locinfo->lconv_intl_refcount = MSVCRT_malloc(sizeof(int));
         if(!locinfo->lconv || !locinfo->lconv_intl_refcount) {
             MSVCRT_free(locinfo->lconv);
@@ -1521,7 +1521,7 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
             free_locinfo(locinfo);
             return NULL;
         }
-        memset(locinfo->lconv, 0, sizeof(struct MSVCRT_lconv));
+        memset(locinfo->lconv, 0, sizeof(struct lconv));
         *locinfo->lconv_intl_refcount = 1;
     } else {
         locinfo->lconv = &cloc_lconv;

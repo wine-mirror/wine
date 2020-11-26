@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <limits.h>
+#include <locale.h>
 #include <errno.h>
 #include "msvcrt.h"
 #include "bnum.h"
