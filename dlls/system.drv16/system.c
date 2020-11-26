@@ -70,7 +70,7 @@ static void CALLBACK SYSTEM_TimerTick( LPVOID arg, DWORD low, DWORD high )
             memset( &context, 0, sizeof(context) );
             context.SegCs = SELECTOROF( proc );
             context.Eip   = OFFSETOF( proc );
-            context.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME, bp);
+            context.Ebp   = CURRENT_SP + FIELD_OFFSET(STACK16FRAME, bp);
             context.Eax   = i + 1;
 
             WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&context );

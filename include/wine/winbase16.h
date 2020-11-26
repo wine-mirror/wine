@@ -564,5 +564,7 @@ BOOL16      WINAPI WriteProfileSection16(LPCSTR,LPCSTR);
 
 #define CURRENT_STACK16 ((STACK16FRAME *)MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved))
 #define CURRENT_DS      (CURRENT_STACK16->ds)
+#define CURRENT_SP      (((WORD *)&NtCurrentTeb()->WOW32Reserved)[0])
+#define CURRENT_SS      (((WORD *)&NtCurrentTeb()->WOW32Reserved)[1])
 
 #endif /* __WINE_WINE_WINBASE16_H */

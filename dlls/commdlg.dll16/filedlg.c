@@ -221,10 +221,10 @@ static LRESULT call_hook16( WNDPROC16 hook, HWND hwnd, UINT msg, WPARAM wp, LPAR
     TRACE( "%p: %p %08x %lx %lx: stub\n", hook, hwnd, msg, wp, lp );
 
     memset( &context, 0, sizeof(context) );
-    context.SegDs = context.SegEs = SELECTOROF( NtCurrentTeb()->WOW32Reserved );
+    context.SegDs = context.SegEs = CURRENT_SS;
     context.SegCs = SELECTOROF( hook );
     context.Eip   = OFFSETOF( hook );
-    context.Ebp   = OFFSETOF( NtCurrentTeb()->WOW32Reserved ) + FIELD_OFFSET( STACK16FRAME, bp );
+    context.Ebp   = CURRENT_SP + FIELD_OFFSET( STACK16FRAME, bp );
     context.Eax   = context.SegDs;
 
     params[4] = HWND_16( hwnd );

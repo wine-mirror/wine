@@ -624,7 +624,7 @@ void WINAPI InitTask16( CONTEXT *context )
 
     /* Initialize the INSTANCEDATA structure */
     pinstance = MapSL( MAKESEGPTR(CURRENT_DS, 0) );
-    pinstance->stackmin    = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + sizeof( STACK16FRAME );
+    pinstance->stackmin    = CURRENT_SP + sizeof( STACK16FRAME );
     pinstance->stackbottom = pinstance->stackmin; /* yup, that's right. Confused me too. */
     pinstance->stacktop    = ( pinstance->stackmin > LOWORD(context->Ebx) ?
                                pinstance->stackmin - LOWORD(context->Ebx) : 0 ) + 150;
@@ -1094,17 +1094,15 @@ void WINAPI SwitchStackTo16( WORD seg, WORD ptr, WORD top )
     UINT16 copySize;
 
     if (!(pData = GlobalLock16( seg ))) return;
-    TRACE("old=%04x:%04x new=%04x:%04x\n",
-          SELECTOROF( NtCurrentTeb()->WOW32Reserved ),
-          OFFSETOF( NtCurrentTeb()->WOW32Reserved ), seg, ptr );
+    TRACE( "old=%04x:%04x new=%04x:%04x\n", CURRENT_SS, CURRENT_SP, seg, ptr );
 
     /* Save the old stack */
 
     oldFrame = CURRENT_STACK16;
     /* pop frame + args and push bp */
-    pData->old_ss_sp   = (SEGPTR)NtCurrentTeb()->WOW32Reserved + sizeof(STACK16FRAME)
-                           + 2 * sizeof(WORD);
-    *(WORD *)MapSL(pData->old_ss_sp) = oldFrame->bp;
+    pData->old_ss = CURRENT_SS;
+    pData->old_sp = CURRENT_SP + sizeof(STACK16FRAME) + 2 * sizeof(WORD);
+    *(WORD *)MapSL(MAKESEGPTR(pData->old_ss, pData->old_sp)) = oldFrame->bp;
     pData->stacktop    = top;
     pData->stackmin    = ptr;
     pData->stackbottom = ptr;
@@ -1114,9 +1112,10 @@ void WINAPI SwitchStackTo16( WORD seg, WORD ptr, WORD top )
     /* Note: we need to take the 3 arguments into account; otherwise,
      * the stack will underflow upon return from this function.
      */
-    copySize = oldFrame->bp - OFFSETOF(pData->old_ss_sp);
+    copySize = oldFrame->bp - pData->old_sp;
     copySize += 3 * sizeof(WORD) + sizeof(STACK16FRAME);
-    NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR( seg, ptr - copySize );
+    CURRENT_SS = seg;
+    CURRENT_SP = ptr - copySize;
     newFrame = CURRENT_STACK16;
 
     /* Copy the stack frame and the local variables to the new stack */
@@ -1135,29 +1134,29 @@ void WINAPI SwitchStackBack16( CONTEXT *context )
     STACK16FRAME *oldFrame, *newFrame;
     INSTANCEDATA *pData;
 
-    if (!(pData = GlobalLock16(SELECTOROF(NtCurrentTeb()->WOW32Reserved))))
+    if (!(pData = GlobalLock16(CURRENT_SS)))
         return;
-    if (!pData->old_ss_sp)
+    if (!pData->old_ss)
     {
         WARN("No previous SwitchStackTo\n" );
         return;
     }
-    TRACE("restoring stack %04x:%04x\n",
-          SELECTOROF(pData->old_ss_sp), OFFSETOF(pData->old_ss_sp) );
+    TRACE( "restoring stack %04x:%04x\n", pData->old_ss, pData->old_sp );
 
     oldFrame = CURRENT_STACK16;
 
     /* Pop bp from the previous stack */
 
-    context->Ebp = (context->Ebp & ~0xffff) | *(WORD *)MapSL(pData->old_ss_sp);
-    pData->old_ss_sp += sizeof(WORD);
+    context->Ebp = (context->Ebp & ~0xffff) | *(WORD *)MapSL(MAKESEGPTR(pData->old_ss, pData->old_sp));
+    pData->old_sp += sizeof(WORD);
 
     /* Switch back to the old stack */
 
-    NtCurrentTeb()->WOW32Reserved = (void *)(pData->old_ss_sp - sizeof(STACK16FRAME));
-    context->SegSs = SELECTOROF(pData->old_ss_sp);
-    context->Esp   = OFFSETOF(pData->old_ss_sp) - sizeof(DWORD); /*ret addr*/
-    pData->old_ss_sp = 0;
+    CURRENT_SS = pData->old_ss;
+    CURRENT_SP = pData->old_sp - sizeof(STACK16FRAME);
+    context->SegSs = pData->old_ss;
+    context->Esp   = pData->old_sp - sizeof(DWORD); /*ret addr*/
+    pData->old_ss = pData->old_sp = 0;
 
     /* Build a stack frame for the return */
 

@@ -46,9 +46,8 @@ static void thread_attach(void)
 {
     /* allocate the 16-bit stack (FIXME: should be done lazily) */
     HGLOBAL16 hstack = WOWGlobalAlloc16( GMEM_FIXED, 0x10000 );
-    kernel_get_thread_data()->stack_sel = GlobalHandleToSel16( hstack );
-    NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR( kernel_get_thread_data()->stack_sel,
-                                                        0x10000 - sizeof(STACK16FRAME) );
+    CURRENT_SS = kernel_get_thread_data()->stack_sel = GlobalHandleToSel16( hstack );
+    CURRENT_SP = 0x10000 - sizeof(STACK16FRAME);
     memset( (char *)GlobalLock16(hstack) + 0x10000 - sizeof(STACK16FRAME), 0, sizeof(STACK16FRAME) );
 }
 
@@ -60,7 +59,7 @@ static void thread_detach(void)
 {
     /* free the 16-bit stack */
     WOWGlobalFree16( kernel_get_thread_data()->stack_sel );
-    NtCurrentTeb()->WOW32Reserved = 0;
+    CURRENT_SS = CURRENT_SP = 0;
     if (NtCurrentTeb()->Tib.SubSystemTib) TASK_ExitTask();
 }
 

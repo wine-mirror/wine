@@ -101,7 +101,8 @@ typedef struct
 typedef struct
 {
     WORD null;        /* Always 0 */
-    DWORD old_ss_sp;  /* Stack pointer; used by SwitchTaskTo() */
+    WORD old_sp;      /* Stack pointer; used by SwitchTaskTo() */
+    WORD old_ss;
     WORD heap;        /* Pointer to the local heap information (if any) */
     WORD atomtable;   /* Pointer to the local atom table (if any) */
     WORD stacktop;    /* Top of the stack */
@@ -174,8 +175,8 @@ static inline SEGPTR stack16_push( int size )
 {
     STACK16FRAME *frame = CURRENT_STACK16;
     memmove( (char*)frame - size, frame, sizeof(*frame) );
-    NtCurrentTeb()->WOW32Reserved = (char *)NtCurrentTeb()->WOW32Reserved - size;
-    return (SEGPTR)((char *)NtCurrentTeb()->WOW32Reserved + sizeof(*frame));
+    CURRENT_SP -= size;
+    return MAKESEGPTR( CURRENT_SS, CURRENT_SP + sizeof(*frame) );
 }
 
 /* pop bytes from the 16-bit stack of a thread */
@@ -183,7 +184,7 @@ static inline void stack16_pop( int size )
 {
     STACK16FRAME *frame = CURRENT_STACK16;
     memmove( (char*)frame + size, frame, sizeof(*frame) );
-    NtCurrentTeb()->WOW32Reserved = (char *)NtCurrentTeb()->WOW32Reserved + size;
+    CURRENT_SP += size;
 }
 
 /* dosmem.c */

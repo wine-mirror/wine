@@ -240,11 +240,11 @@ static LRESULT call_window_proc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPA
     /* Window procedures want ax = hInstance, ds = es = ss */
 
     memset(&context, 0, sizeof(context));
-    context.SegDs = context.SegEs = SELECTOROF(NtCurrentTeb()->WOW32Reserved);
+    context.SegDs = context.SegEs = CURRENT_SS;
     if (!(context.Eax = GetWindowWord( HWND_32(hwnd), GWLP_HINSTANCE ))) context.Eax = context.SegDs;
     context.SegCs = SELECTOROF(func);
     context.Eip   = OFFSETOF(func);
-    context.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME, bp);
+    context.Ebp   = CURRENT_SP + FIELD_OFFSET(STACK16FRAME, bp);
 
     if (lParam)
     {
@@ -267,7 +267,7 @@ static LRESULT call_window_proc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPA
         if (size)
         {
             memcpy( &args.u, MapSL(lParam), size );
-            lParam = PtrToUlong(NtCurrentTeb()->WOW32Reserved) - size;
+            lParam = MAKESEGPTR( CURRENT_SS, CURRENT_SP - size );
         }
     }
 

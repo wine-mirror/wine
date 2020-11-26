@@ -429,7 +429,7 @@ void WINAPI __regs_QT_Thunk( CONTEXT *context )
     context16.Eip   = LOWORD(context->Edx);
     /* point EBP to the STACK16FRAME on the stack
      * for the call_to_16 to set up the register content on calling */
-    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);
+    context16.Ebp   = CURRENT_SP + FIELD_OFFSET(STACK16FRAME,bp);
 
     /*
      * used to be (problematic):
@@ -450,8 +450,7 @@ void WINAPI __regs_QT_Thunk( CONTEXT *context )
     /* make sure to update the Win32 ESP, too, in order to throw away
      * the number of parameters that the Win16 function
      * accepted (that it popped from the corresponding Win16 stack) */
-    context->Esp +=   LOWORD(context16.Esp) -
-                        ( OFFSETOF(NtCurrentTeb()->WOW32Reserved) - argsize );
+    context->Esp +=   LOWORD(context16.Esp) - (CURRENT_SP - argsize);
 }
 DEFINE_REGS_ENTRYPOINT( QT_Thunk )
 
@@ -555,7 +554,7 @@ void WINAPI __regs_FT_Thunk( CONTEXT *context )
 
     context16.SegCs = HIWORD(callTarget);
     context16.Eip   = LOWORD(callTarget);
-    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);
+    context16.Ebp   = CURRENT_SP + FIELD_OFFSET(STACK16FRAME,bp);
 
     argsize  = context->Ebp-context->Esp-0x40;
     if (argsize > sizeof(newstack)) argsize = sizeof(newstack);
@@ -567,9 +566,7 @@ void WINAPI __regs_FT_Thunk( CONTEXT *context )
 	if (mapESPrelative & (1 << i))
 	{
 	    SEGPTR *arg = (SEGPTR *)newstack[i];
-	    *arg = MAKESEGPTR(SELECTOROF(NtCurrentTeb()->WOW32Reserved),
-                              OFFSETOF(NtCurrentTeb()->WOW32Reserved) - argsize
-                              + (*(LPBYTE *)arg - oldstack));
+	    *arg = MAKESEGPTR( CURRENT_SS, CURRENT_SP - argsize + (*(LPBYTE *)arg - oldstack));
 	}
 
     WOWCallback16Ex( 0, WCB16_REGS, argsize, newstack, (DWORD *)&context16 );
@@ -577,8 +574,7 @@ void WINAPI __regs_FT_Thunk( CONTEXT *context )
     context->Edx = context16.Edx;
     context->Ecx = context16.Ecx;
 
-    context->Esp +=   LOWORD(context16.Esp) -
-                        ( OFFSETOF(NtCurrentTeb()->WOW32Reserved) - argsize );
+    context->Esp +=   LOWORD(context16.Esp) - (CURRENT_SP - argsize);
 
     /* Copy modified buffers back to 32-bit stack */
     memcpy( oldstack, newstack, argsize );
@@ -713,7 +709,7 @@ void WINAPI __regs_Common32ThkLS( CONTEXT *context )
     context16.Edi   = LOWORD(context->Ecx);
     context16.SegCs = HIWORD(context->Eax);
     context16.Eip   = LOWORD(context->Eax);
-    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);
+    context16.Ebp   = CURRENT_SP + FIELD_OFFSET(STACK16FRAME,bp);
 
     argsize = HIWORD(context->Edx) * 4;
 
@@ -769,7 +765,7 @@ void WINAPI __regs_OT_32ThkLSF( CONTEXT *context )
 
     context16.SegCs = HIWORD(context->Edx);
     context16.Eip   = LOWORD(context->Edx);
-    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + FIELD_OFFSET(STACK16FRAME,bp);
+    context16.Ebp   = CURRENT_SP + FIELD_OFFSET(STACK16FRAME,bp);
 
     argsize = 2 * *(WORD *)context->Esp + 2;
 
@@ -781,8 +777,7 @@ void WINAPI __regs_OT_32ThkLSF( CONTEXT *context )
     memcpy( (LPBYTE)context->Esp,
             (LPBYTE)CURRENT_STACK16 - argsize, argsize );
 
-    context->Esp +=   LOWORD(context16.Esp) -
-                        ( OFFSETOF(NtCurrentTeb()->WOW32Reserved) - argsize );
+    context->Esp +=   LOWORD(context16.Esp) - (CURRENT_SP - argsize);
 }
 DEFINE_REGS_ENTRYPOINT( OT_32ThkLSF )
 
@@ -1239,21 +1234,22 @@ void WINAPI __regs_K32Thk1632Prolog( CONTEXT *context )
       WORD  stackSel  = SELECTOROF(frame32->frame16);
       DWORD stackBase = GetSelectorBase(stackSel);
 
-      TRACE("before SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %p\n",
-            context->Ebp, context->Esp, NtCurrentTeb()->WOW32Reserved);
+      TRACE("before SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %04x:%04x\n",
+            context->Ebp, context->Esp, CURRENT_SS, CURRENT_SP);
 
       memset(frame16, '\0', sizeof(STACK16FRAME));
       frame16->frame32 = frame32;
       frame16->ebp = context->Ebp;
 
       memcpy(stack32, stack16, argSize);
-      NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR(stackSel, (DWORD)frame16 - stackBase);
+      CURRENT_SS = stackSel;
+      CURRENT_SP = (DWORD)frame16 - stackBase;
 
       context->Esp = (DWORD)stack32 + 4;
       context->Ebp = context->Esp + argSize;
 
-      TRACE("after  SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %p\n",
-            context->Ebp, context->Esp, NtCurrentTeb()->WOW32Reserved);
+      TRACE("after  SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %04x:%04x\n",
+            context->Ebp, context->Esp, CURRENT_SS, CURRENT_SP);
    }
 
     /* entry_point is never used again once the entry point has
@@ -1283,16 +1279,16 @@ void WINAPI __regs_K32Thk1632Epilog( CONTEXT *context )
 
       DWORD nArgsPopped = context->Esp - (DWORD)stack32;
 
-      TRACE("before SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %p\n",
-            context->Ebp, context->Esp, NtCurrentTeb()->WOW32Reserved);
+      TRACE("before SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %04x:%04x\n",
+            context->Ebp, context->Esp, CURRENT_SS, CURRENT_SP);
 
       NtCurrentTeb()->WOW32Reserved = frame16->frame32;
 
       context->Esp = (DWORD)stack16 + nArgsPopped;
       context->Ebp = frame16->ebp;
 
-      TRACE("after  SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %p\n",
-            context->Ebp, context->Esp, NtCurrentTeb()->WOW32Reserved);
+      TRACE("after  SYSTHUNK hack: EBP: %08x ESP: %08x cur_stack: %04x:%04x\n",
+            context->Ebp, context->Esp, CURRENT_SS, CURRENT_SP);
    }
 }
 DEFINE_REGS_ENTRYPOINT( K32Thk1632Epilog )
@@ -2303,7 +2299,7 @@ void WINAPI Throw16( LPCATCHBUF lpbuf, INT16 retval, CONTEXT *context )
     frame32 = pFrame->frame32;
     while (frame32 && frame32->frame16)
     {
-        if (OFFSETOF(frame32->frame16) < OFFSETOF(NtCurrentTeb()->WOW32Reserved))
+        if (OFFSETOF(frame32->frame16) < CURRENT_SP)
             break;  /* Something strange is going on */
         if (OFFSETOF(frame32->frame16) > lpbuf[2])
         {
