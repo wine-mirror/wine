@@ -1235,16 +1235,13 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     GstStaticPadTemplate src_template =
         GST_STATIC_PAD_TEMPLATE("mf_src", GST_PAD_SRC, GST_PAD_ALWAYS, GST_STATIC_CAPS_ANY);
 
-    struct media_source *object = heap_alloc_zero(sizeof(*object));
     IMFStreamDescriptor **descriptors = NULL;
+    struct media_source *object;
     gint64 total_pres_time = 0;
     DWORD bytestream_caps;
     unsigned int i;
     HRESULT hr;
     int ret;
-
-    if (!object)
-        return E_OUTOFMEMORY;
 
     if (FAILED(hr = IMFByteStream_GetCapabilities(bytestream, &bytestream_caps)))
         return hr;
@@ -1254,6 +1251,9 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
         FIXME("Non-seekable bytestreams not supported.\n");
         return MF_E_BYTESTREAM_NOT_SEEKABLE;
     }
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
 
     object->IMFMediaSource_iface.lpVtbl = &IMFMediaSource_vtbl;
     object->async_commands_callback.lpVtbl = &source_async_commands_callback_vtbl;
