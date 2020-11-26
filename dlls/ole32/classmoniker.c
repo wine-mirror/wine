@@ -519,7 +519,7 @@ static HRESULT WINAPI ClassMoniker_GetDisplayName(IMoniker* iface,
                                               LPOLESTR *ppszDisplayName)
 {
     ClassMoniker *This = impl_from_IMoniker(iface);
-    static const WCHAR wszClsidPrefix[] = {'c','l','s','i','d',':',0};
+    static const WCHAR wszClsidPrefix[] = L"clsid:";
 
     TRACE("(%p, %p, %p)\n", pbc, pmkToLeft, ppszDisplayName);
 

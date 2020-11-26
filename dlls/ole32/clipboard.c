@@ -198,7 +198,7 @@ static inline HRESULT get_ole_clipbrd(ole_clipbrd **clipbrd)
 /*
  * Name of our registered OLE clipboard window class
  */
-static const WCHAR clipbrd_wndclass[] = {'C','L','I','P','B','R','D','W','N','D','C','L','A','S','S',0};
+static const WCHAR clipbrd_wndclass[] = L"CLIPBRDWNDCLASS";
 
 UINT ownerlink_clipboard_format = 0;
 UINT filename_clipboard_format = 0;
@@ -619,7 +619,6 @@ static HRESULT render_embed_source_hack(IDataObject *data, LPFORMATETC fmt)
 
         if (mfp)
         {
-            OLECHAR name[]={ 2, 'O', 'l', 'e', 'P', 'r', 'e', 's', '0', '0', '0', 0};
             IStream *pStream = 0;
             void *mfBits;
             PresentationDataHeader pdh;
@@ -644,7 +643,8 @@ static HRESULT render_embed_source_hack(IDataObject *data, LPFORMATETC fmt)
             pdh.dwObjectExtentY = mfp->yExt;
             pdh.dwSize = nSize;
 
-            hr = IStorage_CreateStream(std.u.pstg, name, STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, 0, &pStream);
+            hr = IStorage_CreateStream(std.u.pstg, L"\2OlePres000",
+                    STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, 0, &pStream);
 
             hr = IStream_Write(pStream, &pdh, sizeof(PresentationDataHeader), NULL);
 

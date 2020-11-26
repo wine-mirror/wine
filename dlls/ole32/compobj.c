@@ -245,10 +245,6 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
     return status;
 }
 
-static const WCHAR classes_rootW[] =
-    {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e',
-     '\\','S','o','f','t','w','a','r','e','\\','C','l','a','s','s','e','s',0};
-
 static HKEY classes_root_hkey;
 
 /* create the special HKEY_CLASSES_ROOT key */
@@ -264,7 +260,7 @@ static HKEY create_classes_root_hkey(DWORD access)
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &name, classes_rootW );
+    RtlInitUnicodeString( &name, L"\\Registry\\Machine\\Software\\Classes" );
     if (create_key( &hkey, access, &attr )) return 0;
     TRACE( "%s -> %p\n", debugstr_w(attr.ObjectName->Buffer), hkey );
 
@@ -292,9 +288,8 @@ static inline HKEY get_classes_root_hkey( HKEY hkey, REGSAM access )
         ret = create_classes_root_hkey(MAXIMUM_ALLOWED | (access & KEY_WOW64_64KEY));
     if (force_wow32 && ret && ret == classes_root_hkey)
     {
-        static const WCHAR wow6432nodeW[] = {'W','o','w','6','4','3','2','N','o','d','e',0};
         access &= ~KEY_WOW64_32KEY;
-        if (create_classes_key(classes_root_hkey, wow6432nodeW, access, &hkey))
+        if (create_classes_key(classes_root_hkey, L"Wow6432Node", access, &hkey))
             return 0;
         ret = hkey;
     }
@@ -530,13 +525,12 @@ HRESULT WINAPI CoInitialize(LPVOID lpReserved)
 /* open HKCR\\CLSID\\{string form of clsid}\\{keyname} key */
 HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY *subkey)
 {
-    static const WCHAR wszCLSIDSlash[] = {'C','L','S','I','D','\\',0};
-    WCHAR path[CHARS_IN_GUID + ARRAY_SIZE(wszCLSIDSlash) - 1];
+    WCHAR path[CHARS_IN_GUID + ARRAY_SIZE(L"CLSID\\") - 1];
     LONG res;
     HKEY key;
 
-    lstrcpyW(path, wszCLSIDSlash);
-    StringFromGUID2(clsid, path + lstrlenW(wszCLSIDSlash), CHARS_IN_GUID);
+    lstrcpyW(path, L"CLSID\\");
+    StringFromGUID2(clsid, path + lstrlenW(L"CLSID\\"), CHARS_IN_GUID);
     res = open_classes_key(HKEY_CLASSES_ROOT, path, keyname ? KEY_READ : access, &key);
     if (res == ERROR_FILE_NOT_FOUND)
         return REGDB_E_CLASSNOTREG;
@@ -707,8 +701,6 @@ HRESULT WINAPI CoSetState(IUnknown * pv)
  */
 HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
 {
-    static const WCHAR wszAutoTreatAs[] = {'A','u','t','o','T','r','e','a','t','A','s',0};
-    static const WCHAR wszTreatAs[] = {'T','r','e','a','t','A','s',0};
     HKEY hkey = NULL;
     WCHAR szClsidNew[CHARS_IN_GUID];
     HRESULT res = S_OK;
@@ -722,10 +714,10 @@ HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
 
     if (IsEqualGUID( clsidOld, clsidNew ))
     {
-       if (!RegQueryValueW(hkey, wszAutoTreatAs, auto_treat_as, &auto_treat_as_size) &&
+       if (!RegQueryValueW(hkey, L"AutoTreatAs", auto_treat_as, &auto_treat_as_size) &&
            CLSIDFromString(auto_treat_as, &id) == S_OK)
        {
-           if (RegSetValueW(hkey, wszTreatAs, REG_SZ, auto_treat_as, sizeof(auto_treat_as)))
+           if (RegSetValueW(hkey, L"TreatAs", REG_SZ, auto_treat_as, sizeof(auto_treat_as)))
            {
                res = REGDB_E_WRITEREGDB;
                goto done;
@@ -733,7 +725,7 @@ HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
        }
        else
        {
-           if(RegDeleteKeyW(hkey, wszTreatAs))
+           if (RegDeleteKeyW(hkey, L"TreatAs"))
                res = REGDB_E_WRITEREGDB;
            goto done;
        }
@@ -741,7 +733,7 @@ HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
     else
     {
         if(IsEqualGUID(clsidNew, &CLSID_NULL)){
-           RegDeleteKeyW(hkey, wszTreatAs);
+           RegDeleteKeyW(hkey, L"TreatAs");
         }else{
             if(!StringFromGUID2(clsidNew, szClsidNew, ARRAY_SIZE(szClsidNew))){
                 WARN("StringFromGUID2 failed\n");
@@ -749,7 +741,7 @@ HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
                 goto done;
             }
 
-            if(RegSetValueW(hkey, wszTreatAs, REG_SZ, szClsidNew, sizeof(szClsidNew)) != ERROR_SUCCESS){
+            if (RegSetValueW(hkey, L"TreatAs", REG_SZ, szClsidNew, sizeof(szClsidNew)) != ERROR_SUCCESS){
                 WARN("RegSetValue failed\n");
                 res = REGDB_E_WRITEREGDB;
                 goto done;
@@ -892,12 +884,11 @@ static BOOL get_object_dll_path(const struct class_reg_data *regdata, WCHAR *dst
     }
     else
     {
-        static const WCHAR dllW[] = {'.','d','l','l',0};
         ULONG_PTR cookie;
 
         *dst = 0;
         ActivateActCtx(regdata->u.actctx.hactctx, &cookie);
-        ret = SearchPathW(NULL, regdata->u.actctx.module_name, dllW, dstlen, dst, NULL);
+        ret = SearchPathW(NULL, regdata->u.actctx.module_name, L".dll", dstlen, dst, NULL);
         DeactivateActCtx(0, cookie);
         return *dst != 0;
     }
@@ -905,11 +896,10 @@ static BOOL get_object_dll_path(const struct class_reg_data *regdata, WCHAR *dst
 
 HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-    static const WCHAR wszInprocHandler32[] = {'I','n','p','r','o','c','H','a','n','d','l','e','r','3','2',0};
     HKEY hkey;
     HRESULT hres;
 
-    hres = COM_OpenKeyForCLSID(rclsid, wszInprocHandler32, KEY_READ, &hkey);
+    hres = COM_OpenKeyForCLSID(rclsid, L"InprocHandler32", KEY_READ, &hkey);
     if (SUCCEEDED(hres))
     {
         struct class_reg_data regdata;
@@ -920,8 +910,7 @@ HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
         if (get_object_dll_path(&regdata, dllpath, ARRAY_SIZE(dllpath)))
         {
-            static const WCHAR wszOle32[] = {'o','l','e','3','2','.','d','l','l',0};
-            if (!wcsicmp(dllpath, wszOle32))
+            if (!wcsicmp(dllpath, L"ole32.dll"))
             {
                 RegCloseKey(hkey);
                 return HandlerCF_Create(rclsid, riid, ppv);

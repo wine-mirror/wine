@@ -2991,10 +2991,8 @@ static const IPropertyStorageVtbl IPropertyStorage_Vtbl =
 /***********************************************************************
  * Format ID <-> name conversion
  */
-static const WCHAR szSummaryInfo[] = { 5,'S','u','m','m','a','r','y',
- 'I','n','f','o','r','m','a','t','i','o','n',0 };
-static const WCHAR szDocSummaryInfo[] = { 5,'D','o','c','u','m','e','n','t',
- 'S','u','m','m','a','r','y','I','n','f','o','r','m','a','t','i','o','n',0 };
+static const WCHAR szSummaryInfo[] = L"\5SummaryInformation";
+static const WCHAR szDocSummaryInfo[] = L"\5DocumentSummaryInformation";
 
 #define BITS_PER_BYTE    8
 #define CHARMASK         0x1f

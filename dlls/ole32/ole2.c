@@ -101,24 +101,18 @@ static LONG OLE_moduleLockCount = 0;
 /*
  * Name of our registered window class.
  */
-static const WCHAR OLEDD_DRAGTRACKERCLASS[] =
-  {'W','i','n','e','D','r','a','g','D','r','o','p','T','r','a','c','k','e','r','3','2',0};
+static const WCHAR OLEDD_DRAGTRACKERCLASS[] = L"WineDragDropTracker32";
 
 /*
  * Name of menu descriptor property.
  */
-static const WCHAR prop_olemenuW[] =
-  {'P','R','O','P','_','O','L','E','M','e','n','u','D','e','s','c','r','i','p','t','o','r',0};
+static const WCHAR prop_olemenuW[] = L"PROP_OLEMenuDescriptor";
 
 /* property to store IDropTarget pointer */
-static const WCHAR prop_oledroptarget[] =
-  {'O','l','e','D','r','o','p','T','a','r','g','e','t','I','n','t','e','r','f','a','c','e',0};
+static const WCHAR prop_oledroptarget[] = L"OleDropTargetInterface";
 
 /* property to store Marshalled IDropTarget pointer */
-static const WCHAR prop_marshalleddroptarget[] =
-  {'W','i','n','e','M','a','r','s','h','a','l','l','e','d','D','r','o','p','T','a','r','g','e','t',0};
-
-static const WCHAR emptyW[] = { 0 };
+static const WCHAR prop_marshalleddroptarget[] = L"WineMarshalledDropTarget";
 
 /******************************************************************************
  * These are the prototypes of miscellaneous utility methods
@@ -669,7 +663,6 @@ HRESULT WINAPI RevokeDragDrop(HWND hwnd)
  */
 HRESULT WINAPI OleRegGetUserType(REFCLSID clsid, DWORD form, LPOLESTR *usertype)
 {
-  static const WCHAR auxusertypeW[] = {'A','u','x','U','s','e','r','T','y','p','e','\\','%','d',0};
   DWORD valuetype, valuelen;
   WCHAR auxkeynameW[16];
   HKEY    usertypekey;
@@ -695,10 +688,10 @@ HRESULT WINAPI OleRegGetUserType(REFCLSID clsid, DWORD form, LPOLESTR *usertype)
   {
     HKEY auxkey;
 
-    swprintf(auxkeynameW, ARRAY_SIZE(auxkeynameW), auxusertypeW, form);
+    swprintf(auxkeynameW, ARRAY_SIZE(auxkeynameW), L"AuxUserType\\%d", form);
     if (COM_OpenKeyForCLSID(clsid, auxkeynameW, KEY_READ, &auxkey) == S_OK)
     {
-      if (!RegQueryValueExW(auxkey, emptyW, NULL, &valuetype, NULL, &valuelen) && valuelen)
+      if (!RegQueryValueExW(auxkey, L"", NULL, &valuetype, NULL, &valuelen) && valuelen)
       {
         RegCloseKey(usertypekey);
         usertypekey = auxkey;
@@ -709,7 +702,7 @@ HRESULT WINAPI OleRegGetUserType(REFCLSID clsid, DWORD form, LPOLESTR *usertype)
   }
 
   valuelen = 0;
-  if (RegQueryValueExW(usertypekey, emptyW, NULL, &valuetype, NULL, &valuelen))
+  if (RegQueryValueExW(usertypekey, L"", NULL, &valuetype, NULL, &valuelen))
   {
     RegCloseKey(usertypekey);
     return REGDB_E_READREGDB;
@@ -722,12 +715,7 @@ HRESULT WINAPI OleRegGetUserType(REFCLSID clsid, DWORD form, LPOLESTR *usertype)
     return E_OUTOFMEMORY;
   }
 
-  ret = RegQueryValueExW(usertypekey,
-			  emptyW,
-			  NULL,
-			  &valuetype,
-			  (LPBYTE)*usertype,
-			  &valuelen);
+  ret = RegQueryValueExW(usertypekey, L"", NULL, &valuetype, (BYTE *)*usertype, &valuelen);
   RegCloseKey(usertypekey);
   if (ret != ERROR_SUCCESS)
   {
@@ -748,7 +736,6 @@ HRESULT WINAPI DoDragDrop (
   DWORD       dwOKEffect,    /* [in] effects allowed by the source */
   DWORD       *pdwEffect)    /* [out] ptr to effects of the source */
 {
-  static const WCHAR trackerW[] = {'T','r','a','c','k','e','r','W','i','n','d','o','w',0};
   TrackerWindowInfo trackerInfo;
   HWND            hwndTrackWindow;
   MSG             msg;
@@ -772,7 +759,7 @@ HRESULT WINAPI DoDragDrop (
   trackerInfo.curTargetHWND     = 0;
   trackerInfo.curDragTarget     = 0;
 
-  hwndTrackWindow = CreateWindowW(OLEDD_DRAGTRACKERCLASS, trackerW,
+  hwndTrackWindow = CreateWindowW(OLEDD_DRAGTRACKERCLASS, L"TrackerWindow",
                                   WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT,
                                   CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, 0,
                                   &trackerInfo);
@@ -856,8 +843,6 @@ HRESULT WINAPI OleRegGetMiscStatus(
   DWORD    dwAspect,
   DWORD*   pdwStatus)
 {
-  static const WCHAR miscstatusW[] = {'M','i','s','c','S','t','a','t','u','s',0};
-  static const WCHAR dfmtW[] = {'%','d',0};
   WCHAR   keyName[16];
   HKEY    miscStatusKey;
   HKEY    aspectKey;
@@ -872,7 +857,7 @@ HRESULT WINAPI OleRegGetMiscStatus(
 
   if (actctx_get_miscstatus(clsid, dwAspect, pdwStatus)) return S_OK;
 
-  hr = COM_OpenKeyForCLSID(clsid, miscstatusW, KEY_READ, &miscStatusKey);
+  hr = COM_OpenKeyForCLSID(clsid, L"MiscStatus", KEY_READ, &miscStatusKey);
   if (FAILED(hr))
     /* missing key is not a failure */
     return hr == REGDB_E_KEYMISSING ? S_OK : hr;
@@ -882,7 +867,7 @@ HRESULT WINAPI OleRegGetMiscStatus(
   /*
    * Open the key specific to the requested aspect.
    */
-  swprintf(keyName, ARRAY_SIZE(keyName), dfmtW, dwAspect);
+  swprintf(keyName, ARRAY_SIZE(keyName), L"%d", dwAspect);
 
   result = open_classes_key(miscStatusKey, keyName, KEY_READ, &aspectKey);
   if (result == ERROR_SUCCESS)
@@ -1117,11 +1102,10 @@ HRESULT WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum)
     LONG res;
     HKEY hkeyVerb;
     DWORD dwSubKeys;
-    static const WCHAR wszVerb[] = {'V','e','r','b',0};
 
     TRACE("(%s, %p)\n", debugstr_guid(clsid), ppenum);
 
-    res = COM_OpenKeyForCLSID(clsid, wszVerb, KEY_READ, &hkeyVerb);
+    res = COM_OpenKeyForCLSID(clsid, L"Verb", KEY_READ, &hkeyVerb);
     if (FAILED(res))
     {
         if (res == REGDB_E_CLASSNOTREG)
@@ -2402,12 +2386,7 @@ static void OLEUTL_ReadRegistryDWORDValue(
   DWORD dwKeyType;
   LONG  lres;
 
-  lres = RegQueryValueExW(regKey,
-			  emptyW,
-			  NULL,
-			  &dwKeyType,
-			  (LPBYTE)buffer,
-			  &cbData);
+  lres = RegQueryValueExW(regKey, L"", NULL, &dwKeyType, (BYTE *)buffer, &cbData);
 
   if (lres==ERROR_SUCCESS)
   {
@@ -2573,13 +2552,12 @@ HRESULT WINAPI OleCreate(
  */
 HRESULT WINAPI OleGetAutoConvert(REFCLSID clsidOld, LPCLSID pClsidNew)
 {
-    static const WCHAR wszAutoConvertTo[] = {'A','u','t','o','C','o','n','v','e','r','t','T','o',0};
     HKEY hkey = NULL;
     WCHAR buf[CHARS_IN_GUID];
     LONG len;
     HRESULT res = S_OK;
 
-    res = COM_OpenKeyForCLSID(clsidOld, wszAutoConvertTo, KEY_READ, &hkey);
+    res = COM_OpenKeyForCLSID(clsidOld, L"AutoConvertTo", KEY_READ, &hkey);
     if (FAILED(res))
         goto done;
 
@@ -2600,7 +2578,6 @@ done:
  */
 HRESULT WINAPI OleSetAutoConvert(REFCLSID clsidOld, REFCLSID clsidNew)
 {
-    static const WCHAR wszAutoConvertTo[] = {'A','u','t','o','C','o','n','v','e','r','t','T','o',0};
     HKEY hkey = NULL;
     WCHAR szClsidNew[CHARS_IN_GUID];
     HRESULT res = S_OK;
@@ -2611,7 +2588,7 @@ HRESULT WINAPI OleSetAutoConvert(REFCLSID clsidOld, REFCLSID clsidNew)
     if (FAILED(res))
         goto done;
     StringFromGUID2(clsidNew, szClsidNew, CHARS_IN_GUID);
-    if (RegSetValueW(hkey, wszAutoConvertTo, REG_SZ, szClsidNew, (lstrlenW(szClsidNew)+1) * sizeof(WCHAR)))
+    if (RegSetValueW(hkey, L"AutoConvertTo", REG_SZ, szClsidNew, (lstrlenW(szClsidNew)+1) * sizeof(WCHAR)))
     {
         res = REGDB_E_WRITEREGDB;
 	goto done;

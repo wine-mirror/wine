@@ -129,7 +129,7 @@ static HRESULT COMCAT_UnRegisterClassCategories(
     ULONG cCategories,
     const CATID *rgcatid)
 {
-    WCHAR keyname[68] = { 'C', 'L', 'S', 'I', 'D', '\\' };
+    WCHAR keyname[68] = L"CLSID\\";
     HRESULT res;
     HKEY type_key;
 
@@ -501,9 +501,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_GetCategoryDesc(
     LCID lcid,
     PWCHAR *ppszDesc)
 {
-    WCHAR keyname[60] = { 'C', 'o', 'm', 'p', 'o', 'n', 'e', 'n',
-			  't', ' ', 'C', 'a', 't', 'e', 'g', 'o',
-			  'r', 'i', 'e', 's', '\\', 0 };
+    WCHAR keyname[60] = L"Component Categories\\";
     HKEY key;
     HRESULT res;
 
@@ -584,7 +582,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_IsClassOfCategories(
     ULONG cRequired,
     CATID *rgcatidReq)
 {
-    WCHAR keyname[45] = { 'C', 'L', 'S', 'I', 'D', '\\', 0 };
+    WCHAR keyname[45] = L"CLSID\\";
     HRESULT res;
     struct class_categories *categories;
     HKEY key;

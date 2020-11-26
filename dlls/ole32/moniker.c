@@ -915,8 +915,6 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
     LONG sizeProgId, ret;
     LPOLESTR *pathDec=0,absFile=0,progId=0;
     LPWSTR extension;
-    static const WCHAR bkslashW[] = {'\\',0};
-    static const WCHAR dotW[] = {'.',0};
 
     TRACE("%s, %p\n", debugstr_w(filePathName), pclsid);
 
@@ -962,7 +960,7 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
     absFile=pathDec[nbElm-1];
 
     /* failed if the path represents a directory and not an absolute file name*/
-    if (!wcscmp(absFile, bkslashW)) {
+    if (!wcscmp(absFile, L"\\")) {
         CoTaskMemFree(pathDec);
         return MK_E_INVALIDEXTENSION;
     }
@@ -973,7 +971,7 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
     for(i = length-1; (i >= 0) && *(extension = &absFile[i]) != '.'; i--)
         /* nothing */;
 
-    if (!extension || !wcscmp(extension, dotW)) {
+    if (!extension || !wcscmp(extension, L".")) {
         CoTaskMemFree(pathDec);
         return MK_E_INVALIDEXTENSION;
     }

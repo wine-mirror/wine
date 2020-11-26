@@ -530,8 +530,6 @@ static HRESULT write_clipformat(IStream *stream, CLIPFORMAT clipformat)
     return hr;
 }
 
-static const WCHAR CONTENTS[] = {'C','O','N','T','E','N','T','S',0};
-
 static HRESULT open_pres_stream( IStorage *stg, int stream_number, IStream **stm )
 {
     WCHAR pres[] = {2,'O','l','e','P','r','e','s',
@@ -541,7 +539,7 @@ static HRESULT open_pres_stream( IStorage *stg, int stream_number, IStream **stm
     const WCHAR *name = pres;
 
     if (stream_number == STREAM_NUMBER_NOT_SET) return E_FAIL;
-    if (stream_number == STREAM_NUMBER_CONTENTS) name = CONTENTS;
+    if (stream_number == STREAM_NUMBER_CONTENTS) name = L"CONTENTS";
 
     return IStorage_OpenStream( stg, name, NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0, stm );
 }
@@ -1089,7 +1087,7 @@ static HRESULT create_stream(DataCacheEntry *cache_entry, IStorage *storage,
     const WCHAR *name;
 
     if (contents)
-        name = CONTENTS;
+        name = L"CONTENTS";
     else
         name = pres;
 

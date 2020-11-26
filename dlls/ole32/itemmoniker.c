@@ -1055,7 +1055,6 @@ failed:
 
 HRESULT WINAPI ItemMoniker_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
 {
-    static const WCHAR emptyW[] = { 0 };
     IMoniker *moniker;
     HRESULT hr;
 
@@ -1066,7 +1065,7 @@ HRESULT WINAPI ItemMoniker_CreateInstance(IClassFactory *iface, IUnknown *outer,
     if (outer)
         return CLASS_E_NOAGGREGATION;
 
-    if (FAILED(hr = CreateItemMoniker(emptyW, emptyW, &moniker)))
+    if (FAILED(hr = CreateItemMoniker(L"", L"", &moniker)))
         return hr;
 
     hr = IMoniker_QueryInterface(moniker, riid, ppv);
