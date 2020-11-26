@@ -73,6 +73,7 @@ static NTSTATUS (WINAPI *pNtQuerySystemTime)( LARGE_INTEGER * );
 static NTSTATUS (WINAPI *pRtlWaitOnAddress)( const void *, const void *, SIZE_T, const LARGE_INTEGER * );
 static void     (WINAPI *pRtlWakeAddressAll)( const void * );
 static void     (WINAPI *pRtlWakeAddressSingle)( const void * );
+static NTSTATUS (WINAPI *pNtOpenProcess)( HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *, const CLIENT_ID * );
 
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002
@@ -2034,6 +2035,56 @@ static void test_wait_on_address(void)
     ok(address == 0, "got %s\n", wine_dbgstr_longlong(address));
 }
 
+static void test_process(void)
+{
+    OBJECT_ATTRIBUTES attr;
+    CLIENT_ID cid;
+    NTSTATUS status;
+    HANDLE process;
+
+    if (!pNtOpenProcess)
+    {
+        win_skip( "NtOpenProcess not supported, skipping test\n" );
+        return;
+    }
+
+    InitializeObjectAttributes( &attr, NULL, 0, 0, NULL );
+
+    cid.UniqueProcess = 0;
+    cid.UniqueThread = 0;
+    status = pNtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, NULL, &cid );
+    todo_wine ok( status == STATUS_ACCESS_VIOLATION, "NtOpenProcess returned %x\n", status );
+    status = pNtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, &attr, NULL );
+    todo_wine ok( status == STATUS_INVALID_PARAMETER_MIX, "NtOpenProcess returned %x\n", status );
+
+    cid.UniqueProcess = 0;
+    cid.UniqueThread = 0;
+    status = pNtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, &attr, &cid );
+    todo_wine ok( status == STATUS_INVALID_CID, "NtOpenProcess returned %x\n", status );
+
+    cid.UniqueProcess = ULongToHandle( 0xdeadbeef );
+    cid.UniqueThread = ULongToHandle( 0xdeadbeef );
+    status = pNtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, &attr, &cid );
+    todo_wine ok( status == STATUS_INVALID_CID, "NtOpenProcess returned %x\n", status );
+
+    cid.UniqueProcess = ULongToHandle( GetCurrentThreadId() );
+    cid.UniqueThread = 0;
+    status = pNtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, &attr, &cid );
+    todo_wine ok( status == STATUS_INVALID_CID, "NtOpenProcess returned %x\n", status );
+
+    cid.UniqueProcess = ULongToHandle( GetCurrentProcessId() );
+    cid.UniqueThread = 0;
+    status = pNtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, &attr, &cid );
+    ok( !status, "NtOpenProcess returned %x\n", status );
+    pNtClose( process );
+
+    cid.UniqueProcess = ULongToHandle( GetCurrentProcessId() );
+    cid.UniqueThread = ULongToHandle( GetCurrentThreadId() );
+    status = pNtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, &attr, &cid );
+    ok( !status, "NtOpenProcess returned %x\n", status );
+    pNtClose( process );
+}
+
 START_TEST(om)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
@@ -2082,6 +2133,7 @@ START_TEST(om)
     pRtlWaitOnAddress       =  (void *)GetProcAddress(hntdll, "RtlWaitOnAddress");
     pRtlWakeAddressAll      =  (void *)GetProcAddress(hntdll, "RtlWakeAddressAll");
     pRtlWakeAddressSingle   =  (void *)GetProcAddress(hntdll, "RtlWakeAddressSingle");
+    pNtOpenProcess          =  (void *)GetProcAddress(hntdll, "NtOpenProcess");
 
     test_case_sensitive();
     test_namespace_pipe();
@@ -2096,4 +2148,5 @@ START_TEST(om)
     test_keyed_events();
     test_null_device();
     test_wait_on_address();
+    test_process();
 }
