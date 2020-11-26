@@ -603,16 +603,18 @@ static HRESULT WINAPI memstream_Read(IStream *iface, void *buff, ULONG buff_size
     TRACE("(%p)->(%p, %u, %p)\n", stream, buff, buff_size, read_len);
 
     if (stream->u.mem.position >= stream->u.mem.length)
-        length = 0;
-    else
-        length = stream->u.mem.length - stream->u.mem.position;
-
-    length = buff_size > length ? length : buff_size;
-    if (length != 0) /* not at end of buffer and we want to read something */
     {
-        memmove(buff, stream->u.mem.buffer + stream->u.mem.position, length);
-        stream->u.mem.position += length; /* adjust pointer */
+        if (read_len)
+            *read_len = 0;
+        return S_FALSE;
     }
+
+    length = stream->u.mem.length - stream->u.mem.position;
+    if (buff_size < length)
+        length = buff_size;
+
+    memmove(buff, stream->u.mem.buffer + stream->u.mem.position, length);
+    stream->u.mem.position += length;
 
     if (read_len)
         *read_len = length;
