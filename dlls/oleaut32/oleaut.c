@@ -505,9 +505,6 @@ void WINAPI SetOaNoCache(void)
     bstr_cache_enabled = FALSE;
 }
 
-static const WCHAR	_delimiter[] = {'!',0}; /* default delimiter apparently */
-static const WCHAR	*pdelimiter = &_delimiter[0];
-
 /***********************************************************************
  *		RegisterActiveObject (OLEAUT32.33)
  *
@@ -533,7 +530,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH RegisterActiveObject(
         DWORD                   rot_flags = ROTFLAGS_REGISTRATIONKEEPSALIVE; /* default registration is strong */
 
 	StringFromGUID2(rcid,guidbuf,39);
-	ret = CreateItemMoniker(pdelimiter,guidbuf,&moniker);
+	ret = CreateItemMoniker(L"!", guidbuf, &moniker);
 	if (FAILED(ret))
 		return ret;
 	ret = GetRunningObjectTable(0,&runobtable);
@@ -597,7 +594,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH GetActiveObject(REFCLSID rcid,LPVOID preserved,
 	LPMONIKER		moniker;
 
 	StringFromGUID2(rcid,guidbuf,39);
-	ret = CreateItemMoniker(pdelimiter,guidbuf,&moniker);
+	ret = CreateItemMoniker(L"!", guidbuf, &moniker);
 	if (FAILED(ret))
 		return ret;
 	ret = GetRunningObjectTable(0,&runobtable);
@@ -1104,10 +1101,8 @@ HRESULT WINAPI DllCanUnloadNow(void)
  */
 BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID lpvReserved)
 {
-    static const WCHAR oanocacheW[] = {'o','a','n','o','c','a','c','h','e',0};
-
     if(fdwReason == DLL_PROCESS_ATTACH)
-        bstr_cache_enabled = !GetEnvironmentVariableW(oanocacheW, NULL, 0);
+        bstr_cache_enabled = !GetEnvironmentVariableW(L"oanocache", NULL, 0);
 
     return OLEAUTPS_DllMain( hInstDll, fdwReason, lpvReserved );
 }
@@ -1173,33 +1168,23 @@ HRESULT WINAPI GetAltMonthNames(LCID lcid, LPOLESTR **str)
         NULL
     };
 
-    static const WCHAR pl_month1W[] = {'s','t','y','c','z','n','i','a',0};
-    static const WCHAR pl_month2W[] = {'l','u','t','e','g','o',0};
-    static const WCHAR pl_month3W[] = {'m','a','r','c','a',0};
-    static const WCHAR pl_month4W[] = {'k','w','i','e','t','n','i','a',0};
-    static const WCHAR pl_month5W[] = {'m','a','j','a',0};
-    static const WCHAR pl_month6W[] = {'c','z','e','r','w','c','a',0};
-    static const WCHAR pl_month7W[] = {'l','i','p','c','a',0};
-    static const WCHAR pl_month8W[] = {'s','i','e','r','p','n','i','a',0};
     static const WCHAR pl_month9W[] = {'w','r','z','e',0x15b,'n','i','a',0};
     static const WCHAR pl_month10W[] = {'p','a',0x17a,'d','z','i','e','r','n','i','k','a',0};
-    static const WCHAR pl_month11W[] = {'l','i','s','t','o','p','a','d','a',0};
-    static const WCHAR pl_month12W[] = {'g','r','u','d','n','i','a',0};
 
     static const WCHAR *polish_genitive_names[] =
     {
-        pl_month1W,
-        pl_month2W,
-        pl_month3W,
-        pl_month4W,
-        pl_month5W,
-        pl_month6W,
-        pl_month7W,
-        pl_month8W,
+        L"stycznia",
+        L"lutego",
+        L"marca",
+        L"kwietnia",
+        L"maja",
+        L"czerwca",
+        L"lipca",
+        L"sierpnia",
         pl_month9W,
         pl_month10W,
-        pl_month11W,
-        pl_month12W,
+        L"listopada",
+        L"grudnia",
         NULL
     };
 

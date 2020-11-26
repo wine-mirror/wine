@@ -374,25 +374,17 @@ HRESULT WINAPI OleCreateFontIndirect(
  */
 static void OLEFont_SendNotify(OLEFontImpl* this, DISPID dispID)
 {
-  static const WCHAR wszName[] = {'N','a','m','e',0};
-  static const WCHAR wszSize[] = {'S','i','z','e',0};
-  static const WCHAR wszBold[] = {'B','o','l','d',0};
-  static const WCHAR wszItalic[] = {'I','t','a','l','i','c',0};
-  static const WCHAR wszUnder[] = {'U','n','d','e','r','l','i','n','e',0};
-  static const WCHAR wszStrike[] = {'S','t','r','i','k','e','t','h','r','o','u','g','h',0};
-  static const WCHAR wszWeight[] = {'W','e','i','g','h','t',0};
-  static const WCHAR wszCharset[] = {'C','h','a','r','s','e','t',0};
   static const LPCWSTR dispid_mapping[] =
   {
-    wszName,
-    NULL,
-    wszSize,
-    wszBold,
-    wszItalic,
-    wszUnder,
-    wszStrike,
-    wszWeight,
-    wszCharset
+      L"Name",
+      NULL,
+      L"Size",
+      L"Bold",
+      L"Italic",
+      L"Underline",
+      L"Strikethrough",
+      L"Weight",
+      L"Charset"
   };
 
   IEnumConnections *pEnum;
@@ -1237,7 +1229,6 @@ static HRESULT WINAPI OLEFontImpl_GetTypeInfo(
   LCID        lcid,
   ITypeInfo** ppTInfo)
 {
-  static const WCHAR stdole2tlb[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
   ITypeLib *tl;
   HRESULT hres;
 
@@ -1245,7 +1236,7 @@ static HRESULT WINAPI OLEFontImpl_GetTypeInfo(
   TRACE("(%p, iTInfo=%d, lcid=%04x, %p)\n", this, iTInfo, (int)lcid, ppTInfo);
   if (iTInfo != 0)
     return E_FAIL;
-  hres = LoadTypeLib(stdole2tlb, &tl);
+  hres = LoadTypeLib(L"stdole2.tlb", &tl);
   if (FAILED(hres)) {
     ERR("Could not load the stdole2.tlb?\n");
     return hres;
@@ -1912,20 +1903,13 @@ static HRESULT WINAPI OLEFontImpl_IPersistPropertyBag_Load(
          Italic          =   0   'False
          Strikethrough   =   0   'False
 */
-    static const WCHAR sAttrName[] = {'N','a','m','e',0};
-    static const WCHAR sAttrSize[] = {'S','i','z','e',0};
-    static const WCHAR sAttrCharset[] = {'C','h','a','r','s','e','t',0};
-    static const WCHAR sAttrWeight[] = {'W','e','i','g','h','t',0};
-    static const WCHAR sAttrUnderline[] = {'U','n','d','e','r','l','i','n','e',0};
-    static const WCHAR sAttrItalic[] = {'I','t','a','l','i','c',0};
-    static const WCHAR sAttrStrikethrough[] = {'S','t','r','i','k','e','t','h','r','o','u','g','h',0};
     OLEFontImpl *this = impl_from_IPersistPropertyBag(iface);
     VARIANT value;
     HRESULT iRes;
 
     VariantInit(&value);
 
-    iRes = IPropertyBag_Read(pPropBag, sAttrName, &value, pErrorLog);
+    iRes = IPropertyBag_Read(pPropBag, L"Name", &value, pErrorLog);
     if (iRes == S_OK)
     {
         iRes = VariantChangeType(&value, &value, 0, VT_BSTR);
@@ -1938,7 +1922,7 @@ static HRESULT WINAPI OLEFontImpl_IPersistPropertyBag_Load(
     VariantClear(&value);
 
     if (iRes == S_OK) {
-        iRes = IPropertyBag_Read(pPropBag, sAttrSize, &value, pErrorLog);
+        iRes = IPropertyBag_Read(pPropBag, L"Size", &value, pErrorLog);
         if (iRes == S_OK)
         {
             iRes = VariantChangeType(&value, &value, 0, VT_CY);
@@ -1952,7 +1936,7 @@ static HRESULT WINAPI OLEFontImpl_IPersistPropertyBag_Load(
     }
 
     if (iRes == S_OK) {
-        iRes = IPropertyBag_Read(pPropBag, sAttrCharset, &value, pErrorLog);
+        iRes = IPropertyBag_Read(pPropBag, L"Charset", &value, pErrorLog);
         if (iRes == S_OK)
         {
             iRes = VariantChangeType(&value, &value, 0, VT_I2);
@@ -1966,7 +1950,7 @@ static HRESULT WINAPI OLEFontImpl_IPersistPropertyBag_Load(
     }
 
     if (iRes == S_OK) {
-        iRes = IPropertyBag_Read(pPropBag, sAttrWeight, &value, pErrorLog);
+        iRes = IPropertyBag_Read(pPropBag, L"Weight", &value, pErrorLog);
         if (iRes == S_OK)
         {
             iRes = VariantChangeType(&value, &value, 0, VT_I2);
@@ -1980,7 +1964,7 @@ static HRESULT WINAPI OLEFontImpl_IPersistPropertyBag_Load(
     }
 
     if (iRes == S_OK) {
-        iRes = IPropertyBag_Read(pPropBag, sAttrUnderline, &value, pErrorLog);
+        iRes = IPropertyBag_Read(pPropBag, L"Underline", &value, pErrorLog);
         if (iRes == S_OK)
         {
             iRes = VariantChangeType(&value, &value, 0, VT_BOOL);
@@ -1994,7 +1978,7 @@ static HRESULT WINAPI OLEFontImpl_IPersistPropertyBag_Load(
     }
 
     if (iRes == S_OK) {
-        iRes = IPropertyBag_Read(pPropBag, sAttrItalic, &value, pErrorLog);
+        iRes = IPropertyBag_Read(pPropBag, L"Italic", &value, pErrorLog);
         if (iRes == S_OK)
         {
             iRes = VariantChangeType(&value, &value, 0, VT_BOOL);
@@ -2008,7 +1992,7 @@ static HRESULT WINAPI OLEFontImpl_IPersistPropertyBag_Load(
     }
 
     if (iRes == S_OK) {
-        iRes = IPropertyBag_Read(pPropBag, sAttrStrikethrough, &value, pErrorLog);
+        iRes = IPropertyBag_Read(pPropBag, L"Strikethrough", &value, pErrorLog);
         if (iRes == S_OK)
         {
             iRes = VariantChangeType(&value, &value, 0, VT_BOOL);

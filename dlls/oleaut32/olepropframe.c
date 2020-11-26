@@ -154,8 +154,6 @@ static IPropertyPageSiteVtbl PropertyPageSiteVtbl = {
  */
 HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
 {
-    static const WCHAR comctlW[] = { 'c','o','m','c','t','l','3','2','.','d','l','l',0 };
-
     PROPSHEETHEADERW property_sheet;
     PROPSHEETPAGEW property_sheet_page;
     struct {
@@ -198,7 +196,7 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
         FIXME("dispidInitialProperty not yet implemented\n");
 
     hdc = GetDC(NULL);
-    hcomctl = LoadLibraryW(comctlW);
+    hcomctl = LoadLibraryW(L"comctl32.dll");
     if(hcomctl)
         property_sheet_dialog_find = FindResourceW(hcomctl,
                 MAKEINTRESOURCEW(1006 /*IDD_PROPSHEET*/), (LPWSTR)RT_DIALOG);

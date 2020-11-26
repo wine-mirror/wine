@@ -1947,7 +1947,6 @@ static HRESULT WINAPI OLEPictureImpl_GetTypeInfo(
   LCID        lcid,
   ITypeInfo** ppTInfo)
 {
-  static const WCHAR stdole2tlb[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
   ITypeLib *tl;
   HRESULT hres;
 
@@ -1956,7 +1955,7 @@ static HRESULT WINAPI OLEPictureImpl_GetTypeInfo(
   if (iTInfo != 0)
     return E_FAIL;
 
-  hres = LoadTypeLib(stdole2tlb, &tl);
+  hres = LoadTypeLib(L"stdole2.tlb", &tl);
   if (FAILED(hres))
   {
     ERR("Could not load stdole2.tlb\n");
@@ -2353,7 +2352,6 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
 		DWORD dwReserved, OLE_COLOR clrReserved, REFIID riid,
 		LPVOID *ppvRet )
 {
-  static const WCHAR file[] = { 'f','i','l','e',':',0 };
   IPicture *ipicture;
   HANDLE hFile;
   DWORD dwFileSize;
@@ -2377,7 +2375,7 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
   *ppvRet = NULL;
 
   /* Convert file URLs to DOS paths. */
-  if (wcsncmp(szURLorPath, file, 5) == 0) {
+  if (wcsncmp(szURLorPath, L"file:", 5) == 0) {
       DWORD size;
       hRes = CoInternetParseUrl(szURLorPath, PARSE_PATH_FROM_URL, 0, path_buf,
                                 ARRAY_SIZE(path_buf), &size, 0);
