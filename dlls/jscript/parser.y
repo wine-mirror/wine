@@ -780,7 +780,7 @@ ObjectLiteral
         {
             if(ctx->script->version < 2) {
                 WARN("Trailing comma in object literal is illegal in legacy mode.\n");
-                ctx->hres = JS_E_SYNTAX;
+                set_error(ctx, @3, JS_E_SYNTAX);
                 YYABORT;
             }
             $$ = new_prop_and_value_expression(ctx, $2);
@@ -824,7 +824,7 @@ IdentifierName
             if(ctx->script->version < SCRIPTLANGUAGEVERSION_ES5) {
                 WARN("%s keyword used as an identifier in legacy mode.\n",
                      debugstr_w($1));
-                ctx->hres = JS_E_SYNTAX;
+                set_error(ctx, @$, JS_E_SYNTAX);
                 YYABORT;
             }
             $$ = $1;
