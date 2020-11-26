@@ -1072,6 +1072,7 @@ then
                   WINE_TRY_CROSSCFLAGS([-Wformat-overflow])
                   WINE_TRY_CROSSCFLAGS([-Wnonnull])
                   WINE_TRY_CROSSCFLAGS([-mcx16]) ;;
+          aarch64) WINE_TRY_CROSSCFLAGS([-Wno-format]) ;;
         esac
 
         dnl Determine debug info format
