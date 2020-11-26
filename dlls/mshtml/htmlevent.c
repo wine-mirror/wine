@@ -1225,7 +1225,7 @@ static HRESULT WINAPI DOMUIEvent_initUIEvent(IDOMUIEvent *iface, BSTR type, VARI
         return hres;
 
     nsAString_InitDepend(&type_str, type);
-    nsres = nsIDOMUIEvent_InitUIEvent(This->ui_event, &type_str, can_bubble, cancelable,
+    nsres = nsIDOMUIEvent_InitUIEvent(This->ui_event, &type_str, !!can_bubble, !!cancelable,
                                       NULL /* FIXME */, detail);
     nsAString_Finish(&type_str);
     if(NS_FAILED(nsres)) {
@@ -1517,8 +1517,8 @@ static HRESULT WINAPI DOMMouseEvent_initMouseEvent(IDOMMouseEvent *iface, BSTR t
         nsAString_InitDepend(&type_str, type);
         nsres = nsIDOMMouseEvent_InitMouseEvent(This->mouse_event, &type_str, can_bubble, cancelable,
                                                 NULL /* FIXME */, detail, screen_x, screen_y,
-                                                client_x, client_y, ctrl_key, alt_key, shift_key,
-                                                meta_key, button, nstarget);
+                                                client_x, client_y, !!ctrl_key, !!alt_key, !!shift_key,
+                                                !!meta_key, button, nstarget);
         nsAString_Finish(&type_str);
         if(NS_FAILED(nsres)) {
             FIXME("InitMouseEvent failed: %08x\n", nsres);
