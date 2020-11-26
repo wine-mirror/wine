@@ -1840,7 +1840,7 @@ static inline unsigned long get_fpu_cw(void)
 #endif
     return MAKELONG( cw, sse );
 #elif defined(__aarch64__)
-    unsigned long cw;
+    ULONG_PTR cw;
     __asm__ __volatile__( "mrs %0, fpcr" : "=r" (cw) );
     return cw;
 #else
