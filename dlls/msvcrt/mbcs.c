@@ -931,7 +931,7 @@ int CDECL _mbscmp_l(const unsigned char* str, const unsigned char* cmp, _locale_
 /*********************************************************************
  *		_mbscmp(MSVCRT.@)
  */
-int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp, _locale_t locale)
+int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp)
 {
     return _mbscmp_l(str, cmp, NULL);
 }
