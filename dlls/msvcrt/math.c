@@ -1681,7 +1681,7 @@ unsigned int CDECL _statusfp(void)
     /* FIXME: there's no definition for ambiguous status, just return all status bits for now */
     flags = x86_sw | sse2_sw;
 #elif defined(__aarch64__)
-    unsigned long fpsr;
+    ULONG_PTR fpsr;
 
     __asm__ __volatile__( "mrs %0, fpsr" : "=r" (fpsr) );
     if (fpsr & 0x1)  flags |= MSVCRT__SW_INVALID;
@@ -1726,7 +1726,7 @@ unsigned int CDECL _clearfp(void)
         __asm__ __volatile__( "ldmxcsr %0" : : "m" (fpword) );
     }
 #elif defined(__aarch64__)
-    unsigned long fpsr;
+    ULONG_PTR fpsr;
 
     __asm__ __volatile__( "mrs %0, fpsr" : "=r" (fpsr) );
     if (fpsr & 0x1)  flags |= MSVCRT__SW_INVALID;
@@ -1991,7 +1991,7 @@ unsigned int CDECL _control87(unsigned int newval, unsigned int mask)
         __asm__ __volatile__( "ldmxcsr %0" :: "m" (fpword) );
     }
 #elif defined(__aarch64__)
-    unsigned long fpcr;
+    ULONG_PTR fpcr;
 
     __asm__ __volatile__( "mrs %0, fpcr" : "=r" (fpcr) );
     if (!(fpcr & 0x100))  flags |= MSVCRT__EM_INVALID;
