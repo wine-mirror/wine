@@ -239,7 +239,7 @@
 @ cdecl _cputs(str)
 @ cdecl _cputws(wstr)
 @ cdecl _creat(str long) MSVCRT__creat
-@ cdecl _create_locale(long str) MSVCRT__create_locale
+@ cdecl _create_locale(long str)
 @ cdecl _crt_at_quick_exit(ptr) MSVCRT__crt_at_quick_exit
 @ cdecl _crt_atexit(ptr) MSVCRT__crt_atexit
 @ cdecl _crt_debugger_hook(long) MSVCRT__crt_debugger_hook
@@ -334,7 +334,7 @@
 @ cdecl _fread_nolock(ptr long long ptr) MSVCRT__fread_nolock
 @ cdecl _fread_nolock_s(ptr long long long ptr) MSVCRT__fread_nolock_s
 @ cdecl _free_base(ptr)
-@ cdecl _free_locale(ptr) MSVCRT__free_locale
+@ cdecl _free_locale(ptr)
 @ cdecl _fseek_nolock(ptr long long) MSVCRT__fseek_nolock
 @ cdecl _fseeki64(ptr int64 long) MSVCRT__fseeki64
 @ cdecl _fseeki64_nolock(ptr int64 long) MSVCRT__fseeki64_nolock
@@ -358,7 +358,7 @@
 @ cdecl _gcvt(double long str) MSVCRT__gcvt
 @ cdecl _gcvt_s(ptr long double long) MSVCRT__gcvt_s
 @ cdecl -arch=win64 _get_FMA3_enable() MSVCRT__get_FMA3_enable
-@ cdecl _get_current_locale() MSVCRT__get_current_locale
+@ cdecl _get_current_locale()
 @ cdecl _get_daylight(ptr)
 @ cdecl _get_doserrno(ptr)
 @ cdecl _get_dstbias(ptr) MSVCRT__get_dstbias
@@ -878,7 +878,7 @@
 @ cdecl _o__cputs(str) _cputs
 @ cdecl _o__cputws(wstr) _cputws
 @ cdecl _o__creat(str long) MSVCRT__creat
-@ cdecl _o__create_locale(long str) MSVCRT__create_locale
+@ cdecl _o__create_locale(long str) _create_locale
 @ cdecl _o__crt_atexit(ptr) MSVCRT__crt_atexit
 @ cdecl _o__ctime32_s(str long ptr) MSVCRT__ctime32_s
 @ cdecl _o__ctime64_s(str long ptr) MSVCRT__ctime64_s
@@ -954,7 +954,7 @@
 @ cdecl _o__fread_nolock(ptr long long ptr) MSVCRT__fread_nolock
 @ cdecl _o__fread_nolock_s(ptr long long long ptr) MSVCRT__fread_nolock_s
 @ cdecl _o__free_base(ptr) _free_base
-@ cdecl _o__free_locale(ptr) MSVCRT__free_locale
+@ cdecl _o__free_locale(ptr) _free_locale
 @ cdecl _o__fseek_nolock(ptr long long) MSVCRT__fseek_nolock
 @ cdecl _o__fseeki64(ptr int64 long) MSVCRT__fseeki64
 @ cdecl _o__fseeki64_nolock(ptr int64 long) MSVCRT__fseeki64_nolock
@@ -1686,7 +1686,7 @@
 @ cdecl -ret64 _o_llround(double) MSVCR120_llround
 @ cdecl -ret64 _o_llroundf(float) MSVCR120_llroundf
 @ cdecl -ret64 _o_llroundl(double) MSVCR120_llroundl
-@ cdecl _o_localeconv() MSVCRT_localeconv
+@ cdecl _o_localeconv() localeconv
 @ cdecl _o_log(double) MSVCRT_log
 @ cdecl _o_log10(double) MSVCRT_log10
 @ cdecl -arch=!i386 _o_log10f(float) MSVCRT_log10f
@@ -2388,7 +2388,7 @@
 @ cdecl -ret64 llround(double) MSVCR120_llround
 @ cdecl -ret64 llroundf(float) MSVCR120_llroundf
 @ cdecl -ret64 llroundl(double) MSVCR120_llroundl
-@ cdecl localeconv() MSVCRT_localeconv
+@ cdecl localeconv()
 @ cdecl log(double) MSVCRT_log
 @ cdecl log10(double) MSVCRT_log10
 @ cdecl -arch=!i386 log10f(float) MSVCRT_log10f

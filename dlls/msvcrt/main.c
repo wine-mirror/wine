@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#include <locale.h>
 #include "msvcrt.h"
 #include "winternl.h"
 
@@ -140,7 +141,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     msvcrt_free_tls_mem();
     if (!msvcrt_free_tls())
       return FALSE;
-    MSVCRT__free_locale(MSVCRT_locale);
+    _free_locale(MSVCRT_locale);
 #if _MSVCR_VER >= 100 && _MSVCR_VER <= 120
     msvcrt_free_scheduler_thread();
     msvcrt_free_scheduler();

@@ -377,7 +377,7 @@
 @ cdecl _cputs(str)
 @ cdecl _cputws(wstr)
 @ cdecl _creat(str long) MSVCRT__creat
-@ cdecl _create_locale(long str) MSVCRT__create_locale
+@ cdecl _create_locale(long str)
 # stub _crtAssertBusy
 # stub _crtBreakAlloc
 # stub _crtDbgFlag
@@ -466,7 +466,7 @@
 @ cdecl _fputchar(long) MSVCRT__fputchar
 @ cdecl _fputwchar(long) MSVCRT__fputwchar
 # stub _free_dbg(ptr long)
-@ cdecl _free_locale(ptr) MSVCRT__free_locale
+@ cdecl _free_locale(ptr)
 # stub _freea(ptr)
 # stub _freea_s
 @ varargs _fscanf_l(ptr str ptr) MSVCRT__fscanf_l
@@ -499,7 +499,7 @@
 @ varargs _fwscanf_s_l(ptr wstr ptr) MSVCRT__fwscanf_s_l
 @ cdecl _gcvt(double long str) MSVCRT__gcvt
 @ cdecl _gcvt_s(ptr long  double long) MSVCRT__gcvt_s
-@ cdecl _get_current_locale() MSVCRT__get_current_locale
+@ cdecl _get_current_locale()
 @ cdecl _get_doserrno(ptr)
 @ cdecl _get_environ(ptr) MSVCRT__get_environ
 @ cdecl _get_errno(ptr)
@@ -1353,7 +1353,7 @@
 @ cdecl labs(long) MSVCRT_labs
 @ cdecl ldexp(double long) MSVCRT_ldexp
 @ cdecl -ret64 ldiv(long long) MSVCRT_ldiv
-@ cdecl localeconv() MSVCRT_localeconv
+@ cdecl localeconv()
 @ cdecl localtime(ptr) MSVCRT_localtime
 @ cdecl log(double) MSVCRT_log
 @ cdecl log10(double) MSVCRT_log10

@@ -576,7 +576,7 @@
 @ extern __badioinfo MSVCRT___badioinfo
 @ cdecl __clean_type_info_names_internal(ptr)
 @ cdecl -arch=i386 __control87_2(long long ptr ptr)
-@ cdecl __create_locale(long str) MSVCRT__create_locale
+@ cdecl __create_locale(long str) _create_locale
 @ cdecl __crtCompareStringA(long long str long str long)
 @ cdecl __crtCompareStringW(long long wstr long wstr long)
 @ cdecl __crtLCMapStringA(long long str long ptr long long long)
@@ -588,8 +588,8 @@
 @ stub ___fls_getvalue@4
 @ stub ___fls_setvalue@8
 @ cdecl __fpecode()
-@ cdecl __free_locale(ptr) MSVCRT__free_locale
-@ cdecl __get_current_locale() MSVCRT__get_current_locale
+@ cdecl __free_locale(ptr) _free_locale
+@ cdecl __get_current_locale() _get_current_locale
 @ stub __get_flsindex
 @ stub __get_tlsindex
 @ cdecl __getmainargs(ptr ptr ptr long ptr)
@@ -744,7 +744,7 @@
 @ cdecl _cputs(str)
 @ cdecl _cputws(wstr)
 @ cdecl _creat(str long) MSVCRT__creat
-@ cdecl _create_locale(long str) MSVCRT__create_locale
+@ cdecl _create_locale(long str)
 @ cdecl -arch=i386 _crt_debugger_hook(long) MSVCRT__crt_debugger_hook
 @ cdecl -arch=arm,win64 __crt_debugger_hook(long) MSVCRT__crt_debugger_hook
 @ varargs _cscanf(str)
@@ -837,7 +837,7 @@
 @ cdecl _fputwchar(long) MSVCRT__fputwchar
 @ cdecl _fread_nolock(ptr long long ptr) MSVCRT__fread_nolock
 @ cdecl _fread_nolock_s(ptr long long long ptr) MSVCRT__fread_nolock_s
-@ cdecl _free_locale(ptr) MSVCRT__free_locale
+@ cdecl _free_locale(ptr)
 @ stub _freea
 @ stub _freea_s
 @ stub _freefls
@@ -871,7 +871,7 @@
 @ varargs _fwscanf_s_l(ptr wstr ptr) MSVCRT__fwscanf_s_l
 @ cdecl _gcvt(double long str) MSVCRT__gcvt
 @ cdecl _gcvt_s(ptr long  double long) MSVCRT__gcvt_s
-@ cdecl _get_current_locale() MSVCRT__get_current_locale
+@ cdecl _get_current_locale()
 @ cdecl _get_daylight(ptr)
 @ cdecl _get_doserrno(ptr)
 @ cdecl _get_dstbias(ptr) MSVCRT__get_dstbias
@@ -1734,7 +1734,7 @@
 @ cdecl -ret64 ldiv(long long) MSVCRT_ldiv
 @ cdecl -ret64 llabs(int64) MSVCRT_llabs
 @ cdecl lldiv(int64 int64) MSVCRT_lldiv
-@ cdecl localeconv() MSVCRT_localeconv
+@ cdecl localeconv()
 @ cdecl log(double) MSVCRT_log
 @ cdecl -arch=!i386 logf(float) MSVCRT_logf
 @ cdecl log10(double) MSVCRT_log10

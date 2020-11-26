@@ -362,7 +362,7 @@ find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LO
 }
 
 /* Internal: Find the LCID for a locale specification */
-LCID MSVCRT_locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *sname)
+LCID locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *sname)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     const char *cp, *region;
@@ -1006,7 +1006,7 @@ BOOL CDECL __crtGetStringTypeW(DWORD unk, DWORD type,
 /*********************************************************************
  *		localeconv (MSVCRT.@)
  */
-struct lconv* CDECL MSVCRT_localeconv(void)
+struct lconv* CDECL localeconv(void)
 {
     return get_locinfo()->lconv;
 }
@@ -1173,7 +1173,7 @@ void CDECL free_locale_noalloc(_locale_t locale)
 /*********************************************************************
  *      _get_current_locale (MSVCRT.@)
  */
-_locale_t CDECL MSVCRT__get_current_locale(void)
+_locale_t CDECL _get_current_locale(void)
 {
     _locale_t loc = MSVCRT_malloc(sizeof(_locale_tstruct));
     if(!loc)
@@ -1185,7 +1185,7 @@ _locale_t CDECL MSVCRT__get_current_locale(void)
 /*********************************************************************
  *      _free_locale (MSVCRT.@)
  */
-void CDECL MSVCRT__free_locale(_locale_t locale)
+void CDECL _free_locale(_locale_t locale)
 {
     if (!locale)
         return;
@@ -1325,13 +1325,13 @@ static pthreadlocinfo create_locinfo(int category,
             } else if(p) {
                 memcpy(buf, locale, p-locale);
                 buf[p-locale] = '\0';
-                lcid[i] = MSVCRT_locale_to_LCID(buf, &cp[i], &sname);
+                lcid[i] = locale_to_LCID(buf, &cp[i], &sname);
                 if(sname) {
                     locale_name[i] = locale;
                     locale_len[i] = p-locale;
                 }
             } else {
-                lcid[i] = MSVCRT_locale_to_LCID(locale, &cp[i], &sname);
+                lcid[i] = locale_to_LCID(locale, &cp[i], &sname);
                 if(sname) {
                     locale_name[i] = locale;
                     locale_len[i] = strlen(locale);
@@ -1347,7 +1347,7 @@ static pthreadlocinfo create_locinfo(int category,
             locale = p+1;
         }
     } else {
-        lcid[0] = MSVCRT_locale_to_LCID(locale, &cp[0], &sname);
+        lcid[0] = locale_to_LCID(locale, &cp[0], &sname);
         if(lcid[0] == -1)
             return NULL;
         if(sname) {
@@ -1948,7 +1948,7 @@ static pthreadlocinfo create_locinfo(int category,
 /*********************************************************************
  *      _create_locale (MSVCRT.@)
  */
-_locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
+_locale_t CDECL _create_locale(int category, const char *locale)
 {
     _locale_t loc;
 
@@ -1992,7 +1992,7 @@ _locale_t CDECL MSVCRT__wcreate_locale(int category, const MSVCRT_wchar_t *local
         return NULL;
     MSVCRT_wcstombs(str, locale, len);
 
-    loc = MSVCRT__create_locale(category, str);
+    loc = _create_locale(category, str);
 
     MSVCRT_free(str);
     return loc;
@@ -2118,7 +2118,7 @@ BOOL msvcrt_init_locale(void)
     int i;
 
     _lock_locales();
-    MSVCRT_locale = MSVCRT__create_locale(0, "C");
+    MSVCRT_locale = _create_locale(0, "C");
     _unlock_locales();
     if(!MSVCRT_locale)
         return FALSE;

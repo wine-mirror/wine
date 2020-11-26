@@ -257,7 +257,7 @@ threadmbcinfo* create_mbcinfo(int cp, LCID lcid, threadmbcinfo *old_mbcinfo)
 
   if(lcid == -1) {
     MSVCRT_sprintf(bufA, ".%d", newcp);
-    mbcinfo->mblcid = MSVCRT_locale_to_LCID(bufA, NULL, NULL);
+    mbcinfo->mblcid = locale_to_LCID(bufA, NULL, NULL);
   } else {
     mbcinfo->mblcid = lcid;
   }
