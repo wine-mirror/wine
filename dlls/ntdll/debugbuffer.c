@@ -114,7 +114,16 @@ NTSTATUS WINAPI RtlDestroyQueryDebugBuffer(IN PDEBUG_BUFFER iBuf)
 
 NTSTATUS WINAPI RtlQueryProcessDebugInformation(IN ULONG iProcessId, IN ULONG iDebugInfoMask, IN OUT PDEBUG_BUFFER iBuf) 
 {
-   NTSTATUS nts = STATUS_SUCCESS;
+    CLIENT_ID cid;
+    NTSTATUS status;
+    HANDLE process;
+
+    cid.UniqueProcess = ULongToHandle( iProcessId );
+    cid.UniqueThread = 0;
+
+    if ((status = NtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, NULL, &cid ))) return status;
+    NtClose( process );
+
    FIXME("(%d, %x, %p): stub\n", iProcessId, iDebugInfoMask, iBuf);
    iBuf->InfoClassMask = iDebugInfoMask;
    
@@ -139,5 +148,5 @@ NTSTATUS WINAPI RtlQueryProcessDebugInformation(IN ULONG iProcessId, IN ULONG iD
    }
    TRACE("returns:%p\n", iBuf);
    dump_DEBUG_BUFFER(iBuf);
-   return nts;
+   return status;
 }

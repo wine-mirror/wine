@@ -132,6 +132,24 @@ static void InitFunctionPtrs(void)
     ok(strlen(src) == 15, "Source must be 16 bytes long!\n");
 }
 
+static void test_RtlQueryProcessDebugInformation(void)
+{
+    DEBUG_BUFFER *buffer;
+    NTSTATUS status;
+
+    buffer = RtlCreateQueryDebugBuffer( 0, 0 );
+    ok( buffer != NULL, "RtlCreateQueryDebugBuffer returned NULL" );
+
+    status = RtlQueryProcessDebugInformation( GetCurrentThreadId(), PDI_HEAPS | PDI_HEAP_BLOCKS, buffer );
+    ok( status == STATUS_INVALID_CID, "RtlQueryProcessDebugInformation returned %x\n", status );
+
+    status = RtlQueryProcessDebugInformation( GetCurrentProcessId(), PDI_HEAPS | PDI_HEAP_BLOCKS, buffer );
+    ok( !status, "RtlQueryProcessDebugInformation returned %x\n", status );
+
+    status = RtlDestroyQueryDebugBuffer( buffer );
+    ok( !status, "RtlDestroyQueryDebugBuffer returned %x\n", status );
+}
+
 #define COMP(str1,str2,cmplen,len) size = RtlCompareMemory(str1, str2, cmplen); \
   ok(size == len, "Expected %ld, got %ld\n", size, (SIZE_T)len)
 
@@ -3668,6 +3686,7 @@ START_TEST(rtl)
 {
     InitFunctionPtrs();
 
+    test_RtlQueryProcessDebugInformation();
     test_RtlCompareMemory();
     test_RtlCompareMemoryUlong();
     test_RtlMoveMemory();
