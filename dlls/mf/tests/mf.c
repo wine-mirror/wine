@@ -2562,6 +2562,109 @@ static void test_sample_grabber(void)
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 
+static void test_sample_grabber_is_mediatype_supported(void)
+{
+    IMFMediaType *media_type, *media_type2, *media_type3;
+    IMFMediaTypeHandler *handler;
+    IMFActivate *activate;
+    IMFStreamSink *stream;
+    IMFMediaSink *sink;
+    ULONG refcount;
+    HRESULT hr;
+    GUID guid;
+
+    /* IsMediaTypeSupported checks are done against the creation type, and check format data */
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = MFCreateSampleGrabberSinkActivate(media_type, &grabber_callback, &activate);
+    ok(hr == S_OK, "Failed to create grabber activate, hr %#x.\n", hr);
+
+    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
+    ok(hr == S_OK, "Failed to activate object, hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetStreamSinkByIndex(sink, 0, &stream);
+    ok(hr == S_OK, "Failed to get sink stream, hr %#x.\n", hr);
+    hr = IMFStreamSink_GetMediaTypeHandler(stream, &handler);
+    ok(hr == S_OK, "Failed to get type handler, hr %#x.\n", hr);
+    IMFStreamSink_Release(stream);
+
+    IMFMediaSink_Release(sink);
+
+    /* On Win8+ this initialization happens automatically. */
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, media_type);
+    ok(hr == S_OK, "Failed to set media type, hr %#x.\n", hr);
+
+    hr = MFCreateMediaType(&media_type2);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type2, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type2, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type2, &MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, media_type2, NULL);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, media_type2);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Failed to set media type, hr %#x.\n", hr);
+
+    /* Make it match grabber type sample rate. */
+    hr = IMFMediaType_SetUINT32(media_type2, &MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, media_type2, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, media_type2);
+    ok(hr == S_OK, "Failed to set media type, hr %#x.\n", hr);
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &media_type3);
+    ok(hr == S_OK, "Failed to set media type, hr %#x.\n", hr);
+    ok(media_type3 == media_type2, "Unexpected media type instance.\n");
+    IMFMediaType_Release(media_type3);
+
+    /* Change original type. */
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, media_type2, NULL);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetUINT32(media_type2, &MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_IsMediaTypeSupported(handler, media_type2, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(handler, &guid);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &MFMediaType_Audio), "Unexpected major type.\n");
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMajorType(handler, &guid);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(IsEqualGUID(&guid, &MFMediaType_Audio), "Unexpected major type.\n");
+
+    IMFMediaType_Release(media_type2);
+    IMFMediaType_Release(media_type);
+
+    IMFMediaTypeHandler_Release(handler);
+
+    refcount = IMFActivate_Release(activate);
+    ok(!refcount, "Unexpected refcount %u.\n", refcount);
+}
+
 static BOOL is_supported_video_type(const GUID *guid)
 {
     return IsEqualGUID(guid, &MFVideoFormat_L8)
@@ -4263,6 +4366,7 @@ START_TEST(mf)
     test_MFShutdownObject();
     test_presentation_clock();
     test_sample_grabber();
+    test_sample_grabber_is_mediatype_supported();
     test_video_processor();
     test_quality_manager();
     test_sar();
