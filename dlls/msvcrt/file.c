@@ -2178,17 +2178,15 @@ static int check_bom(HANDLE h, int oflags, BOOL seek)
     char bom[sizeof(utf8_bom)];
     DWORD r;
 
-    oflags &= ~(MSVCRT__O_WTEXT|MSVCRT__O_U16TEXT|MSVCRT__O_U8TEXT);
-
     if (!ReadFile(h, bom, sizeof(utf8_bom), &r, NULL))
         return oflags;
 
     if (r==sizeof(utf8_bom) && !memcmp(bom, utf8_bom, sizeof(utf8_bom))) {
-        oflags |= MSVCRT__O_U8TEXT;
+        oflags = (oflags & ~(MSVCRT__O_WTEXT | MSVCRT__O_U16TEXT)) | MSVCRT__O_U8TEXT;
     }else if (r>=sizeof(utf16_bom) && !memcmp(bom, utf16_bom, sizeof(utf16_bom))) {
         if (seek && r>2)
             SetFilePointer(h, 2, NULL, FILE_BEGIN);
-        oflags |= MSVCRT__O_U16TEXT;
+        oflags = (oflags & ~(MSVCRT__O_WTEXT | MSVCRT__O_U8TEXT)) | MSVCRT__O_U16TEXT;
     }else if (seek) {
         SetFilePointer(h, 0, NULL, FILE_BEGIN);
     }
@@ -2288,8 +2286,6 @@ int CDECL MSVCRT__wsopen_dispatch( const MSVCRT_wchar_t* path, int oflags, int s
           oflags = check_bom(hand, oflags, FALSE);
           CloseHandle(hand);
       }
-      else
-          oflags &= ~(MSVCRT__O_WTEXT|MSVCRT__O_U16TEXT|MSVCRT__O_U8TEXT);
   }
 
   hand = CreateFileW(path, access, sharing, &sa, creation, attrib, 0);
