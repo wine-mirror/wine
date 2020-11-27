@@ -83,6 +83,7 @@ struct gdi_font_face
     struct bitmap_font_size    size;     /* set if face is a bitmap */
     struct gdi_font_family    *family;
     struct gdi_font_enum_data *cached_enum_data;
+    struct wine_rb_entry       full_name_entry;
 };
 
 static const struct font_backend_funcs *font_funcs;
@@ -583,8 +584,20 @@ static int family_second_name_compare( const void *key, const struct wine_rb_ent
     return family_namecmp( (const WCHAR *)key, family->second_name );
 }
 
+static int face_full_name_compare( const void *key, const struct wine_rb_entry *entry )
+{
+    const struct gdi_font_face *face = WINE_RB_ENTRY_VALUE( entry, const struct gdi_font_face, full_name_entry );
+    return facename_compare( (const WCHAR *)key, face->full_name, LF_FULLFACESIZE - 1 );
+}
+
 static struct wine_rb_tree family_name_tree = { family_name_compare };
 static struct wine_rb_tree family_second_name_tree = { family_second_name_compare };
+static struct wine_rb_tree face_full_name_tree = { face_full_name_compare };
+
+static int face_is_in_full_name_tree( const struct gdi_font_face *face )
+{
+    return face->full_name_entry.parent || face_full_name_tree.root == &face->full_name_entry;
+}
 
 static struct gdi_font_family *create_family( const WCHAR *name, const WCHAR *second_name )
 {
@@ -629,6 +642,13 @@ static struct gdi_font_family *find_family_from_any_name( const WCHAR *name )
     if ((family = find_family_from_name( name ))) return family;
     if (!(entry = wine_rb_get( &family_second_name_tree, name ))) return NULL;
     return WINE_RB_ENTRY_VALUE( entry, struct gdi_font_family, second_name_entry );
+}
+
+static struct gdi_font_face *find_face_from_full_name( const WCHAR *full_name )
+{
+    struct wine_rb_entry *entry;
+    if (!(entry = wine_rb_get( &face_full_name_tree, full_name ))) return NULL;
+    return WINE_RB_ENTRY_VALUE( entry, struct gdi_font_face, full_name_entry );
 }
 
 static const struct list *get_family_face_list( const struct gdi_font_family *family )
@@ -819,6 +839,7 @@ static void release_face( struct gdi_font_face *face )
         list_remove( &face->entry );
         release_family( face->family );
     }
+    if (face_is_in_full_name_tree( face )) wine_rb_remove( &face_full_name_tree, &face->full_name_entry );
     HeapFree( GetProcessHeap(), 0, face->file );
     HeapFree( GetProcessHeap(), 0, face->style_name );
     HeapFree( GetProcessHeap(), 0, face->full_name );
@@ -913,6 +934,11 @@ static BOOL insert_face_in_family_list( struct gdi_font_face *face, struct gdi_f
                 face->family = family;
                 family->refcount++;
                 face->refcount++;
+                if (face_is_in_full_name_tree( cursor ))
+                {
+                    wine_rb_replace( &face_full_name_tree, &cursor->full_name_entry, &face->full_name_entry );
+                    memset( &cursor->full_name_entry, 0, sizeof(cursor->full_name_entry) );
+                }
                 release_face( cursor );
                 return TRUE;
             }
@@ -923,6 +949,7 @@ static BOOL insert_face_in_family_list( struct gdi_font_face *face, struct gdi_f
     TRACE( "Adding face %s in family %s from %s\n", debugstr_w(face->full_name),
            debugstr_w(family->family_name), debugstr_w(face->file) );
     list_add_before( &cursor->entry, &face->entry );
+    if (face->scalable) wine_rb_put( &face_full_name_tree, face->full_name, &face->full_name_entry );
     face->family = family;
     family->refcount++;
     face->refcount++;
@@ -7889,7 +7916,7 @@ static void update_external_font_keys( HKEY hkey )
 
 static void load_registry_fonts(void)
 {
-    WCHAR value[LF_FULLFACESIZE + 12], data[MAX_PATH];
+    WCHAR value[LF_FULLFACESIZE + 12], data[MAX_PATH], *tmp;
     DWORD i = 0, type, dlen, vlen;
     struct wine_rb_entry *entry;
     HKEY hkey;
@@ -7918,6 +7945,11 @@ static void load_registry_fonts(void)
                 goto next;
             }
         }
+
+        if ((tmp = wcsrchr( value, ' ' )) && !facename_compare( tmp, L" (TrueType)", -1 )) *tmp = 0;
+        if (find_face_from_full_name( value )) goto next;
+        if (tmp && !*tmp) *tmp = ' ';
+
         if (data[0] && data[1] == ':')
             add_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
         else if (dlen >= 6 && !wcsicmp( data + dlen - 5, L".fon" ))
