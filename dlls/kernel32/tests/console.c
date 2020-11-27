@@ -3878,6 +3878,13 @@ static void test_FreeConsole(void)
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
        "ReadFile returned %x %u\n", ret, GetLastError());
 
+    ret = WriteFile(unbound_input, "test", 4, &size, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+       "ReadFile returned %x %u\n", ret, GetLastError());
+
+    ret = GetConsoleMode(unbound_input, &mode);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+       "GetConsoleMode returned %x %u\n", ret, GetLastError());
     ret = GetConsoleMode(unbound_output, &mode);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
        "GetConsoleMode returned %x %u\n", ret, GetLastError());
