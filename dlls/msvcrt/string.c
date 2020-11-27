@@ -28,6 +28,7 @@
 #include <limits.h>
 #include <locale.h>
 #include <errno.h>
+#include <float.h>
 #include "msvcrt.h"
 #include "bnum.h"
 #include "winnls.h"
@@ -552,7 +553,7 @@ int fpnum_ldouble(struct fpnum *fp, MSVCRT__LDOUBLE *d)
     /* round mantissa */
     if (fp->mod == FP_ROUND_UP || (fp->mod == FP_ROUND_EVEN && fp->m & 1))
     {
-        if (fp->m == MSVCRT_UI64_MAX)
+        if (fp->m == UI64_MAX)
         {
             fp->m = (ULONGLONG)1 << (LDBL_MANT_BITS - 1);
             fp->exp++;
@@ -616,7 +617,7 @@ static struct fpnum fpnum_parse16(wchar_t get(void *ctx), void unget(void *ctx),
     int val, exp = 0;
 
     nch = get(ctx);
-    while(m < MSVCRT_UI64_MAX/16)
+    while(m < UI64_MAX/16)
     {
         val = hex2int(nch);
         if (val == -1) break;
@@ -652,7 +653,7 @@ static struct fpnum fpnum_parse16(wchar_t get(void *ctx), void unget(void *ctx),
         return fpnum(0, 0, 0, 0);
     }
 
-    while(m <= MSVCRT_UI64_MAX/16)
+    while(m <= UI64_MAX/16)
     {
         val = hex2int(nch);
         if (val == -1) break;
@@ -726,13 +727,13 @@ static struct fpnum fpnum_parse16(wchar_t get(void *ctx), void unget(void *ctx),
 /* Return FALSE on overflow */
 static inline BOOL bnum_to_mant(struct bnum *b, ULONGLONG *m)
 {
-    if(MSVCRT_UI64_MAX / LIMB_MAX / LIMB_MAX < b->data[bnum_idx(b, b->e-1)]) return FALSE;
+    if(UI64_MAX / LIMB_MAX / LIMB_MAX < b->data[bnum_idx(b, b->e-1)]) return FALSE;
     *m = (ULONGLONG)b->data[bnum_idx(b, b->e-1)] * LIMB_MAX * LIMB_MAX;
     if(b->b == b->e-1) return TRUE;
-    if(MSVCRT_UI64_MAX - *m < (ULONGLONG)b->data[bnum_idx(b, b->e-2)] * LIMB_MAX) return FALSE;
+    if(UI64_MAX - *m < (ULONGLONG)b->data[bnum_idx(b, b->e-2)] * LIMB_MAX) return FALSE;
     *m += (ULONGLONG)b->data[bnum_idx(b, b->e-2)] * LIMB_MAX;
     if(b->b == b->e-2) return TRUE;
-    if(MSVCRT_UI64_MAX - *m < b->data[bnum_idx(b, b->e-3)]) return FALSE;
+    if(UI64_MAX - *m < b->data[bnum_idx(b, b->e-3)]) return FALSE;
     *m += b->data[bnum_idx(b, b->e-3)];
     return TRUE;
 }
@@ -928,11 +929,11 @@ static struct fpnum fpnum_parse_bnum(wchar_t (*get)(void *ctx), void (*unget)(vo
     if(off < 0) off += LIMB_DIGITS;
     if(off) bnum_mult(b, p10s[off]);
 
-    if(dp-1 > (ldouble ? DBL80_MAX_10_EXP : MSVCRT_DBL_MAX_10_EXP))
+    if(dp-1 > (ldouble ? DBL80_MAX_10_EXP : DBL_MAX_10_EXP))
         return fpnum(sign, INT_MAX, 1, FP_ROUND_ZERO);
     /* Count part of exponent stored in denormalized mantissa. */
     /* Increase exponent range to handle subnormals. */
-    if(dp-1 < (ldouble ? DBL80_MIN_10_EXP : MSVCRT_DBL_MIN_10_EXP-MSVCRT_DBL_DIG-18))
+    if(dp-1 < (ldouble ? DBL80_MIN_10_EXP : DBL_MIN_10_EXP-DBL_DIG-18))
         return fpnum(sign, INT_MIN, 1, FP_ROUND_ZERO);
 
     while(dp > 3*LIMB_DIGITS) {
@@ -1577,11 +1578,11 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, _loca
 
         nptr++;
 
-        if(!negative && (ret>MSVCRT_I64_MAX/base || ret*base>MSVCRT_I64_MAX-v)) {
-            ret = MSVCRT_I64_MAX;
+        if(!negative && (ret>I64_MAX/base || ret*base>I64_MAX-v)) {
+            ret = I64_MAX;
             *MSVCRT__errno() = MSVCRT_ERANGE;
-        } else if(negative && (ret<MSVCRT_I64_MIN/base || ret*base<MSVCRT_I64_MIN-v)) {
-            ret = MSVCRT_I64_MIN;
+        } else if(negative && (ret<I64_MIN/base || ret*base<I64_MIN-v)) {
+            ret = I64_MIN;
             *MSVCRT__errno() = MSVCRT_ERANGE;
         } else
             ret = ret*base + v;
@@ -1676,11 +1677,11 @@ MSVCRT_long CDECL MSVCRT__atol_l(const char *str, _locale_t locale)
 {
     __int64 ret = MSVCRT_strtoi64_l(str, NULL, 10, locale);
 
-    if(ret > MSVCRT_LONG_MAX) {
-        ret = MSVCRT_LONG_MAX;
+    if(ret > LONG_MAX) {
+        ret = LONG_MAX;
         *MSVCRT__errno() = MSVCRT_ERANGE;
-    } else if(ret < MSVCRT_LONG_MIN) {
-        ret = MSVCRT_LONG_MIN;
+    } else if(ret < LONG_MIN) {
+        ret = LONG_MIN;
         *MSVCRT__errno() = MSVCRT_ERANGE;
     }
     return ret;
@@ -1726,11 +1727,11 @@ MSVCRT_long CDECL MSVCRT__strtol_l(const char* nptr,
 {
     __int64 ret = MSVCRT_strtoi64_l(nptr, end, base, locale);
 
-    if(ret > MSVCRT_LONG_MAX) {
-        ret = MSVCRT_LONG_MAX;
+    if(ret > LONG_MAX) {
+        ret = LONG_MAX;
         *MSVCRT__errno() = MSVCRT_ERANGE;
-    } else if(ret < MSVCRT_LONG_MIN) {
-        ret = MSVCRT_LONG_MIN;
+    } else if(ret < LONG_MIN) {
+        ret = LONG_MIN;
         *MSVCRT__errno() = MSVCRT_ERANGE;
     }
 
@@ -1752,10 +1753,10 @@ MSVCRT_ulong CDECL MSVCRT_strtoul_l(const char* nptr, char** end, int base, _loc
 {
     __int64 ret = MSVCRT_strtoi64_l(nptr, end, base, locale);
 
-    if(ret > MSVCRT_ULONG_MAX) {
-        ret = MSVCRT_ULONG_MAX;
+    if(ret > ULONG_MAX) {
+        ret = ULONG_MAX;
         *MSVCRT__errno() = MSVCRT_ERANGE;
-    }else if(ret < -(__int64)MSVCRT_ULONG_MAX) {
+    }else if(ret < -(__int64)ULONG_MAX) {
         ret = 1;
         *MSVCRT__errno() = MSVCRT_ERANGE;
     }
@@ -1826,8 +1827,8 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
 
         nptr++;
 
-        if(ret>MSVCRT_UI64_MAX/base || ret*base>MSVCRT_UI64_MAX-v) {
-            ret = MSVCRT_UI64_MAX;
+        if(ret>UI64_MAX/base || ret*base>UI64_MAX-v) {
+            ret = UI64_MAX;
             *MSVCRT__errno() = MSVCRT_ERANGE;
         } else
             ret = ret*base + v;
@@ -2015,7 +2016,7 @@ int CDECL MSVCRT__itoa_s(int value, char *str, MSVCRT_size_t size, int radix)
  */
 char* CDECL MSVCRT__itoa(int value, char *str, int radix)
 {
-    return ltoa_helper(value, str, MSVCRT_SIZE_MAX, radix) ? NULL : str;
+    return ltoa_helper(value, str, SIZE_MAX, radix) ? NULL : str;
 }
 
 /*********************************************************************

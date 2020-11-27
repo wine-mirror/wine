@@ -219,6 +219,10 @@ static const union {
 #define FP_SUBNORMAL -2
 #define FP_ZERO       0
 
+#define _C2 1
+#define FP_ILOGB0 (-0x7fffffff - _C2)
+#define FP_ILOGBNAN 0x7fffffff
+
 _ACRTIMP short __cdecl _dclass(double);
 _ACRTIMP short __cdecl _fdclass(float);
 _ACRTIMP int   __cdecl _dsign(double);

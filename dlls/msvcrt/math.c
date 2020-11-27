@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <fenv.h>
 #include <fpieee.h>
+#include <limits.h>
 #include <locale.h>
 #include <math.h>
 
@@ -4193,12 +4194,12 @@ int CDECL MSVCR120_ilogb(double x)
     if (!e)
     {
         u.i <<= 12;
-        if (u.i == 0) return MSVCRT_FP_ILOGB0;
+        if (u.i == 0) return FP_ILOGB0;
         /* subnormal x */
         for (e = -0x3ff; u.i >> 63 == 0; e--, u.i <<= 1);
         return e;
     }
-    if (e == 0x7ff) return u.i << 12 ? MSVCRT_FP_ILOGBNAN : MSVCRT_INT_MAX;
+    if (e == 0x7ff) return u.i << 12 ? FP_ILOGBNAN : INT_MAX;
     return e - 0x3ff;
 }
 
@@ -4215,12 +4216,12 @@ int CDECL MSVCR120_ilogbf(float x)
     if (!e)
     {
         u.i <<= 9;
-        if (u.i == 0) return MSVCRT_FP_ILOGB0;
+        if (u.i == 0) return FP_ILOGB0;
         /* subnormal x */
         for (e = -0x7f; u.i >> 31 == 0; e--, u.i <<= 1);
         return e;
     }
-    if (e == 0xff) return u.i << 9 ? MSVCRT_FP_ILOGBNAN : MSVCRT_INT_MAX;
+    if (e == 0xff) return u.i << 9 ? FP_ILOGBNAN : INT_MAX;
     return e - 0x7f;
 }
 

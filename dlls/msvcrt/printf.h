@@ -111,7 +111,7 @@ static inline int FUNC_NAME(pf_fill)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ct
 static inline int wcstombs_len(char *mbstr, const wchar_t *wcstr,
         int len, _locale_t locale)
 {
-    char buf[MSVCRT_MB_LEN_MAX];
+    char buf[MB_LEN_MAX];
     int i, r, mblen = 0;
 
     for(i=0; i<len; i++) {

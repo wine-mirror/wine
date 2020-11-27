@@ -3830,7 +3830,7 @@ MSVCRT_wint_t CDECL MSVCRT__fgetwc_nolock(MSVCRT_FILE* file)
             *p = (char)ch;
         }
     }else {
-        char mbs[MSVCRT_MB_LEN_MAX];
+        char mbs[MB_LEN_MAX];
         int len = 0;
 
         ch = MSVCRT__fgetc_nolock(file);
@@ -4089,7 +4089,7 @@ MSVCRT_wint_t CDECL MSVCRT__fputwc_nolock(MSVCRT_wint_t wc, MSVCRT_FILE* file)
     fdinfo = get_ioinfo_nolock(file->_file);
 
     if((fdinfo->wxflag&WX_TEXT) && !(fdinfo->exflag&(EF_UTF8|EF_UTF16))) {
-        char buf[MSVCRT_MB_LEN_MAX];
+        char buf[MB_LEN_MAX];
         int char_len;
 
         char_len = MSVCRT_wctomb(buf, mwc);
@@ -4406,7 +4406,7 @@ MSVCRT_size_t CDECL MSVCRT__fread_nolock_s(void *buf, MSVCRT_size_t buf_size, MS
     }
     if(!elem_size || !count) return 0;
     if(!MSVCRT_CHECK_PMT(buf != NULL)) return 0;
-    if(!MSVCRT_CHECK_PMT(MSVCRT_SIZE_MAX/count >= elem_size)) return 0;
+    if(!MSVCRT_CHECK_PMT(SIZE_MAX/count >= elem_size)) return 0;
 
     bytes_left = elem_size*count;
     buf_pos = 0;
@@ -5583,7 +5583,7 @@ MSVCRT_wint_t CDECL MSVCRT__ungetwc_nolock(MSVCRT_wint_t wc, MSVCRT_FILE * file)
                 return MSVCRT_WEOF;
         }
     }else {
-        char mbs[MSVCRT_MB_LEN_MAX];
+        char mbs[MB_LEN_MAX];
         int len;
 
         len = MSVCRT_wctomb(mbs, mwc);

@@ -2016,7 +2016,7 @@ int CDECL MSVCRT__wctomb_l(char *dst, wchar_t ch, _locale_t locale)
 {
     int len;
 
-    MSVCRT__wctomb_s_l(&len, dst, dst ? MSVCRT_MB_LEN_MAX : 0, ch, locale);
+    MSVCRT__wctomb_s_l(&len, dst, dst ? MB_LEN_MAX : 0, ch, locale);
     return len;
 }
 
@@ -2556,11 +2556,11 @@ __int64 CDECL MSVCRT__wcstoi64_l(const wchar_t *nptr,
         nptr++;
         empty = FALSE;
 
-        if(!negative && (ret>MSVCRT_I64_MAX/base || ret*base>MSVCRT_I64_MAX-v)) {
-            ret = MSVCRT_I64_MAX;
+        if(!negative && (ret>I64_MAX/base || ret*base>I64_MAX-v)) {
+            ret = I64_MAX;
             *MSVCRT__errno() = MSVCRT_ERANGE;
-        } else if(negative && (ret<MSVCRT_I64_MIN/base || ret*base<MSVCRT_I64_MIN-v)) {
-            ret = MSVCRT_I64_MIN;
+        } else if(negative && (ret<I64_MIN/base || ret*base<I64_MIN-v)) {
+            ret = I64_MIN;
             *MSVCRT__errno() = MSVCRT_ERANGE;
         } else
             ret = ret*base + v;
@@ -2589,11 +2589,11 @@ MSVCRT_long CDECL MSVCRT__wcstol_l(const wchar_t *s,
 {
     __int64 ret = MSVCRT__wcstoi64_l(s, end, base, locale);
 
-    if(ret > MSVCRT_LONG_MAX) {
-        ret = MSVCRT_LONG_MAX;
+    if(ret > LONG_MAX) {
+        ret = LONG_MAX;
         *MSVCRT__errno() = MSVCRT_ERANGE;
-    }else if(ret < MSVCRT_LONG_MIN) {
-        ret = MSVCRT_LONG_MIN;
+    }else if(ret < LONG_MIN) {
+        ret = LONG_MIN;
         *MSVCRT__errno() = MSVCRT_ERANGE;
     }
     return ret;
@@ -2640,11 +2640,11 @@ MSVCRT_long __cdecl MSVCRT__wtol_l(const wchar_t *str, _locale_t locale)
 {
     __int64 ret = MSVCRT__wcstoi64_l(str, NULL, 10, locale);
 
-    if(ret > MSVCRT_LONG_MAX) {
-        ret = MSVCRT_LONG_MAX;
+    if(ret > LONG_MAX) {
+        ret = LONG_MAX;
         *MSVCRT__errno() = MSVCRT_ERANGE;
-    } else if(ret < MSVCRT_LONG_MIN) {
-        ret = MSVCRT_LONG_MIN;
+    } else if(ret < LONG_MIN) {
+        ret = LONG_MIN;
         *MSVCRT__errno() = MSVCRT_ERANGE;
     }
     return ret;
@@ -2726,8 +2726,8 @@ unsigned __int64 CDECL MSVCRT__wcstoui64_l(const wchar_t *nptr,
         nptr++;
         empty = FALSE;
 
-        if(ret>MSVCRT_UI64_MAX/base || ret*base>MSVCRT_UI64_MAX-v) {
-            ret = MSVCRT_UI64_MAX;
+        if(ret>UI64_MAX/base || ret*base>UI64_MAX-v) {
+            ret = UI64_MAX;
             *MSVCRT__errno() = MSVCRT_ERANGE;
         } else
             ret = ret*base + v;
@@ -2756,10 +2756,10 @@ MSVCRT_ulong __cdecl MSVCRT__wcstoul_l(const wchar_t *s,
 {
     __int64 ret = MSVCRT__wcstoi64_l(s, end, base, locale);
 
-    if(ret > MSVCRT_ULONG_MAX) {
-        ret = MSVCRT_ULONG_MAX;
+    if(ret > ULONG_MAX) {
+        ret = ULONG_MAX;
         *MSVCRT__errno() = MSVCRT_ERANGE;
-    }else if(ret < -(__int64)MSVCRT_ULONG_MAX) {
+    }else if(ret < -(__int64)ULONG_MAX) {
         ret = 1;
         *MSVCRT__errno() = MSVCRT_ERANGE;
     }

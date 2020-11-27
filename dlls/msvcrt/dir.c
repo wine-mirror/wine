@@ -22,6 +22,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <direct.h>
 
 #include "windef.h"
@@ -1128,8 +1129,8 @@ do_error:
 void CDECL MSVCRT__splitpath(const char *inpath, char *drv, char *dir,
         char *fname, char *ext)
 {
-    MSVCRT__splitpath_s(inpath, drv, drv?MSVCRT__MAX_DRIVE:0, dir, dir?MSVCRT__MAX_DIR:0,
-            fname, fname?MSVCRT__MAX_FNAME:0, ext, ext?MSVCRT__MAX_EXT:0);
+    MSVCRT__splitpath_s(inpath, drv, drv ? _MAX_DRIVE : 0, dir, dir ? _MAX_DIR : 0,
+            fname, fname ? _MAX_FNAME : 0, ext, ext ? _MAX_EXT : 0);
 }
 
 /******************************************************************
@@ -1222,8 +1223,8 @@ do_error:
 void CDECL MSVCRT__wsplitpath(const wchar_t *inpath, wchar_t *drv, wchar_t *dir,
         wchar_t *fname, wchar_t *ext)
 {
-    MSVCRT__wsplitpath_s(inpath, drv, drv?MSVCRT__MAX_DRIVE:0, dir, dir?MSVCRT__MAX_DIR:0,
-            fname, fname?MSVCRT__MAX_FNAME:0, ext, ext?MSVCRT__MAX_EXT:0);
+    MSVCRT__wsplitpath_s(inpath, drv, drv ? _MAX_DRIVE : 0, dir, dir ? _MAX_DIR : 0,
+            fname, fname ? _MAX_FNAME : 0, ext, ext ? _MAX_EXT : 0);
 }
 
 /*********************************************************************

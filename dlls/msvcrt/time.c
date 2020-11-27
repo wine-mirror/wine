@@ -955,7 +955,7 @@ char ** CDECL __p__tzname(void)
 #define STRFTIME_TD(td, name) td->wstr.names.name
 #endif
 
-#define strftime_str(a,b,c,d) strftime_nstr(a,b,c,d,MSVCRT_SIZE_MAX)
+#define strftime_str(a,b,c,d) strftime_nstr(a,b,c,d,SIZE_MAX)
 static inline BOOL strftime_nstr(STRFTIME_CHAR *str, MSVCRT_size_t *pos,
         MSVCRT_size_t max, const STRFTIME_CHAR *src, MSVCRT_size_t len)
 {
@@ -1142,7 +1142,7 @@ static inline BOOL strftime_format(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCR
             }
             ret = strftime_nstr(str, pos, max,
                     mstm->tm_hour < 12 ? STRFTIME_TD(time_data, am) : STRFTIME_TD(time_data, pm),
-                    (*format == 't' && count == 1) ? 1 : MSVCRT_SIZE_MAX);
+                    (*format == 't' && count == 1) ? 1 : SIZE_MAX);
             break;
         default:
             ret = strftime_nstr(str, pos, max, format, count);
