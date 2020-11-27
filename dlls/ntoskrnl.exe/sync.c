@@ -555,7 +555,7 @@ static inline void small_pause(void)
 void WINAPI KeAcquireSpinLockAtDpcLevel( KSPIN_LOCK *lock )
 {
     TRACE("lock %p.\n", lock);
-    while (!InterlockedCompareExchangePointer( (void **)lock, (void *)1, (void *)0 ))
+    while (InterlockedCompareExchangePointer( (void **)lock, (void *)1, (void *)0 ))
         small_pause();
 }
 
