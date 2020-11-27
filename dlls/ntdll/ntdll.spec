@@ -567,7 +567,7 @@
 @ stdcall RtlDecodeSystemPointer(ptr) RtlDecodePointer
 @ stdcall RtlDecompressBuffer(long ptr long ptr long ptr)
 @ stdcall RtlDecompressFragment(long ptr long ptr long long ptr ptr)
-@ stub RtlDefaultNpAcl
+@ stdcall RtlDefaultNpAcl(ptr)
 @ stub RtlDelete
 @ stdcall RtlDeleteAce(ptr long)
 @ stdcall RtlDeleteAtomFromAtomTable(ptr long)

@@ -1922,3 +1922,14 @@ BOOL WINAPI RtlConvertToAutoInheritSecurityObject(
 
     return FALSE;
 }
+
+/******************************************************************************
+ * RtlDefaultNpAcl (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlDefaultNpAcl(PACL *pAcl)
+{
+    FIXME("%p - stub\n", pAcl);
+
+    *pAcl = NULL;
+    return STATUS_SUCCESS;
+}
