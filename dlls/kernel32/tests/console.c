@@ -3776,15 +3776,20 @@ static void test_GetConsoleScreenBufferInfoEx(HANDLE std_output)
 
 static void test_FreeConsole(void)
 {
-    HANDLE handle, unbound_output = NULL;
+    HANDLE handle, unbound_output = NULL, unbound_input = NULL;
     DWORD size, mode;
     WCHAR title[16];
+    char buf[32];
     HWND hwnd;
     UINT cp;
     BOOL ret;
 
     ok(RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != NULL, "ConsoleHandle is NULL\n");
-    if (!skip_nt) unbound_output = create_unbound_handle(TRUE, TRUE);
+    if (!skip_nt)
+    {
+        unbound_input  = create_unbound_handle(FALSE, TRUE);
+        unbound_output = create_unbound_handle(TRUE, TRUE);
+    }
 
     ret = FreeConsole();
     ok(ret, "FreeConsole failed: %u\n", GetLastError());
@@ -3865,10 +3870,19 @@ static void test_FreeConsole(void)
     handle = GetConsoleInputWaitHandle();
     ok(!handle, "GetConsoleInputWaitHandle returned %p\n", handle);
 
+    ret = ReadFile(unbound_input, buf, sizeof(buf), &size, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+       "ReadFile returned %x %u\n", ret, GetLastError());
+
+    ret = FlushFileBuffers(unbound_input);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
+       "ReadFile returned %x %u\n", ret, GetLastError());
+
     ret = GetConsoleMode(unbound_output, &mode);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
        "GetConsoleMode returned %x %u\n", ret, GetLastError());
 
+    CloseHandle(unbound_input);
     CloseHandle(unbound_output);
 }
 
