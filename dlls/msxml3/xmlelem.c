@@ -774,11 +774,13 @@ static HRESULT WINAPI xmlelem_collection_IEnumVARIANT_Next(
         hr = XMLElement_create(This->current, (void **)&V_DISPATCH(rgVar), FALSE);
         if (FAILED(hr)) return hr;
         This->current = This->current->next;
-        if (--celt && This->current) ++rgVar;
         if (fetched) ++*fetched;
+        rgVar++;
+        celt--;
     }
-
-    return celt == 0 ? S_OK : S_FALSE;
+    if (!celt) return S_OK;
+    V_VT(rgVar) = VT_EMPTY;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI xmlelem_collection_IEnumVARIANT_Skip(

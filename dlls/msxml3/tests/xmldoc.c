@@ -647,7 +647,7 @@ static void test_xmlelem_collection(void)
     WCHAR path[MAX_PATH];
     LONG length, type;
     ULONG num_vars;
-    VARIANT var[3], dummy, vIndex, vName;
+    VARIANT var[4], dummy, vIndex, vName;
     BSTR url, str;
 
     hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER,
@@ -789,12 +789,15 @@ static void test_xmlelem_collection(void)
     VariantClear(&var[1]);
     VariantClear(&var[0]);
 
+    memset( var, 0xcc, sizeof(var));
+
     /* request more elements than available */
-    hr = IEnumVARIANT_Next(enumVar, 3, var, &num_vars);
+    hr = IEnumVARIANT_Next(enumVar, 4, var, &num_vars);
     ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
     ok(V_VT(&var[0]) == VT_DISPATCH, "Expected VT_DISPATCH, got %d\n", V_VT(&var[0]));
     ok(V_VT(&var[1]) == VT_DISPATCH, "Expected VT_DISPATCH, got %d\n", V_VT(&var[1]));
     ok(V_VT(&var[2]) == VT_EMPTY, "Expected 0, got %d\n", V_VT(&var[2]));
+    ok(V_VT(&var[3]) == 0xcccc, "Expected invalid, got %x\n", V_VT(&var[3]));
     ok(num_vars == 2, "Expected 2, got %d\n", num_vars);
 
     hr = IDispatch_QueryInterface(V_DISPATCH(&var[1]), &IID_IXMLElement, (LPVOID *)&child);
