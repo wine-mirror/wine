@@ -442,13 +442,12 @@ static void test_wstrdate(void)
 {
     wchar_t date[16], * result;
     int month, day, year, count, len;
-    wchar_t format[] = { '%','0','2','d','/','%','0','2','d','/','%','0','2','d',0 };
 
     result = _wstrdate(date);
     ok(result == date, "Wrong return value\n");
     len = wcslen(date);
     ok(len == 8, "Wrong length: returned %d, should be 8\n", len);
-    count = swscanf(date, format, &month, &day, &year);
+    count = swscanf(date, L"%02d/%02d/%02d", &month, &day, &year);
     ok(count == 3, "Wrong format: count = %d, should be 3\n", count);
 }
 
@@ -456,13 +455,12 @@ static void test_wstrtime(void)
 {
     wchar_t time[16], * result;
     int hour, minute, second, count, len;
-    wchar_t format[] = { '%','0','2','d',':','%','0','2','d',':','%','0','2','d',0 };
 
     result = _wstrtime(time);
     ok(result == time, "Wrong return value\n");
     len = wcslen(time);
     ok(len == 8, "Wrong length: returned %d, should be 8\n", len);
-    count = swscanf(time, format, &hour, &minute, &second);
+    count = swscanf(time, L"%02d:%02d:%02d", &hour, &minute, &second);
     ok(count == 3, "Wrong format: count = %d, should be 3\n", count);
 }
 
@@ -728,8 +726,6 @@ static void test_strftime(void)
         { "mon1", "mon2", "mon3", "mon4", "mon5", "mon6", "mon7", "mon8", "mon9", "mon10", "mon11", "mon12" },
         "tam", "tpm"
     };
-
-    static const wchar_t cW[] = { '%','c',0 };
     time_t gmt;
     struct tm* gmt_tm;
     char buf[256], bufA[256];
@@ -801,7 +797,7 @@ static void test_strftime(void)
     }
 
     retA = p_strftime(bufA, 256, "%c", gmt_tm);
-    retW = p_wcsftime(bufW, 256, cW, gmt_tm);
+    retW = p_wcsftime(bufW, 256, L"%c", gmt_tm);
     ok(retW == 17, "expected 17, got %ld\n", retW);
     ok(retA == retW, "expected %ld, got %ld\n", retA, retW);
     buf[0] = 0;

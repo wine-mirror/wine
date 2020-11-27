@@ -644,13 +644,7 @@ static void test_setlocale(void)
 
 static void test_crtGetStringTypeW(void)
 {
-    static const wchar_t str0[] = { '0', '\0' };
-    static const wchar_t strA[] = { 'A', '\0' };
-    static const wchar_t str_space[] = { ' ', '\0' };
-    static const wchar_t str_null[] = { '\0', '\0' };
-    static const wchar_t str_rand[] = { 1234, '\0' };
-
-    const wchar_t *str[] = { str0, strA, str_space, str_null, str_rand };
+    const wchar_t *str[] = { L"0", L"A", L" ", L"\0", L"\x04d2" };
 
     WORD out_crt, out;
     BOOL ret_crt, ret;

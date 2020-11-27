@@ -137,9 +137,6 @@ static void test__environ(void)
 
 static void test__wenviron(void)
 {
-    static const WCHAR cat_eq_dogW[] = {'c','a','t','=','d','o','g',0};
-    static const WCHAR cat_eqW[] = {'c','a','t','=',0};
-
     int argc;
     char **argv, **envp = NULL;
     WCHAR **wargv, **wenvp = NULL;
@@ -191,9 +188,9 @@ static void test__wenviron(void)
 
     /* _wenviron isn't initialized until __wgetmainargs is called or
      * one of the Unicode environment manipulation functions is called. */
-    ok( _wputenv(cat_eq_dogW) == 0, "failed setting cat=dog\n" );
+    ok( _wputenv(L"cat=dog") == 0, "failed setting cat=dog\n" );
     ok( *p_wenviron != NULL, "Expected _wenviron to be non-NULL\n" );
-    ok( _wputenv(cat_eqW) == 0, "failed deleting cat\n" );
+    ok( _wputenv(L"cat=") == 0, "failed deleting cat\n" );
 
     __wgetmainargs(&argc, &wargv, &wenvp, 0, &mode);
 
