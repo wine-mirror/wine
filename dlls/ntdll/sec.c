@@ -1718,3 +1718,14 @@ NTSTATUS WINAPI RtlConvertToAutoInheritSecurityObject(
 
     return STATUS_NOT_IMPLEMENTED;
 }
+
+/******************************************************************************
+ * RtlDefaultNpAcl (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlDefaultNpAcl(PACL *pAcl)
+{
+    FIXME("%p - stub\n", pAcl);
+
+    *pAcl = NULL;
+    return STATUS_SUCCESS;
+}
