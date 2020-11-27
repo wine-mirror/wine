@@ -2287,10 +2287,8 @@ const wchar_t* __thiscall basic_string_wchar_const_ptr(const basic_string_wchar 
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_eos, 8)
 void __thiscall basic_string_wchar_eos(basic_string_wchar *this, size_t len)
 {
-    static const wchar_t nullbyte_w = '\0';
-
     this->size = len;
-    MSVCP_char_traits_wchar_assign(basic_string_wchar_ptr(this)+len, &nullbyte_w);
+    MSVCP_char_traits_wchar_assign(basic_string_wchar_ptr(this)+len, L"");
 }
 
 /* ?_Inside@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAE_NPB_W@Z */

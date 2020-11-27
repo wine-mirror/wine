@@ -3198,21 +3198,20 @@ MSVCP_bool __thiscall basic_filebuf_char_is_open(const basic_filebuf_char *this)
 /* ?_Fiopen@std@@YAPEAU_iobuf@@PEB_WHH@Z */
 FILE* __cdecl _Fiopen_wchar(const wchar_t *name, int mode, int prot)
 {
-    static const wchar_t rW[] = {'r',0};
     static const struct {
         int mode;
         const wchar_t str[4];
         const wchar_t str_bin[4];
     } str_mode[] = {
-        {OPENMODE_out,                            {'w',0},     {'w','b',0}},
-        {OPENMODE_out|OPENMODE_app,               {'a',0},     {'a','b',0}},
-        {OPENMODE_app,                            {'a',0},     {'a','b',0}},
-        {OPENMODE_out|OPENMODE_trunc,             {'w',0},     {'w','b',0}},
-        {OPENMODE_in,                             {'r',0},     {'r','b',0}},
-        {OPENMODE_in|OPENMODE_out,                {'r','+',0}, {'r','+','b',0}},
-        {OPENMODE_in|OPENMODE_out|OPENMODE_trunc, {'w','+',0}, {'w','+','b',0}},
-        {OPENMODE_in|OPENMODE_out|OPENMODE_app,   {'a','+',0}, {'a','+','b',0}},
-        {OPENMODE_in|OPENMODE_app,                {'a','+',0}, {'a','+','b',0}}
+        {OPENMODE_out,                              L"w",   L"wb"},
+        {OPENMODE_out|OPENMODE_app,                 L"a",   L"ab"},
+        {OPENMODE_app,                              L"a",   L"ab"},
+        {OPENMODE_out|OPENMODE_trunc,               L"w",   L"wb"},
+        {OPENMODE_in,                               L"r",   L"rb"},
+        {OPENMODE_in|OPENMODE_out,                  L"r+",  L"r+b"},
+        {OPENMODE_in|OPENMODE_out|OPENMODE_trunc,   L"w+",  L"w+b"},
+        {OPENMODE_in|OPENMODE_out|OPENMODE_app,     L"a+",  L"a+b"},
+        {OPENMODE_in|OPENMODE_app,                  L"a+",  L"a+b"}
     };
 
     int real_mode = mode & ~(OPENMODE_ate|OPENMODE__Nocreate|OPENMODE__Noreplace|OPENMODE_binary);
@@ -3227,13 +3226,13 @@ FILE* __cdecl _Fiopen_wchar(const wchar_t *name, int mode, int prot)
     if(mode_idx == ARRAY_SIZE(str_mode))
         return NULL;
 
-    if((mode & OPENMODE__Nocreate) && !(f = _wfopen(name, rW)))
+    if((mode & OPENMODE__Nocreate) && !(f = _wfopen(name, L"r")))
         return NULL;
     else if(f)
         fclose(f);
 
     if((mode & OPENMODE__Noreplace) && (mode & (OPENMODE_out|OPENMODE_app))
-            && (f = _wfopen(name, rW))) {
+            && (f = _wfopen(name, L"r"))) {
         fclose(f);
         return NULL;
     }
@@ -14959,9 +14958,6 @@ void* __cdecl tr2_sys__Open_dir_wchar(wchar_t* target, wchar_t const* dest, int*
     HANDLE handle;
     WIN32_FIND_DATAW data;
     wchar_t temppath[MAX_PATH];
-    static const wchar_t dot[] = {'.', 0};
-    static const wchar_t dotdot[] = {'.', '.', 0};
-    static const wchar_t asterisk[] = {'\\', '*', 0};
 
     TRACE("(%p %s %p %p)\n", target, debugstr_w(dest), err_code, type);
     if(wcslen(dest) > MAX_PATH - 3) {
@@ -14970,7 +14966,7 @@ void* __cdecl tr2_sys__Open_dir_wchar(wchar_t* target, wchar_t const* dest, int*
         return NULL;
     }
     wcscpy(temppath, dest);
-    wcscat(temppath, asterisk);
+    wcscat(temppath, L"\\*");
 
     handle = FindFirstFileW(temppath, &data);
     if(handle == INVALID_HANDLE_VALUE) {
@@ -14978,7 +14974,7 @@ void* __cdecl tr2_sys__Open_dir_wchar(wchar_t* target, wchar_t const* dest, int*
         *target = '\0';
         return NULL;
     }
-    while(!wcscmp(data.cFileName, dot) || !wcscmp(data.cFileName, dotdot)) {
+    while(!wcscmp(data.cFileName, L".") || !wcscmp(data.cFileName, L"..")) {
         if(!FindNextFileW(handle, &data)) {
             *err_code = ERROR_SUCCESS;
             *type = status_unknown;
@@ -15026,8 +15022,6 @@ void* __cdecl tr2_sys__Open_dir(char* target, char const* dest, int* err_code, e
 wchar_t* __cdecl tr2_sys__Read_dir_wchar(wchar_t* target, void* handle, enum file_type* type)
 {
     WIN32_FIND_DATAW data;
-    static const wchar_t dot[] = {'.', 0};
-    static const wchar_t dotdot[] = {'.', '.', 0};
 
     TRACE("(%p %p %p)\n", target, handle, type);
 
@@ -15037,7 +15031,7 @@ wchar_t* __cdecl tr2_sys__Read_dir_wchar(wchar_t* target, void* handle, enum fil
             *target = '\0';
             return target;
         }
-    } while(!wcscmp(data.cFileName, dot) || !wcscmp(data.cFileName, dotdot));
+    } while(!wcscmp(data.cFileName, L".") || !wcscmp(data.cFileName, L".."));
 
     wcscpy(target, data.cFileName);
     if(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
