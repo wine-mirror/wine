@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdbool.h>
 
 #include "windef.h"
 #include "winternl.h"
@@ -115,7 +116,7 @@ typedef struct Scheduler {
 #define call_Scheduler_ScheduleTask(this,proc,data) CALL_VTBL_FUNC(this, 44, \
         void, (Scheduler*,void (__cdecl*)(void*),void*), (this,proc,data))
 #define call_Scheduler_IsAvailableLocation(this,placement) CALL_VTBL_FUNC(this, 48, \
-        MSVCRT_bool, (Scheduler*,const /*location*/void*), (this,placement))
+        bool, (Scheduler*,const /*location*/void*), (this,placement))
 #else
 #define call_Scheduler_CreateScheduleGroup(this) CALL_VTBL_FUNC(this, 32, /*ScheduleGroup*/void*, (Scheduler*), (this))
 #define call_Scheduler_ScheduleTask(this,proc,data) CALL_VTBL_FUNC(this, 36, \
@@ -252,14 +253,14 @@ void __cdecl Context__SpinYield(void)
 }
 
 /* ?IsCurrentTaskCollectionCanceling@Context@Concurrency@@SA_NXZ */
-MSVCRT_bool __cdecl Context_IsCurrentTaskCollectionCanceling(void)
+bool __cdecl Context_IsCurrentTaskCollectionCanceling(void)
 {
     FIXME("()\n");
     return FALSE;
 }
 
 /* ?Oversubscribe@Context@Concurrency@@SAX_N@Z */
-void __cdecl Context_Oversubscribe(MSVCRT_bool begin)
+void __cdecl Context_Oversubscribe(bool begin)
 {
     FIXME("(%x)\n", begin);
 }
@@ -318,7 +319,7 @@ void __thiscall ExternalContextBase_Unblock(ExternalContextBase *this)
 }
 
 DEFINE_THISCALL_WRAPPER(ExternalContextBase_IsSynchronouslyBlocked, 4)
-MSVCRT_bool __thiscall ExternalContextBase_IsSynchronouslyBlocked(const ExternalContextBase *this)
+bool __thiscall ExternalContextBase_IsSynchronouslyBlocked(const ExternalContextBase *this)
 {
     FIXME("(%p)->() stub\n", this);
     return FALSE;
@@ -384,7 +385,7 @@ static void ExternalContextBase_ctor(ExternalContextBase *this)
 
 /* ?Alloc@Concurrency@@YAPAXI@Z */
 /* ?Alloc@Concurrency@@YAPEAX_K@Z */
-void * CDECL Concurrency_Alloc(MSVCRT_size_t size)
+void * CDECL Concurrency_Alloc(size_t size)
 {
     ExternalContextBase *context = (ExternalContextBase*)get_current_context();
     union allocator_cache_entry *p;
@@ -548,11 +549,11 @@ SchedulerPolicy* __thiscall SchedulerPolicy_ctor(SchedulerPolicy *this)
 /* ??0SchedulerPolicy@Concurrency@@QEAA@_KZZ */
 /* TODO: don't leak policy_container on exception */
 SchedulerPolicy* WINAPIV SchedulerPolicy_ctor_policies(
-        SchedulerPolicy *this, MSVCRT_size_t n, ...)
+        SchedulerPolicy *this, size_t n, ...)
 {
     unsigned int min_concurrency, max_concurrency;
     __ms_va_list valist;
-    MSVCRT_size_t i;
+    size_t i;
 
     TRACE("(%p %Iu)\n", this, n);
 
@@ -744,7 +745,7 @@ void __thiscall ThreadScheduler_ScheduleTask(ThreadScheduler *this,
 }
 
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_IsAvailableLocation, 8)
-MSVCRT_bool __thiscall ThreadScheduler_IsAvailableLocation(
+bool __thiscall ThreadScheduler_IsAvailableLocation(
         const ThreadScheduler *this, const /*location*/void *placement)
 {
     FIXME("(%p %p) stub\n", this, placement);
@@ -954,7 +955,7 @@ unsigned int __cdecl CurrentScheduler_Id(void)
 #if _MSVCR_VER > 100
 /* ?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NABVlocation@2@@Z */
 /* ?IsAvailableLocation@CurrentScheduler@Concurrency@@SA_NAEBVlocation@2@@Z */
-MSVCRT_bool __cdecl CurrentScheduler_IsAvailableLocation(const /*location*/void *placement)
+bool __cdecl CurrentScheduler_IsAvailableLocation(const /*location*/void *placement)
 {
     Scheduler *scheduler = try_get_current_scheduler();
 

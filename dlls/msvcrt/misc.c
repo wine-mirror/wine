@@ -78,7 +78,7 @@ int CDECL MSVCRT_rand_s(unsigned int *pval)
 /*********************************************************************
  *		_sleep (MSVCRT.@)
  */
-void CDECL MSVCRT__sleep(MSVCRT_ulong timeout)
+void CDECL MSVCRT__sleep(__msvcrt_ulong timeout)
 {
   TRACE("_sleep for %ld milliseconds\n",timeout);
   Sleep((timeout)?timeout:1);
@@ -153,8 +153,7 @@ void* CDECL _lsearch(const void* match, void* start,
 /*********************************************************************
  *                  bsearch_s (msvcrt.@)
  */
-void* CDECL MSVCRT_bsearch_s(const void *key, const void *base,
-                             MSVCRT_size_t nmemb, MSVCRT_size_t size,
+void* CDECL MSVCRT_bsearch_s(const void *key, const void *base, size_t nmemb, size_t size,
                              int (__cdecl *compare)(void *, const void *, const void *), void *ctx)
 {
     ssize_t min = 0;
@@ -186,8 +185,8 @@ static int CDECL compare_wrapper(void *ctx, const void *e1, const void *e2)
 /*********************************************************************
  *                  bsearch (msvcrt.@)
  */
-void* CDECL MSVCRT_bsearch(const void *key, const void *base, MSVCRT_size_t nmemb,
-        MSVCRT_size_t size, int (__cdecl *compar)(const void *, const void *))
+void* CDECL MSVCRT_bsearch(const void *key, const void *base, size_t nmemb,
+        size_t size, int (__cdecl *compar)(const void *, const void *))
 {
     return MSVCRT_bsearch_s(key, base, nmemb, size, compare_wrapper, compar);
 }
@@ -255,7 +254,7 @@ void CDECL _chkesp(void)
 
 #endif  /* __i386__ */
 
-static inline void swap(char *l, char *r, MSVCRT_size_t size)
+static inline void swap(char *l, char *r, size_t size)
 {
     char tmp;
 
@@ -266,10 +265,10 @@ static inline void swap(char *l, char *r, MSVCRT_size_t size)
     }
 }
 
-static void small_sort(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
+static void small_sort(void *base, size_t nmemb, size_t size,
         int (CDECL *compar)(void *, const void *, const void *), void *context)
 {
-    MSVCRT_size_t e, i;
+    size_t e, i;
     char *max, *p;
 
     for(e=nmemb; e>1; e--) {
@@ -285,11 +284,11 @@ static void small_sort(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
     }
 }
 
-static void quick_sort(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
+static void quick_sort(void *base, size_t nmemb, size_t size,
         int (CDECL *compar)(void *, const void *, const void *), void *context)
 {
-    MSVCRT_size_t stack_lo[8*sizeof(MSVCRT_size_t)], stack_hi[8*sizeof(MSVCRT_size_t)];
-    MSVCRT_size_t beg, end, lo, hi, med;
+    size_t stack_lo[8*sizeof(size_t)], stack_hi[8*sizeof(size_t)];
+    size_t beg, end, lo, hi, med;
     int stack_pos;
 
     stack_pos = 0;
@@ -368,10 +367,10 @@ static void quick_sort(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
  * This function is trying to sort data doing identical comparisons
  * as native does. There are still cases where it behaves differently.
  */
-void CDECL MSVCRT_qsort_s(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
+void CDECL MSVCRT_qsort_s(void *base, size_t nmemb, size_t size,
     int (CDECL *compar)(void *, const void *, const void *), void *context)
 {
-    const MSVCRT_size_t total_size = nmemb*size;
+    const size_t total_size = nmemb*size;
 
     if (!MSVCRT_CHECK_PMT(base != NULL || (base == NULL && nmemb == 0))) return;
     if (!MSVCRT_CHECK_PMT(size > 0)) return;
@@ -386,7 +385,7 @@ void CDECL MSVCRT_qsort_s(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
 /*********************************************************************
  * qsort (MSVCRT.@)
  */
-void CDECL MSVCRT_qsort(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
+void CDECL MSVCRT_qsort(void *base, size_t nmemb, size_t size,
         int (CDECL *compar)(const void*, const void*))
 {
     MSVCRT_qsort_s(base, nmemb, size, compare_wrapper, compar);

@@ -211,10 +211,10 @@ int CDECL _wputenv_s(const wchar_t *name, const wchar_t *value)
 /******************************************************************
  *		_dupenv_s (MSVCR80.@)
  */
-int CDECL _dupenv_s(char **buffer, MSVCRT_size_t *numberOfElements, const char *varname)
+int CDECL _dupenv_s(char **buffer, size_t *numberOfElements, const char *varname)
 {
-    char*               e;
-    MSVCRT_size_t       sz;
+    char *e;
+    size_t sz;
 
     if (!MSVCRT_CHECK_PMT(buffer != NULL)) return MSVCRT_EINVAL;
     if (!MSVCRT_CHECK_PMT(varname != NULL)) return MSVCRT_EINVAL;
@@ -235,11 +235,11 @@ int CDECL _dupenv_s(char **buffer, MSVCRT_size_t *numberOfElements, const char *
 /******************************************************************
  *		_wdupenv_s (MSVCR80.@)
  */
-int CDECL _wdupenv_s(wchar_t **buffer, MSVCRT_size_t *numberOfElements,
+int CDECL _wdupenv_s(wchar_t **buffer, size_t *numberOfElements,
                      const wchar_t *varname)
 {
-    wchar_t*     e;
-    MSVCRT_size_t       sz;
+    wchar_t *e;
+    size_t sz;
 
     if (!MSVCRT_CHECK_PMT(buffer != NULL)) return MSVCRT_EINVAL;
     if (!MSVCRT_CHECK_PMT(varname != NULL)) return MSVCRT_EINVAL;
@@ -262,9 +262,9 @@ int CDECL _wdupenv_s(wchar_t **buffer, MSVCRT_size_t *numberOfElements,
 /******************************************************************
  *		getenv_s (MSVCRT.@)
  */
-int CDECL getenv_s(MSVCRT_size_t *pReturnValue, char* buffer, MSVCRT_size_t numberOfElements, const char *varname)
+int CDECL getenv_s(size_t *pReturnValue, char* buffer, size_t numberOfElements, const char *varname)
 {
-    char*       e;
+    char *e;
 
     if (!MSVCRT_CHECK_PMT(pReturnValue != NULL)) return MSVCRT_EINVAL;
     if (!MSVCRT_CHECK_PMT(!(buffer == NULL && numberOfElements > 0))) return MSVCRT_EINVAL;
@@ -287,10 +287,10 @@ int CDECL getenv_s(MSVCRT_size_t *pReturnValue, char* buffer, MSVCRT_size_t numb
 /******************************************************************
  *		_wgetenv_s (MSVCRT.@)
  */
-int CDECL _wgetenv_s(MSVCRT_size_t *pReturnValue, wchar_t *buffer, MSVCRT_size_t numberOfElements,
+int CDECL _wgetenv_s(size_t *pReturnValue, wchar_t *buffer, size_t numberOfElements,
                      const wchar_t *varname)
 {
-    wchar_t*     e;
+    wchar_t *e;
 
     if (!MSVCRT_CHECK_PMT(pReturnValue != NULL)) return MSVCRT_EINVAL;
     if (!MSVCRT_CHECK_PMT(!(buffer == NULL && numberOfElements > 0))) return MSVCRT_EINVAL;

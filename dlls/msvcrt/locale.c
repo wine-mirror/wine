@@ -1932,7 +1932,7 @@ _locale_t CDECL _create_locale(int category, const char *locale)
 _locale_t CDECL MSVCRT__wcreate_locale(int category, const wchar_t *locale)
 {
     _locale_t loc;
-    MSVCRT_size_t len;
+    size_t len;
     char *str;
 
     if(category<MSVCRT_LC_MIN || category>MSVCRT_LC_MAX || !locale)
@@ -2018,7 +2018,7 @@ wchar_t* CDECL MSVCRT__wsetlocale(int category, const wchar_t* wlocale)
 
     char *locale = NULL;
     const char *ret;
-    MSVCRT_size_t len;
+    size_t len;
 
     if(wlocale) {
         len = MSVCRT_wcstombs(NULL, wlocale, 0);

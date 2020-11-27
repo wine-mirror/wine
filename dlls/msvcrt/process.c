@@ -127,7 +127,7 @@ static void msvcrt_search_executable(const wchar_t *name, wchar_t *fullname, int
   } while(1);
 }
 
-static MSVCRT_intptr_t msvcrt_spawn(int flags, const wchar_t* exe, wchar_t* cmdline,
+static intptr_t msvcrt_spawn(int flags, const wchar_t* exe, wchar_t* cmdline,
                                     wchar_t* env, int use_path)
 {
   STARTUPINFOW si;
@@ -173,7 +173,7 @@ static MSVCRT_intptr_t msvcrt_spawn(int flags, const wchar_t* exe, wchar_t* cmdl
   case MSVCRT__P_NOWAIT:
   case MSVCRT__P_NOWAITO:
     CloseHandle(pi.hThread);
-    return (MSVCRT_intptr_t)pi.hProcess;
+    return (intptr_t)pi.hProcess;
   case  MSVCRT__P_OVERLAY:
     MSVCRT__exit(0);
   }
@@ -353,7 +353,7 @@ static wchar_t *msvcrt_get_comspec(void)
 /*********************************************************************
  *		_cwait (MSVCRT.@)
  */
-MSVCRT_intptr_t CDECL _cwait(int *status, MSVCRT_intptr_t pid, int action)
+intptr_t CDECL _cwait(int *status, intptr_t pid, int action)
 {
   HANDLE hPid = (HANDLE)pid;
   int doserrno;
@@ -386,11 +386,11 @@ MSVCRT_intptr_t CDECL _cwait(int *status, MSVCRT_intptr_t pid, int action)
  *
  * Unicode version of _execl
  */
-MSVCRT_intptr_t WINAPIV _wexecl(const wchar_t* name, const wchar_t* arg0, ...)
+intptr_t WINAPIV _wexecl(const wchar_t* name, const wchar_t* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *args;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   __ms_va_start(ap, arg0);
   args = msvcrt_valisttos(arg0, ap, ' ');
@@ -408,11 +408,11 @@ MSVCRT_intptr_t WINAPIV _wexecl(const wchar_t* name, const wchar_t* arg0, ...)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t WINAPIV _execl(const char* name, const char* arg0, ...)
+intptr_t WINAPIV _execl(const char* name, const char* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *nameW, *args;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
@@ -432,12 +432,12 @@ MSVCRT_intptr_t WINAPIV _execl(const char* name, const char* arg0, ...)
  *
  * Unicode version of _execle
  */
-MSVCRT_intptr_t WINAPIV _wexecle(const wchar_t* name, const wchar_t* arg0, ...)
+intptr_t WINAPIV _wexecle(const wchar_t* name, const wchar_t* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *args, *envs = NULL;
   const wchar_t * const *envp;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   __ms_va_start(ap, arg0);
   args = msvcrt_valisttos(arg0, ap, ' ');
@@ -459,12 +459,12 @@ MSVCRT_intptr_t WINAPIV _wexecle(const wchar_t* name, const wchar_t* arg0, ...)
 /*********************************************************************
  *		_execle (MSVCRT.@)
  */
-MSVCRT_intptr_t WINAPIV _execle(const char* name, const char* arg0, ...)
+intptr_t WINAPIV _execle(const char* name, const char* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *nameW, *args, *envs = NULL;
   const char * const *envp;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
@@ -491,11 +491,11 @@ MSVCRT_intptr_t WINAPIV _execle(const char* name, const char* arg0, ...)
  *
  * Unicode version of _execlp
  */
-MSVCRT_intptr_t WINAPIV _wexeclp(const wchar_t* name, const wchar_t* arg0, ...)
+intptr_t WINAPIV _wexeclp(const wchar_t* name, const wchar_t* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *args;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   __ms_va_start(ap, arg0);
   args = msvcrt_valisttos(arg0, ap, ' ');
@@ -513,11 +513,11 @@ MSVCRT_intptr_t WINAPIV _wexeclp(const wchar_t* name, const wchar_t* arg0, ...)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t WINAPIV _execlp(const char* name, const char* arg0, ...)
+intptr_t WINAPIV _execlp(const char* name, const char* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *nameW, *args;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
@@ -537,12 +537,12 @@ MSVCRT_intptr_t WINAPIV _execlp(const char* name, const char* arg0, ...)
  *
  * Unicode version of _execlpe
  */
-MSVCRT_intptr_t WINAPIV _wexeclpe(const wchar_t* name, const wchar_t* arg0, ...)
+intptr_t WINAPIV _wexeclpe(const wchar_t* name, const wchar_t* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *args, *envs = NULL;
   const wchar_t * const *envp;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   __ms_va_start(ap, arg0);
   args = msvcrt_valisttos(arg0, ap, ' ');
@@ -564,12 +564,12 @@ MSVCRT_intptr_t WINAPIV _wexeclpe(const wchar_t* name, const wchar_t* arg0, ...)
 /*********************************************************************
  *		_execlpe (MSVCRT.@)
  */
-MSVCRT_intptr_t WINAPIV _execlpe(const char* name, const char* arg0, ...)
+intptr_t WINAPIV _execlpe(const char* name, const char* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *nameW, *args, *envs = NULL;
   const char * const *envp;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
@@ -596,7 +596,7 @@ MSVCRT_intptr_t WINAPIV _execlpe(const char* name, const char* arg0, ...)
  *
  * Unicode version of _execv
  */
-MSVCRT_intptr_t CDECL _wexecv(const wchar_t* name, const wchar_t* const* argv)
+intptr_t CDECL _wexecv(const wchar_t* name, const wchar_t* const* argv)
 {
   return MSVCRT__wspawnve(MSVCRT__P_OVERLAY, name, argv, NULL);
 }
@@ -607,7 +607,7 @@ MSVCRT_intptr_t CDECL _wexecv(const wchar_t* name, const wchar_t* const* argv)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t CDECL _execv(const char* name, const char* const* argv)
+intptr_t CDECL _execv(const char* name, const char* const* argv)
 {
   return MSVCRT__spawnve(MSVCRT__P_OVERLAY, name, argv, NULL);
 }
@@ -617,7 +617,7 @@ MSVCRT_intptr_t CDECL _execv(const char* name, const char* const* argv)
  *
  * Unicode version of _execve
  */
-MSVCRT_intptr_t CDECL _wexecve(const wchar_t* name, const wchar_t* const* argv, const wchar_t* const* envv)
+intptr_t CDECL _wexecve(const wchar_t* name, const wchar_t* const* argv, const wchar_t* const* envv)
 {
   return MSVCRT__wspawnve(MSVCRT__P_OVERLAY, name, argv, envv);
 }
@@ -628,7 +628,7 @@ MSVCRT_intptr_t CDECL _wexecve(const wchar_t* name, const wchar_t* const* argv, 
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t CDECL MSVCRT__execve(const char* name, const char* const* argv, const char* const* envv)
+intptr_t CDECL MSVCRT__execve(const char* name, const char* const* argv, const char* const* envv)
 {
   return MSVCRT__spawnve(MSVCRT__P_OVERLAY, name, argv, envv);
 }
@@ -638,7 +638,7 @@ MSVCRT_intptr_t CDECL MSVCRT__execve(const char* name, const char* const* argv, 
  *
  * Unicode version of _execvpe
  */
-MSVCRT_intptr_t CDECL _wexecvpe(const wchar_t* name, const wchar_t* const* argv, const wchar_t* const* envv)
+intptr_t CDECL _wexecvpe(const wchar_t* name, const wchar_t* const* argv, const wchar_t* const* envv)
 {
   return MSVCRT__wspawnvpe(MSVCRT__P_OVERLAY, name, argv, envv);
 }
@@ -649,7 +649,7 @@ MSVCRT_intptr_t CDECL _wexecvpe(const wchar_t* name, const wchar_t* const* argv,
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t CDECL _execvpe(const char* name, const char* const* argv, const char* const* envv)
+intptr_t CDECL _execvpe(const char* name, const char* const* argv, const char* const* envv)
 {
   return MSVCRT__spawnvpe(MSVCRT__P_OVERLAY, name, argv, envv);
 }
@@ -659,7 +659,7 @@ MSVCRT_intptr_t CDECL _execvpe(const char* name, const char* const* argv, const 
  *
  * Unicode version of _execvp
  */
-MSVCRT_intptr_t CDECL _wexecvp(const wchar_t* name, const wchar_t* const* argv)
+intptr_t CDECL _wexecvp(const wchar_t* name, const wchar_t* const* argv)
 {
   return _wexecvpe(name, argv, NULL);
 }
@@ -670,7 +670,7 @@ MSVCRT_intptr_t CDECL _wexecvp(const wchar_t* name, const wchar_t* const* argv)
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t CDECL _execvp(const char* name, const char* const* argv)
+intptr_t CDECL _execvp(const char* name, const char* const* argv)
 {
   return _execvpe(name, argv, NULL);
 }
@@ -680,11 +680,11 @@ MSVCRT_intptr_t CDECL _execvp(const char* name, const char* const* argv)
  *
  * Unicode version of _spawnl
  */
-MSVCRT_intptr_t WINAPIV MSVCRT__wspawnl(int flags, const wchar_t* name, const wchar_t* arg0, ...)
+intptr_t WINAPIV MSVCRT__wspawnl(int flags, const wchar_t* name, const wchar_t* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *args;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   __ms_va_start(ap, arg0);
   args = msvcrt_valisttos(arg0, ap, ' ');
@@ -702,11 +702,11 @@ MSVCRT_intptr_t WINAPIV MSVCRT__wspawnl(int flags, const wchar_t* name, const wc
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t WINAPIV MSVCRT__spawnl(int flags, const char* name, const char* arg0, ...)
+intptr_t WINAPIV MSVCRT__spawnl(int flags, const char* name, const char* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *nameW, *args;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
@@ -726,12 +726,12 @@ MSVCRT_intptr_t WINAPIV MSVCRT__spawnl(int flags, const char* name, const char* 
  *
  * Unicode version of _spawnle
  */
-MSVCRT_intptr_t WINAPIV MSVCRT__wspawnle(int flags, const wchar_t* name, const wchar_t* arg0, ...)
+intptr_t WINAPIV MSVCRT__wspawnle(int flags, const wchar_t* name, const wchar_t* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *args, *envs = NULL;
   const wchar_t * const *envp;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   __ms_va_start(ap, arg0);
   args = msvcrt_valisttos(arg0, ap, ' ');
@@ -753,12 +753,12 @@ MSVCRT_intptr_t WINAPIV MSVCRT__wspawnle(int flags, const wchar_t* name, const w
 /*********************************************************************
  *		_spawnle (MSVCRT.@)
  */
-MSVCRT_intptr_t WINAPIV MSVCRT__spawnle(int flags, const char* name, const char* arg0, ...)
+intptr_t WINAPIV MSVCRT__spawnle(int flags, const char* name, const char* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *nameW, *args, *envs = NULL;
   const char * const *envp;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
@@ -785,11 +785,11 @@ MSVCRT_intptr_t WINAPIV MSVCRT__spawnle(int flags, const char* name, const char*
  *
  * Unicode version of _spawnlp
  */
-MSVCRT_intptr_t WINAPIV MSVCRT__wspawnlp(int flags, const wchar_t* name, const wchar_t* arg0, ...)
+intptr_t WINAPIV MSVCRT__wspawnlp(int flags, const wchar_t* name, const wchar_t* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *args;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   __ms_va_start(ap, arg0);
   args = msvcrt_valisttos(arg0, ap, ' ');
@@ -807,11 +807,11 @@ MSVCRT_intptr_t WINAPIV MSVCRT__wspawnlp(int flags, const wchar_t* name, const w
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t WINAPIV MSVCRT__spawnlp(int flags, const char* name, const char* arg0, ...)
+intptr_t WINAPIV MSVCRT__spawnlp(int flags, const char* name, const char* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *nameW, *args;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
@@ -831,12 +831,12 @@ MSVCRT_intptr_t WINAPIV MSVCRT__spawnlp(int flags, const char* name, const char*
  *
  * Unicode version of _spawnlpe
  */
-MSVCRT_intptr_t WINAPIV MSVCRT__wspawnlpe(int flags, const wchar_t* name, const wchar_t* arg0, ...)
+intptr_t WINAPIV MSVCRT__wspawnlpe(int flags, const wchar_t* name, const wchar_t* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *args, *envs = NULL;
   const wchar_t * const *envp;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   __ms_va_start(ap, arg0);
   args = msvcrt_valisttos(arg0, ap, ' ');
@@ -858,12 +858,12 @@ MSVCRT_intptr_t WINAPIV MSVCRT__wspawnlpe(int flags, const wchar_t* name, const 
 /*********************************************************************
  *		_spawnlpe (MSVCRT.@)
  */
-MSVCRT_intptr_t WINAPIV MSVCRT__spawnlpe(int flags, const char* name, const char* arg0, ...)
+intptr_t WINAPIV MSVCRT__spawnlpe(int flags, const char* name, const char* arg0, ...)
 {
   __ms_va_list ap;
   wchar_t *nameW, *args, *envs = NULL;
   const char * const *envp;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
@@ -891,11 +891,11 @@ MSVCRT_intptr_t WINAPIV MSVCRT__spawnlpe(int flags, const char* name, const char
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t CDECL MSVCRT__spawnve(int flags, const char* name, const char* const* argv,
+intptr_t CDECL MSVCRT__spawnve(int flags, const char* name, const char* const* argv,
                                const char* const* envv)
 {
   wchar_t *nameW, *args, *envs;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
@@ -915,11 +915,11 @@ MSVCRT_intptr_t CDECL MSVCRT__spawnve(int flags, const char* name, const char* c
  *
  * Unicode version of _spawnve
  */
-MSVCRT_intptr_t CDECL MSVCRT__wspawnve(int flags, const wchar_t* name, const wchar_t* const* argv,
+intptr_t CDECL MSVCRT__wspawnve(int flags, const wchar_t* name, const wchar_t* const* argv,
                                 const wchar_t* const* envv)
 {
   wchar_t *args, *envs;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   args = msvcrt_argvtos(argv, ' ');
   envs = msvcrt_argvtos(envv, 0);
@@ -937,7 +937,7 @@ MSVCRT_intptr_t CDECL MSVCRT__wspawnve(int flags, const wchar_t* name, const wch
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t CDECL MSVCRT__spawnv(int flags, const char* name, const char* const* argv)
+intptr_t CDECL MSVCRT__spawnv(int flags, const char* name, const char* const* argv)
 {
   return MSVCRT__spawnve(flags, name, argv, NULL);
 }
@@ -947,7 +947,7 @@ MSVCRT_intptr_t CDECL MSVCRT__spawnv(int flags, const char* name, const char* co
  *
  * Unicode version of _spawnv
  */
-MSVCRT_intptr_t CDECL MSVCRT__wspawnv(int flags, const wchar_t* name, const wchar_t* const* argv)
+intptr_t CDECL MSVCRT__wspawnv(int flags, const wchar_t* name, const wchar_t* const* argv)
 {
   return MSVCRT__wspawnve(flags, name, argv, NULL);
 }
@@ -958,11 +958,11 @@ MSVCRT_intptr_t CDECL MSVCRT__wspawnv(int flags, const wchar_t* name, const wcha
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t CDECL MSVCRT__spawnvpe(int flags, const char* name, const char* const* argv,
+intptr_t CDECL MSVCRT__spawnvpe(int flags, const char* name, const char* const* argv,
                                 const char* const* envv)
 {
   wchar_t *nameW, *args, *envs;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   if (!(nameW = msvcrt_wstrdupa(name))) return -1;
 
@@ -982,11 +982,11 @@ MSVCRT_intptr_t CDECL MSVCRT__spawnvpe(int flags, const char* name, const char* 
  *
  * Unicode version of _spawnvpe
  */
-MSVCRT_intptr_t CDECL MSVCRT__wspawnvpe(int flags, const wchar_t* name, const wchar_t* const* argv,
+intptr_t CDECL MSVCRT__wspawnvpe(int flags, const wchar_t* name, const wchar_t* const* argv,
                                  const wchar_t* const* envv)
 {
   wchar_t *args, *envs;
-  MSVCRT_intptr_t ret;
+  intptr_t ret;
 
   args = msvcrt_argvtos(argv, ' ');
   envs = msvcrt_argvtos(envv, 0);
@@ -1004,7 +1004,7 @@ MSVCRT_intptr_t CDECL MSVCRT__wspawnvpe(int flags, const wchar_t* name, const wc
  * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
-MSVCRT_intptr_t CDECL MSVCRT__spawnvp(int flags, const char* name, const char* const* argv)
+intptr_t CDECL MSVCRT__spawnvp(int flags, const char* name, const char* const* argv)
 {
   return MSVCRT__spawnvpe(flags, name, argv, NULL);
 }
@@ -1014,7 +1014,7 @@ MSVCRT_intptr_t CDECL MSVCRT__spawnvp(int flags, const char* name, const char* c
  *
  * Unicode version of _spawnvp
  */
-MSVCRT_intptr_t CDECL MSVCRT__wspawnvp(int flags, const wchar_t* name, const wchar_t* const* argv)
+intptr_t CDECL MSVCRT__wspawnvp(int flags, const wchar_t* name, const wchar_t* const* argv)
 {
   return MSVCRT__wspawnvpe(flags, name, argv, NULL);
 }
@@ -1278,15 +1278,15 @@ int CDECL MSVCRT_system(const char* cmd)
 /*********************************************************************
  *		_loaddll (MSVCRT.@)
  */
-MSVCRT_intptr_t CDECL _loaddll(const char* dllname)
+intptr_t CDECL _loaddll(const char* dllname)
 {
-  return (MSVCRT_intptr_t)LoadLibraryA(dllname);
+  return (intptr_t)LoadLibraryA(dllname);
 }
 
 /*********************************************************************
  *		_unloaddll (MSVCRT.@)
  */
-int CDECL _unloaddll(MSVCRT_intptr_t dll)
+int CDECL _unloaddll(intptr_t dll)
 {
   if (FreeLibrary((HMODULE)dll))
     return 0;
@@ -1301,7 +1301,7 @@ int CDECL _unloaddll(MSVCRT_intptr_t dll)
 /*********************************************************************
  *		_getdllprocaddr (MSVCRT.@)
  */
-void * CDECL _getdllprocaddr(MSVCRT_intptr_t dll, const char *name, int ordinal)
+void * CDECL _getdllprocaddr(intptr_t dll, const char *name, int ordinal)
 {
     if (name)
     {

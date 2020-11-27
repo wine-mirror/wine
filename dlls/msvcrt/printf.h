@@ -29,7 +29,7 @@
 #endif
 
 struct FUNC_NAME(_str_ctx) {
-    MSVCRT_size_t len;
+    size_t len;
     APICHAR *buf;
 };
 

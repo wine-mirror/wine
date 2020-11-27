@@ -131,7 +131,7 @@ static MSVCRT_invalid_parameter_handler invalid_parameter_handler = NULL;
 void msvcrt_set_errno(int err)
 {
   int *errno_ptr = MSVCRT__errno();
-  MSVCRT_ulong *doserrno = MSVCRT___doserrno();
+  __msvcrt_ulong *doserrno = MSVCRT___doserrno();
 
   *doserrno = err;
 
@@ -219,7 +219,7 @@ int* CDECL MSVCRT__errno(void)
 /*********************************************************************
  *		__doserrno (MSVCRT.@)
  */
-MSVCRT_ulong* CDECL MSVCRT___doserrno(void)
+__msvcrt_ulong* CDECL MSVCRT___doserrno(void)
 {
     return &msvcrt_get_thread_data()->thread_doserrno;
 }
@@ -284,7 +284,7 @@ char* CDECL MSVCRT_strerror(int err)
 /**********************************************************************
  *		strerror_s	(MSVCRT.@)
  */
-int CDECL MSVCRT_strerror_s(char *buffer, MSVCRT_size_t numberOfElements, int errnum)
+int CDECL MSVCRT_strerror_s(char *buffer, size_t numberOfElements, int errnum)
 {
     char *ptr;
 
@@ -352,7 +352,7 @@ void CDECL MSVCRT_perror(const char* str)
  */
 void CDECL MSVCRT__wperror(const wchar_t* str)
 {
-    MSVCRT_size_t size;
+    size_t size;
     char *buffer = NULL;
 
     if (str && *str)
@@ -375,7 +375,7 @@ void CDECL MSVCRT__wperror(const wchar_t* str)
 /*********************************************************************
  *		_wcserror_s (MSVCRT.@)
  */
-int CDECL MSVCRT__wcserror_s(wchar_t* buffer, MSVCRT_size_t nc, int err)
+int CDECL MSVCRT__wcserror_s(wchar_t* buffer, size_t nc, int err)
 {
     if (!MSVCRT_CHECK_PMT(buffer != NULL)) return MSVCRT_EINVAL;
     if (!MSVCRT_CHECK_PMT(nc > 0)) return MSVCRT_EINVAL;
@@ -401,7 +401,7 @@ wchar_t* CDECL MSVCRT__wcserror(int err)
 /**********************************************************************
  *		__wcserror_s	(MSVCRT.@)
  */
-int CDECL MSVCRT___wcserror_s(wchar_t* buffer, MSVCRT_size_t nc, const wchar_t* str)
+int CDECL MSVCRT___wcserror_s(wchar_t* buffer, size_t nc, const wchar_t* str)
 {
     int err;
     size_t len;

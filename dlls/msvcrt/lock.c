@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <stdbool.h>
 
 #include "wine/debug.h"
 #include "windef.h"
@@ -243,7 +244,7 @@ void __thiscall SpinWait__Reset(SpinWait *this)
 /* ?_ShouldSpinAgain@?$_SpinWait@$0A@@details@Concurrency@@IAE_NXZ */
 /* ?_ShouldSpinAgain@?$_SpinWait@$0A@@details@Concurrency@@IEAA_NXZ */
 DEFINE_THISCALL_WRAPPER(SpinWait__ShouldSpinAgain, 4)
-MSVCRT_bool __thiscall SpinWait__ShouldSpinAgain(SpinWait *this)
+bool __thiscall SpinWait__ShouldSpinAgain(SpinWait *this)
 {
     TRACE("(%p)\n", this);
 
@@ -256,7 +257,7 @@ MSVCRT_bool __thiscall SpinWait__ShouldSpinAgain(SpinWait *this)
 /* ?_SpinOnce@?$_SpinWait@$0A@@details@Concurrency@@QAE_NXZ */
 /* ?_SpinOnce@?$_SpinWait@$0A@@details@Concurrency@@QEAA_NXZ */
 DEFINE_THISCALL_WRAPPER(SpinWait__SpinOnce, 4)
-MSVCRT_bool __thiscall SpinWait__SpinOnce(SpinWait *this)
+bool __thiscall SpinWait__SpinOnce(SpinWait *this)
 {
     switch(this->state) {
     case SPINWAIT_INIT:
@@ -390,7 +391,7 @@ void __thiscall critical_section_lock(critical_section *this)
 /* ?try_lock@critical_section@Concurrency@@QAE_NXZ */
 /* ?try_lock@critical_section@Concurrency@@QEAA_NXZ */
 DEFINE_THISCALL_WRAPPER(critical_section_try_lock, 4)
-MSVCRT_bool __thiscall critical_section_try_lock(critical_section *this)
+bool __thiscall critical_section_try_lock(critical_section *this)
 {
     cs_queue q;
 
@@ -459,7 +460,7 @@ critical_section* __thiscall critical_section_native_handle(critical_section *th
 /* ?try_lock_for@critical_section@Concurrency@@QAE_NI@Z */
 /* ?try_lock_for@critical_section@Concurrency@@QEAA_NI@Z */
 DEFINE_THISCALL_WRAPPER(critical_section_try_lock_for, 8)
-MSVCRT_bool __thiscall critical_section_try_lock_for(
+bool __thiscall critical_section_try_lock_for(
         critical_section *this, unsigned int timeout)
 {
     cs_queue *q, *last;
@@ -758,9 +759,9 @@ static void evt_remove_queue(thread_wait_entry **head, thread_wait_entry *entry)
     if(entry->next) entry->next->prev = entry->prev;
 }
 
-static MSVCRT_size_t evt_end_wait(thread_wait *wait, event **events, int count)
+static size_t evt_end_wait(thread_wait *wait, event **events, int count)
 {
-    MSVCRT_size_t i, ret = COOPERATIVE_WAIT_TIMEOUT;
+    size_t i, ret = COOPERATIVE_WAIT_TIMEOUT;
 
     for(i = 0; i < count; i++) {
         critical_section_lock(&events[i]->cs);
@@ -777,7 +778,7 @@ static inline int evt_transition(void **state, void *from, void *to)
     return InterlockedCompareExchangePointer(state, to, from) == from;
 }
 
-static MSVCRT_size_t evt_wait(thread_wait *wait, event **events, int count, MSVCRT_bool wait_all, unsigned int timeout)
+static size_t evt_wait(thread_wait *wait, event **events, int count, bool wait_all, unsigned int timeout)
 {
     int i;
     NTSTATUS status;
@@ -893,10 +894,10 @@ void __thiscall event_set(event *this)
 /* ?wait@event@Concurrency@@QAEII@Z */
 /* ?wait@event@Concurrency@@QEAA_KI@Z */
 DEFINE_THISCALL_WRAPPER(event_wait, 8)
-MSVCRT_size_t __thiscall event_wait(event *this, unsigned int timeout)
+size_t __thiscall event_wait(event *this, unsigned int timeout)
 {
     thread_wait wait;
-    MSVCRT_size_t signaled;
+    size_t signaled;
 
     TRACE("(%p %u)\n", this, timeout);
 
@@ -910,10 +911,10 @@ MSVCRT_size_t __thiscall event_wait(event *this, unsigned int timeout)
 
 /* ?wait_for_multiple@event@Concurrency@@SAIPAPAV12@I_NI@Z */
 /* ?wait_for_multiple@event@Concurrency@@SA_KPEAPEAV12@_K_NI@Z */
-int __cdecl event_wait_for_multiple(event **events, MSVCRT_size_t count, MSVCRT_bool wait_all, unsigned int timeout)
+int __cdecl event_wait_for_multiple(event **events, size_t count, bool wait_all, unsigned int timeout)
 {
     thread_wait *wait;
-    MSVCRT_size_t ret;
+    size_t ret;
 
     TRACE("(%p %Iu %d %u)\n", events, count, wait_all, timeout);
 
@@ -994,7 +995,7 @@ void __thiscall _Condition_variable_wait(_Condition_variable *this, critical_sec
 /* ?wait_for@_Condition_variable@details@Concurrency@@QAE_NAAVcritical_section@3@I@Z */
 /* ?wait_for@_Condition_variable@details@Concurrency@@QEAA_NAEAVcritical_section@3@I@Z */
 DEFINE_THISCALL_WRAPPER(_Condition_variable_wait_for, 12)
-MSVCRT_bool __thiscall _Condition_variable_wait_for(_Condition_variable *this,
+bool __thiscall _Condition_variable_wait_for(_Condition_variable *this,
         critical_section *cs, unsigned int timeout)
 {
     LARGE_INTEGER to;
@@ -1247,7 +1248,7 @@ void __thiscall reader_writer_lock_lock_read(reader_writer_lock *this)
 /* ?try_lock@reader_writer_lock@Concurrency@@QAE_NXZ */
 /* ?try_lock@reader_writer_lock@Concurrency@@QEAA_NXZ */
 DEFINE_THISCALL_WRAPPER(reader_writer_lock_try_lock, 4)
-MSVCRT_bool __thiscall reader_writer_lock_try_lock(reader_writer_lock *this)
+bool __thiscall reader_writer_lock_try_lock(reader_writer_lock *this)
 {
     rwl_queue q = { NULL };
 
@@ -1286,7 +1287,7 @@ MSVCRT_bool __thiscall reader_writer_lock_try_lock(reader_writer_lock *this)
 /* ?try_lock_read@reader_writer_lock@Concurrency@@QAE_NXZ */
 /* ?try_lock_read@reader_writer_lock@Concurrency@@QEAA_NXZ */
 DEFINE_THISCALL_WRAPPER(reader_writer_lock_try_lock_read, 4)
-MSVCRT_bool __thiscall reader_writer_lock_try_lock_read(reader_writer_lock *this)
+bool __thiscall reader_writer_lock_try_lock_read(reader_writer_lock *this)
 {
     LONG count;
 
@@ -1431,7 +1432,7 @@ void __thiscall _ReentrantBlockingLock__Release(_ReentrantBlockingLock *this)
 /* ?_TryAcquire@_ReentrantBlockingLock@details@Concurrency@@QAE_NXZ */
 /* ?_TryAcquire@_ReentrantBlockingLock@details@Concurrency@@QEAA_NXZ */
 DEFINE_THISCALL_WRAPPER(_ReentrantBlockingLock__TryAcquire, 4)
-MSVCRT_bool __thiscall _ReentrantBlockingLock__TryAcquire(_ReentrantBlockingLock *this)
+bool __thiscall _ReentrantBlockingLock__TryAcquire(_ReentrantBlockingLock *this)
 {
     TRACE("(%p)\n", this);
     return TryEnterCriticalSection(&this->cs);

@@ -1441,7 +1441,7 @@ unsigned int CDECL _rotl(unsigned int num, int shift)
 /*********************************************************************
  *		_lrotl (MSVCRT.@)
  */
-MSVCRT_ulong CDECL MSVCRT__lrotl(MSVCRT_ulong num, int shift)
+__msvcrt_ulong CDECL MSVCRT__lrotl(__msvcrt_ulong num, int shift)
 {
   shift &= 0x1f;
   return (num << shift) | (num >> (32-shift));
@@ -1450,7 +1450,7 @@ MSVCRT_ulong CDECL MSVCRT__lrotl(MSVCRT_ulong num, int shift)
 /*********************************************************************
  *		_lrotr (MSVCRT.@)
  */
-MSVCRT_ulong CDECL MSVCRT__lrotr(MSVCRT_ulong num, int shift)
+__msvcrt_ulong CDECL MSVCRT__lrotr(__msvcrt_ulong num, int shift)
 {
   shift &= 0x1f;
   return (num >> shift) | (num << (32-shift));
@@ -1494,7 +1494,7 @@ int CDECL MSVCRT_abs( int n )
 /*********************************************************************
  *		labs (MSVCRT.@)
  */
-MSVCRT_long CDECL MSVCRT_labs( MSVCRT_long n )
+__msvcrt_long CDECL MSVCRT_labs( __msvcrt_long n )
 {
     return n >= 0 ? n : -n;
 }
@@ -1503,7 +1503,7 @@ MSVCRT_long CDECL MSVCRT_labs( MSVCRT_long n )
 /*********************************************************************
  *		llabs (MSVCR100.@)
  */
-MSVCRT_longlong CDECL MSVCRT_llabs( MSVCRT_longlong n )
+__int64 CDECL MSVCRT_llabs( __int64 n )
 {
     return n >= 0 ? n : -n;
 }
@@ -1756,7 +1756,7 @@ int * CDECL __fpecode(void)
 /*********************************************************************
  *		ldexp (MSVCRT.@)
  */
-double CDECL MSVCRT_ldexp(double num, MSVCRT_long exp)
+double CDECL MSVCRT_ldexp(double num, __msvcrt_long exp)
 {
   double z = unix_funcs->ldexp(num,exp);
 
@@ -2433,7 +2433,7 @@ char * CDECL MSVCRT__ecvt( double number, int ndigits, int *decpt, int *sign )
 /*********************************************************************
  *		_ecvt_s (MSVCRT.@)
  */
-int CDECL MSVCRT__ecvt_s( char *buffer, MSVCRT_size_t length, double number, int ndigits, int *decpt, int *sign )
+int CDECL MSVCRT__ecvt_s( char *buffer, size_t length, double number, int ndigits, int *decpt, int *sign )
 {
     int prec, len;
     char *result;
@@ -2576,7 +2576,7 @@ char * CDECL MSVCRT__fcvt( double number, int ndigits, int *decpt, int *sign )
 /***********************************************************************
  *		_fcvt_s  (MSVCRT.@)
  */
-int CDECL MSVCRT__fcvt_s(char* outbuffer, MSVCRT_size_t size, double number, int ndigits, int *decpt, int *sign)
+int CDECL MSVCRT__fcvt_s(char* outbuffer, size_t size, double number, int ndigits, int *decpt, int *sign)
 {
     int stop, dec1, dec2;
     char *ptr1, *ptr2, *first;
@@ -2683,7 +2683,7 @@ char * CDECL MSVCRT__gcvt( double number, int ndigit, char *buff )
 /***********************************************************************
  *              _gcvt_s  (MSVCRT.@)
  */
-int CDECL MSVCRT__gcvt_s(char *buff, MSVCRT_size_t size, double number, int digits)
+int CDECL MSVCRT__gcvt_s(char *buff, size_t size, double number, int digits)
 {
     int len;
 
@@ -2753,7 +2753,7 @@ div_t CDECL MSVCRT_div(int num, int denom)
  * 	[i386] Windows binary compatible - returns the struct in eax/edx.
  */
 #ifdef __i386__
-unsigned __int64 CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
+unsigned __int64 CDECL MSVCRT_ldiv(__msvcrt_long num, __msvcrt_long denom)
 {
     union {
         ldiv_t ldiv;
@@ -2770,7 +2770,7 @@ unsigned __int64 CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
  * VERSION
  *	[!i386] Non-x86 can't run win32 apps so we don't need binary compatibility
  */
-ldiv_t CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
+ldiv_t CDECL MSVCRT_ldiv(__msvcrt_long num, __msvcrt_long denom)
 {
     ldiv_t ret;
 
@@ -2784,7 +2784,7 @@ ldiv_t CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
 /*********************************************************************
  *		lldiv (MSVCR100.@)
  */
-lldiv_t CDECL MSVCRT_lldiv(MSVCRT_longlong num, MSVCRT_longlong denom)
+lldiv_t CDECL MSVCRT_lldiv(__int64 num, __int64 denom)
 {
   lldiv_t ret;
 
@@ -3433,7 +3433,7 @@ LDOUBLE CDECL MSVCR120_rintl(LDOUBLE x)
 /*********************************************************************
  *      lrint (MSVCR120.@)
  */
-MSVCRT_long CDECL MSVCR120_lrint(double x)
+__msvcrt_long CDECL MSVCR120_lrint(double x)
 {
     return unix_funcs->lrint( x );
 }
@@ -3441,7 +3441,7 @@ MSVCRT_long CDECL MSVCR120_lrint(double x)
 /*********************************************************************
  *      lrintf (MSVCR120.@)
  */
-MSVCRT_long CDECL MSVCR120_lrintf(float x)
+__msvcrt_long CDECL MSVCR120_lrintf(float x)
 {
     return unix_funcs->lrintf( x );
 }
@@ -3449,7 +3449,7 @@ MSVCRT_long CDECL MSVCR120_lrintf(float x)
 /*********************************************************************
  *      lrintl (MSVCR120.@)
  */
-MSVCRT_long CDECL MSVCR120_lrintl(LDOUBLE x)
+__msvcrt_long CDECL MSVCR120_lrintl(LDOUBLE x)
 {
     return MSVCR120_lrint(x);
 }
@@ -3457,7 +3457,7 @@ MSVCRT_long CDECL MSVCR120_lrintl(LDOUBLE x)
 /*********************************************************************
  *      llrint (MSVCR120.@)
  */
-MSVCRT_longlong CDECL MSVCR120_llrint(double x)
+__int64 CDECL MSVCR120_llrint(double x)
 {
     return unix_funcs->llrint( x );
 }
@@ -3465,7 +3465,7 @@ MSVCRT_longlong CDECL MSVCR120_llrint(double x)
 /*********************************************************************
  *      llrintf (MSVCR120.@)
  */
-MSVCRT_longlong CDECL MSVCR120_llrintf(float x)
+__int64 CDECL MSVCR120_llrintf(float x)
 {
     return unix_funcs->llrintf( x );
 }
@@ -3473,7 +3473,7 @@ MSVCRT_longlong CDECL MSVCR120_llrintf(float x)
 /*********************************************************************
  *      rintl (MSVCR120.@)
  */
-MSVCRT_longlong CDECL MSVCR120_llrintl(LDOUBLE x)
+__int64 CDECL MSVCR120_llrintl(LDOUBLE x)
 {
     return MSVCR120_llrint(x);
 }
@@ -3507,7 +3507,7 @@ LDOUBLE CDECL MSVCR120_roundl(LDOUBLE x)
 /*********************************************************************
  *      lround (MSVCR120.@)
  */
-MSVCRT_long CDECL MSVCR120_lround(double x)
+__msvcrt_long CDECL MSVCR120_lround(double x)
 {
     return unix_funcs->lround( x );
 }
@@ -3515,7 +3515,7 @@ MSVCRT_long CDECL MSVCR120_lround(double x)
 /*********************************************************************
  *      lroundf (MSVCR120.@)
  */
-MSVCRT_long CDECL MSVCR120_lroundf(float x)
+__msvcrt_long CDECL MSVCR120_lroundf(float x)
 {
     return unix_funcs->lroundf( x );
 }
@@ -3523,7 +3523,7 @@ MSVCRT_long CDECL MSVCR120_lroundf(float x)
 /*********************************************************************
  *      lroundl (MSVCR120.@)
  */
-MSVCRT_long CDECL MSVCR120_lroundl(LDOUBLE x)
+__msvcrt_long CDECL MSVCR120_lroundl(LDOUBLE x)
 {
     return MSVCR120_lround(x);
 }
@@ -3531,7 +3531,7 @@ MSVCRT_long CDECL MSVCR120_lroundl(LDOUBLE x)
 /*********************************************************************
  *      llround (MSVCR120.@)
  */
-MSVCRT_longlong CDECL MSVCR120_llround(double x)
+__int64 CDECL MSVCR120_llround(double x)
 {
     return unix_funcs->llround( x );
 }
@@ -3539,7 +3539,7 @@ MSVCRT_longlong CDECL MSVCR120_llround(double x)
 /*********************************************************************
  *      llroundf (MSVCR120.@)
  */
-MSVCRT_longlong CDECL MSVCR120_llroundf(float x)
+__int64 CDECL MSVCR120_llroundf(float x)
 {
     return unix_funcs->llroundf( x );
 }
@@ -3547,7 +3547,7 @@ MSVCRT_longlong CDECL MSVCR120_llroundf(float x)
 /*********************************************************************
  *      roundl (MSVCR120.@)
  */
-MSVCRT_longlong CDECL MSVCR120_llroundl(LDOUBLE x)
+__int64 CDECL MSVCR120_llroundl(LDOUBLE x)
 {
     return MSVCR120_llround(x);
 }
@@ -3936,7 +3936,7 @@ LDOUBLE CDECL MSVCR120_atanhl(LDOUBLE x)
  *      scalbn  (MSVCR120.@)
  *      scalbln (MSVCR120.@)
  */
-double CDECL MSVCRT__scalb(double num, MSVCRT_long power)
+double CDECL MSVCRT__scalb(double num, __msvcrt_long power)
 {
   return MSVCRT_ldexp(num, power);
 }
@@ -3946,7 +3946,7 @@ double CDECL MSVCRT__scalb(double num, MSVCRT_long power)
  *      scalbnf  (MSVCR120.@)
  *      scalblnf (MSVCR120.@)
  */
-float CDECL MSVCRT__scalbf(float num, MSVCRT_long power)
+float CDECL MSVCRT__scalbf(float num, __msvcrt_long power)
 {
   return MSVCRT_ldexp(num, power);
 }
@@ -3957,7 +3957,7 @@ float CDECL MSVCRT__scalbf(float num, MSVCRT_long power)
  *      scalbnl  (MSVCR120.@)
  *      scalblnl (MSVCR120.@)
  */
-LDOUBLE CDECL MSVCR120_scalbnl(LDOUBLE num, MSVCRT_long power)
+LDOUBLE CDECL MSVCR120_scalbnl(LDOUBLE num, __msvcrt_long power)
 {
     return MSVCRT__scalb(num, power);
 }
