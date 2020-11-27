@@ -739,7 +739,7 @@ static HRESULT WINAPI VBScript_AddTypeLib(IActiveScript *iface, REFGUID rguidTyp
         DWORD dwMajor, DWORD dwMinor, DWORD dwFlags)
 {
     VBScript *This = impl_from_IActiveScript(iface);
-    FIXME("(%p)->()\n", This);
+    FIXME("(%p)->(%s %d %d %d)\n", This, debugstr_guid(rguidTypeLib), dwMajor, dwMinor, dwFlags);
     return E_NOTIMPL;
 }
 
