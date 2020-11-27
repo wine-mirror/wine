@@ -63,11 +63,11 @@ critical_section* (__thiscall *critical_section_ctor)(critical_section*);
 void (__thiscall *critical_section_dtor)(critical_section*);
 void (__thiscall *critical_section_lock)(critical_section*);
 void (__thiscall *critical_section_unlock)(critical_section*);
-MSVCP_bool (__thiscall *critical_section_trylock)(critical_section*);
+bool (__thiscall *critical_section_trylock)(critical_section*);
 #endif
 
 #if _MSVCP_VER >= 100
-MSVCP_bool (__cdecl *Context_IsCurrentTaskCollectionCanceling)(void);
+bool (__cdecl *Context_IsCurrentTaskCollectionCanceling)(void);
 #endif
 
 #define VERSION_STRING(ver) #ver

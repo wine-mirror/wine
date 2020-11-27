@@ -940,7 +940,7 @@ void __cdecl _Xruntime_error(const char *str)
 }
 
 /* ?uncaught_exception@std@@YA_NXZ */
-MSVCP_bool __cdecl MSVCP__uncaught_exception(void)
+bool __cdecl MSVCP__uncaught_exception(void)
 {
     return __uncaught_exception();
 }

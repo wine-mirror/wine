@@ -98,7 +98,7 @@ typedef struct _locale__Locimp {
     locale_facet **facetvec;
     size_t facet_cnt;
     category catmask;
-    MSVCP_bool transparent;
+    bool transparent;
     locale_string name;
 } locale__Locimp;
 
@@ -1682,7 +1682,7 @@ ctype_char* __thiscall ctype_char_ctor_locinfo(ctype_char *this,
 /* ??0?$ctype@D@std@@QEAA@PEBF_N_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char_ctor_table, 16)
 ctype_char* __thiscall ctype_char_ctor_table(ctype_char *this,
-        const short *table, MSVCP_bool delete, size_t refs)
+        const short *table, bool delete, size_t refs)
 {
     _Locinfo locinfo;
 
@@ -2162,7 +2162,7 @@ const char* __thiscall ctype_char_toupper(const ctype_char *this, char *first, c
 /* ?is@?$ctype@D@std@@QBE_NFD@Z */
 /* ?is@?$ctype@D@std@@QEBA_NFD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char_is_ch, 12)
-MSVCP_bool __thiscall ctype_char_is_ch(const ctype_char *this, short mask, char ch)
+bool __thiscall ctype_char_is_ch(const ctype_char *this, short mask, char ch)
 {
     TRACE("(%p %x %c)\n", this, mask, ch);
     return (this->ctype.table[(unsigned char)ch] & mask) != 0;
@@ -2982,12 +2982,12 @@ short __cdecl _Getwctype(wchar_t ch, const _Ctypevec *ctype)
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_is_ch, 12)
 #if _MSVCP_VER <= 100
 #define call_ctype_wchar_do_is_ch(this, mask, ch) CALL_VTBL_FUNC(this, 8, \
-        MSVCP_bool, (const ctype_wchar*, short, wchar_t), (this, mask, ch))
+        bool, (const ctype_wchar*, short, wchar_t), (this, mask, ch))
 #else
 #define call_ctype_wchar_do_is_ch(this, mask, ch) CALL_VTBL_FUNC(this, 16, \
-        MSVCP_bool, (const ctype_wchar*, short, wchar_t), (this, mask, ch))
+        bool, (const ctype_wchar*, short, wchar_t), (this, mask, ch))
 #endif
-MSVCP_bool __thiscall ctype_wchar_do_is_ch(const ctype_wchar *this, short mask, wchar_t ch)
+bool __thiscall ctype_wchar_do_is_ch(const ctype_wchar *this, short mask, wchar_t ch)
 {
     TRACE("(%p %x %d)\n", this, mask, ch);
     return (_Getwctype(ch, &this->ctype) & mask) != 0;
@@ -3019,7 +3019,7 @@ const wchar_t* __thiscall ctype_wchar_do_is(const ctype_wchar *this,
 /* ?is@?$ctype@G@std@@QBE_NFG@Z */
 /* ?is@?$ctype@G@std@@QEBA_NFG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_is_ch, 12)
-MSVCP_bool __thiscall ctype_wchar_is_ch(const ctype_wchar *this, short mask, wchar_t ch)
+bool __thiscall ctype_wchar_is_ch(const ctype_wchar *this, short mask, wchar_t ch)
 {
     TRACE("(%p %x %d)\n", this, mask, ch);
     return call_ctype_wchar_do_is_ch(this, mask, ch);
@@ -3164,13 +3164,13 @@ codecvt_base* __thiscall codecvt_base_vector_dtor(codecvt_base *this, unsigned i
 /* ?do_always_noconv@codecvt_base@std@@MEBA_NXZ */
 #if _MSVCP_VER <= 100
 #define call_codecvt_base_do_always_noconv(this) CALL_VTBL_FUNC(this, 4, \
-        MSVCP_bool, (const codecvt_base*), (this))
+        bool, (const codecvt_base*), (this))
 #else
 #define call_codecvt_base_do_always_noconv(this) CALL_VTBL_FUNC(this, 12, \
-        MSVCP_bool, (const codecvt_base*), (this))
+        bool, (const codecvt_base*), (this))
 #endif
 DEFINE_THISCALL_WRAPPER(codecvt_base_do_always_noconv, 4)
-MSVCP_bool __thiscall codecvt_base_do_always_noconv(const codecvt_base *this)
+bool __thiscall codecvt_base_do_always_noconv(const codecvt_base *this)
 {
     TRACE("(%p)\n", this);
     return _MSVCP_VER <= 100;
@@ -3179,7 +3179,7 @@ MSVCP_bool __thiscall codecvt_base_do_always_noconv(const codecvt_base *this)
 /* ?always_noconv@codecvt_base@std@@QBE_NXZ */
 /* ?always_noconv@codecvt_base@std@@QEBA_NXZ */
 DEFINE_THISCALL_WRAPPER(codecvt_base_always_noconv, 4)
-MSVCP_bool __thiscall codecvt_base_always_noconv(const codecvt_base *this)
+bool __thiscall codecvt_base_always_noconv(const codecvt_base *this)
 {
     TRACE("(%p)\n", this);
     return call_codecvt_base_do_always_noconv(this);
@@ -3364,7 +3364,7 @@ codecvt_char* codecvt_char_use_facet(const locale *loc)
 /* ?do_always_noconv@?$codecvt@DDH@std@@MBE_NXZ */
 /* ?do_always_noconv@?$codecvt@DDH@std@@MEBA_NXZ */
 DEFINE_THISCALL_WRAPPER(codecvt_char_do_always_noconv, 4)
-MSVCP_bool __thiscall codecvt_char_do_always_noconv(const codecvt_char *this)
+bool __thiscall codecvt_char_do_always_noconv(const codecvt_char *this)
 {
     TRACE("(%p)\n", this);
     return TRUE;
@@ -3783,7 +3783,7 @@ locale_id* __cdecl codecvt_short__Id_func(void)
 /* ?do_always_noconv@?$codecvt@_WDH@std@@MBE_NXZ */
 /* ?do_always_noconv@?$codecvt@_WDH@std@@MEBA_NXZ */
 DEFINE_THISCALL_WRAPPER(codecvt_wchar_do_always_noconv, 4)
-MSVCP_bool __thiscall codecvt_wchar_do_always_noconv(const codecvt_wchar *this)
+bool __thiscall codecvt_wchar_do_always_noconv(const codecvt_wchar *this)
 {
     TRACE("(%p)\n", this);
     return FALSE;
@@ -4032,7 +4032,7 @@ extern const vtable_ptr MSVCP_numpunct_char_vtable;
 /* ?_Init@?$numpunct@D@std@@IAEXABV_Locinfo@2@_N@Z */
 /* ?_Init@?$numpunct@D@std@@IEAAXAEBV_Locinfo@2@_N@Z */
 DEFINE_THISCALL_WRAPPER(numpunct_char__Init, 12)
-void __thiscall numpunct_char__Init(numpunct_char *this, const _Locinfo *locinfo, MSVCP_bool isdef)
+void __thiscall numpunct_char__Init(numpunct_char *this, const _Locinfo *locinfo, bool isdef)
 {
     int len;
 
@@ -4093,7 +4093,7 @@ void __thiscall numpunct_char__Tidy(numpunct_char *this)
 /* ??0?$numpunct@D@std@@QEAA@AEBV_Locinfo@1@_K_N@Z */
 DEFINE_THISCALL_WRAPPER(numpunct_char_ctor_locinfo, 16)
 numpunct_char* __thiscall numpunct_char_ctor_locinfo(numpunct_char *this,
-        const _Locinfo *locinfo, size_t refs, MSVCP_bool usedef)
+        const _Locinfo *locinfo, size_t refs, bool usedef)
 {
     TRACE("(%p %p %Iu %d)\n", this, locinfo, refs, usedef);
     locale_facet_ctor_refs(&this->facet, refs);
@@ -4106,7 +4106,7 @@ numpunct_char* __thiscall numpunct_char_ctor_locinfo(numpunct_char *this,
 /* ??0?$numpunct@D@std@@IEAA@PEBD_K_N@Z */
 DEFINE_THISCALL_WRAPPER(numpunct_char_ctor_name, 16)
 numpunct_char* __thiscall numpunct_char_ctor_name(numpunct_char *this,
-        const char *name, size_t refs, MSVCP_bool usedef)
+        const char *name, size_t refs, bool usedef)
 {
     _Locinfo locinfo;
 
@@ -4367,7 +4367,7 @@ extern const vtable_ptr MSVCP_numpunct_short_vtable;
 /* ?_Init@?$numpunct@G@std@@IEAAXAEBV_Locinfo@2@_N@Z */
 DEFINE_THISCALL_WRAPPER(numpunct_wchar__Init, 12)
 void __thiscall numpunct_wchar__Init(numpunct_wchar *this,
-        const _Locinfo *locinfo, MSVCP_bool isdef)
+        const _Locinfo *locinfo, bool isdef)
 {
     const char *to_convert;
     _Cvtvec cvt;
@@ -4438,7 +4438,7 @@ void __thiscall numpunct_wchar__Tidy(numpunct_wchar *this)
 /* ??0?$numpunct@_W@std@@QEAA@AEBV_Locinfo@1@_K_N@Z */
 DEFINE_THISCALL_WRAPPER(numpunct_wchar_ctor_locinfo, 16)
 numpunct_wchar* __thiscall numpunct_wchar_ctor_locinfo(numpunct_wchar *this,
-        const _Locinfo *locinfo, size_t refs, MSVCP_bool usedef)
+        const _Locinfo *locinfo, size_t refs, bool usedef)
 {
     TRACE("(%p %p %Iu %d)\n", this, locinfo, refs, usedef);
     locale_facet_ctor_refs(&this->facet, refs);
@@ -4451,7 +4451,7 @@ numpunct_wchar* __thiscall numpunct_wchar_ctor_locinfo(numpunct_wchar *this,
 /* ??0?$numpunct@G@std@@QEAA@AEBV_Locinfo@1@_K_N@Z */
 DEFINE_THISCALL_WRAPPER(numpunct_short_ctor_locinfo, 16)
 numpunct_wchar* __thiscall numpunct_short_ctor_locinfo(numpunct_wchar *this,
-        const _Locinfo *locinfo, size_t refs, MSVCP_bool usedef)
+        const _Locinfo *locinfo, size_t refs, bool usedef)
 {
     numpunct_wchar_ctor_locinfo(this, locinfo, refs, usedef);
     this->facet.vtable = &MSVCP_numpunct_short_vtable;
@@ -4462,7 +4462,7 @@ numpunct_wchar* __thiscall numpunct_short_ctor_locinfo(numpunct_wchar *this,
 /* ??0?$numpunct@_W@std@@IEAA@PEBD_K_N@Z */
 DEFINE_THISCALL_WRAPPER(numpunct_wchar_ctor_name, 16)
 numpunct_wchar* __thiscall numpunct_wchar_ctor_name(numpunct_wchar *this,
-        const char *name, size_t refs, MSVCP_bool usedef)
+        const char *name, size_t refs, bool usedef)
 {
     _Locinfo locinfo;
 
@@ -4480,7 +4480,7 @@ numpunct_wchar* __thiscall numpunct_wchar_ctor_name(numpunct_wchar *this,
 /* ??0?$numpunct@G@std@@IEAA@PEBD_K_N@Z */
     DEFINE_THISCALL_WRAPPER(numpunct_short_ctor_name, 16)
 numpunct_wchar* __thiscall numpunct_short_ctor_name(numpunct_wchar *this,
-        const char *name, size_t refs, MSVCP_bool usedef)
+        const char *name, size_t refs, bool usedef)
 {
     numpunct_wchar_ctor_name(this, name, refs, usedef);
     this->facet.vtable = &MSVCP_numpunct_short_vtable;
@@ -6095,7 +6095,7 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_get_ushort(const num_get *th
 static istreambuf_iterator_wchar* num_get_do_get_bool(const num_get *this,
         istreambuf_iterator_wchar *ret, istreambuf_iterator_wchar first,
         istreambuf_iterator_wchar last, ios_base *base, int *state,
-        MSVCP_bool *pval, numpunct_wchar *numpunct)
+        bool *pval, numpunct_wchar *numpunct)
 {
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
@@ -6162,16 +6162,16 @@ static istreambuf_iterator_wchar* num_get_do_get_bool(const num_get *this,
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEA_N@Z */
 #if _MSVCP_VER <= 100
 #define call_num_get_wchar_do_get_bool(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 44, istreambuf_iterator_wchar*, \
-        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, MSVCP_bool*), \
+        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, bool*), \
         (this, ret, first, last, base, state, pval))
 #else
 #define call_num_get_wchar_do_get_bool(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 52, istreambuf_iterator_wchar*, \
-        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, MSVCP_bool*), \
+        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, bool*), \
         (this, ret, first, last, base, state, pval))
 #endif
 DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_bool,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_bool(const num_get *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, MSVCP_bool *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, bool *pval)
 {
     return num_get_do_get_bool(this, ret, first, last, base,
             state, pval, numpunct_wchar_use_facet(IOS_LOCALE(base)));
@@ -6181,7 +6181,7 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_bool(const num_get *t
 /* ?do_get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AEAVios_base@2@AEAHAEA_N@Z */
 DEFINE_THISCALL_WRAPPER(num_get_short_do_get_bool,36)
 istreambuf_iterator_wchar *__thiscall num_get_short_do_get_bool(const num_get *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, MSVCP_bool *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, bool *pval)
 {
     return num_get_do_get_bool(this, ret, first, last, base,
             state, pval, numpunct_short_use_facet(IOS_LOCALE(base)));
@@ -6193,7 +6193,7 @@ istreambuf_iterator_wchar *__thiscall num_get_short_do_get_bool(const num_get *t
 /* ?get@?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@GU?$char_traits@G@std@@@2@V32@0AEAVios_base@2@AEAHAEA_N@Z */
 DEFINE_THISCALL_WRAPPER(num_get_wchar_get_bool,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_get_bool(const num_get *this, istreambuf_iterator_wchar *ret,
-    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, MSVCP_bool *pval)
+    istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, bool *pval)
 {
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
     return call_num_get_wchar_do_get_bool(this, ret, first, last, base, state, pval);
@@ -7068,16 +7068,16 @@ istreambuf_iterator_char *__thiscall num_get_char_get_ushort(const num_get *this
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEA_N@Z */
 #if _MSVCP_VER <= 100
 #define call_num_get_char_do_get_bool(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 44, istreambuf_iterator_char*, \
-        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, MSVCP_bool*), \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, bool*), \
         (this, ret, first, last, base, state, pval))
 #else
 #define call_num_get_char_do_get_bool(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 52, istreambuf_iterator_char*, \
-        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, MSVCP_bool*), \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, bool*), \
         (this, ret, first, last, base, state, pval))
 #endif
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_bool,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_bool(const num_get *this, istreambuf_iterator_char *ret,
-    istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, MSVCP_bool *pval)
+    istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, bool *pval)
 {
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
 
@@ -7145,7 +7145,7 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_bool(const num_get *thi
 /* ?get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@QEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEA_N@Z */
 DEFINE_THISCALL_WRAPPER(num_get_char_get_bool,36)
 istreambuf_iterator_char *__thiscall num_get_char_get_bool(const num_get *this, istreambuf_iterator_char *ret,
-    istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, MSVCP_bool *pval)
+    istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, bool *pval)
 {
     TRACE("(%p %p %p %p %p)\n", this, ret, base, state, pval);
     return call_num_get_char_do_get_bool(this, ret, first, last, base, state, pval);
@@ -7837,11 +7837,11 @@ ostreambuf_iterator_char* __thiscall num_put_char_put_uint64(const num_put *this
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@D_N@Z */
 #if _MSVCP_VER <= 100
 #define call_num_put_char_do_put_bool(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 32, ostreambuf_iterator_char*, \
-        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, MSVCP_bool), \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, bool), \
         (this, ret, dest, base, fill, v))
 #else
 #define call_num_put_char_do_put_bool(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 40, ostreambuf_iterator_char*, \
-        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, MSVCP_bool), \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, bool), \
         (this, ret, dest, base, fill, v))
 #endif
 #if _MSVCP_VER != 80
@@ -7850,7 +7850,7 @@ DEFINE_THISCALL_WRAPPER(num_put_char_do_put_bool, 28)
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_bool, 32)
 #endif
 ostreambuf_iterator_char* __thiscall num_put_char_do_put_bool(const num_put *this, ostreambuf_iterator_char *ret,
-        ostreambuf_iterator_char dest, ios_base *base, char fill, MSVCP_bool v)
+        ostreambuf_iterator_char dest, ios_base *base, char fill, bool v)
 {
     TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
 
@@ -7888,7 +7888,7 @@ DEFINE_THISCALL_WRAPPER(num_put_char_put_bool, 28)
 DEFINE_THISCALL_WRAPPER(num_put_char_put_bool, 32)
 #endif
 ostreambuf_iterator_char* __thiscall num_put_char_put_bool(const num_put *this, ostreambuf_iterator_char *ret,
-        ostreambuf_iterator_char dest, ios_base *base, char fill, MSVCP_bool v)
+        ostreambuf_iterator_char dest, ios_base *base, char fill, bool v)
 {
     TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
     return call_num_put_char_do_put_bool(this, ret, dest, base, fill, v);
@@ -8887,11 +8887,11 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_uint64(const num_put *th
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_W_N@Z */
 #if _MSVCP_VER <= 100
 #define call_num_put_wchar_do_put_bool(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 32, ostreambuf_iterator_wchar*, \
-        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, MSVCP_bool), \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, bool), \
         (this, ret, dest, base, fill, v))
 #else
 #define call_num_put_wchar_do_put_bool(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 40, ostreambuf_iterator_wchar*, \
-        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, MSVCP_bool), \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, bool), \
         (this, ret, dest, base, fill, v))
 #endif
 #if _MSVCP_VER != 80
@@ -8900,7 +8900,7 @@ DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_bool, 28)
 DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_bool, 32)
 #endif
 ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_bool(const num_put *this, ostreambuf_iterator_wchar *ret,
-        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, MSVCP_bool v)
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, bool v)
 {
     TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
 
@@ -8938,7 +8938,7 @@ DEFINE_THISCALL_WRAPPER(num_put_short_do_put_bool, 28)
 DEFINE_THISCALL_WRAPPER(num_put_short_do_put_bool, 32)
 #endif
 ostreambuf_iterator_wchar* __thiscall num_put_short_do_put_bool(const num_put *this, ostreambuf_iterator_wchar *ret,
-        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, MSVCP_bool v)
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, bool v)
 {
     TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
 
@@ -8978,7 +8978,7 @@ DEFINE_THISCALL_WRAPPER(num_put_wchar_put_bool, 28)
 DEFINE_THISCALL_WRAPPER(num_put_wchar_put_bool, 32)
 #endif
 ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_bool(const num_put *this, ostreambuf_iterator_wchar *ret,
-        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, MSVCP_bool v)
+        ostreambuf_iterator_wchar dest, ios_base *base, wchar_t fill, bool v)
 {
     TRACE("(%p %p %p %d %d)\n", this, ret, base, fill, v);
     return call_num_put_wchar_do_put_bool(this, ret, dest, base, fill, v);
@@ -11541,7 +11541,7 @@ extern const vtable_ptr MSVCP_locale__Locimp_vtable;
 /* ??0_Locimp@locale@std@@AAE@_N@Z */
 /* ??0_Locimp@locale@std@@AEAA@_N@Z */
 DEFINE_THISCALL_WRAPPER(locale__Locimp_ctor_transparent, 8)
-locale__Locimp* __thiscall locale__Locimp_ctor_transparent(locale__Locimp *this, MSVCP_bool transparent)
+locale__Locimp* __thiscall locale__Locimp_ctor_transparent(locale__Locimp *this, bool transparent)
 {
     TRACE("(%p %d)\n", this, transparent);
 
@@ -11666,7 +11666,7 @@ locale__Locimp* __cdecl locale__Locimp__New_Locimp(const locale__Locimp *copy)
 
 /* ?_New_Locimp@_Locimp@locale@std@@CAPAV123@_N@Z */
 /* ?_New_Locimp@_Locimp@locale@std@@CAPEAV123@_N@Z */
-locale__Locimp* __cdecl locale__Locimp__New_Locimp_transparent(MSVCP_bool transparent)
+locale__Locimp* __cdecl locale__Locimp__New_Locimp_transparent(bool transparent)
 {
     locale__Locimp *ret;
 
@@ -12198,7 +12198,7 @@ locale__Locimp* __cdecl locale__Init(void)
 
 /* ?_Init@locale@std@@CAPAV_Locimp@12@_N@Z */
 /* ?_Init@locale@std@@CAPEAV_Locimp@12@_N@Z */
-locale__Locimp* __cdecl locale__Init_ref(MSVCP_bool inc_ref)
+locale__Locimp* __cdecl locale__Init_ref(bool inc_ref)
 {
     locale__Locimp *ret;
     _Lockit lock;
@@ -12220,7 +12220,7 @@ locale__Locimp* __cdecl locale__Init_ref(MSVCP_bool inc_ref)
 /* ?_Iscloc@locale@std@@QBE_NXZ */
 /* ?_Iscloc@locale@std@@QEBA_NXZ */
 DEFINE_THISCALL_WRAPPER(locale__Iscloc, 4)
-MSVCP_bool __thiscall locale__Iscloc(const locale *this)
+bool __thiscall locale__Iscloc(const locale *this)
 {
     TRACE("(%p)\n", this);
     return this->ptr == locale__Locimp__Clocptr;
@@ -12367,7 +12367,7 @@ locale* __thiscall locale_operator_assign(locale *this, const locale *loc)
 /* ??8locale@std@@QBE_NABV01@@Z */
 /* ??8locale@std@@QEBA_NAEBV01@@Z */
 DEFINE_THISCALL_WRAPPER(locale_operator_equal, 8)
-MSVCP_bool __thiscall locale_operator_equal(const locale *this, const locale *loc)
+bool __thiscall locale_operator_equal(const locale *this, const locale *loc)
 {
     FIXME("(%p %p) stub\n", this, loc);
     return 0;
@@ -12376,7 +12376,7 @@ MSVCP_bool __thiscall locale_operator_equal(const locale *this, const locale *lo
 /* ??9locale@std@@QBE_NABV01@@Z */
 /* ??9locale@std@@QEBA_NAEBV01@@Z */
 DEFINE_THISCALL_WRAPPER(locale_operator_not_equal, 8)
-MSVCP_bool __thiscall locale_operator_not_equal(const locale *this, locale const *loc)
+bool __thiscall locale_operator_not_equal(const locale *this, locale const *loc)
 {
     FIXME("(%p %p) stub\n", this, loc);
     return 0;
@@ -12414,7 +12414,7 @@ locale* __thiscall locale__Addfac(locale *this, locale_facet *facet, size_t id, 
 /* ?_Getfacet@locale@std@@QEBAPEBVfacet@12@_K_N@Z */
 DEFINE_THISCALL_WRAPPER(locale__Getfacet_bool, 12)
 const locale_facet* __thiscall locale__Getfacet_bool(const locale *this,
-        size_t id, MSVCP_bool allow_transparent)
+        size_t id, bool allow_transparent)
 {
     locale_facet *fac;
 

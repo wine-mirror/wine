@@ -1106,7 +1106,7 @@ DEFINE_THISCALL_WRAPPER(custom_category_default_error_condition, 12)
 }
 
 DEFINE_THISCALL_WRAPPER(custom_category_equivalent, 12)
-MSVCP_bool __thiscall custom_category_equivalent(const custom_category *this,
+bool __thiscall custom_category_equivalent(const custom_category *this,
         int code, const /*error_condition*/void *condition)
 {
     FIXME("(%p %x %p) stub\n", this, code, condition);
@@ -1114,7 +1114,7 @@ MSVCP_bool __thiscall custom_category_equivalent(const custom_category *this,
 }
 
 DEFINE_THISCALL_WRAPPER(custom_category_equivalent_code, 12)
-MSVCP_bool __thiscall custom_category_equivalent_code(custom_category *this,
+bool __thiscall custom_category_equivalent_code(custom_category *this,
         const /*error_code*/void *code, int condition)
 {
     FIXME("(%p %p %x) stub\n", this, code, condition);
@@ -1348,7 +1348,7 @@ typedef struct
     const vtable_ptr *vtable;
     _Cnd_t cnd;
     _Mtx_t mtx;
-    MSVCP_bool launched;
+    bool launched;
 } _Pad;
 
 DEFINE_RTTI_DATA0(_Pad, 0, ".?AV_Pad@std@@")
@@ -1609,7 +1609,7 @@ void __thiscall _Concurrent_queue_base_v4__Internal_finish_clear(
 /* ?_Internal_empty@_Concurrent_queue_base_v4@details@Concurrency@@IBE_NXZ */
 /* ?_Internal_empty@_Concurrent_queue_base_v4@details@Concurrency@@IEBA_NXZ */
 DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_empty, 4)
-MSVCP_bool __thiscall _Concurrent_queue_base_v4__Internal_empty(
+bool __thiscall _Concurrent_queue_base_v4__Internal_empty(
         const _Concurrent_queue_base_v4 *this)
 {
     TRACE("(%p)\n", this);
@@ -1789,7 +1789,7 @@ void __thiscall _Concurrent_queue_base_v4__Internal_move_push(
 /* ?_Internal_pop_if_present@_Concurrent_queue_base_v4@details@Concurrency@@IAE_NPAX@Z */
 /* ?_Internal_pop_if_present@_Concurrent_queue_base_v4@details@Concurrency@@IEAA_NPEAX@Z */
 DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_pop_if_present, 8)
-MSVCP_bool __thiscall _Concurrent_queue_base_v4__Internal_pop_if_present(
+bool __thiscall _Concurrent_queue_base_v4__Internal_pop_if_present(
         _Concurrent_queue_base_v4 *this, void *e)
 {
     size_t id;
@@ -2643,7 +2643,7 @@ void __cdecl _Unlock_shared_ptr_spin_lock(void)
 
 #if _MSVCP_VER >= 100
 /* ?is_current_task_group_canceling@Concurrency@@YA_NXZ */
-MSVCP_bool __cdecl is_current_task_group_canceling(void)
+bool __cdecl is_current_task_group_canceling(void)
 {
     return Context_IsCurrentTaskCollectionCanceling();
 }
@@ -2690,11 +2690,11 @@ void __thiscall _ContextCallback__Assign(void *this, void *v)
 }
 
 #define call_function_do_call(this) CALL_VTBL_FUNC(this, 8, void, (function_void_cdecl_void*), (this))
-#define call_function_do_clean(this,b) CALL_VTBL_FUNC(this, 16, void, (function_void_cdecl_void*,MSVCP_bool), (this, b))
+#define call_function_do_clean(this,b) CALL_VTBL_FUNC(this, 16, void, (function_void_cdecl_void*,bool), (this, b))
 /* ?_CallInContext@_ContextCallback@details@Concurrency@@QBEXV?$function@$$A6AXXZ@std@@_N@Z */
 /* ?_CallInContext@_ContextCallback@details@Concurrency@@QEBAXV?$function@$$A6AXXZ@std@@_N@Z */
 DEFINE_THISCALL_WRAPPER(_ContextCallback__CallInContext, 48)
-void __thiscall _ContextCallback__CallInContext(const void *this, function_void_cdecl_void func, MSVCP_bool b)
+void __thiscall _ContextCallback__CallInContext(const void *this, function_void_cdecl_void func, bool b)
 {
     TRACE("(%p %p %x)\n", this, func.func, b);
     call_function_do_call(func.this);
@@ -2718,7 +2718,7 @@ void __thiscall _ContextCallback__Reset(void *this)
 }
 
 /* ?_IsCurrentOriginSTA@_ContextCallback@details@Concurrency@@CA_NXZ */
-MSVCP_bool __cdecl _ContextCallback__IsCurrentOriginSTA(void *this)
+bool __cdecl _ContextCallback__IsCurrentOriginSTA(void *this)
 {
     TRACE("(%p)\n", this);
     return FALSE;
@@ -2726,8 +2726,8 @@ MSVCP_bool __cdecl _ContextCallback__IsCurrentOriginSTA(void *this)
 
 typedef struct {
     /*_Task_impl_base*/void *task;
-    MSVCP_bool scheduled;
-    MSVCP_bool started;
+    bool scheduled;
+    bool started;
 } _TaskEventLogger;
 
 /* ?_LogCancelTask@_TaskEventLogger@details@Concurrency@@QAEXXZ */
@@ -2741,7 +2741,7 @@ void __thiscall _TaskEventLogger__LogCancelTask(_TaskEventLogger *this)
 /* ?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QAEX_N@Z */
 /* ?_LogScheduleTask@_TaskEventLogger@details@Concurrency@@QEAAX_N@Z */
 DEFINE_THISCALL_WRAPPER(_TaskEventLogger__LogScheduleTask, 8)
-void __thiscall _TaskEventLogger__LogScheduleTask(_TaskEventLogger *this, MSVCP_bool continuation)
+void __thiscall _TaskEventLogger__LogScheduleTask(_TaskEventLogger *this, bool continuation)
 {
     TRACE("(%p %x)\n", this, continuation);
 }
@@ -2843,7 +2843,7 @@ _Ph _Ph_16 = {0}, _Ph_17 = {0}, _Ph_18 = {0}, _Ph_19 = {0}, _Ph_20 = {0};
 
 #if _MSVCP_VER >= 140
 /* ?_IsNonBlockingThread@_Task_impl_base@details@Concurrency@@SA_NXZ */
-MSVCP_bool __cdecl _Task_impl_base__IsNonBlockingThread(void)
+bool __cdecl _Task_impl_base__IsNonBlockingThread(void)
 {
     FIXME("() stub\n");
     return FALSE;
