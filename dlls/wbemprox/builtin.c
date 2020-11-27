@@ -376,10 +376,10 @@ static const struct column col_sid[] =
 };
 static const struct column col_sounddevice[] =
 {
-    { L"DeviceID",     CIM_STRING },
+    { L"DeviceID",     CIM_STRING|COL_FLAG_DYNAMIC },
     { L"Manufacturer", CIM_STRING },
     { L"Name",         CIM_STRING },
-    { L"PNPDeviceID",  CIM_STRING },
+    { L"PNPDeviceID",  CIM_STRING|COL_FLAG_DYNAMIC },
     { L"ProductName",  CIM_STRING },
     { L"Status",       CIM_STRING },
     { L"StatusInfo",   CIM_UINT16 },
