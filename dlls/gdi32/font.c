@@ -7758,7 +7758,7 @@ static void load_system_bitmap_fonts(void)
     {
         dlen = sizeof(data);
         if (!RegQueryValueExW( hkey, fonts[i], 0, &type, (BYTE *)data, &dlen ) && type == REG_SZ)
-            add_system_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
+            add_system_font_resource( data, ADDFONT_ALLOW_BITMAP );
     }
     RegCloseKey( hkey );
 }
@@ -7789,11 +7789,11 @@ static void load_file_system_fonts(void)
 
     /* Windows directory */
     get_fonts_win_dir_path( L"*", path );
-    load_directory_fonts( path, ADDFONT_ADD_TO_CACHE );
+    load_directory_fonts( path, 0 );
 
     /* Wine data directory */
     get_fonts_data_dir_path( L"*", path );
-    load_directory_fonts( path, ADDFONT_ADD_TO_CACHE | ADDFONT_EXTERNAL_FONT );
+    load_directory_fonts( path, ADDFONT_EXTERNAL_FONT );
 
     /* custom paths */
     /* @@ Wine registry key: HKCU\Software\Wine\Fonts */
@@ -7805,7 +7805,7 @@ static void load_file_system_fonts(void)
             if (next && next - ptr < 2) continue;
             lstrcpynW( path, ptr, MAX_PATH - 2 );
             lstrcatW( path, L"\\*" );
-            load_directory_fonts( path, ADDFONT_ADD_TO_CACHE | ADDFONT_EXTERNAL_FONT );
+            load_directory_fonts( path, ADDFONT_EXTERNAL_FONT );
         }
     }
 }
@@ -7926,9 +7926,9 @@ static void load_registry_fonts(void)
 
         dlen /= sizeof(WCHAR);
         if (data[0] && data[1] == ':')
-            add_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
+            add_font_resource( data, ADDFONT_ALLOW_BITMAP );
         else if (dlen >= 6 && !wcsicmp( data + dlen - 5, L".fon" ))
-            add_system_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
+            add_system_font_resource( data, ADDFONT_ALLOW_BITMAP );
     next:
         vlen = ARRAY_SIZE(value);
         dlen = sizeof(data);
@@ -7954,6 +7954,10 @@ void font_init(void)
     update_codepage();
     if (__wine_init_unix_lib( gdi32_module, DLL_PROCESS_ATTACH, &callback_funcs, &font_funcs )) return;
 
+    load_system_bitmap_fonts();
+    load_file_system_fonts();
+    font_funcs->load_fonts();
+
     if (!(mutex = CreateMutexW( NULL, FALSE, L"__WINE_FONT_MUTEX__" ))) return;
     WaitForSingleObject( mutex, INFINITE );
 
@@ -7962,15 +7966,17 @@ void font_init(void)
 
     if (disposition == REG_CREATED_NEW_KEY)
     {
-        load_system_bitmap_fonts();
-        load_file_system_fonts();
-        font_funcs->load_fonts();
         load_registry_fonts();
         update_external_font_keys();
     }
-    else load_font_list_from_cache();
 
     ReleaseMutex( mutex );
+
+    if (disposition != REG_CREATED_NEW_KEY)
+    {
+        load_registry_fonts();
+        load_font_list_from_cache();
+    }
 
     reorder_font_list();
     load_gdi_font_subst();

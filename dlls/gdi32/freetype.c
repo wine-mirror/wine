@@ -1303,7 +1303,7 @@ static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
 	    ReadFontDir(path, external_fonts);
 	else
         {
-            DWORD addfont_flags = ADDFONT_ADD_TO_CACHE;
+            DWORD addfont_flags = 0;
             if(external_fonts) addfont_flags |= ADDFONT_EXTERNAL_FONT;
             AddFontToList(NULL, path, NULL, 0, addfont_flags);
         }
@@ -1523,7 +1523,7 @@ static void load_fontconfig_fonts( void )
     if (!(done_set = pFcStrSetCreate())) goto done;
     if (!(dir_list = pFcConfigGetFontDirs( config ))) goto done;
 
-    fontconfig_add_fonts_from_dir_list( config, dir_list, done_set, ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE );
+    fontconfig_add_fonts_from_dir_list( config, dir_list, done_set, ADDFONT_EXTERNAL_FONT );
 
 done:
     if (dir_list) pFcStrListDone( dir_list );
@@ -1543,7 +1543,7 @@ static void load_mac_font_callback(const void *value, void *context)
     if (path && CFStringGetFileSystemRepresentation(pathStr, path, len))
     {
         TRACE("font file %s\n", path);
-        AddFontToList(NULL, path, NULL, 0, ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE);
+        AddFontToList(NULL, path, NULL, 0, ADDFONT_EXTERNAL_FONT);
     }
     RtlFreeHeap(GetProcessHeap(), 0, path);
 }
