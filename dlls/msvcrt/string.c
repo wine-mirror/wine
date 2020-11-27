@@ -741,9 +741,9 @@ static struct fpnum fpnum_parse_bnum(wchar_t (*get)(void *ctx), void (*unget)(vo
         void *ctx, pthreadlocinfo locinfo, BOOL ldouble, struct bnum *b)
 {
 #if _MSVCR_VER >= 140
-    wchar_t _infinity[] = { 'i', 'n', 'f', 'i', 'n', 'i', 't', 'y', 0 };
-    wchar_t _nan[] = { 'n', 'a', 'n', 0 };
-    wchar_t *str_match = NULL;
+    const wchar_t _infinity[] = L"infinity";
+    const wchar_t _nan[] = L"nan";
+    const wchar_t *str_match = NULL;
     int matched=0;
 #endif
     BOOL found_digit = FALSE, found_dp = FALSE, found_sign = FALSE;

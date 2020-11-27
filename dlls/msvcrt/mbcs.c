@@ -2397,7 +2397,7 @@ MSVCRT_size_t CDECL _mbstrlen(const char* str)
 int CDECL MSVCRT_mbtowc_l(wchar_t *dst, const char* str, MSVCRT_size_t n, _locale_t locale)
 {
     pthreadlocinfo locinfo;
-    wchar_t tmpdst = '\0';
+    wchar_t tmpdst;
 
     if(!locale)
         locinfo = get_locinfo();

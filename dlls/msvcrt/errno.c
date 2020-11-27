@@ -404,8 +404,6 @@ wchar_t* CDECL MSVCRT__wcserror(int err)
 int CDECL MSVCRT___wcserror_s(wchar_t* buffer, MSVCRT_size_t nc, const wchar_t* str)
 {
     int err;
-    static const WCHAR colonW[] = {':', ' ', '\0'};
-    static const WCHAR nlW[] = {'\n', '\0'};
     size_t len;
 
     err = *MSVCRT__errno();
@@ -421,12 +419,12 @@ int CDECL MSVCRT___wcserror_s(wchar_t* buffer, MSVCRT_size_t nc, const wchar_t* 
     if (str && *str)
     {
         lstrcpyW(buffer, str);
-        lstrcatW(buffer, colonW);
+        lstrcatW(buffer, L": ");
     }
     else buffer[0] = '\0';
     len = MSVCRT_wcslen(buffer);
     MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, buffer + len, 256 - len);
-    lstrcatW(buffer, nlW);
+    lstrcatW(buffer, L"\n");
 
     return 0;
 }

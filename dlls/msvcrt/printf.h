@@ -247,10 +247,9 @@ static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void
     BOOL api_is_wide = sizeof(APICHAR) == sizeof(wchar_t);
     BOOL complement_is_narrow = legacy_wide ? api_is_wide : FALSE;
 #ifdef PRINTF_WIDE
-    static const wchar_t nullW[] = {'(','n','u','l','l',')',0};
 
     if(!str)
-        return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, nullW, 6, flags, locale);
+        return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, L"(null)", 6, flags, locale);
 #else
     if(!str)
         return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, "(null)", 6, flags, locale);

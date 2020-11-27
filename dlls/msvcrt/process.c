@@ -38,9 +38,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 static void msvcrt_search_executable(const wchar_t *name, wchar_t *fullname, int use_path)
 {
-  static const wchar_t path[] = {'P','A','T','H',0};
   static const wchar_t suffix[][5] =
-    {{'.','c','o','m',0}, {'.','e','x','e',0}, {'.','b','a','t',0}, {'.','c','m','d',0}};
+    {L".com", L".exe", L".bat", L".cmd"};
 
   wchar_t buffer[MAX_PATH];
   const wchar_t *env, *p, *end;
@@ -84,7 +83,7 @@ static void msvcrt_search_executable(const wchar_t *name, wchar_t *fullname, int
     extension = 0;
   }
 
-  if (!use_path || !(env = MSVCRT__wgetenv(path))) return;
+  if (!use_path || !(env = MSVCRT__wgetenv(L"PATH"))) return;
 
   /* now try search path */
   do
@@ -340,15 +339,13 @@ static wchar_t *msvcrt_valisttos_aw(const char *arg0, __ms_va_list alist, wchar_
 /* INTERNAL: retrieve COMSPEC environment variable */
 static wchar_t *msvcrt_get_comspec(void)
 {
-  static const wchar_t cmd[] = {'c','m','d',0};
-  static const wchar_t comspec[] = {'C','O','M','S','P','E','C',0};
   wchar_t *ret;
   unsigned int len;
 
-  if (!(len = GetEnvironmentVariableW(comspec, NULL, 0))) len = ARRAY_SIZE(cmd);
+  if (!(len = GetEnvironmentVariableW(L"COMSPEC", NULL, 0))) len = 4;
   if ((ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(wchar_t))))
   {
-    if (!GetEnvironmentVariableW(comspec, ret, len)) MSVCRT_wcscpy(ret, cmd);
+    if (!GetEnvironmentVariableW(L"COMSPEC", ret, len)) MSVCRT_wcscpy(ret, L"cmd");
   }
   return ret;
 }
@@ -1046,7 +1043,6 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const wchar_t* command, const wchar_t* mode)
   const wchar_t *p;
   wchar_t *comspec, *fullcmd;
   unsigned int len;
-  static const wchar_t flag[] = {' ','/','c',' ',0};
   struct popen_handle *container;
   DWORD i;
 
@@ -1109,7 +1105,7 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const wchar_t* command, const wchar_t* mode)
   MSVCRT__close(fds[fdToDup]);
 
   if (!(comspec = msvcrt_get_comspec())) goto error;
-  len = MSVCRT_wcslen(comspec) + MSVCRT_wcslen(flag) + MSVCRT_wcslen(command) + 1;
+  len = MSVCRT_wcslen(comspec) + MSVCRT_wcslen(command) + 5;
 
   if (!(fullcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(wchar_t))))
   {
@@ -1118,7 +1114,7 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const wchar_t* command, const wchar_t* mode)
   }
 
   MSVCRT_wcscpy(fullcmd, comspec);
-  MSVCRT_wcscat(fullcmd, flag);
+  MSVCRT_wcscat(fullcmd, L" /c ");
   MSVCRT_wcscat(fullcmd, command);
 
   if ((container->proc = (HANDLE)msvcrt_spawn(MSVCRT__P_NOWAIT, comspec, fullcmd, NULL, 1))
@@ -1225,7 +1221,6 @@ int CDECL _wsystem(const wchar_t* cmd)
   int res;
   wchar_t *comspec, *fullcmd;
   unsigned int len;
-  static const wchar_t flag[] = {' ','/','c',' ',0};
 
   comspec = msvcrt_get_comspec();
 
@@ -1240,10 +1235,10 @@ int CDECL _wsystem(const wchar_t* cmd)
     return 1;
   }
 
-  if ( comspec == NULL)
+  if (comspec == NULL)
     return -1;
 
-  len = MSVCRT_wcslen(comspec) + MSVCRT_wcslen(flag) + MSVCRT_wcslen(cmd) + 1;
+  len = MSVCRT_wcslen(comspec) + MSVCRT_wcslen(cmd) + 5;
 
   if (!(fullcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(wchar_t))))
   {
@@ -1251,7 +1246,7 @@ int CDECL _wsystem(const wchar_t* cmd)
     return -1;
   }
   MSVCRT_wcscpy(fullcmd, comspec);
-  MSVCRT_wcscat(fullcmd, flag);
+  MSVCRT_wcscat(fullcmd, L" /c ");
   MSVCRT_wcscat(fullcmd, cmd);
 
   res = msvcrt_spawn(MSVCRT__P_WAIT, comspec, fullcmd, NULL, 1);

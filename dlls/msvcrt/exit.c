@@ -187,24 +187,19 @@ void CDECL MSVCRT__exit(int exitcode)
 /* Print out an error message with an option to debug */
 static void DoMessageBoxW(const wchar_t *lead, const wchar_t *message)
 {
-  static const wchar_t message_format[] = {'%','l','s','\n','\n','P','r','o','g','r','a','m',':',' ','%','l','s','\n',
-    '%','l','s','\n','\n','P','r','e','s','s',' ','O','K',' ','t','o',' ','e','x','i','t',' ','t','h','e',' ',
-    'p','r','o','g','r','a','m',',',' ','o','r',' ','C','a','n','c','e','l',' ','t','o',' ','s','t','a','r','t',' ',
-    't','h','e',' ','W','i','n','e',' ','d','e','b','u','g','g','e','r','.','\n',0};
-  static const WCHAR title[] =
-    {'W','i','n','e',' ','C','+','+',' ','R','u','n','t','i','m','e',' ','L','i','b','r','a','r','y',0};
-
   MSGBOXPARAMSW msgbox;
   wchar_t text[2048];
   INT ret;
 
-  MSVCRT__snwprintf(text, ARRAY_SIZE(text), message_format, lead, MSVCRT__wpgmptr, message);
+  MSVCRT__snwprintf(text, ARRAY_SIZE(text), L"%ls\n\nProgram: %ls\n%ls\n\n"
+          L"Press OK to exit the program, or Cancel to start the Wine debugger.\n",
+          lead, MSVCRT__wpgmptr, message);
 
   msgbox.cbSize = sizeof(msgbox);
   msgbox.hwndOwner = GetActiveWindow();
   msgbox.hInstance = 0;
   msgbox.lpszText = text;
-  msgbox.lpszCaption = title;
+  msgbox.lpszCaption = L"Wine C++ Runtime Library";
   msgbox.dwStyle = MB_OKCANCEL|MB_ICONERROR;
   msgbox.lpszIcon = NULL;
   msgbox.dwContextHelpId = 0;
@@ -289,23 +284,17 @@ unsigned int CDECL MSVCRT__set_abort_behavior(unsigned int flags, unsigned int m
  */
 void CDECL MSVCRT__wassert(const wchar_t* str, const wchar_t* file, unsigned int line)
 {
-  static const wchar_t assertion_failed[] = {'A','s','s','e','r','t','i','o','n',' ','f','a','i','l','e','d','!',0};
-  static const wchar_t format_msgbox[] = {'F','i','l','e',':',' ','%','l','s','\n','L','i','n','e',':',' ','%','d',
-      '\n','\n','E','x','p','r','e','s','s','i','o','n',':',' ','\"','%','l','s','\"',0};
-  static const wchar_t format_console[] = {'A','s','s','e','r','t','i','o','n',' ','f','a','i','l','e','d',':',' ',
-      '%','l','s',',',' ','f','i','l','e',' ','%','l','s',',',' ','l','i','n','e',' ','%','d','\n','\n',0};
-
   TRACE("(%s,%s,%d)\n", debugstr_w(str), debugstr_w(file), line);
 
   if ((MSVCRT_error_mode == MSVCRT__OUT_TO_MSGBOX) ||
      ((MSVCRT_error_mode == MSVCRT__OUT_TO_DEFAULT) && (MSVCRT_app_type == 2)))
   {
     wchar_t text[2048];
-    MSVCRT__snwprintf(text, sizeof(text), format_msgbox, file, line, str);
-    DoMessageBoxW(assertion_failed, text);
+    MSVCRT__snwprintf(text, sizeof(text), L"File: %ls\nLine: %d\n\nExpression: \"%ls\"", file, line, str);
+    DoMessageBoxW(L"Assertion failed!", text);
   }
   else
-    MSVCRT_fwprintf(MSVCRT_stderr, format_console, str, file, line);
+    MSVCRT_fwprintf(MSVCRT_stderr, L"Assertion failed: %ls, file %ls, line %d\n\n", str, file, line);
 
   MSVCRT_raise(MSVCRT_SIGABRT);
   MSVCRT__exit(3);
@@ -367,13 +356,12 @@ MSVCRT__onexit_t CDECL MSVCRT__onexit(MSVCRT__onexit_t func)
 void CDECL MSVCRT_exit(int exitcode)
 {
   HMODULE hmscoree;
-  static const WCHAR mscoreeW[] = {'m','s','c','o','r','e','e',0};
   void (WINAPI *pCorExitProcess)(int);
 
   TRACE("(%d)\n",exitcode);
   MSVCRT__cexit();
 
-  hmscoree = GetModuleHandleW(mscoreeW);
+  hmscoree = GetModuleHandleW(L"mscoree");
 
   if (hmscoree)
   {

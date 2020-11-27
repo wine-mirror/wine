@@ -591,11 +591,8 @@ struct MSVCRT_tm* CDECL MSVCRT_gmtime(const MSVCRT___time32_t* secs)
  */
 char* CDECL MSVCRT__strdate(char* date)
 {
-  static const char format[] = "MM'/'dd'/'yy";
-
-  GetDateFormatA(LOCALE_NEUTRAL, 0, NULL, format, date, 9);
-
-  return date;
+    GetDateFormatA(LOCALE_NEUTRAL, 0, NULL, "MM'/'dd'/'yy", date, 9);
+    return date;
 }
 
 /**********************************************************************
@@ -625,11 +622,8 @@ int CDECL _strdate_s(char* date, MSVCRT_size_t size)
  */
 wchar_t* CDECL MSVCRT__wstrdate(wchar_t* date)
 {
-  static const WCHAR format[] = { 'M','M','\'','/','\'','d','d','\'','/','\'','y','y',0 };
-
-  GetDateFormatW(LOCALE_NEUTRAL, 0, NULL, format, date, 9);
-
-  return date;
+    GetDateFormatW(LOCALE_NEUTRAL, 0, NULL, L"MM'/'dd'/'yy", date, 9);
+    return date;
 }
 
 /**********************************************************************
@@ -659,11 +653,8 @@ int CDECL _wstrdate_s(wchar_t* date, MSVCRT_size_t size)
  */
 char* CDECL MSVCRT__strtime(char* time)
 {
-  static const char format[] = "HH':'mm':'ss";
-
-  GetTimeFormatA(LOCALE_NEUTRAL, 0, NULL, format, time, 9); 
-
-  return time;
+    GetTimeFormatA(LOCALE_NEUTRAL, 0, NULL, "HH':'mm':'ss", time, 9);
+    return time;
 }
 
 /*********************************************************************
@@ -693,11 +684,8 @@ int CDECL _strtime_s(char* time, MSVCRT_size_t size)
  */
 wchar_t* CDECL MSVCRT__wstrtime(wchar_t* time)
 {
-  static const WCHAR format[] = { 'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0 };
-
-  GetTimeFormatW(LOCALE_NEUTRAL, 0, NULL, format, time, 9);
-
-  return time;
+    GetTimeFormatW(LOCALE_NEUTRAL, 0, NULL, L"HH':'mm':'ss", time, 9);
+    return time;
 }
 
 /*********************************************************************
@@ -990,9 +978,6 @@ static inline BOOL strftime_nstr(STRFTIME_CHAR *str, MSVCRT_size_t *pos,
 static inline BOOL strftime_int(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCRT_size_t max,
         int src, int prec, int l, int h)
 {
-#if _MSVCR_VER > 90
-    static const WCHAR fmt[] = {'%','0','*','d',0};
-#endif
     MSVCRT_size_t len;
 
     if(!MSVCRT_CHECK_PMT(src>=l && src<=h)) {
@@ -1003,7 +988,7 @@ static inline BOOL strftime_int(STRFTIME_CHAR *str, MSVCRT_size_t *pos, MSVCRT_s
 #if _MSVCR_VER <= 90
     len = MSVCRT__snprintf(str+*pos, max-*pos, "%0*d", prec, src);
 #else
-    len = MSVCRT__snwprintf(str+*pos, max-*pos, fmt, prec, src);
+    len = MSVCRT__snwprintf(str+*pos, max-*pos, L"%0*d", prec, src);
 #endif
     if(len == -1) {
         *str = 0;
@@ -1236,9 +1221,7 @@ static MSVCRT_size_t strftime_impl(STRFTIME_CHAR *str, MSVCRT_size_t max,
 #if _MSVCR_VER>=140
             if(time_data == &cloc_time_data && !alternate)
             {
-                static const WCHAR datetime_format[] =
-                        { '%','a',' ','%','b',' ','%','e',' ','%','T',' ','%','Y',0 };
-                tmp = strftime_impl(str+ret, max-ret, datetime_format, mstm, time_data, loc);
+                tmp = strftime_impl(str+ret, max-ret, L"%a %b %e %T %Y", mstm, time_data, loc);
                 if(!tmp)
                     return 0;
                 ret += tmp;

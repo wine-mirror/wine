@@ -1599,36 +1599,31 @@ static int msvcrt_get_flags(const wchar_t* mode, int *open_flags, int* stream_fl
 
   if(*mode == ',')
   {
-    static const WCHAR ccs[] = {'c','c','s'};
-    static const WCHAR utf8[] = {'u','t','f','-','8'};
-    static const WCHAR utf16le[] = {'u','t','f','-','1','6','l','e'};
-    static const WCHAR unicode[] = {'u','n','i','c','o','d','e'};
-
     mode++;
     while(*mode == ' ') mode++;
-    if(!MSVCRT_CHECK_PMT(!MSVCRT_wcsncmp(ccs, mode, ARRAY_SIZE(ccs))))
+    if(!MSVCRT_CHECK_PMT(!MSVCRT_wcsncmp(L"ccs", mode, 3)))
       return -1;
-    mode += ARRAY_SIZE(ccs);
+    mode += 3;
     while(*mode == ' ') mode++;
     if(!MSVCRT_CHECK_PMT(*mode == '='))
         return -1;
     mode++;
     while(*mode == ' ') mode++;
 
-    if(!MSVCRT__wcsnicmp(utf8, mode, ARRAY_SIZE(utf8)))
+    if(!MSVCRT__wcsnicmp(L"utf-8", mode, 5))
     {
       *open_flags |= MSVCRT__O_U8TEXT;
-      mode += ARRAY_SIZE(utf8);
+      mode += 5;
     }
-    else if(!MSVCRT__wcsnicmp(utf16le, mode, ARRAY_SIZE(utf16le)))
+    else if(!MSVCRT__wcsnicmp(L"utf-16le", mode, 8))
     {
       *open_flags |= MSVCRT__O_U16TEXT;
-      mode += ARRAY_SIZE(utf16le);
+      mode += 8;
     }
-    else if(!MSVCRT__wcsnicmp(unicode, mode, ARRAY_SIZE(unicode)))
+    else if(!MSVCRT__wcsnicmp(L"unicode", mode, 7))
     {
       *open_flags |= MSVCRT__O_WTEXT;
-      mode += ARRAY_SIZE(unicode);
+      mode += 7;
     }
     else
     {
@@ -3313,9 +3308,8 @@ char * CDECL MSVCRT__tempnam(const char *dir, const char *prefix)
  */
 wchar_t * CDECL MSVCRT__wtempnam(const wchar_t *dir, const wchar_t *prefix)
 {
-  static const wchar_t tmpW[] = {'T','M','P',0};
   wchar_t tmpbuf[MAX_PATH];
-  const wchar_t *tmp_dir = MSVCRT__wgetenv(tmpW);
+  const wchar_t *tmp_dir = MSVCRT__wgetenv(L"TMP");
 
   if (tmp_dir) dir = tmp_dir;
 

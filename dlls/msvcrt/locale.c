@@ -51,53 +51,6 @@ BOOL initial_locale = TRUE;
 #define MSVCRT_LEADBYTE  0x8000
 #define MSVCRT_C1_DEFINED 0x200
 
-static const wchar_t sun[] = {'S','u','n',0};
-static const wchar_t mon[] = {'M','o','n',0};
-static const wchar_t tue[] = {'T','u','e',0};
-static const wchar_t wed[] = {'W','e','d',0};
-static const wchar_t thu[] = {'T','h','u',0};
-static const wchar_t fri[] = {'F','r','i',0};
-static const wchar_t sat[] = {'S','a','t',0};
-static const wchar_t sunday[] = {'S','u','n','d','a','y',0};
-static const wchar_t monday[] = {'M','o','n','d','a','y',0};
-static const wchar_t tuesday[] = {'T','u','e','s','d','a','y',0};
-static const wchar_t wednesday[] = {'W','e','d','n','e','s','d','a','y',0};
-static const wchar_t thursday[] = {'T','h','u','r','s','d','a','y',0};
-static const wchar_t friday[] = {'F','r','i','d','a','y',0};
-static const wchar_t saturday[] = {'S','a','t','u','r','d','a','y',0};
-static const wchar_t jan[] = {'J','a','n',0};
-static const wchar_t feb[] = {'F','e','b',0};
-static const wchar_t mar[] = {'M','a','r',0};
-static const wchar_t apr[] = {'A','p','r',0};
-static const wchar_t may[] = {'M','a','y',0};
-static const wchar_t jun[] = {'J','u','n',0};
-static const wchar_t jul[] = {'J','u','l',0};
-static const wchar_t aug[] = {'A','u','g',0};
-static const wchar_t sep[] = {'S','e','p',0};
-static const wchar_t oct[] = {'O','c','t',0};
-static const wchar_t nov[] = {'N','o','v',0};
-static const wchar_t dec[] = {'D','e','c',0};
-static const wchar_t january[] = {'J','a','n','u','a','r','y',0};
-static const wchar_t february[] = {'F','e','b','r','u','a','r','y',0};
-static const wchar_t march[] = {'M','a','r','c','h',0};
-static const wchar_t april[] = {'A','p','r','i','l',0};
-static const wchar_t june[] = {'J','u','n','e',0};
-static const wchar_t july[] = {'J','u','l','y',0};
-static const wchar_t august[] = {'A','u','g','u','s','t',0};
-static const wchar_t september[] = {'S','e','p','t','e','m','b','e','r',0};
-static const wchar_t october[] = {'O','c','t','o','b','e','r',0};
-static const wchar_t november[] = {'N','o','v','e','m','b','e','r',0};
-static const wchar_t december[] = {'D','e','c','e','m','b','e','r',0};
-static const wchar_t am[] = {'A','M',0};
-static const wchar_t pm[] = {'P','M',0};
-static const wchar_t cloc_short_date[] = {'M','M','/','d','d','/','y','y',0};
-static const wchar_t cloc_date[] = {'d','d','d','d',',',' ','M','M','M','M',' ','d','d',',',' ','y','y','y','y',0};
-static const wchar_t cloc_time[] = {'H','H',':','m','m',':','s','s',0};
-
-#if _MSVCR_VER >= 110
-static const wchar_t en_us[] = {'e','n','-','U','S',0};
-#endif
-
 __lc_time_data cloc_time_data =
 {
     {{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",
@@ -110,14 +63,14 @@ __lc_time_data cloc_time_data =
     MAKELCID(LANG_ENGLISH, SORT_DEFAULT),
 #endif
     1, 0,
-    {{sun, mon, tue, wed, thu, fri, sat,
-      sunday, monday, tuesday, wednesday, thursday, friday, saturday,
-      jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec,
-      january, february, march, april, may, june, july,
-      august, september, october, november, december,
-      am, pm, cloc_short_date, cloc_date, cloc_time}},
+    {{L"Sun", L"Mon", L"Tue", L"Wed", L"Thu", L"Fri", L"Sat",
+      L"Sunday", L"Monday", L"Tuesday", L"Wednesday", L"Thursday", L"Friday", L"Saturday",
+      L"Jan", L"Feb", L"Mar", L"Apr", L"May", L"Jun", L"Jul", L"Aug", L"Sep", L"Oct", L"Nov", L"Dec",
+      L"January", L"February", L"March", L"April", L"May", L"June", L"July",
+      L"August", L"September", L"October", L"November", L"December",
+      L"AM", L"PM", L"MM/dd/yy", L"dddd, MMMM dd, yyyy", L"HH:mm:ss"}},
 #if _MSVCR_VER >= 110
-    en_us,
+    L"en-US",
 #endif
 };
 
@@ -196,8 +149,8 @@ static const unsigned char cloc_cumap[256] =
 static char empty[] = "";
 static char cloc_dec_point[] = ".";
 #if _MSVCR_VER >= 100
-static wchar_t emptyW[] = {0};
-static wchar_t cloc_dec_pointW[] = {'.', 0};
+static wchar_t emptyW[] = L"";
+static wchar_t cloc_dec_pointW[] = L".";
 #endif
 static struct lconv cloc_lconv =
 {
