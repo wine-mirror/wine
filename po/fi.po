@@ -6920,10 +6920,8 @@ msgid "Not implemented.\n"
 msgstr "Ei toteutettu.\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "RPC call failed.\n"
 msgid "Call failed.\n"
-msgstr "RPC-kutsu epäonnistui.\n"
+msgstr "Kutsu epäonnistui.\n"
 
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
@@ -9898,16 +9896,12 @@ msgid "Iran Daylight Time"
 msgstr "Iranin kesäaika"
 
 #: dlls/tzres/tzres.rc:204
-#, fuzzy
-#| msgid "Haiti Standard Time"
 msgid "Saint Pierre Standard Time"
-msgstr "Haitin normaaliaika"
+msgstr "Saint-Pierren normaaliaika"
 
 #: dlls/tzres/tzres.rc:205
-#, fuzzy
-#| msgid "Haiti Daylight Time"
 msgid "Saint Pierre Daylight Time"
-msgstr "Haitin kesäaika"
+msgstr "Saint-Pierren kesäaika"
 
 #: dlls/tzres/tzres.rc:170
 msgid "Namibia Standard Time"
@@ -9950,16 +9944,12 @@ msgid "Central Asia Daylight Time"
 msgstr "Keski-Aasian kesäaika"
 
 #: dlls/tzres/tzres.rc:146
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "Lord Howe Standard Time"
-msgstr "Korean normaaliaika"
+msgstr "Lord Howen normaaliaika"
 
 #: dlls/tzres/tzres.rc:147
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "Lord Howe Daylight Time"
-msgstr "Korean kesäaika"
+msgstr "Lord Howen kesäaika"
 
 #: dlls/tzres/tzres.rc:40
 msgid "Arabic Standard Time"
@@ -10010,16 +10000,12 @@ msgid "Azerbaijan Daylight Time"
 msgstr "Azerbaidžanin kesäaika"
 
 #: dlls/tzres/tzres.rc:150
-#, fuzzy
-#| msgid "Magadan Standard Time"
 msgid "Magallanes Standard Time"
-msgstr "Magadanin normaaliaika"
+msgstr "Magallanesin normaaliaika"
 
 #: dlls/tzres/tzres.rc:151
-#, fuzzy
-#| msgid "Magadan Daylight Time"
 msgid "Magallanes Daylight Time"
-msgstr "Magadanin kesäaika"
+msgstr "Magallanesin kesäaika"
 
 #: dlls/tzres/tzres.rc:206
 msgid "Samoa Standard Time"
@@ -10370,16 +10356,12 @@ msgid "Arabian Daylight Time"
 msgstr "Arabian kesäaika"
 
 #: dlls/tzres/tzres.rc:222
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Tocantins Standard Time"
-msgstr "Kalliovuorten normaaliaika"
+msgstr "Tocantinsin normaaliaika"
 
 #: dlls/tzres/tzres.rc:223
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Tocantins Daylight Time"
-msgstr "Kalliovuorten kesäaika"
+msgstr "Tocantinsin kesäaika"
 
 #: dlls/tzres/tzres.rc:196
 msgid "Russian Standard Time"
@@ -10390,16 +10372,12 @@ msgid "Russian Daylight Time"
 msgstr "Venäjän kesäaika"
 
 #: dlls/tzres/tzres.rc:48
-#, fuzzy
-#| msgid "AUS Central Standard Time"
 msgid "Aus Central W. Standard Time"
-msgstr "Australian keskinen normaaliaika"
+msgstr "Australian keskilännen normaaliaika"
 
 #: dlls/tzres/tzres.rc:49
-#, fuzzy
-#| msgid "AUS Central Daylight Time"
 msgid "Aus Central W. Daylight Time"
-msgstr "Australian keskinen kesäaika"
+msgstr "Australian keskilännen kesäaika"
 
 #: dlls/tzres/tzres.rc:194
 msgid "Romance Standard Time"
