@@ -80,7 +80,7 @@ struct process
     struct list          asyncs;          /* list of async object owned by the process */
     struct list          locks;           /* list of file locks owned by the process */
     struct list          classes;         /* window classes owned by the process */
-    struct console_input*console;         /* console input */
+    struct console      *console;         /* console input */
     enum startup_state   startup_state;   /* startup state */
     struct startup_info *startup_info;    /* startup info while init is in progress */
     struct event        *idle_event;      /* event for input idle */
@@ -133,7 +133,7 @@ extern void enum_processes( int (*cb)(struct process*, void*), void *user);
 
 /* console functions */
 extern int free_console( struct process *process );
-extern struct thread *console_get_renderer( struct console_input *console );
+extern struct thread *console_get_renderer( struct console *console );
 
 /* process tracing mechanism to use */
 #ifdef __APPLE__
