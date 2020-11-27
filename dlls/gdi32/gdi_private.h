@@ -376,6 +376,7 @@ struct gdi_font
 #define ADDFONT_ADD_TO_CACHE  0x04
 #define ADDFONT_ADD_RESOURCE  0x08  /* added through AddFontResource */
 #define ADDFONT_VERTICAL_FONT 0x10
+#define ADDFONT_EXTERNAL_FOUND 0x20
 #define ADDFONT_AA_FLAGS(flags) ((flags) << 16)
 
 struct font_backend_funcs

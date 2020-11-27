@@ -7812,57 +7812,21 @@ static void load_file_system_fonts(void)
 
 struct external_key
 {
-    struct wine_rb_entry entry;
-    BOOL                 found;
-    WCHAR                value[LF_FULLFACESIZE + 12];
-    WCHAR                path[1];
+    struct list entry;
+    WCHAR       value[LF_FULLFACESIZE + 12];
 };
 
-static int compare_external_key( const void *key, const struct wine_rb_entry *entry )
+static void update_external_font_keys(void)
 {
-    return facename_compare( key, WINE_RB_ENTRY_VALUE( entry, struct external_key, entry )->value, -1 );
-}
-
-static struct wine_rb_tree external_keys = { compare_external_key };
-
-static HKEY load_external_font_keys(void)
-{
-    WCHAR value[LF_FULLFACESIZE + 12], path[MAX_PATH];
-    DWORD i = 0, type, dlen, vlen;
-    struct external_key *key;
-    HKEY hkey;
-
-    if (RegCreateKeyW( wine_fonts_key, L"External Fonts", &hkey )) return 0;
-
-    vlen = ARRAY_SIZE(value);
-    dlen = sizeof(path);
-    while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, (BYTE *)path, &dlen ))
-    {
-        if (type != REG_SZ) goto next;
-        dlen /= sizeof(WCHAR);
-        if (!(key = HeapAlloc( GetProcessHeap(), 0, offsetof(struct external_key, path[dlen]) ))) break;
-        key->found = FALSE;
-        lstrcpyW( key->value, value );
-        lstrcpyW( key->path, path );
-        wine_rb_put( &external_keys, value, &key->entry );
-    next:
-        vlen = ARRAY_SIZE(value);
-        dlen = sizeof(path);
-    }
-    return hkey;
-}
-
-static void update_external_font_keys( HKEY hkey )
-{
+    struct list external_keys = LIST_INIT(external_keys);
     HKEY winnt_key = 0, win9x_key = 0;
     struct gdi_font_family *family;
-    struct gdi_font_face *face;
-    struct wine_rb_entry *entry;
     struct external_key *key, *next;
-    DWORD len;
-    BOOL skip;
-    WCHAR value[LF_FULLFACESIZE + 12], path[MAX_PATH];
+    struct gdi_font_face *face;
+    DWORD len, i = 0, type, dlen, vlen;
+    WCHAR value[LF_FULLFACESIZE + 12], path[MAX_PATH], *tmp;
     WCHAR *file;
+    HKEY hkey;
 
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts",
                      0, NULL, 0, KEY_ALL_ACCESS, NULL, &winnt_key, NULL );
@@ -7871,11 +7835,34 @@ static void update_external_font_keys( HKEY hkey )
 
     /* enumerate the fonts and add external ones to the two keys */
 
+    if (RegCreateKeyW( wine_fonts_key, L"External Fonts", &hkey )) return;
+
+    vlen = ARRAY_SIZE(value);
+    dlen = sizeof(path);
+    while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, (BYTE *)path, &dlen ))
+    {
+        if (type != REG_SZ) goto next;
+        if ((tmp = wcsrchr( value, ' ' )) && !facename_compare( tmp, L" (TrueType)", -1 )) *tmp = 0;
+        if ((face = find_face_from_full_name( value )))
+        {
+            if (!wcsicmp( face->file, path )) face->flags |= ADDFONT_EXTERNAL_FOUND;
+            goto next;
+        }
+        if (tmp && !*tmp) *tmp = ' ';
+        if (!(key = HeapAlloc( GetProcessHeap(), 0, sizeof(*key) ))) break;
+        lstrcpyW( key->value, value );
+        list_add_tail( &external_keys, &key->entry );
+    next:
+        vlen = ARRAY_SIZE(value);
+        dlen = sizeof(path);
+    }
+
     WINE_RB_FOR_EACH_ENTRY( family, &family_name_tree, struct gdi_font_family, name_entry )
     {
         LIST_FOR_EACH_ENTRY( face, &family->faces, struct gdi_font_face, entry )
         {
             if (!(face->flags & ADDFONT_EXTERNAL_FONT)) continue;
+            if ((face->flags & ADDFONT_EXTERNAL_FOUND)) continue;
 
             lstrcpyW( value, face->full_name );
             if (face->scalable) lstrcatW( value, L" (TrueType)" );
@@ -7887,38 +7874,29 @@ static void update_external_font_keys( HKEY hkey )
             else
                 file = face->file;
 
-            skip = FALSE;
-            if ((entry = wine_rb_get( &external_keys, value )))
-            {
-                struct external_key *key = WINE_RB_ENTRY_VALUE( entry, struct external_key, entry );
-                skip = key->found && !wcsicmp( key->path, file );
-                wine_rb_remove_key( &external_keys, value );
-                HeapFree( GetProcessHeap(), 0, key );
-            }
-            if (skip) continue;
             len = (lstrlenW(file) + 1) * sizeof(WCHAR);
             RegSetValueExW( winnt_key, value, 0, REG_SZ, (BYTE *)file, len );
             RegSetValueExW( win9x_key, value, 0, REG_SZ, (BYTE *)file, len );
             RegSetValueExW( hkey, value, 0, REG_SZ, (BYTE *)file, len );
         }
     }
-    WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR( key, next, &external_keys, struct external_key, entry )
+    LIST_FOR_EACH_ENTRY_SAFE( key, next, &external_keys, struct external_key, entry )
     {
         RegDeleteValueW( win9x_key, key->value );
         RegDeleteValueW( winnt_key, key->value );
         RegDeleteValueW( hkey, key->value );
-        wine_rb_remove_key( &external_keys, key->value );
+        list_remove( &key->entry );
         HeapFree( GetProcessHeap(), 0, key );
     }
     RegCloseKey( win9x_key );
     RegCloseKey( winnt_key );
+    RegCloseKey( hkey );
 }
 
 static void load_registry_fonts(void)
 {
     WCHAR value[LF_FULLFACESIZE + 12], data[MAX_PATH], *tmp;
     DWORD i = 0, type, dlen, vlen;
-    struct wine_rb_entry *entry;
     HKEY hkey;
 
     /* Look under HKLM\Software\Microsoft\Windows[ NT]\CurrentVersion\Fonts
@@ -7936,16 +7914,6 @@ static void load_registry_fonts(void)
     {
         if (type != REG_SZ) goto next;
         dlen /= sizeof(WCHAR);
-        if ((entry = wine_rb_get( &external_keys, value )))
-        {
-            struct external_key *key = WINE_RB_ENTRY_VALUE( entry, struct external_key, entry );
-            if (!wcsicmp( key->path, data ))
-            {
-                key->found = TRUE;
-                goto next;
-            }
-        }
-
         if ((tmp = wcsrchr( value, ' ' )) && !facename_compare( tmp, L" (TrueType)", -1 )) *tmp = 0;
         if (find_face_from_full_name( value )) goto next;
         if (tmp && !*tmp) *tmp = ' ';
@@ -7987,13 +7955,11 @@ void font_init(void)
 
     if (disposition == REG_CREATED_NEW_KEY)
     {
-        HKEY key = load_external_font_keys();
         load_system_bitmap_fonts();
         load_file_system_fonts();
         font_funcs->load_fonts();
         load_registry_fonts();
-        update_external_font_keys( key );
-        RegCloseKey( key );
+        update_external_font_keys();
     }
     else load_font_list_from_cache();
 
