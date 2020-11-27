@@ -406,6 +406,7 @@ static NTSTATUS get_pe_file_info( UNICODE_STRING *path, HANDLE *handle, pe_image
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
 
+    *handle = 0;
     memset( info, 0, sizeof(*info) );
     InitializeObjectAttributes( &attr, path, OBJ_CASE_INSENSITIVE, 0, 0 );
     if ((status = NtOpenFile( handle, GENERIC_READ, &attr, &io,
@@ -422,7 +423,6 @@ static NTSTATUS get_pe_file_info( UNICODE_STRING *path, HANDLE *handle, pe_image
 #else
             info->cpu = client_cpu;
 #endif
-            *handle = 0;
             return STATUS_SUCCESS;
         }
         return status;
