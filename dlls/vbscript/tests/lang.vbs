@@ -60,6 +60,7 @@ Call ok(&hfffe = -2, "&hfffe <> -2")
 Call ok(&hffff& = 65535, "&hffff& <> -1")
 Call ok(&hfffe& = 65534, "&hfffe& <> -2")
 Call ok(&hffffffff& = -1, "&hffffffff& <> -1")
+Call ok((&h01or&h02)=3,"&h01or&h02 <> 3")
 
 W = 5
 Call ok(W = 5, "W = " & W & " expected " & 5)
