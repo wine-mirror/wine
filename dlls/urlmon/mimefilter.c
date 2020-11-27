@@ -482,28 +482,6 @@ static HRESULT find_mime_from_url(const WCHAR *url, WCHAR **ret)
     return hres;
 }
 
-static const WCHAR text_htmlW[] = {'t','e','x','t','/','h','t','m','l',0};
-static const WCHAR text_richtextW[] = {'t','e','x','t','/','r','i','c','h','t','e','x','t',0};
-static const WCHAR text_xmlW[] = {'t','e','x','t','/','x','m','l',0};
-static const WCHAR audio_basicW[] = {'a','u','d','i','o','/','b','a','s','i','c',0};
-static const WCHAR audio_wavW[] = {'a','u','d','i','o','/','w','a','v',0};
-static const WCHAR image_gifW[] = {'i','m','a','g','e','/','g','i','f',0};
-static const WCHAR image_pjpegW[] = {'i','m','a','g','e','/','p','j','p','e','g',0};
-static const WCHAR image_tiffW[] = {'i','m','a','g','e','/','t','i','f','f',0};
-static const WCHAR image_xpngW[] = {'i','m','a','g','e','/','x','-','p','n','g',0};
-static const WCHAR image_bmpW[] = {'i','m','a','g','e','/','b','m','p',0};
-static const WCHAR video_aviW[] = {'v','i','d','e','o','/','a','v','i',0};
-static const WCHAR video_mpegW[] = {'v','i','d','e','o','/','m','p','e','g',0};
-static const WCHAR app_postscriptW[] =
-        {'a','p','p','l','i','c','a','t','i','o','n','/','p','o','s','t','s','c','r','i','p','t',0};
-static const WCHAR app_pdfW[] = {'a','p','p','l','i','c','a','t','i','o','n','/','p','d','f',0};
-static const WCHAR app_xzipW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
-        'x','-','z','i','p','-','c','o','m','p','r','e','s','s','e','d',0};
-static const WCHAR app_xgzipW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
-        'x','-','g','z','i','p','-','c','o','m','p','r','e','s','s','e','d',0};
-static const WCHAR app_javaW[] = {'a','p','p','l','i','c','a','t','i','o','n','/','j','a','v','a',0};
-static const WCHAR app_xmsdownloadW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
-        'x','-','m','s','d','o','w','n','l','o','a','d',0};
 static const WCHAR text_plainW[] = {'t','e','x','t','/','p','l','a','i','n','\0'};
 static const WCHAR app_octetstreamW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
         'o','c','t','e','t','-','s','t','r','e','a','m','\0'};
@@ -512,33 +490,33 @@ static const struct {
     const WCHAR *mime;
     BOOL (*filter)(const BYTE *,DWORD);
 } mime_filters_any_pos[] = {
-    {text_htmlW,       text_html_filter},
-    {text_xmlW,        text_xml_filter}
+    {L"text/html",       text_html_filter},
+    {L"text/xml",        text_xml_filter}
 }, mime_filters[] = {
-    {text_richtextW,   text_richtext_filter},
- /* {audio_xaiffW,     audio_xaiff_filter}, */
-    {audio_basicW,     audio_basic_filter},
-    {audio_wavW,       audio_wav_filter},
-    {image_gifW,       image_gif_filter},
-    {image_pjpegW,     image_pjpeg_filter},
-    {image_tiffW,      image_tiff_filter},
-    {image_xpngW,      image_xpng_filter},
- /* {image_xbitmapW,   image_xbitmap_filter}, */
-    {image_bmpW,       image_bmp_filter},
- /* {image_xjgW,       image_xjg_filter}, */
- /* {image_xemfW,      image_xemf_filter}, */
- /* {image_xwmfW,      image_xwmf_filter}, */
-    {video_aviW,       video_avi_filter},
-    {video_mpegW,      video_mpeg_filter},
-    {app_postscriptW,  application_postscript_filter},
- /* {app_base64W,      application_base64_filter}, */
- /* {app_macbinhex40W, application_macbinhex40_filter}, */
-    {app_pdfW,         application_pdf_filter},
- /* {app_zcompressedW, application_xcompressed_filter}, */
-    {app_xzipW,        application_xzip_filter},
-    {app_xgzipW,       application_xgzip_filter},
-    {app_javaW,        application_java_filter},
-    {app_xmsdownloadW, application_xmsdownload},
+    {L"text/richtext",   text_richtext_filter},
+ /* {L"audio/x-aiff",    audio_xaiff_filter}, */
+    {L"audio/basic",     audio_basic_filter},
+    {L"audio/wav",       audio_wav_filter},
+    {L"image/gif",       image_gif_filter},
+    {L"image/pjpeg",     image_pjpeg_filter},
+    {L"image/tiff",      image_tiff_filter},
+    {L"image/x-png",     image_xpng_filter},
+ /* {L"image/x-bitmap",  image_xbitmap_filter}, */
+    {L"image/bmp",       image_bmp_filter},
+ /* {L"image/x-jg",      image_xjg_filter}, */
+ /* {L"image/x-emf",     image_xemf_filter}, */
+ /* {L"image/x-wmf",     image_xwmf_filter}, */
+    {L"video/avi",       video_avi_filter},
+    {L"video/mpeg",      video_mpeg_filter},
+    {L"application/postscript",         application_postscript_filter},
+ /* {L"application/base64",             application_base64_filter}, */
+ /* {L"application/mac-binhex40",       application_macbinhex40_filter}, */
+    {L"application/pdf",                application_pdf_filter},
+ /* {L"application/x-compressed",       application_xcompressed_filter}, */
+    {L"application/x-zip-compressed",   application_xzip_filter},
+    {L"application/x-gzip-compressed",  application_xgzip_filter},
+    {L"application/java",               application_java_filter},
+    {L"application/x-msdownload",       application_xmsdownload},
     {text_plainW,      text_plain_filter},
     {app_octetstreamW, application_octet_stream_filter}
 };

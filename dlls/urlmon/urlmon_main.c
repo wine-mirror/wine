@@ -383,21 +383,14 @@ struct object_creation_info
     LPCWSTR protocol;
 };
 
-static const WCHAR wszFile[] = {'f','i','l','e',0};
-static const WCHAR wszFtp[]  = {'f','t','p',0};
-static const WCHAR wszGopher[]  = {'g','o','p','h','e','r',0};
-static const WCHAR wszHttp[] = {'h','t','t','p',0};
-static const WCHAR wszHttps[] = {'h','t','t','p','s',0};
-static const WCHAR wszMk[]   = {'m','k',0};
-
 static const struct object_creation_info object_creation[] =
 {
-    { &CLSID_FileProtocol,            &FileProtocolCF.IClassFactory_iface,    wszFile },
-    { &CLSID_FtpProtocol,             &FtpProtocolCF.IClassFactory_iface,     wszFtp  },
-    { &CLSID_GopherProtocol,          &GopherProtocolCF.IClassFactory_iface,  wszGopher },
-    { &CLSID_HttpProtocol,            &HttpProtocolCF.IClassFactory_iface,    wszHttp },
-    { &CLSID_HttpSProtocol,           &HttpSProtocolCF.IClassFactory_iface,   wszHttps },
-    { &CLSID_MkProtocol,              &MkProtocolCF.IClassFactory_iface,      wszMk },
+    { &CLSID_FileProtocol,            &FileProtocolCF.IClassFactory_iface,    L"file" },
+    { &CLSID_FtpProtocol,             &FtpProtocolCF.IClassFactory_iface,     L"ftp"  },
+    { &CLSID_GopherProtocol,          &GopherProtocolCF.IClassFactory_iface,  L"gopher" },
+    { &CLSID_HttpProtocol,            &HttpProtocolCF.IClassFactory_iface,    L"http" },
+    { &CLSID_HttpSProtocol,           &HttpSProtocolCF.IClassFactory_iface,   L"https" },
+    { &CLSID_MkProtocol,              &MkProtocolCF.IClassFactory_iface,      L"mk" },
     { &CLSID_InternetSecurityManager, &SecurityManagerCF.IClassFactory_iface, NULL    },
     { &CLSID_InternetZoneManager,     &ZoneManagerCF.IClassFactory_iface,     NULL    },
     { &CLSID_StdURLMoniker,           &StdURLMonikerCF.IClassFactory_iface,   NULL    },

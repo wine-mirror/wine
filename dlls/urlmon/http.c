@@ -304,9 +304,9 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
     HRESULT hres;
 
     static const WCHAR wszBindVerb[BINDVERB_CUSTOM][5] =
-        {{'G','E','T',0},
-         {'P','O','S','T',0},
-         {'P','U','T',0}};
+        {L"GET",
+         L"POST",
+         L"PUT"};
 
     hres = IUri_GetPort(uri, &port);
     if(FAILED(hres))
@@ -345,8 +345,7 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
     num = ARRAY_SIZE(accept_mimes) - 1;
     hres = IInternetBindInfo_GetBindString(bind_info, BINDSTRING_ACCEPT_MIMES, accept_mimes, num, &num);
     if(hres == INET_E_USE_DEFAULT_SETTING) {
-        static const WCHAR default_accept_mimeW[] = {'*','/','*',0};
-        static const WCHAR *default_accept_mimes[] = {default_accept_mimeW, NULL};
+        static const WCHAR *default_accept_mimes[] = {L"*/*", NULL};
 
         accept_types = default_accept_mimes;
         num = 0;

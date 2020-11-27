@@ -180,28 +180,28 @@ static const struct {
     URL_SCHEME  scheme;
     WCHAR       scheme_name[16];
 } recognized_schemes[] = {
-    {URL_SCHEME_FTP,            {'f','t','p',0}},
-    {URL_SCHEME_HTTP,           {'h','t','t','p',0}},
-    {URL_SCHEME_GOPHER,         {'g','o','p','h','e','r',0}},
-    {URL_SCHEME_MAILTO,         {'m','a','i','l','t','o',0}},
-    {URL_SCHEME_NEWS,           {'n','e','w','s',0}},
-    {URL_SCHEME_NNTP,           {'n','n','t','p',0}},
-    {URL_SCHEME_TELNET,         {'t','e','l','n','e','t',0}},
-    {URL_SCHEME_WAIS,           {'w','a','i','s',0}},
-    {URL_SCHEME_FILE,           {'f','i','l','e',0}},
-    {URL_SCHEME_MK,             {'m','k',0}},
-    {URL_SCHEME_HTTPS,          {'h','t','t','p','s',0}},
-    {URL_SCHEME_SHELL,          {'s','h','e','l','l',0}},
-    {URL_SCHEME_SNEWS,          {'s','n','e','w','s',0}},
-    {URL_SCHEME_LOCAL,          {'l','o','c','a','l',0}},
-    {URL_SCHEME_JAVASCRIPT,     {'j','a','v','a','s','c','r','i','p','t',0}},
-    {URL_SCHEME_VBSCRIPT,       {'v','b','s','c','r','i','p','t',0}},
-    {URL_SCHEME_ABOUT,          {'a','b','o','u','t',0}},
-    {URL_SCHEME_RES,            {'r','e','s',0}},
-    {URL_SCHEME_MSSHELLROOTED,  {'m','s','-','s','h','e','l','l','-','r','o','o','t','e','d',0}},
-    {URL_SCHEME_MSSHELLIDLIST,  {'m','s','-','s','h','e','l','l','-','i','d','l','i','s','t',0}},
-    {URL_SCHEME_MSHELP,         {'h','c','p',0}},
-    {URL_SCHEME_WILDCARD,       {'*',0}}
+    {URL_SCHEME_FTP,            L"ftp"},
+    {URL_SCHEME_HTTP,           L"http"},
+    {URL_SCHEME_GOPHER,         L"gopher"},
+    {URL_SCHEME_MAILTO,         L"mailto"},
+    {URL_SCHEME_NEWS,           L"news"},
+    {URL_SCHEME_NNTP,           L"nntp"},
+    {URL_SCHEME_TELNET,         L"telnet"},
+    {URL_SCHEME_WAIS,           L"wais"},
+    {URL_SCHEME_FILE,           L"file"},
+    {URL_SCHEME_MK,             L"mk"},
+    {URL_SCHEME_HTTPS,          L"https"},
+    {URL_SCHEME_SHELL,          L"shell"},
+    {URL_SCHEME_SNEWS,          L"snews"},
+    {URL_SCHEME_LOCAL,          L"local"},
+    {URL_SCHEME_JAVASCRIPT,     L"javascript"},
+    {URL_SCHEME_VBSCRIPT,       L"vbscript"},
+    {URL_SCHEME_ABOUT,          L"about"},
+    {URL_SCHEME_RES,            L"res"},
+    {URL_SCHEME_MSSHELLROOTED,  L"ms-shell-rooted"},
+    {URL_SCHEME_MSSHELLIDLIST,  L"ms-shell-idlist"},
+    {URL_SCHEME_MSHELP,         L"hcp"},
+    {URL_SCHEME_WILDCARD,       L"*"}
 };
 
 /* List of default ports Windows recognizes. */
@@ -224,13 +224,13 @@ static const struct {
 static const struct {
     WCHAR tld_name[4];
 } recognized_tlds[] = {
-    {{'c','o','m',0}},
-    {{'e','d','u',0}},
-    {{'g','o','v',0}},
-    {{'i','n','t',0}},
-    {{'m','i','l',0}},
-    {{'n','e','t',0}},
-    {{'o','r','g',0}}
+    {L"com"},
+    {L"edu"},
+    {L"gov"},
+    {L"int"},
+    {L"mil"},
+    {L"net"},
+    {L"org"}
 };
 
 static Uri *get_uri_obj(IUri *uri)

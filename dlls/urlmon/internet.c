@@ -32,69 +32,6 @@ static const WCHAR feature_control_keyW[] =
      'M','a','i','n','\\',
      'F','e','a','t','u','r','e','C','o','n','t','r','o','l',0};
 
-static const WCHAR feature_object_cachingW[] =
-    {'F','E','A','T','U','R','E','_','O','B','J','E','C','T','_','C','A','C','H','I','N','G',0};
-static const WCHAR feature_zone_elevationW[] =
-    {'F','E','A','T','U','R','E','_','Z','O','N','E','_','E','L','E','V','A','T','I','O','N',0};
-static const WCHAR feature_mime_handlingW[] =
-    {'F','E','A','T','U','R','E','_','M','I','M','E','_','H','A','N','D','L','I','N','G',0};
-static const WCHAR feature_mime_sniffingW[] =
-    {'F','E','A','T','U','R','E','_','M','I','M','E','_','S','N','I','F','F','I','N','G',0};
-static const WCHAR feature_window_restrictionsW[] =
-    {'F','E','A','T','U','R','E','_','W','I','N','D','O','W','_','R','E','S','T','R','I','C','T','I','O','N','S',0};
-static const WCHAR feature_weboc_popupmanagementW[] =
-    {'F','E','A','T','U','R','E','_','W','E','B','O','C','_','P','O','P','U','P','M','A','N','A','G','E','M','E','N','T',0};
-static const WCHAR feature_behaviorsW[] =
-    {'F','E','A','T','U','R','E','_','B','E','H','A','V','I','O','R','S',0};
-static const WCHAR feature_disable_mk_protocolW[] =
-    {'F','E','A','T','U','R','E','_','D','I','S','A','B','L','E','_','M','K','_','P','R','O','T','O','C','O','L',0};
-static const WCHAR feature_localmachine_lockdownW[] =
-    {'F','E','A','T','U','R','E','_','L','O','C','A','L','M','A','C','H','I','N','E','_','L','O','C','K','D','O','W','N',0};
-static const WCHAR feature_securitybandW[] =
-    {'F','E','A','T','U','R','E','_','S','E','C','U','R','I','T','Y','B','A','N','D',0};
-static const WCHAR feature_restrict_activexinstallW[] =
-    {'F','E','A','T','U','R','E','_','R','E','S','T','R','I','C','T','_','A','C','T','I','V','E','X','I','N','S','T','A','L','L',0};
-static const WCHAR feature_validate_navigate_urlW[] =
-    {'F','E','A','T','U','R','E','_','V','A','L','I','D','A','T','E','_','N','A','V','I','G','A','T','E','_','U','R','L',0};
-static const WCHAR feature_restrict_filedownloadW[] =
-    {'F','E','A','T','U','R','E','_','R','E','S','T','R','I','C','T','_','F','I','L','E','D','O','W','N','L','O','A','D',0};
-static const WCHAR feature_addon_managementW[] =
-    {'F','E','A','T','U','R','E','_','A','D','D','O','N','_','M','A','N','A','G','E','M','E','N','T',0};
-static const WCHAR feature_protocol_lockdownW[] =
-    {'F','E','A','T','U','R','E','_','P','R','O','T','O','C','O','L','_','L','O','C','K','D','O','W','N',0};
-static const WCHAR feature_http_username_password_disableW[] =
-    {'F','E','A','T','U','R','E','_','H','T','T','P','_','U','S','E','R','N','A','M','E','_',
-     'P','A','S','S','W','O','R','D','_','D','I','S','A','B','L','E',0};
-static const WCHAR feature_safe_bindtoobjectW[] =
-    {'F','E','A','T','U','R','E','_','S','A','F','E','_','B','I','N','D','T','O','O','B','J','E','C','T',0};
-static const WCHAR feature_unc_savedfilecheckW[] =
-    {'F','E','A','T','U','R','E','_','U','N','C','_','S','A','V','E','D','F','I','L','E','C','H','E','C','K',0};
-static const WCHAR feature_get_url_dom_filepath_unencodedW[] =
-    {'F','E','A','T','U','R','E','_','G','E','T','_','U','R','L','_','D','O','M','_',
-     'F','I','L','E','P','A','T','H','_','U','N','E','N','C','O','D','E','D',0};
-static const WCHAR feature_tabbed_browsingW[] =
-    {'F','E','A','T','U','R','E','_','T','A','B','B','E','D','_','B','R','O','W','S','I','N','G',0};
-static const WCHAR feature_ssluxW[] =
-    {'F','E','A','T','U','R','E','_','S','S','L','U','X',0};
-static const WCHAR feature_disable_navigation_soundsW[] =
-    {'F','E','A','T','U','R','E','_','D','I','S','A','B','L','E','_','N','A','V','I','G','A','T','I','O','N','_',
-     'S','O','U','N','D','S',0};
-static const WCHAR feature_disable_legacy_compressionW[] =
-    {'F','E','A','T','U','R','E','_','D','I','S','A','B','L','E','_','L','E','G','A','C','Y','_',
-     'C','O','M','P','R','E','S','S','I','O','N',0};
-static const WCHAR feature_force_addr_and_statusW[] =
-    {'F','E','A','T','U','R','E','_','F','O','R','C','E','_','A','D','D','R','_','A','N','D','_',
-     'S','T','A','T','U','S',0};
-static const WCHAR feature_xmlhttpW[] =
-    {'F','E','A','T','U','R','E','_','X','M','L','H','T','T','P',0};
-static const WCHAR feature_disable_telnet_protocolW[] =
-    {'F','E','A','T','U','R','E','_','D','I','S','A','B','L','E','_','T','E','L','N','E','T','_',
-     'P','R','O','T','O','C','O','L',0};
-static const WCHAR feature_feedsW[] =
-    {'F','E','A','T','U','R','E','_','F','E','E','D','S',0};
-static const WCHAR feature_block_input_promptsW[] =
-    {'F','E','A','T','U','R','E','_','B','L','O','C','K','_','I','N','P','U','T','_','P','R','O','M','P','T','S',0};
-
 static CRITICAL_SECTION process_features_cs;
 static CRITICAL_SECTION_DEBUG process_features_cs_dbg =
 {
@@ -116,34 +53,34 @@ typedef struct feature_control {
  * appear in the same order as it does in INTERNETFEATURELIST.
  */
 static feature_control process_feature_controls[FEATURE_ENTRY_COUNT] = {
-    {feature_object_cachingW,                   TRUE ,TRUE},
-    {feature_zone_elevationW,                   FALSE,TRUE},
-    {feature_mime_handlingW,                    FALSE,TRUE},
-    {feature_mime_sniffingW,                    FALSE,TRUE},
-    {feature_window_restrictionsW,              FALSE,TRUE},
-    {feature_weboc_popupmanagementW,            FALSE,TRUE},
-    {feature_behaviorsW,                        TRUE ,TRUE},
-    {feature_disable_mk_protocolW,              TRUE ,TRUE},
-    {feature_localmachine_lockdownW,            FALSE,TRUE},
-    {feature_securitybandW,                     FALSE,TRUE},
-    {feature_restrict_activexinstallW,          FALSE,TRUE},
-    {feature_validate_navigate_urlW,            FALSE,TRUE},
-    {feature_restrict_filedownloadW,            FALSE,TRUE},
-    {feature_addon_managementW,                 FALSE,TRUE},
-    {feature_protocol_lockdownW,                FALSE,TRUE},
-    {feature_http_username_password_disableW,   FALSE,TRUE},
-    {feature_safe_bindtoobjectW,                FALSE,TRUE},
-    {feature_unc_savedfilecheckW,               FALSE,TRUE},
-    {feature_get_url_dom_filepath_unencodedW,   TRUE ,TRUE},
-    {feature_tabbed_browsingW,                  FALSE,TRUE},
-    {feature_ssluxW,                            FALSE,TRUE},
-    {feature_disable_navigation_soundsW,        FALSE,TRUE},
-    {feature_disable_legacy_compressionW,       TRUE ,TRUE},
-    {feature_force_addr_and_statusW,            FALSE,TRUE},
-    {feature_xmlhttpW,                          TRUE ,TRUE},
-    {feature_disable_telnet_protocolW,          FALSE,TRUE},
-    {feature_feedsW,                            FALSE,TRUE},
-    {feature_block_input_promptsW,              FALSE,TRUE}
+    {L"FEATURE_OBJECT_CACHING",                   TRUE ,TRUE},
+    {L"FEATURE_ZONE_ELEVATION",                   FALSE,TRUE},
+    {L"FEATURE_MIME_HANDLING",                    FALSE,TRUE},
+    {L"FEATURE_MIME_SNIFFING",                    FALSE,TRUE},
+    {L"FEATURE_WINDOW_RESTRICTIONS",              FALSE,TRUE},
+    {L"FEATURE_WEBOC_POPUPMANAGEMENT",            FALSE,TRUE},
+    {L"FEATURE_BEHAVIORS",                        TRUE ,TRUE},
+    {L"FEATURE_DISABLE_MK_PROTOCOL",              TRUE ,TRUE},
+    {L"FEATURE_LOCALMACHINE_LOCKDOWN",            FALSE,TRUE},
+    {L"FEATURE_SECURITYBAND",                     FALSE,TRUE},
+    {L"FEATURE_RESTRICT_ACTIVEXINSTALL",          FALSE,TRUE},
+    {L"FEATURE_VALIDATE_NAVIGATE_URL",            FALSE,TRUE},
+    {L"FEATURE_RESTRICT_FILEDOWNLOAD",            FALSE,TRUE},
+    {L"FEATURE_ADDON_MANAGEMENT",                 FALSE,TRUE},
+    {L"FEATURE_PROTOCOL_LOCKDOWN",                FALSE,TRUE},
+    {L"FEATURE_HTTP_USERNAME_PASSWORD_DISABLE",   FALSE,TRUE},
+    {L"FEATURE_SAFE_BINDTOOBJECT",                FALSE,TRUE},
+    {L"FEATURE_UNC_SAVEDFILECHECK",               FALSE,TRUE},
+    {L"FEATURE_GET_URL_DOM_FILEPATH_UNENCODED",   TRUE ,TRUE},
+    {L"FEATURE_TABBED_BROWSING",                  FALSE,TRUE},
+    {L"FEATURE_SSLUX",                            FALSE,TRUE},
+    {L"FEATURE_DISABLE_NAVIGATION_SOUNDS",        FALSE,TRUE},
+    {L"FEATURE_DISABLE_LEGACY_COMPRESSION",       TRUE ,TRUE},
+    {L"FEATURE_FORCE_ADDR_AND_STATUS",            FALSE,TRUE},
+    {L"FEATURE_XMLHTTP",                          TRUE ,TRUE},
+    {L"FEATURE_DISABLE_TELNET_PROTOCOL",          FALSE,TRUE},
+    {L"FEATURE_FEEDS",                            FALSE,TRUE},
+    {L"FEATURE_BLOCK_INPUT_PROMPTS",              FALSE,TRUE}
 };
 
 static HRESULT parse_schema(LPCWSTR url, DWORD flags, LPWSTR result, DWORD size, DWORD *rsize)
