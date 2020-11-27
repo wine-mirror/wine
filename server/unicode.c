@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
+#include "request.h"
 #include "unicode.h"
 
 /* number of following bytes in sequence based on first byte value (for bytes above 0x7f) */
@@ -45,6 +46,8 @@ static const unsigned char utf8_mask[4] = { 0x7f, 0x1f, 0x0f, 0x07 };
 /* minimum Unicode value depending on UTF-8 sequence length */
 static const unsigned int utf8_minval[4] = { 0x0, 0x80, 0x800, 0x10000 };
 
+static unsigned short *casemap;
+
 static inline char to_hex( char ch )
 {
     if (isdigit(ch)) return ch - '0';
@@ -53,8 +56,7 @@ static inline char to_hex( char ch )
 
 static inline WCHAR to_lower( WCHAR ch )
 {
-    extern const WCHAR wine_casemap_lower[];
-    return ch + wine_casemap_lower[wine_casemap_lower[ch >> 8] + (ch & 0xff)];
+    return ch + casemap[casemap[casemap[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0x0f)];
 }
 
 int memicmp_strW( const WCHAR *str1, const WCHAR *str2, data_size_t len )
@@ -223,4 +225,74 @@ int dump_strW( const WCHAR *str, data_size_t len, FILE *f, const char escape[2] 
     fwrite( buffer, pos - buffer, 1, f );
     count += pos - buffer;
     return count;
+}
+
+static char *get_nls_dir(void)
+{
+    char *p, *dir, *ret;
+    const char *nlsdir = BIN_TO_NLSDIR;
+
+#if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
+    dir = realpath( "/proc/self/exe", NULL );
+#elif defined (__FreeBSD__) || defined(__DragonFly__)
+    dir = realpath( "/proc/curproc/file", NULL );
+#else
+    dir = realpath( server_argv0, NULL );
+#endif
+    if (!dir) return NULL;
+    if (!(p = strrchr( dir, '/' )))
+    {
+        free( dir );
+        return NULL;
+    }
+    *(++p) = 0;
+    if (p > dir + 8 && !strcmp( p - 8, "/server/" )) nlsdir = "../nls";  /* inside build tree */
+    if ((ret = malloc( strlen(dir) + strlen( nlsdir ) + 1 )))
+    {
+        strcpy( ret, dir );
+        strcat( ret, nlsdir );
+    }
+    free( dir );
+    return ret;
+}
+
+/* load the case mapping table */
+void load_intl_file(void)
+{
+    static const char *nls_dirs[] = { NULL, NLSDIR, "/usr/local/share/wine/nls", "/usr/share/wine/nls" };
+    unsigned int i, offset, size;
+    unsigned short data;
+    char *path;
+    int unix_fd = -1;
+
+    nls_dirs[0] = get_nls_dir();
+    for (i = 0; i < ARRAY_SIZE( nls_dirs ); i++)
+    {
+        if (!nls_dirs[i]) continue;
+        if (!(path = malloc( strlen(nls_dirs[i]) + sizeof("/l_intl.nls" )))) continue;
+        strcpy( path, nls_dirs[i] );
+        strcat( path, "/l_intl.nls" );
+        if ((unix_fd = open( path, O_RDONLY )) != -1) break;
+        free( path );
+    }
+    if (unix_fd == -1) fatal_error( "failed to load l_intl.nls\n" );
+    /* read initial offset */
+    if (pread( unix_fd, &data, sizeof(data), 0 ) != sizeof(data) || !data) goto failed;
+    offset = data;
+    /* read size of uppercase table */
+    if (pread( unix_fd, &data, sizeof(data), offset * 2 ) != sizeof(data) || !data) goto failed;
+    offset += data;
+    /* read size of lowercase table */
+    if (pread( unix_fd, &data, sizeof(data), offset * 2 ) != sizeof(data) || !data) goto failed;
+    offset++;
+    size = data - 1;
+    /* read lowercase table */
+    if (!(casemap = malloc( size * 2 ))) goto failed;
+    if (pread( unix_fd, casemap, size * 2, offset * 2 ) != size * 2) goto failed;
+    close( unix_fd );
+    free( path );
+    return;
+
+failed:
+    fatal_error( "invalid format for casemap table %s\n", path );
 }

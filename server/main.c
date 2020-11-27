@@ -36,6 +36,7 @@
 #include "file.h"
 #include "thread.h"
 #include "request.h"
+#include "unicode.h"
 
 /* command-line options */
 int debug_level = 0;
@@ -143,6 +144,7 @@ int main( int argc, char *argv[] )
     if (debug_level) fprintf( stderr, "wineserver: starting (pid=%ld)\n", (long) getpid() );
     set_current_time();
     init_signals();
+    load_intl_file();
     init_directories();
     init_registry();
     main_loop();

@@ -50,3 +50,5 @@ MANPAGES = \
 	wineserver.man.in
 
 EXTRALIBS = $(LDEXECFLAGS) $(POLL_LIBS) $(RT_LIBS) $(INOTIFY_LIBS)
+
+unicode_EXTRADEFS = -DNLSDIR="\"${nlsdir}\"" -DBIN_TO_NLSDIR=\"`$(MAKEDEP) -R ${bindir} ${nlsdir}`\"
