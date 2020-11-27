@@ -106,7 +106,7 @@ static void vfw_capture_destroy(struct strmbase_filter *iface)
     DeleteCriticalSection(&filter->state_cs);
     strmbase_source_cleanup(&filter->source);
     strmbase_filter_cleanup(&filter->filter);
-    CoTaskMemFree(filter);
+    free(filter);
     ObjectRefCount(FALSE);
 }
 
@@ -852,7 +852,7 @@ HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out)
     if (!InitOnceExecuteOnce(&init_once, load_capture_funcs, NULL, NULL) || !capture_funcs)
         return E_FAIL;
 
-    if (!(object = CoTaskMemAlloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_VfwCapture, &filter_ops);
@@ -862,7 +862,6 @@ HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out)
     object->IAMVideoProcAmp_iface.lpVtbl = &IAMVideoProcAmp_VTable;
     object->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_VTable;
     object->IPersistPropertyBag_iface.lpVtbl = &IPersistPropertyBag_VTable;
-    object->init = FALSE;
 
     strmbase_source_init(&object->source, &object->filter, L"Output", &source_ops);
 

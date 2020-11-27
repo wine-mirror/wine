@@ -85,13 +85,11 @@ static HRESULT fill_format_info(AVICompressor *This, VIDEOINFOHEADER *src_videoi
     }
 
     size += FIELD_OFFSET(VIDEOINFOHEADER, bmiHeader);
-    This->videoinfo = heap_alloc(size);
-    if(!This->videoinfo)
+    if (!(This->videoinfo = calloc(1, size)))
         return E_OUTOFMEMORY;
 
     This->videoinfo_size = size;
     This->driver_flags = icinfo.dwFlags;
-    memset(This->videoinfo, 0, sizeof(*This->videoinfo));
     ICCompressGetFormat(This->hic, &src_videoinfo->bmiHeader, &This->videoinfo->bmiHeader);
 
     This->videoinfo->dwBitRate = 10000000/src_videoinfo->AvgTimePerFrame * This->videoinfo->bmiHeader.biSizeImage * 8;
@@ -117,11 +115,11 @@ static void avi_compressor_destroy(struct strmbase_filter *iface)
 
     if (filter->hic)
         ICClose(filter->hic);
-    heap_free(filter->videoinfo);
+    free(filter->videoinfo);
     strmbase_sink_cleanup(&filter->sink);
     strmbase_source_cleanup(&filter->source);
     strmbase_filter_cleanup(&filter->filter);
-    heap_free(filter);
+    free(filter);
 }
 
 static HRESULT avi_compressor_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
@@ -401,7 +399,7 @@ static HRESULT sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_ME
 static void sink_disconnect(struct strmbase_sink *iface)
 {
     AVICompressor *filter = impl_from_strmbase_pin(&iface->pin);
-    heap_free(filter->videoinfo);
+    free(filter->videoinfo);
     filter->videoinfo = NULL;
 }
 
@@ -470,7 +468,7 @@ HRESULT avi_compressor_create(IUnknown *outer, IUnknown **out)
 {
     AVICompressor *object;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_AVICo, &filter_ops);

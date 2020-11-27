@@ -59,7 +59,7 @@ static void smart_tee_destroy(struct strmbase_filter *iface)
     strmbase_source_cleanup(&filter->capture);
     strmbase_source_cleanup(&filter->preview);
     strmbase_filter_cleanup(&filter->filter);
-    CoTaskMemFree(filter);
+    free(filter);
 }
 
 static HRESULT smart_tee_wait_state(struct strmbase_filter *iface, DWORD timeout)
@@ -319,9 +319,8 @@ HRESULT smart_tee_create(IUnknown *outer, IUnknown **out)
     SmartTeeFilter *object;
     HRESULT hr;
 
-    if (!(object = CoTaskMemAlloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
-    memset(object, 0, sizeof(*object));
 
     strmbase_filter_init(&object->filter, outer, &CLSID_SmartTee, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, L"Input", &sink_ops, NULL);
@@ -330,7 +329,7 @@ HRESULT smart_tee_create(IUnknown *outer, IUnknown **out)
     if (FAILED(hr))
     {
         strmbase_filter_cleanup(&object->filter);
-        CoTaskMemFree(object);
+        free(object);
         return hr;
     }
 

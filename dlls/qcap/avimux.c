@@ -125,12 +125,12 @@ static void avi_mux_destroy(struct strmbase_filter *iface)
         IMemAllocator_Release(filter->in[i]->samples_allocator);
         filter->in[i]->samples_allocator = NULL;
         strmbase_sink_cleanup(&filter->in[i]->pin);
-        heap_free(filter->in[i]);
+        free(filter->in[i]);
     }
 
-    heap_free(filter->idx1);
+    free(filter->idx1);
     strmbase_filter_cleanup(&filter->filter);
-    heap_free(filter);
+    free(filter);
     ObjectRefCount(FALSE);
 }
 
@@ -225,8 +225,7 @@ static HRESULT out_write(AviMux *This, const void *data, int size)
 static inline HRESULT idx1_add_entry(AviMux *avimux, DWORD ckid, DWORD flags, DWORD off, DWORD len)
 {
     if(avimux->idx1_entries == avimux->idx1_size) {
-        AVIINDEXENTRY *new_idx = HeapReAlloc(GetProcessHeap(), 0, avimux->idx1,
-                sizeof(*avimux->idx1)*2*avimux->idx1_size);
+        AVIINDEXENTRY *new_idx = realloc(avimux->idx1, sizeof(*avimux->idx1) * 2 * avimux->idx1_size);
         if(!new_idx)
             return E_OUTOFMEMORY;
 
@@ -576,8 +575,7 @@ static HRESULT avi_mux_init_stream(struct strmbase_filter *iface)
     This->idx1_entries = 0;
     if(!This->idx1_size) {
         This->idx1_size = 1024;
-        This->idx1 = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->idx1)*This->idx1_size);
-        if(!This->idx1)
+        if (!(This->idx1 = malloc(sizeof(*This->idx1) * This->idx1_size)))
             return E_OUTOFMEMORY;
     }
 
@@ -1433,7 +1431,7 @@ static HRESULT avi_mux_sink_connect(struct strmbase_sink *iface, IPin *peer, con
             return hr;
 
         size = pmt->cbFormat - FIELD_OFFSET(VIDEOINFOHEADER, bmiHeader);
-        avimuxin->strf = CoTaskMemAlloc(sizeof(RIFFCHUNK) + ALIGN(FIELD_OFFSET(BITMAPINFO, bmiColors[vih->bmiHeader.biClrUsed])));
+        avimuxin->strf = malloc(sizeof(RIFFCHUNK) + ALIGN(FIELD_OFFSET(BITMAPINFO, bmiColors[vih->bmiHeader.biClrUsed])));
         avimuxin->strf->fcc = ckidSTREAMFORMAT;
         avimuxin->strf->cb = FIELD_OFFSET(BITMAPINFO, bmiColors[vih->bmiHeader.biClrUsed]);
         if(size > avimuxin->strf->cb)
@@ -1467,7 +1465,7 @@ static void avi_mux_sink_disconnect(struct strmbase_sink *iface)
         if(cur == avimuxin->samples_head)
             avimuxin->samples_head = NULL;
     }
-    CoTaskMemFree(avimuxin->strf);
+    free(avimuxin->strf);
     avimuxin->strf = NULL;
 }
 
@@ -1786,7 +1784,7 @@ static HRESULT create_input_pin(AviMux *avimux)
 
     swprintf(name, ARRAY_SIZE(name), L"Input %02u", avimux->input_pin_no + 1);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     strmbase_sink_init(&object->pin, &avimux->filter, name, &sink_ops, NULL);
@@ -1800,7 +1798,7 @@ static HRESULT create_input_pin(AviMux *avimux)
     if (FAILED(hr))
     {
         strmbase_sink_cleanup(&object->pin);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -1810,7 +1808,7 @@ static HRESULT create_input_pin(AviMux *avimux)
     {
         IMemAllocator_Release(object->samples_allocator);
         strmbase_sink_cleanup(&object->pin);
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -1826,7 +1824,7 @@ HRESULT avi_mux_create(IUnknown *outer, IUnknown **out)
     AviMux *avimux;
     HRESULT hr;
 
-    if (!(avimux = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AviMux))))
+    if (!(avimux = calloc(1, sizeof(AviMux))))
         return E_OUTOFMEMORY;
 
     strmbase_filter_init(&avimux->filter, outer, &CLSID_AviDest, &filter_ops);
@@ -1846,7 +1844,7 @@ HRESULT avi_mux_create(IUnknown *outer, IUnknown **out)
     if(FAILED(hr)) {
         strmbase_source_cleanup(&avimux->source);
         strmbase_filter_cleanup(&avimux->filter);
-        HeapFree(GetProcessHeap(), 0, avimux);
+        free(avimux);
         return hr;
     }
 

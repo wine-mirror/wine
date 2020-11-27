@@ -55,7 +55,7 @@ HRESULT capture_graph_create(IUnknown *outer, IUnknown **out)
     if (outer)
         return CLASS_E_NOAGGREGATION;
 
-    if (!(object = CoTaskMemAlloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->ICaptureGraphBuilder2_iface.lpVtbl = &builder2_Vtbl;
@@ -122,7 +122,7 @@ static ULONG WINAPI fnCaptureGraphBuilder2_Release(ICaptureGraphBuilder2 * iface
         DeleteCriticalSection(&This->csFilter);
         if (This->mygraph)
             IGraphBuilder_Release(This->mygraph);
-        CoTaskMemFree(This);
+        free(This);
         ObjectRefCount(FALSE);
     }
     return ref;

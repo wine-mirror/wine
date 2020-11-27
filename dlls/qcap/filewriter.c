@@ -161,10 +161,10 @@ static void file_writer_destroy(struct strmbase_filter *iface)
 {
     struct file_writer *filter = impl_from_strmbase_filter(iface);
 
-    heap_free(filter->filename);
+    free(filter->filename);
     strmbase_sink_cleanup(&filter->sink);
     strmbase_filter_cleanup(&filter->filter);
-    heap_free(filter);
+    free(filter);
 }
 
 static HRESULT file_writer_init_stream(struct strmbase_filter *iface)
@@ -245,11 +245,10 @@ static HRESULT WINAPI filesinkfilter_SetFileName(IFileSinkFilter *iface,
     if (mt)
         FIXME("Ignoring media type %p.\n", mt);
 
-    if (!(new_filename = heap_alloc((wcslen(filename) + 1) * sizeof(WCHAR))))
+    if (!(new_filename = wcsdup(filename)))
         return E_OUTOFMEMORY;
-    wcscpy(new_filename, filename);
 
-    heap_free(filter->filename);
+    free(filter->filename);
     filter->filename = new_filename;
     return S_OK;
 }
@@ -317,7 +316,7 @@ HRESULT file_writer_create(IUnknown *outer, IUnknown **out)
 {
     struct file_writer *object;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_FileWriter, &filter_ops);

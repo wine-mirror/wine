@@ -47,7 +47,7 @@ static void audio_record_destroy(struct strmbase_filter *iface)
     AudioRecord *filter = impl_from_strmbase_filter(iface);
 
     strmbase_filter_cleanup(&filter->filter);
-    CoTaskMemFree(filter);
+    free(filter);
 }
 
 static HRESULT audio_record_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
@@ -144,9 +144,8 @@ HRESULT audio_record_create(IUnknown *outer, IUnknown **out)
 {
     AudioRecord *object;
 
-    if (!(object = CoTaskMemAlloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
-    memset(object, 0, sizeof(*object));
 
     object->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
     strmbase_filter_init(&object->filter, outer, &CLSID_AudioRecord, &filter_ops);
