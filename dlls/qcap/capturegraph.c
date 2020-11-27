@@ -371,9 +371,6 @@ static HRESULT match_smart_tee_pin(CaptureGraphImpl *This,
                                    IUnknown *pSource,
                                    IPin **source_out)
 {
-    static const WCHAR inputW[] = {'I','n','p','u','t',0};
-    static const WCHAR captureW[] = {'C','a','p','t','u','r','e',0};
-    static const WCHAR previewW[] = {'P','r','e','v','i','e','w',0};
     IPin *capture = NULL;
     IPin *preview = NULL;
     IPin *peer = NULL;
@@ -439,7 +436,7 @@ static HRESULT match_smart_tee_pin(CaptureGraphImpl *This,
             hr = IGraphBuilder_AddFilter(This->mygraph, smartTee, NULL);
             if (SUCCEEDED(hr)) {
                 IPin *smartTeeInput = NULL;
-                hr = IBaseFilter_FindPin(smartTee, inputW, &smartTeeInput);
+                hr = IBaseFilter_FindPin(smartTee, L"Input", &smartTeeInput);
                 if (SUCCEEDED(hr)) {
                     hr = IGraphBuilder_ConnectDirect(This->mygraph, capture, smartTeeInput, NULL);
                     IPin_Release(smartTeeInput);
@@ -456,9 +453,9 @@ static HRESULT match_smart_tee_pin(CaptureGraphImpl *This,
         goto end;
     }
     if (IsEqualIID(pCategory, &PIN_CATEGORY_CAPTURE))
-        hr = IBaseFilter_FindPin(smartTee, captureW, source_out);
+        hr = IBaseFilter_FindPin(smartTee, L"Capture", source_out);
     else {
-        hr = IBaseFilter_FindPin(smartTee, previewW, source_out);
+        hr = IBaseFilter_FindPin(smartTee, L"Preview", source_out);
         if (SUCCEEDED(hr))
             hr = VFW_S_NOPREVIEWPIN;
     }
