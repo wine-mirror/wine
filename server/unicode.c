@@ -23,9 +23,13 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdarg.h>
 
+#include "windef.h"
+#include "winternl.h"
 #include "request.h"
 #include "unicode.h"
+#include "file.h"
 
 /* number of following bytes in sequence based on first byte value (for bytes above 0x7f) */
 static const char utf8_length[128] =
@@ -257,13 +261,15 @@ static char *get_nls_dir(void)
 }
 
 /* load the case mapping table */
-void load_intl_file(void)
+struct fd *load_intl_file(void)
 {
     static const char *nls_dirs[] = { NULL, NLSDIR, "/usr/local/share/wine/nls", "/usr/share/wine/nls" };
     unsigned int i, offset, size;
     unsigned short data;
     char *path;
-    int unix_fd = -1;
+    struct fd *fd = NULL;
+    int unix_fd;
+    mode_t mode = 0600;
 
     nls_dirs[0] = get_nls_dir();
     for (i = 0; i < ARRAY_SIZE( nls_dirs ); i++)
@@ -272,10 +278,13 @@ void load_intl_file(void)
         if (!(path = malloc( strlen(nls_dirs[i]) + sizeof("/l_intl.nls" )))) continue;
         strcpy( path, nls_dirs[i] );
         strcat( path, "/l_intl.nls" );
-        if ((unix_fd = open( path, O_RDONLY )) != -1) break;
+        if ((fd = open_fd( NULL, path, O_RDONLY, &mode, FILE_READ_DATA,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT ))) break;
         free( path );
     }
-    if (unix_fd == -1) fatal_error( "failed to load l_intl.nls\n" );
+    if (!fd) fatal_error( "failed to load l_intl.nls\n" );
+    unix_fd = get_unix_fd( fd );
     /* read initial offset */
     if (pread( unix_fd, &data, sizeof(data), 0 ) != sizeof(data) || !data) goto failed;
     offset = data;
@@ -289,9 +298,8 @@ void load_intl_file(void)
     /* read lowercase table */
     if (!(casemap = malloc( size * 2 ))) goto failed;
     if (pread( unix_fd, casemap, size * 2, offset * 2 ) != size * 2) goto failed;
-    close( unix_fd );
     free( path );
-    return;
+    return fd;
 
 failed:
     fatal_error( "invalid format for casemap table %s\n", path );

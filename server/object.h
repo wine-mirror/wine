@@ -244,7 +244,7 @@ extern struct object *get_root_directory(void);
 extern struct object *get_directory_obj( struct process *process, obj_handle_t handle );
 extern struct object_type *get_object_type( const struct unicode_str *name );
 extern int directory_link_name( struct object *obj, struct object_name *name, struct object *parent );
-extern void init_directories(void);
+extern void init_directories( struct fd *intl_fd );
 
 /* symbolic link functions */
 

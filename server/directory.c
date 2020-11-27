@@ -249,14 +249,12 @@ static void create_session( unsigned int id )
     static const WCHAR dir_bnolinksW[] = {'B','N','O','L','I','N','K','S'};
     static const WCHAR dir_bnoW[] = {'B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s'};
     static const WCHAR dir_dosdevicesW[] = {'D','o','s','D','e','v','i','c','e','s'};
-    static const WCHAR dir_nlsW[] = {'N','L','S'};
     static const WCHAR dir_windowsW[] = {'W','i','n','d','o','w','s'};
     static const WCHAR dir_winstationsW[] = {'W','i','n','d','o','w','S','t','a','t','i','o','n','s'};
     static const struct unicode_str dir_sessions_str = {dir_sessionsW, sizeof(dir_sessionsW)};
     static const struct unicode_str dir_bnolinks_str = {dir_bnolinksW, sizeof(dir_bnolinksW)};
     static const struct unicode_str dir_bno_str = {dir_bnoW, sizeof(dir_bnoW)};
     static const struct unicode_str dir_dosdevices_str = {dir_dosdevicesW, sizeof(dir_dosdevicesW)};
-    static const struct unicode_str dir_nls_str = {dir_nlsW, sizeof(dir_nlsW)};
     static const struct unicode_str dir_windows_str = {dir_windowsW, sizeof(dir_windowsW)};
     static const struct unicode_str dir_winstations_str = {dir_winstationsW, sizeof(dir_winstationsW)};
 
@@ -280,7 +278,6 @@ static void create_session( unsigned int id )
         dir_bno_global = create_directory( &root_directory->obj, &dir_bno_str, OBJ_PERMANENT, HASH_SIZE, NULL );
         dir_sessions   = create_directory( &root_directory->obj, &dir_sessions_str, OBJ_PERMANENT, HASH_SIZE, NULL );
         dir_bnolinks   = create_directory( &dir_sessions->obj, &dir_bnolinks_str, OBJ_PERMANENT, HASH_SIZE, NULL );
-        release_object( create_directory( &root_directory->obj, &dir_nls_str, OBJ_PERMANENT, HASH_SIZE, NULL ));
         release_object( dir_bno_global );
         release_object( dir_bnolinks );
         release_object( dir_sessions );
@@ -326,7 +323,7 @@ static void create_session( unsigned int id )
     free( id_strW );
 }
 
-void init_directories(void)
+void init_directories( struct fd *intl_fd )
 {
     /* Directories */
     static const WCHAR dir_globalW[] = {'?','?'};
@@ -334,11 +331,13 @@ void init_directories(void)
     static const WCHAR dir_deviceW[] = {'D','e','v','i','c','e'};
     static const WCHAR dir_objtypeW[] = {'O','b','j','e','c','t','T','y','p','e','s'};
     static const WCHAR dir_kernelW[] = {'K','e','r','n','e','l','O','b','j','e','c','t','s'};
+    static const WCHAR dir_nlsW[] = {'N','L','S'};
     static const struct unicode_str dir_global_str = {dir_globalW, sizeof(dir_globalW)};
     static const struct unicode_str dir_driver_str = {dir_driverW, sizeof(dir_driverW)};
     static const struct unicode_str dir_device_str = {dir_deviceW, sizeof(dir_deviceW)};
     static const struct unicode_str dir_objtype_str = {dir_objtypeW, sizeof(dir_objtypeW)};
     static const struct unicode_str dir_kernel_str = {dir_kernelW, sizeof(dir_kernelW)};
+    static const struct unicode_str dir_nls_str = {dir_nlsW, sizeof(dir_nlsW)};
 
     /* symlinks */
     static const WCHAR link_dosdevW[] = {'D','o','s','D','e','v','i','c','e','s'};
@@ -399,10 +398,12 @@ void init_directories(void)
     static const struct unicode_str keyed_event_crit_sect_str = {keyed_event_crit_sectW, sizeof(keyed_event_crit_sectW)};
 
     /* mappings */
+    static const WCHAR intlW[] = {'N','l','s','S','e','c','t','i','o','n','L','A','N','G','_','I','N','T','L'};
     static const WCHAR user_dataW[] = {'_','_','w','i','n','e','_','u','s','e','r','_','s','h','a','r','e','d','_','d','a','t','a'};
+    static const struct unicode_str intl_str = {intlW, sizeof(intlW)};
     static const struct unicode_str user_data_str = {user_dataW, sizeof(user_dataW)};
 
-    struct directory *dir_driver, *dir_device, *dir_global, *dir_kernel;
+    struct directory *dir_driver, *dir_device, *dir_global, *dir_kernel, *dir_nls;
     struct object *named_pipe_device, *mailslot_device, *null_device;
     unsigned int i;
 
@@ -412,6 +413,7 @@ void init_directories(void)
     dir_objtype    = create_directory( &root_directory->obj, &dir_objtype_str, OBJ_PERMANENT, HASH_SIZE, NULL );
     dir_kernel     = create_directory( &root_directory->obj, &dir_kernel_str, OBJ_PERMANENT, HASH_SIZE, NULL );
     dir_global     = create_directory( &root_directory->obj, &dir_global_str, OBJ_PERMANENT, HASH_SIZE, NULL );
+    dir_nls        = create_directory( &root_directory->obj, &dir_nls_str, OBJ_PERMANENT, HASH_SIZE, NULL );
 
     /* devices */
     named_pipe_device = create_named_pipe_device( &dir_device->obj, &named_pipe_str, OBJ_PERMANENT, NULL );
@@ -439,7 +441,8 @@ void init_directories(void)
         release_object( create_event( &dir_kernel->obj, &kernel_events[i], OBJ_PERMANENT, 1, 0, NULL ));
     release_object( create_keyed_event( &dir_kernel->obj, &keyed_event_crit_sect_str, OBJ_PERMANENT, NULL ));
 
-    /* user data mapping */
+    /* mappings */
+    release_object( create_fd_mapping( &dir_nls->obj, &intl_str, intl_fd, OBJ_PERMANENT, NULL ));
     release_object( create_user_data_mapping( &dir_kernel->obj, &user_data_str, OBJ_PERMANENT, NULL ));
 
     release_object( named_pipe_device );
@@ -450,6 +453,7 @@ void init_directories(void)
     release_object( dir_device );
     release_object( dir_objtype );
     release_object( dir_kernel );
+    release_object( dir_nls );
     release_object( dir_global );
 }
 

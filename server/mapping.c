@@ -883,6 +883,41 @@ static struct mapping *create_mapping( struct object *root, const struct unicode
     return NULL;
 }
 
+/* create a read-only file mapping for the specified fd */
+struct mapping *create_fd_mapping( struct object *root, const struct unicode_str *name,
+                                   struct fd *fd, unsigned int attr, const struct security_descriptor *sd )
+{
+    struct mapping *mapping;
+    int unix_fd;
+    struct stat st;
+
+    if (!(mapping = create_named_object( root, &mapping_ops, name, attr, sd ))) return NULL;
+    if (get_error() == STATUS_OBJECT_NAME_EXISTS) return mapping;  /* Nothing else to do */
+
+    mapping->shared    = NULL;
+    mapping->committed = NULL;
+    mapping->flags     = SEC_FILE;
+    mapping->fd        = (struct fd *)grab_object( fd );
+    set_fd_user( mapping->fd, &mapping_fd_ops, NULL );
+
+    if ((unix_fd = get_unix_fd( mapping->fd )) == -1) goto error;
+    if (fstat( unix_fd, &st ) == -1)
+    {
+        file_set_error();
+        goto error;
+    }
+    if (!(mapping->size = st.st_size))
+    {
+        set_error( STATUS_MAPPED_FILE_SIZE_ZERO );
+        goto error;
+    }
+    return mapping;
+
+ error:
+    release_object( mapping );
+    return NULL;
+}
+
 static struct mapping *get_mapping_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct mapping *)get_handle_obj( process, handle, access, &mapping_ops );
