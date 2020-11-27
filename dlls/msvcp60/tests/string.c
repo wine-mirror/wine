@@ -562,12 +562,11 @@ static void test_basic_string_char_concatenate(void) {
 }
 
 static void test_basic_string_char_find(void) {
-    static const char tmp[] = {'a','a','a','\0','b','b','b',0};
     basic_string_char str;
     size_t ret;
 
     call_func1(p_basic_string_char_ctor, &str);
-    call_func3(p_basic_string_char_assign_cstr_len, &str, tmp, 7);
+    call_func3(p_basic_string_char_assign_cstr_len, &str, "aaa\0bbb", 7);
     ret = (size_t)call_func4(p_basic_string_char_find_cstr_substr, &str, "aaa", 0, 3);
     ok(ret == 0, "ret = %lu\n", (unsigned long)ret);
     ret = (size_t)call_func4(p_basic_string_char_find_cstr_substr, &str, "aaa", 1, 3);
@@ -660,8 +659,6 @@ static void test_basic_string_char_replace(void) {
 }
 
 static void test_basic_string_wchar(void) {
-    static const wchar_t test[] = { 't','e','s','t',0 };
-
     basic_string_wchar str1, str2, *pstr;
     const wchar_t *str;
     size_t size, capacity;
@@ -676,12 +673,12 @@ static void test_basic_string_wchar(void) {
     ok(*str == '\0', "*str = %c\n", *str);
     call_func1(p_basic_string_wchar_dtor, &str1);
 
-    pstr = call_func3(p_basic_string_wchar_ctor_cstr_alloc, &str1, test, &fake_allocator);
+    pstr = call_func3(p_basic_string_wchar_ctor_cstr_alloc, &str1, L"test", &fake_allocator);
     ok(pstr == &str1, "pstr != &str1\n");
     str = call_func1(p_basic_string_wchar_cstr, &str1);
-    ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
+    ok(!memcmp(str, L"test", 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
     str = call_func1(p_basic_string_wchar_data, &str1);
-    ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
+    ok(!memcmp(str, L"test", 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
     size = (size_t)call_func1(p_basic_string_wchar_size, &str1);
     ok(size == 4, "size = %lu\n", (unsigned long)size);
     capacity = (size_t)call_func1(p_basic_string_wchar_capacity, &str1);
@@ -691,9 +688,9 @@ static void test_basic_string_wchar(void) {
     pstr = call_func2(p_basic_string_wchar_copy_ctor, &str2, &str1);
     ok(pstr == &str2, "pstr != &str2\n");
     str = call_func1(p_basic_string_wchar_cstr, &str2);
-    ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
+    ok(!memcmp(str, L"test", 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
     str = call_func1(p_basic_string_wchar_data, &str2);
-    ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
+    ok(!memcmp(str, L"test", 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
 
     call_func3(p_basic_string_wchar_erase, &str2, 1, 2);
     str = call_func1(p_basic_string_wchar_cstr, &str2);
@@ -715,11 +712,11 @@ static void test_basic_string_wchar(void) {
     capacity = (size_t)call_func1(p_basic_string_wchar_capacity, &str1);
     ok(capacity >= size, "capacity = %lu < size = %lu\n", (unsigned long)capacity, (unsigned long)size);
 
-    call_func3(p_basic_string_wchar_assign_cstr_len, &str2, test, 4);
+    call_func3(p_basic_string_wchar_assign_cstr_len, &str2, L"test", 4);
     str = call_func1(p_basic_string_wchar_cstr, &str2);
-    ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
+    ok(!memcmp(str, L"test", 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
     str = call_func1(p_basic_string_wchar_data, &str2);
-    ok(!memcmp(str, test, 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
+    ok(!memcmp(str, L"test", 5*sizeof(wchar_t)), "str = %s\n", wine_dbgstr_w(str));
 
     call_func3(p_basic_string_wchar_assign_cstr_len, &str2, (str+1), 2);
     str = call_func1(p_basic_string_wchar_cstr, &str2);

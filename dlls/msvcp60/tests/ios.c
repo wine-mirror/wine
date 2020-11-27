@@ -1614,8 +1614,6 @@ static void test_istream_getline(void)
 
 static void test_ostream_print_ushort(void)
 {
-    static const wchar_t str65[] = { '6','5',0 };
-
     basic_stringstream_wchar wss;
     basic_string_wchar pwstr;
     const wchar_t *wstr;
@@ -1625,7 +1623,7 @@ static void test_ostream_print_ushort(void)
 
     call_func2(p_basic_stringstream_wchar_str_get, &wss, &pwstr);
     wstr = call_func1(p_basic_string_wchar_cstr, &pwstr);
-    ok(!lstrcmpW(str65, wstr), "wstr = %s\n", wine_dbgstr_w(wstr));
+    ok(!lstrcmpW(L"65", wstr), "wstr = %s\n", wine_dbgstr_w(wstr));
 
     call_func1(p_basic_string_wchar_dtor, &pwstr);
     call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
