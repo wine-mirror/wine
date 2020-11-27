@@ -46,7 +46,7 @@ static call_expression_t *new_call_expression(parser_ctx_t*,expression_t*,expres
 static call_expression_t *make_call_expression(parser_ctx_t*,expression_t*,expression_t*);
 
 static void *new_statement(parser_ctx_t*,statement_type_t,size_t,unsigned);
-static statement_t *new_call_statement(parser_ctx_t*,unsigned,BOOL,expression_t*);
+static statement_t *new_call_statement(parser_ctx_t*,unsigned,expression_t*);
 static statement_t *new_assign_statement(parser_ctx_t*,unsigned,expression_t*,expression_t*);
 static statement_t *new_set_statement(parser_ctx_t*,unsigned,expression_t*,expression_t*);
 static statement_t *new_dim_statement(parser_ctx_t*,unsigned,dim_decl_t*);
@@ -200,8 +200,8 @@ Statement
 
 SimpleStatement
     : CallExpression ArgumentList_opt       { call_expression_t *call_expr = make_call_expression(ctx, $1, $2); CHECK_ERROR;
-                                              $$ = new_call_statement(ctx, @$, FALSE, &call_expr->expr); CHECK_ERROR; };
-    | tCALL UnaryExpression                 { $$ = new_call_statement(ctx, @$, TRUE, $2); CHECK_ERROR; }
+                                              $$ = new_call_statement(ctx, @$, &call_expr->expr); CHECK_ERROR; };
+    | tCALL UnaryExpression                 { $$ = new_call_statement(ctx, @$, $2); CHECK_ERROR; }
     | CallExpression '=' Expression
                                             { $$ = new_assign_statement(ctx, @$, $1, $3); CHECK_ERROR; }
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, @$, $2); CHECK_ERROR; }
@@ -734,7 +734,7 @@ static void *new_statement(parser_ctx_t *ctx, statement_type_t type, size_t size
     return stat;
 }
 
-static statement_t *new_call_statement(parser_ctx_t *ctx, unsigned loc, BOOL is_strict, expression_t *expr)
+static statement_t *new_call_statement(parser_ctx_t *ctx, unsigned loc, expression_t *expr)
 {
     call_expression_t *call_expr = NULL;
     call_statement_t *stat;
@@ -758,7 +758,6 @@ static statement_t *new_call_statement(parser_ctx_t *ctx, unsigned loc, BOOL is_
         return NULL;
 
     stat->expr = call_expr;
-    stat->is_strict = is_strict;
     return &stat->stat;
 }
 

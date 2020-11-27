@@ -140,7 +140,6 @@ typedef struct _statement_t {
 typedef struct {
     statement_t stat;
     call_expression_t *expr;
-    BOOL is_strict;
 } call_statement_t;
 
 typedef struct {
