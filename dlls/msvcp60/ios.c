@@ -282,7 +282,7 @@ typedef struct {
     char *seekhigh;
     streamsize minsize;
     int strmode;
-    void* (__cdecl *palloc)(MSVCP_size_t);
+    void* (__cdecl *palloc)(size_t);
     void (__cdecl *pfree)(void*);
 } strstreambuf;
 
@@ -1196,16 +1196,16 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Xsgetn_s, 16)
 #endif
 #if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
 #define call_basic_streambuf_char__Xsgetn_s(this, ptr, size, count) CALL_VTBL_FUNC(this, 28, \
-        streamsize, (basic_streambuf_char*, char*, MSVCP_size_t, streamsize), (this, ptr, size, count))
+        streamsize, (basic_streambuf_char*, char*, size_t, streamsize), (this, ptr, size, count))
 #else
 #define call_basic_streambuf_char__Xsgetn_s(this, ptr, size, count) basic_streambuf_char__Xsgetn_s(this, ptr, size, count)
 #endif
-streamsize __thiscall basic_streambuf_char__Xsgetn_s(basic_streambuf_char *this, char *ptr, MSVCP_size_t size, streamsize count)
+streamsize __thiscall basic_streambuf_char__Xsgetn_s(basic_streambuf_char *this, char *ptr, size_t size, streamsize count)
 {
     streamsize copied, chunk;
     int c;
 
-    TRACE("(%p %p %lu %s)\n", this, ptr, size, wine_dbgstr_longlong(count));
+    TRACE("(%p %p %Iu %s)\n", this, ptr, size, wine_dbgstr_longlong(count));
 
     for(copied=0; copied<count && size;) {
         chunk = basic_streambuf_char__Gnavail(this);
@@ -1237,9 +1237,9 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Sgetn_s, 20)
 #else
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Sgetn_s, 16)
 #endif
-streamsize __thiscall basic_streambuf_char__Sgetn_s(basic_streambuf_char *this, char *ptr, MSVCP_size_t size, streamsize count)
+streamsize __thiscall basic_streambuf_char__Sgetn_s(basic_streambuf_char *this, char *ptr, size_t size, streamsize count)
 {
-    TRACE("(%p %p %lu %s)\n", this, ptr, size, wine_dbgstr_longlong(count));
+    TRACE("(%p %p %Iu %s)\n", this, ptr, size, wine_dbgstr_longlong(count));
     return call_basic_streambuf_char__Xsgetn_s(this, ptr, size, count);
 }
 
@@ -2076,16 +2076,16 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Xsgetn_s, 16)
 #endif
 #if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
 #define call_basic_streambuf_wchar__Xsgetn_s(this, ptr, size, count) CALL_VTBL_FUNC(this, 28, \
-        streamsize, (basic_streambuf_wchar*, wchar_t*, MSVCP_size_t, streamsize), (this, ptr, size, count))
+        streamsize, (basic_streambuf_wchar*, wchar_t*, size_t, streamsize), (this, ptr, size, count))
 #else
 #define call_basic_streambuf_wchar__Xsgetn_s(this, ptr, size, count) basic_streambuf_wchar__Xsgetn_s(this, ptr, size, count)
 #endif
-streamsize __thiscall basic_streambuf_wchar__Xsgetn_s(basic_streambuf_wchar *this, wchar_t *ptr, MSVCP_size_t size, streamsize count)
+streamsize __thiscall basic_streambuf_wchar__Xsgetn_s(basic_streambuf_wchar *this, wchar_t *ptr, size_t size, streamsize count)
 {
     streamsize copied, chunk;
     unsigned short c;
 
-    TRACE("(%p %p %lu %s)\n", this, ptr, size, wine_dbgstr_longlong(count));
+    TRACE("(%p %p %Iu %s)\n", this, ptr, size, wine_dbgstr_longlong(count));
 
     for(copied=0; copied<count && size;) {
         chunk = basic_streambuf_wchar__Gnavail(this);
@@ -2119,9 +2119,9 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Sgetn_s, 20)
 #else
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Sgetn_s, 16)
 #endif
-streamsize __thiscall basic_streambuf_wchar__Sgetn_s(basic_streambuf_wchar *this, wchar_t *ptr, MSVCP_size_t size, streamsize count)
+streamsize __thiscall basic_streambuf_wchar__Sgetn_s(basic_streambuf_wchar *this, wchar_t *ptr, size_t size, streamsize count)
 {
-    TRACE("(%p %p %lu %s)\n", this, ptr, size, wine_dbgstr_longlong(count));
+    TRACE("(%p %p %Iu %s)\n", this, ptr, size, wine_dbgstr_longlong(count));
     return call_basic_streambuf_wchar__Xsgetn_s(this, ptr, size, count);
 }
 
@@ -3903,9 +3903,9 @@ int __thiscall basic_stringbuf_char__Getstate(basic_stringbuf_char *this, IOSB_o
 /* ?_Init@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEXPBDIH@Z */
 /* ?_Init@?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAAXPEBD_KH@Z */
 DEFINE_THISCALL_WRAPPER(basic_stringbuf_char__Init, 16)
-void __thiscall basic_stringbuf_char__Init(basic_stringbuf_char *this, const char *str, MSVCP_size_t count, int state)
+void __thiscall basic_stringbuf_char__Init(basic_stringbuf_char *this, const char *str, size_t count, int state)
 {
-    TRACE("(%p, %p, %ld, %d)\n", this, str, count, state);
+    TRACE("(%p, %p, %Iu, %d)\n", this, str, count, state);
 
     basic_streambuf_char__Init_empty(&this->base);
 
@@ -4030,7 +4030,7 @@ basic_stringbuf_char* __thiscall basic_stringbuf_char_vector_dtor(basic_stringbu
 DEFINE_THISCALL_WRAPPER(basic_stringbuf_char_overflow, 8)
 int __thiscall basic_stringbuf_char_overflow(basic_stringbuf_char *this, int meta)
 {
-    MSVCP_size_t oldsize, size;
+    size_t oldsize, size;
     char *ptr, *buf;
 
     TRACE("(%p %x)\n", this, meta);
@@ -4280,9 +4280,9 @@ int __thiscall basic_stringbuf_wchar__Getstate(basic_stringbuf_wchar *this, IOSB
 /* ?_Init@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@IAEXPBGIH@Z */
 /* ?_Init@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@IEAAXPEBG_KH@Z */
 DEFINE_THISCALL_WRAPPER(basic_stringbuf_wchar__Init, 16)
-void __thiscall basic_stringbuf_wchar__Init(basic_stringbuf_wchar *this, const wchar_t *str, MSVCP_size_t count, int state)
+void __thiscall basic_stringbuf_wchar__Init(basic_stringbuf_wchar *this, const wchar_t *str, size_t count, int state)
 {
-    TRACE("(%p, %p, %lu, %d)\n", this, str, count, state);
+    TRACE("(%p, %p, %Iu, %d)\n", this, str, count, state);
 
     basic_streambuf_wchar__Init_empty(&this->base);
 
@@ -4443,7 +4443,7 @@ basic_stringbuf_wchar* __thiscall basic_stringbuf_wchar_vector_dtor(basic_string
 DEFINE_THISCALL_WRAPPER(basic_stringbuf_wchar_overflow, 8)
 unsigned short __thiscall basic_stringbuf_wchar_overflow(basic_stringbuf_wchar *this, unsigned short meta)
 {
-    MSVCP_size_t oldsize, size;
+    size_t oldsize, size;
     wchar_t *ptr, *buf;
 
     TRACE("(%p %x)\n", this, meta);
@@ -6473,7 +6473,7 @@ basic_ostream_char* __cdecl basic_ostream_char_print_bstr(basic_ostream_char *os
     TRACE("(%p %p)\n", ostr, str);
 
     if(basic_ostream_char_sentry_create(ostr)) {
-        MSVCP_size_t len = MSVCP_basic_string_char_length(str);
+        size_t len = MSVCP_basic_string_char_length(str);
         streamsize pad = (base->base.wide>len ? base->base.wide-len : 0);
 
         if((base->base.fmtfl & FMTFLAG_adjustfield) != FMTFLAG_left) {
@@ -6572,7 +6572,7 @@ basic_ostream_char* __cdecl basic_ostream_char_print_str(basic_ostream_char *ost
     TRACE("(%p %s)\n", ostr, str);
 
     if(basic_ostream_char_sentry_create(ostr)) {
-        MSVCP_size_t len = strlen(str);
+        size_t len = strlen(str);
         streamsize pad = (base->base.wide>len ? base->base.wide-len : 0);
 
         if((base->base.fmtfl & FMTFLAG_adjustfield) != FMTFLAG_left) {
@@ -7494,7 +7494,7 @@ basic_ostream_wchar* __cdecl basic_ostream_wchar_print_bstr(basic_ostream_wchar 
     TRACE("(%p %p)\n", ostr, str);
 
     if(basic_ostream_wchar_sentry_create(ostr)) {
-        MSVCP_size_t len = MSVCP_basic_string_wchar_length(str);
+        size_t len = MSVCP_basic_string_wchar_length(str);
         streamsize pad = (base->base.wide>len ? base->base.wide-len : 0);
 
         if((base->base.fmtfl & FMTFLAG_adjustfield) != FMTFLAG_left) {
@@ -7589,7 +7589,7 @@ basic_ostream_wchar* __cdecl basic_ostream_wchar_print_str(basic_ostream_wchar *
     TRACE("(%p %s)\n", ostr, debugstr_w(str));
 
     if(basic_ostream_wchar_sentry_create(ostr)) {
-        MSVCP_size_t len = wcslen(str);
+        size_t len = wcslen(str);
         streamsize pad = (base->base.wide>len ? base->base.wide-len : 0);
 
         if((base->base.fmtfl & FMTFLAG_adjustfield) != FMTFLAG_left) {
@@ -8166,12 +8166,12 @@ DEFINE_THISCALL_WRAPPER(basic_istream_char__Read_s, 20)
 #else
 DEFINE_THISCALL_WRAPPER(basic_istream_char__Read_s, 16)
 #endif
-basic_istream_char* __thiscall basic_istream_char__Read_s(basic_istream_char *this, char *str, MSVCP_size_t size, streamsize count)
+basic_istream_char* __thiscall basic_istream_char__Read_s(basic_istream_char *this, char *str, size_t size, streamsize count)
 {
     basic_ios_char *base = basic_istream_char_get_basic_ios(this);
     IOSB_iostate state = IOSTATE_goodbit;
 
-    TRACE("(%p %p %lu %s)\n", this, str, size, wine_dbgstr_longlong(count));
+    TRACE("(%p %p %Iu %s)\n", this, str, size, wine_dbgstr_longlong(count));
 
     if(basic_istream_char_sentry_create(this, TRUE)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
@@ -8207,12 +8207,12 @@ DEFINE_THISCALL_WRAPPER(basic_istream_char__Readsome_s, 20)
 #else
 DEFINE_THISCALL_WRAPPER(basic_istream_char__Readsome_s, 16)
 #endif
-streamsize __thiscall basic_istream_char__Readsome_s(basic_istream_char *this, char *str, MSVCP_size_t size, streamsize count)
+streamsize __thiscall basic_istream_char__Readsome_s(basic_istream_char *this, char *str, size_t size, streamsize count)
 {
     basic_ios_char *base = basic_istream_char_get_basic_ios(this);
     IOSB_iostate state = IOSTATE_goodbit;
 
-    TRACE("(%p %p %lu %s)\n", this, str, size, wine_dbgstr_longlong(count));
+    TRACE("(%p %p %Iu %s)\n", this, str, size, wine_dbgstr_longlong(count));
 
     this->count = 0;
 
@@ -8757,7 +8757,7 @@ basic_istream_char* __cdecl basic_istream_char_read_bstr(
 
     if(basic_istream_char_sentry_create(istream, FALSE)) {
         const ctype_char *ctype = ctype_char_use_facet(IOS_LOCALE(base->strbuf));
-        MSVCP_size_t count = ios_base_width_get(&base->base);
+        size_t count = ios_base_width_get(&base->base);
 
         if(!count)
             count = -1;
@@ -8794,7 +8794,7 @@ basic_istream_char* __cdecl basic_istream_char_read_str(basic_istream_char *istr
 
     if(basic_istream_char_sentry_create(istream, FALSE)) {
         const ctype_char *ctype = ctype_char_use_facet(IOS_LOCALE(base->strbuf));
-        MSVCP_size_t count = ios_base_width_get(&base->base)-1;
+        size_t count = ios_base_width_get(&base->base)-1;
 
         for(c = basic_streambuf_char_sgetc(basic_ios_char_rdbuf_get(base));
                 c!=EOF && !ctype_char_is_ch(ctype, _SPACE|_BLANK, c) && count>0;
@@ -9649,12 +9649,12 @@ DEFINE_THISCALL_WRAPPER(basic_istream_wchar__Read_s, 20)
 #else
 DEFINE_THISCALL_WRAPPER(basic_istream_wchar__Read_s, 16)
 #endif
-basic_istream_wchar* __thiscall basic_istream_wchar__Read_s(basic_istream_wchar *this, wchar_t *str, MSVCP_size_t size, streamsize count)
+basic_istream_wchar* __thiscall basic_istream_wchar__Read_s(basic_istream_wchar *this, wchar_t *str, size_t size, streamsize count)
 {
     basic_ios_wchar *base = basic_istream_wchar_get_basic_ios(this);
     IOSB_iostate state = IOSTATE_goodbit;
 
-    TRACE("(%p %p %lu %s)\n", this, str, size, wine_dbgstr_longlong(count));
+    TRACE("(%p %p %Iu %s)\n", this, str, size, wine_dbgstr_longlong(count));
 
     if(basic_istream_wchar_sentry_create(this, TRUE)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
@@ -9694,12 +9694,12 @@ DEFINE_THISCALL_WRAPPER(basic_istream_wchar__Readsome_s, 20)
 #else
 DEFINE_THISCALL_WRAPPER(basic_istream_wchar__Readsome_s, 16)
 #endif
-streamsize __thiscall basic_istream_wchar__Readsome_s(basic_istream_wchar *this, wchar_t *str, MSVCP_size_t size, streamsize count)
+streamsize __thiscall basic_istream_wchar__Readsome_s(basic_istream_wchar *this, wchar_t *str, size_t size, streamsize count)
 {
     basic_ios_wchar *base = basic_istream_wchar_get_basic_ios(this);
     IOSB_iostate state = IOSTATE_goodbit;
 
-    TRACE("(%p %p %lu %s)\n", this, str, size, wine_dbgstr_longlong(count));
+    TRACE("(%p %p %Iu %s)\n", this, str, size, wine_dbgstr_longlong(count));
 
     this->count = 0;
 
@@ -10427,7 +10427,7 @@ static basic_istream_wchar* basic_istream_read_bstr(basic_istream_wchar *istream
     TRACE("(%p %p)\n", istream, str);
 
     if(basic_istream_wchar_sentry_create(istream, FALSE)) {
-        MSVCP_size_t count = ios_base_width_get(&base->base);
+        size_t count = ios_base_width_get(&base->base);
 
         if(!count)
             count = -1;
@@ -10475,7 +10475,7 @@ static basic_istream_wchar* basic_istream_read_str(basic_istream_wchar *istream,
     TRACE("(%p %p)\n", istream, str);
 
     if(basic_istream_wchar_sentry_create(istream, FALSE)) {
-        MSVCP_size_t count = ios_base_width_get(&base->base)-1;
+        size_t count = ios_base_width_get(&base->base)-1;
 
         for(c = basic_streambuf_wchar_sgetc(basic_ios_wchar_rdbuf_get(base));
                 c!=WEOF && !ctype_wchar_is_ch(ctype, _SPACE|_BLANK, c) && count>0;
@@ -13082,7 +13082,7 @@ strstreambuf* __thiscall strstreambuf_ctor_len(strstreambuf *this, streamsize le
 /* ??0strstreambuf@std@@QAE@P6APAXI@ZP6AXPAX@Z@Z */
 /* ??0strstreambuf@std@@QEAA@P6APEAX_K@ZP6AXPEAX@Z@Z */
 DEFINE_THISCALL_WRAPPER(strstreambuf_ctor_alloc, 12)
-strstreambuf* __thiscall strstreambuf_ctor_alloc(strstreambuf *this, void* (__cdecl *palloc)(MSVCP_size_t), void (__cdecl *pfree)(void*))
+strstreambuf* __thiscall strstreambuf_ctor_alloc(strstreambuf *this, void* (__cdecl *palloc)(size_t), void (__cdecl *pfree)(void*))
 {
     TRACE("(%p %p %p)\n", this, palloc, pfree);
 
@@ -13222,7 +13222,7 @@ streamsize __thiscall strstreambuf_pcount(const strstreambuf *this)
 DEFINE_THISCALL_WRAPPER(strstreambuf_overflow, 8)
 int __thiscall strstreambuf_overflow(strstreambuf *this, int c)
 {
-    MSVCP_size_t old_size, size;
+    size_t old_size, size;
     char *ptr, *buf;
 
     TRACE("(%p %d)\n", this, c);

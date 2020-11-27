@@ -23,7 +23,6 @@
 #define ALIGNED_SIZE(size, alignment) (((size)+((alignment)-1))/(alignment)*(alignment))
 
 typedef unsigned char MSVCP_bool;
-typedef SIZE_T MSVCP_size_t;
 typedef SSIZE_T streamoff;
 typedef SSIZE_T streamsize;
 #define STREAMOFF_BITS 32
@@ -33,7 +32,7 @@ void __cdecl _invalid_parameter(const wchar_t*, const wchar_t*,
         const wchar_t*, unsigned int, uintptr_t);
 BOOL __cdecl __uncaught_exception(void);
 
-extern void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
+extern void* (__cdecl *MSVCRT_operator_new)(size_t);
 extern void (__cdecl *MSVCRT_operator_delete)(void*);
 
 /* basic_string<char, char_traits<char>, allocator<char>> */
@@ -41,50 +40,50 @@ typedef struct
 {
     void *allocator;
     char *ptr;
-    MSVCP_size_t size;
-    MSVCP_size_t res;
+    size_t size;
+    size_t res;
 } basic_string_char;
 
 basic_string_char* __thiscall MSVCP_basic_string_char_ctor(basic_string_char*);
 basic_string_char* __thiscall MSVCP_basic_string_char_ctor_cstr(basic_string_char*, const char*);
-basic_string_char* __thiscall MSVCP_basic_string_char_ctor_cstr_len(basic_string_char*, const char*, MSVCP_size_t);
+basic_string_char* __thiscall MSVCP_basic_string_char_ctor_cstr_len(basic_string_char*, const char*, size_t);
 basic_string_char* __thiscall MSVCP_basic_string_char_copy_ctor(basic_string_char*, const basic_string_char*);
 void __thiscall MSVCP_basic_string_char_dtor(basic_string_char*);
 const char* __thiscall MSVCP_basic_string_char_c_str(const basic_string_char*);
 void __thiscall MSVCP_basic_string_char_clear(basic_string_char*);
 basic_string_char* __thiscall MSVCP_basic_string_char_append_ch(basic_string_char*, char);
-MSVCP_size_t __thiscall MSVCP_basic_string_char_length(const basic_string_char*);
-basic_string_char* __thiscall MSVCP_basic_string_char_append_len_ch(basic_string_char*, MSVCP_size_t, char);
+size_t __thiscall MSVCP_basic_string_char_length(const basic_string_char*);
+basic_string_char* __thiscall MSVCP_basic_string_char_append_len_ch(basic_string_char*, size_t, char);
 basic_string_char* __thiscall MSVCP_basic_string_char_assign(basic_string_char*, const basic_string_char*);
 
 typedef struct
 {
     void *allocator;
     wchar_t *ptr;
-    MSVCP_size_t size;
-    MSVCP_size_t res;
+    size_t size;
+    size_t res;
 } basic_string_wchar;
 
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor(basic_string_wchar*);
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr(basic_string_wchar*, const wchar_t*);
-basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr_len(basic_string_wchar*, const wchar_t*, MSVCP_size_t);
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr_len(basic_string_wchar*, const wchar_t*, size_t);
 void __thiscall MSVCP_basic_string_wchar_dtor(basic_string_wchar*);
 const wchar_t* __thiscall MSVCP_basic_string_wchar_c_str(const basic_string_wchar*);
 void __thiscall MSVCP_basic_string_wchar_clear(basic_string_wchar*);
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_ch(basic_string_wchar*, wchar_t);
-MSVCP_size_t __thiscall MSVCP_basic_string_wchar_length(const basic_string_wchar*);
+size_t __thiscall MSVCP_basic_string_wchar_length(const basic_string_wchar*);
 
-char* __thiscall MSVCP_allocator_char_allocate(void*, MSVCP_size_t);
-void __thiscall MSVCP_allocator_char_deallocate(void*, char*, MSVCP_size_t);
-MSVCP_size_t __thiscall MSVCP_allocator_char_max_size(const void*);
-wchar_t* __thiscall MSVCP_allocator_wchar_allocate(void*, MSVCP_size_t);
-void __thiscall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, MSVCP_size_t);
-MSVCP_size_t __thiscall MSVCP_allocator_wchar_max_size(const void*);
+char* __thiscall MSVCP_allocator_char_allocate(void*, size_t);
+void __thiscall MSVCP_allocator_char_deallocate(void*, char*, size_t);
+size_t __thiscall MSVCP_allocator_char_max_size(const void*);
+wchar_t* __thiscall MSVCP_allocator_wchar_allocate(void*, size_t);
+void __thiscall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, size_t);
+size_t __thiscall MSVCP_allocator_wchar_max_size(const void*);
 
 /* class locale::facet */
 typedef struct {
     const vtable_ptr *vtable;
-    MSVCP_size_t refs;
+    size_t refs;
 } locale_facet;
 
 typedef enum {
@@ -174,7 +173,7 @@ locale* __thiscall locale_ctor_uninitialized(locale *, int);
 locale* __thiscall locale_operator_assign(locale*, const locale*);
 void __thiscall locale_dtor(locale*);
 void free_locale(void);
-locale* __thiscall locale__Addfac(locale*, locale_facet*, MSVCP_size_t, MSVCP_size_t);
+locale* __thiscall locale__Addfac(locale*, locale_facet*, size_t, size_t);
 codecvt_char* codecvt_char_use_facet(const locale*);
 codecvt_wchar* codecvt_wchar_use_facet(const locale*);
 codecvt_wchar* codecvt_short_use_facet(const locale*);
@@ -183,7 +182,7 @@ ctype_wchar* ctype_wchar_use_facet(const locale*);
 ctype_wchar* ctype_short_use_facet(const locale*);
 
 typedef struct {
-    MSVCP_size_t id;
+    size_t id;
 } locale_id;
 extern locale_id codecvt_char_id;
 extern locale_id codecvt_short_id;
@@ -296,7 +295,7 @@ typedef struct _ios_base {
     IOS_BASE_iosarray *arr;
     IOS_BASE_fnarray *calls;
     locale loc;
-    MSVCP_size_t stdstr;
+    size_t stdstr;
 } ios_base;
 
 /* class basic_streambuf<char> */
