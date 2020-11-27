@@ -486,6 +486,14 @@ static void test_errorinfo(void)
     ok(dispparams.cArgs == 1, "Got argument count %u\n", dispparams.cArgs);
     ok(dispparams.cNamedArgs == 1, "Got named argument count %u\n", dispparams.cNamedArgs);
 
+    EXPECT_REF(errrecs, 2);
+    EXPECT_REF(errorinfo, 2);
+    hr = IErrorRecords_GetErrorInfo(errrecs, 0, 0, &errorinfo2);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(errorinfo == errorinfo2, "different object\n");
+    EXPECT_REF(errorinfo, 3);
+    IErrorInfo_Release(errorinfo2);
+
     free_dispparams(&dispparams);
     VariantClear(&arg);
 
