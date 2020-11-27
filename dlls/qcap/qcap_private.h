@@ -30,6 +30,8 @@
 #include "wine/strmbase.h"
 #include "wine/unicode.h"
 
+extern HINSTANCE qcap_instance DECLSPEC_HIDDEN;
+
 extern DWORD ObjectRefCount(BOOL increment) DECLSPEC_HIDDEN;
 
 HRESULT audio_record_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
@@ -58,7 +60,5 @@ struct video_capture_funcs
     HRESULT (*set_prop)(struct video_capture_device *device, VideoProcAmpProperty property, LONG value, LONG flags);
     BOOL (*read_frame)(struct video_capture_device *device, BYTE *data);
 };
-
-extern const struct video_capture_funcs v4l_funcs;
 
 #endif

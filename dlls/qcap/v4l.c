@@ -19,6 +19,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #define BIONIC_IOCTL_NO_SIGNEDNESS_OVERLOAD  /* work around ioctl breakage on Android */
 
 #include "config.h"
@@ -47,7 +51,11 @@
 #include <unistd.h>
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "initguid.h"
 #include "qcap_private.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
@@ -558,17 +566,12 @@ const struct video_capture_funcs v4l_funcs =
     .read_frame = v4l_device_read_frame,
 };
 
-#else
-
-static struct video_capture_device *v4l_device_create(USHORT index)
+NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
 {
-    ERR("v4l2 was not present at compilation time.\n");
-    return NULL;
+    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
+
+    *(const struct video_capture_funcs **)ptr_out = &v4l_funcs;
+    return STATUS_SUCCESS;
 }
 
-const struct video_capture_funcs v4l_funcs =
-{
-    .create = v4l_device_create,
-};
-
-#endif /* defined(VIDIOCMCAPTURE) */
+#endif /* HAVE_LINUX_VIDEODEV2_H */

@@ -25,7 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
-static HINSTANCE qcap_instance;
+HINSTANCE qcap_instance;
 
 static LONG objects_ref = 0;
 

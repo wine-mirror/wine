@@ -19,6 +19,7 @@
  */
 
 #include "qcap_private.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
@@ -839,7 +840,7 @@ static const IAMVideoControlVtbl IAMVideoControl_VTable =
 
 static BOOL WINAPI load_capture_funcs(INIT_ONCE *once, void *param, void **context)
 {
-    capture_funcs = &v4l_funcs;
+    __wine_init_unix_lib(qcap_instance, DLL_PROCESS_ATTACH, NULL, &capture_funcs);
     return TRUE;
 }
 
@@ -850,7 +851,7 @@ HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out)
     static const WCHAR source_name[] = {'O','u','t','p','u','t',0};
     struct vfw_capture *object;
 
-    if (!InitOnceExecuteOnce(&init_once, load_capture_funcs, NULL, NULL))
+    if (!InitOnceExecuteOnce(&init_once, load_capture_funcs, NULL, NULL) || !capture_funcs)
         return E_FAIL;
 
     if (!(object = CoTaskMemAlloc(sizeof(*object))))
