@@ -24,9 +24,8 @@
 #define ALIGNED_SIZE(size, alignment) (((size)+((alignment)-1))/(alignment)*(alignment))
 
 typedef unsigned char MSVCP_bool;
-typedef SIZE_T MSVCP_size_t;
 
-#define MSVCP_SIZE_T_MAX (~(MSVCP_size_t)0)
+#define MSVCP_SIZE_T_MAX (~(size_t)0)
 #if _MSVCP_VER >= 100
 typedef __int64 DECLSPEC_ALIGN(8) streamoff;
 typedef __int64 DECLSPEC_ALIGN(8) streamsize;
@@ -43,7 +42,7 @@ void __cdecl _invalid_parameter_noinfo(void);
 BOOL __cdecl __uncaught_exception(void);
 int __cdecl _callnewh(size_t);
 
-extern void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
+extern void* (__cdecl *MSVCRT_operator_new)(size_t);
 extern void (__cdecl *MSVCRT_operator_delete)(void*);
 extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
@@ -89,8 +88,8 @@ typedef struct
 #endif
         char *ptr;
     } data;
-    MSVCP_size_t size;
-    MSVCP_size_t res;
+    size_t size;
+    size_t res;
 #if _MSVCP_VER == 100
     char allocator;
 #endif
@@ -98,13 +97,13 @@ typedef struct
 
 basic_string_char* __thiscall MSVCP_basic_string_char_ctor(basic_string_char*);
 basic_string_char* __thiscall MSVCP_basic_string_char_ctor_cstr(basic_string_char*, const char*);
-basic_string_char* __thiscall MSVCP_basic_string_char_ctor_cstr_len(basic_string_char*, const char*, MSVCP_size_t);
+basic_string_char* __thiscall MSVCP_basic_string_char_ctor_cstr_len(basic_string_char*, const char*, size_t);
 basic_string_char* __thiscall MSVCP_basic_string_char_copy_ctor(basic_string_char*, const basic_string_char*);
 void* __thiscall MSVCP_basic_string_char_dtor(basic_string_char*);
 const char* __thiscall MSVCP_basic_string_char_c_str(const basic_string_char*);
 void __thiscall MSVCP_basic_string_char_clear(basic_string_char*);
 basic_string_char* __thiscall MSVCP_basic_string_char_append_ch(basic_string_char*, char);
-MSVCP_size_t __thiscall MSVCP_basic_string_char_length(const basic_string_char*);
+size_t __thiscall MSVCP_basic_string_char_length(const basic_string_char*);
 basic_string_char* __thiscall MSVCP_basic_string_char_assign(basic_string_char*, const basic_string_char*);
 
 typedef struct
@@ -119,8 +118,8 @@ typedef struct
 #endif
         wchar_t *ptr;
     } data;
-    MSVCP_size_t size;
-    MSVCP_size_t res;
+    size_t size;
+    size_t res;
 #if _MSVCP_VER == 100
     char allocator;
 #endif
@@ -128,19 +127,19 @@ typedef struct
 
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor(basic_string_wchar*);
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr(basic_string_wchar*, const wchar_t*);
-basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr_len(basic_string_wchar*, const wchar_t*, MSVCP_size_t);
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr_len(basic_string_wchar*, const wchar_t*, size_t);
 void* __thiscall MSVCP_basic_string_wchar_dtor(basic_string_wchar*);
 const wchar_t* __thiscall MSVCP_basic_string_wchar_c_str(const basic_string_wchar*);
 void __thiscall MSVCP_basic_string_wchar_clear(basic_string_wchar*);
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_ch(basic_string_wchar*, wchar_t);
-MSVCP_size_t __thiscall MSVCP_basic_string_wchar_length(const basic_string_wchar*);
+size_t __thiscall MSVCP_basic_string_wchar_length(const basic_string_wchar*);
 
-char* __thiscall MSVCP_allocator_char_allocate(void*, MSVCP_size_t);
-void __thiscall MSVCP_allocator_char_deallocate(void*, char*, MSVCP_size_t);
-MSVCP_size_t __thiscall MSVCP_allocator_char_max_size(const void*);
-wchar_t* __thiscall MSVCP_allocator_wchar_allocate(void*, MSVCP_size_t);
-void __thiscall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, MSVCP_size_t);
-MSVCP_size_t __thiscall MSVCP_allocator_wchar_max_size(const void*);
+char* __thiscall MSVCP_allocator_char_allocate(void*, size_t);
+void __thiscall MSVCP_allocator_char_deallocate(void*, char*, size_t);
+size_t __thiscall MSVCP_allocator_char_max_size(const void*);
+wchar_t* __thiscall MSVCP_allocator_wchar_allocate(void*, size_t);
+void __thiscall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, size_t);
+size_t __thiscall MSVCP_allocator_wchar_max_size(const void*);
 
 typedef struct
 {
@@ -169,7 +168,7 @@ _Yarn_wchar* __thiscall _Yarn_wchar_op_assign_cstr(_Yarn_wchar*, const wchar_t*)
 /* class locale::facet */
 typedef struct {
     const vtable_ptr *vtable;
-    MSVCP_size_t refs;
+    size_t refs;
 } locale_facet;
 
 typedef enum {
@@ -404,9 +403,9 @@ typedef struct _fnarray {
 typedef struct _ios_base {
     const vtable_ptr *vtable;
 #if _MSVCP_VER >= 100
-    MSVCP_size_t DECLSPEC_ALIGN(8) stdstr;
+    size_t DECLSPEC_ALIGN(8) stdstr;
 #elif _MSVCP_VER >= 71
-    MSVCP_size_t stdstr;
+    size_t stdstr;
 #endif
     IOSB_iostate state;
     IOSB_iostate except;
@@ -421,7 +420,7 @@ typedef struct _ios_base {
     locale *loc;
 #endif
 #if _MSVCP_VER <= 70
-    MSVCP_size_t stdstr;
+    size_t stdstr;
 #endif
 } ios_base;
 

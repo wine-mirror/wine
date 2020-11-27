@@ -493,7 +493,7 @@ unsigned short __cdecl wctype(const char *property)
 
 typedef void (__cdecl *MSVCP_new_handler_func)(void);
 static MSVCP_new_handler_func MSVCP_new_handler;
-static int __cdecl new_handler_wrapper(MSVCP_size_t unused)
+static int __cdecl new_handler_wrapper(size_t unused)
 {
     MSVCP_new_handler();
     return 1;
@@ -1472,7 +1472,7 @@ void __thiscall _Pad__Release(_Pad *this)
 typedef struct _Page
 {
     struct _Page *_Next;
-    MSVCP_size_t _Mask;
+    size_t _Mask;
     char data[1];
 } _Page;
 
@@ -1481,15 +1481,15 @@ typedef struct
     LONG lock;
     _Page *head;
     _Page *tail;
-    MSVCP_size_t head_pos;
-    MSVCP_size_t tail_pos;
+    size_t head_pos;
+    size_t tail_pos;
 } threadsafe_queue;
 
 #define QUEUES_NO 8
 typedef struct
 {
-    MSVCP_size_t tail_pos;
-    MSVCP_size_t head_pos;
+    size_t tail_pos;
+    size_t head_pos;
     threadsafe_queue queues[QUEUES_NO];
 } queue_data;
 
@@ -1497,28 +1497,28 @@ typedef struct
 {
     const vtable_ptr *vtable;
     queue_data *data; /* queue_data structure is not binary compatible */
-    MSVCP_size_t alloc_count;
-    MSVCP_size_t item_size;
+    size_t alloc_count;
+    size_t item_size;
 } _Concurrent_queue_base_v4;
 
 extern const vtable_ptr MSVCP__Concurrent_queue_base_v4_vtable;
 #if _MSVCP_VER == 100
 #define call__Concurrent_queue_base_v4__Move_item call__Concurrent_queue_base_v4__Copy_item
 #define call__Concurrent_queue_base_v4__Copy_item(this,dst,idx,src) CALL_VTBL_FUNC(this, \
-        0, void, (_Concurrent_queue_base_v4*,_Page*,MSVCP_size_t,const void*), (this,dst,idx,src))
+        0, void, (_Concurrent_queue_base_v4*,_Page*,size_t,const void*), (this,dst,idx,src))
 #define  call__Concurrent_queue_base_v4__Assign_and_destroy_item(this,dst,src,idx) CALL_VTBL_FUNC(this, \
-        4, void, (_Concurrent_queue_base_v4*,void*,_Page*,MSVCP_size_t), (this,dst,src,idx))
+        4, void, (_Concurrent_queue_base_v4*,void*,_Page*,size_t), (this,dst,src,idx))
 #define call__Concurrent_queue_base_v4__Allocate_page(this) CALL_VTBL_FUNC(this, \
         12, _Page*, (_Concurrent_queue_base_v4*), (this))
 #define call__Concurrent_queue_base_v4__Deallocate_page(this, page) CALL_VTBL_FUNC(this, \
         16, void, (_Concurrent_queue_base_v4*,_Page*), (this,page))
 #else
 #define call__Concurrent_queue_base_v4__Move_item(this,dst,idx,src) CALL_VTBL_FUNC(this, \
-        0, void, (_Concurrent_queue_base_v4*,_Page*,MSVCP_size_t,void*), (this,dst,idx,src))
+        0, void, (_Concurrent_queue_base_v4*,_Page*,size_t,void*), (this,dst,idx,src))
 #define call__Concurrent_queue_base_v4__Copy_item(this,dst,idx,src) CALL_VTBL_FUNC(this, \
-        4, void, (_Concurrent_queue_base_v4*,_Page*,MSVCP_size_t,const void*), (this,dst,idx,src))
+        4, void, (_Concurrent_queue_base_v4*,_Page*,size_t,const void*), (this,dst,idx,src))
 #define  call__Concurrent_queue_base_v4__Assign_and_destroy_item(this,dst,src,idx) CALL_VTBL_FUNC(this, \
-        8, void, (_Concurrent_queue_base_v4*,void*,_Page*,MSVCP_size_t), (this,dst,src,idx))
+        8, void, (_Concurrent_queue_base_v4*,void*,_Page*,size_t), (this,dst,src,idx))
 #define call__Concurrent_queue_base_v4__Allocate_page(this) CALL_VTBL_FUNC(this, \
         16, _Page*, (_Concurrent_queue_base_v4*), (this))
 #define call__Concurrent_queue_base_v4__Deallocate_page(this, page) CALL_VTBL_FUNC(this, \
@@ -1539,9 +1539,9 @@ void __thiscall _Concurrent_queue_base_v4__Internal_throw_exception(
 /* ??0_Concurrent_queue_base_v4@details@Concurrency@@IEAA@_K@Z */
 DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4_ctor, 8)
 _Concurrent_queue_base_v4* __thiscall _Concurrent_queue_base_v4_ctor(
-        _Concurrent_queue_base_v4 *this, MSVCP_size_t size)
+        _Concurrent_queue_base_v4 *this, size_t size)
 {
-    TRACE("(%p %ld)\n", this, size);
+    TRACE("(%p %Iu)\n", this, size);
 
     this->data = MSVCRT_operator_new(sizeof(*this->data));
     memset(this->data, 0, sizeof(*this->data));
@@ -1619,7 +1619,7 @@ MSVCP_bool __thiscall _Concurrent_queue_base_v4__Internal_empty(
 /* ?_Internal_size@_Concurrent_queue_base_v4@details@Concurrency@@IBEIXZ */
 /* ?_Internal_size@_Concurrent_queue_base_v4@details@Concurrency@@IEBA_KXZ */
 DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_size, 4)
-MSVCP_size_t __thiscall _Concurrent_queue_base_v4__Internal_size(
+size_t __thiscall _Concurrent_queue_base_v4__Internal_size(
         const _Concurrent_queue_base_v4 *this)
 {
     TRACE("(%p)\n", this);
@@ -1649,9 +1649,9 @@ static void spin_wait(int *counter)
 }
 
 #ifdef _WIN64
-static MSVCP_size_t InterlockedIncrementSizeT(MSVCP_size_t volatile *dest)
+static size_t InterlockedIncrementSizeT(size_t volatile *dest)
 {
-    MSVCP_size_t v;
+    size_t v;
 
     do
     {
@@ -1670,10 +1670,10 @@ static void CALLBACK queue_push_finally(BOOL normal, void *ctx)
     InterlockedIncrementSizeT(&queue->tail_pos);
 }
 
-static void threadsafe_queue_push(threadsafe_queue *queue, MSVCP_size_t id,
+static void threadsafe_queue_push(threadsafe_queue *queue, size_t id,
         void *e, _Concurrent_queue_base_v4 *parent, BOOL copy)
 {
-    MSVCP_size_t page_id = id & ~(parent->alloc_count-1);
+    size_t page_id = id & ~(parent->alloc_count-1);
     int spin;
     _Page *p;
 
@@ -1714,10 +1714,10 @@ static void threadsafe_queue_push(threadsafe_queue *queue, MSVCP_size_t id,
     __FINALLY_CTX(queue_push_finally, queue);
 }
 
-static BOOL threadsafe_queue_pop(threadsafe_queue *queue, MSVCP_size_t id,
+static BOOL threadsafe_queue_pop(threadsafe_queue *queue, size_t id,
         void *e, _Concurrent_queue_base_v4 *parent)
 {
-    MSVCP_size_t page_id = id & ~(parent->alloc_count-1);
+    size_t page_id = id & ~(parent->alloc_count-1);
     int spin;
     _Page *p;
     BOOL ret = FALSE;
@@ -1762,7 +1762,7 @@ DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_push, 8)
 void __thiscall _Concurrent_queue_base_v4__Internal_push(
         _Concurrent_queue_base_v4 *this, void *e)
 {
-    MSVCP_size_t id;
+    size_t id;
 
     TRACE("(%p %p)\n", this, e);
 
@@ -1777,7 +1777,7 @@ DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_move_push, 8)
 void __thiscall _Concurrent_queue_base_v4__Internal_move_push(
         _Concurrent_queue_base_v4 *this, void *e)
 {
-    MSVCP_size_t id;
+    size_t id;
 
     TRACE("(%p %p)\n", this, e);
 
@@ -1792,7 +1792,7 @@ DEFINE_THISCALL_WRAPPER(_Concurrent_queue_base_v4__Internal_pop_if_present, 8)
 MSVCP_bool __thiscall _Concurrent_queue_base_v4__Internal_pop_if_present(
         _Concurrent_queue_base_v4 *this, void *e)
 {
-    MSVCP_size_t id;
+    size_t id;
 
     TRACE("(%p %p)\n", this, e);
 
@@ -1872,10 +1872,10 @@ DEFINE_RTTI_DATA0(_Runtime_object, 0, ".?AV_Runtime_object@details@Concurrency@@
 #if _MSVCP_VER >= 100
 typedef struct __Concurrent_vector_base_v4
 {
-    void* (__cdecl *allocator)(struct __Concurrent_vector_base_v4 *, MSVCP_size_t);
+    void* (__cdecl *allocator)(struct __Concurrent_vector_base_v4 *, size_t);
     void *storage[3];
-    MSVCP_size_t first_block;
-    MSVCP_size_t early_size;
+    size_t first_block;
+    size_t early_size;
     void **segment;
 } _Concurrent_vector_base_v4;
 
@@ -1884,7 +1884,7 @@ typedef struct __Concurrent_vector_base_v4
 
 typedef struct compact_block
 {
-    MSVCP_size_t first_block;
+    size_t first_block;
     void *blocks[SEGMENT_SIZE];
     int size_check;
 }compact_block;
@@ -1899,11 +1899,11 @@ static inline unsigned int log2i(unsigned int x)
 
 /* ?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KAII@Z */
 /* ?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KA_K_K@Z */
-MSVCP_size_t __cdecl _vector_base_v4__Segment_index_of(MSVCP_size_t x)
+size_t __cdecl _vector_base_v4__Segment_index_of(size_t x)
 {
     unsigned int half;
 
-    TRACE("(%lu)\n", x);
+    TRACE("(%Iu)\n", x);
 
     if((sizeof(x) == 8) && (half = x >> 32))
         return log2i(half) + 32;
@@ -1914,7 +1914,7 @@ MSVCP_size_t __cdecl _vector_base_v4__Segment_index_of(MSVCP_size_t x)
 /* ?_Internal_throw_exception@_Concurrent_vector_base_v4@details@Concurrency@@IBEXI@Z */
 /* ?_Internal_throw_exception@_Concurrent_vector_base_v4@details@Concurrency@@IEBAX_K@Z */
 DEFINE_THISCALL_WRAPPER(_vector_base_v4__Internal_throw_exception, 8)
-void __thiscall _vector_base_v4__Internal_throw_exception(void/*_vector_base_v4*/ *this, MSVCP_size_t idx)
+void __thiscall _vector_base_v4__Internal_throw_exception(void/*_vector_base_v4*/ *this, size_t idx)
 {
     static const struct {
         exception_type type;
@@ -1925,30 +1925,30 @@ void __thiscall _vector_base_v4__Internal_throw_exception(void/*_vector_base_v4*
         { EXCEPTION_RANGE_ERROR,  "Index is inside segment which failed to be allocated" },
     };
 
-    TRACE("(%p %lu)\n", this, idx);
+    TRACE("(%p %Iu)\n", this, idx);
 
     if(idx < ARRAY_SIZE(exceptions))
         throw_exception(exceptions[idx].type, exceptions[idx].msg);
 }
 
 #ifdef _WIN64
-#define InterlockedCompareExchangeSizeT(dest, exchange, cmp) InterlockedCompareExchangeSize((MSVCP_size_t *)dest, (MSVCP_size_t)exchange, (MSVCP_size_t)cmp)
-static MSVCP_size_t InterlockedCompareExchangeSize(MSVCP_size_t volatile *dest, MSVCP_size_t exchange, MSVCP_size_t cmp)
+#define InterlockedCompareExchangeSizeT(dest, exchange, cmp) InterlockedCompareExchangeSize((size_t *)dest, (size_t)exchange, (size_t)cmp)
+static size_t InterlockedCompareExchangeSize(size_t volatile *dest, size_t exchange, size_t cmp)
 {
-    MSVCP_size_t v;
+    size_t v;
 
     v = InterlockedCompareExchange64((LONGLONG*)dest, exchange, cmp);
 
     return v;
 }
 #else
-#define InterlockedCompareExchangeSizeT(dest, exchange, cmp) InterlockedCompareExchange((LONG*)dest, (MSVCP_size_t)exchange, (MSVCP_size_t)cmp)
+#define InterlockedCompareExchangeSizeT(dest, exchange, cmp) InterlockedCompareExchange((LONG*)dest, (size_t)exchange, (size_t)cmp)
 #endif
 
 #define SEGMENT_ALLOC_MARKER ((void*)1)
 
 static void concurrent_vector_alloc_segment(_Concurrent_vector_base_v4 *this,
-        MSVCP_size_t seg, MSVCP_size_t element_size)
+        size_t seg, size_t element_size)
 {
     int spin;
 
@@ -1995,10 +1995,10 @@ void __thiscall _Concurrent_vector_base_v4_dtor(
 /* ?_Internal_capacity@_Concurrent_vector_base_v4@details@Concurrency@@IBEIXZ */
 /* ?_Internal_capacity@_Concurrent_vector_base_v4@details@Concurrency@@IEBA_KXZ */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_capacity, 4)
-MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_capacity(
+size_t __thiscall _Concurrent_vector_base_v4__Internal_capacity(
         const _Concurrent_vector_base_v4 *this)
 {
-    MSVCP_size_t last_block;
+    size_t last_block;
     int i;
 
     TRACE("(%p)\n", this);
@@ -2016,14 +2016,14 @@ MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_capacity(
 /* ?_Internal_reserve@_Concurrent_vector_base_v4@details@Concurrency@@IEAAX_K00@Z */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_reserve, 16)
 void __thiscall _Concurrent_vector_base_v4__Internal_reserve(
-        _Concurrent_vector_base_v4 *this, MSVCP_size_t size,
-        MSVCP_size_t element_size, MSVCP_size_t max_size)
+        _Concurrent_vector_base_v4 *this, size_t size,
+        size_t element_size, size_t max_size)
 {
-    MSVCP_size_t block_idx, capacity;
+    size_t block_idx, capacity;
     int i;
     void **new_segment;
 
-    TRACE("(%p %ld %ld %ld)\n", this, size, element_size, max_size);
+    TRACE("(%p %Iu %Iu %Iu)\n", this, size, element_size, max_size);
 
     if(size > max_size) _vector_base_v4__Internal_throw_exception(this, 0);
     capacity = _Concurrent_vector_base_v4__Internal_capacity(this);
@@ -2052,10 +2052,10 @@ void __thiscall _Concurrent_vector_base_v4__Internal_reserve(
 /* ?_Internal_clear@_Concurrent_vector_base_v4@details@Concurrency@@IAEIP6AXPAXI@Z@Z */
 /* ?_Internal_clear@_Concurrent_vector_base_v4@details@Concurrency@@IEAA_KP6AXPEAX_K@Z@Z */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_clear, 8)
-MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_clear(
-        _Concurrent_vector_base_v4 *this, void (__cdecl *clear)(void*, MSVCP_size_t))
+size_t __thiscall _Concurrent_vector_base_v4__Internal_clear(
+        _Concurrent_vector_base_v4 *this, void (__cdecl *clear)(void*, size_t))
 {
-    MSVCP_size_t seg_no, elems;
+    size_t seg_no, elems;
     int i;
 
     TRACE("(%p %p)\n", this, clear);
@@ -2077,15 +2077,15 @@ MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_clear(
 /* ?_Internal_compact@_Concurrent_vector_base_v4@details@Concurrency@@IEAAPEAX_KPEAXP6AX10@ZP6AX1PEBX0@Z@Z */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_compact, 20)
 void * __thiscall _Concurrent_vector_base_v4__Internal_compact(
-        _Concurrent_vector_base_v4 *this, MSVCP_size_t element_size, void *v,
-        void (__cdecl *clear)(void*, MSVCP_size_t),
-        void (__cdecl *copy)(void*, const void*, MSVCP_size_t))
+        _Concurrent_vector_base_v4 *this, size_t element_size, void *v,
+        void (__cdecl *clear)(void*, size_t),
+        void (__cdecl *copy)(void*, const void*, size_t))
 {
     compact_block *b;
-    MSVCP_size_t size, alloc_size, seg_no, alloc_seg, copy_element, clear_element;
+    size_t size, alloc_size, seg_no, alloc_seg, copy_element, clear_element;
     int i;
 
-    TRACE("(%p %ld %p %p %p)\n", this, element_size, v, clear, copy);
+    TRACE("(%p %Iu %p %p %p)\n", this, element_size, v, clear, copy);
 
     size = this->early_size;
     alloc_size = _Concurrent_vector_base_v4__Internal_capacity(this);
@@ -2136,12 +2136,12 @@ void * __thiscall _Concurrent_vector_base_v4__Internal_compact(
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_copy, 16)
 void __thiscall _Concurrent_vector_base_v4__Internal_copy(
         _Concurrent_vector_base_v4 *this, const _Concurrent_vector_base_v4 *v,
-        MSVCP_size_t element_size, void (__cdecl *copy)(void*, const void*, MSVCP_size_t))
+        size_t element_size, void (__cdecl *copy)(void*, const void*, size_t))
 {
-    MSVCP_size_t seg_no, v_size;
+    size_t seg_no, v_size;
     int i;
 
-    TRACE("(%p %p %ld %p)\n", this, v, element_size, copy);
+    TRACE("(%p %p %Iu %p)\n", this, v, element_size, copy);
 
     v_size = v->early_size;
     if(!v_size) {
@@ -2162,14 +2162,14 @@ void __thiscall _Concurrent_vector_base_v4__Internal_copy(
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_assign, 24)
 void __thiscall _Concurrent_vector_base_v4__Internal_assign(
         _Concurrent_vector_base_v4 *this, const _Concurrent_vector_base_v4 *v,
-        MSVCP_size_t element_size, void (__cdecl *clear)(void*, MSVCP_size_t),
-        void (__cdecl *assign)(void*, const void*, MSVCP_size_t),
-        void (__cdecl *copy)(void*, const void*, MSVCP_size_t))
+        size_t element_size, void (__cdecl *clear)(void*, size_t),
+        void (__cdecl *assign)(void*, const void*, size_t),
+        void (__cdecl *copy)(void*, const void*, size_t))
 {
-    MSVCP_size_t v_size, seg_no, v_seg_no, remain_element;
+    size_t v_size, seg_no, v_seg_no, remain_element;
     int i;
 
-    TRACE("(%p %p %ld %p %p %p)\n", this, v, element_size, clear, assign, copy);
+    TRACE("(%p %p %Iu %p %p %p)\n", this, v, element_size, clear, assign, copy);
 
     v_size = v->early_size;
     if(!v_size) {
@@ -2222,13 +2222,13 @@ void __thiscall _Concurrent_vector_base_v4__Internal_assign(
 /* ?_Internal_grow_by@_Concurrent_vector_base_v4@details@Concurrency@@IAEIIIP6AXPAXPBXI@Z1@Z */
 /* ?_Internal_grow_by@_Concurrent_vector_base_v4@details@Concurrency@@IEAA_K_K0P6AXPEAXPEBX0@Z2@Z */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_grow_by, 20)
-MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_grow_by(
-        _Concurrent_vector_base_v4 *this, MSVCP_size_t count, MSVCP_size_t element_size,
-        void (__cdecl *copy)(void*, const void*, MSVCP_size_t), const void *v)
+size_t __thiscall _Concurrent_vector_base_v4__Internal_grow_by(
+        _Concurrent_vector_base_v4 *this, size_t count, size_t element_size,
+        void (__cdecl *copy)(void*, const void*, size_t), const void *v)
 {
-    MSVCP_size_t size, seg_no, last_seg_no, remain_size;
+    size_t size, seg_no, last_seg_no, remain_size;
 
-    TRACE("(%p %ld %ld %p %p)\n", this, count, element_size, copy, v);
+    TRACE("(%p %Iu %Iu %p %p)\n", this, count, element_size, copy, v);
 
     if(count == 0) return this->early_size;
     do {
@@ -2255,13 +2255,13 @@ MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_grow_by(
 /* ?_Internal_grow_to_at_least_with_result@_Concurrent_vector_base_v4@details@Concurrency@@IAEIIIP6AXPAXPBXI@Z1@Z */
 /* ?_Internal_grow_to_at_least_with_result@_Concurrent_vector_base_v4@details@Concurrency@@IEAA_K_K0P6AXPEAXPEBX0@Z2@Z */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_grow_to_at_least_with_result, 20)
-MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_grow_to_at_least_with_result(
-        _Concurrent_vector_base_v4 *this, MSVCP_size_t count, MSVCP_size_t element_size,
-        void (__cdecl *copy)(void*, const void*, MSVCP_size_t), const void *v)
+size_t __thiscall _Concurrent_vector_base_v4__Internal_grow_to_at_least_with_result(
+        _Concurrent_vector_base_v4 *this, size_t count, size_t element_size,
+        void (__cdecl *copy)(void*, const void*, size_t), const void *v)
 {
-    MSVCP_size_t size, seg_no, last_seg_no, remain_size;
+    size_t size, seg_no, last_seg_no, remain_size;
 
-    TRACE("(%p %ld %ld %p %p)\n", this, count, element_size, copy, v);
+    TRACE("(%p %Iu %Iu %p %p)\n", this, count, element_size, copy, v);
 
     _Concurrent_vector_base_v4__Internal_reserve(this, count, element_size,
             MSVCP_SIZE_T_MAX / element_size);
@@ -2289,12 +2289,12 @@ MSVCP_size_t __thiscall _Concurrent_vector_base_v4__Internal_grow_to_at_least_wi
 /* ?_Internal_push_back@_Concurrent_vector_base_v4@details@Concurrency@@IEAAPEAX_KAEA_K@Z */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_push_back, 12)
 void * __thiscall _Concurrent_vector_base_v4__Internal_push_back(
-       _Concurrent_vector_base_v4 *this, MSVCP_size_t element_size, MSVCP_size_t *idx)
+       _Concurrent_vector_base_v4 *this, size_t element_size, size_t *idx)
 {
-    MSVCP_size_t index, seg, segment_base;
+    size_t index, seg, segment_base;
     void *data;
 
-    TRACE("(%p %ld %p)\n", this, element_size, idx);
+    TRACE("(%p %Iu %p)\n", this, element_size, idx);
 
     do {
         index = this->early_size;
@@ -2313,13 +2313,13 @@ void * __thiscall _Concurrent_vector_base_v4__Internal_push_back(
 /* ?_Internal_resize@_Concurrent_vector_base_v4@details@Concurrency@@IEAAX_K00P6AXPEAX0@ZP6AX1PEBX0@Z3@Z */
 DEFINE_THISCALL_WRAPPER(_Concurrent_vector_base_v4__Internal_resize, 28)
 void __thiscall _Concurrent_vector_base_v4__Internal_resize(
-        _Concurrent_vector_base_v4 *this, MSVCP_size_t resize, MSVCP_size_t element_size,
-        MSVCP_size_t max_size, void (__cdecl *clear)(void*, MSVCP_size_t),
-        void (__cdecl *copy)(void*, const void*, MSVCP_size_t), const void *v)
+        _Concurrent_vector_base_v4 *this, size_t resize, size_t element_size,
+        size_t max_size, void (__cdecl *clear)(void*, size_t),
+        void (__cdecl *copy)(void*, const void*, size_t), const void *v)
 {
-    MSVCP_size_t size, seg_no, end_seg_no, clear_element;
+    size_t size, seg_no, end_seg_no, clear_element;
 
-    TRACE("(%p %ld %ld %ld %p %p %p)\n", this, resize, element_size, max_size, clear, copy, v);
+    TRACE("(%p %Iu %Iu %Iu %p %p %p)\n", this, resize, element_size, max_size, clear, copy, v);
 
     if(resize > max_size) _vector_base_v4__Internal_throw_exception(this, 0);
     size = this->early_size;
@@ -2650,7 +2650,7 @@ MSVCP_bool __cdecl is_current_task_group_canceling(void)
 
 /* ?_GetCombinableSize@details@Concurrency@@YAIXZ */
 /* ?_GetCombinableSize@details@Concurrency@@YA_KXZ */
-MSVCP_size_t __cdecl _GetCombinableSize(void)
+size_t __cdecl _GetCombinableSize(void)
 {
     FIXME("() stub\n");
     return 11;

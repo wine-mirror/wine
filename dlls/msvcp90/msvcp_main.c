@@ -54,7 +54,7 @@ DEFINE_VTBL_WRAPPER(56);
 
 #endif
 
-void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
+void* (__cdecl *MSVCRT_operator_new)(size_t);
 void (__cdecl *MSVCRT_operator_delete)(void*);
 void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
@@ -79,7 +79,7 @@ MSVCP_bool (__cdecl *Context_IsCurrentTaskCollectionCanceling)(void);
 #endif
 
 #if _MSVCP_VER >= 140
-static void* __cdecl operator_new(MSVCP_size_t size)
+static void* __cdecl operator_new(size_t size)
 {
     void *retval;
     int freed;
@@ -89,13 +89,13 @@ static void* __cdecl operator_new(MSVCP_size_t size)
         retval = malloc(size);
         if (retval)
         {
-            TRACE("(%ld) returning %p\n", size, retval);
+            TRACE("(%Iu) returning %p\n", size, retval);
             return retval;
         }
         freed = _callnewh(size);
     } while (freed);
 
-    TRACE("(%ld) out of memory\n", size);
+    TRACE("(%Iu) out of memory\n", size);
     throw_exception(EXCEPTION_BAD_ALLOC, "bad allocation");
     return NULL;
 }
