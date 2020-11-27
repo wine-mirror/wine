@@ -24,7 +24,7 @@
  */
 
 #ifdef WIDE_SCANF
-#define _CHAR_ MSVCRT_wchar_t
+#define _CHAR_ wchar_t
 #define _EOF_ MSVCRT_WEOF
 #define _EOF_RET (short)MSVCRT_WEOF
 #define _ISSPACE_(c) MSVCRT_iswspace(c)
@@ -52,9 +52,9 @@
 #define _UNLOCK_FILE_(file) MSVCRT__unlock_file(MSVCRT_stdin)
 #ifdef WIDE_SCANF
 #ifdef SECURE
-#define _FUNCTION_ static int MSVCRT_vcwscanf_s_l(const MSVCRT_wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vcwscanf_s_l(const wchar_t *format, _locale_t locale, __ms_va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int MSVCRT_vcwscanf_l(const MSVCRT_wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vcwscanf_l(const wchar_t *format, _locale_t locale, __ms_va_list ap)
 #endif /* SECURE */
 #else  /* WIDE_SCANF */
 #ifdef SECURE
@@ -84,9 +84,9 @@
 #define _UNLOCK_FILE_(file) do {} while(0)
 #ifdef WIDE_SCANF
 #ifdef SECURE
-#define _FUNCTION_ static int MSVCRT_vsnwscanf_s_l(const MSVCRT_wchar_t *file, MSVCRT_size_t length, const MSVCRT_wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vsnwscanf_s_l(const wchar_t *file, MSVCRT_size_t length, const wchar_t *format, _locale_t locale, __ms_va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int MSVCRT_vsnwscanf_l(const MSVCRT_wchar_t *file, MSVCRT_size_t length, const MSVCRT_wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vsnwscanf_l(const wchar_t *file, MSVCRT_size_t length, const wchar_t *format, _locale_t locale, __ms_va_list ap)
 #endif /* SECURE */
 #else /* WIDE_SCANF */
 #ifdef SECURE
@@ -106,9 +106,9 @@
 #define _UNLOCK_FILE_(file) do {} while(0)
 #ifdef WIDE_SCANF
 #ifdef SECURE
-#define _FUNCTION_ static int MSVCRT_vswscanf_s_l(const MSVCRT_wchar_t *file, const MSVCRT_wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vswscanf_s_l(const wchar_t *file, const wchar_t *format, _locale_t locale, __ms_va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int MSVCRT_vswscanf_l(const MSVCRT_wchar_t *file, const MSVCRT_wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vswscanf_l(const wchar_t *file, const wchar_t *format, _locale_t locale, __ms_va_list ap)
 #endif /* SECURE */
 #else /* WIDE_SCANF */
 #ifdef SECURE
@@ -127,9 +127,9 @@
 #define _LOCK_FILE_(file) MSVCRT__lock_file(file)
 #define _UNLOCK_FILE_(file) MSVCRT__unlock_file(file)
 #ifdef SECURE
-#define _FUNCTION_ static int MSVCRT_vfwscanf_s_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vfwscanf_s_l(MSVCRT_FILE* file, const wchar_t *format, _locale_t locale, __ms_va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int MSVCRT_vfwscanf_l(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vfwscanf_l(MSVCRT_FILE* file, const wchar_t *format, _locale_t locale, __ms_va_list ap)
 #endif /* SECURE */
 #else /* WIDE_SCANF */
 #define _GETC_FUNC_(file) MSVCRT_fgetc(file)
@@ -162,7 +162,7 @@ struct _STRTOD_NAME_(strtod_scanf_ctx) {
     BOOL err;
 };
 
-static MSVCRT_wchar_t _STRTOD_NAME_(strtod_scanf_get)(void *ctx)
+static wchar_t _STRTOD_NAME_(strtod_scanf_get)(void *ctx)
 {
     struct _STRTOD_NAME_(strtod_scanf_ctx) *context = ctx;
 
@@ -482,8 +482,8 @@ _FUNCTION_ {
                 }
                 break;
 	    widecharstring: { /* read a word into a wchar_t* */
-		    MSVCRT_wchar_t *sptr = suppress ? NULL : va_arg(ap, MSVCRT_wchar_t*);
-                    MSVCRT_wchar_t *sptr_beg = sptr;
+		    wchar_t *sptr = suppress ? NULL : va_arg(ap, wchar_t*);
+                    wchar_t *sptr_beg = sptr;
 #ifdef SECURE
                     unsigned size = suppress ? UINT_MAX : va_arg(ap, unsigned);
 #else
@@ -563,8 +563,8 @@ _FUNCTION_ {
                 }
 		break;
 	  widecharacter: { /* read single character into a wchar_t */
-                    MSVCRT_wchar_t *str = suppress ? NULL : va_arg(ap, MSVCRT_wchar_t*);
-                    MSVCRT_wchar_t *pstr = str;
+                    wchar_t *str = suppress ? NULL : va_arg(ap, wchar_t*);
+                    wchar_t *pstr = str;
 #ifdef SECURE
                     unsigned size = suppress ? UINT_MAX : va_arg(ap, unsigned);
 #else

@@ -350,7 +350,7 @@ void CDECL MSVCRT_perror(const char* str)
 /*********************************************************************
  *		_wperror (MSVCRT.@)
  */
-void CDECL MSVCRT__wperror(const MSVCRT_wchar_t* str)
+void CDECL MSVCRT__wperror(const wchar_t* str)
 {
     MSVCRT_size_t size;
     char *buffer = NULL;
@@ -375,7 +375,7 @@ void CDECL MSVCRT__wperror(const MSVCRT_wchar_t* str)
 /*********************************************************************
  *		_wcserror_s (MSVCRT.@)
  */
-int CDECL MSVCRT__wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, int err)
+int CDECL MSVCRT__wcserror_s(wchar_t* buffer, MSVCRT_size_t nc, int err)
 {
     if (!MSVCRT_CHECK_PMT(buffer != NULL)) return MSVCRT_EINVAL;
     if (!MSVCRT_CHECK_PMT(nc > 0)) return MSVCRT_EINVAL;
@@ -388,12 +388,12 @@ int CDECL MSVCRT__wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, int err)
 /*********************************************************************
  *		_wcserror (MSVCRT.@)
  */
-MSVCRT_wchar_t* CDECL MSVCRT__wcserror(int err)
+wchar_t* CDECL MSVCRT__wcserror(int err)
 {
     thread_data_t *data = msvcrt_get_thread_data();
 
     if (!data->wcserror_buffer)
-        if (!(data->wcserror_buffer = MSVCRT_malloc(256 * sizeof(MSVCRT_wchar_t)))) return NULL;
+        if (!(data->wcserror_buffer = MSVCRT_malloc(256 * sizeof(wchar_t)))) return NULL;
     MSVCRT__wcserror_s(data->wcserror_buffer, 256, err);
     return data->wcserror_buffer;
 }
@@ -401,7 +401,7 @@ MSVCRT_wchar_t* CDECL MSVCRT__wcserror(int err)
 /**********************************************************************
  *		__wcserror_s	(MSVCRT.@)
  */
-int CDECL MSVCRT___wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, const MSVCRT_wchar_t* str)
+int CDECL MSVCRT___wcserror_s(wchar_t* buffer, MSVCRT_size_t nc, const wchar_t* str)
 {
     int err;
     static const WCHAR colonW[] = {':', ' ', '\0'};
@@ -434,13 +434,13 @@ int CDECL MSVCRT___wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, const MS
 /**********************************************************************
  *		__wcserror	(MSVCRT.@)
  */
-MSVCRT_wchar_t* CDECL MSVCRT___wcserror(const MSVCRT_wchar_t* str)
+wchar_t* CDECL MSVCRT___wcserror(const wchar_t* str)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     int err;
 
     if (!data->wcserror_buffer)
-        if (!(data->wcserror_buffer = MSVCRT_malloc(256 * sizeof(MSVCRT_wchar_t)))) return NULL;
+        if (!(data->wcserror_buffer = MSVCRT_malloc(256 * sizeof(wchar_t)))) return NULL;
 
     err = MSVCRT___wcserror_s(data->wcserror_buffer, 256, str);
     if (err) FIXME("bad wcserror call (%d)\n", err);
@@ -459,8 +459,8 @@ void CDECL _seterrormode(int mode)
 /******************************************************************************
  *		_invalid_parameter (MSVCRT.@)
  */
-void __cdecl MSVCRT__invalid_parameter(const MSVCRT_wchar_t *expr, const MSVCRT_wchar_t *func,
-                                       const MSVCRT_wchar_t *file, unsigned int line, uintptr_t arg)
+void __cdecl MSVCRT__invalid_parameter(const wchar_t *expr, const wchar_t *func,
+                                       const wchar_t *file, unsigned int line, uintptr_t arg)
 {
 #if _MSVCR_VER >= 140
     thread_data_t *data = msvcrt_get_thread_data();

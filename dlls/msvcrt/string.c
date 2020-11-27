@@ -606,12 +606,12 @@ static inline int hex2int(char c)
     return -1;
 }
 
-static struct fpnum fpnum_parse16(MSVCRT_wchar_t get(void *ctx), void unget(void *ctx),
+static struct fpnum fpnum_parse16(wchar_t get(void *ctx), void unget(void *ctx),
         void *ctx, int sign, pthreadlocinfo locinfo)
 {
     BOOL found_digit = FALSE, found_dp = FALSE;
     enum fpmod round = FP_ROUND_ZERO;
-    MSVCRT_wchar_t nch;
+    wchar_t nch;
     ULONGLONG m = 0;
     int val, exp = 0;
 
@@ -737,19 +737,19 @@ static inline BOOL bnum_to_mant(struct bnum *b, ULONGLONG *m)
     return TRUE;
 }
 
-static struct fpnum fpnum_parse_bnum(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
+static struct fpnum fpnum_parse_bnum(wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
         void *ctx, pthreadlocinfo locinfo, BOOL ldouble, struct bnum *b)
 {
 #if _MSVCR_VER >= 140
-    MSVCRT_wchar_t _infinity[] = { 'i', 'n', 'f', 'i', 'n', 'i', 't', 'y', 0 };
-    MSVCRT_wchar_t _nan[] = { 'n', 'a', 'n', 0 };
-    MSVCRT_wchar_t *str_match = NULL;
+    wchar_t _infinity[] = { 'i', 'n', 'f', 'i', 'n', 'i', 't', 'y', 0 };
+    wchar_t _nan[] = { 'n', 'a', 'n', 0 };
+    wchar_t *str_match = NULL;
     int matched=0;
 #endif
     BOOL found_digit = FALSE, found_dp = FALSE, found_sign = FALSE;
     int e2 = 0, dp=0, sign=1, off, limb_digits = 0, i;
     enum fpmod round = FP_ROUND_ZERO;
-    MSVCRT_wchar_t nch;
+    wchar_t nch;
     ULONGLONG m;
 
     nch = get(ctx);
@@ -969,7 +969,7 @@ static struct fpnum fpnum_parse_bnum(MSVCRT_wchar_t (*get)(void *ctx), void (*un
     return fpnum(sign, e2, m, round);
 }
 
-struct fpnum fpnum_parse(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
+struct fpnum fpnum_parse(wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
        void *ctx, pthreadlocinfo locinfo, BOOL ldouble)
 {
     if(!ldouble) {
@@ -987,7 +987,7 @@ struct fpnum fpnum_parse(MSVCRT_wchar_t (*get)(void *ctx), void (*unget)(void *c
     }
 }
 
-static MSVCRT_wchar_t strtod_str_get(void *ctx)
+static wchar_t strtod_str_get(void *ctx)
 {
     const char **p = ctx;
     if (!**p) return MSVCRT_WEOF;
@@ -1930,12 +1930,12 @@ int CDECL MSVCRT__ltoa_s(MSVCRT_long value, char *str, MSVCRT_size_t size, int r
 /*********************************************************************
  *  _ltow_s (MSVCRT.@)
  */
-int CDECL MSVCRT__ltow_s(MSVCRT_long value, MSVCRT_wchar_t *str, MSVCRT_size_t size, int radix)
+int CDECL MSVCRT__ltow_s(MSVCRT_long value, wchar_t *str, MSVCRT_size_t size, int radix)
 {
     MSVCRT_ulong val;
     unsigned int digit;
     BOOL is_negative;
-    MSVCRT_wchar_t buffer[33], *pos;
+    wchar_t buffer[33], *pos;
     size_t len;
 
     if (!MSVCRT_CHECK_PMT(str != NULL)) return MSVCRT_EINVAL;
@@ -1979,7 +1979,7 @@ int CDECL MSVCRT__ltow_s(MSVCRT_long value, MSVCRT_wchar_t *str, MSVCRT_size_t s
     if (len > size)
     {
         size_t i;
-        MSVCRT_wchar_t *p = str;
+        wchar_t *p = str;
 
         /* Copy the temporary buffer backwards up to the available number of
          * characters. Don't copy the negative sign if present. */
@@ -1998,7 +1998,7 @@ int CDECL MSVCRT__ltow_s(MSVCRT_long value, MSVCRT_wchar_t *str, MSVCRT_size_t s
         return MSVCRT_ERANGE;
     }
 
-    memcpy(str, pos, len * sizeof(MSVCRT_wchar_t));
+    memcpy(str, pos, len * sizeof(wchar_t));
     return 0;
 }
 
@@ -2021,7 +2021,7 @@ char* CDECL MSVCRT__itoa(int value, char *str, int radix)
 /*********************************************************************
  *  _itow_s (MSVCRT.@)
  */
-int CDECL MSVCRT__itow_s(int value, MSVCRT_wchar_t *str, MSVCRT_size_t size, int radix)
+int CDECL MSVCRT__itow_s(int value, wchar_t *str, MSVCRT_size_t size, int radix)
 {
     return MSVCRT__ltow_s(value, str, size, radix);
 }
@@ -2068,10 +2068,10 @@ int CDECL MSVCRT__ui64toa_s(unsigned __int64 value, char *str,
 /*********************************************************************
  *      _ui64tow_s  (MSVCRT.@)
  */
-int CDECL MSVCRT__ui64tow_s( unsigned __int64 value, MSVCRT_wchar_t *str,
+int CDECL MSVCRT__ui64tow_s( unsigned __int64 value, wchar_t *str,
                              MSVCRT_size_t size, int radix )
 {
-    MSVCRT_wchar_t buffer[65], *pos;
+    wchar_t buffer[65], *pos;
     int digit;
 
     if (!MSVCRT_CHECK_PMT(str != NULL)) return MSVCRT_EINVAL;
@@ -2099,7 +2099,7 @@ int CDECL MSVCRT__ui64tow_s( unsigned __int64 value, MSVCRT_wchar_t *str,
         return MSVCRT_EINVAL;
     }
 
-    memcpy(str, pos, (buffer-pos+65)*sizeof(MSVCRT_wchar_t));
+    memcpy(str, pos, (buffer-pos+65)*sizeof(wchar_t));
     return 0;
 }
 
@@ -2160,7 +2160,7 @@ int CDECL MSVCRT__ultoa_s(MSVCRT_ulong value, char *str, MSVCRT_size_t size, int
 /*********************************************************************
  *  _ultow_s (MSVCRT.@)
  */
-int CDECL MSVCRT__ultow_s(MSVCRT_ulong value, MSVCRT_wchar_t *str, MSVCRT_size_t size, int radix)
+int CDECL MSVCRT__ultow_s(MSVCRT_ulong value, wchar_t *str, MSVCRT_size_t size, int radix)
 {
     MSVCRT_ulong digit;
     WCHAR buffer[33], *pos;
@@ -2207,7 +2207,7 @@ int CDECL MSVCRT__ultow_s(MSVCRT_ulong value, MSVCRT_wchar_t *str, MSVCRT_size_t
         return MSVCRT_ERANGE;
     }
 
-    memcpy(str, pos, len * sizeof(MSVCRT_wchar_t));
+    memcpy(str, pos, len * sizeof(wchar_t));
     return 0;
 }
 
@@ -2289,12 +2289,12 @@ int CDECL MSVCRT__i64toa_s(__int64 value, char *str, MSVCRT_size_t size, int rad
 /*********************************************************************
  *  _i64tow_s (MSVCRT.@)
  */
-int CDECL MSVCRT__i64tow_s(__int64 value, MSVCRT_wchar_t *str, MSVCRT_size_t size, int radix)
+int CDECL MSVCRT__i64tow_s(__int64 value, wchar_t *str, MSVCRT_size_t size, int radix)
 {
     unsigned __int64 val;
     unsigned int digit;
     BOOL is_negative;
-    MSVCRT_wchar_t buffer[65], *pos;
+    wchar_t buffer[65], *pos;
     size_t len;
 
     if (!MSVCRT_CHECK_PMT(str != NULL)) return MSVCRT_EINVAL;
@@ -2338,7 +2338,7 @@ int CDECL MSVCRT__i64tow_s(__int64 value, MSVCRT_wchar_t *str, MSVCRT_size_t siz
     if (len > size)
     {
         size_t i;
-        MSVCRT_wchar_t *p = str;
+        wchar_t *p = str;
 
         /* Copy the temporary buffer backwards up to the available number of
          * characters. Don't copy the negative sign if present. */
@@ -2357,7 +2357,7 @@ int CDECL MSVCRT__i64tow_s(__int64 value, MSVCRT_wchar_t *str, MSVCRT_size_t siz
         return MSVCRT_ERANGE;
     }
 
-    memcpy(str, pos, len * sizeof(MSVCRT_wchar_t));
+    memcpy(str, pos, len * sizeof(wchar_t));
     return 0;
 }
 

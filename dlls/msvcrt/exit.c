@@ -46,7 +46,7 @@ static CRITICAL_SECTION_DEBUG MSVCRT_onexit_cs_debug =
 static CRITICAL_SECTION MSVCRT_onexit_cs = { &MSVCRT_onexit_cs_debug, -1, 0, 0, 0, 0 };
 
 extern int MSVCRT_app_type;
-extern MSVCRT_wchar_t *MSVCRT__wpgmptr;
+extern wchar_t *MSVCRT__wpgmptr;
 
 static unsigned int MSVCRT_abort_behavior =  MSVCRT__WRITE_ABORT_MSG | MSVCRT__CALL_REPORTFAULT;
 static int MSVCRT_error_mode = MSVCRT__OUT_TO_DEFAULT;
@@ -185,9 +185,9 @@ void CDECL MSVCRT__exit(int exitcode)
 }
 
 /* Print out an error message with an option to debug */
-static void DoMessageBoxW(const MSVCRT_wchar_t *lead, const MSVCRT_wchar_t *message)
+static void DoMessageBoxW(const wchar_t *lead, const wchar_t *message)
 {
-  static const MSVCRT_wchar_t message_format[] = {'%','l','s','\n','\n','P','r','o','g','r','a','m',':',' ','%','l','s','\n',
+  static const wchar_t message_format[] = {'%','l','s','\n','\n','P','r','o','g','r','a','m',':',' ','%','l','s','\n',
     '%','l','s','\n','\n','P','r','e','s','s',' ','O','K',' ','t','o',' ','e','x','i','t',' ','t','h','e',' ',
     'p','r','o','g','r','a','m',',',' ','o','r',' ','C','a','n','c','e','l',' ','t','o',' ','s','t','a','r','t',' ',
     't','h','e',' ','W','i','n','e',' ','d','e','b','u','g','g','e','r','.','\n',0};
@@ -195,7 +195,7 @@ static void DoMessageBoxW(const MSVCRT_wchar_t *lead, const MSVCRT_wchar_t *mess
     {'W','i','n','e',' ','C','+','+',' ','R','u','n','t','i','m','e',' ','L','i','b','r','a','r','y',0};
 
   MSGBOXPARAMSW msgbox;
-  MSVCRT_wchar_t text[2048];
+  wchar_t text[2048];
   INT ret;
 
   MSVCRT__snwprintf(text, ARRAY_SIZE(text), message_format, lead, MSVCRT__wpgmptr, message);
@@ -218,7 +218,7 @@ static void DoMessageBoxW(const MSVCRT_wchar_t *lead, const MSVCRT_wchar_t *mess
 
 static void DoMessageBox(const char *lead, const char *message)
 {
-  MSVCRT_wchar_t leadW[1024], messageW[1024];
+  wchar_t leadW[1024], messageW[1024];
 
   MSVCRT_mbstowcs(leadW, lead, 1024);
   MSVCRT_mbstowcs(messageW, message, 1024);
@@ -287,12 +287,12 @@ unsigned int CDECL MSVCRT__set_abort_behavior(unsigned int flags, unsigned int m
 /*********************************************************************
  *              _wassert (MSVCRT.@)
  */
-void CDECL MSVCRT__wassert(const MSVCRT_wchar_t* str, const MSVCRT_wchar_t* file, unsigned int line)
+void CDECL MSVCRT__wassert(const wchar_t* str, const wchar_t* file, unsigned int line)
 {
-  static const MSVCRT_wchar_t assertion_failed[] = {'A','s','s','e','r','t','i','o','n',' ','f','a','i','l','e','d','!',0};
-  static const MSVCRT_wchar_t format_msgbox[] = {'F','i','l','e',':',' ','%','l','s','\n','L','i','n','e',':',' ','%','d',
+  static const wchar_t assertion_failed[] = {'A','s','s','e','r','t','i','o','n',' ','f','a','i','l','e','d','!',0};
+  static const wchar_t format_msgbox[] = {'F','i','l','e',':',' ','%','l','s','\n','L','i','n','e',':',' ','%','d',
       '\n','\n','E','x','p','r','e','s','s','i','o','n',':',' ','\"','%','l','s','\"',0};
-  static const MSVCRT_wchar_t format_console[] = {'A','s','s','e','r','t','i','o','n',' ','f','a','i','l','e','d',':',' ',
+  static const wchar_t format_console[] = {'A','s','s','e','r','t','i','o','n',' ','f','a','i','l','e','d',':',' ',
       '%','l','s',',',' ','f','i','l','e',' ','%','l','s',',',' ','l','i','n','e',' ','%','d','\n','\n',0};
 
   TRACE("(%s,%s,%d)\n", debugstr_w(str), debugstr_w(file), line);
@@ -300,7 +300,7 @@ void CDECL MSVCRT__wassert(const MSVCRT_wchar_t* str, const MSVCRT_wchar_t* file
   if ((MSVCRT_error_mode == MSVCRT__OUT_TO_MSGBOX) ||
      ((MSVCRT_error_mode == MSVCRT__OUT_TO_DEFAULT) && (MSVCRT_app_type == 2)))
   {
-    MSVCRT_wchar_t text[2048];
+    wchar_t text[2048];
     MSVCRT__snwprintf(text, sizeof(text), format_msgbox, file, line, str);
     DoMessageBoxW(assertion_failed, text);
   }
@@ -316,7 +316,7 @@ void CDECL MSVCRT__wassert(const MSVCRT_wchar_t* str, const MSVCRT_wchar_t* file
  */
 void CDECL _assert(const char* str, const char* file, unsigned int line)
 {
-    MSVCRT_wchar_t strW[1024], fileW[1024];
+    wchar_t strW[1024], fileW[1024];
 
     MSVCRT_mbstowcs(strW, str, 1024);
     MSVCRT_mbstowcs(fileW, file, 1024);

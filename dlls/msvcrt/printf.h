@@ -19,12 +19,12 @@
 #include "bnum.h"
 
 #ifdef PRINTF_WIDE
-#define APICHAR MSVCRT_wchar_t
+#define APICHAR wchar_t
 #define CONVCHAR char
 #define FUNC_NAME(func) func ## _w
 #else
 #define APICHAR char
-#define CONVCHAR MSVCRT_wchar_t
+#define CONVCHAR wchar_t
 #define FUNC_NAME(func) func ## _a
 #endif
 
@@ -108,7 +108,7 @@ static inline int FUNC_NAME(pf_fill)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ct
 
 #ifndef PRINTF_HELPERS
 #define PRINTF_HELPERS
-static inline int wcstombs_len(char *mbstr, const MSVCRT_wchar_t *wcstr,
+static inline int wcstombs_len(char *mbstr, const wchar_t *wcstr,
         int len, _locale_t locale)
 {
     char buf[MSVCRT_MB_LEN_MAX];
@@ -122,7 +122,7 @@ static inline int wcstombs_len(char *mbstr, const MSVCRT_wchar_t *wcstr,
     return mblen;
 }
 
-static inline int mbstowcs_len(MSVCRT_wchar_t *wcstr, const char *mbstr,
+static inline int mbstowcs_len(wchar_t *wcstr, const char *mbstr,
         int len, _locale_t locale)
 {
     int i, r, wlen = 0;
@@ -138,7 +138,7 @@ static inline int mbstowcs_len(MSVCRT_wchar_t *wcstr, const char *mbstr,
 #endif
 
 static inline int FUNC_NAME(pf_output_wstr)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const MSVCRT_wchar_t *str, int len, _locale_t locale)
+        const wchar_t *str, int len, _locale_t locale)
 {
 #ifdef PRINTF_WIDE
     return pf_puts(puts_ctx, len, str);
@@ -182,7 +182,7 @@ static inline int FUNC_NAME(pf_output_str)(FUNC_NAME(puts_clbk) pf_puts, void *p
 }
 
 static inline int FUNC_NAME(pf_output_format_wstr)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const MSVCRT_wchar_t *str, int len, pf_flags *flags, _locale_t locale)
+        const wchar_t *str, int len, pf_flags *flags, _locale_t locale)
 {
     int r, ret;
 
@@ -244,10 +244,10 @@ static inline int FUNC_NAME(pf_output_format_str)(FUNC_NAME(puts_clbk) pf_puts, 
 static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
         const void *str, int len, pf_flags *flags, _locale_t locale, BOOL legacy_wide)
 {
-    BOOL api_is_wide = sizeof(APICHAR) == sizeof(MSVCRT_wchar_t);
+    BOOL api_is_wide = sizeof(APICHAR) == sizeof(wchar_t);
     BOOL complement_is_narrow = legacy_wide ? api_is_wide : FALSE;
 #ifdef PRINTF_WIDE
-    static const MSVCRT_wchar_t nullW[] = {'(','n','u','l','l',')',0};
+    static const wchar_t nullW[] = {'(','n','u','l','l',')',0};
 
     if(!str)
         return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, nullW, 6, flags, locale);
