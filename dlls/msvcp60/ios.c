@@ -2878,21 +2878,20 @@ MSVCP_bool __thiscall basic_filebuf_char_is_open(const basic_filebuf_char *this)
 /* ?_Fiopen@std@@YAPEAU_iobuf@@PEB_WHH@Z */
 FILE* __cdecl _Fiopen_wchar(const wchar_t *name, int mode, int prot)
 {
-    static const wchar_t rW[] = {'r',0};
     static const struct {
         int mode;
         const wchar_t str[4];
         const wchar_t str_bin[4];
     } str_mode[] = {
-        {OPENMODE_out,                            {'w',0},     {'w','b',0}},
-        {OPENMODE_out|OPENMODE_app,               {'a',0},     {'a','b',0}},
-        {OPENMODE_app,                            {'a',0},     {'a','b',0}},
-        {OPENMODE_out|OPENMODE_trunc,             {'w',0},     {'w','b',0}},
-        {OPENMODE_in,                             {'r',0},     {'r','b',0}},
-        {OPENMODE_in|OPENMODE_out,                {'r','+',0}, {'r','+','b',0}},
-        {OPENMODE_in|OPENMODE_out|OPENMODE_trunc, {'w','+',0}, {'w','+','b',0}},
-        {OPENMODE_in|OPENMODE_out|OPENMODE_app,   {'a','+',0}, {'a','+','b',0}},
-        {OPENMODE_in|OPENMODE_app,                {'a','+',0}, {'a','+','b',0}}
+        {OPENMODE_out,                              L"w",   L"wb"},
+        {OPENMODE_out|OPENMODE_app,                 L"a",   L"ab"},
+        {OPENMODE_app,                              L"a",   L"ab"},
+        {OPENMODE_out|OPENMODE_trunc,               L"w",   L"wb"},
+        {OPENMODE_in,                               L"r",   L"rb"},
+        {OPENMODE_in|OPENMODE_out,                  L"r+",  L"r+b"},
+        {OPENMODE_in|OPENMODE_out|OPENMODE_trunc,   L"w+",  L"w+b"},
+        {OPENMODE_in|OPENMODE_out|OPENMODE_app,     L"a+",  L"a+b"},
+        {OPENMODE_in|OPENMODE_app,                  L"a+",  L"a+b"}
     };
 
     int real_mode = mode & ~(OPENMODE_ate|OPENMODE__Nocreate|OPENMODE__Noreplace|OPENMODE_binary);
@@ -2907,13 +2906,13 @@ FILE* __cdecl _Fiopen_wchar(const wchar_t *name, int mode, int prot)
     if(mode_idx == ARRAY_SIZE(str_mode))
         return NULL;
 
-    if((mode & OPENMODE__Nocreate) && !(f = _wfopen(name, rW)))
+    if((mode & OPENMODE__Nocreate) && !(f = _wfopen(name, L"r")))
         return NULL;
     else if(f)
         fclose(f);
 
     if((mode & OPENMODE__Noreplace) && (mode & (OPENMODE_out|OPENMODE_app))
-            && (f = _wfopen(name, rW))) {
+            && (f = _wfopen(name, L"r"))) {
         fclose(f);
         return NULL;
     }
