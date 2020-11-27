@@ -1777,15 +1777,14 @@ static const IQualityControlVtbl AviMuxIn_QualityControlVtbl = {
 
 static HRESULT create_input_pin(AviMux *avimux)
 {
-    WCHAR name[] = {'I','n','p','u','t',' ','0','0',0};
     AviMuxIn *object;
+    WCHAR name[19];
     HRESULT hr;
 
     if(avimux->input_pin_no >= MAX_PIN_NO-1)
         return E_FAIL;
 
-    name[7] = '0' + (avimux->input_pin_no+1) % 10;
-    name[6] = '0' + (avimux->input_pin_no+1) / 10;
+    swprintf(name, ARRAY_SIZE(name), L"Input %02u", avimux->input_pin_no + 1);
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -1824,10 +1823,7 @@ static HRESULT create_input_pin(AviMux *avimux)
 
 HRESULT avi_mux_create(IUnknown *outer, IUnknown **out)
 {
-    static const WCHAR output_name[] = {'A','V','I',' ','O','u','t',0};
-
     AviMux *avimux;
-    PIN_INFO info;
     HRESULT hr;
 
     if (!(avimux = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AviMux))))
@@ -1840,10 +1836,7 @@ HRESULT avi_mux_create(IUnknown *outer, IUnknown **out)
     avimux->IPersistMediaPropertyBag_iface.lpVtbl = &PersistMediaPropertyBagVtbl;
     avimux->ISpecifyPropertyPages_iface.lpVtbl = &SpecifyPropertyPagesVtbl;
 
-    info.dir = PINDIR_OUTPUT;
-    info.pFilter = &avimux->filter.IBaseFilter_iface;
-    lstrcpyW(info.achName, output_name);
-    strmbase_source_init(&avimux->source, &avimux->filter, output_name, &source_ops);
+    strmbase_source_init(&avimux->source, &avimux->filter, L"AVI Out", &source_ops);
     avimux->IQualityControl_iface.lpVtbl = &AviMuxOut_QualityControlVtbl;
     avimux->cur_stream = 0;
     avimux->cur_time = 0;

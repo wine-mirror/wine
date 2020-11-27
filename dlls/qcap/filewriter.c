@@ -315,7 +315,6 @@ static const IAMFilterMiscFlagsVtbl misc_flags_vtbl =
 
 HRESULT file_writer_create(IUnknown *outer, IUnknown **out)
 {
-    static const WCHAR sink_name[] = {'i','n',0};
     struct file_writer *object;
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
@@ -325,7 +324,7 @@ HRESULT file_writer_create(IUnknown *outer, IUnknown **out)
     object->IFileSinkFilter_iface.lpVtbl = &filesinkfilter_vtbl;
     object->IAMFilterMiscFlags_iface.lpVtbl = &misc_flags_vtbl;
 
-    strmbase_sink_init(&object->sink, &object->filter, sink_name, &sink_ops, NULL);
+    strmbase_sink_init(&object->sink, &object->filter, L"in", &sink_ops, NULL);
 
     TRACE("Created file writer %p.\n", object);
     *out = &object->filter.IUnknown_inner;

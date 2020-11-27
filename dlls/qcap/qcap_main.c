@@ -229,9 +229,6 @@ static const REGFILTER2 reg_file_writer =
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    static const WCHAR avi_muxW[] = {'A','V','I',' ','M','u','x',0};
-    static const WCHAR file_writerW[] = {'F','i','l','e',' ','w','r','i','t','e','r',0};
-    static const WCHAR smart_teeW[] = {'S','m','a','r','t',' ','T','e','e',0};
     IFilterMapper2 *mapper;
     HRESULT hr;
 
@@ -242,11 +239,11 @@ HRESULT WINAPI DllRegisterServer(void)
             &IID_IFilterMapper2, (void **)&mapper)))
         return hr;
 
-    IFilterMapper2_RegisterFilter(mapper, &CLSID_AviDest, avi_muxW,
+    IFilterMapper2_RegisterFilter(mapper, &CLSID_AviDest, L"AVI Mux",
             NULL, NULL, NULL, &reg_avi_mux);
-    IFilterMapper2_RegisterFilter(mapper, &CLSID_FileWriter, file_writerW,
+    IFilterMapper2_RegisterFilter(mapper, &CLSID_FileWriter, L"File writer",
             NULL, NULL, NULL, &reg_file_writer);
-    IFilterMapper2_RegisterFilter(mapper, &CLSID_SmartTee, smart_teeW,
+    IFilterMapper2_RegisterFilter(mapper, &CLSID_SmartTee, L"Smart Tee",
             NULL, NULL, NULL, &reg_smart_tee);
 
     IFilterMapper2_Release(mapper);

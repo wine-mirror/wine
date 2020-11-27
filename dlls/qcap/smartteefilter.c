@@ -316,9 +316,6 @@ static const struct strmbase_source_ops preview_ops =
 
 HRESULT smart_tee_create(IUnknown *outer, IUnknown **out)
 {
-    static const WCHAR captureW[] = {'C','a','p','t','u','r','e',0};
-    static const WCHAR previewW[] = {'P','r','e','v','i','e','w',0};
-    static const WCHAR inputW[] = {'I','n','p','u','t',0};
     SmartTeeFilter *object;
     HRESULT hr;
 
@@ -327,7 +324,7 @@ HRESULT smart_tee_create(IUnknown *outer, IUnknown **out)
     memset(object, 0, sizeof(*object));
 
     strmbase_filter_init(&object->filter, outer, &CLSID_SmartTee, &filter_ops);
-    strmbase_sink_init(&object->sink, &object->filter, inputW, &sink_ops, NULL);
+    strmbase_sink_init(&object->sink, &object->filter, L"Input", &sink_ops, NULL);
     hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMemAllocator, (void **)&object->sink.pAllocator);
     if (FAILED(hr))
@@ -337,8 +334,8 @@ HRESULT smart_tee_create(IUnknown *outer, IUnknown **out)
         return hr;
     }
 
-    strmbase_source_init(&object->capture, &object->filter, captureW, &capture_ops);
-    strmbase_source_init(&object->preview, &object->filter, previewW, &preview_ops);
+    strmbase_source_init(&object->capture, &object->filter, L"Capture", &capture_ops);
+    strmbase_source_init(&object->preview, &object->filter, L"Preview", &preview_ops);
 
     TRACE("Created smart tee %p.\n", object);
     *out = &object->filter.IUnknown_inner;

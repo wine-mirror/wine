@@ -530,7 +530,6 @@ static HRESULT WINAPI PPB_InitNew(IPersistPropertyBag * iface)
 
 static HRESULT WINAPI PPB_Load(IPersistPropertyBag *iface, IPropertyBag *bag, IErrorLog *error_log)
 {
-    static const OLECHAR VFWIndex[] = {'V','F','W','I','n','d','e','x',0};
     struct vfw_capture *filter = impl_from_IPersistPropertyBag(iface);
     HRESULT hr;
     VARIANT var;
@@ -538,7 +537,7 @@ static HRESULT WINAPI PPB_Load(IPersistPropertyBag *iface, IPropertyBag *bag, IE
     TRACE("filter %p, bag %p, error_log %p.\n", filter, bag, error_log);
 
     V_VT(&var) = VT_I4;
-    if (FAILED(hr = IPropertyBag_Read(bag, VFWIndex, &var, error_log)))
+    if (FAILED(hr = IPropertyBag_Read(bag, L"VFWIndex", &var, error_log)))
         return hr;
 
     if (!(filter->device = capture_funcs->create(V_I4(&var))))
@@ -848,7 +847,6 @@ static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
 HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out)
 {
-    static const WCHAR source_name[] = {'O','u','t','p','u','t',0};
     struct vfw_capture *object;
 
     if (!InitOnceExecuteOnce(&init_once, load_capture_funcs, NULL, NULL) || !capture_funcs)
@@ -866,7 +864,7 @@ HRESULT vfw_capture_create(IUnknown *outer, IUnknown **out)
     object->IPersistPropertyBag_iface.lpVtbl = &IPersistPropertyBag_VTable;
     object->init = FALSE;
 
-    strmbase_source_init(&object->source, &object->filter, source_name, &source_ops);
+    strmbase_source_init(&object->source, &object->filter, L"Output", &source_ops);
 
     object->IKsPropertySet_iface.lpVtbl = &IKsPropertySet_VTable;
 

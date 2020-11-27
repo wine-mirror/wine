@@ -213,12 +213,10 @@ static HRESULT WINAPI AVICompressorPropertyBag_Load(IPersistPropertyBag *iface, 
     VARIANT v;
     HRESULT hres;
 
-    static const WCHAR fcc_handlerW[] = {'F','c','c','H','a','n','d','l','e','r',0};
-
     TRACE("(%p)->(%p %p)\n", This, pPropBag, pErrorLog);
 
     V_VT(&v) = VT_BSTR;
-    hres = IPropertyBag_Read(pPropBag, fcc_handlerW, &v, NULL);
+    hres = IPropertyBag_Read(pPropBag, L"FccHandler", &v, NULL);
     if(FAILED(hres)) {
         WARN("Could not read FccHandler: %08x\n", hres);
         return hres;
@@ -470,8 +468,6 @@ static const struct strmbase_source_ops source_ops =
 
 HRESULT avi_compressor_create(IUnknown *outer, IUnknown **out)
 {
-    static const WCHAR source_name[] = {'O','u','t',0};
-    static const WCHAR sink_name[] = {'I','n',0};
     AVICompressor *object;
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
@@ -480,8 +476,8 @@ HRESULT avi_compressor_create(IUnknown *outer, IUnknown **out)
     strmbase_filter_init(&object->filter, outer, &CLSID_AVICo, &filter_ops);
     object->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
 
-    strmbase_sink_init(&object->sink, &object->filter, sink_name, &sink_ops, NULL);
-    strmbase_source_init(&object->source, &object->filter, source_name, &source_ops);
+    strmbase_sink_init(&object->sink, &object->filter, L"In", &sink_ops, NULL);
+    strmbase_source_init(&object->source, &object->filter, L"Out", &source_ops);
 
     TRACE("Created AVI compressor %p.\n", object);
     *out = &object->filter.IUnknown_inner;
