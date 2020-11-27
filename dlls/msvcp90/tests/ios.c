@@ -1969,7 +1969,7 @@ static void test_istream_tellg(void)
 
         /* filebuf */
         file = fopen(testfile, "wt");
-        fprintf(file, tests[i].str);
+        fprintf(file, "%s", tests[i].str);
         fclose(file);
 
         /* fstream<char> version */
