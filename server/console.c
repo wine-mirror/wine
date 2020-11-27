@@ -290,23 +290,23 @@ static const struct object_ops console_device_ops =
     no_destroy                        /* destroy */
 };
 
-static void input_device_dump( struct object *obj, int verbose );
-static struct object *input_device_open_file( struct object *obj, unsigned int access,
-                                              unsigned int sharing, unsigned int options );
-static int input_device_add_queue( struct object *obj, struct wait_queue_entry *entry );
-static struct fd *input_device_get_fd( struct object *obj );
+static void console_input_dump( struct object *obj, int verbose );
+static struct object *console_input_open_file( struct object *obj, unsigned int access,
+                                               unsigned int sharing, unsigned int options );
+static int console_input_add_queue( struct object *obj, struct wait_queue_entry *entry );
+static struct fd *console_input_get_fd( struct object *obj );
 
-static const struct object_ops input_device_ops =
+static const struct object_ops console_input_ops =
 {
     sizeof(struct object),            /* size */
-    input_device_dump,                /* dump */
+    console_input_dump,               /* dump */
     console_device_get_type,          /* get_type */
-    input_device_add_queue,           /* add_queue */
+    console_input_add_queue,          /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
-    input_device_get_fd,              /* get_fd */
+    console_input_get_fd,             /* get_fd */
     no_map_access,                    /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -314,29 +314,29 @@ static const struct object_ops input_device_ops =
     no_lookup_name,                   /* lookup_name */
     directory_link_name,              /* link_name */
     default_unlink_name,              /* unlink_name */
-    input_device_open_file,           /* open_file */
+    console_input_open_file,          /* open_file */
     no_kernel_obj_list,               /* get_kernel_obj_list */
     no_close_handle,                  /* close_handle */
     no_destroy                        /* destroy */
 };
 
-static void output_device_dump( struct object *obj, int verbose );
-static int output_device_add_queue( struct object *obj, struct wait_queue_entry *entry );
-static struct fd *output_device_get_fd( struct object *obj );
-static struct object *output_device_open_file( struct object *obj, unsigned int access,
-                                              unsigned int sharing, unsigned int options );
+static void console_output_dump( struct object *obj, int verbose );
+static int console_output_add_queue( struct object *obj, struct wait_queue_entry *entry );
+static struct fd *console_output_get_fd( struct object *obj );
+static struct object *console_output_open_file( struct object *obj, unsigned int access,
+                                                unsigned int sharing, unsigned int options );
 
-static const struct object_ops output_device_ops =
+static const struct object_ops console_output_ops =
 {
     sizeof(struct object),            /* size */
-    output_device_dump,               /* dump */
+    console_output_dump,              /* dump */
     console_device_get_type,          /* get_type */
-    output_device_add_queue,          /* add_queue */
+    console_output_add_queue,         /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
-    output_device_get_fd,             /* get_fd */
+    console_output_get_fd,            /* get_fd */
     no_map_access,                    /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -344,7 +344,7 @@ static const struct object_ops output_device_ops =
     no_lookup_name,                   /* lookup_name */
     directory_link_name,              /* link_name */
     default_unlink_name,              /* unlink_name */
-    output_device_open_file,          /* open_file */
+    console_output_open_file,         /* open_file */
     no_kernel_obj_list,               /* get_kernel_obj_list */
     no_close_handle,                  /* close_handle */
     no_destroy                        /* destroy */
@@ -1214,13 +1214,13 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
     if (name->len == sizeof(inputW) && !memcmp( name->str, inputW, name->len ))
     {
         name->len = 0;
-        return alloc_object( &input_device_ops );
+        return alloc_object( &console_input_ops );
     }
 
     if (name->len == sizeof(outputW) && !memcmp( name->str, outputW, name->len ))
     {
         name->len = 0;
-        return alloc_object( &output_device_ops );
+        return alloc_object( &console_output_ops );
     }
 
     if (name->len == sizeof(screen_bufferW) && !memcmp( name->str, screen_bufferW, name->len ))
@@ -1268,12 +1268,12 @@ static struct object *console_device_open_file( struct object *obj, unsigned int
     return is_output ? grab_object( current->process->console->active ) : grab_object( current->process->console );
 }
 
-static void input_device_dump( struct object *obj, int verbose )
+static void console_input_dump( struct object *obj, int verbose )
 {
     fputs( "console Input device\n", stderr );
 }
 
-static int input_device_add_queue( struct object *obj, struct wait_queue_entry *entry )
+static int console_input_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
     if (!current->process->console)
     {
@@ -1283,7 +1283,7 @@ static int input_device_add_queue( struct object *obj, struct wait_queue_entry *
     return add_queue( &current->process->console->obj, entry );
 }
 
-static struct fd *input_device_get_fd( struct object *obj )
+static struct fd *console_input_get_fd( struct object *obj )
 {
     if (!current->process->console)
     {
@@ -1293,18 +1293,18 @@ static struct fd *input_device_get_fd( struct object *obj )
     return get_obj_fd( &current->process->console->obj );
 }
 
-static struct object *input_device_open_file( struct object *obj, unsigned int access,
-                                              unsigned int sharing, unsigned int options )
+static struct object *console_input_open_file( struct object *obj, unsigned int access,
+                                               unsigned int sharing, unsigned int options )
 {
     return grab_object( obj );
 }
 
-static void output_device_dump( struct object *obj, int verbose )
+static void console_output_dump( struct object *obj, int verbose )
 {
     fputs( "console Output device\n", stderr );
 }
 
-static int output_device_add_queue( struct object *obj, struct wait_queue_entry *entry )
+static int console_output_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
     if (!current->process->console || !current->process->console->active)
     {
@@ -1314,7 +1314,7 @@ static int output_device_add_queue( struct object *obj, struct wait_queue_entry 
     return add_queue( &current->process->console->obj, entry );
 }
 
-static struct fd *output_device_get_fd( struct object *obj )
+static struct fd *console_output_get_fd( struct object *obj )
 {
     if (!current->process->console || !current->process->console->active)
     {
@@ -1325,8 +1325,8 @@ static struct fd *output_device_get_fd( struct object *obj )
     return get_obj_fd( &current->process->console->active->obj );
 }
 
-static struct object *output_device_open_file( struct object *obj, unsigned int access,
-                                               unsigned int sharing, unsigned int options )
+static struct object *console_output_open_file( struct object *obj, unsigned int access,
+                                                unsigned int sharing, unsigned int options )
 {
     return grab_object( obj );
 }
