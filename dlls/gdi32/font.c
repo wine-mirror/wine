@@ -7958,8 +7958,8 @@ void font_init(void)
         HKEY key = load_external_font_keys();
         load_system_bitmap_fonts();
         load_file_system_fonts();
-        load_registry_fonts();
         font_funcs->load_fonts();
+        load_registry_fonts();
         update_external_font_keys( key );
         RegCloseKey( key );
     }
