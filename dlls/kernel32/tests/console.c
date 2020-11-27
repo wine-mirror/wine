@@ -3777,7 +3777,7 @@ static void test_GetConsoleScreenBufferInfoEx(HANDLE std_output)
 static void test_FreeConsole(void)
 {
     HANDLE handle, unbound_output = NULL, unbound_input = NULL;
-    DWORD size, mode;
+    DWORD size, mode, type;
     WCHAR title[16];
     char buf[32];
     HWND hwnd;
@@ -3888,6 +3888,11 @@ static void test_FreeConsole(void)
     ret = GetConsoleMode(unbound_output, &mode);
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE,
        "GetConsoleMode returned %x %u\n", ret, GetLastError());
+
+    type = GetFileType(unbound_input);
+    ok(type == FILE_TYPE_CHAR, "GetFileType returned %u\n", type);
+    type = GetFileType(unbound_output);
+    ok(type == FILE_TYPE_CHAR, "GetFileType returned %u\n", type);
 
     CloseHandle(unbound_input);
     CloseHandle(unbound_output);

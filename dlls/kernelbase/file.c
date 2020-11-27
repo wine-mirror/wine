@@ -3099,8 +3099,6 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFileType( HANDLE file )
         file == (HANDLE)STD_ERROR_HANDLE)
         file = GetStdHandle( (DWORD_PTR)file );
 
-    if (is_console_handle( file )) return FILE_TYPE_CHAR;
-
     if (!set_ntstatus( NtQueryVolumeInformationFile( file, &io, &info, sizeof(info),
                                                      FileFsDeviceInformation )))
         return FILE_TYPE_UNKNOWN;
@@ -3108,6 +3106,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFileType( HANDLE file )
     switch (info.DeviceType)
     {
     case FILE_DEVICE_NULL:
+    case FILE_DEVICE_CONSOLE:
     case FILE_DEVICE_SERIAL_PORT:
     case FILE_DEVICE_PARALLEL_PORT:
     case FILE_DEVICE_TAPE:
