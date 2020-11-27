@@ -230,7 +230,7 @@ wchar_t* CDECL MSVCP_char_traits_wchar_assignn(wchar_t *str,
     return str;
 }
 
-static MSVCP_bool basic_string_char_inside(
+static bool basic_string_char_inside(
         basic_string_char *this, const char *ptr)
 {
     return ptr>=this->ptr && ptr<this->ptr+this->size;
@@ -281,7 +281,7 @@ void __thiscall MSVCP_basic_string_char_clear(basic_string_char *this)
 /* ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEX_N@Z */
 /* ?_Tidy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAAX_N@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char__Tidy, 8)
-void __thiscall basic_string_char__Tidy(basic_string_char *this, MSVCP_bool built)
+void __thiscall basic_string_char__Tidy(basic_string_char *this, bool built)
 {
     TRACE("(%p %d)\n", this, built);
 
@@ -297,7 +297,7 @@ void __thiscall basic_string_char__Tidy(basic_string_char *this, MSVCP_bool buil
 /* ?_Grow@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAE_NI_N@Z */
 /* ?_Grow@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAA_N_K_N@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char__Grow, 12)
-MSVCP_bool __thiscall basic_string_char__Grow(basic_string_char *this, size_t new_size, MSVCP_bool trim)
+bool __thiscall basic_string_char__Grow(basic_string_char *this, size_t new_size, bool trim)
 {
     if(!new_size) {
         if(trim)
@@ -739,7 +739,7 @@ int __thiscall MSVCP_basic_string_char_compare_substr_cstr(const basic_string_ch
 /* ??$?8DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
 /* ??8std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
 /* ??8std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_equal(
+bool __cdecl MSVCP_basic_string_char_equal(
         const basic_string_char *left, const basic_string_char *right)
 {
     return MSVCP_basic_string_char_compare(left, right) == 0;
@@ -749,7 +749,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_equal(
 /* ??$?8DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
 /* ??8std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z */
 /* ??8std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_equal_str_cstr(
+bool __cdecl MSVCP_basic_string_char_equal_str_cstr(
         const basic_string_char *left, const char *right)
 {
     return MSVCP_basic_string_char_compare_cstr(left, right) == 0;
@@ -759,7 +759,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_equal_str_cstr(
 /* ??$?8DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 /* ??8std@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 /* ??8std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_equal_cstr_str(
+bool __cdecl MSVCP_basic_string_char_equal_cstr_str(
         const char *left, const basic_string_char *right)
 {
     return MSVCP_basic_string_char_compare_cstr(right, left) == 0;
@@ -769,7 +769,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_equal_cstr_str(
 /* ??$?9DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
 /* ??9std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
 /* ??9std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_not_equal(
+bool __cdecl MSVCP_basic_string_char_not_equal(
         const basic_string_char *left, const basic_string_char *right)
 {
     return MSVCP_basic_string_char_compare(left, right) != 0;
@@ -779,7 +779,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_not_equal(
 /* ??$?9DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
 /* ??9std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z */
 /* ??9std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_not_equal_str_cstr(
+bool __cdecl MSVCP_basic_string_char_not_equal_str_cstr(
         const basic_string_char *left, const char *right)
 {
     return MSVCP_basic_string_char_compare_cstr(left, right) != 0;
@@ -789,7 +789,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_not_equal_str_cstr(
 /* ??$?9DU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 /* ??9std@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 /* ??9std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_not_equal_cstr_str(
+bool __cdecl MSVCP_basic_string_char_not_equal_cstr_str(
         const char *left, const basic_string_char *right)
 {
     return MSVCP_basic_string_char_compare_cstr(right, left) != 0;
@@ -799,7 +799,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_not_equal_cstr_str(
 /* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
 /* ??Mstd@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
 /* ??Mstd@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_lower(
+bool __cdecl MSVCP_basic_string_char_lower(
         const basic_string_char *left, const basic_string_char *right)
 {
     return MSVCP_basic_string_char_compare(left, right) < 0;
@@ -809,7 +809,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_lower(
 /* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
 /* ??Mstd@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z */
 /* ??Mstd@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_lower_bstr_cstr(
+bool __cdecl MSVCP_basic_string_char_lower_bstr_cstr(
         const basic_string_char *left, const char *right)
 {
     return MSVCP_basic_string_char_compare_cstr(left, right) < 0;
@@ -819,7 +819,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_lower_bstr_cstr(
 /* ??$?MDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 /* ??Mstd@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 /* ??Mstd@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_lower_cstr_bstr(
+bool __cdecl MSVCP_basic_string_char_lower_cstr_bstr(
         const char *left, const basic_string_char *right)
 {
     return MSVCP_basic_string_char_compare_cstr(right, left) > 0;
@@ -829,7 +829,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_lower_cstr_bstr(
 /* ??$?NDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
 /* ??Nstd@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
 /* ??Nstd@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_leq(
+bool __cdecl MSVCP_basic_string_char_leq(
         const basic_string_char *left, const basic_string_char *right)
 {
     return MSVCP_basic_string_char_compare(left, right) <= 0;
@@ -839,7 +839,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_leq(
 /* ??$?NDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
 /* ??Nstd@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z */
 /* ??Nstd@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_leq_bstr_cstr(
+bool __cdecl MSVCP_basic_string_char_leq_bstr_cstr(
         const basic_string_char *left, const char *right)
 {
     return MSVCP_basic_string_char_compare_cstr(left, right) <= 0;
@@ -849,7 +849,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_leq_bstr_cstr(
 /* ??$?NDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 /* ??Nstd@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 /* ??Nstd@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_leq_cstr_bstr(
+bool __cdecl MSVCP_basic_string_char_leq_cstr_bstr(
         const char *left, const basic_string_char *right)
 {
     return MSVCP_basic_string_char_compare_cstr(right, left) >= 0;
@@ -859,7 +859,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_leq_cstr_bstr(
 /* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
 /* ??Ostd@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
 /* ??Ostd@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_greater(
+bool __cdecl MSVCP_basic_string_char_greater(
         const basic_string_char *left, const basic_string_char *right)
 {
     return MSVCP_basic_string_char_compare(left, right) > 0;
@@ -869,7 +869,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_greater(
 /* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
 /* ??Ostd@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z */
 /* ??Ostd@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_greater_bstr_cstr(
+bool __cdecl MSVCP_basic_string_char_greater_bstr_cstr(
         const basic_string_char *left, const char *right)
 {
     return MSVCP_basic_string_char_compare_cstr(left, right) > 0;
@@ -879,7 +879,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_greater_bstr_cstr(
 /* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 /* ??Ostd@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 /* ??Ostd@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_greater_cstr_bstr(
+bool __cdecl MSVCP_basic_string_char_greater_cstr_bstr(
         const char *left, const basic_string_char *right)
 {
     return MSVCP_basic_string_char_compare_cstr(right, left) < 0;
@@ -889,7 +889,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_greater_cstr_bstr(
 /* ??$?PDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
 /* ??Pstd@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
 /* ??Pstd@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_geq(
+bool __cdecl MSVCP_basic_string_char_geq(
         const basic_string_char *left, const basic_string_char *right)
 {
     return MSVCP_basic_string_char_compare(left, right) >= 0;
@@ -899,7 +899,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_geq(
 /* ??$?PDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
 /* ??Pstd@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z */
 /* ??Pstd@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_geq_bstr_cstr(
+bool __cdecl MSVCP_basic_string_char_geq_bstr_cstr(
         const basic_string_char *left, const char *right)
 {
     return MSVCP_basic_string_char_compare_cstr(left, right) >= 0;
@@ -909,7 +909,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_geq_bstr_cstr(
 /* ??$?PDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 /* ??Pstd@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
 /* ??Pstd@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_char_geq_cstr_bstr(
+bool __cdecl MSVCP_basic_string_char_geq_cstr_bstr(
         const char *left, const basic_string_char *right)
 {
     return MSVCP_basic_string_char_compare_cstr(right, left) <= 0;
@@ -1703,7 +1703,7 @@ void __thiscall MSVCP_basic_string_char_reserve(basic_string_char *this, size_t 
 /* ?empty@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE_NXZ */
 /* ?empty@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_NXZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_empty, 4)
-MSVCP_bool __thiscall MSVCP_basic_string_char_empty(basic_string_char *this)
+bool __thiscall MSVCP_basic_string_char_empty(basic_string_char *this)
 {
     TRACE("%p\n", this);
     return this->size == 0;
@@ -1760,7 +1760,7 @@ allocator* __thiscall basic_string_char_get_allocator(const basic_string_char *t
     return ret;
 }
 
-static MSVCP_bool basic_string_wchar_inside(
+static bool basic_string_wchar_inside(
         basic_string_wchar *this, const wchar_t *ptr)
 {
     return ptr>=this->ptr && ptr<this->ptr+this->size;
@@ -1813,7 +1813,7 @@ void __thiscall MSVCP_basic_string_wchar_clear(basic_string_wchar *this)
 /* ?_Tidy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAEX_N@Z */
 /* ?_Tidy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AEAAX_N@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar__Tidy, 8)
-void __thiscall basic_string_wchar__Tidy(basic_string_wchar *this, MSVCP_bool built)
+void __thiscall basic_string_wchar__Tidy(basic_string_wchar *this, bool built)
 {
     TRACE("(%p %d)\n", this, built);
 
@@ -1829,7 +1829,7 @@ void __thiscall basic_string_wchar__Tidy(basic_string_wchar *this, MSVCP_bool bu
 /* ?_Grow@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAE_NI_N@Z */
 /* ?_Grow@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AEAA_N_K_N@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar__Grow, 12)
-MSVCP_bool __thiscall basic_string_wchar__Grow(basic_string_wchar *this, size_t new_size, MSVCP_bool trim)
+bool __thiscall basic_string_wchar__Grow(basic_string_wchar *this, size_t new_size, bool trim)
 {
     if(!new_size) {
         if(trim)
@@ -2276,7 +2276,7 @@ int __thiscall MSVCP_basic_string_wchar_compare_substr_cstr(const basic_string_w
 /* ??$?8GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
 /* ??8std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
 /* ??8std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_equal(
+bool __cdecl MSVCP_basic_string_wchar_equal(
         const basic_string_wchar *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare(left, right) == 0;
@@ -2286,7 +2286,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_equal(
 /* ??$?8GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
 /* ??8std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PBG@Z */
 /* ??8std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_equal_str_cstr(
+bool __cdecl MSVCP_basic_string_wchar_equal_str_cstr(
         const basic_string_wchar *left, const wchar_t *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(left, right) == 0;
@@ -2296,7 +2296,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_equal_str_cstr(
 /* ??$?8GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
 /* ??8std@@YA_NPBGABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
 /* ??8std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_equal_cstr_str(
+bool __cdecl MSVCP_basic_string_wchar_equal_cstr_str(
         const wchar_t *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(right, left) == 0;
@@ -2306,7 +2306,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_equal_cstr_str(
 /* ??$?9GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
 /* ??9std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
 /* ??9std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_not_equal(
+bool __cdecl MSVCP_basic_string_wchar_not_equal(
         const basic_string_wchar *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare(left, right) != 0;
@@ -2316,7 +2316,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_not_equal(
 /* ??$?9GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
 /* ??9std@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PBG@Z */
 /* ??9std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_not_equal_str_cstr(
+bool __cdecl MSVCP_basic_string_wchar_not_equal_str_cstr(
         const basic_string_wchar *left, const wchar_t *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(left, right) != 0;
@@ -2326,7 +2326,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_not_equal_str_cstr(
 /* ??$?9GU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
 /* ??9std@@YA_NPBGABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
 /* ??9std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_not_equal_cstr_str(
+bool __cdecl MSVCP_basic_string_wchar_not_equal_cstr_str(
         const wchar_t *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(right, left) != 0;
@@ -2336,7 +2336,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_not_equal_cstr_str(
 /* ??$?MGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
 /* ??Mstd@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
 /* ??Mstd@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_lower(
+bool __cdecl MSVCP_basic_string_wchar_lower(
         const basic_string_wchar *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare(left, right) < 0;
@@ -2346,7 +2346,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_lower(
 /* ??$?MGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
 /* ??Mstd@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PBG@Z */
 /* ??Mstd@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_lower_bstr_cstr(
+bool __cdecl MSVCP_basic_string_wchar_lower_bstr_cstr(
         const basic_string_wchar *left, const wchar_t *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(left, right) < 0;
@@ -2356,7 +2356,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_lower_bstr_cstr(
 /* ??$?MGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
 /* ??Mstd@@YA_NPBGABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
 /* ??Mstd@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_lower_cstr_bstr(
+bool __cdecl MSVCP_basic_string_wchar_lower_cstr_bstr(
         const wchar_t *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(right, left) > 0;
@@ -2366,7 +2366,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_lower_cstr_bstr(
 /* ??$?NGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
 /* ??Nstd@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
 /* ??Nstd@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_leq(
+bool __cdecl MSVCP_basic_string_wchar_leq(
         const basic_string_wchar *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare(left, right) <= 0;
@@ -2376,7 +2376,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_leq(
 /* ??$?NGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
 /* ??Nstd@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PBG@Z */
 /* ??Nstd@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_leq_bstr_cstr(
+bool __cdecl MSVCP_basic_string_wchar_leq_bstr_cstr(
         const basic_string_wchar *left, const wchar_t *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(left, right) <= 0;
@@ -2386,7 +2386,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_leq_bstr_cstr(
 /* ??$?NGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
 /* ??Nstd@@YA_NPBGABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
 /* ??Nstd@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_leq_cstr_bstr(
+bool __cdecl MSVCP_basic_string_wchar_leq_cstr_bstr(
         const wchar_t *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(right, left) >= 0;
@@ -2396,7 +2396,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_leq_cstr_bstr(
 /* ??$?OGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
 /* ??Ostd@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
 /* ??Ostd@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_greater(
+bool __cdecl MSVCP_basic_string_wchar_greater(
         const basic_string_wchar *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare(left, right) > 0;
@@ -2406,7 +2406,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_greater(
 /* ??$?OGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
 /* ??Ostd@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PBG@Z */
 /* ??Ostd@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_greater_bstr_cstr(
+bool __cdecl MSVCP_basic_string_wchar_greater_bstr_cstr(
         const basic_string_wchar *left, const wchar_t *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(left, right) > 0;
@@ -2416,7 +2416,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_greater_bstr_cstr(
 /* ??$?OGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
 /* ??Ostd@@YA_NPBGABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
 /* ??Ostd@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_greater_cstr_bstr(
+bool __cdecl MSVCP_basic_string_wchar_greater_cstr_bstr(
         const wchar_t *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(right, left) < 0;
@@ -2426,7 +2426,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_greater_cstr_bstr(
 /* ??$?PGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
 /* ??Pstd@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
 /* ??Pstd@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@0@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_geq(
+bool __cdecl MSVCP_basic_string_wchar_geq(
         const basic_string_wchar *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare(left, right) >= 0;
@@ -2436,7 +2436,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_geq(
 /* ??$?PGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
 /* ??Pstd@@YA_NABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PBG@Z */
 /* ??Pstd@@YA_NAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@PEBG@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_geq_bstr_cstr(
+bool __cdecl MSVCP_basic_string_wchar_geq_bstr_cstr(
         const basic_string_wchar *left, const wchar_t *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(left, right) >= 0;
@@ -2446,7 +2446,7 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_geq_bstr_cstr(
 /* ??$?PGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
 /* ??Pstd@@YA_NPBGABV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
 /* ??Pstd@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z */
-MSVCP_bool __cdecl MSVCP_basic_string_wchar_geq_cstr_bstr(
+bool __cdecl MSVCP_basic_string_wchar_geq_cstr_bstr(
         const wchar_t *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(right, left) <= 0;
@@ -3240,7 +3240,7 @@ void __thiscall MSVCP_basic_string_wchar_reserve(basic_string_wchar *this, size_
 /* ?empty@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBE_NXZ */
 /* ?empty@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_NXZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_empty, 4)
-MSVCP_bool __thiscall MSVCP_basic_string_wchar_empty(basic_string_wchar *this)
+bool __thiscall MSVCP_basic_string_wchar_empty(basic_string_wchar *this)
 {
     TRACE("%p\n", this);
     return this->size == 0;
