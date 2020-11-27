@@ -551,7 +551,7 @@ static void set_active_screen_buffer( struct console *console, struct screen_buf
                                            screen_buffer->id, NULL, NULL );
 }
 
-static struct object *create_console_output( struct console *console )
+static struct object *create_screen_buffer( struct console *console )
 {
     struct screen_buffer *screen_buffer;
 
@@ -814,7 +814,7 @@ static struct object *console_server_lookup_name( struct object *obj, struct uni
             return 0;
         }
         if (!(server->console = (struct console *)create_console())) return NULL;
-        if (!(screen_buffer = (struct screen_buffer *)create_console_output( server->console )))
+        if (!(screen_buffer = (struct screen_buffer *)create_screen_buffer( server->console )))
         {
             release_object( server->console );
             server->console = NULL;
@@ -1231,7 +1231,7 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
             return NULL;
         }
         name->len = 0;
-        return create_console_output( current->process->console );
+        return create_screen_buffer( current->process->console );
     }
 
     if (name->len == sizeof(serverW) && !memcmp( name->str, serverW, name->len ))
