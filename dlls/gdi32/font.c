@@ -7910,7 +7910,7 @@ static void load_registry_fonts(void)
 
     vlen = ARRAY_SIZE(value);
     dlen = sizeof(data);
-    while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, (LPBYTE)data, &dlen ))
+    while (!RegEnumValueW( hkey, i++, value, &vlen, NULL, &type, NULL, NULL ))
     {
         if (type != REG_SZ) goto next;
         dlen /= sizeof(WCHAR);
@@ -7918,6 +7918,13 @@ static void load_registry_fonts(void)
         if (find_face_from_full_name( value )) goto next;
         if (tmp && !*tmp) *tmp = ' ';
 
+        if (RegQueryValueExW( hkey, value, NULL, NULL, (LPBYTE)data, &dlen ))
+        {
+            WARN( "Unable to get face path %s\n", debugstr_w(value) );
+            goto next;
+        }
+
+        dlen /= sizeof(WCHAR);
         if (data[0] && data[1] == ':')
             add_font_resource( data, ADDFONT_ALLOW_BITMAP | ADDFONT_ADD_TO_CACHE );
         else if (dlen >= 6 && !wcsicmp( data + dlen - 5, L".fon" ))
