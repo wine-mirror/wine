@@ -28,7 +28,6 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/strmbase.h"
-#include "wine/unicode.h"
 
 extern HINSTANCE qcap_instance DECLSPEC_HIDDEN;
 

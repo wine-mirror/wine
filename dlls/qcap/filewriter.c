@@ -245,9 +245,9 @@ static HRESULT WINAPI filesinkfilter_SetFileName(IFileSinkFilter *iface,
     if (mt)
         FIXME("Ignoring media type %p.\n", mt);
 
-    if (!(new_filename = heap_alloc((strlenW(filename) + 1) * sizeof(WCHAR))))
+    if (!(new_filename = heap_alloc((wcslen(filename) + 1) * sizeof(WCHAR))))
         return E_OUTOFMEMORY;
-    strcpyW(new_filename, filename);
+    wcscpy(new_filename, filename);
 
     heap_free(filter->filename);
     filter->filename = new_filename;
