@@ -116,9 +116,9 @@ static void v4l_device_destroy(struct video_capture_device *device)
     if (device->fd != -1)
         video_close(device->fd);
     if (device->caps_count)
-        heap_free(device->caps);
-    heap_free(device->image_data);
-    heap_free(device);
+        free(device->caps);
+    free(device->image_data);
+    free(device);
 }
 
 static const struct caps *find_caps(struct video_capture_device *device, const AM_MEDIA_TYPE *mt)
@@ -167,7 +167,7 @@ static HRESULT set_caps(struct video_capture_device *device, const struct caps *
     height = caps->video_info.bmiHeader.biHeight;
     image_size = width * height * caps->video_info.bmiHeader.biBitCount / 8;
 
-    if (!(image_data = heap_alloc(image_size)))
+    if (!(image_data = malloc(image_size)))
     {
         ERR("Failed to allocate memory.\n");
         return E_OUTOFMEMORY;
@@ -183,14 +183,14 @@ static HRESULT set_caps(struct video_capture_device *device, const struct caps *
             || format.fmt.pix.height != height)
     {
         ERR("Failed to set pixel format: %s.\n", strerror(errno));
-        heap_free(image_data);
+        free(image_data);
         return VFW_E_TYPE_NOT_ACCEPTED;
     }
 
     device->current_caps = caps;
     device->image_size = image_size;
     device->image_pitch = width * caps->video_info.bmiHeader.biBitCount / 8;
-    heap_free(device->image_data);
+    free(device->image_data);
     device->image_data = image_data;
     return S_OK;
 }
@@ -407,7 +407,7 @@ struct video_capture_device *v4l_device_create(USHORT index)
 
     have_libv4l2 = video_init();
 
-    if (!(device = heap_alloc_zero(sizeof(*device))))
+    if (!(device = calloc(1, sizeof(*device))))
         return NULL;
 
     sprintf(path, "/dev/video%i", index);
@@ -509,7 +509,7 @@ struct video_capture_device *v4l_device_create(USHORT index)
         else
             ERR("Failed to get fps: %s.\n", strerror(errno));
 
-        new_caps = heap_realloc(device->caps, (device->caps_count + 1) * sizeof(*device->caps));
+        new_caps = realloc(device->caps, (device->caps_count + 1) * sizeof(*device->caps));
         if (!new_caps)
             goto error;
         device->caps = new_caps;
