@@ -520,7 +520,7 @@ static inline HRESULT variant_from_dt(XDR_DT dt, xmlChar* str, VARIANT* v)
                 if(*p == '.')
                 {
                     p++;
-                    while(isdigitW(*p)) p++;
+                    while (*p >= '0' && *p <= '9') p++;
                 }
             }
 

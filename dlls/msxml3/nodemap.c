@@ -371,7 +371,7 @@ static HRESULT xmlnodemap_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DI
     WCHAR *ptr;
     int idx = 0;
 
-    for(ptr = name; *ptr && isdigitW(*ptr); ptr++)
+    for(ptr = name; *ptr >= '0' && *ptr <= '9'; ptr++)
         idx = idx*10 + (*ptr-'0');
     if(*ptr)
         return DISP_E_UNKNOWNNAME;
