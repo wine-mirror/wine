@@ -338,7 +338,7 @@ HRESULT WINAPI OleCreateFontIndirect(
   *ppvObj = 0;
 
   if (!lpFontDesc) {
-    static WCHAR fname[] = { 'S','y','s','t','e','m',0 };
+    static WCHAR fname[] = L"System";
 
     fd.cbSizeofstruct = sizeof(fd);
     fd.lpstrName      = fname;

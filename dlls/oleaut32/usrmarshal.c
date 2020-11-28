@@ -2261,7 +2261,6 @@ HRESULT __RPC_STUB IPropertyBag_Read_Stub(
     DWORD varType,
     IUnknown *pUnkObj)
 {
-  static const WCHAR emptyWstr[] = {0};
   IDispatch *disp;
   HRESULT hr;
   TRACE("(%p, %s, %p, %p, %x, %p)\n", This, debugstr_w(pszPropName), pVar,
@@ -2287,7 +2286,7 @@ HRESULT __RPC_STUB IPropertyBag_Read_Stub(
       V_UNKNOWN(pVar) = pUnkObj;
       break;
     case VT_BSTR:
-      V_BSTR(pVar) = SysAllocString(emptyWstr);
+      V_BSTR(pVar) = SysAllocString(L"");
       break;
     case VT_SAFEARRAY:
       FIXME("Safearray support not yet implemented.\n");

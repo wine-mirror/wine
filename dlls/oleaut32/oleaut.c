@@ -1138,38 +1138,22 @@ HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hIcon)
  */
 HRESULT WINAPI GetAltMonthNames(LCID lcid, LPOLESTR **str)
 {
-    static const WCHAR ar_month1W[] = {0x645,0x62d,0x631,0x645,0};
-    static const WCHAR ar_month2W[] = {0x635,0x641,0x631,0};
-    static const WCHAR ar_month3W[] = {0x631,0x628,0x64a,0x639,' ',0x627,0x644,0x627,0x648,0x644,0};
-    static const WCHAR ar_month4W[] = {0x631,0x628,0x64a,0x639,' ',0x627,0x644,0x62b,0x627,0x646,0x64a,0};
-    static const WCHAR ar_month5W[] = {0x62c,0x645,0x627,0x62f,0x649,' ',0x627,0x644,0x627,0x648,0x644,0x649,0};
-    static const WCHAR ar_month6W[] = {0x62c,0x645,0x627,0x62f,0x649,' ',0x627,0x644,0x62b,0x627,0x646,0x64a,0x629,0};
-    static const WCHAR ar_month7W[] = {0x631,0x62c,0x628,0};
-    static const WCHAR ar_month8W[] = {0x634,0x639,0x628,0x627,0x646,0};
-    static const WCHAR ar_month9W[] = {0x631,0x645,0x636,0x627,0x646,0};
-    static const WCHAR ar_month10W[] = {0x634,0x648,0x627,0x643,0};
-    static const WCHAR ar_month11W[] = {0x630,0x648,' ',0x627,0x644,0x642,0x639,0x62f,0x629,0};
-    static const WCHAR ar_month12W[] = {0x630,0x648,' ',0x627,0x644,0x62d,0x62c,0x629,0};
-
     static const WCHAR *arabic_hijri[] =
     {
-        ar_month1W,
-        ar_month2W,
-        ar_month3W,
-        ar_month4W,
-        ar_month5W,
-        ar_month6W,
-        ar_month7W,
-        ar_month8W,
-        ar_month9W,
-        ar_month10W,
-        ar_month11W,
-        ar_month12W,
+        L"\x0645\x062d\x0631\x0645",
+        L"\x0635\x0641\x0631",
+        L"\x0631\x0628\x064a\x0639 \x0627\x0644\x0627\x0648\x0644",
+        L"\x0631\x0628\x064a\x0639 \x0627\x0644\x062b\x0627\x0646\x064a",
+        L"\x062c\x0645\x0627\x062f\x0649 \x0627\x0644\x0627\x0648\x0644\x0649",
+        L"\x062c\x0645\x0627\x062f\x0649 \x0627\x0644\x062b\x0627\x0646\x064a\x0629",
+        L"\x0631\x062c\x0628",
+        L"\x0634\x0639\x0628\x0627\x0646",
+        L"\x0631\x0645\x0636\x0627\x0646",
+        L"\x0634\x0648\x0627\x0643",
+        L"\x0630\x0648 \x0627\x0644\x0642\x0639\x062f\x0629",
+        L"\x0630\x0648 \x0627\x0644\x062d\x062c\x0629",
         NULL
     };
-
-    static const WCHAR pl_month9W[] = {'w','r','z','e',0x15b,'n','i','a',0};
-    static const WCHAR pl_month10W[] = {'p','a',0x17a,'d','z','i','e','r','n','i','k','a',0};
 
     static const WCHAR *polish_genitive_names[] =
     {
@@ -1181,40 +1165,27 @@ HRESULT WINAPI GetAltMonthNames(LCID lcid, LPOLESTR **str)
         L"czerwca",
         L"lipca",
         L"sierpnia",
-        pl_month9W,
-        pl_month10W,
+        L"wrze\x015bnia",
+        L"pa\x017a" "dziernika",
         L"listopada",
         L"grudnia",
         NULL
     };
 
-    static const WCHAR ru_month1W[] = {0x44f,0x43d,0x432,0x430,0x440,0x44f,0};
-    static const WCHAR ru_month2W[] = {0x444,0x435,0x432,0x440,0x430,0x43b,0x44f,0};
-    static const WCHAR ru_month3W[] = {0x43c,0x430,0x440,0x442,0x430,0};
-    static const WCHAR ru_month4W[] = {0x430,0x43f,0x440,0x435,0x43b,0x44f,0};
-    static const WCHAR ru_month5W[] = {0x43c,0x430,0x44f,0};
-    static const WCHAR ru_month6W[] = {0x438,0x44e,0x43d,0x44f,0};
-    static const WCHAR ru_month7W[] = {0x438,0x44e,0x43b,0x44f,0};
-    static const WCHAR ru_month8W[] = {0x430,0x432,0x433,0x443,0x441,0x442,0x430,0};
-    static const WCHAR ru_month9W[] = {0x441,0x435,0x43d,0x442,0x44f,0x431,0x440,0x44f,0};
-    static const WCHAR ru_month10W[] = {0x43e,0x43a,0x442,0x44f,0x431,0x440,0x44f,0};
-    static const WCHAR ru_month11W[] = {0x43d,0x43e,0x44f,0x431,0x440,0x44f,0};
-    static const WCHAR ru_month12W[] = {0x434,0x435,0x43a,0x430,0x431,0x440,0x44f,0};
-
     static const WCHAR *russian_genitive_names[] =
     {
-        ru_month1W,
-        ru_month2W,
-        ru_month3W,
-        ru_month4W,
-        ru_month5W,
-        ru_month6W,
-        ru_month7W,
-        ru_month8W,
-        ru_month9W,
-        ru_month10W,
-        ru_month11W,
-        ru_month12W,
+        L"\x044f\x043d\x0432\x0430\x0440\x044f",
+        L"\x0444\x0435\x0432\x0440\x0430\x043b\x044f",
+        L"\x043c\x0430\x0440\x0442\x0430",
+        L"\x0430\x043f\x0440\x0435\x043b\x044f",
+        L"\x043c\x0430\x044f",
+        L"\x0438\x044e\x043d\x044f",
+        L"\x0438\x044e\x043b\x044f",
+        L"\x0430\x0432\x0433\x0443\x0441\x0442\x0430",
+        L"\x0441\x0435\x043d\x0442\x044f\x0431\x0440\x044f",
+        L"\x043e\x043a\x0442\x044f\x0431\x0440\x044f",
+        L"\x043d\x043e\x044f\x0431\x0440\x044f",
+        L"\x0434\x0435\x043a\x0430\x0431\x0440\x044f",
         NULL
     };
 

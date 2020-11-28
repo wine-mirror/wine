@@ -44,10 +44,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(variant);
  */
 #define LCID_US MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT)
 
-static const WCHAR szPercent_d[] = { '%','d','\0' };
-static const WCHAR szPercentZeroTwo_d[] = { '%','0','2','d','\0' };
-static const WCHAR szPercentZeroStar_d[] = { '%','0','*','d','\0' };
-
 /******************************************************************************
  * Variant-Formats {OLEAUT32}
  *
@@ -272,7 +268,6 @@ typedef struct tagFMT_DATE_HEADER
 #define FMT_STR_COPY_SKIP   0x41 /* Copy len chars or skip if no char */
 
 /* Named Formats and their tokenised values */
-static const WCHAR szGeneralDate[] = { 'G','e','n','e','r','a','l',' ','D','a','t','e','\0' };
 static const BYTE fmtGeneralDate[0x0a] =
 {
   0x0a,FMT_TYPE_DATE,sizeof(FMT_SHORT_HEADER),
@@ -280,7 +275,6 @@ static const BYTE fmtGeneralDate[0x0a] =
   FMT_DATE_GENERAL,FMT_GEN_END
 };
 
-static const WCHAR szShortDate[] = { 'S','h','o','r','t',' ','D','a','t','e','\0' };
 static const BYTE fmtShortDate[0x0a] =
 {
   0x0a,FMT_TYPE_DATE,sizeof(FMT_SHORT_HEADER),
@@ -288,7 +282,6 @@ static const BYTE fmtShortDate[0x0a] =
   FMT_DATE_SHORT,FMT_GEN_END
 };
 
-static const WCHAR szMediumDate[] = { 'M','e','d','i','u','m',' ','D','a','t','e','\0' };
 static const BYTE fmtMediumDate[0x0a] =
 {
   0x0a,FMT_TYPE_DATE,sizeof(FMT_SHORT_HEADER),
@@ -296,7 +289,6 @@ static const BYTE fmtMediumDate[0x0a] =
   FMT_DATE_MEDIUM,FMT_GEN_END
 };
 
-static const WCHAR szLongDate[] = { 'L','o','n','g',' ','D','a','t','e','\0' };
 static const BYTE fmtLongDate[0x0a] =
 {
   0x0a,FMT_TYPE_DATE,sizeof(FMT_SHORT_HEADER),
@@ -304,7 +296,6 @@ static const BYTE fmtLongDate[0x0a] =
   FMT_DATE_LONG,FMT_GEN_END
 };
 
-static const WCHAR szShortTime[] = { 'S','h','o','r','t',' ','T','i','m','e','\0' };
 static const BYTE fmtShortTime[0x0c] =
 {
   0x0c,FMT_TYPE_DATE,sizeof(FMT_SHORT_HEADER),
@@ -312,7 +303,6 @@ static const BYTE fmtShortTime[0x0c] =
   FMT_DATE_TIME_UNK2,FMT_DATE_TIME_SEP,FMT_DATE_MIN_0,FMT_GEN_END
 };
 
-static const WCHAR szMediumTime[] = { 'M','e','d','i','u','m',' ','T','i','m','e','\0' };
 static const BYTE fmtMediumTime[0x11] =
 {
   0x11,FMT_TYPE_DATE,sizeof(FMT_SHORT_HEADER),
@@ -321,7 +311,6 @@ static const BYTE fmtMediumTime[0x11] =
   FMT_GEN_INLINE,0x01,' ','\0',FMT_DATE_AMPM_SYS1,FMT_GEN_END
 };
 
-static const WCHAR szLongTime[] = { 'L','o','n','g',' ','T','i','m','e','\0' };
 static const BYTE fmtLongTime[0x0d] =
 {
   0x0a,FMT_TYPE_DATE,sizeof(FMT_SHORT_HEADER),
@@ -329,7 +318,6 @@ static const BYTE fmtLongTime[0x0d] =
   FMT_DATE_TIME_SYS,FMT_GEN_END
 };
 
-static const WCHAR szTrueFalse[] = { 'T','r','u','e','/','F','a','l','s','e','\0' };
 static const BYTE fmtTrueFalse[0x0d] =
 {
   0x0d,FMT_TYPE_NUMBER,sizeof(FMT_HEADER),0x0,0x0,0x0,
@@ -337,7 +325,6 @@ static const BYTE fmtTrueFalse[0x0d] =
   FMT_NUM_TRUE_FALSE,FMT_GEN_END
 };
 
-static const WCHAR szYesNo[] = { 'Y','e','s','/','N','o','\0' };
 static const BYTE fmtYesNo[0x0d] =
 {
   0x0d,FMT_TYPE_NUMBER,sizeof(FMT_HEADER),0x0,0x0,0x0,
@@ -345,7 +332,6 @@ static const BYTE fmtYesNo[0x0d] =
   FMT_NUM_YES_NO,FMT_GEN_END
 };
 
-static const WCHAR szOnOff[] = { 'O','n','/','O','f','f','\0' };
 static const BYTE fmtOnOff[0x0d] =
 {
   0x0d,FMT_TYPE_NUMBER,sizeof(FMT_HEADER),0x0,0x0,0x0,
@@ -353,13 +339,11 @@ static const BYTE fmtOnOff[0x0d] =
   FMT_NUM_ON_OFF,FMT_GEN_END
 };
 
-static const WCHAR szGeneralNumber[] = { 'G','e','n','e','r','a','l',' ','N','u','m','b','e','r','\0' };
 static const BYTE fmtGeneralNumber[sizeof(FMT_HEADER)] =
 {
   sizeof(FMT_HEADER),FMT_TYPE_GENERAL,sizeof(FMT_HEADER),0x0,0x0,0x0
 };
 
-static const WCHAR szCurrency[] = { 'C','u','r','r','e','n','c','y','\0' };
 static const BYTE fmtCurrency[0x26] =
 {
   0x26,FMT_TYPE_NUMBER,sizeof(FMT_HEADER),0x12,0x0,0x0,
@@ -374,7 +358,6 @@ static const BYTE fmtCurrency[0x26] =
   FMT_GEN_END
 };
 
-static const WCHAR szFixed[] = { 'F','i','x','e','d','\0' };
 static const BYTE fmtFixed[0x11] =
 {
   0x11,FMT_TYPE_NUMBER,sizeof(FMT_HEADER),0x0,0x0,0x0,
@@ -382,7 +365,6 @@ static const BYTE fmtFixed[0x11] =
   FMT_NUM_COPY_ZERO,0x1,FMT_NUM_DECIMAL,FMT_NUM_COPY_ZERO,0x2,FMT_GEN_END
 };
 
-static const WCHAR szStandard[] = { 'S','t','a','n','d','a','r','d','\0' };
 static const BYTE fmtStandard[0x11] =
 {
   0x11,FMT_TYPE_NUMBER,sizeof(FMT_HEADER),0x0,0x0,0x0,
@@ -390,7 +372,6 @@ static const BYTE fmtStandard[0x11] =
   FMT_NUM_COPY_ZERO,0x1,FMT_NUM_DECIMAL,FMT_NUM_COPY_ZERO,0x2,FMT_GEN_END
 };
 
-static const WCHAR szPercent[] = { 'P','e','r','c','e','n','t','\0' };
 static const BYTE fmtPercent[0x15] =
 {
   0x15,FMT_TYPE_NUMBER,sizeof(FMT_HEADER),0x0,0x0,0x0,
@@ -399,7 +380,6 @@ static const BYTE fmtPercent[0x15] =
   FMT_GEN_INLINE,0x1,'%','\0',FMT_GEN_END
 };
 
-static const WCHAR szScientific[] = { 'S','c','i','e','n','t','i','f','i','c','\0' };
 static const BYTE fmtScientific[0x13] =
 {
   0x13,FMT_TYPE_NUMBER,sizeof(FMT_HEADER),0x0,0x0,0x0,
@@ -416,22 +396,22 @@ typedef struct tagNAMED_FORMAT
 /* Format name to tokenised format. Must be kept sorted by name */
 static const NAMED_FORMAT VARIANT_NamedFormats[] =
 {
-  { szCurrency, fmtCurrency },
-  { szFixed, fmtFixed },
-  { szGeneralDate, fmtGeneralDate },
-  { szGeneralNumber, fmtGeneralNumber },
-  { szLongDate, fmtLongDate },
-  { szLongTime, fmtLongTime },
-  { szMediumDate, fmtMediumDate },
-  { szMediumTime, fmtMediumTime },
-  { szOnOff, fmtOnOff },
-  { szPercent, fmtPercent },
-  { szScientific, fmtScientific },
-  { szShortDate, fmtShortDate },
-  { szShortTime, fmtShortTime },
-  { szStandard, fmtStandard },
-  { szTrueFalse, fmtTrueFalse },
-  { szYesNo, fmtYesNo }
+  { L"Currency", fmtCurrency },
+  { L"Fixed", fmtFixed },
+  { L"General Date", fmtGeneralDate },
+  { L"General Number", fmtGeneralNumber },
+  { L"Long Date", fmtLongDate },
+  { L"Long Time", fmtLongTime },
+  { L"Medium Date", fmtMediumDate },
+  { L"Medium Time", fmtMediumTime },
+  { L"On/Off", fmtOnOff },
+  { L"Percent", fmtPercent },
+  { L"Scientific", fmtScientific },
+  { L"Short Date", fmtShortDate },
+  { L"Short Time", fmtShortTime },
+  { L"Standard", fmtStandard },
+  { L"True/False", fmtTrueFalse },
+  { L"Yes/No", fmtYesNo }
 };
 typedef const NAMED_FORMAT *LPCNAMED_FORMAT;
 
@@ -1415,13 +1395,13 @@ VARIANT_FormatNumber_Bool:
       if (exponent < 0)
       {
         *pBuff++ = '-';
-        swprintf(pBuff, ARRAY_SIZE(buff) - (pBuff - buff), szPercentZeroStar_d, pToken[1], -exponent);
+        swprintf(pBuff, ARRAY_SIZE(buff) - (pBuff - buff), L"%0*d", pToken[1], -exponent);
       }
       else
       {
         if (*pToken == FMT_NUM_EXP_POS_L || *pToken == FMT_NUM_EXP_POS_U)
           *pBuff++ = '+';
-        swprintf(pBuff, ARRAY_SIZE(buff) - (pBuff - buff), szPercentZeroStar_d, pToken[1], exponent);
+        swprintf(pBuff, ARRAY_SIZE(buff) - (pBuff - buff), L"%0*d", pToken[1], exponent);
       }
       while (*pBuff)
         pBuff++;
@@ -1697,12 +1677,12 @@ static HRESULT VARIANT_FormatDate(LPVARIANT pVarIn, LPOLESTR lpszFormat,
       break;
 
     case FMT_DATE_DAY:
-      szPrintFmt = szPercent_d;
+      szPrintFmt = L"%d";
       dwVal = udate.st.wDay;
       break;
 
     case FMT_DATE_DAY_0:
-      szPrintFmt = szPercentZeroTwo_d;
+      szPrintFmt = L"%02d";
       dwVal = udate.st.wDay;
       break;
 
@@ -1736,7 +1716,7 @@ static HRESULT VARIANT_FormatDate(LPVARIANT pVarIn, LPOLESTR lpszFormat,
       break;
 
     case FMT_DATE_DAY_WEEK:
-      szPrintFmt = szPercent_d;
+      szPrintFmt = L"%d";
       if (pToken[1])
         dwVal = udate.st.wDayOfWeek + 2 - pToken[1];
       else
@@ -1749,19 +1729,19 @@ static HRESULT VARIANT_FormatDate(LPVARIANT pVarIn, LPOLESTR lpszFormat,
       break;
 
     case FMT_DATE_WEEK_YEAR:
-      szPrintFmt = szPercent_d;
+      szPrintFmt = L"%d";
       dwVal = udate.wDayOfYear / 7 + 1;
       pToken += 2;
       FIXME("Ignoring nFirstDay of %d, nFirstWeek of %d\n", pToken[0], pToken[1]);
       break;
 
     case FMT_DATE_MON:
-      szPrintFmt = szPercent_d;
+      szPrintFmt = L"%d";
       dwVal = udate.st.wMonth;
       break;
 
     case FMT_DATE_MON_0:
-      szPrintFmt = szPercentZeroTwo_d;
+      szPrintFmt = L"%02d";
       dwVal = udate.st.wMonth;
       break;
 
@@ -1780,58 +1760,58 @@ static HRESULT VARIANT_FormatDate(LPVARIANT pVarIn, LPOLESTR lpszFormat,
       break;
 
     case FMT_DATE_YEAR_DOY:
-      szPrintFmt = szPercent_d;
+      szPrintFmt = L"%d";
       dwVal = udate.wDayOfYear;
       break;
 
     case FMT_DATE_YEAR_0:
-      szPrintFmt = szPercentZeroTwo_d;
+      szPrintFmt = L"%02d";
       dwVal = udate.st.wYear % 100;
       break;
 
     case FMT_DATE_YEAR_LONG:
-      szPrintFmt = szPercent_d;
+      szPrintFmt = L"%d";
       dwVal = udate.st.wYear;
       break;
 
     case FMT_DATE_MIN:
-      szPrintFmt = szPercent_d;
+      szPrintFmt = L"%d";
       dwVal = udate.st.wMinute;
       break;
 
     case FMT_DATE_MIN_0:
-      szPrintFmt = szPercentZeroTwo_d;
+      szPrintFmt = L"%02d";
       dwVal = udate.st.wMinute;
       break;
 
     case FMT_DATE_SEC:
-      szPrintFmt = szPercent_d;
+      szPrintFmt = L"%d";
       dwVal = udate.st.wSecond;
       break;
 
     case FMT_DATE_SEC_0:
-      szPrintFmt = szPercentZeroTwo_d;
+      szPrintFmt = L"%02d";
       dwVal = udate.st.wSecond;
       break;
 
     case FMT_DATE_HOUR:
-      szPrintFmt = szPercent_d;
+      szPrintFmt = L"%d";
       dwVal = udate.st.wHour;
       break;
 
     case FMT_DATE_HOUR_0:
     case FMT_DATE_TIME_UNK2:
-      szPrintFmt = szPercentZeroTwo_d;
+      szPrintFmt = L"%02d";
       dwVal = udate.st.wHour;
       break;
 
     case FMT_DATE_HOUR_12:
-      szPrintFmt = szPercent_d;
+      szPrintFmt = L"%d";
       dwVal = udate.st.wHour ? udate.st.wHour > 12 ? udate.st.wHour - 12 : udate.st.wHour : 12;
       break;
 
     case FMT_DATE_HOUR_12_0:
-      szPrintFmt = szPercentZeroTwo_d;
+      szPrintFmt = L"%02d";
       dwVal = udate.st.wHour ? udate.st.wHour > 12 ? udate.st.wHour - 12 : udate.st.wHour : 12;
       break;
 
@@ -1918,7 +1898,7 @@ static HRESULT VARIANT_FormatString(LPVARIANT pVarIn, LPOLESTR lpszFormat,
                                     LPBYTE rgbTok, ULONG dwFlags,
                                     BSTR *pbstrOut, LCID lcid)
 {
-  static WCHAR szEmpty[] = { '\0' };
+  static WCHAR szEmpty[] = L"";
   WCHAR buff[256], *pBuff = buff;
   WCHAR *pSrc;
   FMT_HEADER *header = (FMT_HEADER*)rgbTok;
@@ -2189,7 +2169,7 @@ HRESULT WINAPI VarFormat(LPVARIANT pVarIn, LPOLESTR lpszFormat,
  */
 HRESULT WINAPI VarFormatDateTime(LPVARIANT pVarIn, INT nFormat, ULONG dwFlags, BSTR *pbstrOut)
 {
-  static WCHAR szEmpty[] = { '\0' };
+  static WCHAR szEmpty[] = L"";
   const BYTE* lpFmt = NULL;
 
   TRACE("%s,%d,0x%08x,%p)\n", debugstr_variant(pVarIn), nFormat, dwFlags, pbstrOut);
@@ -2345,8 +2325,6 @@ HRESULT WINAPI VarFormatNumber(LPVARIANT pVarIn, INT nDigits, INT nLeading, INT 
 HRESULT WINAPI VarFormatPercent(LPVARIANT pVarIn, INT nDigits, INT nLeading, INT nParens,
                                 INT nGrouping, ULONG dwFlags, BSTR *pbstrOut)
 {
-  static const WCHAR szPercent[] = { '%','\0' };
-  static const WCHAR szPercentBracket[] = { '%',')','\0' };
   WCHAR buff[256];
   HRESULT hRet;
   VARIANT vDbl;
@@ -2382,7 +2360,7 @@ HRESULT WINAPI VarFormatPercent(LPVARIANT pVarIn, INT nDigits, INT nLeading, INT
 
         dwLen -= bBracket;
         memcpy(buff, *pbstrOut, dwLen * sizeof(WCHAR));
-        lstrcpyW(buff + dwLen, bBracket ? szPercentBracket : szPercent);
+        lstrcpyW(buff + dwLen, bBracket ? L"%)" : L"%");
         SysFreeString(*pbstrOut);
         *pbstrOut = SysAllocString(buff);
         if (!*pbstrOut)
