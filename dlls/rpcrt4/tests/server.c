@@ -245,9 +245,6 @@ static void (__cdecl *test_handle)(ctx_handle_t ctx_handle);
 /* type check statements generated in header file */
 fnprintf *p_printf = printf;
 
-static const WCHAR helloW[] = { 'H','e','l','l','o',0 };
-static const WCHAR worldW[] = { 'W','o','r','l','d','!',0 };
-
 static BOOL is_interp;
 
 static void set_interp_interface(void)
@@ -833,10 +830,10 @@ void __cdecl s_get_namesw(int *n, wstr_array_t *names)
   wstr_array_t list;
 
   list = MIDL_user_allocate(2 * sizeof(list[0]));
-  list[0] = MIDL_user_allocate(sizeof(helloW));
-  lstrcpyW(list[0], helloW);
-  list[1] = MIDL_user_allocate(sizeof(worldW));
-  lstrcpyW(list[1], worldW);
+  list[0] = MIDL_user_allocate(sizeof(L"Hello"));
+  lstrcpyW(list[0], L"Hello");
+  list[1] = MIDL_user_allocate(sizeof(L"World!"));
+  lstrcpyW(list[1], L"World!");
 
   *names = list;
   *n = 2;
@@ -1157,7 +1154,7 @@ static void
 basic_tests(void)
 {
   char string[] = "I am a string";
-  WCHAR wstring[] = {'I',' ','a','m',' ','a',' ','w','s','t','r','i','n','g', 0};
+  WCHAR wstring[] = L"I am a wstring";
   int f[5] = {1, 3, 0, -2, -4};
   vector_t a = {1, 3, 7};
   vector_t vec1 = {4, -2, 1}, vec2 = {-5, 2, 3}, *pvec2 = &vec2;
@@ -1599,8 +1596,8 @@ pointer_tests(void)
       namesw = NULL;
       get_namesw(&n, &namesw);
       ok(n == 2, "expected 2, got %d\n", n);
-      ok(!lstrcmpW(namesw[0], helloW), "expected Hello, got %s\n", wine_dbgstr_w(namesw[0]));
-      ok(!lstrcmpW(namesw[1], worldW), "expected World!, got %s\n", wine_dbgstr_w(namesw[1]));
+      ok(!lstrcmpW(namesw[0], L"Hello"), "expected Hello, got %s\n", wine_dbgstr_w(namesw[0]));
+      ok(!lstrcmpW(namesw[1], L"World!"), "expected World!, got %s\n", wine_dbgstr_w(namesw[1]));
       MIDL_user_free(namesw[0]);
       MIDL_user_free(namesw[1]);
       MIDL_user_free(namesw);
@@ -2464,7 +2461,6 @@ enum firewall_op
 
 static HRESULT set_firewall( enum firewall_op op )
 {
-    static const WCHAR testW[] = {'r','p','c','r','t','4','_','t','e','s','t',0};
     HRESULT hr, init;
     INetFwMgr *mgr = NULL;
     INetFwPolicy *policy = NULL;
@@ -2504,7 +2500,7 @@ static HRESULT set_firewall( enum firewall_op op )
     hr = INetFwAuthorizedApplication_put_ProcessImageFileName( app, image );
     if (hr != S_OK) goto done;
 
-    name = SysAllocString( testW );
+    name = SysAllocString( L"rpcrt4_test" );
     hr = INetFwAuthorizedApplication_put_Name( app, name );
     SysFreeString( name );
     ok( hr == S_OK, "got %08x\n", hr );

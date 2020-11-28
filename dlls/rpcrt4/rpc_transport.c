@@ -1874,7 +1874,6 @@ static RPC_STATUS rpcrt4_http_check_response(HINTERNET hor)
 
 static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
 {
-    static const WCHAR wszUserAgent[] = {'M','S','R','P','C',0};
     LPWSTR proxy = NULL;
     LPWSTR user = NULL;
     LPWSTR password = NULL;
@@ -1912,12 +1911,9 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
     for (option = httpc->common.NetworkOptions; option;
          option = (wcschr(option, ',') ? wcschr(option, ',')+1 : NULL))
     {
-        static const WCHAR wszRpcProxy[] = {'R','p','c','P','r','o','x','y','=',0};
-        static const WCHAR wszHttpProxy[] = {'H','t','t','p','P','r','o','x','y','=',0};
-
-        if (!wcsnicmp(option, wszRpcProxy, ARRAY_SIZE(wszRpcProxy)-1))
+        if (!wcsnicmp(option, L"RpcProxy=", ARRAY_SIZE(L"RpcProxy=")-1))
         {
-            const WCHAR *value_start = option + ARRAY_SIZE(wszRpcProxy)-1;
+            const WCHAR *value_start = option + ARRAY_SIZE(L"RpcProxy=")-1;
             const WCHAR *value_end;
             const WCHAR *p;
 
@@ -1934,9 +1930,9 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
             TRACE("RpcProxy value is %s\n", debugstr_wn(value_start, value_end-value_start));
             servername = RPCRT4_strndupW(value_start, value_end-value_start);
         }
-        else if (!wcsnicmp(option, wszHttpProxy, ARRAY_SIZE(wszHttpProxy)-1))
+        else if (!wcsnicmp(option, L"HttpProxy=", ARRAY_SIZE(L"HttpProxy=")-1))
         {
-            const WCHAR *value_start = option + ARRAY_SIZE(wszHttpProxy)-1;
+            const WCHAR *value_start = option + ARRAY_SIZE(L"HttpProxy=")-1;
             const WCHAR *value_end;
 
             value_end = wcschr(option, ',');
@@ -1949,7 +1945,7 @@ static RPC_STATUS rpcrt4_http_internet_connect(RpcConnection_http *httpc)
             FIXME("unhandled option %s\n", debugstr_w(option));
     }
 
-    httpc->app_info = InternetOpenW(wszUserAgent, proxy ? INTERNET_OPEN_TYPE_PROXY : INTERNET_OPEN_TYPE_PRECONFIG,
+    httpc->app_info = InternetOpenW(L"MSRPC", proxy ? INTERNET_OPEN_TYPE_PROXY : INTERNET_OPEN_TYPE_PRECONFIG,
                                     NULL, NULL, INTERNET_FLAG_ASYNC);
     if (!httpc->app_info)
     {
@@ -2062,11 +2058,9 @@ static RPC_STATUS send_echo_request(HINTERNET req, RpcHttpAsyncData *async_data,
 
 static RPC_STATUS insert_content_length_header(HINTERNET request, DWORD len)
 {
-    static const WCHAR fmtW[] =
-        {'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','u','\r','\n',0};
-    WCHAR header[ARRAY_SIZE(fmtW) + 10];
+    WCHAR header[ARRAY_SIZE(L"Content-Length: %u\r\n") + 10];
 
-    swprintf(header, ARRAY_SIZE(header), fmtW, len);
+    swprintf(header, ARRAY_SIZE(header), L"Content-Length: %u\r\n", len);
     if ((HttpAddRequestHeadersW(request, header, -1, HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD))) return RPC_S_OK;
     return RPC_S_SERVER_UNAVAILABLE;
 }
@@ -2379,12 +2373,6 @@ static void destroy_authinfo(struct authinfo *info)
     HeapFree(GetProcessHeap(), 0, info);
 }
 
-static const WCHAR basicW[]     = {'B','a','s','i','c',0};
-static const WCHAR ntlmW[]      = {'N','T','L','M',0};
-static const WCHAR passportW[]  = {'P','a','s','s','p','o','r','t',0};
-static const WCHAR digestW[]    = {'D','i','g','e','s','t',0};
-static const WCHAR negotiateW[] = {'N','e','g','o','t','i','a','t','e',0};
-
 static const struct
 {
     const WCHAR *str;
@@ -2393,11 +2381,11 @@ static const struct
 }
 auth_schemes[] =
 {
-    { basicW,     ARRAY_SIZE(basicW) - 1,     RPC_C_HTTP_AUTHN_SCHEME_BASIC },
-    { ntlmW,      ARRAY_SIZE(ntlmW) - 1,      RPC_C_HTTP_AUTHN_SCHEME_NTLM },
-    { passportW,  ARRAY_SIZE(passportW) - 1,  RPC_C_HTTP_AUTHN_SCHEME_PASSPORT },
-    { digestW,    ARRAY_SIZE(digestW) - 1,    RPC_C_HTTP_AUTHN_SCHEME_DIGEST },
-    { negotiateW, ARRAY_SIZE(negotiateW) - 1, RPC_C_HTTP_AUTHN_SCHEME_NEGOTIATE }
+    { L"Basic",     ARRAY_SIZE(L"Basic") - 1,     RPC_C_HTTP_AUTHN_SCHEME_BASIC },
+    { L"NTLM",      ARRAY_SIZE(L"NTLM") - 1,      RPC_C_HTTP_AUTHN_SCHEME_NTLM },
+    { L"Passport",  ARRAY_SIZE(L"Passport") - 1,  RPC_C_HTTP_AUTHN_SCHEME_PASSPORT },
+    { L"Digest",    ARRAY_SIZE(L"Digest") - 1,    RPC_C_HTTP_AUTHN_SCHEME_DIGEST },
+    { L"Negotiate", ARRAY_SIZE(L"Negotiate") - 1, RPC_C_HTTP_AUTHN_SCHEME_NEGOTIATE }
 };
 
 static DWORD auth_scheme_from_header( const WCHAR *header )
@@ -2458,7 +2446,7 @@ static RPC_STATUS do_authorization(HINTERNET request, SEC_WCHAR *servername,
     case RPC_C_HTTP_AUTHN_SCHEME_NEGOTIATE:
     {
 
-        static SEC_WCHAR ntlmW[] = {'N','T','L','M',0}, negotiateW[] = {'N','e','g','o','t','i','a','t','e',0};
+        static SEC_WCHAR ntlmW[] = L"NTLM", negotiateW[] = L"Negotiate";
         SECURITY_STATUS ret;
         SecBufferDesc out_desc, in_desc;
         SecBuffer out, in;
@@ -2634,7 +2622,6 @@ static void drain_content(HINTERNET request, RpcHttpAsyncData *async_data, HANDL
 
 static RPC_STATUS authorize_request(RpcConnection_http *httpc, HINTERNET request)
 {
-    static const WCHAR authW[] = {'A','u','t','h','o','r','i','z','a','t','i','o','n',':','\r','\n',0};
     struct authinfo *info = NULL;
     RPC_STATUS status;
     BOOL ret;
@@ -2658,7 +2645,7 @@ static RPC_STATUS authorize_request(RpcConnection_http *httpc, HINTERNET request
     }
 
     if (info->scheme != RPC_C_HTTP_AUTHN_SCHEME_BASIC)
-        HttpAddRequestHeadersW(request, authW, -1, HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD);
+        HttpAddRequestHeadersW(request, L"Authorization:\r\n", -1, HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDREQ_FLAG_ADD);
 
     destroy_authinfo(info);
     return status;
@@ -2691,8 +2678,8 @@ static BOOL is_secure(RpcConnection_http *httpc)
 
 static RPC_STATUS set_auth_cookie(RpcConnection_http *httpc, const WCHAR *value)
 {
-    static WCHAR httpW[] = {'h','t','t','p',0};
-    static WCHAR httpsW[] = {'h','t','t','p','s',0};
+    static WCHAR httpW[] = L"http";
+    static WCHAR httpsW[] = L"https";
     URL_COMPONENTSW uc;
     DWORD len;
     WCHAR *url;
@@ -2737,12 +2724,8 @@ static RPC_STATUS set_auth_cookie(RpcConnection_http *httpc, const WCHAR *value)
 static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
 {
     RpcConnection_http *httpc = (RpcConnection_http *)Connection;
-    static const WCHAR wszVerbIn[] = {'R','P','C','_','I','N','_','D','A','T','A',0};
-    static const WCHAR wszVerbOut[] = {'R','P','C','_','O','U','T','_','D','A','T','A',0};
-    static const WCHAR wszRpcProxyPrefix[] = {'/','r','p','c','/','r','p','c','p','r','o','x','y','.','d','l','l','?',0};
-    static const WCHAR wszColon[] = {':',0};
-    static const WCHAR wszAcceptType[] = {'a','p','p','l','i','c','a','t','i','o','n','/','r','p','c',0};
-    LPCWSTR wszAcceptTypes[] = { wszAcceptType, NULL };
+    static const WCHAR wszRpcProxyPrefix[] = L"/rpc/rpcproxy.dll?";
+    LPCWSTR wszAcceptTypes[] = { L"application/rpc", NULL };
     DWORD flags;
     WCHAR *url;
     RPC_STATUS status;
@@ -2777,7 +2760,7 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
     memcpy(url, wszRpcProxyPrefix, sizeof(wszRpcProxyPrefix));
     MultiByteToWideChar(CP_ACP, 0, Connection->NetworkAddr, -1, url+ARRAY_SIZE(wszRpcProxyPrefix)-1,
                         strlen(Connection->NetworkAddr)+1);
-    lstrcatW(url, wszColon);
+    lstrcatW(url, L":");
     MultiByteToWideChar(CP_ACP, 0, Connection->Endpoint, -1, url+lstrlenW(url), strlen(Connection->Endpoint)+1);
 
     secure = is_secure(httpc);
@@ -2794,7 +2777,7 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
         HeapFree(GetProcessHeap(), 0, url);
         return status;
     }
-    httpc->in_request = HttpOpenRequestW(httpc->session, wszVerbIn, url, NULL, NULL, wszAcceptTypes,
+    httpc->in_request = HttpOpenRequestW(httpc->session, L"RPC_IN_DATA", url, NULL, NULL, wszAcceptTypes,
                                          flags, (DWORD_PTR)httpc->async_data);
     if (!httpc->in_request)
     {
@@ -2820,7 +2803,7 @@ static RPC_STATUS rpcrt4_ncacn_http_open(RpcConnection* Connection)
         drain_content(httpc->in_request, httpc->async_data, httpc->cancel_event);
     }
 
-    httpc->out_request = HttpOpenRequestW(httpc->session, wszVerbOut, url, NULL, NULL, wszAcceptTypes,
+    httpc->out_request = HttpOpenRequestW(httpc->session, L"RPC_OUT_DATA", url, NULL, NULL, wszAcceptTypes,
                                           flags, (DWORD_PTR)httpc->async_data);
     HeapFree(GetProcessHeap(), 0, url);
     if (!httpc->out_request)

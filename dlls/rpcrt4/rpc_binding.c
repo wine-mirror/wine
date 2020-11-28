@@ -676,7 +676,6 @@ RPC_STATUS WINAPI RpcStringBindingParseW( RPC_WSTR StringBinding, RPC_WSTR *ObjU
                                           RPC_WSTR *Endpoint, RPC_WSTR *Options)
 {
   const WCHAR *data, *next;
-  static const WCHAR ep_opt[] = {'e','n','d','p','o','i','n','t','=',0};
   BOOL endpoint_already_found = FALSE;
 
   TRACE("(%s,%p,%p,%p,%p,%p)\n", debugstr_w(StringBinding),
@@ -740,7 +739,7 @@ RPC_STATUS WINAPI RpcStringBindingParseW( RPC_WSTR StringBinding, RPC_WSTR *ObjU
         else HeapFree(GetProcessHeap(), 0, opt);
         endpoint_already_found = TRUE;
       } else {
-        if (wcsncmp(opt, ep_opt, lstrlenW(ep_opt)) == 0) {
+        if (wcsncmp(opt, L"endpoint=", lstrlenW(L"endpoint=")) == 0) {
           /* endpoint option */
           if (endpoint_already_found) goto fail;
           if (Endpoint) *Endpoint = unescape_string_binding_componentW(next+1, -1);
