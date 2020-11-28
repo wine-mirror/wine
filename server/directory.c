@@ -444,6 +444,7 @@ void init_directories( struct fd *intl_fd )
     /* mappings */
     release_object( create_fd_mapping( &dir_nls->obj, &intl_str, intl_fd, OBJ_PERMANENT, NULL ));
     release_object( create_user_data_mapping( &dir_kernel->obj, &user_data_str, OBJ_PERMANENT, NULL ));
+    release_object( intl_fd );
 
     release_object( named_pipe_device );
     release_object( mailslot_device );
