@@ -28,7 +28,6 @@
 #include <string.h>
 #include <sys/types.h>
 
-#define WINE_UNICODE_INLINE  /* nothing */
 #include "wine/unicode.h"
 
 /* functions from libwine_port that are also exported from libwine for backwards compatibility,
