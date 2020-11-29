@@ -436,14 +436,13 @@ static HRESULT WINAPI propertyset_Item( ISWbemPropertySet *iface, BSTR name,
 
 static HRESULT WINAPI propertyset_get_Count( ISWbemPropertySet *iface, LONG *count )
 {
-    static const WCHAR propcountW[] = {'_','_','P','R','O','P','E','R','T','Y','_','C','O','U','N','T',0};
     struct propertyset *propertyset = impl_from_ISWbemPropertySet( iface );
     HRESULT hr;
     VARIANT val;
 
     TRACE( "%p, %p\n", propertyset, count );
 
-    hr = IWbemClassObject_Get( propertyset->object, propcountW, 0, &val, NULL, NULL );
+    hr = IWbemClassObject_Get( propertyset->object, L"__PROPERTY_COUNT", 0, &val, NULL, NULL );
     if (SUCCEEDED(hr))
     {
         *count = V_I4( &val );
@@ -1701,12 +1700,11 @@ static HRESULT WINAPI services_DeleteAsync(
 
 static BSTR build_query_string( const WCHAR *class )
 {
-    static const WCHAR selectW[] = {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',0};
-    UINT len = lstrlenW(class) + ARRAY_SIZE(selectW);
+    UINT len = lstrlenW(class) + ARRAY_SIZE(L"SELECT * FROM ");
     BSTR ret;
 
     if (!(ret = SysAllocStringLen( NULL, len ))) return NULL;
-    lstrcpyW( ret, selectW );
+    lstrcpyW( ret, L"SELECT * FROM " );
     lstrcatW( ret, class );
     return ret;
 }
@@ -1718,8 +1716,7 @@ static HRESULT WINAPI services_InstancesOf(
     IDispatch *objWbemNamedValueSet,
     ISWbemObjectSet **objWbemObjectSet )
 {
-    static const WCHAR wqlW[] = {'W','Q','L',0};
-    BSTR query, wql = SysAllocString( wqlW );
+    BSTR query, wql = SysAllocString( L"WQL" );
     HRESULT hr;
 
     TRACE( "%p, %s, %x, %p, %p\n", iface, debugstr_w(strClass), iFlags, objWbemNamedValueSet,
@@ -2128,14 +2125,13 @@ static HRESULT WINAPI locator_Invoke(
 
 static BSTR build_resource_string( BSTR server, BSTR namespace )
 {
-    static const WCHAR defaultW[] = {'r','o','o','t','\\','d','e','f','a','u','l','t',0};
     ULONG len, len_server = 0, len_namespace = 0;
     BSTR ret;
 
     if (server && *server) len_server = lstrlenW( server );
     else len_server = 1;
     if (namespace && *namespace) len_namespace = lstrlenW( namespace );
-    else len_namespace = ARRAY_SIZE(defaultW) - 1;
+    else len_namespace = ARRAY_SIZE(L"root\\default") - 1;
 
     if (!(ret = SysAllocStringLen( NULL, 2 + len_server + 1 + len_namespace ))) return NULL;
 
@@ -2147,7 +2143,7 @@ static BSTR build_resource_string( BSTR server, BSTR namespace )
     ret[len++] = '\\';
 
     if (namespace && *namespace) lstrcpyW( ret + len, namespace );
-    else lstrcpyW( ret + len, defaultW );
+    else lstrcpyW( ret + len, L"root\\default" );
     return ret;
 }
 

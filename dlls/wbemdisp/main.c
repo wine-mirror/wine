@@ -129,8 +129,7 @@ done:
 static HRESULT WINAPI WinMGMTS_ParseDisplayName(IParseDisplayName *iface, IBindCtx *pbc, LPOLESTR pszDisplayName,
         ULONG *pchEaten, IMoniker **ppmkOut)
 {
-    static const WCHAR prefixW[] = {'w','i','n','m','g','m','t','s',':',0};
-    const DWORD prefix_len = ARRAY_SIZE(prefixW) - 1;
+    const DWORD prefix_len = ARRAY_SIZE(L"winmgmts:") - 1;
     ISWbemLocator *locator = NULL;
     ISWbemServices *services = NULL;
     ISWbemObject *obj = NULL;
@@ -140,7 +139,7 @@ static HRESULT WINAPI WinMGMTS_ParseDisplayName(IParseDisplayName *iface, IBindC
 
     TRACE( "%p, %p, %s, %p, %p\n", iface, pbc, debugstr_w(pszDisplayName), pchEaten, ppmkOut );
 
-    if (wcsnicmp( pszDisplayName, prefixW, prefix_len )) return MK_E_SYNTAX;
+    if (wcsnicmp( pszDisplayName, L"winmgmts:", prefix_len )) return MK_E_SYNTAX;
 
     p = pszDisplayName + prefix_len;
     if (*p == '{')

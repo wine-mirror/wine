@@ -34,26 +34,10 @@ static const LCID english = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US)
 
 static void test_ParseDisplayName(void)
 {
-    static const WCHAR biosW[] = {'W','i','n','3','2','_','B','i','o','s',0};
-    static const WCHAR manufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e','r',0};
-    static const WCHAR versionW[] = {'v','e','r','s','i','o','n',0};
-    static const WCHAR nosuchW[] = {'N','o','S','u','c','h',0};
-    static const WCHAR name1[] =
-        {'w','i','n','m','g','m','t','s',':',0};
-    static const WCHAR name2[] =
-        {'w','i','n','m','g','m','t','s',':','\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',0};
-    static const WCHAR name3[] =
-        {'w','i','n','m','g','m','t','s',':','\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',':',
-         'W','i','n','3','2','_','L','o','g','i','c','a','l','D','i','s','k','.',
-         'D','e','v','i','c','e','I','D','=','\'','C',':','\'',0};
-    static const WCHAR name4[] =
-        {'w','i','n','m','g','m','t','s',':','\\','\\','.','\\','r','o','o','t','\\','c','i','m','v','2',':',
-         'W','i','n','3','2','_','S','e','r','v','i','c','e',0};
-    static const WCHAR stdregprovW[] =
-        {'w','i','n','m','g','m','t','s',':','\\','\\','.','\\','r','o','o','t','\\','d','e','f','a','u','l','t',':',
-         'S','t','d','R','e','g','P','r','o','v',0};
-    static const WCHAR getstringvalueW[] =
-        {'G','e','t','S','t','r','i','n','g','V','a','l','u','e',0};
+    static const WCHAR name1[] = L"winmgmts:";
+    static const WCHAR name2[] = L"winmgmts:\\\\.\\root\\cimv2";
+    static const WCHAR name3[] = L"winmgmts:\\\\.\\root\\cimv2:Win32_LogicalDisk.DeviceID='C:'";
+    static const WCHAR name4[] = L"winmgmts:\\\\.\\root\\cimv2:Win32_Service";
     static const struct
     {
         const WCHAR *name;
@@ -130,7 +114,7 @@ static void test_ParseDisplayName(void)
         {
             ISWbemObjectSet *objectset = NULL;
 
-            str = SysAllocString( biosW );
+            str = SysAllocString( L"Win32_Bios" );
             hr = ISWbemServices_InstancesOf( services, str, 0, NULL, &objectset );
             SysFreeString( str );
             ok( hr == S_OK, "got %x\n", hr );
@@ -174,28 +158,28 @@ static void test_ParseDisplayName(void)
                         ok( hr == S_OK, "got %x\n", hr );
                         ok( count == 1, "got %u\n", count );
 
-                        str = SysAllocString( manufacturerW );
+                        str = SysAllocString( L"Manufacturer" );
                         dispid = 0xdeadbeef;
                         hr = IDispatch_GetIDsOfNames( dispatch, &IID_NULL, &str, 1, english, &dispid );
                         SysFreeString( str );
                         ok( hr == S_OK, "got %x\n", hr );
                         ok( dispid == 0x1800001 || dispid == 0x10b /* win2k */, "got %x\n", dispid );
 
-                        str = SysAllocString( versionW );
+                        str = SysAllocString( L"version" );
                         dispid = 0xdeadbeef;
                         hr = IDispatch_GetIDsOfNames( dispatch, &IID_NULL, &str, 1, english, &dispid );
                         SysFreeString( str );
                         ok( hr == S_OK, "got %x\n", hr );
                         ok( dispid == 0x1800002 || dispid == 0x119 /* win2k */, "got %x\n", dispid );
 
-                        str = SysAllocString( nosuchW );
+                        str = SysAllocString( L"NoSuch" );
                         dispid = 0xdeadbeef;
                         hr = IDispatch_GetIDsOfNames( dispatch, &IID_NULL, &str, 1, english, &dispid );
                         SysFreeString( str );
                         ok( hr == DISP_E_UNKNOWNNAME, "got %x\n", hr );
                         ok( dispid == DISPID_UNKNOWN, "got %x\n", dispid );
 
-                        str = SysAllocString( manufacturerW );
+                        str = SysAllocString( L"Manufacturer" );
                         dispid = 0xdeadbeef;
                         hr = IDispatch_GetIDsOfNames( dispatch, &IID_NULL, &str, 1, english, &dispid );
                         SysFreeString( str );
@@ -261,7 +245,7 @@ static void test_ParseDisplayName(void)
     hr = CreateBindCtx( 0, &ctx );
     ok( hr == S_OK, "got %x\n", hr );
 
-    str = SysAllocString( stdregprovW );
+    str = SysAllocString( L"winmgmts:\\\\.\\root\\default:StdRegProv" );
     hr = IParseDisplayName_ParseDisplayName( displayname, NULL, str, &eaten, &moniker );
     ok( hr == S_OK, "got %x\n", hr );
     SysFreeString( str );
@@ -280,7 +264,7 @@ static void test_ParseDisplayName(void)
         {
             DISPID dispid = 0xdeadbeef;
 
-            str = SysAllocString( getstringvalueW );
+            str = SysAllocString( L"GetStringValue" );
             hr = ISWbemObject_GetIDsOfNames( sobj, &IID_NULL, &str, 1, english, &dispid );
             ok( hr == S_OK, "got %x\n", hr );
             ok( dispid == 0x1000001, "got %x\n", dispid );
@@ -294,14 +278,6 @@ static void test_ParseDisplayName(void)
     IBindCtx_Release(ctx);
     IParseDisplayName_Release( displayname );
 }
-
-static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
-static const WCHAR root[] = {'r','o','o','t','\\','C','I','M','V','2',0};
-static const WCHAR query[] = {'S','e','l','e','c','t',' ','P','r','o','c','e','s','s','o','r','I','d',' ','f','r','o','m',
-                              ' ','W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
-static const WCHAR lang[] = {'W','Q','L',0};
-static const WCHAR props[] = {'P','r','o','p','e','r','t','i','e','s','_',0};
-static const WCHAR procid[] = {'P','r','o','c','e','s','s','o','r','I','d',0};
 
 static void test_locator(void)
 {
@@ -324,15 +300,15 @@ static void test_locator(void)
     hr = CoCreateInstance( &CLSID_SWbemLocator, NULL, CLSCTX_INPROC_SERVER, &IID_ISWbemLocator, (void **)&locator );
     ok( hr == S_OK, "got %x\n", hr );
 
-    host_bstr = SysAllocString(localhost);
-    root_bstr = SysAllocString(root);
+    host_bstr = SysAllocString( L"localhost" );
+    root_bstr = SysAllocString( L"root\\CIMV2" );
     hr = ISWbemLocator_ConnectServer( locator, host_bstr, root_bstr, NULL, NULL, NULL, NULL, 0, NULL, &services);
     ok( hr == S_OK, "got %x\n", hr );
     SysFreeString( root_bstr );
     SysFreeString( host_bstr );
 
-    query_bstr = SysAllocString(query);
-    lang_bstr = SysAllocString(lang);
+    query_bstr = SysAllocString( L"Select ProcessorId from Win32_Processor" );
+    lang_bstr = SysAllocString( L"WQL" );
     hr = ISWbemServices_ExecQuery( services, query_bstr, lang_bstr, wbemFlagForwardOnly, NULL, &object_set);
     ok( hr == S_OK, "got %x\n", hr );
     SysFreeString( lang_bstr );
@@ -374,7 +350,7 @@ static void test_locator(void)
     ok( hr == S_OK, "got %x\n", hr );
     ok( V_VT(&var) == VT_DISPATCH, "got %x\n", V_VT(&var));
 
-    props_bstr = SysAllocString( props );
+    props_bstr = SysAllocString( L"Properties_" );
     hr = IDispatch_GetIDsOfNames( V_DISPATCH(&var), &IID_NULL, &props_bstr, 1, english, &id );
     ok( hr == S_OK, "got %x\n", hr );
     ok( id == 21, "got %d\n", id );
@@ -390,7 +366,7 @@ static void test_locator(void)
     ok( hr == WBEM_E_NOT_FOUND, "got %x\n", hr );
     SysFreeString( props_bstr );
 
-    procid_bstr = SysAllocString( procid );
+    procid_bstr = SysAllocString( L"ProcessorId" );
     hr = ISWbemPropertySet_Item( prop_set, procid_bstr, 0, &prop );
     ok( hr == S_OK, "got %x\n", hr );
     SysFreeString( procid_bstr );
