@@ -46,11 +46,6 @@ int defaultColor = 7;
 BOOL echo_mode = TRUE;
 
 WCHAR anykey[100], version_string[100];
-static const WCHAR envPathExt[] = {'P','A','T','H','E','X','T','\0'};
-static const WCHAR dfltPathExt[] = {'.','b','a','t',';',
-                                    '.','c','o','m',';',
-                                    '.','c','m','d',';',
-                                    '.','e','x','e','\0'};
 
 static BOOL opt_c, opt_k, opt_s, unicodeOutput = FALSE;
 
@@ -334,12 +329,10 @@ static void WCMD_show_prompt (BOOL newLine) {
   WCHAR out_string[MAX_PATH], curdir[MAX_PATH], prompt_string[MAX_PATH];
   WCHAR *p, *q;
   DWORD len;
-  static const WCHAR envPrompt[] = {'P','R','O','M','P','T','\0'};
 
-  len = GetEnvironmentVariableW(envPrompt, prompt_string, ARRAY_SIZE(prompt_string));
+  len = GetEnvironmentVariableW(L"PROMPT", prompt_string, ARRAY_SIZE(prompt_string));
   if ((len == 0) || (len >= ARRAY_SIZE(prompt_string))) {
-    static const WCHAR dfltPrompt[] = {'$','P','$','G','\0'};
-    lstrcpyW (prompt_string, dfltPrompt);
+    lstrcpyW(prompt_string, L"$P$G");
   }
   p = prompt_string;
   q = out_string;
@@ -554,13 +547,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
     WCHAR thisVarContents[MAXSTRING];
     WCHAR savedchar = 0x00;
     int len;
-
-    static const WCHAR ErrorLvl[]  = {'E','R','R','O','R','L','E','V','E','L','\0'};
-    static const WCHAR Date[]      = {'D','A','T','E','\0'};
-    static const WCHAR Time[]      = {'T','I','M','E','\0'};
-    static const WCHAR Cd[]        = {'C','D','\0'};
-    static const WCHAR Random[]    = {'R','A','N','D','O','M','\0'};
-    WCHAR Delims[]    = {'%',':','\0'}; /* First char gets replaced appropriately */
+    WCHAR Delims[] = L"%:"; /* First char gets replaced appropriately */
 
     WINE_TRACE("Expanding: %s (%c)\n", wine_dbgstr_w(start), startchar);
 
@@ -614,24 +601,22 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
     /* Expand to contents, if unchanged, return */
     /* Handle DATE, TIME, ERRORLEVEL and CD replacements allowing */
     /* override if existing env var called that name              */
-    if (WCMD_is_magic_envvar(thisVar, ErrorLvl)) {
-      static const WCHAR fmt[] = {'%','d','\0'};
-      wsprintfW(thisVarContents, fmt, errorlevel);
+    if (WCMD_is_magic_envvar(thisVar, L"ERRORLEVEL")) {
+      wsprintfW(thisVarContents, L"%d", errorlevel);
       len = lstrlenW(thisVarContents);
-    } else if (WCMD_is_magic_envvar(thisVar, Date)) {
+    } else if (WCMD_is_magic_envvar(thisVar, L"DATE")) {
       GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL,
                     NULL, thisVarContents, MAXSTRING);
       len = lstrlenW(thisVarContents);
-    } else if (WCMD_is_magic_envvar(thisVar, Time)) {
+    } else if (WCMD_is_magic_envvar(thisVar, L"TIME")) {
       GetTimeFormatW(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL,
                         NULL, thisVarContents, MAXSTRING);
       len = lstrlenW(thisVarContents);
-    } else if (WCMD_is_magic_envvar(thisVar, Cd)) {
+    } else if (WCMD_is_magic_envvar(thisVar, L"CD")) {
       GetCurrentDirectoryW(MAXSTRING, thisVarContents);
       len = lstrlenW(thisVarContents);
-    } else if (WCMD_is_magic_envvar(thisVar, Random)) {
-      static const WCHAR fmt[] = {'%','d','\0'};
-      wsprintfW(thisVarContents, fmt, rand() % 32768);
+    } else if (WCMD_is_magic_envvar(thisVar, L"RANDOM")) {
+      wsprintfW(thisVarContents, L"%d", rand() % 32768);
       len = lstrlenW(thisVarContents);
     } else {
 
@@ -1042,8 +1027,6 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   BOOL  explicit_path = FALSE;
   BOOL  status;
   DWORD len;
-  static const WCHAR envPath[] = {'P','A','T','H','\0'};
-  static const WCHAR delims[] = {'/','\\',':','\0'};
 
   /* Quick way to get the filename is to extract the first argument. */
   WINE_TRACE("Running '%s' (%d)\n", wine_dbgstr_w(command), called);
@@ -1056,13 +1039,11 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   }
 
   /* Calculate the search path and stem to search for */
-  if (wcspbrk (firstParam, delims) == NULL) {  /* No explicit path given, search path */
-    static const WCHAR curDir[] = {'.',';','\0'};
-    lstrcpyW(pathtosearch, curDir);
-    len = GetEnvironmentVariableW(envPath, &pathtosearch[2], ARRAY_SIZE(pathtosearch)-2);
+  if (wcspbrk(firstParam, L"/\\:") == NULL) {  /* No explicit path given, search path */
+    lstrcpyW(pathtosearch, L".;");
+    len = GetEnvironmentVariableW(L"PATH", &pathtosearch[2], ARRAY_SIZE(pathtosearch)-2);
     if ((len == 0) || (len >= ARRAY_SIZE(pathtosearch) - 2)) {
-      static const WCHAR curDir[] = {'.','\0'};
-      lstrcpyW (pathtosearch, curDir);
+      lstrcpyW(pathtosearch, L".");
     }
     if (wcschr(firstParam, '.') != NULL) extensionsupplied = TRUE;
     if (lstrlenW(firstParam) >= MAX_PATH)
@@ -1088,9 +1069,9 @@ void WCMD_run_program (WCHAR *command, BOOL called)
   }
 
   /* Now extract PATHEXT */
-  len = GetEnvironmentVariableW(envPathExt, pathext, ARRAY_SIZE(pathext));
+  len = GetEnvironmentVariableW(L"PATHEXT", pathext, ARRAY_SIZE(pathext));
   if ((len == 0) || (len >= ARRAY_SIZE(pathext))) {
-    lstrcpyW (pathext, dfltPathExt);
+    lstrcpyW(pathext, L".bat;.com;.cmd;.exe");
   }
 
   /* Loop through the search path, dir by dir */
@@ -1163,9 +1144,8 @@ void WCMD_run_program (WCHAR *command, BOOL called)
     if (!found) {
       HANDLE          h;
       WIN32_FIND_DATAW finddata;
-      static const WCHAR allFiles[] = {'.','*','\0'};
 
-      lstrcatW(thisDir,allFiles);
+      lstrcatW(thisDir, L".*");
       h = FindFirstFileW(thisDir, &finddata);
       FindClose(h);
       if (h != INVALID_HANDLE_VALUE) {
@@ -1201,13 +1181,11 @@ void WCMD_run_program (WCHAR *command, BOOL called)
       DWORD console;
       HINSTANCE hinst;
       WCHAR *ext = wcsrchr( thisDir, '.' );
-      static const WCHAR batExt[] = {'.','b','a','t','\0'};
-      static const WCHAR cmdExt[] = {'.','c','m','d','\0'};
 
       WINE_TRACE("Found as %s\n", wine_dbgstr_w(thisDir));
 
       /* Special case BAT and CMD */
-      if (ext && (!wcsicmp(ext, batExt) || !wcsicmp(ext, cmdExt))) {
+      if (ext && (!wcsicmp(ext, L".bat") || !wcsicmp(ext, L".cmd"))) {
         BOOL oldinteractive = interactive;
         interactive = FALSE;
         WCMD_batch (thisDir, command, called, NULL, INVALID_HANDLE_VALUE);
@@ -1349,7 +1327,6 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
         (*cmdList)->nextcommand->prevDelim == CMD_PIPE) {
 
         WCHAR temp_path[MAX_PATH];
-        static const WCHAR cmdW[]     = {'C','M','D','\0'};
 
         /* Remember piping is in action */
         WINE_TRACE("Output needs to be piped\n");
@@ -1357,15 +1334,14 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
 
         /* Generate a unique temporary filename */
         GetTempPathW(ARRAY_SIZE(temp_path), temp_path);
-        GetTempFileNameW(temp_path, cmdW, 0, (*cmdList)->nextcommand->pipeFile);
+        GetTempFileNameW(temp_path, L"CMD", 0, (*cmdList)->nextcommand->pipeFile);
         WINE_TRACE("Using temporary file of %s\n",
                    wine_dbgstr_w((*cmdList)->nextcommand->pipeFile));
     }
 
     /* If piped output, send stdout to the pipe by appending >filename to redirects */
     if (piped) {
-        static const WCHAR redirOut[] = {'%','s',' ','>',' ','%','s','\0'};
-        wsprintfW (new_redir, redirOut, redirects, (*cmdList)->nextcommand->pipeFile);
+        wsprintfW (new_redir, L"%s > %s", redirects, (*cmdList)->nextcommand->pipeFile);
         WINE_TRACE("Redirects now %s\n", wine_dbgstr_w(new_redir));
     } else {
         lstrcpyW(new_redir, redirects);
@@ -1395,8 +1371,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
       lstrcpyW(envvar, L"=");
       lstrcatW(envvar, cmd);
       if (GetEnvironmentVariableW(envvar, dir, MAX_PATH) == 0) {
-        static const WCHAR fmt[] = {'%','s','\\','\0'};
-        wsprintfW(cmd, fmt, cmd);
+        wsprintfW(cmd, L"%s\\", cmd);
         WINE_TRACE("No special directory settings, using dir of %s\n", wine_dbgstr_w(cmd));
       }
       WINE_TRACE("Got directory %s as %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(cmd));
@@ -1675,11 +1650,10 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
  */
 WCHAR *WCMD_LoadMessage(UINT id) {
     static WCHAR msg[2048];
-    static const WCHAR failedMsg[]  = {'F','a','i','l','e','d','!','\0'};
 
     if (!LoadStringW(GetModuleHandleW(NULL), id, msg, ARRAY_SIZE(msg))) {
        WINE_FIXME("LoadString failed with %d\n", GetLastError());
-       lstrcpyW(msg, failedMsg);
+       lstrcpyW(msg, L"Failed!");
     }
     return msg;
 }
@@ -2440,11 +2414,6 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   BOOL promptNewLine = TRUE;
   BOOL opt_q;
   int opt_t = 0;
-  static const WCHAR offW[] = {'O','F','F','\0'};
-  static const WCHAR promptW[] = {'P','R','O','M','P','T','\0'};
-  static const WCHAR defaultpromptW[] = {'$','P','$','G','\0'};
-  static const WCHAR comspecW[] = {'C','O','M','S','P','E','C',0};
-  static const WCHAR cmdW[] = {'\\','c','m','d','.','e','x','e',0};
   WCHAR comspec[MAX_PATH];
   CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
   RTL_OSVERSIONINFOEXW osv;
@@ -2452,11 +2421,11 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   STARTUPINFOW startupInfo;
   const WCHAR *arg;
 
-  if (!GetEnvironmentVariableW(comspecW, comspec, ARRAY_SIZE(comspec)))
+  if (!GetEnvironmentVariableW(L"COMSPEC", comspec, ARRAY_SIZE(comspec)))
   {
-      GetSystemDirectoryW(comspec, ARRAY_SIZE(comspec) - ARRAY_SIZE(cmdW));
-      lstrcatW(comspec, cmdW);
-      SetEnvironmentVariableW(comspecW, comspec);
+      GetSystemDirectoryW(comspec, ARRAY_SIZE(comspec) - ARRAY_SIZE(L"\\cmd.exe"));
+      lstrcatW(comspec, L"\\cmd.exe");
+      SetEnvironmentVariableW(L"COMSPEC", comspec);
   }
 
   srand(time(NULL));
@@ -2528,13 +2497,13 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   while (*arg && wcschr(L" \t,=;", *arg)) arg++;
 
   if (opt_q) {
-    WCMD_echo(offW);
+    WCMD_echo(L"OFF");
   }
 
   /* Until we start to read from the keyboard, stay as non-interactive */
   interactive = FALSE;
 
-  SetEnvironmentVariableW(promptW, defaultpromptW);
+  SetEnvironmentVariableW(L"PROMPT", L"$P$G");
 
   if (opt_c || opt_k) {
       int     len;
@@ -2592,9 +2561,9 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
         BOOL found = FALSE;
 
         /* Now extract PATHEXT */
-        len = GetEnvironmentVariableW(envPathExt, pathext, ARRAY_SIZE(pathext));
+        len = GetEnvironmentVariableW(L"PATHEXT", pathext, ARRAY_SIZE(pathext));
         if ((len == 0) || (len >= ARRAY_SIZE(pathext))) {
-          lstrcpyW (pathext, dfltPathExt);
+          lstrcpyW(pathext, L".bat;.com;.cmd;.exe");
         }
 
         /* If the supplied parameter has any directory information, look there */
@@ -2681,8 +2650,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   /* Save cwd into appropriate env var (Must be before the /c processing */
   GetCurrentDirectoryW(ARRAY_SIZE(string), string);
   if (IsCharAlphaW(string[0]) && string[1] == ':') {
-    static const WCHAR fmt[] = {'=','%','c',':','\0'};
-    wsprintfW(envvar, fmt, string[0]);
+    wsprintfW(envvar, L"=%c:", string[0]);
     SetEnvironmentVariableW(envvar, string);
     WINE_TRACE("Set %s to %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(string));
   }
@@ -2726,26 +2694,20 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
       HKEY key;
       DWORD type;
       DWORD value=0, size=4;
-      static const WCHAR regKeyW[] = {'S','o','f','t','w','a','r','e','\\',
-                                      'M','i','c','r','o','s','o','f','t','\\',
-                                      'C','o','m','m','a','n','d',' ','P','r','o','c','e','s','s','o','r','\0'};
-      static const WCHAR dfltColorW[] = {'D','e','f','a','u','l','t','C','o','l','o','r','\0'};
+      static const WCHAR regKeyW[] = L"Software\\Microsoft\\Command Processor";
 
       if (RegOpenKeyExW(HKEY_CURRENT_USER, regKeyW,
                        0, KEY_READ, &key) == ERROR_SUCCESS) {
           WCHAR  strvalue[4];
 
           /* See if DWORD or REG_SZ */
-          if (RegQueryValueExW(key, dfltColorW, NULL, &type,
-                     NULL, NULL) == ERROR_SUCCESS) {
+          if (RegQueryValueExW(key, L"DefaultColor", NULL, &type, NULL, NULL) == ERROR_SUCCESS) {
               if (type == REG_DWORD) {
                   size = sizeof(DWORD);
-                  RegQueryValueExW(key, dfltColorW, NULL, NULL,
-                                  (LPBYTE)&value, &size);
+                  RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)&value, &size);
               } else if (type == REG_SZ) {
                   size = ARRAY_SIZE(strvalue);
-                  RegQueryValueExW(key, dfltColorW, NULL, NULL,
-                                  (LPBYTE)strvalue, &size);
+                  RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)strvalue, &size);
                   value = wcstoul(strvalue, NULL, 10);
               }
           }
@@ -2757,16 +2719,14 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
           WCHAR  strvalue[4];
 
           /* See if DWORD or REG_SZ */
-          if (RegQueryValueExW(key, dfltColorW, NULL, &type,
+          if (RegQueryValueExW(key, L"DefaultColor", NULL, &type,
                      NULL, NULL) == ERROR_SUCCESS) {
               if (type == REG_DWORD) {
                   size = sizeof(DWORD);
-                  RegQueryValueExW(key, dfltColorW, NULL, NULL,
-                                  (LPBYTE)&value, &size);
+                  RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)&value, &size);
               } else if (type == REG_SZ) {
                   size = ARRAY_SIZE(strvalue);
-                  RegQueryValueExW(key, dfltColorW, NULL, NULL,
-                                  (LPBYTE)strvalue, &size);
+                  RegQueryValueExW(key, L"DefaultColor", NULL, NULL, (BYTE *)strvalue, &size);
                   value = wcstoul(strvalue, NULL, 10);
               }
           }

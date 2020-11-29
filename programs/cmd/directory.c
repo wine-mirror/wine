@@ -252,11 +252,6 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
   int concurrentDirs = 0;
   BOOL done_header = FALSE;
 
-  static const WCHAR fmt2[]  = {'%','1','!','-','1','3','s','!','\0'};
-  static const WCHAR fmt3[]  = {'%','1','!','-','2','3','s','!','\0'};
-  static const WCHAR fmt4[]  = {'%','1','\0'};
-  static const WCHAR fmt5[]  = {'%','1','%','2','\0'};
-
   dir_count = 0;
   file_count = 0;
   entry_count = 0;
@@ -405,13 +400,13 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 
         if (!bare) {
            WCMD_output (L"%1!10s!  %2!8s!  <DIR>         ", datestring, timestring);
-           if (shortname) WCMD_output (fmt2, fd[i].cAlternateFileName);
-           if (usernames) WCMD_output (fmt3, username);
-           WCMD_output(fmt4,fd[i].cFileName);
+           if (shortname) WCMD_output(L"%1!-13s!", fd[i].cAlternateFileName);
+           if (usernames) WCMD_output(L"%1!-23s!", username);
+           WCMD_output(L"%1",fd[i].cFileName);
         } else {
            if (!((lstrcmpW(fd[i].cFileName, L".") == 0) ||
                  (lstrcmpW(fd[i].cFileName, L"..") == 0))) {
-              WCMD_output(fmt5, recurse?inputparms->dirName:L"", fd[i].cFileName);
+              WCMD_output(L"%1%2", recurse ? inputparms->dirName : L"", fd[i].cFileName);
            } else {
               addNewLine = FALSE;
            }
@@ -425,11 +420,11 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         if (!bare) {
            WCMD_output (L"%1!10s!  %2!8s!    %3!10s!  ", datestring, timestring,
                         WCMD_filesize64(file_size.QuadPart));
-           if (shortname) WCMD_output (fmt2, fd[i].cAlternateFileName);
-           if (usernames) WCMD_output (fmt3, username);
-           WCMD_output(fmt4,fd[i].cFileName);
+           if (shortname) WCMD_output(L"%1!-13s!", fd[i].cAlternateFileName);
+           if (usernames) WCMD_output(L"%1!-23s!", username);
+           WCMD_output(L"%1",fd[i].cFileName);
         } else {
-           WCMD_output(fmt5, recurse ? inputparms->dirName : L"", fd[i].cFileName);
+           WCMD_output(L"%1%2", recurse ? inputparms->dirName : L"", fd[i].cFileName);
         }
       }
      }
