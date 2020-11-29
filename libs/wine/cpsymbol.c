@@ -23,7 +23,7 @@
 
 #ifdef __ASM_OBSOLETE
 
-#include "wine/unicode.h"
+#include "unicode.h"
 
 /* return -1 on dst buffer overflow */
 int wine_cpsymbol_mbstowcs_obsolete( const char *src, int srclen, WCHAR *dst, int dstlen)

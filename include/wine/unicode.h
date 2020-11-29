@@ -43,42 +43,6 @@ extern "C" {
 #define WINE_UNICODE_INLINE static FORCEINLINE
 #endif
 
-/* code page info common to SBCS and DBCS */
-struct cp_info
-{
-    unsigned int          codepage;          /* codepage id */
-    unsigned int          char_size;         /* char size (1 or 2 bytes) */
-    WCHAR                 def_char;          /* default char value (can be double-byte) */
-    WCHAR                 def_unicode_char;  /* default Unicode char value */
-    const char           *name;              /* code page name */
-};
-
-struct sbcs_table
-{
-    struct cp_info        info;
-    const WCHAR          *cp2uni;            /* code page -> Unicode map */
-    const WCHAR          *cp2uni_glyphs;     /* code page -> Unicode map with glyph chars */
-    const unsigned char  *uni2cp_low;        /* Unicode -> code page map */
-    const unsigned short *uni2cp_high;
-};
-
-struct dbcs_table
-{
-    struct cp_info        info;
-    const WCHAR          *cp2uni;            /* code page -> Unicode map */
-    const unsigned char  *cp2uni_leadbytes;
-    const unsigned short *uni2cp_low;        /* Unicode -> code page map */
-    const unsigned short *uni2cp_high;
-    unsigned char         lead_bytes[12];    /* lead bytes ranges */
-};
-
-union cptable
-{
-    struct cp_info    info;
-    struct sbcs_table sbcs;
-    struct dbcs_table dbcs;
-};
-
 WINE_UNICODE_INLINE WCHAR tolowerW( WCHAR ch )
 {
     extern const WCHAR wine_casemap_lower[];

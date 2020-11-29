@@ -24,7 +24,7 @@
 
 #ifdef __ASM_OBSOLETE
 
-#include "wine/unicode.h"
+#include "unicode.h"
 
 /* Everything below this line is generated automatically by make_unicode */
 /* ### cpmap begin ### */

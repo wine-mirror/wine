@@ -24,7 +24,7 @@
 
 #ifdef __ASM_OBSOLETE
 
-#include "wine/unicode.h"
+#include "unicode.h"
 
 extern WCHAR wine_compose( const WCHAR *str ) DECLSPEC_HIDDEN;
 
