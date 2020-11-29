@@ -1968,6 +1968,7 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
   BOOL thisduplicate = FALSE;
   BOOL anyduplicates = FALSE;
   int  totalfound;
+  static WCHAR emptyW[] = L"";
 
   /* Skip lines if requested */
   if (*forf_skip) {
@@ -1998,7 +1999,7 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
   for (varoffset=0;
        varidx >= 0 && varoffset<totalfound && (((varidx%26) + varoffset) < 26);
        varoffset++) {
-    forloopcontext.variable[varidx + varoffset] = (WCHAR *)nullW;
+    forloopcontext.variable[varidx + varoffset] = emptyW;
   }
 
   /* Loop extracting the tokens
@@ -2048,7 +2049,7 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
     int i;
     for (i=varidx; i<MAX_FOR_VARIABLES; i++) {
       if ((forloopcontext.variable[i] != oldcontext.variable[i]) &&
-          (forloopcontext.variable[i] != nullW)) {
+          (forloopcontext.variable[i] != emptyW)) {
         heap_free(forloopcontext.variable[i]);
       }
     }
