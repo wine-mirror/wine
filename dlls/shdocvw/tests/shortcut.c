@@ -165,9 +165,7 @@ static void test_ShortcutFolder(void) {
     CLSID clsid;
     const CLSID CLSID_WineTest = 
         { 0x9b352ebf, 0x2765, 0x45c1, { 0xb4, 0xc6, 0x85, 0xcc, 0x7f, 0x7a, 0xbc, 0x64 } };
-    WCHAR wszWineTestFolder[] = {
-        ':',':','{','9','B','3','5','2','E','B','F','-','2','7','6','5','-','4','5','C','1','-',
-        'B','4','C','6','-','8','5','C','C','7','F','7','A','B','C','6','4','}',0 };
+    static WCHAR wszWineTestFolder[] = L"::{9B352EBF-2765-45C1-B4C6-85CC7F7ABC64}";
 
     /* First, we register all the necessary registry keys/values for our 'WineTest'
      * shell object. */

@@ -43,10 +43,8 @@ static HINSTANCE ieframe_instance;
 
 static HINSTANCE get_ieframe_instance(void)
 {
-    static const WCHAR ieframe_dllW[] = {'i','e','f','r','a','m','e','.','d','l','l',0};
-
     if(!ieframe_instance)
-        ieframe_instance = LoadLibraryW(ieframe_dllW);
+        ieframe_instance = LoadLibraryW(L"ieframe.dll");
 
     return ieframe_instance;
 }
@@ -276,10 +274,9 @@ DWORD WINAPI SetQueryNetSessionCount(DWORD arg)
 
 static void* fetch_shlwapi_ordinal(UINT_PTR ord)
 {
-    static const WCHAR shlwapiW[] = {'s','h','l','w','a','p','i','.','d','l','l','\0'};
     static HANDLE h;
 
-    if (!h && !(h = GetModuleHandleW(shlwapiW))) return NULL;
+    if (!h && !(h = GetModuleHandleW(L"shlwapi.dll"))) return NULL;
     return (void*)GetProcAddress(h, (const char*)ord);
 }
 

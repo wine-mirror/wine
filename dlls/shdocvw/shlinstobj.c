@@ -357,12 +357,7 @@ static HRESULT InstanceObjectFactory_Constructor(REFCLSID rclsid, IPropertyBag *
 HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid, REFIID riid, 
     LPVOID *ppvClassObj)
 {
-    WCHAR wszInstanceKey[] = { 'C','L','S','I','D','\\','{','0','0','0','0','0','0','0','0','-',
-        '0','0','0','0','-','0','0','0','0','-','0','0','0','0','-','0','0','0','0','0','0','0','0',
-        '0','0','0','0','}','\\','I','n','s','t','a','n','c','e', 0 };
-    static const WCHAR wszCLSID[] = { 'C','L','S','I','D',0 };
-    static const WCHAR wszInitPropertyBag[] =
-        { 'I','n','i','t','P','r','o','p','e','r','t','y','B','a','g',0 };
+    WCHAR wszInstanceKey[] = L"CLSID\\{00000000-0000-0000-0000-000000000000}\\Instance";
     WCHAR wszCLSIDInstance[CHARS_IN_GUID];
     CLSID clsidInstance;
     HKEY hInstanceKey, hInitPropertyBagKey;
@@ -382,7 +377,7 @@ HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid, REFIID riid,
         /* If there is no 'Instance' subkey, then it's not a Shell Instance Object. */
         return CLASS_E_CLASSNOTAVAILABLE;
 
-    if (ERROR_SUCCESS != RegQueryValueExW(hInstanceKey, wszCLSID, NULL, &dwType, (LPBYTE)wszCLSIDInstance, &cbBytes) ||
+    if (ERROR_SUCCESS != RegQueryValueExW(hInstanceKey, L"CLSID", NULL, &dwType, (BYTE *)wszCLSIDInstance, &cbBytes) ||
         FAILED(CLSIDFromString(wszCLSIDInstance, &clsidInstance)))
     {
         /* 'Instance' should have a 'CLSID' value with a well-formed clsid-string. */
@@ -392,7 +387,7 @@ HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid, REFIID riid,
     }
 
     /* Try to open the 'InitPropertyBag' subkey. */
-    res = RegOpenKeyExW(hInstanceKey, wszInitPropertyBag, 0, KEY_READ, &hInitPropertyBagKey);
+    res = RegOpenKeyExW(hInstanceKey, L"InitPropertyBag", 0, KEY_READ, &hInitPropertyBagKey);
     RegCloseKey(hInstanceKey);
     if (res != ERROR_SUCCESS) {
         /* Besides 'InitPropertyBag's, shell instance objects might be initialized by streams.
