@@ -220,6 +220,31 @@ static HRESULT WINAPI CommonEncoderFrame_SetSize(IWICBitmapFrameEncode *iface,
 
     EnterCriticalSection(&This->parent->lock);
 
+    if (This->parent->encoder_info.flags & ENCODER_FLAGS_ICNS_SIZE)
+    {
+        if (uiWidth != uiHeight)
+        {
+            WARN("cannot generate ICNS icon from %dx%d image\n", uiWidth, uiHeight);
+            hr = E_INVALIDARG;
+            goto end;
+        }
+
+        switch (uiWidth)
+        {
+            case 16:
+            case 32:
+            case 48:
+            case 128:
+            case 256:
+            case 512:
+                break;
+            default:
+                WARN("cannot generate ICNS icon from %dx%d image\n", uiWidth, uiHeight);
+                hr = E_INVALIDARG;
+                goto end;
+        }
+    }
+
     if (!This->initialized || This->frame_created)
     {
         hr = WINCODEC_ERR_WRONGSTATE;
@@ -231,6 +256,7 @@ static HRESULT WINAPI CommonEncoderFrame_SetSize(IWICBitmapFrameEncode *iface,
         hr = S_OK;
     }
 
+end:
     LeaveCriticalSection(&This->parent->lock);
 
     return hr;

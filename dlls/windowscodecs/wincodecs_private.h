@@ -31,6 +31,8 @@ DEFINE_GUID(CLSID_WICIcnsEncoder, 0x312fb6f1,0xb767,0x409d,0x8a,0x6d,0x0f,0xc1,0
 
 DEFINE_GUID(GUID_WineContainerFormatTga, 0x0c44fda1,0xa5c5,0x4298,0x96,0x85,0x47,0x3f,0xc1,0x7c,0xd3,0x22);
 
+DEFINE_GUID(GUID_WineContainerFormatIcns, 0xe4cd3e69,0x4436,0x4363,0x98,0x1d,0xcc,0xf0,0x5a,0x87,0x4c,0x73);
+
 DEFINE_GUID(GUID_VendorWine, 0xddf46da1,0x7dc1,0x404e,0x98,0xf2,0xef,0xa4,0x8d,0xfc,0x95,0x0a);
 
 extern IID IID_IMILBitmap;
@@ -353,6 +355,7 @@ enum encoder_option
 };
 
 #define ENCODER_FLAGS_MULTI_FRAME 0x1
+#define ENCODER_FLAGS_ICNS_SIZE 0x2
 
 struct encoder_info
 {
@@ -407,6 +410,7 @@ HRESULT CDECL jpeg_decoder_create(struct decoder_info *info, struct decoder **re
 HRESULT CDECL png_encoder_create(struct encoder_info *info, struct encoder **result);
 HRESULT CDECL tiff_encoder_create(struct encoder_info *info, struct encoder **result);
 HRESULT CDECL jpeg_encoder_create(struct encoder_info *info, struct encoder **result);
+HRESULT CDECL icns_encoder_create(struct encoder_info *info, struct encoder **result);
 
 struct unix_funcs
 {

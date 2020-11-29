@@ -1532,7 +1532,7 @@ static struct regsvr_encoder const encoder_list[] = {
 	"ICNS Encoder",
 	"1.0.0.0",
 	&GUID_VendorWine,
-	NULL, /* no container format guid */
+	&GUID_WineContainerFormatIcns,
 	"image/icns",
 	".icns",
 	icns_encode_formats
