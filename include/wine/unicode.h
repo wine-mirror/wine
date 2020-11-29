@@ -26,6 +26,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winnls.h>
+#include <winternl.h>
 
 #ifdef __WINE_WINE_TEST_H
 #error This file should not be used in Wine tests
@@ -45,14 +46,12 @@ extern "C" {
 
 WINE_UNICODE_INLINE WCHAR tolowerW( WCHAR ch )
 {
-    extern const WCHAR wine_casemap_lower[];
-    return ch + wine_casemap_lower[wine_casemap_lower[ch >> 8] + (ch & 0xff)];
+    return RtlDowncaseUnicodeChar( ch );
 }
 
 WINE_UNICODE_INLINE WCHAR toupperW( WCHAR ch )
 {
-    extern const WCHAR wine_casemap_upper[];
-    return ch + wine_casemap_upper[wine_casemap_upper[ch >> 8] + (ch & 0xff)];
+    return RtlUpcaseUnicodeChar( ch );
 }
 
 /* the character type contains the C1_* flags in the low 12 bits */

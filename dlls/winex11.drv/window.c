@@ -37,6 +37,8 @@
 #include <X11/extensions/shape.h>
 #endif /* HAVE_LIBXSHAPE */
 
+/* avoid conflict with field names in included win32 headers */
+#undef Status
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

@@ -7,8 +7,6 @@ WINE_1.0
     __wine_main_environ;
     __wine_main_wargv;
     wine_anon_mmap;
-    wine_casemap_lower;
-    wine_casemap_upper;
     wine_dll_set_callback;
     wine_init;
     wine_init_argv0_path;
@@ -64,6 +62,8 @@ WINE_1.0
     vsnprintfW;
     vsprintfW;
     wine_call_on_stack;
+    wine_casemap_lower;
+    wine_casemap_upper;
     wine_compare_string;
     wine_cp_enum_table;
     wine_cp_get_table;

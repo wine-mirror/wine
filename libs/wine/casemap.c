@@ -2,6 +2,10 @@
 /* generated from https://www.unicode.org/Public/13.0.0/ucd/UCD.zip:UnicodeData.txt */
 /* DO NOT EDIT!! */
 
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
+
 #include "windef.h"
 
 const WCHAR wine_casemap_lower[4122] =
@@ -1101,3 +1105,5 @@ const WCHAR wine_casemap_upper[4557] =
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000
 };
+
+#endif /* __ASM_OBSOLETE */
