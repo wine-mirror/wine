@@ -310,7 +310,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 
     /* Output the results */
     if (!bare) {
-       if (level != 0 && (entry_count > 0)) WCMD_output_asis (newlineW);
+       if (level != 0 && (entry_count > 0)) WCMD_output_asis(L"\r\n");
        if (!recurse || ((entry_count > 0) && done_header==FALSE)) {
            WCMD_output (L"Directory of %1\n\n", real_path);
            done_header = TRUE;
@@ -397,7 +397,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         if ((cur_width + widest) > max_width) {
             cur_width = 0;
         } else {
-            WCMD_output(L"%1!*s!", cur_width - tmp_width, nullW);
+            WCMD_output(L"%1!*s!", cur_width - tmp_width, L"");
         }
 
       } else if (fd[i].dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
@@ -409,9 +409,9 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
            if (usernames) WCMD_output (fmt3, username);
            WCMD_output(fmt4,fd[i].cFileName);
         } else {
-           if (!((lstrcmpW(fd[i].cFileName, dotW) == 0) ||
-                 (lstrcmpW(fd[i].cFileName, dotdotW) == 0))) {
-              WCMD_output (fmt5, recurse?inputparms->dirName:nullW, fd[i].cFileName);
+           if (!((lstrcmpW(fd[i].cFileName, L".") == 0) ||
+                 (lstrcmpW(fd[i].cFileName, L"..") == 0))) {
+              WCMD_output(fmt5, recurse?inputparms->dirName:L"", fd[i].cFileName);
            } else {
               addNewLine = FALSE;
            }
@@ -429,11 +429,11 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
            if (usernames) WCMD_output (fmt3, username);
            WCMD_output(fmt4,fd[i].cFileName);
         } else {
-           WCMD_output (fmt5, recurse?inputparms->dirName:nullW, fd[i].cFileName);
+           WCMD_output(fmt5, recurse ? inputparms->dirName : L"", fd[i].cFileName);
         }
       }
      }
-     if (addNewLine) WCMD_output_asis (newlineW);
+     if (addNewLine) WCMD_output_asis(L"\r\n");
      cur_width = 0;
     }
 
@@ -467,15 +467,15 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 
     /* Build path to search */
     lstrcpyW(string, inputparms->dirName);
-    lstrcatW(string, starW);
+    lstrcatW(string, L"*");
 
     WINE_TRACE("Recursive, looking for '%s'\n", wine_dbgstr_w(string));
     hff = FindFirstFileW(string, &finddata);
     if (hff != INVALID_HANDLE_VALUE) {
       do {
         if ((finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-            (lstrcmpW(finddata.cFileName, dotdotW) != 0) &&
-            (lstrcmpW(finddata.cFileName, dotW) != 0)) {
+            (lstrcmpW(finddata.cFileName, L"..") != 0) &&
+            (lstrcmpW(finddata.cFileName, L".") != 0)) {
 
           DIRECTORY_STACK *thisDir;
           int              dirsToCopy = concurrentDirs;
@@ -488,7 +488,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
             /* Work out search parameter in sub dir */
             lstrcpyW (string, inputparms->dirName);
             lstrcatW (string, finddata.cFileName);
-            lstrcatW (string, slashW);
+            lstrcatW(string, L"\\");
             WINE_TRACE("Recursive, Adding to search list '%s'\n", wine_dbgstr_w(string));
 
             /* Allocate memory, add to list */
@@ -762,7 +762,7 @@ void WCMD_directory (WCHAR *args)
   argno         = 0;
   argN          = args;
   GetCurrentDirectoryW(MAX_PATH, cwd);
-  lstrcatW(cwd, slashW);
+  lstrcatW(cwd, L"\\");
 
   /* Loop through all args, calculating full effective directory */
   fullParms = NULL;
@@ -781,7 +781,7 @@ void WCMD_directory (WCHAR *args)
         if (!GetEnvironmentVariableW(envvar, fullname, MAX_PATH)) {
           wsprintfW(fullname, L"%c:", thisArg[0]);
         }
-        lstrcatW(fullname, slashW);
+        lstrcatW(fullname, L"\\");
         lstrcatW(fullname, &thisArg[2]);
       } else if (thisArg[0] == '\\') {
         memcpy(fullname, cwd, 2 * sizeof(WCHAR));
@@ -802,13 +802,13 @@ void WCMD_directory (WCHAR *args)
       if ((wcschr(path, '*') == NULL) && (wcschr(path, '%') == NULL)) {
         status = GetFileAttributesW(path);
         if ((status != INVALID_FILE_ATTRIBUTES) && (status & FILE_ATTRIBUTE_DIRECTORY)) {
-          if (!ends_with_backslash( path )) lstrcatW( path, slashW );
-          lstrcatW (path, starW);
+          if (!ends_with_backslash(path)) lstrcatW(path, L"\\");
+          lstrcatW(path, L"*");
         }
       } else {
         /* Special case wildcard search with no extension (ie parameters ending in '.') as
            GetFullPathName strips off the additional '.'                                  */
-        if (fullname[lstrlenW(fullname)-1] == '.') lstrcatW(path, dotW);
+        if (fullname[lstrlenW(fullname)-1] == '.') lstrcatW(path, L".");
       }
 
       WINE_TRACE("Using path '%s'\n", wine_dbgstr_w(path));
@@ -841,7 +841,7 @@ void WCMD_directory (WCHAR *args)
     fullParms = heap_xalloc(sizeof(DIRECTORY_STACK));
     fullParms->next = NULL;
     fullParms->dirName = heap_strdupW(cwd);
-    fullParms->fileName = heap_strdupW(starW);
+    fullParms->fileName = heap_strdupW(L"*");
   }
 
   lastDrive = '?';

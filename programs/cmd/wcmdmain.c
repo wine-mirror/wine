@@ -46,8 +46,6 @@ int defaultColor = 7;
 BOOL echo_mode = TRUE;
 
 WCHAR anykey[100], version_string[100];
-const WCHAR newlineW[] = {'\r','\n','\0'};
-const WCHAR spaceW[]   = {' ','\0'};
 static const WCHAR envPathExt[] = {'P','A','T','H','E','X','T','\0'};
 static const WCHAR dfltPathExt[] = {'.','b','a','t',';',
                                     '.','c','o','m',';',
@@ -319,8 +317,7 @@ void WCMD_print_error (void) {
   WCMD_output_asis_len(lpMsgBuf, lstrlenW(lpMsgBuf),
                        GetStdHandle(STD_ERROR_HANDLE));
   LocalFree (lpMsgBuf);
-  WCMD_output_asis_len (newlineW, lstrlenW(newlineW),
-                        GetStdHandle(STD_ERROR_HANDLE));
+  WCMD_output_asis_len(L"\r\n", lstrlenW(L"\r\n"), GetStdHandle(STD_ERROR_HANDLE));
   return;
 }
 
@@ -731,7 +728,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
 
     /* search and replace manipulation */
     } else {
-      WCHAR *equalspos = wcsstr(colonpos, equalW);
+      WCHAR *equalspos = wcsstr(colonpos, L"=");
       WCHAR *replacewith = equalspos+1;
       WCHAR *found       = NULL;
       WCHAR *searchIn;
@@ -1151,7 +1148,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
     }
 
     /* 1. If extension supplied, see if that file exists */
-    lstrcatW(thisDir, slashW);
+    lstrcatW(thisDir, L"\\");
     lstrcatW(thisDir, stemofsearch);
     pos = &thisDir[lstrlenW(thisDir)]; /* Pos = end of name */
 
@@ -1395,7 +1392,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
       /* According to MSDN CreateProcess docs, special env vars record
          the current directory on each drive, in the form =C:
          so see if one specified, and if so go back to it             */
-      lstrcpyW(envvar, equalW);
+      lstrcpyW(envvar, L"=");
       lstrcatW(envvar, cmd);
       if (GetEnvironmentVariableW(envvar, dir, MAX_PATH) == 0) {
         static const WCHAR fmt[] = {'%','s','\\','\0'};
@@ -1607,7 +1604,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
         WCMD_type (parms_start);
         break;
       case WCMD_VER:
-        WCMD_output_asis(newlineW);
+        WCMD_output_asis(L"\r\n");
         WCMD_version ();
         break;
       case WCMD_VERIFY:
@@ -1886,7 +1883,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     if (lstrlenW(extraSpace) == MAXSTRING -1) {
         WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_TRUNCATEDLINE));
         WCMD_output_asis_stderr(extraSpace);
-        WCMD_output_asis_stderr(newlineW);
+        WCMD_output_asis_stderr(L"\r\n");
     }
 
     /* Replace env vars if in a batch context */
@@ -1914,9 +1911,9 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
           && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
                          curPos, min_len, echoSlash, len) != CSTR_EQUAL)
       {
-          WCMD_output_asis(spaceW);
+          WCMD_output_asis(L" ");
       }
-      WCMD_output_asis(newlineW);
+      WCMD_output_asis(L"\r\n");
     }
 
     /* Skip repeated 'no echo' characters */
@@ -2354,7 +2351,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
         /* Continue to echo commands IF echo is on and in batch program */
         if (context && echo_mode && *curPos && *curPos != '@') {
           WCMD_output_asis(extraSpace);
-          WCMD_output_asis(newlineW);
+          WCMD_output_asis(L"\r\n");
         }
 
         /* Skip repeated 'no echo' characters and whitespace */

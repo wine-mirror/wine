@@ -39,12 +39,6 @@ extern BOOL echo_mode;
 extern BOOL interactive;
 
 struct env_stack *pushd_directories;
-const WCHAR dotW[]    = {'.','\0'};
-const WCHAR dotdotW[] = {'.','.','\0'};
-const WCHAR nullW[]   = {'\0'};
-const WCHAR starW[]   = {'*','\0'};
-const WCHAR slashW[]  = {'\\','\0'};
-const WCHAR equalW[]  = {'=','\0'};
 const WCHAR wildcardsW[] = {'*','?','\0'};
 const WCHAR slashstarW[] = {'\\','*','\0'};
 const WCHAR deviceW[] = {'\\','\\','.','\\','\0'};
@@ -410,7 +404,7 @@ void WCMD_choice (const WCHAR * args) {
         ptr = wcschr(opt_c, answer[0]);
         if (ptr) {
             WCMD_output_asis(answer);
-            WCMD_output_asis(newlineW);
+            WCMD_output_asis(L"\r\n");
             if (have_console)
                 SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), oldmode);
 
@@ -807,8 +801,8 @@ void WCMD_copy(WCHAR * args) {
   if (destination == NULL) {
 
     WINE_TRACE("No destination supplied, so need to calculate it\n");
-    lstrcpyW(destname, dotW);
-    lstrcatW(destname, slashW);
+    lstrcpyW(destname, L".");
+    lstrcatW(destname, L"\\");
 
     destination = heap_xalloc(sizeof(COPY_FILES));
     if (destination == NULL) goto exitreturn;
@@ -835,7 +829,7 @@ void WCMD_copy(WCHAR * args) {
          (attributes & FILE_ATTRIBUTE_DIRECTORY))) {
 
       destisdirectory = TRUE;
-      if (!ends_with_backslash( destname )) lstrcatW(destname, slashW);
+      if (!ends_with_backslash(destname)) lstrcatW(destname, L"\\");
       WINE_TRACE("Directory, so full name is now '%s'\n", wine_dbgstr_w(destname));
     }
   }
@@ -916,7 +910,7 @@ void WCMD_copy(WCHAR * args) {
 
       /* We need to know where the filename part starts, so append * and
          recalculate the full resulting path                              */
-      lstrcatW(thiscopy->name, starW);
+      lstrcatW(thiscopy->name, L"*");
       GetFullPathNameW(thiscopy->name, ARRAY_SIZE(srcpath), srcpath, &filenamepart);
       WINE_TRACE("Directory, so full name is now '%s'\n", wine_dbgstr_w(srcpath));
 
@@ -1208,7 +1202,6 @@ static BOOL WCMD_delete_confirm_wildcard(const WCHAR *filename, BOOL *pPrompted)
     static const WCHAR parmQ[] = {'/','Q','\0'};
 
     if ((wcsstr(quals, parmQ) == NULL) && (wcsstr(quals, parmP) == NULL)) {
-        static const WCHAR anyExt[]= {'.','*','\0'};
         WCHAR drive[10];
         WCHAR dir[MAX_PATH];
         WCHAR fname[MAX_PATH];
@@ -1220,8 +1213,7 @@ static BOOL WCMD_delete_confirm_wildcard(const WCHAR *filename, BOOL *pPrompted)
         _wsplitpath(fpath, drive, dir, fname, ext);
 
         /* Only prompt for * and *.*, not *a, a*, *.a* etc */
-        if ((lstrcmpW(fname, starW) == 0) &&
-            (*ext == 0x00 || (lstrcmpW(ext, anyExt) == 0))) {
+        if ((lstrcmpW(fname, L"*") == 0) && (*ext == 0x00 || (lstrcmpW(ext, L".*") == 0))) {
 
             WCHAR question[MAXSTRING];
             static const WCHAR fmt[] = {'%','s',' ','\0'};
@@ -1375,8 +1367,7 @@ static BOOL WCMD_delete_one (const WCHAR *thisArg) {
 
         do {
           if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-              (lstrcmpW(fd.cFileName, dotdotW) != 0) &&
-              (lstrcmpW(fd.cFileName, dotW) != 0)) {
+              (lstrcmpW(fd.cFileName, L"..") != 0) && (lstrcmpW(fd.cFileName, L".") != 0)) {
 
             DIRECTORY_STACK *nextDir;
             WCHAR subParm[MAX_PATH];
@@ -1384,7 +1375,7 @@ static BOOL WCMD_delete_one (const WCHAR *thisArg) {
             /* Work out search parameter in sub dir */
             lstrcpyW (subParm, thisDir);
             lstrcatW (subParm, fd.cFileName);
-            lstrcatW (subParm, slashW);
+            lstrcatW (subParm, L"\\");
             lstrcatW (subParm, fname);
             lstrcatW (subParm, ext);
             WINE_TRACE("Recursive, Adding to search list '%s'\n", wine_dbgstr_w(subParm));
@@ -1526,7 +1517,7 @@ void WCMD_echo (const WCHAR *args)
     echo_mode = FALSE;
   else {
     WCMD_output_asis (args);
-    WCMD_output_asis (newlineW);
+    WCMD_output_asis(L"\r\n");
   }
   heap_free(trimmed);
 }
@@ -1783,8 +1774,7 @@ static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk) {
     do {
       WINE_TRACE("Looking for subdirectories\n");
       if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-          (lstrcmpW(fd.cFileName, dotdotW) != 0) &&
-          (lstrcmpW(fd.cFileName, dotW) != 0))
+          (lstrcmpW(fd.cFileName, L"..") != 0) && (lstrcmpW(fd.cFileName, L".") != 0))
       {
         /* Allocate memory, add to list */
         DIRECTORY_STACK *toWalk = heap_xalloc(sizeof(DIRECTORY_STACK));
@@ -1794,7 +1784,7 @@ static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk) {
         remainingDirs = toWalk;
         toWalk->dirName = heap_xalloc(sizeof(WCHAR) * (lstrlenW(dirsToWalk->dirName) + 2 + lstrlenW(fd.cFileName)));
         lstrcpyW(toWalk->dirName, dirsToWalk->dirName);
-        lstrcatW(toWalk->dirName, slashW);
+        lstrcatW(toWalk->dirName, L"\\");
         lstrcatW(toWalk->dirName, fd.cFileName);
         WINE_TRACE("Added to stack %s (%p->%p)\n", wine_dbgstr_w(toWalk->dirName),
                    toWalk, toWalk->next);
@@ -2329,7 +2319,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
                as it is fully qualified in the /R case */
             if (dirsToWalk) {
               lstrcpyW(fullitem, dirsToWalk->dirName);
-              lstrcatW(fullitem, slashW);
+              lstrcatW(fullitem, L"\\");
               lstrcatW(fullitem, item);
             } else {
               WCHAR *prefix = wcsrchr(item, '\\');
@@ -2347,15 +2337,14 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
                   /* Handle as files or dirs appropriately, but ignore . and .. */
                   if (isDirectory == expandDirs &&
-                      (lstrcmpW(fd.cFileName, dotdotW) != 0) &&
-                      (lstrcmpW(fd.cFileName, dotW) != 0))
+                      (lstrcmpW(fd.cFileName, L"..") != 0) && (lstrcmpW(fd.cFileName, L".") != 0))
                   {
                       thisCmdStart = cmdStart;
                       WINE_TRACE("Processing FOR filename %s\n", wine_dbgstr_w(fd.cFileName));
 
                       if (doRecurse) {
                           lstrcpyW(fullitem, dirsToWalk->dirName);
-                          lstrcatW(fullitem, slashW);
+                          lstrcatW(fullitem, L"\\");
                           lstrcatW(fullitem, fd.cFileName);
                       } else {
                           if (prefixlen) lstrcpynW(fullitem, item, prefixlen + 1);
@@ -2867,7 +2856,7 @@ int evaluate_if_condition(WCHAR *p, WCHAR **command, int *test, int *negate)
     int    len = lstrlenW(param);
 
     /* FindFirstFile does not like a directory path ending in '\', append a '.' */
-    if (len && param[len-1] == '\\') lstrcatW(param, dotW);
+    if (len && param[len-1] == '\\') lstrcatW(param, L".");
 
     hff = FindFirstFileW(param, &fd);
     *test = (hff != INVALID_HANDLE_VALUE );
@@ -2982,7 +2971,7 @@ void WCMD_move (void)
 
   /* If no destination supplied, assume current directory */
   if (param2[0] == 0x00) {
-      lstrcpyW(param2, dotW);
+      lstrcpyW(param2, L".");
   }
 
   /* If 2nd parm is directory, then use original filename */
@@ -3017,7 +3006,7 @@ void WCMD_move (void)
     if (attribs != INVALID_FILE_ATTRIBUTES &&
        (attribs & FILE_ATTRIBUTE_DIRECTORY)) {
       lstrcpyW(dest, output);
-      lstrcatW(dest, slashW);
+      lstrcatW(dest, L"\\");
       lstrcatW(dest, fd.cFileName);
     } else {
       lstrcpyW(dest, output);
@@ -3477,7 +3466,7 @@ void WCMD_setshow_default (const WCHAR *args) {
   GetCurrentDirectoryW(ARRAY_SIZE(cwd), cwd);
 
   if (!*args) {
-    lstrcatW (cwd, newlineW);
+    lstrcatW(cwd, L"\r\n");
     WCMD_output_asis (cwd);
   }
   else {
@@ -3544,7 +3533,7 @@ void WCMD_setshow_default (const WCHAR *args) {
        drive                                                          */
     if ((string[1] == ':') && IsCharAlphaW(string[0])) {
       WCHAR env[4];
-      lstrcpyW(env, equalW);
+      lstrcpyW(env, L"=");
       memcpy(env+1, string, 2 * sizeof(WCHAR));
       env[3] = 0x00;
       WINE_TRACE("Setting '%s' to '%s'\n", wine_dbgstr_w(env), wine_dbgstr_w(string));
@@ -3596,7 +3585,7 @@ static int __cdecl WCMD_compare( const void *a, const void *b )
     int r;
     const WCHAR * const *str_a = a, * const *str_b = b;
     r = CompareStringW( LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-	  *str_a, wcscspn(*str_a, equalW), *str_b, wcscspn(*str_b, equalW) );
+	  *str_a, wcscspn(*str_a, L"="), *str_b, wcscspn(*str_b, L"=") );
     if( r == CSTR_LESS_THAN ) return -1;
     if( r == CSTR_GREATER_THAN ) return 1;
     return 0;
@@ -3641,7 +3630,7 @@ static int WCMD_setshow_sortenv(const WCHAR *s, const WCHAR *stub)
       /* Don't display special internal variables */
       if (str[i][0] != '=') {
         WCMD_output_asis(str[i]);
-        WCMD_output_asis(newlineW);
+        WCMD_output_asis(L"\r\n");
         displayedcount++;
       }
     }
@@ -4314,7 +4303,7 @@ void WCMD_setshow_path (const WCHAR *args) {
     if (status != 0) {
       WCMD_output_asis ( pathEqW);
       WCMD_output_asis ( string);
-      WCMD_output_asis ( newlineW);
+      WCMD_output_asis(L"\r\n");
     }
     else {
       WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOPATH));
@@ -4438,7 +4427,7 @@ void WCMD_start(WCHAR *args)
     lstrcatW( file, exeW );
     cmdline = heap_xalloc( (lstrlenW(file) + lstrlenW(args) + 8) * sizeof(WCHAR) );
     lstrcpyW( cmdline, file );
-    lstrcatW( cmdline, spaceW );
+    lstrcatW(cmdline, L" ");
     cmdline_params = cmdline + lstrlenW(cmdline);
 
     /* The start built-in has some special command-line parsing properties
@@ -4866,8 +4855,7 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
     if (newValue) accessOptions |= KEY_WRITE;
 
     /* Open a key to HKEY_CLASSES_ROOT for enumerating */
-    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, nullW, 0,
-                      accessOptions, &key) != ERROR_SUCCESS) {
+    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, L"", 0, accessOptions, &key) != ERROR_SUCCESS) {
       WINE_FIXME("Unexpected failure opening HKCR key: %d\n", GetLastError());
       return;
     }
@@ -4901,12 +4889,12 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
               valueLen = ARRAY_SIZE(keyValue);
               rc = RegQueryValueExW(readKey, NULL, NULL, NULL, (LPBYTE)keyValue, &valueLen);
               WCMD_output_asis(keyName);
-              WCMD_output_asis(equalW);
+              WCMD_output_asis(L"=");
               /* If no default value found, leave line empty after '=' */
               if (rc == ERROR_SUCCESS) {
                 WCMD_output_asis(keyValue);
               }
-              WCMD_output_asis(newlineW);
+              WCMD_output_asis(L"\r\n");
               RegCloseKey(readKey);
             }
           }
@@ -4933,10 +4921,10 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
 
           rc = RegQueryValueExW(readKey, NULL, NULL, NULL, (LPBYTE)keyValue, &valueLen);
           WCMD_output_asis(args);
-          WCMD_output_asis(equalW);
+          WCMD_output_asis(L"=");
           /* If no default value found, leave line empty after '=' */
           if (rc == ERROR_SUCCESS) WCMD_output_asis(keyValue);
-          WCMD_output_asis(newlineW);
+          WCMD_output_asis(L"\r\n");
           RegCloseKey(readKey);
 
         } else {
@@ -5005,9 +4993,9 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
             errorlevel = 2;
           } else {
             WCMD_output_asis(args);
-            WCMD_output_asis(equalW);
+            WCMD_output_asis(L"=");
             WCMD_output_asis(newValue);
-            WCMD_output_asis(newlineW);
+            WCMD_output_asis(L"\r\n");
           }
         }
       }

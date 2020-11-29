@@ -271,14 +271,6 @@ extern BOOL delayedsubst;
 #define WCMD_EXIT     46
 
 /* Some standard messages */
-extern const WCHAR newlineW[];
-extern const WCHAR spaceW[];
-extern const WCHAR nullW[];
-extern const WCHAR dotW[];
-extern const WCHAR dotdotW[];
-extern const WCHAR starW[];
-extern const WCHAR slashW[];
-extern const WCHAR equalW[];
 extern WCHAR anykey[];
 extern WCHAR version_string[];
 
