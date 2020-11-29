@@ -1,6 +1,10 @@
 /* Unicode ctype tables */
 /* Automatically generated; DO NOT EDIT!! */
 
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
+
 #include "windef.h"
 
 const unsigned short wine_wctype_table[16242] =
@@ -2039,3 +2043,5 @@ const unsigned short wine_wctype_table[16242] =
     0x0000, 0x0000, 0x0000, 0xb220, 0xb220, 0xb220, 0xb200, 0xb200,
     0x0000, 0x0000
 };
+
+#endif /* __ASM_OBSOLETE */

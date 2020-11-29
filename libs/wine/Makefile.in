@@ -84,7 +84,8 @@ C_SRCS = \
 	sortkey.c \
 	string.c \
 	utf8.c \
-	wctomb.c
+	wctomb.c \
+	wctype.c
 
 config_EXTRADEFS = \
 	-DBINDIR='"${bindir}"' \

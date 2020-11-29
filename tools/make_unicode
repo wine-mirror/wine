@@ -1754,19 +1754,6 @@ sub compress_array($$@)
 }
 
 ################################################################
-# dump a simple char -> 16-bit value mapping table
-sub dump_simple_mapping($$@)
-{
-    my $name = shift;
-    my $def = shift;
-    my @array = compress_array( 256, $def, @_[0..65535] );
-
-    printf OUTPUT "const unsigned short %s[%d] =\n{\n", $name, $#array+1;
-    printf OUTPUT "    /* offsets */\n%s,\n", dump_array( 16, 0, @array[0..255] );
-    printf OUTPUT "    /* values */\n%s\n};\n", dump_array( 16, 0, @array[256..$#array] );
-}
-
-################################################################
 # dump a char -> 16-bit value mapping table using two-level tables
 sub dump_two_level_mapping($$@)
 {
@@ -1876,32 +1863,6 @@ sub dump_bidi_dir_table($)
     }
 
     dump_two_level_mapping( "bidi_direction_table", $bidi_types{"L"}, 16, @table );
-
-    close OUTPUT;
-    save_file($filename);
-}
-
-
-################################################################
-# dump the ctype tables
-sub dump_ctype_tables($)
-{
-    my $filename = shift;
-    open OUTPUT,">$filename.new" or die "Cannot create $filename";
-    printf "Building $filename\n";
-    printf OUTPUT "/* Unicode ctype tables */\n";
-    printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
-    printf OUTPUT "#include \"windef.h\"\n\n";
-
-    my @table = map { ($_ || 0) & 0xffff; } @category_table;
-
-    # add the direction in the high 4 bits of the category
-    for (my $i = 0; $i < 65536; $i++)
-    {
-        $table[$i] |= $directions{$direction_table[$i]} << 12 if defined $direction_table[$i];
-    }
-
-    dump_simple_mapping( "wine_wctype_table", 0, @table );
 
     close OUTPUT;
     save_file($filename);
@@ -2739,7 +2700,6 @@ sub save_file($)
 chdir ".." if -f "./make_unicode";
 load_data();
 dump_sortkeys( "dlls/kernelbase/collation.c" );
-dump_ctype_tables( "libs/port/wctype.c" );
 dump_bidi_dir_table( "dlls/gdi32/uniscribe/direction.c" );
 dump_bidi_dir_table( "dlls/dwrite/direction.c" );
 dump_digit_folding( "dlls/kernelbase/digitmap.c" );

@@ -18,5 +18,4 @@ C_SRCS = \
 	statvfs.c \
 	strnlen.c \
 	symlink.c \
-	usleep.c \
-	wctype.c
+	usleep.c

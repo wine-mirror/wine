@@ -58,8 +58,9 @@ WINE_UNICODE_INLINE WCHAR toupperW( WCHAR ch )
 /* and the C2_* type in the high 4 bits */
 WINE_UNICODE_INLINE unsigned short get_char_typeW( WCHAR ch )
 {
-    extern const unsigned short wine_wctype_table[];
-    return wine_wctype_table[wine_wctype_table[ch >> 8] + (ch & 0xff)];
+    unsigned short type;
+    GetStringTypeW( CT_CTYPE1, &ch, 1, &type );
+    return type;
 }
 
 WINE_UNICODE_INLINE int iscntrlW( WCHAR wc )
