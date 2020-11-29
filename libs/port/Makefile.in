@@ -17,7 +17,6 @@ C_SRCS = \
 	rint.c \
 	spawn.c \
 	statvfs.c \
-	string.c \
 	strnlen.c \
 	symlink.c \
 	usleep.c \

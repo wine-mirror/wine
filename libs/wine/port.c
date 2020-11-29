@@ -27,16 +27,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-
-#include "wine/unicode.h"
-
-/* functions from libwine_port that are also exported from libwine for backwards compatibility,
- * on platforms that require it */
-const void *libwine_port_functions[] =
-{
-    strtolW,
-    vsnprintfW,
-};
+#include <stdarg.h>
+#include <windef.h>
 
 /* no longer used, for backwards compatibility only */
 struct wine_pthread_functions;

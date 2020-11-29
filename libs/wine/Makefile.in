@@ -81,6 +81,7 @@ C_SRCS = \
 	mmap.c \
 	port.c \
 	sortkey.c \
+	string.c \
 	utf8.c \
 	wctomb.c
 

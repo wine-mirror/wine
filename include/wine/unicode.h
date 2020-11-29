@@ -40,7 +40,7 @@ extern "C" {
 #endif
 
 #ifndef WINE_UNICODE_INLINE
-#define WINE_UNICODE_INLINE static inline
+#define WINE_UNICODE_INLINE static FORCEINLINE
 #endif
 
 /* code page info common to SBCS and DBCS */
@@ -78,11 +78,6 @@ union cptable
     struct sbcs_table sbcs;
     struct dbcs_table dbcs;
 };
-
-extern int sprintfW( WCHAR *str, const WCHAR *format, ... );
-extern int snprintfW( WCHAR *str, size_t len, const WCHAR *format, ... );
-extern int vsprintfW( WCHAR *str, const WCHAR *format, va_list valist );
-extern int vsnprintfW( WCHAR *str, size_t len, const WCHAR *format, va_list valist );
 
 WINE_UNICODE_INLINE WCHAR tolowerW( WCHAR ch )
 {
@@ -399,6 +394,28 @@ WINE_UNICODE_INLINE long int atolW( const WCHAR *str )
 WINE_UNICODE_INLINE int atoiW( const WCHAR *str )
 {
     return (int)atolW( str );
+}
+
+NTSYSAPI int __cdecl _vsnwprintf(WCHAR*,size_t,const WCHAR*,__ms_va_list);
+
+static inline int WINAPIV snprintfW( WCHAR *str, size_t len, const WCHAR *format, ...)
+{
+    int retval;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    retval = _vsnwprintf(str, len, format, valist);
+    __ms_va_end(valist);
+    return retval;
+}
+
+static inline int WINAPIV sprintfW( WCHAR *str, const WCHAR *format, ...)
+{
+    int retval;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    retval = _vsnwprintf(str, MAXLONG, format, valist);
+    __ms_va_end(valist);
+    return retval;
 }
 
 #undef WINE_UNICODE_INLINE
