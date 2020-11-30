@@ -249,7 +249,7 @@ WCHAR** CDECL MSVCRT___p__wpgmptr(void) { return &MSVCRT__wpgmptr; }
  */
 int CDECL _get_pgmptr(char** p)
 {
-  if (!MSVCRT_CHECK_PMT(p)) return MSVCRT_EINVAL;
+  if (!MSVCRT_CHECK_PMT(p)) return EINVAL;
 
   *p = MSVCRT__pgmptr;
   return 0;
@@ -260,7 +260,7 @@ int CDECL _get_pgmptr(char** p)
  */
 int CDECL _get_wpgmptr(WCHAR** p)
 {
-  if (!MSVCRT_CHECK_PMT(p)) return MSVCRT_EINVAL;
+  if (!MSVCRT_CHECK_PMT(p)) return EINVAL;
   *p = MSVCRT__wpgmptr;
   return 0;
 }
@@ -277,7 +277,7 @@ int CDECL MSVCRT__set_fmode(int mode)
 {
     /* TODO: support _O_WTEXT */
     if(!MSVCRT_CHECK_PMT(mode==MSVCRT__O_TEXT || mode==MSVCRT__O_BINARY))
-        return MSVCRT_EINVAL;
+        return EINVAL;
 
     MSVCRT__fmode = mode;
     return 0;
@@ -289,7 +289,7 @@ int CDECL MSVCRT__set_fmode(int mode)
 int CDECL MSVCRT__get_fmode(int *mode)
 {
     if(!MSVCRT_CHECK_PMT(mode))
-        return MSVCRT_EINVAL;
+        return EINVAL;
 
     *mode = MSVCRT__fmode;
     return 0;
@@ -366,7 +366,7 @@ wchar_t*** CDECL __p___winitenv(void) { return &MSVCRT___winitenv; }
  */
 int CDECL MSVCRT__get_osplatform(int *pValue)
 {
-    if (!MSVCRT_CHECK_PMT(pValue != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(pValue != NULL)) return EINVAL;
     *pValue = MSVCRT__osplatform;
     return 0;
 }
@@ -787,7 +787,7 @@ wchar_t* CDECL _get_wide_winmain_command_line(void)
  */
 int CDECL MSVCRT__get_winmajor(int* value)
 {
-    if (!MSVCRT_CHECK_PMT(value != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(value != NULL)) return EINVAL;
     *value = MSVCRT__winmajor;
     return 0;
 }
@@ -797,7 +797,7 @@ int CDECL MSVCRT__get_winmajor(int* value)
  */
 int CDECL MSVCRT__get_winminor(int* value)
 {
-    if (!MSVCRT_CHECK_PMT(value != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(value != NULL)) return EINVAL;
     *value = MSVCRT__winminor;
     return 0;
 }
@@ -807,7 +807,7 @@ int CDECL MSVCRT__get_winminor(int* value)
  */
 int CDECL MSVCRT__get_osver(int* value)
 {
-    if (!MSVCRT_CHECK_PMT(value != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(value != NULL)) return EINVAL;
     *value = MSVCRT__osver;
     return 0;
 }

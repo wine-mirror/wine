@@ -150,7 +150,7 @@ void msvcrt_set_errno(int err)
     ERR_CASE(ERROR_NOT_LOCKED)
     ERR_CASE(ERROR_INVALID_ACCESS)
     ERR_CASE(ERROR_SHARING_VIOLATION)
-    ERR_MAPS(ERROR_LOCK_VIOLATION,       MSVCRT_EACCES);
+    ERR_MAPS(ERROR_LOCK_VIOLATION,       EACCES);
     ERR_CASE(ERROR_FILE_NOT_FOUND)
     ERR_CASE(ERROR_NO_MORE_FILES)
     ERR_CASE(ERROR_BAD_PATHNAME)
@@ -158,33 +158,33 @@ void msvcrt_set_errno(int err)
     ERR_CASE(ERROR_INVALID_DRIVE)
     ERR_CASE(ERROR_BAD_NET_NAME)
     ERR_CASE(ERROR_FILENAME_EXCED_RANGE)
-    ERR_MAPS(ERROR_PATH_NOT_FOUND,       MSVCRT_ENOENT);
-    ERR_MAPS(ERROR_IO_DEVICE,            MSVCRT_EIO);
-    ERR_MAPS(ERROR_BAD_FORMAT,           MSVCRT_ENOEXEC);
-    ERR_MAPS(ERROR_INVALID_HANDLE,       MSVCRT_EBADF);
+    ERR_MAPS(ERROR_PATH_NOT_FOUND,       ENOENT);
+    ERR_MAPS(ERROR_IO_DEVICE,            EIO);
+    ERR_MAPS(ERROR_BAD_FORMAT,           ENOEXEC);
+    ERR_MAPS(ERROR_INVALID_HANDLE,       EBADF);
     ERR_CASE(ERROR_OUTOFMEMORY)
     ERR_CASE(ERROR_INVALID_BLOCK)
     ERR_CASE(ERROR_NOT_ENOUGH_QUOTA)
-    ERR_MAPS(ERROR_ARENA_TRASHED,        MSVCRT_ENOMEM);
-    ERR_MAPS(ERROR_BUSY,                 MSVCRT_EBUSY);
+    ERR_MAPS(ERROR_ARENA_TRASHED,        ENOMEM);
+    ERR_MAPS(ERROR_BUSY,                 EBUSY);
     ERR_CASE(ERROR_ALREADY_EXISTS)
-    ERR_MAPS(ERROR_FILE_EXISTS,          MSVCRT_EEXIST);
-    ERR_MAPS(ERROR_BAD_DEVICE,           MSVCRT_ENODEV);
-    ERR_MAPS(ERROR_TOO_MANY_OPEN_FILES,  MSVCRT_EMFILE);
-    ERR_MAPS(ERROR_DISK_FULL,            MSVCRT_ENOSPC);
-    ERR_MAPS(ERROR_BROKEN_PIPE,          MSVCRT_EPIPE);
-    ERR_MAPS(ERROR_POSSIBLE_DEADLOCK,    MSVCRT_EDEADLK);
-    ERR_MAPS(ERROR_DIR_NOT_EMPTY,        MSVCRT_ENOTEMPTY);
-    ERR_MAPS(ERROR_BAD_ENVIRONMENT,      MSVCRT_E2BIG);
+    ERR_MAPS(ERROR_FILE_EXISTS,          EEXIST);
+    ERR_MAPS(ERROR_BAD_DEVICE,           ENODEV);
+    ERR_MAPS(ERROR_TOO_MANY_OPEN_FILES,  EMFILE);
+    ERR_MAPS(ERROR_DISK_FULL,            ENOSPC);
+    ERR_MAPS(ERROR_BROKEN_PIPE,          EPIPE);
+    ERR_MAPS(ERROR_POSSIBLE_DEADLOCK,    EDEADLK);
+    ERR_MAPS(ERROR_DIR_NOT_EMPTY,        ENOTEMPTY);
+    ERR_MAPS(ERROR_BAD_ENVIRONMENT,      E2BIG);
     ERR_CASE(ERROR_WAIT_NO_CHILDREN)
-    ERR_MAPS(ERROR_CHILD_NOT_COMPLETE,   MSVCRT_ECHILD);
+    ERR_MAPS(ERROR_CHILD_NOT_COMPLETE,   ECHILD);
     ERR_CASE(ERROR_NO_PROC_SLOTS)
     ERR_CASE(ERROR_MAX_THRDS_REACHED)
-    ERR_MAPS(ERROR_NESTING_NOT_ALLOWED,  MSVCRT_EAGAIN);
+    ERR_MAPS(ERROR_NESTING_NOT_ALLOWED,  EAGAIN);
   default:
     /*  Remaining cases map to EINVAL */
     /* FIXME: may be missing some errors above */
-    *errno_ptr = MSVCRT_EINVAL;
+    *errno_ptr = EINVAL;
   }
 }
 
@@ -230,7 +230,7 @@ __msvcrt_ulong* CDECL MSVCRT___doserrno(void)
 int CDECL _get_errno(int *pValue)
 {
     if (!pValue)
-        return MSVCRT_EINVAL;
+        return EINVAL;
 
     *pValue = *MSVCRT__errno();
     return 0;
@@ -242,7 +242,7 @@ int CDECL _get_errno(int *pValue)
 int CDECL _get_doserrno(int *pValue)
 {
     if (!pValue)
-        return MSVCRT_EINVAL;
+        return EINVAL;
 
     *pValue = *MSVCRT___doserrno();
     return 0;
@@ -290,8 +290,8 @@ int CDECL MSVCRT_strerror_s(char *buffer, size_t numberOfElements, int errnum)
 
     if (!buffer || !numberOfElements)
     {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return MSVCRT_EINVAL;
+        *MSVCRT__errno() = EINVAL;
+        return EINVAL;
     }
 
     if (errnum < 0 || errnum > MSVCRT__sys_nerr)
@@ -377,8 +377,8 @@ void CDECL MSVCRT__wperror(const wchar_t* str)
  */
 int CDECL MSVCRT__wcserror_s(wchar_t* buffer, size_t nc, int err)
 {
-    if (!MSVCRT_CHECK_PMT(buffer != NULL)) return MSVCRT_EINVAL;
-    if (!MSVCRT_CHECK_PMT(nc > 0)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(buffer != NULL)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(nc > 0)) return EINVAL;
 
     if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
     MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, buffer, nc);
@@ -413,8 +413,8 @@ int CDECL MSVCRT___wcserror_s(wchar_t* buffer, size_t nc, const wchar_t* str)
     if (str && *str) len += MSVCRT_wcslen(str) + 2 /* ': ' */;
     if (len > nc)
     {
-        MSVCRT_INVALID_PMT("buffer[nc] is too small", MSVCRT_ERANGE);
-        return MSVCRT_ERANGE;
+        MSVCRT_INVALID_PMT("buffer[nc] is too small", ERANGE);
+        return ERANGE;
     }
     if (str && *str)
     {

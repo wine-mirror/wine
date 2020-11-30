@@ -121,7 +121,7 @@ uintptr_t CDECL _beginthread(
 
   trampoline = MSVCRT_malloc(sizeof(*trampoline));
   if(!trampoline) {
-      *MSVCRT__errno() = MSVCRT_EAGAIN;
+      *MSVCRT__errno() = EAGAIN;
       return -1;
   }
 
@@ -129,7 +129,7 @@ uintptr_t CDECL _beginthread(
           trampoline, CREATE_SUSPENDED, NULL);
   if(!thread) {
       MSVCRT_free(trampoline);
-      *MSVCRT__errno() = MSVCRT_EAGAIN;
+      *MSVCRT__errno() = EAGAIN;
       return -1;
   }
 
@@ -139,7 +139,7 @@ uintptr_t CDECL _beginthread(
 
   if(ResumeThread(thread) == -1) {
       MSVCRT_free(trampoline);
-      *MSVCRT__errno() = MSVCRT_EAGAIN;
+      *MSVCRT__errno() = EAGAIN;
       return -1;
   }
 

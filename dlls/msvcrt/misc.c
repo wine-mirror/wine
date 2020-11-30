@@ -69,8 +69,8 @@ int CDECL MSVCRT_rand_s(unsigned int *pval)
 {
     if (!pval || !RtlGenRandom(pval, sizeof(*pval)))
     {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return MSVCRT_EINVAL;
+        *MSVCRT__errno() = EINVAL;
+        return EINVAL;
     }
     return 0;
 }

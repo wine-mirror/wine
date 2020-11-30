@@ -1126,7 +1126,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             int *used;
 
             if(!n_format_enabled) {
-                MSVCRT_INVALID_PMT("\'n\' format specifier disabled", MSVCRT_EINVAL);
+                MSVCRT_INVALID_PMT("\'n\' format specifier disabled", EINVAL);
                 return -1;
             }
 
@@ -1189,7 +1189,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
         } else {
             if(invoke_invalid_param_handler) {
                 MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
-                *MSVCRT__errno() = MSVCRT_EINVAL;
+                *MSVCRT__errno() = EINVAL;
                 return -1;
             }
 

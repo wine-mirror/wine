@@ -297,7 +297,7 @@ int CDECL MSVCRT__chdrive(int newdrive)
   {
     msvcrt_set_errno(GetLastError());
     if (newdrive <= 0)
-      *MSVCRT__errno() = MSVCRT_EACCES;
+      *MSVCRT__errno() = EACCES;
     return -1;
   }
   return 0;
@@ -571,7 +571,7 @@ int CDECL MSVCRT__findnext(intptr_t hand, struct MSVCRT__finddata_t * ft)
 
   if (!FindNextFileA((HANDLE)hand, &find_data))
   {
-    *MSVCRT__errno() = MSVCRT_ENOENT;
+    *MSVCRT__errno() = ENOENT;
     return -1;
   }
 
@@ -588,7 +588,7 @@ int CDECL MSVCRT__findnext32(intptr_t hand, struct MSVCRT__finddata32_t * ft)
 
   if (!FindNextFileA((HANDLE)hand, &find_data))
   {
-    *MSVCRT__errno() = MSVCRT_ENOENT;
+    *MSVCRT__errno() = ENOENT;
     return -1;
   }
 
@@ -605,7 +605,7 @@ int CDECL MSVCRT__wfindnext32(intptr_t hand, struct MSVCRT__wfinddata32_t * ft)
 
   if (!FindNextFileW((HANDLE)hand, &find_data))
   {
-    *MSVCRT__errno() = MSVCRT_ENOENT;
+    *MSVCRT__errno() = ENOENT;
     return -1;
   }
 
@@ -624,7 +624,7 @@ int CDECL MSVCRT__wfindnext(intptr_t hand, struct MSVCRT__wfinddata_t * ft)
 
   if (!FindNextFileW((HANDLE)hand, &find_data))
   {
-    *MSVCRT__errno() = MSVCRT_ENOENT;
+    *MSVCRT__errno() = ENOENT;
     return -1;
   }
 
@@ -643,7 +643,7 @@ int CDECL MSVCRT__findnexti64(intptr_t hand, struct MSVCRT__finddatai64_t * ft)
 
   if (!FindNextFileA((HANDLE)hand, &find_data))
   {
-    *MSVCRT__errno() = MSVCRT_ENOENT;
+    *MSVCRT__errno() = ENOENT;
     return -1;
   }
 
@@ -662,7 +662,7 @@ int CDECL MSVCRT__findnext64(intptr_t hand, struct MSVCRT__finddata64_t * ft)
 
   if (!FindNextFileA((HANDLE)hand, &find_data))
   {
-    *MSVCRT__errno() = MSVCRT_ENOENT;
+    *MSVCRT__errno() = ENOENT;
     return -1;
   }
 
@@ -681,7 +681,7 @@ int CDECL MSVCRT__wfindnext64(intptr_t hand, struct MSVCRT__wfinddata64_t * ft)
 
   if (!FindNextFileW((HANDLE)hand, &find_data))
   {
-    *MSVCRT__errno() = MSVCRT_ENOENT;
+    *MSVCRT__errno() = ENOENT;
     return -1;
   }
 
@@ -700,7 +700,7 @@ int CDECL MSVCRT__findnext64i32(intptr_t hand, struct MSVCRT__finddata64i32_t * 
 
   if (!FindNextFileA((HANDLE)hand, &find_data))
   {
-    *MSVCRT__errno() = MSVCRT_ENOENT;
+    *MSVCRT__errno() = ENOENT;
     return -1;
   }
 
@@ -719,7 +719,7 @@ int CDECL MSVCRT__wfindnexti64(intptr_t hand, struct MSVCRT__wfinddatai64_t * ft
 
   if (!FindNextFileW((HANDLE)hand, &find_data))
   {
-    *MSVCRT__errno() = MSVCRT_ENOENT;
+    *MSVCRT__errno() = ENOENT;
     return -1;
   }
 
@@ -738,7 +738,7 @@ int CDECL MSVCRT__wfindnext64i32(intptr_t hand, struct MSVCRT__wfinddata64i32_t 
 
   if (!FindNextFileW((HANDLE)hand, &find_data))
   {
-    *MSVCRT__errno() = MSVCRT_ENOENT;
+    *MSVCRT__errno() = ENOENT;
     return -1;
   }
 
@@ -775,7 +775,7 @@ char* CDECL MSVCRT__getcwd(char * buf, int size)
   }
   else if (dir_len >= size)
   {
-    *MSVCRT__errno() = MSVCRT_ERANGE;
+    *MSVCRT__errno() = ERANGE;
     return NULL; /* buf too small */
   }
   strcpy(buf,dir);
@@ -802,7 +802,7 @@ wchar_t* CDECL MSVCRT__wgetcwd(wchar_t * buf, int size)
   }
   if (dir_len >= size)
   {
-    *MSVCRT__errno() = MSVCRT_ERANGE;
+    *MSVCRT__errno() = ERANGE;
     return NULL; /* buf too small */
   }
   MSVCRT_wcscpy(buf,dir);
@@ -862,14 +862,14 @@ char* CDECL MSVCRT__getdcwd(int drive, char * buf, int size)
     drivespec[0] += drive - 1;
     if (GetDriveTypeA(drivespec) < DRIVE_REMOVABLE)
     {
-      *MSVCRT__errno() = MSVCRT_EACCES;
+      *MSVCRT__errno() = EACCES;
       return NULL;
     }
 
     dir_len = GetFullPathNameA(drivespec,MAX_PATH,dir,&dummy);
     if (dir_len >= size || dir_len < 1)
     {
-      *MSVCRT__errno() = MSVCRT_ERANGE;
+      *MSVCRT__errno() = ERANGE;
       return NULL; /* buf too small */
     }
 
@@ -904,14 +904,14 @@ wchar_t* CDECL MSVCRT__wgetdcwd(int drive, wchar_t * buf, int size)
     drivespec[0] += drive - 1;
     if (GetDriveTypeW(drivespec) < DRIVE_REMOVABLE)
     {
-      *MSVCRT__errno() = MSVCRT_EACCES;
+      *MSVCRT__errno() = EACCES;
       return NULL;
     }
 
     dir_len = GetFullPathNameW(drivespec,MAX_PATH,dir,&dummy);
     if (dir_len >= size || dir_len < 1)
     {
-      *MSVCRT__errno() = MSVCRT_ERANGE;
+      *MSVCRT__errno() = ERANGE;
       return NULL; /* buf too small */
     }
 
@@ -1055,8 +1055,8 @@ int CDECL MSVCRT__splitpath_s(const char* inpath,
             (!ext && sz_ext) ||
             (ext && !sz_ext))
     {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return MSVCRT_EINVAL;
+        *MSVCRT__errno() = EINVAL;
+        return EINVAL;
     }
 
     if (inpath[0] && inpath[1] == ':')
@@ -1119,8 +1119,8 @@ do_error:
     if (dir)    dir[0] = '\0';
     if (fname)  fname[0]= '\0';
     if (ext)    ext[0]= '\0';
-    *MSVCRT__errno() = MSVCRT_ERANGE;
-    return MSVCRT_ERANGE;
+    *MSVCRT__errno() = ERANGE;
+    return ERANGE;
 }
 
 /*********************************************************************
@@ -1155,8 +1155,8 @@ int CDECL MSVCRT__wsplitpath_s(const wchar_t* inpath,
             (!ext && sz_ext) ||
             (ext && !sz_ext))
     {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return MSVCRT_EINVAL;
+        *MSVCRT__errno() = EINVAL;
+        return EINVAL;
     }
 
     if (inpath[0] && inpath[1] == ':')
@@ -1211,8 +1211,8 @@ do_error:
     if (dir)    dir[0] = '\0';
     if (fname)  fname[0]= '\0';
     if (ext)    ext[0]= '\0';
-    *MSVCRT__errno() = MSVCRT_ERANGE;
-    return MSVCRT_ERANGE;
+    *MSVCRT__errno() = ERANGE;
+    return ERANGE;
 }
 
 /*********************************************************************
@@ -1253,7 +1253,7 @@ wchar_t * CDECL MSVCRT__wfullpath(wchar_t * absPath, const wchar_t* relPath, siz
 
   if (size < 4)
   {
-    *MSVCRT__errno() = MSVCRT_ERANGE;
+    *MSVCRT__errno() = ERANGE;
     return NULL;
   }
 
@@ -1307,7 +1307,7 @@ char * CDECL MSVCRT__fullpath(char * absPath, const char* relPath, unsigned int 
 
   if (size < 4)
   {
-    *MSVCRT__errno() = MSVCRT_ERANGE;
+    *MSVCRT__errno() = ERANGE;
     return NULL;
   }
 
@@ -1443,8 +1443,8 @@ int CDECL MSVCRT__makepath_s(char *path, size_t size, const char *drive,
 
     if (!path || !size)
     {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return MSVCRT_EINVAL;
+        *MSVCRT__errno() = EINVAL;
+        return EINVAL;
     }
 
     if (drive && drive[0])
@@ -1530,8 +1530,8 @@ int CDECL MSVCRT__makepath_s(char *path, size_t size, const char *drive,
 
 range:
     path[0] = '\0';
-    *MSVCRT__errno() = MSVCRT_ERANGE;
-    return MSVCRT_ERANGE;
+    *MSVCRT__errno() = ERANGE;
+    return ERANGE;
 }
 
 /*********************************************************************
@@ -1547,8 +1547,8 @@ int CDECL MSVCRT__wmakepath_s(wchar_t *path, size_t size, const wchar_t *drive,
 
     if (!path || !size)
     {
-        *MSVCRT__errno() = MSVCRT_EINVAL;
-        return MSVCRT_EINVAL;
+        *MSVCRT__errno() = EINVAL;
+        return EINVAL;
     }
 
     if (drive && drive[0])
@@ -1634,8 +1634,8 @@ int CDECL MSVCRT__wmakepath_s(wchar_t *path, size_t size, const wchar_t *drive,
 
 range:
     path[0] = '\0';
-    *MSVCRT__errno() = MSVCRT_ERANGE;
-    return MSVCRT_ERANGE;
+    *MSVCRT__errno() = ERANGE;
+    return ERANGE;
 }
 
 /*********************************************************************
@@ -1647,9 +1647,9 @@ int CDECL MSVCRT__searchenv_s(const char* file, const char* env, char *buf, size
   char path[MAX_PATH];
   size_t path_len, fname_len;
 
-  if (!MSVCRT_CHECK_PMT(file != NULL)) return MSVCRT_EINVAL;
-  if (!MSVCRT_CHECK_PMT(buf != NULL)) return MSVCRT_EINVAL;
-  if (!MSVCRT_CHECK_PMT(count > 0)) return MSVCRT_EINVAL;
+  if (!MSVCRT_CHECK_PMT(file != NULL)) return EINVAL;
+  if (!MSVCRT_CHECK_PMT(buf != NULL)) return EINVAL;
+  if (!MSVCRT_CHECK_PMT(count > 0)) return EINVAL;
 
   if (count > MAX_PATH)
       FIXME("count > MAX_PATH not supported\n");
@@ -1669,8 +1669,8 @@ int CDECL MSVCRT__searchenv_s(const char* file, const char* env, char *buf, size
   envVal = MSVCRT_getenv(env);
   if (!envVal)
   {
-    *MSVCRT__errno() = MSVCRT_ENOENT;
-    return MSVCRT_ENOENT;
+    *MSVCRT__errno() = ENOENT;
+    return ENOENT;
   }
 
   penv = envVal;
@@ -1711,16 +1711,16 @@ int CDECL MSVCRT__searchenv_s(const char* file, const char* env, char *buf, size
     {
       if (path_len + fname_len + 1 > count)
       {
-        MSVCRT_INVALID_PMT("buf[count] is too small", MSVCRT_ERANGE);
-        return MSVCRT_ERANGE;
+        MSVCRT_INVALID_PMT("buf[count] is too small", ERANGE);
+        return ERANGE;
       }
       memcpy(buf, path, path_len + fname_len + 1);
       return 0;
     }
   }
 
-  *MSVCRT__errno() = MSVCRT_ENOENT;
-  return MSVCRT_ENOENT;
+  *MSVCRT__errno() = ENOENT;
+  return ENOENT;
 }
 
 /*********************************************************************
@@ -1741,9 +1741,9 @@ int CDECL MSVCRT__wsearchenv_s(const wchar_t* file, const wchar_t* env,
   wchar_t path[MAX_PATH];
   size_t path_len, fname_len;
 
-  if (!MSVCRT_CHECK_PMT(file != NULL)) return MSVCRT_EINVAL;
-  if (!MSVCRT_CHECK_PMT(buf != NULL)) return MSVCRT_EINVAL;
-  if (!MSVCRT_CHECK_PMT(count > 0)) return MSVCRT_EINVAL;
+  if (!MSVCRT_CHECK_PMT(file != NULL)) return EINVAL;
+  if (!MSVCRT_CHECK_PMT(buf != NULL)) return EINVAL;
+  if (!MSVCRT_CHECK_PMT(count > 0)) return EINVAL;
 
   if (count > MAX_PATH)
       FIXME("count > MAX_PATH not supported\n");
@@ -1763,8 +1763,8 @@ int CDECL MSVCRT__wsearchenv_s(const wchar_t* file, const wchar_t* env,
   envVal = MSVCRT__wgetenv(env);
   if (!envVal)
   {
-    *MSVCRT__errno() = MSVCRT_ENOENT;
-    return MSVCRT_ENOENT;
+    *MSVCRT__errno() = ENOENT;
+    return ENOENT;
   }
 
   penv = envVal;
@@ -1805,16 +1805,16 @@ int CDECL MSVCRT__wsearchenv_s(const wchar_t* file, const wchar_t* env,
     {
       if (path_len + fname_len + 1 > count)
       {
-        MSVCRT_INVALID_PMT("buf[count] is too small", MSVCRT_ERANGE);
-        return MSVCRT_ERANGE;
+        MSVCRT_INVALID_PMT("buf[count] is too small", ERANGE);
+        return ERANGE;
       }
       memcpy(buf, path, (path_len + fname_len + 1) * sizeof(wchar_t));
       return 0;
     }
   }
 
-  *MSVCRT__errno() = MSVCRT_ENOENT;
-  return MSVCRT_ENOENT;
+  *MSVCRT__errno() = ENOENT;
+  return ENOENT;
 }
 
 /*********************************************************************
