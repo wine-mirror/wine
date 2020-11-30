@@ -230,7 +230,7 @@ static void test_stillimage_aggregation(void)
 
 static void test_launch_app_registry(void)
 {
-    static WCHAR appName[] = {'w','i','n','e','s','t','i','t','e','s','t','a','p','p',0};
+    static WCHAR appName[] = L"winestitestapp";
     IStillImageW *pStiW = NULL;
     HRESULT hr;
 

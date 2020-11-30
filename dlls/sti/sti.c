@@ -32,14 +32,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(sti);
 
-static const WCHAR registeredAppsLaunchPath[] = {
-    'S','O','F','T','W','A','R','E','\\',
-    'M','i','c','r','o','s','o','f','t','\\',
-    'W','i','n','d','o','w','s','\\',
-    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-    'S','t','i','l','l','I','m','a','g','e','\\',
-    'R','e','g','i','s','t','e','r','e','d',' ','A','p','p','l','i','c','a','t','i','o','n','s',0
-};
+static const WCHAR registeredAppsLaunchPath[] =
+    L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\StillImage\\Registered Applications";
 
 typedef struct _stillimage
 {
@@ -134,10 +128,7 @@ static HRESULT WINAPI stillimagew_GetSTILaunchInformation(IStillImageW *iface, L
 static HRESULT WINAPI stillimagew_RegisterLaunchApplication(IStillImageW *iface, LPWSTR pwszAppName,
                                                             LPWSTR pwszCommandLine)
 {
-    static const WCHAR format[] = {'%','s',' ','%','s',0};
-    static const WCHAR commandLineSuffix[] = {
-        '/','S','t','i','D','e','v','i','c','e',':','%','1',' ',
-        '/','S','t','i','E','v','e','n','t',':','%','2',0};
+    static const WCHAR commandLineSuffix[] = L"/StiDevice:%1 /StiEvent:%2";
     HKEY registeredAppsKey = NULL;
     DWORD ret;
     HRESULT hr = S_OK;
@@ -152,7 +143,7 @@ static HRESULT WINAPI stillimagew_RegisterLaunchApplication(IStillImageW *iface,
         WCHAR *value = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         if (value)
         {
-            swprintf(value, len, format, pwszCommandLine, commandLineSuffix);
+            swprintf(value, len, L"%s %s", pwszCommandLine, commandLineSuffix);
             ret = RegSetValueExW(registeredAppsKey, pwszAppName, 0,
                 REG_SZ, (BYTE*)value, (lstrlenW(value)+1)*sizeof(WCHAR));
             if (ret != ERROR_SUCCESS)
