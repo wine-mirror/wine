@@ -1446,7 +1446,7 @@ static void load_ntdll(void)
 {
     NTSTATUS status;
     SECTION_IMAGE_INFORMATION info;
-    void *module;
+    void *module = NULL;
     char *name = build_path( dll_dir, "ntdll.dll.so" );
 
     name[strlen(name) - 3] = 0;  /* remove .so */
