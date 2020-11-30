@@ -5600,9 +5600,12 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
         { WAVE_FORMAT_WMAUDIO_LOSSLESS },
         { WAVE_FORMAT_WMASPDIF },
     };
+
+    UINT8 buff[MPEGLAYER3_WFX_EXTRA_BYTES];
     WAVEFORMATEXTENSIBLE waveformatext;
+    MPEGLAYER3WAVEFORMAT mp3format;
     IMFMediaType *mediatype;
-    unsigned int i;
+    unsigned int i, size;
     HRESULT hr;
 
     hr = MFCreateMediaType(&mediatype);
@@ -5627,6 +5630,29 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
 
         validate_media_type(mediatype, &waveformatext.Format);
     }
+
+    /* MPEGLAYER3WAVEFORMAT */
+    mp3format.wfx.wFormatTag = WAVE_FORMAT_MPEGLAYER3;
+    mp3format.wfx.nChannels = 2;
+    mp3format.wfx.nSamplesPerSec = 44100;
+    mp3format.wfx.nAvgBytesPerSec = 16000;
+    mp3format.wfx.nBlockAlign = 1;
+    mp3format.wfx.wBitsPerSample = 0;
+    mp3format.wfx.cbSize = MPEGLAYER3_WFX_EXTRA_BYTES;
+    mp3format.wID = MPEGLAYER3_ID_MPEG;
+    mp3format.fdwFlags = 0;
+    mp3format.nBlockSize = 417;
+    mp3format.nFramesPerBlock = 0;
+    mp3format.nCodecDelay = 0;
+
+    hr = MFInitMediaTypeFromWaveFormatEx(mediatype, (WAVEFORMATEX *)&mp3format, sizeof(mp3format));
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    validate_media_type(mediatype, &mp3format.wfx);
+    hr = IMFMediaType_GetBlob(mediatype, &MF_MT_USER_DATA, buff, sizeof(buff), &size);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(size == mp3format.wfx.cbSize, "Unexpected size %u.\n", size);
+    ok(!memcmp(buff, (WAVEFORMATEX *)&mp3format + 1, size), "Unexpected user data.\n");
 
     IMFMediaType_Release(mediatype);
 }

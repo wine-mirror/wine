@@ -2943,6 +2943,13 @@ static void mediatype_set_guid(IMFMediaType *mediatype, const GUID *attr, const 
         *hr = IMFMediaType_SetGUID(mediatype, attr, value);
 }
 
+static void mediatype_set_blob(IMFMediaType *mediatype, const GUID *attr, const UINT8 *data,
+        unsigned int size, HRESULT *hr)
+{
+    if (SUCCEEDED(*hr))
+        *hr = IMFMediaType_SetBlob(mediatype, attr, data, size);
+}
+
 /***********************************************************************
  *      MFInitMediaTypeFromWaveFormatEx (mfplat.@)
  */
@@ -2956,9 +2963,6 @@ HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WA
 
     if (!mediatype || !format)
         return E_POINTER;
-
-    if (format->cbSize && format->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
-        return E_INVALIDARG;
 
     if (format->cbSize + sizeof(*format) > size)
         return E_INVALIDARG;
@@ -3006,6 +3010,9 @@ HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WA
     {
         mediatype_set_uint32(mediatype, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1, &hr);
     }
+
+    if (format->cbSize)
+        mediatype_set_blob(mediatype, &MF_MT_USER_DATA, (const UINT8 *)(format + 1), format->cbSize, &hr);
 
     return hr;
 }
