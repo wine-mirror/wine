@@ -147,37 +147,36 @@ static HRESULT unregister_pixelformats(struct regsvr_pixelformat const *list);
 /***********************************************************************
  *		static string constants
  */
-static const WCHAR clsid_keyname[] = {
-    'C', 'L', 'S', 'I', 'D', 0 };
+static const WCHAR clsid_keyname[] = L"CLSID";
 static const char author_valuename[] = "Author";
 static const char friendlyname_valuename[] = "FriendlyName";
-static const WCHAR vendor_valuename[] = {'V','e','n','d','o','r',0};
-static const WCHAR containerformat_valuename[] = {'C','o','n','t','a','i','n','e','r','F','o','r','m','a','t',0};
+static const WCHAR vendor_valuename[] = L"Vendor";
+static const WCHAR containerformat_valuename[] = L"ContainerFormat";
 static const char version_valuename[] = "Version";
 static const char mimetypes_valuename[] = "MimeTypes";
 static const char extensions_valuename[] = "FileExtensions";
-static const WCHAR formats_keyname[] = {'F','o','r','m','a','t','s',0};
-static const WCHAR patterns_keyname[] = {'P','a','t','t','e','r','n','s',0};
-static const WCHAR instance_keyname[] = {'I','n','s','t','a','n','c','e',0};
-static const WCHAR clsid_valuename[] = {'C','L','S','I','D',0};
+static const WCHAR formats_keyname[] = L"Formats";
+static const WCHAR patterns_keyname[] = L"Patterns";
+static const WCHAR instance_keyname[] = L"Instance";
+static const WCHAR clsid_valuename[] = L"CLSID";
 static const char length_valuename[] = "Length";
 static const char position_valuename[] = "Position";
 static const char pattern_valuename[] = "Pattern";
 static const char mask_valuename[] = "Mask";
 static const char endofstream_valuename[] = "EndOfStream";
-static const WCHAR pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
-static const WCHAR metadataformat_valuename[] = {'M','e','t','a','d','a','t','a','F','o','r','m','a','t',0};
+static const WCHAR pixelformats_keyname[] = L"PixelFormats";
+static const WCHAR metadataformat_valuename[] = L"MetadataFormat";
 static const char specversion_valuename[] = "SpecVersion";
 static const char requiresfullstream_valuename[] = "RequiresFullStream";
 static const char supportspadding_valuename[] = "SupportsPadding";
 static const char requiresfixedsize_valuename[] = "FixedSize";
-static const WCHAR containers_keyname[] = {'C','o','n','t','a','i','n','e','r','s',0};
+static const WCHAR containers_keyname[] = L"Containers";
 static const char dataoffset_valuename[] = "DataOffset";
 static const char bitsperpixel_valuename[] = "BitLength";
 static const char channelcount_valuename[] = "ChannelCount";
 static const char numericrepresentation_valuename[] = "NumericRepresentation";
 static const char supportstransparency_valuename[] = "SupportsTransparency";
-static const WCHAR channelmasks_keyname[] = {'C','h','a','n','n','e','l','M','a','s','k','s',0};
+static const WCHAR channelmasks_keyname[] = L"ChannelMasks";
 
 /***********************************************************************
  *		register_decoders
@@ -305,8 +304,7 @@ static HRESULT register_decoders(struct regsvr_decoder const *list)
             for (i=0; list->patterns[i].length; i++)
             {
                 HKEY pattern_key;
-                static const WCHAR int_format[] = {'%','i',0};
-                swprintf(buf, 39, int_format, i);
+                swprintf(buf, 39, L"%i", i);
                 res = RegCreateKeyExW(patterns_key, buf, 0, NULL, 0,
                                       KEY_READ | KEY_WRITE, NULL, &pattern_key, NULL);
                 if (res != ERROR_SUCCESS) break;
@@ -851,8 +849,7 @@ static HRESULT register_metadatareaders(struct regsvr_metadatareader const *list
                 for (i=0; container->patterns[i].length; i++)
                 {
                     HKEY pattern_key;
-                    static const WCHAR int_format[] = {'%','i',0};
-                    swprintf(buf, 39, int_format, i);
+                    swprintf(buf, 39, L"%i", i);
                     res = RegCreateKeyExW(format_key, buf, 0, NULL, 0,
                                           KEY_READ | KEY_WRITE, NULL, &pattern_key, NULL);
                     if (res != ERROR_SUCCESS) break;
@@ -1031,7 +1028,6 @@ static HRESULT register_pixelformats(struct regsvr_pixelformat const *list)
         if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 
         if (list->channelmasks) {
-            static const WCHAR valuename_format[] = {'%','d',0};
             HKEY masks_key;
             UINT i, mask_size;
             WCHAR mask_valuename[11];
@@ -1043,7 +1039,7 @@ static HRESULT register_pixelformats(struct regsvr_pixelformat const *list)
             if (res != ERROR_SUCCESS) goto error_close_clsid_key;
             for (i=0; i < list->channelcount; i++)
             {
-                swprintf(mask_valuename, ARRAY_SIZE(mask_valuename), valuename_format, i);
+                swprintf(mask_valuename, ARRAY_SIZE(mask_valuename), L"%d", i);
                 res = RegSetValueExW(masks_key, mask_valuename, 0, REG_BINARY,
                                      list->channelmasks[i], mask_size);
                 if (res != ERROR_SUCCESS) break;
