@@ -114,7 +114,6 @@ static HRESULT LoadGamaMetadata(IStream *stream, const GUID *preferred_vendor,
     BYTE *data;
     ULONG data_size;
     ULONG gamma;
-    static const WCHAR ImageGamma[] = {'I','m','a','g','e','G','a','m','m','a',0};
     LPWSTR name;
     MetadataItem *result;
 
@@ -132,7 +131,7 @@ static HRESULT LoadGamaMetadata(IStream *stream, const GUID *preferred_vendor,
     HeapFree(GetProcessHeap(), 0, data);
 
     result = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MetadataItem));
-    name = HeapAlloc(GetProcessHeap(), 0, sizeof(ImageGamma));
+    name = HeapAlloc(GetProcessHeap(), 0, sizeof(L"ImageGamma"));
     if (!result || !name)
     {
         HeapFree(GetProcessHeap(), 0, result);
@@ -144,7 +143,7 @@ static HRESULT LoadGamaMetadata(IStream *stream, const GUID *preferred_vendor,
     PropVariantInit(&result[0].id);
     PropVariantInit(&result[0].value);
 
-    memcpy(name, ImageGamma, sizeof(ImageGamma));
+    memcpy(name, L"ImageGamma", sizeof(L"ImageGamma"));
 
     result[0].id.vt = VT_LPWSTR;
     result[0].id.u.pwszVal = name;
@@ -176,14 +175,14 @@ static HRESULT LoadChrmMetadata(IStream *stream, const GUID *preferred_vendor,
     BYTE *data;
     ULONG data_size;
     static const WCHAR names[8][12] = {
-        {'W','h','i','t','e','P','o','i','n','t','X',0},
-        {'W','h','i','t','e','P','o','i','n','t','Y',0},
-        {'R','e','d','X',0},
-        {'R','e','d','Y',0},
-        {'G','r','e','e','n','X',0},
-        {'G','r','e','e','n','Y',0},
-        {'B','l','u','e','X',0},
-        {'B','l','u','e','Y',0},
+        L"WhitePointX",
+        L"WhitePointY",
+        L"RedX",
+        L"RedY",
+        L"GreenX",
+        L"GreenY",
+        L"BlueX",
+        L"BlueY",
     };
     LPWSTR dyn_names[8] = {0};
     MetadataItem *result;
