@@ -428,6 +428,21 @@ void wined3d_resource_free_sysmem(struct wined3d_resource *resource)
     resource->heap_memory = NULL;
 }
 
+GLbitfield wined3d_resource_gl_storage_flags(const struct wined3d_resource *resource)
+{
+    uint32_t access = resource->access;
+    GLbitfield flags = 0;
+
+    if (resource->usage & WINED3DUSAGE_DYNAMIC)
+        flags |= GL_CLIENT_STORAGE_BIT;
+    if (access & WINED3D_RESOURCE_ACCESS_MAP_W)
+        flags |= GL_MAP_WRITE_BIT;
+    if (access & WINED3D_RESOURCE_ACCESS_MAP_R)
+        flags |= GL_MAP_READ_BIT;
+
+    return flags;
+}
+
 GLbitfield wined3d_resource_gl_map_flags(DWORD d3d_flags)
 {
     GLbitfield ret = 0;

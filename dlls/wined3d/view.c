@@ -1415,8 +1415,8 @@ static void wined3d_unordered_access_view_gl_cs_init(void *object)
             struct wined3d_bo_gl *bo = &view_gl->counter_bo;
 
             view_gl->v.counter_bo = (uintptr_t)bo;
-            wined3d_context_gl_create_bo(context_gl, sizeof(uint32_t),
-                    GL_ATOMIC_COUNTER_BUFFER, GL_STATIC_DRAW, true, bo);
+            wined3d_context_gl_create_bo(context_gl, sizeof(uint32_t), GL_ATOMIC_COUNTER_BUFFER,
+                    GL_STATIC_DRAW, true, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_CLIENT_STORAGE_BIT, bo);
             wined3d_unordered_access_view_set_counter(&view_gl->v, 0);
         }
         context_release(&context_gl->c);

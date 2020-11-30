@@ -2694,13 +2694,13 @@ void wined3d_context_gl_destroy_bo(struct wined3d_context_gl *context_gl, struct
 }
 
 bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizeiptr size,
-        GLenum binding, GLenum usage, bool coherent, struct wined3d_bo_gl *bo)
+        GLenum binding, GLenum usage, bool coherent, GLbitfield flags, struct wined3d_bo_gl *bo)
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     GLuint id = 0;
 
-    TRACE("context_gl %p, size %lu, binding %#x, usage %#x, coherent %#x, bo %p.\n",
-            context_gl, size, binding, usage, coherent, bo);
+    TRACE("context_gl %p, size %lu, binding %#x, usage %#x, coherent %#x, flags %#x, bo %p.\n",
+            context_gl, size, binding, usage, coherent, flags, bo);
 
     GL_EXTCALL(glGenBuffers(1, &id));
     if (!id)
@@ -2716,7 +2716,10 @@ bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizei
         GL_EXTCALL(glBufferParameteriAPPLE(binding, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_FALSE));
     }
 
-    GL_EXTCALL(glBufferData(binding, size, NULL, usage));
+    if (gl_info->supported[ARB_BUFFER_STORAGE])
+        GL_EXTCALL(glBufferStorage(binding, size, NULL, flags | GL_DYNAMIC_STORAGE_BIT));
+    else
+        GL_EXTCALL(glBufferData(binding, size, NULL, usage));
 
     wined3d_context_gl_bind_bo(context_gl, binding, 0);
     checkGLcall("buffer object creation");

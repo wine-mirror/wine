@@ -201,6 +201,7 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     GLenum usage = GL_STATIC_DRAW;
+    GLbitfield gl_storage_flags;
     struct wined3d_bo_gl *bo;
     bool coherent = true;
     GLsizeiptr size;
@@ -216,8 +217,9 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
         usage = GL_STREAM_DRAW_ARB;
         coherent = false;
     }
+    gl_storage_flags = wined3d_resource_gl_storage_flags(&buffer_gl->b.resource);
     bo = &buffer_gl->bo;
-    if (!wined3d_context_gl_create_bo(context_gl, size, binding, usage, coherent, bo))
+    if (!wined3d_context_gl_create_bo(context_gl, size, binding, usage, coherent, gl_storage_flags, bo))
     {
         ERR("Failed to create OpenGL buffer object.\n");
         buffer_gl->b.flags &= ~WINED3D_BUFFER_USE_BO;
