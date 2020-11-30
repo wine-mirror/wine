@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#include <process.h>
 #include <stdio.h>
 #include "msvcrt.h"
 #include "mtdll.h"
@@ -31,7 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 static MSVCRT_purecall_handler purecall_handler = NULL;
 
-static MSVCRT__onexit_table_t MSVCRT_atexit_table;
+static _onexit_table_t MSVCRT_atexit_table;
 
 typedef void (__stdcall *_tls_callback_type)(void*,ULONG,void*);
 static _tls_callback_type tls_atexit_callback;
@@ -53,7 +54,7 @@ static int MSVCRT_error_mode = MSVCRT__OUT_TO_DEFAULT;
 
 void (*CDECL _aexit_rtn)(int) = MSVCRT__exit;
 
-static int initialize_onexit_table(MSVCRT__onexit_table_t *table)
+static int initialize_onexit_table(_onexit_table_t *table)
 {
     if (!table)
         return -1;
@@ -63,7 +64,7 @@ static int initialize_onexit_table(MSVCRT__onexit_table_t *table)
     return 0;
 }
 
-static int register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func)
+static int register_onexit_function(_onexit_table_t *table, _onexit_t func)
 {
     if (!table)
         return -1;
@@ -86,7 +87,7 @@ static int register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT__onexi
     if (table->_last == table->_end)
     {
         int len = table->_end - table->_first;
-        MSVCRT__onexit_t *tmp = MSVCRT_realloc(table->_first, 2 * len * sizeof(void *));
+        _PVFV *tmp = MSVCRT_realloc(table->_first, 2 * len * sizeof(void *));
         if (!tmp)
         {
             WARN("failed to grow table.\n");
@@ -98,16 +99,16 @@ static int register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT__onexi
         table->_last = table->_first + len;
     }
 
-    *table->_last = func;
+    *table->_last = (_PVFV)func;
     table->_last++;
     LeaveCriticalSection(&MSVCRT_onexit_cs);
     return 0;
 }
 
-static int execute_onexit_table(MSVCRT__onexit_table_t *table)
+static int execute_onexit_table(_onexit_table_t *table)
 {
-    MSVCRT__onexit_t *func;
-    MSVCRT__onexit_table_t copy;
+    _onexit_table_t copy;
+    _PVFV *func;
 
     if (!table)
         return -1;
@@ -145,9 +146,9 @@ static void call_atexit(void)
 /*********************************************************************
  *		__dllonexit (MSVCRT.@)
  */
-MSVCRT__onexit_t CDECL __dllonexit(MSVCRT__onexit_t func, MSVCRT__onexit_t **start, MSVCRT__onexit_t **end)
+_onexit_t CDECL __dllonexit(_onexit_t func, _onexit_t **start, _onexit_t **end)
 {
-  MSVCRT__onexit_t *tmp;
+  _onexit_t *tmp;
   int len;
 
   TRACE("(%p,%p,%p)\n", func, start, end);
@@ -336,7 +337,7 @@ void CDECL MSVCRT__cexit(void)
 /*********************************************************************
  *		_onexit (MSVCRT.@)
  */
-MSVCRT__onexit_t CDECL MSVCRT__onexit(MSVCRT__onexit_t func)
+_onexit_t CDECL MSVCRT__onexit(_onexit_t func)
 {
   TRACE("(%p)\n",func);
 
@@ -380,11 +381,11 @@ void CDECL MSVCRT_exit(int exitcode)
 int CDECL MSVCRT_atexit(void (__cdecl *func)(void))
 {
   TRACE("(%p)\n", func);
-  return MSVCRT__onexit((MSVCRT__onexit_t)func) == (MSVCRT__onexit_t)func ? 0 : -1;
+  return MSVCRT__onexit((_onexit_t)func) == (_onexit_t)func ? 0 : -1;
 }
 
 #if _MSVCR_VER >= 140
-static MSVCRT__onexit_table_t MSVCRT_quick_exit_table;
+static _onexit_table_t MSVCRT_quick_exit_table;
 
 /*********************************************************************
  *             _crt_at_quick_exit (UCRTBASE.@)
@@ -392,7 +393,7 @@ static MSVCRT__onexit_table_t MSVCRT_quick_exit_table;
 int CDECL MSVCRT__crt_at_quick_exit(void (__cdecl *func)(void))
 {
   TRACE("(%p)\n", func);
-  return register_onexit_function(&MSVCRT_quick_exit_table, (MSVCRT__onexit_t)func);
+  return register_onexit_function(&MSVCRT_quick_exit_table, (_onexit_t)func);
 }
 
 /*********************************************************************
@@ -412,13 +413,13 @@ void CDECL MSVCRT_quick_exit(int exitcode)
 int CDECL MSVCRT__crt_atexit(void (__cdecl *func)(void))
 {
   TRACE("(%p)\n", func);
-  return MSVCRT__onexit((MSVCRT__onexit_t)func) == (MSVCRT__onexit_t)func ? 0 : -1;
+  return MSVCRT__onexit((_onexit_t)func) == (_onexit_t)func ? 0 : -1;
 }
 
 /*********************************************************************
  *		_initialize_onexit_table (UCRTBASE.@)
  */
-int CDECL MSVCRT__initialize_onexit_table(MSVCRT__onexit_table_t *table)
+int CDECL MSVCRT__initialize_onexit_table(_onexit_table_t *table)
 {
     TRACE("(%p)\n", table);
 
@@ -428,7 +429,7 @@ int CDECL MSVCRT__initialize_onexit_table(MSVCRT__onexit_table_t *table)
 /*********************************************************************
  *		_register_onexit_function (UCRTBASE.@)
  */
-int CDECL MSVCRT__register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT__onexit_t func)
+int CDECL MSVCRT__register_onexit_function(_onexit_table_t *table, _onexit_t func)
 {
     TRACE("(%p %p)\n", table, func);
 
@@ -438,7 +439,7 @@ int CDECL MSVCRT__register_onexit_function(MSVCRT__onexit_table_t *table, MSVCRT
 /*********************************************************************
  *		_execute_onexit_table (UCRTBASE.@)
  */
-int CDECL MSVCRT__execute_onexit_table(MSVCRT__onexit_table_t *table)
+int CDECL MSVCRT__execute_onexit_table(_onexit_table_t *table)
 {
     TRACE("(%p)\n", table);
 
