@@ -722,12 +722,11 @@ static void test__itoa_s(void)
 
 static void test_wcsncat_s(void)
 {
-    static wchar_t abcW[] = {'a','b','c',0};
     int ret;
     wchar_t dst[4];
     wchar_t src[4];
 
-    memcpy(src, abcW, sizeof(abcW));
+    wcscpy(src, L"abc");
     dst[0] = 0;
     SET_EXPECT(invalid_parameter_handler);
     ret = p_wcsncat_s(NULL, 4, src, 4);
@@ -758,8 +757,7 @@ static void test_wcsncat_s(void)
     ok(ret == STRUNCATE, "err = %d\n", ret);
     ok(dst[0] == 'a' && dst[1] == 0, "dst is %s\n", wine_dbgstr_w(dst));
 
-    memcpy(dst, abcW, sizeof(abcW));
-    dst[3] = 'd';
+    memcpy(dst, L"abcd", 4 * sizeof(wchar_t));
     SET_EXPECT(invalid_parameter_handler);
     ret = p_wcsncat_s(dst, 4, src, 4);
     ok(ret == EINVAL, "err = %d\n", ret);
@@ -1081,16 +1079,15 @@ static void test__sopen_s(void)
 
 static void test__wsopen_s(void)
 {
-    wchar_t testW[] = {'t','e','s','t',0};
     int ret, fd;
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_wsopen_s(NULL, testW, _O_RDONLY, _SH_DENYNO, _S_IREAD);
+    ret = p_wsopen_s(NULL, L"test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
     ok(ret == EINVAL, "got %d, expected EINVAL\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     fd = 0xdead;
-    ret = p_wsopen_s(&fd, testW, _O_RDONLY, _SH_DENYNO, _S_IREAD);
+    ret = p_wsopen_s(&fd, L"test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
     ok(ret == ENOENT, "got %d, expected ENOENT\n", ret);
     ok(fd == -1, "got %d\n", fd);
 }
@@ -1176,7 +1173,7 @@ static void test_getptd(void)
 {
     struct __thread_data *ptd = p_getptd();
     DWORD tid = GetCurrentThreadId();
-    wchar_t testW[] = {'t','e','s','t',0}, tW[] = {'t',0}, *wp;
+    wchar_t testW[] = L"test", *wp;
     char test[] = "test", *p;
     unsigned char mbstok_test[] = "test", *up;
     struct tm time;
@@ -1192,7 +1189,7 @@ static void test_getptd(void)
     ok(ptd->random_seed == 1234, "ptd->random_seed = %d\n", ptd->random_seed);
     p = p_strtok(test, "t");
     ok(ptd->strtok_next == p+3, "ptd->strtok_next is incorrect\n");
-    wp = p_wcstok(testW, tW);
+    wp = p_wcstok(testW, L"t");
     ok(ptd->wcstok_next == wp+3, "ptd->wcstok_next is incorrect\n");
     up = p__mbstok(mbstok_test, (unsigned char*)"t");
     ok(ptd->mbstok_next == up+3, "ptd->mbstok_next is incorrect\n");
@@ -1243,20 +1240,16 @@ static int WINAPIV _vswprintf_l_wrapper(wchar_t *buf,
 
 static void test__vswprintf_l(void)
 {
-    static const wchar_t format[] = {'t','e','s','t',0};
-
     wchar_t buf[32];
     int ret;
 
-    ret = __vswprintf_l_wrapper(buf, format, NULL);
+    ret = __vswprintf_l_wrapper(buf, L"test", NULL);
     ok(ret == 4, "ret = %d\n", ret);
-    ok(!memcmp(buf, format, sizeof(format)), "buf = %s, expected %s\n",
-            wine_dbgstr_w(buf), wine_dbgstr_w(format));
+    ok(!wcscmp(buf, L"test"), "buf = %s\n", wine_dbgstr_w(buf));
 
-    ret = _vswprintf_l_wrapper(buf, format, NULL);
+    ret = _vswprintf_l_wrapper(buf, L"test", NULL);
     ok(ret == 4, "ret = %d\n", ret);
-    ok(!memcmp(buf, format, sizeof(format)), "buf = %s, expected %s\n",
-            wine_dbgstr_w(buf), wine_dbgstr_w(format));
+    ok(!wcscmp(buf, L"test"), "buf = %s\n", wine_dbgstr_w(buf));
 }
 
 struct block_file_arg
