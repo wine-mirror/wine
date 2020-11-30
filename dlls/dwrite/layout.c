@@ -302,9 +302,10 @@ struct dwrite_textformat
     struct dwrite_textformat_data format;
 };
 
-struct dwrite_trimmingsign {
+struct dwrite_trimmingsign
+{
     IDWriteInlineObject IDWriteInlineObject_iface;
-    LONG ref;
+    LONG refcount;
 
     IDWriteTextLayout *layout;
 };
@@ -5221,9 +5222,7 @@ HRESULT create_textlayout(const struct textlayout_desc *desc, IDWriteTextLayout 
 
 static HRESULT WINAPI dwritetrimmingsign_QueryInterface(IDWriteInlineObject *iface, REFIID riid, void **obj)
 {
-    struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteInlineObject)) {
         *obj = iface;
@@ -5239,51 +5238,55 @@ static HRESULT WINAPI dwritetrimmingsign_QueryInterface(IDWriteInlineObject *ifa
 
 static ULONG WINAPI dwritetrimmingsign_AddRef(IDWriteInlineObject *iface)
 {
-    struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
-    return ref;
+    struct dwrite_trimmingsign *sign = impl_from_IDWriteInlineObject(iface);
+    ULONG refcount = InterlockedIncrement(&sign->refcount);
+
+    TRACE("%p, refcount %d.\n", iface, refcount);
+
+    return refcount;
 }
 
 static ULONG WINAPI dwritetrimmingsign_Release(IDWriteInlineObject *iface)
 {
-    struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct dwrite_trimmingsign *sign = impl_from_IDWriteInlineObject(iface);
+    ULONG refcount = InterlockedDecrement(&sign->refcount);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE("%p, refcount %d.\n", iface, refcount);
 
-    if (!ref) {
-        IDWriteTextLayout_Release(This->layout);
-        heap_free(This);
+    if (!refcount)
+    {
+        IDWriteTextLayout_Release(sign->layout);
+        heap_free(sign);
     }
 
-    return ref;
+    return refcount;
 }
 
 static HRESULT WINAPI dwritetrimmingsign_Draw(IDWriteInlineObject *iface, void *context, IDWriteTextRenderer *renderer,
     FLOAT originX, FLOAT originY, BOOL is_sideways, BOOL is_rtl, IUnknown *effect)
 {
-    struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
+    struct dwrite_trimmingsign *sign = impl_from_IDWriteInlineObject(iface);
     DWRITE_LINE_METRICS line;
     UINT32 line_count;
 
-    TRACE("(%p)->(%p %p %.2f %.2f %d %d %p)\n", This, context, renderer, originX, originY,
+    TRACE("%p, %p, %p, %.2f, %.2f, %d, %d, %p.\n", iface, context, renderer, originX, originY,
             is_sideways, is_rtl, effect);
 
-    IDWriteTextLayout_GetLineMetrics(This->layout, &line, 1, &line_count);
-    return IDWriteTextLayout_Draw(This->layout, context, renderer, originX, originY - line.baseline);
+    IDWriteTextLayout_GetLineMetrics(sign->layout, &line, 1, &line_count);
+    return IDWriteTextLayout_Draw(sign->layout, context, renderer, originX, originY - line.baseline);
 }
 
 static HRESULT WINAPI dwritetrimmingsign_GetMetrics(IDWriteInlineObject *iface, DWRITE_INLINE_OBJECT_METRICS *ret)
 {
-    struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
+    struct dwrite_trimmingsign *sign = impl_from_IDWriteInlineObject(iface);
     DWRITE_TEXT_METRICS metrics;
     HRESULT hr;
 
-    TRACE("(%p)->(%p)\n", This, ret);
+    TRACE("%p, %p.\n", iface, ret);
 
-    hr = IDWriteTextLayout_GetMetrics(This->layout, &metrics);
-    if (FAILED(hr)) {
+    hr = IDWriteTextLayout_GetMetrics(sign->layout, &metrics);
+    if (FAILED(hr))
+    {
         memset(ret, 0, sizeof(*ret));
         return hr;
     }
@@ -5297,23 +5300,24 @@ static HRESULT WINAPI dwritetrimmingsign_GetMetrics(IDWriteInlineObject *iface, 
 
 static HRESULT WINAPI dwritetrimmingsign_GetOverhangMetrics(IDWriteInlineObject *iface, DWRITE_OVERHANG_METRICS *overhangs)
 {
-    struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
-    TRACE("(%p)->(%p)\n", This, overhangs);
-    return IDWriteTextLayout_GetOverhangMetrics(This->layout, overhangs);
+    struct dwrite_trimmingsign *sign = impl_from_IDWriteInlineObject(iface);
+
+    TRACE("%p, %p.\n", iface, overhangs);
+
+    return IDWriteTextLayout_GetOverhangMetrics(sign->layout, overhangs);
 }
 
 static HRESULT WINAPI dwritetrimmingsign_GetBreakConditions(IDWriteInlineObject *iface, DWRITE_BREAK_CONDITION *before,
         DWRITE_BREAK_CONDITION *after)
 {
-    struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
-
-    TRACE("(%p)->(%p %p)\n", This, before, after);
+    TRACE("%p, %p, %p.\n", iface, before, after);
 
     *before = *after = DWRITE_BREAK_CONDITION_NEUTRAL;
     return S_OK;
 }
 
-static const IDWriteInlineObjectVtbl dwritetrimmingsignvtbl = {
+static const IDWriteInlineObjectVtbl dwritetrimmingsignvtbl =
+{
     dwritetrimmingsign_QueryInterface,
     dwritetrimmingsign_AddRef,
     dwritetrimmingsign_Release,
@@ -5350,7 +5354,7 @@ static inline BOOL is_flow_direction_vert(DWRITE_FLOW_DIRECTION direction)
 HRESULT create_trimmingsign(IDWriteFactory7 *factory, IDWriteTextFormat *format, IDWriteInlineObject **sign)
 {
     static const WCHAR ellipsisW = 0x2026;
-    struct dwrite_trimmingsign *This;
+    struct dwrite_trimmingsign *object;
     DWRITE_READING_DIRECTION reading;
     DWRITE_FLOW_DIRECTION flow;
     HRESULT hr;
@@ -5366,24 +5370,24 @@ HRESULT create_trimmingsign(IDWriteFactory7 *factory, IDWriteTextFormat *format,
         (is_reading_direction_vert(reading) && is_flow_direction_vert(flow)))
         return DWRITE_E_FLOWDIRECTIONCONFLICTS;
 
-    This = heap_alloc(sizeof(*This));
-    if (!This)
+    if (!(object = heap_alloc(sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    This->IDWriteInlineObject_iface.lpVtbl = &dwritetrimmingsignvtbl;
-    This->ref = 1;
+    object->IDWriteInlineObject_iface.lpVtbl = &dwritetrimmingsignvtbl;
+    object->refcount = 1;
 
-    hr = IDWriteFactory7_CreateTextLayout(factory, &ellipsisW, 1, format, 0.0f, 0.0f, &This->layout);
-    if (FAILED(hr)) {
-        heap_free(This);
+    hr = IDWriteFactory7_CreateTextLayout(factory, &ellipsisW, 1, format, 0.0f, 0.0f, &object->layout);
+    if (FAILED(hr))
+    {
+        heap_free(object);
         return hr;
     }
 
-    IDWriteTextLayout_SetWordWrapping(This->layout, DWRITE_WORD_WRAPPING_NO_WRAP);
-    IDWriteTextLayout_SetParagraphAlignment(This->layout, DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-    IDWriteTextLayout_SetTextAlignment(This->layout, DWRITE_TEXT_ALIGNMENT_LEADING);
+    IDWriteTextLayout_SetWordWrapping(object->layout, DWRITE_WORD_WRAPPING_NO_WRAP);
+    IDWriteTextLayout_SetParagraphAlignment(object->layout, DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+    IDWriteTextLayout_SetTextAlignment(object->layout, DWRITE_TEXT_ALIGNMENT_LEADING);
 
-    *sign = &This->IDWriteInlineObject_iface;
+    *sign = &object->IDWriteInlineObject_iface;
 
     return S_OK;
 }
