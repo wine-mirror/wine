@@ -31,7 +31,6 @@
 #include "ocidl.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 #include "wincodecs_private.h"
 
@@ -307,7 +306,7 @@ static HRESULT register_decoders(struct regsvr_decoder const *list)
             {
                 HKEY pattern_key;
                 static const WCHAR int_format[] = {'%','i',0};
-                snprintfW(buf, 39, int_format, i);
+                swprintf(buf, 39, int_format, i);
                 res = RegCreateKeyExW(patterns_key, buf, 0, NULL, 0,
                                       KEY_READ | KEY_WRITE, NULL, &pattern_key, NULL);
                 if (res != ERROR_SUCCESS) break;
@@ -853,7 +852,7 @@ static HRESULT register_metadatareaders(struct regsvr_metadatareader const *list
                 {
                     HKEY pattern_key;
                     static const WCHAR int_format[] = {'%','i',0};
-                    snprintfW(buf, 39, int_format, i);
+                    swprintf(buf, 39, int_format, i);
                     res = RegCreateKeyExW(format_key, buf, 0, NULL, 0,
                                           KEY_READ | KEY_WRITE, NULL, &pattern_key, NULL);
                     if (res != ERROR_SUCCESS) break;
@@ -1044,7 +1043,7 @@ static HRESULT register_pixelformats(struct regsvr_pixelformat const *list)
             if (res != ERROR_SUCCESS) goto error_close_clsid_key;
             for (i=0; i < list->channelcount; i++)
             {
-                sprintfW(mask_valuename, valuename_format, i);
+                swprintf(mask_valuename, ARRAY_SIZE(mask_valuename), valuename_format, i);
                 res = RegSetValueExW(masks_key, mask_valuename, 0, REG_BINARY,
                                      list->channelmasks[i], mask_size);
                 if (res != ERROR_SUCCESS) break;

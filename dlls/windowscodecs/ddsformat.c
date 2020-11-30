@@ -26,9 +26,6 @@
  *     A cube map array is equivalent to a 2D texture array which has cubeCount*6 textures.
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 
 #define COBJMACROS

@@ -23,7 +23,6 @@
 #include "wincodecsdk.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 DEFINE_GUID(CLSID_WineTgaDecoder, 0xb11fc79a,0x67cc,0x43e6,0xa9,0xce,0xe3,0xd5,0x49,0x45,0xd3,0x04);
 
@@ -238,7 +237,7 @@ static inline WCHAR *heap_strdupW(const WCHAR *src)
     WCHAR *dst;
     SIZE_T len;
     if (!src) return NULL;
-    len = (strlenW(src) + 1) * sizeof(WCHAR);
+    len = (lstrlenW(src) + 1) * sizeof(WCHAR);
     if ((dst = HeapAlloc(GetProcessHeap(), 0, len))) memcpy(dst, src, len);
     return dst;
 }
@@ -277,7 +276,7 @@ struct decoder_frame
     CLSID pixel_format;
     UINT width, height;
     UINT bpp;
-    double dpix, dpiy;
+    DOUBLE dpix, dpiy;
     DWORD num_color_contexts;
     DWORD num_colors;
     WICColor palette[256];
@@ -371,7 +370,7 @@ struct encoder_frame
     UINT width, height;
     UINT bpp;
     BOOL indexed;
-    double dpix, dpiy;
+    DOUBLE dpix, dpiy;
     DWORD num_colors;
     WICColor palette[256];
     /* encoder options */

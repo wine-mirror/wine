@@ -17,8 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -26,7 +24,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
-#include "wine/unicode.h"
 
 #include "wincodecs_private.h"
 
@@ -117,7 +114,7 @@ static LONG find_item(PropertyBag *This, LPCOLESTR name)
 
     for (i=0; i < This->prop_count; i++)
     {
-        if (strcmpW(name, This->properties[i].pstrName) == 0)
+        if (wcscmp(name, This->properties[i].pstrName) == 0)
             return i;
     }
 
@@ -220,11 +217,11 @@ static HRESULT copy_propbag2(PROPBAG2 *dest, const PROPBAG2 *src)
     dest->dwHint = src->dwHint;
     dest->dwType = src->dwType;
     dest->vt = src->vt;
-    dest->pstrName = CoTaskMemAlloc((strlenW(src->pstrName)+1) * sizeof(WCHAR));
+    dest->pstrName = CoTaskMemAlloc((lstrlenW(src->pstrName)+1) * sizeof(WCHAR));
     if(!dest->pstrName)
         return E_OUTOFMEMORY;
 
-    strcpyW(dest->pstrName, src->pstrName);
+    lstrcpyW(dest->pstrName, src->pstrName);
 
     return S_OK;
 }

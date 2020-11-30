@@ -17,8 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -31,7 +29,6 @@
 #include "wincodecs_private.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
 #include "wine/heap.h"
@@ -612,7 +609,7 @@ static void read_bitmap_patterns(BitmapDecoderInfo *info)
 
     for (i=0; res == ERROR_SUCCESS && i < pattern_count; i++)
     {
-        snprintfW(subkeyname, 11, uintformatW, i);
+        swprintf(subkeyname, 11, uintformatW, i);
         res = RegOpenKeyExW(patternskey, subkeyname, 0, KEY_READ, &patternkey);
         if (res != ERROR_SUCCESS) break;
 
@@ -648,7 +645,7 @@ static void read_bitmap_patterns(BitmapDecoderInfo *info)
 
     for (i=0; res == ERROR_SUCCESS && i < pattern_count; i++)
     {
-        snprintfW(subkeyname, 11, uintformatW, i);
+        swprintf(subkeyname, 11, uintformatW, i);
         res = RegOpenKeyExW(patternskey, subkeyname, 0, KEY_READ, &patternkey);
         if (res != ERROR_SUCCESS) break;
 
@@ -1423,7 +1420,7 @@ static HRESULT WINAPI PixelFormatInfo_GetChannelMask(IWICPixelFormatInfo2 *iface
 
     if (SUCCEEDED(hr))
     {
-        snprintfW(valuename, 11, uintformatW, uiChannelIndex);
+        swprintf(valuename, 11, uintformatW, uiChannelIndex);
 
         cbData = cbMaskBuffer;
 
@@ -1903,7 +1900,7 @@ static void read_metadata_patterns(MetadataReaderInfo *info, GUID *container_gui
 
     for (i=0; res == ERROR_SUCCESS && i < pattern_count; i++)
     {
-        snprintfW(subkeyname, 11, uintformatW, i);
+        swprintf(subkeyname, 11, uintformatW, i);
         res = RegOpenKeyExW(guid_key, subkeyname, 0, KEY_READ, &patternkey);
         if (res != ERROR_SUCCESS) break;
 
@@ -1938,7 +1935,7 @@ static void read_metadata_patterns(MetadataReaderInfo *info, GUID *container_gui
 
     for (i=0; res == ERROR_SUCCESS && i < pattern_count; i++)
     {
-        snprintfW(subkeyname, 11, uintformatW, i);
+        swprintf(subkeyname, 11, uintformatW, i);
         res = RegOpenKeyExW(guid_key, subkeyname, 0, KEY_READ, &patternkey);
         if (res != ERROR_SUCCESS) break;
 

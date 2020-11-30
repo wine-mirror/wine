@@ -17,9 +17,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
+#include <wchar.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -201,7 +200,7 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
 
         if (start[1] < '0' || start[1] > '9') return DISP_E_TYPEMISMATCH;
 
-        *idx = strtolW(start + 1, &idx_end, 10);
+        *idx = wcstol(start + 1, &idx_end, 10);
         if (idx_end > elem->str + elem->len) return WINCODEC_ERR_INVALIDQUERYREQUEST;
         if (*idx_end != ']') return WINCODEC_ERR_INVALIDQUERYREQUEST;
         if (*idx < 0) return WINCODEC_ERR_INVALIDQUERYREQUEST;
@@ -225,7 +224,7 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
         VARTYPE vt;
         PROPVARIANT next_token;
 
-        end = memchrW(start + 1, '=', elem->len - 1);
+        end = wmemchr(start + 1, '=', elem->len - 1);
         if (!end) return WINCODEC_ERR_INVALIDQUERYREQUEST;
         if (end > elem->str + elem->len) return WINCODEC_ERR_INVALIDQUERYREQUEST;
 
@@ -312,10 +311,10 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
         return S_OK;
     }
 
-    end = memchrW(start, '/', elem->len);
+    end = wmemchr(start, '/', elem->len);
     if (!end) end = start + elem->len;
 
-    p = memchrW(start, ':', end - start);
+    p = wmemchr(start, ':', end - start);
     if (p)
     {
         next_elem.str = p + 1;
@@ -885,7 +884,7 @@ static const WCHAR *map_shortname_to_schema(const GUID *format, const WCHAR *nam
 
     for (i = 0; i < ARRAY_SIZE(name2schema); i++)
     {
-        if (!lstrcmpW(name2schema[i].name, name))
+        if (!wcscmp(name2schema[i].name, name))
             return name2schema[i].schema;
     }
 
@@ -910,7 +909,7 @@ HRESULT WINAPI WICMapSchemaToName(REFGUID format, LPWSTR schema, UINT len, WCHAR
 
     for (i = 0; i < ARRAY_SIZE(name2schema); i++)
     {
-        if (!lstrcmpW(name2schema[i].schema, schema))
+        if (!wcscmp(name2schema[i].schema, schema))
         {
             if (name)
             {
