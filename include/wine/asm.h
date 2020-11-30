@@ -65,6 +65,14 @@
 # define __ASM_FUNC_TYPE(name) ".type " name ",@function"
 #endif
 
+#ifdef _WIN32
+# define __ASM_FUNC_SIZE(name) ""
+#elif defined(__APPLE__)
+# define __ASM_FUNC_SIZE(name) ""
+#else
+# define __ASM_FUNC_SIZE(name) "\n\t.size " name ",.-" name
+#endif
+
 #if !defined(__GNUC__) && !defined(__clang__)
 # define __ASM_BLOCK_BEGIN(name) void __asm_dummy_##name(void) {
 # define __ASM_BLOCK_END         }
@@ -76,7 +84,7 @@
 #define __ASM_DEFINE_FUNC(name,code)  \
     __ASM_BLOCK_BEGIN(__LINE__) \
     asm(".text\n\t.align 4\n\t.globl " name "\n\t" __ASM_FUNC_TYPE(name) __ASM_SEH("\n\t.seh_proc " name) "\n" name ":\n\t" \
-        __ASM_CFI(".cfi_startproc\n\t") code __ASM_CFI("\n\t.cfi_endproc") __ASM_SEH("\n\t.seh_endproc") ); \
+        __ASM_CFI(".cfi_startproc\n\t") code __ASM_CFI("\n\t.cfi_endproc") __ASM_SEH("\n\t.seh_endproc") __ASM_FUNC_SIZE(name)); \
     __ASM_BLOCK_END
 
 #define __ASM_GLOBAL_FUNC(name,code) __ASM_DEFINE_FUNC(__ASM_NAME(#name),code)
