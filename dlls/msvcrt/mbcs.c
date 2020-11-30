@@ -2445,12 +2445,12 @@ wint_t CDECL btowc(int c)
     wchar_t ret;
 
     if(c == MSVCRT_EOF)
-        return MSVCRT_WEOF;
+        return WEOF;
     if(!get_locinfo()->lc_codepage)
         return c & 255;
     if(!MultiByteToWideChar(get_locinfo()->lc_codepage,
                 MB_ERR_INVALID_CHARS, (LPCSTR)&letter, 1, &ret, 1))
-        return MSVCRT_WEOF;
+        return WEOF;
 
     return ret;
 }

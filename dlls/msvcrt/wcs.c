@@ -533,7 +533,7 @@ int CDECL MSVCRT__wcsncoll(const wchar_t* str1, const wchar_t* str2, size_t coun
 static wchar_t strtod_wstr_get(void *ctx)
 {
     const wchar_t **p = ctx;
-    if (!**p) return MSVCRT_WEOF;
+    if (!**p) return WEOF;
     return *(*p)++;
 }
 
@@ -2076,7 +2076,7 @@ INT CDECL MSVCRT__iswctype_l( wchar_t wc, wctype_t type, _locale_t locale )
 {
     WORD ct;
 
-    if (wc == MSVCRT_WEOF) return 0;
+    if (wc == WEOF) return 0;
     if (wc < 256) return MSVCRT__pwctype[wc] & type;
 
     if (!GetStringTypeW(CT_CTYPE1, &wc, 1, &ct))

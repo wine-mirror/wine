@@ -648,7 +648,7 @@ static struct fpnum fpnum_parse16(wchar_t get(void *ctx), void unget(void *ctx),
     }
     else if (!found_digit)
     {
-        if(nch!=MSVCRT_WEOF) unget(ctx);
+        if(nch!=WEOF) unget(ctx);
         unget(ctx);
         return fpnum(0, 0, 0, 0);
     }
@@ -679,7 +679,7 @@ static struct fpnum fpnum_parse16(wchar_t get(void *ctx), void unget(void *ctx),
 
     if (!found_digit)
     {
-        if (nch != MSVCRT_WEOF) unget(ctx);
+        if (nch != WEOF) unget(ctx);
         if (found_dp) unget(ctx);
         unget(ctx);
         return fpnum(0, 0, 0, 0);
@@ -706,14 +706,14 @@ static struct fpnum fpnum_parse16(wchar_t get(void *ctx), void unget(void *ctx),
                     e = e*10+nch-'0';
                 nch = get(ctx);
             }
-            if((nch!=MSVCRT_WEOF) && (nch < '0' || nch > '9')) unget(ctx);
+            if((nch!=WEOF) && (nch < '0' || nch > '9')) unget(ctx);
             e *= s;
 
             if(e<0 && exp<INT_MIN-e) exp = INT_MIN;
             else if(e>0 && exp>INT_MAX-e) exp = INT_MAX;
             else exp += e;
         } else {
-            if(nch != MSVCRT_WEOF) unget(ctx);
+            if(nch != WEOF) unget(ctx);
             if(found_sign) unget(ctx);
             unget(ctx);
         }
@@ -768,7 +768,7 @@ static struct fpnum fpnum_parse_bnum(wchar_t (*get)(void *ctx), void (*unget)(vo
         str_match = _infinity;
     if(nch == _nan[0] || nch == MSVCRT__toupper(_nan[0]))
         str_match = _nan;
-    while(str_match && nch != MSVCRT_WEOF &&
+    while(str_match && nch != WEOF &&
             (nch == str_match[matched] || nch == MSVCRT__toupper(str_match[matched]))) {
         nch = get(ctx);
         matched++;
@@ -777,7 +777,7 @@ static struct fpnum fpnum_parse_bnum(wchar_t (*get)(void *ctx), void (*unget)(vo
         int keep = 0;
         if(matched >= 8) keep = 8;
         else if(matched >= 3) keep = 3;
-        if(nch != MSVCRT_WEOF) unget(ctx);
+        if(nch != WEOF) unget(ctx);
         for (; matched > keep; matched--) {
             unget(ctx);
         }
@@ -866,7 +866,7 @@ static struct fpnum fpnum_parse_bnum(wchar_t (*get)(void *ctx), void (*unget)(vo
     }
 
     if(!found_digit) {
-        if(nch != MSVCRT_WEOF) unget(ctx);
+        if(nch != WEOF) unget(ctx);
         if(found_dp) unget(ctx);
         if(found_sign) unget(ctx);
         return fpnum(0, 0, 0, 0);
@@ -895,18 +895,18 @@ static struct fpnum fpnum_parse_bnum(wchar_t (*get)(void *ctx), void (*unget)(vo
                     e = e*10+nch-'0';
                 nch = get(ctx);
             }
-            if(nch != MSVCRT_WEOF) unget(ctx);
+            if(nch != WEOF) unget(ctx);
             e *= s;
 
             if(e<0 && dp<INT_MIN-e) dp = INT_MIN;
             else if(e>0 && dp>INT_MAX-e) dp = INT_MAX;
             else dp += e;
         } else {
-            if(nch != MSVCRT_WEOF) unget(ctx);
+            if(nch != WEOF) unget(ctx);
             if(found_sign) unget(ctx);
             unget(ctx);
         }
-    } else if(nch != MSVCRT_WEOF) {
+    } else if(nch != WEOF) {
         unget(ctx);
     }
 
@@ -991,7 +991,7 @@ struct fpnum fpnum_parse(wchar_t (*get)(void *ctx), void (*unget)(void *ctx),
 static wchar_t strtod_str_get(void *ctx)
 {
     const char **p = ctx;
-    if (!**p) return MSVCRT_WEOF;
+    if (!**p) return WEOF;
     return *(*p)++;
 }
 

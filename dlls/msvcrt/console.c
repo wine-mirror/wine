@@ -29,8 +29,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-
-
 /* MT */
 #define LOCK_CONSOLE   _lock(_CONIO_LOCK)
 #define UNLOCK_CONSOLE _unlock(_CONIO_LOCK)
@@ -38,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 static HANDLE MSVCRT_console_in = INVALID_HANDLE_VALUE;
 static HANDLE MSVCRT_console_out= INVALID_HANDLE_VALUE;
 static int __MSVCRT_console_buffer = MSVCRT_EOF;
-static wchar_t __MSVCRT_console_buffer_w = MSVCRT_WEOF;
+static wchar_t __MSVCRT_console_buffer_w = WEOF;
 
 /* INTERNAL: Initialise console handles */
 void msvcrt_init_console(void)
@@ -222,12 +220,12 @@ int CDECL _getch(void)
  */
 wchar_t CDECL _getwch_nolock(void)
 {
-    wchar_t retval = MSVCRT_WEOF;
+    wchar_t retval = WEOF;
 
-    if (__MSVCRT_console_buffer_w != MSVCRT_WEOF)
+    if (__MSVCRT_console_buffer_w != WEOF)
     {
         retval = __MSVCRT_console_buffer_w;
-        __MSVCRT_console_buffer_w = MSVCRT_WEOF;
+        __MSVCRT_console_buffer_w = WEOF;
     }
     else
     {
@@ -314,7 +312,7 @@ wchar_t CDECL _putwch_nolock(wchar_t c)
     DWORD count;
     if (WriteConsoleW(MSVCRT_console_out, &c, 1, &count, NULL) && count==1)
         return c;
-    return MSVCRT_WEOF;
+    return WEOF;
 }
 
 /*********************************************************************
@@ -360,7 +358,7 @@ wchar_t CDECL _getwche_nolock(void)
 {
     wchar_t wch;
     wch = _getch_nolock();
-    if (wch == MSVCRT_WEOF)
+    if (wch == WEOF)
         return wch;
     return _putwch_nolock(wch);
 }
@@ -443,8 +441,8 @@ int CDECL _ungetch(int c)
  */
 wchar_t CDECL _ungetwch_nolock(wchar_t c)
 {
-    wchar_t retval = MSVCRT_WEOF;
-    if (c != MSVCRT_WEOF && __MSVCRT_console_buffer_w == MSVCRT_WEOF)
+    wchar_t retval = WEOF;
+    if (c != WEOF && __MSVCRT_console_buffer_w == WEOF)
         retval = __MSVCRT_console_buffer_w = c;
     return retval;
 }

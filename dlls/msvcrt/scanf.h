@@ -25,8 +25,8 @@
 
 #ifdef WIDE_SCANF
 #define _CHAR_ wchar_t
-#define _EOF_ MSVCRT_WEOF
-#define _EOF_RET (short)MSVCRT_WEOF
+#define _EOF_ WEOF
+#define _EOF_RET (short)WEOF
 #define _ISSPACE_(c) MSVCRT_iswspace(c)
 #define _WIDE2SUPPORTED_(c) c /* No conversion needed (wide to wide) */
 #define _CHAR2SUPPORTED_(c) c /* FIXME: convert char to wide char */
@@ -167,13 +167,13 @@ static wchar_t _STRTOD_NAME_(strtod_scanf_get)(void *ctx)
     struct _STRTOD_NAME_(strtod_scanf_ctx) *context = ctx;
 
     context->cur = _EOF_;
-    if (!context->length) return MSVCRT_WEOF;
+    if (!context->length) return WEOF;
     if (context->unget != _EOF_) {
         context->cur = context->unget;
         context->unget = _EOF_;
     } else {
         context->cur = _GETC_FUNC_(context->file);
-        if (context->cur == _EOF_) return MSVCRT_WEOF;
+        if (context->cur == _EOF_) return WEOF;
     }
 
     if (context->length > 0) context->length--;
