@@ -1092,7 +1092,7 @@ double CDECL MSVCRT__atof_l( const char *str, _locale_t locale)
 /*********************************************************************
  *		_atoflt_l  (MSVCRT.@)
  */
-int CDECL MSVCRT__atoflt_l( MSVCRT__CRT_FLOAT *value, char *str, _locale_t locale)
+int CDECL MSVCRT__atoflt_l(_CRT_FLOAT *value, char *str, _locale_t locale)
 {
     double d;
     int err;
@@ -1100,16 +1100,16 @@ int CDECL MSVCRT__atoflt_l( MSVCRT__CRT_FLOAT *value, char *str, _locale_t local
     d = strtod_helper(str, NULL, locale, &err);
     value->f = d;
     if(isinf(value->f))
-        return MSVCRT__OVERFLOW;
-    if((d!=0 || err) && value->f>-MSVCRT_FLT_MIN && value->f<MSVCRT_FLT_MIN)
-        return MSVCRT__UNDERFLOW;
+        return _OVERFLOW;
+    if((d!=0 || err) && value->f>-FLT_MIN && value->f<FLT_MIN)
+        return _UNDERFLOW;
     return 0;
 }
 
 /*********************************************************************
  * _atoflt  (MSVCR100.@)
  */
-int CDECL MSVCRT__atoflt(MSVCRT__CRT_FLOAT *value, char *str)
+int CDECL MSVCRT__atoflt(_CRT_FLOAT *value, char *str)
 {
     return MSVCRT__atoflt_l(value, str, NULL);
 }
@@ -1117,22 +1117,22 @@ int CDECL MSVCRT__atoflt(MSVCRT__CRT_FLOAT *value, char *str)
 /*********************************************************************
  *              _atodbl_l  (MSVCRT.@)
  */
-int CDECL MSVCRT__atodbl_l(MSVCRT__CRT_DOUBLE *value, char *str, _locale_t locale)
+int CDECL MSVCRT__atodbl_l(_CRT_DOUBLE *value, char *str, _locale_t locale)
 {
     int err;
 
     value->x = strtod_helper(str, NULL, locale, &err);
     if(isinf(value->x))
-        return MSVCRT__OVERFLOW;
-    if((value->x!=0 || err) && value->x>-MSVCRT_DBL_MIN && value->x<MSVCRT_DBL_MIN)
-        return MSVCRT__UNDERFLOW;
+        return _OVERFLOW;
+    if((value->x!=0 || err) && value->x>-DBL_MIN && value->x<DBL_MIN)
+        return _UNDERFLOW;
     return 0;
 }
 
 /*********************************************************************
  *              _atodbl  (MSVCRT.@)
  */
-int CDECL MSVCRT__atodbl(MSVCRT__CRT_DOUBLE *value, char *str)
+int CDECL MSVCRT__atodbl(_CRT_DOUBLE *value, char *str)
 {
     return MSVCRT__atodbl_l(value, str, NULL);
 }
@@ -1482,8 +1482,8 @@ int CDECL MSVCRT__atoldbl_l( MSVCRT__LDOUBLE *value, const char *str, _locale_t 
     char *endptr;
     switch(__STRINGTOLD_L( value, &endptr, str, 0, locale ))
     {
-    case 1: return MSVCRT__UNDERFLOW;
-    case 2: return MSVCRT__OVERFLOW;
+    case 1: return _UNDERFLOW;
+    case 2: return _OVERFLOW;
     default: return 0;
     }
 }
