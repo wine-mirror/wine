@@ -2444,7 +2444,7 @@ wint_t CDECL btowc(int c)
     unsigned char letter = c;
     wchar_t ret;
 
-    if(c == MSVCRT_EOF)
+    if(c == EOF)
         return WEOF;
     if(!get_locinfo()->lc_codepage)
         return c & 255;

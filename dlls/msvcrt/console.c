@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 static HANDLE MSVCRT_console_in = INVALID_HANDLE_VALUE;
 static HANDLE MSVCRT_console_out= INVALID_HANDLE_VALUE;
-static int __MSVCRT_console_buffer = MSVCRT_EOF;
+static int __MSVCRT_console_buffer = EOF;
 static wchar_t __MSVCRT_console_buffer_w = WEOF;
 
 /* INTERNAL: Initialise console handles */
@@ -153,12 +153,12 @@ static BOOL handle_enhanced_keys(INPUT_RECORD *ir, unsigned char *ch1, unsigned 
  */
 int CDECL _getch_nolock(void)
 {
-  int retval = MSVCRT_EOF;
+  int retval = EOF;
 
-  if (__MSVCRT_console_buffer != MSVCRT_EOF)
+  if (__MSVCRT_console_buffer != EOF)
   {
     retval = __MSVCRT_console_buffer;
-    __MSVCRT_console_buffer = MSVCRT_EOF;
+    __MSVCRT_console_buffer = EOF;
   }
   else
   {
@@ -290,7 +290,7 @@ int CDECL _putch_nolock(int c)
   DWORD count;
   if (WriteConsoleA(MSVCRT_console_out, &c, 1, &count, NULL) && count == 1)
     return c;
-  return MSVCRT_EOF;
+  return EOF;
 }
 
 /*********************************************************************
@@ -333,7 +333,7 @@ int CDECL _getche_nolock(void)
 {
   int retval;
   retval = _getch_nolock();
-  if (retval != MSVCRT_EOF)
+  if (retval != EOF)
     retval = _putch_nolock(retval);
   return retval;
 }
@@ -419,8 +419,8 @@ char* CDECL _cgets(char* str)
  */
 int CDECL _ungetch_nolock(int c)
 {
-  int retval = MSVCRT_EOF;
-  if (c != MSVCRT_EOF && __MSVCRT_console_buffer == MSVCRT_EOF)
+  int retval = EOF;
+  if (c != EOF && __MSVCRT_console_buffer == EOF)
     retval = __MSVCRT_console_buffer = c;
   return retval;
 }
@@ -466,7 +466,7 @@ int CDECL _kbhit(void)
   int retval = 0;
 
   LOCK_CONSOLE;
-  if (__MSVCRT_console_buffer != MSVCRT_EOF)
+  if (__MSVCRT_console_buffer != EOF)
     retval = 1;
   else
   {

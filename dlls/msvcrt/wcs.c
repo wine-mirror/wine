@@ -2039,10 +2039,10 @@ INT CDECL MSVCRT_wctob( wint_t wchar )
         if (wchar < 0xff)
             return (signed char)wchar;
         else
-            return MSVCRT_EOF;
+            return EOF;
     } else if(WideCharToMultiByte( codepage, 0, &wchar, 1, &out, 1, NULL, perror ) && !error)
         return (INT)out;
-    return MSVCRT_EOF;
+    return EOF;
 }
 
 /*********************************************************************

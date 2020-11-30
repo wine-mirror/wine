@@ -34,8 +34,8 @@
 #define _BITMAPSIZE_ 256*256
 #else /* WIDE_SCANF */
 #define _CHAR_ char
-#define _EOF_ MSVCRT_EOF
-#define _EOF_RET MSVCRT_EOF
+#define _EOF_ EOF
+#define _EOF_RET EOF
 #define _ISSPACE_(c) MSVCRT_isspace(c)
 #define _WIDE2SUPPORTED_(c) c /* FIXME: convert wide char to char */
 #define _CHAR2SUPPORTED_(c) c /* No conversion needed (char to char) */
