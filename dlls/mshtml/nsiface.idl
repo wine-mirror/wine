@@ -25,7 +25,7 @@
 
 #pragma makedep header
 
-cpp_quote("#define GECKO_VERSION \"2.47.1\"")
+cpp_quote("#define GECKO_VERSION \"2.47.2\"")
 cpp_quote("#define GECKO_VERSION_STRING \"Wine Gecko \" GECKO_VERSION")
 
 import "wtypes.idl";
