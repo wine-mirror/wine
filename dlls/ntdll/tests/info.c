@@ -490,7 +490,7 @@ static void test_query_module(void)
         const SYSTEM_MODULE *module = &info->Modules[i];
 
         ok(module->LoadOrderIndex == i, "%u: got index %u\n", i, module->LoadOrderIndex);
-        ok(!!module->ImageBaseAddress, "%u: got NULL address\n", i);
+        ok(module->ImageBaseAddress || is_wow64, "%u: got NULL address for %s\n", i, module->Name);
         ok(module->ImageSize, "%u: got 0 size\n", i);
         ok(module->LoadCount, "%u: got 0 load count\n", i);
     }
@@ -516,7 +516,7 @@ static void test_query_module(void)
         const SYSTEM_MODULE *module = &infoex->BaseInfo;
 
         ok(module->LoadOrderIndex == i, "%u: got index %u\n", i, module->LoadOrderIndex);
-        ok(!!module->ImageBaseAddress, "%u: got NULL address\n", i);
+        ok(module->ImageBaseAddress || is_wow64, "%u: got NULL address for %s\n", i, module->Name);
         ok(module->ImageSize, "%u: got 0 size\n", i);
         ok(module->LoadCount, "%u: got 0 load count\n", i);
 
