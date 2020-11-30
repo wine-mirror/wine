@@ -579,6 +579,7 @@ struct testfilter
     struct strmbase_sink sink;
     const AM_MEDIA_TYPE *sink_mt;
     AM_MEDIA_TYPE source_mt;
+    unsigned int got_sample;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -628,7 +629,7 @@ static HRESULT testsource_get_media_type(struct strmbase_pin *iface, unsigned in
 
 static void test_sink_allocator(IPin *pin)
 {
-    ALLOCATOR_PROPERTIES req_props = {1, 5000, 1, 0}, ret_props;
+    ALLOCATOR_PROPERTIES req_props = {1, 256, 1, 0}, ret_props;
     IMemAllocator *req_allocator, *ret_allocator;
     IMemInputPin *input;
     HRESULT hr;
@@ -664,9 +665,6 @@ static void test_sink_allocator(IPin *pin)
     IMemAllocator_Release(ret_allocator);
 
     hr = IMemAllocator_SetProperties(req_allocator, &req_props, &ret_props);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
-    hr = IMemAllocator_Commit(req_allocator);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IMemAllocator_Release(req_allocator);
@@ -736,6 +734,42 @@ static HRESULT testsink_get_media_type(struct strmbase_pin *iface, unsigned int 
 
 static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample *sample)
 {
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    REFERENCE_TIME start, stop;
+    BYTE *data, expect[200];
+    LONG size, i;
+    HRESULT hr;
+
+    size = IMediaSample_GetSize(sample);
+    ok(size == 256, "Got size %u.\n", size);
+    size = IMediaSample_GetActualDataLength(sample);
+    ok(size == 200, "Got valid size %u.\n", size);
+
+    hr = IMediaSample_GetPointer(sample, &data);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    for (i = 0; i < size; ++i)
+        expect[i] = i;
+    ok(!memcmp(data, expect, size), "Data didn't match.\n");
+
+    hr = IMediaSample_GetTime(sample, &start, &stop);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(start == 30000, "Got start time %s.\n", wine_dbgstr_longlong(start));
+    ok(stop == 40000, "Got stop time %s.\n", wine_dbgstr_longlong(stop));
+
+    hr = IMediaSample_GetMediaTime(sample, &start, &stop);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(start == 10000, "Got start time %s.\n", wine_dbgstr_longlong(start));
+    ok(stop == 20000, "Got stop time %s.\n", wine_dbgstr_longlong(stop));
+
+    hr = IMediaSample_IsDiscontinuity(sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaSample_IsPreroll(sample);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = IMediaSample_IsSyncPoint(sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ++filter->got_sample;
+
     return S_OK;
 }
 
@@ -756,6 +790,73 @@ static void testfilter_init(struct testfilter *filter)
     strmbase_sink_init(&filter->sink, &filter->filter, L"sink", &testsink_ops, NULL);
 }
 
+static void test_sample_processing(IMediaControl *control, IMemInputPin *input, struct testfilter *sink)
+{
+    REFERENCE_TIME start, stop;
+    IMemAllocator *allocator;
+    IMediaSample *sample;
+    LONG size, i;
+    HRESULT hr;
+    BYTE *data;
+
+    hr = IMemInputPin_ReceiveCanBlock(input);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr != S_OK)
+    {
+        IMemAllocator_Commit(allocator);
+        hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+    }
+
+    hr = IMediaSample_GetPointer(sample, &data);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    size = IMediaSample_GetSize(sample);
+    ok(size == 256, "Got size %d.\n", size);
+    for (i = 0; i < 200; ++i)
+        data[i] = i;
+    hr = IMediaSample_SetActualDataLength(sample, 200);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    start = 10000;
+    stop = 20000;
+    hr = IMediaSample_SetMediaTime(sample, &start, &stop);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    start = 30000;
+    stop = 40000;
+    hr = IMediaSample_SetTime(sample, &start, &stop);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaSample_SetDiscontinuity(sample, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaSample_SetSyncPoint(sample, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(sink->got_sample == 1, "Got %u calls to Receive().\n", sink->got_sample);
+    sink->got_sample = 0;
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_Receive(input, sample);
+    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
+
+    IMediaSample_Release(sample);
+    IMemAllocator_Release(allocator);
+}
+
 static void test_connect_pin(void)
 {
     AM_MEDIA_TYPE req_mt =
@@ -772,6 +873,7 @@ static void test_connect_pin(void)
     IMediaControl *control;
     AM_MEDIA_TYPE mt, *pmt;
     IFilterGraph2 *graph;
+    IMemInputPin *input;
     HRESULT hr;
     ULONG ref;
 
@@ -784,6 +886,7 @@ static void test_connect_pin(void)
     IFilterGraph2_AddFilter(graph, filter, L"sample grabber");
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
     IBaseFilter_FindPin(filter, L"In", &sink);
+    IPin_QueryInterface(sink, &IID_IMemInputPin, (void **)&input);
     IBaseFilter_FindPin(filter, L"Out", &source);
     IBaseFilter_QueryInterface(filter, &IID_ISampleGrabber, (void **)&grabber);
 
@@ -915,6 +1018,8 @@ static void test_connect_pin(void)
     ok(compare_media_types(&mt, &req_mt), "Media types didn't match.\n");
     ok(compare_media_types(&testsink.sink.pin.mt, &req_mt), "Media types didn't match.\n");
     ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
+
+    test_sample_processing(control, input, &testsink);
 
     hr = IMediaControl_Pause(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -1053,6 +1158,7 @@ static void test_connect_pin(void)
     hr = IPin_ConnectionMediaType(sink, &mt);
     ok(hr == VFW_E_NOT_CONNECTED, "Got hr %#x.\n", hr);
 
+    IMemInputPin_Release(input);
     IPin_Release(sink);
     IPin_Release(source);
     IMediaControl_Release(control);
