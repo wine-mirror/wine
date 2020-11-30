@@ -33,8 +33,10 @@ struct chunk_entry {
 
 HRESULT stream_get_chunk(IStream *stream, struct chunk_entry *chunk) DECLSPEC_HIDDEN;
 HRESULT stream_next_chunk(IStream *stream, struct chunk_entry *chunk) DECLSPEC_HIDDEN;
-HRESULT stream_skip_chunk(IStream *stream, struct chunk_entry *chunk) DECLSPEC_HIDDEN;
+HRESULT stream_skip_chunk(IStream *stream, const struct chunk_entry *chunk) DECLSPEC_HIDDEN;
 
+HRESULT stream_chunk_get_array(IStream *stream, const struct chunk_entry *chunk, void **array,
+        unsigned int *count, DWORD elem_size) DECLSPEC_HIDDEN;
 HRESULT stream_chunk_get_data(IStream *stream, const struct chunk_entry *chunk, void *data,
         ULONG size) DECLSPEC_HIDDEN;
 HRESULT stream_chunk_get_wstr(IStream *stream, const struct chunk_entry *chunk, WCHAR *str,
@@ -88,6 +90,10 @@ HRESULT dmobj_parsedescriptor(IStream *stream, const struct chunk_entry *riff,
    DMUS_OBJ_NAME is 'UNAM' chunk in UNFO list */
 #define DMUS_OBJ_NAME_INAM   0x1000     /* 'INAM' chunk in UNFO list */
 #define DMUS_OBJ_NAME_INFO   0x2000     /* 'INAM' chunk in INFO list */
+
+/* 'DMRF' (reference list) helper */
+HRESULT dmobj_parsereference(IStream *stream, const struct chunk_entry *list,
+        IDirectMusicObject **dmobj) DECLSPEC_HIDDEN;
 
 /* Generic IPersistStream methods */
 HRESULT WINAPI dmobj_IPersistStream_QueryInterface(IPersistStream *iface, REFIID riid,
