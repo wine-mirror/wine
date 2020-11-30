@@ -32,7 +32,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
-struct dwrite_textformat_data {
+struct dwrite_textformat_data
+{
     WCHAR *family_name;
     UINT32 family_len;
     WCHAR *locale;
@@ -51,6 +52,7 @@ struct dwrite_textformat_data {
     DWRITE_VERTICAL_GLYPH_ORIENTATION vertical_orientation;
     DWRITE_OPTICAL_ALIGNMENT optical_alignment;
     DWRITE_LINE_SPACING spacing;
+    DWRITE_AUTOMATIC_FONT_AXES automatic_axes;
 
     FLOAT fontsize;
     FLOAT tabstop;
@@ -4144,17 +4146,25 @@ static HRESULT WINAPI dwritetextlayout4_GetFontAxisValues(IDWriteTextLayout4 *if
 
 static DWRITE_AUTOMATIC_FONT_AXES WINAPI dwritetextlayout4_GetAutomaticFontAxes(IDWriteTextLayout4 *iface)
 {
-    FIXME("%p.\n", iface);
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextLayout4(iface);
 
-    return DWRITE_AUTOMATIC_FONT_AXES_NONE;
+    TRACE("%p.\n", iface);
+
+    return layout->format.automatic_axes;
 }
 
 static HRESULT WINAPI dwritetextlayout4_SetAutomaticFontAxes(IDWriteTextLayout4 *iface,
         DWRITE_AUTOMATIC_FONT_AXES axes)
 {
-    FIXME("%p, %d.\n", iface, axes);
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextLayout4(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %d.\n", iface, axes);
+
+    if ((unsigned int)axes > DWRITE_AUTOMATIC_FONT_AXES_OPTICAL_SIZE)
+        return E_INVALIDARG;
+
+    layout->format.automatic_axes = axes;
+    return S_OK;
 }
 
 static const IDWriteTextLayout4Vtbl dwritetextlayoutvtbl =
@@ -4702,17 +4712,15 @@ static HRESULT WINAPI dwritetextformat3_layout_GetFontAxisValues(IDWriteTextForm
 
 static DWRITE_AUTOMATIC_FONT_AXES WINAPI dwritetextformat3_layout_GetAutomaticFontAxes(IDWriteTextFormat3 *iface)
 {
-    FIXME("%p.\n", iface);
-
-    return DWRITE_AUTOMATIC_FONT_AXES_NONE;
+    struct dwrite_textlayout *layout = impl_layout_from_IDWriteTextFormat3(iface);
+    return IDWriteTextLayout4_GetAutomaticFontAxes(&layout->IDWriteTextLayout4_iface);
 }
 
 static HRESULT WINAPI dwritetextformat3_layout_SetAutomaticFontAxes(IDWriteTextFormat3 *iface,
         DWRITE_AUTOMATIC_FONT_AXES axes)
 {
-    FIXME("%p, %d.\n", iface, axes);
-
-    return E_NOTIMPL;
+    struct dwrite_textlayout *layout = impl_layout_from_IDWriteTextFormat3(iface);
+    return IDWriteTextLayout4_SetAutomaticFontAxes(&layout->IDWriteTextLayout4_iface, axes);
 }
 
 static const IDWriteTextFormat3Vtbl dwritetextformat3_layout_vtbl =
@@ -5036,6 +5044,7 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
 {
     struct dwrite_textformat *textformat;
     IDWriteTextFormat1 *format1;
+    IDWriteTextFormat3 *format3;
     UINT32 len;
     HRESULT hr;
 
@@ -5123,6 +5132,13 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
     else {
         layout->format.vertical_orientation = DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT;
         layout->format.optical_alignment = DWRITE_OPTICAL_ALIGNMENT_NONE;
+    }
+
+    hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat3, (void **)&format3);
+    if (hr == S_OK)
+    {
+        layout->format.automatic_axes = IDWriteTextFormat3_GetAutomaticFontAxes(format3);
+        IDWriteTextFormat3_Release(format3);
     }
 
     return IDWriteTextFormat_GetFontCollection(format, &layout->format.collection);
@@ -5833,16 +5849,22 @@ static HRESULT WINAPI dwritetextformat3_GetFontAxisValues(IDWriteTextFormat3 *if
 
 static DWRITE_AUTOMATIC_FONT_AXES WINAPI dwritetextformat3_GetAutomaticFontAxes(IDWriteTextFormat3 *iface)
 {
-    FIXME("%p.\n", iface);
+    struct dwrite_textformat *format = impl_from_IDWriteTextFormat3(iface);
 
-    return DWRITE_AUTOMATIC_FONT_AXES_NONE;
+    TRACE("%p.\n", iface);
+
+    return format->format.automatic_axes;
 }
 
 static HRESULT WINAPI dwritetextformat3_SetAutomaticFontAxes(IDWriteTextFormat3 *iface, DWRITE_AUTOMATIC_FONT_AXES axes)
 {
-    FIXME("%p, %d.\n", iface, axes);
+    struct dwrite_textformat *format = impl_from_IDWriteTextFormat3(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %d.\n", iface, axes);
+
+    format->format.automatic_axes = axes;
+
+    return S_OK;
 }
 
 static const IDWriteTextFormat3Vtbl dwritetextformatvtbl =
@@ -5948,6 +5970,7 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     This->format.trimmingsign = NULL;
     This->format.collection = collection;
     This->format.fallback = NULL;
+    This->format.automatic_axes = DWRITE_AUTOMATIC_FONT_AXES_NONE;
     IDWriteFontCollection_AddRef(collection);
 
     *format = (IDWriteTextFormat *)&This->IDWriteTextFormat3_iface;

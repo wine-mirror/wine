@@ -5732,6 +5732,96 @@ todo_wine {
     IDWriteFactory_Release(factory);
 }
 
+static void test_automatic_font_axes(void)
+{
+    DWRITE_AUTOMATIC_FONT_AXES axes;
+    IDWriteTextLayout4 *layout4 = NULL;
+    IDWriteTextFormat3 *format3;
+    IDWriteTextLayout *layout;
+    IDWriteTextFormat *format;
+    IDWriteFactory *factory;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL,
+            DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"en-us", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a", 1, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %x.\n", hr);
+
+    IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout4, (void **)&layout4);
+
+    IDWriteTextLayout_Release(layout);
+
+    if (!layout4)
+    {
+        win_skip("Text layout does not support variable fonts.\n");
+        IDWriteFactory_Release(factory);
+        IDWriteTextFormat_Release(format);
+        return;
+    }
+
+    hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat3, (void **)&format3);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    axes = IDWriteTextFormat3_GetAutomaticFontAxes(format3);
+    ok(axes == DWRITE_AUTOMATIC_FONT_AXES_NONE, "Unexpected automatic axes %u.\n", axes);
+
+    hr = IDWriteTextFormat3_SetAutomaticFontAxes(format3, DWRITE_AUTOMATIC_FONT_AXES_OPTICAL_SIZE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteTextFormat3_SetAutomaticFontAxes(format3, DWRITE_AUTOMATIC_FONT_AXES_OPTICAL_SIZE + 1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IDWriteTextFormat3_Release(format3);
+
+    axes = IDWriteTextLayout4_GetAutomaticFontAxes(layout4);
+    ok(axes == DWRITE_AUTOMATIC_FONT_AXES_NONE, "Unexpected automatic axes %u.\n", axes);
+
+    hr = IDWriteTextLayout4_SetAutomaticFontAxes(layout4, DWRITE_AUTOMATIC_FONT_AXES_OPTICAL_SIZE + 1);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteTextLayout4_SetAutomaticFontAxes(layout4, DWRITE_AUTOMATIC_FONT_AXES_OPTICAL_SIZE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IDWriteTextLayout4_Release(layout4);
+
+    /* Out of range values allow for formats, but not for layouts. */
+    hr = IDWriteFactory_CreateTextLayout(factory, L"a", 1, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %x.\n", hr);
+
+    hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout4, (void **)&layout4);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    axes = IDWriteTextLayout4_GetAutomaticFontAxes(layout4);
+    ok(axes == DWRITE_AUTOMATIC_FONT_AXES_OPTICAL_SIZE + 1, "Unexpected automatic axes %u.\n", axes);
+
+    hr = IDWriteTextLayout4_QueryInterface(layout4, &IID_IDWriteTextFormat3, (void **)&format3);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    axes = IDWriteTextFormat3_GetAutomaticFontAxes(format3);
+    ok(axes == DWRITE_AUTOMATIC_FONT_AXES_OPTICAL_SIZE + 1, "Unexpected automatic axes %u.\n", axes);
+
+    hr = IDWriteTextLayout4_SetAutomaticFontAxes(layout4, DWRITE_AUTOMATIC_FONT_AXES_OPTICAL_SIZE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    axes = IDWriteTextFormat3_GetAutomaticFontAxes(format3);
+    ok(axes == DWRITE_AUTOMATIC_FONT_AXES_OPTICAL_SIZE, "Unexpected automatic axes %u.\n", axes);
+
+    hr = IDWriteTextFormat3_SetAutomaticFontAxes(format3, DWRITE_AUTOMATIC_FONT_AXES_OPTICAL_SIZE + 1);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    IDWriteTextFormat3_Release(format3);
+
+    IDWriteTextLayout_Release(layout);
+
+    IDWriteTextLayout4_Release(layout4);
+    IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     IDWriteFactory *factory;
@@ -5783,6 +5873,7 @@ START_TEST(layout)
     test_line_spacing();
     test_GetOverhangMetrics();
     test_tab_stops();
+    test_automatic_font_axes();
 
     IDWriteFactory_Release(factory);
 }
