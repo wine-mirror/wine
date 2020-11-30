@@ -579,7 +579,7 @@ struct testfilter
     struct strmbase_sink sink;
     const AM_MEDIA_TYPE *sink_mt;
     AM_MEDIA_TYPE source_mt;
-    unsigned int got_sample;
+    unsigned int got_sample, got_new_segment, got_eos, got_begin_flush, got_end_flush;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -773,12 +773,48 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     return S_OK;
 }
 
+static HRESULT testsink_new_segment(struct strmbase_sink *iface,
+        REFERENCE_TIME start, REFERENCE_TIME stop, double rate)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    ++filter->got_new_segment;
+    ok(start == 10000, "Got start %s.\n", wine_dbgstr_longlong(start));
+    ok(stop == 20000, "Got stop %s.\n", wine_dbgstr_longlong(stop));
+    ok(rate == 1.0, "Got rate %.16e.\n", rate);
+    return S_OK;
+}
+
+static HRESULT testsink_eos(struct strmbase_sink *iface)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    ++filter->got_eos;
+    return S_OK;
+}
+
+static HRESULT testsink_begin_flush(struct strmbase_sink *iface)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    ++filter->got_begin_flush;
+    return S_OK;
+}
+
+static HRESULT testsink_end_flush(struct strmbase_sink *iface)
+{
+    struct testfilter *filter = impl_from_strmbase_filter(iface->pin.filter);
+    ++filter->got_end_flush;
+    return S_OK;
+}
+
 static const struct strmbase_sink_ops testsink_ops =
 {
     .base.pin_query_interface = testsink_query_interface,
     .base.pin_query_accept = testsink_query_accept,
     .base.pin_get_media_type = testsink_get_media_type,
     .pfnReceive = testsink_Receive,
+    .sink_new_segment = testsink_new_segment,
+    .sink_eos = testsink_eos,
+    .sink_begin_flush = testsink_begin_flush,
+    .sink_end_flush = testsink_end_flush,
 };
 
 static void testfilter_init(struct testfilter *filter)
@@ -853,6 +889,95 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
     hr = IMemInputPin_Receive(input, sample);
     todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
 
+    IMediaSample_Release(sample);
+    IMemAllocator_Release(allocator);
+}
+
+static void test_streaming_events(IMediaControl *control, IPin *sink,
+        IMemInputPin *input, struct testfilter *testsink)
+{
+    REFERENCE_TIME start, stop;
+    IMemAllocator *allocator;
+    IMediaSample *sample;
+    HRESULT hr;
+    BYTE *data;
+    LONG i;
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMemAllocator_GetBuffer(allocator, &sample, NULL, NULL, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaSample_GetPointer(sample, &data);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    for (i = 0; i < 200; ++i)
+        data[i] = i;
+    hr = IMediaSample_SetActualDataLength(sample, 200);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    start = 10000;
+    stop = 20000;
+    hr = IMediaSample_SetMediaTime(sample, &start, &stop);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    start = 30000;
+    stop = 40000;
+    hr = IMediaSample_SetTime(sample, &start, &stop);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaSample_SetDiscontinuity(sample, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaSample_SetSyncPoint(sample, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(!testsink->got_new_segment, "Got %u calls to IPin::NewSegment().\n", testsink->got_new_segment);
+    hr = IPin_NewSegment(sink, 10000, 20000, 1.0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(testsink->got_new_segment == 1, "Got %u calls to IPin::NewSegment().\n", testsink->got_new_segment);
+
+    ok(!testsink->got_eos, "Got %u calls to IPin::EndOfStream().\n", testsink->got_eos);
+    hr = IPin_EndOfStream(sink);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(!testsink->got_sample, "Got %u calls to Receive().\n", testsink->got_sample);
+    ok(testsink->got_eos == 1, "Got %u calls to IPin::EndOfStream().\n", testsink->got_eos);
+    testsink->got_eos = 0;
+
+    hr = IPin_EndOfStream(sink);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(testsink->got_eos == 1, "Got %u calls to IPin::EndOfStream().\n", testsink->got_eos);
+    testsink->got_eos = 0;
+
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(testsink->got_sample == 1, "Got %u calls to Receive().\n", testsink->got_sample);
+    testsink->got_sample = 0;
+
+    ok(!testsink->got_begin_flush, "Got %u calls to IPin::BeginFlush().\n", testsink->got_begin_flush);
+    hr = IPin_BeginFlush(sink);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(testsink->got_begin_flush == 1, "Got %u calls to IPin::BeginFlush().\n", testsink->got_begin_flush);
+
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(testsink->got_sample == 1, "Got %u calls to Receive().\n", testsink->got_sample);
+    testsink->got_sample = 0;
+
+    hr = IPin_EndOfStream(sink);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(testsink->got_eos == 1, "Got %u calls to IPin::EndOfStream().\n", testsink->got_eos);
+    testsink->got_eos = 0;
+
+    ok(!testsink->got_end_flush, "Got %u calls to IPin::EndFlush().\n", testsink->got_end_flush);
+    hr = IPin_EndFlush(sink);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(testsink->got_end_flush == 1, "Got %u calls to IPin::EndFlush().\n", testsink->got_end_flush);
+
+    hr = IMemInputPin_Receive(input, sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(testsink->got_sample == 1, "Got %u calls to Receive().\n", testsink->got_sample);
+    testsink->got_sample = 0;
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
     IMediaSample_Release(sample);
     IMemAllocator_Release(allocator);
 }
@@ -1020,6 +1145,7 @@ static void test_connect_pin(void)
     ok(compare_media_types(&testsource.source.pin.mt, &testsink.sink.pin.mt), "Media types didn't match.\n");
 
     test_sample_processing(control, input, &testsink);
+    test_streaming_events(control, sink, input, &testsink);
 
     hr = IMediaControl_Pause(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
