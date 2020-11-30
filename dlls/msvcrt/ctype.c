@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <locale.h>
 #include "msvcrt.h"
 #include "winnls.h"
 
@@ -168,7 +169,7 @@ int CDECL MSVCRT__isctype_l(int c, int type, _locale_t locale)
     *pconv++ = c & 0xff;
     *pconv = 0;
 
-    if (GetStringTypeExA(locinfo->lc_handle[MSVCRT_LC_CTYPE],
+    if (GetStringTypeExA(locinfo->lc_handle[LC_CTYPE],
                 CT_CTYPE1, convert, convert[1] ? 2 : 1, &typeInfo))
       return typeInfo & type;
   }
@@ -456,7 +457,7 @@ int CDECL MSVCRT__toupper_l(int c, _locale_t locale)
     }
     *p++ = c & 255;
 
-    switch(__crtLCMapStringA(locinfo->lc_handle[MSVCRT_LC_CTYPE], LCMAP_UPPERCASE,
+    switch(__crtLCMapStringA(locinfo->lc_handle[LC_CTYPE], LCMAP_UPPERCASE,
                 (char*)str, p-str, (char*)ret, 2, locinfo->lc_codepage, 0))
     {
     case 0:
@@ -510,7 +511,7 @@ int CDECL MSVCRT__tolower_l(int c, _locale_t locale)
     }
     *p++ = c & 255;
 
-    switch(__crtLCMapStringA(locinfo->lc_handle[MSVCRT_LC_CTYPE], LCMAP_LOWERCASE,
+    switch(__crtLCMapStringA(locinfo->lc_handle[LC_CTYPE], LCMAP_LOWERCASE,
                 (char*)str, p-str, (char*)ret, 2, locinfo->lc_codepage, 0))
     {
     case 0:

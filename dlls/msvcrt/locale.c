@@ -44,7 +44,7 @@ _locale_t MSVCRT_locale = NULL;
 unsigned short *MSVCRT__pctype = NULL;
 unsigned int MSVCRT___lc_codepage = 0;
 int MSVCRT___lc_collate_cp = 0;
-LCID MSVCRT___lc_handle[MSVCRT_LC_MAX - MSVCRT_LC_MIN + 1] = { 0 };
+LCID MSVCRT___lc_handle[LC_MAX - LC_MIN + 1] = { 0 };
 int MSVCRT___mb_cur_max = 1;
 BOOL initial_locale = TRUE;
 
@@ -559,7 +559,7 @@ static void CDECL grab_locinfo(pthreadlocinfo locinfo)
     int i;
 
     InterlockedIncrement(&locinfo->refcount);
-    for(i=MSVCRT_LC_MIN+1; i<=MSVCRT_LC_MAX; i++)
+    for(i=LC_MIN+1; i<=LC_MAX; i++)
     {
         InterlockedIncrement(locinfo->lc_category[i].refcount);
         if(locinfo->lc_category[i].wrefcount)
@@ -621,22 +621,22 @@ static inline char* construct_lc_all(pthreadlocinfo locinfo) {
 
     int i;
 
-    for(i=MSVCRT_LC_MIN+1; i<MSVCRT_LC_MAX; i++) {
+    for(i=LC_MIN+1; i<LC_MAX; i++) {
         if(strcmp(locinfo->lc_category[i].locale,
                     locinfo->lc_category[i+1].locale))
             break;
     }
 
-    if(i==MSVCRT_LC_MAX)
-        return locinfo->lc_category[MSVCRT_LC_COLLATE].locale;
+    if(i==LC_MAX)
+        return locinfo->lc_category[LC_COLLATE].locale;
 
     MSVCRT_sprintf(current_lc_all,
             "LC_COLLATE=%s;LC_CTYPE=%s;LC_MONETARY=%s;LC_NUMERIC=%s;LC_TIME=%s",
-            locinfo->lc_category[MSVCRT_LC_COLLATE].locale,
-            locinfo->lc_category[MSVCRT_LC_CTYPE].locale,
-            locinfo->lc_category[MSVCRT_LC_MONETARY].locale,
-            locinfo->lc_category[MSVCRT_LC_NUMERIC].locale,
-            locinfo->lc_category[MSVCRT_LC_TIME].locale);
+            locinfo->lc_category[LC_COLLATE].locale,
+            locinfo->lc_category[LC_CTYPE].locale,
+            locinfo->lc_category[LC_MONETARY].locale,
+            locinfo->lc_category[LC_NUMERIC].locale,
+            locinfo->lc_category[LC_TIME].locale);
 
     return current_lc_all;
 }
@@ -1023,7 +1023,7 @@ void free_locinfo(pthreadlocinfo locinfo)
     if(!locinfo)
         return;
 
-    for(i=MSVCRT_LC_MIN+1; i<=MSVCRT_LC_MAX; i++) {
+    for(i=LC_MIN+1; i<=LC_MAX; i++) {
         if(!locinfo->lc_category[i].refcount
                 || !InterlockedDecrement(locinfo->lc_category[i].refcount)) {
             MSVCRT_free(locinfo->lc_category[i].locale);
@@ -1242,7 +1242,7 @@ static pthreadlocinfo create_locinfo(int category,
 
     TRACE("(%d %s)\n", category, locale);
 
-    if(category<MSVCRT_LC_MIN || category>MSVCRT_LC_MAX || !locale)
+    if(category<LC_MIN || category>LC_MAX || !locale)
         return NULL;
 
     if(locale[0]=='C' && !locale[1]) {
@@ -1254,19 +1254,19 @@ static pthreadlocinfo create_locinfo(int category,
         while(1) {
             locale += 3; /* LC_ */
             if(!memcmp(locale, collate, sizeof(collate)-1)) {
-                i = MSVCRT_LC_COLLATE;
+                i = LC_COLLATE;
                 locale += sizeof(collate)-1;
             } else if(!memcmp(locale, ctype, sizeof(ctype)-1)) {
-                i = MSVCRT_LC_CTYPE;
+                i = LC_CTYPE;
                 locale += sizeof(ctype)-1;
             } else if(!memcmp(locale, monetary, sizeof(monetary)-1)) {
-                i = MSVCRT_LC_MONETARY;
+                i = LC_MONETARY;
                 locale += sizeof(monetary)-1;
             } else if(!memcmp(locale, numeric, sizeof(numeric)-1)) {
-                i = MSVCRT_LC_NUMERIC;
+                i = LC_NUMERIC;
                 locale += sizeof(numeric)-1;
             } else if(!memcmp(locale, time, sizeof(time)-1)) {
-                i = MSVCRT_LC_TIME;
+                i = LC_TIME;
                 locale += sizeof(time)-1;
             } else
                 return NULL;
@@ -1317,7 +1317,7 @@ static pthreadlocinfo create_locinfo(int category,
     }
 
     for(i=1; i<6; i++) {
-        if(category!=MSVCRT_LC_ALL && category!=i) {
+        if(category!=LC_ALL && category!=i) {
             if(old_locinfo) {
                 lcid[i] = old_locinfo->lc_handle[i];
                 cp[i] = old_locinfo->lc_id[i].wCodePage;
@@ -1335,42 +1335,42 @@ static pthreadlocinfo create_locinfo(int category,
     memset(locinfo, 0, sizeof(threadlocinfo));
     locinfo->refcount = 1;
 
-    if(locale_name[MSVCRT_LC_COLLATE] &&
-            !init_category_name(locale_name[MSVCRT_LC_COLLATE],
-                locale_len[MSVCRT_LC_COLLATE], locinfo, MSVCRT_LC_COLLATE)) {
+    if(locale_name[LC_COLLATE] &&
+            !init_category_name(locale_name[LC_COLLATE],
+                locale_len[LC_COLLATE], locinfo, LC_COLLATE)) {
         free_locinfo(locinfo);
         return NULL;
     }
 
-    if(!category_needs_update(MSVCRT_LC_COLLATE, old_locinfo,
-                lcid[MSVCRT_LC_COLLATE], cp[MSVCRT_LC_COLLATE])) {
-        copy_threadlocinfo_category(locinfo, old_locinfo, MSVCRT_LC_COLLATE);
+    if(!category_needs_update(LC_COLLATE, old_locinfo,
+                lcid[LC_COLLATE], cp[LC_COLLATE])) {
+        copy_threadlocinfo_category(locinfo, old_locinfo, LC_COLLATE);
         locinfo->lc_collate_cp = old_locinfo->lc_collate_cp;
-    } else if(lcid[MSVCRT_LC_COLLATE]) {
-        if(!update_threadlocinfo_category(lcid[MSVCRT_LC_COLLATE],
-                    cp[MSVCRT_LC_COLLATE], locinfo, MSVCRT_LC_COLLATE)) {
+    } else if(lcid[LC_COLLATE]) {
+        if(!update_threadlocinfo_category(lcid[LC_COLLATE],
+                    cp[LC_COLLATE], locinfo, LC_COLLATE)) {
             free_locinfo(locinfo);
             return NULL;
         }
 
-        locinfo->lc_collate_cp = locinfo->lc_id[MSVCRT_LC_COLLATE].wCodePage;
+        locinfo->lc_collate_cp = locinfo->lc_id[LC_COLLATE].wCodePage;
     } else {
-        if(!init_category_name("C", 1, locinfo, MSVCRT_LC_COLLATE)) {
+        if(!init_category_name("C", 1, locinfo, LC_COLLATE)) {
             free_locinfo(locinfo);
             return NULL;
         }
     }
 
-    if(locale_name[MSVCRT_LC_CTYPE] &&
-            !init_category_name(locale_name[MSVCRT_LC_CTYPE],
-                locale_len[MSVCRT_LC_CTYPE], locinfo, MSVCRT_LC_CTYPE)) {
+    if(locale_name[LC_CTYPE] &&
+            !init_category_name(locale_name[LC_CTYPE],
+                locale_len[LC_CTYPE], locinfo, LC_CTYPE)) {
         free_locinfo(locinfo);
         return NULL;
     }
 
-    if(!category_needs_update(MSVCRT_LC_CTYPE, old_locinfo,
-                lcid[MSVCRT_LC_CTYPE], cp[MSVCRT_LC_CTYPE])) {
-        copy_threadlocinfo_category(locinfo, old_locinfo, MSVCRT_LC_CTYPE);
+    if(!category_needs_update(LC_CTYPE, old_locinfo,
+                lcid[LC_CTYPE], cp[LC_CTYPE])) {
+        copy_threadlocinfo_category(locinfo, old_locinfo, LC_CTYPE);
         locinfo->lc_codepage = old_locinfo->lc_codepage;
         locinfo->lc_clike = old_locinfo->lc_clike;
         locinfo->mb_cur_max = old_locinfo->mb_cur_max;
@@ -1381,17 +1381,17 @@ static pthreadlocinfo create_locinfo(int category,
         locinfo->pcumap = old_locinfo->pcumap;
         if(locinfo->ctype1_refcount)
             InterlockedIncrement(locinfo->ctype1_refcount);
-    } else if(lcid[MSVCRT_LC_CTYPE]) {
+    } else if(lcid[LC_CTYPE]) {
         CPINFO cp_info;
         int j;
 
-        if(!update_threadlocinfo_category(lcid[MSVCRT_LC_CTYPE],
-                    cp[MSVCRT_LC_CTYPE], locinfo, MSVCRT_LC_CTYPE)) {
+        if(!update_threadlocinfo_category(lcid[LC_CTYPE],
+                    cp[LC_CTYPE], locinfo, LC_CTYPE)) {
             free_locinfo(locinfo);
             return NULL;
         }
 
-        locinfo->lc_codepage = locinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage;
+        locinfo->lc_codepage = locinfo->lc_id[LC_CTYPE].wCodePage;
         locinfo->lc_clike = 1;
         if(!GetCPInfo(locinfo->lc_codepage, &cp_info)) {
             free_locinfo(locinfo);
@@ -1424,7 +1424,7 @@ static pthreadlocinfo create_locinfo(int category,
             /* builtin GetStringTypeA doesn't set output to 0 on invalid input */
             locinfo->ctype1[i] = 0;
 
-            GetStringTypeA(lcid[MSVCRT_LC_CTYPE], CT_CTYPE1, buf,
+            GetStringTypeA(lcid[LC_CTYPE], CT_CTYPE1, buf,
                     1, locinfo->ctype1+i);
         }
 
@@ -1439,9 +1439,9 @@ static pthreadlocinfo create_locinfo(int category,
                 buf[i] = i;
         }
 
-        LCMapStringA(lcid[MSVCRT_LC_CTYPE], LCMAP_LOWERCASE, buf, 256,
+        LCMapStringA(lcid[LC_CTYPE], LCMAP_LOWERCASE, buf, 256,
                 (char*)locinfo->pclmap, 256);
-        LCMapStringA(lcid[MSVCRT_LC_CTYPE], LCMAP_UPPERCASE, buf, 256,
+        LCMapStringA(lcid[LC_CTYPE], LCMAP_UPPERCASE, buf, 256,
                 (char*)locinfo->pcumap, 256);
     } else {
         locinfo->lc_clike = 1;
@@ -1449,21 +1449,21 @@ static pthreadlocinfo create_locinfo(int category,
         locinfo->pctype = MSVCRT__ctype+1;
         locinfo->pclmap = cloc_clmap;
         locinfo->pcumap = cloc_cumap;
-        if(!init_category_name("C", 1, locinfo, MSVCRT_LC_CTYPE)) {
+        if(!init_category_name("C", 1, locinfo, LC_CTYPE)) {
             free_locinfo(locinfo);
             return NULL;
         }
     }
 
-    if(!category_needs_update(MSVCRT_LC_MONETARY, old_locinfo,
-                lcid[MSVCRT_LC_MONETARY], cp[MSVCRT_LC_MONETARY]) &&
-            !category_needs_update(MSVCRT_LC_NUMERIC, old_locinfo,
-                lcid[MSVCRT_LC_NUMERIC], cp[MSVCRT_LC_NUMERIC])) {
+    if(!category_needs_update(LC_MONETARY, old_locinfo,
+                lcid[LC_MONETARY], cp[LC_MONETARY]) &&
+            !category_needs_update(LC_NUMERIC, old_locinfo,
+                lcid[LC_NUMERIC], cp[LC_NUMERIC])) {
         locinfo->lconv = old_locinfo->lconv;
         locinfo->lconv_intl_refcount = old_locinfo->lconv_intl_refcount;
         if(locinfo->lconv_intl_refcount)
             InterlockedIncrement(locinfo->lconv_intl_refcount);
-    } else if(lcid[MSVCRT_LC_MONETARY] || lcid[MSVCRT_LC_NUMERIC]) {
+    } else if(lcid[LC_MONETARY] || lcid[LC_NUMERIC]) {
         locinfo->lconv = MSVCRT_malloc(sizeof(struct lconv));
         locinfo->lconv_intl_refcount = MSVCRT_malloc(sizeof(int));
         if(!locinfo->lconv || !locinfo->lconv_intl_refcount) {
@@ -1480,16 +1480,16 @@ static pthreadlocinfo create_locinfo(int category,
         locinfo->lconv = &cloc_lconv;
     }
 
-    if(locale_name[MSVCRT_LC_MONETARY] &&
-            !init_category_name(locale_name[MSVCRT_LC_MONETARY],
-                locale_len[MSVCRT_LC_MONETARY], locinfo, MSVCRT_LC_MONETARY)) {
+    if(locale_name[LC_MONETARY] &&
+            !init_category_name(locale_name[LC_MONETARY],
+                locale_len[LC_MONETARY], locinfo, LC_MONETARY)) {
         free_locinfo(locinfo);
         return NULL;
     }
 
-    if(!category_needs_update(MSVCRT_LC_MONETARY, old_locinfo,
-                lcid[MSVCRT_LC_MONETARY], cp[MSVCRT_LC_MONETARY])) {
-        copy_threadlocinfo_category(locinfo, old_locinfo, MSVCRT_LC_MONETARY);
+    if(!category_needs_update(LC_MONETARY, old_locinfo,
+                lcid[LC_MONETARY], cp[LC_MONETARY])) {
+        copy_threadlocinfo_category(locinfo, old_locinfo, LC_MONETARY);
         locinfo->lconv_mon_refcount = old_locinfo->lconv_mon_refcount;
         if(locinfo->lconv_mon_refcount)
             InterlockedIncrement(locinfo->lconv_mon_refcount);
@@ -1518,9 +1518,9 @@ static pthreadlocinfo create_locinfo(int category,
             locinfo->lconv->_W_negative_sign = old_locinfo->lconv->_W_negative_sign;
 #endif
         }
-    } else if(lcid[MSVCRT_LC_MONETARY]) {
-        if(!update_threadlocinfo_category(lcid[MSVCRT_LC_MONETARY],
-                    cp[MSVCRT_LC_MONETARY], locinfo, MSVCRT_LC_MONETARY)) {
+    } else if(lcid[LC_MONETARY]) {
+        if(!update_threadlocinfo_category(lcid[LC_MONETARY],
+                    cp[LC_MONETARY], locinfo, LC_MONETARY)) {
             free_locinfo(locinfo);
             return NULL;
         }
@@ -1533,7 +1533,7 @@ static pthreadlocinfo create_locinfo(int category,
 
         *locinfo->lconv_mon_refcount = 1;
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SINTLSYMBOL
+        i = GetLocaleInfoA(lcid[LC_MONETARY], LOCALE_SINTLSYMBOL
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (locinfo->lconv->int_curr_symbol = MSVCRT_malloc(i)))
             memcpy(locinfo->lconv->int_curr_symbol, buf, i);
@@ -1542,7 +1542,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SCURRENCY
+        i = GetLocaleInfoA(lcid[LC_MONETARY], LOCALE_SCURRENCY
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (locinfo->lconv->currency_symbol = MSVCRT_malloc(i)))
             memcpy(locinfo->lconv->currency_symbol, buf, i);
@@ -1551,7 +1551,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONDECIMALSEP
+        i = GetLocaleInfoA(lcid[LC_MONETARY], LOCALE_SMONDECIMALSEP
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (locinfo->lconv->mon_decimal_point = MSVCRT_malloc(i)))
             memcpy(locinfo->lconv->mon_decimal_point, buf, i);
@@ -1560,7 +1560,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONTHOUSANDSEP
+        i = GetLocaleInfoA(lcid[LC_MONETARY], LOCALE_SMONTHOUSANDSEP
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (locinfo->lconv->mon_thousands_sep = MSVCRT_malloc(i)))
             memcpy(locinfo->lconv->mon_thousands_sep, buf, i);
@@ -1569,7 +1569,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONGROUPING
+        i = GetLocaleInfoA(lcid[LC_MONETARY], LOCALE_SMONGROUPING
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i>1)
             i = i/2 + (buf[i-2]=='0'?0:1);
@@ -1584,7 +1584,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SPOSITIVESIGN
+        i = GetLocaleInfoA(lcid[LC_MONETARY], LOCALE_SPOSITIVESIGN
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (locinfo->lconv->positive_sign = MSVCRT_malloc(i)))
             memcpy(locinfo->lconv->positive_sign, buf, i);
@@ -1593,7 +1593,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SNEGATIVESIGN
+        i = GetLocaleInfoA(lcid[LC_MONETARY], LOCALE_SNEGATIVESIGN
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (locinfo->lconv->negative_sign = MSVCRT_malloc(i)))
             memcpy(locinfo->lconv->negative_sign, buf, i);
@@ -1602,7 +1602,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_IINTLCURRDIGITS
+        if(GetLocaleInfoW(lcid[LC_MONETARY], LOCALE_IINTLCURRDIGITS
                           |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
             locinfo->lconv->int_frac_digits = val;
         else {
@@ -1610,7 +1610,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_ICURRDIGITS
+        if(GetLocaleInfoW(lcid[LC_MONETARY], LOCALE_ICURRDIGITS
                           |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
             locinfo->lconv->frac_digits = val;
         else {
@@ -1618,7 +1618,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSYMPRECEDES
+        if(GetLocaleInfoW(lcid[LC_MONETARY], LOCALE_IPOSSYMPRECEDES
                           |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
             locinfo->lconv->p_cs_precedes = val;
         else {
@@ -1626,7 +1626,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSEPBYSPACE
+        if(GetLocaleInfoW(lcid[LC_MONETARY], LOCALE_IPOSSEPBYSPACE
                           |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
             locinfo->lconv->p_sep_by_space = val;
         else {
@@ -1634,7 +1634,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSYMPRECEDES
+        if(GetLocaleInfoW(lcid[LC_MONETARY], LOCALE_INEGSYMPRECEDES
                           |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
             locinfo->lconv->n_cs_precedes = val;
         else {
@@ -1642,7 +1642,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSEPBYSPACE
+        if(GetLocaleInfoW(lcid[LC_MONETARY], LOCALE_INEGSEPBYSPACE
                           |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
             locinfo->lconv->n_sep_by_space = val;
         else {
@@ -1650,7 +1650,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_IPOSSIGNPOSN
+        if(GetLocaleInfoW(lcid[LC_MONETARY], LOCALE_IPOSSIGNPOSN
                           |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
             locinfo->lconv->p_sign_posn = val;
         else {
@@ -1658,7 +1658,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        if(GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_INEGSIGNPOSN
+        if(GetLocaleInfoW(lcid[LC_MONETARY], LOCALE_INEGSIGNPOSN
                           |LOCALE_NOUSEROVERRIDE|LOCALE_RETURN_NUMBER, (WCHAR *)&val, 2))
             locinfo->lconv->n_sign_posn = val;
         else {
@@ -1667,7 +1667,7 @@ static pthreadlocinfo create_locinfo(int category,
         }
 
 #if _MSVCR_VER >= 100
-        i = GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_SINTLSYMBOL
+        i = GetLocaleInfoW(lcid[LC_MONETARY], LOCALE_SINTLSYMBOL
                 |LOCALE_NOUSEROVERRIDE, wbuf, 256);
         if(i && (locinfo->lconv->_W_int_curr_symbol = MSVCRT_malloc(i * sizeof(wchar_t))))
             memcpy(locinfo->lconv->_W_int_curr_symbol, wbuf, i * sizeof(wchar_t));
@@ -1676,7 +1676,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        i = GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_SCURRENCY
+        i = GetLocaleInfoW(lcid[LC_MONETARY], LOCALE_SCURRENCY
                 |LOCALE_NOUSEROVERRIDE, wbuf, 256);
         if(i && (locinfo->lconv->_W_currency_symbol = MSVCRT_malloc(i * sizeof(wchar_t))))
             memcpy(locinfo->lconv->_W_currency_symbol, wbuf, i * sizeof(wchar_t));
@@ -1685,7 +1685,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        i = GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONDECIMALSEP
+        i = GetLocaleInfoW(lcid[LC_MONETARY], LOCALE_SMONDECIMALSEP
                 |LOCALE_NOUSEROVERRIDE, wbuf, 256);
         if(i && (locinfo->lconv->_W_mon_decimal_point = MSVCRT_malloc(i * sizeof(wchar_t))))
             memcpy(locinfo->lconv->_W_mon_decimal_point, wbuf, i * sizeof(wchar_t));
@@ -1694,7 +1694,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        i = GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONTHOUSANDSEP
+        i = GetLocaleInfoW(lcid[LC_MONETARY], LOCALE_SMONTHOUSANDSEP
                 |LOCALE_NOUSEROVERRIDE, wbuf, 256);
         if(i && (locinfo->lconv->_W_mon_thousands_sep = MSVCRT_malloc(i * sizeof(wchar_t))))
             memcpy(locinfo->lconv->_W_mon_thousands_sep, wbuf, i * sizeof(wchar_t));
@@ -1703,7 +1703,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        i = GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_SPOSITIVESIGN
+        i = GetLocaleInfoW(lcid[LC_MONETARY], LOCALE_SPOSITIVESIGN
                 |LOCALE_NOUSEROVERRIDE, wbuf, 256);
         if(i && (locinfo->lconv->_W_positive_sign = MSVCRT_malloc(i * sizeof(wchar_t))))
             memcpy(locinfo->lconv->_W_positive_sign, wbuf, i * sizeof(wchar_t));
@@ -1712,7 +1712,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        i = GetLocaleInfoW(lcid[MSVCRT_LC_MONETARY], LOCALE_SNEGATIVESIGN
+        i = GetLocaleInfoW(lcid[LC_MONETARY], LOCALE_SNEGATIVESIGN
                 |LOCALE_NOUSEROVERRIDE, wbuf, 256);
         if(i && (locinfo->lconv->_W_negative_sign = MSVCRT_malloc(i * sizeof(wchar_t))))
             memcpy(locinfo->lconv->_W_negative_sign, wbuf, i * sizeof(wchar_t));
@@ -1749,22 +1749,22 @@ static pthreadlocinfo create_locinfo(int category,
 #endif
         }
 
-        if(!init_category_name("C", 1, locinfo, MSVCRT_LC_MONETARY)) {
+        if(!init_category_name("C", 1, locinfo, LC_MONETARY)) {
             free_locinfo(locinfo);
             return NULL;
         }
     }
 
-    if(locale_name[MSVCRT_LC_NUMERIC] &&
-            !init_category_name(locale_name[MSVCRT_LC_NUMERIC],
-                locale_len[MSVCRT_LC_NUMERIC], locinfo, MSVCRT_LC_NUMERIC)) {
+    if(locale_name[LC_NUMERIC] &&
+            !init_category_name(locale_name[LC_NUMERIC],
+                locale_len[LC_NUMERIC], locinfo, LC_NUMERIC)) {
         free_locinfo(locinfo);
         return NULL;
     }
 
-    if(!category_needs_update(MSVCRT_LC_NUMERIC, old_locinfo,
-                lcid[MSVCRT_LC_NUMERIC], cp[MSVCRT_LC_NUMERIC])) {
-        copy_threadlocinfo_category(locinfo, old_locinfo, MSVCRT_LC_NUMERIC);
+    if(!category_needs_update(LC_NUMERIC, old_locinfo,
+                lcid[LC_NUMERIC], cp[LC_NUMERIC])) {
+        copy_threadlocinfo_category(locinfo, old_locinfo, LC_NUMERIC);
         locinfo->lconv_num_refcount = old_locinfo->lconv_num_refcount;
         if(locinfo->lconv_num_refcount)
             InterlockedIncrement(locinfo->lconv_num_refcount);
@@ -1777,9 +1777,9 @@ static pthreadlocinfo create_locinfo(int category,
             locinfo->lconv->_W_thousands_sep = old_locinfo->lconv->_W_thousands_sep;
 #endif
         }
-    } else if(lcid[MSVCRT_LC_NUMERIC]) {
-        if(!update_threadlocinfo_category(lcid[MSVCRT_LC_NUMERIC],
-                    cp[MSVCRT_LC_NUMERIC], locinfo, MSVCRT_LC_NUMERIC)) {
+    } else if(lcid[LC_NUMERIC]) {
+        if(!update_threadlocinfo_category(lcid[LC_NUMERIC],
+                    cp[LC_NUMERIC], locinfo, LC_NUMERIC)) {
             free_locinfo(locinfo);
             return NULL;
         }
@@ -1792,7 +1792,7 @@ static pthreadlocinfo create_locinfo(int category,
 
         *locinfo->lconv_num_refcount = 1;
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_NUMERIC], LOCALE_SDECIMAL
+        i = GetLocaleInfoA(lcid[LC_NUMERIC], LOCALE_SDECIMAL
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (locinfo->lconv->decimal_point = MSVCRT_malloc(i)))
             memcpy(locinfo->lconv->decimal_point, buf, i);
@@ -1801,7 +1801,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_NUMERIC], LOCALE_STHOUSAND
+        i = GetLocaleInfoA(lcid[LC_NUMERIC], LOCALE_STHOUSAND
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i && (locinfo->lconv->thousands_sep = MSVCRT_malloc(i)))
             memcpy(locinfo->lconv->thousands_sep, buf, i);
@@ -1810,7 +1810,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        i = GetLocaleInfoA(lcid[MSVCRT_LC_NUMERIC], LOCALE_SGROUPING
+        i = GetLocaleInfoA(lcid[LC_NUMERIC], LOCALE_SGROUPING
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i>1)
             i = i/2 + (buf[i-2]=='0'?0:1);
@@ -1826,7 +1826,7 @@ static pthreadlocinfo create_locinfo(int category,
         }
 
 #if _MSVCR_VER >= 100
-        i = GetLocaleInfoW(lcid[MSVCRT_LC_NUMERIC], LOCALE_SDECIMAL
+        i = GetLocaleInfoW(lcid[LC_NUMERIC], LOCALE_SDECIMAL
                 |LOCALE_NOUSEROVERRIDE, wbuf, 256);
         if(i && (locinfo->lconv->_W_decimal_point = MSVCRT_malloc(i * sizeof(wchar_t))))
             memcpy(locinfo->lconv->_W_decimal_point, wbuf, i * sizeof(wchar_t));
@@ -1835,7 +1835,7 @@ static pthreadlocinfo create_locinfo(int category,
             return NULL;
         }
 
-        i = GetLocaleInfoW(lcid[MSVCRT_LC_NUMERIC], LOCALE_STHOUSAND
+        i = GetLocaleInfoW(lcid[LC_NUMERIC], LOCALE_STHOUSAND
                 |LOCALE_NOUSEROVERRIDE, wbuf, 256);
         if(i && (locinfo->lconv->_W_thousands_sep = MSVCRT_malloc(i * sizeof(wchar_t))))
             memcpy(locinfo->lconv->_W_thousands_sep, wbuf, i * sizeof(wchar_t));
@@ -1856,38 +1856,38 @@ static pthreadlocinfo create_locinfo(int category,
 #endif
         }
 
-        if (!init_category_name("C", 1, locinfo, MSVCRT_LC_NUMERIC)) {
+        if (!init_category_name("C", 1, locinfo, LC_NUMERIC)) {
             free_locinfo(locinfo);
             return NULL;
         }
     }
 
-    if(locale_name[MSVCRT_LC_TIME] &&
-            !init_category_name(locale_name[MSVCRT_LC_TIME],
-                locale_len[MSVCRT_LC_TIME], locinfo, MSVCRT_LC_TIME)) {
+    if(locale_name[LC_TIME] &&
+            !init_category_name(locale_name[LC_TIME],
+                locale_len[LC_TIME], locinfo, LC_TIME)) {
         free_locinfo(locinfo);
         return NULL;
     }
 
-    if(!category_needs_update(MSVCRT_LC_TIME, old_locinfo,
-                lcid[MSVCRT_LC_TIME], cp[MSVCRT_LC_TIME])) {
-        copy_threadlocinfo_category(locinfo, old_locinfo, MSVCRT_LC_TIME);
+    if(!category_needs_update(LC_TIME, old_locinfo,
+                lcid[LC_TIME], cp[LC_TIME])) {
+        copy_threadlocinfo_category(locinfo, old_locinfo, LC_TIME);
         locinfo->lc_time_curr = old_locinfo->lc_time_curr;
         InterlockedIncrement(&locinfo->lc_time_curr->refcount);
-    } else if(lcid[MSVCRT_LC_TIME]) {
-        if(!update_threadlocinfo_category(lcid[MSVCRT_LC_TIME],
-                    cp[MSVCRT_LC_TIME], locinfo, MSVCRT_LC_TIME)) {
+    } else if(lcid[LC_TIME]) {
+        if(!update_threadlocinfo_category(lcid[LC_TIME],
+                    cp[LC_TIME], locinfo, LC_TIME)) {
             free_locinfo(locinfo);
             return NULL;
         }
 
-        locinfo->lc_time_curr = create_time_data(lcid[MSVCRT_LC_TIME]);
+        locinfo->lc_time_curr = create_time_data(lcid[LC_TIME]);
         if(!locinfo->lc_time_curr) {
             free_locinfo(locinfo);
             return NULL;
         }
     } else {
-        if(!init_category_name("C", 1, locinfo, MSVCRT_LC_TIME)) {
+        if(!init_category_name("C", 1, locinfo, LC_TIME)) {
             free_locinfo(locinfo);
             return NULL;
         }
@@ -1915,8 +1915,8 @@ _locale_t CDECL _create_locale(int category, const char *locale)
         return NULL;
     }
 
-    loc->mbcinfo = create_mbcinfo(loc->locinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage,
-            loc->locinfo->lc_handle[MSVCRT_LC_CTYPE], NULL);
+    loc->mbcinfo = create_mbcinfo(loc->locinfo->lc_id[LC_CTYPE].wCodePage,
+            loc->locinfo->lc_handle[LC_CTYPE], NULL);
     if(!loc->mbcinfo) {
         free_locinfo(loc->locinfo);
         MSVCRT_free(loc);
@@ -1935,7 +1935,7 @@ _locale_t CDECL MSVCRT__wcreate_locale(int category, const wchar_t *locale)
     size_t len;
     char *str;
 
-    if(category<MSVCRT_LC_MIN || category>MSVCRT_LC_MAX || !locale)
+    if(category<LC_MIN || category>LC_MAX || !locale)
         return NULL;
 
     len = MSVCRT_wcstombs(NULL, locale, 0);
@@ -1960,11 +1960,11 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
     thread_data_t *data = msvcrt_get_thread_data();
     pthreadlocinfo locinfo = get_locinfo(), newlocinfo;
 
-    if(category<MSVCRT_LC_MIN || category>MSVCRT_LC_MAX)
+    if(category<LC_MIN || category>LC_MAX)
         return NULL;
 
     if(!locale) {
-        if(category == MSVCRT_LC_ALL)
+        if(category == LC_ALL)
             return construct_lc_all(locinfo);
 
         return locinfo->lc_category[category].locale;
@@ -1997,13 +1997,13 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
         MSVCRT___lc_collate_cp = newlocinfo->lc_collate_cp;
         MSVCRT___mb_cur_max = newlocinfo->mb_cur_max;
         MSVCRT__pctype = newlocinfo->pctype;
-        for(i=MSVCRT_LC_MIN; i<=MSVCRT_LC_MAX; i++)
+        for(i=LC_MIN; i<=LC_MAX; i++)
             MSVCRT___lc_handle[i] = MSVCRT_locale->locinfo->lc_handle[i];
         _unlock_locales();
         update_thread_locale(data);
     }
 
-    if(category == MSVCRT_LC_ALL)
+    if(category == LC_ALL)
         return construct_lc_all(data->locinfo);
 
     return data->locinfo->lc_category[category].locale;
@@ -2080,7 +2080,7 @@ BOOL msvcrt_init_locale(void)
     MSVCRT___lc_collate_cp = MSVCRT_locale->locinfo->lc_collate_cp;
     MSVCRT___mb_cur_max = MSVCRT_locale->locinfo->mb_cur_max;
     MSVCRT__pctype = MSVCRT_locale->locinfo->pctype;
-    for(i=MSVCRT_LC_MIN; i<=MSVCRT_LC_MAX; i++)
+    for(i=LC_MIN; i<=LC_MAX; i++)
         MSVCRT___lc_handle[i] = MSVCRT_locale->locinfo->lc_handle[i];
     _setmbcp(_MB_CP_ANSI);
     return TRUE;
