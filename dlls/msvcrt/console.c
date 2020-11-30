@@ -564,7 +564,7 @@ int WINAPIV _cwprintf(const wchar_t* format, ...)
 /*********************************************************************
  *		__conio_common_vcprintf (UCRTBASE.@)
  */
-int CDECL MSVCRT__conio_common_vcprintf(unsigned __int64 options, const char* format,
+int CDECL __conio_common_vcprintf(unsigned __int64 options, const char* format,
                                         _locale_t locale, __ms_va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)
@@ -576,7 +576,7 @@ int CDECL MSVCRT__conio_common_vcprintf(unsigned __int64 options, const char* fo
 /*********************************************************************
  *		__conio_common_vcwprintf (UCRTBASE.@)
  */
-int CDECL MSVCRT__conio_common_vcwprintf(unsigned __int64 options, const wchar_t* format,
+int CDECL __conio_common_vcwprintf(unsigned __int64 options, const wchar_t* format,
                                          _locale_t locale, __ms_va_list valist)
 {
     if (options & ~UCRTBASE_PRINTF_MASK)

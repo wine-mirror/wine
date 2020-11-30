@@ -73,11 +73,11 @@
 @ cdecl ___mb_cur_max_func() MSVCRT____mb_cur_max_func
 @ cdecl ___mb_cur_max_l_func(ptr)
 @ cdecl __acrt_iob_func(long) MSVCRT___acrt_iob_func
-@ cdecl __conio_common_vcprintf(int64 str ptr ptr) MSVCRT__conio_common_vcprintf
+@ cdecl __conio_common_vcprintf(int64 str ptr ptr)
 @ stub __conio_common_vcprintf_p
 @ stub __conio_common_vcprintf_s
 @ stub __conio_common_vcscanf
-@ cdecl __conio_common_vcwprintf(int64 wstr ptr ptr) MSVCRT__conio_common_vcwprintf
+@ cdecl __conio_common_vcwprintf(int64 wstr ptr ptr) __conio_common_vcwprintf
 @ stub __conio_common_vcwprintf_p
 @ stub __conio_common_vcwprintf_s
 @ stub __conio_common_vcwscanf
@@ -759,11 +759,11 @@
 @ cdecl _o____lc_locale_name_func() ___lc_locale_name_func
 @ cdecl _o____mb_cur_max_func() MSVCRT____mb_cur_max_func
 @ cdecl _o___acrt_iob_func(long) MSVCRT___acrt_iob_func
-@ cdecl _o___conio_common_vcprintf(int64 str ptr ptr) MSVCRT__conio_common_vcprintf
+@ cdecl _o___conio_common_vcprintf(int64 str ptr ptr) __conio_common_vcprintf
 @ stub _o___conio_common_vcprintf_p
 @ stub _o___conio_common_vcprintf_s
 @ stub _o___conio_common_vcscanf
-@ cdecl _o___conio_common_vcwprintf(int64 wstr ptr ptr) MSVCRT__conio_common_vcwprintf
+@ cdecl _o___conio_common_vcwprintf(int64 wstr ptr ptr) __conio_common_vcwprintf
 @ stub _o___conio_common_vcwprintf_p
 @ stub _o___conio_common_vcwprintf_s
 @ stub _o___conio_common_vcwscanf
