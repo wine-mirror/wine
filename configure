@@ -1244,6 +1244,7 @@ enable_davclnt
 enable_dbgeng
 enable_dbghelp
 enable_dciman32
+enable_dcomp
 enable_ddraw
 enable_ddrawex
 enable_devenum
@@ -20214,6 +20215,7 @@ wine_fn_config_makefile dlls/dbgeng/tests enable_tests
 wine_fn_config_makefile dlls/dbghelp enable_dbghelp
 wine_fn_config_makefile dlls/dbghelp/tests enable_tests
 wine_fn_config_makefile dlls/dciman32 enable_dciman32
+wine_fn_config_makefile dlls/dcomp enable_dcomp
 wine_fn_config_makefile dlls/ddeml.dll16 enable_win16
 wine_fn_config_makefile dlls/ddraw enable_ddraw
 wine_fn_config_makefile dlls/ddraw/tests enable_tests
