@@ -374,8 +374,8 @@ static BOOL init(void)
 static void test_wmemcpy_s(void)
 {
     static wchar_t dest[8], buf[32];
-    static const wchar_t tiny[] = {'T',0,'I','N','Y',0};
-    static const wchar_t big[] = {'a','t','o','o','l','o','n','g','s','t','r','i','n','g',0};
+    static const wchar_t tiny[] = L"T\0INY";
+    static const wchar_t big[] = L"atoolongstring";
     const wchar_t XX = 0x5858;     /* two 'X' bytes */
     int ret;
 
@@ -455,8 +455,8 @@ static void test_wmemcpy_s(void)
 static void test_wmemmove_s(void)
 {
     static wchar_t dest[8];
-    static const wchar_t tiny[] = {'T',0,'I','N','Y',0};
-    static const wchar_t big[] = {'a','t','o','o','l','o','n','g','s','t','r','i','n','g',0};
+    static const wchar_t tiny[] = L"T\0INY";
+    static const wchar_t big[] = L"atoolongstring";
     const wchar_t XX = 0x5858;     /* two 'X' bytes */
     int ret;
 
