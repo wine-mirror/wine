@@ -1540,6 +1540,8 @@ struct wined3d_bo_gl
     GLuint id;
     GLenum binding;
     GLenum usage;
+
+    uint64_t command_fence_id;
 };
 
 static inline GLuint wined3d_bo_gl_id(uintptr_t bo)
@@ -1842,6 +1844,8 @@ void wined3d_fence_destroy(struct wined3d_fence *fence) DECLSPEC_HIDDEN;
 void wined3d_fence_issue(struct wined3d_fence *fence, struct wined3d_device *device) DECLSPEC_HIDDEN;
 enum wined3d_fence_result wined3d_fence_wait(const struct wined3d_fence *fence,
         struct wined3d_device *device) DECLSPEC_HIDDEN;
+enum wined3d_fence_result wined3d_fence_test(const struct wined3d_fence *fence,
+        struct wined3d_device *device, DWORD flags) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued
  * state because only the driver knows about it, but we have a created state
@@ -2105,10 +2109,6 @@ struct wined3d_context
 
     struct wined3d_stream_info stream_info;
 
-    /* Fences for GL_APPLE_flush_buffer_range */
-    struct wined3d_fence *buffer_fences[MAX_ATTRIBS];
-    unsigned int buffer_fence_count;
-
     unsigned int viewport_count;
     unsigned int scissor_rect_count;
 };
@@ -2126,6 +2126,12 @@ void context_update_stream_info(struct wined3d_context *context, const struct wi
 
 HRESULT wined3d_context_no3d_init(struct wined3d_context *context_no3d,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
+
+struct wined3d_command_fence_gl
+{
+    uint64_t id;
+    struct wined3d_fence *fence;
+};
 
 struct wined3d_context_gl
 {
@@ -2214,6 +2220,13 @@ struct wined3d_context_gl
     GLfloat colour[4], fog_start, fog_end, fog_colour[4];
 
     GLuint dummy_arbfp_prog;
+
+    struct
+    {
+        struct wined3d_command_fence_gl *fences;
+        SIZE_T fences_size;
+        SIZE_T fence_count;
+    } submitted;
 };
 
 static inline struct wined3d_context_gl *wined3d_context_gl(struct wined3d_context *context)
@@ -2287,6 +2300,7 @@ struct wined3d_context_gl *wined3d_context_gl_reacquire(struct wined3d_context_g
 void wined3d_context_gl_release(struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
 BOOL wined3d_context_gl_set_current(struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
 void wined3d_context_gl_set_draw_buffer(struct wined3d_context_gl *context_gl, GLenum buffer) DECLSPEC_HIDDEN;
+void wined3d_context_gl_submit_command_fence(struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
 void wined3d_context_gl_texture_update(struct wined3d_context_gl *context_gl,
         const struct wined3d_texture_gl *texture_gl) DECLSPEC_HIDDEN;
 void wined3d_context_gl_unload_tex_coords(const struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
@@ -2294,6 +2308,7 @@ void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl, 
         unsigned int range_count, const struct wined3d_range *ranges) DECLSPEC_HIDDEN;
 void wined3d_context_gl_update_stream_sources(struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state) DECLSPEC_HIDDEN;
+void wined3d_context_gl_wait_command_fence(struct wined3d_context_gl *context_gl, uint64_t id) DECLSPEC_HIDDEN;
 
 struct wined3d_command_buffer_vk
 {
@@ -3803,6 +3818,9 @@ struct wined3d_device_gl
 
     /* Textures for when no other textures are bound. */
     struct wined3d_dummy_textures dummy_textures;
+
+    uint64_t completed_fence_id;
+    uint64_t current_fence_id;
 };
 
 static inline struct wined3d_device_gl *wined3d_device_gl(struct wined3d_device *device)
@@ -4789,7 +4807,6 @@ struct wined3d_buffer
 
     struct wined3d_range *maps;
     SIZE_T maps_size, modified_areas;
-    struct wined3d_fence *fence;
 
     /* conversion stuff */
     UINT decl_change_count, full_conversion_count;
@@ -6296,6 +6313,13 @@ static inline bool wined3d_primitive_type_is_list(enum wined3d_primitive_type t)
             || t == WINED3D_PT_LINELIST_ADJ
             || t == WINED3D_PT_TRIANGLELIST_ADJ
             || t == WINED3D_PT_PATCH;
+}
+
+static inline void wined3d_context_gl_reference_bo(struct wined3d_context_gl *context_gl, struct wined3d_bo_gl *bo_gl)
+{
+    struct wined3d_device_gl *device_gl = wined3d_device_gl(context_gl->c.device);
+
+    bo_gl->command_fence_id = device_gl->current_fence_id;
 }
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */

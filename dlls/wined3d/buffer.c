@@ -187,11 +187,6 @@ static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *bu
     wined3d_context_gl_destroy_bo(context_gl, &buffer_gl->bo);
     buffer_gl->b.buffer_object = 0;
 
-    if (buffer_gl->b.fence)
-    {
-        wined3d_fence_destroy(buffer_gl->b.fence);
-        buffer_gl->b.fence = NULL;
-    }
     buffer_gl->b.flags &= ~WINED3D_BUFFER_APPLESYNC;
 }
 
@@ -746,9 +741,9 @@ void * CDECL wined3d_buffer_get_parent(const struct wined3d_buffer *buffer)
 static void wined3d_buffer_gl_sync_apple(struct wined3d_buffer_gl *buffer_gl,
         uint32_t flags, struct wined3d_context_gl *context_gl)
 {
+    struct wined3d_device_gl *device_gl = wined3d_device_gl(buffer_gl->b.resource.device);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    enum wined3d_fence_result ret;
-    HRESULT hr;
+    struct wined3d_bo_gl *bo = &buffer_gl->bo;
 
     /* No fencing needs to be done if the app promises not to overwrite
      * existing data. */
@@ -759,59 +754,17 @@ static void wined3d_buffer_gl_sync_apple(struct wined3d_buffer_gl *buffer_gl,
     {
         wined3d_buffer_gl_bind(buffer_gl, context_gl);
 
-        GL_EXTCALL(glBufferData(buffer_gl->bo.binding, buffer_gl->b.resource.size, NULL, buffer_gl->bo.usage));
+        GL_EXTCALL(glBufferData(bo->binding, buffer_gl->b.resource.size, NULL, bo->usage));
         checkGLcall("glBufferData");
-        return;
-    }
-
-    if (!buffer_gl->b.fence)
-    {
-        TRACE("Creating fence for buffer %p.\n", buffer_gl);
-
-        if (FAILED(hr = wined3d_fence_create(buffer_gl->b.resource.device, &buffer_gl->b.fence)))
-        {
-            if (hr == WINED3DERR_NOTAVAILABLE)
-                FIXME("Fences not supported, dropping async buffer locks.\n");
-            else
-                ERR("Failed to create fence, hr %#x.\n", hr);
-            goto drop_fence;
-        }
-
-        /* Since we don't know about old draws a glFinish is needed once */
-        gl_info->gl_ops.gl.p_glFinish();
+        bo->command_fence_id = 0;
         return;
     }
 
     TRACE("Synchronizing buffer %p.\n", buffer_gl);
-    ret = wined3d_fence_wait(buffer_gl->b.fence, buffer_gl->b.resource.device);
-    switch (ret)
-    {
-        case WINED3D_FENCE_NOT_STARTED:
-        case WINED3D_FENCE_OK:
-            /* All done */
-            return;
 
-        case WINED3D_FENCE_WRONG_THREAD:
-            WARN("Cannot synchronize buffer lock due to a thread conflict.\n");
-            goto drop_fence;
-
-        default:
-            ERR("wined3d_fence_wait() returned %u, dropping async buffer locks.\n", ret);
-            goto drop_fence;
-    }
-
-drop_fence:
-    if (buffer_gl->b.fence)
-    {
-        wined3d_fence_destroy(buffer_gl->b.fence);
-        buffer_gl->b.fence = NULL;
-    }
-
-    gl_info->gl_ops.gl.p_glFinish();
-    wined3d_buffer_gl_bind(buffer_gl, context_gl);
-    GL_EXTCALL(glBufferParameteriAPPLE(buffer_gl->bo.binding, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE));
-    checkGLcall("glBufferParameteriAPPLE(buffer_gl->buffer_type_hint, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_TRUE)");
-    buffer_gl->b.flags &= ~WINED3D_BUFFER_APPLESYNC;
+    if (bo->command_fence_id == device_gl->current_fence_id)
+        wined3d_context_gl_submit_command_fence(context_gl);
+    wined3d_context_gl_wait_command_fence(context_gl, bo->command_fence_id);
 }
 
 static void buffer_mark_used(struct wined3d_buffer *buffer)

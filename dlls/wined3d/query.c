@@ -180,7 +180,7 @@ static BOOL wined3d_fence_supported(const struct wined3d_gl_info *gl_info)
     return gl_info->supported[ARB_SYNC] || gl_info->supported[NV_FENCE] || gl_info->supported[APPLE_FENCE];
 }
 
-static enum wined3d_fence_result wined3d_fence_test(const struct wined3d_fence *fence,
+enum wined3d_fence_result wined3d_fence_test(const struct wined3d_fence *fence,
         struct wined3d_device *device, DWORD flags)
 {
     const struct wined3d_gl_info *gl_info;

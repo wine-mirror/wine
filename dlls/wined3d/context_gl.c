@@ -1374,6 +1374,10 @@ static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
 
     if (context_gl->valid)
     {
+        wined3d_context_gl_submit_command_fence(context_gl);
+        wined3d_context_gl_wait_command_fence(context_gl,
+                wined3d_device_gl(context_gl->c.device)->current_fence_id - 1);
+
         if (context_gl->dummy_arbfp_prog)
             GL_EXTCALL(glDeleteProgramsARB(1, &context_gl->dummy_arbfp_prog));
 
@@ -1422,6 +1426,7 @@ static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
 
         checkGLcall("context cleanup");
     }
+    heap_free(context_gl->submitted.fences);
     heap_free(context_gl->free_pipeline_statistics_queries);
     heap_free(context_gl->free_so_statistics_queries);
     heap_free(context_gl->free_timestamp_queries);
@@ -2571,6 +2576,80 @@ void wined3d_context_gl_bind_texture(struct wined3d_context_gl *context_gl, GLen
     checkGLcall("bind texture");
 }
 
+static void wined3d_context_gl_poll_fences(struct wined3d_context_gl *context_gl)
+{
+    struct wined3d_device_gl *device_gl = wined3d_device_gl(context_gl->c.device);
+    struct wined3d_command_fence_gl *f;
+    SIZE_T i;
+
+    for (i = 0; i < context_gl->submitted.fence_count; ++i)
+    {
+        f = &context_gl->submitted.fences[i];
+
+        if (f->id > device_gl->completed_fence_id)
+        {
+            if (wined3d_fence_test(f->fence, &device_gl->d, 0) != WINED3D_FENCE_OK)
+                continue;
+            device_gl->completed_fence_id = f->id;
+        }
+
+        wined3d_fence_destroy(f->fence);
+        if (i != context_gl->submitted.fence_count - 1)
+            *f = context_gl->submitted.fences[context_gl->submitted.fence_count - 1];
+        --context_gl->submitted.fence_count;
+    }
+}
+
+void wined3d_context_gl_wait_command_fence(struct wined3d_context_gl *context_gl, uint64_t id)
+{
+    struct wined3d_device_gl *device_gl = wined3d_device_gl(context_gl->c.device);
+    enum wined3d_fence_result ret;
+    SIZE_T i;
+
+    if (id <= device_gl->completed_fence_id
+            || id > device_gl->current_fence_id) /* In case the fence ID wrapped. */
+        return;
+
+    for (i = 0; i < context_gl->submitted.fence_count; ++i)
+    {
+        if (context_gl->submitted.fences[i].id != id)
+            continue;
+
+        if ((ret = wined3d_fence_wait(context_gl->submitted.fences[i].fence, &device_gl->d)) != WINED3D_FENCE_OK)
+            ERR("Failed to wait for command fence with id 0x%s, ret %#x.\n", wine_dbgstr_longlong(id), ret);
+        wined3d_context_gl_poll_fences(context_gl);
+        return;
+    }
+
+    ERR("Failed to find fence for command fence with id 0x%s.\n", wine_dbgstr_longlong(id));
+}
+
+void wined3d_context_gl_submit_command_fence(struct wined3d_context_gl *context_gl)
+{
+    struct wined3d_device_gl *device_gl = wined3d_device_gl(context_gl->c.device);
+    struct wined3d_command_fence_gl *f;
+    HRESULT hr;
+
+    if (!wined3d_array_reserve((void **)&context_gl->submitted.fences, &context_gl->submitted.fences_size,
+            context_gl->submitted.fence_count + 1, sizeof(*context_gl->submitted.fences)))
+        ERR("Failed to grow submitted command buffer array.\n");
+
+    f = &context_gl->submitted.fences[context_gl->submitted.fence_count++];
+    f->id = device_gl->current_fence_id;
+    if (FAILED(hr = wined3d_fence_create(&device_gl->d, &f->fence)))
+        ERR("Failed to create fence, hr %#x.\n", hr);
+    wined3d_fence_issue(f->fence, &device_gl->d);
+
+    /* We don't expect this to ever happen, but handle it anyway. */
+    if (!++device_gl->current_fence_id)
+    {
+        wined3d_context_gl_wait_command_fence(context_gl, device_gl->current_fence_id - 1);
+        device_gl->completed_fence_id = 0;
+        device_gl->current_fence_id = 1;
+    }
+    wined3d_context_gl_poll_fences(context_gl);
+}
+
 void *wined3d_context_gl_map_bo_address(struct wined3d_context_gl *context_gl,
         const struct wined3d_bo_address *data, size_t size, uint32_t flags)
 {
@@ -2728,6 +2807,8 @@ bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizei
     bo->id = id;
     bo->binding = binding;
     bo->usage = usage;
+    bo->command_fence_id = 0;
+
     return true;
 }
 
@@ -3605,7 +3686,7 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     const struct wined3d_fb_state *fb = &state->fb;
     unsigned int i, base;
-    WORD map;
+    uint32_t map;
 
     context->uses_fbo_attached_resources = 0;
 
@@ -3638,24 +3719,36 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
     {
         context_update_stream_info(context, state);
     }
-    else
+
+    map = context->stream_info.use_map;
+    while (map)
     {
-        for (i = 0, map = context->stream_info.use_map; map; map >>= 1, ++i)
-        {
-            if (map & 1)
-                wined3d_buffer_load(state->streams[context->stream_info.elements[i].stream_idx].buffer,
-                        context, state);
-        }
-        /* Loading the buffers above may have invalidated the stream info. */
-        if (isStateDirty(context, STATE_STREAMSRC))
-            context_update_stream_info(context, state);
+        const struct wined3d_stream_info_element *e;
+        struct wined3d_buffer_gl *buffer_gl;
+
+        e = &context->stream_info.elements[wined3d_bit_scan(&map)];
+        buffer_gl = wined3d_buffer_gl(state->streams[e->stream_idx].buffer);
+
+        wined3d_buffer_load(&buffer_gl->b, context, state);
+        wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
     }
+    /* Loading the buffers above may have invalidated the stream info. */
+    if (wined3d_context_is_graphics_state_dirty(context, STATE_STREAMSRC))
+        context_update_stream_info(context, state);
+
     if (indexed && state->index_buffer)
     {
+        struct wined3d_buffer_gl *buffer_gl = wined3d_buffer_gl(state->index_buffer);
+
         if (context->stream_info.all_vbo)
-            wined3d_buffer_load(state->index_buffer, context, state);
+        {
+            wined3d_buffer_load(&buffer_gl->b, context, state);
+            wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
+        }
         else
-            wined3d_buffer_load_sysmem(state->index_buffer, context);
+        {
+            wined3d_buffer_load_sysmem(&buffer_gl->b, context);
+        }
     }
 
     for (i = 0, base = 0; i < ARRAY_SIZE(context->dirty_graphics_states); ++i)
@@ -4475,7 +4568,6 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     const struct wined3d_stream_info *stream_info;
     struct wined3d_rendertarget_view *dsv, *rtv;
     struct wined3d_stream_info si_emulated;
-    struct wined3d_fence *ib_fence = NULL;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
     struct wined3d_context *context;
@@ -4573,14 +4665,9 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
     {
         struct wined3d_buffer *index_buffer = state->index_buffer;
         if (!index_buffer->buffer_object || !stream_info->all_vbo)
-        {
             idx_data = index_buffer->resource.heap_memory;
-        }
         else
-        {
-            ib_fence = index_buffer->fence;
             idx_data = NULL;
-        }
         idx_data = (const BYTE *)idx_data + state->index_offset;
 
         if (state->index_format == WINED3DFMT_R16_UINT)
@@ -4718,11 +4805,6 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         glDisable(GL_RASTERIZER_DISCARD);
         checkGLcall("disable rasterizer discard");
     }
-
-    if (ib_fence)
-        wined3d_fence_issue(ib_fence, device);
-    for (i = 0; i < context->buffer_fence_count; ++i)
-        wined3d_fence_issue(context->buffer_fences[i], device);
 
     context_release(context);
 

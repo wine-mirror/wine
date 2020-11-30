@@ -271,7 +271,6 @@ void context_update_stream_info(struct wined3d_context *context, const struct wi
     wined3d_stream_info_from_declaration(stream_info, state, d3d_info);
 
     stream_info->all_vbo = 1;
-    context->buffer_fence_count = 0;
     for (i = 0, map = stream_info->use_map; map; map >>= 1, ++i)
     {
         struct wined3d_stream_info_element *element;
@@ -311,9 +310,6 @@ void context_update_stream_info(struct wined3d_context *context, const struct wi
 
         if (!element->data.buffer_object)
             stream_info->all_vbo = 0;
-
-        if (buffer->fence)
-            context->buffer_fences[context->buffer_fence_count++] = buffer->fence;
 
         TRACE("Load array %u %s.\n", i, debug_bo_address(&element->data));
     }

@@ -559,6 +559,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
 
     /* call wglSwapBuffers through the gl table to avoid confusing the Steam overlay */
     gl_info->gl_ops.wgl.p_wglSwapBuffers(context_gl->dc);
+    wined3d_context_gl_submit_command_fence(context_gl);
 
     wined3d_swapchain_gl_rotate(swapchain, context);
 
