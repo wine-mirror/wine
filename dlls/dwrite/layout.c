@@ -5080,9 +5080,6 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
     layout->format.wrapping = IDWriteTextFormat_GetWordWrapping(format);
     layout->format.readingdir = IDWriteTextFormat_GetReadingDirection(format);
     layout->format.flow = IDWriteTextFormat_GetFlowDirection(format);
-    layout->format.fallback = NULL;
-    layout->format.spacing.leadingBefore = 0.0f;
-    layout->format.spacing.fontLineGapUsage = DWRITE_FONT_LINE_GAP_USAGE_DEFAULT;
     hr = IDWriteTextFormat_GetLineSpacing(format, &layout->format.spacing.method,
         &layout->format.spacing.height, &layout->format.spacing.baseline);
     if (FAILED(hr))
@@ -5115,7 +5112,8 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
     layout->format.family_len = len;
 
     hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat1, (void**)&format1);
-    if (hr == S_OK) {
+    if (hr == S_OK)
+    {
         IDWriteTextFormat2 *format2;
 
         layout->format.vertical_orientation = IDWriteTextFormat1_GetVerticalGlyphOrientation(format1);
@@ -5128,10 +5126,6 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
         }
 
         IDWriteTextFormat1_Release(format1);
-    }
-    else {
-        layout->format.vertical_orientation = DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT;
-        layout->format.optical_alignment = DWRITE_OPTICAL_ALIGNMENT_NONE;
     }
 
     hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat3, (void **)&format3);
@@ -5157,14 +5151,6 @@ static HRESULT init_textlayout(const struct textlayout_desc *desc, struct dwrite
     layout->refcount = 1;
     layout->len = desc->length;
     layout->recompute = RECOMPUTE_EVERYTHING;
-    layout->nominal_breakpoints = NULL;
-    layout->actual_breakpoints = NULL;
-    layout->cluster_count = 0;
-    layout->clustermetrics = NULL;
-    layout->clusters = NULL;
-    layout->lines = NULL;
-    layout->lines_size = 0;
-    layout->minwidth = 0.0f;
     list_init(&layout->eruns);
     list_init(&layout->inlineobjects);
     list_init(&layout->underlines);
@@ -5176,14 +5162,8 @@ static HRESULT init_textlayout(const struct textlayout_desc *desc, struct dwrite
     list_init(&layout->effects);
     list_init(&layout->spacing);
     list_init(&layout->typographies);
-    memset(&layout->format, 0, sizeof(layout->format));
-    memset(&layout->metrics, 0, sizeof(layout->metrics));
     layout->metrics.layoutWidth = desc->max_width;
     layout->metrics.layoutHeight = desc->max_height;
-    layout->measuringmode = DWRITE_MEASURING_MODE_NATURAL;
-
-    layout->ppdip = 0.0f;
-    memset(&layout->transform, 0, sizeof(layout->transform));
 
     layout->str = heap_strdupnW(desc->string, desc->length);
     if (desc->length && !layout->str) {
@@ -5212,10 +5192,8 @@ static HRESULT init_textlayout(const struct textlayout_desc *desc, struct dwrite
         goto fail;
     }
 
-    if (desc->is_gdi_compatible)
-        layout->measuringmode = desc->use_gdi_natural ? DWRITE_MEASURING_MODE_GDI_NATURAL : DWRITE_MEASURING_MODE_GDI_CLASSIC;
-    else
-        layout->measuringmode = DWRITE_MEASURING_MODE_NATURAL;
+    layout->measuringmode = desc->is_gdi_compatible ? (desc->use_gdi_natural ? DWRITE_MEASURING_MODE_GDI_NATURAL :
+            DWRITE_MEASURING_MODE_GDI_CLASSIC) : DWRITE_MEASURING_MODE_NATURAL;
     layout->ppdip = desc->ppdip;
     layout->transform = desc->transform ? *desc->transform : identity;
 
@@ -5234,22 +5212,22 @@ fail:
     return hr;
 }
 
-HRESULT create_textlayout(const struct textlayout_desc *desc, IDWriteTextLayout **ret)
+HRESULT create_textlayout(const struct textlayout_desc *desc, IDWriteTextLayout **layout)
 {
-    struct dwrite_textlayout *layout;
+    struct dwrite_textlayout *object;
     HRESULT hr;
 
-    *ret = NULL;
+    *layout = NULL;
 
     if (!desc->format || !desc->string)
         return E_INVALIDARG;
 
-    layout = heap_alloc(sizeof(struct dwrite_textlayout));
-    if (!layout) return E_OUTOFMEMORY;
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    hr = init_textlayout(desc, layout);
+    hr = init_textlayout(desc, object);
     if (hr == S_OK)
-        *ret = (IDWriteTextLayout *)&layout->IDWriteTextLayout4_iface;
+        *layout = (IDWriteTextLayout *)&object->IDWriteTextLayout4_iface;
 
     return hr;
 }
