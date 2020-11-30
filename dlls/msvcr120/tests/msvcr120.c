@@ -584,9 +584,6 @@ static void test__strtof(void)
     const char float3[] = "-3.402823466e+38";
     const char float4[] = "1.7976931348623158e+308";  /* DBL_MAX */
 
-    const WCHAR twelve[] = {'1','2','.','0',0};
-    const WCHAR arabic23[] = { 0x662, 0x663, 0};
-
     char *end;
     float f;
 
@@ -621,10 +618,10 @@ static void test__strtof(void)
     f = p_strtof("0x12", NULL);
     ok(f == 0, "f = %lf\n", f);
 
-    f = p_wcstof(twelve, NULL);
+    f = p_wcstof(L"12.0", NULL);
     ok(f == 12.0, "f = %lf\n", f);
 
-    f = p_wcstof(arabic23, NULL);
+    f = p_wcstof(L"\x0662\x0663", NULL);
     ok(f == 0, "f = %lf\n", f);
 
     if(!p_setlocale(LC_ALL, "Arabic")) {
@@ -632,10 +629,10 @@ static void test__strtof(void)
         return;
     }
 
-    f = p_wcstof(twelve, NULL);
+    f = p_wcstof(L"12.0", NULL);
     ok(f == 12.0, "f = %lf\n", f);
 
-    f = p_wcstof(arabic23, NULL);
+    f = p_wcstof(L"\x0662\x0663", NULL);
     ok(f == 0, "f = %lf\n", f);
 
     p_setlocale(LC_ALL, "C");
@@ -807,22 +804,19 @@ static void test_feenv(void)
 
 static void test__wcreate_locale(void)
 {
-    static const wchar_t c_locale[] = {'C',0};
-    static const wchar_t bogus[] = {'b','o','g','u','s',0};
-    static const wchar_t empty[] = {0};
     _locale_t lcl;
     errno_t e;
 
     /* simple success */
     errno = -1;
-    lcl = p_wcreate_locale(LC_ALL, c_locale);
+    lcl = p_wcreate_locale(LC_ALL, L"C");
     e = errno;
     ok(!!lcl, "expected success, but got NULL\n");
     ok(errno == -1, "expected errno -1, but got %i\n", e);
     p_free_locale(lcl);
 
     errno = -1;
-    lcl = p_wcreate_locale(LC_ALL, empty);
+    lcl = p_wcreate_locale(LC_ALL, L"");
     e = errno;
     ok(!!lcl, "expected success, but got NULL\n");
     ok(errno == -1, "expected errno -1, but got %i\n", e);
@@ -830,14 +824,14 @@ static void test__wcreate_locale(void)
 
     /* bogus category */
     errno = -1;
-    lcl = p_wcreate_locale(-1, c_locale);
+    lcl = p_wcreate_locale(-1, L"C");
     e = errno;
     ok(!lcl, "expected failure, but got %p\n", lcl);
     ok(errno == -1, "expected errno -1, but got %i\n", e);
 
     /* bogus names */
     errno = -1;
-    lcl = p_wcreate_locale(LC_ALL, bogus);
+    lcl = p_wcreate_locale(LC_ALL, L"bogus");
     e = errno;
     ok(!lcl, "expected failure, but got %p\n", lcl);
     ok(errno == -1, "expected errno -1, but got %i\n", e);
