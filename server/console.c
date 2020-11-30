@@ -1476,6 +1476,8 @@ DECL_HANDLER(get_next_console_request)
         return;
     }
 
+    if (!server->console->renderer) server->console->renderer = current;
+
     if (!req->signal) server->console->signaled = 0;
     else if (!server->console->signaled)
     {
