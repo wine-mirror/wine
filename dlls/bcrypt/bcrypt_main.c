@@ -799,7 +799,7 @@ NTSTATUS WINAPI BCryptCreateHash( BCRYPT_ALG_HANDLE algorithm, BCRYPT_HASH_HANDL
     struct hash *hash;
     NTSTATUS status;
 
-    TRACE( "%p, %p, %p, %u, %p, %u, %08x - stub\n", algorithm, handle, object, object_len,
+    TRACE( "%p, %p, %p, %u, %p, %u, %08x\n", algorithm, handle, object, object_len,
            secret, secret_len, flags );
     if (flags & ~BCRYPT_HASH_REUSABLE_FLAG)
     {
