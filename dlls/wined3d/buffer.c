@@ -142,7 +142,6 @@ static void wined3d_buffer_gl_bind(struct wined3d_buffer_gl *buffer_gl, struct w
 static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *buffer_gl,
         struct wined3d_context_gl *context_gl)
 {
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_resource *resource = &buffer_gl->b.resource;
     struct wined3d_buffer *buffer = &buffer_gl->b;
     struct wined3d_cs *cs = resource->device->cs;
@@ -185,10 +184,8 @@ static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *bu
         }
     }
 
-    GL_EXTCALL(glDeleteBuffers(1, &buffer_gl->bo.id));
-    checkGLcall("glDeleteBuffers");
+    wined3d_context_gl_destroy_bo(context_gl, &buffer_gl->bo);
     buffer_gl->b.buffer_object = 0;
-    buffer_gl->bo.id = 0;
 
     if (buffer_gl->b.fence)
     {

@@ -751,18 +751,14 @@ void wined3d_texture_get_memory(struct wined3d_texture *texture, unsigned int su
 
 /* Context activation is done by the caller. */
 static void wined3d_texture_remove_buffer_object(struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, const struct wined3d_gl_info *gl_info)
+        unsigned int sub_resource_idx, struct wined3d_context_gl *context_gl)
 {
     struct wined3d_bo_gl *bo = &texture->sub_resources[sub_resource_idx].bo;
 
-    GL_EXTCALL(glDeleteBuffers(1, &bo->id));
-    checkGLcall("glDeleteBuffers");
+    TRACE("texture %p, sub_resource_idx %u, context_gl %p.\n", texture, sub_resource_idx, context_gl);
 
-    TRACE("Deleted buffer object %u for texture %p, sub-resource %u.\n",
-            bo->id, texture, sub_resource_idx);
-
+    wined3d_context_gl_destroy_bo(context_gl, bo);
     wined3d_texture_invalidate_location(texture, sub_resource_idx, WINED3D_LOCATION_BUFFER);
-    bo->id = 0;
 }
 
 static void wined3d_texture_update_map_binding(struct wined3d_texture *texture)
@@ -781,7 +777,7 @@ static void wined3d_texture_update_map_binding(struct wined3d_texture *texture)
                 && !wined3d_texture_load_location(texture, i, context, map_binding))
             ERR("Failed to load location %s.\n", wined3d_debug_location(map_binding));
         if (texture->resource.map_binding == WINED3D_LOCATION_BUFFER)
-            wined3d_texture_remove_buffer_object(texture, i, wined3d_context_gl(context)->gl_info);
+            wined3d_texture_remove_buffer_object(texture, i, wined3d_context_gl(context));
     }
 
     context_release(context);
@@ -3223,7 +3219,7 @@ static void wined3d_texture_gl_unload_location(struct wined3d_texture *texture,
             for (i = 0; i < sub_count; ++i)
             {
                 if (texture_gl->t.sub_resources[i].bo.id)
-                    wined3d_texture_remove_buffer_object(&texture_gl->t, i, context_gl->gl_info);
+                    wined3d_texture_remove_buffer_object(&texture_gl->t, i, context_gl);
             }
             break;
 

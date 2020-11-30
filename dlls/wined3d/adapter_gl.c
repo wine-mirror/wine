@@ -4778,7 +4778,7 @@ static void wined3d_view_gl_destroy_object(void *object)
             gl_info->gl_ops.gl.p_glDeleteTextures(1, &ctx->gl_view->name);
         }
         if (counter_id)
-            GL_EXTCALL(glDeleteBuffers(1, &counter_id));
+            wined3d_context_gl_destroy_bo(wined3d_context_gl(context), ctx->counter_bo);
         checkGLcall("delete resources");
         context_release(context);
     }

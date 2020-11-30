@@ -2681,6 +2681,18 @@ void wined3d_context_gl_copy_bo_address(struct wined3d_context_gl *context_gl,
     }
 }
 
+void wined3d_context_gl_destroy_bo(struct wined3d_context_gl *context_gl, struct wined3d_bo_gl *bo)
+{
+    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+
+    TRACE("context_gl %p, bo %p.\n", context_gl, bo);
+
+    TRACE("Destroying GL buffer %u.\n", bo->id);
+    GL_EXTCALL(glDeleteBuffers(1, &bo->id));
+    checkGLcall("buffer object destruction");
+    bo->id = 0;
+}
+
 static void wined3d_context_gl_set_render_offscreen(struct wined3d_context_gl *context_gl, BOOL offscreen)
 {
     if (context_gl->c.render_offscreen == offscreen)
