@@ -960,10 +960,10 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
     BOOL positional_params = options & MSVCRT_PRINTF_POSITIONAL_PARAMS;
     BOOL invoke_invalid_param_handler = options & MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER;
 #if _MSVCR_VER >= 140
-    BOOL legacy_wide = options & UCRTBASE_PRINTF_LEGACY_WIDE_SPECIFIERS;
-    BOOL legacy_msvcrt_compat = options & UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY;
-    BOOL three_digit_exp = options & UCRTBASE_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS;
-    BOOL standard_rounding = options & UCRTBASE_PRINTF_STANDARD_ROUNDING;
+    BOOL legacy_wide = options & _CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS;
+    BOOL legacy_msvcrt_compat = options & _CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY;
+    BOOL three_digit_exp = options & _CRT_INTERNAL_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS;
+    BOOL standard_rounding = options & _CRT_INTERNAL_PRINTF_STANDARD_ROUNDING;
 #else
     BOOL legacy_wide = TRUE, legacy_msvcrt_compat = TRUE;
     BOOL three_digit_exp = MSVCRT__get_output_format() != MSVCRT__TWO_DIGIT_EXPONENT;

@@ -674,7 +674,7 @@ int CDECL MSVCRT__stdio_common_vsscanf(unsigned __int64 options,
      * but parsing of those isn't implemented at all yet. */
     if (options & ~UCRTBASE_SCANF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
-    if (options & UCRTBASE_SCANF_SECURECRT)
+    if (options & _CRT_INTERNAL_SCANF_SECURECRT)
         return MSVCRT_vsnscanf_s_l(input, length, format, locale, valist);
     else
         return MSVCRT_vsnscanf_l(input, length, format, locale, valist);
@@ -694,7 +694,7 @@ int CDECL MSVCRT__stdio_common_vswscanf(unsigned __int64 options,
      * but parsing of those isn't implemented at all yet. */
     if (options & ~UCRTBASE_SCANF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
-    if (options & UCRTBASE_SCANF_SECURECRT)
+    if (options & _CRT_INTERNAL_SCANF_SECURECRT)
         return MSVCRT_vsnwscanf_s_l(input, length, format, locale, valist);
     else
         return MSVCRT_vsnwscanf_l(input, length, format, locale, valist);
@@ -709,9 +709,9 @@ int CDECL MSVCRT__stdio_common_vfscanf(unsigned __int64 options,
                                        _locale_t locale,
                                        __ms_va_list valist)
 {
-    if (options & ~UCRTBASE_SCANF_SECURECRT)
+    if (options & ~_CRT_INTERNAL_SCANF_SECURECRT)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
-    if (options & UCRTBASE_SCANF_SECURECRT)
+    if (options & _CRT_INTERNAL_SCANF_SECURECRT)
         return MSVCRT_vfscanf_s_l(file, format, locale, valist);
     else
         return MSVCRT_vfscanf_l(file, format, locale, valist);
@@ -726,9 +726,9 @@ int CDECL MSVCRT__stdio_common_vfwscanf(unsigned __int64 options,
                                         _locale_t locale,
                                         __ms_va_list valist)
 {
-    if (options & ~UCRTBASE_SCANF_SECURECRT)
+    if (options & ~_CRT_INTERNAL_SCANF_SECURECRT)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
-    if (options & UCRTBASE_SCANF_SECURECRT)
+    if (options & _CRT_INTERNAL_SCANF_SECURECRT)
         return MSVCRT_vfwscanf_s_l(file, format, locale, valist);
     else
         return MSVCRT_vfwscanf_l(file, format, locale, valist);

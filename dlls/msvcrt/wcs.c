@@ -896,11 +896,11 @@ int CDECL __stdio_common_vsprintf( unsigned __int64 options, char *str, size_t l
 
     if(!str)
         return ret;
-    if(options & UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION)
+    if(options & _CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION)
         return ret>len ? -1 : ret;
     if(ret>=len) {
         if(len) str[len-1] = 0;
-        if(options & UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR)
+        if(options & _CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR)
             return ret;
         return len > 0 ? -2 : -1;
     }
@@ -1509,11 +1509,11 @@ int CDECL MSVCRT__stdio_common_vswprintf( unsigned __int64 options,
 
     if(!str)
         return ret;
-    if(options & UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION)
+    if(options & _CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION)
         return ret>len ? -1 : ret;
     if(ret>=len) {
         if(len) str[len-1] = 0;
-        if(options & UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR)
+        if(options & _CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR)
             return ret;
         return len > 0 ? -2 : -1;
     }
