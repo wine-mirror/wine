@@ -1742,12 +1742,31 @@ static BOOL match_tz_info( const RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi,
             match_tz_date(&tzi->DaylightDate, &reg_tzi->DaylightDate));
 }
 
+static BOOL match_past_tz_bias( time_t past_time, LONG past_bias )
+{
+    LONG bias;
+    struct tm *tm;
+    if (!past_time) return TRUE;
+
+    tm = gmtime( &past_time );
+    bias = (LONG)(mktime(tm) - past_time) / 60;
+    return bias == past_bias;
+}
+
 static BOOL match_tz_name( const char *tz_name, const RTL_DYNAMIC_TIME_ZONE_INFORMATION *reg_tzi )
 {
-    static const struct { WCHAR key_name[32]; const char *short_name; } mapping[] =
+    static const struct {
+        WCHAR key_name[32];
+        const char *short_name;
+        time_t past_time;
+        LONG past_bias;
+    }
+    mapping[] =
     {
+        { {'N','o','r','t','h',' ','K','o','r','e','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e',0 },
+          "KST", 1451606400 /* 2016-01-01 00:00:00 UTC */, -510 },
         { {'K','o','r','e','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e',0 },
-          "KST" },
+          "KST", 1451606400 /* 2016-01-01 00:00:00 UTC */, -540 },
         { {'T','o','k','y','o',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e',0 },
           "JST" },
         { {'Y','a','k','u','t','s','k',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e',0 },
@@ -1759,7 +1778,8 @@ static BOOL match_tz_name( const char *tz_name, const RTL_DYNAMIC_TIME_ZONE_INFO
     for (i = 0; i < ARRAY_SIZE(mapping); i++)
     {
         if (!wcscmp( mapping[i].key_name, reg_tzi->TimeZoneKeyName ))
-            return !strcmp( mapping[i].short_name, tz_name );
+            return !strcmp( mapping[i].short_name, tz_name )
+                && match_past_tz_bias( mapping[i].past_time, mapping[i].past_bias );
     }
     return TRUE;
 }
