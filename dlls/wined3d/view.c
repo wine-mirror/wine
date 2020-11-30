@@ -1417,8 +1417,9 @@ static void wined3d_unordered_access_view_gl_cs_init(void *object)
 
             GL_EXTCALL(glGenBuffers(1, &bo->id));
             bo->binding = GL_ATOMIC_COUNTER_BUFFER;
+            bo->usage = GL_STATIC_DRAW;
             GL_EXTCALL(glBindBuffer(bo->binding, bo->id));
-            GL_EXTCALL(glBufferData(bo->binding, sizeof(initial_value), &initial_value, GL_STATIC_DRAW));
+            GL_EXTCALL(glBufferData(bo->binding, sizeof(initial_value), &initial_value, bo->usage));
             checkGLcall("create atomic counter buffer");
             view_gl->v.counter_bo = (uintptr_t)bo;
         }
