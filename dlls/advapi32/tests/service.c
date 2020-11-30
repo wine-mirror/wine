@@ -2678,6 +2678,26 @@ static void test_refcount(void)
     CloseServiceHandle(scm_handle);
 }
 
+static BOOL is_lang_english(void)
+{
+    static HMODULE hkernel32 = NULL;
+    static LANGID (WINAPI *pGetThreadUILanguage)(void) = NULL;
+    static LANGID (WINAPI *pGetUserDefaultUILanguage)(void) = NULL;
+
+    if (!hkernel32)
+    {
+        hkernel32 = GetModuleHandleA("kernel32.dll");
+        pGetThreadUILanguage = (void*)GetProcAddress(hkernel32, "GetThreadUILanguage");
+        pGetUserDefaultUILanguage = (void*)GetProcAddress(hkernel32, "GetUserDefaultUILanguage");
+    }
+    if (pGetThreadUILanguage)
+        return PRIMARYLANGID(pGetThreadUILanguage()) == LANG_ENGLISH;
+    if (pGetUserDefaultUILanguage)
+        return PRIMARYLANGID(pGetUserDefaultUILanguage()) == LANG_ENGLISH;
+
+    return PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
+}
+
 static void test_EventLog(void)
 {
     SC_HANDLE scm_handle, svc_handle;
@@ -2715,7 +2735,8 @@ todo_wine
     ok(!strcmp(config->lpServiceStartName, "LocalSystem") /* XP */ ||
        !strcmp(config->lpServiceStartName, "NT AUTHORITY\\LocalService"),
        "got %s\n", config->lpServiceStartName);
-    ok(!strcmp(config->lpDisplayName, "Event Log") /* XP */ ||
+    ok(!is_lang_english() || /* DisplayName is often translated */
+       !strcmp(config->lpDisplayName, "Event Log") /* XP */ ||
        !strcmp(config->lpDisplayName, "Windows Event Log") /* Vista+ */, "got %s\n", config->lpDisplayName);
 
     HeapFree(GetProcessHeap(), 0, config);
