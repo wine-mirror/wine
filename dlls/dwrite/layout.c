@@ -171,16 +171,18 @@ struct regular_layout_run {
     UINT32 glyphcount; /* actual glyph count after shaping, not necessarily the same as reported to Draw() */
 };
 
-struct layout_run {
+struct layout_run
+{
     struct list entry;
     enum layout_run_kind kind;
-    union {
+    union
+    {
         struct inline_object_run object;
         struct regular_layout_run regular;
     } u;
-    FLOAT baseline;
-    FLOAT height;
-    UINT32 start_position; /* run text position in range [0, layout-text-length) */
+    float baseline;
+    float height;
+    unsigned int start_position; /* run text position in range [0, layout-text-length) */
 };
 
 struct layout_effective_run {
@@ -494,22 +496,16 @@ static BOOL is_run_rtl(const struct layout_effective_run *run)
     return run->run->u.regular.run.bidiLevel & 1;
 }
 
-static struct layout_run *alloc_layout_run(enum layout_run_kind kind, UINT32 start_position)
+static HRESULT alloc_layout_run(enum layout_run_kind kind, unsigned int start_position,
+        struct layout_run **run)
 {
-    struct layout_run *ret;
+    if (!(*run = heap_alloc_zero(sizeof(**run))))
+        return E_OUTOFMEMORY;
 
-    ret = heap_alloc(sizeof(*ret));
-    if (!ret) return NULL;
+    (*run)->kind = kind;
+    (*run)->start_position = start_position;
 
-    memset(ret, 0, sizeof(*ret));
-    ret->kind = kind;
-    if (kind == LAYOUT_RUN_REGULAR) {
-        ret->u.regular.sa.script = Script_Unknown;
-        ret->u.regular.sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
-    }
-    ret->start_position = start_position;
-
-    return ret;
+    return S_OK;
 }
 
 static void free_layout_runs(struct dwrite_textlayout *layout)
@@ -772,9 +768,8 @@ static HRESULT layout_itemize(struct dwrite_textlayout *layout)
             if (FAILED(hr))
                 return hr;
 
-            r = alloc_layout_run(LAYOUT_RUN_INLINE, range->h.range.startPosition);
-            if (!r)
-                return E_OUTOFMEMORY;
+            if (FAILED(hr = alloc_layout_run(LAYOUT_RUN_INLINE, range->h.range.startPosition, &r)))
+                return hr;
 
             r->u.object.object = range->object;
             r->u.object.length = get_clipped_range_length(layout, range);
@@ -893,16 +888,14 @@ static HRESULT layout_resolve_fonts(struct dwrite_textlayout *layout)
 
             run->run.fontEmSize = range->fontsize * scale;
 
-            if (mapped_length < length) {
+            if (mapped_length < length)
+            {
                 struct regular_layout_run *nextrun;
                 struct layout_run *nextr;
 
                 /* keep mapped part for current run, add another run for the rest */
-                nextr = alloc_layout_run(LAYOUT_RUN_REGULAR, 0);
-                if (!nextr) {
-                    hr = E_OUTOFMEMORY;
+                if (FAILED(hr = alloc_layout_run(LAYOUT_RUN_REGULAR, 0, &nextr)))
                     goto fatal;
-                }
 
                 *nextr = *r;
                 nextr->start_position = run->descr.textPosition + mapped_length;
@@ -2227,18 +2220,17 @@ static struct layout_range_header *alloc_layout_range(struct dwrite_textlayout *
     {
         struct layout_range *range;
 
-        range = heap_alloc(sizeof(*range));
+        range = heap_alloc_zero(sizeof(*range));
         if (!range) return NULL;
 
         range->weight = layout->format.weight;
         range->style  = layout->format.style;
         range->stretch = layout->format.stretch;
         range->fontsize = layout->format.fontsize;
-        range->object = NULL;
-        range->pair_kerning = FALSE;
 
         range->fontfamily = heap_strdupW(layout->format.family_name);
-        if (!range->fontfamily) {
+        if (!range->fontfamily)
+        {
             heap_free(range);
             return NULL;
         }
@@ -2256,10 +2248,9 @@ static struct layout_range_header *alloc_layout_range(struct dwrite_textlayout *
     {
         struct layout_range_bool *range;
 
-        range = heap_alloc(sizeof(*range));
+        range = heap_alloc_zero(sizeof(*range));
         if (!range) return NULL;
 
-        range->value = FALSE;
         h = &range->h;
         break;
     }
@@ -2268,10 +2259,9 @@ static struct layout_range_header *alloc_layout_range(struct dwrite_textlayout *
     {
         struct layout_range_iface *range;
 
-        range = heap_alloc(sizeof(*range));
+        range = heap_alloc_zero(sizeof(*range));
         if (!range) return NULL;
 
-        range->iface = NULL;
         h = &range->h;
         break;
     }
@@ -2279,12 +2269,9 @@ static struct layout_range_header *alloc_layout_range(struct dwrite_textlayout *
     {
         struct layout_range_spacing *range;
 
-        range = heap_alloc(sizeof(*range));
+        range = heap_alloc_zero(sizeof(*range));
         if (!range) return NULL;
 
-        range->leading = 0.0f;
-        range->trailing = 0.0f;
-        range->min_advance = 0.0f;
         h = &range->h;
         break;
     }
@@ -4805,12 +4792,12 @@ static HRESULT WINAPI dwritetextlayout_sink_SetScriptAnalysis(IDWriteTextAnalysi
 {
     struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink1(iface);
     struct layout_run *run;
+    HRESULT hr;
 
     TRACE("[%u,%u) script=%u:%s\n", position, position + length, sa->script, debugstr_sa_script(sa->script));
 
-    run = alloc_layout_run(LAYOUT_RUN_REGULAR, position);
-    if (!run)
-        return E_OUTOFMEMORY;
+    if (FAILED(hr = alloc_layout_run(LAYOUT_RUN_REGULAR, position, &run)))
+        return hr;
 
     run->u.regular.descr.string = &layout->str[position];
     run->u.regular.descr.stringLength = length;
@@ -4837,6 +4824,7 @@ static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink
 {
     struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink1(iface);
     struct layout_run *cur_run;
+    HRESULT hr;
 
     TRACE("[%u,%u) %u %u\n", position, position + length, explicitLevel, resolvedLevel);
 
@@ -4868,9 +4856,8 @@ static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink
         /* all fully covered runs are processed at this point, reuse existing run for remaining
            reported bidi range and add another run for the rest of original one */
 
-        run = alloc_layout_run(LAYOUT_RUN_REGULAR, position + length);
-        if (!run)
-            return E_OUTOFMEMORY;
+        if (FAILED(hr = alloc_layout_run(LAYOUT_RUN_REGULAR, position + length, &run)))
+            return hr;
 
         *run = *cur_run;
         run->u.regular.descr.textPosition = position + length;
