@@ -1405,25 +1405,21 @@ static void wined3d_unordered_access_view_gl_cs_init(void *object)
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         struct wined3d_buffer *buffer = buffer_from_resource(resource);
-        struct wined3d_context *context;
+        struct wined3d_context_gl *context_gl;
 
-        context = context_acquire(resource->device, NULL, 0);
-        gl_info = wined3d_context_gl(context)->gl_info;
-        create_buffer_view(&view_gl->gl_view, context, desc, buffer, view_gl->v.format);
+        context_gl = wined3d_context_gl(context_acquire(resource->device, NULL, 0));
+        gl_info = context_gl->gl_info;
+        create_buffer_view(&view_gl->gl_view, &context_gl->c, desc, buffer, view_gl->v.format);
         if (desc->flags & (WINED3D_VIEW_BUFFER_COUNTER | WINED3D_VIEW_BUFFER_APPEND))
         {
             struct wined3d_bo_gl *bo = &view_gl->counter_bo;
-            static const GLuint initial_value = 0;
 
-            GL_EXTCALL(glGenBuffers(1, &bo->id));
-            bo->binding = GL_ATOMIC_COUNTER_BUFFER;
-            bo->usage = GL_STATIC_DRAW;
-            GL_EXTCALL(glBindBuffer(bo->binding, bo->id));
-            GL_EXTCALL(glBufferData(bo->binding, sizeof(initial_value), &initial_value, bo->usage));
-            checkGLcall("create atomic counter buffer");
             view_gl->v.counter_bo = (uintptr_t)bo;
+            wined3d_context_gl_create_bo(context_gl, sizeof(uint32_t),
+                    GL_ATOMIC_COUNTER_BUFFER, GL_STATIC_DRAW, true, bo);
+            wined3d_unordered_access_view_set_counter(&view_gl->v, 0);
         }
-        context_release(context);
+        context_release(&context_gl->c);
     }
     else
     {

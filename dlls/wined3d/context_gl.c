@@ -2693,6 +2693,41 @@ void wined3d_context_gl_destroy_bo(struct wined3d_context_gl *context_gl, struct
     bo->id = 0;
 }
 
+bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizeiptr size,
+        GLenum binding, GLenum usage, bool coherent, struct wined3d_bo_gl *bo)
+{
+    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    GLuint id = 0;
+
+    TRACE("context_gl %p, size %lu, binding %#x, usage %#x, coherent %#x, bo %p.\n",
+            context_gl, size, binding, usage, coherent, bo);
+
+    GL_EXTCALL(glGenBuffers(1, &id));
+    if (!id)
+    {
+        checkGLcall("buffer object creation");
+        return false;
+    }
+    wined3d_context_gl_bind_bo(context_gl, binding, id);
+
+    if (!coherent && gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
+    {
+        GL_EXTCALL(glBufferParameteriAPPLE(binding, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE));
+        GL_EXTCALL(glBufferParameteriAPPLE(binding, GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL_FALSE));
+    }
+
+    GL_EXTCALL(glBufferData(binding, size, NULL, usage));
+
+    wined3d_context_gl_bind_bo(context_gl, binding, 0);
+    checkGLcall("buffer object creation");
+
+    TRACE("Created buffer object %u.\n", id);
+    bo->id = id;
+    bo->binding = binding;
+    bo->usage = usage;
+    return true;
+}
+
 static void wined3d_context_gl_set_render_offscreen(struct wined3d_context_gl *context_gl, BOOL offscreen)
 {
     if (context_gl->c.render_offscreen == offscreen)

@@ -1913,26 +1913,22 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, unsig
 }
 
 /* Context activation is done by the caller. */
-static void wined3d_texture_prepare_buffer_object(struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, const struct wined3d_gl_info *gl_info)
+static void wined3d_texture_gl_prepare_buffer_object(struct wined3d_texture_gl *texture_gl,
+        unsigned int sub_resource_idx, struct wined3d_context_gl *context_gl)
 {
     struct wined3d_texture_sub_resource *sub_resource;
     struct wined3d_bo_gl *bo;
 
-    sub_resource = &texture->sub_resources[sub_resource_idx];
+    sub_resource = &texture_gl->t.sub_resources[sub_resource_idx];
     bo = &sub_resource->bo;
     if (bo->id)
         return;
 
-    GL_EXTCALL(glGenBuffers(1, &bo->id));
-    bo->binding = GL_PIXEL_UNPACK_BUFFER;
-    bo->usage = GL_STREAM_DRAW;
-    GL_EXTCALL(glBindBuffer(bo->binding, bo->id));
-    GL_EXTCALL(glBufferData(bo->binding, sub_resource->size, NULL, bo->usage));
-    GL_EXTCALL(glBindBuffer(bo->binding, 0));
-    checkGLcall("Create buffer object");
+    if (!wined3d_context_gl_create_bo(context_gl, sub_resource->size,
+            GL_PIXEL_UNPACK_BUFFER, GL_STREAM_DRAW, true, bo))
+        return;
 
-    TRACE("Created buffer object %u for texture %p, sub-resource %u.\n", bo->id, texture, sub_resource_idx);
+    TRACE("Created buffer object %u for texture %p, sub-resource %u.\n", bo->id, texture_gl, sub_resource_idx);
 }
 
 static void wined3d_texture_force_reload(struct wined3d_texture *texture)
@@ -3135,7 +3131,7 @@ static BOOL wined3d_texture_gl_prepare_location(struct wined3d_texture *texture,
                     : wined3d_resource_prepare_sysmem(&texture->resource);
 
         case WINED3D_LOCATION_BUFFER:
-            wined3d_texture_prepare_buffer_object(texture, sub_resource_idx, context_gl->gl_info);
+            wined3d_texture_gl_prepare_buffer_object(texture_gl, sub_resource_idx, context_gl);
             return TRUE;
 
         case WINED3D_LOCATION_TEXTURE_RGB:
