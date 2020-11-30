@@ -2429,11 +2429,9 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
             break;
     }
 
-    /* For now return original topology. */
-
     *ret_topology = output_topology;
 
-    return IMFTopology_CloneFrom(output_topology, input_topology);
+    return hr;
 }
 
 static const IMFTopoLoaderVtbl topologyloadervtbl =

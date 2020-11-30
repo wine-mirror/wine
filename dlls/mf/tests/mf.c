@@ -1735,7 +1735,6 @@ static void test_topology_loader(void)
 
             MF_CONNECT_DIRECT,
             MF_E_INVALIDMEDIATYPE,
-            LOADER_TODO,
         },
 
         {
@@ -1766,7 +1765,7 @@ static void test_topology_loader(void)
 
             MF_CONNECT_ALLOW_CONVERTER,
             S_OK,
-            LOADER_EXPECTED_CONVERTER,
+            LOADER_EXPECTED_CONVERTER | LOADER_TODO,
         },
 
         {
@@ -1794,7 +1793,6 @@ static void test_topology_loader(void)
 
             MF_CONNECT_DIRECT,
             MF_E_INVALIDMEDIATYPE,
-            LOADER_TODO,
         },
 
         {
@@ -1850,7 +1848,7 @@ static void test_topology_loader(void)
 
             MF_CONNECT_ALLOW_DECODER,
             S_OK,
-            LOADER_EXPECTED_DECODER,
+            LOADER_EXPECTED_DECODER | LOADER_TODO,
         },
     };
 
