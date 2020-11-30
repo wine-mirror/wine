@@ -2022,8 +2022,6 @@ static HRESULT topology_loader_resolve_branch(struct topoloader_context *context
     if (FAILED(IMFTopology_GetNodeByID(context->output_topology, id, &node)))
         topology_loader_clone_node(context, downstream_node, &node, context->marker + 1);
 
-    IMFTopologyNode_ConnectOutput(upstream_node, output_index, node, input_index);
-
     IMFTopologyNode_GetNodeType(upstream_node, &u_type);
     IMFTopologyNode_GetNodeType(downstream_node, &d_type);
 
@@ -2033,7 +2031,7 @@ static HRESULT topology_loader_resolve_branch(struct topoloader_context *context
         return E_FAIL;
     }
 
-    return connectors[u_type][d_type](context, upstream_node, output_index, downstream_node, input_index);
+    return connectors[u_type][d_type](context, upstream_node, output_index, node, input_index);
 }
 
 static HRESULT topology_loader_resolve_nodes(struct topoloader_context *context, unsigned int *layer_size)
