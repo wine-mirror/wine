@@ -63,9 +63,9 @@
 @ stub __GetPlatformExceptionInfo
 @ stub __NLG_Dispatch2
 @ stub __NLG_Return2
-@ cdecl __RTCastToVoid(ptr) MSVCRT___RTCastToVoid
-@ cdecl __RTDynamicCast(ptr long ptr ptr long) MSVCRT___RTDynamicCast
-@ cdecl __RTtypeid(ptr) MSVCRT___RTtypeid
+@ cdecl __RTCastToVoid(ptr)
+@ cdecl __RTDynamicCast(ptr long ptr ptr long)
+@ cdecl __RTtypeid(ptr)
 @ stub __TypeMatch
 @ cdecl ___lc_codepage_func()
 @ cdecl ___lc_collate_cp_func()
@@ -142,10 +142,10 @@
 @ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr
 @ cdecl __std_exception_copy(ptr ptr) MSVCRT___std_exception_copy
 @ cdecl __std_exception_destroy(ptr) MSVCRT___std_exception_destroy
-@ cdecl __std_type_info_compare(ptr ptr) MSVCRT_type_info_compare
-@ cdecl __std_type_info_destroy_list(ptr) MSVCRT_type_info_destroy_list
-@ cdecl __std_type_info_hash(ptr) MSVCRT_type_info_hash
-@ cdecl __std_type_info_name(ptr ptr) MSVCRT_type_info_name_list
+@ cdecl __std_type_info_compare(ptr ptr)
+@ cdecl __std_type_info_destroy_list(ptr)
+@ cdecl __std_type_info_hash(ptr)
+@ cdecl __std_type_info_name(ptr ptr)
 @ cdecl __stdio_common_vfprintf(int64 ptr str ptr ptr) MSVCRT__stdio_common_vfprintf
 @ stub __stdio_common_vfprintf_p
 @ cdecl __stdio_common_vfprintf_s(int64 ptr str ptr ptr) MSVCRT__stdio_common_vfprintf_s
@@ -374,11 +374,11 @@
 @ cdecl _get_printf_count_output() MSVCRT__get_printf_count_output
 @ cdecl _get_purecall_handler()
 @ cdecl _get_stream_buffer_pointers(ptr ptr ptr ptr) MSVCRT__get_stream_buffer_pointers
-@ cdecl _get_terminate() MSVCRT__get_terminate
+@ cdecl _get_terminate()
 @ cdecl _get_thread_local_invalid_parameter_handler()
 @ cdecl _get_timezone(ptr)
 @ cdecl _get_tzname(ptr str long long) MSVCRT__get_tzname
-@ cdecl _get_unexpected() MSVCRT__get_unexpected
+@ cdecl _get_unexpected()
 @ cdecl _get_wide_winmain_command_line()
 @ cdecl _get_wpgmptr(ptr)
 @ cdecl _getc_nolock(ptr) MSVCRT__fgetc_nolock
@@ -808,8 +808,8 @@
 @ stub _o___pwctype_func
 @ cdecl _o___std_exception_copy(ptr ptr) MSVCRT___std_exception_copy
 @ cdecl _o___std_exception_destroy(ptr) MSVCRT___std_exception_destroy
-@ cdecl _o___std_type_info_destroy_list(ptr) MSVCRT_type_info_destroy_list
-@ cdecl _o___std_type_info_name(ptr ptr) MSVCRT_type_info_name_list
+@ cdecl _o___std_type_info_destroy_list(ptr) __std_type_info_destroy_list
+@ cdecl _o___std_type_info_name(ptr ptr) __std_type_info_name
 @ cdecl _o___stdio_common_vfprintf(int64 ptr str ptr ptr) MSVCRT__stdio_common_vfprintf
 @ stub _o___stdio_common_vfprintf_p
 @ cdecl _o___stdio_common_vfprintf_s(int64 ptr str ptr ptr) MSVCRT__stdio_common_vfprintf_s
@@ -989,7 +989,7 @@
 @ cdecl _o__get_osfhandle(long) MSVCRT__get_osfhandle
 @ cdecl _o__get_pgmptr(ptr) _get_pgmptr
 @ cdecl _o__get_stream_buffer_pointers(ptr ptr ptr ptr) MSVCRT__get_stream_buffer_pointers
-@ cdecl _o__get_terminate() MSVCRT__get_terminate
+@ cdecl _o__get_terminate() _get_terminate
 @ cdecl _o__get_thread_local_invalid_parameter_handler() _get_thread_local_invalid_parameter_handler
 @ cdecl _o__get_timezone(ptr) _get_timezone
 @ cdecl _o__get_tzname(ptr str long long) MSVCRT__get_tzname
@@ -1767,7 +1767,7 @@
 @ cdecl _o_scalbn(double long) MSVCRT__scalb
 @ cdecl _o_scalbnf(float long) MSVCRT__scalbf
 @ cdecl _o_scalbnl(double long) MSVCR120_scalbnl
-@ cdecl _o_set_terminate(ptr) MSVCRT_set_terminate
+@ cdecl _o_set_terminate(ptr) set_terminate
 @ cdecl _o_setbuf(ptr ptr) MSVCRT_setbuf
 @ cdecl _o_setlocale(long str) MSVCRT_setlocale
 @ cdecl _o_setvbuf(ptr str long long) MSVCRT_setvbuf
@@ -1800,7 +1800,7 @@
 @ cdecl -arch=!i386 _o_tanf(float) MSVCRT_tanf
 @ cdecl _o_tanh(double) MSVCRT_tanh
 @ cdecl -arch=!i386 _o_tanhf(float) MSVCRT_tanhf
-@ cdecl _o_terminate() MSVCRT_terminate
+@ cdecl _o_terminate() terminate
 @ cdecl _o_tgamma(double) MSVCR120_tgamma
 @ cdecl _o_tgammaf(float) MSVCR120_tgammaf
 @ cdecl _o_tgammal(double) MSVCR120_tgamma
@@ -1892,7 +1892,7 @@
 @ cdecl _set_new_mode(long) MSVCRT__set_new_mode
 @ cdecl _set_printf_count_output(long) MSVCRT__set_printf_count_output
 @ cdecl _set_purecall_handler(ptr)
-@ cdecl _set_se_translator(ptr) MSVCRT__set_se_translator
+@ cdecl _set_se_translator(ptr)
 @ cdecl _set_thread_local_invalid_parameter_handler(ptr)
 @ cdecl _seterrormode(long)
 @ cdecl -arch=i386 -norelay _setjmp3(ptr long) MSVCRT__setjmp3
@@ -2480,8 +2480,8 @@
 @ cdecl scalbn(double long) MSVCRT__scalb
 @ cdecl scalbnf(float long) MSVCRT__scalbf
 @ cdecl scalbnl(double long) MSVCR120_scalbnl
-@ cdecl set_terminate(ptr) MSVCRT_set_terminate
-@ cdecl set_unexpected(ptr) MSVCRT_set_unexpected
+@ cdecl set_terminate(ptr)
+@ cdecl set_unexpected(ptr)
 @ cdecl setbuf(ptr ptr) MSVCRT_setbuf
 @ cdecl -arch=arm,x86_64 -norelay -private setjmp(ptr) MSVCRT__setjmp
 @ cdecl setlocale(long str) MSVCRT_setlocale
@@ -2533,7 +2533,7 @@
 @ cdecl -arch=!i386 tanf(float) MSVCRT_tanf
 @ cdecl tanh(double) MSVCRT_tanh
 @ cdecl -arch=!i386 tanhf(float) MSVCRT_tanhf
-@ cdecl terminate() MSVCRT_terminate
+@ cdecl terminate()
 @ cdecl tgamma(double) MSVCR120_tgamma
 @ cdecl tgammaf(float) MSVCR120_tgammaf
 @ cdecl tgammal(double) MSVCR120_tgamma

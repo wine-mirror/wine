@@ -93,7 +93,7 @@ typedef struct {
     unsigned int id;
     union allocator_cache_entry *allocator_cache[8];
 } ExternalContextBase;
-extern const vtable_ptr MSVCRT_ExternalContextBase_vtable;
+extern const vtable_ptr ExternalContextBase_vtable;
 static void ExternalContextBase_ctor(ExternalContextBase*);
 
 typedef struct Scheduler {
@@ -134,7 +134,7 @@ typedef struct {
     HANDLE *shutdown_events;
     CRITICAL_SECTION cs;
 } ThreadScheduler;
-extern const vtable_ptr MSVCRT_ThreadScheduler_vtable;
+extern const vtable_ptr ThreadScheduler_vtable;
 
 typedef struct {
     Scheduler *scheduler;
@@ -199,7 +199,7 @@ static Scheduler* try_get_current_scheduler(void)
     if (!context)
         return NULL;
 
-    if (context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
+    if (context->context.vtable != &ExternalContextBase_vtable) {
         ERR("unknown context set\n");
         return NULL;
     }
@@ -210,7 +210,7 @@ static Scheduler* get_current_scheduler(void)
 {
     ExternalContextBase *context = (ExternalContextBase*)get_current_context();
 
-    if (context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
+    if (context->context.vtable != &ExternalContextBase_vtable) {
         ERR("unknown context set\n");
         return NULL;
     }
@@ -375,7 +375,7 @@ static void ExternalContextBase_ctor(ExternalContextBase *this)
     TRACE("(%p)->()\n", this);
 
     memset(this, 0, sizeof(*this));
-    this->context.vtable = &MSVCRT_ExternalContextBase_vtable;
+    this->context.vtable = &ExternalContextBase_vtable;
     this->id = InterlockedIncrement(&context_id);
 
     create_default_scheduler();
@@ -394,7 +394,7 @@ void * CDECL Concurrency_Alloc(size_t size)
     if (size < sizeof(*p))
         size = sizeof(*p);
 
-    if (context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
+    if (context->context.vtable != &ExternalContextBase_vtable) {
         p = MSVCRT_operator_new(size);
         p->alloc.bucket = -1;
     }else {
@@ -431,7 +431,7 @@ void CDECL Concurrency_Free(void* mem)
 
     TRACE("(%p)\n", mem);
 
-    if (context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
+    if (context->context.vtable != &ExternalContextBase_vtable) {
         MSVCRT_operator_delete(p);
     }else {
         if(bucket >= 0 && bucket < ARRAY_SIZE(context->allocator_cache) &&
@@ -698,7 +698,7 @@ void __thiscall ThreadScheduler_Attach(ThreadScheduler *this)
 
     TRACE("(%p)\n", this);
 
-    if(context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
+    if(context->context.vtable != &ExternalContextBase_vtable) {
         ERR("unknown context set\n");
         return;
     }
@@ -779,7 +779,7 @@ static ThreadScheduler* ThreadScheduler_ctor(ThreadScheduler *this,
 
     TRACE("(%p)->()\n", this);
 
-    this->scheduler.vtable = &MSVCRT_ThreadScheduler_vtable;
+    this->scheduler.vtable = &ThreadScheduler_vtable;
     this->ref = 1;
     this->id = InterlockedIncrement(&scheduler_id);
     SchedulerPolicy_copy_ctor(&this->policy, policy);
@@ -857,7 +857,7 @@ void __cdecl CurrentScheduler_Detach(void)
     if(!context)
         throw_exception(EXCEPTION_IMPROPER_SCHEDULER_DETACH, 0, NULL);
 
-    if(context->context.vtable != &MSVCRT_ExternalContextBase_vtable) {
+    if(context->context.vtable != &ExternalContextBase_vtable) {
         ERR("unknown context set\n");
         return;
     }
@@ -1097,7 +1097,7 @@ DEFINE_VTBL_WRAPPER(48);
 
 #endif
 
-extern const vtable_ptr MSVCRT_type_info_vtable;
+extern const vtable_ptr type_info_vtable;
 DEFINE_RTTI_DATA0(Context, 0, ".?AVContext@Concurrency@@")
 DEFINE_RTTI_DATA1(ContextBase, 0, &Context_rtti_base_descriptor, ".?AVContextBase@details@Concurrency@@")
 DEFINE_RTTI_DATA2(ExternalContextBase, 0, &ContextBase_rtti_base_descriptor,
