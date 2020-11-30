@@ -3,5 +3,3 @@ IMPORTS   = mf mfplat mfuuid ole32 user32
 
 C_SRCS = \
 	mf.c
-
-RC_SRCS = resource.rc
