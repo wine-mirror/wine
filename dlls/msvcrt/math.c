@@ -57,7 +57,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define _OVERFLOW       3       /* range overflow */
 #define _UNDERFLOW      4       /* range underflow */
 
-typedef int (CDECL *MSVCRT_matherr_func)(struct MSVCRT__exception *);
+typedef int (CDECL *MSVCRT_matherr_func)(struct _exception *);
 typedef double LDOUBLE;  /* long double is just a double */
 
 static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
@@ -83,7 +83,7 @@ static inline float fp_barrierf(float x)
 /*********************************************************************
  *      _matherr (CRTDLL.@)
  */
-int CDECL MSVCRT__matherr(struct MSVCRT__exception *e)
+int CDECL MSVCRT__matherr(struct _exception *e)
 {
     return 0;
 }
@@ -91,7 +91,7 @@ int CDECL MSVCRT__matherr(struct MSVCRT__exception *e)
 
 static double math_error(int type, const char *name, double arg1, double arg2, double retval)
 {
-    struct MSVCRT__exception exception = {type, (char *)name, arg1, arg2, retval};
+    struct _exception exception = {type, (char *)name, arg1, arg2, retval};
 
     TRACE("(%d, %s, %g, %g, %g)\n", type, debugstr_a(name), arg1, arg2, retval);
 
