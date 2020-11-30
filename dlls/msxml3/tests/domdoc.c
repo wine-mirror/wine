@@ -5877,7 +5877,7 @@ static void test_xmlTypes(void)
             }
 
             /* CData Section */
-            str = SysAllocString(L"[1]*2=3; &gee thats not right!");
+            str = SysAllocString(L"[1]*2=3; &gee that is not right!");
             hr = IXMLDOMDocument_createCDATASection(doc, str, NULL);
             ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
@@ -5904,7 +5904,7 @@ static void test_xmlTypes(void)
 
                 hr = IXMLDOMCDATASection_get_xml(pCDataSec, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
-                ok( !lstrcmpW( str, L"<![CDATA[[1]*2=3; &gee thats not right!]]>" ), "incorrect cdata xml\n");
+                ok( !lstrcmpW( str, L"<![CDATA[[1]*2=3; &gee that is not right!]]>" ), "incorrect cdata xml\n");
                 SysFreeString(str);
 
                 /* test lastChild */
