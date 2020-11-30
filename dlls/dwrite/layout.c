@@ -5920,10 +5920,10 @@ static struct dwrite_textformat *unsafe_impl_from_IDWriteTextFormat(IDWriteTextF
         CONTAINING_RECORD(iface, struct dwrite_textformat, IDWriteTextFormat3_iface) : NULL;
 }
 
-HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *collection, DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style,
-    DWRITE_FONT_STRETCH stretch, FLOAT size, const WCHAR *locale, IDWriteTextFormat **format)
+HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *collection, DWRITE_FONT_WEIGHT weight,
+        DWRITE_FONT_STYLE style, DWRITE_FONT_STRETCH stretch, FLOAT size, const WCHAR *locale, IDWriteTextFormat **format)
 {
-    struct dwrite_textformat *This;
+    struct dwrite_textformat *object;
 
     *format = NULL;
 
@@ -5935,45 +5935,27 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
         ((UINT32)style > DWRITE_FONT_STYLE_ITALIC))
         return E_INVALIDARG;
 
-    This = heap_alloc(sizeof(struct dwrite_textformat));
-    if (!This) return E_OUTOFMEMORY;
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    This->IDWriteTextFormat3_iface.lpVtbl = &dwritetextformatvtbl;
-    This->refcount = 1;
-    This->format.family_name = heap_strdupW(family_name);
-    This->format.family_len = strlenW(family_name);
-    This->format.locale = heap_strdupW(locale);
-    This->format.locale_len = strlenW(locale);
-    /* force locale name to lower case, layout will inherit this modified value */
-    strlwrW(This->format.locale);
-    This->format.weight = weight;
-    This->format.style = style;
-    This->format.fontsize = size;
-    This->format.tabstop = 4.0f * size;
-    This->format.stretch = stretch;
-    This->format.textalignment = DWRITE_TEXT_ALIGNMENT_LEADING;
-    This->format.optical_alignment = DWRITE_OPTICAL_ALIGNMENT_NONE;
-    This->format.paralign = DWRITE_PARAGRAPH_ALIGNMENT_NEAR;
-    This->format.wrapping = DWRITE_WORD_WRAPPING_WRAP;
-    This->format.last_line_wrapping = TRUE;
-    This->format.readingdir = DWRITE_READING_DIRECTION_LEFT_TO_RIGHT;
-    This->format.flow = DWRITE_FLOW_DIRECTION_TOP_TO_BOTTOM;
-    This->format.spacing.method = DWRITE_LINE_SPACING_METHOD_DEFAULT;
-    This->format.spacing.height = 0.0f;
-    This->format.spacing.baseline = 0.0f;
-    This->format.spacing.leadingBefore = 0.0f;
-    This->format.spacing.fontLineGapUsage = DWRITE_FONT_LINE_GAP_USAGE_DEFAULT;
-    This->format.vertical_orientation = DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT;
-    This->format.trimming.granularity = DWRITE_TRIMMING_GRANULARITY_NONE;
-    This->format.trimming.delimiter = 0;
-    This->format.trimming.delimiterCount = 0;
-    This->format.trimmingsign = NULL;
-    This->format.collection = collection;
-    This->format.fallback = NULL;
-    This->format.automatic_axes = DWRITE_AUTOMATIC_FONT_AXES_NONE;
-    IDWriteFontCollection_AddRef(collection);
+    object->IDWriteTextFormat3_iface.lpVtbl = &dwritetextformatvtbl;
+    object->refcount = 1;
+    object->format.family_name = heap_strdupW(family_name);
+    object->format.family_len = strlenW(family_name);
+    object->format.locale = heap_strdupW(locale);
+    object->format.locale_len = strlenW(locale);
+    /* Force locale name to lower case, layout will inherit this modified value. */
+    strlwrW(object->format.locale);
+    object->format.weight = weight;
+    object->format.style = style;
+    object->format.fontsize = size;
+    object->format.tabstop = 4.0f * size;
+    object->format.stretch = stretch;
+    object->format.last_line_wrapping = TRUE;
+    object->format.collection = collection;
+    IDWriteFontCollection_AddRef(object->format.collection);
 
-    *format = (IDWriteTextFormat *)&This->IDWriteTextFormat3_iface;
+    *format = (IDWriteTextFormat *)&object->IDWriteTextFormat3_iface;
 
     return S_OK;
 }
