@@ -55,7 +55,6 @@ struct console
 {
     struct object                obj;           /* object header */
     int                          signaled;      /* is console signaled */
-    int                          num_proc;      /* number of processes attached to this console */
     struct thread               *renderer;      /* console renderer thread */
     struct screen_buffer        *active;        /* active screen buffer */
     struct console_server       *server;        /* console server object */
@@ -513,7 +512,6 @@ static struct object *create_console(void)
 
     console->renderer      = NULL;
     console->signaled      = 0;
-    console->num_proc      = 0;
     console->active        = NULL;
     console->server        = NULL;
     console->fd            = NULL;
@@ -635,20 +633,6 @@ static struct object *create_screen_buffer( struct console *console )
     return &screen_buffer->obj;
 }
 
-/* free the console for this process */
-int free_console( struct process *process )
-{
-    struct console *console = process->console;
-
-    if (!console) return 0;
-
-    process->console = NULL;
-    console->num_proc--;
-    release_object( console );
-
-    return 1;
-}
-
 struct thread *console_get_renderer( struct console *console )
 {
     return console->renderer;
@@ -755,10 +739,7 @@ static struct object *create_console_connection( struct console *console )
     }
 
     if (console)
-    {
         current->process->console = (struct console *)grab_object( console );
-        console->num_proc++;
-    }
 
     return &connection->obj;
 }
@@ -1072,10 +1053,7 @@ static int console_connection_ioctl( struct fd *fd, ioctl_code_t code, struct as
             if (!(process = get_process_from_id( pid ))) return 0;
 
             if (process->console)
-            {
                 current->process->console = (struct console *)grab_object( process->console );
-                process->console->num_proc++;
-            }
             else set_error( STATUS_ACCESS_DENIED );
             release_object( process );
             return !get_error();
@@ -1200,7 +1178,13 @@ static struct object *console_connection_open_file( struct object *obj, unsigned
 
 static int console_connection_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
 {
-    free_console( process );
+    struct console *console = process->console;
+
+    if (console)
+    {
+        process->console = NULL;
+        release_object( console );
+    }
     return 1;
 }
 

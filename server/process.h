@@ -132,7 +132,6 @@ extern void detach_debugged_processes( struct thread *debugger );
 extern void enum_processes( int (*cb)(struct process*, void*), void *user);
 
 /* console functions */
-extern int free_console( struct process *process );
 extern struct thread *console_get_renderer( struct console *console );
 
 /* process tracing mechanism to use */

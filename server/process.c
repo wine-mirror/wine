@@ -915,9 +915,7 @@ static void process_killed( struct process *process )
     if (process->exe_file) release_object( process->exe_file );
     process->idle_event = NULL;
     process->exe_file = NULL;
-
-    /* close the console attached to this process, if any */
-    free_console( process );
+    assert( !process->console );
 
     while ((ptr = list_head( &process->rawinput_devices )))
     {
