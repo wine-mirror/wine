@@ -127,9 +127,9 @@
 #define _LOCK_FILE_(file) MSVCRT__lock_file(file)
 #define _UNLOCK_FILE_(file) MSVCRT__unlock_file(file)
 #ifdef SECURE
-#define _FUNCTION_ static int MSVCRT_vfwscanf_s_l(MSVCRT_FILE* file, const wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vfwscanf_s_l(FILE* file, const wchar_t *format, _locale_t locale, __ms_va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int MSVCRT_vfwscanf_l(MSVCRT_FILE* file, const wchar_t *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vfwscanf_l(FILE* file, const wchar_t *format, _locale_t locale, __ms_va_list ap)
 #endif /* SECURE */
 #else /* WIDE_SCANF */
 #define _GETC_FUNC_(file) MSVCRT_fgetc(file)
@@ -139,9 +139,9 @@
 #define _LOCK_FILE_(file) MSVCRT__lock_file(file)
 #define _UNLOCK_FILE_(file) MSVCRT__unlock_file(file)
 #ifdef SECURE
-#define _FUNCTION_ static int MSVCRT_vfscanf_s_l(MSVCRT_FILE* file, const char *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vfscanf_s_l(FILE* file, const char *format, _locale_t locale, __ms_va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int MSVCRT_vfscanf_l(MSVCRT_FILE* file, const char *format, _locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vfscanf_l(FILE* file, const char *format, _locale_t locale, __ms_va_list ap)
 #endif /* SECURE */
 #endif /* WIDE_SCANF */
 #endif /* STRING */
@@ -153,7 +153,7 @@ struct _STRTOD_NAME_(strtod_scanf_ctx) {
 #ifdef STRING
     const _CHAR_ *file;
 #else
-    MSVCRT_FILE *file;
+    FILE *file;
 #endif
     int length;
     int read;

@@ -1020,7 +1020,7 @@ intptr_t CDECL MSVCRT__wspawnvp(int flags, const wchar_t* name, const wchar_t* c
 }
 
 static struct popen_handle {
-    MSVCRT_FILE *f;
+    FILE *f;
     HANDLE proc;
 } *popen_handles;
 static DWORD popen_handles_size;
@@ -1035,9 +1035,9 @@ void msvcrt_free_popen_data(void)
  *
  * Unicode version of _popen
  */
-MSVCRT_FILE* CDECL MSVCRT__wpopen(const wchar_t* command, const wchar_t* mode)
+FILE* CDECL MSVCRT__wpopen(const wchar_t* command, const wchar_t* mode)
 {
-  MSVCRT_FILE *ret;
+  FILE *ret;
   BOOL readPipe = TRUE;
   int textmode, fds[2], fdToDup, fdToOpen, fdStdHandle = -1;
   const wchar_t *p;
@@ -1148,9 +1148,9 @@ error:
 /*********************************************************************
  *      _popen (MSVCRT.@)
  */
-MSVCRT_FILE* CDECL MSVCRT__popen(const char* command, const char* mode)
+FILE* CDECL MSVCRT__popen(const char* command, const char* mode)
 {
-  MSVCRT_FILE *ret;
+  FILE *ret;
   wchar_t *cmdW, *modeW;
 
   TRACE("(command=%s, mode=%s)\n", debugstr_a(command), debugstr_a(mode));
@@ -1175,7 +1175,7 @@ MSVCRT_FILE* CDECL MSVCRT__popen(const char* command, const char* mode)
 /*********************************************************************
  *		_pclose (MSVCRT.@)
  */
-int CDECL MSVCRT__pclose(MSVCRT_FILE* file)
+int CDECL MSVCRT__pclose(FILE* file)
 {
   HANDLE h;
   DWORD i;
