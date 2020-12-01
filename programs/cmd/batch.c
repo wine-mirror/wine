@@ -249,7 +249,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
   /* We can't use the native f* functions because of the filename syntax differences
      between DOS and Unix. Also need to lose the LF (or CRLF) from the line. */
 
-  if (!WCMD_is_console_handle(h)) {
+  if (!ReadConsoleW(h, buf, noChars, &charsRead, NULL)) {
       LARGE_INTEGER filepos;
       char *bufA;
       UINT cp;
@@ -282,8 +282,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
       heap_free(bufA);
   }
   else {
-      status = WCMD_ReadFile(h, buf, noChars, &charsRead);
-      if (!status || charsRead == 0) return NULL;
+      if (!charsRead) return NULL;
 
       /* Find first EOL */
       for (i = 0; i < charsRead; i++) {

@@ -105,10 +105,6 @@ void WCMD_version (void);
 int  WCMD_volume (BOOL set_label, const WCHAR *args);
 void WCMD_mklink(WCHAR *args);
 
-static inline BOOL WCMD_is_console_handle(HANDLE h)
-{
-    return (((DWORD_PTR)h) & 3) == 3;
-}
 WCHAR *WCMD_fgets (WCHAR *buf, DWORD n, HANDLE stream);
 WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, BOOL raw, BOOL wholecmdline);
 WCHAR *WCMD_parameter_with_delims (WCHAR *s, int n, WCHAR **start, BOOL raw,

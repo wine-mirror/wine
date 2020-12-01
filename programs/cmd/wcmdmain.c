@@ -221,9 +221,8 @@ BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWO
     DWORD numRead;
     char *buffer;
 
-    if (WCMD_is_console_handle(hIn))
-        /* Try to read from console as Unicode */
-        return ReadConsoleW(hIn, intoBuf, maxChars, charsRead, NULL);
+    /* Try to read from console as Unicode */
+    if (ReadConsoleW(hIn, intoBuf, maxChars, charsRead, NULL)) return TRUE;
 
     /* We assume it's a file handle and read then convert from assumed OEM codepage */
     if (!(buffer = get_file_buffer()))
