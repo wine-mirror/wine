@@ -257,9 +257,7 @@ static HRESULT DSoundRender_SendSampleData(struct dsound_render *This,
             hr = S_FALSE;
 
         if (hr != S_OK) {
-            LeaveCriticalSection(&This->stream_cs);
             ret = WaitForSingleObject(This->flush_event, 10);
-            EnterCriticalSection(&This->stream_cs);
             if (This->sink.flushing || This->filter.state == State_Stopped)
                 return This->filter.state == State_Paused ? S_OK : VFW_E_WRONG_STATE;
             if (ret != WAIT_TIMEOUT)
