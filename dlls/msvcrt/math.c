@@ -218,13 +218,13 @@ int CDECL MSVCRT__fpclassf( float num )
     switch (e)
     {
     case 0:
-        if (u.i << 1) return s ? MSVCRT__FPCLASS_ND : MSVCRT__FPCLASS_PD;
-        return s ? MSVCRT__FPCLASS_NZ : MSVCRT__FPCLASS_PZ;
+        if (u.i << 1) return s ? _FPCLASS_ND : _FPCLASS_PD;
+        return s ? _FPCLASS_NZ : _FPCLASS_PZ;
     case 0xff:
-        if (u.i << 9) return ((u.i >> 22) & 1) ? MSVCRT__FPCLASS_QNAN : MSVCRT__FPCLASS_SNAN;
-        return s ? MSVCRT__FPCLASS_NINF : MSVCRT__FPCLASS_PINF;
+        if (u.i << 9) return ((u.i >> 22) & 1) ? _FPCLASS_QNAN : _FPCLASS_SNAN;
+        return s ? _FPCLASS_NINF : _FPCLASS_PINF;
     default:
-        return s ? MSVCRT__FPCLASS_NN : MSVCRT__FPCLASS_PN;
+        return s ? _FPCLASS_NN : _FPCLASS_PN;
     }
 }
 
@@ -1419,13 +1419,13 @@ int CDECL MSVCRT__fpclass(double num)
     switch (e)
     {
     case 0:
-        if (u.i << 1) return s ? MSVCRT__FPCLASS_ND : MSVCRT__FPCLASS_PD;
-        return s ? MSVCRT__FPCLASS_NZ : MSVCRT__FPCLASS_PZ;
+        if (u.i << 1) return s ? _FPCLASS_ND : _FPCLASS_PD;
+        return s ? _FPCLASS_NZ : _FPCLASS_PZ;
     case 0x7ff:
-        if (u.i << 12) return ((u.i >> 51) & 1) ? MSVCRT__FPCLASS_QNAN : MSVCRT__FPCLASS_SNAN;
-        return s ? MSVCRT__FPCLASS_NINF : MSVCRT__FPCLASS_PINF;
+        if (u.i << 12) return ((u.i >> 51) & 1) ? _FPCLASS_QNAN : _FPCLASS_SNAN;
+        return s ? _FPCLASS_NINF : _FPCLASS_PINF;
     default:
-        return s ? MSVCRT__FPCLASS_NN : MSVCRT__FPCLASS_PN;
+        return s ? _FPCLASS_NN : _FPCLASS_PN;
     }
 }
 
@@ -2285,7 +2285,7 @@ double CDECL MSVCRT__y0(double num)
 
   if (!isfinite(num)) *_errno() = EDOM;
   retval = unix_funcs->y0( num );
-  if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
+  if (MSVCRT__fpclass(retval) == _FPCLASS_NINF)
   {
     *_errno() = EDOM;
     retval = NAN;
@@ -2302,7 +2302,7 @@ double CDECL MSVCRT__y1(double num)
 
   if (!isfinite(num)) *_errno() = EDOM;
   retval = unix_funcs->y1( num );
-  if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
+  if (MSVCRT__fpclass(retval) == _FPCLASS_NINF)
   {
     *_errno() = EDOM;
     retval = NAN;
@@ -2319,7 +2319,7 @@ double CDECL MSVCRT__yn(int order, double num)
 
   if (!isfinite(num)) *_errno() = EDOM;
   retval = unix_funcs->yn( order, num );
-  if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
+  if (MSVCRT__fpclass(retval) == _FPCLASS_NINF)
   {
     *_errno() = EDOM;
     retval = NAN;
@@ -2351,8 +2351,8 @@ float CDECL MSVCRT_nearbyintf(float num)
 double CDECL MSVCRT_nexttoward(double num, double next)
 {
     double ret = unix_funcs->nexttoward(num, next);
-    if (!(MSVCRT__fpclass(ret) & (MSVCRT__FPCLASS_PN | MSVCRT__FPCLASS_NN
-            | MSVCRT__FPCLASS_SNAN | MSVCRT__FPCLASS_QNAN)) && !isinf(num))
+    if (!(MSVCRT__fpclass(ret) & (_FPCLASS_PN | _FPCLASS_NN
+            | _FPCLASS_SNAN | _FPCLASS_QNAN)) && !isinf(num))
     {
         *_errno() = ERANGE;
     }
@@ -2365,8 +2365,8 @@ double CDECL MSVCRT_nexttoward(double num, double next)
 float CDECL MSVCRT_nexttowardf(float num, double next)
 {
     float ret = unix_funcs->nexttowardf( num, next );
-    if (!(MSVCRT__fpclass(ret) & (MSVCRT__FPCLASS_PN | MSVCRT__FPCLASS_NN
-            | MSVCRT__FPCLASS_SNAN | MSVCRT__FPCLASS_QNAN)) && !isinf(num))
+    if (!(MSVCRT__fpclass(ret) & (_FPCLASS_PN | _FPCLASS_NN
+            | _FPCLASS_SNAN | _FPCLASS_QNAN)) && !isinf(num))
     {
         *_errno() = ERANGE;
     }
