@@ -3011,7 +3011,7 @@ HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WA
         mediatype_set_uint32(mediatype, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1, &hr);
     }
 
-    if (format->cbSize)
+    if (format->cbSize && format->wFormatTag != WAVE_FORMAT_EXTENSIBLE)
         mediatype_set_blob(mediatype, &MF_MT_USER_DATA, (const UINT8 *)(format + 1), format->cbSize, &hr);
 
     return hr;

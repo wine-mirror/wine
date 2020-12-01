@@ -5625,8 +5625,12 @@ static void test_MFInitMediaTypeFromWaveFormatEx(void)
         waveformatext.dwChannelMask = 0x8;
         memcpy(&waveformatext.SubFormat, &MFAudioFormat_Base, sizeof(waveformatext.SubFormat));
         waveformatext.SubFormat.Data1 = waveformatex_tests[i].wFormatTag;
+
         hr = MFInitMediaTypeFromWaveFormatEx(mediatype, &waveformatext.Format, sizeof(waveformatext));
         ok(hr == S_OK, "Failed to initialize media type, hr %#x.\n", hr);
+
+        hr = IMFMediaType_GetItem(mediatype, &MF_MT_USER_DATA, NULL);
+        ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
 
         validate_media_type(mediatype, &waveformatext.Format);
     }
