@@ -63,7 +63,6 @@ struct dsound_render
     IDirectSound8 *dsound;
     LPDIRECTSOUNDBUFFER dsbuffer;
     DWORD buf_size;
-    DWORD in_loop;
     DWORD last_playpos, writepos;
 
     REFERENCE_TIME play_time;
@@ -237,11 +236,9 @@ static HRESULT DSoundRender_HandleEndOfStream(struct dsound_render *This)
         if (pos1 == pos2)
             break;
 
-        This->in_loop = 1;
         LeaveCriticalSection(&This->stream_cs);
         WaitForSingleObject(This->flush_event, 10);
         EnterCriticalSection(&This->stream_cs);
-        This->in_loop = 0;
     }
 
     return S_OK;
@@ -262,11 +259,9 @@ static HRESULT DSoundRender_SendSampleData(struct dsound_render *This,
             hr = S_FALSE;
 
         if (hr != S_OK) {
-            This->in_loop = 1;
             LeaveCriticalSection(&This->stream_cs);
             ret = WaitForSingleObject(This->flush_event, 10);
             EnterCriticalSection(&This->stream_cs);
-            This->in_loop = 0;
             if (This->sink.flushing || This->filter.state == State_Stopped)
                 return This->filter.state == State_Paused ? S_OK : VFW_E_WRONG_STATE;
             if (ret != WAIT_TIMEOUT)
