@@ -1092,6 +1092,86 @@ fail:
     return NULL;
 }
 
+struct family_names_data
+{
+    LANGID primary_langid;
+    struct opentype_name family_name;
+    struct opentype_name second_name;
+    BOOL primary_seen;
+    BOOL english_seen;
+};
+
+static BOOL search_family_names_callback( LANGID langid, struct opentype_name *name, void *user )
+{
+    struct family_names_data *data = user;
+
+    if (langid == MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT))
+    {
+        data->english_seen = TRUE;
+        if (data->primary_langid == langid) data->primary_seen = TRUE;
+
+        if (!data->family_name.bytes) data->family_name = *name;
+        else if (data->primary_langid != langid) data->second_name = *name;
+    }
+    else if (data->primary_langid == langid)
+    {
+        data->primary_seen = TRUE;
+        if (!data->second_name.bytes) data->second_name = data->family_name;
+        data->family_name = *name;
+    }
+    else if (!data->second_name.bytes) data->second_name = *name;
+
+    if (data->family_name.bytes && data->second_name.bytes && data->primary_seen && data->english_seen)
+        return TRUE;
+    return FALSE;
+}
+
+struct face_name_data
+{
+    LANGID primary_langid;
+    struct opentype_name face_name;
+};
+
+static BOOL search_face_name_callback( LANGID langid, struct opentype_name *name, void *user )
+{
+    struct face_name_data *data = user;
+
+    if (langid == data->primary_langid || (langid == MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) && !data->face_name.bytes))
+        data->face_name = *name;
+
+    return langid == data->primary_langid;
+}
+
+static WCHAR *decode_opentype_name( struct opentype_name *name )
+{
+    CPTABLEINFO codepage_info;
+    USHORT *codepage_ptr;
+    SIZE_T codepage_size;
+    WCHAR buffer[512];
+    DWORD len;
+
+    if (!name->codepage)
+    {
+        len = min( ARRAY_SIZE(buffer), name->length / sizeof(WCHAR) );
+        while (len--) buffer[len] = GET_BE_WORD( ((WORD *)name->bytes)[len] );
+        len = min( ARRAY_SIZE(buffer), name->length / sizeof(WCHAR) );
+    }
+    else
+    {
+        NtGetNlsSectionPtr( 11, name->codepage, NULL, (void **)&codepage_ptr, &codepage_size );
+        RtlInitCodePageTable( codepage_ptr, &codepage_info );
+        RtlCustomCPToUnicodeN( &codepage_info, buffer, sizeof(buffer), &len, name->bytes, name->length );
+        len /= sizeof(WCHAR);
+        NtUnmapViewOfSection( GetCurrentProcess(), codepage_ptr );
+    }
+
+    buffer[ARRAY_SIZE(buffer) - 1] = 0;
+    if (len == ARRAY_SIZE(buffer)) WARN("Truncated font name %s -> %s\n", debugstr_an(name->bytes, name->length), debugstr_w(buffer));
+    else buffer[len] = 0;
+
+    return strdupW( buffer );
+}
+
 struct unix_face
 {
     FT_Face ft_face;
@@ -1110,11 +1190,14 @@ struct unix_face
 static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr, DWORD data_size,
                                            UINT face_index, DWORD flags )
 {
+    static const WCHAR space_w[] = {' ',0};
+
     const struct ttc_sfnt_v1 *ttc_sfnt_v1;
+    const struct tt_name_v0 *tt_name_v0;
     struct unix_face *This;
     struct stat st;
     DWORD face_count;
-    int fd;
+    int fd, length;
 
     TRACE( "unix_name %s, face_index %u, data_ptr %p, data_size %u, flags %#x\n",
            unix_name, face_index, data_ptr, data_size, flags );
@@ -1140,20 +1223,55 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
         RtlFreeHeap( GetProcessHeap(), 0, This );
         This = NULL;
     }
-    else if (opentype_get_ttc_sfnt_v1( data_ptr, data_size, face_index, &face_count, &ttc_sfnt_v1 ))
+    else if (opentype_get_ttc_sfnt_v1( data_ptr, data_size, face_index, &face_count, &ttc_sfnt_v1 ) &&
+             opentype_get_tt_name_v0( data_ptr, data_size, ttc_sfnt_v1, &tt_name_v0 ))
     {
+        struct family_names_data family_names;
+        struct face_name_data style_name;
+        struct face_name_data full_name;
+        LANGID primary_langid = system_lcid;
+
         This->scalable = TRUE;
         This->num_faces = face_count;
+
+        memset( &family_names, 0, sizeof(family_names) );
+        family_names.primary_langid = primary_langid;
+        opentype_enum_family_names( tt_name_v0, search_family_names_callback, &family_names );
+        This->family_name = decode_opentype_name( &family_names.family_name );
+        This->second_name = decode_opentype_name( &family_names.second_name );
+
+        memset( &style_name, 0, sizeof(style_name) );
+        style_name.primary_langid = primary_langid;
+        opentype_enum_style_names( tt_name_v0, search_face_name_callback, &style_name );
+        This->style_name = decode_opentype_name( &style_name.face_name );
+
+        memset( &full_name, 0, sizeof(full_name) );
+        style_name.primary_langid = primary_langid;
+        opentype_enum_full_names( tt_name_v0, search_face_name_callback, &full_name );
+        This->full_name = decode_opentype_name( &full_name.face_name );
+
+        TRACE( "parsed font names family_name %s, second_name %s, primary_seen %d, english_seen %d, "
+               "full_name %s, style_name %s\n",
+               debugstr_w(This->family_name), debugstr_w(This->second_name),
+               family_names.primary_seen, family_names.english_seen,
+               debugstr_w(This->full_name), debugstr_w(This->style_name) );
+
+        if (!This->full_name && This->family_name && This->style_name)
+        {
+            length = lstrlenW( This->family_name ) + lstrlenW( space_w ) + lstrlenW( This->style_name ) + 1;
+            This->full_name = RtlAllocateHeap( GetProcessHeap(), 0, length * sizeof(WCHAR) );
+            lstrcpyW( This->full_name, This->family_name );
+            lstrcatW( This->full_name, space_w );
+            lstrcatW( This->full_name, This->style_name );
+            WARN( "full name not found, using %s instead\n", debugstr_w(This->full_name) );
+        }
     }
     else
     {
         WARN( "unable to parse font, falling back to FreeType\n" );
         This->scalable = FT_IS_SCALABLE( This->ft_face );
         This->num_faces = This->ft_face->num_faces;
-    }
 
-    if (This)
-    {
         This->family_name = ft_face_get_family_name( This->ft_face, system_lcid );
         This->second_name = ft_face_get_family_name( This->ft_face, MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) );
 
@@ -1173,7 +1291,10 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
 
         This->style_name = ft_face_get_style_name( This->ft_face, system_lcid );
         This->full_name = ft_face_get_full_name( This->ft_face, system_lcid );
+    }
 
+    if (This)
+    {
         This->ntm_flags = get_ntm_flags( This->ft_face );
         This->font_version = get_font_version( This->ft_face );
         if (!This->scalable) get_bitmap_size( This->ft_face, &This->size );

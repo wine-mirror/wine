@@ -26,6 +26,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 
 #include "wine/debug.h"
 
@@ -40,6 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #define MS_EBSC_TAG MS_MAKE_TAG('E','B','S','C')
 #define MS_EBDT_TAG MS_MAKE_TAG('E','B','D','T')
 #define MS_CBDT_TAG MS_MAKE_TAG('C','B','D','T')
+#define MS_NAME_TAG MS_MAKE_TAG('n','a','m','e')
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
@@ -115,7 +117,124 @@ struct tt_os2_v1
     ULONG ulCodePageRange1;
     ULONG ulCodePageRange2;
 };
+
+struct tt_namerecord
+{
+    WORD platformID;
+    WORD encodingID;
+    WORD languageID;
+    WORD nameID;
+    WORD length;
+    WORD offset;
+};
+
+struct tt_name_v0
+{
+    WORD format;
+    WORD count;
+    WORD stringOffset;
+    struct tt_namerecord nameRecord[1];
+};
 #include "poppack.h"
+
+enum OPENTYPE_PLATFORM_ID
+{
+    OPENTYPE_PLATFORM_UNICODE = 0,
+    OPENTYPE_PLATFORM_MAC,
+    OPENTYPE_PLATFORM_ISO,
+    OPENTYPE_PLATFORM_WIN,
+    OPENTYPE_PLATFORM_CUSTOM
+};
+
+enum TT_NAME_WIN_ENCODING_ID
+{
+    TT_NAME_WIN_ENCODING_SYMBOL = 0,
+    TT_NAME_WIN_ENCODING_UNICODE_BMP,
+    TT_NAME_WIN_ENCODING_SJIS,
+    TT_NAME_WIN_ENCODING_PRC,
+    TT_NAME_WIN_ENCODING_BIG5,
+    TT_NAME_WIN_ENCODING_WANSUNG,
+    TT_NAME_WIN_ENCODING_JOHAB,
+    TT_NAME_WIN_ENCODING_RESERVED1,
+    TT_NAME_WIN_ENCODING_RESERVED2,
+    TT_NAME_WIN_ENCODING_RESERVED3,
+    TT_NAME_WIN_ENCODING_UNICODE_FULL
+};
+
+enum TT_NAME_UNICODE_ENCODING_ID
+{
+    TT_NAME_UNICODE_ENCODING_1_0 = 0,
+    TT_NAME_UNICODE_ENCODING_1_1,
+    TT_NAME_UNICODE_ENCODING_ISO_10646,
+    TT_NAME_UNICODE_ENCODING_2_0_BMP,
+    TT_NAME_UNICODE_ENCODING_2_0_FULL,
+    TT_NAME_UNICODE_ENCODING_VAR,
+    TT_NAME_UNICODE_ENCODING_FULL,
+};
+
+enum TT_NAME_MAC_ENCODING_ID
+{
+    TT_NAME_MAC_ENCODING_ROMAN = 0,
+    TT_NAME_MAC_ENCODING_JAPANESE,
+    TT_NAME_MAC_ENCODING_TRAD_CHINESE,
+    TT_NAME_MAC_ENCODING_KOREAN,
+    TT_NAME_MAC_ENCODING_ARABIC,
+    TT_NAME_MAC_ENCODING_HEBREW,
+    TT_NAME_MAC_ENCODING_GREEK,
+    TT_NAME_MAC_ENCODING_RUSSIAN,
+    TT_NAME_MAC_ENCODING_RSYMBOL,
+    TT_NAME_MAC_ENCODING_DEVANAGARI,
+    TT_NAME_MAC_ENCODING_GURMUKHI,
+    TT_NAME_MAC_ENCODING_GUJARATI,
+    TT_NAME_MAC_ENCODING_ORIYA,
+    TT_NAME_MAC_ENCODING_BENGALI,
+    TT_NAME_MAC_ENCODING_TAMIL,
+    TT_NAME_MAC_ENCODING_TELUGU,
+    TT_NAME_MAC_ENCODING_KANNADA,
+    TT_NAME_MAC_ENCODING_MALAYALAM,
+    TT_NAME_MAC_ENCODING_SINHALESE,
+    TT_NAME_MAC_ENCODING_BURMESE,
+    TT_NAME_MAC_ENCODING_KHMER,
+    TT_NAME_MAC_ENCODING_THAI,
+    TT_NAME_MAC_ENCODING_LAOTIAN,
+    TT_NAME_MAC_ENCODING_GEORGIAN,
+    TT_NAME_MAC_ENCODING_ARMENIAN,
+    TT_NAME_MAC_ENCODING_SIMPL_CHINESE,
+    TT_NAME_MAC_ENCODING_TIBETAN,
+    TT_NAME_MAC_ENCODING_MONGOLIAN,
+    TT_NAME_MAC_ENCODING_GEEZ,
+    TT_NAME_MAC_ENCODING_SLAVIC,
+    TT_NAME_MAC_ENCODING_VIETNAMESE,
+    TT_NAME_MAC_ENCODING_SINDHI,
+    TT_NAME_MAC_ENCODING_UNINTERPRETED
+};
+
+enum OPENTYPE_NAME_ID
+{
+    OPENTYPE_NAME_COPYRIGHT_NOTICE = 0,
+    OPENTYPE_NAME_FAMILY,
+    OPENTYPE_NAME_SUBFAMILY,
+    OPENTYPE_NAME_UNIQUE_IDENTIFIER,
+    OPENTYPE_NAME_FULLNAME,
+    OPENTYPE_NAME_VERSION_STRING,
+    OPENTYPE_NAME_POSTSCRIPT,
+    OPENTYPE_NAME_TRADEMARK,
+    OPENTYPE_NAME_MANUFACTURER,
+    OPENTYPE_NAME_DESIGNER,
+    OPENTYPE_NAME_DESCRIPTION,
+    OPENTYPE_NAME_VENDOR_URL,
+    OPENTYPE_NAME_DESIGNER_URL,
+    OPENTYPE_NAME_LICENSE_DESCRIPTION,
+    OPENTYPE_NAME_LICENSE_INFO_URL,
+    OPENTYPE_NAME_RESERVED_ID15,
+    OPENTYPE_NAME_TYPOGRAPHIC_FAMILY,
+    OPENTYPE_NAME_TYPOGRAPHIC_SUBFAMILY,
+    OPENTYPE_NAME_COMPATIBLE_FULLNAME,
+    OPENTYPE_NAME_SAMPLE_TEXT,
+    OPENTYPE_NAME_POSTSCRIPT_CID,
+    OPENTYPE_NAME_WWS_FAMILY,
+    OPENTYPE_NAME_WWS_SUBFAMILY
+};
 
 static BOOL opentype_get_table_ptr( const void *data, size_t size, const struct ttc_sfnt_v1 *ttc_sfnt_v1,
                                     UINT32 table_tag, const void **table_ptr, UINT32 *table_size )
@@ -149,6 +268,306 @@ static BOOL opentype_get_tt_os2_v1( const void *data, size_t size, const struct 
 {
     UINT32 table_size = sizeof(**tt_os2_v1);
     return opentype_get_table_ptr( data, size, ttc_sfnt_v1, MS_OS_2_TAG, (const void **)tt_os2_v1, &table_size );
+}
+
+static UINT get_name_record_codepage( enum OPENTYPE_PLATFORM_ID platform, USHORT encoding )
+{
+    switch (platform)
+    {
+    case OPENTYPE_PLATFORM_UNICODE:
+        return 0;
+    case OPENTYPE_PLATFORM_MAC:
+        switch (encoding)
+        {
+        case TT_NAME_MAC_ENCODING_ROMAN:
+            return 10000;
+        case TT_NAME_MAC_ENCODING_JAPANESE:
+            return 10001;
+        case TT_NAME_MAC_ENCODING_TRAD_CHINESE:
+            return 10002;
+        case TT_NAME_MAC_ENCODING_KOREAN:
+            return 10003;
+        case TT_NAME_MAC_ENCODING_ARABIC:
+            return 10004;
+        case TT_NAME_MAC_ENCODING_HEBREW:
+            return 10005;
+        case TT_NAME_MAC_ENCODING_GREEK:
+            return 10006;
+        case TT_NAME_MAC_ENCODING_RUSSIAN:
+            return 10007;
+        case TT_NAME_MAC_ENCODING_SIMPL_CHINESE:
+            return 10008;
+        case TT_NAME_MAC_ENCODING_THAI:
+            return 10021;
+        default:
+            FIXME( "encoding %u not handled, platform %d.\n", encoding, platform );
+            break;
+        }
+        break;
+    case OPENTYPE_PLATFORM_WIN:
+        switch (encoding)
+        {
+        case TT_NAME_WIN_ENCODING_SYMBOL:
+        case TT_NAME_WIN_ENCODING_UNICODE_BMP:
+        case TT_NAME_WIN_ENCODING_UNICODE_FULL:
+            return 0;
+        case TT_NAME_WIN_ENCODING_SJIS:
+            return 932;
+        case TT_NAME_WIN_ENCODING_PRC:
+            return 936;
+        case TT_NAME_WIN_ENCODING_BIG5:
+            return 950;
+        case TT_NAME_WIN_ENCODING_WANSUNG:
+            return 20949;
+        case TT_NAME_WIN_ENCODING_JOHAB:
+            return 1361;
+        default:
+            FIXME( "encoding %u not handled, platform %d.\n", encoding, platform );
+            break;
+        }
+        break;
+    default:
+        FIXME( "unknown platform %d\n", platform );
+        break;
+    }
+
+    return 0;
+}
+
+static const LANGID mac_langid_table[] =
+{
+    MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_ITALIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_DUTCH, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_SWEDISH, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_SPANISH, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_DANISH, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_PORTUGUESE, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_NORWEGIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_HEBREW, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_ARABIC, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_FINNISH, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_GREEK, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_ICELANDIC, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_MALTESE, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_TURKISH, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_CROATIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_CHINESE_TRADITIONAL, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_URDU, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_HINDI, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_THAI, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_KOREAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_LITHUANIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_POLISH, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_HUNGARIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_ESTONIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_LATVIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_SAMI, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_FAEROESE, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_FARSI, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_RUSSIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_CHINESE_SIMPLIFIED, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_DUTCH, SUBLANG_DUTCH_BELGIAN),
+    MAKELANGID(LANG_IRISH, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_ALBANIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_ROMANIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_CZECH, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_SLOVAK, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_SLOVENIAN, SUBLANG_DEFAULT),
+    0,
+    MAKELANGID(LANG_SERBIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_MACEDONIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_BULGARIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_UKRAINIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_BELARUSIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_UZBEK, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_KAZAK, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_AZERI, SUBLANG_AZERI_CYRILLIC),
+    0,
+    MAKELANGID(LANG_ARMENIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_GEORGIAN, SUBLANG_DEFAULT),
+    0,
+    MAKELANGID(LANG_KYRGYZ, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_TAJIK, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_TURKMEN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_MONGOLIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_MONGOLIAN, SUBLANG_MONGOLIAN_CYRILLIC_MONGOLIA),
+    MAKELANGID(LANG_PASHTO, SUBLANG_DEFAULT),
+    0,
+    MAKELANGID(LANG_KASHMIRI, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_SINDHI, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_TIBETAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_NEPALI, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_SANSKRIT, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_MARATHI, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_BENGALI, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_ASSAMESE, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_GUJARATI, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_PUNJABI, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_ORIYA, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_MALAYALAM, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_KANNADA, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_TAMIL, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_TELUGU, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_SINHALESE, SUBLANG_DEFAULT),
+    0,
+    MAKELANGID(LANG_KHMER, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_LAO, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_VIETNAMESE, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_INDONESIAN, SUBLANG_DEFAULT),
+    0,
+    MAKELANGID(LANG_MALAY, SUBLANG_DEFAULT),
+    0,
+    MAKELANGID(LANG_AMHARIC, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_TIGRIGNA, SUBLANG_DEFAULT),
+    0,
+    0,
+    MAKELANGID(LANG_SWAHILI, SUBLANG_DEFAULT),
+    0,
+    0,
+    0,
+    MAKELANGID(LANG_MALAGASY, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_ESPERANTO, SUBLANG_DEFAULT),
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    MAKELANGID(LANG_WELSH, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_BASQUE, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_CATALAN, SUBLANG_DEFAULT),
+    0,
+    MAKELANGID(LANG_QUECHUA, SUBLANG_DEFAULT),
+    0,
+    0,
+    MAKELANGID(LANG_TATAR, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_UIGHUR, SUBLANG_DEFAULT),
+    0,
+    0,
+    0,
+    MAKELANGID(LANG_GALICIAN, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_AFRIKAANS, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_BRETON, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_INUKTITUT, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_SCOTTISH_GAELIC, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_MANX_GAELIC, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_IRISH, SUBLANG_IRISH_IRELAND),
+    0,
+    0,
+    MAKELANGID(LANG_GREENLANDIC, SUBLANG_DEFAULT),
+    MAKELANGID(LANG_AZERI, SUBLANG_AZERI_LATIN),
+};
+
+static LANGID get_name_record_langid( enum OPENTYPE_PLATFORM_ID platform, USHORT encoding, USHORT language )
+{
+    switch (platform)
+    {
+    case OPENTYPE_PLATFORM_WIN:
+        return language;
+    case OPENTYPE_PLATFORM_MAC:
+        if (language < ARRAY_SIZE(mac_langid_table)) return mac_langid_table[language];
+        WARN( "invalid mac lang id %d\n", language );
+        break;
+    case OPENTYPE_PLATFORM_UNICODE:
+        switch (encoding)
+        {
+        case TT_NAME_UNICODE_ENCODING_1_0:
+        case TT_NAME_UNICODE_ENCODING_ISO_10646:
+        case TT_NAME_UNICODE_ENCODING_2_0_BMP:
+            if (language < ARRAY_SIZE(mac_langid_table)) return mac_langid_table[language];
+            WARN( "invalid unicode lang id %d\n", language );
+            break;
+        default:
+            break;
+        }
+    default:
+        FIXME( "unknown platform %d\n", platform );
+        break;
+    }
+
+    return MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
+}
+
+static BOOL opentype_enum_font_names( const struct tt_name_v0 *header, enum OPENTYPE_PLATFORM_ID platform,
+                                      enum OPENTYPE_NAME_ID name, opentype_enum_names_cb callback, void *user )
+{
+    const char *name_data;
+    USHORT i, name_count, encoding, language, length, offset;
+    USHORT platform_id = GET_BE_WORD( platform ), name_id = GET_BE_WORD( name );
+    LANGID langid;
+    BOOL ret = FALSE;
+
+    switch (GET_BE_WORD( header->format ))
+    {
+    case 0:
+    case 1:
+        break;
+    default:
+        FIXME( "unsupported name format %d\n", GET_BE_WORD( header->format ) );
+        return FALSE;
+    }
+
+    name_data = (const char *)header + GET_BE_WORD( header->stringOffset );
+    name_count = GET_BE_WORD( header->count );
+    for (i = 0; i < name_count; i++)
+    {
+        const struct tt_namerecord *record = &header->nameRecord[i];
+        struct opentype_name opentype_name;
+
+        if (record->nameID != name_id) continue;
+        if (record->platformID != platform_id) continue;
+
+        language = GET_BE_WORD( record->languageID );
+        if (language >= 0x8000)
+        {
+            FIXME( "handle name format 1\n" );
+            continue;
+        }
+
+        encoding = GET_BE_WORD( record->encodingID );
+        offset = GET_BE_WORD( record->offset );
+        length = GET_BE_WORD( record->length );
+        langid = get_name_record_langid( platform, encoding, language );
+
+        opentype_name.codepage = get_name_record_codepage( platform, encoding );
+        opentype_name.length = length;
+        opentype_name.bytes = name_data + offset;
+
+        if ((ret = callback( langid, &opentype_name, user ))) break;
+    }
+
+    return ret;
 }
 
 BOOL opentype_get_ttc_sfnt_v1( const void *data, size_t size, DWORD index, DWORD *count, const struct ttc_sfnt_v1 **ttc_sfnt_v1 )
@@ -217,4 +636,44 @@ BOOL opentype_get_ttc_sfnt_v1( const void *data, size_t size, DWORD index, DWORD
     }
 
     return TRUE;
+}
+
+BOOL opentype_get_tt_name_v0( const void *data, size_t size, const struct ttc_sfnt_v1 *ttc_sfnt_v1,
+                              const struct tt_name_v0 **tt_name_v0 )
+{
+    UINT32 table_size = sizeof(**tt_name_v0);
+    return opentype_get_table_ptr( data, size, ttc_sfnt_v1, MS_NAME_TAG, (const void **)tt_name_v0, &table_size );
+}
+
+BOOL opentype_enum_family_names( const struct tt_name_v0 *header, opentype_enum_names_cb callback, void *user )
+{
+    if (opentype_enum_font_names( header, OPENTYPE_PLATFORM_WIN, OPENTYPE_NAME_FAMILY, callback, user ))
+        return TRUE;
+    if (opentype_enum_font_names( header, OPENTYPE_PLATFORM_MAC, OPENTYPE_NAME_FAMILY, callback, user ))
+        return TRUE;
+    if (opentype_enum_font_names( header, OPENTYPE_PLATFORM_UNICODE, OPENTYPE_NAME_FAMILY, callback, user ))
+        return TRUE;
+    return FALSE;
+}
+
+BOOL opentype_enum_style_names( const struct tt_name_v0 *header, opentype_enum_names_cb callback, void *user )
+{
+    if (opentype_enum_font_names( header, OPENTYPE_PLATFORM_WIN, OPENTYPE_NAME_SUBFAMILY, callback, user ))
+        return TRUE;
+    if (opentype_enum_font_names( header, OPENTYPE_PLATFORM_MAC, OPENTYPE_NAME_SUBFAMILY, callback, user ))
+        return TRUE;
+    if (opentype_enum_font_names( header, OPENTYPE_PLATFORM_UNICODE, OPENTYPE_NAME_SUBFAMILY, callback, user ))
+        return TRUE;
+    return FALSE;
+}
+
+BOOL opentype_enum_full_names( const struct tt_name_v0 *header, opentype_enum_names_cb callback, void *user )
+{
+    if (opentype_enum_font_names( header, OPENTYPE_PLATFORM_WIN, OPENTYPE_NAME_FULLNAME, callback, user ))
+        return TRUE;
+    if (opentype_enum_font_names( header, OPENTYPE_PLATFORM_MAC, OPENTYPE_NAME_FULLNAME, callback, user ))
+        return TRUE;
+    if (opentype_enum_font_names( header, OPENTYPE_PLATFORM_UNICODE, OPENTYPE_NAME_FULLNAME, callback, user ))
+        return TRUE;
+    return FALSE;
 }
