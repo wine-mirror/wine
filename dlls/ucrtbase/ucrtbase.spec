@@ -281,7 +281,7 @@
 @ varargs _execlpe(str str)
 @ cdecl _execute_onexit_table(ptr)
 @ cdecl _execv(str ptr)
-@ cdecl _execve(str ptr ptr) MSVCRT__execve
+@ cdecl _execve(str ptr ptr)
 @ cdecl _execvp(str ptr)
 @ cdecl _execvpe(str ptr ptr)
 @ cdecl _exit(long)
@@ -908,7 +908,7 @@
 @ cdecl _o__except1(long long double double long ptr) _except1
 @ cdecl _o__execute_onexit_table(ptr) _execute_onexit_table
 @ cdecl _o__execv(str ptr) _execv
-@ cdecl _o__execve(str ptr ptr) MSVCRT__execve
+@ cdecl _o__execve(str ptr ptr) _execve
 @ cdecl _o__execvp(str ptr) _execvp
 @ cdecl _o__execvpe(str ptr ptr) _execvpe
 @ cdecl _o__exit(long) _exit
@@ -1299,9 +1299,9 @@
 @ cdecl _o__nextafter(double double) MSVCRT__nextafter
 @ cdecl -arch=x86_64 _o__nextafterf(float float) MSVCRT__nextafterf
 @ cdecl _o__open_osfhandle(long long) MSVCRT__open_osfhandle
-@ cdecl _o__pclose(ptr) MSVCRT__pclose
+@ cdecl _o__pclose(ptr) _pclose
 @ cdecl _o__pipe(ptr long long) MSVCRT__pipe
-@ cdecl _o__popen(str str) MSVCRT__popen
+@ cdecl _o__popen(str str) _popen
 @ cdecl _o__purecall() _purecall
 @ cdecl _o__putc_nolock(long ptr) MSVCRT__fputc_nolock
 @ cdecl _o__putch(long) _putch
@@ -1343,10 +1343,10 @@
 @ varargs _o__sopen(str long long) MSVCRT__sopen
 @ cdecl _o__sopen_dispatch(str long long long ptr long) MSVCRT__sopen_dispatch
 @ cdecl _o__sopen_s(ptr str long long long) MSVCRT__sopen_s
-@ cdecl _o__spawnv(long str ptr) MSVCRT__spawnv
-@ cdecl _o__spawnve(long str ptr ptr) MSVCRT__spawnve
-@ cdecl _o__spawnvp(long str ptr) MSVCRT__spawnvp
-@ cdecl _o__spawnvpe(long str ptr ptr) MSVCRT__spawnvpe
+@ cdecl _o__spawnv(long str ptr) _spawnv
+@ cdecl _o__spawnve(long str ptr ptr) _spawnve
+@ cdecl _o__spawnvp(long str ptr) _spawnvp
+@ cdecl _o__spawnvpe(long str ptr ptr) _spawnvpe
 @ cdecl _o__splitpath(str ptr ptr ptr ptr) MSVCRT__splitpath
 @ cdecl _o__splitpath_s(str ptr long ptr long ptr long ptr long) MSVCRT__splitpath_s
 @ cdecl _o__stat32(str ptr) MSVCRT__stat32
@@ -1512,7 +1512,7 @@
 @ cdecl _o__wmktemp(wstr) MSVCRT__wmktemp
 @ cdecl _o__wmktemp_s(wstr long) MSVCRT__wmktemp_s
 @ cdecl _o__wperror(wstr) _wperror
-@ cdecl _o__wpopen(wstr wstr) MSVCRT__wpopen
+@ cdecl _o__wpopen(wstr wstr) _wpopen
 @ cdecl _o__wputenv(wstr) _wputenv
 @ cdecl _o__wputenv_s(wstr wstr) _wputenv_s
 @ cdecl _o__wremove(wstr) MSVCRT__wremove
@@ -1524,10 +1524,10 @@
 @ cdecl _o__wsetlocale(long wstr) _wsetlocale
 @ cdecl _o__wsopen_dispatch(wstr long long long ptr long) MSVCRT__wsopen_dispatch
 @ cdecl _o__wsopen_s(ptr wstr long long long) MSVCRT__wsopen_s
-@ cdecl _o__wspawnv(long wstr ptr) MSVCRT__wspawnv
-@ cdecl _o__wspawnve(long wstr ptr ptr) MSVCRT__wspawnve
-@ cdecl _o__wspawnvp(long wstr ptr) MSVCRT__wspawnvp
-@ cdecl _o__wspawnvpe(long wstr ptr ptr) MSVCRT__wspawnvpe
+@ cdecl _o__wspawnv(long wstr ptr) _wspawnv
+@ cdecl _o__wspawnve(long wstr ptr ptr) _wspawnve
+@ cdecl _o__wspawnvp(long wstr ptr) _wspawnvp
+@ cdecl _o__wspawnvpe(long wstr ptr ptr) _wspawnvpe
 @ cdecl _o__wsplitpath(wstr ptr ptr ptr ptr) MSVCRT__wsplitpath
 @ cdecl _o__wsplitpath_s(wstr ptr long ptr long ptr long ptr long) MSVCRT__wsplitpath_s
 @ cdecl _o__wstat32(wstr ptr) MSVCRT__wstat32
@@ -1795,7 +1795,7 @@
 @ cdecl -ret64 _o_strtoll(str ptr long) MSVCRT_strtoi64
 @ cdecl _o_strtoul(str ptr long) MSVCRT_strtoul
 @ cdecl -ret64 _o_strtoull(str ptr long) MSVCRT_strtoui64
-@ cdecl _o_system(str) MSVCRT_system
+@ cdecl _o_system(str) system
 @ cdecl _o_tan(double) MSVCRT_tan
 @ cdecl -arch=!i386 _o_tanf(float) MSVCRT_tanf
 @ cdecl _o_tanh(double) MSVCRT_tanh
@@ -1841,9 +1841,9 @@
 @ cdecl _o_wmemmove_s(ptr long ptr long) wmemmove_s
 @ varargs _open(str long) MSVCRT__open
 @ cdecl _open_osfhandle(long long) MSVCRT__open_osfhandle
-@ cdecl _pclose(ptr) MSVCRT__pclose
+@ cdecl _pclose(ptr)
 @ cdecl _pipe(ptr long long) MSVCRT__pipe
-@ cdecl _popen(str str) MSVCRT__popen
+@ cdecl _popen(str str)
 @ cdecl _purecall()
 @ cdecl _putc_nolock(long ptr) MSVCRT__fputc_nolock
 @ cdecl _putch(long)
@@ -1904,14 +1904,14 @@
 @ varargs _sopen(str long long) MSVCRT__sopen
 @ cdecl _sopen_dispatch(str long long long ptr long) MSVCRT__sopen_dispatch
 @ cdecl _sopen_s(ptr str long long long) MSVCRT__sopen_s
-@ varargs _spawnl(long str str) MSVCRT__spawnl
-@ varargs _spawnle(long str str) MSVCRT__spawnle
-@ varargs _spawnlp(long str str) MSVCRT__spawnlp
-@ varargs _spawnlpe(long str str) MSVCRT__spawnlpe
-@ cdecl _spawnv(long str ptr) MSVCRT__spawnv
-@ cdecl _spawnve(long str ptr ptr) MSVCRT__spawnve
-@ cdecl _spawnvp(long str ptr) MSVCRT__spawnvp
-@ cdecl _spawnvpe(long str ptr ptr) MSVCRT__spawnvpe
+@ varargs _spawnl(long str str)
+@ varargs _spawnle(long str str)
+@ varargs _spawnlp(long str str)
+@ varargs _spawnlpe(long str str)
+@ cdecl _spawnv(long str ptr)
+@ cdecl _spawnve(long str ptr ptr)
+@ cdecl _spawnvp(long str ptr)
+@ cdecl _spawnvpe(long str ptr ptr)
 @ cdecl _splitpath(str ptr ptr ptr ptr) MSVCRT__splitpath
 @ cdecl _splitpath_s(str ptr long ptr long ptr long ptr long) MSVCRT__splitpath_s
 @ cdecl _stat32(str ptr) MSVCRT__stat32
@@ -2098,7 +2098,7 @@
 @ cdecl _wmktemp_s(wstr long) MSVCRT__wmktemp_s
 @ varargs _wopen(wstr long) MSVCRT__wopen
 @ cdecl _wperror(wstr)
-@ cdecl _wpopen(wstr wstr) MSVCRT__wpopen
+@ cdecl _wpopen(wstr wstr)
 @ cdecl _wputenv(wstr)
 @ cdecl _wputenv_s(wstr wstr)
 @ cdecl _wremove(wstr) MSVCRT__wremove
@@ -2111,14 +2111,14 @@
 @ varargs _wsopen(wstr long long) MSVCRT__wsopen
 @ cdecl _wsopen_dispatch(wstr long long long ptr long) MSVCRT__wsopen_dispatch
 @ cdecl _wsopen_s(ptr wstr long long long) MSVCRT__wsopen_s
-@ varargs _wspawnl(long wstr wstr) MSVCRT__wspawnl
-@ varargs _wspawnle(long wstr wstr) MSVCRT__wspawnle
-@ varargs _wspawnlp(long wstr wstr) MSVCRT__wspawnlp
-@ varargs _wspawnlpe(long wstr wstr) MSVCRT__wspawnlpe
-@ cdecl _wspawnv(long wstr ptr) MSVCRT__wspawnv
-@ cdecl _wspawnve(long wstr ptr ptr) MSVCRT__wspawnve
-@ cdecl _wspawnvp(long wstr ptr) MSVCRT__wspawnvp
-@ cdecl _wspawnvpe(long wstr ptr ptr) MSVCRT__wspawnvpe
+@ varargs _wspawnl(long wstr wstr)
+@ varargs _wspawnle(long wstr wstr)
+@ varargs _wspawnlp(long wstr wstr)
+@ varargs _wspawnlpe(long wstr wstr)
+@ cdecl _wspawnv(long wstr ptr)
+@ cdecl _wspawnve(long wstr ptr ptr)
+@ cdecl _wspawnvp(long wstr ptr)
+@ cdecl _wspawnvpe(long wstr ptr ptr)
 @ cdecl _wsplitpath(wstr ptr ptr ptr ptr) MSVCRT__wsplitpath
 @ cdecl _wsplitpath_s(wstr ptr long ptr long ptr long ptr long) MSVCRT__wsplitpath_s
 @ cdecl _wstat32(wstr ptr) MSVCRT__wstat32
@@ -2528,7 +2528,7 @@
 @ cdecl -ret64 strtoull(str ptr long) MSVCRT_strtoui64
 @ cdecl -ret64 strtoumax(str ptr long) MSVCRT_strtoui64
 @ cdecl strxfrm(ptr str long) MSVCRT_strxfrm
-@ cdecl system(str) MSVCRT_system
+@ cdecl system(str)
 @ cdecl tan(double) MSVCRT_tan
 @ cdecl -arch=!i386 tanf(float) MSVCRT_tanf
 @ cdecl tanh(double) MSVCRT_tanh

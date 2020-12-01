@@ -268,7 +268,7 @@
 @ varargs _execlp(str str)
 @ varargs _execlpe(str str)
 @ cdecl _execv(str ptr)
-@ cdecl _execve(str ptr ptr) MSVCRT__execve
+@ cdecl _execve(str ptr ptr)
 @ cdecl _execvp(str ptr)
 @ cdecl _execvpe(str ptr ptr)
 @ cdecl _exit(long)
@@ -463,11 +463,11 @@
 @ stub -arch=i386 _outp(long long)
 @ stub -arch=i386 _outpd(long long)
 @ stub -arch=i386 _outpw(long long)
-@ cdecl _pclose(ptr) MSVCRT__pclose
+@ cdecl _pclose(ptr)
 @ extern _pctype MSVCRT__pctype
 @ extern _pgmptr MSVCRT__pgmptr
 @ cdecl _pipe(ptr long long) MSVCRT__pipe
-@ cdecl _popen(str str) MSVCRT__popen
+@ cdecl _popen(str str)
 @ cdecl _purecall()
 @ cdecl _putch(long)
 @ cdecl _putenv(str)
@@ -501,14 +501,14 @@
 @ varargs _snprintf(ptr long str) MSVCRT__snprintf
 @ varargs _snwprintf(ptr long wstr) MSVCRT__snwprintf
 @ varargs _sopen(str long long) MSVCRT__sopen
-@ varargs _spawnl(long str str) MSVCRT__spawnl
-@ varargs _spawnle(long str str) MSVCRT__spawnle
-@ varargs _spawnlp(long str str) MSVCRT__spawnlp
-@ varargs _spawnlpe(long str str) MSVCRT__spawnlpe
-@ cdecl _spawnv(long str ptr) MSVCRT__spawnv
-@ cdecl _spawnve(long str ptr ptr) MSVCRT__spawnve
-@ cdecl _spawnvp(long str ptr) MSVCRT__spawnvp
-@ cdecl _spawnvpe(long str ptr ptr) MSVCRT__spawnvpe
+@ varargs _spawnl(long str str)
+@ varargs _spawnle(long str str)
+@ varargs _spawnlp(long str str)
+@ varargs _spawnlpe(long str str)
+@ cdecl _spawnv(long str ptr)
+@ cdecl _spawnve(long str ptr ptr)
+@ cdecl _spawnvp(long str ptr)
+@ cdecl _spawnvpe(long str ptr ptr)
 @ cdecl _splitpath(str ptr ptr ptr ptr) MSVCRT__splitpath
 @ cdecl _stat(str ptr) MSVCRT_stat
 @ cdecl _stati64(str ptr) MSVCRT_stati64
@@ -600,7 +600,7 @@
 @ varargs _wopen(wstr long) MSVCRT__wopen
 @ cdecl _wperror(wstr)
 @ extern _wpgmptr MSVCRT__wpgmptr
-@ cdecl _wpopen(wstr wstr) MSVCRT__wpopen
+@ cdecl _wpopen(wstr wstr)
 @ cdecl _wputenv(wstr)
 @ cdecl _wremove(wstr) MSVCRT__wremove
 @ cdecl _wrename(wstr wstr) MSVCRT__wrename
@@ -609,14 +609,14 @@
 @ cdecl _wsearchenv(wstr wstr ptr) MSVCRT__wsearchenv
 @ cdecl _wsetlocale(long wstr)
 @ varargs _wsopen(wstr long long) MSVCRT__wsopen
-@ varargs _wspawnl(long wstr wstr) MSVCRT__wspawnl
-@ varargs _wspawnle(long wstr wstr) MSVCRT__wspawnle
-@ varargs _wspawnlp(long wstr wstr) MSVCRT__wspawnlp
-@ varargs _wspawnlpe(long wstr wstr) MSVCRT__wspawnlpe
-@ cdecl _wspawnv(long wstr ptr) MSVCRT__wspawnv
-@ cdecl _wspawnve(long wstr ptr ptr) MSVCRT__wspawnve
-@ cdecl _wspawnvp(long wstr ptr) MSVCRT__wspawnvp
-@ cdecl _wspawnvpe(long wstr ptr ptr) MSVCRT__wspawnvpe
+@ varargs _wspawnl(long wstr wstr)
+@ varargs _wspawnle(long wstr wstr)
+@ varargs _wspawnlp(long wstr wstr)
+@ varargs _wspawnlpe(long wstr wstr)
+@ cdecl _wspawnv(long wstr ptr)
+@ cdecl _wspawnve(long wstr ptr ptr)
+@ cdecl _wspawnvp(long wstr ptr)
+@ cdecl _wspawnvpe(long wstr ptr ptr)
 @ cdecl _wsplitpath(wstr ptr ptr ptr ptr) MSVCRT__wsplitpath
 @ cdecl _wstat(wstr ptr) MSVCRT__wstat
 @ cdecl _wstati64(wstr ptr) MSVCRT__wstati64
@@ -787,7 +787,7 @@
 @ cdecl strxfrm(ptr str long) MSVCRT_strxfrm
 @ varargs swprintf(ptr wstr) MSVCRT_swprintf
 @ varargs swscanf(wstr wstr) MSVCRT_swscanf
-@ cdecl system(str) MSVCRT_system
+@ cdecl system(str)
 @ cdecl tan(double) MSVCRT_tan
 @ cdecl tanh(double) MSVCRT_tanh
 @ cdecl time(ptr) MSVCRT_time
