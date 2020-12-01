@@ -4107,6 +4107,7 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
         GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, buffer_gl->bo.id));
         GL_EXTCALL(glDispatchComputeIndirect((GLintptr)indirect->offset));
         GL_EXTCALL(glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, 0));
+        wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
     }
     else
     {
