@@ -224,18 +224,15 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
             IReferenceClock_AdviseTime(filter->filter.clock, filter->stream_start,
                     start, (HEVENT)filter->advise_event, &cookie);
 
-            LeaveCriticalSection(&filter->csRenderLock);
-
             ret = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
             IReferenceClock_Unadvise(filter->filter.clock, cookie);
 
             if (ret == 1)
             {
+                LeaveCriticalSection(&filter->csRenderLock);
                 TRACE("Flush signaled; discarding current sample.\n");
                 return S_OK;
             }
-
-            EnterCriticalSection(&filter->csRenderLock);
         }
     }
 
