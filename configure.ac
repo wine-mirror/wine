@@ -2187,7 +2187,6 @@ AC_CHECK_FUNCS(\
 	readdir \
 	readlink \
 	sched_yield \
-	select \
 	setproctitle \
 	setprogname \
 	settimeofday \
@@ -2196,8 +2195,7 @@ AC_CHECK_FUNCS(\
 	symlink \
 	sysinfo \
 	tcdrain \
-	thr_kill2 \
-	usleep
+	thr_kill2
 )
 CFLAGS="$ac_save_CFLAGS"
 

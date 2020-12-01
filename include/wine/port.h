@@ -277,10 +277,6 @@ int readlink( const char *path, char *buf, size_t size );
 int symlink(const char *from, const char *to);
 #endif
 
-#ifndef HAVE_USLEEP
-int usleep (unsigned int useconds);
-#endif /* !defined(HAVE_USLEEP) */
-
 extern int mkstemps(char *template, int suffix_len);
 
 #else /* NO_LIBWINE_PORT */
@@ -292,7 +288,6 @@ extern int mkstemps(char *template, int suffix_len);
 #define lstat                   __WINE_NOT_PORTABLE(lstat)
 #define pread                   __WINE_NOT_PORTABLE(pread)
 #define pwrite                  __WINE_NOT_PORTABLE(pwrite)
-#define usleep                  __WINE_NOT_PORTABLE(usleep)
 
 #endif /* NO_LIBWINE_PORT */
 

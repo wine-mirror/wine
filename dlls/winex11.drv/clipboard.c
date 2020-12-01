@@ -95,7 +95,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
 /* Maximum wait time for selection notify */
 #define SELECTION_RETRIES 500  /* wait for .5 seconds */
-#define SELECTION_WAIT    1000 /* us */
+#define SELECTION_WAIT    1    /* ms */
 
 #define SELECTION_UPDATE_DELAY 2000   /* delay between checks of the X11 selection */
 
@@ -458,7 +458,7 @@ static BOOL convert_selection( Display *display, Window win, Atom selection,
         Bool res = XCheckTypedWindowEvent( display, win, SelectionNotify, &event );
         if (res && event.xselection.selection == selection && event.xselection.target == format->atom)
             return read_property( display, win, event.xselection.property, type, data, size );
-        usleep( SELECTION_WAIT );
+        Sleep( SELECTION_WAIT );
     }
     ERR( "Timed out waiting for SelectionNotify event\n" );
     return FALSE;
@@ -1691,7 +1691,7 @@ static BOOL read_property( Display *display, Window w, Atom prop,
                 if (res && xe.xproperty.atom == prop &&
                     xe.xproperty.state == PropertyNewValue)
                     break;
-                usleep(SELECTION_WAIT);
+                Sleep(SELECTION_WAIT);
             }
 
             if (i >= SELECTION_RETRIES ||
