@@ -1640,12 +1640,12 @@ void CDECL _statusfp2( unsigned int *x86_sw, unsigned int *sse2_sw )
     {
         __asm__ __volatile__( "fstsw %0" : "=m" (fpword) );
         flags = 0;
-        if (fpword & 0x1)  flags |= MSVCRT__SW_INVALID;
-        if (fpword & 0x2)  flags |= MSVCRT__SW_DENORMAL;
-        if (fpword & 0x4)  flags |= MSVCRT__SW_ZERODIVIDE;
-        if (fpword & 0x8)  flags |= MSVCRT__SW_OVERFLOW;
-        if (fpword & 0x10) flags |= MSVCRT__SW_UNDERFLOW;
-        if (fpword & 0x20) flags |= MSVCRT__SW_INEXACT;
+        if (fpword & 0x1)  flags |= _SW_INVALID;
+        if (fpword & 0x2)  flags |= _SW_DENORMAL;
+        if (fpword & 0x4)  flags |= _SW_ZERODIVIDE;
+        if (fpword & 0x8)  flags |= _SW_OVERFLOW;
+        if (fpword & 0x10) flags |= _SW_UNDERFLOW;
+        if (fpword & 0x20) flags |= _SW_INEXACT;
         *x86_sw = flags;
     }
 
@@ -1655,12 +1655,12 @@ void CDECL _statusfp2( unsigned int *x86_sw, unsigned int *sse2_sw )
     {
         __asm__ __volatile__( "stmxcsr %0" : "=m" (fpword) );
         flags = 0;
-        if (fpword & 0x1)  flags |= MSVCRT__SW_INVALID;
-        if (fpword & 0x2)  flags |= MSVCRT__SW_DENORMAL;
-        if (fpword & 0x4)  flags |= MSVCRT__SW_ZERODIVIDE;
-        if (fpword & 0x8)  flags |= MSVCRT__SW_OVERFLOW;
-        if (fpword & 0x10) flags |= MSVCRT__SW_UNDERFLOW;
-        if (fpword & 0x20) flags |= MSVCRT__SW_INEXACT;
+        if (fpword & 0x1)  flags |= _SW_INVALID;
+        if (fpword & 0x2)  flags |= _SW_DENORMAL;
+        if (fpword & 0x4)  flags |= _SW_ZERODIVIDE;
+        if (fpword & 0x8)  flags |= _SW_OVERFLOW;
+        if (fpword & 0x10) flags |= _SW_UNDERFLOW;
+        if (fpword & 0x20) flags |= _SW_INEXACT;
         *sse2_sw = flags;
     }
     else *sse2_sw = 0;
@@ -1686,12 +1686,12 @@ unsigned int CDECL _statusfp(void)
     ULONG_PTR fpsr;
 
     __asm__ __volatile__( "mrs %0, fpsr" : "=r" (fpsr) );
-    if (fpsr & 0x1)  flags |= MSVCRT__SW_INVALID;
-    if (fpsr & 0x2)  flags |= MSVCRT__SW_ZERODIVIDE;
-    if (fpsr & 0x4)  flags |= MSVCRT__SW_OVERFLOW;
-    if (fpsr & 0x8)  flags |= MSVCRT__SW_UNDERFLOW;
-    if (fpsr & 0x10) flags |= MSVCRT__SW_INEXACT;
-    if (fpsr & 0x80) flags |= MSVCRT__SW_DENORMAL;
+    if (fpsr & 0x1)  flags |= _SW_INVALID;
+    if (fpsr & 0x2)  flags |= _SW_ZERODIVIDE;
+    if (fpsr & 0x4)  flags |= _SW_OVERFLOW;
+    if (fpsr & 0x8)  flags |= _SW_UNDERFLOW;
+    if (fpsr & 0x10) flags |= _SW_INEXACT;
+    if (fpsr & 0x80) flags |= _SW_DENORMAL;
 #else
     FIXME( "not implemented\n" );
 #endif
@@ -1708,22 +1708,22 @@ unsigned int CDECL _clearfp(void)
     unsigned long fpword;
 
     __asm__ __volatile__( "fnstsw %0; fnclex" : "=m" (fpword) );
-    if (fpword & 0x1)  flags |= MSVCRT__SW_INVALID;
-    if (fpword & 0x2)  flags |= MSVCRT__SW_DENORMAL;
-    if (fpword & 0x4)  flags |= MSVCRT__SW_ZERODIVIDE;
-    if (fpword & 0x8)  flags |= MSVCRT__SW_OVERFLOW;
-    if (fpword & 0x10) flags |= MSVCRT__SW_UNDERFLOW;
-    if (fpword & 0x20) flags |= MSVCRT__SW_INEXACT;
+    if (fpword & 0x1)  flags |= _SW_INVALID;
+    if (fpword & 0x2)  flags |= _SW_DENORMAL;
+    if (fpword & 0x4)  flags |= _SW_ZERODIVIDE;
+    if (fpword & 0x8)  flags |= _SW_OVERFLOW;
+    if (fpword & 0x10) flags |= _SW_UNDERFLOW;
+    if (fpword & 0x20) flags |= _SW_INEXACT;
 
     if (sse2_supported)
     {
         __asm__ __volatile__( "stmxcsr %0" : "=m" (fpword) );
-        if (fpword & 0x1)  flags |= MSVCRT__SW_INVALID;
-        if (fpword & 0x2)  flags |= MSVCRT__SW_DENORMAL;
-        if (fpword & 0x4)  flags |= MSVCRT__SW_ZERODIVIDE;
-        if (fpword & 0x8)  flags |= MSVCRT__SW_OVERFLOW;
-        if (fpword & 0x10) flags |= MSVCRT__SW_UNDERFLOW;
-        if (fpword & 0x20) flags |= MSVCRT__SW_INEXACT;
+        if (fpword & 0x1)  flags |= _SW_INVALID;
+        if (fpword & 0x2)  flags |= _SW_DENORMAL;
+        if (fpword & 0x4)  flags |= _SW_ZERODIVIDE;
+        if (fpword & 0x8)  flags |= _SW_OVERFLOW;
+        if (fpword & 0x10) flags |= _SW_UNDERFLOW;
+        if (fpword & 0x20) flags |= _SW_INEXACT;
         fpword &= ~0x3f;
         __asm__ __volatile__( "ldmxcsr %0" : : "m" (fpword) );
     }
@@ -1731,12 +1731,12 @@ unsigned int CDECL _clearfp(void)
     ULONG_PTR fpsr;
 
     __asm__ __volatile__( "mrs %0, fpsr" : "=r" (fpsr) );
-    if (fpsr & 0x1)  flags |= MSVCRT__SW_INVALID;
-    if (fpsr & 0x2)  flags |= MSVCRT__SW_ZERODIVIDE;
-    if (fpsr & 0x4)  flags |= MSVCRT__SW_OVERFLOW;
-    if (fpsr & 0x8)  flags |= MSVCRT__SW_UNDERFLOW;
-    if (fpsr & 0x10) flags |= MSVCRT__SW_INEXACT;
-    if (fpsr & 0x80) flags |= MSVCRT__SW_DENORMAL;
+    if (fpsr & 0x1)  flags |= _SW_INVALID;
+    if (fpsr & 0x2)  flags |= _SW_ZERODIVIDE;
+    if (fpsr & 0x4)  flags |= _SW_OVERFLOW;
+    if (fpsr & 0x8)  flags |= _SW_UNDERFLOW;
+    if (fpsr & 0x10) flags |= _SW_INEXACT;
+    if (fpsr & 0x80) flags |= _SW_DENORMAL;
     fpsr &= ~0x9f;
     __asm__ __volatile__( "msr fpsr, %0" :: "r" (fpsr) );
 #else
