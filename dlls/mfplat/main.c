@@ -1579,7 +1579,6 @@ const char *debugstr_attr(const GUID *guid)
         X(MF_SA_D3D_AWARE),
         X(MF_MT_MAX_KEYFRAME_SPACING),
         X(MFT_TRANSFORM_CLSID_Attribute),
-        X(MFT_TRANSFORM_CLSID_Attribute),
         X(MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING),
         X(MF_MT_AM_FORMAT_TYPE),
         X(MF_SESSION_APPROX_EVENT_OCCURRENCE_TIME),
