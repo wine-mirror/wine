@@ -27,7 +27,6 @@
  */
 
 
-#define __iob_func mingw___iob_func
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
