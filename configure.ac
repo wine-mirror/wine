@@ -417,7 +417,6 @@ AC_CHECK_HEADERS(\
 	Carbon/Carbon.h \
 	CommonCrypto/CommonCryptor.h \
 	CoreAudio/CoreAudio.h \
-	CoreServices/CoreServices.h \
 	DiskArbitration/DiskArbitration.h \
 	EGL/egl.h \
 	IOKit/IOKitLib.h \
@@ -449,7 +448,6 @@ AC_CHECK_HEADERS(\
 	libproc.h \
 	link.h \
 	linux/cdrom.h \
-	linux/compiler.h \
 	linux/filter.h \
 	linux/hdreg.h \
 	linux/hidraw.h \
@@ -462,10 +460,8 @@ AC_CHECK_HEADERS(\
 	linux/types.h \
 	linux/ucdrom.h \
 	lwp.h \
-	mach-o/nlist.h \
 	mach-o/loader.h \
 	mach/mach.h \
-	mach/machine.h \
 	machine/cpu.h \
 	machine/sysarch.h \
 	mntent.h \
@@ -484,7 +480,6 @@ AC_CHECK_HEADERS(\
 	scsi/scsi.h \
 	scsi/scsi_ioctl.h \
 	scsi/sg.h \
-	stdbool.h \
 	stdint.h \
 	stropts.h \
 	sys/attr.h \
@@ -2184,16 +2179,12 @@ AC_CHECK_FUNCS(\
 	pread \
 	proc_pidinfo \
 	pwrite \
-	readdir \
 	readlink \
 	sched_yield \
 	setproctitle \
 	setprogname \
-	settimeofday \
 	sigprocmask \
-	strtold \
 	symlink \
-	sysinfo \
 	tcdrain \
 	thr_kill2
 )
@@ -2222,7 +2213,6 @@ dnl **** Check for functions which may rely on -lsocket on Solaris.
 AC_CHECK_FUNCS(\
 	getaddrinfo \
 	getnameinfo \
-	getnetbyname \
 	getservbyport \
 )
 
@@ -2394,12 +2384,6 @@ then
                 [Define if <linux/joystick.h> defines the Linux 2.2 joystick API])
    fi
 fi
-
-dnl Check for dirent.d_reclen
-AC_CHECK_MEMBERS([struct dirent.d_reclen],,,
-[#ifdef HAVE_DIRENT_H
-#include <dirent.h>
-#endif])
 
 dnl Check for socket structure members
 AC_CHECK_MEMBERS([struct msghdr.msg_accrights, struct sockaddr.sa_len, struct sockaddr_un.sun_len],,,

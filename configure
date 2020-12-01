@@ -7390,7 +7390,6 @@ for ac_header in \
 	Carbon/Carbon.h \
 	CommonCrypto/CommonCryptor.h \
 	CoreAudio/CoreAudio.h \
-	CoreServices/CoreServices.h \
 	DiskArbitration/DiskArbitration.h \
 	EGL/egl.h \
 	IOKit/IOKitLib.h \
@@ -7422,7 +7421,6 @@ for ac_header in \
 	libproc.h \
 	link.h \
 	linux/cdrom.h \
-	linux/compiler.h \
 	linux/filter.h \
 	linux/hdreg.h \
 	linux/hidraw.h \
@@ -7435,10 +7433,8 @@ for ac_header in \
 	linux/types.h \
 	linux/ucdrom.h \
 	lwp.h \
-	mach-o/nlist.h \
 	mach-o/loader.h \
 	mach/mach.h \
-	mach/machine.h \
 	machine/cpu.h \
 	machine/sysarch.h \
 	mntent.h \
@@ -7457,7 +7453,6 @@ for ac_header in \
 	scsi/scsi.h \
 	scsi/scsi_ioctl.h \
 	scsi/sg.h \
-	stdbool.h \
 	stdint.h \
 	stropts.h \
 	sys/attr.h \
@@ -17775,16 +17770,12 @@ for ac_func in \
 	pread \
 	proc_pidinfo \
 	pwrite \
-	readdir \
 	readlink \
 	sched_yield \
 	setproctitle \
 	setprogname \
-	settimeofday \
 	sigprocmask \
-	strtold \
 	symlink \
-	sysinfo \
 	tcdrain \
 	thr_kill2
 
@@ -18093,7 +18084,6 @@ fi
 for ac_func in \
 	getaddrinfo \
 	getnameinfo \
-	getnetbyname \
 	getservbyport \
 
 do :
@@ -18688,20 +18678,6 @@ $as_echo "#define HAVE_LINUX_22_JOYSTICK_API 1" >>confdefs.h
 
    fi
 fi
-
-ac_fn_c_check_member "$LINENO" "struct dirent" "d_reclen" "ac_cv_member_struct_dirent_d_reclen" "#ifdef HAVE_DIRENT_H
-#include <dirent.h>
-#endif
-"
-if test "x$ac_cv_member_struct_dirent_d_reclen" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_DIRENT_D_RECLEN 1
-_ACEOF
-
-
-fi
-
 
 ac_fn_c_check_member "$LINENO" "struct msghdr" "msg_accrights" "ac_cv_member_struct_msghdr_msg_accrights" "#include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H

@@ -62,7 +62,6 @@ static inline const char *dlerror(void) { return "No dlopen support on Windows";
 
 #ifdef _MSC_VER
 
-#define ftruncate chsize
 #define popen _popen
 #define pclose _pclose
 /* The UCRT headers in the Windows SDK #error out if we #define snprintf.
@@ -77,7 +76,6 @@ static inline const char *dlerror(void) { return "No dlopen support on Windows";
 #define strncasecmp _strnicmp
 #define strcasecmp _stricmp
 
-typedef int mode_t;
 typedef long off_t;
 typedef int pid_t;
 typedef int ssize_t;
@@ -124,20 +122,12 @@ extern int _spawnvp(int mode, const char *cmdname, const char * const argv[]);
 # define S_ISLNK(mod) (0)
 #endif
 
-#ifndef S_ISSOCK
-# define S_ISSOCK(mod) (0)
-#endif
-
 #ifndef S_ISDIR
 # define S_ISDIR(mod) (((mod) & _S_IFMT) == _S_IFDIR)
 #endif
 
 #ifndef S_ISCHR
 # define S_ISCHR(mod) (((mod) & _S_IFMT) == _S_IFCHR)
-#endif
-
-#ifndef S_ISFIFO
-# define S_ISFIFO(mod) (((mod) & _S_IFMT) == _S_IFIFO)
 #endif
 
 #ifndef S_ISREG
