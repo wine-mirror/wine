@@ -162,9 +162,6 @@
 /* Define to 1 if you have the <FAudio.h> header file. */
 #undef HAVE_FAUDIO_H
 
-/* Define to 1 if you have the `ffs' function. */
-#undef HAVE_FFS
-
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
 

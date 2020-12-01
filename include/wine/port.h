@@ -274,10 +274,6 @@ extern int getopt_long_only (int ___argc, char *const *___argv,
                              const struct option *__longopts, int *__longind);
 #endif  /* HAVE_GETOPT_LONG_ONLY */
 
-#ifndef HAVE_FFS
-int ffs( int x );
-#endif
-
 #ifndef HAVE_LSTAT
 int lstat(const char *file_name, struct stat *buf);
 #endif /* HAVE_LSTAT */
@@ -332,7 +328,6 @@ extern int mkstemps(char *template, int suffix_len);
 
 #define __WINE_NOT_PORTABLE(func) func##_is_not_portable func##_is_not_portable
 
-#define ffs                     __WINE_NOT_PORTABLE(ffs)
 #define fstatvfs                __WINE_NOT_PORTABLE(fstatvfs)
 #define getopt_long             __WINE_NOT_PORTABLE(getopt_long)
 #define getopt_long_only        __WINE_NOT_PORTABLE(getopt_long_only)

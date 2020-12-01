@@ -2163,7 +2163,6 @@ AC_CHECK_FUNCS(\
         __res_getservers \
 	_spawnvp \
 	epoll_create \
-	ffs \
 	fnmatch \
 	fork \
 	fstatfs \
