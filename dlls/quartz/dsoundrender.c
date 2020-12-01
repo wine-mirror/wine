@@ -236,9 +236,7 @@ static HRESULT DSoundRender_HandleEndOfStream(struct dsound_render *This)
         if (pos1 == pos2)
             break;
 
-        LeaveCriticalSection(&This->stream_cs);
         WaitForSingleObject(This->flush_event, 10);
-        EnterCriticalSection(&This->stream_cs);
     }
 
     return S_OK;
