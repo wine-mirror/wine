@@ -141,7 +141,7 @@ _ACRTIMP FILE*  __cdecl tmpfile(void);
 _ACRTIMP char*  __cdecl tmpnam(char*);
 _ACRTIMP int    __cdecl ungetc(int,FILE*);
 _ACRTIMP unsigned int __cdecl _get_output_format(void);
-_ACRTIMP unsigned int __cdecl _set_output_format(void);
+_ACRTIMP unsigned int __cdecl _set_output_format(unsigned int);
 
 #ifdef _UCRT
 

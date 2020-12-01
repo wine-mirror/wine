@@ -39,7 +39,7 @@
 @ stub _NLG_Dispatch2
 @ stub _NLG_Return
 @ stub _NLG_Return2
-@ cdecl _SetWinRTOutOfMemoryExceptionCallback(ptr) MSVCR120__SetWinRTOutOfMemoryExceptionCallback
+@ cdecl _SetWinRTOutOfMemoryExceptionCallback(ptr)
 @ cdecl _Strftime(ptr long str ptr ptr)
 @ cdecl _W_Getdays()
 @ cdecl _W_Getmonths()
@@ -202,11 +202,11 @@
 @ cdecl _atoldbl(ptr str) MSVCRT__atoldbl
 @ cdecl _atoldbl_l(ptr str ptr) MSVCRT__atoldbl_l
 @ cdecl -ret64 _atoll_l(str ptr) MSVCRT__atoll_l
-@ cdecl _beep(long long) MSVCRT__beep
+@ cdecl _beep(long long)
 @ cdecl _beginthread(ptr long ptr)
 @ cdecl _beginthreadex(ptr long ptr ptr long ptr)
 @ cdecl _byteswap_uint64(int64)
-@ cdecl _byteswap_ulong(long) MSVCRT__byteswap_ulong
+@ cdecl _byteswap_ulong(long)
 @ cdecl _byteswap_ushort(long)
 @ cdecl _c_exit()
 @ cdecl _cabs(long) MSVCRT__cabs
@@ -242,7 +242,7 @@
 @ cdecl _create_locale(long str)
 @ cdecl _crt_at_quick_exit(ptr)
 @ cdecl _crt_atexit(ptr)
-@ cdecl _crt_debugger_hook(long) MSVCRT__crt_debugger_hook
+@ cdecl _crt_debugger_hook(long)
 @ cdecl _ctime32(ptr) MSVCRT__ctime32
 @ cdecl _ctime32_s(str long ptr) MSVCRT__ctime32_s
 @ cdecl _ctime64(ptr) MSVCRT__ctime64
@@ -853,7 +853,7 @@
 @ cdecl _o__atoldbl(ptr str) MSVCRT__atoldbl
 @ cdecl _o__atoldbl_l(ptr str ptr) MSVCRT__atoldbl_l
 @ cdecl -ret64 _o__atoll_l(str ptr) MSVCRT__atoll_l
-@ cdecl _o__beep(long long) MSVCRT__beep
+@ cdecl _o__beep(long long) _beep
 @ cdecl _o__beginthread(ptr long ptr) _beginthread
 @ cdecl _o__beginthreadex(ptr long ptr ptr long ptr) _beginthreadex
 @ cdecl _o__cabs(long) MSVCRT__cabs
@@ -1317,7 +1317,7 @@
 @ cdecl _o__realloc_base(ptr long) _realloc_base
 @ cdecl _o__recalloc(ptr long long) _recalloc
 @ cdecl _o__register_onexit_function(ptr ptr) _register_onexit_function
-@ cdecl _o__resetstkoflw() MSVCRT__resetstkoflw
+@ cdecl _o__resetstkoflw() _resetstkoflw
 @ cdecl _o__rmdir(str) MSVCRT__rmdir
 @ cdecl _o__rmtmp() MSVCRT__rmtmp
 @ cdecl _o__scalb(double long) MSVCRT__scalb
@@ -1339,7 +1339,7 @@
 @ cdecl _o__setmbcp(long) _setmbcp
 @ cdecl _o__setmode(long long) MSVCRT__setmode
 @ stub _o__setsystime
-@ cdecl _o__sleep(long) MSVCRT__sleep
+@ cdecl _o__sleep(long) _sleep
 @ varargs _o__sopen(str long long) MSVCRT__sopen
 @ cdecl _o__sopen_dispatch(str long long long ptr long) MSVCRT__sopen_dispatch
 @ cdecl _o__sopen_s(ptr str long long long) MSVCRT__sopen_s
@@ -1580,8 +1580,8 @@
 @ cdecl _o_atoi(str) MSVCRT_atoi
 @ cdecl _o_atol(str) MSVCRT_atol
 @ cdecl -ret64 _o_atoll(str) MSVCRT_atoll
-@ cdecl _o_bsearch(ptr ptr long long ptr) MSVCRT_bsearch
-@ cdecl _o_bsearch_s(ptr ptr long long ptr ptr) MSVCRT_bsearch_s
+@ cdecl _o_bsearch(ptr ptr long long ptr) bsearch
+@ cdecl _o_bsearch_s(ptr ptr long long ptr ptr) bsearch_s
 @ cdecl _o_btowc(long) btowc
 @ cdecl _o_calloc(long long) calloc
 @ cdecl _o_cbrt(double) MSVCR120_cbrt
@@ -1740,11 +1740,11 @@
 @ cdecl _o_puts(str) MSVCRT_puts
 @ cdecl _o_putwc(long ptr) MSVCRT_fputwc
 @ cdecl _o_putwchar(long) MSVCRT__fputwchar
-@ cdecl _o_qsort(ptr long long ptr) MSVCRT_qsort
-@ cdecl _o_qsort_s(ptr long long ptr ptr) MSVCRT_qsort_s
+@ cdecl _o_qsort(ptr long long ptr) qsort
+@ cdecl _o_qsort_s(ptr long long ptr ptr) qsort_s
 @ cdecl _o_raise(long) raise
-@ cdecl _o_rand() MSVCRT_rand
-@ cdecl _o_rand_s(ptr) MSVCRT_rand_s
+@ cdecl _o_rand() rand
+@ cdecl _o_rand_s(ptr) rand_s
 @ cdecl _o_realloc(ptr long) realloc
 @ cdecl _o_remainder(double double) MSVCR120_remainder
 @ cdecl _o_remainderf(float float) MSVCR120_remainderf
@@ -1777,7 +1777,7 @@
 @ cdecl -arch=!i386 _o_sinhf(float) MSVCRT_sinhf
 @ cdecl _o_sqrt(double) MSVCRT_sqrt
 @ cdecl -arch=!i386 _o_sqrtf(float) MSVCRT_sqrtf
-@ cdecl _o_srand(long) MSVCRT_srand
+@ cdecl _o_srand(long) srand
 @ cdecl _o_strcat_s(str long str) MSVCRT_strcat_s
 @ cdecl _o_strcoll(str str) MSVCRT_strcoll
 @ cdecl _o_strcpy_s(ptr long str) MSVCRT_strcpy_s
@@ -1863,7 +1863,7 @@
 @ cdecl _recalloc(ptr long long)
 @ cdecl _register_onexit_function(ptr ptr)
 @ cdecl _register_thread_local_exe_atexit_callback(ptr)
-@ cdecl _resetstkoflw() MSVCRT__resetstkoflw
+@ cdecl _resetstkoflw()
 @ cdecl _rmdir(str) MSVCRT__rmdir
 @ cdecl _rmtmp() MSVCRT__rmtmp
 @ cdecl _rotl(long long)
@@ -1900,7 +1900,7 @@
 @ cdecl _setmbcp(long)
 @ cdecl _setmode(long long) MSVCRT__setmode
 @ stub _setsystime(ptr long)
-@ cdecl _sleep(long) MSVCRT__sleep
+@ cdecl _sleep(long)
 @ varargs _sopen(str long long) MSVCRT__sopen
 @ cdecl _sopen_dispatch(str long long long ptr long) MSVCRT__sopen_dispatch
 @ cdecl _sopen_s(ptr str long long long) MSVCRT__sopen_s
@@ -2174,8 +2174,8 @@
 @ cdecl atoi(str) MSVCRT_atoi
 @ cdecl atol(str) MSVCRT_atol
 @ cdecl -ret64 atoll(str) MSVCRT_atoll
-@ cdecl bsearch(ptr ptr long long ptr) MSVCRT_bsearch
-@ cdecl bsearch_s(ptr ptr long long ptr ptr) MSVCRT_bsearch_s
+@ cdecl bsearch(ptr ptr long long ptr)
+@ cdecl bsearch_s(ptr ptr long long ptr ptr)
 @ cdecl btowc(long)
 @ stub c16rtomb
 @ stub c32rtomb
@@ -2452,12 +2452,12 @@
 @ cdecl puts(str) MSVCRT_puts
 @ cdecl putwc(long ptr) MSVCRT_fputwc
 @ cdecl putwchar(long) MSVCRT__fputwchar
-@ cdecl qsort(ptr long long ptr) MSVCRT_qsort
-@ cdecl qsort_s(ptr long long ptr ptr) MSVCRT_qsort_s
+@ cdecl qsort(ptr long long ptr)
+@ cdecl qsort_s(ptr long long ptr ptr)
 @ cdecl quick_exit(long)
 @ cdecl raise(long)
-@ cdecl rand() MSVCRT_rand
-@ cdecl rand_s(ptr) MSVCRT_rand_s
+@ cdecl rand()
+@ cdecl rand_s(ptr)
 @ cdecl realloc(ptr long)
 @ cdecl remainder(double double) MSVCR120_remainder
 @ cdecl remainderf(float float) MSVCR120_remainderf
@@ -2493,7 +2493,7 @@
 @ cdecl -arch=!i386 sinhf(float) MSVCRT_sinhf
 @ cdecl sqrt(double) MSVCRT_sqrt
 @ cdecl -arch=!i386 sqrtf(float) MSVCRT_sqrtf
-@ cdecl srand(long) MSVCRT_srand
+@ cdecl srand(long)
 @ cdecl strcat(str str)
 @ cdecl strcat_s(str long str) MSVCRT_strcat_s
 @ cdecl strchr(str long)

@@ -34,7 +34,7 @@ static unsigned int output_format;
 /*********************************************************************
  *		_beep (MSVCRT.@)
  */
-void CDECL MSVCRT__beep( unsigned int freq, unsigned int duration)
+void CDECL _beep( unsigned int freq, unsigned int duration)
 {
     TRACE(":Freq %d, Duration %d\n",freq,duration);
     Beep(freq, duration);
@@ -43,7 +43,7 @@ void CDECL MSVCRT__beep( unsigned int freq, unsigned int duration)
 /*********************************************************************
  *		srand (MSVCRT.@)
  */
-void CDECL MSVCRT_srand( unsigned int seed )
+void CDECL srand( unsigned int seed )
 {
     thread_data_t *data = msvcrt_get_thread_data();
     data->random_seed = seed;
@@ -52,7 +52,7 @@ void CDECL MSVCRT_srand( unsigned int seed )
 /*********************************************************************
  *		rand (MSVCRT.@)
  */
-int CDECL MSVCRT_rand(void)
+int CDECL rand(void)
 {
     thread_data_t *data = msvcrt_get_thread_data();
 
@@ -65,7 +65,7 @@ int CDECL MSVCRT_rand(void)
 /*********************************************************************
  *		rand_s (MSVCRT.@)
  */
-int CDECL MSVCRT_rand_s(unsigned int *pval)
+int CDECL rand_s(unsigned int *pval)
 {
     if (!pval || !RtlGenRandom(pval, sizeof(*pval)))
     {
@@ -78,7 +78,7 @@ int CDECL MSVCRT_rand_s(unsigned int *pval)
 /*********************************************************************
  *		_sleep (MSVCRT.@)
  */
-void CDECL MSVCRT__sleep(__msvcrt_ulong timeout)
+void CDECL _sleep(__msvcrt_ulong timeout)
 {
   TRACE("_sleep for %ld milliseconds\n",timeout);
   Sleep((timeout)?timeout:1);
@@ -153,7 +153,7 @@ void* CDECL _lsearch(const void* match, void* start,
 /*********************************************************************
  *                  bsearch_s (msvcrt.@)
  */
-void* CDECL MSVCRT_bsearch_s(const void *key, const void *base, size_t nmemb, size_t size,
+void* CDECL bsearch_s(const void *key, const void *base, size_t nmemb, size_t size,
                              int (__cdecl *compare)(void *, const void *, const void *), void *ctx)
 {
     ssize_t min = 0;
@@ -185,10 +185,10 @@ static int CDECL compare_wrapper(void *ctx, const void *e1, const void *e2)
 /*********************************************************************
  *                  bsearch (msvcrt.@)
  */
-void* CDECL MSVCRT_bsearch(const void *key, const void *base, size_t nmemb,
+void* CDECL bsearch(const void *key, const void *base, size_t nmemb,
         size_t size, int (__cdecl *compar)(const void *, const void *))
 {
-    return MSVCRT_bsearch_s(key, base, nmemb, size, compare_wrapper, compar);
+    return bsearch_s(key, base, nmemb, size, compare_wrapper, compar);
 }
 /*********************************************************************
  *		_chkesp (MSVCRT.@)
@@ -227,7 +227,7 @@ __ASM_GLOBAL_FUNC(_chkesp,
                   "pushl %eax\n\t"
                   "pushl %ecx\n\t"
                   "pushl %edx\n\t"
-                  "call " __ASM_NAME("MSVCRT_chkesp_fail") "\n\t"
+                  "call " __ASM_NAME("chkesp_fail") "\n\t"
                   "popl %edx\n\t"
                   "popl %ecx\n\t"
                   "popl %eax\n\t"
@@ -236,7 +236,7 @@ __ASM_GLOBAL_FUNC(_chkesp,
                   __ASM_CFI(".cfi_same_value %ebp\n\t")
                   "ret")
 
-void CDECL DECLSPEC_HIDDEN MSVCRT_chkesp_fail(void)
+void CDECL DECLSPEC_HIDDEN chkesp_fail(void)
 {
   ERR("Stack pointer incorrect after last function call - Bad prototype/spec entry?\n");
   DebugBreak();
@@ -367,7 +367,7 @@ static void quick_sort(void *base, size_t nmemb, size_t size,
  * This function is trying to sort data doing identical comparisons
  * as native does. There are still cases where it behaves differently.
  */
-void CDECL MSVCRT_qsort_s(void *base, size_t nmemb, size_t size,
+void CDECL qsort_s(void *base, size_t nmemb, size_t size,
     int (CDECL *compar)(void *, const void *, const void *), void *context)
 {
     const size_t total_size = nmemb*size;
@@ -385,16 +385,16 @@ void CDECL MSVCRT_qsort_s(void *base, size_t nmemb, size_t size,
 /*********************************************************************
  * qsort (MSVCRT.@)
  */
-void CDECL MSVCRT_qsort(void *base, size_t nmemb, size_t size,
+void CDECL qsort(void *base, size_t nmemb, size_t size,
         int (CDECL *compar)(const void*, const void*))
 {
-    MSVCRT_qsort_s(base, nmemb, size, compare_wrapper, compar);
+    qsort_s(base, nmemb, size, compare_wrapper, compar);
 }
 
 /*********************************************************************
  * _get_output_format (MSVCRT.@)
  */
-unsigned int CDECL MSVCRT__get_output_format(void)
+unsigned int CDECL _get_output_format(void)
 {
    return output_format;
 }
@@ -402,7 +402,7 @@ unsigned int CDECL MSVCRT__get_output_format(void)
 /*********************************************************************
  * _set_output_format (MSVCRT.@)
  */
-unsigned int CDECL MSVCRT__set_output_format(unsigned int new_output_format)
+unsigned int CDECL _set_output_format(unsigned int new_output_format)
 {
     unsigned int ret = output_format;
 
@@ -416,7 +416,7 @@ unsigned int CDECL MSVCRT__set_output_format(unsigned int new_output_format)
 /*********************************************************************
  * _resetstkoflw (MSVCRT.@)
  */
-int CDECL MSVCRT__resetstkoflw(void)
+int CDECL _resetstkoflw(void)
 {
     int stack_addr;
     DWORD oldprot;
@@ -430,7 +430,7 @@ int CDECL MSVCRT__resetstkoflw(void)
 /*********************************************************************
  *  _decode_pointer (MSVCR80.@)
  */
-void * CDECL MSVCRT_decode_pointer(void * ptr)
+void * CDECL _decode_pointer(void * ptr)
 {
     return DecodePointer(ptr);
 }
@@ -438,7 +438,7 @@ void * CDECL MSVCRT_decode_pointer(void * ptr)
 /*********************************************************************
  *  _encode_pointer (MSVCR80.@)
  */
-void * CDECL MSVCRT_encode_pointer(void * ptr)
+void * CDECL _encode_pointer(void * ptr)
 {
     return EncodePointer(ptr);
 }
@@ -490,7 +490,7 @@ unsigned short CDECL _byteswap_ushort(unsigned short s)
 /*********************************************************************
  * _byteswap_ulong (MSVCR80.@)
  */
-ULONG CDECL MSVCRT__byteswap_ulong(ULONG l)
+ULONG CDECL _byteswap_ulong(ULONG l)
 {
     return (l<<24) + ((l<<8)&0xFF0000) + ((l>>8)&0xFF00) + (l>>24);
 }
@@ -511,7 +511,7 @@ unsigned __int64 CDECL _byteswap_uint64(unsigned __int64 i)
 /*********************************************************************
  *  __crtGetShowWindowMode (MSVCR110.@)
  */
-int CDECL MSVCR110__crtGetShowWindowMode(void)
+int CDECL __crtGetShowWindowMode(void)
 {
     STARTUPINFOW si;
 
@@ -523,7 +523,7 @@ int CDECL MSVCR110__crtGetShowWindowMode(void)
 /*********************************************************************
  *  __crtInitializeCriticalSectionEx (MSVCR110.@)
  */
-BOOL CDECL MSVCR110__crtInitializeCriticalSectionEx(
+BOOL CDECL __crtInitializeCriticalSectionEx(
         CRITICAL_SECTION *cs, DWORD spin_count, DWORD flags)
 {
     TRACE("(%p %x %x)\n", cs, spin_count, flags);
@@ -536,7 +536,7 @@ BOOL CDECL MSVCR110__crtInitializeCriticalSectionEx(
 /*********************************************************************
  * _vacopy (MSVCR120.@)
  */
-void CDECL MSVCR120__vacopy(__ms_va_list *dest, __ms_va_list src)
+void CDECL _vacopy(__ms_va_list *dest, __ms_va_list src)
 {
     __ms_va_copy(*dest, src);
 }
@@ -546,7 +546,7 @@ void CDECL MSVCR120__vacopy(__ms_va_list *dest, __ms_va_list src)
 /*********************************************************************
  * _crt_debugger_hook (MSVCR80.@)
  */
-void CDECL MSVCRT__crt_debugger_hook(int reserved)
+void CDECL _crt_debugger_hook(int reserved)
 {
     WARN("(%x)\n", reserved);
 }
@@ -556,7 +556,7 @@ void CDECL MSVCRT__crt_debugger_hook(int reserved)
 /*********************************************************************
  *  __crtUnhandledException (MSVCR110.@)
  */
-LONG CDECL MSVCRT__crtUnhandledException(EXCEPTION_POINTERS *ep)
+LONG CDECL __crtUnhandledException(EXCEPTION_POINTERS *ep)
 {
     TRACE("(%p)\n", ep);
     SetUnhandledExceptionFilter(NULL);
@@ -574,7 +574,7 @@ void WINAPIV _Trace_agents(/*enum Concurrency::Agents_EventType*/int type, __int
 /*********************************************************************
  *		__crtSleep (MSVCR120.@)
  */
-void CDECL MSVCRT__crtSleep(DWORD timeout)
+void CDECL __crtSleep(DWORD timeout)
 {
   TRACE("(%u)\n", timeout);
   Sleep(timeout);
@@ -583,7 +583,7 @@ void CDECL MSVCRT__crtSleep(DWORD timeout)
 /*********************************************************************
  * _SetWinRTOutOfMemoryExceptionCallback (MSVCR120.@)
  */
-void CDECL MSVCR120__SetWinRTOutOfMemoryExceptionCallback(void *callback)
+void CDECL _SetWinRTOutOfMemoryExceptionCallback(void *callback)
 {
     FIXME("(%p): stub\n", callback);
 }

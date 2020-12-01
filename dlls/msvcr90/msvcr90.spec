@@ -350,11 +350,11 @@
 @ cdecl _atol_l(str ptr) MSVCRT__atol_l
 @ cdecl _atoldbl(ptr str) MSVCRT__atoldbl
 @ cdecl _atoldbl_l(ptr str ptr) MSVCRT__atoldbl_l
-@ cdecl _beep(long long) MSVCRT__beep
+@ cdecl _beep(long long)
 @ cdecl _beginthread(ptr long ptr)
 @ cdecl _beginthreadex(ptr long ptr ptr long ptr)
 @ cdecl _byteswap_uint64(int64)
-@ cdecl _byteswap_ulong(long) MSVCRT__byteswap_ulong
+@ cdecl _byteswap_ulong(long)
 @ cdecl _byteswap_ushort(long)
 @ cdecl _c_exit()
 @ cdecl _cabs(long) MSVCRT__cabs
@@ -392,8 +392,8 @@
 @ cdecl _cputws(wstr)
 @ cdecl _creat(str long) MSVCRT__creat
 @ cdecl _create_locale(long str)
-@ cdecl -arch=i386 _crt_debugger_hook(long) MSVCRT__crt_debugger_hook
-@ cdecl -arch=arm,win64 __crt_debugger_hook(long) MSVCRT__crt_debugger_hook
+@ cdecl -arch=i386 _crt_debugger_hook(long)
+@ cdecl -arch=arm,win64 __crt_debugger_hook(long) _crt_debugger_hook
 @ varargs _cscanf(str)
 @ varargs _cscanf_l(str ptr)
 @ varargs _cscanf_s(str)
@@ -414,7 +414,7 @@
 @ varargs _cwscanf_s(wstr)
 @ varargs _cwscanf_s_l(wstr ptr)
 @ extern _daylight MSVCRT___daylight
-@ cdecl _decode_pointer(ptr) MSVCRT_decode_pointer
+@ cdecl _decode_pointer(ptr)
 @ cdecl _difftime32(long long) MSVCRT__difftime32
 @ cdecl _difftime64(int64 int64) MSVCRT__difftime64
 @ stub _dosmaperr
@@ -424,7 +424,7 @@
 @ cdecl _dupenv_s(ptr ptr str)
 @ cdecl _ecvt(double long ptr ptr) MSVCRT__ecvt
 @ cdecl _ecvt_s(str long double long ptr ptr) MSVCRT__ecvt_s
-@ cdecl _encode_pointer(ptr) MSVCRT_encode_pointer
+@ cdecl _encode_pointer(ptr)
 @ cdecl _encoded_null()
 @ cdecl _endthread()
 @ cdecl _endthreadex(long)
@@ -530,7 +530,7 @@
 @ cdecl _get_heap_handle()
 @ cdecl _get_invalid_parameter_handler()
 @ cdecl _get_osfhandle(long) MSVCRT__get_osfhandle
-@ cdecl _get_output_format() MSVCRT__get_output_format
+@ cdecl _get_output_format()
 @ cdecl _get_pgmptr(ptr)
 @ cdecl _get_printf_count_output() MSVCRT__get_printf_count_output
 @ cdecl _get_purecall_handler()
@@ -898,7 +898,7 @@
 @ cdecl _realloc_crt(ptr long) realloc
 @ cdecl _recalloc(ptr long long)
 @ stub _recalloc_crt
-@ cdecl _resetstkoflw() MSVCRT__resetstkoflw
+@ cdecl _resetstkoflw()
 @ cdecl _rmdir(str) MSVCRT__rmdir
 @ cdecl _rmtmp() MSVCRT__rmtmp
 @ cdecl _rotl(long long)
@@ -935,7 +935,7 @@
 @ cdecl _set_fmode(long)
 @ cdecl _set_invalid_parameter_handler(ptr)
 @ stub _set_malloc_crt_max_wait
-@ cdecl _set_output_format(long) MSVCRT__set_output_format
+@ cdecl _set_output_format(long)
 @ cdecl _set_printf_count_output(long) MSVCRT__set_printf_count_output
 @ cdecl _set_purecall_handler(ptr)
 @ cdecl _set_sbh_threshold(long)
@@ -946,7 +946,7 @@
 @ cdecl _setmbcp(long)
 @ cdecl _setmode(long long) MSVCRT__setmode
 @ stub _setsystime(ptr long)
-@ cdecl _sleep(long) MSVCRT__sleep
+@ cdecl _sleep(long)
 @ varargs _snprintf(ptr long str) MSVCRT__snprintf
 @ varargs _snprintf_c(ptr long str) MSVCRT_snprintf_c
 @ varargs _snprintf_c_l(ptr long str ptr) MSVCRT_snprintf_c_l
@@ -1295,8 +1295,8 @@
 @ cdecl atof(str) MSVCRT_atof
 @ cdecl atoi(str) MSVCRT_atoi
 @ cdecl atol(str) MSVCRT_atol
-@ cdecl bsearch(ptr ptr long long ptr) MSVCRT_bsearch
-@ cdecl bsearch_s(ptr ptr long long ptr ptr) MSVCRT_bsearch_s
+@ cdecl bsearch(ptr ptr long long ptr)
+@ cdecl bsearch_s(ptr ptr long long ptr ptr)
 @ cdecl btowc(long)
 @ cdecl calloc(long long)
 @ cdecl ceil(double) MSVCRT_ceil
@@ -1421,11 +1421,11 @@
 @ cdecl puts(str) MSVCRT_puts
 @ cdecl putwc(long ptr) MSVCRT_fputwc
 @ cdecl putwchar(long) MSVCRT__fputwchar
-@ cdecl qsort(ptr long long ptr) MSVCRT_qsort
-@ cdecl qsort_s(ptr long long ptr ptr) MSVCRT_qsort_s
+@ cdecl qsort(ptr long long ptr)
+@ cdecl qsort_s(ptr long long ptr ptr)
 @ cdecl raise(long)
-@ cdecl rand() MSVCRT_rand
-@ cdecl rand_s(ptr) MSVCRT_rand_s
+@ cdecl rand()
+@ cdecl rand_s(ptr)
 @ cdecl realloc(ptr long)
 @ cdecl remove(str) MSVCRT_remove
 @ cdecl rename(str str) MSVCRT_rename
@@ -1445,7 +1445,7 @@
 @ varargs sprintf_s(ptr long str) MSVCRT_sprintf_s
 @ cdecl sqrt(double) MSVCRT_sqrt
 @ cdecl -arch=!i386 sqrtf(float) MSVCRT_sqrtf
-@ cdecl srand(long) MSVCRT_srand
+@ cdecl srand(long)
 @ varargs sscanf(str str) MSVCRT_sscanf
 @ varargs sscanf_s(str str) MSVCRT_sscanf_s
 @ cdecl strcat(str str)

@@ -47,7 +47,7 @@
 @ extern _basemajor_dll CRTDLL__basemajor_dll
 @ extern _baseminor_dll CRTDLL__baseminor_dll
 @ extern _baseversion_dll MSVCRT__osver
-@ cdecl _beep(long long) MSVCRT__beep
+@ cdecl _beep(long long)
 @ cdecl _beginthread(ptr long ptr)
 @ cdecl _c_exit()
 @ cdecl _cabs(long) MSVCRT__cabs
@@ -270,7 +270,7 @@
 @ cdecl -arch=i386,x86_64,arm,arm64 -norelay _setjmp(ptr) MSVCRT__setjmp
 @ cdecl _setmode(long long) MSVCRT__setmode
 @ stub _setsystime(ptr long)
-@ cdecl _sleep(long) MSVCRT__sleep
+@ cdecl _sleep(long)
 @ varargs _snprintf(ptr long str) MSVCRT__snprintf
 @ varargs _snwprintf(ptr long wstr) MSVCRT__snwprintf
 @ varargs _sopen(str long long) MSVCRT__sopen
@@ -352,7 +352,7 @@
 @ cdecl atof(str) MSVCRT_atof
 @ cdecl atoi(str) MSVCRT_atoi
 @ cdecl atol(str) MSVCRT_atol
-@ cdecl bsearch(ptr ptr long long ptr) MSVCRT_bsearch
+@ cdecl bsearch(ptr ptr long long ptr)
 @ cdecl calloc(long long)
 @ cdecl ceil(double) MSVCRT_ceil
 @ cdecl clearerr(ptr) MSVCRT_clearerr
@@ -447,9 +447,9 @@
 @ cdecl putc(long ptr) MSVCRT_putc
 @ cdecl putchar(long) MSVCRT_putchar
 @ cdecl puts(str) MSVCRT_puts
-@ cdecl qsort(ptr long long ptr) MSVCRT_qsort
+@ cdecl qsort(ptr long long ptr)
 @ cdecl raise(long)
-@ cdecl rand() MSVCRT_rand
+@ cdecl rand()
 @ cdecl realloc(ptr long)
 @ cdecl remove(str) MSVCRT_remove
 @ cdecl rename(str str) MSVCRT_rename
@@ -463,7 +463,7 @@
 @ cdecl sinh(double) MSVCRT_sinh
 @ varargs sprintf(ptr str) MSVCRT_sprintf
 @ cdecl sqrt(double) MSVCRT_sqrt
-@ cdecl srand(long) MSVCRT_srand
+@ cdecl srand(long)
 @ varargs sscanf(str str) MSVCRT_sscanf
 @ cdecl strcat(str str)
 @ cdecl strchr(str long)

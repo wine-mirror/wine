@@ -337,7 +337,7 @@
 @ cdecl _atol_l(str ptr) MSVCRT__atol_l
 @ cdecl _atoldbl(ptr str) MSVCRT__atoldbl
 @ cdecl _atoldbl_l(ptr str ptr) MSVCRT__atoldbl_l
-@ cdecl _beep(long long) MSVCRT__beep
+@ cdecl _beep(long long)
 @ cdecl _beginthread (ptr long ptr)
 @ cdecl _beginthreadex (ptr long ptr ptr long ptr)
 @ cdecl _c_exit()
@@ -510,7 +510,7 @@
 @ cdecl _get_osfhandle(long) MSVCRT__get_osfhandle
 @ cdecl _get_osplatform(ptr)
 @ cdecl _get_osver(ptr)
-@ cdecl _get_output_format() MSVCRT__get_output_format
+@ cdecl _get_output_format()
 @ cdecl _get_pgmptr(ptr)
 @ cdecl _get_sbh_threshold()
 @ cdecl _get_wenviron(ptr)
@@ -866,7 +866,7 @@
 @ extern _pwctype MSVCRT__pwctype
 @ cdecl _read(long ptr long) MSVCRT__read
 # stub _realloc_dbg(ptr long long str long)
-@ cdecl _resetstkoflw() MSVCRT__resetstkoflw
+@ cdecl _resetstkoflw()
 @ cdecl _rmdir(str) MSVCRT__rmdir
 @ cdecl _rmtmp() MSVCRT__rmtmp
 @ cdecl _rotl(long long)
@@ -898,7 +898,7 @@
 @ cdecl _set_error_mode(long)
 # stub _set_fileinfo(long)
 @ cdecl _set_fmode(long)
-@ cdecl _set_output_format(long) MSVCRT__set_output_format
+@ cdecl _set_output_format(long)
 @ cdecl _set_sbh_threshold(long)
 @ cdecl _seterrormode(long)
 @ cdecl -arch=i386,x86_64,arm,arm64 -norelay _setjmp(ptr) MSVCRT__setjmp
@@ -908,7 +908,7 @@
 @ cdecl _setmbcp(long)
 @ cdecl _setmode(long long) MSVCRT__setmode
 @ stub _setsystime(ptr long)
-@ cdecl _sleep(long) MSVCRT__sleep
+@ cdecl _sleep(long)
 @ varargs _snprintf(ptr long str) MSVCRT__snprintf
 @ varargs _snprintf_c(ptr long str) MSVCRT_snprintf_c
 @ varargs _snprintf_c_l(ptr long str ptr) MSVCRT_snprintf_c_l
@@ -1259,8 +1259,8 @@
 @ cdecl atof(str) MSVCRT_atof
 @ cdecl atoi(str) MSVCRT_atoi
 @ cdecl atol(str) MSVCRT_atol
-@ cdecl bsearch(ptr ptr long long ptr) MSVCRT_bsearch
-@ cdecl bsearch_s(ptr ptr long long ptr ptr) MSVCRT_bsearch_s
+@ cdecl bsearch(ptr ptr long long ptr)
+@ cdecl bsearch_s(ptr ptr long long ptr ptr)
 @ cdecl btowc(long)
 @ cdecl calloc(long long)
 @ cdecl ceil(double) MSVCRT_ceil
@@ -1393,11 +1393,11 @@
 @ cdecl puts(str) MSVCRT_puts
 @ cdecl putwc(long ptr) MSVCRT_fputwc
 @ cdecl putwchar(long) MSVCRT__fputwchar
-@ cdecl qsort(ptr long long ptr) MSVCRT_qsort
-@ cdecl qsort_s(ptr long long ptr ptr) MSVCRT_qsort_s
+@ cdecl qsort(ptr long long ptr)
+@ cdecl qsort_s(ptr long long ptr ptr)
 @ cdecl raise(long)
-@ cdecl rand() MSVCRT_rand
-@ cdecl rand_s(ptr) MSVCRT_rand_s
+@ cdecl rand()
+@ cdecl rand_s(ptr)
 @ cdecl realloc(ptr long)
 @ cdecl remove(str) MSVCRT_remove
 @ cdecl rename(str str) MSVCRT_rename
@@ -1417,7 +1417,7 @@
 @ varargs sprintf_s(ptr long str) MSVCRT_sprintf_s
 @ cdecl sqrt(double) MSVCRT_sqrt
 @ cdecl -arch=!i386 sqrtf(float) MSVCRT_sqrtf
-@ cdecl srand(long) MSVCRT_srand
+@ cdecl srand(long)
 @ varargs sscanf(str str) MSVCRT_sscanf
 @ varargs sscanf_s(str str) MSVCRT_sscanf_s
 @ cdecl strcat(str str)
