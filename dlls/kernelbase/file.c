@@ -738,7 +738,6 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
     UNICODE_STRING nameW;
     IO_STATUS_BLOCK io;
     HANDLE ret;
-    DWORD dosdev;
     const WCHAR *vxd_name = NULL;
     SECURITY_QUALITY_OF_SERVICE qos;
 
@@ -770,25 +769,14 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
            (sharing & FILE_SHARE_DELETE) ? "FILE_SHARE_DELETE " : "",
            creation, attributes);
 
-    if (!wcsncmp( filename, L"\\\\.\\", 4 ))
+    if ((GetVersion() & 0x80000000) && !wcsncmp( filename, L"\\\\.\\", 4 ) &&
+        !RtlIsDosDeviceName_U( filename + 4 ) &&
+        wcsnicmp( filename + 4, L"PIPE\\", 5 ) &&
+        wcsnicmp( filename + 4, L"MAILSLOT\\", 9 ))
     {
-        if ((filename[4] && filename[5] == ':' && !filename[6]) ||
-            !wcsnicmp( filename + 4, L"PIPE\\", 5 ) ||
-            !wcsnicmp( filename + 4, L"MAILSLOT\\", 9 ))
-        {
-            dosdev = 0;
-        }
-        else if ((dosdev = RtlIsDosDeviceName_U( filename + 4 )))
-        {
-            dosdev += MAKELONG( 0, 4*sizeof(WCHAR) );  /* adjust position to start of filename */
-        }
-        else if (GetVersion() & 0x80000000)
-        {
-            vxd_name = filename + 4;
-            if (!creation) creation = OPEN_EXISTING;
-        }
+        vxd_name = filename + 4;
+        if (!creation) creation = OPEN_EXISTING;
     }
-    else dosdev = RtlIsDosDeviceName_U( filename );
 
     if (creation < CREATE_NEW || creation > TRUNCATE_EXISTING)
     {
