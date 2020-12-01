@@ -63,15 +63,6 @@ static inline const char *dlerror(void) { return "No dlopen support on Windows";
 #ifdef _MSC_VER
 
 #define ftruncate chsize
-#ifndef isfinite
-# define isfinite(x) _finite(x)
-#endif
-#ifndef isinf
-# define isinf(x) (!(_finite(x) || _isnan(x)))
-#endif
-#ifndef isnan
-# define isnan(x) _isnan(x)
-#endif
 #define popen _popen
 #define pclose _pclose
 /* The UCRT headers in the Windows SDK #error out if we #define snprintf.
@@ -101,18 +92,6 @@ typedef int ssize_t;
 #  else
 #    define __int64 long long
 #  endif
-#endif
-
-#ifndef HAVE_ISFINITE
-int isfinite(double x);
-#endif
-
-#ifndef HAVE_ISINF
-int isinf(double x);
-#endif
-
-#ifndef HAVE_ISNAN
-int isnan(double x);
 #endif
 
 /* Process creation flags */
@@ -189,24 +168,6 @@ extern int _spawnvp(int mode, const char *cmdname, const char * const argv[]);
 
 #ifndef M_PI_2
 #define M_PI_2 1.570796326794896619
-#endif
-
-#ifndef INFINITY
-static inline float __port_infinity(void)
-{
-    static const unsigned __inf_bytes = 0x7f800000;
-    return *(const float *)&__inf_bytes;
-}
-#define INFINITY __port_infinity()
-#endif
-
-#ifndef NAN
-static inline float __port_nan(void)
-{
-    static const unsigned __nan_bytes = 0x7fc00000;
-    return *(const float *)&__nan_bytes;
-}
-#define NAN __port_nan()
 #endif
 
 

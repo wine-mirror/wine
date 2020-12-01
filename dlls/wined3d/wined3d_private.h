@@ -328,6 +328,40 @@ static inline GLenum wined3d_gl_min_mip_filter(enum wined3d_texture_filter_type 
     return minMipLookup[min_filter].mip[mip_filter];
 }
 
+#ifdef HAVE_IEEEFP_H
+#include <ieeefp.h>
+#endif
+
+#if !defined(HAVE_ISFINITE) && !defined(isfinite)
+static inline int isfinite(double x) { return finite(x); }
+#endif
+
+#if !defined(HAVE_ISINF) && !defined(isinf)
+static inline int isinf(double x) { return (!(finite(x) || isnand(x))); }
+#endif
+
+#if !defined(HAVE_ISNAN) && !defined(isnan)
+static inline int isnan(double x) { return isnand(x); }
+#endif
+
+#ifndef INFINITY
+static inline float __port_infinity(void)
+{
+    static const unsigned __inf_bytes = 0x7f800000;
+    return *(const float *)&__inf_bytes;
+}
+#define INFINITY __port_infinity()
+#endif
+
+#ifndef NAN
+static inline float __port_nan(void)
+{
+    static const unsigned __nan_bytes = 0x7fc00000;
+    return *(const float *)&__nan_bytes;
+}
+#define NAN __port_nan()
+#endif
+
 /* float_16_to_32() and float_32_to_16() (see implementation in
  * surface_base.c) convert 16 bit floats in the FLOAT16 data type
  * to standard C floats and vice versa. They do not depend on the encoding

@@ -2,9 +2,6 @@ STATICLIB = libwine_port.a
 
 C_SRCS = \
 	getopt.c \
-	isfinite.c \
-	isinf.c \
-	isnan.c \
 	lstat.c \
 	mkstemps.c \
 	poll.c \
