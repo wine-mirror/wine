@@ -184,7 +184,7 @@ static Context* get_current_context(void)
 
     ret = TlsGetValue(context_tls_index);
     if (!ret) {
-        ExternalContextBase *context = MSVCRT_operator_new(sizeof(ExternalContextBase));
+        ExternalContextBase *context = operator_new(sizeof(ExternalContextBase));
         ExternalContextBase_ctor(context);
         TlsSetValue(context_tls_index, context);
         ret = &context->context;
@@ -335,7 +335,7 @@ static void ExternalContextBase_dtor(ExternalContextBase *this)
     for(i=0; i<ARRAY_SIZE(this->allocator_cache); i++) {
         for(cur = this->allocator_cache[i]; cur; cur=next) {
             next = cur->free.next;
-            MSVCRT_operator_delete(cur);
+            operator_delete(cur);
         }
     }
 
@@ -345,7 +345,7 @@ static void ExternalContextBase_dtor(ExternalContextBase *this)
         for(scheduler_cur=this->scheduler.next; scheduler_cur; scheduler_cur=scheduler_next) {
             scheduler_next = scheduler_cur->next;
             call_Scheduler_Release(scheduler_cur->scheduler);
-            MSVCRT_operator_delete(scheduler_cur);
+            operator_delete(scheduler_cur);
         }
     }
 }
@@ -360,11 +360,11 @@ Context* __thiscall ExternalContextBase_vector_dtor(ExternalContextBase *this, u
 
         for(i=*ptr-1; i>=0; i--)
             ExternalContextBase_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         ExternalContextBase_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return &this->context;
@@ -395,7 +395,7 @@ void * CDECL Concurrency_Alloc(size_t size)
         size = sizeof(*p);
 
     if (context->context.vtable != &ExternalContextBase_vtable) {
-        p = MSVCRT_operator_new(size);
+        p = operator_new(size);
         p->alloc.bucket = -1;
     }else {
         int i;
@@ -405,14 +405,14 @@ void * CDECL Concurrency_Alloc(size_t size)
             if (1 << (i+4) >= size) break;
 
         if(i==ARRAY_SIZE(context->allocator_cache)) {
-            p = MSVCRT_operator_new(size);
+            p = operator_new(size);
             p->alloc.bucket = -1;
         }else if (context->allocator_cache[i]) {
             p = context->allocator_cache[i];
             context->allocator_cache[i] = p->free.next;
             p->alloc.bucket = i;
         }else {
-            p = MSVCRT_operator_new(1 << (i+4));
+            p = operator_new(1 << (i+4));
             p->alloc.bucket = i;
         }
     }
@@ -432,7 +432,7 @@ void CDECL Concurrency_Free(void* mem)
     TRACE("(%p)\n", mem);
 
     if (context->context.vtable != &ExternalContextBase_vtable) {
-        MSVCRT_operator_delete(p);
+        operator_delete(p);
     }else {
         if(bucket >= 0 && bucket < ARRAY_SIZE(context->allocator_cache) &&
             (!context->allocator_cache[bucket] || context->allocator_cache[bucket]->free.depth < 20)) {
@@ -440,7 +440,7 @@ void CDECL Concurrency_Free(void* mem)
             p->free.depth = p->free.next ? p->free.next->free.depth+1 : 0;
             context->allocator_cache[bucket] = p;
         }else {
-            MSVCRT_operator_delete(p);
+            operator_delete(p);
         }
     }
 }
@@ -531,7 +531,7 @@ SchedulerPolicy* __thiscall SchedulerPolicy_ctor(SchedulerPolicy *this)
 {
     TRACE("(%p)\n", this);
 
-    this->policy_container = MSVCRT_operator_new(sizeof(*this->policy_container));
+    this->policy_container = operator_new(sizeof(*this->policy_container));
     /* TODO: default values can probably be affected by CurrentScheduler */
     this->policy_container->policies[SchedulerKind] = 0;
     this->policy_container->policies[MaxConcurrency] = -1;
@@ -608,7 +608,7 @@ DEFINE_THISCALL_WRAPPER(SchedulerPolicy_dtor, 4)
 void __thiscall SchedulerPolicy_dtor(SchedulerPolicy *this)
 {
     TRACE("(%p)\n", this);
-    MSVCRT_operator_delete(this->policy_container);
+    operator_delete(this->policy_container);
 }
 
 static void ThreadScheduler_dtor(ThreadScheduler *this)
@@ -620,7 +620,7 @@ static void ThreadScheduler_dtor(ThreadScheduler *this)
 
     for(i=0; i<this->shutdown_count; i++)
         SetEvent(this->shutdown_events[i]);
-    MSVCRT_operator_delete(this->shutdown_events);
+    operator_delete(this->shutdown_events);
 
     this->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&this->cs);
@@ -664,7 +664,7 @@ unsigned int __thiscall ThreadScheduler_Release(ThreadScheduler *this)
 
     if(!ret) {
         ThreadScheduler_dtor(this);
-        MSVCRT_operator_delete(this);
+        operator_delete(this);
     }
     return ret;
 }
@@ -680,10 +680,10 @@ void __thiscall ThreadScheduler_RegisterShutdownEvent(ThreadScheduler *this, HAN
     EnterCriticalSection(&this->cs);
 
     size = this->shutdown_size ? this->shutdown_size * 2 : 1;
-    shutdown_events = MSVCRT_operator_new(size * sizeof(*shutdown_events));
+    shutdown_events = operator_new(size * sizeof(*shutdown_events));
     memcpy(shutdown_events, this->shutdown_events,
             this->shutdown_count * sizeof(*shutdown_events));
-    MSVCRT_operator_delete(this->shutdown_events);
+    operator_delete(this->shutdown_events);
     this->shutdown_size = size;
     this->shutdown_events = shutdown_events;
     this->shutdown_events[this->shutdown_count++] = event;
@@ -707,7 +707,7 @@ void __thiscall ThreadScheduler_Attach(ThreadScheduler *this)
         throw_exception(EXCEPTION_IMPROPER_SCHEDULER_ATTACH, 0, NULL);
 
     if(context->scheduler.scheduler) {
-        struct scheduler_list *l = MSVCRT_operator_new(sizeof(*l));
+        struct scheduler_list *l = operator_new(sizeof(*l));
         *l = context->scheduler;
         context->scheduler.next = l;
     }
@@ -762,11 +762,11 @@ Scheduler* __thiscall ThreadScheduler_vector_dtor(ThreadScheduler *this, unsigne
 
         for(i=*ptr-1; i>=0; i--)
             ThreadScheduler_dtor(this+i);
-        MSVCRT_operator_delete(ptr);
+        operator_delete(ptr);
     } else {
         ThreadScheduler_dtor(this);
         if(flags & 1)
-            MSVCRT_operator_delete(this);
+            operator_delete(this);
     }
 
     return &this->scheduler;
@@ -805,7 +805,7 @@ Scheduler* __cdecl Scheduler_Create(const SchedulerPolicy *policy)
 
     TRACE("(%p)\n", policy);
 
-    ret = MSVCRT_operator_new(sizeof(*ret));
+    ret = operator_new(sizeof(*ret));
     return &ThreadScheduler_ctor(ret, policy)->scheduler;
 }
 
@@ -872,7 +872,7 @@ void __cdecl CurrentScheduler_Detach(void)
         struct scheduler_list *entry = context->scheduler.next;
         context->scheduler.scheduler = entry->scheduler;
         context->scheduler.next = entry->next;
-        MSVCRT_operator_delete(entry);
+        operator_delete(entry);
     }
 }
 
@@ -888,7 +888,7 @@ static void create_default_scheduler(void)
         if(!default_scheduler_policy.policy_container)
             SchedulerPolicy_ctor(&default_scheduler_policy);
 
-        scheduler = MSVCRT_operator_new(sizeof(*scheduler));
+        scheduler = operator_new(sizeof(*scheduler));
         ThreadScheduler_ctor(scheduler, &default_scheduler_policy);
         default_scheduler = scheduler;
     }
@@ -1158,7 +1158,7 @@ void msvcrt_free_scheduler(void)
         SchedulerPolicy_dtor(&default_scheduler_policy);
     if(default_scheduler) {
         ThreadScheduler_dtor(default_scheduler);
-        MSVCRT_operator_delete(default_scheduler);
+        operator_delete(default_scheduler);
     }
 }
 

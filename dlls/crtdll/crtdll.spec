@@ -1,11 +1,11 @@
 # Old C runtime library. All functions provided by msvcrt
 
-@ cdecl -arch=win32 ??2@YAPAXI@Z(long) MSVCRT_operator_new
-@ cdecl -arch=win64 ??2@YAPEAX_K@Z(long) MSVCRT_operator_new
-@ cdecl -arch=win32 ??3@YAXPAX@Z(ptr) MSVCRT_operator_delete
-@ cdecl -arch=win64 ??3@YAXPEAX@Z(ptr) MSVCRT_operator_delete
-@ cdecl -arch=win32 ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) MSVCRT__set_new_handler
-@ cdecl -arch=win64 ?_set_new_handler@@YAP6AH_K@ZP6AH0@Z@Z(ptr) MSVCRT__set_new_handler
+@ cdecl -arch=win32 ??2@YAPAXI@Z(long) operator_new
+@ cdecl -arch=win64 ??2@YAPEAX_K@Z(long) operator_new
+@ cdecl -arch=win32 ??3@YAXPAX@Z(ptr) operator_delete
+@ cdecl -arch=win64 ??3@YAXPEAX@Z(ptr) operator_delete
+@ cdecl -arch=win32 ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) _set_new_handler
+@ cdecl -arch=win64 ?_set_new_handler@@YAP6AH_K@ZP6AH0@Z@Z(ptr) _set_new_handler
 @ cdecl -arch=i386 _CIacos()
 @ cdecl -arch=i386 _CIasin()
 @ cdecl -arch=i386 _CIatan()
@@ -351,7 +351,7 @@
 @ cdecl atoi(str) MSVCRT_atoi
 @ cdecl atol(str) MSVCRT_atol
 @ cdecl bsearch(ptr ptr long long ptr) MSVCRT_bsearch
-@ cdecl calloc(long long) MSVCRT_calloc
+@ cdecl calloc(long long)
 @ cdecl ceil(double) MSVCRT_ceil
 @ cdecl clearerr(ptr) MSVCRT_clearerr
 @ cdecl clock() MSVCRT_clock
@@ -379,7 +379,7 @@
 @ cdecl fputs(str ptr) MSVCRT_fputs
 @ cdecl fputwc(long ptr) MSVCRT_fputwc
 @ cdecl fread(ptr long long ptr) MSVCRT_fread
-@ cdecl free(ptr) MSVCRT_free
+@ cdecl free(ptr)
 @ cdecl freopen(str str ptr) MSVCRT_freopen
 @ cdecl frexp(double ptr) MSVCRT_frexp
 @ varargs fscanf(ptr str) MSVCRT_fscanf
@@ -428,7 +428,7 @@
 @ cdecl log(double) MSVCRT_log
 @ cdecl log10(double) MSVCRT_log10
 @ cdecl -arch=i386,x86_64,arm,arm64 longjmp(ptr long) MSVCRT_longjmp
-@ cdecl malloc(long) MSVCRT_malloc
+@ cdecl malloc(long)
 @ cdecl mblen(ptr long) MSVCRT_mblen
 @ cdecl mbstowcs(ptr str long) MSVCRT_mbstowcs
 @ cdecl mbtowc(ptr str long) MSVCRT_mbtowc
@@ -448,7 +448,7 @@
 @ cdecl qsort(ptr long long ptr) MSVCRT_qsort
 @ cdecl raise(long) MSVCRT_raise
 @ cdecl rand() MSVCRT_rand
-@ cdecl realloc(ptr long) MSVCRT_realloc
+@ cdecl realloc(ptr long)
 @ cdecl remove(str) MSVCRT_remove
 @ cdecl rename(str str) MSVCRT_rename
 @ cdecl rewind(ptr) MSVCRT_rewind

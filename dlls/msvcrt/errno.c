@@ -274,7 +274,7 @@ char* CDECL strerror(int err)
     thread_data_t *data = msvcrt_get_thread_data();
 
     if (!data->strerror_buffer)
-        if (!(data->strerror_buffer = MSVCRT_malloc(256))) return NULL;
+        if (!(data->strerror_buffer = malloc(256))) return NULL;
 
     if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
     strcpy( data->strerror_buffer, MSVCRT__sys_errlist[err] );
@@ -317,7 +317,7 @@ char* CDECL _strerror(const char* str)
     int err;
 
     if (!data->strerror_buffer)
-        if (!(data->strerror_buffer = MSVCRT_malloc(256))) return NULL;
+        if (!(data->strerror_buffer = malloc(256))) return NULL;
 
     err = data->thread_errno;
     if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
@@ -360,16 +360,16 @@ void CDECL _wperror(const wchar_t* str)
         size = MSVCRT_wcstombs(NULL, str, 0);
         if (size == -1) return;
         size++;
-        buffer = MSVCRT_malloc(size);
+        buffer = malloc(size);
         if (!buffer) return;
         if (MSVCRT_wcstombs(buffer, str, size) == -1)
         {
-            MSVCRT_free(buffer);
+            free(buffer);
             return;
         }
     }
     perror(buffer);
-    MSVCRT_free(buffer);
+    free(buffer);
 }
 
 /*********************************************************************
@@ -393,7 +393,7 @@ wchar_t* CDECL _wcserror(int err)
     thread_data_t *data = msvcrt_get_thread_data();
 
     if (!data->wcserror_buffer)
-        if (!(data->wcserror_buffer = MSVCRT_malloc(256 * sizeof(wchar_t)))) return NULL;
+        if (!(data->wcserror_buffer = malloc(256 * sizeof(wchar_t)))) return NULL;
     _wcserror_s(data->wcserror_buffer, 256, err);
     return data->wcserror_buffer;
 }
@@ -438,7 +438,7 @@ wchar_t* CDECL __wcserror(const wchar_t* str)
     int err;
 
     if (!data->wcserror_buffer)
-        if (!(data->wcserror_buffer = MSVCRT_malloc(256 * sizeof(wchar_t)))) return NULL;
+        if (!(data->wcserror_buffer = malloc(256 * sizeof(wchar_t)))) return NULL;
 
     err = __wcserror_s(data->wcserror_buffer, 256, str);
     if (err) FIXME("bad wcserror call (%d)\n", err);

@@ -771,7 +771,7 @@ char* CDECL MSVCRT__getcwd(char * buf, int size)
   if (!buf)
   {
       if (size <= dir_len) size = dir_len + 1;
-      if (!(buf = MSVCRT_malloc( size ))) return NULL;
+      if (!(buf = malloc( size ))) return NULL;
   }
   else if (dir_len >= size)
   {
@@ -798,7 +798,7 @@ wchar_t* CDECL MSVCRT__wgetcwd(wchar_t * buf, int size)
   if (!buf)
   {
       if (size <= dir_len) size = dir_len + 1;
-      if (!(buf = MSVCRT_malloc( size * sizeof(WCHAR) ))) return NULL;
+      if (!(buf = malloc( size * sizeof(WCHAR) ))) return NULL;
   }
   if (dir_len >= size)
   {
@@ -1244,7 +1244,7 @@ wchar_t * CDECL MSVCRT__wfullpath(wchar_t * absPath, const wchar_t* relPath, siz
 
   if (absPath == NULL)
   {
-      buffer = MSVCRT_malloc(MAX_PATH * sizeof(WCHAR));
+      buffer = malloc(MAX_PATH * sizeof(WCHAR));
       size = MAX_PATH;
       alloced = TRUE;
   }
@@ -1266,7 +1266,7 @@ wchar_t * CDECL MSVCRT__wfullpath(wchar_t * absPath, const wchar_t* relPath, siz
   else
   {
       if (alloced)
-          MSVCRT_free(buffer);
+          free(buffer);
         return NULL;
   }
 }
@@ -1298,7 +1298,7 @@ char * CDECL MSVCRT__fullpath(char * absPath, const char* relPath, unsigned int 
 
   if (absPath == NULL)
   {
-      buffer = MSVCRT_malloc(MAX_PATH);
+      buffer = malloc(MAX_PATH);
       size = MAX_PATH;
       alloced = TRUE;
   }
@@ -1320,7 +1320,7 @@ char * CDECL MSVCRT__fullpath(char * absPath, const char* relPath, unsigned int 
   else
   {
       if (alloced)
-          MSVCRT_free(buffer);
+          free(buffer);
         return NULL;
   }
 }

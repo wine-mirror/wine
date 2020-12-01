@@ -375,7 +375,7 @@ int CDECL MSVCRT__get_osplatform(int *pValue)
 wchar_t *msvcrt_wstrdupa(const char *str)
 {
   const unsigned int len = strlen(str) + 1 ;
-  wchar_t *wstr = MSVCRT_malloc(len* sizeof (wchar_t));
+  wchar_t *wstr = malloc(len* sizeof (wchar_t));
   if (!wstr)
     return NULL;
    MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED,str,len,wstr,len);
@@ -569,7 +569,7 @@ int CDECL __wgetmainargs(int *argc, wchar_t** *wargv, wchar_t** *wenvp,
     *wargv = MSVCRT___wargv;
     *wenvp = MSVCRT___winitenv;
     if (new_mode)
-        MSVCRT__set_new_mode( *new_mode );
+        _set_new_mode( *new_mode );
     return 0;
 }
 
@@ -604,7 +604,7 @@ int CDECL __getmainargs(int *argc, char** *argv, char** *envp,
     *envp = MSVCRT___initenv;
 
     if (new_mode)
-        MSVCRT__set_new_mode( *new_mode );
+        _set_new_mode( *new_mode );
     return 0;
 }
 

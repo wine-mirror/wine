@@ -1332,8 +1332,8 @@
 @ cdecl _o__set_errno(long) _set_errno
 @ cdecl _o__set_fmode(long) MSVCRT__set_fmode
 @ cdecl _o__set_invalid_parameter_handler(ptr) _set_invalid_parameter_handler
-@ cdecl _o__set_new_handler(ptr) MSVCRT_set_new_handler
-@ cdecl _o__set_new_mode(long) MSVCRT__set_new_mode
+@ cdecl _o__set_new_handler(ptr) set_new_handler
+@ cdecl _o__set_new_mode(long) _set_new_mode
 @ cdecl _o__set_thread_local_invalid_parameter_handler(ptr) _set_thread_local_invalid_parameter_handler
 @ cdecl _o__seterrormode(long) _seterrormode
 @ cdecl _o__setmbcp(long) _setmbcp
@@ -1583,7 +1583,7 @@
 @ cdecl _o_bsearch(ptr ptr long long ptr) MSVCRT_bsearch
 @ cdecl _o_bsearch_s(ptr ptr long long ptr ptr) MSVCRT_bsearch_s
 @ cdecl _o_btowc(long) btowc
-@ cdecl _o_calloc(long long) MSVCRT_calloc
+@ cdecl _o_calloc(long long) calloc
 @ cdecl _o_cbrt(double) MSVCR120_cbrt
 @ cdecl _o_cbrtf(float) MSVCR120_cbrtf
 @ cdecl _o_ceil(double) MSVCRT_ceil
@@ -1631,7 +1631,7 @@
 @ cdecl _o_fputws(wstr ptr) MSVCRT_fputws
 @ cdecl _o_fread(ptr long long ptr) MSVCRT_fread
 @ cdecl _o_fread_s(ptr long long long ptr) MSVCRT_fread_s
-@ cdecl _o_free(ptr) MSVCRT_free
+@ cdecl _o_free(ptr) free
 @ cdecl _o_freopen(str str ptr) MSVCRT_freopen
 @ cdecl _o_freopen_s(ptr str str ptr) MSVCRT_freopen_s
 @ cdecl _o_frexp(double ptr) MSVCRT_frexp
@@ -1706,7 +1706,7 @@
 @ cdecl _o_lround(double) MSVCR120_lround
 @ cdecl _o_lroundf(float) MSVCR120_lroundf
 @ cdecl _o_lroundl(double) MSVCR120_lroundl
-@ cdecl _o_malloc(long) MSVCRT_malloc
+@ cdecl _o_malloc(long) malloc
 @ cdecl _o_mblen(ptr long) MSVCRT_mblen
 @ cdecl _o_mbrlen(ptr long ptr) MSVCRT_mbrlen
 @ stub _o_mbrtoc16
@@ -1717,7 +1717,7 @@
 @ cdecl _o_mbstowcs(ptr str long) MSVCRT_mbstowcs
 @ cdecl _o_mbstowcs_s(ptr ptr long str long) MSVCRT__mbstowcs_s
 @ cdecl _o_mbtowc(ptr str long) MSVCRT_mbtowc
-@ cdecl _o_memcpy_s(ptr long ptr long) MSVCRT_memcpy_s
+@ cdecl _o_memcpy_s(ptr long ptr long) memcpy_s
 @ cdecl _o_memset(ptr long long) memset
 @ cdecl _o_modf(double ptr) MSVCRT_modf
 @ cdecl -arch=!i386 _o_modff(float ptr) MSVCRT_modff
@@ -1745,7 +1745,7 @@
 @ cdecl _o_raise(long) MSVCRT_raise
 @ cdecl _o_rand() MSVCRT_rand
 @ cdecl _o_rand_s(ptr) MSVCRT_rand_s
-@ cdecl _o_realloc(ptr long) MSVCRT_realloc
+@ cdecl _o_realloc(ptr long) realloc
 @ cdecl _o_remainder(double double) MSVCR120_remainder
 @ cdecl _o_remainderf(float float) MSVCR120_remainderf
 @ cdecl _o_remainderl(double double) MSVCR120_remainderl
@@ -1785,7 +1785,7 @@
 @ cdecl _o_strerror_s(ptr long long) strerror_s
 @ cdecl _o_strftime(ptr long str ptr) MSVCRT_strftime
 @ cdecl _o_strncat_s(str long str long) MSVCRT_strncat_s
-@ cdecl _o_strncpy_s(ptr long str long) MSVCRT_strncpy_s
+@ cdecl _o_strncpy_s(ptr long str long) strncpy_s
 @ cdecl _o_strtod(str ptr) MSVCRT_strtod
 @ cdecl _o_strtof(str ptr) MSVCRT_strtof
 @ cdecl _o_strtok(str str) MSVCRT_strtok
@@ -1856,8 +1856,8 @@
 @ cdecl _putwch_nolock(long)
 @ cdecl _putws(wstr) MSVCRT__putws
 @ stub _query_app_type
-@ cdecl _query_new_handler() MSVCRT__query_new_handler
-@ cdecl _query_new_mode() MSVCRT__query_new_mode
+@ cdecl _query_new_handler()
+@ cdecl _query_new_mode()
 @ cdecl _read(long ptr long) MSVCRT__read
 @ cdecl _realloc_base(ptr long)
 @ cdecl _recalloc(ptr long long)
@@ -1888,8 +1888,8 @@
 @ cdecl _set_error_mode(long)
 @ cdecl _set_fmode(long) MSVCRT__set_fmode
 @ cdecl _set_invalid_parameter_handler(ptr)
-@ cdecl _set_new_handler(ptr) MSVCRT_set_new_handler
-@ cdecl _set_new_mode(long) MSVCRT__set_new_mode
+@ cdecl _set_new_handler(ptr) set_new_handler
+@ cdecl _set_new_mode(long)
 @ cdecl _set_printf_count_output(long) MSVCRT__set_printf_count_output
 @ cdecl _set_purecall_handler(ptr)
 @ cdecl _set_se_translator(ptr)
@@ -2188,7 +2188,7 @@
 @ stub cacoshf
 @ stub cacoshl
 @ stub cacosl
-@ cdecl calloc(long long) MSVCRT_calloc
+@ cdecl calloc(long long)
 @ stub carg
 @ stub cargf
 @ stub cargl
@@ -2324,7 +2324,7 @@
 @ cdecl fputws(wstr ptr) MSVCRT_fputws
 @ cdecl fread(ptr long long ptr) MSVCRT_fread
 @ cdecl fread_s(ptr long long long ptr) MSVCRT_fread_s
-@ cdecl free(ptr) MSVCRT_free
+@ cdecl free(ptr)
 @ cdecl freopen(str str ptr) MSVCRT_freopen
 @ cdecl freopen_s(ptr str str ptr) MSVCRT_freopen_s
 @ cdecl frexp(double ptr) MSVCRT_frexp
@@ -2409,7 +2409,7 @@
 @ cdecl lround(double) MSVCR120_lround
 @ cdecl lroundf(float) MSVCR120_lroundf
 @ cdecl lroundl(double) MSVCR120_lroundl
-@ cdecl malloc(long) MSVCRT_malloc
+@ cdecl malloc(long)
 @ cdecl mblen(ptr long) MSVCRT_mblen
 @ cdecl mbrlen(ptr long ptr) MSVCRT_mbrlen
 @ stub mbrtoc16
@@ -2423,9 +2423,9 @@
 @ cdecl memchr(ptr long long) MSVCRT_memchr
 @ cdecl memcmp(ptr ptr long)
 @ cdecl memcpy(ptr ptr long)
-@ cdecl memcpy_s(ptr long ptr long) MSVCRT_memcpy_s
+@ cdecl memcpy_s(ptr long ptr long)
 @ cdecl memmove(ptr ptr long)
-@ cdecl memmove_s(ptr long ptr long) MSVCRT_memmove_s
+@ cdecl memmove_s(ptr long ptr long) memmove_s
 @ cdecl memset(ptr long long)
 @ cdecl modf(double ptr) MSVCRT_modf
 @ cdecl -arch=!i386 modff(float ptr) MSVCRT_modff
@@ -2458,7 +2458,7 @@
 @ cdecl raise(long) MSVCRT_raise
 @ cdecl rand() MSVCRT_rand
 @ cdecl rand_s(ptr) MSVCRT_rand_s
-@ cdecl realloc(ptr long) MSVCRT_realloc
+@ cdecl realloc(ptr long)
 @ cdecl remainder(double double) MSVCR120_remainder
 @ cdecl remainderf(float float) MSVCR120_remainderf
 @ cdecl remainderl(double double) MSVCR120_remainderl
@@ -2510,7 +2510,7 @@
 @ cdecl strncat_s(str long str long) MSVCRT_strncat_s
 @ cdecl strncmp(str str long) MSVCRT_strncmp
 @ cdecl strncpy(ptr str long) MSVCRT_strncpy
-@ cdecl strncpy_s(ptr long str long) MSVCRT_strncpy_s
+@ cdecl strncpy_s(ptr long str long)
 @ cdecl strnlen(str long) MSVCRT_strnlen
 @ cdecl strpbrk(str str) MSVCRT_strpbrk
 @ cdecl strrchr(str long) MSVCRT_strrchr

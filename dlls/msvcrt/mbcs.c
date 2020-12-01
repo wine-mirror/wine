@@ -229,7 +229,7 @@ threadmbcinfo* create_mbcinfo(int cp, LCID lcid, threadmbcinfo *old_mbcinfo)
     return old_mbcinfo;
   }
 
-  mbcinfo = MSVCRT_malloc(sizeof(threadmbcinfo));
+  mbcinfo = malloc(sizeof(threadmbcinfo));
   if(!mbcinfo)
     return NULL;
   mbcinfo->refcount = 1;
@@ -271,7 +271,7 @@ threadmbcinfo* create_mbcinfo(int cp, LCID lcid, threadmbcinfo *old_mbcinfo)
   if (!GetCPInfo(newcp, &cpi))
   {
     WARN("Codepage %d not found\n", newcp);
-    MSVCRT_free(mbcinfo);
+    free(mbcinfo);
     return NULL;
   }
 
@@ -2241,7 +2241,7 @@ size_t CDECL _mbscspn(const unsigned char* str, const unsigned char* cmp)
 unsigned char* CDECL _mbsrev(unsigned char* str)
 {
     int i, len = _mbslen(str);
-    unsigned char *p, *temp=MSVCRT_malloc(len*2);
+    unsigned char *p, *temp=malloc(len*2);
 
     if(!temp)
         return str;
@@ -2277,7 +2277,7 @@ unsigned char* CDECL _mbsrev(unsigned char* str)
         }
     }
 
-    MSVCRT_free(temp);
+    free(temp);
 
     return str;
 }

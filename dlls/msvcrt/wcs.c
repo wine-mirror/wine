@@ -79,7 +79,7 @@ wchar_t* CDECL MSVCRT__wcsdup( const wchar_t* str )
   if (str)
   {
     int size = (MSVCRT_wcslen(str) + 1) * sizeof(wchar_t);
-    ret = MSVCRT_malloc( size );
+    ret = malloc( size );
     if (ret) memcpy( ret, str, size );
   }
   return ret;

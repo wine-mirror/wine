@@ -99,7 +99,7 @@ static DWORD CALLBACK _beginthread_trampoline(LPVOID arg)
 
     memcpy(&local_trampoline,arg,sizeof(local_trampoline));
     data->handle = local_trampoline.thread;
-    MSVCRT_free(arg);
+    free(arg);
 
     local_trampoline.start_address(local_trampoline.arglist);
     _endthread();
@@ -119,7 +119,7 @@ uintptr_t CDECL _beginthread(
 
   TRACE("(%p, %d, %p)\n", start_address, stack_size, arglist);
 
-  trampoline = MSVCRT_malloc(sizeof(*trampoline));
+  trampoline = malloc(sizeof(*trampoline));
   if(!trampoline) {
       *_errno() = EAGAIN;
       return -1;
@@ -128,7 +128,7 @@ uintptr_t CDECL _beginthread(
   thread = CreateThread(NULL, stack_size, _beginthread_trampoline,
           trampoline, CREATE_SUSPENDED, NULL);
   if(!thread) {
-      MSVCRT_free(trampoline);
+      free(trampoline);
       *_errno() = EAGAIN;
       return -1;
   }
@@ -138,7 +138,7 @@ uintptr_t CDECL _beginthread(
   trampoline->arglist = arglist;
 
   if(ResumeThread(thread) == -1) {
-      MSVCRT_free(trampoline);
+      free(trampoline);
       *_errno() = EAGAIN;
       return -1;
   }

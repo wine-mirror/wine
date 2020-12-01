@@ -197,12 +197,12 @@
 @ cdecl -arch=arm ??1type_info@@UAA@XZ(ptr) type_info_dtor
 @ thiscall -arch=i386 ??1type_info@@UAE@XZ(ptr) type_info_dtor
 @ cdecl -arch=win64 ??1type_info@@UEAA@XZ(ptr) type_info_dtor
-@ cdecl -arch=win32 ??2@YAPAXI@Z(long) MSVCRT_operator_new
-@ cdecl -arch=win64 ??2@YAPEAX_K@Z(long) MSVCRT_operator_new
-@ cdecl -arch=win32 ??2@YAPAXIHPBDH@Z(long long str long) MSVCRT_operator_new_dbg
-@ cdecl -arch=win64 ??2@YAPEAX_KHPEBDH@Z(long long str long) MSVCRT_operator_new_dbg
-@ cdecl -arch=win32 ??3@YAXPAX@Z(ptr) MSVCRT_operator_delete
-@ cdecl -arch=win64 ??3@YAXPEAX@Z(ptr) MSVCRT_operator_delete
+@ cdecl -arch=win32 ??2@YAPAXI@Z(long) operator_new
+@ cdecl -arch=win64 ??2@YAPEAX_K@Z(long) operator_new
+@ cdecl -arch=win32 ??2@YAPAXIHPBDH@Z(long long str long) operator_new_dbg
+@ cdecl -arch=win64 ??2@YAPEAX_KHPEBDH@Z(long long str long) operator_new_dbg
+@ cdecl -arch=win32 ??3@YAXPAX@Z(ptr) operator_delete
+@ cdecl -arch=win64 ??3@YAXPEAX@Z(ptr) operator_delete
 @ stub -arch=win32 ??4?$_SpinWait@$00@details@Concurrency@@QAEAAV012@ABV012@@Z
 @ stub -arch=win64 ??4?$_SpinWait@$00@details@Concurrency@@QEAAAEAV012@AEBV012@@Z
 @ stub -arch=win32 ??4?$_SpinWait@$0A@@details@Concurrency@@QAEAAV012@ABV012@@Z
@@ -236,12 +236,12 @@
 @ cdecl -arch=win64 ??_Fbad_cast@std@@QEAAXXZ(ptr) bad_cast_default_ctor
 @ thiscall -arch=i386 ??_Fbad_typeid@std@@QAEXXZ(ptr) bad_typeid_default_ctor
 @ cdecl -arch=win64 ??_Fbad_typeid@std@@QEAAXXZ(ptr) bad_typeid_default_ctor
-@ cdecl -arch=win32 ??_U@YAPAXI@Z(long) MSVCRT_operator_new
-@ cdecl -arch=win64 ??_U@YAPEAX_K@Z(long) MSVCRT_operator_new
-@ cdecl -arch=win32 ??_U@YAPAXIHPBDH@Z(long long str long) MSVCRT_operator_new_dbg
-@ cdecl -arch=win64 ??_U@YAPEAX_KHPEBDH@Z(long long str long) MSVCRT_operator_new_dbg
-@ cdecl -arch=win32 ??_V@YAXPAX@Z(ptr) MSVCRT_operator_delete
-@ cdecl -arch=win64 ??_V@YAXPEAX@Z(ptr) MSVCRT_operator_delete
+@ cdecl -arch=win32 ??_U@YAPAXI@Z(long) operator_new
+@ cdecl -arch=win64 ??_U@YAPEAX_K@Z(long) operator_new
+@ cdecl -arch=win32 ??_U@YAPAXIHPBDH@Z(long long str long) operator_new_dbg
+@ cdecl -arch=win64 ??_U@YAPEAX_KHPEBDH@Z(long long str long) operator_new_dbg
+@ cdecl -arch=win32 ??_V@YAXPAX@Z(ptr) operator_delete
+@ cdecl -arch=win64 ??_V@YAXPEAX@Z(ptr) operator_delete
 @ cdecl -arch=win32 ?Alloc@Concurrency@@YAPAXI@Z(long) Concurrency_Alloc
 @ cdecl -arch=win64 ?Alloc@Concurrency@@YAPEAX_K@Z(long) Concurrency_Alloc
 @ cdecl ?Block@Context@Concurrency@@SAXXZ() Context_Block
@@ -435,14 +435,14 @@
 @ cdecl -arch=win64 ?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
 @ varargs -arch=win32 ?_open@@YAHPBDHH@Z(str long) MSVCRT__open
 @ varargs -arch=win64 ?_open@@YAHPEBDHH@Z(str long) MSVCRT__open
-@ cdecl -arch=win32 ?_query_new_handler@@YAP6AHI@ZXZ() MSVCRT__query_new_handler
-@ cdecl -arch=win64 ?_query_new_handler@@YAP6AH_K@ZXZ() MSVCRT__query_new_handler
-@ cdecl ?_query_new_mode@@YAHXZ() MSVCRT__query_new_mode
+@ cdecl -arch=win32 ?_query_new_handler@@YAP6AHI@ZXZ() _query_new_handler
+@ cdecl -arch=win64 ?_query_new_handler@@YAP6AH_K@ZXZ() _query_new_handler
+@ cdecl ?_query_new_mode@@YAHXZ() _query_new_mode
 @ stub -arch=win32 ?_set_new_handler@@YAP6AHI@ZH@Z  # int (__cdecl*__cdecl _set_new_handler(int))(unsigned int)
 @ stub -arch=win64 ?_set_new_handler@@YAP6AH_K@ZH@Z  # int (__cdecl*__cdecl _set_new_handler(int))(unsigned __int64)
-@ cdecl -arch=win32 ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) MSVCRT__set_new_handler
-@ cdecl -arch=win64 ?_set_new_handler@@YAP6AH_K@ZP6AH0@Z@Z(ptr) MSVCRT__set_new_handler
-@ cdecl ?_set_new_mode@@YAHH@Z(long) MSVCRT__set_new_mode
+@ cdecl -arch=win32 ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) _set_new_handler
+@ cdecl -arch=win64 ?_set_new_handler@@YAP6AH_K@ZP6AH0@Z@Z(ptr) _set_new_handler
+@ cdecl ?_set_new_mode@@YAHH@Z(long) _set_new_mode
 @ stub -arch=win32 ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZH@Z  # void (__cdecl*__cdecl _set_se_translator(int))(unsigned int,struct _EXCEPTION_POINTERS *)
 @ stub -arch=win64 ?_set_se_translator@@YAP6AXIPEAU_EXCEPTION_POINTERS@@@ZH@Z  # void (__cdecl*__cdecl _set_se_translator(int))(unsigned int,struct _EXCEPTION_POINTERS * __ptr64)
 @ cdecl -arch=win32 ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) _set_se_translator
@@ -476,7 +476,7 @@
 @ cdecl -arch=win64 ?reset@event@Concurrency@@QEAAXXZ(ptr) event_reset
 @ thiscall -arch=win32 ?set@event@Concurrency@@QAEXXZ(ptr) event_set
 @ cdecl -arch=win64 ?set@event@Concurrency@@QEAAXXZ(ptr) event_set
-@ cdecl ?set_new_handler@@YAP6AXXZP6AXXZ@Z(ptr) MSVCRT_set_new_handler
+@ cdecl ?set_new_handler@@YAP6AXXZP6AXXZ@Z(ptr) set_new_handler
 @ stub ?set_terminate@@YAP6AXXZH@Z
 @ cdecl ?set_terminate@@YAP6AXXZP6AXXZ@Z(ptr) set_terminate
 @ stub ?set_unexpected@@YAP6AXXZH@Z
@@ -711,7 +711,7 @@
 @ cdecl _c_exit() MSVCRT__c_exit
 @ cdecl _cabs(long) MSVCRT__cabs
 @ cdecl _callnewh(long)
-@ cdecl _calloc_crt(long long) MSVCRT_calloc
+@ cdecl _calloc_crt(long long) calloc
 @ cdecl _cexit() MSVCRT__cexit
 @ cdecl _cgets(ptr)
 @ stub _cgets_s
@@ -1067,7 +1067,7 @@
 @ cdecl _ltow_s(long ptr long long) MSVCRT__ltow_s
 @ cdecl _makepath(ptr str str str str) MSVCRT__makepath
 @ cdecl _makepath_s(ptr long str str str str) MSVCRT__makepath_s
-@ cdecl _malloc_crt(long) MSVCRT_malloc
+@ cdecl _malloc_crt(long) malloc
 @ cdecl _mbbtombc(long)
 @ stub _mbbtombc_l
 @ cdecl _mbbtype(long long)
@@ -1245,7 +1245,7 @@
 @ cdecl _putws(wstr) MSVCRT__putws
 @ extern _pwctype MSVCRT__pwctype
 @ cdecl _read(long ptr long) MSVCRT__read
-@ cdecl _realloc_crt(ptr long) MSVCRT_realloc
+@ cdecl _realloc_crt(ptr long) realloc
 @ cdecl _recalloc(ptr long long)
 @ stub _recalloc_crt
 @ cdecl _resetstkoflw() MSVCRT__resetstkoflw
@@ -1643,7 +1643,7 @@
 @ cdecl bsearch(ptr ptr long long ptr) MSVCRT_bsearch
 @ cdecl bsearch_s(ptr ptr long long ptr ptr) MSVCRT_bsearch_s
 @ cdecl btowc(long)
-@ cdecl calloc(long long) MSVCRT_calloc
+@ cdecl calloc(long long)
 @ cdecl ceil(double) MSVCRT_ceil
 @ cdecl -arch=!i386 ceilf(float) MSVCRT_ceilf
 @ cdecl clearerr(ptr) MSVCRT_clearerr
@@ -1681,7 +1681,7 @@
 @ cdecl fputws(wstr ptr) MSVCRT_fputws
 @ cdecl fread(ptr long long ptr) MSVCRT_fread
 @ cdecl fread_s(ptr long long long ptr) MSVCRT_fread_s
-@ cdecl free(ptr) MSVCRT_free
+@ cdecl free(ptr)
 @ cdecl freopen(str str ptr) MSVCRT_freopen
 @ cdecl freopen_s(ptr str str ptr) MSVCRT_freopen_s
 @ cdecl frexp(double ptr) MSVCRT_frexp
@@ -1740,7 +1740,7 @@
 @ cdecl log10(double) MSVCRT_log10
 @ cdecl -arch=!i386 log10f(float) MSVCRT_log10f
 @ cdecl -arch=i386,x86_64,arm,arm64 longjmp(ptr long) MSVCRT_longjmp
-@ cdecl malloc(long) MSVCRT_malloc
+@ cdecl malloc(long)
 @ cdecl mblen(ptr long) MSVCRT_mblen
 @ cdecl mbrlen(ptr long ptr) MSVCRT_mbrlen
 @ cdecl mbrtowc(ptr str long ptr) MSVCRT_mbrtowc
@@ -1752,9 +1752,9 @@
 @ cdecl memchr(ptr long long) MSVCRT_memchr
 @ cdecl memcmp(ptr ptr long)
 @ cdecl memcpy(ptr ptr long)
-@ cdecl memcpy_s(ptr long ptr long) MSVCRT_memcpy_s
+@ cdecl memcpy_s(ptr long ptr long)
 @ cdecl memmove(ptr ptr long)
-@ cdecl memmove_s(ptr long ptr long) MSVCRT_memmove_s
+@ cdecl memmove_s(ptr long ptr long)
 @ cdecl memset(ptr long long)
 @ cdecl modf(double ptr) MSVCRT_modf
 @ cdecl -arch=!i386 modff(float ptr) MSVCRT_modff
@@ -1773,7 +1773,7 @@
 @ cdecl raise(long) MSVCRT_raise
 @ cdecl rand() MSVCRT_rand
 @ cdecl rand_s(ptr) MSVCRT_rand_s
-@ cdecl realloc(ptr long) MSVCRT_realloc
+@ cdecl realloc(ptr long)
 @ cdecl remove(str) MSVCRT_remove
 @ cdecl rename(str str) MSVCRT_rename
 @ cdecl rewind(ptr) MSVCRT_rewind
@@ -1811,7 +1811,7 @@
 @ cdecl strncat_s(str long str long) MSVCRT_strncat_s
 @ cdecl strncmp(str str long) MSVCRT_strncmp
 @ cdecl strncpy(ptr str long) MSVCRT_strncpy
-@ cdecl strncpy_s(ptr long str long) MSVCRT_strncpy_s
+@ cdecl strncpy_s(ptr long str long)
 @ cdecl strnlen(str long) MSVCRT_strnlen
 @ cdecl strpbrk(str str) MSVCRT_strpbrk
 @ cdecl strrchr(str long) MSVCRT_strrchr

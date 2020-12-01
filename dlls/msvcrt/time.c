@@ -429,7 +429,7 @@ struct tm* CDECL MSVCRT__localtime64(const __time64_t* secs)
     thread_data_t *data = msvcrt_get_thread_data();
 
     if(!data->time_buffer)
-        data->time_buffer = MSVCRT_malloc(sizeof(struct tm));
+        data->time_buffer = malloc(sizeof(struct tm));
 
     if(_localtime64_s(data->time_buffer, secs))
         return NULL;
@@ -536,7 +536,7 @@ struct tm* CDECL MSVCRT__gmtime64(const __time64_t *secs)
     thread_data_t * const data = msvcrt_get_thread_data();
 
     if(!data->time_buffer)
-        data->time_buffer = MSVCRT_malloc(sizeof(struct tm));
+        data->time_buffer = malloc(sizeof(struct tm));
 
     if(MSVCRT__gmtime64_s(data->time_buffer, secs))
         return NULL;
@@ -1543,19 +1543,19 @@ static size_t strftime_helper(char *str, size_t max, const char *format,
     if (!MSVCRT_CHECK_PMT(format != NULL)) return 0;
 
     len = MSVCRT__mbstowcs_l( NULL, format, 0, loc ) + 1;
-    if (!len || !(fmt = MSVCRT_malloc( len*sizeof(wchar_t) ))) return 0;
+    if (!len || !(fmt = malloc( len*sizeof(wchar_t) ))) return 0;
     MSVCRT__mbstowcs_l(fmt, format, len, loc);
 
-    if ((s = MSVCRT_malloc( max*sizeof(wchar_t) )))
+    if ((s = malloc( max*sizeof(wchar_t) )))
     {
         len = strftime_impl( s, max, fmt, mstm, time_data, loc );
         if (len)
             len = MSVCRT__wcstombs_l( str, s, max, loc );
-        MSVCRT_free( s );
+        free( s );
     }
     else len = 0;
 
-    MSVCRT_free( fmt );
+    free( fmt );
     return len;
 #endif
 }
@@ -1600,18 +1600,18 @@ static size_t wcsftime_helper( wchar_t *str, size_t max,
     TRACE("%p %Iu %s %p %p %p\n", str, max, debugstr_w(format), mstm, time_data, loc);
 
     len = MSVCRT__wcstombs_l( NULL, format, 0, loc ) + 1;
-    if (!(fmt = MSVCRT_malloc( len ))) return 0;
+    if (!(fmt = malloc( len ))) return 0;
     MSVCRT__wcstombs_l(fmt, format, len, loc);
 
-    if ((s = MSVCRT_malloc( max*4 )))
+    if ((s = malloc( max*4 )))
     {
         if (!strftime_impl( s, max*4, fmt, mstm, time_data, loc )) s[0] = 0;
         len = MSVCRT__mbstowcs_l( str, s, max, loc );
-        MSVCRT_free( s );
+        free( s );
     }
     else len = 0;
 
-    MSVCRT_free( fmt );
+    free( fmt );
     return len;
 #else
     TRACE("%p %Iu %s %p %p %p\n", str, max, debugstr_w(format), mstm, time_data, loc);
@@ -1688,7 +1688,7 @@ char * CDECL MSVCRT_asctime(const struct tm *mstm)
 
     /* asctime returns date in format that always has exactly 26 characters */
     if (!data->asctime_buffer) {
-        data->asctime_buffer = MSVCRT_malloc(26);
+        data->asctime_buffer = malloc(26);
         if (!data->asctime_buffer) {
             *_errno() = ENOMEM;
             return NULL;
@@ -1729,7 +1729,7 @@ wchar_t * CDECL MSVCRT__wasctime(const struct tm *mstm)
     char buffer[26];
 
     if(!data->wasctime_buffer) {
-        data->wasctime_buffer = MSVCRT_malloc(26*sizeof(wchar_t));
+        data->wasctime_buffer = malloc(26*sizeof(wchar_t));
         if(!data->wasctime_buffer) {
             *_errno() = ENOMEM;
             return NULL;

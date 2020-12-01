@@ -2398,7 +2398,7 @@ char * CDECL MSVCRT__ecvt( double number, int ndigits, int *decpt, int *sign )
                                       * 4 for exponent and one for
                                       * terminating '\0' */
     if (!data->efcvt_buffer)
-        data->efcvt_buffer = MSVCRT_malloc( 80 ); /* ought to be enough */
+        data->efcvt_buffer = malloc( 80 ); /* ought to be enough */
 
     if( number < 0) {
         *sign = TRUE;
@@ -2461,7 +2461,7 @@ int CDECL MSVCRT__ecvt_s( char *buffer, size_t length, double number, int ndigit
     /* handle cases with zero ndigits or less */
     prec = ndigits;
     if( prec < 1) prec = 2;
-    result = MSVCRT_malloc(prec + 7);
+    result = malloc(prec + 7);
 
     if( number < 0) {
         *sign = TRUE;
@@ -2487,7 +2487,7 @@ int CDECL MSVCRT__ecvt_s( char *buffer, size_t length, double number, int ndigit
         result[ 0] = '\0';
     }
     memcpy( buffer, result, max(ndigits + 1, 1) );
-    MSVCRT_free( result );
+    free( result );
     return 0;
 }
 
@@ -2503,7 +2503,7 @@ char * CDECL MSVCRT__fcvt( double number, int ndigits, int *decpt, int *sign )
     char decimal_separator = get_locinfo()->lconv->decimal_point[0];
 
     if (!data->efcvt_buffer)
-        data->efcvt_buffer = MSVCRT_malloc( 80 ); /* ought to be enough */
+        data->efcvt_buffer = malloc( 80 ); /* ought to be enough */
 
     if (number < 0)
     {

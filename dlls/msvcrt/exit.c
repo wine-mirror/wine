@@ -72,7 +72,7 @@ static int register_onexit_function(_onexit_table_t *table, _onexit_t func)
     EnterCriticalSection(&MSVCRT_onexit_cs);
     if (!table->_first)
     {
-        table->_first = MSVCRT_calloc(32, sizeof(void *));
+        table->_first = calloc(32, sizeof(void *));
         if (!table->_first)
         {
             WARN("failed to allocate initial table.\n");
@@ -87,7 +87,7 @@ static int register_onexit_function(_onexit_table_t *table, _onexit_t func)
     if (table->_last == table->_end)
     {
         int len = table->_end - table->_first;
-        _PVFV *tmp = MSVCRT_realloc(table->_first, 2 * len * sizeof(void *));
+        _PVFV *tmp = realloc(table->_first, 2 * len * sizeof(void *));
         if (!tmp)
         {
             WARN("failed to grow table.\n");
@@ -132,7 +132,7 @@ static int execute_onexit_table(_onexit_table_t *table)
            (*func)();
     }
 
-    MSVCRT_free(copy._first);
+    free(copy._first);
     return 0;
 }
 
@@ -166,7 +166,7 @@ _onexit_t CDECL __dllonexit(_onexit_t func, _onexit_t **start, _onexit_t **end)
   if (++len <= 0)
     return NULL;
 
-  tmp = MSVCRT_realloc(*start, len * sizeof(*tmp));
+  tmp = realloc(*start, len * sizeof(*tmp));
   if (!tmp)
     return NULL;
   *start = tmp;

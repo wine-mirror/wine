@@ -222,7 +222,7 @@ int CDECL _dupenv_s(char **buffer, size_t *numberOfElements, const char *varname
     if (!(e = MSVCRT_getenv(varname))) return *_errno() = EINVAL;
 
     sz = strlen(e) + 1;
-    if (!(*buffer = MSVCRT_malloc(sz)))
+    if (!(*buffer = malloc(sz)))
     {
         if (numberOfElements) *numberOfElements = 0;
         return *_errno() = ENOMEM;
@@ -247,7 +247,7 @@ int CDECL _wdupenv_s(wchar_t **buffer, size_t *numberOfElements,
     if (!(e = MSVCRT__wgetenv(varname))) return *_errno() = EINVAL;
 
     sz = MSVCRT_wcslen(e) + 1;
-    if (!(*buffer = MSVCRT_malloc(sz * sizeof(wchar_t))))
+    if (!(*buffer = malloc(sz * sizeof(wchar_t))))
     {
         if (numberOfElements) *numberOfElements = 0;
         return *_errno() = ENOMEM;

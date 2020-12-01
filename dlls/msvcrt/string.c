@@ -43,7 +43,7 @@ char* CDECL MSVCRT__strdup(const char* str)
 {
     if(str)
     {
-      char * ret = MSVCRT_malloc(strlen(str)+1);
+      char * ret = malloc(strlen(str)+1);
       if (ret) strcpy( ret, str );
       return ret;
     }

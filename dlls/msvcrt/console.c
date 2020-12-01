@@ -476,7 +476,7 @@ int CDECL _kbhit(void)
 
     GetNumberOfConsoleInputEvents(MSVCRT_console_in, &count);
 
-    if (count && (ir = MSVCRT_malloc(count * sizeof(INPUT_RECORD))) &&
+    if (count && (ir = malloc(count * sizeof(INPUT_RECORD))) &&
         PeekConsoleInputA(MSVCRT_console_in, ir, count, &count))
       for(i = 0; i < count - 1; i++)
       {
@@ -488,7 +488,7 @@ int CDECL _kbhit(void)
           break;
         }
       }
-    MSVCRT_free(ir);
+    free(ir);
   }
   UNLOCK_CONSOLE;
   return retval;

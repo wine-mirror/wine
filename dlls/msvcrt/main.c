@@ -68,14 +68,14 @@ static inline void msvcrt_free_tls_mem(void)
 
   if (tls)
   {
-    MSVCRT_free(tls->efcvt_buffer);
-    MSVCRT_free(tls->asctime_buffer);
-    MSVCRT_free(tls->wasctime_buffer);
-    MSVCRT_free(tls->strerror_buffer);
-    MSVCRT_free(tls->wcserror_buffer);
-    MSVCRT_free(tls->time_buffer);
-    MSVCRT_free(tls->tmpnam_buffer);
-    MSVCRT_free(tls->wtmpnam_buffer);
+    free(tls->efcvt_buffer);
+    free(tls->asctime_buffer);
+    free(tls->wasctime_buffer);
+    free(tls->strerror_buffer);
+    free(tls->wcserror_buffer);
+    free(tls->time_buffer);
+    free(tls->tmpnam_buffer);
+    free(tls->wtmpnam_buffer);
     if(tls->locale_flags & LOCALE_FREE) {
         free_locinfo(tls->locinfo);
         free_mbcinfo(tls->mbcinfo);

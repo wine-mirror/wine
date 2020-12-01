@@ -281,7 +281,7 @@ static inline BOOL alloc_pioinfo_block(int fd)
         return FALSE;
     }
 
-    block = MSVCRT_calloc(MSVCRT_FD_BLOCK_SIZE, sizeof(ioinfo));
+    block = calloc(MSVCRT_FD_BLOCK_SIZE, sizeof(ioinfo));
     if(!block)
     {
         WARN(":out of memory!\n");
@@ -291,7 +291,7 @@ static inline BOOL alloc_pioinfo_block(int fd)
     for(i=0; i<MSVCRT_FD_BLOCK_SIZE; i++)
         block[i].handle = INVALID_HANDLE_VALUE;
     if(InterlockedCompareExchangePointer((void**)&MSVCRT___pioinfo[fd/MSVCRT_FD_BLOCK_SIZE], block, NULL))
-        MSVCRT_free(block);
+        free(block);
     return TRUE;
 }
 
@@ -360,7 +360,7 @@ static inline MSVCRT_FILE* msvcrt_get_file(int i)
 
     ret = MSVCRT_fstream[i/MSVCRT_FD_BLOCK_SIZE];
     if(!ret) {
-        MSVCRT_fstream[i/MSVCRT_FD_BLOCK_SIZE] = MSVCRT_calloc(MSVCRT_FD_BLOCK_SIZE, sizeof(file_crit));
+        MSVCRT_fstream[i/MSVCRT_FD_BLOCK_SIZE] = calloc(MSVCRT_FD_BLOCK_SIZE, sizeof(file_crit));
         if(!MSVCRT_fstream[i/MSVCRT_FD_BLOCK_SIZE]) {
             ERR("out of memory\n");
             *_errno() = ENOMEM;
@@ -509,7 +509,7 @@ unsigned msvcrt_create_io_inherit_block(WORD *size, BYTE **block)
   last_fd++;
 
   *size = sizeof(unsigned) + (sizeof(char) + sizeof(HANDLE)) * last_fd;
-  *block = MSVCRT_calloc(1, *size);
+  *block = calloc(1, *size);
   if (!*block)
   {
     *size = 0;
@@ -686,7 +686,7 @@ static BOOL msvcrt_alloc_buffer(MSVCRT_FILE* file)
             && MSVCRT__isatty(file->_file))
         return FALSE;
 
-    file->_base = MSVCRT_calloc(1, MSVCRT_INTERNAL_BUFSIZ);
+    file->_base = calloc(1, MSVCRT_INTERNAL_BUFSIZ);
     if(file->_base) {
         file->_bufsiz = MSVCRT_INTERNAL_BUFSIZ;
         file->_flag |= MSVCRT__IOMYBUF;
@@ -1232,7 +1232,7 @@ void msvcrt_free_io(void)
             if(MSVCRT___pioinfo[i][j].exflag & EF_CRIT_INIT)
                 DeleteCriticalSection(&MSVCRT___pioinfo[i][j].crit);
         }
-        MSVCRT_free(MSVCRT___pioinfo[i]);
+        free(MSVCRT___pioinfo[i]);
     }
 
     for(j=0; j<MSVCRT_stream_idx; j++)
@@ -1246,7 +1246,7 @@ void msvcrt_free_io(void)
     }
 
     for(i=0; i<ARRAY_SIZE(MSVCRT_fstream); i++)
-        MSVCRT_free(MSVCRT_fstream[i]);
+        free(MSVCRT_fstream[i]);
 }
 
 /*********************************************************************
@@ -1651,7 +1651,7 @@ MSVCRT_FILE* CDECL MSVCRT__fdopen(int fd, const char *mode)
 
     ret = MSVCRT__wfdopen(fd, modeW);
 
-    MSVCRT_free(modeW);
+    free(modeW);
     return ret;
 }
 
@@ -2400,7 +2400,7 @@ int CDECL MSVCRT__sopen_dispatch( const char *path, int oflags, int shflags,
         return EINVAL;
 
     ret = MSVCRT__wsopen_dispatch(pathW, oflags, shflags, pmode, fd, secure);
-    MSVCRT_free(pathW);
+    free(pathW);
     return ret;
 }
 
@@ -2576,7 +2576,7 @@ static int read_utf8(ioinfo *fdinfo, wchar_t *buf, unsigned int count)
     /* read bytes have to fit to output and lookahead buffers */
     count /= 2;
     readbuf_size = count < 4 ? 4 : count;
-    if(readbuf_size<=4 || !(readbuf = MSVCRT_malloc(readbuf_size))) {
+    if(readbuf_size<=4 || !(readbuf = malloc(readbuf_size))) {
         readbuf_size = 4;
         readbuf = min_buf;
     }
@@ -2659,16 +2659,16 @@ static int read_utf8(ioinfo *fdinfo, wchar_t *buf, unsigned int count)
             num_read = 0;
         }else if(GetLastError() == ERROR_BROKEN_PIPE) {
             fdinfo->wxflag |= WX_ATEOF;
-            if (readbuf != min_buf) MSVCRT_free(readbuf);
+            if (readbuf != min_buf) free(readbuf);
             return 0;
         }else {
             msvcrt_set_errno(GetLastError());
-            if (readbuf != min_buf) MSVCRT_free(readbuf);
+            if (readbuf != min_buf) free(readbuf);
             return -1;
         }
     }else if(!pos && !num_read) {
         fdinfo->wxflag |= WX_ATEOF;
-        if (readbuf != min_buf) MSVCRT_free(readbuf);
+        if (readbuf != min_buf) free(readbuf);
         return 0;
     }
 
@@ -2727,11 +2727,11 @@ static int read_utf8(ioinfo *fdinfo, wchar_t *buf, unsigned int count)
 
     if(!(num_read = MultiByteToWideChar(CP_UTF8, 0, readbuf, pos, buf, count))) {
         msvcrt_set_errno(GetLastError());
-        if (readbuf != min_buf) MSVCRT_free(readbuf);
+        if (readbuf != min_buf) free(readbuf);
         return -1;
     }
 
-    if (readbuf != min_buf) MSVCRT_free(readbuf);
+    if (readbuf != min_buf) free(readbuf);
     return num_read*2;
 }
 
@@ -3649,13 +3649,13 @@ int CDECL MSVCRT__fclose_nolock(MSVCRT_FILE* file)
   }
 
   flag = file->_flag;
-  MSVCRT_free(file->_tmpfname);
+  free(file->_tmpfname);
   file->_tmpfname = NULL;
   /* flush stdio buffers */
   if(file->_flag & MSVCRT__IOWRT)
       MSVCRT__fflush_nolock(file);
   if(file->_flag & MSVCRT__IOMYBUF)
-      MSVCRT_free(file->_base);
+      free(file->_base);
 
   r=MSVCRT__close(file->_file);
   file->_flag = 0;
@@ -4163,7 +4163,7 @@ MSVCRT_FILE * CDECL MSVCRT__fsopen(const char *path, const char *mode, int share
     }
     if (mode && !(modeW = msvcrt_wstrdupa(mode)))
     {
-        MSVCRT_free(pathW);
+        free(pathW);
         _invalid_parameter(NULL, NULL, NULL, 0, 0);
         *_errno() = EINVAL;
         return NULL;
@@ -4171,8 +4171,8 @@ MSVCRT_FILE * CDECL MSVCRT__fsopen(const char *path, const char *mode, int share
 
     ret = MSVCRT__wfsopen(pathW, modeW, share);
 
-    MSVCRT_free(pathW);
-    MSVCRT_free(modeW);
+    free(pathW);
+    free(modeW);
     return ret;
 }
 
@@ -4503,14 +4503,14 @@ MSVCRT_FILE* CDECL MSVCRT_freopen(const char *path, const char *mode, MSVCRT_FIL
     if (path && !(pathW = msvcrt_wstrdupa(path))) return NULL;
     if (mode && !(modeW = msvcrt_wstrdupa(mode)))
     {
-        MSVCRT_free(pathW);
+        free(pathW);
         return NULL;
     }
 
     ret = MSVCRT__wfreopen(pathW, modeW, file);
 
-    MSVCRT_free(pathW);
-    MSVCRT_free(modeW);
+    free(pathW);
+    free(modeW);
     return ret;
 }
 
@@ -4902,7 +4902,7 @@ int CDECL MSVCRT_setvbuf(MSVCRT_FILE* file, char *buf, int mode, size_t size)
 
     MSVCRT__fflush_nolock(file);
     if(file->_flag & MSVCRT__IOMYBUF)
-        MSVCRT_free(file->_base);
+        free(file->_base);
     file->_flag &= ~(MSVCRT__IONBF | MSVCRT__IOMYBUF | MSVCRT__USERBUF);
     file->_cnt = 0;
 
@@ -4915,7 +4915,7 @@ int CDECL MSVCRT_setvbuf(MSVCRT_FILE* file, char *buf, int mode, size_t size)
         file->_flag |= MSVCRT__USERBUF;
         file->_bufsiz = size;
     }else {
-        file->_base = file->_ptr = MSVCRT_malloc(size);
+        file->_base = file->_ptr = malloc(size);
         if(!file->_base) {
             file->_bufsiz = 0;
             MSVCRT__unlock_file(file);
@@ -5000,7 +5000,7 @@ char * CDECL MSVCRT_tmpnam(char *s)
     thread_data_t *data = msvcrt_get_thread_data();
 
     if(!data->tmpnam_buffer)
-      data->tmpnam_buffer = MSVCRT_malloc(MAX_PATH);
+      data->tmpnam_buffer = malloc(MAX_PATH);
 
     s = data->tmpnam_buffer;
   }
@@ -5074,7 +5074,7 @@ wchar_t * CDECL MSVCRT__wtmpnam(wchar_t *s)
         thread_data_t *data = msvcrt_get_thread_data();
 
         if(!data->wtmpnam_buffer)
-            data->wtmpnam_buffer = MSVCRT_malloc(sizeof(wchar_t[MAX_PATH]));
+            data->wtmpnam_buffer = malloc(sizeof(wchar_t[MAX_PATH]));
 
         s = data->wtmpnam_buffer;
     }
@@ -5106,7 +5106,7 @@ MSVCRT_FILE* CDECL MSVCRT_tmpfile(void)
 
   if(fd != -1 && !file)
       MSVCRT__close(fd);
-  MSVCRT_free(filename);
+  free(filename);
   UNLOCK_FILES();
   return file;
 }

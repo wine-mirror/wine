@@ -153,11 +153,11 @@ static intptr_t msvcrt_spawn(int flags, const wchar_t* exe, wchar_t* cmdline,
                       create_flags, env, NULL, &si, &pi))
   {
     msvcrt_set_errno(GetLastError());
-    MSVCRT_free(si.lpReserved2);
+    free(si.lpReserved2);
     return -1;
   }
 
-  MSVCRT_free(si.lpReserved2);
+  free(si.lpReserved2);
   switch(flags)
   {
   case MSVCRT__P_WAIT:
@@ -205,7 +205,7 @@ static wchar_t* msvcrt_argvtos(const wchar_t* const* arg, wchar_t delim)
     a++;
   }
 
-  ret = MSVCRT_malloc((size + 1) * sizeof(wchar_t));
+  ret = malloc((size + 1) * sizeof(wchar_t));
   if (!ret)
     return NULL;
 
@@ -249,7 +249,7 @@ static wchar_t *msvcrt_argvtos_aw(const char * const *arg, wchar_t delim)
     a++;
   }
 
-  ret = MSVCRT_malloc((len + 1) * sizeof(wchar_t));
+  ret = malloc((len + 1) * sizeof(wchar_t));
   if (!ret)
     return NULL;
 
@@ -283,9 +283,9 @@ static wchar_t *msvcrt_valisttos(const wchar_t *arg0, __ms_va_list alist, wchar_
         {
             size = max( 256, size * 2 );
             size = max( size, pos + len + 1 );
-            if (!(new = MSVCRT_realloc( ret, size * sizeof(wchar_t) )))
+            if (!(new = realloc( ret, size * sizeof(wchar_t) )))
             {
-                MSVCRT_free( ret );
+                free( ret );
                 return NULL;
             }
             ret = new;
@@ -318,9 +318,9 @@ static wchar_t *msvcrt_valisttos_aw(const char *arg0, __ms_va_list alist, wchar_
         {
             size = max( 256, size * 2 );
             size = max( size, pos + len + 1 );
-            if (!(new = MSVCRT_realloc( ret, size * sizeof(wchar_t) )))
+            if (!(new = realloc( ret, size * sizeof(wchar_t) )))
             {
-                MSVCRT_free( ret );
+                free( ret );
                 return NULL;
             }
             ret = new;
@@ -398,7 +398,7 @@ intptr_t WINAPIV _wexecl(const wchar_t* name, const wchar_t* arg0, ...)
 
   ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, NULL, 0);
 
-  MSVCRT_free(args);
+  free(args);
   return ret;
 }
 
@@ -422,8 +422,8 @@ intptr_t WINAPIV _execl(const char* name, const char* arg0, ...)
 
   ret = msvcrt_spawn(MSVCRT__P_OVERLAY, nameW, args, NULL, 0);
 
-  MSVCRT_free(nameW);
-  MSVCRT_free(args);
+  free(nameW);
+  free(args);
   return ret;
 }
 
@@ -451,8 +451,8 @@ intptr_t WINAPIV _wexecle(const wchar_t* name, const wchar_t* arg0, ...)
 
   ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, envs, 0);
 
-  MSVCRT_free(args);
-  MSVCRT_free(envs);
+  free(args);
+  free(envs);
   return ret;
 }
 
@@ -480,9 +480,9 @@ intptr_t WINAPIV _execle(const char* name, const char* arg0, ...)
 
   ret = msvcrt_spawn(MSVCRT__P_OVERLAY, nameW, args, envs, 0);
 
-  MSVCRT_free(nameW);
-  MSVCRT_free(args);
-  MSVCRT_free(envs);
+  free(nameW);
+  free(args);
+  free(envs);
   return ret;
 }
 
@@ -503,7 +503,7 @@ intptr_t WINAPIV _wexeclp(const wchar_t* name, const wchar_t* arg0, ...)
 
   ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, NULL, 1);
 
-  MSVCRT_free(args);
+  free(args);
   return ret;
 }
 
@@ -527,8 +527,8 @@ intptr_t WINAPIV _execlp(const char* name, const char* arg0, ...)
 
   ret = msvcrt_spawn(MSVCRT__P_OVERLAY, nameW, args, NULL, 1);
 
-  MSVCRT_free(nameW);
-  MSVCRT_free(args);
+  free(nameW);
+  free(args);
   return ret;
 }
 
@@ -556,8 +556,8 @@ intptr_t WINAPIV _wexeclpe(const wchar_t* name, const wchar_t* arg0, ...)
 
   ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, envs, 1);
 
-  MSVCRT_free(args);
-  MSVCRT_free(envs);
+  free(args);
+  free(envs);
   return ret;
 }
 
@@ -585,9 +585,9 @@ intptr_t WINAPIV _execlpe(const char* name, const char* arg0, ...)
 
   ret = msvcrt_spawn(MSVCRT__P_OVERLAY, nameW, args, envs, 1);
 
-  MSVCRT_free(nameW);
-  MSVCRT_free(args);
-  MSVCRT_free(envs);
+  free(nameW);
+  free(args);
+  free(envs);
   return ret;
 }
 
@@ -692,7 +692,7 @@ intptr_t WINAPIV MSVCRT__wspawnl(int flags, const wchar_t* name, const wchar_t* 
 
   ret = msvcrt_spawn(flags, name, args, NULL, 0);
 
-  MSVCRT_free(args);
+  free(args);
   return ret;
 }
 
@@ -716,8 +716,8 @@ intptr_t WINAPIV MSVCRT__spawnl(int flags, const char* name, const char* arg0, .
 
   ret = msvcrt_spawn(flags, nameW, args, NULL, 0);
 
-  MSVCRT_free(nameW);
-  MSVCRT_free(args);
+  free(nameW);
+  free(args);
   return ret;
 }
 
@@ -745,8 +745,8 @@ intptr_t WINAPIV MSVCRT__wspawnle(int flags, const wchar_t* name, const wchar_t*
 
   ret = msvcrt_spawn(flags, name, args, envs, 0);
 
-  MSVCRT_free(args);
-  MSVCRT_free(envs);
+  free(args);
+  free(envs);
   return ret;
 }
 
@@ -774,9 +774,9 @@ intptr_t WINAPIV MSVCRT__spawnle(int flags, const char* name, const char* arg0, 
 
   ret = msvcrt_spawn(flags, nameW, args, envs, 0);
 
-  MSVCRT_free(nameW);
-  MSVCRT_free(args);
-  MSVCRT_free(envs);
+  free(nameW);
+  free(args);
+  free(envs);
   return ret;
 }
 
@@ -797,7 +797,7 @@ intptr_t WINAPIV MSVCRT__wspawnlp(int flags, const wchar_t* name, const wchar_t*
 
   ret = msvcrt_spawn(flags, name, args, NULL, 1);
 
-  MSVCRT_free(args);
+  free(args);
   return ret;
 }
 
@@ -821,8 +821,8 @@ intptr_t WINAPIV MSVCRT__spawnlp(int flags, const char* name, const char* arg0, 
 
   ret = msvcrt_spawn(flags, nameW, args, NULL, 1);
 
-  MSVCRT_free(nameW);
-  MSVCRT_free(args);
+  free(nameW);
+  free(args);
   return ret;
 }
 
@@ -850,8 +850,8 @@ intptr_t WINAPIV MSVCRT__wspawnlpe(int flags, const wchar_t* name, const wchar_t
 
   ret = msvcrt_spawn(flags, name, args, envs, 1);
 
-  MSVCRT_free(args);
-  MSVCRT_free(envs);
+  free(args);
+  free(envs);
   return ret;
 }
 
@@ -879,9 +879,9 @@ intptr_t WINAPIV MSVCRT__spawnlpe(int flags, const char* name, const char* arg0,
 
   ret = msvcrt_spawn(flags, nameW, args, envs, 1);
 
-  MSVCRT_free(nameW);
-  MSVCRT_free(args);
-  MSVCRT_free(envs);
+  free(nameW);
+  free(args);
+  free(envs);
   return ret;
 }
 
@@ -904,9 +904,9 @@ intptr_t CDECL MSVCRT__spawnve(int flags, const char* name, const char* const* a
 
   ret = msvcrt_spawn(flags, nameW, args, envs, 0);
 
-  MSVCRT_free(nameW);
-  MSVCRT_free(args);
-  MSVCRT_free(envs);
+  free(nameW);
+  free(args);
+  free(envs);
   return ret;
 }
 
@@ -926,8 +926,8 @@ intptr_t CDECL MSVCRT__wspawnve(int flags, const wchar_t* name, const wchar_t* c
 
   ret = msvcrt_spawn(flags, name, args, envs, 0);
 
-  MSVCRT_free(args);
-  MSVCRT_free(envs);
+  free(args);
+  free(envs);
   return ret;
 }
 
@@ -971,9 +971,9 @@ intptr_t CDECL MSVCRT__spawnvpe(int flags, const char* name, const char* const* 
 
   ret = msvcrt_spawn(flags, nameW, args, envs, 1);
 
-  MSVCRT_free(nameW);
-  MSVCRT_free(args);
-  MSVCRT_free(envs);
+  free(nameW);
+  free(args);
+  free(envs);
   return ret;
 }
 
@@ -993,8 +993,8 @@ intptr_t CDECL MSVCRT__wspawnvpe(int flags, const wchar_t* name, const wchar_t* 
 
   ret = msvcrt_spawn(flags, name, args, envs, 1);
 
-  MSVCRT_free(args);
-  MSVCRT_free(envs);
+  free(args);
+  free(envs);
   return ret;
 }
 
@@ -1027,7 +1027,7 @@ static DWORD popen_handles_size;
 
 void msvcrt_free_popen_data(void)
 {
-    MSVCRT_free(popen_handles);
+    free(popen_handles);
 }
 
 /*********************************************************************
@@ -1087,7 +1087,7 @@ MSVCRT_FILE* CDECL MSVCRT__wpopen(const wchar_t* command, const wchar_t* mode)
   if (i==popen_handles_size)
   {
     i = (popen_handles_size ? popen_handles_size*2 : 8);
-    container = MSVCRT_realloc(popen_handles, i*sizeof(*container));
+    container = realloc(popen_handles, i*sizeof(*container));
     if (!container) goto error;
 
     popen_handles = container;
