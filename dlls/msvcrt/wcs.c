@@ -2100,7 +2100,7 @@ INT CDECL MSVCRT_iswctype( wchar_t wc, wctype_t type )
  */
 int CDECL MSVCRT__iswalnum_l( wchar_t wc, _locale_t locale )
 {
-    return MSVCRT__iswctype_l( wc, MSVCRT__ALPHA | MSVCRT__DIGIT, locale );
+    return MSVCRT__iswctype_l( wc, _ALPHA | _DIGIT, locale );
 }
 
 /*********************************************************************
@@ -2116,7 +2116,7 @@ INT CDECL MSVCRT_iswalnum( wchar_t wc )
  */
 INT CDECL MSVCRT__iswalpha_l( wchar_t wc, _locale_t locale )
 {
-    return MSVCRT__iswctype_l( wc, MSVCRT__ALPHA, locale );
+    return MSVCRT__iswctype_l( wc, _ALPHA, locale );
 }
 
 /*********************************************************************
@@ -2132,7 +2132,7 @@ INT CDECL MSVCRT_iswalpha( wchar_t wc )
  */
 int CDECL MSVCRT__iswcntrl_l( wchar_t wc, _locale_t locale )
 {
-    return MSVCRT__iswctype_l( wc, MSVCRT__CONTROL, locale );
+    return MSVCRT__iswctype_l( wc, _CONTROL, locale );
 }
 
 /*********************************************************************
@@ -2148,7 +2148,7 @@ INT CDECL MSVCRT_iswcntrl( wchar_t wc )
  */
 INT CDECL MSVCRT__iswdigit_l( wchar_t wc, _locale_t locale )
 {
-    return MSVCRT__iswctype_l( wc, MSVCRT__DIGIT, locale );
+    return MSVCRT__iswctype_l( wc, _DIGIT, locale );
 }
 
 /*********************************************************************
@@ -2164,7 +2164,7 @@ INT CDECL MSVCRT_iswdigit( wchar_t wc )
  */
 int CDECL MSVCRT__iswgraph_l( wchar_t wc, _locale_t locale )
 {
-    return MSVCRT__iswctype_l( wc, MSVCRT__ALPHA | MSVCRT__DIGIT | MSVCRT__PUNCT, locale );
+    return MSVCRT__iswctype_l( wc, _ALPHA | _DIGIT | _PUNCT, locale );
 }
 
 /*********************************************************************
@@ -2180,7 +2180,7 @@ INT CDECL MSVCRT_iswgraph( wchar_t wc )
  */
 int CDECL MSVCRT__iswlower_l( wchar_t wc, _locale_t locale )
 {
-    return MSVCRT__iswctype_l( wc, MSVCRT__LOWER, locale );
+    return MSVCRT__iswctype_l( wc, _LOWER, locale );
 }
 
 /*********************************************************************
@@ -2196,8 +2196,8 @@ INT CDECL MSVCRT_iswlower( wchar_t wc )
  */
 int CDECL MSVCRT__iswprint_l( wchar_t wc, _locale_t locale )
 {
-    return MSVCRT__iswctype_l( wc, MSVCRT__ALPHA | MSVCRT__BLANK |
-            MSVCRT__DIGIT | MSVCRT__PUNCT, locale );
+    return MSVCRT__iswctype_l( wc, _ALPHA | _BLANK |
+            _DIGIT | _PUNCT, locale );
 }
 
 /*********************************************************************
@@ -2213,7 +2213,7 @@ INT CDECL MSVCRT_iswprint( wchar_t wc )
  */
 INT CDECL MSVCRT__iswpunct_l( wchar_t wc, _locale_t locale )
 {
-    return MSVCRT__iswctype_l( wc, MSVCRT__PUNCT, locale );
+    return MSVCRT__iswctype_l( wc, _PUNCT, locale );
 }
 
 /*********************************************************************
@@ -2229,7 +2229,7 @@ INT CDECL MSVCRT_iswpunct( wchar_t wc )
  */
 INT CDECL MSVCRT__iswspace_l( wchar_t wc, _locale_t locale )
 {
-    return MSVCRT__iswctype_l( wc, MSVCRT__SPACE, locale );
+    return MSVCRT__iswctype_l( wc, _SPACE, locale );
 }
 
 /*********************************************************************
@@ -2245,7 +2245,7 @@ INT CDECL MSVCRT_iswspace( wchar_t wc )
  */
 int CDECL MSVCRT__iswupper_l( wchar_t wc, _locale_t locale )
 {
-    return MSVCRT__iswctype_l( wc, MSVCRT__UPPER, locale );
+    return MSVCRT__iswctype_l( wc, _UPPER, locale );
 }
 
 /*********************************************************************
@@ -2261,7 +2261,7 @@ INT CDECL MSVCRT_iswupper( wchar_t wc )
  */
 int CDECL MSVCRT__iswxdigit_l( wchar_t wc, _locale_t locale )
 {
-    return MSVCRT__iswctype_l( wc, MSVCRT__HEX, locale );
+    return MSVCRT__iswctype_l( wc, _HEX, locale );
 }
 
 /*********************************************************************
@@ -2277,7 +2277,7 @@ INT CDECL MSVCRT_iswxdigit( wchar_t wc )
  */
 INT CDECL MSVCRT__iswblank_l( wchar_t wc, _locale_t locale )
 {
-    return wc == '\t' || MSVCRT__iswctype_l( wc, MSVCRT__BLANK, locale );
+    return wc == '\t' || MSVCRT__iswctype_l( wc, _BLANK, locale );
 }
 
 /*********************************************************************
@@ -2285,7 +2285,7 @@ INT CDECL MSVCRT__iswblank_l( wchar_t wc, _locale_t locale )
  */
 INT CDECL MSVCRT_iswblank( wchar_t wc )
 {
-    return wc == '\t' || MSVCRT__iswctype_l( wc, MSVCRT__BLANK, NULL );
+    return wc == '\t' || MSVCRT__iswctype_l( wc, _BLANK, NULL );
 }
 
 /*********************************************************************

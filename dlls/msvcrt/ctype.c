@@ -23,18 +23,18 @@
 #include "winnls.h"
 
 /* Some abbreviations to make the following table readable */
-#define _C_ MSVCRT__CONTROL
-#define _S_ MSVCRT__SPACE
-#define _P_ MSVCRT__PUNCT
-#define _D_ MSVCRT__DIGIT
-#define _H_ MSVCRT__HEX
-#define _U_ MSVCRT__UPPER
-#define _L_ MSVCRT__LOWER
+#define _C_ _CONTROL
+#define _S_ _SPACE
+#define _P_ _PUNCT
+#define _D_ _DIGIT
+#define _H_ _HEX
+#define _U_ _UPPER
+#define _L_ _LOWER
 
 WORD MSVCRT__ctype [257] = {
   0, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _S_|_C_, _S_|_C_,
   _S_|_C_, _S_|_C_, _S_|_C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_,
-  _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _S_|MSVCRT__BLANK,
+  _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _C_, _S_|_BLANK,
   _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _P_,
   _P_, _D_|_H_, _D_|_H_, _D_|_H_, _D_|_H_, _D_|_H_, _D_|_H_, _D_|_H_,
   _D_|_H_, _D_|_H_, _D_|_H_, _P_, _P_, _P_, _P_, _P_, _P_, _P_, _U_|_H_,
@@ -52,7 +52,7 @@ WORD MSVCRT__ctype [257] = {
 };
 
 #if _MSVCR_VER <= 110
-# define B110 MSVCRT__BLANK
+# define B110 _BLANK
 #else
 # define B110 0
 #endif
@@ -64,9 +64,9 @@ WORD MSVCRT__ctype [257] = {
 #endif
 
 #if _MSVCR_VER >= 140
-# define S140 MSVCRT__SPACE
-# define L140 MSVCRT__LOWER | 0x100
-# define C140 MSVCRT__CONTROL
+# define S140 _SPACE
+# define L140 _LOWER | 0x100
+# define C140 _CONTROL
 #else
 # define S140 0
 # define L140 0
@@ -164,7 +164,7 @@ int CDECL MSVCRT__isctype_l(int c, int type, _locale_t locale)
     WORD typeInfo;
     char convert[3], *pconv = convert;
 
-    if (locinfo->pctype[(UINT)c >> 8] & MSVCRT__LEADBYTE)
+    if (locinfo->pctype[(UINT)c >> 8] & _LEADBYTE)
       *pconv++ = (UINT)c >> 8;
     *pconv++ = c & 0xff;
     *pconv = 0;
@@ -189,7 +189,7 @@ int CDECL MSVCRT__isctype(int c, int type)
  */
 int CDECL MSVCRT__isalnum_l(int c, _locale_t locale)
 {
-  return MSVCRT__isctype_l( c, MSVCRT__ALPHA | MSVCRT__DIGIT, locale );
+  return MSVCRT__isctype_l( c, _ALPHA | _DIGIT, locale );
 }
 
 /*********************************************************************
@@ -197,7 +197,7 @@ int CDECL MSVCRT__isalnum_l(int c, _locale_t locale)
  */
 int CDECL MSVCRT_isalnum(int c)
 {
-  return MSVCRT__isctype( c, MSVCRT__ALPHA | MSVCRT__DIGIT );
+  return MSVCRT__isctype( c, _ALPHA | _DIGIT );
 }
 
 /*********************************************************************
@@ -205,7 +205,7 @@ int CDECL MSVCRT_isalnum(int c)
  */
 int CDECL MSVCRT__isalpha_l(int c, _locale_t locale)
 {
-  return MSVCRT__isctype_l( c, MSVCRT__ALPHA, locale );
+  return MSVCRT__isctype_l( c, _ALPHA, locale );
 }
 
 /*********************************************************************
@@ -213,7 +213,7 @@ int CDECL MSVCRT__isalpha_l(int c, _locale_t locale)
  */
 int CDECL MSVCRT_isalpha(int c)
 {
-  return MSVCRT__isctype( c, MSVCRT__ALPHA );
+  return MSVCRT__isctype( c, _ALPHA );
 }
 
 /*********************************************************************
@@ -221,7 +221,7 @@ int CDECL MSVCRT_isalpha(int c)
  */
 int CDECL MSVCRT__iscntrl_l(int c, _locale_t locale)
 {
-  return MSVCRT__isctype_l( c, MSVCRT__CONTROL, locale );
+  return MSVCRT__isctype_l( c, _CONTROL, locale );
 }
 
 /*********************************************************************
@@ -229,7 +229,7 @@ int CDECL MSVCRT__iscntrl_l(int c, _locale_t locale)
  */
 int CDECL MSVCRT_iscntrl(int c)
 {
-  return MSVCRT__isctype( c, MSVCRT__CONTROL );
+  return MSVCRT__isctype( c, _CONTROL );
 }
 
 /*********************************************************************
@@ -237,7 +237,7 @@ int CDECL MSVCRT_iscntrl(int c)
  */
 int CDECL MSVCRT__isdigit_l(int c, _locale_t locale)
 {
-  return MSVCRT__isctype_l( c, MSVCRT__DIGIT, locale );
+  return MSVCRT__isctype_l( c, _DIGIT, locale );
 }
 
 /*********************************************************************
@@ -245,7 +245,7 @@ int CDECL MSVCRT__isdigit_l(int c, _locale_t locale)
  */
 int CDECL MSVCRT_isdigit(int c)
 {
-  return MSVCRT__isctype( c, MSVCRT__DIGIT );
+  return MSVCRT__isctype( c, _DIGIT );
 }
 
 /*********************************************************************
@@ -253,7 +253,7 @@ int CDECL MSVCRT_isdigit(int c)
  */
 int CDECL MSVCRT__isgraph_l(int c, _locale_t locale)
 {
-  return MSVCRT__isctype_l( c, MSVCRT__ALPHA | MSVCRT__DIGIT | MSVCRT__PUNCT, locale );
+  return MSVCRT__isctype_l( c, _ALPHA | _DIGIT | _PUNCT, locale );
 }
 
 /*********************************************************************
@@ -261,7 +261,7 @@ int CDECL MSVCRT__isgraph_l(int c, _locale_t locale)
  */
 int CDECL MSVCRT_isgraph(int c)
 {
-  return MSVCRT__isctype( c, MSVCRT__ALPHA | MSVCRT__DIGIT | MSVCRT__PUNCT );
+  return MSVCRT__isctype( c, _ALPHA | _DIGIT | _PUNCT );
 }
 
 /*********************************************************************
@@ -269,7 +269,7 @@ int CDECL MSVCRT_isgraph(int c)
  */
 int CDECL MSVCRT__isleadbyte_l(int c, _locale_t locale)
 {
-  return MSVCRT__isctype_l( c, MSVCRT__LEADBYTE, locale );
+  return MSVCRT__isctype_l( c, _LEADBYTE, locale );
 }
 
 /*********************************************************************
@@ -277,7 +277,7 @@ int CDECL MSVCRT__isleadbyte_l(int c, _locale_t locale)
  */
 int CDECL MSVCRT_isleadbyte(int c)
 {
-  return MSVCRT__isctype( c, MSVCRT__LEADBYTE );
+  return MSVCRT__isctype( c, _LEADBYTE );
 }
 
 /*********************************************************************
@@ -285,7 +285,7 @@ int CDECL MSVCRT_isleadbyte(int c)
  */
 int CDECL MSVCRT__islower_l(int c, _locale_t locale)
 {
-  return MSVCRT__isctype_l( c, MSVCRT__LOWER, locale );
+  return MSVCRT__isctype_l( c, _LOWER, locale );
 }
 
 /*********************************************************************
@@ -293,7 +293,7 @@ int CDECL MSVCRT__islower_l(int c, _locale_t locale)
  */
 int CDECL MSVCRT_islower(int c)
 {
-  return MSVCRT__isctype( c, MSVCRT__LOWER );
+  return MSVCRT__isctype( c, _LOWER );
 }
 
 /*********************************************************************
@@ -301,7 +301,7 @@ int CDECL MSVCRT_islower(int c)
  */
 int CDECL MSVCRT__isprint_l(int c, _locale_t locale)
 {
-  return MSVCRT__isctype_l( c, MSVCRT__ALPHA | MSVCRT__DIGIT | MSVCRT__BLANK | MSVCRT__PUNCT, locale );
+  return MSVCRT__isctype_l( c, _ALPHA | _DIGIT | _BLANK | _PUNCT, locale );
 }
 
 /*********************************************************************
@@ -309,7 +309,7 @@ int CDECL MSVCRT__isprint_l(int c, _locale_t locale)
  */
 int CDECL MSVCRT_isprint(int c)
 {
-  return MSVCRT__isctype( c, MSVCRT__ALPHA | MSVCRT__DIGIT | MSVCRT__BLANK | MSVCRT__PUNCT );
+  return MSVCRT__isctype( c, _ALPHA | _DIGIT | _BLANK | _PUNCT );
 }
 
 /*********************************************************************
@@ -317,7 +317,7 @@ int CDECL MSVCRT_isprint(int c)
  */
 int CDECL MSVCRT_ispunct(int c)
 {
-  return MSVCRT__isctype( c, MSVCRT__PUNCT );
+  return MSVCRT__isctype( c, _PUNCT );
 }
 
 /*********************************************************************
@@ -325,7 +325,7 @@ int CDECL MSVCRT_ispunct(int c)
  */
 int CDECL MSVCRT__ispunct_l(int c, _locale_t locale)
 {
-  return MSVCRT__isctype_l( c, MSVCRT__PUNCT, locale );
+  return MSVCRT__isctype_l( c, _PUNCT, locale );
 }
 
 /*********************************************************************
@@ -333,7 +333,7 @@ int CDECL MSVCRT__ispunct_l(int c, _locale_t locale)
  */
 int CDECL MSVCRT__isspace_l(int c, _locale_t locale)
 {
-  return MSVCRT__isctype_l( c, MSVCRT__SPACE, locale );
+  return MSVCRT__isctype_l( c, _SPACE, locale );
 }
 
 /*********************************************************************
@@ -341,7 +341,7 @@ int CDECL MSVCRT__isspace_l(int c, _locale_t locale)
  */
 int CDECL MSVCRT_isspace(int c)
 {
-  return MSVCRT__isctype( c, MSVCRT__SPACE );
+  return MSVCRT__isctype( c, _SPACE );
 }
 
 /*********************************************************************
@@ -349,7 +349,7 @@ int CDECL MSVCRT_isspace(int c)
  */
 int CDECL MSVCRT__isupper_l(int c, _locale_t locale)
 {
-  return MSVCRT__isctype_l( c, MSVCRT__UPPER, locale );
+  return MSVCRT__isctype_l( c, _UPPER, locale );
 }
 
 /*********************************************************************
@@ -357,7 +357,7 @@ int CDECL MSVCRT__isupper_l(int c, _locale_t locale)
  */
 int CDECL MSVCRT_isupper(int c)
 {
-  return MSVCRT__isctype( c, MSVCRT__UPPER );
+  return MSVCRT__isctype( c, _UPPER );
 }
 
 /*********************************************************************
@@ -365,7 +365,7 @@ int CDECL MSVCRT_isupper(int c)
  */
 int CDECL MSVCRT__isxdigit_l(int c, _locale_t locale)
 {
-  return MSVCRT__isctype_l( c, MSVCRT__HEX, locale );
+  return MSVCRT__isctype_l( c, _HEX, locale );
 }
 
 /*********************************************************************
@@ -373,7 +373,7 @@ int CDECL MSVCRT__isxdigit_l(int c, _locale_t locale)
  */
 int CDECL MSVCRT_isxdigit(int c)
 {
-  return MSVCRT__isctype( c, MSVCRT__HEX );
+  return MSVCRT__isctype( c, _HEX );
 }
 
 /*********************************************************************
@@ -381,7 +381,7 @@ int CDECL MSVCRT_isxdigit(int c)
  */
 int CDECL MSVCRT__isblank_l(int c, _locale_t locale)
 {
-  return c == '\t' || MSVCRT__isctype_l( c, MSVCRT__BLANK, locale );
+  return c == '\t' || MSVCRT__isctype_l( c, _BLANK, locale );
 }
 
 /*********************************************************************
@@ -389,7 +389,7 @@ int CDECL MSVCRT__isblank_l(int c, _locale_t locale)
  */
 int CDECL MSVCRT_isblank(int c)
 {
-  return c == '\t' || MSVCRT__isctype( c, MSVCRT__BLANK );
+  return c == '\t' || MSVCRT__isctype( c, _BLANK );
 }
 
 /*********************************************************************
@@ -449,7 +449,7 @@ int CDECL MSVCRT__toupper_l(int c, _locale_t locale)
     if((unsigned)c < 256)
         return locinfo->pcumap[c];
 
-    if(locinfo->pctype[(c>>8)&255] & MSVCRT__LEADBYTE)
+    if(locinfo->pctype[(c>>8)&255] & _LEADBYTE)
         *p++ = (c>>8) & 255;
     else {
         *_errno() = EILSEQ;
@@ -503,7 +503,7 @@ int CDECL MSVCRT__tolower_l(int c, _locale_t locale)
     if((unsigned)c < 256)
         return locinfo->pclmap[c];
 
-    if(locinfo->pctype[(c>>8)&255] & MSVCRT__LEADBYTE)
+    if(locinfo->pctype[(c>>8)&255] & _LEADBYTE)
         *p++ = (c>>8) & 255;
     else {
         *_errno() = EILSEQ;
@@ -551,17 +551,17 @@ unsigned short __cdecl wctype(const char *property)
         const char *name;
         unsigned short mask;
     } properties[] = {
-        { "alnum", MSVCRT__DIGIT|MSVCRT__ALPHA },
-        { "alpha", MSVCRT__ALPHA },
-        { "cntrl", MSVCRT__CONTROL },
-        { "digit", MSVCRT__DIGIT },
-        { "graph", MSVCRT__DIGIT|MSVCRT__PUNCT|MSVCRT__ALPHA },
-        { "lower", MSVCRT__LOWER },
-        { "print", MSVCRT__DIGIT|MSVCRT__PUNCT|MSVCRT__BLANK|MSVCRT__ALPHA },
-        { "punct", MSVCRT__PUNCT },
-        { "space", MSVCRT__SPACE },
-        { "upper", MSVCRT__UPPER },
-        { "xdigit", MSVCRT__HEX }
+        { "alnum", _DIGIT|_ALPHA },
+        { "alpha", _ALPHA },
+        { "cntrl", _CONTROL },
+        { "digit", _DIGIT },
+        { "graph", _DIGIT|_PUNCT|_ALPHA },
+        { "lower", _LOWER },
+        { "print", _DIGIT|_PUNCT|_BLANK|_ALPHA },
+        { "punct", _PUNCT },
+        { "space", _SPACE },
+        { "upper", _UPPER },
+        { "xdigit", _HEX }
     };
     unsigned int i;
 

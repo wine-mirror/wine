@@ -1430,10 +1430,10 @@ static pthreadlocinfo create_locinfo(int category,
 
         for(i=0; cp_info.LeadByte[i+1]!=0; i+=2)
             for(j=cp_info.LeadByte[i]; j<=cp_info.LeadByte[i+1]; j++)
-                locinfo->ctype1[j+1] |= MSVCRT__LEADBYTE;
+                locinfo->ctype1[j+1] |= _LEADBYTE;
 
         for(i=0; i<256; i++) {
-            if(locinfo->pctype[i] & MSVCRT__LEADBYTE)
+            if(locinfo->pctype[i] & _LEADBYTE)
                 buf[i] = ' ';
             else
                 buf[i] = i;
