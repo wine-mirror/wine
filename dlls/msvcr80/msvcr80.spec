@@ -203,8 +203,8 @@
 @ cdecl ___lc_handle_func()
 @ cdecl ___mb_cur_max_func() MSVCRT____mb_cur_max_func
 @ cdecl ___mb_cur_max_l_func(ptr)
-@ cdecl ___setlc_active_func() MSVCRT____setlc_active_func
-@ cdecl ___unguarded_readlc_active_add_func() MSVCRT____unguarded_readlc_active_add_func
+@ cdecl ___setlc_active_func()
+@ cdecl ___unguarded_readlc_active_add_func()
 @ extern __argc MSVCRT___argc
 @ extern __argv MSVCRT___argv
 @ extern __badioinfo MSVCRT___badioinfo
@@ -267,41 +267,41 @@
 @ cdecl -arch=i386 -norelay __libm_sse2_tan() MSVCRT___libm_sse2_tan
 @ cdecl -arch=i386 -norelay __libm_sse2_tanf() MSVCRT___libm_sse2_tanf
 @ extern __mb_cur_max MSVCRT___mb_cur_max
-@ cdecl __p___argc() MSVCRT___p___argc
-@ cdecl __p___argv() MSVCRT___p___argv
+@ cdecl __p___argc()
+@ cdecl __p___argv()
 @ cdecl __p___initenv()
 @ cdecl __p___mb_cur_max()
-@ cdecl __p___wargv() MSVCRT___p___wargv
+@ cdecl __p___wargv()
 @ cdecl __p___winitenv()
-@ cdecl __p__acmdln() MSVCRT___p__acmdln
+@ cdecl __p__acmdln()
 @ cdecl __p__amblksiz()
 @ cdecl __p__commode()
 @ cdecl __p__daylight() MSVCRT___p__daylight
 @ cdecl __p__dstbias() MSVCRT___p__dstbias
-@ cdecl __p__environ() MSVCRT___p__environ
-@ cdecl __p__fmode() MSVCRT___p__fmode
+@ cdecl __p__environ()
+@ cdecl __p__fmode()
 @ cdecl -arch=i386 __p__iob() __iob_func
 @ stub __p__mbcasemap()
 @ cdecl __p__mbctype()
 @ stub __p__osplatform
 @ cdecl __p__osver()
 @ cdecl __p__pctype()
-@ cdecl __p__pgmptr() MSVCRT___p__pgmptr
+@ cdecl __p__pgmptr()
 @ stub __p__pwctype()
 @ cdecl __p__timezone() MSVCRT___p__timezone
 @ cdecl __p__tzname()
-@ cdecl __p__wcmdln() MSVCRT___p__wcmdln
-@ cdecl __p__wenviron() MSVCRT___p__wenviron
+@ cdecl __p__wcmdln()
+@ cdecl __p__wenviron()
 @ cdecl __p__winmajor()
 @ cdecl __p__winminor()
 @ cdecl __p__winver()
-@ cdecl __p__wpgmptr() MSVCRT___p__wpgmptr
+@ cdecl __p__wpgmptr()
 @ cdecl __pctype_func()
 @ extern __pioinfo MSVCRT___pioinfo
 @ stub __pwctype_func
 @ cdecl __pxcptinfoptrs() MSVCRT___pxcptinfoptrs
 @ stub __report_gsfailure
-@ cdecl __set_app_type(long) MSVCRT___set_app_type
+@ cdecl __set_app_type(long)
 @ stub __set_flsgetvalue
 @ extern __setlc_active MSVCRT___setlc_active
 @ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr
@@ -543,12 +543,12 @@
 @ cdecl _get_doserrno(ptr)
 @ cdecl _get_dstbias(ptr) MSVCRT__get_dstbias
 @ cdecl _get_errno(ptr)
-@ cdecl _get_fmode(ptr) MSVCRT__get_fmode
+@ cdecl _get_fmode(ptr)
 @ cdecl _get_heap_handle()
 @ cdecl _get_invalid_parameter_handler()
 @ cdecl _get_osfhandle(long) MSVCRT__get_osfhandle
-@ cdecl _get_osplatform(ptr) MSVCRT__get_osplatform
-@ cdecl _get_osver(ptr) MSVCRT__get_osver
+@ cdecl _get_osplatform(ptr)
+@ cdecl _get_osver(ptr)
 @ cdecl _get_output_format() MSVCRT__get_output_format
 @ cdecl _get_pgmptr(ptr)
 @ cdecl _get_printf_count_output() MSVCRT__get_printf_count_output
@@ -558,8 +558,8 @@
 @ cdecl _get_timezone(ptr)
 @ cdecl _get_tzname(ptr str long long) MSVCRT__get_tzname
 @ cdecl _get_unexpected()
-@ cdecl _get_winmajor(ptr) MSVCRT__get_winmajor
-@ cdecl _get_winminor(ptr) MSVCRT__get_winminor
+@ cdecl _get_winmajor(ptr)
+@ cdecl _get_winminor(ptr)
 @ stub _get_winver
 @ cdecl _get_wpgmptr(ptr)
 @ cdecl _getc_nolock(ptr) MSVCRT__fgetc_nolock
@@ -956,7 +956,7 @@
 @ cdecl _set_doserrno(long)
 @ cdecl _set_errno(long)
 @ cdecl _set_error_mode(long)
-@ cdecl _set_fmode(long) MSVCRT__set_fmode
+@ cdecl _set_fmode(long)
 @ cdecl _set_invalid_parameter_handler(ptr)
 @ stub _set_malloc_crt_max_wait
 @ cdecl _set_output_format(long) MSVCRT__set_output_format

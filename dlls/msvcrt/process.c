@@ -1039,7 +1039,7 @@ FILE* CDECL MSVCRT__wpopen(const wchar_t* command, const wchar_t* mode)
 {
   FILE *ret;
   BOOL readPipe = TRUE;
-  int textmode, fds[2], fdToDup, fdToOpen, fdStdHandle = -1;
+  int textmode, fds[2], fdToDup, fdToOpen, fdStdHandle = -1, fmode;
   const wchar_t *p;
   wchar_t *comspec, *fullcmd;
   unsigned int len;
@@ -1051,7 +1051,8 @@ FILE* CDECL MSVCRT__wpopen(const wchar_t* command, const wchar_t* mode)
   if (!command || !mode)
     return NULL;
 
-  textmode = *MSVCRT___p__fmode() & (MSVCRT__O_BINARY | MSVCRT__O_TEXT);
+  _get_fmode(&fmode);
+  textmode = fmode & (MSVCRT__O_BINARY | MSVCRT__O_TEXT);
   for (p = mode; *p; p++)
   {
     switch (*p)

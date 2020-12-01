@@ -195,8 +195,8 @@
 @ cdecl ___lc_collate_cp_func()
 @ cdecl ___lc_handle_func()
 @ cdecl ___mb_cur_max_func() MSVCRT____mb_cur_max_func
-@ cdecl ___setlc_active_func() MSVCRT____setlc_active_func
-@ cdecl ___unguarded_readlc_active_add_func() MSVCRT____unguarded_readlc_active_add_func
+@ cdecl ___setlc_active_func()
+@ cdecl ___unguarded_readlc_active_add_func()
 @ extern __argc MSVCRT___argc
 @ extern __argv MSVCRT___argv
 @ extern __badioinfo MSVCRT___badioinfo
@@ -245,40 +245,40 @@
 @ cdecl -arch=i386 -norelay __libm_sse2_tan() MSVCRT___libm_sse2_tan
 @ cdecl -arch=i386 -norelay __libm_sse2_tanf() MSVCRT___libm_sse2_tanf
 @ extern __mb_cur_max MSVCRT___mb_cur_max
-@ cdecl -arch=i386 __p___argc() MSVCRT___p___argc
-@ cdecl -arch=i386 __p___argv() MSVCRT___p___argv
+@ cdecl -arch=i386 __p___argc()
+@ cdecl -arch=i386 __p___argv()
 @ cdecl -arch=i386 __p___initenv()
 @ cdecl -arch=i386 __p___mb_cur_max()
-@ cdecl -arch=i386 __p___wargv() MSVCRT___p___wargv
+@ cdecl -arch=i386 __p___wargv()
 @ cdecl -arch=i386 __p___winitenv()
-@ cdecl -arch=i386 __p__acmdln() MSVCRT___p__acmdln
+@ cdecl -arch=i386 __p__acmdln()
 @ cdecl -arch=i386 __p__amblksiz()
 @ cdecl -arch=i386 __p__commode()
 @ cdecl -arch=i386 __p__daylight() MSVCRT___p__daylight
 @ cdecl -arch=i386 __p__dstbias() MSVCRT___p__dstbias
-@ cdecl -arch=i386 __p__environ() MSVCRT___p__environ
+@ cdecl -arch=i386 __p__environ()
 @ stub -arch=i386 __p__fileinfo()
-@ cdecl -arch=i386 __p__fmode() MSVCRT___p__fmode
+@ cdecl -arch=i386 __p__fmode()
 @ cdecl -arch=i386 __p__iob() __iob_func
 @ stub -arch=i386 __p__mbcasemap()
 @ cdecl -arch=i386 __p__mbctype()
 @ cdecl -arch=i386 __p__osver()
 @ cdecl -arch=i386 __p__pctype()
-@ cdecl -arch=i386 __p__pgmptr() MSVCRT___p__pgmptr
+@ cdecl -arch=i386 __p__pgmptr()
 @ stub -arch=i386 __p__pwctype()
 @ cdecl -arch=i386 __p__timezone() MSVCRT___p__timezone
 @ cdecl -arch=i386 __p__tzname()
-@ cdecl -arch=i386 __p__wcmdln() MSVCRT___p__wcmdln
-@ cdecl -arch=i386 __p__wenviron() MSVCRT___p__wenviron
+@ cdecl -arch=i386 __p__wcmdln()
+@ cdecl -arch=i386 __p__wenviron()
 @ cdecl -arch=i386 __p__winmajor()
 @ cdecl -arch=i386 __p__winminor()
 @ cdecl -arch=i386 __p__winver()
-@ cdecl -arch=i386 __p__wpgmptr() MSVCRT___p__wpgmptr
+@ cdecl -arch=i386 __p__wpgmptr()
 @ cdecl __pctype_func()
 @ extern __pioinfo MSVCRT___pioinfo
 # stub __pwctype_func()
 @ cdecl __pxcptinfoptrs() MSVCRT___pxcptinfoptrs
-@ cdecl __set_app_type(long) MSVCRT___set_app_type
+@ cdecl __set_app_type(long)
 @ extern __setlc_active MSVCRT___setlc_active
 @ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr
 @ cdecl __strncnt(str long) MSVCRT___strncnt
@@ -505,17 +505,17 @@
 @ cdecl _get_environ(ptr) MSVCRT__get_environ
 @ cdecl _get_errno(ptr)
 # stub _get_fileinfo(ptr)
-@ cdecl _get_fmode(ptr) MSVCRT__get_fmode
+@ cdecl _get_fmode(ptr)
 @ cdecl _get_heap_handle()
 @ cdecl _get_osfhandle(long) MSVCRT__get_osfhandle
-@ cdecl _get_osplatform(ptr) MSVCRT__get_osplatform
-@ cdecl _get_osver(ptr) MSVCRT__get_osver
+@ cdecl _get_osplatform(ptr)
+@ cdecl _get_osver(ptr)
 @ cdecl _get_output_format() MSVCRT__get_output_format
 @ cdecl _get_pgmptr(ptr)
 @ cdecl _get_sbh_threshold()
 @ cdecl _get_wenviron(ptr) MSVCRT__get_wenviron
-@ cdecl _get_winmajor(ptr) MSVCRT__get_winmajor
-@ cdecl _get_winminor(ptr) MSVCRT__get_winminor
+@ cdecl _get_winmajor(ptr)
+@ cdecl _get_winminor(ptr)
 # stub _get_winver(ptr)
 @ cdecl _get_wpgmptr(ptr)
 @ cdecl _get_terminate()
@@ -897,7 +897,7 @@
 @ cdecl _set_errno(long)
 @ cdecl _set_error_mode(long)
 # stub _set_fileinfo(long)
-@ cdecl _set_fmode(long) MSVCRT__set_fmode
+@ cdecl _set_fmode(long)
 @ cdecl _set_output_format(long) MSVCRT__set_output_format
 @ cdecl _set_sbh_threshold(long)
 @ cdecl _seterrormode(long)

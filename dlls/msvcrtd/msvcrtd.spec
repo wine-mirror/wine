@@ -150,13 +150,13 @@
 @ extern __lc_handle MSVCRT___lc_handle
 @ cdecl __lconv_init()
 @ extern __mb_cur_max MSVCRT___mb_cur_max
-@ cdecl __p___argc() MSVCRT___p___argc
-@ cdecl __p___argv() MSVCRT___p___argv
+@ cdecl __p___argc()
+@ cdecl __p___argv()
 @ cdecl __p___initenv()
 @ cdecl __p___mb_cur_max()
-@ cdecl __p___wargv() MSVCRT___p___wargv
+@ cdecl __p___wargv()
 @ cdecl __p___winitenv()
-@ cdecl __p__acmdln() MSVCRT___p__acmdln
+@ cdecl __p__acmdln()
 @ cdecl __p__amblksiz()
 @ cdecl __p__commode()
 @ cdecl __p__crtAssertBusy()
@@ -164,28 +164,28 @@
 @ cdecl __p__crtDbgFlag()
 @ cdecl __p__daylight() MSVCRT___p__daylight
 @ cdecl __p__dstbias() MSVCRT___p__dstbias
-@ cdecl __p__environ() MSVCRT___p__environ
+@ cdecl __p__environ()
 @ stub __p__fileinfo()
-@ cdecl __p__fmode() MSVCRT___p__fmode
+@ cdecl __p__fmode()
 @ cdecl __p__iob() __iob_func
 @ stub __p__mbcasemap()
 @ cdecl __p__mbctype()
 @ cdecl __p__osver()
 @ cdecl __p__pctype()
-@ cdecl __p__pgmptr() MSVCRT___p__pgmptr
+@ cdecl __p__pgmptr()
 @ stub __p__pwctype()
 @ cdecl __p__timezone() MSVCRT___p__timezone
 @ cdecl __p__tzname()
-@ cdecl __p__wcmdln() MSVCRT___p__wcmdln
-@ cdecl __p__wenviron() MSVCRT___p__wenviron
+@ cdecl __p__wcmdln()
+@ cdecl __p__wenviron()
 @ cdecl __p__winmajor()
 @ cdecl __p__winminor()
 @ cdecl __p__winver()
-@ cdecl __p__wpgmptr() MSVCRT___p__wpgmptr
+@ cdecl __p__wpgmptr()
 @ cdecl __pctype_func()
 @ extern __pioinfo MSVCRT___pioinfo
 @ cdecl __pxcptinfoptrs() MSVCRT___pxcptinfoptrs
-@ cdecl __set_app_type(long) MSVCRT___set_app_type
+@ cdecl __set_app_type(long)
 @ extern __setlc_active MSVCRT___setlc_active
 @ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr
 @ cdecl __threadhandle() kernel32.GetCurrentThread

@@ -226,7 +226,7 @@ typedef int (CDECL *_INITTERM_E_FN)(void);
 /***********************************************************************
  *		__p___argc (MSVCRT.@)
  */
-int* CDECL MSVCRT___p___argc(void) { return &MSVCRT___argc; }
+int* CDECL __p___argc(void) { return &MSVCRT___argc; }
 
 /***********************************************************************
  *		__p__commode (MSVCRT.@)
@@ -237,12 +237,12 @@ unsigned int* CDECL __p__commode(void) { return &MSVCRT__commode; }
 /***********************************************************************
  *              __p__pgmptr (MSVCRT.@)
  */
-char** CDECL MSVCRT___p__pgmptr(void) { return &MSVCRT__pgmptr; }
+char** CDECL __p__pgmptr(void) { return &MSVCRT__pgmptr; }
 
 /***********************************************************************
  *              __p__wpgmptr (MSVCRT.@)
  */
-WCHAR** CDECL MSVCRT___p__wpgmptr(void) { return &MSVCRT__wpgmptr; }
+WCHAR** CDECL __p__wpgmptr(void) { return &MSVCRT__wpgmptr; }
 
 /***********************************************************************
  *              _get_pgmptr (MSVCRT.@)
@@ -268,12 +268,12 @@ int CDECL _get_wpgmptr(WCHAR** p)
 /***********************************************************************
  *		__p__fmode (MSVCRT.@)
  */
-int* CDECL MSVCRT___p__fmode(void) { return &MSVCRT__fmode; }
+int* CDECL __p__fmode(void) { return &MSVCRT__fmode; }
 
 /***********************************************************************
  *              _set_fmode (MSVCRT.@)
  */
-int CDECL MSVCRT__set_fmode(int mode)
+int CDECL _set_fmode(int mode)
 {
     /* TODO: support _O_WTEXT */
     if(!MSVCRT_CHECK_PMT(mode==MSVCRT__O_TEXT || mode==MSVCRT__O_BINARY))
@@ -286,7 +286,7 @@ int CDECL MSVCRT__set_fmode(int mode)
 /***********************************************************************
  *              _get_fmode (MSVCRT.@)
  */
-int CDECL MSVCRT__get_fmode(int *mode)
+int CDECL _get_fmode(int *mode)
 {
     if(!MSVCRT_CHECK_PMT(mode))
         return EINVAL;
@@ -318,27 +318,27 @@ unsigned int* CDECL __p__winver(void) { return &MSVCRT__winver; }
 /*********************************************************************
  *		__p__acmdln (MSVCRT.@)
  */
-char** CDECL MSVCRT___p__acmdln(void) { return &MSVCRT__acmdln; }
+char** CDECL __p__acmdln(void) { return &MSVCRT__acmdln; }
 
 /*********************************************************************
  *		__p__wcmdln (MSVCRT.@)
  */
-wchar_t** CDECL MSVCRT___p__wcmdln(void) { return &MSVCRT__wcmdln; }
+wchar_t** CDECL __p__wcmdln(void) { return &MSVCRT__wcmdln; }
 
 /*********************************************************************
  *		__p___argv (MSVCRT.@)
  */
-char*** CDECL MSVCRT___p___argv(void) { return &MSVCRT___argv; }
+char*** CDECL __p___argv(void) { return &MSVCRT___argv; }
 
 /*********************************************************************
  *		__p___wargv (MSVCRT.@)
  */
-wchar_t*** CDECL MSVCRT___p___wargv(void) { return &MSVCRT___wargv; }
+wchar_t*** CDECL __p___wargv(void) { return &MSVCRT___wargv; }
 
 /*********************************************************************
  *		__p__environ (MSVCRT.@)
  */
-char*** CDECL MSVCRT___p__environ(void)
+char*** CDECL __p__environ(void)
 {
   return &MSVCRT__environ;
 }
@@ -346,7 +346,7 @@ char*** CDECL MSVCRT___p__environ(void)
 /*********************************************************************
  *		__p__wenviron (MSVCRT.@)
  */
-wchar_t*** CDECL MSVCRT___p__wenviron(void)
+wchar_t*** CDECL __p__wenviron(void)
 {
   return &MSVCRT__wenviron;
 }
@@ -364,7 +364,7 @@ wchar_t*** CDECL __p___winitenv(void) { return &MSVCRT___winitenv; }
 /*********************************************************************
  *		_get_osplatform (MSVCRT.@)
  */
-int CDECL MSVCRT__get_osplatform(int *pValue)
+int CDECL _get_osplatform(int *pValue)
 {
     if (!MSVCRT_CHECK_PMT(pValue != NULL)) return EINVAL;
     *pValue = MSVCRT__osplatform;
@@ -385,7 +385,7 @@ wchar_t *msvcrt_wstrdupa(const char *str)
 /*********************************************************************
  *		___unguarded_readlc_active_add_func (MSVCRT.@)
  */
-unsigned int * CDECL MSVCRT____unguarded_readlc_active_add_func(void)
+unsigned int * CDECL ___unguarded_readlc_active_add_func(void)
 {
   return &MSVCRT___unguarded_readlc_active;
 }
@@ -393,7 +393,7 @@ unsigned int * CDECL MSVCRT____unguarded_readlc_active_add_func(void)
 /*********************************************************************
  *		___setlc_active_func (MSVCRT.@)
  */
-unsigned int CDECL MSVCRT____setlc_active_func(void)
+unsigned int CDECL ___setlc_active_func(void)
 {
   return MSVCRT___setlc_active;
 }
@@ -666,7 +666,7 @@ int CDECL _initterm_e(_INITTERM_E_FN *table, _INITTERM_E_FN *end)
 /*********************************************************************
  *		__set_app_type (MSVCRT.@)
  */
-void CDECL MSVCRT___set_app_type(int app_type)
+void CDECL __set_app_type(int app_type)
 {
   TRACE("(%d) %s application\n", app_type, app_type == 2 ? "Gui" : "Console");
   MSVCRT_app_type = app_type;
@@ -785,7 +785,7 @@ wchar_t* CDECL _get_wide_winmain_command_line(void)
 /*********************************************************************
  *    _get_winmajor (MSVCRT.@)
  */
-int CDECL MSVCRT__get_winmajor(int* value)
+int CDECL _get_winmajor(int* value)
 {
     if (!MSVCRT_CHECK_PMT(value != NULL)) return EINVAL;
     *value = MSVCRT__winmajor;
@@ -795,7 +795,7 @@ int CDECL MSVCRT__get_winmajor(int* value)
 /*********************************************************************
  *    _get_winminor (MSVCRT.@)
  */
-int CDECL MSVCRT__get_winminor(int* value)
+int CDECL _get_winminor(int* value)
 {
     if (!MSVCRT_CHECK_PMT(value != NULL)) return EINVAL;
     *value = MSVCRT__winminor;
@@ -805,7 +805,7 @@ int CDECL MSVCRT__get_winminor(int* value)
 /*********************************************************************
  *    _get_osver (MSVCRT.@)
  */
-int CDECL MSVCRT__get_osver(int* value)
+int CDECL _get_osver(int* value)
 {
     if (!MSVCRT_CHECK_PMT(value != NULL)) return EINVAL;
     *value = MSVCRT__osver;

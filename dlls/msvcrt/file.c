@@ -2070,7 +2070,7 @@ wchar_t * CDECL MSVCRT__wmktemp(wchar_t *pattern)
 
 static unsigned split_oflags(unsigned oflags)
 {
-    int         wxflags = 0;
+    int wxflags = 0;
     unsigned unsupp; /* until we support everything */
 
     if (oflags & MSVCRT__O_APPEND)              wxflags |= WX_APPEND;
@@ -2079,8 +2079,12 @@ static unsigned split_oflags(unsigned oflags)
     else if (oflags & MSVCRT__O_WTEXT)          wxflags |= WX_TEXT;
     else if (oflags & MSVCRT__O_U16TEXT)        wxflags |= WX_TEXT;
     else if (oflags & MSVCRT__O_U8TEXT)         wxflags |= WX_TEXT;
-    else if (*MSVCRT___p__fmode() & MSVCRT__O_BINARY)  {/* Nothing to do */}
-    else                                        wxflags |= WX_TEXT; /* default to TEXT*/
+    else
+    {
+        int fmode;
+        _get_fmode(&fmode);
+        if (!(fmode & MSVCRT__O_BINARY))        wxflags |= WX_TEXT; /* default to TEXT*/
+    }
     if (oflags & MSVCRT__O_NOINHERIT)           wxflags |= WX_DONTINHERIT;
 
     if ((unsupp = oflags & ~(

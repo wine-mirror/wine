@@ -136,6 +136,9 @@ _ACRTIMP errno_t       __cdecl _get_errno(int*);
 _ACRTIMP errno_t       __cdecl _set_doserrno(int);
 _ACRTIMP errno_t       __cdecl _set_errno(int);
 
+_ACRTIMP errno_t       __cdecl _set_fmode(int);
+_ACRTIMP errno_t       __cdecl _get_fmode(int*);
+
 #ifndef _CRT_ONEXIT_T_DEFINED
 #define _CRT_ONEXIT_T_DEFINED
 typedef int (__cdecl *_onexit_t)(void);

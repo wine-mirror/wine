@@ -121,19 +121,19 @@
 @ cdecl -arch=i386 -norelay __libm_sse2_sinf() MSVCRT___libm_sse2_sinf
 @ cdecl -arch=i386 -norelay __libm_sse2_tan() MSVCRT___libm_sse2_tan
 @ cdecl -arch=i386 -norelay __libm_sse2_tanf() MSVCRT___libm_sse2_tanf
-@ cdecl __p___argc() MSVCRT___p___argc
-@ cdecl __p___argv() MSVCRT___p___argv
-@ cdecl __p___wargv() MSVCRT___p___wargv
-@ cdecl __p__acmdln() MSVCRT___p__acmdln
+@ cdecl __p___argc()
+@ cdecl __p___argv()
+@ cdecl __p___wargv()
+@ cdecl __p__acmdln()
 @ cdecl __p__commode()
-@ cdecl __p__environ() MSVCRT___p__environ
-@ cdecl __p__fmode() MSVCRT___p__fmode
+@ cdecl __p__environ()
+@ cdecl __p__fmode()
 @ stub __p__mbcasemap()
 @ cdecl __p__mbctype()
-@ cdecl __p__pgmptr() MSVCRT___p__pgmptr
-@ cdecl __p__wcmdln() MSVCRT___p__wcmdln
-@ cdecl __p__wenviron() MSVCRT___p__wenviron
-@ cdecl __p__wpgmptr() MSVCRT___p__wpgmptr
+@ cdecl __p__pgmptr()
+@ cdecl __p__wcmdln()
+@ cdecl __p__wenviron()
+@ cdecl __p__wpgmptr()
 @ cdecl __pctype_func()
 @ cdecl __processing_throw()
 @ stub __pwctype_func
@@ -363,7 +363,7 @@
 @ cdecl _get_doserrno(ptr)
 @ cdecl _get_dstbias(ptr) MSVCRT__get_dstbias
 @ cdecl _get_errno(ptr)
-@ cdecl _get_fmode(ptr) MSVCRT__get_fmode
+@ cdecl _get_fmode(ptr)
 @ cdecl _get_heap_handle()
 @ cdecl _get_initial_narrow_environment()
 @ cdecl _get_initial_wide_environment()
@@ -791,19 +791,19 @@
 @ cdecl -arch=i386 -norelay _o___libm_sse2_sinf() MSVCRT___libm_sse2_sinf
 @ cdecl -arch=i386 -norelay _o___libm_sse2_tan() MSVCRT___libm_sse2_tan
 @ cdecl -arch=i386 -norelay _o___libm_sse2_tanf() MSVCRT___libm_sse2_tanf
-@ cdecl _o___p___argc() MSVCRT___p___argc
-@ cdecl _o___p___argv() MSVCRT___p___argv
-@ cdecl _o___p___wargv() MSVCRT___p___wargv
-@ cdecl _o___p__acmdln() MSVCRT___p__acmdln
+@ cdecl _o___p___argc() __p___argc
+@ cdecl _o___p___argv() __p___argv
+@ cdecl _o___p___wargv() __p___wargv
+@ cdecl _o___p__acmdln() __p__acmdln
 @ cdecl _o___p__commode() __p__commode
-@ cdecl _o___p__environ() MSVCRT___p__environ
-@ cdecl _o___p__fmode() MSVCRT___p__fmode
+@ cdecl _o___p__environ() __p__environ
+@ cdecl _o___p__fmode() __p__fmode
 @ stub _o___p__mbcasemap
 @ cdecl _o___p__mbctype() __p__mbctype
-@ cdecl _o___p__pgmptr() MSVCRT___p__pgmptr
-@ cdecl _o___p__wcmdln() MSVCRT___p__wcmdln
-@ cdecl _o___p__wenviron() MSVCRT___p__wenviron
-@ cdecl _o___p__wpgmptr() MSVCRT___p__wpgmptr
+@ cdecl _o___p__pgmptr() __p__pgmptr
+@ cdecl _o___p__wcmdln() __p__wcmdln
+@ cdecl _o___p__wenviron() __p__wenviron
+@ cdecl _o___p__wpgmptr() __p__wpgmptr
 @ cdecl _o___pctype_func() __pctype_func
 @ stub _o___pwctype_func
 @ cdecl _o___std_exception_copy(ptr ptr) MSVCRT___std_exception_copy
@@ -980,7 +980,7 @@
 @ cdecl _o__get_doserrno(ptr) _get_doserrno
 @ cdecl _o__get_dstbias(ptr) MSVCRT__get_dstbias
 @ cdecl _o__get_errno(ptr) _get_errno
-@ cdecl _o__get_fmode(ptr) MSVCRT__get_fmode
+@ cdecl _o__get_fmode(ptr) _get_fmode
 @ cdecl _o__get_heap_handle() _get_heap_handle
 @ cdecl _o__get_initial_narrow_environment() _get_initial_narrow_environment
 @ cdecl _o__get_initial_wide_environment() _get_initial_wide_environment
@@ -1327,10 +1327,10 @@
 @ cdecl _o__seh_filter_dll(long ptr) __CppXcptFilter
 @ cdecl _o__seh_filter_exe(long ptr) _XcptFilter
 @ cdecl _o__set_abort_behavior(long long) MSVCRT__set_abort_behavior
-@ cdecl _o__set_app_type(long) MSVCRT___set_app_type
+@ cdecl _o__set_app_type(long) __set_app_type
 @ cdecl _o__set_doserrno(long) _set_doserrno
 @ cdecl _o__set_errno(long) _set_errno
-@ cdecl _o__set_fmode(long) MSVCRT__set_fmode
+@ cdecl _o__set_fmode(long) _set_fmode
 @ cdecl _o__set_invalid_parameter_handler(ptr) _set_invalid_parameter_handler
 @ cdecl _o__set_new_handler(ptr) set_new_handler
 @ cdecl _o__set_new_mode(long) _set_new_mode
@@ -1881,12 +1881,12 @@
 @ stdcall -arch=i386 _seh_longjmp_unwind(ptr)
 @ cdecl -arch=i386 _set_SSE2_enable(long) MSVCRT__set_SSE2_enable
 @ cdecl _set_abort_behavior(long long) MSVCRT__set_abort_behavior
-@ cdecl _set_app_type(long) MSVCRT___set_app_type
+@ cdecl _set_app_type(long) __set_app_type
 @ cdecl _set_controlfp(long long)
 @ cdecl _set_doserrno(long)
 @ cdecl _set_errno(long)
 @ cdecl _set_error_mode(long)
-@ cdecl _set_fmode(long) MSVCRT__set_fmode
+@ cdecl _set_fmode(long)
 @ cdecl _set_invalid_parameter_handler(ptr)
 @ cdecl _set_new_handler(ptr) set_new_handler
 @ cdecl _set_new_mode(long)
