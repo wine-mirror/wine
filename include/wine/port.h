@@ -278,22 +278,6 @@ extern int getopt_long_only (int ___argc, char *const *___argv,
 int ffs( int x );
 #endif
 
-#ifndef HAVE_LLRINT
-__int64 llrint(double x);
-#endif
-
-#ifndef HAVE_LLRINTF
-__int64 llrintf(float x);
-#endif
-
-#ifndef HAVE_LRINT
-long lrint(double x);
-#endif
-
-#ifndef HAVE_LRINTF
-long lrintf(float x);
-#endif
-
 #ifndef HAVE_LSTAT
 int lstat(const char *file_name, struct stat *buf);
 #endif /* HAVE_LSTAT */
@@ -325,14 +309,6 @@ ssize_t pwrite( int fd, const void *buf, size_t count, off_t offset );
 #ifndef HAVE_READLINK
 int readlink( const char *path, char *buf, size_t size );
 #endif /* HAVE_READLINK */
-
-#ifndef HAVE_RINT
-double rint(double x);
-#endif
-
-#ifndef HAVE_RINTF
-float rintf(float x);
-#endif
 
 #ifndef HAVE_STATVFS
 int statvfs( const char *path, struct statvfs *buf );

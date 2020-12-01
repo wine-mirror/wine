@@ -479,7 +479,11 @@ static float CDECL unix_lgammaf(float x)
  */
 static __int64 CDECL unix_llrint(double x)
 {
+#ifdef HAVE_LLRINT
     return llrint(x);
+#else
+    return x >= 0 ? floor(x + 0.5) : ceil(x - 0.5);
+#endif
 }
 
 /*********************************************************************
@@ -487,7 +491,11 @@ static __int64 CDECL unix_llrint(double x)
  */
 static __int64 CDECL unix_llrintf(float x)
 {
+#ifdef HAVE_LLRINTF
     return llrintf(x);
+#else
+    return x >= 0 ? floorf(x + 0.5) : ceilf(x - 0.5);
+#endif
 }
 
 /*********************************************************************
@@ -591,7 +599,11 @@ static float CDECL unix_logbf( float x )
  */
 static int CDECL unix_lrint(double x)
 {
+#ifdef HAVE_LRINT
     return lrint(x);
+#else
+    return x >= 0 ? floor(x + 0.5) : ceil(x - 0.5);
+#endif
 }
 
 /*********************************************************************
@@ -599,7 +611,11 @@ static int CDECL unix_lrint(double x)
  */
 static int CDECL unix_lrintf(float x)
 {
+#ifdef HAVE_LRINTF
     return lrintf(x);
+#else
+    return x >= 0 ? floorf(x + 0.5) : ceilf(x - 0.5);
+#endif
 }
 
 /*********************************************************************
@@ -757,7 +773,11 @@ static float CDECL unix_remquof(float x, float y, int *quo)
  */
 static double CDECL unix_rint(double x)
 {
+#ifdef HAVE_RINT
     return rint(x);
+#else
+    return x >= 0 ? floor(x + 0.5) : ceil(x - 0.5);
+#endif
 }
 
 /*********************************************************************
@@ -765,7 +785,11 @@ static double CDECL unix_rint(double x)
  */
 static float CDECL unix_rintf(float x)
 {
+#ifdef HAVE_RINTF
     return rintf(x);
+#else
+    return x >= 0 ? floorf(x + 0.5) : ceilf(x - 0.5);
+#endif
 }
 
 /*********************************************************************
