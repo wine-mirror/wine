@@ -637,9 +637,7 @@ static HRESULT create_rendertarget(IDWriteFactory7 *factory, HDC hdc, UINT32 wid
 
 static HRESULT WINAPI gdiinterop_QueryInterface(IDWriteGdiInterop1 *iface, REFIID riid, void **obj)
 {
-    struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IDWriteGdiInterop1) ||
         IsEqualIID(riid, &IID_IDWriteGdiInterop) ||
@@ -686,9 +684,7 @@ static ULONG WINAPI gdiinterop_Release(IDWriteGdiInterop1 *iface)
 static HRESULT WINAPI gdiinterop_CreateFontFromLOGFONT(IDWriteGdiInterop1 *iface,
     LOGFONTW const *logfont, IDWriteFont **font)
 {
-    struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
-
-    TRACE("(%p)->(%p %p)\n", This, logfont, font);
+    TRACE("%p, %p, %p.\n", iface, logfont, font);
 
     return IDWriteGdiInterop1_CreateFontFromLOGFONT(iface, logfont, NULL, font);
 }
@@ -696,12 +692,11 @@ static HRESULT WINAPI gdiinterop_CreateFontFromLOGFONT(IDWriteGdiInterop1 *iface
 static HRESULT WINAPI gdiinterop_ConvertFontToLOGFONT(IDWriteGdiInterop1 *iface,
     IDWriteFont *font, LOGFONTW *logfont, BOOL *is_systemfont)
 {
-    struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
     IDWriteFontCollection *collection;
     IDWriteFontFamily *family;
     HRESULT hr;
 
-    TRACE("(%p)->(%p %p %p)\n", This, font, logfont, is_systemfont);
+    TRACE("%p, %p, %p, %p.\n", iface, font, logfont, is_systemfont);
 
     *is_systemfont = FALSE;
 
@@ -732,9 +727,7 @@ static HRESULT WINAPI gdiinterop_ConvertFontToLOGFONT(IDWriteGdiInterop1 *iface,
 static HRESULT WINAPI gdiinterop_ConvertFontFaceToLOGFONT(IDWriteGdiInterop1 *iface,
     IDWriteFontFace *fontface, LOGFONTW *logfont)
 {
-    struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
-
-    TRACE("(%p)->(%p %p)\n", This, fontface, logfont);
+    TRACE("%p, %p, %p.\n", iface, fontface, logfont);
 
     memset(logfont, 0, sizeof(*logfont));
 
@@ -841,9 +834,11 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop1 *iface
 static HRESULT WINAPI gdiinterop_CreateBitmapRenderTarget(IDWriteGdiInterop1 *iface,
     HDC hdc, UINT32 width, UINT32 height, IDWriteBitmapRenderTarget **target)
 {
-    struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
-    TRACE("(%p)->(%p %u %u %p)\n", This, hdc, width, height, target);
-    return create_rendertarget(This->factory, hdc, width, height, target);
+    struct gdiinterop *interop = impl_from_IDWriteGdiInterop1(iface);
+
+    TRACE("%p, %p, %u, %u, %p.\n", iface, hdc, width, height, target);
+
+    return create_rendertarget(interop->factory, hdc, width, height, target);
 }
 
 static HRESULT WINAPI gdiinterop1_CreateFontFromLOGFONT(IDWriteGdiInterop1 *iface,
@@ -897,9 +892,7 @@ done:
 static HRESULT WINAPI gdiinterop1_GetFontSignature_(IDWriteGdiInterop1 *iface, IDWriteFontFace *fontface,
     FONTSIGNATURE *fontsig)
 {
-    struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
-
-    TRACE("(%p)->(%p %p)\n", This, fontface, fontsig);
+    TRACE("%p, %p, %p.\n", iface, fontface, fontsig);
 
     return get_fontsig_from_fontface(fontface, fontsig);
 }
@@ -919,9 +912,7 @@ static HRESULT WINAPI gdiinterop1_GetFontSignature(IDWriteGdiInterop1 *iface, ID
 static HRESULT WINAPI gdiinterop1_GetMatchingFontsByLOGFONT(IDWriteGdiInterop1 *iface, LOGFONTW const *logfont,
     IDWriteFontSet *fontset, IDWriteFontSet **subset)
 {
-    struct gdiinterop *This = impl_from_IDWriteGdiInterop1(iface);
-
-    FIXME("(%p)->(%p %p %p): stub\n", This, logfont, fontset, subset);
+    FIXME("%p, %p, %p, %p: stub.\n", iface, logfont, fontset, subset);
 
     return E_NOTIMPL;
 }
