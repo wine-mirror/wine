@@ -147,7 +147,7 @@
 @ cdecl __crtLCMapStringA(long long str long ptr long long long)
 @ cdecl __crtLCMapStringW(long long wstr long ptr long long long)
 @ cdecl __dllonexit(ptr ptr ptr)
-@ cdecl __doserrno() MSVCRT___doserrno
+@ cdecl __doserrno()
 @ cdecl __fpecode()
 @ cdecl __getmainargs(ptr ptr ptr long ptr)
 @ extern __initenv MSVCRT___initenv
@@ -206,7 +206,7 @@
 @ cdecl __unDNameEx(ptr str long ptr ptr ptr long)
 @ extern __unguarded_readlc_active MSVCRT___unguarded_readlc_active
 @ extern __wargv MSVCRT___wargv
-@ cdecl __wcserror(wstr) MSVCRT___wcserror
+@ cdecl __wcserror(wstr)
 @ cdecl __wgetmainargs(ptr ptr ptr long ptr)
 @ extern __winitenv MSVCRT___winitenv
 @ cdecl _abnormal_termination()
@@ -278,7 +278,7 @@
 @ cdecl _endthreadex(long)
 @ extern _environ MSVCRT__environ
 @ cdecl _eof(long) MSVCRT__eof
-@ cdecl _errno() MSVCRT__errno
+@ cdecl _errno()
 @ cdecl -arch=i386 _except_handler2(ptr ptr ptr ptr)
 @ cdecl -arch=i386 _except_handler3(ptr ptr ptr ptr)
 @ varargs _execl(str str)
@@ -546,7 +546,7 @@
 @ cdecl _strcmpi(str str) MSVCRT__stricmp
 @ cdecl _strdate(ptr) MSVCRT__strdate
 @ cdecl _strdup(str) MSVCRT__strdup
-@ cdecl _strerror(long) MSVCRT__strerror
+@ cdecl _strerror(long)
 @ cdecl _stricmp(str str) MSVCRT__stricmp
 @ cdecl _stricoll(str str) MSVCRT__stricoll
 @ cdecl _strlwr(str) MSVCRT__strlwr
@@ -595,7 +595,7 @@
 @ extern _wcmdln MSVCRT__wcmdln
 @ cdecl _wcreat(wstr long) MSVCRT__wcreat
 @ cdecl _wcsdup(wstr) MSVCRT__wcsdup
-@ cdecl _wcserror(long) MSVCRT__wcserror
+@ cdecl _wcserror(long)
 @ cdecl _wcsicmp(wstr wstr) MSVCRT__wcsicmp
 @ cdecl _wcsicoll(wstr wstr) MSVCRT__wcsicoll
 @ cdecl _wcslwr(wstr) MSVCRT__wcslwr
@@ -641,7 +641,7 @@
 @ cdecl _wmkdir(wstr) MSVCRT__wmkdir
 @ cdecl _wmktemp(wstr) MSVCRT__wmktemp
 @ varargs _wopen(wstr long) MSVCRT__wopen
-@ cdecl _wperror(wstr) MSVCRT__wperror
+@ cdecl _wperror(wstr)
 @ extern _wpgmptr MSVCRT__wpgmptr
 @ cdecl _wpopen(wstr wstr) MSVCRT__wpopen
 @ cdecl _wputenv(wstr)
@@ -783,7 +783,7 @@
 @ cdecl memset(ptr long long)
 @ cdecl mktime(ptr) MSVCRT_mktime
 @ cdecl modf(double ptr) MSVCRT_modf
-@ cdecl perror(str) MSVCRT_perror
+@ cdecl perror(str)
 @ cdecl pow(double double) MSVCRT_pow
 @ varargs printf(str) MSVCRT_printf
 @ cdecl putc(long ptr) MSVCRT_putc
@@ -815,7 +815,7 @@
 @ cdecl strcoll(str str) MSVCRT_strcoll
 @ cdecl strcpy(ptr str)
 @ cdecl strcspn(str str) MSVCRT_strcspn
-@ cdecl strerror(long) MSVCRT_strerror
+@ cdecl strerror(long)
 @ cdecl strftime(ptr long str ptr) MSVCRT_strftime
 @ cdecl strlen(str)
 @ cdecl strncat(str str long) MSVCRT_strncat

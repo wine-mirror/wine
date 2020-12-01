@@ -139,7 +139,7 @@ static intptr_t msvcrt_spawn(int flags, const wchar_t* exe, wchar_t* cmdline,
 
   if ((unsigned)flags > MSVCRT__P_DETACH)
   {
-    *MSVCRT__errno() = EINVAL;
+    *_errno() = EINVAL;
     return -1;
   }
 
@@ -372,8 +372,8 @@ intptr_t CDECL _cwait(int *status, intptr_t pid, int action)
 
   if (doserrno == ERROR_INVALID_HANDLE)
   {
-    *MSVCRT__errno() =  ECHILD;
-    *MSVCRT___doserrno() = doserrno;
+    *_errno() =  ECHILD;
+    *__doserrno() = doserrno;
   }
   else
     msvcrt_set_errno(doserrno);
@@ -1191,7 +1191,7 @@ int CDECL MSVCRT__pclose(MSVCRT_FILE* file)
   if(i == popen_handles_size)
   {
     _unlock(_POPEN_LOCK);
-    *MSVCRT__errno() = EBADF;
+    *_errno() = EBADF;
     return -1;
   }
 
@@ -1228,7 +1228,7 @@ int CDECL _wsystem(const wchar_t* cmd)
   {
     if (comspec == NULL)
     {
-        *MSVCRT__errno() = ENOENT;
+        *_errno() = ENOENT;
         return 0;
     }
     HeapFree(GetProcessHeap(), 0, comspec);

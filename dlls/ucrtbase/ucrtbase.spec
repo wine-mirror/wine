@@ -87,7 +87,7 @@
 @ cdecl __daylight() MSVCRT___p__daylight
 @ stub __dcrt_get_wide_environment_from_os
 @ stub __dcrt_initial_narrow_environment
-@ cdecl __doserrno() MSVCRT___doserrno
+@ cdecl __doserrno()
 @ cdecl __dstbias() MSVCRT___p__dstbias
 @ cdecl __fpe_flt_rounds()
 @ cdecl __fpecode()
@@ -175,8 +175,8 @@
 @ cdecl __unDName(ptr str long ptr ptr long)
 @ cdecl __unDNameEx(ptr str long ptr ptr ptr long)
 @ cdecl __uncaught_exception() MSVCRT___uncaught_exception
-@ cdecl __wcserror(wstr) MSVCRT___wcserror
-@ cdecl __wcserror_s(ptr long wstr) MSVCRT___wcserror_s
+@ cdecl __wcserror(wstr)
+@ cdecl __wcserror_s(ptr long wstr)
 @ stub __wcsncnt
 @ cdecl -ret64 _abs64(int64)
 @ cdecl _access(str long) MSVCRT__access
@@ -270,7 +270,7 @@
 @ cdecl _endthread()
 @ cdecl _endthreadex(long)
 @ cdecl _eof(long) MSVCRT__eof
-@ cdecl _errno() MSVCRT__errno
+@ cdecl _errno()
 @ cdecl _except1(long long double double long ptr)
 @ cdecl -arch=i386 _except_handler2(ptr ptr ptr ptr)
 @ cdecl -arch=i386 _except_handler3(ptr ptr ptr ptr)
@@ -830,7 +830,7 @@
 @ cdecl _o___stdio_common_vswscanf(int64 ptr long wstr ptr ptr) MSVCRT__stdio_common_vswscanf
 @ cdecl _o___timezone() MSVCRT___p__timezone
 @ cdecl _o___tzname() __p__tzname
-@ cdecl _o___wcserror(wstr) MSVCRT___wcserror
+@ cdecl _o___wcserror(wstr) __wcserror
 @ cdecl _o__access(str long) MSVCRT__access
 @ cdecl _o__access_s(str long) MSVCRT__access_s
 @ cdecl _o__aligned_free(ptr) _aligned_free
@@ -904,7 +904,7 @@
 @ cdecl _o__endthread() _endthread
 @ cdecl _o__endthreadex(long) _endthreadex
 @ cdecl _o__eof(long) MSVCRT__eof
-@ cdecl _o__errno() MSVCRT__errno
+@ cdecl _o__errno() _errno
 @ cdecl _o__except1(long long double double long ptr) _except1
 @ cdecl _o__execute_onexit_table(ptr) MSVCRT__execute_onexit_table
 @ cdecl _o__execv(str ptr) _execv
@@ -1357,7 +1357,7 @@
 @ cdecl _o__strdate(ptr) MSVCRT__strdate
 @ cdecl _o__strdate_s(ptr long) _strdate_s
 @ cdecl _o__strdup(str) MSVCRT__strdup
-@ cdecl _o__strerror(long) MSVCRT__strerror
+@ cdecl _o__strerror(long) _strerror
 @ stub _o__strerror_s
 @ cdecl _o__strftime_l(ptr long str ptr ptr) MSVCRT__strftime_l
 @ cdecl _o__stricmp(str str) MSVCRT__stricmp
@@ -1437,8 +1437,8 @@
 @ cdecl _o__wcreate_locale(long wstr) MSVCRT__wcreate_locale
 @ cdecl _o__wcscoll_l(wstr wstr ptr) MSVCRT__wcscoll_l
 @ cdecl _o__wcsdup(wstr) MSVCRT__wcsdup
-@ cdecl _o__wcserror(long) MSVCRT__wcserror
-@ cdecl _o__wcserror_s(ptr long long) MSVCRT__wcserror_s
+@ cdecl _o__wcserror(long) _wcserror
+@ cdecl _o__wcserror_s(ptr long long) _wcserror_s
 @ cdecl _o__wcsftime_l(ptr long wstr ptr ptr) MSVCRT__wcsftime_l
 @ cdecl _o__wcsicmp(wstr wstr) MSVCRT__wcsicmp
 @ cdecl _o__wcsicmp_l(wstr wstr ptr) MSVCRT__wcsicmp_l
@@ -1511,7 +1511,7 @@
 @ cdecl _o__wmkdir(wstr) MSVCRT__wmkdir
 @ cdecl _o__wmktemp(wstr) MSVCRT__wmktemp
 @ cdecl _o__wmktemp_s(wstr long) MSVCRT__wmktemp_s
-@ cdecl _o__wperror(wstr) MSVCRT__wperror
+@ cdecl _o__wperror(wstr) _wperror
 @ cdecl _o__wpopen(wstr wstr) MSVCRT__wpopen
 @ cdecl _o__wputenv(wstr) _wputenv
 @ cdecl _o__wputenv_s(wstr wstr) _wputenv_s
@@ -1781,8 +1781,8 @@
 @ cdecl _o_strcat_s(str long str) MSVCRT_strcat_s
 @ cdecl _o_strcoll(str str) MSVCRT_strcoll
 @ cdecl _o_strcpy_s(ptr long str) MSVCRT_strcpy_s
-@ cdecl _o_strerror(long) MSVCRT_strerror
-@ cdecl _o_strerror_s(ptr long long) MSVCRT_strerror_s
+@ cdecl _o_strerror(long) strerror
+@ cdecl _o_strerror_s(ptr long long) strerror_s
 @ cdecl _o_strftime(ptr long str ptr) MSVCRT_strftime
 @ cdecl _o_strncat_s(str long str long) MSVCRT_strncat_s
 @ cdecl _o_strncpy_s(ptr long str long) MSVCRT_strncpy_s
@@ -1924,7 +1924,7 @@
 @ cdecl _strdate(ptr) MSVCRT__strdate
 @ cdecl _strdate_s(ptr long)
 @ cdecl _strdup(str) MSVCRT__strdup
-@ cdecl _strerror(long) MSVCRT__strerror
+@ cdecl _strerror(long)
 @ stub _strerror_s
 @ cdecl _strftime_l(ptr long str ptr ptr) MSVCRT__strftime_l
 @ cdecl _stricmp(str str) MSVCRT__stricmp
@@ -2014,8 +2014,8 @@
 @ cdecl _wcreate_locale(long wstr) MSVCRT__wcreate_locale
 @ cdecl _wcscoll_l(wstr wstr ptr) MSVCRT__wcscoll_l
 @ cdecl _wcsdup(wstr) MSVCRT__wcsdup
-@ cdecl _wcserror(long) MSVCRT__wcserror
-@ cdecl _wcserror_s(ptr long long) MSVCRT__wcserror_s
+@ cdecl _wcserror(long)
+@ cdecl _wcserror_s(ptr long long)
 @ cdecl _wcsftime_l(ptr long wstr ptr ptr) MSVCRT__wcsftime_l
 @ cdecl _wcsicmp(wstr wstr) MSVCRT__wcsicmp
 @ cdecl _wcsicmp_l(wstr wstr ptr) MSVCRT__wcsicmp_l
@@ -2097,7 +2097,7 @@
 @ cdecl _wmktemp(wstr) MSVCRT__wmktemp
 @ cdecl _wmktemp_s(wstr long) MSVCRT__wmktemp_s
 @ varargs _wopen(wstr long) MSVCRT__wopen
-@ cdecl _wperror(wstr) MSVCRT__wperror
+@ cdecl _wperror(wstr)
 @ cdecl _wpopen(wstr wstr) MSVCRT__wpopen
 @ cdecl _wputenv(wstr)
 @ cdecl _wputenv_s(wstr wstr)
@@ -2444,7 +2444,7 @@
 @ stub norm
 @ stub normf
 @ stub norml
-@ cdecl perror(str) MSVCRT_perror
+@ cdecl perror(str)
 @ cdecl pow(double double) MSVCRT_pow
 @ cdecl -arch=!i386 powf(float float) MSVCRT_powf
 @ cdecl putc(long ptr) MSVCRT_putc
@@ -2502,8 +2502,8 @@
 @ cdecl strcpy(ptr str)
 @ cdecl strcpy_s(ptr long str) MSVCRT_strcpy_s
 @ cdecl strcspn(str str) MSVCRT_strcspn
-@ cdecl strerror(long) MSVCRT_strerror
-@ cdecl strerror_s(ptr long long) MSVCRT_strerror_s
+@ cdecl strerror(long)
+@ cdecl strerror_s(ptr long long)
 @ cdecl strftime(ptr long str ptr) MSVCRT_strftime
 @ cdecl strlen(str)
 @ cdecl strncat(str str long) MSVCRT_strncat

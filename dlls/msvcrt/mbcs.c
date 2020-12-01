@@ -390,7 +390,7 @@ int CDECL _setmbcp(int cp)
     mbcinfo = create_mbcinfo(cp, -1, get_mbcinfo());
     if(!mbcinfo)
     {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return -1;
     }
 
@@ -682,7 +682,7 @@ int CDECL _mbccpy_s_l(unsigned char* dest, size_t maxsize,
     if(_ismbblead_l(*src, locale)) {
         if(!src[1]) {
             if(copied) *copied = 1;
-            *MSVCRT__errno() = EILSEQ;
+            *_errno() = EILSEQ;
             return EILSEQ;
         }
 
@@ -1950,7 +1950,7 @@ int CDECL _mbsnbcat_s(unsigned char *dst, size_t size, const unsigned char *src,
         if (dst && size)
             *dst = '\0';
 
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -1961,7 +1961,7 @@ int CDECL _mbsnbcat_s(unsigned char *dst, size_t size, const unsigned char *src,
     if (!size)
     {
         *dst = '\0';
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -1978,7 +1978,7 @@ int CDECL _mbsnbcat_s(unsigned char *dst, size_t size, const unsigned char *src,
         if (!size)
         {
             *dst = '\0';
-            *MSVCRT__errno() = ERANGE;
+            *_errno() = ERANGE;
             return ERANGE;
         }
     }
@@ -2052,7 +2052,7 @@ int CDECL _mbslwr_s(unsigned char* s, size_t len)
   }
   else if (!s || !len)
   {
-    *MSVCRT__errno() = EINVAL;
+    *_errno() = EINVAL;
     return EINVAL;
   }
   if (get_mbcinfo()->ismbcodepage)
@@ -2074,7 +2074,7 @@ int CDECL _mbslwr_s(unsigned char* s, size_t len)
   if (*s)
   {
     *s = '\0';
-    *MSVCRT__errno() = EINVAL;
+    *_errno() = EINVAL;
     return EINVAL;
   }
   return 0;
@@ -2120,7 +2120,7 @@ int CDECL _mbsupr_s(unsigned char* s, size_t len)
   }
   else if (!s || !len)
   {
-    *MSVCRT__errno() = EINVAL;
+    *_errno() = EINVAL;
     return EINVAL;
   }
   if (get_mbcinfo()->ismbcodepage)
@@ -2142,7 +2142,7 @@ int CDECL _mbsupr_s(unsigned char* s, size_t len)
   if (*s)
   {
     *s = '\0';
-    *MSVCRT__errno() = EINVAL;
+    *_errno() = EINVAL;
     return EINVAL;
   }
   return 0;
@@ -2374,7 +2374,7 @@ size_t CDECL _mbstrlen_l(const char* str, _locale_t locale)
         len = MultiByteToWideChar(locinfo->lc_codepage, MB_ERR_INVALID_CHARS,
                                   str, -1, NULL, 0);
         if (!len) {
-            *MSVCRT__errno() = EILSEQ;
+            *_errno() = EILSEQ;
             return -1;
         }
         return len - 1;
@@ -2512,7 +2512,7 @@ size_t CDECL MSVCRT__mbstowcs_l(wchar_t *wcstr, const char *mbstr,
     size_t i, size;
 
     if(!mbstr) {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return -1;
     }
 
@@ -2537,7 +2537,7 @@ size_t CDECL MSVCRT__mbstowcs_l(wchar_t *wcstr, const char *mbstr,
         size = MultiByteToWideChar(locinfo->lc_codepage,
                 MB_ERR_INVALID_CHARS, mbstr, -1, NULL, 0);
         if(!size) {
-            *MSVCRT__errno() = EILSEQ;
+            *_errno() = EILSEQ;
             return -1;
         }
         return size - 1;
@@ -2555,7 +2555,7 @@ size_t CDECL MSVCRT__mbstowcs_l(wchar_t *wcstr, const char *mbstr,
                 MB_ERR_INVALID_CHARS, mbstr, size, wcstr, count);
         if(!size) {
             if(count) wcstr[0] = '\0';
-            *MSVCRT__errno() = EILSEQ;
+            *_errno() = EILSEQ;
             return -1;
         }
     }
@@ -2681,7 +2681,7 @@ int CDECL MSVCRT_mbsrtowcs_s(size_t *ret, wchar_t *wcstr, size_t len,
     *ret = MSVCRT_mbsrtowcs(wcstr, mbstr, count>len ? len : count, state);
     if(*ret == -1) {
         if(wcstr) *wcstr = 0;
-        return *MSVCRT__errno();
+        return *_errno();
     }
     (*ret)++;
     if(*ret > len) {

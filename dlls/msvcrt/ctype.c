@@ -452,7 +452,7 @@ int CDECL MSVCRT__toupper_l(int c, _locale_t locale)
     if(locinfo->pctype[(c>>8)&255] & MSVCRT__LEADBYTE)
         *p++ = (c>>8) & 255;
     else {
-        *MSVCRT__errno() = EILSEQ;
+        *_errno() = EILSEQ;
         str[1] = 0;
     }
     *p++ = c & 255;
@@ -506,7 +506,7 @@ int CDECL MSVCRT__tolower_l(int c, _locale_t locale)
     if(locinfo->pctype[(c>>8)&255] & MSVCRT__LEADBYTE)
         *p++ = (c>>8) & 255;
     else {
-        *MSVCRT__errno() = EILSEQ;
+        *_errno() = EILSEQ;
         str[1] = 0;
     }
     *p++ = c & 255;

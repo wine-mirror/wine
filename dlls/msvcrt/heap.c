@@ -335,7 +335,7 @@ int CDECL _heapset(unsigned int value)
 int CDECL _heapadd(void* mem, size_t size)
 {
   TRACE("(%p,%Iu) unsupported in Win32\n", mem,size);
-  *MSVCRT__errno() = ENOSYS;
+  *_errno() = ENOSYS;
   return -1;
 }
 
@@ -388,7 +388,7 @@ void* CDECL DECLSPEC_HOTPATCH MSVCRT_calloc(size_t count, size_t size)
 
   if (size && bytes / size != count)
   {
-    *MSVCRT__errno() = ENOMEM;
+    *_errno() = ENOMEM;
     return NULL;
   }
 
@@ -438,7 +438,7 @@ void* CDECL MSVCRT_malloc(size_t size)
     } while(_callnewh(size));
 
     if (!ret)
-        *MSVCRT__errno() = ENOMEM;
+        *_errno() = ENOMEM;
     return ret;
 }
 
@@ -490,7 +490,7 @@ void* CDECL _recalloc(void *mem, size_t num, size_t size)
 
     ret = MSVCRT_realloc(mem, size);
     if(!ret) {
-        *MSVCRT__errno() = ENOMEM;
+        *_errno() = ENOMEM;
         return NULL;
     }
 
@@ -564,14 +564,14 @@ void * CDECL _aligned_offset_malloc(size_t size, size_t alignment, size_t offset
     /* alignment must be a power of 2 */
     if ((alignment & (alignment - 1)) != 0)
     {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return NULL;
     }
 
     /* offset must be less than size */
     if (offset && offset >= size)
     {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return NULL;
     }
 
@@ -621,14 +621,14 @@ void * CDECL _aligned_offset_realloc(void *memblock, size_t size,
     /* alignment must be a power of 2 */
     if ((alignment & (alignment - 1)) != 0)
     {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return NULL;
     }
 
     /* offset must be less than size */
     if (offset >= size)
     {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return NULL;
     }
 
@@ -646,7 +646,7 @@ void * CDECL _aligned_offset_realloc(void *memblock, size_t size,
     saved = SAVED_PTR(memblock);
     if (memblock != ALIGN_PTR(*saved, alignment, offset))
     {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return NULL;
     }
 

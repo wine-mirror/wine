@@ -130,8 +130,8 @@ static MSVCRT_invalid_parameter_handler invalid_parameter_handler = NULL;
 /* INTERNAL: Set the crt and dos errno's from the OS error given. */
 void msvcrt_set_errno(int err)
 {
-  int *errno_ptr = MSVCRT__errno();
-  __msvcrt_ulong *doserrno = MSVCRT___doserrno();
+  int *errno_ptr = _errno();
+  __msvcrt_ulong *doserrno = __doserrno();
 
   *doserrno = err;
 
@@ -211,7 +211,7 @@ char** CDECL __sys_errlist(void)
 /*********************************************************************
  *		_errno (MSVCRT.@)
  */
-int* CDECL MSVCRT__errno(void)
+int* CDECL _errno(void)
 {
     return &msvcrt_get_thread_data()->thread_errno;
 }
@@ -219,7 +219,7 @@ int* CDECL MSVCRT__errno(void)
 /*********************************************************************
  *		__doserrno (MSVCRT.@)
  */
-__msvcrt_ulong* CDECL MSVCRT___doserrno(void)
+__msvcrt_ulong* CDECL __doserrno(void)
 {
     return &msvcrt_get_thread_data()->thread_doserrno;
 }
@@ -232,7 +232,7 @@ int CDECL _get_errno(int *pValue)
     if (!pValue)
         return EINVAL;
 
-    *pValue = *MSVCRT__errno();
+    *pValue = *_errno();
     return 0;
 }
 
@@ -244,7 +244,7 @@ int CDECL _get_doserrno(int *pValue)
     if (!pValue)
         return EINVAL;
 
-    *pValue = *MSVCRT___doserrno();
+    *pValue = *__doserrno();
     return 0;
 }
 
@@ -253,7 +253,7 @@ int CDECL _get_doserrno(int *pValue)
  */
 int CDECL _set_errno(int value)
 {
-    *MSVCRT__errno() = value;
+    *_errno() = value;
     return 0;
 }
 
@@ -262,14 +262,14 @@ int CDECL _set_errno(int value)
  */
 int CDECL _set_doserrno(int value)
 {
-    *MSVCRT___doserrno() = value;
+    *__doserrno() = value;
     return 0;
 }
 
 /*********************************************************************
  *		strerror (MSVCRT.@)
  */
-char* CDECL MSVCRT_strerror(int err)
+char* CDECL strerror(int err)
 {
     thread_data_t *data = msvcrt_get_thread_data();
 
@@ -284,13 +284,13 @@ char* CDECL MSVCRT_strerror(int err)
 /**********************************************************************
  *		strerror_s	(MSVCRT.@)
  */
-int CDECL MSVCRT_strerror_s(char *buffer, size_t numberOfElements, int errnum)
+int CDECL strerror_s(char *buffer, size_t numberOfElements, int errnum)
 {
     char *ptr;
 
     if (!buffer || !numberOfElements)
     {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -311,7 +311,7 @@ int CDECL MSVCRT_strerror_s(char *buffer, size_t numberOfElements, int errnum)
 /**********************************************************************
  *		_strerror	(MSVCRT.@)
  */
-char* CDECL MSVCRT__strerror(const char* str)
+char* CDECL _strerror(const char* str)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     int err;
@@ -333,9 +333,9 @@ char* CDECL MSVCRT__strerror(const char* str)
 /*********************************************************************
  *		perror (MSVCRT.@)
  */
-void CDECL MSVCRT_perror(const char* str)
+void CDECL perror(const char* str)
 {
-    int err = *MSVCRT__errno();
+    int err = *_errno();
     if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
 
     if (str && *str)
@@ -350,7 +350,7 @@ void CDECL MSVCRT_perror(const char* str)
 /*********************************************************************
  *		_wperror (MSVCRT.@)
  */
-void CDECL MSVCRT__wperror(const wchar_t* str)
+void CDECL _wperror(const wchar_t* str)
 {
     size_t size;
     char *buffer = NULL;
@@ -368,14 +368,14 @@ void CDECL MSVCRT__wperror(const wchar_t* str)
             return;
         }
     }
-    MSVCRT_perror(buffer);
+    perror(buffer);
     MSVCRT_free(buffer);
 }
 
 /*********************************************************************
  *		_wcserror_s (MSVCRT.@)
  */
-int CDECL MSVCRT__wcserror_s(wchar_t* buffer, size_t nc, int err)
+int CDECL _wcserror_s(wchar_t* buffer, size_t nc, int err)
 {
     if (!MSVCRT_CHECK_PMT(buffer != NULL)) return EINVAL;
     if (!MSVCRT_CHECK_PMT(nc > 0)) return EINVAL;
@@ -388,25 +388,25 @@ int CDECL MSVCRT__wcserror_s(wchar_t* buffer, size_t nc, int err)
 /*********************************************************************
  *		_wcserror (MSVCRT.@)
  */
-wchar_t* CDECL MSVCRT__wcserror(int err)
+wchar_t* CDECL _wcserror(int err)
 {
     thread_data_t *data = msvcrt_get_thread_data();
 
     if (!data->wcserror_buffer)
         if (!(data->wcserror_buffer = MSVCRT_malloc(256 * sizeof(wchar_t)))) return NULL;
-    MSVCRT__wcserror_s(data->wcserror_buffer, 256, err);
+    _wcserror_s(data->wcserror_buffer, 256, err);
     return data->wcserror_buffer;
 }
 
 /**********************************************************************
  *		__wcserror_s	(MSVCRT.@)
  */
-int CDECL MSVCRT___wcserror_s(wchar_t* buffer, size_t nc, const wchar_t* str)
+int CDECL __wcserror_s(wchar_t* buffer, size_t nc, const wchar_t* str)
 {
     int err;
     size_t len;
 
-    err = *MSVCRT__errno();
+    err = *_errno();
     if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
 
     len = MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, NULL, 0) + 1 /* \n */;
@@ -432,7 +432,7 @@ int CDECL MSVCRT___wcserror_s(wchar_t* buffer, size_t nc, const wchar_t* str)
 /**********************************************************************
  *		__wcserror	(MSVCRT.@)
  */
-wchar_t* CDECL MSVCRT___wcserror(const wchar_t* str)
+wchar_t* CDECL __wcserror(const wchar_t* str)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     int err;
@@ -440,7 +440,7 @@ wchar_t* CDECL MSVCRT___wcserror(const wchar_t* str)
     if (!data->wcserror_buffer)
         if (!(data->wcserror_buffer = MSVCRT_malloc(256 * sizeof(wchar_t)))) return NULL;
 
-    err = MSVCRT___wcserror_s(data->wcserror_buffer, 256, str);
+    err = __wcserror_s(data->wcserror_buffer, 256, str);
     if (err) FIXME("bad wcserror call (%d)\n", err);
 
     return data->wcserror_buffer;
@@ -457,7 +457,7 @@ void CDECL _seterrormode(int mode)
 /******************************************************************************
  *		_invalid_parameter (MSVCRT.@)
  */
-void __cdecl MSVCRT__invalid_parameter(const wchar_t *expr, const wchar_t *func,
+void __cdecl _invalid_parameter(const wchar_t *expr, const wchar_t *func,
                                        const wchar_t *file, unsigned int line, uintptr_t arg)
 {
 #if _MSVCR_VER >= 140
@@ -487,7 +487,7 @@ void __cdecl MSVCRT__invalid_parameter(const wchar_t *expr, const wchar_t *func,
  */
 void CDECL _invalid_parameter_noinfo(void)
 {
-    MSVCRT__invalid_parameter( NULL, NULL, NULL, 0, 0 );
+    _invalid_parameter( NULL, NULL, NULL, 0, 0 );
 }
 
 /*********************************************************************
@@ -495,7 +495,7 @@ void CDECL _invalid_parameter_noinfo(void)
  */
 void CDECL _invalid_parameter_noinfo_noreturn(void)
 {
-    MSVCRT__invalid_parameter( NULL, NULL, NULL, 0, 0 );
+    _invalid_parameter( NULL, NULL, NULL, 0, 0 );
     MSVCRT__exit( STATUS_INVALID_CRUNTIME_PARAMETER );
 }
 

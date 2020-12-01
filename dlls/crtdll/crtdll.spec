@@ -28,7 +28,7 @@
 @ extern __argc_dll MSVCRT___argc
 @ extern __argv_dll MSVCRT___argv
 @ cdecl __dllonexit(ptr ptr ptr)
-@ cdecl __doserrno() MSVCRT___doserrno
+@ cdecl __doserrno()
 @ cdecl __fpecode()
 @ cdecl __isascii(long) MSVCRT___isascii
 @ cdecl __iscsym(long) MSVCRT___iscsym
@@ -79,7 +79,7 @@
 @ cdecl _endthread()
 @ extern _environ_dll MSVCRT__environ
 @ cdecl _eof(long) MSVCRT__eof
-@ cdecl _errno() MSVCRT__errno
+@ cdecl _errno()
 @ cdecl -arch=i386 _except_handler2(ptr ptr ptr ptr)
 @ varargs _execl(str str)
 @ varargs _execle(str str)
@@ -288,7 +288,7 @@
 @ cdecl _strdate(ptr) MSVCRT__strdate
 @ cdecl _strdec(str str)
 @ cdecl _strdup(str) MSVCRT__strdup
-@ cdecl _strerror(long) MSVCRT__strerror
+@ cdecl _strerror(long)
 @ cdecl _stricmp(str str) MSVCRT__stricmp
 @ cdecl _stricoll(str str) MSVCRT__stricoll
 @ cdecl _strinc(str)
@@ -439,7 +439,7 @@
 @ cdecl memset(ptr long long)
 @ cdecl mktime(ptr) MSVCRT_mktime
 @ cdecl modf(double ptr) MSVCRT_modf
-@ cdecl perror(str) MSVCRT_perror
+@ cdecl perror(str)
 @ cdecl pow(double double) MSVCRT_pow
 @ varargs printf(str) MSVCRT_printf
 @ cdecl putc(long ptr) MSVCRT_putc
@@ -469,7 +469,7 @@
 @ cdecl strcoll(str str) MSVCRT_strcoll
 @ cdecl strcpy(ptr str)
 @ cdecl strcspn(str str) MSVCRT_strcspn
-@ cdecl strerror(long) MSVCRT_strerror
+@ cdecl strerror(long)
 @ cdecl strftime(ptr long str ptr) MSVCRT_strftime
 @ cdecl strlen(str)
 @ cdecl strncat(str str long) MSVCRT_strncat

@@ -82,8 +82,8 @@
 @ stub -arch=win64 ?_ValidateWrite@@YAHPEAXI@Z  # int __cdecl _ValidateWrite(void * __ptr64,unsigned int)
 @ cdecl __uncaught_exception() MSVCRT___uncaught_exception
 @ stub ?_inconsistency@@YAXXZ
-@ cdecl -arch=win32 ?_invalid_parameter@@YAXPBG00II@Z(wstr wstr wstr long long) MSVCRT__invalid_parameter
-@ cdecl -arch=win64 ?_invalid_parameter@@YAXPEBG00I_K@Z(wstr wstr wstr long long) MSVCRT__invalid_parameter
+@ cdecl -arch=win32 ?_invalid_parameter@@YAXPBG00II@Z(wstr wstr wstr long long) _invalid_parameter
+@ cdecl -arch=win64 ?_invalid_parameter@@YAXPEBG00I_K@Z(wstr wstr wstr long long) _invalid_parameter
 @ cdecl -arch=win32 ?_is_exception_typeof@@YAHABVtype_info@@PAU_EXCEPTION_POINTERS@@@Z(ptr ptr) _is_exception_typeof
 @ cdecl -arch=win64 ?_is_exception_typeof@@YAHAEBVtype_info@@PEAU_EXCEPTION_POINTERS@@@Z(ptr ptr) _is_exception_typeof
 @ cdecl -arch=arm ?_name_internal_method@type_info@@QBAPBDPAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
@@ -210,7 +210,7 @@
 @ cdecl __crtLCMapStringW(long long wstr long ptr long long long)
 @ cdecl __daylight() MSVCRT___p__daylight
 @ cdecl __dllonexit(ptr ptr ptr)
-@ cdecl __doserrno() MSVCRT___doserrno
+@ cdecl __doserrno()
 @ cdecl __dstbias() MSVCRT___p__dstbias
 @ stub ___fls_getvalue@4
 @ stub ___fls_setvalue@8
@@ -304,8 +304,8 @@
 @ extern __unguarded_readlc_active MSVCRT___unguarded_readlc_active
 @ cdecl __vswprintf_l(ptr wstr ptr ptr) MSVCRT_vswprintf_l
 @ extern __wargv MSVCRT___wargv
-@ cdecl __wcserror(wstr) MSVCRT___wcserror
-@ cdecl __wcserror_s(ptr long wstr) MSVCRT___wcserror_s
+@ cdecl __wcserror(wstr)
+@ cdecl __wcserror_s(ptr long wstr)
 @ stub __wcsncnt
 @ cdecl __wgetmainargs(ptr ptr ptr long ptr)
 @ extern __winitenv MSVCRT___winitenv
@@ -430,7 +430,7 @@
 @ cdecl _endthreadex(long)
 @ extern _environ MSVCRT__environ
 @ cdecl _eof(long) MSVCRT__eof
-@ cdecl _errno() MSVCRT__errno
+@ cdecl _errno()
 @ cdecl -arch=i386 _except_handler2(ptr ptr ptr ptr)
 @ cdecl -arch=i386 _except_handler3(ptr ptr ptr ptr)
 @ cdecl -arch=i386 _except_handler4_common(ptr ptr ptr ptr ptr ptr)
@@ -588,7 +588,7 @@
 @ stub -arch=i386 _inp(long)
 @ stub -arch=i386 _inpd(long)
 @ stub -arch=i386 _inpw(long)
-@ cdecl _invalid_parameter(wstr wstr wstr long long) MSVCRT__invalid_parameter
+@ cdecl _invalid_parameter(wstr wstr wstr long long)
 @ cdecl _invalid_parameter_noinfo()
 @ stub _invoke_watson
 @ extern _iob MSVCRT__iob
@@ -993,7 +993,7 @@
 @ cdecl _strdate(ptr) MSVCRT__strdate
 @ cdecl _strdate_s(ptr long)
 @ cdecl _strdup(str) MSVCRT__strdup
-@ cdecl _strerror(long) MSVCRT__strerror
+@ cdecl _strerror(long)
 @ stub _strerror_s
 @ cdecl _strftime_l(ptr long str ptr ptr) MSVCRT__strftime_l
 @ cdecl _stricmp(str str) MSVCRT__stricmp
@@ -1144,8 +1144,8 @@
 @ cdecl _wcreat(wstr long) MSVCRT__wcreat
 @ cdecl _wcscoll_l(wstr wstr ptr) MSVCRT__wcscoll_l
 @ cdecl _wcsdup(wstr) MSVCRT__wcsdup
-@ cdecl _wcserror(long) MSVCRT__wcserror
-@ cdecl _wcserror_s(ptr long long) MSVCRT__wcserror_s
+@ cdecl _wcserror(long)
+@ cdecl _wcserror_s(ptr long long)
 @ cdecl _wcsftime_l(ptr long wstr ptr ptr) MSVCRT__wcsftime_l
 @ cdecl _wcsicmp(wstr wstr) MSVCRT__wcsicmp
 @ cdecl _wcsicmp_l(wstr wstr ptr) MSVCRT__wcsicmp_l
@@ -1223,7 +1223,7 @@
 @ cdecl _wmktemp(wstr) MSVCRT__wmktemp
 @ cdecl _wmktemp_s(wstr long) MSVCRT__wmktemp_s
 @ varargs _wopen(wstr long) MSVCRT__wopen
-@ cdecl _wperror(wstr) MSVCRT__wperror
+@ cdecl _wperror(wstr)
 @ extern _wpgmptr MSVCRT__wpgmptr
 @ cdecl _wpopen(wstr wstr) MSVCRT__wpopen
 @ stub _wprintf_l
@@ -1411,7 +1411,7 @@
 @ cdecl memset(ptr long long)
 @ cdecl modf(double ptr) MSVCRT_modf
 @ cdecl -arch=!i386 modff(float ptr) MSVCRT_modff
-@ cdecl perror(str) MSVCRT_perror
+@ cdecl perror(str)
 @ cdecl pow(double double) MSVCRT_pow
 @ cdecl -arch=!i386 powf(float float) MSVCRT_powf
 @ varargs printf(str) MSVCRT_printf
@@ -1456,8 +1456,8 @@
 @ cdecl strcpy(ptr str)
 @ cdecl strcpy_s(ptr long str) MSVCRT_strcpy_s
 @ cdecl strcspn(str str) MSVCRT_strcspn
-@ cdecl strerror(long) MSVCRT_strerror
-@ cdecl strerror_s(ptr long long) MSVCRT_strerror_s
+@ cdecl strerror(long)
+@ cdecl strerror_s(ptr long long)
 @ cdecl strftime(ptr long str ptr) MSVCRT_strftime
 @ cdecl strlen(str)
 @ cdecl strncat(str str long) MSVCRT_strncat

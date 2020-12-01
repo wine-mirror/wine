@@ -308,8 +308,8 @@ int CDECL MSVCRT__wcsnset_s( wchar_t *str, size_t size, wchar_t c, size_t count 
         if(!str[i]) return 0;
 
     str[0] = 0;
-    MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
-    *MSVCRT__errno() = EINVAL;
+    _invalid_parameter(NULL, NULL, NULL, 0, 0);
+    *_errno() = EINVAL;
     return EINVAL;
 }
 
@@ -342,8 +342,8 @@ int CDECL MSVCRT__wcsset_s( wchar_t *str, size_t n, wchar_t c )
     while(*p && --n) *p++ = c;
     if(!n) {
         str[0] = 0;
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
-        *MSVCRT__errno() = EINVAL;
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *_errno() = EINVAL;
         return EINVAL;
     }
     return 0;
@@ -370,7 +370,7 @@ int CDECL MSVCRT__wcsupr_s_l( wchar_t* str, size_t n, _locale_t locale )
   if (!str || !n)
   {
     if (str) *str = '\0';
-    *MSVCRT__errno() = EINVAL;
+    *_errno() = EINVAL;
     return EINVAL;
   }
 
@@ -393,7 +393,7 @@ int CDECL MSVCRT__wcsupr_s_l( wchar_t* str, size_t n, _locale_t locale )
   /* MSDN claims that the function should return and set errno to
    * ERANGE, which doesn't seem to be true based on the tests. */
   *str = '\0';
-  *MSVCRT__errno() = EINVAL;
+  *_errno() = EINVAL;
   return EINVAL;
 }
 
@@ -434,7 +434,7 @@ int CDECL MSVCRT__wcslwr_s_l( wchar_t* str, size_t n, _locale_t locale )
   if (!str || !n)
   {
     if (str) *str = '\0';
-    *MSVCRT__errno() = EINVAL;
+    *_errno() = EINVAL;
     return EINVAL;
   }
 
@@ -457,7 +457,7 @@ int CDECL MSVCRT__wcslwr_s_l( wchar_t* str, size_t n, _locale_t locale )
   /* MSDN claims that the function should return and set errno to
    * ERANGE, which doesn't seem to be true based on the tests. */
   *str = '\0';
-  *MSVCRT__errno() = EINVAL;
+  *_errno() = EINVAL;
   return EINVAL;
 }
 
@@ -574,7 +574,7 @@ double CDECL MSVCRT__wcstod_l(const wchar_t* str, wchar_t** end,
     if (end) *end = (p == beg ? (wchar_t*)str : (wchar_t*)p);
 
     err = fpnum_double(&fp, &ret);
-    if(err) *MSVCRT__errno() = err;
+    if(err) *_errno() = err;
     return ret;
 }
 
@@ -602,7 +602,7 @@ static size_t MSVCRT_wcsrtombs_l(char *mbstr, const wchar_t **wcstr,
 
         for(i=0; i<count; i++) {
             if((*wcstr)[i] > 255) {
-                *MSVCRT__errno() = EILSEQ;
+                *_errno() = EILSEQ;
                 return -1;
             }
 
@@ -618,7 +618,7 @@ static size_t MSVCRT_wcsrtombs_l(char *mbstr, const wchar_t **wcstr,
         tmp = WideCharToMultiByte(locinfo->lc_codepage, WC_NO_BEST_FIT_CHARS,
                 *wcstr, -1, NULL, 0, NULL, pused_default);
         if(!tmp || used_default) {
-            *MSVCRT__errno() = EILSEQ;
+            *_errno() = EILSEQ;
             return -1;
         }
         return tmp-1;
@@ -631,7 +631,7 @@ static size_t MSVCRT_wcsrtombs_l(char *mbstr, const wchar_t **wcstr,
         size = WideCharToMultiByte(locinfo->lc_codepage, WC_NO_BEST_FIT_CHARS,
                 *wcstr, 1, buf, 3, NULL, pused_default);
         if(!size || used_default) {
-            *MSVCRT__errno() = EILSEQ;
+            *_errno() = EILSEQ;
             return -1;
         }
         if(tmp+size > count)
@@ -693,7 +693,7 @@ static int MSVCRT_wcsrtombs_s_l(size_t *ret, char *mbstr, size_t size,
         if(ret)
             *ret = conv+1;
         if(conv == -1)
-            return *MSVCRT__errno();
+            return *_errno();
         return 0;
     }
 
@@ -713,7 +713,7 @@ static int MSVCRT_wcsrtombs_s_l(size_t *ret, char *mbstr, size_t size,
         conv = 0;
         if(size)
             mbstr[0] = '\0';
-        err = *MSVCRT__errno();
+        err = *_errno();
     }else if(conv < size)
         mbstr[conv++] = '\0';
     else if(conv==size && (count==MSVCRT__TRUNCATE || mbstr[conv-1]=='\0')) {
@@ -1167,8 +1167,8 @@ int CDECL MSVCRT__vscprintf_p_l(const char *format,
 
     ret = create_positional_ctx_a(args_ctx, format, args);
     if(ret < 0)  {
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
-        *MSVCRT__errno() = EINVAL;
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *_errno() = EINVAL;
         return ret;
     } else if(ret == 0) {
         ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale,
@@ -1345,8 +1345,8 @@ static int MSVCRT_vswprintf_p_l_opt(wchar_t *buffer, size_t length,
 
     ret = create_positional_ctx_w(args_ctx, format, args);
     if(ret < 0)  {
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
-        *MSVCRT__errno() = EINVAL;
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *_errno() = EINVAL;
         return ret;
     } else if(ret == 0)
         ret = pf_printf_w(puts_clbk_str_w, &puts_ctx, format, locale, MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER | options,
@@ -1724,8 +1724,8 @@ static int MSVCRT_vsprintf_p_l_opt(char *buffer, size_t length, const char *form
 
     ret = create_positional_ctx_a(args_ctx, format, args);
     if(ret < 0) {
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
-        *MSVCRT__errno() = EINVAL;
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *_errno() = EINVAL;
         return ret;
     } else if(ret == 0)
         ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale,
@@ -1963,7 +1963,7 @@ int CDECL MSVCRT__wctomb_s_l(int *len, char *mbchar, size_t size,
         if(wch > 0xff) {
             if(mbchar && size>0)
                 memset(mbchar, 0, size);
-            *MSVCRT__errno() = EILSEQ;
+            *_errno() = EILSEQ;
             return EILSEQ;
         }
 
@@ -1987,7 +1987,7 @@ int CDECL MSVCRT__wctomb_s_l(int *len, char *mbchar, size_t size,
             return ERANGE;
         }
 
-        *MSVCRT__errno() = EILSEQ;
+        *_errno() = EILSEQ;
         return EILSEQ;
     }
 
@@ -2552,10 +2552,10 @@ __int64 CDECL MSVCRT__wcstoi64_l(const wchar_t *nptr,
 
         if(!negative && (ret>I64_MAX/base || ret*base>I64_MAX-v)) {
             ret = I64_MAX;
-            *MSVCRT__errno() = ERANGE;
+            *_errno() = ERANGE;
         } else if(negative && (ret<I64_MIN/base || ret*base<I64_MIN-v)) {
             ret = I64_MIN;
-            *MSVCRT__errno() = ERANGE;
+            *_errno() = ERANGE;
         } else
             ret = ret*base + v;
     }
@@ -2585,10 +2585,10 @@ __msvcrt_long CDECL MSVCRT__wcstol_l(const wchar_t *s,
 
     if(ret > LONG_MAX) {
         ret = LONG_MAX;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     }else if(ret < LONG_MIN) {
         ret = LONG_MIN;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     }
     return ret;
 }
@@ -2611,10 +2611,10 @@ int __cdecl MSVCRT__wtoi_l(const wchar_t *str, _locale_t locale)
 
     if(ret > INT_MAX) {
         ret = INT_MAX;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     } else if(ret < INT_MIN) {
         ret = INT_MIN;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     }
     return ret;
 }
@@ -2636,10 +2636,10 @@ __msvcrt_long __cdecl MSVCRT__wtol_l(const wchar_t *str, _locale_t locale)
 
     if(ret > LONG_MAX) {
         ret = LONG_MAX;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     } else if(ret < LONG_MIN) {
         ret = LONG_MIN;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     }
     return ret;
 }
@@ -2722,7 +2722,7 @@ unsigned __int64 CDECL MSVCRT__wcstoui64_l(const wchar_t *nptr,
 
         if(ret>UI64_MAX/base || ret*base>UI64_MAX-v) {
             ret = UI64_MAX;
-            *MSVCRT__errno() = ERANGE;
+            *_errno() = ERANGE;
         } else
             ret = ret*base + v;
     }
@@ -2752,10 +2752,10 @@ __msvcrt_ulong __cdecl MSVCRT__wcstoul_l(const wchar_t *s,
 
     if(ret > ULONG_MAX) {
         ret = ULONG_MAX;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     }else if(ret < -(__int64)ULONG_MAX) {
         ret = 1;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     }
     return ret;
 }
@@ -2927,14 +2927,14 @@ size_t CDECL MSVCRT__wcsxfrm_l(wchar_t *dest, const wchar_t *src,
             LCMAP_SORTKEY, src, -1, NULL, 0);
     if(!ret) {
         if(len) dest[0] = 0;
-        *MSVCRT__errno() = EILSEQ;
+        *_errno() = EILSEQ;
         return INT_MAX;
     }
     if(!len) return ret-1;
 
     if(ret > len) {
         dest[0] = 0;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return ret-1;
     }
 

@@ -69,7 +69,7 @@ int CDECL MSVCRT_rand_s(unsigned int *pval)
 {
     if (!pval || !RtlGenRandom(pval, sizeof(*pval)))
     {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
     return 0;

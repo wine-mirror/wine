@@ -1188,8 +1188,8 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                         locale, three_digit_exp, standard_rounding);
         } else {
             if(invoke_invalid_param_handler) {
-                MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
-                *MSVCRT__errno() = EINVAL;
+                _invalid_parameter(NULL, NULL, NULL, 0, 0);
+                *_errno() = EINVAL;
                 return -1;
             }
 

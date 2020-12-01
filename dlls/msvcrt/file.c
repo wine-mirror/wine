@@ -277,7 +277,7 @@ static inline BOOL alloc_pioinfo_block(int fd)
 
     if(fd<0 || fd>=MSVCRT_MAX_FILES)
     {
-        *MSVCRT__errno() = ENFILE;
+        *_errno() = ENFILE;
         return FALSE;
     }
 
@@ -285,7 +285,7 @@ static inline BOOL alloc_pioinfo_block(int fd)
     if(!block)
     {
         WARN(":out of memory!\n");
-        *MSVCRT__errno() = ENOMEM;
+        *_errno() = ENOMEM;
         return FALSE;
     }
     for(i=0; i<MSVCRT_FD_BLOCK_SIZE; i++)
@@ -338,7 +338,7 @@ static inline ioinfo* get_ioinfo_alloc(int *fd)
     }
 
     WARN(":files exhausted!\n");
-    *MSVCRT__errno() = ENFILE;
+    *_errno() = ENFILE;
     return &MSVCRT___badioinfo;
 }
 
@@ -363,7 +363,7 @@ static inline MSVCRT_FILE* msvcrt_get_file(int i)
         MSVCRT_fstream[i/MSVCRT_FD_BLOCK_SIZE] = MSVCRT_calloc(MSVCRT_FD_BLOCK_SIZE, sizeof(file_crit));
         if(!MSVCRT_fstream[i/MSVCRT_FD_BLOCK_SIZE]) {
             ERR("out of memory\n");
-            *MSVCRT__errno() = ENOMEM;
+            *_errno() = ENOMEM;
             return NULL;
         }
 
@@ -476,8 +476,8 @@ static int msvcrt_init_fp(MSVCRT_FILE* file, int fd, unsigned stream_flags)
   if (!(get_ioinfo_nolock(fd)->wxflag & WX_OPEN))
   {
     WARN(":invalid fd %d\n",fd);
-    *MSVCRT___doserrno() = 0;
-    *MSVCRT__errno() = EBADF;
+    *__doserrno() = 0;
+    *_errno() = EBADF;
     return -1;
   }
   file->_ptr = file->_base = NULL;
@@ -822,11 +822,11 @@ int CDECL MSVCRT__access(const char *filename, int mode)
  */
 int CDECL MSVCRT__access_s(const char *filename, int mode)
 {
-  if (!MSVCRT_CHECK_PMT(filename != NULL)) return *MSVCRT__errno();
-  if (!MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0)) return *MSVCRT__errno();
+  if (!MSVCRT_CHECK_PMT(filename != NULL)) return *_errno();
+  if (!MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0)) return *_errno();
 
   if (MSVCRT__access(filename, mode) == -1)
-    return *MSVCRT__errno();
+    return *_errno();
   return 0;
 }
 
@@ -857,11 +857,11 @@ int CDECL MSVCRT__waccess(const wchar_t *filename, int mode)
  */
 int CDECL MSVCRT__waccess_s(const wchar_t *filename, int mode)
 {
-  if (!MSVCRT_CHECK_PMT(filename != NULL)) return *MSVCRT__errno();
-  if (!MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0)) return *MSVCRT__errno();
+  if (!MSVCRT_CHECK_PMT(filename != NULL)) return *_errno();
+  if (!MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0)) return *_errno();
 
   if (MSVCRT__waccess(filename, mode) == -1)
-    return *MSVCRT__errno();
+    return *_errno();
   return 0;
 }
 
@@ -1050,7 +1050,7 @@ int CDECL MSVCRT__close(int fd)
   TRACE(":fd (%d) handle (%p)\n", fd, info->handle);
 
   if (fd == MSVCRT_NO_CONSOLE_FD) {
-    *MSVCRT__errno() = EBADF;
+    *_errno() = EBADF;
     ret = -1;
   } else if (!MSVCRT_CHECK_PMT_ERR(info->wxflag & WX_OPEN, EBADF)) {
     ret = -1;
@@ -1127,7 +1127,7 @@ int CDECL MSVCRT__dup2(int od, int nd)
   }
   else
   {
-    *MSVCRT__errno() = EBADF;
+    *_errno() = EBADF;
     ret = -1;
   }
 
@@ -1261,7 +1261,7 @@ __int64 CDECL MSVCRT__lseeki64(int fd, __int64 offset, int whence)
 
   if (info->handle == INVALID_HANDLE_VALUE)
   {
-    *MSVCRT__errno() = EBADF;
+    *_errno() = EBADF;
     release_ioinfo(info);
     return -1;
   }
@@ -1269,7 +1269,7 @@ __int64 CDECL MSVCRT__lseeki64(int fd, __int64 offset, int whence)
   if (whence < 0 || whence > 2)
   {
     release_ioinfo(info);
-    *MSVCRT__errno() = EINVAL;
+    *_errno() = EINVAL;
     return -1;
   }
 
@@ -1348,7 +1348,7 @@ int CDECL MSVCRT__locking(int fd, int mode, LONG nbytes)
   if (mode < 0 || mode > 4)
   {
     release_ioinfo(info);
-    *MSVCRT__errno() = EINVAL;
+    *_errno() = EINVAL;
     return -1;
   }
 
@@ -1364,7 +1364,7 @@ int CDECL MSVCRT__locking(int fd, int mode, LONG nbytes)
   {
     release_ioinfo(info);
     FIXME ("Seek failed\n");
-    *MSVCRT__errno() = EINVAL; /* FIXME */
+    *_errno() = EINVAL; /* FIXME */
     return -1;
   }
   if (mode == MSVCRT__LK_LOCK || mode == MSVCRT__LK_RLCK)
@@ -1476,7 +1476,7 @@ int CDECL MSVCRT__chsize_s(int fd, __int64 size)
     }
 
     release_ioinfo(info);
-    return ret ? 0 : *MSVCRT__errno();
+    return ret ? 0 : *_errno();
 }
 
 /*********************************************************************
@@ -1929,7 +1929,7 @@ intptr_t CDECL MSVCRT__get_osfhandle(int fd)
   TRACE(":fd (%d) handle (%p)\n",fd,hand);
 
   if(hand == INVALID_HANDLE_VALUE)
-      *MSVCRT__errno() = EBADF;
+      *_errno() = EBADF;
   return (intptr_t)hand;
 }
 
@@ -1968,7 +1968,7 @@ int CDECL MSVCRT__mktemp_s(char *pattern, size_t size)
     }
 
     pattern[0] = 0;
-    *MSVCRT__errno() = EEXIST;
+    *_errno() = EEXIST;
     return EEXIST;
 }
 
@@ -2043,7 +2043,7 @@ int CDECL MSVCRT__wmktemp_s(wchar_t *pattern, size_t size)
     }
 
     pattern[0] = 0;
-    *MSVCRT__errno() = EEXIST;
+    *_errno() = EEXIST;
     return EEXIST;
 }
 
@@ -2122,7 +2122,7 @@ int CDECL MSVCRT__pipe(int *pfds, unsigned int psize, int textmode)
 
   if (!pfds)
   {
-    *MSVCRT__errno() = EINVAL;
+    *_errno() = EINVAL;
     return -1;
   }
 
@@ -2148,14 +2148,14 @@ int CDECL MSVCRT__pipe(int *pfds, unsigned int psize, int textmode)
       {
         MSVCRT__close(pfds[0]);
         CloseHandle(writeHandle);
-        *MSVCRT__errno() = EMFILE;
+        *_errno() = EMFILE;
       }
     }
     else
     {
       CloseHandle(readHandle);
       CloseHandle(writeHandle);
-      *MSVCRT__errno() = EMFILE;
+      *_errno() = EMFILE;
     }
   }
   else
@@ -2283,7 +2283,7 @@ int CDECL MSVCRT__wsopen_dispatch( const wchar_t* path, int oflags, int shflags,
   if (hand == INVALID_HANDLE_VALUE)  {
     WARN(":failed-last error (%d)\n",GetLastError());
     msvcrt_set_errno(GetLastError());
-    return *MSVCRT__errno();
+    return *_errno();
   }
 
   if (oflags & (MSVCRT__O_WTEXT|MSVCRT__O_U16TEXT|MSVCRT__O_U8TEXT))
@@ -2308,7 +2308,7 @@ int CDECL MSVCRT__wsopen_dispatch( const wchar_t* path, int oflags, int shflags,
                   WARN("error writing BOM\n");
                   CloseHandle(hand);
                   msvcrt_set_errno(GetLastError());
-                  return *MSVCRT__errno();
+                  return *_errno();
               }
           }
           else
@@ -2323,7 +2323,7 @@ int CDECL MSVCRT__wsopen_dispatch( const wchar_t* path, int oflags, int shflags,
                   WARN("error writing BOM\n");
                   CloseHandle(hand);
                   msvcrt_set_errno(GetLastError());
-                  return *MSVCRT__errno();
+                  return *_errno();
               }
           }
       }
@@ -2339,7 +2339,7 @@ int CDECL MSVCRT__wsopen_dispatch( const wchar_t* path, int oflags, int shflags,
 
   *fd = msvcrt_alloc_fd(hand, wxflag);
   if (*fd == -1)
-      return *MSVCRT__errno();
+      return *_errno();
 
   if (oflags & MSVCRT__O_WTEXT)
       get_ioinfo_nolock(*fd)->exflag |= EF_UTF16|EF_UNK_UNICODE;
@@ -2759,14 +2759,14 @@ static int read_i(int fd, ioinfo *fdinfo, void *buf, unsigned int count)
         TRACE(":fd (%d) handle (%p) buf (%p) len (%d)\n", fd, fdinfo->handle, buf, count);
     if (fdinfo->handle == INVALID_HANDLE_VALUE)
     {
-        *MSVCRT__errno() = EBADF;
+        *_errno() = EBADF;
         return -1;
     }
 
     utf16 = (fdinfo->exflag & EF_UTF16) != 0;
     if (((fdinfo->exflag&EF_UTF8) || utf16) && count&1)
     {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return -1;
     }
 
@@ -2909,7 +2909,7 @@ int CDECL MSVCRT__read(int fd, void *buf, unsigned int count)
     int num_read;
 
     if(fd == MSVCRT_NO_CONSOLE_FD) {
-        *MSVCRT__errno() = EBADF;
+        *_errno() = EBADF;
         return -1;
     }
 
@@ -2931,13 +2931,13 @@ int CDECL MSVCRT__setmode(int fd,int mode)
 
     if(mode!=MSVCRT__O_TEXT && mode!=MSVCRT__O_BINARY && mode!=MSVCRT__O_WTEXT
                 && mode!=MSVCRT__O_U16TEXT && mode!=MSVCRT__O_U8TEXT) {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         release_ioinfo(info);
         return -1;
     }
 
     if(info == &MSVCRT___badioinfo) {
-        *MSVCRT__errno() = EBADF;
+        *_errno() = EBADF;
         return EOF;
     }
 
@@ -2978,14 +2978,14 @@ int CDECL MSVCRT_stat64(const char* path, struct MSVCRT__stat64 * buf)
 
   if (plen==2 && path[1]==':')
   {
-    *MSVCRT__errno() = ENOENT;
+    *_errno() = ENOENT;
     return -1;
   }
 
 #if _MSVCR_VER<140
   if (plen>=2 && path[plen-2]!=':' && (path[plen-1]=='\\' || path[plen-1]=='/'))
   {
-    *MSVCRT__errno() = ENOENT;
+    *_errno() = ENOENT;
     return -1;
   }
 #endif
@@ -2993,7 +2993,7 @@ int CDECL MSVCRT_stat64(const char* path, struct MSVCRT__stat64 * buf)
   if (!GetFileAttributesExA(path, GetFileExInfoStandard, &hfi))
   {
       TRACE("failed (%d)\n",GetLastError());
-      *MSVCRT__errno() = ENOENT;
+      *_errno() = ENOENT;
       return -1;
   }
 
@@ -3134,14 +3134,14 @@ int CDECL MSVCRT__wstat64(const wchar_t* path, struct MSVCRT__stat64 * buf)
 
   if (plen==2 && path[1]==':')
   {
-    *MSVCRT__errno() = ENOENT;
+    *_errno() = ENOENT;
     return -1;
   }
 
 #if _MSVCR_VER<140
   if (plen>=2 && path[plen-2]!=':' && (path[plen-1]=='\\' || path[plen-1]=='/'))
   {
-    *MSVCRT__errno() = ENOENT;
+    *_errno() = ENOENT;
     return -1;
   }
 #endif
@@ -3149,7 +3149,7 @@ int CDECL MSVCRT__wstat64(const wchar_t* path, struct MSVCRT__stat64 * buf)
   if (!GetFileAttributesExW(path, GetFileExInfoStandard, &hfi))
   {
       TRACE("failed (%d)\n",GetLastError());
-      *MSVCRT__errno() = ENOENT;
+      *_errno() = ENOENT;
       return -1;
   }
 
@@ -3441,14 +3441,14 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
 
     if (hand == INVALID_HANDLE_VALUE || fd == MSVCRT_NO_CONSOLE_FD)
     {
-        *MSVCRT__errno() = EBADF;
+        *_errno() = EBADF;
         release_ioinfo(info);
         return -1;
     }
 
     if (((info->exflag&EF_UTF8) || (info->exflag&EF_UTF16)) && count&1)
     {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         release_ioinfo(info);
         return -1;
     }
@@ -3508,7 +3508,7 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
                         info->dbcsBufferUsed = TRUE;
                         break;
 #else
-                        *MSVCRT__errno() = EINVAL;
+                        *_errno() = EINVAL;
                         release_ioinfo(info);
                         return -1;
 #endif
@@ -3948,7 +3948,7 @@ int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file)
     if(!(file->_flag & MSVCRT__IOWRT)) {
         if(!(file->_flag & MSVCRT__IORW)) {
             file->_flag |= MSVCRT__IOERR;
-            *MSVCRT__errno() = EBADF;
+            *_errno() = EBADF;
             return EOF;
         }
         file->_flag |= MSVCRT__IOWRT;
@@ -4157,15 +4157,15 @@ MSVCRT_FILE * CDECL MSVCRT__fsopen(const char *path, const char *mode, int share
     wchar_t *pathW = NULL, *modeW = NULL;
 
     if (path && !(pathW = msvcrt_wstrdupa(path))) {
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
-        *MSVCRT__errno() = EINVAL;
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *_errno() = EINVAL;
         return NULL;
     }
     if (mode && !(modeW = msvcrt_wstrdupa(mode)))
     {
         MSVCRT_free(pathW);
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
-        *MSVCRT__errno() = EINVAL;
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+        *_errno() = EINVAL;
         return NULL;
     }
 
@@ -4197,7 +4197,7 @@ int CDECL MSVCRT_fopen_s(MSVCRT_FILE** pFile,
     *pFile = MSVCRT_fopen(filename, mode);
 
     if(!*pFile)
-        return *MSVCRT__errno();
+        return *_errno();
     return 0;
 }
 
@@ -4222,7 +4222,7 @@ int CDECL MSVCRT__wfopen_s(MSVCRT_FILE** pFile, const wchar_t *filename,
     *pFile = MSVCRT__wfopen(filename, mode);
 
     if(!*pFile)
-        return *MSVCRT__errno();
+        return *_errno();
     return 0;
 }
 
@@ -4487,7 +4487,7 @@ int CDECL MSVCRT__wfreopen_s(MSVCRT_FILE** pFile,
     *pFile = MSVCRT__wfreopen(path, mode, file);
 
     if(!*pFile)
-        return *MSVCRT__errno();
+        return *_errno();
     return 0;
 }
 
@@ -4528,7 +4528,7 @@ int CDECL MSVCRT_freopen_s(MSVCRT_FILE** pFile,
     *pFile = MSVCRT_freopen(path, mode, file);
 
     if(!*pFile)
-        return *MSVCRT__errno();
+        return *_errno();
     return 0;
 }
 
@@ -4736,7 +4736,7 @@ char * CDECL MSVCRT_gets_s(char *buf, size_t len)
     if (!len)
     {
         *buf_start = 0;
-        MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
         return NULL;
     }
 
@@ -4947,7 +4947,7 @@ static int tmpnam_helper(char *s, size_t size, int *tmpnam_unique, int tmp_max)
 
     if (size < 3) {
         if (size) *s = 0;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return ERANGE;
     }
     *p++ = '\\';
@@ -4956,7 +4956,7 @@ static int tmpnam_helper(char *s, size_t size, int *tmpnam_unique, int tmp_max)
     digits = msvcrt_int_to_base32(GetCurrentProcessId(), tmpstr);
     if (digits+1 > size) {
         *s = 0;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return ERANGE;
     }
     memcpy(p, tmpstr, digits*sizeof(tmpstr[0]));
@@ -4973,7 +4973,7 @@ static int tmpnam_helper(char *s, size_t size, int *tmpnam_unique, int tmp_max)
         digits = msvcrt_int_to_base32(digits, tmpstr);
         if (digits+1 > size) {
             *s = 0;
-            *MSVCRT__errno() = ERANGE;
+            *_errno() = ERANGE;
             return ERANGE;
         }
         memcpy(p, tmpstr, digits*sizeof(tmpstr[0]));
@@ -5018,7 +5018,7 @@ static int wtmpnam_helper(wchar_t *s, size_t size, int *tmpnam_unique, int tmp_m
 
     if (size < 3) {
         if (size) *s = 0;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return ERANGE;
     }
     *p++ = '\\';
@@ -5027,7 +5027,7 @@ static int wtmpnam_helper(wchar_t *s, size_t size, int *tmpnam_unique, int tmp_m
     digits = msvcrt_int_to_base32_w(GetCurrentProcessId(), tmpstr);
     if (digits+1 > size) {
         *s = 0;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return ERANGE;
     }
     memcpy(p, tmpstr, digits*sizeof(tmpstr[0]));
@@ -5044,7 +5044,7 @@ static int wtmpnam_helper(wchar_t *s, size_t size, int *tmpnam_unique, int tmp_m
         digits = msvcrt_int_to_base32_w(digits, tmpstr);
         if (digits+1 > size) {
             *s = 0;
-            *MSVCRT__errno() = ERANGE;
+            *_errno() = ERANGE;
             return ERANGE;
         }
         memcpy(p, tmpstr, digits*sizeof(tmpstr[0]));
@@ -5164,8 +5164,8 @@ static int vfprintf_helper(DWORD options, MSVCRT_FILE* file, const char *format,
         memset(args_ctx, 0, sizeof(args_ctx));
         ret = create_positional_ctx_a(args_ctx, format, valist);
         if(ret < 0) {
-            MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
-            *MSVCRT__errno() = EINVAL;
+            _invalid_parameter(NULL, NULL, NULL, 0, 0);
+            *_errno() = EINVAL;
             return ret;
         } else if(!ret)
             options &= ~MSVCRT_PRINTF_POSITIONAL_PARAMS;
@@ -5196,8 +5196,8 @@ static int vfwprintf_helper(DWORD options, MSVCRT_FILE* file, const wchar_t *for
         memset(args_ctx, 0, sizeof(args_ctx));
         ret = create_positional_ctx_w(args_ctx, format, valist);
         if(ret < 0) {
-            MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
-            *MSVCRT__errno() = EINVAL;
+            _invalid_parameter(NULL, NULL, NULL, 0, 0);
+            *_errno() = EINVAL;
             return ret;
         } else if(!ret)
             options &= ~MSVCRT_PRINTF_POSITIONAL_PARAMS;

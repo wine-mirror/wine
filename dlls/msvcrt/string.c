@@ -60,7 +60,7 @@ int CDECL MSVCRT__strlwr_s_l(char *str, size_t len, _locale_t locale)
 
     if (!str || !len)
     {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -73,7 +73,7 @@ int CDECL MSVCRT__strlwr_s_l(char *str, size_t len, _locale_t locale)
     if (!len)
     {
         str[0] = '\0';
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -139,7 +139,7 @@ int CDECL MSVCRT__strupr_s_l(char *str, size_t len, _locale_t locale)
 
     if (!str || !len)
     {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -152,7 +152,7 @@ int CDECL MSVCRT__strupr_s_l(char *str, size_t len, _locale_t locale)
     if (!len)
     {
         str[0] = '\0';
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -227,8 +227,8 @@ int CDECL MSVCRT__strnset_s(char *str, size_t size, int c, size_t count)
         if(!str[i]) return 0;
 
     str[0] = 0;
-    MSVCRT__invalid_parameter(NULL, NULL, NULL, 0, 0);
-    *MSVCRT__errno() = EINVAL;
+    _invalid_parameter(NULL, NULL, NULL, 0, 0);
+    *_errno() = EINVAL;
     return EINVAL;
 }
 
@@ -1010,7 +1010,7 @@ static inline double strtod_helper(const char *str, char **end, _locale_t locale
 
     if (perr) *perr = 0;
 #if _MSVCR_VER == 0
-    else *MSVCRT__errno() = 0;
+    else *_errno() = 0;
 #endif
 
     if (!MSVCRT_CHECK_PMT(str != NULL)) {
@@ -1033,7 +1033,7 @@ static inline double strtod_helper(const char *str, char **end, _locale_t locale
 
     err = fpnum_double(&fp, &ret);
     if (perr) *perr = err;
-    else if(err) *MSVCRT__errno() = err;
+    else if(err) *_errno() = err;
     return ret;
 }
 
@@ -1411,14 +1411,14 @@ size_t CDECL MSVCRT__strxfrm_l( char *dest, const char *src,
             LCMAP_SORTKEY, src, -1, NULL, 0);
     if(!ret) {
         if(len) dest[0] = 0;
-        *MSVCRT__errno() = EILSEQ;
+        *_errno() = EILSEQ;
         return INT_MAX;
     }
     if(!len) return ret-1;
 
     if(ret > len) {
         dest[0] = 0;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return ret-1;
     }
 
@@ -1579,10 +1579,10 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, _loca
 
         if(!negative && (ret>I64_MAX/base || ret*base>I64_MAX-v)) {
             ret = I64_MAX;
-            *MSVCRT__errno() = ERANGE;
+            *_errno() = ERANGE;
         } else if(negative && (ret<I64_MIN/base || ret*base<I64_MIN-v)) {
             ret = I64_MIN;
-            *MSVCRT__errno() = ERANGE;
+            *_errno() = ERANGE;
         } else
             ret = ret*base + v;
     }
@@ -1610,10 +1610,10 @@ int __cdecl MSVCRT__atoi_l(const char *str, _locale_t locale)
 
     if(ret > INT_MAX) {
         ret = INT_MAX;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     } else if(ret < INT_MIN) {
         ret = INT_MIN;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     }
     return ret;
 }
@@ -1678,10 +1678,10 @@ __msvcrt_long CDECL MSVCRT__atol_l(const char *str, _locale_t locale)
 
     if(ret > LONG_MAX) {
         ret = LONG_MAX;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     } else if(ret < LONG_MIN) {
         ret = LONG_MIN;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     }
     return ret;
 }
@@ -1728,10 +1728,10 @@ __msvcrt_long CDECL MSVCRT__strtol_l(const char* nptr,
 
     if(ret > LONG_MAX) {
         ret = LONG_MAX;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     } else if(ret < LONG_MIN) {
         ret = LONG_MIN;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     }
 
     return ret;
@@ -1754,10 +1754,10 @@ __msvcrt_ulong CDECL MSVCRT_strtoul_l(const char* nptr, char** end, int base, _l
 
     if(ret > ULONG_MAX) {
         ret = ULONG_MAX;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     }else if(ret < -(__int64)ULONG_MAX) {
         ret = 1;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     }
 
     return ret;
@@ -1828,7 +1828,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
 
         if(ret>UI64_MAX/base || ret*base>UI64_MAX-v) {
             ret = UI64_MAX;
-            *MSVCRT__errno() = ERANGE;
+            *_errno() = ERANGE;
         } else
             ret = ret*base + v;
     }
@@ -2117,7 +2117,7 @@ int CDECL MSVCRT__ultoa_s(__msvcrt_ulong value, char *str, size_t size, int radi
         if (str && size)
             str[0] = '\0';
 
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -2149,7 +2149,7 @@ int CDECL MSVCRT__ultoa_s(__msvcrt_ulong value, char *str, size_t size, int radi
             *p++ = *pos--;
 
         str[0] = '\0';
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return ERANGE;
     }
 
@@ -2171,7 +2171,7 @@ int CDECL MSVCRT__ultow_s(__msvcrt_ulong value, wchar_t *str, size_t size, int r
         if (str && size)
             str[0] = '\0';
 
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -2203,7 +2203,7 @@ int CDECL MSVCRT__ultow_s(__msvcrt_ulong value, wchar_t *str, size_t size, int r
             *p++ = *pos--;
 
         str[0] = '\0';
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return ERANGE;
     }
 

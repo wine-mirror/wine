@@ -235,7 +235,7 @@ static __time64_t mktime_helper(struct tm *mstm, BOOL local)
     }
 
     if(ret<70 || ret>1100) {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return -1;
     }
 
@@ -245,7 +245,7 @@ static __time64_t mktime_helper(struct tm *mstm, BOOL local)
     st.wYear = ret+1900;
 
     if(!SystemTimeToFileTime(&st, &ft)) {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return -1;
     }
 
@@ -300,7 +300,7 @@ static __time64_t mktime_helper(struct tm *mstm, BOOL local)
     mstm->tm_isdst = use_dst ? 1 : 0;
 
     if(ret < TICKS_1601_TO_1970) {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return -1;
     }
     ret = (ret-TICKS_1601_TO_1970)/TICKSPERSEC;
@@ -388,7 +388,7 @@ int CDECL _localtime64_s(struct tm *res, const __time64_t *secs)
         if (res)
             write_invalid_msvcrt_tm(res);
 
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -462,7 +462,7 @@ int CDECL _localtime32_s(struct tm *time, const __time32_t *secs)
         if (time)
             write_invalid_msvcrt_tm(time);
 
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -500,7 +500,7 @@ int CDECL MSVCRT__gmtime64_s(struct tm *res, const __time64_t *secs)
             write_invalid_msvcrt_tm(res);
         }
 
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -604,12 +604,12 @@ int CDECL _strdate_s(char* date, size_t size)
         date[0] = '\0';
 
     if(!date) {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
     if(size < 9) {
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return ERANGE;
     }
 
@@ -635,12 +635,12 @@ int CDECL _wstrdate_s(wchar_t* date, size_t size)
         date[0] = '\0';
 
     if(!date) {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
     if(size < 9) {
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return ERANGE;
     }
 
@@ -666,12 +666,12 @@ int CDECL _strtime_s(char* time, size_t size)
         time[0] = '\0';
 
     if(!time) {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
     if(size < 9) {
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return ERANGE;
     }
 
@@ -697,12 +697,12 @@ int CDECL _wstrtime_s(wchar_t* time, size_t size)
         time[0] = '\0';
 
     if(!time) {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
     if(size < 9) {
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return ERANGE;
     }
 
@@ -916,13 +916,13 @@ int CDECL MSVCRT__get_tzname(size_t *ret, char *buf, size_t bufsize, int index)
         timezone = tzname_dst;
         break;
     default:
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
     if(!ret || (!buf && bufsize > 0) || (buf && !bufsize))
     {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -963,7 +963,7 @@ static inline BOOL strftime_nstr(STRFTIME_CHAR *str, size_t *pos,
     {
         if(*pos >= max) {
             *str = 0;
-            *MSVCRT__errno() = ERANGE;
+            *_errno() = ERANGE;
             return FALSE;
         }
 
@@ -992,7 +992,7 @@ static inline BOOL strftime_int(STRFTIME_CHAR *str, size_t *pos, size_t max,
 #endif
     if(len == -1) {
         *str = 0;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return FALSE;
     }
 
@@ -1186,7 +1186,7 @@ static size_t strftime_impl(STRFTIME_CHAR *str, size_t max,
     if(!str || !format) {
         if(str && max)
             *str = 0;
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return 0;
     }
 
@@ -1513,7 +1513,7 @@ static size_t strftime_impl(STRFTIME_CHAR *str, size_t max,
     if(ret == max) {
         if(max)
             *str = 0;
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return 0;
     }
 
@@ -1662,7 +1662,7 @@ static char* asctime_buf(char *buf, const struct tm *mstm)
             || mstm->tm_wday<0 || mstm->tm_wday>6
             || mstm->tm_year<0 || mstm->tm_mday<0
             || mstm->tm_mday>MonthLengths[IsLeapYear(1900+mstm->tm_year)][mstm->tm_mon]) {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return NULL;
     }
 
@@ -1690,7 +1690,7 @@ char * CDECL MSVCRT_asctime(const struct tm *mstm)
     if (!data->asctime_buffer) {
         data->asctime_buffer = MSVCRT_malloc(26);
         if (!data->asctime_buffer) {
-            *MSVCRT__errno() = ENOMEM;
+            *_errno() = ENOMEM;
             return NULL;
         }
     }
@@ -1731,7 +1731,7 @@ wchar_t * CDECL MSVCRT__wasctime(const struct tm *mstm)
     if(!data->wasctime_buffer) {
         data->wasctime_buffer = MSVCRT_malloc(26*sizeof(wchar_t));
         if(!data->wasctime_buffer) {
-            *MSVCRT__errno() = ENOMEM;
+            *_errno() = ENOMEM;
             return NULL;
         }
     }

@@ -101,11 +101,11 @@ static double math_error(int type, const char *name, double arg1, double arg2, d
     switch (type)
     {
     case _DOMAIN:
-        *MSVCRT__errno() = EDOM;
+        *_errno() = EDOM;
         break;
     case _SING:
     case _OVERFLOW:
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         break;
     case _UNDERFLOW:
         /* don't set errno */
@@ -189,7 +189,7 @@ float CDECL MSVCRT__copysignf( float x, float y )
  */
 float CDECL MSVCRT__nextafterf( float num, float next )
 {
-    if (!isfinite(num) || !isfinite(next)) *MSVCRT__errno() = EDOM;
+    if (!isfinite(num) || !isfinite(next)) *_errno() = EDOM;
     return unix_funcs->nextafterf( num, next );
 }
 
@@ -1578,9 +1578,9 @@ double CDECL MSVCRT_floor( double x )
 double CDECL MSVCRT_fma( double x, double y, double z )
 {
   double w = unix_funcs->fma(x, y, z);
-  if ((isinf(x) && y == 0) || (x == 0 && isinf(y))) *MSVCRT__errno() = EDOM;
-  else if (isinf(x) && isinf(z) && x != z) *MSVCRT__errno() = EDOM;
-  else if (isinf(y) && isinf(z) && y != z) *MSVCRT__errno() = EDOM;
+  if ((isinf(x) && y == 0) || (x == 0 && isinf(y))) *_errno() = EDOM;
+  else if (isinf(x) && isinf(z) && x != z) *_errno() = EDOM;
+  else if (isinf(y) && isinf(z) && y != z) *_errno() = EDOM;
   return w;
 }
 
@@ -1590,9 +1590,9 @@ double CDECL MSVCRT_fma( double x, double y, double z )
 float CDECL MSVCRT_fmaf( float x, float y, float z )
 {
   float w = unix_funcs->fmaf(x, y, z);
-  if ((isinf(x) && y == 0) || (x == 0 && isinf(y))) *MSVCRT__errno() = EDOM;
-  else if (isinf(x) && isinf(z) && x != z) *MSVCRT__errno() = EDOM;
-  else if (isinf(y) && isinf(z) && y != z) *MSVCRT__errno() = EDOM;
+  if ((isinf(x) && y == 0) || (x == 0 && isinf(y))) *_errno() = EDOM;
+  else if (isinf(x) && isinf(z) && x != z) *_errno() = EDOM;
+  else if (isinf(y) && isinf(z) && y != z) *_errno() = EDOM;
   return w;
 }
 
@@ -2283,11 +2283,11 @@ double CDECL MSVCRT__y0(double num)
 {
   double retval;
 
-  if (!isfinite(num)) *MSVCRT__errno() = EDOM;
+  if (!isfinite(num)) *_errno() = EDOM;
   retval = unix_funcs->y0( num );
   if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
-    *MSVCRT__errno() = EDOM;
+    *_errno() = EDOM;
     retval = NAN;
   }
   return retval;
@@ -2300,11 +2300,11 @@ double CDECL MSVCRT__y1(double num)
 {
   double retval;
 
-  if (!isfinite(num)) *MSVCRT__errno() = EDOM;
+  if (!isfinite(num)) *_errno() = EDOM;
   retval = unix_funcs->y1( num );
   if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
-    *MSVCRT__errno() = EDOM;
+    *_errno() = EDOM;
     retval = NAN;
   }
   return retval;
@@ -2317,11 +2317,11 @@ double CDECL MSVCRT__yn(int order, double num)
 {
   double retval;
 
-  if (!isfinite(num)) *MSVCRT__errno() = EDOM;
+  if (!isfinite(num)) *_errno() = EDOM;
   retval = unix_funcs->yn( order, num );
   if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
-    *MSVCRT__errno() = EDOM;
+    *_errno() = EDOM;
     retval = NAN;
   }
   return retval;
@@ -2354,7 +2354,7 @@ double CDECL MSVCRT_nexttoward(double num, double next)
     if (!(MSVCRT__fpclass(ret) & (MSVCRT__FPCLASS_PN | MSVCRT__FPCLASS_NN
             | MSVCRT__FPCLASS_SNAN | MSVCRT__FPCLASS_QNAN)) && !isinf(num))
     {
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     }
     return ret;
 }
@@ -2368,7 +2368,7 @@ float CDECL MSVCRT_nexttowardf(float num, double next)
     if (!(MSVCRT__fpclass(ret) & (MSVCRT__FPCLASS_PN | MSVCRT__FPCLASS_NN
             | MSVCRT__FPCLASS_SNAN | MSVCRT__FPCLASS_QNAN)) && !isinf(num))
     {
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
     }
     return ret;
 }
@@ -2381,7 +2381,7 @@ float CDECL MSVCRT_nexttowardf(float num, double next)
 double CDECL MSVCRT__nextafter(double num, double next)
 {
   double retval;
-  if (!isfinite(num) || !isfinite(next)) *MSVCRT__errno() = EDOM;
+  if (!isfinite(num) || !isfinite(next)) *_errno() = EDOM;
   retval = unix_funcs->nextafter(num,next);
   return retval;
 }
@@ -2585,7 +2585,7 @@ int CDECL MSVCRT__fcvt_s(char* outbuffer, size_t size, double number, int ndigit
 
     if (!outbuffer || !decpt || !sign || size == 0)
     {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -2667,12 +2667,12 @@ int CDECL MSVCRT__fcvt_s(char* outbuffer, size_t size, double number, int ndigit
 char * CDECL MSVCRT__gcvt( double number, int ndigit, char *buff )
 {
     if(!buff) {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return NULL;
     }
 
     if(ndigit < 0) {
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return NULL;
     }
 
@@ -2688,7 +2688,7 @@ int CDECL MSVCRT__gcvt_s(char *buff, size_t size, double number, int digits)
     int len;
 
     if(!buff) {
-        *MSVCRT__errno() = EINVAL;
+        *_errno() = EINVAL;
         return EINVAL;
     }
 
@@ -2696,14 +2696,14 @@ int CDECL MSVCRT__gcvt_s(char *buff, size_t size, double number, int digits)
         if(size)
             buff[0] = '\0';
 
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return ERANGE;
     }
 
     len = MSVCRT__scprintf("%.*g", digits, number);
     if(len > size) {
         buff[0] = '\0';
-        *MSVCRT__errno() = ERANGE;
+        *_errno() = ERANGE;
         return ERANGE;
     }
 
@@ -3300,7 +3300,7 @@ LDOUBLE CDECL MSVCR120_cbrtl(LDOUBLE x)
 double CDECL MSVCR120_exp2(double x)
 {
     double ret = unix_funcs->exp2( x );
-    if (isfinite(x) && !isfinite(ret)) *MSVCRT__errno() = ERANGE;
+    if (isfinite(x) && !isfinite(ret)) *_errno() = ERANGE;
     return ret;
 }
 
@@ -3310,7 +3310,7 @@ double CDECL MSVCR120_exp2(double x)
 float CDECL MSVCR120_exp2f(float x)
 {
     float ret = unix_funcs->exp2f( x );
-    if (isfinite(x) && !isfinite(ret)) *MSVCRT__errno() = ERANGE;
+    if (isfinite(x) && !isfinite(ret)) *_errno() = ERANGE;
     return ret;
 }
 
@@ -3328,7 +3328,7 @@ LDOUBLE CDECL MSVCR120_exp2l(LDOUBLE x)
 double CDECL MSVCR120_expm1(double x)
 {
     double ret = unix_funcs->expm1( x );
-    if (isfinite(x) && !isfinite(ret)) *MSVCRT__errno() = ERANGE;
+    if (isfinite(x) && !isfinite(ret)) *_errno() = ERANGE;
     return ret;
 }
 
@@ -3338,7 +3338,7 @@ double CDECL MSVCR120_expm1(double x)
 float CDECL MSVCR120_expm1f(float x)
 {
     float ret = unix_funcs->expm1f( x );
-    if (isfinite(x) && !isfinite(ret)) *MSVCRT__errno() = ERANGE;
+    if (isfinite(x) && !isfinite(ret)) *_errno() = ERANGE;
     return ret;
 }
 
@@ -3355,8 +3355,8 @@ LDOUBLE CDECL MSVCR120_expm1l(LDOUBLE x)
  */
 double CDECL MSVCR120_log1p(double x)
 {
-    if (x < -1) *MSVCRT__errno() = EDOM;
-    else if (x == -1) *MSVCRT__errno() = ERANGE;
+    if (x < -1) *_errno() = EDOM;
+    else if (x == -1) *_errno() = ERANGE;
     return unix_funcs->log1p( x );
 }
 
@@ -3365,8 +3365,8 @@ double CDECL MSVCR120_log1p(double x)
  */
 float CDECL MSVCR120_log1pf(float x)
 {
-    if (x < -1) *MSVCRT__errno() = EDOM;
-    else if (x == -1) *MSVCRT__errno() = ERANGE;
+    if (x < -1) *_errno() = EDOM;
+    else if (x == -1) *_errno() = ERANGE;
     return unix_funcs->log1pf( x );
 }
 
@@ -3383,8 +3383,8 @@ LDOUBLE CDECL MSVCR120_log1pl(LDOUBLE x)
  */
 double CDECL MSVCR120_log2(double x)
 {
-    if (x < 0) *MSVCRT__errno() = EDOM;
-    else if (x == 0) *MSVCRT__errno() = ERANGE;
+    if (x < 0) *_errno() = EDOM;
+    else if (x == 0) *_errno() = ERANGE;
     return unix_funcs->log2( x );
 }
 
@@ -3393,8 +3393,8 @@ double CDECL MSVCR120_log2(double x)
  */
 float CDECL MSVCR120_log2f(float x)
 {
-    if (x < 0) *MSVCRT__errno() = EDOM;
-    else if (x == 0) *MSVCRT__errno() = ERANGE;
+    if (x < 0) *_errno() = EDOM;
+    else if (x == 0) *_errno() = ERANGE;
     return unix_funcs->log2f( x );
 }
 
@@ -3838,7 +3838,7 @@ double CDECL MSVCR120_acosh(double x)
     {
         fenv_t env;
 
-        *MSVCRT__errno() = EDOM;
+        *_errno() = EDOM;
         MSVCRT_fegetenv(&env);
         env._Fe_stat |= FE_INVALID;
         MSVCRT_fesetenv(&env);
@@ -3856,7 +3856,7 @@ float CDECL MSVCR120_acoshf(float x)
     {
         fenv_t env;
 
-        *MSVCRT__errno() = EDOM;
+        *_errno() = EDOM;
         MSVCRT_fegetenv(&env);
         env._Fe_stat |= FE_INVALID;
         MSVCRT_fesetenv(&env);
@@ -3883,7 +3883,7 @@ double CDECL MSVCR120_atanh(double x)
     if (x > 1 || x < -1) {
         fenv_t env;
 
-        *MSVCRT__errno() = EDOM;
+        *_errno() = EDOM;
 
         /* on Linux atanh returns -NAN in this case */
         MSVCRT_fegetenv(&env);
@@ -3893,7 +3893,7 @@ double CDECL MSVCR120_atanh(double x)
     }
     ret = unix_funcs->atanh( x );
 
-    if (!isfinite(ret)) *MSVCRT__errno() = ERANGE;
+    if (!isfinite(ret)) *_errno() = ERANGE;
     return ret;
 }
 
@@ -3907,7 +3907,7 @@ float CDECL MSVCR120_atanhf(float x)
     if (x > 1 || x < -1) {
         fenv_t env;
 
-        *MSVCRT__errno() = EDOM;
+        *_errno() = EDOM;
 
         MSVCRT_fegetenv(&env);
         env._Fe_stat |= FE_INVALID;
@@ -3917,7 +3917,7 @@ float CDECL MSVCR120_atanhf(float x)
 
     ret = unix_funcs->atanh( x );
 
-    if (!isfinite(ret)) *MSVCRT__errno() = ERANGE;
+    if (!isfinite(ret)) *_errno() = ERANGE;
     return ret;
 }
 
@@ -3968,8 +3968,8 @@ LDOUBLE CDECL MSVCR120_scalbnl(LDOUBLE num, __msvcrt_long power)
 double CDECL MSVCR120_remainder(double x, double y)
 {
     /* this matches 64-bit Windows.  32-bit Windows is slightly different */
-    if(!isfinite(x)) *MSVCRT__errno() = EDOM;
-    if(isnan(y) || y==0.0) *MSVCRT__errno() = EDOM;
+    if(!isfinite(x)) *_errno() = EDOM;
+    if(isnan(y) || y==0.0) *_errno() = EDOM;
     return unix_funcs->remainder( x, y );
 }
 
@@ -3979,8 +3979,8 @@ double CDECL MSVCR120_remainder(double x, double y)
 float CDECL MSVCR120_remainderf(float x, float y)
 {
     /* this matches 64-bit Windows.  32-bit Windows is slightly different */
-    if(!isfinite(x)) *MSVCRT__errno() = EDOM;
-    if(isnan(y) || y==0.0f) *MSVCRT__errno() = EDOM;
+    if(!isfinite(x)) *_errno() = EDOM;
+    if(isnan(y) || y==0.0f) *_errno() = EDOM;
     return unix_funcs->remainderf( x, y );
 }
 
@@ -3997,8 +3997,8 @@ LDOUBLE CDECL MSVCR120_remainderl(LDOUBLE x, LDOUBLE y)
  */
 double CDECL MSVCR120_remquo(double x, double y, int *quo)
 {
-    if(!isfinite(x)) *MSVCRT__errno() = EDOM;
-    if(isnan(y) || y==0.0) *MSVCRT__errno() = EDOM;
+    if(!isfinite(x)) *_errno() = EDOM;
+    if(isnan(y) || y==0.0) *_errno() = EDOM;
     return unix_funcs->remquo( x, y, quo );
 }
 
@@ -4007,8 +4007,8 @@ double CDECL MSVCR120_remquo(double x, double y, int *quo)
  */
 float CDECL MSVCR120_remquof(float x, float y, int *quo)
 {
-    if(!isfinite(x)) *MSVCRT__errno() = EDOM;
-    if(isnan(y) || y==0.0f) *MSVCRT__errno() = EDOM;
+    if(!isfinite(x)) *_errno() = EDOM;
+    if(isnan(y) || y==0.0f) *_errno() = EDOM;
     return unix_funcs->remquof( x, y, quo );
 }
 
