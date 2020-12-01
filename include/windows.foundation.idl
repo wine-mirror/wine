@@ -28,7 +28,7 @@ import "windowscontracts.idl";
 
 namespace Windows {
     namespace Foundation {
-        [version(0x06020000)]
+        [contract(Windows.Foundation.FoundationContract, 1.0)]
         enum PropertyType {
             Empty       = 0,
             UInt8       = 1,
@@ -73,19 +73,19 @@ namespace Windows {
             OtherTypeArray   = 1044
         };
 
-        [version(0x06020000)]
+        [contract(Windows.Foundation.FoundationContract, 1.0)]
         struct Point {
             FLOAT X;
             FLOAT Y;
         };
 
-        [version(0x06020000)]
+        [contract(Windows.Foundation.FoundationContract, 1.0)]
         struct Size {
             FLOAT Width;
             FLOAT Height;
         };
 
-        [version(0x06020000)]
+        [contract(Windows.Foundation.FoundationContract, 1.0)]
         struct Rect {
             FLOAT X;
             FLOAT Y;
@@ -93,18 +93,18 @@ namespace Windows {
             FLOAT Height;
         };
 
-        [version(0x06020000)]
+        [contract(Windows.Foundation.FoundationContract, 1.0)]
         struct DateTime {
             INT64 UniversalTime;
         };
 
-        [version(0x06020000)]
+        [contract(Windows.Foundation.FoundationContract, 1.0)]
         struct TimeSpan {
             INT64 Duration;
         };
 
         [
-            version(0x06030000),
+            contract(Windows.Foundation.FoundationContract, 1.0),
             uuid(96369f54-8eb6-48f0-abce-c1b211e627c3)
         ]
         interface IStringable : IInspectable

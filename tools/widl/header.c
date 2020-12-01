@@ -45,6 +45,11 @@ generic_handle_list_t generic_handle_list = LIST_INIT(generic_handle_list);
 
 static void write_type_v(FILE *f, const decl_spec_t *t, int is_field, int declonly, const char *name, enum name_type name_type);
 
+static void write_winrt_type_comments(FILE *header, const type_t *type);
+
+static void write_apicontract_guard_start(FILE *header, const expr_t *expr);
+static void write_apicontract_guard_end(FILE *header, const expr_t *expr);
+
 static void indent(FILE *h, int delta)
 {
   int c;
@@ -218,7 +223,9 @@ static void write_fields(FILE *h, var_list_t *fields, enum name_type name_type)
     }
 
     LIST_FOR_EACH_ENTRY( v, fields, var_t, entry ) {
+        expr_t *contract = get_attrp(v->attrs, ATTR_CONTRACT);
         if (!v || !v->declspec.type) continue;
+        if (contract) write_apicontract_guard_start(h, contract);
 
         indent(h, 0);
         name = v->name;
@@ -252,6 +259,7 @@ static void write_fields(FILE *h, var_list_t *fields, enum name_type name_type)
         }
         write_type_v(h, &v->declspec, TRUE, v->declonly, name, name_type);
         fprintf(h, ";\n");
+        if (contract) write_apicontract_guard_end(h, contract);
     }
 }
 
@@ -261,6 +269,8 @@ static void write_enums(FILE *h, var_list_t *enums, const char *enum_name)
   if (!enums) return;
   LIST_FOR_EACH_ENTRY( v, enums, var_t, entry )
   {
+    expr_t *contract = get_attrp(v->attrs, ATTR_CONTRACT);
+    if (contract) write_apicontract_guard_start(h, contract);
     if (v->name) {
       indent(h, 0);
       if(!enum_name)
@@ -273,8 +283,9 @@ static void write_enums(FILE *h, var_list_t *enums, const char *enum_name)
       }
     }
     if (list_next( enums, &v->entry )) fprintf(h, ",\n");
+    else fprintf(h, "\n");
+    if (contract) write_apicontract_guard_end(h, contract);
   }
-  fprintf(h, "\n");
 }
 
 int needs_space_after(type_t *t)
@@ -563,7 +574,9 @@ static void write_type_definition(FILE *f, type_t *t, int declonly)
     int in_namespace = t->namespace && !is_global_namespace(t->namespace);
     int save_written = t->written;
     decl_spec_t ds = {.type = t};
+    expr_t *contract = get_attrp(t->attrs, ATTR_CONTRACT);
 
+    if (contract) write_apicontract_guard_start(f, contract);
     if(in_namespace) {
         fprintf(f, "#ifdef __cplusplus\n");
         fprintf(f, "} /* extern \"C\" */\n");
@@ -581,6 +594,7 @@ static void write_type_definition(FILE *f, type_t *t, int declonly)
         fprintf(f, ";\n");
         fprintf(f, "#endif\n\n");
     }
+    if (contract) write_apicontract_guard_end(f, contract);
 }
 
 void write_type_decl(FILE *f, const decl_spec_t *t, const char *name)
@@ -1468,12 +1482,55 @@ static char *format_apicontract_macro(const type_t *type)
     return name;
 }
 
+static void write_winrt_type_comments(FILE *header, const type_t *type)
+{
+    expr_t *contract = get_attrp(type->attrs, ATTR_CONTRACT);
+    fprintf(header, " *\n");
+    if (contract)
+    {
+        const type_t *type = contract->u.tref.type;
+        char *name = format_namespace(type->namespace, "", ".", type->name, NULL);
+        int ver = contract->ref->u.lval;
+        fprintf(header, " * Introduced to %s in version %d.%d\n *\n", name, (ver >> 16) & 0xffff, ver & 0xffff);
+        free(name);
+    }
+}
+
+static void write_apicontract_guard_start(FILE *header, const expr_t *expr)
+{
+    const type_t *type;
+    char *name;
+    int ver;
+    if (!winrt_mode) return;
+    type = expr->u.tref.type;
+    ver = expr->ref->u.lval;
+    name = format_apicontract_macro(type);
+    fprintf(header, "#if %s_VERSION >= %#x\n", name, ver);
+    free(name);
+}
+
+static void write_apicontract_guard_end(FILE *header, const expr_t *expr)
+{
+    const type_t *type;
+    char *name;
+    int ver;
+    if (!winrt_mode) return;
+    type = expr->u.tref.type;
+    ver = expr->ref->u.lval;
+    name = format_apicontract_macro(type);
+    fprintf(header, "#endif /* %s_VERSION >= %#x */\n", name, ver);
+    free(name);
+}
+
 static void write_com_interface_start(FILE *header, const type_t *iface)
 {
   int dispinterface = is_attr(iface->attrs, ATTR_DISPINTERFACE);
+  expr_t *contract = get_attrp(iface->attrs, ATTR_CONTRACT);
   fprintf(header, "/*****************************************************************************\n");
   fprintf(header, " * %s %sinterface\n", iface->name, dispinterface ? "disp" : "");
+  if (winrt_mode) write_winrt_type_comments(header, iface);
   fprintf(header, " */\n");
+  if (contract) write_apicontract_guard_start(header, contract);
   fprintf(header,"#ifndef __%s_%sINTERFACE_DEFINED__\n", iface->c_name, dispinterface ? "DISP" : "");
   fprintf(header,"#define __%s_%sINTERFACE_DEFINED__\n\n", iface->c_name, dispinterface ? "DISP" : "");
 }
@@ -1482,6 +1539,7 @@ static void write_com_interface_end(FILE *header, type_t *iface)
 {
   int dispinterface = is_attr(iface->attrs, ATTR_DISPINTERFACE);
   const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
+  expr_t *contract = get_attrp(iface->attrs, ATTR_CONTRACT);
   type_t *type;
 
   if (uuid)
@@ -1559,17 +1617,22 @@ static void write_com_interface_end(FILE *header, type_t *iface)
     write_locals(header, iface, FALSE);
     fprintf(header, "\n");
   }
-  fprintf(header,"#endif  /* __%s_%sINTERFACE_DEFINED__ */\n\n", iface->c_name, dispinterface ? "DISP" : "");
+  fprintf(header, "#endif  /* __%s_%sINTERFACE_DEFINED__ */\n", iface->c_name, dispinterface ? "DISP" : "");
+  if (contract) write_apicontract_guard_end(header, contract);
+  fprintf(header, "\n");
 }
 
 static void write_rpc_interface_start(FILE *header, const type_t *iface)
 {
   unsigned int ver = get_attrv(iface->attrs, ATTR_VERSION);
   const var_t *var = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
+  expr_t *contract = get_attrp(iface->attrs, ATTR_CONTRACT);
 
   fprintf(header, "/*****************************************************************************\n");
   fprintf(header, " * %s interface (v%d.%d)\n", iface->name, MAJORVERSION(ver), MINORVERSION(ver));
+  if (winrt_mode) write_winrt_type_comments(header, iface);
   fprintf(header, " */\n");
+  if (contract) write_apicontract_guard_start(header, contract);
   fprintf(header,"#ifndef __%s_INTERFACE_DEFINED__\n", iface->name);
   fprintf(header,"#define __%s_INTERFACE_DEFINED__\n\n", iface->name);
   if (var)
@@ -1594,7 +1657,10 @@ static void write_rpc_interface_start(FILE *header, const type_t *iface)
 
 static void write_rpc_interface_end(FILE *header, const type_t *iface)
 {
-  fprintf(header,"\n#endif  /* __%s_INTERFACE_DEFINED__ */\n\n", iface->name);
+  expr_t *contract = get_attrp(iface->attrs, ATTR_CONTRACT);
+  fprintf(header, "\n#endif  /* __%s_INTERFACE_DEFINED__ */\n", iface->name);
+  if (contract) write_apicontract_guard_end(header, contract);
+  fprintf(header, "\n");
 }
 
 static void write_coclass(FILE *header, type_t *cocl)
