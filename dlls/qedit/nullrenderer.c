@@ -46,9 +46,7 @@ static HRESULT WINAPI NullRenderer_DoRenderSample(struct strmbase_renderer *ifac
         const HANDLE events[2] = {filter->run_event, filter->renderer.flush_event};
 
         SetEvent(filter->renderer.state_event);
-        LeaveCriticalSection(&filter->renderer.csRenderLock);
         WaitForMultipleObjects(2, events, FALSE, INFINITE);
-        EnterCriticalSection(&filter->renderer.csRenderLock);
     }
 
     return S_OK;
