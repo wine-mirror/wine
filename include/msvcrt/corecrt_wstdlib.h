@@ -39,8 +39,11 @@ _ACRTIMP __int64       __cdecl _wtoi64(const wchar_t*);
 _ACRTIMP __msvcrt_long __cdecl _wtol(const wchar_t*);
 
 _ACRTIMP size_t        __cdecl mbstowcs(wchar_t*,const char*,size_t);
+_ACRTIMP size_t        __cdecl _mbstowcs_l(wchar_t*,const char*,size_t,_locale_t);
 _ACRTIMP errno_t       __cdecl mbstowcs_s(size_t*,wchar_t*,size_t,const char*,size_t);
+_ACRTIMP errno_t       __cdecl _mbstowcs_s_l(size_t*,wchar_t*,size_t,const char*,size_t,_locale_t);
 _ACRTIMP int           __cdecl mbtowc(wchar_t*,const char*,size_t);
+_ACRTIMP int           __cdecl _mbtowc_l(wchar_t*,const char*,size_t,_locale_t);
 _ACRTIMP float         __cdecl wcstof(const wchar_t*,wchar_t**);
 _ACRTIMP double        __cdecl wcstod(const wchar_t*,wchar_t**);
 _ACRTIMP __msvcrt_long __cdecl wcstol(const wchar_t*,wchar_t**,int);

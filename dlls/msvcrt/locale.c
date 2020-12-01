@@ -2036,7 +2036,7 @@ wchar_t* CDECL _wsetlocale(int category, const wchar_t* wlocale)
     ret = setlocale(category, locale);
     free(locale);
 
-    if(ret && MSVCRT_mbstowcs(current_lc_all, ret, MAX_LOCALE_LENGTH)==-1)
+    if(ret && mbstowcs(current_lc_all, ret, MAX_LOCALE_LENGTH)==-1)
         ret = NULL;
 
     _unlock_locales();

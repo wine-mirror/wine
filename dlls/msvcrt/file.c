@@ -3481,7 +3481,7 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
                 conv[j] = s[i];
             }
 
-            len = MSVCRT_mbstowcs((WCHAR*)lfbuf, conv, len);
+            len = mbstowcs((WCHAR*)lfbuf, conv, len);
             if (len == -1)
             {
                 msvcrt_set_errno(GetLastError());
@@ -3806,7 +3806,7 @@ wint_t CDECL MSVCRT__fgetwc_nolock(FILE* file)
             }
         }
 
-        if(!len || MSVCRT_mbtowc(&ret, mbs, len)==-1)
+        if(!len || mbtowc(&ret, mbs, len)==-1)
             ret = WEOF;
     }
 

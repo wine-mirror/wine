@@ -894,7 +894,7 @@
 @ cdecl ___lc_codepage_func()
 @ cdecl ___lc_collate_cp_func()
 @ cdecl ___lc_locale_name_func()
-@ cdecl ___mb_cur_max_func() MSVCRT____mb_cur_max_func
+@ cdecl ___mb_cur_max_func()
 @ cdecl ___mb_cur_max_l_func(ptr)
 @ cdecl ___setlc_active_func()
 @ cdecl ___unguarded_readlc_active_add_func()
@@ -1550,8 +1550,8 @@
 @ cdecl _mbstok_l(str str ptr)
 @ cdecl _mbstok_s(str str ptr)
 @ cdecl _mbstok_s_l(str str ptr ptr)
-@ cdecl _mbstowcs_l(ptr str long ptr) MSVCRT__mbstowcs_l
-@ cdecl _mbstowcs_s_l(ptr ptr long str long ptr) MSVCRT__mbstowcs_s_l
+@ cdecl _mbstowcs_l(ptr str long ptr)
+@ cdecl _mbstowcs_s_l(ptr ptr long str long ptr)
 @ cdecl _mbstrlen(str)
 @ cdecl _mbstrlen_l(str ptr)
 @ stub _mbstrnlen
@@ -1560,7 +1560,7 @@
 @ stub _mbsupr_l
 @ cdecl _mbsupr_s(str long)
 @ stub _mbsupr_s_l
-@ cdecl _mbtowc_l(ptr str long ptr) MSVCRT_mbtowc_l
+@ cdecl _mbtowc_l(ptr str long ptr)
 @ cdecl _memccpy(ptr ptr long long) ntdll._memccpy
 @ cdecl _memicmp(str str long) MSVCRT__memicmp
 @ cdecl _memicmp_l(str str long ptr) MSVCRT__memicmp_l
@@ -2099,14 +2099,14 @@
 @ cdecl -arch=!i386 log10f(float) MSVCRT_log10f
 @ cdecl -arch=i386,x86_64,arm,arm64 longjmp(ptr long) MSVCRT_longjmp
 @ cdecl malloc(long)
-@ cdecl mblen(ptr long) MSVCRT_mblen
-@ cdecl mbrlen(ptr long ptr) MSVCRT_mbrlen
-@ cdecl mbrtowc(ptr str long ptr) MSVCRT_mbrtowc
-@ cdecl mbsrtowcs(ptr ptr long ptr) MSVCRT_mbsrtowcs
-@ cdecl mbsrtowcs_s(ptr ptr long ptr long ptr) MSVCRT_mbsrtowcs_s
-@ cdecl mbstowcs(ptr str long) MSVCRT_mbstowcs
-@ cdecl mbstowcs_s(ptr ptr long str long) MSVCRT__mbstowcs_s
-@ cdecl mbtowc(ptr str long) MSVCRT_mbtowc
+@ cdecl mblen(ptr long)
+@ cdecl mbrlen(ptr long ptr)
+@ cdecl mbrtowc(ptr str long ptr)
+@ cdecl mbsrtowcs(ptr ptr long ptr)
+@ cdecl mbsrtowcs_s(ptr ptr long ptr long ptr)
+@ cdecl mbstowcs(ptr str long)
+@ cdecl mbstowcs_s(ptr ptr long str long) _mbstowcs_s
+@ cdecl mbtowc(ptr str long)
 @ cdecl memchr(ptr long long) MSVCRT_memchr
 @ cdecl memcmp(ptr ptr long)
 @ cdecl memcpy(ptr ptr long)

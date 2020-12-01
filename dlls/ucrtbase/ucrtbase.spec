@@ -70,7 +70,7 @@
 @ cdecl ___lc_codepage_func()
 @ cdecl ___lc_collate_cp_func()
 @ cdecl ___lc_locale_name_func()
-@ cdecl ___mb_cur_max_func() MSVCRT____mb_cur_max_func
+@ cdecl ___mb_cur_max_func()
 @ cdecl ___mb_cur_max_l_func(ptr)
 @ cdecl __acrt_iob_func(long) MSVCRT___acrt_iob_func
 @ cdecl __conio_common_vcprintf(int64 str ptr ptr)
@@ -706,8 +706,8 @@
 @ cdecl _mbstok_l(str str ptr)
 @ cdecl _mbstok_s(str str ptr)
 @ cdecl _mbstok_s_l(str str ptr ptr)
-@ cdecl _mbstowcs_l(ptr str long ptr) MSVCRT__mbstowcs_l
-@ cdecl _mbstowcs_s_l(ptr ptr long str long ptr) MSVCRT__mbstowcs_s_l
+@ cdecl _mbstowcs_l(ptr str long ptr)
+@ cdecl _mbstowcs_s_l(ptr ptr long str long ptr)
 @ cdecl _mbstrlen(str)
 @ cdecl _mbstrlen_l(str ptr)
 @ stub _mbstrnlen
@@ -716,7 +716,7 @@
 @ stub _mbsupr_l
 @ cdecl _mbsupr_s(str long)
 @ stub _mbsupr_s_l
-@ cdecl _mbtowc_l(ptr str long ptr) MSVCRT_mbtowc_l
+@ cdecl _mbtowc_l(ptr str long ptr)
 @ cdecl _memccpy(ptr ptr long long) ntdll._memccpy
 @ cdecl _memicmp(str str long) MSVCRT__memicmp
 @ cdecl _memicmp_l(str str long ptr) MSVCRT__memicmp_l
@@ -757,7 +757,7 @@
 @ cdecl _o____lc_codepage_func() ___lc_codepage_func
 @ cdecl _o____lc_collate_cp_func() ___lc_collate_cp_func
 @ cdecl _o____lc_locale_name_func() ___lc_locale_name_func
-@ cdecl _o____mb_cur_max_func() MSVCRT____mb_cur_max_func
+@ cdecl _o____mb_cur_max_func() ___mb_cur_max_func
 @ cdecl _o___acrt_iob_func(long) MSVCRT___acrt_iob_func
 @ cdecl _o___conio_common_vcprintf(int64 str ptr ptr) __conio_common_vcprintf
 @ stub _o___conio_common_vcprintf_p
@@ -1275,8 +1275,8 @@
 @ cdecl _o__mbstok_l(str str ptr) _mbstok_l
 @ cdecl _o__mbstok_s(str str ptr) _mbstok_s
 @ cdecl _o__mbstok_s_l(str str ptr ptr) _mbstok_s_l
-@ cdecl _o__mbstowcs_l(ptr str long ptr) MSVCRT__mbstowcs_l
-@ cdecl _o__mbstowcs_s_l(ptr ptr long str long ptr) MSVCRT__mbstowcs_s_l
+@ cdecl _o__mbstowcs_l(ptr str long ptr) _mbstowcs_l
+@ cdecl _o__mbstowcs_s_l(ptr ptr long str long ptr) _mbstowcs_s_l
 @ cdecl _o__mbstrlen(str) _mbstrlen
 @ cdecl _o__mbstrlen_l(str ptr) _mbstrlen_l
 @ stub _o__mbstrnlen
@@ -1285,7 +1285,7 @@
 @ stub _o__mbsupr_l
 @ cdecl _o__mbsupr_s(str long) _mbsupr_s
 @ stub _o__mbsupr_s_l
-@ cdecl _o__mbtowc_l(ptr str long ptr) MSVCRT_mbtowc_l
+@ cdecl _o__mbtowc_l(ptr str long ptr) _mbtowc_l
 @ cdecl _o__memicmp(str str long) MSVCRT__memicmp
 @ cdecl _o__memicmp_l(str str long ptr) MSVCRT__memicmp_l
 @ cdecl _o__mkdir(str) MSVCRT__mkdir
@@ -1707,16 +1707,16 @@
 @ cdecl _o_lroundf(float) MSVCR120_lroundf
 @ cdecl _o_lroundl(double) MSVCR120_lroundl
 @ cdecl _o_malloc(long) malloc
-@ cdecl _o_mblen(ptr long) MSVCRT_mblen
-@ cdecl _o_mbrlen(ptr long ptr) MSVCRT_mbrlen
+@ cdecl _o_mblen(ptr long) mblen
+@ cdecl _o_mbrlen(ptr long ptr) mbrlen
 @ stub _o_mbrtoc16
 @ stub _o_mbrtoc32
-@ cdecl _o_mbrtowc(ptr str long ptr) MSVCRT_mbrtowc
-@ cdecl _o_mbsrtowcs(ptr ptr long ptr) MSVCRT_mbsrtowcs
-@ cdecl _o_mbsrtowcs_s(ptr ptr long ptr long ptr) MSVCRT_mbsrtowcs_s
-@ cdecl _o_mbstowcs(ptr str long) MSVCRT_mbstowcs
-@ cdecl _o_mbstowcs_s(ptr ptr long str long) MSVCRT__mbstowcs_s
-@ cdecl _o_mbtowc(ptr str long) MSVCRT_mbtowc
+@ cdecl _o_mbrtowc(ptr str long ptr) mbrtowc
+@ cdecl _o_mbsrtowcs(ptr ptr long ptr) mbsrtowcs
+@ cdecl _o_mbsrtowcs_s(ptr ptr long ptr long ptr) mbsrtowcs_s
+@ cdecl _o_mbstowcs(ptr str long) mbstowcs
+@ cdecl _o_mbstowcs_s(ptr ptr long str long) _mbstowcs_s
+@ cdecl _o_mbtowc(ptr str long) mbtowc
 @ cdecl _o_memcpy_s(ptr long ptr long) memcpy_s
 @ cdecl _o_memset(ptr long long) memset
 @ cdecl _o_modf(double ptr) MSVCRT_modf
@@ -2410,16 +2410,16 @@
 @ cdecl lroundf(float) MSVCR120_lroundf
 @ cdecl lroundl(double) MSVCR120_lroundl
 @ cdecl malloc(long)
-@ cdecl mblen(ptr long) MSVCRT_mblen
-@ cdecl mbrlen(ptr long ptr) MSVCRT_mbrlen
+@ cdecl mblen(ptr long)
+@ cdecl mbrlen(ptr long ptr)
 @ stub mbrtoc16
 @ stub mbrtoc32
-@ cdecl mbrtowc(ptr str long ptr) MSVCRT_mbrtowc
-@ cdecl mbsrtowcs(ptr ptr long ptr) MSVCRT_mbsrtowcs
-@ cdecl mbsrtowcs_s(ptr ptr long ptr long ptr) MSVCRT_mbsrtowcs_s
-@ cdecl mbstowcs(ptr str long) MSVCRT_mbstowcs
-@ cdecl mbstowcs_s(ptr ptr long str long) MSVCRT__mbstowcs_s
-@ cdecl mbtowc(ptr str long) MSVCRT_mbtowc
+@ cdecl mbrtowc(ptr str long ptr)
+@ cdecl mbsrtowcs(ptr ptr long ptr)
+@ cdecl mbsrtowcs_s(ptr ptr long ptr long ptr)
+@ cdecl mbstowcs(ptr str long)
+@ cdecl mbstowcs_s(ptr ptr long str long) _mbstowcs_s
+@ cdecl mbtowc(ptr str long)
 @ cdecl memchr(ptr long long) MSVCRT_memchr
 @ cdecl memcmp(ptr ptr long)
 @ cdecl memcpy(ptr ptr long)

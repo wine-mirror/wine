@@ -217,8 +217,8 @@ static void DoMessageBox(const char *lead, const char *message)
 {
   wchar_t leadW[1024], messageW[1024];
 
-  MSVCRT_mbstowcs(leadW, lead, 1024);
-  MSVCRT_mbstowcs(messageW, message, 1024);
+  mbstowcs(leadW, lead, 1024);
+  mbstowcs(messageW, message, 1024);
 
   DoMessageBoxW(leadW, messageW);
 }
@@ -309,8 +309,8 @@ void CDECL _assert(const char* str, const char* file, unsigned int line)
 {
     wchar_t strW[1024], fileW[1024];
 
-    MSVCRT_mbstowcs(strW, str, 1024);
-    MSVCRT_mbstowcs(fileW, file, 1024);
+    mbstowcs(strW, str, 1024);
+    mbstowcs(fileW, file, 1024);
 
     _wassert(strW, fileW, line);
 }

@@ -1476,7 +1476,7 @@ static size_t strftime_impl(STRFTIME_CHAR *str, size_t max,
             if(MSVCRT__get_tzname(&tmp, str+ret, max-ret, mstm->tm_isdst ? 1 : 0))
                 return 0;
 #else
-                if(MSVCRT__mbstowcs_s_l(&tmp, str+ret, max-ret,
+                if(_mbstowcs_s_l(&tmp, str+ret, max-ret,
                             mstm->tm_isdst ? tzname_dst : tzname_std,
                             MSVCRT__TRUNCATE, loc) == STRUNCATE)
                     ret = max;
@@ -1542,9 +1542,9 @@ static size_t strftime_helper(char *str, size_t max, const char *format,
     *str = 0;
     if (!MSVCRT_CHECK_PMT(format != NULL)) return 0;
 
-    len = MSVCRT__mbstowcs_l( NULL, format, 0, loc ) + 1;
+    len = _mbstowcs_l( NULL, format, 0, loc ) + 1;
     if (!len || !(fmt = malloc( len*sizeof(wchar_t) ))) return 0;
-    MSVCRT__mbstowcs_l(fmt, format, len, loc);
+    _mbstowcs_l(fmt, format, len, loc);
 
     if ((s = malloc( max*sizeof(wchar_t) )))
     {
@@ -1606,7 +1606,7 @@ static size_t wcsftime_helper( wchar_t *str, size_t max,
     if ((s = malloc( max*4 )))
     {
         if (!strftime_impl( s, max*4, fmt, mstm, time_data, loc )) s[0] = 0;
-        len = MSVCRT__mbstowcs_l( str, s, max, loc );
+        len = _mbstowcs_l( str, s, max, loc );
         free( s );
     }
     else len = 0;

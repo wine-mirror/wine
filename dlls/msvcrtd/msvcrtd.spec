@@ -130,7 +130,7 @@
 @ cdecl __RTDynamicCast(ptr long ptr ptr long)
 @ cdecl __RTtypeid(ptr)
 @ cdecl __STRINGTOLD(ptr ptr str long)
-@ cdecl ___mb_cur_max_func() MSVCRT____mb_cur_max_func
+@ cdecl ___mb_cur_max_func()
 @ extern __argc MSVCRT___argc
 @ extern __argv MSVCRT___argv
 @ extern __badioinfo MSVCRT___badioinfo
@@ -728,9 +728,9 @@
 @ cdecl log10(double) MSVCRT_log10
 @ cdecl -arch=i386,x86_64,arm,arm64 longjmp(ptr long) MSVCRT_longjmp
 @ cdecl malloc(long)
-@ cdecl mblen(ptr long) MSVCRT_mblen
-@ cdecl mbstowcs(ptr str long) MSVCRT_mbstowcs
-@ cdecl mbtowc(ptr str long) MSVCRT_mbtowc
+@ cdecl mblen(ptr long)
+@ cdecl mbstowcs(ptr str long)
+@ cdecl mbtowc(ptr str long)
 @ cdecl memchr(ptr long long) MSVCRT_memchr
 @ cdecl memcmp(ptr ptr long)
 @ cdecl memcpy(ptr ptr long)

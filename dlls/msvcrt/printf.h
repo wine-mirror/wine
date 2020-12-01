@@ -129,7 +129,7 @@ static inline int mbstowcs_len(wchar_t *wcstr, const char *mbstr,
     WCHAR buf;
 
     for(i=0; i<len; wlen++) {
-        r = MSVCRT_mbtowc_l(wcstr ? wcstr+wlen : &buf, mbstr+i, len-i, locale);
+        r = _mbtowc_l(wcstr ? wcstr+wlen : &buf, mbstr+i, len-i, locale);
         if(r < 0) return r;
         i += r ? r : 1;
     }
