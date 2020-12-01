@@ -338,6 +338,7 @@ static const struct keyword attr_keywords[] =
 	{"context_handle",              tCONTEXTHANDLE,             0},
 	{"context_handle_noserialize",  tCONTEXTHANDLENOSERIALIZE,  0},
 	{"context_handle_serialize",    tCONTEXTHANDLENOSERIALIZE,  0},
+	{"contractversion",             tCONTRACTVERSION,           1},
 	{"control",                     tCONTROL,                   0},
 	{"custom",                      tCUSTOM,                    0},
 	{"decode",                      tDECODE,                    0},
