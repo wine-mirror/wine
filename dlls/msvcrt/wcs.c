@@ -1159,7 +1159,7 @@ int CDECL MSVCRT__vscprintf_l(const char *format,
 int CDECL MSVCRT__vscprintf_p_l(const char *format,
         _locale_t locale, __ms_va_list args)
 {
-    printf_arg args_ctx[MSVCRT__ARGMAX+1];
+    printf_arg args_ctx[_ARGMAX+1];
     struct _str_ctx_a puts_ctx = {INT_MAX, NULL};
     int ret;
 
@@ -1337,7 +1337,7 @@ int CDECL MSVCRT_vswprintf_c(wchar_t *str, size_t len,
 static int MSVCRT_vswprintf_p_l_opt(wchar_t *buffer, size_t length,
         const wchar_t *format, DWORD options, _locale_t locale, __ms_va_list args)
 {
-    printf_arg args_ctx[MSVCRT__ARGMAX+1];
+    printf_arg args_ctx[_ARGMAX+1];
     struct _str_ctx_w puts_ctx = {length, buffer};
     int ret;
 
@@ -1716,7 +1716,7 @@ static int MSVCRT_vsprintf_p_l_opt(char *buffer, size_t length, const char *form
         DWORD options, _locale_t locale, __ms_va_list args)
 {
     static const char nullbyte = '\0';
-    printf_arg args_ctx[MSVCRT__ARGMAX+1];
+    printf_arg args_ctx[_ARGMAX+1];
     struct _str_ctx_a puts_ctx = {length, buffer};
     int ret;
 

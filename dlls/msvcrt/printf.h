@@ -1225,7 +1225,7 @@ static printf_arg arg_clbk_type(void *ctx, int pos, int type, __ms_va_list *vali
     } else
         args[0].get_int |= TYPE_CLBK_POSITIONAL;
 
-    if(pos<1 || pos>MSVCRT__ARGMAX)
+    if(pos<1 || pos>_ARGMAX)
         args[0].get_int |= TYPE_CLBK_ERROR_POS;
     else if(args[pos].get_int && args[pos].get_int!=type)
         args[0].get_int |= TYPE_CLBK_ERROR_TYPE;
@@ -1252,7 +1252,7 @@ int FUNC_NAME(create_positional_ctx)(void *args_ctx, const APICHAR *format, __ms
     if(args[0].get_int != TYPE_CLBK_POSITIONAL)
         return -1;
 
-    for(i=MSVCRT__ARGMAX; i>0; i--)
+    for(i=_ARGMAX; i>0; i--)
         if(args[i].get_int)
             break;
 

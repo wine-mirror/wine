@@ -5108,7 +5108,7 @@ static int puts_clbk_file_w(void *file, int len, const wchar_t *str)
 static int vfprintf_helper(DWORD options, FILE* file, const char *format,
         _locale_t locale, __ms_va_list valist)
 {
-    printf_arg args_ctx[MSVCRT__ARGMAX+1];
+    printf_arg args_ctx[_ARGMAX+1];
     BOOL tmp_buf;
     int ret;
 
@@ -5140,7 +5140,7 @@ static int vfprintf_helper(DWORD options, FILE* file, const char *format,
 static int vfwprintf_helper(DWORD options, FILE* file, const wchar_t *format,
         _locale_t locale, __ms_va_list valist)
 {
-    printf_arg args_ctx[MSVCRT__ARGMAX+1];
+    printf_arg args_ctx[_ARGMAX+1];
     BOOL tmp_buf;
     int ret;
 
