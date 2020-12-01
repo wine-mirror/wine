@@ -854,12 +854,6 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
     }
     else
     {
-        if (dosdev &&
-            ((LOWORD(dosdev) == 3 * sizeof(WCHAR) && !wcsnicmp( filename + HIWORD(dosdev)/sizeof(WCHAR), L"CON", 3 )) ||
-             (LOWORD(dosdev) == 6 * sizeof(WCHAR) && !wcsnicmp( filename + HIWORD(dosdev)/sizeof(WCHAR), L"CONIN$", 6 )) ||
-             (LOWORD(dosdev) == 7 * sizeof(WCHAR) && !wcsnicmp( filename + HIWORD(dosdev)/sizeof(WCHAR), L"CONOUT$", 7 ))))
-            ret = console_handle_map( ret );
-
         if ((creation == CREATE_ALWAYS && io.Information == FILE_OVERWRITTEN) ||
             (creation == OPEN_ALWAYS && io.Information == FILE_OPENED))
             SetLastError( ERROR_ALREADY_EXISTS );

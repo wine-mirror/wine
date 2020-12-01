@@ -396,7 +396,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH CloseHandle( HANDLE handle )
     else if (handle == (HANDLE)STD_ERROR_HANDLE)
         handle = InterlockedExchangePointer( &NtCurrentTeb()->Peb->ProcessParameters->hStdError, 0 );
 
-    if (is_console_handle( handle )) handle = console_handle_map( handle );
     return set_ntstatus( NtClose( handle ));
 }
 
@@ -658,15 +657,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH DuplicateHandle( HANDLE source_process, HANDLE sou
                                                HANDLE dest_process, HANDLE *dest,
                                                DWORD access, BOOL inherit, DWORD options )
 {
-    if (is_console_handle( source ))
-    {
-        source = console_handle_map( source );
-        if (!set_ntstatus( NtDuplicateObject( source_process, source, dest_process, dest,
-                                              access, inherit ? OBJ_INHERIT : 0, options )))
-            return FALSE;
-        *dest = console_handle_map( *dest );
-        return TRUE;
-    }
     return set_ntstatus( NtDuplicateObject( source_process, source, dest_process, dest,
                                             access, inherit ? OBJ_INHERIT : 0, options ));
 }

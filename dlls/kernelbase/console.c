@@ -244,7 +244,7 @@ static BOOL init_console_std_handles( BOOL override_all )
                                FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
         if (!set_ntstatus( status )) return FALSE;
         console_flags |= CONSOLE_INPUT_HANDLE;
-        SetStdHandle( STD_INPUT_HANDLE, console_handle_map( handle ));
+        SetStdHandle( STD_INPUT_HANDLE, handle );
     }
 
     if (!override_all)
@@ -263,7 +263,7 @@ static BOOL init_console_std_handles( BOOL override_all )
     if (!std_out)
     {
         console_flags |= CONSOLE_OUTPUT_HANDLE;
-        SetStdHandle( STD_OUTPUT_HANDLE, console_handle_map( handle ));
+        SetStdHandle( STD_OUTPUT_HANDLE, handle );
     }
 
     if (!std_err)
@@ -272,7 +272,7 @@ static BOOL init_console_std_handles( BOOL override_all )
                                           &handle, 0, TRUE, DUPLICATE_SAME_ACCESS ))
             return FALSE;
         console_flags |= CONSOLE_ERROR_HANDLE;
-        SetStdHandle( STD_ERROR_HANDLE, console_handle_map( handle ));
+        SetStdHandle( STD_ERROR_HANDLE, handle );
     }
 
     return TRUE;
