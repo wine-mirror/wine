@@ -2380,9 +2380,15 @@ static void topology_loader_resolve_complete(struct topoloader_context *context)
 
             if (node_type == MF_TOPOLOGY_OUTPUT_NODE)
             {
-                /* Make sure MF_TOPONODE_STREAMID is set for all outputs. */
+                /* Set MF_TOPONODE_STREAMID for all outputs. */
                 if (FAILED(IMFTopologyNode_GetItem(node, &MF_TOPONODE_STREAMID, NULL)))
                     IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_STREAMID, 0);
+            }
+            else if (node_type == MF_TOPOLOGY_SOURCESTREAM_NODE)
+            {
+                /* Set MF_TOPONODE_MEDIASTART for all sources. */
+                if (FAILED(IMFTopologyNode_GetItem(node, &MF_TOPONODE_MEDIASTART, NULL)))
+                    IMFTopologyNode_SetUINT64(node, &MF_TOPONODE_MEDIASTART, 0);
             }
 
             IMFTopologyNode_Release(node);

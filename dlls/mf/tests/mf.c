@@ -2136,6 +2136,7 @@ static void test_topology_loader_evr(void)
     IMFTopoLoader *loader;
     IMFMediaSink *sink;
     WORD node_count;
+    UINT64 value64;
     HWND window;
     HRESULT hr;
 
@@ -2231,6 +2232,13 @@ todo_wine
             hr = IMFTopologyNode_GetUINT32(node, &MF_TOPONODE_STREAMID, &value);
             ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
             ok(!value, "Unexpected stream id %u.\n", value);
+        }
+        else if (node_type == MF_TOPOLOGY_SOURCESTREAM_NODE)
+        {
+            value64 = 1;
+            hr = IMFTopologyNode_GetUINT64(node, &MF_TOPONODE_MEDIASTART, &value64);
+            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+            ok(!value64, "Unexpected value.\n");
         }
     }
 
