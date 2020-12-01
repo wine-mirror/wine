@@ -2989,8 +2989,8 @@ int CDECL MSVCRT_stat64(const char* path, struct MSVCRT__stat64 * buf)
                  Also a letter as first char isn't enough to be classified
 		 as a drive letter
   */
-  if (MSVCRT_isalpha(*path)&& (*(path+1)==':'))
-    buf->st_dev = buf->st_rdev = MSVCRT__toupper_l(*path, NULL) - 'A'; /* drive num */
+  if (isalpha(*path)&& (*(path+1)==':'))
+    buf->st_dev = buf->st_rdev = _toupper_l(*path, NULL) - 'A'; /* drive num */
   else
     buf->st_dev = buf->st_rdev = MSVCRT__getdrive() - 1;
 
@@ -3003,9 +3003,9 @@ int CDECL MSVCRT_stat64(const char* path, struct MSVCRT__stat64 * buf)
     /* executable? */
     if (plen > 6 && path[plen-4] == '.')  /* shortest exe: "\x.exe" */
     {
-      unsigned int ext = MSVCRT__tolower_l(path[plen-1], NULL) |
-          (MSVCRT__tolower_l(path[plen-2], NULL) << 8) |
-          (MSVCRT__tolower_l(path[plen-3], NULL) << 16);
+      unsigned int ext = _tolower_l(path[plen-1], NULL) |
+          (_tolower_l(path[plen-2], NULL) << 8) |
+          (_tolower_l(path[plen-3], NULL) << 16);
       if (ext == EXE || ext == BAT || ext == CMD || ext == COM)
           mode |= ALL_S_IEXEC;
     }
@@ -3452,7 +3452,7 @@ int CDECL MSVCRT__write(int fd, const void* buf, unsigned int count)
             for (; i < count && j < sizeof(conv)-1 &&
                     len < (sizeof(lfbuf) - 1) / sizeof(WCHAR); i++, j++, len++)
             {
-                if (MSVCRT_isleadbyte((unsigned char)s[i]))
+                if (isleadbyte((unsigned char)s[i]))
                 {
                     conv[j++] = s[i++];
 
@@ -3791,7 +3791,7 @@ wint_t CDECL MSVCRT__fgetwc_nolock(FILE* file)
         ch = MSVCRT__fgetc_nolock(file);
         if(ch != EOF) {
             mbs[0] = (char)ch;
-            if(MSVCRT_isleadbyte((unsigned char)mbs[0])) {
+            if(isleadbyte((unsigned char)mbs[0])) {
                 ch = MSVCRT__fgetc_nolock(file);
                 if(ch != EOF) {
                     mbs[1] = (char)ch;

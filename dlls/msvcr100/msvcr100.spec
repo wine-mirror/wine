@@ -595,9 +595,9 @@
 @ cdecl __getmainargs(ptr ptr ptr long ptr)
 @ extern __initenv MSVCRT___initenv
 @ cdecl __iob_func()
-@ cdecl __isascii(long) MSVCRT___isascii
-@ cdecl __iscsym(long) MSVCRT___iscsym
-@ cdecl __iscsymf(long) MSVCRT___iscsymf
+@ cdecl __isascii(long)
+@ cdecl __iscsym(long)
+@ cdecl __iscsymf(long)
 @ stub __iswcsym
 @ stub __iswcsymf
 # extern __lconv
@@ -639,7 +639,7 @@
 @ cdecl __p__iob() __iob_func
 @ stub __p__mbcasemap()
 @ cdecl __p__mbctype()
-@ cdecl __p__pctype() MSVCRT___p__pctype
+@ cdecl __p__pctype()
 @ cdecl __p__pgmptr() MSVCRT___p__pgmptr
 @ stub __p__pwctype()
 @ cdecl __p__timezone() MSVCRT___p__timezone
@@ -647,7 +647,7 @@
 @ cdecl __p__wcmdln() MSVCRT___p__wcmdln
 @ cdecl __p__wenviron() MSVCRT___p__wenviron
 @ cdecl __p__wpgmptr() MSVCRT___p__wpgmptr
-@ cdecl __pctype_func() MSVCRT___pctype_func
+@ cdecl __pctype_func()
 @ extern __pioinfo MSVCRT___pioinfo
 @ stub __pwctype_func
 @ cdecl __pxcptinfoptrs() MSVCRT___pxcptinfoptrs
@@ -663,7 +663,7 @@
 @ cdecl __threadhandle() kernel32.GetCurrentThread
 @ cdecl __threadid() kernel32.GetCurrentThreadId
 @ cdecl __timezone() MSVCRT___p__timezone
-@ cdecl __toascii(long) MSVCRT___toascii
+@ cdecl __toascii(long)
 @ cdecl __tzname() __p__tzname
 @ cdecl __unDName(ptr str long ptr ptr long)
 @ cdecl __unDNameEx(ptr str long ptr ptr ptr long)
@@ -942,16 +942,16 @@
 @ cdecl _invalid_parameter_noinfo_noreturn()
 @ stub _invoke_watson
 @ extern _iob MSVCRT__iob
-@ cdecl _isalnum_l(long ptr) MSVCRT__isalnum_l
-@ cdecl _isalpha_l(long ptr) MSVCRT__isalpha_l
+@ cdecl _isalnum_l(long ptr)
+@ cdecl _isalpha_l(long ptr)
 @ cdecl _isatty(long) MSVCRT__isatty
-@ cdecl _iscntrl_l(long ptr) MSVCRT__iscntrl_l
-@ cdecl _isctype(long long) MSVCRT__isctype
-@ cdecl _isctype_l(long long ptr) MSVCRT__isctype_l
-@ cdecl _isdigit_l(long ptr) MSVCRT__isdigit_l
-@ cdecl _isgraph_l(long ptr) MSVCRT__isgraph_l
-@ cdecl _isleadbyte_l(long ptr) MSVCRT__isleadbyte_l
-@ cdecl _islower_l(long ptr) MSVCRT__islower_l
+@ cdecl _iscntrl_l(long ptr)
+@ cdecl _isctype(long long)
+@ cdecl _isctype_l(long long ptr)
+@ cdecl _isdigit_l(long ptr)
+@ cdecl _isgraph_l(long ptr)
+@ cdecl _isleadbyte_l(long ptr)
+@ cdecl _islower_l(long ptr)
 @ stub _ismbbalnum(long)
 @ stub _ismbbalnum_l
 @ stub _ismbbalpha(long)
@@ -1012,10 +1012,10 @@
 @ stub _ismbstrail_l
 @ cdecl _isnan(double) MSVCRT__isnan
 @ cdecl -arch=x86_64 _isnanf(float) MSVCRT__isnanf
-@ cdecl _isprint_l(long ptr) MSVCRT__isprint_l
-@ cdecl _ispunct_l(long ptr) MSVCRT__ispunct_l
-@ cdecl _isspace_l(long ptr) MSVCRT__isspace_l
-@ cdecl _isupper_l(long ptr) MSVCRT__isupper_l
+@ cdecl _isprint_l(long ptr)
+@ cdecl _ispunct_l(long ptr)
+@ cdecl _isspace_l(long ptr)
+@ cdecl _isupper_l(long ptr)
 @ cdecl _iswalnum_l(long ptr) MSVCRT__iswalnum_l
 @ cdecl _iswalpha_l(long ptr) MSVCRT__iswalpha_l
 @ cdecl _iswcntrl_l(long ptr) MSVCRT__iswcntrl_l
@@ -1030,7 +1030,7 @@
 @ cdecl _iswspace_l(long ptr) MSVCRT__iswspace_l
 @ cdecl _iswupper_l(long ptr) MSVCRT__iswupper_l
 @ cdecl _iswxdigit_l(long ptr) MSVCRT__iswxdigit_l
-@ cdecl _isxdigit_l(long ptr) MSVCRT__isxdigit_l
+@ cdecl _isxdigit_l(long ptr)
 @ cdecl _itoa(long ptr long) MSVCRT__itoa
 @ cdecl _itoa_s(long ptr long long) MSVCRT__itoa_s
 @ cdecl _itow(long ptr long) ntdll._itow
@@ -1391,10 +1391,10 @@
 @ cdecl _time32(ptr) MSVCRT__time32
 @ cdecl _time64(ptr) MSVCRT__time64
 @ extern _timezone MSVCRT___timezone
-@ cdecl _tolower(long) MSVCRT__tolower
-@ cdecl _tolower_l(long ptr) MSVCRT__tolower_l
-@ cdecl _toupper(long) MSVCRT__toupper
-@ cdecl _toupper_l(long ptr) MSVCRT__toupper_l
+@ cdecl _tolower(long)
+@ cdecl _tolower_l(long ptr)
+@ cdecl _toupper(long)
+@ cdecl _toupper_l(long ptr)
 @ cdecl _towlower_l(long ptr) MSVCRT__towlower_l
 @ cdecl _towupper_l(long ptr) MSVCRT__towupper_l
 @ extern _tzname MSVCRT__tzname
@@ -1704,20 +1704,20 @@
 @ cdecl getwc(ptr) MSVCRT_getwc
 @ cdecl getwchar() MSVCRT_getwchar
 @ cdecl is_wctype(long long) MSVCRT_iswctype
-@ cdecl isalnum(long) MSVCRT_isalnum
-@ cdecl isalpha(long) MSVCRT_isalpha
-@ cdecl iscntrl(long) MSVCRT_iscntrl
-@ cdecl isdigit(long) MSVCRT_isdigit
-@ cdecl isgraph(long) MSVCRT_isgraph
-@ cdecl isleadbyte(long) MSVCRT_isleadbyte
-@ cdecl islower(long) MSVCRT_islower
-@ cdecl isprint(long) MSVCRT_isprint
-@ cdecl ispunct(long) MSVCRT_ispunct
-@ cdecl isspace(long) MSVCRT_isspace
-@ cdecl isupper(long) MSVCRT_isupper
+@ cdecl isalnum(long)
+@ cdecl isalpha(long)
+@ cdecl iscntrl(long)
+@ cdecl isdigit(long)
+@ cdecl isgraph(long)
+@ cdecl isleadbyte(long)
+@ cdecl islower(long)
+@ cdecl isprint(long)
+@ cdecl ispunct(long)
+@ cdecl isspace(long)
+@ cdecl isupper(long)
 @ cdecl iswalnum(long) MSVCRT_iswalnum
 @ cdecl iswalpha(long) MSVCRT_iswalpha
-@ cdecl iswascii(long) MSVCRT_iswascii
+@ cdecl iswascii(long)
 @ cdecl iswcntrl(long) MSVCRT_iswcntrl
 @ cdecl iswctype(long long) MSVCRT_iswctype
 @ cdecl iswdigit(long) MSVCRT_iswdigit
@@ -1728,7 +1728,7 @@
 @ cdecl iswspace(long) MSVCRT_iswspace
 @ cdecl iswupper(long) MSVCRT_iswupper
 @ cdecl iswxdigit(long) MSVCRT_iswxdigit
-@ cdecl isxdigit(long) MSVCRT_isxdigit
+@ cdecl isxdigit(long)
 @ cdecl labs(long) MSVCRT_labs
 @ cdecl ldexp(double long) MSVCRT_ldexp
 @ cdecl -ret64 ldiv(long long) MSVCRT_ldiv
@@ -1835,8 +1835,8 @@
 @ cdecl tmpfile_s(ptr) MSVCRT_tmpfile_s
 @ cdecl tmpnam(ptr) MSVCRT_tmpnam
 @ cdecl tmpnam_s(ptr long) MSVCRT_tmpnam_s
-@ cdecl tolower(long) MSVCRT_tolower
-@ cdecl toupper(long) MSVCRT_toupper
+@ cdecl tolower(long)
+@ cdecl toupper(long)
 @ cdecl towlower(long) MSVCRT_towlower
 @ cdecl towupper(long) MSVCRT_towupper
 @ cdecl ungetc(long ptr) MSVCRT_ungetc

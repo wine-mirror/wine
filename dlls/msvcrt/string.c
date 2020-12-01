@@ -95,7 +95,7 @@ int CDECL MSVCRT__strlwr_s_l(char *str, size_t len, _locale_t locale)
     {
         while (*str)
         {
-            *str = MSVCRT__tolower_l((unsigned char)*str, locale);
+            *str = _tolower_l((unsigned char)*str, locale);
             str++;
         }
     }
@@ -174,7 +174,7 @@ int CDECL MSVCRT__strupr_s_l(char *str, size_t len, _locale_t locale)
     {
         while (*str)
         {
-            *str = MSVCRT__toupper_l((unsigned char)*str, locale);
+            *str = _toupper_l((unsigned char)*str, locale);
             str++;
         }
     }
@@ -763,12 +763,12 @@ static struct fpnum fpnum_parse_bnum(wchar_t (*get)(void *ctx), void (*unget)(vo
     }
 
 #if _MSVCR_VER >= 140
-    if(nch == _infinity[0] || nch == MSVCRT__toupper(_infinity[0]))
+    if(nch == _infinity[0] || nch == _toupper(_infinity[0]))
         str_match = _infinity;
-    if(nch == _nan[0] || nch == MSVCRT__toupper(_nan[0]))
+    if(nch == _nan[0] || nch == _toupper(_nan[0]))
         str_match = _nan;
     while(str_match && nch != WEOF &&
-            (nch == str_match[matched] || nch == MSVCRT__toupper(str_match[matched]))) {
+            (nch == str_match[matched] || nch == _toupper(str_match[matched]))) {
         nch = get(ctx);
         matched++;
     }
@@ -1024,7 +1024,7 @@ static inline double strtod_helper(const char *str, char **end, _locale_t locale
         locinfo = locale->locinfo;
 
     p = str;
-    while(MSVCRT__isspace_l((unsigned char)*p, locale))
+    while(_isspace_l((unsigned char)*p, locale))
         p++;
     beg = p;
 
@@ -1453,7 +1453,7 @@ int CDECL __STRINGTOLD_L( MSVCRT__LDOUBLE *value, char **endptr,
         locinfo = locale->locinfo;
 
     p = str;
-    while (MSVCRT__isspace_l((unsigned char)*p, locale))
+    while (_isspace_l((unsigned char)*p, locale))
         p++;
     beg = p;
 
@@ -1537,7 +1537,7 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, _loca
     if (!MSVCRT_CHECK_PMT(base == 0 || base >= 2)) return 0;
     if (!MSVCRT_CHECK_PMT(base <= 36)) return 0;
 
-    while(MSVCRT__isspace_l((unsigned char)*nptr, locale)) nptr++;
+    while(_isspace_l((unsigned char)*nptr, locale)) nptr++;
 
     if(*nptr == '-') {
         negative = TRUE;
@@ -1545,7 +1545,7 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, _loca
     } else if(*nptr == '+')
         nptr++;
 
-    if((base==0 || base==16) && *nptr=='0' && MSVCRT__tolower_l(*(nptr+1), locale)=='x') {
+    if((base==0 || base==16) && *nptr=='0' && _tolower_l(*(nptr+1), locale)=='x') {
         base = 16;
         nptr += 2;
     }
@@ -1558,7 +1558,7 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, _loca
     }
 
     while(*nptr) {
-        char cur = MSVCRT__tolower_l(*nptr, locale);
+        char cur = _tolower_l(*nptr, locale);
         int v;
 
         if(cur>='0' && cur<='9') {
@@ -1630,7 +1630,7 @@ int __cdecl MSVCRT_atoi(const char *str)
     if(!str)
         return 0;
 
-    while(MSVCRT__isspace_l((unsigned char)*str, NULL)) str++;
+    while(_isspace_l((unsigned char)*str, NULL)) str++;
 
     if(*str == '+') {
         str++;
@@ -1789,7 +1789,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
     if (!MSVCRT_CHECK_PMT(base == 0 || base >= 2)) return 0;
     if (!MSVCRT_CHECK_PMT(base <= 36)) return 0;
 
-    while(MSVCRT__isspace_l((unsigned char)*nptr, locale)) nptr++;
+    while(_isspace_l((unsigned char)*nptr, locale)) nptr++;
 
     if(*nptr == '-') {
         negative = TRUE;
@@ -1797,7 +1797,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
     } else if(*nptr == '+')
         nptr++;
 
-    if((base==0 || base==16) && *nptr=='0' && MSVCRT__tolower_l(*(nptr+1), locale)=='x') {
+    if((base==0 || base==16) && *nptr=='0' && _tolower_l(*(nptr+1), locale)=='x') {
         base = 16;
         nptr += 2;
     }
@@ -1810,7 +1810,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
     }
 
     while(*nptr) {
-        char cur = MSVCRT__tolower_l(*nptr, locale);
+        char cur = _tolower_l(*nptr, locale);
         int v;
 
         if(cur>='0' && cur<='9') {
@@ -2679,8 +2679,8 @@ int __cdecl MSVCRT__strnicmp_l(const char *s1, const char *s2,
     }
 
     do {
-        c1 = MSVCRT__tolower_l((unsigned char)*s1++, locale);
-        c2 = MSVCRT__tolower_l((unsigned char)*s2++, locale);
+        c1 = _tolower_l((unsigned char)*s1++, locale);
+        c2 = _tolower_l((unsigned char)*s2++, locale);
     }while(--count && c1 && c1==c2);
 
     return c1-c2;
@@ -2771,7 +2771,7 @@ int __cdecl MSVCRT__memicmp_l(const char *s1, const char *s2, size_t len, _local
 
     while (len--)
     {
-        if ((ret = MSVCRT__tolower_l(*s1, locale) - MSVCRT__tolower_l(*s2, locale)))
+        if ((ret = _tolower_l(*s1, locale) - _tolower_l(*s2, locale)))
             break;
         s1++;
         s2++;

@@ -36,7 +36,7 @@
 #define _CHAR_ char
 #define _EOF_ EOF
 #define _EOF_RET EOF
-#define _ISSPACE_(c) MSVCRT_isspace(c)
+#define _ISSPACE_(c) isspace(c)
 #define _WIDE2SUPPORTED_(c) c /* FIXME: convert wide char to char */
 #define _CHAR2SUPPORTED_(c) c /* No conversion needed (char to char) */
 #define _CHAR2DIGIT_(c, base) char2digit((c), (base))

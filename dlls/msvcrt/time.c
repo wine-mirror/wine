@@ -1195,7 +1195,7 @@ static size_t strftime_impl(STRFTIME_CHAR *str, size_t max,
 
     for(ret=0; *format && ret<max; format++) {
         if(*format != '%') {
-            if(MSVCRT__isleadbyte_l((unsigned char)*format, loc)) {
+            if(_isleadbyte_l((unsigned char)*format, loc)) {
                 str[ret++] = *(format++);
                 if(ret == max) continue;
                 if(!MSVCRT_CHECK_PMT(str[ret]))

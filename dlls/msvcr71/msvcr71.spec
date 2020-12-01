@@ -147,9 +147,9 @@
 @ cdecl __getmainargs(ptr ptr ptr long ptr)
 @ extern __initenv MSVCRT___initenv
 @ cdecl __iob_func()
-@ cdecl __isascii(long) MSVCRT___isascii
-@ cdecl __iscsym(long) MSVCRT___iscsym
-@ cdecl __iscsymf(long) MSVCRT___iscsymf
+@ cdecl __isascii(long)
+@ cdecl __iscsym(long)
+@ cdecl __iscsymf(long)
 # extern __lc_clike
 @ extern __lc_codepage MSVCRT___lc_codepage
 @ extern __lc_collate_cp MSVCRT___lc_collate_cp
@@ -174,7 +174,7 @@
 @ stub __p__mbcasemap()
 @ cdecl __p__mbctype()
 @ cdecl __p__osver()
-@ cdecl __p__pctype() MSVCRT___p__pctype
+@ cdecl __p__pctype()
 @ cdecl __p__pgmptr() MSVCRT___p__pgmptr
 @ stub __p__pwctype()
 @ cdecl __p__timezone() MSVCRT___p__timezone
@@ -185,7 +185,7 @@
 @ cdecl __p__winminor()
 @ cdecl __p__winver()
 @ cdecl __p__wpgmptr() MSVCRT___p__wpgmptr
-@ cdecl __pctype_func() MSVCRT___pctype_func
+@ cdecl __pctype_func()
 @ extern __pioinfo MSVCRT___pioinfo
 @ stub __pwctype_func
 @ cdecl __pxcptinfoptrs() MSVCRT___pxcptinfoptrs
@@ -196,7 +196,7 @@
 @ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr
 @ cdecl __threadhandle() kernel32.GetCurrentThread
 @ cdecl __threadid() kernel32.GetCurrentThreadId
-@ cdecl __toascii(long) MSVCRT___toascii
+@ cdecl __toascii(long)
 @ cdecl __unDName(ptr str long ptr ptr long)
 @ cdecl __unDNameEx(ptr str long ptr ptr ptr long)
 @ extern __unguarded_readlc_active MSVCRT___unguarded_readlc_active
@@ -359,7 +359,7 @@
 @ stub -arch=i386 _inpw(long)
 @ extern _iob MSVCRT__iob
 @ cdecl _isatty(long) MSVCRT__isatty
-@ cdecl _isctype(long long) MSVCRT__isctype
+@ cdecl _isctype(long long)
 @ stub _ismbbalnum(long)
 @ stub _ismbbalpha(long)
 @ stub _ismbbgraph(long)
@@ -565,8 +565,8 @@
 @ cdecl _tempnam(str str) MSVCRT__tempnam
 @ cdecl _time64(ptr) MSVCRT__time64
 @ extern _timezone MSVCRT___timezone
-@ cdecl _tolower(long) MSVCRT__tolower
-@ cdecl _toupper(long) MSVCRT__toupper
+@ cdecl _tolower(long)
+@ cdecl _toupper(long)
 @ extern _tzname MSVCRT__tzname
 @ cdecl _tzset() MSVCRT__tzset
 @ cdecl _ui64toa(int64 ptr long) ntdll._ui64toa
@@ -738,20 +738,20 @@
 @ cdecl getwchar() MSVCRT_getwchar
 @ cdecl gmtime(ptr) MSVCRT_gmtime
 @ cdecl is_wctype(long long) MSVCRT_iswctype
-@ cdecl isalnum(long) MSVCRT_isalnum
-@ cdecl isalpha(long) MSVCRT_isalpha
-@ cdecl iscntrl(long) MSVCRT_iscntrl
-@ cdecl isdigit(long) MSVCRT_isdigit
-@ cdecl isgraph(long) MSVCRT_isgraph
-@ cdecl isleadbyte(long) MSVCRT_isleadbyte
-@ cdecl islower(long) MSVCRT_islower
-@ cdecl isprint(long) MSVCRT_isprint
-@ cdecl ispunct(long) MSVCRT_ispunct
-@ cdecl isspace(long) MSVCRT_isspace
-@ cdecl isupper(long) MSVCRT_isupper
+@ cdecl isalnum(long)
+@ cdecl isalpha(long)
+@ cdecl iscntrl(long)
+@ cdecl isdigit(long)
+@ cdecl isgraph(long)
+@ cdecl isleadbyte(long)
+@ cdecl islower(long)
+@ cdecl isprint(long)
+@ cdecl ispunct(long)
+@ cdecl isspace(long)
+@ cdecl isupper(long)
 @ cdecl iswalnum(long) MSVCRT_iswalnum
 @ cdecl iswalpha(long) MSVCRT_iswalpha
-@ cdecl iswascii(long) MSVCRT_iswascii
+@ cdecl iswascii(long)
 @ cdecl iswcntrl(long) MSVCRT_iswcntrl
 @ cdecl iswctype(long long) MSVCRT_iswctype
 @ cdecl iswdigit(long) MSVCRT_iswdigit
@@ -762,7 +762,7 @@
 @ cdecl iswspace(long) MSVCRT_iswspace
 @ cdecl iswupper(long) MSVCRT_iswupper
 @ cdecl iswxdigit(long) MSVCRT_iswxdigit
-@ cdecl isxdigit(long) MSVCRT_isxdigit
+@ cdecl isxdigit(long)
 @ cdecl labs(long) MSVCRT_labs
 @ cdecl ldexp(double long) MSVCRT_ldexp
 @ cdecl -ret64 ldiv(long long) MSVCRT_ldiv
@@ -837,8 +837,8 @@
 @ cdecl time(ptr) MSVCRT_time
 @ cdecl tmpfile() MSVCRT_tmpfile
 @ cdecl tmpnam(ptr) MSVCRT_tmpnam
-@ cdecl tolower(long) MSVCRT_tolower
-@ cdecl toupper(long) MSVCRT_toupper
+@ cdecl tolower(long)
+@ cdecl toupper(long)
 @ cdecl towlower(long) MSVCRT_towlower
 @ cdecl towupper(long) MSVCRT_towupper
 @ cdecl ungetc(long ptr) MSVCRT_ungetc
