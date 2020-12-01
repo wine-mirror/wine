@@ -414,6 +414,13 @@ struct font_callback_funcs
 
 extern void font_init(void) DECLSPEC_HIDDEN;
 
+/* opentype.c */
+
+struct ttc_sfnt_v1;
+
+extern BOOL opentype_get_ttc_sfnt_v1( const void *data, size_t size, DWORD index, DWORD *count,
+                                      const struct ttc_sfnt_v1 **ttc_sfnt_v1 ) DECLSPEC_HIDDEN;
+
 /* gdiobj.c */
 extern HGDIOBJ alloc_gdi_handle( void *obj, WORD type, const struct gdi_obj_funcs *funcs ) DECLSPEC_HIDDEN;
 extern void *free_gdi_handle( HGDIOBJ handle ) DECLSPEC_HIDDEN;

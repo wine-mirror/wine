@@ -1110,8 +1110,10 @@ struct unix_face
 static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr, DWORD data_size,
                                            UINT face_index, DWORD flags )
 {
+    const struct ttc_sfnt_v1 *ttc_sfnt_v1;
     struct unix_face *This;
     struct stat st;
+    DWORD face_count;
     int fd;
 
     TRACE( "unix_name %s, face_index %u, data_ptr %p, data_size %u, flags %#x\n",
@@ -1138,11 +1140,20 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
         RtlFreeHeap( GetProcessHeap(), 0, This );
         This = NULL;
     }
+    else if (opentype_get_ttc_sfnt_v1( data_ptr, data_size, face_index, &face_count, &ttc_sfnt_v1 ))
+    {
+        This->scalable = TRUE;
+        This->num_faces = face_count;
+    }
     else
     {
+        WARN( "unable to parse font, falling back to FreeType\n" );
         This->scalable = FT_IS_SCALABLE( This->ft_face );
         This->num_faces = This->ft_face->num_faces;
+    }
 
+    if (This)
+    {
         This->family_name = ft_face_get_family_name( This->ft_face, system_lcid );
         This->second_name = ft_face_get_family_name( This->ft_face, MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) );
 
