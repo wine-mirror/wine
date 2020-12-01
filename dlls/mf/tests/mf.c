@@ -1740,7 +1740,6 @@ static void test_topology_loader(void)
         {
             /* PCM -> PCM, different bps. */
             &MFMediaType_Audio,
-            /* Source type */
             {
                 {
                   { &MF_MT_SUBTYPE, WAVE_FORMAT_PCM },
@@ -1751,7 +1750,6 @@ static void test_topology_loader(void)
                   { &MF_MT_AUDIO_BITS_PER_SAMPLE, 8 },
                 }
             },
-            /* Sink type */
             {
                 {
                   { &MF_MT_SUBTYPE, WAVE_FORMAT_PCM },
@@ -2038,6 +2036,14 @@ todo_wine {
 
                 hr = IMFTopologyNode_GetObject(mft_node, &node_object);
                 ok(hr == S_OK, "Failed to get object of transform node, hr %#x.\n", hr);
+
+                if (test->flags & LOADER_EXPECTED_DECODER)
+                {
+                    value = 0;
+                    hr = IMFTopologyNode_GetUINT32(mft_node, &MF_TOPONODE_DECODER, &value);
+                    ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
+                    ok(value == 1, "Unexpected value.\n");
+                }
 
                 hr = IUnknown_QueryInterface(node_object, &IID_IMFTransform, (void **)&transform);
                 ok(hr == S_OK, "Failed to get IMFTransform from transform node's object, hr %#x.\n", hr);

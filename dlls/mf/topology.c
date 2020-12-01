@@ -1996,6 +1996,7 @@ struct transform_output_type
 {
     IMFMediaType *type;
     IMFTransform *transform;
+    const GUID *category;
 };
 
 struct connect_context
@@ -2053,6 +2054,7 @@ static HRESULT topology_loader_enumerate_output_types(const GUID *category, IMFM
             unsigned int output_count = 0;
 
             output_type.transform = transform;
+            output_type.category = category;
             while (SUCCEEDED(IMFTransform_GetOutputAvailableType(transform, 0, output_count++, &output_type.type)))
             {
                 hr = connect_func(&output_type, context);
@@ -2073,6 +2075,24 @@ static HRESULT topology_loader_enumerate_output_types(const GUID *category, IMFM
     return hr;
 }
 
+static HRESULT topology_loader_create_transform(const struct transform_output_type *output_type,
+        IMFTopologyNode **node)
+{
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, node)))
+        return hr;
+
+    IMFTopologyNode_SetObject(*node, (IUnknown *)output_type->transform);
+    if (IsEqualGUID(output_type->category, &MFT_CATEGORY_AUDIO_DECODER) ||
+            IsEqualGUID(output_type->category, &MFT_CATEGORY_VIDEO_DECODER))
+    {
+        IMFTopologyNode_SetUINT32(*node, &MF_TOPONODE_DECODER, 1);
+    }
+
+    return hr;
+}
+
 static HRESULT connect_to_sink(struct transform_output_type *output_type, struct connect_context *context)
 {
     IMFTopologyNode *node;
@@ -2081,10 +2101,9 @@ static HRESULT connect_to_sink(struct transform_output_type *output_type, struct
     if (FAILED(IMFMediaTypeHandler_IsMediaTypeSupported(context->sink_handler, output_type->type, NULL)))
         return MF_E_TRANSFORM_NOT_POSSIBLE_FOR_CURRENT_MEDIATYPE_COMBINATION;
 
-    if (FAILED(hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node)))
+    if (FAILED(hr = topology_loader_create_transform(output_type, &node)))
         return hr;
 
-    IMFTopologyNode_SetObject(node, (IUnknown *)output_type->transform);
     IMFTopology_AddNode(context->context->output_topology, node);
     IMFTopologyNode_ConnectOutput(context->upstream_node, 0, node, 0);
     IMFTopologyNode_ConnectOutput(node, 0, context->sink, 0);
@@ -2107,10 +2126,8 @@ static HRESULT connect_to_converter(struct transform_output_type *output_type, s
     if (SUCCEEDED(connect_to_sink(output_type, context)))
         return S_OK;
 
-    if (FAILED(hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node)))
+    if (FAILED(hr = topology_loader_create_transform(output_type, &node)))
         return hr;
-
-    IMFTopologyNode_SetObject(node, (IUnknown *)output_type->transform);
 
     sink_ctx = *context;
     sink_ctx.upstream_node = node;
