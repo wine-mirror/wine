@@ -16799,7 +16799,7 @@ static void fp_special_test(void)
         0x0000ffff,                                                             /* end                          */
     };
 
-    struct
+    static const struct
     {
         float x, y, z;
         float s;
