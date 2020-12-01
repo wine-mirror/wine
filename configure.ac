@@ -2166,7 +2166,6 @@ AC_CHECK_FUNCS(\
 	fnmatch \
 	fork \
 	fstatfs \
-	fstatvfs \
 	futimens \
 	futimes \
 	futimesat \
@@ -2193,8 +2192,6 @@ AC_CHECK_FUNCS(\
 	setprogname \
 	settimeofday \
 	sigprocmask \
-	statfs \
-	statvfs \
 	strnlen \
 	strtold \
 	symlink \
@@ -2299,7 +2296,6 @@ fi
 dnl **** Check for types ****
 
 AC_C_INLINE
-AC_CHECK_TYPES([fsblkcnt_t, fsfilcnt_t])
 AC_CHECK_TYPES([sigset_t],,,[#include <sys/types.h>
 #include <signal.h>])
 AC_CHECK_TYPES([request_sense],,,[#include <linux/cdrom.h>])
@@ -2401,29 +2397,6 @@ then
                 [Define if <linux/joystick.h> defines the Linux 2.2 joystick API])
    fi
 fi
-
-dnl **** FIXME: what about mixed cases, where we need two of them? ***
-
-dnl Check for statfs members
-AC_CHECK_MEMBERS([struct statfs.f_bfree, struct statfs.f_bavail, struct statfs.f_frsize, struct statfs.f_ffree, struct statfs.f_favail, struct statfs.f_namelen],,,
-[#include <sys/types.h>
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif
-#ifdef HAVE_SYS_MOUNT_H
-# include <sys/mount.h>
-#endif
-#ifdef HAVE_SYS_VFS_H
-# include <sys/vfs.h>
-#endif
-#ifdef HAVE_SYS_STATFS_H
-# include <sys/statfs.h>
-#endif])
-
-AC_CHECK_MEMBERS([struct statvfs.f_blocks],,,
-[#ifdef HAVE_SYS_STATVFS_H
-#include <sys/statvfs.h>
-#endif])
 
 dnl Check for dirent.d_reclen
 AC_CHECK_MEMBERS([struct dirent.d_reclen],,,

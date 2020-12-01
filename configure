@@ -17757,7 +17757,6 @@ for ac_func in \
 	fnmatch \
 	fork \
 	fstatfs \
-	fstatvfs \
 	futimens \
 	futimes \
 	futimesat \
@@ -17784,8 +17783,6 @@ for ac_func in \
 	setprogname \
 	settimeofday \
 	sigprocmask \
-	statfs \
-	statvfs \
 	strnlen \
 	strtold \
 	symlink \
@@ -18457,25 +18454,6 @@ _ACEOF
     ;;
 esac
 
-ac_fn_c_check_type "$LINENO" "fsblkcnt_t" "ac_cv_type_fsblkcnt_t" "$ac_includes_default"
-if test "x$ac_cv_type_fsblkcnt_t" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_FSBLKCNT_T 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_type "$LINENO" "fsfilcnt_t" "ac_cv_type_fsfilcnt_t" "$ac_includes_default"
-if test "x$ac_cv_type_fsfilcnt_t" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_FSFILCNT_T 1
-_ACEOF
-
-
-fi
-
 ac_fn_c_check_type "$LINENO" "sigset_t" "ac_cv_type_sigset_t" "#include <sys/types.h>
 #include <signal.h>
 "
@@ -18713,155 +18691,6 @@ $as_echo "#define HAVE_LINUX_22_JOYSTICK_API 1" >>confdefs.h
 
    fi
 fi
-
-
-ac_fn_c_check_member "$LINENO" "struct statfs" "f_bfree" "ac_cv_member_struct_statfs_f_bfree" "#include <sys/types.h>
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif
-#ifdef HAVE_SYS_MOUNT_H
-# include <sys/mount.h>
-#endif
-#ifdef HAVE_SYS_VFS_H
-# include <sys/vfs.h>
-#endif
-#ifdef HAVE_SYS_STATFS_H
-# include <sys/statfs.h>
-#endif
-"
-if test "x$ac_cv_member_struct_statfs_f_bfree" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_STATFS_F_BFREE 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_member "$LINENO" "struct statfs" "f_bavail" "ac_cv_member_struct_statfs_f_bavail" "#include <sys/types.h>
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif
-#ifdef HAVE_SYS_MOUNT_H
-# include <sys/mount.h>
-#endif
-#ifdef HAVE_SYS_VFS_H
-# include <sys/vfs.h>
-#endif
-#ifdef HAVE_SYS_STATFS_H
-# include <sys/statfs.h>
-#endif
-"
-if test "x$ac_cv_member_struct_statfs_f_bavail" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_STATFS_F_BAVAIL 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_member "$LINENO" "struct statfs" "f_frsize" "ac_cv_member_struct_statfs_f_frsize" "#include <sys/types.h>
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif
-#ifdef HAVE_SYS_MOUNT_H
-# include <sys/mount.h>
-#endif
-#ifdef HAVE_SYS_VFS_H
-# include <sys/vfs.h>
-#endif
-#ifdef HAVE_SYS_STATFS_H
-# include <sys/statfs.h>
-#endif
-"
-if test "x$ac_cv_member_struct_statfs_f_frsize" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_STATFS_F_FRSIZE 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_member "$LINENO" "struct statfs" "f_ffree" "ac_cv_member_struct_statfs_f_ffree" "#include <sys/types.h>
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif
-#ifdef HAVE_SYS_MOUNT_H
-# include <sys/mount.h>
-#endif
-#ifdef HAVE_SYS_VFS_H
-# include <sys/vfs.h>
-#endif
-#ifdef HAVE_SYS_STATFS_H
-# include <sys/statfs.h>
-#endif
-"
-if test "x$ac_cv_member_struct_statfs_f_ffree" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_STATFS_F_FFREE 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_member "$LINENO" "struct statfs" "f_favail" "ac_cv_member_struct_statfs_f_favail" "#include <sys/types.h>
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif
-#ifdef HAVE_SYS_MOUNT_H
-# include <sys/mount.h>
-#endif
-#ifdef HAVE_SYS_VFS_H
-# include <sys/vfs.h>
-#endif
-#ifdef HAVE_SYS_STATFS_H
-# include <sys/statfs.h>
-#endif
-"
-if test "x$ac_cv_member_struct_statfs_f_favail" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_STATFS_F_FAVAIL 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_member "$LINENO" "struct statfs" "f_namelen" "ac_cv_member_struct_statfs_f_namelen" "#include <sys/types.h>
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif
-#ifdef HAVE_SYS_MOUNT_H
-# include <sys/mount.h>
-#endif
-#ifdef HAVE_SYS_VFS_H
-# include <sys/vfs.h>
-#endif
-#ifdef HAVE_SYS_STATFS_H
-# include <sys/statfs.h>
-#endif
-"
-if test "x$ac_cv_member_struct_statfs_f_namelen" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_STATFS_F_NAMELEN 1
-_ACEOF
-
-
-fi
-
-
-ac_fn_c_check_member "$LINENO" "struct statvfs" "f_blocks" "ac_cv_member_struct_statvfs_f_blocks" "#ifdef HAVE_SYS_STATVFS_H
-#include <sys/statvfs.h>
-#endif
-"
-if test "x$ac_cv_member_struct_statvfs_f_blocks" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_STATVFS_F_BLOCKS 1
-_ACEOF
-
-
-fi
-
 
 ac_fn_c_check_member "$LINENO" "struct dirent" "d_reclen" "ac_cv_member_struct_dirent_d_reclen" "#ifdef HAVE_DIRENT_H
 #include <dirent.h>

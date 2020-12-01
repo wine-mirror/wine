@@ -130,35 +130,6 @@ extern int _spawnvp(int mode, const char *cmdname, const char * const argv[]);
 #endif  /* _WIN32 */
 
 /****************************************************************
- * Type definitions
- */
-
-#ifndef HAVE_FSBLKCNT_T
-typedef unsigned long fsblkcnt_t;
-#endif
-#ifndef HAVE_FSFILCNT_T
-typedef unsigned long fsfilcnt_t;
-#endif
-
-#ifndef HAVE_STRUCT_STATVFS_F_BLOCKS
-struct statvfs
-{
-    unsigned long f_bsize;
-    unsigned long f_frsize;
-    fsblkcnt_t    f_blocks;
-    fsblkcnt_t    f_bfree;
-    fsblkcnt_t    f_bavail;
-    fsfilcnt_t    f_files;
-    fsfilcnt_t    f_ffree;
-    fsfilcnt_t    f_favail;
-    unsigned long f_fsid;
-    unsigned long f_flag;
-    unsigned long f_namemax;
-};
-#endif /* HAVE_STRUCT_STATVFS_F_BLOCKS */
-
-
-/****************************************************************
  * Macro definitions
  */
 
@@ -245,10 +216,6 @@ static inline float __port_nan(void)
 
 #ifndef NO_LIBWINE_PORT
 
-#ifndef HAVE_FSTATVFS
-int fstatvfs( int fd, struct statvfs *buf );
-#endif
-
 #ifndef HAVE_GETOPT_LONG_ONLY
 extern char *optarg;
 extern int optind;
@@ -306,10 +273,6 @@ ssize_t pwrite( int fd, const void *buf, size_t count, off_t offset );
 int readlink( const char *path, char *buf, size_t size );
 #endif /* HAVE_READLINK */
 
-#ifndef HAVE_STATVFS
-int statvfs( const char *path, struct statvfs *buf );
-#endif
-
 #ifndef HAVE_STRNLEN
 size_t strnlen( const char *str, size_t maxlen );
 #endif /* !defined(HAVE_STRNLEN) */
@@ -328,13 +291,11 @@ extern int mkstemps(char *template, int suffix_len);
 
 #define __WINE_NOT_PORTABLE(func) func##_is_not_portable func##_is_not_portable
 
-#define fstatvfs                __WINE_NOT_PORTABLE(fstatvfs)
 #define getopt_long             __WINE_NOT_PORTABLE(getopt_long)
 #define getopt_long_only        __WINE_NOT_PORTABLE(getopt_long_only)
 #define lstat                   __WINE_NOT_PORTABLE(lstat)
 #define pread                   __WINE_NOT_PORTABLE(pread)
 #define pwrite                  __WINE_NOT_PORTABLE(pwrite)
-#define statvfs                 __WINE_NOT_PORTABLE(statvfs)
 #define strnlen                 __WINE_NOT_PORTABLE(strnlen)
 #define usleep                  __WINE_NOT_PORTABLE(usleep)
 
