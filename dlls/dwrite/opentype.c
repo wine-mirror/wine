@@ -126,7 +126,7 @@ enum opentype_cmap_table_encoding
 
 /* PANOSE is 10 bytes in size, need to pack the structure properly */
 #include "pshpack2.h"
-typedef struct
+struct tt_head
 {
     USHORT majorVersion;
     USHORT minorVersion;
@@ -146,9 +146,9 @@ typedef struct
     SHORT direction_hint;
     SHORT index_format;
     SHORT glyphdata_format;
-} TT_HEAD;
+};
 
-enum TT_HEAD_MACSTYLE
+enum tt_head_macstyle
 {
     TT_HEAD_MACSTYLE_BOLD      = 1 << 0,
     TT_HEAD_MACSTYLE_ITALIC    = 1 << 1,
@@ -159,7 +159,7 @@ enum TT_HEAD_MACSTYLE
     TT_HEAD_MACSTYLE_EXTENDED  = 1 << 6,
 };
 
-typedef struct
+struct tt_post
 {
     ULONG Version;
     ULONG italicAngle;
@@ -170,9 +170,9 @@ typedef struct
     ULONG maxmemType42;
     ULONG minmemType1;
     ULONG maxmemType1;
-} TT_POST;
+};
 
-typedef struct
+struct tt_os2
 {
     USHORT version;
     SHORT xAvgCharWidth;
@@ -217,9 +217,10 @@ typedef struct
     USHORT usDefaultChar;
     USHORT usBreakChar;
     USHORT usMaxContext;
-} TT_OS2_V2;
+};
 
-typedef struct {
+struct tt_hhea
+{
     USHORT majorVersion;
     USHORT minorVersion;
     SHORT  ascender;
@@ -235,7 +236,7 @@ typedef struct {
     SHORT  reserved[4];
     SHORT  metricDataFormat;
     USHORT numberOfHMetrics;
-} TT_HHEA;
+};
 
 struct sbix_header
 {
@@ -1878,31 +1879,25 @@ HRESULT opentype_cmap_get_unicode_ranges(const struct dwrite_cmap *cmap, unsigne
 void opentype_get_font_typo_metrics(struct file_stream_desc *stream_desc, unsigned int *ascent, unsigned int *descent)
 {
     struct dwrite_fonttable os2;
-    const TT_OS2_V2 *data;
 
     opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
-    data = (const TT_OS2_V2 *)os2.data;
 
     *ascent = *descent = 0;
 
-    if (os2.size >= FIELD_OFFSET(TT_OS2_V2, sTypoLineGap))
+    if (os2.size >= FIELD_OFFSET(struct tt_os2, sTypoLineGap))
     {
-        SHORT value = GET_BE_WORD(data->sTypoDescender);
-        *ascent = GET_BE_WORD(data->sTypoAscender);
+        SHORT value = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, sTypoDescender));
+        *ascent = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, sTypoAscender));
         *descent = value < 0 ? -value : 0;
     }
 
-    if (data)
+    if (os2.data)
         IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2.context);
 }
 
 void opentype_get_font_metrics(struct file_stream_desc *stream_desc, DWRITE_FONT_METRICS1 *metrics, DWRITE_CARET_METRICS *caret)
 {
     struct dwrite_fonttable os2, head, post, hhea;
-    const TT_OS2_V2 *tt_os2;
-    const TT_HEAD *tt_head;
-    const TT_POST *tt_post;
-    const TT_HHEA *tt_hhea;
 
     memset(metrics, 0, sizeof(*metrics));
 
@@ -1911,88 +1906,89 @@ void opentype_get_font_metrics(struct file_stream_desc *stream_desc, DWRITE_FONT
     opentype_get_font_table(stream_desc, MS_POST_TAG, &post);
     opentype_get_font_table(stream_desc, MS_HHEA_TAG, &hhea);
 
-    tt_head = (const TT_HEAD *)head.data;
-    tt_os2 = (const TT_OS2_V2 *)os2.data;
-    tt_post = (const TT_POST *)post.data;
-    tt_hhea = (const TT_HHEA *)hhea.data;
-
-    if (tt_head) {
-        metrics->designUnitsPerEm = GET_BE_WORD(tt_head->unitsPerEm);
-        metrics->glyphBoxLeft = GET_BE_WORD(tt_head->xMin);
-        metrics->glyphBoxTop = GET_BE_WORD(tt_head->yMax);
-        metrics->glyphBoxRight = GET_BE_WORD(tt_head->xMax);
-        metrics->glyphBoxBottom = GET_BE_WORD(tt_head->yMin);
+    if (head.data)
+    {
+        metrics->designUnitsPerEm = table_read_be_word(&head, FIELD_OFFSET(struct tt_head, unitsPerEm));
+        metrics->glyphBoxLeft = table_read_be_word(&head, FIELD_OFFSET(struct tt_head, xMin));
+        metrics->glyphBoxTop = table_read_be_word(&head, FIELD_OFFSET(struct tt_head, yMax));
+        metrics->glyphBoxRight = table_read_be_word(&head, FIELD_OFFSET(struct tt_head, xMax));
+        metrics->glyphBoxBottom = table_read_be_word(&head, FIELD_OFFSET(struct tt_head, yMin));
     }
 
     if (caret)
     {
-        if (tt_hhea) {
-            caret->slopeRise = GET_BE_WORD(tt_hhea->caretSlopeRise);
-            caret->slopeRun = GET_BE_WORD(tt_hhea->caretSlopeRun);
-            caret->offset = GET_BE_WORD(tt_hhea->caretOffset);
+        if (hhea.data)
+        {
+            caret->slopeRise = table_read_be_word(&hhea, FIELD_OFFSET(struct tt_hhea, caretSlopeRise));
+            caret->slopeRun = table_read_be_word(&hhea, FIELD_OFFSET(struct tt_hhea, caretSlopeRun));
+            caret->offset = table_read_be_word(&hhea, FIELD_OFFSET(struct tt_hhea, caretOffset));
         }
-        else {
-            caret->slopeRise = 0;
-            caret->slopeRun = 0;
-            caret->offset = 0;
-        }
+        else
+            memset(caret, 0, sizeof(*caret));
     }
 
-    if (tt_os2) {
-        USHORT version = GET_BE_WORD(tt_os2->version);
+    if (os2.data)
+    {
+        USHORT version = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, version));
 
-        metrics->ascent  = GET_BE_WORD(tt_os2->usWinAscent);
+        metrics->ascent = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, usWinAscent));
         /* Some fonts have usWinDescent value stored as signed short, which could be wrongly
            interpreted as large unsigned value. */
-        metrics->descent = abs((SHORT)GET_BE_WORD(tt_os2->usWinDescent));
+        metrics->descent = abs((SHORT)table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, usWinDescent)));
 
-        /* line gap is estimated using two sets of ascender/descender values and 'hhea' line gap */
-        if (tt_hhea) {
-            SHORT descender = (SHORT)GET_BE_WORD(tt_hhea->descender);
+        /* Line gap is estimated using two sets of ascender/descender values and 'hhea' line gap. */
+        if (hhea.data)
+        {
+            SHORT descender = (SHORT)table_read_be_word(&hhea, FIELD_OFFSET(struct tt_hhea, descender));
             INT32 linegap;
 
-            linegap = GET_BE_WORD(tt_hhea->ascender) + abs(descender) + GET_BE_WORD(tt_hhea->linegap) -
-                metrics->ascent - metrics->descent;
+            linegap = table_read_be_word(&hhea, FIELD_OFFSET(struct tt_hhea, ascender)) + abs(descender) +
+                    table_read_be_word(&hhea, FIELD_OFFSET(struct tt_hhea, linegap)) - metrics->ascent - metrics->descent;
             metrics->lineGap = linegap > 0 ? linegap : 0;
         }
 
-        metrics->strikethroughPosition  = GET_BE_WORD(tt_os2->yStrikeoutPosition);
-        metrics->strikethroughThickness = GET_BE_WORD(tt_os2->yStrikeoutSize);
-        metrics->subscriptPositionX = GET_BE_WORD(tt_os2->ySubscriptXOffset);
+        metrics->strikethroughPosition  = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, yStrikeoutPosition));
+        metrics->strikethroughThickness = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, yStrikeoutSize));
+        metrics->subscriptPositionX = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, ySubscriptXOffset));
         /* Y offset is stored as positive offset below baseline */
-        metrics->subscriptPositionY = -GET_BE_WORD(tt_os2->ySubscriptYOffset);
-        metrics->subscriptSizeX = GET_BE_WORD(tt_os2->ySubscriptXSize);
-        metrics->subscriptSizeY = GET_BE_WORD(tt_os2->ySubscriptYSize);
-        metrics->superscriptPositionX = GET_BE_WORD(tt_os2->ySuperscriptXOffset);
-        metrics->superscriptPositionY = GET_BE_WORD(tt_os2->ySuperscriptYOffset);
-        metrics->superscriptSizeX = GET_BE_WORD(tt_os2->ySuperscriptXSize);
-        metrics->superscriptSizeY = GET_BE_WORD(tt_os2->ySuperscriptYSize);
+        metrics->subscriptPositionY = -table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, ySubscriptYOffset));
+        metrics->subscriptSizeX = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, ySubscriptXSize));
+        metrics->subscriptSizeY = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, ySubscriptYSize));
+        metrics->superscriptPositionX = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, ySuperscriptXOffset));
+        metrics->superscriptPositionY = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, ySuperscriptYOffset));
+        metrics->superscriptSizeX = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, ySuperscriptXSize));
+        metrics->superscriptSizeY = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, ySuperscriptYSize));
 
         /* version 2 fields */
-        if (version >= 2) {
-            metrics->capHeight = GET_BE_WORD(tt_os2->sCapHeight);
-            metrics->xHeight   = GET_BE_WORD(tt_os2->sxHeight);
+        if (version >= 2)
+        {
+            metrics->capHeight = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, sCapHeight));
+            metrics->xHeight   = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, sxHeight));
         }
 
-        if (GET_BE_WORD(tt_os2->fsSelection) & OS2_FSSELECTION_USE_TYPO_METRICS) {
-            SHORT descent = GET_BE_WORD(tt_os2->sTypoDescender);
-            metrics->ascent = GET_BE_WORD(tt_os2->sTypoAscender);
+        if (table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, fsSelection)) & OS2_FSSELECTION_USE_TYPO_METRICS)
+        {
+            SHORT descent = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, sTypoDescender));
+            metrics->ascent = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, sTypoAscender));
             metrics->descent = descent < 0 ? -descent : 0;
-            metrics->lineGap = GET_BE_WORD(tt_os2->sTypoLineGap);
+            metrics->lineGap = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, sTypoLineGap));
             metrics->hasTypographicMetrics = TRUE;
         }
     }
-    else {
+    else
+    {
         metrics->strikethroughPosition = metrics->designUnitsPerEm / 3;
-        if (tt_hhea) {
-            metrics->ascent = GET_BE_WORD(tt_hhea->ascender);
-            metrics->descent = abs((SHORT)GET_BE_WORD(tt_hhea->descender));
+        if (hhea.data)
+        {
+            metrics->ascent = table_read_be_word(&hhea, FIELD_OFFSET(struct tt_hhea, ascender));
+            metrics->descent = abs((SHORT)table_read_be_word(&hhea, FIELD_OFFSET(struct tt_hhea, descender)));
         }
     }
 
-    if (tt_post) {
-        metrics->underlinePosition = GET_BE_WORD(tt_post->underlinePosition);
-        metrics->underlineThickness = GET_BE_WORD(tt_post->underlineThickness);
+    if (post.data)
+    {
+        metrics->underlinePosition = table_read_be_word(&post, FIELD_OFFSET(struct tt_post, underlinePosition));
+        metrics->underlineThickness = table_read_be_word(&post, FIELD_OFFSET(struct tt_post, underlineThickness));
     }
 
     if (metrics->underlineThickness == 0)
@@ -2006,13 +2002,13 @@ void opentype_get_font_metrics(struct file_stream_desc *stream_desc, DWRITE_FONT
     if (metrics->capHeight == 0)
         metrics->capHeight = metrics->designUnitsPerEm * 7 / 10;
 
-    if (tt_os2)
+    if (os2.data)
         IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2.context);
-    if (tt_head)
+    if (head.data)
         IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, head.context);
-    if (tt_post)
+    if (post.data)
         IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, post.context);
-    if (tt_hhea)
+    if (hhea.data)
         IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, hhea.context);
 }
 
@@ -2020,14 +2016,9 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
 {
     struct dwrite_fonttable os2, head, colr, cpal;
     BOOL is_symbol, is_monospaced;
-    const TT_OS2_V2 *tt_os2;
-    const TT_HEAD *tt_head;
 
     opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
     opentype_get_font_table(stream_desc, MS_HEAD_TAG, &head);
-
-    tt_os2 = (const TT_OS2_V2 *)os2.data;
-    tt_head = (const TT_HEAD *)head.data;
 
     /* default stretch, weight and style to normal */
     props->stretch = DWRITE_FONT_STRETCH_NORMAL;
@@ -2039,12 +2030,13 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
     props->flags = 0;
 
     /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
-    if (tt_os2)
+    if (os2.data)
     {
-        USHORT version = GET_BE_WORD(tt_os2->version);
-        USHORT fsSelection = GET_BE_WORD(tt_os2->fsSelection);
-        USHORT usWeightClass = GET_BE_WORD(tt_os2->usWeightClass);
-        USHORT usWidthClass = GET_BE_WORD(tt_os2->usWidthClass);
+        USHORT version = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, version));
+        USHORT fsSelection = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, fsSelection));
+        USHORT usWeightClass = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, usWeightClass));
+        USHORT usWidthClass = table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, usWidthClass));
+        const void *panose;
 
         if (usWidthClass > DWRITE_FONT_STRETCH_UNDEFINED && usWidthClass <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
             props->stretch = usWidthClass;
@@ -2063,22 +2055,24 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
             props->style = DWRITE_FONT_STYLE_ITALIC;
         props->lf.lfItalic = !!(fsSelection & OS2_FSSELECTION_ITALIC);
 
-        memcpy(&props->panose, &tt_os2->panose, sizeof(props->panose));
+        if ((panose = table_read_ensure(&os2, FIELD_OFFSET(struct tt_os2, panose), sizeof(props->panose))))
+            memcpy(&props->panose, panose, sizeof(props->panose));
 
         /* FONTSIGNATURE */
-        props->fontsig.fsUsb[0] = GET_BE_DWORD(tt_os2->ulUnicodeRange1);
-        props->fontsig.fsUsb[1] = GET_BE_DWORD(tt_os2->ulUnicodeRange2);
-        props->fontsig.fsUsb[2] = GET_BE_DWORD(tt_os2->ulUnicodeRange3);
-        props->fontsig.fsUsb[3] = GET_BE_DWORD(tt_os2->ulUnicodeRange4);
+        props->fontsig.fsUsb[0] = table_read_be_dword(&os2, FIELD_OFFSET(struct tt_os2, ulUnicodeRange1));
+        props->fontsig.fsUsb[1] = table_read_be_dword(&os2, FIELD_OFFSET(struct tt_os2, ulUnicodeRange2));
+        props->fontsig.fsUsb[2] = table_read_be_dword(&os2, FIELD_OFFSET(struct tt_os2, ulUnicodeRange3));
+        props->fontsig.fsUsb[3] = table_read_be_dword(&os2, FIELD_OFFSET(struct tt_os2, ulUnicodeRange4));
 
         if (version)
         {
-            props->fontsig.fsCsb[0] = GET_BE_DWORD(tt_os2->ulCodePageRange1);
-            props->fontsig.fsCsb[1] = GET_BE_DWORD(tt_os2->ulCodePageRange2);
+            props->fontsig.fsCsb[0] = table_read_be_dword(&os2, FIELD_OFFSET(struct tt_os2, ulCodePageRange1));
+            props->fontsig.fsCsb[1] = table_read_be_dword(&os2, FIELD_OFFSET(struct tt_os2, ulCodePageRange2));
         }
     }
-    else if (tt_head) {
-        USHORT macStyle = GET_BE_WORD(tt_head->macStyle);
+    else if (head.data)
+    {
+        USHORT macStyle = table_read_be_word(&head, FIELD_OFFSET(struct tt_head, macStyle));
 
         if (macStyle & TT_HEAD_MACSTYLE_CONDENSED)
             props->stretch = DWRITE_FONT_STRETCH_CONDENSED;
@@ -2137,7 +2131,7 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
 
         if (post.data)
         {
-            is_monospaced = !!table_read_dword(&post, FIELD_OFFSET(TT_POST, fixed_pitch));
+            is_monospaced = !!table_read_dword(&post, FIELD_OFFSET(struct tt_post, fixed_pitch));
 
             IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, post.context);
         }
@@ -2544,20 +2538,20 @@ HRESULT opentype_get_font_info_strings(const struct file_stream_desc *stream_des
 HRESULT opentype_get_font_familyname(struct file_stream_desc *stream_desc, IDWriteLocalizedStrings **names)
 {
     struct dwrite_fonttable os2, name;
-    const TT_OS2_V2 *tt_os2;
     const void *name_table;
+    UINT16 fsselection;
     HRESULT hr;
 
     opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
     opentype_get_font_table(stream_desc, MS_NAME_TAG, &name);
 
-    tt_os2 = (const TT_OS2_V2 *)os2.data;
     name_table = (const void *)name.data;
 
     *names = NULL;
 
-    /* if Preferred Family doesn't conform to WWS model try WWS name */
-    if (tt_os2 && !(GET_BE_WORD(tt_os2->fsSelection) & OS2_FSSELECTION_WWS))
+    /* If Preferred Family doesn't conform to WWS model try WWS name. */
+    fsselection = os2.data ? table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, fsSelection)) : 0;
+    if (os2.data && !(fsselection & OS2_FSSELECTION_WWS))
         hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_WWS_FAMILY_NAME, names);
     else
         hr = E_FAIL;
@@ -2581,20 +2575,20 @@ HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *
 {
     struct dwrite_fonttable os2, name;
     IDWriteLocalizedStrings *lfnames;
-    const TT_OS2_V2 *tt_os2;
     const void *name_table;
+    UINT16 fsselection;
     HRESULT hr;
 
     opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
     opentype_get_font_table(stream_desc, MS_NAME_TAG, &name);
 
-    tt_os2 = (const TT_OS2_V2 *)os2.data;
     name_table = name.data;
 
     *names = NULL;
 
     /* if Preferred Family doesn't conform to WWS model try WWS name */
-    if (tt_os2 && !(GET_BE_WORD(tt_os2->fsSelection) & OS2_FSSELECTION_WWS))
+    fsselection = os2.data ? table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, fsSelection)) : 0;
+    if (os2.data && !(fsselection & OS2_FSSELECTION_WWS))
         hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_WWS_SUBFAMILY_NAME, names);
     else
         hr = E_FAIL;
