@@ -265,31 +265,6 @@ DWORD WINAPI GetConsoleProcessList(LPDWORD processlist, DWORD processcount)
     return 0;
 }
 
-BOOL CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params)
-{
-    /* convert value from server:
-     * + INVALID_HANDLE_VALUE => TEB: 0, STARTUPINFO: INVALID_HANDLE_VALUE
-     * + 0                    => TEB: 0, STARTUPINFO: INVALID_HANDLE_VALUE
-     * + console handle needs to be mapped
-     */
-    if (!params->hStdInput || params->hStdInput == INVALID_HANDLE_VALUE)
-        params->hStdInput = 0;
-    else if (!is_console_handle(params->hStdInput) && VerifyConsoleIoHandle(params->hStdInput))
-        params->hStdInput = console_handle_map(params->hStdInput);
-
-    if (!params->hStdOutput || params->hStdOutput == INVALID_HANDLE_VALUE)
-        params->hStdOutput = 0;
-    else if (!is_console_handle(params->hStdOutput) && VerifyConsoleIoHandle(params->hStdOutput))
-        params->hStdOutput = console_handle_map(params->hStdOutput);
-
-    if (!params->hStdError || params->hStdError == INVALID_HANDLE_VALUE)
-        params->hStdError = 0;
-    else if (!is_console_handle(params->hStdError) && VerifyConsoleIoHandle(params->hStdError))
-        params->hStdError = console_handle_map(params->hStdError);
-
-    return TRUE;
-}
-
 /* Undocumented, called by native doskey.exe */
 /* FIXME: Should use CONSOLE_GetHistory() above for full implementation */
 DWORD WINAPI GetConsoleCommandHistoryA(DWORD unknown1, DWORD unknown2, DWORD unknown3)

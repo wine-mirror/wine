@@ -120,14 +120,10 @@ static void copy_startup_info(void)
  */
 static BOOL process_attach( HMODULE module )
 {
-    RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
-
     kernel32_handle = module;
     RtlSetUnhandledExceptionFilter( UnhandledExceptionFilter );
 
     NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
-
-    CONSOLE_Init(params);
 
     copy_startup_info();
 
