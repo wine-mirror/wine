@@ -22,6 +22,7 @@
 
 import "inspectable.idl";
 /* import "asyncinfo.idl"; */
+import "windowscontracts.idl";
 /* import "eventtoken.idl"; */
 /* import "ivectorchangedeventargs.idl"; */
 

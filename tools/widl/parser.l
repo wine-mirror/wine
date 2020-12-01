@@ -267,6 +267,7 @@ static const struct keyword keywords[] = {
 	{"_fastcall",       tFASTCALL,       0},
 	{"_pascal",         tPASCAL,         0},
 	{"_stdcall",        tSTDCALL,        0},
+	{"apicontract",     tAPICONTRACT,    1},
 	{"boolean",         tBOOLEAN,        0},
 	{"byte",            tBYTE,           0},
 	{"case",            tCASE,           0},

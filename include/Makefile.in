@@ -744,6 +744,7 @@ SOURCES = \
 	windns.h \
 	windows.foundation.idl \
 	windows.h \
+	windowscontracts.idl \
 	windowsx.h \
 	wine/debug.h \
 	wine/exception.h \

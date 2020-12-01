@@ -224,7 +224,8 @@ unsigned short get_type_vt(type_t *t)
     return VT_VOID;
 
   case TYPE_ALIAS:
-    /* aliases should be filtered out by the type_get_type call above */
+  case TYPE_APICONTRACT:
+    /* not supposed to be here */
     assert(0);
     break;
 

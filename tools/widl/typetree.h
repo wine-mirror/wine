@@ -223,6 +223,9 @@ static inline int type_is_complete(const type_t *type)
     case TYPE_ARRAY:
     case TYPE_BITFIELD:
         return TRUE;
+    case TYPE_APICONTRACT:
+        assert(0);
+        break;
     }
     return FALSE;
 }
