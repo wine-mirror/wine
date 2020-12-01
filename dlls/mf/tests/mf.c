@@ -1622,8 +1622,11 @@ static void init_source_node(IMFMediaType *mediatype, IMFMediaSource *source, IM
     hr = IMFTopologyNode_SetUnknown(node, &MF_TOPONODE_STREAM_DESCRIPTOR, (IUnknown *)sd);
     ok(hr == S_OK, "Failed to set node sd, hr %#x.\n", hr);
 
-    hr = IMFTopologyNode_SetUnknown(node, &MF_TOPONODE_SOURCE, (IUnknown *)source);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (source)
+    {
+        hr = IMFTopologyNode_SetUnknown(node, &MF_TOPONODE_SOURCE, (IUnknown *)source);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    }
 
     IMFStreamDescriptor_Release(sd);
 }
@@ -2119,6 +2122,129 @@ todo_wine {
 
     hr = MFShutdown();
     ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
+}
+
+static void test_topology_loader_evr(void)
+{
+    IMFTopologyNode *node, *source_node, *evr_node;
+    IMFTopology *topology, *full_topology;
+    IMFMediaTypeHandler *handler;
+    unsigned int i, count, value;
+    IMFStreamSink *stream_sink;
+    IMFMediaType *media_type;
+    IMFActivate *activate;
+    IMFTopoLoader *loader;
+    IMFMediaSink *sink;
+    WORD node_count;
+    HWND window;
+    HRESULT hr;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#x.\n", hr);
+
+    hr = MFCreateTopoLoader(&loader);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Source node. */
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &source_node);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFVideoFormat_RGB32);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)640 << 32 | 480);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    init_source_node(media_type, NULL, source_node);
+
+    /* EVR sink node. */
+    window = create_window();
+
+    hr = MFCreateVideoRendererActivate(window, &activate);
+    ok(hr == S_OK, "Failed to create activate object, hr %#x.\n", hr);
+
+    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_GetStreamSinkById(sink, 0, &stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &evr_node);
+    ok(hr == S_OK, "Failed to create topology node, hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_SetObject(evr_node, (IUnknown *)stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &handler);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, media_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMFMediaTypeHandler_Release(handler);
+
+    IMFStreamSink_Release(stream_sink);
+    IMFMediaSink_Release(sink);
+
+    hr = MFCreateTopology(&topology);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTopology_AddNode(topology, source_node);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFTopology_AddNode(topology, evr_node);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFTopologyNode_ConnectOutput(source_node, 0, evr_node, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_SetUINT32(evr_node, &MF_TOPONODE_CONNECT_METHOD, MF_CONNECT_DIRECT);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTopologyNode_GetCount(evr_node, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(count == 1, "Unexpected attribute count %u.\n", count);
+
+    hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTopology_GetNodeCount(full_topology, &node_count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(node_count == 3, "Unexpected node count %u.\n", node_count);
+
+    for (i = 0; i < node_count; ++i)
+    {
+        MF_TOPOLOGY_TYPE node_type;
+
+        hr = IMFTopology_GetNode(full_topology, i, &node);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFTopologyNode_GetNodeType(node, &node_type);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        if (node_type == MF_TOPOLOGY_OUTPUT_NODE)
+        {
+            value = 1;
+            hr = IMFTopologyNode_GetUINT32(node, &MF_TOPONODE_STREAMID, &value);
+            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+            ok(!value, "Unexpected stream id %u.\n", value);
+        }
+    }
+
+    IMFTopology_Release(full_topology);
+
+    IMFTopoLoader_Release(loader);
+
+    IMFTopologyNode_Release(source_node);
+    IMFTopologyNode_Release(evr_node);
+    IMFTopology_Release(topology);
+    IMFMediaType_Release(media_type);
+    DestroyWindow(window);
+
+    CoUninitialize();
 }
 
 static HRESULT WINAPI testshutdown_QueryInterface(IMFShutdown *iface, REFIID riid, void **obj)
@@ -4859,6 +4985,7 @@ START_TEST(mf)
     test_topology();
     test_topology_tee_node();
     test_topology_loader();
+    test_topology_loader_evr();
     test_MFGetService();
     test_sequencer_source();
     test_media_session();

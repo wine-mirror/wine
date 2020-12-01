@@ -2364,6 +2364,32 @@ static HRESULT topology_loader_resolve_nodes(struct topoloader_context *context,
     return hr;
 }
 
+static void topology_loader_resolve_complete(struct topoloader_context *context)
+{
+    MF_TOPOLOGY_TYPE node_type;
+    IMFTopologyNode *node;
+    WORD i, node_count;
+
+    IMFTopology_GetNodeCount(context->output_topology, &node_count);
+
+    for (i = 0; i < node_count; ++i)
+    {
+        if (SUCCEEDED(IMFTopology_GetNode(context->output_topology, i, &node)))
+        {
+            IMFTopologyNode_GetNodeType(node, &node_type);
+
+            if (node_type == MF_TOPOLOGY_OUTPUT_NODE)
+            {
+                /* Make sure MF_TOPONODE_STREAMID is set for all outputs. */
+                if (FAILED(IMFTopologyNode_GetItem(node, &MF_TOPONODE_STREAMID, NULL)))
+                    IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_STREAMID, 0);
+            }
+
+            IMFTopologyNode_Release(node);
+        }
+    }
+}
+
 static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *input_topology,
         IMFTopology **ret_topology, IMFTopology *current_topology)
 {
@@ -2450,6 +2476,9 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
         if (!layer_size)
             break;
     }
+
+    if (SUCCEEDED(hr))
+        topology_loader_resolve_complete(&context);
 
     *ret_topology = output_topology;
 
