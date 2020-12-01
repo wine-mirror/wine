@@ -408,7 +408,6 @@ extern unsigned int opentype_get_cpal_palettecount(const struct dwrite_fonttable
 extern unsigned int opentype_get_cpal_paletteentrycount(const struct dwrite_fonttable *table) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_cpal_entries(const struct dwrite_fonttable *table, unsigned int palette,
         unsigned int first_entry_index, unsigned int entry_count, DWRITE_COLOR_F *entries) DECLSPEC_HIDDEN;
-extern BOOL opentype_has_vertical_variants(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
 extern UINT32 opentype_get_glyph_image_formats(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
 extern DWRITE_CONTAINER_TYPE opentype_analyze_container_type(void const *, UINT32) DECLSPEC_HIDDEN;
 
@@ -650,6 +649,7 @@ extern void opentype_layout_apply_gpos_features(struct scriptshaping_context *co
 extern BOOL opentype_layout_check_feature(struct scriptshaping_context *context, unsigned int script_index,
         unsigned int language_index, struct shaping_feature *feature, unsigned int glyph_count,
         const UINT16 *glyphs, UINT8 *feature_applies) DECLSPEC_HIDDEN;
+extern BOOL opentype_has_vertical_variants(struct dwrite_fontface *fontface) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_vertical_glyph_variants(struct dwrite_fontface *fontface, unsigned int glyph_count,
         const UINT16 *nominal_glyphs, UINT16 *glyphs) DECLSPEC_HIDDEN;
 

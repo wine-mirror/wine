@@ -8208,16 +8208,17 @@ static BOOL has_vertical_glyph_variants(IDWriteFontFace1 *fontface)
                 subst2 = (const GSUB_SingleSubstFormat2*)((BYTE*)lookup_table + offset);
                 index = GET_BE_WORD(subst2->SubstFormat);
                 if (index == 1)
-                    ok(0, "validate Single Substitution Format 1\n");
+                    ret = TRUE;
                 else if (index == 2) {
                     /* SimSun-ExtB has 0 glyph count for this substitution */
-                    if (GET_BE_WORD(subst2->GlyphCount) > 0) {
+                    if (GET_BE_WORD(subst2->GlyphCount) > 0)
                         ret = TRUE;
-                        break;
-                    }
                 }
                 else
                     ok(0, "unknown Single Substitution Format, %u\n", index);
+
+                if (ret)
+                    break;
             }
         }
     }

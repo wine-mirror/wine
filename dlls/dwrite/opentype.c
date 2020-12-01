@@ -2945,81 +2945,6 @@ void opentype_colr_next_glyph(const struct dwrite_fonttable *colr, struct dwrite
     }
 }
 
-BOOL opentype_has_vertical_variants(IDWriteFontFace5 *fontface)
-{
-    const struct gpos_gsub_header *header;
-    const struct ot_feature_list *featurelist;
-    const struct ot_lookup_list *lookup_list;
-    BOOL exists = FALSE, ret = FALSE;
-    unsigned int i, j;
-    const void *data;
-    void *context;
-    UINT32 size;
-    HRESULT hr;
-
-    hr = IDWriteFontFace5_TryGetFontTable(fontface, MS_GSUB_TAG, &data, &size, &context, &exists);
-    if (FAILED(hr) || !exists)
-        return FALSE;
-
-    header = data;
-    featurelist = (struct ot_feature_list *)((BYTE*)header + GET_BE_WORD(header->feature_list));
-    lookup_list = (const struct ot_lookup_list *)((BYTE*)header + GET_BE_WORD(header->lookup_list));
-
-    for (i = 0; i < GET_BE_WORD(featurelist->feature_count); i++) {
-        if (featurelist->features[i].tag == DWRITE_FONT_FEATURE_TAG_VERTICAL_WRITING) {
-            const struct ot_feature *feature = (const struct ot_feature*)((BYTE*)featurelist + GET_BE_WORD(featurelist->features[i].offset));
-            UINT16 lookup_count = GET_BE_WORD(feature->lookup_count), index, count, type;
-            const GSUB_SingleSubstFormat2 *subst2;
-            const struct ot_lookup_table *lookup_table;
-            UINT32 offset;
-
-            if (lookup_count == 0)
-                continue;
-
-            for (j = 0; j < lookup_count; ++j) {
-                /* check if lookup is empty */
-                index = GET_BE_WORD(feature->lookuplist_index[j]);
-                lookup_table = (const struct ot_lookup_table *)((BYTE*)lookup_list + GET_BE_WORD(lookup_list->lookup[index]));
-
-                type = GET_BE_WORD(lookup_table->lookup_type);
-                if (type != GSUB_LOOKUP_SINGLE_SUBST && type != GSUB_LOOKUP_EXTENSION_SUBST)
-                    continue;
-
-                count = GET_BE_WORD(lookup_table->subtable_count);
-                if (count == 0)
-                    continue;
-
-                offset = GET_BE_WORD(lookup_table->subtable[0]);
-                if (type == GSUB_LOOKUP_EXTENSION_SUBST) {
-                    const GSUB_ExtensionPosFormat1 *ext = (const GSUB_ExtensionPosFormat1 *)((const BYTE *)lookup_table + offset);
-                    if (GET_BE_WORD(ext->SubstFormat) == 1)
-                        offset += GET_BE_DWORD(ext->ExtensionOffset);
-                    else
-                        FIXME("Unhandled Extension Substitution Format %u\n", GET_BE_WORD(ext->SubstFormat));
-                }
-
-                subst2 = (const GSUB_SingleSubstFormat2*)((BYTE*)lookup_table + offset);
-                index = GET_BE_WORD(subst2->SubstFormat);
-                if (index == 1)
-                    FIXME("Validate Single Substitution Format 1\n");
-                else if (index == 2) {
-                    /* SimSun-ExtB has 0 glyph count for this substitution */
-                    if (GET_BE_WORD(subst2->GlyphCount) > 0) {
-                        ret = TRUE;
-                        break;
-                    }
-                }
-                else
-                    WARN("Unknown Single Substitution Format, %u\n", index);
-            }
-        }
-    }
-
-    IDWriteFontFace5_ReleaseFontTable(fontface, context);
-
-    return ret;
-}
-
 static BOOL opentype_has_font_table(IDWriteFontFace5 *fontface, UINT32 tag)
 {
     BOOL exists = FALSE;
@@ -4329,9 +4254,15 @@ static BOOL opentype_layout_apply_gpos_mark_to_mark_attachment(struct scriptshap
 }
 
 static unsigned int opentype_layout_adjust_extension_subtable(struct scriptshaping_context *context,
-        unsigned int *subtable_offset)
+        unsigned int *subtable_offset, const struct lookup *lookup)
 {
     const struct ot_gsubgpos_extension_format1 *format1;
+
+    if ((context->table == &context->cache->gsub && lookup->type != GSUB_LOOKUP_EXTENSION_SUBST) ||
+            (context->table == &context->cache->gpos && lookup->type != GPOS_LOOKUP_EXTENSION_POSITION))
+    {
+        return lookup->type;
+    }
 
     if (!(format1 = table_read_ensure(&context->table->table, *subtable_offset, sizeof(*format1))))
         return 0;
@@ -4361,14 +4292,7 @@ static BOOL opentype_layout_apply_gpos_lookup(struct scriptshaping_context *cont
     {
         unsigned int subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup->offset, i);
 
-        if (lookup->type == GPOS_LOOKUP_EXTENSION_POSITION)
-        {
-            lookup_type = opentype_layout_adjust_extension_subtable(context, &subtable_offset);
-            if (!lookup_type)
-                continue;
-        }
-        else
-            lookup_type = lookup->type;
+        lookup_type = opentype_layout_adjust_extension_subtable(context, &subtable_offset, lookup);
 
         switch (lookup_type)
         {
@@ -5679,14 +5603,7 @@ static BOOL opentype_layout_apply_gsub_lookup(struct scriptshaping_context *cont
     {
         unsigned int subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup->offset, i);
 
-        if (lookup->type == GSUB_LOOKUP_EXTENSION_SUBST)
-        {
-            lookup_type = opentype_layout_adjust_extension_subtable(context, &subtable_offset);
-            if (!lookup_type)
-                continue;
-        }
-        else
-            lookup_type = lookup->type;
+        lookup_type = opentype_layout_adjust_extension_subtable(context, &subtable_offset, lookup);
 
         switch (lookup_type)
         {
@@ -6005,14 +5922,7 @@ static BOOL opentype_layout_gsub_lookup_is_glyph_covered(struct scriptshaping_co
     {
         unsigned int subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup->offset, i);
 
-        if (lookup->type == GSUB_LOOKUP_EXTENSION_SUBST)
-        {
-            lookup_type = opentype_layout_adjust_extension_subtable(context, &subtable_offset);
-            if (!lookup_type)
-                continue;
-        }
-        else
-            lookup_type = lookup->type;
+        lookup_type = opentype_layout_adjust_extension_subtable(context, &subtable_offset, lookup);
 
         format = table_read_be_word(gsub, subtable_offset);
 
@@ -6079,14 +5989,7 @@ static BOOL opentype_layout_gpos_lookup_is_glyph_covered(struct scriptshaping_co
     {
         unsigned int subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup->offset, i);
 
-        if (lookup->type == GPOS_LOOKUP_EXTENSION_POSITION)
-        {
-            lookup_type = opentype_layout_adjust_extension_subtable(context, &subtable_offset);
-            if (!lookup_type)
-                continue;
-        }
-        else
-            lookup_type = lookup->type;
+        lookup_type = opentype_layout_adjust_extension_subtable(context, &subtable_offset, lookup);
 
         format = table_read_be_word(gpos, subtable_offset);
 
@@ -6178,6 +6081,61 @@ BOOL opentype_layout_check_feature(struct scriptshaping_context *context, unsign
     return ret;
 }
 
+BOOL opentype_has_vertical_variants(struct dwrite_fontface *fontface)
+{
+    unsigned int i, j, count = 0, lookup_type, subtable_offset;
+    struct shaping_features features = { 0 };
+    struct shaping_feature vert_feature = { 0 };
+    struct scriptshaping_context context = { 0 };
+    struct lookups lookups = { 0 };
+    UINT16 format;
+
+    context.cache = fontface_get_shaping_cache(fontface);
+    context.table = &context.cache->gsub;
+
+    vert_feature.tag = DWRITE_MAKE_OPENTYPE_TAG('v','e','r','t');
+    vert_feature.flags = FEATURE_GLOBAL | FEATURE_GLOBAL_SEARCH;
+    vert_feature.max_value = 1;
+    vert_feature.default_value = 1;
+
+    features.features = &vert_feature;
+    features.count = features.capacity = 1;
+
+    opentype_layout_collect_lookups(&context, ~0u, ~0u, &features, context.table, &lookups);
+
+    for (i = 0; i < lookups.count && !count; ++i)
+    {
+        const struct dwrite_fonttable *table = &context.table->table;
+        const struct lookup *lookup = &lookups.lookups[i];
+
+        for (j = 0; j < lookup->subtable_count && !count; ++j)
+        {
+            subtable_offset = opentype_layout_get_gsubgpos_subtable(&context, lookup->offset, j);
+            lookup_type = opentype_layout_adjust_extension_subtable(&context, &subtable_offset, lookup);
+
+            if (lookup_type != GSUB_LOOKUP_SINGLE_SUBST)
+                continue;
+
+            format = table_read_be_word(table, subtable_offset);
+
+            if (format == 1)
+            {
+                count = 1;
+            }
+            else if (format == 2)
+            {
+                count = table_read_be_word(table, subtable_offset + FIELD_OFFSET(struct ot_gsub_singlesubst_format2, count));
+            }
+            else
+                WARN("Unrecognized single substitution format %u.\n", format);
+        }
+    }
+
+    heap_free(lookups.lookups);
+
+    return !!count;
+}
+
 HRESULT opentype_get_vertical_glyph_variants(struct dwrite_fontface *fontface, unsigned int glyph_count,
         const UINT16 *nominal_glyphs, UINT16 *glyphs)
 {
@@ -6215,6 +6173,7 @@ HRESULT opentype_get_vertical_glyph_variants(struct dwrite_fontface *fontface, u
     {
         const struct lookup *lookup = &lookups.lookups[i];
 
+        /* FIXME: should probably handle extension subtables. */
         if (lookup->type != GSUB_LOOKUP_SINGLE_SUBST)
             continue;
 
