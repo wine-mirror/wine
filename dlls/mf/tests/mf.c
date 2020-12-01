@@ -2213,7 +2213,6 @@ static void test_topology_loader_evr(void)
 
     hr = IMFTopology_GetNodeCount(full_topology, &node_count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(node_count == 3, "Unexpected node count %u.\n", node_count);
 
     for (i = 0; i < node_count; ++i)

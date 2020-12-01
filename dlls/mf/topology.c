@@ -2364,6 +2364,119 @@ static HRESULT topology_loader_resolve_nodes(struct topoloader_context *context,
     return hr;
 }
 
+static BOOL topology_loader_is_node_d3d_aware(IMFTopologyNode *node)
+{
+    IMFAttributes *attributes;
+    unsigned int d3d_aware = 0;
+    IUnknown *object = NULL;
+
+    if (FAILED(IMFTopologyNode_GetObject(node, &object)))
+        return FALSE;
+
+    if (SUCCEEDED(IUnknown_QueryInterface(object, &IID_IMFAttributes, (void **)&attributes)))
+    {
+        IMFAttributes_GetUINT32(attributes, &MF_SA_D3D_AWARE, &d3d_aware);
+        IMFAttributes_Release(attributes);
+    }
+
+    if (!d3d_aware)
+        d3d_aware = mf_is_sample_copier_transform(object);
+
+    IUnknown_Release(object);
+
+    return !!d3d_aware;
+}
+
+static HRESULT topology_loader_create_copier(IMFTopologyNode *upstream_node, unsigned int upstream_output,
+        IMFTopologyNode *downstream_node, unsigned int downstream_input, IMFTransform **copier)
+{
+    IMFMediaType *input_type = NULL, *output_type = NULL;
+    IMFTransform *transform;
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateSampleCopierMFT(&transform)))
+        return hr;
+
+    if (FAILED(hr = MFGetTopoNodeCurrentType(upstream_node, upstream_output, TRUE, &input_type)))
+        WARN("Failed to get upstream media type hr %#x.\n", hr);
+
+    if (SUCCEEDED(hr) && FAILED(hr = MFGetTopoNodeCurrentType(downstream_node, downstream_input, FALSE, &output_type)))
+        WARN("Failed to get downstream media type hr %#x.\n", hr);
+
+    if (SUCCEEDED(hr) && FAILED(hr = IMFTransform_SetInputType(transform, 0, input_type, 0)))
+        WARN("Input type wasn't accepted, hr %#x.\n", hr);
+
+    if (SUCCEEDED(hr) && FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0)))
+        WARN("Output type wasn't accepted, hr %#x.\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        *copier = transform;
+        IMFTransform_AddRef(*copier);
+    }
+
+    if (input_type)
+        IMFMediaType_Release(input_type);
+    if (output_type)
+        IMFMediaType_Release(output_type);
+
+    IMFTransform_Release(transform);
+
+    return hr;
+}
+
+static HRESULT topology_loader_connect_copier(struct topoloader_context *context, IMFTopologyNode *upstream_node,
+        unsigned int upstream_output, IMFTopologyNode *downstream_node, unsigned int downstream_input, IMFTransform *copier)
+{
+    IMFTopologyNode *copier_node;
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &copier_node)))
+        return hr;
+
+    IMFTopologyNode_SetObject(copier_node, (IUnknown *)copier);
+    IMFTopology_AddNode(context->output_topology, copier_node);
+    IMFTopologyNode_ConnectOutput(upstream_node, upstream_output, copier_node, 0);
+    IMFTopologyNode_ConnectOutput(copier_node, 0, downstream_node, downstream_input);
+
+    IMFTopologyNode_Release(copier_node);
+
+    return S_OK;
+}
+
+/* Right now this should be used for output nodes only. */
+static HRESULT topology_loader_connect_d3d_aware_input(struct topoloader_context *context,
+        IMFTopologyNode *node)
+{
+    IMFTopologyNode *upstream_node;
+    unsigned int upstream_output;
+    IMFStreamSink *stream_sink;
+    IMFTransform *copier = NULL;
+    HRESULT hr = S_OK;
+
+    IMFTopologyNode_GetObject(node, (IUnknown **)&stream_sink);
+
+    if (topology_loader_is_node_d3d_aware(node))
+    {
+        if (SUCCEEDED(IMFTopologyNode_GetInput(node, 0, &upstream_node, &upstream_output)))
+        {
+            if (!topology_loader_is_node_d3d_aware(upstream_node))
+            {
+                if (SUCCEEDED(hr = topology_loader_create_copier(upstream_node, upstream_output, node, 0, &copier)))
+                {
+                    hr = topology_loader_connect_copier(context, upstream_node, upstream_output, node, 0, copier);
+                    IMFTransform_Release(copier);
+                }
+            }
+            IMFTopologyNode_Release(upstream_node);
+        }
+    }
+
+    IMFStreamSink_Release(stream_sink);
+
+    return hr;
+}
+
 static void topology_loader_resolve_complete(struct topoloader_context *context)
 {
     MF_TOPOLOGY_TYPE node_type;
@@ -2383,6 +2496,8 @@ static void topology_loader_resolve_complete(struct topoloader_context *context)
                 /* Set MF_TOPONODE_STREAMID for all outputs. */
                 if (FAILED(IMFTopologyNode_GetItem(node, &MF_TOPONODE_STREAMID, NULL)))
                     IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_STREAMID, 0);
+
+                topology_loader_connect_d3d_aware_input(context, node);
             }
             else if (node_type == MF_TOPOLOGY_SOURCESTREAM_NODE)
             {

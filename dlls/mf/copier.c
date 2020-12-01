@@ -561,6 +561,14 @@ static const IMFTransformVtbl sample_copier_transform_vtbl =
     sample_copier_transform_ProcessOutput,
 };
 
+BOOL mf_is_sample_copier_transform(IUnknown *transform)
+{
+    return transform->lpVtbl == (IUnknownVtbl *)&sample_copier_transform_vtbl;
+}
+
+/***********************************************************************
+ *      MFCreateSampleCopierMFT (mf.@)
+ */
 HRESULT WINAPI MFCreateSampleCopierMFT(IMFTransform **transform)
 {
     struct sample_copier *object;

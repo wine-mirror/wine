@@ -79,3 +79,5 @@ static inline const char *debugstr_time(LONGLONG time)
 
     return wine_dbg_sprintf("%s", rev);
 }
+
+extern BOOL mf_is_sample_copier_transform(IUnknown *transform) DECLSPEC_HIDDEN;
