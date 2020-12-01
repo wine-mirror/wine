@@ -1092,65 +1092,123 @@ fail:
     return NULL;
 }
 
+struct unix_face
+{
+    FT_Face ft_face;
+    BOOL scalable;
+    UINT num_faces;
+    WCHAR *family_name;
+    WCHAR *second_name;
+};
+
+static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr, DWORD data_size,
+                                           UINT face_index, DWORD flags )
+{
+    struct unix_face *This;
+    struct stat st;
+    int fd;
+
+    TRACE( "unix_name %s, face_index %u, data_ptr %p, data_size %u, flags %#x\n",
+           unix_name, face_index, data_ptr, data_size, flags );
+
+    if (unix_name)
+    {
+        if ((fd = open( unix_name, O_RDONLY )) == -1) return NULL;
+        if (fstat( fd, &st ) == -1)
+        {
+            close( fd );
+            return NULL;
+        }
+        data_size = st.st_size;
+        data_ptr = mmap( NULL, data_size, PROT_READ, MAP_PRIVATE, fd, 0 );
+        close( fd );
+        if (data_ptr == MAP_FAILED) return NULL;
+    }
+
+    if (!(This = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This) ))) goto done;
+
+    if (!(This->ft_face = new_ft_face( unix_name, data_ptr, data_size, face_index, flags & ADDFONT_ALLOW_BITMAP )))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, This );
+        This = NULL;
+    }
+    else
+    {
+        This->scalable = FT_IS_SCALABLE( This->ft_face );
+        This->num_faces = This->ft_face->num_faces;
+
+        This->family_name = ft_face_get_family_name( This->ft_face, system_lcid );
+        This->second_name = ft_face_get_family_name( This->ft_face, MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) );
+
+        /* try to find another secondary name, preferring the lowest langids */
+        if (!RtlCompareUnicodeStrings( This->family_name, lstrlenW( This->family_name ),
+                                       This->second_name, lstrlenW( This->second_name ), TRUE ))
+        {
+            RtlFreeHeap( GetProcessHeap(), 0, This->second_name );
+            This->second_name = ft_face_get_family_name( This->ft_face, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL) );
+            if (!RtlCompareUnicodeStrings( This->family_name, lstrlenW( This->family_name ),
+                                           This->second_name, lstrlenW( This->second_name ), TRUE ))
+            {
+                RtlFreeHeap( GetProcessHeap(), 0, This->second_name );
+                This->second_name = NULL;
+            }
+        }
+    }
+
+done:
+    if (unix_name) munmap( data_ptr, data_size );
+    return This;
+}
+
+static void unix_face_destroy( struct unix_face *This )
+{
+    pFT_Done_Face( This->ft_face );
+    RtlFreeHeap( GetProcessHeap(), 0, This->second_name );
+    RtlFreeHeap( GetProcessHeap(), 0, This->family_name );
+    RtlFreeHeap( GetProcessHeap(), 0, This );
+}
+
 static int add_unix_face( const char *unix_name, const WCHAR *file, void *data_ptr, SIZE_T data_size,
                           DWORD face_index, DWORD flags, DWORD *num_faces )
 {
+    struct unix_face *unix_face;
     struct bitmap_font_size size;
     FONTSIGNATURE fs;
-    FT_Face ft_face;
-    WCHAR *family_name, *second_name, *style_name, *full_name;
+    WCHAR *style_name, *full_name;
     int ret;
 
     if (num_faces) *num_faces = 0;
 
-    if (!(ft_face = new_ft_face( unix_name, data_ptr, data_size, face_index, flags & ADDFONT_ALLOW_BITMAP )))
+    if (!(unix_face = unix_face_create( unix_name, data_ptr, data_size, face_index, flags )))
         return 0;
 
-    if (ft_face->family_name[0] == '.') /* Ignore fonts with names beginning with a dot */
+    if (unix_face->family_name[0] == '.') /* Ignore fonts with names beginning with a dot */
     {
         TRACE("Ignoring %s since its family name begins with a dot\n", debugstr_a(unix_name));
-        pFT_Done_Face( ft_face );
+        unix_face_destroy( unix_face );
         return 0;
     }
 
-    family_name = ft_face_get_family_name( ft_face, system_lcid );
-    second_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) );
-    style_name = ft_face_get_style_name( ft_face, system_lcid );
-    full_name = ft_face_get_full_name( ft_face, system_lcid );
+    style_name = ft_face_get_style_name( unix_face->ft_face, system_lcid );
+    full_name = ft_face_get_full_name( unix_face->ft_face, system_lcid );
 
-    /* try to find another secondary name, preferring the lowest langids */
-    if (!RtlCompareUnicodeStrings( family_name, lstrlenW(family_name),
-                                   second_name, lstrlenW(second_name), TRUE ))
-    {
-        RtlFreeHeap( GetProcessHeap(), 0, second_name );
-        second_name = ft_face_get_family_name( ft_face, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL) );
-        if (!RtlCompareUnicodeStrings( family_name, lstrlenW(family_name),
-                                       second_name, lstrlenW(second_name), TRUE ))
-        {
-            RtlFreeHeap( GetProcessHeap(), 0, second_name );
-            second_name = NULL;
-        }
-    }
-
-    get_fontsig( ft_face, &fs );
-    if (!FT_IS_SCALABLE( ft_face )) get_bitmap_size( ft_face, &size );
+    get_fontsig( unix_face->ft_face, &fs );
+    if (!unix_face->scalable) get_bitmap_size( unix_face->ft_face, &size );
     if (!HIWORD( flags )) flags |= ADDFONT_AA_FLAGS( default_aa_flags );
 
-    ret = callback_funcs->add_gdi_face( family_name, second_name, style_name, full_name, file,
-                                        data_ptr, data_size, face_index, fs, get_ntm_flags( ft_face ),
-                                        get_font_version( ft_face ), flags,
-                                        FT_IS_SCALABLE(ft_face) ? NULL : &size );
+    ret = callback_funcs->add_gdi_face( unix_face->family_name, unix_face->second_name, style_name, full_name,
+                                        file, data_ptr, data_size, face_index, fs, get_ntm_flags( unix_face->ft_face ),
+                                        get_font_version( unix_face->ft_face ), flags,
+                                        unix_face->scalable ? NULL : &size );
 
     TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
           fs.fsCsb[0], fs.fsCsb[1], fs.fsUsb[0], fs.fsUsb[1], fs.fsUsb[2], fs.fsUsb[3]);
 
-    RtlFreeHeap( GetProcessHeap(), 0, family_name );
-    RtlFreeHeap( GetProcessHeap(), 0, second_name );
     RtlFreeHeap( GetProcessHeap(), 0, style_name );
     RtlFreeHeap( GetProcessHeap(), 0, full_name );
 
-    if (num_faces) *num_faces = ft_face->num_faces;
-    pFT_Done_Face( ft_face );
+    if (num_faces) *num_faces = unix_face->num_faces;
+    unix_face_destroy( unix_face );
     return ret;
 }
 
