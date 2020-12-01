@@ -1348,6 +1348,7 @@ void wined3d_unordered_access_view_gl_clear_uint(struct wined3d_unordered_access
     wined3d_context_gl_bind_bo(context_gl, buffer_gl->bo.binding, buffer_gl->bo.id);
     GL_EXTCALL(glClearBufferSubData(buffer_gl->bo.binding, format->internal,
             offset, size, format->format, format->type, clear_value));
+    wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
     checkGLcall("clear unordered access view");
 }
 
