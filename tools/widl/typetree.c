@@ -89,38 +89,38 @@ const char *type_get_name(const type_t *type, enum name_type name_type)
     return NULL;
 }
 
-static char *append_namespace(char *ptr, struct namespace *namespace, const char *separator)
+static char *append_namespace(char *ptr, struct namespace *namespace, const char *separator, const char *abi_prefix)
 {
     if(is_global_namespace(namespace)) {
-        if(!use_abi_namespace)
-            return ptr;
-        strcpy(ptr, "ABI");
+        if(!abi_prefix) return ptr;
+        strcpy(ptr, abi_prefix);
         strcat(ptr, separator);
         return ptr + strlen(ptr);
     }
 
-    ptr = append_namespace(ptr, namespace->parent, separator);
+    ptr = append_namespace(ptr, namespace->parent, separator, abi_prefix);
     strcpy(ptr, namespace->name);
     strcat(ptr, separator);
     return ptr + strlen(ptr);
 }
 
-char *format_namespace(struct namespace *namespace, const char *prefix, const char *separator, const char *suffix)
+char *format_namespace(struct namespace *namespace, const char *prefix, const char *separator, const char *suffix,
+                       const char *abi_prefix)
 {
     unsigned len = strlen(prefix) + strlen(suffix);
     unsigned sep_len = strlen(separator);
     struct namespace *iter;
     char *ret, *ptr;
 
-    if(use_abi_namespace && !is_global_namespace(namespace))
-        len += 3 /* strlen("ABI") */ + sep_len;
+    if(abi_prefix)
+        len += strlen(abi_prefix) + sep_len;
 
     for(iter = namespace; !is_global_namespace(iter); iter = iter->parent)
         len += strlen(iter->name) + sep_len;
 
     ret = xmalloc(len+1);
     strcpy(ret, prefix);
-    ptr = append_namespace(ret + strlen(ret), namespace, separator);
+    ptr = append_namespace(ret + strlen(ret), namespace, separator, abi_prefix);
     strcpy(ptr, suffix);
 
     return ret;

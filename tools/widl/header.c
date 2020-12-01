@@ -132,7 +132,7 @@ static void write_guid(FILE *f, const char *guid_prefix, const char *name, const
 
 static void write_uuid_decl(FILE *f, type_t *type, const UUID *uuid)
 {
-  char *name = format_namespace(type->namespace, "", "::", type->name);
+  char *name = format_namespace(type->namespace, "", "::", type->name, use_abi_namespace ? "ABI" : NULL);
   fprintf(f, "#ifdef __CRT_UUID_DECL\n");
   fprintf(f, "__CRT_UUID_DECL(%s, 0x%08x, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,"
         "0x%02x,0x%02x,0x%02x,0x%02x,0x%02x)\n",

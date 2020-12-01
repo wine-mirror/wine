@@ -1922,7 +1922,7 @@ type_t *reg_type(type_t *type, const char *name, struct namespace *namespace, in
   if (is_global_namespace(namespace))
     type->c_name = name;
   else
-    type->c_name = format_namespace(namespace, "__x_", "_C", name);
+    type->c_name = format_namespace(namespace, "__x_", "_C", name, use_abi_namespace ? "ABI" : NULL);
   nt->type = type;
   nt->t = t;
   nt->next = namespace->type_hash[hash];
