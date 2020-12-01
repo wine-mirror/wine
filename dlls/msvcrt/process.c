@@ -83,7 +83,7 @@ static void msvcrt_search_executable(const wchar_t *name, wchar_t *fullname, int
     extension = 0;
   }
 
-  if (!use_path || !(env = MSVCRT__wgetenv(L"PATH"))) return;
+  if (!use_path || !(env = _wgetenv(L"PATH"))) return;
 
   /* now try search path */
   do

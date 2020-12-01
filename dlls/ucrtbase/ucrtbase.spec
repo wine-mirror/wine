@@ -1504,7 +1504,7 @@
 @ cdecl _o__wfullpath(ptr wstr long) MSVCRT__wfullpath
 @ cdecl _o__wgetcwd(wstr long) MSVCRT__wgetcwd
 @ cdecl _o__wgetdcwd(long wstr long) MSVCRT__wgetdcwd
-@ cdecl _o__wgetenv(wstr) MSVCRT__wgetenv
+@ cdecl _o__wgetenv(wstr) _wgetenv
 @ cdecl _o__wgetenv_s(ptr ptr long wstr) _wgetenv_s
 @ cdecl _o__wmakepath(ptr wstr wstr wstr wstr) MSVCRT__wmakepath
 @ cdecl _o__wmakepath_s(ptr long wstr wstr wstr wstr) MSVCRT__wmakepath_s
@@ -1641,7 +1641,7 @@
 @ cdecl _o_fwrite(ptr long long ptr) MSVCRT_fwrite
 @ cdecl _o_getc(ptr) MSVCRT_getc
 @ cdecl _o_getchar() MSVCRT_getchar
-@ cdecl _o_getenv(str) MSVCRT_getenv
+@ cdecl _o_getenv(str) getenv
 @ cdecl _o_getenv_s(ptr ptr long str) getenv_s
 @ cdecl _o_gets(str) MSVCRT_gets
 @ cdecl _o_gets_s(ptr long) MSVCRT_gets_s
@@ -2089,7 +2089,7 @@
 @ cdecl _wfullpath(ptr wstr long) MSVCRT__wfullpath
 @ cdecl _wgetcwd(wstr long) MSVCRT__wgetcwd
 @ cdecl _wgetdcwd(long wstr long) MSVCRT__wgetdcwd
-@ cdecl _wgetenv(wstr) MSVCRT__wgetenv
+@ cdecl _wgetenv(wstr)
 @ cdecl _wgetenv_s(ptr ptr long wstr)
 @ cdecl _wmakepath(ptr wstr wstr wstr wstr) MSVCRT__wmakepath
 @ cdecl _wmakepath_s(ptr long wstr wstr wstr wstr) MSVCRT__wmakepath_s
@@ -2334,7 +2334,7 @@
 @ cdecl fwrite(ptr long long ptr) MSVCRT_fwrite
 @ cdecl getc(ptr) MSVCRT_getc
 @ cdecl getchar() MSVCRT_getchar
-@ cdecl getenv(str) MSVCRT_getenv
+@ cdecl getenv(str)
 @ cdecl getenv_s(ptr ptr long str)
 @ cdecl gets(str) MSVCRT_gets
 @ cdecl gets_s(ptr long) MSVCRT_gets_s

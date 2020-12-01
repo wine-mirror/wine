@@ -502,7 +502,7 @@
 @ cdecl _gcvt_s(ptr long  double long) MSVCRT__gcvt_s
 @ cdecl _get_current_locale()
 @ cdecl _get_doserrno(ptr)
-@ cdecl _get_environ(ptr) MSVCRT__get_environ
+@ cdecl _get_environ(ptr)
 @ cdecl _get_errno(ptr)
 # stub _get_fileinfo(ptr)
 @ cdecl _get_fmode(ptr)
@@ -513,7 +513,7 @@
 @ cdecl _get_output_format() MSVCRT__get_output_format
 @ cdecl _get_pgmptr(ptr)
 @ cdecl _get_sbh_threshold()
-@ cdecl _get_wenviron(ptr) MSVCRT__get_wenviron
+@ cdecl _get_wenviron(ptr)
 @ cdecl _get_winmajor(ptr)
 @ cdecl _get_winminor(ptr)
 # stub _get_winver(ptr)
@@ -1172,7 +1172,7 @@
 # stub _wfullpath_dbg(ptr wstr long long str long)
 @ cdecl _wgetcwd(wstr long) MSVCRT__wgetcwd
 @ cdecl _wgetdcwd(long wstr long) MSVCRT__wgetdcwd
-@ cdecl _wgetenv(wstr) MSVCRT__wgetenv
+@ cdecl _wgetenv(wstr)
 @ cdecl _wgetenv_s(ptr ptr long wstr)
 @ extern _winmajor MSVCRT__winmajor
 @ extern _winminor MSVCRT__winminor
@@ -1321,7 +1321,7 @@
 @ varargs fwscanf_s(ptr wstr) MSVCRT_fwscanf_s
 @ cdecl getc(ptr) MSVCRT_getc
 @ cdecl getchar() MSVCRT_getchar
-@ cdecl getenv(str) MSVCRT_getenv
+@ cdecl getenv(str)
 @ cdecl getenv_s(ptr ptr long str)
 @ cdecl gets(str) MSVCRT_gets
 @ cdecl getwc(ptr) MSVCRT_getwc

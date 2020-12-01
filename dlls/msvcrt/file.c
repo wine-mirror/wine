@@ -3277,7 +3277,7 @@ __int64 CDECL _telli64(int fd)
 char * CDECL MSVCRT__tempnam(const char *dir, const char *prefix)
 {
   char tmpbuf[MAX_PATH];
-  const char *tmp_dir = MSVCRT_getenv("TMP");
+  const char *tmp_dir = getenv("TMP");
 
   if (tmp_dir) dir = tmp_dir;
 
@@ -3298,7 +3298,7 @@ char * CDECL MSVCRT__tempnam(const char *dir, const char *prefix)
 wchar_t * CDECL MSVCRT__wtempnam(const wchar_t *dir, const wchar_t *prefix)
 {
   wchar_t tmpbuf[MAX_PATH];
-  const wchar_t *tmp_dir = MSVCRT__wgetenv(L"TMP");
+  const wchar_t *tmp_dir = _wgetenv(L"TMP");
 
   if (tmp_dir) dir = tmp_dir;
 

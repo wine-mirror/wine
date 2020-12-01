@@ -108,7 +108,7 @@ static TIME_ZONE_INFORMATION tzi = {0};
  */
 void CDECL MSVCRT__tzset(void)
 {
-    char *tz = MSVCRT_getenv("TZ");
+    char *tz = getenv("TZ");
     BOOL error;
 
     _lock(_TIME_LOCK);

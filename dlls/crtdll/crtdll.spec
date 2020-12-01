@@ -393,7 +393,7 @@
 @ varargs fwscanf(ptr wstr) MSVCRT_fwscanf
 @ cdecl getc(ptr) MSVCRT_getc
 @ cdecl getchar() MSVCRT_getchar
-@ cdecl getenv(str) MSVCRT_getenv
+@ cdecl getenv(str)
 @ cdecl gets(str) MSVCRT_gets
 @ cdecl gmtime(ptr) MSVCRT_gmtime
 @ cdecl is_wctype(long long) MSVCRT_iswctype

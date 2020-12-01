@@ -1666,7 +1666,7 @@ int CDECL MSVCRT__searchenv_s(const char* file, const char* env, char *buf, size
   }
 
   /* Search given environment variable */
-  envVal = MSVCRT_getenv(env);
+  envVal = getenv(env);
   if (!envVal)
   {
     *_errno() = ENOENT;
@@ -1760,7 +1760,7 @@ int CDECL MSVCRT__wsearchenv_s(const wchar_t* file, const wchar_t* env,
   }
 
   /* Search given environment variable */
-  envVal = MSVCRT__wgetenv(env);
+  envVal = _wgetenv(env);
   if (!envVal)
   {
     *_errno() = ENOENT;

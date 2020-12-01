@@ -1560,7 +1560,7 @@
 @ cdecl _wgetcwd(wstr long) MSVCRT__wgetcwd
 @ cdecl _wgetdcwd(long wstr long) MSVCRT__wgetdcwd
 @ stub _wgetdcwd_nolock
-@ cdecl _wgetenv(wstr) MSVCRT__wgetenv
+@ cdecl _wgetenv(wstr)
 @ cdecl _wgetenv_s(ptr ptr long wstr)
 @ cdecl _wmakepath(ptr wstr wstr wstr wstr) MSVCRT__wmakepath
 @ cdecl _wmakepath_s(ptr long wstr wstr wstr wstr) MSVCRT__wmakepath_s
@@ -1697,7 +1697,7 @@
 @ varargs fwscanf_s(ptr wstr) MSVCRT_fwscanf_s
 @ cdecl getc(ptr) MSVCRT_getc
 @ cdecl getchar() MSVCRT_getchar
-@ cdecl getenv(str) MSVCRT_getenv
+@ cdecl getenv(str)
 @ cdecl getenv_s(ptr ptr long str)
 @ cdecl gets(str) MSVCRT_gets
 @ cdecl gets_s(ptr long) MSVCRT_gets_s

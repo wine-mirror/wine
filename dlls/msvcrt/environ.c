@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 /*********************************************************************
  *		getenv (MSVCRT.@)
  */
-char * CDECL MSVCRT_getenv(const char *name)
+char * CDECL getenv(const char *name)
 {
     char **env;
     unsigned int length=strlen(name);
@@ -49,7 +49,7 @@ char * CDECL MSVCRT_getenv(const char *name)
 /*********************************************************************
  *		_wgetenv (MSVCRT.@)
  */
-wchar_t * CDECL MSVCRT__wgetenv(const wchar_t *name)
+wchar_t * CDECL _wgetenv(const wchar_t *name)
 {
     wchar_t **env;
     unsigned int length=MSVCRT_wcslen(name);
@@ -219,7 +219,7 @@ int CDECL _dupenv_s(char **buffer, size_t *numberOfElements, const char *varname
     if (!MSVCRT_CHECK_PMT(buffer != NULL)) return EINVAL;
     if (!MSVCRT_CHECK_PMT(varname != NULL)) return EINVAL;
 
-    if (!(e = MSVCRT_getenv(varname))) return *_errno() = EINVAL;
+    if (!(e = getenv(varname))) return *_errno() = EINVAL;
 
     sz = strlen(e) + 1;
     if (!(*buffer = malloc(sz)))
@@ -244,7 +244,7 @@ int CDECL _wdupenv_s(wchar_t **buffer, size_t *numberOfElements,
     if (!MSVCRT_CHECK_PMT(buffer != NULL)) return EINVAL;
     if (!MSVCRT_CHECK_PMT(varname != NULL)) return EINVAL;
 
-    if (!(e = MSVCRT__wgetenv(varname))) return *_errno() = EINVAL;
+    if (!(e = _wgetenv(varname))) return *_errno() = EINVAL;
 
     sz = MSVCRT_wcslen(e) + 1;
     if (!(*buffer = malloc(sz * sizeof(wchar_t))))
@@ -270,7 +270,7 @@ int CDECL getenv_s(size_t *pReturnValue, char* buffer, size_t numberOfElements, 
     if (!MSVCRT_CHECK_PMT(!(buffer == NULL && numberOfElements > 0))) return EINVAL;
     if (!MSVCRT_CHECK_PMT(varname != NULL)) return EINVAL;
 
-    if (!(e = MSVCRT_getenv(varname)))
+    if (!(e = getenv(varname)))
     {
         *pReturnValue = 0;
         return *_errno() = EINVAL;
@@ -296,7 +296,7 @@ int CDECL _wgetenv_s(size_t *pReturnValue, wchar_t *buffer, size_t numberOfEleme
     if (!MSVCRT_CHECK_PMT(!(buffer == NULL && numberOfElements > 0))) return EINVAL;
     if (!MSVCRT_CHECK_PMT(varname != NULL)) return EINVAL;
 
-    if (!(e = MSVCRT__wgetenv(varname)))
+    if (!(e = _wgetenv(varname)))
     {
         *pReturnValue = 0;
         return *_errno() = EINVAL;
@@ -313,7 +313,7 @@ int CDECL _wgetenv_s(size_t *pReturnValue, wchar_t *buffer, size_t numberOfEleme
 /*********************************************************************
  *		_get_environ (MSVCRT.@)
  */
-void CDECL MSVCRT__get_environ(char ***ptr)
+void CDECL _get_environ(char ***ptr)
 {
     *ptr = MSVCRT__environ;
 }
@@ -321,7 +321,7 @@ void CDECL MSVCRT__get_environ(char ***ptr)
 /*********************************************************************
  *		_get_wenviron (MSVCRT.@)
  */
-void CDECL MSVCRT__get_wenviron(wchar_t ***ptr)
+void CDECL _get_wenviron(wchar_t ***ptr)
 {
     *ptr = MSVCRT__wenviron;
 }
