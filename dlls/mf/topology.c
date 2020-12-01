@@ -1996,7 +1996,7 @@ struct transform_output_type
 {
     IMFMediaType *type;
     IMFTransform *transform;
-    const GUID *category;
+    IMFActivate *activate;
 };
 
 struct connect_context
@@ -2054,7 +2054,7 @@ static HRESULT topology_loader_enumerate_output_types(const GUID *category, IMFM
             unsigned int output_count = 0;
 
             output_type.transform = transform;
-            output_type.category = category;
+            output_type.activate = activates[i];
             while (SUCCEEDED(IMFTransform_GetOutputAvailableType(transform, 0, output_count++, &output_type.type)))
             {
                 hr = connect_func(&output_type, context);
@@ -2079,16 +2079,21 @@ static HRESULT topology_loader_create_transform(const struct transform_output_ty
         IMFTopologyNode **node)
 {
     HRESULT hr;
+    GUID guid;
 
     if (FAILED(hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, node)))
         return hr;
 
     IMFTopologyNode_SetObject(*node, (IUnknown *)output_type->transform);
-    if (IsEqualGUID(output_type->category, &MFT_CATEGORY_AUDIO_DECODER) ||
-            IsEqualGUID(output_type->category, &MFT_CATEGORY_VIDEO_DECODER))
+
+    if (SUCCEEDED(IMFActivate_GetGUID(output_type->activate, &MF_TRANSFORM_CATEGORY_Attribute, &guid)) &&
+            (IsEqualGUID(&guid, &MFT_CATEGORY_AUDIO_DECODER) || IsEqualGUID(&guid, &MFT_CATEGORY_VIDEO_DECODER)))
     {
         IMFTopologyNode_SetUINT32(*node, &MF_TOPONODE_DECODER, 1);
     }
+
+    if (SUCCEEDED(IMFActivate_GetGUID(output_type->activate, &MFT_TRANSFORM_CLSID_Attribute, &guid)))
+        IMFTopologyNode_SetGUID(*node, &MF_TOPONODE_TRANSFORM_OBJECTID, &guid);
 
     return hr;
 }

@@ -2045,6 +2045,9 @@ todo_wine {
                     ok(value == 1, "Unexpected value.\n");
                 }
 
+                hr = IMFTopologyNode_GetItem(mft_node, &MF_TOPONODE_TRANSFORM_OBJECTID, NULL);
+                ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
+
                 hr = IUnknown_QueryInterface(node_object, &IID_IMFTransform, (void **)&transform);
                 ok(hr == S_OK, "Failed to get IMFTransform from transform node's object, hr %#x.\n", hr);
                 IUnknown_Release(node_object);
@@ -2067,6 +2070,9 @@ todo_wine {
                 hr = IMFTopologyNode_GetNodeType(mft_node, &node_type);
                 ok(hr == S_OK, "Failed to get transform node type in resolved topology, hr %#x.\n", hr);
                 ok(node_type == MF_TOPOLOGY_TRANSFORM_NODE, "Unexpected node type %u.\n", node_type);
+
+                hr = IMFTopologyNode_GetItem(mft_node, &MF_TOPONODE_TRANSFORM_OBJECTID, NULL);
+                ok(hr == S_OK, "Failed to get attribute, hr %#x.\n", hr);
 
                 hr = IMFTopologyNode_GetObject(mft_node, &node_object);
                 ok(hr == S_OK, "Failed to get object of transform node, hr %#x.\n", hr);
