@@ -31,6 +31,7 @@
 #define EOF       (-1)
 #define FILENAME_MAX 260
 #define TMP_MAX   0x7fff
+#define TMP_MAX_S 0x7fffffff
 #define FOPEN_MAX 20
 #define L_tmpnam  260
 

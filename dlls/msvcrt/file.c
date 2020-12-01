@@ -575,7 +575,7 @@ void msvcrt_init_io(void)
     }
   }
 
-  fdinfo = get_ioinfo_alloc_fd(MSVCRT_STDIN_FILENO);
+  fdinfo = get_ioinfo_alloc_fd(STDIN_FILENO);
   if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE) {
     HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
     DWORD flags = WX_OPEN | WX_TEXT;
@@ -594,7 +594,7 @@ void msvcrt_init_io(void)
   }
   release_ioinfo(fdinfo);
 
-  fdinfo = get_ioinfo_alloc_fd(MSVCRT_STDOUT_FILENO);
+  fdinfo = get_ioinfo_alloc_fd(STDOUT_FILENO);
   if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE) {
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD flags = WX_OPEN | WX_TEXT;
@@ -613,7 +613,7 @@ void msvcrt_init_io(void)
   }
   release_ioinfo(fdinfo);
 
-  fdinfo = get_ioinfo_alloc_fd(MSVCRT_STDERR_FILENO);
+  fdinfo = get_ioinfo_alloc_fd(STDERR_FILENO);
   if (!(fdinfo->wxflag & WX_OPEN) || fdinfo->handle == INVALID_HANDLE_VALUE) {
     HANDLE h = GetStdHandle(STD_ERROR_HANDLE);
     DWORD flags = WX_OPEN | WX_TEXT;
@@ -632,9 +632,9 @@ void msvcrt_init_io(void)
   }
   release_ioinfo(fdinfo);
 
-  TRACE(":handles (%p)(%p)(%p)\n", get_ioinfo_nolock(MSVCRT_STDIN_FILENO)->handle,
-        get_ioinfo_nolock(MSVCRT_STDOUT_FILENO)->handle,
-        get_ioinfo_nolock(MSVCRT_STDERR_FILENO)->handle);
+  TRACE(":handles (%p)(%p)(%p)\n", get_ioinfo_nolock(STDIN_FILENO)->handle,
+        get_ioinfo_nolock(STDOUT_FILENO)->handle,
+        get_ioinfo_nolock(STDERR_FILENO)->handle);
 
   memset(MSVCRT__iob,0,3*sizeof(FILE));
   for (i = 0; i < 3; i++)
@@ -643,7 +643,7 @@ void msvcrt_init_io(void)
     MSVCRT__iob[i]._file = get_ioinfo_nolock(i)->handle == MSVCRT_NO_CONSOLE ?
         MSVCRT_NO_CONSOLE_FD : i;
     MSVCRT__iob[i]._tmpfname = NULL;
-    MSVCRT__iob[i]._flag = (i == 0) ? MSVCRT__IOREAD : MSVCRT__IOWRT;
+    MSVCRT__iob[i]._flag = (i == 0) ? _IOREAD : _IOWRT;
   }
   MSVCRT_stream_idx = 3;
 }
@@ -653,14 +653,14 @@ static int msvcrt_flush_buffer(FILE* file)
 {
     int ret = 0;
 
-    if((file->_flag & (MSVCRT__IOREAD|MSVCRT__IOWRT)) == MSVCRT__IOWRT &&
-            file->_flag & (MSVCRT__IOMYBUF|MSVCRT__USERBUF)) {
+    if((file->_flag & (_IOREAD|_IOWRT)) == _IOWRT &&
+            file->_flag & (_IOMYBUF|MSVCRT__USERBUF)) {
         int cnt=file->_ptr-file->_base;
         if(cnt>0 && MSVCRT__write(file->_file, file->_base, cnt) != cnt) {
-            file->_flag |= MSVCRT__IOERR;
+            file->_flag |= _IOERR;
             ret = EOF;
-        } else if(file->_flag & MSVCRT__IORW) {
-            file->_flag &= ~MSVCRT__IOWRT;
+        } else if(file->_flag & _IORW) {
+            file->_flag &= ~_IOWRT;
         }
     }
 
@@ -682,18 +682,18 @@ int CDECL MSVCRT__isatty(int fd)
 /* INTERNAL: Allocate stdio file buffer */
 static BOOL msvcrt_alloc_buffer(FILE* file)
 {
-    if((file->_file==MSVCRT_STDOUT_FILENO || file->_file==MSVCRT_STDERR_FILENO)
+    if((file->_file==STDOUT_FILENO || file->_file==STDERR_FILENO)
             && MSVCRT__isatty(file->_file))
         return FALSE;
 
     file->_base = calloc(1, MSVCRT_INTERNAL_BUFSIZ);
     if(file->_base) {
         file->_bufsiz = MSVCRT_INTERNAL_BUFSIZ;
-        file->_flag |= MSVCRT__IOMYBUF;
+        file->_flag |= _IOMYBUF;
     } else {
         file->_base = (char*)(&file->_charbuf);
         file->_bufsiz = 2;
-        file->_flag |= MSVCRT__IONBF;
+        file->_flag |= _IONBF;
     }
     file->_ptr = file->_base;
     file->_cnt = 0;
@@ -703,15 +703,15 @@ static BOOL msvcrt_alloc_buffer(FILE* file)
 /* INTERNAL: Allocate temporary buffer for stdout and stderr */
 static BOOL add_std_buffer(FILE *file)
 {
-    static char buffers[2][MSVCRT_BUFSIZ];
+    static char buffers[2][BUFSIZ];
 
-    if((file->_file!=MSVCRT_STDOUT_FILENO && file->_file!=MSVCRT_STDERR_FILENO)
-            || (file->_flag & (MSVCRT__IONBF | MSVCRT__IOMYBUF | MSVCRT__USERBUF))
+    if((file->_file!=STDOUT_FILENO && file->_file!=STDERR_FILENO)
+            || (file->_flag & (_IONBF | _IOMYBUF | MSVCRT__USERBUF))
             || !MSVCRT__isatty(file->_file))
         return FALSE;
 
-    file->_ptr = file->_base = buffers[file->_file == MSVCRT_STDOUT_FILENO ? 0 : 1];
-    file->_bufsiz = file->_cnt = MSVCRT_BUFSIZ;
+    file->_ptr = file->_base = buffers[file->_file == STDOUT_FILENO ? 0 : 1];
+    file->_bufsiz = file->_cnt = BUFSIZ;
     file->_flag |= MSVCRT__USERBUF;
     return TRUE;
 }
@@ -999,7 +999,7 @@ static int msvcrt_flush_all_buffers(int mask)
  */
 int CDECL MSVCRT__flushall(void)
 {
-    return msvcrt_flush_all_buffers(MSVCRT__IOWRT | MSVCRT__IOREAD);
+    return msvcrt_flush_all_buffers(_IOWRT | _IOREAD);
 }
 
 /*********************************************************************
@@ -1010,7 +1010,7 @@ int CDECL MSVCRT_fflush(FILE* file)
     int ret;
 
     if(!file) {
-        msvcrt_flush_all_buffers(MSVCRT__IOWRT);
+        msvcrt_flush_all_buffers(_IOWRT);
         ret = 0;
     } else {
         MSVCRT__lock_file(file);
@@ -1029,7 +1029,7 @@ int CDECL MSVCRT__fflush_nolock(FILE* file)
     int res;
 
     if(!file) {
-        msvcrt_flush_all_buffers(MSVCRT__IOWRT);
+        msvcrt_flush_all_buffers(_IOWRT);
         return 0;
     }
 
@@ -1054,12 +1054,12 @@ int CDECL MSVCRT__close(int fd)
     ret = -1;
   } else if (!MSVCRT_CHECK_PMT_ERR(info->wxflag & WX_OPEN, EBADF)) {
     ret = -1;
-  } else if (fd == MSVCRT_STDOUT_FILENO &&
-          info->handle == get_ioinfo_nolock(MSVCRT_STDERR_FILENO)->handle) {
+  } else if (fd == STDOUT_FILENO &&
+          info->handle == get_ioinfo_nolock(STDERR_FILENO)->handle) {
     msvcrt_free_fd(fd);
     ret = 0;
-  } else if (fd == MSVCRT_STDERR_FILENO &&
-          info->handle == get_ioinfo_nolock(MSVCRT_STDOUT_FILENO)->handle) {
+  } else if (fd == STDERR_FILENO &&
+          info->handle == get_ioinfo_nolock(STDOUT_FILENO)->handle) {
     msvcrt_free_fd(fd);
     ret = 0;
   } else {
@@ -1275,9 +1275,9 @@ __int64 CDECL MSVCRT__lseeki64(int fd, __int64 offset, int whence)
 
   TRACE(":fd (%d) to %s pos %s\n",
         fd,wine_dbgstr_longlong(offset),
-        (whence==MSVCRT_SEEK_SET)?"SEEK_SET":
-        (whence==MSVCRT_SEEK_CUR)?"SEEK_CUR":
-        (whence==MSVCRT_SEEK_END)?"SEEK_END":"UNKNOWN");
+        (whence==SEEK_SET)?"SEEK_SET":
+        (whence==SEEK_CUR)?"SEEK_CUR":
+        (whence==SEEK_END)?"SEEK_END":"UNKNOWN");
 
   /* The MoleBox protection scheme expects msvcrt to use SetFilePointer only,
    * so a LARGE_INTEGER offset cannot be passed directly via SetFilePointerEx. */
@@ -1408,19 +1408,19 @@ int CDECL MSVCRT__fseeki64_nolock(FILE* file, __int64 offset, int whence)
 {
   int ret;
 
-  if(whence == MSVCRT_SEEK_CUR && file->_flag & MSVCRT__IOREAD ) {
-      whence = MSVCRT_SEEK_SET;
+  if(whence == SEEK_CUR && file->_flag & _IOREAD ) {
+      whence = SEEK_SET;
       offset += MSVCRT__ftelli64_nolock(file);
   }
 
   /* Flush output if needed */
   msvcrt_flush_buffer(file);
   /* Reset direction of i/o */
-  if(file->_flag & MSVCRT__IORW) {
-        file->_flag &= ~(MSVCRT__IOREAD|MSVCRT__IOWRT);
+  if(file->_flag & _IORW) {
+        file->_flag &= ~(_IOREAD|_IOWRT);
   }
   /* Clear end of file flag */
-  file->_flag &= ~MSVCRT__IOEOF;
+  file->_flag &= ~_IOEOF;
   ret = (MSVCRT__lseeki64(file->_file,offset,whence) == -1)?-1:0;
 
   return ret;
@@ -1460,10 +1460,10 @@ int CDECL MSVCRT__chsize_s(int fd, __int64 size)
     if (info->handle != INVALID_HANDLE_VALUE)
     {
         /* save the current file pointer */
-        cur = MSVCRT__lseeki64(fd, 0, MSVCRT_SEEK_CUR);
+        cur = MSVCRT__lseeki64(fd, 0, SEEK_CUR);
         if (cur >= 0)
         {
-            pos = MSVCRT__lseeki64(fd, size, MSVCRT_SEEK_SET);
+            pos = MSVCRT__lseeki64(fd, size, SEEK_SET);
             if (pos >= 0)
             {
                 ret = SetEndOfFile(info->handle);
@@ -1471,7 +1471,7 @@ int CDECL MSVCRT__chsize_s(int fd, __int64 size)
             }
 
             /* restore the file pointer */
-            MSVCRT__lseeki64(fd, cur, MSVCRT_SEEK_SET);
+            MSVCRT__lseeki64(fd, cur, SEEK_SET);
         }
     }
 
@@ -1496,7 +1496,7 @@ void CDECL MSVCRT_clearerr(FILE* file)
   TRACE(":file (%p) fd (%d)\n",file,file->_file);
 
   MSVCRT__lock_file(file);
-  file->_flag &= ~(MSVCRT__IOERR | MSVCRT__IOEOF);
+  file->_flag &= ~(_IOERR | _IOEOF);
   MSVCRT__unlock_file(file);
 }
 
@@ -1510,7 +1510,7 @@ int CDECL MSVCRT_clearerr_s(FILE* file)
   if (!MSVCRT_CHECK_PMT(file != NULL)) return EINVAL;
 
   MSVCRT__lock_file(file);
-  file->_flag &= ~(MSVCRT__IOERR | MSVCRT__IOEOF);
+  file->_flag &= ~(_IOERR | _IOEOF);
   MSVCRT__unlock_file(file);
   return 0;
 }
@@ -1523,7 +1523,7 @@ void CDECL MSVCRT_rewind(FILE* file)
   TRACE(":file (%p) fd (%d)\n",file,file->_file);
 
   MSVCRT__lock_file(file);
-  MSVCRT__fseek_nolock(file, 0L, MSVCRT_SEEK_SET);
+  MSVCRT__fseek_nolock(file, 0L, SEEK_SET);
   MSVCRT_clearerr(file);
   MSVCRT__unlock_file(file);
 }
@@ -1540,15 +1540,15 @@ static int msvcrt_get_flags(const wchar_t* mode, int *open_flags, int* stream_fl
   {
   case 'R': case 'r':
     *open_flags = plus ? MSVCRT__O_RDWR : MSVCRT__O_RDONLY;
-    *stream_flags = plus ? MSVCRT__IORW : MSVCRT__IOREAD;
+    *stream_flags = plus ? _IORW : _IOREAD;
     break;
   case 'W': case 'w':
     *open_flags = MSVCRT__O_CREAT | MSVCRT__O_TRUNC | (plus  ? MSVCRT__O_RDWR : MSVCRT__O_WRONLY);
-    *stream_flags = plus ? MSVCRT__IORW : MSVCRT__IOWRT;
+    *stream_flags = plus ? _IORW : _IOWRT;
     break;
   case 'A': case 'a':
     *open_flags = MSVCRT__O_CREAT | MSVCRT__O_APPEND | (plus  ? MSVCRT__O_RDWR : MSVCRT__O_WRONLY);
-    *stream_flags = plus ? MSVCRT__IORW : MSVCRT__IOWRT;
+    *stream_flags = plus ? _IORW : _IOWRT;
     break;
   default:
     MSVCRT_INVALID_PMT(0, EINVAL);
@@ -1684,14 +1684,14 @@ FILE* CDECL MSVCRT__wfdopen(int fd, const wchar_t *mode)
  */
 LONG CDECL MSVCRT__filelength(int fd)
 {
-  LONG curPos = MSVCRT__lseek(fd, 0, MSVCRT_SEEK_CUR);
+  LONG curPos = MSVCRT__lseek(fd, 0, SEEK_CUR);
   if (curPos != -1)
   {
-    LONG endPos = MSVCRT__lseek(fd, 0, MSVCRT_SEEK_END);
+    LONG endPos = MSVCRT__lseek(fd, 0, SEEK_END);
     if (endPos != -1)
     {
       if (endPos != curPos)
-        MSVCRT__lseek(fd, curPos, MSVCRT_SEEK_SET);
+        MSVCRT__lseek(fd, curPos, SEEK_SET);
       return endPos;
     }
   }
@@ -1703,14 +1703,14 @@ LONG CDECL MSVCRT__filelength(int fd)
  */
 __int64 CDECL MSVCRT__filelengthi64(int fd)
 {
-  __int64 curPos = MSVCRT__lseeki64(fd, 0, MSVCRT_SEEK_CUR);
+  __int64 curPos = MSVCRT__lseeki64(fd, 0, SEEK_CUR);
   if (curPos != -1)
   {
-    __int64 endPos = MSVCRT__lseeki64(fd, 0, MSVCRT_SEEK_END);
+    __int64 endPos = MSVCRT__lseeki64(fd, 0, SEEK_END);
     if (endPos != -1)
     {
       if (endPos != curPos)
-        MSVCRT__lseeki64(fd, curPos, MSVCRT_SEEK_SET);
+        MSVCRT__lseeki64(fd, curPos, SEEK_SET);
       return endPos;
     }
   }
@@ -3260,7 +3260,7 @@ int CDECL MSVCRT__wstat64i32(const wchar_t *path, struct MSVCRT__stat64i32 *buf)
  */
 __msvcrt_long CDECL MSVCRT__tell(int fd)
 {
-  return MSVCRT__lseek(fd, 0, MSVCRT_SEEK_CUR);
+  return MSVCRT__lseek(fd, 0, SEEK_CUR);
 }
 
 /*********************************************************************
@@ -3268,7 +3268,7 @@ __msvcrt_long CDECL MSVCRT__tell(int fd)
  */
 __int64 CDECL _telli64(int fd)
 {
-  return MSVCRT__lseeki64(fd, 0, MSVCRT_SEEK_CUR);
+  return MSVCRT__lseeki64(fd, 0, SEEK_CUR);
 }
 
 /*********************************************************************
@@ -3575,7 +3575,7 @@ int CDECL MSVCRT__putw(int val, FILE* file)
     return val;
   }
 
-  file->_flag |= MSVCRT__IOERR;
+  file->_flag |= _IOERR;
   MSVCRT__unlock_file(file);
   return EOF;
 }
@@ -3601,7 +3601,7 @@ int CDECL MSVCRT__fclose_nolock(FILE* file)
 {
   int r, flag;
 
-  if(!(file->_flag & (MSVCRT__IOREAD | MSVCRT__IOWRT | MSVCRT__IORW)))
+  if(!(file->_flag & (_IOREAD | _IOWRT | _IORW)))
   {
       file->_flag = 0;
       return EOF;
@@ -3611,15 +3611,15 @@ int CDECL MSVCRT__fclose_nolock(FILE* file)
   free(file->_tmpfname);
   file->_tmpfname = NULL;
   /* flush stdio buffers */
-  if(file->_flag & MSVCRT__IOWRT)
+  if(file->_flag & _IOWRT)
       MSVCRT__fflush_nolock(file);
-  if(file->_flag & MSVCRT__IOMYBUF)
+  if(file->_flag & _IOMYBUF)
       free(file->_base);
 
   r=MSVCRT__close(file->_file);
   file->_flag = 0;
 
-  return ((r == -1) || (flag & MSVCRT__IOERR) ? EOF : 0);
+  return ((r == -1) || (flag & _IOERR) ? EOF : 0);
 }
 
 /*********************************************************************
@@ -3627,7 +3627,7 @@ int CDECL MSVCRT__fclose_nolock(FILE* file)
  */
 int CDECL MSVCRT_feof(FILE* file)
 {
-    return file->_flag & MSVCRT__IOEOF;
+    return file->_flag & _IOEOF;
 }
 
 /*********************************************************************
@@ -3635,7 +3635,7 @@ int CDECL MSVCRT_feof(FILE* file)
  */
 int CDECL MSVCRT_ferror(FILE* file)
 {
-    return file->_flag & MSVCRT__IOERR;
+    return file->_flag & _IOERR;
 }
 
 /*********************************************************************
@@ -3645,24 +3645,24 @@ int CDECL MSVCRT__filbuf(FILE* file)
 {
     unsigned char c;
 
-    if(file->_flag & MSVCRT__IOSTRG)
+    if(file->_flag & _IOSTRG)
         return EOF;
 
     /* Allocate buffer if needed */
-    if(!(file->_flag & (MSVCRT__IONBF | MSVCRT__IOMYBUF | MSVCRT__USERBUF)))
+    if(!(file->_flag & (_IONBF | _IOMYBUF | MSVCRT__USERBUF)))
         msvcrt_alloc_buffer(file);
 
-    if(!(file->_flag & MSVCRT__IOREAD)) {
-        if(file->_flag & MSVCRT__IORW)
-            file->_flag |= MSVCRT__IOREAD;
+    if(!(file->_flag & _IOREAD)) {
+        if(file->_flag & _IORW)
+            file->_flag |= _IOREAD;
         else
             return EOF;
     }
 
-    if(!(file->_flag & (MSVCRT__IOMYBUF | MSVCRT__USERBUF))) {
+    if(!(file->_flag & (_IOMYBUF | MSVCRT__USERBUF))) {
         int r;
         if ((r = MSVCRT__read(file->_file,&c,1)) != 1) {
-            file->_flag |= (r == 0) ? MSVCRT__IOEOF : MSVCRT__IOERR;
+            file->_flag |= (r == 0) ? _IOEOF : _IOERR;
             return EOF;
         }
 
@@ -3670,7 +3670,7 @@ int CDECL MSVCRT__filbuf(FILE* file)
     } else {
         file->_cnt = MSVCRT__read(file->_file, file->_base, file->_bufsiz);
         if(file->_cnt<=0) {
-            file->_flag |= (file->_cnt == 0) ? MSVCRT__IOEOF : MSVCRT__IOERR;
+            file->_flag |= (file->_cnt == 0) ? _IOEOF : _IOERR;
             file->_cnt = 0;
             return EOF;
         }
@@ -3827,7 +3827,7 @@ int CDECL MSVCRT__getw(FILE* file)
   for (j=0; j<sizeof(int); j++) {
     k = MSVCRT__fgetc_nolock(file);
     if (k == EOF) {
-      file->_flag |= MSVCRT__IOEOF;
+      file->_flag |= _IOEOF;
       MSVCRT__unlock_file(file);
       return EOF;
     }
@@ -3900,36 +3900,36 @@ wchar_t * CDECL MSVCRT_fgetws(wchar_t *s, int size, FILE* file)
 int CDECL MSVCRT__flsbuf(int c, FILE* file)
 {
     /* Flush output buffer */
-    if(!(file->_flag & (MSVCRT__IONBF | MSVCRT__IOMYBUF | MSVCRT__USERBUF))) {
+    if(!(file->_flag & (_IONBF | _IOMYBUF | MSVCRT__USERBUF))) {
         msvcrt_alloc_buffer(file);
     }
 
-    if(!(file->_flag & MSVCRT__IOWRT)) {
-        if(!(file->_flag & MSVCRT__IORW)) {
-            file->_flag |= MSVCRT__IOERR;
+    if(!(file->_flag & _IOWRT)) {
+        if(!(file->_flag & _IORW)) {
+            file->_flag |= _IOERR;
             *_errno() = EBADF;
             return EOF;
         }
-        file->_flag |= MSVCRT__IOWRT;
+        file->_flag |= _IOWRT;
     }
-    if(file->_flag & MSVCRT__IOREAD) {
-        if(!(file->_flag & MSVCRT__IOEOF)) {
-            file->_flag |= MSVCRT__IOERR;
+    if(file->_flag & _IOREAD) {
+        if(!(file->_flag & _IOEOF)) {
+            file->_flag |= _IOERR;
             return EOF;
         }
         file->_cnt = 0;
         file->_ptr = file->_base;
-        file->_flag &= ~(MSVCRT__IOREAD | MSVCRT__IOEOF);
+        file->_flag &= ~(_IOREAD | _IOEOF);
     }
 
-    if(file->_flag & (MSVCRT__IOMYBUF | MSVCRT__USERBUF)) {
+    if(file->_flag & (_IOMYBUF | MSVCRT__USERBUF)) {
         int res = 0;
 
         if(file->_cnt <= 0) {
             res = msvcrt_flush_buffer(file);
             if(res)
                 return res;
-            file->_flag |= MSVCRT__IOWRT;
+            file->_flag |= _IOWRT;
             file->_cnt=file->_bufsiz;
         }
         *file->_ptr++ = c;
@@ -3943,7 +3943,7 @@ int CDECL MSVCRT__flsbuf(int c, FILE* file)
         len = MSVCRT__write(file->_file, &cc, 1);
         if (len == 1)
             return c & 0xff;
-        file->_flag |= MSVCRT__IOERR;
+        file->_flag |= _IOERR;
         return EOF;
     }
 }
@@ -3975,7 +3975,7 @@ size_t CDECL MSVCRT__fwrite_nolock(const void *ptr, size_t size, size_t nmemb, F
     while(wrcnt) {
         if(file->_cnt < 0) {
             WARN("negative file->_cnt value in %p\n", file);
-            file->_flag |= MSVCRT__IOERR;
+            file->_flag |= _IOERR;
             break;
         } else if(file->_cnt) {
             int pcnt=(file->_cnt>wrcnt)? wrcnt: file->_cnt;
@@ -3985,15 +3985,15 @@ size_t CDECL MSVCRT__fwrite_nolock(const void *ptr, size_t size, size_t nmemb, F
             written += pcnt;
             wrcnt -= pcnt;
             ptr = (const char*)ptr + pcnt;
-        } else if((file->_flag & MSVCRT__IONBF)
-                || ((file->_flag & (MSVCRT__IOMYBUF | MSVCRT__USERBUF)) && wrcnt >= file->_bufsiz)
-                || (!(file->_flag & (MSVCRT__IOMYBUF | MSVCRT__USERBUF)) && wrcnt >= MSVCRT_INTERNAL_BUFSIZ)) {
+        } else if((file->_flag & _IONBF)
+                || ((file->_flag & (_IOMYBUF | MSVCRT__USERBUF)) && wrcnt >= file->_bufsiz)
+                || (!(file->_flag & (_IOMYBUF | MSVCRT__USERBUF)) && wrcnt >= MSVCRT_INTERNAL_BUFSIZ)) {
             size_t pcnt;
             int bufsiz;
 
-            if(file->_flag & MSVCRT__IONBF)
+            if(file->_flag & _IONBF)
                 bufsiz = 1;
-            else if(!(file->_flag & (MSVCRT__IOMYBUF | MSVCRT__USERBUF)))
+            else if(!(file->_flag & (_IOMYBUF | MSVCRT__USERBUF)))
                 bufsiz = MSVCRT_INTERNAL_BUFSIZ;
             else
                 bufsiz = file->_bufsiz;
@@ -4004,7 +4004,7 @@ size_t CDECL MSVCRT__fwrite_nolock(const void *ptr, size_t size, size_t nmemb, F
                 break;
 
             if(MSVCRT__write(file->_file, ptr, pcnt) <= 0) {
-                file->_flag |= MSVCRT__IOERR;
+                file->_flag |= _IOERR;
                 break;
             }
             written += pcnt;
@@ -4266,21 +4266,21 @@ size_t CDECL MSVCRT__fread_nolock(void *ptr, size_t size, size_t nmemb, FILE* fi
 	read += pcnt ;
 	rcnt -= pcnt ;
         ptr = (char*)ptr + pcnt;
-  } else if(!(file->_flag & MSVCRT__IOREAD )) {
-	if(file->_flag & MSVCRT__IORW) {
-		file->_flag |= MSVCRT__IOREAD;
+  } else if(!(file->_flag & _IOREAD )) {
+	if(file->_flag & _IORW) {
+		file->_flag |= _IOREAD;
 	} else {
         return 0;
     }
   }
 
-  if(rcnt>0 && !(file->_flag & (MSVCRT__IONBF | MSVCRT__IOMYBUF | MSVCRT__USERBUF)))
+  if(rcnt>0 && !(file->_flag & (_IONBF | _IOMYBUF | MSVCRT__USERBUF)))
       msvcrt_alloc_buffer(file);
 
   while(rcnt>0)
   {
     int i;
-    if (!file->_cnt && rcnt<file->_bufsiz && (file->_flag & (MSVCRT__IOMYBUF | MSVCRT__USERBUF))) {
+    if (!file->_cnt && rcnt<file->_bufsiz && (file->_flag & (_IOMYBUF | MSVCRT__USERBUF))) {
       i = MSVCRT__read(file->_file, file->_base, file->_bufsiz);
       file->_ptr = file->_base;
       if (i != -1) {
@@ -4290,7 +4290,7 @@ size_t CDECL MSVCRT__fread_nolock(void *ptr, size_t size, size_t nmemb, FILE* fi
       /* If the buffer fill reaches eof but fread wouldn't, clear eof. */
       if (i > 0 && i < file->_cnt) {
         get_ioinfo_nolock(file->_file)->wxflag &= ~WX_ATEOF;
-        file->_flag &= ~MSVCRT__IOEOF;
+        file->_flag &= ~_IOEOF;
       }
       if (i > 0) {
         memcpy(ptr, file->_ptr, i);
@@ -4311,10 +4311,10 @@ size_t CDECL MSVCRT__fread_nolock(void *ptr, size_t size, size_t nmemb, FILE* fi
      * MFC tests file->_flag for feof, and doesn't call feof())
      */
     if (get_ioinfo_nolock(file->_file)->wxflag & WX_ATEOF)
-        file->_flag |= MSVCRT__IOEOF;
+        file->_flag |= _IOEOF;
     else if (i == -1)
     {
-        file->_flag |= MSVCRT__IOERR;
+        file->_flag |= _IOERR;
         pread = 0;
         rcnt = 0;
     }
@@ -4502,11 +4502,11 @@ int CDECL MSVCRT_fsetpos(FILE* file, fpos_t *pos)
   msvcrt_flush_buffer(file);
 
   /* Reset direction of i/o */
-  if(file->_flag & MSVCRT__IORW) {
-        file->_flag &= ~(MSVCRT__IOREAD|MSVCRT__IOWRT);
+  if(file->_flag & _IORW) {
+        file->_flag &= ~(_IOREAD|_IOWRT);
   }
 
-  ret = (MSVCRT__lseeki64(file->_file,*pos,MSVCRT_SEEK_SET) == -1) ? -1 : 0;
+  ret = (MSVCRT__lseeki64(file->_file,*pos,SEEK_SET) == -1) ? -1 : 0;
   MSVCRT__unlock_file(file);
   return ret;
 }
@@ -4535,8 +4535,8 @@ __int64 CDECL MSVCRT__ftelli64_nolock(FILE* file)
     pos = _telli64(file->_file);
     if(pos == -1)
         return -1;
-    if(file->_flag & (MSVCRT__IOMYBUF | MSVCRT__USERBUF))  {
-        if(file->_flag & MSVCRT__IOWRT) {
+    if(file->_flag & (_IOMYBUF | MSVCRT__USERBUF))  {
+        if(file->_flag & _IOWRT) {
             pos += file->_ptr - file->_base;
 
             if(get_ioinfo_nolock(file->_file)->wxflag & WX_TEXT) {
@@ -4547,7 +4547,7 @@ __int64 CDECL MSVCRT__ftelli64_nolock(FILE* file)
                         pos++;
             }
         } else if(!file->_cnt) { /* nothing to do */
-        } else if(MSVCRT__lseeki64(file->_file, 0, MSVCRT_SEEK_END)==pos) {
+        } else if(MSVCRT__lseeki64(file->_file, 0, SEEK_END)==pos) {
             int i;
 
             pos -= file->_cnt;
@@ -4559,7 +4559,7 @@ __int64 CDECL MSVCRT__ftelli64_nolock(FILE* file)
         } else {
             char *p;
 
-            if(MSVCRT__lseeki64(file->_file, pos, MSVCRT_SEEK_SET) != pos)
+            if(MSVCRT__lseeki64(file->_file, pos, SEEK_SET) != pos)
                 return -1;
 
             pos -= file->_bufsiz;
@@ -4854,19 +4854,19 @@ int CDECL MSVCRT__wrename(const wchar_t *oldpath,const wchar_t *newpath)
 int CDECL MSVCRT_setvbuf(FILE* file, char *buf, int mode, size_t size)
 {
     if(!MSVCRT_CHECK_PMT(file != NULL)) return -1;
-    if(!MSVCRT_CHECK_PMT(mode==MSVCRT__IONBF || mode==MSVCRT__IOFBF || mode==MSVCRT__IOLBF)) return -1;
-    if(!MSVCRT_CHECK_PMT(mode==MSVCRT__IONBF || (size>=2 && size<=INT_MAX))) return -1;
+    if(!MSVCRT_CHECK_PMT(mode==_IONBF || mode==_IOFBF || mode==_IOLBF)) return -1;
+    if(!MSVCRT_CHECK_PMT(mode==_IONBF || (size>=2 && size<=INT_MAX))) return -1;
 
     MSVCRT__lock_file(file);
 
     MSVCRT__fflush_nolock(file);
-    if(file->_flag & MSVCRT__IOMYBUF)
+    if(file->_flag & _IOMYBUF)
         free(file->_base);
-    file->_flag &= ~(MSVCRT__IONBF | MSVCRT__IOMYBUF | MSVCRT__USERBUF);
+    file->_flag &= ~(_IONBF | _IOMYBUF | MSVCRT__USERBUF);
     file->_cnt = 0;
 
-    if(mode == MSVCRT__IONBF) {
-        file->_flag |= MSVCRT__IONBF;
+    if(mode == _IONBF) {
+        file->_flag |= _IONBF;
         file->_base = file->_ptr = (char*)&file->_charbuf;
         file->_bufsiz = 2;
     }else if(buf) {
@@ -4881,7 +4881,7 @@ int CDECL MSVCRT_setvbuf(FILE* file, char *buf, int mode, size_t size)
             return -1;
         }
 
-        file->_flag |= MSVCRT__IOMYBUF;
+        file->_flag |= _IOMYBUF;
         file->_bufsiz = size;
     }
     MSVCRT__unlock_file(file);
@@ -4893,7 +4893,7 @@ int CDECL MSVCRT_setvbuf(FILE* file, char *buf, int mode, size_t size)
  */
 void CDECL MSVCRT_setbuf(FILE* file, char *buf)
 {
-  MSVCRT_setvbuf(file, buf, buf ? MSVCRT__IOFBF : MSVCRT__IONBF, MSVCRT_BUFSIZ);
+  MSVCRT_setvbuf(file, buf, buf ? _IOFBF : _IONBF, BUFSIZ);
 }
 
 static int tmpnam_helper(char *s, size_t size, int *tmpnam_unique, int tmp_max)
@@ -4947,7 +4947,7 @@ static int tmpnam_helper(char *s, size_t size, int *tmpnam_unique, int tmp_max)
 
 int CDECL MSVCRT_tmpnam_s(char *s, size_t size)
 {
-    return tmpnam_helper(s, size, &tmpnam_s_unique, MSVCRT_TMP_MAX_S);
+    return tmpnam_helper(s, size, &tmpnam_s_unique, TMP_MAX_S);
 }
 
 /*********************************************************************
@@ -4964,7 +4964,7 @@ char * CDECL MSVCRT_tmpnam(char *s)
     s = data->tmpnam_buffer;
   }
 
-  return tmpnam_helper(s, -1, &tmpnam_unique, MSVCRT_TMP_MAX) ? NULL : s;
+  return tmpnam_helper(s, -1, &tmpnam_unique, TMP_MAX) ? NULL : s;
 }
 
 static int wtmpnam_helper(wchar_t *s, size_t size, int *tmpnam_unique, int tmp_max)
@@ -5021,7 +5021,7 @@ static int wtmpnam_helper(wchar_t *s, size_t size, int *tmpnam_unique, int tmp_m
  */
 int CDECL MSVCRT__wtmpnam_s(wchar_t *s, size_t size)
 {
-    return wtmpnam_helper(s, size, &tmpnam_s_unique, MSVCRT_TMP_MAX_S);
+    return wtmpnam_helper(s, size, &tmpnam_s_unique, TMP_MAX_S);
 }
 
 /*********************************************************************
@@ -5038,7 +5038,7 @@ wchar_t * CDECL MSVCRT__wtmpnam(wchar_t *s)
         s = data->wtmpnam_buffer;
     }
 
-    return wtmpnam_helper(s, -1, &tmpnam_unique, MSVCRT_TMP_MAX) ? NULL : s;
+    return wtmpnam_helper(s, -1, &tmpnam_unique, TMP_MAX) ? NULL : s;
 }
 
 /*********************************************************************
@@ -5055,7 +5055,7 @@ FILE* CDECL MSVCRT_tmpfile(void)
           MSVCRT__S_IREAD | MSVCRT__S_IWRITE);
   if (fd != -1 && (file = msvcrt_alloc_fp()))
   {
-    if (msvcrt_init_fp(file, fd, MSVCRT__IORW) == -1)
+    if (msvcrt_init_fp(file, fd, _IORW) == -1)
     {
         file->_flag = 0;
         file = NULL;
@@ -5477,18 +5477,18 @@ int CDECL MSVCRT__ungetc_nolock(int c, FILE * file)
 {
     if(!MSVCRT_CHECK_PMT(file != NULL)) return EOF;
 
-    if (c == EOF || !(file->_flag&MSVCRT__IOREAD ||
-                (file->_flag&MSVCRT__IORW && !(file->_flag&MSVCRT__IOWRT))))
+    if (c == EOF || !(file->_flag&_IOREAD ||
+                (file->_flag&_IORW && !(file->_flag&_IOWRT))))
         return EOF;
 
-    if((!(file->_flag & (MSVCRT__IONBF | MSVCRT__IOMYBUF | MSVCRT__USERBUF))
+    if((!(file->_flag & (_IONBF | _IOMYBUF | MSVCRT__USERBUF))
                 && msvcrt_alloc_buffer(file))
             || (!file->_cnt && file->_ptr==file->_base))
         file->_ptr++;
 
     if(file->_ptr>file->_base) {
         file->_ptr--;
-        if(file->_flag & MSVCRT__IOSTRG) {
+        if(file->_flag & _IOSTRG) {
             if(*file->_ptr != c) {
                 file->_ptr++;
                 return EOF;
@@ -5497,8 +5497,8 @@ int CDECL MSVCRT__ungetc_nolock(int c, FILE * file)
             *file->_ptr = c;
         }
         file->_cnt++;
-        file->_flag &= ~(MSVCRT__IOERR | MSVCRT__IOEOF);
-        file->_flag |= MSVCRT__IOREAD;
+        file->_flag &= ~(_IOERR | _IOEOF);
+        file->_flag |= _IOREAD;
         return c;
     }
 
