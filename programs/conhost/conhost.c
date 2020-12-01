@@ -2756,7 +2756,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         if (!init_window( &console )) return 1;
         GetStartupInfoW( &si );
         set_console_title( &console, si.lpTitle, wcslen( si.lpTitle ) * sizeof(WCHAR) );
-        ShowWindow( console.win, SW_SHOW );
+        ShowWindow( console.win, (si.dwFlags & STARTF_USESHOWWINDOW) ? si.wShowWindow : SW_SHOW );
     }
 
     return main_loop( &console, signal );
