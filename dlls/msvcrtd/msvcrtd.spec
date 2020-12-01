@@ -305,7 +305,8 @@
 @ cdecl _ftime(ptr) MSVCRT__ftime
 @ cdecl -arch=i386 -ret64 _ftol() MSVCRT__ftol
 @ cdecl _fullpath(ptr str long) MSVCRT__fullpath
-@ cdecl _futime(long ptr)
+@ cdecl -arch=win32 _futime(long ptr) _futime32
+@ cdecl -arch=win64 _futime(long ptr) _futime64
 @ cdecl _gcvt(double long str) MSVCRT__gcvt
 @ cdecl _get_osfhandle(long) MSVCRT__get_osfhandle
 @ cdecl _get_sbh_threshold()
@@ -547,7 +548,8 @@
 @ cdecl _unlink(str) MSVCRT__unlink
 @ cdecl _unloaddll(long)
 @ cdecl _unlock(long)
-@ cdecl _utime(str ptr)
+@ cdecl -arch=win32 _utime(str ptr) _utime32
+@ cdecl -arch=win64 _utime(str ptr) _utime64
 @ cdecl _vsnprintf(ptr long str ptr)
 @ cdecl _vsnwprintf(ptr long wstr ptr) MSVCRT_vsnwprintf
 @ cdecl _waccess(wstr long) MSVCRT__waccess
@@ -627,7 +629,8 @@
 @ cdecl -ret64 _wtoi64(wstr) MSVCRT__wtoi64
 @ cdecl _wtol(wstr) MSVCRT__wtol
 @ cdecl _wunlink(wstr) MSVCRT__wunlink
-@ cdecl _wutime(wstr ptr)
+@ cdecl -arch=win32 _wutime(wstr ptr) _wutime32
+@ cdecl -arch=win64 _wutime(wstr ptr) _wutime64
 @ cdecl _y0(double) MSVCRT__y0
 @ cdecl _y1(double) MSVCRT__y1
 @ cdecl _yn(long double) MSVCRT__yn

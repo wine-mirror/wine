@@ -30,6 +30,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/utime.h>
 #include <limits.h>
 
 #include "windef.h"
@@ -1862,7 +1863,7 @@ int CDECL MSVCRT__fstat64i32(int fd, struct MSVCRT__stat64i32* buf)
 /*********************************************************************
  *		_futime64 (MSVCRT.@)
  */
-int CDECL _futime64(int fd, struct MSVCRT___utimbuf64 *t)
+int CDECL _futime64(int fd, struct __utimbuf64 *t)
 {
   ioinfo *info = get_ioinfo(fd);
   FILETIME at, wt;
@@ -1891,11 +1892,11 @@ int CDECL _futime64(int fd, struct MSVCRT___utimbuf64 *t)
 /*********************************************************************
  *		_futime32 (MSVCRT.@)
  */
-int CDECL _futime32(int fd, struct MSVCRT___utimbuf32 *t)
+int CDECL _futime32(int fd, struct __utimbuf32 *t)
 {
     if (t)
     {
-        struct MSVCRT___utimbuf64 t64;
+        struct __utimbuf64 t64;
         t64.actime = t->actime;
         t64.modtime = t->modtime;
         return _futime64( fd, &t64 );
@@ -1903,21 +1904,6 @@ int CDECL _futime32(int fd, struct MSVCRT___utimbuf32 *t)
     else
         return _futime64( fd, NULL );
 }
-
-/*********************************************************************
- *		_futime (MSVCRT.@)
- */
-#ifdef _WIN64
-int CDECL _futime(int fd, struct MSVCRT___utimbuf64 *t)
-{
-    return _futime64( fd, t );
-}
-#else
-int CDECL _futime(int fd, struct MSVCRT___utimbuf32 *t)
-{
-    return _futime32( fd, t );
-}
-#endif
 
 /*********************************************************************
  *		_get_osfhandle (MSVCRT.@)
@@ -3337,7 +3323,7 @@ int CDECL MSVCRT__umask(int umask)
 /*********************************************************************
  *		_utime64 (MSVCRT.@)
  */
-int CDECL _utime64(const char* path, struct MSVCRT___utimbuf64 *t)
+int CDECL _utime64(const char* path, struct __utimbuf64 *t)
 {
   int fd = MSVCRT__open(path, MSVCRT__O_WRONLY | MSVCRT__O_BINARY);
 
@@ -3353,11 +3339,11 @@ int CDECL _utime64(const char* path, struct MSVCRT___utimbuf64 *t)
 /*********************************************************************
  *		_utime32 (MSVCRT.@)
  */
-int CDECL _utime32(const char* path, struct MSVCRT___utimbuf32 *t)
+int CDECL _utime32(const char* path, struct __utimbuf32 *t)
 {
     if (t)
     {
-        struct MSVCRT___utimbuf64 t64;
+        struct __utimbuf64 t64;
         t64.actime = t->actime;
         t64.modtime = t->modtime;
         return _utime64( path, &t64 );
@@ -3367,24 +3353,9 @@ int CDECL _utime32(const char* path, struct MSVCRT___utimbuf32 *t)
 }
 
 /*********************************************************************
- *		_utime (MSVCRT.@)
- */
-#ifdef _WIN64
-int CDECL _utime(const char* path, struct MSVCRT___utimbuf64 *t)
-{
-    return _utime64( path, t );
-}
-#else
-int CDECL _utime(const char* path, struct MSVCRT___utimbuf32 *t)
-{
-    return _utime32( path, t );
-}
-#endif
-
-/*********************************************************************
  *		_wutime64 (MSVCRT.@)
  */
-int CDECL _wutime64(const wchar_t* path, struct MSVCRT___utimbuf64 *t)
+int CDECL _wutime64(const wchar_t* path, struct __utimbuf64 *t)
 {
   int fd = MSVCRT__wopen(path, MSVCRT__O_WRONLY | MSVCRT__O_BINARY);
 
@@ -3400,11 +3371,11 @@ int CDECL _wutime64(const wchar_t* path, struct MSVCRT___utimbuf64 *t)
 /*********************************************************************
  *		_wutime32 (MSVCRT.@)
  */
-int CDECL _wutime32(const wchar_t* path, struct MSVCRT___utimbuf32 *t)
+int CDECL _wutime32(const wchar_t* path, struct __utimbuf32 *t)
 {
     if (t)
     {
-        struct MSVCRT___utimbuf64 t64;
+        struct __utimbuf64 t64;
         t64.actime = t->actime;
         t64.modtime = t->modtime;
         return _wutime64( path, &t64 );
@@ -3412,21 +3383,6 @@ int CDECL _wutime32(const wchar_t* path, struct MSVCRT___utimbuf32 *t)
     else
         return _wutime64( path, NULL );
 }
-
-/*********************************************************************
- *		_wutime (MSVCRT.@)
- */
-#ifdef _WIN64
-int CDECL _wutime(const wchar_t* path, struct MSVCRT___utimbuf64 *t)
-{
-    return _wutime64( path, t );
-}
-#else
-int CDECL _wutime(const wchar_t* path, struct MSVCRT___utimbuf32 *t)
-{
-    return _wutime32( path, t );
-}
-#endif
 
 /*********************************************************************
  *		_write (MSVCRT.@)

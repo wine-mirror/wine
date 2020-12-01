@@ -488,7 +488,8 @@
 # stub _ftol2_sse_excpt
 @ cdecl _fullpath(ptr str long) MSVCRT__fullpath
 # stub _fullpath_dbg(ptr str long long str long)
-@ cdecl _futime(long ptr)
+@ cdecl -arch=win32 _futime(long ptr) _futime32
+@ cdecl -arch=win64 _futime(long ptr) _futime64
 @ cdecl _futime32(long ptr)
 @ cdecl _futime64(long ptr)
 @ varargs _fwprintf_l(ptr wstr ptr) MSVCRT__fwprintf_l
@@ -1055,7 +1056,8 @@
 # stub _vprintf_p(str ptr)
 # stub _vprintf_p_l(str ptr ptr)
 # stub _vprintf_s_l(str ptr ptr)
-@ cdecl _utime(str ptr)
+@ cdecl -arch=win32 _utime(str ptr) _utime32
+@ cdecl -arch=win64 _utime(str ptr) _utime64
 @ cdecl _vscprintf(str ptr) MSVCRT__vscprintf
 @ cdecl _vscprintf_l(str ptr ptr) MSVCRT__vscprintf_l
 @ cdecl _vscprintf_p_l(str ptr ptr) MSVCRT__vscprintf_p_l
@@ -1234,7 +1236,8 @@
 @ cdecl _wtol(wstr) MSVCRT__wtol
 @ cdecl _wtol_l(wstr ptr) MSVCRT__wtol_l
 @ cdecl _wunlink(wstr) MSVCRT__wunlink
-@ cdecl _wutime(wstr ptr)
+@ cdecl -arch=win32 _wutime(wstr ptr) _wutime32
+@ cdecl -arch=win64 _wutime(wstr ptr) _wutime64
 @ cdecl _wutime32(wstr ptr)
 @ cdecl _wutime64(wstr ptr)
 @ cdecl _y0(double) MSVCRT__y0

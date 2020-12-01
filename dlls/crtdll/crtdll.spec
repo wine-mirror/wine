@@ -117,7 +117,8 @@
 @ cdecl _ftime(ptr) MSVCRT__ftime
 @ cdecl -arch=i386 -ret64 _ftol() MSVCRT__ftol
 @ cdecl _fullpath(ptr str long) MSVCRT__fullpath
-@ cdecl _futime(long ptr)
+@ cdecl -arch=win32 _futime(long ptr) _futime32
+@ cdecl -arch=win64 _futime(long ptr) _futime64
 @ cdecl _gcvt(double long str) MSVCRT__gcvt
 @ cdecl _get_osfhandle(long) MSVCRT__get_osfhandle
 @ cdecl _getch()
@@ -318,7 +319,8 @@
 @ cdecl _ungetch(long)
 @ cdecl _unlink(str) MSVCRT__unlink
 @ cdecl _unloaddll(long)
-@ cdecl _utime(str ptr)
+@ cdecl -arch=win32 _utime(str ptr) _utime32
+@ cdecl -arch=win64 _utime(str ptr) _utime64
 @ cdecl _vsnprintf(ptr long str ptr)
 @ cdecl _vsnwprintf(ptr long wstr ptr) MSVCRT_vsnwprintf
 @ cdecl _wcsdup(wstr) MSVCRT__wcsdup
