@@ -992,9 +992,7 @@ static int screen_buffer_write( struct fd *fd, struct async *async, file_pos_t p
     /* we can't use default async handling, because write result is not
      * compatible with ioctl result */
     iosb = async_get_iosb( async );
-    iosb->status = STATUS_SUCCESS;
     iosb->result = iosb->in_size;
-    async_terminate( async, iosb->result ? STATUS_ALERTED : STATUS_SUCCESS );
     release_object( iosb );
     return 1;
 }
