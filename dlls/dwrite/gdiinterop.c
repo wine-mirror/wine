@@ -46,7 +46,7 @@ struct rendertarget
 
     IDWriteFactory7 *factory;
     DWRITE_TEXT_ANTIALIAS_MODE antialiasmode;
-    FLOAT ppdip;
+    float ppdip;
     DWRITE_MATRIX m;
     SIZE size;
     HDC hdc;
@@ -149,20 +149,20 @@ static HRESULT WINAPI rendertarget_sink_QueryInterface(ID2D1SimplifiedGeometrySi
 
 static ULONG WINAPI rendertarget_sink_AddRef(ID2D1SimplifiedGeometrySink *iface)
 {
-    struct rendertarget *This = impl_from_ID2D1SimplifiedGeometrySink(iface);
-    return IDWriteBitmapRenderTarget1_AddRef(&This->IDWriteBitmapRenderTarget1_iface);
+    struct rendertarget *target = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    return IDWriteBitmapRenderTarget1_AddRef(&target->IDWriteBitmapRenderTarget1_iface);
 }
 
 static ULONG WINAPI rendertarget_sink_Release(ID2D1SimplifiedGeometrySink *iface)
 {
-    struct rendertarget *This = impl_from_ID2D1SimplifiedGeometrySink(iface);
-    return IDWriteBitmapRenderTarget1_Release(&This->IDWriteBitmapRenderTarget1_iface);
+    struct rendertarget *target = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    return IDWriteBitmapRenderTarget1_Release(&target->IDWriteBitmapRenderTarget1_iface);
 }
 
 static void WINAPI rendertarget_sink_SetFillMode(ID2D1SimplifiedGeometrySink *iface, D2D1_FILL_MODE mode)
 {
-    struct rendertarget *This = impl_from_ID2D1SimplifiedGeometrySink(iface);
-    SetPolyFillMode(This->hdc, mode == D2D1_FILL_MODE_ALTERNATE ? ALTERNATE : WINDING);
+    struct rendertarget *target = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    SetPolyFillMode(target->hdc, mode == D2D1_FILL_MODE_ALTERNATE ? ALTERNATE : WINDING);
 }
 
 static void WINAPI rendertarget_sink_SetSegmentFlags(ID2D1SimplifiedGeometrySink *iface, D2D1_PATH_SEGMENT vertexFlags)
@@ -171,26 +171,28 @@ static void WINAPI rendertarget_sink_SetSegmentFlags(ID2D1SimplifiedGeometrySink
 
 static void WINAPI rendertarget_sink_BeginFigure(ID2D1SimplifiedGeometrySink *iface, D2D1_POINT_2F startPoint, D2D1_FIGURE_BEGIN figureBegin)
 {
-    struct rendertarget *This = impl_from_ID2D1SimplifiedGeometrySink(iface);
-    MoveToEx(This->hdc, startPoint.x, startPoint.y, NULL);
+    struct rendertarget *target = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    MoveToEx(target->hdc, startPoint.x, startPoint.y, NULL);
 }
 
 static void WINAPI rendertarget_sink_AddLines(ID2D1SimplifiedGeometrySink *iface, const D2D1_POINT_2F *points, UINT32 count)
 {
-    struct rendertarget *This = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    struct rendertarget *target = impl_from_ID2D1SimplifiedGeometrySink(iface);
 
-    while (count--) {
-        LineTo(This->hdc, points->x, points->y);
+    while (count--)
+    {
+        LineTo(target->hdc, points->x, points->y);
         points++;
     }
 }
 
 static void WINAPI rendertarget_sink_AddBeziers(ID2D1SimplifiedGeometrySink *iface, const D2D1_BEZIER_SEGMENT *beziers, UINT32 count)
 {
-    struct rendertarget *This = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    struct rendertarget *target = impl_from_ID2D1SimplifiedGeometrySink(iface);
     POINT points[3];
 
-    while (count--) {
+    while (count--)
+    {
         points[0].x = beziers->point1.x;
         points[0].y = beziers->point1.y;
         points[1].x = beziers->point2.x;
@@ -198,15 +200,15 @@ static void WINAPI rendertarget_sink_AddBeziers(ID2D1SimplifiedGeometrySink *ifa
         points[2].x = beziers->point3.x;
         points[2].y = beziers->point3.y;
 
-        PolyBezierTo(This->hdc, points, 3);
+        PolyBezierTo(target->hdc, points, 3);
         beziers++;
     }
 }
 
 static void WINAPI rendertarget_sink_EndFigure(ID2D1SimplifiedGeometrySink *iface, D2D1_FIGURE_END figureEnd)
 {
-    struct rendertarget *This = impl_from_ID2D1SimplifiedGeometrySink(iface);
-    CloseFigure(This->hdc);
+    struct rendertarget *target = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    CloseFigure(target->hdc);
 }
 
 static HRESULT WINAPI rendertarget_sink_Close(ID2D1SimplifiedGeometrySink *iface)
@@ -214,7 +216,8 @@ static HRESULT WINAPI rendertarget_sink_Close(ID2D1SimplifiedGeometrySink *iface
     return S_OK;
 }
 
-static const ID2D1SimplifiedGeometrySinkVtbl rendertargetsinkvtbl = {
+static const ID2D1SimplifiedGeometrySinkVtbl rendertargetsinkvtbl =
+{
     rendertarget_sink_QueryInterface,
     rendertarget_sink_AddRef,
     rendertarget_sink_Release,
@@ -229,9 +232,7 @@ static const ID2D1SimplifiedGeometrySinkVtbl rendertargetsinkvtbl = {
 
 static HRESULT WINAPI rendertarget_QueryInterface(IDWriteBitmapRenderTarget1 *iface, REFIID riid, void **obj)
 {
-    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget1(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IDWriteBitmapRenderTarget1) ||
         IsEqualIID(riid, &IID_IDWriteBitmapRenderTarget) ||
@@ -490,93 +491,101 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
 
 static HDC WINAPI rendertarget_GetMemoryDC(IDWriteBitmapRenderTarget1 *iface)
 {
-    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget1(iface);
-    TRACE("(%p)\n", This);
-    return This->hdc;
+    struct rendertarget *target = impl_from_IDWriteBitmapRenderTarget1(iface);
+
+    TRACE("%p.\n", iface);
+
+    return target->hdc;
 }
 
-static FLOAT WINAPI rendertarget_GetPixelsPerDip(IDWriteBitmapRenderTarget1 *iface)
+static float WINAPI rendertarget_GetPixelsPerDip(IDWriteBitmapRenderTarget1 *iface)
 {
-    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget1(iface);
-    TRACE("(%p)\n", This);
-    return This->ppdip;
+    struct rendertarget *target = impl_from_IDWriteBitmapRenderTarget1(iface);
+
+    TRACE("%p.\n", iface);
+
+    return target->ppdip;
 }
 
-static HRESULT WINAPI rendertarget_SetPixelsPerDip(IDWriteBitmapRenderTarget1 *iface, FLOAT ppdip)
+static HRESULT WINAPI rendertarget_SetPixelsPerDip(IDWriteBitmapRenderTarget1 *iface, float ppdip)
 {
-    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget1(iface);
+    struct rendertarget *target = impl_from_IDWriteBitmapRenderTarget1(iface);
 
-    TRACE("(%p)->(%.2f)\n", This, ppdip);
+    TRACE("%p, %.2f.\n", iface, ppdip);
 
     if (ppdip <= 0.0f)
         return E_INVALIDARG;
 
-    This->ppdip = ppdip;
+    target->ppdip = ppdip;
     return S_OK;
 }
 
 static HRESULT WINAPI rendertarget_GetCurrentTransform(IDWriteBitmapRenderTarget1 *iface, DWRITE_MATRIX *transform)
 {
-    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget1(iface);
+    struct rendertarget *target = impl_from_IDWriteBitmapRenderTarget1(iface);
 
-    TRACE("(%p)->(%p)\n", This, transform);
+    TRACE("%p, %p.\n", iface, transform);
 
-    *transform = This->m;
+    *transform = target->m;
     return S_OK;
 }
 
 static HRESULT WINAPI rendertarget_SetCurrentTransform(IDWriteBitmapRenderTarget1 *iface, DWRITE_MATRIX const *transform)
 {
-    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget1(iface);
+    struct rendertarget *target = impl_from_IDWriteBitmapRenderTarget1(iface);
 
-    TRACE("(%p)->(%p)\n", This, transform);
+    TRACE("%p, %p.\n", iface, transform);
 
-    This->m = transform ? *transform : identity;
+    target->m = transform ? *transform : identity;
     return S_OK;
 }
 
 static HRESULT WINAPI rendertarget_GetSize(IDWriteBitmapRenderTarget1 *iface, SIZE *size)
 {
-    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget1(iface);
+    struct rendertarget *target = impl_from_IDWriteBitmapRenderTarget1(iface);
 
-    TRACE("(%p)->(%p)\n", This, size);
-    *size = This->size;
+    TRACE("%p, %p.\n", iface, size);
+
+    *size = target->size;
     return S_OK;
 }
 
 static HRESULT WINAPI rendertarget_Resize(IDWriteBitmapRenderTarget1 *iface, UINT32 width, UINT32 height)
 {
-    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget1(iface);
+    struct rendertarget *target = impl_from_IDWriteBitmapRenderTarget1(iface);
 
-    TRACE("(%p)->(%u %u)\n", This, width, height);
+    TRACE("%p, %u, %u.\n", iface, width, height);
 
-    if (This->size.cx == width && This->size.cy == height)
+    if (target->size.cx == width && target->size.cy == height)
         return S_OK;
 
-    return create_target_dibsection(This, width, height);
+    return create_target_dibsection(target, width, height);
 }
 
 static DWRITE_TEXT_ANTIALIAS_MODE WINAPI rendertarget_GetTextAntialiasMode(IDWriteBitmapRenderTarget1 *iface)
 {
-    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget1(iface);
-    TRACE("(%p)\n", This);
-    return This->antialiasmode;
+    struct rendertarget *target = impl_from_IDWriteBitmapRenderTarget1(iface);
+
+    TRACE("%p.\n", iface);
+
+    return target->antialiasmode;
 }
 
 static HRESULT WINAPI rendertarget_SetTextAntialiasMode(IDWriteBitmapRenderTarget1 *iface, DWRITE_TEXT_ANTIALIAS_MODE mode)
 {
-    struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget1(iface);
+    struct rendertarget *target = impl_from_IDWriteBitmapRenderTarget1(iface);
 
-    TRACE("(%p)->(%d)\n", This, mode);
+    TRACE("%p, %d.\n", iface, mode);
 
     if ((DWORD)mode > DWRITE_TEXT_ANTIALIAS_MODE_GRAYSCALE)
         return E_INVALIDARG;
 
-    This->antialiasmode = mode;
+    target->antialiasmode = mode;
     return S_OK;
 }
 
-static const IDWriteBitmapRenderTarget1Vtbl rendertargetvtbl = {
+static const IDWriteBitmapRenderTarget1Vtbl rendertargetvtbl =
+{
     rendertarget_QueryInterface,
     rendertarget_AddRef,
     rendertarget_Release,
@@ -592,7 +601,8 @@ static const IDWriteBitmapRenderTarget1Vtbl rendertargetvtbl = {
     rendertarget_SetTextAntialiasMode
 };
 
-static HRESULT create_rendertarget(IDWriteFactory7 *factory, HDC hdc, UINT32 width, UINT32 height, IDWriteBitmapRenderTarget **ret)
+static HRESULT create_rendertarget(IDWriteFactory7 *factory, HDC hdc, UINT32 width, UINT32 height,
+        IDWriteBitmapRenderTarget **ret)
 {
     struct rendertarget *target;
     HRESULT hr;
