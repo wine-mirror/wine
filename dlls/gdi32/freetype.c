@@ -1224,7 +1224,9 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
         This = NULL;
     }
     else if (opentype_get_ttc_sfnt_v1( data_ptr, data_size, face_index, &face_count, &ttc_sfnt_v1 ) &&
-             opentype_get_tt_name_v0( data_ptr, data_size, ttc_sfnt_v1, &tt_name_v0 ))
+             opentype_get_tt_name_v0( data_ptr, data_size, ttc_sfnt_v1, &tt_name_v0 ) &&
+             opentype_get_properties( data_ptr, data_size, ttc_sfnt_v1, &This->font_version,
+                                      &This->fs, &This->ntm_flags ))
     {
         struct family_names_data family_names;
         struct face_name_data style_name;
@@ -1291,10 +1293,7 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
 
         This->style_name = ft_face_get_style_name( This->ft_face, system_lcid );
         This->full_name = ft_face_get_full_name( This->ft_face, system_lcid );
-    }
 
-    if (This)
-    {
         This->ntm_flags = get_ntm_flags( This->ft_face );
         This->font_version = get_font_version( This->ft_face );
         if (!This->scalable) get_bitmap_size( This->ft_face, &This->size );

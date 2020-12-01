@@ -42,6 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #define MS_EBDT_TAG MS_MAKE_TAG('E','B','D','T')
 #define MS_CBDT_TAG MS_MAKE_TAG('C','B','D','T')
 #define MS_NAME_TAG MS_MAKE_TAG('n','a','m','e')
+#define MS_CFF__TAG MS_MAKE_TAG('C','F','F',' ')
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
@@ -134,6 +135,28 @@ struct tt_name_v0
     WORD count;
     WORD stringOffset;
     struct tt_namerecord nameRecord[1];
+};
+
+struct tt_head
+{
+    USHORT majorVersion;
+    USHORT minorVersion;
+    ULONG revision;
+    ULONG checksumadj;
+    ULONG magic;
+    USHORT flags;
+    USHORT unitsPerEm;
+    ULONGLONG created;
+    ULONGLONG modified;
+    SHORT xMin;
+    SHORT yMin;
+    SHORT xMax;
+    SHORT yMax;
+    USHORT macStyle;
+    USHORT lowestRecPPEM;
+    SHORT direction_hint;
+    SHORT index_format;
+    SHORT glyphdata_format;
 };
 #include "poppack.h"
 
@@ -236,6 +259,20 @@ enum OPENTYPE_NAME_ID
     OPENTYPE_NAME_WWS_SUBFAMILY
 };
 
+enum OS2_FSSELECTION
+{
+    OS2_FSSELECTION_ITALIC           = 1 << 0,
+    OS2_FSSELECTION_UNDERSCORE       = 1 << 1,
+    OS2_FSSELECTION_NEGATIVE         = 1 << 2,
+    OS2_FSSELECTION_OUTLINED         = 1 << 3,
+    OS2_FSSELECTION_STRIKEOUT        = 1 << 4,
+    OS2_FSSELECTION_BOLD             = 1 << 5,
+    OS2_FSSELECTION_REGULAR          = 1 << 6,
+    OS2_FSSELECTION_USE_TYPO_METRICS = 1 << 7,
+    OS2_FSSELECTION_WWS              = 1 << 8,
+    OS2_FSSELECTION_OBLIQUE          = 1 << 9
+};
+
 static BOOL opentype_get_table_ptr( const void *data, size_t size, const struct ttc_sfnt_v1 *ttc_sfnt_v1,
                                     UINT32 table_tag, const void **table_ptr, UINT32 *table_size )
 {
@@ -268,6 +305,13 @@ static BOOL opentype_get_tt_os2_v1( const void *data, size_t size, const struct 
 {
     UINT32 table_size = sizeof(**tt_os2_v1);
     return opentype_get_table_ptr( data, size, ttc_sfnt_v1, MS_OS_2_TAG, (const void **)tt_os2_v1, &table_size );
+}
+
+static BOOL opentype_get_tt_head( const void *data, size_t size, const struct ttc_sfnt_v1 *ttc_sfnt_v1,
+                                  const struct tt_head **tt_head )
+{
+    UINT32 table_size = sizeof(**tt_head);
+    return opentype_get_table_ptr( data, size, ttc_sfnt_v1, MS_HEAD_TAG, (const void **)tt_head, &table_size );
 }
 
 static UINT get_name_record_codepage( enum OPENTYPE_PLATFORM_ID platform, USHORT encoding )
@@ -676,4 +720,51 @@ BOOL opentype_enum_full_names( const struct tt_name_v0 *header, opentype_enum_na
     if (opentype_enum_font_names( header, OPENTYPE_PLATFORM_UNICODE, OPENTYPE_NAME_FULLNAME, callback, user ))
         return TRUE;
     return FALSE;
+}
+
+BOOL opentype_get_properties( const void *data, size_t size, const struct ttc_sfnt_v1 *ttc_sfnt_v1,
+                              DWORD *version, FONTSIGNATURE *fs, DWORD *ntm_flags )
+{
+    const struct tt_os2_v1 *tt_os2_v1;
+    const struct tt_head *tt_head;
+    const void *cff_header;
+    UINT32 table_size = 0;
+    USHORT idx, selection;
+    DWORD flags = 0;
+
+    if (!opentype_get_tt_head( data, size, ttc_sfnt_v1, &tt_head )) return FALSE;
+    if (!opentype_get_tt_os2_v1( data, size, ttc_sfnt_v1, &tt_os2_v1 )) return FALSE;
+
+    *version = GET_BE_DWORD( tt_head->revision );
+
+    fs->fsUsb[0] = GET_BE_DWORD( tt_os2_v1->ulUnicodeRange1 );
+    fs->fsUsb[1] = GET_BE_DWORD( tt_os2_v1->ulUnicodeRange2 );
+    fs->fsUsb[2] = GET_BE_DWORD( tt_os2_v1->ulUnicodeRange3 );
+    fs->fsUsb[3] = GET_BE_DWORD( tt_os2_v1->ulUnicodeRange4 );
+
+    if (tt_os2_v1->version == 0)
+    {
+        idx = GET_BE_WORD( tt_os2_v1->usFirstCharIndex );
+        if (idx >= 0xf000 && idx < 0xf100) fs->fsCsb[0] = FS_SYMBOL;
+        else fs->fsCsb[0] = FS_LATIN1;
+        fs->fsCsb[1] = 0;
+    }
+    else
+    {
+        fs->fsCsb[0] = GET_BE_DWORD( tt_os2_v1->ulCodePageRange1 );
+        fs->fsCsb[1] = GET_BE_DWORD( tt_os2_v1->ulCodePageRange2 );
+    }
+
+    selection = GET_BE_WORD( tt_os2_v1->fsSelection );
+
+    if (selection & OS2_FSSELECTION_ITALIC) flags |= NTM_ITALIC;
+    if (selection & OS2_FSSELECTION_BOLD) flags |= NTM_BOLD;
+    if (selection & OS2_FSSELECTION_REGULAR) flags |= NTM_REGULAR;
+    if (flags == 0) flags = NTM_REGULAR;
+
+    if (opentype_get_table_ptr( data, size, ttc_sfnt_v1, MS_CFF__TAG, &cff_header, &table_size ))
+        flags |= NTM_PS_OPENTYPE;
+
+    *ntm_flags = flags;
+    return TRUE;
 }
