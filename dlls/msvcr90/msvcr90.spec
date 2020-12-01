@@ -490,8 +490,8 @@
 @ stub _freea
 @ stub _freea_s
 @ stub _freefls
-@ varargs _fscanf_l(ptr str ptr) MSVCRT__fscanf_l
-@ varargs _fscanf_s_l(ptr str ptr) MSVCRT__fscanf_s_l
+@ varargs _fscanf_l(ptr str ptr)
+@ varargs _fscanf_s_l(ptr str ptr)
 @ cdecl _fseek_nolock(ptr long long) MSVCRT__fseek_nolock
 @ cdecl _fseeki64(ptr int64 long) MSVCRT__fseeki64
 @ cdecl _fseeki64_nolock(ptr int64 long) MSVCRT__fseeki64_nolock
@@ -516,8 +516,8 @@
 @ stub _fwprintf_p_l
 @ stub _fwprintf_s_l
 @ cdecl _fwrite_nolock(ptr long long ptr) MSVCRT__fwrite_nolock
-@ varargs _fwscanf_l(ptr wstr ptr) MSVCRT__fwscanf_l
-@ varargs _fwscanf_s_l(ptr wstr ptr) MSVCRT__fwscanf_s_l
+@ varargs _fwscanf_l(ptr wstr ptr)
+@ varargs _fwscanf_s_l(ptr wstr ptr)
 @ cdecl _gcvt(double long str) MSVCRT__gcvt
 @ cdecl _gcvt_s(ptr long  double long) MSVCRT__gcvt_s
 @ stub _get_amblksiz
@@ -911,8 +911,8 @@
 @ cdecl -arch=i386 _safe_fprem1()
 @ cdecl _scalb(double long) MSVCRT__scalb
 @ cdecl -arch=x86_64 _scalbf(float long) MSVCRT__scalbf
-@ varargs _scanf_l(str ptr) MSVCRT__scanf_l
-@ varargs _scanf_s_l(str ptr) MSVCRT__scanf_s_l
+@ varargs _scanf_l(str ptr)
+@ varargs _scanf_s_l(str ptr)
 @ varargs _scprintf(str) MSVCRT__scprintf
 @ stub _scprintf_l
 @ stub _scprintf_p
@@ -953,18 +953,18 @@
 @ varargs _snprintf_l(ptr long str ptr) MSVCRT__snprintf_l
 @ varargs _snprintf_s(ptr long long str) MSVCRT__snprintf_s
 @ varargs _snprintf_s_l(ptr long long str ptr) MSVCRT_snprintf_s_l
-@ varargs _snscanf(str long str) MSVCRT__snscanf
-@ varargs _snscanf_l(str long str ptr) MSVCRT__snscanf_l
-@ varargs _snscanf_s(str long str) MSVCRT__snscanf_s
-@ varargs _snscanf_s_l(str long str ptr) MSVCRT__snscanf_s_l
+@ varargs _snscanf(str long str)
+@ varargs _snscanf_l(str long str ptr)
+@ varargs _snscanf_s(str long str)
+@ varargs _snscanf_s_l(str long str ptr)
 @ varargs _snwprintf(ptr long wstr) MSVCRT__snwprintf
 @ varargs _snwprintf_l(ptr long wstr ptr) MSVCRT__snwprintf_l
 @ varargs _snwprintf_s(ptr long long wstr) MSVCRT__snwprintf_s
 @ varargs _snwprintf_s_l(ptr long long wstr ptr) MSVCRT__snwprintf_s_l
-@ varargs _snwscanf(wstr long wstr) MSVCRT__snwscanf
-@ varargs _snwscanf_l(wstr long wstr ptr) MSVCRT__snwscanf_l
-@ varargs _snwscanf_s(wstr long wstr) MSVCRT__snwscanf_s
-@ varargs _snwscanf_s_l(wstr long wstr ptr) MSVCRT__snwscanf_s_l
+@ varargs _snwscanf(wstr long wstr)
+@ varargs _snwscanf_l(wstr long wstr ptr)
+@ varargs _snwscanf_s(wstr long wstr)
+@ varargs _snwscanf_s_l(wstr long wstr ptr)
 @ varargs _sopen(str long long) MSVCRT__sopen
 @ cdecl _sopen_s(ptr str long long long) MSVCRT__sopen_s
 @ varargs _spawnl(long str str)
@@ -981,8 +981,8 @@
 @ varargs _sprintf_p(ptr long str) MSVCRT__sprintf_p
 @ varargs _sprintf_p_l(ptr long str ptr) MSVCRT_sprintf_p_l
 @ varargs _sprintf_s_l(ptr long str ptr) MSVCRT_sprintf_s_l
-@ varargs _sscanf_l(str str ptr) MSVCRT__sscanf_l
-@ varargs _sscanf_s_l(str str ptr) MSVCRT__sscanf_s_l
+@ varargs _sscanf_l(str str ptr)
+@ varargs _sscanf_s_l(str str ptr)
 @ cdecl _stat32(str ptr) MSVCRT__stat32
 @ cdecl _stat32i64(str ptr) MSVCRT__stat32i64
 @ cdecl _stat64(str ptr) MSVCRT_stat64
@@ -1036,8 +1036,8 @@
 @ stub _swprintf_p
 @ varargs _swprintf_p_l(ptr long wstr ptr) MSVCRT_swprintf_p_l
 @ varargs _swprintf_s_l(ptr long wstr ptr) MSVCRT__swprintf_s_l
-@ varargs _swscanf_l(wstr wstr ptr) MSVCRT__swscanf_l
-@ varargs _swscanf_s_l(wstr wstr ptr) MSVCRT__swscanf_s_l
+@ varargs _swscanf_l(wstr wstr ptr)
+@ varargs _swscanf_s_l(wstr wstr ptr)
 @ extern _sys_errlist MSVCRT__sys_errlist
 @ extern _sys_nerr MSVCRT__sys_nerr
 @ cdecl _tell(long) MSVCRT__tell
@@ -1236,8 +1236,8 @@
 @ cdecl _wrename(wstr wstr) MSVCRT__wrename
 @ cdecl _write(long ptr long) MSVCRT__write
 @ cdecl _wrmdir(wstr) MSVCRT__wrmdir
-@ varargs _wscanf_l(wstr ptr) MSVCRT__wscanf_l
-@ varargs _wscanf_s_l(wstr ptr) MSVCRT__wscanf_s_l
+@ varargs _wscanf_l(wstr ptr)
+@ varargs _wscanf_s_l(wstr ptr)
 @ cdecl _wsearchenv(wstr wstr ptr) MSVCRT__wsearchenv
 @ cdecl _wsearchenv_s(wstr wstr ptr long) MSVCRT__wsearchenv_s
 @ cdecl _wsetlocale(long wstr)
@@ -1340,16 +1340,16 @@
 @ cdecl freopen(str str ptr) MSVCRT_freopen
 @ cdecl freopen_s(ptr str str ptr) MSVCRT_freopen_s
 @ cdecl frexp(double ptr) MSVCRT_frexp
-@ varargs fscanf(ptr str) MSVCRT_fscanf
-@ varargs fscanf_s(ptr str) MSVCRT_fscanf_s
+@ varargs fscanf(ptr str)
+@ varargs fscanf_s(ptr str)
 @ cdecl fseek(ptr long long) MSVCRT_fseek
 @ cdecl fsetpos(ptr ptr) MSVCRT_fsetpos
 @ cdecl ftell(ptr) MSVCRT_ftell
 @ varargs fwprintf(ptr wstr) MSVCRT_fwprintf
 @ varargs fwprintf_s(ptr wstr) MSVCRT_fwprintf_s
 @ cdecl fwrite(ptr long long ptr) MSVCRT_fwrite
-@ varargs fwscanf(ptr wstr) MSVCRT_fwscanf
-@ varargs fwscanf_s(ptr wstr) MSVCRT_fwscanf_s
+@ varargs fwscanf(ptr wstr)
+@ varargs fwscanf_s(ptr wstr)
 @ cdecl getc(ptr) MSVCRT_getc
 @ cdecl getchar() MSVCRT_getchar
 @ cdecl getenv(str)
@@ -1430,8 +1430,8 @@
 @ cdecl remove(str) MSVCRT_remove
 @ cdecl rename(str str) MSVCRT_rename
 @ cdecl rewind(ptr) MSVCRT_rewind
-@ varargs scanf(str) MSVCRT_scanf
-@ varargs scanf_s(str) MSVCRT_scanf_s
+@ varargs scanf(str)
+@ varargs scanf_s(str)
 @ cdecl setbuf(ptr ptr) MSVCRT_setbuf
 @ cdecl -arch=arm,x86_64 -norelay -private setjmp(ptr) MSVCRT__setjmp
 @ cdecl setlocale(long str)
@@ -1446,8 +1446,8 @@
 @ cdecl sqrt(double) MSVCRT_sqrt
 @ cdecl -arch=!i386 sqrtf(float) MSVCRT_sqrtf
 @ cdecl srand(long)
-@ varargs sscanf(str str) MSVCRT_sscanf
-@ varargs sscanf_s(str str) MSVCRT_sscanf_s
+@ varargs sscanf(str str)
+@ varargs sscanf_s(str str)
 @ cdecl strcat(str str)
 @ cdecl strcat_s(str long str) MSVCRT_strcat_s
 @ cdecl strchr(str long)
@@ -1477,8 +1477,8 @@
 @ cdecl strtoul(str ptr long) MSVCRT_strtoul
 @ cdecl strxfrm(ptr str long) MSVCRT_strxfrm
 @ varargs swprintf_s(ptr long wstr) MSVCRT_swprintf_s
-@ varargs swscanf(wstr wstr) MSVCRT_swscanf
-@ varargs swscanf_s(wstr wstr) MSVCRT_swscanf_s
+@ varargs swscanf(wstr wstr)
+@ varargs swscanf_s(wstr wstr)
 @ cdecl system(str)
 @ cdecl tan(double) MSVCRT_tan
 @ cdecl -arch=!i386 tanf(float) MSVCRT_tanf
@@ -1542,5 +1542,5 @@
 @ cdecl wctomb_s(ptr ptr long long) MSVCRT_wctomb_s
 @ varargs wprintf(wstr) MSVCRT_wprintf
 @ varargs wprintf_s(wstr) MSVCRT_wprintf_s
-@ varargs wscanf(wstr) MSVCRT_wscanf
-@ varargs wscanf_s(wstr) MSVCRT_wscanf_s
+@ varargs wscanf(wstr)
+@ varargs wscanf_s(wstr)

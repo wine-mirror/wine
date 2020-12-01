@@ -155,6 +155,10 @@ _ACRTIMP int __cdecl __stdio_common_vsnprintf_s(unsigned __int64,char*,size_t,si
 _ACRTIMP int __cdecl __stdio_common_vfscanf(unsigned __int64,FILE*,const char*,_locale_t,__ms_va_list);
 _ACRTIMP int __cdecl __stdio_common_vsscanf(unsigned __int64,char const*,size_t,const char*,_locale_t,__ms_va_list);
 
+#endif /* _UCRT */
+
+#if defined(_UCRT) && !defined(_NO_CRT_STDIO_INLINE)
+
 static inline int __cdecl vsnprintf(char *buffer, size_t size, const char *format, __ms_va_list args)
 {
     int ret = __stdio_common_vsprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS | _CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR,
@@ -376,7 +380,7 @@ static inline int WINAPIV scanf_s(const char *format, ...)
     return ret;
 }
 
-#else /* _UCRT */
+#else /* _UCRT && !_NO_CRT_STDIO_INLINE */
 
 _ACRTIMP int WINAPIV _scprintf(const char *,...);
 _ACRTIMP int WINAPIV _snprintf_s(char*,size_t,size_t,const char*,...);
@@ -406,7 +410,7 @@ _ACRTIMP int WINAPIV scanf_s(const char*,...);
 _ACRTIMP int WINAPIV sscanf(const char*,const char*,...);
 _ACRTIMP int WINAPIV sscanf_s(const char*,const char*,...);
 
-#endif /* _UCRT */
+#endif /* _UCRT && !_NO_CRT_STDIO_INLINE */
 
 #endif /* _STDIO_DEFINED */
 

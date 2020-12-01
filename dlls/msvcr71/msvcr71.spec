@@ -523,9 +523,9 @@
 @ stub _setsystime(ptr long)
 @ cdecl _sleep(long)
 @ varargs _snprintf(ptr long str) MSVCRT__snprintf
-@ varargs _snscanf(str long str) MSVCRT__snscanf
+@ varargs _snscanf(str long str)
 @ varargs _snwprintf(ptr long wstr) MSVCRT__snwprintf
-@ varargs _snwscanf(wstr long wstr) MSVCRT__snwscanf
+@ varargs _snwscanf(wstr long wstr)
 @ varargs _sopen(str long long) MSVCRT__sopen
 @ varargs _spawnl(long str str)
 @ varargs _spawnle(long str str)
@@ -723,13 +723,13 @@
 @ cdecl free(ptr)
 @ cdecl freopen(str str ptr) MSVCRT_freopen
 @ cdecl frexp(double ptr) MSVCRT_frexp
-@ varargs fscanf(ptr str) MSVCRT_fscanf
+@ varargs fscanf(ptr str)
 @ cdecl fseek(ptr long long) MSVCRT_fseek
 @ cdecl fsetpos(ptr ptr) MSVCRT_fsetpos
 @ cdecl ftell(ptr) MSVCRT_ftell
 @ varargs fwprintf(ptr wstr) MSVCRT_fwprintf
 @ cdecl fwrite(ptr long long ptr) MSVCRT_fwrite
-@ varargs fwscanf(ptr wstr) MSVCRT_fwscanf
+@ varargs fwscanf(ptr wstr)
 @ cdecl getc(ptr) MSVCRT_getc
 @ cdecl getchar() MSVCRT_getchar
 @ cdecl getenv(str)
@@ -797,7 +797,7 @@
 @ cdecl remove(str) MSVCRT_remove
 @ cdecl rename(str str) MSVCRT_rename
 @ cdecl rewind(ptr) MSVCRT_rewind
-@ varargs scanf(str) MSVCRT_scanf
+@ varargs scanf(str)
 @ cdecl setbuf(ptr ptr) MSVCRT_setbuf
 @ cdecl setlocale(long str)
 @ cdecl setvbuf(ptr str long long) MSVCRT_setvbuf
@@ -807,7 +807,7 @@
 @ varargs sprintf(ptr str) MSVCRT_sprintf
 @ cdecl sqrt(double) MSVCRT_sqrt
 @ cdecl srand(long)
-@ varargs sscanf(str str) MSVCRT_sscanf
+@ varargs sscanf(str str)
 @ cdecl strcat(str str)
 @ cdecl strchr(str long)
 @ cdecl strcmp(str str)
@@ -830,7 +830,7 @@
 @ cdecl strtoul(str ptr long) MSVCRT_strtoul
 @ cdecl strxfrm(ptr str long) MSVCRT_strxfrm
 @ varargs swprintf(ptr wstr) MSVCRT_swprintf
-@ varargs swscanf(wstr wstr) MSVCRT_swscanf
+@ varargs swscanf(wstr wstr)
 @ cdecl system(str)
 @ cdecl tan(double) MSVCRT_tan
 @ cdecl tanh(double) MSVCRT_tanh
@@ -872,4 +872,4 @@
 @ cdecl wcsxfrm(ptr wstr long) MSVCRT_wcsxfrm
 @ cdecl wctomb(ptr long) MSVCRT_wctomb
 @ varargs wprintf(wstr) MSVCRT_wprintf
-@ varargs wscanf(wstr) MSVCRT_wscanf
+@ varargs wscanf(wstr)

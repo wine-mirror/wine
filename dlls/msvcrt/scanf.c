@@ -146,13 +146,13 @@ static int wchar2digit(wchar_t c, int base) {
 /*********************************************************************
  *		fscanf (MSVCRT.@)
  */
-int WINAPIV MSVCRT_fscanf(FILE *file, const char *format, ...)
+int WINAPIV fscanf(FILE *file, const char *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vfscanf_l(file, format, NULL, valist);
+    res = vfscanf_l(file, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -160,14 +160,14 @@ int WINAPIV MSVCRT_fscanf(FILE *file, const char *format, ...)
 /*********************************************************************
  *		_fscanf_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__fscanf_l(FILE *file, const char *format,
+int WINAPIV _fscanf_l(FILE *file, const char *format,
         _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vfscanf_l(file, format, locale, valist);
+    res = vfscanf_l(file, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -175,13 +175,13 @@ int WINAPIV MSVCRT__fscanf_l(FILE *file, const char *format,
 /*********************************************************************
  *		fscanf_s (MSVCRT.@)
  */
-int WINAPIV MSVCRT_fscanf_s(FILE *file, const char *format, ...)
+int WINAPIV fscanf_s(FILE *file, const char *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vfscanf_s_l(file, format, NULL, valist);
+    res = vfscanf_s_l(file, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -189,14 +189,14 @@ int WINAPIV MSVCRT_fscanf_s(FILE *file, const char *format, ...)
 /*********************************************************************
  *		_fscanf_s_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__fscanf_s_l(FILE *file, const char *format,
+int WINAPIV _fscanf_s_l(FILE *file, const char *format,
         _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vfscanf_s_l(file, format, locale, valist);
+    res = vfscanf_s_l(file, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -204,13 +204,13 @@ int WINAPIV MSVCRT__fscanf_s_l(FILE *file, const char *format,
 /*********************************************************************
  *		scanf (MSVCRT.@)
  */
-int WINAPIV MSVCRT_scanf(const char *format, ...)
+int WINAPIV scanf(const char *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vfscanf_l(MSVCRT_stdin, format, NULL, valist);
+    res = vfscanf_l(MSVCRT_stdin, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -218,13 +218,13 @@ int WINAPIV MSVCRT_scanf(const char *format, ...)
 /*********************************************************************
  *		_scanf_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__scanf_l(const char *format, _locale_t locale, ...)
+int WINAPIV _scanf_l(const char *format, _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vfscanf_l(MSVCRT_stdin, format, locale, valist);
+    res = vfscanf_l(MSVCRT_stdin, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -232,13 +232,13 @@ int WINAPIV MSVCRT__scanf_l(const char *format, _locale_t locale, ...)
 /*********************************************************************
  *		scanf_s (MSVCRT.@)
  */
-int WINAPIV MSVCRT_scanf_s(const char *format, ...)
+int WINAPIV scanf_s(const char *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vfscanf_s_l(MSVCRT_stdin, format, NULL, valist);
+    res = vfscanf_s_l(MSVCRT_stdin, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -246,13 +246,13 @@ int WINAPIV MSVCRT_scanf_s(const char *format, ...)
 /*********************************************************************
  *		_scanf_s_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__scanf_s_l(const char *format, _locale_t locale, ...)
+int WINAPIV _scanf_s_l(const char *format, _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vfscanf_s_l(MSVCRT_stdin, format, locale, valist);
+    res = vfscanf_s_l(MSVCRT_stdin, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -260,13 +260,13 @@ int WINAPIV MSVCRT__scanf_s_l(const char *format, _locale_t locale, ...)
 /*********************************************************************
  *		fwscanf (MSVCRT.@)
  */
-int WINAPIV MSVCRT_fwscanf(FILE *file, const wchar_t *format, ...)
+int WINAPIV fwscanf(FILE *file, const wchar_t *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vfwscanf_l(file, format, NULL, valist);
+    res = vfwscanf_l(file, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -274,14 +274,14 @@ int WINAPIV MSVCRT_fwscanf(FILE *file, const wchar_t *format, ...)
 /*********************************************************************
  *		_fwscanf_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__fwscanf_l(FILE *file, const wchar_t *format,
+int WINAPIV _fwscanf_l(FILE *file, const wchar_t *format,
         _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vfwscanf_l(file, format, locale, valist);
+    res = vfwscanf_l(file, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -289,13 +289,13 @@ int WINAPIV MSVCRT__fwscanf_l(FILE *file, const wchar_t *format,
 /*********************************************************************
  *		fwscanf_s (MSVCRT.@)
  */
-int WINAPIV MSVCRT_fwscanf_s(FILE *file, const wchar_t *format, ...)
+int WINAPIV fwscanf_s(FILE *file, const wchar_t *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vfwscanf_s_l(file, format, NULL, valist);
+    res = vfwscanf_s_l(file, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -303,14 +303,14 @@ int WINAPIV MSVCRT_fwscanf_s(FILE *file, const wchar_t *format, ...)
 /*********************************************************************
  *		_fwscanf_s_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__fwscanf_s_l(FILE *file, const wchar_t *format,
+int WINAPIV _fwscanf_s_l(FILE *file, const wchar_t *format,
         _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vfwscanf_s_l(file, format, locale, valist);
+    res = vfwscanf_s_l(file, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -318,13 +318,13 @@ int WINAPIV MSVCRT__fwscanf_s_l(FILE *file, const wchar_t *format,
 /*********************************************************************
  *		wscanf (MSVCRT.@)
  */
-int WINAPIV MSVCRT_wscanf(const wchar_t *format, ...)
+int WINAPIV wscanf(const wchar_t *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vfwscanf_l(MSVCRT_stdin, format, NULL, valist);
+    res = vfwscanf_l(MSVCRT_stdin, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -332,14 +332,14 @@ int WINAPIV MSVCRT_wscanf(const wchar_t *format, ...)
 /*********************************************************************
  *		_wscanf_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__wscanf_l(const wchar_t *format,
+int WINAPIV _wscanf_l(const wchar_t *format,
         _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vfwscanf_l(MSVCRT_stdin, format, locale, valist);
+    res = vfwscanf_l(MSVCRT_stdin, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -347,13 +347,13 @@ int WINAPIV MSVCRT__wscanf_l(const wchar_t *format,
 /*********************************************************************
  *		wscanf_s (MSVCRT.@)
  */
-int WINAPIV MSVCRT_wscanf_s(const wchar_t *format, ...)
+int WINAPIV wscanf_s(const wchar_t *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vfwscanf_s_l(MSVCRT_stdin, format, NULL, valist);
+    res = vfwscanf_s_l(MSVCRT_stdin, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -361,14 +361,14 @@ int WINAPIV MSVCRT_wscanf_s(const wchar_t *format, ...)
 /*********************************************************************
  *		_wscanf_s_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__wscanf_s_l(const wchar_t *format,
+int WINAPIV _wscanf_s_l(const wchar_t *format,
         _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vfwscanf_s_l(MSVCRT_stdin, format, locale, valist);
+    res = vfwscanf_s_l(MSVCRT_stdin, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -376,13 +376,13 @@ int WINAPIV MSVCRT__wscanf_s_l(const wchar_t *format,
 /*********************************************************************
  *		sscanf (MSVCRT.@)
  */
-int WINAPIV MSVCRT_sscanf(const char *str, const char *format, ...)
+int WINAPIV sscanf(const char *str, const char *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vsscanf_l(str, format, NULL, valist);
+    res = vsscanf_l(str, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -390,14 +390,14 @@ int WINAPIV MSVCRT_sscanf(const char *str, const char *format, ...)
 /*********************************************************************
  *		_sscanf_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__sscanf_l(const char *str, const char *format,
+int WINAPIV _sscanf_l(const char *str, const char *format,
         _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vsscanf_l(str, format, locale, valist);
+    res = vsscanf_l(str, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -405,13 +405,13 @@ int WINAPIV MSVCRT__sscanf_l(const char *str, const char *format,
 /*********************************************************************
  *		sscanf_s (MSVCRT.@)
  */
-int WINAPIV MSVCRT_sscanf_s(const char *str, const char *format, ...)
+int WINAPIV sscanf_s(const char *str, const char *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vsscanf_s_l(str, format, NULL, valist);
+    res = vsscanf_s_l(str, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -419,14 +419,14 @@ int WINAPIV MSVCRT_sscanf_s(const char *str, const char *format, ...)
 /*********************************************************************
  *		_sscanf_s_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__sscanf_s_l(const char *str, const char *format,
+int WINAPIV _sscanf_s_l(const char *str, const char *format,
         _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vsscanf_s_l(str, format, locale, valist);
+    res = vsscanf_s_l(str, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -434,13 +434,13 @@ int WINAPIV MSVCRT__sscanf_s_l(const char *str, const char *format,
 /*********************************************************************
  *		swscanf (MSVCRT.@)
  */
-int WINAPIV MSVCRT_swscanf(const wchar_t *str, const wchar_t *format, ...)
+int WINAPIV swscanf(const wchar_t *str, const wchar_t *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vswscanf_l(str, format, NULL, valist);
+    res = vswscanf_l(str, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -448,14 +448,14 @@ int WINAPIV MSVCRT_swscanf(const wchar_t *str, const wchar_t *format, ...)
 /*********************************************************************
  *		_swscanf_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__swscanf_l(const wchar_t *str, const wchar_t *format,
+int WINAPIV _swscanf_l(const wchar_t *str, const wchar_t *format,
         _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vswscanf_l(str, format, locale, valist);
+    res = vswscanf_l(str, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -463,13 +463,13 @@ int WINAPIV MSVCRT__swscanf_l(const wchar_t *str, const wchar_t *format,
 /*********************************************************************
  *		swscanf_s (MSVCRT.@)
  */
-int WINAPIV MSVCRT_swscanf_s(const wchar_t *str, const wchar_t *format, ...)
+int WINAPIV swscanf_s(const wchar_t *str, const wchar_t *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vswscanf_s_l(str, format, NULL, valist);
+    res = vswscanf_s_l(str, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -477,14 +477,14 @@ int WINAPIV MSVCRT_swscanf_s(const wchar_t *str, const wchar_t *format, ...)
 /*********************************************************************
  *		_swscanf_s_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__swscanf_s_l(const wchar_t *str, const wchar_t *format,
+int WINAPIV _swscanf_s_l(const wchar_t *str, const wchar_t *format,
         _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vswscanf_s_l(str, format, locale, valist);
+    res = vswscanf_s_l(str, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -498,7 +498,7 @@ int WINAPIV _cscanf(const char *format, ...)
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vcscanf_l(format, NULL, valist);
+    res = vcscanf_l(format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -512,7 +512,7 @@ int WINAPIV _cscanf_l(const char *format, _locale_t locale, ...)
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vcscanf_l(format, locale, valist);
+    res = vcscanf_l(format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -526,7 +526,7 @@ int WINAPIV _cscanf_s(const char *format, ...)
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vcscanf_s_l(format, NULL, valist);
+    res = vcscanf_s_l(format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -540,7 +540,7 @@ int WINAPIV _cscanf_s_l(const char *format, _locale_t locale, ...)
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vcscanf_s_l(format, locale, valist);
+    res = vcscanf_s_l(format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -554,7 +554,7 @@ int WINAPIV _cwscanf(const wchar_t *format, ...)
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vcwscanf_l(format, NULL, valist);
+    res = vcwscanf_l(format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -568,7 +568,7 @@ int WINAPIV _cwscanf_l(const wchar_t *format, _locale_t locale, ...)
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vcwscanf_l(format, locale, valist);
+    res = vcwscanf_l(format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -582,7 +582,7 @@ int WINAPIV _cwscanf_s(const wchar_t *format, ...)
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vcwscanf_s_l(format, NULL, valist);
+    res = vcwscanf_s_l(format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -596,7 +596,7 @@ int WINAPIV _cwscanf_s_l(const wchar_t *format, _locale_t locale, ...)
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vcwscanf_s_l(format, locale, valist);
+    res = vcwscanf_s_l(format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -604,13 +604,13 @@ int WINAPIV _cwscanf_s_l(const wchar_t *format, _locale_t locale, ...)
 /*********************************************************************
  *		_snscanf (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snscanf(char *input, size_t length, const char *format, ...)
+int WINAPIV _snscanf(const char *input, size_t length, const char *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vsnscanf_l(input, length, format, NULL, valist);
+    res = vsnscanf_l(input, length, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -618,14 +618,14 @@ int WINAPIV MSVCRT__snscanf(char *input, size_t length, const char *format, ...)
 /*********************************************************************
  *		_snscanf_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snscanf_l(char *input, size_t length,
+int WINAPIV _snscanf_l(const char *input, size_t length,
         const char *format, _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vsnscanf_l(input, length, format, locale, valist);
+    res = vsnscanf_l(input, length, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -633,13 +633,13 @@ int WINAPIV MSVCRT__snscanf_l(char *input, size_t length,
 /*********************************************************************
  *		_snscanf_s (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snscanf_s(char *input, size_t length, const char *format, ...)
+int WINAPIV _snscanf_s(const char *input, size_t length, const char *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vsnscanf_s_l(input, length, format, NULL, valist);
+    res = vsnscanf_s_l(input, length, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -647,14 +647,14 @@ int WINAPIV MSVCRT__snscanf_s(char *input, size_t length, const char *format, ..
 /*********************************************************************
  *		_snscanf_s_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snscanf_s_l(char *input, size_t length,
+int WINAPIV _snscanf_s_l(const char *input, size_t length,
         const char *format, _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vsnscanf_s_l(input, length, format, locale, valist);
+    res = vsnscanf_s_l(input, length, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -663,7 +663,7 @@ int WINAPIV MSVCRT__snscanf_s_l(char *input, size_t length,
 /*********************************************************************
  *              __stdio_common_vsscanf (UCRTBASE.@)
  */
-int CDECL MSVCRT__stdio_common_vsscanf(unsigned __int64 options,
+int CDECL __stdio_common_vsscanf(unsigned __int64 options,
                                        const char *input, size_t length,
                                        const char *format,
                                        _locale_t locale,
@@ -675,15 +675,15 @@ int CDECL MSVCRT__stdio_common_vsscanf(unsigned __int64 options,
     if (options & ~UCRTBASE_SCANF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
     if (options & _CRT_INTERNAL_SCANF_SECURECRT)
-        return MSVCRT_vsnscanf_s_l(input, length, format, locale, valist);
+        return vsnscanf_s_l(input, length, format, locale, valist);
     else
-        return MSVCRT_vsnscanf_l(input, length, format, locale, valist);
+        return vsnscanf_l(input, length, format, locale, valist);
 }
 
 /*********************************************************************
  *              __stdio_common_vswscanf (UCRTBASE.@)
  */
-int CDECL MSVCRT__stdio_common_vswscanf(unsigned __int64 options,
+int CDECL __stdio_common_vswscanf(unsigned __int64 options,
                                         const wchar_t *input, size_t length,
                                         const wchar_t *format,
                                         _locale_t locale,
@@ -695,15 +695,15 @@ int CDECL MSVCRT__stdio_common_vswscanf(unsigned __int64 options,
     if (options & ~UCRTBASE_SCANF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
     if (options & _CRT_INTERNAL_SCANF_SECURECRT)
-        return MSVCRT_vsnwscanf_s_l(input, length, format, locale, valist);
+        return vsnwscanf_s_l(input, length, format, locale, valist);
     else
-        return MSVCRT_vsnwscanf_l(input, length, format, locale, valist);
+        return vsnwscanf_l(input, length, format, locale, valist);
 }
 
 /*********************************************************************
  *              __stdio_common_vfscanf (UCRTBASE.@)
  */
-int CDECL MSVCRT__stdio_common_vfscanf(unsigned __int64 options,
+int CDECL __stdio_common_vfscanf(unsigned __int64 options,
                                        FILE *file,
                                        const char *format,
                                        _locale_t locale,
@@ -712,15 +712,15 @@ int CDECL MSVCRT__stdio_common_vfscanf(unsigned __int64 options,
     if (options & ~_CRT_INTERNAL_SCANF_SECURECRT)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
     if (options & _CRT_INTERNAL_SCANF_SECURECRT)
-        return MSVCRT_vfscanf_s_l(file, format, locale, valist);
+        return vfscanf_s_l(file, format, locale, valist);
     else
-        return MSVCRT_vfscanf_l(file, format, locale, valist);
+        return vfscanf_l(file, format, locale, valist);
 }
 
 /*********************************************************************
  *              __stdio_common_vfwscanf (UCRTBASE.@)
  */
-int CDECL MSVCRT__stdio_common_vfwscanf(unsigned __int64 options,
+int CDECL __stdio_common_vfwscanf(unsigned __int64 options,
                                         FILE *file,
                                         const wchar_t *format,
                                         _locale_t locale,
@@ -729,22 +729,22 @@ int CDECL MSVCRT__stdio_common_vfwscanf(unsigned __int64 options,
     if (options & ~_CRT_INTERNAL_SCANF_SECURECRT)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
     if (options & _CRT_INTERNAL_SCANF_SECURECRT)
-        return MSVCRT_vfwscanf_s_l(file, format, locale, valist);
+        return vfwscanf_s_l(file, format, locale, valist);
     else
-        return MSVCRT_vfwscanf_l(file, format, locale, valist);
+        return vfwscanf_l(file, format, locale, valist);
 }
 
 /*********************************************************************
  *		_snwscanf (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snwscanf(wchar_t *input, size_t length,
+int WINAPIV _snwscanf(wchar_t *input, size_t length,
         const wchar_t *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vsnwscanf_l(input, length, format, NULL, valist);
+    res = vsnwscanf_l(input, length, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -752,14 +752,14 @@ int WINAPIV MSVCRT__snwscanf(wchar_t *input, size_t length,
 /*********************************************************************
  *		_snwscanf_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snwscanf_l(wchar_t *input, size_t length,
+int WINAPIV _snwscanf_l(wchar_t *input, size_t length,
         const wchar_t *format, _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vsnwscanf_l(input, length, format, locale, valist);
+    res = vsnwscanf_l(input, length, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -767,14 +767,14 @@ int WINAPIV MSVCRT__snwscanf_l(wchar_t *input, size_t length,
 /*********************************************************************
  *		_snwscanf_s (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snwscanf_s(wchar_t *input, size_t length,
+int WINAPIV _snwscanf_s(wchar_t *input, size_t length,
         const wchar_t *format, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, format);
-    res = MSVCRT_vsnwscanf_s_l(input, length, format, NULL, valist);
+    res = vsnwscanf_s_l(input, length, format, NULL, valist);
     __ms_va_end(valist);
     return res;
 }
@@ -782,19 +782,19 @@ int WINAPIV MSVCRT__snwscanf_s(wchar_t *input, size_t length,
 /*********************************************************************
  *		_snscanf_s_l (MSVCRT.@)
  */
-int WINAPIV MSVCRT__snwscanf_s_l(wchar_t *input, size_t length,
+int WINAPIV _snwscanf_s_l(wchar_t *input, size_t length,
         const wchar_t *format, _locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
 
     __ms_va_start(valist, locale);
-    res = MSVCRT_vsnwscanf_s_l(input, length, format, locale, valist);
+    res = vsnwscanf_s_l(input, length, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }
 
-#if _MSVCR_VER>=120
+#if _MSVCR_VER==120
 
 /*********************************************************************
  *		vsscanf (MSVCRT120.@)
@@ -803,17 +803,17 @@ int CDECL MSVCRT_vsscanf(const char *buffer, const char *format, __ms_va_list va
 {
     if (!MSVCRT_CHECK_PMT(buffer != NULL && format != NULL)) return -1;
 
-    return MSVCRT_vsscanf_l(buffer, format, NULL, valist);
+    return vsscanf_l(buffer, format, NULL, valist);
 }
 
 /*********************************************************************
  *		vswscanf (MSVCRT120.@)
  */
-int CDECL MSVCRT_vswscanf(const wchar_t *buffer, const wchar_t *format, __ms_va_list valist)
+int CDECL vswscanf(const wchar_t *buffer, const wchar_t *format, __ms_va_list valist)
 {
     if (!MSVCRT_CHECK_PMT(buffer != NULL && format != NULL)) return -1;
 
-    return MSVCRT_vswscanf_l(buffer, format, NULL, valist);
+    return vswscanf_l(buffer, format, NULL, valist);
 }
 
 #endif /* _MSVCR_VER>=120 */

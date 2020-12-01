@@ -2415,7 +2415,7 @@ char * CDECL MSVCRT__ecvt( double number, int ndigits, int *decpt, int *sign )
     /* take the exponential "e" out */
     data->efcvt_buffer[ prec] = '\0';
     /* read the exponent */
-    MSVCRT_sscanf( data->efcvt_buffer + prec + 1, "%d", decpt);
+    sscanf( data->efcvt_buffer + prec + 1, "%d", decpt);
     (*decpt)++;
     /* adjust for some border cases */
     if( data->efcvt_buffer[0] == '0')/* value is zero */
@@ -2475,7 +2475,7 @@ int CDECL MSVCRT__ecvt_s( char *buffer, size_t length, double number, int ndigit
     /* take the exponential "e" out */
     result[ prec] = '\0';
     /* read the exponent */
-    MSVCRT_sscanf( result + prec + 1, "%d", decpt);
+    sscanf( result + prec + 1, "%d", decpt);
     (*decpt)++;
     /* adjust for some border cases */
     if( result[0] == '0')/* value is zero */
