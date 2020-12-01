@@ -3684,6 +3684,25 @@ static void wined3d_context_gl_bind_unordered_access_views(struct wined3d_contex
     checkGLcall("Bind unordered access views");
 }
 
+static void context_gl_load_stream_output_buffers(struct wined3d_context_gl *context_gl,
+        const struct wined3d_state *state)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(state->stream_output); ++i)
+    {
+        struct wined3d_buffer_gl *buffer_gl;
+
+        if (!state->stream_output[i].buffer)
+            continue;
+
+        buffer_gl = wined3d_buffer_gl(state->stream_output[i].buffer);
+        wined3d_buffer_load(&buffer_gl->b, &context_gl->c, state);
+        wined3d_buffer_invalidate_location(&buffer_gl->b, ~WINED3D_LOCATION_BUFFER);
+        wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
+    }
+}
+
 /* Context activation is done by the caller. */
 static BOOL context_apply_draw_state(struct wined3d_context *context,
         const struct wined3d_device *device, const struct wined3d_state *state, BOOL indexed)
@@ -3716,7 +3735,7 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
     context_load_shader_resources(context, state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
     context_load_unordered_access_resources(context, state->shader[WINED3D_SHADER_TYPE_PIXEL],
             state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);
-    context_load_stream_output_buffers(context, state);
+    context_gl_load_stream_output_buffers(context_gl, state);
     /* TODO: Right now the dependency on the vertex shader is necessary
      * since wined3d_stream_info_from_declaration() depends on the reg_maps of
      * the current VS but maybe it's possible to relax the coupling in some

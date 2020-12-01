@@ -455,18 +455,3 @@ void context_load_unordered_access_resources(struct wined3d_context *context,
         context->uses_uavs = 1;
     }
 }
-
-void context_load_stream_output_buffers(struct wined3d_context *context, const struct wined3d_state *state)
-{
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(state->stream_output); ++i)
-    {
-        struct wined3d_buffer *buffer;
-        if (!(buffer = state->stream_output[i].buffer))
-            continue;
-
-        wined3d_buffer_load(buffer, context, state);
-        wined3d_buffer_invalidate_location(buffer, ~WINED3D_LOCATION_BUFFER);
-    }
-}
