@@ -12,6 +12,5 @@ C_SRCS = \
 	pwrite.c \
 	readlink.c \
 	spawn.c \
-	strnlen.c \
 	symlink.c \
 	usleep.c

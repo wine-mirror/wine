@@ -2192,7 +2192,6 @@ AC_CHECK_FUNCS(\
 	setprogname \
 	settimeofday \
 	sigprocmask \
-	strnlen \
 	strtold \
 	symlink \
 	sysinfo \

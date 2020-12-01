@@ -273,10 +273,6 @@ ssize_t pwrite( int fd, const void *buf, size_t count, off_t offset );
 int readlink( const char *path, char *buf, size_t size );
 #endif /* HAVE_READLINK */
 
-#ifndef HAVE_STRNLEN
-size_t strnlen( const char *str, size_t maxlen );
-#endif /* !defined(HAVE_STRNLEN) */
-
 #ifndef HAVE_SYMLINK
 int symlink(const char *from, const char *to);
 #endif
@@ -296,7 +292,6 @@ extern int mkstemps(char *template, int suffix_len);
 #define lstat                   __WINE_NOT_PORTABLE(lstat)
 #define pread                   __WINE_NOT_PORTABLE(pread)
 #define pwrite                  __WINE_NOT_PORTABLE(pwrite)
-#define strnlen                 __WINE_NOT_PORTABLE(strnlen)
 #define usleep                  __WINE_NOT_PORTABLE(usleep)
 
 #endif /* NO_LIBWINE_PORT */

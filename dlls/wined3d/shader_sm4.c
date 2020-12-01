@@ -1939,18 +1939,13 @@ static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
 
 static const char *shader_get_string(const char *data, size_t data_size, DWORD offset)
 {
-    size_t len, max_len;
-
     if (offset >= data_size)
     {
         WARN("Invalid offset %#x (data size %#lx).\n", offset, (long)data_size);
         return NULL;
     }
 
-    max_len = data_size - offset;
-    len = strnlen(data + offset, max_len);
-
-    if (len == max_len)
+    if (!memchr( data + offset, 0, data_size - offset ))
         return NULL;
 
     return data + offset;
