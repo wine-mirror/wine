@@ -1409,7 +1409,6 @@ static void wined3d_unordered_access_view_gl_cs_init(void *object)
         struct wined3d_context_gl *context_gl;
 
         context_gl = wined3d_context_gl(context_acquire(resource->device, NULL, 0));
-        gl_info = context_gl->gl_info;
         create_buffer_view(&view_gl->gl_view, &context_gl->c, desc, buffer, view_gl->v.format);
         if (desc->flags & (WINED3D_VIEW_BUFFER_COUNTER | WINED3D_VIEW_BUFFER_APPEND))
         {
