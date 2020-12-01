@@ -1218,15 +1218,10 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
 
     if (!(This = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This) ))) goto done;
 
-    if (!(This->ft_face = new_ft_face( unix_name, data_ptr, data_size, face_index, flags & ADDFONT_ALLOW_BITMAP )))
-    {
-        RtlFreeHeap( GetProcessHeap(), 0, This );
-        This = NULL;
-    }
-    else if (opentype_get_ttc_sfnt_v1( data_ptr, data_size, face_index, &face_count, &ttc_sfnt_v1 ) &&
-             opentype_get_tt_name_v0( data_ptr, data_size, ttc_sfnt_v1, &tt_name_v0 ) &&
-             opentype_get_properties( data_ptr, data_size, ttc_sfnt_v1, &This->font_version,
-                                      &This->fs, &This->ntm_flags ))
+    if (opentype_get_ttc_sfnt_v1( data_ptr, data_size, face_index, &face_count, &ttc_sfnt_v1 ) &&
+        opentype_get_tt_name_v0( data_ptr, data_size, ttc_sfnt_v1, &tt_name_v0 ) &&
+        opentype_get_properties( data_ptr, data_size, ttc_sfnt_v1, &This->font_version,
+                                 &This->fs, &This->ntm_flags ))
     {
         struct family_names_data family_names;
         struct face_name_data style_name;
@@ -1268,7 +1263,7 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
             WARN( "full name not found, using %s instead\n", debugstr_w(This->full_name) );
         }
     }
-    else
+    else if ((This->ft_face = new_ft_face( unix_name, data_ptr, data_size, face_index, flags & ADDFONT_ALLOW_BITMAP )))
     {
         WARN( "unable to parse font, falling back to FreeType\n" );
         This->scalable = FT_IS_SCALABLE( This->ft_face );
@@ -1299,6 +1294,11 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
         if (!This->scalable) get_bitmap_size( This->ft_face, &This->size );
         get_fontsig( This->ft_face, &This->fs );
     }
+    else
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, This );
+        This = NULL;
+    }
 
 done:
     if (unix_name) munmap( data_ptr, data_size );
@@ -1307,7 +1307,7 @@ done:
 
 static void unix_face_destroy( struct unix_face *This )
 {
-    pFT_Done_Face( This->ft_face );
+    if (This->ft_face) pFT_Done_Face( This->ft_face );
     RtlFreeHeap( GetProcessHeap(), 0, This->full_name );
     RtlFreeHeap( GetProcessHeap(), 0, This->style_name );
     RtlFreeHeap( GetProcessHeap(), 0, This->second_name );
