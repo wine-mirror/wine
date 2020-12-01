@@ -1099,6 +1099,12 @@ struct unix_face
     UINT num_faces;
     WCHAR *family_name;
     WCHAR *second_name;
+    WCHAR *style_name;
+    WCHAR *full_name;
+    DWORD ntm_flags;
+    DWORD font_version;
+    FONTSIGNATURE fs;
+    struct bitmap_font_size size;
 };
 
 static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr, DWORD data_size,
@@ -1153,6 +1159,14 @@ static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr
                 This->second_name = NULL;
             }
         }
+
+        This->style_name = ft_face_get_style_name( This->ft_face, system_lcid );
+        This->full_name = ft_face_get_full_name( This->ft_face, system_lcid );
+
+        This->ntm_flags = get_ntm_flags( This->ft_face );
+        This->font_version = get_font_version( This->ft_face );
+        if (!This->scalable) get_bitmap_size( This->ft_face, &This->size );
+        get_fontsig( This->ft_face, &This->fs );
     }
 
 done:
@@ -1163,6 +1177,8 @@ done:
 static void unix_face_destroy( struct unix_face *This )
 {
     pFT_Done_Face( This->ft_face );
+    RtlFreeHeap( GetProcessHeap(), 0, This->full_name );
+    RtlFreeHeap( GetProcessHeap(), 0, This->style_name );
     RtlFreeHeap( GetProcessHeap(), 0, This->second_name );
     RtlFreeHeap( GetProcessHeap(), 0, This->family_name );
     RtlFreeHeap( GetProcessHeap(), 0, This );
@@ -1172,9 +1188,6 @@ static int add_unix_face( const char *unix_name, const WCHAR *file, void *data_p
                           DWORD face_index, DWORD flags, DWORD *num_faces )
 {
     struct unix_face *unix_face;
-    struct bitmap_font_size size;
-    FONTSIGNATURE fs;
-    WCHAR *style_name, *full_name;
     int ret;
 
     if (num_faces) *num_faces = 0;
@@ -1189,23 +1202,14 @@ static int add_unix_face( const char *unix_name, const WCHAR *file, void *data_p
         return 0;
     }
 
-    style_name = ft_face_get_style_name( unix_face->ft_face, system_lcid );
-    full_name = ft_face_get_full_name( unix_face->ft_face, system_lcid );
-
-    get_fontsig( unix_face->ft_face, &fs );
-    if (!unix_face->scalable) get_bitmap_size( unix_face->ft_face, &size );
     if (!HIWORD( flags )) flags |= ADDFONT_AA_FLAGS( default_aa_flags );
 
-    ret = callback_funcs->add_gdi_face( unix_face->family_name, unix_face->second_name, style_name, full_name,
-                                        file, data_ptr, data_size, face_index, fs, get_ntm_flags( unix_face->ft_face ),
-                                        get_font_version( unix_face->ft_face ), flags,
-                                        unix_face->scalable ? NULL : &size );
+    ret = callback_funcs->add_gdi_face( unix_face->family_name, unix_face->second_name, unix_face->style_name, unix_face->full_name,
+                                        file, data_ptr, data_size, face_index, unix_face->fs, unix_face->ntm_flags,
+                                        unix_face->font_version, flags, unix_face->scalable ? NULL : &unix_face->size );
 
-    TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
-          fs.fsCsb[0], fs.fsCsb[1], fs.fsUsb[0], fs.fsUsb[1], fs.fsUsb[2], fs.fsUsb[3]);
-
-    RtlFreeHeap( GetProcessHeap(), 0, style_name );
-    RtlFreeHeap( GetProcessHeap(), 0, full_name );
+    TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n", unix_face->fs.fsCsb[0], unix_face->fs.fsCsb[1],
+          unix_face->fs.fsUsb[0], unix_face->fs.fsUsb[1], unix_face->fs.fsUsb[2], unix_face->fs.fsUsb[3]);
 
     if (num_faces) *num_faces = unix_face->num_faces;
     unix_face_destroy( unix_face );
