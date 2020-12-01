@@ -205,7 +205,7 @@ static void remap_synonym(char *name)
   unsigned int i;
   for (i = 0; i < ARRAY_SIZE(_country_synonyms); i += 2)
   {
-    if (!MSVCRT__stricmp(_country_synonyms[i],name))
+    if (!_stricmp(_country_synonyms[i],name))
     {
       TRACE(":Mapping synonym %s to %s\n",name,_country_synonyms[i+1]);
       strcpy(name, _country_synonyms[i+1]);
@@ -247,9 +247,9 @@ static int compare_info(LCID lcid, DWORD flags, char* buff, const char* cmp, BOO
   /* Partial matches are only allowed on language/country names */
   len = strlen(cmp);
   if(exact || len<=3)
-    return !MSVCRT__stricmp(cmp, buff);
+    return !_stricmp(cmp, buff);
   else
-    return !MSVCRT__strnicmp(cmp, buff, len);
+    return !_strnicmp(cmp, buff, len);
 }
 
 static BOOL CALLBACK
@@ -361,7 +361,7 @@ LCID locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *sname)
             search.allow_sname = TRUE;
         }
 
-        if(!MSVCRT__stricmp(search.search_country, "China"))
+        if(!_stricmp(search.search_country, "China"))
             strcpy(search.search_country, "People's Republic of China");
 
         EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
@@ -382,21 +382,21 @@ LCID locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *sname)
     }
 
     /* Obtain code page */
-    if (!cp || !cp[1] || !MSVCRT__strnicmp(cp, ".ACP", 4)) {
+    if (!cp || !cp[1] || !_strnicmp(cp, ".ACP", 4)) {
         GetLocaleInfoW(lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
                 (WCHAR *)&locale_cp, sizeof(DWORD)/sizeof(WCHAR));
         if (!locale_cp)
             locale_cp = GetACP();
-    } else if (!MSVCRT__strnicmp(cp, ".OCP", 4)) {
+    } else if (!_strnicmp(cp, ".OCP", 4)) {
         GetLocaleInfoW(lcid, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
                 (WCHAR *)&locale_cp, sizeof(DWORD)/sizeof(WCHAR));
 #if _MSVCR_VER >= 140
-    } else if (!MSVCRT__strnicmp(cp, ".UTF-8", 6)
-            || !MSVCRT__strnicmp(cp, ".UTF8", 5)) {
+    } else if (!_strnicmp(cp, ".UTF-8", 6)
+            || !_strnicmp(cp, ".UTF8", 5)) {
         locale_cp = CP_UTF8;
 #endif
     } else {
-        locale_cp = MSVCRT_atoi(cp + 1);
+        locale_cp = atoi(cp + 1);
     }
     if (!IsValidCodePage(locale_cp))
         return -1;

@@ -875,7 +875,7 @@ char* CDECL MSVCRT__getdcwd(int drive, char * buf, int size)
 
     TRACE(":returning '%s'\n", dir);
     if (!buf)
-      return MSVCRT__strdup(dir); /* allocate */
+      return _strdup(dir); /* allocate */
 
     strcpy(buf,dir);
   }

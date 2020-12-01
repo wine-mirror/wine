@@ -37,7 +37,7 @@ char * CDECL getenv(const char *name)
     {
         char *str = *env;
         char *pos = strchr(str,'=');
-        if (pos && ((pos - str) == length) && !MSVCRT__strnicmp(str,name,length))
+        if (pos && ((pos - str) == length) && !_strnicmp(str,name,length))
         {
             TRACE("(%s): got %s\n", debugstr_a(name), debugstr_a(pos + 1));
             return pos + 1;

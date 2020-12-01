@@ -13,11 +13,11 @@ extern "C" {
 #endif
 
 _ACRTIMP wchar_t*      __cdecl _itow(int,wchar_t*,int);
-_ACRTIMP errno_t       __cdecl _itow_s(int,wchar_t*,int, int);
+_ACRTIMP errno_t       __cdecl _itow_s(int,wchar_t*,size_t, int);
 _ACRTIMP wchar_t*      __cdecl _i64tow(__int64,wchar_t*,int);
 _ACRTIMP errno_t       __cdecl _i64tow_s(__int64, wchar_t*, size_t, int);
 _ACRTIMP wchar_t*      __cdecl _ltow(__msvcrt_long,wchar_t*,int);
-_ACRTIMP errno_t       __cdecl _ltow_s(__msvcrt_long,wchar_t*,int,int);
+_ACRTIMP errno_t       __cdecl _ltow_s(__msvcrt_long,wchar_t*,size_t,int);
 _ACRTIMP wchar_t*      __cdecl _ui64tow(unsigned __int64,wchar_t*,int);
 _ACRTIMP errno_t       __cdecl _ui64tow_s(unsigned __int64, wchar_t*, size_t, int);
 _ACRTIMP wchar_t*      __cdecl _ultow(__msvcrt_ulong,wchar_t*,int);

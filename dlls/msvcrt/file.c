@@ -3286,7 +3286,7 @@ char * CDECL MSVCRT__tempnam(const char *dir, const char *prefix)
   {
     TRACE("got name (%s)\n",tmpbuf);
     DeleteFileA(tmpbuf);
-    return MSVCRT__strdup(tmpbuf);
+    return _strdup(tmpbuf);
   }
   TRACE("failed (%d)\n",GetLastError());
   return NULL;
@@ -5060,7 +5060,7 @@ FILE* CDECL MSVCRT_tmpfile(void)
         file->_flag = 0;
         file = NULL;
     }
-    else file->_tmpfname = MSVCRT__strdup(filename);
+    else file->_tmpfname = _strdup(filename);
   }
 
   if(fd != -1 && !file)

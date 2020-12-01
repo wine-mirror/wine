@@ -219,7 +219,7 @@ static inline int FUNC_NAME(pf_output_format_str)(FUNC_NAME(puts_clbk) pf_puts, 
     if(len < 0) {
         /* Do not search past the length specified by the precision. */
         if(flags->Precision>=0)
-            len = MSVCRT_strnlen(str, flags->Precision);
+            len = strnlen(str, flags->Precision);
         else
             len = strlen(str);
     }

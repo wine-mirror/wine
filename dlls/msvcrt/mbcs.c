@@ -126,7 +126,7 @@ static inline size_t u_strlen( const unsigned char *str )
 
 static inline unsigned char* u_strncat( unsigned char* dst, const unsigned char* src, size_t len )
 {
-  return (unsigned char*)MSVCRT_strncat( (char*)dst, (const char*)src, len);
+  return (unsigned char*)strncat( (char*)dst, (const char*)src, len);
 }
 
 static inline int u_strcmp( const unsigned char *s1, const unsigned char *s2 )
@@ -136,17 +136,17 @@ static inline int u_strcmp( const unsigned char *s1, const unsigned char *s2 )
 
 static inline int u_strcasecmp( const unsigned char *s1, const unsigned char *s2 )
 {
-  return MSVCRT__stricmp( (const char*)s1, (const char*)s2 );
+  return _stricmp( (const char*)s1, (const char*)s2 );
 }
 
 static inline int u_strncmp( const unsigned char *s1, const unsigned char *s2, size_t len )
 {
-  return MSVCRT_strncmp( (const char*)s1, (const char*)s2, len );
+  return strncmp( (const char*)s1, (const char*)s2, len );
 }
 
 static inline int u_strncasecmp( const unsigned char *s1, const unsigned char *s2, size_t len )
 {
-  return MSVCRT__strnicmp( (const char*)s1, (const char*)s2, len );
+  return _strnicmp( (const char*)s1, (const char*)s2, len );
 }
 
 static inline unsigned char *u_strchr( const unsigned char *s, unsigned char x )
@@ -156,7 +156,7 @@ static inline unsigned char *u_strchr( const unsigned char *s, unsigned char x )
 
 static inline unsigned char *u_strrchr( const unsigned char *s, unsigned char x )
 {
-  return (unsigned char*) MSVCRT_strrchr( (const char*)s, x );
+  return (unsigned char*) strrchr( (const char*)s, x );
 }
 
 static inline unsigned char *u__strset( unsigned char *s, unsigned char c )
@@ -166,7 +166,7 @@ static inline unsigned char *u__strset( unsigned char *s, unsigned char c )
 
 static inline unsigned char *u__strnset( unsigned char *s, unsigned char c, size_t len )
 {
-  return (unsigned char*) MSVCRT__strnset( (char*)s, c, len );
+  return (unsigned char*) _strnset( (char*)s, c, len );
 }
 
 /*********************************************************************
@@ -628,7 +628,7 @@ size_t CDECL _mbsnlen_l(const unsigned char *str,
         mbcinfo = locale->mbcinfo;
 
     if(!mbcinfo->ismbcodepage)
-        return MSVCRT_strnlen((const char*)str, maxsize);
+        return strnlen((const char*)str, maxsize);
 
     while(i<maxsize && str[i])
     {
@@ -949,7 +949,7 @@ int CDECL _mbsnbicoll_l(const unsigned char *str1, const unsigned char *str2, si
         mbcinfo = locale->mbcinfo;
 
     if(!mbcinfo->ismbcodepage)
-        return MSVCRT__strnicoll_l((const char*)str1, (const char*)str2, len, locale);
+        return _strnicoll_l((const char*)str1, (const char*)str2, len, locale);
     return CompareStringA(mbcinfo->mblcid, NORM_IGNORECASE, (const char*)str1, len, (const char*)str2, len)-CSTR_EQUAL;
 }
 
@@ -995,7 +995,7 @@ int CDECL _mbsnbcoll_l(const unsigned char *str1, const unsigned char *str2, siz
         mbcinfo = locale->mbcinfo;
 
     if(!mbcinfo->ismbcodepage)
-        return MSVCRT__strncoll_l((const char*)str1, (const char*)str2, len, locale);
+        return _strncoll_l((const char*)str1, (const char*)str2, len, locale);
     return CompareStringA(mbcinfo->mblcid, 0, (const char*)str1, len, (const char*)str2, len)-CSTR_EQUAL;
 }
 
@@ -1271,7 +1271,7 @@ unsigned char* CDECL _mbscpy( unsigned char *dst, const unsigned char *src )
  */
 unsigned char * CDECL _mbsstr(const unsigned char *haystack, const unsigned char *needle)
 {
-    return (unsigned char *)MSVCRT_strstr( (const char *)haystack, (const char *)needle );
+    return (unsigned char *)strstr( (const char *)haystack, (const char *)needle );
 }
 
 /*********************************************************************
@@ -1339,7 +1339,7 @@ unsigned char* CDECL _mbstok_s_l(unsigned char *str, const unsigned char *delim,
         mbcinfo = get_mbcinfo();
 
     if(!mbcinfo->ismbcodepage)
-        return (unsigned char*)MSVCRT_strtok_s((char*)str, (const char*)delim, (char**)ctx);
+        return (unsigned char*)strtok_s((char*)str, (const char*)delim, (char**)ctx);
 
     if(!str)
         str = *ctx;

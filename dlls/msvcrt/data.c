@@ -407,7 +407,7 @@ void msvcrt_init_args(void)
 {
   OSVERSIONINFOW osvi;
 
-  MSVCRT__acmdln = MSVCRT__strdup( GetCommandLineA() );
+  MSVCRT__acmdln = _strdup( GetCommandLineA() );
   MSVCRT__wcmdln = MSVCRT__wcsdup( GetCommandLineW() );
   initial_wargv  = cmdline_to_argv( GetCommandLineW(), &initial_argc );
   MSVCRT___argc  = initial_argc;
