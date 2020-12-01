@@ -165,8 +165,6 @@ extern int _spawnvp(int mode, const char *cmdname, const char * const argv[]);
  * Function definitions (only when using libwine_port)
  */
 
-#ifndef NO_LIBWINE_PORT
-
 #ifndef HAVE_GETOPT_LONG_ONLY
 extern char *optarg;
 extern int optind;
@@ -229,17 +227,5 @@ int symlink(const char *from, const char *to);
 #endif
 
 extern int mkstemps(char *template, int suffix_len);
-
-#else /* NO_LIBWINE_PORT */
-
-#define __WINE_NOT_PORTABLE(func) func##_is_not_portable func##_is_not_portable
-
-#define getopt_long             __WINE_NOT_PORTABLE(getopt_long)
-#define getopt_long_only        __WINE_NOT_PORTABLE(getopt_long_only)
-#define lstat                   __WINE_NOT_PORTABLE(lstat)
-#define pread                   __WINE_NOT_PORTABLE(pread)
-#define pwrite                  __WINE_NOT_PORTABLE(pwrite)
-
-#endif /* NO_LIBWINE_PORT */
 
 #endif /* !defined(__WINE_WINE_PORT_H) */

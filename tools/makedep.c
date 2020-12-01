@@ -19,19 +19,25 @@
  */
 
 #include "config.h"
-#define NO_LIBWINE_PORT
-#include "wine/port.h"
 
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <signal.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
+#endif
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <direct.h>
+#include <io.h>
+#define mkdir(path,mode) mkdir(path)
 #endif
 #include "wine/list.h"
 
