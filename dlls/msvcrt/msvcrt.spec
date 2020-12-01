@@ -277,7 +277,7 @@
 @ cdecl __pctype_func()
 @ extern __pioinfo MSVCRT___pioinfo
 # stub __pwctype_func()
-@ cdecl __pxcptinfoptrs() MSVCRT___pxcptinfoptrs
+@ cdecl __pxcptinfoptrs()
 @ cdecl __set_app_type(long)
 @ extern __setlc_active MSVCRT___setlc_active
 @ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr
@@ -285,7 +285,7 @@
 @ cdecl __threadhandle() kernel32.GetCurrentThread
 @ cdecl __threadid() kernel32.GetCurrentThreadId
 @ cdecl __toascii(long)
-@ cdecl __uncaught_exception() MSVCRT___uncaught_exception
+@ cdecl __uncaught_exception()
 @ cdecl __unDName(ptr str long ptr ptr long)
 @ cdecl __unDNameEx(ptr str long ptr ptr ptr long)
 @ extern __unguarded_readlc_active MSVCRT___unguarded_readlc_active
@@ -1395,7 +1395,7 @@
 @ cdecl putwchar(long) MSVCRT__fputwchar
 @ cdecl qsort(ptr long long ptr) MSVCRT_qsort
 @ cdecl qsort_s(ptr long long ptr ptr) MSVCRT_qsort_s
-@ cdecl raise(long) MSVCRT_raise
+@ cdecl raise(long)
 @ cdecl rand() MSVCRT_rand
 @ cdecl rand_s(ptr) MSVCRT_rand_s
 @ cdecl realloc(ptr long)
@@ -1408,7 +1408,7 @@
 @ cdecl -arch=arm,x86_64 -norelay -private setjmp(ptr) MSVCRT__setjmp
 @ cdecl setlocale(long str) MSVCRT_setlocale
 @ cdecl setvbuf(ptr str long long) MSVCRT_setvbuf
-@ cdecl signal(long long) MSVCRT_signal
+@ cdecl signal(long long)
 @ cdecl sin(double) MSVCRT_sin
 @ cdecl sinh(double) MSVCRT_sinh
 @ cdecl -arch=!i386 sinf(float) MSVCRT_sinf

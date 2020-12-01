@@ -424,7 +424,7 @@
 @ cdecl -arch=win64 ?__ExceptionPtrDestroy@@YAXPEAX@Z(ptr) __ExceptionPtrDestroy
 @ cdecl -arch=win32 ?__ExceptionPtrRethrow@@YAXPBX@Z(ptr) __ExceptionPtrRethrow
 @ cdecl -arch=win64 ?__ExceptionPtrRethrow@@YAXPEBX@Z(ptr) __ExceptionPtrRethrow
-@ cdecl __uncaught_exception() MSVCRT___uncaught_exception
+@ cdecl __uncaught_exception()
 @ stub ?_inconsistency@@YAXXZ
 @ cdecl -arch=win32 ?_invalid_parameter@@YAXPBG00II@Z(wstr wstr wstr long long) _invalid_parameter
 @ cdecl -arch=win64 ?_invalid_parameter@@YAXPEBG00I_K@Z(wstr wstr wstr long long) _invalid_parameter
@@ -650,7 +650,7 @@
 @ cdecl __pctype_func()
 @ extern __pioinfo MSVCRT___pioinfo
 @ stub __pwctype_func
-@ cdecl __pxcptinfoptrs() MSVCRT___pxcptinfoptrs
+@ cdecl __pxcptinfoptrs()
 @ stub __report_gsfailure
 @ cdecl __set_app_type(long)
 @ stub __set_flsgetvalue
@@ -1770,7 +1770,7 @@
 @ cdecl putwchar(long) MSVCRT__fputwchar
 @ cdecl qsort(ptr long long ptr) MSVCRT_qsort
 @ cdecl qsort_s(ptr long long ptr ptr) MSVCRT_qsort_s
-@ cdecl raise(long) MSVCRT_raise
+@ cdecl raise(long)
 @ cdecl rand() MSVCRT_rand
 @ cdecl rand_s(ptr) MSVCRT_rand_s
 @ cdecl realloc(ptr long)
@@ -1783,7 +1783,7 @@
 @ cdecl -arch=arm,x86_64 -norelay -private setjmp(ptr) MSVCRT__setjmp
 @ cdecl setlocale(long str) MSVCRT_setlocale
 @ cdecl setvbuf(ptr str long long) MSVCRT_setvbuf
-@ cdecl signal(long long) MSVCRT_signal
+@ cdecl signal(long long)
 @ cdecl sin(double) MSVCRT_sin
 @ cdecl -arch=!i386 sinf(float) MSVCRT_sinf
 @ cdecl sinh(double) MSVCRT_sinh

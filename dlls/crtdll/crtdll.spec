@@ -34,7 +34,7 @@
 @ cdecl __iscsym(long)
 @ cdecl __iscsymf(long)
 @ extern __mb_cur_max_dll MSVCRT___mb_cur_max
-@ cdecl __pxcptinfoptrs() MSVCRT___pxcptinfoptrs
+@ cdecl __pxcptinfoptrs()
 @ cdecl __threadhandle() kernel32.GetCurrentThread
 @ cdecl __threadid() kernel32.GetCurrentThreadId
 @ cdecl __toascii(long)
@@ -448,7 +448,7 @@
 @ cdecl putchar(long) MSVCRT_putchar
 @ cdecl puts(str) MSVCRT_puts
 @ cdecl qsort(ptr long long ptr) MSVCRT_qsort
-@ cdecl raise(long) MSVCRT_raise
+@ cdecl raise(long)
 @ cdecl rand() MSVCRT_rand
 @ cdecl realloc(ptr long)
 @ cdecl remove(str) MSVCRT_remove
@@ -458,7 +458,7 @@
 @ cdecl setbuf(ptr ptr) MSVCRT_setbuf
 @ cdecl setlocale(long str) MSVCRT_setlocale
 @ cdecl setvbuf(ptr str long long) MSVCRT_setvbuf
-@ cdecl signal(long long) MSVCRT_signal
+@ cdecl signal(long long)
 @ cdecl sin(double) MSVCRT_sin
 @ cdecl sinh(double) MSVCRT_sinh
 @ varargs sprintf(ptr str) MSVCRT_sprintf

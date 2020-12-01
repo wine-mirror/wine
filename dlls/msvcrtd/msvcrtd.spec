@@ -184,7 +184,7 @@
 @ cdecl __p__wpgmptr()
 @ cdecl __pctype_func()
 @ extern __pioinfo MSVCRT___pioinfo
-@ cdecl __pxcptinfoptrs() MSVCRT___pxcptinfoptrs
+@ cdecl __pxcptinfoptrs()
 @ cdecl __set_app_type(long)
 @ extern __setlc_active MSVCRT___setlc_active
 @ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr
@@ -747,7 +747,7 @@
 @ cdecl putwc(long ptr) MSVCRT_fputwc
 @ cdecl putwchar(long) MSVCRT__fputwchar
 @ cdecl qsort(ptr long long ptr) MSVCRT_qsort
-@ cdecl raise(long) MSVCRT_raise
+@ cdecl raise(long)
 @ cdecl rand() MSVCRT_rand
 @ cdecl realloc(ptr long)
 @ cdecl remove(str) MSVCRT_remove
@@ -757,7 +757,7 @@
 @ cdecl setbuf(ptr ptr) MSVCRT_setbuf
 @ cdecl setlocale(long str) MSVCRT_setlocale
 @ cdecl setvbuf(ptr str long long) MSVCRT_setvbuf
-@ cdecl signal(long long) MSVCRT_signal
+@ cdecl signal(long long)
 @ cdecl sin(double) MSVCRT_sin
 @ cdecl sinh(double) MSVCRT_sinh
 @ varargs sprintf(ptr str) MSVCRT_sprintf

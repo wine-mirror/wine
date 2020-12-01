@@ -137,11 +137,11 @@
 @ cdecl __pctype_func()
 @ cdecl __processing_throw()
 @ stub __pwctype_func
-@ cdecl __pxcptinfoptrs() MSVCRT___pxcptinfoptrs
+@ cdecl __pxcptinfoptrs()
 @ stub __report_gsfailure
 @ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr
-@ cdecl __std_exception_copy(ptr ptr) MSVCRT___std_exception_copy
-@ cdecl __std_exception_destroy(ptr) MSVCRT___std_exception_destroy
+@ cdecl __std_exception_copy(ptr ptr)
+@ cdecl __std_exception_destroy(ptr)
 @ cdecl __std_type_info_compare(ptr ptr)
 @ cdecl __std_type_info_destroy_list(ptr)
 @ cdecl __std_type_info_hash(ptr)
@@ -174,7 +174,7 @@
 @ cdecl __tzname() __p__tzname
 @ cdecl __unDName(ptr str long ptr ptr long)
 @ cdecl __unDNameEx(ptr str long ptr ptr ptr long)
-@ cdecl __uncaught_exception() MSVCRT___uncaught_exception
+@ cdecl __uncaught_exception()
 @ cdecl __wcserror(wstr)
 @ cdecl __wcserror_s(ptr long wstr)
 @ stub __wcsncnt
@@ -806,8 +806,8 @@
 @ cdecl _o___p__wpgmptr() __p__wpgmptr
 @ cdecl _o___pctype_func() __pctype_func
 @ stub _o___pwctype_func
-@ cdecl _o___std_exception_copy(ptr ptr) MSVCRT___std_exception_copy
-@ cdecl _o___std_exception_destroy(ptr) MSVCRT___std_exception_destroy
+@ cdecl _o___std_exception_copy(ptr ptr) __std_exception_copy
+@ cdecl _o___std_exception_destroy(ptr) __std_exception_destroy
 @ cdecl _o___std_type_info_destroy_list(ptr) __std_type_info_destroy_list
 @ cdecl _o___std_type_info_name(ptr ptr) __std_type_info_name
 @ cdecl _o___stdio_common_vfprintf(int64 ptr str ptr ptr) MSVCRT__stdio_common_vfprintf
@@ -1742,7 +1742,7 @@
 @ cdecl _o_putwchar(long) MSVCRT__fputwchar
 @ cdecl _o_qsort(ptr long long ptr) MSVCRT_qsort
 @ cdecl _o_qsort_s(ptr long long ptr ptr) MSVCRT_qsort_s
-@ cdecl _o_raise(long) MSVCRT_raise
+@ cdecl _o_raise(long) raise
 @ cdecl _o_rand() MSVCRT_rand
 @ cdecl _o_rand_s(ptr) MSVCRT_rand_s
 @ cdecl _o_realloc(ptr long) realloc
@@ -2455,7 +2455,7 @@
 @ cdecl qsort(ptr long long ptr) MSVCRT_qsort
 @ cdecl qsort_s(ptr long long ptr ptr) MSVCRT_qsort_s
 @ cdecl quick_exit(long) MSVCRT_quick_exit
-@ cdecl raise(long) MSVCRT_raise
+@ cdecl raise(long)
 @ cdecl rand() MSVCRT_rand
 @ cdecl rand_s(ptr) MSVCRT_rand_s
 @ cdecl realloc(ptr long)
@@ -2486,7 +2486,7 @@
 @ cdecl -arch=arm,x86_64 -norelay -private setjmp(ptr) MSVCRT__setjmp
 @ cdecl setlocale(long str) MSVCRT_setlocale
 @ cdecl setvbuf(ptr str long long) MSVCRT_setvbuf
-@ cdecl signal(long long) MSVCRT_signal
+@ cdecl signal(long long)
 @ cdecl sin(double) MSVCRT_sin
 @ cdecl -arch=!i386 sinf(float) MSVCRT_sinf
 @ cdecl sinh(double) MSVCRT_sinh

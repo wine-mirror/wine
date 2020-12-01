@@ -58,7 +58,7 @@
 @ cdecl -arch=win64 ??_U@YAPEAX_K@Z(long) operator_new
 @ cdecl -arch=win32 ??_V@YAXPAX@Z(ptr) operator_delete
 @ cdecl -arch=win64 ??_V@YAXPEAX@Z(ptr) operator_delete
-@ cdecl __uncaught_exception() MSVCRT___uncaught_exception
+@ cdecl __uncaught_exception()
 @ cdecl -arch=win32 ?_query_new_handler@@YAP6AHI@ZXZ() _query_new_handler
 @ cdecl -arch=win64 ?_query_new_handler@@YAP6AH_K@ZXZ() _query_new_handler
 @ cdecl ?_query_new_mode@@YAHXZ() _query_new_mode
@@ -188,7 +188,7 @@
 @ cdecl __pctype_func()
 @ extern __pioinfo MSVCRT___pioinfo
 @ stub __pwctype_func
-@ cdecl __pxcptinfoptrs() MSVCRT___pxcptinfoptrs
+@ cdecl __pxcptinfoptrs()
 @ cdecl __security_error_handler(long ptr)
 @ cdecl __set_app_type(long)
 @ stub __set_buffer_overrun_handler
@@ -791,7 +791,7 @@
 @ cdecl putwc(long ptr) MSVCRT_fputwc
 @ cdecl putwchar(long) MSVCRT__fputwchar
 @ cdecl qsort(ptr long long ptr) MSVCRT_qsort
-@ cdecl raise(long) MSVCRT_raise
+@ cdecl raise(long)
 @ cdecl rand() MSVCRT_rand
 @ cdecl realloc(ptr long)
 @ cdecl remove(str) MSVCRT_remove
@@ -801,7 +801,7 @@
 @ cdecl setbuf(ptr ptr) MSVCRT_setbuf
 @ cdecl setlocale(long str) MSVCRT_setlocale
 @ cdecl setvbuf(ptr str long long) MSVCRT_setvbuf
-@ cdecl signal(long long) MSVCRT_signal
+@ cdecl signal(long long)
 @ cdecl sin(double) MSVCRT_sin
 @ cdecl sinh(double) MSVCRT_sinh
 @ varargs sprintf(ptr str) MSVCRT_sprintf
