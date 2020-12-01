@@ -175,7 +175,7 @@ static intptr_t msvcrt_spawn(int flags, const wchar_t* exe, wchar_t* cmdline,
     CloseHandle(pi.hThread);
     return (intptr_t)pi.hProcess;
   case  MSVCRT__P_OVERLAY:
-    MSVCRT__exit(0);
+    _exit(0);
   }
   return -1; /* can't reach here */
 }

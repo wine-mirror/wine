@@ -53,7 +53,7 @@ extern wchar_t *MSVCRT__wpgmptr;
 static unsigned int MSVCRT_abort_behavior =  MSVCRT__WRITE_ABORT_MSG | MSVCRT__CALL_REPORTFAULT;
 static int MSVCRT_error_mode = MSVCRT__OUT_TO_DEFAULT;
 
-void (*CDECL _aexit_rtn)(int) = MSVCRT__exit;
+void (*CDECL _aexit_rtn)(int) = _exit;
 
 static int initialize_onexit_table(_onexit_table_t *table)
 {
@@ -180,7 +180,7 @@ _onexit_t CDECL __dllonexit(_onexit_t func, _onexit_t **start, _onexit_t **end)
 /*********************************************************************
  *		_exit (MSVCRT.@)
  */
-void CDECL MSVCRT__exit(int exitcode)
+void CDECL _exit(int exitcode)
 {
   TRACE("(%d)\n", exitcode);
   ExitProcess(exitcode);
@@ -245,7 +245,7 @@ void CDECL _amsg_exit(int errnum)
 /*********************************************************************
  *		abort (MSVCRT.@)
  */
-void CDECL MSVCRT_abort(void)
+void CDECL abort(void)
 {
   TRACE("()\n");
 
@@ -261,14 +261,14 @@ void CDECL MSVCRT_abort(void)
   }
   raise(SIGABRT);
   /* in case raise() returns */
-  MSVCRT__exit(3);
+  _exit(3);
 }
 
 #if _MSVCR_VER>=80
 /*********************************************************************
  *		_set_abort_behavior (MSVCR80.@)
  */
-unsigned int CDECL MSVCRT__set_abort_behavior(unsigned int flags, unsigned int mask)
+unsigned int CDECL _set_abort_behavior(unsigned int flags, unsigned int mask)
 {
   unsigned int old = MSVCRT_abort_behavior;
 
@@ -284,7 +284,7 @@ unsigned int CDECL MSVCRT__set_abort_behavior(unsigned int flags, unsigned int m
 /*********************************************************************
  *              _wassert (MSVCRT.@)
  */
-void CDECL MSVCRT__wassert(const wchar_t* str, const wchar_t* file, unsigned int line)
+void CDECL _wassert(const wchar_t* str, const wchar_t* file, unsigned int line)
 {
   TRACE("(%s,%s,%d)\n", debugstr_w(str), debugstr_w(file), line);
 
@@ -299,7 +299,7 @@ void CDECL MSVCRT__wassert(const wchar_t* str, const wchar_t* file, unsigned int
     MSVCRT_fwprintf(MSVCRT_stderr, L"Assertion failed: %ls, file %ls, line %d\n\n", str, file, line);
 
   raise(SIGABRT);
-  MSVCRT__exit(3);
+  _exit(3);
 }
 
 /*********************************************************************
@@ -312,13 +312,13 @@ void CDECL _assert(const char* str, const char* file, unsigned int line)
     MSVCRT_mbstowcs(strW, str, 1024);
     MSVCRT_mbstowcs(fileW, file, 1024);
 
-    MSVCRT__wassert(strW, fileW, line);
+    _wassert(strW, fileW, line);
 }
 
 /*********************************************************************
  *		_c_exit (MSVCRT.@)
  */
-void CDECL MSVCRT__c_exit(void)
+void CDECL _c_exit(void)
 {
   TRACE("(void)\n");
   /* All cleanup is done on DLL detach; Return to caller */
@@ -327,7 +327,7 @@ void CDECL MSVCRT__c_exit(void)
 /*********************************************************************
  *		_cexit (MSVCRT.@)
  */
-void CDECL MSVCRT__cexit(void)
+void CDECL _cexit(void)
 {
   TRACE("(void)\n");
   LOCK_EXIT;
@@ -338,7 +338,7 @@ void CDECL MSVCRT__cexit(void)
 /*********************************************************************
  *		_onexit (MSVCRT.@)
  */
-_onexit_t CDECL MSVCRT__onexit(_onexit_t func)
+_onexit_t CDECL _onexit(_onexit_t func)
 {
   TRACE("(%p)\n",func);
 
@@ -355,13 +355,13 @@ _onexit_t CDECL MSVCRT__onexit(_onexit_t func)
 /*********************************************************************
  *		exit (MSVCRT.@)
  */
-void CDECL MSVCRT_exit(int exitcode)
+void CDECL exit(int exitcode)
 {
   HMODULE hmscoree;
   void (WINAPI *pCorExitProcess)(int);
 
   TRACE("(%d)\n",exitcode);
-  MSVCRT__cexit();
+  _cexit();
 
   hmscoree = GetModuleHandleW(L"mscoree");
 
@@ -382,7 +382,7 @@ void CDECL MSVCRT_exit(int exitcode)
 int CDECL MSVCRT_atexit(void (__cdecl *func)(void))
 {
   TRACE("(%p)\n", func);
-  return MSVCRT__onexit((_onexit_t)func) == (_onexit_t)func ? 0 : -1;
+  return _onexit((_onexit_t)func) == (_onexit_t)func ? 0 : -1;
 }
 
 #if _MSVCR_VER >= 140
@@ -391,7 +391,7 @@ static _onexit_table_t MSVCRT_quick_exit_table;
 /*********************************************************************
  *             _crt_at_quick_exit (UCRTBASE.@)
  */
-int CDECL MSVCRT__crt_at_quick_exit(void (__cdecl *func)(void))
+int CDECL _crt_at_quick_exit(void (__cdecl *func)(void))
 {
   TRACE("(%p)\n", func);
   return register_onexit_function(&MSVCRT_quick_exit_table, (_onexit_t)func);
@@ -400,27 +400,27 @@ int CDECL MSVCRT__crt_at_quick_exit(void (__cdecl *func)(void))
 /*********************************************************************
  *             quick_exit (UCRTBASE.@)
  */
-void CDECL MSVCRT_quick_exit(int exitcode)
+void CDECL quick_exit(int exitcode)
 {
   TRACE("(%d)\n", exitcode);
 
   execute_onexit_table(&MSVCRT_quick_exit_table);
-  MSVCRT__exit(exitcode);
+  _exit(exitcode);
 }
 
 /*********************************************************************
  *		_crt_atexit (UCRTBASE.@)
  */
-int CDECL MSVCRT__crt_atexit(void (__cdecl *func)(void))
+int CDECL _crt_atexit(void (__cdecl *func)(void))
 {
   TRACE("(%p)\n", func);
-  return MSVCRT__onexit((_onexit_t)func) == (_onexit_t)func ? 0 : -1;
+  return _onexit((_onexit_t)func) == (_onexit_t)func ? 0 : -1;
 }
 
 /*********************************************************************
  *		_initialize_onexit_table (UCRTBASE.@)
  */
-int CDECL MSVCRT__initialize_onexit_table(_onexit_table_t *table)
+int CDECL _initialize_onexit_table(_onexit_table_t *table)
 {
     TRACE("(%p)\n", table);
 
@@ -430,7 +430,7 @@ int CDECL MSVCRT__initialize_onexit_table(_onexit_table_t *table)
 /*********************************************************************
  *		_register_onexit_function (UCRTBASE.@)
  */
-int CDECL MSVCRT__register_onexit_function(_onexit_table_t *table, _onexit_t func)
+int CDECL _register_onexit_function(_onexit_table_t *table, _onexit_t func)
 {
     TRACE("(%p %p)\n", table, func);
 
@@ -440,7 +440,7 @@ int CDECL MSVCRT__register_onexit_function(_onexit_table_t *table, _onexit_t fun
 /*********************************************************************
  *		_execute_onexit_table (UCRTBASE.@)
  */
-int CDECL MSVCRT__execute_onexit_table(_onexit_table_t *table)
+int CDECL _execute_onexit_table(_onexit_table_t *table)
 {
     TRACE("(%p)\n", table);
 

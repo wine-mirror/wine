@@ -1047,11 +1047,11 @@
 @ cdecl _byteswap_uint64(int64)
 @ cdecl _byteswap_ulong(long) MSVCRT__byteswap_ulong
 @ cdecl _byteswap_ushort(long)
-@ cdecl _c_exit() MSVCRT__c_exit
+@ cdecl _c_exit()
 @ cdecl _cabs(long) MSVCRT__cabs
 @ cdecl _callnewh(long)
 @ cdecl _calloc_crt(long long) calloc
-@ cdecl _cexit() MSVCRT__cexit
+@ cdecl _cexit()
 @ cdecl _cgets(ptr)
 @ stub _cgets_s
 @ stub _cgetws
@@ -1136,7 +1136,7 @@
 @ cdecl _execve(str ptr ptr) MSVCRT__execve
 @ cdecl _execvp(str ptr)
 @ cdecl _execvpe(str ptr ptr)
-@ cdecl _exit(long) MSVCRT__exit
+@ cdecl _exit(long)
 @ cdecl _expand(ptr long)
 @ cdecl _fclose_nolock(ptr) MSVCRT__fclose_nolock
 @ cdecl _fcloseall() MSVCRT__fcloseall
@@ -1584,7 +1584,7 @@
 @ cdecl _msize(ptr)
 @ cdecl _nextafter(double double) MSVCRT__nextafter
 @ cdecl -arch=x86_64 _nextafterf(float float) MSVCRT__nextafterf
-@ cdecl _onexit(ptr) MSVCRT__onexit
+@ cdecl _onexit(ptr)
 @ varargs _open(str long) MSVCRT__open
 @ cdecl _open_osfhandle(long long) MSVCRT__open_osfhandle
 @ stub -arch=i386 _outp(long long)
@@ -1640,7 +1640,7 @@
 @ stdcall -arch=i386 _seh_longjmp_unwind(ptr)
 @ cdecl -arch=i386 _set_SSE2_enable(long) MSVCRT__set_SSE2_enable
 @ cdecl -arch=win64 _set_FMA3_enable(long) MSVCRT__set_FMA3_enable
-@ cdecl _set_abort_behavior(long long) MSVCRT__set_abort_behavior
+@ cdecl _set_abort_behavior(long long)
 @ cdecl _set_controlfp(long long)
 @ cdecl _set_doserrno(long)
 @ cdecl _set_errno(long)
@@ -1857,12 +1857,12 @@
 @ cdecl _waccess_s(wstr long) MSVCRT__waccess_s
 @ cdecl _wasctime(ptr) MSVCRT__wasctime
 @ cdecl _wasctime_s(ptr long ptr) MSVCRT__wasctime_s
-@ cdecl _wassert(wstr wstr long) MSVCRT__wassert
+@ cdecl _wassert(wstr wstr long)
 @ cdecl _wchdir(wstr) MSVCRT__wchdir
 @ cdecl _wchmod(wstr long) MSVCRT__wchmod
 @ extern _wcmdln MSVCRT__wcmdln
 @ cdecl _wcreat(wstr long) MSVCRT__wcreat
-@ cdecl _wcreate_locale(long wstr) MSVCRT__wcreate_locale
+@ cdecl _wcreate_locale(long wstr)
 @ cdecl _wcscoll_l(wstr wstr ptr) MSVCRT__wcscoll_l
 @ cdecl _wcsdup(wstr) MSVCRT__wcsdup
 @ cdecl _wcserror(long)
@@ -1966,7 +1966,7 @@
 @ varargs _wscanf_s_l(wstr ptr) MSVCRT__wscanf_s_l
 @ cdecl _wsearchenv(wstr wstr ptr) MSVCRT__wsearchenv
 @ cdecl _wsearchenv_s(wstr wstr ptr long) MSVCRT__wsearchenv_s
-@ cdecl _wsetlocale(long wstr) MSVCRT__wsetlocale
+@ cdecl _wsetlocale(long wstr)
 @ varargs _wsopen(wstr long long) MSVCRT__wsopen
 @ cdecl _wsopen_s(ptr wstr long long long) MSVCRT__wsopen_s
 @ varargs _wspawnl(long wstr wstr) MSVCRT__wspawnl
@@ -2007,7 +2007,7 @@
 @ cdecl _y0(double) MSVCRT__y0
 @ cdecl _y1(double) MSVCRT__y1
 @ cdecl _yn(long double) MSVCRT__yn
-@ cdecl abort() MSVCRT_abort
+@ cdecl abort()
 @ cdecl abs(long) MSVCRT_abs
 @ cdecl acos(double) MSVCRT_acos
 @ cdecl -arch=!i386 acosf(float) MSVCRT_acosf
@@ -2128,7 +2128,7 @@
 @ cdecl erfcl(double) MSVCR120_erfcl
 @ cdecl erff(float) MSVCR120_erff
 @ cdecl erfl(double) MSVCR120_erfl
-@ cdecl exit(long) MSVCRT_exit
+@ cdecl exit(long)
 @ cdecl exp(double) MSVCRT_exp
 @ cdecl exp2(double) MSVCR120_exp2
 @ cdecl exp2f(float) MSVCR120_exp2f
@@ -2349,7 +2349,7 @@
 @ varargs scanf_s(str) MSVCRT_scanf_s
 @ cdecl setbuf(ptr ptr) MSVCRT_setbuf
 @ cdecl -arch=arm,x86_64 -norelay -private setjmp(ptr) MSVCRT__setjmp
-@ cdecl setlocale(long str) MSVCRT_setlocale
+@ cdecl setlocale(long str)
 @ cdecl setvbuf(ptr str long long) MSVCRT_setvbuf
 @ cdecl signal(long long)
 @ cdecl sin(double) MSVCRT_sin
@@ -2486,7 +2486,7 @@
 @ cdecl wctob(long) MSVCRT_wctob
 @ cdecl wctomb(ptr long) MSVCRT_wctomb
 @ cdecl wctomb_s(ptr ptr long long) MSVCRT_wctomb_s
-@ cdecl wctrans(str) MSVCR120_wctrans
+@ cdecl wctrans(str)
 @ cdecl wctype(str)
 @ cdecl wmemcpy_s(ptr long ptr long)
 @ cdecl wmemmove_s(ptr long ptr long)

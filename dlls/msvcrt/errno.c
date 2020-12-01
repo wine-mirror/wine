@@ -496,7 +496,7 @@ void CDECL _invalid_parameter_noinfo(void)
 void CDECL _invalid_parameter_noinfo_noreturn(void)
 {
     _invalid_parameter( NULL, NULL, NULL, 0, 0 );
-    MSVCRT__exit( STATUS_INVALID_CRUNTIME_PARAMETER );
+    _exit( STATUS_INVALID_CRUNTIME_PARAMETER );
 }
 
 /*********************************************************************

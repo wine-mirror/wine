@@ -1929,7 +1929,7 @@ _locale_t CDECL _create_locale(int category, const char *locale)
 /*********************************************************************
  *      _wcreate_locale (MSVCR110.@)
  */
-_locale_t CDECL MSVCRT__wcreate_locale(int category, const wchar_t *locale)
+_locale_t CDECL _wcreate_locale(int category, const wchar_t *locale)
 {
     _locale_t loc;
     size_t len;
@@ -1955,7 +1955,7 @@ _locale_t CDECL MSVCRT__wcreate_locale(int category, const wchar_t *locale)
 /*********************************************************************
  *             setlocale (MSVCRT.@)
  */
-char* CDECL MSVCRT_setlocale(int category, const char* locale)
+char* CDECL setlocale(int category, const char* locale)
 {
     thread_data_t *data = msvcrt_get_thread_data();
     pthreadlocinfo locinfo = get_locinfo(), newlocinfo;
@@ -2012,7 +2012,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
 /*********************************************************************
  *		_wsetlocale (MSVCRT.@)
  */
-wchar_t* CDECL MSVCRT__wsetlocale(int category, const wchar_t* wlocale)
+wchar_t* CDECL _wsetlocale(int category, const wchar_t* wlocale)
 {
     static wchar_t current_lc_all[MAX_LOCALE_LENGTH];
 
@@ -2033,7 +2033,7 @@ wchar_t* CDECL MSVCRT__wsetlocale(int category, const wchar_t* wlocale)
     }
 
     _lock_locales();
-    ret = MSVCRT_setlocale(category, locale);
+    ret = setlocale(category, locale);
     free(locale);
 
     if(ret && MSVCRT_mbstowcs(current_lc_all, ret, MAX_LOCALE_LENGTH)==-1)
@@ -2090,7 +2090,7 @@ BOOL msvcrt_init_locale(void)
 /*********************************************************************
  *      wctrans (MSVCR120.@)
  */
-wctrans_t CDECL MSVCR120_wctrans(const char *property)
+wctrans_t CDECL wctrans(const char *property)
 {
     static const char str_tolower[] = "tolower";
     static const char str_toupper[] = "toupper";

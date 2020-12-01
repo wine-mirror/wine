@@ -235,10 +235,10 @@
 @ cdecl _beep(long long) MSVCRT__beep
 @ cdecl _beginthread(ptr long ptr)
 @ cdecl _beginthreadex(ptr long ptr ptr long ptr)
-@ cdecl _c_exit() MSVCRT__c_exit
+@ cdecl _c_exit()
 @ cdecl _cabs(long) MSVCRT__cabs
 @ cdecl _callnewh(long)
-@ cdecl _cexit() MSVCRT__cexit
+@ cdecl _cexit()
 @ cdecl _cgets(ptr)
 @ stub _cgetws
 @ cdecl _chdir(str) MSVCRT__chdir
@@ -283,7 +283,7 @@
 @ cdecl _execve(str ptr ptr) MSVCRT__execve
 @ cdecl _execvp(str ptr)
 @ cdecl _execvpe(str ptr ptr)
-@ cdecl _exit(long) MSVCRT__exit
+@ cdecl _exit(long)
 @ cdecl _expand(ptr long)
 @ cdecl _fcloseall() MSVCRT__fcloseall
 @ cdecl _fcvt(double long ptr ptr) MSVCRT__fcvt
@@ -474,7 +474,7 @@
 @ cdecl _mktime64(ptr) MSVCRT__mktime64
 @ cdecl _msize(ptr)
 @ cdecl _nextafter(double double) MSVCRT__nextafter
-@ cdecl _onexit(ptr) MSVCRT__onexit
+@ cdecl _onexit(ptr)
 @ varargs _open(str long) MSVCRT__open
 @ cdecl _open_osfhandle(long long) MSVCRT__open_osfhandle
 @ extern _osplatform MSVCRT__osplatform
@@ -648,7 +648,7 @@
 @ cdecl _write(long ptr long) MSVCRT__write
 @ cdecl _wrmdir(wstr) MSVCRT__wrmdir
 @ cdecl _wsearchenv(wstr wstr ptr) MSVCRT__wsearchenv
-@ cdecl _wsetlocale(long wstr) MSVCRT__wsetlocale
+@ cdecl _wsetlocale(long wstr)
 @ varargs _wsopen(wstr long long) MSVCRT__wsopen
 @ varargs _wspawnl(long wstr wstr) MSVCRT__wspawnl
 @ varargs _wspawnle(long wstr wstr) MSVCRT__wspawnle
@@ -678,7 +678,7 @@
 @ cdecl _y0(double) MSVCRT__y0
 @ cdecl _y1(double) MSVCRT__y1
 @ cdecl _yn(long double) MSVCRT__yn
-@ cdecl abort() MSVCRT_abort
+@ cdecl abort()
 @ cdecl abs(long) MSVCRT_abs
 @ cdecl acos(double) MSVCRT_acos
 @ cdecl asctime(ptr) MSVCRT_asctime
@@ -699,7 +699,7 @@
 @ cdecl ctime(ptr) MSVCRT_ctime
 @ cdecl difftime(long long) MSVCRT_difftime
 @ cdecl -ret64 div(long long) MSVCRT_div
-@ cdecl exit(long) MSVCRT_exit
+@ cdecl exit(long)
 @ cdecl exp(double) MSVCRT_exp
 @ cdecl fabs(double) MSVCRT_fabs
 @ cdecl fclose(ptr) MSVCRT_fclose
@@ -799,7 +799,7 @@
 @ cdecl rewind(ptr) MSVCRT_rewind
 @ varargs scanf(str) MSVCRT_scanf
 @ cdecl setbuf(ptr ptr) MSVCRT_setbuf
-@ cdecl setlocale(long str) MSVCRT_setlocale
+@ cdecl setlocale(long str)
 @ cdecl setvbuf(ptr str long long) MSVCRT_setvbuf
 @ cdecl signal(long long)
 @ cdecl sin(double) MSVCRT_sin
