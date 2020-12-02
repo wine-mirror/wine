@@ -102,7 +102,7 @@ static ULONG ptTypes[] = {
 static void test_PropCopyMore(void)
 {
     static char szHiA[] = "Hi!";
-    static WCHAR szHiW[] = { 'H', 'i', '!', '\0' };
+    static WCHAR szHiW[] = L"Hi!";
     SPropValue *lpDest = NULL, *lpSrc = NULL;
     ULONG i;
     SCODE scode;
@@ -182,7 +182,7 @@ static void test_PropCopyMore(void)
 static void test_UlPropSize(void)
 {
     static char szHiA[] = "Hi!";
-    static WCHAR szHiW[] = { 'H', 'i', '!', '\0' };
+    static WCHAR szHiW[] = L"Hi!";
     LPSTR  buffa[2];
     LPWSTR buffw[2];
     SBinary buffbin[2];
@@ -702,7 +702,7 @@ static void test_PpropFindProp(void)
 static void test_ScCountProps(void)
 {
     static char szHiA[] = "Hi!";
-    static WCHAR szHiW[] = { 'H', 'i', '!', '\0' };
+    static WCHAR szHiW[] = L"Hi!";
     static const ULONG ULHILEN = 4; /* chars in szHiA/W incl. NUL */
     LPSTR  buffa[3];
     LPWSTR buffw[3];
@@ -971,7 +971,7 @@ static void test_FBadRglpszA(void)
 static void test_FBadRglpszW(void)
 {
     LPWSTR lpStrs[4];
-    static WCHAR szString[] = { 'A',' ','S','t','r','i','n','g','\0' };
+    static WCHAR szString[] = L"A String";
     BOOL bRet;
 
     if (!pFBadRglpszW)
@@ -1063,7 +1063,7 @@ static void test_FBadRow(void)
 
 static void test_FBadProp(void)
 {
-    static WCHAR szEmpty[] = { '\0' };
+    static WCHAR szEmpty[] = L"";
     GUID iid;
     ULONG pt, res;
     SPropValue pv;

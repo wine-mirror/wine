@@ -966,8 +966,6 @@ static HMODULE mapi_ex_provider;
  */
 static void load_mapi_provider(HKEY hkeyMail, LPCWSTR valueName, HMODULE *mapi_provider)
 {
-    static const WCHAR mapi32_dll[] = {'m','a','p','i','3','2','.','d','l','l',0 };
-
     DWORD dwType, dwLen = 0;
     LPWSTR dllPath;
 
@@ -982,7 +980,7 @@ static void load_mapi_provider(HKEY hkeyMail, LPCWSTR valueName, HMODULE *mapi_p
             RegQueryValueExW(hkeyMail, valueName, NULL, NULL, (LPBYTE)dllPath, &dwLen);
 
             /* Check that this value doesn't refer to mapi32.dll (eg, as Outlook does) */
-            if (lstrcmpiW(dllPath, mapi32_dll) != 0)
+            if (lstrcmpiW(dllPath, L"mapi32.dll") != 0)
             {
                 if (dwType == REG_EXPAND_SZ)
                 {
@@ -1022,13 +1020,7 @@ static void load_mapi_provider(HKEY hkeyMail, LPCWSTR valueName, HMODULE *mapi_p
  */
 void load_mapi_providers(void)
 {
-    static const WCHAR regkey_mail[] = {
-        'S','o','f','t','w','a','r','e','\\','C','l','i','e','n','t','s','\\',
-        'M','a','i','l',0 };
-
-    static const WCHAR regkey_dllpath[] = {'D','L','L','P','a','t','h',0 };
-    static const WCHAR regkey_dllpath_ex[] = {'D','L','L','P','a','t','h','E','x',0 };
-    static const WCHAR regkey_backslash[] = { '\\', 0 };
+    static const WCHAR regkey_mail[] = L"Software\\Clients\\Mail";
 
     HKEY hkeyMail;
     DWORD dwType, dwLen = 0;
@@ -1056,13 +1048,13 @@ void load_mapi_providers(void)
     TRACE("appName: %s\n", debugstr_w(appName));
 
     appKey = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * (lstrlenW(regkey_mail) +
-        lstrlenW(regkey_backslash) + lstrlenW(appName) + 1));
+        lstrlenW(L"\\") + lstrlenW(appName) + 1));
 
     if (!appKey)
         goto cleanUp;
 
     lstrcpyW(appKey, regkey_mail);
-    lstrcatW(appKey, regkey_backslash);
+    lstrcatW(appKey, L"\\");
     lstrcatW(appKey, appName);
 
     RegCloseKey(hkeyMail);
@@ -1074,8 +1066,8 @@ void load_mapi_providers(void)
         goto cleanUp;
 
     /* Try to load the providers */
-    load_mapi_provider(hkeyMail, regkey_dllpath, &mapi_provider);
-    load_mapi_provider(hkeyMail, regkey_dllpath_ex, &mapi_ex_provider);
+    load_mapi_provider(hkeyMail, L"DLLPath", &mapi_provider);
+    load_mapi_provider(hkeyMail, L"DLLPathEx", &mapi_ex_provider);
 
     /* Now try to load our function pointers */
     ZeroMemory(&mapiFunctions, sizeof(mapiFunctions));
