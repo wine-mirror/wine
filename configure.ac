@@ -1712,7 +1712,7 @@ dnl **** Check for libSDL2 ****
 if test "x$with_sdl" != "xno"
 then
     WINE_PACKAGE_FLAGS(SDL2,[sdl2],[-lSDL2],,,
-        [AC_CHECK_HEADERS([SDL2/SDL.h],
+        [AC_CHECK_HEADERS([SDL.h],
             [WINE_CHECK_SONAME(SDL2,SDL_Init,,,[$SDL2_LIBS],[[libSDL2-2.0*]])])])
 fi
 WINE_NOTICE_WITH(sdl,[test "x$ac_cv_lib_soname_SDL2" = "x"],

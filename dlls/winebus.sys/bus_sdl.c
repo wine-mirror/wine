@@ -27,8 +27,8 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#ifdef HAVE_SDL2_SDL_H
-# include <SDL2/SDL.h>
+#ifdef HAVE_SDL_H
+# include <SDL.h>
 #endif
 
 #define NONAMELESSUNION

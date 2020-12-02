@@ -738,8 +738,8 @@
 /* Define to 1 if you have the <scsi/sg.h> header file. */
 #undef HAVE_SCSI_SG_H
 
-/* Define to 1 if you have the <SDL2/SDL.h> header file. */
-#undef HAVE_SDL2_SDL_H
+/* Define to 1 if you have the <SDL.h> header file. */
+#undef HAVE_SDL_H
 
 /* Define to 1 if you have the <Security/Security.h> header file. */
 #undef HAVE_SECURITY_SECURITY_H
