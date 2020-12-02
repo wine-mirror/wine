@@ -78,52 +78,8 @@ typedef struct {
 static struct list port_handles = LIST_INIT( port_handles );
 static struct list xcv_handles = LIST_INIT( xcv_handles );
 
-/* ############################### */
-
-static const WCHAR cmd_AddPortW[] = {'A','d','d','P','o','r','t',0};
-static const WCHAR cmd_DeletePortW[] = {'D','e','l','e','t','e','P','o','r','t',0};
-static const WCHAR cmd_ConfigureLPTPortCommandOKW[] = {'C','o','n','f','i','g','u','r','e',
-                                    'L','P','T','P','o','r','t',
-                                    'C','o','m','m','a','n','d','O','K',0};
-
-static const WCHAR cmd_GetDefaultCommConfigW[] = {'G','e','t',
-                                    'D','e','f','a','u','l','t',
-                                    'C','o','m','m','C','o','n','f','i','g',0};
-
-static const WCHAR cmd_GetTransmissionRetryTimeoutW[] = {'G','e','t',
-                                    'T','r','a','n','s','m','i','s','s','i','o','n',
-                                    'R','e','t','r','y','T','i','m','e','o','u','t',0};
-
-static const WCHAR cmd_MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
-static const WCHAR cmd_PortIsValidW[] = {'P','o','r','t','I','s','V','a','l','i','d',0};
-static const WCHAR cmd_SetDefaultCommConfigW[] = {'S','e','t',
-                                    'D','e','f','a','u','l','t',
-                                    'C','o','m','m','C','o','n','f','i','g',0};
-
-static const WCHAR dllnameuiW[] = {'l','o','c','a','l','u','i','.','d','l','l',0};
-static const WCHAR emptyW[] = {0};
-static const WCHAR LocalPortW[] = {'L','o','c','a','l',' ','P','o','r','t',0};
-
-static const WCHAR portname_LPT[]  = {'L','P','T',0};
-static const WCHAR portname_COM[]  = {'C','O','M',0};
-static const WCHAR portname_FILE[] = {'F','I','L','E',':',0};
-static const WCHAR portname_CUPS[] = {'C','U','P','S',':',0};
-static const WCHAR portname_LPR[]  = {'L','P','R',':',0};
-
-static const WCHAR TransmissionRetryTimeoutW[] = {'T','r','a','n','s','m','i','s','s','i','o','n',
-                                    'R','e','t','r','y','T','i','m','e','o','u','t',0};
-
-static const WCHAR WinNT_CV_PortsW[] = {'S','o','f','t','w','a','r','e','\\',
-                                        'M','i','c','r','o','s','o','f','t','\\',
-                                        'W','i','n','d','o','w','s',' ','N','T','\\',
-                                        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                        'P','o','r','t','s',0};
-
-static const WCHAR WinNT_CV_WindowsW[] = {'S','o','f','t','w','a','r','e','\\',
-                                        'M','i','c','r','o','s','o','f','t','\\',
-                                        'W','i','n','d','o','w','s',' ','N','T','\\',
-                                        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                        'W','i','n','d','o','w','s',0};
+static const WCHAR WinNT_CV_PortsW[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Ports";
+static const WCHAR WinNT_CV_WindowsW[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows";
 
 
 /******************************************************************
@@ -279,13 +235,13 @@ static DWORD get_type_from_name(LPCWSTR name)
 {
     HANDLE  hfile;
 
-    if (!wcsncmp(name, portname_LPT, ARRAY_SIZE(portname_LPT) - 1))
+    if (!wcsncmp(name, L"LPT", ARRAY_SIZE(L"LPT") - 1))
         return PORT_IS_LPT;
 
-    if (!wcsncmp(name, portname_COM, ARRAY_SIZE(portname_COM) - 1))
+    if (!wcsncmp(name, L"COM", ARRAY_SIZE(L"COM") - 1))
         return PORT_IS_COM;
 
-    if (!lstrcmpW(name, portname_FILE))
+    if (!lstrcmpW(name, L"FILE:"))
         return PORT_IS_FILE;
 
     if (name[0] == '/')
@@ -294,10 +250,10 @@ static DWORD get_type_from_name(LPCWSTR name)
     if (name[0] == '|')
         return PORT_IS_PIPE;
 
-    if (!wcsncmp(name, portname_CUPS, ARRAY_SIZE(portname_CUPS) - 1))
+    if (!wcsncmp(name, L"CUPS:", ARRAY_SIZE(L"CUPS:") - 1))
         return PORT_IS_CUPS;
 
-    if (!wcsncmp(name, portname_LPR, ARRAY_SIZE(portname_LPR) - 1))
+    if (!wcsncmp(name, L"LPR:", ARRAY_SIZE(L"LPR:") - 1))
         return PORT_IS_LPR;
 
     /* Must be a file or a directory. Does the file exist ? */
@@ -385,7 +341,7 @@ static BOOL WINAPI localmon_AddPortExW(LPWSTR pName, DWORD level, LPBYTE pBuffer
             debugstr_w(pMonitorName), debugstr_w(pi ? pi->pName : NULL));
 
 
-    if ((pMonitorName == NULL) || (lstrcmpiW(pMonitorName, LocalPortW) != 0 ) ||
+    if ((pMonitorName == NULL) || (lstrcmpiW(pMonitorName, L"Local Port") != 0 ) ||
         (pi == NULL) || (pi->pName == NULL) || (pi->pName[0] == '\0') ) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
@@ -404,7 +360,7 @@ static BOOL WINAPI localmon_AddPortExW(LPWSTR pName, DWORD level, LPBYTE pBuffer
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
-        res = RegSetValueExW(hroot, pi->pName, 0, REG_SZ, (const BYTE *) emptyW, sizeof(emptyW));
+        res = RegSetValueExW(hroot, pi->pName, 0, REG_SZ, (const BYTE *) L"", sizeof(L""));
         RegCloseKey(hroot);
     }
     if (res != ERROR_SUCCESS) SetLastError(ERROR_INVALID_PARAMETER);
@@ -605,7 +561,7 @@ static DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE
     TRACE("(%p, %s, %p, %d, %p, %d, %p)\n", hXcv, debugstr_w(pszDataName),
           pInputData, cbInputData, pOutputData, cbOutputData, pcbOutputNeeded);
 
-    if (!lstrcmpW(pszDataName, cmd_AddPortW)) {
+    if (!lstrcmpW(pszDataName, L"AddPort")) {
         TRACE("InputData (%d): %s\n", cbInputData, debugstr_w( (LPWSTR) pInputData));
         res = RegOpenKeyW(HKEY_LOCAL_MACHINE, WinNT_CV_PortsW, &hroot);
         if (res == ERROR_SUCCESS) {
@@ -614,7 +570,7 @@ static DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE
                 TRACE("=> %u\n", ERROR_ALREADY_EXISTS);
                 return ERROR_ALREADY_EXISTS;
             }
-            res = RegSetValueExW(hroot, (LPWSTR) pInputData, 0, REG_SZ, (const BYTE *) emptyW, sizeof(emptyW));
+            res = RegSetValueExW(hroot, (LPWSTR)pInputData, 0, REG_SZ, (const BYTE*)L"", sizeof(L""));
             RegCloseKey(hroot);
         }
         TRACE("=> %u\n", res);
@@ -622,17 +578,17 @@ static DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE
     }
 
 
-    if (!lstrcmpW(pszDataName, cmd_ConfigureLPTPortCommandOKW)) {
+    if (!lstrcmpW(pszDataName, L"ConfigureLPTPortCommandOK")) {
         TRACE("InputData (%d): %s\n", cbInputData, debugstr_w( (LPWSTR) pInputData));
         res = RegCreateKeyW(HKEY_LOCAL_MACHINE, WinNT_CV_WindowsW, &hroot);
         if (res == ERROR_SUCCESS) {
-            res = RegSetValueExW(hroot, TransmissionRetryTimeoutW, 0, REG_SZ, pInputData, cbInputData);
+            res = RegSetValueExW(hroot, L"TransmissionRetryTimeout", 0, REG_SZ, pInputData, cbInputData);
             RegCloseKey(hroot);
         }
         return res;
     }
 
-    if (!lstrcmpW(pszDataName, cmd_DeletePortW)) {
+    if (!lstrcmpW(pszDataName, L"DeletePort")) {
         TRACE("InputData (%d): %s\n", cbInputData, debugstr_w( (LPWSTR) pInputData));
         res = RegOpenKeyW(HKEY_LOCAL_MACHINE, WinNT_CV_PortsW, &hroot);
         if (res == ERROR_SUCCESS) {
@@ -644,7 +600,7 @@ static DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE
         return ERROR_FILE_NOT_FOUND;
     }
 
-    if (!lstrcmpW(pszDataName, cmd_GetDefaultCommConfigW)) {
+    if (!lstrcmpW(pszDataName, L"GetDefaultCommConfig")) {
         TRACE("InputData (%d): %s\n", cbInputData, debugstr_w( (LPWSTR) pInputData));
         *pcbOutputNeeded = cbOutputData;
         res = GetDefaultCommConfigW((LPWSTR) pInputData, (LPCOMMCONFIG) pOutputData, pcbOutputNeeded);
@@ -652,7 +608,7 @@ static DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE
         return res ? ERROR_SUCCESS : GetLastError();
     }
 
-    if (!lstrcmpW(pszDataName, cmd_GetTransmissionRetryTimeoutW)) {
+    if (!lstrcmpW(pszDataName, L"GetTransmissionRetryTimeout")) {
         * pcbOutputNeeded = sizeof(DWORD);
         if (cbOutputData >= sizeof(DWORD)) {
             /* the w2k resource kit documented a default of 90, but that's wrong */
@@ -661,7 +617,7 @@ static DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE
             res = RegOpenKeyW(HKEY_LOCAL_MACHINE, WinNT_CV_WindowsW, &hroot);
             if (res == ERROR_SUCCESS) {
                 needed = sizeof(buffer) - sizeof(WCHAR);
-                res = RegQueryValueExW(hroot, TransmissionRetryTimeoutW, NULL, NULL, (LPBYTE) buffer, &needed);
+                res = RegQueryValueExW(hroot, L"TransmissionRetryTimeout", NULL, NULL, (BYTE*)buffer, &needed);
                 if ((res == ERROR_SUCCESS) && (buffer[0])) {
                     *((LPDWORD) pOutputData) = wcstoul(buffer, NULL, 0);
                 }
@@ -673,16 +629,16 @@ static DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE
     }
 
 
-    if (!lstrcmpW(pszDataName, cmd_MonitorUIW)) {
-        * pcbOutputNeeded = sizeof(dllnameuiW);
-        if (cbOutputData >= sizeof(dllnameuiW)) {
-            memcpy(pOutputData, dllnameuiW, sizeof(dllnameuiW));
+    if (!lstrcmpW(pszDataName, L"MonitorUI")) {
+        * pcbOutputNeeded = sizeof(L"localui.dll");
+        if (cbOutputData >= sizeof(L"localui.dll")) {
+            memcpy(pOutputData, L"localui.dll", sizeof(L"localui.dll"));
             return ERROR_SUCCESS;
         }
         return ERROR_INSUFFICIENT_BUFFER;
     }
 
-    if (!lstrcmpW(pszDataName, cmd_PortIsValidW)) {
+    if (!lstrcmpW(pszDataName, L"PortIsValid")) {
         TRACE("InputData (%d): %s\n", cbInputData, debugstr_w( (LPWSTR) pInputData));
         res = get_type_from_name((LPCWSTR) pInputData);
         TRACE("detected as %u\n",  res);
@@ -694,7 +650,7 @@ static DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE
         return GetLastError();
     }
 
-    if (!lstrcmpW(pszDataName, cmd_SetDefaultCommConfigW)) {
+    if (!lstrcmpW(pszDataName, L"SetDefaultCommConfig")) {
         /* get the portname from the Handle */
         ptr =  wcschr(((xcv_t *)hXcv)->nameW, ' ');
         if (ptr) {

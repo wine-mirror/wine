@@ -101,78 +101,27 @@ static monitor_t * pm_localport;
 
 static const PRINTPROVIDOR * pprovider = NULL;
 
-static const WCHAR backslashW[] = {'\\',0};
-static const WCHAR bs_ports_bsW[] = {'\\','P','o','r','t','s','\\',0};
-static const WCHAR configuration_fileW[] = {'C','o','n','f','i','g','u','r','a','t','i','o','n',' ','F','i','l','e',0};
-static const WCHAR datatypeW[] = {'D','a','t','a','t','y','p','e',0};
-static const WCHAR data_fileW[] = {'D','a','t','a',' ','F','i','l','e',0};
-static const WCHAR dependent_filesW[] = {'D','e','p','e','n','d','e','n','t',' ','F','i','l','e','s',0};
-static const WCHAR driverW[] = {'D','r','i','v','e','r',0};
-static const WCHAR emptyW[] = {0};
-static const WCHAR fmt_driversW[] = { 'S','y','s','t','e','m','\\',
-                                  'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-                                  'c','o','n','t','r','o','l','\\',
-                                  'P','r','i','n','t','\\',
-                                  'E','n','v','i','r','o','n','m','e','n','t','s','\\',
-                                  '%','s','\\','D','r','i','v','e','r','s','%','s',0 };
-static const WCHAR fmt_printprocessorsW[] = { 'S','y','s','t','e','m','\\',
-                                  'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-                                  'C','o','n','t','r','o','l','\\',
-                                  'P','r','i','n','t','\\',
-                                  'E','n','v','i','r','o','n','m','e','n','t','s','\\','%','s','\\',
-                                  'P','r','i','n','t',' ','P','r','o','c','e','s','s','o','r','s',0 };
-static const WCHAR help_fileW[] = {'H','e','l','p',' ','F','i','l','e',0};
-static const WCHAR ia64_envnameW[] = {'W','i','n','d','o','w','s',' ','I','A','6','4',0};
-static const WCHAR ia64_subdirW[] = {'i','a','6','4',0};
-static const WCHAR localportW[] = {'L','o','c','a','l',' ','P','o','r','t',0};
-static const WCHAR monitorW[] = {'M','o','n','i','t','o','r',0};
-static const WCHAR monitorsW[] = {'S','y','s','t','e','m','\\',
-                                'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-                                'C','o','n','t','r','o','l','\\',
-                                'P','r','i','n','t','\\',
-                                'M','o','n','i','t','o','r','s','\\',0};
-static const WCHAR monitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
-static const WCHAR previous_namesW[] = {'P','r','e','v','i','o','u','s',' ','N','a','m','e','s',0};
-static const WCHAR printersW[] = {'S','y','s','t','e','m','\\',
-                                  'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-                                  'C','o','n','t','r','o','l','\\',
-                                  'P','r','i','n','t','\\',
-                                  'P','r','i','n','t','e','r','s',0};
-static const WCHAR spoolW[] = {'\\','s','p','o','o','l',0};
-static const WCHAR driversW[] = {'\\','d','r','i','v','e','r','s','\\',0};
-static const WCHAR spoolprtprocsW[] = {'\\','s','p','o','o','l','\\','p','r','t','p','r','o','c','s','\\',0};
-static const WCHAR version0_regpathW[] = {'\\','V','e','r','s','i','o','n','-','0',0};
-static const WCHAR version0_subdirW[] = {'\\','0',0};
-static const WCHAR version3_regpathW[] = {'\\','V','e','r','s','i','o','n','-','3',0};
-static const WCHAR version3_subdirW[] = {'\\','3',0};
-static const WCHAR versionW[] = {'V','e','r','s','i','o','n',0};
-static const WCHAR win40_envnameW[] = {'W','i','n','d','o','w','s',' ','4','.','0',0};
-static const WCHAR win40_subdirW[] = {'w','i','n','4','0',0};
-static const WCHAR winnt_cv_portsW[] = {'S','o','f','t','w','a','r','e','\\',
-                                        'M','i','c','r','o','s','o','f','t','\\',
-                                        'W','i','n','d','o','w','s',' ','N','T','\\',
-                                        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                        'P','o','r','t','s',0};
-static const WCHAR winprintW[] = {'w','i','n','p','r','i','n','t',0};
-static const WCHAR x64_envnameW[] = {'W','i','n','d','o','w','s',' ','x','6','4',0};
-static const WCHAR x64_subdirW[] = {'x','6','4',0};
-static const WCHAR x86_envnameW[] = {'W','i','n','d','o','w','s',' ','N','T',' ','x','8','6',0};
-static const WCHAR x86_subdirW[] = {'w','3','2','x','8','6',0};
-static const WCHAR XcvMonitorW[] = {',','X','c','v','M','o','n','i','t','o','r',' ',0};
-static const WCHAR XcvPortW[] = {',','X','c','v','P','o','r','t',' ',0};
+static const WCHAR fmt_driversW[] =
+    L"System\\CurrentControlSet\\control\\Print\\Environments\\%s\\Drivers%s";
+static const WCHAR fmt_printprocessorsW[] =
+    L"System\\CurrentControlSet\\Control\\Print\\Environments\\%s\\Print Processors";
+static const WCHAR monitorsW[] = L"System\\CurrentControlSet\\Control\\Print\\Monitors\\";
+static const WCHAR printersW[] = L"System\\CurrentControlSet\\Control\\Print\\Printers";
+static const WCHAR winnt_cv_portsW[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Ports";
+static const WCHAR x86_envnameW[] = L"Windows NT x86";
 
 
-static const printenv_t env_ia64 =  {ia64_envnameW, ia64_subdirW, 3,
-                                     version3_regpathW, version3_subdirW};
+static const printenv_t env_ia64 =  {L"Windows IA64", L"ia64", 3,
+                                     L"\\Version-3", L"\\3"};
 
-static const printenv_t env_x86 =   {x86_envnameW, x86_subdirW, 3,
-                                     version3_regpathW, version3_subdirW};
+static const printenv_t env_x86 =   {x86_envnameW, L"w32x86", 3,
+                                     L"\\Version-3", L"\\3"};
 
-static const printenv_t env_x64 =   {x64_envnameW, x64_subdirW, 3,
-                                     version3_regpathW, version3_subdirW};
+static const printenv_t env_x64 =   {L"Windows x64", L"x64", 3,
+                                     L"\\Version-3", L"\\3"};
 
-static const printenv_t env_win40 = {win40_envnameW, win40_subdirW, 0,
-                                     version0_regpathW, version0_subdirW};
+static const printenv_t env_win40 = {L"Windows 4.0", L"win40", 0,
+                                     L"\\Version-0", L"\\0"};
 
 static const printenv_t * const all_printenv[] = {&env_x86, &env_x64, &env_ia64, &env_win40};
 
@@ -515,10 +464,10 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
                 /* Get the Driver from the Registry */
                 if (driver == NULL) {
                     DWORD   namesize;
-                    if (RegQueryValueExW(hroot, driverW, NULL, NULL, NULL,
+                    if (RegQueryValueExW(hroot, L"Driver", NULL, NULL, NULL,
                                         &namesize) == ERROR_SUCCESS) {
                         driver = heap_alloc(namesize);
-                        RegQueryValueExW(hroot, driverW, NULL, NULL, (LPBYTE) driver, &namesize) ;
+                        RegQueryValueExW(hroot, L"Driver", NULL, NULL, (BYTE*)driver, &namesize);
                     }
                 }
             }
@@ -637,7 +586,7 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
         }
     }
 cleanup:
-    if ((pm_localport ==  NULL) && (pm != NULL) && (lstrcmpW(pm->name, localportW) == 0)) {
+    if ((pm_localport ==  NULL) && (pm != NULL) && (lstrcmpW(pm->name, L"Local Port") == 0)) {
         pm->refcount++;
         pm_localport = pm;
     }
@@ -712,12 +661,12 @@ static monitor_t * monitor_loadui(monitor_t * pm)
     /* query the userinterface-dllname from the Portmonitor */
     /* building (",XcvMonitor %s",pm->name) not needed yet */
     if (pm->monitor.pfnXcvOpenPort)
-        res = pm->monitor.pfnXcvOpenPort(pm->hmon, emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
+        res = pm->monitor.pfnXcvOpenPort(pm->hmon, L"", SERVER_ACCESS_ADMINISTER, &hXcv);
     else if (pm->old_XcvOpenPort)
-        res = pm->old_XcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
+        res = pm->old_XcvOpenPort(L"", SERVER_ACCESS_ADMINISTER, &hXcv);
     TRACE("got %u with %p\n", res, hXcv);
     if (res) {
-        res = pm->monitor.pfnXcvDataPort(hXcv, monitorUIW, NULL, 0, (BYTE *) buffer, sizeof(buffer), &len);
+        res = pm->monitor.pfnXcvDataPort(hXcv, L"MonitorUI", NULL, 0, (BYTE *) buffer, sizeof(buffer), &len);
         TRACE("got %u with %s\n", res, debugstr_w(buffer));
         if (res == ERROR_SUCCESS) pui = monitor_load(NULL, buffer);
         pm->monitor.pfnXcvClosePort(hXcv);
@@ -750,12 +699,12 @@ static monitor_t * monitor_load_by_port(LPCWSTR portname)
         if (RegQueryValueExW(hroot, portname, NULL, NULL, NULL, &len) == ERROR_SUCCESS) {
             /* found the portname */
             RegCloseKey(hroot);
-            return monitor_load(localportW, NULL);
+            return monitor_load(L"Local Port", NULL);
         }
         RegCloseKey(hroot);
     }
 
-    len = MAX_PATH + lstrlenW(bs_ports_bsW) + lstrlenW(portname) + 1;
+    len = MAX_PATH + lstrlenW(L"\\Ports\\") + lstrlenW(portname) + 1;
     buffer = heap_alloc(len * sizeof(WCHAR));
     if (buffer == NULL) return NULL;
 
@@ -768,7 +717,7 @@ static monitor_t * monitor_load_by_port(LPCWSTR portname)
             RegEnumKeyW(hroot, id, buffer, MAX_PATH);
             TRACE("testing %s\n", debugstr_w(buffer));
             len = lstrlenW(buffer);
-            lstrcatW(buffer, bs_ports_bsW);
+            lstrcatW(buffer, L"\\Ports\\");
             lstrcatW(buffer, portname);
             if (RegOpenKeyW(hroot, buffer, &hport) == ERROR_SUCCESS) {
                 RegCloseKey(hport);
@@ -895,7 +844,7 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
 
             /* The Monitor must have a Driver-DLL */
             if (RegOpenKeyExW(hroot, buffer, 0, KEY_READ, &hentry) == ERROR_SUCCESS) {
-                if (RegQueryValueExW(hentry, driverW, NULL, NULL, (LPBYTE) dllname, &dllsize) == ERROR_SUCCESS) {
+                if (RegQueryValueExW(hentry, L"Driver", NULL, NULL, (BYTE*)dllname, &dllsize) == ERROR_SUCCESS) {
                     /* We found a valid DLL for this Monitor. */
                     TRACE("using Driver: %s\n", debugstr_w(dllname));
                 }
@@ -977,27 +926,27 @@ static DWORD get_local_printprocessors(LPWSTR regpathW, LPBYTE pPPInfo, DWORD cb
     if (RegCreateKeyW(HKEY_LOCAL_MACHINE, regpathW, &hroot) == ERROR_SUCCESS) {
         /* add "winprint" first */
         numentries++;
-        needed = sizeof(PRINTPROCESSOR_INFO_1W) + sizeof(winprintW);
+        needed = sizeof(PRINTPROCESSOR_INFO_1W) + sizeof(L"winprint");
         if (pPPInfo && (cbBuf >= needed)){
             ppi = (PPRINTPROCESSOR_INFO_1W) pPPInfo;
             pPPInfo += sizeof(PRINTPROCESSOR_INFO_1W);
 
             TRACE("%p: writing PRINTPROCESSOR_INFO_1W #%d\n", ppi, numentries);
             ppi->pName = ptr;
-            lstrcpyW(ptr, winprintW);      /* Name of the Print Processor */
-            ptr += ARRAY_SIZE(winprintW);
+            lstrcpyW(ptr, L"winprint");      /* Name of the Print Processor */
+            ptr += ARRAY_SIZE(L"winprint");
         }
 
         /* Scan all Printprocessor Keys */
         while ((RegEnumKeyExW(hroot, index, buffer, &len, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) &&
-            (lstrcmpiW(buffer, winprintW) != 0)) {
+            (lstrcmpiW(buffer, L"winprint") != 0)) {
             TRACE("PrintProcessor_%d: %s\n", numentries, debugstr_w(buffer));
             dllsize = sizeof(dllname);
             dllname[0] = '\0';
 
             /* The Print Processor must have a Driver-DLL */
             if (RegOpenKeyExW(hroot, buffer, 0, KEY_READ, &hentry) == ERROR_SUCCESS) {
-                if (RegQueryValueExW(hentry, driverW, NULL, NULL, (LPBYTE) dllname, &dllsize) == ERROR_SUCCESS) {
+                if (RegQueryValueExW(hentry, L"Driver", NULL, NULL, (BYTE*)dllname, &dllsize) == ERROR_SUCCESS) {
                     /* We found a valid DLL for this Print Processor */
                     TRACE("using Driver: %s\n", debugstr_w(dllname));
                 }
@@ -1214,8 +1163,8 @@ static BOOL WINAPI fpGetPrinterDriverDirectory(LPWSTR pName, LPWSTR pEnvironment
     /* GetSystemDirectoryW returns number of WCHAR including the '\0' */
     needed = GetSystemDirectoryW(NULL, 0);
     /* add the Size for the Subdirectories */
-    needed += lstrlenW(spoolW);
-    needed += lstrlenW(driversW);
+    needed += lstrlenW(L"\\spool");
+    needed += lstrlenW(L"\\drivers\\");
     needed += lstrlenW(env->subdir);
     needed *= sizeof(WCHAR);  /* return-value is size in Bytes */
 
@@ -1234,9 +1183,9 @@ static BOOL WINAPI fpGetPrinterDriverDirectory(LPWSTR pName, LPWSTR pEnvironment
 
     GetSystemDirectoryW( dir, cbBuf / sizeof(WCHAR) );
     /* add the Subdirectories */
-    lstrcatW( dir, spoolW );
+    lstrcatW( dir, L"\\spool" );
     CreateDirectoryW( dir, NULL );
-    lstrcatW( dir, driversW );
+    lstrcatW( dir, L"\\drivers\\" );
     CreateDirectoryW( dir, NULL );
     lstrcatW( dir, env->subdir );
     CreateDirectoryW( dir, NULL );
@@ -1274,7 +1223,7 @@ static HMODULE driver_load(const printenv_t * env, LPWSTR dllname)
     }
 
     lstrcatW(fullname, env->versionsubdir);
-    lstrcatW(fullname, backslashW);
+    lstrcatW(fullname, L"\\");
     lstrcatW(fullname, dllname);
 
     hui = LoadLibraryW(fullname);
@@ -1344,8 +1293,8 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
         printer = NULL;
     }
     if (printername) {
-        len = ARRAY_SIZE(XcvMonitorW) - 1;
-        if (wcsncmp(printername, XcvMonitorW, len) == 0) {
+        len = ARRAY_SIZE(L",XcvMonitor ") - 1;
+        if (wcsncmp(printername, L",XcvMonitor ", len) == 0) {
             /* OpenPrinter(",XcvMonitor ", ...) detected */
             TRACE(",XcvMonitor: %s\n", debugstr_w(&printername[len]));
             printer->pm = monitor_load(&printername[len], NULL);
@@ -1358,8 +1307,8 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
         }
         else
         {
-            len = ARRAY_SIZE(XcvPortW) - 1;
-            if (wcsncmp( printername, XcvPortW, len) == 0) {
+            len = ARRAY_SIZE(L",XcvPort ") - 1;
+            if (wcsncmp( printername, L",XcvPort ", len) == 0) {
                 /* OpenPrinter(",XcvPort ", ...) detected */
                 TRACE(",XcvPort: %s\n", debugstr_w(&printername[len]));
                 printer->pm = monitor_load_by_port(&printername[len]);
@@ -1475,17 +1424,17 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
     if (env == NULL) return FALSE;        /* ERROR_INVALID_ENVIRONMENT */
 
     /* fill the copy-data / get the driverdir */
-    len = sizeof(apd.src) - sizeof(version3_subdirW) - sizeof(WCHAR);
+    len = sizeof(apd.src) - sizeof(L"\\3") - sizeof(WCHAR);
     if (!fpGetPrinterDriverDirectory(NULL, (LPWSTR) env->envname, 1,
                                     (LPBYTE) apd.src, len, &len)) {
         /* Should never fail */
         return FALSE;
     }
     memcpy(apd.dst, apd.src, len);
-    lstrcatW(apd.src, backslashW);
+    lstrcatW(apd.src, L"\\");
     apd.srclen = lstrlenW(apd.src);
     lstrcatW(apd.dst, env->versionsubdir);
-    lstrcatW(apd.dst, backslashW);
+    lstrcatW(apd.dst, L"\\");
     apd.dstlen = lstrlenW(apd.dst);
     apd.copyflags = dwFileCopyFlags;
     apd.lazy = lazy;
@@ -1511,30 +1460,30 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
     RegCloseKey(hroot);
 
     /* Verified with the Adobe PS Driver, that w2k does not use di.Version */
-    RegSetValueExW(hdrv, versionW, 0, REG_DWORD, (const BYTE*) &env->driverversion,
+    RegSetValueExW(hdrv, L"Version", 0, REG_DWORD, (const BYTE*) &env->driverversion,
                    sizeof(DWORD));
 
     file = get_file_part( di.pDriverPath );
-    RegSetValueExW( hdrv, driverW, 0, REG_SZ, (LPBYTE)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
+    RegSetValueExW( hdrv, L"Driver", 0, REG_SZ, (BYTE*)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
     apd_copyfile( di.pDriverPath, file, &apd );
 
     file = get_file_part( di.pDataFile );
-    RegSetValueExW( hdrv, data_fileW, 0, REG_SZ, (LPBYTE)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
+    RegSetValueExW( hdrv, L"Data File", 0, REG_SZ, (BYTE*)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
     apd_copyfile( di.pDataFile, file, &apd );
 
     file = get_file_part( di.pConfigFile );
-    RegSetValueExW( hdrv, configuration_fileW, 0, REG_SZ, (LPBYTE)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
+    RegSetValueExW( hdrv, L"Configuration File", 0, REG_SZ, (BYTE*)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
     apd_copyfile( di.pConfigFile, file, &apd );
 
     /* settings for level 3 */
     if (di.pHelpFile)
     {
         file = get_file_part( di.pHelpFile );
-        RegSetValueExW( hdrv, help_fileW, 0, REG_SZ, (LPBYTE)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
+        RegSetValueExW( hdrv, L"Help File", 0, REG_SZ, (BYTE*)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
         apd_copyfile( di.pHelpFile, file, &apd );
     }
     else
-        RegSetValueExW( hdrv, help_fileW, 0, REG_SZ, (const BYTE*)emptyW, sizeof(emptyW) );
+        RegSetValueExW( hdrv, L"Help File", 0, REG_SZ, (const BYTE*)L"", sizeof(L"") );
 
     if (di.pDependentFiles && *di.pDependentFiles)
     {
@@ -1551,31 +1500,31 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
         }
         *reg_ptr = 0;
 
-        RegSetValueExW( hdrv, dependent_filesW, 0, REG_MULTI_SZ, (LPBYTE)reg, (reg_ptr - reg + 1) * sizeof(WCHAR) );
+        RegSetValueExW( hdrv, L"Dependent Files", 0, REG_MULTI_SZ, (BYTE*)reg, (reg_ptr - reg + 1) * sizeof(WCHAR) );
         HeapFree( GetProcessHeap(), 0, reg );
     }
     else
-        RegSetValueExW(hdrv, dependent_filesW, 0, REG_MULTI_SZ, (const BYTE*)emptyW, sizeof(emptyW));
+        RegSetValueExW(hdrv, L"Dependent Files", 0, REG_MULTI_SZ, (const BYTE*)L"", sizeof(L""));
 
     /* The language-Monitor was already copied by the caller to "%SystemRoot%\system32" */
     if (di.pMonitorName)
-        RegSetValueExW(hdrv, monitorW, 0, REG_SZ, (LPBYTE) di.pMonitorName,
+        RegSetValueExW(hdrv, L"Monitor", 0, REG_SZ, (BYTE*)di.pMonitorName,
                        (lstrlenW(di.pMonitorName)+1)* sizeof(WCHAR));
     else
-        RegSetValueExW(hdrv, monitorW, 0, REG_SZ, (const BYTE*)emptyW, sizeof(emptyW));
+        RegSetValueExW(hdrv, L"Monitor", 0, REG_SZ, (const BYTE*)L"", sizeof(L""));
 
     if (di.pDefaultDataType)
-        RegSetValueExW(hdrv, datatypeW, 0, REG_SZ, (LPBYTE) di.pDefaultDataType,
+        RegSetValueExW(hdrv, L"Datatype", 0, REG_SZ, (BYTE*)di.pDefaultDataType,
                        (lstrlenW(di.pDefaultDataType)+1)* sizeof(WCHAR));
     else
-        RegSetValueExW(hdrv, datatypeW, 0, REG_SZ, (const BYTE*)emptyW, sizeof(emptyW));
+        RegSetValueExW(hdrv, L"Datatype", 0, REG_SZ, (const BYTE*)L"", sizeof(L""));
 
     /* settings for level 4 */
     if (di.pszzPreviousNames)
-        RegSetValueExW(hdrv, previous_namesW, 0, REG_MULTI_SZ, (LPBYTE) di.pszzPreviousNames,
+        RegSetValueExW(hdrv, L"Previous Names", 0, REG_MULTI_SZ, (BYTE*)di.pszzPreviousNames,
                        multi_sz_lenW(di.pszzPreviousNames));
     else
-        RegSetValueExW(hdrv, previous_namesW, 0, REG_MULTI_SZ, (const BYTE*)emptyW, sizeof(emptyW));
+        RegSetValueExW(hdrv, L"Previous Names", 0, REG_MULTI_SZ, (const BYTE*)L"", sizeof(L""));
 
     if (level > 5) TRACE("level %u for Driver %s is incomplete\n", level, debugstr_w(di.pName));
 
@@ -1669,7 +1618,7 @@ static BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
         DWORD   namesize = 0;
 
         if ((disposition == REG_OPENED_EXISTING_KEY) &&
-            (RegQueryValueExW(hentry, driverW, NULL, NULL, NULL,
+            (RegQueryValueExW(hentry, L"Driver", NULL, NULL, NULL,
                               &namesize) == ERROR_SUCCESS)) {
             TRACE("monitor %s already exists\n", debugstr_w(mi2w->pName));
             /* 9x use ERROR_ALREADY_EXISTS */
@@ -1679,7 +1628,7 @@ static BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
         {
             INT len;
             len = (lstrlenW(mi2w->pDLLName) +1) * sizeof(WCHAR);
-            res = (RegSetValueExW(hentry, driverW, 0, REG_SZ,
+            res = (RegSetValueExW(hentry, L"Driver", 0, REG_SZ,
                     (LPBYTE) mi2w->pDLLName, len) == ERROR_SUCCESS);
 
             /* Load and initialize the monitor. SetLastError() is called on failure */
@@ -2437,7 +2386,7 @@ static BOOL WINAPI fpGetPrintProcessorDirectory(LPWSTR pName, LPWSTR pEnvironmen
     /* GetSystemDirectoryW returns number of WCHAR including the '\0' */
     needed = GetSystemDirectoryW(NULL, 0);
     /* add the Size for the Subdirectories */
-    needed += lstrlenW(spoolprtprocsW);
+    needed += lstrlenW(L"\\spool\\prtprocs\\");
     needed += lstrlenW(env->subdir);
     needed *= sizeof(WCHAR);  /* return-value is size in Bytes */
 
@@ -2450,7 +2399,7 @@ static BOOL WINAPI fpGetPrintProcessorDirectory(LPWSTR pName, LPWSTR pEnvironmen
 
     GetSystemDirectoryW((LPWSTR) pPPInfo, cbBuf/sizeof(WCHAR));
     /* add the Subdirectories */
-    lstrcatW((LPWSTR) pPPInfo, spoolprtprocsW);
+    lstrcatW((LPWSTR) pPPInfo, L"\\spool\\prtprocs\\");
     lstrcatW((LPWSTR) pPPInfo, env->subdir);
     TRACE("==> %s\n", debugstr_w((LPWSTR) pPPInfo));
     return TRUE;
