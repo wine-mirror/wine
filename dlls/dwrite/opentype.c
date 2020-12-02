@@ -3499,13 +3499,46 @@ static void opentype_layout_apply_gpos_value(struct scriptshaping_context *conte
     }
 }
 
-static unsigned int opentype_layout_get_gsubgpos_subtable(const struct scriptshaping_context *context,
-        unsigned int lookup_offset, unsigned int subtable)
+struct lookup
 {
-    unsigned int subtable_offset = table_read_be_word(&context->table->table, lookup_offset +
-            FIELD_OFFSET(struct ot_lookup_table, subtable[subtable]));
+    unsigned short index;
+    unsigned short type;
+    unsigned short flags;
+    unsigned short subtable_count;
 
-    return lookup_offset + subtable_offset;
+    unsigned int mask;
+    unsigned int offset;
+};
+
+static unsigned int opentype_layout_get_gsubgpos_subtable(const struct scriptshaping_context *context,
+        const struct lookup *lookup, unsigned int subtable, unsigned int *lookup_type)
+{
+    unsigned int subtable_offset = table_read_be_word(&context->table->table, lookup->offset +
+            FIELD_OFFSET(struct ot_lookup_table, subtable[subtable]));
+    const struct ot_gsubgpos_extension_format1 *format1;
+
+    subtable_offset += lookup->offset;
+
+    if ((context->table == &context->cache->gsub && lookup->type != GSUB_LOOKUP_EXTENSION_SUBST) ||
+            (context->table == &context->cache->gpos && lookup->type != GPOS_LOOKUP_EXTENSION_POSITION))
+    {
+        *lookup_type = lookup->type;
+        return subtable_offset;
+    }
+
+    *lookup_type = 0;
+
+    if (!(format1 = table_read_ensure(&context->table->table, subtable_offset, sizeof(*format1))))
+        return 0;
+
+    if (GET_BE_WORD(format1->format) != 1)
+    {
+        WARN("Unexpected extension table format %#x.\n", format1->format);
+        return 0;
+    }
+
+    *lookup_type = GET_BE_WORD(format1->lookup_type);
+    return subtable_offset + GET_BE_DWORD(format1->extension_offset);
 }
 
 struct ot_lookup
@@ -3714,17 +3747,6 @@ static BOOL glyph_iterator_prev(struct glyph_iterator *iter)
 
     return FALSE;
 }
-
-struct lookup
-{
-    unsigned short index;
-    unsigned short type;
-    unsigned short flags;
-    unsigned short subtable_count;
-
-    unsigned int mask;
-    unsigned int offset;
-};
 
 static BOOL opentype_layout_apply_gpos_single_adjustment(struct scriptshaping_context *context,
         const struct lookup *lookup, unsigned int subtable_offset)
@@ -4247,31 +4269,6 @@ static BOOL opentype_layout_apply_gpos_mark_to_mark_attachment(struct scriptshap
     return TRUE;
 }
 
-static unsigned int opentype_layout_adjust_extension_subtable(struct scriptshaping_context *context,
-        unsigned int *subtable_offset, const struct lookup *lookup)
-{
-    const struct ot_gsubgpos_extension_format1 *format1;
-
-    if ((context->table == &context->cache->gsub && lookup->type != GSUB_LOOKUP_EXTENSION_SUBST) ||
-            (context->table == &context->cache->gpos && lookup->type != GPOS_LOOKUP_EXTENSION_POSITION))
-    {
-        return lookup->type;
-    }
-
-    if (!(format1 = table_read_ensure(&context->table->table, *subtable_offset, sizeof(*format1))))
-        return 0;
-
-    if (GET_BE_WORD(format1->format) != 1)
-    {
-        WARN("Unexpected extension table format %#x.\n", format1->format);
-        return 0;
-    }
-
-    *subtable_offset = *subtable_offset + GET_BE_DWORD(format1->extension_offset);
-
-    return GET_BE_WORD(format1->lookup_type);
-}
-
 static BOOL opentype_layout_apply_context(struct scriptshaping_context *context, const struct lookup *lookup,
         unsigned int subtable_offset);
 static BOOL opentype_layout_apply_chain_context(struct scriptshaping_context *context, const struct lookup *lookup,
@@ -4284,9 +4281,7 @@ static BOOL opentype_layout_apply_gpos_lookup(struct scriptshaping_context *cont
 
     for (i = 0; i < lookup->subtable_count; ++i)
     {
-        unsigned int subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup->offset, i);
-
-        lookup_type = opentype_layout_adjust_extension_subtable(context, &subtable_offset, lookup);
+        unsigned int subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup, i, &lookup_type);
 
         switch (lookup_type)
         {
@@ -5595,9 +5590,7 @@ static BOOL opentype_layout_apply_gsub_lookup(struct scriptshaping_context *cont
 
     for (i = 0; i < lookup->subtable_count; ++i)
     {
-        unsigned int subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup->offset, i);
-
-        lookup_type = opentype_layout_adjust_extension_subtable(context, &subtable_offset, lookup);
+        unsigned int subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup, i, &lookup_type);
 
         switch (lookup_type)
         {
@@ -5740,14 +5733,9 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
 
 static BOOL opentype_is_gsub_lookup_reversed(const struct scriptshaping_context *context, const struct lookup *lookup)
 {
-    unsigned int subtable_offset, lookup_type = lookup->type;
+    unsigned int lookup_type;
 
-    if (lookup->type == GSUB_LOOKUP_EXTENSION_SUBST)
-    {
-        subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup->offset, 0);
-        /* Assumes format 1. */
-        lookup_type = table_read_be_word(&context->table->table, subtable_offset + 2);
-    }
+    opentype_layout_get_gsubgpos_subtable(context, lookup, 0, &lookup_type);
     return lookup_type == GSUB_LOOKUP_REVERSE_CHAINING_CONTEXTUAL_SUBST;
 }
 
@@ -5914,9 +5902,7 @@ static BOOL opentype_layout_gsub_lookup_is_glyph_covered(struct scriptshaping_co
 
     for (i = 0; i < lookup->subtable_count; ++i)
     {
-        unsigned int subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup->offset, i);
-
-        lookup_type = opentype_layout_adjust_extension_subtable(context, &subtable_offset, lookup);
+        unsigned int subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup, i, &lookup_type);
 
         format = table_read_be_word(gsub, subtable_offset);
 
@@ -5981,9 +5967,7 @@ static BOOL opentype_layout_gpos_lookup_is_glyph_covered(struct scriptshaping_co
 
     for (i = 0; i < lookup->subtable_count; ++i)
     {
-        unsigned int subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup->offset, i);
-
-        lookup_type = opentype_layout_adjust_extension_subtable(context, &subtable_offset, lookup);
+        unsigned int subtable_offset = opentype_layout_get_gsubgpos_subtable(context, lookup, i, &lookup_type);
 
         format = table_read_be_word(gpos, subtable_offset);
 
@@ -6104,8 +6088,7 @@ BOOL opentype_has_vertical_variants(struct dwrite_fontface *fontface)
 
         for (j = 0; j < lookup->subtable_count && !count; ++j)
         {
-            subtable_offset = opentype_layout_get_gsubgpos_subtable(&context, lookup->offset, j);
-            lookup_type = opentype_layout_adjust_extension_subtable(&context, &subtable_offset, lookup);
+            subtable_offset = opentype_layout_get_gsubgpos_subtable(&context, lookup, j, &lookup_type);
 
             if (lookup_type != GSUB_LOOKUP_SINGLE_SUBST)
                 continue;
