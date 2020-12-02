@@ -3684,6 +3684,50 @@ static void wined3d_context_gl_bind_unordered_access_views(struct wined3d_contex
     checkGLcall("Bind unordered access views");
 }
 
+static void context_gl_load_shader_resources(struct wined3d_context_gl *context_gl,
+        const struct wined3d_state *state, unsigned int shader_mask)
+{
+    struct wined3d_shader_sampler_map_entry *entry;
+    struct wined3d_shader_resource_view *view;
+    struct wined3d_buffer_gl *buffer_gl;
+    struct wined3d_shader *shader;
+    unsigned int i, j;
+
+    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
+    {
+        if (!(shader_mask & (1u << i)))
+            continue;
+
+        if (!(shader = state->shader[i]))
+            continue;
+
+        for (j = 0; j < WINED3D_MAX_CBS; ++j)
+        {
+            if (state->cb[i][j])
+                wined3d_buffer_load(state->cb[i][j], &context_gl->c, state);
+        }
+
+        for (j = 0; j < shader->reg_maps.sampler_map.count; ++j)
+        {
+            entry = &shader->reg_maps.sampler_map.entries[j];
+
+            if (!(view = state->shader_resource_view[i][entry->resource_idx]))
+                continue;
+
+            if (view->resource->type == WINED3D_RTYPE_BUFFER)
+            {
+                buffer_gl = wined3d_buffer_gl(buffer_from_resource(view->resource));
+                wined3d_buffer_load(&buffer_gl->b, &context_gl->c, state);
+                wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
+            }
+            else
+            {
+                wined3d_texture_load(texture_from_resource(view->resource), &context_gl->c, FALSE);
+            }
+        }
+    }
+}
+
 static void context_gl_load_unordered_access_resources(struct wined3d_context_gl *context_gl,
         const struct wined3d_shader *shader, struct wined3d_unordered_access_view * const *views)
 {
@@ -3768,7 +3812,7 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
      * updating a resource location. */
     wined3d_context_gl_update_tex_unit_map(context_gl, state);
     context_preload_textures(context, state);
-    context_load_shader_resources(context, state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
+    context_gl_load_shader_resources(context_gl, state, ~(1u << WINED3D_SHADER_TYPE_COMPUTE));
     context_gl_load_unordered_access_resources(context_gl, state->shader[WINED3D_SHADER_TYPE_PIXEL],
             state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);
     context_gl_load_stream_output_buffers(context_gl, state);
@@ -3873,7 +3917,7 @@ static void wined3d_context_gl_apply_compute_state(struct wined3d_context_gl *co
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     unsigned int state_id, i;
 
-    context_load_shader_resources(&context_gl->c, state, 1u << WINED3D_SHADER_TYPE_COMPUTE);
+    context_gl_load_shader_resources(context_gl, state, 1u << WINED3D_SHADER_TYPE_COMPUTE);
     context_gl_load_unordered_access_resources(context_gl, state->shader[WINED3D_SHADER_TYPE_COMPUTE],
             state->unordered_access_view[WINED3D_PIPELINE_COMPUTE]);
 

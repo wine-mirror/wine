@@ -2149,8 +2149,6 @@ struct wined3d_context
 
 void wined3d_context_cleanup(struct wined3d_context *context) DECLSPEC_HIDDEN;
 void wined3d_context_init(struct wined3d_context *context, struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
-void context_load_shader_resources(struct wined3d_context *context,
-        const struct wined3d_state *state, unsigned int shader_mask) DECLSPEC_HIDDEN;
 void context_preload_textures(struct wined3d_context *context, const struct wined3d_state *state) DECLSPEC_HIDDEN;
 void context_update_stream_info(struct wined3d_context *context, const struct wined3d_state *state) DECLSPEC_HIDDEN;
 
