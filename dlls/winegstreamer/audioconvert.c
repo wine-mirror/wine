@@ -326,9 +326,16 @@ static HRESULT WINAPI audio_converter_ProcessEvent(IMFTransform *iface, DWORD id
 
 static HRESULT WINAPI audio_converter_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
 {
-    FIXME("%p, %u %lu.\n", iface, message, param);
+    TRACE("%p, %u %lu.\n", iface, message, param);
 
-    return E_NOTIMPL;
+    switch(message)
+    {
+        case MFT_MESSAGE_NOTIFY_START_OF_STREAM:
+            return S_OK;
+        default:
+            FIXME("Unhandled message type %x.\n", message);
+            return E_NOTIMPL;
+    }
 }
 
 static HRESULT WINAPI audio_converter_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
