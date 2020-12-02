@@ -21,6 +21,22 @@
 
 #include "wine/test.h"
 
+static BOOL is_process_elevated(void)
+{
+    HANDLE token;
+    if (OpenProcessToken( GetCurrentProcess(), TOKEN_QUERY, &token ))
+    {
+        TOKEN_ELEVATION_TYPE type;
+        DWORD size;
+        BOOL ret;
+
+        ret = GetTokenInformation( token, TokenElevationType, &type, sizeof(type), &size );
+        CloseHandle( token );
+        return (ret && type == TokenElevationTypeFull);
+    }
+    return FALSE;
+}
+
 static DWORD runcmd(const char* cmd)
 {
     STARTUPINFOA si = { sizeof(STARTUPINFOA) };
@@ -64,6 +80,11 @@ static void test_hardlink(void)
     CloseHandle(hfile);
 
     rc = runcmd("fsutil");
+    if (rc == 1 && !is_process_elevated())
+    {
+        win_skip("Cannot run fsutil without elevated privileges on Windows <= 7\n");
+        return;
+    }
     ok(rc == 0, "failed to run fsutil\n");
 
     rc = runcmd("fsutil hardlink");
