@@ -213,9 +213,9 @@ typedef struct
 static WCHAR emptyW[] = L"";
 static WCHAR xmlW[] = L"xml";
 static WCHAR xmlnsW[] = L"xmlns";
-static const strval strval_empty = { (WCHAR *)emptyW, 0 };
-static const strval strval_xml = { (WCHAR *)xmlW, 3 };
-static const strval strval_xmlns = { (WCHAR *)xmlnsW, 5 };
+static const strval strval_empty = { emptyW, 0 };
+static const strval strval_xml = { xmlW, 3 };
+static const strval strval_xmlns = { xmlnsW, 5 };
 
 struct reader_position
 {
