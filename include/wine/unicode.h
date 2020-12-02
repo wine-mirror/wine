@@ -28,16 +28,8 @@
 #include <winnls.h>
 #include <winternl.h>
 
-#ifdef __WINE_WINE_TEST_H
-#error This file should not be used in Wine tests
-#endif
-
 #ifdef __WINE_USE_MSVCRT
 #error This file should not be used with msvcrt headers
-#endif
-
-#ifdef __cplusplus
-extern "C" {
 #endif
 
 #ifndef WINE_UNICODE_INLINE
@@ -54,71 +46,12 @@ WINE_UNICODE_INLINE WCHAR toupperW( WCHAR ch )
     return RtlUpcaseUnicodeChar( ch );
 }
 
-/* the character type contains the C1_* flags in the low 12 bits */
-/* and the C2_* type in the high 4 bits */
-WINE_UNICODE_INLINE unsigned short get_char_typeW( WCHAR ch )
-{
-    unsigned short type;
-    GetStringTypeW( CT_CTYPE1, &ch, 1, &type );
-    return type;
-}
-
-WINE_UNICODE_INLINE int iscntrlW( WCHAR wc )
-{
-    return get_char_typeW(wc) & C1_CNTRL;
-}
-
-WINE_UNICODE_INLINE int ispunctW( WCHAR wc )
-{
-    return get_char_typeW(wc) & C1_PUNCT;
-}
-
 WINE_UNICODE_INLINE int isspaceW( WCHAR wc )
 {
-    return get_char_typeW(wc) & C1_SPACE;
+    unsigned short type;
+    GetStringTypeW( CT_CTYPE1, &wc, 1, &type );
+    return type & C1_SPACE;
 }
-
-WINE_UNICODE_INLINE int isdigitW( WCHAR wc )
-{
-    return get_char_typeW(wc) & C1_DIGIT;
-}
-
-WINE_UNICODE_INLINE int isxdigitW( WCHAR wc )
-{
-    return get_char_typeW(wc) & C1_XDIGIT;
-}
-
-WINE_UNICODE_INLINE int islowerW( WCHAR wc )
-{
-    return get_char_typeW(wc) & C1_LOWER;
-}
-
-WINE_UNICODE_INLINE int isupperW( WCHAR wc )
-{
-    return get_char_typeW(wc) & C1_UPPER;
-}
-
-WINE_UNICODE_INLINE int isalnumW( WCHAR wc )
-{
-    return get_char_typeW(wc) & (C1_ALPHA|C1_DIGIT|C1_LOWER|C1_UPPER);
-}
-
-WINE_UNICODE_INLINE int isalphaW( WCHAR wc )
-{
-    return get_char_typeW(wc) & (C1_ALPHA|C1_LOWER|C1_UPPER);
-}
-
-WINE_UNICODE_INLINE int isgraphW( WCHAR wc )
-{
-    return get_char_typeW(wc) & (C1_ALPHA|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER);
-}
-
-WINE_UNICODE_INLINE int isprintW( WCHAR wc )
-{
-    return get_char_typeW(wc) & (C1_ALPHA|C1_BLANK|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER);
-}
-
-/* some useful string manipulation routines */
 
 WINE_UNICODE_INLINE unsigned int strlenW( const WCHAR *str )
 {
@@ -133,9 +66,6 @@ WINE_UNICODE_INLINE WCHAR *strcpyW( WCHAR *dst, const WCHAR *src )
     while ((*p++ = *src++));
     return dst;
 }
-
-/* strncpy doesn't do what you think, don't use it */
-#define strncpyW(d,s,n) error do_not_use_strncpyW_use_lstrcpynW_or_memcpy_instead
 
 WINE_UNICODE_INLINE int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 {
@@ -175,31 +105,10 @@ WINE_UNICODE_INLINE WCHAR *strpbrkW( const WCHAR *str, const WCHAR *accept )
     return NULL;
 }
 
-WINE_UNICODE_INLINE size_t strspnW( const WCHAR *str, const WCHAR *accept )
-{
-    const WCHAR *ptr;
-    for (ptr = str; *ptr; ptr++) if (!strchrW( accept, *ptr )) break;
-    return ptr - str;
-}
-
-WINE_UNICODE_INLINE size_t strcspnW( const WCHAR *str, const WCHAR *reject )
-{
-    const WCHAR *ptr;
-    for (ptr = str; *ptr; ptr++) if (strchrW( reject, *ptr )) break;
-    return ptr - str;
-}
-
 WINE_UNICODE_INLINE WCHAR *strlwrW( WCHAR *str )
 {
     WCHAR *ret;
     for (ret = str; *str; str++) *str = tolowerW(*str);
-    return ret;
-}
-
-WINE_UNICODE_INLINE WCHAR *struprW( WCHAR *str )
-{
-    WCHAR *ret;
-    for (ret = str; *str; str++) *str = toupperW(*str);
     return ret;
 }
 
@@ -208,14 +117,6 @@ WINE_UNICODE_INLINE WCHAR *memchrW( const WCHAR *ptr, WCHAR ch, size_t n )
     const WCHAR *end;
     for (end = ptr + n; ptr < end; ptr++) if (*ptr == ch) return (WCHAR *)(ULONG_PTR)ptr;
     return NULL;
-}
-
-WINE_UNICODE_INLINE WCHAR *memrchrW( const WCHAR *ptr, WCHAR ch, size_t n )
-{
-    const WCHAR *end;
-    WCHAR *ret = NULL;
-    for (end = ptr + n; ptr < end; ptr++) if (*ptr == ch) ret = (WCHAR *)(ULONG_PTR)ptr;
-    return ret;
 }
 
 WINE_UNICODE_INLINE int strcmpiW( const WCHAR *str1, const WCHAR *str2 )
@@ -234,14 +135,6 @@ WINE_UNICODE_INLINE int strncmpiW( const WCHAR *str1, const WCHAR *str2, int n )
     int ret = 0;
     for ( ; n > 0; n--, str1++, str2++)
         if ((ret = tolowerW(*str1) - tolowerW(*str2)) || !*str1) break;
-    return ret;
-}
-
-WINE_UNICODE_INLINE int memicmpW( const WCHAR *str1, const WCHAR *str2, int n )
-{
-    int ret = 0;
-    for ( ; n > 0; n--, str1++, str2++)
-        if ((ret = tolowerW(*str1) - tolowerW(*str2))) break;
     return ret;
 }
 
@@ -350,14 +243,9 @@ WINE_UNICODE_INLINE ULONG strtoulW( LPCWSTR s, LPWSTR *end, INT base )
     return negative ? -ret : ret;
 }
 
-WINE_UNICODE_INLINE long int atolW( const WCHAR *str )
-{
-    return strtolW( str, (WCHAR **)0, 10 );
-}
-
 WINE_UNICODE_INLINE int atoiW( const WCHAR *str )
 {
-    return (int)atolW( str );
+    return (int)strtolW( str, (WCHAR **)0, 10 );
 }
 
 NTSYSAPI int __cdecl _vsnwprintf(WCHAR*,size_t,const WCHAR*,__ms_va_list);
@@ -383,9 +271,5 @@ static inline int WINAPIV sprintfW( WCHAR *str, const WCHAR *format, ...)
 }
 
 #undef WINE_UNICODE_INLINE
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  /* __WINE_WINE_UNICODE_H */

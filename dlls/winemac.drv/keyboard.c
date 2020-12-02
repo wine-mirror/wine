@@ -1242,7 +1242,7 @@ INT CDECL macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
                                     0, &deadKeyState, size - 1, &len, (UniChar*)buffer);
             if (status != noErr)
                 len = 0;
-            if (len && isgraphW(buffer[0]))
+            if (len && buffer[0] > 32)
                 buffer[len] = 0;
 
             vkey = thread_data->keyc2vkey[keyc];

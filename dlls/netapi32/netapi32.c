@@ -3621,7 +3621,7 @@ DWORD WINAPI DavGetUNCFromHTTPPath(const WCHAR *http_path, WCHAR *buf, DWORD *bu
     if (*p == ':')
     {
         port = ++p;
-        while (*p && isdigitW(*p)) { p++; len_port++; };
+        while (*p >= '0' && *p <= '9') { p++; len_port++; };
         if (len_port == 2 && !ssl && !memcmp( port, port80W, sizeof(port80W) )) port = NULL;
         else if (len_port == 3 && ssl && !memcmp( port, port443W, sizeof(port443W) )) port = NULL;
         path = p;

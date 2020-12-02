@@ -2086,7 +2086,7 @@ static void create_port_devices( DRIVER_OBJECT *driver )
         if (type != REG_SZ || strncmpiW( port, port_prefix, 3 ))
             continue;
 
-        n = atolW( port  + 3 );
+        n = atoiW( port  + 3 );
         if (n < 1 || n >= MAX_PORTS)
             continue;
 

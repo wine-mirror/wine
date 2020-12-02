@@ -293,9 +293,11 @@ static inline UINT16 get_char_script(WCHAR c)
 static DWRITE_SCRIPT_ANALYSIS get_char_sa(WCHAR c)
 {
     DWRITE_SCRIPT_ANALYSIS sa;
+    WORD type;
 
+    GetStringTypeW(CT_CTYPE1, &c, 1, &type);
     sa.script = get_char_script(c);
-    sa.shapes = iscntrlW(c) || c == 0x2028 /* LINE SEPARATOR */ || c == 0x2029 /* PARAGRAPH SEPARATOR */ ?
+    sa.shapes = (type & C1_CNTRL) || c == 0x2028 /* LINE SEPARATOR */ || c == 0x2029 /* PARAGRAPH SEPARATOR */ ?
         DWRITE_SCRIPT_SHAPES_NO_VISUAL : DWRITE_SCRIPT_SHAPES_DEFAULT;
     return sa;
 }

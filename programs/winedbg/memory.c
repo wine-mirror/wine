@@ -394,15 +394,9 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
              */
             if (!dbg_curr_process->be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
         print_char:
-            if (size == 1 && isprint((char)val_int))
+            if ((size == 1 && isprint((char)val_int)) ||
+                 (size == 2 && val_int < 127 && isprint((char)val_int)))
                 dbg_printf("'%c'", (char)val_int);
-            else if (size == 2 && isprintW((WCHAR)val_int))
-            {
-                WCHAR   wch = (WCHAR)val_int;
-                dbg_printf("'");
-                dbg_outputW(&wch, 1);
-                dbg_printf("'");
-            }
             else
                 dbg_printf("%d", (int)val_int);
             break;

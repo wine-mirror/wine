@@ -799,7 +799,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
             This->no_fwd_char = '\0';
 
             /* Don't autocomplete at all on most control characters */
-            if (iscntrlW(wParam) && !(wParam >= '\b' && wParam <= '\r'))
+            if (wParam < 32 && !(wParam >= '\b' && wParam <= '\r'))
                 break;
 
             ret = CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
