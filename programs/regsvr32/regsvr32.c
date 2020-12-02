@@ -315,7 +315,7 @@ int __cdecl wmain(int argc, WCHAR* argv[])
     BOOL            Unregister = FALSE;
     BOOL            DllFound = FALSE;
     WCHAR*          wsCommandLine = NULL;
-    WCHAR           EmptyLine[1] = {0};
+    WCHAR           EmptyLine[] = L"";
 
     OleInitialize(NULL);
 
