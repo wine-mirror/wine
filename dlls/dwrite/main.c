@@ -258,9 +258,7 @@ static inline struct localizedstrings *impl_from_IDWriteLocalizedStrings(IDWrite
 
 static HRESULT WINAPI localizedstrings_QueryInterface(IDWriteLocalizedStrings *iface, REFIID riid, void **obj)
 {
-    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteLocalizedStrings))
     {
@@ -358,60 +356,66 @@ static HRESULT WINAPI localizedstrings_GetLocaleNameLength(IDWriteLocalizedStrin
 
 static HRESULT WINAPI localizedstrings_GetLocaleName(IDWriteLocalizedStrings *iface, UINT32 index, WCHAR *buffer, UINT32 size)
 {
-    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
 
-    TRACE("(%p)->(%u %p %u)\n", This, index, buffer, size);
+    TRACE("%p, %u, %p, %u.\n", iface, index, buffer, size);
 
-    if (index >= This->count) {
+    if (index >= strings->count)
+    {
         if (buffer) *buffer = 0;
         return E_FAIL;
     }
 
-    if (size < strlenW(This->data[index].locale)+1) {
+    if (size < strlenW(strings->data[index].locale) + 1)
+    {
         if (buffer) *buffer = 0;
         return E_NOT_SUFFICIENT_BUFFER;
     }
 
-    strcpyW(buffer, This->data[index].locale);
+    strcpyW(buffer, strings->data[index].locale);
     return S_OK;
 }
 
 static HRESULT WINAPI localizedstrings_GetStringLength(IDWriteLocalizedStrings *iface, UINT32 index, UINT32 *length)
 {
-    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
 
-    TRACE("(%p)->(%u %p)\n", This, index, length);
+    TRACE("%p, %u, %p.\n", iface, index, length);
 
-    if (index >= This->count) {
-        *length = (UINT32)-1;
+    if (index >= strings->count)
+    {
+        *length = ~0u;
         return E_FAIL;
     }
 
-    *length = strlenW(This->data[index].string);
+    *length = strlenW(strings->data[index].string);
     return S_OK;
 }
 
 static HRESULT WINAPI localizedstrings_GetString(IDWriteLocalizedStrings *iface, UINT32 index, WCHAR *buffer, UINT32 size)
 {
-    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
 
-    TRACE("(%p)->(%u %p %u)\n", This, index, buffer, size);
+    TRACE("%p, %u, %p, %u.\n", iface, index, buffer, size);
 
-    if (index >= This->count) {
+    if (index >= strings->count)
+    {
         if (buffer) *buffer = 0;
         return E_FAIL;
     }
 
-    if (size < strlenW(This->data[index].string)+1) {
+    if (size < strlenW(strings->data[index].string) + 1)
+    {
         if (buffer) *buffer = 0;
         return E_NOT_SUFFICIENT_BUFFER;
     }
 
-    strcpyW(buffer, This->data[index].string);
+    strcpyW(buffer, strings->data[index].string);
     return S_OK;
 }
 
-static const IDWriteLocalizedStringsVtbl localizedstringsvtbl = {
+static const IDWriteLocalizedStringsVtbl localizedstringsvtbl =
+{
     localizedstrings_QueryInterface,
     localizedstrings_AddRef,
     localizedstrings_Release,
@@ -511,13 +515,15 @@ HRESULT clone_localizedstrings(IDWriteLocalizedStrings *iface, IDWriteLocalizedS
 void set_en_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *string)
 {
     static const WCHAR enusW[] = {'e','n','-','U','S',0};
-    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
     UINT32 i;
 
-    for (i = 0; i < This->count; i++) {
-        if (!strcmpiW(This->data[i].locale, enusW)) {
-            heap_free(This->data[i].string);
-            This->data[i].string = heap_strdupW(string);
+    for (i = 0; i < strings->count; i++)
+    {
+        if (!strcmpiW(strings->data[i].locale, enusW))
+        {
+            heap_free(strings->data[i].string);
+            strings->data[i].string = heap_strdupW(string);
             break;
         }
     }
