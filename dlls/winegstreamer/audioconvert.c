@@ -200,9 +200,72 @@ static HRESULT WINAPI audio_converter_GetInputAvailableType(IMFTransform *iface,
 static HRESULT WINAPI audio_converter_GetOutputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
-    FIXME("%p, %u, %u, %p.\n", iface, id, index, type);
+    IMFMediaType *output_type;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    static const struct
+    {
+        const GUID *subtype;
+        DWORD depth;
+    }
+    formats[] =
+    {
+        {&MFAudioFormat_PCM, 16},
+        {&MFAudioFormat_PCM, 24},
+        {&MFAudioFormat_PCM, 32},
+        {&MFAudioFormat_Float, 32},
+    };
+
+    static const DWORD rates[] = {44100, 48000};
+    static const DWORD channel_cnts[] = {1, 2, 6};
+    const GUID *subtype;
+    DWORD rate, channels, bps;
+
+    TRACE("%p, %u, %u, %p.\n", iface, id, index, type);
+
+    if (id != 0)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    if (index >= ARRAY_SIZE(formats) * 2/*rates*/ * 3/*layouts*/)
+        return MF_E_NO_MORE_TYPES;
+
+    if (FAILED(hr = MFCreateMediaType(&output_type)))
+        return hr;
+
+    subtype = formats[index / 6].subtype;
+    bps = formats[index / 6].depth;
+    rate = rates[index % 2];
+    channels = channel_cnts[(index / 2) % 3];
+
+    if (FAILED(hr = IMFMediaType_SetGUID(output_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio)))
+        goto fail;
+    if (FAILED(hr = IMFMediaType_SetGUID(output_type, &MF_MT_SUBTYPE, subtype)))
+        goto fail;
+    if (FAILED(hr = IMFMediaType_SetUINT32(output_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, rate)))
+        goto fail;
+    if (FAILED(hr = IMFMediaType_SetUINT32(output_type, &MF_MT_AUDIO_NUM_CHANNELS, channels)))
+        goto fail;
+    if (FAILED(hr = IMFMediaType_SetUINT32(output_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, bps)))
+        goto fail;
+
+    if (FAILED(hr = IMFMediaType_SetUINT32(output_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, channels * bps / 8)))
+        goto fail;
+    if (FAILED(hr = IMFMediaType_SetUINT32(output_type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, rate * channels * bps / 8)))
+        goto fail;
+    if (FAILED(hr = IMFMediaType_SetUINT32(output_type, &MF_MT_AUDIO_CHANNEL_MASK,
+            channels == 1 ? KSAUDIO_SPEAKER_MONO :
+            channels == 2 ? KSAUDIO_SPEAKER_STEREO :
+          /*channels == 6*/ KSAUDIO_SPEAKER_5POINT1)))
+        goto fail;
+    if (FAILED(hr = IMFMediaType_SetUINT32(output_type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE)))
+        goto fail;
+
+    *type = output_type;
+
+    return S_OK;
+fail:
+    IMFMediaType_Release(output_type);
+    return hr;
 }
 
 static HRESULT WINAPI audio_converter_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
