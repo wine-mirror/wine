@@ -167,9 +167,10 @@ enum runanalysis_flags {
     RUNANALYSIS_USE_TRANSFORM = 1 << 2
 };
 
-struct dwrite_glyphrunanalysis {
+struct dwrite_glyphrunanalysis
+{
     IDWriteGlyphRunAnalysis IDWriteGlyphRunAnalysis_iface;
-    LONG ref;
+    LONG refcount;
 
     DWRITE_RENDERING_MODE1 rendering_mode;
     DWRITE_TEXTURE_TYPE texture_type; /* derived from rendering mode specified on creation */
@@ -5496,12 +5497,9 @@ HRESULT get_local_refkey(const WCHAR *path, const FILETIME *writetime, void **ke
     return S_OK;
 }
 
-/* IDWriteGlyphRunAnalysis */
 static HRESULT WINAPI glyphrunanalysis_QueryInterface(IDWriteGlyphRunAnalysis *iface, REFIID riid, void **ppv)
 {
-    struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
-
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), ppv);
 
     if (IsEqualIID(riid, &IID_IDWriteGlyphRunAnalysis) ||
         IsEqualIID(riid, &IID_IUnknown))
@@ -5519,29 +5517,32 @@ static HRESULT WINAPI glyphrunanalysis_QueryInterface(IDWriteGlyphRunAnalysis *i
 
 static ULONG WINAPI glyphrunanalysis_AddRef(IDWriteGlyphRunAnalysis *iface)
 {
-    struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%u)\n", This, ref);
-    return ref;
+    struct dwrite_glyphrunanalysis *analysis = impl_from_IDWriteGlyphRunAnalysis(iface);
+    ULONG refcount = InterlockedIncrement(&analysis->refcount);
+
+    TRACE("%p, refcount %d.\n", iface, refcount);
+
+    return refcount;
 }
 
 static ULONG WINAPI glyphrunanalysis_Release(IDWriteGlyphRunAnalysis *iface)
 {
-    struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct dwrite_glyphrunanalysis *analysis = impl_from_IDWriteGlyphRunAnalysis(iface);
+    ULONG refcount = InterlockedDecrement(&analysis->refcount);
 
-    TRACE("(%p)->(%u)\n", This, ref);
+    TRACE("%p, refcount %d.\n", iface, refcount);
 
-    if (!ref) {
-        if (This->run.fontFace)
-            IDWriteFontFace_Release(This->run.fontFace);
-        heap_free(This->glyphs);
-        heap_free(This->origins);
-        heap_free(This->bitmap);
-        heap_free(This);
+    if (!refcount)
+    {
+        if (analysis->run.fontFace)
+            IDWriteFontFace_Release(analysis->run.fontFace);
+        heap_free(analysis->glyphs);
+        heap_free(analysis->origins);
+        heap_free(analysis->bitmap);
+        heap_free(analysis);
     }
 
-    return ref;
+    return refcount;
 }
 
 static BOOL is_natural_rendering_mode(DWRITE_RENDERING_MODE1 mode)
@@ -5611,23 +5612,25 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
     *bounds = analysis->bounds;
 }
 
-static HRESULT WINAPI glyphrunanalysis_GetAlphaTextureBounds(IDWriteGlyphRunAnalysis *iface, DWRITE_TEXTURE_TYPE type, RECT *bounds)
+static HRESULT WINAPI glyphrunanalysis_GetAlphaTextureBounds(IDWriteGlyphRunAnalysis *iface,
+        DWRITE_TEXTURE_TYPE type, RECT *bounds)
 {
-    struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
+    struct dwrite_glyphrunanalysis *analysis = impl_from_IDWriteGlyphRunAnalysis(iface);
 
-    TRACE("(%p)->(%d %p)\n", This, type, bounds);
+    TRACE("%p, %d, %p.\n", iface, type, bounds);
 
     if ((UINT32)type > DWRITE_TEXTURE_CLEARTYPE_3x1) {
         SetRectEmpty(bounds);
         return E_INVALIDARG;
     }
 
-    if (type != This->texture_type) {
+    if (type != analysis->texture_type)
+    {
         SetRectEmpty(bounds);
         return S_OK;
     }
 
-    glyphrunanalysis_get_texturebounds(This, bounds);
+    glyphrunanalysis_get_texturebounds(analysis, bounds);
     return S_OK;
 }
 
@@ -5769,45 +5772,47 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
 static HRESULT WINAPI glyphrunanalysis_CreateAlphaTexture(IDWriteGlyphRunAnalysis *iface, DWRITE_TEXTURE_TYPE type,
     RECT const *bounds, BYTE *bitmap, UINT32 size)
 {
-    struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
+    struct dwrite_glyphrunanalysis *analysis = impl_from_IDWriteGlyphRunAnalysis(iface);
     UINT32 required;
     RECT runbounds;
 
-    TRACE("(%p)->(%d %s %p %u)\n", This, type, wine_dbgstr_rect(bounds), bitmap, size);
+    TRACE("%p, %d, %s, %p, %u.\n", iface, type, wine_dbgstr_rect(bounds), bitmap, size);
 
     if (!bounds || !bitmap || (UINT32)type > DWRITE_TEXTURE_CLEARTYPE_3x1)
         return E_INVALIDARG;
 
     /* make sure buffer is large enough for requested texture type */
     required = (bounds->right - bounds->left) * (bounds->bottom - bounds->top);
-    if (This->texture_type == DWRITE_TEXTURE_CLEARTYPE_3x1)
+    if (analysis->texture_type == DWRITE_TEXTURE_CLEARTYPE_3x1)
         required *= 3;
 
     if (size < required)
         return E_NOT_SUFFICIENT_BUFFER;
 
     /* validate requested texture type */
-    if (This->texture_type != type)
+    if (analysis->texture_type != type)
         return DWRITE_E_UNSUPPORTEDOPERATION;
 
     memset(bitmap, 0, size);
-    glyphrunanalysis_get_texturebounds(This, &runbounds);
-    if (IntersectRect(&runbounds, &runbounds, bounds)) {
+    glyphrunanalysis_get_texturebounds(analysis, &runbounds);
+    if (IntersectRect(&runbounds, &runbounds, bounds))
+    {
         int pixel_size = type == DWRITE_TEXTURE_CLEARTYPE_3x1 ? 3 : 1;
-        int src_width = (This->bounds.right - This->bounds.left) * pixel_size;
+        int src_width = (analysis->bounds.right - analysis->bounds.left) * pixel_size;
         int dst_width = (bounds->right - bounds->left) * pixel_size;
         int draw_width = (runbounds.right - runbounds.left) * pixel_size;
         BYTE *src, *dst;
         int y;
 
-        if (!(This->flags & RUNANALYSIS_BITMAP_READY)) {
+        if (!(analysis->flags & RUNANALYSIS_BITMAP_READY))
+        {
             HRESULT hr;
 
-            if (FAILED(hr = glyphrunanalysis_render(This)))
+            if (FAILED(hr = glyphrunanalysis_render(analysis)))
                 return hr;
         }
 
-        src = get_pixel_ptr(This->bitmap, type, &runbounds, &This->bounds);
+        src = get_pixel_ptr(analysis->bitmap, type, &runbounds, &analysis->bounds);
         dst = get_pixel_ptr(bitmap, type, &runbounds, bounds);
 
         for (y = 0; y < runbounds.bottom - runbounds.top; y++) {
@@ -5823,14 +5828,14 @@ static HRESULT WINAPI glyphrunanalysis_CreateAlphaTexture(IDWriteGlyphRunAnalysi
 static HRESULT WINAPI glyphrunanalysis_GetAlphaBlendParams(IDWriteGlyphRunAnalysis *iface, IDWriteRenderingParams *params,
     FLOAT *gamma, FLOAT *contrast, FLOAT *cleartypelevel)
 {
-    struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
+    struct dwrite_glyphrunanalysis *analysis = impl_from_IDWriteGlyphRunAnalysis(iface);
 
-    TRACE("(%p)->(%p %p %p %p)\n", This, params, gamma, contrast, cleartypelevel);
+    TRACE("%p, %p, %p, %p, %p.\n", iface, params, gamma, contrast, cleartypelevel);
 
     if (!params)
         return E_INVALIDARG;
 
-    switch (This->rendering_mode)
+    switch (analysis->rendering_mode)
     {
     case DWRITE_RENDERING_MODE1_GDI_CLASSIC:
     case DWRITE_RENDERING_MODE1_GDI_NATURAL:
@@ -5859,7 +5864,8 @@ static HRESULT WINAPI glyphrunanalysis_GetAlphaBlendParams(IDWriteGlyphRunAnalys
     return S_OK;
 }
 
-static const struct IDWriteGlyphRunAnalysisVtbl glyphrunanalysisvtbl = {
+static const struct IDWriteGlyphRunAnalysisVtbl glyphrunanalysisvtbl =
+{
     glyphrunanalysis_QueryInterface,
     glyphrunanalysis_AddRef,
     glyphrunanalysis_Release,
@@ -5930,7 +5936,7 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
         return E_OUTOFMEMORY;
 
     analysis->IDWriteGlyphRunAnalysis_iface.lpVtbl = &glyphrunanalysisvtbl;
-    analysis->ref = 1;
+    analysis->refcount = 1;
     analysis->rendering_mode = desc->rendering_mode;
 
     if (desc->rendering_mode == DWRITE_RENDERING_MODE1_ALIASED
