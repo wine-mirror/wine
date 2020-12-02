@@ -210,7 +210,7 @@ typedef struct
     UINT   start; /* input position where value starts */
 } strval;
 
-static WCHAR emptyW[] = {0};
+static WCHAR emptyW[] = L"";
 static WCHAR xmlW[] = L"xml";
 static WCHAR xmlnsW[] = L"xmlns";
 static const strval strval_empty = { (WCHAR *)emptyW, 0 };
