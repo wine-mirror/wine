@@ -266,7 +266,6 @@ DWORD WINAPI GetConsoleProcessList(LPDWORD processlist, DWORD processcount)
 }
 
 /* Undocumented, called by native doskey.exe */
-/* FIXME: Should use CONSOLE_GetHistory() above for full implementation */
 DWORD WINAPI GetConsoleCommandHistoryA(DWORD unknown1, DWORD unknown2, DWORD unknown3)
 {
     FIXME(": (0x%x, 0x%x, 0x%x) stub!\n", unknown1, unknown2, unknown3);
@@ -275,7 +274,6 @@ DWORD WINAPI GetConsoleCommandHistoryA(DWORD unknown1, DWORD unknown2, DWORD unk
 }
 
 /* Undocumented, called by native doskey.exe */
-/* FIXME: Should use CONSOLE_GetHistory() above for full implementation */
 DWORD WINAPI GetConsoleCommandHistoryW(DWORD unknown1, DWORD unknown2, DWORD unknown3)
 {
     FIXME(": (0x%x, 0x%x, 0x%x) stub!\n", unknown1, unknown2, unknown3);
@@ -284,7 +282,6 @@ DWORD WINAPI GetConsoleCommandHistoryW(DWORD unknown1, DWORD unknown2, DWORD unk
 }
 
 /* Undocumented, called by native doskey.exe */
-/* FIXME: Should use CONSOLE_GetHistory() above for full implementation */
 DWORD WINAPI GetConsoleCommandHistoryLengthA(LPCSTR unknown)
 {
     FIXME(": (%s) stub!\n", debugstr_a(unknown));
@@ -293,7 +290,6 @@ DWORD WINAPI GetConsoleCommandHistoryLengthA(LPCSTR unknown)
 }
 
 /* Undocumented, called by native doskey.exe */
-/* FIXME: Should use CONSOLE_GetHistory() above for full implementation */
 DWORD WINAPI GetConsoleCommandHistoryLengthW(LPCWSTR unknown)
 {
     FIXME(": (%s) stub!\n", debugstr_w(unknown));
