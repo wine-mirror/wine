@@ -166,9 +166,35 @@ static HRESULT WINAPI audio_converter_AddInputStreams(IMFTransform *iface, DWORD
 static HRESULT WINAPI audio_converter_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
         IMFMediaType **type)
 {
-    FIXME("%p, %u, %u, %p.\n", iface, id, index, type);
+    IMFMediaType *ret;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %u, %p.\n", iface, id, index, type);
+
+    if (id != 0)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    if (index >= 2)
+        return MF_E_NO_MORE_TYPES;
+
+    if (FAILED(hr = MFCreateMediaType(&ret)))
+        return hr;
+
+    if (FAILED(hr = IMFMediaType_SetGUID(ret, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio)))
+    {
+        IMFMediaType_Release(ret);
+        return hr;
+    }
+
+    if (FAILED(hr = IMFMediaType_SetGUID(ret, &MF_MT_SUBTYPE, index ? &MFAudioFormat_Float : &MFAudioFormat_PCM)))
+    {
+        IMFMediaType_Release(ret);
+        return hr;
+    }
+
+    *type = ret;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI audio_converter_GetOutputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
