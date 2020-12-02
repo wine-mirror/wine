@@ -6150,10 +6150,6 @@ HRESULT opentype_get_vertical_glyph_variants(struct dwrite_fontface *fontface, u
     {
         const struct lookup *lookup = &lookups.lookups[i];
 
-        /* FIXME: should probably handle extension subtables. */
-        if (lookup->type != GSUB_LOOKUP_SINGLE_SUBST)
-            continue;
-
         context.cur = 0;
         while (context.cur < context.glyph_count)
         {
