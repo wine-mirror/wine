@@ -1277,7 +1277,7 @@ static NTSTATUS process_console_input( struct console *console )
             ^ ctx->insert_key;
 
         if (func) func( console );
-        else if (ir.Event.KeyEvent.uChar.UnicodeChar && !(ir.Event.KeyEvent.dwControlKeyState & LEFT_ALT_PRESSED))
+        else if (ir.Event.KeyEvent.uChar.UnicodeChar)
             edit_line_insert( console, &ir.Event.KeyEvent.uChar.UnicodeChar, 1 );
 
         if (!(console->mode & ENABLE_LINE_INPUT) && ctx->status == STATUS_PENDING)
