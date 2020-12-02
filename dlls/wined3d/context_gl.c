@@ -3703,8 +3703,12 @@ static void context_gl_load_shader_resources(struct wined3d_context_gl *context_
 
         for (j = 0; j < WINED3D_MAX_CBS; ++j)
         {
-            if (state->cb[i][j])
-                wined3d_buffer_load(state->cb[i][j], &context_gl->c, state);
+            if (!state->cb[i][j])
+                continue;
+
+            buffer_gl = wined3d_buffer_gl(state->cb[i][j]);
+            wined3d_buffer_load(&buffer_gl->b, &context_gl->c, state);
+            wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
         }
 
         for (j = 0; j < shader->reg_maps.sampler_map.count; ++j)
