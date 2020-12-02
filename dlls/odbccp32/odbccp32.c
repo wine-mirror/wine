@@ -1523,18 +1523,45 @@ BOOL WINAPI SQLRemoveDriverManager(LPDWORD pdwUsageCount)
 
 BOOL WINAPI SQLRemoveDSNFromIniW(LPCWSTR lpszDSN)
 {
+    HKEY hkey;
+
+    TRACE("%s\n", debugstr_w(lpszDSN));
+
     clear_errors();
-    FIXME("%s\n", debugstr_w(lpszDSN));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+
+    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, L"Software\\ODBC\\ODBC.INI\\ODBC Data Sources", &hkey) == ERROR_SUCCESS)
+    {
+        RegDeleteValueW(hkey, lpszDSN);
+        RegCloseKey(hkey);
+    }
+
+    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, L"Software\\ODBC\\ODBC.INI", &hkey) == ERROR_SUCCESS)
+    {
+        RegDeleteTreeW(hkey, lpszDSN);
+        RegCloseKey(hkey);
+    }
+
+    return TRUE;
 }
 
 BOOL WINAPI SQLRemoveDSNFromIni(LPCSTR lpszDSN)
 {
+    BOOL ret = FALSE;
+    WCHAR *dsn;
+
+    TRACE("%s\n", debugstr_a(lpszDSN));
+
     clear_errors();
-    FIXME("%s\n", debugstr_a(lpszDSN));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+
+    dsn = SQLInstall_strdup(lpszDSN);
+    if (dsn)
+        ret = SQLRemoveDSNFromIniW(dsn);
+    else
+        push_error(ODBC_ERROR_OUT_OF_MEM, odbc_error_out_of_mem);
+
+    heap_free(dsn);
+
+    return ret;
 }
 
 BOOL WINAPI SQLRemoveTranslatorW(const WCHAR *translator, DWORD *usage_count)
