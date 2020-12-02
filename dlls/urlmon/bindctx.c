@@ -23,7 +23,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
-static WCHAR bscb_holderW[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
+static WCHAR bscb_holderW[] = L"_BSCB_Holder_";
 
 extern IID IID_IBindStatusCallbackHolder;
 

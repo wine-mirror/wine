@@ -26,11 +26,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 static const WCHAR feature_control_keyW[] =
-    {'S','o','f','t','w','a','r','e','\\',
-     'M','i','c','r','o','s','o','f','t','\\',
-     'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r','\\',
-     'M','a','i','n','\\',
-     'F','e','a','t','u','r','e','C','o','n','t','r','o','l',0};
+    L"Software\\Microsoft\\Internet Explorer\\Main\\FeatureControl";
 
 static CRITICAL_SECTION process_features_cs;
 static CRITICAL_SECTION_DEBUG process_features_cs_dbg =
@@ -489,8 +485,6 @@ static BOOL get_feature_from_reg(HKEY feature_control, LPCWSTR feature_name, LPC
     HKEY feature;
     DWORD res;
 
-    static const WCHAR wildcardW[] = {'*',0};
-
     res = RegOpenKeyW(feature_control, feature_name, &feature);
     if(res != ERROR_SUCCESS)
         return FALSE;
@@ -499,7 +493,7 @@ static BOOL get_feature_from_reg(HKEY feature_control, LPCWSTR feature_name, LPC
     res = RegQueryValueExW(feature, process_name, NULL, &type, (BYTE*)&value, &size);
     if(res != ERROR_SUCCESS || type != REG_DWORD) {
         size = sizeof(DWORD);
-        res = RegQueryValueExW(feature, wildcardW, NULL, &type, (BYTE*)&value, &size);
+        res = RegQueryValueExW(feature, L"*", NULL, &type, (BYTE*)&value, &size);
     }
 
     RegCloseKey(feature);
@@ -507,7 +501,7 @@ static BOOL get_feature_from_reg(HKEY feature_control, LPCWSTR feature_name, LPC
         return FALSE;
 
     if(type != REG_DWORD) {
-        WARN("Unexpected registry value type %d (expected REG_DWORD) for %s\n", type, debugstr_w(wildcardW));
+        WARN("Unexpected registry value type %d (expected REG_DWORD) for %s\n", type, debugstr_w(L"*"));
         return FALSE;
     }
 

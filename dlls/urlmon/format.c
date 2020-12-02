@@ -21,7 +21,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
-static WCHAR wszEnumFORMATETC[] = {'_','E','n','u','m','F','O','R','M','A','T','E','T','C','_',0};
+static WCHAR wszEnumFORMATETC[] = L"_EnumFORMATETC_";
 
 typedef struct {
     IEnumFORMATETC IEnumFORMATETC_iface;

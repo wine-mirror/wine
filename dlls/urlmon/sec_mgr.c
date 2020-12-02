@@ -33,35 +33,12 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
-
-static const WCHAR currentlevelW[] = {'C','u','r','r','e','n','t','L','e','v','e','l',0};
-static const WCHAR descriptionW[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
-static const WCHAR displaynameW[] = {'D','i','s','p','l','a','y','N','a','m','e',0};
-static const WCHAR fileW[] = {'f','i','l','e',0};
-static const WCHAR flagsW[] = {'F','l','a','g','s',0};
-static const WCHAR iconW[] = {'I','c','o','n',0};
-static const WCHAR minlevelW[] = {'M','i','n','L','e','v','e','l',0};
-static const WCHAR recommendedlevelW[] = {'R','e','c','o','m','m','e','n','d','e','d',
-                                          'L','e','v','e','l',0};
-static const WCHAR wszZonesKey[] = {'S','o','f','t','w','a','r','e','\\',
-                                    'M','i','c','r','o','s','o','f','t','\\',
-                                    'W','i','n','d','o','w','s','\\',
-                                    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                    'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
-                                    'Z','o','n','e','s','\\',0};
-static const WCHAR zone_map_keyW[] = {'S','o','f','t','w','a','r','e','\\',
-                                      'M','i','c','r','o','s','o','f','t','\\',
-                                      'W','i','n','d','o','w','s','\\',
-                                      'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                      'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
-                                      'Z','o','n','e','M','a','p',0};
-static const WCHAR wszZoneMapDomainsKey[] = {'S','o','f','t','w','a','r','e','\\',
-                                             'M','i','c','r','o','s','o','f','t','\\',
-                                             'W','i','n','d','o','w','s','\\',
-                                             'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                             'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
-                                             'Z','o','n','e','M','a','p','\\',
-                                             'D','o','m','a','i','n','s',0};
+static const WCHAR wszZonesKey[] =
+    L"Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Zones\\";
+static const WCHAR zone_map_keyW[] =
+    L"Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap";
+static const WCHAR wszZoneMapDomainsKey[] =
+    L"Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Domains";
 
 static inline BOOL is_drive_path(const WCHAR *path)
 {
@@ -135,13 +112,7 @@ static HRESULT get_zone_from_reg(LPCWSTR schema, DWORD *zone)
     HKEY hkey;
 
     static const WCHAR wszZoneMapProtocolKey[] =
-        {'S','o','f','t','w','a','r','e','\\',
-         'M','i','c','r','o','s','o','f','t','\\',
-         'W','i','n','d','o','w','s','\\',
-         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-         'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
-         'Z','o','n','e','M','a','p','\\',
-         'P','r','o','t','o','c','o','l','D','e','f','a','u','l','t','s',0};
+        L"Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\ProtocolDefaults";
 
     res = RegOpenKeyW(HKEY_CURRENT_USER, wszZoneMapProtocolKey, &hkey);
     if(res != ERROR_SUCCESS) {
@@ -262,8 +233,6 @@ static BOOL matches_domain_pattern(LPCWSTR pattern, LPCWSTR str, BOOL implicit_w
 
 static BOOL get_zone_for_scheme(HKEY key, LPCWSTR schema, DWORD *zone)
 {
-    static const WCHAR wildcardW[] = {'*',0};
-
     DWORD res;
     DWORD size = sizeof(DWORD);
     DWORD type;
@@ -278,12 +247,12 @@ static BOOL get_zone_for_scheme(HKEY key, LPCWSTR schema, DWORD *zone)
 
     /* Try to get the zone for the wildcard scheme. */
     size = sizeof(DWORD);
-    res = RegQueryValueExW(key, wildcardW, NULL, &type, (BYTE*)zone, &size);
+    res = RegQueryValueExW(key, L"*", NULL, &type, (BYTE*)zone, &size);
     if(res != ERROR_SUCCESS)
         return FALSE;
 
     if(type != REG_DWORD) {
-        WARN("Unexpected value type %d for value %s, expected REG_DWORD\n", type, debugstr_w(wildcardW));
+        WARN("Unexpected value type %d for value %s, expected REG_DWORD\n", type, debugstr_w(L"*"));
         return FALSE;
     }
 
@@ -528,7 +497,7 @@ static HRESULT map_security_uri_to_zone(IUri *uri, DWORD *zone)
     if(FAILED(hres))
         return hres;
 
-    if(!wcsicmp(scheme, fileW)) {
+    if(!wcsicmp(scheme, L"file")) {
         BSTR path;
         WCHAR *ptr, *path_start, root[20];
 
@@ -639,12 +608,10 @@ static HRESULT map_uri_to_zone(IUri *uri, DWORD *zone, IUri **ret_uri)
 
 static HRESULT open_zone_key(HKEY parent_key, DWORD zone, HKEY *hkey)
 {
-    static const WCHAR wszFormat[] = {'%','s','%','u',0};
-
     WCHAR key_name[ARRAY_SIZE(wszZonesKey) + 12];
     DWORD res;
 
-    wsprintfW(key_name, wszFormat, wszZonesKey, zone);
+    wsprintfW(key_name, L"%s%u", wszZonesKey, zone);
 
     res = RegOpenKeyW(parent_key, key_name, hkey);
 
@@ -688,9 +655,7 @@ static HRESULT get_action_policy(DWORD zone, DWORD action, BYTE *policy, DWORD s
         WCHAR action_str[16];
         DWORD len = size;
 
-        static const WCHAR formatW[] = {'%','X',0};
-
-        wsprintfW(action_str, formatW, action);
+        wsprintfW(action_str, L"%X", action);
 
         res = RegQueryValueExW(hkey, action_str, NULL, NULL, policy, &len);
         if(res == ERROR_MORE_DATA) {
@@ -1425,13 +1390,13 @@ static HRESULT WINAPI ZoneMgrImpl_GetZoneAttributes(IInternetZoneManagerEx2* ifa
     if (FAILED(hr))
         TRACE("Zone %d not in HKLM\n", dwZone);
 
-    get_string_from_reg(hcu, hklm, displaynameW, pZoneAttributes->szDisplayName, MAX_ZONE_PATH);
-    get_string_from_reg(hcu, hklm, descriptionW, pZoneAttributes->szDescription, MAX_ZONE_DESCRIPTION);
-    get_string_from_reg(hcu, hklm, iconW, pZoneAttributes->szIconPath, MAX_ZONE_PATH);
-    get_dword_from_reg(hcu, hklm, minlevelW, &pZoneAttributes->dwTemplateMinLevel);
-    get_dword_from_reg(hcu, hklm, currentlevelW, &pZoneAttributes->dwTemplateCurrentLevel);
-    get_dword_from_reg(hcu, hklm, recommendedlevelW, &pZoneAttributes->dwTemplateRecommended);
-    get_dword_from_reg(hcu, hklm, flagsW, &pZoneAttributes->dwFlags);
+    get_string_from_reg(hcu, hklm, L"DisplayName", pZoneAttributes->szDisplayName, MAX_ZONE_PATH);
+    get_string_from_reg(hcu, hklm, L"Description", pZoneAttributes->szDescription, MAX_ZONE_DESCRIPTION);
+    get_string_from_reg(hcu, hklm, L"Icon", pZoneAttributes->szIconPath, MAX_ZONE_PATH);
+    get_dword_from_reg(hcu, hklm, L"MinLevel", &pZoneAttributes->dwTemplateMinLevel);
+    get_dword_from_reg(hcu, hklm, L"CurrentLevel", &pZoneAttributes->dwTemplateCurrentLevel);
+    get_dword_from_reg(hcu, hklm, L"RecommendedLevel", &pZoneAttributes->dwTemplateRecommended);
+    get_dword_from_reg(hcu, hklm, L"Flags", &pZoneAttributes->dwFlags);
 
     RegCloseKey(hklm);
     RegCloseKey(hcu);
@@ -1459,25 +1424,25 @@ static HRESULT WINAPI ZoneMgrImpl_SetZoneAttributes(IInternetZoneManagerEx2* ifa
         return S_OK;  /* IE6 returned E_FAIL here */
 
     /* cbSize is ignored */
-    RegSetValueExW(hcu, displaynameW, 0, REG_SZ, (LPBYTE) pZoneAttributes->szDisplayName,
+    RegSetValueExW(hcu, L"DisplayName", 0, REG_SZ, (BYTE*)pZoneAttributes->szDisplayName,
                     (lstrlenW(pZoneAttributes->szDisplayName)+1)* sizeof(WCHAR));
 
-    RegSetValueExW(hcu, descriptionW, 0, REG_SZ, (LPBYTE) pZoneAttributes->szDescription,
+    RegSetValueExW(hcu, L"Description", 0, REG_SZ, (BYTE*)pZoneAttributes->szDescription,
                     (lstrlenW(pZoneAttributes->szDescription)+1)* sizeof(WCHAR));
 
-    RegSetValueExW(hcu, iconW, 0, REG_SZ, (LPBYTE) pZoneAttributes->szIconPath,
+    RegSetValueExW(hcu, L"Icon", 0, REG_SZ, (BYTE*)pZoneAttributes->szIconPath,
                     (lstrlenW(pZoneAttributes->szIconPath)+1)* sizeof(WCHAR));
 
-    RegSetValueExW(hcu, minlevelW, 0, REG_DWORD,
+    RegSetValueExW(hcu, L"MinLevel", 0, REG_DWORD,
                     (const BYTE*) &pZoneAttributes->dwTemplateMinLevel, sizeof(DWORD));
 
-    RegSetValueExW(hcu, currentlevelW, 0, REG_DWORD,
+    RegSetValueExW(hcu, L"CurrentLevel", 0, REG_DWORD,
                     (const BYTE*) &pZoneAttributes->dwTemplateCurrentLevel, sizeof(DWORD));
 
-    RegSetValueExW(hcu, recommendedlevelW, 0, REG_DWORD,
+    RegSetValueExW(hcu, L"RecommendedLevel", 0, REG_DWORD,
                     (const BYTE*) &pZoneAttributes->dwTemplateRecommended, sizeof(DWORD));
 
-    RegSetValueExW(hcu, flagsW, 0, REG_DWORD, (const BYTE*) &pZoneAttributes->dwFlags, sizeof(DWORD));
+    RegSetValueExW(hcu, L"Flags", 0, REG_DWORD, (const BYTE*) &pZoneAttributes->dwFlags, sizeof(DWORD));
     RegCloseKey(hcu);
     return S_OK;
 
@@ -2048,7 +2013,7 @@ HRESULT WINAPI CoInternetGetSecurityUrlEx(IUri *pUri, IUri **ppSecUri, PSUACTION
         const WCHAR *tmp = ret_url;
 
         /* Check and see if a "//" is after the scheme name. */
-        tmp += ARRAY_SIZE(fileW);
+        tmp += ARRAY_SIZE(L"file");
         if(*tmp != '/' || *(tmp+1) != '/')
             hres = E_INVALIDARG;
     }
@@ -2083,11 +2048,9 @@ BOOL WINAPI IsInternetESCEnabledLocal(void)
         DWORD type, size, val;
         HKEY zone_map;
 
-        static const WCHAR iehardenW[] = {'I','E','H','a','r','d','e','n',0};
-
         if(RegOpenKeyExW(HKEY_CURRENT_USER, zone_map_keyW, 0, KEY_QUERY_VALUE, &zone_map) == ERROR_SUCCESS) {
             size = sizeof(DWORD);
-            if(RegQueryValueExW(zone_map, iehardenW, NULL, &type, (BYTE*)&val, &size) == ERROR_SUCCESS)
+            if(RegQueryValueExW(zone_map, L"IEHarden", NULL, &type, (BYTE*)&val, &size) == ERROR_SUCCESS)
                 esc_enabled = type == REG_DWORD && val != 0;
             RegCloseKey(zone_map);
         }

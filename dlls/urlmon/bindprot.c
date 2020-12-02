@@ -83,10 +83,6 @@ static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
-static const WCHAR wszURLMonikerNotificationWindow[] =
-    {'U','R','L',' ','M','o','n','i','k','e','r',' ',
-     'N','o','t','i','f','i','c','a','t','i','o','n',' ','W','i','n','d','o','w',0};
-
 static ATOM notif_wnd_class;
 
 static BOOL WINAPI register_notif_wnd_class(INIT_ONCE *once, void *param, void **context)
@@ -94,7 +90,7 @@ static BOOL WINAPI register_notif_wnd_class(INIT_ONCE *once, void *param, void *
     static WNDCLASSEXW wndclass = {
         sizeof(wndclass), 0, notif_wnd_proc, 0, 0,
         NULL, NULL, NULL, NULL, NULL,
-        wszURLMonikerNotificationWindow, NULL
+        L"URL Moniker Notification Window", NULL
     };
 
     wndclass.hInstance = hProxyDll;
@@ -128,7 +124,7 @@ HWND get_notif_hwnd(void)
         return NULL;
 
     tls_data->notif_hwnd = CreateWindowExW(0, MAKEINTRESOURCEW(notif_wnd_class),
-            wszURLMonikerNotificationWindow, 0, 0, 0, 0, 0, HWND_MESSAGE,
+            L"URL Moniker Notification Window", 0, 0, 0, 0, 0, HWND_MESSAGE,
             NULL, hProxyDll, NULL);
     if(tls_data->notif_hwnd)
         tls_data->notif_hwnd_cnt++;

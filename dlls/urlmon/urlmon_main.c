@@ -453,9 +453,7 @@ static HRESULT register_inf(BOOL doregister)
     HRESULT (WINAPI *pRegInstall)(HMODULE hm, LPCSTR pszSection, const STRTABLEA* pstTable);
     HMODULE hAdvpack;
 
-    static const WCHAR wszAdvpack[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
-
-    hAdvpack = LoadLibraryW(wszAdvpack);
+    hAdvpack = LoadLibraryW(L"advpack.dll");
     pRegInstall = (void *)GetProcAddress(hAdvpack, "RegInstall");
 
     return pRegInstall(hProxyDll, doregister ? "RegisterDll" : "UnregisterDll", NULL);

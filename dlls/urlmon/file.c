@@ -264,7 +264,6 @@ static HRESULT WINAPI FileProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
     DWORD grfBINDF = 0;
     DWORD scheme, size;
     LPWSTR mime = NULL;
-    WCHAR null_char = 0;
     BSTR ext;
     HRESULT hres;
 
@@ -301,7 +300,7 @@ static HRESULT WINAPI FileProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
         return S_OK;
     }
 
-    IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_SENDINGREQUEST, &null_char);
+    IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_SENDINGREQUEST, L"");
 
     size = 0;
     hres = CoInternetParseIUri(pUri, PARSE_PATH_FROM_URL, 0, path, ARRAY_SIZE(path), &size, 0);

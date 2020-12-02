@@ -858,10 +858,7 @@ HRESULT WINAPI URLDownloadToCacheFileW(LPUNKNOWN lpUnkCaller, LPCWSTR szURL, LPW
     HRESULT hr;
     LPWSTR ext;
 
-    static WCHAR header[] = {
-        'H','T','T','P','/','1','.','0',' ','2','0','0',' ',
-        'O','K','\\','r','\\','n','\\','r','\\','n',0
-    };
+    static WCHAR header[] = L"HTTP/1.0 200 OK\\r\\n\\r\\n";
 
     TRACE("(%p, %s, %p, %d, %d, %p)\n", lpUnkCaller, debugstr_w(szURL),
           szFileName, dwBufLength, dwReserved, pBSC);
@@ -932,11 +929,10 @@ HRESULT WINAPI HlinkSimpleNavigateToString( LPCWSTR szTarget,
     if (grfHLNF == HLNF_OPENINNEWWINDOW)
     {
         SHELLEXECUTEINFOW sei;
-        static const WCHAR openW[] = { 'o', 'p', 'e', 'n', 0 };
 
         memset(&sei, 0, sizeof(sei));
         sei.cbSize = sizeof(sei);
-        sei.lpVerb = openW;
+        sei.lpVerb = L"open";
         sei.nShow = SW_SHOWNORMAL;
         sei.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_NO_CONSOLE;
         sei.lpFile = szTarget;

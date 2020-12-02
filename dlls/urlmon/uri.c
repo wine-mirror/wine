@@ -699,8 +699,6 @@ static BSTR pre_process_uri(LPCWSTR uri) {
  * address.
  */
 static DWORD ui2ipv4(WCHAR *dest, UINT address) {
-    static const WCHAR formatW[] =
-        {'%','u','.','%','u','.','%','u','.','%','u',0};
     DWORD ret = 0;
     UCHAR digits[4];
 
@@ -711,22 +709,21 @@ static DWORD ui2ipv4(WCHAR *dest, UINT address) {
 
     if(!dest) {
         WCHAR tmp[16];
-        ret = swprintf(tmp, ARRAY_SIZE(tmp), formatW, digits[0], digits[1], digits[2], digits[3]);
+        ret = swprintf(tmp, ARRAY_SIZE(tmp), L"%u.%u.%u.%u", digits[0], digits[1], digits[2], digits[3]);
     } else
-        ret = swprintf(dest, 16, formatW, digits[0], digits[1], digits[2], digits[3]);
+        ret = swprintf(dest, 16, L"%u.%u.%u.%u", digits[0], digits[1], digits[2], digits[3]);
 
     return ret;
 }
 
 static DWORD ui2str(WCHAR *dest, UINT value) {
-    static const WCHAR formatW[] = {'%','u',0};
     DWORD ret = 0;
 
     if(!dest) {
         WCHAR tmp[11];
-        ret = swprintf(tmp, ARRAY_SIZE(tmp), formatW, value);
+        ret = swprintf(tmp, ARRAY_SIZE(tmp), L"%u", value);
     } else
-        ret = swprintf(dest, 11, formatW, value);
+        ret = swprintf(dest, 11, L"%u", value);
 
     return ret;
 }
@@ -970,14 +967,11 @@ static BOOL parse_scheme_type(parse_data *data) {
  * Returns TRUE if it was able to successfully parse the information.
  */
 static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD extras) {
-    static const WCHAR fileW[] = {'f','i','l','e',0};
-    static const WCHAR wildcardW[] = {'*',0};
-
     /* First check to see if the uri could implicitly be a file path. */
     if(is_implicit_file_path(*ptr)) {
         if(flags & Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME) {
-            data->scheme = fileW;
-            data->scheme_len = lstrlenW(fileW);
+            data->scheme = L"file";
+            data->scheme_len = lstrlenW(L"file");
             data->has_implicit_scheme = TRUE;
 
             TRACE("(%p %p %x): URI is an implicit file path.\n", ptr, data, flags);
@@ -996,8 +990,8 @@ static BOOL parse_scheme(const WCHAR **ptr, parse_data *data, DWORD flags, DWORD
          *      c) an invalid URI.
          */
         if(flags & Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME) {
-            data->scheme = wildcardW;
-            data->scheme_len = lstrlenW(wildcardW);
+            data->scheme = L"*";
+            data->scheme_len = lstrlenW(L"*");
             data->has_implicit_scheme = TRUE;
 
             TRACE("(%p %p %x): URI is an implicit wildcard scheme.\n", ptr, data, flags);
@@ -1510,7 +1504,6 @@ static BOOL parse_authority(const WCHAR **ptr, parse_data *data, DWORD flags) {
 /* Attempts to parse the path information of a hierarchical URI. */
 static BOOL parse_path_hierarchical(const WCHAR **ptr, parse_data *data, DWORD flags) {
     const WCHAR *start = *ptr;
-    static const WCHAR slash[] = {'/',0};
     const BOOL is_file = data->scheme_type == URL_SCHEME_FILE;
 
     if(is_path_delim(data->scheme_type, **ptr)) {
@@ -1519,7 +1512,7 @@ static BOOL parse_path_hierarchical(const WCHAR **ptr, parse_data *data, DWORD f
             data->path_len = 0;
         } else if(!(flags & Uri_CREATE_NO_CANONICALIZE)) {
             /* If the path component is empty, then a '/' is added. */
-            data->path = slash;
+            data->path = L"/";
             data->path_len = 1;
         }
     } else {
@@ -1972,14 +1965,12 @@ static BOOL canonicalize_userinfo(const parse_data *data, Uri *uri, DWORD flags,
  */
 static BOOL canonicalize_reg_name(const parse_data *data, Uri *uri,
                                   DWORD flags, BOOL computeOnly) {
-    static const WCHAR localhostW[] =
-            {'l','o','c','a','l','h','o','s','t',0};
     const WCHAR *ptr;
     const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
 
     if(data->scheme_type == URL_SCHEME_FILE &&
-       data->host_len == lstrlenW(localhostW)) {
-        if(!StrCmpNIW(data->host, localhostW, data->host_len)) {
+       data->host_len == lstrlenW(L"localhost")) {
+        if(!StrCmpNIW(data->host, L"localhost", data->host_len)) {
             uri->host_start = -1;
             uri->host_len = 0;
             uri->host_type = Uri_HOST_UNKNOWN;
@@ -3147,8 +3138,7 @@ static HRESULT validate_scheme_name(const UriBuilder *builder, parse_data *data,
         ptr = builder->uri->canon_uri+builder->uri->scheme_start;
         expected_len = builder->uri->scheme_len;
     } else {
-        static const WCHAR nullW[] = {0};
-        ptr = nullW;
+        ptr = L"";
         expected_len = 0;
     }
 
@@ -3317,8 +3307,7 @@ static HRESULT validate_path(const UriBuilder *builder, parse_data *data, DWORD 
         ptr = builder->uri->canon_uri+builder->uri->path_start;
         expected_len = builder->uri->path_len;
     } else {
-        static const WCHAR nullW[] = {0};
-        ptr = nullW;
+        ptr = L"";
         check_len = FALSE;
         expected_len = -1;
     }
@@ -6131,8 +6120,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
                 /* Just set the path as a '/' if the base didn't have
                  * one and if it's a hierarchical URI.
                  */
-                static const WCHAR slashW[] = {'/',0};
-                data.path = slashW;
+                data.path = L"/";
                 data.path_len = 1;
             }
 

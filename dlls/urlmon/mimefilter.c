@@ -428,14 +428,12 @@ HRESULT find_mime_from_ext(const WCHAR *ext, WCHAR **ret)
     WCHAR mime[64];
     HKEY hkey;
 
-    static const WCHAR content_typeW[] = {'C','o','n','t','e','n','t',' ','T','y','p','e','\0'};
-
     res = RegOpenKeyW(HKEY_CLASSES_ROOT, ext, &hkey);
     if(res != ERROR_SUCCESS)
         return HRESULT_FROM_WIN32(res);
 
     size = sizeof(mime);
-    res = RegQueryValueExW(hkey, content_typeW, NULL, NULL, (LPBYTE)mime, &size);
+    res = RegQueryValueExW(hkey, L"Content Type", NULL, NULL, (BYTE*)mime, &size);
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS)
         return HRESULT_FROM_WIN32(res);
@@ -482,9 +480,8 @@ static HRESULT find_mime_from_url(const WCHAR *url, WCHAR **ret)
     return hres;
 }
 
-static const WCHAR text_plainW[] = {'t','e','x','t','/','p','l','a','i','n','\0'};
-static const WCHAR app_octetstreamW[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
-        'o','c','t','e','t','-','s','t','r','e','a','m','\0'};
+static const WCHAR text_plainW[] = L"text/plain";
+static const WCHAR app_octetstreamW[] = L"application/octet-stream";
 
 static const struct {
     const WCHAR *mime;

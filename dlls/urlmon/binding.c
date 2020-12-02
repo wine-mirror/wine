@@ -26,8 +26,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
-static WCHAR cbinding_contextW[] = {'C','B','i','n','d','i','n','g',' ','C','o','n','t','e','x','t',0};
-static WCHAR bscb_holderW[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
+static WCHAR cbinding_contextW[] = L"CBinding Context";
+static WCHAR bscb_holderW[] = L"_BSCB_Holder_";
 
 typedef struct {
     IUnknown IUnknown_iface;
@@ -197,7 +197,6 @@ static LPWSTR get_mime_clsid(LPCWSTR mime, CLSID *clsid)
     static const WCHAR mime_keyW[] =
         {'M','I','M','E','\\','D','a','t','a','b','a','s','e','\\',
          'C','o','n','t','e','n','t',' ','T','y','p','e','\\'};
-    static const WCHAR clsidW[] = {'C','L','S','I','D',0};
 
     len = lstrlenW(mime)+1;
     key_name = heap_alloc(sizeof(mime_keyW) + len*sizeof(WCHAR));
@@ -213,7 +212,7 @@ static LPWSTR get_mime_clsid(LPCWSTR mime, CLSID *clsid)
 
     size = 50*sizeof(WCHAR);
     ret = heap_alloc(size);
-    res = RegQueryValueExW(hkey, clsidW, NULL, &type, (LPBYTE)ret, &size);
+    res = RegQueryValueExW(hkey, L"CLSID", NULL, &type, (BYTE*)ret, &size);
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS) {
         WARN("Could not get CLSID: %08x\n", res);
@@ -1239,13 +1238,11 @@ static HRESULT WINAPI InternetBindInfo_GetBindString(IInternetBindInfo *iface,
 
     switch(ulStringType) {
     case BINDSTRING_ACCEPT_MIMES: {
-        static const WCHAR wszMimes[] = {'*','/','*',0};
-
         if(!ppwzStr || !pcElFetched)
             return E_INVALIDARG;
 
-        ppwzStr[0] = CoTaskMemAlloc(sizeof(wszMimes));
-        memcpy(ppwzStr[0], wszMimes, sizeof(wszMimes));
+        ppwzStr[0] = CoTaskMemAlloc(sizeof(L"*/*"));
+        memcpy(ppwzStr[0], L"*/*", sizeof(L"*/*"));
         *pcElFetched = 1;
         return S_OK;
     }

@@ -52,13 +52,6 @@ static CRITICAL_SECTION_DEBUG session_cs_dbg =
 };
 static CRITICAL_SECTION session_cs = { &session_cs_dbg, -1, 0, 0, 0, 0 };
 
-static const WCHAR internet_settings_keyW[] =
-    {'S','O','F','T','W','A','R','E',
-     '\\','M','i','c','r','o','s','o','f','t',
-     '\\','W','i','n','d','o','w','s',
-     '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
-     '\\','I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s',0};
-
 static name_space *find_name_space(LPCWSTR protocol)
 {
     name_space *iter;
@@ -82,7 +75,6 @@ static HRESULT get_protocol_cf(LPCWSTR schema, DWORD schema_len, CLSID *pclsid, 
 
     static const WCHAR wszProtocolsKey[] =
         {'P','R','O','T','O','C','O','L','S','\\','H','a','n','d','l','e','r','\\'};
-    static const WCHAR wszCLSID[] = {'C','L','S','I','D',0};
 
     wszKey = heap_alloc(sizeof(wszProtocolsKey)+(schema_len+1)*sizeof(WCHAR));
     memcpy(wszKey, wszProtocolsKey, sizeof(wszProtocolsKey));
@@ -96,7 +88,7 @@ static HRESULT get_protocol_cf(LPCWSTR schema, DWORD schema_len, CLSID *pclsid, 
     }
     
     size = sizeof(str_clsid);
-    res = RegQueryValueExW(hkey, wszCLSID, NULL, &type, (LPBYTE)str_clsid, &size);
+    res = RegQueryValueExW(hkey, L"CLSID", NULL, &type, (BYTE*)str_clsid, &size);
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS || type != REG_SZ) {
         WARN("Could not get protocol CLSID res=%d\n", res);
@@ -249,10 +241,6 @@ HRESULT get_protocol_handler(IUri *uri, CLSID *clsid, IClassFactory **ret)
 
 IInternetProtocol *get_mime_filter(LPCWSTR mime)
 {
-    static const WCHAR filtersW[] = {'P','r','o','t','o','c','o','l','s',
-        '\\','F','i','l','t','e','r',0 };
-    static const WCHAR CLSIDW[] = {'C','L','S','I','D',0};
-
     IClassFactory *cf = NULL;
     IInternetProtocol *ret;
     mime_filter *iter;
@@ -283,7 +271,7 @@ IInternetProtocol *get_mime_filter(LPCWSTR mime)
         return ret;
     }
 
-    res = RegOpenKeyW(HKEY_CLASSES_ROOT, filtersW, &hlist);
+    res = RegOpenKeyW(HKEY_CLASSES_ROOT, L"Protocols\\Filter", &hlist);
     if(res != ERROR_SUCCESS) {
         TRACE("Could not open MIME filters key\n");
         return NULL;
@@ -295,7 +283,7 @@ IInternetProtocol *get_mime_filter(LPCWSTR mime)
         return NULL;
 
     size = sizeof(clsidw);
-    res = RegQueryValueExW(hfilter, CLSIDW, NULL, &type, (LPBYTE)clsidw, &size);
+    res = RegQueryValueExW(hfilter, L"CLSID", NULL, &type, (BYTE*)clsidw, &size);
     CloseHandle(hfilter);
     if(res!=ERROR_SUCCESS || type!=REG_SZ) {
         WARN("Could not get filter CLSID for %s\n", debugstr_w(mime));
@@ -505,13 +493,11 @@ static BOOL get_url_encoding(HKEY root, DWORD *encoding)
     DWORD size = sizeof(DWORD), res, type;
     HKEY hkey;
 
-    static const WCHAR wszUrlEncoding[] = {'U','r','l','E','n','c','o','d','i','n','g',0};
-
-    res = RegOpenKeyW(root, internet_settings_keyW, &hkey);
+    res = RegOpenKeyW(root, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", &hkey);
     if(res != ERROR_SUCCESS)
         return FALSE;
 
-    res = RegQueryValueExW(hkey, wszUrlEncoding, NULL, &type, (LPBYTE)encoding, &size);
+    res = RegQueryValueExW(hkey, L"UrlEncoding", NULL, &type, (BYTE*)encoding, &size);
     RegCloseKey(hkey);
 
     return res == ERROR_SUCCESS;
@@ -529,39 +515,21 @@ static void ensure_useragent(void)
     BOOL is_wow;
     HKEY key;
 
-    static const WCHAR formatW[] =
-        {'M','o','z','i','l','l','a','/','4','.','0',
-         ' ','(','c','o','m','p','a','t','i','b','l','e',';',
-         ' ','M','S','I','E',' ','8','.','0',';',
-         ' ','W','i','n','d','o','w','s',' ','%','s','%','d','.','%','d',';',
-         ' ','%','s','T','r','i','d','e','n','t','/','5','.','0',0};
-    static const WCHAR post_platform_keyW[] =
-        {'S','O','F','T','W','A','R','E',
-         '\\','M','i','c','r','o','s','o','f','t',
-         '\\','W','i','n','d','o','w','s',
-         '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',
-         '\\','I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s',
-         '\\','5','.','0','\\','U','s','e','r',' ','A','g','e','n','t',
-         '\\','P','o','s','t',' ','P','l','a','t','f','o','r','m',0};
-    static const WCHAR ntW[] = {'N','T',' ',0};
-    static const WCHAR win64W[] = {'W','i','n','6','4',';',' ','x','6','4',';',' ',0};
-    static const WCHAR wow64W[] = {'W','O','W','6','4',';',' ',0};
-    static const WCHAR emptyW[] = {0};
-
     if(user_agent)
         return;
 
     GetVersionExW(&info);
-    is_nt = info.dwPlatformId == VER_PLATFORM_WIN32_NT ? ntW : emptyW;
+    is_nt = info.dwPlatformId == VER_PLATFORM_WIN32_NT ? L"NT " : L"";
 
     if(sizeof(void*) == 8)
-        os_type = win64W;
+        os_type = L"Win64; x64; ";
     else if(IsWow64Process(GetCurrentProcess(), &is_wow) && is_wow)
-        os_type = wow64W;
+        os_type = L"WOW64; ";
     else
-        os_type = emptyW;
+        os_type = L"";
 
-    swprintf(buf, ARRAY_SIZE(buf), formatW, is_nt, info.dwMajorVersion, info.dwMinorVersion, os_type);
+    swprintf(buf, ARRAY_SIZE(buf), L"Mozilla/4.0 (compatible; MSIE 8.0; Windows %s%d.%d; %sTrident/5.0",
+             is_nt, info.dwMajorVersion, info.dwMinorVersion, os_type);
     len = lstrlenW(buf);
 
     size = len+40;
@@ -571,7 +539,8 @@ static void ensure_useragent(void)
 
     memcpy(ret, buf, len*sizeof(WCHAR));
 
-    res = RegOpenKeyW(HKEY_LOCAL_MACHINE, post_platform_keyW, &key);
+    res = RegOpenKeyW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
+                      "Internet Settings\\5.0\\User Agent\\Post Platform", &key);
     if(res == ERROR_SUCCESS) {
         DWORD value_len;
 
