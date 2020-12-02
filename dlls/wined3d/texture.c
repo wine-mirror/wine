@@ -636,6 +636,7 @@ static BOOL wined3d_texture_copy_sysmem_location(struct wined3d_texture *texture
         GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dst_bo->id));
         GL_EXTCALL(glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, size, src.addr));
         GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+        wined3d_context_gl_reference_bo(wined3d_context_gl(context), dst_bo);
         checkGLcall("PBO upload");
         context_release(context);
         return TRUE;
@@ -648,6 +649,7 @@ static BOOL wined3d_texture_copy_sysmem_location(struct wined3d_texture *texture
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, src_bo->id));
         GL_EXTCALL(glGetBufferSubData(GL_PIXEL_PACK_BUFFER, 0, size, dst.addr));
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        wined3d_context_gl_reference_bo(wined3d_context_gl(context), src_bo);
         checkGLcall("PBO download");
         context_release(context);
         return TRUE;
