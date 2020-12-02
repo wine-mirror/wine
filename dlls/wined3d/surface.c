@@ -527,6 +527,7 @@ error:
     if (data.buffer_object)
     {
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        wined3d_context_gl_reference_bo(context_gl, (struct wined3d_bo_gl *)data.buffer_object);
         checkGLcall("glBindBuffer");
     }
 
