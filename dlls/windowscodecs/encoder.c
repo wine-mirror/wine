@@ -31,28 +31,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
-static const WCHAR wszPngInterlaceOption[] = {'I','n','t','e','r','l','a','c','e','O','p','t','i','o','n',0};
-static const WCHAR wszPngFilterOption[] = {'F','i','l','t','e','r','O','p','t','i','o','n',0};
-static const WCHAR wszTiffCompressionMethod[] = {'T','i','f','f','C','o','m','p','r','e','s','s','i','o','n','M','e','t','h','o','d',0};
-static const WCHAR wszCompressionQuality[] = {'C','o','m','p','r','e','s','s','i','o','n','Q','u','a','l','i','t','y',0};
-static const WCHAR wszImageQuality[] = {'I','m','a','g','e','Q','u','a','l','i','t','y',0};
-static const WCHAR wszBitmapTransform[] = {'B','i','t','m','a','p','T','r','a','n','s','f','o','r','m',0};
-static const WCHAR wszLuminance[] = {'L','u','m','i','n','a','n','c','e',0};
-static const WCHAR wszChrominance[] = {'C','h','r','o','m','i','n','a','n','c','e',0};
-static const WCHAR wszJpegYCrCbSubsampling[] = {'J','p','e','g','Y','C','r','C','b','S','u','b','s','a','m','p','l','i','n','g',0};
-static const WCHAR wszSuppressApp0[] = {'S','u','p','p','r','e','s','s','A','p','p','0',0};
-
 static const PROPBAG2 encoder_option_properties[ENCODER_OPTION_END] = {
-    { PROPBAG2_TYPE_DATA, VT_BOOL, 0, 0, (LPOLESTR)wszPngInterlaceOption },
-    { PROPBAG2_TYPE_DATA, VT_UI1,  0, 0, (LPOLESTR)wszPngFilterOption },
-    { PROPBAG2_TYPE_DATA, VT_UI1, 0, 0, (LPOLESTR)wszTiffCompressionMethod },
-    { PROPBAG2_TYPE_DATA, VT_R4,  0, 0, (LPOLESTR)wszCompressionQuality },
-    { PROPBAG2_TYPE_DATA, VT_R4,            0, 0, (LPOLESTR)wszImageQuality },
-    { PROPBAG2_TYPE_DATA, VT_UI1,           0, 0, (LPOLESTR)wszBitmapTransform },
-    { PROPBAG2_TYPE_DATA, VT_I4 | VT_ARRAY, 0, 0, (LPOLESTR)wszLuminance },
-    { PROPBAG2_TYPE_DATA, VT_I4 | VT_ARRAY, 0, 0, (LPOLESTR)wszChrominance },
-    { PROPBAG2_TYPE_DATA, VT_UI1,           0, 0, (LPOLESTR)wszJpegYCrCbSubsampling },
-    { PROPBAG2_TYPE_DATA, VT_BOOL,          0, 0, (LPOLESTR)wszSuppressApp0 }
+    { PROPBAG2_TYPE_DATA, VT_BOOL, 0, 0, (LPOLESTR)L"InterlaceOption" },
+    { PROPBAG2_TYPE_DATA, VT_UI1,  0, 0, (LPOLESTR)L"FilterOption" },
+    { PROPBAG2_TYPE_DATA, VT_UI1,  0, 0, (LPOLESTR)L"TiffCompressionMethod" },
+    { PROPBAG2_TYPE_DATA, VT_R4,   0, 0, (LPOLESTR)L"CompressionQuality" },
+    { PROPBAG2_TYPE_DATA, VT_R4,            0, 0, (LPOLESTR)L"ImageQuality" },
+    { PROPBAG2_TYPE_DATA, VT_UI1,           0, 0, (LPOLESTR)L"BitmapTransform" },
+    { PROPBAG2_TYPE_DATA, VT_I4 | VT_ARRAY, 0, 0, (LPOLESTR)L"Luminance" },
+    { PROPBAG2_TYPE_DATA, VT_I4 | VT_ARRAY, 0, 0, (LPOLESTR)L"Chrominance" },
+    { PROPBAG2_TYPE_DATA, VT_UI1,           0, 0, (LPOLESTR)L"JpegYCrCbSubsampling" },
+    { PROPBAG2_TYPE_DATA, VT_BOOL,          0, 0, (LPOLESTR)L"SuppressApp0" }
 };
 
 typedef struct CommonEncoder {
