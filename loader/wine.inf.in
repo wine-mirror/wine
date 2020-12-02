@@ -2758,6 +2758,8 @@ system.ini, drivers32,,"; vidc.IV50=ir50_32.dll"
 system.ini, drivers32,,"; vidc.IV31=ir32_32.dll"
 system.ini, drivers32,,"; vidc.IV32=ir32_32.dll"
 
+win.ini, mail,,"mapi=1"
+
 [Timezones]
 ; The timezone information (TZI field) comes from the Olson timezone database
 ; http://www.twinsun.com/tz/tz-link.htm
