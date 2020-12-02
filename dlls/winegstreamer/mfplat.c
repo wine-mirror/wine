@@ -669,31 +669,39 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
     }
     else if (IsEqualGUID(&major_type, &MFMediaType_Audio))
     {
-        DWORD rate, channels, channel_mask, bitrate;
+        DWORD rate = -1, channels = -1, channel_mask = -1;
+
+        if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &rate)))
+        {
+            ERR("Sample rate not set.\n");
+            return NULL;
+        }
+        if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_NUM_CHANNELS, &channels)))
+        {
+            ERR("Channel count not set.\n");
+            return NULL;
+        }
+        IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_CHANNEL_MASK, &channel_mask);
 
         if (IsEqualGUID(&subtype, &MFAudioFormat_Float))
         {
-            output = gst_caps_new_empty_simple("audio/x-raw");
+            GstAudioInfo float_info;
 
-            gst_caps_set_simple(output, "format", G_TYPE_STRING, "F32LE", NULL);
-            gst_caps_set_simple(output, "layout", G_TYPE_STRING, "interleaved", NULL);
+            gst_audio_info_set_format(&float_info, GST_AUDIO_FORMAT_F32LE, rate, channels, NULL);
+            output = gst_audio_info_to_caps(&float_info);
         }
         else if (IsEqualGUID(&subtype, &MFAudioFormat_PCM))
         {
+            GstAudioFormat pcm_format;
+            GstAudioInfo pcm_info;
             DWORD bits_per_sample;
 
             if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_BITS_PER_SAMPLE, &bits_per_sample)))
             {
-                char format[6];
-                char type;
+                pcm_format = gst_audio_format_build_integer(bits_per_sample > 8, G_LITTLE_ENDIAN, bits_per_sample, bits_per_sample);
 
-                type = bits_per_sample > 8 ? 'S' : 'U';
-
-                output = gst_caps_new_empty_simple("audio/x-raw");
-
-                sprintf(format, "%c%u%s", type, bits_per_sample, bits_per_sample > 8 ? "LE" : "");
-
-                gst_caps_set_simple(output, "format", G_TYPE_STRING, format, NULL);
+                gst_audio_info_set_format(&pcm_info, pcm_format, rate, channels, NULL);
+                output = gst_audio_info_to_caps(&pcm_info);
             }
             else
             {
@@ -707,23 +715,8 @@ GstCaps *caps_from_mf_media_type(IMFMediaType *type)
             return NULL;
         }
 
-        if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &rate)))
-        {
-            gst_caps_set_simple(output, "rate", G_TYPE_INT, rate, NULL);
-        }
-        if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_NUM_CHANNELS, &channels)))
-        {
-            gst_caps_set_simple(output, "channels", G_TYPE_INT, channels, NULL);
-        }
-        if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_CHANNEL_MASK, &channel_mask)))
-        {
+        if (channel_mask != -1)
             gst_caps_set_simple(output, "channel-mask", GST_TYPE_BITMASK, (guint64) channel_mask, NULL);
-        }
-
-        if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_AVG_BITRATE, &bitrate)))
-        {
-            gst_caps_set_simple(output, "bitrate", G_TYPE_INT, bitrate, NULL);
-        }
 
         return output;
     }
