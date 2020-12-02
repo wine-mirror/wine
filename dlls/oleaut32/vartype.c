@@ -6469,7 +6469,7 @@ static BSTR VARIANT_BstrReplaceDecimal(const WCHAR * buff, LCID lcid, ULONG dwFl
   {
     WCHAR *p;
     WCHAR numbuff[256];
-    WCHAR empty[] = {'\0'};
+    WCHAR empty[] = L"";
     NUMBERFMTW minFormat;
 
     minFormat.NumDigits = 0;
