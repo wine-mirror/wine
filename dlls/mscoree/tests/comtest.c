@@ -168,6 +168,12 @@ static void run_registry_test(run_type run)
 
     sprintf(buffer, "CLSID\\%s", wine_dbgstr_guid(&CLSID_Test), "");
     ret = RegCreateKeyA( HKEY_CLASSES_ROOT, buffer, &hkey );
+    if (ret == ERROR_ACCESS_DENIED && !IsUserAnAdmin())
+    {
+        win_skip("cannot run the registry tests due to user not being admin\n");
+        RegCloseKey(hkey);
+        return;
+    }
     ok(ret == ERROR_SUCCESS, "RegCreateKeyA returned %x\n", ret);
 
     ret = RegSetKeyValueA(hkey, "InprocServer32", NULL, REG_SZ, "mscoree.dll", 11);
