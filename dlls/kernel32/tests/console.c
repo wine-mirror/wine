@@ -268,12 +268,26 @@ static void testWriteSimple(HANDLE hCon)
     const char*	mytest = "abcdefg";
     int mylen = strlen(mytest);
     COORD c = {0, 0};
+    DWORD len;
+    BOOL ret;
 
     simple_write_console(hCon, mytest);
 
     for (c.X = 0; c.X < mylen; c.X++)
     {
         okCHAR(hCon, c, mytest[c.X], TEST_ATTRIB);
+    }
+
+    okCURSOR(hCon, c);
+    okCHAR(hCon, c, ' ', DEFAULT_ATTRIB);
+
+    ret = WriteFile(hCon, mytest, mylen, &len, NULL);
+    ok(ret, "WriteFile failed: %u\n", GetLastError());
+    ok(len == mylen, "unexpected len = %u\n", len);
+
+    for (c.X = 0; c.X < 2 * mylen; c.X++)
+    {
+        okCHAR(hCon, c, mytest[c.X % mylen], TEST_ATTRIB);
     }
 
     okCURSOR(hCon, c);

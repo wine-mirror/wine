@@ -1520,7 +1520,6 @@ DECL_HANDLER(get_next_console_request)
                     if ((iosb->out_data = memdup( get_req_data(), iosb->out_size )))
                     {
                         iosb->result = iosb->out_size;
-                        status = STATUS_ALERTED;
                     }
                     else if (!status)
                     {
@@ -1528,6 +1527,7 @@ DECL_HANDLER(get_next_console_request)
                         iosb->out_size = 0;
                     }
                 }
+                if (iosb->result) status = STATUS_ALERTED;
             }
             else
             {
