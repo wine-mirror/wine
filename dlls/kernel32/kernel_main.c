@@ -120,7 +120,6 @@ static void copy_startup_info(void)
  */
 static BOOL process_attach( HMODULE module )
 {
-    kernel32_handle = module;
     RtlSetUnhandledExceptionFilter( UnhandledExceptionFilter );
 
     NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );

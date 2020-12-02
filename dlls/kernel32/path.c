@@ -40,6 +40,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 #define MAX_PATHNAME_LEN        1024
 
+static const WCHAR system_dir[] = L"C:\\windows\\system32";
+
 /***********************************************************************
  *           copy_filename_WtoA
  *
@@ -232,10 +234,10 @@ BOOL WINAPI CreateDirectoryExA( LPCSTR template, LPCSTR path, LPSECURITY_ATTRIBU
  */
 UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
 {
-    UINT len = lstrlenW( DIR_System ) + 1;
+    UINT len = ARRAY_SIZE(system_dir);
     if (path && count >= len)
     {
-        lstrcpyW( path, DIR_System );
+        lstrcpyW( path, system_dir );
         len--;
     }
     return len;
@@ -249,7 +251,7 @@ UINT WINAPI GetSystemDirectoryW( LPWSTR path, UINT count )
  */
 UINT WINAPI GetSystemDirectoryA( LPSTR path, UINT count )
 {
-    return copy_filename_WtoA( DIR_System, path, count );
+    return copy_filename_WtoA( system_dir, path, count );
 }
 
 

@@ -49,11 +49,7 @@ typedef struct
     DWORD dwReserved;
 } LOADPARMS32;
 
-HMODULE kernel32_handle = 0;
 SYSTEM_BASIC_INFORMATION system_info = { 0 };
-
-const WCHAR DIR_Windows[] = L"C:\\windows";
-const WCHAR DIR_System[] = L"C:\\windows\\system32";
 
 /* Process flags */
 #define PDB32_DEBUGGED      0x0001  /* Process is being debugged */
