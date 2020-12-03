@@ -31,7 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
-WINE_DECLARE_DEBUG_CHANNEL(d3d_synchronous);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_sync);
 
 #define WINED3D_MAX_FBO_ENTRIES 64
 #define WINED3D_ALL_LAYERS (~0u)
@@ -2144,7 +2144,7 @@ HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wi
     if (context_debug_output_enabled(gl_info))
     {
         GL_EXTCALL(glDebugMessageCallback(wined3d_debug_callback, context));
-        if (TRACE_ON(d3d_synchronous))
+        if (TRACE_ON(d3d_sync))
             gl_info->gl_ops.gl.p_glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         GL_EXTCALL(glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_FALSE));
         if (ERR_ON(d3d))
