@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/utime.h>
+#include <time.h>
 #include <limits.h>
 
 #include "windef.h"
@@ -1870,7 +1871,7 @@ int CDECL _futime64(int fd, struct __utimbuf64 *t)
 
   if (!t)
   {
-      time_to_filetime( MSVCRT__time64(NULL), &at );
+      time_to_filetime( _time64(NULL), &at );
       wt = at;
   }
   else
