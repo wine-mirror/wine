@@ -452,6 +452,9 @@ enum wined3d_shader_backend
     WINED3D_SHADER_BACKEND_NONE,
 };
 
+#define WINED3D_CSMT_ENABLE    0x00000001
+#define WINED3D_CSMT_SERIALIZE 0x00000002
+
 /* NOTE: When adding fields to this structure, make sure to update the default
  * values in wined3d_main.c as well. */
 struct wined3d_settings
@@ -4675,6 +4678,7 @@ struct wined3d_cs
     HMODULE wined3d_module;
     HANDLE thread;
     DWORD thread_id;
+    BOOL serialize_commands;
 
     struct wined3d_cs_queue queue[WINED3D_CS_QUEUE_COUNT];
     size_t data_size, start, end;
@@ -6364,5 +6368,7 @@ static inline void wined3d_context_gl_reference_bo(struct wined3d_context_gl *co
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */
 #define WINED3D_OPENGL_WINDOW_CLASS_NAME "WineD3D_OpenGL"
+
+extern CRITICAL_SECTION wined3d_command_cs;
 
 #endif

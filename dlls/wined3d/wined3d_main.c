@@ -96,11 +96,21 @@ static CRITICAL_SECTION_DEBUG wined3d_wndproc_cs_debug =
 };
 static CRITICAL_SECTION wined3d_wndproc_cs = {&wined3d_wndproc_cs_debug, -1, 0, 0, 0, 0};
 
+CRITICAL_SECTION wined3d_command_cs;
+static CRITICAL_SECTION_DEBUG wined3d_command_cs_debug =
+{
+    0, 0, &wined3d_command_cs,
+    {&wined3d_command_cs_debug.ProcessLocksList,
+    &wined3d_command_cs_debug.ProcessLocksList},
+    0, 0, {(DWORD_PTR)(__FILE__ ": wined3d_command_cs")}
+};
+CRITICAL_SECTION wined3d_command_cs = {&wined3d_command_cs_debug, -1, 0, 0, 0, 0};
+
 /* When updating default value here, make sure to update winecfg as well,
  * where appropriate. */
 struct wined3d_settings wined3d_settings =
 {
-    TRUE,           /* Multithreaded CS by default. */
+    WINED3D_CSMT_ENABLE,     /* Multithreaded CS by default. */
     MAKEDWORD_VERSION(4, 4), /* Default to OpenGL 4.4 */
     ORM_FBO,        /* Use FBOs to do offscreen rendering */
     PCI_VENDOR_NONE,/* PCI Vendor ID */
@@ -435,6 +445,8 @@ static BOOL wined3d_dll_destroy(HINSTANCE hInstDLL)
 
     heap_free(wined3d_settings.logo);
     UnregisterClassA(WINED3D_OPENGL_WINDOW_CLASS_NAME, hInstDLL);
+
+    DeleteCriticalSection(&wined3d_command_cs);
 
     DeleteCriticalSection(&wined3d_wndproc_cs);
     DeleteCriticalSection(&wined3d_cs);

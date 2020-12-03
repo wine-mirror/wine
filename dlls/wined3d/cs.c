@@ -21,6 +21,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_sync);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 #define WINED3D_INITIAL_CS_SIZE 4096
@@ -2866,6 +2867,18 @@ static void wined3d_cs_wait_event(struct wined3d_cs *cs)
     WaitForSingleObject(cs->event, INFINITE);
 }
 
+static void wined3d_cs_command_lock(const struct wined3d_cs *cs)
+{
+    if (cs->serialize_commands)
+        EnterCriticalSection(&wined3d_command_cs);
+}
+
+static void wined3d_cs_command_unlock(const struct wined3d_cs *cs)
+{
+    if (cs->serialize_commands)
+        LeaveCriticalSection(&wined3d_command_cs);
+}
+
 static DWORD WINAPI wined3d_cs_run(void *ctx)
 {
     struct wined3d_cs_packet *packet;
@@ -2889,7 +2902,9 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
     {
         if (++poll == WINED3D_CS_QUERY_POLL_INTERVAL)
         {
+            wined3d_cs_command_lock(cs);
             poll_queries(cs);
+            wined3d_cs_command_unlock(cs);
             poll = 0;
         }
 
@@ -2920,7 +2935,9 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
                 break;
             }
 
+            wined3d_cs_command_lock(cs);
             wined3d_cs_op_handlers[opcode](cs, packet->data);
+            wined3d_cs_command_unlock(cs);
             TRACE("%s executed.\n", debug_cs_op(opcode));
         }
 
@@ -2945,6 +2962,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
 
     cs->ops = &wined3d_cs_st_ops;
     cs->device = device;
+    cs->serialize_commands = TRACE_ON(d3d_sync) || wined3d_settings.cs_multithreaded & WINED3D_CSMT_SERIALIZE;
 
     state_init(&cs->state, d3d_info, WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT);
 
@@ -2952,7 +2970,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
     if (!(cs->data = heap_alloc(cs->data_size)))
         goto fail;
 
-    if (wined3d_settings.cs_multithreaded
+    if (wined3d_settings.cs_multithreaded & WINED3D_CSMT_ENABLE
             && !RtlIsCriticalSectionLockedByThread(NtCurrentTeb()->Peb->LoaderLock))
     {
         cs->ops = &wined3d_cs_mt_ops;
