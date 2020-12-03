@@ -4142,6 +4142,101 @@ static void testGetPublicKeyLength(void)
        "Expected length 56, got %d\n", ret);
 }
 
+static void testKeyProvInfo(void)
+{
+    static WCHAR containerW[] = L"Wine Test Container";
+    static WCHAR providerW[] = L"Hello World CSP";
+    static CRYPT_KEY_PROV_PARAM param[2] = { { 0x4444, (BYTE *)"param", 6, 0x5555 }, { 0x7777, (BYTE *)"param2", 7, 0x8888 } };
+    HCERTSTORE store;
+    const CERT_CONTEXT *cert;
+    CERT_NAME_BLOB name;
+    CRYPT_KEY_PROV_INFO *info, info2;
+    BOOL ret;
+    DWORD size;
+
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM_A, 0, 0,
+                          CERT_SYSTEM_STORE_CURRENT_USER, "My");
+    ok(store != NULL, "CertOpenStore error %u\n", GetLastError());
+
+    cert = CertCreateCertificateContext(X509_ASN_ENCODING, selfSignedCert, sizeof(selfSignedCert));
+    ok(cert != NULL, "CertCreateCertificateContext error %#x\n", GetLastError());
+
+    info2.pwszContainerName = containerW;
+    info2.pwszProvName = providerW;
+    info2.dwProvType = 0x12345678;
+    info2.dwFlags = 0x87654321;
+    info2.cProvParam = ARRAY_SIZE(param);
+    info2.rgProvParam = param;
+    info2.dwKeySpec = 0x11223344;
+    ret = CertSetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, 0, &info2);
+    ok(ret, "CertSetCertificateContextProperty error %#x\n", GetLastError());
+
+    ret = CertGetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, NULL, &size);
+    ok(ret, "CertGetCertificateContextProperty error %#x\n", GetLastError());
+    info = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = CertGetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, info, &size);
+    ok(ret, "CertGetCertificateContextProperty error %#x\n", GetLastError());
+    ok(!lstrcmpW(info->pwszContainerName, containerW), "got %s\n", wine_dbgstr_w(info->pwszContainerName));
+    ok(!lstrcmpW(info->pwszProvName, providerW), "got %s\n", wine_dbgstr_w(info->pwszProvName));
+    ok(info->dwProvType == 0x12345678, "got %#x\n", info->dwProvType);
+    ok(info->dwFlags == 0x87654321, "got %#x\n", info->dwFlags);
+    ok(info->dwKeySpec == 0x11223344, "got %#x\n", info->dwKeySpec);
+    ok(info->cProvParam == 2, "got %#x\n", info->cProvParam);
+    ok(info->rgProvParam != NULL, "got %p\n", info->rgProvParam);
+    ok(info->rgProvParam[0].dwParam == param[0].dwParam, "got %#x\n", info->rgProvParam[0].dwParam);
+    ok(info->rgProvParam[0].cbData == param[0].cbData, "got %#x\n", info->rgProvParam[0].cbData);
+    ok(!memcmp(info->rgProvParam[0].pbData, param[0].pbData, param[0].cbData), "param1 mismatch\n");
+    ok(info->rgProvParam[0].dwFlags == param[0].dwFlags, "got %#x\n", info->rgProvParam[1].dwFlags);
+    ok(info->rgProvParam[1].dwParam == param[1].dwParam, "got %#x\n", info->rgProvParam[1].dwParam);
+    ok(info->rgProvParam[1].cbData == param[1].cbData, "got %#x\n", info->rgProvParam[1].cbData);
+    ok(!memcmp(info->rgProvParam[1].pbData, param[1].pbData, param[1].cbData), "param2 mismatch\n");
+    ok(info->rgProvParam[1].dwFlags == param[1].dwFlags, "got %#x\n", info->rgProvParam[1].dwFlags);
+    HeapFree(GetProcessHeap(), 0, info);
+
+    ret = CertAddCertificateContextToStore(store, cert, CERT_STORE_ADD_NEW, NULL);
+    ok(ret, "CertAddCertificateContextToStore error %#x\n", GetLastError());
+
+    CertFreeCertificateContext(cert);
+    CertCloseStore(store, 0);
+
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM_A, 0, 0,
+                          CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, "My");
+    ok(store != NULL, "CertOpenStore error %u\n", GetLastError());
+
+    name.pbData = subjectName;
+    name.cbData = sizeof(subjectName);
+    cert = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0, CERT_FIND_SUBJECT_NAME, &name, NULL);
+    ok(cert != NULL, "certificate should exist in My store\n");
+
+    ret = CertGetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, NULL, &size);
+    ok(ret, "CertGetCertificateContextProperty error %#x\n", GetLastError());
+    info = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = CertGetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, info, &size);
+    ok(ret, "CertGetCertificateContextProperty error %#x\n", GetLastError());
+    ok(!lstrcmpW(info->pwszContainerName, containerW), "got %s\n", wine_dbgstr_w(info->pwszContainerName));
+    ok(!lstrcmpW(info->pwszProvName, providerW), "got %s\n", wine_dbgstr_w(info->pwszProvName));
+    ok(info->dwProvType == 0x12345678, "got %#x\n", info->dwProvType);
+    ok(info->dwFlags == 0x87654321, "got %#x\n", info->dwFlags);
+    ok(info->dwKeySpec == 0x11223344, "got %#x\n", info->dwKeySpec);
+    ok(info->cProvParam == 2, "got %#x\n", info->cProvParam);
+    ok(info->rgProvParam != NULL, "got %p\n", info->rgProvParam);
+    ok(info->rgProvParam[0].dwParam == param[0].dwParam, "got %#x\n", info->rgProvParam[0].dwParam);
+    ok(info->rgProvParam[0].cbData == param[0].cbData, "got %#x\n", info->rgProvParam[0].cbData);
+    ok(!memcmp(info->rgProvParam[0].pbData, param[0].pbData, param[0].cbData), "param1 mismatch\n");
+    ok(info->rgProvParam[0].dwFlags == param[0].dwFlags, "got %#x\n", info->rgProvParam[1].dwFlags);
+    ok(info->rgProvParam[1].dwParam == param[1].dwParam, "got %#x\n", info->rgProvParam[1].dwParam);
+    ok(info->rgProvParam[1].cbData == param[1].cbData, "got %#x\n", info->rgProvParam[1].cbData);
+    ok(!memcmp(info->rgProvParam[1].pbData, param[1].pbData, param[1].cbData), "param2 mismatch\n");
+    ok(info->rgProvParam[1].dwFlags == param[1].dwFlags, "got %#x\n", info->rgProvParam[1].dwFlags);
+    HeapFree(GetProcessHeap(), 0, info);
+
+    ret = CertDeleteCertificateFromStore(cert);
+    ok(ret, "CertDeleteCertificateFromStore error %#x\n", GetLastError());
+
+    CertFreeCertificateContext(cert);
+    CertCloseStore(store, 0);
+}
+
 START_TEST(cert)
 {
     init_function_pointers();
@@ -4154,6 +4249,7 @@ START_TEST(cert)
     testGetSubjectCert();
     testGetIssuerCert();
     testLinkCert();
+    testKeyProvInfo();
 
     testCryptHashCert();
     testCryptHashCert2();
