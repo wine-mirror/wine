@@ -2841,6 +2841,7 @@ static void wined3d_texture_gl_download_data(struct wined3d_context *context,
     if (dst_bo)
     {
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        wined3d_context_gl_reference_bo(context_gl, dst_bo);
         checkGLcall("glBindBuffer");
     }
 }
