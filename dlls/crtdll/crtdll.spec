@@ -53,8 +53,8 @@
 @ cdecl _cabs(long)
 @ cdecl _cexit()
 @ cdecl _cgets(ptr)
-@ cdecl _chdir(str) MSVCRT__chdir
-@ cdecl _chdrive(long) MSVCRT__chdrive
+@ cdecl _chdir(str)
+@ cdecl _chdrive(long)
 @ cdecl _chgsign(double)
 @ cdecl _chmod(str long) MSVCRT__chmod
 @ cdecl _chsize(long long) MSVCRT__chsize
@@ -100,9 +100,9 @@
 # extern _fileinfo_dll
 @ cdecl _filelength(long) MSVCRT__filelength
 @ cdecl _fileno(ptr) MSVCRT__fileno
-@ cdecl _findclose(long) MSVCRT__findclose
-@ cdecl _findfirst(str ptr) MSVCRT__findfirst
-@ cdecl _findnext(long ptr) MSVCRT__findnext
+@ cdecl _findclose(long)
+@ cdecl _findfirst(str ptr)
+@ cdecl _findnext(long ptr)
 @ cdecl _finite(double)
 @ cdecl _flsbuf(long ptr) MSVCRT__flsbuf
 @ cdecl _flushall() MSVCRT__flushall
@@ -117,18 +117,18 @@
 @ cdecl -arch=win32 _ftime(ptr) _ftime32
 @ cdecl -arch=win64 _ftime(ptr) _ftime64
 @ cdecl -arch=i386 -ret64 _ftol()
-@ cdecl _fullpath(ptr str long) MSVCRT__fullpath
+@ cdecl _fullpath(ptr str long)
 @ cdecl -arch=win32 _futime(long ptr) _futime32
 @ cdecl -arch=win64 _futime(long ptr) _futime64
 @ cdecl _gcvt(double long str)
 @ cdecl _get_osfhandle(long) MSVCRT__get_osfhandle
 @ cdecl _getch()
 @ cdecl _getche()
-@ cdecl _getcwd(str long) MSVCRT__getcwd
-@ cdecl _getdcwd(long str long) MSVCRT__getdcwd
-@ cdecl _getdiskfree(long ptr) MSVCRT__getdiskfree
+@ cdecl _getcwd(str long)
+@ cdecl _getdcwd(long str long)
+@ cdecl _getdiskfree(long ptr)
 @ cdecl _getdllprocaddr(long str long)
-@ cdecl _getdrive() MSVCRT__getdrive
+@ cdecl _getdrive()
 @ cdecl _getdrives() kernel32.GetLogicalDrives
 @ cdecl _getpid()
 @ stub _getsystime(ptr)
@@ -186,7 +186,7 @@
 @ cdecl _lseek(long long long) MSVCRT__lseek
 @ cdecl _ltoa(long ptr long) ntdll._ltoa
 @ cdecl _ltow(long ptr long) ntdll._ltow
-@ cdecl _makepath(ptr str str str str) MSVCRT__makepath
+@ cdecl _makepath(ptr str str str str)
 @ cdecl _matherr(ptr)
 @ cdecl _mbbtombc(long)
 @ cdecl _mbbtype(long long)
@@ -238,7 +238,7 @@
 @ cdecl _mbsupr(str)
 @ cdecl _memccpy(ptr ptr long long) ntdll._memccpy
 @ cdecl _memicmp(str str long)
-@ cdecl _mkdir(str) MSVCRT__mkdir
+@ cdecl _mkdir(str)
 @ cdecl _mktemp(str) MSVCRT__mktemp
 @ cdecl _msize(ptr)
 @ cdecl _nextafter(double double)
@@ -261,12 +261,12 @@
 @ cdecl _putw(long ptr) MSVCRT__putw
 # extern _pwctype_dll
 @ cdecl _read(long ptr long) MSVCRT__read
-@ cdecl _rmdir(str) MSVCRT__rmdir
+@ cdecl _rmdir(str)
 @ cdecl _rmtmp() MSVCRT__rmtmp
 @ cdecl _rotl(long long)
 @ cdecl _rotr(long long)
 @ cdecl _scalb(double long)
-@ cdecl _searchenv(str str ptr) MSVCRT__searchenv
+@ cdecl _searchenv(str str ptr)
 @ cdecl _seterrormode(long)
 @ cdecl -arch=i386,x86_64,arm,arm64 -norelay _setjmp(ptr) MSVCRT__setjmp
 @ cdecl _setmode(long long) MSVCRT__setmode
@@ -283,7 +283,7 @@
 @ cdecl _spawnve(long str ptr ptr)
 @ cdecl _spawnvp(long str ptr)
 @ cdecl _spawnvpe(long str ptr ptr)
-@ cdecl _splitpath(str ptr ptr ptr ptr) MSVCRT__splitpath
+@ cdecl _splitpath(str ptr ptr ptr ptr)
 @ cdecl _stat(str ptr) MSVCRT_stat
 @ cdecl _statusfp()
 @ cdecl _strcmpi(str str) _stricmp

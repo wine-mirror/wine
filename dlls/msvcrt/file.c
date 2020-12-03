@@ -26,7 +26,7 @@
  * Use the file flag hints O_SEQUENTIAL, O_RANDOM, O_SHORT_LIVED
  */
 
-
+#include <direct.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -2997,7 +2997,7 @@ int CDECL MSVCRT_stat64(const char* path, struct MSVCRT__stat64 * buf)
   if (isalpha(*path)&& (*(path+1)==':'))
     buf->st_dev = buf->st_rdev = _toupper_l(*path, NULL) - 'A'; /* drive num */
   else
-    buf->st_dev = buf->st_rdev = MSVCRT__getdrive() - 1;
+    buf->st_dev = buf->st_rdev = _getdrive() - 1;
 
   /* Dir, or regular file? */
   if (hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
@@ -3149,7 +3149,7 @@ int CDECL MSVCRT__wstat64(const wchar_t* path, struct MSVCRT__stat64 * buf)
   if (iswalpha(*path) && path[1] == ':')
     buf->st_dev = buf->st_rdev = towupper(*path) - 'A'; /* drive num */
   else
-    buf->st_dev = buf->st_rdev = MSVCRT__getdrive() - 1;
+    buf->st_dev = buf->st_rdev = _getdrive() - 1;
 
   /* Dir, or regular file? */
   if (hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
