@@ -61,3 +61,9 @@ coclass VideoProcessorMFT {}
     uuid(317df618-5e5a-468a-9f15-d827a9a08162)
 ]
 coclass GStreamerByteStreamHandler {}
+
+[
+    threading(both),
+    uuid(6a170414-aad9-4693-b806-3a0c47c570d6)
+]
+coclass WINEAudioConverter { }

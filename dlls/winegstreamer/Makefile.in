@@ -6,6 +6,7 @@ EXTRALIBS = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
 PARENTSRC = ../strmbase
 
 C_SRCS = \
+	audioconvert.c \
 	filter.c \
 	gst_cbs.c \
 	gstdemux.c \
