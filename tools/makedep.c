@@ -2277,6 +2277,15 @@ static struct strarray get_default_imports( const struct makefile *make )
 
 
 /*******************************************************************
+ *         is_crt_module
+ */
+static int is_crt_module( const char *file )
+{
+    return !strncmp( file, "msvcr", 5 ) || !strncmp( file, "ucrt", 4 ) || !strcmp( file, "crtdll.dll" );
+}
+
+
+/*******************************************************************
  *         add_crt_import
  */
 static void add_crt_import( const struct makefile *make, struct strarray *imports, struct strarray *defs )
@@ -2286,16 +2295,13 @@ static void add_crt_import( const struct makefile *make, struct strarray *import
 
     for (i = 0; i < imports->count; i++)
     {
-        if (strncmp( imports->str[i], "msvcr", 5 ) && strncmp( imports->str[i], "ucrt", 4 )) continue;
+        if (!is_crt_module( imports->str[i])) continue;
         if (crt_dll) fatal_error( "More than one C runtime DLL imported: %s and %s\n", crt_dll, imports->str[i] );
         crt_dll = imports->str[i];
     }
     if (!crt_dll && !strarray_exists( &make->extradllflags, "-nodefaultlibs" ))
     {
-        if (make->module &&
-            (!strncmp( make->module, "msvcr", 5 ) ||
-             !strncmp( make->module, "ucrt", 4 ) ||
-             !strcmp( make->module, "crtdll.dll" )))
+        if (make->module && is_crt_module( make->module ))
         {
             crt_dll = make->module;
         }
@@ -3147,7 +3153,8 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
         output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
         output_filenames( defines );
         output_filenames( extra_cross_cflags );
-        if (source->file->flags & FLAG_C_IMPLIB) output_filename( "-fno-builtin" );
+        if (source->file->flags & FLAG_C_IMPLIB || (make->module && is_crt_module( make->module )))
+            output_filename( "-fno-builtin" );
         output_filenames( cpp_flags );
         output_filename( "$(CROSSCFLAGS)" );
         output( "\n" );
