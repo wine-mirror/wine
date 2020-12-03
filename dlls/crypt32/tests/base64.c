@@ -236,12 +236,36 @@ static void encode_compare_base64_W(const BYTE *toEncode, DWORD toEncodeLen, DWO
     heap_free(trailerW);
 }
 
+static DWORD binary_to_hex_len(DWORD binary_len, DWORD flags)
+{
+    DWORD strLen2;
+
+    strLen2 = binary_len * 3; /* spaces + terminating \0 */
+
+    if (flags & CRYPT_STRING_NOCR)
+    {
+        strLen2 += (binary_len + 7) / 16; /* space every 16 characters */
+        strLen2 += 1; /* terminating \n */
+    }
+    else if (!(flags & CRYPT_STRING_NOCRLF))
+    {
+        strLen2 += (binary_len + 7) / 16; /* space every 16 characters */
+        strLen2 += binary_len / 16 + 1; /* LF every 16 characters + terminating \r */
+
+        if (binary_len % 16)
+            strLen2 += 1; /* terminating \n */
+    }
+
+    return strLen2;
+}
+
 static void test_CryptBinaryToString(void)
 {
     static const DWORD flags[] = { 0, CRYPT_STRING_NOCR, CRYPT_STRING_NOCRLF };
+    static const DWORD sizes[] = { 3, 4, 7, 8, 12, 15, 16, 17, 256 };
     static const WCHAR hexdig[] = L"0123456789abcdef";
     BYTE input[256 * sizeof(WCHAR)];
-    DWORD strLen, strLen2, i, j;
+    DWORD strLen, strLen2, i, j, k;
     WCHAR *hex, *cmp, *ptr;
     BOOL ret;
 
@@ -440,6 +464,93 @@ static void test_CryptBinaryToString(void)
            ret, GetLastError());
         ok(strLen == strLen2, "Expected length %d, got %d\n", strLen, strLen2);
         ok(!memcmp(hex, cmp, strLen * sizeof(WCHAR)), "Unexpected value\n");
+
+        heap_free(hex);
+        heap_free(cmp);
+    }
+
+    for (k = 0; k < ARRAY_SIZE(sizes); k++)
+    for (i = 0; i < ARRAY_SIZE(flags); i++)
+    {
+        strLen = 0;
+        ret = CryptBinaryToStringW(input, sizes[k], CRYPT_STRING_HEX | flags[i], NULL, &strLen);
+        ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
+        ok(strLen > 0, "Unexpected string length.\n");
+
+        strLen = ~0;
+        ret = CryptBinaryToStringW(input, sizes[k], CRYPT_STRING_HEX | flags[i], NULL, &strLen);
+        ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
+        strLen2 = binary_to_hex_len(sizes[k], CRYPT_STRING_HEX | flags[i]);
+        ok(strLen == strLen2, "%u: Expected length %d, got %d\n", i, strLen2, strLen);
+
+        hex = heap_alloc(strLen * sizeof(WCHAR) + 256);
+        memset(hex, 0xcc, strLen * sizeof(WCHAR));
+
+        ptr = cmp = heap_alloc(strLen * sizeof(WCHAR) + 256);
+        for (j = 0; j < sizes[k]; j++)
+        {
+            *ptr++ = hexdig[(input[j] >> 4) & 0xf];
+            *ptr++ = hexdig[input[j] & 0xf];
+
+            if (j >= sizes[k] - 1) break;
+
+            if (j && !(flags[i] & CRYPT_STRING_NOCRLF))
+            {
+
+                if (!((j + 1) % 16))
+                {
+                    if (flags[i] & CRYPT_STRING_NOCR)
+                    {
+                        *ptr++ = '\n';
+                    }
+                    else
+                    {
+                        *ptr++ = '\r';
+                        *ptr++ = '\n';
+                    }
+                    continue;
+                }
+                else if (!((j + 1) % 8))
+                    *ptr++ = ' ';
+            }
+
+            *ptr++ = ' ';
+        }
+
+        if (flags[i] & CRYPT_STRING_NOCR)
+        {
+            *ptr++ = '\n';
+        }
+        else if (!(flags[i] & CRYPT_STRING_NOCRLF))
+        {
+            *ptr++ = '\r';
+            *ptr++ = '\n';
+        }
+        *ptr++ = 0;
+
+        ret = CryptBinaryToStringW(input, sizes[k], CRYPT_STRING_HEX | flags[i], hex, &strLen);
+        ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
+        strLen2--;
+        ok(strLen == strLen2, "%u: Expected length %d, got %d\n", i, strLen, strLen2);
+        ok(!memcmp(hex, cmp, strLen * sizeof(WCHAR)), "%u: got %s\n", i, wine_dbgstr_wn(hex, strLen));
+
+        /* adjusts size if buffer too big */
+        strLen *= 2;
+        ret = CryptBinaryToStringW(input, sizes[k], CRYPT_STRING_HEX | flags[i], hex, &strLen);
+        ok(ret, "CryptBinaryToStringW failed: %d\n", GetLastError());
+        ok(strLen == strLen2, "%u: Expected length %d, got %d\n", i, strLen, strLen2);
+
+        /* no writes if buffer too small */
+        strLen /= 2;
+        strLen2 /= 2;
+        memset(hex, 0xcc, strLen * sizeof(WCHAR));
+        memset(cmp, 0xcc, strLen * sizeof(WCHAR));
+        SetLastError(0xdeadbeef);
+        ret = CryptBinaryToStringW(input, sizes[k], CRYPT_STRING_HEX | flags[i], hex, &strLen);
+        ok(!ret && GetLastError() == ERROR_MORE_DATA,"Expected ERROR_MORE_DATA, got ret=%d le=%u\n",
+           ret, GetLastError());
+        ok(strLen == strLen2, "%u: Expected length %d, got %d\n", i, strLen, strLen2);
+        ok(!memcmp(hex, cmp, strLen * sizeof(WCHAR)), "%u: got %s\n", i, wine_dbgstr_wn(hex, strLen));
 
         heap_free(hex);
         heap_free(cmp);

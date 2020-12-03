@@ -460,7 +460,7 @@ static BOOL BinaryToBase64W(const BYTE *pbBinary,
     return ret;
 }
 
-static BOOL BinaryToHexW(const BYTE *bin, DWORD nbin, DWORD flags, LPWSTR str, DWORD *nstr)
+static BOOL BinaryToHexRawW(const BYTE *bin, DWORD nbin, DWORD flags, LPWSTR str, DWORD *nstr)
 {
     static const WCHAR hex[] = L"0123456789abcdef";
     DWORD needed;
@@ -491,6 +491,79 @@ static BOOL BinaryToHexW(const BYTE *bin, DWORD nbin, DWORD flags, LPWSTR str, D
         *str++ = hex[(*bin >> 4) & 0xf];
         *str++ = hex[*bin & 0xf];
         bin++;
+    }
+
+    if (flags & CRYPT_STRING_NOCR)
+        *str++ = '\n';
+    else if (!(flags & CRYPT_STRING_NOCRLF))
+    {
+        *str++ = '\r';
+        *str++ = '\n';
+    }
+
+    *str = 0;
+    *nstr = needed - 1;
+    return TRUE;
+}
+
+static BOOL binary_to_hexW(const BYTE *bin, DWORD nbin, DWORD flags, LPWSTR str, DWORD *nstr)
+{
+    static const WCHAR hex[] = L"0123456789abcdef";
+    DWORD needed, i;
+
+    needed = nbin * 3; /* spaces + terminating \0 */
+
+    if (flags & CRYPT_STRING_NOCR)
+    {
+        needed += (nbin + 7) / 16; /* space every 16 characters */
+        needed += 1; /* terminating \n */
+    }
+    else if (!(flags & CRYPT_STRING_NOCRLF))
+    {
+        needed += (nbin + 7) / 16; /* space every 16 characters */
+        needed += nbin / 16 + 1; /* LF every 16 characters + terminating \r */
+
+        if (nbin % 16)
+            needed += 1; /* terminating \n */
+    }
+
+    if (!str)
+    {
+        *nstr = needed;
+        return TRUE;
+    }
+
+    if (needed > *nstr)
+    {
+        SetLastError(ERROR_MORE_DATA);
+        return FALSE;
+    }
+
+    for (i = 0; i < nbin; i++)
+    {
+        *str++ = hex[(bin[i] >> 4) & 0xf];
+        *str++ = hex[bin[i] & 0xf];
+
+        if (i >= nbin - 1) break;
+
+        if (i && !(flags & CRYPT_STRING_NOCRLF))
+        {
+            if (!((i + 1) % 16))
+            {
+                if (flags & CRYPT_STRING_NOCR)
+                    *str++ = '\n';
+                else
+                {
+                    *str++ = '\r';
+                    *str++ = '\n';
+                }
+                continue;
+            }
+            else if (!((i + 1) % 8))
+                *str++ = ' ';
+        }
+
+        *str++ = ' ';
     }
 
     if (flags & CRYPT_STRING_NOCR)
@@ -537,9 +610,11 @@ BOOL WINAPI CryptBinaryToStringW(const BYTE *pbBinary,
         encoder = BinaryToBase64W;
         break;
     case CRYPT_STRING_HEXRAW:
-        encoder = BinaryToHexW;
+        encoder = BinaryToHexRawW;
         break;
     case CRYPT_STRING_HEX:
+        encoder = binary_to_hexW;
+        break;
     case CRYPT_STRING_HEXASCII:
     case CRYPT_STRING_HEXADDR:
     case CRYPT_STRING_HEXASCIIADDR:
