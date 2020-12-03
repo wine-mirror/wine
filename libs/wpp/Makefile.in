@@ -1,8 +1,6 @@
 STATICLIB = libwpp.a
 
-C_SRCS = \
-	preproc.c \
-	wpp.c
+C_SRCS = wpp.c
 
 LEX_SRCS   = ppl.l
 BISON_SRCS = ppy.y
