@@ -441,7 +441,7 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
         LOCALE_SABBREVMONTHNAME9, LOCALE_SABBREVMONTHNAME10,
         LOCALE_SABBREVMONTHNAME11, LOCALE_SABBREVMONTHNAME12 };
 
-    BOOL formatAD = TRUE;
+    const WCHAR *formatEra = L"";
     WCHAR week[64], month[64];
     WCHAR buf[192];
     jsstr_t *date_jsstr;
@@ -466,7 +466,7 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
 
         year = year_from_time(time);
         if(year<0) {
-            formatAD = FALSE;
+            formatEra = L" B.C.";
             year = -year+1;
         }
 
@@ -480,16 +480,16 @@ static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, 
         if(!show_offset)
             swprintf(buf, ARRAY_SIZE(buf), L"%s %s %d %02d:%02d:%02d %d%s", week, month, day,
                     (int)hour_from_time(time), (int)min_from_time(time),
-                    (int)sec_from_time(time), year, formatAD?L"":L" B.C.");
+                    (int)sec_from_time(time), year, formatEra);
         else if(offset)
             swprintf(buf, ARRAY_SIZE(buf), L"%s %s %d %02d:%02d:%02d UTC%c%02d%02d %d%s", week, month, day,
                     (int)hour_from_time(time), (int)min_from_time(time),
                     (int)sec_from_time(time), sign, offset/60, offset%60,
-                    year, formatAD?L"":L" B.C.");
+                    year, formatEra);
         else
             swprintf(buf, ARRAY_SIZE(buf), L"%s %s %d %02d:%02d:%02d UTC %d%s", week, month, day,
                     (int)hour_from_time(time), (int)min_from_time(time),
-                    (int)sec_from_time(time), year, formatAD?L"":L" B.C.");
+                    (int)sec_from_time(time), year, formatEra);
 
         date_jsstr = jsstr_alloc(buf);
         if(!date_jsstr)
@@ -638,7 +638,7 @@ static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis, jsva
         LOCALE_SABBREVMONTHNAME9, LOCALE_SABBREVMONTHNAME10,
         LOCALE_SABBREVMONTHNAME11, LOCALE_SABBREVMONTHNAME12 };
 
-    BOOL formatAD = TRUE;
+    const WCHAR *formatEra = L"";
     WCHAR week[64], month[64];
     WCHAR buf[192];
     DateInstance *date;
@@ -666,15 +666,15 @@ static inline HRESULT create_utc_string(script_ctx_t *ctx, vdisp_t *jsthis, jsva
 
         year = year_from_time(date->time);
         if(year<0) {
-            formatAD = FALSE;
+            formatEra = L" B.C.";
             year = -year+1;
         }
 
         day = date_from_time(date->time);
 
         swprintf(buf, ARRAY_SIZE(buf),
-                formatAD ? L"%s, %d %s %d %02d:%02d:%02d UTC" : L"%s, %d %s %d B.C. %02d:%02d:%02d UTC",
-                week, day, month, year, (int)hour_from_time(date->time), (int)min_from_time(date->time),
+                L"%s, %d %s %d%s %02d:%02d:%02d UTC", week, day, month, year, formatEra,
+                (int)hour_from_time(date->time), (int)min_from_time(date->time),
                 (int)sec_from_time(date->time));
 
         date_str = jsstr_alloc(buf);
@@ -714,7 +714,7 @@ static HRESULT dateobj_to_date_string(DateInstance *date, jsval_t *r)
         LOCALE_SABBREVMONTHNAME9, LOCALE_SABBREVMONTHNAME10,
         LOCALE_SABBREVMONTHNAME11, LOCALE_SABBREVMONTHNAME12 };
 
-    BOOL formatAD = TRUE;
+    const WCHAR *formatEra = L"";
     WCHAR week[64], month[64];
     WCHAR buf[192];
     jsstr_t *date_str;
@@ -741,14 +741,13 @@ static HRESULT dateobj_to_date_string(DateInstance *date, jsval_t *r)
 
         year = year_from_time(time);
         if(year<0) {
-            formatAD = FALSE;
+            formatEra = L" B.C.";
             year = -year+1;
         }
 
         day = date_from_time(time);
 
-        swprintf(buf, ARRAY_SIZE(buf), formatAD ? L"%s %s %d %d" : L"%s %s %d %d B.C.", week, month,
-                day, year);
+        swprintf(buf, ARRAY_SIZE(buf), L"%s %s %d %d%s", week, month, day, year, formatEra);
 
         date_str = jsstr_alloc(buf);
         if(!date_str)
