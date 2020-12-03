@@ -125,8 +125,6 @@ _ACRTIMP float __cdecl asinf(float);
 _ACRTIMP float __cdecl acosf(float);
 _ACRTIMP float __cdecl atanf(float);
 _ACRTIMP float __cdecl atan2f(float, float);
-_ACRTIMP float __cdecl asinhf(float);
-_ACRTIMP float __cdecl acoshf(float);
 _ACRTIMP float __cdecl atanhf(float);
 _ACRTIMP float __cdecl expf(float);
 _ACRTIMP float __cdecl logf(float);
@@ -140,9 +138,6 @@ _ACRTIMP float __cdecl frexpf(float, int*);
 _ACRTIMP float __cdecl modff(float, float*);
 _ACRTIMP float __cdecl fmodf(float, float);
 
-_ACRTIMP float __cdecl _copysignf(float, float);
-_ACRTIMP float __cdecl _chgsignf(float);
-_ACRTIMP float __cdecl _logbf(float);
 _ACRTIMP int   __cdecl _finitef(float);
 _ACRTIMP int   __cdecl _isnanf(float);
 _ACRTIMP int   __cdecl _fpclassf(float);
@@ -159,9 +154,6 @@ static inline float asinf(float x) { return asin(x); }
 static inline float acosf(float x) { return acos(x); }
 static inline float atanf(float x) { return atan(x); }
 static inline float atan2f(float x, float y) { return atan2(x, y); }
-static inline float asinhf(float x) { return asinh(x); }
-static inline float acoshf(float x) { return acosh(x); }
-static inline float atanhf(float x) { return atanh(x); }
 static inline float expf(float x) { return exp(x); }
 static inline float logf(float x) { return log(x); }
 static inline float log10f(float x) { return log10(x); }
@@ -174,12 +166,29 @@ static inline float frexpf(float x, int *y) { return frexp(x, y); }
 static inline float modff(float x, float *y) { double yd, ret = modf(x, &yd); *y = yd; return ret; }
 static inline float fmodf(float x, float y) { return fmod(x, y); }
 
-static inline float _copysignf(float x, float y) { return _copysign(x, y); }
-static inline float _chgsignf(float x) { return _chgsign(x); }
-static inline float _logbf(float x) { return _logb(x); }
 static inline int   _finitef(float x) { return _finite(x); }
 static inline int   _isnanf(float x) { return _isnan(x); }
 static inline int   _fpclassf(float x) { return _fpclass(x); }
+
+#endif
+
+#if !defined(__i386__) || _MSVCR_VER>=120
+
+_ACRTIMP float __cdecl _chgsignf(float);
+_ACRTIMP float __cdecl _copysignf(float, float);
+_ACRTIMP float __cdecl _logbf(float);
+_ACRTIMP float __cdecl acoshf(float);
+_ACRTIMP float __cdecl asinhf(float);
+_ACRTIMP float __cdecl atanhf(float);
+
+#else
+
+static inline float _chgsignf(float x) { return _chgsign(x); }
+static inline float _copysignf(float x, float y) { return _copysign(x, y); }
+static inline float _logbf(float x) { return _logb(x); }
+static inline float acoshf(float x) { return acosh(x); }
+static inline float asinhf(float x) { return asinh(x); }
+static inline float atanhf(float x) { return atanh(x); }
 
 #endif
 

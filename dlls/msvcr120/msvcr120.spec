@@ -824,7 +824,7 @@
 @ cdecl -arch=i386 _CItanh()
 @ cdecl _CRT_RTC_INIT(ptr ptr long long long)
 @ cdecl _CRT_RTC_INITW(ptr ptr long long long)
-@ cdecl _Cbuild(ptr double double) MSVCR120__Cbuild
+@ cdecl _Cbuild(ptr double double)
 @ cdecl _CreateFrameInfo(ptr ptr)
 @ stdcall _CxxThrowException(ptr ptr)
 @ cdecl -arch=i386 -norelay _EH_prolog()
@@ -941,27 +941,27 @@
 @ stub -arch=arm __jump_unwind
 # extern __lconv
 @ cdecl __lconv_init()
-@ cdecl -arch=i386 -norelay __libm_sse2_acos() MSVCRT___libm_sse2_acos
-@ cdecl -arch=i386 -norelay __libm_sse2_acosf() MSVCRT___libm_sse2_acosf
-@ cdecl -arch=i386 -norelay __libm_sse2_asin() MSVCRT___libm_sse2_asin
-@ cdecl -arch=i386 -norelay __libm_sse2_asinf() MSVCRT___libm_sse2_asinf
-@ cdecl -arch=i386 -norelay __libm_sse2_atan() MSVCRT___libm_sse2_atan
-@ cdecl -arch=i386 -norelay __libm_sse2_atan2() MSVCRT___libm_sse2_atan2
-@ cdecl -arch=i386 -norelay __libm_sse2_atanf() MSVCRT___libm_sse2_atanf
-@ cdecl -arch=i386 -norelay __libm_sse2_cos() MSVCRT___libm_sse2_cos
-@ cdecl -arch=i386 -norelay __libm_sse2_cosf() MSVCRT___libm_sse2_cosf
-@ cdecl -arch=i386 -norelay __libm_sse2_exp() MSVCRT___libm_sse2_exp
-@ cdecl -arch=i386 -norelay __libm_sse2_expf() MSVCRT___libm_sse2_expf
-@ cdecl -arch=i386 -norelay __libm_sse2_log() MSVCRT___libm_sse2_log
-@ cdecl -arch=i386 -norelay __libm_sse2_log10() MSVCRT___libm_sse2_log10
-@ cdecl -arch=i386 -norelay __libm_sse2_log10f() MSVCRT___libm_sse2_log10f
-@ cdecl -arch=i386 -norelay __libm_sse2_logf() MSVCRT___libm_sse2_logf
-@ cdecl -arch=i386 -norelay __libm_sse2_pow() MSVCRT___libm_sse2_pow
-@ cdecl -arch=i386 -norelay __libm_sse2_powf() MSVCRT___libm_sse2_powf
-@ cdecl -arch=i386 -norelay __libm_sse2_sin() MSVCRT___libm_sse2_sin
-@ cdecl -arch=i386 -norelay __libm_sse2_sinf() MSVCRT___libm_sse2_sinf
-@ cdecl -arch=i386 -norelay __libm_sse2_tan() MSVCRT___libm_sse2_tan
-@ cdecl -arch=i386 -norelay __libm_sse2_tanf() MSVCRT___libm_sse2_tanf
+@ cdecl -arch=i386 -norelay __libm_sse2_acos()
+@ cdecl -arch=i386 -norelay __libm_sse2_acosf()
+@ cdecl -arch=i386 -norelay __libm_sse2_asin()
+@ cdecl -arch=i386 -norelay __libm_sse2_asinf()
+@ cdecl -arch=i386 -norelay __libm_sse2_atan()
+@ cdecl -arch=i386 -norelay __libm_sse2_atan2()
+@ cdecl -arch=i386 -norelay __libm_sse2_atanf()
+@ cdecl -arch=i386 -norelay __libm_sse2_cos()
+@ cdecl -arch=i386 -norelay __libm_sse2_cosf()
+@ cdecl -arch=i386 -norelay __libm_sse2_exp()
+@ cdecl -arch=i386 -norelay __libm_sse2_expf()
+@ cdecl -arch=i386 -norelay __libm_sse2_log()
+@ cdecl -arch=i386 -norelay __libm_sse2_log10()
+@ cdecl -arch=i386 -norelay __libm_sse2_log10f()
+@ cdecl -arch=i386 -norelay __libm_sse2_logf()
+@ cdecl -arch=i386 -norelay __libm_sse2_pow()
+@ cdecl -arch=i386 -norelay __libm_sse2_powf()
+@ cdecl -arch=i386 -norelay __libm_sse2_sin()
+@ cdecl -arch=i386 -norelay __libm_sse2_sinf()
+@ cdecl -arch=i386 -norelay __libm_sse2_tan()
+@ cdecl -arch=i386 -norelay __libm_sse2_tanf()
 @ extern __mb_cur_max MSVCRT___mb_cur_max
 @ cdecl __p___argc()
 @ cdecl __p___argv()
@@ -993,7 +993,7 @@
 @ stub __report_gsfailure
 @ cdecl __set_app_type(long)
 @ extern __setlc_active MSVCRT___setlc_active
-@ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr
+@ cdecl __setusermatherr(ptr)
 @ cdecl __strncnt(str long)
 @ varargs  __swprintf_l(ptr wstr ptr)
 @ cdecl __sys_errlist()
@@ -1048,7 +1048,7 @@
 @ cdecl _byteswap_ulong(long)
 @ cdecl _byteswap_ushort(long)
 @ cdecl _c_exit()
-@ cdecl _cabs(long) MSVCRT__cabs
+@ cdecl _cabs(long)
 @ cdecl _callnewh(long)
 @ cdecl _calloc_crt(long long) calloc
 @ cdecl _cexit()
@@ -1058,8 +1058,8 @@
 @ stub _cgetws_s
 @ cdecl _chdir(str) MSVCRT__chdir
 @ cdecl _chdrive(long) MSVCRT__chdrive
-@ cdecl _chgsign(double) MSVCRT__chgsign
-@ cdecl _chgsignf(float) MSVCRT__chgsignf
+@ cdecl _chgsign(double)
+@ cdecl _chgsignf(float)
 @ cdecl -arch=i386 -norelay _chkesp()
 @ cdecl _chmod(str long) MSVCRT__chmod
 @ cdecl _chsize(long long) MSVCRT__chsize
@@ -1072,8 +1072,8 @@
 @ cdecl _control87(long long)
 @ cdecl _controlfp(long long)
 @ cdecl _controlfp_s(ptr long long)
-@ cdecl _copysign(double double) MSVCRT__copysign
-@ cdecl _copysignf(float float) MSVCRT__copysignf
+@ cdecl _copysign(double double)
+@ cdecl _copysignf(float float)
 @ varargs _cprintf(str)
 @ stub _cprintf_l
 @ stub _cprintf_p
@@ -1106,19 +1106,19 @@
 @ varargs _cwscanf_s(wstr)
 @ varargs _cwscanf_s_l(wstr ptr)
 @ extern _daylight MSVCRT___daylight
-@ cdecl _dclass(double) MSVCR120__dclass
+@ cdecl _dclass(double)
 @ cdecl _difftime32(long long)
 @ cdecl _difftime64(int64 int64)
 @ stub _dosmaperr
-@ cdecl _dpcomp(double double) MSVCR120__dpcomp
-@ cdecl _dsign(double) MSVCR120__dsign
+@ cdecl _dpcomp(double double)
+@ cdecl _dsign(double)
 @ extern _dstbias MSVCRT__dstbias
-@ cdecl _dtest(ptr) MSVCR120__dtest
+@ cdecl _dtest(ptr)
 @ cdecl _dup(long) MSVCRT__dup
 @ cdecl _dup2(long long) MSVCRT__dup2
 @ cdecl _dupenv_s(ptr ptr str)
-@ cdecl _ecvt(double long ptr ptr) MSVCRT__ecvt
-@ cdecl _ecvt_s(str long double long ptr ptr) MSVCRT__ecvt_s
+@ cdecl _ecvt(double long ptr ptr)
+@ cdecl _ecvt_s(str long double long ptr ptr)
 @ cdecl _endthread()
 @ cdecl _endthreadex(long)
 @ extern _environ MSVCRT__environ
@@ -1140,13 +1140,13 @@
 @ cdecl _expand(ptr long)
 @ cdecl _fclose_nolock(ptr) MSVCRT__fclose_nolock
 @ cdecl _fcloseall() MSVCRT__fcloseall
-@ cdecl _fcvt(double long ptr ptr) MSVCRT__fcvt
-@ cdecl _fcvt_s(ptr long double long ptr ptr) MSVCRT__fcvt_s
-@ cdecl _fdclass(float) MSVCR120__fdclass
+@ cdecl _fcvt(double long ptr ptr)
+@ cdecl _fcvt_s(ptr long double long ptr ptr)
+@ cdecl _fdclass(float)
 @ cdecl _fdopen(long str) MSVCRT__fdopen
-@ cdecl _fdpcomp(float float) MSVCR120__fdpcomp
-@ cdecl _fdsign(float) MSVCR120__fdsign
-@ cdecl _fdtest(ptr) MSVCR120__fdtest
+@ cdecl _fdpcomp(float float)
+@ cdecl _fdsign(float)
+@ cdecl _fdtest(ptr)
 @ cdecl _fflush_nolock(ptr) MSVCRT__fflush_nolock
 @ cdecl _fgetc_nolock(ptr) MSVCRT__fgetc_nolock
 @ cdecl _fgetchar() MSVCRT__fgetchar
@@ -1165,13 +1165,13 @@
 @ stub _findnext32i64
 @ cdecl _findnext64(long ptr) MSVCRT__findnext64
 @ cdecl _findnext64i32(long ptr) MSVCRT__findnext64i32
-@ cdecl _finite(double) MSVCRT__finite
-@ cdecl -arch=!i386 _finitef(float) MSVCRT__finitef
+@ cdecl _finite(double)
+@ cdecl -arch=!i386 _finitef(float)
 @ cdecl _flsbuf(long ptr) MSVCRT__flsbuf
 @ cdecl _flushall() MSVCRT__flushall
 @ extern _fmode MSVCRT__fmode
-@ cdecl _fpclass(double) MSVCRT__fpclass
-@ cdecl -arch=!i386 _fpclassf(float) MSVCRT__fpclassf
+@ cdecl _fpclass(double)
+@ cdecl -arch=!i386 _fpclassf(float)
 @ cdecl -arch=i386,x86_64,arm,arm64 _fpieee_flt(long ptr ptr)
 @ cdecl _fpreset()
 @ stub _fprintf_l
@@ -1205,7 +1205,7 @@
 @ cdecl _ftime32_s(ptr)
 @ cdecl _ftime64(ptr)
 @ cdecl _ftime64_s(ptr)
-@ cdecl -arch=i386 -ret64 _ftol() MSVCRT__ftol
+@ cdecl -arch=i386 -ret64 _ftol()
 @ cdecl _fullpath(ptr str long) MSVCRT__fullpath
 @ cdecl _futime32(long ptr)
 @ cdecl _futime64(long ptr)
@@ -1216,8 +1216,8 @@
 @ cdecl _fwrite_nolock(ptr long long ptr) MSVCRT__fwrite_nolock
 @ varargs _fwscanf_l(ptr wstr ptr)
 @ varargs _fwscanf_s_l(ptr wstr ptr)
-@ cdecl _gcvt(double long str) MSVCRT__gcvt
-@ cdecl _gcvt_s(ptr long  double long) MSVCRT__gcvt_s
+@ cdecl _gcvt(double long str)
+@ cdecl _gcvt_s(ptr long  double long)
 @ cdecl _get_current_locale()
 @ cdecl _get_daylight(ptr)
 @ cdecl _get_doserrno(ptr)
@@ -1272,7 +1272,7 @@
 @ stub _heapused(ptr ptr)
 @ cdecl _heapwalk(ptr)
 @ cdecl _hypot(double double)
-@ cdecl _hypotf(float float) MSVCRT__hypotf
+@ cdecl _hypotf(float float)
 @ cdecl _i64toa(int64 ptr long) ntdll._i64toa
 @ cdecl _i64toa_s(int64 ptr long long)
 @ cdecl _i64tow(int64 ptr long) ntdll._i64tow
@@ -1361,8 +1361,8 @@
 @ stub _ismbslead_l
 @ cdecl _ismbstrail(ptr ptr)
 @ stub _ismbstrail_l
-@ cdecl _isnan(double) MSVCRT__isnan
-@ cdecl -arch=x86_64 _isnanf(float) MSVCRT__isnanf
+@ cdecl _isnan(double)
+@ cdecl -arch=x86_64 _isnanf(float)
 @ cdecl _isprint_l(long ptr)
 @ cdecl _ispunct_l(long ptr)
 @ cdecl _isspace_l(long ptr)
@@ -1387,27 +1387,27 @@
 @ cdecl _itoa_s(long ptr long long)
 @ cdecl _itow(long ptr long) ntdll._itow
 @ cdecl _itow_s(long ptr long long)
-@ cdecl _j0(double) MSVCRT__j0
-@ cdecl _j1(double) MSVCRT__j1
-@ cdecl _jn(long double) MSVCRT__jn
+@ cdecl _j0(double)
+@ cdecl _j1(double)
+@ cdecl _jn(long double)
 @ cdecl _kbhit()
-@ cdecl _ldclass(double) MSVCR120__ldclass
-@ cdecl _ldpcomp(double double) MSVCR120__dpcomp
-@ cdecl _ldsign(double) MSVCR120__dsign
-@ cdecl _ldtest(ptr) MSVCR120__ldtest
+@ cdecl _ldclass(double)
+@ cdecl _ldpcomp(double double) _dpcomp
+@ cdecl _ldsign(double) _dsign
+@ cdecl _ldtest(ptr)
 @ cdecl _lfind(ptr ptr ptr long ptr)
 @ cdecl _lfind_s(ptr ptr ptr long ptr ptr)
-@ cdecl -arch=i386 -norelay _libm_sse2_acos_precise() MSVCRT___libm_sse2_acos
-@ cdecl -arch=i386 -norelay _libm_sse2_asin_precise() MSVCRT___libm_sse2_asin
-@ cdecl -arch=i386 -norelay _libm_sse2_atan_precise() MSVCRT___libm_sse2_atan
-@ cdecl -arch=i386 -norelay _libm_sse2_cos_precise() MSVCRT___libm_sse2_cos
-@ cdecl -arch=i386 -norelay _libm_sse2_exp_precise() MSVCRT___libm_sse2_exp
-@ cdecl -arch=i386 -norelay _libm_sse2_log10_precise() MSVCRT___libm_sse2_log10
-@ cdecl -arch=i386 -norelay _libm_sse2_log_precise() MSVCRT___libm_sse2_log
-@ cdecl -arch=i386 -norelay _libm_sse2_pow_precise() MSVCRT___libm_sse2_pow
-@ cdecl -arch=i386 -norelay _libm_sse2_sin_precise() MSVCRT___libm_sse2_sin
-@ cdecl -arch=i386 -norelay _libm_sse2_sqrt_precise() MSVCRT___libm_sse2_sqrt_precise
-@ cdecl -arch=i386 -norelay _libm_sse2_tan_precise() MSVCRT___libm_sse2_tan
+@ cdecl -arch=i386 -norelay _libm_sse2_acos_precise() __libm_sse2_acos
+@ cdecl -arch=i386 -norelay _libm_sse2_asin_precise() __libm_sse2_asin
+@ cdecl -arch=i386 -norelay _libm_sse2_atan_precise() __libm_sse2_atan
+@ cdecl -arch=i386 -norelay _libm_sse2_cos_precise() __libm_sse2_cos
+@ cdecl -arch=i386 -norelay _libm_sse2_exp_precise() __libm_sse2_exp
+@ cdecl -arch=i386 -norelay _libm_sse2_log10_precise() __libm_sse2_log10
+@ cdecl -arch=i386 -norelay _libm_sse2_log_precise() __libm_sse2_log
+@ cdecl -arch=i386 -norelay _libm_sse2_pow_precise() __libm_sse2_pow
+@ cdecl -arch=i386 -norelay _libm_sse2_sin_precise() __libm_sse2_sin
+@ cdecl -arch=i386 -norelay _libm_sse2_sqrt_precise() __libm_sse2_sqrt_precise
+@ cdecl -arch=i386 -norelay _libm_sse2_tan_precise() __libm_sse2_tan
 @ cdecl _loaddll(str)
 @ cdecl -arch=x86_64 _local_unwind(ptr ptr)
 @ cdecl -arch=i386 _local_unwind2(ptr long)
@@ -1419,11 +1419,11 @@
 @ cdecl _lock(long)
 @ cdecl _lock_file(ptr) MSVCRT__lock_file
 @ cdecl _locking(long long long) MSVCRT__locking
-@ cdecl _logb(double) MSVCRT__logb
-@ cdecl -arch=!i386 _logbf(float) MSVCRT__logbf
+@ cdecl _logb(double)
+@ cdecl -arch=!i386 _logbf(float)
 @ cdecl -arch=i386 _longjmpex(ptr long) MSVCRT_longjmp
-@ cdecl _lrotl(long long) MSVCRT__lrotl
-@ cdecl _lrotr(long long) MSVCRT__lrotr
+@ cdecl _lrotl(long long)
+@ cdecl _lrotr(long long)
 @ cdecl _lsearch(ptr ptr ptr long ptr)
 @ stub _lsearch_s
 @ cdecl _lseek(long long long) MSVCRT__lseek
@@ -1582,8 +1582,8 @@
 @ cdecl _mktime32(ptr)
 @ cdecl _mktime64(ptr)
 @ cdecl _msize(ptr)
-@ cdecl _nextafter(double double) MSVCRT__nextafter
-@ cdecl -arch=x86_64 _nextafterf(float float) MSVCRT__nextafterf
+@ cdecl _nextafter(double double)
+@ cdecl -arch=x86_64 _nextafterf(float float)
 @ cdecl _onexit(ptr)
 @ varargs _open(str long) MSVCRT__open
 @ cdecl _open_osfhandle(long long) MSVCRT__open_osfhandle
@@ -1622,8 +1622,8 @@
 @ cdecl -ret64 _rotl64(int64 long)
 @ cdecl _rotr(long long)
 @ cdecl -ret64 _rotr64(int64 long)
-@ cdecl _scalb(double long) MSVCRT__scalb
-@ cdecl -arch=x86_64 _scalbf(float long) MSVCRT__scalbf
+@ cdecl _scalb(double long)
+@ cdecl -arch=x86_64 _scalbf(float long)
 @ varargs _scanf_l(str ptr)
 @ varargs _scanf_s_l(str ptr)
 @ varargs _scprintf(str)
@@ -1638,8 +1638,8 @@
 @ cdecl _searchenv_s(str str ptr long) MSVCRT__searchenv_s
 @ stdcall -arch=i386 _seh_longjmp_unwind4(ptr)
 @ stdcall -arch=i386 _seh_longjmp_unwind(ptr)
-@ cdecl -arch=i386 _set_SSE2_enable(long) MSVCRT__set_SSE2_enable
-@ cdecl -arch=win64 _set_FMA3_enable(long) MSVCRT__set_FMA3_enable
+@ cdecl -arch=i386 _set_SSE2_enable(long)
+@ cdecl -arch=win64 _set_FMA3_enable(long)
 @ cdecl _set_abort_behavior(long long)
 @ cdecl _set_controlfp(long long)
 @ cdecl _set_doserrno(long)
@@ -2004,29 +2004,29 @@
 @ cdecl _wunlink(wstr) MSVCRT__wunlink
 @ cdecl _wutime32(wstr ptr)
 @ cdecl _wutime64(wstr ptr)
-@ cdecl _y0(double) MSVCRT__y0
-@ cdecl _y1(double) MSVCRT__y1
-@ cdecl _yn(long double) MSVCRT__yn
+@ cdecl _y0(double)
+@ cdecl _y1(double)
+@ cdecl _yn(long double)
 @ cdecl abort()
-@ cdecl abs(long) MSVCRT_abs
-@ cdecl acos(double) MSVCRT_acos
-@ cdecl -arch=!i386 acosf(float) MSVCRT_acosf
-@ cdecl acosh(double) MSVCR120_acosh
-@ cdecl acoshf(float) MSVCR120_acoshf
+@ cdecl abs(long)
+@ cdecl acos(double)
+@ cdecl -arch=!i386 acosf(float)
+@ cdecl acosh(double)
+@ cdecl acoshf(float)
 @ cdecl acoshl(double) MSVCR120_acoshl
 @ cdecl asctime(ptr)
 @ cdecl asctime_s(ptr long ptr)
-@ cdecl asin(double) MSVCRT_asin
-@ cdecl -arch=!i386 asinf(float) MSVCRT_asinf
-@ cdecl asinh(double) MSVCR120_asinh
-@ cdecl asinhf(float) MSVCR120_asinhf
+@ cdecl asin(double)
+@ cdecl -arch=!i386 asinf(float)
+@ cdecl asinh(double)
+@ cdecl asinhf(float)
 @ cdecl asinhl(double) MSVCR120_asinhl
-@ cdecl atan(double) MSVCRT_atan
-@ cdecl -arch=!i386 atanf(float) MSVCRT_atanf
-@ cdecl atan2(double double) MSVCRT_atan2
-@ cdecl -arch=!i386 atan2f(float float) MSVCRT_atan2f
-@ cdecl atanh(double) MSVCR120_atanh
-@ cdecl atanhf(float) MSVCR120_atanhf
+@ cdecl atan(double)
+@ cdecl -arch=!i386 atanf(float)
+@ cdecl atan2(double double)
+@ cdecl -arch=!i386 atan2f(float float)
+@ cdecl atanh(double)
+@ cdecl atanhf(float)
 @ cdecl atanhl(double) MSVCR120_atanhl
 @ cdecl -private atexit(ptr) MSVCRT_atexit  # not imported to avoid conflicts with Mingw
 @ cdecl atof(str)
@@ -2061,8 +2061,8 @@
 @ stub catanhf
 @ stub catanhl
 @ stub catanl
-@ cdecl cbrt(double) MSVCR120_cbrt
-@ cdecl cbrtf(float) MSVCR120_cbrtf
+@ cdecl cbrt(double)
+@ cdecl cbrtf(float)
 @ cdecl cbrtl(double) MSVCR120_cbrtl
 @ stub ccos
 @ stub ccosf
@@ -2070,8 +2070,8 @@
 @ stub ccoshf
 @ stub ccoshl
 @ stub ccosl
-@ cdecl ceil(double) MSVCRT_ceil
-@ cdecl -arch=!i386 ceilf(float) MSVCRT_ceilf
+@ cdecl ceil(double)
+@ cdecl -arch=!i386 ceilf(float)
 @ stub cexp
 @ stub cexpf
 @ stub cexpl
@@ -2090,13 +2090,13 @@
 @ stub conj
 @ stub conjf
 @ stub conjl
-@ cdecl copysign(double double) MSVCRT__copysign
-@ cdecl copysignf(float float) MSVCRT__copysignf
-@ cdecl copysignl(double double) MSVCRT__copysign
-@ cdecl cos(double) MSVCRT_cos
-@ cdecl -arch=!i386 cosf(float) MSVCRT_cosf
-@ cdecl cosh(double) MSVCRT_cosh
-@ cdecl -arch=!i386 coshf(float) MSVCRT_coshf
+@ cdecl copysign(double double) _copysign
+@ cdecl copysignf(float float) _copysignf
+@ cdecl copysignl(double double) _copysign
+@ cdecl cos(double)
+@ cdecl -arch=!i386 cosf(float)
+@ cdecl cosh(double)
+@ cdecl -arch=!i386 coshf(float)
 @ stub cpow
 @ stub cpowf
 @ stub cpowl
@@ -2121,39 +2121,39 @@
 @ stub ctanhf
 @ stub ctanhl
 @ stub ctanl
-@ cdecl -ret64 div(long long) MSVCRT_div
-@ cdecl erf(double) MSVCR120_erf
-@ cdecl erfc(double) MSVCR120_erfc
-@ cdecl erfcf(float) MSVCR120_erfcf
+@ cdecl -ret64 div(long long)
+@ cdecl erf(double)
+@ cdecl erfc(double)
+@ cdecl erfcf(float)
 @ cdecl erfcl(double) MSVCR120_erfcl
-@ cdecl erff(float) MSVCR120_erff
+@ cdecl erff(float)
 @ cdecl erfl(double) MSVCR120_erfl
 @ cdecl exit(long)
-@ cdecl exp(double) MSVCRT_exp
-@ cdecl exp2(double) MSVCR120_exp2
-@ cdecl exp2f(float) MSVCR120_exp2f
+@ cdecl exp(double)
+@ cdecl exp2(double)
+@ cdecl exp2f(float)
 @ cdecl exp2l(double) MSVCR120_exp2l
-@ cdecl -arch=!i386 expf(float) MSVCRT_expf
-@ cdecl expm1(double) MSVCR120_expm1
-@ cdecl expm1f(float) MSVCR120_expm1f
+@ cdecl -arch=!i386 expf(float)
+@ cdecl expm1(double)
+@ cdecl expm1f(float)
 @ cdecl expm1l(double) MSVCR120_expm1l
-@ cdecl fabs(double) MSVCRT_fabs
-@ cdecl -arch=!i386 fabsf(float) MSVCRT_fabsf
+@ cdecl fabs(double)
+@ cdecl -arch=!i386 fabsf(float)
 @ cdecl fclose(ptr) MSVCRT_fclose
-@ cdecl fdim(double double) MSVCR120_fdim
-@ cdecl fdimf(float float) MSVCR120_fdimf
-@ cdecl fdiml(double double) MSVCR120_fdim
+@ cdecl fdim(double double)
+@ cdecl fdimf(float float)
+@ cdecl fdiml(double double) fdim
 @ stub feclearexcept
-@ cdecl fegetenv(ptr) MSVCRT_fegetenv
+@ cdecl fegetenv(ptr)
 @ stub fegetexceptflag
-@ cdecl fegetround() MSVCRT_fegetround
+@ cdecl fegetround()
 @ stub feholdexcept
 @ cdecl feof(ptr) MSVCRT_feof
 @ stub feraiseexcept
 @ cdecl ferror(ptr) MSVCRT_ferror
-@ cdecl fesetenv(ptr) MSVCRT_fesetenv
+@ cdecl fesetenv(ptr)
 @ stub fesetexceptflag
-@ cdecl fesetround(long) MSVCRT_fesetround
+@ cdecl fesetround(long)
 @ stub fetestexcept
 @ stub feupdateenv
 @ cdecl fflush(ptr) MSVCRT_fflush
@@ -2162,19 +2162,19 @@
 @ cdecl fgets(ptr long ptr) MSVCRT_fgets
 @ cdecl fgetwc(ptr) MSVCRT_fgetwc
 @ cdecl fgetws(ptr long ptr) MSVCRT_fgetws
-@ cdecl floor(double) MSVCRT_floor
-@ cdecl -arch=!i386 floorf(float) MSVCRT_floorf
-@ cdecl fma(double double double) MSVCRT_fma
-@ cdecl fmaf(float float float) MSVCRT_fmaf
-@ cdecl fmal(double double double) MSVCRT_fma
-@ cdecl fmax(double double) MSVCR120_fmax
-@ cdecl fmaxf(float float) MSVCR120_fmaxf
-@ cdecl fmaxl(double double) MSVCR120_fmax
-@ cdecl fmin(double double) MSVCR120_fmin
-@ cdecl fminf(float float) MSVCR120_fminf
-@ cdecl fminl(double double) MSVCR120_fmin
-@ cdecl fmod(double double) MSVCRT_fmod
-@ cdecl -arch=!i386 fmodf(float float) MSVCRT_fmodf
+@ cdecl floor(double)
+@ cdecl -arch=!i386 floorf(float)
+@ cdecl fma(double double double)
+@ cdecl fmaf(float float float)
+@ cdecl fmal(double double double) fma
+@ cdecl fmax(double double)
+@ cdecl fmaxf(float float)
+@ cdecl fmaxl(double double) fmax
+@ cdecl fmin(double double)
+@ cdecl fminf(float float)
+@ cdecl fminl(double double) fmin
+@ cdecl fmod(double double)
+@ cdecl -arch=!i386 fmodf(float float)
 @ cdecl fopen(str str) MSVCRT_fopen
 @ cdecl fopen_s(ptr str str) MSVCRT_fopen_s
 @ varargs fprintf(ptr str) MSVCRT_fprintf
@@ -2188,7 +2188,7 @@
 @ cdecl free(ptr)
 @ cdecl freopen(str str ptr) MSVCRT_freopen
 @ cdecl freopen_s(ptr str str ptr) MSVCRT_freopen_s
-@ cdecl frexp(double ptr) MSVCRT_frexp
+@ cdecl frexp(double ptr)
 @ varargs fscanf(ptr str)
 @ varargs fscanf_s(ptr str)
 @ cdecl fseek(ptr long long) MSVCRT_fseek
@@ -2207,10 +2207,10 @@
 @ cdecl gets_s(ptr long) MSVCRT_gets_s
 @ cdecl getwc(ptr) MSVCRT_getwc
 @ cdecl getwchar() MSVCRT_getwchar
-@ cdecl ilogb(double) MSVCR120_ilogb
-@ cdecl ilogbf(float) MSVCR120_ilogbf
+@ cdecl ilogb(double)
+@ cdecl ilogbf(float)
 @ cdecl ilogbl(double) MSVCR120_ilogbl
-@ cdecl -ret64 imaxabs(int64) MSVCRT_imaxabs
+@ cdecl -ret64 imaxabs(int64)
 @ stub imaxdiv
 @ cdecl is_wctype(long long) iswctype
 @ cdecl isalnum(long)
@@ -2240,40 +2240,40 @@
 @ cdecl iswupper(long)
 @ cdecl iswxdigit(long)
 @ cdecl isxdigit(long)
-@ cdecl labs(long) MSVCRT_labs
-@ cdecl ldexp(double long) MSVCRT_ldexp
-@ cdecl -ret64 ldiv(long long) MSVCRT_ldiv
-@ cdecl lgamma(double) MSVCR120_lgamma
-@ cdecl lgammaf(float) MSVCR120_lgammaf
+@ cdecl labs(long)
+@ cdecl ldexp(double long)
+@ cdecl -ret64 ldiv(long long)
+@ cdecl lgamma(double)
+@ cdecl lgammaf(float)
 @ cdecl lgammal(double) MSVCR120_lgammal
-@ cdecl -ret64 llabs(int64) MSVCRT_llabs
-@ cdecl lldiv(int64 int64) MSVCRT_lldiv
-@ cdecl -ret64 llrint(double) MSVCR120_llrint
-@ cdecl -ret64 llrintf(float) MSVCR120_llrintf
+@ cdecl -ret64 llabs(int64)
+@ cdecl lldiv(int64 int64)
+@ cdecl -ret64 llrint(double)
+@ cdecl -ret64 llrintf(float)
 @ cdecl -ret64 llrintl(double) MSVCR120_llrintl
-@ cdecl -ret64 llround(double) MSVCR120_llround
-@ cdecl -ret64 llroundf(float) MSVCR120_llroundf
+@ cdecl -ret64 llround(double)
+@ cdecl -ret64 llroundf(float)
 @ cdecl -ret64 llroundl(double) MSVCR120_llroundl
 @ cdecl localeconv()
-@ cdecl log(double) MSVCRT_log
-@ cdecl -arch=!i386 logf(float) MSVCRT_logf
-@ cdecl log10(double) MSVCRT_log10
-@ cdecl -arch=!i386 log10f(float) MSVCRT_log10f
-@ cdecl log1p(double) MSVCR120_log1p
-@ cdecl log1pf(float) MSVCR120_log1pf
+@ cdecl log(double)
+@ cdecl -arch=!i386 logf(float)
+@ cdecl log10(double)
+@ cdecl -arch=!i386 log10f(float)
+@ cdecl log1p(double)
+@ cdecl log1pf(float)
 @ cdecl log1pl(double) MSVCR120_log1pl
-@ cdecl log2(double) MSVCR120_log2
-@ cdecl log2f(float) MSVCR120_log2f
+@ cdecl log2(double)
+@ cdecl log2f(float)
 @ cdecl log2l(double) MSVCR120_log2l
-@ cdecl logb(double) MSVCRT__logb
-@ cdecl logbf(float) MSVCRT__logbf
-@ cdecl logbl(double) MSVCRT__logb
+@ cdecl logb(double) _logb
+@ cdecl logbf(float) _logbf
+@ cdecl logbl(double) _logb
 @ cdecl -arch=i386,x86_64,arm,arm64 longjmp(ptr long) MSVCRT_longjmp
-@ cdecl lrint(double) MSVCR120_lrint
-@ cdecl lrintf(float) MSVCR120_lrintf
+@ cdecl lrint(double)
+@ cdecl lrintf(float)
 @ cdecl lrintl(double) MSVCR120_lrintl
-@ cdecl lround(double) MSVCR120_lround
-@ cdecl lroundf(float) MSVCR120_lroundf
+@ cdecl lround(double)
+@ cdecl lroundf(float)
 @ cdecl lroundl(double) MSVCR120_lroundl
 @ cdecl malloc(long)
 @ cdecl mblen(ptr long)
@@ -2291,17 +2291,17 @@
 @ cdecl memmove(ptr ptr long)
 @ cdecl memmove_s(ptr long ptr long)
 @ cdecl memset(ptr long long)
-@ cdecl modf(double ptr) MSVCRT_modf
-@ cdecl -arch=!i386 modff(float ptr) MSVCRT_modff
-@ cdecl nan(str) MSVCR120_nan
-@ cdecl nanf(str) MSVCR120_nanf
-@ cdecl nanl(str) MSVCR120_nan
-@ cdecl nearbyint(double) MSVCRT_nearbyint
-@ cdecl nearbyintf(float) MSVCRT_nearbyintf
-@ cdecl nearbyintl(double) MSVCRT_nearbyint
-@ cdecl nextafter(double double) MSVCRT__nextafter
-@ cdecl nextafterf(float float) MSVCRT__nextafterf
-@ cdecl nextafterl(double double) MSVCRT__nextafter
+@ cdecl modf(double ptr)
+@ cdecl -arch=!i386 modff(float ptr)
+@ cdecl nan(str)
+@ cdecl nanf(str)
+@ cdecl nanl(str) nan
+@ cdecl nearbyint(double)
+@ cdecl nearbyintf(float)
+@ cdecl nearbyintl(double) nearbyint
+@ cdecl nextafter(double double) _nextafter
+@ cdecl nextafterf(float float) _nextafterf
+@ cdecl nextafterl(double double) _nextafter
 @ cdecl nexttoward(double double) MSVCRT_nexttoward
 @ cdecl nexttowardf(float double) MSVCRT_nexttowardf
 @ cdecl nexttowardl(double double) MSVCRT_nexttoward
@@ -2309,8 +2309,8 @@
 @ stub normf
 @ stub norml
 @ cdecl perror(str)
-@ cdecl pow(double double) MSVCRT_pow
-@ cdecl -arch=!i386 powf(float float) MSVCRT_powf
+@ cdecl pow(double double)
+@ cdecl -arch=!i386 powf(float float)
 @ varargs printf(str) MSVCRT_printf
 @ varargs printf_s(str) MSVCRT_printf_s
 @ cdecl putc(long ptr) MSVCRT_putc
@@ -2324,26 +2324,26 @@
 @ cdecl rand()
 @ cdecl rand_s(ptr)
 @ cdecl realloc(ptr long)
-@ cdecl remainder(double double) MSVCR120_remainder
-@ cdecl remainderf(float float) MSVCR120_remainderf
+@ cdecl remainder(double double)
+@ cdecl remainderf(float float)
 @ cdecl remainderl(double double) MSVCR120_remainderl
 @ cdecl remove(str) MSVCRT_remove
-@ cdecl remquo(double double ptr) MSVCR120_remquo
-@ cdecl remquof(float float ptr) MSVCR120_remquof
+@ cdecl remquo(double double ptr)
+@ cdecl remquof(float float ptr)
 @ cdecl remquol(double double ptr) MSVCR120_remquol
 @ cdecl rename(str str) MSVCRT_rename
 @ cdecl rewind(ptr) MSVCRT_rewind
-@ cdecl rint(double) MSVCR120_rint
-@ cdecl rintf(float) MSVCR120_rintf
+@ cdecl rint(double)
+@ cdecl rintf(float)
 @ cdecl rintl(double) MSVCR120_rintl
-@ cdecl round(double) MSVCR120_round
-@ cdecl roundf(float) MSVCR120_roundf
+@ cdecl round(double)
+@ cdecl roundf(float)
 @ cdecl roundl(double) MSVCR120_roundl
-@ cdecl scalbln(double long) MSVCRT__scalb
-@ cdecl scalblnf(float long) MSVCRT__scalbf
+@ cdecl scalbln(double long) _scalb
+@ cdecl scalblnf(float long) _scalbf
 @ cdecl scalblnl(double long) MSVCR120_scalbnl
-@ cdecl scalbn(double long) MSVCRT__scalb
-@ cdecl scalbnf(float long) MSVCRT__scalbf
+@ cdecl scalbn(double long) _scalb
+@ cdecl scalbnf(float long) _scalbf
 @ cdecl scalbnl(double long) MSVCR120_scalbnl
 @ varargs scanf(str)
 @ varargs scanf_s(str)
@@ -2352,14 +2352,14 @@
 @ cdecl setlocale(long str)
 @ cdecl setvbuf(ptr str long long) MSVCRT_setvbuf
 @ cdecl signal(long long)
-@ cdecl sin(double) MSVCRT_sin
-@ cdecl -arch=!i386 sinf(float) MSVCRT_sinf
-@ cdecl sinh(double) MSVCRT_sinh
-@ cdecl -arch=!i386 sinhf(float) MSVCRT_sinhf
+@ cdecl sin(double)
+@ cdecl -arch=!i386 sinf(float)
+@ cdecl sinh(double)
+@ cdecl -arch=!i386 sinhf(float)
 @ varargs sprintf(ptr str)
 @ varargs sprintf_s(ptr long str)
-@ cdecl sqrt(double) MSVCRT_sqrt
-@ cdecl -arch=!i386 sqrtf(float) MSVCRT_sqrtf
+@ cdecl sqrt(double)
+@ cdecl -arch=!i386 sqrtf(float)
 @ cdecl srand(long)
 @ varargs sscanf(str str)
 @ varargs sscanf_s(str str)
@@ -2401,13 +2401,13 @@
 @ varargs swscanf(wstr wstr)
 @ varargs swscanf_s(wstr wstr)
 @ cdecl system(str)
-@ cdecl tan(double) MSVCRT_tan
-@ cdecl -arch=!i386 tanf(float) MSVCRT_tanf
-@ cdecl tanh(double) MSVCRT_tanh
-@ cdecl -arch=!i386 tanhf(float) MSVCRT_tanhf
-@ cdecl tgamma(double) MSVCR120_tgamma
-@ cdecl tgammaf(float) MSVCR120_tgammaf
-@ cdecl tgammal(double) MSVCR120_tgamma
+@ cdecl tan(double)
+@ cdecl -arch=!i386 tanf(float)
+@ cdecl tanh(double)
+@ cdecl -arch=!i386 tanhf(float)
+@ cdecl tgamma(double)
+@ cdecl tgammaf(float)
+@ cdecl tgammal(double) tgamma
 @ cdecl tmpfile() MSVCRT_tmpfile
 @ cdecl tmpfile_s(ptr) MSVCRT_tmpfile_s
 @ cdecl tmpnam(ptr) MSVCRT_tmpnam
@@ -2417,8 +2417,8 @@
 @ cdecl towctrans(long long)
 @ cdecl towlower(long)
 @ cdecl towupper(long)
-@ cdecl trunc(double) MSVCR120_trunc
-@ cdecl truncf(float) MSVCR120_truncf
+@ cdecl trunc(double)
+@ cdecl truncf(float)
 @ cdecl truncl(double) MSVCR120_truncl
 @ cdecl ungetc(long ptr) MSVCRT_ungetc
 @ cdecl ungetwc(long ptr) MSVCRT_ungetwc
