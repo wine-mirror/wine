@@ -8150,6 +8150,7 @@ static void pretransformed_varying_test(void)
         },
     };
     IDirect3DVertexDeclaration9 *decl;
+    D3DADAPTER_IDENTIFIER9 identifier;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
     unsigned int i;
@@ -8173,6 +8174,18 @@ static void pretransformed_varying_test(void)
     if (caps.PixelShaderVersion < D3DPS_VERSION(3, 0) || caps.VertexShaderVersion < D3DVS_VERSION(3, 0))
     {
         skip("No shader model 3 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+
+    hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
+    if (adapter_is_warp(&identifier) && sizeof(UINT) == sizeof(UINT_PTR))
+    {
+        /* Apparently the "monster" vertex declaration used in this test
+         * overruns some stack buffer (DrawPrimitiveUP crashes with a
+         * 0xc0000409 exception) on 32-bit WARP since Win 10 1809. */
+        skip("Test crashes on recent 32-bit WARP.\n");
         IDirect3DDevice9_Release(device);
         goto done;
     }
