@@ -2408,7 +2408,7 @@ char * CDECL MSVCRT__ecvt( double number, int ndigits, int *decpt, int *sign )
     /* handle cases with zero ndigits or less */
     prec = ndigits;
     if( prec < 1) prec = 2;
-    len = MSVCRT__snprintf(data->efcvt_buffer, 80, "%.*le", prec - 1, number);
+    len = _snprintf(data->efcvt_buffer, 80, "%.*le", prec - 1, number);
     /* take the decimal "point away */
     if( prec != 1)
         memmove( data->efcvt_buffer + 1, data->efcvt_buffer + 2, len - 1 );
@@ -2468,7 +2468,7 @@ int CDECL MSVCRT__ecvt_s( char *buffer, size_t length, double number, int ndigit
         number = -number;
     } else
         *sign = FALSE;
-    len = MSVCRT__snprintf(result, prec + 7, "%.*le", prec - 1, number);
+    len = _snprintf(result, prec + 7, "%.*le", prec - 1, number);
     /* take the decimal "point away */
     if( prec != 1)
         memmove( result + 1, result + 2, len - 1 );
@@ -2511,7 +2511,7 @@ char * CDECL MSVCRT__fcvt( double number, int ndigits, int *decpt, int *sign )
 	number = -number;
     } else *sign = 0;
 
-    stop = MSVCRT__snprintf(buf, 80, "%.*f", ndigits < 0 ? 0 : ndigits, number);
+    stop = _snprintf(buf, 80, "%.*f", ndigits < 0 ? 0 : ndigits, number);
     ptr1 = buf;
     ptr2 = data->efcvt_buffer;
     first = NULL;
@@ -2595,7 +2595,7 @@ int CDECL MSVCRT__fcvt_s(char* outbuffer, size_t size, double number, int ndigit
 	number = -number;
     } else *sign = 0;
 
-    stop = MSVCRT__snprintf(buf, 80, "%.*f", ndigits < 0 ? 0 : ndigits, number);
+    stop = _snprintf(buf, 80, "%.*f", ndigits < 0 ? 0 : ndigits, number);
     ptr1 = buf;
     ptr2 = outbuffer;
     first = NULL;
@@ -2676,7 +2676,7 @@ char * CDECL MSVCRT__gcvt( double number, int ndigit, char *buff )
         return NULL;
     }
 
-    MSVCRT_sprintf(buff, "%.*g", ndigit, number);
+    sprintf(buff, "%.*g", ndigit, number);
     return buff;
 }
 
@@ -2700,14 +2700,14 @@ int CDECL MSVCRT__gcvt_s(char *buff, size_t size, double number, int digits)
         return ERANGE;
     }
 
-    len = MSVCRT__scprintf("%.*g", digits, number);
+    len = _scprintf("%.*g", digits, number);
     if(len > size) {
         buff[0] = '\0';
         *_errno() = ERANGE;
         return ERANGE;
     }
 
-    MSVCRT_sprintf(buff, "%.*g", digits, number);
+    sprintf(buff, "%.*g", digits, number);
     return 0;
 }
 

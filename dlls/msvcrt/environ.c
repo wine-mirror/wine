@@ -52,7 +52,7 @@ char * CDECL getenv(const char *name)
 wchar_t * CDECL _wgetenv(const wchar_t *name)
 {
     wchar_t **env;
-    unsigned int length=MSVCRT_wcslen(name);
+    unsigned int length=wcslen(name);
 
     /* Initialize the _wenviron array if it's not already created. */
     if (!MSVCRT__wenviron)
@@ -61,8 +61,8 @@ wchar_t * CDECL _wgetenv(const wchar_t *name)
     for (env = MSVCRT__wenviron; *env; env++)
     {
         wchar_t *str = *env;
-        wchar_t *pos = MSVCRT_wcschr(str,'=');
-        if (pos && ((pos - str) == length) && !MSVCRT__wcsnicmp(str,name,length))
+        wchar_t *pos = wcschr(str,'=');
+        if (pos && ((pos - str) == length) && !_wcsnicmp(str,name,length))
         {
             TRACE("(%s): got %s\n", debugstr_w(name), debugstr_w(pos + 1));
             return pos + 1;
@@ -130,7 +130,7 @@ int CDECL _wputenv(const wchar_t *str)
 
  if (!str)
    return -1;
- name = HeapAlloc(GetProcessHeap(), 0, (MSVCRT_wcslen(str) + 1) * sizeof(wchar_t));
+ name = HeapAlloc(GetProcessHeap(), 0, (wcslen(str) + 1) * sizeof(wchar_t));
  if (!name)
    return -1;
  dst = name;
@@ -246,13 +246,13 @@ int CDECL _wdupenv_s(wchar_t **buffer, size_t *numberOfElements,
 
     if (!(e = _wgetenv(varname))) return *_errno() = EINVAL;
 
-    sz = MSVCRT_wcslen(e) + 1;
+    sz = wcslen(e) + 1;
     if (!(*buffer = malloc(sz * sizeof(wchar_t))))
     {
         if (numberOfElements) *numberOfElements = 0;
         return *_errno() = ENOMEM;
     }
-    MSVCRT_wcscpy(*buffer, e);
+    wcscpy(*buffer, e);
     if (numberOfElements) *numberOfElements = sz;
     return 0;
 }
@@ -301,12 +301,12 @@ int CDECL _wgetenv_s(size_t *pReturnValue, wchar_t *buffer, size_t numberOfEleme
         *pReturnValue = 0;
         return *_errno() = EINVAL;
     }
-    *pReturnValue = MSVCRT_wcslen(e) + 1;
+    *pReturnValue = wcslen(e) + 1;
     if (numberOfElements < *pReturnValue)
     {
         return *_errno() = ERANGE;
     }
-    MSVCRT_wcscpy(buffer, e);
+    wcscpy(buffer, e);
     return 0;
 }
 

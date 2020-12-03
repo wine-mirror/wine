@@ -323,9 +323,9 @@ char* CDECL _strerror(const char* str)
     if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
 
     if (str && *str)
-        MSVCRT_sprintf( data->strerror_buffer, "%s: %s\n", str, MSVCRT__sys_errlist[err] );
+        sprintf( data->strerror_buffer, "%s: %s\n", str, MSVCRT__sys_errlist[err] );
     else
-        MSVCRT_sprintf( data->strerror_buffer, "%s\n", MSVCRT__sys_errlist[err] );
+        sprintf( data->strerror_buffer, "%s\n", MSVCRT__sys_errlist[err] );
 
     return data->strerror_buffer;
 }
@@ -357,12 +357,12 @@ void CDECL _wperror(const wchar_t* str)
 
     if (str && *str)
     {
-        size = MSVCRT_wcstombs(NULL, str, 0);
+        size = wcstombs(NULL, str, 0);
         if (size == -1) return;
         size++;
         buffer = malloc(size);
         if (!buffer) return;
-        if (MSVCRT_wcstombs(buffer, str, size) == -1)
+        if (wcstombs(buffer, str, size) == -1)
         {
             free(buffer);
             return;
@@ -410,7 +410,7 @@ int CDECL __wcserror_s(wchar_t* buffer, size_t nc, const wchar_t* str)
     if (err < 0 || err > MSVCRT__sys_nerr) err = MSVCRT__sys_nerr;
 
     len = MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, NULL, 0) + 1 /* \n */;
-    if (str && *str) len += MSVCRT_wcslen(str) + 2 /* ': ' */;
+    if (str && *str) len += wcslen(str) + 2 /* ': ' */;
     if (len > nc)
     {
         MSVCRT_INVALID_PMT("buffer[nc] is too small", ERANGE);
@@ -422,7 +422,7 @@ int CDECL __wcserror_s(wchar_t* buffer, size_t nc, const wchar_t* str)
         lstrcatW(buffer, L": ");
     }
     else buffer[0] = '\0';
-    len = MSVCRT_wcslen(buffer);
+    len = wcslen(buffer);
     MultiByteToWideChar(CP_ACP, 0, MSVCRT__sys_errlist[err], -1, buffer + len, 256 - len);
     lstrcatW(buffer, L"\n");
 

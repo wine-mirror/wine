@@ -889,9 +889,9 @@ static inline BOOL strftime_int(STRFTIME_CHAR *str, size_t *pos, size_t max,
     }
 
 #if _MSVCR_VER <= 90
-    len = MSVCRT__snprintf(str+*pos, max-*pos, "%0*d", prec, src);
+    len = _snprintf(str+*pos, max-*pos, "%0*d", prec, src);
 #else
-    len = MSVCRT__snwprintf(str+*pos, max-*pos, L"%0*d", prec, src);
+    len = _snwprintf(str+*pos, max-*pos, L"%0*d", prec, src);
 #endif
     if(len == -1) {
         *str = 0;
@@ -1453,7 +1453,7 @@ static size_t strftime_helper(char *str, size_t max, const char *format,
     {
         len = strftime_impl( s, max, fmt, mstm, time_data, loc );
         if (len)
-            len = MSVCRT__wcstombs_l( str, s, max, loc );
+            len = _wcstombs_l( str, s, max, loc );
         free( s );
     }
     else len = 0;
@@ -1502,9 +1502,9 @@ static size_t wcsftime_helper( wchar_t *str, size_t max,
 
     TRACE("%p %Iu %s %p %p %p\n", str, max, debugstr_w(format), mstm, time_data, loc);
 
-    len = MSVCRT__wcstombs_l( NULL, format, 0, loc ) + 1;
+    len = _wcstombs_l( NULL, format, 0, loc ) + 1;
     if (!(fmt = malloc( len ))) return 0;
-    MSVCRT__wcstombs_l(fmt, format, len, loc);
+    _wcstombs_l(fmt, format, len, loc);
 
     if ((s = malloc( max*4 )))
     {
@@ -1571,11 +1571,11 @@ static char* asctime_buf(char *buf, const struct tm *mstm)
 
 #if _MSVCR_VER>=140
     /* C89 (4.12.3.1) uses space-padding for day of month. */
-    MSVCRT__snprintf(buf, 26, "%s %s %2d %02d:%02d:%02d %c%03d\n", wday[mstm->tm_wday],
+    _snprintf(buf, 26, "%s %s %2d %02d:%02d:%02d %c%03d\n", wday[mstm->tm_wday],
             month[mstm->tm_mon], mstm->tm_mday, mstm->tm_hour, mstm->tm_min,
             mstm->tm_sec, '1'+(mstm->tm_year+900)/1000, (900+mstm->tm_year)%1000);
 #else
-    MSVCRT__snprintf(buf, 26, "%s %s %02d %02d:%02d:%02d %c%03d\n", wday[mstm->tm_wday],
+    _snprintf(buf, 26, "%s %s %02d %02d:%02d:%02d %c%03d\n", wday[mstm->tm_wday],
             month[mstm->tm_mon], mstm->tm_mday, mstm->tm_hour, mstm->tm_min,
             mstm->tm_sec, '1'+(mstm->tm_year+900)/1000, (900+mstm->tm_year)%1000);
 #endif

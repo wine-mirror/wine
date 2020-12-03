@@ -90,7 +90,7 @@ static void msvcrt_wfttofd( const WIN32_FIND_DATAW *fd, struct MSVCRT__wfinddata
   RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftLastWriteTime, &dw );
   ft->time_write = dw;
   ft->size = fd->nFileSizeLow;
-  MSVCRT_wcscpy(ft->name, fd->cFileName);
+  wcscpy(ft->name, fd->cFileName);
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAW to wfinddata32_t  */
@@ -110,7 +110,7 @@ static void msvcrt_wfttofd32(const WIN32_FIND_DATAW *fd, struct MSVCRT__wfinddat
   RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftLastWriteTime, &dw );
   ft->time_write = dw;
   ft->size = fd->nFileSizeLow;
-  MSVCRT_wcscpy(ft->name, fd->cFileName);
+  wcscpy(ft->name, fd->cFileName);
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAA to finddatai64_t  */
@@ -170,7 +170,7 @@ static void msvcrt_wfttofd64( const WIN32_FIND_DATAW *fd, struct MSVCRT__wfindda
   RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftLastWriteTime, &dw );
   ft->time_write = dw;
   ft->size = ((__int64)fd->nFileSizeHigh) << 32 | fd->nFileSizeLow;
-  MSVCRT_wcscpy(ft->name, fd->cFileName);
+  wcscpy(ft->name, fd->cFileName);
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAA to finddata64i32_t  */
@@ -210,7 +210,7 @@ static void msvcrt_wfttofdi64( const WIN32_FIND_DATAW *fd, struct MSVCRT__wfindd
   RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftLastWriteTime, &dw );
   ft->time_write = dw;
   ft->size = ((__int64)fd->nFileSizeHigh) << 32 | fd->nFileSizeLow;
-  MSVCRT_wcscpy(ft->name, fd->cFileName);
+  wcscpy(ft->name, fd->cFileName);
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAW to wfinddata64i32_t  */
@@ -230,7 +230,7 @@ static void msvcrt_wfttofd64i32( const WIN32_FIND_DATAW *fd, struct MSVCRT__wfin
   RtlTimeToSecondsSince1970( (const LARGE_INTEGER *)&fd->ftLastWriteTime, &dw );
   ft->time_write = dw;
   ft->size = fd->nFileSizeLow;
-  MSVCRT_wcscpy(ft->name, fd->cFileName);
+  wcscpy(ft->name, fd->cFileName);
 }
 
 /*********************************************************************
@@ -805,7 +805,7 @@ wchar_t* CDECL MSVCRT__wgetcwd(wchar_t * buf, int size)
     *_errno() = ERANGE;
     return NULL; /* buf too small */
   }
-  MSVCRT_wcscpy(buf,dir);
+  wcscpy(buf,dir);
   return buf;
 }
 
@@ -826,7 +826,7 @@ int CDECL MSVCRT__getdrive(void)
     WCHAR buffer[MAX_PATH];
     if (GetCurrentDirectoryW( MAX_PATH, buffer ) &&
         buffer[0] >= 'A' && buffer[0] <= 'z' && buffer[1] == ':')
-        return MSVCRT_towupper(buffer[0]) - 'A' + 1;
+        return towupper(buffer[0]) - 'A' + 1;
     return 0;
 }
 
@@ -917,8 +917,8 @@ wchar_t* CDECL MSVCRT__wgetdcwd(int drive, wchar_t * buf, int size)
 
     TRACE(":returning %s\n", debugstr_w(dir));
     if (!buf)
-      return MSVCRT__wcsdup(dir); /* allocate */
-    MSVCRT_wcscpy(buf,dir);
+      return _wcsdup(dir); /* allocate */
+    wcscpy(buf,dir);
   }
   return buf;
 }
@@ -1202,8 +1202,8 @@ int CDECL MSVCRT__wsplitpath_s(const wchar_t* inpath,
     }
     if (ext)
     {
-        if (sz_ext <= MSVCRT_wcslen(end)) goto do_error;
-        MSVCRT_wcscpy( ext, end );
+        if (sz_ext <= wcslen(end)) goto do_error;
+        wcscpy( ext, end );
     }
     return 0;
 do_error:
@@ -1406,7 +1406,7 @@ VOID CDECL MSVCRT__wmakepath(wchar_t *path, const wchar_t *drive, const wchar_t 
     }
     if (directory && directory[0])
     {
-        unsigned int len = MSVCRT_wcslen(directory);
+        unsigned int len = wcslen(directory);
         memmove(p, directory, len * sizeof(wchar_t));
         p += len;
         if (p[-1] != '/' && p[-1] != '\\')
@@ -1414,7 +1414,7 @@ VOID CDECL MSVCRT__wmakepath(wchar_t *path, const wchar_t *drive, const wchar_t 
     }
     if (filename && filename[0])
     {
-        unsigned int len = MSVCRT_wcslen(filename);
+        unsigned int len = wcslen(filename);
         memmove(p, filename, len * sizeof(wchar_t));
         p += len;
     }
@@ -1422,7 +1422,7 @@ VOID CDECL MSVCRT__wmakepath(wchar_t *path, const wchar_t *drive, const wchar_t 
     {
         if (extension[0] != '.')
             *p++ = '.';
-        MSVCRT_wcscpy(p, extension);
+        wcscpy(p, extension);
     }
     else
         *p = '\0';
@@ -1563,7 +1563,7 @@ int CDECL MSVCRT__wmakepath_s(wchar_t *path, size_t size, const wchar_t *drive,
 
     if (directory && directory[0])
     {
-        unsigned int len = MSVCRT_wcslen(directory);
+        unsigned int len = wcslen(directory);
         unsigned int needs_separator = directory[len - 1] != '/' && directory[len - 1] != '\\';
         unsigned int copylen = min(size - 1, len);
 
@@ -1590,7 +1590,7 @@ int CDECL MSVCRT__wmakepath_s(wchar_t *path, size_t size, const wchar_t *drive,
 
     if (filename && filename[0])
     {
-        unsigned int len = MSVCRT_wcslen(filename);
+        unsigned int len = wcslen(filename);
         unsigned int copylen = min(size - 1, len);
 
         if (size < 2)
@@ -1607,7 +1607,7 @@ int CDECL MSVCRT__wmakepath_s(wchar_t *path, size_t size, const wchar_t *drive,
 
     if (extension && extension[0])
     {
-        unsigned int len = MSVCRT_wcslen(extension);
+        unsigned int len = wcslen(extension);
         unsigned int needs_period = extension[0] != '.';
         unsigned int copylen;
 
@@ -1748,7 +1748,7 @@ int CDECL MSVCRT__wsearchenv_s(const wchar_t* file, const wchar_t* env,
   if (count > MAX_PATH)
       FIXME("count > MAX_PATH not supported\n");
 
-  fname_len = MSVCRT_wcslen(file);
+  fname_len = wcslen(file);
   *buf = '\0';
 
   /* Try CWD first */

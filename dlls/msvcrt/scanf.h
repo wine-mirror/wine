@@ -27,7 +27,7 @@
 #define _CHAR_ wchar_t
 #define _EOF_ WEOF
 #define _EOF_RET (short)WEOF
-#define _ISSPACE_(c) MSVCRT_iswspace(c)
+#define _ISSPACE_(c) iswspace(c)
 #define _WIDE2SUPPORTED_(c) c /* No conversion needed (wide to wide) */
 #define _CHAR2SUPPORTED_(c) c /* FIXME: convert char to wide char */
 #define _CHAR2DIGIT_(c, base) wchar2digit((c), (base))

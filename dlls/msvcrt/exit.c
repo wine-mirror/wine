@@ -193,7 +193,7 @@ static void DoMessageBoxW(const wchar_t *lead, const wchar_t *message)
   wchar_t text[2048];
   INT ret;
 
-  MSVCRT__snwprintf(text, ARRAY_SIZE(text), L"%ls\n\nProgram: %ls\n%ls\n\n"
+  _snwprintf(text, ARRAY_SIZE(text), L"%ls\n\nProgram: %ls\n%ls\n\n"
           L"Press OK to exit the program, or Cancel to start the Wine debugger.\n",
           lead, MSVCRT__wpgmptr, message);
 
@@ -234,7 +234,7 @@ void CDECL _amsg_exit(int errnum)
      ((MSVCRT_error_mode == MSVCRT__OUT_TO_DEFAULT) && (MSVCRT_app_type == 2)))
   {
     char text[32];
-    MSVCRT_sprintf(text, "Error: R60%d",errnum);
+    sprintf(text, "Error: R60%d",errnum);
     DoMessageBox("Runtime error!", text);
   }
   else
@@ -292,7 +292,7 @@ void CDECL _wassert(const wchar_t* str, const wchar_t* file, unsigned int line)
      ((MSVCRT_error_mode == MSVCRT__OUT_TO_DEFAULT) && (MSVCRT_app_type == 2)))
   {
     wchar_t text[2048];
-    MSVCRT__snwprintf(text, sizeof(text), L"File: %ls\nLine: %d\n\nExpression: \"%ls\"", file, line, str);
+    _snwprintf(text, sizeof(text), L"File: %ls\nLine: %d\n\nExpression: \"%ls\"", file, line, str);
     DoMessageBoxW(L"Assertion failed!", text);
   }
   else

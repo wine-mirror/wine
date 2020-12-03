@@ -123,7 +123,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     /* don't allow unloading msvcrt, we can't setup file handles twice */
     LdrAddRefDll( LDR_ADDREF_DLL_PIN, hinstDLL );
 #elif _MSVCR_VER >= 80
-    MSVCRT__set_printf_count_output(0);
+    _set_printf_count_output(0);
 #endif
     msvcrt_init_clock();
     TRACE("finished process init\n");

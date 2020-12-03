@@ -529,7 +529,7 @@ static BOOL update_threadlocinfo_category(LCID lcid, unsigned short cp,
         len += GetLocaleInfoA(lcid, LOCALE_SENGCOUNTRY
                 |LOCALE_NOUSEROVERRIDE, &buf[len], 256-len);
         buf[len-1] = '.';
-        MSVCRT_sprintf(buf+len, "%d", cp);
+        sprintf(buf+len, "%d", cp);
         len += strlen(buf+len);
 
         return init_category_name(buf, len, locinfo, category);
@@ -630,7 +630,7 @@ static inline char* construct_lc_all(pthreadlocinfo locinfo) {
     if(i==LC_MAX)
         return locinfo->lc_category[LC_COLLATE].locale;
 
-    MSVCRT_sprintf(current_lc_all,
+    sprintf(current_lc_all,
             "LC_COLLATE=%s;LC_CTYPE=%s;LC_MONETARY=%s;LC_NUMERIC=%s;LC_TIME=%s",
             locinfo->lc_category[LC_COLLATE].locale,
             locinfo->lc_category[LC_CTYPE].locale,
@@ -691,8 +691,8 @@ wchar_t* CDECL _W_Getdays(void)
     TRACE("\n");
 
     for(i=0; i<7; i++) {
-        size += MSVCRT_wcslen(cur->wstr.names.short_wday[i]) + 1;
-        size += MSVCRT_wcslen(cur->wstr.names.wday[i]) + 1;
+        size += wcslen(cur->wstr.names.short_wday[i]) + 1;
+        size += wcslen(cur->wstr.names.wday[i]) + 1;
     }
     out = malloc((size+1)*sizeof(*out));
     if(!out)
@@ -701,12 +701,12 @@ wchar_t* CDECL _W_Getdays(void)
     size = 0;
     for(i=0; i<7; i++) {
         out[size++] = ':';
-        len = MSVCRT_wcslen(cur->wstr.names.short_wday[i]);
+        len = wcslen(cur->wstr.names.short_wday[i]);
         memcpy(&out[size], cur->wstr.names.short_wday[i], len*sizeof(*out));
         size += len;
 
         out[size++] = ':';
-        len = MSVCRT_wcslen(cur->wstr.names.wday[i]);
+        len = wcslen(cur->wstr.names.wday[i]);
         memcpy(&out[size], cur->wstr.names.wday[i], len*sizeof(*out));
         size += len;
     }
@@ -765,8 +765,8 @@ wchar_t* CDECL _W_Getmonths(void)
     TRACE("\n");
 
     for(i=0; i<12; i++) {
-        size += MSVCRT_wcslen(cur->wstr.names.short_mon[i]) + 1;
-        size += MSVCRT_wcslen(cur->wstr.names.mon[i]) + 1;
+        size += wcslen(cur->wstr.names.short_mon[i]) + 1;
+        size += wcslen(cur->wstr.names.mon[i]) + 1;
     }
     out = malloc((size+1)*sizeof(*out));
     if(!out)
@@ -775,12 +775,12 @@ wchar_t* CDECL _W_Getmonths(void)
     size = 0;
     for(i=0; i<12; i++) {
         out[size++] = ':';
-        len = MSVCRT_wcslen(cur->wstr.names.short_mon[i]);
+        len = wcslen(cur->wstr.names.short_mon[i]);
         memcpy(&out[size], cur->wstr.names.short_mon[i], len*sizeof(*out));
         size += len;
 
         out[size++] = ':';
-        len = MSVCRT_wcslen(cur->wstr.names.mon[i]);
+        len = wcslen(cur->wstr.names.mon[i]);
         memcpy(&out[size], cur->wstr.names.mon[i], len*sizeof(*out));
         size += len;
     }
@@ -1938,12 +1938,12 @@ _locale_t CDECL _wcreate_locale(int category, const wchar_t *locale)
     if(category<LC_MIN || category>LC_MAX || !locale)
         return NULL;
 
-    len = MSVCRT_wcstombs(NULL, locale, 0);
+    len = wcstombs(NULL, locale, 0);
     if(len == -1)
         return NULL;
     if(!(str = malloc(++len)))
         return NULL;
-    MSVCRT_wcstombs(str, locale, len);
+    wcstombs(str, locale, len);
 
     loc = _create_locale(category, str);
 
@@ -2021,7 +2021,7 @@ wchar_t* CDECL _wsetlocale(int category, const wchar_t* wlocale)
     size_t len;
 
     if(wlocale) {
-        len = MSVCRT_wcstombs(NULL, wlocale, 0);
+        len = wcstombs(NULL, wlocale, 0);
         if(len == -1)
             return NULL;
 
@@ -2029,7 +2029,7 @@ wchar_t* CDECL _wsetlocale(int category, const wchar_t* wlocale)
         if(!locale)
             return NULL;
 
-        MSVCRT_wcstombs(locale, wlocale, len);
+        wcstombs(locale, wlocale, len);
     }
 
     _lock_locales();

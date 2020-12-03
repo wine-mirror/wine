@@ -62,7 +62,7 @@ static void msvcrt_search_executable(const wchar_t *name, wchar_t *fullname, int
   /* try current dir first */
   if (GetFileAttributesW(buffer) != INVALID_FILE_ATTRIBUTES)
   {
-    MSVCRT_wcscpy(fullname, buffer);
+    wcscpy(fullname, buffer);
     return;
   }
 
@@ -77,7 +77,7 @@ static void msvcrt_search_executable(const wchar_t *name, wchar_t *fullname, int
       memcpy(buffer + name_len, suffix[i], 5 * sizeof(wchar_t));
       if (GetFileAttributesW(buffer) != INVALID_FILE_ATTRIBUTES)
       {
-        MSVCRT_wcscpy(fullname, buffer);
+        wcscpy(fullname, buffer);
         return;
       }
     }
@@ -104,10 +104,10 @@ static void msvcrt_search_executable(const wchar_t *name, wchar_t *fullname, int
       }
       else buffer[path_len] = '\0';
 
-      MSVCRT_wcscat(buffer, name);
+      wcscat(buffer, name);
       if (GetFileAttributesW(buffer) != INVALID_FILE_ATTRIBUTES)
       {
-        MSVCRT_wcscpy(fullname, buffer);
+        wcscpy(fullname, buffer);
         return;
       }
     }
@@ -119,7 +119,7 @@ static void msvcrt_search_executable(const wchar_t *name, wchar_t *fullname, int
         memcpy(buffer + path_len + name_len, suffix[i], 5 * sizeof(wchar_t));
         if (GetFileAttributesW(buffer) != INVALID_FILE_ATTRIBUTES)
         {
-          MSVCRT_wcscpy(fullname, buffer);
+          wcscpy(fullname, buffer);
           return;
         }
       }
@@ -202,7 +202,7 @@ static wchar_t* msvcrt_argvtos(const wchar_t* const* arg, wchar_t delim)
   size = 0;
   while (*a)
   {
-    size += MSVCRT_wcslen(*a) + 1;
+    size += wcslen(*a) + 1;
     a++;
   }
 
@@ -215,7 +215,7 @@ static wchar_t* msvcrt_argvtos(const wchar_t* const* arg, wchar_t delim)
   p = ret;
   while (*a)
   {
-    int len = MSVCRT_wcslen(*a);
+    int len = wcslen(*a);
     memcpy(p,*a,len * sizeof(wchar_t));
     p += len;
     *p++ = delim;
@@ -279,7 +279,7 @@ static wchar_t *msvcrt_valisttos(const wchar_t *arg0, __ms_va_list alist, wchar_
 
     for (arg = arg0; arg; arg = va_arg( alist, wchar_t * ))
     {
-        unsigned int len = MSVCRT_wcslen( arg ) + 1;
+        unsigned int len = wcslen( arg ) + 1;
         if (pos + len >= size)
         {
             size = max( 256, size * 2 );
@@ -291,7 +291,7 @@ static wchar_t *msvcrt_valisttos(const wchar_t *arg0, __ms_va_list alist, wchar_
             }
             ret = new;
         }
-        MSVCRT_wcscpy( ret + pos, arg );
+        wcscpy( ret + pos, arg );
         pos += len;
         ret[pos - 1] = delim;
     }
@@ -346,7 +346,7 @@ static wchar_t *msvcrt_get_comspec(void)
   if (!(len = GetEnvironmentVariableW(L"COMSPEC", NULL, 0))) len = 4;
   if ((ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(wchar_t))))
   {
-    if (!GetEnvironmentVariableW(L"COMSPEC", ret, len)) MSVCRT_wcscpy(ret, L"cmd");
+    if (!GetEnvironmentVariableW(L"COMSPEC", ret, len)) wcscpy(ret, L"cmd");
   }
   return ret;
 }
@@ -1107,7 +1107,7 @@ FILE* CDECL _wpopen(const wchar_t* command, const wchar_t* mode)
   MSVCRT__close(fds[fdToDup]);
 
   if (!(comspec = msvcrt_get_comspec())) goto error;
-  len = MSVCRT_wcslen(comspec) + MSVCRT_wcslen(command) + 5;
+  len = wcslen(comspec) + wcslen(command) + 5;
 
   if (!(fullcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(wchar_t))))
   {
@@ -1115,9 +1115,9 @@ FILE* CDECL _wpopen(const wchar_t* command, const wchar_t* mode)
     goto error;
   }
 
-  MSVCRT_wcscpy(fullcmd, comspec);
-  MSVCRT_wcscat(fullcmd, L" /c ");
-  MSVCRT_wcscat(fullcmd, command);
+  wcscpy(fullcmd, comspec);
+  wcscat(fullcmd, L" /c ");
+  wcscat(fullcmd, command);
 
   if ((container->proc = (HANDLE)msvcrt_spawn(MSVCRT__P_NOWAIT, comspec, fullcmd, NULL, 1))
           == INVALID_HANDLE_VALUE)
@@ -1240,16 +1240,16 @@ int CDECL _wsystem(const wchar_t* cmd)
   if (comspec == NULL)
     return -1;
 
-  len = MSVCRT_wcslen(comspec) + MSVCRT_wcslen(cmd) + 5;
+  len = wcslen(comspec) + wcslen(cmd) + 5;
 
   if (!(fullcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(wchar_t))))
   {
     HeapFree(GetProcessHeap(), 0, comspec);
     return -1;
   }
-  MSVCRT_wcscpy(fullcmd, comspec);
-  MSVCRT_wcscat(fullcmd, L" /c ");
-  MSVCRT_wcscat(fullcmd, cmd);
+  wcscpy(fullcmd, comspec);
+  wcscat(fullcmd, L" /c ");
+  wcscat(fullcmd, cmd);
 
   res = msvcrt_spawn(MSVCRT__P_WAIT, comspec, fullcmd, NULL, 1);
 

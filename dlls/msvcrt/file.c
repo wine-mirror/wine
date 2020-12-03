@@ -1531,7 +1531,7 @@ void CDECL MSVCRT_rewind(FILE* file)
 
 static int msvcrt_get_flags(const wchar_t* mode, int *open_flags, int* stream_flags)
 {
-  int plus = MSVCRT_wcschr(mode, '+') != NULL;
+  int plus = wcschr(mode, '+') != NULL;
 
   TRACE("%s\n", debugstr_w(mode));
 
@@ -1602,7 +1602,7 @@ static int msvcrt_get_flags(const wchar_t* mode, int *open_flags, int* stream_fl
   {
     mode++;
     while(*mode == ' ') mode++;
-    if(!MSVCRT_CHECK_PMT(!MSVCRT_wcsncmp(L"ccs", mode, 3)))
+    if(!MSVCRT_CHECK_PMT(!wcsncmp(L"ccs", mode, 3)))
       return -1;
     mode += 3;
     while(*mode == ' ') mode++;
@@ -1611,17 +1611,17 @@ static int msvcrt_get_flags(const wchar_t* mode, int *open_flags, int* stream_fl
     mode++;
     while(*mode == ' ') mode++;
 
-    if(!MSVCRT__wcsnicmp(L"utf-8", mode, 5))
+    if(!_wcsnicmp(L"utf-8", mode, 5))
     {
       *open_flags |= MSVCRT__O_U8TEXT;
       mode += 5;
     }
-    else if(!MSVCRT__wcsnicmp(L"utf-16le", mode, 8))
+    else if(!_wcsnicmp(L"utf-16le", mode, 8))
     {
       *open_flags |= MSVCRT__O_U16TEXT;
       mode += 8;
     }
-    else if(!MSVCRT__wcsnicmp(L"unicode", mode, 7))
+    else if(!_wcsnicmp(L"unicode", mode, 7))
     {
       *open_flags |= MSVCRT__O_WTEXT;
       mode += 7;
@@ -3118,7 +3118,7 @@ int CDECL MSVCRT__wstat64(const wchar_t* path, struct MSVCRT__stat64 * buf)
 
   TRACE(":file (%s) buf(%p)\n",debugstr_w(path),buf);
 
-  plen = MSVCRT_wcslen(path);
+  plen = wcslen(path);
   while (plen && path[plen-1]==' ')
     plen--;
 
@@ -3146,8 +3146,8 @@ int CDECL MSVCRT__wstat64(const wchar_t* path, struct MSVCRT__stat64 * buf)
   memset(buf,0,sizeof(struct MSVCRT__stat64));
 
   /* FIXME: rdev isn't drive num, despite what the docs says-what is it? */
-  if (MSVCRT_iswalpha(*path) && path[1] == ':')
-    buf->st_dev = buf->st_rdev = MSVCRT_towupper(*path) - 'A'; /* drive num */
+  if (iswalpha(*path) && path[1] == ':')
+    buf->st_dev = buf->st_rdev = towupper(*path) - 'A'; /* drive num */
   else
     buf->st_dev = buf->st_rdev = MSVCRT__getdrive() - 1;
 
@@ -3160,8 +3160,8 @@ int CDECL MSVCRT__wstat64(const wchar_t* path, struct MSVCRT__stat64 * buf)
     /* executable? */
     if (plen > 6 && path[plen-4] == '.')  /* shortest exe: "\x.exe" */
     {
-      ULONGLONG ext = MSVCRT_towlower(path[plen-1]) | (MSVCRT_towlower(path[plen-2]) << 16) |
-                               ((ULONGLONG)MSVCRT_towlower(path[plen-3]) << 32);
+      ULONGLONG ext = towlower(path[plen-1]) | (towlower(path[plen-2]) << 16) |
+                               ((ULONGLONG)towlower(path[plen-3]) << 32);
       if (ext == WCEXE || ext == WCBAT || ext == WCCMD || ext == WCCOM)
         mode |= ALL_S_IEXEC;
     }
@@ -3308,7 +3308,7 @@ wchar_t * CDECL MSVCRT__wtempnam(const wchar_t *dir, const wchar_t *prefix)
   {
     TRACE("got name (%s)\n",debugstr_w(tmpbuf));
     DeleteFileW(tmpbuf);
-    return MSVCRT__wcsdup(tmpbuf);
+    return _wcsdup(tmpbuf);
   }
   TRACE("failed (%d)\n",GetLastError());
   return NULL;
@@ -4052,7 +4052,7 @@ wint_t CDECL MSVCRT__fputwc_nolock(wint_t wc, FILE* file)
         char buf[MB_LEN_MAX];
         int char_len;
 
-        char_len = MSVCRT_wctomb(buf, mwc);
+        char_len = wctomb(buf, mwc);
         if(char_len!=-1 && MSVCRT__fwrite_nolock(buf, char_len, 1, file)==1)
             ret = wc;
         else
@@ -4628,7 +4628,7 @@ int CDECL MSVCRT_fputs(const char *s, FILE* file)
  */
 int CDECL MSVCRT_fputws(const wchar_t *s, FILE* file)
 {
-    size_t i, len = MSVCRT_wcslen(s);
+    size_t i, len = wcslen(s);
     BOOL tmp_buf;
     int ret;
 
@@ -5546,7 +5546,7 @@ wint_t CDECL MSVCRT__ungetwc_nolock(wint_t wc, FILE * file)
         char mbs[MB_LEN_MAX];
         int len;
 
-        len = MSVCRT_wctomb(mbs, mwc);
+        len = wctomb(mbs, mwc);
         if(len == -1)
             return WEOF;
 

@@ -115,7 +115,7 @@ static inline int wcstombs_len(char *mbstr, const wchar_t *wcstr,
     int i, r, mblen = 0;
 
     for(i=0; i<len; i++) {
-        r = MSVCRT__wctomb_l(mbstr ? mbstr+mblen : buf, wcstr[i], locale);
+        r = _wctomb_l(mbstr ? mbstr+mblen : buf, wcstr[i], locale);
         if(r < 0) return r;
         mblen += r;
     }
@@ -189,9 +189,9 @@ static inline int FUNC_NAME(pf_output_format_wstr)(FUNC_NAME(puts_clbk) pf_puts,
     if(len < 0) {
         /* Do not search past the length specified by the precision. */
         if(flags->Precision>=0)
-            len = MSVCRT_wcsnlen(str, flags->Precision);
+            len = wcsnlen(str, flags->Precision);
         else
-            len = MSVCRT_wcslen(str);
+            len = wcslen(str);
     }
 
     if(flags->Precision>=0 && flags->Precision<len)

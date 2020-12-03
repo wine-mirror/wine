@@ -431,6 +431,8 @@ static inline int unlink(const char* path) { return _unlink(path); }
 #define _UNLINK_DEFINED
 #endif
 
+#if !defined(_NO_CRT_STDIO_INLINE)
+
 static inline int WINAPIV snprintf(char *buffer, size_t size, const char *format, ...)
 {
     int ret;
@@ -463,6 +465,14 @@ static inline int WINAPIV sprintf(char *buffer, const char *format, ...)
     __ms_va_end(args);
     return ret;
 }
+
+#else /* !_NO_CRT_STDIO_INLINE */
+
+_ACRTIMP int WINAPIV snprintf(char*,size_t,const char*,...);
+_ACRTIMP int WINAPIV _snprintf(char*,size_t,const char*,...);
+_ACRTIMP int WINAPIV sprintf(char*,const char*,...);
+
+#endif /* !_NO_CRT_STDIO_INLINE */
 
 static inline wint_t fgetwchar(void) { return _fgetwchar(); }
 static inline wint_t fputwchar(wint_t wc) { return _fputwchar(wc); }
