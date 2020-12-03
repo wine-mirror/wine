@@ -61,7 +61,7 @@ extern "C" {
 
 _ACRTIMP int         __cdecl _access(const char*,int);
 _ACRTIMP int         __cdecl _chmod(const char*,int);
-_ACRTIMP int         __cdecl _chsize(int,__msvcrt_ulong);
+_ACRTIMP int         __cdecl _chsize(int,__msvcrt_long);
 _ACRTIMP int         __cdecl _chsize_s(int,__int64);
 _ACRTIMP int         __cdecl _close(int);
 _ACRTIMP int         __cdecl _commit(int);

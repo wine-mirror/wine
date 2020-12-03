@@ -296,7 +296,7 @@ void CDECL _wassert(const wchar_t* str, const wchar_t* file, unsigned int line)
     DoMessageBoxW(L"Assertion failed!", text);
   }
   else
-    MSVCRT_fwprintf(MSVCRT_stderr, L"Assertion failed: %ls, file %ls, line %d\n\n", str, file, line);
+    fwprintf(MSVCRT_stderr, L"Assertion failed: %ls, file %ls, line %d\n\n", str, file, line);
 
   raise(SIGABRT);
   _exit(3);

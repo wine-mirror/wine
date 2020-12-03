@@ -39,7 +39,7 @@
 @ cdecl __threadid() kernel32.GetCurrentThreadId
 @ cdecl __toascii(long)
 @ cdecl _abnormal_termination()
-@ cdecl _access(str long) MSVCRT__access
+@ cdecl _access(str long)
 @ extern _acmdln_dll MSVCRT__acmdln
 @ extern _aexit_rtn_dll _aexit_rtn
 @ cdecl _amsg_exit(long)
@@ -56,11 +56,11 @@
 @ cdecl _chdir(str)
 @ cdecl _chdrive(long)
 @ cdecl _chgsign(double)
-@ cdecl _chmod(str long) MSVCRT__chmod
-@ cdecl _chsize(long long) MSVCRT__chsize
+@ cdecl _chmod(str long)
+@ cdecl _chsize(long long)
 @ cdecl _clearfp()
-@ cdecl _close(long) MSVCRT__close
-@ cdecl _commit(long) MSVCRT__commit
+@ cdecl _close(long)
+@ cdecl _commit(long)
 @ extern _commode_dll MSVCRT__commode
 @ cdecl _control87(long long)
 @ cdecl _controlfp(long long)
@@ -68,17 +68,17 @@
 @ varargs _cprintf(str)
 @ extern _cpumode_dll CRTDLL__cpumode_dll
 @ cdecl _cputs(str)
-@ cdecl _creat(str long) MSVCRT__creat
+@ cdecl _creat(str long)
 @ varargs _cscanf(str)
 @ extern _ctype MSVCRT__ctype
 @ cdecl _cwait(ptr long long)
 @ extern _daylight_dll MSVCRT___daylight
-@ cdecl _dup(long) MSVCRT__dup
-@ cdecl _dup2(long long) MSVCRT__dup2
+@ cdecl _dup(long)
+@ cdecl _dup2(long long)
 @ cdecl _ecvt(double long ptr ptr)
 @ cdecl _endthread()
 @ extern _environ_dll MSVCRT__environ
-@ cdecl _eof(long) MSVCRT__eof
+@ cdecl _eof(long)
 @ cdecl _errno()
 @ cdecl -arch=i386 _except_handler2(ptr ptr ptr ptr)
 @ varargs _execl(str str)
@@ -91,29 +91,29 @@
 @ cdecl _execvpe(str ptr ptr)
 @ cdecl _exit(long)
 @ cdecl _expand(ptr long)
-@ cdecl _fcloseall() MSVCRT__fcloseall
+@ cdecl _fcloseall()
 @ cdecl _fcvt(double long ptr ptr)
-@ cdecl _fdopen(long str) MSVCRT__fdopen
-@ cdecl _fgetchar() MSVCRT__fgetchar
-@ cdecl _fgetwchar() MSVCRT__fgetwchar
-@ cdecl _filbuf(ptr) MSVCRT__filbuf
+@ cdecl _fdopen(long str)
+@ cdecl _fgetchar()
+@ cdecl _fgetwchar()
+@ cdecl _filbuf(ptr)
 # extern _fileinfo_dll
-@ cdecl _filelength(long) MSVCRT__filelength
-@ cdecl _fileno(ptr) MSVCRT__fileno
+@ cdecl _filelength(long)
+@ cdecl _fileno(ptr)
 @ cdecl _findclose(long)
 @ cdecl _findfirst(str ptr)
 @ cdecl _findnext(long ptr)
 @ cdecl _finite(double)
-@ cdecl _flsbuf(long ptr) MSVCRT__flsbuf
-@ cdecl _flushall() MSVCRT__flushall
+@ cdecl _flsbuf(long ptr)
+@ cdecl _flushall()
 @ extern _fmode_dll MSVCRT__fmode
 @ cdecl _fpclass(double)
 @ cdecl -arch=i386,x86_64,arm,arm64 _fpieee_flt(long ptr ptr)
 @ cdecl _fpreset()
-@ cdecl _fputchar(long) MSVCRT__fputchar
-@ cdecl _fputwchar(long) MSVCRT__fputwchar
-@ cdecl _fsopen(str str long) MSVCRT__fsopen
-@ cdecl _fstat(long ptr) MSVCRT__fstat
+@ cdecl _fputchar(long)
+@ cdecl _fputwchar(long)
+@ cdecl _fsopen(str str long)
+@ cdecl _fstat(long ptr)
 @ cdecl -arch=win32 _ftime(ptr) _ftime32
 @ cdecl -arch=win64 _ftime(ptr) _ftime64
 @ cdecl -arch=i386 -ret64 _ftol()
@@ -121,7 +121,7 @@
 @ cdecl -arch=win32 _futime(long ptr) _futime32
 @ cdecl -arch=win64 _futime(long ptr) _futime64
 @ cdecl _gcvt(double long str)
-@ cdecl _get_osfhandle(long) MSVCRT__get_osfhandle
+@ cdecl _get_osfhandle(long)
 @ cdecl _getch()
 @ cdecl _getche()
 @ cdecl _getcwd(str long)
@@ -132,7 +132,7 @@
 @ cdecl _getdrives() kernel32.GetLogicalDrives
 @ cdecl _getpid()
 @ stub _getsystime(ptr)
-@ cdecl _getw(ptr) MSVCRT__getw
+@ cdecl _getw(ptr)
 @ cdecl -arch=i386 _global_unwind2(ptr)
 @ cdecl _heapchk()
 @ cdecl _heapmin()
@@ -141,7 +141,7 @@
 @ cdecl _hypot(double double)
 @ cdecl _initterm(ptr ptr)
 @ extern _iob MSVCRT__iob
-@ cdecl _isatty(long) MSVCRT__isatty
+@ cdecl _isatty(long)
 @ cdecl _isctype(long long)
 @ stub _ismbbalnum(long)
 @ stub _ismbbalpha(long)
@@ -178,12 +178,12 @@
 @ cdecl _lfind(ptr ptr ptr long ptr)
 @ cdecl _loaddll(str)
 @ cdecl -arch=i386 _local_unwind2(ptr long)
-@ cdecl _locking(long long long) MSVCRT__locking
+@ cdecl _locking(long long long)
 @ cdecl _logb(double)
 @ cdecl _lrotl(long long)
 @ cdecl _lrotr(long long)
 @ cdecl _lsearch(ptr ptr ptr long ptr)
-@ cdecl _lseek(long long long) MSVCRT__lseek
+@ cdecl _lseek(long long long)
 @ cdecl _ltoa(long ptr long) ntdll._ltoa
 @ cdecl _ltow(long ptr long) ntdll._ltow
 @ cdecl _makepath(ptr str str str str)
@@ -239,12 +239,12 @@
 @ cdecl _memccpy(ptr ptr long long) ntdll._memccpy
 @ cdecl _memicmp(str str long)
 @ cdecl _mkdir(str)
-@ cdecl _mktemp(str) MSVCRT__mktemp
+@ cdecl _mktemp(str)
 @ cdecl _msize(ptr)
 @ cdecl _nextafter(double double)
 @ cdecl _onexit(ptr)
-@ varargs _open(str long) MSVCRT__open
-@ cdecl _open_osfhandle(long long) MSVCRT__open_osfhandle
+@ varargs _open(str long)
+@ cdecl _open_osfhandle(long long)
 @ extern _osmajor_dll MSVCRT__winmajor
 @ extern _osminor_dll MSVCRT__winminor
 @ extern _osmode_dll CRTDLL__osmode_dll
@@ -253,28 +253,28 @@
 @ cdecl _pclose(ptr)
 @ extern _pctype_dll MSVCRT__pctype
 @ extern _pgmptr_dll MSVCRT__pgmptr
-@ cdecl _pipe(ptr long long) MSVCRT__pipe
+@ cdecl _pipe(ptr long long)
 @ cdecl _popen(str str)
 @ cdecl _purecall()
 @ cdecl _putch(long)
 @ cdecl _putenv(str)
-@ cdecl _putw(long ptr) MSVCRT__putw
+@ cdecl _putw(long ptr)
 # extern _pwctype_dll
-@ cdecl _read(long ptr long) MSVCRT__read
+@ cdecl _read(long ptr long)
 @ cdecl _rmdir(str)
-@ cdecl _rmtmp() MSVCRT__rmtmp
+@ cdecl _rmtmp()
 @ cdecl _rotl(long long)
 @ cdecl _rotr(long long)
 @ cdecl _scalb(double long)
 @ cdecl _searchenv(str str ptr)
 @ cdecl _seterrormode(long)
 @ cdecl -arch=i386,x86_64,arm,arm64 -norelay _setjmp(ptr) MSVCRT__setjmp
-@ cdecl _setmode(long long) MSVCRT__setmode
+@ cdecl _setmode(long long)
 @ stub _setsystime(ptr long)
 @ cdecl _sleep(long)
 @ varargs _snprintf(ptr long str)
 @ varargs _snwprintf(ptr long wstr)
-@ varargs _sopen(str long long) MSVCRT__sopen
+@ varargs _sopen(str long long)
 @ varargs _spawnl(long str str)
 @ varargs _spawnle(long str str)
 @ varargs _spawnlp(long str str)
@@ -284,7 +284,7 @@
 @ cdecl _spawnvp(long str ptr)
 @ cdecl _spawnvpe(long str ptr ptr)
 @ cdecl _splitpath(str ptr ptr ptr ptr)
-@ cdecl _stat(str ptr) MSVCRT_stat
+@ cdecl _stat(str ptr)
 @ cdecl _statusfp()
 @ cdecl _strcmpi(str str) _stricmp
 @ cdecl _strdate(ptr)
@@ -308,17 +308,17 @@
 @ cdecl _swab(str str long)
 @ extern _sys_errlist MSVCRT__sys_errlist
 @ extern _sys_nerr_dll MSVCRT__sys_nerr
-@ cdecl _tell(long) MSVCRT__tell
-@ cdecl _tempnam(str str) MSVCRT__tempnam
+@ cdecl _tell(long)
+@ cdecl _tempnam(str str)
 @ extern _timezone_dll MSVCRT___timezone
 @ cdecl _tolower(long)
 @ cdecl _toupper(long)
 @ extern _tzname MSVCRT__tzname
 @ cdecl _tzset()
 @ cdecl _ultoa(long ptr long) ntdll._ultoa
-@ cdecl _umask(long) MSVCRT__umask
+@ cdecl _umask(long)
 @ cdecl _ungetch(long)
-@ cdecl _unlink(str) MSVCRT__unlink
+@ cdecl _unlink(str)
 @ cdecl _unloaddll(long)
 @ cdecl -arch=win32 _utime(str ptr) _utime32
 @ cdecl -arch=win64 _utime(str ptr) _utime64
@@ -336,7 +336,7 @@
 @ extern _winmajor_dll MSVCRT__winmajor
 @ extern _winminor_dll MSVCRT__winminor
 @ extern _winver_dll MSVCRT__winver
-@ cdecl _write(long ptr long) MSVCRT__write
+@ cdecl _write(long ptr long)
 @ cdecl _wtoi(wstr)
 @ cdecl _wtol(wstr)
 @ cdecl _y0(double)
@@ -356,7 +356,7 @@
 @ cdecl bsearch(ptr ptr long long ptr)
 @ cdecl calloc(long long)
 @ cdecl ceil(double)
-@ cdecl clearerr(ptr) MSVCRT_clearerr
+@ cdecl clearerr(ptr)
 @ cdecl clock()
 @ cdecl cos(double)
 @ cdecl cosh(double)
@@ -368,36 +368,36 @@
 @ cdecl exit(long)
 @ cdecl exp(double)
 @ cdecl fabs(double)
-@ cdecl fclose(ptr) MSVCRT_fclose
-@ cdecl feof(ptr) MSVCRT_feof
-@ cdecl ferror(ptr) MSVCRT_ferror
-@ cdecl fflush(ptr) MSVCRT_fflush
-@ cdecl fgetc(ptr) MSVCRT_fgetc
-@ cdecl fgetpos(ptr ptr) MSVCRT_fgetpos
-@ cdecl fgets(ptr long ptr) MSVCRT_fgets
-@ cdecl fgetwc(ptr) MSVCRT_fgetwc
+@ cdecl fclose(ptr)
+@ cdecl feof(ptr)
+@ cdecl ferror(ptr)
+@ cdecl fflush(ptr)
+@ cdecl fgetc(ptr)
+@ cdecl fgetpos(ptr ptr)
+@ cdecl fgets(ptr long ptr)
+@ cdecl fgetwc(ptr)
 @ cdecl floor(double)
 @ cdecl fmod(double double)
-@ cdecl fopen(str str) MSVCRT_fopen
-@ varargs fprintf(ptr str) MSVCRT_fprintf
-@ cdecl fputc(long ptr) MSVCRT_fputc
-@ cdecl fputs(str ptr) MSVCRT_fputs
-@ cdecl fputwc(long ptr) MSVCRT_fputwc
-@ cdecl fread(ptr long long ptr) MSVCRT_fread
+@ cdecl fopen(str str)
+@ varargs fprintf(ptr str)
+@ cdecl fputc(long ptr)
+@ cdecl fputs(str ptr)
+@ cdecl fputwc(long ptr)
+@ cdecl fread(ptr long long ptr)
 @ cdecl free(ptr)
-@ cdecl freopen(str str ptr) MSVCRT_freopen
+@ cdecl freopen(str str ptr)
 @ cdecl frexp(double ptr)
 @ varargs fscanf(ptr str)
-@ cdecl fseek(ptr long long) MSVCRT_fseek
-@ cdecl fsetpos(ptr ptr) MSVCRT_fsetpos
-@ cdecl ftell(ptr) MSVCRT_ftell
-@ varargs fwprintf(ptr wstr) MSVCRT_fwprintf
-@ cdecl fwrite(ptr long long ptr) MSVCRT_fwrite
+@ cdecl fseek(ptr long long)
+@ cdecl fsetpos(ptr ptr)
+@ cdecl ftell(ptr)
+@ varargs fwprintf(ptr wstr)
+@ cdecl fwrite(ptr long long ptr)
 @ varargs fwscanf(ptr wstr)
-@ cdecl getc(ptr) MSVCRT_getc
-@ cdecl getchar() MSVCRT_getchar
+@ cdecl getc(ptr)
+@ cdecl getchar()
 @ cdecl getenv(str)
-@ cdecl gets(str) MSVCRT_gets
+@ cdecl gets(str)
 @ cdecl -arch=win32 gmtime(ptr) _gmtime32
 @ cdecl -arch=win64 gmtime(ptr) _gmtime64
 @ cdecl is_wctype(long long) iswctype
@@ -449,21 +449,21 @@
 @ cdecl modf(double ptr)
 @ cdecl perror(str)
 @ cdecl pow(double double)
-@ varargs printf(str) MSVCRT_printf
-@ cdecl putc(long ptr) MSVCRT_putc
-@ cdecl putchar(long) MSVCRT_putchar
-@ cdecl puts(str) MSVCRT_puts
+@ varargs printf(str)
+@ cdecl putc(long ptr)
+@ cdecl putchar(long)
+@ cdecl puts(str)
 @ cdecl qsort(ptr long long ptr)
 @ cdecl raise(long)
 @ cdecl rand()
 @ cdecl realloc(ptr long)
-@ cdecl remove(str) MSVCRT_remove
-@ cdecl rename(str str) MSVCRT_rename
-@ cdecl rewind(ptr) MSVCRT_rewind
+@ cdecl remove(str)
+@ cdecl rename(str str)
+@ cdecl rewind(ptr)
 @ varargs scanf(str)
-@ cdecl setbuf(ptr ptr) MSVCRT_setbuf
+@ cdecl setbuf(ptr ptr)
 @ cdecl setlocale(long str)
-@ cdecl setvbuf(ptr str long long) MSVCRT_setvbuf
+@ cdecl setvbuf(ptr str long long)
 @ cdecl signal(long long)
 @ cdecl sin(double)
 @ cdecl sinh(double)
@@ -499,20 +499,20 @@
 @ cdecl tanh(double)
 @ cdecl -arch=win32 time(ptr) _time32
 @ cdecl -arch=win64 time(ptr) _time64
-@ cdecl tmpfile() MSVCRT_tmpfile
-@ cdecl tmpnam(ptr) MSVCRT_tmpnam
+@ cdecl tmpfile()
+@ cdecl tmpnam(ptr)
 @ cdecl tolower(long)
 @ cdecl toupper(long)
 @ cdecl towlower(long)
 @ cdecl towupper(long)
-@ cdecl ungetc(long ptr) MSVCRT_ungetc
-@ cdecl ungetwc(long ptr) MSVCRT_ungetwc
-@ cdecl vfprintf(ptr str ptr) MSVCRT_vfprintf
-@ cdecl vfwprintf(ptr wstr ptr) MSVCRT_vfwprintf
-@ cdecl vprintf(str ptr) MSVCRT_vprintf
+@ cdecl ungetc(long ptr)
+@ cdecl ungetwc(long ptr)
+@ cdecl vfprintf(ptr str ptr)
+@ cdecl vfwprintf(ptr wstr ptr)
+@ cdecl vprintf(str ptr)
 @ cdecl vsprintf(ptr str ptr)
 @ cdecl vswprintf(ptr wstr ptr) _vswprintf
-@ cdecl vwprintf(wstr ptr) MSVCRT_vwprintf
+@ cdecl vwprintf(wstr ptr)
 @ cdecl wcscat(wstr wstr)
 @ cdecl wcschr(wstr long)
 @ cdecl wcscmp(wstr wstr)
@@ -535,5 +535,5 @@
 @ cdecl wcstoul(wstr ptr long)
 @ cdecl wcsxfrm(ptr wstr long)
 @ cdecl wctomb(ptr long)
-@ varargs wprintf(wstr) MSVCRT_wprintf
+@ varargs wprintf(wstr)
 @ varargs wscanf(wstr)

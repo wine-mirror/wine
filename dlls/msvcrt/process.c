@@ -27,6 +27,7 @@
  * -No check for maximum path/argument/environment size is done
  */
 
+#include <io.h>
 #include <process.h>
 #include <stdarg.h>
 
@@ -1074,7 +1075,7 @@ FILE* CDECL _wpopen(const wchar_t* command, const wchar_t* mode)
         break;
     }
   }
-  if (MSVCRT__pipe(fds, 0, textmode) == -1)
+  if (_pipe(fds, 0, textmode) == -1)
     return NULL;
 
   fdToDup = readPipe ? 1 : 0;
@@ -1099,12 +1100,12 @@ FILE* CDECL _wpopen(const wchar_t* command, const wchar_t* mode)
   }
   else container = popen_handles+i;
 
-  if ((fdStdHandle = MSVCRT__dup(fdToDup)) == -1)
+  if ((fdStdHandle = _dup(fdToDup)) == -1)
     goto error;
-  if (MSVCRT__dup2(fds[fdToDup], fdToDup) != 0)
+  if (_dup2(fds[fdToDup], fdToDup) != 0)
     goto error;
 
-  MSVCRT__close(fds[fdToDup]);
+  _close(fds[fdToDup]);
 
   if (!(comspec = msvcrt_get_comspec())) goto error;
   len = wcslen(comspec) + wcslen(command) + 5;
@@ -1122,28 +1123,28 @@ FILE* CDECL _wpopen(const wchar_t* command, const wchar_t* mode)
   if ((container->proc = (HANDLE)msvcrt_spawn(MSVCRT__P_NOWAIT, comspec, fullcmd, NULL, 1))
           == INVALID_HANDLE_VALUE)
   {
-    MSVCRT__close(fds[fdToOpen]);
+    _close(fds[fdToOpen]);
     ret = NULL;
   }
   else
   {
-    ret = MSVCRT__wfdopen(fds[fdToOpen], mode);
+    ret = _wfdopen(fds[fdToOpen], mode);
     if (!ret)
-      MSVCRT__close(fds[fdToOpen]);
+      _close(fds[fdToOpen]);
     container->f = ret;
   }
   _unlock(_POPEN_LOCK);
   HeapFree(GetProcessHeap(), 0, comspec);
   HeapFree(GetProcessHeap(), 0, fullcmd);
-  MSVCRT__dup2(fdStdHandle, fdToDup);
-  MSVCRT__close(fdStdHandle);
+  _dup2(fdStdHandle, fdToDup);
+  _close(fdStdHandle);
   return ret;
 
 error:
   _unlock(_POPEN_LOCK);
-  if (fdStdHandle != -1) MSVCRT__close(fdStdHandle);
-  MSVCRT__close(fds[0]);
-  MSVCRT__close(fds[1]);
+  if (fdStdHandle != -1) _close(fdStdHandle);
+  _close(fds[0]);
+  _close(fds[1]);
   return NULL;
 }
 
@@ -1201,7 +1202,7 @@ int CDECL _pclose(FILE* file)
   popen_handles[i].f = NULL;
   _unlock(_POPEN_LOCK);
 
-  MSVCRT_fclose(file);
+  fclose(file);
   if(WaitForSingleObject(h, INFINITE)==WAIT_FAILED || !GetExitCodeProcess(h, &i))
   {
     msvcrt_set_errno(GetLastError());

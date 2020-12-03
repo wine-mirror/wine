@@ -88,6 +88,8 @@ _ACRTIMP int    __cdecl _setmaxstdio(int);
 _ACRTIMP char*  __cdecl _tempnam(const char*,const char*);
 _ACRTIMP int    __cdecl _unlink(const char*);
 
+_ACRTIMP void __cdecl _lock_file(FILE*);
+_ACRTIMP void __cdecl _unlock_file(FILE*);
 _ACRTIMP size_t __cdecl _fread_nolock(void*,size_t,size_t,FILE*);
 _ACRTIMP size_t __cdecl _fread_nolock_s(void*,size_t,size_t,size_t,FILE*);
 _ACRTIMP size_t __cdecl _fwrite_nolock(const void*,size_t,size_t,FILE*);

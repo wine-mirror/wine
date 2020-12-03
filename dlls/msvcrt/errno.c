@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <io.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -340,11 +341,11 @@ void CDECL perror(const char* str)
 
     if (str && *str)
     {
-        MSVCRT__write( 2, str, strlen(str) );
-        MSVCRT__write( 2, ": ", 2 );
+        _write( 2, str, strlen(str) );
+        _write( 2, ": ", 2 );
     }
-    MSVCRT__write( 2, MSVCRT__sys_errlist[err], strlen(MSVCRT__sys_errlist[err]) );
-    MSVCRT__write( 2, "\n", 1 );
+    _write( 2, MSVCRT__sys_errlist[err], strlen(MSVCRT__sys_errlist[err]) );
+    _write( 2, "\n", 1 );
 }
 
 /*********************************************************************

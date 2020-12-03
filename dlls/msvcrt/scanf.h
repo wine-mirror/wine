@@ -48,8 +48,8 @@
 #define _STRTOD_NAME_(func) console_ ## func
 #define _GETC_(file) (consumed++, _getch())
 #define _UNGETC_(nch, file) do { _ungetch(nch); consumed--; } while(0)
-#define _LOCK_FILE_(file) MSVCRT__lock_file(MSVCRT_stdin)
-#define _UNLOCK_FILE_(file) MSVCRT__unlock_file(MSVCRT_stdin)
+#define _LOCK_FILE_(file) _lock_file(MSVCRT_stdin)
+#define _UNLOCK_FILE_(file) _unlock_file(MSVCRT_stdin)
 #ifdef WIDE_SCANF
 #ifdef SECURE
 #define _FUNCTION_ static int vcwscanf_s_l(const wchar_t *format, _locale_t locale, __ms_va_list ap)
@@ -120,24 +120,24 @@
 #endif /* STRING_LEN */
 #else /* STRING */
 #ifdef WIDE_SCANF
-#define _GETC_FUNC_(file) MSVCRT_fgetwc(file)
+#define _GETC_FUNC_(file) fgetwc(file)
 #define _STRTOD_NAME_(func) filew_ ## func
-#define _GETC_(file) (consumed++, MSVCRT_fgetwc(file))
-#define _UNGETC_(nch, file) do { MSVCRT_ungetwc(nch, file); consumed--; } while(0)
-#define _LOCK_FILE_(file) MSVCRT__lock_file(file)
-#define _UNLOCK_FILE_(file) MSVCRT__unlock_file(file)
+#define _GETC_(file) (consumed++, fgetwc(file))
+#define _UNGETC_(nch, file) do { ungetwc(nch, file); consumed--; } while(0)
+#define _LOCK_FILE_(file) _lock_file(file)
+#define _UNLOCK_FILE_(file) _unlock_file(file)
 #ifdef SECURE
 #define _FUNCTION_ static int vfwscanf_s_l(FILE* file, const wchar_t *format, _locale_t locale, __ms_va_list ap)
 #else  /* SECURE */
 #define _FUNCTION_ static int vfwscanf_l(FILE* file, const wchar_t *format, _locale_t locale, __ms_va_list ap)
 #endif /* SECURE */
 #else /* WIDE_SCANF */
-#define _GETC_FUNC_(file) MSVCRT_fgetc(file)
+#define _GETC_FUNC_(file) fgetc(file)
 #define _STRTOD_NAME_(func) file_ ## func
-#define _GETC_(file) (consumed++, MSVCRT_fgetc(file))
-#define _UNGETC_(nch, file) do { MSVCRT_ungetc(nch, file); consumed--; } while(0)
-#define _LOCK_FILE_(file) MSVCRT__lock_file(file)
-#define _UNLOCK_FILE_(file) MSVCRT__unlock_file(file)
+#define _GETC_(file) (consumed++, fgetc(file))
+#define _UNGETC_(nch, file) do { ungetc(nch, file); consumed--; } while(0)
+#define _LOCK_FILE_(file) _lock_file(file)
+#define _UNLOCK_FILE_(file) _unlock_file(file)
 #ifdef SECURE
 #define _FUNCTION_ static int vfscanf_s_l(FILE* file, const char *format, _locale_t locale, __ms_va_list ap)
 #else  /* SECURE */
