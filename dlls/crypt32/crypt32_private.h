@@ -370,14 +370,6 @@ BOOL CRYPT_ReadSerializedStoreFromFile(HANDLE file, HCERTSTORE store) DECLSPEC_H
 BOOL CRYPT_ReadSerializedStoreFromBlob(const CRYPT_DATA_BLOB *blob,
  HCERTSTORE store) DECLSPEC_HIDDEN;
 
-/* Fixes up the pointers in info, where info is assumed to be a
- * CRYPT_KEY_PROV_INFO, followed by its container name, provider name, and any
- * provider parameters, in a contiguous buffer, but where info's pointers are
- * assumed to be invalid.  Upon return, info's pointers point to the
- * appropriate memory locations.
- */
-void CRYPT_FixKeyProvInfoPointers(PCRYPT_KEY_PROV_INFO info) DECLSPEC_HIDDEN;
-
 struct store_CERT_KEY_CONTEXT
 {
     DWORD   cbSize;
