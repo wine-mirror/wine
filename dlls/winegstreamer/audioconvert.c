@@ -38,6 +38,7 @@ struct audio_converter
     IMFTransform IMFTransform_iface;
     LONG refcount;
     IMFMediaType *input_type;
+    IMFMediaType *output_type;
     CRITICAL_SECTION cs;
 };
 
@@ -347,9 +348,77 @@ static HRESULT WINAPI audio_converter_SetInputType(IMFTransform *iface, DWORD id
 
 static HRESULT WINAPI audio_converter_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
-    FIXME("%p, %u, %p, %#x.\n", iface, id, type, flags);
+    struct audio_converter *converter = impl_audio_converter_from_IMFTransform(iface);
+    GUID major_type, subtype;
+    GstCaps *output_caps;
+    DWORD unused;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p, %#x.\n", iface, id, type, flags);
+
+    if (id != 0)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    if (!converter->input_type)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+
+    if (type)
+    {
+        /* validate the type */
+
+        if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_MAJOR_TYPE, &major_type)))
+            return MF_E_INVALIDTYPE;
+        if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
+            return MF_E_INVALIDTYPE;
+        if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_NUM_CHANNELS, &unused)))
+            return MF_E_INVALIDTYPE;
+        if (IsEqualGUID(&subtype, &MFAudioFormat_PCM) && FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_BITS_PER_SAMPLE, &unused)))
+            return MF_E_INVALIDTYPE;
+        if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &unused)))
+            return MF_E_INVALIDTYPE;
+
+        if (!(IsEqualGUID(&major_type, &MFMediaType_Audio)))
+            return MF_E_INVALIDTYPE;
+
+        if (!IsEqualGUID(&subtype, &MFAudioFormat_PCM) && !IsEqualGUID(&subtype, &MFAudioFormat_Float))
+            return MF_E_INVALIDTYPE;
+
+        if (!(output_caps = caps_from_mf_media_type(type)))
+            return MF_E_INVALIDTYPE;
+
+        gst_caps_unref(output_caps);
+    }
+
+    if (flags & MFT_SET_TYPE_TEST_ONLY)
+        return S_OK;
+
+    EnterCriticalSection(&converter->cs);
+
+    hr = S_OK;
+
+    if (type)
+    {
+        if (!converter->output_type)
+            hr = MFCreateMediaType(&converter->output_type);
+
+        if (SUCCEEDED(hr))
+            hr = IMFMediaType_CopyAllItems(type, (IMFAttributes *) converter->output_type);
+
+        if (FAILED(hr))
+        {
+            IMFMediaType_Release(converter->output_type);
+            converter->output_type = NULL;
+        }
+    }
+    else if (converter->output_type)
+    {
+        IMFMediaType_Release(converter->output_type);
+        converter->output_type = NULL;
+    }
+
+    LeaveCriticalSection(&converter->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI audio_converter_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **type)
