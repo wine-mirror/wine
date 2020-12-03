@@ -1314,8 +1314,6 @@ NTSTATUS WINAPI RtlIpv6StringToAddressA(const char *str, const char **terminator
 NTSTATUS WINAPI RtlIpv4AddressToStringExW(const IN_ADDR *pin, USHORT port, LPWSTR buffer, PULONG psize)
 {
     WCHAR tmp_ip[32];
-    static const WCHAR fmt_ip[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
-    static const WCHAR fmt_port[] = {':','%','u',0};
     ULONG needed;
 
     if (!pin || !buffer || !psize)
@@ -1323,11 +1321,11 @@ NTSTATUS WINAPI RtlIpv4AddressToStringExW(const IN_ADDR *pin, USHORT port, LPWST
 
     TRACE("(%p:0x%x, %d, %p, %p:%d)\n", pin, pin->S_un.S_addr, port, buffer, psize, *psize);
 
-    needed = swprintf(tmp_ip, ARRAY_SIZE(tmp_ip), fmt_ip,
+    needed = swprintf(tmp_ip, ARRAY_SIZE(tmp_ip), L"%u.%u.%u.%u",
                       pin->S_un.S_un_b.s_b1, pin->S_un.S_un_b.s_b2,
                       pin->S_un.S_un_b.s_b3, pin->S_un.S_un_b.s_b4);
 
-    if (port) needed += swprintf(tmp_ip + needed, ARRAY_SIZE(tmp_ip) - needed, fmt_port, ntohs(port));
+    if (port) needed += swprintf(tmp_ip + needed, ARRAY_SIZE(tmp_ip) - needed, L":%u", ntohs(port));
 
     if (*psize > needed) {
         *psize = needed + 1;

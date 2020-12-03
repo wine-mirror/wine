@@ -50,8 +50,6 @@ static BOOL show_dot_files;
  */
 void init_directories(void)
 {
-    static const WCHAR WineW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e',0};
-    static const WCHAR ShowDotFilesW[] = {'S','h','o','w','D','o','t','F','i','l','e','s',0};
     char tmp[80];
     HANDLE root, hkey;
     DWORD dummy;
@@ -65,12 +63,12 @@ void init_directories(void)
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, WineW );
+    RtlInitUnicodeString( &nameW, L"Software\\Wine" );
 
     /* @@ Wine registry key: HKCU\Software\Wine */
     if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
     {
-        RtlInitUnicodeString( &nameW, ShowDotFilesW );
+        RtlInitUnicodeString( &nameW, L"ShowDotFiles" );
         if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
         {
             WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;

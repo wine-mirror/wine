@@ -31,10 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
-static const WCHAR DeviceRootW[] = {'\\','\\','.','\\',0};
-static const WCHAR NTDosPrefixW[] = {'\\','?','?','\\',0};
-static const WCHAR UncPfxW[] = {'U','N','C','\\',0};
-
 #define IS_SEPARATOR(ch)  ((ch) == '\\' || (ch) == '/')
 
 /***********************************************************************
@@ -69,7 +65,6 @@ DOS_PATHNAME_TYPE WINAPI RtlDetermineDosPathNameType_U( PCWSTR path )
  */
 ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
 {
-    static const WCHAR consoleW[] = {'\\','\\','.','\\','C','O','N',0};
     static const WCHAR auxW[] = {'A','U','X'};
     static const WCHAR comW[] = {'C','O','M'};
     static const WCHAR conW[] = {'C','O','N'};
@@ -87,7 +82,7 @@ ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
     case UNC_PATH:
         return 0;
     case DEVICE_PATH:
-        if (!wcsicmp( dos_name, consoleW ))
+        if (!wcsicmp( dos_name, L"\\\\.\\CON" ))
             return MAKELONG( sizeof(conW), 4 * sizeof(WCHAR) );  /* 4 is length of \\.\ prefix */
         return 0;
     case ABSOLUTE_DRIVE_PATH:
@@ -207,12 +202,12 @@ NTSTATUS WINAPI RtlDosPathNameToNtPathName_U_WithStatus(const WCHAR *dos_path, U
         return STATUS_NO_MEMORY;
     }
 
-    wcscpy(ntpath->Buffer, NTDosPrefixW);
+    wcscpy(ntpath->Buffer, L"\\??\\");
     switch (RtlDetermineDosPathNameType_U(ptr))
     {
     case UNC_PATH: /* \\foo */
         offset = 2;
-        wcscat(ntpath->Buffer, UncPfxW);
+        wcscat(ntpath->Buffer, L"UNC\\");
         break;
     case DEVICE_PATH: /* \\.\foo */
         offset = 4;
@@ -661,7 +656,7 @@ DWORD WINAPI RtlGetFullPathName_U(const WCHAR* name, ULONG size, WCHAR* buffer,
         DWORD   sz = LOWORD(dosdev); /* in bytes */
 
         if (8 + sz + 2 > size) return sz + 10;
-        wcscpy(buffer, DeviceRootW);
+        wcscpy(buffer, L"\\\\.\\");
         memmove(buffer + 4, name + offset, sz);
         buffer[4 + sz / sizeof(WCHAR)] = '\0';
         /* file_part isn't set in this case */
@@ -874,7 +869,7 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
     if (size && ptr[size - 1] != '\\') ptr[size++] = '\\';
 
     /* convert \??\UNC\ path to \\ prefix */
-    if (size >= 4 && !wcsnicmp(ptr, UncPfxW, 4))
+    if (size >= 4 && !wcsnicmp(ptr, L"UNC\\", 4))
     {
         ptr += 2;
         size -= 2;

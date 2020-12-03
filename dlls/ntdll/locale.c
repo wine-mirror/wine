@@ -1269,8 +1269,6 @@ NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags 
 {
     /* locale name format is: lang[-script][-country][_modifier] */
 
-    static const WCHAR sepW[] = {'-','_',0};
-
     const IMAGE_RESOURCE_DIRECTORY *resdir;
     const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
     LDR_RESOURCE_INFO info;
@@ -1291,16 +1289,16 @@ NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags 
     if (wcslen( name ) >= LOCALE_NAME_MAX_LENGTH) return STATUS_INVALID_PARAMETER_1;
     wcscpy( lang, name );
 
-    if ((p = wcspbrk( lang, sepW )) && *p == '-')
+    if ((p = wcspbrk( lang, L"-_" )) && *p == '-')
     {
         *p++ = 0;
         country = p;
-        if ((p = wcspbrk( p, sepW )) && *p == '-')
+        if ((p = wcspbrk( p, L"-_" )) && *p == '-')
         {
             *p++ = 0;
             script = country;
             country = p;
-            p = wcspbrk( p, sepW );
+            p = wcspbrk( p, L"-_" );
         }
         if (p) *p = 0;  /* FIXME: modifier is ignored */
         /* second value can be script or country, check length to resolve the ambiguity */

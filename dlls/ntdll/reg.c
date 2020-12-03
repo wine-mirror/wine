@@ -402,49 +402,30 @@ static NTSTATUS RTL_KeyHandleCreateObject(ULONG RelativeTo, PCWSTR Path, POBJECT
     PCWSTR base;
     INT len;
 
-    static const WCHAR empty[] = {0};
-    static const WCHAR control[] = {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e',
-    '\\','S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-    'C','o','n','t','r','o','l','\\',0};
-
-    static const WCHAR devicemap[] = {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\',
-    'H','a','r','d','w','a','r','e','\\','D','e','v','i','c','e','M','a','p','\\',0};
-
-    static const WCHAR services[] = {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\',
-    'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-    'S','e','r','v','i','c','e','s','\\',0};
-
-    static const WCHAR user[] = {'\\','R','e','g','i','s','t','r','y','\\','U','s','e','r','\\',
-    'C','u','r','r','e','n','t','U','s','e','r','\\',0};
-
-    static const WCHAR windows_nt[] = {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\',
-    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-    'W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',0};
-
     switch (RelativeTo & 0xff)
     {
     case RTL_REGISTRY_ABSOLUTE:
-        base = empty;
+        base = L"";
         break;
 
     case RTL_REGISTRY_CONTROL:
-        base = control;
+        base = L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\";
         break;
 
     case RTL_REGISTRY_DEVICEMAP:
-        base = devicemap;
+        base = L"\\Registry\\Machine\\Hardware\\DeviceMap\\";
         break;
 
     case RTL_REGISTRY_SERVICES:
-        base = services;
+        base = L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\";
         break;
 
     case RTL_REGISTRY_USER:
-        base = user;
+        base = L"\\Registry\\User\\CurrentUser\\";
         break;
 
     case RTL_REGISTRY_WINDOWS_NT:
-        base = windows_nt;
+        base = L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\";
         break;
 
     default:

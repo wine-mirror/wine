@@ -102,11 +102,10 @@ NTSTATUS WINAPI RtlDeleteAtomFromAtomTable( RTL_ATOM_TABLE table, RTL_ATOM atom 
  */
 static ULONG integral_atom_name(WCHAR* buffer, ULONG len, RTL_ATOM atom)
 {
-    static const WCHAR fmt[] = {'#','%','u',0};
     WCHAR tmp[16];
     int ret;
 
-    ret = swprintf( tmp, ARRAY_SIZE(tmp), fmt, atom );
+    ret = swprintf( tmp, ARRAY_SIZE(tmp), L"#%u", atom );
     if (!len) return ret * sizeof(WCHAR);
     if (len <= ret) ret = len - 1;
     memcpy( buffer, tmp, ret * sizeof(WCHAR) );

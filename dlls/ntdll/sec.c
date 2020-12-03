@@ -1617,21 +1617,20 @@ NTSTATUS WINAPI RtlConvertSidToUnicodeString(
        PSID pSid,
        BOOLEAN AllocateString)
 {
-    static const WCHAR formatW[] = {'-','%','u',0};
     WCHAR buffer[2 + 10 + 10 + 10 * SID_MAX_SUB_AUTHORITIES];
     WCHAR *p = buffer;
     const SID *sid = pSid;
     DWORD i, len;
 
     *p++ = 'S';
-    p += swprintf( p, ARRAY_SIZE(buffer) - (p - buffer), formatW, sid->Revision );
-    p += swprintf( p, ARRAY_SIZE(buffer) - (p - buffer), formatW,
+    p += swprintf( p, ARRAY_SIZE(buffer) - (p - buffer), L"-%u", sid->Revision );
+    p += swprintf( p, ARRAY_SIZE(buffer) - (p - buffer), L"-%u",
                    MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5],
                                        sid->IdentifierAuthority.Value[4] ),
                              MAKEWORD( sid->IdentifierAuthority.Value[3],
                                        sid->IdentifierAuthority.Value[2] )));
     for (i = 0; i < sid->SubAuthorityCount; i++)
-        p += swprintf( p, ARRAY_SIZE(buffer) - (p - buffer), formatW, sid->SubAuthority[i] );
+        p += swprintf( p, ARRAY_SIZE(buffer) - (p - buffer), L"-%u", sid->SubAuthority[i] );
 
     len = (p + 1 - buffer) * sizeof(WCHAR);
 

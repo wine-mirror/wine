@@ -1160,8 +1160,6 @@ NTSTATUS WINAPI RtlFindCharInUnicodeString(
  */
 BOOLEAN WINAPI RtlIsTextUnicode( LPCVOID buf, INT len, INT *pf )
 {
-    static const WCHAR std_control_chars[] = {'\r','\n','\t',' ',0x3000,0};
-    static const WCHAR byterev_control_chars[] = {0x0d00,0x0a00,0x0900,0x2000,0};
     const WCHAR *s = buf;
     int i;
     unsigned int flags = ~0U, out_flags = 0;
@@ -1225,7 +1223,7 @@ BOOLEAN WINAPI RtlIsTextUnicode( LPCVOID buf, INT len, INT *pf )
     {
         for (i = 0; i < len; i++)
         {
-            if (wcschr(std_control_chars, s[i]))
+            if (wcschr(L"\r\n\t \x3000", s[i]))
             {
                 out_flags |= IS_TEXT_UNICODE_CONTROLS;
                 break;
@@ -1237,7 +1235,7 @@ BOOLEAN WINAPI RtlIsTextUnicode( LPCVOID buf, INT len, INT *pf )
     {
         for (i = 0; i < len; i++)
         {
-            if (wcschr(byterev_control_chars, s[i]))
+            if (wcschr(L"\x0d00\x0a00\x0900\x2000", s[i]))
             {
                 out_flags |= IS_TEXT_UNICODE_REVERSE_CONTROLS;
                 break;
@@ -1684,11 +1682,6 @@ NTSTATUS WINAPI RtlGUIDFromString(PUNICODE_STRING str, GUID* guid)
  */
 NTSTATUS WINAPI RtlStringFromGUID(const GUID* guid, UNICODE_STRING *str)
 {
-  static const WCHAR szFormat[] = { '{','%','0','8','l','X','-',
-    '%','0','4','X','-',  '%','0','4','X','-','%','0','2','X','%','0','2','X',
-    '-',   '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X',
-    '%','0','2','X','%','0','2','X','}','\0' };
-
   TRACE("(%p,%p)\n", guid, str);
 
   str->Length = GUID_STRING_LENGTH * sizeof(WCHAR);
@@ -1699,7 +1692,8 @@ NTSTATUS WINAPI RtlStringFromGUID(const GUID* guid, UNICODE_STRING *str)
     str->Length = str->MaximumLength = 0;
     return STATUS_NO_MEMORY;
   }
-  swprintf(str->Buffer, str->MaximumLength/sizeof(WCHAR), szFormat, guid->Data1, guid->Data2, guid->Data3,
+  swprintf(str->Buffer, str->MaximumLength/sizeof(WCHAR),
+          L"{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}", guid->Data1, guid->Data2, guid->Data3,
           guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
           guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
 
@@ -1739,7 +1733,6 @@ static UINT64 get_arg( int nr, struct format_message_args *args_data, BOOL is64 
 static NTSTATUS add_format( WCHAR **buffer, WCHAR *end, const WCHAR **src, int insert, BOOLEAN ansi,
                             struct format_message_args *args_data )
 {
-    static const WCHAR modifiers[] = {'0','1','2','3','4','5','6','7','8','9',' ','+','-','*','#','.',0};
     const WCHAR *format = *src;
     WCHAR *p, fmt[32];
     ULONG_PTR args[5] = { 0 };
@@ -1757,7 +1750,7 @@ static NTSTATUS add_format( WCHAR **buffer, WCHAR *end, const WCHAR **src, int i
         if (!end || end - format > ARRAY_SIZE(fmt) - 2) return STATUS_INVALID_PARAMETER;
         *src = end + 1;
 
-        while (wcschr( modifiers, *format ))
+        while (wcschr( L"0123456789 +-*#.", *format ))
         {
             if (*format == '*') stars++;
             *p++ = *format++;
@@ -1829,7 +1822,6 @@ NTSTATUS WINAPI RtlFormatMessageEx( const WCHAR *src, ULONG width, BOOLEAN ignor
                                     BOOLEAN ansi, BOOLEAN is_array, __ms_va_list *args,
                                     WCHAR *buffer, ULONG size, ULONG *retsize, ULONG flags )
 {
-    static const WCHAR emptyW = 0;
     static const WCHAR spaceW = ' ';
     static const WCHAR crW    = '\r';
     static const WCHAR tabW   = '\t';
@@ -1945,7 +1937,7 @@ NTSTATUS WINAPI RtlFormatMessageEx( const WCHAR *src, ULONG width, BOOLEAN ignor
         }
     }
 
-    if ((status = add_chars( &buffer, end, &emptyW, 1 ))) return status;
+    if ((status = add_chars( &buffer, end, L"", 1 ))) return status;
 
     *retsize = (buffer - start) * sizeof(WCHAR);
     return STATUS_SUCCESS;

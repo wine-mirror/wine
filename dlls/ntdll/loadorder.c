@@ -49,7 +49,7 @@ struct loadorder_list
     module_loadorder_t *order;
 };
 
-static const WCHAR separatorsW[] = {',',' ','\t',0};
+static const WCHAR separatorsW[] = L", \t";
 
 static BOOL init_done;
 static struct loadorder_list env_list;
@@ -89,10 +89,9 @@ static const WCHAR *get_basename( const WCHAR *name )
  */
 static inline void remove_dll_ext( WCHAR *name )
 {
-    static const WCHAR dllW[] = {'.','d','l','l',0};
     WCHAR *p = wcsrchr( name, '.' );
 
-    if (p && !wcsicmp( p, dllW )) *p = 0;
+    if (p && !wcsicmp( p, L".dll" )) *p = 0;
 }
 
 
@@ -224,7 +223,6 @@ static void add_load_order_set( WCHAR *entry )
  */
 static void init_load_order(void)
 {
-    static const WCHAR winedlloverridesW[] = {'W','I','N','E','D','L','L','O','V','E','R','R','I','D','E','S',0};
     WCHAR *entry, *next, *order;
     SIZE_T len = 1024;
     NTSTATUS status;
@@ -234,7 +232,7 @@ static void init_load_order(void)
     for (;;)
     {
         order = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        status = RtlQueryEnvironmentVariable( NULL, winedlloverridesW, wcslen(winedlloverridesW),
+        status = RtlQueryEnvironmentVariable( NULL, L"WINEDLLOVERRIDES", wcslen(L"WINEDLLOVERRIDES"),
                                               order, len - 1, &len );
         if (!status)
         {
@@ -290,8 +288,6 @@ static inline enum loadorder get_env_load_order( const WCHAR *module )
  */
 static HANDLE get_standard_key(void)
 {
-    static const WCHAR DllOverridesW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                          'D','l','l','O','v','e','r','r','i','d','e','s',0};
     static HANDLE std_key = (HANDLE)-1;
 
     if (std_key == (HANDLE)-1)
@@ -307,7 +303,7 @@ static HANDLE get_standard_key(void)
         attr.Attributes = 0;
         attr.SecurityDescriptor = NULL;
         attr.SecurityQualityOfService = NULL;
-        RtlInitUnicodeString( &nameW, DllOverridesW );
+        RtlInitUnicodeString( &nameW, L"Software\\Wine\\DllOverrides" );
 
         /* @@ Wine registry key: HKCU\Software\Wine\DllOverrides */
         if (NtOpenKey( &std_key, KEY_ALL_ACCESS, &attr )) std_key = 0;
@@ -328,20 +324,17 @@ static HANDLE get_app_key( const WCHAR *app_name )
     UNICODE_STRING nameW;
     HANDLE root;
     WCHAR *str;
-    static const WCHAR AppDefaultsW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                         'A','p','p','D','e','f','a','u','l','t','s','\\',0};
-    static const WCHAR DllOverridesW[] = {'\\','D','l','l','O','v','e','r','r','i','d','e','s',0};
     static HANDLE app_key = (HANDLE)-1;
 
     if (app_key != (HANDLE)-1) return app_key;
 
     str = RtlAllocateHeap( GetProcessHeap(), 0,
-                           sizeof(AppDefaultsW) + sizeof(DllOverridesW) +
+                           sizeof(L"Software\\Wine\\AppDefaults\\") + sizeof(L"\\DllOverrides") +
                            wcslen(app_name) * sizeof(WCHAR) );
     if (!str) return 0;
-    wcscpy( str, AppDefaultsW );
+    wcscpy( str, L"Software\\Wine\\AppDefaults\\" );
     wcscat( str, app_name );
-    wcscat( str, DllOverridesW );
+    wcscat( str, L"\\DllOverrides" );
 
     RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
     attr.Length = sizeof(attr);
@@ -425,7 +418,6 @@ static enum loadorder get_load_order_value( HANDLE std_key, HANDLE app_key, cons
  */
 enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_name )
 {
-    static const WCHAR nt_prefixW[] = {'\\','?','?','\\',0};
     enum loadorder ret = LO_INVALID;
     HANDLE std_key, app_key = 0;
     const WCHAR *path = nt_name->Buffer;
@@ -435,7 +427,7 @@ enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_n
     if (!init_done) init_load_order();
     std_key = get_standard_key();
     if (app_name) app_key = get_app_key( app_name );
-    if (!wcsncmp( path, nt_prefixW, 4 )) path += 4;
+    if (!wcsncmp( path, L"\\??\\", 4 )) path += 4;
 
     TRACE("looking for %s\n", debugstr_w(path));
 
