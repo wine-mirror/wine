@@ -888,9 +888,7 @@ static HRESULT String_replace(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
                 if(FAILED(hres))
                     break;
             }else {
-                static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d'};
-
-                hres = strbuf_append(&ret, undefinedW, ARRAY_SIZE(undefinedW));
+                hres = strbuf_append(&ret, L"undefined", ARRAY_SIZE(L"undefined")-1);
                 if(FAILED(hres))
                     break;
             }

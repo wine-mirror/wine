@@ -620,17 +620,16 @@ static HRESULT NativeFunction_toString(FunctionInstance *func, jsstr_t **ret)
     jsstr_t *str;
     WCHAR *ptr;
 
-    static const WCHAR native_prefixW[] = {'\n','f','u','n','c','t','i','o','n',' '};
-    static const WCHAR native_suffixW[] =
-        {'(',')',' ','{','\n',' ',' ',' ',' ','[','n','a','t','i','v','e',' ','c','o','d','e',']','\n','}','\n'};
+    static const WCHAR native_prefixW[] = L"\nfunction ";
+    static const WCHAR native_suffixW[] = L"() {\n    [native code]\n}\n";
 
     name_len = function->name ? lstrlenW(function->name) : 0;
-    str = jsstr_alloc_buf(ARRAY_SIZE(native_prefixW) + ARRAY_SIZE(native_suffixW) + name_len, &ptr);
+    str = jsstr_alloc_buf(ARRAY_SIZE(native_prefixW) + ARRAY_SIZE(native_suffixW) + name_len - 2, &ptr);
     if(!str)
         return E_OUTOFMEMORY;
 
     memcpy(ptr, native_prefixW, sizeof(native_prefixW));
-    ptr += ARRAY_SIZE(native_prefixW);
+    ptr += ARRAY_SIZE(native_prefixW) - 1;
     memcpy(ptr, function->name, name_len*sizeof(WCHAR));
     ptr += name_len;
     memcpy(ptr, native_suffixW, sizeof(native_suffixW));
@@ -912,8 +911,8 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
     int j = 0;
     HRESULT hres = S_OK;
 
-    static const WCHAR function_anonymousW[] = {'f','u','n','c','t','i','o','n',' ','a','n','o','n','y','m','o','u','s','('};
-    static const WCHAR function_beginW[] = {')',' ','{','\n'};
+    static const WCHAR function_anonymousW[] = L"function anonymous(";
+    static const WCHAR function_beginW[] = L") {\n";
     static const WCHAR function_endW[] = L"\n}";
 
     if(argc) {
@@ -932,11 +931,11 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
     }
 
     if(SUCCEEDED(hres)) {
-        len += ARRAY_SIZE(function_anonymousW) + ARRAY_SIZE(function_beginW) + ARRAY_SIZE(function_endW);
+        len += ARRAY_SIZE(function_anonymousW) + ARRAY_SIZE(function_beginW) + ARRAY_SIZE(function_endW) - 2;
         str = heap_alloc(len*sizeof(WCHAR));
         if(str) {
             memcpy(str, function_anonymousW, sizeof(function_anonymousW));
-            ptr = str + ARRAY_SIZE(function_anonymousW);
+            ptr = str + ARRAY_SIZE(function_anonymousW) - 1;
             if(argc > 1) {
                 while(1) {
                     ptr += jsstr_flush(params[j], ptr);
@@ -947,7 +946,7 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
                 }
             }
             memcpy(ptr, function_beginW, sizeof(function_beginW));
-            ptr += ARRAY_SIZE(function_beginW);
+            ptr += ARRAY_SIZE(function_beginW) - 1;
             if(argc)
                 ptr += jsstr_flush(params[argc-1], ptr);
             memcpy(ptr, function_endW, sizeof(function_endW));

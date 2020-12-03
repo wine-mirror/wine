@@ -494,7 +494,7 @@ static HRESULT str_to_number(jsstr_t *str, double *ret)
     BOOL neg = FALSE;
     DOUBLE d = 0.0;
 
-    static const WCHAR infinityW[] = {'I','n','f','i','n','i','t','y'};
+    static const WCHAR infinityW[] = L"Infinity";
 
     ptr = jsstr_flatten(str);
     if(!ptr)
@@ -510,8 +510,8 @@ static HRESULT str_to_number(jsstr_t *str, double *ret)
         ptr++;
     }
 
-    if(!wcsncmp(ptr, infinityW, ARRAY_SIZE(infinityW))) {
-        ptr += ARRAY_SIZE(infinityW);
+    if(!wcsncmp(ptr, infinityW, ARRAY_SIZE(infinityW)-1)) {
+        ptr += ARRAY_SIZE(infinityW) - 1;
         while(*ptr && iswspace(*ptr))
             ptr++;
 

@@ -1573,14 +1573,12 @@ HRESULT script_parse(script_ctx_t *ctx, struct _compiler_ctx_t *compiler, byteco
     heap_pool_t *mark;
     HRESULT hres;
 
-    const WCHAR html_tagW[] = {'<','/','s','c','r','i','p','t','>',0};
-
     parser_ctx = heap_alloc_zero(sizeof(parser_ctx_t));
     if(!parser_ctx)
         return E_OUTOFMEMORY;
 
     parser_ctx->error_loc = -1;
-    parser_ctx->is_html = delimiter && !wcsicmp(delimiter, html_tagW);
+    parser_ctx->is_html = delimiter && !wcsicmp(delimiter, L"</script>");
 
     parser_ctx->begin = parser_ctx->ptr = code->source;
     parser_ctx->end = parser_ctx->begin + lstrlenW(parser_ctx->begin);
