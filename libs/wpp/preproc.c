@@ -79,8 +79,8 @@ void *pp_xmalloc(size_t size)
     res = malloc(size);
     if(res == NULL)
     {
-        /* Set the error flag */
-        pp_status.state = 1;
+        fprintf( stderr, "Virtual memory exhausted\n" );
+        exit(1);
     }
     return res;
 }
@@ -93,23 +93,16 @@ void *pp_xrealloc(void *p, size_t size)
     res = realloc(p, size);
     if(res == NULL)
     {
-        /* Set the error flag */
-        pp_status.state = 1;
+        fprintf( stderr, "Virtual memory exhausted\n" );
+        exit(1);
     }
     return res;
 }
 
 char *pp_xstrdup(const char *str)
 {
-	char *s;
-	int len;
-
-	assert(str != NULL);
-	len = strlen(str)+1;
-	s = pp_xmalloc(len);
-	if(!s)
-		return NULL;
-	return memcpy(s, str, len);
+	int len = strlen(str)+1;
+	return memcpy(pp_xmalloc(len), str, len);
 }
 
 char *wpp_lookup(const char *name, int type, const char *parent_name,
@@ -122,8 +115,6 @@ char *wpp_lookup(const char *name, int type, const char *parent_name,
     int i, fd;
 
     cpy = pp_xmalloc(strlen(name)+1);
-    if(!cpy)
-        return NULL;
     cptr = cpy;
 
     for(ccptr = name; *ccptr; ccptr++)
@@ -149,11 +140,6 @@ char *wpp_lookup(const char *name, int type, const char *parent_name,
         if ((p = strrchr( parent_name, '/' ))) p++;
         else p = parent_name;
         path = pp_xmalloc( (p - parent_name) + strlen(cpy) + 1 );
-        if(!path)
-        {
-            free(cpy);
-            return NULL;
-        }
         memcpy( path, parent_name, p - parent_name );
         strcpy( path + (p - parent_name), cpy );
         fd = open( path, O_RDONLY );
@@ -169,11 +155,6 @@ char *wpp_lookup(const char *name, int type, const char *parent_name,
     for(i = 0; i < include_path_count; i++)
     {
         path = pp_xmalloc(strlen(include_path[i]) + strlen(cpy) + 2);
-        if(!path)
-        {
-            free(cpy);
-            return NULL;
-        }
         strcpy(path, include_path[i]);
         strcat(path, "/");
         strcat(path, cpy);
@@ -252,16 +233,13 @@ static void free_pp_entry( pp_entry_t *ppp, int idx )
 }
 
 /* push a new (empty) define state */
-int pp_push_define_state(void)
+void pp_push_define_state(void)
 {
     pp_def_state_t *state = pp_xmalloc( sizeof(*state) );
-    if(!state)
-        return 1;
 
     memset( state->defines, 0, sizeof(state->defines) );
     state->next = pp_def_state;
     pp_def_state = state;
-    return 0;
 }
 
 /* pop the current define state */
@@ -308,8 +286,6 @@ pp_entry_t *pp_add_define(const char *def, const char *text)
 	int idx;
 	pp_entry_t *ppp;
 
-	if(!def)
-		return NULL;
 	idx = pphash(def);
 	if((ppp = pplookup(def)) != NULL)
 	{
@@ -318,19 +294,11 @@ pp_entry_t *pp_add_define(const char *def, const char *text)
 		pp_del_define(def);
 	}
 	ppp = pp_xmalloc(sizeof(pp_entry_t));
-	if(!ppp)
-		return NULL;
 	memset( ppp, 0, sizeof(*ppp) );
 	ppp->ident = pp_xstrdup(def);
-	if(!ppp->ident)
-		goto error;
 	ppp->type = def_define;
 	ppp->subst.text = text ? pp_xstrdup(text) : NULL;
-	if(text && !ppp->subst.text)
-		goto error;
 	ppp->filename = pp_xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
-	if(!ppp->filename)
-		goto error;
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
 	ppp->next = pp_def_state->defines[idx];
 	pp_def_state->defines[idx] = ppp;
@@ -354,12 +322,6 @@ pp_entry_t *pp_add_define(const char *def, const char *text)
 		printf("Added define (%s, %d) <%s> to <%s>\n", pp_status.input, pp_status.line_number, ppp->ident, ppp->subst.text ? ppp->subst.text : "(null)");
 
 	return ppp;
-
-error:
-	free(ppp->ident);
-	free(ppp->subst.text);
-	free(ppp);
-	return NULL;
 }
 
 pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
@@ -367,8 +329,6 @@ pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 	int idx;
 	pp_entry_t *ppp;
 
-	if(!id)
-		return NULL;
 	idx = pphash(id);
 	if((ppp = pplookup(id)) != NULL)
 	{
@@ -377,8 +337,6 @@ pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 		pp_del_define(id);
 	}
 	ppp = pp_xmalloc(sizeof(pp_entry_t));
-	if(!ppp)
-		return NULL;
 	memset( ppp, 0, sizeof(*ppp) );
 	ppp->ident	= id;
 	ppp->type	= def_macro;
@@ -386,11 +344,6 @@ pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 	ppp->nargs	= nargs;
 	ppp->subst.mtext= exp;
 	ppp->filename = pp_xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
-	if(!ppp->filename)
-	{
-		free(ppp);
-		return NULL;
-	}
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
 	ppp->next	= pp_def_state->defines[idx];
 	pp_def_state->defines[idx] = ppp;
@@ -438,12 +391,10 @@ pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 static char **includepath;
 static int nincludepath = 0;
 
-int wpp_add_include_path(const char *path)
+void wpp_add_include_path(const char *path)
 {
 	char *tok;
 	char *cpy = pp_xstrdup(path);
-	if(!cpy)
-		return 1;
 
 	tok = strtok(cpy, INCLUDESEPARATOR);
 	while(tok)
@@ -451,14 +402,8 @@ int wpp_add_include_path(const char *path)
 		if(*tok) {
 			char *dir;
 			char *cptr;
-			char **new_path;
 
 			dir = pp_xstrdup(tok);
-			if(!dir)
-			{
-				free(cpy);
-				return 1;
-			}
 			for(cptr = dir; *cptr; cptr++)
 			{
 				/* Convert to forward slash */
@@ -470,21 +415,13 @@ int wpp_add_include_path(const char *path)
 				*cptr = '\0';
 
 			/* Add to list */
-			new_path = pp_xrealloc(includepath, (nincludepath+1) * sizeof(*includepath));
-			if(!new_path)
-			{
-				free(dir);
-				free(cpy);
-				return 1;
-			}
-			includepath = new_path;
+			includepath = pp_xrealloc(includepath, (nincludepath+1) * sizeof(*includepath));
 			includepath[nincludepath] = dir;
 			nincludepath++;
 		}
 		tok = strtok(NULL, INCLUDESEPARATOR);
 	}
 	free(cpy);
-	return 0;
 }
 
 char *wpp_find_include(const char *name, const char *parent_name)
@@ -676,8 +613,6 @@ static void generic_msg(const char *s, const char *t, const char *n, va_list ap)
 		if(n)
 		{
 			cpy = pp_xstrdup(n);
-			if(!cpy)
-				goto end;
 			for (p = cpy; *p; p++) if(!isprint(*p)) *p = ' ';
 			fprintf(stderr, " near '%s'", cpy);
 			free(cpy);

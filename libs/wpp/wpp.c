@@ -72,12 +72,10 @@ static void add_special_defines(void)
     pp_add_define( "__TIME__", buf );
 
     ppp = pp_add_define( "__FILE__", "" );
-    if(ppp)
-        ppp->type = def_special;
+    ppp->type = def_special;
 
     ppp = pp_add_define( "__LINE__", "" );
-    if(ppp)
-        ppp->type = def_special;
+    ppp->type = def_special;
 }
 
 static void del_special_defines(void)
@@ -90,7 +88,7 @@ static void del_special_defines(void)
 
 
 /* add a define to the preprocessor list */
-int wpp_add_define( const char *name, const char *value )
+void wpp_add_define( const char *name, const char *value )
 {
     struct define *def;
 
@@ -100,35 +98,17 @@ int wpp_add_define( const char *name, const char *value )
     {
         if (!strcmp( def->name, name ))
         {
-            char *new_value = pp_xstrdup(value);
-            if(!new_value)
-                return 1;
             free( def->value );
-            def->value = new_value;
-
-            return 0;
+            def->value = pp_xstrdup(value);
+            return;
         }
     }
 
     def = pp_xmalloc( sizeof(*def) );
-    if(!def)
-        return 1;
     def->next  = cmdline_defines;
     def->name  = pp_xstrdup(name);
-    if(!def->name)
-    {
-        free(def);
-        return 1;
-    }
     def->value = pp_xstrdup(value);
-    if(!def->value)
-    {
-        free(def->name);
-        free(def);
-        return 1;
-    }
     cmdline_defines = def;
-    return 0;
 }
 
 
@@ -150,17 +130,15 @@ void wpp_del_define( const char *name )
 
 
 /* add a command-line define of the form NAME=VALUE */
-int wpp_add_cmdline_define( const char *value )
+void wpp_add_cmdline_define( const char *value )
 {
     char *p;
     char *str = pp_xstrdup(value);
-    if(!str)
-        return 1;
+
     p = strchr( str, '=' );
     if (p) *p++ = 0;
     wpp_add_define( str, p );
     free( str );
-    return 0;
 }
 
 
@@ -188,23 +166,14 @@ int wpp_parse( const char *input, FILE *output )
     pp_status.input = NULL;
     pp_status.line_number = 1;
     pp_status.char_number = 1;
-    pp_status.state = 0;
 
-    ret = pp_push_define_state();
-    if(ret)
-        return ret;
+    pp_push_define_state();
     add_cmdline_defines();
     add_special_defines();
 
     if (!input) pp_status.file = stdin;
     else if (!(pp_status.file = fopen(input, "rt")))
-    {
         ppy_error("Could not open %s\n", input);
-        del_special_defines();
-        del_cmdline_defines();
-        pp_pop_define_state();
-        return 2;
-    }
 
     pp_status.input = input ? pp_xstrdup(input) : NULL;
 
@@ -212,8 +181,6 @@ int wpp_parse( const char *input, FILE *output )
     pp_writestring("# 1 \"%s\" 1\n", input ? input : "");
 
     ret = ppy_parse();
-    /* If there were errors during processing, return an error code */
-    if (!ret && pp_status.state) ret = pp_status.state;
 
     if (input)
     {
