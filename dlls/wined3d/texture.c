@@ -2501,7 +2501,7 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
 static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl *texture_gl,
         unsigned int sub_resource_idx, struct wined3d_context_gl *context_gl, const struct wined3d_bo_address *data)
 {
-    const struct wined3d_bo_gl *bo = (const struct wined3d_bo_gl *)data->buffer_object;
+    struct wined3d_bo_gl *bo = (struct wined3d_bo_gl *)data->buffer_object;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_texture_sub_resource *sub_resource;
     unsigned int dst_row_pitch, dst_slice_pitch;
@@ -2721,6 +2721,7 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
     if (bo)
     {
         GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        wined3d_context_gl_reference_bo(context_gl, bo);
         checkGLcall("glBindBuffer");
     }
 
