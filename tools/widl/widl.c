@@ -249,6 +249,7 @@ static char *dup_basename_token(const char *name, const char *ext)
 
 static void add_widl_version_define(void)
 {
+    char version_str[32];
     unsigned int version;
     const char *p = PACKAGE_VERSION;
 
@@ -267,14 +268,8 @@ static void add_widl_version_define(void)
     if (p)
         version += atoi(p + 1);
 
-    if (version != 0)
-    {
-        char version_str[11];
-        snprintf(version_str, sizeof(version_str), "0x%x", version);
-        wpp_add_define("__WIDL__", version_str);
-    }
-    else
-        wpp_add_define("__WIDL__", NULL);
+    snprintf(version_str, sizeof(version_str), "__WIDL__=0x%x", version);
+    wpp_add_cmdline_define(version_str);
 }
 
 /* set the target platform */
@@ -922,7 +917,7 @@ int main(int argc,char *argv[])
   if (do_regscript) regscript_token = dup_basename_token(regscript_name,"_r.rgs");
 
   add_widl_version_define();
-  wpp_add_define("_WIN32", NULL);
+  wpp_add_cmdline_define("_WIN32=1");
 
   atexit(rm_tempfile);
   if (!no_preprocess)

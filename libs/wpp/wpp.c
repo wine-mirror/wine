@@ -49,16 +49,6 @@ static void add_cmdline_defines(void)
     }
 }
 
-static void del_cmdline_defines(void)
-{
-    struct define *def;
-
-    LIST_FOR_EACH_ENTRY( def, &cmdline_defines, struct define, entry )
-    {
-        if (def->value) pp_del_define( def->name );
-    }
-}
-
 static void add_special_defines(void)
 {
     time_t now = time(NULL);
@@ -78,17 +68,8 @@ static void add_special_defines(void)
     ppp->type = def_special;
 }
 
-static void del_special_defines(void)
-{
-    pp_del_define( "__DATE__" );
-    pp_del_define( "__TIME__" );
-    pp_del_define( "__FILE__" );
-    pp_del_define( "__LINE__" );
-}
-
-
 /* add a define to the preprocessor list */
-void wpp_add_define( const char *name, const char *value )
+static void wpp_add_define( const char *name, const char *value )
 {
     struct define *def;
 
@@ -166,7 +147,7 @@ int wpp_parse( const char *input, FILE *output )
     pp_status.line_number = 1;
     pp_status.char_number = 1;
 
-    pp_push_define_state();
+    pp_init_define_state();
     add_cmdline_defines();
     add_special_defines();
 
@@ -188,8 +169,6 @@ int wpp_parse( const char *input, FILE *output )
     }
     /* Clean if_stack, it could remain dirty on errors */
     while (pp_get_if_depth()) pp_pop_if();
-    del_special_defines();
-    del_cmdline_defines();
-    pp_pop_define_state();
+    pp_free_define_state();
     return ret;
 }

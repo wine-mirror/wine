@@ -37,20 +37,6 @@ typedef struct includelogicentry {
 } includelogicentry_t;
 
 /*
- * The arguments of a macrodefinition
- */
-typedef enum {
-	arg_single,
-	arg_list
-} def_arg_t;
-
-typedef struct marg {
-	def_arg_t	type;	/* Normal or ... argument */
-	char		*arg;	/* The textual argument */
-	int		nnl;	/* Number of newlines in the text to subst */
-} marg_t;
-
-/*
  * The expansiontext of a macro
  */
 typedef enum {
@@ -84,7 +70,7 @@ typedef struct pp_entry {
 	struct list entry;
 	def_type_t	type;		/* Define or macro */
 	char		*ident;		/* The key */
-	marg_t		**margs;	/* Macro arguments array or NULL if none */
+	char		**margs;	/* Macro arguments array or NULL if none */
 	int		nargs;
 	union {
 		mtext_t	*mtext;		/* The substitution sequence or NULL if none */
@@ -131,21 +117,13 @@ typedef struct
     int seen_junk;         /* Set when junk is seen */
 } include_state_t;
 
-#define SIZE_CHAR	1
-#define SIZE_SHORT	2
-#define SIZE_INT	3
-#define SIZE_LONG	4
-#define SIZE_LONGLONG	5
+#define SIZE_INT	1
+#define SIZE_LONG	2
+#define SIZE_LONGLONG	3
 #define SIZE_MASK	0x00ff
 #define FLAG_SIGNED	0x0100
 
 typedef enum {
-#if 0
-	cv_schar  = SIZE_CHAR + FLAG_SIGNED,
-	cv_uchar  = SIZE_CHAR,
-	cv_sshort = SIZE_SHORT + FLAG_SIGNED,
-	cv_ushort = SIZE_SHORT,
-#endif
 	cv_sint   = SIZE_INT + FLAG_SIGNED,
 	cv_uint   = SIZE_INT,
 	cv_slong  = SIZE_LONG + FLAG_SIGNED,
@@ -157,12 +135,6 @@ typedef enum {
 typedef struct cval {
 	ctype_t	type;
 	union {
-#if 0
-		signed char	sc;	/* Explicitly signed because compilers are stupid */
-		unsigned char	uc;
-		short		ss;
-		unsigned short	us;
-#endif
 		int		si;
 		unsigned int	ui;
 		long		sl;
@@ -178,10 +150,10 @@ void *pp_xmalloc(size_t);
 void *pp_xrealloc(void *, size_t);
 char *pp_xstrdup(const char *str);
 pp_entry_t *pplookup(const char *ident);
-void pp_push_define_state(void);
-void pp_pop_define_state(void);
+void pp_init_define_state(void);
+void pp_free_define_state(void);
 pp_entry_t *pp_add_define(const char *def, const char *text);
-pp_entry_t *pp_add_macro(char *ident, marg_t *args[], int nargs, mtext_t *exp);
+pp_entry_t *pp_add_macro(char *ident, char *args[], int nargs, mtext_t *exp);
 void pp_del_define(const char *name);
 void *pp_open_include(const char *name, int type, const char *parent_name, char **newpath);
 void pp_push_if(pp_if_state_t s);
@@ -196,8 +168,6 @@ char *wpp_lookup(const char *name, int type, const char *parent_name,
 #define __attribute__(x)  /*nothing*/
 #endif
 
-extern const struct wpp_callbacks *wpp_callbacks;
-
 int ppy_error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int ppy_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void pp_internal_error(const char *file, int line, const char *s, ...) __attribute__((format (printf, 3, 4)));
@@ -207,7 +177,7 @@ void pp_internal_error(const char *file, int line, const char *s, ...) __attribu
 struct pp_status
 {
     char *input;        /* current input file name */
-    void *file;         /* current input file descriptor */
+    FILE *file;         /* current input file descriptor */
     int line_number;    /* current line number */
     int char_number;    /* current char number in line */
     int pedantic;       /* pedantic option */

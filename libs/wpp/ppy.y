@@ -108,8 +108,7 @@ static void cast_to_slong(cval_t *v);
 static void cast_to_ulong(cval_t *v);
 static void cast_to_sll(cval_t *v);
 static void cast_to_ull(cval_t *v);
-static marg_t *new_marg(char *str, def_arg_t type);
-static marg_t *add_new_marg(char *str, def_arg_t type);
+static char *add_new_marg(char *str);
 static int marg_index(char *id);
 static mtext_t *new_mtext(char *str, int idx, def_exp_t type);
 static mtext_t *combine_mtext(mtext_t *tail, mtext_t *mtp);
@@ -118,7 +117,7 @@ static char *merge_text(char *s1, char *s2);
 /*
  * Local variables
  */
-static marg_t **macro_args;	/* Macro parameters array while parsing */
+static char   **macro_args;	/* Macro parameters array while parsing */
 static int	nmacro_args;
 
 %}
@@ -133,7 +132,7 @@ static int	nmacro_args;
 	int		*iptr;
 	char		*cptr;
 	cval_t		cval;
-	marg_t		*marg;
+	char		*marg;
 	mtext_t		*mtext;
 }
 
@@ -327,11 +326,11 @@ allmargs: /* Empty */		{ $$ = 0; macro_args = NULL; nmacro_args = 0; }
 	;
 
 emargs	: margs			{ $$ = $1; }
-	| margs ',' tELLIPSIS	{ $$ = add_new_marg(NULL, arg_list); nmacro_args *= -1; }
+	| margs ',' tELLIPSIS	{ nmacro_args *= -1; }
 	;
 
-margs	: margs ',' tIDENT	{ $$ = add_new_marg($3, arg_single); }
-	| tIDENT		{ $$ = add_new_marg($1, arg_single); }
+margs	: margs ',' tIDENT	{ $$ = add_new_marg($3); }
+	| tIDENT		{ $$ = add_new_marg($1); }
 	;
 
 opt_mtexts
@@ -543,25 +542,11 @@ static int boolean(cval_t *v)
 	return 0;
 }
 
-static marg_t *new_marg(char *str, def_arg_t type)
+static char *add_new_marg(char *str)
 {
-	marg_t *ma = pp_xmalloc(sizeof(marg_t));
-
-	ma->arg = str;
-	ma->type = type;
-	ma->nnl = 0;
-	return ma;
-}
-
-static marg_t *add_new_marg(char *str, def_arg_t type)
-{
-	marg_t *ma;
-	if(!str)
-		return NULL;
+	char *ma;
 	macro_args = pp_xrealloc(macro_args, (nmacro_args+1) * sizeof(macro_args[0]));
-	ma = new_marg(str, type);
-	macro_args[nmacro_args] = ma;
-	nmacro_args++;
+	macro_args[nmacro_args++] = ma = pp_xstrdup(str);
 	return ma;
 }
 
@@ -572,7 +557,7 @@ static int marg_index(char *id)
 		return -1;
 	for(t = 0; t < nmacro_args; t++)
 	{
-		if(!strcmp(id, macro_args[t]->arg))
+		if(!strcmp(id, macro_args[t]))
 			break;
 	}
 	return t < nmacro_args ? t : -1;

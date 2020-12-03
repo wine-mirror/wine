@@ -37,37 +37,11 @@ struct pp_status pp_status;
 
 #define HASHKEY		2039
 
-typedef struct pp_def_state
-{
-    struct list entry;
-    struct list defines[HASHKEY];
-} pp_def_state_t;
-
-static struct list pp_states = LIST_INIT( pp_states );
-static pp_def_state_t *pp_def_state;
+static struct list pp_defines[HASHKEY];
 
 #define MAXIFSTACK	64
 static pp_if_state_t if_stack[MAXIFSTACK];
 static int if_stack_idx = 0;
-
-#if 0
-void pp_print_status(void) __attribute__((destructor));
-void pp_print_status(void)
-{
-	int i;
-	int sum;
-	int total = 0;
-
-	fprintf(stderr, "Defines statistics:\n");
-	for(i = 0; i < HASHKEY; i++)
-	{
-		sum = list_count( &pp_def_state->defines[i] );
-		total += sum;
-		if (sum) fprintf(stderr, "%4d, %3d\n", i, sum);
-	}
-	fprintf(stderr, "Total defines: %d\n", total);
-}
-#endif
 
 void *pp_xmalloc(size_t size)
 {
@@ -186,7 +160,7 @@ pp_entry_t *pplookup(const char *ident)
 	if(!ident)
 		return NULL;
 	idx = pphash(ident);
-        LIST_FOR_EACH_ENTRY( ppp, &pp_def_state->defines[idx], pp_entry_t, entry )
+        LIST_FOR_EACH_ENTRY( ppp, &pp_defines[idx], pp_entry_t, entry )
 	{
 		if(!strcmp(ident, ppp->ident))
 			return ppp;
@@ -206,27 +180,23 @@ static void free_pp_entry( pp_entry_t *ppp, int idx )
 	free(ppp);
 }
 
-/* push a new (empty) define state */
-void pp_push_define_state(void)
+/* initialize the define state */
+void pp_init_define_state(void)
 {
-    pp_def_state_t *state = pp_xmalloc( sizeof(*state) );
     int i;
 
-    for (i = 0; i < HASHKEY; i++) list_init( &state->defines[i] );
-    list_add_head( &pp_states, &state->entry );
-    pp_def_state = state;
+    for (i = 0; i < HASHKEY; i++) list_init( &pp_defines[i] );
 }
 
-/* pop the current define state */
-void pp_pop_define_state(void)
+/* free the current define state */
+void pp_free_define_state(void)
 {
     int i;
     pp_entry_t *ppp, *ppp2;
-    pp_def_state_t *state = pp_def_state;
 
     for (i = 0; i < HASHKEY; i++)
     {
-        LIST_FOR_EACH_ENTRY_SAFE( ppp, ppp2, &state->defines[i], pp_entry_t, entry )
+        LIST_FOR_EACH_ENTRY_SAFE( ppp, ppp2, &pp_defines[i], pp_entry_t, entry )
         {
             free( ppp->ident );
             free( ppp->subst.text );
@@ -234,9 +204,6 @@ void pp_pop_define_state(void)
             free_pp_entry( ppp, i );
         }
     }
-    list_remove( &state->entry );
-    free( state );
-    pp_def_state = LIST_ENTRY( list_head( &pp_states ), pp_def_state_t, entry );
 }
 
 void pp_del_define(const char *name)
@@ -281,7 +248,7 @@ pp_entry_t *pp_add_define(const char *def, const char *text)
 	ppp->subst.text = text ? pp_xstrdup(text) : NULL;
 	ppp->filename = pp_xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
-        list_add_head( &pp_def_state->defines[idx], &ppp->entry );
+        list_add_head( &pp_defines[idx], &ppp->entry );
 	if(ppp->subst.text)
 	{
 		/* Strip trailing white space from subst text */
@@ -302,7 +269,7 @@ pp_entry_t *pp_add_define(const char *def, const char *text)
 	return ppp;
 }
 
-pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
+pp_entry_t *pp_add_macro(char *id, char *args[], int nargs, mtext_t *exp)
 {
 	int idx;
 	pp_entry_t *ppp;
@@ -323,7 +290,7 @@ pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 	ppp->subst.mtext= exp;
 	ppp->filename = pp_xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
-        list_add_head( &pp_def_state->defines[idx], &ppp->entry );
+        list_add_head( &pp_defines[idx], &ppp->entry );
 	if(pp_status.debug)
 	{
 		fprintf(stderr, "Added macro (%s, %d) <%s(%d)> to <", pp_status.input, pp_status.line_number, ppp->ident, nargs);
@@ -574,26 +541,11 @@ int pp_get_if_depth(void)
 	return if_stack_idx;
 }
 
-/* #define WANT_NEAR_INDICATION */
-
 static void generic_msg(const char *s, const char *t, const char *n, va_list ap)
 {
 	fprintf(stderr, "%s:%d:%d: %s: ", pp_status.input ? pp_status.input : "stdin",
                 pp_status.line_number, pp_status.char_number, t);
 	vfprintf(stderr, s, ap);
-#ifdef WANT_NEAR_INDICATION
-	{
-		char *cpy, *p;
-		if(n)
-		{
-			cpy = pp_xstrdup(n);
-			for (p = cpy; *p; p++) if(!isprint(*p)) *p = ' ';
-			fprintf(stderr, " near '%s'", cpy);
-			free(cpy);
-		}
-	}
-end:
-#endif
 	fprintf(stderr, "\n");
 }
 

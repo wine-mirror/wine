@@ -210,7 +210,7 @@ ul	[uUlL]|[uUlL][lL]|[lL][uU]|[lL][lL][uU]|[uU][lL][lL]|[lL][uU][lL]
 
 typedef struct bufferstackentry {
 	YY_BUFFER_STATE	bufferstate;	/* Buffer to switch back to */
-	void		*filehandle;    /* Handle to be used with wpp_callbacks->read */
+	FILE		*file;          /* File handle */
 	pp_entry_t	*define;	/* Points to expanding define or NULL if handling includes */
 	int		line_number;	/* Line that we were handling */
 	int		char_number;	/* The current position on that line */
@@ -849,10 +849,6 @@ static void newline(int dowrite)
  *
  * FIXME:
  * The sizes of resulting 'int' and 'long' are compiler specific.
- * I depend on sizeof(int) > 2 here (although a relatively safe
- * assumption).
- * Long longs are not yet implemented because this is very compiler
- * specific and I don't want to think too much about the problems.
  *
  *-------------------------------------------------------------------------
  */
@@ -1223,10 +1219,6 @@ static void expand_macro(macexpstackentry_t *mep)
  */
 static void new_string(void)
 {
-#ifdef DEBUG
-	if(strbuf_idx)
-		ppy_warning("new_string: strbuf_idx != 0");
-#endif
 	strbuf_idx = 0;
 	str_startline = pp_status.line_number;
 }
@@ -1259,18 +1251,12 @@ static char *get_string(void)
 
 	memcpy(str, strbuffer, strbuf_idx);
 	str[strbuf_idx] = '\0';
-#ifdef DEBUG
-	strbuf_idx = 0;
-#endif
 	return str;
 }
 
 static void put_string(void)
 {
 	put_buffer(strbuffer, strbuf_idx);
-#ifdef DEBUG
-	strbuf_idx = 0;
-#endif
 }
 
 static int string_start(void)
@@ -1293,7 +1279,7 @@ static void push_buffer(pp_entry_t *ppp, char *filename, char *incname, int pop)
 
 	memset(&bufferstack[bufferstackidx], 0, sizeof(bufferstack[0]));
 	bufferstack[bufferstackidx].bufferstate	= YY_CURRENT_BUFFER;
-	bufferstack[bufferstackidx].filehandle  = pp_status.file;
+	bufferstack[bufferstackidx].file        = pp_status.file;
 	bufferstack[bufferstackidx].define	= ppp;
 	bufferstack[bufferstackidx].line_number	= pp_status.line_number;
 	bufferstack[bufferstackidx].char_number	= pp_status.char_number;
@@ -1383,7 +1369,7 @@ static bufferstackentry_t *pop_buffer(void)
 			bufferstack[bufferstackidx].filename,
 			bufferstack[bufferstackidx].should_pop);
 
-	pp_status.file = bufferstack[bufferstackidx].filehandle;
+	pp_status.file = bufferstack[bufferstackidx].file;
 	ppy__switch_to_buffer(bufferstack[bufferstackidx].bufferstate);
 
 	if(bufferstack[bufferstackidx].should_pop)
