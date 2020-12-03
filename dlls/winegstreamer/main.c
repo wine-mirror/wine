@@ -368,7 +368,8 @@ HRESULT WINAPI DllRegisterServer(void)
     IFilterMapper2_RegisterFilter(mapper, &CLSID_WAVEParser, wave_parserW, NULL, NULL, NULL, &reg_wave_parser);
 
     IFilterMapper2_Release(mapper);
-    return S_OK;
+
+    return mfplat_DllRegisterServer();
 }
 
 HRESULT WINAPI DllUnregisterServer(void)

@@ -445,6 +445,75 @@ HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
+static WCHAR audio_converterW[] = {'A','u','d','i','o',' ','C','o','n','v','e','r','t','e','r',0};
+static const GUID *audio_converter_supported_types[] =
+{
+    &MFAudioFormat_PCM,
+    &MFAudioFormat_Float,
+};
+
+static const struct mft
+{
+    const GUID *clsid;
+    const GUID *category;
+    LPWSTR name;
+    const UINT32 flags;
+    const GUID *major_type;
+    const UINT32 input_types_count;
+    const GUID **input_types;
+    const UINT32 output_types_count;
+    const GUID **output_types;
+    IMFAttributes *attributes;
+}
+mfts[] =
+{
+    {
+        &CLSID_WINEAudioConverter,
+        &MFT_CATEGORY_AUDIO_EFFECT,
+        audio_converterW,
+        MFT_ENUM_FLAG_SYNCMFT,
+        &MFMediaType_Audio,
+        ARRAY_SIZE(audio_converter_supported_types),
+        audio_converter_supported_types,
+        ARRAY_SIZE(audio_converter_supported_types),
+        audio_converter_supported_types,
+        NULL
+    },
+};
+
+HRESULT mfplat_DllRegisterServer(void)
+{
+    unsigned int i, j;
+    HRESULT hr;
+    MFT_REGISTER_TYPE_INFO input_types[2], output_types[2];
+
+    for (i = 0; i < ARRAY_SIZE(mfts); i++)
+    {
+        const struct mft *cur = &mfts[i];
+
+        for (j = 0; j < cur->input_types_count; j++)
+        {
+            input_types[j].guidMajorType = *(cur->major_type);
+            input_types[j].guidSubtype = *(cur->input_types[j]);
+        }
+        for (j = 0; j < cur->output_types_count; j++)
+        {
+            output_types[j].guidMajorType = *(cur->major_type);
+            output_types[j].guidSubtype = *(cur->output_types[j]);
+        }
+
+        hr = MFTRegister(*(cur->clsid), *(cur->category), cur->name, cur->flags, cur->input_types_count,
+                    input_types, cur->output_types_count, output_types, cur->attributes);
+
+        if (FAILED(hr))
+        {
+            FIXME("Failed to register MFT, hr %#x\n", hr);
+            return hr;
+        }
+    }
+    return S_OK;
+}
+
 static const struct
 {
     const GUID *subtype;
