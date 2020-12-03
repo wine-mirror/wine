@@ -32,18 +32,18 @@ int ppy_debug, pp_flex_debug;
 
 struct define
 {
-    struct define *next;
+    struct list    entry;
     char          *name;
     char          *value;
 };
 
-static struct define *cmdline_defines;
+static struct list cmdline_defines = LIST_INIT( cmdline_defines );
 
 static void add_cmdline_defines(void)
 {
     struct define *def;
 
-    for (def = cmdline_defines; def; def = def->next)
+    LIST_FOR_EACH_ENTRY( def, &cmdline_defines, struct define, entry )
     {
         if (def->value) pp_add_define( def->name, def->value );
     }
@@ -53,7 +53,7 @@ static void del_cmdline_defines(void)
 {
     struct define *def;
 
-    for (def = cmdline_defines; def; def = def->next)
+    LIST_FOR_EACH_ENTRY( def, &cmdline_defines, struct define, entry )
     {
         if (def->value) pp_del_define( def->name );
     }
@@ -94,7 +94,7 @@ void wpp_add_define( const char *name, const char *value )
 
     if (!value) value = "";
 
-    for (def = cmdline_defines; def; def = def->next)
+    LIST_FOR_EACH_ENTRY( def, &cmdline_defines, struct define, entry )
     {
         if (!strcmp( def->name, name ))
         {
@@ -105,10 +105,9 @@ void wpp_add_define( const char *name, const char *value )
     }
 
     def = pp_xmalloc( sizeof(*def) );
-    def->next  = cmdline_defines;
     def->name  = pp_xstrdup(name);
     def->value = pp_xstrdup(value);
-    cmdline_defines = def;
+    list_add_head( &cmdline_defines, &def->entry );
 }
 
 
@@ -117,7 +116,7 @@ void wpp_del_define( const char *name )
 {
     struct define *def;
 
-    for (def = cmdline_defines; def; def = def->next)
+    LIST_FOR_EACH_ENTRY( def, &cmdline_defines, struct define, entry )
     {
         if (!strcmp( def->name, name ))
         {

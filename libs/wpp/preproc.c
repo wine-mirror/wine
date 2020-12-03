@@ -39,10 +39,11 @@ struct pp_status pp_status;
 
 typedef struct pp_def_state
 {
-    struct pp_def_state *next;
-    pp_entry_t          *defines[HASHKEY];
+    struct list entry;
+    struct list defines[HASHKEY];
 } pp_def_state_t;
 
+static struct list pp_states = LIST_INIT( pp_states );
 static pp_def_state_t *pp_def_state;
 
 #define MAXIFSTACK	64
@@ -56,14 +57,11 @@ void pp_print_status(void)
 	int i;
 	int sum;
 	int total = 0;
-	pp_entry_t *ppp;
 
 	fprintf(stderr, "Defines statistics:\n");
 	for(i = 0; i < HASHKEY; i++)
 	{
-		sum = 0;
-		for(ppp = pp_def_state->defines[i]; ppp; ppp = ppp->next)
-			sum++;
+		sum = list_count( &pp_def_state->defines[i] );
 		total += sum;
 		if (sum) fprintf(stderr, "%4d, %3d\n", i, sum);
 	}
@@ -188,7 +186,7 @@ pp_entry_t *pplookup(const char *ident)
 	if(!ident)
 		return NULL;
 	idx = pphash(ident);
-	for(ppp = pp_def_state->defines[idx]; ppp; ppp = ppp->next)
+        LIST_FOR_EACH_ENTRY( ppp, &pp_def_state->defines[idx], pp_entry_t, entry )
 	{
 		if(!strcmp(ident, ppp->ident))
 			return ppp;
@@ -200,35 +198,11 @@ static void free_pp_entry( pp_entry_t *ppp, int idx )
 {
 	if(ppp->iep)
 	{
-		if(ppp->iep == pp_includelogiclist)
-		{
-			pp_includelogiclist = ppp->iep->next;
-			if(pp_includelogiclist)
-				pp_includelogiclist->prev = NULL;
-		}
-		else
-		{
-			ppp->iep->prev->next = ppp->iep->next;
-			if(ppp->iep->next)
-				ppp->iep->next->prev = ppp->iep->prev;
-		}
+                list_remove( &ppp->iep->entry );
 		free(ppp->iep->filename);
 		free(ppp->iep);
 	}
-
-	if(pp_def_state->defines[idx] == ppp)
-	{
-		pp_def_state->defines[idx] = ppp->next;
-		if(pp_def_state->defines[idx])
-			pp_def_state->defines[idx]->prev = NULL;
-	}
-	else
-	{
-		ppp->prev->next = ppp->next;
-		if(ppp->next)
-			ppp->next->prev = ppp->prev;
-	}
-
+        list_remove( &ppp->entry );
 	free(ppp);
 }
 
@@ -236,9 +210,10 @@ static void free_pp_entry( pp_entry_t *ppp, int idx )
 void pp_push_define_state(void)
 {
     pp_def_state_t *state = pp_xmalloc( sizeof(*state) );
+    int i;
 
-    memset( state->defines, 0, sizeof(state->defines) );
-    state->next = pp_def_state;
+    for (i = 0; i < HASHKEY; i++) list_init( &state->defines[i] );
+    list_add_head( &pp_states, &state->entry );
     pp_def_state = state;
 }
 
@@ -246,16 +221,22 @@ void pp_push_define_state(void)
 void pp_pop_define_state(void)
 {
     int i;
-    pp_entry_t *ppp;
-    pp_def_state_t *state;
+    pp_entry_t *ppp, *ppp2;
+    pp_def_state_t *state = pp_def_state;
 
     for (i = 0; i < HASHKEY; i++)
     {
-        while ((ppp = pp_def_state->defines[i]) != NULL) pp_del_define( ppp->ident );
+        LIST_FOR_EACH_ENTRY_SAFE( ppp, ppp2, &state->defines[i], pp_entry_t, entry )
+        {
+            free( ppp->ident );
+            free( ppp->subst.text );
+            free( ppp->filename );
+            free_pp_entry( ppp, i );
+        }
     }
-    state = pp_def_state;
-    pp_def_state = state->next;
+    list_remove( &state->entry );
     free( state );
+    pp_def_state = LIST_ENTRY( list_head( &pp_states ), pp_def_state_t, entry );
 }
 
 void pp_del_define(const char *name)
@@ -300,10 +281,7 @@ pp_entry_t *pp_add_define(const char *def, const char *text)
 	ppp->subst.text = text ? pp_xstrdup(text) : NULL;
 	ppp->filename = pp_xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
-	ppp->next = pp_def_state->defines[idx];
-	pp_def_state->defines[idx] = ppp;
-	if(ppp->next)
-		ppp->next->prev = ppp;
+        list_add_head( &pp_def_state->defines[idx], &ppp->entry );
 	if(ppp->subst.text)
 	{
 		/* Strip trailing white space from subst text */
@@ -345,11 +323,7 @@ pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
 	ppp->subst.mtext= exp;
 	ppp->filename = pp_xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
-	ppp->next	= pp_def_state->defines[idx];
-	pp_def_state->defines[idx] = ppp;
-	if(ppp->next)
-		ppp->next->prev = ppp;
-
+        list_add_head( &pp_def_state->defines[idx], &ppp->entry );
 	if(pp_status.debug)
 	{
 		fprintf(stderr, "Added macro (%s, %d) <%s(%d)> to <", pp_status.input, pp_status.line_number, ppp->ident, nargs);

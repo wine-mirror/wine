@@ -302,7 +302,7 @@ include_state_t pp_incl_state =
     0      /* seen_junk */
 };
 
-includelogicentry_t *pp_includelogiclist = NULL;
+struct list pp_includelogiclist = LIST_INIT( pp_includelogiclist );
 
 #define YY_INPUT(buf,result,max_size)					     \
 	{								     \
@@ -1350,11 +1350,7 @@ static bufferstackentry_t *pop_buffer(void)
 					iep->ppp = ppp;
 					ppp->iep = iep;
 					iep->filename = bufferstack[bufferstackidx].include_filename;
-					iep->prev = NULL;
-					iep->next = pp_includelogiclist;
-					if(iep->next)
-						iep->next->prev = iep;
-					pp_includelogiclist = iep;
+                                        list_add_head( &pp_includelogiclist, &iep->entry );
 					if(pp_status.debug)
 						fprintf(stderr, "pop_buffer: %s:%d: includelogic added, include_ppp='%s', file='%s'\n",
                                                         bufferstack[bufferstackidx].filename, bufferstack[bufferstackidx].line_number, pp_incl_state.ppp, iep->filename);
@@ -1557,7 +1553,7 @@ void pp_do_include(char *fname, int type)
 	if(!fname)
 		return;
 
-	for(iep = pp_includelogiclist; iep; iep = iep->next)
+	LIST_FOR_EACH_ENTRY( iep, &pp_includelogiclist, includelogicentry_t, entry )
 	{
 		if(!strcmp(iep->filename, fname))
 		{

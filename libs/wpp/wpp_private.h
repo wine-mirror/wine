@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "wine/list.h"
 
 struct pp_entry;	/* forward */
 /*
@@ -30,8 +31,7 @@ struct pp_entry;	/* forward */
  * are protected in the #ifndef/#endif way.
  */
 typedef struct includelogicentry {
-	struct includelogicentry *next;
-	struct includelogicentry *prev;
+	struct list entry;
 	struct pp_entry	*ppp;		/* The define which protects the file */
 	char		*filename;	/* The filename of the include */
 } includelogicentry_t;
@@ -81,8 +81,7 @@ typedef enum {
 } def_type_t;
 
 typedef struct pp_entry {
-	struct pp_entry *next;
-	struct pp_entry *prev;
+	struct list entry;
 	def_type_t	type;		/* Define or macro */
 	char		*ident;		/* The key */
 	marg_t		**margs;	/* Macro arguments array or NULL if none */
@@ -217,7 +216,7 @@ struct pp_status
 
 extern struct pp_status pp_status;
 extern include_state_t pp_incl_state;
-extern includelogicentry_t *pp_includelogiclist;
+extern struct list pp_includelogiclist;
 
 /*
  * From ppl.l
