@@ -2653,6 +2653,7 @@ void wined3d_context_gl_submit_command_fence(struct wined3d_context_gl *context_
 void *wined3d_context_gl_map_bo_address(struct wined3d_context_gl *context_gl,
         const struct wined3d_bo_address *data, size_t size, uint32_t flags)
 {
+    struct wined3d_device_gl *device_gl = wined3d_device_gl(context_gl->c.device);
     const struct wined3d_gl_info *gl_info;
     struct wined3d_bo_gl *bo;
     BYTE *memory;
@@ -2660,6 +2661,14 @@ void *wined3d_context_gl_map_bo_address(struct wined3d_context_gl *context_gl,
     if (!(bo = (struct wined3d_bo_gl *)data->buffer_object))
         return data->addr;
 
+    if (flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
+        goto map;
+
+    if (bo->command_fence_id == device_gl->current_fence_id)
+        wined3d_context_gl_submit_command_fence(context_gl);
+    wined3d_context_gl_wait_command_fence(context_gl, bo->command_fence_id);
+
+map:
     gl_info = context_gl->gl_info;
     wined3d_context_gl_bind_bo(context_gl, bo->binding, bo->id);
 

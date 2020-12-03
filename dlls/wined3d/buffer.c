@@ -741,7 +741,6 @@ void * CDECL wined3d_buffer_get_parent(const struct wined3d_buffer *buffer)
 static void wined3d_buffer_gl_sync_apple(struct wined3d_buffer_gl *buffer_gl,
         uint32_t flags, struct wined3d_context_gl *context_gl)
 {
-    struct wined3d_device_gl *device_gl = wined3d_device_gl(buffer_gl->b.resource.device);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_bo_gl *bo = &buffer_gl->bo;
 
@@ -759,12 +758,6 @@ static void wined3d_buffer_gl_sync_apple(struct wined3d_buffer_gl *buffer_gl,
         bo->command_fence_id = 0;
         return;
     }
-
-    TRACE("Synchronizing buffer %p.\n", buffer_gl);
-
-    if (bo->command_fence_id == device_gl->current_fence_id)
-        wined3d_context_gl_submit_command_fence(context_gl);
-    wined3d_context_gl_wait_command_fence(context_gl, bo->command_fence_id);
 }
 
 static void buffer_mark_used(struct wined3d_buffer *buffer)
