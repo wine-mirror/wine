@@ -1119,6 +1119,39 @@ static NTSTATUS CDECL key_import_ecc( struct key *key, UCHAR *buf, ULONG len )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS CDECL key_import_rsa( struct key *key, UCHAR *buf, ULONG len )
+{
+    BCRYPT_RSAKEY_BLOB *rsa_blob = (BCRYPT_RSAKEY_BLOB *)buf;
+    gnutls_datum_t m, e, p, q;
+    gnutls_privkey_t handle;
+    int ret;
+
+    if ((ret = pgnutls_privkey_init( &handle )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    e.data = (unsigned char *)(rsa_blob + 1);
+    e.size = rsa_blob->cbPublicExp;
+    m.data = e.data + e.size;
+    m.size = rsa_blob->cbModulus;
+    p.data = m.data + m.size;
+    p.size = rsa_blob->cbPrime1;
+    q.data = p.data + p.size;
+    q.size = rsa_blob->cbPrime2;
+
+    if ((ret = pgnutls_privkey_import_rsa_raw( handle, &m, &e, NULL, &p, &q, NULL, NULL, NULL )))
+    {
+        pgnutls_perror( ret );
+        pgnutls_privkey_deinit( handle );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    key_data(key)->privkey = handle;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS CDECL key_export_dsa_capi( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len )
 {
     BLOBHEADER *hdr;
@@ -1869,7 +1902,8 @@ static const struct key_funcs key_funcs =
     key_export_dsa_capi,
     key_export_ecc,
     key_import_dsa_capi,
-    key_import_ecc
+    key_import_ecc,
+    key_import_rsa
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )

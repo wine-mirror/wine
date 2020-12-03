@@ -214,6 +214,7 @@ struct key_funcs
     NTSTATUS (CDECL *key_export_ecc)( struct key *, UCHAR *, ULONG, ULONG * );
     NTSTATUS (CDECL *key_import_dsa_capi)( struct key *, UCHAR *, ULONG );
     NTSTATUS (CDECL *key_import_ecc)( struct key *, UCHAR *, ULONG );
+    NTSTATUS (CDECL *key_import_rsa)( struct key *, UCHAR *, ULONG );
 };
 
 #endif /* __BCRYPT_INTERNAL_H */

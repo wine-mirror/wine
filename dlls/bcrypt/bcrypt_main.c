@@ -1331,6 +1331,27 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
         return key_asymmetric_create( (struct key **)ret_key, alg, rsa_blob->BitLength, (BYTE *)rsa_blob, size );
     }
+    else if (!wcscmp( type, BCRYPT_RSAPRIVATE_BLOB ))
+    {
+        BCRYPT_RSAKEY_BLOB *rsa_blob = (BCRYPT_RSAKEY_BLOB *)input;
+        ULONG size;
+
+        if (input_len < sizeof(*rsa_blob)) return STATUS_INVALID_PARAMETER;
+        if (alg->id != ALG_ID_RSA || rsa_blob->Magic != BCRYPT_RSAPRIVATE_MAGIC)
+            return STATUS_NOT_SUPPORTED;
+
+        size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
+        if ((status = key_asymmetric_create( &key, alg, rsa_blob->BitLength, (BYTE *)rsa_blob, size )))
+            return status;
+        if ((status = key_funcs->key_import_rsa( key, input, input_len )))
+        {
+            BCryptDestroyKey( key );
+            return status;
+        }
+
+        *ret_key = key;
+        return STATUS_SUCCESS;
+    }
     else if (!wcscmp( type, BCRYPT_DSA_PUBLIC_BLOB ))
     {
         BCRYPT_DSA_KEY_BLOB *dsa_blob = (BCRYPT_DSA_KEY_BLOB *)input;

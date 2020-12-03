@@ -249,6 +249,12 @@ static NTSTATUS CDECL key_import_ecc( struct key *key, UCHAR *input, ULONG len )
     return STATUS_NOT_IMPLEMENTED;
 }
 
+static NTSTATUS CDECL key_import_rsa( struct key *key, UCHAR *input, ULONG len )
+{
+    FIXME( "not implemented on Mac\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static NTSTATUS CDECL key_asymmetric_generate( struct key *key )
 {
     FIXME( "not implemented on Mac\n" );
@@ -284,7 +290,8 @@ static const struct key_funcs key_funcs =
     key_export_dsa_capi,
     key_export_ecc,
     key_import_dsa_capi,
-    key_import_ecc
+    key_import_ecc,
+    key_import_rsa
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
