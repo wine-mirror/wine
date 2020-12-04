@@ -32,7 +32,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define WINED3D_BUFFER_HASDESC      0x01    /* A vertex description has been found. */
 #define WINED3D_BUFFER_USE_BO       0x02    /* Use a buffer object for this buffer. */
 #define WINED3D_BUFFER_PIN_SYSMEM   0x04    /* Keep a system memory copy for this buffer. */
-#define WINED3D_BUFFER_DISCARD      0x08    /* A DISCARD lock has occurred since the last preload. */
 #define WINED3D_BUFFER_APPLESYNC    0x10    /* Using sync as in GL_APPLE_flush_buffer_range. */
 
 #define VB_MAXDECLCHANGES     100     /* After that number of decl changes we stop converting */
@@ -714,11 +713,6 @@ void * CDECL wined3d_buffer_get_parent(const struct wined3d_buffer *buffer)
     return buffer->resource.parent;
 }
 
-static void buffer_mark_used(struct wined3d_buffer *buffer)
-{
-    buffer->flags &= ~WINED3D_BUFFER_DISCARD;
-}
-
 /* Context activation is done by the caller. */
 void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct wined3d_state *state)
@@ -737,8 +731,6 @@ void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *
     {
         WARN("Loading mapped buffer.\n");
     }
-
-    buffer_mark_used(buffer);
 
     /* TODO: Make converting independent from VBOs */
     if (!(buffer->flags & WINED3D_BUFFER_USE_BO))
@@ -921,16 +913,6 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
 
             if (count == 1)
             {
-                /* Filter redundant WINED3D_MAP_DISCARD maps. The 3DMark2001
-                 * multitexture fill rate test seems to depend on this. When
-                 * we map a buffer with GL_MAP_INVALIDATE_BUFFER_BIT, the
-                 * driver is free to discard the previous contents of the
-                 * buffer. The r600g driver only does this when the buffer is
-                 * currently in use, while the proprietary NVIDIA driver
-                 * appears to do this unconditionally. */
-                if (buffer->flags & WINED3D_BUFFER_DISCARD)
-                    flags &= ~WINED3D_MAP_DISCARD;
-
                 addr.buffer_object = buffer->buffer_object;
                 addr.addr = 0;
                 buffer->map_ptr = wined3d_context_map_bo_address(context, &addr, resource->size, flags);
@@ -962,9 +944,6 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
 
             context_release(context);
         }
-
-        if (flags & WINED3D_MAP_DISCARD)
-            buffer->flags |= WINED3D_BUFFER_DISCARD;
     }
 
     base = buffer->map_ptr ? buffer->map_ptr : resource->heap_memory;
@@ -1051,9 +1030,6 @@ void wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_off
 
     TRACE("dst_buffer %p, dst_offset %u, src_buffer %p, src_offset %u, size %u.\n",
             dst_buffer, dst_offset, src_buffer, src_offset, size);
-
-    buffer_mark_used(dst_buffer);
-    buffer_mark_used(src_buffer);
 
     dst_location = wined3d_buffer_get_memory(dst_buffer, &dst, dst_buffer->locations);
     dst.addr += dst_offset;
