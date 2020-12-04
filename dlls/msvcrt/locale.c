@@ -2052,12 +2052,12 @@ int CDECL _configthreadlocale(int type)
     thread_data_t *data = msvcrt_get_thread_data();
     int ret;
 
-    ret = (data->locale_flags & LOCALE_THREAD ? MSVCRT__ENABLE_PER_THREAD_LOCALE :
-            MSVCRT__DISABLE_PER_THREAD_LOCALE);
+    ret = (data->locale_flags & LOCALE_THREAD ? _ENABLE_PER_THREAD_LOCALE :
+            _DISABLE_PER_THREAD_LOCALE);
 
-    if(type == MSVCRT__ENABLE_PER_THREAD_LOCALE)
+    if(type == _ENABLE_PER_THREAD_LOCALE)
         data->locale_flags |= LOCALE_THREAD;
-    else if(type == MSVCRT__DISABLE_PER_THREAD_LOCALE)
+    else if(type == _DISABLE_PER_THREAD_LOCALE)
         data->locale_flags &= ~LOCALE_THREAD;
     else if(type)
         ret = -1;

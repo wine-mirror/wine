@@ -68,6 +68,18 @@ struct lconv
 
 struct tm;
 
+#ifndef _CONFIG_LOCALE_SWT
+#define _CONFIG_LOCALE_SWT
+
+#define _ENABLE_PER_THREAD_LOCALE 0x1
+#define _DISABLE_PER_THREAD_LOCALE 0x2
+#define _ENABLE_PER_THREAD_LOCALE_GLOBAL 0x10
+#define _DISABLE_PER_THREAD_LOCALE_GLOBAL 0x20
+#define _ENABLE_PER_THREAD_LOCALE_NEW 0x100
+#define _DISABLE_PER_THREAD_LOCALE_NEW 0x200
+
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
