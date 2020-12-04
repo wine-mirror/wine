@@ -1462,22 +1462,22 @@ static ULONG WINAPI VMR7WindowlessControl_Release(IVMRWindowlessControl *iface)
 }
 
 static HRESULT WINAPI VMR7WindowlessControl_GetNativeVideoSize(IVMRWindowlessControl *iface,
-                                                               LONG *width, LONG *height,
-                                                               LONG *arwidth, LONG *arheight)
+        LONG *width, LONG *height, LONG *aspect_width, LONG *aspect_height)
 {
-    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
-    TRACE("(%p/%p)->(%p, %p, %p, %p)\n", iface, This, width, height, arwidth, arheight);
+    struct quartz_vmr *filter = impl_from_IVMRWindowlessControl(iface);
 
-    if (!width || !height || !arwidth || !arheight)
-    {
-        ERR("Got no pointer\n");
+    TRACE("filter %p, width %p, height %p, aspect_width %p, aspect_height %p.\n",
+            filter, width, height, aspect_width, aspect_height);
+
+    if (!width || !height)
         return E_POINTER;
-    }
 
-    *width = This->bmiheader.biWidth;
-    *height = This->bmiheader.biHeight;
-    *arwidth = This->bmiheader.biWidth;
-    *arheight = This->bmiheader.biHeight;
+    *width = filter->bmiheader.biWidth;
+    *height = filter->bmiheader.biHeight;
+    if (aspect_width)
+        *aspect_width = filter->bmiheader.biWidth;
+    if (aspect_height)
+        *aspect_height = filter->bmiheader.biHeight;
 
     return S_OK;
 }
