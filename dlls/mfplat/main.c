@@ -8911,14 +8911,12 @@ HRESULT WINAPI MFCreateDXGIDeviceManager(UINT *token, IMFDXGIDeviceManager **man
     if (!token || !manager)
         return E_POINTER;
 
-    object = heap_alloc(sizeof(*object));
-    if (!object)
+    if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFDXGIDeviceManager_iface.lpVtbl = &dxgi_device_manager_vtbl;
     object->refcount = 1;
     object->token = GetTickCount();
-    object->device = NULL;
     InitializeCriticalSection(&object->cs);
     InitializeConditionVariable(&object->lock);
 
