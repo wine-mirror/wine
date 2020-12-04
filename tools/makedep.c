@@ -2388,9 +2388,6 @@ static struct strarray get_shared_lib_names( const char *libname )
         strcpy( second, ext );
         strarray_add( &ret, xstrdup( name ));
     }
-    /* now remove all digits */
-    strcpy( first, ext );
-    strarray_add( &ret, name );
     return ret;
 }
 
