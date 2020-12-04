@@ -230,6 +230,10 @@ _ACRTIMP int           __cdecl system(const char*);
 _ACRTIMP void*         __cdecl bsearch(const void*,const void*,size_t,size_t,int (__cdecl *)(const void*,const void*));
 _ACRTIMP void          __cdecl qsort(void*,size_t,size_t,int (__cdecl *)(const void*,const void*));
 
+typedef void (__cdecl *_purecall_handler)(void);
+_ACRTIMP _purecall_handler __cdecl _set_purecall_handler(_purecall_handler);
+_ACRTIMP _purecall_handler __cdecl _get_purecall_handler(void);
+
 typedef void (__cdecl *_invalid_parameter_handler)(const wchar_t*, const wchar_t*, const wchar_t*, unsigned, uintptr_t);
 _ACRTIMP _invalid_parameter_handler __cdecl _set_invalid_parameter_handler(_invalid_parameter_handler);
 _ACRTIMP _invalid_parameter_handler __cdecl _get_invalid_parameter_handler(void);

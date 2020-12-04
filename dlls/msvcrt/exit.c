@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define LOCK_EXIT   _lock(_EXIT_LOCK1)
 #define UNLOCK_EXIT _unlock(_EXIT_LOCK1)
 
-static MSVCRT_purecall_handler purecall_handler = NULL;
+static _purecall_handler purecall_handler = NULL;
 
 static _onexit_table_t MSVCRT_atexit_table;
 
@@ -461,9 +461,9 @@ void CDECL _register_thread_local_exe_atexit_callback(_tls_callback_type callbac
 /*********************************************************************
  *		_set_purecall_handler (MSVCR71.@)
  */
-MSVCRT_purecall_handler CDECL _set_purecall_handler(MSVCRT_purecall_handler function)
+_purecall_handler CDECL _set_purecall_handler(_purecall_handler function)
 {
-    MSVCRT_purecall_handler ret = purecall_handler;
+    _purecall_handler ret = purecall_handler;
 
     TRACE("(%p)\n", function);
     purecall_handler = function;
@@ -475,7 +475,7 @@ MSVCRT_purecall_handler CDECL _set_purecall_handler(MSVCRT_purecall_handler func
 /*********************************************************************
  *		_get_purecall_handler (MSVCR80.@)
  */
-MSVCRT_purecall_handler CDECL _get_purecall_handler(void)
+_purecall_handler CDECL _get_purecall_handler(void)
 {
     TRACE("\n");
     return purecall_handler;
