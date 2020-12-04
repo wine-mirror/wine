@@ -65,6 +65,7 @@ static int      (__cdecl *p_wcsnicmp)(LPCWSTR,LPCWSTR,int);
 
 static LPWSTR   (__cdecl *pwcschr)(LPCWSTR, WCHAR);
 static LPWSTR   (__cdecl *pwcsrchr)(LPCWSTR, WCHAR);
+static void*    (__cdecl *pmemchr)(const void*, int, size_t);
 
 static void     (__cdecl *pqsort)(void *,size_t,size_t, int(__cdecl *compar)(const void *, const void *) );
 static void*    (__cdecl *pbsearch)(void *,void*,size_t,size_t, int(__cdecl *compar)(const void *, const void *) );
@@ -134,6 +135,7 @@ static void InitFunctionPtrs(void)
     X(_wcsnicmp);
     X(wcschr);
     X(wcsrchr);
+    X(memchr);
     X(qsort);
     X(bsearch);
     X(_snprintf);
@@ -2035,6 +2037,24 @@ static void test_ctype(void)
     }
 }
 
+static void test_memchr(void)
+{
+    const char s[] = "ab";
+    char *r;
+
+    r = pmemchr(s, 'z', 2);
+    ok(!r, "memchr returned %p, expected NULL\n", r);
+
+    r = pmemchr(s, 'a', 2);
+    ok(r == s, "memchr returned %p, expected %p\n", r, s);
+
+    r = pmemchr(s, 0x100 + 'a', 2);
+    ok(r == s, "memchr returned %p, expected %p\n", r, s);
+
+    r = pmemchr(s, -0x100 + 'a', 2);
+    ok(r == s, "memchr returned %p, expected %p\n", r, s);
+}
+
 START_TEST(string)
 {
     InitFunctionPtrs();
@@ -2066,4 +2086,5 @@ START_TEST(string)
     test_sscanf();
     test_wctype();
     test_ctype();
+    test_memchr();
 }

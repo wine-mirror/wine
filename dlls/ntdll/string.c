@@ -72,7 +72,7 @@ void * __cdecl memchr( const void *ptr, int c, size_t n )
 {
     const unsigned char *p = ptr;
 
-    for (p = ptr; n; n--, p++) if (*p == c) return (void *)(ULONG_PTR)p;
+    for (p = ptr; n; n--, p++) if (*p == (unsigned char)c) return (void *)(ULONG_PTR)p;
     return NULL;
 }
 
