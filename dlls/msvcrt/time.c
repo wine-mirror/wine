@@ -666,7 +666,7 @@ clock_t CDECL clock(void)
     LARGE_INTEGER systime;
 
     NtQuerySystemTime(&systime);
-    return (systime.QuadPart - init_time) / (TICKSPERSEC / MSVCRT_CLOCKS_PER_SEC);
+    return (systime.QuadPart - init_time) / (TICKSPERSEC / CLOCKS_PER_SEC);
 }
 
 /*********************************************************************
@@ -1381,7 +1381,7 @@ static size_t strftime_impl(STRFTIME_CHAR *str, size_t max,
 #else
                 if(_mbstowcs_s_l(&tmp, str+ret, max-ret,
                             mstm->tm_isdst ? tzname_dst : tzname_std,
-                            MSVCRT__TRUNCATE, loc) == STRUNCATE)
+                            _TRUNCATE, loc) == STRUNCATE)
                     ret = max;
 #endif
             ret += tmp-1;

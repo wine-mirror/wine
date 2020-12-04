@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <fcntl.h>
 #include <math.h>
 #include "msvcrt.h"
 #include <winnls.h>
@@ -276,7 +277,7 @@ int* CDECL __p__fmode(void) { return &MSVCRT__fmode; }
 int CDECL _set_fmode(int mode)
 {
     /* TODO: support _O_WTEXT */
-    if(!MSVCRT_CHECK_PMT(mode==MSVCRT__O_TEXT || mode==MSVCRT__O_BINARY))
+    if(!MSVCRT_CHECK_PMT(mode==_O_TEXT || mode==_O_BINARY))
         return EINVAL;
 
     MSVCRT__fmode = mode;
@@ -435,7 +436,7 @@ void msvcrt_init_args(void)
   MSVCRT__HUGE = HUGE_VAL;
   MSVCRT___setlc_active = 0;
   MSVCRT___unguarded_readlc_active = 0;
-  MSVCRT__fmode = MSVCRT__O_TEXT;
+  MSVCRT__fmode = _O_TEXT;
 
   MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(NULL);
   MSVCRT___initenv = msvcrt_SnapshotOfEnvironmentA(NULL);

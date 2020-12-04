@@ -1350,7 +1350,7 @@ int CDECL strncat_s( char* dst, size_t elem, const char* src, size_t count )
         {
             for(j = 0; (j + i) < elem; j++)
             {
-                if(count == MSVCRT__TRUNCATE && j + i == elem - 1)
+                if(count == _TRUNCATE && j + i == elem - 1)
                 {
                     dst[j + i] = '\0';
                     return STRUNCATE;
@@ -2656,7 +2656,7 @@ int __cdecl _strnicmp_l(const char *s1, const char *s2,
     int c1, c2;
 
     if(s1==NULL || s2==NULL)
-        return MSVCRT__NLSCMPERROR;
+        return _NLSCMPERROR;
 
     if(!count)
         return 0;
@@ -2766,7 +2766,7 @@ int __cdecl _memicmp_l(const void *v1, const void *v2, size_t len, _locale_t loc
     {
         if (len)
             MSVCRT_INVALID_PMT(NULL, EINVAL);
-        return len ? MSVCRT__NLSCMPERROR : 0;
+        return len ? _NLSCMPERROR : 0;
     }
 #endif
 

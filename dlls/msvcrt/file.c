@@ -27,8 +27,11 @@
  */
 
 #include <direct.h>
+#include <fcntl.h>
 #include <io.h>
+#include <share.h>
 #include <stdarg.h>
+#include <sys/locking.h>
 #include <sys/types.h>
 #include <sys/utime.h>
 #include <time.h>
@@ -66,9 +69,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #undef _wstat64
 
 /* for stat mode, permissions apply to all,owner and group */
-#define ALL_S_IREAD  (MSVCRT__S_IREAD  | (MSVCRT__S_IREAD  >> 3) | (MSVCRT__S_IREAD  >> 6))
-#define ALL_S_IWRITE (MSVCRT__S_IWRITE | (MSVCRT__S_IWRITE >> 3) | (MSVCRT__S_IWRITE >> 6))
-#define ALL_S_IEXEC  (MSVCRT__S_IEXEC  | (MSVCRT__S_IEXEC  >> 3) | (MSVCRT__S_IEXEC  >> 6))
+#define ALL_S_IREAD  (_S_IREAD  | (_S_IREAD  >> 3) | (_S_IREAD  >> 6))
+#define ALL_S_IWRITE (_S_IWRITE | (_S_IWRITE >> 3) | (_S_IWRITE >> 6))
+#define ALL_S_IEXEC  (_S_IEXEC  | (_S_IEXEC  >> 3) | (_S_IEXEC  >> 6))
 
 /* _access() bit flags FIXME: incomplete */
 #define MSVCRT_W_OK      0x02
@@ -894,7 +897,7 @@ int CDECL _chmod(const char *path, int flags)
 
   if (oldFlags != INVALID_FILE_ATTRIBUTES)
   {
-    DWORD newFlags = (flags & MSVCRT__S_IWRITE)? oldFlags & ~FILE_ATTRIBUTE_READONLY:
+    DWORD newFlags = (flags & _S_IWRITE)? oldFlags & ~FILE_ATTRIBUTE_READONLY:
       oldFlags | FILE_ATTRIBUTE_READONLY;
 
     if (newFlags == oldFlags || SetFileAttributesA(path, newFlags))
@@ -913,7 +916,7 @@ int CDECL _wchmod(const wchar_t *path, int flags)
 
   if (oldFlags != INVALID_FILE_ATTRIBUTES)
   {
-    DWORD newFlags = (flags & MSVCRT__S_IWRITE)? oldFlags & ~FILE_ATTRIBUTE_READONLY:
+    DWORD newFlags = (flags & _S_IWRITE)? oldFlags & ~FILE_ATTRIBUTE_READONLY:
       oldFlags | FILE_ATTRIBUTE_READONLY;
 
     if (newFlags == oldFlags || SetFileAttributesW(path, newFlags))
@@ -1127,7 +1130,7 @@ int CDECL _dup2(int od, int nd)
     if (DuplicateHandle(GetCurrentProcess(), info_od->handle,
      GetCurrentProcess(), &handle, 0, TRUE, DUPLICATE_SAME_ACCESS))
     {
-      int wxflag = info_od->wxflag & ~MSVCRT__O_NOINHERIT;
+      int wxflag = info_od->wxflag & ~_O_NOINHERIT;
 
       if (info_nd->wxflag & WX_OPEN)
         _close(nd);
@@ -1370,11 +1373,11 @@ int CDECL _locking(int fd, int mode, __msvcrt_long nbytes)
   }
 
   TRACE(":fd (%d) by 0x%08Ix mode %s\n",
-        fd,nbytes,(mode==MSVCRT__LK_UNLCK)?"_LK_UNLCK":
-        (mode==MSVCRT__LK_LOCK)?"_LK_LOCK":
-        (mode==MSVCRT__LK_NBLCK)?"_LK_NBLCK":
-        (mode==MSVCRT__LK_RLCK)?"_LK_RLCK":
-        (mode==MSVCRT__LK_NBRLCK)?"_LK_NBRLCK":
+        fd,nbytes,(mode==_LK_UNLCK)?"_LK_UNLCK":
+        (mode==_LK_LOCK)?"_LK_LOCK":
+        (mode==_LK_NBLCK)?"_LK_NBLCK":
+        (mode==_LK_RLCK)?"_LK_RLCK":
+        (mode==_LK_NBRLCK)?"_LK_NBRLCK":
                           "UNKNOWN");
 
   if ((cur_locn = SetFilePointer(info->handle, 0L, NULL, FILE_CURRENT)) == INVALID_SET_FILE_POINTER)
@@ -1384,7 +1387,7 @@ int CDECL _locking(int fd, int mode, __msvcrt_long nbytes)
     *_errno() = EINVAL; /* FIXME */
     return -1;
   }
-  if (mode == MSVCRT__LK_LOCK || mode == MSVCRT__LK_RLCK)
+  if (mode == _LK_LOCK || mode == _LK_RLCK)
   {
     int nretry = 10;
     ret = 1; /* just to satisfy gcc */
@@ -1395,7 +1398,7 @@ int CDECL _locking(int fd, int mode, __msvcrt_long nbytes)
       Sleep(1);
     }
   }
-  else if (mode == MSVCRT__LK_UNLCK)
+  else if (mode == _LK_UNLCK)
     ret = UnlockFile(info->handle, cur_locn, 0L, nbytes, 0L);
   else
     ret = LockFile(info->handle, cur_locn, 0L, nbytes, 0L);
@@ -1556,15 +1559,15 @@ static int msvcrt_get_flags(const wchar_t* mode, int *open_flags, int* stream_fl
   switch(*mode++)
   {
   case 'R': case 'r':
-    *open_flags = plus ? MSVCRT__O_RDWR : MSVCRT__O_RDONLY;
+    *open_flags = plus ? _O_RDWR : _O_RDONLY;
     *stream_flags = plus ? _IORW : _IOREAD;
     break;
   case 'W': case 'w':
-    *open_flags = MSVCRT__O_CREAT | MSVCRT__O_TRUNC | (plus  ? MSVCRT__O_RDWR : MSVCRT__O_WRONLY);
+    *open_flags = _O_CREAT | _O_TRUNC | (plus  ? _O_RDWR : _O_WRONLY);
     *stream_flags = plus ? _IORW : _IOWRT;
     break;
   case 'A': case 'a':
-    *open_flags = MSVCRT__O_CREAT | MSVCRT__O_APPEND | (plus  ? MSVCRT__O_RDWR : MSVCRT__O_WRONLY);
+    *open_flags = _O_CREAT | _O_APPEND | (plus  ? _O_RDWR : _O_WRONLY);
     *stream_flags = plus ? _IORW : _IOWRT;
     break;
   default:
@@ -1578,18 +1581,18 @@ static int msvcrt_get_flags(const wchar_t* mode, int *open_flags, int* stream_fl
     switch (*mode++)
     {
     case 'B': case 'b':
-      *open_flags |=  MSVCRT__O_BINARY;
-      *open_flags &= ~MSVCRT__O_TEXT;
+      *open_flags |=  _O_BINARY;
+      *open_flags &= ~_O_TEXT;
       break;
     case 't':
-      *open_flags |=  MSVCRT__O_TEXT;
-      *open_flags &= ~MSVCRT__O_BINARY;
+      *open_flags |=  _O_TEXT;
+      *open_flags &= ~_O_BINARY;
       break;
     case 'D':
-      *open_flags |= MSVCRT__O_TEMPORARY;
+      *open_flags |= _O_TEMPORARY;
       break;
     case 'T':
-      *open_flags |= MSVCRT__O_SHORT_LIVED;
+      *open_flags |= _O_SHORT_LIVED;
       break;
     case 'c':
       *stream_flags |= MSVCRT__IOCOMMIT;
@@ -1598,7 +1601,7 @@ static int msvcrt_get_flags(const wchar_t* mode, int *open_flags, int* stream_fl
       *stream_flags &= ~MSVCRT__IOCOMMIT;
       break;
     case 'N':
-      *open_flags |= MSVCRT__O_NOINHERIT;
+      *open_flags |= _O_NOINHERIT;
       break;
     case '+':
     case ' ':
@@ -1629,17 +1632,17 @@ static int msvcrt_get_flags(const wchar_t* mode, int *open_flags, int* stream_fl
 
     if(!_wcsnicmp(L"utf-8", mode, 5))
     {
-      *open_flags |= MSVCRT__O_U8TEXT;
+      *open_flags |= _O_U8TEXT;
       mode += 5;
     }
     else if(!_wcsnicmp(L"utf-16le", mode, 8))
     {
-      *open_flags |= MSVCRT__O_U16TEXT;
+      *open_flags |= _O_U16TEXT;
       mode += 8;
     }
     else if(!_wcsnicmp(L"unicode", mode, 7))
     {
-      *open_flags |= MSVCRT__O_WTEXT;
+      *open_flags |= _O_WTEXT;
       mode += 7;
     }
     else
@@ -1774,13 +1777,13 @@ int CDECL _fstat64(int fd, struct _stat64* buf)
   if (type == FILE_TYPE_PIPE)
   {
     buf->st_dev = buf->st_rdev = fd;
-    buf->st_mode = MSVCRT__S_IFIFO;
+    buf->st_mode = _S_IFIFO;
     buf->st_nlink = 1;
   }
   else if (type == FILE_TYPE_CHAR)
   {
     buf->st_dev = buf->st_rdev = fd;
-    buf->st_mode = MSVCRT__S_IFCHR;
+    buf->st_mode = _S_IFCHR;
     buf->st_nlink = 1;
   }
   else /* FILE_TYPE_DISK etc. */
@@ -1792,7 +1795,7 @@ int CDECL _fstat64(int fd, struct _stat64* buf)
       release_ioinfo(info);
       return -1;
     }
-    buf->st_mode = MSVCRT__S_IFREG | 0444;
+    buf->st_mode = _S_IFREG | 0444;
     if (!(hfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
       buf->st_mode |= 0222;
     buf->st_size  = ((__int64)hfi.nFileSizeHigh << 32) + hfi.nFileSizeLow;
@@ -2090,28 +2093,23 @@ static unsigned split_oflags(unsigned oflags)
     int wxflags = 0;
     unsigned unsupp; /* until we support everything */
 
-    if (oflags & MSVCRT__O_APPEND)              wxflags |= WX_APPEND;
-    if (oflags & MSVCRT__O_BINARY)              {/* Nothing to do */}
-    else if (oflags & MSVCRT__O_TEXT)           wxflags |= WX_TEXT;
-    else if (oflags & MSVCRT__O_WTEXT)          wxflags |= WX_TEXT;
-    else if (oflags & MSVCRT__O_U16TEXT)        wxflags |= WX_TEXT;
-    else if (oflags & MSVCRT__O_U8TEXT)         wxflags |= WX_TEXT;
+    if (oflags & _O_APPEND)              wxflags |= WX_APPEND;
+    if (oflags & _O_BINARY)              {/* Nothing to do */}
+    else if (oflags & _O_TEXT)           wxflags |= WX_TEXT;
+    else if (oflags & _O_WTEXT)          wxflags |= WX_TEXT;
+    else if (oflags & _O_U16TEXT)        wxflags |= WX_TEXT;
+    else if (oflags & _O_U8TEXT)         wxflags |= WX_TEXT;
     else
     {
         int fmode;
         _get_fmode(&fmode);
-        if (!(fmode & MSVCRT__O_BINARY))        wxflags |= WX_TEXT; /* default to TEXT*/
+        if (!(fmode & _O_BINARY))        wxflags |= WX_TEXT; /* default to TEXT*/
     }
-    if (oflags & MSVCRT__O_NOINHERIT)           wxflags |= WX_DONTINHERIT;
+    if (oflags & _O_NOINHERIT)           wxflags |= WX_DONTINHERIT;
 
-    if ((unsupp = oflags & ~(
-                    MSVCRT__O_BINARY|MSVCRT__O_TEXT|MSVCRT__O_APPEND|
-                    MSVCRT__O_TRUNC|MSVCRT__O_EXCL|MSVCRT__O_CREAT|
-                    MSVCRT__O_RDWR|MSVCRT__O_WRONLY|MSVCRT__O_TEMPORARY|
-                    MSVCRT__O_NOINHERIT|
-                    MSVCRT__O_SEQUENTIAL|MSVCRT__O_RANDOM|MSVCRT__O_SHORT_LIVED|
-                    MSVCRT__O_WTEXT|MSVCRT__O_U16TEXT|MSVCRT__O_U8TEXT
-                    )))
+    if ((unsupp = oflags & ~(_O_BINARY | _O_TEXT | _O_APPEND | _O_TRUNC | _O_EXCL | _O_CREAT |
+                    _O_RDWR | _O_WRONLY | _O_TEMPORARY | _O_NOINHERIT | _O_SEQUENTIAL |
+                    _O_RANDOM | _O_SHORT_LIVED | _O_WTEXT | _O_U16TEXT | _O_U8TEXT)))
         ERR(":unsupported oflags 0x%04x\n",unsupp);
 
     return wxflags;
@@ -2133,7 +2131,7 @@ int CDECL _pipe(int *pfds, unsigned int psize, int textmode)
   }
 
   sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-  sa.bInheritHandle = !(textmode & MSVCRT__O_NOINHERIT);
+  sa.bInheritHandle = !(textmode & _O_NOINHERIT);
   sa.lpSecurityDescriptor = NULL;
   if (CreatePipe(&readHandle, &writeHandle, &sa, psize))
   {
@@ -2179,11 +2177,11 @@ static int check_bom(HANDLE h, int oflags, BOOL seek)
         return oflags;
 
     if (r==sizeof(utf8_bom) && !memcmp(bom, utf8_bom, sizeof(utf8_bom))) {
-        oflags = (oflags & ~(MSVCRT__O_WTEXT | MSVCRT__O_U16TEXT)) | MSVCRT__O_U8TEXT;
+        oflags = (oflags & ~(_O_WTEXT | _O_U16TEXT)) | _O_U8TEXT;
     }else if (r>=sizeof(utf16_bom) && !memcmp(bom, utf16_bom, sizeof(utf16_bom))) {
         if (seek && r>2)
             SetFilePointer(h, 2, NULL, FILE_BEGIN);
-        oflags = (oflags & ~(MSVCRT__O_WTEXT | MSVCRT__O_U8TEXT)) | MSVCRT__O_U16TEXT;
+        oflags = (oflags & ~(_O_WTEXT | _O_U8TEXT)) | _O_U16TEXT;
     }else if (seek) {
         SetFilePointer(h, 0, NULL, FILE_BEGIN);
     }
@@ -2210,28 +2208,28 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
 
   *fd = -1;
   wxflag = split_oflags(oflags);
-  switch (oflags & (MSVCRT__O_RDONLY | MSVCRT__O_WRONLY | MSVCRT__O_RDWR))
+  switch (oflags & (_O_RDONLY | _O_WRONLY | _O_RDWR))
   {
-  case MSVCRT__O_RDONLY: access |= GENERIC_READ; break;
-  case MSVCRT__O_WRONLY: access |= GENERIC_WRITE; break;
-  case MSVCRT__O_RDWR:   access |= GENERIC_WRITE | GENERIC_READ; break;
+  case _O_RDONLY: access |= GENERIC_READ; break;
+  case _O_WRONLY: access |= GENERIC_WRITE; break;
+  case _O_RDWR:   access |= GENERIC_WRITE | GENERIC_READ; break;
   }
 
-  if (oflags & MSVCRT__O_CREAT)
+  if (oflags & _O_CREAT)
   {
-    if (secure && !MSVCRT_CHECK_PMT(!(pmode & ~(MSVCRT__S_IREAD | MSVCRT__S_IWRITE))))
+    if (secure && !MSVCRT_CHECK_PMT(!(pmode & ~(_S_IREAD | _S_IWRITE))))
       return EINVAL;
 
-    if (oflags & MSVCRT__O_EXCL)
+    if (oflags & _O_EXCL)
       creation = CREATE_NEW;
-    else if (oflags & MSVCRT__O_TRUNC)
+    else if (oflags & _O_TRUNC)
       creation = CREATE_ALWAYS;
     else
       creation = OPEN_ALWAYS;
   }
-  else  /* no MSVCRT__O_CREAT */
+  else  /* no _O_CREAT */
   {
-    if (oflags & MSVCRT__O_TRUNC)
+    if (oflags & _O_TRUNC)
       creation = TRUNCATE_EXISTING;
     else
       creation = OPEN_EXISTING;
@@ -2239,16 +2237,16 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
 
   switch( shflags )
   {
-    case MSVCRT__SH_DENYRW:
+    case _SH_DENYRW:
       sharing = 0L;
       break;
-    case MSVCRT__SH_DENYWR:
+    case _SH_DENYWR:
       sharing = FILE_SHARE_READ;
       break;
-    case MSVCRT__SH_DENYRD:
+    case _SH_DENYRD:
       sharing = FILE_SHARE_WRITE;
       break;
-    case MSVCRT__SH_DENYNO:
+    case _SH_DENYNO:
       sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
       break;
     default:
@@ -2256,12 +2254,12 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
       return EINVAL;
   }
 
-  if (!(pmode & ~MSVCRT_umask & MSVCRT__S_IWRITE))
+  if (!(pmode & ~MSVCRT_umask & _S_IWRITE))
       attrib = FILE_ATTRIBUTE_READONLY;
   else
       attrib = FILE_ATTRIBUTE_NORMAL;
 
-  if (oflags & MSVCRT__O_TEMPORARY)
+  if (oflags & _O_TEMPORARY)
   {
       attrib |= FILE_FLAG_DELETE_ON_CLOSE;
       access |= DELETE;
@@ -2270,9 +2268,9 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
 
   sa.nLength              = sizeof( SECURITY_ATTRIBUTES );
   sa.lpSecurityDescriptor = NULL;
-  sa.bInheritHandle       = !(oflags & MSVCRT__O_NOINHERIT);
+  sa.bInheritHandle       = !(oflags & _O_NOINHERIT);
 
-  if ((oflags&(MSVCRT__O_WTEXT|MSVCRT__O_U16TEXT|MSVCRT__O_U8TEXT))
+  if ((oflags & (_O_WTEXT | _O_U16TEXT | _O_U8TEXT))
           && (creation==OPEN_ALWAYS || creation==OPEN_EXISTING)
           && !(access&GENERIC_READ))
   {
@@ -2292,7 +2290,7 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
     return *_errno();
   }
 
-  if (oflags & (MSVCRT__O_WTEXT|MSVCRT__O_U16TEXT|MSVCRT__O_U8TEXT))
+  if (oflags & (_O_WTEXT | _O_U16TEXT | _O_U8TEXT))
   {
       LARGE_INTEGER size = {{0}};
 
@@ -2303,7 +2301,7 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
                   || creation==CREATE_ALWAYS || creation==TRUNCATE_EXISTING
                   || ((creation==OPEN_EXISTING || creation==OPEN_ALWAYS) && !size.QuadPart)))
       {
-          if (oflags & MSVCRT__O_U8TEXT)
+          if (oflags & _O_U8TEXT)
           {
               DWORD written = 0, tmp;
 
@@ -2347,11 +2345,11 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
   if (*fd == -1)
       return *_errno();
 
-  if (oflags & MSVCRT__O_WTEXT)
+  if (oflags & _O_WTEXT)
       get_ioinfo_nolock(*fd)->exflag |= EF_UTF16|EF_UNK_UNICODE;
-  else if (oflags & MSVCRT__O_U16TEXT)
+  else if (oflags & _O_U16TEXT)
       get_ioinfo_nolock(*fd)->exflag |= EF_UTF16;
-  else if (oflags & MSVCRT__O_U8TEXT)
+  else if (oflags & _O_U8TEXT)
       get_ioinfo_nolock(*fd)->exflag |= EF_UTF8;
 
   TRACE(":fd (%d) handle (%p)\n", *fd, hand);
@@ -2375,7 +2373,7 @@ int WINAPIV _wsopen( const wchar_t *path, int oflags, int shflags, ... )
   int pmode;
   int fd;
 
-  if (oflags & MSVCRT__O_CREAT)
+  if (oflags & _O_CREAT)
   {
     __ms_va_list ap;
 
@@ -2426,7 +2424,7 @@ int WINAPIV _sopen( const char *path, int oflags, int shflags, ... )
   int pmode;
   int fd;
 
-  if (oflags & MSVCRT__O_CREAT)
+  if (oflags & _O_CREAT)
   {
     __ms_va_list ap;
 
@@ -2447,16 +2445,16 @@ int WINAPIV _open( const char *path, int flags, ... )
 {
   __ms_va_list ap;
 
-  if (flags & MSVCRT__O_CREAT)
+  if (flags & _O_CREAT)
   {
     int pmode;
     __ms_va_start(ap, flags);
     pmode = va_arg(ap, int);
     __ms_va_end(ap);
-    return _sopen( path, flags, MSVCRT__SH_DENYNO, pmode );
+    return _sopen( path, flags, _SH_DENYNO, pmode );
   }
   else
-    return _sopen( path, flags, MSVCRT__SH_DENYNO);
+    return _sopen( path, flags, _SH_DENYNO);
 }
 
 /*********************************************************************
@@ -2466,16 +2464,16 @@ int WINAPIV _wopen(const wchar_t *path,int flags,...)
 {
   __ms_va_list ap;
 
-  if (flags & MSVCRT__O_CREAT)
+  if (flags & _O_CREAT)
   {
     int pmode;
     __ms_va_start(ap, flags);
     pmode = va_arg(ap, int);
     __ms_va_end(ap);
-    return _wsopen( path, flags, MSVCRT__SH_DENYNO, pmode );
+    return _wsopen( path, flags, _SH_DENYNO, pmode );
   }
   else
-    return _wsopen( path, flags, MSVCRT__SH_DENYNO);
+    return _wsopen( path, flags, _SH_DENYNO);
 }
 
 /*********************************************************************
@@ -2483,7 +2481,7 @@ int WINAPIV _wopen(const wchar_t *path,int flags,...)
  */
 int CDECL _creat(const char *path, int pmode)
 {
-  int flags = MSVCRT__O_CREAT | MSVCRT__O_TRUNC | MSVCRT__O_RDWR;
+  int flags = _O_CREAT | _O_TRUNC | _O_RDWR;
   return _open(path, flags, pmode);
 }
 
@@ -2492,7 +2490,7 @@ int CDECL _creat(const char *path, int pmode)
  */
 int CDECL _wcreat(const wchar_t *path, int pmode)
 {
-  int flags = MSVCRT__O_CREAT | MSVCRT__O_TRUNC | MSVCRT__O_RDWR;
+  int flags = _O_CREAT | _O_TRUNC | _O_RDWR;
   return _wopen(path, flags, pmode);
 }
 
@@ -2504,14 +2502,14 @@ int CDECL _open_osfhandle(intptr_t handle, int oflags)
   DWORD flags;
   int fd;
 
-  /* MSVCRT__O_RDONLY (0) always matches, so set the read flag
+  /* _O_RDONLY (0) always matches, so set the read flag
    * MFC's CStdioFile clears O_RDONLY (0)! if it wants to write to the
-   * file, so set the write flag. It also only sets MSVCRT__O_TEXT if it wants
-   * text - it never sets MSVCRT__O_BINARY.
+   * file, so set the write flag. It also only sets _O_TEXT if it wants
+   * text - it never sets _O_BINARY.
    */
   /* don't let split_oflags() decide the mode if no mode is passed */
-  if (!(oflags & (MSVCRT__O_BINARY | MSVCRT__O_TEXT)))
-      oflags |= MSVCRT__O_BINARY;
+  if (!(oflags & (_O_BINARY | _O_TEXT)))
+      oflags |= _O_BINARY;
 
   flags = GetFileType((HANDLE)handle);
   if (flags==FILE_TYPE_UNKNOWN && GetLastError()!=NO_ERROR)
@@ -2931,12 +2929,12 @@ int CDECL _read(int fd, void *buf, unsigned int count)
 int CDECL _setmode(int fd,int mode)
 {
     ioinfo *info = get_ioinfo(fd);
-    int ret = info->wxflag & WX_TEXT ? MSVCRT__O_TEXT : MSVCRT__O_BINARY;
-    if(ret==MSVCRT__O_TEXT && (info->exflag & (EF_UTF8|EF_UTF16)))
-        ret = MSVCRT__O_WTEXT;
+    int ret = info->wxflag & WX_TEXT ? _O_TEXT : _O_BINARY;
+    if(ret==_O_TEXT && (info->exflag & (EF_UTF8|EF_UTF16)))
+        ret = _O_WTEXT;
 
-    if(mode!=MSVCRT__O_TEXT && mode!=MSVCRT__O_BINARY && mode!=MSVCRT__O_WTEXT
-                && mode!=MSVCRT__O_U16TEXT && mode!=MSVCRT__O_U8TEXT) {
+    if(mode!=_O_TEXT && mode!=_O_BINARY && mode!=_O_WTEXT
+                && mode!=_O_U16TEXT && mode!=_O_U8TEXT) {
         *_errno() = EINVAL;
         release_ioinfo(info);
         return -1;
@@ -2947,7 +2945,7 @@ int CDECL _setmode(int fd,int mode)
         return EOF;
     }
 
-    if(mode == MSVCRT__O_BINARY) {
+    if(mode == _O_BINARY) {
         info->wxflag &= ~WX_TEXT;
         info->exflag &= ~(EF_UTF8|EF_UTF16);
         release_ioinfo(info);
@@ -2955,9 +2953,9 @@ int CDECL _setmode(int fd,int mode)
     }
 
     info->wxflag |= WX_TEXT;
-    if(mode == MSVCRT__O_TEXT)
+    if(mode == _O_TEXT)
         info->exflag &= ~(EF_UTF8|EF_UTF16);
-    else if(mode == MSVCRT__O_U8TEXT)
+    else if(mode == _O_U8TEXT)
         info->exflag = (info->exflag & ~EF_UTF16) | EF_UTF8;
     else
         info->exflag = (info->exflag & ~EF_UTF8) | EF_UTF16;
@@ -3017,10 +3015,10 @@ int CDECL _stat64(const char* path, struct _stat64 * buf)
 
   /* Dir, or regular file? */
   if (hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-    mode |= (MSVCRT__S_IFDIR | ALL_S_IEXEC);
+    mode |= (_S_IFDIR | ALL_S_IEXEC);
   else
   {
-    mode |= MSVCRT__S_IFREG;
+    mode |= _S_IFREG;
     /* executable? */
     if (plen > 6 && path[plen-4] == '.')  /* shortest exe: "\x.exe" */
     {
@@ -3169,10 +3167,10 @@ int CDECL _wstat64(const wchar_t* path, struct _stat64 * buf)
 
   /* Dir, or regular file? */
   if (hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-    mode |= (MSVCRT__S_IFDIR | ALL_S_IEXEC);
+    mode |= (_S_IFDIR | ALL_S_IEXEC);
   else
   {
-    mode |= MSVCRT__S_IFREG;
+    mode |= _S_IFREG;
     /* executable? */
     if (plen > 6 && path[plen-4] == '.')  /* shortest exe: "\x.exe" */
     {
@@ -3346,7 +3344,7 @@ int CDECL _umask(int umask)
  */
 int CDECL _utime64(const char* path, struct __utimbuf64 *t)
 {
-  int fd = _open(path, MSVCRT__O_WRONLY | MSVCRT__O_BINARY);
+  int fd = _open(path, _O_WRONLY | _O_BINARY);
 
   if (fd > 0)
   {
@@ -3378,7 +3376,7 @@ int CDECL _utime32(const char* path, struct __utimbuf32 *t)
  */
 int CDECL _wutime64(const wchar_t* path, struct __utimbuf64 *t)
 {
-  int fd = _wopen(path, MSVCRT__O_WRONLY | MSVCRT__O_BINARY);
+  int fd = _wopen(path, _O_WRONLY | _O_BINARY);
 
   if (fd > 0)
   {
@@ -4105,7 +4103,7 @@ FILE * CDECL _wfsopen(const wchar_t *path, const wchar_t *mode, int share)
       return NULL;
 
   LOCK_FILES();
-  fd = _wsopen(path, open_flags, share, MSVCRT__S_IREAD | MSVCRT__S_IWRITE);
+  fd = _wsopen(path, open_flags, share, _S_IREAD | _S_IWRITE);
   if (fd < 0)
     file = NULL;
   else if ((file = msvcrt_alloc_fp()) && msvcrt_init_fp(file, fd, stream_flags)
@@ -4157,7 +4155,7 @@ FILE * CDECL _fsopen(const char *path, const char *mode, int share)
  */
 FILE * CDECL fopen(const char *path, const char *mode)
 {
-    return _fsopen( path, mode, MSVCRT__SH_DENYNO );
+    return _fsopen( path, mode, _SH_DENYNO );
 }
 
 /*********************************************************************
@@ -4182,7 +4180,7 @@ int CDECL fopen_s(FILE** pFile,
  */
 FILE * CDECL _wfopen(const wchar_t *path, const wchar_t *mode)
 {
-    return _wfsopen( path, mode, MSVCRT__SH_DENYNO );
+    return _wfsopen( path, mode, _SH_DENYNO );
 }
 
 /*********************************************************************
@@ -4437,7 +4435,7 @@ FILE* CDECL _wfreopen(const wchar_t *path, const wchar_t *mode, FILE* file)
         fclose(file);
         if (msvcrt_get_flags(mode, &open_flags, &stream_flags) == -1)
             file = NULL;
-        else if((fd = _wopen(path, open_flags, MSVCRT__S_IREAD | MSVCRT__S_IWRITE)) < 0)
+        else if((fd = _wopen(path, open_flags, _S_IREAD | _S_IWRITE)) < 0)
             file = NULL;
         else if(msvcrt_init_fp(file, fd, stream_flags) == -1)
         {
@@ -5068,8 +5066,8 @@ FILE* CDECL tmpfile(void)
   FILE* file = NULL;
 
   LOCK_FILES();
-  fd = _open(filename, MSVCRT__O_CREAT | MSVCRT__O_BINARY | MSVCRT__O_RDWR | MSVCRT__O_TEMPORARY,
-          MSVCRT__S_IREAD | MSVCRT__S_IWRITE);
+  fd = _open(filename, _O_CREAT | _O_BINARY | _O_RDWR | _O_TEMPORARY,
+          _S_IREAD | _S_IWRITE);
   if (fd != -1 && (file = msvcrt_alloc_fp()))
   {
     if (msvcrt_init_fp(file, fd, _IORW) == -1)

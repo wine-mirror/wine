@@ -966,7 +966,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
     BOOL standard_rounding = options & _CRT_INTERNAL_PRINTF_STANDARD_ROUNDING;
 #else
     BOOL legacy_wide = TRUE, legacy_msvcrt_compat = TRUE;
-    BOOL three_digit_exp = _get_output_format() != MSVCRT__TWO_DIGIT_EXPONENT;
+    BOOL three_digit_exp = _get_output_format() != _TWO_DIGIT_EXPONENT;
     BOOL standard_rounding = FALSE;
 #endif
 

@@ -27,6 +27,7 @@
  * -No check for maximum path/argument/environment size is done
  */
 
+#include <fcntl.h>
 #include <io.h>
 #include <process.h>
 #include <stdarg.h>
@@ -139,7 +140,7 @@ static intptr_t msvcrt_spawn(int flags, const wchar_t* exe, wchar_t* cmdline,
 
   TRACE("%x %s %s %s %d\n", flags, debugstr_w(exe), debugstr_w(cmdline), debugstr_w(env), use_path);
 
-  if ((unsigned)flags > MSVCRT__P_DETACH)
+  if ((unsigned)flags > _P_DETACH)
   {
     *_errno() = EINVAL;
     return -1;
@@ -150,7 +151,7 @@ static intptr_t msvcrt_spawn(int flags, const wchar_t* exe, wchar_t* cmdline,
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(si);
   msvcrt_create_io_inherit_block(&si.cbReserved2, &si.lpReserved2);
-  if (flags == MSVCRT__P_DETACH) create_flags |= DETACHED_PROCESS;
+  if (flags == _P_DETACH) create_flags |= DETACHED_PROCESS;
   if (!CreateProcessW(fullname, cmdline, NULL, NULL, TRUE,
                       create_flags, env, NULL, &si, &pi))
   {
@@ -162,21 +163,21 @@ static intptr_t msvcrt_spawn(int flags, const wchar_t* exe, wchar_t* cmdline,
   free(si.lpReserved2);
   switch(flags)
   {
-  case MSVCRT__P_WAIT:
+  case _P_WAIT:
     WaitForSingleObject(pi.hProcess, INFINITE);
     GetExitCodeProcess(pi.hProcess,&pi.dwProcessId);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
     return pi.dwProcessId;
-  case MSVCRT__P_DETACH:
+  case _P_DETACH:
     CloseHandle(pi.hProcess);
     pi.hProcess = 0;
     /* fall through */
-  case MSVCRT__P_NOWAIT:
-  case MSVCRT__P_NOWAITO:
+  case _P_NOWAIT:
+  case _P_NOWAITO:
     CloseHandle(pi.hThread);
     return (intptr_t)pi.hProcess;
-  case  MSVCRT__P_OVERLAY:
+  case  _P_OVERLAY:
     _exit(0);
   }
   return -1; /* can't reach here */
@@ -398,7 +399,7 @@ intptr_t WINAPIV _wexecl(const wchar_t* name, const wchar_t* arg0, ...)
   args = msvcrt_valisttos(arg0, ap, ' ');
   __ms_va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, NULL, 0);
+  ret = msvcrt_spawn(_P_OVERLAY, name, args, NULL, 0);
 
   free(args);
   return ret;
@@ -422,7 +423,7 @@ intptr_t WINAPIV _execl(const char* name, const char* arg0, ...)
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
   __ms_va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, nameW, args, NULL, 0);
+  ret = msvcrt_spawn(_P_OVERLAY, nameW, args, NULL, 0);
 
   free(nameW);
   free(args);
@@ -451,7 +452,7 @@ intptr_t WINAPIV _wexecle(const wchar_t* name, const wchar_t* arg0, ...)
   if (envp) envs = msvcrt_argvtos(envp, 0);
   __ms_va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, envs, 0);
+  ret = msvcrt_spawn(_P_OVERLAY, name, args, envs, 0);
 
   free(args);
   free(envs);
@@ -480,7 +481,7 @@ intptr_t WINAPIV _execle(const char* name, const char* arg0, ...)
   if (envp) envs = msvcrt_argvtos_aw(envp, 0);
   __ms_va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, nameW, args, envs, 0);
+  ret = msvcrt_spawn(_P_OVERLAY, nameW, args, envs, 0);
 
   free(nameW);
   free(args);
@@ -503,7 +504,7 @@ intptr_t WINAPIV _wexeclp(const wchar_t* name, const wchar_t* arg0, ...)
   args = msvcrt_valisttos(arg0, ap, ' ');
   __ms_va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, NULL, 1);
+  ret = msvcrt_spawn(_P_OVERLAY, name, args, NULL, 1);
 
   free(args);
   return ret;
@@ -527,7 +528,7 @@ intptr_t WINAPIV _execlp(const char* name, const char* arg0, ...)
   args = msvcrt_valisttos_aw(arg0, ap, ' ');
   __ms_va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, nameW, args, NULL, 1);
+  ret = msvcrt_spawn(_P_OVERLAY, nameW, args, NULL, 1);
 
   free(nameW);
   free(args);
@@ -556,7 +557,7 @@ intptr_t WINAPIV _wexeclpe(const wchar_t* name, const wchar_t* arg0, ...)
   if (envp) envs = msvcrt_argvtos(envp, 0);
   __ms_va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, name, args, envs, 1);
+  ret = msvcrt_spawn(_P_OVERLAY, name, args, envs, 1);
 
   free(args);
   free(envs);
@@ -585,7 +586,7 @@ intptr_t WINAPIV _execlpe(const char* name, const char* arg0, ...)
   if (envp) envs = msvcrt_argvtos_aw(envp, 0);
   __ms_va_end(ap);
 
-  ret = msvcrt_spawn(MSVCRT__P_OVERLAY, nameW, args, envs, 1);
+  ret = msvcrt_spawn(_P_OVERLAY, nameW, args, envs, 1);
 
   free(nameW);
   free(args);
@@ -600,7 +601,7 @@ intptr_t WINAPIV _execlpe(const char* name, const char* arg0, ...)
  */
 intptr_t CDECL _wexecv(const wchar_t* name, const wchar_t* const* argv)
 {
-  return _wspawnve(MSVCRT__P_OVERLAY, name, argv, NULL);
+  return _wspawnve(_P_OVERLAY, name, argv, NULL);
 }
 
 /*********************************************************************
@@ -611,7 +612,7 @@ intptr_t CDECL _wexecv(const wchar_t* name, const wchar_t* const* argv)
  */
 intptr_t CDECL _execv(const char* name, const char* const* argv)
 {
-  return _spawnve(MSVCRT__P_OVERLAY, name, argv, NULL);
+  return _spawnve(_P_OVERLAY, name, argv, NULL);
 }
 
 /*********************************************************************
@@ -621,7 +622,7 @@ intptr_t CDECL _execv(const char* name, const char* const* argv)
  */
 intptr_t CDECL _wexecve(const wchar_t* name, const wchar_t* const* argv, const wchar_t* const* envv)
 {
-  return _wspawnve(MSVCRT__P_OVERLAY, name, argv, envv);
+  return _wspawnve(_P_OVERLAY, name, argv, envv);
 }
 
 /*********************************************************************
@@ -632,7 +633,7 @@ intptr_t CDECL _wexecve(const wchar_t* name, const wchar_t* const* argv, const w
  */
 intptr_t CDECL _execve(const char* name, const char* const* argv, const char* const* envv)
 {
-  return _spawnve(MSVCRT__P_OVERLAY, name, argv, envv);
+  return _spawnve(_P_OVERLAY, name, argv, envv);
 }
 
 /*********************************************************************
@@ -642,7 +643,7 @@ intptr_t CDECL _execve(const char* name, const char* const* argv, const char* co
  */
 intptr_t CDECL _wexecvpe(const wchar_t* name, const wchar_t* const* argv, const wchar_t* const* envv)
 {
-  return _wspawnvpe(MSVCRT__P_OVERLAY, name, argv, envv);
+  return _wspawnvpe(_P_OVERLAY, name, argv, envv);
 }
 
 /*********************************************************************
@@ -653,7 +654,7 @@ intptr_t CDECL _wexecvpe(const wchar_t* name, const wchar_t* const* argv, const 
  */
 intptr_t CDECL _execvpe(const char* name, const char* const* argv, const char* const* envv)
 {
-  return _spawnvpe(MSVCRT__P_OVERLAY, name, argv, envv);
+  return _spawnvpe(_P_OVERLAY, name, argv, envv);
 }
 
 /*********************************************************************
@@ -1054,7 +1055,7 @@ FILE* CDECL _wpopen(const wchar_t* command, const wchar_t* mode)
     return NULL;
 
   _get_fmode(&fmode);
-  textmode = fmode & (MSVCRT__O_BINARY | MSVCRT__O_TEXT);
+  textmode = fmode & (_O_BINARY | _O_TEXT);
   for (p = mode; *p; p++)
   {
     switch (*p)
@@ -1065,13 +1066,13 @@ FILE* CDECL _wpopen(const wchar_t* command, const wchar_t* mode)
         break;
       case 'B':
       case 'b':
-        textmode |= MSVCRT__O_BINARY;
-        textmode &= ~MSVCRT__O_TEXT;
+        textmode |= _O_BINARY;
+        textmode &= ~_O_TEXT;
         break;
       case 'T':
       case 't':
-        textmode |= MSVCRT__O_TEXT;
-        textmode &= ~MSVCRT__O_BINARY;
+        textmode |= _O_TEXT;
+        textmode &= ~_O_BINARY;
         break;
     }
   }
@@ -1120,7 +1121,7 @@ FILE* CDECL _wpopen(const wchar_t* command, const wchar_t* mode)
   wcscat(fullcmd, L" /c ");
   wcscat(fullcmd, command);
 
-  if ((container->proc = (HANDLE)msvcrt_spawn(MSVCRT__P_NOWAIT, comspec, fullcmd, NULL, 1))
+  if ((container->proc = (HANDLE)msvcrt_spawn(_P_NOWAIT, comspec, fullcmd, NULL, 1))
           == INVALID_HANDLE_VALUE)
   {
     _close(fds[fdToOpen]);
@@ -1252,7 +1253,7 @@ int CDECL _wsystem(const wchar_t* cmd)
   wcscat(fullcmd, L" /c ");
   wcscat(fullcmd, cmd);
 
-  res = msvcrt_spawn(MSVCRT__P_WAIT, comspec, fullcmd, NULL, 1);
+  res = msvcrt_spawn(_P_WAIT, comspec, fullcmd, NULL, 1);
 
   HeapFree(GetProcessHeap(), 0, comspec);
   HeapFree(GetProcessHeap(), 0, fullcmd);

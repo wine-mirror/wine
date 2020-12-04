@@ -124,7 +124,7 @@ INT CDECL _wcsicmp_l(const wchar_t *str1, const wchar_t *str2, _locale_t locale)
     wchar_t c1, c2;
 
     if(!MSVCRT_CHECK_PMT(str1 != NULL) || !MSVCRT_CHECK_PMT(str2 != NULL))
-        return MSVCRT__NLSCMPERROR;
+        return _NLSCMPERROR;
 
     if(!locale)
         locale = get_current_locale_noalloc(&tmp);
@@ -170,7 +170,7 @@ INT CDECL _wcsnicmp_l(const wchar_t *str1, const wchar_t *str2,
         return 0;
 
     if(!MSVCRT_CHECK_PMT(str1 != NULL) || !MSVCRT_CHECK_PMT(str2 != NULL))
-        return MSVCRT__NLSCMPERROR;
+        return _NLSCMPERROR;
 
     if(!locale)
         locale = get_current_locale_noalloc(&tmp);
@@ -703,7 +703,7 @@ static int wcsrtombs_s_l(size_t *ret, char *mbstr, size_t size,
     if (!MSVCRT_CHECK_PMT(wcstr != NULL)) return EINVAL;
     if (!MSVCRT_CHECK_PMT(*wcstr != NULL)) return EINVAL;
 
-    if(count==MSVCRT__TRUNCATE || size<count)
+    if(count==_TRUNCATE || size<count)
         conv = size;
     else
         conv = count;
@@ -717,9 +717,9 @@ static int wcsrtombs_s_l(size_t *ret, char *mbstr, size_t size,
         err = *_errno();
     }else if(conv < size)
         mbstr[conv++] = '\0';
-    else if(conv==size && (count==MSVCRT__TRUNCATE || mbstr[conv-1]=='\0')) {
+    else if(conv==size && (count==_TRUNCATE || mbstr[conv-1]=='\0')) {
         mbstr[conv-1] = '\0';
-        if(count==MSVCRT__TRUNCATE)
+        if(count==_TRUNCATE)
             err = STRUNCATE;
     }else {
         MSVCRT_INVALID_PMT("mbstr[size] is too small", ERANGE);
@@ -969,7 +969,7 @@ static int CDECL vsnprintf_s_l_opt( char *str, size_t sizeOfBuffer,
     puts_clbk_str_a(&ctx, 1, &nullbyte);
 
     if(ret<0 || ret==len) {
-        if(count!=MSVCRT__TRUNCATE && count>sizeOfBuffer) {
+        if(count!=_TRUNCATE && count>sizeOfBuffer) {
             MSVCRT_INVALID_PMT("str[sizeOfBuffer] is too small", ERANGE);
             memset(str, 0, sizeOfBuffer);
         } else
@@ -999,7 +999,7 @@ static int vsnwprintf_s_l_opt( wchar_t *str, size_t sizeOfBuffer,
     puts_clbk_str_w(&ctx, 1, L"");
 
     if(ret<0 || ret==len) {
-        if(count!=MSVCRT__TRUNCATE && count>sizeOfBuffer) {
+        if(count!=_TRUNCATE && count>sizeOfBuffer) {
             MSVCRT_INVALID_PMT("str[sizeOfBuffer] is too small", ERANGE);
             memset(str, 0, sizeOfBuffer*sizeof(wchar_t));
         } else
@@ -2348,7 +2348,7 @@ INT CDECL wcsncpy_s( wchar_t* wcDest, size_t numElement, const wchar_t *wcSrc,
                             size_t count )
 {
     WCHAR *p = wcDest;
-    BOOL truncate = (count == MSVCRT__TRUNCATE);
+    BOOL truncate = (count == _TRUNCATE);
 
     if(!wcDest && !numElement && !count)
         return 0;
@@ -2447,7 +2447,7 @@ INT CDECL wcsncat_s(wchar_t *dst, size_t elem,
         return EINVAL;
     }
 
-    if (count == MSVCRT__TRUNCATE)
+    if (count == _TRUNCATE)
     {
         srclen = wcslen(src);
         if (srclen >= (elem - dststart))

@@ -59,7 +59,7 @@ int CDECL rand(void)
     /* this is the algorithm used by MSVC, according to
      * http://en.wikipedia.org/wiki/List_of_pseudorandom_number_generators */
     data->random_seed = data->random_seed * 214013 + 2531011;
-    return (data->random_seed >> 16) & MSVCRT_RAND_MAX;
+    return (data->random_seed >> 16) & RAND_MAX;
 }
 
 /*********************************************************************
@@ -406,7 +406,7 @@ unsigned int CDECL _set_output_format(unsigned int new_output_format)
 {
     unsigned int ret = output_format;
 
-    if(!MSVCRT_CHECK_PMT(new_output_format==0 || new_output_format==MSVCRT__TWO_DIGIT_EXPONENT))
+    if(!MSVCRT_CHECK_PMT(new_output_format==0 || new_output_format==_TWO_DIGIT_EXPONENT))
         return ret;
 
     output_format = new_output_format;

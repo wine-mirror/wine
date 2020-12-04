@@ -50,8 +50,8 @@ static CRITICAL_SECTION MSVCRT_onexit_cs = { &MSVCRT_onexit_cs_debug, -1, 0, 0, 
 extern int MSVCRT_app_type;
 extern wchar_t *MSVCRT__wpgmptr;
 
-static unsigned int MSVCRT_abort_behavior =  MSVCRT__WRITE_ABORT_MSG | MSVCRT__CALL_REPORTFAULT;
-static int MSVCRT_error_mode = MSVCRT__OUT_TO_DEFAULT;
+static unsigned int MSVCRT_abort_behavior =  _WRITE_ABORT_MSG | _CALL_REPORTFAULT;
+static int MSVCRT_error_mode = _OUT_TO_DEFAULT;
 
 void (*CDECL _aexit_rtn)(int) = _exit;
 
@@ -230,8 +230,8 @@ void CDECL _amsg_exit(int errnum)
 {
   TRACE("(%d)\n", errnum);
 
-  if ((MSVCRT_error_mode == MSVCRT__OUT_TO_MSGBOX) ||
-     ((MSVCRT_error_mode == MSVCRT__OUT_TO_DEFAULT) && (MSVCRT_app_type == 2)))
+  if ((MSVCRT_error_mode == _OUT_TO_MSGBOX) ||
+     ((MSVCRT_error_mode == _OUT_TO_DEFAULT) && (MSVCRT_app_type == 2)))
   {
     char text[32];
     sprintf(text, "Error: R60%d",errnum);
@@ -249,10 +249,10 @@ void CDECL abort(void)
 {
   TRACE("()\n");
 
-  if (MSVCRT_abort_behavior & MSVCRT__WRITE_ABORT_MSG)
+  if (MSVCRT_abort_behavior & _WRITE_ABORT_MSG)
   {
-    if ((MSVCRT_error_mode == MSVCRT__OUT_TO_MSGBOX) ||
-       ((MSVCRT_error_mode == MSVCRT__OUT_TO_DEFAULT) && (MSVCRT_app_type == 2)))
+    if ((MSVCRT_error_mode == _OUT_TO_MSGBOX) ||
+       ((MSVCRT_error_mode == _OUT_TO_DEFAULT) && (MSVCRT_app_type == 2)))
     {
       DoMessageBox("Runtime error!", "abnormal program termination");
     }
@@ -273,7 +273,7 @@ unsigned int CDECL _set_abort_behavior(unsigned int flags, unsigned int mask)
   unsigned int old = MSVCRT_abort_behavior;
 
   TRACE("%x, %x\n", flags, mask);
-  if (mask & MSVCRT__CALL_REPORTFAULT)
+  if (mask & _CALL_REPORTFAULT)
     FIXME("_WRITE_CALL_REPORTFAULT unhandled\n");
 
   MSVCRT_abort_behavior = (MSVCRT_abort_behavior & ~mask) | (flags & mask);
@@ -288,8 +288,8 @@ void CDECL _wassert(const wchar_t* str, const wchar_t* file, unsigned int line)
 {
   TRACE("(%s,%s,%d)\n", debugstr_w(str), debugstr_w(file), line);
 
-  if ((MSVCRT_error_mode == MSVCRT__OUT_TO_MSGBOX) ||
-     ((MSVCRT_error_mode == MSVCRT__OUT_TO_DEFAULT) && (MSVCRT_app_type == 2)))
+  if ((MSVCRT_error_mode == _OUT_TO_MSGBOX) ||
+     ((MSVCRT_error_mode == _OUT_TO_DEFAULT) && (MSVCRT_app_type == 2)))
   {
     wchar_t text[2048];
     _snwprintf(text, sizeof(text), L"File: %ls\nLine: %d\n\nExpression: \"%ls\"", file, line, str);
@@ -510,7 +510,7 @@ int CDECL _set_error_mode(int mode)
 {
 
   const int old = MSVCRT_error_mode;
-  if ( MSVCRT__REPORT_ERRMODE != mode ) {
+  if ( _REPORT_ERRMODE != mode ) {
     MSVCRT_error_mode = mode;
   }
   return old;

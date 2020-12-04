@@ -2597,7 +2597,7 @@ int CDECL _mbstowcs_s_l(size_t *ret, wchar_t *wcstr,
         return EINVAL;
     }
 
-    if(count==MSVCRT__TRUNCATE || size<count)
+    if(count==_TRUNCATE || size<count)
         conv = size;
     else
         conv = count;
@@ -2605,7 +2605,7 @@ int CDECL _mbstowcs_s_l(size_t *ret, wchar_t *wcstr,
     conv = _mbstowcs_l(wcstr, mbstr, conv, locale);
     if(conv<size)
         wcstr[conv++] = '\0';
-    else if(conv==size && count==MSVCRT__TRUNCATE && wcstr[conv-1]!='\0') {
+    else if(conv==size && count==_TRUNCATE && wcstr[conv-1]!='\0') {
         wcstr[conv-1] = '\0';
         err = STRUNCATE;
     }else if(conv==size && wcstr[conv-1]!='\0') {
