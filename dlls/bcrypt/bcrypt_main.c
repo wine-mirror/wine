@@ -1160,8 +1160,8 @@ static NTSTATUS key_encrypt( struct key *key,  UCHAR *input, ULONG input_len, vo
     return status;
 }
 
-static NTSTATUS key_decrypt( struct key *key, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
-                             ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
+static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
+                                       ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
 {
     ULONG bytes_left = input_len;
     UCHAR *buf, *src, *dst;
@@ -1238,6 +1238,24 @@ static NTSTATUS key_decrypt( struct key *key, UCHAR *input, ULONG input_len, voi
     }
 
     return status;
+}
+
+static NTSTATUS key_asymmetric_decrypt( struct key *key, UCHAR *input, ULONG input_len, UCHAR *output,
+        ULONG output_len, ULONG *ret_len )
+{
+    NTSTATUS status;
+
+    if (!(status = key_funcs->key_asymmetric_decrypt( key, input, input_len, output, &output_len )))
+        *ret_len = output_len;
+
+    return status;
+}
+
+static NTSTATUS key_decrypt( struct key *key, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
+                             ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
+{
+    return key_is_symmetric( key ) ? key_symmetric_decrypt( key, input, input_len, padding, iv, iv_len,
+            output, output_len, ret_len, flags ) : key_asymmetric_decrypt( key, input, input_len, output, output_len, ret_len );
 }
 
 static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYPT_KEY_HANDLE *ret_key, UCHAR *input,

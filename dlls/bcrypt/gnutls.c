@@ -109,6 +109,7 @@ static int (*pgnutls_privkey_generate)(gnutls_privkey_t, gnutls_pk_algorithm_t, 
 static int (*pgnutls_privkey_import_rsa_raw)(gnutls_privkey_t, const gnutls_datum_t *, const gnutls_datum_t *,
                                              const gnutls_datum_t *, const gnutls_datum_t *, const gnutls_datum_t *,
                                              const gnutls_datum_t *, const gnutls_datum_t *, const gnutls_datum_t *);
+static int (*pgnutls_privkey_decrypt_data)(gnutls_privkey_t, unsigned int flags, const gnutls_datum_t *, gnutls_datum_t *);
 
 /* Not present in gnutls version < 3.6.0 */
 static int (*pgnutls_decode_rs_value)(const gnutls_datum_t *, gnutls_datum_t *, gnutls_datum_t *);
@@ -124,6 +125,7 @@ MAKE_FUNCPTR(gnutls_global_init);
 MAKE_FUNCPTR(gnutls_global_set_log_function);
 MAKE_FUNCPTR(gnutls_global_set_log_level);
 MAKE_FUNCPTR(gnutls_perror);
+MAKE_FUNCPTR(gnutls_privkey_decrypt_data);
 MAKE_FUNCPTR(gnutls_privkey_deinit);
 MAKE_FUNCPTR(gnutls_privkey_import_dsa_raw);
 MAKE_FUNCPTR(gnutls_privkey_init);
@@ -211,6 +213,12 @@ static int compat_gnutls_decode_rs_value(const gnutls_datum_t * sig_value, gnutl
 static int compat_gnutls_privkey_import_rsa_raw(gnutls_privkey_t key, const gnutls_datum_t *m, const gnutls_datum_t *e,
                                                 const gnutls_datum_t *d, const gnutls_datum_t *p, const gnutls_datum_t *q,
                                                 const gnutls_datum_t *u, const gnutls_datum_t *e1, const gnutls_datum_t *e2)
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
+static int compat_gnutls_privkey_decrypt_data(gnutls_privkey_t key, unsigned int flags, const gnutls_datum_t *cipher_text,
+                                              gnutls_datum_t *plain_text)
 {
     return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
 }
@@ -340,6 +348,11 @@ static BOOL gnutls_initialize(void)
     {
         WARN("gnutls_privkey_import_rsa_raw not found\n");
         pgnutls_privkey_import_rsa_raw = compat_gnutls_privkey_import_rsa_raw;
+    }
+    if (!(pgnutls_privkey_decrypt_data = dlsym( libgnutls_handle, "gnutls_privkey_decrypt_data" )))
+    {
+        WARN("gnutls_privkey_decrypt_data not found\n");
+        pgnutls_privkey_decrypt_data = compat_gnutls_privkey_decrypt_data;
     }
 
     if (TRACE_ON( bcrypt ))
@@ -1883,6 +1896,35 @@ static NTSTATUS CDECL key_asymmetric_duplicate( struct key *key_orig, struct key
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS CDECL key_asymmetric_decrypt( struct key *key, UCHAR *input, ULONG input_len,
+        UCHAR *output, ULONG *output_len )
+{
+    gnutls_datum_t e, d = { 0 };
+    NTSTATUS status = STATUS_SUCCESS;
+    int ret;
+
+    e.data = (unsigned char *)input;
+    e.size = input_len;
+
+    if ((ret = pgnutls_privkey_decrypt_data( key_data(key)->privkey, 0, &e, &d )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (*output_len >= d.size)
+    {
+        *output_len = d.size;
+        memcpy( output, d.data, *output_len );
+    }
+    else
+        status = STATUS_BUFFER_TOO_SMALL;
+
+    free( d.data );
+
+    return status;
+}
+
 static const struct key_funcs key_funcs =
 {
     key_set_property,
@@ -1895,6 +1937,7 @@ static const struct key_funcs key_funcs =
     key_symmetric_destroy,
     key_asymmetric_init,
     key_asymmetric_generate,
+    key_asymmetric_decrypt,
     key_asymmetric_duplicate,
     key_asymmetric_sign,
     key_asymmetric_verify,
