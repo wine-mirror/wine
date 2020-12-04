@@ -2823,6 +2823,7 @@ bool wined3d_context_gl_create_bo(struct wined3d_context_gl *context_gl, GLsizei
     bo->id = id;
     bo->binding = binding;
     bo->usage = usage;
+    list_init(&bo->users);
     bo->command_fence_id = 0;
 
     return true;
@@ -3718,6 +3719,8 @@ static void context_gl_load_shader_resources(struct wined3d_context_gl *context_
             buffer_gl = wined3d_buffer_gl(state->cb[i][j]);
             wined3d_buffer_load(&buffer_gl->b, &context_gl->c, state);
             wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
+            if (!buffer_gl->bo_user.valid)
+                device_invalidate_state(context_gl->c.device, STATE_CONSTANT_BUFFER(i));
         }
 
         for (j = 0; j < shader->reg_maps.sampler_map.count; ++j)
@@ -3793,6 +3796,8 @@ static void context_gl_load_stream_output_buffers(struct wined3d_context_gl *con
         wined3d_buffer_load(&buffer_gl->b, &context_gl->c, state);
         wined3d_buffer_invalidate_location(&buffer_gl->b, ~WINED3D_LOCATION_BUFFER);
         wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
+        if (!buffer_gl->bo_user.valid)
+            device_invalidate_state(context_gl->c.device, STATE_STREAM_OUTPUT);
     }
 }
 
@@ -3848,7 +3853,10 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
         e = &context->stream_info.elements[wined3d_bit_scan(&map)];
         buffer_gl = wined3d_buffer_gl(state->streams[e->stream_idx].buffer);
 
-        wined3d_buffer_load(&buffer_gl->b, context, state);
+        if (!buffer_gl->bo_user.valid)
+            device_invalidate_state(device, STATE_STREAMSRC);
+        else
+            wined3d_buffer_load(&buffer_gl->b, context, state);
         wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
     }
     /* Loading the buffers above may have invalidated the stream info. */
@@ -3862,6 +3870,8 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
         if (context->stream_info.all_vbo)
         {
             wined3d_buffer_load(&buffer_gl->b, context, state);
+            if (!buffer_gl->bo_user.valid)
+                device_invalidate_state(device, STATE_INDEXBUFFER);
             wined3d_context_gl_reference_bo(context_gl, &buffer_gl->bo);
         }
         else
@@ -4989,6 +4999,7 @@ void wined3d_context_gl_load_tex_coords(const struct wined3d_context_gl *context
             gl_info->gl_ops.gl.p_glTexCoordPointer(format_gl->vtx_format, format_gl->vtx_type, e->stride,
                     e->data.addr + state->load_base_vertex_index * e->stride);
             gl_info->gl_ops.gl.p_glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            wined3d_buffer_gl(state->streams[e->stream_idx].buffer)->bo_user.valid = true;
         }
         else
         {
@@ -5077,6 +5088,7 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
         checkGLcall("glVertexPointer(...)");
         gl_info->gl_ops.gl.p_glEnableClientState(GL_VERTEX_ARRAY);
         checkGLcall("glEnableClientState(GL_VERTEX_ARRAY)");
+        wined3d_buffer_gl(state->streams[e->stream_idx].buffer)->bo_user.valid = true;
     }
 
     /* Normals */
@@ -5100,7 +5112,7 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
         checkGLcall("glNormalPointer(...)");
         gl_info->gl_ops.gl.p_glEnableClientState(GL_NORMAL_ARRAY);
         checkGLcall("glEnableClientState(GL_NORMAL_ARRAY)");
-
+        wined3d_buffer_gl(state->streams[e->stream_idx].buffer)->bo_user.valid = true;
     }
     else
     {
@@ -5130,7 +5142,7 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
         checkGLcall("glColorPointer(4, GL_UNSIGNED_BYTE, ...)");
         gl_info->gl_ops.gl.p_glEnableClientState(GL_COLOR_ARRAY);
         checkGLcall("glEnableClientState(GL_COLOR_ARRAY)");
-
+        wined3d_buffer_gl(state->streams[e->stream_idx].buffer)->bo_user.valid = true;
     }
     else
     {
@@ -5199,6 +5211,7 @@ static void wined3d_context_gl_load_vertex_data(struct wined3d_context_gl *conte
             }
             gl_info->gl_ops.gl.p_glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
             checkGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
+            wined3d_buffer_gl(state->streams[e->stream_idx].buffer)->bo_user.valid = true;
         }
         else
         {
@@ -5292,6 +5305,7 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
 
         format_gl = wined3d_format_gl(element->format);
         stream = &state->streams[element->stream_idx];
+        wined3d_buffer_gl(stream->buffer)->bo_user.valid = true;
 
         if ((stream->flags & WINED3DSTREAMSOURCE_INSTANCEDATA) && !context->instance_count)
             context->instance_count = state->streams[0].frequency;

@@ -1575,6 +1575,7 @@ struct wined3d_bo_gl
     GLenum binding;
     GLenum usage;
 
+    struct list users;
     uint64_t command_fence_id;
 };
 
@@ -1583,7 +1584,7 @@ static inline GLuint wined3d_bo_gl_id(uintptr_t bo)
     return bo ? ((struct wined3d_bo_gl *)bo)->id : 0;
 }
 
-struct wined3d_bo_user_vk
+struct wined3d_bo_user
 {
     struct list entry;
     bool valid;
@@ -4875,6 +4876,7 @@ struct wined3d_buffer_gl
     struct wined3d_buffer b;
 
     struct wined3d_bo_gl bo;
+    struct wined3d_bo_user bo_user;
 };
 
 static inline struct wined3d_buffer_gl *wined3d_buffer_gl(struct wined3d_buffer *buffer)
@@ -4898,7 +4900,7 @@ struct wined3d_buffer_vk
     struct wined3d_buffer b;
 
     struct wined3d_bo_vk bo;
-    struct wined3d_bo_user_vk bo_user;
+    struct wined3d_bo_user bo_user;
     VkDescriptorBufferInfo buffer_info;
 };
 
@@ -5029,7 +5031,7 @@ HRESULT wined3d_shader_resource_view_gl_init(struct wined3d_shader_resource_view
 
 struct wined3d_view_vk
 {
-    struct wined3d_bo_user_vk bo_user;
+    struct wined3d_bo_user bo_user;
     union
     {
         VkBufferView vk_buffer_view;

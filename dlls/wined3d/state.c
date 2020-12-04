@@ -4452,12 +4452,17 @@ static void indexbuffer(struct wined3d_context *context, const struct wined3d_st
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
     const struct wined3d_stream_info *stream_info = &context->stream_info;
-    const struct wined3d_buffer *ib = state->index_buffer;
+    struct wined3d_buffer_gl *buffer_gl;
 
-    if (!ib || !stream_info->all_vbo)
+    if (!state->index_buffer || !stream_info->all_vbo)
+    {
         GL_EXTCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
-    else
-        GL_EXTCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, wined3d_buffer_gl_const(ib)->bo.id));
+        return;
+    }
+
+    buffer_gl = wined3d_buffer_gl(state->index_buffer);
+    GL_EXTCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer_gl->bo.id));
+    buffer_gl->bo_user.valid = true;
 }
 
 static void depth_clip(const struct wined3d_rasterizer_state *r, const struct wined3d_gl_info *gl_info)
@@ -4550,7 +4555,7 @@ static void state_cb(struct wined3d_context *context, const struct wined3d_state
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
     enum wined3d_shader_type shader_type;
-    struct wined3d_buffer *buffer;
+    struct wined3d_buffer_gl *buffer_gl;
     unsigned int i, base, count;
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
@@ -4563,8 +4568,15 @@ static void state_cb(struct wined3d_context *context, const struct wined3d_state
     wined3d_gl_limits_get_uniform_block_range(&gl_info->limits, shader_type, &base, &count);
     for (i = 0; i < count; ++i)
     {
-        buffer = state->cb[shader_type][i];
-        GL_EXTCALL(glBindBufferBase(GL_UNIFORM_BUFFER, base + i, buffer ? wined3d_buffer_gl(buffer)->bo.id : 0));
+        if (!state->cb[shader_type][i])
+        {
+            GL_EXTCALL(glBindBufferBase(GL_UNIFORM_BUFFER, base + i, 0));
+            continue;
+        }
+
+        buffer_gl = wined3d_buffer_gl(state->cb[shader_type][i]);
+        GL_EXTCALL(glBindBufferBase(GL_UNIFORM_BUFFER, base + i, buffer_gl->bo.id));
+        buffer_gl->bo_user.valid = true;
     }
     checkGLcall("bind constant buffers");
 }
@@ -4614,7 +4626,7 @@ static void state_so(struct wined3d_context *context, const struct wined3d_state
 {
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_buffer *buffer;
+    struct wined3d_buffer_gl *buffer_gl;
     unsigned int offset, size, i;
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
@@ -4623,20 +4635,22 @@ static void state_so(struct wined3d_context *context, const struct wined3d_state
 
     for (i = 0; i < ARRAY_SIZE(state->stream_output); ++i)
     {
-        if (!(buffer = state->stream_output[i].buffer))
+        if (!state->stream_output[i].buffer)
         {
             GL_EXTCALL(glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, i, 0));
             continue;
         }
 
+        buffer_gl = wined3d_buffer_gl(state->stream_output[i].buffer);
         offset = state->stream_output[i].offset;
         if (offset == ~0u)
         {
             FIXME("Appending to stream output buffers not implemented.\n");
             offset = 0;
         }
-        size = buffer->resource.size - offset;
-        GL_EXTCALL(glBindBufferRange(GL_TRANSFORM_FEEDBACK_BUFFER, i, wined3d_buffer_gl(buffer)->bo.id, offset, size));
+        size = buffer_gl->b.resource.size - offset;
+        GL_EXTCALL(glBindBufferRange(GL_TRANSFORM_FEEDBACK_BUFFER, i, buffer_gl->bo.id, offset, size));
+        buffer_gl->bo_user.valid = true;
     }
     checkGLcall("bind transform feedback buffers");
 }

@@ -143,47 +143,22 @@ static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *bu
         struct wined3d_context_gl *context_gl)
 {
     struct wined3d_resource *resource = &buffer_gl->b.resource;
-    struct wined3d_buffer *buffer = &buffer_gl->b;
-    struct wined3d_cs *cs = resource->device->cs;
 
     if (!buffer_gl->b.buffer_object)
         return;
 
-    /* The stream source state handler might have read the memory of the
-     * vertex buffer already and got the memory in the vbo which is not
-     * valid any longer. Dirtify the stream source to force a reload. This
-     * happens only once per changed vertexbuffer and should occur rather
-     * rarely. */
-    if (resource->bind_count)
+    if (context_gl->c.transform_feedback_active && resource->bind_count
+            && resource->bind_flags & WINED3D_BIND_STREAM_OUTPUT)
     {
-        if (resource->bind_flags & WINED3D_BIND_VERTEX_BUFFER)
-            device_invalidate_state(resource->device, STATE_STREAMSRC);
-        if (resource->bind_flags & WINED3D_BIND_INDEX_BUFFER
-                && cs->state.index_buffer == buffer)
-            device_invalidate_state(resource->device, STATE_INDEXBUFFER);
-        if (resource->bind_flags & WINED3D_BIND_CONSTANT_BUFFER)
-        {
-            device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX));
-            device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_HULL));
-            device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_DOMAIN));
-            device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY));
-            device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL));
-            device_invalidate_state(resource->device, STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COMPUTE));
-        }
-        if (resource->bind_flags & WINED3D_BIND_STREAM_OUTPUT)
-        {
-            device_invalidate_state(resource->device, STATE_STREAM_OUTPUT);
-            if (context_gl->c.transform_feedback_active)
-            {
-                /* We have to make sure that transform feedback is not active
-                 * when deleting a potentially bound transform feedback buffer.
-                 * This may happen when the device is being destroyed. */
-                WARN("Deleting buffer object for buffer %p, disabling transform feedback.\n", buffer_gl);
-                wined3d_context_gl_end_transform_feedback(context_gl);
-            }
-        }
+        /* We have to make sure that transform feedback is not active
+         * when deleting a potentially bound transform feedback buffer.
+         * This may happen when the device is being destroyed. */
+        WARN("Deleting buffer object for buffer %p, disabling transform feedback.\n", buffer_gl);
+        wined3d_context_gl_end_transform_feedback(context_gl);
     }
 
+    buffer_gl->bo_user.valid = false;
+    list_remove(&buffer_gl->bo_user.entry);
     wined3d_context_gl_destroy_bo(context_gl, &buffer_gl->bo);
     buffer_gl->b.buffer_object = 0;
 
@@ -225,6 +200,8 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
     if (!coherent && gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
         buffer_gl->b.flags |= WINED3D_BUFFER_APPLESYNC;
 
+    list_init(&buffer_gl->bo_user.entry);
+    list_add_head(&buffer_gl->bo.users, &buffer_gl->bo_user.entry);
     buffer_gl->b.buffer_object = (uintptr_t)bo;
     buffer_invalidate_bo_range(&buffer_gl->b, 0, 0);
 
