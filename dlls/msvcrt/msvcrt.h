@@ -283,8 +283,6 @@ extern unsigned msvcrt_create_io_inherit_block(WORD*, BYTE**) DECLSPEC_HIDDEN;
 
 extern FILE MSVCRT__iob[];
 
-typedef struct _complex _Dcomplex;
-
 #ifdef __i386__
 struct MSVCRT___JUMP_BUFFER {
     unsigned long Ebp;

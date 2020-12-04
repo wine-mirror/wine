@@ -443,6 +443,7 @@ SOURCES = \
 	mstask.idl \
 	mstcpip.h \
 	msvcrt/assert.h \
+	msvcrt/complex.h \
 	msvcrt/conio.h \
 	msvcrt/corecrt.h \
 	msvcrt/corecrt_startup.h \

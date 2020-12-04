@@ -35,6 +35,7 @@
  * ====================================================
  */
 
+#include <complex.h>
 #include <stdio.h>
 #include <fenv.h>
 #include <fpieee.h>
@@ -4177,14 +4178,14 @@ double CDECL _except1(DWORD fpe, _FP_OPERATION_CODE op, double arg, double res, 
 
 _Dcomplex* CDECL _Cbuild(_Dcomplex *ret, double r, double i)
 {
-    ret->x = r;
-    ret->y = i;
+    ret->_Val[0] = r;
+    ret->_Val[1] = i;
     return ret;
 }
 
 double CDECL MSVCR120_creal(_Dcomplex z)
 {
-    return z.x;
+    return z._Val[0];
 }
 
 /*********************************************************************
