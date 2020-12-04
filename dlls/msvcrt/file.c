@@ -3003,7 +3003,7 @@ int CDECL _stat64(const char* path, struct _stat64 * buf)
       return -1;
   }
 
-  memset(buf,0,sizeof(struct MSVCRT__stat64));
+  memset(buf,0,sizeof(struct _stat64));
 
   /* FIXME: rdev isn't drive num, despite what the docs say-what is it?
      Bon 011120: This FIXME seems incorrect
@@ -3159,7 +3159,7 @@ int CDECL _wstat64(const wchar_t* path, struct _stat64 * buf)
       return -1;
   }
 
-  memset(buf,0,sizeof(struct MSVCRT__stat64));
+  memset(buf,0,sizeof(struct _stat64));
 
   /* FIXME: rdev isn't drive num, despite what the docs says-what is it? */
   if (iswalpha(*path) && path[1] == ':')
