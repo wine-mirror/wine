@@ -311,8 +311,8 @@ static BOOL check_live_target(struct process* pcs)
     {
         PEB peb;
         if (!ReadProcessMemory(pcs->handle, pbi.PebBaseAddress, &peb, sizeof(peb), NULL)) return FALSE;
-        if (!ReadProcessMemory(pcs->handle, &peb.CloudFileFlags, &base, sizeof(base), NULL)) return FALSE;
-        ReadProcessMemory(pcs->handle, &peb.ProcessParameters->Environment, &env, sizeof(env), NULL);
+        if (!ReadProcessMemory(pcs->handle, (char *)pbi.PebBaseAddress + FIELD_OFFSET(PEB, CloudFileFlags), &base, sizeof(base), NULL)) return FALSE;
+        ReadProcessMemory(pcs->handle, (char *)peb.ProcessParameters + FIELD_OFFSET(RTL_USER_PROCESS_PARAMETERS, Environment), &env, sizeof(env), NULL);
     }
 
     /* read debuggee environment block */
