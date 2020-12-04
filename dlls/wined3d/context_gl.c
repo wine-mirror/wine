@@ -2743,6 +2743,15 @@ void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl,
                     (UINT_PTR)data->addr + ranges[i].offset, ranges[i].size));
         }
     }
+    else if (!bo->coherent && gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
+    {
+        for (i = 0; i < range_count; ++i)
+        {
+            GL_EXTCALL(glFlushMappedBufferRangeAPPLE(bo->binding,
+                    (uintptr_t)data->addr + ranges[i].offset, ranges[i].size));
+            checkGLcall("glFlushMappedBufferRangeAPPLE");
+        }
+    }
 
     GL_EXTCALL(glUnmapBuffer(bo->binding));
     wined3d_context_gl_bind_bo(context_gl, bo->binding, 0);

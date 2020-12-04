@@ -32,7 +32,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define WINED3D_BUFFER_HASDESC      0x01    /* A vertex description has been found. */
 #define WINED3D_BUFFER_USE_BO       0x02    /* Use a buffer object for this buffer. */
 #define WINED3D_BUFFER_PIN_SYSMEM   0x04    /* Keep a system memory copy for this buffer. */
-#define WINED3D_BUFFER_APPLESYNC    0x10    /* Using sync as in GL_APPLE_flush_buffer_range. */
 
 #define VB_MAXDECLCHANGES     100     /* After that number of decl changes we stop converting */
 #define VB_RESETDECLCHANGE    1000    /* Reset the decl changecount after that number of draws */
@@ -160,8 +159,6 @@ static void wined3d_buffer_gl_destroy_buffer_object(struct wined3d_buffer_gl *bu
     list_remove(&buffer_gl->bo_user.entry);
     wined3d_context_gl_destroy_bo(context_gl, &buffer_gl->bo);
     buffer_gl->b.buffer_object = 0;
-
-    buffer_gl->b.flags &= ~WINED3D_BUFFER_APPLESYNC;
 }
 
 /* Context activation is done by the caller. */
@@ -195,9 +192,6 @@ static BOOL wined3d_buffer_gl_create_buffer_object(struct wined3d_buffer_gl *buf
         buffer_clear_dirty_areas(&buffer_gl->b);
         return FALSE;
     }
-
-    if (!coherent && gl_info->supported[APPLE_FLUSH_BUFFER_RANGE])
-        buffer_gl->b.flags |= WINED3D_BUFFER_APPLESYNC;
 
     list_init(&buffer_gl->bo_user.entry);
     list_add_head(&buffer_gl->bo.users, &buffer_gl->bo_user.entry);
@@ -987,27 +981,6 @@ static HRESULT buffer_resource_sub_resource_unmap(struct wined3d_resource *resou
         return WINED3D_OK;
 
     context = context_acquire(device, NULL, 0);
-
-    if (buffer->flags & WINED3D_BUFFER_APPLESYNC)
-    {
-        struct wined3d_context_gl *context_gl;
-        const struct wined3d_gl_info *gl_info;
-        struct wined3d_buffer_gl *buffer_gl;
-        unsigned int i;
-
-        buffer_gl = wined3d_buffer_gl(buffer);
-        context_gl = wined3d_context_gl(context);
-        gl_info = context_gl->gl_info;
-
-        wined3d_buffer_gl_bind(buffer_gl, context_gl);
-        for (i = 0; i < range_count; ++i)
-        {
-            GL_EXTCALL(glFlushMappedBufferRangeAPPLE(buffer_gl->bo.binding,
-                    buffer->maps[i].offset, buffer->maps[i].size));
-            checkGLcall("glFlushMappedBufferRangeAPPLE");
-        }
-        range_count = 0;
-    }
 
     addr.buffer_object = buffer->buffer_object;
     addr.addr = 0;
