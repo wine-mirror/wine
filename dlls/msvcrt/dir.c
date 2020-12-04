@@ -21,6 +21,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <corecrt_io.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <direct.h>
@@ -44,8 +45,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #undef _wfindnext64i32
 #undef _wfindnext64
 
+#undef _findfirst
+#undef _findfirsti64
+#undef _findnext
+#undef _findnexti64
+#undef _findfirst32
+#undef _findnext32
+#undef _findfirst64i32
+#undef _findfirst64
+#undef _findnext64i32
+#undef _findnext64
+
 /* INTERNAL: Translate WIN32_FIND_DATAA to finddata_t  */
-static void msvcrt_fttofd( const WIN32_FIND_DATAA *fd, struct MSVCRT__finddata_t* ft)
+static void msvcrt_fttofd( const WIN32_FIND_DATAA *fd, struct _finddata_t* ft)
 {
   DWORD dw;
 
@@ -65,7 +77,7 @@ static void msvcrt_fttofd( const WIN32_FIND_DATAA *fd, struct MSVCRT__finddata_t
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAA to finddata32_t  */
-static void msvcrt_fttofd32( const WIN32_FIND_DATAA *fd, struct MSVCRT__finddata32_t* ft)
+static void msvcrt_fttofd32( const WIN32_FIND_DATAA *fd, struct _finddata32_t* ft)
 {
   DWORD dw;
 
@@ -125,7 +137,7 @@ static void msvcrt_wfttofd32(const WIN32_FIND_DATAW *fd, struct _wfinddata32_t* 
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAA to finddatai64_t  */
-static void msvcrt_fttofdi64( const WIN32_FIND_DATAA *fd, struct MSVCRT__finddatai64_t* ft)
+static void msvcrt_fttofdi64( const WIN32_FIND_DATAA *fd, struct _finddatai64_t* ft)
 {
   DWORD dw;
 
@@ -145,7 +157,7 @@ static void msvcrt_fttofdi64( const WIN32_FIND_DATAA *fd, struct MSVCRT__finddat
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAA to finddata64_t  */
-static void msvcrt_fttofd64( const WIN32_FIND_DATAA *fd, struct MSVCRT__finddata64_t* ft)
+static void msvcrt_fttofd64( const WIN32_FIND_DATAA *fd, struct _finddata64_t* ft)
 {
   DWORD dw;
 
@@ -185,7 +197,7 @@ static void msvcrt_wfttofd64( const WIN32_FIND_DATAW *fd, struct _wfinddata64_t*
 }
 
 /* INTERNAL: Translate WIN32_FIND_DATAA to finddata64i32_t  */
-static void msvcrt_fttofd64i32( const WIN32_FIND_DATAA *fd, struct MSVCRT__finddata64i32_t* ft)
+static void msvcrt_fttofd64i32( const WIN32_FIND_DATAA *fd, struct _finddata64i32_t* ft)
 {
   DWORD dw;
 
@@ -357,7 +369,7 @@ int CDECL _findclose(intptr_t hand)
  * NOTES
  *  See FindFirstFileA.
  */
-intptr_t CDECL _findfirst(const char * fspec, struct MSVCRT__finddata_t* ft)
+intptr_t CDECL _findfirst(const char * fspec, struct _finddata_t* ft)
 {
   WIN32_FIND_DATAA find_data;
   HANDLE hfind;
@@ -376,7 +388,7 @@ intptr_t CDECL _findfirst(const char * fspec, struct MSVCRT__finddata_t* ft)
 /*********************************************************************
  *              _findfirst32 (MSVCRT.@)
  */
-intptr_t CDECL _findfirst32(const char * fspec, struct MSVCRT__finddata32_t* ft)
+intptr_t CDECL _findfirst32(const char * fspec, struct _finddata32_t* ft)
 {
   WIN32_FIND_DATAA find_data;
   HANDLE hfind;
@@ -439,7 +451,7 @@ intptr_t CDECL _wfindfirst32(const wchar_t * fspec, struct _wfinddata32_t* ft)
  *
  * 64-bit version of _findfirst.
  */
-intptr_t CDECL _findfirsti64(const char * fspec, struct MSVCRT__finddatai64_t* ft)
+intptr_t CDECL _findfirsti64(const char * fspec, struct _finddatai64_t* ft)
 {
   WIN32_FIND_DATAA find_data;
   HANDLE hfind;
@@ -460,7 +472,7 @@ intptr_t CDECL _findfirsti64(const char * fspec, struct MSVCRT__finddatai64_t* f
  *
  * 64-bit version of _findfirst.
  */
-intptr_t CDECL _findfirst64(const char * fspec, struct MSVCRT__finddata64_t* ft)
+intptr_t CDECL _findfirst64(const char * fspec, struct _finddata64_t* ft)
 {
   WIN32_FIND_DATAA find_data;
   HANDLE hfind;
@@ -502,7 +514,7 @@ intptr_t CDECL _wfindfirst64(const wchar_t * fspec, struct _wfinddata64_t* ft)
  *
  * 64-bit/32-bit version of _findfirst.
  */
-intptr_t CDECL _findfirst64i32(const char * fspec, struct MSVCRT__finddata64i32_t* ft)
+intptr_t CDECL _findfirst64i32(const char * fspec, struct _finddata64i32_t* ft)
 {
   WIN32_FIND_DATAA find_data;
   HANDLE hfind;
@@ -576,7 +588,7 @@ intptr_t CDECL _wfindfirsti64(const wchar_t * fspec, struct _wfinddatai64_t* ft)
  * NOTES
  *  See FindNextFileA.
  */
-int CDECL _findnext(intptr_t hand, struct MSVCRT__finddata_t * ft)
+int CDECL _findnext(intptr_t hand, struct _finddata_t * ft)
 {
   WIN32_FIND_DATAA find_data;
 
@@ -593,7 +605,7 @@ int CDECL _findnext(intptr_t hand, struct MSVCRT__finddata_t * ft)
 /*********************************************************************
  *               _findnext32 (MSVCRT.@)
  */
-int CDECL _findnext32(intptr_t hand, struct MSVCRT__finddata32_t * ft)
+int CDECL _findnext32(intptr_t hand, struct _finddata32_t * ft)
 {
   WIN32_FIND_DATAA find_data;
 
@@ -648,7 +660,7 @@ int CDECL _wfindnext(intptr_t hand, struct _wfinddata_t * ft)
  *
  * 64-bit version of _findnext.
  */
-int CDECL _findnexti64(intptr_t hand, struct MSVCRT__finddatai64_t * ft)
+int CDECL _findnexti64(intptr_t hand, struct _finddatai64_t * ft)
 {
   WIN32_FIND_DATAA find_data;
 
@@ -667,7 +679,7 @@ int CDECL _findnexti64(intptr_t hand, struct MSVCRT__finddatai64_t * ft)
  *
  * 64-bit version of _findnext.
  */
-int CDECL _findnext64(intptr_t hand, struct MSVCRT__finddata64_t * ft)
+int CDECL _findnext64(intptr_t hand, struct _finddata64_t * ft)
 {
   WIN32_FIND_DATAA find_data;
 
@@ -705,7 +717,7 @@ int CDECL _wfindnext64(intptr_t hand, struct _wfinddata64_t * ft)
  *
  * 64-bit/32-bit version of _findnext.
  */
-int CDECL _findnext64i32(intptr_t hand, struct MSVCRT__finddata64i32_t * ft)
+int CDECL _findnext64i32(intptr_t hand, struct _finddata64i32_t * ft)
 {
   WIN32_FIND_DATAA find_data;
 
