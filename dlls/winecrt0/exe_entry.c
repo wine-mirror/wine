@@ -27,7 +27,7 @@
 #include "winbase.h"
 #include "winternl.h"
 
-extern int __cdecl main( int argc, char *argv[] );
+extern int main( int argc, char *argv[] );
 
 static char **build_argv( const char *src, int *ret_argc )
 {
