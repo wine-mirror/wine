@@ -1218,7 +1218,7 @@
 @ cdecl _wspawnvpe(long wstr ptr ptr)
 @ cdecl _wsplitpath(wstr ptr ptr ptr ptr)
 @ cdecl _wsplitpath_s(wstr ptr long ptr long ptr long ptr long)
-@ cdecl _wstat(str ptr)
+@ cdecl _wstat(wstr ptr)
 @ cdecl _wstati64(wstr ptr)
 @ cdecl _wstat64(wstr ptr)
 @ cdecl _wstrdate(ptr)
