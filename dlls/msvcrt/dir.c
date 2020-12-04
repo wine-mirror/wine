@@ -22,6 +22,7 @@
  */
 
 #include <corecrt_io.h>
+#include <mbctype.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <direct.h>

@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <mbctype.h>
+#include <mbstring.h>
 
 #include "msvcrt.h"
 #include "mtdll.h"
@@ -577,7 +578,7 @@ unsigned char* CDECL _mbsdec(const unsigned char* start, const unsigned char* cu
 /*********************************************************************
  *		_mbclen(MSVCRT.@)
  */
-unsigned int CDECL _mbclen(const unsigned char* str)
+size_t CDECL _mbclen(const unsigned char* str)
 {
   return _ismbblead(*str) ? 2 : 1;
 }

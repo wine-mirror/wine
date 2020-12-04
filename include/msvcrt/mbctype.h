@@ -68,6 +68,7 @@ _ACRTIMP int __cdecl _setmbcp(int);
 #ifndef _MBLEADTRAIL_DEFINED
 #define _MBLEADTRAIL_DEFINED
 _ACRTIMP int __cdecl _ismbblead(unsigned int);
+_ACRTIMP int __cdecl _ismbblead_l(unsigned int,_locale_t);
 _ACRTIMP int __cdecl _ismbbtrail(unsigned int);
 _ACRTIMP int __cdecl _ismbslead(const unsigned char*,const unsigned char*);
 _ACRTIMP int __cdecl _ismbstrail(const unsigned char*,const unsigned char*);
