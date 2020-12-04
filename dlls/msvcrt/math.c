@@ -61,7 +61,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define _UNDERFLOW      4       /* range underflow */
 
 typedef int (CDECL *MSVCRT_matherr_func)(struct _exception *);
-typedef double LDOUBLE;  /* long double is just a double */
 
 static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 
@@ -3294,14 +3293,6 @@ float CDECL cbrtf(float x)
 }
 
 /*********************************************************************
- *      cbrtl (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_cbrtl(LDOUBLE x)
-{
-    return cbrt(x);
-}
-
-/*********************************************************************
  *      exp2 (MSVCR120.@)
  */
 double CDECL exp2(double x)
@@ -3319,14 +3310,6 @@ float CDECL exp2f(float x)
     float ret = unix_funcs->exp2f( x );
     if (isfinite(x) && !isfinite(ret)) *_errno() = ERANGE;
     return ret;
-}
-
-/*********************************************************************
- *      exp2l (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_exp2l(LDOUBLE x)
-{
-    return exp2(x);
 }
 
 /*********************************************************************
@@ -3350,14 +3333,6 @@ float CDECL expm1f(float x)
 }
 
 /*********************************************************************
- *      expm1l (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_expm1l(LDOUBLE x)
-{
-    return expm1(x);
-}
-
-/*********************************************************************
  *      log1p (MSVCR120.@)
  */
 double CDECL log1p(double x)
@@ -3375,14 +3350,6 @@ float CDECL log1pf(float x)
     if (x < -1) *_errno() = EDOM;
     else if (x == -1) *_errno() = ERANGE;
     return unix_funcs->log1pf( x );
-}
-
-/*********************************************************************
- *      log1pl (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_log1pl(LDOUBLE x)
-{
-    return log1p(x);
 }
 
 /*********************************************************************
@@ -3406,14 +3373,6 @@ float CDECL log2f(float x)
 }
 
 /*********************************************************************
- *      log2l (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_log2l(LDOUBLE x)
-{
-    return log2(x);
-}
-
-/*********************************************************************
  *      rint (MSVCR120.@)
  */
 double CDECL rint(double x)
@@ -3427,14 +3386,6 @@ double CDECL rint(double x)
 float CDECL rintf(float x)
 {
     return unix_funcs->rintf(x);
-}
-
-/*********************************************************************
- *      rintl (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_rintl(LDOUBLE x)
-{
-    return rint(x);
 }
 
 /*********************************************************************
@@ -3454,14 +3405,6 @@ __msvcrt_long CDECL lrintf(float x)
 }
 
 /*********************************************************************
- *      lrintl (MSVCR120.@)
- */
-__msvcrt_long CDECL MSVCR120_lrintl(LDOUBLE x)
-{
-    return lrint(x);
-}
-
-/*********************************************************************
  *      llrint (MSVCR120.@)
  */
 __int64 CDECL llrint(double x)
@@ -3475,14 +3418,6 @@ __int64 CDECL llrint(double x)
 __int64 CDECL llrintf(float x)
 {
     return unix_funcs->llrintf( x );
-}
-
-/*********************************************************************
- *      rintl (MSVCR120.@)
- */
-__int64 CDECL MSVCR120_llrintl(LDOUBLE x)
-{
-    return llrint(x);
 }
 
 #if _MSVCR_VER>=120
@@ -3504,14 +3439,6 @@ float CDECL roundf(float x)
 }
 
 /*********************************************************************
- *      roundl (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_roundl(LDOUBLE x)
-{
-    return round(x);
-}
-
-/*********************************************************************
  *      lround (MSVCR120.@)
  */
 __msvcrt_long CDECL lround(double x)
@@ -3525,14 +3452,6 @@ __msvcrt_long CDECL lround(double x)
 __msvcrt_long CDECL lroundf(float x)
 {
     return unix_funcs->lroundf( x );
-}
-
-/*********************************************************************
- *      lroundl (MSVCR120.@)
- */
-__msvcrt_long CDECL MSVCR120_lroundl(LDOUBLE x)
-{
-    return lround(x);
 }
 
 /*********************************************************************
@@ -3552,14 +3471,6 @@ __int64 CDECL llroundf(float x)
 }
 
 /*********************************************************************
- *      roundl (MSVCR120.@)
- */
-__int64 CDECL MSVCR120_llroundl(LDOUBLE x)
-{
-    return llround(x);
-}
-
-/*********************************************************************
  *      trunc (MSVCR120.@)
  */
 double CDECL trunc(double x)
@@ -3573,14 +3484,6 @@ double CDECL trunc(double x)
 float CDECL truncf(float x)
 {
     return unix_funcs->truncf(x);
-}
-
-/*********************************************************************
- *      truncl (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_truncl(LDOUBLE x)
-{
-    return trunc(x);
 }
 
 /*********************************************************************
@@ -3614,14 +3517,6 @@ short CDECL _fdclass(float x)
 }
 
 /*********************************************************************
- *      _ldclass (MSVCR120.@)
- */
-short CDECL _ldclass(LDOUBLE x)
-{
-    return _dclass(x);
-}
-
-/*********************************************************************
  *      _dtest (MSVCR120.@)
  */
 short CDECL _dtest(double *x)
@@ -3635,14 +3530,6 @@ short CDECL _dtest(double *x)
 short CDECL _fdtest(float *x)
 {
     return _fdclass(*x);
-}
-
-/*********************************************************************
- *      _ldtest (MSVCR120.@)
- */
-short CDECL _ldtest(LDOUBLE *x)
-{
-    return _dclass(*x);
 }
 
 /*********************************************************************
@@ -3662,14 +3549,6 @@ float CDECL erff(float x)
 }
 
 /*********************************************************************
- *      erfl (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_erfl(LDOUBLE x)
-{
-    return erf(x);
-}
-
-/*********************************************************************
  *      erfc (MSVCR120.@)
  */
 double CDECL erfc(double x)
@@ -3683,14 +3562,6 @@ double CDECL erfc(double x)
 float CDECL erfcf(float x)
 {
     return unix_funcs->erfcf( x );
-}
-
-/*********************************************************************
- *      erfcl (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_erfcl(LDOUBLE x)
-{
-    return erfc(x);
 }
 
 /*********************************************************************
@@ -3829,14 +3700,6 @@ float CDECL asinhf(float x)
 }
 
 /*********************************************************************
- *      asinhl (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_asinhl(LDOUBLE x)
-{
-    return asinh(x);
-}
-
-/*********************************************************************
  *      acosh (MSVCR120.@)
  */
 double CDECL acosh(double x)
@@ -3870,14 +3733,6 @@ float CDECL acoshf(float x)
         return NAN;
     }
     return unix_funcs->acoshf( x );
-}
-
-/*********************************************************************
- *      acoshl (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_acoshl(LDOUBLE x)
-{
-    return acosh(x);
 }
 
 /*********************************************************************
@@ -3928,14 +3783,6 @@ float CDECL atanhf(float x)
     return ret;
 }
 
-/*********************************************************************
- *      atanhl (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_atanhl(LDOUBLE x)
-{
-    return atanh(x);
-}
-
 #endif /* _MSVCR_VER>=120 */
 
 /*********************************************************************
@@ -3961,15 +3808,6 @@ float CDECL _scalbf(float num, __msvcrt_long power)
 #if _MSVCR_VER>=120
 
 /*********************************************************************
- *      scalbnl  (MSVCR120.@)
- *      scalblnl (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_scalbnl(LDOUBLE num, __msvcrt_long power)
-{
-    return _scalb(num, power);
-}
-
-/*********************************************************************
  *      remainder (MSVCR120.@)
  */
 double CDECL remainder(double x, double y)
@@ -3989,14 +3827,6 @@ float CDECL remainderf(float x, float y)
     if(!isfinite(x)) *_errno() = EDOM;
     if(isnan(y) || y==0.0f) *_errno() = EDOM;
     return unix_funcs->remainderf( x, y );
-}
-
-/*********************************************************************
- *      remainderl (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_remainderl(LDOUBLE x, LDOUBLE y)
-{
-    return remainder(x, y);
 }
 
 /*********************************************************************
@@ -4020,14 +3850,6 @@ float CDECL remquof(float x, float y, int *quo)
 }
 
 /*********************************************************************
- *      remquol (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_remquol(LDOUBLE x, LDOUBLE y, int *quo)
-{
-    return remquo(x, y, quo);
-}
-
-/*********************************************************************
  *      lgamma (MSVCR120.@)
  */
 double CDECL lgamma(double x)
@@ -4041,14 +3863,6 @@ double CDECL lgamma(double x)
 float CDECL lgammaf(float x)
 {
     return unix_funcs->lgammaf( x );
-}
-
-/*********************************************************************
- *      lgammal (MSVCR120.@)
- */
-LDOUBLE CDECL MSVCR120_lgammal(LDOUBLE x)
-{
-    return lgamma(x);
 }
 
 /*********************************************************************
@@ -4231,13 +4045,4 @@ int CDECL ilogbf(float x)
     if (e == 0xff) return u.i << 9 ? FP_ILOGBNAN : INT_MAX;
     return e - 0x7f;
 }
-
-/*********************************************************************
- *      ilogbl (MSVCR120.@)
- */
-int CDECL MSVCR120_ilogbl(LDOUBLE x)
-{
-    return ilogb(x);
-}
-
 #endif /* _MSVCR_VER>=120 */

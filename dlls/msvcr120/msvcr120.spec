@@ -1391,10 +1391,10 @@
 @ cdecl _j1(double)
 @ cdecl _jn(long double)
 @ cdecl _kbhit()
-@ cdecl _ldclass(double)
+@ cdecl _ldclass(double) _dclass
 @ cdecl _ldpcomp(double double) _dpcomp
 @ cdecl _ldsign(double) _dsign
-@ cdecl _ldtest(ptr)
+@ cdecl _ldtest(ptr) _dtest
 @ cdecl _lfind(ptr ptr ptr long ptr)
 @ cdecl _lfind_s(ptr ptr ptr long ptr ptr)
 @ cdecl -arch=i386 -norelay _libm_sse2_acos_precise() __libm_sse2_acos
@@ -2013,21 +2013,21 @@
 @ cdecl -arch=!i386 acosf(float)
 @ cdecl acosh(double)
 @ cdecl acoshf(float)
-@ cdecl acoshl(double) MSVCR120_acoshl
+@ cdecl acoshl(double) acosh
 @ cdecl asctime(ptr)
 @ cdecl asctime_s(ptr long ptr)
 @ cdecl asin(double)
 @ cdecl -arch=!i386 asinf(float)
 @ cdecl asinh(double)
 @ cdecl asinhf(float)
-@ cdecl asinhl(double) MSVCR120_asinhl
+@ cdecl asinhl(double) asinh
 @ cdecl atan(double)
 @ cdecl -arch=!i386 atanf(float)
 @ cdecl atan2(double double)
 @ cdecl -arch=!i386 atan2f(float float)
 @ cdecl atanh(double)
 @ cdecl atanhf(float)
-@ cdecl atanhl(double) MSVCR120_atanhl
+@ cdecl atanhl(double) atanh
 @ cdecl -private atexit(ptr) MSVCRT_atexit  # not imported to avoid conflicts with Mingw
 @ cdecl atof(str)
 @ cdecl atoi(str)
@@ -2063,7 +2063,7 @@
 @ stub catanl
 @ cdecl cbrt(double)
 @ cdecl cbrtf(float)
-@ cdecl cbrtl(double) MSVCR120_cbrtl
+@ cdecl cbrtl(double) cbrt
 @ stub ccos
 @ stub ccosf
 @ stub ccosh
@@ -2125,18 +2125,18 @@
 @ cdecl erf(double)
 @ cdecl erfc(double)
 @ cdecl erfcf(float)
-@ cdecl erfcl(double) MSVCR120_erfcl
+@ cdecl erfcl(double) erfc
 @ cdecl erff(float)
-@ cdecl erfl(double) MSVCR120_erfl
+@ cdecl erfl(double) erf
 @ cdecl exit(long)
 @ cdecl exp(double)
 @ cdecl exp2(double)
 @ cdecl exp2f(float)
-@ cdecl exp2l(double) MSVCR120_exp2l
+@ cdecl exp2l(double) exp2
 @ cdecl -arch=!i386 expf(float)
 @ cdecl expm1(double)
 @ cdecl expm1f(float)
-@ cdecl expm1l(double) MSVCR120_expm1l
+@ cdecl expm1l(double) expm1
 @ cdecl fabs(double)
 @ cdecl -arch=!i386 fabsf(float)
 @ cdecl fclose(ptr)
@@ -2209,7 +2209,7 @@
 @ cdecl getwchar()
 @ cdecl ilogb(double)
 @ cdecl ilogbf(float)
-@ cdecl ilogbl(double) MSVCR120_ilogbl
+@ cdecl ilogbl(double) ilogb
 @ cdecl -ret64 imaxabs(int64)
 @ stub imaxdiv
 @ cdecl is_wctype(long long) iswctype
@@ -2245,15 +2245,15 @@
 @ cdecl -ret64 ldiv(long long)
 @ cdecl lgamma(double)
 @ cdecl lgammaf(float)
-@ cdecl lgammal(double) MSVCR120_lgammal
+@ cdecl lgammal(double) lgamma
 @ cdecl -ret64 llabs(int64)
 @ cdecl lldiv(int64 int64)
 @ cdecl -ret64 llrint(double)
 @ cdecl -ret64 llrintf(float)
-@ cdecl -ret64 llrintl(double) MSVCR120_llrintl
+@ cdecl -ret64 llrintl(double) llrint
 @ cdecl -ret64 llround(double)
 @ cdecl -ret64 llroundf(float)
-@ cdecl -ret64 llroundl(double) MSVCR120_llroundl
+@ cdecl -ret64 llroundl(double) llround
 @ cdecl localeconv()
 @ cdecl log(double)
 @ cdecl -arch=!i386 logf(float)
@@ -2261,20 +2261,20 @@
 @ cdecl -arch=!i386 log10f(float)
 @ cdecl log1p(double)
 @ cdecl log1pf(float)
-@ cdecl log1pl(double) MSVCR120_log1pl
+@ cdecl log1pl(double) log1p
 @ cdecl log2(double)
 @ cdecl log2f(float)
-@ cdecl log2l(double) MSVCR120_log2l
+@ cdecl log2l(double) log2
 @ cdecl logb(double) _logb
 @ cdecl logbf(float) _logbf
 @ cdecl logbl(double) _logb
 @ cdecl -arch=i386,x86_64,arm,arm64 longjmp(ptr long) MSVCRT_longjmp
 @ cdecl lrint(double)
 @ cdecl lrintf(float)
-@ cdecl lrintl(double) MSVCR120_lrintl
+@ cdecl lrintl(double) lrint
 @ cdecl lround(double)
 @ cdecl lroundf(float)
-@ cdecl lroundl(double) MSVCR120_lroundl
+@ cdecl lroundl(double) lround
 @ cdecl malloc(long)
 @ cdecl mblen(ptr long)
 @ cdecl mbrlen(ptr long ptr)
@@ -2326,25 +2326,25 @@
 @ cdecl realloc(ptr long)
 @ cdecl remainder(double double)
 @ cdecl remainderf(float float)
-@ cdecl remainderl(double double) MSVCR120_remainderl
+@ cdecl remainderl(double double) remainder
 @ cdecl remove(str)
 @ cdecl remquo(double double ptr)
 @ cdecl remquof(float float ptr)
-@ cdecl remquol(double double ptr) MSVCR120_remquol
+@ cdecl remquol(double double ptr) remquo
 @ cdecl rename(str str)
 @ cdecl rewind(ptr)
 @ cdecl rint(double)
 @ cdecl rintf(float)
-@ cdecl rintl(double) MSVCR120_rintl
+@ cdecl rintl(double) rint
 @ cdecl round(double)
 @ cdecl roundf(float)
-@ cdecl roundl(double) MSVCR120_roundl
+@ cdecl roundl(double) round
 @ cdecl scalbln(double long) _scalb
 @ cdecl scalblnf(float long) _scalbf
-@ cdecl scalblnl(double long) MSVCR120_scalbnl
+@ cdecl scalblnl(double long) _scalb
 @ cdecl scalbn(double long) _scalb
 @ cdecl scalbnf(float long) _scalbf
-@ cdecl scalbnl(double long) MSVCR120_scalbnl
+@ cdecl scalbnl(double long) _scalb
 @ varargs scanf(str)
 @ varargs scanf_s(str)
 @ cdecl setbuf(ptr ptr)
@@ -2419,7 +2419,7 @@
 @ cdecl towupper(long)
 @ cdecl trunc(double)
 @ cdecl truncf(float)
-@ cdecl truncl(double) MSVCR120_truncl
+@ cdecl truncl(double) trunc
 @ cdecl ungetc(long ptr)
 @ cdecl ungetwc(long ptr)
 @ cdecl vfprintf(ptr str ptr)
