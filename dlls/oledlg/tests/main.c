@@ -49,7 +49,6 @@ static ULONG WINAPI enumverbs_Release(IEnumOLEVERB *iface)
 }
 
 static int g_enumpos;
-static const WCHAR verbW[] = {'v','e','r','b',0};
 static HRESULT WINAPI enumverbs_Next(IEnumOLEVERB *iface, ULONG count, OLEVERB *verbs, ULONG *fetched)
 {
     ok(count == 1, "got %u\n", count);
@@ -58,8 +57,8 @@ static HRESULT WINAPI enumverbs_Next(IEnumOLEVERB *iface, ULONG count, OLEVERB *
 
     if (g_enumpos++ == 0) {
         verbs->lVerb = 123;
-        verbs->lpszVerbName = CoTaskMemAlloc(sizeof(verbW));
-        lstrcpyW(verbs->lpszVerbName, verbW);
+        verbs->lpszVerbName = CoTaskMemAlloc(sizeof(L"verb"));
+        lstrcpyW(verbs->lpszVerbName, L"verb");
         verbs->fuFlags = MF_ENABLED;
         verbs->grfAttribs = OLEVERBATTRIB_ONCONTAINERMENU;
         if (fetched) *fetched = 1;
@@ -207,14 +206,12 @@ static HRESULT WINAPI oleobject_GetUserClassID(IOleObject *iface, CLSID *clsid)
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
-
-static const WCHAR testW[] = {'t','e','s','t',0};
 static HRESULT WINAPI oleobject_GetUserType(IOleObject *iface, DWORD formoftype,
     LPOLESTR *usertype)
 {
     ok(formoftype == USERCLASSTYPE_SHORT, "got %d\n", formoftype);
-    *usertype = CoTaskMemAlloc(sizeof(testW));
-    lstrcpyW(*usertype, testW);
+    *usertype = CoTaskMemAlloc(sizeof(L"test"));
+    lstrcpyW(*usertype, L"test");
     return S_OK;
 }
 
@@ -291,7 +288,6 @@ static IOleObject oleobject = { &oleobjectvtbl };
 
 static void test_OleUIAddVerbMenu(void)
 {
-    static const WCHAR cadabraW[] = {'c','a','d','a','b','r','a',0};
     HMENU hMenu, verbmenu;
     MENUITEMINFOW info;
     WCHAR buffW[50];
@@ -365,7 +361,7 @@ static void test_OleUIAddVerbMenu(void)
 
     /* now without object */
     verbmenu = (HMENU)0xdeadbeef;
-    ret = OleUIAddVerbMenuW(NULL, testW, hMenu, 3, 42, 0, FALSE, 0, &verbmenu);
+    ret = OleUIAddVerbMenuW(NULL, L"test", hMenu, 3, 42, 0, FALSE, 0, &verbmenu);
     ok(!ret, "got %d\n", ret);
     ok(verbmenu == NULL, "got %p\n", verbmenu);
 
@@ -399,7 +395,7 @@ static void test_OleUIAddVerbMenu(void)
     ok(ret, "got %d\n", ret);
     /* Item string contains verb, usertype and localized string for 'Object' word,
        exact format depends on localization. */
-    ok(wcsstr(buffW, verbW) != NULL, "str %s\n", wine_dbgstr_w(buffW));
+    ok(wcsstr(buffW, L"verb") != NULL, "str %s\n", wine_dbgstr_w(buffW));
     ok(info.fState == 0, "got state 0x%08x\n", info.fState);
     ok(info.hSubMenu == NULL, "got submenu %p\n", info.hSubMenu);
 
@@ -445,13 +441,13 @@ static void test_OleUIAddVerbMenu(void)
     info.fMask = MIIM_STRING|MIIM_STATE;
     info.fState = MFS_ENABLED;
     info.dwTypeData = buffW;
-    lstrcpyW(buffW, cadabraW);
+    lstrcpyW(buffW, L"cadabra");
     ret = SetMenuItemInfoW(hMenu, 0, TRUE, &info);
     ok(ret, "got %d\n", ret);
 
     buffW[0] = 0;
     GetMenuStringW(hMenu, 0, buffW, ARRAY_SIZE(buffW), MF_BYPOSITION);
-    ok(!lstrcmpW(buffW, cadabraW), "got %s\n", wine_dbgstr_w(buffW));
+    ok(!lstrcmpW(buffW, L"cadabra"), "got %s\n", wine_dbgstr_w(buffW));
 
     verbmenu = NULL;
     ret = OleUIAddVerbMenuW(NULL, NULL, hMenu, 0, 5, 10, TRUE, 3, &verbmenu);
@@ -466,7 +462,7 @@ static void test_OleUIAddVerbMenu(void)
     info.cch = ARRAY_SIZE(buffW);
     ret = GetMenuItemInfoW(hMenu, 0, TRUE, &info);
     ok(ret, "got %d\n", ret);
-    ok(lstrcmpW(buffW, cadabraW), "got %s\n", wine_dbgstr_w(buffW));
+    ok(lstrcmpW(buffW, L"cadabra"), "got %s\n", wine_dbgstr_w(buffW));
     ok(info.fState == MF_GRAYED, "got state 0x%08x\n", info.fState);
 
     count = GetMenuItemCount(hMenu);
