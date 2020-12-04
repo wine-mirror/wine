@@ -401,7 +401,6 @@ static LRESULT CALLBACK enum_driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
 
 static void test_ICInfo(void)
 {
-    static const WCHAR bogusW[] = {'b','o','g','u','s',0};
     static const DWORD test_type = mmioFOURCC('w','i','n','e');
     static const DWORD test_handler = mmioFOURCC('t','e','s','t');
     DWORD i = 0, found = 0;
@@ -475,7 +474,7 @@ static void test_ICInfo(void)
         ok(info.dwVersionICM == ICVERSION, "Got unexpected ICM version %#x.\n", info.dwVersionICM);
         ok(!info.szName[0], "Got unexpected name %s.\n", wine_dbgstr_w(info.szName));
         ok(!info.szDescription[0], "Got unexpected name %s.\n", wine_dbgstr_w(info.szDescription));
-        ok(!lstrcmpW(info.szDriver, bogusW), "Got unexpected driver %s.\n", wine_dbgstr_w(info.szDriver));
+        ok(!lstrcmpW(info.szDriver, L"bogus"), "Got unexpected driver %s.\n", wine_dbgstr_w(info.szDriver));
 
         /* Drivers installed after msvfw32 is loaded are not enumerated. */
 todo_wine
@@ -503,7 +502,7 @@ todo_wine
         ok(info.dwVersionICM == ICVERSION, "Got unexpected ICM version %#x.\n", info.dwVersionICM);
         ok(!info.szName[0], "Got unexpected name %s.\n", wine_dbgstr_w(info.szName));
         ok(!info.szDescription[0], "Got unexpected name %s.\n", wine_dbgstr_w(info.szDescription));
-        ok(!lstrcmpW(info.szDriver, bogusW), "Got unexpected driver %s.\n", wine_dbgstr_w(info.szDriver));
+        ok(!lstrcmpW(info.szDriver, L"bogus"), "Got unexpected driver %s.\n", wine_dbgstr_w(info.szDriver));
 
         /* Drivers installed after msvfw32 is loaded are not enumerated. */
 todo_wine
