@@ -1572,9 +1572,12 @@ do {                                                                \
 struct wined3d_bo_gl
 {
     GLuint id;
+    GLsizeiptr size;
     GLenum binding;
     GLenum usage;
 
+    GLbitfield flags;
+    bool coherent;
     struct list users;
     uint64_t command_fence_id;
 };
@@ -5014,6 +5017,7 @@ void shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *
 struct wined3d_shader_resource_view_gl
 {
     struct wined3d_shader_resource_view v;
+    struct wined3d_bo_user bo_user;
     struct wined3d_gl_view gl_view;
 };
 
@@ -5028,6 +5032,8 @@ void wined3d_shader_resource_view_gl_bind(struct wined3d_shader_resource_view_gl
 HRESULT wined3d_shader_resource_view_gl_init(struct wined3d_shader_resource_view_gl *view_gl,
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+void wined3d_shader_resource_view_gl_update(struct wined3d_shader_resource_view_gl *srv_gl,
+        struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
 
 struct wined3d_view_vk
 {
@@ -5083,6 +5089,7 @@ void wined3d_unordered_access_view_set_counter(struct wined3d_unordered_access_v
 struct wined3d_unordered_access_view_gl
 {
     struct wined3d_unordered_access_view v;
+    struct wined3d_bo_user bo_user;
     struct wined3d_gl_view gl_view;
     struct wined3d_bo_gl counter_bo;
 };
@@ -5098,6 +5105,8 @@ void wined3d_unordered_access_view_gl_clear_uint(struct wined3d_unordered_access
 HRESULT wined3d_unordered_access_view_gl_init(struct wined3d_unordered_access_view_gl *view_gl,
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+void wined3d_unordered_access_view_gl_update(struct wined3d_unordered_access_view_gl *uav_gl,
+        struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
 
 struct wined3d_unordered_access_view_vk
 {

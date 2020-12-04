@@ -714,29 +714,6 @@ void * CDECL wined3d_buffer_get_parent(const struct wined3d_buffer *buffer)
     return buffer->resource.parent;
 }
 
-/* The caller provides a context and binds the buffer */
-static void wined3d_buffer_gl_sync_apple(struct wined3d_buffer_gl *buffer_gl,
-        uint32_t flags, struct wined3d_context_gl *context_gl)
-{
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_bo_gl *bo = &buffer_gl->bo;
-
-    /* No fencing needs to be done if the app promises not to overwrite
-     * existing data. */
-    if (flags & WINED3D_MAP_NOOVERWRITE)
-        return;
-
-    if (flags & WINED3D_MAP_DISCARD)
-    {
-        wined3d_buffer_gl_bind(buffer_gl, context_gl);
-
-        GL_EXTCALL(glBufferData(bo->binding, buffer_gl->b.resource.size, NULL, bo->usage));
-        checkGLcall("glBufferData");
-        bo->command_fence_id = 0;
-        return;
-    }
-}
-
 static void buffer_mark_used(struct wined3d_buffer *buffer)
 {
     buffer->flags &= ~WINED3D_BUFFER_DISCARD;
@@ -953,9 +930,6 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
                  * appears to do this unconditionally. */
                 if (buffer->flags & WINED3D_BUFFER_DISCARD)
                     flags &= ~WINED3D_MAP_DISCARD;
-
-                if (buffer->flags & WINED3D_BUFFER_APPLESYNC)
-                    wined3d_buffer_gl_sync_apple(wined3d_buffer_gl(buffer), flags, wined3d_context_gl(context));
 
                 addr.buffer_object = buffer->buffer_object;
                 addr.addr = 0;

@@ -4867,6 +4867,7 @@ static void adapter_gl_destroy_shader_resource_view(struct wined3d_shader_resour
      * the refcount on a device that's in the process of being destroyed. */
     if (swapchain_count)
         wined3d_device_incref(device);
+    list_remove(&view_gl->bo_user.entry);
     wined3d_shader_resource_view_cleanup(&view_gl->v);
     wined3d_view_gl_destroy(device, &view_gl->gl_view, NULL, view_gl);
     if (swapchain_count)
@@ -4913,6 +4914,7 @@ static void adapter_gl_destroy_unordered_access_view(struct wined3d_unordered_ac
      * the refcount on a device that's in the process of being destroyed. */
     if (swapchain_count)
         wined3d_device_incref(device);
+    list_remove(&view_gl->bo_user.entry);
     wined3d_unordered_access_view_cleanup(&view_gl->v);
     wined3d_view_gl_destroy(device, &view_gl->gl_view, &view_gl->counter_bo, view_gl);
     if (swapchain_count)

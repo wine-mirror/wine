@@ -268,7 +268,8 @@ static void create_buffer_texture(struct wined3d_gl_view *view, struct wined3d_c
     wined3d_buffer_load_location(&buffer_gl->b, &context_gl->c, WINED3D_LOCATION_BUFFER);
 
     view->target = GL_TEXTURE_BUFFER;
-    gl_info->gl_ops.gl.p_glGenTextures(1, &view->name);
+    if (!view->name)
+        gl_info->gl_ops.gl.p_glGenTextures(1, &view->name);
 
     wined3d_context_gl_bind_texture(context_gl, GL_TEXTURE_BUFFER, view->name);
     if (gl_info->supported[ARB_TEXTURE_BUFFER_RANGE])
@@ -916,6 +917,14 @@ void * CDECL wined3d_shader_resource_view_get_parent(const struct wined3d_shader
     return view->parent;
 }
 
+void wined3d_shader_resource_view_gl_update(struct wined3d_shader_resource_view_gl *srv_gl,
+        struct wined3d_context_gl *context_gl)
+{
+    create_buffer_view(&srv_gl->gl_view, &context_gl->c, &srv_gl->v.desc,
+            buffer_from_resource(srv_gl->v.resource), srv_gl->v.format);
+    srv_gl->bo_user.valid = true;
+}
+
 static void wined3d_shader_resource_view_gl_cs_init(void *object)
 {
     struct wined3d_shader_resource_view_gl *view_gl = object;
@@ -936,6 +945,8 @@ static void wined3d_shader_resource_view_gl_cs_init(void *object)
 
         context = context_acquire(resource->device, NULL, 0);
         create_buffer_view(&view_gl->gl_view, context, desc, buffer, view_format);
+        view_gl->bo_user.valid = true;
+        list_add_head(&wined3d_buffer_gl(buffer)->bo.users, &view_gl->bo_user.entry);
         context_release(context);
     }
     else
@@ -1006,6 +1017,7 @@ HRESULT wined3d_shader_resource_view_gl_init(struct wined3d_shader_resource_view
     if (FAILED(hr = wined3d_shader_resource_view_init(&view_gl->v, desc, resource, parent, parent_ops)))
         return hr;
 
+    list_init(&view_gl->bo_user.entry);
     wined3d_cs_init_object(resource->device->cs, wined3d_shader_resource_view_gl_cs_init, view_gl);
 
     return hr;
@@ -1394,6 +1406,14 @@ void wined3d_unordered_access_view_copy_counter(struct wined3d_unordered_access_
     wined3d_buffer_invalidate_location(buffer, ~dst_location);
 }
 
+void wined3d_unordered_access_view_gl_update(struct wined3d_unordered_access_view_gl *uav_gl,
+        struct wined3d_context_gl *context_gl)
+{
+    create_buffer_view(&uav_gl->gl_view, &context_gl->c, &uav_gl->v.desc,
+            buffer_from_resource(uav_gl->v.resource), uav_gl->v.format);
+    uav_gl->bo_user.valid = true;
+}
+
 static void wined3d_unordered_access_view_gl_cs_init(void *object)
 {
     struct wined3d_unordered_access_view_gl *view_gl = object;
@@ -1410,6 +1430,8 @@ static void wined3d_unordered_access_view_gl_cs_init(void *object)
 
         context_gl = wined3d_context_gl(context_acquire(resource->device, NULL, 0));
         create_buffer_view(&view_gl->gl_view, &context_gl->c, desc, buffer, view_gl->v.format);
+        view_gl->bo_user.valid = true;
+        list_add_head(&wined3d_buffer_gl(buffer)->bo.users, &view_gl->bo_user.entry);
         if (desc->flags & (WINED3D_VIEW_BUFFER_COUNTER | WINED3D_VIEW_BUFFER_APPEND))
         {
             struct wined3d_bo_gl *bo = &view_gl->counter_bo;
@@ -1470,6 +1492,7 @@ HRESULT wined3d_unordered_access_view_gl_init(struct wined3d_unordered_access_vi
     if (FAILED(hr = wined3d_unordered_access_view_init(&view_gl->v, desc, resource, parent, parent_ops)))
         return hr;
 
+    list_init(&view_gl->bo_user.entry);
     wined3d_cs_init_object(resource->device->cs, wined3d_unordered_access_view_gl_cs_init, view_gl);
 
     return hr;
