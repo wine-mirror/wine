@@ -2600,7 +2600,7 @@ static void test_basic_video(void)
         .cbFormat = sizeof(vih),
         .pbFormat = (BYTE *)&vih,
     };
-    IBaseFilter *filter = create_vmr7(VMR9Mode_Windowed);
+    IBaseFilter *filter = create_vmr7(VMRMode_Windowed);
     IFilterGraph2 *graph = create_graph();
     LONG left, top, width, height, l;
     struct testfilter source;
@@ -2790,6 +2790,137 @@ out:
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
+static void test_windowless_size(void)
+{
+    ALLOCATOR_PROPERTIES req_props = {1, 32 * 16 * 4, 1, 0}, ret_props;
+    VIDEOINFOHEADER vih =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = 32,
+        .bmiHeader.biHeight = 16,
+        .bmiHeader.biBitCount = 32,
+        .bmiHeader.biPlanes = 1,
+    };
+    AM_MEDIA_TYPE mt =
+    {
+        .majortype = MEDIATYPE_Video,
+        .subtype = MEDIASUBTYPE_RGB32,
+        .formattype = FORMAT_VideoInfo,
+        .cbFormat = sizeof(vih),
+        .pbFormat = (BYTE *)&vih,
+    };
+    IBaseFilter *filter = create_vmr7(VMRMode_Windowless);
+    LONG width, height, aspect_width, aspect_height;
+    IVMRWindowlessControl *windowless_control;
+    IFilterGraph2 *graph = create_graph();
+    struct testfilter source;
+    IMemAllocator *allocator;
+    RECT src, dst, expect;
+    IMemInputPin *input;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    IBaseFilter_QueryInterface(filter, &IID_IVMRWindowlessControl, (void **)&windowless_control);
+    IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
+    IPin_QueryInterface(pin, &IID_IMemInputPin, (void **)&input);
+    testfilter_init(&source);
+    IFilterGraph2_AddFilter(graph, &source.filter.IBaseFilter_iface, L"source");
+    IFilterGraph2_AddFilter(graph, filter, L"vmr7");
+    window = CreateWindowA("static", "quartz_test", WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok(!!window, "Failed to create a window.\n");
+
+    hr = IVMRWindowlessControl_SetVideoClippingWindow(windowless_control, window);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &mt);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = IMemAllocator_SetProperties(allocator, &req_props, &ret_props);
+        IMemAllocator_Release(allocator);
+        if (hr == E_FAIL)
+        {
+            skip("Got E_FAIL when setting allocator properties.\n");
+            goto out;
+        }
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(!memcmp(&ret_props, &req_props, sizeof(req_props)), "Properties did not match.\n");
+    }
+
+    hr = IVMRWindowlessControl_GetNativeVideoSize(windowless_control, NULL, &height, &aspect_width, &aspect_height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    hr = IVMRWindowlessControl_GetNativeVideoSize(windowless_control, &width, NULL, &aspect_width, &aspect_height);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+
+    width = height = 0xdeadbeef;
+    hr = IVMRWindowlessControl_GetNativeVideoSize(windowless_control, &width, &height, NULL, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(width == 32, "Got width %d.\n", width);
+    todo_wine ok(height == 16, "Got height %d.\n", height);
+
+    aspect_width = aspect_height = 0xdeadbeef;
+    hr = IVMRWindowlessControl_GetNativeVideoSize(windowless_control, &width, &height, &aspect_width, &aspect_height);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(aspect_width == 32, "Got width %d.\n", aspect_width);
+    ok(aspect_height == 16, "Got height %d.\n", aspect_height);
+
+    memset(&src, 0xcc, sizeof(src));
+    hr = IVMRWindowlessControl_GetVideoPosition(windowless_control, &src, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    SetRect(&expect, 0, 0, 32, 16);
+    ok(EqualRect(&src, &expect), "Got source rect %s.\n", wine_dbgstr_rect(&src));
+
+    memset(&dst, 0xcc, sizeof(dst));
+    hr = IVMRWindowlessControl_GetVideoPosition(windowless_control, NULL, &dst);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    SetRect(&expect, 0, 0, 0, 0);
+    ok(EqualRect(&dst, &expect), "Got dest rect %s.\n", wine_dbgstr_rect(&dst));
+
+    SetRect(&src, 4, 6, 16, 12);
+    hr = IVMRWindowlessControl_SetVideoPosition(windowless_control, &src, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    memset(&src, 0xcc, sizeof(src));
+    memset(&dst, 0xcc, sizeof(dst));
+    hr = IVMRWindowlessControl_GetVideoPosition(windowless_control, &src, &dst);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    SetRect(&expect, 4, 6, 16, 12);
+    ok(EqualRect(&src, &expect), "Got source rect %s.\n", wine_dbgstr_rect(&src));
+    SetRect(&expect, 0, 0, 0, 0);
+    ok(EqualRect(&dst, &expect), "Got dest rect %s.\n", wine_dbgstr_rect(&dst));
+
+    SetRect(&dst, 40, 60, 120, 160);
+    hr = IVMRWindowlessControl_SetVideoPosition(windowless_control, NULL, &dst);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    memset(&src, 0xcc, sizeof(src));
+    memset(&dst, 0xcc, sizeof(dst));
+    hr = IVMRWindowlessControl_GetVideoPosition(windowless_control, &src, &dst);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    SetRect(&expect, 4, 6, 16, 12);
+    ok(EqualRect(&src, &expect), "Got source rect %s.\n", wine_dbgstr_rect(&src));
+    SetRect(&expect, 40, 60, 120, 160);
+    ok(EqualRect(&dst, &expect), "Got dest rect %s.\n", wine_dbgstr_rect(&dst));
+
+    GetWindowRect(window, &src);
+    SetRect(&expect, 0, 0, 640, 480);
+    ok(EqualRect(&src, &expect), "Got window rect %s.\n", wine_dbgstr_rect(&src));
+
+out:
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IMemInputPin_Release(input);
+    IPin_Release(pin);
+    IVMRWindowlessControl_Release(windowless_control);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    DestroyWindow(window);
+}
+
 START_TEST(vmr7)
 {
     CoInitialize(NULL);
@@ -2807,6 +2938,7 @@ START_TEST(vmr7)
     test_overlay();
     test_video_window();
     test_basic_video();
+    test_windowless_size();
 
     CoUninitialize();
 }
