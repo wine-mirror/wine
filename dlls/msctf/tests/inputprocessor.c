@@ -1112,9 +1112,6 @@ static void test_Register(void)
 {
     HRESULT hr;
 
-    static const WCHAR szDesc[] = {'F','a','k','e',' ','W','i','n','e',' ','S','e','r','v','i','c','e',0};
-    static const WCHAR szFile[] = {'F','a','k','e',' ','W','i','n','e',' ','S','e','r','v','i','c','e',' ','F','i','l','e',0};
-
     hr = ITfInputProcessorProfiles_GetCurrentLanguage(g_ipp,&gLangid);
     ok(SUCCEEDED(hr),"Unable to get current language id\n");
     trace("Current Language %x\n",gLangid);
@@ -1124,7 +1121,8 @@ static void test_Register(void)
     hr = ITfInputProcessorProfiles_Register(g_ipp, &CLSID_FakeService);
     ok(SUCCEEDED(hr),"Unable to register text service(%x)\n",hr);
     hr = ITfInputProcessorProfiles_AddLanguageProfile(g_ipp, &CLSID_FakeService, gLangid,
-            &CLSID_FakeService, szDesc, ARRAY_SIZE(szDesc), szFile, ARRAY_SIZE(szFile), 1);
+            &CLSID_FakeService, L"Fake Wine Service", ARRAY_SIZE(L"Fake Wine Service"),
+            L"Fake Wine Service File", ARRAY_SIZE(L"Fake Wine Service File"), 1);
     ok(SUCCEEDED(hr),"Unable to add Language Profile (%x)\n",hr);
 }
 
@@ -2071,12 +2069,11 @@ static void test_InsertAtSelection(TfEditCookie ec, ITfContext *cxt)
     HRESULT hr;
     ITfInsertAtSelection *iis;
     ITfRange *range=NULL;
-    static const WCHAR txt[] = {'H','e','l','l','o',' ','W','o','r','l','d',0};
 
     hr = ITfContext_QueryInterface(cxt, &IID_ITfInsertAtSelection , (LPVOID*)&iis);
     ok(SUCCEEDED(hr),"Failed to get ITfInsertAtSelection interface\n");
     test_ACP_InsertTextAtSelection = SINK_EXPECTED;
-    hr = ITfInsertAtSelection_InsertTextAtSelection(iis, ec, 0, txt, 11, &range);
+    hr = ITfInsertAtSelection_InsertTextAtSelection(iis, ec, 0, L"Hello World", 11, &range);
     ok(SUCCEEDED(hr),"ITfInsertAtSelection_InsertTextAtSelection failed %x\n",hr);
     sink_check_ok(&test_ACP_InsertTextAtSelection,"InsertTextAtSelection");
     ok(range != NULL,"No range returned\n");
