@@ -441,6 +441,7 @@ GstFlowReturn bytestream_wrapper_pull(GstPad *pad, GstObject *parent, guint64 of
 {
     struct media_source *source = gst_pad_get_element_private(pad);
     IMFByteStream *byte_stream = source->byte_stream;
+    GstBuffer *new_buffer = NULL;
     ULONG bytes_read;
     GstMapInfo info;
     BOOL is_eof;
@@ -460,7 +461,7 @@ GstFlowReturn bytestream_wrapper_pull(GstPad *pad, GstObject *parent, guint64 of
         return GST_FLOW_EOS;
 
     if (!(*buf))
-        *buf = gst_buffer_new_and_alloc(len);
+        *buf = new_buffer = gst_buffer_new_and_alloc(len);
     gst_buffer_map(*buf, &info, GST_MAP_WRITE);
     hr = IMFByteStream_Read(byte_stream, info.data, len, &bytes_read);
     gst_buffer_unmap(*buf, &info);
@@ -468,7 +469,11 @@ GstFlowReturn bytestream_wrapper_pull(GstPad *pad, GstObject *parent, guint64 of
     gst_buffer_set_size(*buf, bytes_read);
 
     if (FAILED(hr))
+    {
+        if (new_buffer)
+            gst_buffer_unref(new_buffer);
         return GST_FLOW_ERROR;
+    }
     return GST_FLOW_OK;
 }
 
