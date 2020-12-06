@@ -2484,9 +2484,6 @@ static void test_isvisible(BOOL global_members)
     IActiveScript *engine;
     HRESULT hres;
 
-    static const WCHAR script_textW[] =
-        {'v','a','r',' ','v',' ','=',' ','t','e','s','t','V','a','l',';',0};
-
     engine = create_script();
     if(!engine)
         return;
@@ -2519,12 +2516,12 @@ static void test_isvisible(BOOL global_members)
 
     if(!global_members)
         SET_EXPECT(GetItemInfo_testVal);
-    hres = IActiveScriptParse_ParseScriptText(parser, script_textW, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, L"var v = testVal;", NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
     if(!global_members)
         CHECK_CALLED(GetItemInfo_testVal);
 
-    hres = IActiveScriptParse_ParseScriptText(parser, script_textW, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parser, L"var v = testVal;", NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
 
     IActiveScript_Release(engine);
@@ -3035,17 +3032,17 @@ static void run_bom_tests(void)
     int i;
     HRESULT hres;
     struct bom_test bom_tests[] = {
-        {{'v','a','r',' ','a',' ','=',' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s','(',')',';','\0'}, S_OK},
-        {{0xFEFF,'v','a','r',' ','a',' ','=',' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s','(',')',';','\0'}, S_OK},
-        {{'v',0xFEFF,'a','r',' ','a',' ','=',' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s','(',')',';','\0'}, JS_E_OUT_OF_MEMORY},
-        {{'v','a','r',0xFEFF,' ','a',' ','=',' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s','(',')',';','\0'}, S_OK},
-        {{'v','a','r',' ','a',' ','=',' ','1',';',' ',0xFEFF,'r','e','p','o','r','t','S','u','c','c','e','s','s','(',')',';','\0'}, S_OK},
-        {{'v','a','r',' ','a',' ','=',' ','1',';',' ','r','e','p','o','r','t',0xFEFF,'S','u','c','c','e','s','s','(',')',';','\0'}, JS_E_OUT_OF_MEMORY},
-        {{'v','a','r',' ','a',' ','=',' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s',0xFEFF,'(',')',';','\0'}, S_OK},
-        {{'v','a','r',' ','a',' ','=',' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s','(',0xFEFF,')',';','\0'}, S_OK},
-        {{'v','a','r',' ','a',' ','=',0xFEFF,' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s','(',0xFEFF,')',';','\0'}, S_OK},
-        {{0xFEFF,'v','a','r',' ','a',' ','=',0xFEFF,0xFEFF,' ','1',';',' ','r','e','p','o','r','t','S','u','c','c','e','s','s','(',0xFEFF,')',';','\0'}, S_OK},
-        {{0}}
+        {L"var a = 1; reportSuccess();", S_OK},
+        {L"\xfeffvar a = 1; reportSuccess();", S_OK},
+        {L"v\xfeff" "ar a = 1; reportSuccess();", JS_E_OUT_OF_MEMORY},
+        {L"var\xfeff a = 1; reportSuccess();", S_OK},
+        {L"var a = 1; \xfeffreportSuccess();", S_OK},
+        {L"var a = 1; report\xfeffSuccess();", JS_E_OUT_OF_MEMORY},
+        {L"var a = 1; reportSuccess\xfeff();", S_OK},
+        {L"var a = 1; reportSuccess(\xfeff);", S_OK},
+        {L"var a =\xfeff 1; reportSuccess(\xfeff);", S_OK},
+        {L"\xfeffvar a =\xfeff\xfeff 1; reportSuccess(\xfeff);", S_OK},
+        {L""}
     };
 
     engine_clsid = &CLSID_JScript;

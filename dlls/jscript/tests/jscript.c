@@ -828,9 +828,6 @@ static void test_jscript_uninitializing(void)
     ULONG ref;
     HRESULT hres;
 
-    static const WCHAR script_textW[] =
-        {'f','u','n','c','t','i','o','n',' ','f','(',')',' ','{','}',0};
-
     script = create_jscript();
 
     hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parse);
@@ -850,7 +847,7 @@ static void test_jscript_uninitializing(void)
 
     test_state(script, SCRIPTSTATE_INITIALIZED);
 
-    hres = IActiveScriptParse_ParseScriptText(parse, script_textW, NULL, NULL, NULL, 0, 1, 0x42, NULL, NULL);
+    hres = IActiveScriptParse_ParseScriptText(parse, L"function f() {}", NULL, NULL, NULL, 0, 1, 0x42, NULL, NULL);
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
