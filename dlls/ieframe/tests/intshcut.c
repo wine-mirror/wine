@@ -171,9 +171,7 @@ static void test_ReadAndWriteProperties(void)
     IUniformResourceLocatorA *urlA;
     IUniformResourceLocatorA *urlAFromFile;
     WCHAR fileNameW[MAX_PATH];
-
-    static const WCHAR shortcutW[] = {'t','e','s','t','s','h','o','r','t','c','u','t','.','u','r','l',0};
-    WCHAR iconPath[] = {'f','i','l','e',':','/','/','/','C',':','/','a','r','b','i','t','r','a','r','y','/','i','c','o','n','/','p','a','t','h',0};
+    static WCHAR iconPath[] = L"file:///C:/arbitrary/icon/path";
     char testurl[] = "http://some/bogus/url.html";
 
     ps[0].ulKind = PRSPEC_PROPID;
@@ -183,7 +181,7 @@ static void test_ReadAndWriteProperties(void)
 
     /* Make sure we have a valid temporary directory */
     GetTempPathW(MAX_PATH, fileNameW);
-    lstrcatW(fileNameW, shortcutW);
+    lstrcatW(fileNameW, L"testshortcut.url");
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&urlA);
     ok(hr == S_OK, "Could not create CLSID_InternetShortcut instance: %08x\n", hr);
@@ -208,7 +206,7 @@ static void test_ReadAndWriteProperties(void)
         IPersistFile_Release(pf);
 
         pv[0].vt = VT_LPWSTR;
-        U(pv[0]).pwszVal = (void *) iconPath;
+        U(pv[0]).pwszVal = iconPath;
         pv[1].vt = VT_I4;
         U(pv[1]).lVal = iconIndex;
         hr = urlA->lpVtbl->QueryInterface(urlA, &IID_IPropertySetStorage, (void **) &pPropSetStg);
@@ -326,10 +324,8 @@ static void test_Load(void)
     HANDLE file;
     HRESULT hres;
 
-    static const WCHAR test_urlW[] = {'t','e','s','t','.','u','r','l',0};
-
     GetTempPathW(MAX_PATH, file_path);
-    lstrcatW(file_path, test_urlW);
+    lstrcatW(file_path, L"test.url");
 
     for(test = load_tests; test < load_tests + ARRAY_SIZE(load_tests); test++) {
         IPropertySetStorage *propsetstorage;

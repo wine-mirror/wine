@@ -160,8 +160,6 @@ DEFINE_EXPECT(GetExternal);
 DEFINE_EXPECT(outer_QI_test);
 DEFINE_EXPECT(Advise_OnClose);
 
-static const WCHAR wszItem[] = {'i','t','e','m',0};
-
 static VARIANT_BOOL exvb;
 
 static IWebBrowser2 *wb;
@@ -1268,7 +1266,7 @@ static HRESULT WINAPI InPlaceUIWindow_SetActiveObject(IOleInPlaceFrame *iface,
     CHECK_EXPECT(UIWindow_SetActiveObject);
     if(!test_close && !test_hide) {
         ok(pActiveObject != NULL, "pActiveObject = NULL\n");
-        ok(!lstrcmpW(pszObjName, wszItem), "unexpected pszObjName\n");
+        ok(!lstrcmpW(pszObjName, L"item"), "unexpected pszObjName\n");
     } else {
         ok(!pActiveObject, "pActiveObject != NULL\n");
         ok(!pszObjName, "pszObjName != NULL\n");
@@ -1282,7 +1280,7 @@ static HRESULT WINAPI InPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface,
     CHECK_EXPECT(Frame_SetActiveObject);
     if(!test_close && !test_hide) {
         ok(pActiveObject != NULL, "pActiveObject = NULL\n");
-        ok(!lstrcmpW(pszObjName, wszItem), "unexpected pszObjName\n");
+        ok(!lstrcmpW(pszObjName, L"item"), "unexpected pszObjName\n");
     } else {
         ok(!pActiveObject, "pActiveObject != NULL\n");
         ok(!pszObjName, "pszObjName != NULL\n");
@@ -1817,19 +1815,17 @@ static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 static HWND create_container_window(void)
 {
-    static const WCHAR wszWebBrowserContainer[] =
-        {'W','e','b','B','r','o','w','s','e','r','C','o','n','t','a','i','n','e','r',0};
     static WNDCLASSEXW wndclass = {
         sizeof(WNDCLASSEXW),
         0,
         wnd_proc,
         0, 0, NULL, NULL, NULL, NULL, NULL,
-        wszWebBrowserContainer,
+        L"WebBrowserContainer",
         NULL
     };
 
     RegisterClassExW(&wndclass);
-    return CreateWindowW(wszWebBrowserContainer, wszWebBrowserContainer,
+    return CreateWindowW(L"WebBrowserContainer", L"WebBrowserContainer",
             WS_OVERLAPPEDWINDOW, 10, 10, 600, 600, NULL, NULL, NULL, NULL);
 }
 
@@ -1942,9 +1938,7 @@ static void test_SetHostNames(IOleObject *oleobj)
 {
     HRESULT hres;
 
-    static const WCHAR test_appW[] =  {'t','e','s','t',' ','a','p','p',0};
-
-    hres = IOleObject_SetHostNames(oleobj, test_appW, (void*)0xdeadbeef);
+    hres = IOleObject_SetHostNames(oleobj, L"test app", (void*)0xdeadbeef);
     ok(hres == S_OK, "SetHostNames failed: %08x\n", hres);
 }
 
