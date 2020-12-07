@@ -969,13 +969,13 @@ static void copy_selection( struct console *console )
     WCHAR *p, *buf;
     HANDLE mem;
 
-    w = abs( console->window->selection_start.X - console->window->selection_end.X ) + 2;
+    w = abs( console->window->selection_start.X - console->window->selection_end.X ) + 1;
     h = abs( console->window->selection_start.Y - console->window->selection_end.Y ) + 1;
 
     if (!OpenClipboard( console->win )) return;
     EmptyClipboard();
 
-    mem = GlobalAlloc( GMEM_MOVEABLE, (w * h) * sizeof(WCHAR) );
+    mem = GlobalAlloc( GMEM_MOVEABLE, (w + 1) * h * sizeof(WCHAR) );
     if (mem && (p = buf = GlobalLock( mem )))
     {
         int x, y;
@@ -992,20 +992,21 @@ static void copy_selection( struct console *console )
                 p[x - c.X] = console->active->data[y * console->active->width + x].ch;
 
             /* strip spaces from the end of the line */
-            end = p + w - 1;
+            end = p + w;
             while (end > p && *(end - 1) == ' ')
                 end--;
-            *end = (y < h - 1) ? '\n' : '\0';
+            *end = (y < c.Y + h - 1) ? '\n' : '\0';
             p = end + 1;
         }
 
-        GlobalUnlock( mem );
-        if (p - buf != w * h)
+        TRACE( "%s\n", debugstr_w( buf ));
+        if (p - buf != (w + 1) * h)
         {
             HANDLE new_mem;
             new_mem = GlobalReAlloc( mem, (p - buf) * sizeof(WCHAR), GMEM_MOVEABLE );
             if (new_mem) mem = new_mem;
         }
+        GlobalUnlock( mem );
         SetClipboardData( CF_UNICODETEXT, mem );
     }
     CloseClipboard();
