@@ -152,7 +152,7 @@ static BOOL build_filepathsW( const struct file_op *op, FILEPATHS_W *paths )
     unsigned int src_len = 1, dst_len = 1;
     WCHAR *source = (PWSTR)paths->Source, *target = (PWSTR)paths->Target;
 
-    if (op->src_file[0] != '@')
+    if (!op->src_file || op->src_file[0] != '@')
     {
         if (op->media) src_len += lstrlenW(op->media->root) + 1;
         if (op->src_path) src_len += lstrlenW(op->src_path) + 1;
@@ -174,7 +174,7 @@ static BOOL build_filepathsW( const struct file_op *op, FILEPATHS_W *paths )
         paths->Target = target = HeapAlloc( GetProcessHeap(), 0, dst_len );
     }
     if (!source || !target) return FALSE;
-    if (op->src_file[0] != '@')
+    if (!op->src_file || op->src_file[0] != '@')
         concat_W( source, op->media ? op->media->root : NULL, op->src_path, op->src_file );
     else
         lstrcpyW( source, op->src_file );
