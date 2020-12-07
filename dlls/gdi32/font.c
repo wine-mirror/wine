@@ -3761,9 +3761,9 @@ static HFONT CDECL font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
 
         font = select_font( &lf, dcmat, can_use_bitmap );
 
-        if (font && !*aa_flags)
+        if (font)
         {
-            *aa_flags = font->aa_flags;
+            if (!*aa_flags) *aa_flags = font->aa_flags;
             if (!*aa_flags)
             {
                 if (lf.lfQuality == CLEARTYPE_QUALITY || lf.lfQuality == CLEARTYPE_NATURAL_QUALITY)
