@@ -56,6 +56,7 @@ static void *    (WINAPI *pRtlLocateExtendedFeature)(CONTEXT_EX *context_ex, ULO
 static void *    (WINAPI *pRtlLocateLegacyContext)(CONTEXT_EX *context_ex, ULONG *length);
 static void      (WINAPI *pRtlSetExtendedFeaturesMask)(CONTEXT_EX *context_ex, ULONG64 feature_mask);
 static ULONG64   (WINAPI *pRtlGetExtendedFeaturesMask)(CONTEXT_EX *context_ex);
+static NTSTATUS  (WINAPI *pNtRaiseException)(EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
 static NTSTATUS  (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -1828,7 +1829,7 @@ static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTE
 }
 
 /* Use CDECL to leave arguments on stack. */
-void CDECL hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *context)
+static void CDECL hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *context)
 {
     trace("rec %p, context %p.\n", rec, context);
     trace("context->Eip %#x, context->Esp %#x, ContextFlags %#x.\n",
@@ -3716,6 +3717,8 @@ static struct
 }
 test_kiuserexceptiondispatcher_regs;
 
+static ULONG64 test_kiuserexceptiondispatcher_saved_r12;
+
 static DWORD dbg_except_continue_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
         CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
 {
@@ -3738,6 +3741,13 @@ static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTE
 
     trace("dbg_except_continue_vectored_handler, code %#x, Rip %#lx.\n", rec->ExceptionCode, context->Rip);
 
+    if (rec->ExceptionCode == 0xceadbeef)
+    {
+        ok(context->P1Home == (ULONG64)0xdeadbeeffeedcafe, "Got unexpected context->P1Home %#lx.\n", context->P1Home);
+        context->R12 = test_kiuserexceptiondispatcher_saved_r12;
+        return EXCEPTION_CONTINUE_EXECUTION;
+    }
+
     ok(rec->ExceptionCode == 0x80000003, "Got unexpected exception code %#x.\n", rec->ExceptionCode);
 
     got_exception = 1;
@@ -3752,7 +3762,7 @@ static LONG WINAPI dbg_except_continue_vectored_handler(struct _EXCEPTION_POINTE
     return EXCEPTION_CONTINUE_EXECUTION;
 }
 
-void WINAPI hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *context)
+static void WINAPI hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *context)
 {
     trace("rec %p, context %p.\n", rec, context);
     trace("context->Rip %#lx, context->Rsp %#lx, ContextFlags %#lx.\n",
@@ -3760,7 +3770,7 @@ void WINAPI hook_KiUserExceptionDispatcher(EXCEPTION_RECORD *rec, CONTEXT *conte
 
     hook_called = TRUE;
     /* Broken on Win2008, probably rec offset in stack is different. */
-    ok(rec->ExceptionCode == 0x80000003 || broken(!rec->ExceptionCode),
+    ok(rec->ExceptionCode == 0x80000003 || rec->ExceptionCode == 0xceadbeef || broken(!rec->ExceptionCode),
             "Got unexpected ExceptionCode %#x.\n", rec->ExceptionCode);
 
     hook_KiUserExceptionDispatcher_rip = (void *)context->Rip;
@@ -3810,15 +3820,15 @@ static void test_kiuserexceptiondispatcher(void)
         0x48, 0x89, 0xe2,           /* mov %rsp,%rdx */
         0x48, 0x8d, 0x8c, 0x24, 0xf0, 0x04, 0x00, 0x00,
                                     /* lea 0x4f0(%rsp),%rcx */
-
+        0x4c, 0x89, 0x22,           /* mov %r12,(%rdx) */
         0xff, 0x14, 0x25,
-        /* offset: 14 bytes */
+        /* offset: 17 bytes */
         0x00, 0x00, 0x00, 0x00,     /* callq *addr */ /* call hook implementation. */
         0x48, 0x31, 0xc9,           /* xor %rcx, %rcx */
         0x48, 0x31, 0xd2,           /* xor %rdx, %rdx */
 
         0xff, 0x24, 0x25,
-        /* offset: 27 bytes */
+        /* offset: 30 bytes */
         0x00, 0x00, 0x00, 0x00,     /* jmpq *addr */ /* jump to original function. */
     };
 
@@ -3827,6 +3837,8 @@ static void test_kiuserexceptiondispatcher(void)
     DWORD old_protect1, old_protect2;
     EXCEPTION_RECORD record;
     void *bpt_address;
+    CONTEXT ctx;
+    LONG pass;
     BYTE *ptr;
     BOOL ret;
 
@@ -3845,8 +3857,8 @@ static void test_kiuserexceptiondispatcher(void)
     ok(((ULONG64)&pKiUserExceptionDispatcher & 0xffffffff) == ((ULONG64)&pKiUserExceptionDispatcher),
             "Address is too long.\n");
 
-    *(unsigned int *)(hook_trampoline + 14) = (unsigned int)(ULONG_PTR)&phook_KiUserExceptionDispatcher;
-    *(unsigned int *)(hook_trampoline + 27) = (unsigned int)(ULONG_PTR)&pKiUserExceptionDispatcher;
+    *(unsigned int *)(hook_trampoline + 17) = (unsigned int)(ULONG_PTR)&phook_KiUserExceptionDispatcher;
+    *(unsigned int *)(hook_trampoline + 30) = (unsigned int)(ULONG_PTR)&pKiUserExceptionDispatcher;
 
     ret = VirtualProtect(hook_trampoline, ARRAY_SIZE(hook_trampoline), PAGE_EXECUTE_READWRITE, &old_protect1);
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
@@ -3953,6 +3965,35 @@ static void test_kiuserexceptiondispatcher(void)
             == test_kiuserexceptiondispatcher_regs.new_rbp, "rbp does not match.\n");
 
     NtCurrentTeb()->Peb->BeingDebugged = 0;
+
+    vectored_handler = AddVectoredExceptionHandler(TRUE, dbg_except_continue_vectored_handler);
+    pass = 0;
+    InterlockedIncrement(&pass);
+    pRtlCaptureContext(&ctx);
+    if (InterlockedIncrement(&pass) == 2) /* interlocked to prevent compiler from moving before capture */
+    {
+        memcpy(pKiUserExceptionDispatcher, patched_KiUserExceptionDispatcher_bytes,
+                sizeof(patched_KiUserExceptionDispatcher_bytes));
+        got_exception = 0;
+        hook_called = FALSE;
+
+        record.ExceptionCode = 0xceadbeef;
+        test_kiuserexceptiondispatcher_saved_r12 = ctx.R12;
+        ctx.R12 = (ULONG64)0xdeadbeeffeedcafe;
+
+#ifdef __GNUC__
+        /* Spoil r12 value to make sure it doesn't come from the current userspace registers. */
+        __asm__ volatile("movq $0xdeadcafe, %%r12" : : : "%r12");
+#endif
+        pNtRaiseException(&record, &ctx, TRUE);
+        ok(0, "Shouldn't be reached.\n");
+    }
+    else
+    {
+        ok(pass == 3, "Got unexpected pass %d.\n", pass);
+    }
+    ok(hook_called, "Hook was not called.\n");
+    RemoveVectoredExceptionHandler(vectored_handler);
 
     ret = VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes),
             old_protect2, &old_protect2);
@@ -8047,6 +8088,7 @@ START_TEST(exception)
     X(NtQueryInformationThread);
     X(NtSetInformationProcess);
     X(NtSuspendProcess);
+    X(NtRaiseException);
     X(NtResumeProcess);
     X(RtlGetUnloadEventTrace);
     X(RtlGetUnloadEventTraceEx);

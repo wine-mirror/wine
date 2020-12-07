@@ -2081,19 +2081,7 @@ __ASM_GLOBAL_FUNC( call_raise_user_exception_dispatcher,
 /***********************************************************************
  *           call_user_exception_dispatcher
  */
-
-extern void WINAPI user_exception_dispatcher_trampoline( struct stack_layout *stack,
-        void *pKiUserExceptionDispatcher );
-
-__ASM_GLOBAL_FUNC( user_exception_dispatcher_trampoline,
-                   "movq %rcx,%rsp\n\t"
-                   "movq 0x98(%rsp),%rcx\n\t" /* context->Rsp */
-                   "movq 0xa0(%rsp),%rbp\n\t"
-                   "movq 0xa8(%rsp),%rsi\n\t"
-                   "movq 0xb0(%rsp),%rdi\n\t"
-                   "jmpq *%rdx")
-
-void WINAPI do_call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context,
+struct stack_layout * WINAPI setup_user_exception_dispatcher_stack( EXCEPTION_RECORD *rec, CONTEXT *context,
                                                NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*),
                                                struct stack_layout *stack )
 {
@@ -2127,8 +2115,7 @@ void WINAPI do_call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *c
     /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
     if (stack->rec.ExceptionCode == EXCEPTION_BREAKPOINT) stack->context.Rip--;
 
-    amd64_thread_data()->syscall_frame = NULL;
-    user_exception_dispatcher_trampoline( stack, dispatcher );
+    return stack;
 }
 
 __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
@@ -2141,7 +2128,34 @@ __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
                    "1:\tsubq $0x5b0,%r9\n\t" /* sizeof(struct stack_layout) */
                    "cmpq %rsp,%r9\n\t"
                    "cmovbq %r9,%rsp\n\t"
-                   "jmp " __ASM_NAME("do_call_user_exception_dispatcher") "\n\t")
+                   "pushq %r8\n\t"
+                   "subq $0x20,%rsp\n\t"
+                   "call " __ASM_NAME("setup_user_exception_dispatcher_stack") "\n\t"
+                   "addq $0x20,%rsp\n\t"
+                   "popq %r8\n\t"
+                   "mov %rax,%rcx\n\t"
+                   "movq 0xa0(%rcx),%rbp\n\t"
+                   "movq 0x90(%rcx),%rbx\n\t"
+                   "movq 0xa8(%rcx),%rsi\n\t"
+                   "movq 0xb0(%rcx),%rdi\n\t"
+                   "movq 0xd8(%rcx),%r12\n\t"
+                   "movq 0xe0(%rcx),%r13\n\t"
+                   "movq 0xe8(%rcx),%r14\n\t"
+                   "movq 0xf0(%rcx),%r15\n\t"
+                   "movdqa 0x200(%rcx),%xmm6\n\t"
+                   "movdqa 0x210(%rcx),%xmm7\n\t"
+                   "movdqa 0x220(%rcx),%xmm8\n\t"
+                   "movdqa 0x230(%rcx),%xmm9\n\t"
+                   "movdqa 0x240(%rcx),%xmm10\n\t"
+                   "movdqa 0x250(%rcx),%xmm11\n\t"
+                   "movdqa 0x260(%rcx),%xmm12\n\t"
+                   "movdqa 0x270(%rcx),%xmm13\n\t"
+                   "movdqa 0x280(%rcx),%xmm14\n\t"
+                   "movdqa 0x290(%rcx),%xmm15\n\t"
+                   "mov %rcx,%rsp\n\t"
+                   "movq %gs:0x30,%rax\n\t"
+                   "movq $0,0x328(%rax)\n\t"   /* amd64_thread_data()->syscall_frame */
+                   "jmpq *%r8")
 
 /***********************************************************************
  *           is_privileged_instr
