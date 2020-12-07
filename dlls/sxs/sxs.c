@@ -135,14 +135,20 @@ BOOL WINAPI SxsLookupClrGuid(DWORD flags, GUID *clsid, HANDLE actctx, void *buff
 
     if (flags & SXS_LOOKUP_CLR_GUID_FIND_SURROGATE)
     {
-        if ((retval = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES, clsid, &guid_info)))
+        if ((retval = FindActCtxSectionGuid(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
+                ACTIVATION_CONTEXT_SECTION_CLR_SURROGATES, clsid, &guid_info)))
+        {
             flags &= ~SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS;
+        }
     }
 
     if (!retval && (flags & SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS))
     {
-        if ((retval = FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, clsid, &guid_info)))
+        if ((retval = FindActCtxSectionGuid(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
+                ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION, clsid, &guid_info)))
+        {
             flags &= ~SXS_LOOKUP_CLR_GUID_FIND_SURROGATE;
+        }
     }
 
     if (!retval)
@@ -151,7 +157,7 @@ BOOL WINAPI SxsLookupClrGuid(DWORD flags, GUID *clsid, HANDLE actctx, void *buff
         goto out;
     }
 
-    retval = QueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, NULL, &guid_info.ulAssemblyRosterIndex,
+    retval = QueryActCtxW(0, guid_info.hActCtx, &guid_info.ulAssemblyRosterIndex,
             AssemblyDetailedInformationInActivationContext, NULL, 0, &bytes_assembly_info);
     if (!retval && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
     {
@@ -159,7 +165,7 @@ BOOL WINAPI SxsLookupClrGuid(DWORD flags, GUID *clsid, HANDLE actctx, void *buff
     }
 
     assembly_info = heap_alloc(bytes_assembly_info);
-    if (!(retval = QueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, NULL, &guid_info.ulAssemblyRosterIndex,
+    if (!(retval = QueryActCtxW(0, guid_info.hActCtx, &guid_info.ulAssemblyRosterIndex,
             AssemblyDetailedInformationInActivationContext, assembly_info,
             bytes_assembly_info, &bytes_assembly_info)))
     {
@@ -225,6 +231,7 @@ BOOL WINAPI SxsLookupClrGuid(DWORD flags, GUID *clsid, HANDLE actctx, void *buff
     SetLastError(0);
 
 out:
+    ReleaseActCtx(guid_info.hActCtx);
 
     if (flags & SXS_LOOKUP_CLR_GUID_USE_ACTCTX)
         DeactivateActCtx(0, cookie);
