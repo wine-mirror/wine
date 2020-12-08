@@ -1268,6 +1268,33 @@ static void test_mounted_folder(void)
     HANDLE file;
     DWORD size;
 
+    file = CreateFileA( "C:\\", 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+            OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, NULL );
+    ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    status = NtQueryInformationFile( file, &io, &info, sizeof(info), FileAttributeTagInformation );
+    ok(!status, "got status %#x\n", status);
+    ok(!(info.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+            && (info.FileAttributes & FILE_ATTRIBUTE_DIRECTORY), "got attributes %#x\n", info.FileAttributes);
+    ok(!info.ReparseTag, "got reparse tag %#x\n", info.ReparseTag);
+
+    CloseHandle( file );
+
+    file = CreateFileA( "C:\\", 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+            OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL );
+    ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    status = NtQueryInformationFile( file, &io, &info, sizeof(info), FileAttributeTagInformation );
+    ok(!status, "got status %#x\n", status);
+    ok(!(info.FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+            && (info.FileAttributes & FILE_ATTRIBUTE_DIRECTORY), "got attributes %#x\n", info.FileAttributes);
+    ok(!info.ReparseTag, "got reparse tag %#x\n", info.ReparseTag);
+
+    CloseHandle( file );
+
+    ret = GetFileAttributesA( "C:\\" );
+    ok(!(ret & FILE_ATTRIBUTE_REPARSE_POINT) && (ret & FILE_ATTRIBUTE_DIRECTORY), "got attributes %#x\n", ret);
+
     ret = CreateDirectoryA("C:\\winetest_mnt", NULL);
     if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
     {
@@ -1323,6 +1350,10 @@ static void test_mounted_folder(void)
             debugstr_wn(name->FileName, name->FileNameLength / sizeof(WCHAR)));
 
     CloseHandle( file );
+
+    ret = GetFileAttributesA( "C:\\winetest_mnt" );
+    ok(ret != INVALID_FILE_ATTRIBUTES, "got error %u\n", GetLastError());
+    ok((ret & FILE_ATTRIBUTE_REPARSE_POINT) && (ret & FILE_ATTRIBUTE_DIRECTORY), "got attributes %#x\n", ret);
 
     file = CreateFileA( "C:\\winetest_mnt\\windows", 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
             NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL );
