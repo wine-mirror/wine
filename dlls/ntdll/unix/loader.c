@@ -339,7 +339,7 @@ static void set_config_dir(void)
     }
 }
 
-static void init_paths( int argc, char *argv[], char *envp[] )
+static void init_paths( char *argv[] )
 {
     Dl_info info;
 
@@ -350,7 +350,7 @@ static void init_paths( int argc, char *argv[], char *envp[] )
 
     if (!(build_dir = remove_tail( dll_dir, "/dlls/ntdll" )))
     {
-#if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
+#if (defined(__linux__) && !defined(__ANDROID__)) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
         bin_dir = realpath_dirname( "/proc/self/exe" );
 #elif defined (__FreeBSD__) || defined(__DragonFly__)
         bin_dir = realpath_dirname( "/proc/curproc/file" );
@@ -1757,7 +1757,7 @@ static void check_command_line( int argc, char *argv[] )
  */
 void __wine_main( int argc, char *argv[], char *envp[] )
 {
-    init_paths( argc, argv, envp );
+    init_paths( argv );
 
     if (!getenv( "WINELOADERNOEXEC" ))  /* first time around */
     {
