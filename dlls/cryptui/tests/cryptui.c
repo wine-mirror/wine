@@ -398,9 +398,8 @@ static void test_crypt_ui_wiz_import(void)
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
     if (ret)
     {
-        static const WCHAR CA[] = { 'C','A',0 };
         HCERTSTORE ca = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
-         CERT_SYSTEM_STORE_CURRENT_USER, CA);
+         CERT_SYSTEM_STORE_CURRENT_USER, L"CA");
 
         if (ca)
         {
@@ -422,10 +421,8 @@ static void test_crypt_ui_wiz_import(void)
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
     if (ret)
     {
-        static const WCHAR AddressBook[] = { 'A','d','d','r','e','s','s',
-         'B','o','o','k',0 };
         HCERTSTORE addressBook = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
-         CERT_SYSTEM_STORE_CURRENT_USER, AddressBook);
+         CERT_SYSTEM_STORE_CURRENT_USER, L"AddressBook");
 
         if (addressBook)
         {
@@ -476,10 +473,8 @@ static void test_crypt_ui_wiz_import(void)
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
     if (ret)
     {
-        static const WCHAR AddressBook[] = { 'A','d','d','r','e','s','s',
-         'B','o','o','k',0 };
         HCERTSTORE addressBook = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
-         CERT_SYSTEM_STORE_CURRENT_USER, AddressBook);
+         CERT_SYSTEM_STORE_CURRENT_USER, L"AddressBook");
 
         if (addressBook)
         {
@@ -499,9 +494,8 @@ static void test_crypt_ui_wiz_import(void)
     ok(ret, "CryptUIWizImport failed: %08x\n", GetLastError());
     if (ret)
     {
-        static const WCHAR CA[] = { 'C','A',0 };
         HCERTSTORE ca = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
-         CERT_SYSTEM_STORE_CURRENT_USER, CA);
+         CERT_SYSTEM_STORE_CURRENT_USER, L"CA");
 
         if (ca)
         {
