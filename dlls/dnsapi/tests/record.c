@@ -28,8 +28,8 @@
 
 #include "wine/test.h"
 
-static WCHAR name1[] = {'l','o','c','a','l','h','o','s','t',0};
-static WCHAR name2[] = {'L','O','C','A','L','H','O','S','T',0};
+static WCHAR name1[] = L"localhost";
+static WCHAR name2[] = L"LOCALHOST";
 
 static DNS_RECORDW r1 = { NULL, name1, DNS_TYPE_A, sizeof(DNS_A_DATA), { 0 }, 1200, 0, { { 0xffffffff } } };
 static DNS_RECORDW r2 = { NULL, name1, DNS_TYPE_A, sizeof(DNS_A_DATA), { 0 }, 1200, 0, { { 0xffffffff } } };
