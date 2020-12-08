@@ -166,8 +166,6 @@ static void test_process_reference(void)
 
 static void test_SHUnicodeToAnsi(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
-    static const WCHAR emptyW[] = { 0 };
     char buff[16];
     int ret;
 
@@ -186,32 +184,31 @@ static void test_SHUnicodeToAnsi(void)
 
     buff[0] = 1;
     strcpy(buff, "test");
-    ret = pSHUnicodeToAnsi(emptyW, buff, 1);
+    ret = pSHUnicodeToAnsi(L"", buff, 1);
     ok(ret == 1, "Unexpected return value %d.\n", ret);
     ok(*buff == 0, "Unexpected buffer contents.\n");
 
     buff[0] = 1;
-    ret = pSHUnicodeToAnsi(testW, buff, 0);
+    ret = pSHUnicodeToAnsi(L"test", buff, 0);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
     ok(buff[0] == 1, "Unexpected buffer contents.\n");
 
     buff[0] = 1;
-    ret = pSHUnicodeToAnsi(testW, buff, 1);
+    ret = pSHUnicodeToAnsi(L"test", buff, 1);
     ok(ret == 1, "Unexpected return value %d.\n", ret);
     ok(*buff == 0, "Unexpected buffer contents.\n");
 
-    ret = pSHUnicodeToAnsi(testW, buff, 16);
+    ret = pSHUnicodeToAnsi(L"test", buff, 16);
     ok(ret == 5, "Unexpected return value %d.\n", ret);
     ok(!strcmp(buff, "test"), "Unexpected buffer contents.\n");
 
-    ret = pSHUnicodeToAnsi(testW, buff, 2);
+    ret = pSHUnicodeToAnsi(L"test", buff, 2);
     ok(ret == 2, "Unexpected return value %d.\n", ret);
     ok(!strcmp(buff, "t"), "Unexpected buffer contents.\n");
 }
 
 static void test_SHAnsiToUnicode(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
     WCHAR buffW[16];
     int ret;
 
@@ -246,7 +243,7 @@ static void test_SHAnsiToUnicode(void)
 
     ret = pSHAnsiToUnicode("test", buffW, 16);
     ok(ret == 5, "Unexpected return value %d.\n", ret);
-    ok(!lstrcmpW(buffW, testW), "Unexpected buffer contents.\n");
+    ok(!lstrcmpW(buffW, L"test"), "Unexpected buffer contents.\n");
 
     ret = pSHAnsiToUnicode("test", buffW, 2);
     ok(ret == 2, "Unexpected return value %d.\n", ret);
@@ -294,43 +291,40 @@ static void test_SHAnsiToAnsi(void)
 
 static void test_SHUnicodeToUnicode(void)
 {
-    static const WCHAR testW[] = {'t','e','s','t',0};
-    static const WCHAR strW[] = {'a','b','c','d','e','f','g','h','i','k','l','m',0};
-    static const WCHAR emptyW[] = { 0 };
     WCHAR buff[16];
     int ret;
 
     ret = pSHUnicodeToUnicode(NULL, NULL, 0);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
 
-    lstrcpyW(buff, strW);
-    ret = pSHUnicodeToUnicode(testW, buff, 3);
+    lstrcpyW(buff, L"abcdefghiklm");
+    ret = pSHUnicodeToUnicode(L"test", buff, 3);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
-    ok(!memcmp(buff, testW, 2 * sizeof(WCHAR)) && !buff[2], "Unexpected buffer contents.\n");
+    ok(!memcmp(buff, L"test", 2 * sizeof(WCHAR)) && !buff[2], "Unexpected buffer contents.\n");
     ok(buff[3] == 'd', "Unexpected buffer contents.\n");
 
-    lstrcpyW(buff, strW);
-    ret = pSHUnicodeToUnicode(emptyW, buff, 3);
+    lstrcpyW(buff, L"abcdefghiklm");
+    ret = pSHUnicodeToUnicode(L"", buff, 3);
     ok(ret == 1, "Unexpected return value %d.\n", ret);
     ok(!*buff, "Unexpected buffer contents.\n");
     ok(buff[3] == 'd', "Unexpected buffer contents.\n");
 
-    lstrcpyW(buff, strW);
-    ret = pSHUnicodeToUnicode(testW, buff, 4);
+    lstrcpyW(buff, L"abcdefghiklm");
+    ret = pSHUnicodeToUnicode(L"test", buff, 4);
     ok(ret == 0, "Unexpected return value %d.\n", ret);
-    ok(!memcmp(buff, testW, 3 * sizeof(WCHAR)) && !buff[3], "Unexpected buffer contents.\n");
+    ok(!memcmp(buff, L"test", 3 * sizeof(WCHAR)) && !buff[3], "Unexpected buffer contents.\n");
     ok(buff[4] == 'e', "Unexpected buffer contents.\n");
 
-    lstrcpyW(buff, strW);
-    ret = pSHUnicodeToUnicode(testW, buff, 5);
+    lstrcpyW(buff, L"abcdefghiklm");
+    ret = pSHUnicodeToUnicode(L"test", buff, 5);
     ok(ret == 5, "Unexpected return value %d.\n", ret);
-    ok(!lstrcmpW(buff, testW), "Unexpected buffer contents.\n");
+    ok(!lstrcmpW(buff, L"test"), "Unexpected buffer contents.\n");
     ok(buff[5] == 'f', "Unexpected buffer contents.\n");
 
-    lstrcpyW(buff, strW);
-    ret = pSHUnicodeToUnicode(testW, buff, 6);
+    lstrcpyW(buff, L"abcdefghiklm");
+    ret = pSHUnicodeToUnicode(L"test", buff, 6);
     ok(ret == 5, "Unexpected return value %d.\n", ret);
-    ok(!lstrcmpW(buff, testW), "Unexpected buffer contents.\n");
+    ok(!lstrcmpW(buff, L"test"), "Unexpected buffer contents.\n");
     ok(buff[5] == 'f', "Unexpected buffer contents.\n");
 }
 
