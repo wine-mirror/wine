@@ -74,6 +74,9 @@
 #  define _POSIX_SPAWN_DISABLE_ASLR 0x0100
 # endif
 #endif
+#ifdef __ANDROID__
+# include <jni.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -1579,6 +1582,123 @@ static void start_main_thread(void)
     server_init_process_done();
 }
 
+#ifdef __ANDROID__
+
+#ifndef WINE_JAVA_CLASS
+#define WINE_JAVA_CLASS "org/winehq/wine/WineActivity"
+#endif
+
+JavaVM *java_vm = NULL;
+jobject java_object = 0;
+unsigned short java_gdt_sel = 0;
+
+/* main Wine initialisation */
+static jstring wine_init_jni( JNIEnv *env, jobject obj, jobjectArray cmdline, jobjectArray environment )
+{
+    char **argv;
+    char *str;
+    char error[1024];
+    int i, argc, length;
+
+    /* get the command line array */
+
+    argc = (*env)->GetArrayLength( env, cmdline );
+    for (i = length = 0; i < argc; i++)
+    {
+        jobject str_obj = (*env)->GetObjectArrayElement( env, cmdline, i );
+        length += (*env)->GetStringUTFLength( env, str_obj ) + 1;
+    }
+
+    argv = malloc( (argc + 1) * sizeof(*argv) + length );
+    str = (char *)(argv + argc + 1);
+    for (i = 0; i < argc; i++)
+    {
+        jobject str_obj = (*env)->GetObjectArrayElement( env, cmdline, i );
+        length = (*env)->GetStringUTFLength( env, str_obj );
+        (*env)->GetStringUTFRegion( env, str_obj, 0,
+                                    (*env)->GetStringLength( env, str_obj ), str );
+        argv[i] = str;
+        str[length] = 0;
+        str += length + 1;
+    }
+    argv[argc] = NULL;
+
+    /* set the environment variables */
+
+    if (environment)
+    {
+        int count = (*env)->GetArrayLength( env, environment );
+        for (i = 0; i < count - 1; i += 2)
+        {
+            jobject var_obj = (*env)->GetObjectArrayElement( env, environment, i );
+            jobject val_obj = (*env)->GetObjectArrayElement( env, environment, i + 1 );
+            const char *var = (*env)->GetStringUTFChars( env, var_obj, NULL );
+
+            if (val_obj)
+            {
+                const char *val = (*env)->GetStringUTFChars( env, val_obj, NULL );
+                setenv( var, val, 1 );
+                if (!strcmp( var, "LD_LIBRARY_PATH" ))
+                {
+                    void (*update_func)( const char * ) = dlsym( RTLD_DEFAULT,
+                                                                 "android_update_LD_LIBRARY_PATH" );
+                    if (update_func) update_func( val );
+                }
+                else if (!strcmp( var, "WINEDEBUGLOG" ))
+                {
+                    int fd = open( val, O_WRONLY | O_CREAT | O_APPEND, 0666 );
+                    if (fd != -1)
+                    {
+                        dup2( fd, 2 );
+                        close( fd );
+                    }
+                }
+                (*env)->ReleaseStringUTFChars( env, val_obj, val );
+            }
+            else unsetenv( var );
+
+            (*env)->ReleaseStringUTFChars( env, var_obj, var );
+        }
+    }
+
+    java_object = (*env)->NewGlobalRef( env, obj );
+
+    init_paths( argv );
+    virtual_init();
+    init_environment( argc, argv, environ );
+
+#ifdef __i386__
+    {
+        unsigned short java_fs;
+        __asm__( "mov %%fs,%0" : "=r" (java_fs) );
+        __asm__( "mov %0,%%fs" :: "r" (0) );
+        start_main_thread();
+        __asm__( "mov %0,%%fs" :: "r" (java_fs) );
+    }
+#else
+    start_main_thread();
+#endif
+    return (*env)->NewStringUTF( env, error );
+}
+
+jint JNI_OnLoad( JavaVM *vm, void *reserved )
+{
+    static const JNINativeMethod method =
+    {
+        "wine_init", "([Ljava/lang/String;[Ljava/lang/String;)Ljava/lang/String;", wine_init_jni
+    };
+
+    JNIEnv *env;
+    jclass class;
+
+    java_vm = vm;
+    if ((*vm)->AttachCurrentThread( vm, &env, NULL ) != JNI_OK) return JNI_ERR;
+    if (!(class = (*env)->FindClass( env, WINE_JAVA_CLASS ))) return JNI_ERR;
+    (*env)->RegisterNatives( env, class, &method, 1 );
+    return JNI_VERSION_1_6;
+}
+
+#endif  /* __ANDROID__ */
 
 #ifdef __APPLE__
 static void *apple_wine_thread( void *arg )

@@ -138,14 +138,7 @@ public class WineActivity extends Activity
 
         createProgressDialog( 0, "Setting up the Windows environment..." );
 
-        try
-        {
-            System.loadLibrary( "wine" );
-        }
-        catch (java.lang.UnsatisfiedLinkError e)
-        {
-            System.load( libdir.toString() + "/libwine.so" );
-        }
+        System.load( dlldir.toString() + "/ntdll.so" );
         prefix.mkdirs();
 
         runWine( cmdline, env );
