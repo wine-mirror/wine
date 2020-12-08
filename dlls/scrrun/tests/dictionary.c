@@ -333,7 +333,7 @@ static void test_hash_value(void)
         L"123",
         L"A",
         L"a",
-        { 0 }
+        L""
     };
 
     static const int int_hash_tests[] = {

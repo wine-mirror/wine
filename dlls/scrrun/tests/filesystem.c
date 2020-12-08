@@ -44,7 +44,6 @@ static inline ULONG get_refcount(IUnknown *iface)
     return IUnknown_Release(iface);
 }
 
-static const WCHAR crlfW[] = {'\r','\n',0};
 static const char utf16bom[] = {0xff,0xfe,0};
 static const WCHAR testfileW[] = L"test.txt";
 
@@ -1572,7 +1571,7 @@ static void test_WriteLine(void)
     len = MultiByteToWideChar(CP_ACP, 0, buffA, r, buffW, ARRAY_SIZE(buffW));
     buffW[len] = 0;
     lstrcpyW(buff2W, nameW);
-    lstrcatW(buff2W, crlfW);
+    lstrcatW(buff2W, L"\r\n");
     ok(!lstrcmpW(buff2W, buffW), "got %s, expected %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(buff2W));
     CloseHandle(file);
     DeleteFileW(nameW);
@@ -1596,7 +1595,7 @@ static void test_WriteLine(void)
     buff2W[0] = 0xfeff;
     buff2W[1] = 0;
     lstrcatW(buff2W, nameW);
-    lstrcatW(buff2W, crlfW);
+    lstrcatW(buff2W, L"\r\n");
     ok(!lstrcmpW(buff2W, buffW), "got %s, expected %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(buff2W));
     CloseHandle(file);
     DeleteFileW(nameW);
@@ -1665,9 +1664,9 @@ static void test_ReadAll(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     lstrcpyW(buffW, nameW);
-    lstrcatW(buffW, crlfW);
+    lstrcatW(buffW, L"\r\n");
     lstrcatW(buffW, secondlineW);
-    lstrcatW(buffW, crlfW);
+    lstrcatW(buffW, L"\r\n");
     str = NULL;
     hr = ITextStream_ReadAll(stream, &str);
     ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
@@ -1699,7 +1698,7 @@ static void test_ReadAll(void)
     SysFreeString(str);
 
     lstrcpyW(buffW, secondlineW);
-    lstrcatW(buffW, crlfW);
+    lstrcatW(buffW, L"\r\n");
     str = NULL;
     hr = ITextStream_ReadAll(stream, &str);
     ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
@@ -1810,9 +1809,9 @@ static void test_Read(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     lstrcpyW(buffW, nameW);
-    lstrcatW(buffW, crlfW);
+    lstrcatW(buffW, L"\r\n");
     lstrcatW(buffW, secondlineW);
-    lstrcatW(buffW, crlfW);
+    lstrcatW(buffW, L"\r\n");
     str = NULL;
     hr = ITextStream_Read(stream, 500, &str);
     ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
@@ -1843,7 +1842,7 @@ static void test_Read(void)
     SysFreeString(str);
 
     lstrcpyW(buffW, secondlineW);
-    lstrcatW(buffW, crlfW);
+    lstrcatW(buffW, L"\r\n");
     str = NULL;
     hr = ITextStream_Read(stream, 100, &str);
     ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
@@ -1856,9 +1855,9 @@ static void test_Read(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     lstrcpyW(buffW, nameW);
-    lstrcatW(buffW, crlfW);
+    lstrcatW(buffW, L"\r\n");
     lstrcatW(buffW, secondlineW);
-    lstrcatW(buffW, crlfW);
+    lstrcatW(buffW, L"\r\n");
     str = NULL;
     hr = ITextStream_Read(stream, 500, &str);
     ok(hr == S_FALSE || broken(hr == S_OK) /* win2003 */, "got 0x%08x\n", hr);
@@ -2102,14 +2101,14 @@ struct driveexists_test {
  * with the drive letter of a drive of this type. If such a drive does not exist,
  * the test will be skipped. */
 static const struct driveexists_test driveexiststestdata[] = {
-    { {'N',':','\\',0}, DRIVE_NO_ROOT_DIR, VARIANT_FALSE },
-    { {'R',':','\\',0}, DRIVE_REMOVABLE, VARIANT_TRUE },
-    { {'F',':','\\',0}, DRIVE_FIXED, VARIANT_TRUE },
-    { {'F',':',0}, DRIVE_FIXED, VARIANT_TRUE },
-    { {'F','?',0}, DRIVE_FIXED, VARIANT_FALSE },
-    { {'F',0}, DRIVE_FIXED, VARIANT_TRUE },
-    { {'?',0}, -1, VARIANT_FALSE },
-    { { 0 } }
+    { L"N:\\", DRIVE_NO_ROOT_DIR, VARIANT_FALSE },
+    { L"R:\\", DRIVE_REMOVABLE, VARIANT_TRUE },
+    { L"F:\\", DRIVE_FIXED, VARIANT_TRUE },
+    { L"F:", DRIVE_FIXED, VARIANT_TRUE },
+    { L"F?", DRIVE_FIXED, VARIANT_FALSE },
+    { L"F", DRIVE_FIXED, VARIANT_TRUE },
+    { L"?", -1, VARIANT_FALSE },
+    { L"" }
 };
 
 static void test_DriveExists(void)
@@ -2118,7 +2117,7 @@ static void test_DriveExists(void)
     HRESULT hr;
     VARIANT_BOOL ret;
     BSTR drivespec;
-    WCHAR root[] = {'?',':','\\',0};
+    WCHAR root[] = L"?:\\";
 
     hr = IFileSystem3_DriveExists(fs3, NULL, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
@@ -2175,14 +2174,14 @@ struct getdrivename_test {
 };
 
 static const struct getdrivename_test getdrivenametestdata[] = {
-    { {'C',':','\\','1','.','t','s','t',0}, {'C',':',0} },
-    { {'O',':','\\','1','.','t','s','t',0}, {'O',':',0} },
-    { {'O',':',0}, {'O',':',0} },
-    { {'o',':',0}, {'o',':',0} },
-    { {'O','O',':',0} },
-    { {':',0} },
-    { {'O',0} },
-    { { 0 } }
+    { L"C:\\1.tst", L"C:" },
+    { L"O:\\1.tst", L"O:" },
+    { L"O:", L"O:" },
+    { L"o:", L"o:" },
+    { L"OO:" },
+    { L":" },
+    { L"O" },
+    { L"" }
 };
 
 static void test_GetDriveName(void)
@@ -2225,7 +2224,7 @@ static void test_GetDrive(void)
     HRESULT hr;
     IDrive *drive_fixed, *drive;
     BSTR dl_fixed, drivespec;
-    WCHAR root[] = {'?',':','\\',0};
+    WCHAR root[] = L"?:\\";
 
     drive = (void*)0xdeadbeef;
     hr = IFileSystem3_GetDrive(fs3, NULL, NULL);
@@ -2266,12 +2265,12 @@ static void test_GetDrive(void)
             { {dl_upper,':',0}, S_OK, {dl_upper,0} },
             { {dl_upper,':','\\',0}, S_OK, {dl_upper,0} },
             { {dl_lower,':','\\',0}, S_OK, {dl_upper,0} },
-            { {dl_upper,'\\',0}, E_INVALIDARG, { 0 } },
-            { {dl_lower,'\\',0}, E_INVALIDARG, { 0 } },
-            { {'$',':','\\',0}, E_INVALIDARG, { 0 } },
-            { {'\\','h','o','s','t','\\','s','h','a','r','e',0}, E_INVALIDARG, { 0 } },
-            { {'h','o','s','t','\\','s','h','a','r','e',0}, E_INVALIDARG, { 0 } },
-            { { 0 } },
+            { {dl_upper,'\\',0 }, E_INVALIDARG, L""},
+            { {dl_lower,'\\',0 }, E_INVALIDARG, L""},
+            { L"$:\\", E_INVALIDARG, L"" },
+            { L"\\host\\share", E_INVALIDARG, L"" },
+            { L"host\\share", E_INVALIDARG, L"" },
+            { L"" },
         };
         struct getdrive_test *ptr = &testdata[0];
 
@@ -2349,10 +2348,10 @@ static const struct extension_test {
     WCHAR path[20];
     WCHAR ext[10];
 } extension_tests[] = {
-    { {'n','o','e','x','t',0}, {0} },
-    { {'n','.','o','.','e','x','t',0}, {'e','x','t',0} },
-    { {'n','.','o','.','e','X','t',0}, {'e','X','t',0} },
-    { { 0 } }
+    { L"noext", L"" },
+    { L"n.o.ext", L"ext" },
+    { L"n.o.eXt", L"eXt" },
+    { L"" }
 };
 
 static void test_GetExtensionName(void)
