@@ -292,19 +292,13 @@ static void test_32bit_win(void)
     UINT uiLengthA, uiLengthW;
     char mypathA[MAX_PATH];
     WCHAR mypathW[MAX_PATH];
-    char rootA[] = "\\";
-    WCHAR rootW[] = { '\\', 0 };
-    WCHAR emptyW[] = { 0 };
-    char varfileinfoA[] = "\\VarFileInfo\\Translation";
-    WCHAR varfileinfoW[]    = { '\\','V','a','r','F','i','l','e','I','n','f','o',
-                                '\\','T','r','a','n','s','l','a','t','i','o','n', 0 };
-    char WineVarFileInfoA[] = { 0x09, 0x04, 0xE4, 0x04 };
-    char FileDescriptionA[] = "\\StringFileInfo\\040904E4\\FileDescription";
-    WCHAR FileDescriptionW[] = { '\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o',
-                                '\\','0','4','0','9','0','4','E','4',
-                                '\\','F','i','l','e','D','e','s','c','r','i','p','t','i','o','n', 0 };
-    char WineFileDescriptionA[] = "FileDescription";
-    WCHAR WineFileDescriptionW[] = { 'F','i','l','e','D','e','s','c','r','i','p','t','i','o','n', 0 };
+    const char varfileinfoA[] = "\\VarFileInfo\\Translation";
+    const WCHAR varfileinfoW[] = L"\\VarFileInfo\\Translation";
+    const char WineVarFileInfoA[] = { 0x09, 0x04, 0xE4, 0x04 };
+    const char FileDescriptionA[] = "\\StringFileInfo\\040904E4\\FileDescription";
+    const WCHAR FileDescriptionW[] = L"\\StringFileInfo\\040904E4\\FileDescription";
+    const char WineFileDescriptionA[] = "FileDescription";
+    const WCHAR WineFileDescriptionW[] = L"FileDescription";
     BOOL is_unicode_enabled = TRUE;
 
     /* A copy from dlls/version/info.c */
@@ -397,7 +391,7 @@ static void test_32bit_win(void)
 
     /* Get the VS_FIXEDFILEINFO information, this must be the same for both A- and W-Calls */ 
 
-    retA = VerQueryValueA( pVersionInfoA, rootA, (LPVOID *)&pBufA, &uiLengthA );
+    retA = VerQueryValueA( pVersionInfoA, "\\", (void **)&pBufA, &uiLengthA );
     ok (retA, "VerQueryValueA failed: GetLastError = %u\n", GetLastError());
     ok ( uiLengthA == sizeof(VS_FIXEDFILEINFO), "Size (%d) doesn't match the size of the VS_FIXEDFILEINFO struct\n", uiLengthA);
 
@@ -409,10 +403,10 @@ static void test_32bit_win(void)
             ok (retW, "VerQueryValueW failed: GetLastError = %u\n", GetLastError());
         }
 
-        retW = VerQueryValueW( pVersionInfoW, emptyW, (LPVOID *)&pBufW, &uiLengthW );
+        retW = VerQueryValueW( pVersionInfoW, L"", (void **)&pBufW, &uiLengthW );
         ok (retW, "VerQueryValueW failed: GetLastError = %u\n", GetLastError());
 
-        retW = VerQueryValueW( pVersionInfoW, rootW, (LPVOID *)&pBufW, &uiLengthW );
+        retW = VerQueryValueW( pVersionInfoW, L"\\", (void **)&pBufW, &uiLengthW );
         ok (retW, "VerQueryValueW failed: GetLastError = %u\n", GetLastError());
         ok ( uiLengthW == sizeof(VS_FIXEDFILEINFO), "Size (%d) doesn't match the size of the VS_FIXEDFILEINFO struct\n", uiLengthW );
 
@@ -639,7 +633,6 @@ static void test_GetFileVersionInfoEx(void)
     const LANGID lang = GetUserDefaultUILanguage();
     const LANGID english = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
     const WORD unicode = 1200; /* = UNICODE */
-    const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
     const DWORD test_flags[] = {
         0, FILE_VER_GET_LOCALISED, FILE_VER_GET_NEUTRAL,
         FILE_VER_GET_LOCALISED | FILE_VER_GET_NEUTRAL,
@@ -658,13 +651,13 @@ static void test_GetFileVersionInfoEx(void)
         return;
     }
 
-    size = GetFileVersionInfoSizeW(kernel32W, NULL);
+    size = GetFileVersionInfoSizeW(L"kernel32.dll", NULL);
     ok(size, "GetFileVersionInfoSize(kernel32) error %u\n", GetLastError());
 
     ver = HeapAlloc(GetProcessHeap(), 0, size);
     assert(ver);
 
-    ret = GetFileVersionInfoW(kernel32W, 0, size, ver);
+    ret = GetFileVersionInfoW(L"kernel32.dll", 0, size, ver);
     ok(ret, "GetFileVersionInfo error %u\n", GetLastError());
 
     ret = VerQueryValueA(ver, "\\VarFileInfo\\Translation", (void **)&p, &size);
@@ -694,13 +687,13 @@ static void test_GetFileVersionInfoEx(void)
 
     for (i = 0; i < ARRAY_SIZE(test_flags); i++)
     {
-        size = pGetFileVersionInfoSizeExW(test_flags[i], kernel32W, NULL);
+        size = pGetFileVersionInfoSizeExW(test_flags[i], L"kernel32.dll", NULL);
         ok(size, "[%u] GetFileVersionInfoSizeEx(kernel32) error %u\n", i, GetLastError());
 
         ver = HeapAlloc(GetProcessHeap(), 0, size);
         assert(ver);
 
-        ret = pGetFileVersionInfoExW(test_flags[i], kernel32W, 0, size, ver);
+        ret = pGetFileVersionInfoExW(test_flags[i], L"kernel32.dll", 0, size, ver);
         ok(ret, "[%u] GetFileVersionInfoEx error %u\n", i, GetLastError());
 
         ret = VerQueryValueA(ver, "\\VarFileInfo\\Translation", (void **)&p, &size);
