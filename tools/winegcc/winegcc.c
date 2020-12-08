@@ -638,7 +638,7 @@ static const char *get_multiarch_dir( enum target_cpu cpu )
 static char *get_lib_dir( struct options *opts )
 {
     const char *stdlibpath[] = { libdir, LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
-    static const char libwine[] = "/libwine.so";
+    static const char ntdll[] = "/wine/ntdll.so";
     const char *bit_suffix, *other_bit_suffix, *build_multiarch, *target_multiarch;
     const char *root = opts->sysroot ? opts->sysroot : "";
     unsigned int i;
@@ -658,31 +658,31 @@ static char *get_lib_dir( struct options *opts )
 
         if (!stdlibpath[i]) continue;
         buffer = xmalloc( strlen(root) + strlen(stdlibpath[i]) +
-                          strlen("/arm-linux-gnueabi") + strlen(libwine) + 1 );
+                          strlen("/arm-linux-gnueabi") + strlen(ntdll) + 1 );
         strcpy( buffer, root );
         strcat( buffer, stdlibpath[i] );
         p = buffer + strlen(buffer);
         while (p > buffer && p[-1] == '/') p--;
-        strcpy( p, libwine );
+        strcpy( p, ntdll );
         if (check_platform( opts, buffer )) goto found;
         if (p > buffer + 2 && (!memcmp( p - 2, "32", 2 ) || !memcmp( p - 2, "64", 2 )))
         {
             p -= 2;
-            strcpy( p, libwine );
+            strcpy( p, ntdll );
             if (check_platform( opts, buffer )) goto found;
         }
         strcpy( p, bit_suffix );
-        strcat( p, libwine );
+        strcat( p, ntdll );
         if (check_platform( opts, buffer )) goto found;
         strcpy( p, target_multiarch );
-        strcat( p, libwine );
+        strcat( p, ntdll );
         if (check_platform( opts, buffer )) goto found;
 
         strcpy( buffer, root );
         strcat( buffer, stdlibpath[i] );
         p = buffer + strlen(buffer);
         while (p > buffer && p[-1] == '/') p--;
-        strcpy( p, libwine );
+        strcpy( p, ntdll );
 
         /* try to fixup each parent dirs named lib, lib32 or lib64 with target bitness suffix */
         while (p > buffer)
@@ -724,7 +724,7 @@ static char *get_lib_dir( struct options *opts )
         continue;
 
     found:
-        buffer[strlen(buffer) - strlen(libwine)] = 0;
+        buffer[strlen(buffer) - strlen(ntdll)] = 0;
         return buffer;
     }
     return strmake( "%s%s", root, LIBDIR );
