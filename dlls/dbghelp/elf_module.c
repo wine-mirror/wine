@@ -1752,13 +1752,10 @@ static const struct loader_ops elf_loader_ops =
 BOOL elf_read_wine_loader_dbg_info(struct process* pcs, ULONG_PTR addr)
 {
     struct elf_info     elf_info;
-    WCHAR *loader;
     BOOL ret;
 
     elf_info.flags = ELF_INFO_DEBUG_HEADER | ELF_INFO_MODULE;
-    loader = get_wine_loader_name(pcs);
-    ret = elf_search_and_load_file(pcs, loader, addr, 0, &elf_info);
-    heap_free(loader);
+    ret = elf_search_and_load_file(pcs, get_wine_loader_name(pcs), addr, 0, &elf_info);
     if (!ret || !elf_info.dbg_hdr_addr) return FALSE;
 
     TRACE("Found ELF debug header %#lx\n", elf_info.dbg_hdr_addr);

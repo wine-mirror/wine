@@ -138,37 +138,12 @@ void module_set_module(struct module* module, const WCHAR* name)
 }
 
 /* Returned string must be freed by caller */
-WCHAR *get_wine_loader_name(struct process *pcs)
+const WCHAR *get_wine_loader_name(struct process *pcs)
 {
-    static const WCHAR wineW[] = {'w','i','n','e',0};
-    static const WCHAR suffixW[] = {'6','4',0};
-    WCHAR *buffer, *p;
-    const char *env;
-
-    /* All binaries are loaded with WINELOADER (if run from tree) or by the
-     * main executable
-     */
-    if ((env = getenv("WINELOADER")))
-    {
-        DWORD len = 2 + MultiByteToWideChar( CP_UNIXCP, 0, env, -1, NULL, 0 );
-        buffer = heap_alloc( len * sizeof(WCHAR) );
-        MultiByteToWideChar( CP_UNIXCP, 0, env, -1, buffer, len );
-    }
-    else
-    {
-        buffer = heap_alloc( sizeof(wineW) + 2 * sizeof(WCHAR) );
-        lstrcpyW( buffer, wineW );
-    }
-
-    p = buffer + lstrlenW( buffer ) - lstrlenW( suffixW );
-    if (p > buffer && !wcscmp( p, suffixW ))
-        *p = 0;
-
-    if (pcs->is_64bit)
-        lstrcatW(buffer, suffixW);
-
-    TRACE( "returning %s\n", debugstr_w(buffer) );
-    return buffer;
+    const WCHAR *name = process_getenv(pcs, L"WINELOADER");
+    if (!name) name = pcs->is_64bit ? L"wine64" : L"wine";
+    TRACE("returning %s\n", debugstr_w(name));
+    return name;
 }
 
 static const char*      get_module_type(enum module_type type, BOOL virtual)
