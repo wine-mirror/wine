@@ -8,12 +8,6 @@ WINE_1.0
     __wine_main_wargv;
     wine_anon_mmap;
     wine_dll_set_callback;
-    wine_init;
-    wine_init_argv0_path;
-    wine_mmap_add_reserved_area;
-    wine_mmap_enum_reserved_areas;
-    wine_mmap_is_in_reserved_area;
-    wine_mmap_remove_reserved_area;
 
     /* the following functions are obsolete and only exported for backwards compatibility */
 
@@ -99,6 +93,8 @@ WINE_1.0
     wine_get_ss;
     wine_get_user_name;
     wine_get_version;
+    wine_init;
+    wine_init_argv0_path;
     wine_is_dbcs_leadbyte;
     wine_ldt_alloc_entries;
     wine_ldt_alloc_fs;
@@ -112,6 +108,10 @@ WINE_1.0
     wine_ldt_is_system;
     wine_ldt_realloc_entries;
     wine_ldt_set_entry;
+    wine_mmap_add_reserved_area;
+    wine_mmap_enum_reserved_areas;
+    wine_mmap_is_in_reserved_area;
+    wine_mmap_remove_reserved_area;
     wine_pthread_get_functions;
     wine_pthread_set_functions;
     wine_set_fs;

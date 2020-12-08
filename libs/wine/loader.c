@@ -66,15 +66,6 @@ char **__wine_main_argv = NULL;
 WCHAR **__wine_main_wargv = NULL;
 char **__wine_main_environ = NULL;
 
-struct dll_path_context
-{
-    unsigned int index; /* current index in the dll path list */
-    char *buffer;       /* buffer used for storing path names */
-    char *name;         /* start of file name part in buffer (including leading slash) */
-    int   namelen;      /* length of file name without .so extension */
-    int   win16;        /* 16-bit dll search */
-};
-
 #define MAX_DLLS 100
 
 static struct
@@ -90,14 +81,27 @@ static const IMAGE_NT_HEADERS *main_exe;
 typedef void (*load_dll_callback_t)( void *, const char * );
 static load_dll_callback_t load_dll_callback;
 
-extern const char *build_dir;
+extern void *wine_anon_mmap( void *start, size_t size, int prot, int flags );
+
+#ifdef __ASM_OBSOLETE
+
+struct dll_path_context
+{
+    unsigned int index; /* current index in the dll path list */
+    char *buffer;       /* buffer used for storing path names */
+    char *name;         /* start of file name part in buffer (including leading slash) */
+    int   namelen;      /* length of file name without .so extension */
+    int   win16;        /* 16-bit dll search */
+};
+
 static const char *default_dlldir;
 static const char **dll_paths;
 static unsigned int nb_dll_paths;
 static int dll_path_maxlen;
 
-extern void *wine_anon_mmap( void *start, size_t size, int prot, int flags );
-extern void wine_init_argv0_path( const char *argv0 );
+extern const char *build_dir;
+
+extern void wine_init_argv0_path_obsolete( const char *argv0 );
 extern void mmap_init(void);
 extern const char *get_dlldir( const char **default_dlldir );
 
@@ -226,6 +230,7 @@ static inline void free_dll_path( struct dll_path_context *context )
     free( context->buffer );
 }
 
+#endif  /* __ASM_OBSOLETE */
 
 /* adjust an array of pointers to make them into RVAs */
 static inline void fixup_rva_ptrs( void *array, BYTE *base, unsigned int count )
@@ -784,16 +789,6 @@ int wine_dll_get_owner_obsolete( const char *name, char *buffer, int size, int *
     return ret;
 }
 
-__ASM_OBSOLETE(wine_dlopen);
-__ASM_OBSOLETE(wine_dlsym);
-__ASM_OBSOLETE(wine_dlclose);
-__ASM_OBSOLETE(wine_dll_enum_load_path);
-__ASM_OBSOLETE(wine_dll_get_owner);
-__ASM_OBSOLETE(wine_dll_load);
-__ASM_OBSOLETE(wine_dll_load_main_exe);
-__ASM_OBSOLETE(wine_dll_unload);
-
-#endif /* __ASM_OBSOLETE */
 
 /***********************************************************************
  *           set_max_limit
@@ -878,9 +873,9 @@ static void apple_create_wine_thread( void *init_func )
          * fails, just let it go wherever.  It'll be a waste of space, but we
          * can go on. */
         if (!pthread_attr_getstacksize( &attr, &info.desired_size ) &&
-            wine_mmap_enum_reserved_areas( apple_alloc_thread_stack, &info, 1 ))
+            wine_mmap_enum_reserved_areas_obsolete( apple_alloc_thread_stack, &info, 1 ))
         {
-            wine_mmap_remove_reserved_area( info.stack, info.desired_size, 0 );
+            wine_mmap_remove_reserved_area_obsolete( info.stack, info.desired_size, 0 );
             pthread_attr_setstackaddr( &attr, (char*)info.stack + info.desired_size );
         }
 #endif
@@ -958,7 +953,7 @@ static void apple_main_thread( void (*init_func)(void) )
  *
  * Main Wine initialisation.
  */
-void wine_init( int argc, char *argv[], char *error, int error_size )
+void wine_init_obsolete( int argc, char *argv[], char *error, int error_size )
 {
     struct dll_path_context context;
     char *path;
@@ -973,7 +968,7 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     set_max_limit( RLIMIT_AS );
 #endif
 
-    wine_init_argv0_path( argv[0] );
+    wine_init_argv0_path_obsolete( argv[0] );
     build_dll_path();
     __wine_main_argc = argc;
     __wine_main_argv = argv;
@@ -1012,3 +1007,15 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     init_func();
 #endif
 }
+
+__ASM_OBSOLETE(wine_dlopen);
+__ASM_OBSOLETE(wine_dlsym);
+__ASM_OBSOLETE(wine_dlclose);
+__ASM_OBSOLETE(wine_dll_enum_load_path);
+__ASM_OBSOLETE(wine_dll_get_owner);
+__ASM_OBSOLETE(wine_dll_load);
+__ASM_OBSOLETE(wine_dll_load_main_exe);
+__ASM_OBSOLETE(wine_dll_unload);
+__ASM_OBSOLETE(wine_init);
+
+#endif /* __ASM_OBSOLETE */

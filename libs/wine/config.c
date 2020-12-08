@@ -20,6 +20,9 @@
 
 #include "config.h"
 #include "wine/port.h"
+#include "wine/asm.h"
+
+#ifdef __ASM_OBSOLETE
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -40,7 +43,6 @@
 #define _POSIX_SPAWN_DISABLE_ASLR 0x0100
 #endif
 #endif
-#include "wine/asm.h"
 
 static char *bindir;
 static char *dlldir;
@@ -296,7 +298,7 @@ static int set_dlldir( char *libdir )
 }
 
 /* initialize the argv0 path */
-void wine_init_argv0_path( const char *argv0 )
+void wine_init_argv0_path_obsolete( const char *argv0 )
 {
     const char *basename, *wineloader;
 
@@ -329,8 +331,6 @@ done:
         argv0_name = xstrdup( basename );
     }
 }
-
-#ifdef __ASM_OBSOLETE
 
 static const char server_config_dir[] = "/.wine";        /* config dir relative to $HOME */
 static const char server_root_prefix[] = "/tmp/.wine";   /* prefix for server root dir */
@@ -622,6 +622,7 @@ void wine_exec_wine_binary_obsolete( const char *name, char **argv, const char *
     free( argv[0] );
 }
 
+__ASM_OBSOLETE(wine_init_argv0_path);
 __ASM_OBSOLETE(wine_get_build_dir);
 __ASM_OBSOLETE(wine_get_build_id);
 __ASM_OBSOLETE(wine_get_config_dir);
