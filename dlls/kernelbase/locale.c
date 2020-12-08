@@ -5205,7 +5205,7 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
                                             WCHAR *dst, int dstlen, NLSVERSIONINFO *version,
                                             void *reserved, LPARAM handle )
 {
-    const struct sortguid *sortid;
+    const struct sortguid *sortid = NULL;
     LPWSTR dst_ptr;
     INT len;
 
@@ -5236,7 +5236,7 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
 
     if (!dstlen) dst = NULL;
 
-    if (!(sortid = get_language_sort( locale )))
+    if (flags & LCMAP_LINGUISTIC_CASING && !(sortid = get_language_sort( locale )))
     {
         FIXME( "unknown locale %s\n", debugstr_w(locale) );
         SetLastError( ERROR_INVALID_PARAMETER );
