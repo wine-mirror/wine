@@ -1716,8 +1716,8 @@ static void test_GetGlyphIndices(void)
     testtext[0] = 'T';
     charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
     ok(charcount == 5, "GetGlyphIndicesW count of glyphs should = 5 not %d\n", charcount);
-    todo_wine ok(glyphs[0] == 0, "GetGlyphIndicesW for tmDefaultChar should be 0 not %04x\n", glyphs[0]);
-    todo_wine ok(glyphs[4] == 0, "GetGlyphIndicesW should have returned 0 not %04x\n", glyphs[4]);
+    ok(glyphs[0] == 0, "GetGlyphIndicesW for tmDefaultChar should be 0 not %04x\n", glyphs[0]);
+    ok(glyphs[4] == 0, "GetGlyphIndicesW should have returned 0 not %04x\n", glyphs[4]);
     DeleteObject(SelectObject(hdc, hOldFont));
 
     ret = pRemoveFontMemResourceEx(rsrc);

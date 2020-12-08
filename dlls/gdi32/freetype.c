@@ -2601,7 +2601,7 @@ static UINT CDECL freetype_get_default_glyph( struct gdi_font *font )
     if ((pOS2 = pFT_Get_Sfnt_Table( ft_face, ft_sfnt_os2 )))
     {
         UINT glyph = pOS2->usDefaultChar;
-        freetype_get_glyph_index( font, &glyph, TRUE );
+        if (glyph) freetype_get_glyph_index( font, &glyph, TRUE );
         return glyph;
     }
     if (!pFT_Get_WinFNT_Header( ft_face, &winfnt )) return winfnt.default_char + winfnt.first_char;
