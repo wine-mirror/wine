@@ -622,6 +622,7 @@ static void load_android_libs(void)
 
 JavaVM **p_java_vm = NULL;
 jobject *p_java_object = NULL;
+unsigned short *p_java_gdt_sel = NULL;
 
 static BOOL process_attach(void)
 {
@@ -635,6 +636,7 @@ static BOOL process_attach(void)
 
     p_java_vm = dlsym( ntdll, "java_vm" );
     p_java_object = dlsym( ntdll, "java_object" );
+    p_java_gdt_sel = dlsym( ntdll, "java_gdt_sel" );
 
     object = *p_java_object;
 

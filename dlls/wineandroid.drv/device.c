@@ -258,9 +258,11 @@ static inline void wrap_java_call(void)   { __asm__( "mov %0,%%fs" :: "r" (java_
 static inline void unwrap_java_call(void) { __asm__( "mov %0,%%fs" :: "r" (orig_fs) ); }
 static inline void init_java_thread( JavaVM *java_vm )
 {
+    java_fs = *p_java_gdt_sel;
     __asm__( "mov %%fs,%0" : "=r" (orig_fs) );
+    __asm__( "mov %0,%%fs" :: "r" (java_fs) );
     (*java_vm)->AttachCurrentThread( java_vm, &jni_env, 0 );
-    __asm__( "mov %%fs,%0" : "=r" (java_fs) );
+    if (!*p_java_gdt_sel) __asm__( "mov %%fs,%0" : "=r" (java_fs) );
     __asm__( "mov %0,%%fs" :: "r" (orig_fs) );
 }
 

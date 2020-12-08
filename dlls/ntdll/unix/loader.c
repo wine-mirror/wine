@@ -1671,6 +1671,7 @@ static jstring wine_init_jni( JNIEnv *env, jobject obj, jobjectArray cmdline, jo
     {
         unsigned short java_fs;
         __asm__( "mov %%fs,%0" : "=r" (java_fs) );
+        if (!(java_fs & 4)) java_gdt_sel = java_fs;
         __asm__( "mov %0,%%fs" :: "r" (0) );
         start_main_thread();
         __asm__( "mov %0,%%fs" :: "r" (java_fs) );
