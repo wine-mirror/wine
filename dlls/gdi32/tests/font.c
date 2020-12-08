@@ -1587,6 +1587,45 @@ static void test_text_extents(void)
     ReleaseDC(NULL, hdc);
 }
 
+static void free_font(void *font)
+{
+    UnmapViewOfFile(font);
+}
+
+static void *load_font(const char *font_name, DWORD *font_size)
+{
+    char file_name[MAX_PATH];
+    HANDLE file, mapping;
+    void *font;
+
+    if (font_name[1] == ':')
+        strcpy(file_name, font_name);
+    else
+    {
+        if (!GetWindowsDirectoryA(file_name, sizeof(file_name))) return NULL;
+        strcat(file_name, "\\fonts\\");
+        strcat(file_name, font_name);
+    }
+
+    file = CreateFileA(file_name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    if (file == INVALID_HANDLE_VALUE) return NULL;
+
+    *font_size = GetFileSize(file, NULL);
+
+    mapping = CreateFileMappingA(file, NULL, PAGE_READONLY, 0, 0, NULL);
+    if (!mapping)
+    {
+        CloseHandle(file);
+        return NULL;
+    }
+
+    font = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
+
+    CloseHandle(file);
+    CloseHandle(mapping);
+    return font;
+}
+
 static void test_GetGlyphIndices(void)
 {
     HDC      hdc;
@@ -1598,6 +1637,10 @@ static void test_GetGlyphIndices(void)
     WORD     glyphs[(sizeof(testtext)/2)-1];
     TEXTMETRICA textm;
     HFONT hOldFont;
+    HANDLE rsrc;
+    DWORD ret, font_size, num_fonts;
+    void *font;
+    char ttf_name[MAX_PATH];
 
     if (!pGetGlyphIndicesW) {
         win_skip("GetGlyphIndicesW not available on platform\n");
@@ -1653,6 +1696,36 @@ static void test_GetGlyphIndices(void)
     ok(glyphs[0] == 0, "GetGlyphIndicesW for tmDefaultChar should be 0 not %04x\n", glyphs[0]);
     ok(glyphs[4] == 0, "GetGlyphIndicesW should have returned 0 not %04x\n", glyphs[4]);
     DeleteObject(SelectObject(hdc, hOldFont));
+
+    ret = write_ttf_file("wine_nul.ttf", ttf_name);
+    ok(ret, "Failed to create test font file.\n");
+    font = load_font(ttf_name, &font_size);
+    ok(font != NULL, "Failed to map font file.\n");
+    num_fonts = 0;
+    rsrc = pAddFontMemResourceEx(font, font_size, NULL, &num_fonts);
+    ok(ret != 0, "Failed to add resource, %d.\n", GetLastError());
+    ok(num_fonts == 1, "Unexpected number of fonts %u.\n", num_fonts);
+
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "wine_nul");
+    lf.lfHeight = 20;
+    flags = 0;
+    hfont = CreateFontIndirectA(&lf);
+    hOldFont = SelectObject(hdc, hfont);
+    ok(GetTextMetricsA(hdc, &textm), "GetTextMetric failed\n");
+    testtext[0] = 'T';
+    charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
+    ok(charcount == 5, "GetGlyphIndicesW count of glyphs should = 5 not %d\n", charcount);
+    todo_wine ok(glyphs[0] == 0, "GetGlyphIndicesW for tmDefaultChar should be 0 not %04x\n", glyphs[0]);
+    todo_wine ok(glyphs[4] == 0, "GetGlyphIndicesW should have returned 0 not %04x\n", glyphs[4]);
+    DeleteObject(SelectObject(hdc, hOldFont));
+
+    ret = pRemoveFontMemResourceEx(rsrc);
+    ok(ret, "RemoveFontMemResourceEx error %d\n", GetLastError());
+    free_font(font);
+    ret = DeleteFileA(ttf_name);
+    ok(ret, "Failed to delete font file, %d.\n", GetLastError());
+
 }
 
 static void test_GetKerningPairs(void)
@@ -4998,45 +5071,6 @@ static void test_CreateFontIndirectEx(void)
     if (hfont)
         check_font("Arial", &lfex.elfEnumLogfontEx.elfLogFont, hfont);
     DeleteObject(hfont);
-}
-
-static void free_font(void *font)
-{
-    UnmapViewOfFile(font);
-}
-
-static void *load_font(const char *font_name, DWORD *font_size)
-{
-    char file_name[MAX_PATH];
-    HANDLE file, mapping;
-    void *font;
-
-    if (font_name[1] == ':')
-        strcpy(file_name, font_name);
-    else
-    {
-        if (!GetWindowsDirectoryA(file_name, sizeof(file_name))) return NULL;
-        strcat(file_name, "\\fonts\\");
-        strcat(file_name, font_name);
-    }
-
-    file = CreateFileA(file_name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
-    if (file == INVALID_HANDLE_VALUE) return NULL;
-
-    *font_size = GetFileSize(file, NULL);
-
-    mapping = CreateFileMappingA(file, NULL, PAGE_READONLY, 0, 0, NULL);
-    if (!mapping)
-    {
-        CloseHandle(file);
-        return NULL;
-    }
-
-    font = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
-
-    CloseHandle(file);
-    CloseHandle(mapping);
-    return font;
 }
 
 static void test_realization_info(const char *name, DWORD size, BOOL is_memory_resource)

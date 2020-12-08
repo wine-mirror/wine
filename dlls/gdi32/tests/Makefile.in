@@ -24,6 +24,7 @@ FONT_SRCS = \
 	wine_langnames2.sfd \
 	wine_langnames3.sfd \
 	wine_longname.sfd \
+	wine_nul.sfd \
 	wine_test.sfd \
 	wine_ttfnames.sfd \
 	wine_ttfnames_bold.sfd \

@@ -46,3 +46,6 @@ wine_langnames2.ttf RCDATA wine_langnames2.ttf
 
 /* @makedep: wine_langnames3.ttf */
 wine_langnames3.ttf RCDATA wine_langnames3.ttf
+
+/* @makedep: wine_nul.ttf */
+wine_nul.ttf RCDATA wine_nul.ttf
