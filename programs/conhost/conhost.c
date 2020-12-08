@@ -2625,7 +2625,7 @@ static int main_loop( struct console *console, HANDLE signal )
     for (;;)
     {
         if (pump_msgs)
-            res = MsgWaitForMultipleObjects( wait_cnt, wait_handles, FALSE, INFINITE, QS_ALLEVENTS );
+            res = MsgWaitForMultipleObjects( wait_cnt, wait_handles, FALSE, INFINITE, QS_ALLINPUT );
         else
             res = WaitForMultipleObjects( wait_cnt, wait_handles, FALSE, INFINITE );
 
