@@ -30,11 +30,6 @@
 #define expectf_(expected, got, precision) ok(fabs((expected) - (got)) <= (precision), "Expected %f, got %f\n", (expected), (got))
 #define expectf(expected, got) expectf_((expected), (got), 0.001)
 
-static const WCHAR nonexistent[] = {'T','h','i','s','F','o','n','t','s','h','o','u','l','d','N','o','t','E','x','i','s','t','\0'};
-static const WCHAR MSSansSerif[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
-static const WCHAR TimesNewRoman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n','\0'};
-static const WCHAR Tahoma[] = {'T','a','h','o','m','a',0};
-
 static void set_rect_empty(RectF *rc)
 {
     rc->X = 0.0;
@@ -125,11 +120,11 @@ static void test_createfont(void)
     REAL size;
     WCHAR familyname[LF_FACESIZE];
 
-    stat = GdipCreateFontFamilyFromName(nonexistent, NULL, &fontfamily);
+    stat = GdipCreateFontFamilyFromName(L"ThisFontShouldNotExist", NULL, &fontfamily);
     expect (FontFamilyNotFound, stat);
     stat = GdipDeleteFont(font);
     expect (InvalidParameter, stat);
-    stat = GdipCreateFontFamilyFromName(Tahoma, NULL, &fontfamily);
+    stat = GdipCreateFontFamilyFromName(L"Tahoma", NULL, &fontfamily);
     expect (Ok, stat);
     stat = GdipCreateFont(fontfamily, 12, FontStyleRegular, UnitPoint, &font);
     expect (Ok, stat);
@@ -142,7 +137,7 @@ static void test_createfont(void)
     stat = GdipGetFamilyName(fontfamily2, familyname, 0);
     expect(Ok, stat);
     ok (fontfamily == fontfamily2, "Unexpected family instance.\n");
-    ok (lstrcmpiW(Tahoma, familyname) == 0, "Expected Tahoma, got %s\n",
+    ok (lstrcmpiW(L"Tahoma", familyname) == 0, "Expected Tahoma, got %s\n",
             wine_dbgstr_w(familyname));
     stat = GdipDeleteFontFamily(fontfamily2);
     expect(Ok, stat);
@@ -362,26 +357,26 @@ static void test_fontfamily (void)
     GpStatus stat;
 
     /* FontFamily cannot be NULL */
-    stat = GdipCreateFontFamilyFromName (Tahoma , NULL, NULL);
+    stat = GdipCreateFontFamilyFromName (L"Tahoma" , NULL, NULL);
     expect (InvalidParameter, stat);
 
     /* FontFamily must be able to actually find the family.
      * If it can't, any subsequent calls should fail.
      */
-    stat = GdipCreateFontFamilyFromName (nonexistent, NULL, &family);
+    stat = GdipCreateFontFamilyFromName (L"ThisFontShouldNotExist", NULL, &family);
     expect (FontFamilyNotFound, stat);
 
     /* Bitmap fonts are not found */
-    stat = GdipCreateFontFamilyFromName (MSSansSerif, NULL, &family);
+    stat = GdipCreateFontFamilyFromName (L"MS Sans Serif", NULL, &family);
     expect (FontFamilyNotFound, stat);
     if(stat == Ok) GdipDeleteFontFamily(family);
 
-    stat = GdipCreateFontFamilyFromName (Tahoma, NULL, &family);
+    stat = GdipCreateFontFamilyFromName (L"Tahoma", NULL, &family);
     expect (Ok, stat);
 
     stat = GdipGetFamilyName (family, itsName, LANG_NEUTRAL);
     expect (Ok, stat);
-    expect (0, lstrcmpiW(itsName, Tahoma));
+    expect (0, lstrcmpiW(itsName, L"Tahoma"));
 
     if (0)
     {
@@ -398,7 +393,7 @@ static void test_fontfamily (void)
     GdipDeleteFontFamily(family);
     stat = GdipGetFamilyName(clonedFontFamily, itsName, LANG_NEUTRAL);
     expect(Ok, stat);
-    expect(0, lstrcmpiW(itsName, Tahoma));
+    expect(0, lstrcmpiW(itsName, L"Tahoma"));
 
     GdipDeleteFontFamily(clonedFontFamily);
 }
@@ -409,7 +404,7 @@ static void test_fontfamily_properties (void)
     GpStatus stat;
     UINT16 result = 0;
 
-    stat = GdipCreateFontFamilyFromName(Tahoma, NULL, &FontFamily);
+    stat = GdipCreateFontFamilyFromName(L"Tahoma", NULL, &FontFamily);
     expect(Ok, stat);
 
     stat = GdipGetLineSpacing(FontFamily, FontStyleRegular, &result);
@@ -429,7 +424,7 @@ static void test_fontfamily_properties (void)
     ok(result == 423, "Expected 423, got %d\n", result);
     GdipDeleteFontFamily(FontFamily);
 
-    stat = GdipCreateFontFamilyFromName(TimesNewRoman, NULL, &FontFamily);
+    stat = GdipCreateFontFamilyFromName(L"Times New Roman", NULL, &FontFamily);
     if(stat == FontFamilyNotFound)
         skip("Times New Roman not installed\n");
     else
@@ -533,7 +528,7 @@ static void test_heightgivendpi(void)
     REAL height;
     Unit unit;
 
-    stat = GdipCreateFontFamilyFromName(Tahoma, NULL, &fontfamily);
+    stat = GdipCreateFontFamilyFromName(L"Tahoma", NULL, &fontfamily);
     expect(Ok, stat);
 
     stat = GdipCreateFont(fontfamily, 30, FontStyleRegular, UnitPixel, &font);
@@ -734,7 +729,7 @@ static void test_font_metrics(void)
     memset(&lf, 0, sizeof(lf));
 
     /* Tahoma,-13 */
-    lstrcpyW(lf.lfFaceName, Tahoma);
+    lstrcpyW(lf.lfFaceName, L"Tahoma");
     lf.lfHeight = -13;
     stat = GdipCreateFontFromLogfontW(hdc, &lf, &font);
     expect(Ok, stat);
@@ -775,7 +770,7 @@ static void test_font_metrics(void)
     GdipDeleteFont(font);
 
     /* Tahoma,13 */
-    lstrcpyW(lf.lfFaceName, Tahoma);
+    lstrcpyW(lf.lfFaceName, L"Tahoma");
     lf.lfHeight = 13;
     stat = GdipCreateFontFromLogfontW(hdc, &lf, &font);
     expect(Ok, stat);
@@ -815,7 +810,7 @@ static void test_font_metrics(void)
 
     GdipDeleteFont(font);
 
-    stat = GdipCreateFontFamilyFromName(Tahoma, NULL, &family);
+    stat = GdipCreateFontFamilyFromName(L"Tahoma", NULL, &family);
     expect(Ok, stat);
 
     /* Tahoma,13 */
@@ -892,7 +887,7 @@ static void test_font_substitution(void)
     GdipDeleteFont(font);
     GdipDeleteFontFamily(family);
 
-    status = GdipCreateFontFamilyFromName(nonexistent, NULL, &family);
+    status = GdipCreateFontFamilyFromName(L"ThisFontShouldNotExist", NULL, &family);
     ok(status == FontFamilyNotFound, "expected FontFamilyNotFound, got %d\n", status);
 
     /* nonexistent fonts fallback to Arial, or something else if it's missing */
@@ -1364,13 +1359,13 @@ static void test_CloneFont(void)
     expect(Ok, status);
     ok(collection == collection2, "got %p\n", collection2);
 
-    status = GdipCreateFontFamilyFromName(nonexistent, NULL, &family);
+    status = GdipCreateFontFamilyFromName(L"ThisFontShouldNotExist", NULL, &family);
     expect(FontFamilyNotFound, status);
 
-    status = GdipCreateFontFamilyFromName(nonexistent, collection, &family);
+    status = GdipCreateFontFamilyFromName(L"ThisFontShouldNotExist", collection, &family);
     expect(FontFamilyNotFound, status);
 
-    status = GdipCreateFontFamilyFromName(Tahoma, NULL, &family);
+    status = GdipCreateFontFamilyFromName(L"Tahoma", NULL, &family);
     expect(Ok, status);
 
     ret = is_family_in_collection(collection, family);

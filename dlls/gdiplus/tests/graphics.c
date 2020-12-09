@@ -3195,7 +3195,6 @@ static void test_string_functions(void)
     GpBrush *brush;
     ARGB color = 0xff000000;
     HDC hdc = GetDC( hwnd );
-    const WCHAR fontname[] = {'T','a','h','o','m','a',0};
     const WCHAR teststring[] = {'M','M',' ','M','\n','M',0};
     const WCHAR teststring2[] = {'j',0};
     REAL char_width, char_height;
@@ -3213,7 +3212,7 @@ static void test_string_functions(void)
     expect(Ok, status);
     ok(graphics != NULL, "Expected graphics to be initialized\n");
 
-    status = GdipCreateFontFamilyFromName(fontname, NULL, &family);
+    status = GdipCreateFontFamilyFromName(L"Tahoma", NULL, &family);
     expect(Ok, status);
 
     status = GdipCreateFont(family, 10.0, FontStyleRegular, UnitPixel, &font);
@@ -3744,7 +3743,6 @@ static void test_GdipMeasureString(void)
         { 200.0, 600.0, 1.0, UnitPixel },
         { 200.0, 600.0, 2.0, UnitPixel },
     };
-    static const WCHAR tahomaW[] = { 'T','a','h','o','m','a',0 };
     static const WCHAR string[] = { '1','2','3','4','5','6','7',0 };
     GpStatus status;
     GpGraphics *graphics;
@@ -3761,7 +3759,7 @@ static void test_GdipMeasureString(void)
 
     status = GdipCreateStringFormat(0, LANG_NEUTRAL, &format);
     expect(Ok, status);
-    status = GdipCreateFontFamilyFromName(tahomaW, NULL, &family);
+    status = GdipCreateFontFamilyFromName(L"Tahoma", NULL, &family);
     expect(Ok, status);
 
     /* font size in pixels */
@@ -4259,7 +4257,6 @@ static void test_pen_thickness(void)
  */
 static void test_font_height_scaling(void)
 {
-    static const WCHAR tahomaW[] = { 'T','a','h','o','m','a',0 };
     static const WCHAR string[] = { '1','2','3','4','5','6','7',0 };
     HDC hdc;
     GpStringFormat *format;
@@ -4281,7 +4278,7 @@ static void test_font_height_scaling(void)
     status = GdipCreateRegion(&region);
     expect(Ok, status);
 
-    status = GdipCreateFontFamilyFromName(tahomaW, NULL, &family);
+    status = GdipCreateFontFamilyFromName(L"Tahoma", NULL, &family);
     expect(Ok, status);
 
     hdc = CreateCompatibleDC(0);
@@ -4447,7 +4444,6 @@ cleanup:
 
 static void test_measure_string(void)
 {
-    static const WCHAR tahomaW[] = { 'T','a','h','o','m','a',0 };
     static const WCHAR string[] = { 'A','0','1',0 };
     static const WCHAR string2[] = { 'M',' ','M','M',0 };
     HDC hdc;
@@ -4470,7 +4466,7 @@ static void test_measure_string(void)
     status = GdipCreateRegion(&region);
     expect(Ok, status);
 
-    status = GdipCreateFontFamilyFromName(tahomaW, NULL, &family);
+    status = GdipCreateFontFamilyFromName(L"Tahoma", NULL, &family);
     expect(Ok, status);
 
     hdc = CreateCompatibleDC(0);
@@ -4919,7 +4915,6 @@ todo_wine
 
 static void test_measured_extra_space(void)
 {
-    static const WCHAR tahomaW[] = { 'T','a','h','o','m','a',0 };
     static const WCHAR string[2] = { 'W','W' };
     GpStringFormat *format;
     HDC hdc;
@@ -4934,7 +4929,7 @@ static void test_measured_extra_space(void)
     status = GdipCreateStringFormat(0, LANG_NEUTRAL, &format);
     expect(Ok, status);
 
-    status = GdipCreateFontFamilyFromName(tahomaW, NULL, &family);
+    status = GdipCreateFontFamilyFromName(L"Tahoma", NULL, &family);
     expect(Ok, status);
     hdc = CreateCompatibleDC(0);
     status = GdipCreateFromHDC(hdc, &graphics);
