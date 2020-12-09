@@ -28,7 +28,6 @@ interface IWICImagingFactory;
 interface IWICColorContext;
 interface ID2D1ColorContext;
 interface ID2D1Effect;
-interface ID2D1GradientStopCollection1;
 interface ID2D1ImageBrush;
 interface ID2D1BitmapBrush1;
 
@@ -493,6 +492,23 @@ interface ID2D1BitmapBrush1 : ID2D1BitmapBrush
         [in] D2D1_INTERPOLATION_MODE mode
     );
     D2D1_INTERPOLATION_MODE GetInterpolationMode1();
+}
+
+[
+    object,
+    uuid(ae1572f4-5dd0-4777-998b-9279472ae63b),
+    local,
+]
+interface ID2D1GradientStopCollection1 : ID2D1GradientStopCollection
+{
+    void GetGradientStops1(
+        [out] D2D1_GRADIENT_STOP *gradient,
+        [in] UINT32 count
+    );
+    D2D1_COLOR_SPACE GetPreInterpolationSpace();
+    D2D1_COLOR_SPACE GetPostInterpolationSpace();
+    D2D1_BUFFER_PRECISION GetBufferPrecision();
+    D2D1_COLOR_INTERPOLATION_MODE GetColorInterpolationMode();
 }
 
 [
