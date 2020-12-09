@@ -50,13 +50,6 @@ static int kmemcmp( const void *ptr1, const void *ptr2, size_t n )
     return 0;
 }
 
-static const WCHAR device_name[] = {'\\','D','e','v','i','c','e',
-                                    '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r',0};
-static const WCHAR upper_name[] = {'\\','D','e','v','i','c','e',
-                                   '\\','W','i','n','e','T','e','s','t','U','p','p','e','r',0};
-static const WCHAR driver_link[] = {'\\','D','o','s','D','e','v','i','c','e','s',
-                                    '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r',0};
-
 static DRIVER_OBJECT *driver_obj;
 static DEVICE_OBJECT *lower_device, *upper_device;
 
@@ -183,14 +176,8 @@ static void test_init_funcs(void)
     ok(timer2.Header.SignalState == 0, "got: %u\n", timer2.Header.SignalState);
 }
 
-static const WCHAR driver2_path[] = {
-    '\\','R','e','g','i','s','t','r','y',
-    '\\','M','a','c','h','i','n','e',
-    '\\','S','y','s','t','e','m',
-    '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
-    '\\','S','e','r','v','i','c','e','s',
-    '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r','2',0
-};
+static const WCHAR driver2_path[] =
+    L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\WineTestDriver2";
 
 static IMAGE_INFO test_image_info;
 static int test_load_image_notify_count;
@@ -1163,8 +1150,6 @@ static void test_ob_reference(const WCHAR *test_path)
     SIZE_T len;
     NTSTATUS status;
 
-    static const WCHAR tmpW[] = {'.','t','m','p',0};
-
     pObGetObjectType = get_proc_address("ObGetObjectType");
     if (!pObGetObjectType)
         win_skip("ObGetObjectType not found\n");
@@ -1174,9 +1159,9 @@ static void test_ob_reference(const WCHAR *test_path)
     ok(!status, "ZwCreateEvent failed: %#x\n", status);
 
     len = wcslen(test_path);
-    tmp_path = ExAllocatePool(PagedPool, len * sizeof(WCHAR) + sizeof(tmpW));
+    tmp_path = ExAllocatePool(PagedPool, len * sizeof(WCHAR) + sizeof(L".tmp"));
     memcpy(tmp_path, test_path, len * sizeof(WCHAR));
-    memcpy(tmp_path + len, tmpW, sizeof(tmpW));
+    memcpy(tmp_path + len, L".tmp", sizeof(L".tmp"));
 
     RtlInitUnicodeString(&pathU, tmp_path);
     attr.ObjectName = &pathU;
@@ -2487,7 +2472,7 @@ static VOID WINAPI driver_Unload(DRIVER_OBJECT *driver)
 
     DbgPrint("unloading driver\n");
 
-    RtlInitUnicodeString(&linkW, driver_link);
+    RtlInitUnicodeString(&linkW, L"\\DosDevices\\WineTestDriver");
     IoDeleteSymbolicLink(&linkW);
 
     IoDeleteDevice(upper_device);
@@ -2496,9 +2481,6 @@ static VOID WINAPI driver_Unload(DRIVER_OBJECT *driver)
 
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
 {
-    static const WCHAR IoDriverObjectTypeW[] = {'I','o','D','r','i','v','e','r','O','b','j','e','c','t','T','y','p','e',0};
-    static const WCHAR driver_nameW[] = {'\\','D','r','i','v','e','r',
-            '\\','W','i','n','e','T','e','s','t','D','r','i','v','e','r',0};
     UNICODE_STRING nameW, linkW;
     NTSTATUS status;
     void *obj;
@@ -2517,10 +2499,10 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     driver->MajorFunction[IRP_MJ_QUERY_INFORMATION] = driver_QueryInformation;
     driver->MajorFunction[IRP_MJ_CLOSE]             = driver_Close;
 
-    RtlInitUnicodeString(&nameW, IoDriverObjectTypeW);
+    RtlInitUnicodeString(&nameW, L"IoDriverObjectType");
     pIoDriverObjectType = MmGetSystemRoutineAddress(&nameW);
 
-    RtlInitUnicodeString(&nameW, driver_nameW);
+    RtlInitUnicodeString(&nameW, L"\\Driver\\WineTestDriver");
     if ((status = ObReferenceObjectByName(&nameW, 0, NULL, 0, *pIoDriverObjectType, KernelMode, NULL, &obj)))
         return status;
     if (obj != driver)
@@ -2530,8 +2512,8 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     }
     ObDereferenceObject(obj);
 
-    RtlInitUnicodeString(&nameW, device_name);
-    RtlInitUnicodeString(&linkW, driver_link);
+    RtlInitUnicodeString(&nameW, L"\\Device\\WineTestDriver");
+    RtlInitUnicodeString(&linkW, L"\\DosDevices\\WineTestDriver");
 
     if (!(status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN,
                                   FILE_DEVICE_SECURE_OPEN, FALSE, &lower_device)))
@@ -2542,7 +2524,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
 
     if (!status)
     {
-        RtlInitUnicodeString(&nameW, upper_name);
+        RtlInitUnicodeString(&nameW, L"\\Device\\WineTestUpper");
 
         status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN,
                                 FILE_DEVICE_SECURE_OPEN, FALSE, &upper_device);

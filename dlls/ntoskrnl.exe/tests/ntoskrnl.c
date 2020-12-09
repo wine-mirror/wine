@@ -156,7 +156,6 @@ static ULONG64 modified_value;
 
 static void main_test(void)
 {
-    static const WCHAR dokW[] = {'d','o','k',0};
     WCHAR temppathW[MAX_PATH], pathW[MAX_PATH];
     struct test_input *test_input;
     DWORD len, written, read;
@@ -168,7 +167,7 @@ static void main_test(void)
 
     /* Create a temporary file that the driver will write ok/trace output to. */
     GetTempPathW(MAX_PATH, temppathW);
-    GetTempFileNameW(temppathW, dokW, 0, pathW);
+    GetTempFileNameW(temppathW, L"dok", 0, pathW);
     pRtlDosPathNameToNtPathName_U( pathW, &pathU, NULL, NULL );
 
     len = pathU.Length + sizeof(WCHAR);
