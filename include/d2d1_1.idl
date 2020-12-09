@@ -448,6 +448,21 @@ interface ID2D1DrawingStateBlock1 : ID2D1DrawingStateBlock
 
 [
     object,
+    uuid(1c4820bb-5771-4518-a581-2fe4dd0ec657),
+    local,
+]
+interface ID2D1ColorContext : ID2D1Resource
+{
+    D2D1_COLOR_SPACE GetColorSpace();
+    UINT32 GetProfileSize();
+    HRESULT GetProfile(
+        [out] BYTE *profile,
+        [in] UINT32 size
+    );
+}
+
+[
+    object,
     uuid(a898a84c-3873-4588-b08b-ebbf978df041),
     local,
 ]
