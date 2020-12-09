@@ -2279,7 +2279,7 @@ static void test_GdipDrawString(void)
     GpBrush *brush;
     LOGFONTA logfont;
     HDC hdc = GetDC( hwnd );
-    static const WCHAR string[] = {'T','e','s','t',0};
+    static const WCHAR string[] = L"Test";
     static const PointF positions[4] = {{0,0}, {1,1}, {2,2}, {3,3}};
     GpMatrix *matrix;
 
@@ -3195,8 +3195,8 @@ static void test_string_functions(void)
     GpBrush *brush;
     ARGB color = 0xff000000;
     HDC hdc = GetDC( hwnd );
-    const WCHAR teststring[] = {'M','M',' ','M','\n','M',0};
-    const WCHAR teststring2[] = {'j',0};
+    const WCHAR teststring[] = L"MM M\nM";
+    const WCHAR teststring2[] = L"j";
     REAL char_width, char_height;
     INT codepointsfitted, linesfilled;
     GpStringFormat *format;
@@ -3743,7 +3743,7 @@ static void test_GdipMeasureString(void)
         { 200.0, 600.0, 1.0, UnitPixel },
         { 200.0, 600.0, 2.0, UnitPixel },
     };
-    static const WCHAR string[] = { '1','2','3','4','5','6','7',0 };
+    static const WCHAR string[] = L"1234567";
     GpStatus status;
     GpGraphics *graphics;
     GpFontFamily *family;
@@ -4257,7 +4257,7 @@ static void test_pen_thickness(void)
  */
 static void test_font_height_scaling(void)
 {
-    static const WCHAR string[] = { '1','2','3','4','5','6','7',0 };
+    static const WCHAR string[] = L"1234567";
     HDC hdc;
     GpStringFormat *format;
     CharacterRange range = { 0, 7 };
@@ -4357,7 +4357,6 @@ static void test_font_height_scaling(void)
         /* UnitPixel = 2, UnitPoint = 3, UnitInch = 4, UnitDocument = 5, UnitMillimeter = 6 */
         for (gfx_unit = 2; gfx_unit <= 6; gfx_unit++)
         {
-            static const WCHAR doubleW[2] = { 'W','W' };
             RectF bounds_1, bounds_2;
             REAL margin, margin_y, font_height;
             int match;
@@ -4397,12 +4396,12 @@ todo_wine
             /* bounds.width of 1 glyph: [margin]+[width]+[margin] */
             set_rect_empty(&rect);
             set_rect_empty(&bounds_1);
-            status = GdipMeasureString(graphics, doubleW, 1, font, &rect, format, &bounds_1, NULL, NULL);
+            status = GdipMeasureString(graphics, L"W", 1, font, &rect, format, &bounds_1, NULL, NULL);
             expect(Ok, status);
             /* bounds.width of 2 identical glyphs: [margin]+[width]+[width]+[margin] */
             set_rect_empty(&rect);
             set_rect_empty(&bounds_2);
-            status = GdipMeasureString(graphics, doubleW, 2, font, &rect, format, &bounds_2, NULL, NULL);
+            status = GdipMeasureString(graphics, L"WW", 2, font, &rect, format, &bounds_2, NULL, NULL);
             expect(Ok, status);
 
             /* margin = [bounds.width of 1] - [bounds.width of 2] / 2*/
@@ -4444,8 +4443,8 @@ cleanup:
 
 static void test_measure_string(void)
 {
-    static const WCHAR string[] = { 'A','0','1',0 };
-    static const WCHAR string2[] = { 'M',' ','M','M',0 };
+    static const WCHAR string[] = L"A01";
+    static const WCHAR string2[] = L"M MM";
     HDC hdc;
     GpStringFormat *format, *format_no_wrap;
     CharacterRange range;
@@ -4915,7 +4914,6 @@ todo_wine
 
 static void test_measured_extra_space(void)
 {
-    static const WCHAR string[2] = { 'W','W' };
     GpStringFormat *format;
     HDC hdc;
     GpGraphics *graphics;
@@ -4959,12 +4957,12 @@ static void test_measured_extra_space(void)
             /* bounds.width of 1 glyph: [margin]+[width]+[margin] */
             set_rect_empty(&rect);
             set_rect_empty(&bounds_1);
-            status = GdipMeasureString(graphics, string, 1, font, &rect, format, &bounds_1, NULL, NULL);
+            status = GdipMeasureString(graphics, L"W", 1, font, &rect, format, &bounds_1, NULL, NULL);
             expect(Ok, status);
             /* bounds.width of 2 identical glyphs: [margin]+[width]+[width]+[margin] */
             set_rect_empty(&rect);
             set_rect_empty(&bounds_2);
-            status = GdipMeasureString(graphics, string, 2, font, &rect, format, &bounds_2, NULL, NULL);
+            status = GdipMeasureString(graphics, L"WW", 2, font, &rect, format, &bounds_2, NULL, NULL);
             expect(Ok, status);
 
             /* margin = [bounds.width of 1] - [bounds.width of 2] / 2*/

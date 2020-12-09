@@ -946,7 +946,7 @@ todo_wine
 
 static void test_font_transform(void)
 {
-    static const WCHAR string[] = { 'A',0 };
+    static const WCHAR string[] = L"A";
     GpStatus status;
     HDC hdc;
     LOGFONTA lf;
