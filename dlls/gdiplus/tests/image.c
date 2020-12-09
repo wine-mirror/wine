@@ -537,7 +537,6 @@ static void test_SavingMultiPageTiff(void)
     static const CHAR filename2A[] = "2.tif";
     static const WCHAR filename1[] = L"1.tif";
     static const WCHAR filename2[] = L"2.tif";
-    static const WCHAR tiff_mimetype[] = { 'i','m','a','g','e','/','t','i','f','f',0 };
 
     params.Count = 1;
     params.Parameter[0].Guid = EncoderSaveFlag;
@@ -549,7 +548,7 @@ static void test_SavingMultiPageTiff(void)
     expect(Ok, stat);
     stat = GdipCreateBitmapFromScan0(2 * WIDTH, 2 * HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm2);
     expect(Ok, stat);
-    result = get_encoder_clsid(tiff_mimetype, &format, &tiff_clsid);
+    result = get_encoder_clsid(L"image/tiff", &format, &tiff_clsid);
     ok(result, "getting TIFF encoding clsid failed");
 
     if (!bm1 || !bm2 || !result)
