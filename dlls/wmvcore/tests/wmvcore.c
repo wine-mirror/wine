@@ -321,36 +321,31 @@ static void test_WMCreateWriterPriv(void)
 static void test_urlextension(void)
 {
     HRESULT hr;
-    const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
-    const WCHAR mkvfile[] = {'t','e','s','t','.','m','k','v',0};
-    const WCHAR urlfile[] = {'a','b','c','d',':','/','/','t','e','s','t','/','t','e','s','t','.','w','m','v',0};
-    const WCHAR testurl[] = {'h','t','t','p',':','/','/','t','e','s','t','/','t','.','a','s','f','?','a','l','t','=','t','.','m','k','v',0};
 
     hr = WMCheckURLExtension(NULL);
     ok(hr == E_INVALIDARG, "WMCheckURLExtension failed 0x%08x\n", hr);
-    hr = WMCheckURLExtension(mkvfile);
+    hr = WMCheckURLExtension(L"test.mkv");
     ok(hr == NS_E_INVALID_NAME, "WMCheckURLExtension failed 0x%08x\n", hr);
-    hr = WMCheckURLExtension(mp3file);
+    hr = WMCheckURLExtension(L"test.mp3");
     todo_wine ok(hr == S_OK, "WMCheckURLExtension failed 0x%08x\n", hr);
-    hr = WMCheckURLExtension(urlfile);
+    hr = WMCheckURLExtension(L"abcd://test/test.wmv");
     todo_wine ok(hr == S_OK, "WMCheckURLExtension failed 0x%08x\n", hr);
-    hr = WMCheckURLExtension(testurl);
+    hr = WMCheckURLExtension(L"http://test/t.asf?alt=t.mkv");
     todo_wine ok(hr == S_OK, "WMCheckURLExtension failed 0x%08x\n", hr);
 }
 
 static void test_iscontentprotected(void)
 {
     HRESULT hr;
-    const WCHAR mp3file[] = {'t','e','s','t','.','m','p','3',0};
     BOOL drm;
 
     hr = WMIsContentProtected(NULL, NULL);
     ok(hr == E_INVALIDARG, "WMIsContentProtected failed 0x%08x\n", hr);
     hr = WMIsContentProtected(NULL, &drm);
     ok(hr == E_INVALIDARG, "WMIsContentProtected failed 0x%08x\n", hr);
-    hr = WMIsContentProtected(mp3file, NULL);
+    hr = WMIsContentProtected(L"test.mp3", NULL);
     ok(hr == E_INVALIDARG, "WMIsContentProtected failed 0x%08x\n", hr);
-    hr = WMIsContentProtected(mp3file, &drm);
+    hr = WMIsContentProtected(L"test.mp3", &drm);
     ok(hr == S_FALSE, "WMIsContentProtected failed 0x%08x\n", hr);
     ok(drm == FALSE, "got %0dx\n", drm);
 }
