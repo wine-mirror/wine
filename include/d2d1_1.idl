@@ -19,7 +19,6 @@
 import "d2d1.idl";
 
 interface ID2D1DeviceContext;
-interface ID2D1StrokeStyle1;
 interface ID2D1PathGeometry1;
 interface ID2D1Properties;
 interface IPrintDocumentPackageTarget;
@@ -876,6 +875,16 @@ interface ID2D1DeviceContext : ID2D1RenderTarget
         [in] const D2D1_RECT_F *dst_rect,
         [in] const D2D1_RECT_F *src_rect
     );
+}
+
+[
+    object,
+    uuid(10a72a66-e91c-43f4-993f-ddf4b82b0b4a),
+    local,
+]
+interface ID2D1StrokeStyle1 : ID2D1StrokeStyle
+{
+    D2D1_STROKE_TRANSFORM_TYPE GetStrokeTransformType();
 }
 
 [
