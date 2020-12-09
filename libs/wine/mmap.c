@@ -43,6 +43,7 @@
 #endif
 
 #include "wine/list.h"
+#include "wine/asm.h"
 
 #ifndef MAP_NORESERVE
 #define MAP_NORESERVE 0
