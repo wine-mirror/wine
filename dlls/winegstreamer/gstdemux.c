@@ -1041,9 +1041,6 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *
             goto out;
         }
 
-        /* Avoid expensive color matrix conversions. */
-        gst_util_set_object_arg(G_OBJECT(vconv2), "matrix-mode", "none");
-
         /* The bin takes ownership of these elements. */
         gst_bin_add(GST_BIN(This->container), deinterlace);
         gst_element_sync_state_with_parent(deinterlace);
