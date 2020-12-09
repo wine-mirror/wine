@@ -945,6 +945,18 @@ interface ID2D1Factory1 : ID2D1Factory
     );
 }
 
+[
+    object,
+    uuid(31e6e7bc-e0ff-4d46-8c64-a0a8c41c15d3),
+    local,
+]
+interface ID2D1Multithread : IUnknown
+{
+    BOOL GetMultithreadProtected();
+    void Enter();
+    void Leave();
+}
+
 [local] HRESULT __stdcall D2D1CreateDevice(IDXGIDevice *dxgi_device,
         const D2D1_CREATION_PROPERTIES *creation_properties, ID2D1Device **device);
 [local] void __stdcall D2D1SinCos(float angle, float *s, float *c);
