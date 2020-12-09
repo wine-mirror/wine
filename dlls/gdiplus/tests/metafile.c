@@ -2824,7 +2824,6 @@ static void test_fillpath(void)
 {
     static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
-    static const WCHAR winetestemfW[] = {'w','i','n','e','t','e','s','t','.','e','m','f',0};
 
     GpMetafile *metafile;
     GpGraphics *graphics;
@@ -2870,7 +2869,7 @@ static void test_fillpath(void)
     check_emfplus(hemf, fill_path_records, "fill path");
 
     /* write to disk */
-    DeleteEnhMetaFile(CopyEnhMetaFileW(hemf, winetestemfW));
+    DeleteEnhMetaFile(CopyEnhMetaFileW(hemf, L"winetest.emf"));
 
     DeleteEnhMetaFile(hemf);
 
@@ -2878,15 +2877,15 @@ static void test_fillpath(void)
     expect(Ok, stat);
 
     /* should succeed when given path to an EMF */
-    stat = GdipCreateMetafileFromWmfFile(winetestemfW, NULL, &metafile);
+    stat = GdipCreateMetafileFromWmfFile(L"winetest.emf", NULL, &metafile);
     expect(Ok, stat);
 
     stat = GdipDisposeImage((GpImage*)metafile);
     expect(Ok, stat);
 
-    DeleteFileW(winetestemfW);
+    DeleteFileW(L"winetest.emf");
 
-    stat = GdipCreateMetafileFromWmfFile(winetestemfW, NULL, &metafile);
+    stat = GdipCreateMetafileFromWmfFile(L"winetest.emf", NULL, &metafile);
     expect(GenericError, stat);
 }
 

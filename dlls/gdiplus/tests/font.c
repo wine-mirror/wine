@@ -69,7 +69,6 @@ static void _delete_testfontfile(const WCHAR *filename, int line)
 static void test_long_name(void)
 {
     WCHAR path[MAX_PATH];
-    static const WCHAR path_longname[] = {'w','i','n','e','_','l','o','n','g','n','a','m','e','.','t','t','f',0};
     GpStatus stat;
     GpFontCollection *fonts;
     INT num_families;
@@ -80,7 +79,7 @@ static void test_long_name(void)
     stat = GdipNewPrivateFontCollection(&fonts);
     ok(stat == Ok, "GdipNewPrivateFontCollection failed: %d\n", stat);
 
-    create_testfontfile(path_longname, 1, path);
+    create_testfontfile(L"wine_longname.ttf", 1, path);
 
     stat = GdipPrivateAddFontFile(fonts, path);
     ok(stat == Ok, "GdipPrivateAddFontFile failed: %d\n", stat);

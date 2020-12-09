@@ -417,7 +417,6 @@ static void test_LoadingImages(void)
     GpStatus stat;
     GpBitmap *bm;
     GpImage *img;
-    static const WCHAR nonexistentW[] = {'n','o','n','e','x','i','s','t','e','n','t',0};
 
     stat = GdipCreateBitmapFromFile(0, 0);
     expect(InvalidParameter, stat);
@@ -428,7 +427,7 @@ static void test_LoadingImages(void)
     ok(bm == (GpBitmap *)0xdeadbeef, "returned %p\n", bm);
 
     bm = (GpBitmap *)0xdeadbeef;
-    stat = GdipCreateBitmapFromFile(nonexistentW, &bm);
+    stat = GdipCreateBitmapFromFile(L"nonexistent", &bm);
     todo_wine expect(InvalidParameter, stat);
     ok(!bm, "returned %p\n", bm);
 
@@ -441,7 +440,7 @@ static void test_LoadingImages(void)
     ok(img == (GpImage *)0xdeadbeef, "returned %p\n", img);
 
     img = (GpImage *)0xdeadbeef;
-    stat = GdipLoadImageFromFile(nonexistentW, &img);
+    stat = GdipLoadImageFromFile(L"nonexistent", &img);
     todo_wine expect(OutOfMemory, stat);
     ok(!img, "returned %p\n", img);
 
@@ -454,7 +453,7 @@ static void test_LoadingImages(void)
     ok(img == (GpImage *)0xdeadbeef, "returned %p\n", img);
 
     img = (GpImage *)0xdeadbeef;
-    stat = GdipLoadImageFromFileICM(nonexistentW, &img);
+    stat = GdipLoadImageFromFileICM(L"nonexistent", &img);
     todo_wine expect(OutOfMemory, stat);
     ok(!img, "returned %p\n", img);
 }
@@ -469,7 +468,7 @@ static void test_SavingImages(void)
     REAL w, h;
     ImageCodecInfo *codecs;
     static const CHAR filenameA[] = "a.bmp";
-    static const WCHAR filename[] = { 'a','.','b','m','p',0 };
+    static const WCHAR filename[] = L"a.bmp";
 
     codecs = NULL;
 
@@ -536,8 +535,8 @@ static void test_SavingMultiPageTiff(void)
     UINT frame_count;
     static const CHAR filename1A[] = "1.tif";
     static const CHAR filename2A[] = "2.tif";
-    static const WCHAR filename1[] = { '1','.','t','i','f',0 };
-    static const WCHAR filename2[] = { '2','.','t','i','f',0 };
+    static const WCHAR filename1[] = L"1.tif";
+    static const WCHAR filename2[] = L"2.tif";
     static const WCHAR tiff_mimetype[] = { 'i','m','a','g','e','/','t','i','f','f',0 };
 
     params.Count = 1;
