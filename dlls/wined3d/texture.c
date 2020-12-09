@@ -3683,6 +3683,20 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     if (!offset)
         return WINED3DERR_INVALIDCALL;
 
+    /* Ensure the last mip-level is at least large enough to hold a single
+     * compressed block. It is questionable how useful these mip-levels are to
+     * the application with "broken pitch" formats, but we want to avoid
+     * memory corruption when loading textures into WINED3D_LOCATION_SYSMEM. */
+    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_BROKEN_PITCH)
+    {
+        unsigned int min_size;
+
+        min_size = texture->sub_resources[level_count * layer_count - 1].offset + format->block_byte_count;
+        min_size = (min_size + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1);
+        if (min_size > offset)
+            offset = min_size;
+    }
+
     if (FAILED(hr = resource_init(&texture->resource, device, desc->resource_type, format,
             desc->multisample_type, desc->multisample_quality, desc->usage, desc->bind_flags, desc->access,
             desc->width, desc->height, desc->depth, offset, parent, parent_ops, &texture_resource_ops)))
