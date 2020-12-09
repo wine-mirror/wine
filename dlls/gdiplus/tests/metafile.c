@@ -31,6 +31,8 @@
 static BOOL save_metafiles;
 static BOOL load_metafiles;
 
+static const WCHAR description[] = L"winetest";
+
 typedef struct emfplus_record
 {
     DWORD record_type;
@@ -378,7 +380,6 @@ static void test_empty(void)
     MetafileHeader header;
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
     static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     UINT limit_dpi;
 
     hdc = CreateCompatibleDC(0);
@@ -626,7 +627,6 @@ static void test_getdc(void)
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
     static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
     static const GpPointF dst_points_half[3] = {{0.0,0.0},{50.0,0.0},{0.0,50.0}};
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     HBRUSH hbrush, holdbrush;
     GpBitmap *bitmap;
     ARGB color;
@@ -784,7 +784,6 @@ static void test_emfonly(void)
     MetafileHeader header;
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
     static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     HBRUSH hbrush, holdbrush;
     GpBitmap *bitmap;
     ARGB color;
@@ -1081,7 +1080,6 @@ static void test_fillrect(void)
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
     static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
     static const GpPointF dst_points_half[3] = {{0.0,0.0},{50.0,0.0},{0.0,50.0}};
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     GpBitmap *bitmap;
     ARGB color;
     GpBrush *brush;
@@ -1194,7 +1192,6 @@ static void test_clear(void)
     HENHMETAFILE hemf;
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
     static const GpPointF dst_points[3] = {{10.0,10.0},{20.0,10.0},{10.0,20.0}};
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     GpBitmap *bitmap;
     ARGB color;
 
@@ -1266,7 +1263,6 @@ static void test_nullframerect(void) {
     GpMetafile *metafile;
     GpGraphics *graphics;
     HDC hdc, metafile_dc;
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     GpBrush *brush;
     HBRUSH hbrush, holdbrush;
     GpRectF bounds;
@@ -1459,7 +1455,6 @@ static void test_pagetransform(void)
     HDC hdc;
     static const GpRectF frame = {0.0, 0.0, 5.0, 5.0};
     static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     GpBitmap *bitmap;
     ARGB color;
     GpBrush *brush;
@@ -1664,7 +1659,6 @@ static void test_worldtransform(void)
     HDC hdc;
     static const GpRectF frame = {0.0, 0.0, 5.0, 5.0};
     static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     GpBitmap *bitmap;
     ARGB color;
     GpBrush *brush;
@@ -1921,7 +1915,6 @@ static void test_converttoemfplus(void)
     GpStatus (WINAPI *pGdipConvertToEmfPlus)( const GpGraphics *graphics, GpMetafile *metafile, BOOL *succ,
               EmfType emfType, const WCHAR *description, GpMetafile **outmetafile);
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     GpStatus stat;
     GpMetafile *metafile, *metafile2 = NULL, *emhmeta;
     GpGraphics *graphics;
@@ -2001,7 +1994,6 @@ static void test_frameunit(void)
     GpGraphics *graphics;
     HDC hdc;
     static const GpRectF frame = {0.0, 0.0, 5.0, 5.0};
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     GpUnit unit;
     REAL dpix, dpiy;
     GpRectF bounds;
@@ -2097,7 +2089,6 @@ static void test_containers(void)
     HDC hdc;
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
     static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     GraphicsContainer state1, state2;
     GpRectF srcrect, dstrect;
     REAL dpix, dpiy;
@@ -2293,7 +2284,6 @@ static void test_clipping(void)
     HDC hdc;
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
     static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     GraphicsState state;
 
     hdc = CreateCompatibleDC(0);
@@ -2434,7 +2424,6 @@ static void test_gditransform(void)
     MetafileHeader header;
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
     static const GpPointF dst_points[3] = {{0.0,0.0},{40.0,0.0},{0.0,40.0}};
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     HBRUSH hbrush, holdbrush;
     GpBitmap *bitmap;
     ARGB color;
@@ -2561,7 +2550,6 @@ static const emfplus_record draw_image_metafile_records[] = {
 
 static void test_drawimage(void)
 {
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     static const GpPointF dst_points[3] = {{10.0,10.0},{85.0,15.0},{10.0,80.0}};
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
     const ColorMatrix double_red = {{
@@ -2679,7 +2667,6 @@ static const emfplus_record properties_records[] = {
 
 static void test_properties(void)
 {
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
 
     GpMetafile *metafile;
@@ -2757,7 +2744,6 @@ static const emfplus_record draw_path_records[] = {
 
 static void test_drawpath(void)
 {
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
 
     GpMetafile *metafile;
@@ -2822,7 +2808,6 @@ static const emfplus_record fill_path_records[] = {
 
 static void test_fillpath(void)
 {
-    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
 
     GpMetafile *metafile;
