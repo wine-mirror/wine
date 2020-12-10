@@ -1685,6 +1685,8 @@ then
         if test "$wine_cv_have_unw_step" = no -a -n "$UNWIND_LIBS"
         then
             save_libs=$LIBS
+            dnl Force static libgcc, libunwind breaks libgcc_s unwinding
+            UNWIND_LIBS="-static-libgcc $UNWIND_LIBS"
             LIBS="$UNWIND_LIBS $LIBS"
             AC_CACHE_CHECK([for unw_step in libunwind],wine_cv_have_libunwind_unw_step,
                [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define UNW_LOCAL_ONLY

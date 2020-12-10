@@ -14892,6 +14892,7 @@ $as_echo "$wine_cv_have_unw_step" >&6; }
         if test "$wine_cv_have_unw_step" = no -a -n "$UNWIND_LIBS"
         then
             save_libs=$LIBS
+                        UNWIND_LIBS="-static-libgcc $UNWIND_LIBS"
             LIBS="$UNWIND_LIBS $LIBS"
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for unw_step in libunwind" >&5
 $as_echo_n "checking for unw_step in libunwind... " >&6; }
