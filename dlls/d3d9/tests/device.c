@@ -13172,8 +13172,7 @@ static void test_device_caps(void)
         test_device_caps_adapter_group(&caps, adapter_idx, adapter_count);
         ok(!(caps.Caps & ~D3DCAPS_READ_SCANLINE),
                 "Adapter %u: Caps field has unexpected flags %#x.\n", adapter_idx, caps.Caps);
-        ok(!(caps.Caps2 & ~(D3DCAPS2_NO2DDURING3DSCENE | D3DCAPS2_FULLSCREENGAMMA
-                | D3DCAPS2_CANRENDERWINDOWED | D3DCAPS2_CANCALIBRATEGAMMA | D3DCAPS2_RESERVED
+        ok(!(caps.Caps2 & ~(D3DCAPS2_FULLSCREENGAMMA | D3DCAPS2_CANCALIBRATEGAMMA | D3DCAPS2_RESERVED
                 | D3DCAPS2_CANMANAGERESOURCE | D3DCAPS2_DYNAMICTEXTURES | D3DCAPS2_CANAUTOGENMIPMAP
                 | D3DCAPS2_CANSHARERESOURCE)),
                 "Adapter %u: Caps2 field has unexpected flags %#x.\n", adapter_idx, caps.Caps2);
