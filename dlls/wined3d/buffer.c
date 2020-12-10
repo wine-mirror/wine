@@ -1391,11 +1391,13 @@ static BOOL wined3d_buffer_vk_create_buffer_object(struct wined3d_buffer_vk *buf
     if (bind_flags & (WINED3D_BIND_RENDER_TARGET | WINED3D_BIND_DEPTH_STENCIL))
         FIXME("Ignoring some bind flags %#x.\n", bind_flags);
 
-    memory_type = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+    memory_type = 0;
     if (!(resource->usage & WINED3DUSAGE_DYNAMIC))
         memory_type |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     if (resource->access & WINED3D_RESOURCE_ACCESS_MAP_R)
-        memory_type |= VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+        memory_type |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+    else if (resource->access & WINED3D_RESOURCE_ACCESS_MAP_W)
+        memory_type |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
     if (!(wined3d_context_vk_create_bo(context_vk, resource->size, usage, memory_type, &buffer_vk->bo)))
     {
@@ -1472,9 +1474,11 @@ static void wined3d_buffer_vk_unload_location(struct wined3d_buffer *buffer,
 static void wined3d_buffer_vk_upload_ranges(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const void *data, unsigned int data_offset, unsigned int range_count, const struct wined3d_range *ranges)
 {
+    struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
     struct wined3d_resource *resource = &buffer->resource;
+    struct wined3d_bo_address src, dst;
     const struct wined3d_range *range;
-    struct wined3d_bo_address dst;
+    struct wined3d_bo_vk *dst_bo;
     unsigned int i = range_count;
     uint32_t flags;
     void *map_ptr;
@@ -1488,6 +1492,24 @@ static void wined3d_buffer_vk_upload_ranges(struct wined3d_buffer *buffer, struc
     flags = WINED3D_MAP_WRITE;
     if (!ranges->offset && ranges->size == resource->size)
         flags |= WINED3D_MAP_DISCARD;
+
+    dst_bo = &wined3d_buffer_vk(buffer)->bo;
+    if (!(dst_bo->memory_type & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) || (!(flags & WINED3D_MAP_DISCARD)
+            && dst_bo->command_buffer_id > context_vk->completed_command_buffer_id))
+    {
+        src.buffer_object = 0;
+        while (range_count--)
+        {
+            range = &ranges[range_count];
+
+            src.addr = (uint8_t *)data + range->offset - data_offset;
+            dst.addr = (void *)(uintptr_t)range->offset;
+            wined3d_context_copy_bo_address(context, &dst, &src, range->size);
+        }
+
+        return;
+    }
+
     if (!(map_ptr = wined3d_context_map_bo_address(context, &dst, resource->size, flags)))
     {
         FIXME("Failed to map buffer.\n");
