@@ -50,6 +50,7 @@ typedef enum _WAIT_TYPE {
 #define NT_WARNING(status)      ((((NTSTATUS)(status)) & 0xc0000000) == 0x80000000)
 #define NT_ERROR(status)        ((((NTSTATUS)(status)) & 0xc0000000) == 0xc0000000)
 
+#ifndef BASETYPES
 #define BASETYPES
 typedef unsigned char UCHAR, *PUCHAR;
 typedef unsigned short USHORT, *PUSHORT;
@@ -57,6 +58,7 @@ typedef unsigned short USHORT, *PUSHORT;
 typedef unsigned long ULONG, *PULONG;
 #else
 typedef unsigned int ULONG, *PULONG;
+#endif
 #endif
 
 typedef struct _RTL_BALANCED_NODE
