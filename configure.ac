@@ -4105,9 +4105,6 @@ else
     TOP_INSTALL_LIB="$TOP_INSTALL_LIB \
 fonts \
 loader/wine.inf \
-loader/winebus.inf \
-loader/winehid.inf \
-loader/wineusb.inf \
 nls \
 programs/msidb/msidb \
 programs/msiexec/msiexec \
