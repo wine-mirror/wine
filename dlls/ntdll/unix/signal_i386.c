@@ -774,7 +774,7 @@ static inline void restore_xstate( const CONTEXT *context )
     XSAVE_FORMAT *xrstor_base;
     XSTATE *xs;
 
-    if (!(xs = xstate_from_context( context )))
+    if (!(user_shared_data->XState.EnabledFeatures && (xs = xstate_from_context( context ))))
         return;
 
     xrstor_base = (XSAVE_FORMAT *)xs - 1;
@@ -891,7 +891,7 @@ static inline void save_context( struct xcontext *xcontext, const ucontext_t *si
         context->ContextFlags |= CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
         memcpy( context->ExtendedRegisters, fpux, sizeof(*fpux) );
         if (!fpu) fpux_to_fpu( &context->FloatSave, fpux );
-        if ((xs = XState_sig(fpux)))
+        if (user_shared_data->XState.EnabledFeatures && (xs = XState_sig(fpux)))
         {
             context_init_xstate( context, xs );
             xcontext->host_compaction_mask = xs->CompactionMask;
