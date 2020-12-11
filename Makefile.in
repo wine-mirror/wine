@@ -122,7 +122,7 @@ programs/winetest/build.rc: dummy
 	@build="STRINGTABLE { 1 \"`GIT_DIR=$(srcdir)/.git git rev-parse HEAD 2>/dev/null`\" }" && (echo $$build | cmp -s - $@) || echo $$build >$@ || (rm -f $@ && exit 1)
 
 programs/winetest/build.nfo:
-	-$(CC) -v 2>$@
+	@-$(CC) -v 2>$@
 
 dlls/wineandroid.drv/wine-debug.apk: dlls/wineandroid.drv/build.gradle $(srcdir)/dlls/wineandroid.drv/AndroidManifest.xml $(srcdir)/dlls/wineandroid.drv/WineActivity.java $(srcdir)/dlls/wineandroid.drv/wine.svg
 	cd dlls/wineandroid.drv && gradle -q -Psrcdir=$(srcdir) assembleDebug
