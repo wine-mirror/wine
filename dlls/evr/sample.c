@@ -345,6 +345,7 @@ static void video_sample_create_tracking_thread(void)
         {
             WARN("Failed to create sample tracking thread.\n");
             CloseHandle(ready_event);
+            LeaveCriticalSection(&tracking_thread_cs);
             return;
         }
 
