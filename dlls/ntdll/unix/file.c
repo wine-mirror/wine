@@ -2812,7 +2812,6 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, char **unix_na
         if (!new_name) break;
         free( unix_name );
         unix_name = new_name;
-        unix_len = strlen(unix_name) + 1;
         dev = NULL; /* last try */
     }
     free( unix_name );
