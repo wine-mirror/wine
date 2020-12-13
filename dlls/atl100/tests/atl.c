@@ -43,24 +43,12 @@ static const GUID CATID_CatTest1 =
 static const GUID CATID_CatTest2 =
     {0x178fc163,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x46}};
 #define CATID_CATTEST2_STR "178fc163-0000-0000-0000-000000000246"
-
-static const WCHAR emptyW[] = {'\0'};
-static const WCHAR randomW[] = {'r','a','n','d','o','m','\0'};
-static const WCHAR progid1W[] = {'S','h','e','l','l','.','E','x','p','l','o','r','e','r','.','2','\0'};
-static const WCHAR clsid1W[] = {'{','8','8','5','6','f','9','6','1','-','3','4','0','a','-',
-                                '1','1','d','0','-','a','9','6','b','-',
-                                '0','0','c','0','4','f','d','7','0','5','a','2','}','\0'};
-static const WCHAR url1W[] = {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q',
-                              '.','o','r','g','/','t','e','s','t','s','/','w','i','n','e','h','q','_',
-                              's','n','a','p','s','h','o','t','/','\0'};
-static const WCHAR mshtml1W[] = {'m','s','h','t','m','l',':','<','h','t','m','l','>','<','b','o','d','y','>',
-                                 't','e','s','t','<','/','b','o','d','y','>','<','/','h','t','m','l','>','\0'};
-static const WCHAR mshtml2W[] = {'M','S','H','T','M','L',':','<','h','t','m','l','>','<','b','o','d','y','>',
-                                 't','e','s','t','<','/','b','o','d','y','>','<','/','h','t','m','l','>','\0'};
-static const WCHAR mshtml3W[] = {'<','h','t','m','l','>','<','b','o','d','y','>', 't','e','s','t',
-                                 '<','/','b','o','d','y','>','<','/','h','t','m','l','>','\0'};
-static const WCHAR fileW[] = {'f','i','l','e',':','/','/','/','\0'};
-static const WCHAR html_fileW[] = {'t','e','s','t','.','h','t','m','l','\0'};
+static const WCHAR progid1W[] = L"Shell.Explorer.2";
+static const WCHAR clsid1W[] = L"{8856f961-340a-11d0-a96b-00c04fd705a2}";
+static const WCHAR url1W[] = L"http://test.winehq.org/tests/winehq_snapshot/";
+static const WCHAR mshtml1W[] = L"mshtml:<html><body>test</body></html>";
+static const WCHAR mshtml2W[] = L"MSHTML:<html><body>test</body></html>";
+static const WCHAR mshtml3W[] = L"<html><body>test</body></html>";
 static const char html_str[] = "<html><body>test</body><html>";
 
 static BOOL is_token_admin(HANDLE token)
@@ -292,9 +280,6 @@ static void test_typelib(void)
     BSTR path;
     HRESULT hres;
 
-    static const WCHAR scrrun_dll_suffixW[] = {'\\','s','c','r','r','u','n','.','d','l','l',0};
-    static const WCHAR mshtml_tlb_suffixW[] = {'\\','m','s','h','t','m','l','.','t','l','b',0};
-
     inst = LoadLibraryA("scrrun.dll");
     ok(inst != NULL, "Could not load scrrun.dll\n");
 
@@ -304,8 +289,8 @@ static void test_typelib(void)
     FreeLibrary(inst);
 
     len = SysStringLen(path);
-    ok(len > ARRAY_SIZE(scrrun_dll_suffixW)
-       && lstrcmpiW(path+len-ARRAY_SIZE(scrrun_dll_suffixW), scrrun_dll_suffixW),
+    ok(len > ARRAY_SIZE(L"\\scrrun.dll")
+       && lstrcmpiW(path+len-ARRAY_SIZE(L"\\scrrun.dll"), L"\\scrrun.dll"),
        "unexpected path %s\n", wine_dbgstr_w(path));
     SysFreeString(path);
     ok(typelib != NULL, "typelib == NULL\n");
@@ -320,8 +305,8 @@ static void test_typelib(void)
     FreeLibrary(inst);
 
     len = SysStringLen(path);
-    ok(len > ARRAY_SIZE(mshtml_tlb_suffixW)
-       && lstrcmpiW(path+len-ARRAY_SIZE(mshtml_tlb_suffixW), mshtml_tlb_suffixW),
+    ok(len > ARRAY_SIZE(L"\\mshtml.tlb")
+       && lstrcmpiW(path+len-ARRAY_SIZE(L"\\mshtml.tlb"), L"\\mshtml.tlb"),
        "unexpected path %s\n", wine_dbgstr_w(path));
     SysFreeString(path);
     ok(typelib != NULL, "typelib == NULL\n");
@@ -589,12 +574,10 @@ static HRESULT WINAPI Dispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID l
     ITypeLib *typelib;
     HRESULT hres;
 
-    static const WCHAR mshtml_tlbW[] = {'m','s','h','t','m','l','.','t','l','b',0};
-
     ok(!iTInfo, "iTInfo = %d\n", iTInfo);
     ok(!lcid, "lcid = %x\n", lcid);
 
-    hres = LoadTypeLib(mshtml_tlbW, &typelib);
+    hres = LoadTypeLib(L"mshtml.tlb", &typelib);
     ok(hres == S_OK, "LoadTypeLib failed: %08x\n", hres);
 
     hres = ITypeLib_GetTypeInfoOfGuid(typelib, &IID_IHTMLElement, ppTInfo);
@@ -679,8 +662,8 @@ static void test_ax_win(void)
     static HMODULE hinstance = 0;
     static const WCHAR cls_names[][16] =
     {
-        {'A','t','l','A','x','W','i','n','1','0','0',0},
-        {'A','t','l','A','x','W','i','n','L','i','c','1','0','0',0}
+        L"AtlAxWin100",
+        L"AtlAxWinLic100"
     };
 
     ret = AtlAxWinInit();
@@ -706,7 +689,7 @@ static void test_ax_win(void)
         if (control) IUnknown_Release(control);
         DestroyWindow(hwnd);
 
-        hwnd = CreateWindowW(cls_names[i], emptyW, 0, 100, 100, 100, 100, NULL, NULL, NULL, NULL);
+        hwnd = CreateWindowW(cls_names[i], L"", 0, 100, 100, 100, 100, NULL, NULL, NULL, NULL);
         ok(hwnd != NULL, "CreateWindow failed!\n");
         control = (IUnknown *)0xdeadbeef;
         res = AtlAxGetControl(hwnd, &control);
@@ -715,7 +698,7 @@ static void test_ax_win(void)
         if (control) IUnknown_Release(control);
         DestroyWindow(hwnd);
 
-        hwnd = CreateWindowW(cls_names[i], randomW, 0, 100, 100, 100, 100, NULL, NULL, NULL, NULL);
+        hwnd = CreateWindowW(cls_names[i], L"random", 0, 100, 100, 100, 100, NULL, NULL, NULL, NULL);
         todo_wine ok(!hwnd, "returned %p\n", hwnd);
         if(hwnd) DestroyWindow(hwnd);
 
@@ -772,7 +755,7 @@ static void test_ax_win(void)
 
         ret = GetTempPathW(MAX_PATH, pathW);
         ok(ret, "GetTempPath failed!\n");
-        lstrcatW(pathW, html_fileW);
+        lstrcatW(pathW, L"test.html");
         hfile = CreateFileW(pathW, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0);
         ok(hfile != INVALID_HANDLE_VALUE, "failed to create file\n");
         ret = WriteFile(hfile, html_str, sizeof(html_str), &ret_size, NULL);
@@ -790,7 +773,7 @@ static void test_ax_win(void)
         DestroyWindow(hwnd);
 
         /* test file:// scheme */
-        lstrcpyW(file_uri1W, fileW);
+        lstrcpyW(file_uri1W, L"file:///");
         lstrcatW(file_uri1W, pathW);
         hwnd = CreateWindowW(cls_names[i], file_uri1W, 0, 100, 100, 100, 100, NULL, NULL, NULL, NULL);
         ok(hwnd != NULL, "CreateWindow failed!\n");
@@ -940,7 +923,7 @@ static void test_AtlAxCreateControl(void)
     control = (IUnknown *)0xdeadbeef;
     hwnd = create_container_window();
     ok(hwnd != NULL, "create window failed!\n");
-    hr = AtlAxCreateControlEx(emptyW, hwnd, NULL, &container, &control, &IID_NULL, NULL);
+    hr = AtlAxCreateControlEx(L"", hwnd, NULL, &container, &control, &IID_NULL, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     todo_wine ok(container != NULL, "returned %p!\n", container);
     ok(!control, "returned %p\n", control);
@@ -950,7 +933,7 @@ static void test_AtlAxCreateControl(void)
     control = (IUnknown *)0xdeadbeef;
     hwnd = create_container_window();
     ok(hwnd != NULL, "create window failed!\n");
-    hr = AtlAxCreateControlEx(randomW, hwnd, NULL, &container, &control, &IID_NULL, NULL);
+    hr = AtlAxCreateControlEx(L"random", hwnd, NULL, &container, &control, &IID_NULL, NULL);
     ok(hr == CO_E_CLASSSTRING, "got 0x%08x\n", hr);
     ok(!container, "returned %p!\n", container);
     ok(!control, "returned %p\n", control);
@@ -1028,7 +1011,7 @@ static void test_AtlAxCreateControl(void)
 
     ret = GetTempPathW(MAX_PATH, pathW);
     ok(ret, "GetTempPath failed!\n");
-    lstrcatW(pathW, html_fileW);
+    lstrcatW(pathW, L"test.html");
     hfile = CreateFileW(pathW, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0);
     ok(hfile != INVALID_HANDLE_VALUE, "failed to create file\n");
     ret = WriteFile(hfile, html_str, sizeof(html_str), &ret_size, NULL);
@@ -1049,7 +1032,7 @@ static void test_AtlAxCreateControl(void)
     DestroyWindow(hwnd);
 
     /* test file:// scheme */
-    lstrcpyW(file_uri1W, fileW);
+    lstrcpyW(file_uri1W, L"file:///");
     lstrcatW(file_uri1W, pathW);
     container = NULL;
     control = NULL;
