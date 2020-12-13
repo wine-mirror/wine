@@ -52,7 +52,7 @@ static LONG CALLBACK rpc_exception_filter(EXCEPTION_POINTERS *ptrs)
 START_TEST(atsvcapi)
 {
     static unsigned char ncalrpc[] = "ncalrpc";
-    static WCHAR task1W[] = { 'T','a','s','k','1','.','e','x','e',0 };
+    static WCHAR task1W[] = L"Task1.exe";
     HRESULT hr;
     unsigned char *binding_str;
     WCHAR server_name[MAX_COMPUTERNAME_LENGTH + 1];
