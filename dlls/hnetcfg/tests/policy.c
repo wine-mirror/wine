@@ -109,7 +109,7 @@ static void test_interfaces(void)
 static void test_NetFwAuthorizedApplication(void)
 {
     INetFwAuthorizedApplication *app;
-    static WCHAR empty[] = {0};
+    static WCHAR empty[] = L"";
     UNIVERSAL_NAME_INFOW *info;
     WCHAR fullpath[MAX_PATH];
     WCHAR netpath[MAX_PATH];
