@@ -323,6 +323,7 @@ static INT_PTR security_on_initdialog(HWND hsec)
     TRACE("using imagelist: %p\n", sd->himages);
     if (!sd->himages) {
         ERR("ImageList_Create failed!\n");
+        security_on_destroy(sd);
         return FALSE;
     }
     SendMessageW(sd->hlv, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)sd->himages);
