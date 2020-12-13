@@ -98,7 +98,7 @@ static void test_ldap_parse_sort_control( LDAP *ld )
 static void test_ldap_search_extW( LDAP *ld )
 {
     ULONG ret, message, timelimit;
-    WCHAR base[] = {0}, filter[] = {'o','u','=','*',0};
+    WCHAR base[] = L"", filter[] = L"ou=*";
 
     timelimit = 20;
     ret = ldap_search_extW( ld, base, LDAP_SCOPE_SUBTREE, filter, NULL, 0, NULL, NULL, timelimit, 0, &message );
