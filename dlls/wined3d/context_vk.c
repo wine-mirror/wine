@@ -797,15 +797,18 @@ void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const 
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    struct wined3d_bo_slab_vk *slab_vk;
     size_t object_size, idx;
 
     TRACE("context_vk %p, bo %p.\n", context_vk, bo);
 
-    if (bo->slab)
+    if ((slab_vk = bo->slab))
     {
-        object_size = bo->slab->bo.size / 32;
+        if (bo->map_ptr)
+            wined3d_bo_slab_vk_unmap(slab_vk, context_vk);
+        object_size = slab_vk->bo.size / 32;
         idx = bo->buffer_offset / object_size;
-        wined3d_context_vk_destroy_bo_slab_slice(context_vk, bo->slab, idx, bo->command_buffer_id);
+        wined3d_context_vk_destroy_bo_slab_slice(context_vk, slab_vk, idx, bo->command_buffer_id);
         return;
     }
 

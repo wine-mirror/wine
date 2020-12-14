@@ -1633,6 +1633,11 @@ struct wined3d_bo_slab_vk
     uint32_t map;
 };
 
+void *wined3d_bo_slab_vk_map(struct wined3d_bo_slab_vk *slab_vk,
+        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+void wined3d_bo_slab_vk_unmap(struct wined3d_bo_slab_vk *slab_vk,
+        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+
 struct wined3d_bo_address
 {
     UINT_PTR buffer_object;

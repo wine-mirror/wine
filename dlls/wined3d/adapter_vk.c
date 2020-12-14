@@ -772,12 +772,11 @@ static void *wined3d_bo_vk_map(struct wined3d_bo_vk *bo, struct wined3d_context_
 
     if ((slab = bo->slab))
     {
-        if (!(bo->map_ptr = slab->map_ptr) && !(bo->map_ptr = wined3d_bo_vk_map(&slab->bo, context_vk)))
+        if (!(bo->map_ptr = wined3d_bo_slab_vk_map(slab, context_vk)))
         {
             ERR("Failed to map slab.\n");
             return NULL;
         }
-        ++slab->map_count;
     }
     else if (bo->memory)
     {
@@ -811,21 +810,43 @@ static void wined3d_bo_vk_unmap(struct wined3d_bo_vk *bo, struct wined3d_context
 
     if ((slab = bo->slab))
     {
-        if (--slab->map_count)
-            return;
+        wined3d_bo_slab_vk_unmap(slab, context_vk);
+        return;
+    }
 
-        wined3d_bo_vk_unmap(&slab->bo, context_vk);
-        slab->map_ptr = NULL;
+    if (bo->memory)
+    {
+        wined3d_allocator_chunk_vk_unmap(wined3d_allocator_chunk_vk(bo->memory->chunk), context_vk);
         return;
     }
 
     vk_info = context_vk->vk_info;
     device_vk = wined3d_device_vk(context_vk->c.device);
+    VK_CALL(vkUnmapMemory(device_vk->vk_device, bo->vk_memory));
+}
 
-    if (bo->memory)
-        wined3d_allocator_chunk_vk_unmap(wined3d_allocator_chunk_vk(bo->memory->chunk), context_vk);
-    else
-        VK_CALL(vkUnmapMemory(device_vk->vk_device, bo->vk_memory));
+void *wined3d_bo_slab_vk_map(struct wined3d_bo_slab_vk *slab_vk, struct wined3d_context_vk *context_vk)
+{
+    TRACE("slab_vk %p, context_vk %p.\n", slab_vk, context_vk);
+
+    if (!slab_vk->map_ptr && !(slab_vk->map_ptr = wined3d_bo_vk_map(&slab_vk->bo, context_vk)))
+    {
+        ERR("Failed to map slab.\n");
+        return NULL;
+    }
+
+    ++slab_vk->map_count;
+
+    return slab_vk->map_ptr;
+}
+
+void wined3d_bo_slab_vk_unmap(struct wined3d_bo_slab_vk *slab_vk, struct wined3d_context_vk *context_vk)
+{
+    if (--slab_vk->map_count)
+        return;
+
+    wined3d_bo_vk_unmap(&slab_vk->bo, context_vk);
+    slab_vk->map_ptr = NULL;
 }
 
 static VkAccessFlags vk_access_mask_from_buffer_usage(VkBufferUsageFlags usage)
