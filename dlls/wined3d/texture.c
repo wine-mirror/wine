@@ -6465,11 +6465,6 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
 
     src_aspect = vk_aspect_mask_from_format(src_texture_vk->t.resource.format);
     dst_aspect = vk_aspect_mask_from_format(dst_texture_vk->t.resource.format);
-    if ((src_aspect | dst_aspect) & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT))
-    {
-        TRACE("Depth/stencil blits not supported.\n");
-        goto next;
-    }
 
     if (wined3d_resource_get_sample_count(&src_texture_vk->t.resource) > 1)
         resolve = true;
