@@ -1513,7 +1513,7 @@ HRESULT CDECL wined3d_adapter_get_identifier(const struct wined3d_adapter *adapt
     identifier->device_identifier = IID_D3DDEVICE_D3DUID;
     identifier->driver_uuid = adapter->driver_uuid;
     identifier->device_uuid = adapter->device_uuid;
-    identifier->whql_level = (flags & WINED3DENUM_NO_WHQL_LEVEL) ? 0 : 1;
+    identifier->whql_level = (flags & WINED3DENUM_WHQL_LEVEL) ? 1 : 0;
     identifier->adapter_luid = adapter->luid;
     identifier->video_memory = min(~(SIZE_T)0, adapter->driver_info.vram_bytes);
     identifier->shared_system_memory = min(~(SIZE_T)0, adapter->driver_info.sysmem_bytes);

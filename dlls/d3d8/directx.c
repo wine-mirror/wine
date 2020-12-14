@@ -121,6 +121,9 @@ static HRESULT WINAPI d3d8_GetAdapterIdentifier(IDirect3D8 *iface, UINT adapter,
     adapter_id.description = identifier->Description;
     adapter_id.description_size = sizeof(identifier->Description);
 
+    /* D3DENUM_NO_WHQL_LEVEL -> WINED3DENUM_WHQL_LEVEL */
+    flags ^= D3DENUM_NO_WHQL_LEVEL;
+
     wined3d_adapter = wined3d_output_get_adapter(d3d8->wined3d_outputs[output_idx]);
     if (SUCCEEDED(hr = wined3d_adapter_get_identifier(wined3d_adapter, flags, &adapter_id)))
     {
