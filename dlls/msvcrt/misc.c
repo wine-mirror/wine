@@ -213,7 +213,7 @@ void* CDECL bsearch(const void *key, const void *base, size_t nmemb,
  */
 #ifdef __i386__
 
-# ifdef __GNUC__
+# if defined(__GNUC__) || defined(__clang__)
 
 __ASM_GLOBAL_FUNC(_chkesp,
                   "jnz 1f\n\t"
@@ -242,7 +242,7 @@ void CDECL DECLSPEC_HIDDEN chkesp_fail(void)
   DebugBreak();
 }
 
-# else  /* __GNUC__ */
+# else  /* __GNUC__ || __clang__ */
 
 /**********************************************************************/
 
@@ -250,7 +250,7 @@ void CDECL _chkesp(void)
 {
 }
 
-# endif  /* __GNUC__ */
+# endif  /* __GNUC__ || __clang__ */
 
 #endif  /* __i386__ */
 

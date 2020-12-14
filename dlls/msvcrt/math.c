@@ -1297,7 +1297,7 @@ double CDECL tanh( double x )
 }
 
 
-#if defined(__GNUC__) && defined(__i386__)
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__i386__)
 
 #define CREATE_FPU_FUNC1(name, call) \
     __ASM_GLOBAL_FUNC(name, \
@@ -1411,7 +1411,7 @@ __ASM_GLOBAL_FUNC(_ftol,
         __ASM_CFI(".cfi_same_value %ebp\n\t")
         "ret")
 
-#endif /* defined(__GNUC__) && defined(__i386__) */
+#endif /* (defined(__GNUC__) || defined(__clang__)) && defined(__i386__) */
 
 /*********************************************************************
  *		_fpclass (MSVCRT.@)
@@ -1638,7 +1638,7 @@ double CDECL modf( double x, double *iptr )
 #if defined(__i386__) || defined(__x86_64__)
 void CDECL _statusfp2( unsigned int *x86_sw, unsigned int *sse2_sw )
 {
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__clang__)
     unsigned int flags;
     unsigned long fpword;
 
@@ -1710,7 +1710,7 @@ unsigned int CDECL _statusfp(void)
 unsigned int CDECL _clearfp(void)
 {
     unsigned int flags = 0;
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#if (defined(__GNUC__) || defined(__clang__)) && (defined(__i386__) || defined(__x86_64__))
     unsigned long fpword;
 
     __asm__ __volatile__( "fnstsw %0; fnclex" : "=m" (fpword) );
@@ -1802,7 +1802,7 @@ double CDECL _chgsign(double num)
 int CDECL __control87_2( unsigned int newval, unsigned int mask,
                          unsigned int *x86_cw, unsigned int *sse2_cw )
 {
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__clang__)
     unsigned long fpword;
     unsigned int flags;
     unsigned int old_flags;
@@ -2152,7 +2152,7 @@ int CDECL _finite(double num)
  */
 void CDECL _fpreset(void)
 {
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#if (defined(__GNUC__) || defined(__clang__)) && (defined(__i386__) || defined(__x86_64__))
     const unsigned int x86_cw = 0x27f;
     __asm__ __volatile__( "fninit; fldcw %0" : : "m" (x86_cw) );
     if (sse2_supported)
@@ -2171,7 +2171,7 @@ void CDECL _fpreset(void)
  */
 int CDECL fesetenv(const fenv_t *env)
 {
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#if (defined(__GNUC__) || defined(__clang__)) && (defined(__i386__) || defined(__x86_64__))
     struct {
         WORD control_word;
         WORD unused1;
