@@ -277,8 +277,10 @@ void wined3d_allocator_chunk_vk_unmap(struct wined3d_allocator_chunk_vk *chunk_v
 
     TRACE("chunk_vk %p, context_vk %p.\n", chunk_vk, context_vk);
 
-    if (!--chunk_vk->c.map_count)
-        VK_CALL(vkUnmapMemory(device_vk->vk_device, chunk_vk->vk_memory));
+    if (--chunk_vk->c.map_count)
+        return;
+
+    VK_CALL(vkUnmapMemory(device_vk->vk_device, chunk_vk->vk_memory));
     chunk_vk->c.map_ptr = NULL;
 }
 
