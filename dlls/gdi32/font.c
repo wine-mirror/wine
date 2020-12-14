@@ -2919,6 +2919,8 @@ static UINT get_glyph_index( struct gdi_font *font, UINT glyph )
         glyph = (unsigned char)ch;
         font_funcs->get_glyph_index( font, &glyph, FALSE );
     }
+    else return 0;
+
     return glyph;
 }
 
