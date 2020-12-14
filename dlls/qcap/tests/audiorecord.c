@@ -176,18 +176,15 @@ static ULONG WINAPI property_bag_Release(IPropertyBag *iface)
     ok(0, "Unexpected call.\n");
     return 1;
 }
-
-static const WCHAR waveinidW[] = {'W','a','v','e','I','n','I','d',0};
-static const WCHAR usemixerW[] = {'U','s','e','M','i','x','e','r',0};
 static int ppb_id;
 static unsigned int ppb_got_read;
 
 static HRESULT WINAPI property_bag_Read(IPropertyBag *iface, const WCHAR *name, VARIANT *var, IErrorLog *log)
 {
-    if (!lstrcmpW(name, usemixerW))
+    if (!lstrcmpW(name, L"UseMixer"))
         return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 
-    todo_wine ok(!lstrcmpW(name, waveinidW), "Got unexpected name %s.\n", wine_dbgstr_w(name));
+    todo_wine ok(!lstrcmpW(name, L"WaveInId"), "Got unexpected name %s.\n", wine_dbgstr_w(name));
     ok(V_VT(var) == VT_I4, "Got unexpected type %u.\n", V_VT(var));
     ok(!log, "Got unexpected error log %p.\n", log);
     ppb_got_read++;
@@ -222,7 +219,7 @@ static void test_property_bag(IMoniker *mon)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     VariantInit(&var);
-    hr = IPropertyBag_Read(devenum_bag, waveinidW, &var, NULL);
+    hr = IPropertyBag_Read(devenum_bag, L"WaveInId", &var, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ppb_id = V_I4(&var);
 

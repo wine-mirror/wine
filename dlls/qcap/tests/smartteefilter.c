@@ -23,10 +23,6 @@
 #include "wine/strmbase.h"
 #include "wine/test.h"
 
-static const WCHAR sink_id[] = {'I','n','p','u','t',0};
-static const WCHAR capture_id[] = {'C','a','p','t','u','r','e',0};
-static const WCHAR preview_id[] = {'P','r','e','v','i','e','w',0};
-
 static HANDLE event;
 
 static IBaseFilter *create_smart_tee(void)
@@ -90,7 +86,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
 
-    IBaseFilter_FindPin(filter, sink_id, &pin);
+    IBaseFilter_FindPin(filter, L"Input", &pin);
 
     check_interface(pin, &IID_IMemInputPin, TRUE);
     check_interface(pin, &IID_IPin, TRUE);
@@ -106,7 +102,7 @@ static void test_interfaces(void)
 
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, capture_id, &pin);
+    IBaseFilter_FindPin(filter, L"Capture", &pin);
 
     todo_wine check_interface(pin, &IID_IAMStreamControl, TRUE);
     check_interface(pin, &IID_IPin, TRUE);
@@ -122,7 +118,7 @@ static void test_interfaces(void)
 
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, preview_id, &pin);
+    IBaseFilter_FindPin(filter, L"Preview", &pin);
 
     todo_wine check_interface(pin, &IID_IAMStreamControl, TRUE);
     check_interface(pin, &IID_IPin, TRUE);
@@ -387,7 +383,7 @@ static void test_find_pin(void)
     hr = IBaseFilter_EnumPins(filter, &enum_pins);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Input", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -395,7 +391,7 @@ static void test_find_pin(void)
     IPin_Release(pin2);
     IPin_Release(pin);
 
-    hr = IBaseFilter_FindPin(filter, capture_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Capture", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -403,7 +399,7 @@ static void test_find_pin(void)
     IPin_Release(pin2);
     IPin_Release(pin);
 
-    hr = IBaseFilter_FindPin(filter, preview_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Preview", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -427,7 +423,7 @@ static void test_pin_info(void)
     ULONG ref;
     IPin *pin;
 
-    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Input", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = get_refcount(filter);
     ok(ref == 2, "Got unexpected refcount %d.\n", ref);
@@ -438,7 +434,7 @@ static void test_pin_info(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
-    ok(!lstrcmpW(info.achName, sink_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ok(!lstrcmpW(info.achName, L"Input"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     ref = get_refcount(filter);
     ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
@@ -451,7 +447,7 @@ static void test_pin_info(void)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, sink_id), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!lstrcmpW(id, L"Input"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     hr = IPin_QueryInternalConnections(pin, NULL, &count);
@@ -459,14 +455,14 @@ static void test_pin_info(void)
 
     IPin_Release(pin);
 
-    hr = IBaseFilter_FindPin(filter, capture_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Capture", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_QueryPinInfo(pin, &info);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
-    ok(!lstrcmpW(info.achName, capture_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ok(!lstrcmpW(info.achName, L"Capture"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     ref = get_refcount(filter);
     ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
@@ -479,7 +475,7 @@ static void test_pin_info(void)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, capture_id), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!lstrcmpW(id, L"Capture"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     hr = IPin_QueryInternalConnections(pin, NULL, &count);
@@ -487,14 +483,14 @@ static void test_pin_info(void)
 
     IPin_Release(pin);
 
-    hr = IBaseFilter_FindPin(filter, preview_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Preview", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_QueryPinInfo(pin, &info);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
-    ok(!lstrcmpW(info.achName, preview_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ok(!lstrcmpW(info.achName, L"Preview"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     ref = get_refcount(filter);
     ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
@@ -507,7 +503,7 @@ static void test_pin_info(void)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, preview_id), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!lstrcmpW(id, L"Preview"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     hr = IPin_QueryInternalConnections(pin, NULL, &count);
@@ -528,7 +524,7 @@ static void test_enum_media_types(void)
     HRESULT hr;
     IPin *pin;
 
-    IBaseFilter_FindPin(filter, sink_id, &pin);
+    IBaseFilter_FindPin(filter, L"Input", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enum1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

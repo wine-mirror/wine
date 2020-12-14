@@ -23,9 +23,6 @@
 #include "vfw.h"
 #include "wine/test.h"
 
-static const WCHAR source_id[] = {'A','V','I',' ','O','u','t',0};
-static const WCHAR sink0_id[] = {'I','n','p','u','t',' ','0','1',0};
-
 static const GUID testguid = {0xfacade};
 
 static IBaseFilter *create_avi_mux(void)
@@ -86,7 +83,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
 
-    IBaseFilter_FindPin(filter, source_id, &pin);
+    IBaseFilter_FindPin(filter, L"AVI Out", &pin);
 
     check_interface(pin, &IID_IPin, TRUE);
     check_interface(pin, &IID_IQualityControl, TRUE);
@@ -99,7 +96,7 @@ static void test_interfaces(void)
 
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, sink0_id, &pin);
+    IBaseFilter_FindPin(filter, L"Input 01", &pin);
 
     check_interface(pin, &IID_IAMStreamControl, TRUE);
     check_interface(pin, &IID_IMemInputPin, TRUE);
@@ -343,7 +340,7 @@ static void test_find_pin(void)
     hr = IBaseFilter_EnumPins(filter, &enum_pins);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IBaseFilter_FindPin(filter, source_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"AVI Out", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -351,7 +348,7 @@ static void test_find_pin(void)
     IPin_Release(pin);
     IPin_Release(pin2);
 
-    hr = IBaseFilter_FindPin(filter, sink0_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Input 01", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -374,7 +371,7 @@ static void test_pin_info(void)
     ULONG ref;
     IPin *pin;
 
-    hr = IBaseFilter_FindPin(filter, source_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"AVI Out", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ref = get_refcount(filter);
     ok(ref == 2, "Got unexpected refcount %d.\n", ref);
@@ -385,7 +382,7 @@ static void test_pin_info(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
-    ok(!lstrcmpW(info.achName, source_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ok(!lstrcmpW(info.achName, L"AVI Out"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     ref = get_refcount(filter);
     ok(ref == 3, "Got unexpected refcount %d.\n", ref);
     ref = get_refcount(pin);
@@ -398,7 +395,7 @@ static void test_pin_info(void)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, source_id), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!lstrcmpW(id, L"AVI Out"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     hr = IPin_QueryInternalConnections(pin, NULL, NULL);
@@ -406,14 +403,14 @@ static void test_pin_info(void)
 
     IPin_Release(pin);
 
-    hr = IBaseFilter_FindPin(filter, sink0_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Input 01", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_QueryPinInfo(pin, &info);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
-    ok(!lstrcmpW(info.achName, sink0_id), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    ok(!lstrcmpW(info.achName, L"Input 01"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     IBaseFilter_Release(info.pFilter);
 
     hr = IPin_QueryDirection(pin, &dir);
@@ -422,7 +419,7 @@ static void test_pin_info(void)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, sink0_id), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!lstrcmpW(id, L"Input 01"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     hr = IPin_QueryInternalConnections(pin, NULL, NULL);
@@ -445,7 +442,7 @@ static void test_media_types(void)
     ULONG ref;
     IPin *pin;
 
-    IBaseFilter_FindPin(filter, source_id, &pin);
+    IBaseFilter_FindPin(filter, L"AVI Out", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enummt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -498,7 +495,7 @@ static void test_media_types(void)
     IEnumMediaTypes_Release(enummt);
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, sink0_id, &pin);
+    IBaseFilter_FindPin(filter, L"Input 01", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enummt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -565,7 +562,7 @@ static void test_enum_media_types(void)
     HRESULT hr;
     IPin *pin;
 
-    IBaseFilter_FindPin(filter, source_id, &pin);
+    IBaseFilter_FindPin(filter, L"AVI Out", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enum1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -629,7 +626,7 @@ static void test_enum_media_types(void)
     IEnumMediaTypes_Release(enum2);
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, sink0_id, &pin);
+    IBaseFilter_FindPin(filter, L"Input 01", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enum1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

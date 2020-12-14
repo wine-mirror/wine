@@ -23,11 +23,6 @@
 #include "vfw.h"
 #include "wine/test.h"
 
-static const WCHAR sink_id[] = {'I','n',0};
-static const WCHAR source_id[] = {'O','u','t',0};
-static const WCHAR sink_name[] = {'I','n','p','u','t',0};
-static const WCHAR source_name[] = {'O','u','t','p','u','t',0};
-
 static const DWORD test_fourcc = mmioFOURCC('w','t','s','t');
 
 #define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
@@ -74,7 +69,7 @@ static void test_interfaces(IBaseFilter *filter)
     check_interface(filter, &IID_IReferenceClock, FALSE);
     check_interface(filter, &IID_IVideoWindow, FALSE);
 
-    IBaseFilter_FindPin(filter, sink_id, &pin);
+    IBaseFilter_FindPin(filter, L"In", &pin);
 
     check_interface(pin, &IID_IMemInputPin, TRUE);
     check_interface(pin, &IID_IPin, TRUE);
@@ -85,7 +80,7 @@ static void test_interfaces(IBaseFilter *filter)
     check_interface(pin, &IID_IMediaSeeking, FALSE);
 
     IPin_Release(pin);
-    IBaseFilter_FindPin(filter, source_id, &pin);
+    IBaseFilter_FindPin(filter, L"Out", &pin);
 
     todo_wine check_interface(pin, &IID_IMediaPosition, TRUE);
     todo_wine check_interface(pin, &IID_IMediaSeeking, TRUE);
@@ -319,7 +314,7 @@ static void test_find_pin(IBaseFilter *filter)
     hr = IBaseFilter_EnumPins(filter, &enum_pins);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"In", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -327,7 +322,7 @@ static void test_find_pin(IBaseFilter *filter)
     IPin_Release(pin);
     IPin_Release(pin2);
 
-    hr = IBaseFilter_FindPin(filter, source_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Out", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -335,9 +330,9 @@ static void test_find_pin(IBaseFilter *filter)
     IPin_Release(pin);
     IPin_Release(pin2);
 
-    hr = IBaseFilter_FindPin(filter, sink_name, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Input", &pin);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
-    hr = IBaseFilter_FindPin(filter, source_name, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Output", &pin);
     ok(hr == VFW_E_NOT_FOUND, "Got hr %#x.\n", hr);
 
     IEnumPins_Release(enum_pins);
@@ -351,14 +346,14 @@ static void test_pin_info(IBaseFilter *filter)
     WCHAR *id;
     IPin *pin;
 
-    hr = IBaseFilter_FindPin(filter, sink_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"In", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_QueryPinInfo(pin, &info);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_INPUT, "Got direction %d.\n", info.dir);
-    todo_wine ok(!lstrcmpW(info.achName, sink_name), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    todo_wine ok(!lstrcmpW(info.achName, L"Input"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     IBaseFilter_Release(info.pFilter);
 
     hr = IPin_QueryDirection(pin, &dir);
@@ -367,19 +362,19 @@ static void test_pin_info(IBaseFilter *filter)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, sink_id), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!lstrcmpW(id, L"In"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     IPin_Release(pin);
 
-    hr = IBaseFilter_FindPin(filter, source_id, &pin);
+    hr = IBaseFilter_FindPin(filter, L"Out", &pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_QueryPinInfo(pin, &info);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(info.pFilter == filter, "Expected filter %p, got %p.\n", filter, info.pFilter);
     ok(info.dir == PINDIR_OUTPUT, "Got direction %d.\n", info.dir);
-    todo_wine ok(!lstrcmpW(info.achName, source_name), "Got name %s.\n", wine_dbgstr_w(info.achName));
+    todo_wine ok(!lstrcmpW(info.achName, L"Output"), "Got name %s.\n", wine_dbgstr_w(info.achName));
     IBaseFilter_Release(info.pFilter);
 
     hr = IPin_QueryDirection(pin, &dir);
@@ -388,7 +383,7 @@ static void test_pin_info(IBaseFilter *filter)
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!lstrcmpW(id, source_id), "Got id %s.\n", wine_dbgstr_w(id));
+    ok(!lstrcmpW(id, L"Out"), "Got id %s.\n", wine_dbgstr_w(id));
     CoTaskMemFree(id);
 
     IPin_Release(pin);
@@ -397,7 +392,6 @@ static void test_pin_info(IBaseFilter *filter)
 static LRESULT CALLBACK driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
         LPARAM lparam1, LPARAM lparam2)
 {
-    static const WCHAR nameW[] = {'f','o','o',0};
     if (winetest_debug > 1) trace("msg %#x, lparam1 %#lx, lparam2 %#lx.\n", msg, lparam1, lparam2);
 
     switch (msg)
@@ -415,8 +409,8 @@ static LRESULT CALLBACK driver_proc(DWORD_PTR id, HDRVR driver, UINT msg,
         info->dwFlags = VIDCF_TEMPORAL;
         info->dwVersion = 0x10101;
         info->dwVersionICM = ICVERSION;
-        lstrcpyW(info->szName, nameW);
-        lstrcpyW(info->szDescription, nameW);
+        lstrcpyW(info->szName, L"foo");
+        lstrcpyW(info->szDescription, L"foo");
         return sizeof(ICINFO);
     }
     case ICM_COMPRESS_QUERY:
@@ -446,14 +440,12 @@ static ULONG WINAPI property_bag_Release(IPropertyBag *iface)
     ok(0, "Unexpected call.\n");
     return 1;
 }
-
-static const WCHAR fcchandlerW[] = {'F','c','c','H','a','n','d','l','e','r',0};
 static BSTR ppb_handler;
 static unsigned int ppb_got_read;
 
 static HRESULT WINAPI property_bag_Read(IPropertyBag *iface, const WCHAR *name, VARIANT *var, IErrorLog *log)
 {
-    ok(!lstrcmpW(name, fcchandlerW), "Got unexpected name %s.\n", wine_dbgstr_w(name));
+    ok(!lstrcmpW(name, L"FccHandler"), "Got unexpected name %s.\n", wine_dbgstr_w(name));
     ok(V_VT(var) == VT_BSTR, "Got unexpected type %u.\n", V_VT(var));
     ok(!log, "Got unexpected error log %p.\n", log);
     V_BSTR(var) = SysAllocString(ppb_handler);
@@ -489,7 +481,7 @@ static void test_property_bag(IMoniker *mon)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     VariantInit(&var);
-    hr = IPropertyBag_Read(devenum_bag, fcchandlerW, &var, NULL);
+    hr = IPropertyBag_Read(devenum_bag, L"FccHandler", &var, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ppb_handler = V_BSTR(&var);
 
@@ -525,7 +517,7 @@ static void test_media_types(IBaseFilter *filter)
     HRESULT hr;
     IPin *pin;
 
-    IBaseFilter_FindPin(filter, sink_id, &pin);
+    IBaseFilter_FindPin(filter, L"In", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enummt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -572,7 +564,7 @@ static void test_media_types(IBaseFilter *filter)
 
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, source_id, &pin);
+    IBaseFilter_FindPin(filter, L"Out", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enummt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -592,7 +584,7 @@ static void test_enum_media_types(IBaseFilter *filter)
     HRESULT hr;
     IPin *pin;
 
-    IBaseFilter_FindPin(filter, sink_id, &pin);
+    IBaseFilter_FindPin(filter, L"In", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enum1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -623,7 +615,7 @@ static void test_enum_media_types(IBaseFilter *filter)
     IEnumMediaTypes_Release(enum2);
     IPin_Release(pin);
 
-    IBaseFilter_FindPin(filter, source_id, &pin);
+    IBaseFilter_FindPin(filter, L"Out", &pin);
 
     hr = IPin_EnumMediaTypes(pin, &enum1);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -709,10 +701,8 @@ static void test_unconnected_filter_state(IBaseFilter *filter)
 
 START_TEST(avico)
 {
-    static const WCHAR test_display_name[] = {'@','d','e','v','i','c','e',':',
-            'c','m',':','{','3','3','D','9','A','7','6','0','-','9','0','C','8',
-            '-','1','1','D','0','-','B','D','4','3','-','0','0','A','0','C','9',
-            '1','1','C','E','8','6','}','\\','w','t','s','t',0};
+    static const WCHAR test_display_name[] =
+        L"@device:cm:{33D9A760-90C8-11D0-BD43-00A0C911CE86}\\wtst";
     ICreateDevEnum *devenum;
     IEnumMoniker *enummon;
     IBaseFilter *filter;
