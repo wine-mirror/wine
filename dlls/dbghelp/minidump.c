@@ -540,7 +540,8 @@ static  unsigned        dump_modules(struct dump_context* dc, BOOL dump_elf)
             mdModule.ModuleNameRva = dc->rva;
             ms->Length -= sizeof(WCHAR);
             append(dc, ms, sizeof(ULONG) + ms->Length + sizeof(WCHAR));
-            fetch_module_versioninfo(ms->Buffer, &mdModule.VersionInfo);
+            if (!dump_elf) fetch_module_versioninfo(ms->Buffer, &mdModule.VersionInfo);
+            else memset(&mdModule.VersionInfo, 0, sizeof(mdModule.VersionInfo));
             mdModule.CvRecord.DataSize = 0; /* FIXME */
             mdModule.CvRecord.Rva = 0; /* FIXME */
             mdModule.MiscRecord.DataSize = 0; /* FIXME */
