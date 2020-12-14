@@ -2551,29 +2551,35 @@ static void test_WSASocket(void)
            SOCK_RAW, socktype);
         closesocket(sock);
 
-        todo_wine {
         sock = WSASocketA(0, 0, IPPROTO_RAW, NULL, 0, 0);
-        ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
-           WSAGetLastError());
-        size = sizeof(socktype);
-        socktype = 0xdead;
-        err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
-        ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
-        ok(socktype == SOCK_RAW, "Wrong socket type, expected %d received %d\n",
-           SOCK_RAW, socktype);
-        closesocket(sock);
-        }
+        if (sock != INVALID_SOCKET)
+        {
+            todo_wine {
+            size = sizeof(socktype);
+            socktype = 0xdead;
+            err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
+            ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
+            ok(socktype == SOCK_RAW, "Wrong socket type, expected %d received %d\n",
+               SOCK_RAW, socktype);
+            closesocket(sock);
+            }
 
-        sock = WSASocketA(AF_INET, SOCK_RAW, IPPROTO_TCP, NULL, 0, 0);
-        ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
-           WSAGetLastError());
-        size = sizeof(socktype);
-        socktype = 0xdead;
-        err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
-        ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
-        ok(socktype == SOCK_RAW, "Wrong socket type, expected %d received %d\n",
-           SOCK_RAW, socktype);
-        closesocket(sock);
+            sock = WSASocketA(AF_INET, SOCK_RAW, IPPROTO_TCP, NULL, 0, 0);
+            ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
+               WSAGetLastError());
+            size = sizeof(socktype);
+            socktype = 0xdead;
+            err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
+            ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
+            ok(socktype == SOCK_RAW, "Wrong socket type, expected %d received %d\n",
+               SOCK_RAW, socktype);
+            closesocket(sock);
+        }
+        else if (WSAGetLastError() == WSAEACCES)
+            skip("SOCK_RAW is not available\n");
+        else
+            ok(0, "Failed to create socket: %d\n", WSAGetLastError());
+
     }
 
     /* IPX socket tests */
