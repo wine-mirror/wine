@@ -346,11 +346,6 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale 
                 "wrong caps on %s for %u: %u\n", descr, caps[i],
                 GetDeviceCaps( hdc, caps[i] ) );
 
-        SetLastError( 0xdeadbeef );
-        ret = GetDeviceGammaRamp( hdc, &ramp );
-        ok( !ret, "GetDeviceGammaRamp succeeded on %s\n", descr );
-        ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef), /* nt4 */
-            "wrong error %u on %s\n", GetLastError(), descr );
         type = GetClipBox( hdc, &rect );
         ok( type == ERROR, "GetClipBox returned %d on %s\n", type, descr );
 
@@ -392,17 +387,6 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale 
                 "mismatched caps on %s for %u: %u/%u (scale %d)\n", descr, caps[i],
                 hdc_caps, GetDeviceCaps( ref_dc, caps[i] ), scale );
         }
-
-        SetLastError( 0xdeadbeef );
-        ret = GetDeviceGammaRamp( hdc, &ramp );
-        if (GetObjectType( hdc ) != OBJ_DC || GetDeviceCaps( hdc, TECHNOLOGY ) == DT_RASPRINTER)
-        {
-            ok( !ret, "GetDeviceGammaRamp succeeded on %s (type %d)\n", descr, GetObjectType( hdc ) );
-            ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef), /* nt4 */
-                "wrong error %u on %s\n", GetLastError(), descr );
-        }
-        else
-            ok( ret || broken(!ret) /* NT4 */, "GetDeviceGammaRamp failed on %s (type %d), error %u\n", descr, GetObjectType( hdc ), GetLastError() );
 
         type = GetBoundsRect( hdc, &rect, 0 );
         ok( type == DCB_RESET || broken(type == DCB_SET) /* XP */,
@@ -494,12 +478,6 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale 
                 "mismatched caps on %s and DIB for %u: %u/%u\n", descr, caps[i],
                 GetDeviceCaps( hdc, caps[i] ), GetDeviceCaps( ref_dc, caps[i] ) );
 
-        SetLastError( 0xdeadbeef );
-        ret = GetDeviceGammaRamp( hdc, &ramp );
-        ok( !ret, "GetDeviceGammaRamp succeeded on %s\n", descr );
-        ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef), /* nt4 */
-            "wrong error %u on %s\n", GetLastError(), descr );
-
         type = GetClipBox( hdc, &rect );
         ok( type == SIMPLEREGION, "GetClipBox returned %d on memdc for %s\n", type, descr );
         ok( rect.left == 0 && rect.top == 0 && rect.right == 16 && rect.bottom == 16,
@@ -515,6 +493,29 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale 
 
         SelectObject( hdc, old );
         DeleteObject( dib );
+    }
+
+    /* Memory DC, metafile DC and enhanced metafile DC support gamma ramp on Win10 1909+. Exclude
+     * these types from tests as they return different results depending on Windows versions */
+    if (GetObjectType( hdc ) != OBJ_MEMDC
+        && GetObjectType( hdc ) != OBJ_METADC
+        && GetObjectType( hdc ) != OBJ_ENHMETADC)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = GetDeviceGammaRamp( hdc, &ramp );
+        if (GetObjectType( hdc ) != OBJ_DC || GetDeviceCaps( hdc, TECHNOLOGY ) == DT_RASPRINTER)
+        {
+            ok( !ret, "GetDeviceGammaRamp succeeded on %s (type %d)\n", descr, GetObjectType( hdc ) );
+            ok( GetLastError() == ERROR_INVALID_PARAMETER
+                || broken(GetLastError() == 0xdeadbeef) /* nt4 */
+                || broken(GetLastError() == NO_ERROR), /* Printer DC on Win10 1909+ */
+                "wrong error %u on %s\n", GetLastError(), descr );
+        }
+        else
+        {
+            ok( ret || broken(!ret) /* NT4 */, "GetDeviceGammaRamp failed on %s (type %d), error %u\n",
+                descr, GetObjectType( hdc ), GetLastError() );
+        }
     }
 
     /* restore hdc state */
