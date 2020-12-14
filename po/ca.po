@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-12-31 11:39-0700\n"
+"PO-Revision-Date: 2020-12-13 20:27-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.2.4\n"
+"X-Generator: Poedit 2.4.1\n"
 
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
@@ -3668,7 +3668,7 @@ msgstr "Opcions d'Internet"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:32
 msgid "Configure Wine Internet Browser and related settings"
-msgstr "Configura el Wine Internet Browser i els ajusts relacionats"
+msgstr "Configura el Wine Internet Browser i les opcions relacionades"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:33
 msgid "Security settings for zone: "
@@ -3756,7 +3756,7 @@ msgstr "Controladors de joc"
 
 #: dlls/joy.cpl/joy.rc:32
 msgid "Test and configure game controllers."
-msgstr ""
+msgstr "Prova i configura controladors de joc."
 
 #: dlls/jscript/jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3771,10 +3771,8 @@ msgid "Subscript out of range"
 msgstr "El subíndex és fora d'interval"
 
 #: dlls/jscript/jscript.rc:31
-#, fuzzy
-#| msgid "Out of paper; "
 msgid "Out of stack space"
-msgstr "No queda paper; "
+msgstr "No queda espai de pila"
 
 #: dlls/jscript/jscript.rc:32
 msgid "Object required"
@@ -3862,17 +3860,15 @@ msgstr "S'esperava '@'"
 
 #: dlls/jscript/jscript.rc:78
 msgid "Microsoft JScript compilation error"
-msgstr ""
+msgstr "Error de compilació de Microsoft JScript"
 
 #: dlls/jscript/jscript.rc:79
 msgid "Microsoft JScript runtime error"
-msgstr ""
+msgstr "Error d'entorn d'execució de Microsoft JScript"
 
 #: dlls/jscript/jscript.rc:80 dlls/vbscript/vbscript.rc:64
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown runtime error"
-msgstr "Error desconegut"
+msgstr "Error d'entorn d'execució desconegut"
 
 #: dlls/jscript/jscript.rc:55
 msgid "Number expected"
@@ -3915,16 +3911,12 @@ msgid "JScript object expected"
 msgstr "S'esperava un objecte JScript"
 
 #: dlls/jscript/jscript.rc:63
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Enumerator object expected"
-msgstr "S'esperava un objecte Array"
+msgstr "S'esperava un objecte d'Enumerator"
 
 #: dlls/jscript/jscript.rc:64
-#, fuzzy
-#| msgid "Boolean object expected"
 msgid "Regular Expression object expected"
-msgstr "S'esperava un objecte booleà"
+msgstr "S'esperava un objecte d'expressió regular"
 
 #: dlls/jscript/jscript.rc:65
 msgid "Syntax error in regular expression"
@@ -3932,7 +3924,7 @@ msgstr "Error de sintaxi en l'expressió regular"
 
 #: dlls/jscript/jscript.rc:66
 msgid "Exception thrown and not caught"
-msgstr ""
+msgstr "S'ha llançat una excepció que no s'ha atrapat"
 
 #: dlls/jscript/jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
@@ -6950,32 +6942,24 @@ msgid "Connection reset by peer.\n"
 msgstr "Un igual ha restablert la connexió.\n"
 
 #: dlls/kernel32/winerror.mc:3767
-#, fuzzy
-#| msgid "Not implemented"
 msgid "Not implemented.\n"
-msgstr "No implementat"
+msgstr "No implementat.\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "RPC call failed.\n"
 msgid "Call failed.\n"
-msgstr "La trucada RPC ha fallat.\n"
+msgstr "La trucada ha fallat.\n"
 
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "No s'ha trobat cap signatura en el fitxer.\n"
 
 #: dlls/kernel32/winerror.mc:3774
-#, fuzzy
-#| msgid "Invalid level.\n"
 msgid "Invalid call.\n"
-msgstr "El nivell no és vàlid.\n"
+msgstr "La trucada no és vàlida.\n"
 
 #: dlls/kernel32/winerror.mc:3781
-#, fuzzy
-#| msgid "Value is not available.\n"
 msgid "Resource is not currently available.\n"
-msgstr "El valor no està disponible.\n"
+msgstr "El recurs actualment no està disponible.\n"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -7037,10 +7021,8 @@ msgid "Sink has not been finalized.\n"
 msgstr "No s'ha finalitzat el receptor.\n"
 
 #: dlls/mferror/mferror.mc:732
-#, fuzzy
-#| msgid "Sink was already stopped.\n"
 msgid "Clock was stopped\n"
-msgstr "El receptor ja s'ha aturat.\n"
+msgstr "El rellotge s'ha aturat\n"
 
 #: dlls/mferror/mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7419,10 +7401,8 @@ msgid "Clock state was already set.\n"
 msgstr "Ja s'ha establert l'estat de rellotge.\n"
 
 #: dlls/mferror/mferror.mc:725
-#, fuzzy
-#| msgid "Clock is not available.\n"
 msgid "Clock is not simple\n"
-msgstr "El rellotge no està disponible.\n"
+msgstr "El rellotge no és simple\n"
 
 #: dlls/mpr/mpr.rc:35 dlls/wininet/wininet.rc:48
 msgid "Enter Network Password"
@@ -8527,150 +8507,117 @@ msgid "Select the data you want to connect to:"
 msgstr "Seleccioneu les dades a les qualles voleu connectar:"
 
 #: dlls/oledb32/version.rc:66
-#, fuzzy
-#| msgid "Connections"
 msgid "Connection"
-msgstr "Connexions"
+msgstr "Connexió"
 
 #: dlls/oledb32/version.rc:69
-#, fuzzy
-#| msgid "Select the data you want to connect to:"
 msgid "Specify the following to connect to ODBC data:"
-msgstr "Seleccioneu les dades a les qualles voleu connectar:"
+msgstr "Especifiqueu ho següent per a connectar a les dades ODBC:"
 
 #: dlls/oledb32/version.rc:70
 msgid "1. Specify the source of data:"
-msgstr ""
+msgstr "1. Especifiqueu la font de dades:"
 
 #: dlls/oledb32/version.rc:71
-#, fuzzy
-#| msgid "Please enter your name"
 msgid "Use &data source name"
-msgstr "Si us plau, introduïu el vostre nom"
+msgstr "Utilitza el nom de font de &dades"
 
 #: dlls/oledb32/version.rc:74
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "Use c&onnection string"
-msgstr "Connexions restablertes"
+msgstr "Utilitza una cadena de c&onnexió"
 
 #: dlls/oledb32/version.rc:75
-#, fuzzy
-#| msgid "Connections"
 msgid "&Connection string:"
-msgstr "Connexions"
+msgstr "Cadena de &connexió:"
 
 #: dlls/oledb32/version.rc:77
-#, fuzzy
-#| msgid "A&dd..."
 msgid "B&uild..."
-msgstr "A&fegeix..."
+msgstr "Constr&ueix..."
 
 #: dlls/oledb32/version.rc:78
 msgid "2. Enter information to log on to the server"
-msgstr ""
+msgstr "2. Introduïu la informació per a entrar al servidor"
 
 #: dlls/oledb32/version.rc:79
-#, fuzzy
-#| msgid "&User name:"
 msgid "User &name:"
 msgstr "&Nom d'usuari:"
 
 #: dlls/oledb32/version.rc:83
-#, fuzzy
-#| msgid "&Blank page"
 msgid "&Blank password"
-msgstr "Pàgina en &blanc"
+msgstr "Contrasenya en &blanc"
 
 #: dlls/oledb32/version.rc:84
-#, fuzzy
-#| msgid "Wrong password.\n"
 msgid "Allow &saving password"
-msgstr "La contrasenya està equivocada.\n"
+msgstr "Permet &desar la contrasenya"
 
 #: dlls/oledb32/version.rc:85
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. Introduïu el catàleg &inicial per a utilitzar:"
 
 #: dlls/oledb32/version.rc:87
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "&Test Connection"
-msgstr "Connexions restablertes"
+msgstr "&Prova la connexió"
 
 #: dlls/oledb32/version.rc:92
 msgid "Advanced"
 msgstr "Avançat"
 
 #: dlls/oledb32/version.rc:95
-#, fuzzy
-#| msgid "Network share"
 msgid "Network settings"
-msgstr "Recurs compartit de xarxa"
+msgstr "Opcions de xarxa"
 
 #: dlls/oledb32/version.rc:96
-#, fuzzy
-#| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
-msgstr "El nivell de suplantació és dolent.\n"
+msgstr "Nivell de &suplantació:"
 
 #: dlls/oledb32/version.rc:98
 msgid "P&rotection level:"
-msgstr ""
+msgstr "Nivell de p&rotecció:"
 
 #: dlls/oledb32/version.rc:101
-#, fuzzy
-#| msgid "Connected"
 msgid "Connect:"
-msgstr "Connectat"
+msgstr "Connecta:"
 
 #: dlls/oledb32/version.rc:103
-#, fuzzy
-#| msgid "seconds"
 msgid "seconds."
-msgstr "segons"
+msgstr "segons."
 
 #: dlls/oledb32/version.rc:104
-#, fuzzy
-#| msgid "Success"
 msgid "A&ccess:"
-msgstr "Èxit"
+msgstr "A&ccés:"
 
 #: dlls/oledb32/version.rc:110
-#, fuzzy
-#| msgid "&All"
 msgid "All"
-msgstr "&Tot"
+msgstr "Tot"
 
 #: dlls/oledb32/version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"Aquestes són les propietats d'inicialització per a aquest tipus de dades. "
+"Per a editar un valor, seleccioneu una propietat, llavors trieu \"Edita el "
+"valor\" a sota."
 
 #: dlls/oledb32/version.rc:115
-#, fuzzy
-#| msgid "&Edit..."
 msgid "&Edit Value..."
-msgstr "E&dita..."
+msgstr "&Edita el valor..."
 
 #: dlls/oledb32/version.rc:49
-#, fuzzy
-#| msgid "Data Link Properties"
 msgid "Data Link Error"
-msgstr "Propietats d'enllaç de dades"
+msgstr "Error d'enllaç de dades"
 
 #: dlls/oledb32/version.rc:50
-#, fuzzy
-#| msgid "Please select a file."
 msgid "Please select a provider."
-msgstr "Si us plau, seleccioneu un fitxer."
+msgstr "Si us plau, seleccioneu un proveïdor."
 
 #: dlls/oledb32/version.rc:51
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
+"El proveïdor ja no està disponible. Assegureu-vos que el proveïdor estigui "
+"instal·lat correctament."
 
 #: dlls/oledb32/version.rc:36
 msgid "Data Link Properties"
@@ -8681,38 +8628,32 @@ msgid "OLE DB Provider(s)"
 msgstr "Proveïdors de base de dades OLE"
 
 #: dlls/oledb32/version.rc:41
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "Llest"
+msgstr "Lectura"
 
 #: dlls/oledb32/version.rc:42
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "Llegiu-me:"
+msgstr "Lectura i escriptura"
 
 #: dlls/oledb32/version.rc:43
 msgid "Share Deny None"
-msgstr ""
+msgstr "No deneguis res de la compartició"
 
 #: dlls/oledb32/version.rc:44
 msgid "Share Deny Read"
-msgstr ""
+msgstr "Denega lectura de la compartició"
 
 #: dlls/oledb32/version.rc:45
 msgid "Share Deny Write"
-msgstr ""
+msgstr "Denega escriptura a la compartició"
 
 #: dlls/oledb32/version.rc:46
 msgid "Share Exclusive"
-msgstr ""
+msgstr "Compartició exclusiva"
 
 #: dlls/oledb32/version.rc:47
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "Escriptures d'E/S"
+msgstr "Escriptura"
 
 #: dlls/oledlg/oledlg.rc:55
 msgid "Insert Object"
@@ -9959,16 +9900,12 @@ msgid "Cape Verde Daylight Time"
 msgstr "Hora d'estiu de Cap Verd"
 
 #: dlls/tzres/tzres.rc:126
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
 msgid "Haiti Standard Time"
-msgstr "Hora estàndard de Hawaii"
+msgstr "Hora estàndard de Haití"
 
 #: dlls/tzres/tzres.rc:127
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
 msgid "Haiti Daylight Time"
-msgstr "Hora d'estiu de Hawaii"
+msgstr "Hora d'estiu de Haití"
 
 #: dlls/tzres/tzres.rc:80
 msgid "Central European Standard Time"
@@ -10003,16 +9940,12 @@ msgid "Iran Daylight Time"
 msgstr "Hora d'estiu d'Iran"
 
 #: dlls/tzres/tzres.rc:204
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
 msgid "Saint Pierre Standard Time"
-msgstr "Hora estàndard de Hawaii"
+msgstr "Hora estàndard de Sant Pere"
 
 #: dlls/tzres/tzres.rc:205
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
 msgid "Saint Pierre Daylight Time"
-msgstr "Hora d'estiu de Hawaii"
+msgstr "Hora d'estiu de Sant Pere"
 
 #: dlls/tzres/tzres.rc:170
 msgid "Namibia Standard Time"
@@ -10055,16 +9988,12 @@ msgid "Central Asia Daylight Time"
 msgstr "Hora d'estiu de l'Àsia Central"
 
 #: dlls/tzres/tzres.rc:146
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "Lord Howe Standard Time"
-msgstr "Hora estàndard de Corea"
+msgstr "Hora estàndard de Lord Howe"
 
 #: dlls/tzres/tzres.rc:147
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "Lord Howe Daylight Time"
-msgstr "Hora d'estiu de Corea"
+msgstr "Hora d'estiu de Lord Howe"
 
 #: dlls/tzres/tzres.rc:40
 msgid "Arabic Standard Time"
@@ -10115,16 +10044,12 @@ msgid "Azerbaijan Daylight Time"
 msgstr "Hora d'estiu de l'Azerbaidjan"
 
 #: dlls/tzres/tzres.rc:150
-#, fuzzy
-#| msgid "Magadan Standard Time"
 msgid "Magallanes Standard Time"
-msgstr "Hora estàndard de Magadan"
+msgstr "Hora estàndard de Magallanes"
 
 #: dlls/tzres/tzres.rc:151
-#, fuzzy
-#| msgid "Magadan Daylight Time"
 msgid "Magallanes Daylight Time"
-msgstr "Hora d'estiu de Magadan"
+msgstr "Hora d'estiu de Magallanes"
 
 #: dlls/tzres/tzres.rc:206
 msgid "Samoa Standard Time"
@@ -10175,16 +10100,12 @@ msgid "Line Islands Daylight Time"
 msgstr "Hora d'estiu de les Illes de la Línia"
 
 #: dlls/tzres/tzres.rc:92
-#, fuzzy
-#| msgid "China Standard Time"
 msgid "Cuba Standard Time"
-msgstr "Hora estàndard de la Xina"
+msgstr "Hora estàndard de Cuba"
 
 #: dlls/tzres/tzres.rc:93
-#, fuzzy
-#| msgid "China Daylight Time"
 msgid "Cuba Daylight Time"
-msgstr "Hora d'estiu de la Xina"
+msgstr "Hora d'estiu de Cuba"
 
 #: dlls/tzres/tzres.rc:136
 msgid "Jordan Standard Time"
@@ -10227,16 +10148,12 @@ msgid "Argentina Daylight Time"
 msgstr "Hora d'estiu de l'Argentina"
 
 #: dlls/tzres/tzres.rc:152
-#, fuzzy
-#| msgid "Mauritius Standard Time"
 msgid "Marquesas Standard Time"
-msgstr "Hora estàndard de Maurici"
+msgstr "Hora estàndard de Marqueses"
 
 #: dlls/tzres/tzres.rc:153
-#, fuzzy
-#| msgid "Mauritius Daylight Time"
 msgid "Marquesas Daylight Time"
-msgstr "Hora d'estiu de Maurici"
+msgstr "Hora d'estiu de Marqueses"
 
 #: dlls/tzres/tzres.rc:166
 msgid "Myanmar Standard Time"
@@ -10387,16 +10304,12 @@ msgid "US Eastern Daylight Time"
 msgstr "Hora d'estiu oriental EUA"
 
 #: dlls/tzres/tzres.rc:182
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "North Korea Standard Time"
-msgstr "Hora estàndard de Corea"
+msgstr "Hora estàndard de Corea del Nord"
 
 #: dlls/tzres/tzres.rc:183
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "North Korea Daylight Time"
-msgstr "Hora d'estiu de Corea"
+msgstr "Hora d'estiu de Corea del Nord"
 
 #: dlls/tzres/tzres.rc:220
 msgid "Tasmania Standard Time"
@@ -10487,16 +10400,12 @@ msgid "Arabian Daylight Time"
 msgstr "Hora d'estiu de l'Àrabia"
 
 #: dlls/tzres/tzres.rc:222
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Tocantins Standard Time"
-msgstr "Hora estàndard de les muntanyes"
+msgstr "Hora estàndard de Tocantins"
 
 #: dlls/tzres/tzres.rc:223
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Tocantins Daylight Time"
-msgstr "Hora d'estiu de les muntanyes"
+msgstr "Hora d'estiu de Tocantins"
 
 #: dlls/tzres/tzres.rc:196
 msgid "Russian Standard Time"
@@ -10507,16 +10416,12 @@ msgid "Russian Daylight Time"
 msgstr "Hora d'estiu de Rússia"
 
 #: dlls/tzres/tzres.rc:48
-#, fuzzy
-#| msgid "AUS Central Standard Time"
 msgid "Aus Central W. Standard Time"
-msgstr "Hora estàndard central AUS"
+msgstr "Hora estàndard central occident d'Austràlia"
 
 #: dlls/tzres/tzres.rc:49
-#, fuzzy
-#| msgid "AUS Central Daylight Time"
 msgid "Aus Central W. Daylight Time"
-msgstr "Hora d'estiu central AUS"
+msgstr "Hora d'estiu central occident d'Austràlia"
 
 #: dlls/tzres/tzres.rc:194
 msgid "Romance Standard Time"
@@ -10647,16 +10552,12 @@ msgid "Venezuela Daylight Time"
 msgstr "Hora d'estiu de Veneçuela"
 
 #: dlls/tzres/tzres.rc:62
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Bougainville Standard Time"
-msgstr "Hora estàndard de les muntanyes"
+msgstr "Hora estàndard de Bougainville"
 
 #: dlls/tzres/tzres.rc:63
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Bougainville Daylight Time"
-msgstr "Hora d'estiu de les muntanyes"
+msgstr "Hora d'estiu de Bougainville"
 
 #: dlls/tzres/tzres.rc:128
 msgid "Hawaiian Standard Time"
@@ -10683,16 +10584,12 @@ msgid "New Zealand Daylight Time"
 msgstr "Hora d'estiu de Nova Zelanda"
 
 #: dlls/tzres/tzres.rc:34
-#, fuzzy
-#| msgid "Argentina Standard Time"
 msgid "Aleutian Standard Time"
-msgstr "Hora estàndard de l'Argentina"
+msgstr "Hora estàndard aleutiana"
 
 #: dlls/tzres/tzres.rc:35
-#, fuzzy
-#| msgid "Argentina Daylight Time"
 msgid "Aleutian Daylight Time"
-msgstr "Hora d'estiu de l'Argentina"
+msgstr "Hora d'estiu aleutiana"
 
 #: dlls/tzres/tzres.rc:76
 msgid "Central Brazilian Standard Time"
@@ -10743,16 +10640,12 @@ msgid "Egypt Daylight Time"
 msgstr "Hora d'estiu d'Egipte"
 
 #: dlls/tzres/tzres.rc:106
-#, fuzzy
-#| msgid "Central Standard Time (Mexico)"
 msgid "Eastern Standard Time (Mexico)"
-msgstr "Hora estàndard central (Mèxic)"
+msgstr "Hora estàndard oriental (Mèxic)"
 
 #: dlls/tzres/tzres.rc:107
-#, fuzzy
-#| msgid "Central Daylight Time (Mexico)"
 msgid "Eastern Daylight Time (Mexico)"
-msgstr "Hora d'estiu central (Mèxic)"
+msgstr "Hora d'estiu oriental (Mèxic)"
 
 #: dlls/tzres/tzres.rc:154
 msgid "Mauritius Standard Time"
@@ -10787,16 +10680,12 @@ msgid "Korea Daylight Time"
 msgstr "Hora d'estiu de Corea"
 
 #: dlls/tzres/tzres.rc:88
-#, fuzzy
-#| msgid "Easter Island Standard Time"
 msgid "Chatham Islands Standard Time"
-msgstr "Hora estàndard de l'Illa de Pasqua"
+msgstr "Hora estàndard de les Illes de Chatham"
 
 #: dlls/tzres/tzres.rc:89
-#, fuzzy
-#| msgid "Easter Island Daylight Time"
 msgid "Chatham Islands Daylight Time"
-msgstr "Hora d'estiu de l'Illa de Pasqua"
+msgstr "Hora d'estiu de les Illes de Chatham"
 
 #: dlls/tzres/tzres.rc:96
 msgid "E. Africa Standard Time"
@@ -10962,149 +10851,119 @@ msgstr "&Més finestres..."
 
 #: dlls/vbscript/vbscript.rc:30
 msgid "Overflow"
-msgstr ""
+msgstr "Desbordament"
 
 #: dlls/vbscript/vbscript.rc:31
-#, fuzzy
-#| msgid "Out of memory."
 msgid "Out of memory"
-msgstr "No queda memòria."
+msgstr "No queda memòria"
 
 #: dlls/vbscript/vbscript.rc:33
 msgid "This array is fixed or temporarily locked"
-msgstr ""
+msgstr "Aquest vector és fix o està bloquejat temporalment"
 
 #: dlls/vbscript/vbscript.rc:34
-#, fuzzy
-#| msgid "Data type mismatch.\n"
 msgid "Type mismatch"
-msgstr "Els tipus de dades no es coincideixen.\n"
+msgstr "Els tipus de dades no es coincideixen"
 
 #: dlls/vbscript/vbscript.rc:36
-#, fuzzy
-#| msgid "I/O device error.\n"
 msgid "Device I/O error"
-msgstr "Hi ha hagut un error de dispositiu E/S.\n"
+msgstr "Error de dispositiu E/S"
 
 #: dlls/vbscript/vbscript.rc:37
-#, fuzzy
-#| msgid "File already exists.\n"
 msgid "File already exists"
-msgstr "El fitxer ja existeix.\n"
+msgstr "El fitxer ja existeix"
 
 #: dlls/vbscript/vbscript.rc:38
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "Disk full"
-msgstr "El disc està ple.\n"
+msgstr "El disc està ple"
 
 #: dlls/vbscript/vbscript.rc:39
-#, fuzzy
-#| msgid "Too many open files.\n"
 msgid "Too many files"
-msgstr "Hi ha massa fitxers oberts.\n"
+msgstr "Hi ha massa fitxers"
 
 #: dlls/vbscript/vbscript.rc:40
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permission denied"
-msgstr "S'ha denegat l'accés.\n"
+msgstr "S'ha denegat el permís"
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
-msgstr ""
+msgstr "Error d'accés al camí/fitxer"
 
 #: dlls/vbscript/vbscript.rc:42
-#, fuzzy
-#| msgid "Path not found.\n"
 msgid "Path not found"
-msgstr "No s'ha trobat el camí.\n"
+msgstr "No s'ha trobat el camí"
 
 #: dlls/vbscript/vbscript.rc:43
-#, fuzzy
-#| msgid "(value not set)"
 msgid "Object variable not set"
-msgstr "(valor no definit)"
+msgstr "La variable d'objecte no està establerta"
 
 #: dlls/vbscript/vbscript.rc:44
-#, fuzzy
-#| msgid "Invalid user buffer.\n"
 msgid "Invalid use of Null"
-msgstr "La memòria intermèdia d'usuari no és vàlida.\n"
+msgstr "Ús no vàlid de Null"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
-msgstr ""
+msgstr "No es pot crear el fitxer temporal necessari"
 
 #: dlls/vbscript/vbscript.rc:46
-#, fuzzy
-#| msgid "Automation server can't create object"
 msgid "ActiveX component can't create object"
-msgstr "El servidor d'automatització no pot crear l'objecte"
+msgstr "El component d'ActiveX no pot crear l'objecte"
 
 #: dlls/vbscript/vbscript.rc:47
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Class doesn't support Automation"
-msgstr "L'objecte no accepta aquesta acció"
+msgstr "La classe no permet l'automatització"
 
 #: dlls/vbscript/vbscript.rc:48
 msgid "File name or class name not found during Automation operation"
 msgstr ""
+"No s'ha trobat el nom de fitxer o nom de classe durant l'operació "
+"d'automatització"
 
 #: dlls/vbscript/vbscript.rc:51
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support named arguments"
-msgstr "L'objecte no accepta aquesta acció"
+msgstr "L'objecte no accepta arguments nombrats"
 
 #: dlls/vbscript/vbscript.rc:52
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
-msgstr "L'objecte no accepta aquesta acció"
+msgstr "L'objecte no accepta la configuració de localització actual"
 
 #: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
-#, fuzzy
-#| msgid "Element not found.\n"
 msgid "Named argument not found"
-msgstr "No s'ha trobat l'element.\n"
+msgstr "No s'ha trobat el argument anomenat"
 
 #: dlls/vbscript/vbscript.rc:55
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr ""
+"El nombre d'arguments és incorrecte o l'assignació de propietat no és vàlida"
 
 #: dlls/vbscript/vbscript.rc:56
-#, fuzzy
-#| msgid "Object Class Violation"
 msgid "Object not a collection"
-msgstr "Violació de classe d'objecte"
+msgstr "L'objecte no és una colecció"
 
 #: dlls/vbscript/vbscript.rc:57
-#, fuzzy
-#| msgid "Specified control was not found in message"
 msgid "Specified DLL function not found"
-msgstr "No s'ha trobat el control especificat en el missatge"
+msgstr "No s'ha trobat la funció especificada de la DLL"
 
 #: dlls/vbscript/vbscript.rc:58
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr ""
+"La variable utilitza un tipus d'automatització que no s'admet en VBScript"
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "The remote server machine does not exist or is unavailable"
-msgstr ""
+msgstr "La maquinà de servidor remota no existeix o no està disponible"
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr ""
+msgstr "Referència no vàlida o no qualificada"
 
 #: dlls/vbscript/vbscript.rc:62
 msgid "Microsoft VBScript compilation error"
-msgstr ""
+msgstr "Error de compilació de Microsoft VBScript"
 
 #: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript runtime error"
-msgstr ""
+msgstr "Error d'entorn d'execució de Microsoft VBScript"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"
@@ -11202,33 +11061,27 @@ msgstr ""
 
 #: dlls/wininet/wininet.rc:35
 msgid "Effective Date"
-msgstr ""
+msgstr "Data efectiva"
 
 #: dlls/wininet/wininet.rc:37
-#, fuzzy
-#| msgid "Security"
 msgid "Security Protocol"
-msgstr "Seguretat"
+msgstr "Protocol de seguretat"
 
 #: dlls/wininet/wininet.rc:38
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature Type"
-msgstr "Signatura"
+msgstr "Tipus de signatura"
 
 #: dlls/wininet/wininet.rc:39
-#, fuzzy
-#| msgid "Encrypting File System"
 msgid "Encryption Type"
-msgstr "Sistema de fitxers xifrant"
+msgstr "Tipus de xifratge"
 
 #: dlls/wininet/wininet.rc:40
 msgid "Privacy Strength"
-msgstr ""
+msgstr "Força de privacitat"
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
-msgstr ""
+msgstr "bits"
 
 #: dlls/wininet/winineterror.mc:26
 msgid "The request has timed out.\n"
@@ -13303,6 +13156,9 @@ msgid ""
 "\n"
 "hardlink      hardlink management\n"
 msgstr ""
+"- Ordres admesos -\n"
+"\n"
+"hardlink      gestió d'enllaços durs\n"
 
 #: programs/fsutil/fsutil.mc:35
 msgid ""
@@ -13310,10 +13166,13 @@ msgid ""
 "\n"
 "create        create a hardlink\n"
 msgstr ""
+"- Enllaços durs - Ordres admesos -\n"
+"\n"
+"create        crea un enllaç dur\n"
 
 #: programs/fsutil/fsutil.mc:40
 msgid "Syntax: fsutil hardlink create <new> <existing>\n"
-msgstr ""
+msgstr "Sintaxis: fsutil hardlink create <nou> <existent>\n"
 
 #: programs/hostname/hostname.rc:30
 msgid "Usage: hostname\n"
@@ -17159,10 +17018,8 @@ msgid "&Beginner"
 msgstr "&Principiant"
 
 #: programs/winemine/winemine.rc:45
-#, fuzzy
-#| msgid "Interface"
 msgid "&Intermediate"
-msgstr "Interfície"
+msgstr "&Intermedi"
 
 #: programs/winemine/winemine.rc:46
 msgid "&Expert"
@@ -17193,10 +17050,8 @@ msgid "Beginner"
 msgstr "Principiant"
 
 #: programs/winemine/winemine.rc:65
-#, fuzzy
-#| msgid "Interface"
 msgid "Intermediate"
-msgstr "Interfície"
+msgstr "Intermedi"
 
 #: programs/winemine/winemine.rc:66
 msgid "Expert"
