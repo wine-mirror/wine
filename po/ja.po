@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-09-07 22:53+0900\n"
+"PO-Revision-Date: 2020-12-12 20:13+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -6920,26 +6920,20 @@ msgid "Not implemented.\n"
 msgstr "未実装です。\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "RPC call failed.\n"
 msgid "Call failed.\n"
-msgstr "RPC 呼び出しが失敗しました。\n"
+msgstr "呼び出しが失敗しました。\n"
 
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "ファイルにデジタル署名がありません。\n"
 
 #: dlls/kernel32/winerror.mc:3774
-#, fuzzy
-#| msgid "Invalid level.\n"
 msgid "Invalid call.\n"
-msgstr "レベルは正しくありません。\n"
+msgstr "呼び出しは正しくありません。\n"
 
 #: dlls/kernel32/winerror.mc:3781
-#, fuzzy
-#| msgid "Value is not available.\n"
 msgid "Resource is not currently available.\n"
-msgstr "値は利用可能ではありません。\n"
+msgstr "リソースは現在利用できません。\n"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -7840,7 +7834,7 @@ msgstr "ファイル: [1], ディレクトリ: [9], サイズ: [6]"
 
 #: dlls/msi/msi.rc:171
 msgid "Service: [2]"
-msgstr "デバイス: [2]"
+msgstr "サービス: [2]"
 
 #: dlls/msi/msi.rc:172
 msgid "File: [1],  Dependencies: [2]"
@@ -9821,7 +9815,7 @@ msgstr "ソースの選択"
 
 #: dlls/tzres/tzres.rc:90
 msgid "China Standard Time"
-msgstr "中国標準時間"
+msgstr "中国標準時"
 
 #: dlls/tzres/tzres.rc:91
 msgid "China Daylight Time"
@@ -9900,16 +9894,12 @@ msgid "Iran Daylight Time"
 msgstr "イラン夏時間"
 
 #: dlls/tzres/tzres.rc:204
-#, fuzzy
-#| msgid "Haiti Standard Time"
 msgid "Saint Pierre Standard Time"
-msgstr "ハイチ標準時"
+msgstr "サン ピエール標準時"
 
 #: dlls/tzres/tzres.rc:205
-#, fuzzy
-#| msgid "Haiti Daylight Time"
 msgid "Saint Pierre Daylight Time"
-msgstr "ハイチ夏時間"
+msgstr "サン ピエール夏時間"
 
 #: dlls/tzres/tzres.rc:170
 msgid "Namibia Standard Time"
@@ -9952,16 +9942,12 @@ msgid "Central Asia Daylight Time"
 msgstr "中央アジア夏時間"
 
 #: dlls/tzres/tzres.rc:146
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "Lord Howe Standard Time"
-msgstr "韓国 (標準時)"
+msgstr "ロード ハウ標準時"
 
 #: dlls/tzres/tzres.rc:147
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "Lord Howe Daylight Time"
-msgstr "韓国 (夏時間)"
+msgstr "ロード ハウ夏時間"
 
 #: dlls/tzres/tzres.rc:40
 msgid "Arabic Standard Time"
@@ -10012,16 +9998,12 @@ msgid "Azerbaijan Daylight Time"
 msgstr "アゼルバイジャン夏時間"
 
 #: dlls/tzres/tzres.rc:150
-#, fuzzy
-#| msgid "Magadan Standard Time"
 msgid "Magallanes Standard Time"
-msgstr "マガダン標準時"
+msgstr "マガヤネス標準時"
 
 #: dlls/tzres/tzres.rc:151
-#, fuzzy
-#| msgid "Magadan Daylight Time"
 msgid "Magallanes Daylight Time"
-msgstr "マガダン夏時間"
+msgstr "マガヤネス夏時間"
 
 #: dlls/tzres/tzres.rc:206
 msgid "Samoa Standard Time"
@@ -10072,16 +10054,12 @@ msgid "Line Islands Daylight Time"
 msgstr "ライン諸島夏時間"
 
 #: dlls/tzres/tzres.rc:92
-#, fuzzy
-#| msgid "China Standard Time"
 msgid "Cuba Standard Time"
-msgstr "中国標準時間"
+msgstr "キューバ標準時"
 
 #: dlls/tzres/tzres.rc:93
-#, fuzzy
-#| msgid "China Daylight Time"
 msgid "Cuba Daylight Time"
-msgstr "中国夏時間"
+msgstr "キューバ夏時間"
 
 #: dlls/tzres/tzres.rc:136
 msgid "Jordan Standard Time"
@@ -10280,16 +10258,12 @@ msgid "US Eastern Daylight Time"
 msgstr "米国東部夏時間"
 
 #: dlls/tzres/tzres.rc:182
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "North Korea Standard Time"
-msgstr "韓国 (標準時)"
+msgstr "北朝鮮標準時"
 
 #: dlls/tzres/tzres.rc:183
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "North Korea Daylight Time"
-msgstr "韓国 (夏時間)"
+msgstr "北朝鮮夏時間"
 
 #: dlls/tzres/tzres.rc:220
 msgid "Tasmania Standard Time"
@@ -10380,16 +10354,12 @@ msgid "Arabian Daylight Time"
 msgstr "アラビアン夏時間"
 
 #: dlls/tzres/tzres.rc:222
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Tocantins Standard Time"
-msgstr "山地標準時"
+msgstr "トカンティンス標準時"
 
 #: dlls/tzres/tzres.rc:223
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Tocantins Daylight Time"
-msgstr "山地夏時間"
+msgstr "トカンティンス夏時間"
 
 #: dlls/tzres/tzres.rc:196
 msgid "Russian Standard Time"
@@ -10400,16 +10370,12 @@ msgid "Russian Daylight Time"
 msgstr "ロシア夏時間"
 
 #: dlls/tzres/tzres.rc:48
-#, fuzzy
-#| msgid "AUS Central Standard Time"
 msgid "Aus Central W. Standard Time"
-msgstr "オーストラリア中部標準時"
+msgstr "オーストラリア中西部標準時"
 
 #: dlls/tzres/tzres.rc:49
-#, fuzzy
-#| msgid "AUS Central Daylight Time"
 msgid "Aus Central W. Daylight Time"
-msgstr "オーストラリア中部夏時間"
+msgstr "オーストラリア中西部夏時間"
 
 #: dlls/tzres/tzres.rc:194
 msgid "Romance Standard Time"
@@ -10628,16 +10594,12 @@ msgid "Egypt Daylight Time"
 msgstr "エジプト夏時間"
 
 #: dlls/tzres/tzres.rc:106
-#, fuzzy
-#| msgid "Central Standard Time (Mexico)"
 msgid "Eastern Standard Time (Mexico)"
-msgstr "中部標準時 (メキシコ)"
+msgstr "東部標準時 (メキシコ)"
 
 #: dlls/tzres/tzres.rc:107
-#, fuzzy
-#| msgid "Central Daylight Time (Mexico)"
 msgid "Eastern Daylight Time (Mexico)"
-msgstr "中部夏時間 (メキシコ)"
+msgstr "東部夏時間 (メキシコ)"
 
 #: dlls/tzres/tzres.rc:154
 msgid "Mauritius Standard Time"
@@ -10843,153 +10805,115 @@ msgstr "ウィンドウの一覧(&M)..."
 
 #: dlls/vbscript/vbscript.rc:30
 msgid "Overflow"
-msgstr ""
+msgstr "オーバーフローです"
 
 #: dlls/vbscript/vbscript.rc:31
-#, fuzzy
-#| msgid "Out of memory."
 msgid "Out of memory"
-msgstr "メモリ不足です。"
+msgstr "メモリ不足です"
 
 #: dlls/vbscript/vbscript.rc:33
 msgid "This array is fixed or temporarily locked"
-msgstr ""
+msgstr "この配列は固定長か一時的にロックされています"
 
 #: dlls/vbscript/vbscript.rc:34
-#, fuzzy
-#| msgid "Data type mismatch.\n"
 msgid "Type mismatch"
-msgstr "データの種類が一致しません。\n"
+msgstr "型が不一致です"
 
 #: dlls/vbscript/vbscript.rc:36
-#, fuzzy
-#| msgid "I/O device error.\n"
 msgid "Device I/O error"
-msgstr "入出力デバイス エラーです。\n"
+msgstr "デバイス入出力エラーです"
 
 #: dlls/vbscript/vbscript.rc:37
-#, fuzzy
-#| msgid "File already exists.\n"
 msgid "File already exists"
-msgstr "ファイルはすでに存在します。\n"
+msgstr "ファイルはすでに存在します"
 
 #: dlls/vbscript/vbscript.rc:38
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "Disk full"
-msgstr "ディスクがいっぱいです。\n"
+msgstr "ディスクがいっぱいです"
 
 #: dlls/vbscript/vbscript.rc:39
-#, fuzzy
-#| msgid "Too many open files.\n"
 msgid "Too many files"
-msgstr "これ以上ファイルを開けません。\n"
+msgstr "ファイルが多すぎます"
 
 #: dlls/vbscript/vbscript.rc:40
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permission denied"
-msgstr "アクセスが拒否されました。\n"
+msgstr "許可がありません"
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
-msgstr ""
+msgstr "パス/ファイルのアクセス エラーです"
 
 #: dlls/vbscript/vbscript.rc:42
-#, fuzzy
-#| msgid "Path not found.\n"
 msgid "Path not found"
-msgstr "パスが見つかりません。\n"
+msgstr "パスが見つかりません"
 
 #: dlls/vbscript/vbscript.rc:43
-#, fuzzy
-#| msgid "(value not set)"
 msgid "Object variable not set"
-msgstr "(値の設定なし)"
+msgstr "オブジェクト変数は設定されていません"
 
 #: dlls/vbscript/vbscript.rc:44
-#, fuzzy
-#| msgid "Invalid user buffer.\n"
 msgid "Invalid use of Null"
-msgstr "ユーザ バッファが正しくありません。\n"
+msgstr "Null の使い方が正しくありません"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
-msgstr ""
+msgstr "必要な一時ファイルを作成できません"
 
 #: dlls/vbscript/vbscript.rc:46
-#, fuzzy
-#| msgid "Automation server can't create object"
 msgid "ActiveX component can't create object"
-msgstr "オートメーション サーバはオブジェクトを生成できません"
+msgstr "ActiveX コンポーネントはオブジェクトを生成できません"
 
 #: dlls/vbscript/vbscript.rc:47
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Class doesn't support Automation"
-msgstr "オブジェクトはこの操作をサポートしていません"
+msgstr "クラスはこのオートメーションをサポートしていません"
 
 #: dlls/vbscript/vbscript.rc:48
 msgid "File name or class name not found during Automation operation"
-msgstr ""
+msgstr "オートメーション操作中にファイル名またはクラス名が見つかりません"
 
 #: dlls/vbscript/vbscript.rc:51
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support named arguments"
-msgstr "オブジェクトはこの操作をサポートしていません"
+msgstr "オブジェクトは名前付き引数をサポートしていません"
 
 #: dlls/vbscript/vbscript.rc:52
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
-msgstr "オブジェクトはこの操作をサポートしていません"
+msgstr "オブジェクトは現在のロケール設定をサポートしていません"
 
 #: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
-#, fuzzy
-#| msgid "Element not found.\n"
 msgid "Named argument not found"
-msgstr "エレメントが見つかりません。\n"
+msgstr "名前付き引数が見つかりません"
 
 #: dlls/vbscript/vbscript.rc:55
 msgid "Wrong number of arguments or invalid property assignment"
-msgstr ""
+msgstr "引数の数に誤りがあるかプロパティの代入が正しくありません"
 
 #: dlls/vbscript/vbscript.rc:56
-#, fuzzy
-#| msgid "Object Class Violation"
 msgid "Object not a collection"
-msgstr "オブジェクト クラス違反"
+msgstr "オブジェクトはコレクションではありません"
 
 #: dlls/vbscript/vbscript.rc:57
-#, fuzzy
-#| msgid "Specified control was not found in message"
 msgid "Specified DLL function not found"
-msgstr "指定されたコントロールはメッセージ中に見つかりませんでした"
+msgstr "指定された DLL 関数が見つかりません"
 
 #: dlls/vbscript/vbscript.rc:58
 msgid "Variable uses an Automation type not supported in VBScript"
-msgstr ""
+msgstr "VBScript ではオートメーション型を使う変数はサポートされていません"
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "The remote server machine does not exist or is unavailable"
-msgstr ""
+msgstr "リモートのサーバー機が存在しないか利用できません"
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr ""
+msgstr "正しくないか資格のない参照です"
 
 #: dlls/vbscript/vbscript.rc:62
-#, fuzzy
-#| msgid "Microsoft JScript compilation error"
 msgid "Microsoft VBScript compilation error"
-msgstr "Microsoft JScript コンパイル エラー"
+msgstr "Microsoft VBScript コンパイル エラー"
 
 #: dlls/vbscript/vbscript.rc:63
-#, fuzzy
-#| msgid "Microsoft JScript runtime error"
 msgid "Microsoft VBScript runtime error"
-msgstr "Microsoft JScript 実行時エラー"
+msgstr "Microsoft VBScript 実行時エラー"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"
@@ -11086,33 +11010,27 @@ msgstr "この証明書には特定できないセキュリティ問題があり
 
 #: dlls/wininet/wininet.rc:35
 msgid "Effective Date"
-msgstr ""
+msgstr "有効開始日"
 
 #: dlls/wininet/wininet.rc:37
-#, fuzzy
-#| msgid "Security"
 msgid "Security Protocol"
-msgstr "セキュリティ"
+msgstr "セキュリティ プロトコル"
 
 #: dlls/wininet/wininet.rc:38
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature Type"
-msgstr "署名"
+msgstr "署名の種類"
 
 #: dlls/wininet/wininet.rc:39
-#, fuzzy
-#| msgid "Encrypting File System"
 msgid "Encryption Type"
-msgstr "ファイル システムの暗号化"
+msgstr "暗号化の種類"
 
 #: dlls/wininet/wininet.rc:40
 msgid "Privacy Strength"
-msgstr ""
+msgstr "プライバシー強度"
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
-msgstr ""
+msgstr "ビット"
 
 #: dlls/wininet/winineterror.mc:26
 msgid "The request has timed out.\n"
@@ -15325,7 +15243,7 @@ msgstr "関係の設定(&A)..."
 
 #: programs/taskmgr/taskmgr.rc:170
 msgid "Edit Debug &Channels..."
-msgstr "ダンプ ファイルの作成(&C)..."
+msgstr "デバッグ チャンネルの編集(&C)..."
 
 #: programs/taskmgr/taskmgr.rc:338 programs/taskmgr/taskmgr.rc:180
 #: programs/taskmgr/taskmgr.rc:181
