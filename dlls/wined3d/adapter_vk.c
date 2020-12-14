@@ -762,7 +762,6 @@ static void *wined3d_bo_vk_map(struct wined3d_bo_vk *bo, struct wined3d_context_
     const struct wined3d_vk_info *vk_info;
     struct wined3d_device_vk *device_vk;
     struct wined3d_bo_slab_vk *slab;
-    void *map_ptr;
     VkResult vr;
 
     if (bo->map_ptr)
@@ -773,7 +772,7 @@ static void *wined3d_bo_vk_map(struct wined3d_bo_vk *bo, struct wined3d_context_
 
     if ((slab = bo->slab))
     {
-        if (!(map_ptr = slab->map_ptr) && !(map_ptr = wined3d_bo_vk_map(&slab->bo, context_vk)))
+        if (!(bo->map_ptr = slab->map_ptr) && !(bo->map_ptr = wined3d_bo_vk_map(&slab->bo, context_vk)))
         {
             ERR("Failed to map slab.\n");
             return NULL;
@@ -784,22 +783,19 @@ static void *wined3d_bo_vk_map(struct wined3d_bo_vk *bo, struct wined3d_context_
     {
         struct wined3d_allocator_chunk_vk *chunk_vk = wined3d_allocator_chunk_vk(bo->memory->chunk);
 
-        if (!(map_ptr = wined3d_allocator_chunk_vk_map(chunk_vk, context_vk)))
+        if (!(bo->map_ptr = wined3d_allocator_chunk_vk_map(chunk_vk, context_vk)))
         {
             ERR("Failed to map chunk.\n");
             return NULL;
         }
     }
-    else if ((vr = VK_CALL(vkMapMemory(device_vk->vk_device, bo->vk_memory, 0, VK_WHOLE_SIZE, 0, &map_ptr))) < 0)
+    else if ((vr = VK_CALL(vkMapMemory(device_vk->vk_device, bo->vk_memory, 0, VK_WHOLE_SIZE, 0, &bo->map_ptr))) < 0)
     {
         ERR("Failed to map memory, vr %s.\n", wined3d_debug_vkresult(vr));
         return NULL;
     }
 
-    if (sizeof(map_ptr) >= sizeof(uint64_t))
-        bo->map_ptr = map_ptr;
-
-    return map_ptr;
+    return bo->map_ptr;
 }
 
 static void wined3d_bo_vk_unmap(struct wined3d_bo_vk *bo, struct wined3d_context_vk *context_vk)
@@ -808,8 +804,10 @@ static void wined3d_bo_vk_unmap(struct wined3d_bo_vk *bo, struct wined3d_context
     struct wined3d_device_vk *device_vk;
     struct wined3d_bo_slab_vk *slab;
 
-    if (bo->map_ptr)
+    if (wined3d_map_persistent())
         return;
+
+    bo->map_ptr = NULL;
 
     if ((slab = bo->slab))
     {

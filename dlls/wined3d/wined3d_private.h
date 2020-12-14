@@ -6367,6 +6367,11 @@ static inline void wined3d_context_gl_reference_bo(struct wined3d_context_gl *co
     bo_gl->command_fence_id = device_gl->current_fence_id;
 }
 
+static inline bool wined3d_map_persistent(void)
+{
+    return sizeof(void *) >= sizeof(uint64_t);
+}
+
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */
 #define WINED3D_OPENGL_WINDOW_CLASS_NAME "WineD3D_OpenGL"
 
