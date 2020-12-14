@@ -371,6 +371,7 @@ static bool wined3d_context_vk_create_slab_bo(struct wined3d_context_vk *context
             return false;
         }
 
+        slab->requested_memory_type = memory_type;
         if (!wined3d_context_vk_create_bo(context_vk, key.size, usage, memory_type, &slab->bo))
         {
             ERR("Failed to create slab bo.\n");
@@ -625,7 +626,7 @@ static void wined3d_bo_slab_vk_free_slice(struct wined3d_bo_slab_vk *slab,
 
     if (!slab->map)
     {
-        key.memory_type = slab->bo.memory_type;
+        key.memory_type = slab->requested_memory_type;
         key.usage = slab->bo.usage;
         key.size = slab->bo.size;
 
@@ -1677,8 +1678,8 @@ static int wined3d_bo_slab_vk_compare(const void *key, const struct wine_rb_entr
     const struct wined3d_bo_slab_vk *slab = WINE_RB_ENTRY_VALUE(entry, const struct wined3d_bo_slab_vk, entry);
     const struct wined3d_bo_slab_vk_key *k = key;
 
-    if (k->memory_type != slab->bo.memory_type)
-        return k->memory_type - slab->bo.memory_type;
+    if (k->memory_type != slab->requested_memory_type)
+        return k->memory_type - slab->requested_memory_type;
     if (k->usage != slab->bo.usage)
         return k->usage - slab->bo.usage;
     return k->size - slab->bo.size;

@@ -1626,6 +1626,7 @@ struct wined3d_bo_slab_vk
 {
     struct wine_rb_entry entry;
     struct wined3d_bo_slab_vk *next;
+    VkMemoryPropertyFlags requested_memory_type;
     struct wined3d_bo_vk bo;
     unsigned int map_count;
     void *map_ptr;
