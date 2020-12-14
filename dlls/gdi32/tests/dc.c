@@ -1539,6 +1539,40 @@ static void test_pscript_printer_dc(void)
     DeleteDC(hdc);
 }
 
+struct screen_region_info
+{
+    HRGN region;
+    INT type;
+};
+
+static BOOL CALLBACK enum_monitor_proc(HMONITOR monitor, HDC hdc, RECT *rect, LPARAM lparam)
+{
+    struct screen_region_info *info = (struct screen_region_info *)lparam;
+    HRGN region;
+
+    if (!info->region)
+    {
+        info->region = CreateRectRgnIndirect(rect);
+        info->type = SIMPLEREGION;
+    }
+    else
+    {
+        region = CreateRectRgnIndirect(rect);
+        info->type = CombineRgn(info->region, info->region, region, RGN_OR);
+        DeleteObject(region);
+    }
+    return TRUE;
+}
+
+static INT get_screen_region_type(void)
+{
+    struct screen_region_info info = {NULL, NULLREGION};
+
+    EnumDisplayMonitors(NULL, NULL, enum_monitor_proc, (LPARAM)&info);
+    DeleteObject(info.region);
+    return info.type;
+}
+
 static void test_clip_box(void)
 {
     DEVMODEA scale_mode = {.dmSize = sizeof(DEVMODEA)};
@@ -1554,7 +1588,7 @@ static void test_clip_box(void)
     SetRect(&screen_rect, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),
             GetSystemMetrics(SM_XVIRTUALSCREEN) + GetSystemMetrics(SM_CXVIRTUALSCREEN),
             GetSystemMetrics(SM_YVIRTUALSCREEN) + GetSystemMetrics(SM_CYVIRTUALSCREEN));
-    screen_type = GetSystemMetrics(SM_CMONITORS) > 1 ? COMPLEXREGION : SIMPLEREGION;
+    screen_type = get_screen_region_type();
 
     dc = CreateDCA("DISPLAY", NULL, NULL, NULL);
     type = GetClipBox(dc, &rect);
