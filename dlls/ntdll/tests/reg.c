@@ -614,6 +614,7 @@ static void test_NtCreateKey(void)
     pRtlFreeUnicodeString( &str );
 
     /* the REGISTRY part is case-sensitive unless OBJ_CASE_INSENSITIVE is specified */
+    am = GENERIC_READ;
     attr.Attributes = 0;
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry\\Machine\\Software\\Classes" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
@@ -624,14 +625,14 @@ static void test_NtCreateKey(void)
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\REGISTRY\\Machine\\Software\\Classes" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
+    ok( status == STATUS_SUCCESS,
         "NtCreateKey failed: 0x%08x\n", status );
     if (!status) pNtClose( subkey );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\REGISTRY\\MACHINE\\SOFTWARE\\CLASSES" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
+    ok( status == STATUS_SUCCESS,
         "NtCreateKey failed: 0x%08x\n", status );
     if (!status) pNtClose( subkey );
     pRtlFreeUnicodeString( &str );
