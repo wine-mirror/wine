@@ -544,7 +544,7 @@ sub output_header($$$) {
     print OUT "\n";
     print OUT "#if defined(_MSC_VER) && (_MSC_VER >= 1300) && defined(__cplusplus)\n";
     print OUT "# define _TYPE_ALIGNMENT(type) __alignof(type)\n";
-    print OUT "#elif defined(__GNUC__)\n";
+    print OUT "#elif defined(__GNUC__) || defined(__clang__)\n";
     print OUT "# define _TYPE_ALIGNMENT(type) __alignof__(type)\n";
     print OUT "#else\n";
     print OUT "/*\n";
