@@ -240,10 +240,6 @@ struct stack_layout
     CONTEXT           context;
     CONTEXT_EX        context_ex;
     EXCEPTION_RECORD  rec;
-    ULONG64           rsi;
-    ULONG64           rdi;
-    ULONG64           rbp;
-    ULONG64           rip;
     ULONG64           align;
     char              xstate[0]; /* If xstate is present it is allocated
                                   * dynamically to provide 64 byte alignment. */
@@ -252,7 +248,7 @@ struct stack_layout
 C_ASSERT((offsetof(struct stack_layout, xstate) == sizeof(struct stack_layout)));
 
 C_ASSERT( sizeof(XSTATE) == 0x140 );
-C_ASSERT( sizeof(struct stack_layout) == 0x5b0 ); /* Should match the size in call_user_exception_dispatcher(). */
+C_ASSERT( sizeof(struct stack_layout) == 0x590 ); /* Should match the size in call_user_exception_dispatcher(). */
 
 struct syscall_frame
 {
@@ -1964,10 +1960,10 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Rip--;
 
-    stack_size = sizeof(*stack);
+    stack_size = sizeof(*stack) + 0x20;
     if ((src_xs = xstate_from_context( context )))
     {
-        stack_size += (ULONG_PTR)stack_ptr - (((ULONG_PTR)stack_ptr
+        stack_size += (ULONG_PTR)stack_ptr - 0x20 - (((ULONG_PTR)stack_ptr - 0x20
                 - sizeof(XSTATE)) & ~(ULONG_PTR)63);
     }
 
@@ -2120,12 +2116,13 @@ struct stack_layout * WINAPI setup_user_exception_dispatcher_stack( EXCEPTION_RE
 
 __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
                    "movq 0x98(%rdx),%r9\n\t" /* context->Rsp */
+                   "subq $0x20,%r9\n\t" /* Unwind registers save space */
                    "andq $~0xf,%r9\n\t"
                    "btl $6,0x30(%rdx)\n\t" /* context->ContextFlags, CONTEXT_XSTATE bit. */
                    "jnc 1f\n\t"
                    "subq $0x140,%r9\n\t" /* sizeof(XSTATE) */
                    "andq $~63,%r9\n"
-                   "1:\tsubq $0x5b0,%r9\n\t" /* sizeof(struct stack_layout) */
+                   "1:\tsubq $0x590,%r9\n\t" /* sizeof(struct stack_layout) */
                    "cmpq %rsp,%r9\n\t"
                    "cmovbq %r9,%rsp\n\t"
                    "pushq %r8\n\t"
