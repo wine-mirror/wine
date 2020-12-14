@@ -1458,6 +1458,11 @@ static void test_redirection(void)
 
     pRtlInitUnicodeString( &str, wine64W );
     status = pNtCreateKey( &root64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    if (status == STATUS_ACCESS_DENIED)
+    {
+        skip("Not authorized to modify KEY_WOW64_64KEY, no redirection\n");
+        return;
+    }
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
 
     pRtlInitUnicodeString( &str, wine32W );
