@@ -3158,6 +3158,7 @@ HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk, struct wi
 
     TRACE("context_vk %p, swapchain %p.\n", context_vk, swapchain);
 
+    memset(context_vk, 0, sizeof(*context_vk));
     wined3d_context_init(&context_vk->c, swapchain);
     device_vk = wined3d_device_vk(swapchain->device);
     adapter_vk = wined3d_adapter_vk(device_vk->d.adapter);
