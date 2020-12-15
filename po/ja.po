@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-12-14 21:46+0900\n"
+"PO-Revision-Date: 2020-12-15 21:26+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -580,7 +580,7 @@ msgstr "ページ設定(&P)"
 
 #: dlls/comdlg32/comdlg32.rc:213 dlls/comdlg32/comdlg32.rc:235
 msgid "&Setup"
-msgstr "プリンタの設定(&S)"
+msgstr "プリンターの設定(&S)"
 
 #: dlls/comdlg32/comdlg32.rc:214
 msgid "&From:"
@@ -7316,7 +7316,7 @@ msgstr "サンプルがシンクに処理されませんでした。\n"
 
 #: dlls/mferror/mferror.mc:620
 msgid "Sink was not provided with required headers.\n"
-msgstr "シンクにて必須ヘッダが提供されませんでした。\n"
+msgstr "シンクにて必須ヘッダーが提供されませんでした。\n"
 
 #: dlls/mferror/mferror.mc:627
 msgid "Optional node is invalid.\n"
@@ -11051,7 +11051,7 @@ msgstr "URL スキームを認識できなかったかサポートしていま�
 
 #: dlls/wininet/winineterror.mc:46
 msgid "The server name could not be resolved.\n"
-msgstr "サーバー名をを解決できませんでした。\n"
+msgstr "サーバー名を解決できませんでした。\n"
 
 #: dlls/wininet/winineterror.mc:51
 msgid "The requested operation is invalid.\n"
@@ -11169,15 +11169,15 @@ msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"waveヘッダが準備されていません。Prepare関数を使用してヘッダを準備してやり直し"
-"て下さい。"
+"wave ヘッダーが準備されていません。Prepare 関数を使用してヘッダーを準備してや"
+"り直して下さい。"
 
 #: dlls/winmm/winmm.rc:49
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
-"WAVE_ALLOWSYNCフラグなしではデバイスをオープンできません。フラグを指定してや"
+"WAVE_ALLOWSYNC フラグなしではデバイスをオープンできません。フラグを指定してや"
 "り直して下さい。"
 
 #: dlls/winmm/winmm.rc:52
@@ -11185,16 +11185,16 @@ msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"MIDIヘッダが準備されていません。Prepare関数を使用してヘッダを準備してやり直し"
-"て下さい。"
+"MIDI ヘッダーが準備されていません。Prepare 関数を使用してヘッダーを準備してや"
+"り直して下さい。"
 
 #: dlls/winmm/winmm.rc:54
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
 msgstr ""
-"MIDIマップが見つかりません。ドライバーの問題か、MIDIMAP.CFGファイルが破損して"
-"いるか存在しない可能性があります。"
+"MIDI マップが見つかりません。ドライバーの問題か、MIDIMAP.CFG ファイルが破損し"
+"ているか存在しない可能性があります。"
 
 #: dlls/winmm/winmm.rc:55
 msgid ""
@@ -11332,7 +11332,7 @@ msgstr ""
 #: dlls/winmm/winmm.rc:80
 msgid "Cannot use 'all' as the device name with the specified command."
 msgstr ""
-"指定されたコマンドは「all」をデバイス名として使用することができません。"
+"指定されたコマンドは 'all' をデバイス名として使用することができません。"
 
 #: dlls/winmm/winmm.rc:81
 msgid ""
@@ -11476,8 +11476,8 @@ msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
 msgstr ""
-"ファイル名が無効です。ファイル名が半角8文字以内で、ピリオドに続いて拡張子が付"
-"いていることを確認して下さい。"
+"ファイル名が無効です。ファイル名が半角 8 文字以内で、ピリオドに続いて拡張子が"
+"付いていることを確認して下さい。"
 
 #: dlls/winmm/winmm.rc:104
 msgid ""
@@ -12290,8 +12290,8 @@ msgstr ""
 "$q    等号                $t    現在の時刻          $v    cmdのバージョン\n"
 "\n"
 "注意：PROMPTコマンドをプロンプト文字列なしで実行すると、既定値にリセット\n"
-"されます。 デフォルト値はカレント ディレクトリ(ドライブ名を含みます)\n"
-"に続いて大なり(>)記号です。\n"
+"されます。 既定値はカレント ディレクトリ (ドライブ名を含みます) に続いて\n"
+"大なり (>) 記号です。\n"
 "(PROMPT $p$g を実行した時と同様です)\n"
 "\n"
 "プロンプトはPROMPT環境変数を編集することでも変更できます。したがって、\n"
@@ -13488,7 +13488,7 @@ msgstr "ページ設定"
 
 #: programs/notepad/notepad.rc:102
 msgid "&Header:"
-msgstr "ヘッダ(&H):"
+msgstr "ヘッダー(&H):"
 
 #: programs/notepad/notepad.rc:104
 msgid "&Footer:"
