@@ -1720,6 +1720,14 @@ static BOOL wined3d_query_event_vk_issue(struct wined3d_query *query, uint32_t f
     {
         context_vk = wined3d_context_vk(context_acquire(&device_vk->d, NULL, 0));
         wined3d_context_vk_reference_query(context_vk, query_vk);
+        /* Because we don't actually submit any commands to the command buffer
+         * for event queries, the context's current command buffer may still
+         * be empty, and we should wait on the preceding command buffer
+         * instead. That's not merely an optimisation; if the command buffer
+         * referenced by the query is still empty by the time the application
+         * waits for it, that wait will never complete. */
+        if (!context_vk->current_command_buffer.vk_command_buffer)
+            --query_vk->command_buffer_id;
         context_release(&context_vk->c);
 
         return TRUE;
