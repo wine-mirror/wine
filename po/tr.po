@@ -527,7 +527,7 @@ msgstr "Dosya &Adı:"
 
 #: dlls/comdlg32/comdlg32.rc:164 dlls/comdlg32/comdlg32.rc:186
 msgid "&Directories:"
-msgstr "&Dizinler:"
+msgstr "&Klasörler:"
 
 #: dlls/comdlg32/comdlg32.rc:167 dlls/comdlg32/comdlg32.rc:189
 msgid "List Files of &Type:"
@@ -979,15 +979,15 @@ msgstr "Dosya mevcut değil"
 
 #: dlls/comdlg32/comdlg32.rc:41
 msgid "The selection contains a non-folder object"
-msgstr "Seçim dizin olmayan bir öge içeriyor"
+msgstr "Seçim klasör olmayan bir öge içeriyor"
 
 #: dlls/comdlg32/comdlg32.rc:46
 msgid "Up One Level"
-msgstr "Bir Dizin Yukarı"
+msgstr "Bir Klasör Yukarı"
 
 #: dlls/comdlg32/comdlg32.rc:47
 msgid "Create New Folder"
-msgstr "Yeni Dizin Oluştur"
+msgstr "Yeni Klasör Oluştur"
 
 #: dlls/comdlg32/comdlg32.rc:48
 msgid "List"
@@ -1171,7 +1171,7 @@ msgstr "Dosya Aç"
 
 #: dlls/comdlg32/comdlg32.rc:148
 msgid "Select Folder"
-msgstr "Dizin Seç"
+msgstr "Klasör Seç"
 
 #: dlls/comdlg32/comdlg32.rc:149
 msgid "Font size has to be a number."
@@ -1890,7 +1890,7 @@ msgstr "Tüm uygulama ilkeleri"
 
 #: dlls/crypt32/crypt32.rc:164 dlls/cryptui/cryptui.rc:149
 msgid "Directory Service Email Replication"
-msgstr "Dizin Hizmet E-posta Çoğaltması"
+msgstr "Dizin Hizmeti E-posta Çoğaltması"
 
 #: dlls/crypt32/crypt32.rc:165 dlls/cryptui/cryptui.rc:145
 msgid "Certificate Request Agent"
@@ -3740,7 +3740,7 @@ msgstr "Oyun Denetleyicileri"
 
 #: dlls/joy.cpl/joy.rc:32
 msgid "Test and configure game controllers."
-msgstr ""
+msgstr "Oyun denetleyicilerini sınayın ve yapılandırın."
 
 #: dlls/jscript/jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3755,10 +3755,8 @@ msgid "Subscript out of range"
 msgstr "Alt indis kapsama dışında"
 
 #: dlls/jscript/jscript.rc:31
-#, fuzzy
-#| msgid "Out of paper; "
 msgid "Out of stack space"
-msgstr "Kağıt yok; "
+msgstr "Yetersiz yığın alanı"
 
 #: dlls/jscript/jscript.rc:32
 msgid "Object required"
@@ -3846,17 +3844,15 @@ msgstr "Beklenen '@'"
 
 #: dlls/jscript/jscript.rc:78
 msgid "Microsoft JScript compilation error"
-msgstr ""
+msgstr "Microsoft JScript derleme hatası"
 
 #: dlls/jscript/jscript.rc:79
 msgid "Microsoft JScript runtime error"
-msgstr ""
+msgstr "Microsoft JScript çalışma zamanı hatası"
 
 #: dlls/jscript/jscript.rc:80 dlls/vbscript/vbscript.rc:64
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown runtime error"
-msgstr "Bilinmeyen hata"
+msgstr "Bilinmeyen çalışma zamanı hatası"
 
 #: dlls/jscript/jscript.rc:55
 msgid "Number expected"
@@ -3872,7 +3868,7 @@ msgstr "'[object]' bir tarih nesnesi değil"
 
 #: dlls/jscript/jscript.rc:56
 msgid "Object expected"
-msgstr "Nesne beklendi"
+msgstr "Beklenen nesne"
 
 #: dlls/jscript/jscript.rc:57
 msgid "Illegal assignment"
@@ -3899,16 +3895,12 @@ msgid "JScript object expected"
 msgstr "Beklenen JScript nesnesi"
 
 #: dlls/jscript/jscript.rc:63
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Enumerator object expected"
-msgstr "Beklenen dizi nesnesi"
+msgstr "Beklenen sıralayıcı nesne"
 
 #: dlls/jscript/jscript.rc:64
-#, fuzzy
-#| msgid "Boolean object expected"
 msgid "Regular Expression object expected"
-msgstr "Beklenen mantıksal nesne"
+msgstr "Beklenen Düzenli İfade nesnesi"
 
 #: dlls/jscript/jscript.rc:65
 msgid "Syntax error in regular expression"
@@ -3916,7 +3908,7 @@ msgstr "Düzenli ifadede sözdizimi hatası"
 
 #: dlls/jscript/jscript.rc:66
 msgid "Exception thrown and not caught"
-msgstr ""
+msgstr "Hata verildi ve yakalanmadı"
 
 #: dlls/jscript/jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
@@ -4037,7 +4029,7 @@ msgstr "Geçersiz sürücü.\n"
 
 #: dlls/kernel32/winerror.mc:108
 msgid "Can't delete current directory.\n"
-msgstr "Şimdiki dizin silinemiyor.\n"
+msgstr "Şimdiki klasör silinemiyor.\n"
 
 #: dlls/kernel32/winerror.mc:113
 msgid "Not same device.\n"
@@ -4413,11 +4405,11 @@ msgstr "Aynı sürücü.\n"
 
 #: dlls/kernel32/winerror.mc:588
 msgid "Not top-level directory.\n"
-msgstr "Üst seviye dizin değil.\n"
+msgstr "Üst seviye klasör değil.\n"
 
 #: dlls/kernel32/winerror.mc:593
 msgid "Directory is not empty.\n"
-msgstr "Dizin boş değil.\n"
+msgstr "Klasör boş değil.\n"
 
 #: dlls/kernel32/winerror.mc:598
 msgid "Path is in use as a SUBST.\n"
@@ -4449,7 +4441,7 @@ msgstr "DosMuxSemWait için çok fazla bekleyen.\n"
 
 #: dlls/kernel32/winerror.mc:633
 msgid "DosSemMuxWait list invalid.\n"
-msgstr "DosMuxSemWait listesi geçersiz.\n"
+msgstr "DosSemMuxWait listesi geçersiz.\n"
 
 #: dlls/kernel32/winerror.mc:638
 msgid "Volume label too long.\n"
@@ -4489,7 +4481,7 @@ msgstr "Sinyal bekliyor.\n"
 
 #: dlls/kernel32/winerror.mc:683
 msgid "Max system-wide thread count reached.\n"
-msgstr "Azami sistem çapında iş parçacığı sayısına ulaşıldı.\n"
+msgstr "Sistem çapında azami iş parçacığı sayısına ulaşıldı.\n"
 
 #: dlls/kernel32/winerror.mc:688
 msgid "Lock failed.\n"
@@ -4673,7 +4665,7 @@ msgstr "Kopyalama API'si kullanılamaz.\n"
 
 #: dlls/kernel32/winerror.mc:913
 msgid "Directory name invalid.\n"
-msgstr "Dizin adı geçersiz.\n"
+msgstr "Klasör adı geçersiz.\n"
 
 #: dlls/kernel32/winerror.mc:918
 msgid "Extended attributes didn't fit.\n"
@@ -5825,7 +5817,7 @@ msgstr "Alınabilecek bileşen yok.\n"
 
 #: dlls/kernel32/winerror.mc:2363
 msgid "File or directory corrupt.\n"
-msgstr "Dosya veya dizin bozuk.\n"
+msgstr "Dosya veya klasör bozuk.\n"
 
 #: dlls/kernel32/winerror.mc:2368
 msgid "Disk is corrupt.\n"
@@ -6932,32 +6924,24 @@ msgid "Connection reset by peer.\n"
 msgstr "Bağlantı eş tarafından sıfırlandı.\n"
 
 #: dlls/kernel32/winerror.mc:3767
-#, fuzzy
-#| msgid "Not implemented"
 msgid "Not implemented.\n"
-msgstr "Eklenmedi/Geliştirilmedi"
+msgstr "Eklenmedi/Geliştirilmedi\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "RPC call failed.\n"
 msgid "Call failed.\n"
-msgstr "RPC çağrısı başarısız.\n"
+msgstr "Çağrı başarısız.\n"
 
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Dosyada imza bulunamadı.\n"
 
 #: dlls/kernel32/winerror.mc:3774
-#, fuzzy
-#| msgid "Invalid level.\n"
 msgid "Invalid call.\n"
-msgstr "Geçersiz seviye.\n"
+msgstr "Geçersiz çağrı.\n"
 
 #: dlls/kernel32/winerror.mc:3781
-#, fuzzy
-#| msgid "Value is not available.\n"
 msgid "Resource is not currently available.\n"
-msgstr "Değer kullanılamıyor.\n"
+msgstr "Kaynak şu an kullanılamıyor.\n"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -7018,10 +7002,8 @@ msgid "Sink has not been finalized.\n"
 msgstr "Ses çıkışı bitirilmedi.\n"
 
 #: dlls/mferror/mferror.mc:732
-#, fuzzy
-#| msgid "Sink was already stopped.\n"
 msgid "Clock was stopped\n"
-msgstr "Çıkış zaten durduruldu.\n"
+msgstr "Saat durduruldu\n"
 
 #: dlls/mferror/mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7072,10 +7054,8 @@ msgid "Invalid type.\n"
 msgstr "Geçersiz tür.\n"
 
 #: dlls/mferror/mferror.mc:123
-#, fuzzy
-#| msgid "Invalid pixel format.\n"
 msgid "Invalid file format.\n"
-msgstr "Geçersiz piksel biçimi.\n"
+msgstr "Geçersiz dosya biçimi.\n"
 
 #: dlls/mferror/mferror.mc:137
 msgid "Invalid timestamp.\n"
@@ -7402,10 +7382,8 @@ msgid "Clock state was already set.\n"
 msgstr "Saat durumu zaten ayarlı.\n"
 
 #: dlls/mferror/mferror.mc:725
-#, fuzzy
-#| msgid "Clock is not available.\n"
 msgid "Clock is not simple\n"
-msgstr "Saat kullanılamıyor.\n"
+msgstr "Saat basit değil.\n"
 
 #: dlls/mpr/mpr.rc:35 dlls/wininet/wininet.rc:48
 msgid "Enter Network Password"
@@ -7559,7 +7537,7 @@ msgstr ""
 
 #: dlls/msi/msi.rc:61
 msgid "enter which folder contains %s"
-msgstr "%s öğesini içeren dizini girin"
+msgstr "%s ögesini içeren klasörü girin"
 
 #: dlls/msi/msi.rc:62
 msgid "install source for feature missing"
@@ -7575,7 +7553,7 @@ msgstr "buradan özellik:"
 
 #: dlls/msi/msi.rc:65
 msgid "choose which folder contains %s"
-msgstr "%s öğesini içeren dizini seçin"
+msgstr "%s öğesini içeren klasörü seçin"
 
 #: dlls/msi/msi.rc:66 dlls/shell32/shell32.rc:238
 msgid "New Folder"
@@ -7603,7 +7581,7 @@ msgstr "Yer gereksinimi hesaplanıyor"
 
 #: dlls/msi/msi.rc:97
 msgid "Creating folders"
-msgstr "Dizinler oluşturuluyor"
+msgstr "Klasörler oluşturuluyor"
 
 #: dlls/msi/msi.rc:98
 msgid "Creating shortcuts"
@@ -7739,7 +7717,7 @@ msgstr "Dosyalar kaldırılıyor"
 
 #: dlls/msi/msi.rc:132
 msgid "Removing folders"
-msgstr "Dizinler kaldırılıyor"
+msgstr "Klasörler kaldırılıyor"
 
 #: dlls/msi/msi.rc:133
 msgid "Removing INI files entries"
@@ -7839,7 +7817,7 @@ msgstr "Dosya: [1]"
 
 #: dlls/msi/msi.rc:164 dlls/msi/msi.rc:191
 msgid "Folder: [1]"
-msgstr "Dizin: [1]"
+msgstr "Klasör: [1]"
 
 #: dlls/msi/msi.rc:165 dlls/msi/msi.rc:194
 msgid "Shortcut: [1]"
@@ -7851,7 +7829,7 @@ msgstr "Hizmet: [1]"
 
 #: dlls/msi/msi.rc:167 dlls/msi/msi.rc:170 dlls/msi/msi.rc:174
 msgid "File: [1],  Directory: [9],  Size: [6]"
-msgstr "Dosya: [1],  Dizin: [9],  Boyut: [6]"
+msgstr "Dosya: [1],  Klasör: [9],  Boyut: [6]"
 
 #: dlls/msi/msi.rc:168
 msgid "Found application: [1]"
@@ -7859,7 +7837,7 @@ msgstr "Şu uygulama bulundu: [1]"
 
 #: dlls/msi/msi.rc:169
 msgid "File: [1], Directory: [9], Size: [6]"
-msgstr "Dosya: [1], Dizin: [9], Boyut: [6]"
+msgstr "Dosya: [1], Klasör: [9], Boyut: [6]"
 
 #: dlls/msi/msi.rc:171
 msgid "Service: [2]"
@@ -7879,7 +7857,7 @@ msgstr "Uygulama İçeriği:[1], Derleme Adı:[2]"
 
 #: dlls/msi/msi.rc:177
 msgid "File: [1],  Directory: [2],  Size: [3]"
-msgstr "Dosya: [1],  Dizin: [2],  Boyut: [3]"
+msgstr "Dosya: [1],  Klasör: [2],  Boyut: [3]"
 
 #: dlls/msi/msi.rc:178 dlls/msi/msi.rc:199
 msgid "Component ID: [1], Qualifier: [2]"
@@ -7920,7 +7898,7 @@ msgstr "Kitaplık Kimliği: [1]"
 
 #: dlls/msi/msi.rc:187 dlls/msi/msi.rc:190
 msgid "File: [1], Directory: [9]"
-msgstr "Dosya: [1], Dizin: [9]"
+msgstr "Dosya: [1], Klasör: [9]"
 
 #: dlls/msi/msi.rc:188 dlls/msi/msi.rc:208
 msgid "Name: [1], Value: [2], Action [3]"
@@ -7940,7 +7918,7 @@ msgstr "Anahtar: [1], Ad: [2]"
 
 #: dlls/msi/msi.rc:195 dlls/msi/msi.rc:196
 msgid "File: [1], Folder: [2]"
-msgstr "Dosya: [1], Dizin: [2]"
+msgstr "Dosya: [1], Klasör: [2]"
 
 #: dlls/msi/msi.rc:202
 msgid "AppId: [1]{{, AppType: [2]}}"
@@ -8509,150 +8487,115 @@ msgid "Select the data you want to connect to:"
 msgstr "Bağlanmak istediğiniz veriyi seçin:"
 
 #: dlls/oledb32/version.rc:66
-#, fuzzy
-#| msgid "Connections"
 msgid "Connection"
-msgstr "Bağlantılar"
+msgstr "Bağlantı"
 
 #: dlls/oledb32/version.rc:69
-#, fuzzy
-#| msgid "Select the data you want to connect to:"
 msgid "Specify the following to connect to ODBC data:"
-msgstr "Bağlanmak istediğiniz veriyi seçin:"
+msgstr "ODBC verisine bağlanmak için şunları belirtin:"
 
 #: dlls/oledb32/version.rc:70
 msgid "1. Specify the source of data:"
-msgstr ""
+msgstr "1. Verinin kaynağını belirtin:"
 
 #: dlls/oledb32/version.rc:71
-#, fuzzy
-#| msgid "Please enter your name"
 msgid "Use &data source name"
-msgstr "Lütfen adınızı girin"
+msgstr "&Veri kaynağı adını kullan"
 
 #: dlls/oledb32/version.rc:74
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "Use c&onnection string"
-msgstr "Bağlantıları Sıfırla"
+msgstr "&Bağlantı dizesini kullan"
 
 #: dlls/oledb32/version.rc:75
-#, fuzzy
-#| msgid "Connections"
 msgid "&Connection string:"
-msgstr "Bağlantılar"
+msgstr "B&ağlantı dizesi:"
 
 #: dlls/oledb32/version.rc:77
-#, fuzzy
-#| msgid "A&dd..."
 msgid "B&uild..."
-msgstr "&Ekle..."
+msgstr "&Derle..."
 
 #: dlls/oledb32/version.rc:78
 msgid "2. Enter information to log on to the server"
-msgstr ""
+msgstr "2. Sunucuya bağlanmak için bilgileri girin"
 
 #: dlls/oledb32/version.rc:79
-#, fuzzy
-#| msgid "&User name:"
 msgid "User &name:"
 msgstr "&Kullanıcı adı:"
 
 #: dlls/oledb32/version.rc:83
-#, fuzzy
-#| msgid "&Blank page"
 msgid "&Blank password"
-msgstr "Boş sa&yfa"
+msgstr "B&oş parola"
 
 #: dlls/oledb32/version.rc:84
-#, fuzzy
-#| msgid "Wrong password.\n"
 msgid "Allow &saving password"
-msgstr "Hatalı şifre.\n"
+msgstr "&Parolayı kaydetmeye izin ver"
 
 #: dlls/oledb32/version.rc:85
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. Kullanılacak &ilk kataloğu girin:"
 
 #: dlls/oledb32/version.rc:87
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "&Test Connection"
-msgstr "Bağlantıları Sıfırla"
+msgstr "Bağlantıyı &Sına"
 
 #: dlls/oledb32/version.rc:92
 msgid "Advanced"
 msgstr "Gelişmiş"
 
 #: dlls/oledb32/version.rc:95
-#, fuzzy
-#| msgid "Network share"
 msgid "Network settings"
-msgstr "Ağ paylaşımı"
+msgstr "Ağ ayarları"
 
 #: dlls/oledb32/version.rc:96
-#, fuzzy
-#| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
-msgstr "Geçersiz taklit seviyesi.\n"
+msgstr "Tak&lit seviyesi:"
 
 #: dlls/oledb32/version.rc:98
 msgid "P&rotection level:"
-msgstr ""
+msgstr "Ko&ruma seviyesi:"
 
 #: dlls/oledb32/version.rc:101
-#, fuzzy
-#| msgid "Connected"
 msgid "Connect:"
-msgstr "Bağlı"
+msgstr "Bağlan"
 
 #: dlls/oledb32/version.rc:103
-#, fuzzy
-#| msgid "seconds"
 msgid "seconds."
-msgstr "saniye"
+msgstr "saniye."
 
 #: dlls/oledb32/version.rc:104
-#, fuzzy
-#| msgid "Success"
 msgid "A&ccess:"
-msgstr "Başarılı"
+msgstr "&Erişim:"
 
 #: dlls/oledb32/version.rc:110
-#, fuzzy
-#| msgid "&All"
 msgid "All"
-msgstr "&Tümü"
+msgstr "Tümü"
 
 #: dlls/oledb32/version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"Bunlar, bu türden verinin başlatılma özellikleridir. Bir değeri düzenlemek "
+"için, bir özelliği seçin, sonra alttan Değeri Düzenle'yi tıklatın."
 
 #: dlls/oledb32/version.rc:115
-#, fuzzy
-#| msgid "&Edit..."
 msgid "&Edit Value..."
-msgstr "&Düzenle..."
+msgstr "Değeri Dü&zenle..."
 
 #: dlls/oledb32/version.rc:49
-#, fuzzy
-#| msgid "Data Link Properties"
 msgid "Data Link Error"
-msgstr "Veri Bağlantısı Özellikleri"
+msgstr "Veri Bağlama Hatası"
 
 #: dlls/oledb32/version.rc:50
-#, fuzzy
-#| msgid "Please select a file."
 msgid "Please select a provider."
-msgstr "Lütfen bir dosya seçin."
+msgstr "Lütfen bir sağlayıcı seçin."
 
 #: dlls/oledb32/version.rc:51
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
+"Sağlayıcı kullanılamıyor. Sağlayıcının düzgün yüklendiğinden emin olun."
 
 #: dlls/oledb32/version.rc:36
 msgid "Data Link Properties"
@@ -8663,38 +8606,32 @@ msgid "OLE DB Provider(s)"
 msgstr "OLE Veritabanı Sağlayıcısı"
 
 #: dlls/oledb32/version.rc:41
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "Hazır"
+msgstr "Okuma"
 
 #: dlls/oledb32/version.rc:42
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "Benioku:"
+msgstr "Okuma-yazma"
 
 #: dlls/oledb32/version.rc:43
 msgid "Share Deny None"
-msgstr ""
+msgstr "Yasak olmadan paylaş"
 
 #: dlls/oledb32/version.rc:44
 msgid "Share Deny Read"
-msgstr ""
+msgstr "Okuma iznini yasakla"
 
 #: dlls/oledb32/version.rc:45
 msgid "Share Deny Write"
-msgstr ""
+msgstr "Yazma iznini yasakla"
 
 #: dlls/oledb32/version.rc:46
 msgid "Share Exclusive"
-msgstr ""
+msgstr "Okuma ve yazmayı yasakla"
 
 #: dlls/oledb32/version.rc:47
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "G/Ç Yazım"
+msgstr "Yazma"
 
 #: dlls/oledlg/oledlg.rc:55
 msgid "Insert Object"
@@ -9049,7 +8986,7 @@ msgstr "Resmi Ya&zdır..."
 
 #: dlls/shdoclc/shdoclc.rc:75
 msgid "&Go to My Pictures"
-msgstr "Resimlerim dizinine &Git"
+msgstr "Resimlerim Klasörüne &Git"
 
 #: dlls/shdoclc/shdoclc.rc:76 dlls/shdoclc/shdoclc.rc:156
 #: dlls/shdoclc/shdoclc.rc:180
@@ -9313,7 +9250,7 @@ msgstr "Yeni"
 
 #: dlls/shell32/shell32.rc:69
 msgid "New &Folder"
-msgstr "Yeni &Dizin"
+msgstr "Yeni Kl&asör"
 
 #: dlls/shell32/shell32.rc:70
 msgid "New &Link"
@@ -9362,7 +9299,7 @@ msgstr "&Denetim Masası Hakkında"
 
 #: dlls/shell32/shell32.rc:273 dlls/shell32/shell32.rc:288
 msgid "Browse for Folder"
-msgstr "Dizine Gözat"
+msgstr "Klasöre Gözat"
 
 #: dlls/shell32/shell32.rc:293
 msgid "Folder:"
@@ -9405,8 +9342,8 @@ msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
 msgstr ""
-"Herhangi bir program, dizin, belge veya Internet kaynağı seçin ve Wine sizin "
-"için açsın."
+"Herhangi bir program, klasör, belge veya Internet kaynağı seçin ve Wine "
+"sizin için açsın."
 
 #: dlls/shell32/shell32.rc:339
 msgid "&Open:"
@@ -9686,11 +9623,11 @@ msgstr "İndirilenler"
 
 #: dlls/shell32/shell32.rc:169
 msgid "Unable to create new Folder: Permission denied."
-msgstr "Yeni dizin oluşturulamıyor: Erişim engellendi."
+msgstr "Yeni klasör oluşturulamıyor: Erişim engellendi."
 
 #: dlls/shell32/shell32.rc:170
 msgid "Error during creation of a new folder"
-msgstr "Dizin oluşturma sırasında hata"
+msgstr "Klasör oluşturma sırasında hata"
 
 #: dlls/shell32/shell32.rc:171
 msgid "Confirm file deletion"
@@ -9698,7 +9635,7 @@ msgstr "Dosya silmeyi onayla"
 
 #: dlls/shell32/shell32.rc:172
 msgid "Confirm folder deletion"
-msgstr "Dizin silmeyi onayla"
+msgstr "Klasör silmeyi onayla"
 
 #: dlls/shell32/shell32.rc:173
 msgid "Are you sure you want to delete '%1'?"
@@ -9927,16 +9864,12 @@ msgid "Cape Verde Daylight Time"
 msgstr "Yeşil Burun Adaları Yaz Saati"
 
 #: dlls/tzres/tzres.rc:126
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
 msgid "Haiti Standard Time"
-msgstr "Hawaii Standart Saati"
+msgstr "Haiti Standart Saati"
 
 #: dlls/tzres/tzres.rc:127
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
 msgid "Haiti Daylight Time"
-msgstr "Hawaii Yaz Saati"
+msgstr "Haiti Yaz Saati"
 
 #: dlls/tzres/tzres.rc:80
 msgid "Central European Standard Time"
@@ -9971,16 +9904,12 @@ msgid "Iran Daylight Time"
 msgstr "İran Yaz Saati"
 
 #: dlls/tzres/tzres.rc:204
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
 msgid "Saint Pierre Standard Time"
-msgstr "Hawaii Standart Saati"
+msgstr "Saint Pierre Standart Saati"
 
 #: dlls/tzres/tzres.rc:205
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
 msgid "Saint Pierre Daylight Time"
-msgstr "Hawaii Yaz Saati"
+msgstr "Saint Pierre Yaz Saati"
 
 #: dlls/tzres/tzres.rc:170
 msgid "Namibia Standard Time"
@@ -10023,16 +9952,12 @@ msgid "Central Asia Daylight Time"
 msgstr "Orta Asya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:146
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "Lord Howe Standard Time"
-msgstr "Kore Standart Saati"
+msgstr "Lord Howe Standart Saati"
 
 #: dlls/tzres/tzres.rc:147
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "Lord Howe Daylight Time"
-msgstr "Kore Yaz Saati"
+msgstr "Lord Howe Yaz Saati"
 
 #: dlls/tzres/tzres.rc:40
 msgid "Arabic Standard Time"
@@ -10083,16 +10008,12 @@ msgid "Azerbaijan Daylight Time"
 msgstr "Azerbaycan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:150
-#, fuzzy
-#| msgid "Magadan Standard Time"
 msgid "Magallanes Standard Time"
-msgstr "Magadan Standart Saati"
+msgstr "Macellan Standart Saati"
 
 #: dlls/tzres/tzres.rc:151
-#, fuzzy
-#| msgid "Magadan Daylight Time"
 msgid "Magallanes Daylight Time"
-msgstr "Magadan Yaz Saati"
+msgstr "Macellan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:206
 msgid "Samoa Standard Time"
@@ -10143,16 +10064,12 @@ msgid "Line Islands Daylight Time"
 msgstr "Line Adaları Yaz Saati"
 
 #: dlls/tzres/tzres.rc:92
-#, fuzzy
-#| msgid "China Standard Time"
 msgid "Cuba Standard Time"
-msgstr "Çin Standart Saati"
+msgstr "Küba Standart Saati"
 
 #: dlls/tzres/tzres.rc:93
-#, fuzzy
-#| msgid "China Daylight Time"
 msgid "Cuba Daylight Time"
-msgstr "Çin Yaz Saati"
+msgstr "Küba Yaz Saati"
 
 #: dlls/tzres/tzres.rc:136
 msgid "Jordan Standard Time"
@@ -10195,16 +10112,12 @@ msgid "Argentina Daylight Time"
 msgstr "Arjantin Yaz Saati"
 
 #: dlls/tzres/tzres.rc:152
-#, fuzzy
-#| msgid "Mauritius Standard Time"
 msgid "Marquesas Standard Time"
-msgstr "Mauritius Standart Saati"
+msgstr "Markiz Adaları Standart Saati"
 
 #: dlls/tzres/tzres.rc:153
-#, fuzzy
-#| msgid "Mauritius Daylight Time"
 msgid "Marquesas Daylight Time"
-msgstr "Mauritius Yaz Saati"
+msgstr "Markiz Adaları Yaz Saati"
 
 #: dlls/tzres/tzres.rc:166
 msgid "Myanmar Standard Time"
@@ -10355,16 +10268,12 @@ msgid "US Eastern Daylight Time"
 msgstr "Doğu Amerika Yaz Saati"
 
 #: dlls/tzres/tzres.rc:182
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "North Korea Standard Time"
-msgstr "Kore Standart Saati"
+msgstr "Kuzey Kore Standart Saati"
 
 #: dlls/tzres/tzres.rc:183
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "North Korea Daylight Time"
-msgstr "Kore Yaz Saati"
+msgstr "Kuzey Kore Yaz Saati"
 
 #: dlls/tzres/tzres.rc:220
 msgid "Tasmania Standard Time"
@@ -10455,16 +10364,12 @@ msgid "Arabian Daylight Time"
 msgstr "Arabistan Yaz Saati"
 
 #: dlls/tzres/tzres.rc:222
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Tocantins Standard Time"
-msgstr "Dağlık Amerika Standart Saati"
+msgstr "Tocantins Standart Saati"
 
 #: dlls/tzres/tzres.rc:223
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Tocantins Daylight Time"
-msgstr "Dağlık Amerika Yaz Saati"
+msgstr "Tocantins Yaz Saati"
 
 #: dlls/tzres/tzres.rc:196
 msgid "Russian Standard Time"
@@ -10475,16 +10380,12 @@ msgid "Russian Daylight Time"
 msgstr "Rusya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:48
-#, fuzzy
-#| msgid "AUS Central Standard Time"
 msgid "Aus Central W. Standard Time"
-msgstr "Orta Avustralya Standart Saati"
+msgstr "Orta Batı Avustralya Standart Saati"
 
 #: dlls/tzres/tzres.rc:49
-#, fuzzy
-#| msgid "AUS Central Daylight Time"
 msgid "Aus Central W. Daylight Time"
-msgstr "Orta Avustralya Yaz Saati"
+msgstr "Orta Batı Avustralya Yaz Saati"
 
 #: dlls/tzres/tzres.rc:194
 msgid "Romance Standard Time"
@@ -10615,16 +10516,12 @@ msgid "Venezuela Daylight Time"
 msgstr "Venezuela Yaz Saati"
 
 #: dlls/tzres/tzres.rc:62
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Bougainville Standard Time"
-msgstr "Dağlık Amerika Standart Saati"
+msgstr "Bougainville Standart Saati"
 
 #: dlls/tzres/tzres.rc:63
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Bougainville Daylight Time"
-msgstr "Dağlık Amerika Yaz Saati"
+msgstr "Bougainville Yaz Saati"
 
 #: dlls/tzres/tzres.rc:128
 msgid "Hawaiian Standard Time"
@@ -10651,16 +10548,12 @@ msgid "New Zealand Daylight Time"
 msgstr "Yeni Zelanda Yaz Saati"
 
 #: dlls/tzres/tzres.rc:34
-#, fuzzy
-#| msgid "Argentina Standard Time"
 msgid "Aleutian Standard Time"
-msgstr "Arjantin Standart Saati"
+msgstr "Aleut Adaları Standart Saati"
 
 #: dlls/tzres/tzres.rc:35
-#, fuzzy
-#| msgid "Argentina Daylight Time"
 msgid "Aleutian Daylight Time"
-msgstr "Arjantin Yaz Saati"
+msgstr "Aleut Adaları Yaz Saati"
 
 #: dlls/tzres/tzres.rc:76
 msgid "Central Brazilian Standard Time"
@@ -10711,16 +10604,12 @@ msgid "Egypt Daylight Time"
 msgstr "Mısır Yaz Saati"
 
 #: dlls/tzres/tzres.rc:106
-#, fuzzy
-#| msgid "Central Standard Time (Mexico)"
 msgid "Eastern Standard Time (Mexico)"
-msgstr "Orta Amerika Standart Saati (Meksika)"
+msgstr "Doğu Amerika Standart Saati (Meksika)"
 
 #: dlls/tzres/tzres.rc:107
-#, fuzzy
-#| msgid "Central Daylight Time (Mexico)"
 msgid "Eastern Daylight Time (Mexico)"
-msgstr "Orta Amerika Yaz Saati (Meksika)"
+msgstr "Doğu Amerika Yaz Saati (Meksika)"
 
 #: dlls/tzres/tzres.rc:154
 msgid "Mauritius Standard Time"
@@ -10755,16 +10644,12 @@ msgid "Korea Daylight Time"
 msgstr "Kore Yaz Saati"
 
 #: dlls/tzres/tzres.rc:88
-#, fuzzy
-#| msgid "Easter Island Standard Time"
 msgid "Chatham Islands Standard Time"
-msgstr "Paskalya Adası Standart Saati"
+msgstr "Chatham Adaları Standart Saati"
 
 #: dlls/tzres/tzres.rc:89
-#, fuzzy
-#| msgid "Easter Island Daylight Time"
 msgid "Chatham Islands Daylight Time"
-msgstr "Paskalya Adası Yaz Saati"
+msgstr "Chatham Adaları Yaz Saati"
 
 #: dlls/tzres/tzres.rc:96
 msgid "E. Africa Standard Time"
@@ -10856,7 +10741,7 @@ msgstr "Bileşen yüklemesi başarısız: %08x"
 
 #: dlls/urlmon/urlmon.rc:52
 msgid "Install (%d)"
-msgstr "(%d)'yi Kur"
+msgstr "(%d) Kur"
 
 #: dlls/urlmon/urlmon.rc:53
 msgid "Install"
@@ -10929,149 +10814,115 @@ msgstr "&Daha Fazla Pencere..."
 
 #: dlls/vbscript/vbscript.rc:30
 msgid "Overflow"
-msgstr ""
+msgstr "Taşma"
 
 #: dlls/vbscript/vbscript.rc:31
-#, fuzzy
-#| msgid "Out of memory."
 msgid "Out of memory"
-msgstr "Bellek dolu."
+msgstr "Bellek dolu"
 
 #: dlls/vbscript/vbscript.rc:33
 msgid "This array is fixed or temporarily locked"
-msgstr ""
+msgstr "Bu dizi sabit veya geçici olarak kilitli"
 
 #: dlls/vbscript/vbscript.rc:34
-#, fuzzy
-#| msgid "Data type mismatch.\n"
 msgid "Type mismatch"
-msgstr "Veri türü eşleşmiyor.\n"
+msgstr "Tür eşleşmiyor."
 
 #: dlls/vbscript/vbscript.rc:36
-#, fuzzy
-#| msgid "I/O device error.\n"
 msgid "Device I/O error"
-msgstr "G/Ç aygıt hatası.\n"
+msgstr "Aygıt G/Ç hatası."
 
 #: dlls/vbscript/vbscript.rc:37
-#, fuzzy
-#| msgid "File already exists.\n"
 msgid "File already exists"
-msgstr "Dosya zaten mevcut.\n"
+msgstr "Dosya zaten mevcut"
 
 #: dlls/vbscript/vbscript.rc:38
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "Disk full"
-msgstr "Disk dolu.\n"
+msgstr "Disk dolu"
 
 #: dlls/vbscript/vbscript.rc:39
-#, fuzzy
-#| msgid "Too many open files.\n"
 msgid "Too many files"
-msgstr "Çok fazla dosya açık.\n"
+msgstr "Çok fazla dosya"
 
 #: dlls/vbscript/vbscript.rc:40
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permission denied"
-msgstr "Erişim engellendi.\n"
+msgstr "İzin engellendi."
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
-msgstr ""
+msgstr "Dosya veya dosya yolu erişim hatası"
 
 #: dlls/vbscript/vbscript.rc:42
-#, fuzzy
-#| msgid "Path not found.\n"
 msgid "Path not found"
-msgstr "Yol bulunamadı.\n"
+msgstr "Yol bulunamadı"
 
 #: dlls/vbscript/vbscript.rc:43
-#, fuzzy
-#| msgid "(value not set)"
 msgid "Object variable not set"
-msgstr "(değer belirlenmemiş)"
+msgstr "Nesne değişkeni belirlenmemiş"
 
 #: dlls/vbscript/vbscript.rc:44
-#, fuzzy
-#| msgid "Invalid user buffer.\n"
 msgid "Invalid use of Null"
-msgstr "Geçersiz kullanıcı tamponu.\n"
+msgstr "'Null' hatalı kullanılmış"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
-msgstr ""
+msgstr "Gereken geçici dosya oluşturulamıyor"
 
 #: dlls/vbscript/vbscript.rc:46
-#, fuzzy
-#| msgid "Automation server can't create object"
 msgid "ActiveX component can't create object"
-msgstr "Otomasyon sunucusu nesneyi oluşturamadı"
+msgstr "ActiveX bileşeni nesneyi oluşturamadı"
 
 #: dlls/vbscript/vbscript.rc:47
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Class doesn't support Automation"
-msgstr "Nesne bu işlemi desteklemiyor"
+msgstr "Sınıf otomasyonu desteklemiyor"
 
 #: dlls/vbscript/vbscript.rc:48
 msgid "File name or class name not found during Automation operation"
-msgstr ""
+msgstr "Otomasyon işlemi sırasında dosya adı veya sınıf adı bulunamadı"
 
 #: dlls/vbscript/vbscript.rc:51
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support named arguments"
-msgstr "Nesne bu işlemi desteklemiyor"
+msgstr "Nesne isimlendirilmiş değişkenleri desteklemiyor"
 
 #: dlls/vbscript/vbscript.rc:52
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
-msgstr "Nesne bu işlemi desteklemiyor"
+msgstr "Nesne şimdiki konum ayarını desteklemiyor"
 
 #: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
-#, fuzzy
-#| msgid "Element not found.\n"
 msgid "Named argument not found"
-msgstr "Eleman bulunamadı.\n"
+msgstr "İsimlendirilmiş değişken bulunamadı"
 
 #: dlls/vbscript/vbscript.rc:55
 msgid "Wrong number of arguments or invalid property assignment"
-msgstr ""
+msgstr "Hatalı değişken sayısı veya geçersiz özellik ataması"
 
 #: dlls/vbscript/vbscript.rc:56
-#, fuzzy
-#| msgid "Object Class Violation"
 msgid "Object not a collection"
-msgstr "Nesne Sınıfı İhlali"
+msgstr "Nesne bir koleksiyon değil"
 
 #: dlls/vbscript/vbscript.rc:57
-#, fuzzy
-#| msgid "Specified control was not found in message"
 msgid "Specified DLL function not found"
-msgstr "İletide belirtilen denetim bulunamadı"
+msgstr "Belirtilen DLL fonksiyonu bulunamadı"
 
 #: dlls/vbscript/vbscript.rc:58
 msgid "Variable uses an Automation type not supported in VBScript"
-msgstr ""
+msgstr "Değişken, VBScript'te desteklenmeyeb bir otomasyon türü kullanıyor"
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "The remote server machine does not exist or is unavailable"
-msgstr ""
+msgstr "Uzak sunucu makinesi yok veya kullanılamıyor"
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr ""
+msgstr "Geçersiz veya yetersiz referans"
 
 #: dlls/vbscript/vbscript.rc:62
 msgid "Microsoft VBScript compilation error"
-msgstr ""
+msgstr "Microsoft VBScript derleme hatası"
 
 #: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript runtime error"
-msgstr ""
+msgstr "Microsoft VBScript çalışma zamanı hatası"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"
@@ -11169,33 +11020,27 @@ msgstr "Bu sertifika ile en az bir tane belirtilmemiş güvenlik problemi var."
 
 #: dlls/wininet/wininet.rc:35
 msgid "Effective Date"
-msgstr ""
+msgstr "Geçerlilik Tarihi"
 
 #: dlls/wininet/wininet.rc:37
-#, fuzzy
-#| msgid "Security"
 msgid "Security Protocol"
-msgstr "Güvenlik"
+msgstr "Güvenlik Protokolü"
 
 #: dlls/wininet/wininet.rc:38
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature Type"
-msgstr "İmza"
+msgstr "İmza Türü"
 
 #: dlls/wininet/wininet.rc:39
-#, fuzzy
-#| msgid "Encrypting File System"
 msgid "Encryption Type"
-msgstr "Dosya Sistemi Şifrelemesi"
+msgstr "Şifreleme Türü"
 
 #: dlls/wininet/wininet.rc:40
 msgid "Privacy Strength"
-msgstr ""
+msgstr "Gizlilik Gücü"
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
-msgstr ""
+msgstr "bit"
 
 #: dlls/wininet/winineterror.mc:26
 msgid "The request has timed out.\n"
@@ -11306,11 +11151,11 @@ msgstr "Sistemde tanımlanmamış bir hata numarası belirtilmiş."
 
 #: dlls/winmm/winmm.rc:42
 msgid "An invalid flag was passed to a system function."
-msgstr "Bir sistem işlevine geçersiz bir bayrak geçilmiş."
+msgstr "Bir sistem fonksiyonuna geçersiz bir bayrak geçilmiş."
 
 #: dlls/winmm/winmm.rc:43
 msgid "An invalid parameter was passed to a system function."
-msgstr "Bir sistem işlevine geçersiz bir parametre geçilmiş."
+msgstr "Bir sistem fonksiyonuna geçersiz bir parametre geçilmiş."
 
 #: dlls/winmm/winmm.rc:46
 msgid ""
@@ -11382,7 +11227,7 @@ msgid ""
 "Windows SYSTEM directory, and then try again."
 msgstr ""
 "Geçerli MIDI kurulumu bozuk. Özgün MIDIMAP.CFG dosyasını Windows SYSTEM "
-"dizinine kopyalayın ve yeniden deneyin."
+"klasörüne kopyalayın ve yeniden deneyin."
 
 #: dlls/winmm/winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
@@ -11662,7 +11507,7 @@ msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
 msgstr ""
-"Belirtilen dosyaya veya MCI aygıtına erişilemiyor. Dizinleri değiştirmeyi "
+"Belirtilen dosyaya veya MCI aygıtına erişilemiyor. Klasörleri değiştirmeyi "
 "veya bilgisayarınızı yeniden başlatmayı deneyin."
 
 #: dlls/winmm/winmm.rc:107
@@ -12214,7 +12059,7 @@ msgstr ""
 "mevcutsa, denetim yine onu çağıran dosyaya döner. CALL komutu çağrılan\n"
 "yordamlar için parametre verebilir.\n"
 "\n"
-"Çağrılan bir yordamda değiştirilen dizinler, çevre değişkenleri vb.\n"
+"Çağrılan bir yordamda değiştirilen klasörler, çevre değişkenleri vb.\n"
 "kendisini çağıran tarafından alınır.\n"
 
 #: programs/cmd/cmd.rc:44
@@ -12222,12 +12067,12 @@ msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
-"CD <dizin> CHDIR komutunun kısa şeklidir. Şimdiki dizini\n"
+"CD <klasör> CHDIR komutunun kısa şeklidir. Şimdiki klasörü\n"
 "değiştirir.\n"
 
 #: programs/cmd/cmd.rc:47
 msgid "CHDIR <directory> changes the current default directory.\n"
-msgstr "CHDIR <dizin> şimdiki dizini değiştirir.\n"
+msgstr "CHDIR <klasör> şimdiki klasörü değiştirir.\n"
 
 #: programs/cmd/cmd.rc:50
 msgid "CLS clears the console screen.\n"
@@ -12251,7 +12096,7 @@ msgstr "DEL <dosyaadı> bir veya daha fazla dosyayı siler.\n"
 
 #: programs/cmd/cmd.rc:65
 msgid "DIR lists the contents of a directory.\n"
-msgstr "DIR bir dizinin içindekileri listeler.\n"
+msgstr "DIR bir klasörün içindekileri listeler.\n"
 
 #: programs/cmd/cmd.rc:75
 msgid ""
@@ -12360,11 +12205,11 @@ msgstr ""
 
 #: programs/cmd/cmd.rc:121
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr "MD <isim> MKDIR komutunun kısa şeklidir. Bir alt dizin oluşturur.\n"
+msgstr "MD <isim> MKDIR komutunun kısa şeklidir. Bir alt klasör oluşturur.\n"
 
 #: programs/cmd/cmd.rc:123
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr "MKDIR <isim> bir alt dizin oluşturur.\n"
+msgstr "MKDIR <isim> bir alt klasör oluşturur.\n"
 
 #: programs/cmd/cmd.rc:131
 msgid ""
@@ -12375,10 +12220,10 @@ msgid ""
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
-"MOVE bir dosya veya dizini dosya sistemi içinde yeni bir noktaya taşır.\n"
+"MOVE bir dosya veya klasörü dosya sistemi içinde yeni bir noktaya taşır.\n"
 "\n"
-"Eğer taşınacak öğe bir dizinse dizin içerisindeki tüm dosyalar ve alt\n"
-"dizinler de birlikte taşınacaktır.\n"
+"Eğer taşınacak öğe bir klasörse klasör içerisindeki tüm dosyalar ve alt\n"
+"klasörler de birlikte taşınacaktır.\n"
 "\n"
 "Eğer eski ve yeni konumlar farklı DOS sürücüleri üzerindeyse MOVE hata\n"
 "verecektir.\n"
@@ -12451,7 +12296,8 @@ msgstr ""
 "$l    < işareti           $n    Geçerli sürücü      $p    Geçerli yol\n"
 "$q    Eşittir işareti     $t    Geçerli saat        $v    cmd sürümü\n"
 "\n"
-"Sadece PROMPT komutunu girerseniz komut istemi geçerli dizini (sürücü harfi\n"
+"Sadece PROMPT komutunu girerseniz komut istemi şimdiki klasörü (sürücü "
+"harfi\n"
 "dahil) ve onu izleyen büyüktür (>) işareti içeren varsayılan değerlere\n"
 "dönecektir.\n"
 "(PROMPT $p$g komutu gibi).\n"
@@ -12481,11 +12327,11 @@ msgstr "RENAME <dosyaadı> bir dosyayı yeniden adlandırır.\n"
 
 #: programs/cmd/cmd.rc:181
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
-msgstr "RD <dizin> RMDIR komutunun kısa şeklidir. Bir dizini siler.\n"
+msgstr "RD <klasör> RMDIR komutunun kısa şeklidir. Bir klasörü siler.\n"
 
 #: programs/cmd/cmd.rc:183
 msgid "RMDIR <directory> deletes a directory.\n"
-msgstr "RMDIR <dizin> bir dizini siler.\n"
+msgstr "RMDIR <klasör> bir klasörü siler.\n"
 
 #: programs/cmd/cmd.rc:229
 msgid ""
@@ -12569,7 +12415,7 @@ msgstr ""
 "\n"
 "Seçenekler:\n"
 "\"başlık\"        Alt pencerelerin başlığını belirtir.\n"
-"/d dizin        Programı belirtilen dizinde başlatır.\n"
+"/d klasör        Programı belirtilen klasörde başlatır.\n"
 "/b              Program için yeni bir konsol oluşturmaz.\n"
 "/i              Programı taze ortam değişkenleri ile başlatır.\n"
 "/min            Programı simge durumunda başlatır.\n"
@@ -12662,12 +12508,12 @@ msgid ""
 "PUSHD <directory> saves the current directory onto a stack, and then\n"
 "changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <dizin> şimdiki dizini bir yığın belleğe kaydeder, sonra şimdiki\n"
-"dizin yerine verilen dizine geçer.\n"
+"PUSHD <klasör> şimdiki klasörü bir yığın belleğe kaydeder, sonra şimdiki\n"
+"klasör yerine verilen klasöre geçer.\n"
 
 #: programs/cmd/cmd.rc:278
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
-msgstr "POPD şimdiki dizini en son PUSHD ile kaydedilen dizine değiştirir.\n"
+msgstr "POPD şimdiki klasörü en son PUSHD ile kaydedilen klasöre değiştirir.\n"
 
 #: programs/cmd/cmd.rc:288
 msgid ""
@@ -12751,9 +12597,9 @@ msgstr ""
 "Sözdizimi: MKLINK [seçenekler] bağlantı_adı hedef\n"
 "\n"
 "Seçenekler:\n"
-"/d             Bir dizin simgesel bağlantısı yaratır.\n"
-"/h             Bir sıkı bağlantı yaratır.\n"
-"/j              Bir dizin kavşak noktası yaratır.\n"
+"/d             Bir klasör simgesel bağlantısı yaratır.\n"
+"/h             Bir sabit bağlantı yaratır.\n"
+"/j              Bir klasör kavşak noktası yaratır.\n"
 "bağlantı_adı, yeni simgesel bağlantının adıdır.\n"
 "hedef, bağlantı_adı'nın işaret ettiği dosya yoludur.\n"
 
@@ -12811,31 +12657,31 @@ msgstr ""
 "ASSOC\t\tDosya uzantısı ilişkilendirmelerini göster veya düzenle\n"
 "ATTRIB\t\tDOS dosya özelliklerini göster veya değiştir\n"
 "CALL\t\tToplu işlem dosyası içerisinden bir diğerini çalıştır\n"
-"CD (CHDIR)\tŞimdiki dizini değiştir\n"
+"CD (CHDIR)\tŞimdiki klasörü değiştir\n"
 "CHOICE\t\tSeçilebilir listeden bir tuşa basılmasını bekle\n"
 "CLS\t\tKonsol ekranını temizle\n"
 "COPY\t\tDosya kopyala\n"
 "CTTY\t\tGiriş/çıkış aygıtını değiştir\n"
 "DATE\t\tSistem tarihini göster veya değiştir\n"
 "DEL (ERASE)\tBir veya daha fazla dosyayı sil\n"
-"DIR\t\tDizin içeriğini listele\n"
+"DIR\t\tklasör içeriğini listele\n"
 "ECHO\t\tMetni doğrudan konsol çıkışına kopyala\n"
 "ENDLOCAL\tOrtam değişiklikleri yerelleştirmesini, bir toplu dosyada\n"
 "\t\tsonlandır\n"
 "FTYPE\t\tDosya türleri ile ilişkilendirilmiş aç komutlarını göster veya\n"
 "\t\tdüzenle\n"
 "HELP\t\tBir konu üzerine özet yardım göster\n"
-"MD (MKDIR)\tAlt dizin oluştur\n"
+"MD (MKDIR)\tAlt klasör oluştur\n"
 "MKLINK\t\tBir simgesel bağlantı oluştur\n"
 "MORE\t\tÇıktıyı sayfalar halinde görüntüle\n"
-"MOVE\t\tBir veya daha fazla dosyayı ya da dizin ağacını taşı\n"
+"MOVE\t\tBir veya daha fazla dosyayı ya da klasör ağacını taşı\n"
 "PATH\t\tArama yolunu düzenle veya göster\n"
 "PAUSE\t\tBir toplu iş dosyasının çalışmasını durdur\n"
-"POPD\t\tPUSHD ile kaydedilen son dizini onar\n"
+"POPD\t\tPUSHD ile kaydedilen son klasörü onar\n"
 "PROMPT\t\tKomut istemini değiştir\n"
-"PUSHD\t\tYeni dizine geçiş yap, şimdikini kaydet\n"
+"PUSHD\t\tYeni klasöre geçiş yap, şimdikini kaydet\n"
 "REN (RENAME)\tDosyayı yeniden adlandır\n"
-"RD (RMDIR)\tAlt dizini sil\n"
+"RD (RMDIR)\tAlt klasörü sil\n"
 "SET\t\tÇevre değişkenlerini düzenle veya göster\n"
 "SETLOCAL\tOrtam değişiklikleri yerelleştirmesini bir toplu dosyada başlat\n"
 "START\t\tİlişkili programda bir program başlat veya bir belge aç\n"
@@ -12844,7 +12690,7 @@ msgstr ""
 "TYPE\t\tMetin dosyasının içeriğini göster\n"
 "VER\t\tŞimdiki komut istemi sürümünü göster\n"
 "VOL\t\tDisk aygıtının birim etiketini göster\n"
-"XCOPY\t\tKaynak dosyaları veya dizin ağaçlarını bir hedefe kopyala\n"
+"XCOPY\t\tKaynak dosyaları veya klasör ağaçlarını bir hedefe kopyala\n"
 "EXIT\t\tKomut istemini kapat\n"
 "\n"
 "Yukarıdaki komutlar hakkında daha fazla bilgi için HELP <komut> yazınız.\n"
@@ -13225,6 +13071,9 @@ msgid ""
 "\n"
 "hardlink      hardlink management\n"
 msgstr ""
+"- Desteklenen Komutlar -\n"
+"\n"
+"hardlink      sabit bağlantıları düzenler\n"
 
 #: programs/fsutil/fsutil.mc:35
 msgid ""
@@ -13232,10 +13081,13 @@ msgid ""
 "\n"
 "create        create a hardlink\n"
 msgstr ""
+"- Hardlink - Desteklenen Komutlar -\n"
+"\n"
+"create        bir sabit bağlantı oluşturur\n"
 
 #: programs/fsutil/fsutil.mc:40
 msgid "Syntax: fsutil hardlink create <new> <existing>\n"
-msgstr ""
+msgstr "Sözdizimi: fsutil hardlink create <yeni> <bulunan>\n"
 
 #: programs/hostname/hostname.rc:30
 msgid "Usage: hostname\n"
@@ -14261,7 +14113,7 @@ msgstr "&Komut satırı:"
 
 #: programs/progman/progman.rc:174
 msgid "&Working directory:"
-msgstr "&Çalışma dizini:"
+msgstr "&Çalışma klasörü:"
 
 #: programs/progman/progman.rc:176
 msgid "&Key combination:"
@@ -16458,7 +16310,7 @@ msgstr "Sürücüler"
 
 #: programs/winecfg/winecfg.rc:35
 msgid "Select the Unix target directory, please."
-msgstr "Lütfen Unix hedef dizinini seçin."
+msgstr "Lütfen Unix hedef klasörünü seçin."
 
 #: programs/winecfg/winecfg.rc:36
 msgid "Hide Advan&ced"
@@ -16502,7 +16354,7 @@ msgstr "Klasör"
 
 #: programs/winecfg/winecfg.rc:48
 msgid "Links to"
-msgstr "Hedef Dizin"
+msgstr "Hedef klasör"
 
 #: programs/winecfg/winecfg.rc:44
 msgid "Wine configuration for %s"
@@ -16864,7 +16716,7 @@ msgstr "&Özellikler\tAlt+Enter"
 
 #: programs/winefile/winefile.rc:38
 msgid "Cr&eate Directory..."
-msgstr "&Dizin Oluştur..."
+msgstr "&klasör Oluştur..."
 
 #: programs/winefile/winefile.rc:43
 msgid "&Disk"
@@ -16944,7 +16796,7 @@ msgstr "Dosya türü"
 
 #: programs/winefile/winefile.rc:140
 msgid "&Directories"
-msgstr "&Dizinler"
+msgstr "&klasörler"
 
 #: programs/winefile/winefile.rc:142
 msgid "&Programs"
@@ -17664,8 +17516,8 @@ msgid ""
 "(F - File, D - Directory)\n"
 msgstr ""
 "Hedefteki '%1' bir dosya mı\n"
-"yoksa dizin mi?\n"
-"(F - Dosya, D - Dizin)\n"
+"yoksa klasör mü?\n"
+"(F - Dosya, D - Klasör)\n"
 
 #: programs/xcopy/xcopy.rc:38
 msgid "%1? (Yes|No)\n"
@@ -17729,7 +17581,7 @@ msgid ""
 "\t\tthan source.\n"
 "\n"
 msgstr ""
-"XCOPY - Kaynak dosya ve dizinleri hedefe kopyalar.\n"
+"XCOPY - Kaynak dosya ve klasörleri hedefe kopyalar.\n"
 "\n"
 "Sözdizimi:\n"
 "XCOPY kaynak [hedef] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
@@ -17737,15 +17589,15 @@ msgstr ""
 "\n"
 "Nerede:\n"
 "\n"
-"[/I]  Hedef dizin bulunmuyorsa oluşturup iki veya daha fazla dosyayı\n"
+"[/I]  Hedef klasör bulunmuyorsa oluşturup iki veya daha fazla dosyayı\n"
 "\tkopyalar.\n"
-"[/S]  Dizin ve alt dizinleri kopyalar.\n"
-"[/E]  Boş olanlar hariç dizin ve alt dizinleri kopyalar.\n"
+"[/S]  Klasör ve alt klasörleri kopyalar.\n"
+"[/E]  Boş olanlar hariç klasör ve alt klasörleri kopyalar.\n"
 "[/Q]  Kopyalama sırasında isimleri göstermez, işi sessiz yapar.\n"
 "[/F]  Kopyalama sırasında tüm kaynak ve hedef isimlerini gösterir.\n"
 "[/L]  İşlemi canlandırır, kopyalanacak isimleri gösterir.\n"
 "[/W]  Kopyalama işlemi sırasında komut sorar.\n"
-"[/T]  Boş dizin yapısını oluşturur ancak dosyaları kopyalamaz.\n"
+"[/T]  Boş klasör yapısını oluşturur ancak dosyaları kopyalamaz.\n"
 "[/Y]  Dosyalar üzerine yazılsın mı sorgusunu atlar.\n"
 "[/-Y] Dosyalar yazılırken onay alır.\n"
 "[/P]  Kopyalamadan önce her kaynak dosya için onay alır.\n"
