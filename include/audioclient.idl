@@ -333,6 +333,34 @@ interface IAudioStreamVolume : IUnknown
     );
 }
 
+typedef enum AMBISONICS_TYPE
+{
+    AMBISONICS_TYPE_FULL3D = 0x0,
+} AMBISONICS_TYPE;
+
+typedef enum AMBISONICS_CHANNEL_ORDERING
+{
+    AMBISONICS_CHANNEL_ORDERING_ACN = 0x0,
+} AMBISONICS_CHANNEL_ORDERING;
+
+typedef enum AMBISONICS_NORMALIZATION
+{
+    AMBISONICS_NORMALIZATION_SN3D = 0x0,
+    AMBISONICS_NORMALIZATION_N3D = 0x1,
+} AMBISONICS_NORMALIZATION;
+
+typedef struct AMBISONICS_PARAMS
+{
+    UINT32 u32Size;
+    UINT32 u32Version;
+    AMBISONICS_TYPE u32Type;
+    AMBISONICS_CHANNEL_ORDERING u32ChannelOrdering;
+    AMBISONICS_NORMALIZATION u32Normalization;
+    UINT32 u32Order;
+    UINT32 u32NumChannels;
+    UINT32 *pu32ChannelMap;
+} AMBISONICS_PARAMS;
+
 [
     local,
     pointer_default(unique),
