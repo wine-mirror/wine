@@ -364,6 +364,32 @@ typedef struct AMBISONICS_PARAMS
 [
     local,
     pointer_default(unique),
+    uuid(28724c91-df35-4856-9f76-d6a26413f3df),
+    object,
+]
+interface IAudioAmbisonicsControl : IUnknown
+{
+    HRESULT SetData(
+        [in] const AMBISONICS_PARAMS *param,
+        [in] UINT32 size
+    );
+    HRESULT SetHeadTracking(
+        [in] BOOL enable
+    );
+    HRESULT GetHeadTracking(
+        [out] BOOL *enable
+    );
+    HRESULT SetRotation(
+        [in] float x,
+        [in] float y,
+        [in] float z,
+        [in] float w
+    );
+}
+
+[
+    local,
+    pointer_default(unique),
     uuid("1c158861-b533-4b30-b1cf-e853e51c59b8"),
     object,
 ]
