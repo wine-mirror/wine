@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-06-04 19:24-0600\n"
-"Last-Translator: Zixing Liu <liushuyu011@gmail.com>\n"
+"PO-Revision-Date: 2020-12-15 16:24+0800\n"
+"Last-Translator: Jactry Zeng <jzeng@codeweavers.com>\n"
 "Language-Team: Chinese (PRC)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.4.2\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: dlls/appwiz.cpl/appwiz.rc:58
@@ -3686,7 +3686,7 @@ msgstr "游戏控制器"
 
 #: dlls/joy.cpl/joy.rc:32
 msgid "Test and configure game controllers."
-msgstr ""
+msgstr "测试和配置游戏控制器。"
 
 #: dlls/jscript/jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3701,10 +3701,8 @@ msgid "Subscript out of range"
 msgstr "标记越界"
 
 #: dlls/jscript/jscript.rc:31
-#, fuzzy
-#| msgid "Out of paper; "
 msgid "Out of stack space"
-msgstr "缺纸；"
+msgstr "堆栈空间不足"
 
 #: dlls/jscript/jscript.rc:32
 msgid "Object required"
@@ -3843,16 +3841,12 @@ msgid "JScript object expected"
 msgstr "期望得到 JScript 对象"
 
 #: dlls/jscript/jscript.rc:63
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Enumerator object expected"
-msgstr "期望得到 Array 对象"
+msgstr "期望得到枚举器对象"
 
 #: dlls/jscript/jscript.rc:64
-#, fuzzy
-#| msgid "Boolean object expected"
 msgid "Regular Expression object expected"
-msgstr "期望得到布尔型对象"
+msgstr "期望得到正则表达式对象"
 
 #: dlls/jscript/jscript.rc:65
 msgid "Syntax error in regular expression"
@@ -6874,32 +6868,24 @@ msgid "Connection reset by peer.\n"
 msgstr "连接被重置。\n"
 
 #: dlls/kernel32/winerror.mc:3767
-#, fuzzy
-#| msgid "Not implemented"
 msgid "Not implemented.\n"
-msgstr "尚未实现"
+msgstr "尚未实现。\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "RPC call failed.\n"
 msgid "Call failed.\n"
-msgstr "RPC 调用失败。\n"
+msgstr "调用失败。\n"
 
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "未在文件内找到签名。\n"
 
 #: dlls/kernel32/winerror.mc:3774
-#, fuzzy
-#| msgid "Invalid level.\n"
 msgid "Invalid call.\n"
-msgstr "无效的级别。\n"
+msgstr "无效调用。\n"
 
 #: dlls/kernel32/winerror.mc:3781
-#, fuzzy
-#| msgid "Value is not available.\n"
 msgid "Resource is not currently available.\n"
-msgstr "值不可用。\n"
+msgstr "资源当前不可用。\n"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -9838,16 +9824,12 @@ msgid "Iran Daylight Time"
 msgstr "伊朗夏令时"
 
 #: dlls/tzres/tzres.rc:204
-#, fuzzy
-#| msgid "Haiti Standard Time"
 msgid "Saint Pierre Standard Time"
-msgstr "海地标准时间"
+msgstr "圣皮埃尔标准时间"
 
 #: dlls/tzres/tzres.rc:205
-#, fuzzy
-#| msgid "Haiti Daylight Time"
 msgid "Saint Pierre Daylight Time"
-msgstr "海地夏令时"
+msgstr "圣皮埃尔夏令时"
 
 #: dlls/tzres/tzres.rc:170
 msgid "Namibia Standard Time"
@@ -9890,16 +9872,12 @@ msgid "Central Asia Daylight Time"
 msgstr "中亚夏令时"
 
 #: dlls/tzres/tzres.rc:146
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "Lord Howe Standard Time"
-msgstr "韩国标准时间"
+msgstr "豪勋爵标准时间"
 
 #: dlls/tzres/tzres.rc:147
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "Lord Howe Daylight Time"
-msgstr "韩国夏令时"
+msgstr "豪勋爵夏令时"
 
 #: dlls/tzres/tzres.rc:40
 msgid "Arabic Standard Time"
@@ -9950,16 +9928,12 @@ msgid "Azerbaijan Daylight Time"
 msgstr "阿塞拜疆夏令时"
 
 #: dlls/tzres/tzres.rc:150
-#, fuzzy
-#| msgid "Magadan Standard Time"
 msgid "Magallanes Standard Time"
-msgstr "马加丹标准时间"
+msgstr "麦哲伦标准时间"
 
 #: dlls/tzres/tzres.rc:151
-#, fuzzy
-#| msgid "Magadan Daylight Time"
 msgid "Magallanes Daylight Time"
-msgstr "马加丹夏令时"
+msgstr "麦哲伦夏令时"
 
 #: dlls/tzres/tzres.rc:206
 msgid "Samoa Standard Time"
@@ -10010,16 +9984,12 @@ msgid "Line Islands Daylight Time"
 msgstr "莱恩群岛夏令时"
 
 #: dlls/tzres/tzres.rc:92
-#, fuzzy
-#| msgid "China Standard Time"
 msgid "Cuba Standard Time"
-msgstr "中国标准时间"
+msgstr "古巴标准时间"
 
 #: dlls/tzres/tzres.rc:93
-#, fuzzy
-#| msgid "China Daylight Time"
 msgid "Cuba Daylight Time"
-msgstr "中国夏令时"
+msgstr "古巴夏令时"
 
 #: dlls/tzres/tzres.rc:136
 msgid "Jordan Standard Time"
@@ -10218,16 +10188,12 @@ msgid "US Eastern Daylight Time"
 msgstr "美国东部夏令时"
 
 #: dlls/tzres/tzres.rc:182
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "North Korea Standard Time"
-msgstr "韩国标准时间"
+msgstr "朝鲜标准时间"
 
 #: dlls/tzres/tzres.rc:183
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "North Korea Daylight Time"
-msgstr "韩国夏令时"
+msgstr "朝鲜夏令时"
 
 #: dlls/tzres/tzres.rc:220
 msgid "Tasmania Standard Time"
@@ -10318,16 +10284,12 @@ msgid "Arabian Daylight Time"
 msgstr "阿拉伯夏令时"
 
 #: dlls/tzres/tzres.rc:222
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Tocantins Standard Time"
-msgstr "山地标准时间"
+msgstr "托坎廷斯标准时间"
 
 #: dlls/tzres/tzres.rc:223
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Tocantins Daylight Time"
-msgstr "山地夏令时"
+msgstr "托坎廷斯夏令时"
 
 #: dlls/tzres/tzres.rc:196
 msgid "Russian Standard Time"
@@ -10338,16 +10300,12 @@ msgid "Russian Daylight Time"
 msgstr "俄罗斯夏令时"
 
 #: dlls/tzres/tzres.rc:48
-#, fuzzy
-#| msgid "AUS Central Standard Time"
 msgid "Aus Central W. Standard Time"
-msgstr "澳大利亚中部标准时间"
+msgstr "澳大利亚中西部标准时间"
 
 #: dlls/tzres/tzres.rc:49
-#, fuzzy
-#| msgid "AUS Central Daylight Time"
 msgid "Aus Central W. Daylight Time"
-msgstr "澳大利亚中部夏令时"
+msgstr "澳大利亚中西部夏令时"
 
 #: dlls/tzres/tzres.rc:194
 msgid "Romance Standard Time"
@@ -10566,16 +10524,12 @@ msgid "Egypt Daylight Time"
 msgstr "埃及夏令时"
 
 #: dlls/tzres/tzres.rc:106
-#, fuzzy
-#| msgid "Central Standard Time (Mexico)"
 msgid "Eastern Standard Time (Mexico)"
-msgstr "中部标准时间（墨西哥）"
+msgstr "东部标准时间（墨西哥）"
 
 #: dlls/tzres/tzres.rc:107
-#, fuzzy
-#| msgid "Central Daylight Time (Mexico)"
 msgid "Eastern Daylight Time (Mexico)"
-msgstr "中部夏令时（墨西哥）"
+msgstr "东部夏令时（墨西哥）"
 
 #: dlls/tzres/tzres.rc:154
 msgid "Mauritius Standard Time"
@@ -10780,153 +10734,115 @@ msgstr "更多窗口(&M)..."
 
 #: dlls/vbscript/vbscript.rc:30
 msgid "Overflow"
-msgstr ""
+msgstr "溢出"
 
 #: dlls/vbscript/vbscript.rc:31
-#, fuzzy
-#| msgid "Out of memory."
 msgid "Out of memory"
-msgstr "内存不足。"
+msgstr "内存不足"
 
 #: dlls/vbscript/vbscript.rc:33
 msgid "This array is fixed or temporarily locked"
-msgstr ""
+msgstr "该数组为固定数组或已被临时锁定"
 
 #: dlls/vbscript/vbscript.rc:34
-#, fuzzy
-#| msgid "Data type mismatch.\n"
 msgid "Type mismatch"
-msgstr "数据类型不匹配。\n"
+msgstr "类型不匹配"
 
 #: dlls/vbscript/vbscript.rc:36
-#, fuzzy
-#| msgid "I/O device error.\n"
 msgid "Device I/O error"
-msgstr "I/O 设备错误。\n"
+msgstr "设备 I/O 错误"
 
 #: dlls/vbscript/vbscript.rc:37
-#, fuzzy
-#| msgid "File already exists.\n"
 msgid "File already exists"
-msgstr "文件已存在。\n"
+msgstr "文件已存在"
 
 #: dlls/vbscript/vbscript.rc:38
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "Disk full"
-msgstr "磁盘满。\n"
+msgstr "磁盘已满"
 
 #: dlls/vbscript/vbscript.rc:39
-#, fuzzy
-#| msgid "Too many open files.\n"
 msgid "Too many files"
-msgstr "太多打开的文件。\n"
+msgstr "太多文件"
 
 #: dlls/vbscript/vbscript.rc:40
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permission denied"
-msgstr "访问被拒绝。\n"
+msgstr "没有权限"
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
-msgstr ""
+msgstr "路径/文件访问出错"
 
 #: dlls/vbscript/vbscript.rc:42
-#, fuzzy
-#| msgid "Path not found.\n"
 msgid "Path not found"
-msgstr "找不到路径。\n"
+msgstr "找不到路径"
 
 #: dlls/vbscript/vbscript.rc:43
-#, fuzzy
-#| msgid "(value not set)"
 msgid "Object variable not set"
-msgstr "(没有设值)"
+msgstr "未设置对象变量"
 
 #: dlls/vbscript/vbscript.rc:44
-#, fuzzy
-#| msgid "Invalid user buffer.\n"
 msgid "Invalid use of Null"
-msgstr "用户缓冲区无效。\n"
+msgstr "Null 使用无效"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
-msgstr ""
+msgstr "无法创建必要的临时文件"
 
 #: dlls/vbscript/vbscript.rc:46
-#, fuzzy
-#| msgid "Automation server can't create object"
 msgid "ActiveX component can't create object"
-msgstr "自动化服务器无法创建对象"
+msgstr "ActiveX 组件无法创建对象"
 
 #: dlls/vbscript/vbscript.rc:47
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Class doesn't support Automation"
-msgstr "对象不支持此动作"
+msgstr "类不支持自动化"
 
 #: dlls/vbscript/vbscript.rc:48
 msgid "File name or class name not found during Automation operation"
-msgstr ""
+msgstr "自动化操作期间无法找到文件名或类名"
 
 #: dlls/vbscript/vbscript.rc:51
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support named arguments"
-msgstr "对象不支持此动作"
+msgstr "对象不支持命名参数"
 
 #: dlls/vbscript/vbscript.rc:52
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
-msgstr "对象不支持此动作"
+msgstr "对象不支持当前 locale 设置"
 
 #: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
-#, fuzzy
-#| msgid "Element not found.\n"
 msgid "Named argument not found"
-msgstr "找不到元素。\n"
+msgstr "未找到命名参数"
 
 #: dlls/vbscript/vbscript.rc:55
 msgid "Wrong number of arguments or invalid property assignment"
-msgstr ""
+msgstr "参数数量错误或无效的指定属性"
 
 #: dlls/vbscript/vbscript.rc:56
-#, fuzzy
-#| msgid "Object Class Violation"
 msgid "Object not a collection"
-msgstr "对象类冲突"
+msgstr "对象不是集合"
 
 #: dlls/vbscript/vbscript.rc:57
-#, fuzzy
-#| msgid "Specified control was not found in message"
 msgid "Specified DLL function not found"
-msgstr "消息中找不到指定的控制"
+msgstr "未找到指定的 DLL 函数"
 
 #: dlls/vbscript/vbscript.rc:58
 msgid "Variable uses an Automation type not supported in VBScript"
-msgstr ""
+msgstr "变量使用了 VBScript 中不支持的自动化类型"
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "The remote server machine does not exist or is unavailable"
-msgstr ""
+msgstr "远程服务器不存在或不可用"
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr ""
+msgstr "无效或不合格引用"
 
 #: dlls/vbscript/vbscript.rc:62
-#, fuzzy
-#| msgid "Microsoft JScript compilation error"
 msgid "Microsoft VBScript compilation error"
-msgstr "Microsoft JScript 编译错误"
+msgstr "Microsoft VBScript 编译错误"
 
 #: dlls/vbscript/vbscript.rc:63
-#, fuzzy
-#| msgid "Microsoft JScript runtime error"
 msgid "Microsoft VBScript runtime error"
-msgstr "Microsoft JScript 运行时错误"
+msgstr "Microsoft VBScript 运行时错误"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"
@@ -11023,33 +10939,27 @@ msgstr "证书至少带有一个不明安全问题。"
 
 #: dlls/wininet/wininet.rc:35
 msgid "Effective Date"
-msgstr ""
+msgstr "生效日期"
 
 #: dlls/wininet/wininet.rc:37
-#, fuzzy
-#| msgid "Security"
 msgid "Security Protocol"
-msgstr "安全"
+msgstr "安全协议"
 
 #: dlls/wininet/wininet.rc:38
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature Type"
-msgstr "签名"
+msgstr "签名类型"
 
 #: dlls/wininet/wininet.rc:39
-#, fuzzy
-#| msgid "Encrypting File System"
 msgid "Encryption Type"
-msgstr "正在加密文件系統"
+msgstr "加密类型"
 
 #: dlls/wininet/wininet.rc:40
 msgid "Privacy Strength"
-msgstr ""
+msgstr "隐私级别"
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
-msgstr ""
+msgstr "bits"
 
 #: dlls/wininet/winineterror.mc:26
 msgid "The request has timed out.\n"
@@ -12937,6 +12847,9 @@ msgid ""
 "\n"
 "hardlink      hardlink management\n"
 msgstr ""
+"- 支持命令 -\n"
+"\n"
+"hardlink      硬链接管理\n"
 
 #: programs/fsutil/fsutil.mc:35
 msgid ""
@@ -12944,10 +12857,13 @@ msgid ""
 "\n"
 "create        create a hardlink\n"
 msgstr ""
+"- Hardlink - 支持命令 -\n"
+"\n"
+"create        创建硬链接\n"
 
 #: programs/fsutil/fsutil.mc:40
 msgid "Syntax: fsutil hardlink create <new> <existing>\n"
-msgstr ""
+msgstr "语法：fsutil hardlink create <new> <existing>\n"
 
 #: programs/hostname/hostname.rc:30
 msgid "Usage: hostname\n"
@@ -16713,10 +16629,8 @@ msgid "&Beginner"
 msgstr "初学者(&B)"
 
 #: programs/winemine/winemine.rc:45
-#, fuzzy
-#| msgid "Interface"
 msgid "&Intermediate"
-msgstr "接口"
+msgstr "&中等"
 
 #: programs/winemine/winemine.rc:46
 msgid "&Expert"
@@ -16747,10 +16661,8 @@ msgid "Beginner"
 msgstr "初学者"
 
 #: programs/winemine/winemine.rc:65
-#, fuzzy
-#| msgid "Interface"
 msgid "Intermediate"
-msgstr "接口"
+msgstr "中等"
 
 #: programs/winemine/winemine.rc:66
 msgid "Expert"
