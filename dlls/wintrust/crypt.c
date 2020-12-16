@@ -908,6 +908,7 @@ HANDLE WINAPI CryptCATOpen(WCHAR *filename, DWORD flags, HCRYPTPROV hProv,
     BYTE *buffer = NULL;
     DWORD size, open_mode = OPEN_ALWAYS;
     struct cryptcat *cc;
+    BOOL valid;
 
     TRACE("filename %s, flags %#x, provider %#lx, version %#x, type %#x\n",
           debugstr_w(filename), flags, hProv, dwPublicVersion, dwEncodingType);
@@ -941,13 +942,15 @@ HANDLE WINAPI CryptCATOpen(WCHAR *filename, DWORD flags, HCRYPTPROV hProv,
         HeapFree(GetProcessHeap(), 0, buffer);
         return INVALID_HANDLE_VALUE;
     }
-    if (!ReadFile(file, buffer, size, &size, NULL) || !CryptMsgUpdate(hmsg, buffer, size, TRUE))
+    if (!size) valid = FALSE;
+    else if (!ReadFile(file, buffer, size, &size, NULL))
     {
         CloseHandle(file);
         HeapFree(GetProcessHeap(), 0, buffer);
         CryptMsgClose(hmsg);
         return INVALID_HANDLE_VALUE;
     }
+    else valid = CryptMsgUpdate(hmsg, buffer, size, TRUE);
     HeapFree(GetProcessHeap(), 0, buffer);
     CloseHandle(file);
 
@@ -961,7 +964,13 @@ HANDLE WINAPI CryptCATOpen(WCHAR *filename, DWORD flags, HCRYPTPROV hProv,
 
     cc->msg = hmsg;
     cc->encoding = dwEncodingType;
-    if (CryptMsgGetParam(hmsg, CMSG_ATTR_CERT_COUNT_PARAM, 0, &cc->attr_count, &size))
+    if (!valid)
+    {
+        cc->magic = CRYPTCAT_MAGIC;
+        SetLastError(ERROR_SUCCESS);
+        return cc;
+    }
+    else if (CryptMsgGetParam(hmsg, CMSG_ATTR_CERT_COUNT_PARAM, 0, &cc->attr_count, &size))
     {
         DWORD i, sum = 0;
         BYTE *p;
@@ -1012,6 +1021,7 @@ HANDLE WINAPI CryptCATOpen(WCHAR *filename, DWORD flags, HCRYPTPROV hProv,
             return INVALID_HANDLE_VALUE;
         }
         cc->magic = CRYPTCAT_MAGIC;
+        SetLastError(ERROR_SUCCESS);
         return cc;
     }
     HeapFree(GetProcessHeap(), 0, cc);

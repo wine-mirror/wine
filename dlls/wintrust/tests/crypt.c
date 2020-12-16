@@ -429,10 +429,10 @@ static void test_CryptCATOpen(void)
         }
         else
         {
-            todo_wine ok(cat != INVALID_HANDLE_VALUE, "flags %#x: expected success\n", flags);
-            todo_wine ok(!GetLastError(), "flags %#x: got error %u\n", flags, GetLastError());
+            ok(cat != INVALID_HANDLE_VALUE, "flags %#x: expected success\n", flags);
+            ok(!GetLastError(), "flags %#x: got error %u\n", flags, GetLastError());
             ret = pCryptCATClose(cat);
-            todo_wine ok(ret, "flags %#x: failed to close file\n", flags);
+            ok(ret, "flags %#x: failed to close file\n", flags);
             ret = DeleteFileW(filename);
             ok(ret, "flags %#x: failed to delete file, error %u\n", flags, GetLastError());
         }
@@ -443,10 +443,10 @@ static void test_CryptCATOpen(void)
 
         SetLastError(0xdeadbeef);
         cat = pCryptCATOpen(filename, flags, 0, 0, 0);
-        todo_wine ok(cat != INVALID_HANDLE_VALUE, "flags %#x: expected success\n", flags);
-        todo_wine ok(!GetLastError(), "flags %#x: got error %u\n", flags, GetLastError());
+        ok(cat != INVALID_HANDLE_VALUE, "flags %#x: expected success\n", flags);
+        ok(!GetLastError(), "flags %#x: got error %u\n", flags, GetLastError());
         ret = pCryptCATClose(cat);
-        todo_wine ok(ret, "flags %#x: failed to close file\n", flags);
+        ok(ret, "flags %#x: failed to close file\n", flags);
 
         file = _wfopen(filename, L"r");
         ret = fread(buffer, 1, sizeof(buffer), file);
