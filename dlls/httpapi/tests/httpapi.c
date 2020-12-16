@@ -233,9 +233,11 @@ static void test_v1_server(void)
     ok(ret, "Got error %u.\n", GetLastError());
     ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
 
-    /* 64-bit Windows 10 version 1507 apparently suffers from a bug where it
-     * will report success before completely filling the buffer. Wait for a
-     * short interval to work around this. */
+    /* Various versions of Windows (observed on 64-bit Windows 8 and Windows 10
+     * version 1507, but probably affecting others) suffer from a bug where the
+     * kernel will report success before completely filling the buffer or
+     * reporting the correct buffer size. Wait for a short interval to work
+     * around this. */
     Sleep(100);
 
     ok(!req->Flags, "Got flags %#x.\n", req->Flags);
@@ -1296,10 +1298,14 @@ static void test_v2_server(void)
     ret = send(s, req_text, strlen(req_text), 0);
     ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
+    ret = WaitForSingleObject(ovl.hEvent, 100);
+    ok(!ret, "Got %u.\n", ret);
+
+    Sleep(100);
+
     ret = GetOverlappedResult(queue, &ovl, &ret_size, TRUE);
     ok(ret, "Got error %u.\n", GetLastError());
     ok(ret_size > sizeof(*req), "Got size %u.\n", ret_size);
-    Sleep(100);
 
     ok(!req->Flags, "Got flags %#x.\n", req->Flags);
     ok(req->ConnectionId, "Expected nonzero connection ID.\n");
