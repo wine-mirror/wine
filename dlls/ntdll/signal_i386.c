@@ -218,6 +218,18 @@ __ASM_STDCALL_FUNC( KiUserExceptionDispatcher, 8,
                     "call " __ASM_STDCALL("dispatch_exception", 8) "\n\t"
                     "int3" )
 
+
+/*******************************************************************
+ *		KiUserApcDispatcher (NTDLL.@)
+ */
+void WINAPI KiUserApcDispatcher( CONTEXT *context, ULONG_PTR ctx, ULONG_PTR arg1, ULONG_PTR arg2,
+                                 PNTAPCFUNC func )
+{
+    func( ctx, arg1, arg2 );
+    NtContinue( context, TRUE );
+}
+
+
 /***********************************************************************
  *           save_fpu
  *

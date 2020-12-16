@@ -2073,9 +2073,28 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "movq %r14,%r9\n"                /* arg2 */
                    "movq $0,0x328(%rbx)\n\t"        /* amd64_thread_data()->syscall_frame */
                    "movq %rsi,0x20(%rsp)\n\t"       /* func */
-                   "movq 0xa0(%rcx),%rbp\n\t"       /* context.Rbp */
+                   "movq %rdi,%r10\n\t"
+                   /* Set nonvolatile regs from context. */
+                   "movq 0xa0(%rcx),%rbp\n\t"
+                   "movq 0x90(%rcx),%rbx\n\t"
+                   "movq 0xa8(%rcx),%rsi\n\t"
+                   "movq 0xb0(%rcx),%rdi\n\t"
+                   "movq 0xd8(%rcx),%r12\n\t"
+                   "movq 0xe0(%rcx),%r13\n\t"
+                   "movq 0xe8(%rcx),%r14\n\t"
+                   "movq 0xf0(%rcx),%r15\n\t"
+                   "movdqa 0x200(%rcx),%xmm6\n\t"
+                   "movdqa 0x210(%rcx),%xmm7\n\t"
+                   "movdqa 0x220(%rcx),%xmm8\n\t"
+                   "movdqa 0x230(%rcx),%xmm9\n\t"
+                   "movdqa 0x240(%rcx),%xmm10\n\t"
+                   "movdqa 0x250(%rcx),%xmm11\n\t"
+                   "movdqa 0x260(%rcx),%xmm12\n\t"
+                   "movdqa 0x270(%rcx),%xmm13\n\t"
+                   "movdqa 0x280(%rcx),%xmm14\n\t"
+                   "movdqa 0x290(%rcx),%xmm15\n\t"
                    "pushq 0xf8(%rcx)\n\t"           /* context.Rip */
-                   "jmp *%rdi" )
+                   "jmp *%r10" )
 
 
 /***********************************************************************

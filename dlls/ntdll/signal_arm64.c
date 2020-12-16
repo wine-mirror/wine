@@ -523,6 +523,18 @@ NTSTATUS WINAPI KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *conte
     return NtRaiseException( rec, context, FALSE );
 }
 
+
+/*******************************************************************
+ *		KiUserApcDispatcher (NTDLL.@)
+ */
+void WINAPI KiUserApcDispatcher( CONTEXT *context, ULONG_PTR ctx, ULONG_PTR arg1, ULONG_PTR arg2,
+                                 PNTAPCFUNC func )
+{
+    func( ctx, arg1, arg2 );
+    NtContinue( context, TRUE );
+}
+
+
 /***********************************************************************
  * Definitions for Win32 unwind tables
  */

@@ -590,6 +590,36 @@ __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
                    "call " __ASM_NAME("dispatch_exception") "\n\t"
                   "int3")
 
+
+/*******************************************************************
+ *		KiUserApcDispatcher (NTDLL.@)
+ */
+void WINAPI dispatch_apc( CONTEXT *context, ULONG_PTR ctx, ULONG_PTR arg1, ULONG_PTR arg2,
+                          PNTAPCFUNC func )
+{
+    func( ctx, arg1, arg2 );
+    NtContinue( context, TRUE );
+}
+
+__ASM_GLOBAL_FUNC( KiUserApcDispatcher,
+                  "addq $0x8,%rsp\n\t"
+                  "mov 0x98(%rcx),%r10\n\t" /* context->Rsp */
+                  "mov 0xf8(%rcx),%r11\n\t" /* context->Rip */
+                  "mov %r11,-0x8(%r10)\n\t"
+                  "mov %rbp,-0x10(%r10)\n\t"
+                  "lea -0x10(%r10),%rbp\n\t"
+                  __ASM_SEH(".seh_pushreg %rbp\n\t")
+                  __ASM_SEH(".seh_setframe %rbp,0\n\t")
+                  __ASM_SEH(".seh_endprologue\n\t")
+                  __ASM_CFI(".cfi_signal_frame\n\t")
+                  __ASM_CFI(".cfi_adjust_cfa_offset 0x10\n\t")
+                  __ASM_CFI(".cfi_def_cfa %rbp,0x10\n\t")
+                  __ASM_CFI(".cfi_rel_offset %rip,0x8\n\t")
+                  __ASM_CFI(".cfi_rel_offset %rbp,0\n\t")
+                   "call " __ASM_NAME("dispatch_apc") "\n\t"
+                   "int3")
+
+
 static ULONG64 get_int_reg( CONTEXT *context, int reg )
 {
     return *(&context->Rax + reg);

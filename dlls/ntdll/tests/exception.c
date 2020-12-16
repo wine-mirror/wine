@@ -37,6 +37,8 @@ static void *code_mem;
 
 static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pNtSetContextThread)(HANDLE,CONTEXT*);
+static NTSTATUS  (WINAPI *pNtQueueApcThread)(HANDLE handle, PNTAPCFUNC func,
+        ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3);
 static NTSTATUS  (WINAPI *pRtlRaiseException)(EXCEPTION_RECORD *rec);
 static PVOID     (WINAPI *pRtlUnwind)(PVOID, PVOID, PEXCEPTION_RECORD, PVOID);
 static VOID      (WINAPI *pRtlCaptureContext)(CONTEXT*);
@@ -4061,6 +4063,55 @@ static void test_nested_exception(void)
     ok(got_prev_frame_exception, "Did not get nested exception in the previous frame.\n");
 }
 
+static CONTEXT test_unwind_apc_context;
+static BOOL test_unwind_apc_called;
+
+static void CALLBACK test_unwind_apc(ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3)
+{
+    EXCEPTION_RECORD rec;
+
+    test_unwind_apc_called = TRUE;
+    memset(&rec, 0, sizeof(rec));
+    pRtlUnwind((void *)test_unwind_apc_context.Rsp, (void *)test_unwind_apc_context.Rip, &rec, (void *)0xdeadbeef);
+    ok(0, "Should not get here.\n");
+}
+
+static void test_unwind_from_apc(void)
+{
+    NTSTATUS status;
+    int pass;
+
+    if (!pNtQueueApcThread)
+    {
+        win_skip("NtQueueApcThread is not available.\n");
+        return;
+    }
+
+    pass = 0;
+    InterlockedIncrement(&pass);
+    RtlCaptureContext(&test_unwind_apc_context);
+    InterlockedIncrement(&pass);
+
+    if (pass == 2)
+    {
+        test_unwind_apc_called = FALSE;
+        status = pNtQueueApcThread(GetCurrentThread(), test_unwind_apc, 0, 0, 0);
+        ok(!status, "Got unexpected status %#x.\n", status);
+        SleepEx(0, TRUE);
+        ok(0, "Should not get here.\n");
+    }
+    if (pass == 3)
+    {
+        ok(test_unwind_apc_called, "Test user APC was not called.\n");
+        test_unwind_apc_called = FALSE;
+        status = pNtQueueApcThread(GetCurrentThread(), test_unwind_apc, 0, 0, 0);
+        ok(!status, "Got unexpected status %#x.\n", status);
+        NtContinue(&test_unwind_apc_context, TRUE );
+        ok(0, "Should not get here.\n");
+    }
+    ok(pass == 4, "Got unexpected pass %d.\n", pass);
+    ok(test_unwind_apc_called, "Test user APC was not called.\n");
+}
 #elif defined(__arm__)
 
 static void test_thread_context(void)
@@ -8073,6 +8124,7 @@ START_TEST(exception)
 #define X(f) p##f = (void*)GetProcAddress(hntdll, #f)
     X(NtGetContextThread);
     X(NtSetContextThread);
+    X(NtQueueApcThread);
     X(NtReadVirtualMemory);
     X(NtClose);
     X(RtlUnwind);
@@ -8241,6 +8293,7 @@ START_TEST(exception)
       skip( "Dynamic unwind functions not found\n" );
     test_extended_context();
     test_copy_context();
+    test_unwind_from_apc();
 
 #elif defined(__aarch64__)
 
