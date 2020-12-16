@@ -688,7 +688,7 @@ static VkBufferView wined3d_view_vk_create_buffer_view(struct wined3d_context_vk
 
 static VkImageView wined3d_view_vk_create_texture_view(struct wined3d_context_vk *context_vk,
         const struct wined3d_view_desc *desc, struct wined3d_texture_vk *texture_vk,
-        const struct wined3d_format_vk *view_format_vk, struct color_fixup_desc fixup, bool srv)
+        const struct wined3d_format_vk *view_format_vk, struct color_fixup_desc fixup, bool rtv)
 {
     const struct wined3d_resource *resource = &texture_vk->t.resource;
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
@@ -730,7 +730,7 @@ static VkImageView wined3d_view_vk_create_texture_view(struct wined3d_context_vk
     create_info.flags = 0;
     create_info.image = texture_vk->vk_image;
     create_info.viewType = vk_image_view_type_from_wined3d(resource->type, desc->flags);
-    if (!srv && create_info.viewType == VK_IMAGE_VIEW_TYPE_3D)
+    if (rtv && create_info.viewType == VK_IMAGE_VIEW_TYPE_3D)
     {
         if (desc->u.texture.layer_count > 1)
             create_info.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
@@ -823,7 +823,7 @@ static void wined3d_render_target_view_vk_cs_init(void *object)
 
     context = context_acquire(resource->device, NULL, 0);
     view_vk->vk_image_view = wined3d_view_vk_create_texture_view(wined3d_context_vk(context),
-            desc, texture_vk, format_vk, COLOR_FIXUP_IDENTITY, false);
+            desc, texture_vk, format_vk, COLOR_FIXUP_IDENTITY, true);
     context_release(context);
 
     if (!view_vk->vk_image_view)
@@ -1098,7 +1098,7 @@ static void wined3d_shader_resource_view_vk_cs_init(void *object)
 
     context = context_acquire(resource->device, NULL, 0);
     vk_image_view = wined3d_view_vk_create_texture_view(wined3d_context_vk(context),
-            desc, texture_vk, wined3d_format_vk(format), format->color_fixup, true);
+            desc, texture_vk, wined3d_format_vk(format), format->color_fixup, false);
     context_release(context);
 
     if (!vk_image_view)
