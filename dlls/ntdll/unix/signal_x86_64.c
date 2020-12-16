@@ -250,6 +250,22 @@ C_ASSERT((offsetof(struct stack_layout, xstate) == sizeof(struct stack_layout)))
 C_ASSERT( sizeof(XSTATE) == 0x140 );
 C_ASSERT( sizeof(struct stack_layout) == 0x590 ); /* Should match the size in call_user_exception_dispatcher(). */
 
+/* stack layout when calling an user apc function.
+ * FIXME: match Windows ABI. */
+struct apc_stack_layout
+{
+    ULONG64  save_regs[4];
+    void            *func;
+    ULONG64         align;
+    CONTEXT       context;
+    ULONG64           rbp;
+    ULONG64           rip;
+};
+
+/* Should match size and offset in call_user_apc_dispatcher(). */
+C_ASSERT( offsetof(struct apc_stack_layout, context) == 0x30 );
+C_ASSERT( sizeof(struct apc_stack_layout) == 0x510 );
+
 struct syscall_frame
 {
     ULONG64               xmm[10 * 2];  /* xmm6-xmm15 */
@@ -265,6 +281,9 @@ struct syscall_frame
     ULONG64               thunk_addr;
     ULONG64               ret_addr;
 };
+
+/* Should match the offset in call_user_apc_dispatcher(). */
+C_ASSERT( offsetof( struct syscall_frame, ret_addr ) == 0xf0);
 
 struct amd64_thread_data
 {
@@ -2013,31 +2032,46 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 /***********************************************************************
  *           call_user_apc_dispatcher
  */
+struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *context, struct apc_stack_layout *stack )
+{
+    CONTEXT c;
+
+    if (!context)
+    {
+        c.ContextFlags = CONTEXT_FULL;
+        NtGetContextThread( GetCurrentThread(), &c );
+        context = &c;
+    }
+    memmove( &stack->context, context, sizeof(stack->context) );
+    return stack;
+}
+
 __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "movq 0x28(%rsp),%rsi\n\t"       /* func */
                    "movq 0x30(%rsp),%rdi\n\t"       /* dispatcher */
                    "movq %gs:0x30,%rbx\n\t"
-                   "jrcxz 1f\n\t"
-                   "movq 0x98(%rcx),%rax\n\t"       /* context_ptr->Rsp */
-                   "leaq -0x5c0(%rax),%rsp\n\t"     /* sizeof(CONTEXT) + offsetof(frame,ret_addr) */
-                   "andq $~15,%rsp\n\t"
-                   "jmp 2f\n"
-                   "1:\tmovq 0x328(%rbx),%rax\n\t"  /* amd64_thread_data()->syscall_frame */
-                   "leaq -0x4d0(%rax),%rsp\n\t"
-                   "andq $~15,%rsp\n\t"
                    "movq %rdx,%r12\n\t"             /* ctx */
                    "movq %r8,%r13\n\t"              /* arg1 */
                    "movq %r9,%r14\n\t"              /* arg2 */
-                   "movq %rsp,%rdx\n\t"             /* context */
-                   "movl $0x10000b,0x30(%rdx)\n\t"  /* context.ContextFlags */
-                   "movq $~1,%rcx\n\t"
-                   "call " __ASM_NAME("NtGetContextThread") "\n\t"
-                   "movq %rsp,%rcx\n\t"             /* context */
+                   "jrcxz 1f\n\t"
+                   "movq 0x98(%rcx),%rdx\n\t"        /* context->Rsp */
+                   "jmp 2f\n\t"
+                   "1:\tmovq 0x328(%rbx),%rax\n\t"   /* amd64_thread_data()->syscall_frame */
+                   "leaq 0xf0(%rax),%rdx\n\t"        /* &amd64_thread_data()->syscall_frame->ret_addr */
+                   "2:\tsubq $0x510,%rdx\n\t"        /* sizeof(struct apc_stack_layout) */
+                   "andq $~0xf,%rdx\n\t"
+                   "addq $8,%rsp\n\t"                /* pop return address */
+                   "cmpq %rsp,%rdx\n\t"
+                   "cmovbq %rdx,%rsp\n\t"
+                   "subq $0x20,%rsp\n\t"
+                   "call " __ASM_NAME("setup_user_apc_dispatcher_stack") "\n\t"
+                   "movq %rax,%rsp\n\t"
+                   "leaq 0x30(%rsp),%rcx\n\t"       /* context */
                    "movq $0xc0,0x78(%rcx)\n\t"      /* context.Rax = STATUS_USER_APC */
                    "movq %r12,%rdx\n\t"             /* ctx */
                    "movq %r13,%r8\n\t"              /* arg1 */
                    "movq %r14,%r9\n"                /* arg2 */
-                   "2:\tmovq $0,0x328(%rbx)\n\t"
+                   "movq $0,0x328(%rbx)\n\t"        /* amd64_thread_data()->syscall_frame */
                    "movq %rsi,0x20(%rsp)\n\t"       /* func */
                    "movq 0xa0(%rcx),%rbp\n\t"       /* context.Rbp */
                    "pushq 0xf8(%rcx)\n\t"           /* context.Rip */
