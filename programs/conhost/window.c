@@ -385,7 +385,7 @@ static void fill_mem_dc( struct console *console, const RECT *update )
     INT *dx;
     RECT r;
 
-    if (!console->window->font)
+    if (!console->window->font || !console->window->bitmap)
         return;
 
     if (!(line = malloc( (update->right - update->left + 1) * sizeof(WCHAR))) ) return;
@@ -479,7 +479,7 @@ static void update_window( struct console *console )
 
     if (console->window->sb_width != console->active->width ||
         console->window->sb_height != console->active->height ||
-        !console->window->bitmap)
+        (!console->window->bitmap && IsWindowVisible( console->win )))
     {
         console->window->sb_width  = console->active->width;
         console->window->sb_height = console->active->height;
@@ -2188,6 +2188,16 @@ static LRESULT WINAPI window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
             EndPaint( console->win, &ps );
             break;
         }
+
+    case WM_SHOWWINDOW:
+        if (wparam)
+            update_window( console );
+        else
+        {
+            if (console->window->bitmap) DeleteObject( console->window->bitmap );
+            console->window->bitmap = NULL;
+        }
+        break;
 
     case WM_KEYDOWN:
     case WM_KEYUP:
