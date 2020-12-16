@@ -4265,6 +4265,7 @@ static void test_create_device_from_clipper3(void)
     IUnknown *unknown = NULL;
     IDirect3DRMDevice3 *device3 = (IDirect3DRMDevice3 *)0xdeadbeef;
     IDirect3DDevice2 *d3ddevice2 = NULL;
+    IDirect3DDevice3 *d3ddevice3 = NULL;
     IDirectDrawClipper *clipper = NULL, *d3drm_clipper = NULL;
     IDirectDrawSurface *surface = NULL, *ds = NULL, *d3drm_primary = NULL;
     IDirectDrawSurface7 *surface7 = NULL;
@@ -4319,6 +4320,10 @@ static void test_create_device_from_clipper3(void)
     /* Fetch immediate mode device in order to access render target */
     hr = IDirect3DRMDevice3_GetDirect3DDevice2(device3, &d3ddevice2);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
+
+    hr = IDirect3DDevice2_QueryInterface(d3ddevice2, &IID_IDirect3DDevice3, (void**)&d3ddevice3);
+    ok(hr == S_OK, "got %x.\n", hr);
+    IDirect3DDevice3_Release(d3ddevice3);
 
     hr = IDirect3DDevice2_GetRenderTarget(d3ddevice2, &surface);
     ok(hr == DD_OK, "Cannot get surface to the render target (hr = %x).\n", hr);
