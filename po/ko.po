@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-11-01 16:21+0900\n"
+"PO-Revision-Date: 2020-12-16 13:14+0900\n"
 "Last-Translator: Byeongsik Jeon <bsjeon@hanmail.net>\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
@@ -702,7 +702,7 @@ msgstr "사용자 정의 색상(&C):"
 
 #: dlls/comdlg32/comdlg32.rc:289
 msgid "|S&olid"
-msgstr ""
+msgstr "|단색(&O)"
 
 #: dlls/comdlg32/comdlg32.rc:290
 msgid "&Red:"
@@ -739,11 +739,9 @@ msgid "&Define Custom Colors >>"
 msgstr "사용자 정의 색상 결정(&D) >>"
 
 #: dlls/comdlg32/comdlg32.rc:312
-#, fuzzy
-#| msgid "&No"
 msgctxt "Solid"
 msgid "&o"
-msgstr "아니요(&N)"
+msgstr "&O"
 
 #: dlls/comdlg32/comdlg32.rc:318 programs/regedit/regedit.rc:275
 #: programs/regedit/regedit.rc:285
@@ -978,7 +976,7 @@ msgstr "파일이 없습니다"
 
 #: dlls/comdlg32/comdlg32.rc:41
 msgid "The selection contains a non-folder object"
-msgstr "선택 영역에 폴더가 아닌 객체가 들어 있습니다"
+msgstr "선택 영역에 폴더가 아닌 개체가 들어 있습니다"
 
 #: dlls/comdlg32/comdlg32.rc:46
 msgid "Up One Level"
@@ -2292,7 +2290,7 @@ msgstr "용도 추가"
 #: dlls/cryptui/cryptui.rc:265
 msgid ""
 "Add the object identifier (OID) for the certificate purpose you wish to add:"
-msgstr "추가하고자 하는 인증서 용도의 객체 식별자(OID) 추가:"
+msgstr "추가하고자 하는 인증서 용도의 개체 식별자(OID) 추가:"
 
 #: dlls/cryptui/cryptui.rc:273 dlls/cryptui/cryptui.rc:69
 msgid "Select Certificate Store"
@@ -2726,7 +2724,7 @@ msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
-"이 파일에 주어진 기준에 맞지 않는 객체가 있습니다. 다른 파일을 선택하십시오."
+"이 파일에 주어진 기준에 맞지 않는 개체가 있습니다. 다른 파일을 선택하십시오."
 
 #: dlls/cryptui/cryptui.rc:73
 msgid "File to Import"
@@ -3126,7 +3124,7 @@ msgstr "행동"
 
 #: dlls/dinput/dinput.rc:29
 msgid "Object"
-msgstr "객체"
+msgstr "개체"
 
 #: dlls/dxdiagn/dxdiagn.rc:28
 msgid "Regional Setting"
@@ -3723,11 +3721,11 @@ msgstr "게임 컨트롤러"
 
 #: dlls/joy.cpl/joy.rc:32
 msgid "Test and configure game controllers."
-msgstr ""
+msgstr "게임 컨트롤러를 테스트하고 구성합니다."
 
 #: dlls/jscript/jscript.rc:28
 msgid "Error converting object to primitive type"
-msgstr "객체를 기본 형식으로 변환하는 중에 오류 발생"
+msgstr "개체를 기본 형식으로 변환하는 중에 오류 발생"
 
 #: dlls/jscript/jscript.rc:29 dlls/vbscript/vbscript.rc:29
 msgid "Invalid procedure call or argument"
@@ -3738,26 +3736,24 @@ msgid "Subscript out of range"
 msgstr "첨자가 범위를 벗어남"
 
 #: dlls/jscript/jscript.rc:31
-#, fuzzy
-#| msgid "Out of paper; "
 msgid "Out of stack space"
-msgstr "종이 초과; "
+msgstr "스택 공간이 부족함"
 
 #: dlls/jscript/jscript.rc:32
 msgid "Object required"
-msgstr "객체가 필요함"
+msgstr "개체가 필요함"
 
 #: dlls/jscript/jscript.rc:33
 msgid "Automation server can't create object"
-msgstr "자동화 서버가 객체를 만들 수 없음"
+msgstr "자동화 서버가 개체를 만들 수 없음"
 
 #: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:49
 msgid "Object doesn't support this property or method"
-msgstr "객체는 이 속성이나 메소드를 지원하지 않음"
+msgstr "개체는 이 속성이나 메소드를 지원하지 않음"
 
 #: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:50
 msgid "Object doesn't support this action"
-msgstr "객체는 이 행동을 지원하지 않음"
+msgstr "개체는 이 행동을 지원하지 않음"
 
 #: dlls/jscript/jscript.rc:36
 msgid "Argument not optional"
@@ -3809,11 +3805,11 @@ msgstr "루프 바깥에는 'continue'를 사용할 수 없음"
 
 #: dlls/jscript/jscript.rc:48
 msgid "Label redefined"
-msgstr "레이블이 중복정의됨"
+msgstr "레이블이 재정의되었습니다"
 
 #: dlls/jscript/jscript.rc:49
 msgid "Label not found"
-msgstr "레이블을 찾을 수 없음"
+msgstr "레이블을 찾을 수 없습니다"
 
 #: dlls/jscript/jscript.rc:50
 msgid "Expected '@end'"
@@ -3821,7 +3817,7 @@ msgstr "'@end'가 필요합니다"
 
 #: dlls/jscript/jscript.rc:51
 msgid "Conditional compilation is turned off"
-msgstr "조건부 컴파일이 해제되어 있음"
+msgstr "조건부 컴파일이 해제되었습니다"
 
 #: dlls/jscript/jscript.rc:52
 msgid "Expected '@'"
@@ -3829,17 +3825,15 @@ msgstr "'@'가 필요합니다"
 
 #: dlls/jscript/jscript.rc:78
 msgid "Microsoft JScript compilation error"
-msgstr ""
+msgstr "Microsoft JScript 컴파일 오류"
 
 #: dlls/jscript/jscript.rc:79
 msgid "Microsoft JScript runtime error"
-msgstr ""
+msgstr "Microsoft JScript 런타임 오류"
 
 #: dlls/jscript/jscript.rc:80 dlls/vbscript/vbscript.rc:64
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown runtime error"
-msgstr "알 수 없는 오류"
+msgstr "알 수 없는 런타임 오류"
 
 #: dlls/jscript/jscript.rc:55
 msgid "Number expected"
@@ -3851,11 +3845,11 @@ msgstr "함수가 필요합니다"
 
 #: dlls/jscript/jscript.rc:54
 msgid "'[object]' is not a date object"
-msgstr "'[object]'가 날짜 객체가 아닙니다"
+msgstr "'[object]'은(는) 날짜 개체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:56
 msgid "Object expected"
-msgstr "객체가 필요합니다"
+msgstr "개체가 필요합니다"
 
 #: dlls/jscript/jscript.rc:57
 msgid "Illegal assignment"
@@ -3863,43 +3857,39 @@ msgstr "잘못된 할당"
 
 #: dlls/jscript/jscript.rc:58
 msgid "'|' is undefined"
-msgstr "'|'가 정의도지 않았습니다"
+msgstr "'|'이(가) 정의되지 않았습니다"
 
 #: dlls/jscript/jscript.rc:59
 msgid "Boolean object expected"
-msgstr "볼린 객제가 필요함"
+msgstr "Boolean 개체가 필요합니다"
 
 #: dlls/jscript/jscript.rc:60
 msgid "Cannot delete '|'"
-msgstr "'|'를 지울 수 없음"
+msgstr "'|'을(를) 삭제할 수 없습니다"
 
 #: dlls/jscript/jscript.rc:61
 msgid "VBArray object expected"
-msgstr "VBArray 갹체가 필요함"
+msgstr "VBArray 개체가 필요합니다"
 
 #: dlls/jscript/jscript.rc:62
 msgid "JScript object expected"
-msgstr "JScript 객체가 필요함"
+msgstr "JScript 개체가 필요합니다"
 
 #: dlls/jscript/jscript.rc:63
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Enumerator object expected"
-msgstr "배열 객체가 필요합니다"
+msgstr "열거형 개체가 필요합니다"
 
 #: dlls/jscript/jscript.rc:64
-#, fuzzy
-#| msgid "Boolean object expected"
 msgid "Regular Expression object expected"
-msgstr "볼린 객제가 필요함"
+msgstr "정규식 개체가 필요합니다"
 
 #: dlls/jscript/jscript.rc:65
 msgid "Syntax error in regular expression"
-msgstr "정규 표현식에 문법오류가 있음"
+msgstr "정규식에 구문 오류가 있습니다"
 
 #: dlls/jscript/jscript.rc:66
 msgid "Exception thrown and not caught"
-msgstr ""
+msgstr "예외가 발생했지만 catch할 수 없습니다"
 
 #: dlls/jscript/jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
@@ -3907,7 +3897,7 @@ msgstr "인코딩할 URI에 올바르지 않은 문자가 들어 있습니다"
 
 #: dlls/jscript/jscript.rc:67
 msgid "URI to be decoded is incorrect"
-msgstr "디코딩할 URI가 올바르지 않습니다"
+msgstr "디코딩할 URI가 잘못되었습니다"
 
 #: dlls/jscript/jscript.rc:69
 msgid "Number of fraction digits is out of range"
@@ -3919,11 +3909,11 @@ msgstr "정밀도가 범위를 벗어났습니다"
 
 #: dlls/jscript/jscript.rc:71
 msgid "Array length must be a finite positive integer"
-msgstr "배열 길이는 유한한 양의 정수이어야 합니다"
+msgstr "배열의 길이는 유한한 양의 정수이어야 합니다"
 
 #: dlls/jscript/jscript.rc:72
 msgid "Array object expected"
-msgstr "배열 객체가 필요합니다"
+msgstr "배열 개체가 필요합니다"
 
 #: dlls/jscript/jscript.rc:73
 msgid ""
@@ -3934,15 +3924,15 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cannot redefine non-configurable property '|'"
-msgstr "구성되지 않은 요소 '|'를 재처리할 수 없습니다"
+msgstr "구성 가능하지 않은 속성 '|'을(를) 재정의할 수 없습니다"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Cannot modify non-writable property '|'"
-msgstr "쓰기 가능하지 않은 요소 '|'를 편집할 수 없습니다"
+msgstr "쓰기 가능하지 않은 속성 '|'을(를) 수정할 수 없습니다"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Property cannot have both accessors and a value"
-msgstr "속성은 접근자와 값을 모두 가질 수 없습니다"
+msgstr "속성에 접근자와 값을 둘 다 지정할 수는 없습니다"
 
 #: include/wine/wine_common_ver.rc:129
 msgid "Wine kernel DLL"
@@ -5975,7 +5965,7 @@ msgstr "목록상자에는 탭정지가 없음.\n"
 
 #: dlls/kernel32/winerror.mc:2573
 msgid "Can't destroy object owned by another thread.\n"
-msgstr "다른 스레드가 소유한 객체를 파괴할 수 없다.\n"
+msgstr "다른 스레드가 소유한 개체를 파괴할 수 없다.\n"
 
 #: dlls/kernel32/winerror.mc:2578
 msgid "Child window menus not allowed.\n"
@@ -6303,7 +6293,7 @@ msgstr "올바르지 않은 시간 초과 값.\n"
 
 #: dlls/kernel32/winerror.mc:2983
 msgid "Object UUID not found.\n"
-msgstr "UUID 객체를 찾을 수 없습니다.\n"
+msgstr "UUID 개체를 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2988
 msgid "UUID already registered.\n"
@@ -6479,7 +6469,7 @@ msgstr "더 이상 회원은 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3208
 msgid "Not all objects unexported.\n"
-msgstr "모든 객체가 내보내지지 못했습니다.\n"
+msgstr "모든 개체가 내보내지지 못했습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3213
 msgid "Interface not found.\n"
@@ -6763,7 +6753,7 @@ msgstr "잘못된 스텁 버전.\n"
 
 #: dlls/kernel32/winerror.mc:3563
 msgid "Invalid pipe object.\n"
-msgstr "올바르지 않은 파이프 객체.\n"
+msgstr "올바르지 않은 파이프 개체.\n"
 
 #: dlls/kernel32/winerror.mc:3568
 msgid "Wrong pipe order.\n"
@@ -6783,7 +6773,7 @@ msgstr "엔드포인트 매퍼 DB를 만들 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3588
 msgid "Invalid object.\n"
-msgstr "올바르지 않은 객체.\n"
+msgstr "올바르지 않은 개체.\n"
 
 #: dlls/kernel32/winerror.mc:3593
 msgid "Invalid time.\n"
@@ -6831,7 +6821,7 @@ msgstr "올바르지 않은 드라이버.\n"
 
 #: dlls/kernel32/winerror.mc:3648
 msgid "Invalid object resolver set.\n"
-msgstr "잘못된 객체 확인자 세트.\n"
+msgstr "잘못된 개체 확인자 세트.\n"
 
 #: dlls/kernel32/winerror.mc:3653
 msgid "Incomplete RPC send.\n"
@@ -6914,49 +6904,41 @@ msgid "Connection reset by peer.\n"
 msgstr "피어가 연결을 초기화 했습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3767
-#, fuzzy
-#| msgid "Not implemented"
 msgid "Not implemented.\n"
-msgstr "구현되지 않음"
+msgstr "구현되지 않았습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "RPC call failed.\n"
 msgid "Call failed.\n"
-msgstr "RPC 호출 실패.\n"
+msgstr "호출이 실패했습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
-msgstr "서명 또는 인증서를 찾을 수 없습니다.\n"
+msgstr "파일에서 서명을 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3774
-#, fuzzy
-#| msgid "Invalid level.\n"
 msgid "Invalid call.\n"
-msgstr "올바르지 않은 레벨.\n"
+msgstr "올바르지 않은 호출입니다.\n"
 
 #: dlls/kernel32/winerror.mc:3781
-#, fuzzy
-#| msgid "Value is not available.\n"
 msgid "Resource is not currently available.\n"
-msgstr "값을 사용할 수 없습니다.\n"
+msgstr "지금은 리소스를 사용할 수 없습니다.\n"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
 msgid "Local Port"
-msgstr "지역 포트"
+msgstr "로컬 포트"
 
 #: dlls/localspl/localspl.rc:32
 msgid "Local Monitor"
-msgstr "지역 모니터"
+msgstr "로컬 모니터"
 
 #: dlls/localui/localui.rc:39
 msgid "Add a Local Port"
-msgstr "지역 포트 더하기"
+msgstr "로컬 포트 추가"
 
 #: dlls/localui/localui.rc:42
 msgid "&Enter the port name to add:"
-msgstr "더할 포트 이름 입력(&E):"
+msgstr "추가할 포트 이름 입력(&E):"
 
 #: dlls/localui/localui.rc:51
 msgid "Configure LPT Port"
@@ -6964,11 +6946,11 @@ msgstr "LPT 포트 설정"
 
 #: dlls/localui/localui.rc:54
 msgid "Timeout (seconds)"
-msgstr "시간초과(초)"
+msgstr "시간 제한(초)"
 
 #: dlls/localui/localui.rc:55
 msgid "&Transmission Retry:"
-msgstr "재 전송 횟수(&T):"
+msgstr "전송 재시도(&T):"
 
 #: dlls/localui/localui.rc:32
 msgid "'%s' is not a valid port name"
@@ -6999,10 +6981,8 @@ msgid "Sink has not been finalized.\n"
 msgstr "싱크가 완료되지 않았습니다.\n"
 
 #: dlls/mferror/mferror.mc:732
-#, fuzzy
-#| msgid "Sink was already stopped.\n"
 msgid "Clock was stopped\n"
-msgstr "싱크가 이미 중지되었습니다.\n"
+msgstr "시계가 중지되었습니다.\n"
 
 #: dlls/mferror/mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7030,7 +7010,7 @@ msgstr "더 이상 입력이 허용되지 않습니다.\n"
 
 #: dlls/mferror/mferror.mc:74
 msgid "Object is not initialized.\n"
-msgstr "객체가 초기화되지 않았습니다.\n"
+msgstr "개체가 초기화되지 않았습니다.\n"
 
 #: dlls/mferror/mferror.mc:81
 msgid "Representation is not supported.\n"
@@ -7110,7 +7090,7 @@ msgstr "비율(rate) 변경이 선점되었습니다.\n"
 
 #: dlls/mferror/mferror.mc:228
 msgid "Object or value wasn't found.\n"
-msgstr "객체 또는 값을 찾을 수 없습니다.\n"
+msgstr "개체 또는 값을 찾을 수 없습니다.\n"
 
 #: dlls/mferror/mferror.mc:235
 msgid "Value is not available.\n"
@@ -7381,10 +7361,8 @@ msgid "Clock state was already set.\n"
 msgstr "시계 상태가 이미 설정되었습니다.\n"
 
 #: dlls/mferror/mferror.mc:725
-#, fuzzy
-#| msgid "Clock is not available.\n"
 msgid "Clock is not simple\n"
-msgstr "시계를 사용할 수 없습니다.\n"
+msgstr "시계가 단순하지 않습니다.\n"
 
 #: dlls/mpr/mpr.rc:35 dlls/wininet/wininet.rc:48
 msgid "Enter Network Password"
@@ -8043,7 +8021,7 @@ msgstr "Wine 비디오 1 비디오 코덱"
 
 #: dlls/oleacc/oleacc.rc:31
 msgid "unknown object"
-msgstr "알 수 없는 객체"
+msgstr "알 수 없는 개체"
 
 #: dlls/oleacc/oleacc.rc:32
 msgid "title bar"
@@ -8478,214 +8456,168 @@ msgid "Off"
 msgstr "비작동"
 
 #: dlls/oledb32/version.rc:56
-#, fuzzy
-#| msgid "video"
 msgid "Provider"
-msgstr "비디오"
+msgstr "공급자"
 
 #: dlls/oledb32/version.rc:59
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
-msgstr "사용할 파일 형식 선택:"
+msgstr "연결할 데이터 선택:"
 
 #: dlls/oledb32/version.rc:66
-#, fuzzy
-#| msgid "Connections"
 msgid "Connection"
 msgstr "연결"
 
 #: dlls/oledb32/version.rc:69
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
-msgstr "사용할 파일 형식 선택:"
+msgstr "ODBC 데이터에 연결하려면 다음을 지정합니다:"
 
 #: dlls/oledb32/version.rc:70
 msgid "1. Specify the source of data:"
-msgstr ""
+msgstr "1. 데이터 원본을 지정합니다:"
 
 #: dlls/oledb32/version.rc:71
-#, fuzzy
-#| msgid "Please enter your name"
 msgid "Use &data source name"
-msgstr "이름을 입력해 주세요"
+msgstr "데이터 원본 이름 사용(&D)"
 
 #: dlls/oledb32/version.rc:74
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "Use c&onnection string"
-msgstr "연결 재설정"
+msgstr "연결 문자열 사용(&O)"
 
 #: dlls/oledb32/version.rc:75
-#, fuzzy
-#| msgid "Connections"
 msgid "&Connection string:"
-msgstr "연결"
+msgstr "연결 문자열(&C):"
 
 #: dlls/oledb32/version.rc:77
-#, fuzzy
-#| msgid "A&dd..."
 msgid "B&uild..."
-msgstr "추가(&D)..."
+msgstr "빌드(&U)..."
 
 #: dlls/oledb32/version.rc:78
 msgid "2. Enter information to log on to the server"
-msgstr ""
+msgstr "2. 서버에 로그온할 정보를 입력합니다"
 
 #: dlls/oledb32/version.rc:79
-#, fuzzy
-#| msgid "&User name:"
 msgid "User &name:"
-msgstr "사용자 이름(&U):"
+msgstr "사용자 이름(&N):"
 
 #: dlls/oledb32/version.rc:83
-#, fuzzy
-#| msgid "&Blank page"
 msgid "&Blank password"
-msgstr "빈 페이지(&B)"
+msgstr "빈 암호(&B)"
 
 #: dlls/oledb32/version.rc:84
-#, fuzzy
-#| msgid "Wrong password.\n"
 msgid "Allow &saving password"
-msgstr "잘못된 암호.\n"
+msgstr "암호 저장 허용(&S)"
 
 #: dlls/oledb32/version.rc:85
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. 사용할 초기 카탈로그를 입력합니다(&I):"
 
 #: dlls/oledb32/version.rc:87
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "&Test Connection"
-msgstr "연결 재설정"
+msgstr "테스트 연결(&T)"
 
 #: dlls/oledb32/version.rc:92
 msgid "Advanced"
-msgstr "중급자"
+msgstr "고급"
 
 #: dlls/oledb32/version.rc:95
-#, fuzzy
-#| msgid "Network share"
 msgid "Network settings"
-msgstr "네트워크 공유"
+msgstr "네트워크 설정"
 
 #: dlls/oledb32/version.rc:96
-#, fuzzy
-#| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
-msgstr "나쁜 가장 수준.\n"
+msgstr "개인화 수준(&I):"
 
 #: dlls/oledb32/version.rc:98
 msgid "P&rotection level:"
-msgstr ""
+msgstr "보호 수준(&R):"
 
 #: dlls/oledb32/version.rc:101
-#, fuzzy
-#| msgid "Connected"
 msgid "Connect:"
-msgstr "연결됨"
+msgstr "연결:"
 
 #: dlls/oledb32/version.rc:103
-#, fuzzy
-#| msgid "seconds"
 msgid "seconds."
-msgstr "초"
+msgstr "초."
 
 #: dlls/oledb32/version.rc:104
-#, fuzzy
-#| msgid "Success"
 msgid "A&ccess:"
-msgstr "성공"
+msgstr "접근(&C):"
 
 #: dlls/oledb32/version.rc:110
-#, fuzzy
-#| msgid "&All"
 msgid "All"
-msgstr "모두(&A)"
+msgstr "모두"
 
 #: dlls/oledb32/version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"이러한 유형의 데이터에 대한 초기화 속성입니다. 값을 편집하려면 속성을 선택한 "
+"다음 아래의 값 편집을 선택합니다."
 
 #: dlls/oledb32/version.rc:115
-#, fuzzy
-#| msgid "&Edit..."
 msgid "&Edit Value..."
-msgstr "편집(&E)..."
+msgstr "값 편집(&E)..."
 
 #: dlls/oledb32/version.rc:49
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Error"
-msgstr "속성"
+msgstr "데이터 링크 오류"
 
 #: dlls/oledb32/version.rc:50
-#, fuzzy
-#| msgid "Please select a file."
 msgid "Please select a provider."
-msgstr "파일을 선택하십시오."
+msgstr "공급자를 선택하십시오."
 
 #: dlls/oledb32/version.rc:51
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
+"공급자를 더 이상 사용할 수 없습니다. 공급자가 올바르게 설치되었는지 확인하십"
+"시오."
 
 #: dlls/oledb32/version.rc:36
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Properties"
-msgstr "속성"
+msgstr "데이터 링크 속성"
 
 #: dlls/oledb32/version.rc:37
 msgid "OLE DB Provider(s)"
-msgstr ""
+msgstr "OLE DB 제공자"
 
 #: dlls/oledb32/version.rc:41
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "준비"
+msgstr "읽기"
 
 #: dlls/oledb32/version.rc:42
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "주의사항:"
+msgstr "읽기 쓰기"
 
 #: dlls/oledb32/version.rc:43
 msgid "Share Deny None"
-msgstr ""
+msgstr "거부 없음을 공유"
 
 #: dlls/oledb32/version.rc:44
 msgid "Share Deny Read"
-msgstr ""
+msgstr "읽기 거부를 공유"
 
 #: dlls/oledb32/version.rc:45
 msgid "Share Deny Write"
-msgstr ""
+msgstr "쓰기 거부를 공유"
 
 #: dlls/oledb32/version.rc:46
 msgid "Share Exclusive"
-msgstr ""
+msgstr "독점적 공유"
 
 #: dlls/oledb32/version.rc:47
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "I/O 쓰기"
+msgstr "쓰기"
 
 #: dlls/oledlg/oledlg.rc:55
 msgid "Insert Object"
-msgstr "객체 삽입"
+msgstr "개체 삽입"
 
 #: dlls/oledlg/oledlg.rc:61
 msgid "Object Type:"
-msgstr "객체 타입:"
+msgstr "개체 타입:"
 
 #: dlls/oledlg/oledlg.rc:64 dlls/oledlg/oledlg.rc:102
 msgid "Result"
@@ -8753,14 +8685,14 @@ msgstr "아이콘 바꾸기(&I)..."
 
 #: dlls/oledlg/oledlg.rc:28
 msgid "Insert a new %s object into your document"
-msgstr "새 %s 객체를 문서에 삽입"
+msgstr "새 %s 개체를 문서에 삽입"
 
 #: dlls/oledlg/oledlg.rc:29
 msgid ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
 msgstr ""
-"파일 내용을 문서에 객체로 삽입합니다. 파일을 만든 프로그램을 사용하여 활성화"
+"파일 내용을 문서에 개체로 삽입합니다. 파일을 만든 프로그램을 사용하여 활성화"
 "합니다."
 
 #: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:197
@@ -8784,15 +8716,15 @@ msgstr "변환(&C)..."
 
 #: dlls/oledlg/oledlg.rc:36
 msgid "%1 %2 &Object"
-msgstr "%1 %2 객체(&O)"
+msgstr "%1 %2 개체(&O)"
 
 #: dlls/oledlg/oledlg.rc:34
 msgid "%1 &Object"
-msgstr "%1 객체(&O)"
+msgstr "%1 개체(&O)"
 
 #: dlls/oledlg/oledlg.rc:33 programs/oleview/oleview.rc:40
 msgid "&Object"
-msgstr "객체(&O)"
+msgstr "개체(&O)"
 
 #: dlls/oledlg/oledlg.rc:41
 msgid "Inserts the contents of the clipboard into your document as %s."
@@ -8854,7 +8786,7 @@ msgstr "알 수 없는 원본"
 
 #: dlls/oledlg/oledlg.rc:50
 msgid "the program which created it"
-msgstr "객체를 만든 프로그램"
+msgstr "개체를 만든 프로그램"
 
 #: dlls/sane.ds/sane.rc:41
 msgid "Scanning"
@@ -9228,7 +9160,7 @@ msgstr "Wine 인터넷 익스폴로어"
 
 #: dlls/shdoclc/shdoclc.rc:33
 msgid "&w&bPage &p"
-msgstr "&w&b페이지 &p"
+msgstr "&w&b&p쪽"
 
 #: dlls/shell32/shell32.rc:30 dlls/shell32/shell32.rc:45
 #: dlls/shell32/shell32.rc:122 dlls/shell32/shell32.rc:162
@@ -9906,16 +9838,12 @@ msgid "Cape Verde Daylight Time"
 msgstr "카보베르데 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:126
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
 msgid "Haiti Standard Time"
-msgstr "하와이 표준 시간"
+msgstr "아이티 표준 시간"
 
 #: dlls/tzres/tzres.rc:127
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
 msgid "Haiti Daylight Time"
-msgstr "하와이 일광 절약 시간"
+msgstr "아이티 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:80
 msgid "Central European Standard Time"
@@ -9950,16 +9878,12 @@ msgid "Iran Daylight Time"
 msgstr "이란 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:204
-#, fuzzy
-#| msgid "Hawaiian Standard Time"
 msgid "Saint Pierre Standard Time"
-msgstr "하와이 표준 시간"
+msgstr "생피에르 표준 시간"
 
 #: dlls/tzres/tzres.rc:205
-#, fuzzy
-#| msgid "Hawaiian Daylight Time"
 msgid "Saint Pierre Daylight Time"
-msgstr "하와이 일광 절약 시간"
+msgstr "생피에르 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:170
 msgid "Namibia Standard Time"
@@ -10002,16 +9926,12 @@ msgid "Central Asia Daylight Time"
 msgstr "중앙 아시아 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:146
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "Lord Howe Standard Time"
-msgstr "대한민국 표준 시간"
+msgstr "로드하우 표준 시간"
 
 #: dlls/tzres/tzres.rc:147
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "Lord Howe Daylight Time"
-msgstr "대한민국 일광 절약 시간"
+msgstr "로드하우 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:40
 msgid "Arabic Standard Time"
@@ -10062,16 +9982,12 @@ msgid "Azerbaijan Daylight Time"
 msgstr "아제르바이잔 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:150
-#, fuzzy
-#| msgid "Magadan Standard Time"
 msgid "Magallanes Standard Time"
-msgstr "마가단 표준 시간"
+msgstr "마갈란스 표준 시간"
 
 #: dlls/tzres/tzres.rc:151
-#, fuzzy
-#| msgid "Magadan Daylight Time"
 msgid "Magallanes Daylight Time"
-msgstr "마가단 일광 절약 시간"
+msgstr "마갈란스 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:206
 msgid "Samoa Standard Time"
@@ -10122,16 +10038,12 @@ msgid "Line Islands Daylight Time"
 msgstr "라인 제도 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:92
-#, fuzzy
-#| msgid "China Standard Time"
 msgid "Cuba Standard Time"
-msgstr "중국 표준 시간"
+msgstr "쿠바 표준 시간"
 
 #: dlls/tzres/tzres.rc:93
-#, fuzzy
-#| msgid "China Daylight Time"
 msgid "Cuba Daylight Time"
-msgstr "중국 일광 절약 시간"
+msgstr "쿠바 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:136
 msgid "Jordan Standard Time"
@@ -10174,16 +10086,12 @@ msgid "Argentina Daylight Time"
 msgstr "아르헨티나 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:152
-#, fuzzy
-#| msgid "Mauritius Standard Time"
 msgid "Marquesas Standard Time"
-msgstr "모리셔스 표준 시간"
+msgstr "마키저스 표준 시간"
 
 #: dlls/tzres/tzres.rc:153
-#, fuzzy
-#| msgid "Mauritius Daylight Time"
 msgid "Marquesas Daylight Time"
-msgstr "모리셔스 일광 절약 시간"
+msgstr "마키저스 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:166
 msgid "Myanmar Standard Time"
@@ -10334,16 +10242,12 @@ msgid "US Eastern Daylight Time"
 msgstr "미국 동부 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:182
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "North Korea Standard Time"
-msgstr "대한민국 표준 시간"
+msgstr "북한 표준 시간"
 
 #: dlls/tzres/tzres.rc:183
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "North Korea Daylight Time"
-msgstr "대한민국 일광 절약 시간"
+msgstr "북한 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:220
 msgid "Tasmania Standard Time"
@@ -10434,16 +10338,12 @@ msgid "Arabian Daylight Time"
 msgstr "아라비아 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:222
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Tocantins Standard Time"
-msgstr "산지 표준 시간"
+msgstr "토칸칭스 표준 시간"
 
 #: dlls/tzres/tzres.rc:223
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Tocantins Daylight Time"
-msgstr "산지 일광 절약 시간"
+msgstr "토칸칭스 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:196
 msgid "Russian Standard Time"
@@ -10454,14 +10354,10 @@ msgid "Russian Daylight Time"
 msgstr "러시아 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:48
-#, fuzzy
-#| msgid "AUS Central Standard Time"
 msgid "Aus Central W. Standard Time"
 msgstr "오스트레일리아 중부 표준 시간"
 
 #: dlls/tzres/tzres.rc:49
-#, fuzzy
-#| msgid "AUS Central Daylight Time"
 msgid "Aus Central W. Daylight Time"
 msgstr "오스트레일리아 중부 일광 절약 시간"
 
@@ -10594,16 +10490,12 @@ msgid "Venezuela Daylight Time"
 msgstr "베네수엘라 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:62
-#, fuzzy
-#| msgid "Mountain Standard Time"
 msgid "Bougainville Standard Time"
-msgstr "산지 표준 시간"
+msgstr "부건빌 표준 시간"
 
 #: dlls/tzres/tzres.rc:63
-#, fuzzy
-#| msgid "Mountain Daylight Time"
 msgid "Bougainville Daylight Time"
-msgstr "산지 일광 절약 시간"
+msgstr "부건빌 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:128
 msgid "Hawaiian Standard Time"
@@ -10630,16 +10522,12 @@ msgid "New Zealand Daylight Time"
 msgstr "뉴질랜드 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:34
-#, fuzzy
-#| msgid "Argentina Standard Time"
 msgid "Aleutian Standard Time"
-msgstr "아르헨티나 표준 시간"
+msgstr "알류샨 표준 시간"
 
 #: dlls/tzres/tzres.rc:35
-#, fuzzy
-#| msgid "Argentina Daylight Time"
 msgid "Aleutian Daylight Time"
-msgstr "아르헨티나 일광 절약 시간"
+msgstr "알류샨 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:76
 msgid "Central Brazilian Standard Time"
@@ -10690,16 +10578,12 @@ msgid "Egypt Daylight Time"
 msgstr "이집트 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:106
-#, fuzzy
-#| msgid "Central Standard Time (Mexico)"
 msgid "Eastern Standard Time (Mexico)"
-msgstr "중부 표준 시간 (멕시코)"
+msgstr "동부 표준 시간 (멕시코)"
 
 #: dlls/tzres/tzres.rc:107
-#, fuzzy
-#| msgid "Central Daylight Time (Mexico)"
 msgid "Eastern Daylight Time (Mexico)"
-msgstr "중부 일광 절약 시간 (멕시코)"
+msgstr "동부 일광 절약 시간 (멕시코)"
 
 #: dlls/tzres/tzres.rc:154
 msgid "Mauritius Standard Time"
@@ -10734,16 +10618,12 @@ msgid "Korea Daylight Time"
 msgstr "대한민국 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:88
-#, fuzzy
-#| msgid "Easter Island Standard Time"
 msgid "Chatham Islands Standard Time"
-msgstr "이스터 섬 표준 시간"
+msgstr "채텀 섬 표준 시간"
 
 #: dlls/tzres/tzres.rc:89
-#, fuzzy
-#| msgid "Easter Island Daylight Time"
 msgid "Chatham Islands Daylight Time"
-msgstr "이스터 섬 일광 절약 시간"
+msgstr "채텀 섬 일광 절약 시간"
 
 #: dlls/tzres/tzres.rc:96
 msgid "E. Africa Standard Time"
@@ -10908,149 +10788,115 @@ msgstr "더 많은 창(&M)..."
 
 #: dlls/vbscript/vbscript.rc:30
 msgid "Overflow"
-msgstr ""
+msgstr "오버플로"
 
 #: dlls/vbscript/vbscript.rc:31
-#, fuzzy
-#| msgid "Out of memory."
 msgid "Out of memory"
-msgstr "메모리 부족."
+msgstr "메모리 부족"
 
 #: dlls/vbscript/vbscript.rc:33
 msgid "This array is fixed or temporarily locked"
-msgstr ""
+msgstr "이 배열은 고정되었거나 일시적으로 잠금 상태입니다"
 
 #: dlls/vbscript/vbscript.rc:34
-#, fuzzy
-#| msgid "Data type mismatch.\n"
 msgid "Type mismatch"
-msgstr "데이터 형식이 맞지 않습니다.\n"
+msgstr "형식 불일치"
 
 #: dlls/vbscript/vbscript.rc:36
-#, fuzzy
-#| msgid "I/O device error.\n"
 msgid "Device I/O error"
-msgstr "I/O 장치 오류.\n"
+msgstr "장치 I/O 오류"
 
 #: dlls/vbscript/vbscript.rc:37
-#, fuzzy
-#| msgid "File already exists.\n"
 msgid "File already exists"
-msgstr "파일이 이미 존재합니다.\n"
+msgstr "파일이 이미 있습니다"
 
 #: dlls/vbscript/vbscript.rc:38
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "Disk full"
-msgstr "디스크가 차 있습니다.\n"
+msgstr "디스크가 가득 찼습니다"
 
 #: dlls/vbscript/vbscript.rc:39
-#, fuzzy
-#| msgid "Too many open files.\n"
 msgid "Too many files"
-msgstr "너무 많은 파일 오픈.\n"
+msgstr "파일이 너무 많습니다"
 
 #: dlls/vbscript/vbscript.rc:40
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permission denied"
-msgstr "접근 거부.\n"
+msgstr "허가가 거부되었습니다"
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
-msgstr ""
+msgstr "경로/파일 접근 오류"
 
 #: dlls/vbscript/vbscript.rc:42
-#, fuzzy
-#| msgid "Path not found.\n"
 msgid "Path not found"
-msgstr "경로를 찾을 수 없습니다.\n"
+msgstr "경로를 찾을 수 없습니다"
 
 #: dlls/vbscript/vbscript.rc:43
-#, fuzzy
-#| msgid "(value not set)"
 msgid "Object variable not set"
-msgstr "(값이 설정되지 않음)"
+msgstr "개체 변수가 설정되어 있지 않습니다"
 
 #: dlls/vbscript/vbscript.rc:44
-#, fuzzy
-#| msgid "Invalid user buffer.\n"
 msgid "Invalid use of Null"
-msgstr "올바르지 않은 사용자 버퍼.\n"
+msgstr "올바르지 않은 널 사용"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
-msgstr ""
+msgstr "필요한 임시 파일을 만들 수 없습니다"
 
 #: dlls/vbscript/vbscript.rc:46
-#, fuzzy
-#| msgid "Automation server can't create object"
 msgid "ActiveX component can't create object"
-msgstr "자동화 서버가 객체를 만들 수 없음"
+msgstr "ActiveX 구성 요소는 개체를 만들 수 없습니다"
 
 #: dlls/vbscript/vbscript.rc:47
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Class doesn't support Automation"
-msgstr "객체는 이 행동을 지원하지 않음"
+msgstr "클래스는 자동화를 지원하지 않습니다"
 
 #: dlls/vbscript/vbscript.rc:48
 msgid "File name or class name not found during Automation operation"
-msgstr ""
+msgstr "자동화 작업 중에 파일 이름 또는 클래스 이름을 찾을 수 없습니다"
 
 #: dlls/vbscript/vbscript.rc:51
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support named arguments"
-msgstr "객체는 이 행동을 지원하지 않음"
+msgstr "개체는 명명된 인수를 지원하지 않습니다"
 
 #: dlls/vbscript/vbscript.rc:52
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
-msgstr "객체는 이 행동을 지원하지 않음"
+msgstr "개체는 현재 로캘 설정을 지원하지 않습니다"
 
 #: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
-#, fuzzy
-#| msgid "Element not found.\n"
 msgid "Named argument not found"
-msgstr "요소를 찾을 수 없습니다.\n"
+msgstr "명명된 인수를 찾을 수 없습니다"
 
 #: dlls/vbscript/vbscript.rc:55
 msgid "Wrong number of arguments or invalid property assignment"
-msgstr ""
+msgstr "인수의 개수나 속성 할당이 잘못되었습니다"
 
 #: dlls/vbscript/vbscript.rc:56
-#, fuzzy
-#| msgid "Object Class Violation"
 msgid "Object not a collection"
-msgstr "객체 클래스 위반"
+msgstr "컬렉션이 아닌 개체입니다"
 
 #: dlls/vbscript/vbscript.rc:57
-#, fuzzy
-#| msgid "Specified control was not found in message"
 msgid "Specified DLL function not found"
-msgstr "지정한 제어는 메시지에서 발견할 수 없습니다"
+msgstr "지정한 DLL 함수를 찾을 수 없습니다"
 
 #: dlls/vbscript/vbscript.rc:58
 msgid "Variable uses an Automation type not supported in VBScript"
-msgstr ""
+msgstr "변수에 VBScript에서 지원하지 않는 자동화 형식이 사용되었습니다"
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "The remote server machine does not exist or is unavailable"
-msgstr ""
+msgstr "원격 서버가 없거나 사용할 수 없습니다"
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr ""
+msgstr "올바르지 않거나 비정규화된 참조"
 
 #: dlls/vbscript/vbscript.rc:62
 msgid "Microsoft VBScript compilation error"
-msgstr ""
+msgstr "Microsoft VBScript 컴파일 오류"
 
 #: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript runtime error"
-msgstr ""
+msgstr "Microsoft VBScript 런타임 오류"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"
@@ -11147,33 +10993,27 @@ msgstr "인증서에 최소한 하나의 알 수 없는 보안 문제가 있습�
 
 #: dlls/wininet/wininet.rc:35
 msgid "Effective Date"
-msgstr ""
+msgstr "개시 날짜"
 
 #: dlls/wininet/wininet.rc:37
-#, fuzzy
-#| msgid "Security"
 msgid "Security Protocol"
-msgstr "보안"
+msgstr "보안 프로토콜"
 
 #: dlls/wininet/wininet.rc:38
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature Type"
-msgstr "서명"
+msgstr "서명 유형"
 
 #: dlls/wininet/wininet.rc:39
-#, fuzzy
-#| msgid "Encrypting File System"
 msgid "Encryption Type"
-msgstr "파일 시스템 암호화"
+msgstr "암호화 유형"
 
 #: dlls/wininet/wininet.rc:40
 msgid "Privacy Strength"
-msgstr ""
+msgstr "보안 수준"
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
-msgstr ""
+msgstr "bits"
 
 #: dlls/wininet/winineterror.mc:26
 msgid "The request has timed out.\n"
@@ -11918,7 +11758,7 @@ msgstr "잘못된 문법"
 
 #: dlls/wldap32/wldap32.rc:64
 msgid "No Such Object"
-msgstr "어떤 객체도 없음"
+msgstr "어떤 개체도 없음"
 
 #: dlls/wldap32/wldap32.rc:65
 msgid "Alias Problem"
@@ -11978,7 +11818,7 @@ msgstr "명명 위반"
 
 #: dlls/wldap32/wldap32.rc:97
 msgid "Object Class Violation"
-msgstr "객체 클래스 위반"
+msgstr "개체 클래스 위반"
 
 #: dlls/wldap32/wldap32.rc:98
 msgid "Not allowed on Non-leaf"
@@ -11994,7 +11834,7 @@ msgstr "이미 존재합니다"
 
 #: dlls/wldap32/wldap32.rc:101
 msgid "No Object Class Mods"
-msgstr "어떤 객체 클래스 모드도 없숩니다"
+msgstr "어떤 개체 클래스 모드도 없숩니다"
 
 #: dlls/wldap32/wldap32.rc:102
 msgid "Results Too Large"
@@ -13176,6 +13016,9 @@ msgid ""
 "\n"
 "hardlink      hardlink management\n"
 msgstr ""
+"- 지원되는 명령 -\n"
+"\n"
+"hardlink      하드링크 관리\n"
 
 #: programs/fsutil/fsutil.mc:35
 msgid ""
@@ -13183,10 +13026,13 @@ msgid ""
 "\n"
 "create        create a hardlink\n"
 msgstr ""
+"- Hardlink - 지원되는 명령 -\n"
+"\n"
+"create        하드링크 만들기\n"
 
 #: programs/fsutil/fsutil.mc:40
 msgid "Syntax: fsutil hardlink create <new> <existing>\n"
-msgstr ""
+msgstr "구문: fsutil hardlink create <new> <existing>\n"
 
 #: programs/hostname/hostname.rc:30
 msgid "Usage: hostname\n"
@@ -13817,7 +13663,7 @@ msgstr "C&LSID를 클립보드로 복사"
 
 #: programs/oleview/oleview.rc:57
 msgid "Copy &HTML object Tag to clipboard"
-msgstr "&HTML 객체 태그를 클립보드로 복사"
+msgstr "&HTML 개체 태그를 클립보드로 복사"
 
 #: programs/oleview/oleview.rc:63
 msgid "&Expert mode"
@@ -13930,7 +13776,7 @@ msgstr "ITypeLib 뷰어"
 
 #: programs/oleview/oleview.rc:99
 msgid "OleView - OLE/COM Object Viewer"
-msgstr "OleView - OLE/COM 객체 뷰어"
+msgstr "OleView - OLE/COM 개체 뷰어"
 
 #: programs/oleview/oleview.rc:102
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
@@ -13958,15 +13804,15 @@ msgstr "바뀐 것을 저장할지 물어보고 프로그램 끝내기"
 
 #: programs/oleview/oleview.rc:110
 msgid "Create an instance of the selected object"
-msgstr "선택된 객체의 인스턴트 만들기"
+msgstr "선택된 개체의 인스턴트 만들기"
 
 #: programs/oleview/oleview.rc:111
 msgid "Create an instance of the selected object on a specific machine"
-msgstr "지정한 머신의 선택된 객체의 인스턴트 만들기"
+msgstr "지정한 머신의 선택된 개체의 인스턴트 만들기"
 
 #: programs/oleview/oleview.rc:112
 msgid "Release the currently selected object instance"
-msgstr "현재 선택된 객체 인스턴트 해제하기"
+msgstr "현재 선택된 개체 인스턴트 해제하기"
 
 #: programs/oleview/oleview.rc:113
 msgid "Copy the GUID of the currently selected item to the clipboard"
@@ -14027,15 +13873,15 @@ msgstr "컴포턴트 분류"
 
 #: programs/oleview/oleview.rc:132
 msgid "OLE 1.0 Objects"
-msgstr "OLE 1.0 객체"
+msgstr "OLE 1.0 개체"
 
 #: programs/oleview/oleview.rc:133
 msgid "COM Library Objects"
-msgstr "COM 라이브러리 객체"
+msgstr "COM 라이브러리 개체"
 
 #: programs/oleview/oleview.rc:134
 msgid "All Objects"
-msgstr "모든 객체"
+msgstr "모든 개체"
 
 #: programs/oleview/oleview.rc:135
 msgid "Application IDs"
@@ -15625,7 +15471,7 @@ msgstr "페이지 실패(&F)"
 
 #: programs/taskmgr/taskmgr.rc:537
 msgid "&USER Objects"
-msgstr "사용자 객체(&U)"
+msgstr "사용자 개체(&U)"
 
 #: programs/taskmgr/taskmgr.rc:539 programs/taskmgr/taskmgr.rc:281
 msgid "I/O Reads"
@@ -15673,7 +15519,7 @@ msgstr "스레드 카운트(&T)"
 
 #: programs/taskmgr/taskmgr.rc:561 programs/taskmgr/taskmgr.rc:292
 msgid "GDI Objects"
-msgstr "GDI 객체"
+msgstr "GDI 개체"
 
 #: programs/taskmgr/taskmgr.rc:563 programs/taskmgr/taskmgr.rc:293
 msgid "I/O Writes"
@@ -15909,7 +15755,7 @@ msgstr "페이지 실패"
 
 #: programs/taskmgr/taskmgr.rc:280
 msgid "USER Objects"
-msgstr "사용자 객체"
+msgstr "사용자 개체"
 
 #: programs/taskmgr/taskmgr.rc:283
 msgid "Session ID"
@@ -15937,7 +15783,7 @@ msgstr "NP 풀"
 
 #: programs/taskmgr/taskmgr.rc:289
 msgid "Base Pri"
-msgstr "기본 Pri"
+msgstr "기본 우선 순위"
 
 #: programs/taskmgr/taskmgr.rc:301
 msgid "Task Manager Warning"
@@ -16983,14 +16829,12 @@ msgid "&Beginner"
 msgstr "초보자(&B)"
 
 #: programs/winemine/winemine.rc:45
-#, fuzzy
-#| msgid "Interface"
 msgid "&Intermediate"
-msgstr "인터페이스"
+msgstr "중급자(&I)"
 
 #: programs/winemine/winemine.rc:46
 msgid "&Expert"
-msgstr "상급자(&E)"
+msgstr "전문가(&E)"
 
 #: programs/winemine/winemine.rc:47
 msgid "&Custom..."
@@ -17017,10 +16861,8 @@ msgid "Beginner"
 msgstr "초보자"
 
 #: programs/winemine/winemine.rc:65
-#, fuzzy
-#| msgid "Interface"
 msgid "Intermediate"
-msgstr "인터페이스"
+msgstr "중급자"
 
 #: programs/winemine/winemine.rc:66
 msgid "Expert"
