@@ -1702,8 +1702,6 @@ static NTSTATUS get_output_info( struct screen_buffer *screen_buffer, size_t *ou
 {
     struct condrv_output_info *info;
 
-    TRACE( "%p\n", screen_buffer );
-
     *out_size = min( *out_size, sizeof(*info) + screen_buffer->font.face_len );
     if (!(info = alloc_ioctl_buffer( *out_size ))) return STATUS_NO_MEMORY;
 
@@ -1727,6 +1725,12 @@ static NTSTATUS get_output_info( struct screen_buffer *screen_buffer, size_t *ou
     info->font_pitch_family = screen_buffer->font.pitch_family;
     memcpy( info->color_map, screen_buffer->color_map, sizeof(info->color_map) );
     if (*out_size > sizeof(*info)) memcpy( info + 1, screen_buffer->font.face_name, *out_size - sizeof(*info) );
+
+    TRACE( "%p cursor_size=%u cursor_visible=%x cursor=(%u,%u) width=%u height=%u win=%s attr=%x popup_attr=%x"
+           " font_width=%u font_height=%u %s\n", screen_buffer, info->cursor_size, info->cursor_visible,
+           info->cursor_x, info->cursor_y, info->width, info->height, wine_dbgstr_rect(&screen_buffer->win),
+           info->attr, info->popup_attr, info->font_width, info->font_height,
+           debugstr_wn( (const WCHAR *)(info + 1), (*out_size - sizeof(*info)) / sizeof(WCHAR) ) );
     return STATUS_SUCCESS;
 }
 
