@@ -209,7 +209,7 @@
 @ cdecl __wcserror(wstr)
 @ cdecl __wgetmainargs(ptr ptr ptr long ptr)
 @ extern __winitenv MSVCRT___winitenv
-@ cdecl _abnormal_termination()
+@ cdecl _abnormal_termination() __intrinsic_abnormal_termination
 @ cdecl _access(str long)
 @ extern _acmdln MSVCRT__acmdln
 @ stdcall -arch=i386 _adj_fdiv_m16i(long)

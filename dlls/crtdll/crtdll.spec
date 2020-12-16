@@ -38,7 +38,7 @@
 @ cdecl __threadhandle() kernel32.GetCurrentThread
 @ cdecl __threadid() kernel32.GetCurrentThreadId
 @ cdecl __toascii(long)
-@ cdecl _abnormal_termination()
+@ cdecl _abnormal_termination() __intrinsic_abnormal_termination
 @ cdecl _access(str long)
 @ extern _acmdln_dll MSVCRT__acmdln
 @ extern _aexit_rtn_dll _aexit_rtn

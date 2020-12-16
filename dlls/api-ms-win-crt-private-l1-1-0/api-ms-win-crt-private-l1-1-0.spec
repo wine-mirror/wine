@@ -38,7 +38,7 @@
 @ cdecl __current_exception_context() ucrtbase.__current_exception_context
 @ stub __dcrt_get_wide_environment_from_os
 @ stub __dcrt_initial_narrow_environment
-@ stub __intrinsic_abnormal_termination
+@ cdecl __intrinsic_abnormal_termination() ucrtbase.__intrinsic_abnormal_termination
 @ cdecl -arch=i386,x86_64,arm,arm64 -norelay __intrinsic_setjmp(ptr) ucrtbase.__intrinsic_setjmp
 @ cdecl -arch=x86_64,arm64 -norelay __intrinsic_setjmpex(ptr ptr) ucrtbase.__intrinsic_setjmpex
 @ cdecl __processing_throw() ucrtbase.__processing_throw

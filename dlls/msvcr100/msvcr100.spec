@@ -676,7 +676,7 @@
 @ stub __wcsncnt
 @ cdecl __wgetmainargs(ptr ptr ptr long ptr)
 @ extern __winitenv MSVCRT___winitenv
-@ cdecl _abnormal_termination()
+@ cdecl _abnormal_termination() __intrinsic_abnormal_termination
 @ cdecl -ret64 _abs64(int64)
 @ cdecl _access(str long)
 @ cdecl _access_s(str long)
