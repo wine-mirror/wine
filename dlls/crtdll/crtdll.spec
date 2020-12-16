@@ -180,8 +180,8 @@
 @ cdecl -arch=i386 _local_unwind2(ptr long)
 @ cdecl _locking(long long long)
 @ cdecl _logb(double)
-@ cdecl _lrotl(long long)
-@ cdecl _lrotr(long long)
+@ cdecl _lrotl(long long) MSVCRT__lrotl
+@ cdecl _lrotr(long long) MSVCRT__lrotr
 @ cdecl _lsearch(ptr ptr ptr long ptr)
 @ cdecl _lseek(long long long)
 @ cdecl _ltoa(long ptr long) ntdll._ltoa
@@ -263,8 +263,8 @@
 @ cdecl _read(long ptr long)
 @ cdecl _rmdir(str)
 @ cdecl _rmtmp()
-@ cdecl _rotl(long long)
-@ cdecl _rotr(long long)
+@ cdecl _rotl(long long) MSVCRT__rotl
+@ cdecl _rotr(long long) MSVCRT__rotr
 @ cdecl _scalb(double long)
 @ cdecl _searchenv(str str ptr)
 @ cdecl _seterrormode(long)

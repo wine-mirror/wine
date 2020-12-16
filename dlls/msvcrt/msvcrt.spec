@@ -672,8 +672,8 @@
 @ cdecl _logb(double)
 @ cdecl -arch=!i386 _logbf(float)
 @ cdecl -arch=i386 _longjmpex(ptr long) MSVCRT_longjmp
-@ cdecl _lrotl(long long)
-@ cdecl _lrotr(long long)
+@ cdecl _lrotl(long long) MSVCRT__lrotl
+@ cdecl _lrotr(long long) MSVCRT__lrotr
 @ cdecl _lsearch(ptr ptr ptr long ptr)
 # stub _lsearch_s(ptr ptr ptr long ptr ptr)
 @ cdecl _lseek(long long long)
@@ -871,10 +871,10 @@
 @ cdecl _resetstkoflw()
 @ cdecl _rmdir(str)
 @ cdecl _rmtmp()
-@ cdecl _rotl(long long)
-@ cdecl -ret64 _rotl64(int64 long)
-@ cdecl _rotr(long long)
-@ cdecl -ret64 _rotr64(int64 long)
+@ cdecl _rotl(long long) MSVCRT__rotl
+@ cdecl -ret64 _rotl64(int64 long) MSVCRT__rotl64
+@ cdecl _rotr(long long) MSVCRT__rotr
+@ cdecl -ret64 _rotr64(int64 long) MSVCRT__rotr64
 @ cdecl -arch=i386 _safe_fdiv()
 @ cdecl -arch=i386 _safe_fdivr()
 @ cdecl -arch=i386 _safe_fprem()

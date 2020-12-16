@@ -1438,7 +1438,7 @@ int CDECL _fpclass(double num)
 /*********************************************************************
  *		_rotl (MSVCRT.@)
  */
-unsigned int CDECL _rotl(unsigned int num, int shift)
+unsigned int CDECL MSVCRT__rotl(unsigned int num, int shift)
 {
   shift &= 31;
   return (num << shift) | (num >> (32-shift));
@@ -1447,7 +1447,7 @@ unsigned int CDECL _rotl(unsigned int num, int shift)
 /*********************************************************************
  *		_lrotl (MSVCRT.@)
  */
-__msvcrt_ulong CDECL _lrotl(__msvcrt_ulong num, int shift)
+__msvcrt_ulong CDECL MSVCRT__lrotl(__msvcrt_ulong num, int shift)
 {
   shift &= 0x1f;
   return (num << shift) | (num >> (32-shift));
@@ -1456,7 +1456,7 @@ __msvcrt_ulong CDECL _lrotl(__msvcrt_ulong num, int shift)
 /*********************************************************************
  *		_lrotr (MSVCRT.@)
  */
-__msvcrt_ulong CDECL _lrotr(__msvcrt_ulong num, int shift)
+__msvcrt_ulong CDECL MSVCRT__lrotr(__msvcrt_ulong num, int shift)
 {
   shift &= 0x1f;
   return (num >> shift) | (num << (32-shift));
@@ -1465,7 +1465,7 @@ __msvcrt_ulong CDECL _lrotr(__msvcrt_ulong num, int shift)
 /*********************************************************************
  *		_rotr (MSVCRT.@)
  */
-unsigned int CDECL _rotr(unsigned int num, int shift)
+unsigned int CDECL MSVCRT__rotr(unsigned int num, int shift)
 {
     shift &= 0x1f;
     return (num >> shift) | (num << (32-shift));
@@ -1474,7 +1474,7 @@ unsigned int CDECL _rotr(unsigned int num, int shift)
 /*********************************************************************
  *		_rotl64 (MSVCRT.@)
  */
-unsigned __int64 CDECL _rotl64(unsigned __int64 num, int shift)
+unsigned __int64 CDECL MSVCRT__rotl64(unsigned __int64 num, int shift)
 {
   shift &= 63;
   return (num << shift) | (num >> (64-shift));
@@ -1483,7 +1483,7 @@ unsigned __int64 CDECL _rotl64(unsigned __int64 num, int shift)
 /*********************************************************************
  *		_rotr64 (MSVCRT.@)
  */
-unsigned __int64 CDECL _rotr64(unsigned __int64 num, int shift)
+unsigned __int64 CDECL MSVCRT__rotr64(unsigned __int64 num, int shift)
 {
     shift &= 63;
     return (num >> shift) | (num << (64-shift));
