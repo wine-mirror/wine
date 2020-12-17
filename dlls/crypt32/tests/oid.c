@@ -646,7 +646,8 @@ static void test_registerOIDInfo(void)
     SetLastError(0xdeadbeef);
     ret = CryptUnregisterOIDInfo(&info1);
     ok(!ret, "should fail\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
+       GetLastError() == ERROR_ACCESS_DENIED, "got %u\n", GetLastError());
 
     info2 = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, (void *)test_oid, 0);
     ok(!info2, "should fail\n");
