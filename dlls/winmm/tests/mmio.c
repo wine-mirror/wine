@@ -551,7 +551,7 @@ static void test_mmioOpen_create(void)
 
     wcscpy(buffer, L"test_mmio_path");
     hmmio = mmioOpenW(buffer, &info, MMIO_WRITE);
-    todo_wine ok(!!hmmio, "failed to open file, error %#x\n", info.wErrorRet);
+    ok(!!hmmio, "failed to open file, error %#x\n", info.wErrorRet);
     mmioClose(hmmio, 0);
 
     wcscpy(buffer, L"test_mmio_path");
