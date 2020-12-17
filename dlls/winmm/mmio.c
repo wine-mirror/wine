@@ -734,6 +734,7 @@ HMMIO WINAPI mmioOpenW(LPWSTR szFileName, MMIOINFO* lpmmioinfo,
     if (szFileName)
     {
         INT     len = WideCharToMultiByte( CP_ACP, 0, szFileName, -1, NULL, 0, NULL, NULL );
+        if (len < MAX_PATH) len = MAX_PATH;
         szFn = HeapAlloc( GetProcessHeap(), 0, len );
         if (!szFn) return NULL;
         WideCharToMultiByte( CP_ACP, 0, szFileName, -1, szFn, len, NULL, NULL );
