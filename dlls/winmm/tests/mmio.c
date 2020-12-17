@@ -483,7 +483,7 @@ static void test_mmioOpen_create(void)
         L"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
         L"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     WCHAR buffer[MAX_PATH], expect[MAX_PATH];
-    char exedir_filename[MAX_PATH];
+    char exedir_filename[MAX_PATH], bufferA[MAX_PATH], expectA[MAX_PATH];
     MMIOINFO info = {0};
     BOOL ret;
     FILE *f;
@@ -530,6 +530,24 @@ static void test_mmioOpen_create(void)
     mmioClose(hmmio, 0);
 
     DeleteFileW(long_filename);
+
+    wcscpy(buffer, long_filename);
+    info.wErrorRet = 0xdead;
+    hmmio = mmioOpenW(buffer, &info, MMIO_PARSE);
+    todo_wine ok(hmmio == (HMMIO)FALSE, "failed to parse file name, error %#x\n", info.wErrorRet);
+    todo_wine ok(info.wErrorRet == MMIOERR_OUTOFMEMORY, "got error %#x\n", info.wErrorRet);
+    wcscpy(expect, temp_dir);
+    wcscat(expect, long_filename);
+    expect[127] = 0;
+    todo_wine ok(!wcscmp(buffer, expect), "expected %s, got %s\n", debugstr_w(expect), debugstr_w(buffer));
+
+    WideCharToMultiByte(CP_ACP, 0, long_filename, -1, bufferA, sizeof(bufferA), NULL, NULL);
+    info.wErrorRet = 0xdead;
+    hmmio = mmioOpenA(bufferA, &info, MMIO_PARSE);
+    todo_wine ok(hmmio == (HMMIO)FALSE, "failed to parse file name, error %#x\n", info.wErrorRet);
+    todo_wine ok(info.wErrorRet == MMIOERR_OUTOFMEMORY, "got error %#x\n", info.wErrorRet);
+    WideCharToMultiByte(CP_ACP, 0, long_filename, -1, expectA, sizeof(expectA), NULL, NULL);
+    todo_wine ok(!strcmp(bufferA, expectA), "expected %s, got %s\n", debugstr_a(expectA), debugstr_a(bufferA));
 
     wcscpy(buffer, L"test_mmio_path");
     hmmio = mmioOpenW(buffer, &info, MMIO_WRITE);
