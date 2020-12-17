@@ -124,7 +124,7 @@ void DECLSPEC_HIDDEN call_thread_func( PRTL_THREAD_START_ROUTINE entry, void *ar
     }
     __EXCEPT(call_unhandled_exception_filter)
     {
-        NtTerminateProcess( GetCurrentThread(), GetExceptionCode() );
+        NtTerminateProcess( GetCurrentProcess(), GetExceptionCode() );
     }
     __ENDTRY
 }
@@ -140,7 +140,7 @@ void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
     }
     __EXCEPT(call_unhandled_exception_filter)
     {
-        NtTerminateProcess( GetCurrentThread(), GetExceptionCode() );
+        NtTerminateProcess( GetCurrentProcess(), GetExceptionCode() );
     }
     __ENDTRY
 }
