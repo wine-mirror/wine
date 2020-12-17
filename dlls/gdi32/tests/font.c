@@ -1136,7 +1136,6 @@ static void ABCWidths_helper(const char* description, HDC hdc, WORD *glyphs, con
 
 static void test_GetCharABCWidths(void)
 {
-    static const WCHAR str[] = {'i',0};
     BOOL ret;
     HDC hdc;
     LOGFONTA lf;
@@ -1201,7 +1200,7 @@ static void test_GetCharABCWidths(void)
     hdc = GetDC(0);
     hfont = SelectObject(hdc, hfont);
 
-    nb = pGetGlyphIndicesW(hdc, str, 1, glyphs, 0);
+    nb = pGetGlyphIndicesW(hdc, L"i", 1, glyphs, 0);
     ok(nb == 1, "GetGlyphIndicesW should have returned 1\n");
 
     ret = GetCharABCWidthsI(NULL, 0, 1, glyphs, abc);
@@ -1382,7 +1381,7 @@ static void test_GetCharABCWidths(void)
     SetMapMode(hdc, MM_ANISOTROPIC);
     SelectObject(hdc, hfont);
 
-    nb = pGetGlyphIndicesW(hdc, str, 1, glyphs, 0);
+    nb = pGetGlyphIndicesW(hdc, L"i", 1, glyphs, 0);
     ok(nb == 1, "GetGlyphIndicesW should have returned 1\n");
 
     ret = GetCharABCWidthsI(hdc, 0, 1, glyphs, abc);
@@ -1433,8 +1432,7 @@ static void test_GetCharABCWidths(void)
 
 static void test_text_extents(void)
 {
-    static const WCHAR wt[] = {'O','n','e','\n','t','w','o',' ','3',0};
-    static const WCHAR emptyW[] = {0};
+    static const WCHAR wt[] = L"One\ntwo 3";
     LPINT extents;
     INT i, len, fit1, fit2, extents2[3];
     LOGFONTA lf;
@@ -1484,7 +1482,7 @@ static void test_text_extents(void)
     ok(sz.cx == 0 && sz.cy == 0, "cx %d, cy %d\n", sz.cx, sz.cy);
 
     memset(&sz, 0xcc, sizeof(sz));
-    ret = GetTextExtentPointW(hdc, emptyW, 0, &sz);
+    ret = GetTextExtentPointW(hdc, L"", 0, &sz);
     ok(ret, "got %d\n", ret);
     ok(sz.cx == 0 && sz.cy == 0, "cx %d, cy %d\n", sz.cx, sz.cy);
 
@@ -1633,7 +1631,7 @@ static void test_GetGlyphIndices(void)
     DWORD    charcount;
     LOGFONTA lf;
     DWORD    flags = 0;
-    WCHAR    testtext[] = {'T','e','s','t',0xffff,0};
+    WCHAR    testtext[] = L"Test\xffff";
     WORD     glyphs[(sizeof(testtext)/2)-1];
     TEXTMETRICA textm;
     HFONT hOldFont;
@@ -4445,7 +4443,7 @@ static void test_RealizationInfo(void)
 static void test_GetTextFace(void)
 {
     static const char faceA[] = "Tahoma";
-    static const WCHAR faceW[] = {'T','a','h','o','m','a', 0};
+    static const WCHAR faceW[] = L"Tahoma";
     LOGFONTA fA = {0};
     LOGFONTW fW = {0};
     char bufA[LF_FACESIZE];
@@ -6822,7 +6820,7 @@ static void test_fake_bold_font(void)
 
 static void test_bitmap_font_glyph_index(void)
 {
-    const WCHAR text[] = {'#','!','/','b','i','n','/','s','h',0};
+    const WCHAR text[] = L"#!/bin/sh";
     const struct {
         LPCSTR face;
         BYTE charset;
@@ -7117,10 +7115,10 @@ static void test_ttf_names(void)
 
 static void test_lang_names(void)
 {
-    static const WCHAR name_cond_ja_w[] = {0x30d5,0x30a9,0x30f3,0x30c8,0x540d,' ','C','o','n','d',' ','(','j','a',')',0};
-    static const WCHAR name_cond_ja_reg_w[] = {0x30d5,0x30a9,0x30f3,0x30c8,0x540d,' ','C','o','n','d',' ','(','j','a',')',' ','R','e','g',0};
-    static const WCHAR name_cond_ja_reg_ja_w[] = {0x30d5,0x30a9,0x30f3,0x30c8,0x540d,' ','C','o','n','d',' ','(','j','a',')',' ','R','e','g',' ','(','j','a',')',0};
-    static const WCHAR name_wws_ja_w[] = {0x30d5,0x30a9,0x30f3,0x30c8,0x540d,' ','W','W','S',' ','(','j','a',')',0};
+    static const WCHAR name_cond_ja_w[] = L"\x30d5\x30a9\x30f3\x30c8\x540d Cond (ja)";
+    static const WCHAR name_cond_ja_reg_w[] = L"\x30d5\x30a9\x30f3\x30c8\x540d Cond (ja) Reg";
+    static const WCHAR name_cond_ja_reg_ja_w[] = L"\x30d5\x30a9\x30f3\x30c8\x540d Cond (ja) Reg (ja)";
+    static const WCHAR name_wws_ja_w[] = L"\x30d5\x30a9\x30f3\x30c8\x540d WWS (ja)";
 
     struct enum_fullname_data efnd;
     struct enum_fullname_data_w efnd_w;

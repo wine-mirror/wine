@@ -27,8 +27,6 @@
 
 #include "wine/test.h"
 
-static const WCHAR displayW[] = {'D','I','S','P','L','A','Y',0};
-
 static void test_GetICMProfileA( HDC dc )
 {
     BOOL ret;
@@ -167,7 +165,7 @@ static void test_SetICMMode( HDC dc )
     ok( ret, "SetICMMode failed (%d)\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
-    dc = CreateDCW( displayW, NULL, NULL, NULL );
+    dc = CreateDCW( L"DISPLAY", NULL, NULL, NULL );
     if ( !dc && ( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED ) )
     {
         win_skip( "CreateDCW is not implemented\n" );

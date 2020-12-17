@@ -312,7 +312,6 @@ static int CALLBACK eto_scale_enum_proc(HDC hdc, HANDLETABLE *handle_table,
 static void test_ExtTextOutScale(void)
 {
     const RECT rc = { 0, 0, 100, 100 };
-    const WCHAR str[] = {'a',0 };
     struct eto_scale_test_record test;
     HDC hdcDisplay, hdcMetafile;
     HENHMETAFILE hMetafile;
@@ -392,7 +391,7 @@ static void test_ExtTextOutScale(void)
             ok(ret, "SetViewportExtEx failed\n");
         }
 
-        ret = ExtTextOutW(hdcMetafile, 0, 0, 0, 0, str, 1, NULL);
+        ret = ExtTextOutW(hdcMetafile, 0, 0, 0, 0, L"a", 1, NULL);
         ok(ret, "ExtTextOutW failed\n");
 
         hMetafile = CloseEnhMetaFile(hdcMetafile);
