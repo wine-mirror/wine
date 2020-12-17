@@ -30,17 +30,17 @@ static HMODULE      vcomp_handle;
 typedef CRITICAL_SECTION *omp_lock_t;
 typedef CRITICAL_SECTION *omp_nest_lock_t;
 
-static void  (CDECL   *p_vcomp_atomic_add_i1)(char *dest, char val);
+static void  (CDECL   *p_vcomp_atomic_add_i1)(char *dest, signed char val);
 static void  (CDECL   *p_vcomp_atomic_add_i2)(short *dest, short val);
 static void  (CDECL   *p_vcomp_atomic_add_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_add_i8)(LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_atomic_add_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_add_r8)(double *dest, double val);
-static void  (CDECL   *p_vcomp_atomic_and_i1)(char *dest, char val);
+static void  (CDECL   *p_vcomp_atomic_and_i1)(char *dest, signed char val);
 static void  (CDECL   *p_vcomp_atomic_and_i2)(short *dest, short val);
 static void  (CDECL   *p_vcomp_atomic_and_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_and_i8)(LONG64 *dest, LONG64 val);
-static void  (CDECL   *p_vcomp_atomic_div_i1)(char *dest, char val);
+static void  (CDECL   *p_vcomp_atomic_div_i1)(char *dest, signed char val);
 static void  (CDECL   *p_vcomp_atomic_div_i2)(short *dest, short val);
 static void  (CDECL   *p_vcomp_atomic_div_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_div_i8)(LONG64 *dest, LONG64 val);
@@ -50,13 +50,13 @@ static void  (CDECL   *p_vcomp_atomic_div_ui1)(unsigned char *dest, unsigned cha
 static void  (CDECL   *p_vcomp_atomic_div_ui2)(unsigned short *dest, unsigned short val);
 static void  (CDECL   *p_vcomp_atomic_div_ui4)(unsigned int *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_div_ui8)(ULONG64 *dest, ULONG64 val);
-static void  (CDECL   *p_vcomp_atomic_mul_i1)(char *dest, char val);
+static void  (CDECL   *p_vcomp_atomic_mul_i1)(char *dest, signed char val);
 static void  (CDECL   *p_vcomp_atomic_mul_i2)(short *dest, short val);
 static void  (CDECL   *p_vcomp_atomic_mul_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_mul_i8)(LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_atomic_mul_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_mul_r8)(double *dest, double val);
-static void  (CDECL   *p_vcomp_atomic_or_i1)(char *dest, char val);
+static void  (CDECL   *p_vcomp_atomic_or_i1)(char *dest, signed char val);
 static void  (CDECL   *p_vcomp_atomic_or_i2)(short *dest, short val);
 static void  (CDECL   *p_vcomp_atomic_or_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_or_i8)(LONG64 *dest, LONG64 val);
@@ -72,13 +72,13 @@ static void  (CDECL   *p_vcomp_atomic_shr_ui1)(unsigned char *dest, unsigned int
 static void  (CDECL   *p_vcomp_atomic_shr_ui2)(unsigned short *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_shr_ui4)(unsigned int *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_shr_ui8)(ULONG64 *dest, unsigned int val);
-static void  (CDECL   *p_vcomp_atomic_sub_i1)(char *dest, char val);
+static void  (CDECL   *p_vcomp_atomic_sub_i1)(char *dest, signed char val);
 static void  (CDECL   *p_vcomp_atomic_sub_i2)(short *dest, short val);
 static void  (CDECL   *p_vcomp_atomic_sub_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_sub_i8)(LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_atomic_sub_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_sub_r8)(double *dest, double val);
-static void  (CDECL   *p_vcomp_atomic_xor_i1)(char *dest, char val);
+static void  (CDECL   *p_vcomp_atomic_xor_i1)(char *dest, signed char val);
 static void  (CDECL   *p_vcomp_atomic_xor_i2)(short *dest, short val);
 static void  (CDECL   *p_vcomp_atomic_xor_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_xor_i8)(LONG64 *dest, LONG64 val);
@@ -1535,7 +1535,7 @@ static void test_atomic_integer8(void)
 {
     struct
     {
-        void (CDECL *func)(char *, char);
+        void (CDECL *func)(char *, signed char);
         signed char v1, v2, expected;
     }
     tests1[] =
