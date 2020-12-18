@@ -614,6 +614,7 @@ static HRESULT WINAPI PersistFile_Save(IPersistFile *pFile, LPCOLESTR pszFileNam
                         WriteFile(file, str_ICONFILE, lstrlenA(str_ICONFILE), &bytesWritten, NULL);
                         WriteFile(file, iconfile, lstrlenA(iconfile), &bytesWritten, NULL);
                         WriteFile(file, str_eol, lstrlenA(str_eol), &bytesWritten, NULL);
+                        heap_free(iconfile);
                     }
 
                     sprintf(indexString, "ICONINDEX=%d", pvread[1].u.iVal);
