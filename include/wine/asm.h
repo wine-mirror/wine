@@ -56,7 +56,7 @@
 #endif
 
 #ifdef _WIN32
-# define __ASM_FUNC_TYPE(name) ".def " name "; .scl 2; .type 32; .endef"
+# define __ASM_FUNC_TYPE(name) ".def " name "\n\t.scl 2\n\t.type 32\n\t.endef"
 #elif defined(__APPLE__)
 # define __ASM_FUNC_TYPE(name) ""
 #elif defined(__arm__) || defined(__arm64__)
