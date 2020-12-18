@@ -2001,6 +2001,53 @@ static void test_kiuserexceptiondispatcher(void)
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
 }
 
+static BOOL test_apc_called;
+
+static void CALLBACK test_apc(ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3)
+{
+    test_apc_called = TRUE;
+}
+
+static void test_user_apc(void)
+{
+    NTSTATUS status;
+    CONTEXT context;
+    int pass;
+
+    if (!pNtQueueApcThread)
+    {
+        win_skip("NtQueueApcThread is not available.\n");
+        return;
+    }
+
+    pass = 0;
+    InterlockedIncrement(&pass);
+    RtlCaptureContext(&context);
+    InterlockedIncrement(&pass);
+
+    if (pass == 2)
+    {
+        /* Try to make sure context data is far enough below context.Esp. */
+        CONTEXT c[4];
+
+        c[0] = context;
+
+        test_apc_called = FALSE;
+        status = pNtQueueApcThread(GetCurrentThread(), test_apc, 0, 0, 0);
+        ok(!status, "Got unexpected status %#x.\n", status);
+        SleepEx(0, TRUE);
+        ok(test_apc_called, "Test user APC was not called.\n");
+        test_apc_called = FALSE;
+        status = pNtQueueApcThread(GetCurrentThread(), test_apc, 0, 0, 0);
+        ok(!status, "Got unexpected status %#x.\n", status);
+        status = NtContinue(&c[0], TRUE );
+
+        /* Broken before Win7, in that case NtContinue returns here instead of restoring context after calling APC. */
+        ok(0, "Should not get here, status %#x.\n", status);
+    }
+    ok(pass == 3, "Got unexpected pass %d.\n", pass);
+    ok(test_apc_called, "Test user APC was not called.\n");
+}
 #elif defined(__x86_64__)
 
 #define UNW_FLAG_NHANDLER  0
@@ -8253,6 +8300,7 @@ START_TEST(exception)
     test_kiuserexceptiondispatcher();
     test_extended_context();
     test_copy_context();
+    test_user_apc();
 
 #elif defined(__x86_64__)
 

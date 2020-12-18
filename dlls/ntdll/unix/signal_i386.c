@@ -1665,6 +1665,42 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
     setup_raise_exception( sigcontext, stack, rec, &xcontext );
 }
 
+/* stack layout when calling an user apc function.
+ * FIXME: match Windows ABI. */
+struct apc_stack_layout
+{
+    void         *context_ptr;
+    void         *ctx;
+    void         *arg1;
+    void         *arg2;
+    void         *func;
+    CONTEXT       context;
+};
+
+struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *context, struct apc_stack_layout *stack,
+        void *ctx, void *arg1, void *arg2, void *func )
+{
+    CONTEXT c;
+
+    if (!context)
+    {
+        c.ContextFlags = CONTEXT_FULL;
+        NtGetContextThread( GetCurrentThread(), &c );
+        context = &c;
+    }
+    memmove( &stack->context, context, sizeof(stack->context) );
+    stack->context_ptr = &stack->context;
+    stack->ctx = ctx;
+    stack->arg1 = arg1;
+    stack->arg2 = arg2;
+    stack->func = func;
+    stack->context.Eax = STATUS_USER_APC;
+    return stack;
+}
+
+C_ASSERT( sizeof(struct apc_stack_layout) == 0x2e0 );
+C_ASSERT( offsetof(struct syscall_frame, ret_addr) == 0x14 );
+C_ASSERT( offsetof(struct apc_stack_layout, context) == 20 );
 
 /***********************************************************************
  *           call_user_apc_dispatcher
@@ -1672,41 +1708,27 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "movl 4(%esp),%esi\n\t"       /* context_ptr */
                    "movl 24(%esp),%edi\n\t"      /* dispatcher */
+                   "leal 4(%esp),%ebp\n\t"
                    "test %esi,%esi\n\t"
                    "jz 1f\n\t"
-                   "movl 0xc4(%esi),%eax\n\t"    /* context_ptr->Rsp */
-                   "leal -0x2f8(%eax),%eax\n\t"  /* sizeof(CONTEXT) + offsetof(frame,ret_addr) + params */
-                   "movl 20(%esp),%ecx\n\t"      /* func */
-                   "movl %ecx,20(%eax)\n\t"
-                   "movl 8(%esp),%ebx\n\t"       /* ctx */
-                   "movl 12(%esp),%edx\n\t"      /* arg1 */
-                   "movl 16(%esp),%ecx\n\t"      /* arg2 */
-                   "leal 4(%eax),%esp\n\t"
-                   "jmp 2f\n"
+                   "movl 0xc4(%esi),%eax\n\t"    /* context_ptr->Esp */
+                   "jmp 2f\n\t"
                    "1:\tmovl %fs:0x1f8,%eax\n\t" /* x86_thread_data()->syscall_frame */
-                   "leal -0x2cc(%eax),%esi\n\t"
-                   "movl %esp,%ebx\n\t"
-                   "cmpl %esp,%esi\n\t"
-                   "cmovbl %esi,%esp\n\t"
-                   "pushl 20(%ebx)\n\t"          /* func */
-                   "pushl 16(%ebx)\n\t"          /* arg2 */
-                   "pushl 12(%ebx)\n\t"          /* arg1 */
-                   "movl 8(%ebx),%ebx\n\t"       /* ctx */
-                   "movl $0x00010007,(%esi)\n\t" /* context.ContextFlags = CONTEXT_FULL */
-                   "pushl %esi\n\t"              /* context */
-                   "pushl $0xfffffffe\n\t"
-                   "call " __ASM_STDCALL("NtGetContextThread",8) "\n\t"
-                   "movl $0xc0,0xb0(%esi)\n"     /* context.Eax = STATUS_USER_APC */
-                   "popl %edx\n\t"
-                   "popl %ecx\n\t"
-                   "popl %eax\n\t"
-                   "leal -20(%esi),%esp\n\t"
-                   "movl %eax,16(%esp)\n"        /* func */
-                   "2:\tmovl %ecx,12(%esp)\n\t"  /* arg2 */
-                   "movl %edx,8(%esp)\n\t"       /* arg1 */
-                   "movl %ebx,4(%esp)\n\t"       /* ctx */
-                   "movl %esi,(%esp)\n\t"        /* context */
+                   "leal 0x14(%eax),%eax\n\t"    /* &x86_thread_data()->syscall_frame->ret_addr */
+                   "2:\tsubl $0x2e0,%eax\n\t"    /* sizeof(struct apc_stack_layout) */
+                   "movl %ebp,%esp\n\t"          /* pop return address */
+                   "cmpl %esp,%eax\n\t"
+                   "cmovbl %eax,%esp\n\t"
+                   "pushl 16(%ebp)\n\t"          /* func */
+                   "pushl 12(%ebp)\n\t"          /* arg2 */
+                   "pushl 8(%ebp)\n\t"           /* arg1 */
+                   "pushl 4(%ebp)\n\t"           /* ctx */
+                   "pushl %eax\n\t"
+                   "pushl %esi\n\t"
+                   "call " __ASM_STDCALL("setup_user_apc_dispatcher_stack",24) "\n\t"
                    "movl $0,%fs:0x1f8\n\t"       /* x86_thread_data()->syscall_frame = NULL */
+                   "movl %eax,%esp\n\t"
+                   "leal 20(%eax),%esi\n\t"
                    "movl 0xb4(%esi),%ebp\n\t"    /* context.Ebp */
                    "pushl 0xb8(%esi)\n\t"        /* context.Eip */
                    "jmp *%edi\n" )
