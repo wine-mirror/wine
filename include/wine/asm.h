@@ -41,7 +41,7 @@
 # define __ASM_CFI(str)
 #endif
 
-#ifdef __SEH__
+#if defined(__SEH__) || (defined(_MSC_VER) && defined(__clang__) && (defined(__x86_64__) || defined(__aarch64__)))
 # if defined(__aarch64__) && defined(__clang_major__) && (__clang_major__ < 12 || defined(__apple_build_version__))
    /* Clang got support for aarch64 SEH assembly directives in Clang 12,
     * before that, only .seh_startproc/.seh_endproc but nothing else was
