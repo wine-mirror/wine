@@ -1760,6 +1760,67 @@ static void test_Win32_SoundDevice( IWbemServices *services )
     SysFreeString( wql );
 }
 
+static void test_SystemRestore( IWbemServices *services )
+{
+    WCHAR path[MAX_PATH];
+    BSTR class, method;
+    IWbemClassObject *service, *sig_in, *in, *out;
+    VARIANT var;
+    HRESULT hr;
+
+    class = SysAllocString( L"SystemRestore" );
+    hr = IWbemServices_GetObject( services, class, 0, NULL, &service, NULL );
+    if (hr != S_OK)
+    {
+        skip( "SystemRestore not available\n" );
+        SysFreeString( class );
+        return;
+    }
+
+    check_property( service, L"CreationTime", VT_NULL, CIM_STRING );
+    check_property( service, L"Description", VT_NULL, CIM_STRING );
+    check_property( service, L"EventType", VT_NULL, CIM_UINT32 );
+    check_property( service, L"RestorePointType", VT_NULL, CIM_UINT32 );
+    check_property( service, L"SequenceNumber", VT_NULL, CIM_UINT32 );
+
+    method = SysAllocString( L"Enable" );
+    sig_in = NULL;
+    hr = IWbemClassObject_GetMethod( service, method, 0, &sig_in, NULL );
+    ok( hr == S_OK, "failed to get Enable method %08x\n", hr );
+
+    hr = IWbemClassObject_SpawnInstance( sig_in, 0, &in );
+    ok( hr == S_OK, "failed to spawn instance %08x\n", hr );
+
+    GetWindowsDirectoryW(path, ARRAY_SIZE(path));
+    path[3] = 0; /* otherwise XP fails */
+    V_VT( &var ) = VT_BSTR;
+    V_BSTR( &var ) = SysAllocString( path );
+    hr = IWbemClassObject_Put( in, L"Drive", 0, &var, 0 );
+    ok( hr == S_OK, "failed to set Drive %08x\n", hr );
+    SysFreeString( V_BSTR( &var ) );
+
+    out = NULL;
+    hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, in, &out, NULL );
+    ok( hr == S_OK || hr == WBEM_E_ACCESS_DENIED, "failed to execute method %08x\n", hr );
+    if (hr == S_OK)
+    {
+        VariantInit( &var );
+        hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &var, NULL, NULL );
+        ok( hr == S_OK, "failed to get return value %08x\n", hr );
+        ok( V_I4( &var ) == ERROR_SUCCESS, "unexpected error %u\n", V_UI4( &var ) );
+
+        IWbemClassObject_Release( out );
+    }
+    else if (hr == WBEM_E_ACCESS_DENIED)
+        win_skip( "insufficient privs to test SystemRestore\n" );
+
+    IWbemClassObject_Release( in );
+    IWbemClassObject_Release( sig_in );
+    IWbemClassObject_Release( service );
+    SysFreeString( method );
+    SysFreeString( class );
+}
+
 START_TEST(query)
 {
     BSTR path = SysAllocString( L"ROOT\\CIMV2" );
@@ -1823,6 +1884,7 @@ START_TEST(query)
     test_Win32_SystemEnclosure( services );
     test_Win32_VideoController( services );
     test_Win32_WinSAT( services );
+    test_SystemRestore( services );
 
     SysFreeString( path );
     IWbemServices_Release( services );
@@ -1836,6 +1898,7 @@ START_TEST(query)
     ok( hr == S_OK, "failed to set proxy blanket %08x\n", hr );
 
     test_StdRegProv( services );
+    test_SystemRestore( services );
 
     SysFreeString( path );
     IWbemServices_Release( services );
