@@ -1826,6 +1826,19 @@ START_TEST(query)
 
     SysFreeString( path );
     IWbemServices_Release( services );
+
+    /* Some tests need other connection point */
+    path = SysAllocString( L"ROOT\\DEFAULT" );
+    hr = IWbemLocator_ConnectServer( locator, path, NULL, NULL, NULL, 0, NULL, NULL, &services );
+    ok( hr == S_OK, "failed to get IWbemServices interface %08x\n", hr );
+    hr = CoSetProxyBlanket( (IUnknown *)services, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+                            RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE );
+    ok( hr == S_OK, "failed to set proxy blanket %08x\n", hr );
+
+    test_StdRegProv( services );
+
+    SysFreeString( path );
+    IWbemServices_Release( services );
     IWbemLocator_Release( locator );
     CoUninitialize();
 }
