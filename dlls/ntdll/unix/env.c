@@ -1348,7 +1348,6 @@ void CDECL get_initial_directory( UNICODE_STRING *dir )
         MESSAGE("Warning: could not find DOS drive for current working directory '%s', "
                 "starting in the Windows directory.\n", cwd ? cwd : "" );
     free( cwd );
-    chdir( "/" ); /* avoid locking removable devices */
 }
 
 

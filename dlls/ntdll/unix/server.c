@@ -1466,7 +1466,16 @@ void server_init_process_done(void)
     IMAGE_NT_HEADERS *nt = get_exe_nt_header();
     void *entry = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
     NTSTATUS status;
-    int suspend;
+    int suspend, needs_close, unixdir;
+
+    if (peb->ProcessParameters->CurrentDirectory.Handle &&
+        !server_get_unix_fd( peb->ProcessParameters->CurrentDirectory.Handle,
+                             FILE_TRAVERSE, &unixdir, &needs_close, NULL, NULL ))
+    {
+        fchdir( unixdir );
+        if (needs_close) close( unixdir );
+    }
+    else chdir( "/" ); /* avoid locking removable devices */
 
 #ifdef __APPLE__
     send_server_task_port();
