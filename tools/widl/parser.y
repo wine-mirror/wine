@@ -2940,6 +2940,8 @@ static void check_async_uuid(type_t *iface)
         var_t *begin_func, *finish_func, *func = stmt->u.var, *arg;
         var_list_t *begin_args = NULL, *finish_args = NULL, *args;
 
+        if (is_attr(func->attrs, ATTR_CALLAS)) continue;
+
         args = type_function_get_args(func->declspec.type);
         if (args) LIST_FOR_EACH_ENTRY(arg, args, var_t, entry)
         {
