@@ -3831,18 +3831,13 @@ PKEVENT WINAPI IoCreateNotificationEvent(UNICODE_STRING *name, HANDLE *handle)
 }
 
 
-#ifdef __x86_64__
 /**************************************************************************
  *		__chkstk (NTOSKRNL.@)
- *
- * Supposed to touch all the stack pages, but we shouldn't need that.
  */
+#ifdef __x86_64__
+/* Supposed to touch all the stack pages, but we shouldn't need that. */
 __ASM_GLOBAL_FUNC( __chkstk, "ret" );
-
 #elif defined(__i386__)
-/**************************************************************************
- *           _chkstk   (NTOSKRNL.@)
- */
 __ASM_GLOBAL_FUNC( _chkstk,
                    "negl %eax\n\t"
                    "addl %esp,%eax\n\t"
@@ -3851,13 +3846,12 @@ __ASM_GLOBAL_FUNC( _chkstk,
                    "movl %eax,0(%esp)\n\t"
                    "ret" )
 #elif defined(__arm__)
-/**************************************************************************
- *		__chkstk (NTDLL.@)
- *
- * Incoming r4 contains words to allocate, converting to bytes then return
- */
+/* Incoming r4 contains words to allocate, converting to bytes then return */
 __ASM_GLOBAL_FUNC( __chkstk, "lsl r4, r4, #2\n\t"
                              "bx lr" )
+#elif defined(__aarch64__)
+/* Supposed to touch all the stack pages, but we shouldn't need that. */
+__ASM_GLOBAL_FUNC( __chkstk, "ret" );
 #endif
 
 /*********************************************************************

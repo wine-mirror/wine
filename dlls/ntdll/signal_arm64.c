@@ -100,6 +100,14 @@ static inline BOOL is_valid_frame( ULONG_PTR frame )
 }
 
 
+/**************************************************************************
+ *		__chkstk (NTDLL.@)
+ *
+ * Supposed to touch all the stack pages, but we shouldn't need that.
+ */
+__ASM_GLOBAL_FUNC( __chkstk, "ret")
+
+
 /***********************************************************************
  *		RtlCaptureContext (NTDLL.@)
  */
