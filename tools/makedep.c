@@ -3564,7 +3564,6 @@ static void output_test_module( struct makefile *make )
     struct strarray all_libs = add_import_libs( make, &dep_libs, make->imports, 0, 0 );
     struct makefile *parent = get_parent_makefile( make );
     const char *ext = make->is_cross ? "" : dll_ext;
-    const char *parent_ext = parent && parent->is_cross ? "" : dll_ext;
     const char *debug_file;
     char *output_file;
 
@@ -3606,7 +3605,17 @@ static void output_test_module( struct makefile *make )
 
     output_filenames_obj_dir( make, make->ok_files );
     output( ": %s%s", obj_dir_path( make, testmodule ), ext );
-    if (parent) output( " %s%s", obj_dir_path( parent, make->testdll ), parent_ext );
+    if (parent)
+    {
+        output_filename( parent->is_cross ? obj_dir_path( parent, make->testdll )
+                         : strmake( "%s%s", obj_dir_path( parent, make->testdll ), dll_ext ));
+        if (parent->unixobj_files.count)
+        {
+            char *ext, *unix_lib = xstrdup( parent->module );
+            if ((ext = get_extension( unix_lib ))) *ext = 0;
+            output_filename( strmake( "%s%s", obj_dir_path( parent, unix_lib ), dll_ext ));
+        }
+    }
     output( "\n" );
     output( "%s %s:", obj_dir_path( make, "check" ), obj_dir_path( make, "test" ));
     if (!make->disabled && parent && !parent->disabled) output_filenames_obj_dir( make, make->ok_files );
