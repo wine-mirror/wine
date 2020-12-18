@@ -1,12 +1,12 @@
-The Wine development release 6.0-rc2 is now available.
+The Wine development release 6.0-rc3 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/6.0/wine-6.0-rc2.tar.xz
-  http://mirrors.ibiblio.org/wine/source/6.0/wine-6.0-rc2.tar.xz
+  https://dl.winehq.org/wine/source/6.0/wine-6.0-rc3.tar.xz
+  http://mirrors.ibiblio.org/wine/source/6.0/wine-6.0-rc3.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,150 +22,127 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 6.0-rc2 (total 40):
+Bugs fixed in 6.0-rc3 (total 19):
 
-  16250  Sacred Gold Edition: cinematics do not play
-  29310  FirstClassClient 12.005 no login screen
-  32877  Gnomoria Demo crashes on launch.
-  33488  Print Artist 4.0 (Win 3.11/95) installer doesn't show up
-  34373  AirScout 0.9.9.5 (.NET 4.0 app) fails to start with Wine-Mono (System.Windows.Forms.DataVisualization.Charting.Chart.BeginInit method not implemented)
-  38161  Whispering Willows has missing text for Cyrillic alphabet
-  42152  eFax Messenger 4.4: hangs during installation
-  43362  Bethesda Net Launcher can`t download games
-  44455  Grandia 2 movies don't play
-  45249  Multiple applications wrapped with PE Compact v2.x protection scheme crash on startup (GOT/PIC code emitted at Win32 API entries)(Zockinger Facilitator TFFT v1.1x)
-  45404  LEGO Rock Raiders crashes early on launch
-  48362  Shadwen (32-bit version) crashes after an intro or chapter restart
-  48531  Commandos 2 - HD Remaster fails to launch without native .NET 4.0
-  48850  Mafia: The City of Lost Heaven videos playing in pink
-  49106  error: redefinition of typedef ‘UCHAR’ (plus 'PUCHAR’, ‘USHORT’, 'PUSHORT’, ‘ULONG’, and 'PULONG’)
-  49191  armv7l build broken: dlls/ntdll expression too complex (compiler default '-march=armv6' doesn't support __sync_add_and_fetch for 64-bit integers)
-  49455  Resident Evil Revelations 2 goes into split screen with one controller.
-  49467  Resident Evil Revelations 2 my directional pad does not work when analogs are enabled.
-  49535  Multiple applications have overly green and purple videos due to bad YUV -> RGB conversion (Final Fantasy XI Online, Megarace 3, BlazBlue Calamity Trigger, Mafia: The City of Lost Heaven)
-  49540  Silverlight configuration tab "Webcam / Mic" crashes without functional GL libraries
-  49690  winetricks dotnet35 hangs in 64-bit prefixes
-  49838  Backtraces no longer contain symbols
-  49892  WINE 5.17 never ending loop on "Setting up the windows environment..." ( Android-x86 OS running on PC)
-  49900  Go programs built using go-winio crash on unimplemented function ntdll.dll.RtlDefaultNpAcl
-  50010  Deus Ex Mankind Divided crashes if Wine is compiled with mingw
-  50024  signtool.exe from Windows 7 SDK fails to find certificates
-  50102  Starcraft fails to download cloud settings in fullscreen mode
-  50114  Battle.net App hangs when opening web links
-  50121  Commandos 2 - HD Remaster too dark with vulkan renderer
-  50127  Fonts are thin and pale
-  50139  Exact Audio Copy (EAC) 1.6 plugins not loading (dotnet20 / dotnet40)
-  50173  Autocad 2005 no longer launches
-  50175  Path of Exile: some Cyrillic and Hungul text is missing since Wine 5.20
-  50190  Shockwave Projector: crash on launch
-  50211  Quicken 2004 XG Release 2 crashes on startup
-  50216  Doesn't start Thunderbird (x64 portable version) any more
-  50228  Warframe: filtering by text does not work for Cyrillic since wine-5.14
-  50273  Sid Meier's Civilization III Complete crashes on start
-  50274  Copy paste bug in ipstats.c
-  50294  It's no longer possible to execute a Winelib binary built with older version of Wine
+  20352  Autodesk 3ds Max 9 fails to start: "adlmdll.dll failed to initialize" (failure to connect to Autodesk Licensing Service)
+  22009  Symantec Antivirus 10.1 installer fails due to missing Windows Event Log Service (wevtsvc)
+  32772  Built-in iexplore crashes on exit with Flash player 11 ActiveX plug-in installed
+  45699  Multiple applications crash on unimplemented function RPCRT4.dll.NdrClientCall3 (MS Office 2016 Pro Plus 64-bit/x64 installer, MS-MPI 10.x)
+  48808  user32:cursorinfo "wrong info cursor" failure in Chinese locale on Windows 10
+  49584  DbgHelp no longer can write minidumps
+  49614  Regression: Steam win32 client floods with "CreateSharedImage: invalid format" before crashing
+  49831  winetricks dotnet30sp1 fails
+  49832  Crysis crashes when starting a new game
+  49841  Provide an intermediate level of make output
+  49940  64Bit iexplore.exe crashes on macOS
+  50014  ConEmu hangs (no interaction possible with console)
+  50015  YUMI-UEFI broken in Wine 5.15
+  50052  wineconsole and mark-copy
+  50124  Objects are visible through each other or invisible at all with vulkan renderer (Sniper Elite V2, Banished)
+  50142  winedbg fails to run programs
+  50252  (linked  ?) fonts not handled correctly since wine 5.21
+  50271  Wine throws virtual_setup_exception error during PSPad splash screen or while checking for updates
+  50343  ConEmu is extremely slow when resizing or selecting text
 
 ----------------------------------------------------------------
 
-Changes since 6.0-rc1:
+Changes since 6.0-rc2:
 
-Alex Henrie (1):
-      ntdll: Remove unnecessary call to strlen from get_dos_device.
+Akihiro Sagawa (3):
+      po: Update Japanese translation.
+      po: Update Japanese translation style.
+      po: Update Japanese translation.
 
-Alexandre Julliard (11):
-      gdi32: Always let the Freetype driver fixup the AA flags.
-      ntdll: Don't use the main exe path as bindir on Android.
-      libwine: Move the Android JNI initialization to ntdll.
-      libwine: Mark more functions as obsolete.
-      ntdll: Support the Android Java %fs register being a GDT selector.
-      winegcc: Look for ntdll.so instead of libwine.so to find the library directory.
-      libwine: Add missing wine/asm.h include.
-      configure: Force -static-libgcc when using libunwind.
-      include: Avoid redefining base types in ntdef.h.
-      configure: Get rid of some removed files in the install target.
-      makefiles: Add support for Automake-style silent make rules.
+Alex Henrie (2):
+      po: Update Catalan translation.
+      kernel32/tests: Add tests for Get(Active|Maximum)ProcessorCount.
 
-Biswapriyo Nath (6):
-      ntdll: Add RtlDefaultNpAcl stub.
-      include: Add ID2D1ColorContext interface in d2d1_1.idl.
-      include: Add ID2D1GradientStopCollection1 interface in d2d1_1.idl.
-      include: Add ID2D1ImageBrush interface in d2d1_1.idl.
-      include: Add ID2D1StrokeStyle1 interface in d2d1_1.idl.
-      include: Add ID2D1Multithread interface in d2d1_1.idl.
+Alexandre Julliard (6):
+      gdi32: Don't create font substitutes for identical names.
+      gdi32: Properly fail mapping glyph for invalid characters in fonts without encoding.
+      ntdll: Pass the correct handle to NtTerminateProcess().
+      vcomp/tests: Explicitly request signed chars.
+      makefiles: Make the tests also depend on the Unix library of the tested module.
+      ntdll: Only reset the Unix current directory on removable devices.
 
-Charles Davis (1):
-      iphlpapi: Fix copy-paste error.
+Biswapriyo Nath (7):
+      include: Add AUDCLNT_STREAMOPTIONS_AMBISONICS in audioclient.idl.
+      include: Add error codes in audioclient.idl.
+      include: Add AMBISONICS_PARAMS structure in audioclient.idl.
+      include: Add IAudioAmbisonicsControl interface in audioclient.idl.
+      include: Add more GUIDs in mfreadwrite.idl.
+      include: Add DEFINE_ENUM_FLAG_OPERATORS macro in mfreadwrite.idl.
+      include: Add DEFINE_ENUM_FLAG_OPERATORS macro in directmanipulation.idl.
 
-Haidong Yu (1):
-      evr: Add missing LeaveCriticalSection on creating tracking thread.
+Byeong-Sik Jeon (1):
+      po: Update Korean translation.
 
-Hans Leidekker (1):
-      setupapi: Handle NULL source filename in build_filepathsW.
+Can Taşan (1):
+      po: Update Turkish translation.
 
-Henri Verbeet (5):
-      wined3d: Ensure the last mip-level is at least large enough to hold a single compressed block.
-      wined3d: Use an sRGB fallback format for sRGB formats in wined3d_swapchain_vk_select_vk_format().
-      wined3d: Do not request VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT for dynamic buffers.
-      wined3d: Request VK_MEMORY_PROPERTY_HOST_CACHED_BIT for WINED3D_RESOURCE_ACCESS_MAP_R buffers.
-      wined3d: Do not request VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT for unmappable buffers.
+François Gouget (4):
+      ws2_32/tests: Skip some raw socket tests when missing elevated privileges.
+      ntdll/tests: Skip some registry tests when missing elevated privileges.
+      ntdll/tests: The case-sensitivity tests don't need write access.
+      crypt32/tests: Fix a registerOIDInfo() failure when missing elevated privileges.
 
-Jacek Caban (4):
-      conhost: Fix handling selection boundaries in copy_selection.
-      conhost: Use QS_ALLINPUT to wait for input in main loop.
-      dbghelp: Use WINELOADER environment variable from debuggee process in get_wine_loader_name.
-      setjmp.h: Use GCC-style setjmp on Clang in MSVC mode.
+Haidong Yu (2):
+      inetcpl.cpl: Fix memory leak in security_on_initdialog.
+      ieframe: Fix memory leak in PersistFile_Save.
 
-Jeff Smith (5):
-      gdiplus/tests: Use wide-char string literals for font names.
-      gdiplus/tests: Use wide-char string literals for file names.
-      gdiplus/tests: Use wide-char string literal for mimetype.
-      gdiplus/tests: Use wide-char string literal for metafile description.
-      gdiplus/tests: Use wide-char string literals for test strings.
+Henri Verbeet (9):
+      wined3d: Compare requested memory types in wined3d_bo_slab_vk_compare().
+      wined3d: Only clear "map_ptr" if the memory was unmapped in wined3d_allocator_chunk_vk_unmap().
+      wined3d: Unmap the chunk if needed in wined3d_context_vk_destroy_bo().
+      wined3d: Unmap the slab if needed in wined3d_context_vk_destroy_bo().
+      wined3d: The Vulkan blitter supports depth blits.
+      wined3d: Zero-initialise context_vk in wined3d_context_vk_init().
+      wined3d: Avoid referencing empty command buffers in wined3d_query_event_vk_issue().
+      wine.inf: Store Dynamic DST data for Asia/Tehran as "relative" dates.
+      wined3d: Do not create Vulkan 2D (array) views for UAVs on 3D resources.
 
-Julian Rüger (1):
-      po: Update German translation.
+Jacek Caban (9):
+      dbghelp: Fetch version info only for PE modules in minidumps.
+      ucrtbase: Improve __intrinsic_abnormal_termination stub.
+      msvcrt: Prefix *rot* functions.
+      msvcrt: Use GCC-style assembly on Clang MSVC target.
+      msvcrt: Use __ASM_USE_THISCALL_WRAPPER in cxx.h.
+      winapi: Use __alignof__ on clang.
+      conhost: Don't create bitmap for hidden windows.
+      conhost: Improve get_output_info debug traces.
+      widl: Don't apply call_as methods to async interface.
 
-Michael Stefaniuc (13):
-      msvfw32/tests: Use wide-char string literals.
-      oledlg/tests: Use wide-char string literals.
-      msctf/tests: Use wide-char string literals.
-      gameux/tests: Use wide-char string literals.
-      ieframe/tests: Use wide-char string literals.
-      jscript/tests: Use wide-char string literals.
-      scrrun/tests: Use wide-char string literals.
-      cryptui/tests: Use wide-char string literals.
-      dnsapi/tests: Use wide-char string literals.
-      shcore/tests: Use wide-char string literals.
-      version/tests: Use wide-char string literals.
-      wmvcore/tests: Use wide-char string literals in locale.c.
-      ntoskrnl/tests: Use wide-char string literals in locale.c.
+Jactry Zeng (1):
+      po: Update Simplified Chinese translation.
 
-Nikolay Sivov (1):
-      sxs: Query context that contains the GUID in SxsLookupClrGuid().
+Michael Stefaniuc (7):
+      wldap32/tests: Use wide-char string literals.
+      hnetcfg/tests: Use wide-char string literals.
+      atl100/tests: Use wide-char string literals.
+      msi/tests: Use wide-char string literals.
+      schedsvc/tests: Use wide-char string literals.
+      qcap/tests: Use wide-char string literals.
+      gdi32/tests: Use wide-char string literals.
 
-Paul Gofman (4):
-      ntdll/tests: Add a broken result for Win7u in test_extended_context().
-      ntdll: Restore non-volatile registers in call_user_exception_dispatcher() on x86_64.
-      kernelbase: Get language sort only when required in LCMapStringEx().
-      ntdll: Don't set xstate in context if xstate features are not supported.
+Paul Gofman (5):
+      ws2_32: Fix buffer size check in WSAIoctl() for SIO_GET_INTERFACE_LIST.
+      ntdll: Remove unwind registers save space from struct stack_layout on x64.
+      ntdll: Always copy context in call_user_apc_dispatcher() on x64.
+      ntdll: Save unwind information in KiUserApcDispatcher() on x64.
+      ws2_32/tests: Don't fail the test in test_wsaioctl() if only one interface is available.
 
 Rafał Harabień (1):
-      include: Remove two D3DCAPS2 defines in d3d9 headers.
+      d3d9: Fix handling of D3DENUM_WHQL_LEVEL.
 
-Rémi Bernon (3):
-      gdi32/tests: Test GetGlyphIndices with '\0' default and a glyph.
-      gdi32: Don't try to get glyph index when default char is 0.
-      gdi32: Fix gdi font leak in CreateScalableFontResourceW.
+Rémi Bernon (1):
+      wintrust: Don't fail CryptCATOpen on empty file or invalid data.
 
-Zebediah Figura (4):
-      Revert "winegstreamer: Avoid performing color matrix conversions in videoconvert.".
-      winegstreamer: Clean up a newly allocated buffer on error in bytestream_wrapper_pull().
-      kernel32/tests: Add some more tests for FILE_ATTRIBUTE_REPARSE_POINT.
-      winegstreamer: Remove the color matrix setting for the other videoconvert as well.
-
-Zhiyi Zhang (2):
-      user32/tests: Test that monitor handles are user32 handles.
-      user32/tests: Test that monitor enumeration is not affected by window stations and desktops.
+Zebediah Figura (5):
+      httpapi/tests: Sleep before calling GetOverlappedResult() in test_v2_server().
+      winmm: Always allocate at least MAX_PATH bytes in mmioOpenW().
+      winmm/tests: Test the mmioOpen() search path with various flags.
+      winmm/tests: Add some tests for MMIO_PARSE with long file names.
+      winmm: Search the default path when opening an existing file in create_file_OF().
 
 --
 Alexandre Julliard
