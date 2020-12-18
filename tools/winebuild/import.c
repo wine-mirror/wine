@@ -1856,6 +1856,14 @@ static void build_windows_import_lib( DLLSPEC *spec )
             m_flag = "i386:x86-64";
             as_flags = "--as-flags=--64";
             break;
+        case CPU_ARM:
+            m_flag = "arm";
+            as_flags = NULL;
+            break;
+        case CPU_ARM64:
+            m_flag = "arm64";
+            as_flags = NULL;
+            break;
         default:
             m_flag = NULL;
             break;
