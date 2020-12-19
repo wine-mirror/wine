@@ -6897,7 +6897,7 @@ static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
 #if defined(_MSC_VER)
 
 #define InterlockedCompareExchange128 _InterlockedCompareExchange128
-static inline unsigned char _InterlockedCompareExchange128(__int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare);
+unsigned char _InterlockedCompareExchange128(volatile __int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare);
 #pragma intrinsic(_InterlockedCompareExchange128)
 
 #elif defined(__x86_64__)
