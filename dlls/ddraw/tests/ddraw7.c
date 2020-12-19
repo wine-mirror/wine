@@ -18247,6 +18247,7 @@ static void test_cursor_clipping(void)
     IDirectDraw7 *ddraw;
     HWND window;
     HRESULT hr;
+    BOOL ret;
 
     window = create_window();
     ok(!!window, "Failed to create a window.\n");
@@ -18269,9 +18270,11 @@ static void test_cursor_clipping(void)
         goto done;
     }
 
-    ok(ClipCursor(NULL), "ClipCursor failed, error %#x.\n", GetLastError());
+    ret = ClipCursor(NULL);
+    ok(ret, "ClipCursor failed, error %#x.\n", GetLastError());
     get_virtual_rect(&rect);
-    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ret = GetClipCursor(&clip_rect);
+    ok(ret, "GetClipCursor failed, error %#x.\n", GetLastError());
     ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
             wine_dbgstr_rect(&clip_rect));
 
@@ -18280,7 +18283,8 @@ static void test_cursor_clipping(void)
     ok(hr == DD_OK, "SetCooperativeLevel failed, hr %#x.\n", hr);
     flush_events();
     get_virtual_rect(&rect);
-    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ret = GetClipCursor(&clip_rect);
+    ok(ret, "GetClipCursor failed, error %#x.\n", GetLastError());
     ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
             wine_dbgstr_rect(&clip_rect));
 
@@ -18293,7 +18297,8 @@ static void test_cursor_clipping(void)
     }
     flush_events();
     get_virtual_rect(&rect);
-    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ret = GetClipCursor(&clip_rect);
+    ok(ret, "GetClipCursor failed, error %#x.\n", GetLastError());
     ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
             wine_dbgstr_rect(&clip_rect));
 
@@ -18301,7 +18306,8 @@ static void test_cursor_clipping(void)
     ok(hr == DD_OK, "RestoreDisplayMode failed, hr %#x.\n", hr);
     flush_events();
     get_virtual_rect(&rect);
-    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ret = GetClipCursor(&clip_rect);
+    ok(ret, "GetClipCursor failed, error %#x.\n", GetLastError());
     ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
             wine_dbgstr_rect(&clip_rect));
 
@@ -18310,7 +18316,8 @@ static void test_cursor_clipping(void)
     ok(hr == DD_OK, "SetCooperativeLevel failed, hr %#x.\n", hr);
     flush_events();
     SetRect(&rect, 0, 0, param.old_width, param.old_height);
-    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ret = GetClipCursor(&clip_rect);
+    ok(ret, "GetClipCursor failed, error %#x.\n", GetLastError());
     ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
             wine_dbgstr_rect(&clip_rect));
 
@@ -18323,7 +18330,8 @@ static void test_cursor_clipping(void)
     }
     flush_events();
     SetRect(&rect, 0, 0, param.new_width, param.new_height);
-    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ret = GetClipCursor(&clip_rect);
+    ok(ret, "GetClipCursor failed, error %#x.\n", GetLastError());
     ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
             wine_dbgstr_rect(&clip_rect));
 
@@ -18332,7 +18340,8 @@ static void test_cursor_clipping(void)
     ok(hr == DD_OK, "RestoreDisplayMode failed, hr %#x.\n", hr);
     flush_events();
     SetRect(&rect, 0, 0, param.old_width, param.old_height);
-    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ret = GetClipCursor(&clip_rect);
+    ok(ret, "GetClipCursor failed, error %#x.\n", GetLastError());
     ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
             wine_dbgstr_rect(&clip_rect));
 
@@ -18341,7 +18350,8 @@ static void test_cursor_clipping(void)
     ok(hr == DD_OK, "SetCooperativeLevel failed, hr %#x.\n", hr);
     flush_events();
     get_virtual_rect(&rect);
-    ok(GetClipCursor(&clip_rect), "GetClipCursor failed, error %#x.\n", GetLastError());
+    ret = GetClipCursor(&clip_rect);
+    ok(ret, "GetClipCursor failed, error %#x.\n", GetLastError());
     ok(EqualRect(&clip_rect, &rect), "Expect clip rect %s, got %s.\n", wine_dbgstr_rect(&rect),
             wine_dbgstr_rect(&clip_rect));
 
