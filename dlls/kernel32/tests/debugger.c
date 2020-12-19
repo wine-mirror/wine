@@ -1332,8 +1332,8 @@ static void test_debugger(const char *argv0)
         status = NtSuspendThread(thread, NULL);
         ok(!status, "NtSuspendThread failed, last error:%u\n", GetLastError());
 
-        ok(ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_REPLY_LATER),
-           "ContinueDebugEvent failed, last error:%u\n", GetLastError());
+        ret = ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_REPLY_LATER);
+        ok(ret, "ContinueDebugEvent failed, last error:%u\n", GetLastError());
         ok(!WaitForDebugEvent(&ctx.ev, POLL_EVENT_TIMEOUT), "WaitForDebugEvent succeeded.\n");
 
         status = NtResumeThread(thread, NULL);
@@ -1350,8 +1350,8 @@ static void test_debugger(const char *argv0)
         ok(ctx.ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
         de = ctx.ev;
 
-        ok(ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_REPLY_LATER),
-           "ContinueDebugEvent failed, last error:%u\n", GetLastError());
+        ret = ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_REPLY_LATER);
+        ok(ret, "ContinueDebugEvent failed, last error:%u\n", GetLastError());
 
         ctx.ev.dwDebugEventCode = -1;
         next_event(&ctx, WAIT_EVENT_TIMEOUT);
@@ -1462,8 +1462,8 @@ static void test_debugger(const char *argv0)
 
         status = NtSuspendThread(thread_b, NULL);
         ok(!status, "NtSuspendThread failed, last error:%u\n", GetLastError());
-        ok(ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_REPLY_LATER),
-           "ContinueDebugEvent failed, last error:%u\n", GetLastError());
+        ret = ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_REPLY_LATER);
+        ok(ret, "ContinueDebugEvent failed, last error:%u\n", GetLastError());
 
         ctx.ev.dwDebugEventCode = -1;
         next_event(&ctx, WAIT_EVENT_TIMEOUT);
@@ -1485,8 +1485,8 @@ static void test_debugger(const char *argv0)
         {
             status = pNtSuspendProcess(pi.hProcess);
             ok(!status, "NtSuspendProcess failed, last error:%u\n", GetLastError());
-            ok(ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_REPLY_LATER),
-               "ContinueDebugEvent failed, last error:%u\n", GetLastError());
+            ret = ContinueDebugEvent(ctx.ev.dwProcessId, ctx.ev.dwThreadId, DBG_REPLY_LATER);
+            ok(ret, "ContinueDebugEvent failed, last error:%u\n", GetLastError());
             ok(!WaitForDebugEvent(&ctx.ev, POLL_EVENT_TIMEOUT), "WaitForDebugEvent succeeded.\n");
 
             status = NtResumeThread(thread_b, NULL);
