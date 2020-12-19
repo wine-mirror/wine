@@ -37,9 +37,9 @@ msgid ""
 "to modify its installed components, select it from the list and click Modify/"
 "Remove."
 msgstr ""
-"Aşağıdaki yazılım otomatik olarak kaldırılabilir. Bir programı kaldırmak "
-"veya yüklü bileşenlerini yapılandırmak için listeden seçtikten sonra "
-"Değiştir/Kaldır'ı tıklatın."
+"Aşağıdaki yazılımlar otomatik olarak kaldırılabilir. Bir uygulamayı "
+"kaldırmak veya yüklü bileşenlerini yapılandırmak için listeden seçtikten "
+"sonra Değiştir/Kaldır'ı tıklatın."
 
 #: dlls/appwiz.cpl/appwiz.rc:67
 msgid "&Support Information"
@@ -100,7 +100,7 @@ msgstr "Tamam"
 
 #: dlls/appwiz.cpl/appwiz.rc:79
 msgid "The following information can be used to get technical support for %s:"
-msgstr "Aşağıdaki bilgi %s için teknik destek almak için kullanılabilir:"
+msgstr "Aşağıdaki bilgi %s için teknik destek almak amacıyla kullanılabilir:"
 
 #: dlls/appwiz.cpl/appwiz.rc:80
 msgid "Publisher:"
@@ -660,7 +660,7 @@ msgstr "&Yazı Tipi:"
 
 #: dlls/comdlg32/comdlg32.rc:257
 msgid "Font St&yle:"
-msgstr "Yazı Tipi St&ili:"
+msgstr "Yazı Tipi Biç&imi:"
 
 #: dlls/comdlg32/comdlg32.rc:260 dlls/comdlg32/comdlg32.rc:439
 #: programs/winecfg/winecfg.rc:292
@@ -917,7 +917,7 @@ msgstr "Dosya &türü:"
 
 #: dlls/comdlg32/comdlg32.rc:478 dlls/comdlg32/comdlg32.rc:504
 msgid "Open as &read-only"
-msgstr "Salt-okunu&r aç"
+msgstr "Salt-okunu&r olarak aç"
 
 #: dlls/comdlg32/comdlg32.rc:480 dlls/comdlg32/comdlg32.rc:506
 #: dlls/comdlg32/comdlg32.rc:524 dlls/shdoclc/shdoclc.rc:127
@@ -1102,7 +1102,7 @@ msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
 msgstr ""
-"Kenarlıklar örtüşüyor ya da kağıt sınırlarının dışına çıkıyor.\n"
+"Kenarlıklar çakışıyor ya da kağıt sınırlarının dışına çıkıyor.\n"
 "Lütfen kenarlıkları yeniden girin."
 
 #: dlls/comdlg32/comdlg32.rc:65
@@ -1325,7 +1325,7 @@ msgstr "%s'ye bağlanıyor"
 
 #: dlls/credui/credui.rc:32
 msgid "Logon unsuccessful"
-msgstr "Oturum açma başarısız"
+msgstr "Oturum açılamadı"
 
 #: dlls/credui/credui.rc:33
 msgid ""
@@ -2828,7 +2828,7 @@ msgstr "Alma başarılı."
 
 #: dlls/cryptui/cryptui.rc:100
 msgid "The import failed."
-msgstr "Alma başarısız."
+msgstr "Alınamadı."
 
 #: dlls/cryptui/cryptui.rc:101
 msgid "Arial"
@@ -3056,7 +3056,7 @@ msgstr "Dışa aktarma başarılı."
 
 #: dlls/cryptui/cryptui.rc:169
 msgid "The export failed."
-msgstr "Aktarma başarısız."
+msgstr "Aktarılamadı."
 
 #: dlls/cryptui/cryptui.rc:170
 msgid "Export Private Key"
@@ -4005,7 +4005,7 @@ msgstr "Geçersiz blok.\n"
 
 #: dlls/kernel32/winerror.mc:78
 msgid "Bad environment.\n"
-msgstr "Yanlış ortam.\n"
+msgstr "Yanlış çevre.\n"
 
 #: dlls/kernel32/winerror.mc:83
 msgid "Bad format.\n"
@@ -4285,7 +4285,7 @@ msgstr "Bozuk iletişim tüneli.\n"
 
 #: dlls/kernel32/winerror.mc:428
 msgid "Open failed.\n"
-msgstr "Açma başarısız.\n"
+msgstr "Açılamadı.\n"
 
 #: dlls/kernel32/winerror.mc:433
 msgid "Buffer overflow.\n"
@@ -4485,7 +4485,7 @@ msgstr "Sistem çapında azami iş parçacığı sayısına ulaşıldı.\n"
 
 #: dlls/kernel32/winerror.mc:688
 msgid "Lock failed.\n"
-msgstr "Kilitleme başarısız.\n"
+msgstr "Kilitlenemedi.\n"
 
 #: dlls/kernel32/winerror.mc:693
 msgid "Resource in use.\n"
@@ -4545,7 +4545,7 @@ msgstr "%1 için bozuk EXE biçimi.\n"
 
 #: dlls/kernel32/winerror.mc:763
 msgid "Iterated data exceeds 64k in %1.\n"
-msgstr "Yinelenmiş veri %1 içinde 64k'ya ulaşıyor.\n"
+msgstr "Yinelenmiş veri %1 içinde 64k'yı aşıyor.\n"
 
 #: dlls/kernel32/winerror.mc:768
 msgid "Invalid MinAllocSize in %1.\n"
@@ -4553,7 +4553,7 @@ msgstr "%1 içinde geçersiz MinAllocSize.\n"
 
 #: dlls/kernel32/winerror.mc:773
 msgid "Dynlink from invalid ring.\n"
-msgstr "Geçersiz dönüşten dynlink.\n"
+msgstr "Geçersiz katmandan dinamik bağlantı.\n"
 
 #: dlls/kernel32/winerror.mc:778
 msgid "IOPL not enabled.\n"
@@ -4569,7 +4569,7 @@ msgstr "Otomatik veri segmenti 64k'yı aşıyor.\n"
 
 #: dlls/kernel32/winerror.mc:793
 msgid "Ring 2 segment must be movable.\n"
-msgstr "Dönüş 2 segmenti taşınabilir olmalı.\n"
+msgstr "Katman 2 segmenti taşınabilir olmalı.\n"
 
 #: dlls/kernel32/winerror.mc:798
 msgid "Relocation chain exceeds segment limit in %1.\n"
@@ -4581,7 +4581,7 @@ msgstr "%1 yeniden konumlandırma dizisinde sonsuz döngü.\n"
 
 #: dlls/kernel32/winerror.mc:808
 msgid "Environment variable not found.\n"
-msgstr "Ortam değişkeni bulunamadı.\n"
+msgstr "Çevresel değişken bulunamadı.\n"
 
 #: dlls/kernel32/winerror.mc:813
 msgid "No signal sent.\n"
@@ -4593,7 +4593,7 @@ msgstr "Dosya adı çok uzun.\n"
 
 #: dlls/kernel32/winerror.mc:823
 msgid "Ring 2 stack in use.\n"
-msgstr "Halka 2 yığını kullanımda.\n"
+msgstr "Katman 2 yığını kullanımda.\n"
 
 #: dlls/kernel32/winerror.mc:828
 msgid "Error in use of filename wildcards.\n"
@@ -5029,7 +5029,7 @@ msgstr "Unicode çeviri yok.\n"
 
 #: dlls/kernel32/winerror.mc:1368
 msgid "DLL initialization failed.\n"
-msgstr "DLL başlatma başarısız.\n"
+msgstr "DLL başlatılamadı.\n"
 
 #: dlls/kernel32/winerror.mc:1373
 msgid "Shutdown in progress.\n"
@@ -5077,7 +5077,7 @@ msgstr "Disket uyumsuz olarak kayıt yapıyor.\n"
 
 #: dlls/kernel32/winerror.mc:1428
 msgid "Hard disk recalibrate failed.\n"
-msgstr "Sabit diskin yeniden ayarlanması başarısız.\n"
+msgstr "Sabit disk yeniden ayarlanamadı.\n"
 
 #: dlls/kernel32/winerror.mc:1433
 msgid "Hard disk operation failed.\n"
@@ -5085,7 +5085,7 @@ msgstr "Sabit disk işlemi başarısız.\n"
 
 #: dlls/kernel32/winerror.mc:1438
 msgid "Hard disk reset failed.\n"
-msgstr "Sabit diskin sıfırlanması başarısız.\n"
+msgstr "Sabit disk sıfırlanamadı.\n"
 
 #: dlls/kernel32/winerror.mc:1443
 msgid "End of tape media.\n"
@@ -5109,7 +5109,7 @@ msgstr "Güç durumunun ayarlanması reddedildi.\n"
 
 #: dlls/kernel32/winerror.mc:1468
 msgid "Set-power-state failed.\n"
-msgstr "Güç durumunun ayarlanması başarısız.\n"
+msgstr "Güç durumu ayarlanamadı.\n"
 
 #: dlls/kernel32/winerror.mc:1473
 msgid "Too many links.\n"
@@ -5561,7 +5561,7 @@ msgstr "Parola kısıtlaması.\n"
 
 #: dlls/kernel32/winerror.mc:2038
 msgid "Logon failure.\n"
-msgstr "Oturum başarısız.\n"
+msgstr "Oturum açılamadı.\n"
 
 #: dlls/kernel32/winerror.mc:2043
 msgid "Account restriction.\n"
@@ -6193,7 +6193,7 @@ msgstr "Kurulumun kullanıcı arayüzü başarısız.\n"
 
 #: dlls/kernel32/winerror.mc:2833
 msgid "Failed to open installation log file.\n"
-msgstr "Kurulum günlük dosyasını açma başarısız.\n"
+msgstr "Kurulum günlük dosyası açılamadı.\n"
 
 #: dlls/kernel32/winerror.mc:2838
 msgid "Installation language not supported.\n"
@@ -6201,7 +6201,7 @@ msgstr "Kurulum dili desteklenmiyor.\n"
 
 #: dlls/kernel32/winerror.mc:2843
 msgid "Installation transform failed to apply.\n"
-msgstr "Kurulum dönüştürmesi başarısız.\n"
+msgstr "Kurulum dönüştürülemedi.\n"
 
 #: dlls/kernel32/winerror.mc:2848
 msgid "Installation package rejected.\n"
@@ -6245,7 +6245,7 @@ msgstr "Kurulum programı kullanılmamış.\n"
 
 #: dlls/kernel32/winerror.mc:2898
 msgid "Failed to open the patch package.\n"
-msgstr "Yama paketini açma başarısız.\n"
+msgstr "Yama paketini açılamadı.\n"
 
 #: dlls/kernel32/winerror.mc:2903
 msgid "Invalid patch package.\n"
@@ -6986,8 +6986,7 @@ msgstr "Bu girişin düzenlenecek seçeneği bulunmuyor"
 
 #: dlls/mapi32/mapi32.rc:31
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
-msgstr ""
-"Bir MAPI e-posta istemcisi kurulu olmadığından posta gönderimi başarısız."
+msgstr "Bir MAPI e-posta istemcisi kurulu olmadığından posta gönderilemedi."
 
 #: dlls/mapi32/mapi32.rc:32
 msgid "Send Mail"
@@ -7553,7 +7552,7 @@ msgstr "buradan özellik:"
 
 #: dlls/msi/msi.rc:65
 msgid "choose which folder contains %s"
-msgstr "%s öğesini içeren klasörü seçin"
+msgstr "%s ögesini içeren klasörü seçin"
 
 #: dlls/msi/msi.rc:66 dlls/shell32/shell32.rc:238
 msgid "New Folder"
@@ -8092,7 +8091,7 @@ msgstr "açılır menü"
 
 #: dlls/oleacc/oleacc.rc:43
 msgid "menu item"
-msgstr "menü öğesi"
+msgstr "menü ögesi"
 
 #: dlls/oleacc/oleacc.rc:44
 msgid "tool tip"
@@ -8180,7 +8179,7 @@ msgstr "liste"
 
 #: dlls/oleacc/oleacc.rc:65
 msgid "list item"
-msgstr "liste öğesi"
+msgstr "liste ögesi"
 
 #: dlls/oleacc/oleacc.rc:66
 msgid "outline"
@@ -8188,7 +8187,7 @@ msgstr "anahat"
 
 #: dlls/oleacc/oleacc.rc:67
 msgid "outline item"
-msgstr "anahat öğesi"
+msgstr "anahat ögesi"
 
 #: dlls/oleacc/oleacc.rc:68
 msgid "page tab"
@@ -8927,7 +8926,7 @@ msgstr "Arkaplanı Ko&pyala"
 
 #: dlls/shdoclc/shdoclc.rc:47
 msgid "Set as &Desktop Item"
-msgstr "&Masaüstü Öğesi Yap"
+msgstr "&Masaüstü Ögesi Yap"
 
 #: dlls/shdoclc/shdoclc.rc:52
 msgid "Create Shor&tcut"
@@ -9342,7 +9341,7 @@ msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
 msgstr ""
-"Herhangi bir program, klasör, belge veya Internet kaynağı seçin ve Wine "
+"Herhangi bir program, klasör, belge veya İnternet kaynağı yazın ve Wine "
 "sizin için açsın."
 
 #: dlls/shell32/shell32.rc:339
@@ -9514,7 +9513,7 @@ msgstr "Masaüstü"
 
 #: dlls/shell32/shell32.rc:211
 msgid "NetHood"
-msgstr "Ağ Komşuları"
+msgstr "Ağ Bağlantıları"
 
 #: dlls/shell32/shell32.rc:212
 msgid "Templates"
@@ -9547,7 +9546,7 @@ msgstr "Belgeler"
 
 #: dlls/shell32/shell32.rc:220
 msgid "Administrative Tools"
-msgstr "Yönetimsel Araçlar"
+msgstr "Yönetim Araçları"
 
 #: dlls/shell32/shell32.rc:221
 msgid "Music"
@@ -9639,15 +9638,15 @@ msgstr "Klasör silmeyi onayla"
 
 #: dlls/shell32/shell32.rc:173
 msgid "Are you sure you want to delete '%1'?"
-msgstr "'%1' öğesini silmek istediğinizden emin misiniz?"
+msgstr "'%1' ögesini silmek istediğinizden emin misiniz?"
 
 #: dlls/shell32/shell32.rc:174
 msgid "Are you sure you want to delete these %1 items?"
-msgstr "Bu %1 öğeyi silmek istediğinizden emin misiniz?"
+msgstr "Bu %1 ögeyi silmek istediğinizden emin misiniz?"
 
 #: dlls/shell32/shell32.rc:181
 msgid "Confirm file overwrite"
-msgstr "Dosya Üzerine Yazmayı Onayla"
+msgstr "Dosya üzerine yazmayı Onayla"
 
 #: dlls/shell32/shell32.rc:180
 msgid ""
@@ -9661,25 +9660,25 @@ msgstr ""
 
 #: dlls/shell32/shell32.rc:175
 msgid "Are you sure you want to delete the selected item(s)?"
-msgstr "Seçili öğeleri silmek istediğinizden emin misiniz?"
+msgstr "Seçili ögeleri silmek istediğinizden emin misiniz?"
 
 #: dlls/shell32/shell32.rc:177
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
 msgstr ""
-"'%1' adlı öğeyi ve tüm içeriğini çöpe göndermek istediğinizden emin misiniz?"
+"'%1' adlı ögeyi ve tüm içeriğini çöpe göndermek istediğinizden emin misiniz?"
 
 #: dlls/shell32/shell32.rc:176
 msgid "Are you sure that you want to send '%1' to the Trash?"
-msgstr "'%1' adlı öğeyi çöpe göndermek istediğinizden emin misiniz?"
+msgstr "'%1' adlı ögeyi çöpe göndermek istediğinizden emin misiniz?"
 
 #: dlls/shell32/shell32.rc:178
 msgid "Are you sure that you want to send these %1 items to the Trash?"
-msgstr "Bu %1 öğeyi çöpe göndermek istediğinizden emin misiniz?"
+msgstr "Bu %1 ögeyi çöpe göndermek istediğinizden emin misiniz?"
 
 #: dlls/shell32/shell32.rc:179
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
-msgstr "'%1' adlı öğe çöpe gönderilemiyor. Tamamen silmek ister misiniz?"
+msgstr "'%1' adlı öge çöpe gönderilemiyor. Tamamen silmek ister misiniz?"
 
 #: dlls/shell32/shell32.rc:186
 msgid ""
@@ -9718,11 +9717,11 @@ msgstr "Bu dosya türünü açmak üzere hiçbir Windows programı yapılandır�
 
 #: dlls/shell32/shell32.rc:246
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "'%1' öğesini silmek istediğinizden emin misiniz?"
+msgstr "'%1' ögesini silmek istediğinizden emin misiniz?"
 
 #: dlls/shell32/shell32.rc:247
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "Bu %1 öğeyi silmek istediğinizden emin misiniz?"
+msgstr "Bu %1 ögeyi silmek istediğinizden emin misiniz?"
 
 #: dlls/shell32/shell32.rc:248
 msgid "Confirm deletion"
@@ -9769,9 +9768,9 @@ msgid ""
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
 "Wine ücretsiz bir yazılım olup; Free Software Foundation tarafından "
-"dağıtılan GNU Kısıtlı Genel Kamu Lisansı'nın 2.1 veya (seçimi size bağlı) "
-"herhangi sonraki sürümü altında şartlara bağlı kalarak tekrar dağıtabilir ve/"
-"veya düzenlenebilir.\n"
+"dağıtılan GNU Kısıtlı Genel Kamu Lisansı'nın 2.1 veya herhangi bir sonraki "
+"sürümü (seçimi size bağlı) altında şartlara bağlı kalınarak tekrar "
+"dağıtılabilir ve/veya düzenlenebilir.\n"
 "\n"
 "Wine, yararlı olabileceği umularak dağıtılmaktadır, fakat hiçbir GARANTİSİ "
 "YOKTUR; hatta BU FERAGATNAMEDE BELİRTİLDİĞİ GİBİ TİCARÎ veya HERHANGİ BAŞKA "
@@ -9784,7 +9783,7 @@ msgstr ""
 
 #: dlls/shell32/shell32.rc:256
 msgid "Wine License"
-msgstr "Wine Lisans"
+msgstr "Wine Lisansı"
 
 #: dlls/shell32/shell32.rc:158
 msgid "Trash"
@@ -10661,7 +10660,7 @@ msgstr "Doğu Afrika Yaz Saati"
 
 #: dlls/tzres/tzres.rc:114
 msgid "FLE Standard Time"
-msgstr "Finladiya-Litvanya-Estonya Standart Saati"
+msgstr "Finlandiya-Litvanya-Estonya Standart Saati"
 
 #: dlls/tzres/tzres.rc:115
 msgid "FLE Daylight Time"
@@ -10737,7 +10736,7 @@ msgstr ""
 
 #: dlls/urlmon/urlmon.rc:51
 msgid "Installation of component failed: %08x"
-msgstr "Bileşen yüklemesi başarısız: %08x"
+msgstr "Bileşen yüklenemedi: %08x"
 
 #: dlls/urlmon/urlmon.rc:52
 msgid "Install (%d)"
@@ -11080,7 +11079,7 @@ msgstr "İstenen nesne bulunamadı.\n"
 
 #: dlls/wininet/winineterror.mc:66
 msgid "The attempt to connect to the server failed.\n"
-msgstr "Sunucuya bağlanma denemesi başarısız.\n"
+msgstr "Sunucuya bağlanılamadı.\n"
 
 #: dlls/wininet/winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
@@ -11143,7 +11142,7 @@ msgid ""
 "which functions and messages the driver supports."
 msgstr ""
 "Bu işlev desteklenmiyor. Sürücünün hangi işlevleri ve iletileri "
-"desteklediğini belirlemek için Kapasite işlevini kullanın."
+"desteklediğini belirlemek için Yetenekler işlevini kullanın."
 
 #: dlls/winmm/winmm.rc:41
 msgid "An error number was specified that is not defined in the system."
@@ -11170,7 +11169,7 @@ msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
 msgstr ""
-"Ortam verisi yürütülürken bu işlem yürütülemez. Aygıtı sıfırlayın veya "
+"Ortam verisi oynatılırken bu işlem yürütülemez. Aygıtı sıfırlayın veya "
 "verinin yürütülmesinin tamamlanmasını bekleyin."
 
 #: dlls/winmm/winmm.rc:48
@@ -11202,7 +11201,7 @@ msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
 msgstr ""
-"MIDI haritası bulunmadı. Sürücüde bir sorun olabilir veya MIDIMAP.CFG "
+"MIDI haritası bulunamadı. Sürücüde bir sorun olabilir veya MIDIMAP.CFG "
 "dosyası bozuk veya eksik olabilir."
 
 #: dlls/winmm/winmm.rc:55
@@ -11232,7 +11231,7 @@ msgstr ""
 #: dlls/winmm/winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
-"Geçersiz MCI aygıt tanıtıcısı. MCI aygıtı açıldığında döndürülen tanıtıcıyı "
+"Geçersiz MCI aygıt kimliği. MCI aygıtı açıldığında döndürülen kimliği "
 "kullanın."
 
 #: dlls/winmm/winmm.rc:61
@@ -11286,7 +11285,7 @@ msgid ""
 "one."
 msgstr ""
 "Belirtilen komut karakter dizisinden oluşan bir parametre gerektiriyor. "
-"Lütfen bir tane sağlayın."
+"Lütfen bir tane girin."
 
 #: dlls/winmm/winmm.rc:71
 msgid "The specified integer is invalid for this command."
@@ -11306,7 +11305,7 @@ msgid ""
 "manufacturer about obtaining a new driver."
 msgstr ""
 "Aygıt sürücüsünde bir sorun var. Yeni bir sürücü edinmek için aygıtın "
-"üreticisiyle iletişime geçin."
+"üreticisine başvurun."
 
 #: dlls/winmm/winmm.rc:74
 msgid "The specified command requires a parameter. Please supply one."
@@ -11348,7 +11347,7 @@ msgid ""
 "separately to determine which devices caused the error."
 msgstr ""
 "Birden fazla aygıtta hatalar oluştu. Hangi aygıtların hataya neden olduğunu "
-"belirlemek için her komutu ve aygıtı ayrı ayrı belirleyin."
+"anlamak için her komutu ve aygıtı ayrı ayrı belirleyin."
 
 #: dlls/winmm/winmm.rc:82
 msgid "Cannot determine the device type from the given filename extension."
@@ -11412,14 +11411,14 @@ msgid ""
 "Please supply one."
 msgstr ""
 "Belirtilen komut bir takma ad, dosya, sürücü veya aygıt adı gerektiriyor. "
-"Lütfen bir tane sağlayın."
+"Lütfen bir tane girin."
 
 #: dlls/winmm/winmm.rc:92
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
 msgstr ""
-"Saat biçimi için verilen değer geçersiz. Geçerli biçimler için MCI "
+"Saat biçimi için belirtilen değer geçersiz. Geçerli biçimler için MCI "
 "belgelerine başvurun."
 
 #: dlls/winmm/winmm.rc:93
@@ -11440,8 +11439,8 @@ msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
 msgstr ""
-"Belirtilen dosya belirtilen MCI aygıtı üzerinde yürütülemez. Dosya bozulmuş "
-"olabilir veya doğru biçimde olmayabilir."
+"Belirtilen dosya belirtilen MCI aygıtı üzerinde yürütülemiyor. Dosya "
+"bozulmuş olabilir veya doğru biçimde olmayabilir."
 
 #: dlls/winmm/winmm.rc:96
 msgid "A null parameter block was passed to MCI."
@@ -11449,7 +11448,7 @@ msgstr "'MCI'ya bir boş parametre bloğu geçildi."
 
 #: dlls/winmm/winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
-msgstr "Adsız bir dosya kaydedilemez. Bir dosya adı yazın."
+msgstr "Adsız bir dosya kaydedilemez. Bir dosya adı belirtin."
 
 #: dlls/winmm/winmm.rc:98
 msgid "You must specify an alias when using the 'new' parameter."
@@ -11476,7 +11475,7 @@ msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
 msgstr ""
-"Otomatik açılan aygıtta belirtilen komut çalıştırılamaz. Aygıt kapanana "
+"Belirtilen komut, otomatik açılan aygıtta çalıştırılamaz. Aygıt kapanana "
 "kadar bekleyin ve yeniden deneyin."
 
 #: dlls/winmm/winmm.rc:103
@@ -11515,7 +11514,7 @@ msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
 msgstr ""
-"Belirtilen dosyaya veya MCI aygıtına erişilemiyor. Çünkü uygulama dizinleri "
+"Belirtilen dosyaya veya MCI aygıtına erişilemiyor. Çünkü uygulama klasörleri "
 "değiştiremiyor."
 
 #: dlls/winmm/winmm.rc:108
@@ -11546,7 +11545,7 @@ msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
-"Geçerli biçimdeki dosyaları yürüten tüm dalga aygıtları kullanımda. Bir "
+"Şimdiki biçimde olan dosyaları yürüten tüm dalga aygıtları kullanımda. Bir "
 "dalga aygıtı boşalana kadar bekleyin ve yeniden deneyin."
 
 #: dlls/winmm/winmm.rc:113
@@ -11554,7 +11553,7 @@ msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Geçerli dalga aygıtı kullanımda olduğundan yürütme için açılamıyor. Aygıt "
+"Şimdiki dalga aygıtı kullanımda olduğundan yürütme için açılamıyor. Aygıt "
 "boşalana kadar bekleyin ve yeniden deneyin."
 
 #: dlls/winmm/winmm.rc:114
@@ -11562,16 +11561,16 @@ msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
-"Geçerli biçimdeki dosyaları kaydedebilen tüm dalga aygıtları kullanımda. Bir "
-"dalga aygıtı boşalana kadar bekleyin ve yeniden deneyin."
+"Şimdiki biçimde olan dosyaları kaydedebilen tüm dalga aygıtları kullanımda. "
+"Bir dalga aygıtı boşalana kadar bekleyin ve yeniden deneyin."
 
 #: dlls/winmm/winmm.rc:115
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Geçerli dalga aygıtı kullanımda olduğundan kaydetme işlemi için açılamıyor. "
-"Aygıt boşalana kadar bekleyin ve yeniden deneyin."
+"Şimdiki dalga aygıtı kullanımda olduğundan kaydetme işlemi için "
+"ayarlanamıyor. Aygıt boşalana kadar bekleyin ve yeniden deneyin."
 
 #: dlls/winmm/winmm.rc:116
 msgid "Any compatible waveform playback device may be used."
@@ -11579,35 +11578,35 @@ msgstr "Herhangi bir uyumlu dalga çıkış aygıtı belirlenmemiş."
 
 #: dlls/winmm/winmm.rc:117
 msgid "Any compatible waveform recording device may be used."
-msgstr "Herhangi bir uyumlu dalga giriş aygıtı belirlenmemiş."
+msgstr "Herhangi bir uyumlu dalga giriş aygıtı kullanılabilir."
 
 #: dlls/winmm/winmm.rc:118
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"Geçerli biçimdeki dosyaları yürütebilen dalga aygıtı bulunamadı. Dalga "
-"aygıtını yüklemek için Sürücüler seçeneğini kullanın."
+"Şimdiki biçimde olan dosyaları yürütebilen bir dalga aygıtı yüklenmemiş. "
+"Dalga aygıtını yüklemek için Sürücüler seçeneğini kullanın."
 
 #: dlls/winmm/winmm.rc:119
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
-msgstr "Yürütmeye çalıştığınız aygıt geçerli dosya biçimini tanımıyor."
+msgstr "Yürütmeye çalıştığınız aygıt şimdiki dosya biçimini tanımıyor."
 
 #: dlls/winmm/winmm.rc:120
 msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"Geçerli biçimdeki dosyaları kaydedebilen dalga aygıtı bulunamadı. Dalga "
-"aygıtını yüklemek için Sürücüler seçeneğini kullanın."
+"Şimdiki biçimde olan dosyaları kaydedebilen bir dalga aygıtı yüklenmemiş. "
+"Dalga aygıtını yüklemek için Sürücüler seçeneğini kullanın."
 
 #: dlls/winmm/winmm.rc:121
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
-msgstr "Kaydetmeye çalıştığınız aygıt geçerli dosya biçimini tanımıyor."
+msgstr "Kaydetmeye çalıştığınız aygıt şimdiki dosya biçimini tanımıyor."
 
 #: dlls/winmm/winmm.rc:126
 msgid ""
@@ -11647,7 +11646,7 @@ msgstr ""
 
 #: dlls/winmm/winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
-msgstr "Sistemde belirtilen MIDI bağlantı noktası yok."
+msgstr "Sistemde belirtilen bir MIDI bağlantı noktası yok."
 
 #: dlls/winmm/winmm.rc:127
 msgid ""
@@ -12056,7 +12055,7 @@ msgid ""
 msgstr ""
 "CALL <topluişlemdosyası> komutu bir toplu işlem dosyasında başka bir toplu\n"
 "işlem dosyasındaki komutları çalıştırmak için kullanılır. Eğer dosya\n"
-"mevcutsa, denetim yine onu çağıran dosyaya döner. CALL komutu çağrılan\n"
+"mevcutsa, kontrol yine onu çağıran dosyaya döner. CALL komutu çağrılan\n"
 "yordamlar için parametre verebilir.\n"
 "\n"
 "Çağrılan bir yordamda değiştirilen klasörler, çevre değişkenleri vb.\n"
@@ -12112,7 +12111,7 @@ msgstr ""
 "ECHO <ileti> geçerli uçbirim aygıtında <ileti>'yi gösterir.\n"
 "\n"
 "ECHO ON bir toplu işlem dosyasında tüm komutların çalıştırılmadan önce\n"
-"uçbirim aygıtında görüntülenmesini sağlar\n"
+"uçbirim aygıtında görüntülenmesini sağlar.\n"
 "\n"
 "ECHO OFF bir önceki ECHO ON (ECHO varsayılan olarak kapalıdır)komutunun\n"
 "tersini yapar. ECHO OFF çıktısının görüntülenmesini başına @ işareti\n"
@@ -12130,7 +12129,7 @@ msgid ""
 "\n"
 "The % sign must be doubled when using FOR in a batch file.\n"
 msgstr ""
-"FOR komutu bir dosya kümesinin her öğesi için bir komut çalıştırmada\n"
+"FOR komutu bir dosya kümesinin her ögesi için bir komut çalıştırmada\n"
 "kullanılır.\n"
 "\n"
 "Kullanım: FOR %değişken IN (küme) DO komut\n"
@@ -12222,7 +12221,7 @@ msgid ""
 msgstr ""
 "MOVE bir dosya veya klasörü dosya sistemi içinde yeni bir noktaya taşır.\n"
 "\n"
-"Eğer taşınacak öğe bir klasörse klasör içerisindeki tüm dosyalar ve alt\n"
+"Eğer taşınacak öge bir klasörse klasör içerisindeki tüm dosyalar ve alt\n"
 "klasörler de birlikte taşınacaktır.\n"
 "\n"
 "Eğer eski ve yeni konumlar farklı DOS sürücüleri üzerindeyse MOVE hata\n"
@@ -13021,7 +13020,7 @@ msgstr "A&ra"
 
 #: programs/conhost/conhost.rc:43
 msgid "Setup - Default settings"
-msgstr "Ayarla - Vatsayılan ayarlar"
+msgstr "Ayarla - Varsayılan ayarlar"
 
 #: programs/conhost/conhost.rc:44
 msgid "Setup - Current settings"
@@ -13785,7 +13784,7 @@ msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
-"Bu ayarlar sadece kayıt değerlerini değiştirir.\n"
+"Bu ayarlar sadece kayıt defteri değerlerini değiştirir.\n"
 "Wine performansı üzerine bir etkileri yoktur."
 
 #: programs/oleview/oleview.rc:180
@@ -14267,7 +14266,8 @@ msgstr "reg: Uzak makineye erişilemiyor\n"
 #: programs/reg/reg.rc:43
 msgid ""
 "reg: The system was unable to find the specified registry key or value\n"
-msgstr "reg: Sistem belirtilen kayıt anahtarını veya değeri bulamadı\n"
+msgstr ""
+"reg: Sistem belirtilen kayıt defteri anahtarını veya değerini bulamadı\n"
 
 #: programs/reg/reg.rc:44
 msgid "reg: Unsupported registry data type [%1]\n"
@@ -14366,7 +14366,7 @@ msgstr "reg: '%1' dosyası bulunamadı.\n"
 
 #: programs/reg/reg.rc:68
 msgid "reg: Unable to open the registry key '%1'.\n"
-msgstr "reg: '%1' kayıt anahtarı açılamıyor.\n"
+msgstr "reg: '%1' kayıt defteri anahtarı açılamıyor.\n"
 
 #: programs/reg/reg.rc:69
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
@@ -14390,11 +14390,11 @@ msgstr "&Kayıt Defteri"
 
 #: programs/regedit/regedit.rc:36
 msgid "&Import Registry File..."
-msgstr "Kayıt Defteri Dosyası &Al..."
+msgstr "Kayıt Dosyası &Al..."
 
 #: programs/regedit/regedit.rc:37
 msgid "&Export Registry File..."
-msgstr "Kayıt Defteri Dosyası &Kaydet..."
+msgstr "Kayıt Dosyası &Kaydet..."
 
 #: programs/regedit/regedit.rc:47 programs/regedit/regedit.rc:99
 #: programs/regedit/regedit.rc:121
@@ -14537,15 +14537,15 @@ msgstr "Taban"
 
 #: programs/regedit/regedit.rc:334
 msgid "Hexadecimal"
-msgstr "Onaltılı"
+msgstr "Onaltılık"
 
 #: programs/regedit/regedit.rc:335
 msgid "Decimal"
-msgstr "Onlu"
+msgstr "Onluk"
 
 #: programs/regedit/regedit.rc:342
 msgid "Edit Binary"
-msgstr "İkiliyi Düzenle"
+msgstr "İkili Dizeyi Düzenle"
 
 #: programs/regedit/regedit.rc:355
 msgid "Edit Multi-String"
@@ -14561,7 +14561,7 @@ msgstr "Değerleri veya anahtarları düzenlemek için komutları içerir"
 
 #: programs/regedit/regedit.rc:161
 msgid "Contains commands for customizing the registry window"
-msgstr "Kayıt penceresini özelleştirmek için komutları içerir"
+msgstr "Kayıt defteri penceresini özelleştirmek için komutları içerir"
 
 #: programs/regedit/regedit.rc:162
 msgid "Contains commands for accessing frequently used keys"
@@ -14576,7 +14576,7 @@ msgstr ""
 
 #: programs/regedit/regedit.rc:164
 msgid "Contains commands for creating new keys or values"
-msgstr "Yeni anahtarlar ve değerler üretmek için komutları içerir"
+msgstr "Yeni anahtarlar ve değerler oluşturmak için komutları içerir"
 
 #: programs/regedit/regedit.rc:149
 msgid "Data"
@@ -14705,9 +14705,9 @@ msgstr ""
 "  /C             Bir kayıt defteri dosyasının içeriğini alır.\n"
 "  /D             Belirtilen bir kayıt anahtarını siler.\n"
 "  /E             Belirtilen bir kayıt anahtarının içeriğini bir dosyaya "
-"çıkartır.\n"
+"verir.\n"
 "                 Eğer bir kayıt anahtarı belirtilmezse, bütün kayıt "
-"defterini çıkartır.\n"
+"defterini verir.\n"
 "  /S             Sessiz kip. Herhangi bir ileti gösterilmez.\n"
 "  /V             Kullanıcı arayüzü gelişmiş kipte başlatılır. Önemsenmez.\n"
 "  /?             Bu yardımı gösterir.\n"
@@ -14719,7 +14719,7 @@ msgstr ""
 "\n"
 "Kullanım örnekleri:\n"
 "  regedit \"import.reg\"\n"
-"  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Konsol\"\n"
+"  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
 "  regedit /D \"HKEY_LOCAL_MACHINE\\Anahtar\\Yol\"\n"
 
 #: programs/regedit/regedit.rc:409
@@ -14763,7 +14763,7 @@ msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
 msgstr ""
-"regedit: Onaltılık değeri çevirme başarısız. '%1''de geçersiz bir değerle "
+"regedit: Onaltılık değeri çevrilemiyor. '%1''de geçersiz bir değerle "
 "karşılaşıldı.\n"
 
 #: programs/regedit/regedit.rc:419
@@ -14803,7 +14803,7 @@ msgstr "regedit: '%1' kayıt değeri ikili veri olarak dışa verilecek.\n"
 
 #: programs/regedit/regedit.rc:427
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "reg: Geçersiz sistem anahtarı [%1]\n"
+msgstr "regedit: Geçersiz sistem anahtarı [%1]\n"
 
 #: programs/regedit/regedit.rc:428
 msgid ""
@@ -14860,7 +14860,7 @@ msgstr "Bir anahtar, değer veya veri içerisindeki metin dizesini bulur"
 
 #: programs/regedit/regedit.rc:197
 msgid "Finds next occurrence of text specified in previous search"
-msgstr "Önceki aramada belirlenen metnin bir sonraki eşleşmesini bulur"
+msgstr "Önceki aramada belirtilen metnin bir sonraki eşleşmesini bulur"
 
 #: programs/regedit/regedit.rc:169
 msgid "Modifies the value's data"
@@ -15269,7 +15269,7 @@ msgstr "Normalin &Altında"
 
 #: programs/taskmgr/taskmgr.rc:169
 msgid "Set &Affinity..."
-msgstr "İ&lişkiyi Belirt..."
+msgstr "İ&lişkiyi Ayarla..."
 
 #: programs/taskmgr/taskmgr.rc:170
 msgid "Edit Debug &Channels..."
@@ -15290,11 +15290,11 @@ msgstr "&Tüm kullanıcı işlemlerini göster"
 
 #: programs/taskmgr/taskmgr.rc:372
 msgid "CPU usage"
-msgstr "CPU Kullanımı"
+msgstr "CPU kullanımı"
 
 #: programs/taskmgr/taskmgr.rc:373
 msgid "Mem usage"
-msgstr "Bellek Kullanımı"
+msgstr "Bellek kullanımı"
 
 #: programs/taskmgr/taskmgr.rc:374
 msgid "Totals"
@@ -15302,15 +15302,15 @@ msgstr "Toplamlar"
 
 #: programs/taskmgr/taskmgr.rc:375
 msgid "Commit charge (K)"
-msgstr "Ayrılmış Belllek (K)"
+msgstr "Ayrılmış bellek (K)"
 
 #: programs/taskmgr/taskmgr.rc:376
 msgid "Physical memory (K)"
-msgstr "Fiziksel Bellek (K)"
+msgstr "Fiziksel bellek (K)"
 
 #: programs/taskmgr/taskmgr.rc:377
 msgid "Kernel memory (K)"
-msgstr "Çekirdek Belleği (K)"
+msgstr "Çekirdek belleği (K)"
 
 #: programs/taskmgr/taskmgr.rc:378 programs/taskmgr/taskmgr.rc:290
 msgid "Handles"
@@ -15318,7 +15318,7 @@ msgstr "İşleyiciler"
 
 #: programs/taskmgr/taskmgr.rc:379 programs/taskmgr/taskmgr.rc:291
 msgid "Threads"
-msgstr "İş Parçacıkları"
+msgstr "İş parçacıkları"
 
 #: programs/taskmgr/taskmgr.rc:380 programs/taskmgr/taskmgr.rc:263
 msgid "Processes"
@@ -15351,11 +15351,11 @@ msgstr "Sayfalanmamış"
 
 #: programs/taskmgr/taskmgr.rc:414
 msgid "CPU usage history"
-msgstr "CPU Kullanım Geçmişi"
+msgstr "CPU kullanım geçmişi"
 
 #: programs/taskmgr/taskmgr.rc:415
 msgid "Memory usage history"
-msgstr "Bellek Kullanım Geçmişi"
+msgstr "Bellek kullanım geçmişi"
 
 #: programs/taskmgr/taskmgr.rc:428 programs/taskmgr/taskmgr.rc:327
 msgid "Debug Channels"
@@ -15564,7 +15564,7 @@ msgstr "Kullanıcı &Adı"
 
 #: programs/taskmgr/taskmgr.rc:547
 msgid "Page F&aults Delta"
-msgstr "Sayfalama Hat. &Farkı"
+msgstr "Sayfalama Hatası &Farkı"
 
 #: programs/taskmgr/taskmgr.rc:549
 msgid "&Virtual Memory Size"
@@ -15681,11 +15681,11 @@ msgstr "Pencereleri büyütür"
 
 #: programs/taskmgr/taskmgr.rc:209
 msgid "Cascades the windows diagonally on the desktop"
-msgstr "Masaüstündeki pencereleri köşegen doğrultusunda döşer"
+msgstr "Masaüstündeki pencereleri çapraz döşer"
 
 #: programs/taskmgr/taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
-msgstr "Pencereyi öne getirir; ama ona geçmez"
+msgstr "Pencereyi öne getirir; ama ona odaklanmaz"
 
 #: programs/taskmgr/taskmgr.rc:211
 msgid "Displays Task Manager help topics"
@@ -15705,7 +15705,7 @@ msgstr "16-bit işlemleri ilişkili ntvdm.exe altında gösterir"
 
 #: programs/taskmgr/taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
-msgstr "Hangi süreçlerin İşlem sekmesinde görünebilir olacağını seçin"
+msgstr "Hangi işlemlerin İşlem sekmesinde görünebilir olacağını seçin"
 
 #: programs/taskmgr/taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
@@ -15729,7 +15729,7 @@ msgstr "Seçili görevlere kapanmasını bildirir"
 
 #: programs/taskmgr/taskmgr.rc:228
 msgid "Switches the focus to the process of the selected task"
-msgstr "Seçili sürece odaklanır"
+msgstr "Seçili işleme odaklanır"
 
 #: programs/taskmgr/taskmgr.rc:229
 msgid "Restores the Task Manager from its hidden state"
@@ -15737,7 +15737,7 @@ msgstr "Görev Yöneticisini gizli konumundan geri getirir"
 
 #: programs/taskmgr/taskmgr.rc:230
 msgid "Removes the process from the system"
-msgstr "Sistemden işlemi kaldırır"
+msgstr "İşlemi sistemden kaldırır"
 
 #: programs/taskmgr/taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
@@ -15793,7 +15793,7 @@ msgstr "İşlemler: %d"
 
 #: programs/taskmgr/taskmgr.rc:267
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "Bel Kullanımı: %1!u!kB / %2!u!kB"
+msgstr "Bellek Kullanımı: %1!u!kB / %2!u!kB"
 
 #: programs/taskmgr/taskmgr.rc:272
 msgid "Image Name"
@@ -15813,15 +15813,15 @@ msgstr "CPU Zamanı"
 
 #: programs/taskmgr/taskmgr.rc:276
 msgid "Mem Usage"
-msgstr "Bell. Kull."
+msgstr "Bellek Kullanımı"
 
 #: programs/taskmgr/taskmgr.rc:277
 msgid "Mem Delta"
-msgstr "Bell. Farkı"
+msgstr "Bellek Farkı"
 
 #: programs/taskmgr/taskmgr.rc:278
 msgid "Peak Mem Usage"
-msgstr "En Yüksek Bell. Kull."
+msgstr "En Yüksek Bellek Kullanımı"
 
 #: programs/taskmgr/taskmgr.rc:279
 msgid "Page Faults"
@@ -15861,7 +15861,7 @@ msgstr "Temel Öncelik"
 
 #: programs/taskmgr/taskmgr.rc:301
 msgid "Task Manager Warning"
-msgstr "Görev Yönetici Uyarısı"
+msgstr "Görev Yöneticisi Uyarısı"
 
 #: programs/taskmgr/taskmgr.rc:304
 msgid ""
@@ -15869,7 +15869,7 @@ msgid ""
 "cause undesired results including system instability. Are you\n"
 "sure you want to change the priority class?"
 msgstr ""
-"UYARI: Bu işlemin öncelik sınıfını değiştirmek sistem kararsızlığı da\n"
+"UYARI: Bu işlemin öncelik sınıfını değiştirmek sistem kararsızlığı\n"
 "dahil, istenmeyen sonuçlar doğurabilir. Öncelik sınıfını değiştirmek\n"
 "istediğinizden emin misiniz?"
 
@@ -15892,7 +15892,7 @@ msgstr ""
 
 #: programs/taskmgr/taskmgr.rc:311
 msgid "Unable to Terminate Process"
-msgstr "İşlem Sonlandırma Başarısız"
+msgstr "İşlem Sonlandırılamıyor"
 
 #: programs/taskmgr/taskmgr.rc:313
 msgid ""
@@ -15904,7 +15904,7 @@ msgstr ""
 
 #: programs/taskmgr/taskmgr.rc:314
 msgid "Unable to Debug Process"
-msgstr "İşlemde Hata Ayıklama Başarısız"
+msgstr "İşlemde Hata Ayıklanamıyor"
 
 #: programs/taskmgr/taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
@@ -15916,7 +15916,7 @@ msgstr "Geçersiz Seçenek"
 
 #: programs/taskmgr/taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
-msgstr "İşlem İlişkisine Erişme veya İlişkiyi Ayarlama Başarısız"
+msgstr "İşlem İlişkisine Erişilemiyor veya İlişki Ayarlanamıyor"
 
 #: programs/taskmgr/taskmgr.rc:322
 msgid "System Idle Process"
@@ -15945,7 +15945,7 @@ msgid ""
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "'%s' kaldırma komutu büyük olasılıkla dosya olmadığından çalıştırılamadı.\n"
-"Kayıt defterinden bu kaldırma girişini silmek ister misiniz?"
+"Kayıt defterinden bu kaldırma girdisini silmek ister misiniz?"
 
 #: programs/uninstaller/uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
@@ -16053,9 +16053,9 @@ msgid ""
 "option) any later version."
 msgstr ""
 "Bu program ücretsiz bir yazılım olup; Free Software Foundation tarafından "
-"dağıtılan GNU Kısıtlı Genel Kamu Lisansı'nın 2.1 veya (seçimi size bağlı) "
-"herhangi sonraki sürümü altında şartlara bağlı kalarak tekrar dağıtılabilir "
-"ve/veya düzenlenebilir."
+"dağıtılan GNU Kısıtlı Genel Kamu Lisansı'nın 2.1 veya herhangi bir sonraki "
+"sürümü (seçimi size bağlı) altında şartlara bağlı kalınarak tekrar "
+"dağıtılabilir ve/veya düzenlenebilir."
 
 #: programs/winecfg/winecfg.rc:142
 msgid "Windows registration information"
@@ -16063,11 +16063,11 @@ msgstr "Windows kayıt bilgisi"
 
 #: programs/winecfg/winecfg.rc:143
 msgid "&Owner:"
-msgstr "Kullanıcı:"
+msgstr "&Kullanıcı:"
 
 #: programs/winecfg/winecfg.rc:145
 msgid "Organi&zation:"
-msgstr "Kuruluş:"
+msgstr "K&uruluş:"
 
 #: programs/winecfg/winecfg.rc:153
 msgid "Application settings"
@@ -16125,7 +16125,7 @@ msgstr "Ekran çözünürlüğü"
 
 #: programs/winecfg/winecfg.rc:183
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "Bu, 10 nokta Tahoma kullanan örnek bir metindir"
+msgstr "Bu, 10 punto Tahoma kullanan örnek bir metindir"
 
 #: programs/winecfg/winecfg.rc:190
 msgid "DLL overrides"
@@ -16138,7 +16138,7 @@ msgid ""
 "application)."
 msgstr ""
 "Devingen Bağlı Kitaplıkların her biri yerleşik (Wine ile gelen) veya doğal "
-"(Windows'tan alınmış ya da uygulama tarafından sağlanmış) olarak "
+"(Windows'tan alınan ya da uygulama tarafından sağlanan) olarak "
 "belirtilebilir."
 
 #: programs/winecfg/winecfg.rc:193
@@ -16278,7 +16278,7 @@ msgstr "Tema yükle..."
 
 #: programs/winecfg/winecfg.rc:294
 msgid "It&em:"
-msgstr "&Öğe:"
+msgstr "&Öge:"
 
 #: programs/winecfg/winecfg.rc:296
 msgid "C&olor:"
@@ -16298,7 +16298,7 @@ msgstr "Klasörler"
 
 #: programs/winecfg/winecfg.rc:309
 msgid "&Link to:"
-msgstr "Hedef d&izin:"
+msgstr "Hedef k&lasör:"
 
 #: programs/winecfg/winecfg.rc:33
 msgid "Libraries"
@@ -16442,7 +16442,7 @@ msgstr "Çalıştırılabilir bir dosya seçin"
 
 #: programs/winecfg/winecfg.rc:68
 msgid "Autodetect"
-msgstr "Otomatik &Algıla"
+msgstr "Otomatik Algıla"
 
 #: programs/winecfg/winecfg.rc:69
 msgid "Local hard disk"
@@ -16614,7 +16614,7 @@ msgstr "Arkaplan Sıra Denetimi"
 
 #: programs/winecfg/winecfg.rc:125
 msgid "Hot Tracked Item"
-msgstr "Aktif İzlenen Nesne"
+msgstr "Etkin İzlenen Nesne"
 
 #: programs/winecfg/winecfg.rc:126
 msgid "Active Title Bar Gradient"
@@ -16637,7 +16637,7 @@ msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
 msgstr ""
-"wineconsole: %s programını başlatma başarısız.\n"
+"wineconsole: %s programı başlatılamadı.\n"
 "Komut geçersiz.\n"
 
 #: programs/winedbg/winedbg.rc:50 programs/winedbg/winedbg.rc:38
@@ -16696,7 +16696,7 @@ msgstr "(tanımsız)"
 
 #: programs/winedbg/winedbg.rc:44
 msgid "Saving failed"
-msgstr "Kayıt başarısız"
+msgstr "Kaydedilemedi"
 
 #: programs/winedbg/winedbg.rc:45
 msgid "Loading detailed information, please wait..."
@@ -16716,7 +16716,7 @@ msgstr "&Özellikler\tAlt+Enter"
 
 #: programs/winefile/winefile.rc:38
 msgid "Cr&eate Directory..."
-msgstr "&klasör Oluştur..."
+msgstr "&Klasör Oluştur..."
 
 #: programs/winefile/winefile.rc:43
 msgid "&Disk"
@@ -16756,7 +16756,7 @@ msgstr "&Tarihe Göre Sırala"
 
 #: programs/winefile/winefile.rc:59
 msgid "Filter by&..."
-msgstr "Süzgeç &..."
+msgstr "Filtrele &..."
 
 #: programs/winefile/winefile.rc:66
 msgid "&Drive Bar"
@@ -16796,7 +16796,7 @@ msgstr "Dosya türü"
 
 #: programs/winefile/winefile.rc:140
 msgid "&Directories"
-msgstr "&klasörler"
+msgstr "&Klasörler"
 
 #: programs/winefile/winefile.rc:142
 msgid "&Programs"
@@ -16881,7 +16881,7 @@ msgstr "Düzenlenme tarihi"
 
 #: programs/winefile/winefile.rc:111
 msgid "Index/Inode"
-msgstr "İndis/Düğüm"
+msgstr "Dizin/Düğüm"
 
 #: programs/winefile/winefile.rc:116
 msgid "%1 of %2 free"
@@ -16904,10 +16904,8 @@ msgid "&Beginner"
 msgstr "&Acemi"
 
 #: programs/winemine/winemine.rc:45
-#, fuzzy
-#| msgid "Interface"
 msgid "&Intermediate"
-msgstr "Arayüz"
+msgstr "&Orta Seviye"
 
 #: programs/winemine/winemine.rc:46
 msgid "&Expert"
@@ -16938,10 +16936,8 @@ msgid "Beginner"
 msgstr "Acemi"
 
 #: programs/winemine/winemine.rc:65
-#, fuzzy
-#| msgid "Interface"
 msgid "Intermediate"
-msgstr "Arayüz"
+msgstr "Orta Seviye"
 
 #: programs/winemine/winemine.rc:66
 msgid "Expert"
@@ -17165,7 +17161,7 @@ msgstr "&Ekle"
 
 #: programs/wordpad/wordpad.rc:80
 msgid "&Date and time..."
-msgstr "&Tarih ve zaman..."
+msgstr "&Tarih ve saat..."
 
 #: programs/wordpad/wordpad.rc:82
 msgid "F&ormat"
