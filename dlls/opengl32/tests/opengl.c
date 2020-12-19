@@ -235,9 +235,10 @@ static int test_pfd(const PIXELFORMATDESCRIPTOR *pfd, PIXELFORMATDESCRIPTOR *fmt
     pf = ChoosePixelFormat( hdc, pfd );
     if (pf && fmt)
     {
+        INT ret;
         memset(fmt, 0, sizeof(*fmt));
-        ok(DescribePixelFormat( hdc, pf, sizeof(*fmt), fmt ),
-           "DescribePixelFormat failed with error: %u\n", GetLastError());
+        ret = DescribePixelFormat( hdc, pf, sizeof(*fmt), fmt );
+        ok(ret, "DescribePixelFormat failed with error: %u\n", GetLastError());
     }
     ReleaseDC( hwnd, hdc );
     DestroyWindow( hwnd );
