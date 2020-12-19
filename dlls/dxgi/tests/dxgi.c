@@ -5475,8 +5475,8 @@ static void test_multi_adapter(void)
 
             /* Should have the same monitor rectangle. */
             monitor_info.cbSize = sizeof(monitor_info);
-            ok(GetMonitorInfoA(monitor, &monitor_info),
-                    "Adapter %u output %u: Failed to get monitor info, error %#x.\n", adapter_index,
+            ret = GetMonitorInfoA(monitor, &monitor_info);
+            ok(ret, "Adapter %u output %u: Failed to get monitor info, error %#x.\n", adapter_index,
                     output_index, GetLastError());
             ok(EqualRect(&monitor_info.rcMonitor, &output_desc.DesktopCoordinates),
                     "Adapter %u output %u: Got unexpected output rect %s, expected %s.\n",
@@ -6572,6 +6572,7 @@ static void test_cursor_clipping(IUnknown *device, BOOL is_d3d12)
     IDXGIOutput *output;
     ULONG refcount;
     HRESULT hr;
+    BOOL ret;
 
     get_factory(device, is_d3d12, &factory);
 
@@ -6622,11 +6623,12 @@ static void test_cursor_clipping(IUnknown *device, BOOL is_d3d12)
                     "Adapter %u output %u: Failed to find a different mode than %ux%u.\n",
                     adapter_idx, output_idx, width, height);
 
-            ok(ClipCursor(NULL), "Adapter %u output %u: ClipCursor failed, error %#x.\n",
+            ret = ClipCursor(NULL);
+            ok(ret, "Adapter %u output %u: ClipCursor failed, error %#x.\n",
                     adapter_idx, output_idx, GetLastError());
             get_virtual_rect(&virtual_rect);
-            ok(GetClipCursor(&clip_rect),
-                    "Adapter %u output %u: GetClipCursor failed, error %#x.\n", adapter_idx,
+            ret = GetClipCursor(&clip_rect);
+            ok(ret, "Adapter %u output %u: GetClipCursor failed, error %#x.\n", adapter_idx,
                     output_idx, GetLastError());
             ok(EqualRect(&clip_rect, &virtual_rect),
                     "Adapter %u output %u: Expect clip rect %s, got %s.\n", adapter_idx, output_idx,
@@ -6647,8 +6649,8 @@ static void test_cursor_clipping(IUnknown *device, BOOL is_d3d12)
 
             flush_events();
             get_virtual_rect(&virtual_rect);
-            ok(GetClipCursor(&clip_rect),
-                    "Adapter %u output %u: GetClipCursor failed, error %#x.\n", adapter_idx,
+            ret = GetClipCursor(&clip_rect);
+            ok(ret, "Adapter %u output %u: GetClipCursor failed, error %#x.\n", adapter_idx,
                     output_idx, GetLastError());
             ok(EqualRect(&clip_rect, &virtual_rect),
                     "Adapter %u output %u: Expect clip rect %s, got %s.\n", adapter_idx, output_idx,
@@ -6671,8 +6673,8 @@ static void test_cursor_clipping(IUnknown *device, BOOL is_d3d12)
 
             flush_events();
             get_virtual_rect(&virtual_rect);
-            ok(GetClipCursor(&clip_rect),
-                    "Adapter %u output %u: GetClipCursor failed, error %#x.\n", adapter_idx,
+            ret = GetClipCursor(&clip_rect);
+            ok(ret, "Adapter %u output %u: GetClipCursor failed, error %#x.\n", adapter_idx,
                     output_idx, GetLastError());
             ok(EqualRect(&clip_rect, &virtual_rect),
                     "Adapter %u output %u: Expect clip rect %s, got %s.\n", adapter_idx, output_idx,
@@ -6691,8 +6693,8 @@ static void test_cursor_clipping(IUnknown *device, BOOL is_d3d12)
 
             flush_events();
             get_virtual_rect(&virtual_rect);
-            ok(GetClipCursor(&clip_rect),
-                    "Adapter %u output %u: GetClipCursor failed, error %#x.\n", adapter_idx,
+            ret = GetClipCursor(&clip_rect);
+            ok(ret, "Adapter %u output %u: GetClipCursor failed, error %#x.\n", adapter_idx,
                     output_idx, GetLastError());
             ok(EqualRect(&clip_rect, &virtual_rect),
                     "Adapter %u output %u: Expect clip rect %s, got %s.\n", adapter_idx, output_idx,
