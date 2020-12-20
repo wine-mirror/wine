@@ -81,7 +81,7 @@
 #  endif
 # elif defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__)
 #   define __stdcall __attribute__((pcs("aapcs-vfp")))
-# elif defined(__aarch64__) && defined (__GNUC__)
+# elif defined(__aarch64__) && defined (__GNUC__) && __has_attribute(ms_abi)
 #  define __stdcall __attribute__((ms_abi))
 # else  /* __i386__ */
 #  define __stdcall
@@ -102,7 +102,7 @@
 #endif
 
 #ifndef __ms_va_list
-# if (defined(__x86_64__) || defined(__aarch64__)) && defined (__GNUC__)
+# if (defined(__x86_64__) || (defined(__aarch64__) && __has_attribute(ms_abi))) && defined (__GNUC__)
 #  define __ms_va_list __builtin_ms_va_list
 #  define __ms_va_start(list,arg) __builtin_ms_va_start(list,arg)
 #  define __ms_va_end(list) __builtin_ms_va_end(list)
