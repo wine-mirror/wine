@@ -1632,6 +1632,7 @@ static void test_GetGlyphIndices(void)
     LOGFONTA lf;
     DWORD    flags = 0;
     WCHAR    testtext[] = L"Test\xffff";
+    WCHAR    c[] = { 0x25bc /* Black Down-Pointing Triangle */, 0x212a /* Kelvin Sign */ };
     WORD     glyphs[(sizeof(testtext)/2)-1];
     TEXTMETRICA textm;
     HFONT hOldFont;
@@ -1653,8 +1654,9 @@ static void test_GetGlyphIndices(void)
     lf.lfCharSet = ANSI_CHARSET;
 
     hfont = CreateFontIndirectA(&lf);
-    ok(hfont != 0, "CreateFontIndirectEx failed\n");
-    ok(GetTextMetricsA(hdc, &textm), "GetTextMetric failed\n");
+    ok(hfont != 0, "CreateFontIndirect failed\n");
+    hOldFont = SelectObject(hdc, hfont);
+    ok(GetTextMetricsA(hdc, &textm), "GetTextMetrics failed\n");
     if (textm.tmCharSet == ANSI_CHARSET)
     {
         flags |= GGI_MARK_NONEXISTING_GLYPHS;
@@ -1664,16 +1666,44 @@ static void test_GetGlyphIndices(void)
         flags = 0;
         charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
         ok(charcount == 5, "GetGlyphIndicesW count of glyphs should = 5 not %d\n", charcount);
-        ok(glyphs[4] == textm.tmDefaultChar, "GetGlyphIndicesW should have returned a %04x not %04x\n",
-                        textm.tmDefaultChar, glyphs[4]);
+        ok(glyphs[4] == textm.tmDefaultChar || glyphs[4] == 0x20 /* CJK Windows */,
+           "GetGlyphIndicesW should have returned a %04x not %04x\n", textm.tmDefaultChar, glyphs[4]);
     }
     else
         /* FIXME: Write tests for non-ANSI charsets. */
         skip("GetGlyphIndices System font tests only for ANSI_CHARSET\n");
 
+    DeleteObject(SelectObject(hdc, hOldFont));
+
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "MS Sans Serif");
+    lf.lfHeight = -13;
+    lf.lfCharSet = DEFAULT_CHARSET;
+    hfont = CreateFontIndirectA(&lf);
+    ok(hfont != 0, "CreateFontIndirect failed\n");
+    hOldFont = SelectObject(hdc, hfont);
+    ok(GetTextMetricsA(hdc, &textm), "GetTextMetrics failed\n");
+
+    glyphs[0] = glyphs[1] = 0;
+    charcount = GetGlyphIndicesW(hdc, c, ARRAY_SIZE(c), glyphs, GGI_MARK_NONEXISTING_GLYPHS);
+    ok(charcount == ARRAY_SIZE(c), "got %u\n", charcount);
+    ok(glyphs[0] == 0x001f || glyphs[0] == 0xffff /* Vista */, "got %#x\n", glyphs[0]);
+todo_wine
+    ok(glyphs[1] == 0x001f || glyphs[1] == 0xffff /* Vista */, "got %#x\n", glyphs[1]);
+
+    glyphs[0] = glyphs[1] = 0;
+    charcount = GetGlyphIndicesW(hdc, c, ARRAY_SIZE(c), glyphs, 0);
+    ok(charcount == ARRAY_SIZE(c), "got %u\n", charcount);
+    ok(glyphs[0] == textm.tmDefaultChar || glyphs[0] == 0x20 /* CJK Windows */, "got %#x\n", glyphs[0]);
+todo_wine
+    ok(glyphs[1] == textm.tmDefaultChar || glyphs[1] == 0x20 /* CJK Windows */, "got %#x\n", glyphs[1]);
+
+    DeleteObject(SelectObject(hdc, hOldFont));
+
     if(!is_font_installed("Tahoma"))
     {
         skip("Tahoma is not installed so skipping this test\n");
+        ReleaseDC(0, hdc);
         return;
     }
     memset(&lf, 0, sizeof(lf));
@@ -1718,12 +1748,13 @@ static void test_GetGlyphIndices(void)
     ok(glyphs[4] == 0, "GetGlyphIndicesW should have returned 0 not %04x\n", glyphs[4]);
     DeleteObject(SelectObject(hdc, hOldFont));
 
+    ReleaseDC(0, hdc);
+
     ret = pRemoveFontMemResourceEx(rsrc);
     ok(ret, "RemoveFontMemResourceEx error %d\n", GetLastError());
     free_font(font);
     ret = DeleteFileA(ttf_name);
     ok(ret, "Failed to delete font file, %d.\n", GetLastError());
-
 }
 
 static void test_GetKerningPairs(void)
