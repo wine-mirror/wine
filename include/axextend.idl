@@ -1294,6 +1294,20 @@ interface IAMVfwCaptureDialogs : IUnknown
 [
     local,
     object,
+    uuid(c6e13370-30ac-11d0-a18c-00a0c9118956),
+    pointer_default(unique)
+]
+interface IAMCameraControl : IUnknown
+{
+    HRESULT GetRange([in] long property, [out] long *min, [out] long *max,
+        [out] long *stepping_delta, [out] long *default_value, [out] long *flags);
+    HRESULT Set([in] long property, [in] long property_value, [in] long flags);
+    HRESULT Get([in] long property, [out] long *property_value, [out] long *flags);
+}
+
+[
+    local,
+    object,
     uuid(6a2e0670-28e4-11d0-a18c-00a0c9118956),
     pointer_default(unique)
 ]
