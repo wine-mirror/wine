@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-12-15 21:26+0900\n"
+"PO-Revision-Date: 2020-12-21 22:36+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -604,7 +604,7 @@ msgstr "縮小"
 
 #: dlls/comdlg32/comdlg32.rc:225 dlls/comdlg32/comdlg32.rc:397
 msgid "Print Setup"
-msgstr "プリンタの設定"
+msgstr "印刷設定"
 
 #: dlls/comdlg32/comdlg32.rc:228 dlls/comdlg32/comdlg32.rc:361
 #: dlls/comdlg32/comdlg32.rc:400
@@ -901,7 +901,7 @@ msgstr "下(&B):"
 
 #: dlls/comdlg32/comdlg32.rc:457
 msgid "P&rinter..."
-msgstr "プリンタ(&R)..."
+msgstr "プリンター(&R)..."
 
 #: dlls/comdlg32/comdlg32.rc:465 dlls/comdlg32/comdlg32.rc:490
 msgid "Look &in:"
@@ -10966,7 +10966,7 @@ msgstr "両面印刷:"
 
 #: dlls/wineps.drv/wineps.rc:50
 msgid "Setup"
-msgstr "プリンタの設定"
+msgstr "プリンターの設定"
 
 #: dlls/wininet/wininet.rc:53 dlls/wininet/wininet.rc:73
 msgid "Realm"
@@ -13425,7 +13425,7 @@ msgstr "ページ設定(&T)..."
 
 #: programs/notepad/notepad.rc:37
 msgid "P&rinter Setup..."
-msgstr "プリンタの設定(&R)..."
+msgstr "プリンターの設定(&R)..."
 
 #: programs/notepad/notepad.rc:42 programs/wordpad/wordpad.rc:44
 msgid "&Undo\tCtrl+Z"
