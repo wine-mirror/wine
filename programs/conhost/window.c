@@ -878,7 +878,7 @@ static COORD get_cell( struct console *console, LPARAM lparam )
 {
     COORD c;
     c.X = console->active->win.left + (short)LOWORD(lparam) / console->active->font.width;
-    c.Y = console->active->win.left + (short)HIWORD(lparam) / console->active->font.height;
+    c.Y = console->active->win.top + (short)HIWORD(lparam) / console->active->font.height;
     return c;
 }
 
@@ -906,11 +906,11 @@ static void get_selection_rect( struct console *console, RECT *r )
     r->left   = (min(console->window->selection_start.X, console->window->selection_end.X) -
                  console->active->win.left) * console->active->font.width;
     r->top    = (min(console->window->selection_start.Y, console->window->selection_end.Y) -
-                 console->active->win.left) * console->active->font.height;
+                 console->active->win.top) * console->active->font.height;
     r->right  = (max(console->window->selection_start.X, console->window->selection_end.X) + 1 -
                  console->active->win.left) * console->active->font.width;
     r->bottom = (max(console->window->selection_start.Y, console->window->selection_end.Y) + 1 -
-                 console->active->win.left) * console->active->font.height;
+                 console->active->win.top) * console->active->font.height;
 }
 
 static void update_selection( struct console *console, HDC ref_dc )
