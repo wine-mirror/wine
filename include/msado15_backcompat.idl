@@ -513,6 +513,17 @@ typedef [uuid(00000531-0000-0010-8000-00aa006d2ea4)] enum EventReasonEnum
     adRsnMoveLast = 15
 } EventReasonEnum;
 
+typedef [uuid(0000051e-0000-0010-8000-00aa006d2ea4)] enum ExecuteOptionEnum
+{
+    adOptionUnspecified      =   -1,
+    adAsyncExecute           =   16,
+    adAsyncFetch             =   32,
+    adAsyncFetchNonBlocking  =   64,
+    adExecuteNoRecords       =  128,
+    adExecuteStream          = 1024,
+    [hidden] adExecuteRecord = 2048
+} ExecuteOptionEnum;
+
 typedef [uuid(00000541-0000-0010-8000-00aa006d2ea4)] enum ConnectOptionEnum
 {
     adConnectUnspecified = -1,
