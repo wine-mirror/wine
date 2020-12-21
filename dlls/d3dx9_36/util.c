@@ -134,8 +134,10 @@ HRESULT map_view_of_file(const WCHAR *filename, void **buffer, DWORD *length)
     return S_OK;
 
 error:
-    CloseHandle(hmapping);
-    CloseHandle(hfile);
+    if (hmapping)
+        CloseHandle(hmapping);
+    if (hfile != INVALID_HANDLE_VALUE)
+        CloseHandle(hfile);
     return HRESULT_FROM_WIN32(GetLastError());
 }
 
