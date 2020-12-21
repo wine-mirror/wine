@@ -1717,11 +1717,7 @@ static struct gdi_font *alloc_gdi_font( const WCHAR *file, void *data_ptr, SIZE_
         font->data_size = data_size;
     }
 
-    if (!(font->handle = alloc_font_handle( font )))
-    {
-        HeapFree( GetProcessHeap(), 0, font );
-        return NULL;
-    }
+    font->handle = alloc_font_handle( font );
     return font;
 }
 
