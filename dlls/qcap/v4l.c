@@ -57,10 +57,9 @@
 #include "qcap_private.h"
 #include "winternl.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(qcap);
-
 #ifdef HAVE_LINUX_VIDEODEV2_H
 
+WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static typeof(open) *video_open = open;
