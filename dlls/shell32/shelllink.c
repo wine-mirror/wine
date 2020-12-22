@@ -2297,7 +2297,7 @@ static HRESULT WINAPI
 ShellLink_SetFlags( IShellLinkDataList* iface, DWORD dwFlags )
 {
     FIXME("(%p)->(%u): stub\n", iface, dwFlags);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const IShellLinkDataListVtbl dlvt =
