@@ -454,9 +454,7 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
         /* test GetCurFile before ::Save */
         str = (LPWSTR)0xdeadbeef;
         r = IPersistFile_GetCurFile(pf, &str);
-        lok(r == S_FALSE ||
-            broken(r == S_OK), /* shell32 < 5.0 */
-            "got 0x%08x\n", r);
+        lok(r == S_FALSE, "got 0x%08x\n", r);
         lok(str == NULL, "got %p\n", str);
 
         r = IPersistFile_Save(pf, path, TRUE);
@@ -465,16 +463,9 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
         /* test GetCurFile after ::Save */
         r = IPersistFile_GetCurFile(pf, &str);
         lok(r == S_OK, "got 0x%08x\n", r);
-        lok(str != NULL ||
-            broken(str == NULL), /* shell32 < 5.0 */
-            "Didn't expect NULL\n");
-        if (str)
-        {
-            lok(!wcscmp(path, str), "Expected %s, got %s\n", wine_dbgstr_w(path), wine_dbgstr_w(str));
-            CoTaskMemFree(str);
-        }
-        else
-            win_skip("GetCurFile fails on shell32 < 5.0\n");
+        lok(str != NULL, "Didn't expect NULL\n");
+        lok(!wcscmp(path, str), "Expected %s, got %s\n", wine_dbgstr_w(path), wine_dbgstr_w(str));
+        CoTaskMemFree(str);
 
         IPersistFile_Release(pf);
     }
@@ -507,9 +498,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
     /* test GetCurFile before ::Load */
     str = (LPWSTR)0xdeadbeef;
     r = IPersistFile_GetCurFile(pf, &str);
-    lok(r == S_FALSE ||
-        broken(r == S_OK), /* shell32 < 5.0 */
-        "got 0x%08x\n", r);
+    lok(r == S_FALSE, "got 0x%08x\n", r);
     lok(str == NULL, "got %p\n", str);
 
     r = IPersistFile_Load(pf, path, STGM_READ);
@@ -518,23 +507,11 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int todo)
     /* test GetCurFile after ::Save */
     r = IPersistFile_GetCurFile(pf, &str);
     lok(r == S_OK, "got 0x%08x\n", r);
-    lok(str != NULL ||
-        broken(str == NULL), /* shell32 < 5.0 */
-        "Didn't expect NULL\n");
-    if (str != NULL)
-    {
-        lok(!wcscmp(path, str), "Expected %s, got %s\n", wine_dbgstr_w(path), wine_dbgstr_w(str));
-        CoTaskMemFree(str);
-    }
-    else
-        win_skip("GetCurFile fails on shell32 < 5.0\n");
+    lok(str != NULL, "Didn't expect NULL\n");
+    lok(!wcscmp(path, str), "Expected %s, got %s\n", wine_dbgstr_w(path), wine_dbgstr_w(str));
+    CoTaskMemFree(str);
 
     IPersistFile_Release(pf);
-    if (r != S_OK)
-    {
-        IShellLinkA_Release(sl);
-        return;
-    }
 
     if (desc->description)
     {
