@@ -495,6 +495,16 @@ static inline struct x86_thread_data *x86_thread_data(void)
     return (struct x86_thread_data *)ntdll_get_thread_data()->cpu_data;
 }
 
+void *get_syscall_frame(void)
+{
+    return x86_thread_data()->syscall_frame;
+}
+
+void set_syscall_frame(void *frame)
+{
+    x86_thread_data()->syscall_frame = frame;
+}
+
 static inline WORD get_cs(void) { WORD res; __asm__( "movw %%cs,%0" : "=r" (res) ); return res; }
 static inline WORD get_ds(void) { WORD res; __asm__( "movw %%ds,%0" : "=r" (res) ); return res; }
 static inline WORD get_fs(void) { WORD res; __asm__( "movw %%fs,%0" : "=r" (res) ); return res; }

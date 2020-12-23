@@ -247,6 +247,9 @@ extern void WINAPI DECLSPEC_NORETURN call_user_exception_dispatcher( EXCEPTION_R
                                                                      NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*) ) DECLSPEC_HIDDEN;
 extern void WINAPI DECLSPEC_NORETURN call_raise_user_exception_dispatcher( NTSTATUS (WINAPI *dispatcher)(void) ) DECLSPEC_HIDDEN;
 
+extern void *get_syscall_frame(void) DECLSPEC_HIDDEN;
+extern void set_syscall_frame(void *frame) DECLSPEC_HIDDEN;
+
 #define TICKSPERSEC 10000000
 #define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)86400)
 

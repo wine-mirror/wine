@@ -306,6 +306,15 @@ static inline struct amd64_thread_data *amd64_thread_data(void)
     return (struct amd64_thread_data *)ntdll_get_thread_data()->cpu_data;
 }
 
+void *get_syscall_frame(void)
+{
+    return amd64_thread_data()->syscall_frame;
+}
+
+void set_syscall_frame(void *frame)
+{
+    amd64_thread_data()->syscall_frame = frame;
+}
 
 /***********************************************************************
  * Definitions for Dwarf unwind tables

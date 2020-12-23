@@ -157,6 +157,16 @@ static inline struct arm64_thread_data *arm64_thread_data(void)
     return (struct arm64_thread_data *)ntdll_get_thread_data()->cpu_data;
 }
 
+void *get_syscall_frame(void)
+{
+    return arm64_thread_data()->syscall_frame;
+}
+
+void set_syscall_frame(void *frame)
+{
+    arm64_thread_data()->syscall_frame = frame;
+}
+
 extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, void *dispatcher );
 
 /***********************************************************************
