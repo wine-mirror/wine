@@ -36,9 +36,9 @@
 
 #include "dwrite_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
-
 #ifdef HAVE_FREETYPE
+
+WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
 static CRITICAL_SECTION freetype_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
