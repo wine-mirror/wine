@@ -2742,7 +2742,7 @@ static void init_test(void)
     desc.icon=NULL;
     desc.icon_id=0;
     desc.hotkey=0;
-    create_lnk(lnkfile, &desc, 0);
+    create_lnk(lnkfile, &desc);
 
     sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
     MultiByteToWideChar(CP_ACP, 0, filename, -1, lnkfile, ARRAY_SIZE(lnkfile));
@@ -2756,7 +2756,7 @@ static void init_test(void)
     desc.icon=NULL;
     desc.icon_id=0;
     desc.hotkey=0;
-    create_lnk(lnkfile, &desc, 0);
+    create_lnk(lnkfile, &desc);
 
     /* Create a basic association suitable for most tests */
     if (!create_test_association(".shlexec"))

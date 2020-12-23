@@ -386,7 +386,7 @@ static void test_get_set(void)
 #define lok                   ok_(__FILE__, line)
 #define check_lnk(a,b,c)        check_lnk_(__LINE__, (a), (b), (c))
 
-void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
+void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
 {
     HRESULT r;
     IShellLinkA *sl;
@@ -460,8 +460,7 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
         lok(str == NULL, "got %p\n", str);
 
         r = IPersistFile_Save(pf, path, TRUE);
-        todo_wine_if (save_fails)
-            lok(r == S_OK, "save failed (0x%08x)\n", r);
+        lok(r == S_OK, "save failed (0x%08x)\n", r);
 
         /* test GetCurFile after ::Save */
         r = IPersistFile_GetCurFile(pf, &str);
@@ -628,7 +627,7 @@ static void test_load_save(void)
 
     /* Save an empty .lnk file */
     memset(&desc, 0, sizeof(desc));
-    create_lnk(lnkfile, &desc, 0);
+    create_lnk(lnkfile, &desc);
 
     /* It should come back as a bunch of empty strings */
     desc.description="";
@@ -648,7 +647,7 @@ static void test_load_save(void)
     desc.icon="c:\\nonexistent\\icon\\file";
     desc.icon_id=1234;
     desc.hotkey=0;
-    create_lnk(lnkfile, &desc, 0);
+    create_lnk(lnkfile, &desc);
     check_lnk(lnkfile, &desc, 0x0);
 
     r=GetModuleFileNameA(NULL, mypath, sizeof(mypath));
@@ -672,7 +671,7 @@ static void test_load_save(void)
     desc.icon=mypath;
     desc.icon_id=0;
     desc.hotkey=0x1234;
-    create_lnk(lnkfile, &desc, 0);
+    create_lnk(lnkfile, &desc);
     check_lnk(lnkfile, &desc, 0x0);
 
     /* Test omitting .exe from an absolute path */
@@ -689,7 +688,7 @@ static void test_load_save(void)
     desc.icon=mypath;
     desc.icon_id=0;
     desc.hotkey=0x1234;
-    create_lnk(lnkfile, &desc, 0);
+    create_lnk(lnkfile, &desc);
     strcat(realpath, ".exe");
     check_lnk(lnkfile, &desc, 0x4);
 
@@ -703,7 +702,7 @@ static void test_load_save(void)
     desc.icon=mypath;
     desc.icon_id=0;
     desc.hotkey=0x1234;
-    create_lnk(lnkfile, &desc, 0);
+    create_lnk(lnkfile, &desc);
     /* Check that link is created to proper location */
     SearchPathA( NULL, desc.path, NULL, MAX_PATH, realpath, NULL);
     desc.path=realpath;
@@ -719,7 +718,7 @@ static void test_load_save(void)
     desc.icon=mypath;
     desc.icon_id=0;
     desc.hotkey=0x1234;
-    create_lnk(lnkfile, &desc, 0);
+    create_lnk(lnkfile, &desc);
     /* Check that link is created to proper location */
     SearchPathA( NULL, "rundll32", NULL, MAX_PATH, realpath, NULL);
     desc.path=realpath;
@@ -750,7 +749,7 @@ static void test_load_save(void)
     desc.icon=mypath;
     desc.icon_id=0;
     desc.hotkey=0x1234;
-    create_lnk(lnkfile, &desc, 0);
+    create_lnk(lnkfile, &desc);
     check_lnk(lnkfile, &desc, 0x0);
 
     r = GetShortPathNameA(mydir, mypath, sizeof(mypath));
@@ -770,7 +769,7 @@ static void test_load_save(void)
     desc.icon=mypath;
     desc.icon_id=0;
     desc.hotkey=0x1234;
-    create_lnk(lnkfile, &desc, 0);
+    create_lnk(lnkfile, &desc);
     desc.path=realpath;
     check_lnk(lnkfile, &desc, 0x0);
 
@@ -800,7 +799,7 @@ static void test_load_save(void)
     desc.icon=mypath;
     desc.icon_id=0;
     desc.hotkey=0x1234;
-    create_lnk(lnkfile, &desc, 0);
+    create_lnk(lnkfile, &desc);
     desc.path = realpath;
     check_lnk(lnkfile, &desc, 0x4);
 
