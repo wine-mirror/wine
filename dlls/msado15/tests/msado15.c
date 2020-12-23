@@ -1024,6 +1024,7 @@ static void test_Connection(void)
     IRunnableObject *runtime;
     ISupportErrorInfo *errorinfo;
     IConnectionPointContainer *pointcontainer;
+    ADOConnectionConstruction15 *construct;
     LONG state, timeout;
     BSTR str, str2, str3;
     ConnectModeEnum mode;
@@ -1043,6 +1044,11 @@ static void test_Connection(void)
     hr = _Connection_QueryInterface(connection, &IID_IConnectionPointContainer, (void**)&pointcontainer);
     ok(hr == S_OK, "Failed to get IConnectionPointContainer interface %08x\n", hr);
     IConnectionPointContainer_Release(pointcontainer);
+
+    hr = _Connection_QueryInterface(connection, &IID_ADOConnectionConstruction15, (void**)&construct);
+    todo_wine ok(hr == S_OK, "Failed to get ADOConnectionConstruction15 interface %08x\n", hr);
+    if (hr == S_OK)
+        ADOConnectionConstruction15_Release(construct);
 
 if (0)   /* Crashes on windows */
 {
