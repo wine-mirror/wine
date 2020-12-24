@@ -568,8 +568,8 @@
 @ cdecl _logb(double)
 @ cdecl -arch=!i386 _logbf(float)
 @ cdecl -arch=i386 _longjmpex(ptr long) MSVCRT_longjmp
-@ cdecl MSVCRT__lrotl(long long) MSVCRT__lrotl
-@ cdecl MSVCRT__lrotr(long long) MSVCRT__lrotr
+@ cdecl _lrotl(long long) MSVCRT__lrotl
+@ cdecl _lrotr(long long) MSVCRT__lrotr
 @ cdecl _lsearch(ptr ptr ptr long ptr)
 @ stub _lsearch_s
 @ cdecl _lseek(long long long)
