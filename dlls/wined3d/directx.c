@@ -1692,10 +1692,10 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
     DWORD format_flags = 0;
     DWORD allowed_usage;
 
-    TRACE("wined3d %p, adapter %p, device_type %s, adapter_format %s, usage %s, %s, "
+    TRACE("wined3d %p, adapter %p, device_type %s, adapter_format %s, usage %s, "
             "bind_flags %s, resource_type %s, check_format %s.\n",
             wined3d, adapter, debug_d3ddevicetype(device_type), debug_d3dformat(adapter_format_id),
-            debug_d3dusage(usage), debug_d3dusagequery(usage), wined3d_debug_bind_flags(bind_flags),
+            debug_d3dusage(usage), wined3d_debug_bind_flags(bind_flags),
             debug_d3dresourcetype(resource_type), debug_d3dformat(check_format_id));
 
     adapter_format = wined3d_get_format(adapter, adapter_format_id, WINED3D_BIND_RENDER_TARGET);

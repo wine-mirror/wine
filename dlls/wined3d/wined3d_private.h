@@ -5273,7 +5273,6 @@ const char *debug_d3dformat(enum wined3d_format_id format_id) DECLSPEC_HIDDEN;
 const char *debug_d3ddevicetype(enum wined3d_device_type device_type) DECLSPEC_HIDDEN;
 const char *debug_d3dresourcetype(enum wined3d_resource_type resource_type) DECLSPEC_HIDDEN;
 const char *debug_d3dusage(DWORD usage) DECLSPEC_HIDDEN;
-const char *debug_d3dusagequery(DWORD usagequery) DECLSPEC_HIDDEN;
 const char *debug_d3ddeclmethod(enum wined3d_decl_method method) DECLSPEC_HIDDEN;
 const char *debug_d3ddeclusage(enum wined3d_decl_usage usage) DECLSPEC_HIDDEN;
 const char *debug_d3dinput_classification(enum wined3d_input_classification classification) DECLSPEC_HIDDEN;
