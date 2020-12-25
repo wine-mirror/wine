@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-12-09 22:24+0200\n"
+"PO-Revision-Date: 2020-12-25 21:00+0200\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
@@ -700,7 +700,7 @@ msgstr "Д&одаткові кольори:"
 
 #: dlls/comdlg32/comdlg32.rc:289
 msgid "|S&olid"
-msgstr ""
+msgstr "|&Суцільний"
 
 #: dlls/comdlg32/comdlg32.rc:290
 msgid "&Red:"
@@ -3743,7 +3743,7 @@ msgstr "Ігрові Контролери"
 
 #: dlls/joy.cpl/joy.rc:32
 msgid "Test and configure game controllers."
-msgstr ""
+msgstr "Перевірте та налаштуйте ігрові контролери."
 
 #: dlls/jscript/jscript.rc:28
 msgid "Error converting object to primitive type"
@@ -3758,10 +3758,8 @@ msgid "Subscript out of range"
 msgstr "Індекс поза діапазоном"
 
 #: dlls/jscript/jscript.rc:31
-#, fuzzy
-#| msgid "Out of paper; "
 msgid "Out of stack space"
-msgstr "Не вистачає паперу; "
+msgstr "В стеку немає місця"
 
 #: dlls/jscript/jscript.rc:32
 msgid "Object required"
@@ -3910,16 +3908,12 @@ msgid "JScript object expected"
 msgstr "Очікується об'єкт JScript"
 
 #: dlls/jscript/jscript.rc:63
-#, fuzzy
-#| msgid "Array object expected"
 msgid "Enumerator object expected"
-msgstr "Очікується об'єкт Array"
+msgstr "Очікується об’єкт перечислювача"
 
 #: dlls/jscript/jscript.rc:64
-#, fuzzy
-#| msgid "Boolean object expected"
 msgid "Regular Expression object expected"
-msgstr "Очікується об'єкт Boolean"
+msgstr "Очікується об’єкт регулярного виразу"
 
 #: dlls/jscript/jscript.rc:65
 msgid "Syntax error in regular expression"
@@ -3927,7 +3921,7 @@ msgstr "Синтаксична помилка в регулярному вира
 
 #: dlls/jscript/jscript.rc:66
 msgid "Exception thrown and not caught"
-msgstr ""
+msgstr "Виняток викликано, але не перехоплено"
 
 #: dlls/jscript/jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
@@ -6944,32 +6938,24 @@ msgid "Connection reset by peer.\n"
 msgstr "У з'єднанні відмовлено.\n"
 
 #: dlls/kernel32/winerror.mc:3767
-#, fuzzy
-#| msgid "Not implemented"
 msgid "Not implemented.\n"
-msgstr "Не реалізовано"
+msgstr "Не реалізовано.\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "Creation failed.\n"
 msgid "Call failed.\n"
-msgstr "Помилка створення.\n"
+msgstr "Помилка запиту.\n"
 
 #: dlls/kernel32/winerror.mc:3760
 msgid "No Signature found in file.\n"
 msgstr "Відсутній підпис файла.\n"
 
 #: dlls/kernel32/winerror.mc:3774
-#, fuzzy
-#| msgid "Invalid level.\n"
 msgid "Invalid call.\n"
-msgstr "Невірний рівень.\n"
+msgstr "Невірний запит.\n"
 
 #: dlls/kernel32/winerror.mc:3781
-#, fuzzy
-#| msgid "Value is not available.\n"
 msgid "Resource is not currently available.\n"
-msgstr "Значення недоступне.\n"
+msgstr "Наразі ресурс недоступний.\n"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -7029,10 +7015,8 @@ msgid "Sink has not been finalized.\n"
 msgstr "Вихід не було завершено.\n"
 
 #: dlls/mferror/mferror.mc:732
-#, fuzzy
-#| msgid "Sink was already stopped.\n"
 msgid "Clock was stopped\n"
-msgstr "Вихід вже було припинино.\n"
+msgstr "Годинник зупинино\n"
 
 #: dlls/mferror/mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7411,10 +7395,8 @@ msgid "Clock state was already set.\n"
 msgstr "Статус годинника вже встановлено.\n"
 
 #: dlls/mferror/mferror.mc:725
-#, fuzzy
-#| msgid "Clock is not available.\n"
 msgid "Clock is not simple\n"
-msgstr "Годинник недоступний.\n"
+msgstr "Годинник не простий\n"
 
 #: dlls/mpr/mpr.rc:35 dlls/wininet/wininet.rc:48
 msgid "Enter Network Password"
@@ -8582,98 +8564,72 @@ msgid "Off"
 msgstr "Вимкнено"
 
 #: dlls/oledb32/version.rc:56
-#, fuzzy
-#| msgid "video"
 msgid "Provider"
-msgstr "відео"
+msgstr "Постачальник"
 
 #: dlls/oledb32/version.rc:59
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Select the data you want to connect to:"
-msgstr "Виберіть формат, який ви хочете використати:"
+msgstr "Виберіть дані, до яких потрібно підключитися:"
 
 #: dlls/oledb32/version.rc:66
-#, fuzzy
-#| msgid "Connections"
 msgid "Connection"
 msgstr "Підключення"
 
 #: dlls/oledb32/version.rc:69
-#, fuzzy
-#| msgid "Select the format you want to use:"
 msgid "Specify the following to connect to ODBC data:"
-msgstr "Виберіть формат, який ви хочете використати:"
+msgstr "Вкажіть наступне для підключення до даних ODBC:"
 
 #: dlls/oledb32/version.rc:70
 msgid "1. Specify the source of data:"
-msgstr ""
+msgstr "1. Вкажіть джерело даних:"
 
 #: dlls/oledb32/version.rc:71
-#, fuzzy
-#| msgid "Please enter your name"
 msgid "Use &data source name"
-msgstr "Введіть ваше ім'я"
+msgstr "Використовувати &ім'я джерела даних"
 
 #: dlls/oledb32/version.rc:74
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "Use c&onnection string"
-msgstr "Скинутих Підключень"
+msgstr "Використовувати р&ядок підключення"
 
 #: dlls/oledb32/version.rc:75
-#, fuzzy
-#| msgid "Connections"
 msgid "&Connection string:"
-msgstr "Підключення"
+msgstr "&Рядок з'єднання:"
 
 #: dlls/oledb32/version.rc:77
-#, fuzzy
-#| msgid "A&dd..."
 msgid "B&uild..."
-msgstr "&Додати..."
+msgstr "&Створити..."
 
 #: dlls/oledb32/version.rc:78
 msgid "2. Enter information to log on to the server"
-msgstr ""
+msgstr "2. Введіть інформацію для входу на сервер"
 
 #: dlls/oledb32/version.rc:79
-#, fuzzy
-#| msgid "&User name:"
 msgid "User &name:"
-msgstr "&Користувач:"
+msgstr "Ім'я &користувача:"
 
 #: dlls/oledb32/version.rc:83
-#, fuzzy
-#| msgid "&Blank page"
 msgid "&Blank password"
-msgstr "По&рожня сторінка"
+msgstr "&Пустий пароль"
 
 #: dlls/oledb32/version.rc:84
-#, fuzzy
-#| msgid "Wrong password.\n"
 msgid "Allow &saving password"
-msgstr "Невірний пароль.\n"
+msgstr "Дозволити &збереження пароля"
 
 #: dlls/oledb32/version.rc:85
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. Введіть &початковий каталог для використання:"
 
 #: dlls/oledb32/version.rc:87
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "&Test Connection"
-msgstr "Скинутих Підключень"
+msgstr "&Тест підключення"
 
 #: dlls/oledb32/version.rc:92
 msgid "Advanced"
 msgstr "Майстер"
 
 #: dlls/oledb32/version.rc:95
-#, fuzzy
-#| msgid "Network share"
 msgid "Network settings"
-msgstr "Мережний диск"
+msgstr "Мережеві налаштування"
 
 #: dlls/oledb32/version.rc:96
 msgid "&Impersonation level:"
@@ -8681,83 +8637,67 @@ msgstr ""
 
 #: dlls/oledb32/version.rc:98
 msgid "P&rotection level:"
-msgstr ""
+msgstr "Р&івень захисту:"
 
 #: dlls/oledb32/version.rc:101
-#, fuzzy
-#| msgid "Connected"
 msgid "Connect:"
-msgstr "Під'єднано"
+msgstr "З'єднання:"
 
 #: dlls/oledb32/version.rc:103
-#, fuzzy
-#| msgid "seconds"
 msgid "seconds."
-msgstr "сек."
+msgstr "секунд."
 
 #: dlls/oledb32/version.rc:104
-#, fuzzy
-#| msgid "Success"
 msgid "A&ccess:"
-msgstr "Успіх"
+msgstr "&Доступ:"
 
 #: dlls/oledb32/version.rc:110
-#, fuzzy
-#| msgid "&All"
 msgid "All"
-msgstr "&Все"
+msgstr "Все"
 
 #: dlls/oledb32/version.rc:114
 msgid ""
 "These are the initialization properties for this type of data. To edit a "
 "value, select a property, then choose Edit Value below."
 msgstr ""
+"Це властивості ініціалізації даних цього типу. Щоб відредагувати значення, "
+"виберіть властивість, а потім нижче виберіть Редагувати Значення."
 
 #: dlls/oledb32/version.rc:115
-#, fuzzy
-#| msgid "&Edit..."
 msgid "&Edit Value..."
-msgstr "&Змінити..."
+msgstr "&Редагувати Значення..."
 
 #: dlls/oledb32/version.rc:49
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Error"
-msgstr "Властивості"
+msgstr "Помилка при передачі даних"
 
 #: dlls/oledb32/version.rc:50
-#, fuzzy
-#| msgid "Please select a file."
 msgid "Please select a provider."
-msgstr "Виберіть файл."
+msgstr "Виберіть постачальника послуг."
 
 #: dlls/oledb32/version.rc:51
 msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
+"Постачальник більше не доступний. Переконайтеся, що постачальник "
+"встановлений належним чином."
 
 #: dlls/oledb32/version.rc:36
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Properties"
-msgstr "Властивості"
+msgstr "Властивості каналу передачі даних"
 
 #: dlls/oledb32/version.rc:37
 msgid "OLE DB Provider(s)"
-msgstr ""
+msgstr "Постачальник(и) OLE DB"
 
 #: dlls/oledb32/version.rc:41
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "Готово"
+msgstr "Читання"
 
 #: dlls/oledb32/version.rc:42
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "Файл Readme:"
+msgstr "Читання/Запис"
 
 #: dlls/oledb32/version.rc:43
 msgid "Share Deny None"
@@ -8776,10 +8716,8 @@ msgid "Share Exclusive"
 msgstr ""
 
 #: dlls/oledb32/version.rc:47
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "Кількість записів"
+msgstr "Запис"
 
 #: dlls/oledlg/oledlg.rc:55
 msgid "Insert Object"
@@ -9973,895 +9911,895 @@ msgstr "Виберіть джерело"
 
 #: dlls/tzres/tzres.rc:90
 msgid "China Standard Time"
-msgstr ""
+msgstr "Китайський стандартний час"
 
 #: dlls/tzres/tzres.rc:91
 msgid "China Daylight Time"
-msgstr ""
+msgstr "Китайський літній час"
 
 #: dlls/tzres/tzres.rc:180
 msgid "North Asia Standard Time"
-msgstr ""
+msgstr "Північноазіатський стандартний час"
 
 #: dlls/tzres/tzres.rc:181
 msgid "North Asia Daylight Time"
-msgstr ""
+msgstr "Північноазіатський літній час"
 
 #: dlls/tzres/tzres.rc:116
 msgid "Georgian Standard Time"
-msgstr ""
+msgstr "Грузинський стандартний час"
 
 #: dlls/tzres/tzres.rc:117
 msgid "Georgian Daylight Time"
-msgstr ""
+msgstr "Грузинський літній час"
 
 #: dlls/tzres/tzres.rc:172
 msgid "Nepal Standard Time"
-msgstr ""
+msgstr "Непальський стандартний час"
 
 #: dlls/tzres/tzres.rc:173
 msgid "Nepal Daylight Time"
-msgstr ""
+msgstr "Непальський літній час"
 
 #: dlls/tzres/tzres.rc:66
 msgid "Cape Verde Standard Time"
-msgstr ""
+msgstr "Стандартний час Кабо-Верде"
 
 #: dlls/tzres/tzres.rc:67
 msgid "Cape Verde Daylight Time"
-msgstr ""
+msgstr "Літній час Кабо-Верде"
 
 #: dlls/tzres/tzres.rc:126
 msgid "Haiti Standard Time"
-msgstr ""
+msgstr "Стандартний час Гаїті"
 
 #: dlls/tzres/tzres.rc:127
 msgid "Haiti Daylight Time"
-msgstr ""
+msgstr "Літній час Гаїті"
 
 #: dlls/tzres/tzres.rc:80
 msgid "Central European Standard Time"
-msgstr ""
+msgstr "Центральноєвропейський стандартний час"
 
 #: dlls/tzres/tzres.rc:81
 msgid "Central European Daylight Time"
-msgstr ""
+msgstr "Центральноєвропейський літній час"
 
 #: dlls/tzres/tzres.rc:160
 msgid "Morocco Standard Time"
-msgstr ""
+msgstr "Стандартний час Марокко"
 
 #: dlls/tzres/tzres.rc:161
 msgid "Morocco Daylight Time"
-msgstr ""
+msgstr "Літній час Марокко"
 
 #: dlls/tzres/tzres.rc:78
 msgid "Central Europe Standard Time"
-msgstr ""
+msgstr "Центральноєвропейський стандартний час"
 
 #: dlls/tzres/tzres.rc:79
 msgid "Central Europe Daylight Time"
-msgstr ""
+msgstr "Центральноєвропейський літній час"
 
 #: dlls/tzres/tzres.rc:132
 msgid "Iran Standard Time"
-msgstr ""
+msgstr "Іранський стандартний час"
 
 #: dlls/tzres/tzres.rc:133
 msgid "Iran Daylight Time"
-msgstr ""
+msgstr "Іранський літній час"
 
 #: dlls/tzres/tzres.rc:204
 msgid "Saint Pierre Standard Time"
-msgstr ""
+msgstr "Стандартний час Сен-П'єра"
 
 #: dlls/tzres/tzres.rc:205
 msgid "Saint Pierre Daylight Time"
-msgstr ""
+msgstr "Літній час Сен-П'єра"
 
 #: dlls/tzres/tzres.rc:170
 msgid "Namibia Standard Time"
-msgstr ""
+msgstr "Стандартний час Намібії"
 
 #: dlls/tzres/tzres.rc:171
 msgid "Namibia Daylight Time"
-msgstr ""
+msgstr "Літній час Намібії"
 
 #: dlls/tzres/tzres.rc:226
 msgid "Tonga Standard Time"
-msgstr ""
+msgstr "Стандартний час Королівства Тонга"
 
 #: dlls/tzres/tzres.rc:227
 msgid "Tonga Daylight Time"
-msgstr ""
+msgstr "Літній час Королівства Тонга"
 
 #: dlls/tzres/tzres.rc:164
 msgid "Mountain Standard Time (Mexico)"
-msgstr ""
+msgstr "Гірський стандартний час (Мексика)"
 
 #: dlls/tzres/tzres.rc:165
 msgid "Mountain Daylight Time (Mexico)"
-msgstr ""
+msgstr "Гірський літній час (Мексика)"
 
 #: dlls/tzres/tzres.rc:118
 msgid "GMT Standard Time"
-msgstr ""
+msgstr "GMT стандартний час"
 
 #: dlls/tzres/tzres.rc:119
 msgid "GMT Daylight Time"
-msgstr ""
+msgstr "GMT літній час"
 
 #: dlls/tzres/tzres.rc:74
 msgid "Central Asia Standard Time"
-msgstr ""
+msgstr "Середньоазіатський стандартний час"
 
 #: dlls/tzres/tzres.rc:75
 msgid "Central Asia Daylight Time"
-msgstr ""
+msgstr "Середньоазіатський літній час"
 
 #: dlls/tzres/tzres.rc:146
 msgid "Lord Howe Standard Time"
-msgstr ""
+msgstr "Стандартний час острова Лорд-Хау"
 
 #: dlls/tzres/tzres.rc:147
 msgid "Lord Howe Daylight Time"
-msgstr ""
+msgstr "Літній час острова Лорд-Хау"
 
 #: dlls/tzres/tzres.rc:40
 msgid "Arabic Standard Time"
-msgstr ""
+msgstr "Арабський стандартний час"
 
 #: dlls/tzres/tzres.rc:41
 msgid "Arabic Daylight Time"
-msgstr ""
+msgstr "Арабський літній час"
 
 #: dlls/tzres/tzres.rc:148
 msgid "Magadan Standard Time"
-msgstr ""
+msgstr "Магаданський стандартний час"
 
 #: dlls/tzres/tzres.rc:149
 msgid "Magadan Daylight Time"
-msgstr ""
+msgstr "Магаданський літній час"
 
 #: dlls/tzres/tzres.rc:176
 msgid "Newfoundland Standard Time"
-msgstr ""
+msgstr "Стандартний час Ньюфаундленда"
 
 #: dlls/tzres/tzres.rc:177
 msgid "Newfoundland Daylight Time"
-msgstr ""
+msgstr "Літній час Ньюфаундленда"
 
 #: dlls/tzres/tzres.rc:250
 msgid "West Pacific Standard Time"
-msgstr ""
+msgstr "Західно-Тихоокеанський стандартний час"
 
 #: dlls/tzres/tzres.rc:251
 msgid "West Pacific Daylight Time"
-msgstr ""
+msgstr "Західно-Тихоокеанський літній час"
 
 #: dlls/tzres/tzres.rc:186
 msgid "Pacific Standard Time"
-msgstr ""
+msgstr "Тихоокеанський стандартний час"
 
 #: dlls/tzres/tzres.rc:187
 msgid "Pacific Daylight Time"
-msgstr ""
+msgstr "Тихоокеанський літній час"
 
 #: dlls/tzres/tzres.rc:52
 msgid "Azerbaijan Standard Time"
-msgstr ""
+msgstr "Азербайджанський стандартний час"
 
 #: dlls/tzres/tzres.rc:53
 msgid "Azerbaijan Daylight Time"
-msgstr ""
+msgstr "Азербайджанський літній час"
 
 #: dlls/tzres/tzres.rc:150
 msgid "Magallanes Standard Time"
-msgstr ""
+msgstr "Стандартний час Магальянеса"
 
 #: dlls/tzres/tzres.rc:151
 msgid "Magallanes Daylight Time"
-msgstr ""
+msgstr "Літній час Магальянеса"
 
 #: dlls/tzres/tzres.rc:206
 msgid "Samoa Standard Time"
-msgstr ""
+msgstr "Стандартний час Самоа"
 
 #: dlls/tzres/tzres.rc:207
 msgid "Samoa Daylight Time"
-msgstr ""
+msgstr "Літній час Самоа"
 
 #: dlls/tzres/tzres.rc:138
 msgid "Kaliningrad Standard Time"
-msgstr ""
+msgstr "Калінінградський стандартний час"
 
 #: dlls/tzres/tzres.rc:139
 msgid "Kaliningrad Daylight Time"
-msgstr ""
+msgstr "Калінінградський літній час"
 
 #: dlls/tzres/tzres.rc:188
 msgid "Pacific Standard Time (Mexico)"
-msgstr ""
+msgstr "Тихоокеанський стандартний час (Мексика)"
 
 #: dlls/tzres/tzres.rc:189
 msgid "Pacific Daylight Time (Mexico)"
-msgstr ""
+msgstr "Тихоокеанський літній час (Мексика)"
 
 #: dlls/tzres/tzres.rc:156
 msgid "Middle East Standard Time"
-msgstr ""
+msgstr "Близькосхідний стандартний час"
 
 #: dlls/tzres/tzres.rc:157
 msgid "Middle East Daylight Time"
-msgstr ""
+msgstr "Близькосхідний літній час"
 
 #: dlls/tzres/tzres.rc:224
 msgid "Tokyo Standard Time"
-msgstr ""
+msgstr "Токійський стандартний час"
 
 #: dlls/tzres/tzres.rc:225
 msgid "Tokyo Daylight Time"
-msgstr ""
+msgstr "Токійський літній час"
 
 #: dlls/tzres/tzres.rc:144
 msgid "Line Islands Standard Time"
-msgstr ""
+msgstr "Стандартний час островів Лайн"
 
 #: dlls/tzres/tzres.rc:145
 msgid "Line Islands Daylight Time"
-msgstr ""
+msgstr "Літній час островів Лайн"
 
 #: dlls/tzres/tzres.rc:92
 msgid "Cuba Standard Time"
-msgstr ""
+msgstr "Кубинський стандартний час"
 
 #: dlls/tzres/tzres.rc:93
 msgid "Cuba Daylight Time"
-msgstr ""
+msgstr "Кубинський літній час"
 
 #: dlls/tzres/tzres.rc:136
 msgid "Jordan Standard Time"
-msgstr ""
+msgstr "Йорданський стандартний час"
 
 #: dlls/tzres/tzres.rc:137
 msgid "Jordan Daylight Time"
-msgstr ""
+msgstr "Йорданський літній час"
 
 #: dlls/tzres/tzres.rc:84
 msgid "Central Standard Time"
-msgstr ""
+msgstr "Центральний стандартний час"
 
 #: dlls/tzres/tzres.rc:85
 msgid "Central Daylight Time"
-msgstr ""
+msgstr "Центральний літній час"
 
 #: dlls/tzres/tzres.rc:54
 msgid "Azores Standard Time"
-msgstr ""
+msgstr "Стандартний час Азорських островів"
 
 #: dlls/tzres/tzres.rc:55
 msgid "Azores Daylight Time"
-msgstr ""
+msgstr "Літній час Азорських островів"
 
 #: dlls/tzres/tzres.rc:178
 msgid "North Asia East Standard Time"
-msgstr ""
+msgstr "Північноазіатський східний стандартний час"
 
 #: dlls/tzres/tzres.rc:179
 msgid "North Asia East Daylight Time"
-msgstr ""
+msgstr "Північноазіатський східний літній час"
 
 #: dlls/tzres/tzres.rc:42
 msgid "Argentina Standard Time"
-msgstr ""
+msgstr "Аргентинський стандартний час"
 
 #: dlls/tzres/tzres.rc:43
 msgid "Argentina Daylight Time"
-msgstr ""
+msgstr "Аргентинський літній час"
 
 #: dlls/tzres/tzres.rc:152
 msgid "Marquesas Standard Time"
-msgstr ""
+msgstr "Стандартний час Маркізьких островів"
 
 #: dlls/tzres/tzres.rc:153
 msgid "Marquesas Daylight Time"
-msgstr ""
+msgstr "Літній час Маркізьких островів"
 
 #: dlls/tzres/tzres.rc:166
 msgid "Myanmar Standard Time"
-msgstr ""
+msgstr "Стандартний час М'янми"
 
 #: dlls/tzres/tzres.rc:167
 msgid "Myanmar Daylight Time"
-msgstr ""
+msgstr "Літній час М'янми"
 
 #: dlls/tzres/tzres.rc:236 dlls/tzres/tzres.rc:237
 msgid "Coordinated Universal Time"
-msgstr ""
+msgstr "Всесвітній координований час"
 
 #: dlls/tzres/tzres.rc:130
 msgid "India Standard Time"
-msgstr ""
+msgstr "Індійський стандартний час"
 
 #: dlls/tzres/tzres.rc:131
 msgid "India Daylight Time"
-msgstr ""
+msgstr "Індійський літній час"
 
 #: dlls/tzres/tzres.rc:124
 msgid "GTB Standard Time"
-msgstr ""
+msgstr "GTB стандартний час"
 
 #: dlls/tzres/tzres.rc:125
 msgid "GTB Daylight Time"
-msgstr ""
+msgstr "GTB літній час"
 
 #: dlls/tzres/tzres.rc:228
 msgid "Turkey Standard Time"
-msgstr ""
+msgstr "Турецький стандартний час"
 
 #: dlls/tzres/tzres.rc:229
 msgid "Turkey Daylight Time"
-msgstr ""
+msgstr "Турецький літній час"
 
 #: dlls/tzres/tzres.rc:112
 msgid "Fiji Standard Time"
-msgstr ""
+msgstr "Стандартний час Фіджі"
 
 #: dlls/tzres/tzres.rc:113
 msgid "Fiji Daylight Time"
-msgstr ""
+msgstr "Літній час Фіджі"
 
 #: dlls/tzres/tzres.rc:64
 msgid "Canada Central Standard Time"
-msgstr ""
+msgstr "Центральний стандартний час Канади"
 
 #: dlls/tzres/tzres.rc:65
 msgid "Canada Central Daylight Time"
-msgstr ""
+msgstr "Центральний літній час Канади"
 
 #: dlls/tzres/tzres.rc:218
 msgid "Taipei Standard Time"
-msgstr ""
+msgstr "Тайбейський стандартний час"
 
 #: dlls/tzres/tzres.rc:219
 msgid "Taipei Daylight Time"
-msgstr ""
+msgstr "Тайбейський літній час"
 
 #: dlls/tzres/tzres.rc:246
 msgid "W. Europe Standard Time"
-msgstr ""
+msgstr "Західноєвропейський стандартний час"
 
 #: dlls/tzres/tzres.rc:247
 msgid "W. Europe Daylight Time"
-msgstr ""
+msgstr "Західноєвропейський літній час"
 
 #: dlls/tzres/tzres.rc:158
 msgid "Montevideo Standard Time"
-msgstr ""
+msgstr "Стандартний час Монтевідео"
 
 #: dlls/tzres/tzres.rc:159
 msgid "Montevideo Daylight Time"
-msgstr ""
+msgstr "Літній час Монтевідео"
 
 #: dlls/tzres/tzres.rc:190
 msgid "Pakistan Standard Time"
-msgstr ""
+msgstr "Пакистанський стандартний час"
 
 #: dlls/tzres/tzres.rc:191
 msgid "Pakistan Daylight Time"
-msgstr ""
+msgstr "Пакистанський літній час"
 
 #: dlls/tzres/tzres.rc:68
 msgid "Caucasus Standard Time"
-msgstr ""
+msgstr "Кавказький стандартний час"
 
 #: dlls/tzres/tzres.rc:69
 msgid "Caucasus Daylight Time"
-msgstr ""
+msgstr "Кавказький літній час"
 
 #: dlls/tzres/tzres.rc:50
 msgid "AUS Eastern Standard Time"
-msgstr ""
+msgstr "AUS східний стандартний час"
 
 #: dlls/tzres/tzres.rc:51
 msgid "AUS Eastern Daylight Time"
-msgstr ""
+msgstr "AUS східний літній час"
 
 #: dlls/tzres/tzres.rc:168
 msgid "N. Central Asia Standard Time"
-msgstr ""
+msgstr "Північно-Центральна Азія за стандартним часом"
 
 #: dlls/tzres/tzres.rc:169
 msgid "N. Central Asia Daylight Time"
-msgstr ""
+msgstr "Північно-Центральна Азія за літнім часом"
 
 #: dlls/tzres/tzres.rc:104
 msgid "Eastern Standard Time"
-msgstr ""
+msgstr "Східний стандартний час"
 
 #: dlls/tzres/tzres.rc:105
 msgid "Eastern Daylight Time"
-msgstr ""
+msgstr "Східний літній час"
 
 #: dlls/tzres/tzres.rc:86
 msgid "Central Standard Time (Mexico)"
-msgstr ""
+msgstr "Центральний стандартний час (Мексика)"
 
 #: dlls/tzres/tzres.rc:87
 msgid "Central Daylight Time (Mexico)"
-msgstr ""
+msgstr "Центральний літній час (Мексика)"
 
 #: dlls/tzres/tzres.rc:44
 msgid "Atlantic Standard Time"
-msgstr ""
+msgstr "Атлантичний стандартний час"
 
 #: dlls/tzres/tzres.rc:45
 msgid "Atlantic Daylight Time"
-msgstr ""
+msgstr "Атлантичний літній час"
 
 #: dlls/tzres/tzres.rc:162
 msgid "Mountain Standard Time"
-msgstr ""
+msgstr "Гірський стандартний час"
 
 #: dlls/tzres/tzres.rc:163
 msgid "Mountain Daylight Time"
-msgstr ""
+msgstr "Гірський літній час"
 
 #: dlls/tzres/tzres.rc:232
 msgid "US Eastern Standard Time"
-msgstr ""
+msgstr "Східний стандартний час США"
 
 #: dlls/tzres/tzres.rc:233
 msgid "US Eastern Daylight Time"
-msgstr ""
+msgstr "Східний літній час США"
 
 #: dlls/tzres/tzres.rc:182
 msgid "North Korea Standard Time"
-msgstr ""
+msgstr "Північнокорейський стандартний час"
 
 #: dlls/tzres/tzres.rc:183
 msgid "North Korea Daylight Time"
-msgstr ""
+msgstr "Північнокорейський літній час"
 
 #: dlls/tzres/tzres.rc:220
 msgid "Tasmania Standard Time"
-msgstr ""
+msgstr "Тасманійський стандартний час"
 
 #: dlls/tzres/tzres.rc:221
 msgid "Tasmania Daylight Time"
-msgstr ""
+msgstr "Тасманійський літній час"
 
 #: dlls/tzres/tzres.rc:72
 msgid "Central America Standard Time"
-msgstr ""
+msgstr "Центральна Америка за стандартним часом"
 
 #: dlls/tzres/tzres.rc:73
 msgid "Central America Daylight Time"
-msgstr ""
+msgstr "Центральна Америка за літнім часом"
 
 #: dlls/tzres/tzres.rc:234
 msgid "US Mountain Standard Time"
-msgstr ""
+msgstr "Американський гірський стандартний час"
 
 #: dlls/tzres/tzres.rc:235
 msgid "US Mountain Daylight Time"
-msgstr ""
+msgstr "Американський гірський літній час"
 
 #: dlls/tzres/tzres.rc:212
 msgid "South Africa Standard Time"
-msgstr ""
+msgstr "Південно-Африканський стандартний час"
 
 #: dlls/tzres/tzres.rc:213
 msgid "South Africa Daylight Time"
-msgstr ""
+msgstr "Південно-Африканський літній час"
 
 #: dlls/tzres/tzres.rc:70
 msgid "Cen. Australia Standard Time"
-msgstr ""
+msgstr "Цен. Австралійський стандартний час"
 
 #: dlls/tzres/tzres.rc:71
 msgid "Cen. Australia Daylight Time"
-msgstr ""
+msgstr "Цен. Австралійський літній час"
 
 #: dlls/tzres/tzres.rc:214
 msgid "Sri Lanka Standard Time"
-msgstr ""
+msgstr "Стандартний час Шрі-Ланки"
 
 #: dlls/tzres/tzres.rc:215
 msgid "Sri Lanka Daylight Time"
-msgstr ""
+msgstr "Літній час Шрі-Ланки"
 
 #: dlls/tzres/tzres.rc:30
 msgid "Afghanistan Standard Time"
-msgstr ""
+msgstr "Стандартний час в Афганістані"
 
 #: dlls/tzres/tzres.rc:31
 msgid "Afghanistan Daylight Time"
-msgstr ""
+msgstr "Літній час в Афганістані"
 
 #: dlls/tzres/tzres.rc:252
 msgid "Yakutsk Standard Time"
-msgstr ""
+msgstr "Якутський стандартний час"
 
 #: dlls/tzres/tzres.rc:253
 msgid "Yakutsk Daylight Time"
-msgstr ""
+msgstr "Якутський літній час"
 
 #: dlls/tzres/tzres.rc:198
 msgid "SA Eastern Standard Time"
-msgstr ""
+msgstr "SA східний стандартний час"
 
 #: dlls/tzres/tzres.rc:199
 msgid "SA Eastern Daylight Time"
-msgstr ""
+msgstr "SA східний літній час"
 
 #: dlls/tzres/tzres.rc:36
 msgid "Arab Standard Time"
-msgstr ""
+msgstr "Арабський стандартний час"
 
 #: dlls/tzres/tzres.rc:37
 msgid "Arab Daylight Time"
-msgstr ""
+msgstr "Арабський літній час"
 
 #: dlls/tzres/tzres.rc:38
 msgid "Arabian Standard Time"
-msgstr ""
+msgstr "Арабський стандартний час"
 
 #: dlls/tzres/tzres.rc:39
 msgid "Arabian Daylight Time"
-msgstr ""
+msgstr "Арабський літній час"
 
 #: dlls/tzres/tzres.rc:222
 msgid "Tocantins Standard Time"
-msgstr ""
+msgstr "Стандартний час Токантінс"
 
 #: dlls/tzres/tzres.rc:223
 msgid "Tocantins Daylight Time"
-msgstr ""
+msgstr "Літній час Токантінс"
 
 #: dlls/tzres/tzres.rc:196
 msgid "Russian Standard Time"
-msgstr ""
+msgstr "Російський стандартний час"
 
 #: dlls/tzres/tzres.rc:197
 msgid "Russian Daylight Time"
-msgstr ""
+msgstr "Російський літній час"
 
 #: dlls/tzres/tzres.rc:48
 msgid "Aus Central W. Standard Time"
-msgstr ""
+msgstr "Aus Central W. стандартний час"
 
 #: dlls/tzres/tzres.rc:49
 msgid "Aus Central W. Daylight Time"
-msgstr ""
+msgstr "Aus Central W. літній час"
 
 #: dlls/tzres/tzres.rc:194
 msgid "Romance Standard Time"
-msgstr ""
+msgstr "Романський стандартний час"
 
 #: dlls/tzres/tzres.rc:195
 msgid "Romance Daylight Time"
-msgstr ""
+msgstr "Романський літній час"
 
 #: dlls/tzres/tzres.rc:110
 msgid "Ekaterinburg Standard Time"
-msgstr ""
+msgstr "Стандартний час Єкатеринбурга"
 
 #: dlls/tzres/tzres.rc:111
 msgid "Ekaterinburg Daylight Time"
-msgstr ""
+msgstr "Літній час Єкатеринбурга"
 
 #: dlls/tzres/tzres.rc:216
 msgid "Syria Standard Time"
-msgstr ""
+msgstr "Стандартний час Сирії"
 
 #: dlls/tzres/tzres.rc:217
 msgid "Syria Daylight Time"
-msgstr ""
+msgstr "Літній час Сирії"
 
 #: dlls/tzres/tzres.rc:46
 msgid "AUS Central Standard Time"
-msgstr ""
+msgstr "Центральний стандартний час AUS"
 
 #: dlls/tzres/tzres.rc:47
 msgid "AUS Central Daylight Time"
-msgstr ""
+msgstr "Центральний літній час AUS"
 
 #: dlls/tzres/tzres.rc:122
 msgid "Greenwich Standard Time"
-msgstr ""
+msgstr "Стандартний час за Грінвічем"
 
 #: dlls/tzres/tzres.rc:123
 msgid "Greenwich Daylight Time"
-msgstr ""
+msgstr "Літній час за Грінвічем"
 
 #: dlls/tzres/tzres.rc:230
 msgid "Ulaanbaatar Standard Time"
-msgstr ""
+msgstr "Стандартний час Улан-Батора"
 
 #: dlls/tzres/tzres.rc:231
 msgid "Ulaanbaatar Daylight Time"
-msgstr ""
+msgstr "Літній час Улан-Батора"
 
 #: dlls/tzres/tzres.rc:134
 msgid "Israel Standard Time"
-msgstr ""
+msgstr "Стандартний час Ізраїлю"
 
 #: dlls/tzres/tzres.rc:135
 msgid "Israel Daylight Time"
-msgstr ""
+msgstr "Літній час Ізраїлю"
 
 #: dlls/tzres/tzres.rc:58
 msgid "Bangladesh Standard Time"
-msgstr ""
+msgstr "Стандартний час Бангладеш"
 
 #: dlls/tzres/tzres.rc:59
 msgid "Bangladesh Daylight Time"
-msgstr ""
+msgstr "Літній час Бангладеш"
 
 #: dlls/tzres/tzres.rc:200
 msgid "SA Pacific Standard Time"
-msgstr ""
+msgstr "SA Тихоокеанський стандартний час"
 
 #: dlls/tzres/tzres.rc:201
 msgid "SA Pacific Daylight Time"
-msgstr ""
+msgstr "SA Тихоокеанський літній час"
 
 #: dlls/tzres/tzres.rc:248
 msgid "West Asia Standard Time"
-msgstr ""
+msgstr "Західноазіатський стандартний час"
 
 #: dlls/tzres/tzres.rc:249
 msgid "West Asia Daylight Time"
-msgstr ""
+msgstr "Західноазіатський літній час"
 
 #: dlls/tzres/tzres.rc:32
 msgid "Alaskan Standard Time"
-msgstr ""
+msgstr "Аляскинський стандартний час"
 
 #: dlls/tzres/tzres.rc:33
 msgid "Alaskan Daylight Time"
-msgstr ""
+msgstr "Аляскинський літній час"
 
 #: dlls/tzres/tzres.rc:192
 msgid "Paraguay Standard Time"
-msgstr ""
+msgstr "Парагвайський стандартний час"
 
 #: dlls/tzres/tzres.rc:193
 msgid "Paraguay Daylight Time"
-msgstr ""
+msgstr "Парагвайський літній час"
 
 #: dlls/tzres/tzres.rc:94
 msgid "Dateline Standard Time"
-msgstr ""
+msgstr "Стандартний час у Дателіні"
 
 #: dlls/tzres/tzres.rc:95
 msgid "Dateline Daylight Time"
-msgstr ""
+msgstr "Літній час у Дателіні"
 
 #: dlls/tzres/tzres.rc:142
 msgid "Libya Standard Time"
-msgstr ""
+msgstr "Лівійський стандартний час"
 
 #: dlls/tzres/tzres.rc:143
 msgid "Libya Daylight Time"
-msgstr ""
+msgstr "Лівійський літній час"
 
 #: dlls/tzres/tzres.rc:56
 msgid "Bahia Standard Time"
-msgstr ""
+msgstr "Стандартний час Баїя"
 
 #: dlls/tzres/tzres.rc:57
 msgid "Bahia Daylight Time"
-msgstr ""
+msgstr "Літній час Баїя"
 
 #: dlls/tzres/tzres.rc:238
 msgid "Venezuela Standard Time"
-msgstr ""
+msgstr "Стандартний час Венесуели"
 
 #: dlls/tzres/tzres.rc:239
 msgid "Venezuela Daylight Time"
-msgstr ""
+msgstr "Літній час Венесуели"
 
 #: dlls/tzres/tzres.rc:62
 msgid "Bougainville Standard Time"
-msgstr ""
+msgstr "Стандартний час Бугенвіля"
 
 #: dlls/tzres/tzres.rc:63
 msgid "Bougainville Daylight Time"
-msgstr ""
+msgstr "Літній час Бугенвіля"
 
 #: dlls/tzres/tzres.rc:128
 msgid "Hawaiian Standard Time"
-msgstr ""
+msgstr "Гавайський стандартний час"
 
 #: dlls/tzres/tzres.rc:129
 msgid "Hawaiian Daylight Time"
-msgstr ""
+msgstr "Гавайський літній час"
 
 #: dlls/tzres/tzres.rc:208
 msgid "SE Asia Standard Time"
-msgstr ""
+msgstr "Південно-Східний Азіатський стандартний час"
 
 #: dlls/tzres/tzres.rc:209
 msgid "SE Asia Daylight Time"
-msgstr ""
+msgstr "Південно-Східний Азіатський літній час"
 
 #: dlls/tzres/tzres.rc:174
 msgid "New Zealand Standard Time"
-msgstr ""
+msgstr "Стандартний час Нової Зеландії"
 
 #: dlls/tzres/tzres.rc:175
 msgid "New Zealand Daylight Time"
-msgstr ""
+msgstr "Літній час Нової Зеландії"
 
 #: dlls/tzres/tzres.rc:34
 msgid "Aleutian Standard Time"
-msgstr ""
+msgstr "Алеутський стандартний час"
 
 #: dlls/tzres/tzres.rc:35
 msgid "Aleutian Daylight Time"
-msgstr ""
+msgstr "Алеутський літній час"
 
 #: dlls/tzres/tzres.rc:76
 msgid "Central Brazilian Standard Time"
-msgstr ""
+msgstr "Центральний бразильський стандартний час"
 
 #: dlls/tzres/tzres.rc:77
 msgid "Central Brazilian Daylight Time"
-msgstr ""
+msgstr "Центральний бразильський літній час"
 
 #: dlls/tzres/tzres.rc:60
 msgid "Belarus Standard Time"
-msgstr ""
+msgstr "Білоруський стандартний час"
 
 #: dlls/tzres/tzres.rc:61
 msgid "Belarus Daylight Time"
-msgstr ""
+msgstr "Білоруський літній час"
 
 #: dlls/tzres/tzres.rc:202
 msgid "SA Western Standard Time"
-msgstr ""
+msgstr "SA Західний стандартний час"
 
 #: dlls/tzres/tzres.rc:203
 msgid "SA Western Daylight Time"
-msgstr ""
+msgstr "SA Західний літній час"
 
 #: dlls/tzres/tzres.rc:120
 msgid "Greenland Standard Time"
-msgstr ""
+msgstr "Стандартний час Гренландії"
 
 #: dlls/tzres/tzres.rc:121
 msgid "Greenland Daylight Time"
-msgstr ""
+msgstr "Літній час Гренландії"
 
 #: dlls/tzres/tzres.rc:102
 msgid "Easter Island Standard Time"
-msgstr ""
+msgstr "Стандартний час острова Пасхи"
 
 #: dlls/tzres/tzres.rc:103
 msgid "Easter Island Daylight Time"
-msgstr ""
+msgstr "Літній час острова Пасхи"
 
 #: dlls/tzres/tzres.rc:108
 msgid "Egypt Standard Time"
-msgstr ""
+msgstr "Єгипетський стандартний час"
 
 #: dlls/tzres/tzres.rc:109
 msgid "Egypt Daylight Time"
-msgstr ""
+msgstr "Єгипетський літній час"
 
 #: dlls/tzres/tzres.rc:106
 msgid "Eastern Standard Time (Mexico)"
-msgstr ""
+msgstr "Східний стандартний час (Мексика)"
 
 #: dlls/tzres/tzres.rc:107
 msgid "Eastern Daylight Time (Mexico)"
-msgstr ""
+msgstr "Східний літній час (Мексика)"
 
 #: dlls/tzres/tzres.rc:154
 msgid "Mauritius Standard Time"
-msgstr ""
+msgstr "Стандартний час Маврикія"
 
 #: dlls/tzres/tzres.rc:155
 msgid "Mauritius Daylight Time"
-msgstr ""
+msgstr "Літній час Маврикія"
 
 #: dlls/tzres/tzres.rc:240
 msgid "Vladivostok Standard Time"
-msgstr ""
+msgstr "Стандартний час Владивостока"
 
 #: dlls/tzres/tzres.rc:241
 msgid "Vladivostok Daylight Time"
-msgstr ""
+msgstr "Літній час Владивостока"
 
 #: dlls/tzres/tzres.rc:210
 msgid "Singapore Standard Time"
-msgstr ""
+msgstr "Стандартний час Сінгапуру"
 
 #: dlls/tzres/tzres.rc:211
 msgid "Singapore Daylight Time"
-msgstr ""
+msgstr "Літній час Сінгапуру"
 
 #: dlls/tzres/tzres.rc:140
 msgid "Korea Standard Time"
-msgstr ""
+msgstr "Корейський стандартний час"
 
 #: dlls/tzres/tzres.rc:141
 msgid "Korea Daylight Time"
-msgstr ""
+msgstr "Корейський літній час"
 
 #: dlls/tzres/tzres.rc:88
 msgid "Chatham Islands Standard Time"
-msgstr ""
+msgstr "Стандартний час островів Чатем"
 
 #: dlls/tzres/tzres.rc:89
 msgid "Chatham Islands Daylight Time"
-msgstr ""
+msgstr "Літній час островів Чатем"
 
 #: dlls/tzres/tzres.rc:96
 msgid "E. Africa Standard Time"
-msgstr ""
+msgstr "E. Стандартний час в Африці"
 
 #: dlls/tzres/tzres.rc:97
 msgid "E. Africa Daylight Time"
-msgstr ""
+msgstr "E. Літній час в Африці"
 
 #: dlls/tzres/tzres.rc:114
 msgid "FLE Standard Time"
-msgstr ""
+msgstr "Стандартний час FLE"
 
 #: dlls/tzres/tzres.rc:115
 msgid "FLE Daylight Time"
-msgstr ""
+msgstr "Літній час FLE"
 
 #: dlls/tzres/tzres.rc:100
 msgid "E. South America Standard Time"
-msgstr ""
+msgstr "E. Стандартний час Південної Америки"
 
 #: dlls/tzres/tzres.rc:101
 msgid "E. South America Daylight Time"
-msgstr ""
+msgstr "E. Літній час Південної Америки"
 
 #: dlls/tzres/tzres.rc:82
 msgid "Central Pacific Standard Time"
-msgstr ""
+msgstr "Центральний тихоокеанський стандартний час"
 
 #: dlls/tzres/tzres.rc:83
 msgid "Central Pacific Daylight Time"
-msgstr ""
+msgstr "Центральний тихоокеанський літній час"
 
 #: dlls/tzres/tzres.rc:244
 msgid "W. Central Africa Standard Time"
-msgstr ""
+msgstr "В. Стандартний час у Центральній Африці"
 
 #: dlls/tzres/tzres.rc:245
 msgid "W. Central Africa Daylight Time"
-msgstr ""
+msgstr "В. Літній час у Центральній Африці"
 
 #: dlls/tzres/tzres.rc:184
 msgid "Pacific SA Standard Time"
-msgstr ""
+msgstr "Тихоокеанський стандартний час SA"
 
 #: dlls/tzres/tzres.rc:185
 msgid "Pacific SA Daylight Time"
-msgstr ""
+msgstr "Тихоокеанський літній час SA"
 
 #: dlls/tzres/tzres.rc:98
 msgid "E. Australia Standard Time"
-msgstr ""
+msgstr "E. Стандартний час в Австралії"
 
 #: dlls/tzres/tzres.rc:99
 msgid "E. Australia Daylight Time"
-msgstr ""
+msgstr "E. Літній час в Австралії"
 
 #: dlls/tzres/tzres.rc:242
 msgid "W. Australia Standard Time"
-msgstr ""
+msgstr "В. Стандартний час в Австралії"
 
 #: dlls/tzres/tzres.rc:243
 msgid "W. Australia Daylight Time"
-msgstr ""
+msgstr "В. Літній час в Австралії"
 
 #: dlls/urlmon/urlmon.rc:32 dlls/wininet/wininet.rc:88
 msgid "Security Warning"
@@ -10960,147 +10898,116 @@ msgstr "&Ще вікна..."
 
 #: dlls/vbscript/vbscript.rc:30
 msgid "Overflow"
-msgstr ""
+msgstr "Переповнення"
 
 #: dlls/vbscript/vbscript.rc:31
-#, fuzzy
-#| msgid "Out of memory."
 msgid "Out of memory"
-msgstr "Замало пам'яті."
+msgstr "Замало пам'яті"
 
 #: dlls/vbscript/vbscript.rc:33
 msgid "This array is fixed or temporarily locked"
-msgstr ""
+msgstr "Цей масив виправлений або тимчасово заблокований"
 
 #: dlls/vbscript/vbscript.rc:34
-#, fuzzy
-#| msgid "Data type mismatch.\n"
 msgid "Type mismatch"
-msgstr "Невідповідність типів даних.\n"
+msgstr "Невідповідність типу"
 
 #: dlls/vbscript/vbscript.rc:36
 msgid "Device I/O error"
-msgstr ""
+msgstr "Помилка вводу-виводу пристрою"
 
 #: dlls/vbscript/vbscript.rc:37
-#, fuzzy
-#| msgid "File already exists.\n"
 msgid "File already exists"
-msgstr "Файл вже існує.\n"
+msgstr "Файл вже існує"
 
 #: dlls/vbscript/vbscript.rc:38
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "Disk full"
-msgstr "Диск заповнений.\n"
+msgstr "Диск заповнений"
 
 #: dlls/vbscript/vbscript.rc:39
-#, fuzzy
-#| msgid "Too many open files.\n"
 msgid "Too many files"
-msgstr "Забагато відкритих файлів.\n"
+msgstr "Забагато файлів"
 
 #: dlls/vbscript/vbscript.rc:40
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permission denied"
-msgstr "Доступ заборонено.\n"
+msgstr "Доступ заборонено"
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
-msgstr ""
+msgstr "Помилка доступу до шляху/файлу"
 
 #: dlls/vbscript/vbscript.rc:42
-#, fuzzy
-#| msgid "Path not found.\n"
 msgid "Path not found"
-msgstr "Шлях не знайдено.\n"
+msgstr "Шлях не знайдено"
 
 #: dlls/vbscript/vbscript.rc:43
-#, fuzzy
-#| msgid "(value not set)"
 msgid "Object variable not set"
-msgstr "(значення не задане)"
+msgstr "Не встановлена ​​змінна об'єкта"
 
 #: dlls/vbscript/vbscript.rc:44
-#, fuzzy
-#| msgid "Invalid cursor handle.\n"
 msgid "Invalid use of Null"
-msgstr "Невірна рукоятка курсора.\n"
+msgstr "Неправильне використання Null"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
-msgstr ""
+msgstr "Не вдається створити необхідний тимчасовий файл"
 
 #: dlls/vbscript/vbscript.rc:46
-#, fuzzy
-#| msgid "Automation server can't create object"
 msgid "ActiveX component can't create object"
-msgstr "Сервер автоматизації не може створити об'єкт"
+msgstr "Компонент ActiveX не може створити об’єкт"
 
 #: dlls/vbscript/vbscript.rc:47
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Class doesn't support Automation"
-msgstr "Об'єкт не підтримує цю дію"
+msgstr "Клас не підтримує автоматизацію"
 
 #: dlls/vbscript/vbscript.rc:48
 msgid "File name or class name not found during Automation operation"
-msgstr ""
+msgstr "Ім'я файлу або ім'я класу не знайдено під час операції автоматизації"
 
 #: dlls/vbscript/vbscript.rc:51
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support named arguments"
-msgstr "Об'єкт не підтримує цю дію"
+msgstr "Об'єкт не підтримує названі аргументи"
 
 #: dlls/vbscript/vbscript.rc:52
-#, fuzzy
-#| msgid "Object doesn't support this action"
 msgid "Object doesn't support current locale setting"
-msgstr "Об'єкт не підтримує цю дію"
+msgstr "Об’єкт не підтримує поточні налаштування мови"
 
 #: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
-#, fuzzy
-#| msgid "Element not found.\n"
 msgid "Named argument not found"
-msgstr "Елемент не знайдено.\n"
+msgstr "Названий аргумент не знайдено"
 
 #: dlls/vbscript/vbscript.rc:55
 msgid "Wrong number of arguments or invalid property assignment"
-msgstr ""
+msgstr "Неправильна кількість аргументів або недійсне призначення властивості"
 
 #: dlls/vbscript/vbscript.rc:56
-#, fuzzy
-#| msgid "Object Class Violation"
 msgid "Object not a collection"
-msgstr "Порушення класу об'єкту"
+msgstr "Об'єкт не є набором"
 
 #: dlls/vbscript/vbscript.rc:57
-#, fuzzy
-#| msgid "Specified control was not found in message"
 msgid "Specified DLL function not found"
-msgstr "Вказаний елемент керування не знайдено в повідомленні"
+msgstr "Вказану функцію DLL не знайдено"
 
 #: dlls/vbscript/vbscript.rc:58
 msgid "Variable uses an Automation type not supported in VBScript"
 msgstr ""
+"Змінна використовує тип автоматизації, який не підтримується у VBScript"
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "The remote server machine does not exist or is unavailable"
-msgstr ""
+msgstr "Віддалений сервер не існує або недоступний"
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr ""
+msgstr "Недійсне або невизначене посилання"
 
 #: dlls/vbscript/vbscript.rc:62
 msgid "Microsoft VBScript compilation error"
-msgstr ""
+msgstr "Помилка компіляції Microsoft VBScript"
 
 #: dlls/vbscript/vbscript.rc:63
 msgid "Microsoft VBScript runtime error"
-msgstr ""
+msgstr "Помилка виконання Microsoft VBScript"
 
 #: dlls/winemac.drv/winemac.rc:33
 msgid "Hide %@"
@@ -11197,33 +11104,27 @@ msgstr "Існує принаймні одна невизначена пробл
 
 #: dlls/wininet/wininet.rc:35
 msgid "Effective Date"
-msgstr ""
+msgstr "Дата набрання чинності"
 
 #: dlls/wininet/wininet.rc:37
-#, fuzzy
-#| msgid "Security"
 msgid "Security Protocol"
-msgstr "Безпека"
+msgstr "Протокол безпеки"
 
 #: dlls/wininet/wininet.rc:38
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature Type"
-msgstr "Підпис"
+msgstr "Тип підпису"
 
 #: dlls/wininet/wininet.rc:39
-#, fuzzy
-#| msgid "Encrypting File System"
 msgid "Encryption Type"
-msgstr "Зашифрована Файлова Система"
+msgstr "Тип шифрування"
 
 #: dlls/wininet/wininet.rc:40
 msgid "Privacy Strength"
-msgstr ""
+msgstr "Сила конфіденційності"
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
-msgstr ""
+msgstr "біти"
 
 #: dlls/wininet/winineterror.mc:26
 msgid "The request has timed out.\n"
@@ -13236,6 +13137,9 @@ msgid ""
 "\n"
 "hardlink      hardlink management\n"
 msgstr ""
+"- Підтримувані команди -\n"
+"\n"
+"hardlink      управління жорстким посиланням\n"
 
 #: programs/fsutil/fsutil.mc:35
 msgid ""
@@ -13243,10 +13147,13 @@ msgid ""
 "\n"
 "create        create a hardlink\n"
 msgstr ""
+"- Жорстке посилання - Підтримувані команди -\n"
+"\n"
+"create        створити жорстке посилання\n"
 
 #: programs/fsutil/fsutil.mc:40
 msgid "Syntax: fsutil hardlink create <new> <existing>\n"
-msgstr ""
+msgstr "Синтаксис: fsutil hardlink create <нове> <існуюче>\n"
 
 #: programs/hostname/hostname.rc:30
 msgid "Usage: hostname\n"
@@ -16053,11 +15960,9 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
-"УВАГА: Завершення цього процесу може призвести до\n"
-"небажаних результатів, включаючи втрату даних та\n"
-"нестабільність системи. Процес не зможе зберегти\n"
-"свою позицію чи дані. Ви справді хочете завершити\n"
-"процес?"
+"УВАГА: Завершення цього процесу може призвести до небажаних результатів, "
+"включаючи втрату даних та нестабільність системи. Процес не зможе зберегти "
+"свою позицію чи дані. Ви справді хочете завершити процес?"
 
 #: programs/taskmgr/taskmgr.rc:311
 msgid "Unable to Terminate Process"
@@ -17069,10 +16974,8 @@ msgid "&Beginner"
 msgstr "Н&овачок"
 
 #: programs/winemine/winemine.rc:45
-#, fuzzy
-#| msgid "Interface"
 msgid "&Intermediate"
-msgstr "Інтерфейс"
+msgstr "&Проміжний"
 
 #: programs/winemine/winemine.rc:46
 msgid "&Expert"
@@ -17103,10 +17006,8 @@ msgid "Beginner"
 msgstr "Новачок"
 
 #: programs/winemine/winemine.rc:65
-#, fuzzy
-#| msgid "Interface"
 msgid "Intermediate"
-msgstr "Інтерфейс"
+msgstr "Проміжний"
 
 #: programs/winemine/winemine.rc:66
 msgid "Expert"
