@@ -526,6 +526,7 @@ static void test_trig(void)
 
 static void test_sampling(void)
 {
+    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc = {0};
     struct test_context test_context;
     ID3D11ShaderResourceView *srv;
     ID3D11SamplerState *sampler;
@@ -592,13 +593,6 @@ static void test_sampling(void)
 
     static const D3D11_SUBRESOURCE_DATA resource_data = {&texture_data, sizeof(texture_data) / 2};
 
-    static const D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc =
-    {
-        .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
-        .ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D,
-        .Texture2D.MipLevels = 1,
-    };
-
     static const D3D11_SAMPLER_DESC sampler_desc =
     {
         .Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR,
@@ -614,6 +608,9 @@ static void test_sampling(void)
 
     hr = ID3D11Device_CreateTexture2D(test_context.device, &texture_desc, &resource_data, &texture);
     ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srv_desc.Texture2D.MipLevels = 1;
     hr = ID3D11Device_CreateShaderResourceView(test_context.device, (ID3D11Resource *)texture, &srv_desc, &srv);
     ok(hr == S_OK, "Failed to create SRV, hr %#x.\n", hr);
     ID3D11DeviceContext_PSSetShaderResources(test_context.immediate_context, 0, 1, &srv);
