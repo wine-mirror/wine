@@ -304,7 +304,7 @@ static void test_v1_server(void)
     ok(req->BytesReceived == strlen(req_text), "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
     ok(!req->EntityChunkCount, "Got %u entity chunks.\n", req->EntityChunkCount);
     ok(!req->pEntityChunks, "Got entity chunks %p.\n", req->pEntityChunks);
-    ok(!req->RawConnectionId, "Got SSL connection ID %s.\n", wine_dbgstr_longlong(req->RawConnectionId));
+    /* req->RawConnectionId is zero until Win10 2004. */
     ok(!req->pSslInfo, "Got SSL info %p.\n", req->pSslInfo);
 
     response.StatusCode = 418;
@@ -1372,10 +1372,9 @@ static void test_v2_server(void)
     ok(req->BytesReceived == strlen(req_text), "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
     ok(!req->EntityChunkCount, "Got %u entity chunks.\n", req->EntityChunkCount);
     ok(!req->pEntityChunks, "Got entity chunks %p.\n", req->pEntityChunks);
-    ok(!req->RawConnectionId, "Got SSL connection ID %s.\n", wine_dbgstr_longlong(req->RawConnectionId));
+    /* req->RawConnectionId is zero until Win10 2004. */
     ok(!req->pSslInfo, "Got SSL info %p.\n", req->pSslInfo);
-    ok(!reqv2->RequestInfoCount, "Got request info count %u.\n", reqv2->RequestInfoCount);
-    ok(!reqv2->pRequestInfo, "Got request info %p.\n", reqv2->pRequestInfo);
+    /* RequestInfoCount and pRequestInfo are zero until Win10 1909. */
 
     response.s.StatusCode = 418;
     response.s.pReason = "I'm a teapot";
