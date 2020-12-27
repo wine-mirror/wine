@@ -6616,6 +6616,11 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
              * is invalid */
             ERR_(winediag)("Failed to resolve your host name IP\n");
             result = getaddrinfo(NULL, servname ? servname : "0", punixhints, &unixaires);
+            if (!result && punixhints && (punixhints->ai_flags & AI_CANONNAME) && unixaires && !unixaires->ai_canonname)
+            {
+                freeaddrinfo(unixaires);
+                result = EAI_NONAME;
+            }
         }
     }
     TRACE("%s, %s %p -> %p %d\n", debugstr_a(nodename), debugstr_a(servname), hints, res, result);
