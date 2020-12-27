@@ -850,16 +850,13 @@ static const BYTE align_check_code[] = {
     0x55,                  	/* push   %ebp */
     0x89,0xe5,             	/* mov    %esp,%ebp */
     0x9c,                  	/* pushf   */
+    0x9c,                  	/* pushf   */
     0x58,                  	/* pop    %eax */
     0x0d,0,0,4,0,       	/* or     $0x40000,%eax */
     0x50,                  	/* push   %eax */
     0x9d,                  	/* popf    */
     0x89,0xe0,                  /* mov %esp, %eax */
     0x8b,0x40,0x1,              /* mov 0x1(%eax), %eax - cause exception */
-    0x9c,                  	/* pushf   */
-    0x58,                  	/* pop    %eax */
-    0x35,0,0,4,0,       	/* xor    $0x40000,%eax */
-    0x50,                  	/* push   %eax */
     0x9d,                  	/* popf    */
     0x5d,                  	/* pop    %ebp */
     0xc3,                  	/* ret     */
