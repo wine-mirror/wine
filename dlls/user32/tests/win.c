@@ -1288,87 +1288,24 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     return CallNextHookEx(hhook, nCode, wParam, lParam);
 }
 
-static const WCHAR winlogonW[] =
-    {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-     'W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-     'W','i','n','l','o','g','o','n',0};
-static const WCHAR autorestartshellW[] =
-    {'A','u','t','o','R','e','s','t','a','r','t','S','h','e','l','l',0};
-
-static DWORD get_autorestart(void)
-{
-    DWORD type, val, len = sizeof(val);
-    REGSAM access = KEY_ALL_ACCESS|KEY_WOW64_64KEY;
-    HKEY hkey;
-    LONG res;
-
-    if (RegCreateKeyExW( HKEY_LOCAL_MACHINE, winlogonW, 0, 0, 0, access, NULL, &hkey, 0 )) return 0;
-    res = RegQueryValueExW( hkey, autorestartshellW, NULL, &type, (BYTE *)&val, &len );
-    RegCloseKey( hkey );
-    return (!res && type == REG_DWORD) ? val : 0;
-}
-
-static BOOL set_autorestart( DWORD val )
-{
-    REGSAM access = KEY_ALL_ACCESS|KEY_WOW64_64KEY;
-    HKEY hkey;
-    LONG res;
-
-    if (RegCreateKeyExW( HKEY_LOCAL_MACHINE, winlogonW, 0, 0, 0, access, NULL, &hkey, 0 )) return FALSE;
-    res = RegSetValueExW( hkey, autorestartshellW, 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
-    RegCloseKey( hkey );
-    return !res;
-}
-
-static void test_shell_window(void)
+static DWORD WINAPI test_shell_window_thread(LPVOID param)
 {
     BOOL ret;
-    DWORD error, restart = get_autorestart();
     HMODULE hinst, hUser32;
     BOOL (WINAPI*SetShellWindow)(HWND);
     HWND hwnd1, hwnd2, hwnd3, hwnd4, hwnd5;
     HWND shellWindow, nextWnd;
+    HDESK testDesktop = (HDESK)param;
 
-    if (restart && !set_autorestart(0))
-    {
-        skip("cannot disable automatic shell restart (needs admin rights\n");
-        return;
-    }
+    SetThreadDesktop(testDesktop);
 
     shellWindow = GetShellWindow();
     hinst = GetModuleHandleA(NULL);
     hUser32 = GetModuleHandleA("user32");
 
+    ok(shellWindow == NULL, "Newly created desktop has a shell window %p\n", shellWindow);
+
     SetShellWindow = (void *)GetProcAddress(hUser32, "SetShellWindow");
-
-    if (shellWindow) {
-        DWORD pid;
-        HANDLE hProcess;
-
-        GetWindowThreadProcessId(shellWindow, &pid);
-        hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-        if (!hProcess)
-        {
-            skip( "cannot get access to shell process\n" );
-            set_autorestart(restart);
-            return;
-        }
-
-        SetLastError(0xdeadbeef);
-        ret = DestroyWindow(shellWindow);
-        error = GetLastError();
-
-        ok(!ret, "DestroyWindow(shellWindow)\n");
-        /* passes on Win XP, but not on Win98 */
-        ok(error==ERROR_ACCESS_DENIED || error == 0xdeadbeef,
-           "got %u after DestroyWindow(shellWindow)\n", error);
-
-        /* close old shell instance */
-        ret = TerminateProcess(hProcess, 0);
-        ok(ret, "termination of previous shell process failed: GetLastError()=%d\n", GetLastError());
-        WaitForSingleObject(hProcess, INFINITE);    /* wait for termination */
-        CloseHandle(hProcess);
-    }
 
     hwnd1 = CreateWindowExA(0, "#32770", "TEST1", WS_OVERLAPPEDWINDOW/*|WS_VISIBLE*/, 100, 100, 300, 200, 0, 0, hinst, 0);
 
@@ -1381,8 +1318,8 @@ static void test_shell_window(void)
     ok(!ret, "second call to SetShellWindow(hwnd1)\n");
 
     ret = SetShellWindow(0);
-    error = GetLastError();
     /* passes on Win XP, but not on Win98
+    DWORD error = GetLastError();
     ok(!ret, "reset shell window by SetShellWindow(0)\n");
     ok(error==ERROR_INVALID_WINDOW_HANDLE, "ERROR_INVALID_WINDOW_HANDLE after SetShellWindow(0)\n"); */
 
@@ -1442,7 +1379,24 @@ static void test_shell_window(void)
     DestroyWindow(hwnd3);
     DestroyWindow(hwnd4);
     DestroyWindow(hwnd5);
-    set_autorestart(restart);
+
+    return 0;
+}
+
+static void test_shell_window(void)
+{
+    HDESK hdesk;
+    HANDLE hthread;
+
+    hdesk = CreateDesktopA("winetest", NULL, NULL, 0, GENERIC_ALL, NULL);
+
+    hthread = CreateThread(NULL, 0, test_shell_window_thread, (LPVOID)hdesk, 0, NULL);
+
+    WaitForSingleObject(hthread, INFINITE);
+
+    DeleteObject(hthread);
+
+    CloseDesktop(hdesk);
 }
 
 /************** MDI test ****************/
@@ -12075,7 +12029,5 @@ START_TEST(win)
      */
     test_topmost();
 
-    /* Execute the SetShellWindow() test last, since it kills explorer and that
-     * breaks a lot of things. */
     test_shell_window();
 }
