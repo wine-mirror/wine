@@ -866,24 +866,6 @@ case $host_os in
         LIBS="$ac_save_LIBS"
     fi
 
-    dnl Check for Xcode 3.x broken 16-bit support
-    if test "x$enable_win16" = "xyes"
-    then
-        AC_MSG_CHECKING([whether 16-bit code can be built correctly])
-        AC_RUN_IFELSE([AC_LANG_PROGRAM([[asm(".text\n"
-                                            "bad:\tnop;nop\n"
-                                            "good:\tnop;nop\n\t"
-                                            ".globl _testfunc\n"
-                                            "_testfunc:\tcallw good");
-                                        extern void testfunc();]],
-                                      [[unsigned short *p = (unsigned short *)testfunc;
-                                        return p[0] != 0xe866 || p[1] != 0xfffa]])],
-                                      AC_MSG_RESULT(yes),
-                                      [AC_MSG_RESULT(no)
-                                       AC_MSG_ERROR([Xcode 3.x cannot build 16-bit code correctly. Use --disable-win16 if you don't need 16-bit support.])],
-                                       AC_MSG_RESULT([[cross-compiling, assuming yes]]))
-    fi
-
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.$libwine_version.dylib")
     AC_SUBST(LIBWINE_LDFLAGS,["-dynamiclib -install_name @rpath/libwine.$libwine_soversion.dylib -Wl,-rpath,@loader_path/ -compatibility_version $libwine_soversion -current_version $libwine_version"])
     AC_SUBST(WINELOADER_DEPENDS,"wine_info.plist")

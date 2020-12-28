@@ -9081,45 +9081,6 @@ fi
         LIBS="$ac_save_LIBS"
     fi
 
-        if test "x$enable_win16" = "xyes"
-    then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether 16-bit code can be built correctly" >&5
-$as_echo_n "checking whether 16-bit code can be built correctly... " >&6; }
-        if test "$cross_compiling" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: cross-compiling, assuming yes" >&5
-$as_echo "cross-compiling, assuming yes" >&6; }
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-asm(".text\n"
-                                            "bad:\tnop;nop\n"
-                                            "good:\tnop;nop\n\t"
-                                            ".globl _testfunc\n"
-                                            "_testfunc:\tcallw good");
-                                        extern void testfunc();
-int
-main ()
-{
-unsigned short *p = (unsigned short *)testfunc;
-                                        return p[0] != 0xe866 || p[1] != 0xfffa
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                                       as_fn_error $? "Xcode 3.x cannot build 16-bit code correctly. Use --disable-win16 if you don't need 16-bit support." "$LINENO" 5
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-    fi
-
     LIBWINE_SHAREDLIB="libwine.$libwine_version.dylib"
 
     LIBWINE_LDFLAGS="-dynamiclib -install_name @rpath/libwine.$libwine_soversion.dylib -Wl,-rpath,@loader_path/ -compatibility_version $libwine_soversion -current_version $libwine_version"
