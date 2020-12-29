@@ -295,7 +295,7 @@ static inline BOOL call_dll_entry_point( DLLENTRYPROC proc, void *module,
  *
  * Entry point for stub functions.
  */
-static void stub_entry_point( const char *dll, const char *name, void *ret_addr )
+static void WINAPI stub_entry_point( const char *dll, const char *name, void *ret_addr )
 {
     EXCEPTION_RECORD rec;
 
@@ -406,15 +406,15 @@ static ULONG_PTR allocate_stub( const char *dll, const char *name )
     stub->name      = name;
     stub->entry     = stub_entry_point;
 #else
-    stub->movq_rdi[0]     = 0x48;  /* movq $dll,%rdi */
-    stub->movq_rdi[1]     = 0xbf;
+    stub->movq_rdi[0]     = 0x48;  /* movq $dll,%rcx */
+    stub->movq_rdi[1]     = 0xb9;
     stub->dll             = dll;
-    stub->movq_rsi[0]     = 0x48;  /* movq $name,%rsi */
-    stub->movq_rsi[1]     = 0xbe;
+    stub->movq_rsi[0]     = 0x48;  /* movq $name,%rdx */
+    stub->movq_rsi[1]     = 0xba;
     stub->name            = name;
-    stub->movq_rsp_rdx[0] = 0x48;  /* movq (%rsp),%rdx */
+    stub->movq_rsp_rdx[0] = 0x4c;  /* movq (%rsp),%r8 */
     stub->movq_rsp_rdx[1] = 0x8b;
-    stub->movq_rsp_rdx[2] = 0x14;
+    stub->movq_rsp_rdx[2] = 0x04;
     stub->movq_rsp_rdx[3] = 0x24;
     stub->movq_rax[0]     = 0x48;  /* movq $entry, %rax */
     stub->movq_rax[1]     = 0xb8;
