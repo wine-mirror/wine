@@ -214,12 +214,6 @@ static UINT arm_disasm_halfwordtrans(UINT inst, ADDRESS64 *addr)
     return 0;
 }
 
-static UINT arm_disasm_branchreg(UINT inst, ADDRESS64 *addr)
-{
-    dbg_printf("\n\tb%s\t%s", get_cond(inst), tbl_regs[get_nibble(inst, 0)]);
-    return 0;
-}
-
 static UINT arm_disasm_branchxchg(UINT inst, ADDRESS64 *addr)
 {
     dbg_printf("\n\tbx%s\t%s", get_cond(inst), tbl_regs[get_nibble(inst, 0)]);
@@ -1478,7 +1472,6 @@ static const struct inst_arm tbl_arm[] = {
     { 0x0f8000f0, 0x00800090, arm_disasm_longmul },
     { 0x0fb00ff0, 0x01000090, arm_disasm_swp },
     { 0x0e000090, 0x00000090, arm_disasm_halfwordtrans },
-    { 0x0ffffff0, 0x012fff00, arm_disasm_branchreg },
     { 0x0ffffff0, 0x012fff10, arm_disasm_branchxchg },
     { 0x0fbf0fff, 0x010f0000, arm_disasm_mrstrans },
     { 0x0dbef000, 0x0128f000, arm_disasm_msrtrans },
