@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-12-16 13:14+0900\n"
+"PO-Revision-Date: 2020-12-29 16:25+0900\n"
 "Last-Translator: Byeongsik Jeon <bsjeon@hanmail.net>\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
@@ -23,7 +23,7 @@ msgid ""
 "drive, click Install."
 msgstr ""
 "플로피 디스크, 시디롬 드라이브, 또는 하드디스크 드라이브에서 새 프로그램을 설"
-"치하려면 [설치]를 클릭하십시오."
+"치하려면 [설치]를 클릭하세요."
 
 #: dlls/appwiz.cpl/appwiz.rc:62
 msgid "&Install..."
@@ -36,7 +36,7 @@ msgid ""
 "Remove."
 msgstr ""
 "다음 소프트웨어는 자동으로 제거됩니다. 프로그램을 제거하거나 설치된 구성요소"
-"를 수정하려면, 목록에서 선택한 후 [수정/제거]를 클릭하십시오."
+"를 수정하려면, 목록에서 선택한 후 [수정/제거]를 클릭하세요."
 
 #: dlls/appwiz.cpl/appwiz.rc:67
 msgid "&Support Information"
@@ -101,7 +101,7 @@ msgstr "이 정보는 %s을(를) 위한 기술 지원을 받는 데 사용될 �
 
 #: dlls/appwiz.cpl/appwiz.rc:80
 msgid "Publisher:"
-msgstr "제작사:"
+msgstr "제조업체:"
 
 #: dlls/appwiz.cpl/appwiz.rc:81 programs/winefile/winefile.rc:165
 msgid "Version:"
@@ -133,7 +133,7 @@ msgstr "설명:"
 
 #: dlls/appwiz.cpl/appwiz.rc:100
 msgid "Wine Gecko Installer"
-msgstr "Wine Gecko 설치관리자"
+msgstr "Wine Gecko 설치 관리자"
 
 #: dlls/appwiz.cpl/appwiz.rc:103
 msgid ""
@@ -151,7 +151,7 @@ msgstr ""
 "\n"
 "참고: 배포판이 제공하는 Gecko 패키지 사용을 추천합니다. 자세한 내용은 <a "
 "href=\"https://wiki.winehq.org/Gecko\">https://wiki.winehq.org/Gecko</a>를 보"
-"십시오."
+"세요."
 
 #: dlls/appwiz.cpl/appwiz.rc:109 dlls/appwiz.cpl/appwiz.rc:124
 msgid "&Install"
@@ -202,7 +202,7 @@ msgstr "취소"
 
 #: dlls/appwiz.cpl/appwiz.rc:115
 msgid "Wine Mono Installer"
-msgstr "Wine Mono 설치관리자"
+msgstr "Wine Mono 설치 관리자"
 
 #: dlls/appwiz.cpl/appwiz.rc:118
 msgid ""
@@ -258,7 +258,7 @@ msgstr "이름"
 
 #: dlls/appwiz.cpl/appwiz.rc:39
 msgid "Publisher"
-msgstr "제작사"
+msgstr "제조업체"
 
 #: dlls/appwiz.cpl/appwiz.rc:40 dlls/cryptui/cryptui.rc:54
 msgid "Version"
@@ -936,14 +936,14 @@ msgstr "파일을 찾을 수 없음"
 
 #: dlls/comdlg32/comdlg32.rc:34
 msgid "Please verify that the correct file name was given"
-msgstr "파일 이름이 올바른지 확인하십시오"
+msgstr "파일 이름이 올바른지 확인하세요"
 
 #: dlls/comdlg32/comdlg32.rc:35
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
 msgstr ""
-"파일이 없습니다\n"
+"파일이 없습니다.\n"
 "파일을 새로 만드시겠습니까?"
 
 #: dlls/comdlg32/comdlg32.rc:36
@@ -956,15 +956,15 @@ msgstr ""
 
 #: dlls/comdlg32/comdlg32.rc:37
 msgid "Invalid character(s) in path"
-msgstr "경로에 올바르지 않은 문자가 들어 있습니다"
+msgstr "경로에 잘못된 문자가 들어 있습니다"
 
 #: dlls/comdlg32/comdlg32.rc:38
 msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
 msgstr ""
-"파일 이름에 다음 문자가 들어 있으면 안됩니다.\n"
-"                / : < > |"
+"파일 이름에는 아래의 문자가 들어 있을 수 없습니다.\n"
+"                          / : < > |"
 
 #: dlls/comdlg32/comdlg32.rc:39
 msgid "Path does not exist"
@@ -1080,7 +1080,7 @@ msgstr "흰색"
 
 #: dlls/comdlg32/comdlg32.rc:57
 msgid "Unreadable Entry"
-msgstr "읽을 수 없는 항목입니다"
+msgstr "읽을 수 없는 항목"
 
 #: dlls/comdlg32/comdlg32.rc:59
 msgid ""
@@ -1100,7 +1100,7 @@ msgid ""
 "Please reenter margins."
 msgstr ""
 "여백이 겹쳐졌거나 용지 크기를 넘었습니다.\n"
-"여백 크기를 다시 입력십시오."
+"여백 크기를 다시 입력하세요."
 
 #: dlls/comdlg32/comdlg32.rc:65
 msgid "The 'Number of copies' field cannot be empty."
@@ -1111,12 +1111,12 @@ msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
-"복사본 개수가 너무 많아서 프린터가 지원하지 않습니다.\n"
-"1과 %d 사이의 값을 입력하십시오."
+"이렇게 많은 복사본 갯수는 프린터에서 지원되지 않습니다.\n"
+"1과 %d 사이의 값을 입력하세요."
 
 #: dlls/comdlg32/comdlg32.rc:68
 msgid "A printer error occurred."
-msgstr "프린터 오류 발생."
+msgstr "프린터 오류가 발생하였습니다."
 
 #: dlls/comdlg32/comdlg32.rc:69
 msgid "No default printer defined."
@@ -1128,15 +1128,15 @@ msgstr "프린터를 찾을 수 없습니다."
 
 #: dlls/comdlg32/comdlg32.rc:71 programs/progman/progman.rc:76
 msgid "Out of memory."
-msgstr "메모리 부족."
+msgstr "메모리가 부족합니다."
 
 #: dlls/comdlg32/comdlg32.rc:72
 msgid "An error occurred."
-msgstr "오류 발생."
+msgstr "오류가 발생했습니다."
 
 #: dlls/comdlg32/comdlg32.rc:73
 msgid "Unknown printer driver."
-msgstr "알 수 없는 프린터 드라이버."
+msgstr "알 수 없는 프린터 드라이버입니다."
 
 #: dlls/comdlg32/comdlg32.rc:76
 msgid ""
@@ -1144,11 +1144,11 @@ msgid ""
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
 "페이지 설정이나 문서 인쇄와 같은 프린터 관련 작업을 수행하려면 먼저 프린터를 "
-"설치해야 합니다. 프린터를 설치하고 다시 시도하십시오."
+"설치해야 합니다. 프린터를 설치하고 다시 시도하세요."
 
 #: dlls/comdlg32/comdlg32.rc:142
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "%1!d!pt - %2!d!pt 사이에서 글꼴 크기를 선택하십시오."
+msgstr "%1!d!pt - %2!d!pt 사이에서 글꼴 크기를 선택하세요."
 
 #: dlls/comdlg32/comdlg32.rc:143 dlls/ieframe/ieframe.rc:35
 msgid "&Save"
@@ -1284,7 +1284,7 @@ msgstr "기본 프린터; "
 
 #: dlls/comdlg32/comdlg32.rc:79
 msgid "There are %d documents in the queue"
-msgstr "대기열에는  %d의 문서가 존재합니다"
+msgstr "대기열에는 문서 %d이(가) 존재합니다"
 
 #: dlls/comdlg32/comdlg32.rc:80
 msgid "Margins [inches]"
@@ -1330,7 +1330,7 @@ msgid ""
 "and password are correct."
 msgstr ""
 "사용자 이름과 암호가 올바른지\n"
-"확인하십시오."
+"확인하세요."
 
 #: dlls/credui/credui.rc:35
 msgid ""
@@ -1339,10 +1339,10 @@ msgid ""
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
 msgstr ""
-"Caps Lock이 켜져 있으면 암호가 올바르지 않게 입력될 수 있습니다.\n"
+"Caps Lock을 켜 놓으면 암호가 올바르게 입력되지 않을 수 있습니다.\n"
 "\n"
 "암호를 입력하기 전에 키보드의 Caps Lock 키를 눌러서 Caps Lock을\n"
-"끄십시오."
+"끄세요."
 
 #: dlls/credui/credui.rc:34
 msgid "Caps Lock is On"
@@ -1455,7 +1455,7 @@ msgstr "서명한 데이터 선호"
 #: dlls/crypt32/crypt32.rc:56 dlls/cryptdlg/cryptdlg.rc:34
 msgctxt "Certification Practice Statement"
 msgid "CPS"
-msgstr "CPS"
+msgstr "CPS(인증서 사용 약관)"
 
 #: dlls/crypt32/crypt32.rc:57 dlls/cryptdlg/cryptdlg.rc:35
 msgid "User Notice"
@@ -2298,7 +2298,7 @@ msgstr "인증서 저장소 선택"
 
 #: dlls/cryptui/cryptui.rc:276
 msgid "Select the certificate store you want to use:"
-msgstr "사용하고자 하는 인증서 저장소를 선택하십시오:"
+msgstr "사용하고자 하는 인증서 저장소를 선택하세요:"
 
 #: dlls/cryptui/cryptui.rc:279
 msgid "&Show physical stores"
@@ -2475,7 +2475,7 @@ msgstr ""
 "다. 또한  메시지에 사인하고 인증하는 데도 사용됩니다.인증서 보관소는 인증서, "
 "인증서 파기 목록, 인증서 신뢰 목록의저장소입니다.\n"
 "\n"
-"계속 하려면, [다음]을 클릭하십시오."
+"계속 하려면, [다음]을 클릭하세요."
 
 #: dlls/cryptui/cryptui.rc:389
 msgid ""
@@ -2551,7 +2551,7 @@ msgstr "인증서 선택"
 
 #: dlls/cryptui/cryptui.rc:459
 msgid "Select a certificate you want to use"
-msgstr "사용하고자 하는 인증서를 선택하십시오"
+msgstr "사용할 인증서를 선택합니다"
 
 #: dlls/cryptui/cryptui.rc:30 dlls/cryptui/cryptui.rc:93
 msgid "Certificate"
@@ -2566,8 +2566,8 @@ msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
-"이 인증서는 올바르지 않은 서명을 가지고 있습니다. 이 인증서는 아마도 고쳐졌거"
-"나 망가진 것같습니가."
+"이 인증서에는 잘못된 서명이 있습니다. 인증서가 변경되었거나 손상되었을 수 있"
+"습니다."
 
 #: dlls/cryptui/cryptui.rc:33
 msgid ""
@@ -2575,27 +2575,27 @@ msgid ""
 "trusted root certificate store."
 msgstr ""
 "이 루트 인증서는 신뢰할 수 없습니다. 이것을 신뢰하려면 시스템의 신뢰할 수 있"
-"는 루트 인증서 저장소에 추가하십시오."
+"는 루트 인증서 저장소에 추가하세요."
 
 #: dlls/cryptui/cryptui.rc:34
 msgid "This certificate could not be validated to a trusted root certificate."
-msgstr "이 인증서는 신뢰된 루트 인증서로 허가될 수 없습니다."
+msgstr "이 인증서를 신뢰할 수 있는 루트 인증서로 검증할 수 없습니다."
 
 #: dlls/cryptui/cryptui.rc:35
 msgid "This certificate's issuer could not be found."
-msgstr "이 인증서의 발행자를 찾을 수 없습니다."
+msgstr "이 인증서의 발급자를 찾을 수 없습니다."
 
 #: dlls/cryptui/cryptui.rc:36
 msgid "All the intended purposes of this certificate could not be verified."
-msgstr "이 인증서의 모든 계획된 목적은 검증될 수 없습니다."
+msgstr "이 인증서의 모든 의도된 목적을 확인할 수 없습니다."
 
 #: dlls/cryptui/cryptui.rc:37
 msgid "This certificate is intended for the following purposes:"
-msgstr "이 인증서는 다음의 목적으로 계획되어있습니다:"
+msgstr "이 인증서는 다음 목적을 위해 작성되었습니다:"
 
 #: dlls/cryptui/cryptui.rc:38
 msgid "Issued to: "
-msgstr "발행대상: "
+msgstr "발행 대상: "
 
 #: dlls/cryptui/cryptui.rc:39
 msgid "Issued by: "
@@ -2611,7 +2611,7 @@ msgstr " 유효기간(끝) "
 
 #: dlls/cryptui/cryptui.rc:42
 msgid "This certificate has an invalid signature."
-msgstr "이 인증서는 올바르지 않은 서명을 가지고 있습니다."
+msgstr "이 인증서는 잘못된 서명을 가지고 있습니다."
 
 #: dlls/cryptui/cryptui.rc:43
 msgid "This certificate has expired or is not yet valid."
@@ -2709,7 +2709,7 @@ msgstr "인증서 속성"
 
 #: dlls/cryptui/cryptui.rc:67
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr "폼 1,2,3,4에 하나의 OID를 입력하십시오"
+msgstr "폼 1,2,3,4에 하나의 OID를 입력하세요"
 
 #: dlls/cryptui/cryptui.rc:68
 msgid "The OID you entered already exists."
@@ -2717,14 +2717,14 @@ msgstr "입력한 OID가 이미 존재합니다."
 
 #: dlls/cryptui/cryptui.rc:70
 msgid "Please select a certificate store."
-msgstr "인증서 저장소를 선택하십시오."
+msgstr "인증서 저장소를 선택하세요."
 
 #: dlls/cryptui/cryptui.rc:72
 msgid ""
 "The file contains objects that do not match the given criteria. Please "
 "select another file."
 msgstr ""
-"이 파일에 주어진 기준에 맞지 않는 개체가 있습니다. 다른 파일을 선택하십시오."
+"이 파일에 주어진 기준에 맞지 않는 개체가 있습니다. 다른 파일을 선택하세요."
 
 #: dlls/cryptui/cryptui.rc:73
 msgid "File to Import"
@@ -2767,11 +2767,11 @@ msgstr "CMS/PKCS #7 메시지 (*.spc; *.p7b)"
 
 #: dlls/cryptui/cryptui.rc:84
 msgid "Please select a file."
-msgstr "파일을 선택하십시오."
+msgstr "파일을 선택하세요."
 
 #: dlls/cryptui/cryptui.rc:85
 msgid "The file format is not recognized. Please select another file."
-msgstr "이 파일 형식을 이해할 수 없습니다. 다른 파일을 선택하십시오."
+msgstr "이 파일 형식을 이해할 수 없습니다. 다른 파일을 선택하세요."
 
 #: dlls/cryptui/cryptui.rc:86
 msgid "Could not open "
@@ -2783,7 +2783,7 @@ msgstr "프로그램이 결정"
 
 #: dlls/cryptui/cryptui.rc:88
 msgid "Please select a store"
-msgstr "보관소를 선택하십시오"
+msgstr "보관소를 선택하세요"
 
 #: dlls/cryptui/cryptui.rc:89
 msgid "Certificate Store Selected"
@@ -2965,7 +2965,7 @@ msgstr ""
 
 #: dlls/cryptui/cryptui.rc:127
 msgid "Protects e-mail messages"
-msgstr "전자 메일 메시지를 보호합니다"
+msgstr "전자메일 메시지를 보호합니다"
 
 #: dlls/cryptui/cryptui.rc:128
 msgid "Allows secure communication over the Internet"
@@ -3092,7 +3092,7 @@ msgstr "구현되지 않음"
 
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
-msgstr "장치 설정"
+msgstr "장치 구성"
 
 #: dlls/dinput/dinput.rc:39
 msgid "Reset"
@@ -3136,19 +3136,19 @@ msgstr "%1!u!메가바이트 사용됨, %2!u!메가바이 사용 가능함"
 
 #: dlls/gdi32/gdi32.rc:28
 msgid "Western"
-msgstr "서부"
+msgstr "영어"
 
 #: dlls/gdi32/gdi32.rc:29
 msgid "Central European"
-msgstr "중부 유럽"
+msgstr "중앙 유럽어"
 
 #: dlls/gdi32/gdi32.rc:30
 msgid "Cyrillic"
-msgstr "키릴문자"
+msgstr "키릴 문자"
 
 #: dlls/gdi32/gdi32.rc:31
 msgid "Greek"
-msgstr "그리스어"
+msgstr "그리스 문자"
 
 #: dlls/gdi32/gdi32.rc:32
 msgid "Turkish"
@@ -3200,20 +3200,20 @@ msgstr "기호"
 
 #: dlls/gdi32/gdi32.rc:44
 msgid "OEM/DOS"
-msgstr "OEM/도"
+msgstr "OEM/DOS"
 
 #: dlls/gdi32/gdi32.rc:45 dlls/oledb32/version.rc:100
 #: dlls/wldap32/wldap32.rc:112
 msgid "Other"
-msgstr "다른 문제"
+msgstr "기타"
 
 #: dlls/gphoto2.ds/gphoto2.rc:30
 msgid "Files on Camera"
-msgstr "카메라에 있는 파"
+msgstr "카메라에 있는 파일"
 
 #: dlls/gphoto2.ds/gphoto2.rc:34
 msgid "Import Selected"
-msgstr "선택된 것을 불러오기"
+msgstr "선택한 항목 가져오기"
 
 #: dlls/gphoto2.ds/gphoto2.rc:35
 msgid "Preview"
@@ -3221,31 +3221,31 @@ msgstr "미리 보기"
 
 #: dlls/gphoto2.ds/gphoto2.rc:36
 msgid "Import All"
-msgstr "모두 불러오기"
+msgstr "모두 가져오기"
 
 #: dlls/gphoto2.ds/gphoto2.rc:37
 msgid "Skip This Dialog"
-msgstr "대화상자 지나치기"
+msgstr "이 대화상자 건너뛰기"
 
 #: dlls/gphoto2.ds/gphoto2.rc:38
 msgid "Exit"
-msgstr "나가기"
+msgstr "끝내기"
 
 #: dlls/gphoto2.ds/gphoto2.rc:43
 msgid "Transferring"
-msgstr "옮기는 중"
+msgstr "전송 중"
 
 #: dlls/gphoto2.ds/gphoto2.rc:46
 msgid "Transferring... Please Wait"
-msgstr "옮기는 중... 잠시만 기다리십시오"
+msgstr "전송 중입니다. 잠시 기다려 주세요"
 
 #: dlls/gphoto2.ds/gphoto2.rc:51
 msgid "Connecting to camera"
-msgstr "카메라하고 연결중"
+msgstr "카메라에 연결 중입니다"
 
 #: dlls/gphoto2.ds/gphoto2.rc:55
 msgid "Connecting to camera... Please Wait"
-msgstr "카메라하고 연결중... 잠시만 기다리십시오"
+msgstr "카메라에 연결 중입니다. 잠시 기다려 주세요"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:59
 msgid "S&ync"
@@ -3287,7 +3287,7 @@ msgstr "모두 선택(&A)"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:78 dlls/shdoclc/shdoclc.rc:54
 msgid "&View Source"
-msgstr "소스 보기(&V)"
+msgstr "원본 보기(&V)"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:83
 msgid "Proper&ties"
@@ -3353,7 +3353,7 @@ msgstr "숨기기"
 #: dlls/hhctrl.ocx/hhctrl.rc:44 dlls/ieframe/ieframe.rc:68
 #: dlls/shdoclc/shdoclc.rc:167 dlls/shdoclc/shdoclc.rc:191
 msgid "Stop"
-msgstr "멈추기"
+msgstr "중지"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:45 dlls/ieframe/ieframe.rc:69
 #: dlls/shell32/shell32.rc:62
@@ -3428,15 +3428,15 @@ msgstr "인쇄 미리보기(&W)"
 
 #: dlls/ieframe/ieframe.rc:47
 msgid "&Toolbars"
-msgstr "도구바(&T)"
+msgstr "도구 모음(&T)"
 
 #: dlls/ieframe/ieframe.rc:49
 msgid "&Standard bar"
-msgstr "표준 바(&S)"
+msgstr "표준 도구 모음(&S)"
 
 #: dlls/ieframe/ieframe.rc:50
 msgid "&Address bar"
-msgstr "주소 바(&A)"
+msgstr "주소 표시줄(&A)"
 
 #: dlls/ieframe/ieframe.rc:53 programs/regedit/regedit.rc:72
 msgid "&Favorites"
@@ -3448,7 +3448,7 @@ msgstr "즐겨찾기 추가(&A)..."
 
 #: dlls/ieframe/ieframe.rc:60
 msgid "&About Internet Explorer"
-msgstr "인터넷 익스플로어에 관하여(&A)"
+msgstr "인터넷 익스플로어 정보(&A)"
 
 #: dlls/ieframe/ieframe.rc:90
 msgid "Open URL"
@@ -3456,7 +3456,7 @@ msgstr "URL 열기"
 
 #: dlls/ieframe/ieframe.rc:93
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr "인터넷 익스플로어로 열 URL 지정"
+msgstr "인터넷 탐색기에서 열 URL을 지정합니다"
 
 #: dlls/ieframe/ieframe.rc:94
 msgid "Open:"
@@ -3485,7 +3485,7 @@ msgstr "%s 다운로드 시작"
 
 #: dlls/ieframe/ieframe.rc:83
 msgid "Downloading %s"
-msgstr "%s 다운로드중"
+msgstr "%s 다운로드 중"
 
 #: dlls/ieframe/ieframe.rc:84
 msgid "Asking for %s"
@@ -3517,7 +3517,7 @@ msgstr "방문 기록"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:57
 msgid "You can delete cached pages, cookies and other data."
-msgstr "캐시된 페이지, 쿠키 및 기타 데이터를 제거할 수 있습니다."
+msgstr "캐시된 페이지, 쿠키 및 기타 데이터를 삭제할 수 있습니다."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:59
 msgid "Delete &files..."
@@ -3537,7 +3537,7 @@ msgid ""
 "Cached copies of web pages, images and certificates."
 msgstr ""
 "임시 인터넷 파일\n"
-"웹 페이지의 캐시된 복사본,그림 그리고 인증서."
+"웹 페이지, 이미지 및 인증서의 캐시된 복사본."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:73
 msgid ""
@@ -3547,7 +3547,7 @@ msgid ""
 msgstr ""
 "쿠키\n"
 "사용자 기본 설정 및 로그인 정보와 같은 항목을 저장하는 웹 사이트에서 컴퓨터"
-"에 저장된 파일입니다."
+"에 저장한 파일입니다."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:75
 msgid ""
@@ -3601,7 +3601,7 @@ msgstr "연결"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:125
 msgid "Automatic configuration"
-msgstr "자동 설정"
+msgstr "자동 구성"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:126
 msgid "Use Web Proxy Auto-Discovery (WPAD)"
@@ -3633,7 +3633,7 @@ msgstr "인터넷 설정"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:32
 msgid "Configure Wine Internet Browser and related settings"
-msgstr "Wine 인터넷 브라우저와 관련 설정 처리"
+msgstr "Wine 인터넷 브라우저 및 관련 설정 구성"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:33
 msgid "Security settings for zone: "
@@ -3705,7 +3705,7 @@ msgstr "강제 피드백 테스트"
 
 #: dlls/joy.cpl/joy.rc:68
 msgid "Available Effects"
-msgstr "가능한 효과들"
+msgstr "사용 가능한 효과"
 
 #: dlls/joy.cpl/joy.rc:70
 msgid ""
@@ -3729,7 +3729,7 @@ msgstr "개체를 기본 형식으로 변환하는 중에 오류 발생"
 
 #: dlls/jscript/jscript.rc:29 dlls/vbscript/vbscript.rc:29
 msgid "Invalid procedure call or argument"
-msgstr "올바르지 않은 프로시져 호출이나 인수"
+msgstr "잘못된 프로시져 호출이나 인수"
 
 #: dlls/jscript/jscript.rc:30 dlls/vbscript/vbscript.rc:32
 msgid "Subscript out of range"
@@ -3749,7 +3749,7 @@ msgstr "자동화 서버가 개체를 만들 수 없음"
 
 #: dlls/jscript/jscript.rc:34 dlls/vbscript/vbscript.rc:49
 msgid "Object doesn't support this property or method"
-msgstr "개체는 이 속성이나 메소드를 지원하지 않음"
+msgstr "개체가 이 속성이나 메소드를 지원하지 않습니다"
 
 #: dlls/jscript/jscript.rc:35 dlls/vbscript/vbscript.rc:50
 msgid "Object doesn't support this action"
@@ -3893,7 +3893,7 @@ msgstr "예외가 발생했지만 catch할 수 없습니다"
 
 #: dlls/jscript/jscript.rc:68
 msgid "URI to be encoded contains invalid characters"
-msgstr "인코딩할 URI에 올바르지 않은 문자가 들어 있습니다"
+msgstr "인코딩할 URI에 잘못된 문자가 들어 있습니다"
 
 #: dlls/jscript/jscript.rc:67
 msgid "URI to be decoded is incorrect"
@@ -3949,7 +3949,7 @@ msgstr "성공.\n"
 
 #: dlls/kernel32/winerror.mc:33
 msgid "Invalid function.\n"
-msgstr "올바르지 않은 함수.\n"
+msgstr "잘못된 함수입니다.\n"
 
 #: dlls/kernel32/winerror.mc:38
 msgid "File not found.\n"
@@ -3961,43 +3961,43 @@ msgstr "경로를 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:48
 msgid "Too many open files.\n"
-msgstr "너무 많은 파일 오픈.\n"
+msgstr "열린 파일이 너무 많습니다.\n"
 
 #: dlls/kernel32/winerror.mc:53
 msgid "Access denied.\n"
-msgstr "접근 거부.\n"
+msgstr "접근이 거부되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:58
 msgid "Invalid handle.\n"
-msgstr "올바르지 않은 핸들.\n"
+msgstr "잘못된 핸들입니다.\n"
 
 #: dlls/kernel32/winerror.mc:63
 msgid "Memory trashed.\n"
-msgstr "메모리 손상.\n"
+msgstr "메모리 손상되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:68
 msgid "Not enough memory.\n"
-msgstr "메모리 부족.\n"
+msgstr "메모리가 부족합니다.\n"
 
 #: dlls/kernel32/winerror.mc:73
 msgid "Invalid block.\n"
-msgstr "올바르지 않은 블록.\n"
+msgstr "잘못된 블록입니다.\n"
 
 #: dlls/kernel32/winerror.mc:78
 msgid "Bad environment.\n"
-msgstr "잘못된 환경.\n"
+msgstr "잘못된 환경입니다.\n"
 
 #: dlls/kernel32/winerror.mc:83
 msgid "Bad format.\n"
-msgstr "잘못된 형식.\n"
+msgstr "잘못된 형식입니다.\n"
 
 #: dlls/kernel32/winerror.mc:88
 msgid "Invalid access.\n"
-msgstr "올바르지 않은 접근.\n"
+msgstr "잘못된 접근입니다.\n"
 
 #: dlls/kernel32/winerror.mc:93
 msgid "Invalid data.\n"
-msgstr "올바르지 않은 데이터.\n"
+msgstr "잘못된 데이터입니다.\n"
 
 #: dlls/kernel32/winerror.mc:98
 msgid "Out of memory.\n"
@@ -4005,7 +4005,7 @@ msgstr "메모리 부족.\n"
 
 #: dlls/kernel32/winerror.mc:103
 msgid "Invalid drive.\n"
-msgstr "올바르지 않은 드라이브.\n"
+msgstr "잘못된 드라이브.\n"
 
 #: dlls/kernel32/winerror.mc:108
 msgid "Can't delete current directory.\n"
@@ -4209,11 +4209,11 @@ msgstr "이미 할당되어 있습니다.\n"
 
 #: dlls/kernel32/winerror.mc:358 dlls/kernel32/winerror.mc:1713
 msgid "Invalid password.\n"
-msgstr "올바르지 않은 암호.\n"
+msgstr "잘못된 암호.\n"
 
 #: dlls/kernel32/winerror.mc:363
 msgid "Invalid parameter.\n"
-msgstr "올바르지 않은 매개변수.\n"
+msgstr "잘못된 매개변수.\n"
 
 #: dlls/kernel32/winerror.mc:368
 msgid "Net write fault.\n"
@@ -4241,7 +4241,7 @@ msgstr "너무 많은 세마포어 요청.\n"
 
 #: dlls/kernel32/winerror.mc:398
 msgid "Invalid at interrupt time.\n"
-msgstr "올바르지 않은 인터럽트 시간.\n"
+msgstr "잘못된 인터럽트 시간.\n"
 
 #: dlls/kernel32/winerror.mc:403
 msgid "Semaphore owner died.\n"
@@ -4253,7 +4253,7 @@ msgstr "세마포어 사용자 제한.\n"
 
 #: dlls/kernel32/winerror.mc:413
 msgid "Insert disk for drive %1.\n"
-msgstr "드라이브 %1에 디스크를 넣으십시오.\n"
+msgstr "드라이브 %1에 디스크를 넣으세요.\n"
 
 #: dlls/kernel32/winerror.mc:418
 msgid "Drive locked.\n"
@@ -4277,15 +4277,15 @@ msgstr "핸들을 더이상 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:448
 msgid "Invalid target handle.\n"
-msgstr "올바르지 않은 목표 핸들.\n"
+msgstr "잘못된 목표 핸들.\n"
 
 #: dlls/kernel32/winerror.mc:453
 msgid "Invalid IOCTL.\n"
-msgstr "올바르지 않은 IOCTL.\n"
+msgstr "잘못된 IOCTL.\n"
 
 #: dlls/kernel32/winerror.mc:458
 msgid "Invalid verify switch.\n"
-msgstr "올바르지 않은 검증 스위치.\n"
+msgstr "잘못된 검증 스위치.\n"
 
 #: dlls/kernel32/winerror.mc:463
 msgid "Bad driver level.\n"
@@ -4293,7 +4293,7 @@ msgstr "잘못된 드라이버 레벨.\n"
 
 #: dlls/kernel32/winerror.mc:468
 msgid "Call not implemented.\n"
-msgstr "지원하지 않는 요청.\n"
+msgstr "호출이 구현되지 않았습니다.\n"
 
 #: dlls/kernel32/winerror.mc:473
 msgid "Semaphore timeout.\n"
@@ -4305,11 +4305,11 @@ msgstr "충분하지 않은 버퍼.\n"
 
 #: dlls/kernel32/winerror.mc:483 dlls/mferror/mferror.mc:109
 msgid "Invalid name.\n"
-msgstr "올바르지 않은 이름.\n"
+msgstr "잘못된 이름.\n"
 
 #: dlls/kernel32/winerror.mc:488
 msgid "Invalid level.\n"
-msgstr "올바르지 않은 레벨.\n"
+msgstr "잘못된 레벨.\n"
 
 #: dlls/kernel32/winerror.mc:493
 msgid "No volume label.\n"
@@ -4413,7 +4413,7 @@ msgstr "시스템 추적이 지정하지 않았거나 허용되지 않습니다.
 
 #: dlls/kernel32/winerror.mc:623
 msgid "Event count for DosMuxSemWait incorrect.\n"
-msgstr "DosMuxSemWait 용 이벤트 개수가 올바르지 않습니다.\n"
+msgstr "DosMuxSemWait 용 이벤트 개수가 잘못되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:628
 msgid "Too many waiters for DosMuxSemWait.\n"
@@ -4421,7 +4421,7 @@ msgstr "DosMuxSemWait 용 대기자가 너무 많습니다.\n"
 
 #: dlls/kernel32/winerror.mc:633
 msgid "DosSemMuxWait list invalid.\n"
-msgstr "DosSemMuxWait 목록이 올바르지 않습니다.\n"
+msgstr "DosSemMuxWait 목록이 잘못되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:638
 msgid "Volume label too long.\n"
@@ -4453,7 +4453,7 @@ msgstr "잘못된 DosExecPgm 인수.\n"
 
 #: dlls/kernel32/winerror.mc:673
 msgid "Path is invalid.\n"
-msgstr "올바르지 않은 경로.\n"
+msgstr "잘못된 경로.\n"
 
 #: dlls/kernel32/winerror.mc:678
 msgid "Signal pending.\n"
@@ -4481,11 +4481,11 @@ msgstr "원자적 잠금 미지원.\n"
 
 #: dlls/kernel32/winerror.mc:708
 msgid "Invalid segment number.\n"
-msgstr "올바르지 않은 세그멘트 번호.\n"
+msgstr "잘못된 세그멘트 번호.\n"
 
 #: dlls/kernel32/winerror.mc:713
 msgid "Invalid ordinal for %1.\n"
-msgstr "올바르지 않은 %1 번호.\n"
+msgstr "잘못된 %1 번호.\n"
 
 #: dlls/kernel32/winerror.mc:718
 msgid "File already exists.\n"
@@ -4493,7 +4493,7 @@ msgstr "파일이 이미 존재합니다.\n"
 
 #: dlls/kernel32/winerror.mc:723
 msgid "Invalid flag number.\n"
-msgstr "올바르지 않은 플래그.\n"
+msgstr "잘못된 플래그.\n"
 
 #: dlls/kernel32/winerror.mc:728
 msgid "Semaphore name not found.\n"
@@ -4501,27 +4501,27 @@ msgstr "세마포어 이름을 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:733
 msgid "Invalid starting code segment for %1.\n"
-msgstr "올바르지 않은 %1 시작 코드 세그멘트.\n"
+msgstr "잘못된 %1 시작 코드 세그멘트.\n"
 
 #: dlls/kernel32/winerror.mc:738
 msgid "Invalid starting stack segment for %1.\n"
-msgstr "올바르지 않은 %1 시작 스택 세그먼트.\n"
+msgstr "잘못된 %1 시작 스택 세그먼트.\n"
 
 #: dlls/kernel32/winerror.mc:743
 msgid "Invalid module type for %1.\n"
-msgstr "올바르지 않은 %1 모듈 유형.\n"
+msgstr "잘못된 %1 모듈 유형.\n"
 
 #: dlls/kernel32/winerror.mc:748
 msgid "Invalid EXE signature in %1.\n"
-msgstr "올바르지 않은 %1 실행 서명.\n"
+msgstr "잘못된 %1 EXE 서명.\n"
 
 #: dlls/kernel32/winerror.mc:753
 msgid "EXE %1 is marked invalid.\n"
-msgstr "올바르지 않다고 표신된 EXE %1.\n"
+msgstr "EXE %1이(가) 잘못된 것으로 표시되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:758
 msgid "Bad EXE format for %1.\n"
-msgstr "잘못된 %1 실행 형식.\n"
+msgstr "잘못된 %1 EXE 형식.\n"
 
 #: dlls/kernel32/winerror.mc:763
 msgid "Iterated data exceeds 64k in %1.\n"
@@ -4533,7 +4533,7 @@ msgstr "%1 최소 할당 크기가 잘못되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:773
 msgid "Dynlink from invalid ring.\n"
-msgstr "올바르지 않은 링에서의 동적 링크.\n"
+msgstr "잘못된 링에서의 동적 링크.\n"
 
 #: dlls/kernel32/winerror.mc:778
 msgid "IOPL not enabled.\n"
@@ -4541,7 +4541,7 @@ msgstr "불가능한 IOPL.\n"
 
 #: dlls/kernel32/winerror.mc:783
 msgid "Invalid SEGDPL in %1.\n"
-msgstr "올바르지 않은 %1 SEGDPL.\n"
+msgstr "잘못된 %1 SEGDPL.\n"
 
 #: dlls/kernel32/winerror.mc:788
 msgid "Auto data segment exceeds 64k.\n"
@@ -4581,7 +4581,7 @@ msgstr "파일 이름 와일드카드 사용 오류.\n"
 
 #: dlls/kernel32/winerror.mc:833
 msgid "Invalid signal number.\n"
-msgstr "올바르지 않은 시그널 번호.\n"
+msgstr "잘못된 시그널 번호.\n"
 
 #: dlls/kernel32/winerror.mc:838
 msgid "Error setting signal handler.\n"
@@ -4629,7 +4629,7 @@ msgstr "세션 취소.\n"
 
 #: dlls/kernel32/winerror.mc:893
 msgid "Invalid extended attribute name.\n"
-msgstr "올바르지 않은 확장 속성 이름.\n"
+msgstr "잘못된 확장 속성 이름.\n"
 
 #: dlls/kernel32/winerror.mc:898
 msgid "Extended attribute list inconsistent.\n"
@@ -4645,7 +4645,7 @@ msgstr "복사 API를 사용할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:913
 msgid "Directory name invalid.\n"
-msgstr "올바르지 않은 디렉터리 이름.\n"
+msgstr "잘못된 디렉터리 이름.\n"
 
 #: dlls/kernel32/winerror.mc:918
 msgid "Extended attributes didn't fit.\n"
@@ -4661,7 +4661,7 @@ msgstr "확장 속성 테이블이 가득 찾습니다.\n"
 
 #: dlls/kernel32/winerror.mc:933
 msgid "Invalid extended attribute handle.\n"
-msgstr "올바르지 않은 확장 속성 핸들.\n"
+msgstr "잘못된 확장 속성 핸들.\n"
 
 #: dlls/kernel32/winerror.mc:938
 msgid "Extended attributes not supported.\n"
@@ -4685,7 +4685,7 @@ msgstr "승인되지 않은 oplock.\n"
 
 #: dlls/kernel32/winerror.mc:963
 msgid "Invalid oplock message received.\n"
-msgstr "올바르지 않은 oplock 메시지 수신.\n"
+msgstr "잘못된 oplock 메시지 수신.\n"
 
 #: dlls/kernel32/winerror.mc:968
 msgid "Message 0x%1 not found in file %2.\n"
@@ -4693,7 +4693,7 @@ msgstr "파일 %2에 메시지 0x%1이(가) 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:973
 msgid "Invalid address.\n"
-msgstr "올바르지 않은 주소.\n"
+msgstr "잘못된 주소.\n"
 
 #: dlls/kernel32/winerror.mc:978
 msgid "Arithmetic overflow.\n"
@@ -4737,7 +4737,7 @@ msgstr "스택 오버플로우.\n"
 
 #: dlls/kernel32/winerror.mc:1028
 msgid "Invalid message.\n"
-msgstr "올바르지 않은 메시지.\n"
+msgstr "잘못된 메시지입니다.\n"
 
 #: dlls/kernel32/winerror.mc:1033
 msgid "Cannot complete.\n"
@@ -4745,7 +4745,7 @@ msgstr "완료할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1038
 msgid "Invalid flags.\n"
-msgstr "올바르지 않은 플래그.\n"
+msgstr "잘못된 플래그입니다.\n"
 
 #: dlls/kernel32/winerror.mc:1043
 msgid "Unrecognized volume.\n"
@@ -4753,7 +4753,7 @@ msgstr "인식되지 않는 볼륨.\n"
 
 #: dlls/kernel32/winerror.mc:1048
 msgid "File invalid.\n"
-msgstr "올바르지 않는 파일.\n"
+msgstr "잘못된 파일입니다.\n"
 
 #: dlls/kernel32/winerror.mc:1053
 msgid "Cannot run full-screen.\n"
@@ -4769,7 +4769,7 @@ msgstr "레지스트리 손상.\n"
 
 #: dlls/kernel32/winerror.mc:1068
 msgid "Invalid key.\n"
-msgstr "올바르지 않은 키.\n"
+msgstr "잘못된 키.\n"
 
 #: dlls/kernel32/winerror.mc:1073
 msgid "Can't open registry key.\n"
@@ -4825,7 +4825,7 @@ msgstr "의존 서비스 실행 중.\n"
 
 #: dlls/kernel32/winerror.mc:1138
 msgid "Invalid service control.\n"
-msgstr "올바르지 않은 서비스 컨트롤.\n"
+msgstr "잘못된 서비스 컨트롤.\n"
 
 #: dlls/kernel32/winerror.mc:1143
 msgid "Service request timeout.\n"
@@ -4845,7 +4845,7 @@ msgstr "서비스 실행 증.\n"
 
 #: dlls/kernel32/winerror.mc:1163
 msgid "Invalid service account.\n"
-msgstr "올바르지 않은 서비스 계정.\n"
+msgstr "잘못된 서비스 계정.\n"
 
 #: dlls/kernel32/winerror.mc:1168
 msgid "Service is disabled.\n"
@@ -4901,7 +4901,7 @@ msgstr "서비스 start-hang.\n"
 
 #: dlls/kernel32/winerror.mc:1233
 msgid "Invalid service lock.\n"
-msgstr "올바르지 않은 서비스 잠금.\n"
+msgstr "잘못된 서비스 잠금.\n"
 
 #: dlls/kernel32/winerror.mc:1238
 msgid "Service marked for delete.\n"
@@ -4977,7 +4977,7 @@ msgstr "파티션 실패.\n"
 
 #: dlls/kernel32/winerror.mc:1328
 msgid "Invalid block length.\n"
-msgstr "올바르지 않은 블럭 길이.\n"
+msgstr "잘못된 블럭 길이.\n"
 
 #: dlls/kernel32/winerror.mc:1333
 msgid "Device not partitioned.\n"
@@ -5113,7 +5113,7 @@ msgstr "리얼 모드 프로그램.\n"
 
 #: dlls/kernel32/winerror.mc:1498
 msgid "Invalid DLL.\n"
-msgstr "올바르지 않은 DLL.\n"
+msgstr "잘못된 DLL.\n"
 
 #: dlls/kernel32/winerror.mc:1503
 msgid "No associated application.\n"
@@ -5145,7 +5145,7 @@ msgstr "대상 요소가 가능 차 있습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1538
 msgid "The element address is invalid.\n"
-msgstr "올바르지 않은 요소 주소.\n"
+msgstr "잘못된 요소 주소.\n"
 
 #: dlls/kernel32/winerror.mc:1543
 msgid "The magazine is not present.\n"
@@ -5153,15 +5153,15 @@ msgstr "Magazine이 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1548
 msgid "The device needs reinitialization.\n"
-msgstr "이 장치는 초기화가 다시 필요합니다.\n"
+msgstr "이 장치는 재초기화가 필요합니다.\n"
 
 #: dlls/kernel32/winerror.mc:1553
 msgid "The device requires cleaning.\n"
-msgstr "장치는 청소가 필요함.\n"
+msgstr "이 장치는 정리가 필요합니다.\n"
 
 #: dlls/kernel32/winerror.mc:1558
 msgid "The device door is open.\n"
-msgstr "장치의 문이 열려있음.\n"
+msgstr "장치 문이 열려 있습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1563
 msgid "The device is not connected.\n"
@@ -5185,15 +5185,15 @@ msgstr "포인트를 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1588
 msgid "No running tracking service.\n"
-msgstr "추적 서비스가 실행중이 아님.\n"
+msgstr "실행 중인 추적 서비스가 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1593
 msgid "No such volume ID.\n"
-msgstr "볼륨 아이디가 없음.\n"
+msgstr "그런 볼륨 ID가 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1598
 msgid "Unable to remove the file to be replaced.\n"
-msgstr "교체하려는 파일을 지울 수 없습니다.\n"
+msgstr "바꿀 파일을 제거할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1603
 msgid "Unable to move the replacement file into place.\n"
@@ -5201,11 +5201,11 @@ msgstr "교체 파일을 제자리로 이동할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1608
 msgid "Moving the replacement file failed.\n"
-msgstr "교체 파일 이동 실패.\n"
+msgstr "교체 파일을 이동하지 못했습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1613
 msgid "The journal is being deleted.\n"
-msgstr "저널이 지워졌습니다.\n"
+msgstr "저널이 삭제되고 있습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1618
 msgid "The journal is not active.\n"
@@ -5221,7 +5221,7 @@ msgstr "저널 엔트리가 지워짐.\n"
 
 #: dlls/kernel32/winerror.mc:1633
 msgid "Invalid device name.\n"
-msgstr "올바르지 않은 장치 이름.\n"
+msgstr "잘못된 장치 이름.\n"
 
 #: dlls/kernel32/winerror.mc:1638
 msgid "Connection unavailable.\n"
@@ -5237,7 +5237,7 @@ msgstr "네트워크가 없거나 잘못된 경로.\n"
 
 #: dlls/kernel32/winerror.mc:1653
 msgid "Invalid network provider name.\n"
-msgstr "올바르지 않은 네트워크 제공자 이름.\n"
+msgstr "잘못된 네트워크 제공자 이름.\n"
 
 #: dlls/kernel32/winerror.mc:1658
 msgid "Cannot open network connection profile.\n"
@@ -5257,39 +5257,39 @@ msgstr "확장된 오류.\n"
 
 #: dlls/kernel32/winerror.mc:1678
 msgid "Invalid group name.\n"
-msgstr "올바르지 않은 그룹 이름.\n"
+msgstr "잘못된 그룹 이름.\n"
 
 #: dlls/kernel32/winerror.mc:1683
 msgid "Invalid computer name.\n"
-msgstr "올바르지 않은 컴퓨터 이름.\n"
+msgstr "잘못된 컴퓨터 이름.\n"
 
 #: dlls/kernel32/winerror.mc:1688
 msgid "Invalid event name.\n"
-msgstr "올바르지 않은 이벤트 이름.\n"
+msgstr "잘못된 이벤트 이름.\n"
 
 #: dlls/kernel32/winerror.mc:1693
 msgid "Invalid domain name.\n"
-msgstr "올바르지 않은 도메인 이름.\n"
+msgstr "잘못된 도메인 이름.\n"
 
 #: dlls/kernel32/winerror.mc:1698
 msgid "Invalid service name.\n"
-msgstr "올바르지 않은 서비스 이름.\n"
+msgstr "잘못된 서비스 이름.\n"
 
 #: dlls/kernel32/winerror.mc:1703
 msgid "Invalid network name.\n"
-msgstr "올바르지 않은 네트워크 이름.\n"
+msgstr "잘못된 네트워크 이름.\n"
 
 #: dlls/kernel32/winerror.mc:1708
 msgid "Invalid share name.\n"
-msgstr "올바르지 않은 공유 이름.\n"
+msgstr "잘못된 공유 이름.\n"
 
 #: dlls/kernel32/winerror.mc:1718
 msgid "Invalid message name.\n"
-msgstr "올바르지 않은 메시지 이름.\n"
+msgstr "잘못된 메시지 이름.\n"
 
 #: dlls/kernel32/winerror.mc:1723
 msgid "Invalid message destination.\n"
-msgstr "올바르지 않은 메시지 대상.\n"
+msgstr "잘못된 메시지 대상.\n"
 
 #: dlls/kernel32/winerror.mc:1728
 msgid "Session credential conflict.\n"
@@ -5305,7 +5305,7 @@ msgstr "도메인 또는 작업그룹 이름 중복.\n"
 
 #: dlls/kernel32/winerror.mc:1743
 msgid "No network.\n"
-msgstr "네트쿼크 없음.\n"
+msgstr "네트워크 없음.\n"
 
 #: dlls/kernel32/winerror.mc:1748
 msgid "Operation canceled by user.\n"
@@ -5325,27 +5325,27 @@ msgstr "정상적으로 연결 종료.\n"
 
 #: dlls/kernel32/winerror.mc:1768
 msgid "Address already associated with transport endpoint.\n"
-msgstr "주소는 이미 전송 끝점과 관련되어 있음.\n"
+msgstr "이미 전송 엔드포인트와 연결된 주소입니다.\n"
 
 #: dlls/kernel32/winerror.mc:1773
 msgid "Address not associated with transport endpoint.\n"
-msgstr "주소가 전송 끝점과 연관되지 않았습니다.\n"
+msgstr "주소가 전송 엔드포인트와 연결되지 않았습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1778
 msgid "Connection invalid.\n"
-msgstr "올바르지 않은 연결.\n"
+msgstr "연결이 잘못되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1783
 msgid "Connection is active.\n"
-msgstr "연결 활성화.\n"
+msgstr "연결이 활성화되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1788
 msgid "Network unreachable.\n"
-msgstr "접근할 수 없는 네트워크.\n"
+msgstr "네트워크에 연결할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1793
 msgid "Host unreachable.\n"
-msgstr "접근할 수 없는 호스트.\n"
+msgstr "호스트에 연결할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1798
 msgid "Protocol unreachable.\n"
@@ -5365,7 +5365,7 @@ msgstr "연결 중단.\n"
 
 #: dlls/kernel32/winerror.mc:1818
 msgid "Please retry operation.\n"
-msgstr "작업을 다시 시도하십시오.\n"
+msgstr "작업을 다시 시도하세요.\n"
 
 #: dlls/kernel32/winerror.mc:1823
 msgid "Connection count limit reached.\n"
@@ -5433,7 +5433,7 @@ msgstr "사용자 프로파일이 잘못되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1903
 msgid "Not supported on Small Business Server.\n"
-msgstr "Small Business Server는 지원하지 않습니다.\n"
+msgstr "Small Business Server는 지원되지 않습니다.\n"
 
 #: dlls/kernel32/winerror.mc:1908
 msgid "Not all privileges assigned.\n"
@@ -5465,11 +5465,11 @@ msgstr "호환되지 않는 리비전 레벨.\n"
 
 #: dlls/kernel32/winerror.mc:1943
 msgid "Invalid owner.\n"
-msgstr "올바르지 않은 소유자.\n"
+msgstr "잘못된 소유자.\n"
 
 #: dlls/kernel32/winerror.mc:1948
 msgid "Invalid primary group.\n"
-msgstr "올바르지 않은 기본 그룹.\n"
+msgstr "잘못된 기본 그룹.\n"
 
 #: dlls/kernel32/winerror.mc:1953
 msgid "No impersonation token.\n"
@@ -5497,7 +5497,7 @@ msgstr "권한이 유지 되지 않음.\n"
 
 #: dlls/kernel32/winerror.mc:1983
 msgid "Invalid account name.\n"
-msgstr "올바르지 않은 계정 이름.\n"
+msgstr "잘못된 계정 이름.\n"
 
 #: dlls/kernel32/winerror.mc:1988
 msgid "User already exists.\n"
@@ -5549,11 +5549,11 @@ msgstr "계정 제한.\n"
 
 #: dlls/kernel32/winerror.mc:2048
 msgid "Invalid logon hours.\n"
-msgstr "올바르지 않은 로그온 시간.\n"
+msgstr "잘못된 로그온 시간.\n"
 
 #: dlls/kernel32/winerror.mc:2053
 msgid "Invalid workstation.\n"
-msgstr "올바르지 않은 워크스테이션.\n"
+msgstr "잘못된 워크스테이션.\n"
 
 #: dlls/kernel32/winerror.mc:2058
 msgid "Password expired.\n"
@@ -5577,19 +5577,19 @@ msgstr "LUID가 고갈됨.\n"
 
 #: dlls/kernel32/winerror.mc:2083
 msgid "Invalid sub authority.\n"
-msgstr "올바르지 않은 하위 기관.\n"
+msgstr "잘못된 하위 기관.\n"
 
 #: dlls/kernel32/winerror.mc:2088
 msgid "Invalid ACL.\n"
-msgstr "올바르지 않은 ACL.\n"
+msgstr "잘못된 ACL.\n"
 
 #: dlls/kernel32/winerror.mc:2093
 msgid "Invalid SID.\n"
-msgstr "올바르지 않은 SID.\n"
+msgstr "잘못된 SID.\n"
 
 #: dlls/kernel32/winerror.mc:2098
 msgid "Invalid security descriptor.\n"
-msgstr "올바르지 않은 보안 설명자.\n"
+msgstr "잘못된 보안 설명자.\n"
 
 #: dlls/kernel32/winerror.mc:2103
 msgid "Bad inherited ACL.\n"
@@ -5605,7 +5605,7 @@ msgstr "서버가 가능하지 않지가 않음.\n"
 
 #: dlls/kernel32/winerror.mc:2118
 msgid "Invalid ID authority.\n"
-msgstr "올바르지 않은 아이디 권한.\n"
+msgstr "잘못된 아이디 권한.\n"
 
 #: dlls/kernel32/winerror.mc:2123
 msgid "Allotted space exceeded.\n"
@@ -5613,7 +5613,7 @@ msgstr "할당된 공간을 초과했습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2128
 msgid "Invalid group attributes.\n"
-msgstr "올바르지 않은 그룹 속성.\n"
+msgstr "잘못된 그룹 속성.\n"
 
 #: dlls/kernel32/winerror.mc:2133
 msgid "Bad impersonation level.\n"
@@ -5641,15 +5641,15 @@ msgstr "도메인 정보에 접근할 수 없음.\n"
 
 #: dlls/kernel32/winerror.mc:2163
 msgid "Invalid server state.\n"
-msgstr "올바르지 않은 서버 상태.\n"
+msgstr "잘못된 서버 상태.\n"
 
 #: dlls/kernel32/winerror.mc:2168
 msgid "Invalid domain state.\n"
-msgstr "올바르지 않은 도메인 상태.\n"
+msgstr "잘못된 도메인 상태.\n"
 
 #: dlls/kernel32/winerror.mc:2173
 msgid "Invalid domain role.\n"
-msgstr "올바르지 않은 도메인 법칙.\n"
+msgstr "잘못된 도메인 법칙.\n"
 
 #: dlls/kernel32/winerror.mc:2178
 msgid "No such domain.\n"
@@ -5701,7 +5701,7 @@ msgstr "로그온 세션 아이디 충돌.\n"
 
 #: dlls/kernel32/winerror.mc:2238
 msgid "Invalid logon type.\n"
-msgstr "올바르지 않은 로그온 타입.\n"
+msgstr "잘못된 로그온 타입.\n"
 
 #: dlls/kernel32/winerror.mc:2243
 msgid "Cannot impersonate.\n"
@@ -5709,7 +5709,7 @@ msgstr "사칭할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2248
 msgid "Invalid transaction state.\n"
-msgstr "트랜잭션 상태가 올바르지 않습니다.\n"
+msgstr "트랜잭션 상태가 잘못되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2253
 msgid "Security DB commit failure.\n"
@@ -5781,7 +5781,7 @@ msgstr "어떤 회원도 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2343
 msgid "Invalid member.\n"
-msgstr "올바르지 않은 회원.\n"
+msgstr "잘못된 회원.\n"
 
 #: dlls/kernel32/winerror.mc:2348
 msgid "Too many SIDs.\n"
@@ -5825,27 +5825,27 @@ msgstr "클라이언트와 서버 사이의 시간 왜곡.\n"
 
 #: dlls/kernel32/winerror.mc:2398
 msgid "Invalid window handle.\n"
-msgstr "올바르지 않은 원도우 핸들.\n"
+msgstr "잘못된 원도우 핸들.\n"
 
 #: dlls/kernel32/winerror.mc:2403
 msgid "Invalid menu handle.\n"
-msgstr "올바르지 않은 메뉴 핸들.\n"
+msgstr "잘못된 메뉴 핸들.\n"
 
 #: dlls/kernel32/winerror.mc:2408
 msgid "Invalid cursor handle.\n"
-msgstr "올바르지 않은 커서 핸들.\n"
+msgstr "잘못된 커서 핸들.\n"
 
 #: dlls/kernel32/winerror.mc:2413
 msgid "Invalid accelerator table handle.\n"
-msgstr "올바르지 않은 엑셀레이터 테이블 핸들.\n"
+msgstr "잘못된 엑셀레이터 테이블 핸들.\n"
 
 #: dlls/kernel32/winerror.mc:2418
 msgid "Invalid hook handle.\n"
-msgstr "올바르지 않은 hook 핸들.\n"
+msgstr "잘못된 hook 핸들.\n"
 
 #: dlls/kernel32/winerror.mc:2423
 msgid "Invalid DWP handle.\n"
-msgstr "올바르지 않은 DWP 핸들.\n"
+msgstr "잘못된 DWP 핸들.\n"
 
 #: dlls/kernel32/winerror.mc:2428
 msgid "Can't create top-level child window.\n"
@@ -5877,11 +5877,11 @@ msgstr "클래스는 연 상태의 창을 가지고 있습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2463 dlls/mferror/mferror.mc:130
 msgid "Invalid index.\n"
-msgstr "올바르지 않은 인덱스.\n"
+msgstr "잘못된 인덱스.\n"
 
 #: dlls/kernel32/winerror.mc:2468
 msgid "Invalid icon handle.\n"
-msgstr "올바르지 않은 아이콘 핸들.\n"
+msgstr "잘못된 아이콘 핸들.\n"
 
 #: dlls/kernel32/winerror.mc:2473
 msgid "Private dialog index.\n"
@@ -5913,7 +5913,7 @@ msgstr "컨트롤 아이디를 찾을 수 없음.\n"
 
 #: dlls/kernel32/winerror.mc:2508
 msgid "Invalid combo box message.\n"
-msgstr "올바르지 않은  콤보 박스 메시지입니다.\n"
+msgstr "잘못된  콤보 박스 메시지입니다.\n"
 
 #: dlls/kernel32/winerror.mc:2513
 msgid "Not a combo box window.\n"
@@ -5921,7 +5921,7 @@ msgstr "콤보 박스 창이 아닙니다.\n"
 
 #: dlls/kernel32/winerror.mc:2518
 msgid "Invalid edit height.\n"
-msgstr "올바르지 않은 편집 높이.\n"
+msgstr "잘못된 편집 높이.\n"
 
 #: dlls/kernel32/winerror.mc:2523
 msgid "DC not found.\n"
@@ -5929,43 +5929,43 @@ msgstr "DC를 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2528
 msgid "Invalid hook filter.\n"
-msgstr "올바르지 않은 hook 필터.\n"
+msgstr "잘못된 훅 필터.\n"
 
 #: dlls/kernel32/winerror.mc:2533
 msgid "Invalid filter procedure.\n"
-msgstr "올바르지 않은 필터 프로시져.\n"
+msgstr "잘못된 필터 프로시져.\n"
 
 #: dlls/kernel32/winerror.mc:2538
 msgid "Hook procedure needs module handle.\n"
-msgstr "후크 프로 시저가 처리 모듈 필요.\n"
+msgstr "훅 프로시저가 모듈 핸들을 필요로 합니다.\n"
 
 #: dlls/kernel32/winerror.mc:2543
 msgid "Global-only hook procedure.\n"
-msgstr "글로벌 전용 후크 프로 시저.\n"
+msgstr "글로벌 전용 훅 프로시저.\n"
 
 #: dlls/kernel32/winerror.mc:2548
 msgid "Journal hook already set.\n"
-msgstr "저널 후크는 이미 설정되어 있음.\n"
+msgstr "저널 훅이 이미 설정되어 있습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2553
 msgid "Hook procedure not installed.\n"
-msgstr "설치되어 있지 않은 후크 프로 시저.\n"
+msgstr "훅 프로시저가 설치되어 있지 않습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2558
 msgid "Invalid list box message.\n"
-msgstr "올바르지 않은 목록상자 메시지.\n"
+msgstr "잘못된 목록상자 메시지.\n"
 
 #: dlls/kernel32/winerror.mc:2563
 msgid "Invalid LB_SETCOUNT sent.\n"
-msgstr "올바르지 않은 LB_SETCOUNT 보내기.\n"
+msgstr "잘못된 LB_SETCOUNT 보내기.\n"
 
 #: dlls/kernel32/winerror.mc:2568
 msgid "No tab stops on this list box.\n"
-msgstr "목록상자에는 탭정지가 없음.\n"
+msgstr "이 목록상자는 탭정지가 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2573
 msgid "Can't destroy object owned by another thread.\n"
-msgstr "다른 스레드가 소유한 개체를 파괴할 수 없다.\n"
+msgstr "다른 스레드가 소유한 개체를 파괴할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2578
 msgid "Child window menus not allowed.\n"
@@ -5973,15 +5973,15 @@ msgstr "자식 창 메뉴는 허용되지 않습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2583
 msgid "Window has no system menu.\n"
-msgstr "창은 시스템 메뉴를 가지고 있지 않습니다.\n"
+msgstr "창이 시스템 메뉴를 가지고 있지 않습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2588
 msgid "Invalid message box style.\n"
-msgstr "올바르지 않은 메시지 박스 스타일.\n"
+msgstr "잘못된 메시지 박스 스타일.\n"
 
 #: dlls/kernel32/winerror.mc:2593
 msgid "Invalid SPI parameter.\n"
-msgstr "올바르지 않은 SPI 매개변수.\n"
+msgstr "잘못된 SPI 매개변수.\n"
 
 #: dlls/kernel32/winerror.mc:2598
 msgid "Screen already locked.\n"
@@ -5997,11 +5997,11 @@ msgstr "자식 창이 아닙니다.\n"
 
 #: dlls/kernel32/winerror.mc:2613
 msgid "Invalid GW command.\n"
-msgstr "올바르지 않은 GW 명령.\n"
+msgstr "잘못된 GW 명령.\n"
 
 #: dlls/kernel32/winerror.mc:2618
 msgid "Invalid thread ID.\n"
-msgstr "올바르지 않은 스레드 ID.\n"
+msgstr "잘못된 스레드 ID.\n"
 
 #: dlls/kernel32/winerror.mc:2623
 msgid "Not an MDI child window.\n"
@@ -6017,11 +6017,11 @@ msgstr "스크롤바가 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2638
 msgid "Invalid scrollbar range.\n"
-msgstr "올바르지 않은 스코롤바 범위.\n"
+msgstr "잘못된 스코롤바 범위.\n"
 
 #: dlls/kernel32/winerror.mc:2643
 msgid "Invalid ShowWin command.\n"
-msgstr "올바르지 않은 ShowWin 명령.\n"
+msgstr "잘못된 ShowWin 명령.\n"
 
 #: dlls/kernel32/winerror.mc:2648
 msgid "No system resources.\n"
@@ -6053,7 +6053,7 @@ msgstr "메뉴 항목을 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2683
 msgid "Invalid keyboard handle.\n"
-msgstr "올바르지 않은 키보드 핸들.\n"
+msgstr "잘못된 키보드 핸들.\n"
 
 #: dlls/kernel32/winerror.mc:2688
 msgid "Hook type not allowed.\n"
@@ -6069,7 +6069,7 @@ msgstr "시간 초과.\n"
 
 #: dlls/kernel32/winerror.mc:2703
 msgid "Invalid monitor handle.\n"
-msgstr "올바르지 않은 모니터 핸들.\n"
+msgstr "잘못된 모니터 핸들.\n"
 
 #: dlls/kernel32/winerror.mc:2708
 msgid "Event log file corrupt.\n"
@@ -6141,31 +6141,31 @@ msgstr "잘못된 설치 패키지 버전.\n"
 
 #: dlls/kernel32/winerror.mc:2793
 msgid "Product uninstalled.\n"
-msgstr "제품 제거됨.\n"
+msgstr "제품이 제거되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2798
 msgid "Invalid query syntax.\n"
-msgstr "잘못된 쿼리 구문.\n"
+msgstr "잘못된 쿼리 구문입니다.\n"
 
 #: dlls/kernel32/winerror.mc:2803
 msgid "Invalid field.\n"
-msgstr "올바르지 않은 필드.\n"
+msgstr "잘못된 필드입니다.\n"
 
 #: dlls/kernel32/winerror.mc:2808
 msgid "Device removed.\n"
-msgstr "장치가 제거됨.\n"
+msgstr "장치가 제거되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2813
 msgid "Installation already running.\n"
-msgstr "설치 작업은 이미 실행증임.\n"
+msgstr "설치 작업이 이미 실행중입니다.\n"
 
 #: dlls/kernel32/winerror.mc:2818
 msgid "Installation package failed to open.\n"
-msgstr "설치 패키지 열기 실패.\n"
+msgstr "설치 패키지를 열지 못했습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2823
 msgid "Installation package is invalid.\n"
-msgstr "설치 패키지가 올바르지 않음.\n"
+msgstr "설치 패키지가 잘못되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2828
 msgid "Installer user interface failed.\n"
@@ -6177,7 +6177,7 @@ msgstr "설치 로그 파일 열기 실패.\n"
 
 #: dlls/kernel32/winerror.mc:2838
 msgid "Installation language not supported.\n"
-msgstr "설치 언어를 지원하지 않습니다.\n"
+msgstr "설치하려는 언어가 지원되지 않습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2843
 msgid "Installation transform failed to apply.\n"
@@ -6197,7 +6197,7 @@ msgstr "함수 실패.\n"
 
 #: dlls/kernel32/winerror.mc:2863
 msgid "Invalid table.\n"
-msgstr "올바르지 않은 테이블.\n"
+msgstr "잘못된 테이블.\n"
 
 #: dlls/kernel32/winerror.mc:2868
 msgid "Data type mismatch.\n"
@@ -6205,7 +6205,7 @@ msgstr "데이터 형식이 맞지 않습니다.\n"
 
 #: dlls/kernel32/winerror.mc:2873 dlls/kernel32/winerror.mc:3083
 msgid "Unsupported type.\n"
-msgstr "지원하지 않는 형식.\n"
+msgstr "지원되지 않는 형식.\n"
 
 #: dlls/kernel32/winerror.mc:2878
 msgid "Creation failed.\n"
@@ -6217,7 +6217,7 @@ msgstr "임시 디렉터리에 기록할 수 없음.\n"
 
 #: dlls/kernel32/winerror.mc:2888
 msgid "Installation platform not supported.\n"
-msgstr "설치 플랫폼을 지원하지 않음.\n"
+msgstr "설치하려는 플랫폼이 지원되지 않스니다.\n"
 
 #: dlls/kernel32/winerror.mc:2893
 msgid "Installer not used.\n"
@@ -6229,11 +6229,11 @@ msgstr "패치 패키지 열기 실패.\n"
 
 #: dlls/kernel32/winerror.mc:2903
 msgid "Invalid patch package.\n"
-msgstr "올바르지 않은 패치 패키지.\n"
+msgstr "잘못된 패치 패키지.\n"
 
 #: dlls/kernel32/winerror.mc:2908
 msgid "Unsupported patch package.\n"
-msgstr "지원하지 않는 패치 패키지.\n"
+msgstr "지원되지 않는 패치 패키지입니다.\n"
 
 #: dlls/kernel32/winerror.mc:2913
 msgid "Another version is installed.\n"
@@ -6241,7 +6241,7 @@ msgstr "다른 버전이 설치되어 있음.\n"
 
 #: dlls/kernel32/winerror.mc:2918
 msgid "Invalid command line.\n"
-msgstr "올바르지 않은 명령 라인.\n"
+msgstr "잘못된 명령 라인.\n"
 
 #: dlls/kernel32/winerror.mc:2923
 msgid "Remote installation not allowed.\n"
@@ -6253,7 +6253,7 @@ msgstr "설치가 성공한 후에 스스로 재부팅될 것임.\n"
 
 #: dlls/kernel32/winerror.mc:2933
 msgid "Invalid string binding.\n"
-msgstr "올바르지 않은 문자열 바인딩.\n"
+msgstr "잘못된 문자열 바인딩.\n"
 
 #: dlls/kernel32/winerror.mc:2938
 msgid "Wrong kind of binding.\n"
@@ -6261,7 +6261,7 @@ msgstr "잘못된 종류의 바인딩.\n"
 
 #: dlls/kernel32/winerror.mc:2943
 msgid "Invalid binding.\n"
-msgstr "올바르지 않은 바인딩.\n"
+msgstr "잘못된 바인딩.\n"
 
 #: dlls/kernel32/winerror.mc:2948
 msgid "RPC protocol sequence not supported.\n"
@@ -6269,19 +6269,19 @@ msgstr "RPC 프로토콜 시퀀스가 지원되지 않음.\n"
 
 #: dlls/kernel32/winerror.mc:2953
 msgid "Invalid RPC protocol sequence.\n"
-msgstr "올바르지 않은 RPC 프로토콜 순서.\n"
+msgstr "잘못된 RPC 프로토콜 순서.\n"
 
 #: dlls/kernel32/winerror.mc:2958
 msgid "Invalid string UUID.\n"
-msgstr "올바르지 않은 문자열 UUID.\n"
+msgstr "잘못된 문자열 UUID.\n"
 
 #: dlls/kernel32/winerror.mc:2963
 msgid "Invalid endpoint format.\n"
-msgstr "올바르지 않은 엔드포인트 포맷.\n"
+msgstr "잘못된 엔드포인트 포맷.\n"
 
 #: dlls/kernel32/winerror.mc:2968
 msgid "Invalid network address.\n"
-msgstr "올바르지 않은 네트워크 주소.\n"
+msgstr "잘못된 네트워크 주소.\n"
 
 #: dlls/kernel32/winerror.mc:2973
 msgid "No endpoint found.\n"
@@ -6289,7 +6289,7 @@ msgstr "엔드포인트를 찾을 수 없음.\n"
 
 #: dlls/kernel32/winerror.mc:2978
 msgid "Invalid timeout value.\n"
-msgstr "올바르지 않은 시간 초과 값.\n"
+msgstr "잘못된 시간 초과 값.\n"
 
 #: dlls/kernel32/winerror.mc:2983
 msgid "Object UUID not found.\n"
@@ -6337,59 +6337,59 @@ msgstr "엔드포인트를 만들 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3038
 msgid "Out of resources.\n"
-msgstr "리소스가 부족합니다.\n"
+msgstr "리소스 부족.\n"
 
 #: dlls/kernel32/winerror.mc:3043
 msgid "RPC server unavailable.\n"
-msgstr "RPC 서버가 가능하지 않습니다.\n"
+msgstr "RPC 서버를 사용할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3048
 msgid "RPC server too busy.\n"
-msgstr "RPC 서버는 매우 바쁩니다.\n"
+msgstr "RPC 서버가 지나치게 사용 중입니다.\n"
 
 #: dlls/kernel32/winerror.mc:3053
 msgid "Invalid network options.\n"
-msgstr "올바르지 않은 네트워크 옵션.\n"
+msgstr "잘못된 네트워크 옵션.\n"
 
 #: dlls/kernel32/winerror.mc:3058
 msgid "No RPC call active.\n"
-msgstr "어떤 RPC 호출도 활성화되어있지 않습니다.\n"
+msgstr "RPC 호출이 활성화되지 않았습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3063
 msgid "RPC call failed.\n"
-msgstr "RPC 호출 실패.\n"
+msgstr "RPC 호출이 실패했습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3068
 msgid "RPC call failed and didn't execute.\n"
-msgstr "RPC 호출 실패 그리고 실행못함.\n"
+msgstr "RPC 호출이 실패하여 실행하지 않았습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3073
 msgid "RPC protocol error.\n"
-msgstr "RPC  프로토콜 오류.\n"
+msgstr "RPC 프로토콜 오류.\n"
 
 #: dlls/kernel32/winerror.mc:3078
 msgid "Unsupported transfer syntax.\n"
-msgstr "지원하지 않는 트랜스퍼 문법.\n"
+msgstr "지원되지 않는 전송 구문.\n"
 
 #: dlls/kernel32/winerror.mc:3088
 msgid "Invalid tag.\n"
-msgstr "올바르지 않은 태그.\n"
+msgstr "잘못된 태그.\n"
 
 #: dlls/kernel32/winerror.mc:3093
 msgid "Invalid array bounds.\n"
-msgstr "올바르지 않은 배치 영역.\n"
+msgstr "배열 경계가 잘못되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3098
 msgid "No entry name.\n"
-msgstr "엔트리 이름이 없음.\n"
+msgstr "항목 이름이 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3103
 msgid "Invalid name syntax.\n"
-msgstr "올바르지 않은 이름 문법.\n"
+msgstr "잘못된 이름 구문.\n"
 
 #: dlls/kernel32/winerror.mc:3108
 msgid "Unsupported name syntax.\n"
-msgstr "지원하지 않는 이름 문법.\n"
+msgstr "지원되지 않는 이름 구문.\n"
 
 #: dlls/kernel32/winerror.mc:3113
 msgid "No network address.\n"
@@ -6397,7 +6397,7 @@ msgstr "네트워크 주소가 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3118
 msgid "Duplicate endpoint.\n"
-msgstr "중복된 끝나는 점.\n"
+msgstr "중복된 엔드포인트.\n"
 
 #: dlls/kernel32/winerror.mc:3123
 msgid "Unknown authentication type.\n"
@@ -6405,7 +6405,7 @@ msgstr "알 수 없는 인증 형식.\n"
 
 #: dlls/kernel32/winerror.mc:3128
 msgid "Maximum calls too low.\n"
-msgstr "호출의 최대값이 너무 낮습니다.\n"
+msgstr "최대 호출이 너무 낮습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3133
 msgid "String too long.\n"
@@ -6413,15 +6413,15 @@ msgstr "문자열이 너무 깁니다.\n"
 
 #: dlls/kernel32/winerror.mc:3138
 msgid "Protocol sequence not found.\n"
-msgstr "프로토콜 순서를 찾을 수 없습니다.\n"
+msgstr "프로토콜 시퀀스를 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3143
 msgid "Procedure number out of range.\n"
-msgstr "처리절차 번호가 범위를 벗어납니다.\n"
+msgstr "절차 번호가 범위를 벗어났습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3148
 msgid "Binding has no authentication data.\n"
-msgstr "바인딩은 어떤 인증 정보도 가지고 있지 않습니다.\n"
+msgstr "바인딩에 인증 데이터가 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3153
 msgid "Unknown authentication service.\n"
@@ -6429,11 +6429,11 @@ msgstr "알 수 없는 인증 서비스.\n"
 
 #: dlls/kernel32/winerror.mc:3158
 msgid "Unknown authentication level.\n"
-msgstr "알 수 없는 인증 레벨.\n"
+msgstr "알 수 없는 인증 수준.\n"
 
 #: dlls/kernel32/winerror.mc:3163
 msgid "Invalid authentication identity.\n"
-msgstr "올바르지 않은 인증 증명서.\n"
+msgstr "잘못된 인증 ID.\n"
 
 #: dlls/kernel32/winerror.mc:3168
 msgid "Unknown authorization service.\n"
@@ -6441,35 +6441,35 @@ msgstr "알 수 없는 인증 서비스.\n"
 
 #: dlls/kernel32/winerror.mc:3173
 msgid "Invalid entry.\n"
-msgstr "올바르지 않은 엔트리.\n"
+msgstr "잘못된 항목.\n"
 
 #: dlls/kernel32/winerror.mc:3178
 msgid "Can't perform operation.\n"
-msgstr "작업을 완료할 수 없습니다.\n"
+msgstr "작업을 수행할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3183
 msgid "Endpoints not registered.\n"
-msgstr "끝나는 점이 등록되지 않았습니다.\n"
+msgstr "엔드포인트가 등록되지 않았습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3188
 msgid "Nothing to export.\n"
-msgstr "불러 올 것이 없습니다.\n"
+msgstr "내보낼 것이 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3193
 msgid "Incomplete name.\n"
-msgstr "완성되지 않은 이름.\n"
+msgstr "불완전한 이름.\n"
 
 #: dlls/kernel32/winerror.mc:3198
 msgid "Invalid version option.\n"
-msgstr "올바르지 않은 버전 옵션.\n"
+msgstr "잘못된 버전 옵션.\n"
 
 #: dlls/kernel32/winerror.mc:3203
 msgid "No more members.\n"
-msgstr "더 이상 회원은 없습니다.\n"
+msgstr "구성원이 더 이상 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3208
 msgid "Not all objects unexported.\n"
-msgstr "모든 개체가 내보내지지 못했습니다.\n"
+msgstr "내보내기 취소된 개체가 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3213
 msgid "Interface not found.\n"
@@ -6477,27 +6477,27 @@ msgstr "인터페이스를 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3218
 msgid "Entry already exists.\n"
-msgstr "엔트리는 이미 존재합니다.\n"
+msgstr "항목이 이미 존재합니다.\n"
 
 #: dlls/kernel32/winerror.mc:3223
 msgid "Entry not found.\n"
-msgstr "엔트리를 찾을 수 업습니다.\n"
+msgstr "항목을 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3228
 msgid "Name service unavailable.\n"
-msgstr "네임 서비스는 가능하지 않습니다.\n"
+msgstr "이름 서비스를 사용할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3233
 msgid "Invalid network address family.\n"
-msgstr "올바르지 않은 네트워크 주소 가족.\n"
+msgstr "네트워크 주소 패밀리가 잘못되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3238
 msgid "Operation not supported.\n"
-msgstr "이 작업은 지원하지 않습니다.\n"
+msgstr "작업이 지원되지 않습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3243
 msgid "No security context available.\n"
-msgstr "가능한 보안 컨텍스가 없음.\n"
+msgstr "사용할 수 있는 보안 컨텍스트가 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3248
 msgid "RPCInternal error.\n"
@@ -6513,75 +6513,75 @@ msgstr "주소 오류.\n"
 
 #: dlls/kernel32/winerror.mc:3263
 msgid "Floating-point divide-by-zero.\n"
-msgstr "플로팅 0으로 나눔.\n"
+msgstr "0으로 나뉜 부동 소수점.\n"
 
 #: dlls/kernel32/winerror.mc:3268
 msgid "Floating-point underflow.\n"
-msgstr "플로팅 언더플로우.\n"
+msgstr "부동 소수점 언더플로우.\n"
 
 #: dlls/kernel32/winerror.mc:3273
 msgid "Floating-point overflow.\n"
-msgstr "플로팅 오버플로우.\n"
+msgstr "부동 소수점 오버플로.\n"
 
 #: dlls/kernel32/winerror.mc:3278
 msgid "No more entries.\n"
-msgstr "더 이상 엔트리가 없습니다.\n"
+msgstr "추가 항목이 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3283
 msgid "Character translation table open failed.\n"
-msgstr "문자변환테이블 열기 실패.\n"
+msgstr "문자 변환 테이블을 열지 못했습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3288
 msgid "Character translation table file too small.\n"
-msgstr "문자변환테이블 파일이 너무 작습니다.\n"
+msgstr "문자 변환 테이블 파일이 너무 작습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3293
 msgid "Null context handle.\n"
-msgstr "빈 콘택트 핸들.\n"
+msgstr "널 컨택스트 핸들.\n"
 
 #: dlls/kernel32/winerror.mc:3298
 msgid "Context handle damaged.\n"
-msgstr "콘텍트 핸들이 손상되었습니다.\n"
+msgstr "컨텍스트 핸들이 손상되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3303
 msgid "Binding handle mismatch.\n"
-msgstr "바인딩 핸들이 맞지 않습니다.\n"
+msgstr "바인딩 핸들이 일치하지 않습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3308
 msgid "Cannot get call handle.\n"
-msgstr "호출 핸들을 얻을 수 없습니다.\n"
+msgstr "호출 핸들을 가져올 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3313
 msgid "Null reference pointer.\n"
-msgstr "빈 레퍼런스 포인터.\n"
+msgstr "널 참조 포인터.\n"
 
 #: dlls/kernel32/winerror.mc:3318
 msgid "Enumeration value out of range.\n"
-msgstr "열거 값이 범위를 벗어남.\n"
+msgstr "열거 값이 범위를 벗어났습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3323
 msgid "Byte count too small.\n"
-msgstr "바이트 카운트가 너무 작습니다.\n"
+msgstr "바이트 수가 너무 적습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3328
 msgid "Bad stub data.\n"
-msgstr "나쁜 스텁 정보.\n"
+msgstr "잘못된 스텁 데이터.\n"
 
 #: dlls/kernel32/winerror.mc:3333
 msgid "Invalid user buffer.\n"
-msgstr "올바르지 않은 사용자 버퍼.\n"
+msgstr "잘못된 사용자 버퍼.\n"
 
 #: dlls/kernel32/winerror.mc:3338
 msgid "Unrecognized media.\n"
-msgstr "이해할 수 없는 미디어.\n"
+msgstr "알 수 없는 미디어입니다.\n"
 
 #: dlls/kernel32/winerror.mc:3343
 msgid "No trust secret.\n"
-msgstr "어떤 신뢰된 비밀이 없습니다.\n"
+msgstr "트러스트 암호가 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3348
 msgid "No trust SAM account.\n"
-msgstr "어떤 신뢰 SAM 계정이 없습니다.\n"
+msgstr "트러스트 SAM 계정이 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3353
 msgid "Trusted domain failure.\n"
@@ -6593,11 +6593,11 @@ msgstr "신뢰할 수 있는 관계 실패.\n"
 
 #: dlls/kernel32/winerror.mc:3363
 msgid "Trust logon failure.\n"
-msgstr "신뢰할 수 있는 로그온 실패.\n"
+msgstr "트러스트 로그온 실패.\n"
 
 #: dlls/kernel32/winerror.mc:3368
 msgid "RPC call already in progress.\n"
-msgstr "RPC 요구는 이미 작업중입니다.\n"
+msgstr "RPC 호출이 이미 진행 중입니다.\n"
 
 #: dlls/kernel32/winerror.mc:3373
 msgid "NETLOGON is not started.\n"
@@ -6605,15 +6605,15 @@ msgstr "NETLOGON이 시작되지 않았습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3378
 msgid "Account expired.\n"
-msgstr "계정이 만기되었습니다.\n"
+msgstr "계좌가 만료되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3383
 msgid "Redirector has open handles.\n"
-msgstr "리다이렉터가 핸들을 열었습니다.\n"
+msgstr "리디렉터 핸들이 열려 있습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3388
 msgid "Printer driver already installed.\n"
-msgstr "프린터 드라이버는 이미 설치되어 있습니다.\n"
+msgstr "프린터 드라이버가 이미 설치되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3393
 msgid "Unknown port.\n"
@@ -6625,59 +6625,59 @@ msgstr "알 수 없는 프린터 드라이버.\n"
 
 #: dlls/kernel32/winerror.mc:3403
 msgid "Unknown print processor.\n"
-msgstr "알 수 없는 프린터 프로세서.\n"
+msgstr "알 수 없는 인쇄 프로세서.\n"
 
 #: dlls/kernel32/winerror.mc:3408
 msgid "Invalid separator file.\n"
-msgstr "올바르지 않은 파일 구분 기호.\n"
+msgstr "잘못된 구분 파일.\n"
 
 #: dlls/kernel32/winerror.mc:3413
 msgid "Invalid priority.\n"
-msgstr "올바르지 않은 우선순위.\n"
+msgstr "잘못된 우선순위.\n"
 
 #: dlls/kernel32/winerror.mc:3418
 msgid "Invalid printer name.\n"
-msgstr "올바르지 않은 프린터 이름.\n"
+msgstr "잘못된 프린터 이름.\n"
 
 #: dlls/kernel32/winerror.mc:3423
 msgid "Printer already exists.\n"
-msgstr "프린터는 이미 존재합니다.\n"
+msgstr "프린터가 이미 존재합니다.\n"
 
 #: dlls/kernel32/winerror.mc:3428
 msgid "Invalid printer command.\n"
-msgstr "올바르지 않은 프린터 명령.\n"
+msgstr "잘못된 프린터 명령.\n"
 
 #: dlls/kernel32/winerror.mc:3433
 msgid "Invalid data type.\n"
-msgstr "올바르지 않은 데이터 형식.\n"
+msgstr "잘못된 데이터 형식.\n"
 
 #: dlls/kernel32/winerror.mc:3438
 msgid "Invalid environment.\n"
-msgstr "올바르지 않은 환경변수.\n"
+msgstr "잘못된 환경변수.\n"
 
 #: dlls/kernel32/winerror.mc:3443
 msgid "No more bindings.\n"
-msgstr "더 이상의 바인딩은 없음.\n"
+msgstr "이제 바인딩이 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3448
 msgid "Can't log on with inter-domain trust account.\n"
-msgstr "내부 도메인의 신뢰된 계정에 로그온할 수 없습니다.\n"
+msgstr "도메인 간 트러스트 계정으로 로그온할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3453
 msgid "Can't log on with workstation trust account.\n"
-msgstr "워크스테이션의 신뢰된 계정에 로그온할 수 없습니다.\n"
+msgstr "워크스테이션 트러스트 계정으로 로그온할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3458
 msgid "Can't log on with server trust account.\n"
-msgstr "서버의 신뢰된 계정에 로그온할 수 없습니다.\n"
+msgstr "서버 트러스트 계정으로 로그온할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3463
 msgid "Domain trust information inconsistent.\n"
-msgstr "도메인 신뢰 정보가 다름.\n"
+msgstr "도메인 신뢰 정보가 일치하지 않습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3468
 msgid "Server has open handles.\n"
-msgstr "서버가 핸들을 열었습니다.\n"
+msgstr "서버에 열린 핸들이 있습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3473
 msgid "Resource data not found.\n"
@@ -6697,11 +6697,11 @@ msgstr "리소스 언어를 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3493
 msgid "Not enough quota.\n"
-msgstr "쿼터가 충분하지 않습니다.\n"
+msgstr "할당량이 충분하지 않습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3498
 msgid "No interfaces.\n"
-msgstr "인터페이스가 없음.\n"
+msgstr "인터페이스가 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3503
 msgid "RPC call canceled.\n"
@@ -6709,27 +6709,27 @@ msgstr "RPC 호출이 취소되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3508
 msgid "Binding incomplete.\n"
-msgstr "바인딩이 완료되지 않음.\n"
+msgstr "Binding incomplete.\n"
 
 #: dlls/kernel32/winerror.mc:3513
 msgid "RPC comm failure.\n"
-msgstr "RPC 일반 실패.\n"
+msgstr "RPC 통신 오류.\n"
 
 #: dlls/kernel32/winerror.mc:3518
 msgid "Unsupported authorization level.\n"
-msgstr "지원하지 않는 인증 레벨.\n"
+msgstr "지원되지 않는 권한 수준.\n"
 
 #: dlls/kernel32/winerror.mc:3523
 msgid "No principal name registered.\n"
-msgstr "어떤 등록된 주요 이름이 없음.\n"
+msgstr "등록된 기본 이름이 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3528
 msgid "Not an RPC error.\n"
-msgstr "RPC 오류가 아닙.\n"
+msgstr "RPC 오류가 아닙니다.\n"
 
 #: dlls/kernel32/winerror.mc:3533
 msgid "UUID is local only.\n"
-msgstr "UUID는 오직 로컬에서만 가능합니다.\n"
+msgstr "UUID는 로컬 전용입니다.\n"
 
 #: dlls/kernel32/winerror.mc:3538
 msgid "Security package error.\n"
@@ -6737,15 +6737,15 @@ msgstr "보안 패키지 오류.\n"
 
 #: dlls/kernel32/winerror.mc:3543
 msgid "Thread not canceled.\n"
-msgstr "스레드는 취소되지 않았습니다.\n"
+msgstr "스레드가 취소되지 않았습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3548
 msgid "Invalid handle operation.\n"
-msgstr "올바르지 않은 핸들 작업.\n"
+msgstr "잘못된 핸들 작업.\n"
 
 #: dlls/kernel32/winerror.mc:3553
 msgid "Wrong serializing package version.\n"
-msgstr "잘못된 연속 패키지 버전.\n"
+msgstr "잘못된 일련의 순차적인 패키지 버전.\n"
 
 #: dlls/kernel32/winerror.mc:3558
 msgid "Wrong stub version.\n"
@@ -6753,7 +6753,7 @@ msgstr "잘못된 스텁 버전.\n"
 
 #: dlls/kernel32/winerror.mc:3563
 msgid "Invalid pipe object.\n"
-msgstr "올바르지 않은 파이프 개체.\n"
+msgstr "잘못된 파이프 개체.\n"
 
 #: dlls/kernel32/winerror.mc:3568
 msgid "Wrong pipe order.\n"
@@ -6769,39 +6769,39 @@ msgstr "그룹 멤버를 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3583
 msgid "Can't create endpoint mapper DB.\n"
-msgstr "엔드포인트 매퍼 DB를 만들 수 없습니다.\n"
+msgstr "엔드포인트 매핑기 DB를 만들 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3588
 msgid "Invalid object.\n"
-msgstr "올바르지 않은 개체.\n"
+msgstr "잘못된 개체.\n"
 
 #: dlls/kernel32/winerror.mc:3593
 msgid "Invalid time.\n"
-msgstr "올바르지 않은 시간.\n"
+msgstr "잘못된 시간.\n"
 
 #: dlls/kernel32/winerror.mc:3598
 msgid "Invalid form name.\n"
-msgstr "올바르지 않은 폼 이름.\n"
+msgstr "잘못된 폼 이름.\n"
 
 #: dlls/kernel32/winerror.mc:3603
 msgid "Invalid form size.\n"
-msgstr "올바르지 않은 폼 크기.\n"
+msgstr "잘못된 폼 크기.\n"
 
 #: dlls/kernel32/winerror.mc:3608
 msgid "Already awaiting printer handle.\n"
-msgstr "이미 프린터 핸들르 기다리고 있습니다.\n"
+msgstr "이미 프린터 핸들을 기다리고 있습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3613
 msgid "Printer deleted.\n"
-msgstr "프린터가 지워졌습니다.\n"
+msgstr "프린터가 삭제되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3618
 msgid "Invalid printer state.\n"
-msgstr "올바르지 않은 프린터 상태.\n"
+msgstr "프린터 상태가 잘못되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3623
 msgid "User must change password.\n"
-msgstr "사용자는 반드시 암호를 바꾸어야 합니다.\n"
+msgstr "사용자는 암호를 변경해야 합니다.\n"
 
 #: dlls/kernel32/winerror.mc:3628
 msgid "Domain controller not found.\n"
@@ -6809,59 +6809,59 @@ msgstr "도메인 컨트롤러를 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3633
 msgid "Account locked out.\n"
-msgstr "계정이 잠겨 있음.\n"
+msgstr "계정이 잠겨 있습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3638
 msgid "Invalid pixel format.\n"
-msgstr "올바르지 않은 픽셀 형식.\n"
+msgstr "잘못된 픽셀 형식.\n"
 
 #: dlls/kernel32/winerror.mc:3643
 msgid "Invalid driver.\n"
-msgstr "올바르지 않은 드라이버.\n"
+msgstr "잘못된 드라이버.\n"
 
 #: dlls/kernel32/winerror.mc:3648
 msgid "Invalid object resolver set.\n"
-msgstr "잘못된 개체 확인자 세트.\n"
+msgstr "잘못된 개체 해결기 집합.\n"
 
 #: dlls/kernel32/winerror.mc:3653
 msgid "Incomplete RPC send.\n"
-msgstr "불완전 RPC를 보냄.\n"
+msgstr "불완전한 RPC 전송.\n"
 
 #: dlls/kernel32/winerror.mc:3658
 msgid "Invalid asynchronous RPC handle.\n"
-msgstr "올바르지 않은 비동기식 RPC 핸들.\n"
+msgstr "잘못된 비동기 RPC 핸들.\n"
 
 #: dlls/kernel32/winerror.mc:3663
 msgid "Invalid asynchronous RPC call.\n"
-msgstr "비동기 RPC 호출이 잘못되었습니다.\n"
+msgstr "잘못된 비동기 RPC 호출.\n"
 
 #: dlls/kernel32/winerror.mc:3668
 msgid "RPC pipe closed.\n"
-msgstr "RPC 파이프가 닫힘.\n"
+msgstr "RPC 파이프가 닫혔습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3673
 msgid "Discipline error on RPC pipe.\n"
-msgstr "RPC 파이프에 대한 규율 오류.\n"
+msgstr "RPC 파이프의 징계 오류입니다.\n"
 
 #: dlls/kernel32/winerror.mc:3678
 msgid "No data on RPC pipe.\n"
-msgstr "RPC 파이프에 어떠한 데이터도 없음.\n"
+msgstr "RPC 파이프에 데이터가 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3683
 msgid "No site name available.\n"
-msgstr "가능한 사이트 이름이 없음.\n"
+msgstr "사용할 수 있는 사이트 이름이 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3688
 msgid "The file cannot be accessed.\n"
-msgstr "이 파일은  접근할 수 없습니다.\n"
+msgstr "파일에 액세스할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3693
 msgid "The filename cannot be resolved.\n"
-msgstr "파일 이름을 확인할 수 없음.\n"
+msgstr "파일 이름을 확인할 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3698
 msgid "RPC entry type mismatch.\n"
-msgstr "RPC 입력 유형 불일치.\n"
+msgstr "RPC 입력 유형이 일치하지 않습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3703
 msgid "Not all objects could be exported.\n"
@@ -6917,11 +6917,11 @@ msgstr "파일에서 서명을 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3774
 msgid "Invalid call.\n"
-msgstr "올바르지 않은 호출입니다.\n"
+msgstr "잘못된 호출.\n"
 
 #: dlls/kernel32/winerror.mc:3781
 msgid "Resource is not currently available.\n"
-msgstr "지금은 리소스를 사용할 수 없습니다.\n"
+msgstr "현재 리소스를 사용할 수 없습니다.\n"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -6942,7 +6942,7 @@ msgstr "추가할 포트 이름 입력(&E):"
 
 #: dlls/localui/localui.rc:51
 msgid "Configure LPT Port"
-msgstr "LPT 포트 설정"
+msgstr "LPT 포트 구성"
 
 #: dlls/localui/localui.rc:54
 msgid "Timeout (seconds)"
@@ -6966,7 +6966,7 @@ msgstr "이 포트는 설정할 옵션이 없습니다"
 
 #: dlls/mapi32/mapi32.rc:31
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
-msgstr "설치된 MAPI 메일 클라이언트가 없어서 메일 보내기 실패."
+msgstr "MAPI 메일 클라이언트가 설치되어 있지 않아 메일 발송이 실패했습니다."
 
 #: dlls/mapi32/mapi32.rc:32
 msgid "Send Mail"
@@ -6982,11 +6982,11 @@ msgstr "싱크가 완료되지 않았습니다.\n"
 
 #: dlls/mferror/mferror.mc:732
 msgid "Clock was stopped\n"
-msgstr "시계가 중지되었습니다.\n"
+msgstr "시계가 중지되었습니다\n"
 
 #: dlls/mferror/mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
-msgstr "미디어 기초 플랫폼이 최기화되지 않았습니다.\n"
+msgstr "미디어 기초 플랫폼이 초기화되지 않았습니다.\n"
 
 #: dlls/mferror/mferror.mc:39
 msgid "Buffer is too small.\n"
@@ -7030,15 +7030,15 @@ msgstr "예상치 못한 오류입니다.\n"
 
 #: dlls/mferror/mferror.mc:116
 msgid "Invalid type.\n"
-msgstr "올바르지 않은 형식입니다.\n"
+msgstr "잘못된 형식입니다.\n"
 
 #: dlls/mferror/mferror.mc:123
 msgid "Invalid file format.\n"
-msgstr "올바르지 않은 파일 형식입니다.\n"
+msgstr "잘못된 파일 형식입니다.\n"
 
 #: dlls/mferror/mferror.mc:137
 msgid "Invalid timestamp.\n"
-msgstr "올바르지 않은 타임스탬프입니다.\n"
+msgstr "잘못된 타임스탬프입니다.\n"
 
 #: dlls/mferror/mferror.mc:144
 msgid "Unsupported scheme.\n"
@@ -7058,35 +7058,35 @@ msgstr "이 샘플에 대한 타임스탬프가 설정되지 않았습니다.\n"
 
 #: dlls/mferror/mferror.mc:172
 msgid "No duration set for the sample.\n"
-msgstr "이 샘플에 대한 기간(duration) 설정이 없습니다.\n"
+msgstr "샘플에 대한 재생 시간 설정이 없습니다.\n"
 
 #: dlls/mferror/mferror.mc:179
 msgid "Invalid stream data.\n"
-msgstr "올바르지 않은 스트림 데이터입니다.\n"
+msgstr "잘못된 스트림 데이터입니다.\n"
 
 #: dlls/mferror/mferror.mc:186
 msgid "Realtime support is not available.\n"
-msgstr "실시간 지원은 가능하지 않습니다.\n"
+msgstr "실시간 지원을 사용할 수 없습니다.\n"
 
 #: dlls/mferror/mferror.mc:193
 msgid "Unsupported rate.\n"
-msgstr "지원하지 않는 비율(rate).\n"
+msgstr "지원되지 않는 비율입니다.\n"
 
 #: dlls/mferror/mferror.mc:200
 msgid "Unsupported thinning.\n"
-msgstr "지원하지 않는 세선화(thinning).\n"
+msgstr "지원되지 않는 THINING.\n"
 
 #: dlls/mferror/mferror.mc:207
 msgid "Reversing is not supported.\n"
-msgstr "리버싱(reversing)은 지원되지 않습니다.\n"
+msgstr "반전은 지원되지 않습니다.\n"
 
 #: dlls/mferror/mferror.mc:214
 msgid "Unsupported rate transition.\n"
-msgstr "지원하지 않는 비율(rate) 변환.\n"
+msgstr "지원되지 않는 비율 변환입니다.\n"
 
 #: dlls/mferror/mferror.mc:221
 msgid "Rate change was preempted.\n"
-msgstr "비율(rate) 변경이 선점되었습니다.\n"
+msgstr "비율 변경이 선점되었습니다.\n"
 
 #: dlls/mferror/mferror.mc:228
 msgid "Object or value wasn't found.\n"
@@ -7106,7 +7106,7 @@ msgstr "다중 가입자는 지원되지 않습니다.\n"
 
 #: dlls/mferror/mferror.mc:270
 msgid "The timer was orphaned.\n"
-msgstr "타이머가 고립되었습니다.\n"
+msgstr "타이머가 분리되었습니다.\n"
 
 #: dlls/mferror/mferror.mc:277
 msgid "State transition is pending.\n"
@@ -7114,7 +7114,7 @@ msgstr "상태 전환이 보류 중입니다.\n"
 
 #: dlls/mferror/mferror.mc:284
 msgid "Unsupported state transition.\n"
-msgstr "지원되지 않는 상태 전환.\n"
+msgstr "지원되지 않는 상태 전환입니다.\n"
 
 #: dlls/mferror/mferror.mc:291
 msgid "Unrecoverable error occurred.\n"
@@ -7130,19 +7130,19 @@ msgstr "샘플에 쓰기가 가능하지 않습니다.\n"
 
 #: dlls/mferror/mferror.mc:312
 msgid "Key is invalid.\n"
-msgstr "올바르지 않은 키.\n"
+msgstr "키가 잘못되었습니다.\n"
 
 #: dlls/mferror/mferror.mc:319
 msgid "Bad startup version.\n"
-msgstr "잘못된 시작 버전.\n"
+msgstr "시작 버전이 잘못되었습니다.\n"
 
 #: dlls/mferror/mferror.mc:326
 msgid "Unsupported caption.\n"
-msgstr "지원하지 않는 자막.\n"
+msgstr "지원되지 않는 자막입니다.\n"
 
 #: dlls/mferror/mferror.mc:333
 msgid "Invalid position.\n"
-msgstr "올바르지 않은 위치.\n"
+msgstr "잘못된 위치입니다.\n"
 
 #: dlls/mferror/mferror.mc:340
 msgid "Attribute is not found.\n"
@@ -7190,7 +7190,7 @@ msgstr "바이트 스트림을 구문 분석할 수 없습니다.\n"
 
 #: dlls/mferror/mferror.mc:417
 msgid "Mutually exclusive flags passed to source resolver.\n"
-msgstr "상호 배타적이 플래그가 소스 확인자로 전달되었습니다.\n"
+msgstr "상호 배타적이 플래그가 원본 확인자에 전달되었습니다.\n"
 
 #: dlls/mferror/mferror.mc:424
 msgid "Unknown bytestream length.\n"
@@ -7198,7 +7198,7 @@ msgstr "알 수 없는 바이트 스트림 길이입니다.\n"
 
 #: dlls/mferror/mferror.mc:431
 msgid "Invalid work queue index.\n"
-msgstr "올바르지 않은 작업 큐 인덱스.\n"
+msgstr "잘못된 작업 큐 인덱스입니다.\n"
 
 #: dlls/mferror/mferror.mc:438
 msgid "No events available.\n"
@@ -7206,7 +7206,7 @@ msgstr "사용할 수 있는 이벤트가 없습니다.\n"
 
 #: dlls/mferror/mferror.mc:445
 msgid "Invalid media source state transition.\n"
-msgstr "올바르지 않은 미디어 소스 상태 전환.\n"
+msgstr "잘못된 미디어 원본 상태 전환입니다.\n"
 
 #: dlls/mferror/mferror.mc:452
 msgid "End of media stream has been reached.\n"
@@ -7222,7 +7222,7 @@ msgstr "미디어 스트림에 기간 설정이 없습니다.\n"
 
 #: dlls/mferror/mferror.mc:473
 msgid "Media format was recognized but is invalid.\n"
-msgstr "미디어 형식이 인식되었지만 올바르지 않습니다.\n"
+msgstr "미디어 형식이 인식되었지만 유효하지 않습니다.\n"
 
 #: dlls/mferror/mferror.mc:480
 msgid "Property wasn't found.\n"
@@ -7238,15 +7238,15 @@ msgstr "속성이 허용되지 않습니다.\n"
 
 #: dlls/mferror/mferror.mc:501
 msgid "Media source is not started.\n"
-msgstr "미디어 소스가 시작되지 않았습니다.\n"
+msgstr "미디어 원본이 시작되지 않았습니다.\n"
 
 #: dlls/mferror/mferror.mc:508
 msgid "Unsupported media format.\n"
-msgstr "지원하지 않는 미디어 형식.\n"
+msgstr "지원되지 않는 미디어 형식입니다.\n"
 
 #: dlls/mferror/mferror.mc:515
 msgid "Media source is in wrong state.\n"
-msgstr "미디어 소스가 잘못된 상태에 있습니다.\n"
+msgstr "미디어 원본이 잘못된 상태에 있습니다.\n"
 
 #: dlls/mferror/mferror.mc:522
 msgid "No media streams were selected.\n"
@@ -7254,7 +7254,7 @@ msgstr "미디어 스트림이 선택되지 않았습니다.\n"
 
 #: dlls/mferror/mferror.mc:529
 msgid "Unsupported media source characteristics.\n"
-msgstr "지원되지 않는 미디어 소스 특성입니다.\n"
+msgstr "지원되지 않는 미디어 원본 특성입니다.\n"
 
 #: dlls/mferror/mferror.mc:536
 msgid "Stream sink was removed.\n"
@@ -7306,7 +7306,7 @@ msgstr "싱크가 필요한 헤더를 제공하지 않았습니다.\n"
 
 #: dlls/mferror/mferror.mc:627
 msgid "Optional node is invalid.\n"
-msgstr "선택적 노드가 올바르지 않습니다.\n"
+msgstr "선택적 노드가 잘못되었습니다.\n"
 
 #: dlls/mferror/mferror.mc:634
 msgid "Cannot find decryptor.\n"
@@ -7326,7 +7326,7 @@ msgstr "토폴로지 요청이 지원되지 않습니다.\n"
 
 #: dlls/mferror/mferror.mc:662
 msgid "Invalid topology time attributes.\n"
-msgstr "올바르지 않은 토폴로지 시간 특성.\n"
+msgstr "잘못된 토폴로지 시간 특성입니다.\n"
 
 #: dlls/mferror/mferror.mc:669
 msgid "Found loops in topology.\n"
@@ -7346,7 +7346,7 @@ msgstr "스트림 설명자가 선택되지 않았습니다.\n"
 
 #: dlls/mferror/mferror.mc:697
 msgid "Source is missing.\n"
-msgstr "소스가 없습니다.\n"
+msgstr "원본이 없습니다.\n"
 
 #: dlls/mferror/mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
@@ -7354,7 +7354,7 @@ msgstr "토폴로지 로더가 싱크 활성화를 지원하지 않습니다.\n"
 
 #: dlls/mferror/mferror.mc:711
 msgid "Clock has no time source set.\n"
-msgstr "시계가 시간 소스 설정을 가지고 있지 않습니다.\n"
+msgstr "시계가 시간 원본 집합을 가지고 있지 않습니다.\n"
 
 #: dlls/mferror/mferror.mc:718
 msgid "Clock state was already set.\n"
@@ -7362,7 +7362,7 @@ msgstr "시계 상태가 이미 설정되었습니다.\n"
 
 #: dlls/mferror/mferror.mc:725
 msgid "Clock is not simple\n"
-msgstr "시계가 단순하지 않습니다.\n"
+msgstr "시계가 단순하지 않습니다\n"
 
 #: dlls/mpr/mpr.rc:35 dlls/wininet/wininet.rc:48
 msgid "Enter Network Password"
@@ -7370,7 +7370,7 @@ msgstr "네트워크 암호 입력"
 
 #: dlls/mpr/mpr.rc:38 dlls/wininet/wininet.rc:51 dlls/wininet/wininet.rc:71
 msgid "Please enter your username and password:"
-msgstr "사용자 이름과 암호를 입력하십시오:"
+msgstr "사용자 이름과 암호를 입력하세요:"
 
 #: dlls/mpr/mpr.rc:39 dlls/wininet/wininet.rc:52
 msgid "Proxy"
@@ -7441,7 +7441,7 @@ msgid ""
 "The specified installation package could not be opened. Please check the "
 "file path and try again."
 msgstr ""
-"지정한 설치 패키지를 열 수 없습니다. 파일 경로를 검사한 후 다시 시도하십시오."
+"지정한 설치 패키지를 열 수 없습니다. 파일 경로를 검사한 후 다시 시도하세요."
 
 #: dlls/msi/msi.rc:32
 msgid "path %s not found"
@@ -7449,7 +7449,7 @@ msgstr "경로 %s을(를) 찾을 수 없습니다"
 
 #: dlls/msi/msi.rc:33
 msgid "insert disk %s"
-msgstr "디스크 %s을(를) 넣으십시오"
+msgstr "디스크 %s을(를) 넣으세요"
 
 #: dlls/msi/msi.rc:34
 msgid ""
@@ -7928,12 +7928,12 @@ msgid ""
 "arguments are: [2], [3], [4]}}"
 msgstr ""
 "설치 프로그램에서 이 패키지를 설치하는 동안 예기치 않은 오류가 발생했습니다. "
-"이 패키지에 문제가 있음을 나타낼 수 있습니다. 오류 코드 [1]. {{인수 : [2], "
+"이 패키지에 문제가 있음을 나타낼 수 있습니다. 오류 코드 [1]. {{인수: [2], "
 "[3], [4]}}"
 
 #: dlls/msi/msi.rc:77
 msgid "{{Disk full: }}"
-msgstr "{{디스크가 꽉 찼습니다: }}"
+msgstr "{{디스크가 가득 찼습니다: }}"
 
 #: dlls/msi/msi.rc:78
 msgid "Action [Time]: [1]. [2]"
@@ -7957,7 +7957,7 @@ msgstr "작업 끝 [Time]: [1]. 반환 값 [2]."
 
 #: dlls/msi/msi.rc:84
 msgid "Please insert the disk: [2]"
-msgstr "디스크를 넣으십시오: [2]"
+msgstr "디스크를 넣으세요: [2]"
 
 #: dlls/msi/msi.rc:85
 msgid ""
@@ -7965,7 +7965,7 @@ msgid ""
 "that you can access it."
 msgstr ""
 "원본 파일을 찾을 수 없습니다 {{(cabinet)}}: [2]. 파일 존재 및 액세스 가능 여"
-"부를 확인하십시오."
+"부를 확인하세요."
 
 #: dlls/msrle32/msrle32.rc:31
 msgid "Wine MS-RLE video codec"
@@ -8161,11 +8161,11 @@ msgstr "목록 항목"
 
 #: dlls/oleacc/oleacc.rc:66
 msgid "outline"
-msgstr "외곽선"
+msgstr "윤곽선"
 
 #: dlls/oleacc/oleacc.rc:67
 msgid "outline item"
-msgstr "외곽선 항목"
+msgstr "윤곽선 항목"
 
 #: dlls/oleacc/oleacc.rc:68
 msgid "page tab"
@@ -8193,7 +8193,7 @@ msgstr "문자"
 
 #: dlls/oleacc/oleacc.rc:74
 msgid "push button"
-msgstr "누르기 버튼"
+msgstr "푸쉬 버튼"
 
 #: dlls/oleacc/oleacc.rc:75
 msgid "check button"
@@ -8205,15 +8205,15 @@ msgstr "라디오 버튼"
 
 #: dlls/oleacc/oleacc.rc:77
 msgid "combo box"
-msgstr "콤보  상자"
+msgstr "콤보 상자"
 
 #: dlls/oleacc/oleacc.rc:78
 msgid "drop down"
-msgstr "드룹 다운"
+msgstr "드롭다운"
 
 #: dlls/oleacc/oleacc.rc:79
 msgid "progress bar"
-msgstr "진행바"
+msgstr "진행률 표시줄"
 
 #: dlls/oleacc/oleacc.rc:80
 msgid "dial"
@@ -8221,7 +8221,7 @@ msgstr "다이얼"
 
 #: dlls/oleacc/oleacc.rc:81
 msgid "hot key field"
-msgstr "바로 가기 모음"
+msgstr "바로 가기 키 필드"
 
 #: dlls/oleacc/oleacc.rc:82
 msgid "slider"
@@ -8245,7 +8245,7 @@ msgstr "수식"
 
 #: dlls/oleacc/oleacc.rc:87
 msgid "drop down button"
-msgstr "드룹 다운 버튼"
+msgstr "드롭다운 버튼"
 
 #: dlls/oleacc/oleacc.rc:88
 msgid "menu button"
@@ -8253,11 +8253,11 @@ msgstr "메뉴 버튼"
 
 #: dlls/oleacc/oleacc.rc:89
 msgid "grid drop down button"
-msgstr "그립 드룹 다운 단추"
+msgstr "그리드 드롭다운 버튼"
 
 #: dlls/oleacc/oleacc.rc:90
 msgid "white space"
-msgstr "빈 공간"
+msgstr "공백"
 
 #: dlls/oleacc/oleacc.rc:91
 msgid "page tab list"
@@ -8269,7 +8269,7 @@ msgstr "시계"
 
 #: dlls/oleacc/oleacc.rc:93
 msgid "split button"
-msgstr "나누기 단추"
+msgstr "나누기 버튼"
 
 #: dlls/oleacc/oleacc.rc:94
 msgid "IP address"
@@ -8277,42 +8277,42 @@ msgstr "IP 주소"
 
 #: dlls/oleacc/oleacc.rc:95
 msgid "outline button"
-msgstr "외곽선 단추"
+msgstr "윤곽선 버튼"
 
 #: dlls/oleacc/oleacc.rc:97
 msgctxt "object state"
 msgid "normal"
-msgstr "normal"
+msgstr "보통"
 
 #: dlls/oleacc/oleacc.rc:98
 msgctxt "object state"
 msgid "unavailable"
-msgstr "unavailable"
+msgstr "사용할 수 없음"
 
 #: dlls/oleacc/oleacc.rc:99
 msgctxt "object state"
 msgid "selected"
-msgstr "selected"
+msgstr "선택됨"
 
 #: dlls/oleacc/oleacc.rc:100
 msgctxt "object state"
 msgid "focused"
-msgstr "focused"
+msgstr "포커스됨"
 
 #: dlls/oleacc/oleacc.rc:101
 msgctxt "object state"
 msgid "pressed"
-msgstr "pressed"
+msgstr "눌림"
 
 #: dlls/oleacc/oleacc.rc:102
 msgctxt "object state"
 msgid "checked"
-msgstr "checked"
+msgstr "선택 표시됨"
 
 #: dlls/oleacc/oleacc.rc:103
 msgctxt "object state"
 msgid "mixed"
-msgstr "mixed"
+msgstr "혼합됨"
 
 #: dlls/oleacc/oleacc.rc:104
 msgctxt "object state"
@@ -8322,122 +8322,122 @@ msgstr "읽기 전용"
 #: dlls/oleacc/oleacc.rc:105
 msgctxt "object state"
 msgid "hot tracked"
-msgstr "hot tracked"
+msgstr "상시 추적됨"
 
 #: dlls/oleacc/oleacc.rc:106
 msgctxt "object state"
 msgid "default"
-msgstr "default"
+msgstr "기본값"
 
 #: dlls/oleacc/oleacc.rc:107
 msgctxt "object state"
 msgid "expanded"
-msgstr "expanded"
+msgstr "확장됨"
 
 #: dlls/oleacc/oleacc.rc:108
 msgctxt "object state"
 msgid "collapsed"
-msgstr "collapsed"
+msgstr "축소됨"
 
 #: dlls/oleacc/oleacc.rc:109
 msgctxt "object state"
 msgid "busy"
-msgstr "busy"
+msgstr "사용 중"
 
 #: dlls/oleacc/oleacc.rc:110
 msgctxt "object state"
 msgid "floating"
-msgstr "floating"
+msgstr "떠다님"
 
 #: dlls/oleacc/oleacc.rc:111
 msgctxt "object state"
 msgid "marqueed"
-msgstr "marqueed"
+msgstr "움직임"
 
 #: dlls/oleacc/oleacc.rc:112
 msgctxt "object state"
 msgid "animated"
-msgstr "animated"
+msgstr "애니메이트됨"
 
 #: dlls/oleacc/oleacc.rc:113
 msgctxt "object state"
 msgid "invisible"
-msgstr "invisible"
+msgstr "숨김"
 
 #: dlls/oleacc/oleacc.rc:114
 msgctxt "object state"
 msgid "offscreen"
-msgstr "offscreen"
+msgstr "화면 벗어남"
 
 #: dlls/oleacc/oleacc.rc:115
 msgctxt "object state"
 msgid "sizeable"
-msgstr "sizeable"
+msgstr "크기 조절 가능"
 
 #: dlls/oleacc/oleacc.rc:116
 msgctxt "object state"
 msgid "moveable"
-msgstr "moveable"
+msgstr "이동 가능"
 
 #: dlls/oleacc/oleacc.rc:117
 msgctxt "object state"
 msgid "self voicing"
-msgstr "self voicing"
+msgstr "자가 발성"
 
 #: dlls/oleacc/oleacc.rc:118
 msgctxt "object state"
 msgid "focusable"
-msgstr "focusable"
+msgstr "포커스 가능"
 
 #: dlls/oleacc/oleacc.rc:119
 msgctxt "object state"
 msgid "selectable"
-msgstr "selectable"
+msgstr "선택 가능"
 
 #: dlls/oleacc/oleacc.rc:120
 msgctxt "object state"
 msgid "linked"
-msgstr "linked"
+msgstr "연결됨"
 
 #: dlls/oleacc/oleacc.rc:121
 msgctxt "object state"
 msgid "traversed"
-msgstr "traversed"
+msgstr "방문됨"
 
 #: dlls/oleacc/oleacc.rc:122
 msgctxt "object state"
 msgid "multi selectable"
-msgstr "multi selectable"
+msgstr "다중 선택 가능"
 
 #: dlls/oleacc/oleacc.rc:123
 msgctxt "object state"
 msgid "extended selectable"
-msgstr "extended selectable"
+msgstr "확장된 선택 가능"
 
 #: dlls/oleacc/oleacc.rc:124
 msgctxt "object state"
 msgid "alert low"
-msgstr "alert low"
+msgstr "낮은 수준의 경고"
 
 #: dlls/oleacc/oleacc.rc:125
 msgctxt "object state"
 msgid "alert medium"
-msgstr "alert medium"
+msgstr "보통 수준의 경고"
 
 #: dlls/oleacc/oleacc.rc:126
 msgctxt "object state"
 msgid "alert high"
-msgstr "alert high"
+msgstr "높은 수준의 경고"
 
 #: dlls/oleacc/oleacc.rc:127
 msgctxt "object state"
 msgid "protected"
-msgstr "protected"
+msgstr "보호됨"
 
 #: dlls/oleacc/oleacc.rc:128
 msgctxt "object state"
 msgid "has popup"
-msgstr "has popup"
+msgstr "팝업 있음"
 
 #: dlls/oleaut32/oleaut32.rc:30 programs/oleview/oleview.rc:146
 msgid "True"
@@ -8553,7 +8553,7 @@ msgid ""
 "value, select a property, then choose Edit Value below."
 msgstr ""
 "이러한 유형의 데이터에 대한 초기화 속성입니다. 값을 편집하려면 속성을 선택한 "
-"다음 아래의 값 편집을 선택합니다."
+"다음 아래의 [값 편집]을 선택합니다."
 
 #: dlls/oledb32/version.rc:115
 msgid "&Edit Value..."
@@ -8565,7 +8565,7 @@ msgstr "데이터 링크 오류"
 
 #: dlls/oledb32/version.rc:50
 msgid "Please select a provider."
-msgstr "공급자를 선택하십시오."
+msgstr "공급자를 선택하세요."
 
 #: dlls/oledb32/version.rc:51
 msgid ""
@@ -8633,7 +8633,7 @@ msgstr "컨트롤 만들기"
 
 #: dlls/oledlg/oledlg.rc:69
 msgid "Create From File"
-msgstr "파일로부터 만들기"
+msgstr "파일에서 만들기"
 
 #: dlls/oledlg/oledlg.rc:72
 msgid "&Add Control..."
@@ -8641,7 +8641,7 @@ msgstr "컨트롤 추가(&A)..."
 
 #: dlls/oledlg/oledlg.rc:73
 msgid "Display As Icon"
-msgstr "아이콘으로 보기"
+msgstr "아이콘으로 표시"
 
 #: dlls/oledlg/oledlg.rc:75 dlls/setupapi/setupapi.rc:61
 msgid "Browse..."
@@ -8653,7 +8653,7 @@ msgstr "파일:"
 
 #: dlls/oledlg/oledlg.rc:82
 msgid "Paste Special"
-msgstr "특별하게  붙여넣기"
+msgstr "선택하여 붙여넣기"
 
 #: dlls/oledlg/oledlg.rc:85 dlls/setupapi/setupapi.rc:43
 msgid "Source:"
@@ -8669,7 +8669,7 @@ msgstr "붙여넣기(&P)"
 
 #: dlls/oledlg/oledlg.rc:88
 msgid "Paste &Link"
-msgstr "링크로 붙여넣기(&L)"
+msgstr "연결하여 붙여넣기(&L)"
 
 #: dlls/oledlg/oledlg.rc:90
 msgid "&As:"
@@ -8677,7 +8677,7 @@ msgstr "다른 이름으로(&A):"
 
 #: dlls/oledlg/oledlg.rc:97
 msgid "&Display As Icon"
-msgstr "아이콘으로 보기(&D)"
+msgstr "아이콘으로 표시(&D)"
 
 #: dlls/oledlg/oledlg.rc:99
 msgid "Change &Icon..."
@@ -8794,7 +8794,7 @@ msgstr "스캔 중"
 
 #: dlls/sane.ds/sane.rc:44
 msgid "SCANNING... Please Wait"
-msgstr "스캔 중... 기다려 주십시오"
+msgstr "스캔 중... 기다려 주세요"
 
 #: dlls/sane.ds/sane.rc:31
 msgctxt "unit: pixels"
@@ -8863,12 +8863,12 @@ msgid ""
 "Insert the manufacturer's installation disk, and then\n"
 "make sure the correct drive is selected below"
 msgstr ""
-"제작사의 설치 디스크를 삽입하고,\n"
+"제조업체 설치 디스크를 삽입하고,\n"
 "아래의 선택된 드라이브가 올바른지 확인하시오"
 
 #: dlls/setupapi/setupapi.rc:57
 msgid "Copy manufacturer's files from:"
-msgstr "제작사의 파일이 복사할 곳:"
+msgstr "제조업체의 파일을 복사하세요:"
 
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
@@ -8876,15 +8876,15 @@ msgstr "%2의 '%1' 파일이 필요합니다"
 
 #: dlls/setupapi/setupapi.rc:32 programs/ipconfig/ipconfig.rc:34
 msgid "Unknown"
-msgstr "없음"
+msgstr "알 수 없음"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
-msgstr "복사할 파일이 위치한 곳:"
+msgstr "파일을 복사하세요:"
 
 #: dlls/setupapi/setupapi.rc:34
 msgid "Type the path where the file is located, and then click OK."
-msgstr "파일이 위치한 경로를 입력하고, [확인]을 클릭하십시오."
+msgstr "파일이 위치한 경로를 입력하고, [확인]을 클릭하세요."
 
 #: dlls/shdoclc/shdoclc.rc:42
 msgid "F&orward"
@@ -8892,7 +8892,7 @@ msgstr "앞으로(&O)"
 
 #: dlls/shdoclc/shdoclc.rc:44
 msgid "&Save Background As..."
-msgstr "배경으로 저장(&S)..."
+msgstr "다른 이름으로 배경 저장(&S)..."
 
 #: dlls/shdoclc/shdoclc.rc:45
 msgid "Set As Back&ground"
@@ -8900,7 +8900,7 @@ msgstr "배경으로 설정(&G)"
 
 #: dlls/shdoclc/shdoclc.rc:46
 msgid "&Copy Background"
-msgstr "배경으로 복사(&C)"
+msgstr "배경 화면 복사(&C)"
 
 #: dlls/shdoclc/shdoclc.rc:47
 msgid "Set as &Desktop Item"
@@ -8942,28 +8942,28 @@ msgstr "다른 이름으로 저장(&A)..."
 #: dlls/shdoclc/shdoclc.rc:69 dlls/shdoclc/shdoclc.rc:130
 #: dlls/shdoclc/shdoclc.rc:152 dlls/shdoclc/shdoclc.rc:176
 msgid "&Print Target"
-msgstr "타겟 저장(&P)"
+msgstr "대상 인쇄(&P)"
 
 #: dlls/shdoclc/shdoclc.rc:71 dlls/shdoclc/shdoclc.rc:154
 #: dlls/shdoclc/shdoclc.rc:178
 msgid "S&how Picture"
-msgstr "그림 보기(&H)"
+msgstr "사진 표시(&H)"
 
 #: dlls/shdoclc/shdoclc.rc:72 dlls/shdoclc/shdoclc.rc:179
 msgid "&Save Picture As..."
-msgstr "다른 이름으로 그림 저장(&S)..."
+msgstr "다른 이름으로 사진 저장(&S)..."
 
 #: dlls/shdoclc/shdoclc.rc:73
 msgid "&E-mail Picture..."
-msgstr "그림을 전자메일로(&E)..."
+msgstr "사진을 메일로 보내기(&E)..."
 
 #: dlls/shdoclc/shdoclc.rc:74
 msgid "Pr&int Picture..."
-msgstr "그림 인쇄(&I)..."
+msgstr "사진 인쇄(&I)..."
 
 #: dlls/shdoclc/shdoclc.rc:75
 msgid "&Go to My Pictures"
-msgstr "내 그림으로 가기(&G)"
+msgstr "[내 사진]으로 가기(&G)"
 
 #: dlls/shdoclc/shdoclc.rc:76 dlls/shdoclc/shdoclc.rc:156
 #: dlls/shdoclc/shdoclc.rc:180
@@ -9000,15 +9000,15 @@ msgstr "선택(&S)"
 
 #: dlls/shdoclc/shdoclc.rc:105
 msgid "&Cell"
-msgstr "칸(&C)"
+msgstr "셀(&C)"
 
 #: dlls/shdoclc/shdoclc.rc:106
 msgid "&Row"
-msgstr "가로줄(&R)"
+msgstr "행(&R)"
 
 #: dlls/shdoclc/shdoclc.rc:107
 msgid "&Column"
-msgstr "세로줄(&C)"
+msgstr "열(&C)"
 
 #: dlls/shdoclc/shdoclc.rc:108
 msgid "&Table"
@@ -9016,7 +9016,7 @@ msgstr "표(&T)"
 
 #: dlls/shdoclc/shdoclc.rc:111
 msgid "&Cell Properties"
-msgstr "가로줄 속성(&C)"
+msgstr "셀 속성(&C)"
 
 #: dlls/shdoclc/shdoclc.rc:112
 msgid "&Table Properties"
@@ -9032,7 +9032,7 @@ msgstr "잘라내기"
 
 #: dlls/shdoclc/shdoclc.rc:155
 msgid "&Save Video As..."
-msgstr "비디오 다른 이름으로 저장(&S)..."
+msgstr "다른 이름으로 비디오 저장(&S)..."
 
 #: dlls/shdoclc/shdoclc.rc:166 dlls/shdoclc/shdoclc.rc:190
 msgid "Play"
@@ -9044,7 +9044,7 @@ msgstr "다시 감기"
 
 #: dlls/shdoclc/shdoclc.rc:199
 msgid "Trace Tags"
-msgstr "태그 추적"
+msgstr "추적 태그"
 
 #: dlls/shdoclc/shdoclc.rc:200
 msgid "Resource Failures"
@@ -9060,7 +9060,7 @@ msgstr "디버깅 중지"
 
 #: dlls/shdoclc/shdoclc.rc:203
 msgid "Debug View"
-msgstr "디버깅 정보 보기"
+msgstr "디버깅 보기"
 
 #: dlls/shdoclc/shdoclc.rc:204
 msgid "Dump Tree"
@@ -9068,19 +9068,19 @@ msgstr "트리 덤프"
 
 #: dlls/shdoclc/shdoclc.rc:205
 msgid "Dump Lines"
-msgstr "라인 덤프"
+msgstr "줄 덤프"
 
 #: dlls/shdoclc/shdoclc.rc:206
 msgid "Dump DisplayTree"
-msgstr "디스플레이트리 덤프"
+msgstr "DisplayTree 덤프"
 
 #: dlls/shdoclc/shdoclc.rc:207
 msgid "Dump FormatCaches"
-msgstr "포맷캐쉬 덤프"
+msgstr "FormatCaches 덤프"
 
 #: dlls/shdoclc/shdoclc.rc:208
 msgid "Dump LayoutRects"
-msgstr "레이아웃렉트 덤프"
+msgstr "LayoutRects 덤프"
 
 #: dlls/shdoclc/shdoclc.rc:209
 msgid "Memory Monitor"
@@ -9088,7 +9088,7 @@ msgstr "메모리 모니터"
 
 #: dlls/shdoclc/shdoclc.rc:210
 msgid "Performance Meters"
-msgstr "성능 측정"
+msgstr "성능 측정기"
 
 #: dlls/shdoclc/shdoclc.rc:211
 msgid "Save HTML"
@@ -9096,31 +9096,31 @@ msgstr "HTML 저장"
 
 #: dlls/shdoclc/shdoclc.rc:213
 msgid "&Browse View"
-msgstr "보기 상태(&B)"
+msgstr "브라우저 보기(&B)"
 
 #: dlls/shdoclc/shdoclc.rc:214
 msgid "&Edit View"
-msgstr "편집 상태(&E)"
+msgstr "편집 보기(&E)"
 
 #: dlls/shdoclc/shdoclc.rc:219 dlls/shdoclc/shdoclc.rc:233
 msgid "Scroll Here"
-msgstr "여기서 스크롤"
+msgstr "여기로 스크롤"
 
 #: dlls/shdoclc/shdoclc.rc:221
 msgid "Top"
-msgstr "위"
+msgstr "맨 위"
 
 #: dlls/shdoclc/shdoclc.rc:222
 msgid "Bottom"
-msgstr "아래"
+msgstr "맨 아래"
 
 #: dlls/shdoclc/shdoclc.rc:224
 msgid "Page Up"
-msgstr "위 페이지"
+msgstr "페이지 위로"
 
 #: dlls/shdoclc/shdoclc.rc:225
 msgid "Page Down"
-msgstr "아래 페이지"
+msgstr "페이지 아래로"
 
 #: dlls/shdoclc/shdoclc.rc:227
 msgid "Scroll Up"
@@ -9160,7 +9160,7 @@ msgstr "Wine 인터넷 익스폴로어"
 
 #: dlls/shdoclc/shdoclc.rc:33
 msgid "&w&bPage &p"
-msgstr "&w&b&p쪽"
+msgstr "&w&b페이지 &p"
 
 #: dlls/shell32/shell32.rc:30 dlls/shell32/shell32.rc:45
 #: dlls/shell32/shell32.rc:122 dlls/shell32/shell32.rc:162
@@ -9194,19 +9194,19 @@ msgstr "아이콘 정렬(&I)"
 
 #: dlls/shell32/shell32.rc:53
 msgid "By &Name"
-msgstr "이름으로(&N)"
+msgstr "이름별(&N)"
 
 #: dlls/shell32/shell32.rc:54
 msgid "By &Type"
-msgstr "형식으로(&T)"
+msgstr "종류별(&T)"
 
 #: dlls/shell32/shell32.rc:55
 msgid "By &Size"
-msgstr "크기로(&S)"
+msgstr "크기순(&S)"
 
 #: dlls/shell32/shell32.rc:56
 msgid "By &Date"
-msgstr "날짜로(&D)"
+msgstr "날짜순(&D)"
 
 #: dlls/shell32/shell32.rc:58
 msgid "&Auto Arrange"
@@ -9214,7 +9214,7 @@ msgstr "자동 정렬(&A)"
 
 #: dlls/shell32/shell32.rc:60
 msgid "Line up Icons"
-msgstr "아이콘 정렬"
+msgstr "아이콘 줄 맞춤"
 
 #: dlls/shell32/shell32.rc:65
 msgid "Paste as Link"
@@ -9308,7 +9308,7 @@ msgstr "%s 실행중"
 
 #: dlls/shell32/shell32.rc:329
 msgid "Wine was brought to you by:"
-msgstr "Wine에 도움주신 분:"
+msgstr "Wine 기여자 목록:"
 
 #: dlls/shell32/shell32.rc:334
 msgid "Run"
@@ -9319,7 +9319,7 @@ msgid ""
 "Type the name of a program, folder, document, or Internet resource, and Wine "
 "will open it for you."
 msgstr ""
-"프로그램,폴더,문서나 인터넷 자원, 그리고 Wine이 열  것의 이름을 적어주세요."
+"프로그램, 폴더, 문서 또는 인터넷 리소스의 이름을 입력하면 Wine이 열어줍니다."
 
 #: dlls/shell32/shell32.rc:339
 msgid "&Open:"
@@ -9373,11 +9373,11 @@ msgstr "바꾸기(&C)..."
 
 #: dlls/shell32/shell32.rc:400
 msgid "Last modified:"
-msgstr "수정날짜:"
+msgstr "마지막으로 수정한 날짜:"
 
 #: dlls/shell32/shell32.rc:402
 msgid "Last accessed:"
-msgstr "마지막 접근:"
+msgstr "마지막으로 액세스한 날짜:"
 
 #: dlls/shell32/shell32.rc:138 dlls/shell32/shell32.rc:142
 #: programs/winefile/winefile.rc:107
@@ -9390,7 +9390,7 @@ msgstr "종류"
 
 #: dlls/shell32/shell32.rc:140
 msgid "Modified"
-msgstr "수정날짜"
+msgstr "수정됨"
 
 #: dlls/shell32/shell32.rc:141 programs/winefile/winefile.rc:171
 #: programs/winefile/winefile.rc:113
@@ -9399,7 +9399,7 @@ msgstr "속성"
 
 #: dlls/shell32/shell32.rc:143
 msgid "Size available"
-msgstr "가능한 크기"
+msgstr "사용할 수 있는 크기"
 
 #: dlls/shell32/shell32.rc:145
 msgid "Comments"
@@ -9419,7 +9419,7 @@ msgstr "원래 위치"
 
 #: dlls/shell32/shell32.rc:149
 msgid "Date deleted"
-msgstr "지워진 날짜"
+msgstr "삭제된 날짜"
 
 #: dlls/shell32/shell32.rc:156 programs/winecfg/winecfg.rc:100
 #: programs/winefile/winefile.rc:99
@@ -9519,7 +9519,7 @@ msgstr "Common Files"
 #: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
 #: dlls/shell32/shell32.rc:235
 msgid "Documents"
-msgstr "내 문서"
+msgstr "문서"
 
 #: dlls/shell32/shell32.rc:220
 msgid "Administrative Tools"
@@ -9527,15 +9527,15 @@ msgstr "관리 도구"
 
 #: dlls/shell32/shell32.rc:221
 msgid "Music"
-msgstr "내 음악"
+msgstr "음악"
 
 #: dlls/shell32/shell32.rc:222
 msgid "Pictures"
-msgstr "내 그림"
+msgstr "그림"
 
 #: dlls/shell32/shell32.rc:223
 msgid "Videos"
-msgstr "내 비디오"
+msgstr "비디오"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Program Files (x86)"
@@ -10707,7 +10707,7 @@ msgid ""
 "not click install unless you have absolute trust in the above source."
 msgstr ""
 "설치할 때, ActiveX 구성 요소는 컴퓨터에 대한 완전한 액세스 권한을 가집니다. "
-"위 원본에 대한 절대적인 신뢰가 없는 경우 [설치]를 클릭하지 마십시오."
+"위 원본에 대한 절대적인 신뢰가 없는 경우 [설치]를 클릭하지 마세요."
 
 #: dlls/urlmon/urlmon.rc:51
 msgid "Installation of component failed: %08x"
@@ -10836,7 +10836,7 @@ msgstr "개체 변수가 설정되어 있지 않습니다"
 
 #: dlls/vbscript/vbscript.rc:44
 msgid "Invalid use of Null"
-msgstr "올바르지 않은 널 사용"
+msgstr "잘못된 널 사용"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
@@ -10880,7 +10880,7 @@ msgstr "지정한 DLL 함수를 찾을 수 없습니다"
 
 #: dlls/vbscript/vbscript.rc:58
 msgid "Variable uses an Automation type not supported in VBScript"
-msgstr "변수에 VBScript에서 지원하지 않는 자동화 형식이 사용되었습니다"
+msgstr "변수에 VBScript에서 지원되지 않는 자동화 형식이 사용되었습니다"
 
 #: dlls/vbscript/vbscript.rc:59
 msgid "The remote server machine does not exist or is unavailable"
@@ -10888,7 +10888,7 @@ msgstr "원격 서버가 없거나 사용할 수 없습니다"
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr "올바르지 않거나 비정규화된 참조"
+msgstr "잘못된 참조입니다"
 
 #: dlls/vbscript/vbscript.rc:62
 msgid "Microsoft VBScript compilation error"
@@ -10980,7 +10980,7 @@ msgstr "알려지지 않았거나 신뢰할 수 없는 게시자가 발행한 �
 
 #: dlls/wininet/wininet.rc:30
 msgid "The date on the certificate is invalid."
-msgstr "인증서 날짜가 올바르지 않습니다."
+msgstr "인증서 날짜가 잘못되었습니다."
 
 #: dlls/wininet/wininet.rc:31
 msgid "The name on the certificate does not match the site."
@@ -11025,7 +11025,7 @@ msgstr "내부 오류 발생.\n"
 
 #: dlls/wininet/winineterror.mc:36
 msgid "The URL is invalid.\n"
-msgstr "URL이 올바르지 않습니다.\n"
+msgstr "URL이 잘못되었습니다.\n"
 
 #: dlls/wininet/winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
@@ -11037,7 +11037,7 @@ msgstr "서버 이름을 확인할 수 없습니다.\n"
 
 #: dlls/wininet/winineterror.mc:51
 msgid "The requested operation is invalid.\n"
-msgstr "요청한 작업이 올바르지 않습니다.\n"
+msgstr "요청한 작업이 잘못되었습니다.\n"
 
 #: dlls/wininet/winineterror.mc:56
 msgid ""
@@ -11091,7 +11091,7 @@ msgid ""
 "again."
 msgstr ""
 "지정한 장치가 이미 사용되고 있습니다. 사용할 수 있을 때까지 기다린 다음 다시 "
-"시도하십시오."
+"시도하세요."
 
 #: dlls/winmm/winmm.rc:37
 msgid "The specified device handle is invalid."
@@ -11107,15 +11107,15 @@ msgid ""
 "increase available memory, and then try again."
 msgstr ""
 "메모리가 부족하기 때문에 이 작업을 할 수 없습니다. 응용 프로그램을 한 개 이"
-"상 닫아 사용 가능한 메모리를 늘린 다음 다시 실행하십시오."
+"상 닫아 사용 가능한 메모리를 늘린 다음 다시 실행하세요."
 
 #: dlls/winmm/winmm.rc:40
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
 msgstr ""
-"이 기능은 지원하지 않습니다. Capabilities 함수를 사용하여 드라이버가 지원하"
-"는 기능 및 메시지를 결정하십시오."
+"이 기능은 지원되지 않습니다. Capabilities 함수를 사용하여 드라이버가 지원하"
+"는 기능 및 메시지를 결정하세요."
 
 #: dlls/winmm/winmm.rc:41
 msgid "An error number was specified that is not defined in the system."
@@ -11135,7 +11135,7 @@ msgid ""
 "Capabilities function to determine the supported formats."
 msgstr ""
 "지정한 형식이 지원되지 않거나 변환할 수 없습니다. 지원되는 형식을 결정하려면 "
-"Capabilities 함수를 사용하십시오."
+"Capabilities 함수를 사용하세요."
 
 #: dlls/winmm/winmm.rc:47 dlls/winmm/winmm.rc:53
 msgid ""
@@ -11151,7 +11151,7 @@ msgid ""
 "header, and then try again."
 msgstr ""
 "웨이브 헤더가 준비되지 않았습니다. Prepare 함수를 사용하여 헤더를 준비한 후 "
-"다시 시도하십시오."
+"다시 시도하세요."
 
 #: dlls/winmm/winmm.rc:49
 msgid ""
@@ -11159,7 +11159,7 @@ msgid ""
 "and then try again."
 msgstr ""
 "WAVE_ALLOWSYNC 플래그를 사용하지 않고 장치를 열 수 없습니다. 플래그를 사용한 "
-"후 다시 시도하십시오."
+"후 다시 시도하세요."
 
 #: dlls/winmm/winmm.rc:52
 msgid ""
@@ -11167,7 +11167,7 @@ msgid ""
 "header, and then try again."
 msgstr ""
 "MIDI 헤더가 준비되지 않았습니다. Prepare 함수를 사용하여 헤더를 준비한 후 다"
-"시 시도하십시오."
+"시 시도하세요."
 
 #: dlls/winmm/winmm.rc:54
 msgid ""
@@ -11183,7 +11183,7 @@ msgid ""
 "transmitted, and then try again."
 msgstr ""
 "포트가 데이터를 장치로 전송하고 있습니다. 데이터가 모두 전송될 때까지 기다린 "
-"후 다시 시도하십시오."
+"후 다시 시도하세요."
 
 #: dlls/winmm/winmm.rc:56 dlls/winmm/winmm.rc:129
 msgid ""
@@ -11197,12 +11197,11 @@ msgid ""
 "Windows SYSTEM directory, and then try again."
 msgstr ""
 "현재 MIDI 설정이 손상되었습니다. 원래의 MIDIMAP.CFG 파일을 Windows SYSTEM 디"
-"렉터리에 복사한 후 다시 시도하십시오."
+"렉터리에 복사한 후 다시 시도하세요."
 
 #: dlls/winmm/winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
-msgstr ""
-"MCI 장치 ID가 잘못되었습니다. MCI 장치를 열 때 반환된 ID를 사용하십시오."
+msgstr "MCI 장치 ID가 잘못되었습니다. MCI 장치를 열 때 반환된 ID를 사용하세요."
 
 #: dlls/winmm/winmm.rc:61
 msgid "The driver cannot recognize the specified command parameter."
@@ -11218,7 +11217,7 @@ msgid ""
 "or contact the device manufacturer."
 msgstr ""
 "미디어 장치에 문제가 있습니다. 제대로 작동하는지 확인하거나 장치 제조업체에 "
-"문의하십시오."
+"문의하세요."
 
 #: dlls/winmm/winmm.rc:64
 msgid "The specified device is not open or is not recognized by MCI."
@@ -11230,7 +11229,7 @@ msgid ""
 "unique alias."
 msgstr ""
 "프로그램에서 장치 이름을 이미 별칭으로 사용하고 있습니다. 고유한 별칭을 사용"
-"하십시오."
+"하세요."
 
 #: dlls/winmm/winmm.rc:67
 msgid ""
@@ -11253,7 +11252,7 @@ msgstr ""
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
-msgstr "지정한 명령에 문자열 매개변수가 필요합니다. 매개변수를 입력하십시오."
+msgstr "지정한 명령에 문자열 매개변수가 필요합니다. 매개변수를 입력하세요."
 
 #: dlls/winmm/winmm.rc:71
 msgid "The specified integer is invalid for this command."
@@ -11265,7 +11264,7 @@ msgid ""
 "manufacturer about obtaining a new driver."
 msgstr ""
 "장치 드라이버가 잘못된 반환 형식을 반환했습니다. 새 드라이버를 얻을 수 있는"
-"지 장치 제조업체에 확인하십시오."
+"지 장치 제조업체에 확인하세요."
 
 #: dlls/winmm/winmm.rc:73
 msgid ""
@@ -11273,21 +11272,20 @@ msgid ""
 "manufacturer about obtaining a new driver."
 msgstr ""
 "장치 드라이버에 문제가 있습니다. 새 드라이버를 얻을 수 있는지 장치 제조업체"
-"에 확인하십시오."
+"에 확인하세요."
 
 #: dlls/winmm/winmm.rc:74
 msgid "The specified command requires a parameter. Please supply one."
-msgstr "지정한 명령은 매개변수가 필요합니다. 매개변수를 입력하십시오."
+msgstr "지정한 명령은 매개변수가 필요합니다. 매개변수를 입력하세요."
 
 #: dlls/winmm/winmm.rc:75
 msgid "The MCI device you are using does not support the specified command."
-msgstr "사용 중인 MCI 장치가 지정한 명령을 지원하지 않습니다."
+msgstr "사용 중인 MCI 장치가 지정한 명령을 지원되지 않습니다."
 
 #: dlls/winmm/winmm.rc:76
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
-msgstr ""
-"지정한 파일을 찾을 수 없습니다.경로와 파일 이름이 올바른지 확인하십시오."
+msgstr "지정한 파일을 찾을 수 없습니다.경로와 파일 이름이 올바른지 확인하세요."
 
 #: dlls/winmm/winmm.rc:77
 msgid "The device driver is not ready."
@@ -11295,7 +11293,7 @@ msgstr "장치 드라이버가 준비되지 않았습니다."
 
 #: dlls/winmm/winmm.rc:78
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
-msgstr "MCI 초기화 중 문제가 발생했습니다. Windows를 다시 시작하십시오."
+msgstr "MCI 초기화 중 문제가 발생했습니다. Windows를 다시 시작하세요."
 
 #: dlls/winmm/winmm.rc:79
 msgid ""
@@ -11335,7 +11333,7 @@ msgid ""
 "still connected to the network."
 msgstr ""
 "지정한 파일을 저장할 수 없습니다. 디스크 공간이 충분한지 또는 아직 네트에크"
-"에 연결되어 있는지 확인하십시오."
+"에 연결되어 있는지 확인하세요."
 
 #: dlls/winmm/winmm.rc:86
 msgid ""
@@ -11343,13 +11341,13 @@ msgid ""
 "device name is spelled correctly."
 msgstr ""
 "지정한 장치를 찾을 수 없습니다. 장치가 설치 여부와 장치 이름 철자가 올바른지"
-"를 확인하십시오."
+"를 확인하세요."
 
 #: dlls/winmm/winmm.rc:87
 msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
-msgstr "지정한 장치는 현재 닫혀 있습니다. 잠시 기다린 후, 다시 시도하십시오."
+msgstr "지정한 장치는 현재 닫혀 있습니다. 잠시 기다린 후, 다시 시도하세요."
 
 #: dlls/winmm/winmm.rc:88
 msgid ""
@@ -11357,7 +11355,7 @@ msgid ""
 "alias."
 msgstr ""
 "지정한 별칭이 이미 응용프로그램에서 사용되고 있습니다. 다른 고유한 별칭을 사"
-"용하십시오."
+"용하세요."
 
 #: dlls/winmm/winmm.rc:89
 msgid "The specified parameter is invalid for this command."
@@ -11369,7 +11367,7 @@ msgid ""
 "parameter with each 'open' command."
 msgstr ""
 "장치 드라이버가 이미 사용되고 있습니다. 공유하려면 각 'open' 명령마다 "
-"'shareable' 매개변수를 사용하십시오."
+"'shareable' 매개변수를 사용하세요."
 
 #: dlls/winmm/winmm.rc:91
 msgid ""
@@ -11377,7 +11375,7 @@ msgid ""
 "Please supply one."
 msgstr ""
 "지정한 명령은 별칭, 파일, 드라이버 또는 장치 이름이 필요합니다. 이 중 하나를 "
-"입력하십시오."
+"입력하세요."
 
 #: dlls/winmm/winmm.rc:92
 msgid ""
@@ -11385,17 +11383,17 @@ msgid ""
 "documentation for valid formats."
 msgstr ""
 "시간 형식에 지정한 값이 잘못되었습니다. MCI 문서에서 유효한 형식에 관한 내용"
-"을 참조하십시오."
+"을 참조하세요."
 
 #: dlls/winmm/winmm.rc:93
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
-msgstr "매개변수 값에 닫는 큰 따옴표(\")가 빠졌습니다. 입력하십시오."
+msgstr "매개변수 값에 닫는 큰 따옴표(\")가 빠졌습니다. 입력하세요."
 
 #: dlls/winmm/winmm.rc:94
 msgid "A parameter or value was specified twice. Only specify it once."
-msgstr "매개변수 또는 값을 두 번 지정했습니다. 한번만 지정하십시오."
+msgstr "매개변수 또는 값을 두 번 지정했습니다. 한번만 지정하세요."
 
 #: dlls/winmm/winmm.rc:95
 msgid ""
@@ -11411,7 +11409,7 @@ msgstr "비어있는 매개변수 블럭이 MCI에 전달되었습니다."
 
 #: dlls/winmm/winmm.rc:97
 msgid "Cannot save an unnamed file. Supply a filename."
-msgstr "이름없는 파일을 저장할 수 없습니다. 파일 이름을 지정하십시오."
+msgstr "이름없는 파일을 저장할 수 없습니다. 파일 이름을 지정하세요."
 
 #: dlls/winmm/winmm.rc:98
 msgid "You must specify an alias when using the 'new' parameter."
@@ -11431,7 +11429,7 @@ msgid ""
 "sequence, and then try again."
 msgstr ""
 "지정한 순서대로 명령을 수행할 수 없습니다. 명령 순서를 수정한 다음 다시 시도"
-"하십시오."
+"하세요."
 
 #: dlls/winmm/winmm.rc:102
 msgid ""
@@ -11439,7 +11437,7 @@ msgid ""
 "the device is closed, and then try again."
 msgstr ""
 "자동 열기 장치에서 지정한 명령을 수행할 수 없습니다. 장치가 닫힐 때까지 기다"
-"렸다가 다시 시도하십시오."
+"렸다가 다시 시도하세요."
 
 #: dlls/winmm/winmm.rc:103
 msgid ""
@@ -11447,7 +11445,7 @@ msgid ""
 "characters, followed by a period and an extension."
 msgstr ""
 "파일 이름이 잘못되었습니다. 파일 이름이 8 문자를 넘지 않고, 점과 확장명이 있"
-"는지 확인하십시오."
+"는지 확인하세요."
 
 #: dlls/winmm/winmm.rc:104
 msgid ""
@@ -11460,7 +11458,7 @@ msgid ""
 "in Control Panel to install the device."
 msgstr ""
 "지정한 장치가 시스템에 설치되지 않았습니다. 제어판에서 드라이버 옵션을 사용하"
-"여 장치를 설치하십시오."
+"여 장치를 설치하세요."
 
 #: dlls/winmm/winmm.rc:106
 msgid ""
@@ -11468,7 +11466,7 @@ msgid ""
 "restarting your computer."
 msgstr ""
 "지정한 파일이나 MCI 장치에 접근할 수 없습니다. 디렉터리를 바꾸거나 컴퓨터를 "
-"다시 시작하십시오."
+"다시 시작하세요."
 
 #: dlls/winmm/winmm.rc:107
 msgid ""
@@ -11488,17 +11486,17 @@ msgstr ""
 
 #: dlls/winmm/winmm.rc:109
 msgid "Specify a device or driver name that is less than 79 characters."
-msgstr "장치나 드라이버 이름을 79자 미만으로 지정하십시오."
+msgstr "장치나 드라이버 이름을 79자 미만으로 지정하세요."
 
 #: dlls/winmm/winmm.rc:110
 msgid "Specify a device or driver name that is less than 69 characters."
-msgstr "장치나 드라이버 이름을 69자 미만으로 지정하십시오."
+msgstr "장치나 드라이버 이름을 69자 미만으로 지정하세요."
 
 #: dlls/winmm/winmm.rc:111
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr ""
-"지정한 명령에는 정수 매개변수가 필요합니다. 올바른 매개변수를 지정하십시오."
+"지정한 명령에는 정수 매개변수가 필요합니다. 올바른 매개변수를 지정하세요."
 
 #: dlls/winmm/winmm.rc:112
 msgid ""
@@ -11506,7 +11504,7 @@ msgid ""
 "until a wave device is free, and then try again."
 msgstr ""
 "현재 형식으로 파일을 재생할 수 있는 모든 웨이브 장치가 사용 중입니다. 웨이브 "
-"장치를 사용할 수 있을 때까지 기다린 다음 다시 시도하십시오."
+"장치를 사용할 수 있을 때까지 기다린 다음 다시 시도하세요."
 
 #: dlls/winmm/winmm.rc:113
 msgid ""
@@ -11514,7 +11512,7 @@ msgid ""
 "until the device is free, and then try again."
 msgstr ""
 "현재 웨이브 장치가 사용 중이므로 재생하도록 설정할 수 없습니다. 장치를 사용"
-"할 수 있을 때까지 기다린 다음 다시 시도하십시오."
+"할 수 있을 때까지 기다린 다음 다시 시도하세요."
 
 #: dlls/winmm/winmm.rc:114
 msgid ""
@@ -11522,7 +11520,7 @@ msgid ""
 "Wait until a wave device is free, and then try again."
 msgstr ""
 "파일을 현재 형식으로 녹음할 수 있는 모든 웨이브 장치가 사용 중입니다. 웨이브 "
-"장치를 사용할 수 있을 때까지 기다린 다음 다시 시도하십시오."
+"장치를 사용할 수 있을 때까지 기다린 다음 다시 시도하세요."
 
 #: dlls/winmm/winmm.rc:115
 msgid ""
@@ -11530,7 +11528,7 @@ msgid ""
 "until the device is free, and then try again."
 msgstr ""
 "현재 웨이브 장치가 사용 중이므로 녹음하도록 설정할 수 없습니다. 장치를 사용"
-"할 수 있을 때까지 기다린 다음 다시 시도하십시오."
+"할 수 있을 때까지 기다린 다음 다시 시도하세요."
 
 #: dlls/winmm/winmm.rc:116
 msgid "Any compatible waveform playback device may be used."
@@ -11546,7 +11544,7 @@ msgid ""
 "the Drivers option to install the wave device."
 msgstr ""
 "현재 형식으로 파일을 재생할 수 있는 웨이브 장치가 설치되지 않았습니다. [드라"
-"이버] 옵션을 사용하여 웨이브 장치를 설치하십시오."
+"이버] 옵션을 사용하여 웨이브 장치를 설치하세요."
 
 #: dlls/winmm/winmm.rc:119
 msgid ""
@@ -11560,7 +11558,7 @@ msgid ""
 "the Drivers option to install the wave device."
 msgstr ""
 "현재 형식으로 파일을 기록할 수 있는 웨이브 장치가 설치되지 않았습니다. [드라"
-"이버] 옵션을 사용하여 웨이브 장치를 설치하십시오."
+"이버] 옵션을 사용하여 웨이브 장치를 설치하세요."
 
 #: dlls/winmm/winmm.rc:121
 msgid ""
@@ -11582,7 +11580,7 @@ msgid ""
 "try again."
 msgstr ""
 "저정한 MIDI 포트는 이미 사용 중입니다. 사용할 수 있을 때까지 기다렸다가 다시 "
-"시도하십시오."
+"시도하세요."
 
 #: dlls/winmm/winmm.rc:131
 msgid ""
@@ -11590,7 +11588,7 @@ msgid ""
 "option from the Control Panel to install a MIDI device."
 msgstr ""
 "지정한 MIDI 장치는 시스템에 설치되어 있지 않습니다. 제어판에서 [드라이버] 옵"
-"션을 사용해서 MIDI 장치를 설치하십시오."
+"션을 사용해서 MIDI 장치를 설치하세요."
 
 #: dlls/winmm/winmm.rc:130
 msgid "An error occurred with the specified port."
@@ -11602,7 +11600,7 @@ msgid ""
 "these applications, and then try again."
 msgstr ""
 "모든 멀티미디어 타이머는 다른 프로그램에서 사용되고 있습니다. 이 중 하나를 종"
-"료한 다음 다시 시도하십시오."
+"료한 다음 다시 시도하세요."
 
 #: dlls/winmm/winmm.rc:132
 msgid "The system doesn't have a current MIDI port specified."
@@ -11614,7 +11612,7 @@ msgid ""
 "Control Panel to install a MIDI driver."
 msgstr ""
 "시스템에 MIDI 장치가 설치되어 있지 않습니다. 제어판에서 [드라이버] 옵션을 사"
-"용해서 MIDI 드라이버를 설치하십시오."
+"용해서 MIDI 드라이버를 설치하세요."
 
 #: dlls/winmm/winmm.rc:122
 msgid "There is no display window."
@@ -11630,7 +11628,7 @@ msgid ""
 "check your disk or network connection."
 msgstr ""
 "지정한 파일을 읽을 수 없습니다. 파일이 있는지 확인하거나, 디스크나 네트워크 "
-"연결을 확인하십시오."
+"연결을 확인하세요."
 
 #: dlls/winmm/winmm.rc:125
 msgid ""
@@ -11638,7 +11636,7 @@ msgid ""
 "are still connected to the network."
 msgstr ""
 "지정한 파일에 쓸 수 없습니다. 디스크 용량이 충분한 지 또는 네트워크 연결이 되"
-"었는지 확인하십시오."
+"었는지 확인하세요."
 
 #: dlls/winmm/winmm.rc:136
 msgid "Wine Sound Mapper"
@@ -11666,7 +11664,7 @@ msgstr "출력 파일 이름(&O):"
 
 #: dlls/winspool.drv/winspool.rc:31
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "출력 파일이 이미 존재합니다. 덮어 쓰려면 [확인]을 클릭하십시오."
+msgstr "출력 파일이 이미 존재합니다. 덮어 쓰려면 [확인]을 클릭하세요."
 
 #: dlls/winspool.drv/winspool.rc:32
 msgid "Unable to create the output file."
@@ -11686,43 +11684,43 @@ msgstr "프로토콜 오류"
 
 #: dlls/wldap32/wldap32.rc:35
 msgid "Time Limit Exceeded"
-msgstr "시간 제한 도달"
+msgstr "시간 제한 초과"
 
 #: dlls/wldap32/wldap32.rc:36
 msgid "Size Limit Exceeded"
-msgstr "크기 제한 도달"
+msgstr "크기 제한 초과"
 
 #: dlls/wldap32/wldap32.rc:37
 msgid "Compare False"
-msgstr "잘못된 비교"
+msgstr "비교 - 거짓"
 
 #: dlls/wldap32/wldap32.rc:38
 msgid "Compare True"
-msgstr "잘된 비교"
+msgstr "비교 - 참"
 
 #: dlls/wldap32/wldap32.rc:39
 msgid "Authentication Method Not Supported"
-msgstr "인증 방법을 지원하지 않습니다"
+msgstr "지원되지 않는 인증 방법입니다"
 
 #: dlls/wldap32/wldap32.rc:40
 msgid "Strong Authentication Required"
-msgstr "강력한 인증이 필요합니다"
+msgstr "높은 수준의 인증이 요구됩니다"
 
 #: dlls/wldap32/wldap32.rc:41
 msgid "Referral (v2)"
-msgstr "추천 (v2)"
+msgstr "조회 (v2)"
 
 #: dlls/wldap32/wldap32.rc:42
 msgid "Referral"
-msgstr "추천"
+msgstr "조회"
 
 #: dlls/wldap32/wldap32.rc:43
 msgid "Administration Limit Exceeded"
-msgstr "관리 제한을 넘었습니다"
+msgstr "관리 제한이 초과되었습니다"
 
 #: dlls/wldap32/wldap32.rc:44
 msgid "Unavailable Critical Extension"
-msgstr "가능하지 않은 치명적 확장"
+msgstr "중요한 확장을 사용할 수 없습니다"
 
 #: dlls/wldap32/wldap32.rc:45
 msgid "Confidentiality Required"
@@ -11734,59 +11732,59 @@ msgstr "SASL 바인딩 진행 중"
 
 #: dlls/wldap32/wldap32.rc:48
 msgid "No Such Attribute"
-msgstr "어떤 속성도 없습니다"
+msgstr "그런 특성이 없습니다"
 
 #: dlls/wldap32/wldap32.rc:49
 msgid "Undefined Type"
-msgstr "정의되지 않은 타입"
+msgstr "정의되지 않은 유형입니다"
 
 #: dlls/wldap32/wldap32.rc:50
 msgid "Inappropriate Matching"
-msgstr "어울리지 않습니다"
+msgstr "부적합한 일치입니다"
 
 #: dlls/wldap32/wldap32.rc:51
 msgid "Constraint Violation"
-msgstr "강제 위반"
+msgstr "제약 조건 위반"
 
 #: dlls/wldap32/wldap32.rc:52
 msgid "Attribute Or Value Exists"
-msgstr "속성이나 값이 존재합니다"
+msgstr "특성 또는 값이 있습니다"
 
 #: dlls/wldap32/wldap32.rc:53
 msgid "Invalid Syntax"
-msgstr "잘못된 문법"
+msgstr "잘못된 구문"
 
 #: dlls/wldap32/wldap32.rc:64
 msgid "No Such Object"
-msgstr "어떤 개체도 없음"
+msgstr "그런 개체가 없습니다"
 
 #: dlls/wldap32/wldap32.rc:65
 msgid "Alias Problem"
-msgstr "Alias 문제"
+msgstr "별칭 문제"
 
 #: dlls/wldap32/wldap32.rc:66
 msgid "Invalid DN Syntax"
-msgstr "잘못된 DN 문법"
+msgstr "잘못된 DN 구문입니다"
 
 #: dlls/wldap32/wldap32.rc:67
 msgid "Is Leaf"
-msgstr "Is Leaf"
+msgstr "잎 노드임"
 
 #: dlls/wldap32/wldap32.rc:68
 msgid "Alias Dereference Problem"
-msgstr "Alias 역참조 문제"
+msgstr "별칭 참조 취소에 문제가 있습니다"
 
 #: dlls/wldap32/wldap32.rc:80
 msgid "Inappropriate Authentication"
-msgstr "부적절한 인증"
+msgstr "부적합한 인증입니다"
 
 #: dlls/wldap32/wldap32.rc:81
 msgid "Invalid Credentials"
-msgstr "잘못된 증명서"
+msgstr "자격 증명이 올바르지 않습니다"
 
 #: dlls/wldap32/wldap32.rc:82
 msgid "Insufficient Rights"
-msgstr "충분하지 않은 권리"
+msgstr "권한이 부족합니다"
 
 #: dlls/wldap32/wldap32.rc:83
 msgid "Busy"
@@ -11794,19 +11792,19 @@ msgstr "바쁨"
 
 #: dlls/wldap32/wldap32.rc:84
 msgid "Unavailable"
-msgstr "불가능"
+msgstr "사용할 수 없음"
 
 #: dlls/wldap32/wldap32.rc:85
 msgid "Unwilling To Perform"
-msgstr "실행하는 것이 마음에 내키지 않습니다"
+msgstr "수행하지 않으려고 합니다"
 
 #: dlls/wldap32/wldap32.rc:86
 msgid "Loop Detected"
-msgstr "루프가 발견되었습니다"
+msgstr "루프를 감지했습니다"
 
 #: dlls/wldap32/wldap32.rc:92
 msgid "Sort Control Missing"
-msgstr "정렬 제어가 빠졌습니다"
+msgstr "정렬 컨트롤 손실"
 
 #: dlls/wldap32/wldap32.rc:93
 msgid "Index range error"
@@ -11814,7 +11812,7 @@ msgstr "인덱스 범위 오류"
 
 #: dlls/wldap32/wldap32.rc:96
 msgid "Naming Violation"
-msgstr "명명 위반"
+msgstr "이름 짓기 규칙 위반"
 
 #: dlls/wldap32/wldap32.rc:97
 msgid "Object Class Violation"
@@ -11822,11 +11820,11 @@ msgstr "개체 클래스 위반"
 
 #: dlls/wldap32/wldap32.rc:98
 msgid "Not allowed on Non-leaf"
-msgstr "론-리프를 따를 수 없습니다"
+msgstr "잎 노드 이외에는 허용되지 않습니다"
 
 #: dlls/wldap32/wldap32.rc:99
 msgid "Not allowed on RDN"
-msgstr "RDN은 따를수 없습니다"
+msgstr "RDN에서 허용되지 않습니다"
 
 #: dlls/wldap32/wldap32.rc:100
 msgid "Already Exists"
@@ -11834,7 +11832,7 @@ msgstr "이미 존재합니다"
 
 #: dlls/wldap32/wldap32.rc:101
 msgid "No Object Class Mods"
-msgstr "어떤 개체 클래스 모드도 없숩니다"
+msgstr "개체 클래스 모드가 없습니다"
 
 #: dlls/wldap32/wldap32.rc:102
 msgid "Results Too Large"
@@ -11842,11 +11840,11 @@ msgstr "결과가 너무 큽니다"
 
 #: dlls/wldap32/wldap32.rc:103
 msgid "Affects Multiple DSAs"
-msgstr "다중 DSA를 적용합니다"
+msgstr "여러 DSA에 영향을 미칩니다"
 
 #: dlls/wldap32/wldap32.rc:113
 msgid "Server Down"
-msgstr "서버 다운"
+msgstr "서버 작동 안함"
 
 #: dlls/wldap32/wldap32.rc:114
 msgid "Local Error"
@@ -11874,15 +11872,15 @@ msgstr "필터 오류"
 
 #: dlls/wldap32/wldap32.rc:120
 msgid "User Canceled"
-msgstr "사용자가 취소함"
+msgstr "사용자가 취소했습니다"
 
 #: dlls/wldap32/wldap32.rc:121
 msgid "Parameter Error"
-msgstr "매개변수 오류"
+msgstr "매개 변수 오류"
 
 #: dlls/wldap32/wldap32.rc:122
 msgid "No Memory"
-msgstr "메모리 없음"
+msgstr "메모리 부족"
 
 #: dlls/wldap32/wldap32.rc:123
 msgid "Can't connect to the LDAP server"
@@ -11890,27 +11888,27 @@ msgstr "LDAP 서버에 연결할 수 없습니다"
 
 #: dlls/wldap32/wldap32.rc:124
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr "LDAP 프로토콜의 이 버전은 그 작업을 지원하지 않습니다"
+msgstr "작업이 현재 버전의 LDAP 프로토콜에서 지원되지 않습니다"
 
 #: dlls/wldap32/wldap32.rc:125
 msgid "Specified control was not found in message"
-msgstr "지정한 제어는 메시지에서 발견할 수 없습니다"
+msgstr "지정한 컨트롤이 메시지에 없습니다"
 
 #: dlls/wldap32/wldap32.rc:126
 msgid "No result present in message"
-msgstr "메시지에 결과가 없습니다"
+msgstr "결과가 메시지에 없습니다"
 
 #: dlls/wldap32/wldap32.rc:127
 msgid "More results returned"
-msgstr "더 많은 결과가 돌아왔습니다"
+msgstr "추가 결과를 반환했습니다"
 
 #: dlls/wldap32/wldap32.rc:128
 msgid "Loop while handling referrals"
-msgstr "리퍼럴을 다루는 동안의 루프"
+msgstr "조회를 처리하는 동안의 루프"
 
 #: dlls/wldap32/wldap32.rc:129
 msgid "Referral hop limit exceeded"
-msgstr "리퍼럴 홉 제한에 도달했습니다"
+msgstr "조회 홉 한계를 초과했습니다"
 
 #: programs/attrib/attrib.rc:30 programs/cmd/cmd.rc:373
 msgid ""
@@ -12321,7 +12319,7 @@ msgstr ""
 "Wine 아래의 Win32 환경 변수에는 기반 운영체제의 환경 변수도 들어 있기\n"
 "때문에 일반적으로 네이티브 Win32 구현보다 더 많은 값이 들어 있습니다.\n"
 "cmd에서 운영체제 환경 변수에 영향을 미치는 것이 가능하지 않다는 것에\n"
-"주목하십시오.\n"
+"주목하세요.\n"
 
 #: programs/cmd/cmd.rc:234
 msgid ""
@@ -12657,11 +12655,11 @@ msgstr "N"
 
 #: programs/cmd/cmd.rc:368
 msgid "File association missing for extension %1\n"
-msgstr "이 파일확장자 %1에 연결된 프로그램이 없습니다\n"
+msgstr "확장자 %1에 대한 파일 연결을 찾을 수 없습니다\n"
 
 #: programs/cmd/cmd.rc:369
 msgid "No open command associated with file type '%1'\n"
-msgstr "이 파일 형식 '%1'과 연결된 어떠한 명령도 없습니다'\n"
+msgstr "'%1' 파일 형식과 연결된 열기 명령이 없습니다\n"
 
 #: programs/cmd/cmd.rc:370
 msgid "Overwrite %1?"
@@ -12673,11 +12671,11 @@ msgstr "더..."
 
 #: programs/cmd/cmd.rc:372
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr "배치 작업의 줄은 아마도 불완전한 것 같습니다. 사용법:\n"
+msgstr "일괄 처리 과정에서 줄이 잘릴 수 있습니다. 사용법:\n"
 
 #: programs/cmd/cmd.rc:374
 msgid "Argument missing\n"
-msgstr "인수가 없습니다\n"
+msgstr "인수 없음\n"
 
 #: programs/cmd/cmd.rc:375
 msgid "Syntax error\n"
@@ -12685,7 +12683,7 @@ msgstr "문법 오류\n"
 
 #: programs/cmd/cmd.rc:377
 msgid "No help available for %1\n"
-msgstr "%1을(를) 위한 도움말을 찾을 수 없습니다\n"
+msgstr "%1에 대한 도움말이 없습니다\n"
 
 #: programs/cmd/cmd.rc:378
 msgid "Target to GOTO not found\n"
@@ -12738,7 +12736,7 @@ msgstr "Verify: %1\n"
 
 #: programs/cmd/cmd.rc:390
 msgid "Verify must be ON or OFF\n"
-msgstr "Verify는 ON 또는 OFF 여야 합니다\n"
+msgstr "Verify는 ON 또는 OFF이어야 합니다\n"
 
 #: programs/cmd/cmd.rc:391
 msgid "Parameter error\n"
@@ -12754,7 +12752,7 @@ msgstr ""
 
 #: programs/cmd/cmd.rc:393
 msgid "Volume label (11 characters, <Enter> for none)?"
-msgstr "볼륨 레이블 (11 문자, <ENTER>키는 없음과 같음)?"
+msgstr "볼륨 레이블을 입력하세요(11문자까지 입력 가능, <Enter>: 입력 안 함)?"
 
 #: programs/cmd/cmd.rc:394
 msgid "PATH not found\n"
@@ -12762,7 +12760,7 @@ msgstr "PATH를 찾을 수 없습니다\n"
 
 #: programs/cmd/cmd.rc:395
 msgid "Press any key to continue... "
-msgstr "계속하려면 아무 키나 누르십시오... "
+msgstr "계속하려면 아무 키나 누르세요... "
 
 #: programs/cmd/cmd.rc:396
 msgid "Wine Command Prompt"
@@ -12778,7 +12776,7 @@ msgstr "더? "
 
 #: programs/cmd/cmd.rc:399
 msgid "The input line is too long.\n"
-msgstr "입력 라인이 너무 깁니다.\n"
+msgstr "입력 줄이 너무 깁니다.\n"
 
 #: programs/cmd/cmd.rc:400
 msgid "Volume in drive %1!c! is %2\n"
@@ -12823,8 +12821,8 @@ msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
-"잘못된 형식의 숫자 - 십진수(12)나,\n"
-"16진수(0x34)나 팔진수(056)중의 하나이어야 합니다.\n"
+"잘못된 형식의 숫자 - 10진수(12)나,\n"
+"16진수(0x34)나 8진수(056)중의 하나이어야 합니다.\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -13040,7 +13038,7 @@ msgstr "사용법: hostname\n"
 
 #: programs/hostname/hostname.rc:31
 msgid "Error: Invalid option '%c'.\n"
-msgstr "오류: 올바르지 않은 옵션 '%c'.\n"
+msgstr "오류: 잘못된 옵션 '%c'.\n"
 
 #: programs/hostname/hostname.rc:32
 msgid "Error: Could not get hostname: %u.\n"
@@ -13059,7 +13057,7 @@ msgstr "사용법: ipconfig [ /? | /all ]\n"
 
 #: programs/ipconfig/ipconfig.rc:31
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr "오류:  없거나 올바르지 않은 명령어 라인 매개변수가 지정됨\n"
+msgstr "오류:  없거나 잘못된 명령어 라인 매개변수가 지정됨\n"
 
 #: programs/ipconfig/ipconfig.rc:32
 msgid "%1 adapter %2\n"
@@ -13602,7 +13600,7 @@ msgstr ""
 "파일이 %2 인코딩으로 저장하면 손실되는 유니코드 문자를 포합하고\n"
 "있습니다.\n"
 "손실을 피하려면 [취소]를 클릭한 다음, 인코딩 드롭다운 목록에서\n"
-"유니코드 옵션 중 하나를 선택하십시오.\n"
+"유니코드 옵션 중 하나를 선택하세요.\n"
 "계속하시겠습니까?"
 
 #: programs/oleview/oleview.rc:32
@@ -13651,7 +13649,7 @@ msgstr "인스턴스 만들기(&I)"
 
 #: programs/oleview/oleview.rc:53
 msgid "Create Instance &On..."
-msgstr "인스턴트 온 만들기(&O)..."
+msgstr "인스턴트 만들기(&O)..."
 
 #: programs/oleview/oleview.rc:54
 msgid "&Release Instance"
@@ -13671,13 +13669,13 @@ msgstr "전문가 모드(&E)"
 
 #: programs/oleview/oleview.rc:65
 msgid "&Hidden component categories"
-msgstr "구성 요소 분류 숨기기(&H)"
+msgstr "숨겨진 구성 요소 범주(&H)"
 
 #: programs/oleview/oleview.rc:67 programs/oleview/oleview.rc:89
 #: programs/winefile/winefile.rc:65 programs/wordpad/wordpad.rc:71
 #: programs/wordpad/wordpad.rc:272
 msgid "&Toolbar"
-msgstr "도구바(&T)"
+msgstr "도구 모음(&T)"
 
 #: programs/oleview/oleview.rc:68 programs/oleview/oleview.rc:90
 #: programs/winefile/winefile.rc:67 programs/wordpad/wordpad.rc:74
@@ -13692,7 +13690,7 @@ msgstr "새로 고침(&R)\tF5"
 
 #: programs/oleview/oleview.rc:74
 msgid "&About OleView"
-msgstr "OleView에 관하여(&A)"
+msgstr "OleView 정보(&A)"
 
 #: programs/oleview/oleview.rc:82
 msgid "&Save as..."
@@ -13704,39 +13702,39 @@ msgstr "타입 종류에 따라 구분(&G)"
 
 #: programs/oleview/oleview.rc:156
 msgid "Connect to another machine"
-msgstr "다른 머신(machine)에 접속"
+msgstr "다른 머신에 접속"
 
 #: programs/oleview/oleview.rc:159
 msgid "&Machine name:"
-msgstr "머신(&Machine) 이름:"
+msgstr "머신 이름(&M):"
 
 #: programs/oleview/oleview.rc:167
 msgid "System Configuration"
-msgstr "시스템 설정"
+msgstr "시스템 구성"
 
 #: programs/oleview/oleview.rc:170
 msgid "System Settings"
-msgstr "시스템 셋팅"
+msgstr "시스템 설정"
 
 #: programs/oleview/oleview.rc:171
 msgid "&Enable Distributed COM"
-msgstr "DCOM 허용(&E)"
+msgstr "DCOM 사용(&E)"
 
 #: programs/oleview/oleview.rc:172
 msgid "Enable &Remote Connections (Win95 only)"
-msgstr "원격 연결 허용(&R) (Win95만 해당)"
+msgstr "원격 연결 사용(Win95 전용)(&R)"
 
 #: programs/oleview/oleview.rc:173
 msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
-"이 셋팅은 오직 레지스트리 값만 바꿉니다.\n"
-"WIne의 성능에는 아무 영향을 안 미칩니다."
+"이 셋팅은 레지스트리 값만 바꿉니다.\n"
+"Wine의 성능에는 영향을 미치지 않습니다."
 
 #: programs/oleview/oleview.rc:180
 msgid "Default Interface Viewer"
-msgstr "기본 인터페이스 보기"
+msgstr "기본 인터페이스 뷰어"
 
 #: programs/oleview/oleview.rc:183
 msgid "Interface"
@@ -13792,7 +13790,7 @@ msgstr "TypeLib  파일 열고 내용 보기"
 
 #: programs/oleview/oleview.rc:107
 msgid "Change machine wide Distributed COM settings"
-msgstr "머신 전체의 DCOM설정 바꾸기"
+msgstr "머신 전체의 DCOM 설정 바꾸기"
 
 #: programs/oleview/oleview.rc:108
 msgid "Run the Wine registry editor"
@@ -13945,7 +13943,7 @@ msgstr "타입정보를 타입에 따라 분류"
 
 #: programs/progman/progman.rc:33
 msgid "&New..."
-msgstr "새 작업(&N)..."
+msgstr "새로 만들기(&N)..."
 
 #: programs/progman/progman.rc:34
 msgid "O&pen\tEnter"
@@ -13969,7 +13967,7 @@ msgstr "실행(&E)..."
 
 #: programs/progman/progman.rc:42
 msgid "E&xit Windows"
-msgstr "창 나가기(&X)"
+msgstr "끝내기(&X)"
 
 #: programs/progman/progman.rc:44 programs/taskmgr/taskmgr.rc:41
 #: programs/winefile/winefile.rc:62 programs/winhlp32/winhlp32.rc:47
@@ -13978,15 +13976,15 @@ msgstr "옵션(&O)"
 
 #: programs/progman/progman.rc:45
 msgid "&Arrange automatically"
-msgstr "자동 정렬(&A)"
+msgstr "자동으로 정렬(&A)"
 
 #: programs/progman/progman.rc:46
 msgid "&Minimize on run"
-msgstr "실행시 최소화(&M)"
+msgstr "실행 중 최소화(&M)"
 
 #: programs/progman/progman.rc:47 programs/winefile/winefile.rc:70
 msgid "&Save settings on exit"
-msgstr "끝내면서 설정 저장(&S)"
+msgstr "끝낼 때 설정 내용 저장(&S)"
 
 #: programs/progman/progman.rc:49 programs/taskmgr/taskmgr.rc:78
 #: programs/taskmgr/taskmgr.rc:255
@@ -13995,11 +13993,11 @@ msgstr "창(&W)"
 
 #: programs/progman/progman.rc:50
 msgid "&Overlapped\tShift+F5"
-msgstr "겹치기(&O)\tShift+F5"
+msgstr "겹쳐서 배열(&O)\tShift+F5"
 
 #: programs/progman/progman.rc:51
 msgid "&Side by side\tShift+F4"
-msgstr "나누기(&S)\tShift+F4"
+msgstr "나란히 배열(&S)\tShift+F4"
 
 #: programs/progman/progman.rc:52
 msgid "&Arrange Icons"
@@ -14031,7 +14029,7 @@ msgstr "대상 그룹:"
 
 #: programs/progman/progman.rc:122 programs/progman/progman.rc:140
 msgid "&To group:"
-msgstr "목적 그룹(&T):"
+msgstr "대상 그룹(&T):"
 
 #: programs/progman/progman.rc:134
 msgid "Copy Program"
@@ -14071,11 +14069,11 @@ msgstr "실행시 최소화(&M)"
 
 #: programs/progman/progman.rc:183
 msgid "Change &icon..."
-msgstr "아이콘 바꾸기(&I)..."
+msgstr "아이콘 변경(&I)..."
 
 #: programs/progman/progman.rc:192
 msgid "Change Icon"
-msgstr "아이콘 바꾸기"
+msgstr "아이콘 변경"
 
 #: programs/progman/progman.rc:194
 msgid "&Filename:"
@@ -14131,11 +14129,11 @@ msgstr ""
 
 #: programs/progman/progman.rc:77
 msgid "Help not available."
-msgstr "도움말은 가능하지않습니다."
+msgstr "도움말을 사용할 수 없습니다."
 
 #: programs/progman/progman.rc:78
 msgid "Unknown feature in %s"
-msgstr "%s의 알 수 없는 특징"
+msgstr "%s에서 알 수 없는 기능"
 
 #: programs/progman/progman.rc:79
 msgid "File `%s' exists. Not overwritten."
@@ -14143,7 +14141,7 @@ msgstr "파일 '%s'이(가) 존재합니다. 덮어 쓸 수 없습니다."
 
 #: programs/progman/progman.rc:80
 msgid "Save group as `%s' to prevent overwriting original files."
-msgstr "원본 파일을 덮어쓰는 것을 패해서 '%s'로 저장합니다."
+msgstr "원본 파일을 덮어쓰지 않도록 그룹을 '%s'로 저장합니다."
 
 #: programs/progman/progman.rc:84
 msgid "Libraries (*.dll)"
@@ -14203,7 +14201,7 @@ msgstr "reg: 키 이름이 잘못되었습니다\n"
 
 #: programs/reg/reg.rc:41
 msgid "reg: Invalid command line parameters\n"
-msgstr "reg: 명령줄 매개변수가 올바르지 않습니다\n"
+msgstr "reg: 명령줄 매개변수가 잘못되었습니다\n"
 
 #: programs/reg/reg.rc:42
 msgid "reg: Unable to access remote machine\n"
@@ -14279,19 +14277,19 @@ msgstr "검색 완료. 일치하는 항목 수: %1!d!\n"
 
 #: programs/reg/reg.rc:61
 msgid "reg: Invalid syntax. "
-msgstr "reg: 올바르지 않은 구문. "
+msgstr "reg: 잘못된 구문. "
 
 #: programs/reg/reg.rc:62
 msgid "reg: Invalid option [%1]. "
-msgstr "reg: 올바르지 않은 옵션 [%1]. "
+msgstr "reg: 잘못된 옵션 [%1]. "
 
 #: programs/reg/reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
-msgstr "도움말을 보려면 \"REG /?\"를 입력하십시오.\n"
+msgstr "도움말을 보려면 \"REG /?\"를 입력하세요.\n"
 
 #: programs/reg/reg.rc:64
 msgid "Type \"REG %1 /?\" for help.\n"
-msgstr "도움말을 보려면 \"REG %1 /?\"를 입력하십시오.\n"
+msgstr "도움말을 보려면 \"REG %1 /?\"를 입력하세요.\n"
 
 #: programs/reg/reg.rc:65 programs/regedit/regedit.rc:240
 msgid "(value not set)"
@@ -14319,7 +14317,7 @@ msgstr "REG EXPORT key_name 파일.reg [/y]\n"
 
 #: programs/reg/reg.rc:71
 msgid "reg: Invalid system key [%1]\n"
-msgstr "reg: 올바르지 않은 시스템 키 [%1]\n"
+msgstr "reg: 잘못된 시스템 키 [%1]\n"
 
 #: programs/reg/reg.rc:72
 msgid "The file '%1' already exists. Do you want to overwrite it?"
@@ -14661,7 +14659,7 @@ msgstr "regedit: [%1](은)는 유효하지 않거나 인식할 수 없는 스위
 
 #: programs/regedit/regedit.rc:410
 msgid "Type \"regedit /?\" for help.\n"
-msgstr "도움말을 보려면 \"regedit /?\"를 입력하십시오.\n"
+msgstr "도움말을 보려면 \"regedit /?\"를 입력하세요.\n"
 
 #: programs/regedit/regedit.rc:411
 msgid "regedit: No filename was specified.\n"
@@ -14689,14 +14687,13 @@ msgstr "regedit: 메모리 초과! (%1!S!, line %2!u!)\n"
 
 #: programs/regedit/regedit.rc:417
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "regedit: 올바르지 않은 16진수 값.\n"
+msgstr "regedit: 잘못된 16진수 값.\n"
 
 #: programs/regedit/regedit.rc:418
 msgid ""
 "regedit: Unable to convert hexadecimal data. An invalid value was "
 "encountered at '%1'.\n"
-msgstr ""
-"regedit: 16진수 값을 변환할 수 없습니다. '%1'(이)가 올바르지 않습니다.\n"
+msgstr "regedit: 16진수 값을 변환할 수 없습니다. '%1'(이)가 잘못되었습니다.\n"
 
 #: programs/regedit/regedit.rc:419
 msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
@@ -14704,7 +14701,7 @@ msgstr "regedit: [\\%1!c!](은)는 알 수 없는 제어 문자입니다\n"
 
 #: programs/regedit/regedit.rc:420
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
-msgstr "regedit: [0x%1!x!](은)는 지원하지 않는 레지스트리 데이터 유형입니다\n"
+msgstr "regedit: [0x%1!x!](은)는 지원되지 않는 레지스트리 데이터 유형입니다\n"
 
 #: programs/regedit/regedit.rc:421
 msgid "regedit: Unexpected end of line in '%1'.\n"
@@ -14726,7 +14723,7 @@ msgstr "regedit: 레지스트리 키 '%1'을(를) 열 수 없습니다.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
 msgstr ""
-"regedit: 지원하지 않는 레지스트리 데이터 유형 [0x%1!x!]이(가) '%2'에서 발생하"
+"regedit: 지원되지 않는 레지스트리 데이터 유형 [0x%1!x!]이(가) '%2'에서 발생하"
 "였습니다.\n"
 
 #: programs/regedit/regedit.rc:426
@@ -14735,7 +14732,7 @@ msgstr "regedit: 레지스트리 값 '%1'(이)가 이진 정보로 출력됩니�
 
 #: programs/regedit/regedit.rc:427
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "regedit: 올바르지 않은 시스템 키 [%1]\n"
+msgstr "regedit: 잘못된 시스템 키 [%1]\n"
 
 #: programs/regedit/regedit.rc:428
 msgid ""
@@ -15010,11 +15007,11 @@ msgstr "사용법: taskkill [/?] [/f] [/im 프로세스이름 | /pid 프로세�
 
 #: programs/taskkill/taskkill.rc:31
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "오류:  없거나 올바르지 않은 명령라인 옵션이 지정되었습니다.\n"
+msgstr "오류:  없거나 잘못된 명령라인 옵션이 지정되었습니다.\n"
 
 #: programs/taskkill/taskkill.rc:32
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "오류: 올바르지 않은 명령어 라인 옵션이 지정되었습니다.\n"
+msgstr "오류: 잘못된 명령어 라인 옵션이 지정되었습니다.\n"
 
 #: programs/taskkill/taskkill.rc:33
 msgid "Error: One of options /im or /pid must be specified.\n"
@@ -15065,7 +15062,7 @@ msgstr "오류: 프로세스 자가 종료는 허용되지 않습니다.\n"
 
 #: programs/taskmgr/taskmgr.rc:37 programs/taskmgr/taskmgr.rc:108
 msgid "&New Task (Run...)"
-msgstr "새 작업(&N)( 실행...)"
+msgstr "새 작업(실행...)(&N)"
 
 #: programs/taskmgr/taskmgr.rc:39
 msgid "E&xit Task Manager"
@@ -15073,11 +15070,11 @@ msgstr "작업 관리자 나가기(&X)"
 
 #: programs/taskmgr/taskmgr.rc:45
 msgid "&Minimize On Use"
-msgstr "최소화 상태로 사용(&M)"
+msgstr "작업 전환할 때 최소화(&M)"
 
 #: programs/taskmgr/taskmgr.rc:47
 msgid "&Hide When Minimized"
-msgstr "최소화 상태일 때 숨기기(&H)"
+msgstr "최소화할 때 숨기기(&H)"
 
 #: programs/taskmgr/taskmgr.rc:49 programs/taskmgr/taskmgr.rc:257
 msgid "&Show 16-bit tasks"
@@ -15085,7 +15082,7 @@ msgstr "16-bit 작업 보기(&S)"
 
 #: programs/taskmgr/taskmgr.rc:54
 msgid "&Refresh Now"
-msgstr "지금 새로 읽기(&R)"
+msgstr "지금 새로 고침(&R)"
 
 #: programs/taskmgr/taskmgr.rc:55
 msgid "&Update Speed"
@@ -15097,7 +15094,7 @@ msgstr "높음(&H)"
 
 #: programs/taskmgr/taskmgr.rc:58 programs/taskmgr/taskmgr.rc:162
 msgid "&Normal"
-msgstr "정상(&N)"
+msgstr "보통(&N)"
 
 #: programs/taskmgr/taskmgr.rc:60 programs/taskmgr/taskmgr.rc:166
 msgid "&Low"
@@ -15105,11 +15102,11 @@ msgstr "낮음(&L)"
 
 #: programs/taskmgr/taskmgr.rc:61
 msgid "&Paused"
-msgstr "정지(&P)"
+msgstr "일시 중지됨(&P)"
 
 #: programs/taskmgr/taskmgr.rc:68 programs/taskmgr/taskmgr.rc:256
 msgid "&Select Columns..."
-msgstr "세로 칸 선택(&S)..."
+msgstr "열 선택(&S)..."
 
 #: programs/taskmgr/taskmgr.rc:69 programs/taskmgr/taskmgr.rc:258
 msgid "&CPU History"
@@ -15117,25 +15114,25 @@ msgstr "&CPU 기록"
 
 #: programs/taskmgr/taskmgr.rc:71 programs/taskmgr/taskmgr.rc:259
 msgid "&One Graph, All CPUs"
-msgstr "모든 CPU에 하나의 그래프(&O)"
+msgstr "그래프 하나에 모든 CPU(&O)"
 
 #: programs/taskmgr/taskmgr.rc:73 programs/taskmgr/taskmgr.rc:260
 msgid "One Graph &Per CPU"
-msgstr "CPU 당 하나의 그래프(&P)"
+msgstr "CPU마다 그래프 하나(&P)"
 
 #: programs/taskmgr/taskmgr.rc:76 programs/taskmgr/taskmgr.rc:261
 msgid "&Show Kernel Times"
-msgstr "커널 시간 보기(&S)"
+msgstr "커널 시간 표시(&S)"
 
 #: programs/taskmgr/taskmgr.rc:80 programs/taskmgr/taskmgr.rc:96
 #: programs/taskmgr/taskmgr.rc:123 programs/winefile/winefile.rc:76
 msgid "Tile &Horizontally"
-msgstr "가로 바둑판식 정렬(&H)"
+msgstr "가로 바둑판식 배열(&H)"
 
 #: programs/taskmgr/taskmgr.rc:81 programs/taskmgr/taskmgr.rc:97
 #: programs/taskmgr/taskmgr.rc:124
 msgid "Tile &Vertically"
-msgstr "세로 바둑판 정렬(&V)"
+msgstr "세로 바둑판식 배열(&V)"
 
 #: programs/taskmgr/taskmgr.rc:82 programs/taskmgr/taskmgr.rc:98
 #: programs/taskmgr/taskmgr.rc:125
@@ -15145,16 +15142,16 @@ msgstr "최소화(&M)"
 #: programs/taskmgr/taskmgr.rc:84 programs/taskmgr/taskmgr.rc:100
 #: programs/taskmgr/taskmgr.rc:127
 msgid "&Cascade"
-msgstr "정렬(&C)"
+msgstr "계단식 배열(&C)"
 
 #: programs/taskmgr/taskmgr.rc:85 programs/taskmgr/taskmgr.rc:101
 #: programs/taskmgr/taskmgr.rc:121
 msgid "&Bring To Front"
-msgstr "앞으로 가져오기(&B)"
+msgstr "맨 앞으로 가져오기(&B)"
 
 #: programs/taskmgr/taskmgr.rc:90
 msgid "&About Task Manager"
-msgstr "작업관리자에 관하여(&A)"
+msgstr "작업 관리자 정보(&A)"
 
 #: programs/taskmgr/taskmgr.rc:120 programs/taskmgr/taskmgr.rc:352
 msgid "&Switch To"
@@ -15162,19 +15159,19 @@ msgstr "전환(&S)"
 
 #: programs/taskmgr/taskmgr.rc:129 programs/taskmgr/taskmgr.rc:353
 msgid "&End Task"
-msgstr "작업 끝(&E)"
+msgstr "작업 끝내기(&E)"
 
 #: programs/taskmgr/taskmgr.rc:130
 msgid "&Go To Process"
-msgstr "프로세스로 가기(&G)"
+msgstr "프로세스로 이동(&G)"
 
 #: programs/taskmgr/taskmgr.rc:149 programs/taskmgr/taskmgr.rc:363
 msgid "&End Process"
-msgstr "작업 끝(&E)"
+msgstr "프로세스 끝내기(&E)"
 
 #: programs/taskmgr/taskmgr.rc:150
 msgid "End Process &Tree"
-msgstr "작업 트리 끝(&T)"
+msgstr "프로세스 트리 끝내기(&T)"
 
 #: programs/taskmgr/taskmgr.rc:152 programs/winedbg/winedbg.rc:32
 msgid "&Debug"
@@ -15182,7 +15179,7 @@ msgstr "디버깅(&D)"
 
 #: programs/taskmgr/taskmgr.rc:154
 msgid "Set &Priority"
-msgstr "우선순위 설정(&P)"
+msgstr "우선 순위 설정(&P)"
 
 #: programs/taskmgr/taskmgr.rc:156
 msgid "&Realtime"
@@ -15190,11 +15187,11 @@ msgstr "실시간(&R)"
 
 #: programs/taskmgr/taskmgr.rc:160
 msgid "&Above Normal"
-msgstr "보통보다 위(&A)"
+msgstr "보통 이상(&A)"
 
 #: programs/taskmgr/taskmgr.rc:164
 msgid "&Below Normal"
-msgstr "보통보다 아래(&B)"
+msgstr "보통 이하(&B)"
 
 #: programs/taskmgr/taskmgr.rc:169
 msgid "Set &Affinity..."
@@ -15215,7 +15212,7 @@ msgstr "새 작업(&N)..."
 
 #: programs/taskmgr/taskmgr.rc:364
 msgid "&Show processes from all users"
-msgstr "모든 사용자의 작업 보기(&S)"
+msgstr "모든 사용자의 프로세스 보기(&S)"
 
 #: programs/taskmgr/taskmgr.rc:372
 msgid "CPU usage"
@@ -15227,7 +15224,7 @@ msgstr "메모리 사용량"
 
 #: programs/taskmgr/taskmgr.rc:374
 msgid "Totals"
-msgstr "합계"
+msgstr "전체"
 
 #: programs/taskmgr/taskmgr.rc:375
 msgid "Commit charge (K)"
@@ -15251,7 +15248,7 @@ msgstr "스레드"
 
 #: programs/taskmgr/taskmgr.rc:380 programs/taskmgr/taskmgr.rc:263
 msgid "Processes"
-msgstr "작업"
+msgstr "프로세스"
 
 #: programs/taskmgr/taskmgr.rc:387 programs/taskmgr/taskmgr.rc:396
 #: programs/taskmgr/taskmgr.rc:405
@@ -15264,7 +15261,7 @@ msgstr "제한"
 
 #: programs/taskmgr/taskmgr.rc:389
 msgid "Peak"
-msgstr "피크"
+msgstr "최고"
 
 #: programs/taskmgr/taskmgr.rc:398
 msgid "System Cache"
@@ -15272,11 +15269,11 @@ msgstr "시스템 캐쉬"
 
 #: programs/taskmgr/taskmgr.rc:406
 msgid "Paged"
-msgstr "페이지된"
+msgstr "페이지 됨"
 
 #: programs/taskmgr/taskmgr.rc:407
 msgid "Nonpaged"
-msgstr "페이지안된"
+msgstr "페이지 안 됨"
 
 #: programs/taskmgr/taskmgr.rc:414
 msgid "CPU usage history"
@@ -15292,13 +15289,13 @@ msgstr "디버깅 채널"
 
 #: programs/taskmgr/taskmgr.rc:439
 msgid "Processor Affinity"
-msgstr "프로세서 친화도"
+msgstr "프로세서 선호도"
 
 #: programs/taskmgr/taskmgr.rc:444
 msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
-msgstr "프로세서 친화도 설정은 어떤 CPU가 프로세스를 실행시킬 지를 제어한다."
+msgstr "프로세서 선호도 설정은 어떤 CPU가 프로세스를 실행시킬 지를 제어한다."
 
 #: programs/taskmgr/taskmgr.rc:446
 msgid "CPU 0"
@@ -15430,12 +15427,12 @@ msgstr "CPU 31"
 
 #: programs/taskmgr/taskmgr.rc:514
 msgid "Select Columns"
-msgstr "세로줄 선택"
+msgstr "열 선택"
 
 #: programs/taskmgr/taskmgr.rc:519
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
-msgstr "세로줄 선택은 작업 관리자의 작업 페이지에 나타날것입니다."
+msgstr "작업 관리자의 프로세스 페이지에 표시될 열을 선택하십시오."
 
 #: programs/taskmgr/taskmgr.rc:521
 msgid "&Image Name"
@@ -15459,15 +15456,15 @@ msgstr "메모리 사용(&M)"
 
 #: programs/taskmgr/taskmgr.rc:531
 msgid "Memory Usage &Delta"
-msgstr "메모리 사용 델타(&D)"
+msgstr "메모리 사용 변화량(&D)"
 
 #: programs/taskmgr/taskmgr.rc:533
 msgid "Pea&k Memory Usage"
-msgstr "피크 메모리 사용(&K)"
+msgstr "최대 메모리 사용(&K)"
 
 #: programs/taskmgr/taskmgr.rc:535
 msgid "Page &Faults"
-msgstr "페이지 실패(&F)"
+msgstr "페이지 폴트(&F)"
 
 #: programs/taskmgr/taskmgr.rc:537
 msgid "&USER Objects"
@@ -15479,7 +15476,7 @@ msgstr "I/O 읽기"
 
 #: programs/taskmgr/taskmgr.rc:541 programs/taskmgr/taskmgr.rc:282
 msgid "I/O Read Bytes"
-msgstr "I/O 읽은 바이트"
+msgstr "I/O 읽기 바이트"
 
 #: programs/taskmgr/taskmgr.rc:543
 msgid "&Session ID"
@@ -15491,7 +15488,7 @@ msgstr "사용자 이름(&N)"
 
 #: programs/taskmgr/taskmgr.rc:547
 msgid "Page F&aults Delta"
-msgstr "페이지 실패 델타(&A)"
+msgstr "페이지 폴트 변화량(&A)"
 
 #: programs/taskmgr/taskmgr.rc:549
 msgid "&Virtual Memory Size"
@@ -15499,23 +15496,23 @@ msgstr "가상 메모리 크기(&V)"
 
 #: programs/taskmgr/taskmgr.rc:551
 msgid "Pa&ged Pool"
-msgstr "페이지된 풀(&G)"
+msgstr "페이징 풀(&G)"
 
 #: programs/taskmgr/taskmgr.rc:553
 msgid "N&on-paged Pool"
-msgstr "페이지되지 않은 풀(&O)"
+msgstr "비페이징 풀(&O)"
 
 #: programs/taskmgr/taskmgr.rc:555
 msgid "Base P&riority"
-msgstr "기본 우선권(&R)"
+msgstr "기본 우선 순위(&R)"
 
 #: programs/taskmgr/taskmgr.rc:557
 msgid "&Handle Count"
-msgstr "핸들 카운트(&H)"
+msgstr "핸들 수(&H)"
 
 #: programs/taskmgr/taskmgr.rc:559
 msgid "&Thread Count"
-msgstr "스레드 카운트(&T)"
+msgstr "스레드 수(&T)"
 
 #: programs/taskmgr/taskmgr.rc:561 programs/taskmgr/taskmgr.rc:292
 msgid "GDI Objects"
@@ -15527,7 +15524,7 @@ msgstr "I/O 쓰기"
 
 #: programs/taskmgr/taskmgr.rc:565 programs/taskmgr/taskmgr.rc:294
 msgid "I/O Write Bytes"
-msgstr "I/O 쓴 바이트"
+msgstr "I/O 쓰기 바이트"
 
 #: programs/taskmgr/taskmgr.rc:567 programs/taskmgr/taskmgr.rc:295
 msgid "I/O Other"
@@ -15547,167 +15544,167 @@ msgstr "새 프로그램 실행"
 
 #: programs/taskmgr/taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
-msgstr "작업관리자는 최소화 되지 않는 한 다른 창 앞에 있게 됩니다"
+msgstr "작업 관리자는 최소화되지 않는 한 다른 모든 창 앞에 있게 됩니다"
 
 #: programs/taskmgr/taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
-msgstr "작엄관리자는 전환 작업이 완료될 때 최소화됩니다"
+msgstr "작업 관리자는 작업 전환이 실행될 때 최소화됩니다"
 
 #: programs/taskmgr/taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
-msgstr "작업관리자가 최소하 될 때 숨기기"
+msgstr "최소화되었을 때는 작업 관리자를 숨깁니다"
 
 #: programs/taskmgr/taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
-msgstr "업데이트 속도 설정과는 상관없이 작업관리자 강제로 업데이트"
+msgstr "업데이트 속도 설정에 관계없이 작업 관리자를 바로 업데이트합니다"
 
 #: programs/taskmgr/taskmgr.rc:193
 msgid "Displays tasks by using large icons"
-msgstr "큰 아이콘 사용해서 작업 관리자 보여줌"
+msgstr "큰 아이콘을 사용하여 작업을 표시합니다"
 
 #: programs/taskmgr/taskmgr.rc:194
 msgid "Displays tasks by using small icons"
-msgstr "작은 아이콘 사용해서 작업 관리자 보여줌"
+msgstr "작은 아이콘을 사용하여 작업을 표시합니다"
 
 #: programs/taskmgr/taskmgr.rc:195
 msgid "Displays information about each task"
-msgstr "각각의 작업 정보 보여줌"
+msgstr "각 작업에 대한 정보를 표시합니다"
 
 #: programs/taskmgr/taskmgr.rc:196
 msgid "Updates the display twice per second"
-msgstr "1초에 2번 디스플레이 새로 고침"
+msgstr "표시를 1초마다 두 번 업데이트합니다"
 
 #: programs/taskmgr/taskmgr.rc:197
 msgid "Updates the display every two seconds"
-msgstr "2초마다 디스플레이 새로 고침"
+msgstr "표시를 2초마다 업데이트합니다"
 
 #: programs/taskmgr/taskmgr.rc:198
 msgid "Updates the display every four seconds"
-msgstr "4초마다 디스플레이 새로 고침"
+msgstr "표시를 4초마다 업데이트합니다"
 
 #: programs/taskmgr/taskmgr.rc:203
 msgid "Does not automatically update"
-msgstr "자동 업데이트할 수 없습니다"
+msgstr "표시를 자동으로 업데이트하지 않습니다"
 
 #: programs/taskmgr/taskmgr.rc:205
 msgid "Tiles the windows horizontally on the desktop"
-msgstr "수평 바둑판식으로 창 배열"
+msgstr "창을 바탕 화면에 가로로 배열합니다"
 
 #: programs/taskmgr/taskmgr.rc:206
 msgid "Tiles the windows vertically on the desktop"
-msgstr "수직 바둑판식으로 창 배열"
+msgstr "바탕 화면에 창을 수직으로 배열합니다"
 
 #: programs/taskmgr/taskmgr.rc:207
 msgid "Minimizes the windows"
-msgstr "창 최소화"
+msgstr "창을 최소화합니다"
 
 #: programs/taskmgr/taskmgr.rc:208
 msgid "Maximizes the windows"
-msgstr "창 최대화"
+msgstr "창을 최대화합니다"
 
 #: programs/taskmgr/taskmgr.rc:209
 msgid "Cascades the windows diagonally on the desktop"
-msgstr "계단식으로 창 배열"
+msgstr "창을 바탕 화면에 대각선으로 계단식 배열합니다"
 
 #: programs/taskmgr/taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
-msgstr "포커스 전환 없이, 창을 앞으로 가져옵니다"
+msgstr "창을 앞으로 가져오지만 전환하지는 않습니다"
 
 #: programs/taskmgr/taskmgr.rc:211
 msgid "Displays Task Manager help topics"
-msgstr "작업 관리자 도움물 목차 보기"
+msgstr "작업 관리자 도움말 항목을 표시합니다"
 
 #: programs/taskmgr/taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
-msgstr "프로그램 정보,버전 그리고 저작권 보기"
+msgstr "프로그램 정보, 버전 번호, 저작권을 표시합니다"
 
 #: programs/taskmgr/taskmgr.rc:213
 msgid "Exits the Task Manager application"
-msgstr "작업 관리자 프로그램 나가기"
+msgstr "작업 관리자 응용 프로그램을 끝냅니다"
 
 #: programs/taskmgr/taskmgr.rc:215
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
-msgstr "NTVDM.EXE와 연관된 16비트 작업 보기"
+msgstr "NTVDM.EXE와 연관된 16비트 작업을 표시합니다"
 
 #: programs/taskmgr/taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
-msgstr "세로줄 선택은 작업페이지의 보여주게 될 것입니다"
+msgstr "프로세스 페이지에서 볼 수 있는 열을 선택합니다"
 
 #: programs/taskmgr/taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
-msgstr "성능 그래프의 커널 타입 보기"
+msgstr "커널 시간을 성능 그래프로 표시합니다"
 
 #: programs/taskmgr/taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
-msgstr "모든 CPU  사용을 하나의 기록 그래프로 보기"
+msgstr "단일 사용 현황 그래프를 보면 전체 CPU 사용을 알 수 있습니다"
 
 #: programs/taskmgr/taskmgr.rc:220
 msgid "Each CPU has its own history graph"
-msgstr "각각 CPU를  각자의 기록 그래프로 보기"
+msgstr "CPU마다 자체의 사용 현황 그래프를 가집니다"
 
 #: programs/taskmgr/taskmgr.rc:222
 msgid "Brings a task to the foreground, switch focus to that task"
-msgstr "작업을 앞으로 가져오고, 그 작업으로 포커스 이동"
+msgstr "작업을 앞으로 가져와서 포커스를 그 작업으로 전환합니다"
 
 #: programs/taskmgr/taskmgr.rc:227
 msgid "Tells the selected tasks to close"
-msgstr "선택한 작업을 닫으라고 말하기"
+msgstr "선택한 작업을 닫으라고 지시합니다"
 
 #: programs/taskmgr/taskmgr.rc:228
 msgid "Switches the focus to the process of the selected task"
-msgstr "선택된 태스크의 작업으로 포커스 이동"
+msgstr "선택한 작업의 프로세스로 포커스를 전환합니다"
 
 #: programs/taskmgr/taskmgr.rc:229
 msgid "Restores the Task Manager from its hidden state"
-msgstr "숨은 상태에서 작업관리자 복귀"
+msgstr "작업 관리자를 숨김 상태에서 복원합니다"
 
 #: programs/taskmgr/taskmgr.rc:230
 msgid "Removes the process from the system"
-msgstr "시스템에서 작업 제거"
+msgstr "시스템에서 프로세스를 제거합니다"
 
 #: programs/taskmgr/taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
-msgstr "작업과 시스템으로부터의 모든 자식 프로세스를 제거"
+msgstr "이 프로세스 및 모든 하위 항목을 시스템에서 제거합니다"
 
 #: programs/taskmgr/taskmgr.rc:233
 msgid "Attaches the debugger to this process"
-msgstr "프로세스에 디버거 부착"
+msgstr "이 프로세스에 디버거를 연결합니다"
 
 #: programs/taskmgr/taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
-msgstr "프로세스를 실행할 수 있는 포로세서를 제어합니다"
+msgstr "프로세스가 어떤 프로세서에서 실행될 것인지 제어합니다"
 
 #: programs/taskmgr/taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
-msgstr "작업을 실시간 순위 클래스로 설정"
+msgstr "프로세스를 실시간 우선 순위 클래스로 설정합니다"
 
 #: programs/taskmgr/taskmgr.rc:238
 msgid "Sets process to the HIGH priority class"
-msgstr "작업을 높은 순위 클래스로 설정"
+msgstr "프로세스를 높은 우선 순위 클래스로 설정합니다"
 
 #: programs/taskmgr/taskmgr.rc:240
 msgid "Sets process to the ABOVE NORMAL priority class"
-msgstr "작업을 보통보다 높은 순위 클래스로 설정"
+msgstr "프로세스를 보통 이상 우선 순위 클래스로 설정합니다"
 
 #: programs/taskmgr/taskmgr.rc:242
 msgid "Sets process to the NORMAL priority class"
-msgstr "작업을 보통 순위 클래스로 설정"
+msgstr "프로세스를 보통 우선 순위 클래스로 설정합니다"
 
 #: programs/taskmgr/taskmgr.rc:244
 msgid "Sets process to the BELOW NORMAL priority class"
-msgstr "작업을 보통보다 낮은 순위 클래스로 설정"
+msgstr "프로세스를 보통 이하 우선 순위 클래스로 설정합니다"
 
 #: programs/taskmgr/taskmgr.rc:245
 msgid "Sets process to the LOW priority class"
-msgstr "작업을 낮은 순위 클래스로 설정"
+msgstr "프로세스를 낮은 우선 순위 클래스로 설정합니다"
 
 #: programs/taskmgr/taskmgr.rc:247
 msgid "Controls Debug Channels"
-msgstr "디버깅 채널 제어"
+msgstr "디버깅 채널 제어합니다"
 
 #: programs/taskmgr/taskmgr.rc:264
 msgid "Performance"
-msgstr "퍼포먼스"
+msgstr "성능"
 
 #: programs/taskmgr/taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
@@ -15719,7 +15716,7 @@ msgstr "프로세스: %d"
 
 #: programs/taskmgr/taskmgr.rc:267
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "메모리 사용량: %1!u!킬로바이트 / %2!u!킬로바이트"
+msgstr "메모리 사용량: %1!u!kB / %2!u!kB"
 
 #: programs/taskmgr/taskmgr.rc:272
 msgid "Image Name"
@@ -15743,15 +15740,15 @@ msgstr "메모리 사용량"
 
 #: programs/taskmgr/taskmgr.rc:277
 msgid "Mem Delta"
-msgstr "메모리 델타"
+msgstr "메모리 변화량"
 
 #: programs/taskmgr/taskmgr.rc:278
 msgid "Peak Mem Usage"
-msgstr "피크 메모리 사용"
+msgstr "최고 메모리 사용률"
 
 #: programs/taskmgr/taskmgr.rc:279
 msgid "Page Faults"
-msgstr "페이지 실패"
+msgstr "페이지 폴트"
 
 #: programs/taskmgr/taskmgr.rc:280
 msgid "USER Objects"
@@ -15767,7 +15764,7 @@ msgstr "사용자 이름"
 
 #: programs/taskmgr/taskmgr.rc:285
 msgid "PF Delta"
-msgstr "PF 델타"
+msgstr "PF 변화량"
 
 #: programs/taskmgr/taskmgr.rc:286
 msgid "VM Size"
@@ -15775,7 +15772,7 @@ msgstr "VM 크기"
 
 #: programs/taskmgr/taskmgr.rc:287
 msgid "Paged Pool"
-msgstr "페이지된 풀"
+msgstr "페이징 풀"
 
 #: programs/taskmgr/taskmgr.rc:288
 msgid "NP Pool"
@@ -15795,13 +15792,13 @@ msgid ""
 "cause undesired results including system instability. Are you\n"
 "sure you want to change the priority class?"
 msgstr ""
-"경고: 이 프로세스의 우선 순위 등급을 바꾸면 시스템 불안정과\n"
-"같은 원하지 않는 결과가 발생할 수 있습니다.\n"
-"우선 순위 등급을 바꾸시겠습니까?"
+"경고: 이 프로세스의 우선 순위 클래스를 변경하면 시스템 불안정을\n"
+"포함하여 원하지 않는 결과가 발생할 수 있습니다.\n"
+"우선 순위 클래스를 변경하시겠습니까?"
 
 #: programs/taskmgr/taskmgr.rc:305
 msgid "Unable to Change Priority"
-msgstr "우선순위를 바꿀 수 없습니다"
+msgstr "우선 순위를 변경할 수 없습니다"
 
 #: programs/taskmgr/taskmgr.rc:310
 msgid ""
@@ -15811,23 +15808,23 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
-"경고: 프로세스를 종료하면 데이터 손실 및 시스템 불안정과\n"
-"같은 원하지 않는 결과가 발생할 수 있습니다.\n"
-"프로세스는 종료되기 전에 상태 또는 데이터를 저장할 기회를\n"
-"얻지 못합니다.\n"
+"경고: 프로세스를 종료하면 데이터 손실 및 시스템 불안정을\n"
+"포함하여 원하지 않는 결과가 발생할 수 있습니다.\n"
+"프로세스는 종료되기 전에 상태 또는 데이터를 저장할 기회가\n"
+"제공되지 않습니다.\n"
 "프로세스를 종료하시겠습니까?"
 
 #: programs/taskmgr/taskmgr.rc:311
 msgid "Unable to Terminate Process"
-msgstr "프로세스를 중단시킬 수 없습니다"
+msgstr "프로세스를 종료할 수 없습니다"
 
 #: programs/taskmgr/taskmgr.rc:313
 msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
 msgstr ""
-"경고: 이 프로세스를 디버깅하면 데이터가 손실될 수 있습니다.\n"
-"디버거를 시작하시겠습니까?"
+"경고: 이 프로세스를 디버깅하면 데이터를 손실될 수 있습니다.\n"
+"디버거를 연결하시겠습니까?"
 
 #: programs/taskmgr/taskmgr.rc:314
 msgid "Unable to Debug Process"
@@ -15835,23 +15832,23 @@ msgstr "프로세스를 디버깅할 수 없습니다"
 
 #: programs/taskmgr/taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
-msgstr "프로세스는 최소 하나 이상의 프로세서와 선호도를 가져야 합니다"
+msgstr "프로세스는 하나 이상의 프로세서와 선호도가 있어야 합니다"
 
 #: programs/taskmgr/taskmgr.rc:316
 msgid "Invalid Option"
-msgstr "올바르지 않은 옵션"
+msgstr "잘못된 옵션입니다"
 
 #: programs/taskmgr/taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
-msgstr "프로세스 선호도에 접근하거나 설정할 수 없습니다"
+msgstr "프로세프 선호도를 설정 또는 액세스할 수 없습니다"
 
 #: programs/taskmgr/taskmgr.rc:322
 msgid "System Idle Process"
-msgstr "시스템 유휴 작업"
+msgstr "시스템 유휴 시간 프로세스"
 
 #: programs/taskmgr/taskmgr.rc:323
 msgid "Not Responding"
-msgstr "반응 없음"
+msgstr "응답하지 않음"
 
 #: programs/taskmgr/taskmgr.rc:324
 msgid "Running"
@@ -15863,7 +15860,7 @@ msgstr "작업"
 
 #: programs/uninstaller/uninstaller.rc:29
 msgid "Wine Application Uninstaller"
-msgstr "Wine 프로그램 삭제기"
+msgstr "Wine 프로그램 제거 관리자"
 
 #: programs/uninstaller/uninstaller.rc:30
 msgid ""
@@ -15871,8 +15868,9 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
-"실행 파일이 누락되어 있어서, 제거 명령 '%s'을(를) 실행하지 못했습니다.\n"
-"레지스트리에서 해당 제거 정보 제거하시겠습니까?"
+"삭제 명령 '%s'을(를) 실행하지 못했습니다. 실행 파일이 누락되었을 수 있습니"
+"다.\n"
+"레지스트리에서 해당 항목을 제거하시겠습니까?"
 
 #: programs/uninstaller/uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
@@ -15885,7 +15883,7 @@ msgstr "uninstaller: '--remove' 옵션 뒤에는 프로그램 GUID가 있어야 
 
 #: programs/uninstaller/uninstaller.rc:33
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "uninstaller: 올바르지 않은 옵션 [%1]\n"
+msgstr "uninstaller: 잘못된 옵션 [%1]\n"
 
 #: programs/uninstaller/uninstaller.rc:35
 msgid ""
@@ -15896,7 +15894,7 @@ msgid ""
 msgstr ""
 "Wine Application Uninstaller\n"
 "\n"
-"현재 실행한 Wine에 설치된 프로그램을 제거합니다.\n"
+"현재 Wine 구성(prefix)에서 프로그램을 제거합니다.\n"
 "\n"
 
 #: programs/uninstaller/uninstaller.rc:43
@@ -15916,11 +15914,11 @@ msgstr ""
 "  uninstaller [옵션]\n"
 "\n"
 "옵션:\n"
-"  --help      지금 보고 있는 정보를 출력합니다.\n"
-"  --list      실행한 Wine에 설치된 모든 프로그램의 목록을 출력합니다.\n"
-"  --remove {GUID} 지정한 프로그램을 제거합니다. 프로그램의 GUID를 알아\n"
-"              내려면 '--list' 옵션을 사용하십시오.\n"
-"  [옵션 없음] 옵션없이 실행하면 uninstaller의 GUI 버전이 시작됩니다.\n"
+"  --help          지금 보고 있는 정보를 표시합니다.\n"
+"  --list          실행한 Wine에 설치된 모든 프로그램의 목록을 표시합니다.\n"
+"  --remove {GUID} 지정한 프로그램을 제거합니다. '--list' 옵션을\n"
+"                  사용하면 프로그램의 GUID를 알 수 있습니다.\n"
+"  [옵션 없음]     옵션없이 실행하면 uninstaller의 GUI 버전이 시작됩니다.\n"
 "\n"
 
 #: programs/view/view.rc:36
@@ -15929,7 +15927,7 @@ msgstr "이동(&P)"
 
 #: programs/view/view.rc:38
 msgid "&Scale to Window"
-msgstr "화면 가득 채우기(&S)"
+msgstr "창 크기에 맞춤(&S)"
 
 #: programs/view/view.rc:40
 msgid "&Left"
@@ -15941,7 +15939,7 @@ msgstr "오른쪽(&R)"
 
 #: programs/view/view.rc:49
 msgid "Regular Metafile Viewer"
-msgstr "정규 메타파일 보기"
+msgstr "일반 메타파일 뷰어"
 
 #: programs/view/view.rc:50
 msgid "Metafiles (*.wmf, *.emf)"
@@ -15949,11 +15947,11 @@ msgstr "메타파일 (*.wmf, *.emf)"
 
 #: programs/wineboot/wineboot.rc:31
 msgid "Waiting for Program"
-msgstr "프로그램 대기중"
+msgstr "프로그램 대기 중"
 
 #: programs/wineboot/wineboot.rc:35
 msgid "Terminate Process"
-msgstr "프로세스 끝내기"
+msgstr "프로세스 종료"
 
 #: programs/wineboot/wineboot.rc:36
 msgid ""
@@ -15969,7 +15967,7 @@ msgstr ""
 
 #: programs/wineboot/wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr "Wine 설정(%s)을 업데이트하고 있습니다. 잠시만 기다려주십시오..."
+msgstr "Wine 설정(%s)을 업데이트하고 있습니다. 잠시만 기다려주세요..."
 
 # 라이선스 문구는 번역하지 않습니다.
 #: programs/winecfg/winecfg.rc:140
@@ -16077,7 +16075,7 @@ msgstr "추가(&D)"
 
 #: programs/winecfg/winecfg.rc:196
 msgid "Existing &overrides:"
-msgstr "현재 재정의 DLL 목록(&O):"
+msgstr "현재 DLL 재정의 목록(&O):"
 
 #: programs/winecfg/winecfg.rc:198
 msgid "&Edit..."
@@ -16093,11 +16091,11 @@ msgstr "로드 순서"
 
 #: programs/winecfg/winecfg.rc:208
 msgid "&Builtin (Wine)"
-msgstr "내장(&B) (Wine)"
+msgstr "내장 (Wine &Builtin)"
 
 #: programs/winecfg/winecfg.rc:209
 msgid "&Native (Windows)"
-msgstr "네이티브(&N) (Windows)"
+msgstr "네이티브 (Windows &Native)"
 
 #: programs/winecfg/winecfg.rc:210
 msgid "Buil&tin then Native"
@@ -16132,7 +16130,7 @@ msgstr "경로(&P):"
 
 #: programs/winecfg/winecfg.rc:246 programs/winecfg/winecfg.rc:37
 msgid "Show Advan&ced"
-msgstr "추가 옵션(&C) 보이기"
+msgstr "고급 옵션 표시(&C)"
 
 #: programs/winecfg/winecfg.rc:247
 msgid "De&vice:"
@@ -16148,11 +16146,11 @@ msgstr "레이블(&L):"
 
 #: programs/winecfg/winecfg.rc:253
 msgid "S&erial:"
-msgstr "시리얼(&E):"
+msgstr "일련 번호(&E):"
 
 #: programs/winecfg/winecfg.rc:256
 msgid "&Show dot files"
-msgstr "숨김 파일(dot 파일) 보기(&S)"
+msgstr "숨김 파일(dot 파일) 표시(&S)"
 
 #: programs/winecfg/winecfg.rc:263
 msgid "Driver diagnostics"
@@ -16160,7 +16158,7 @@ msgstr "드라이버 진단"
 
 #: programs/winecfg/winecfg.rc:265
 msgid "Defaults"
-msgstr "기본"
+msgstr "기본값"
 
 #: programs/winecfg/winecfg.rc:266
 msgid "Output device:"
@@ -16184,7 +16182,7 @@ msgstr "소리 테스트(&T)"
 
 #: programs/winecfg/winecfg.rc:275 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
-msgstr "스피커 설정"
+msgstr "스피커 구성"
 
 #: programs/winecfg/winecfg.rc:278
 msgid "Speakers:"
@@ -16216,7 +16214,7 @@ msgstr "MIME 형식"
 
 #: programs/winecfg/winecfg.rc:303
 msgid "Manage file &associations"
-msgstr "Wine이 호스트 시스템의 파일 연결을 수정합니다(&A)"
+msgstr "Wine이 호스트 OS의 파일 연결을 수정합니다(&A)"
 
 #: programs/winecfg/winecfg.rc:306
 msgid "Folders"
@@ -16236,15 +16234,15 @@ msgstr "드라이브"
 
 #: programs/winecfg/winecfg.rc:35
 msgid "Select the Unix target directory, please."
-msgstr "유닉스 목적 폴더를 선택하십시오."
+msgstr "연결 대상 디렉터리를 선택하세요."
 
 #: programs/winecfg/winecfg.rc:36
 msgid "Hide Advan&ced"
-msgstr "추가 옵션 숨기기(&C)"
+msgstr "고급 옵션 숨기기(&C)"
 
 #: programs/winecfg/winecfg.rc:38
 msgid "(No Theme)"
-msgstr "(테마 선택하지 않음)"
+msgstr "(테마 사용 안함)"
 
 #: programs/winecfg/winecfg.rc:39
 msgid "Graphics"
@@ -16272,7 +16270,7 @@ msgstr "테마 파일 (*.msstyles; *.theme)"
 
 #: programs/winecfg/winecfg.rc:46
 msgid "Select a theme file"
-msgstr "테마 파일 선택"
+msgstr "테마 파일을 선택하세요"
 
 #: programs/winecfg/winecfg.rc:47
 msgid "Folder"
@@ -16280,7 +16278,7 @@ msgstr "폴더"
 
 #: programs/winecfg/winecfg.rc:48
 msgid "Links to"
-msgstr "연결 위치"
+msgstr "연결 대상"
 
 #: programs/winecfg/winecfg.rc:44
 msgid "Wine configuration for %s"
@@ -16368,7 +16366,7 @@ msgstr "실행 파일 선택"
 
 #: programs/winecfg/winecfg.rc:68
 msgid "Autodetect"
-msgstr "자동으로 찾기"
+msgstr "자동검색"
 
 #: programs/winecfg/winecfg.rc:69
 msgid "Local hard disk"
@@ -16421,7 +16419,7 @@ msgstr "문자"
 
 #: programs/winecfg/winecfg.rc:77
 msgid "Target folder"
-msgstr "목표 폴더"
+msgstr "대상 폴더"
 
 #: programs/winecfg/winecfg.rc:78
 msgid ""
@@ -16431,7 +16429,7 @@ msgid ""
 msgstr ""
 "드라이브 C가 없습니다. 좋은 구성이 아닙니다.\n"
 "\n"
-"드라이브 탭에서 [추가]를 클릭해서 만드는 것을 잊지 마십시오!\n"
+"드라이브 탭에서 [추가]를 클릭해서 만드는 것을 잊지 마세요!\n"
 
 #: programs/winecfg/winecfg.rc:98
 msgid "Controls Background"
@@ -16563,7 +16561,7 @@ msgid ""
 "The command is invalid.\n"
 msgstr ""
 "wineconsole: 프로그램 %s 시작 실패.\n"
-"이 명령은 올바르지 않습니다.\n"
+"이 명령은 잘못되었습니다.\n"
 
 #: programs/winedbg/winedbg.rc:50 programs/winedbg/winedbg.rc:38
 msgid "Program Error"
@@ -16585,11 +16583,11 @@ msgid ""
 msgstr ""
 "이것은 프로그램의 문제나 Wine의 결함으로 인해 발생할 수 있습니다. 프로그램 실"
 "행에 대한 팁을 얻으려면 <a href=\"https://appdb.winehq.org\">Application "
-"Database</a>를 살펴보십시오."
+"Database</a>를 살펴보세요."
 
 #: programs/winedbg/winedbg.rc:62
 msgid "Show &Details"
-msgstr "자세히(&D) 보이기"
+msgstr "자세히 보이기(^D)"
 
 #: programs/winedbg/winedbg.rc:67
 msgid "Program Error Details"
@@ -16625,7 +16623,7 @@ msgstr "저장 실패"
 
 #: programs/winedbg/winedbg.rc:45
 msgid "Loading detailed information, please wait..."
-msgstr "자세한 정보를 불러오는 중입니다, 잠시만 기다리십시오..."
+msgstr "자세한 정보를 불러오는 중입니다, 잠시만 기다리세요..."
 
 #: programs/winefile/winefile.rc:29
 msgid "&Open\tEnter"
@@ -16633,7 +16631,7 @@ msgstr "열기(&O)\tEnter"
 
 #: programs/winefile/winefile.rc:33
 msgid "Re&name..."
-msgstr "이름바꾸기(&N)..."
+msgstr "이름 바꾸기(&N)..."
 
 #: programs/winefile/winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
@@ -16661,31 +16659,31 @@ msgstr "이름(&N)"
 
 #: programs/winefile/winefile.rc:52
 msgid "&All File Details"
-msgstr "모든 파일 설명(&A)"
+msgstr "파일 세부 정보(&A)"
 
 #: programs/winefile/winefile.rc:54
 msgid "&Sort by Name"
-msgstr "이름으로 정렬(&S)"
+msgstr "이름 정렬(&S)"
 
 #: programs/winefile/winefile.rc:55
 msgid "Sort &by Type"
-msgstr "타입으로 정렬(&B)"
+msgstr "종류별 정렬(&B)"
 
 #: programs/winefile/winefile.rc:56
 msgid "Sort by Si&ze"
-msgstr "크기로 정렬(&Z)"
+msgstr "크기별 정렬(&Z)"
 
 #: programs/winefile/winefile.rc:57
 msgid "Sort by &Date"
-msgstr "날짜로 정렬(&D)"
+msgstr "날짜별 정렬(&D)"
 
 #: programs/winefile/winefile.rc:59
 msgid "Filter by&..."
-msgstr "로 걸려내기&..."
+msgstr "필터링 기준&..."
 
 #: programs/winefile/winefile.rc:66
 msgid "&Drive Bar"
-msgstr "드라이브 바(&D)"
+msgstr "드라이브 표시줄(&D)"
 
 #: programs/winefile/winefile.rc:68
 msgid "F&ull Screen\tCtrl+Shift+S"
@@ -16697,11 +16695,11 @@ msgstr "새 창(&W)"
 
 #: programs/winefile/winefile.rc:75
 msgid "Cascading\tCtrl+F5"
-msgstr "정렬\tCtrl+F5"
+msgstr "계단식\tCtrl+F5"
 
 #: programs/winefile/winefile.rc:77
 msgid "Tile &Vertically\tCtrl+F4"
-msgstr "세로 바둑판식 정렬(&V)\tCtrl+F4"
+msgstr "세로 바둑판식 배열(&V)\tCtrl+F4"
 
 #: programs/winefile/winefile.rc:84
 msgid "&About Wine File Manager"
@@ -16713,11 +16711,11 @@ msgstr "대상 선택"
 
 #: programs/winefile/winefile.rc:134
 msgid "By File Type"
-msgstr "파일 타입으로"
+msgstr "파일 형식별 필터링 기준"
 
 #: programs/winefile/winefile.rc:139
 msgid "File type"
-msgstr "파일 타입"
+msgstr "파일 형식"
 
 #: programs/winefile/winefile.rc:140
 msgid "&Directories"
@@ -16729,15 +16727,15 @@ msgstr "프로그램(&P)"
 
 #: programs/winefile/winefile.rc:144
 msgid "Docu&ments"
-msgstr "문서파일(&M)"
+msgstr "문서(&M)"
 
 #: programs/winefile/winefile.rc:146
 msgid "&Other files"
-msgstr "다른 파일(&O)"
+msgstr "기타 파일(&O)"
 
 #: programs/winefile/winefile.rc:148
 msgid "Show Hidden/&System Files"
-msgstr "숨김/시스템 파일 보이기(&S)"
+msgstr "숨김/시스템 파일 표시(&S)"
 
 #: programs/winefile/winefile.rc:159
 msgid "&File Name:"
@@ -16745,11 +16743,11 @@ msgstr "파일 이름(&F):"
 
 #: programs/winefile/winefile.rc:161
 msgid "Full &Path:"
-msgstr "완전한 경로(&P):"
+msgstr "전체 경로(&P):"
 
 #: programs/winefile/winefile.rc:163
 msgid "Last Change:"
-msgstr "마지막 변화:"
+msgstr "마지막 변경:"
 
 #: programs/winefile/winefile.rc:167
 msgid "Cop&yright:"
@@ -16761,7 +16759,7 @@ msgstr "시스템(&S)"
 
 #: programs/winefile/winefile.rc:176
 msgid "&Compressed"
-msgstr "압축(&C)"
+msgstr "압축됨(&C)"
 
 #: programs/winefile/winefile.rc:177
 msgid "Version information"
@@ -16778,7 +16776,7 @@ msgstr "글꼴 설정 적용"
 
 #: programs/winefile/winefile.rc:91
 msgid "Error while selecting new font."
-msgstr "새 글꼴 선택 오류."
+msgstr "새 글꼴을 선택하는 동안 오류가 발생했습니다."
 
 #: programs/winefile/winefile.rc:96
 msgid "Wine File Manager"
@@ -16810,7 +16808,7 @@ msgstr "인덱스/아이노드"
 
 #: programs/winefile/winefile.rc:116
 msgid "%1 of %2 free"
-msgstr "%1 / %2 사용가능"
+msgstr "%2 중 %1 사용가능"
 
 #: programs/winemine/winemine.rc:39
 msgid "&Game"
@@ -16846,7 +16844,7 @@ msgstr "가장 빠른 시간(&F)"
 
 #: programs/winemine/winemine.rc:54
 msgid "&About WineMine"
-msgstr "WINE지뢰찾기 정보(&A)"
+msgstr "지뢰찾기 정보(&A)"
 
 #: programs/winemine/winemine.rc:61
 msgid "Fastest Times"
@@ -16902,7 +16900,7 @@ msgstr "모든 결과를 잃습니다. 계속 진행하시겠습니까?"
 
 #: programs/winemine/winemine.rc:30
 msgid "WineMine"
-msgstr "Wine지뢰찾기"
+msgstr "지뢰찾기"
 
 #: programs/winemine/winemine.rc:31
 msgid "Nobody"
@@ -16994,7 +16992,7 @@ msgstr "도움말 파일 (*.hlp)"
 
 #: programs/winhlp32/winhlp32.rc:92
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "%s을(를) 찾을 수 없습니다'. 이 파일을 직접 찾겠시겠습니까?"
+msgstr "%s을(를) 찾을 수 없습니다'. 이 파일을 직접 찾으시겠습니까?"
 
 #: programs/winhlp32/winhlp32.rc:93
 msgid "Cannot find a richedit implementation... Aborting"
@@ -17006,7 +17004,7 @@ msgstr "도움말 목차: "
 
 #: programs/wmic/wmic.rc:28
 msgid "Error: Command line not supported\n"
-msgstr "오류: 명령 라인은 지원하지 않음\n"
+msgstr "오류: 명령 라인은 지원되지 않음\n"
 
 #: programs/wmic/wmic.rc:29
 msgid "Error: Alias not found\n"
@@ -17014,11 +17012,11 @@ msgstr "오류: Alias를 찾을 수 없음\n"
 
 #: programs/wmic/wmic.rc:30
 msgid "Error: Invalid query\n"
-msgstr "오류: 올바르지 않은 질의\n"
+msgstr "오류: 잘못된 질의\n"
 
 #: programs/wmic/wmic.rc:31
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "오류: 올바르지 않은 키 이름\n"
+msgstr "오류: 잘못된 키 이름\n"
 
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -17046,11 +17044,11 @@ msgstr "읽기 전용(&O)"
 
 #: programs/wordpad/wordpad.rc:58
 msgid "&Modified"
-msgstr "수정 가능(&M)"
+msgstr "수정됨(&M)"
 
 #: programs/wordpad/wordpad.rc:60
 msgid "E&xtras"
-msgstr "기타(&X)"
+msgstr "추가(&X)"
 
 #: programs/wordpad/wordpad.rc:62
 msgid "Selection &info"
@@ -17058,15 +17056,15 @@ msgstr "선택 영역 정보(&I)"
 
 #: programs/wordpad/wordpad.rc:63
 msgid "Character &format"
-msgstr "문자 형식(&F)"
+msgstr "글꼴 서식(&F)"
 
 #: programs/wordpad/wordpad.rc:64
 msgid "&Def. char format"
-msgstr "정의된 문자열 형식(&D)"
+msgstr "기본 글꼴 서식(&D)"
 
 #: programs/wordpad/wordpad.rc:65
 msgid "Paragrap&h format"
-msgstr "단락 형식(&H)"
+msgstr "단락 서식(&H)"
 
 #: programs/wordpad/wordpad.rc:66
 msgid "&Get text"
@@ -17074,11 +17072,11 @@ msgstr "문자열 얻기(&G)"
 
 #: programs/wordpad/wordpad.rc:72 programs/wordpad/wordpad.rc:273
 msgid "&Format Bar"
-msgstr "형식바(&F)"
+msgstr "서식 모음(&F)"
 
 #: programs/wordpad/wordpad.rc:73 programs/wordpad/wordpad.rc:274
 msgid "&Ruler"
-msgstr "눈금바(&R)"
+msgstr "눈금자(&R)"
 
 #: programs/wordpad/wordpad.rc:78
 msgid "&Insert"
@@ -17086,11 +17084,11 @@ msgstr "삽입(&I)"
 
 #: programs/wordpad/wordpad.rc:80
 msgid "&Date and time..."
-msgstr "날짜와 시간(&D)..."
+msgstr "날짜 및 시간(&D)..."
 
 #: programs/wordpad/wordpad.rc:82
 msgid "F&ormat"
-msgstr "형식(&O)"
+msgstr "서식(&O)"
 
 #: programs/wordpad/wordpad.rc:85
 msgid "&Lists"
@@ -17098,27 +17096,27 @@ msgstr "목록(&L)"
 
 #: programs/wordpad/wordpad.rc:87 programs/wordpad/wordpad.rc:116
 msgid "&Bullet points"
-msgstr "강조 점(&B)"
+msgstr "글머리 기호(&B)"
 
 #: programs/wordpad/wordpad.rc:88
 msgid "Numbers"
-msgstr "번호"
+msgstr "숫자"
 
 #: programs/wordpad/wordpad.rc:89
 msgid "Letters - lower case"
-msgstr "아래 첨자"
+msgstr "문자 - 소문자"
 
 #: programs/wordpad/wordpad.rc:90
 msgid "Letters - upper case"
-msgstr "위 첨자"
+msgstr "문자 - 대문자"
 
 #: programs/wordpad/wordpad.rc:91
 msgid "Roman numerals - lower case"
-msgstr "로마 숫자 위 첨자"
+msgstr "로마 숫자 - 소문자"
 
 #: programs/wordpad/wordpad.rc:92
 msgid "Roman numerals - upper case"
-msgstr "로마 숫자 아래 첨자"
+msgstr "로마 숫자 - 대문자"
 
 #: programs/wordpad/wordpad.rc:94 programs/wordpad/wordpad.rc:117
 msgid "&Paragraph..."
@@ -17138,11 +17136,11 @@ msgstr "시스템(&S)\tCtrl+1"
 
 #: programs/wordpad/wordpad.rc:99
 msgid "&Pale yellow\tCtrl+2"
-msgstr "노랑색으로(&P)\tCtrl+2"
+msgstr "흐린 노란색(&P)\tCtrl+2"
 
 #: programs/wordpad/wordpad.rc:104
 msgid "&About Wine Wordpad"
-msgstr "Wine 워드패드에 관하여(&A)"
+msgstr "Wine 워드패드 정보(&A)"
 
 #: programs/wordpad/wordpad.rc:141
 msgid "Automatic"
@@ -17150,19 +17148,19 @@ msgstr "자동"
 
 #: programs/wordpad/wordpad.rc:210
 msgid "Date and time"
-msgstr "날짜와 시간"
+msgstr "날짜 및 시간"
 
 #: programs/wordpad/wordpad.rc:213
 msgid "Available formats"
-msgstr "가능한 형식"
+msgstr "사용 가능한 형식"
 
 #: programs/wordpad/wordpad.rc:224
 msgid "New document type"
-msgstr "새 문서 형식"
+msgstr "새 문서 종류"
 
 #: programs/wordpad/wordpad.rc:232
 msgid "Paragraph format"
-msgstr "단락 형식"
+msgstr "단락 서식"
 
 #: programs/wordpad/wordpad.rc:235
 msgid "Indentation"
@@ -17194,7 +17192,7 @@ msgstr "탭 정지"
 
 #: programs/wordpad/wordpad.rc:255
 msgid "&Add"
-msgstr "더하기(&A)"
+msgstr "추가(&A)"
 
 #: programs/wordpad/wordpad.rc:259
 msgid "Remove al&l"
@@ -17329,7 +17327,7 @@ msgstr "페이지"
 
 #: programs/wordpad/wordpad.rc:182
 msgid "Pages"
-msgstr "페이지들"
+msgstr "페이지"
 
 #: programs/wordpad/wordpad.rc:183
 msgctxt "unit: centimeter"
@@ -17356,31 +17354,31 @@ msgstr "문서"
 
 #: programs/wordpad/wordpad.rc:192
 msgid "Save changes to '%s'?"
-msgstr "'%s'에 바뀐 사항을 저장하시겠습니까?"
+msgstr "변경 내용을 '%s'에 저장하시겠습니까?"
 
 #: programs/wordpad/wordpad.rc:193
 msgid "Finished searching the document."
-msgstr "문서 검색이 끝났습니다."
+msgstr "문서 검색을 마쳤습니다."
 
 #: programs/wordpad/wordpad.rc:194
 msgid "Failed to load the RichEdit library."
-msgstr "RichEdit 라이브러리 불러오기 실패."
+msgstr "RichEdit 라이브러리를 로드하지 못했습니다."
 
 #: programs/wordpad/wordpad.rc:195
 msgid ""
 "You have chosen to save in plain text format, which will cause all "
 "formatting to be lost. Are you sure that you wish to do this?"
 msgstr ""
-"일반 텍스트 형식으로 저장하도록 선택했습니다. 이로 인해 모든 형식이 손실됩니"
-"다. 계속하시겠습니까?"
+"일반 텍스트 형식으로 저장하도록 선택했기 때문에 모든 서식이 손실됩니다. 계속"
+"하시겠습니까?"
 
 #: programs/wordpad/wordpad.rc:198
 msgid "Invalid number format."
-msgstr "올바르지 않은 숫자 형식."
+msgstr "잘못된 숫자 형식."
 
 #: programs/wordpad/wordpad.rc:199
 msgid "OLE storage documents are not supported."
-msgstr "OLE 저장 문서는 지원되지 않습니다."
+msgstr "OLE 저장소 문서는 지원되지 않습니다."
 
 #: programs/wordpad/wordpad.rc:200
 msgid "Could not save the file."
@@ -17388,7 +17386,7 @@ msgstr "파일을 저장할 수 없습니다."
 
 #: programs/wordpad/wordpad.rc:201
 msgid "You do not have access to save the file."
-msgstr "파일을 저장할 권한이 없습니다."
+msgstr "파일을 저장할 수 있는 권한이 없습니다."
 
 #: programs/wordpad/wordpad.rc:202
 msgid "Could not open the file."
@@ -17396,29 +17394,27 @@ msgstr "파일을 열 수 없습니다."
 
 #: programs/wordpad/wordpad.rc:203
 msgid "You do not have access to open the file."
-msgstr "파일을 열 권한이 없습니다."
+msgstr "파일을 열 수 있는 권한이 없습니다."
 
 #: programs/wordpad/wordpad.rc:204
 msgid "Printing not implemented."
-msgstr "인쇄는 지원되지 않습니다."
+msgstr "인쇄가 구현되지 않았습니다."
 
 #: programs/wordpad/wordpad.rc:205
 msgid "Cannot add more than 32 tab stops."
-msgstr "탭중지는 32개 이상 추가할 수 없습니다."
+msgstr "탭 중지는 32개 이상 추가할 수 없습니다."
 
 #: programs/write/write.rc:30
 msgid "Starting Wordpad failed"
-msgstr "워드패드 시작 실패함"
+msgstr "워드패드 시작 실패"
 
 #: programs/xcopy/xcopy.rc:30
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr ""
-"올바르지 않은 매개변수의 개수 - 도움말을 보려면 'xcopy /?'를 사용하십시오\n"
+msgstr "잘못된 매개변수 개수 - 도움말을 보려면 'xcopy /?'를 사용하세요\n"
 
 #: programs/xcopy/xcopy.rc:31
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr ""
-"올바르지 않은 매개변수 '%1' - 도움말을 보려면 'xcopy /?'를 사용하십시오\n"
+msgstr "잘못된 매개변수 '%1' - 도움말을 보려면 'xcopy /?'를 사용하세요\n"
 
 #: programs/xcopy/xcopy.rc:32
 msgid "Press <Enter> to begin copying\n"
