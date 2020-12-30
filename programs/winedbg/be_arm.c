@@ -192,22 +192,20 @@ static UINT arm_disasm_halfwordtrans(UINT inst, ADDRESS64 *addr)
     short indexing  = (inst >> 24) & 0x01;
     short offset    = ((inst >> 4) & 0xf0) + (inst & 0x0f);
 
-    if (!direction) offset *= -1;
-
     dbg_printf("\n\t%s%s%s%s%s", load ? "ldr" : "str", sign ? "s" : "",
                halfword ? "h" : (sign ? "b" : ""), writeback ? "t" : "", get_cond(inst));
     dbg_printf("\t%s, ", tbl_regs[get_nibble(inst, 3)]);
     if (indexing)
     {
         if (immediate)
-            dbg_printf("[%s, #%d]", tbl_regs[get_nibble(inst, 4)], offset);
+            dbg_printf("[%s, #%s%d]", tbl_regs[get_nibble(inst, 4)], direction ? "" : "-", offset);
         else
             dbg_printf("[%s, %s]", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
     }
     else
     {
         if (immediate)
-            dbg_printf("[%s], #%d", tbl_regs[get_nibble(inst, 4)], offset);
+            dbg_printf("[%s], #%s%d", tbl_regs[get_nibble(inst, 4)], direction ? "" : "-", offset);
         else
             dbg_printf("[%s], %s", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
     }
@@ -310,15 +308,13 @@ static UINT arm_disasm_singletrans(UINT inst, ADDRESS64 *addr)
     short immediate = !((inst >> 25) & 0x01);
     short offset    = inst & 0x0fff;
 
-    if (!direction) offset *= -1;
-
     dbg_printf("\n\t%s%s%s%s", load ? "ldr" : "str", byte ? "b" : "", writeback ? "t" : "",
                get_cond(inst));
     dbg_printf("\t%s, ", tbl_regs[get_nibble(inst, 3)]);
     if (indexing)
     {
         if (immediate)
-            dbg_printf("[%s, #%d]", tbl_regs[get_nibble(inst, 4)], offset);
+            dbg_printf("[%s, #%s%d]", tbl_regs[get_nibble(inst, 4)], direction ? "" : "-", offset);
         else if (((inst >> 4) & 0xff) == 0x00) /* no shift */
             dbg_printf("[%s, %s]", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
         else if (((inst >> 4) & 0x01) == 0x00) /* immediate shift (there's no register shift) */
@@ -330,7 +326,7 @@ static UINT arm_disasm_singletrans(UINT inst, ADDRESS64 *addr)
     else
     {
         if (immediate)
-            dbg_printf("[%s], #%d", tbl_regs[get_nibble(inst, 4)], offset);
+            dbg_printf("[%s], #%s%d", tbl_regs[get_nibble(inst, 4)], direction ? "" : "-", offset);
         else if (((inst >> 4) & 0xff) == 0x00) /* no shift */
             dbg_printf("[%s], %s", tbl_regs[get_nibble(inst, 4)], tbl_regs[get_nibble(inst, 0)]);
         else if (((inst >> 4) & 0x01) == 0x00) /* immediate shift (there's no register shift) */
@@ -414,13 +410,11 @@ static UINT arm_disasm_coprocdatatrans(UINT inst, ADDRESS64 *addr)
     WORD indexing  = (inst >> 24) & 0x01;
     short offset    = (inst & 0xff) << 2;
 
-    if (!direction) offset *= -1;
-
     dbg_printf("\n\t%s%s%s", load ? "ldc" : "stc", translen ? "l" : "", get_cond(inst));
     if (indexing)
-        dbg_printf("\t%u, cr%u, [%s, #%d]%s", CPnum, CRd, tbl_regs[get_nibble(inst, 4)], offset, writeback?"!":"");
+        dbg_printf("\t%u, cr%u, [%s, #%s%d]%s", CPnum, CRd, tbl_regs[get_nibble(inst, 4)], direction ? "" : "-", offset, writeback?"!":"");
     else
-        dbg_printf("\t%u, cr%u, [%s], #%d", CPnum, CRd, tbl_regs[get_nibble(inst, 4)], offset);
+        dbg_printf("\t%u, cr%u, [%s], #%s%d", CPnum, CRd, tbl_regs[get_nibble(inst, 4)], direction ? "" : "-", offset);
     return 0;
 }
 
