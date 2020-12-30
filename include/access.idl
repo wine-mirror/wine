@@ -32,6 +32,27 @@ interface IAccessor : IUnknown
 
     typedef DWORD DBBINDSTATUS;
 
+    enum DBACCESSORFLAGSENUM
+    {
+        DBACCESSOR_INVALID       = 0x00,
+        DBACCESSOR_PASSBYREF     = 0x01,
+        DBACCESSOR_ROWDATA       = 0x02,
+        DBACCESSOR_PARAMETERDATA = 0x04,
+        DBACCESSOR_OPTIMIZED     = 0x08,
+        DBACCESSOR_INHERITED     = 0x10,
+    };
+
+    enum DBBINDSTATUSENUM
+    {
+        DBBINDSTATUS_OK                    = 0,
+        DBBINDSTATUS_BADORDINAL            = 1,
+        DBBINDSTATUS_UNSUPPORTEDCONVERSION = 2,
+        DBBINDSTATUS_BADBINDINFO           = 3,
+        DBBINDSTATUS_BADSTORAGEFLAGS       = 4,
+        DBBINDSTATUS_NOINTERFACE           = 5,
+        DBBINDSTATUS_MULTIPLESTORAGE       = 6,
+    };
+
     [local]
     HRESULT AddRefAccessor([in] HACCESSOR hAccessor,
                            [in, out, unique, annotation("__out_opt")] DBREFCOUNT *pcRefCount);
