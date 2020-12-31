@@ -826,6 +826,9 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *bu
 
     hr = IMediaSample_SetActualDataLength(sample, info.size);
     if(FAILED(hr)){
+        IMediaSample_Release(sample);
+        gst_buffer_unmap(buf, &info);
+        gst_buffer_unref(buf);
         WARN("SetActualDataLength failed: %08x\n", hr);
         return GST_FLOW_FLUSHING;
     }
