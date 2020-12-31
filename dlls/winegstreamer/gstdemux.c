@@ -793,51 +793,20 @@ static DWORD CALLBACK push_data(LPVOID iface)
     return 0;
 }
 
-static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *buf)
+static HRESULT send_sample(struct gstdemux_source *pin, IMediaSample *sample, GstBuffer *buf, GstMapInfo *info)
 {
-    struct gstdemux_source *pin = gst_pad_get_element_private(pad);
-    struct gstdemux *This = impl_from_strmbase_filter(pin->pin.pin.filter);
     HRESULT hr;
     BYTE *ptr = NULL;
-    IMediaSample *sample;
-    GstMapInfo info;
 
-    TRACE("%p %p\n", pad, buf);
-
-    if (This->initial) {
-        gst_buffer_unref(buf);
-        return GST_FLOW_OK;
-    }
-
-    hr = BaseOutputPinImpl_GetDeliveryBuffer(&pin->pin, &sample, NULL, NULL, 0);
-
-    if (hr == VFW_E_NOT_CONNECTED) {
-        gst_buffer_unref(buf);
-        return GST_FLOW_NOT_LINKED;
-    }
-
-    if (FAILED(hr)) {
-        gst_buffer_unref(buf);
-        ERR("Could not get a delivery buffer (%x), returning GST_FLOW_FLUSHING\n", hr);
-        return GST_FLOW_FLUSHING;
-    }
-
-    gst_buffer_map(buf, &info, GST_MAP_READ);
-
-    hr = IMediaSample_SetActualDataLength(sample, info.size);
+    hr = IMediaSample_SetActualDataLength(sample, info->size);
     if(FAILED(hr)){
-        IMediaSample_Release(sample);
-        gst_buffer_unmap(buf, &info);
-        gst_buffer_unref(buf);
         WARN("SetActualDataLength failed: %08x\n", hr);
-        return GST_FLOW_FLUSHING;
+        return hr;
     }
 
     IMediaSample_GetPointer(sample, &ptr);
 
-    memcpy(ptr, info.data, info.size);
-
-    gst_buffer_unmap(buf, &info);
+    memcpy(ptr, info->data, info->size);
 
     if (GST_BUFFER_PTS_IS_VALID(buf)) {
         REFERENCE_TIME rtStart = gst_segment_to_running_time(pin->segment, GST_FORMAT_TIME, buf->pts);
@@ -874,8 +843,43 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *bu
 
     TRACE("sending sample returned: %08x\n", hr);
 
+    return hr;
+}
+
+static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *buf)
+{
+    struct gstdemux_source *pin = gst_pad_get_element_private(pad);
+    struct gstdemux *This = impl_from_strmbase_filter(pin->pin.pin.filter);
+    HRESULT hr;
+    IMediaSample *sample;
+    GstMapInfo info;
+
+    TRACE("%p %p\n", pad, buf);
+
+    if (This->initial) {
+        gst_buffer_unref(buf);
+        return GST_FLOW_OK;
+    }
+
+    hr = BaseOutputPinImpl_GetDeliveryBuffer(&pin->pin, &sample, NULL, NULL, 0);
+
+    if (FAILED(hr))
+    {
+        if (hr != VFW_E_NOT_CONNECTED)
+            ERR("Could not get a delivery buffer (%x), returning GST_FLOW_FLUSHING\n", hr);
+    }
+    else
+    {
+        gst_buffer_map(buf, &info, GST_MAP_READ);
+
+        hr = send_sample(pin, sample, buf, &info);
+
+        gst_buffer_unmap(buf, &info);
+
+        IMediaSample_Release(sample);
+    }
+
     gst_buffer_unref(buf);
-    IMediaSample_Release(sample);
 
     if (hr == VFW_E_NOT_CONNECTED)
         return GST_FLOW_NOT_LINKED;
