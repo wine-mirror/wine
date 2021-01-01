@@ -1555,6 +1555,38 @@ void X11DRV_XRandR_Init(void)
 #ifdef HAVE_XRRGETPROVIDERRESOURCES
     if (ret >= 4 && (major > 1 || (major == 1 && minor >= 4)))
     {
+        XRRScreenResources *screen_resources;
+        XRROutputInfo *output_info;
+        BOOL found_output = FALSE;
+        INT i;
+
+        screen_resources = xrandr_get_screen_resources();
+        if (!screen_resources)
+            return;
+
+        for (i = 0; i < screen_resources->noutput; ++i)
+        {
+            output_info = pXRRGetOutputInfo( gdi_display, screen_resources, screen_resources->outputs[i] );
+            if (!output_info)
+                continue;
+
+            if (output_info->connection == RR_Connected)
+            {
+                pXRRFreeOutputInfo( output_info );
+                found_output = TRUE;
+                break;
+            }
+
+            pXRRFreeOutputInfo( output_info );
+        }
+        pXRRFreeScreenResources( screen_resources );
+
+        if (!found_output)
+        {
+            WARN("No connected outputs found.\n");
+            return;
+        }
+
         display_handler.name = "XRandR 1.4";
         display_handler.priority = 200;
         display_handler.get_gpus = xrandr14_get_gpus;
