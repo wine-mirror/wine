@@ -1,12 +1,12 @@
-The Wine development release 6.0-rc4 is now available.
+The Wine development release 6.0-rc5 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/6.0/wine-6.0-rc4.tar.xz
-  http://mirrors.ibiblio.org/wine/source/6.0/wine-6.0-rc4.tar.xz
+  https://dl.winehq.org/wine/source/6.0/wine-6.0-rc5.tar.xz
+  http://mirrors.ibiblio.org/wine/source/6.0/wine-6.0-rc5.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,110 +22,95 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 6.0-rc4 (total 29):
+Bugs fixed in 6.0-rc5 (total 21):
 
-  24116  Cannot save game in Rainblood: Town of Death
-  25409  Windows Live Essentials for XP installer crashes
-  27229  printf() newline missing with multibyte strings
-  31942  Microsoft Office 2003 and Office 2003 Editions Resource Kit installers crash on startup
-  32061  Guild Wars: Launcher hangs sometimes
-  39731  Assassin's Creed IV Black Flag crashes
-  40430  Multiple NVIDIA installers abort due to failure to process xml config (PhysX 9.x, GeForce Now, GeForce Experience 3.x, RTX Voice)
-  41298  Battlefield 3 crashes during loading
-  41450  timestamp is missing from some debug messages
-  43329  Multiple applications fail to get selected path after double click last path element in IFileDialog2 folder selection dialog (Wargaming.net Game Center, Adobe DNG Converter 10.x/11.x)
-  43412  World of Warships: CEF screens cannot be displayed
-  44185  DragonAgeOrigins autorun.exe crash inside winegstreamer
-  44538  Tales of Zestiria doesn't start
-  45950  RedMon 1.9 (Redirection Port Monitor) does not work (missing support for monitors providing the MONITOR2 interface)
-  48587  httpapi tests are broken on Windows 8
-  49143  RTF Editor does not support cyrillic letters using MS Sans Serif Font
-  49347  Settlers III: mouse not working on start screen, game entry and statistics screen after a game, if "Automatically capture the mouse in full-screen windows" is on in winecfg
-  49493  Children Of Morta stays at blue stars screen after starting game.
-  49545  Current working directory reset to "/" executing a winegcc/wineg++ compiled program
-  49563  Adobe DNG converter 12.4 crashes after upgrade to Wine 5.12
-  49650  Bunch of Heroes (Steam) hangs with a black screen at startup
-  49683  Kingdom Come Deliverance crashes
-  49782  Elite Dangerous Horizons: crashes with wine64 5.16
-  49789  Tina 11 Demo crashes when run in a 64-bit prefix
-  50126  Writing VT_UI8 property type to a stream is not currently supported
-  50291  World of Warcraft Classic Fails to Close Cleanly
-  50354  Team Fortress 2 crashes during loading
-  50373  Touhou Shinpiroku trial terminates immediately
-  50378  dlls/amstream/tests/amstream.o error: unknown field ‘dwBitMasks’ specified in initializer
+  21987  Acrobat 7 tryout installer complains: "This Postscript Driver or Windows Platform (Win9x/Me) not supported" (winspool.drv missing level 8/global default printer settings handling)
+  38166  Heroes of Might and Magic V performance issue: severe fps drop on certain maps
+  41593  Molot VST 0.3.1 UI: some knobs are not rendered
+  43852  Monkey Island Special Edition Collection: White screen and crash when starting Monkey1.exe
+  44243  Spire and Serum VST plugins using Direct2D render very slowly
+  44367  Multiple applications need d2d FillEllipse/DrawEllipse implementation (OP-X PRO II VST)
+  44454  Windows Media Encoder 9 refuses to install
+  44574  Microsoft Office 2013 client area is rendered black (Direct2D)
+  45096  MPC-HC 1.7.13 displays a message box: "Error creating EVR Custom renderer", "DXVA2CreateDirect3DDeviceManager9 failed"
+  47770  Waves Central plugin installation fails
+  47824  Remote Life 1.2 demo terminates with 'Cannot load library nw_elf.dll'
+  48142  shell32:appbar tests fail on some Windows 10 machines
+  49010  ilok license manager: doesn't connect to the activation server as in 4.0.2
+  49356  Saya No Uta (a.k.a. The Song of Saya) crashes when launching
+  49771  ntdll:exception causes an unhandled segmentation fault
+  50241  Vertical Text in NL5 schematic doesn't display correctly
+  50304  Control-C exits winedbg instead of stopping the inferior
+  50397  dlls/d3dcompiler_43/tests/hlsl_d3d11.c: error: unknown field ‘Texture2D’ specified in initializer
+  50408  wineboot crash to due getaddrinfo() returning NULL ai_canonname
+  50420  Divinity: Original Sin - Enhanced Edition crashes on startup
+  50423  dlls/devenum/mediacatenum.c: | function ‘property_bag_Read’ | error: unknown field ‘cPins2’ specified in initializer
 
 ----------------------------------------------------------------
 
-Changes since 6.0-rc3:
+Changes since 6.0-rc4:
 
-Akihiro Sagawa (2):
-      po: Update Japanese translation.
-      d3dx9: Avoid closing invalid handles.
+Akihiro Sagawa (1):
+      readme: Update Japanese translation.
 
-Alexandre Julliard (2):
-      gdi32: Don't fail font creation when we are out of handles.
-      dwrite: Avoid a compiler warning when FreeType is missing.
+Alex Henrie (1):
+      winebus: Remove redundant preprocessor check for libsdl2.
 
-Alistair Leslie-Hughes (4):
-      include: Add DB_LRESERVE type.
-      include: Add ExecuteOptionEnum typedef.
-      msado15: Set row_set point to NULL on close.
-      msado15/tests: Add test for interface ADOConnectionConstruction15.
+Alexandre Julliard (1):
+      Update copyright info for 2021.
 
-Andrey Gusev (1):
-      po: Update Ukrainian translation.
+Alistair Leslie-Hughes (1):
+      include: Add DBACCESSORFLAGSENUM/DBBINDSTATUSENUM values.
 
-André Hentschel (2):
-      opengl32/tests: Don't test function directly when reporting GetLastError().
-      kernel32/tests: Don't test functions directly when reporting GetLastError().
+Anton Baskanov (1):
+      winegstreamer: Unmap and unref the buffer and release the sample before returning.
 
-Biswapriyo Nath (2):
-      include: Add more Media Foundation error codes.
-      include: Add IAMCameraControl definition in axextend.idl.
+Byeong-Sik Jeon (1):
+      po: Update Korean translation.
 
-Can Taşan (1):
-      po: Update Turkish translation.
+Damjan Jovanovic (1):
+      ws2_32: Deal with getaddrinfo() returning NULL ai_canonname despite AI_CANONNAME.
 
-Dmitry Timoshkov (6):
-      wbemprox/tests: Run StdRegProv tests using ROOT\\DEFAULT connection point.
-      wbemprox/tests: Add some tests for SystemRestore class.
-      gdi32/tests: Add some tests to show that GetGlyphIndices() should avoid best fit chars.
-      fonts: Correct default glyph index for MS Sans Serif font to match Windows.
-      shell32/tests: Remove no longer used parameter.
-      shell32/tests: Remove workarounds for shell32 < 5.0.
+Dean M Greer (2):
+      readme: Update OS X requirements.
+      configure: Remove Xcode 3.x check.
 
-Huw D. M. Davies (1):
-      qcap: Avoid unused variable warning if v4l is absent.
+Esme Povirk (1):
+      user32/tests: Don't kill explorer to test shell window.
 
-Jacek Caban (1):
-      conhost: Fix copy-paste typos in selection coordinates.
+Jacek Caban (2):
+      condrv: Don't requre write access for IOCTL_CONDRV_CTRL_EVENT ioctl.
+      conhost: Ignore CONTROL_C_EXIT exceptions in Unix mode.
 
-Martin Storsjo (6):
-      asm: Separate .def/.scl/.type/.endef with newlines instead of semicolons.
-      winebuild: Pass -m options to dlltool for arm and arm64.
-      asm: Use SEH assembly when building with clang in MSVC mode.
-      include: Fix the signature of _InterlockedCompareExchange128.
-      include: Check whether the ms_abi attribute is supported on aarch64.
-      ntdll: Implement a no-op __chkstk for arm64.
+Jefferson Carpenter (1):
+      ntdll/tests: Clear AC flag in align check test.
+
+Lauri Kenttä (1):
+      readme: Update Finnish translation.
 
 Michael Stefaniuc (1):
-      winspool/tests: Use wide-char string literals.
+      msscript.ocx/tests: Use wide-char string literals.
 
 Nikolay Sivov (1):
-      dwrite: Add a notice regarding HarfBuzz.
+      readme: Update Russian translation.
 
 Paul Gofman (2):
-      ntdll: Always copy context in call_user_apc_dispatcher() on x86.
-      ntdll: Preserve syscall frame when calling async IO system APC.
+      ntdll: Use WINAPI calling convention for stub_entry_point().
+      user32: Add stub for SetDisplayConfig().
+
+Qijia Liu (1):
+      winedbg: Remove arm_disasm_branchreg.
+
+Sveinar Søpler (1):
+      readme: Update Norwegian translation.
 
 Zebediah Figura (3):
-      amstream/tests: Define NONAMELESSUNION.
-      ucrtbase: Do not add MSVCRT_ prefix to the exported function name of _lrot*.
-      d3dcompiler/tests: Avoid initializing nameless unions in designated initializers.
+      httpapi/tests: Avoid some test failures with newer Windows 10.
+      devenum: Avoid initializing nameless unions in designated initializers.
+      server: Pass the correct size to sockaddr_from_unix() (Valgrind).
 
-Zhiyi Zhang (2):
-      gdi32/tests: Fix possible test failures in test_clip_box().
-      gdi32/tests: Fix test failures on Win10 1909+.
+Zhiyi Zhang (1):
+      winex11.drv: Check that there are connected outputs before using XRandR 1.4.
 
 --
 Alexandre Julliard
