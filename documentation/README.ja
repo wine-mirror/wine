@@ -40,7 +40,7 @@ Wineをコンパイルし実行するには、以下のうち一つを持って�
   FreeBSD 8.0以降
   Solaris x86 9以降
   NetBSD-current
-  Mac OS X 10.5以降
+  Mac OS X 10.8以降
 
 動作するためにWineにはカーネルレベルのスレッドのサポートが必要なので、
 以上で触れたオペレーティングシステムだけがサポートされます。
@@ -63,8 +63,10 @@ NetBSD情報:
   かどうかを確認してください。
 
 Mac OS X情報:
-  x86上で正しくビルドするにはXcode 2.4以上が必要です。
-  MacドライバにはOS X 10.6以降が必要です。10.5ではビルドされないでしょう。
+  Xcode/Xcode Command Line ToolsまたはApple cctoolsが必要です。Wineを
+  コンパイルするための最小要件はclang 3.8とMacOSX10.10.sdkおよびmingw-w64
+  v8の組み合わせです。MacOSX10.14.sdkまたはそれ以降はwine64だけをビルドでき
+  ます。
 
 
 サポートされたファイルシステム:
