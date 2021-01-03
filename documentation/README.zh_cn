@@ -33,7 +33,7 @@ Wine 是自由软件，在 GNU LGPL 协议下发布；请查看 LICENSE 文件�
   FreeBSD 8.0 或更新版本
   Solaris x86 9 或更新版本
   NetBSD-current
-  Mac OS X 10.5 或更新版本
+  Mac OS X 10.8 或更新版本
 
 鉴于运行 Wine 需要内核级别的线程支持，仅以上提及的操作系统能被支持。
 其它拥有内核线程的操作系统可能在未来得到支持。
@@ -51,8 +51,9 @@ NetBSD 信息：
   请确保您在内核中启用了 USER_LDT、SYSVSHM、SYSVSEM 和 SYSVMSG 选项。
 
 Mac OS X 信息:
-  在 x86 平台下，您需要 Xcode 2.4 或更新版本以正常进行编译。
-  Mac 驱动需要 OS X 10.6 或更新版本。它在 10.5 下不会编译通过。
+  您需要 Xcode/Xcode Command Line Tools 或者 Apple cctools。
+  编译 Wine 的最低要求是 clang 3.8 以及 MacOSX10.10.sdk 和 mingw-w64 v8。
+  MacOSX10.14.sdk 或者更新版本只能编译 wine64。
 
 
 支持的文件系统：
