@@ -22,6 +22,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <locale.h>
 #include <stdlib.h>
 #include <time.h>
 #include <sys/timeb.h>
@@ -1437,6 +1438,7 @@ static size_t strftime_helper(char *str, size_t max, const char *format,
 #else
     wchar_t *s, *fmt;
     size_t len;
+    int cp;
 
     TRACE("(%p %Iu %s %p %p %p)\n", str, max, format, mstm, time_data, loc);
 
@@ -1445,15 +1447,27 @@ static size_t strftime_helper(char *str, size_t max, const char *format,
     *str = 0;
     if (!MSVCRT_CHECK_PMT(format != NULL)) return 0;
 
-    len = _mbstowcs_l( NULL, format, 0, loc ) + 1;
-    if (!len || !(fmt = malloc( len*sizeof(wchar_t) ))) return 0;
-    _mbstowcs_l(fmt, format, len, loc);
+    cp = (loc ? loc->locinfo : get_locinfo())->lc_id[LC_TIME].wCodePage;
+
+    len = MultiByteToWideChar( cp, 0, format, -1, NULL, 0 );
+    if (!len)
+    {
+        *_errno() = EILSEQ;
+        return 0;
+    }
+    fmt = malloc( len*sizeof(wchar_t) );
+    if (!fmt) return 0;
+    MultiByteToWideChar( cp, 0, format, -1, fmt, len );
 
     if ((s = malloc( max*sizeof(wchar_t) )))
     {
         len = strftime_impl( s, max, fmt, mstm, time_data, loc );
         if (len)
-            len = _wcstombs_l( str, s, max, loc );
+        {
+            len = WideCharToMultiByte( cp, 0, s, -1, str, max, NULL, NULL );
+            if (len) len--;
+            else *_errno() = EILSEQ;
+        }
         free( s );
     }
     else len = 0;
@@ -1478,7 +1492,7 @@ size_t CDECL _strftime_l( char *str, size_t max, const char *format,
  *		_Strftime (MSVCRT.@)
  */
 size_t CDECL _Strftime(char *str, size_t max, const char *format,
-        const struct tm *mstm, __lc_time_data *time_data)
+        const struct tm *mstm, void *time_data)
 {
     return strftime_helper(str, max, format, mstm, time_data, NULL);
 }

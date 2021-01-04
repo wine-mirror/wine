@@ -1112,6 +1112,15 @@ static void test_strftime(void)
     ok(ret == 8, "ret = %d\n", ret);
     ok(!strcmp(buf, "00:00:00"), "buf = \"%s\", expected \"%s\"\n", buf, "00:00:00");
     setlocale(LC_ALL, "C");
+
+    if(!setlocale(LC_TIME, "Japanese_Japan.932")) {
+        win_skip("Japanese_Japan.932 locale not available\n");
+        return;
+    }
+    ret = strftime(buf, sizeof(buf), "%a", &epoch);
+    ok(ret == 2 || broken(ret == 1), "ret = %d\n", ret);
+    ok(!strcmp(buf, "\x96\xd8"), "buf = %s, expected \"\\x96\\xd8\"\n", wine_dbgstr_an(buf, 2));
+    setlocale(LC_ALL, "C");
 }
 
 static LONG* get_failures_counter(HANDLE *map)
