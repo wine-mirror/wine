@@ -78,7 +78,7 @@ extern void winetest_wait_child_process( HANDLE process );
 #define START_TEST(name) void func_##name(void)
 #endif
 
-#if (defined(__x86_64__) || defined(__aarch64__)) && defined(__GNUC__) && defined(__WINE_USE_MSVCRT)
+#if (defined(__x86_64__) || (defined(__aarch64__) && __has_attribute(ms_abi))) && defined(__GNUC__) && defined(__WINE_USE_MSVCRT)
 #define __winetest_cdecl __cdecl
 #define __winetest_va_list __builtin_ms_va_list
 #else
