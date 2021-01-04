@@ -2521,7 +2521,6 @@ function testException(func, id) {
     } catch(e) {
         ret = e.name;
         num = e.number;
-        trace(e.message);
     }
 
     ok(ret === ex.type, "Exception test, ret = " + ret + ", expected " + ex.type +". Executed function: " + func.toString());
