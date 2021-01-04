@@ -691,6 +691,7 @@ static void edit_line_find_in_history( struct console *console )
     unsigned int len, oldoffset;
     WCHAR *line;
 
+    if (!console->history_index) return;
     if (ctx->history_index && ctx->history_index == console->history_index)
     {
         start_pos--;
@@ -699,28 +700,28 @@ static void edit_line_find_in_history( struct console *console )
 
     do
     {
-       line = edit_line_history(console, ctx->history_index);
+        line = edit_line_history(console, ctx->history_index);
 
-       if (ctx->history_index) ctx->history_index--;
-       else ctx->history_index = console->history_index;
+        if (ctx->history_index) ctx->history_index--;
+        else ctx->history_index = console->history_index - 1;
 
-       len = lstrlenW(line) + 1;
-       if (len >= ctx->cursor && !memcmp( ctx->buf, line, ctx->cursor * sizeof(WCHAR) ))
-       {
-           /* need to clean also the screen if new string is shorter than old one */
-           edit_line_delete(console, 0, ctx->len);
+        len = lstrlenW(line) + 1;
+        if (len >= ctx->cursor && !memcmp( ctx->buf, line, ctx->cursor * sizeof(WCHAR) ))
+        {
+            /* need to clean also the screen if new string is shorter than old one */
+            edit_line_delete(console, 0, ctx->len);
 
-           if (edit_line_grow(console, len))
-           {
-              oldoffset = ctx->cursor;
-              ctx->cursor = 0;
-              edit_line_insert( console, line, len - 1 );
-              ctx->cursor = oldoffset;
-              free(line);
-              return;
-           }
-       }
-       free(line);
+            if (edit_line_grow(console, len))
+            {
+                oldoffset = ctx->cursor;
+                ctx->cursor = 0;
+                edit_line_insert( console, line, len - 1 );
+                ctx->cursor = oldoffset;
+                free(line);
+                return;
+            }
+        }
+        free(line);
     }
     while (ctx->history_index != start_pos);
 }
