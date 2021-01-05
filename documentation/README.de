@@ -44,7 +44,7 @@ folgenden Betriebssysteme:
   FreeBSD 8.0 oder neuer
   Solaris x86 9 oder neuer
   NetBSD-current
-  Mac OS X 10.5 oder neuer
+  Mac OS X 10.8 oder neuer
 
 Da Wine Thread-Unterstützung auf Kernelebene benötigt, werden nur die oben
 aufgeführten Betriebssysteme unterstützt.
@@ -67,9 +67,10 @@ NetBSD-Info:
   SYSVMSG in Ihrem Kernel aktiviert haben.
 
 Mac OS X Info:
-  Sie benötigen mindestens Xcode 2.4 um richtig unter x86 kompilieren zu
-  können. Der Mac-Treiber benötigt mindestens OS X 10.6, unter 10.5 wird
-  dieser nicht mit kompiliert.
+  Sie benötigen Xcode/Xcode-Kommandozeilentools oder Apple cctools. Die
+  Mindestanforderungen um Wine zu kompilieren sind clang 3.8 mit dem
+  MacOSX10.10.sdk und mingw-w64 v8. Das MacOSX10.14.sdk oder neuer kann
+  nur wine64 erzeugen.
 
 Unterstützte Dateisysteme:
   Wine sollte auf den meisten Dateisystemen laufen. Kompatibilitätsprobleme
