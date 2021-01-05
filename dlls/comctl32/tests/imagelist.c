@@ -2436,7 +2436,7 @@ static void test_alpha(void)
 
         /* If all alpha values are zero, the image is considered to have no alpha and gets masked */
         if (!GetAValue(bits[0]) && !GetAValue(bits[1]))
-            todo_wine ok(!bits[0] && bits[1] == test_bitmaps[i + 1],
+            ok(!bits[0] && bits[1] == test_bitmaps[i + 1],
                "Bitmap [%08X, %08X] returned [%08X, %08X], expected [%08X, %08X]\n",
                test_bitmaps[i], test_bitmaps[i + 1], bits[0], bits[1], 0, test_bitmaps[i + 1]);
         else

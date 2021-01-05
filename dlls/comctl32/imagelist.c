@@ -234,6 +234,13 @@ static void add_dib_bits( HIMAGELIST himl, int pos, int count, int width, int he
                             mask_bits[i * mask_stride + j / 8] |= 0x80 >> (j % 8);
             }
         }
+        else if (mask_info)  /* mask out the background */
+        {
+            for (i = 0; i < height; i++)
+                for (j = n * width; j < (n + 1) * width; j++)
+                    if ((mask_bits[i * mask_stride + j / 8] << (j % 8)) & 0x80)
+                        bits[i * stride + j] = 0;
+        }
         StretchDIBits( himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
                        n * width, 0, width, height, bits, info, DIB_RGB_COLORS, SRCCOPY );
         if (mask_info)
