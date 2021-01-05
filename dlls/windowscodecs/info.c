@@ -1658,7 +1658,7 @@ static HRESULT WINAPI MetadataReaderInfo_GetContainerFormats(IWICMetadataReaderI
     {
         if (This->container_count && length < This->container_count)
             return WINCODEC_ERR_INSUFFICIENTBUFFER;
-        memcpy(formats, This->container_formats, This->container_count);
+        memcpy(formats, This->container_formats, This->container_count * sizeof(*formats));
     }
     return S_OK;
 }
