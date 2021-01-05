@@ -2346,9 +2346,8 @@ static void test_loadimage(void)
 
 #define GetAValue(argb) ((BYTE) ((argb) >> 24))
 
-static void get_image_alpha(HIMAGELIST himl, int index, int width, int height, UINT32 *alpha)
+static void get_image_bits(HIMAGELIST himl, int index, int width, int height, UINT32 *bits)
 {
-    int i;
     HBITMAP hbm_dst;
     void *bitmap_bits;
     BITMAPINFO bitmap_info = {{sizeof(BITMAPINFOHEADER), width, height, 1, 32, BI_RGB, 0, 0, 0, 0, 0}};
@@ -2358,9 +2357,7 @@ static void get_image_alpha(HIMAGELIST himl, int index, int width, int height, U
     SelectObject(hdc_dst, hbm_dst);
 
     pImageList_Draw(himl, index, hdc_dst, 0, 0, ILD_TRANSPARENT);
-    memcpy(alpha, bitmap_bits, (size_t)(width * height * 32 / 8));
-    for (i = 0; i < width * height; i++)
-        alpha[i] = GetAValue(alpha[i]);
+    memcpy(bits, bitmap_bits, (size_t)(width * height * 32 / 8));
 
     DeleteObject(hbm_dst);
     DeleteDC(hdc_dst);
@@ -2372,6 +2369,11 @@ static void test_alpha(void)
     const static UINT32 test_bitmaps[] =
     {
         0x00654321, 0x00ABCDEF,
+        0x00654321, 0x00654321,
+        0x00ABCDEF, 0x00654321,
+        0x00ABCDEF, 0x00ABCDEF,
+        0x00654321, 0x01ABCDEF,
+        0x01654321, 0x00ABCDEF,
         0x00654321, 0xFFABCDEF,
         0x00654321, 0x89ABCDEF,
         0xFF654321, 0x00ABCDEF,
@@ -2381,31 +2383,72 @@ static void test_alpha(void)
         0x87654321, 0xFFABCDEF,
         0x87654321, 0x89ABCDEF
     };
+    const static BYTE mask_bits = 0xAA;
 
     int i, ret;
     HDC hdc;
-    HBITMAP hbm_test;
+    HBITMAP hbm_test, hbm_mask;
     HIMAGELIST himl;
-    UINT32 alpha[2];
+    UINT32 bits[2];
 
     hdc = CreateCompatibleDC(0);
-    himl = pImageList_Create(2, 1, ILC_COLOR32 | ILC_MASK, 0, 10);
+    himl = pImageList_Create(2, 1, ILC_COLOR32 | ILC_MASK, 0, 15);
 
     for (i = 0; i < ARRAY_SIZE(test_bitmaps); i += 2)
     {
         hbm_test = create_test_bitmap(hdc, 2, 1, 32, test_bitmaps + i);
-        ret = pImageList_AddMasked(himl, hbm_test, CLR_NONE);
+        ret = pImageList_AddMasked(himl, hbm_test, RGB(0x65,0x43,0x21));
         ok(ret == i / 2, "ImageList_AddMasked returned %d, expected %d\n", ret, i / 2);
         DeleteObject(hbm_test);
 
-        get_image_alpha(himl, i / 2, 2, 1, alpha);
-        ok(alpha[0] == GetAValue(test_bitmaps[i]) && alpha[1] == GetAValue(test_bitmaps[i + 1]),
+        get_image_bits(himl, i / 2, 2, 1, bits);
+        ok(GetAValue(bits[0]) == GetAValue(test_bitmaps[i]) && GetAValue(bits[1]) == GetAValue(test_bitmaps[i + 1]),
            "Bitmap [%08X, %08X] returned alpha value [%02X, %02X], expected [%02X, %02X]\n",
-           test_bitmaps[i], test_bitmaps[i + 1], alpha[0], alpha[1],
+           test_bitmaps[i], test_bitmaps[i + 1], GetAValue(bits[0]), GetAValue(bits[1]),
            GetAValue(test_bitmaps[i]), GetAValue(test_bitmaps[i + 1]));
+
+        /* If all alpha values are zero, the image is considered to have no alpha and gets masked */
+        if (!GetAValue(bits[0]) && !GetAValue(bits[1]))
+            ok(bits[0] == (test_bitmaps[i] == 0x654321 ? 0 : test_bitmaps[i]) &&
+               bits[1] == (test_bitmaps[i + 1] == 0x654321 ? 0 : test_bitmaps[i + 1]),
+               "Bitmap [%08X, %08X] returned [%08X, %08X], expected [%08X, %08X]\n",
+               test_bitmaps[i], test_bitmaps[i + 1], bits[0], bits[1],
+               test_bitmaps[i] == 0x654321 ? 0 : test_bitmaps[i],
+               test_bitmaps[i + 1] == 0x654321 ? 0 : test_bitmaps[i + 1]);
     }
 
     pImageList_Destroy(himl);
+    hbm_mask = CreateBitmap(2, 1, 1, 1, &mask_bits);
+    himl = pImageList_Create(2, 1, ILC_COLOR32 | ILC_MASK, 0, 15);
+
+    for (i = 0; i < ARRAY_SIZE(test_bitmaps); i += 2)
+    {
+        hbm_test = create_test_bitmap(hdc, 2, 1, 32, test_bitmaps + i);
+        ret = pImageList_Add(himl, hbm_test, hbm_mask);
+        ok(ret == i / 2, "ImageList_Add returned %d, expected %d\n", ret, i / 2);
+        DeleteObject(hbm_test);
+
+        get_image_bits(himl, i / 2, 2, 1, bits);
+        ok(GetAValue(bits[0]) == GetAValue(test_bitmaps[i]) && GetAValue(bits[1]) == GetAValue(test_bitmaps[i + 1]),
+           "Bitmap [%08X, %08X] returned alpha value [%02X, %02X], expected [%02X, %02X]\n",
+           test_bitmaps[i], test_bitmaps[i + 1], GetAValue(bits[0]), GetAValue(bits[1]),
+           GetAValue(test_bitmaps[i]), GetAValue(test_bitmaps[i + 1]));
+
+        /* If all alpha values are zero, the image is considered to have no alpha and gets masked */
+        if (!GetAValue(bits[0]) && !GetAValue(bits[1]))
+            todo_wine ok(!bits[0] && bits[1] == test_bitmaps[i + 1],
+               "Bitmap [%08X, %08X] returned [%08X, %08X], expected [%08X, %08X]\n",
+               test_bitmaps[i], test_bitmaps[i + 1], bits[0], bits[1], 0, test_bitmaps[i + 1]);
+        else
+        {
+            if (GetAValue(bits[0]) >= 0x80)
+                ok(bits[0] & 0x00FFFFFF, "Bitmap [%08X, %08X] has alpha and masked first pixel [%08X]\n",
+                   test_bitmaps[i], test_bitmaps[i + 1], bits[0]);
+        }
+    }
+
+    pImageList_Destroy(himl);
+    DeleteObject(hbm_mask);
     DeleteDC(hdc);
 }
 
