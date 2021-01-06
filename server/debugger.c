@@ -677,6 +677,7 @@ DECL_HANDLER(continue_debug_event)
     struct process *process;
 
     if (req->status != DBG_EXCEPTION_NOT_HANDLED &&
+        req->status != DBG_EXCEPTION_HANDLED &&
         req->status != DBG_CONTINUE &&
         req->status != DBG_REPLY_LATER)
     {

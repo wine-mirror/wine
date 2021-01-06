@@ -1053,7 +1053,7 @@ static void test_exceptions(void)
     ok( res == STATUS_SUCCESS, "NtSetContextThread failed with %x\n", res );
 }
 
-static void test_debugger(void)
+static void test_debugger(DWORD cont_status)
 {
     char cmdline[MAX_PATH];
     PROCESS_INFORMATION pi;
@@ -1081,7 +1081,7 @@ static void test_debugger(void)
 
     do
     {
-        continuestatus = DBG_CONTINUE;
+        continuestatus = cont_status;
         ok(WaitForDebugEvent(&de, INFINITE), "reading debug event\n");
 
         ret = ContinueDebugEvent(de.dwProcessId, de.dwThreadId, 0xdeadbeef);
@@ -1091,7 +1091,7 @@ static void test_debugger(void)
         if (de.dwThreadId != pi.dwThreadId)
         {
             trace("event %d not coming from main thread, ignoring\n", de.dwDebugEventCode);
-            ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
+            ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont_status);
             continue;
         }
 
@@ -3288,7 +3288,7 @@ static void test_rtlraiseexception(void)
     run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
 }
 
-static void test_debugger(void)
+static void test_debugger(DWORD cont_status)
 {
     char cmdline[MAX_PATH];
     PROCESS_INFORMATION pi;
@@ -3316,7 +3316,7 @@ static void test_debugger(void)
 
     do
     {
-        continuestatus = DBG_CONTINUE;
+        continuestatus = cont_status;
         ok(WaitForDebugEvent(&de, INFINITE), "reading debug event\n");
 
         ret = ContinueDebugEvent(de.dwProcessId, de.dwThreadId, 0xdeadbeef);
@@ -3326,7 +3326,7 @@ static void test_debugger(void)
         if (de.dwThreadId != pi.dwThreadId)
         {
             trace("event %d not coming from main thread, ignoring\n", de.dwDebugEventCode);
-            ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
+            ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont_status);
             continue;
         }
 
@@ -4252,7 +4252,7 @@ static void test_thread_context(void)
 #undef COMPARE
 }
 
-static void test_debugger(void)
+static void test_debugger(DWORD cont_status)
 {
     char cmdline[MAX_PATH];
     PROCESS_INFORMATION pi;
@@ -4280,7 +4280,7 @@ static void test_debugger(void)
 
     do
     {
-        continuestatus = DBG_CONTINUE;
+        continuestatus = cont_status;
         ok(WaitForDebugEvent(&de, INFINITE), "reading debug event\n");
 
         ret = ContinueDebugEvent(de.dwProcessId, de.dwThreadId, 0xdeadbeef);
@@ -4290,7 +4290,7 @@ static void test_debugger(void)
         if (de.dwThreadId != pi.dwThreadId)
         {
             trace("event %d not coming from main thread, ignoring\n", de.dwDebugEventCode);
-            ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
+            ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont_status);
             continue;
         }
 
@@ -5500,7 +5500,7 @@ static void test_thread_context(void)
 #undef COMPARE
 }
 
-static void test_debugger(void)
+static void test_debugger(DWORD cont_status)
 {
     char cmdline[MAX_PATH];
     PROCESS_INFORMATION pi;
@@ -5528,7 +5528,7 @@ static void test_debugger(void)
 
     do
     {
-        continuestatus = DBG_CONTINUE;
+        continuestatus = cont_status;
         ok(WaitForDebugEvent(&de, INFINITE), "reading debug event\n");
 
         ret = ContinueDebugEvent(de.dwProcessId, de.dwThreadId, 0xdeadbeef);
@@ -5538,7 +5538,7 @@ static void test_debugger(void)
         if (de.dwThreadId != pi.dwThreadId)
         {
             trace("event %d not coming from main thread, ignoring\n", de.dwDebugEventCode);
-            ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
+            ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont_status);
             continue;
         }
 
@@ -8346,7 +8346,8 @@ START_TEST(exception)
 
 #endif
 
-    test_debugger();
+    test_debugger(DBG_EXCEPTION_HANDLED);
+    test_debugger(DBG_CONTINUE);
     test_thread_context();
     test_outputdebugstring(1, FALSE);
     test_ripevent(1);
