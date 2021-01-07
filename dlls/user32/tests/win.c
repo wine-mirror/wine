@@ -11850,6 +11850,50 @@ static void test_other_process_window(const char *argv0)
     DestroyWindow(hwnd);
 }
 
+static void test_cancel_mode(void)
+{
+    HWND hwnd1, hwnd2, child;
+    LRESULT ret;
+
+    hwnd1 = CreateWindowA("MainWindowClass", "window 1", WS_OVERLAPPEDWINDOW,
+            100, 200, 500, 300, NULL, NULL, NULL, NULL);
+    hwnd2 = CreateWindowA("MainWindowClass", "window 2", WS_OVERLAPPEDWINDOW,
+            100, 200, 500, 300, NULL, NULL, NULL, NULL);
+    flush_events(TRUE);
+    SetCapture(hwnd1);
+    ok(GetCapture() == hwnd1, "got capture %p\n", GetCapture());
+
+    ret = SendMessageA(hwnd2, WM_CANCELMODE, 0, 0);
+    ok(!ret, "got %ld\n", ret);
+    ok(GetCapture() == hwnd1, "got capture %p\n", GetCapture());
+
+    ret = SendMessageA(hwnd1, WM_CANCELMODE, 0, 0);
+    ok(!ret, "got %ld\n", ret);
+    ok(!GetCapture(), "got capture %p\n", GetCapture());
+
+    child = CreateWindowA("MainWindowClass", "child", WS_CHILD,
+            0, 0, 100, 100, hwnd1, NULL, NULL, NULL);
+
+    SetCapture(child);
+    ok(GetCapture() == child, "got capture %p\n", GetCapture());
+
+    ret = SendMessageA(hwnd2, WM_CANCELMODE, 0, 0);
+    ok(!ret, "got %ld\n", ret);
+    ok(GetCapture() == child, "got capture %p\n", GetCapture());
+
+    ret = SendMessageA(hwnd1, WM_CANCELMODE, 0, 0);
+    ok(!ret, "got %ld\n", ret);
+    ok(GetCapture() == child, "got capture %p\n", GetCapture());
+
+    ret = SendMessageA(child, WM_CANCELMODE, 0, 0);
+    ok(!ret, "got %ld\n", ret);
+    ok(!GetCapture(), "got capture %p\n", GetCapture());
+
+    DestroyWindow(child);
+    DestroyWindow(hwnd1);
+    DestroyWindow(hwnd2);
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -12016,6 +12060,7 @@ START_TEST(win)
     test_arrange_iconic_windows();
     test_other_process_window(argv[0]);
     test_SC_SIZE();
+    test_cancel_mode();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
