@@ -2176,6 +2176,89 @@ static void test_dialog_custom_data(void)
     DialogBoxA(g_hinst, "CUSTOM_TEST_DIALOG", NULL, custom_test_dialog_proc);
 }
 
+static INT_PTR CALLBACK capture_release_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lparam)
+{
+    if (message == WM_INITDIALOG)
+    {
+        HWND child = (HWND)lparam;
+        DWORD style;
+
+        ok(GetCapture() == child, "got capture %p\n", GetCapture());
+        style = GetWindowLongA(child, GWL_STYLE);
+        ok(!(style & WS_DISABLED), "child should not be disabled\n");
+
+        PostMessageA(dialog, WM_USER, 0, (LPARAM)child);
+    }
+    else if (message == WM_USER)
+    {
+        HWND child = (HWND)lparam;
+        DWORD style;
+
+        todo_wine ok(!GetCapture(), "got capture %p\n", GetCapture());
+        style = GetWindowLongA(child, GWL_STYLE);
+        ok(!(style & WS_DISABLED), "child should not be disabled\n");
+
+        EndDialog(dialog, 1);
+    }
+    return FALSE;
+}
+
+static INT_PTR CALLBACK capture_release_modeless_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lparam)
+{
+    if (message == WM_INITDIALOG)
+    {
+        HWND child = (HWND)lparam;
+        DWORD style;
+
+        ok(GetCapture() == child, "got capture %p\n", GetCapture());
+        style = GetWindowLongA(child, GWL_STYLE);
+        ok(!(style & WS_DISABLED), "child should not be disabled\n");
+
+        PostMessageA(dialog, WM_QUIT, 0, 0);
+    }
+    return FALSE;
+}
+
+static void test_capture_release(void)
+{
+    HWND window, child, dialog;
+    INT_PTR ret;
+    MSG msg;
+
+    /* Set the capture to a child window. The main window will receive
+     * WM_CANCELMODE when being disabled, but the child window will retain
+     * capture. */
+
+    window = CreateWindowA("static", "parent", 0, 100, 200, 300, 400, NULL, NULL, NULL, NULL);
+    child = CreateWindowA("static", "child", WS_CHILD, 10, 20, 100, 100, window, NULL, NULL, NULL);
+
+    SetCapture(child);
+    ret = DialogBoxParamA(GetModuleHandleA(NULL), "TEST_EMPTY_DIALOG", NULL, capture_release_proc, (LPARAM)child);
+    ok(ret == 1, "got %#Ix\n", ret);
+    todo_wine ok(!GetCapture(), "got capture %p\n", GetCapture());
+
+    SetCapture(child);
+    ret = DialogBoxParamA(GetModuleHandleA(NULL), "TEST_EMPTY_DIALOG", window, capture_release_proc, (LPARAM)child);
+    ok(ret == 1, "got %#Ix\n", ret);
+    todo_wine ok(!GetCapture(), "got capture %p\n", GetCapture());
+
+    SetCapture(child);
+    dialog = CreateDialogParamA(GetModuleHandleA(NULL), "TEST_EMPTY_DIALOG",
+            window, capture_release_modeless_proc, (LPARAM)child);
+    ok(!!dialog, "failed to create dialog\n");
+    ok(GetCapture() == child, "got capture %p\n", GetCapture());
+    ShowWindow(dialog, SW_SHOWNORMAL);
+    ok(GetCapture() == child, "got capture %p\n", GetCapture());
+    while (GetMessageA(&msg, NULL, 0, 0))
+        DispatchMessageA(&msg);
+    ok(GetCapture() == child, "got capture %p\n", GetCapture());
+
+    DestroyWindow(dialog);
+
+    DestroyWindow(child);
+    DestroyWindow(window);
+}
+
 START_TEST(dialog)
 {
     g_hinst = GetModuleHandleA (0);
@@ -2195,4 +2278,5 @@ START_TEST(dialog)
     test_SaveRestoreFocus();
     test_timer_message();
     test_MessageBox();
+    test_capture_release();
 }
