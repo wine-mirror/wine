@@ -776,8 +776,76 @@ static void test_FiberLocalStorageWithFibers(PFLS_CALLBACK_FUNCTION cbfunc)
     test_ConvertFiberToThread();
 }
 
+static void WINAPI fls_exit_deadlock_callback(void *arg)
+{
+    if (arg == (void *)1)
+        Sleep(INFINITE);
+    if (arg == (void *)2)
+        /* Unfortunately this test won't affect the exit code if it fails, but
+         * at least it will print a failure message. */
+        ok(RtlDllShutdownInProgress(), "expected DLL shutdown\n");
+}
+
+static DWORD CALLBACK fls_exit_deadlock_thread(void *arg)
+{
+    FlsSetValue((DWORD_PTR)arg, (void *)1);
+    return 0;
+}
+
+static void fls_exit_deadlock_child(void)
+{
+    DWORD index = FlsAlloc(fls_exit_deadlock_callback);
+    FlsSetValue(index, (void *)2);
+    CreateThread(NULL, 0, fls_exit_deadlock_thread, (void *)(DWORD_PTR)index, 0, NULL);
+    Sleep(100);
+    ExitProcess(0);
+}
+
+static void test_fls_exit_deadlock(void)
+{
+    char **argv, cmdline[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si = {0};
+    BOOL ret;
+
+    /* Regression test for the following deadlock:
+     *
+     * Thread A             Thread B
+     * -----------------------------
+     * ExitThread
+     * acquire FLS lock
+     * call FLS callback
+     *                      ExitProcess
+     *                      terminate thread A
+     *                      acquire FLS lock
+     *
+     * Thread B deadlocks on acquiring the FLS lock (in order to itself call its
+     * FLS callbacks.)
+     */
+
+    winetest_get_mainargs(&argv);
+    sprintf(cmdline, "%s %s fls_exit_deadlock", argv[0], argv[1]);
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "failed to create child, error %u\n", GetLastError());
+    ret = WaitForSingleObject(pi.hProcess, 1000);
+    ok(!ret, "wait failed\n");
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+}
+
 START_TEST(fiber)
 {
+    char **argv;
+    int argc;
+
+    argc = winetest_get_mainargs(&argv);
+
+    if (argc == 3 && !strcmp(argv[2], "fls_exit_deadlock"))
+    {
+        fls_exit_deadlock_child();
+        return;
+    }
+
     init_funcs();
 
     if (!pCreateFiber)
@@ -790,4 +858,5 @@ START_TEST(fiber)
     test_FiberLocalStorage();
     test_FiberLocalStorageCallback(FiberLocalStorageProc);
     test_FiberLocalStorageWithFibers(FiberLocalStorageProc);
+    test_fls_exit_deadlock();
 }
