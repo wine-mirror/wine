@@ -3182,12 +3182,14 @@ fail:
  */
 void WINAPI LdrShutdownProcess(void)
 {
+    BOOL detaching = process_detaching;
+
     TRACE("()\n");
 
-    if (!process_detaching)
+    process_detaching = TRUE;
+    if (!detaching)
         RtlProcessFlsData( NtCurrentTeb()->FlsSlots, 1 );
 
-    process_detaching = TRUE;
     process_detach();
 }
 
