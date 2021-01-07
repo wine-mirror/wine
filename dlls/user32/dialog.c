@@ -667,6 +667,8 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
 
     if (DIALOG_CreateControls32( hwnd, dlgTemplate, &template, hInst, unicode ))
     {
+        HWND capture;
+
         /* Send initialisation messages and set focus */
 
         if (dlgProc)
@@ -694,6 +696,9 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
                 }
             }
         }
+
+        if (modal_owner && (capture = GetCapture()))
+            SendMessageW( capture, WM_CANCELMODE, 0, 0 );
 
         if (template.style & WS_VISIBLE && !(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
         {

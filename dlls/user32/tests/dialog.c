@@ -2192,7 +2192,7 @@ static INT_PTR CALLBACK capture_release_proc(HWND dialog, UINT message, WPARAM w
         HWND child = (HWND)lparam;
         DWORD style;
 
-        todo_wine ok(!GetCapture(), "got capture %p\n", GetCapture());
+        ok(!GetCapture(), "got capture %p\n", GetCapture());
         style = GetWindowLongA(child, GWL_STYLE);
         ok(!(style & WS_DISABLED), "child should not be disabled\n");
 
@@ -2233,12 +2233,12 @@ static void test_capture_release(void)
     SetCapture(child);
     ret = DialogBoxParamA(GetModuleHandleA(NULL), "TEST_EMPTY_DIALOG", NULL, capture_release_proc, (LPARAM)child);
     ok(ret == 1, "got %#Ix\n", ret);
-    todo_wine ok(!GetCapture(), "got capture %p\n", GetCapture());
+    ok(!GetCapture(), "got capture %p\n", GetCapture());
 
     SetCapture(child);
     ret = DialogBoxParamA(GetModuleHandleA(NULL), "TEST_EMPTY_DIALOG", window, capture_release_proc, (LPARAM)child);
     ok(ret == 1, "got %#Ix\n", ret);
-    todo_wine ok(!GetCapture(), "got capture %p\n", GetCapture());
+    ok(!GetCapture(), "got capture %p\n", GetCapture());
 
     SetCapture(child);
     dialog = CreateDialogParamA(GetModuleHandleA(NULL), "TEST_EMPTY_DIALOG",
