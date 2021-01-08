@@ -1696,6 +1696,7 @@ struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *conte
     {
         c.ContextFlags = CONTEXT_FULL;
         NtGetContextThread( GetCurrentThread(), &c );
+        c.Eax = STATUS_USER_APC;
         context = &c;
     }
     memmove( &stack->context, context, sizeof(stack->context) );
@@ -1704,7 +1705,6 @@ struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *conte
     stack->arg1 = arg1;
     stack->arg2 = arg2;
     stack->func = func;
-    stack->context.Eax = STATUS_USER_APC;
     return stack;
 }
 
