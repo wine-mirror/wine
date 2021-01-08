@@ -1,12 +1,15 @@
-The Wine development release 6.0-rc5 is now available.
+The Wine development release 6.0-rc6 is now available.
+
+Barring any last minute issue, this is expected to be the last
+release candidate before the final 6.0.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/6.0/wine-6.0-rc5.tar.xz
-  http://mirrors.ibiblio.org/wine/source/6.0/wine-6.0-rc5.tar.xz
+  https://dl.winehq.org/wine/source/6.0/wine-6.0-rc6.tar.xz
+  http://mirrors.ibiblio.org/wine/source/6.0/wine-6.0-rc6.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,95 +25,79 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 6.0-rc5 (total 21):
+Bugs fixed in 6.0-rc6 (total 10):
 
-  21987  Acrobat 7 tryout installer complains: "This Postscript Driver or Windows Platform (Win9x/Me) not supported" (winspool.drv missing level 8/global default printer settings handling)
-  38166  Heroes of Might and Magic V performance issue: severe fps drop on certain maps
-  41593  Molot VST 0.3.1 UI: some knobs are not rendered
-  43852  Monkey Island Special Edition Collection: White screen and crash when starting Monkey1.exe
-  44243  Spire and Serum VST plugins using Direct2D render very slowly
-  44367  Multiple applications need d2d FillEllipse/DrawEllipse implementation (OP-X PRO II VST)
-  44454  Windows Media Encoder 9 refuses to install
-  44574  Microsoft Office 2013 client area is rendered black (Direct2D)
-  45096  MPC-HC 1.7.13 displays a message box: "Error creating EVR Custom renderer", "DXVA2CreateDirect3DDeviceManager9 failed"
-  47770  Waves Central plugin installation fails
-  47824  Remote Life 1.2 demo terminates with 'Cannot load library nw_elf.dll'
-  48142  shell32:appbar tests fail on some Windows 10 machines
-  49010  ilok license manager: doesn't connect to the activation server as in 4.0.2
-  49356  Saya No Uta (a.k.a. The Song of Saya) crashes when launching
-  49771  ntdll:exception causes an unhandled segmentation fault
-  50241  Vertical Text in NL5 schematic doesn't display correctly
-  50304  Control-C exits winedbg instead of stopping the inferior
-  50397  dlls/d3dcompiler_43/tests/hlsl_d3d11.c: error: unknown field ‘Texture2D’ specified in initializer
-  50408  wineboot crash to due getaddrinfo() returning NULL ai_canonname
-  50420  Divinity: Original Sin - Enhanced Edition crashes on startup
-  50423  dlls/devenum/mediacatenum.c: | function ‘property_bag_Read’ | error: unknown field ‘cPins2’ specified in initializer
+  48860  RegiStax 6: mouse does not work in open file dialog
+  49500  Wine is not displaying any windows (on a headless system)
+  49511  Kontakt (Native Instruments) runtime is broken
+  49575  Delphi applications no longer show their main window in the WM's taskbar
+  50151  World of Tanks fails to launch if LC_LANG/LC_ALL are set ja_JP
+  50153  HID doesn't work on macOS Catalina and Big Sur unless "Input Monitoring" permission is granted
+  50355  Commandos 2: Men of Courage hangs after starting
+  50437  wineserver crashes when running SteelSeries Engine client
+  50453  CDB (Part of Debugging Tools for Windows) fails resume debugging after entry point break (continue debug event: 'DBG_EXCEPTION_HANDLED' must be treated as an alias for 'DBG_CONTINUE')
+  50454  Icons have non-transparent background in HxD
 
 ----------------------------------------------------------------
 
-Changes since 6.0-rc4:
-
-Akihiro Sagawa (1):
-      readme: Update Japanese translation.
-
-Alex Henrie (1):
-      winebus: Remove redundant preprocessor check for libsdl2.
+Changes since 6.0-rc5:
 
 Alexandre Julliard (1):
-      Update copyright info for 2021.
+      winex11: Don't delay mapping 0-sized layered windows.
 
-Alistair Leslie-Hughes (1):
-      include: Add DBACCESSORFLAGSENUM/DBBINDSTATUSENUM values.
+André Hentschel (4):
+      ddraw/tests: Don't test functions directly when reporting GetLastError().
+      d3d8/tests: Don't test functions directly when reporting GetLastError().
+      dxgi/tests: Don't test functions directly when reporting GetLastError().
+      d3d9/tests: Don't test functions directly when reporting GetLastError().
 
-Anton Baskanov (1):
-      winegstreamer: Unmap and unref the buffer and release the sample before returning.
+Anton Baskanov (2):
+      winegstreamer: Move sample sending to a helper function.
+      winegstreamer: Split audio data to fit in the sample buffer.
 
 Byeong-Sik Jeon (1):
-      po: Update Korean translation.
+      readme: Update Korean translation.
 
-Damjan Jovanovic (1):
-      ws2_32: Deal with getaddrinfo() returning NULL ai_canonname despite AI_CANONNAME.
+Gabriel Ivăncescu (4):
+      comctl32/tests: Add more tests for 32bpp bitmaps with and without alpha, and masks.
+      comctl32: Remove the masked background when 32bpp bitmaps have no alpha values.
+      ntdll: Do not override existing context's EAX when dispatching user APC.
+      ntdll: Do not override existing context's RAX when dispatching user APC on x86_64.
 
-Dean M Greer (2):
-      readme: Update OS X requirements.
-      configure: Remove Xcode 3.x check.
+Jacek Caban (3):
+      conhost: Fix wrapping search in edit_line_find_in_history.
+      jscript/tests: Silence noisy debug trace.
+      configure: Check for linker delayload support on mingw hosts.
 
-Esme Povirk (1):
-      user32/tests: Don't kill explorer to test shell window.
+Julian Rüger (1):
+      readme: Update German translation.
 
-Jacek Caban (2):
-      condrv: Don't requre write access for IOCTL_CONDRV_CTRL_EVENT ioctl.
-      conhost: Ignore CONTROL_C_EXIT exceptions in Unix mode.
-
-Jefferson Carpenter (1):
-      ntdll/tests: Clear AC flag in align check test.
-
-Lauri Kenttä (1):
-      readme: Update Finnish translation.
-
-Michael Stefaniuc (1):
-      msscript.ocx/tests: Use wide-char string literals.
+Kevin Puetz (1):
+      include: Check whether the ms_abi attribute is supported on aarch64.
 
 Nikolay Sivov (1):
-      readme: Update Russian translation.
+      mfplat/tests: Get source events in async mode.
 
-Paul Gofman (2):
-      ntdll: Use WINAPI calling convention for stub_entry_point().
-      user32: Add stub for SetDisplayConfig().
+Piotr Caban (1):
+      msvcr100: Use LC_TIME code page when converting strftime data.
 
 Qijia Liu (1):
-      winedbg: Remove arm_disasm_branchreg.
+      winedbg: Distinguish -0 from 0.
 
-Sveinar Søpler (1):
-      readme: Update Norwegian translation.
+Rémi Bernon (2):
+      windowscodecs: Copy container_count GUIDs, not bytes, in GetContainerFormats.
+      server: Accept DBG_EXCEPTION_HANDLED parameter in continue_debug_event.
 
-Zebediah Figura (3):
-      httpapi/tests: Avoid some test failures with newer Windows 10.
-      devenum: Avoid initializing nameless unions in designated initializers.
-      server: Pass the correct size to sockaddr_from_unix() (Valgrind).
+Zebediah Figura (6):
+      wined3d: Use debug_d3dusage() for both usage and usage query flags.
+      user32/tests: Add some tests for WM_CANCELMODE.
+      user32/tests: Add some tests for release of capture via modal dialogs.
+      user32: Send WM_CANCELMODE to the current capture window after initializing a modal dialog.
+      ntdll: Set the process detaching flag before calling FLS callbacks.
+      kernel32/tests: Add a regression test for a deadlock calling FLS callbacks on process exit.
 
 Zhiyi Zhang (1):
-      winex11.drv: Check that there are connected outputs before using XRandR 1.4.
+      readme: Update Simplified Chinese translation.
 
 --
 Alexandre Julliard
