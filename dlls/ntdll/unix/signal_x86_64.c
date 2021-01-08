@@ -2049,6 +2049,7 @@ struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *conte
     {
         c.ContextFlags = CONTEXT_FULL;
         NtGetContextThread( GetCurrentThread(), &c );
+        c.Rax = STATUS_USER_APC;
         context = &c;
     }
     memmove( &stack->context, context, sizeof(stack->context) );
@@ -2076,7 +2077,6 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "call " __ASM_NAME("setup_user_apc_dispatcher_stack") "\n\t"
                    "movq %rax,%rsp\n\t"
                    "leaq 0x30(%rsp),%rcx\n\t"       /* context */
-                   "movq $0xc0,0x78(%rcx)\n\t"      /* context.Rax = STATUS_USER_APC */
                    "movq %r12,%rdx\n\t"             /* ctx */
                    "movq %r13,%r8\n\t"              /* arg1 */
                    "movq %r14,%r9\n"                /* arg2 */
