@@ -3515,6 +3515,8 @@ static DWORD CDECL freetype_get_glyph_outline( struct gdi_font *font, UINT glyph
           font->matrix.eM11, font->matrix.eM12,
           font->matrix.eM21, font->matrix.eM22);
 
+    format &= ~GGO_UNHINTED;
+
     needsTransform = get_transform_matrices( font, tategaki, lpmat, matrices );
 
     vertical_metrics = (tategaki && FT_HAS_VERTICAL(ft_face));
