@@ -913,7 +913,7 @@ static BOOL insert_face_in_family_list( struct gdi_font_face *face, struct gdi_f
                    debugstr_w(face->full_name), debugstr_w(family->family_name),
                    cursor->version, face->version );
 
-            if (face->file && !wcsicmp( face->file, cursor->file ))
+            if (face->file && cursor->file && !wcsicmp( face->file, cursor->file ))
             {
                 cursor->refcount++;
                 TRACE("Font %s already in list, refcount now %d\n",
