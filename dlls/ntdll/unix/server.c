@@ -721,8 +721,11 @@ NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
     user_apc_t apc;
     NTSTATUS status;
 
-    status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, 0, NULL, NULL, &apc );
-    if (status == STATUS_USER_APC) invoke_apc( context, &apc );
+    if (alertable)
+    {
+        status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, 0, NULL, NULL, &apc );
+        if (status == STATUS_USER_APC) invoke_apc( context, &apc );
+    }
     return NtSetContextThread( GetCurrentThread(), context );
 }
 
