@@ -72,7 +72,7 @@ extern "C" {
 #  else
 #   define __stdcall __attribute__((ms_abi))
 #  endif
-# elif defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__)
+# elif defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__) && !defined(_WIN32)
 #   define __stdcall __attribute__((pcs("aapcs-vfp")))
 # elif defined(__aarch64__) && defined (__GNUC__) && __has_attribute(ms_abi)
 #  define __stdcall __attribute__((ms_abi))
@@ -120,7 +120,7 @@ extern "C" {
 # endif
 #endif
 
-#if defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__)
+#if defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__) && !defined(_WIN32)
 # define WINAPIV __attribute__((pcs("aapcs")))
 #else
 # define WINAPIV __cdecl
