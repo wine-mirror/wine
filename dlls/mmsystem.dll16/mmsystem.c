@@ -66,7 +66,7 @@ CRITICAL_SECTION mmdrv_cs = { &mmdrv_critsect_debug, -1, 0, 0, 0, 0 };
  * MMSYSTEM DLL entry point
  *
  */
-BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
+BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE16 hinstDLL, WORD ds,
 			     WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
 {
     static int done;
