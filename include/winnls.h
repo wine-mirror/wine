@@ -394,17 +394,18 @@ static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','
 /* String mapping flags */
 #define LCMAP_LOWERCASE  0x00000100	/* Make lower-case */
 #define LCMAP_UPPERCASE  0x00000200	/* Make upper-case */
+#define LCMAP_TITLECASE  0x00000300	/* Make title-case */
 #define LCMAP_SORTKEY    0x00000400	/* Create a sort key */
 #define LCMAP_BYTEREV    0x00000800	/* Reverse the result */
-
+#define LCMAP_HASH       0x00040000
 #define LCMAP_HIRAGANA   0x00100000	/* Transform Japanese katakana into hiragana */
 #define LCMAP_KATAKANA   0x00200000	/* Transform Japanese hiragana into katakana */
 #define LCMAP_HALFWIDTH  0x00400000	/* Use single byte chars in output */
 #define LCMAP_FULLWIDTH  0x00800000	/* Use double byte chars in output */
-
 #define LCMAP_LINGUISTIC_CASING   0x01000000 /* Change case by using language context */
 #define LCMAP_SIMPLIFIED_CHINESE  0x02000000 /* Transform Chinese traditional into simplified */
 #define LCMAP_TRADITIONAL_CHINESE 0x04000000 /* Transform Chinese simplified into traditional */
+#define LCMAP_SORTHANDLE 0x20000000
 
 /* Date and time formatting flags */
 #define DATE_SHORTDATE          0x01  /* Short date format */
