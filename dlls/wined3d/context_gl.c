@@ -1374,9 +1374,20 @@ static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
 
     if (context_gl->valid)
     {
-        wined3d_context_gl_submit_command_fence(context_gl);
-        wined3d_context_gl_wait_command_fence(context_gl,
-                wined3d_device_gl(context_gl->c.device)->current_fence_id - 1);
+        /* If we're here because we're switching away from a previously
+         * destroyed context, acquiring a context in order to submit a fence
+         * is problematic. (In particular, we'd end up back here again in the
+         * process of switching to the newly acquired context.) */
+        if (context_gl->c.destroyed)
+        {
+            gl_info->gl_ops.gl.p_glFinish();
+        }
+        else
+        {
+            wined3d_context_gl_submit_command_fence(context_gl);
+            wined3d_context_gl_wait_command_fence(context_gl,
+                    wined3d_device_gl(context_gl->c.device)->current_fence_id - 1);
+        }
 
         if (context_gl->dummy_arbfp_prog)
             GL_EXTCALL(glDeleteProgramsARB(1, &context_gl->dummy_arbfp_prog));
