@@ -715,6 +715,7 @@ void WINAPI RtlSetCurrentEnvironment(PWSTR new_env, PWSTR* old_env)
 
     prev = NtCurrentTeb()->Peb->ProcessParameters->Environment;
     NtCurrentTeb()->Peb->ProcessParameters->Environment = new_env;
+    NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize = RtlSizeHeap( GetProcessHeap(), 0, new_env );
 
     RtlReleasePebLock();
 
@@ -775,7 +776,7 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
 
     if ((old_size + len) * sizeof(WCHAR) > RtlSizeHeap( GetProcessHeap(), 0, env ))
     {
-        SIZE_T new_size = max( old_size * 2, old_size + len ) * sizeof(WCHAR);
+        SIZE_T new_size = (old_size + len) * sizeof(WCHAR);
         LPWSTR new_env = RtlAllocateHeap( GetProcessHeap(), 0, new_size );
 
         if (!new_env)
@@ -783,13 +784,16 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
             nts = STATUS_NO_MEMORY;
             goto done;
         }
-        memmove(new_env, env, (p - env) * sizeof(WCHAR));
-        assert(len > 0);
-        memmove(new_env + (p - env) + len, p, (old_size - (p - env)) * sizeof(WCHAR));
+        memcpy(new_env, env, (p - env) * sizeof(WCHAR));
+        memcpy(new_env + (p - env) + len, p, (old_size - (p - env)) * sizeof(WCHAR));
         p = new_env + (p - env);
 
         RtlDestroyEnvironment(env);
-        if (!penv) NtCurrentTeb()->Peb->ProcessParameters->Environment = new_env;
+        if (!penv)
+        {
+            NtCurrentTeb()->Peb->ProcessParameters->Environment = new_env;
+            NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize = new_size;
+        }
         else *penv = new_env;
     }
     else
@@ -1023,12 +1027,14 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
             + ROUND_SIZE( ShellInfo->MaximumLength )
             + ROUND_SIZE( RuntimeInfo->MaximumLength ));
 
-    if ((ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size + ROUND_SIZE(env_size) )))
+    env_size = ROUND_SIZE( env_size );
+    if ((ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size + env_size )))
     {
         RTL_USER_PROCESS_PARAMETERS *params = ptr;
-        params->AllocationSize = size;
-        params->Size           = size;
-        params->Flags          = PROCESS_PARAMS_FLAG_NORMALIZED;
+        params->AllocationSize  = size;
+        params->Size            = size;
+        params->Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
+        params->EnvironmentSize = env_size;
         if (cur_params) params->ConsoleFlags = cur_params->ConsoleFlags;
         /* all other fields are zero */
 
@@ -1263,4 +1269,5 @@ done:
         RtlSetCurrentDirectory_U( &curdir );
     }
     set_wow64_environment( &params->Environment );
+    params->EnvironmentSize = RtlSizeHeap( GetProcessHeap(), 0, params->Environment );
 }

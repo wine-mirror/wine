@@ -325,6 +325,13 @@ static WCHAR *get_params_string( RTL_USER_PROCESS_PARAMETERS *params, UNICODE_ST
     return (WCHAR *)((char *)params + (UINT_PTR)str->Buffer);
 }
 
+static SIZE_T get_env_length( const WCHAR *env )
+{
+    const WCHAR *end = env;
+    while (*end) end += wcslen(end) + 1;
+    return end + 1 - env;
+}
+
 static UINT_PTR align(UINT_PTR size, unsigned int alignment)
 {
     return (size + (alignment - 1)) & ~(alignment - 1);
@@ -438,12 +445,12 @@ static void test_process_params(void)
     {
         ok( (char *)params->Environment - (char *)params == (UINT_PTR)pos,
             "wrong env %lx/%lx\n", (UINT_PTR)((char *)params->Environment - (char *)params), pos);
-        str = params->Environment;
-        while (*str) str += lstrlenW(str) + 1;
-        str++;
-        pos += (str - params->Environment) * sizeof(WCHAR);
+        pos += get_env_length(params->Environment) * sizeof(WCHAR);
         ok( align(pos, sizeof(void *)) == size ||
             broken( align(pos, 4) == size ), "wrong size %lx/%lx\n", pos, size );
+        ok( params->EnvironmentSize == size - ((char *)params->Environment - (char *)params),
+            "wrong len %x/%lx\n", params->EnvironmentSize,
+            size - ((char *)params->Environment - (char *)params) );
     }
     else ok( broken(TRUE), "environment not inside block\n" ); /* <= win2k3 */
     pRtlDestroyProcessParameters( params );
@@ -492,12 +499,12 @@ static void test_process_params(void)
     {
         ok( (char *)params->Environment - (char *)params == pos,
             "wrong env %lx/%lx\n", (UINT_PTR)((char *)params->Environment - (char *)params), pos);
-        str = params->Environment;
-        while (*str) str += lstrlenW(str) + 1;
-        str++;
-        pos += (str - params->Environment) * sizeof(WCHAR);
+        pos += get_env_length(params->Environment) * sizeof(WCHAR);
         ok( align(pos, sizeof(void *)) == size ||
             broken( align(pos, 4) == size ), "wrong size %lx/%lx\n", pos, size );
+        ok( params->EnvironmentSize == size - ((char *)params->Environment - (char *)params),
+            "wrong len %x/%lx\n", params->EnvironmentSize,
+            size - ((char *)params->Environment - (char *)params) );
     }
     else ok( broken(TRUE), "environment not inside block\n" );  /* <= win2k3 */
     pRtlDestroyProcessParameters( params );
@@ -532,11 +539,7 @@ static void test_process_params(void)
     pos = check_string( cur_params, &cur_params->RuntimeInfo, NULL, pos );
     /* environment may follow */
     str = (WCHAR *)pos;
-    if (pos - (UINT_PTR)cur_params < cur_params->Size)
-    {
-        while (*str) str += lstrlenW(str) + 1;
-        str++;
-    }
+    if (pos - (UINT_PTR)cur_params < cur_params->Size) str += get_env_length(str);
     ok( (char *)str == (char *)cur_params + cur_params->Size,
         "wrong end ptr %p/%p\n", str, (char *)cur_params + cur_params->Size );
 
@@ -547,13 +550,14 @@ static void test_process_params(void)
 
     if (VirtualQuery( initial_env, &info, sizeof(info) ) && info.AllocationBase == initial_env)
     {
-        todo_wine
         ok( broken(TRUE), "env not a heap block %p / %p\n", cur_params, initial_env );  /* winxp */
     }
     else
     {
         size = HeapSize( GetProcessHeap(), 0, initial_env );
         ok( size != ~(SIZE_T)0, "env is not a heap block %p / %p\n", cur_params, initial_env );
+        ok( cur_params->EnvironmentSize == size,
+            "wrong len %x/%lx\n", cur_params->EnvironmentSize, size );
     }
 }
 
@@ -587,6 +591,7 @@ static void test_RtlSetCurrentEnvironment(void)
     NTSTATUS status;
     WCHAR *old_env, *env, *prev;
     BOOL ret;
+    SIZE_T size;
 
     status = RtlCreateEnvironment(FALSE, &env);
     ok(!status, "got %#x\n", status);
@@ -602,25 +607,56 @@ static void test_RtlSetCurrentEnvironment(void)
     ok(!status, "got %#x\n", status);
 
     old_env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
+    ok(NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == get_env_length(old_env) * sizeof(WCHAR),
+       "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
+    ok(NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == HeapSize( GetProcessHeap(), 0, old_env ),
+       "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
 
     RtlSetCurrentEnvironment(env, &prev);
     ok(prev == old_env, "got wrong previous env %p\n", prev);
     ok(NtCurrentTeb()->Peb->ProcessParameters->Environment == env, "got wrong current env\n");
+    ok(NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == get_env_length(env) * sizeof(WCHAR),
+       "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
+    ok(NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == HeapSize( GetProcessHeap(), 0, env ),
+       "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
 
     check_env_var("testenv1", "unus");
     check_env_var("testenv2", NULL);
     check_env_var("testenv3", "tres");
     check_env_var("PATH", NULL);
 
+    env = HeapReAlloc( GetProcessHeap(), 0, env, HeapSize( GetProcessHeap(), 0, env) + 120 );
+    RtlSetCurrentEnvironment(env, &prev);
+    ok(NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == HeapSize( GetProcessHeap(), 0, env ),
+       "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
+
     RtlSetCurrentEnvironment(old_env, NULL);
     ok(NtCurrentTeb()->Peb->ProcessParameters->Environment == old_env, "got wrong current env\n");
+    ok(NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == get_env_length(old_env) * sizeof(WCHAR),
+       "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
+    ok(NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == HeapSize( GetProcessHeap(), 0, old_env ),
+       "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
 
     check_env_var("testenv1", "heis");
     check_env_var("testenv2", "dyo");
     check_env_var("testenv3", NULL);
 
+    env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
+    size = get_env_length(env) * sizeof(WCHAR);
+    ok( NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == size,
+        "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize );
+    ok( size == HeapSize( GetProcessHeap(), 0, env ),
+        "got wrong size %lu / %lu\n", size, HeapSize( GetProcessHeap(), 0, env ));
+
     SetEnvironmentVariableA("testenv1", NULL);
     SetEnvironmentVariableA("testenv2", NULL);
+
+    env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
+    ok( NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == size,
+        "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize );
+    ok( size == HeapSize( GetProcessHeap(), 0, env ),
+        "got wrong size %lu / %lu\n", size, HeapSize( GetProcessHeap(), 0, env ));
+    ok( size > get_env_length(env) * sizeof(WCHAR), "got wrong size %lu\n", size );
 }
 
 START_TEST(env)
