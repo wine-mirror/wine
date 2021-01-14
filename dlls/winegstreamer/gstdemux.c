@@ -1525,42 +1525,6 @@ static HRESULT gstdemux_init_stream(struct strmbase_filter *iface)
     return S_OK;
 }
 
-static HRESULT gstdemux_start_stream(struct strmbase_filter *iface, REFERENCE_TIME time)
-{
-    struct gstdemux *filter = impl_from_strmbase_filter(iface);
-    GstStateChangeReturn ret;
-
-    if (!filter->container)
-        return S_OK;
-
-    if ((ret = gst_element_set_state(filter->container, GST_STATE_PLAYING)) == GST_STATE_CHANGE_FAILURE)
-    {
-        ERR("Failed to play stream.\n");
-        return E_FAIL;
-    }
-    else if (ret == GST_STATE_CHANGE_ASYNC)
-        return S_FALSE;
-    return S_OK;
-}
-
-static HRESULT gstdemux_stop_stream(struct strmbase_filter *iface)
-{
-    struct gstdemux *filter = impl_from_strmbase_filter(iface);
-    GstStateChangeReturn ret;
-
-    if (!filter->container)
-        return S_OK;
-
-    if ((ret = gst_element_set_state(filter->container, GST_STATE_PAUSED)) == GST_STATE_CHANGE_FAILURE)
-    {
-        ERR("Failed to pause stream.\n");
-        return E_FAIL;
-    }
-    else if (ret == GST_STATE_CHANGE_ASYNC)
-        return S_FALSE;
-    return S_OK;
-}
-
 static HRESULT gstdemux_cleanup_stream(struct strmbase_filter *iface)
 {
     struct gstdemux *filter = impl_from_strmbase_filter(iface);
@@ -1613,8 +1577,6 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_get_pin = gstdemux_get_pin,
     .filter_destroy = gstdemux_destroy,
     .filter_init_stream = gstdemux_init_stream,
-    .filter_start_stream = gstdemux_start_stream,
-    .filter_stop_stream = gstdemux_stop_stream,
     .filter_cleanup_stream = gstdemux_cleanup_stream,
     .filter_wait_state = gstdemux_wait_state,
 };
@@ -2740,8 +2702,6 @@ static const struct strmbase_filter_ops mpeg_splitter_ops =
     .filter_get_pin = gstdemux_get_pin,
     .filter_destroy = gstdemux_destroy,
     .filter_init_stream = gstdemux_init_stream,
-    .filter_start_stream = gstdemux_start_stream,
-    .filter_stop_stream = gstdemux_stop_stream,
     .filter_cleanup_stream = gstdemux_cleanup_stream,
     .filter_wait_state = gstdemux_wait_state,
 };
