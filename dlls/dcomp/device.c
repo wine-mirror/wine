@@ -20,9 +20,17 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objidl.h"
+#include "dxgi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dcomp);
+
+HRESULT WINAPI DCompositionCreateDevice(IDXGIDevice *dxgi_device, REFIID iid, void **device)
+{
+    FIXME("%p, %s, %p.\n", dxgi_device, debugstr_guid(iid), device);
+
+    return E_NOTIMPL;
+}
 
 HRESULT WINAPI DCompositionCreateDevice2(IUnknown *rendering_device, REFIID iid, void **device)
 {
