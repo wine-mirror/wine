@@ -263,22 +263,6 @@ void removed_decoded_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
     call_cb(&cbdata);
 }
 
-GstAutoplugSelectResult autoplug_blacklist_wrapper(GstElement *bin, GstPad *pad,
-        GstCaps *caps, GstElementFactory *fact, gpointer user)
-{
-    struct cb_data cbdata = { AUTOPLUG_BLACKLIST };
-
-    cbdata.u.autoplug_blacklist_data.bin = bin;
-    cbdata.u.autoplug_blacklist_data.pad = pad;
-    cbdata.u.autoplug_blacklist_data.caps = caps;
-    cbdata.u.autoplug_blacklist_data.fact = fact;
-    cbdata.u.autoplug_blacklist_data.user = user;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.autoplug_blacklist_data.ret;
-}
-
 gboolean query_sink_wrapper(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct cb_data cbdata = { QUERY_SINK };

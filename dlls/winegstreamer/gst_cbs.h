@@ -40,7 +40,6 @@ enum CB_TYPE {
     EVENT_SINK,
     GOT_DATA_SINK,
     REMOVED_DECODED_PAD,
-    AUTOPLUG_BLACKLIST,
     QUERY_SINK,
     GSTDEMUX_MAX,
     BYTESTREAM_WRAPPER_PULL,
@@ -116,14 +115,6 @@ struct cb_data {
             GstPad *pad;
             gpointer user;
         } pad_removed_data;
-        struct autoplug_blacklist_data {
-            GstElement *bin;
-            GstPad *pad;
-            GstCaps *caps;
-            GstElementFactory *fact;
-            gpointer user;
-            GstAutoplugSelectResult ret;
-        } autoplug_blacklist_data;
         struct query_sink_data {
             GstPad *pad;
             GstObject *parent;
@@ -153,7 +144,6 @@ gboolean event_sink_wrapper(GstPad *pad, GstObject *parent, GstEvent *event) DEC
 GstFlowReturn got_data_sink_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf) DECLSPEC_HIDDEN;
 GstFlowReturn got_data_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf) DECLSPEC_HIDDEN;
 void removed_decoded_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
-GstAutoplugSelectResult autoplug_blacklist_wrapper(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, gpointer user) DECLSPEC_HIDDEN;
 void Gstreamer_transform_pad_added_wrapper(GstElement *filter, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
 gboolean query_sink_wrapper(GstPad *pad, GstObject *parent, GstQuery *query) DECLSPEC_HIDDEN;
 GstFlowReturn bytestream_wrapper_pull_wrapper(GstPad *pad, GstObject *parent, guint64 ofs, guint len, GstBuffer **buf) DECLSPEC_HIDDEN;

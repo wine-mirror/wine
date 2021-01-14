@@ -1689,7 +1689,7 @@ static BOOL gstdecoder_init_gst(struct gstdemux *filter)
 
     g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), filter);
     g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), filter);
-    g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_blacklist_wrapper), filter);
+    g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_blacklist), filter);
     g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads_wrapper), filter);
 
     filter->their_sink = gst_element_get_static_pad(element, "sink");
@@ -2336,13 +2336,6 @@ void perform_cb_gstdemux(struct cb_data *cbdata)
         {
             struct pad_removed_data *data = &cbdata->u.pad_removed_data;
             removed_decoded_pad(data->element, data->pad, data->user);
-            break;
-        }
-    case AUTOPLUG_BLACKLIST:
-        {
-            struct autoplug_blacklist_data *data = &cbdata->u.autoplug_blacklist_data;
-            cbdata->u.autoplug_blacklist_data.ret = autoplug_blacklist(data->bin,
-                    data->pad, data->caps, data->fact, data->user);
             break;
         }
     case QUERY_SINK:
