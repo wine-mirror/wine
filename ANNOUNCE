@@ -1,15 +1,25 @@
-The Wine development release 6.0-rc6 is now available.
+The Wine team is proud to announce that the stable release Wine 6.0
+is now available.
 
-Barring any last minute issue, this is expected to be the last
-release candidate before the final 6.0.
+This release represents a year of development effort and over 8,300
+individual changes. It contains a large number of improvements that
+are listed in the release notes below. The areas of major changes are:
 
-What's new in this release (see below for details):
-  - Bug fixes only, we are in code freeze.
+  - Core modules in PE format.
+  - Vulkan backend for WineD3D.
+  - DirectShow and Media Foundation support.
+  - Text console redesign.
+
+This release is dedicated to the memory of Ken Thomases, who passed
+away just before Christmas at the age of 51. Ken was an incredibly
+brilliant developer, and the mastermind behind the macOS support in
+Wine. We all miss his skills, his patience, and his dark sense of
+humor.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/6.0/wine-6.0-rc6.tar.xz
-  http://mirrors.ibiblio.org/wine/source/6.0/wine-6.0-rc6.tar.xz
+  https://dl.winehq.org/wine/source/6.0/wine-6.0.tar.xz
+  http://mirrors.ibiblio.org/wine/source/6.0/wine-6.0.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -25,79 +35,453 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 6.0-rc6 (total 10):
+What's new in Wine 6.0
+======================
 
-  48860  RegiStax 6: mouse does not work in open file dialog
-  49500  Wine is not displaying any windows (on a headless system)
-  49511  Kontakt (Native Instruments) runtime is broken
-  49575  Delphi applications no longer show their main window in the WM's taskbar
-  50151  World of Tanks fails to launch if LC_LANG/LC_ALL are set ja_JP
-  50153  HID doesn't work on macOS Catalina and Big Sur unless "Input Monitoring" permission is granted
-  50355  Commandos 2: Men of Courage hangs after starting
-  50437  wineserver crashes when running SteelSeries Engine client
-  50453  CDB (Part of Debugging Tools for Windows) fails resume debugging after entry point break (continue debug event: 'DBG_EXCEPTION_HANDLED' must be treated as an alias for 'DBG_CONTINUE')
-  50454  Icons have non-transparent background in HxD
 
-----------------------------------------------------------------
+*** PE modules
 
-Changes since 6.0-rc5:
+- The core DLLs, including NTDLL, KERNEL32, GDI32, USER32, etc. are
+  built in PE format. This should help a number of copy protection
+  schemes that check that the DLL files on disk match the in-memory
+  contents.
 
-Alexandre Julliard (1):
-      winex11: Don't delay mapping 0-sized layered windows.
+- There is a new mechanism to associate a Unix library with a PE
+  module, to make it possible to call Unix libraries from PE for the
+  functions that can't be handled with Win32 APIs.
+  These libraries are found by replacing the PE module file extension
+  with .so, for instance ntdll.dll -> ntdll.so. They have to be
+  located next to the PE file on disk.
 
-André Hentschel (4):
-      ddraw/tests: Don't test functions directly when reporting GetLastError().
-      d3d8/tests: Don't test functions directly when reporting GetLastError().
-      dxgi/tests: Don't test functions directly when reporting GetLastError().
-      d3d9/tests: Don't test functions directly when reporting GetLastError().
+- Winelib modules no longer link against libwine.so, or require it at
+  run-time. This is a backwards incompatible change, meaning that
+  modules built with Wine 6.0 won't run on older Wine versions.
 
-Anton Baskanov (2):
-      winegstreamer: Move sample sending to a helper function.
-      winegstreamer: Split audio data to fit in the sample buffer.
+- The libwine library is no longer used, but it's still provided to
+  support running Winelib modules built against older versions. It is
+  deprecated however, and will be removed in a future Wine
+  release. Applications that explicitly call libwine functions will
+  need to be changed to call equivalent Win32 or Unix APIs instead.
+  As a consequence, the wine/library.h header has also been removed.
 
-Byeong-Sik Jeon (1):
-      readme: Update Korean translation.
+- PE modules can be built with their debug information split to a
+  separate file, to reduce the size of the files installed into the
+  Wine prefix.
 
-Gabriel Ivăncescu (4):
-      comctl32/tests: Add more tests for 32bpp bitmaps with and without alpha, and masks.
-      comctl32: Remove the masked background when 32bpp bitmaps have no alpha values.
-      ntdll: Do not override existing context's EAX when dispatching user APC.
-      ntdll: Do not override existing context's RAX when dispatching user APC on x86_64.
 
-Jacek Caban (3):
-      conhost: Fix wrapping search in edit_line_find_in_history.
-      jscript/tests: Silence noisy debug trace.
-      configure: Check for linker delayload support on mingw hosts.
+*** Direct3D
 
-Julian Rüger (1):
-      readme: Update German translation.
+- An experimental Vulkan renderer for WineD3D is implemented. This
+  requires the vkd3d-shader library in order to translate Direct3D
+  shaders to SPIR-V shaders. In this release, shader support in the
+  Vulkan renderer is limited to shader model 4 and 5 shaders. In
+  practice, that limits its usefulness to Direct3D 10 and 11
+  applications. The Vulkan renderer can be enabled by setting the
+  Direct3D "renderer" registry setting to "vulkan".
 
-Kevin Puetz (1):
-      include: Check whether the ms_abi attribute is supported on aarch64.
+- The following Direct3D 11 features are implemented:
+  - Per render-target ("independent") blend states.
+  - Dual-source blending.
+  - Multi-sample anti-aliasing sample masks.
+  - Several more capability queries.
 
-Nikolay Sivov (1):
-      mfplat/tests: Get source events in async mode.
+- Support for Direct3D 9 alpha-to-coverage multi-sampling is
+  implemented.
 
-Piotr Caban (1):
-      msvcr100: Use LC_TIME code page when converting strftime data.
+- When the EXT_framebuffer_multisample_blit_scaled OpenGL extension is
+  available, scaled multi-sample resolve operations can happen as a
+  single operation.
 
-Qijia Liu (1):
-      winedbg: Distinguish -0 from 0.
+- When the ARB_buffer_storage OpenGL extension is available, it will
+  be used to allocate OpenGL buffer objects. This can result in minor
+  performance improvements with some application and driver
+  combinations.
 
-Rémi Bernon (2):
-      windowscodecs: Copy container_count GUIDs, not bytes, in GetContainerFormats.
-      server: Accept DBG_EXCEPTION_HANDLED parameter in continue_debug_event.
+- The Direct3D graphics card database recognizes more graphics cards,
+  and the reported driver versions have been updated.
 
-Zebediah Figura (6):
-      wined3d: Use debug_d3dusage() for both usage and usage query flags.
-      user32/tests: Add some tests for WM_CANCELMODE.
-      user32/tests: Add some tests for release of capture via modal dialogs.
-      user32: Send WM_CANCELMODE to the current capture window after initializing a modal dialog.
-      ntdll: Set the process detaching flag before calling FLS callbacks.
-      kernel32/tests: Add a regression test for a deadlock calling FLS callbacks on process exit.
+- New or modified HKEY_CURRENT_USER\Software\Wine\Direct3D registry keys:
+  - "renderer" (REG_SZ)
+    The backend API to target. This existing setting has an additional
+    valid value in this release: "vulkan". Possible values are now
+    "gl" (default) for OpenGL, "gdi" or "no3d" for GDI, and "vulkan"
+    for Vulkan.
+  - "csmt" (REG_DWORD)
+    Enable or disable multi-threaded command stream features. This
+    existing setting has an additional valid bit-field value in this
+    release. Valid bit-fields in this release are:
+    - 0x1 Enable the multi-threaded command stream feature.
+    - 0x2 Enable serialization between multiple command streams in the
+          same application. This feature is primarily useful for
+          applications using multiple Direct3D instances from
+          different threads, in combination with OpenGL drivers that
+          do not properly support multi-threaded access themselves. As
+          of this release, this is known to affect Microsoft Office
+          2013 and later versions in combination with the Mesa-based
+          Nouveau driver.
+    Note that this setting is a bit-field; in order to enable both
+    features above, set this to 0x3.
 
-Zhiyi Zhang (1):
-      readme: Update Simplified Chinese translation.
+- Removed HKEY_CURRENT_USER\Software\Wine\Direct3D registry key:
+  - "DirectDrawRenderer"
+    This setting was previously deprecated in favor of the "renderer"
+    setting, and has been removed in this release.
+
+
+*** D3DX
+
+- Drawing text using the ID3DXFont interface is implemented.
+
+- The ID3D12ShaderReflection shader reflection interface is
+  implemented.
+
+- The D3DX10GetImageInfoFromMemory() and related image information
+  query functions are implemented.
+
+
+*** Graphics
+
+- Drawing arcs, ellipses and rounded rectangles using the Direct2D API
+  is implemented.
+
+- The standard sRGB color profile is installed into the prefix, for
+  applications that expect to load it directly.
+
+- The Null display driver can be used as a proper display driver, for
+  cases when a user interface is not needed.
+
+- WindowsCodecs supports decoding images in DDS (DirectDraw Surface)
+  and JPEG-XR formats, as well as encoding images to GIF format.
+
+- The Vulkan driver creates the JSON manifest and registry entry used
+  by the official Vulkan loader.
+
+- The Vulkan driver supports up to version 1.2.162 of the Vulkan spec.
+
+- There are a number of improvements in GdiPlus, including support for
+  widening lines, more hatch styles, and more record types in
+  metafiles.
+
+
+*** Audio / video
+
+- The Media Foundation framework is more complete, including:
+  - Initial Media Session implementation for state changes and data
+    flow.
+  - Initial Streaming Audio Renderer (SAR) pipeline component
+    implementation.
+  - Initial Video Renderer implementation, a pipeline component
+    hosting EVR mixer and presenter.
+  - Initial Topology Loader implementation.
+  - Various fixes for the Source Reader.
+  - Initial Media Engine implementation.
+  - Asynchronous queues functionality is moved to rtworkq.dll.
+
+- The AMStream (ActiveMovie Multimedia Streaming) library is more
+  fully implemented, including support for streaming and sample
+  management.
+
+- The Video Mixing Renderer supports the following features:
+  - Windowless and renderless mode.
+  - Automatic stretching and resizing of the video to match the window
+    size.
+  - Hardware-accelerated color space conversion of YUV formats, if
+    supported by the underlying Direct3D implementation.
+  - Preservation of video aspect ratio via letterboxing.
+
+- The Video Mixing Renderer is used as the default video renderer if
+  supported by the underlying Direct3D implementation, replacing the
+  GDI video renderer.
+
+- The DirectShow File Writer filter is implemented.
+
+- The DirectX Media Object (DMO) Wrapper filter is implemented. DMOs
+  can be automatically enumerated and plugged into the filter graph.
+
+- The video capture filter supports reporting more information about
+  video formats, including supported sizes and frame rates.
+
+- More Media Detector APIs are implemented.
+
+- The GStreamer wrapper filter supports video and audio format
+  conversion within the GStreamer pipeline. This obviates the need for
+  extra transform filters, and accordingly the GStreamer-based YUV to
+  ARGB converter, audio converter, and mp3 decoder have been
+  removed. Any video can be output in any of several RGB and YUV
+  formats, allowing for better performance in some cases.
+
+- The Enhanced Video Renderer (EVR) contains an initial default mixer
+  and presenter implementation using DXVA2 API.
+
+- The XACT3 (Cross-platform Audio Creation) engine library and
+  interfaces are implemented through FAudio.
+
+
+*** Text and fonts
+
+- Text console support is reimplemented, using the architecture of
+  recent Windows versions, which is closer to the Unix way of doing
+  things. In particular:
+
+  - Pseudo consoles are implemented (equivalent to Unix pseudo TTYs).
+
+  - All console handling is done in the ConHost process. WineConsole
+    is now only a thin wrapper around ConHost.
+
+  - ConHost handles VT escape sequences, meaning that the Unix Curses
+    library is no longer needed.
+
+- Default shaping features are enabled for all scripts in
+  DirectWrite. All types of GSUB/GPOS lookups are supported.
+
+- In DirectWrite, CMAP data is read directly from the font without
+  global cache or a need to create FreeType objects, for improved
+  performance.
+
+- The font initialization in GDI32 avoids loading fonts through
+  FreeType when possible, for faster startup times. The font registry
+  cache is also more efficient.
+
+- The Uniscribe support in the USP10 library is moved into GDI32, as
+  per recent Windows versions.
+
+- An initial version of the Webdings font is implemented, with only a
+  few glyphs at this point.
+
+
+*** Input devices
+
+- Raw input devices and messages are implemented, and used by
+  DirectInput instead of less efficient low-level hooks.
+
+- An initial USB kernel driver is implemented, based on the LibUSB
+  library, to provide access to USB devices.
+
+- Mouse position history is implemented, for games that want more
+  precise mouse positions.
+
+- SDL controller mappings can be set through the
+  'SDL_GAMECONTROLLERCONFIG' environment variable.
+
+- Plug & Play device notifications are implemented.
+
+
+*** Desktop integration
+
+- Display settings are retrieved through XRandR 1.4 if available. This
+  also provides support for multiple display orientations.
+
+- There is a consistent view of the graphics adapters across the X11,
+  OpenGL and Vulkan APIs.
+
+- The desktop work area layout is supported on multi-monitor setups
+  using the _GTK_WORKAREAS property.
+
+
+*** Internationalization
+
+- Unicode character tables are based on version 13.0.0 of the Unicode
+  Standard.
+
+- Unicode normalization is fully standard-compliant, including support
+  for Hangul, supplementary character planes, and IDN normalization.
+
+- Codepage and other Unicode tables are stored in external NLS files
+  compatible with Windows. This makes it possible to test with the
+  native files to track down character mapping issues.
+
+- Codepage mapping tables are generated from Microsoft's Open
+  Specification data for better compatibility.
+
+- Unicode linguistic case mappings for languages like Turkish are
+  implemented.
+
+- Codepage 708 (Arabic ASMO) is supported.
+
+
+*** Kernel
+
+- Windows version compatibility mode is implemented, to only report
+  the newest Windows versions to applications that have declared that
+  they support them.
+
+- INI file mappings are implemented, to redirect .ini file entries to
+  registry keys.
+
+- Many more NT kernel objects and functions are implemented, to
+  support anti-cheat systems that load kernel drivers.
+
+- A NetIO.sys kernel driver is implemented, to support copy protection
+  drivers that want to access the network.
+
+- AVX registers are supported in register contexts and exception
+  handling on x86 platforms.
+
+- The Kernel User Shared Data block contains up-to-date timestamps, to
+  avoid system calls when retrieving the current time counter.
+
+
+*** C Runtime
+
+- The C runtime import libraries provide the necessary runtime support
+  so that PE modules no longer depend on the MinGW runtime.
+
+- The Wine modules are all built against the new UCRT runtime.
+
+- Winegcc uses the new UCRT runtime by default, unless an older C
+  runtime library is explicitly imported.
+
+- The C runtime supports Windows locales that use the UTF-8 codepage.
+
+- A number of C runtime math functions are implemented internally
+  based on code from the Musl C library, to avoid depending on the
+  system math library.
+
+- Floating point formatting is reimplemented in the C runtime to avoid
+  depending on the system printf function.
+
+
+*** Internet and networking
+
+- The Gecko engine is updated to version 2.47.2.
+
+- The WebSocket API is implemented.
+
+- JScript and VBScript report the correct location for errors in
+  scripts.
+
+- There are various improvements to the LDAP and Active Directory
+  Service support.
+
+- There is an initial implementation of the NDIS network driver.
+
+- The OLE data link dialog supports configuring the ODBC data
+  connection.
+
+
+*** Cryptography
+
+- The BCrypt library supports additional algorithms, including DSA
+  keys and the 3DES cipher.
+
+- The DSSENH (Digital Signatures) Cryptographic Provider is
+  implemented, and enabled by default.
+
+
+*** Alternative platforms
+
+- Support for exception handling and stack unwinding on ARM platforms
+  (both 32-bit and 64-bit) should be on par with the x86
+  architectures.
+
+- There is initial support for ARM64 on macOS, for the new Apple
+  Silicon.
+
+- Support for the obsolete 32-bit PowerPC architecture is removed. It
+  had been broken for some time already.
+
+- Case-insensitive filesystem optimizations are enabled on FreeBSD.
+
+
+*** Builtin applications
+
+- WineCfg supports querying and modifying the configured Windows
+  version through the command line with a new /v option.
+
+- The Shell Folders configuration in WineCfg also supports the
+  Downloads and Templates folders.
+
+- The removable drive autodetection has been removed in WineCfg, now
+  that the dbus dynamic device support is stable.
+
+- The FSUTIL tool supports a 'hardlink' command to create hard links.
+
+- The FIND tool supports searching multiple files, in addition to
+  standard input.
+
+- The WHOAMI tool is implemented to display the current username.
+
+
+*** Development tools
+
+- Winegcc supports generating PDB files when building PE DLLs, for
+  compatibility with Windows debuggers.
+
+- DbgHelp supports GNU-style debug information also in PE files.
+
+- Winegcc can generate an import library directly when building a DLL,
+  with the '-Wl,--out-implib' option.
+
+- The various build tools also look for include and library files in
+  paths relative to the tool binary, to allow relocatable Winelib
+  installations.
+
+- The Resource Compiler (wrc) and Message Compiler (wmc) use the
+  external NLS files for codepage conversions. If necessary, the path
+  to the external files can be specified with the '--nls-dir' option.
+
+- There are various improvements in the gdb proxy mode in WineDbg,
+  including support for hardware watchpoints, and for loading symbols
+  from PE modules.
+
+- The Message Compiler (wmc) handles the Unicode BOM to detect the
+  input file format.
+
+- The Resource Compiler (wrc) has a '--utf8' option to specify UTF-8
+  input, as an alternative to putting #pragma codepage inside the
+  file.
+
+- The IDL compiler (widl) supports a WinRT mode, and various
+  constructs specific to that mode.
+
+- The IDL compiler (widl) supports custom attributes in type
+  libraries.
+
+
+*** Build infrastructure
+
+- Makefiles are no longer recursive; a single Makefile is generated to
+  build the entire tree, with correct dependencies between modules.
+
+- Automake-style silent build rules are supported. They are disabled
+  by default, but can be enabled by passing the '--enable-silent-rules'
+  option to configure.
+
+- The new LLVM-MinGW compiler is supported for PE cross-compilation.
+
+- Building with the Clang compiler in MSVC mode is supported.
+
+- A '-syscall' entry point flag is supported in spec files, to
+  generate NT-style system call entry points.
+
+
+*** Miscellaneous
+
+- The Mono engine is updated to version 5.1.1, containing the open
+  sourced parts of the WPF framework, and initial replacements for
+  some of the closed source parts.
+
+- Most modules have been converted to use wide-character string
+  constants like L"abc" instead of explicit arrays, for more readable
+  code.
+
+- Many of the less common timezones (for various remote islands) are
+  supported.
+
+- Listviews and image buttons are supported in MSI installers.
+
+- There is initial support for the Print Ticket API.
+
+
+*** New external dependencies
+
+- The LibUSB library is used to implement the USB driver.
+
+- The VkD3D-Shader library is used to translate Direct3D shaders to
+  SPIR-V shaders for the WineD3D Vulkan renderer.
+
+- The Curses, GLU, and Zlib libraries are no longer used.
+
 
 --
 Alexandre Julliard
