@@ -279,18 +279,6 @@ GstAutoplugSelectResult autoplug_blacklist_wrapper(GstElement *bin, GstPad *pad,
     return cbdata.u.autoplug_blacklist_data.ret;
 }
 
-void unknown_type_wrapper(GstElement *bin, GstPad *pad, GstCaps *caps, gpointer user)
-{
-    struct cb_data cbdata = { UNKNOWN_TYPE };
-
-    cbdata.u.unknown_type_data.bin = bin;
-    cbdata.u.unknown_type_data.pad = pad;
-    cbdata.u.unknown_type_data.caps = caps;
-    cbdata.u.unknown_type_data.user = user;
-
-    call_cb(&cbdata);
-}
-
 gboolean query_sink_wrapper(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct cb_data cbdata = { QUERY_SINK };

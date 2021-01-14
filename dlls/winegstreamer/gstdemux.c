@@ -1352,13 +1352,6 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
     return GST_BUS_DROP;
 }
 
-static void unknown_type(GstElement *bin, GstPad *pad, GstCaps *caps, gpointer user)
-{
-    gchar *strcaps = gst_caps_to_string(caps);
-    ERR("Could not find a filter for caps: %s\n", debugstr_a(strcaps));
-    g_free(strcaps);
-}
-
 static HRESULT GST_Connect(struct gstdemux *This, IPin *pConnectPin)
 {
     LONGLONG avail;
@@ -1691,7 +1684,6 @@ static BOOL gstdecoder_init_gst(struct gstdemux *filter)
     g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), filter);
     g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), filter);
     g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_blacklist_wrapper), filter);
-    g_signal_connect(element, "unknown-type", G_CALLBACK(unknown_type_wrapper), filter);
     g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads_wrapper), filter);
 
     filter->their_sink = gst_element_get_static_pad(element, "sink");
@@ -2337,12 +2329,6 @@ void perform_cb_gstdemux(struct cb_data *cbdata)
             struct autoplug_blacklist_data *data = &cbdata->u.autoplug_blacklist_data;
             cbdata->u.autoplug_blacklist_data.ret = autoplug_blacklist(data->bin,
                     data->pad, data->caps, data->fact, data->user);
-            break;
-        }
-    case UNKNOWN_TYPE:
-        {
-            struct unknown_type_data *data = &cbdata->u.unknown_type_data;
-            unknown_type(data->bin, data->pad, data->caps, data->user);
             break;
         }
     case QUERY_SINK:
