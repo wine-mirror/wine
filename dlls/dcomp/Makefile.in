@@ -3,6 +3,7 @@ MODULE    = dcomp.dll
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
+	device.c \
 	main.c
 
 RC_SRCS = version.rc
