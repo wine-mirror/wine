@@ -41,6 +41,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gstreamer);
 
+GST_DEBUG_CATEGORY_STATIC(wine);
+#define GST_CAT_DEFAULT wine
+
 static const GUID MEDIASUBTYPE_CVID = {mmioFOURCC('c','v','i','d'), 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
 
 struct gstdemux
@@ -1305,15 +1308,18 @@ static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, 
 {
     const char *name = gst_element_factory_get_longname(fact);
 
-    if (strstr(name, "Player protection")) {
-        WARN("Blacklisted a/52 decoder because it only works in Totem\n");
+    GST_TRACE("Using \"%s\".", name);
+
+    if (strstr(name, "Player protection"))
+    {
+        GST_WARNING("Blacklisted a/52 decoder because it only works in Totem.");
         return GST_AUTOPLUG_SELECT_SKIP;
     }
-    if (!strcmp(name, "Fluendo Hardware Accelerated Video Decoder")) {
-        WARN("Disabled video acceleration since it breaks in wine\n");
+    if (!strcmp(name, "Fluendo Hardware Accelerated Video Decoder"))
+    {
+        GST_WARNING("Disabled video acceleration since it breaks in wine.");
         return GST_AUTOPLUG_SELECT_SKIP;
     }
-    TRACE("using \"%s\"\n", name);
     return GST_AUTOPLUG_SELECT_TRY;
 }
 
@@ -1812,11 +1818,19 @@ static HRESULT gstdecoder_source_get_media_type(struct gstdemux_source *pin,
     return VFW_S_NO_MORE_ITEMS;
 }
 
+static BOOL parser_init_gstreamer(void)
+{
+    if (!init_gstreamer())
+        return FALSE;
+    GST_DEBUG_CATEGORY_INIT(wine, "WINE", GST_DEBUG_FG_RED, "Wine GStreamer support");
+    return TRUE;
+}
+
 HRESULT gstdemux_create(IUnknown *outer, IUnknown **out)
 {
     struct gstdemux *object;
 
-    if (!init_gstreamer())
+    if (!parser_init_gstreamer())
         return E_FAIL;
 
     mark_wine_thread();
@@ -2466,7 +2480,7 @@ HRESULT wave_parser_create(IUnknown *outer, IUnknown **out)
     static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
     struct gstdemux *object;
 
-    if (!init_gstreamer())
+    if (!parser_init_gstreamer())
         return E_FAIL;
 
     mark_wine_thread();
@@ -2585,7 +2599,7 @@ HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out)
     static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
     struct gstdemux *object;
 
-    if (!init_gstreamer())
+    if (!parser_init_gstreamer())
         return E_FAIL;
 
     mark_wine_thread();
@@ -2744,7 +2758,7 @@ HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out)
     static const WCHAR sink_name[] = {'I','n','p','u','t',0};
     struct gstdemux *object;
 
-    if (!init_gstreamer())
+    if (!parser_init_gstreamer())
         return E_FAIL;
 
     mark_wine_thread();
