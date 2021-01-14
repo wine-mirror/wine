@@ -792,7 +792,6 @@ static void session_shutdown_current_topology(struct media_session *session)
     IMFTopologyNode *node;
     IMFActivate *activate;
     IMFMediaSink *sink;
-    IUnknown *object;
     WORD idx = 0;
     HRESULT hr;
 
@@ -818,20 +817,15 @@ static void session_shutdown_current_topology(struct media_session *session)
                         WARN("Failed to shut down activation object for the sink, hr %#x.\n", hr);
                     IMFActivate_Release(activate);
                 }
-                else if (SUCCEEDED(IMFTopologyNode_GetObject(node, &object)))
+                else if (SUCCEEDED(topology_node_get_object(node, &IID_IMFStreamSink, (void **)&stream_sink)))
                 {
-                    if (SUCCEEDED(IUnknown_QueryInterface(object, &IID_IMFStreamSink, (void **)&stream_sink)))
+                    if (SUCCEEDED(IMFStreamSink_GetMediaSink(stream_sink, &sink)))
                     {
-                        if (SUCCEEDED(IMFStreamSink_GetMediaSink(stream_sink, &sink)))
-                        {
-                            IMFMediaSink_Shutdown(sink);
-                            IMFMediaSink_Release(sink);
-                        }
-
-                        IMFStreamSink_Release(stream_sink);
+                        IMFMediaSink_Shutdown(sink);
+                        IMFMediaSink_Release(sink);
                     }
 
-                    IUnknown_Release(object);
+                    IMFStreamSink_Release(stream_sink);
                 }
             }
         }
@@ -1358,7 +1352,6 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
     IMFMediaType *media_type;
     IMFStreamDescriptor *sd;
     HRESULT hr = S_OK;
-    IUnknown *object;
 
     if (!(topo_node = heap_alloc_zero(sizeof(*topo_node))))
         return E_OUTOFMEMORY;
@@ -1374,15 +1367,11 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
         case MF_TOPOLOGY_OUTPUT_NODE:
             topo_node->u.sink.notify_cb.lpVtbl = &node_sample_allocator_cb_vtbl;
 
-            if (FAILED(hr = IMFTopologyNode_GetObject(node, &object)))
+            if (FAILED(hr = topology_node_get_object(node, &IID_IMFStreamSink, (void **)&topo_node->object.object)))
             {
-                WARN("Node %s does not have associated object.\n", wine_dbgstr_longlong(topo_node->node_id));
+                WARN("Failed to get stream sink interface, hr %#x.\n", hr);
                 break;
             }
-            hr = IUnknown_QueryInterface(object, &IID_IMFStreamSink, (void **)&topo_node->object.object);
-            IUnknown_Release(object);
-            if (FAILED(hr))
-                break;
 
             if (FAILED(hr = IMFStreamSink_GetMediaSink(topo_node->object.sink_stream, &media_sink)))
                 break;
@@ -1433,14 +1422,11 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
 
             break;
         case MF_TOPOLOGY_TRANSFORM_NODE:
-            if (SUCCEEDED(hr = IMFTopologyNode_GetObject(node, &object)))
-            {
-                hr = IUnknown_QueryInterface(object, &IID_IMFTransform, (void **)&topo_node->object.transform);
-                IUnknown_Release(object);
-            }
 
-            if (SUCCEEDED(hr))
+            if (SUCCEEDED(hr = topology_node_get_object(node, &IID_IMFTransform, (void **)&topo_node->object.transform)))
+            {
                 hr = session_set_transform_stream_info(topo_node);
+            }
             else
                 WARN("Failed to get IMFTransform for MFT node, hr %#x.\n", hr);
 
@@ -2017,10 +2003,10 @@ static HRESULT WINAPI session_get_service_GetService(IMFGetService *iface, REFGU
     {
         IMFStreamSink *stream_sink;
         IMFTopologyNode *node;
-        IUnknown *vr, *object;
         IMFCollection *nodes;
         IMFMediaSink *sink;
         unsigned int i = 0;
+        IUnknown *vr;
         HRESULT hr;
 
         EnterCriticalSection(&session->cs);
@@ -2033,23 +2019,18 @@ static HRESULT WINAPI session_get_service_GetService(IMFGetService *iface, REFGU
             {
                 while (IMFCollection_GetElement(nodes, i++, (IUnknown **)&node) == S_OK)
                 {
-                    if (SUCCEEDED(IMFTopologyNode_GetObject(node, &object)))
+                    if (SUCCEEDED(topology_node_get_object(node, &IID_IMFStreamSink, (void **)&stream_sink)))
                     {
-                        if (SUCCEEDED(IUnknown_QueryInterface(object, &IID_IMFStreamSink, (void **)&stream_sink)))
+                        if (SUCCEEDED(IMFStreamSink_GetMediaSink(stream_sink, &sink)))
                         {
-                            if (SUCCEEDED(IMFStreamSink_GetMediaSink(stream_sink, &sink)))
+                            if (SUCCEEDED(IMFMediaSink_QueryInterface(sink, &IID_IMFVideoRenderer, (void **)&vr)))
                             {
-                                if (SUCCEEDED(IMFMediaSink_QueryInterface(sink, &IID_IMFVideoRenderer, (void **)&vr)))
-                                {
-                                    if (FAILED(hr = MFGetService(vr, service, riid, obj)))
-                                        WARN("Failed to get service from video renderer %#x.\n", hr);
-                                    IUnknown_Release(vr);
-                                }
+                                if (FAILED(hr = MFGetService(vr, service, riid, obj)))
+                                    WARN("Failed to get service from video renderer %#x.\n", hr);
+                                IUnknown_Release(vr);
                             }
-                            IMFStreamSink_Release(stream_sink);
                         }
-
-                        IUnknown_Release(object);
+                        IMFStreamSink_Release(stream_sink);
                     }
 
                     IMFTopologyNode_Release(node);

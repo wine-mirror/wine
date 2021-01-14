@@ -1786,6 +1786,22 @@ static HRESULT create_topology_node(MF_TOPOLOGY_TYPE node_type, struct topology_
     return S_OK;
 }
 
+HRESULT topology_node_get_object(IMFTopologyNode *node, REFIID riid, void **obj)
+{
+    IUnknown *unk;
+    HRESULT hr;
+
+    *obj = NULL;
+
+    if (SUCCEEDED(hr = IMFTopologyNode_GetObject(node, &unk)))
+    {
+        hr = IUnknown_QueryInterface(unk, riid, obj);
+        IUnknown_Release(unk);
+    }
+
+    return hr;
+}
+
 /***********************************************************************
  *      MFCreateTopologyNode (mf.@)
  */
@@ -1817,7 +1833,6 @@ HRESULT WINAPI MFGetTopoNodeCurrentType(IMFTopologyNode *node, DWORD stream, BOO
     IMFStreamDescriptor *sd;
     IMFTransform *transform;
     UINT32 primary_output;
-    IUnknown *object;
     HRESULT hr;
 
     TRACE("%p, %u, %d, %p.\n", node, stream, output, type);
@@ -1828,12 +1843,7 @@ HRESULT WINAPI MFGetTopoNodeCurrentType(IMFTopologyNode *node, DWORD stream, BOO
     switch (node_type)
     {
         case MF_TOPOLOGY_OUTPUT_NODE:
-            if (FAILED(hr = IMFTopologyNode_GetObject(node, &object)))
-                return hr;
-
-            hr = IUnknown_QueryInterface(object, &IID_IMFStreamSink, (void **)&stream_sink);
-            IUnknown_Release(object);
-            if (SUCCEEDED(hr))
+            if (SUCCEEDED(topology_node_get_object(node, &IID_IMFStreamSink, (void **)&stream_sink)))
             {
                 hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, &type_handler);
                 IMFStreamSink_Release(stream_sink);
@@ -1861,12 +1871,7 @@ HRESULT WINAPI MFGetTopoNodeCurrentType(IMFTopologyNode *node, DWORD stream, BOO
             }
             break;
         case MF_TOPOLOGY_TRANSFORM_NODE:
-            if (FAILED(hr = IMFTopologyNode_GetObject(node, &object)))
-                return hr;
-
-            hr = IUnknown_QueryInterface(object, &IID_IMFTransform, (void **)&transform);
-            IUnknown_Release(object);
-            if (SUCCEEDED(hr))
+            if (SUCCEEDED(hr = topology_node_get_object(node, &IID_IMFTransform, (void **)&transform)))
             {
                 if (output)
                     hr = IMFTransform_GetOutputCurrentType(transform, stream, type);
@@ -2163,7 +2168,6 @@ static HRESULT topology_loader_get_node_type_handler(IMFTopologyNode *node, IMFM
     MF_TOPOLOGY_TYPE node_type;
     IMFStreamSink *stream_sink;
     IMFStreamDescriptor *sd;
-    IUnknown *object;
     HRESULT hr;
 
     if (FAILED(hr = IMFTopologyNode_GetNodeType(node, &node_type)))
@@ -2172,14 +2176,10 @@ static HRESULT topology_loader_get_node_type_handler(IMFTopologyNode *node, IMFM
     switch (node_type)
     {
         case MF_TOPOLOGY_OUTPUT_NODE:
-            if (SUCCEEDED(hr = IMFTopologyNode_GetObject(node, (IUnknown **)&object)))
+            if (SUCCEEDED(hr = topology_node_get_object(node, &IID_IMFStreamSink, (void **)&stream_sink)))
             {
-                if (SUCCEEDED(hr = IUnknown_QueryInterface(object, &IID_IMFStreamSink, (void **)&stream_sink)))
-                {
-                    hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, handler);
-                    IMFStreamSink_Release(stream_sink);
-                }
-                IUnknown_Release(object);
+                hr = IMFStreamSink_GetMediaTypeHandler(stream_sink, handler);
+                IMFStreamSink_Release(stream_sink);
             }
             break;
         case MF_TOPOLOGY_SOURCESTREAM_NODE:
@@ -2368,21 +2368,19 @@ static BOOL topology_loader_is_node_d3d_aware(IMFTopologyNode *node)
 {
     IMFAttributes *attributes;
     unsigned int d3d_aware = 0;
-    IUnknown *object = NULL;
+    IMFTransform *transform;
 
-    if (FAILED(IMFTopologyNode_GetObject(node, &object)))
+    if (FAILED(topology_node_get_object(node, &IID_IMFAttributes, (void **)&attributes)))
         return FALSE;
 
-    if (SUCCEEDED(IUnknown_QueryInterface(object, &IID_IMFAttributes, (void **)&attributes)))
+    IMFAttributes_GetUINT32(attributes, &MF_SA_D3D_AWARE, &d3d_aware);
+    IMFAttributes_Release(attributes);
+
+    if (!d3d_aware && SUCCEEDED(topology_node_get_object(node, &IID_IMFTransform, (void **)&transform)))
     {
-        IMFAttributes_GetUINT32(attributes, &MF_SA_D3D_AWARE, &d3d_aware);
-        IMFAttributes_Release(attributes);
+        d3d_aware = mf_is_sample_copier_transform(transform);
+        IMFTransform_Release(transform);
     }
-
-    if (!d3d_aware)
-        d3d_aware = mf_is_sample_copier_transform(object);
-
-    IUnknown_Release(object);
 
     return !!d3d_aware;
 }
@@ -2454,7 +2452,7 @@ static HRESULT topology_loader_connect_d3d_aware_input(struct topoloader_context
     IMFTransform *copier = NULL;
     HRESULT hr = S_OK;
 
-    IMFTopologyNode_GetObject(node, (IUnknown **)&stream_sink);
+    topology_node_get_object(node, &IID_IMFStreamSink, (void **)&stream_sink);
 
     if (topology_loader_is_node_d3d_aware(node))
     {

@@ -561,9 +561,9 @@ static const IMFTransformVtbl sample_copier_transform_vtbl =
     sample_copier_transform_ProcessOutput,
 };
 
-BOOL mf_is_sample_copier_transform(IUnknown *transform)
+BOOL mf_is_sample_copier_transform(IMFTransform *transform)
 {
-    return transform->lpVtbl == (IUnknownVtbl *)&sample_copier_transform_vtbl;
+    return transform->lpVtbl == &sample_copier_transform_vtbl;
 }
 
 /***********************************************************************
