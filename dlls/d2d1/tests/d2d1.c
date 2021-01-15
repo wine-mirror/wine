@@ -1746,7 +1746,84 @@ static void test_bitmap_brush(void)
     hr = ID2D1Bitmap_QueryInterface(bitmap, &IID_ID2D1Image, (void **)&image);
     ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Vista */, "Failed to get ID2D1Image, hr %#x.\n", hr);
     if (hr == S_OK)
-        ID2D1Image_Release(image);
+    {
+        ID2D1DeviceContext *context;
+        D2D1_POINT_2F offset;
+        D2D1_RECT_F src_rect;
+
+        hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&context);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        ID2D1RenderTarget_BeginDraw(rt);
+        set_color(&color, 0.0f, 0.0f, 1.0f, 1.0f);
+        ID2D1RenderTarget_Clear(rt, &color);
+
+        ID2D1RenderTarget_GetTransform(rt, &tmp_matrix);
+        set_matrix_identity(&matrix);
+        translate_matrix(&matrix, 20.0f, 12.0f);
+        scale_matrix(&matrix, 2.0f, 6.0f);
+        ID2D1RenderTarget_SetTransform(rt, &matrix);
+
+        /* Crash on Windows 7+ */
+        if (0)
+        {
+            ID2D1DeviceContext_DrawImage(context, NULL, NULL, NULL, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                    D2D1_COMPOSITE_MODE_SOURCE_OVER);
+        }
+
+        ID2D1DeviceContext_DrawImage(context, image, NULL, NULL, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                D2D1_COMPOSITE_MODE_SOURCE_OVER);
+
+        set_rect(&src_rect, 0.0f, 0.0f, image_size.width, image_size.height);
+
+        ID2D1DeviceContext_DrawImage(context, image, NULL, &src_rect, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                D2D1_COMPOSITE_MODE_SOURCE_OVER);
+
+        offset.x = -1;
+        offset.y = -1;
+        ID2D1DeviceContext_DrawImage(context, image, &offset, NULL, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                D2D1_COMPOSITE_MODE_SOURCE_OVER);
+
+        offset.x = image_size.width * 2;
+        offset.y = image_size.height;
+        ID2D1DeviceContext_DrawImage(context, image, &offset, NULL, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                D2D1_COMPOSITE_MODE_SOURCE_OVER);
+
+        offset.x = image_size.width * 3;
+        set_rect(&src_rect, image_size.width / 2, image_size.height / 2, image_size.width, image_size.height);
+        ID2D1DeviceContext_DrawImage(context, image, &offset, &src_rect, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                D2D1_COMPOSITE_MODE_SOURCE_OVER);
+
+        offset.x = image_size.width * 4;
+        set_rect(&src_rect, 0.0f, 0.0f, image_size.width * 2, image_size.height * 2);
+        ID2D1DeviceContext_DrawImage(context, image, &offset, &src_rect, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                D2D1_COMPOSITE_MODE_SOURCE_OVER);
+
+        offset.x = image_size.width * 5;
+        set_rect(&src_rect, image_size.width, image_size.height, 0.0f, 0.0f);
+        ID2D1DeviceContext_DrawImage(context, image, &offset, &src_rect, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                D2D1_COMPOSITE_MODE_SOURCE_OVER);
+
+        hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+        ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+        match = compare_surface(surface, "95675fbc4a16404c9568d41b14e8f6be64240998");
+        ok(match, "Surface does not match.\n");
+
+        ID2D1RenderTarget_BeginDraw(rt);
+
+        offset.x = image_size.width * 6;
+        set_rect(&src_rect, 1.0f, 0.0f, 1.0f, image_size.height);
+        ID2D1DeviceContext_DrawImage(context, image, &offset, &src_rect, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR,
+                D2D1_COMPOSITE_MODE_SOURCE_OVER);
+
+        hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+        ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+        match = compare_surface(surface, "95675fbc4a16404c9568d41b14e8f6be64240998");
+        ok(match, "Surface does not match.\n");
+
+        ID2D1RenderTarget_SetTransform(rt, &tmp_matrix);
+        ID2D1DeviceContext_Release(context);
+    }
 
     /* Creating a brush with a NULL bitmap crashes on Vista, but works fine on
      * Windows 7+. */

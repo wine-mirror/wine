@@ -1067,7 +1067,8 @@ static void STDMETHODCALLTYPE d2d_device_context_FillOpacityMask(ID2D1DeviceCont
 
 static void d2d_device_context_draw_bitmap(struct d2d_device_context *context, ID2D1Bitmap *bitmap,
         const D2D1_RECT_F *dst_rect, float opacity, D2D1_INTERPOLATION_MODE interpolation_mode,
-        const D2D1_RECT_F *src_rect, const D2D1_MATRIX_4X4_F *perspective_transform)
+        const D2D1_RECT_F *src_rect, const D2D1_POINT_2F *offset,
+        const D2D1_MATRIX_4X4_F *perspective_transform)
 {
     D2D1_BITMAP_BRUSH_PROPERTIES1 bitmap_brush_desc;
     D2D1_BRUSH_PROPERTIES brush_desc;
@@ -1100,6 +1101,14 @@ static void d2d_device_context_draw_bitmap(struct d2d_device_context *context, I
         d.top = 0.0f;
         d.right = s.right - s.left;
         d.bottom = s.bottom - s.top;
+    }
+
+    if (offset)
+    {
+        d.left += offset->x;
+        d.top += offset->y;
+        d.right += offset->x;
+        d.bottom += offset->y;
     }
 
     bitmap_brush_desc.extendModeX = D2D1_EXTEND_MODE_CLAMP;
@@ -1141,7 +1150,7 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawBitmap(ID2D1DeviceContext *
     }
 
     d2d_device_context_draw_bitmap(context, bitmap, dst_rect, opacity, d2d1_1_interp_mode_from_d2d1(interpolation_mode),
-            src_rect, NULL);
+            src_rect, NULL, NULL);
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_DrawText(ID2D1DeviceContext *iface,
@@ -2211,9 +2220,26 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawImage(ID2D1DeviceContext *i
         const D2D1_POINT_2F *target_offset, const D2D1_RECT_F *image_rect, D2D1_INTERPOLATION_MODE interpolation_mode,
         D2D1_COMPOSITE_MODE composite_mode)
 {
-    FIXME("iface %p, image %p, target_offset %s, image_rect %s, interpolation_mode %#x, composite_mode %#x stub!\n",
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    ID2D1Bitmap *bitmap;
+
+    TRACE("iface %p, image %p, target_offset %s, image_rect %s, interpolation_mode %#x, composite_mode %#x.\n",
             iface, image, debug_d2d_point_2f(target_offset), debug_d2d_rect_f(image_rect),
             interpolation_mode, composite_mode);
+
+    if (composite_mode != D2D1_COMPOSITE_MODE_SOURCE_OVER)
+        FIXME("Unhandled composite mode %#x.\n", composite_mode);
+
+    if (SUCCEEDED(ID2D1Image_QueryInterface(image, &IID_ID2D1Bitmap, (void **)&bitmap)))
+    {
+        d2d_device_context_draw_bitmap(context, bitmap, NULL, 1.0f, d2d1_1_interp_mode_from_d2d1(interpolation_mode),
+                image_rect, target_offset, NULL);
+
+        ID2D1Bitmap_Release(bitmap);
+        return;
+    }
+
+    FIXME("Unhandled image %p.\n", image);
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_DrawGdiMetafile(ID2D1DeviceContext *iface,
@@ -2235,7 +2261,7 @@ static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawBitmap(I
             debug_d2d_rect_f(src_rect), perspective_transform);
 
     d2d_device_context_draw_bitmap(context, bitmap, dst_rect, opacity, interpolation_mode, src_rect,
-            perspective_transform);
+            NULL, perspective_transform);
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_PushLayer(ID2D1DeviceContext *iface,
