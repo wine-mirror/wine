@@ -552,7 +552,7 @@
 @ cdecl _unlock(long)
 @ cdecl -arch=win32 _utime(str ptr) _utime32
 @ cdecl -arch=win64 _utime(str ptr) _utime64
-@ cdecl _vsnprintf(ptr long str ptr)
+@ cdecl -norelay _vsnprintf(ptr long str ptr)
 @ cdecl _vsnwprintf(ptr long wstr ptr)
 @ cdecl _waccess(wstr long)
 @ cdecl _wasctime(ptr)

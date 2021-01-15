@@ -394,7 +394,7 @@
 @ cdecl _getdrives() kernel32.GetLogicalDrives
 @ cdecl _getmaxstdio()
 @ cdecl _getmbcp()
-@ cdecl _getpid() _getpid
+@ cdecl _getpid()
 @ stub _getsystime(ptr)
 @ cdecl _getw(ptr)
 @ cdecl _getwc_nolock(ptr) _fgetwc_nolock
@@ -484,7 +484,7 @@
 @ cdecl _ismbcl2_l(long ptr)
 @ cdecl _ismbclegal(long)
 @ cdecl _ismbclegal_l(long ptr)
-@ stub _ismbclower(long)
+@ cdecl _ismbclower(long)
 @ cdecl _ismbclower_l(long ptr)
 @ cdecl _ismbcprint(long)
 @ cdecl _ismbcprint_l(long ptr)
@@ -623,7 +623,7 @@
 @ cdecl _mbscspn_l(str str ptr)
 @ cdecl _mbsdec(ptr ptr)
 @ stub _mbsdec_l
-@ stub _mbsdup(str)
+@ cdecl _mbsdup(str) _strdup
 @ cdecl _mbsicmp(str str)
 @ stub _mbsicmp_l
 @ cdecl _mbsicoll(str str)
@@ -2425,7 +2425,7 @@
 @ cdecl memcpy(ptr ptr long)
 @ cdecl memcpy_s(ptr long ptr long)
 @ cdecl memmove(ptr ptr long)
-@ cdecl memmove_s(ptr long ptr long) memmove_s
+@ cdecl memmove_s(ptr long ptr long)
 @ cdecl memset(ptr long long)
 @ cdecl modf(double ptr)
 @ cdecl -arch=!i386 modff(float ptr)

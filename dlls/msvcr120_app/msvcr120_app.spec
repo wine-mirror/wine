@@ -1145,7 +1145,7 @@
 @ varargs _fwscanf_l(ptr wstr ptr) msvcr120._fwscanf_l
 @ varargs _fwscanf_s_l(ptr wstr ptr) msvcr120._fwscanf_s_l
 @ cdecl _gcvt(double long str) msvcr120._gcvt
-@ cdecl _gcvt_s(ptr long  double long) msvcr120._gcvt_s
+@ cdecl _gcvt_s(ptr long double long) msvcr120._gcvt_s
 @ cdecl _get_current_locale() msvcr120._get_current_locale
 @ cdecl _get_daylight(ptr) msvcr120._get_daylight
 @ cdecl _get_doserrno(ptr) msvcr120._get_doserrno

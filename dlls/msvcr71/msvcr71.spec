@@ -230,7 +230,7 @@
 @ cdecl _amsg_exit(long)
 @ cdecl _assert(str str long)
 @ cdecl _atodbl(ptr str)
-@ cdecl -ret64 _atoi64(str) ntdll._atoi64
+@ cdecl -ret64 _atoi64(str)
 @ cdecl _atoldbl(ptr str)
 @ cdecl _beep(long long)
 @ cdecl _beginthread(ptr long ptr)
@@ -337,7 +337,7 @@
 @ cdecl _getdrives() kernel32.GetLogicalDrives
 @ cdecl _getmaxstdio()
 @ cdecl _getmbcp()
-@ cdecl _getpid() _getpid
+@ cdecl _getpid()
 @ stub _getsystime(ptr)
 @ cdecl _getw(ptr)
 @ cdecl _getwch()
@@ -416,7 +416,7 @@
 @ cdecl _mbbtombc(long)
 @ cdecl _mbbtype(long long)
 # extern _mbcasemap
-@ cdecl _mbccpy(ptr str)
+@ cdecl _mbccpy(ptr ptr)
 @ cdecl _mbcjistojms(long)
 @ cdecl _mbcjmstojis(long)
 @ cdecl _mbclen(ptr)
