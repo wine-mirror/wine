@@ -44,7 +44,7 @@ size_t mt_tests_size, mt_test_count;
 
 struct d2d1_test_context
 {
-    ID3D10Device1 *device;
+    IDXGIDevice *device;
     HWND window;
     IDXGISwapChain *swapchain;
     IDXGISurface *surface;
@@ -694,7 +694,7 @@ static BOOL compare_figure(struct d2d1_test_context *ctx, unsigned int x, unsign
     return diff <= max_diff;
 }
 
-static ID3D10Device1 *create_device(void)
+static ID3D10Device1 *create_d3d10_device(void)
 {
     ID3D10Device1 *device;
 
@@ -711,6 +711,22 @@ static ID3D10Device1 *create_device(void)
     return NULL;
 }
 
+static IDXGIDevice *create_device(void)
+{
+    ID3D10Device1 *d3d10_device;
+    IDXGIDevice *device;
+    HRESULT hr;
+
+    if (!(d3d10_device = create_d3d10_device()))
+        return NULL;
+
+    hr = ID3D10Device1_QueryInterface(d3d10_device, &IID_IDXGIDevice, (void **)&device);
+    ok(SUCCEEDED(hr), "Failed to get DXGI device, hr %#x.\n", hr);
+    ID3D10Device1_Release(d3d10_device);
+
+    return device;
+}
+
 static HWND create_window(void)
 {
     RECT r = {0, 0, 640, 480};
@@ -721,20 +737,16 @@ static HWND create_window(void)
             0, 0, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
 }
 
-static IDXGISwapChain *create_swapchain(ID3D10Device1 *device, HWND window, BOOL windowed)
+static IDXGISwapChain *create_swapchain(IDXGIDevice *device, HWND window, BOOL windowed)
 {
     IDXGISwapChain *swapchain;
     DXGI_SWAP_CHAIN_DESC desc;
-    IDXGIDevice *dxgi_device;
     IDXGIAdapter *adapter;
     IDXGIFactory *factory;
     HRESULT hr;
 
-    hr = ID3D10Device1_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
-    ok(SUCCEEDED(hr), "Failed to get DXGI device, hr %#x.\n", hr);
-    hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
     ok(SUCCEEDED(hr), "Failed to get adapter, hr %#x.\n", hr);
-    IDXGIDevice_Release(dxgi_device);
     hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to get factory, hr %#x.\n", hr);
     IDXGIAdapter_Release(adapter);
@@ -759,6 +771,19 @@ static IDXGISwapChain *create_swapchain(ID3D10Device1 *device, HWND window, BOOL
     ok(SUCCEEDED(hr), "Failed to create swapchain, hr %#x.\n", hr);
     IDXGIFactory_Release(factory);
 
+    return swapchain;
+}
+
+static IDXGISwapChain *create_d3d10_swapchain(ID3D10Device1 *device, HWND window, BOOL windowed)
+{
+    IDXGISwapChain *swapchain;
+    IDXGIDevice *dxgi_device;
+    HRESULT hr;
+
+    hr = ID3D10Device1_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    ok(SUCCEEDED(hr), "Failed to get DXGI device, hr %#x.\n", hr);
+    swapchain = create_swapchain(dxgi_device, window, windowed);
+    IDXGIDevice_Release(dxgi_device);
     return swapchain;
 }
 
@@ -806,7 +831,7 @@ static void release_test_context_(unsigned int line, struct d2d1_test_context *c
     IDXGISurface_Release(ctx->surface);
     IDXGISwapChain_Release(ctx->swapchain);
     DestroyWindow(ctx->window);
-    ID3D10Device1_Release(ctx->device);
+    IDXGIDevice_Release(ctx->device);
 }
 
 #define init_test_context(ctx) init_test_context_(__LINE__, ctx)
@@ -4256,7 +4281,7 @@ static void test_shared_bitmap(void)
     IDXGISwapChain *swapchain2;
     D2D1_SIZE_U size = {4, 4};
     IDXGISurface1 *surface3;
-    ID3D10Device1 *device2;
+    IDXGIDevice *device2;
     HWND window2;
     HRESULT hr;
 
@@ -4480,7 +4505,7 @@ static void test_shared_bitmap(void)
     IWICBitmap_Release(wic_bitmap1);
     IDXGISurface_Release(surface2);
     IDXGISwapChain_Release(swapchain2);
-    ID3D10Device1_Release(device2);
+    IDXGIDevice_Release(device2);
     release_test_context(&ctx);
     DestroyWindow(window2);
     CoUninitialize();
@@ -7792,7 +7817,6 @@ static void test_create_device(void)
 {
     D2D1_CREATION_PROPERTIES properties = {0};
     struct d2d1_test_context ctx;
-    IDXGIDevice *dxgi_device;
     ID2D1Factory1 *factory;
     ID2D1Factory *factory2;
     ID2D1Device *device;
@@ -7809,10 +7833,7 @@ static void test_create_device(void)
         return;
     }
 
-    hr = ID3D10Device1_QueryInterface(ctx.device, &IID_IDXGIDevice, (void **)&dxgi_device);
-    ok(SUCCEEDED(hr), "Failed to get IDXGIDevice interface, hr %#x.\n", hr);
-
-    hr = ID2D1Factory1_CreateDevice(factory, dxgi_device, &device);
+    hr = ID2D1Factory1_CreateDevice(factory, ctx.device, &device);
     ok(SUCCEEDED(hr), "Failed to get ID2D1Device, hr %#x.\n", hr);
 
     ID2D1Device_GetFactory(device, &factory2);
@@ -7822,18 +7843,17 @@ static void test_create_device(void)
 
     if (pD2D1CreateDevice)
     {
-        hr = pD2D1CreateDevice(dxgi_device, NULL, &device);
+        hr = pD2D1CreateDevice(ctx.device, NULL, &device);
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         ID2D1Device_Release(device);
 
-        hr = pD2D1CreateDevice(dxgi_device, &properties, &device);
+        hr = pD2D1CreateDevice(ctx.device, &properties, &device);
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         ID2D1Device_Release(device);
     }
     else
         win_skip("D2D1CreateDevice() is unavailable.\n");
 
-    IDXGIDevice_Release(dxgi_device);
     release_test_context(&ctx);
 
     refcount = ID2D1Factory1_Release(factory);
@@ -8062,7 +8082,6 @@ static void test_bitmap_surface(void)
     IDXGISurface *surface2;
     D2D1_PIXEL_FORMAT pixel_format;
     struct d2d1_test_context ctx;
-    IDXGIDevice *dxgi_device;
     ID2D1Factory1 *factory;
     ID2D1RenderTarget *rt;
     ID2D1Bitmap1 *bitmap;
@@ -8101,10 +8120,7 @@ static void test_bitmap_surface(void)
     ID2D1DeviceContext_Release(device_context);
 
     /* Bitmap created from DXGI surface. */
-    hr = ID3D10Device1_QueryInterface(ctx.device, &IID_IDXGIDevice, (void **)&dxgi_device);
-    ok(SUCCEEDED(hr), "Failed to get IDXGIDevice interface, hr %#x.\n", hr);
-
-    hr = ID2D1Factory1_CreateDevice(factory, dxgi_device, &device);
+    hr = ID2D1Factory1_CreateDevice(factory, ctx.device, &device);
     ok(SUCCEEDED(hr), "Failed to get ID2D1Device, hr %#x.\n", hr);
 
     hr = ID2D1Device_CreateDeviceContext(device, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &device_context);
@@ -8134,10 +8150,7 @@ static void test_bitmap_surface(void)
     }
 
     /* A8 surface */
-    hr = IDXGISurface_GetDevice(ctx.surface, &IID_IDXGIDevice, (void **)&dxgi_device);
-    ok(SUCCEEDED(hr), "Failed to get the device, hr %#x.\n", hr);
-
-    surface2 = create_surface(dxgi_device, DXGI_FORMAT_A8_UNORM);
+    surface2 = create_surface(ctx.device, DXGI_FORMAT_A8_UNORM);
 
     hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, surface2, NULL, &bitmap);
     ok(SUCCEEDED(hr) || broken(hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT) /* Win7 */,
@@ -8152,7 +8165,6 @@ static void test_bitmap_surface(void)
         ID2D1Bitmap1_Release(bitmap);
     }
 
-    IDXGIDevice_Release(dxgi_device);
     IDXGISurface_Release(surface2);
 
     hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, ctx.surface, NULL, &bitmap);
@@ -8212,7 +8224,6 @@ static void test_bitmap_surface(void)
     ID2D1DeviceContext_Release(device_context);
 
     ID2D1Device_Release(device);
-    IDXGIDevice_Release(dxgi_device);
 
     /* DC target */
     rt_desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
@@ -8282,7 +8293,6 @@ static void test_device_context(void)
     struct d2d1_test_context ctx;
     D2D1_BITMAP_OPTIONS options;
     ID2D1DCRenderTarget *dc_rt;
-    IDXGIDevice *dxgi_device;
     D2D1_UNIT_MODE unit_mode;
     ID2D1Factory1 *factory;
     ID2D1RenderTarget *rt;
@@ -8305,12 +8315,8 @@ static void test_device_context(void)
         return;
     }
 
-    hr = ID3D10Device1_QueryInterface(ctx.device, &IID_IDXGIDevice, (void **)&dxgi_device);
-    ok(SUCCEEDED(hr), "Failed to get IDXGIDevice interface, hr %#x.\n", hr);
-
-    hr = ID2D1Factory1_CreateDevice(factory, dxgi_device, &device);
+    hr = ID2D1Factory1_CreateDevice(factory, ctx.device, &device);
     ok(SUCCEEDED(hr), "Failed to get ID2D1Device, hr %#x.\n", hr);
-    IDXGIDevice_Release(dxgi_device);
 
     hr = ID2D1Device_CreateDeviceContext(device, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &device_context);
     ok(SUCCEEDED(hr), "Failed to create device context, hr %#x.\n", hr);
@@ -8585,19 +8591,14 @@ static void test_skew_matrix(void)
     }
 }
 
-static ID2D1DeviceContext *create_device_context(ID2D1Factory1 *factory, ID3D10Device1 *d3d_device)
+static ID2D1DeviceContext *create_device_context(ID2D1Factory1 *factory, IDXGIDevice *dxgi_device)
 {
     ID2D1DeviceContext *device_context;
-    IDXGIDevice *dxgi_device;
     ID2D1Device *device;
     HRESULT hr;
 
-    hr = ID3D10Device1_QueryInterface(d3d_device, &IID_IDXGIDevice, (void **)&dxgi_device);
-    ok(SUCCEEDED(hr), "Failed to get IDXGIDevice interface, hr %#x.\n", hr);
-
     hr = ID2D1Factory1_CreateDevice(factory, dxgi_device, &device);
     ok(SUCCEEDED(hr), "Failed to get ID2D1Device, hr %#x.\n", hr);
-    IDXGIDevice_Release(dxgi_device);
 
     hr = ID2D1Device_CreateDeviceContext(device, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &device_context);
     ok(SUCCEEDED(hr), "Failed to create device context, hr %#x.\n", hr);
@@ -8905,7 +8906,7 @@ static void test_max_bitmap_size(void)
         }
 
         window = create_window();
-        swapchain = create_swapchain(device, window, TRUE);
+        swapchain = create_d3d10_swapchain(device, window, TRUE);
         hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
         ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
 
