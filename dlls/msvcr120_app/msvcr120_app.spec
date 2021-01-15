@@ -1804,7 +1804,7 @@
 @ cdecl expm1f(float) msvcr120.expm1f
 @ cdecl expm1l(double) msvcr120.expm1l
 @ cdecl fabs(double) msvcr120.fabs
-@ cdecl -arch=!i386 fabsf(float) msvcr120.fabsf
+@ cdecl -arch=arm,arm64 fabsf(float) msvcr120.fabsf
 @ cdecl fclose(ptr) msvcr120.fclose
 @ cdecl fdim(double double) msvcr120.fdim
 @ cdecl fdimf(float float) msvcr120.fdimf
