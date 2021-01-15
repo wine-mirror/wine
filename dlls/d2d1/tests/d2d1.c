@@ -461,12 +461,12 @@ static BOOL compare_sha1(void *data, unsigned int pitch, unsigned int bpp,
     return !strcmp(ref_sha1, (char *)sha1);
 }
 
-static BOOL compare_surface(IDXGISurface *surface, const char *ref_sha1)
+static BOOL compare_surface(struct d2d1_test_context *ctx, const char *ref_sha1)
 {
     struct resource_readback rb;
     BOOL ret;
 
-    get_surface_readback(surface, &rb);
+    get_surface_readback(ctx->surface, &rb);
     ret = compare_sha1(rb.data, rb.pitch, 4, rb.width, rb.height, ref_sha1);
     release_resource_readback(&rb);
 
@@ -1260,7 +1260,7 @@ static void test_clip(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "035a44d4198d6e422e9de6185b5b2c2bac5e33c9");
+    match = compare_surface(&ctx, "035a44d4198d6e422e9de6185b5b2c2bac5e33c9");
     ok(match, "Surface does not match.\n");
 
     /* Fractional clip rectangle coordinates, aliased mode. */
@@ -1326,7 +1326,7 @@ static void test_clip(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "cb418ec4a7c8407b5e36db06fc6292a06bb8476c");
+    match = compare_surface(&ctx, "cb418ec4a7c8407b5e36db06fc6292a06bb8476c");
     ok(match, "Surface does not match.\n");
 
     release_test_context(&ctx);
@@ -1670,7 +1670,7 @@ static void test_color_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "6d1218fca5e21fb7e287b3a439d60dbc251f5ceb");
+    match = compare_surface(&ctx, "6d1218fca5e21fb7e287b3a439d60dbc251f5ceb");
     ok(match, "Surface does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);
@@ -1809,7 +1809,7 @@ static void test_bitmap_brush(void)
 
         hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
         ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-        match = compare_surface(ctx.surface, "95675fbc4a16404c9568d41b14e8f6be64240998");
+        match = compare_surface(&ctx, "95675fbc4a16404c9568d41b14e8f6be64240998");
         ok(match, "Surface does not match.\n");
 
         ID2D1RenderTarget_BeginDraw(rt);
@@ -1821,7 +1821,7 @@ static void test_bitmap_brush(void)
 
         hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
         ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-        match = compare_surface(ctx.surface, "95675fbc4a16404c9568d41b14e8f6be64240998");
+        match = compare_surface(&ctx, "95675fbc4a16404c9568d41b14e8f6be64240998");
         ok(match, "Surface does not match.\n");
 
         ID2D1RenderTarget_SetTransform(rt, &tmp_matrix);
@@ -1910,7 +1910,7 @@ static void test_bitmap_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "f5d039c280fa33ba05496c9883192a34108efbbe");
+    match = compare_surface(&ctx, "f5d039c280fa33ba05496c9883192a34108efbbe");
     ok(match, "Surface does not match.\n");
 
     /* Invalid interpolation mode. */
@@ -1928,7 +1928,7 @@ static void test_bitmap_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "f5d039c280fa33ba05496c9883192a34108efbbe");
+    match = compare_surface(&ctx, "f5d039c280fa33ba05496c9883192a34108efbbe");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -1940,7 +1940,7 @@ static void test_bitmap_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "59043096393570ad800dbcbfdd644394b79493bd");
+    match = compare_surface(&ctx, "59043096393570ad800dbcbfdd644394b79493bd");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -1969,7 +1969,7 @@ static void test_bitmap_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "b4b775afecdae2d26642001f4faff73663bb8b31");
+    match = compare_surface(&ctx, "b4b775afecdae2d26642001f4faff73663bb8b31");
     ok(match, "Surface does not match.\n");
 
     ID2D1Bitmap_Release(bitmap);
@@ -2018,7 +2018,7 @@ static void test_bitmap_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "cf7b90ba7b139fdfbe9347e1907d635cfb4ed197");
+    match = compare_surface(&ctx, "cf7b90ba7b139fdfbe9347e1907d635cfb4ed197");
     ok(match, "Surface does not match.\n");
 
     if (SUCCEEDED(ID2D1BitmapBrush_QueryInterface(brush, &IID_ID2D1BitmapBrush1, (void **)&brush1)))
@@ -3296,7 +3296,7 @@ static void test_path_geometry(void)
     ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)transformed_geometry, (ID2D1Brush *)brush, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "3aace1b22aae111cb577614fed16e4eb1650dba5");
+    match = compare_surface(&ctx, "3aace1b22aae111cb577614fed16e4eb1650dba5");
     ok(match, "Surface does not match.\n");
 
     /* Edge test. */
@@ -3377,7 +3377,7 @@ static void test_path_geometry(void)
     ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)transformed_geometry, (ID2D1Brush *)brush, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "bfb40a1f007694fa07dbd3b854f3f5d9c3e1d76b");
+    match = compare_surface(&ctx, "bfb40a1f007694fa07dbd3b854f3f5d9c3e1d76b");
     ok(match, "Surface does not match.\n");
     ID2D1TransformedGeometry_Release(transformed_geometry);
     ID2D1PathGeometry_Release(geometry);
@@ -3600,7 +3600,7 @@ static void test_path_geometry(void)
     ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)geometry, (ID2D1Brush *)brush, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "a875e68e0cb9c055927b1b50b879f90b24e38470");
+    match = compare_surface(&ctx, "a875e68e0cb9c055927b1b50b879f90b24e38470");
     ok(match, "Surface does not match.\n");
     ID2D1PathGeometry_Release(geometry);
 
@@ -4076,7 +4076,7 @@ static void test_alpha_mode(void)
     ID2D1RenderTarget_Clear(rt, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "48c41aff3a130a17ee210866b2ab7d36763934d5");
+    match = compare_surface(&ctx, "48c41aff3a130a17ee210866b2ab7d36763934d5");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -4084,7 +4084,7 @@ static void test_alpha_mode(void)
     ID2D1RenderTarget_Clear(rt, &color);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "6487e683730fb5a77c1911388d00b04664c5c4e4");
+    match = compare_surface(&ctx, "6487e683730fb5a77c1911388d00b04664c5c4e4");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -4092,7 +4092,7 @@ static void test_alpha_mode(void)
     ID2D1RenderTarget_Clear(rt, &color);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "7a35ba09e43cbaf591388ff1ef8de56157630c98");
+    match = compare_surface(&ctx, "7a35ba09e43cbaf591388ff1ef8de56157630c98");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -4133,7 +4133,7 @@ static void test_alpha_mode(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "14f8ac64b70966c7c3c6281c59aaecdb17c3b16a");
+    match = compare_surface(&ctx, "14f8ac64b70966c7c3c6281c59aaecdb17c3b16a");
     ok(match, "Surface does not match.\n");
 
     rt_desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
@@ -4170,7 +4170,7 @@ static void test_alpha_mode(void)
     ID2D1RenderTarget_Clear(rt, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "b44510bf2d2e61a8d7c0ad862de49a471f1fd13f");
+    match = compare_surface(&ctx, "b44510bf2d2e61a8d7c0ad862de49a471f1fd13f");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -4178,7 +4178,7 @@ static void test_alpha_mode(void)
     ID2D1RenderTarget_Clear(rt, &color);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "2184f4a9198fc1de09ac85301b7a03eebadd9b81");
+    match = compare_surface(&ctx, "2184f4a9198fc1de09ac85301b7a03eebadd9b81");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -4186,7 +4186,7 @@ static void test_alpha_mode(void)
     ID2D1RenderTarget_Clear(rt, &color);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "6527ec83b4039c895b50f9b3e144fe0cf90d1889");
+    match = compare_surface(&ctx, "6527ec83b4039c895b50f9b3e144fe0cf90d1889");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -4227,7 +4227,7 @@ static void test_alpha_mode(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "465f5a3190d7bde408b3206b4be939fb22f8a3d6");
+    match = compare_surface(&ctx, "465f5a3190d7bde408b3206b4be939fb22f8a3d6");
     ok(match, "Surface does not match.\n");
 
     refcount = ID2D1Bitmap_Release(bitmap);
@@ -4566,7 +4566,7 @@ static void test_bitmap_updates(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    match = compare_surface(ctx.surface, "cb8136c91fbbdc76bb83b8c09edc1907b0a5d0a6");
+    match = compare_surface(&ctx, "cb8136c91fbbdc76bb83b8c09edc1907b0a5d0a6");
     ok(match, "Surface does not match.\n");
 
     ID2D1Bitmap_Release(bitmap);
@@ -4687,7 +4687,7 @@ static void test_opacity_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == D2DERR_INCOMPATIBLE_BRUSH_TYPES, "Got unexpected hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "7141c6c7b3decb91196428efb1856bcbf9872935");
+    match = compare_surface(&ctx, "7141c6c7b3decb91196428efb1856bcbf9872935");
     ok(match, "Surface does not match.\n");
     ID2D1RenderTarget_BeginDraw(rt);
 
@@ -4729,7 +4729,7 @@ static void test_opacity_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(ctx.surface, "c3a5802d1750efa3e9122c1a92f6064df3872732");
+    match = compare_surface(&ctx, "c3a5802d1750efa3e9122c1a92f6064df3872732");
     ok(match, "Surface does not match.\n");
 
     ID2D1BitmapBrush_Release(bitmap_brush);
