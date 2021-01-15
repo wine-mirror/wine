@@ -42,6 +42,11 @@ static struct test_entry
 } *mt_tests;
 size_t mt_tests_size, mt_test_count;
 
+struct d2d1_test_context
+{
+    ID3D10Device1 *device;
+};
+
 struct resource_readback
 {
     ID3D10Resource *resource;
@@ -779,6 +784,26 @@ static ID2D1RenderTarget *create_render_target(IDXGISurface *surface)
     return create_render_target_desc(surface, &desc);
 }
 
+#define release_test_context(ctx) release_test_context_(__LINE__, ctx)
+static void release_test_context_(unsigned int line, struct d2d1_test_context *ctx)
+{
+    ID3D10Device1_Release(ctx->device);
+}
+
+#define init_test_context(ctx) init_test_context_(__LINE__, ctx)
+static BOOL init_test_context_(unsigned int line, struct d2d1_test_context *ctx)
+{
+    memset(ctx, 0, sizeof(*ctx));
+
+    if (!(ctx->device = create_device()))
+    {
+        skip_(__FILE__, line)("Failed to create device, skipping tests.\n");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 #define check_bitmap_surface(b, s, o) check_bitmap_surface_(__LINE__, b, s, o)
 static void check_bitmap_surface_(unsigned int line, ID2D1Bitmap *bitmap, BOOL has_surface, DWORD expected_options)
 {
@@ -1087,11 +1112,11 @@ static void geometry_sink_check_(unsigned int line, const struct geometry_sink *
 
 static void test_clip(void)
 {
+    struct d2d1_test_context ctx;
     IDXGISwapChain *swapchain;
     D2D1_MATRIX_3X2_F matrix;
     D2D1_SIZE_U pixel_size;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     D2D1_POINT_2F point;
     D2D1_COLOR_F color;
@@ -1108,13 +1133,11 @@ static void test_clip(void)
         0.0f, 0.0f,
     }}};
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -1288,7 +1311,7 @@ static void test_clip(void)
     ID2D1RenderTarget_Release(rt);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -1298,10 +1321,10 @@ static void test_state_block(void)
     D2D1_DRAWING_STATE_DESCRIPTION drawing_state;
     ID2D1DrawingStateBlock *state_block;
     IDWriteFactory *dwrite_factory;
+    struct d2d1_test_context ctx;
     IDXGISwapChain *swapchain;
     ID2D1Factory1 *factory1;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Factory *factory;
     ULONG refcount;
@@ -1326,13 +1349,11 @@ static void test_state_block(void)
         11.0f, 12.0f,
     }}};
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -1562,7 +1583,7 @@ static void test_state_block(void)
     ID2D1RenderTarget_Release(rt);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -1571,10 +1592,10 @@ static void test_color_brush(void)
     D2D1_MATRIX_3X2_F matrix, tmp_matrix;
     D2D1_BRUSH_PROPERTIES brush_desc;
     D2D1_COLOR_F color, tmp_color;
+    struct d2d1_test_context ctx;
     ID2D1SolidColorBrush *brush;
     IDXGISwapChain *swapchain;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     D2D1_RECT_F rect;
     float opacity;
@@ -1582,13 +1603,11 @@ static void test_color_brush(void)
     HRESULT hr;
     BOOL match;
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -1662,7 +1681,7 @@ static void test_color_brush(void)
     ID2D1RenderTarget_Release(rt);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -1675,13 +1694,13 @@ static void test_bitmap_brush(void)
     D2D1_BITMAP_PROPERTIES bitmap_desc;
     ID2D1Bitmap *bitmap, *tmp_bitmap;
     D2D1_RECT_F src_rect, dst_rect;
+    struct d2d1_test_context ctx;
     D2D1_EXTEND_MODE extend_mode;
     IDXGISwapChain *swapchain;
     ID2D1BitmapBrush1 *brush1;
     ID2D1BitmapBrush *brush;
     D2D1_SIZE_F image_size;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Factory *factory;
     D2D1_COLOR_F color;
@@ -1722,13 +1741,11 @@ static void test_bitmap_brush(void)
         0xffffffff, 0xff000000, 0xff000000, 0xff000000,
     };
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -2069,7 +2086,7 @@ static void test_bitmap_brush(void)
     ID2D1RenderTarget_Release(rt);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -2081,10 +2098,10 @@ static void test_linear_brush(void)
     ID2D1RectangleGeometry *rectangle_geometry;
     D2D1_MATRIX_3X2_F matrix, tmp_matrix;
     ID2D1LinearGradientBrush *brush;
+    struct d2d1_test_context ctx;
     struct resource_readback rb;
     IDXGISwapChain *swapchain;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Factory *factory;
     D2D1_COLOR_F colour;
@@ -2133,13 +2150,11 @@ static void test_linear_brush(void)
         {520, 390, 0xff90ae40},
     };
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -2275,7 +2290,7 @@ static void test_linear_brush(void)
     ID2D1RenderTarget_Release(rt);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -2287,10 +2302,10 @@ static void test_radial_brush(void)
     ID2D1RectangleGeometry *rectangle_geometry;
     D2D1_MATRIX_3X2_F matrix, tmp_matrix;
     ID2D1RadialGradientBrush *brush;
+    struct d2d1_test_context ctx;
     struct resource_readback rb;
     IDXGISwapChain *swapchain;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Factory *factory;
     D2D1_COLOR_F colour;
@@ -2339,13 +2354,11 @@ static void test_radial_brush(void)
         {520, 390, 0xff4059e6},
     };
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -2489,7 +2502,7 @@ static void test_radial_brush(void)
     ID2D1RenderTarget_Release(rt);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -2615,12 +2628,12 @@ static void test_path_geometry(void)
     ID2D1GeometrySink *sink, *tmp_sink;
     struct geometry_sink simplify_sink;
     D2D1_POINT_2F point = {0.0f, 0.0f};
+    struct d2d1_test_context ctx;
     ID2D1SolidColorBrush *brush;
     ID2D1PathGeometry *geometry;
     ID2D1Geometry *tmp_geometry;
     IDXGISwapChain *swapchain;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Factory *factory;
     BOOL match, contains;
@@ -2945,13 +2958,11 @@ static void test_path_geometry(void)
         {D2D1_FIGURE_BEGIN_HOLLOW, D2D1_FIGURE_END_OPEN,   { 40.0f,  20.0f},  2, &expected_segments[172]},
     };
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -3679,7 +3690,7 @@ static void test_path_geometry(void)
     ok(!refcount, "Factory has %u references left.\n", refcount);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -4013,10 +4024,10 @@ static void test_rounded_rectangle_geometry(void)
 static void test_bitmap_formats(void)
 {
     D2D1_BITMAP_PROPERTIES bitmap_desc;
+    struct d2d1_test_context ctx;
     IDXGISwapChain *swapchain;
     D2D1_SIZE_U size = {4, 4};
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Bitmap *bitmap;
     unsigned int i, j;
@@ -4046,13 +4057,11 @@ static void test_bitmap_formats(void)
         {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,   0x8a},
     };
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -4084,7 +4093,7 @@ static void test_bitmap_formats(void)
     ID2D1RenderTarget_Release(rt);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -4094,9 +4103,9 @@ static void test_alpha_mode(void)
     D2D1_BITMAP_PROPERTIES bitmap_desc;
     ID2D1SolidColorBrush *color_brush;
     ID2D1BitmapBrush *bitmap_brush;
+    struct d2d1_test_context ctx;
     IDXGISwapChain *swapchain;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Bitmap *bitmap;
     D2D1_COLOR_F color;
@@ -4115,13 +4124,11 @@ static void test_alpha_mode(void)
         0x7f7f7f7f, 0x7f000000, 0x7f000000, 0x7f000000,
     };
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -4313,7 +4320,7 @@ static void test_alpha_mode(void)
     ID2D1RenderTarget_Release(rt);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -4327,26 +4334,24 @@ static void test_shared_bitmap(void)
     ID2D1RenderTarget *rt1, *rt2, *rt3;
     IDXGISurface *surface1, *surface2;
     ID2D1Factory *factory1, *factory2;
-    ID3D10Device1 *device1, *device2;
     IWICImagingFactory *wic_factory;
     ID2D1Bitmap *bitmap1, *bitmap2;
     DXGI_SURFACE_DESC surface_desc;
     D2D1_PIXEL_FORMAT pixel_format;
+    struct d2d1_test_context ctx;
     D2D1_SIZE_U size = {4, 4};
     IDXGISurface1 *surface3;
+    ID3D10Device1 *device2;
     HWND window1, window2;
     HRESULT hr;
 
-    if (!(device1 = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
 
     window1 = create_window();
     window2 = create_window();
-    swapchain1 = create_swapchain(device1, window1, TRUE);
-    swapchain2 = create_swapchain(device1, window2, TRUE);
+    swapchain1 = create_swapchain(ctx.device, window1, TRUE);
+    swapchain2 = create_swapchain(ctx.device, window2, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain1, 0, &IID_IDXGISurface, (void **)&surface1);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     hr = IDXGISwapChain_GetBuffer(swapchain2, 0, &IID_IDXGISurface, (void **)&surface2);
@@ -4567,7 +4572,7 @@ static void test_shared_bitmap(void)
     IDXGISwapChain_Release(swapchain2);
     IDXGISwapChain_Release(swapchain1);
     ID3D10Device1_Release(device2);
-    ID3D10Device1_Release(device1);
+    release_test_context(&ctx);
     DestroyWindow(window2);
     DestroyWindow(window1);
     CoUninitialize();
@@ -4576,9 +4581,9 @@ static void test_shared_bitmap(void)
 static void test_bitmap_updates(void)
 {
     D2D1_BITMAP_PROPERTIES bitmap_desc;
+    struct d2d1_test_context ctx;
     IDXGISwapChain *swapchain;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     D2D1_RECT_U dst_rect;
     ID2D1Bitmap *bitmap;
@@ -4597,13 +4602,11 @@ static void test_bitmap_updates(void)
         0xffffffff, 0xff000000, 0xff000000, 0xff000000,
     };
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -4672,7 +4675,7 @@ static void test_bitmap_updates(void)
     ID2D1RenderTarget_Release(rt);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -4682,10 +4685,10 @@ static void test_opacity_brush(void)
     D2D1_BITMAP_PROPERTIES bitmap_desc;
     ID2D1RectangleGeometry *geometry;
     ID2D1SolidColorBrush *color_brush;
+    struct d2d1_test_context ctx;
     IDXGISwapChain *swapchain;
     D2D1_MATRIX_3X2_F matrix;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Factory *factory;
     ID2D1Bitmap *bitmap;
@@ -4705,13 +4708,11 @@ static void test_opacity_brush(void)
         0xffffffff, 0x40000000, 0x40000000, 0xff000000,
     };
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -4853,16 +4854,16 @@ static void test_opacity_brush(void)
     ok(!refcount, "Factory has %u references left.\n", refcount);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
 static void test_create_target(void)
 {
+    struct d2d1_test_context ctx;
     IDXGISwapChain *swapchain;
     ID2D1Factory *factory;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     HWND window;
     HRESULT hr;
@@ -4883,13 +4884,11 @@ static void test_create_target(void)
     };
     unsigned int i;
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
 
@@ -4944,7 +4943,7 @@ static void test_create_target(void)
     ID2D1Factory_Release(factory);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -4985,13 +4984,13 @@ static void test_draw_text_layout(void)
     IDXGISwapChain *swapchain;
     ID2D1Factory *factory, *factory2;
     ID2D1RenderTarget *rt, *rt2;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     HWND window;
     HRESULT hr;
     IDWriteFactory *dwrite_factory;
     IDWriteTextFormat *text_format;
     IDWriteTextLayout *text_layout;
+    struct d2d1_test_context ctx;
     D2D1_POINT_2F origin;
     DWRITE_TEXT_RANGE range;
     D2D1_COLOR_F color;
@@ -5000,13 +4999,11 @@ static void test_draw_text_layout(void)
     D2D1_RECT_F rect;
     unsigned int i;
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
 
@@ -5114,7 +5111,7 @@ todo_wine
     ID2D1Factory_Release(factory2);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -5151,11 +5148,11 @@ static void test_dc_target(void)
     D2D1_RENDER_TARGET_PROPERTIES desc;
     D2D1_MATRIX_3X2_F matrix, matrix2;
     ID2D1DCRenderTarget *rt, *rt2;
+    struct d2d1_test_context ctx;
     D2D1_ANTIALIAS_MODE aa_mode;
     ID2D1SolidColorBrush *brush;
     ID2D1RenderTarget *rt3;
     ID2D1Factory *factory;
-    ID3D10Device1 *device;
     FLOAT dpi_x, dpi_y;
     D2D1_COLOR_F color;
     D2D1_SIZE_U sizeu;
@@ -5168,12 +5165,9 @@ static void test_dc_target(void)
     HRESULT hr;
     RECT rect;
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
@@ -5375,18 +5369,15 @@ static void test_hwnd_target(void)
     ID2D1GdiInteropRenderTarget *interop;
     D2D1_RENDER_TARGET_PROPERTIES desc;
     ID2D1HwndRenderTarget *rt, *rt2;
+    struct d2d1_test_context ctx;
     ID2D1RenderTarget *rt3;
     ID2D1Factory *factory;
-    ID3D10Device1 *device;
     D2D1_SIZE_U size;
     HRESULT hr;
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
@@ -5541,22 +5532,19 @@ static void test_bitmap_target(void)
     ID2D1BitmapRenderTarget *rt, *rt2;
     ID2D1HwndRenderTarget *hwnd_rt;
     ID2D1Bitmap *bitmap, *bitmap2;
+    struct d2d1_test_context ctx;
     ID2D1DCRenderTarget *dc_rt;
     D2D1_SIZE_F size, size2;
     ID2D1RenderTarget *rt3;
     ID2D1Factory *factory;
-    ID3D10Device1 *device;
     float dpi[2], dpi2[2];
     D2D1_COLOR_F color;
     ULONG refcount;
     HRESULT hr;
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
@@ -5885,9 +5873,9 @@ static void test_gradient(void)
 {
     ID2D1GradientStopCollection *gradient;
     D2D1_GRADIENT_STOP stops[3], stops2[3];
+    struct d2d1_test_context ctx;
     IDXGISwapChain *swapchain;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     D2D1_COLOR_F color;
     unsigned int i;
@@ -5895,13 +5883,11 @@ static void test_gradient(void)
     HWND window;
     HRESULT hr;
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -5935,7 +5921,7 @@ static void test_gradient(void)
 
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -5945,13 +5931,13 @@ static void test_draw_geometry(void)
     ID2D1RectangleGeometry *rect_geometry[2];
     D2D1_POINT_2F point = {0.0f, 0.0f};
     D2D1_ROUNDED_RECT rounded_rect;
+    struct d2d1_test_context ctx;
     ID2D1SolidColorBrush *brush;
     ID2D1PathGeometry *geometry;
     IDXGISwapChain *swapchain;
     D2D1_MATRIX_3X2_F matrix;
     ID2D1GeometrySink *sink;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Factory *factory;
     D2D1_POINT_2F p0, p1;
@@ -5963,13 +5949,11 @@ static void test_draw_geometry(void)
     HRESULT hr;
     BOOL match;
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -6863,7 +6847,7 @@ static void test_draw_geometry(void)
     ok(!refcount, "Factory has %u references left.\n", refcount);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -6873,13 +6857,13 @@ static void test_fill_geometry(void)
     ID2D1RectangleGeometry *rect_geometry[2];
     D2D1_POINT_2F point = {0.0f, 0.0f};
     D2D1_ROUNDED_RECT rounded_rect;
+    struct d2d1_test_context ctx;
     ID2D1SolidColorBrush *brush;
     ID2D1PathGeometry *geometry;
     IDXGISwapChain *swapchain;
     D2D1_MATRIX_3X2_F matrix;
     ID2D1GeometrySink *sink;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Factory *factory;
     D2D1_ELLIPSE ellipse;
@@ -6890,13 +6874,11 @@ static void test_fill_geometry(void)
     HRESULT hr;
     BOOL match;
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -7677,7 +7659,7 @@ static void test_fill_geometry(void)
     ok(!refcount, "Factory has %u references left.\n", refcount);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
@@ -7686,22 +7668,19 @@ static void test_gdi_interop(void)
     ID2D1GdiInteropRenderTarget *interop;
     D2D1_RENDER_TARGET_PROPERTIES desc;
     IWICImagingFactory *wic_factory;
+    struct d2d1_test_context ctx;
     IWICBitmapLock *wic_lock;
     IWICBitmap *wic_bitmap;
     ID2D1RenderTarget *rt;
     ID2D1Factory *factory;
-    ID3D10Device1 *device;
     D2D1_COLOR_F color;
     HRESULT hr;
     BOOL match;
     RECT rect;
     HDC dc;
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
@@ -7812,14 +7791,15 @@ todo_wine
 
     IWICBitmap_Release(wic_bitmap);
     ID2D1Factory_Release(factory);
+    release_test_context(&ctx);
 }
 
 static void test_layer(void)
 {
     ID2D1Factory *factory, *layer_factory;
+    struct d2d1_test_context ctx;
     IDXGISwapChain *swapchain;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Layer *layer;
     D2D1_SIZE_F size;
@@ -7827,13 +7807,11 @@ static void test_layer(void)
     HWND window;
     HRESULT hr;
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -7866,19 +7844,19 @@ static void test_layer(void)
     ok(!refcount, "Factory has %u references left.\n", refcount);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
 static void test_bezier_intersect(void)
 {
     D2D1_POINT_2F point = {0.0f, 0.0f};
+    struct d2d1_test_context ctx;
     ID2D1SolidColorBrush *brush;
     ID2D1PathGeometry *geometry;
     IDXGISwapChain *swapchain;
     ID2D1GeometrySink *sink;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Factory *factory;
     D2D1_COLOR_F color;
@@ -7887,13 +7865,11 @@ static void test_bezier_intersect(void)
     HRESULT hr;
     BOOL match;
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -8016,14 +7992,14 @@ static void test_bezier_intersect(void)
     ok(!refcount, "Factory has %u references left.\n", refcount);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
 static void test_create_device(void)
 {
     D2D1_CREATION_PROPERTIES properties = {0};
-    ID3D10Device1 *d3d_device;
+    struct d2d1_test_context ctx;
     IDXGIDevice *dxgi_device;
     ID2D1Factory1 *factory;
     ID2D1Factory *factory2;
@@ -8031,20 +8007,17 @@ static void test_create_device(void)
     ULONG refcount;
     HRESULT hr;
 
-    if (!(d3d_device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
 
     if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
     {
         win_skip("ID2D1Factory1 is not supported.\n");
-        ID3D10Device1_Release(d3d_device);
+        release_test_context(&ctx);
         return;
     }
 
-    hr = ID3D10Device1_QueryInterface(d3d_device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    hr = ID3D10Device1_QueryInterface(ctx.device, &IID_IDXGIDevice, (void **)&dxgi_device);
     ok(SUCCEEDED(hr), "Failed to get IDXGIDevice interface, hr %#x.\n", hr);
 
     hr = ID2D1Factory1_CreateDevice(factory, dxgi_device, &device);
@@ -8069,7 +8042,7 @@ static void test_create_device(void)
         win_skip("D2D1CreateDevice() is unavailable.\n");
 
     IDXGIDevice_Release(dxgi_device);
-    ID3D10Device1_Release(d3d_device);
+    release_test_context(&ctx);
 
     refcount = ID2D1Factory1_Release(factory);
     ok(!refcount, "Factory has %u references left.\n", refcount);
@@ -8296,7 +8269,7 @@ static void test_bitmap_surface(void)
     ID2D1DeviceContext *device_context;
     IDXGISurface *surface, *surface2;
     D2D1_PIXEL_FORMAT pixel_format;
-    ID3D10Device1 *d3d_device;
+    struct d2d1_test_context ctx;
     IDXGISwapChain *swapchain;
     IDXGIDevice *dxgi_device;
     ID2D1Factory1 *factory;
@@ -8313,22 +8286,19 @@ static void test_bitmap_surface(void)
     IWICBitmap *wic_bitmap;
     IWICImagingFactory *wic_factory;
 
-    if (!(d3d_device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
 
     if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
     {
         win_skip("ID2D1Factory1 is not supported.\n");
-        ID3D10Device1_Release(d3d_device);
+        release_test_context(&ctx);
         return;
     }
 
     /* DXGI target */
     window = create_window();
-    swapchain = create_swapchain(d3d_device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -8350,7 +8320,7 @@ static void test_bitmap_surface(void)
     ID2D1RenderTarget_Release(rt);
 
     /* Bitmap created from DXGI surface. */
-    hr = ID3D10Device1_QueryInterface(d3d_device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    hr = ID3D10Device1_QueryInterface(ctx.device, &IID_IDXGIDevice, (void **)&dxgi_device);
     ok(SUCCEEDED(hr), "Failed to get IDXGIDevice interface, hr %#x.\n", hr);
 
     hr = ID2D1Factory1_CreateDevice(factory, dxgi_device, &device);
@@ -8519,7 +8489,7 @@ static void test_bitmap_surface(void)
     CoUninitialize();
 
     ID2D1Factory1_Release(factory);
-    ID3D10Device1_Release(d3d_device);
+    release_test_context(&ctx);
 }
 
 static void test_device_context(void)
@@ -8529,9 +8499,9 @@ static void test_device_context(void)
     ID2D1DeviceContext *device_context;
     IDXGISurface *surface, *surface2;
     ID2D1Device *device, *device2;
+    struct d2d1_test_context ctx;
     D2D1_BITMAP_OPTIONS options;
     ID2D1DCRenderTarget *dc_rt;
-    ID3D10Device1 *d3d_device;
     IDXGISwapChain *swapchain;
     IDXGIDevice *dxgi_device;
     D2D1_UNIT_MODE unit_mode;
@@ -8547,20 +8517,17 @@ static void test_device_context(void)
     IWICBitmap *wic_bitmap;
     IWICImagingFactory *wic_factory;
 
-    if (!(d3d_device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
 
     if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
     {
         win_skip("ID2D1Factory1 is not supported.\n");
-        ID3D10Device1_Release(d3d_device);
+        release_test_context(&ctx);
         return;
     }
 
-    hr = ID3D10Device1_QueryInterface(d3d_device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    hr = ID3D10Device1_QueryInterface(ctx.device, &IID_IDXGIDevice, (void **)&dxgi_device);
     ok(SUCCEEDED(hr), "Failed to get IDXGIDevice interface, hr %#x.\n", hr);
 
     hr = ID2D1Factory1_CreateDevice(factory, dxgi_device, &device);
@@ -8585,7 +8552,7 @@ static void test_device_context(void)
 
     /* DXGI target */
     window = create_window();
-    swapchain = create_swapchain(d3d_device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -8725,7 +8692,7 @@ todo_wine
 
     ID2D1Device_Release(device);
     ID2D1Factory1_Release(factory);
-    ID3D10Device1_Release(d3d_device);
+    release_test_context(&ctx);
 }
 
 static void test_invert_matrix(void)
@@ -8890,7 +8857,7 @@ static void test_command_list(void)
     D2D1_BITMAP_PROPERTIES bitmap_desc;
     ID2D1StrokeStyle *stroke_style;
     ID2D1CommandList *command_list;
-    ID3D10Device1 *d3d_device;
+    struct d2d1_test_context ctx;
     ID2D1Geometry *geometry;
     ID2D1Factory1 *factory;
     ID2D1RenderTarget *rt;
@@ -8904,20 +8871,17 @@ static void test_command_list(void)
     ULONG refcount;
     HRESULT hr;
 
-    if (!(d3d_device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
 
     if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
     {
         win_skip("ID2D1Factory1 is not supported.\n");
-        ID3D10Device1_Release(d3d_device);
+        release_test_context(&ctx);
         return;
     }
 
-    device_context = create_device_context(factory, d3d_device);
+    device_context = create_device_context(factory, ctx.device);
     ok(device_context != NULL, "Failed to create device context.\n");
 
     hr = ID2D1DeviceContext_CreateCommandList(device_context, &command_list);
@@ -9103,7 +9067,7 @@ todo_wine
     ID2D1CommandList_Release(command_list);
 
     /* List created with different context. */
-    device_context2 = create_device_context(factory, d3d_device);
+    device_context2 = create_device_context(factory, ctx.device);
     ok(device_context2 != NULL, "Failed to create device context.\n");
 
     hr = ID2D1DeviceContext_CreateCommandList(device_context, &command_list);
@@ -9120,6 +9084,7 @@ todo_wine
     ID2D1DeviceContext_Release(device_context);
     refcount = ID2D1Factory1_Release(factory);
     ok(!refcount, "Factory has %u references left.\n", refcount);
+    release_test_context(&ctx);
 }
 
 static void test_max_bitmap_size(void)
@@ -9245,8 +9210,8 @@ static void test_dpi(void)
     D2D1_BITMAP_PROPERTIES1 bitmap_desc;
     ID2D1DeviceContext *device_context;
     IWICImagingFactory *wic_factory;
+    struct d2d1_test_context ctx;
     IDXGISwapChain *swapchain;
-    ID3D10Device1 *d3d_device;
     ID2D1Factory1 *factory;
     IDXGISurface *surface;
     ID2D1Bitmap1 *bitmap;
@@ -9274,25 +9239,22 @@ static void test_dpi(void)
     static const float dc_dpi_x = 120.0f, dc_dpi_y = 144.0f;
     unsigned int i;
 
-    if (!(d3d_device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
 
     if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
     {
         win_skip("ID2D1Factory1 is not supported.\n");
-        ID3D10Device1_Release(d3d_device);
+        release_test_context(&ctx);
         return;
     }
 
     window = create_window();
-    swapchain = create_swapchain(d3d_device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
-    device_context = create_device_context(factory, d3d_device);
+    device_context = create_device_context(factory, ctx.device);
     ok(!!device_context, "Failed to create device context.\n");
 
     ID2D1DeviceContext_GetDpi(device_context, &dpi_x, &dpi_y);
@@ -9461,18 +9423,18 @@ static void test_dpi(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     ID2D1Factory1_Release(factory);
-    ID3D10Device1_Release(d3d_device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
 static void test_wic_bitmap_format(void)
 {
     IWICImagingFactory *wic_factory;
+    struct d2d1_test_context ctx;
     IDXGISwapChain *swapchain;
     D2D1_PIXEL_FORMAT format;
     IWICBitmap *wic_bitmap;
     ID2D1RenderTarget *rt;
-    ID3D10Device1 *device;
     IDXGISurface *surface;
     ID2D1Bitmap *bitmap;
     unsigned int i;
@@ -9491,13 +9453,11 @@ static void test_wic_bitmap_format(void)
         {&GUID_WICPixelFormat32bppBGR,   {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}},
     };
 
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
+    if (!init_test_context(&ctx))
         return;
-    }
+
     window = create_window();
-    swapchain = create_swapchain(device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(hr == S_OK, "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -9532,7 +9492,7 @@ static void test_wic_bitmap_format(void)
     ID2D1RenderTarget_Release(rt);
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
-    ID3D10Device1_Release(device);
+    release_test_context(&ctx);
     DestroyWindow(window);
 }
 
