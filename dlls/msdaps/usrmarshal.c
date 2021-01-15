@@ -1630,6 +1630,20 @@ HRESULT __RPC_STUB IConvertType_CanConvert_Stub(IConvertType* This, DBTYPE from,
     return E_NOTIMPL;
 }
 
+HRESULT __RPC_STUB IMultipleResults_GetResult_Stub(IMultipleResults* This, IUnknown *outer,
+    DBRESULTFLAG result, REFIID riid, DBROWCOUNT *affected, IUnknown **rowset, IErrorInfo **error)
+{
+    FIXME("(%p)->(%p %ld %s %p %p %p): stub\n", This, outer, result, debugstr_guid(riid), affected, rowset, error);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IMultipleResults_GetResult_Proxy(IMultipleResults* This, IUnknown *outer,
+    DBRESULTFLAG result, REFIID riid, DBROWCOUNT *affected, IUnknown **rowset)
+{
+    FIXME("(%p)->(%p %ld %s %p %p): stub\n", This, outer, result, debugstr_guid(riid), affected, rowset);
+    return E_NOTIMPL;
+}
+
 HRESULT CALLBACK ICommandPrepare_Prepare_Proxy(ICommandPrepare* This, ULONG runs)
 {
     FIXME("(%p)->(%d): stub\n", This, runs);

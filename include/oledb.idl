@@ -77,6 +77,7 @@ typedef LONG_PTR DB_LRESERVE;
 #include "cmdpre.idl"
 #include "rstchg.idl"
 #include "rstupd.idl"
+#include "mulres.idl"
 
 cpp_quote("#include <accctrl.h>")
 

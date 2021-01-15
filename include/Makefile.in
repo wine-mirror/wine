@@ -509,6 +509,7 @@ SOURCES = \
 	msxml6did.h \
 	msxmldid.h \
 	mtxdm.h \
+	mulres.idl \
 	multimon.h \
 	natupnp.idl \
 	nb30.h \
