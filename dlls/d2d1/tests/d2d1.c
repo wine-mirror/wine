@@ -48,6 +48,7 @@ struct d2d1_test_context
     HWND window;
     IDXGISwapChain *swapchain;
     IDXGISurface *surface;
+    ID2D1RenderTarget *rt;
 };
 
 struct resource_readback
@@ -790,6 +791,14 @@ static ID2D1RenderTarget *create_render_target(IDXGISurface *surface)
 #define release_test_context(ctx) release_test_context_(__LINE__, ctx)
 static void release_test_context_(unsigned int line, struct d2d1_test_context *ctx)
 {
+    ID2D1Factory *factory;
+    ULONG ref;
+
+    ID2D1RenderTarget_GetFactory(ctx->rt, &factory);
+    ID2D1RenderTarget_Release(ctx->rt);
+    ref = ID2D1Factory_Release(factory);
+    ok_(__FILE__, line)(!ref, "Factory has %u references left.\n", ref);
+
     IDXGISurface_Release(ctx->surface);
     IDXGISwapChain_Release(ctx->swapchain);
     DestroyWindow(ctx->window);
@@ -815,6 +824,9 @@ static BOOL init_test_context_(unsigned int line, struct d2d1_test_context *ctx)
     ok_(__FILE__, line)(!!ctx->swapchain, "Failed to create swapchain.\n");
     hr = IDXGISwapChain_GetBuffer(ctx->swapchain, 0, &IID_IDXGISurface, (void **)&ctx->surface);
     ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+
+    ctx->rt = create_render_target(ctx->surface);
+    ok_(__FILE__, line)(!!ctx->rt, "Failed to create render target.\n");
 
     return TRUE;
 }
@@ -1148,9 +1160,7 @@ static void test_clip(void)
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
-
+    rt = ctx.rt;
     ID2D1RenderTarget_GetDpi(rt, &dpi_x, &dpi_y);
     ok(dpi_x == 96.0f, "Got unexpected dpi_x %.8e.\n", dpi_x);
     ok(dpi_y == 96.0f, "Got unexpected dpi_x %.8e.\n", dpi_y);
@@ -1316,7 +1326,6 @@ static void test_clip(void)
     match = compare_surface(ctx.surface, "cb418ec4a7c8407b5e36db06fc6292a06bb8476c");
     ok(match, "Surface does not match.\n");
 
-    ID2D1RenderTarget_Release(rt);
     release_test_context(&ctx);
 }
 
@@ -1354,8 +1363,7 @@ static void test_state_block(void)
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
+    rt = ctx.rt;
     ID2D1RenderTarget_GetFactory(rt, &factory);
     hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory, (IUnknown **)&dwrite_factory);
     ok(SUCCEEDED(hr), "Failed to create dwrite factory, hr %#x.\n", hr);
@@ -1578,7 +1586,6 @@ static void test_state_block(void)
     refcount = IDWriteRenderingParams_Release(text_rendering_params1);
     ok(!refcount, "Rendering params %u references left.\n", refcount);
     ID2D1Factory_Release(factory);
-    ID2D1RenderTarget_Release(rt);
     release_test_context(&ctx);
 }
 
@@ -1598,9 +1605,7 @@ static void test_color_brush(void)
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
-
+    rt = ctx.rt;
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
 
@@ -1666,7 +1671,6 @@ static void test_color_brush(void)
     ok(match, "Surface does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);
-    ID2D1RenderTarget_Release(rt);
     release_test_context(&ctx);
 }
 
@@ -1726,9 +1730,7 @@ static void test_bitmap_brush(void)
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
-
+    rt = ctx.rt;
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
 
@@ -1821,6 +1823,7 @@ static void test_bitmap_brush(void)
 
         ID2D1RenderTarget_SetTransform(rt, &tmp_matrix);
         ID2D1DeviceContext_Release(context);
+        ID2D1Image_Release(image);
     }
 
     /* Creating a brush with a NULL bitmap crashes on Vista, but works fine on
@@ -2061,7 +2064,6 @@ static void test_bitmap_brush(void)
     ID2D1BitmapBrush_Release(brush);
     refcount = ID2D1Bitmap_Release(bitmap);
     ok(!refcount, "Bitmap has %u references left.\n", refcount);
-    ID2D1RenderTarget_Release(rt);
     release_test_context(&ctx);
 }
 
@@ -2125,9 +2127,7 @@ static void test_linear_brush(void)
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
-
+    rt = ctx.rt;
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
 
@@ -2255,7 +2255,6 @@ static void test_linear_brush(void)
     ID2D1LinearGradientBrush_Release(brush);
     refcount = ID2D1GradientStopCollection_Release(gradient);
     ok(!refcount, "Gradient has %u references left.\n", refcount);
-    ID2D1RenderTarget_Release(rt);
     release_test_context(&ctx);
 }
 
@@ -2319,9 +2318,7 @@ static void test_radial_brush(void)
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
-
+    rt = ctx.rt;
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
 
@@ -2457,7 +2454,6 @@ static void test_radial_brush(void)
     ID2D1RadialGradientBrush_Release(brush);
     refcount = ID2D1GradientStopCollection_Release(gradient);
     ok(!refcount, "Gradient has %u references left.\n", refcount);
-    ID2D1RenderTarget_Release(rt);
     release_test_context(&ctx);
 }
 
@@ -2592,7 +2588,6 @@ static void test_path_geometry(void)
     BOOL match, contains;
     D2D1_COLOR_F color;
     D2D1_RECT_F rect;
-    ULONG refcount;
     UINT32 count;
     HRESULT hr;
 
@@ -2913,8 +2908,7 @@ static void test_path_geometry(void)
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
+    rt = ctx.rt;
     ID2D1RenderTarget_GetFactory(rt, &factory);
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
@@ -3633,9 +3627,7 @@ static void test_path_geometry(void)
     ID2D1PathGeometry_Release(geometry);
 
     ID2D1SolidColorBrush_Release(brush);
-    ID2D1RenderTarget_Release(rt);
-    refcount = ID2D1Factory_Release(factory);
-    ok(!refcount, "Factory has %u references left.\n", refcount);
+    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -4002,9 +3994,7 @@ static void test_bitmap_formats(void)
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
-
+    rt = ctx.rt;
     bitmap_desc.dpiX = 96.0f;
     bitmap_desc.dpiY = 96.0f;
     for (i = 0; i < ARRAY_SIZE(bitmap_formats); ++i)
@@ -4028,7 +4018,6 @@ static void test_bitmap_formats(void)
         }
     }
 
-    ID2D1RenderTarget_Release(rt);
     release_test_context(&ctx);
 }
 
@@ -4059,9 +4048,7 @@ static void test_alpha_mode(void)
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
-
+    rt = ctx.rt;
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
 
     set_size_u(&size, 4, 4);
@@ -4146,7 +4133,6 @@ static void test_alpha_mode(void)
     match = compare_surface(ctx.surface, "14f8ac64b70966c7c3c6281c59aaecdb17c3b16a");
     ok(match, "Surface does not match.\n");
 
-    ID2D1RenderTarget_Release(rt);
     rt_desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
     rt_desc.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
     rt_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
@@ -4520,9 +4506,7 @@ static void test_bitmap_updates(void)
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
-
+    rt = ctx.rt;
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -4583,7 +4567,6 @@ static void test_bitmap_updates(void)
     ok(match, "Surface does not match.\n");
 
     ID2D1Bitmap_Release(bitmap);
-    ID2D1RenderTarget_Release(rt);
     release_test_context(&ctx);
 }
 
@@ -4616,8 +4599,7 @@ static void test_opacity_brush(void)
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
+    rt = ctx.rt;
     ID2D1RenderTarget_GetFactory(rt, &factory);
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
@@ -4750,9 +4732,7 @@ static void test_opacity_brush(void)
     ID2D1BitmapBrush_Release(bitmap_brush);
     ID2D1BitmapBrush_Release(opacity_brush);
     ID2D1SolidColorBrush_Release(color_brush);
-    ID2D1RenderTarget_Release(rt);
-    refcount = ID2D1Factory_Release(factory);
-    ok(!refcount, "Factory has %u references left.\n", refcount);
+    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -4781,7 +4761,6 @@ static void test_create_target(void)
 
     if (!init_test_context(&ctx))
         return;
-
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
@@ -5761,9 +5740,7 @@ static void test_gradient(void)
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
-
+    rt = ctx.rt;
     stops2[0].position = 0.5f;
     set_color(&stops2[0].color, 1.0f, 1.0f, 0.0f, 1.0f);
     stops2[1] = stops2[0];
@@ -5788,7 +5765,6 @@ static void test_gradient(void)
     }
 
     ID2D1GradientStopCollection_Release(gradient);
-    ID2D1RenderTarget_Release(rt);
 
     release_test_context(&ctx);
 }
@@ -5810,15 +5786,13 @@ static void test_draw_geometry(void)
     D2D1_ELLIPSE ellipse;
     D2D1_COLOR_F color;
     D2D1_RECT_F rect;
-    ULONG refcount;
     HRESULT hr;
     BOOL match;
 
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
+    rt = ctx.rt;
     ID2D1RenderTarget_GetFactory(rt, &factory);
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
@@ -6703,9 +6677,7 @@ static void test_draw_geometry(void)
     ok(match, "Figure does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);
-    ID2D1RenderTarget_Release(rt);
-    refcount = ID2D1Factory_Release(factory);
-    ok(!refcount, "Factory has %u references left.\n", refcount);
+    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -6725,15 +6697,13 @@ static void test_fill_geometry(void)
     D2D1_ELLIPSE ellipse;
     D2D1_COLOR_F color;
     D2D1_RECT_F rect;
-    ULONG refcount;
     HRESULT hr;
     BOOL match;
 
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
+    rt = ctx.rt;
     ID2D1RenderTarget_GetFactory(rt, &factory);
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
@@ -7505,9 +7475,7 @@ static void test_fill_geometry(void)
     ok(match, "Figure does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);
-    ID2D1RenderTarget_Release(rt);
-    refcount = ID2D1Factory_Release(factory);
-    ok(!refcount, "Factory has %u references left.\n", refcount);
+    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -7649,14 +7617,12 @@ static void test_layer(void)
     ID2D1RenderTarget *rt;
     ID2D1Layer *layer;
     D2D1_SIZE_F size;
-    ULONG refcount;
     HRESULT hr;
 
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
+    rt = ctx.rt;
     ID2D1RenderTarget_GetFactory(rt, &factory);
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
@@ -7680,9 +7646,7 @@ static void test_layer(void)
     ok(size.height == 600.0f, "Got unexpected height %.8e.\n", size.height);
     ID2D1Layer_Release(layer);
 
-    ID2D1RenderTarget_Release(rt);
-    refcount = ID2D1Factory_Release(factory);
-    ok(!refcount, "Factory has %u references left.\n", refcount);
+    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -7696,15 +7660,13 @@ static void test_bezier_intersect(void)
     ID2D1RenderTarget *rt;
     ID2D1Factory *factory;
     D2D1_COLOR_F color;
-    ULONG refcount;
     HRESULT hr;
     BOOL match;
 
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
+    rt = ctx.rt;
     ID2D1RenderTarget_GetFactory(rt, &factory);
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
@@ -7818,9 +7780,7 @@ static void test_bezier_intersect(void)
     ok(match, "Figure does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);
-    ID2D1RenderTarget_Release(rt);
-    refcount = ID2D1Factory_Release(factory);
-    ok(!refcount, "Factory has %u references left.\n", refcount);
+    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -8123,10 +8083,7 @@ static void test_bitmap_surface(void)
     }
 
     /* DXGI target */
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
-
-    hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context);
+    hr = ID2D1RenderTarget_QueryInterface(ctx.rt, &IID_ID2D1DeviceContext, (void **)&device_context);
     ok(SUCCEEDED(hr), "Failed to get device context, hr %#x.\n", hr);
 
     bitmap = NULL;
@@ -8135,11 +8092,9 @@ static void test_bitmap_surface(void)
     check_bitmap_surface((ID2D1Bitmap *)bitmap, TRUE, D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW);
     ID2D1Bitmap1_Release(bitmap);
 
-    check_rt_bitmap_surface(rt, TRUE, D2D1_BITMAP_OPTIONS_NONE);
+    check_rt_bitmap_surface(ctx.rt, TRUE, D2D1_BITMAP_OPTIONS_NONE);
 
     ID2D1DeviceContext_Release(device_context);
-
-    ID2D1RenderTarget_Release(rt);
 
     /* Bitmap created from DXGI surface. */
     hr = ID3D10Device1_QueryInterface(ctx.device, &IID_IDXGIDevice, (void **)&dxgi_device);
@@ -8370,9 +8325,7 @@ static void test_device_context(void)
     ID2D1DeviceContext_Release(device_context);
 
     /* DXGI target */
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
-
+    rt = ctx.rt;
     hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context);
     ok(SUCCEEDED(hr), "Failed to get device context interface, hr %#x.\n", hr);
     ID2D1DeviceContext_GetTarget(device_context, (ID2D1Image **)&bitmap);
@@ -8397,7 +8350,6 @@ static void test_device_context(void)
     ok(bitmap == NULL, "Unexpected target instance.\n");
 
     ID2D1DeviceContext_Release(device_context);
-    ID2D1RenderTarget_Release(rt);
 
     /* WIC target */
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -8895,8 +8847,7 @@ todo_wine
 
     ID2D1RenderTarget_Release(rt);
     ID2D1DeviceContext_Release(device_context);
-    refcount = ID2D1Factory1_Release(factory);
-    ok(!refcount, "Factory has %u references left.\n", refcount);
+    ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -9256,8 +9207,7 @@ static void test_wic_bitmap_format(void)
     if (!init_test_context(&ctx))
         return;
 
-    rt = create_render_target(ctx.surface);
-    ok(!!rt, "Failed to create render target.\n");
+    rt = ctx.rt;
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
@@ -9285,7 +9235,6 @@ static void test_wic_bitmap_format(void)
 
     IWICImagingFactory_Release(wic_factory);
     CoUninitialize();
-    ID2D1RenderTarget_Release(rt);
     release_test_context(&ctx);
 }
 
