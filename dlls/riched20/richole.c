@@ -1407,7 +1407,7 @@ IRichEditOle_fnGetObject(IRichEditOle *me, LONG iob,
     }
     else
     {
-        if (iob > IRichEditOle_GetObjectCount(me))
+        if (iob < 0 || iob >= IRichEditOle_GetObjectCount(me))
             return E_INVALIDARG;
         LIST_FOR_EACH_ENTRY(reobj, &This->editor->reobj_list, struct re_object, entry)
         {

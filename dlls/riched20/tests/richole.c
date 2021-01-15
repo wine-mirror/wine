@@ -3296,10 +3296,16 @@ static void test_InsertObject(void)
   ok(hr == S_OK, "IRichEditOle_GetObject failed: 0x%08x\n", hr);
   CHECK_REOBJECT_STRUCT(received_reo4, NULL, NULL, reo2.polesite, 2);
 
+  hr = IRichEditOle_GetObject(reole, 3, &received_reo4, REO_GETOBJ_POLESITE);
+  ok(hr == E_INVALIDARG, "IRichEditOle_GetObject should fail: 0x%08x\n", hr);
+
   hr = IRichEditOle_GetObject(reole, 4, &received_reo4, REO_GETOBJ_POLESITE);
   ok(hr == E_INVALIDARG, "IRichEditOle_GetObject should fail: 0x%08x\n", hr);
 
   hr = IRichEditOle_GetObject(reole, 1024, &received_reo4, REO_GETOBJ_POLESITE);
+  ok(hr == E_INVALIDARG, "IRichEditOle_GetObject should fail: 0x%08x\n", hr);
+
+  hr = IRichEditOle_GetObject(reole, -10, &received_reo4, REO_GETOBJ_POLESITE);
   ok(hr == E_INVALIDARG, "IRichEditOle_GetObject should fail: 0x%08x\n", hr);
 
   /* received_reo4 will be zeroed before be used */
