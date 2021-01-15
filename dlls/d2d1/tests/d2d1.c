@@ -1676,6 +1676,7 @@ static void test_bitmap_brush(void)
     IDXGISwapChain *swapchain;
     ID2D1BitmapBrush1 *brush1;
     ID2D1BitmapBrush *brush;
+    D2D1_SIZE_F image_size;
     ID2D1RenderTarget *rt;
     ID3D10Device1 *device;
     IDXGISurface *surface;
@@ -1740,6 +1741,7 @@ static void test_bitmap_brush(void)
     bitmap_desc.dpiY = 96.0f;
     hr = ID2D1RenderTarget_CreateBitmap(rt, size, bitmap_data, 4 * sizeof(*bitmap_data), &bitmap_desc, &bitmap);
     ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+    image_size = ID2D1Bitmap_GetSize(bitmap);
 
     hr = ID2D1Bitmap_QueryInterface(bitmap, &IID_ID2D1Image, (void **)&image);
     ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Vista */, "Failed to get ID2D1Image, hr %#x.\n", hr);
@@ -1812,10 +1814,22 @@ static void test_bitmap_brush(void)
     set_rect(&src_rect, 2.0f, 1.0f, 4.0f, 3.0f);
     ID2D1RenderTarget_DrawBitmap(rt, bitmap, &dst_rect, 1.0f,
             D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, &src_rect);
+    set_rect(&dst_rect, 4.0f, 12.0f, 12.0f, 20.0f);
+    set_rect(&src_rect, 0.0f, 0.0f, image_size.width * 2, image_size.height * 2);
+    ID2D1RenderTarget_DrawBitmap(rt, bitmap, &dst_rect, 1.0f,
+            D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, &src_rect);
+    set_rect(&dst_rect, 4.0f, 8.0f, 12.0f, 12.0f);
+    set_rect(&src_rect, image_size.width / 2, image_size.height / 2, image_size.width, image_size.height);
+    ID2D1RenderTarget_DrawBitmap(rt, bitmap, &dst_rect, 1.0f,
+            D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, &src_rect);
+    set_rect(&dst_rect, 0.0f, 4.0f, 4.0f, 8.0f);
+    set_rect(&src_rect, image_size.width, 0.0f, 0.0f, image_size.height);
+    ID2D1RenderTarget_DrawBitmap(rt, bitmap, &dst_rect, 1.0f,
+            D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, &src_rect);
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "9437f4447d98feaad41a1c4202ee90aadc718ee6");
+    match = compare_surface(surface, "f5d039c280fa33ba05496c9883192a34108efbbe");
     ok(match, "Surface does not match.\n");
 
     /* Invalid interpolation mode. */
@@ -1828,7 +1842,19 @@ static void test_bitmap_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
-    match = compare_surface(surface, "9437f4447d98feaad41a1c4202ee90aadc718ee6");
+    match = compare_surface(surface, "f5d039c280fa33ba05496c9883192a34108efbbe");
+    ok(match, "Surface does not match.\n");
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    ID2D1RenderTarget_Clear(rt, &color);
+
+    set_rect(&src_rect, image_size.width, 0.0f, 0.0f, image_size.height);
+    ID2D1RenderTarget_DrawBitmap(rt, bitmap, NULL, 1.0f,
+            D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, &src_rect);
+
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+    match = compare_surface(surface, "59043096393570ad800dbcbfdd644394b79493bd");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);

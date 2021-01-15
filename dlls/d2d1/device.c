@@ -1072,25 +1072,19 @@ static void d2d_device_context_draw_bitmap(struct d2d_device_context *context, I
     D2D1_BITMAP_BRUSH_PROPERTIES1 bitmap_brush_desc;
     D2D1_BRUSH_PROPERTIES brush_desc;
     struct d2d_brush *brush;
+    D2D1_SIZE_F size;
     D2D1_RECT_F s, d;
     HRESULT hr;
 
     if (perspective_transform)
         FIXME("Perspective transform is ignored.\n");
 
-    if (src_rect)
+    size = ID2D1Bitmap_GetSize(bitmap);
+    d2d_rect_set(&s, 0.0f, 0.0f, size.width, size.height);
+    if (src_rect && src_rect->left <= src_rect->right
+            && src_rect->top <= src_rect->bottom)
     {
-        s = *src_rect;
-    }
-    else
-    {
-        D2D1_SIZE_F size;
-
-        size = ID2D1Bitmap_GetSize(bitmap);
-        s.left = 0.0f;
-        s.top = 0.0f;
-        s.right = size.width;
-        s.bottom = size.height;
+        d2d_rect_intersect(&s, src_rect);
     }
 
     if (dst_rect)
