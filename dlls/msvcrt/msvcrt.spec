@@ -265,7 +265,7 @@
 @ cdecl -arch=i386 __p__osver()
 @ cdecl -arch=i386 __p__pctype()
 @ cdecl -arch=i386 __p__pgmptr()
-@ stub -arch=i386 __p__pwctype()
+@ cdecl -arch=i386 __p__pwctype()
 @ cdecl -arch=i386 __p__timezone()
 @ cdecl -arch=i386 __p__tzname()
 @ cdecl -arch=i386 __p__wcmdln()
@@ -276,7 +276,7 @@
 @ cdecl -arch=i386 __p__wpgmptr()
 @ cdecl __pctype_func()
 @ extern __pioinfo MSVCRT___pioinfo
-# stub __pwctype_func()
+@ cdecl __pwctype_func()
 @ cdecl __pxcptinfoptrs()
 @ cdecl __set_app_type(long)
 @ extern __setlc_active MSVCRT___setlc_active

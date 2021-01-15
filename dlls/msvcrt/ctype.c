@@ -144,6 +144,22 @@ const unsigned short* CDECL __pctype_func(void)
 }
 
 /*********************************************************************
+ *		__p__pwctype (MSVCRT.@)
+ */
+unsigned short** CDECL __p__pwctype(void)
+{
+    return &MSVCRT__pwctype;
+}
+
+/*********************************************************************
+ *		__pwctype_func (MSVCRT.@)
+ */
+const unsigned short* CDECL __pwctype_func(void)
+{
+    return MSVCRT__pwctype;
+}
+
+/*********************************************************************
  *		_isctype_l (MSVCRT.@)
  */
 int CDECL _isctype_l(int c, int type, _locale_t locale)

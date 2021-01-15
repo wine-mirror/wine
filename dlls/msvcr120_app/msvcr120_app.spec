@@ -960,7 +960,7 @@
 @ cdecl __p__wpgmptr() msvcr120.__p__wpgmptr
 @ cdecl __pctype_func() msvcr120.__pctype_func
 @ extern __pioinfo msvcr120.__pioinfo
-@ stub __pwctype_func
+@ cdecl __pwctype_func() msvcr120.__pwctype_func
 @ cdecl __pxcptinfoptrs() msvcr120.__pxcptinfoptrs
 @ stub __report_gsfailure
 @ extern __setlc_active msvcr120.__setlc_active

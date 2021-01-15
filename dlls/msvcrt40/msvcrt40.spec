@@ -904,7 +904,7 @@
 @ cdecl -arch=i386 __p__osver() msvcrt.__p__osver
 @ cdecl -arch=i386 __p__pctype() msvcrt.__p__pctype
 @ cdecl -arch=i386 __p__pgmptr() msvcrt.__p__pgmptr
-@ cdecl __p__pwctype() msvcrt.__p__pwctype
+@ cdecl -arch=i386 __p__pwctype() msvcrt.__p__pwctype
 @ cdecl -arch=i386 __p__timezone() msvcrt.__p__timezone
 @ cdecl -arch=i386 __p__tzname() msvcrt.__p__tzname
 @ cdecl -arch=i386 __p__wcmdln() msvcrt.__p__wcmdln

@@ -5,7 +5,7 @@
 @ cdecl ___mb_cur_max_l_func(ptr) ucrtbase.___mb_cur_max_l_func
 @ cdecl __initialize_lconv_for_unsigned_char() ucrtbase.__initialize_lconv_for_unsigned_char
 @ cdecl __pctype_func() ucrtbase.__pctype_func
-@ stub __pwctype_func
+@ cdecl __pwctype_func() ucrtbase.__pwctype_func
 @ cdecl _configthreadlocale(long) ucrtbase._configthreadlocale
 @ cdecl _create_locale(long str) ucrtbase._create_locale
 @ cdecl _free_locale(ptr) ucrtbase._free_locale

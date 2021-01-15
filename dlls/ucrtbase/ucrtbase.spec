@@ -136,7 +136,7 @@
 @ cdecl __p__wpgmptr()
 @ cdecl __pctype_func()
 @ cdecl __processing_throw()
-@ stub __pwctype_func
+@ cdecl __pwctype_func()
 @ cdecl __pxcptinfoptrs()
 @ stub __report_gsfailure
 @ cdecl __setusermatherr(ptr)

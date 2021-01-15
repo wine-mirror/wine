@@ -287,7 +287,7 @@
 @ cdecl __p__osver()
 @ cdecl __p__pctype()
 @ cdecl __p__pgmptr()
-@ stub __p__pwctype()
+@ cdecl __p__pwctype()
 @ cdecl __p__timezone()
 @ cdecl __p__tzname()
 @ cdecl __p__wcmdln()
@@ -298,7 +298,7 @@
 @ cdecl __p__wpgmptr()
 @ cdecl __pctype_func()
 @ extern __pioinfo MSVCRT___pioinfo
-@ stub __pwctype_func
+@ cdecl __pwctype_func()
 @ cdecl __pxcptinfoptrs()
 @ stub __report_gsfailure
 @ cdecl __set_app_type(long)
