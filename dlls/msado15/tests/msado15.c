@@ -1046,7 +1046,7 @@ static void test_Connection(void)
     IConnectionPointContainer_Release(pointcontainer);
 
     hr = _Connection_QueryInterface(connection, &IID_ADOConnectionConstruction15, (void**)&construct);
-    todo_wine ok(hr == S_OK, "Failed to get ADOConnectionConstruction15 interface %08x\n", hr);
+    ok(hr == S_OK, "Failed to get ADOConnectionConstruction15 interface %08x\n", hr);
     if (hr == S_OK)
         ADOConnectionConstruction15_Release(construct);
 
