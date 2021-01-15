@@ -30,6 +30,9 @@
 
 static HRESULT (WINAPI *pD2D1CreateDevice)(IDXGIDevice *dxgi_device,
         const D2D1_CREATION_PROPERTIES *properties, ID2D1Device **device);
+static void (WINAPI *pD2D1SinCos)(float angle, float *s, float *c);
+static float (WINAPI *pD2D1Tan)(float angle);
+static float (WINAPI *pD2D1Vec3Length)(float x, float y, float z);
 
 static BOOL use_mt = TRUE;
 
@@ -9585,9 +9588,15 @@ static void test_math(void)
         {1.0f, 2.0f, 3.0f, 3.74165750f},
     };
 
+    if (!pD2D1SinCos || !pD2D1Tan || !pD2D1Vec3Length)
+    {
+        win_skip("D2D1SinCos/D2D1Tan/D2D1Vec3Length not available, skipping test.\n");
+        return;
+    }
+
     for (i = 0; i < ARRAY_SIZE(sc_data); ++i)
     {
-        D2D1SinCos(sc_data[i].x, &s, &c);
+        pD2D1SinCos(sc_data[i].x, &s, &c);
         ok(compare_float(s, sc_data[i].s, 0),
                 "Test %u: Got unexpected sin %.8e, expected %.8e.\n", i, s, sc_data[i].s);
         ok(compare_float(c, sc_data[i].c, 0),
@@ -9596,14 +9605,14 @@ static void test_math(void)
 
     for (i = 0; i < ARRAY_SIZE(t_data); ++i)
     {
-        t = D2D1Tan(t_data[i].x);
+        t = pD2D1Tan(t_data[i].x);
         ok(compare_float(t, t_data[i].t, 1),
                 "Test %u: Got unexpected tan %.8e, expected %.8e.\n", i, t, t_data[i].t);
     }
 
     for (i = 0; i < ARRAY_SIZE(l_data); ++i)
     {
-        l = D2D1Vec3Length(l_data[i].x, l_data[i].y, l_data[i].z);
+        l = pD2D1Vec3Length(l_data[i].x, l_data[i].y, l_data[i].z);
         ok(compare_float(l, l_data[i].l, 0),
                 "Test %u: Got unexpected length %.8e, expected %.8e.\n", i, l, l_data[i].l);
     }
@@ -9611,10 +9620,14 @@ static void test_math(void)
 
 START_TEST(d2d1)
 {
+    HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
     unsigned int argc, i;
     char **argv;
 
-    pD2D1CreateDevice = (void *)GetProcAddress(GetModuleHandleA("d2d1.dll"), "D2D1CreateDevice");
+    pD2D1CreateDevice = (void *)GetProcAddress(d2d1_dll, "D2D1CreateDevice");
+    pD2D1SinCos = (void *)GetProcAddress(d2d1_dll, "D2D1SinCos");
+    pD2D1Tan = (void *)GetProcAddress(d2d1_dll, "D2D1Tan");
+    pD2D1Vec3Length = (void *)GetProcAddress(d2d1_dll, "D2D1Vec3Length");
 
     use_mt = !getenv("WINETEST_NO_MT_D3D");
 
