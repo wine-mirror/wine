@@ -624,12 +624,14 @@ static gboolean gst_base_src_perform_seek(struct parser *This, GstEvent *event)
 static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
 {
     struct parser *This = gst_pad_get_element_private(pad);
+    gboolean ret = TRUE;
 
     TRACE("filter %p, type \"%s\".\n", This, GST_EVENT_TYPE_NAME(event));
 
     switch (event->type) {
         case GST_EVENT_SEEK:
-            return gst_base_src_perform_seek(This, event);
+            ret = gst_base_src_perform_seek(This, event);
+            break;
         case GST_EVENT_FLUSH_START:
             EnterCriticalSection(&This->filter.csFilter);
             if (This->reader)
@@ -649,13 +651,13 @@ static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
         case GST_EVENT_RECONFIGURE:
             return gst_pad_event_default(pad, parent, event);
     }
-    return TRUE;
+    gst_event_unref(event);
+    return ret;
 }
 
 static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
 {
     struct parser_source *pin = gst_pad_get_element_private(pad);
-    gboolean ret;
 
     TRACE("pin %p, type \"%s\".\n", pin, GST_EVENT_TYPE_NAME(event));
 
@@ -675,7 +677,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             if (segment->format != GST_FORMAT_TIME)
             {
                 FIXME("Unhandled format \"%s\".\n", gst_format_get_name(segment->format));
-                return TRUE;
+                break;
             }
 
             gst_segment_copy_into(segment, pin->segment);
@@ -688,14 +690,14 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             if (pin->pin.pin.peer)
                 IPin_NewSegment(pin->pin.pin.peer, pos, stop, rate*applied_rate);
 
-            return TRUE;
+            break;
         }
         case GST_EVENT_EOS:
             if (pin->pin.pin.peer)
                 IPin_EndOfStream(pin->pin.pin.peer);
             else
                 SetEvent(pin->eos_event);
-            return TRUE;
+            break;
         case GST_EVENT_FLUSH_START:
             if (impl_from_strmbase_filter(pin->pin.pin.filter)->ignore_flush) {
                 /* gst-plugins-base prior to 1.7 contains a bug which causes
@@ -706,24 +708,28 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
                  * unset the flushing flag to avoid the problem. */
                 TRACE("Working around gst <1.7 bug, ignoring FLUSH_START\n");
                 GST_PAD_UNSET_FLUSHING (pad);
-                return TRUE;
+                break;
             }
             if (pin->pin.pin.peer)
                 IPin_BeginFlush(pin->pin.pin.peer);
-            return TRUE;
+            break;
         case GST_EVENT_FLUSH_STOP:
             gst_segment_init(pin->segment, GST_FORMAT_TIME);
             if (pin->pin.pin.peer)
                 IPin_EndFlush(pin->pin.pin.peer);
-            return TRUE;
+            break;
         case GST_EVENT_CAPS:
-            ret = gst_pad_event_default(pad, parent, event);
+        {
+            gboolean ret = gst_pad_event_default(pad, parent, event);
             SetEvent(pin->caps_event);
             return ret;
+        }
         default:
             WARN("Ignoring \"%s\" event.\n", GST_EVENT_TYPE_NAME(event));
             return gst_pad_event_default(pad, parent, event);
     }
+    gst_event_unref(event);
+    return TRUE;
 }
 
 static DWORD CALLBACK push_data(LPVOID iface)
