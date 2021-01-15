@@ -1279,6 +1279,8 @@ static HRESULT WINAPI recordset_put_CursorLocation( _Recordset *iface, CursorLoc
 
     TRACE( "%p, %u\n", iface, cursor_loc );
 
+    if (recordset->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
+
     recordset->cursor_location = cursor_loc;
 
     return S_OK;
