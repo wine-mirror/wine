@@ -1087,6 +1087,9 @@ static void d2d_device_context_draw_bitmap(struct d2d_device_context *context, I
         d2d_rect_intersect(&s, src_rect);
     }
 
+    if (s.left == s.right || s.top == s.bottom)
+        return;
+
     if (dst_rect)
     {
         d = *dst_rect;

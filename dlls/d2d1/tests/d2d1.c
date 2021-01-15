@@ -1835,6 +1835,11 @@ static void test_bitmap_brush(void)
     /* Invalid interpolation mode. */
     ID2D1RenderTarget_BeginDraw(rt);
 
+    set_rect(&dst_rect, 4.0f, 8.0f, 8.0f, 12.0f);
+    set_rect(&src_rect, 0.0f, 1.0f, image_size.width, 1.0f);
+    ID2D1RenderTarget_DrawBitmap(rt, bitmap, &dst_rect, 1.0f,
+            D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, &src_rect);
+
     set_rect(&dst_rect, 1.0f, 8.0f, 4.0f, 12.0f);
     set_rect(&src_rect, 2.0f, 1.0f, 4.0f, 3.0f);
     ID2D1RenderTarget_DrawBitmap(rt, bitmap, &dst_rect, 1.0f,
