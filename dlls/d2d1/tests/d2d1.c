@@ -45,6 +45,7 @@ size_t mt_tests_size, mt_test_count;
 struct d2d1_test_context
 {
     ID3D10Device1 *device;
+    HWND window;
 };
 
 struct resource_readback
@@ -787,6 +788,7 @@ static ID2D1RenderTarget *create_render_target(IDXGISurface *surface)
 #define release_test_context(ctx) release_test_context_(__LINE__, ctx)
 static void release_test_context_(unsigned int line, struct d2d1_test_context *ctx)
 {
+    DestroyWindow(ctx->window);
     ID3D10Device1_Release(ctx->device);
 }
 
@@ -800,6 +802,9 @@ static BOOL init_test_context_(unsigned int line, struct d2d1_test_context *ctx)
         skip_(__FILE__, line)("Failed to create device, skipping tests.\n");
         return FALSE;
     }
+
+    ctx->window = create_window();
+    ok_(__FILE__, line)(!!ctx->window, "Failed to create test window.\n");
 
     return TRUE;
 }
@@ -1123,7 +1128,6 @@ static void test_clip(void)
     float dpi_x, dpi_y;
     D2D1_RECT_F rect;
     D2D1_SIZE_F size;
-    HWND window;
     HRESULT hr;
     BOOL match;
     static const D2D1_MATRIX_3X2_F identity =
@@ -1136,8 +1140,7 @@ static void test_clip(void)
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -1312,7 +1315,6 @@ static void test_clip(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_state_block(void)
@@ -1328,7 +1330,6 @@ static void test_state_block(void)
     IDXGISurface *surface;
     ID2D1Factory *factory;
     ULONG refcount;
-    HWND window;
     HRESULT hr;
     static const D2D1_MATRIX_3X2_F identity =
     {{{
@@ -1352,8 +1353,7 @@ static void test_state_block(void)
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -1584,7 +1584,6 @@ static void test_state_block(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_color_brush(void)
@@ -1599,15 +1598,13 @@ static void test_color_brush(void)
     IDXGISurface *surface;
     D2D1_RECT_F rect;
     float opacity;
-    HWND window;
     HRESULT hr;
     BOOL match;
 
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -1682,7 +1679,6 @@ static void test_color_brush(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_bitmap_brush(void)
@@ -1709,7 +1705,6 @@ static void test_bitmap_brush(void)
     unsigned int i;
     ULONG refcount;
     float opacity;
-    HWND window;
     HRESULT hr;
     BOOL match;
 
@@ -1744,8 +1739,7 @@ static void test_bitmap_brush(void)
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -2087,7 +2081,6 @@ static void test_bitmap_brush(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_linear_brush(void)
@@ -2110,7 +2103,6 @@ static void test_linear_brush(void)
     ULONG refcount;
     D2D1_RECT_F r;
     float opacity;
-    HWND window;
     HRESULT hr;
 
     static const D2D1_GRADIENT_STOP stops[] =
@@ -2153,8 +2145,7 @@ static void test_linear_brush(void)
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -2291,7 +2282,6 @@ static void test_linear_brush(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_radial_brush(void)
@@ -2313,7 +2303,6 @@ static void test_radial_brush(void)
     unsigned int i;
     ULONG refcount;
     D2D1_RECT_F r;
-    HWND window;
     HRESULT hr;
     float f;
 
@@ -2357,8 +2346,7 @@ static void test_radial_brush(void)
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -2503,7 +2491,6 @@ static void test_radial_brush(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void fill_geometry_sink(ID2D1GeometrySink *sink, unsigned int hollow_count)
@@ -2641,7 +2628,6 @@ static void test_path_geometry(void)
     D2D1_RECT_F rect;
     ULONG refcount;
     UINT32 count;
-    HWND window;
     HRESULT hr;
 
     static const struct geometry_segment expected_segments[] =
@@ -2961,8 +2947,7 @@ static void test_path_geometry(void)
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -3691,7 +3676,6 @@ static void test_path_geometry(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_rectangle_geometry(void)
@@ -4031,7 +4015,6 @@ static void test_bitmap_formats(void)
     IDXGISurface *surface;
     ID2D1Bitmap *bitmap;
     unsigned int i, j;
-    HWND window;
     HRESULT hr;
 
     static const struct
@@ -4060,8 +4043,7 @@ static void test_bitmap_formats(void)
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -4094,7 +4076,6 @@ static void test_bitmap_formats(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_alpha_mode(void)
@@ -4112,7 +4093,6 @@ static void test_alpha_mode(void)
     D2D1_RECT_F rect;
     D2D1_SIZE_U size;
     ULONG refcount;
-    HWND window;
     HRESULT hr;
     BOOL match;
 
@@ -4127,8 +4107,7 @@ static void test_alpha_mode(void)
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -4321,7 +4300,6 @@ static void test_alpha_mode(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_shared_bitmap(void)
@@ -4342,15 +4320,14 @@ static void test_shared_bitmap(void)
     D2D1_SIZE_U size = {4, 4};
     IDXGISurface1 *surface3;
     ID3D10Device1 *device2;
-    HWND window1, window2;
+    HWND window2;
     HRESULT hr;
 
     if (!init_test_context(&ctx))
         return;
 
-    window1 = create_window();
     window2 = create_window();
-    swapchain1 = create_swapchain(ctx.device, window1, TRUE);
+    swapchain1 = create_swapchain(ctx.device, ctx.window, TRUE);
     swapchain2 = create_swapchain(ctx.device, window2, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain1, 0, &IID_IDXGISurface, (void **)&surface1);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
@@ -4574,7 +4551,6 @@ static void test_shared_bitmap(void)
     ID3D10Device1_Release(device2);
     release_test_context(&ctx);
     DestroyWindow(window2);
-    DestroyWindow(window1);
     CoUninitialize();
 }
 
@@ -4590,7 +4566,6 @@ static void test_bitmap_updates(void)
     D2D1_COLOR_F color;
     D2D1_RECT_F rect;
     D2D1_SIZE_U size;
-    HWND window;
     HRESULT hr;
     BOOL match;
 
@@ -4605,8 +4580,7 @@ static void test_bitmap_updates(void)
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -4676,7 +4650,6 @@ static void test_bitmap_updates(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_opacity_brush(void)
@@ -4696,7 +4669,6 @@ static void test_opacity_brush(void)
     D2D1_RECT_F rect;
     D2D1_SIZE_U size;
     ULONG refcount;
-    HWND window;
     HRESULT hr;
     BOOL match;
 
@@ -4711,8 +4683,7 @@ static void test_opacity_brush(void)
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -4855,7 +4826,6 @@ static void test_opacity_brush(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_create_target(void)
@@ -4865,7 +4835,6 @@ static void test_create_target(void)
     ID2D1Factory *factory;
     ID2D1RenderTarget *rt;
     IDXGISurface *surface;
-    HWND window;
     HRESULT hr;
     static const struct
     {
@@ -4887,8 +4856,7 @@ static void test_create_target(void)
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
 
@@ -4944,7 +4912,6 @@ static void test_create_target(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_draw_text_layout(void)
@@ -4985,7 +4952,6 @@ static void test_draw_text_layout(void)
     ID2D1Factory *factory, *factory2;
     ID2D1RenderTarget *rt, *rt2;
     IDXGISurface *surface;
-    HWND window;
     HRESULT hr;
     IDWriteFactory *dwrite_factory;
     IDWriteTextFormat *text_format;
@@ -5002,8 +4968,7 @@ static void test_draw_text_layout(void)
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
 
@@ -5112,7 +5077,6 @@ todo_wine
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void create_target_dibsection(HDC hdc, UINT32 width, UINT32 height)
@@ -5880,14 +5844,12 @@ static void test_gradient(void)
     D2D1_COLOR_F color;
     unsigned int i;
     UINT32 count;
-    HWND window;
     HRESULT hr;
 
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -5922,7 +5884,6 @@ static void test_gradient(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_draw_geometry(void)
@@ -5945,15 +5906,13 @@ static void test_draw_geometry(void)
     D2D1_COLOR_F color;
     D2D1_RECT_F rect;
     ULONG refcount;
-    HWND window;
     HRESULT hr;
     BOOL match;
 
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -6848,7 +6807,6 @@ static void test_draw_geometry(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_fill_geometry(void)
@@ -6870,15 +6828,13 @@ static void test_fill_geometry(void)
     D2D1_COLOR_F color;
     D2D1_RECT_F rect;
     ULONG refcount;
-    HWND window;
     HRESULT hr;
     BOOL match;
 
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -7660,7 +7616,6 @@ static void test_fill_geometry(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_gdi_interop(void)
@@ -7804,14 +7759,12 @@ static void test_layer(void)
     ID2D1Layer *layer;
     D2D1_SIZE_F size;
     ULONG refcount;
-    HWND window;
     HRESULT hr;
 
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -7845,7 +7798,6 @@ static void test_layer(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_bezier_intersect(void)
@@ -7861,15 +7813,13 @@ static void test_bezier_intersect(void)
     ID2D1Factory *factory;
     D2D1_COLOR_F color;
     ULONG refcount;
-    HWND window;
     HRESULT hr;
     BOOL match;
 
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -7993,7 +7943,6 @@ static void test_bezier_intersect(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_create_device(void)
@@ -8280,7 +8229,6 @@ static void test_bitmap_surface(void)
     D2D1_SIZE_U size;
     D2D1_TAG t1, t2;
     unsigned int i;
-    HWND window;
     HRESULT hr;
 
     IWICBitmap *wic_bitmap;
@@ -8297,8 +8245,7 @@ static void test_bitmap_surface(void)
     }
 
     /* DXGI target */
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -8509,7 +8456,6 @@ static void test_device_context(void)
     ID2D1RenderTarget *rt;
     ID2D1Bitmap1 *bitmap;
     ID2D1Image *target;
-    HWND window;
     HRESULT hr;
     RECT rect;
     HDC hdc;
@@ -8551,8 +8497,7 @@ static void test_device_context(void)
     ID2D1DeviceContext_Release(device_context);
 
     /* DXGI target */
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -8584,7 +8529,6 @@ static void test_device_context(void)
     ID2D1DeviceContext_Release(device_context);
     ID2D1RenderTarget_Release(rt);
     IDXGISurface_Release(surface);
-    DestroyWindow(window);
 
     /* WIC target */
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -9216,7 +9160,6 @@ static void test_dpi(void)
     IDXGISurface *surface;
     ID2D1Bitmap1 *bitmap;
     float dpi_x, dpi_y;
-    HWND window;
     HRESULT hr;
 
     static const struct
@@ -9249,8 +9192,7 @@ static void test_dpi(void)
         return;
     }
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
@@ -9424,7 +9366,6 @@ static void test_dpi(void)
     IDXGISwapChain_Release(swapchain);
     ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_wic_bitmap_format(void)
@@ -9438,7 +9379,6 @@ static void test_wic_bitmap_format(void)
     IDXGISurface *surface;
     ID2D1Bitmap *bitmap;
     unsigned int i;
-    HWND window;
     HRESULT hr;
 
     static const struct
@@ -9456,8 +9396,7 @@ static void test_wic_bitmap_format(void)
     if (!init_test_context(&ctx))
         return;
 
-    window = create_window();
-    swapchain = create_swapchain(ctx.device, window, TRUE);
+    swapchain = create_swapchain(ctx.device, ctx.window, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(hr == S_OK, "Failed to get buffer, hr %#x.\n", hr);
     rt = create_render_target(surface);
@@ -9493,7 +9432,6 @@ static void test_wic_bitmap_format(void)
     IDXGISurface_Release(surface);
     IDXGISwapChain_Release(swapchain);
     release_test_context(&ctx);
-    DestroyWindow(window);
 }
 
 static void test_math(void)
