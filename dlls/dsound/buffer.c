@@ -420,6 +420,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetStatus(IDirectSoundBuffer8 *ifac
 		if (This->playflags & DSBPLAY_LOOPING)
 			*status |= DSBSTATUS_LOOPING;
 	}
+	if (This->dsbd.dwFlags & DSBCAPS_LOCDEFER)
+		*status |= DSBSTATUS_LOCSOFTWARE;
 	ReleaseSRWLockShared(&This->lock);
 
 	TRACE("status=%x\n", *status);
