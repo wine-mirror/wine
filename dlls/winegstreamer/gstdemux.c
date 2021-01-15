@@ -83,6 +83,7 @@ struct parser_source
     GstElement *flip;
     HANDLE caps_event, eos_event;
     GstSegment *segment;
+    GstCaps *caps;
     SourceSeeking seek;
 };
 
@@ -720,9 +721,12 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             break;
         case GST_EVENT_CAPS:
         {
-            gboolean ret = gst_pad_event_default(pad, parent, event);
+            GstCaps *caps;
+
+            gst_event_parse_caps(event, &caps);
+            gst_caps_replace(&pin->caps, caps);
             SetEvent(pin->caps_event);
-            return ret;
+            break;
         }
         default:
             WARN("Ignoring \"%s\" event.\n", GST_EVENT_TYPE_NAME(event));
@@ -1712,7 +1716,7 @@ static HRESULT decodebin_parser_source_query_accept(struct parser_source *pin, c
 static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
-    GstCaps *caps = gst_pad_get_current_caps(pin->my_sink);
+    const GstCaps *caps = pin->caps;
     const GstStructure *structure;
     const char *type;
 
@@ -1744,10 +1748,7 @@ static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
     if (amt_from_gst_caps(caps, mt))
     {
         if (!index--)
-        {
-            gst_caps_unref(caps);
             return S_OK;
-        }
         FreeMediaType(mt);
     }
 
@@ -1756,7 +1757,6 @@ static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
         gint width, height, fps_n, fps_d;
         GstVideoInfo info;
 
-        gst_caps_unref(caps);
         gst_structure_get_int(structure, "width", &width);
         gst_structure_get_int(structure, "height", &height);
         gst_video_info_set_format(&info, video_formats[index], width, height);
@@ -1774,7 +1774,6 @@ static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
         GstAudioInfo info;
         gint rate;
 
-        gst_caps_unref(caps);
         gst_structure_get_int(structure, "rate", &rate);
         gst_audio_info_set_format(&info, GST_AUDIO_FORMAT_S16LE, rate, 2, NULL);
         if (!amt_from_gst_audio_info(&info, mt))
@@ -1782,7 +1781,6 @@ static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
         return S_OK;
     }
 
-    gst_caps_unref(caps);
     return VFW_S_NO_MORE_ITEMS;
 }
 
@@ -2406,20 +2404,12 @@ static BOOL wave_parser_init_gst(struct parser *filter)
     return TRUE;
 }
 
-static gboolean get_source_amt(const struct parser_source *pin, AM_MEDIA_TYPE *mt)
-{
-    GstCaps *caps = gst_pad_get_current_caps(pin->my_sink);
-    gboolean ret = amt_from_gst_caps(caps, mt);
-    gst_caps_unref(caps);
-    return ret;
-}
-
 static HRESULT wave_parser_source_query_accept(struct parser_source *pin, const AM_MEDIA_TYPE *mt)
 {
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    if (!get_source_amt(pin, &pad_mt))
+    if (!amt_from_gst_caps(pin->caps, &pad_mt))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -2431,7 +2421,7 @@ static HRESULT wave_parser_source_get_media_type(struct parser_source *pin,
 {
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    if (!get_source_amt(pin, mt))
+    if (!amt_from_gst_caps(pin->caps, mt))
         return E_OUTOFMEMORY;
     return S_OK;
 }
@@ -2538,7 +2528,7 @@ static HRESULT avi_splitter_source_query_accept(struct parser_source *pin, const
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    if (!get_source_amt(pin, &pad_mt))
+    if (!amt_from_gst_caps(pin->caps, &pad_mt))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -2550,7 +2540,7 @@ static HRESULT avi_splitter_source_get_media_type(struct parser_source *pin,
 {
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    if (!get_source_amt(pin, mt))
+    if (!amt_from_gst_caps(pin->caps, mt))
         return E_OUTOFMEMORY;
     return S_OK;
 }
@@ -2671,7 +2661,7 @@ static HRESULT mpeg_splitter_source_query_accept(struct parser_source *pin, cons
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    if (!get_source_amt(pin, &pad_mt))
+    if (!amt_from_gst_caps(pin->caps, &pad_mt))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -2683,7 +2673,7 @@ static HRESULT mpeg_splitter_source_get_media_type(struct parser_source *pin,
 {
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    if (!get_source_amt(pin, mt))
+    if (!amt_from_gst_caps(pin->caps, mt))
         return E_OUTOFMEMORY;
     return S_OK;
 }
