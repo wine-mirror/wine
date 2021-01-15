@@ -54,8 +54,8 @@ struct d2d1_test_context
 struct resource_readback
 {
     ID3D10Resource *resource;
-    D3D10_MAPPED_TEXTURE2D map_desc;
-    unsigned int width, height;
+    unsigned int pitch, width, height;
+    void *data;
 };
 
 struct figure
@@ -314,6 +314,7 @@ static void cubic_to(ID2D1GeometrySink *sink, float x1, float y1, float x2, floa
 static void get_surface_readback(IDXGISurface *surface, struct resource_readback *rb)
 {
     D3D10_TEXTURE2D_DESC texture_desc;
+    D3D10_MAPPED_TEXTURE2D map_desc;
     DXGI_SURFACE_DESC surface_desc;
     ID3D10Resource *src_resource;
     ID3D10Device *device;
@@ -346,8 +347,11 @@ static void get_surface_readback(IDXGISurface *surface, struct resource_readback
     ID3D10Resource_Release(src_resource);
     ID3D10Device_Release(device);
 
-    hr = ID3D10Texture2D_Map((ID3D10Texture2D *)rb->resource, 0, D3D10_MAP_READ, 0, &rb->map_desc);
+    hr = ID3D10Texture2D_Map((ID3D10Texture2D *)rb->resource, 0, D3D10_MAP_READ, 0, &map_desc);
     ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
+
+    rb->pitch = map_desc.RowPitch;
+    rb->data = map_desc.pData;
 }
 
 static void release_resource_readback(struct resource_readback *rb)
@@ -358,7 +362,7 @@ static void release_resource_readback(struct resource_readback *rb)
 
 static DWORD get_readback_colour(struct resource_readback *rb, unsigned int x, unsigned int y)
 {
-    return ((DWORD *)((BYTE *)rb->map_desc.pData + y * rb->map_desc.RowPitch))[x];
+    return ((DWORD *)((BYTE *)rb->data + y * rb->pitch))[x];
 }
 
 static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
@@ -463,8 +467,7 @@ static BOOL compare_surface(IDXGISurface *surface, const char *ref_sha1)
     BOOL ret;
 
     get_surface_readback(surface, &rb);
-    ret = compare_sha1(rb.map_desc.pData, rb.map_desc.RowPitch, 4,
-            rb.width, rb.height, ref_sha1);
+    ret = compare_sha1(rb.data, rb.pitch, 4, rb.width, rb.height, ref_sha1);
     release_resource_readback(&rb);
 
     return ret;
@@ -641,7 +644,7 @@ static BOOL compare_figure(IDXGISurface *surface, unsigned int x, unsigned int y
     figure.spans_size = 64;
     figure.spans = HeapAlloc(GetProcessHeap(), 0, figure.spans_size * sizeof(*figure.spans));
 
-    read_figure(&figure, rb.map_desc.pData, rb.map_desc.RowPitch, x, y, w, h, prev);
+    read_figure(&figure, rb.data, rb.pitch, x, y, w, h, prev);
 
     deserialize_figure(&ref_figure, (BYTE *)ref);
     span = w * h;
@@ -679,7 +682,7 @@ static BOOL compare_figure(IDXGISurface *surface, unsigned int x, unsigned int y
     if (diff > max_diff)
     {
         trace("diff %u > max_diff %u.\n", diff, max_diff);
-        read_figure(&figure, rb.map_desc.pData, rb.map_desc.RowPitch, x, y, w, h, prev);
+        read_figure(&figure, rb.data, rb.pitch, x, y, w, h, prev);
         serialize_figure(&figure);
     }
 
