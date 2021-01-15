@@ -631,14 +631,14 @@ static void read_figure(struct figure *figure, BYTE *data, unsigned int pitch,
         figure_add_span(figure, span);
 }
 
-static BOOL compare_figure(IDXGISurface *surface, unsigned int x, unsigned int y,
+static BOOL compare_figure(struct d2d1_test_context *ctx, unsigned int x, unsigned int y,
         unsigned int w, unsigned int h, DWORD prev, unsigned int max_diff, const char *ref)
 {
     struct figure ref_figure, figure;
     unsigned int i, j, span, diff;
     struct resource_readback rb;
 
-    get_surface_readback(surface, &rb);
+    get_surface_readback(ctx->surface, &rb);
 
     figure.span_count = 0;
     figure.spans_size = 64;
@@ -3437,7 +3437,7 @@ static void test_path_geometry(void)
     ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)transformed_geometry, (ID2D1Brush *)brush, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_figure(ctx.surface, 0, 0, 160, 160, 0xff652e89, 64,
+    match = compare_figure(&ctx, 0, 0, 160, 160, 0xff652e89, 64,
             "7xoCngECngECngECngECngECngECngECnQEEnAEEnAEEnAEEnAEEmwEGmgEGmgEGmgEGmQEImAEI"
             "lAEECASLAQgKCIEBDQoMew8KD3YQDBByEgwSbhMOEmwUDhRpFBAUZxUQFWUVEhVjFhIWYRYUFl8X"
             "FBddFxYWXRYYFlsXGBdaFhoWWRYcFlgVHhVXFSAVVhQiFFUUIxRVEyYTVBIoElQRKhFUECwQUxAu"
@@ -3447,7 +3447,7 @@ static void test_path_geometry(void)
             "EBVnFBAUaRQOFGsTDhJvEgwSchAMEHYPCg96DQoMggEICgiLAQQIBJQBCJgBCJkBBpoBBpoBBpoB"
             "BpsBBJwBBJwBBJwBBJwBBJ0BAp4BAp4BAp4BAp4BAp4BAp4BAp4BAgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 0, 226, 160, 160, 0xff652e89, 64,
+    match = compare_figure(&ctx, 0, 226, 160, 160, 0xff652e89, 64,
             "7xoCngECngECngECngECngECngECngECnQEEnAEEnAEEnAEEnAEEmwEGmgEGmgEGmgEGmQEImAEI"
             "lAEECASLAQgKCIEBDQoMew8KD3YQDBByEgwSbhMOEmwUDhRpFBAUZxUQFWUVEhVjFhIWYRYUFl8X"
             "FBddFxYWXRYYFlsXGBdaFhoWWRYcFlgVHhVXFSAVVhQiFFUUIxRVEyYTVBIoElQRKhFUECwQUxAu"
@@ -3457,7 +3457,7 @@ static void test_path_geometry(void)
             "EBVnFBAUaRQOFGsTDhJvEgwSchAMEHYPCg96DQoMggEICgiLAQQIBJQBCJgBCJkBBpoBBpoBBpoB"
             "BpsBBJwBBJwBBJwBBJwBBJ0BAp4BAp4BAp4BAp4BAp4BAp4BAp4BAgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 0, 320, 160, 0xff652e89, 64,
+    match = compare_figure(&ctx, 160, 0, 320, 160, 0xff652e89, 64,
             "gVQBwAIBWgHlAQFYAecBAVYB6QEBVAHrAQEjDCMB7AECHhQeAu0BAxoYGgPvAQMWHhYD8QEDFCAU"
             "A/MBBBAkEAT0AQUOJw0F9QEGCioKBvcBBggsCAb4AQgFLgUI+QEJATIBCfsBCAIwAgj8AQcFLAUH"
             "/QEFCCgIBf4BBAwiDAT/AQIQHBAClwISlwIBPgGAAgI8Av8BAzwD/QEEPAT7AQY6BvkBBzoH+AEI"
@@ -3469,7 +3469,7 @@ static void test_path_geometry(void)
             "BfUBBBAlDwTzAQQSIhIE8QEDFh4WA/ABAhkaGQLvAQIcFhwC7QECIBAgAusBASgEKAHpAQFWAecB"
             "AVgB5QEBWgHAAgHhUgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 320, 160, 0xff652e89, 64,
+    match = compare_figure(&ctx, 160, 160, 320, 160, 0xff652e89, 64,
             "/VUB5QEBWAHnAQFWAekBAVQB6wECIQ8hAe0BAh0VHQLuAQIZGhkD7wEDFh4WA/EBBBMhEwPzAQQQ"
             "JQ8F9AEFDCgNBfUBBgoqCgb3AQcHLQcG+QEIBC8ECPkBPAEJ+wEIAy8CCP0BBgYrBQf9AQUJJgkF"
             "/wEDDSANBP8BAhEaEQKYAhAXAYACAT4BgAICPQL+AQM8BPwBBTsE+wEGOgb6AQc5B/gBCDgJ9gEJ"
@@ -3533,21 +3533,21 @@ static void test_path_geometry(void)
     ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)transformed_geometry, (ID2D1Brush *)brush, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_figure(ctx.surface, 0, 0, 160, 160, 0xff652e89, 64,
+    match = compare_figure(&ctx, 0, 0, 160, 160, 0xff652e89, 64,
             "7xoCngECngECngECngECngECngECngECnQEEnAEEnAEEnAEEnAEEmwEGmgEGmgEGmgEGmQEImAEI"
             "lAEQiwEagQEjeyh2LHIwbjNsNmk4ZzplPGM+YUBfQl1DXURbRlpGWUhYSFdKVkpVS1VMVExUTFRM"
             "U05STlJOUk5STlFQUFBQUFBQTlRIXD9mMnYqdjJmP1xIVE5QUFBQUFBQUU5STlJOUk5STlNMVExU"
             "TFRMVEtWSlZKV0hYSFlGWkZbRFxDXkJfQGE+YzxlOmc4aTZrM28wcix2KHojggEaiwEQlAEImAEI"
             "mQEGmgEGmgEGmgEGmwEEnAEEnAEEnAEEnAEEnQECngECngECngECngECngECngECngEC");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 0, 226, 160, 160, 0xff652e89, 64,
+    match = compare_figure(&ctx, 0, 226, 160, 160, 0xff652e89, 64,
             "7xoCngECngECngECngECngECngECngECnQEEnAEEnAEEnAEEnAEEmwEGmgEGmgEGmgEGmQEImAEI"
             "lAEQiwEagQEjeyh2LHIwbjNsNmk4ZzplPGM+YUBfQl1DXURbRlpGWUhYSFdKVkpVS1VMVExUTFRM"
             "U05STlJOUk5STlFQUFBQUFBQTlRIXD9mMnYqdjJmP1xIVE5QUFBQUFBQUU5STlJOUk5STlNMVExU"
             "TFRMVEtWSlZKV0hYSFlGWkZbRFxDXkJfQGE+YzxlOmc4aTZrM28wcix2KHojggEaiwEQlAEImAEI"
             "mQEGmgEGmgEGmgEGmwEEnAEEnAEEnAEEnAEEnQECngECngECngECngECngECngECngEC");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 0, 320, 160, 0xff652e89, 64,
+    match = compare_figure(&ctx, 160, 0, 320, 160, 0xff652e89, 64,
             "4VIBwAIBWgHlAQFYAecBAVYB6QEBVAHrAQIhDiIB7QECHRUdAu4BAhkaGQPvAQMWHhYD8QEEEyET"
             "A/MBBBAkEAT1AQUMKA0F9QEGCioKBvcBBwctBwb5AQgELwQI+QEJATIBCfsBRP0BQ/0BQv8BQf8B"
             "QIECP4ACQIACQf4BQ/wBRPsBRvoBR/gBSPcBSvYBS/QBTPMBTvIBTvIBT/ABUPABUe4BUu4BUu4B"
@@ -3556,7 +3556,7 @@ static void test_path_geometry(void)
             "RPsBCQEyAQn6AQgELwQI+AEHBy0GB/cBBgoqCgb2AQUMKA0F9AEEECUPBPMBBBIiEwPxAQMWHhYD"
             "8AECGRoZA+4BAh0VHQLsAQIhDiIB6wEBVAHpAQFWAecBAVgB5QEBWgHAAgEA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 320, 160, 0xff652e89, 64,
+    match = compare_figure(&ctx, 160, 160, 320, 160, 0xff652e89, 64,
             "gVQBXAHjAQFaAeUBAVgB5wEBVgHpAQEpAikB6wECIBAgAu0BAhwWHALvAQIZGhkC8AEDFh4WA/EB"
             "BBIiEgTzAQQPJRAE9QEFDCgMBfYBBgoqCgb3AQcGLgYH+QEIAzADCPoBRvsBRPwBRP0BQv8BQIAC"
             "QIECPoECQP8BQv0BRPwBRPsBRvkBSPgBSPcBSvUBTPQBTPMBTvIBTvEBUPABUO8BUu4BUu4BUu4B"
@@ -5841,18 +5841,18 @@ static void test_draw_geometry(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "");
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 0, "");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0, "yGBQUFBQUFBQUFDoYQAA");
+    match = compare_figure(&ctx, 160,   0, 160, 160, 0xff652e89, 0, "yGBQUFBQUFBQUFDoYQAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 320,   0, 160, 160, 0xff652e89, 0,
             "xjIUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUxjIA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 2,
+    match = compare_figure(&ctx, 480,   0, 160, 160, 0xff652e89, 2,
             "zjECnQETjAEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEV"
             "igEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEV"
             "igEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEV"
@@ -5860,18 +5860,18 @@ static void test_draw_geometry(void)
             "igEVigEVigEVigEVjAETnQECzjEA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "5mAUjAEUjAEUjAEUjAEUhmIA");
+    match = compare_figure(&ctx,   0, 160, 160, 160, 0xff652e89, 0, "5mAUjAEUjAEUjAEUjAEUhmIA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0, "vmBkPGQ8ZDxkPGTeYQAA");
+    match = compare_figure(&ctx, 160, 160, 160, 160, 0xff652e89, 0, "vmBkPGQ8ZDxkPGTeYQAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 320, 160, 160, 160, 0xff652e89, 0,
             "5i4UjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUhjAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 480, 160, 160, 160, 0xff652e89, 0,
             "vi5kPGQ8ZDxkPGQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -5880,18 +5880,18 @@ static void test_draw_geometry(void)
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZDxkPGQ8ZDxk3i8A");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    match = compare_figure(&ctx,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    match = compare_figure(&ctx, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 320, 320, 160, 160, 0xff652e89, 0,
             "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 10,
+    match = compare_figure(&ctx, 480, 320, 160, 160, 0xff652e89, 10,
             "hDAYgwEieyh1LnAybBcIF2gWDhZkFhIWYRUWFV4VGhVbFRwVWRUeFVcVIBVVFCQUUxQmFFEUKBRP"
             "FSgVTRUqFUwULBRLFC4USRQwFEgUMBRHFDIURhQyFEUUNBREFDQUQxQ2FEIUNhRBFDgUQBQ4FEAU"
             "OBQ/FDoUPhQ6FD4UOhQ+FDoUPhQ6FD0UPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
@@ -5934,18 +5934,18 @@ static void test_draw_geometry(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    match = compare_figure(&ctx, 160,   0, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 320,   0, 160, 160, 0xff652e89, 0,
             "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 480,   0, 160, 160, 0xff652e89, 0,
             "3C4oaUZVUExYRlxCHCgcPxU4FT0UPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -5954,18 +5954,18 @@ static void test_draw_geometry(void)
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FD0VOBU/YEJcRlhMUFVG7S8A");
     todo_wine ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    match = compare_figure(&ctx,   0, 160, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    match = compare_figure(&ctx, 160, 160, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 320, 160, 160, 160, 0xff652e89, 0,
             "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 8,
+    match = compare_figure(&ctx, 480, 160, 160, 160, 0xff652e89, 8,
             "3C4obT5dSFRQTlRKGCgYRhYwFkMVNBVBFTYVPxU5FD4UOhQ9FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -5974,18 +5974,18 @@ static void test_draw_geometry(void)
             "PBQ8FDwUPRQ6FD4UOhQ/FTYVQRU0FUMWMBZGWEpVTVBTSltA8C8A");
     todo_wine ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    match = compare_figure(&ctx,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    match = compare_figure(&ctx, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 320, 320, 160, 160, 0xff652e89, 0,
             "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 480, 320, 160, 160, 0xff652e89, 0,
             "3C4oZU5NWERgP2I9HigePBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6028,18 +6028,18 @@ static void test_draw_geometry(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    match = compare_figure(&ctx, 160,   0, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 320,   0, 160, 160, 0xff652e89, 0,
             "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 16,
+    match = compare_figure(&ctx, 480,   0, 160, 160, 0xff652e89, 16,
             "hDAYgwEieyh1LnAybBcIF2gWDhZkFhIWYRUWFV4WGRVbFRwVWRUeFVcVIBVVFSMUUxQmFFEVJxRP"
             "FSgVTRUqFUwULBRLFC4USRUvFEgUMBRHFDIURhQyFEUUNBREFDQUQxQ2FEIUNhRBFDgUQBQ4FEAU"
             "OBQ/FTkUPhQ6FD4UOhQ+FDoUPhQ6FD0UPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
@@ -6048,18 +6048,18 @@ static void test_draw_geometry(void)
             "FRwVWxUaFV4VFhVhFhIWZBYOFmgWChZsMnAudCp6IoMBGIQw");
     todo_wine ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    match = compare_figure(&ctx,   0, 160, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    match = compare_figure(&ctx, 160, 160, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 320, 160, 160, 160, 0xff652e89, 0,
             "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 16,
+    match = compare_figure(&ctx, 480, 160, 160, 160, 0xff652e89, 16,
             "3C4obzpjQF5EWkhXFSAVVRQkFFMUJhRRFCgUTxQqFE0VKhVMFCwUSxQuFEoULhVIFDAUSBQwFUYU"
             "MhRGFDIURRQ0FEQUNBRDFTQVQhQ2FEIUNhRCFDYUQRQ4FEAUOBRAFDgUQBQ4FD8UOhQ+FDoUPhQ6"
             "FD4UOhQ+FDoUPhQ6FD0VOxQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6068,18 +6068,18 @@ static void test_draw_geometry(void)
             "LhRLFCwUTBUrFE0UKhRPFCgUURQmFFMUJBRVSldIWUZdQWI78i8A");
     todo_wine ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    match = compare_figure(&ctx,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    match = compare_figure(&ctx, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 320, 320, 160, 160, 0xff652e89, 0,
             "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 8,
+    match = compare_figure(&ctx, 480, 320, 160, 160, 0xff652e89, 8,
             "9i80ZERWUExYRV5AHCocPRY4FjwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6171,18 +6171,18 @@ static void test_draw_geometry(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     ID2D1PathGeometry_Release(geometry);
 
-    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "");
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 0, "");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0, "");
+    match = compare_figure(&ctx, 160,   0, 160, 160, 0xff652e89, 0, "");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0, "");
+    match = compare_figure(&ctx, 320,   0, 160, 160, 0xff652e89, 0, "");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 0, "q2MKlgEKq2MA");
+    match = compare_figure(&ctx, 480,   0, 160, 160, 0xff652e89, 0, "q2MKlgEKq2MA");
     todo_wine ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "iGNQUFCIYwAA");
+    match = compare_figure(&ctx,   0, 160, 160, 160, 0xff652e89, 0, "iGNQUFCIYwAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 160, 160, 160, 160, 0xff652e89, 0,
             "qyIKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEK"
             "lgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEK"
             "lgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKQQpLCkEKSwqWAQqW"
@@ -6190,9 +6190,9 @@ static void test_draw_geometry(void)
             "AQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqW"
             "AQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQrLIwAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0, "4GLAAuBi");
+    match = compare_figure(&ctx, 320, 160, 160, 160, 0xff652e89, 0, "4GLAAuBi");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 480, 160, 160, 160, 0xff652e89, 0,
             "qyIKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEK"
             "lgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEK"
             "lgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKSwpBCksKQQqWAQqWAQqW"
@@ -6201,7 +6201,7 @@ static void test_draw_geometry(void)
             "AQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQrLIwAA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx,   0, 320, 160, 160, 0xff652e89, 0,
             "rycCngECnQEEnAEEmwEGmgEGmQEImAEIlwEKlgEKlQEMlAEMkwEOkgEOkQEQkAEQjwESjgESjQEU"
             "jAEUiwEKAgqKAQoCCokBCgQKiAEKBAqHAQoGCoYBCgYKhQEKCAqEAQoICoMBCgoKggEKCgqBAQoM"
             "CoABCgwKfwoOCn4KDgp9ChAKfAoQCnsKEgp6ChIKeQoUCngKFAp3ChYKdgoWCnUKGAp0ChgKcwoa"
@@ -6210,7 +6210,7 @@ static void test_draw_geometry(void)
             "CjYKVQo4ClQKOApTCjoKUgo6ClEKPApQCjwKTwo+Ck4KPgpNCkAKTApACksKQgpKCkIKSQpECkgK"
             "RApHCkYKozIA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 160, 320, 160, 160, 0xff652e89, 0,
             "ozIKRgpHCkQKSApECkkKQgpKCkIKSwpACkwKQApNCj4KTgo+Ck8KPApQCjwKUQo6ClIKOgpTCjgK"
             "VAo4ClUKNgpWCjYKVwo0ClgKNApZCjIKWgoyClsKMApcCjAKXQouCl4KLgpfCiwKYAosCmEKKgpi"
             "CioKYwooCmQKKAplCiYKZgomCmcKJApoCiQKaQoiCmoKIgprCiAKbAogCm0KHgpuCh4KbwocCnAK"
@@ -6219,7 +6219,7 @@ static void test_draw_geometry(void)
             "CgIKiwEUjAEUjQESjgESjwEQkAEQkQEOkgEOkwEMlAEMlQEKlgEKlwEImAEImQEGmgEGmwEEnAEE"
             "nQECngECrycA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 320, 320, 160, 160, 0xff652e89, 0,
             "rycCngECnQEEnAEEmwEGmgEGmQEImAEIlwEKlgEKlQEMlAEMkwEOkgEOkQEQkAEQjwESjgESjQEU"
             "jAEUiwEKAgqKAQoCCokBCgQKiAEKBAqHAQoGCoYBCgYKhQEKCAqEAQoICoMBCgoKggEKCgqBAQoM"
             "CoABCgwKfwoOCn4KDgp9ChAKfAoQCnsKEgp6ChIKeQoUCngKFAp3ChYKdgoWCnUKGAp0ChgKcwoa"
@@ -6228,7 +6228,7 @@ static void test_draw_geometry(void)
             "CjYKVQo4ClQKOApTCjoKUgo6ClEKPApQCjwKTwo+Ck4KPgpNCkAKTApACksKQgpKCkIKSQpECkgK"
             "RApHWkZagzEA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 480, 320, 160, 160, 0xff652e89, 0,
             "gzFaRlpHCkQKSApECkkKQgpKCkIKSwpACkwKQApNCj4KTgo+Ck8KPApQCjwKUQo6ClIKOgpTCjgK"
             "VAo4ClUKNgpWCjYKVwo0ClgKNApZCjIKWgoyClsKMApcCjAKXQouCl4KLgpfCiwKYAosCmEKKgpi"
             "CioKYwooCmQKKAplCiYKZgomCmcKJApoCiQKaQoiCmoKIgprCiAKbAogCm0KHgpuCh4KbwocCnAK"
@@ -6283,7 +6283,7 @@ static void test_draw_geometry(void)
     ID2D1RectangleGeometry_Release(rect_geometry[1]);
     ID2D1RectangleGeometry_Release(rect_geometry[0]);
 
-    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 0,
             "vi5kPGQ8ZDxkPGQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6291,7 +6291,7 @@ static void test_draw_geometry(void)
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZDxkPGQ8ZDxk3i8A");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160,   0, 320, 160, 0xff652e89, 32,
+    match = compare_figure(&ctx, 160,   0, 320, 160, 0xff652e89, 32,
             "8XYGtQIOrAIXpAIfmwIokwIwigI4gwJA+gFJ8gFR6QEzAiXhATMKJdgBMxMl0AEzGyXHATMkJb8B"
             "MysmtgEzNCWvATM8JaYBM0UlngEzTSWVATNWJY0BM14lhAEzZyV8M28lczN4JWszgAElYjOIASZa"
             "M5ABJVgtmQElWCWhASVYJaEBJVgloQElWCWhASVYJaEBJVgloQElWCWhASVYJaEBJVglmQEtWCWQ"
@@ -6299,7 +6299,7 @@ static void test_draw_geometry(void)
             "KzO/ASUkM8cBJRsz0AElEzPYASUKM+EBJQIz6QFR8gFJ+gFAgwI4igIwkwIomwIfpAIXrAIOtQIG"
             "8XYA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface,   0, 160, 160, 320, 0xff652e89, 32,
+    match = compare_figure(&ctx,   0, 160, 160, 320, 0xff652e89, 32,
             "ujEBngECnQEDnQEEmwEFmgEHmQEHmAEIlwEKlgEKlQELlAENkwENkgEOkQEQjwERjwESjQETjAEU"
             "jAEKAQqKAQoCCokBCgMKiQEKBAqHAQoFCoYBCgYKhgEKBwqEAQoICoMBCgkKgwEKCgqBAQoLCoAB"
             "Cg0KfgsNCn4KDgp9ChAKewsQCnsKEQp6ChMKeAoUCngKFAp3ChYKdQoXCnUKGApzChkKcgoaCnIK"
@@ -6318,7 +6318,7 @@ static void test_draw_geometry(void)
             "CoMBCggKhAEKBwqGAQoGCoYBCgUKhwEKBAqJAQoDCokBCgIKigEKAQqMARSMARONARKPARGPARCR"
             "AQ6SAQ2TAQ2UAQuVAQqWAQqXAQiYAQeZAQeaAQWbAQSdAQOdAQKeAQG6MQAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 320, 320, 0xff652e89, 64,
+    match = compare_figure(&ctx, 160, 160, 320, 320, 0xff652e89, 64,
             "82ICvQIEugIHuAIJtgIKtAINsgIPsAIRrQITrAIVqQIYpwIZpgIbowIeoQIgnwIhnQIkmwImmAIp"
             "lgIVARSVAhUDFJICFQUVkAIVBxSPAhUJFIwCFQwUigIVDRWHAhYPFIYCFRIUhAIVFBSBAhUWFf8B"
             "FRgU/gEVGhT7ARUcFfkBFR4U9wEWIBT1ARUjFPMBFSQV8AEVJxTvARUpFOwBFisU6gEVLRXoARUv"
@@ -6454,7 +6454,7 @@ static void test_draw_geometry(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     ID2D1PathGeometry_Release(geometry);
 
-    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 0,
             "vi5kPGQ8ZDxkPGQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6462,7 +6462,7 @@ static void test_draw_geometry(void)
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZDxkPGQ8ZDxk3i8A");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 160,   0, 160, 160, 0xff652e89, 0,
             "vi5kPGQ8ZDxkPGQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6470,7 +6470,7 @@ static void test_draw_geometry(void)
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZDxkPGQ8ZDxk3i8A");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 320,   0, 160, 160, 0xff652e89, 0,
             "vi5kPGQ8ZDxkPGQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6478,7 +6478,7 @@ static void test_draw_geometry(void)
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZDxkPGQ8ZDxk3i8A");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 480,   0, 160, 160, 0xff652e89, 0,
             "yC5aRlpGWjxkPGQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6487,7 +6487,7 @@ static void test_draw_geometry(void)
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZDxkPGQ8ZDxk3i8A");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 64,
+    match = compare_figure(&ctx,   0, 160, 160, 160, 0xff652e89, 64,
             "3SoDYAM6B1gHOgtQCzoPSA87EkASPBc2FzwcLBw8IiAiPWI+Yj5iPhQBOAEUPhQKJgoUPxQ4FEAU"
             "OBRAFDgUQBQ4FEAUOBRBFDYUQhQ2FEIUNhRCFDYUQhQ2FEIUNhRDFDQURBQ0FEQUNBREFDQURBQ0"
             "FEQUNBREFDQURBQ0FEQUNBREFDQURRQyFEYUMhRGFDIURhQyFEYUMhRGFDIURhQyFEYUMhRGFDIU"
@@ -6496,7 +6496,7 @@ static void test_draw_geometry(void)
             "NhRCFDYUQhQ2FEEUOBRAFDgUQBQ4FEAUOBRAFDgUPxQKJgoUPhQBOAEUPmI+Yj5iPSIgIjwcLBw8"
             "FzYXPBJAEjsPSA86C1ALOgdYBzoDYAPdKgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 1024,
+    match = compare_figure(&ctx, 160, 160, 160, 160, 0xff652e89, 1024,
             "uxUBnwECngEDnQEEnAEFmwEGmwEGmgEHmQEImAEJlwEKlgELlQEMlQEMlAENkwEOkgEPkQEQkAER"
             "VQQ2Ek0KOBJFEDkTPRY6FDUcOxUrJDwYHi09Yj5iP2BAQwkUQDgUFEAUOBRAFDcUQRQ3FEEUNxRC"
             "FDYUQhQ2FEIUNhRCFDUUQxQ1FEMUNRRDFDUUQxQ1FEQUNBREFDQURBQ0FEQUNBREFDQURBQ0FEQU"
@@ -6507,7 +6507,7 @@ static void test_draw_geometry(void)
             "NgRVEZABEJEBD5IBDpMBDZQBDJUBDJUBC5YBCpcBCZgBCJkBB5oBBpsBBpsBBZwBBJ0BA54BAp8B"
             "AbsV");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 1024,
+    match = compare_figure(&ctx, 320, 160, 160, 160, 0xff652e89, 1024,
             "pBYBngECnQEDnAEEmwEFmgEGmQEGmQEHmAEIlwEJlgEKlQELlAEMkwEMkwENkgEOkQEPkAEQNgRV"
             "ETcKTRI4EEUSOhY9EzscNRQ8JCsVPS0eGD5iPmI/YEAUCUNAFBQ4QBQ4FEEUNxRBFDcUQRQ3FEEU"
             "NhRCFDYUQhQ2FEMUNRRDFDUUQxQ1FEMUNRRDFDUUQxQ0FEQUNBREFDQURBQ0FEQUNBREFDQURBQ0"
@@ -6518,7 +6518,7 @@ static void test_draw_geometry(void)
             "EVUENhCQAQ+RAQ6SAQ2TAQyTAQyUAQuVAQqWAQmXAQiYAQeZAQaZAQaaAQWbAQScAQOdAQKeAQGk"
             "FgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 64,
+    match = compare_figure(&ctx, 480, 160, 160, 160, 0xff652e89, 64,
             "wCsDmQEHlQELkQEPSwJAEkgLNhc8HCwcPCIgIj1iPmI+Yj4UATgBFD4UCiYKFD8UOBRAFDgUQBQ4"
             "FEAUOBRAFDgUQRQ2FEIUNhRCFDYUQhQ2FEIUNhRCFDYUQxQ0FEQUNBREFDQURBQ0FEQUNBREFDQU"
             "RBQ0FEQUNBREFDQURBQ0FEUUMhRGFDIURhQyFEYUMhRGFDIURhQyFEYUMhRGFDIURhQyFEYUMhRG"
@@ -6528,7 +6528,7 @@ static void test_draw_geometry(void)
             "QBI7D0gPOgtQCzoHWAc6A2AD3SoA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 64,
+    match = compare_figure(&ctx,   0, 320, 160, 160, 0xff652e89, 64,
             "3SkmcThiRFdOTVhEICAgPhwsHDwXNhc8FDwUOxQ+FDoUPhQ6FD4UOhQ+FDoUPhQ5FEAUOBRAFDgU"
             "QBQ4FEAUOBRAFDcUQhQ2FEIUNhRCFDYUQhQ2FEIUNhRCFDUURBQ0FEQUNBREFDQURBQ0FEQUNBRE"
             "FDQURBQ0FEQUNBREFDQURBQzFEYUMhRGFDIURhQyFEYUMhRGFDIURhQyFEYUMhRGFDIURhQyFEYU"
@@ -6537,7 +6537,7 @@ static void test_draw_geometry(void)
             "QhQ2FEIUNxRAFDgUQBQ4FEAUOBRAFDgUQBQ5FD4UOhQ+FDoUPhQ6FD4UOhQ+FDsUPBQ8FzYXPBws"
             "HD4gICBEWE1OV0RiOHEm3SkA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 1024,
+    match = compare_figure(&ctx, 160, 320, 160, 160, 0xff652e89, 1024,
             "zykoczhkRVhQTlpEFx4tPRUrJDwUNRw7FDwVOxQ+FDoUPhQ5FEAUOBRAFDgUQBQ4FEAUOBRBFDcU"
             "QRQ3FEEUNhRCFDYUQhQ2FEIUNhRDFDUUQxQ1FEMUNRRDFDUUQxQ0FEQUNBREFDQURBQ0FEQUNBRE"
             "FDQURBQ0FEQUNBREFDQURBQ0FEQUMxRFFDMURRQzFEUUMxRFFDMURRQzFEUUMxRFFDMURRQzFEUU"
@@ -6546,7 +6546,7 @@ static void test_draw_geometry(void)
             "QhQ2FEIUNhRCFDYUQRQ3FEEUNxRBFDgUQBQ4FEAUOBRAFDgUQBQ5FD4UOhQ+FDsVPBQ7HDUUPCQr"
             "FT0tHhdEWk5QWEVkOHMozykA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 1024,
+    match = compare_figure(&ctx, 320, 320, 160, 160, 0xff652e89, 1024,
             "6SkobThfRVNQSFpALR4XPSQrFTscNRQ7FTwUOhQ+FDoUPhQ5FEAUOBRAFDgUQBQ4FEAUNxRBFDcU"
             "QRQ3FEEUNxRCFDYUQhQ2FEIUNRRDFDUUQxQ1FEMUNRRDFDUUQxQ1FEQUNBREFDQURBQ0FEQUNBRE"
             "FDQURBQ0FEQUNBREFDQURBQ0FEQUNBRFFDMURRQzFEUUMxRFFDMURRQzFEUUMxRFFDMURRQzFEUU"
@@ -6555,7 +6555,7 @@ static void test_draw_geometry(void)
             "QhQ2FEIUNhRCFDcUQRQ3FEEUNxRBFDcUQBQ4FEAUOBRAFDgUQBQ5FD4UOhQ+FDoUPBU7FDUcOxUr"
             "JD0XHi1AWkhQU0VfOG0o6SkA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 64,
+    match = compare_figure(&ctx, 480, 320, 160, 160, 0xff652e89, 64,
             "3SkmcThiRFdOTVhGHiAgRhQsHDwXNhc8FDwUOxQ+FDoUPhQ6FD4UOhQ+FDoUPhQ5FEAUOBRAFDgU"
             "QBQ4FEAUOBRAFDcUQhQ2FEIUNhRCFDYUQhQ2FEIUNhRCFDUURBQ0FEQUNBREFDQURBQ0FEQUNBRE"
             "FDQURBQ0FEQUNBREFDQURBQzFEYUMhRGFDIURhQyFEYUMhRGFDIURhQyFEYUMhRGFDIURhQyFEYU"
@@ -6634,7 +6634,7 @@ static void test_draw_geometry(void)
     ID2D1TransformedGeometry_Release(transformed_geometry[1]);
     ID2D1TransformedGeometry_Release(transformed_geometry[0]);
 
-    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 128,
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 128,
             "yjIJkQEHBwaIAQUSBYMBBBYEggEEFgSCAQQWBIIBBBYEggEEFgSCAQQWBIIBBBYEggEEFgSCAQQW"
             "BIIBBBYEggEEFgSDAQQVBIMBBBUEgwEEFQSDAQQVBIMBBBUEgwEEFQSDAQQVBIMBBBUEgwEEFQSD"
             "AQQVBIQBBBQEhAEEFASEAQQTBIUBBBMEhQEEEwSFAQQTBIUBBBMEhQEEEwSGAQQSBIYBBBIEhgEE"
@@ -6643,13 +6643,13 @@ static void test_draw_geometry(void)
             "AQaaAQaaAQaaAQabAQWbAQWbAQWbAQWaAQeZAQeZAQeZAQiXAQQBBJYBBAMElQEEAwWRAQUGBY0B"
             "BQwFhwEFEgSCAQUXBYABBBoFfgUYBIIBBhEFiAEUpTEA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160,   0, 320, 160, 0xff652e89, 512,
+    match = compare_figure(&ctx, 160,   0, 320, 160, 0xff652e89, 512,
             "yJIBArkCDa4CGKMCIZoCK5ECM4gCO4ECQ/gBS/EBUesBLAYl5QEsDiPeASwWIdkBLBwh0wEsISHO"
             "ASsgKMsBKR4vyAEnHDPIASUaNMsBIxg1mQEFMCIUN54BCygiDzijAREhIgY9qAEYGWGuAR4RXbMB"
             "JAhbuQGAAcABesYBc84Ba9YBTvQBP4MCOIoCNI4CM5ACMZICL5QCLZYCK5kCKJsCJ54CI6MCHq8C"
             "EraSAQAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface,   0, 160, 160, 320, 0xff652e89, 512,
+    match = compare_figure(&ctx,   0, 160, 160, 320, 0xff652e89, 512,
             "xWkCmwEFmAEJlQELlAENkgEOkQEPjwESjQETjAEVigELAQqJAQsCCogBCwQKhwEKBQqGAQoGCoYB"
             "CgcKhAEKCAqEAQoIC4IBCgoKggEKCgqBAQoMCoABCgwKfwoNCn8KDgp9Cg8KfQoPCnwKEQp7ChEK"
             "egoSCnoKEwp4ChQKeAoUCncLFQp2ChYKdgoWCnYKFwp2ChYKdgoWCncKFgp2ChYKdgoWCncKFQt2"
@@ -6663,7 +6663,7 @@ static void test_draw_geometry(void)
             "iQEKAgqJAQoCCooBCgIKiQEKAgqKAQoBCosBCgEKigEKAQqLARSMARSLARSMAROMARONARKOARGO"
             "ARGPARCQAQ6RAQ2YAQTEZAAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 320, 320, 0xff652e89, 1024,
+    match = compare_figure(&ctx, 160, 160, 320, 320, 0xff652e89, 1024,
             "ytABA7gCCbICD60CFKkCF6cCGqMCHqACIZ0CJJoCJpgCKZUCFgIUkgIWBBWPAhYHFI4CFQoUjAIV"
             "DBSKAhUNFYgCFQ8UhwIVERSFAhUTFIMCFRQVgQIUFxSAAhQZFP4BFBoV/AEUHBT7ARQeFPkBFB8V"
             "9wEUIRT2ARQjFPQBFSMV8gEVJRTxARUnFPABFCgV7gEUKhTtARQsFOwBFCwV7AEULBTsARUsFOwB"
@@ -6740,25 +6740,25 @@ static void test_fill_geometry(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 480, 160, 160, 160, 0xff652e89, 0,
             "qDJQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFCoMgAA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx,   0, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 160, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 320, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 8,
+    match = compare_figure(&ctx, 480, 320, 160, 160, 0xff652e89, 8,
             "yjIMjwEWhwEcggEgfiR6KHYscy5xMG40azZpOGc6ZTxjPmI+YUBfQl1EXERbRlpGWUhYSFdKVkpV"
             "TFRMVExTTlJOUk5STlJOUVBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUU5STlJOUk5STlNMVExUTFVK"
             "VkpXSFhIWUZaRltEXERdQl9AYT5iPmM8ZTpnOGk2azRuMHEucyx2KHokfiCCARyHARaPAQzKMgAA");
@@ -6798,37 +6798,37 @@ static void test_fill_geometry(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 160,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 320,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 480,   0, 160, 160, 0xff652e89, 0,
             "szI6YURZSlROUVBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUU5USllEYTqzMgAA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 2,
+    match = compare_figure(&ctx, 480, 160, 160, 160, 0xff652e89, 2,
             "tjI0aDxhQlxGWEpVTFNOUk5RUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFFOUk5TTFVKWEZcQmA+ZzS2MgAA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx,   0, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 160, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 320, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 480, 320, 160, 160, 0xff652e89, 0,
             "sDJAWkxSUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFJMWkCwMgAA");
@@ -6868,37 +6868,37 @@ static void test_fill_geometry(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 160,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 320,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 10,
+    match = compare_figure(&ctx, 480,   0, 160, 160, 0xff652e89, 10,
             "yjIMjwEWhwEcggEgfiR6KHYscy5xMG40azZpOGc6ZTxjPmI+YUBfQl1EXERbRlpGWUhYSFdKVkpV"
             "TFRMVExTTlJOUk5STlJOUVBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUU5STlJOUk5STlNMVExUTFVK"
             "VkpXSFhIWUZaRltEXERdQl9AYT5iPmM8ZTpnOGk2azRuMHEucyx2KHokfiCCARyHARaPAQzKMgAA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 10,
+    match = compare_figure(&ctx, 480, 160, 160, 160, 0xff652e89, 10,
             "uTIucDJsNmk4ZzplPGM+YUBgQF9CXkJdRFxEW0ZaRllIWEhXSlZKVkpWSlVMVExUTFRMU05STlJO"
             "Uk5STlJOUk9QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFFPUU5STlJOUk5STlJOU0xU"
             "TFRMVExVSlZKVkpWSldIWEhZRlpGW0RcRF1CXkJfQGBAYT5jPGU6ZzhpNmwycC65MgAA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx,   0, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 160, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 320, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 10,
+    match = compare_figure(&ctx, 480, 320, 160, 160, 0xff652e89, 10,
             "vzIiczhhRldMUlBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUkxXRmA6cSS+MgAA");
@@ -6987,43 +6987,43 @@ static void test_fill_geometry(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     ID2D1PathGeometry_Release(geometry);
 
-    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 160,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 320,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 0, "gMgB");
-    ok(match, "Figure does not match.\n");
-
-    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
-    ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
-    ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
-    ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx, 480,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    ok(match, "Figure does not match.\n");
+    match = compare_figure(&ctx, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    ok(match, "Figure does not match.\n");
+    match = compare_figure(&ctx, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    ok(match, "Figure does not match.\n");
+    match = compare_figure(&ctx, 480, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    ok(match, "Figure does not match.\n");
+
+    match = compare_figure(&ctx,   0, 320, 160, 160, 0xff652e89, 0,
             "7zMCngECnQEEnAEEmwEGmgEGmQEImAEIlwEKlgEKlQEMlAEMkwEOkgEOkQEQkAEQjwESjgESjQEU"
             "jAEUiwEWigEWiQEYiAEYhwEahgEahQEchAEcgwEeggEegQEggAEgfyJ+In0kfCR7JnomeSh4KHcq"
             "dip1LHQscy5yLnEwcDBvMm4ybTRsNGs2ajZpOGg4ZzpmOmU8ZDxjPmI+YUBgQF9CXkJdRFxEW0Za"
             "RllIWEhXSlZKVUxUTFNOUk5RUKgy");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 160, 320, 160, 160, 0xff652e89, 0,
             "qDJQUU5STlNMVExVSlZKV0hYSFlGWkZbRFxEXUJeQl9AYEBhPmI+YzxkPGU6ZjpnOGg4aTZqNms0"
             "bDRtMm4ybzBwMHEuci5zLHQsdSp2KncoeCh5JnomeyR8JH0ifiJ/IIABIIEBHoIBHoMBHIQBHIUB"
             "GoYBGocBGIgBGIkBFooBFosBFIwBFI0BEo4BEo8BEJABEJEBDpIBDpMBDJQBDJUBCpYBCpcBCJgB"
             "CJkBBpoBBpsBBJwBBJ0BAp4BAu8z");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 320, 320, 160, 160, 0xff652e89, 0,
             "7zMCngECnQEEnAEEmwEGmgEGmQEImAEIlwEKlgEKlQEMlAEMkwEOkgEOkQEQkAEQjwESjgESjQEU"
             "jAEUiwEWigEWiQEYiAEYhwEahgEahQEchAEcgwEeggEegQEggAEgfyJ+In0kfCR7JnomeSh4KHcq"
             "dip1LHQscy5yLnEwcDBvMm4ybTRsNGs2ajZpOGg4ZzpmOmU8ZDxjPmI+YUBgQF9CXkJdRFxEW0Za"
             "RllIWEhXSlZKVUxUTFNOUk5RUKgy");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 480, 320, 160, 160, 0xff652e89, 0,
             "qDJQUU5STlNMVExVSlZKV0hYSFlGWkZbRFxEXUJeQl9AYEBhPmI+YzxkPGU6ZjpnOGg4aTZqNms0"
             "bDRtMm4ybzBwMHEuci5zLHQsdSp2KncoeCh5JnomeyR8JH0ifiJ/IIABIIEBHoIBHoMBHIQBHIUB"
             "GoYBGocBGIgBGIkBFooBFosBFIwBFI0BEo4BEo8BEJABEJEBDpIBDpMBDJQBDJUBCpYBCpcBCJgB"
@@ -7075,18 +7075,18 @@ static void test_fill_geometry(void)
     ID2D1RectangleGeometry_Release(rect_geometry[1]);
     ID2D1RectangleGeometry_Release(rect_geometry[0]);
 
-    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 0,
             "qDJQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFCoMgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160,   0, 320, 160, 0xff652e89, 32,
+    match = compare_figure(&ctx, 160,   0, 320, 160, 0xff652e89, 32,
             "sIMBA7cCDK8CFKYCHZ4CJJYCLY4CNYUCPv0BRvQBT+wBV+MBYNsBaNIBccoBecEBgQG6AYkBsQGS"
             "AakBmgGgAaMBmAGrAY8BtAGHAbwBfsUBfcYBfcYBfcUBfsUBfcYBfcYBfcYBfcYBfcUBfr0BhgG0"
             "AY8BrAGXAaMBoAGbAagBkgGwAYsBuAGCAcEBeskBcdIBadoBYOMBWOsBT/QBR/wBPoUCNowCLpUC"
             "Jp0CHaYCFa4CDLcCBK+DAQAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface,   0, 160, 160, 320, 0xff652e89, 32,
+    match = compare_figure(&ctx,   0, 160, 160, 320, 0xff652e89, 32,
             "+D0BngEDnQEDnAEEmwEGmgEGmQEHmAEJlwEJlgELlAEMkwENkwEOkQEPkAEQkAERjgESjQETjQEU"
             "iwEVigEXiQEXiAEYhwEahgEahQEbhAEdggEeggEegQEgfyF/In0jfCR8JXomeSd5KHcpdip2K3Qs"
             "cy5xL3EvcDFuMm4ybTRrNWs1ajdoOGg5ZjplO2U8Yz1iPmFAYEBfQV5DXUNcRVpGWkZZSFdJV0lW"
@@ -7097,7 +7097,7 @@ static void test_fill_geometry(void)
             "KXgneSZ6JXwkfCN9In8hfyCBAR6CAR6CAR2EARuFARuFARqHARiIAReJAReKARWLARSNARONARKO"
             "ARGQARCQAQ+RAQ6TAQ2TAQyUAQuWAQqWAQmYAQeZAQaaAQabAQScAQOdAQOeAQH4PQAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 320, 320, 0xff652e89, 32,
+    match = compare_figure(&ctx, 160, 160, 320, 320, 0xff652e89, 32,
             "sXkBvgIDvAIEugIHuAIJtgILswINsgIPrwISrQITrAIVqQIYpwIapQIbowIeoQIgngIjnAIkmwIm"
             "mAIplgIqlQIskgIvkAIxjQIzjAI1igI3hwI5hgI7hAI9gQJA/wFB/QFE+wFG+QFI9gFK9QFM8wFO"
             "8AFQ7wFS7AFV6gFX6AFY5gFb5AFd4gFf3wFh3gFj2wFm2QFn2AFp1QFs0wFu0QFvzwFyzQF0ygF3"
@@ -7225,70 +7225,70 @@ static void test_fill_geometry(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     ID2D1PathGeometry_Release(geometry);
 
-    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 0,
             "qDJQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFCoMgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 160,   0, 160, 160, 0xff652e89, 0,
             "qDJQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFCoMgAA");
-    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 320,   0, 160, 160, 0xff652e89, 0,
             "qDJQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFCoMgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(&ctx, 480,   0, 160, 160, 0xff652e89, 0,
             "qDJQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFCoMgAA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 16,
+    match = compare_figure(&ctx,   0, 160, 160, 160, 0xff652e89, 16,
             "qDICTAJQB0IHUQs4C1IRLBFSGxgbUk5STlNMVExUTFRMVExVSlZKVkpWSlZKVkpXSFhIWEhYSFhI"
             "WEhYSFhIWEhYSFlGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZa"
             "RllIWEhYSFhIWEhYSFhIWEhYSFhIV0pWSlZKVkpWSlZKVUxUTFRMVExUTFNOUk5SGxgbUhEsEVIL"
             "OAtRB0IHUAJMAqgy");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 16,
+    match = compare_figure(&ctx, 160, 160, 160, 160, 0xff652e89, 16,
             "qDIBSwRQAkMKUQQ5EVIIKxtTDRkmVExUTFRMVEtVS1VLVkpWSlZKVklXSVdJV0lXSVhIWEhYSFhI"
             "WEhYSFhIWEhYSFhIWUdZR1lHWUdZR1lHWUdZR1lHWUdZSFhIWUdZR1lHWUdZR1lHWUdZR1lHWUdZ"
             "SFhIWEhYSFhIWEhYSFhIWEhYSFhJV0lXSVdJV0lWSlZKVkpWS1VLVUtUTFRMVExUJhkNUxsrCFIR"
             "OQRRCkMCUARLAagy");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 16,
+    match = compare_figure(&ctx, 320, 160, 160, 160, 0xff652e89, 16,
             "qDIESwFRCkMCUhE5BFIbKwhTJhkNVExUTFRMVUtVS1VLVUpWSlZKV0lXSVdJV0lXSVdIWEhYSFhI"
             "WEhYSFhIWEhYSFhIWEdZR1lHWUdZR1lHWUdZR1lHWUdYSFhIWEdZR1lHWUdZR1lHWUdZR1lHWUdY"
             "SFhIWEhYSFhIWEhYSFhIWEhYSFdJV0lXSVdJV0lXSlZKVkpVS1VLVUtVTFRMVExUDRkmUwgrG1IE"
             "ORFSAkMKUQFLBKgy");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 16,
+    match = compare_figure(&ctx, 480, 160, 160, 160, 0xff652e89, 16,
             "qDICTAJQB0IHUQs4C1IRLBFSGxgbUk5STlNMVExUTFRMVExVSlZKVkpWSlZKVkpXSFhIWEhYSFhI"
             "WEhYSFhIWEhYSFlGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZa"
             "RllIWEhYSFhIWEhYSFhIWEhYSFhIV0pWSlZKVkpWSlZKVUxUTFRMVExUTFNOUk5SGxgbUhEsEVIL"
             "OAtRB0IHUAJMAqgy");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 16,
+    match = compare_figure(&ctx,   0, 320, 160, 160, 0xff652e89, 16,
             "pCwYfixuOGNCWUxSUFBQT1JOUk5STlJOUk1UTFRMVExUTFRLVkpWSlZKVkpWSlZJWEhYSFhIWEhY"
             "SFhIWEhYSFhIWEdaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpG"
             "WkdYSFhIWEhYSFhIWEhYSFhIWEhYSVZKVkpWSlZKVkpWS1RMVExUTFRMVE1STlJOUk5STlJPUFBQ"
             "UkxZQmM4bix+GKQs");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 16,
+    match = compare_figure(&ctx, 160, 320, 160, 160, 0xff652e89, 16,
             "liwZgQErcTllQ1xLVFBQUU9STlJNVExUTFRMVExVS1VLVUpWSlZKVkpXSVdJV0lXSVdIWEhYSFhI"
             "WEhYSFhIWEhYSFhIWEdZR1lHWUdZR1lHWUdZR1lHWUdZR1hIWEdZR1lHWUdZR1lHWUdZR1lHWUdZ"
             "R1hIWEhYSFhIWEhYSFhIWEhYSFhIV0lXSVdJV0lXSlZKVkpWSlVLVUtVTFRMVExUTFRNUk5ST1FQ"
             "UFRLXENlOXErgQEZliwA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 16,
+    match = compare_figure(&ctx, 320, 320, 160, 160, 0xff652e89, 16,
             "sSwZeytrOV9DVktRUE9RTlJOUk1UTFRMVExUS1VLVUtVS1ZKVkpWSVdJV0lXSVdJV0lYSFhIWEhY"
             "SFhIWEhYSFhIWEhYSFlHWUdZR1lHWUdZR1lHWUdZR1lIWEhYSFlHWUdZR1lHWUdZR1lHWUdZR1lI"
             "WEhYSFhIWEhYSFhIWEhYSFhIWElXSVdJV0lXSVdJVkpWSlZLVUtVS1VLVExUTFRMVE1STlJOUU9Q"
             "UUtWQ185ayt7GbEs");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 16,
+    match = compare_figure(&ctx, 480, 320, 160, 160, 0xff652e89, 16,
             "pCwYfixuOGNCWUxSUFBQT1JOUk5STlJOUk1UTFRMVExUTFRLVkpWSlZKVkpWSlZJWEhYSFhIWEhY"
             "SFhIWEhYSFhIWEdaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpG"
             "WkdYSFhIWEhYSFhIWEhYSFhIWEhYSVZKVkpWSlZKVkpWS1RMVExUTFRMVE1STlJOUk5STlJPUFBQ"
@@ -7364,19 +7364,19 @@ static void test_fill_geometry(void)
     ID2D1TransformedGeometry_Release(transformed_geometry[1]);
     ID2D1TransformedGeometry_Release(transformed_geometry[0]);
 
-    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 32,
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 32,
             "6DMNjgEWiAEahgEahgEahgEahgEahgEahgEahgEahgEahgEahgEahwEZhwEZhwEZhwEZhwEZhwEZ"
             "hwEZhwEZhwEZiAEYiAEYiAEYiAEYiAEXiQEXiQEXiQEXigEWigEWigEWigEWigEWigEWigEWiwEU"
             "jAEUjAEUjAEUjQESjgESjwEQkAEQkQEOkgENlAEMlQEKlgEKlwEImAEImQEHmQEGmwEFmwEEnQED"
             "nQECngECngECnwEBnwEBnwEBnwEBnwEBnwECnQEDnQEDnQEEmwEFmgEHmQEHlwELkQERjAEXhgEd"
             "hAEfgwEchgEXjwEMqTEA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160,   0, 320, 160, 0xff652e89, 32,
+    match = compare_figure(&ctx, 160,   0, 320, 160, 0xff652e89, 32,
             "h58BBrYCDq0CF6QCIJwCKJMCMIwCNoUCPf8BQ/kBSPQBTu4BTe8BTPEBSfUBRvgBQf0BPYECOYUC"
             "NIoCMI4CK+UBAS0W/AEHIwiPAgsaBZcCEAwIngIepAIaqAIWrAITsAIRsgIPtQIMtwILugIHwAIB"
             "ypwB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface,   0, 160, 160, 320, 0xff652e89, 32,
+    match = compare_figure(&ctx,   0, 160, 160, 320, 0xff652e89, 32,
             "wW4DnAEEmwEFmgEHmAEIlwEKlQELlAEMkwEOkQEPkAEQkAERjgESjgETjAEUjAEUiwEWigEWiQEX"
             "iQEYhwEZhwEZhgEbhQEbhAEchAEdggEeggEeggEfgAEggAEggAEhgAEggAEggQEggAEggAEggQEg"
             "gAEggQEfgQEfggEfgQEfgQEfggEfgQEfggEeggEfggEeggEegwEdgwEeggEegwEdgwEegwEdgwEd"
@@ -7387,7 +7387,7 @@ static void test_fill_geometry(void)
             "AQ6SAQ2TAQ2SAQ2TAQ2TAQyTAQyUAQyUAQuUAQuVAQuUAQuVAQqWAQmWAQqWAQmXAQiXAQiYAQeY"
             "AQeZAQWbAQSDZwAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 320, 320, 0xff652e89, 32,
+    match = compare_figure(&ctx, 160, 160, 320, 320, 0xff652e89, 32,
             "g90BBLkCCLYCC7ICDrACEa0CFKoCF6cCGqQCHKMCHqECIJ8CIpwCJJsCJpkCKJcCKZYCK5QCLZIC"
             "L5ACMI8CMo0CNIsCNYoCN4gCOYcCOYYCO4QCPYICPoECQIACQYACQIECQIACQIECQIECQIECP4IC"
             "P4ICP4ECP4ICP4ICPoMCPoMCPoMCPYQCPYMCPYQCPYQCPYQCPIUCPIUCPIUCO4YCO4YCOoYCO4YC"
@@ -7468,13 +7468,13 @@ static void test_fill_geometry(void)
     ID2D1TransformedGeometry_Release(transformed_geometry[1]);
     ID2D1TransformedGeometry_Release(transformed_geometry[0]);
 
-    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(&ctx,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160,   0, 320, 160, 0xff652e89, 0, "gJAD");
+    match = compare_figure(&ctx, 160,   0, 320, 160, 0xff652e89, 0, "gJAD");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface,   0, 160, 160, 320, 0xff652e89, 0, "gJAD");
+    match = compare_figure(&ctx,   0, 160, 160, 320, 0xff652e89, 0, "gJAD");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(ctx.surface, 160, 160, 320, 320, 0xff652e89, 0, "gKAG");
+    match = compare_figure(&ctx, 160, 160, 320, 320, 0xff652e89, 0, "gKAG");
     ok(match, "Figure does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);
@@ -7713,7 +7713,7 @@ static void test_bezier_intersect(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     ID2D1PathGeometry_Release(geometry);
 
-    match = compare_figure(ctx.surface, 160, 120, 320, 240, 0xff652e89, 2048,
+    match = compare_figure(&ctx, 160, 120, 320, 240, 0xff652e89, 2048,
             "aRQjIxRpYiIcHCJiXSwXFyxdWTQTEzRZVTsQEDtVUkIMDEJST0cKCkdPTUsICEtNSlEFBVFKSFUD"
             "A1VIRlkBAVlGRFsBAVtEQlwCAlxCQFwEBFxAPl0FBV0+PF0HB108Ol4ICF46OV0KCl05N14LC143"
             "Nl4MDF42NF8NDV80M14PD14zMV8QEF8xMF8REV8wL18SEl8vLWATE2AtLGAUFGAsK2EUFGErKWIV"
@@ -7763,7 +7763,7 @@ static void test_bezier_intersect(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     ID2D1PathGeometry_Release(geometry);
 
-    match = compare_figure(ctx.surface, 160, 120, 320, 240, 0xff652e89, 2048,
+    match = compare_figure(&ctx, 160, 120, 320, 240, 0xff652e89, 2048,
             "pQIZkgIrhAI5/QE/9gFH7wFO6wFS5wFW4gFb3gFf2wFi2AFl1gFn1AFp0gFszwFuzQFxywFyyQF1"
             "xwF2xgF4xAF5xAF6wgF8wAF+vwF+vwF/vQGBAbwBggG7AYMBugGEAbkBhQG4AYYBtwGHAbcBiAG1"
             "AYkBtAGKAbQBigGzAYsBswGMAbEBjQGxAY0BsQGOAa8BjwGvAZABrgGQAa4BkQGtAZEBrQGSAawB"
