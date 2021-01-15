@@ -46,7 +46,7 @@ GST_DEBUG_CATEGORY_STATIC(wine);
 
 static const GUID MEDIASUBTYPE_CVID = {mmioFOURCC('c','v','i','d'), 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
 
-struct gstdemux
+struct parser
 {
     struct strmbase_filter filter;
     IAMStreamSelect IAMStreamSelect_iface;
@@ -69,7 +69,7 @@ struct gstdemux
 
     HANDLE push_thread;
 
-    BOOL (*init_gst)(struct gstdemux *filter);
+    BOOL (*init_gst)(struct parser *filter);
     HRESULT (*source_query_accept)(struct parser_source *pin, const AM_MEDIA_TYPE *mt);
     HRESULT (*source_get_media_type)(struct parser_source *pin, unsigned int index, AM_MEDIA_TYPE *mt);
 };
@@ -86,17 +86,17 @@ struct parser_source
     SourceSeeking seek;
 };
 
-static inline struct gstdemux *impl_from_strmbase_filter(struct strmbase_filter *iface)
+static inline struct parser *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
-    return CONTAINING_RECORD(iface, struct gstdemux, filter);
+    return CONTAINING_RECORD(iface, struct parser, filter);
 }
 
 static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
 static const IMediaSeekingVtbl GST_Seeking_Vtbl;
 static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl;
 
-static struct parser_source *create_pin(struct gstdemux *filter, const WCHAR *name);
-static HRESULT GST_RemoveOutputPins(struct gstdemux *This);
+static struct parser_source *create_pin(struct parser *filter, const WCHAR *name);
+static HRESULT GST_RemoveOutputPins(struct parser *This);
 static HRESULT WINAPI GST_ChangeCurrent(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeRate(IMediaSeeking *iface);
@@ -569,7 +569,7 @@ static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
     }
 }
 
-static gboolean gst_base_src_perform_seek(struct gstdemux *This, GstEvent *event)
+static gboolean gst_base_src_perform_seek(struct parser *This, GstEvent *event)
 {
     gboolean res = TRUE;
     gdouble rate;
@@ -623,7 +623,7 @@ static gboolean gst_base_src_perform_seek(struct gstdemux *This, GstEvent *event
 
 static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
 {
-    struct gstdemux *This = gst_pad_get_element_private(pad);
+    struct parser *This = gst_pad_get_element_private(pad);
 
     TRACE("filter %p, type \"%s\".\n", This, GST_EVENT_TYPE_NAME(event));
 
@@ -729,7 +729,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
 static DWORD CALLBACK push_data(LPVOID iface)
 {
     LONGLONG maxlen, curlen;
-    struct gstdemux *This = iface;
+    struct parser *This = iface;
     GstMapInfo mapping;
     GstBuffer *buffer;
     HRESULT hr;
@@ -862,7 +862,7 @@ static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
 static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
     struct parser_source *pin = gst_pad_get_element_private(pad);
-    struct gstdemux *This = impl_from_strmbase_filter(pin->pin.pin.filter);
+    struct parser *This = impl_from_strmbase_filter(pin->pin.pin.filter);
     HRESULT hr = S_OK;
     IMediaSample *sample;
     GstMapInfo info;
@@ -939,7 +939,7 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *bu
 
 static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 ofs, guint len, GstBuffer **buffer)
 {
-    struct gstdemux *This = gst_pad_get_element_private(pad);
+    struct parser *This = gst_pad_get_element_private(pad);
     GstBuffer *new_buffer = NULL;
     HRESULT hr;
     GstMapInfo info;
@@ -974,7 +974,7 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
 
 static DWORD CALLBACK push_data_init(LPVOID iface)
 {
-    struct gstdemux *This = iface;
+    struct parser *This = iface;
     DWORD64 ofs = 0;
 
     TRACE("Starting..\n");
@@ -998,7 +998,7 @@ static DWORD CALLBACK push_data_init(LPVOID iface)
 
 static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
 {
-    struct gstdemux *filter = user;
+    struct parser *filter = user;
     unsigned int i;
     char *name;
 
@@ -1025,7 +1025,7 @@ static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
     g_free(name);
 }
 
-static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct gstdemux *This)
+static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *This)
 {
     static const WCHAR formatW[] = {'S','t','r','e','a','m',' ','%','0','2','u',0};
     const char *typename;
@@ -1172,7 +1172,7 @@ out:
 
 static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
 {
-    struct gstdemux *This = user;
+    struct parser *This = user;
     unsigned int i;
     int ret;
 
@@ -1211,7 +1211,7 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
 
 static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
 {
-    struct gstdemux *This = gst_pad_get_element_private(pad);
+    struct parser *This = gst_pad_get_element_private(pad);
     GstFormat format;
 
     TRACE("filter %p, type %s.\n", This, GST_QUERY_TYPE_NAME(query));
@@ -1252,7 +1252,7 @@ static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
 
 static gboolean activate_push(GstPad *pad, gboolean activate)
 {
-    struct gstdemux *This = gst_pad_get_element_private(pad);
+    struct parser *This = gst_pad_get_element_private(pad);
 
     EnterCriticalSection(&This->filter.csFilter);
     if (!activate) {
@@ -1281,7 +1281,7 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
 
 static gboolean activate_mode(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate)
 {
-    struct gstdemux *filter = gst_pad_get_element_private(pad);
+    struct parser *filter = gst_pad_get_element_private(pad);
 
     TRACE("%s source pad for filter %p in %s mode.\n",
             activate ? "Activating" : "Deactivating", filter, gst_pad_mode_get_name(mode));
@@ -1299,7 +1299,7 @@ static gboolean activate_mode(GstPad *pad, GstObject *parent, GstPadMode mode, g
 
 static void no_more_pads(GstElement *decodebin, gpointer user)
 {
-    struct gstdemux *filter = user;
+    struct parser *filter = user;
     TRACE("filter %p.\n", filter);
     SetEvent(filter->no_more_pads_event);
 }
@@ -1325,7 +1325,7 @@ static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, 
 
 static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
 {
-    struct gstdemux *filter = data;
+    struct parser *filter = data;
     GError *err = NULL;
     gchar *dbg_info = NULL;
 
@@ -1358,7 +1358,7 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
     return GST_BUS_DROP;
 }
 
-static HRESULT GST_Connect(struct gstdemux *This, IPin *pConnectPin)
+static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
 {
     LONGLONG avail;
     GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE(
@@ -1420,9 +1420,9 @@ static inline struct parser_source *impl_from_IMediaSeeking(IMediaSeeking *iface
     return CONTAINING_RECORD(iface, struct parser_source, seek.IMediaSeeking_iface);
 }
 
-static struct strmbase_pin *gstdemux_get_pin(struct strmbase_filter *base, unsigned int index)
+static struct strmbase_pin *parser_get_pin(struct strmbase_filter *base, unsigned int index)
 {
-    struct gstdemux *filter = impl_from_strmbase_filter(base);
+    struct parser *filter = impl_from_strmbase_filter(base);
 
     if (filter->enum_sink_first)
     {
@@ -1441,9 +1441,9 @@ static struct strmbase_pin *gstdemux_get_pin(struct strmbase_filter *base, unsig
     return NULL;
 }
 
-static void gstdemux_destroy(struct strmbase_filter *iface)
+static void parser_destroy(struct strmbase_filter *iface)
 {
-    struct gstdemux *filter = impl_from_strmbase_filter(iface);
+    struct parser *filter = impl_from_strmbase_filter(iface);
     HRESULT hr;
 
     CloseHandle(filter->no_more_pads_event);
@@ -1473,9 +1473,9 @@ static void gstdemux_destroy(struct strmbase_filter *iface)
     heap_free(filter);
 }
 
-static HRESULT gstdemux_init_stream(struct strmbase_filter *iface)
+static HRESULT parser_init_stream(struct strmbase_filter *iface)
 {
-    struct gstdemux *filter = impl_from_strmbase_filter(iface);
+    struct parser *filter = impl_from_strmbase_filter(iface);
     const SourceSeeking *seeking;
     GstStateChangeReturn ret;
     unsigned int i;
@@ -1525,9 +1525,9 @@ static HRESULT gstdemux_init_stream(struct strmbase_filter *iface)
     return S_OK;
 }
 
-static HRESULT gstdemux_cleanup_stream(struct strmbase_filter *iface)
+static HRESULT parser_cleanup_stream(struct strmbase_filter *iface)
 {
-    struct gstdemux *filter = impl_from_strmbase_filter(iface);
+    struct parser *filter = impl_from_strmbase_filter(iface);
     GstStateChangeReturn ret;
     unsigned int i;
 
@@ -1552,9 +1552,9 @@ static HRESULT gstdemux_cleanup_stream(struct strmbase_filter *iface)
     return S_OK;
 }
 
-static HRESULT gstdemux_wait_state(struct strmbase_filter *iface, DWORD timeout)
+static HRESULT parser_wait_state(struct strmbase_filter *iface, DWORD timeout)
 {
-    struct gstdemux *filter = impl_from_strmbase_filter(iface);
+    struct parser *filter = impl_from_strmbase_filter(iface);
     GstStateChangeReturn ret;
 
     if (!filter->container)
@@ -1574,16 +1574,16 @@ static HRESULT gstdemux_wait_state(struct strmbase_filter *iface, DWORD timeout)
 
 static const struct strmbase_filter_ops filter_ops =
 {
-    .filter_get_pin = gstdemux_get_pin,
-    .filter_destroy = gstdemux_destroy,
-    .filter_init_stream = gstdemux_init_stream,
-    .filter_cleanup_stream = gstdemux_cleanup_stream,
-    .filter_wait_state = gstdemux_wait_state,
+    .filter_get_pin = parser_get_pin,
+    .filter_destroy = parser_destroy,
+    .filter_init_stream = parser_init_stream,
+    .filter_cleanup_stream = parser_cleanup_stream,
+    .filter_wait_state = parser_wait_state,
 };
 
-static inline struct gstdemux *impl_from_strmbase_sink(struct strmbase_sink *iface)
+static inline struct parser *impl_from_strmbase_sink(struct strmbase_sink *iface)
 {
-    return CONTAINING_RECORD(iface, struct gstdemux, sink);
+    return CONTAINING_RECORD(iface, struct parser, sink);
 }
 
 static HRESULT sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
@@ -1593,9 +1593,9 @@ static HRESULT sink_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE
     return S_FALSE;
 }
 
-static HRESULT gstdemux_sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *pmt)
+static HRESULT parser_sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_MEDIA_TYPE *pmt)
 {
-    struct gstdemux *filter = impl_from_strmbase_sink(iface);
+    struct parser *filter = impl_from_strmbase_sink(iface);
     HRESULT hr = S_OK;
 
     mark_wine_thread();
@@ -1615,9 +1615,9 @@ err:
     return hr;
 }
 
-static void gstdemux_sink_disconnect(struct strmbase_sink *iface)
+static void parser_sink_disconnect(struct strmbase_sink *iface)
 {
-    struct gstdemux *filter = impl_from_strmbase_sink(iface);
+    struct parser *filter = impl_from_strmbase_sink(iface);
 
     mark_wine_thread();
 
@@ -1630,11 +1630,11 @@ static void gstdemux_sink_disconnect(struct strmbase_sink *iface)
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = sink_query_accept,
-    .sink_connect = gstdemux_sink_connect,
-    .sink_disconnect = gstdemux_sink_disconnect,
+    .sink_connect = parser_sink_connect,
+    .sink_disconnect = parser_sink_disconnect,
 };
 
-static BOOL gstdecoder_init_gst(struct gstdemux *filter)
+static BOOL gstdecoder_init_gst(struct parser *filter)
 {
     GstElement *element = gst_element_factory_make("decodebin", NULL);
     unsigned int i;
@@ -1790,7 +1790,7 @@ static BOOL parser_init_gstreamer(void)
 
 HRESULT gstdemux_create(IUnknown *outer, IUnknown **out)
 {
-    struct gstdemux *object;
+    struct parser *object;
 
     if (!parser_init_gstreamer())
         return E_FAIL;
@@ -1814,26 +1814,26 @@ HRESULT gstdemux_create(IUnknown *outer, IUnknown **out)
     return S_OK;
 }
 
-static struct gstdemux *impl_from_IAMStreamSelect(IAMStreamSelect *iface)
+static struct parser *impl_from_IAMStreamSelect(IAMStreamSelect *iface)
 {
-    return CONTAINING_RECORD(iface, struct gstdemux, IAMStreamSelect_iface);
+    return CONTAINING_RECORD(iface, struct parser, IAMStreamSelect_iface);
 }
 
 static HRESULT WINAPI stream_select_QueryInterface(IAMStreamSelect *iface, REFIID iid, void **out)
 {
-    struct gstdemux *filter = impl_from_IAMStreamSelect(iface);
+    struct parser *filter = impl_from_IAMStreamSelect(iface);
     return IUnknown_QueryInterface(filter->filter.outer_unk, iid, out);
 }
 
 static ULONG WINAPI stream_select_AddRef(IAMStreamSelect *iface)
 {
-    struct gstdemux *filter = impl_from_IAMStreamSelect(iface);
+    struct parser *filter = impl_from_IAMStreamSelect(iface);
     return IUnknown_AddRef(filter->filter.outer_unk);
 }
 
 static ULONG WINAPI stream_select_Release(IAMStreamSelect *iface)
 {
-    struct gstdemux *filter = impl_from_IAMStreamSelect(iface);
+    struct parser *filter = impl_from_IAMStreamSelect(iface);
     return IUnknown_Release(filter->filter.outer_unk);
 }
 
@@ -2090,14 +2090,14 @@ static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, vo
 static HRESULT source_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
 {
     struct parser_source *pin = impl_source_from_IPin(&iface->IPin_iface);
-    struct gstdemux *filter = impl_from_strmbase_filter(iface->filter);
+    struct parser *filter = impl_from_strmbase_filter(iface->filter);
     return filter->source_query_accept(pin, mt);
 }
 
 static HRESULT source_get_media_type(struct strmbase_pin *iface, unsigned int index, AM_MEDIA_TYPE *mt)
 {
     struct parser_source *pin = impl_source_from_IPin(&iface->IPin_iface);
-    struct gstdemux *filter = impl_from_strmbase_filter(iface->filter);
+    struct parser *filter = impl_from_strmbase_filter(iface->filter);
     return filter->source_get_media_type(pin, index, mt);
 }
 
@@ -2174,7 +2174,7 @@ static const struct strmbase_source_ops source_ops =
     .pfnDecideBufferSize = GSTOutPin_DecideBufferSize,
 };
 
-static struct parser_source *create_pin(struct gstdemux *filter, const WCHAR *name)
+static struct parser_source *create_pin(struct parser *filter, const WCHAR *name)
 {
     struct parser_source *pin, **new_array;
     char pad_name[19];
@@ -2207,7 +2207,7 @@ static struct parser_source *create_pin(struct gstdemux *filter, const WCHAR *na
     return pin;
 }
 
-static HRESULT GST_RemoveOutputPins(struct gstdemux *This)
+static HRESULT GST_RemoveOutputPins(struct parser *This)
 {
     unsigned int i;
 
@@ -2337,11 +2337,11 @@ static HRESULT wave_parser_sink_query_accept(struct strmbase_pin *iface, const A
 static const struct strmbase_sink_ops wave_parser_sink_ops =
 {
     .base.pin_query_accept = wave_parser_sink_query_accept,
-    .sink_connect = gstdemux_sink_connect,
-    .sink_disconnect = gstdemux_sink_disconnect,
+    .sink_connect = parser_sink_connect,
+    .sink_disconnect = parser_sink_disconnect,
 };
 
-static BOOL wave_parser_init_gst(struct gstdemux *filter)
+static BOOL wave_parser_init_gst(struct parser *filter)
 {
     static const WCHAR source_name[] = {'o','u','t','p','u','t',0};
     struct parser_source *pin;
@@ -2433,7 +2433,7 @@ static HRESULT wave_parser_source_get_media_type(struct parser_source *pin,
 HRESULT wave_parser_create(IUnknown *outer, IUnknown **out)
 {
     static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
-    struct gstdemux *object;
+    struct parser *object;
 
     if (!parser_init_gstreamer())
         return E_FAIL;
@@ -2466,11 +2466,11 @@ static HRESULT avi_splitter_sink_query_accept(struct strmbase_pin *iface, const 
 static const struct strmbase_sink_ops avi_splitter_sink_ops =
 {
     .base.pin_query_accept = avi_splitter_sink_query_accept,
-    .sink_connect = gstdemux_sink_connect,
-    .sink_disconnect = gstdemux_sink_disconnect,
+    .sink_connect = parser_sink_connect,
+    .sink_disconnect = parser_sink_disconnect,
 };
 
-static BOOL avi_splitter_init_gst(struct gstdemux *filter)
+static BOOL avi_splitter_init_gst(struct parser *filter)
 {
     GstElement *element = gst_element_factory_make("avidemux", NULL);
     unsigned int i;
@@ -2552,7 +2552,7 @@ static HRESULT avi_splitter_source_get_media_type(struct parser_source *pin,
 HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out)
 {
     static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
-    struct gstdemux *object;
+    struct parser *object;
 
     if (!parser_init_gstreamer())
         return E_FAIL;
@@ -2591,11 +2591,11 @@ static HRESULT mpeg_splitter_sink_query_accept(struct strmbase_pin *iface, const
 static const struct strmbase_sink_ops mpeg_splitter_sink_ops =
 {
     .base.pin_query_accept = mpeg_splitter_sink_query_accept,
-    .sink_connect = gstdemux_sink_connect,
-    .sink_disconnect = gstdemux_sink_disconnect,
+    .sink_connect = parser_sink_connect,
+    .sink_disconnect = parser_sink_disconnect,
 };
 
-static BOOL mpeg_splitter_init_gst(struct gstdemux *filter)
+static BOOL mpeg_splitter_init_gst(struct parser *filter)
 {
     static const WCHAR source_name[] = {'A','u','d','i','o',0};
     struct parser_source *pin;
@@ -2684,7 +2684,7 @@ static HRESULT mpeg_splitter_source_get_media_type(struct parser_source *pin,
 
 static HRESULT mpeg_splitter_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
 {
-    struct gstdemux *filter = impl_from_strmbase_filter(iface);
+    struct parser *filter = impl_from_strmbase_filter(iface);
 
     if (IsEqualGUID(iid, &IID_IAMStreamSelect))
     {
@@ -2699,17 +2699,17 @@ static HRESULT mpeg_splitter_query_interface(struct strmbase_filter *iface, REFI
 static const struct strmbase_filter_ops mpeg_splitter_ops =
 {
     .filter_query_interface = mpeg_splitter_query_interface,
-    .filter_get_pin = gstdemux_get_pin,
-    .filter_destroy = gstdemux_destroy,
-    .filter_init_stream = gstdemux_init_stream,
-    .filter_cleanup_stream = gstdemux_cleanup_stream,
-    .filter_wait_state = gstdemux_wait_state,
+    .filter_get_pin = parser_get_pin,
+    .filter_destroy = parser_destroy,
+    .filter_init_stream = parser_init_stream,
+    .filter_cleanup_stream = parser_cleanup_stream,
+    .filter_wait_state = parser_wait_state,
 };
 
 HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out)
 {
     static const WCHAR sink_name[] = {'I','n','p','u','t',0};
-    struct gstdemux *object;
+    struct parser *object;
 
     if (!parser_init_gstreamer())
         return E_FAIL;
