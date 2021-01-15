@@ -47,6 +47,7 @@ struct d2d1_test_context
     ID3D10Device1 *device;
     HWND window;
     IDXGISwapChain *swapchain;
+    IDXGISurface *surface;
 };
 
 struct resource_readback
@@ -789,6 +790,7 @@ static ID2D1RenderTarget *create_render_target(IDXGISurface *surface)
 #define release_test_context(ctx) release_test_context_(__LINE__, ctx)
 static void release_test_context_(unsigned int line, struct d2d1_test_context *ctx)
 {
+    IDXGISurface_Release(ctx->surface);
     IDXGISwapChain_Release(ctx->swapchain);
     DestroyWindow(ctx->window);
     ID3D10Device1_Release(ctx->device);
@@ -797,6 +799,8 @@ static void release_test_context_(unsigned int line, struct d2d1_test_context *c
 #define init_test_context(ctx) init_test_context_(__LINE__, ctx)
 static BOOL init_test_context_(unsigned int line, struct d2d1_test_context *ctx)
 {
+    HRESULT hr;
+
     memset(ctx, 0, sizeof(*ctx));
 
     if (!(ctx->device = create_device()))
@@ -809,6 +813,8 @@ static BOOL init_test_context_(unsigned int line, struct d2d1_test_context *ctx)
     ok_(__FILE__, line)(!!ctx->window, "Failed to create test window.\n");
     ctx->swapchain = create_swapchain(ctx->device, ctx->window, TRUE);
     ok_(__FILE__, line)(!!ctx->swapchain, "Failed to create swapchain.\n");
+    hr = IDXGISwapChain_GetBuffer(ctx->swapchain, 0, &IID_IDXGISurface, (void **)&ctx->surface);
+    ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
 
     return TRUE;
 }
@@ -1125,7 +1131,6 @@ static void test_clip(void)
     D2D1_MATRIX_3X2_F matrix;
     D2D1_SIZE_U pixel_size;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     D2D1_POINT_2F point;
     D2D1_COLOR_F color;
     float dpi_x, dpi_y;
@@ -1143,9 +1148,7 @@ static void test_clip(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
 
     ID2D1RenderTarget_GetDpi(rt, &dpi_x, &dpi_y);
@@ -1244,7 +1247,7 @@ static void test_clip(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "035a44d4198d6e422e9de6185b5b2c2bac5e33c9");
+    match = compare_surface(ctx.surface, "035a44d4198d6e422e9de6185b5b2c2bac5e33c9");
     ok(match, "Surface does not match.\n");
 
     /* Fractional clip rectangle coordinates, aliased mode. */
@@ -1310,11 +1313,10 @@ static void test_clip(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "cb418ec4a7c8407b5e36db06fc6292a06bb8476c");
+    match = compare_surface(ctx.surface, "cb418ec4a7c8407b5e36db06fc6292a06bb8476c");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_Release(rt);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -1327,7 +1329,6 @@ static void test_state_block(void)
     struct d2d1_test_context ctx;
     ID2D1Factory1 *factory1;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     ID2D1Factory *factory;
     ULONG refcount;
     HRESULT hr;
@@ -1353,9 +1354,7 @@ static void test_state_block(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
     ID2D1RenderTarget_GetFactory(rt, &factory);
     hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory, (IUnknown **)&dwrite_factory);
@@ -1580,7 +1579,6 @@ static void test_state_block(void)
     ok(!refcount, "Rendering params %u references left.\n", refcount);
     ID2D1Factory_Release(factory);
     ID2D1RenderTarget_Release(rt);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -1592,7 +1590,6 @@ static void test_color_brush(void)
     struct d2d1_test_context ctx;
     ID2D1SolidColorBrush *brush;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     D2D1_RECT_F rect;
     float opacity;
     HRESULT hr;
@@ -1601,9 +1598,7 @@ static void test_color_brush(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
@@ -1667,12 +1662,11 @@ static void test_color_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "6d1218fca5e21fb7e287b3a439d60dbc251f5ceb");
+    match = compare_surface(ctx.surface, "6d1218fca5e21fb7e287b3a439d60dbc251f5ceb");
     ok(match, "Surface does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);
     ID2D1RenderTarget_Release(rt);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -1691,7 +1685,6 @@ static void test_bitmap_brush(void)
     ID2D1BitmapBrush *brush;
     D2D1_SIZE_F image_size;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     ID2D1Factory *factory;
     D2D1_COLOR_F color;
     ID2D1Image *image;
@@ -1733,9 +1726,7 @@ static void test_bitmap_brush(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
@@ -1813,7 +1804,7 @@ static void test_bitmap_brush(void)
 
         hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
         ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-        match = compare_surface(surface, "95675fbc4a16404c9568d41b14e8f6be64240998");
+        match = compare_surface(ctx.surface, "95675fbc4a16404c9568d41b14e8f6be64240998");
         ok(match, "Surface does not match.\n");
 
         ID2D1RenderTarget_BeginDraw(rt);
@@ -1825,7 +1816,7 @@ static void test_bitmap_brush(void)
 
         hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
         ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-        match = compare_surface(surface, "95675fbc4a16404c9568d41b14e8f6be64240998");
+        match = compare_surface(ctx.surface, "95675fbc4a16404c9568d41b14e8f6be64240998");
         ok(match, "Surface does not match.\n");
 
         ID2D1RenderTarget_SetTransform(rt, &tmp_matrix);
@@ -1913,7 +1904,7 @@ static void test_bitmap_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "f5d039c280fa33ba05496c9883192a34108efbbe");
+    match = compare_surface(ctx.surface, "f5d039c280fa33ba05496c9883192a34108efbbe");
     ok(match, "Surface does not match.\n");
 
     /* Invalid interpolation mode. */
@@ -1931,7 +1922,7 @@ static void test_bitmap_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
-    match = compare_surface(surface, "f5d039c280fa33ba05496c9883192a34108efbbe");
+    match = compare_surface(ctx.surface, "f5d039c280fa33ba05496c9883192a34108efbbe");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -1943,7 +1934,7 @@ static void test_bitmap_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "59043096393570ad800dbcbfdd644394b79493bd");
+    match = compare_surface(ctx.surface, "59043096393570ad800dbcbfdd644394b79493bd");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -1972,7 +1963,7 @@ static void test_bitmap_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "b4b775afecdae2d26642001f4faff73663bb8b31");
+    match = compare_surface(ctx.surface, "b4b775afecdae2d26642001f4faff73663bb8b31");
     ok(match, "Surface does not match.\n");
 
     ID2D1Bitmap_Release(bitmap);
@@ -2021,7 +2012,7 @@ static void test_bitmap_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "cf7b90ba7b139fdfbe9347e1907d635cfb4ed197");
+    match = compare_surface(ctx.surface, "cf7b90ba7b139fdfbe9347e1907d635cfb4ed197");
     ok(match, "Surface does not match.\n");
 
     if (SUCCEEDED(ID2D1BitmapBrush_QueryInterface(brush, &IID_ID2D1BitmapBrush1, (void **)&brush1)))
@@ -2071,7 +2062,6 @@ static void test_bitmap_brush(void)
     refcount = ID2D1Bitmap_Release(bitmap);
     ok(!refcount, "Bitmap has %u references left.\n", refcount);
     ID2D1RenderTarget_Release(rt);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -2086,7 +2076,6 @@ static void test_linear_brush(void)
     struct d2d1_test_context ctx;
     struct resource_readback rb;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     ID2D1Factory *factory;
     D2D1_COLOR_F colour;
     D2D1_POINT_2F p;
@@ -2136,9 +2125,7 @@ static void test_linear_brush(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
@@ -2180,7 +2167,7 @@ static void test_linear_brush(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    get_surface_readback(surface, &rb);
+    get_surface_readback(ctx.surface, &rb);
     for (i = 0; i < ARRAY_SIZE(test1); ++i)
     {
         DWORD colour;
@@ -2253,7 +2240,7 @@ static void test_linear_brush(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    get_surface_readback(surface, &rb);
+    get_surface_readback(ctx.surface, &rb);
     for (i = 0; i < ARRAY_SIZE(test2); ++i)
     {
         DWORD colour;
@@ -2269,7 +2256,6 @@ static void test_linear_brush(void)
     refcount = ID2D1GradientStopCollection_Release(gradient);
     ok(!refcount, "Gradient has %u references left.\n", refcount);
     ID2D1RenderTarget_Release(rt);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -2284,7 +2270,6 @@ static void test_radial_brush(void)
     struct d2d1_test_context ctx;
     struct resource_readback rb;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     ID2D1Factory *factory;
     D2D1_COLOR_F colour;
     D2D1_POINT_2F p;
@@ -2334,9 +2319,7 @@ static void test_radial_brush(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
@@ -2384,7 +2367,7 @@ static void test_radial_brush(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    get_surface_readback(surface, &rb);
+    get_surface_readback(ctx.surface, &rb);
     for (i = 0; i < ARRAY_SIZE(test1); ++i)
     {
         DWORD colour;
@@ -2459,7 +2442,7 @@ static void test_radial_brush(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    get_surface_readback(surface, &rb);
+    get_surface_readback(ctx.surface, &rb);
     for (i = 0; i < ARRAY_SIZE(test2); ++i)
     {
         DWORD colour;
@@ -2475,7 +2458,6 @@ static void test_radial_brush(void)
     refcount = ID2D1GradientStopCollection_Release(gradient);
     ok(!refcount, "Gradient has %u references left.\n", refcount);
     ID2D1RenderTarget_Release(rt);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -2606,7 +2588,6 @@ static void test_path_geometry(void)
     ID2D1PathGeometry *geometry;
     ID2D1Geometry *tmp_geometry;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     ID2D1Factory *factory;
     BOOL match, contains;
     D2D1_COLOR_F color;
@@ -2932,9 +2913,7 @@ static void test_path_geometry(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
     ID2D1RenderTarget_GetFactory(rt, &factory);
 
@@ -3320,7 +3299,7 @@ static void test_path_geometry(void)
     ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)transformed_geometry, (ID2D1Brush *)brush, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "3aace1b22aae111cb577614fed16e4eb1650dba5");
+    match = compare_surface(ctx.surface, "3aace1b22aae111cb577614fed16e4eb1650dba5");
     ok(match, "Surface does not match.\n");
 
     /* Edge test. */
@@ -3401,7 +3380,7 @@ static void test_path_geometry(void)
     ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)transformed_geometry, (ID2D1Brush *)brush, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "bfb40a1f007694fa07dbd3b854f3f5d9c3e1d76b");
+    match = compare_surface(ctx.surface, "bfb40a1f007694fa07dbd3b854f3f5d9c3e1d76b");
     ok(match, "Surface does not match.\n");
     ID2D1TransformedGeometry_Release(transformed_geometry);
     ID2D1PathGeometry_Release(geometry);
@@ -3461,7 +3440,7 @@ static void test_path_geometry(void)
     ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)transformed_geometry, (ID2D1Brush *)brush, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_figure(surface, 0, 0, 160, 160, 0xff652e89, 64,
+    match = compare_figure(ctx.surface, 0, 0, 160, 160, 0xff652e89, 64,
             "7xoCngECngECngECngECngECngECngECnQEEnAEEnAEEnAEEnAEEmwEGmgEGmgEGmgEGmQEImAEI"
             "lAEECASLAQgKCIEBDQoMew8KD3YQDBByEgwSbhMOEmwUDhRpFBAUZxUQFWUVEhVjFhIWYRYUFl8X"
             "FBddFxYWXRYYFlsXGBdaFhoWWRYcFlgVHhVXFSAVVhQiFFUUIxRVEyYTVBIoElQRKhFUECwQUxAu"
@@ -3471,7 +3450,7 @@ static void test_path_geometry(void)
             "EBVnFBAUaRQOFGsTDhJvEgwSchAMEHYPCg96DQoMggEICgiLAQQIBJQBCJgBCJkBBpoBBpoBBpoB"
             "BpsBBJwBBJwBBJwBBJwBBJ0BAp4BAp4BAp4BAp4BAp4BAp4BAp4BAgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 0, 226, 160, 160, 0xff652e89, 64,
+    match = compare_figure(ctx.surface, 0, 226, 160, 160, 0xff652e89, 64,
             "7xoCngECngECngECngECngECngECngECnQEEnAEEnAEEnAEEnAEEmwEGmgEGmgEGmgEGmQEImAEI"
             "lAEECASLAQgKCIEBDQoMew8KD3YQDBByEgwSbhMOEmwUDhRpFBAUZxUQFWUVEhVjFhIWYRYUFl8X"
             "FBddFxYWXRYYFlsXGBdaFhoWWRYcFlgVHhVXFSAVVhQiFFUUIxRVEyYTVBIoElQRKhFUECwQUxAu"
@@ -3481,7 +3460,7 @@ static void test_path_geometry(void)
             "EBVnFBAUaRQOFGsTDhJvEgwSchAMEHYPCg96DQoMggEICgiLAQQIBJQBCJgBCJkBBpoBBpoBBpoB"
             "BpsBBJwBBJwBBJwBBJwBBJ0BAp4BAp4BAp4BAp4BAp4BAp4BAp4BAgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 0, 320, 160, 0xff652e89, 64,
+    match = compare_figure(ctx.surface, 160, 0, 320, 160, 0xff652e89, 64,
             "gVQBwAIBWgHlAQFYAecBAVYB6QEBVAHrAQEjDCMB7AECHhQeAu0BAxoYGgPvAQMWHhYD8QEDFCAU"
             "A/MBBBAkEAT0AQUOJw0F9QEGCioKBvcBBggsCAb4AQgFLgUI+QEJATIBCfsBCAIwAgj8AQcFLAUH"
             "/QEFCCgIBf4BBAwiDAT/AQIQHBAClwISlwIBPgGAAgI8Av8BAzwD/QEEPAT7AQY6BvkBBzoH+AEI"
@@ -3493,7 +3472,7 @@ static void test_path_geometry(void)
             "BfUBBBAlDwTzAQQSIhIE8QEDFh4WA/ABAhkaGQLvAQIcFhwC7QECIBAgAusBASgEKAHpAQFWAecB"
             "AVgB5QEBWgHAAgHhUgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 320, 160, 0xff652e89, 64,
+    match = compare_figure(ctx.surface, 160, 160, 320, 160, 0xff652e89, 64,
             "/VUB5QEBWAHnAQFWAekBAVQB6wECIQ8hAe0BAh0VHQLuAQIZGhkD7wEDFh4WA/EBBBMhEwPzAQQQ"
             "JQ8F9AEFDCgNBfUBBgoqCgb3AQcHLQcG+QEIBC8ECPkBPAEJ+wEIAy8CCP0BBgYrBQf9AQUJJgkF"
             "/wEDDSANBP8BAhEaEQKYAhAXAYACAT4BgAICPQL+AQM8BPwBBTsE+wEGOgb6AQc5B/gBCDgJ9gEJ"
@@ -3557,21 +3536,21 @@ static void test_path_geometry(void)
     ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)transformed_geometry, (ID2D1Brush *)brush, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_figure(surface, 0, 0, 160, 160, 0xff652e89, 64,
+    match = compare_figure(ctx.surface, 0, 0, 160, 160, 0xff652e89, 64,
             "7xoCngECngECngECngECngECngECngECnQEEnAEEnAEEnAEEnAEEmwEGmgEGmgEGmgEGmQEImAEI"
             "lAEQiwEagQEjeyh2LHIwbjNsNmk4ZzplPGM+YUBfQl1DXURbRlpGWUhYSFdKVkpVS1VMVExUTFRM"
             "U05STlJOUk5STlFQUFBQUFBQTlRIXD9mMnYqdjJmP1xIVE5QUFBQUFBQUU5STlJOUk5STlNMVExU"
             "TFRMVEtWSlZKV0hYSFlGWkZbRFxDXkJfQGE+YzxlOmc4aTZrM28wcix2KHojggEaiwEQlAEImAEI"
             "mQEGmgEGmgEGmgEGmwEEnAEEnAEEnAEEnAEEnQECngECngECngECngECngECngECngEC");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 0, 226, 160, 160, 0xff652e89, 64,
+    match = compare_figure(ctx.surface, 0, 226, 160, 160, 0xff652e89, 64,
             "7xoCngECngECngECngECngECngECngECnQEEnAEEnAEEnAEEnAEEmwEGmgEGmgEGmgEGmQEImAEI"
             "lAEQiwEagQEjeyh2LHIwbjNsNmk4ZzplPGM+YUBfQl1DXURbRlpGWUhYSFdKVkpVS1VMVExUTFRM"
             "U05STlJOUk5STlFQUFBQUFBQTlRIXD9mMnYqdjJmP1xIVE5QUFBQUFBQUU5STlJOUk5STlNMVExU"
             "TFRMVEtWSlZKV0hYSFlGWkZbRFxDXkJfQGE+YzxlOmc4aTZrM28wcix2KHojggEaiwEQlAEImAEI"
             "mQEGmgEGmgEGmgEGmwEEnAEEnAEEnAEEnAEEnQECngECngECngECngECngECngECngEC");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 0, 320, 160, 0xff652e89, 64,
+    match = compare_figure(ctx.surface, 160, 0, 320, 160, 0xff652e89, 64,
             "4VIBwAIBWgHlAQFYAecBAVYB6QEBVAHrAQIhDiIB7QECHRUdAu4BAhkaGQPvAQMWHhYD8QEEEyET"
             "A/MBBBAkEAT1AQUMKA0F9QEGCioKBvcBBwctBwb5AQgELwQI+QEJATIBCfsBRP0BQ/0BQv8BQf8B"
             "QIECP4ACQIACQf4BQ/wBRPsBRvoBR/gBSPcBSvYBS/QBTPMBTvIBTvIBT/ABUPABUe4BUu4BUu4B"
@@ -3580,7 +3559,7 @@ static void test_path_geometry(void)
             "RPsBCQEyAQn6AQgELwQI+AEHBy0GB/cBBgoqCgb2AQUMKA0F9AEEECUPBPMBBBIiEwPxAQMWHhYD"
             "8AECGRoZA+4BAh0VHQLsAQIhDiIB6wEBVAHpAQFWAecBAVgB5QEBWgHAAgEA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 320, 160, 0xff652e89, 64,
+    match = compare_figure(ctx.surface, 160, 160, 320, 160, 0xff652e89, 64,
             "gVQBXAHjAQFaAeUBAVgB5wEBVgHpAQEpAikB6wECIBAgAu0BAhwWHALvAQIZGhkC8AEDFh4WA/EB"
             "BBIiEgTzAQQPJRAE9QEFDCgMBfYBBgoqCgb3AQcGLgYH+QEIAzADCPoBRvsBRPwBRP0BQv8BQIAC"
             "QIECPoECQP8BQv0BRPwBRPsBRvkBSPgBSPcBSvUBTPQBTPMBTvIBTvEBUPABUO8BUu4BUu4BUu4B"
@@ -3624,7 +3603,7 @@ static void test_path_geometry(void)
     ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)geometry, (ID2D1Brush *)brush, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "a875e68e0cb9c055927b1b50b879f90b24e38470");
+    match = compare_surface(ctx.surface, "a875e68e0cb9c055927b1b50b879f90b24e38470");
     ok(match, "Surface does not match.\n");
     ID2D1PathGeometry_Release(geometry);
 
@@ -3657,7 +3636,6 @@ static void test_path_geometry(void)
     ID2D1RenderTarget_Release(rt);
     refcount = ID2D1Factory_Release(factory);
     ok(!refcount, "Factory has %u references left.\n", refcount);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -3994,7 +3972,6 @@ static void test_bitmap_formats(void)
     struct d2d1_test_context ctx;
     D2D1_SIZE_U size = {4, 4};
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     ID2D1Bitmap *bitmap;
     unsigned int i, j;
     HRESULT hr;
@@ -4025,9 +4002,7 @@ static void test_bitmap_formats(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
 
     bitmap_desc.dpiX = 96.0f;
@@ -4054,7 +4029,6 @@ static void test_bitmap_formats(void)
     }
 
     ID2D1RenderTarget_Release(rt);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -4066,7 +4040,6 @@ static void test_alpha_mode(void)
     ID2D1BitmapBrush *bitmap_brush;
     struct d2d1_test_context ctx;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     ID2D1Bitmap *bitmap;
     D2D1_COLOR_F color;
     D2D1_RECT_F rect;
@@ -4086,9 +4059,7 @@ static void test_alpha_mode(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
 
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
@@ -4115,7 +4086,7 @@ static void test_alpha_mode(void)
     ID2D1RenderTarget_Clear(rt, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "48c41aff3a130a17ee210866b2ab7d36763934d5");
+    match = compare_surface(ctx.surface, "48c41aff3a130a17ee210866b2ab7d36763934d5");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -4123,7 +4094,7 @@ static void test_alpha_mode(void)
     ID2D1RenderTarget_Clear(rt, &color);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "6487e683730fb5a77c1911388d00b04664c5c4e4");
+    match = compare_surface(ctx.surface, "6487e683730fb5a77c1911388d00b04664c5c4e4");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -4131,7 +4102,7 @@ static void test_alpha_mode(void)
     ID2D1RenderTarget_Clear(rt, &color);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "7a35ba09e43cbaf591388ff1ef8de56157630c98");
+    match = compare_surface(ctx.surface, "7a35ba09e43cbaf591388ff1ef8de56157630c98");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -4172,7 +4143,7 @@ static void test_alpha_mode(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "14f8ac64b70966c7c3c6281c59aaecdb17c3b16a");
+    match = compare_surface(ctx.surface, "14f8ac64b70966c7c3c6281c59aaecdb17c3b16a");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_Release(rt);
@@ -4183,7 +4154,7 @@ static void test_alpha_mode(void)
     rt_desc.dpiY = 0.0f;
     rt_desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
     rt_desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
-    rt = create_render_target_desc(surface, &rt_desc);
+    rt = create_render_target_desc(ctx.surface, &rt_desc);
     ok(!!rt, "Failed to create render target.\n");
 
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
@@ -4210,7 +4181,7 @@ static void test_alpha_mode(void)
     ID2D1RenderTarget_Clear(rt, NULL);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "b44510bf2d2e61a8d7c0ad862de49a471f1fd13f");
+    match = compare_surface(ctx.surface, "b44510bf2d2e61a8d7c0ad862de49a471f1fd13f");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -4218,7 +4189,7 @@ static void test_alpha_mode(void)
     ID2D1RenderTarget_Clear(rt, &color);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "2184f4a9198fc1de09ac85301b7a03eebadd9b81");
+    match = compare_surface(ctx.surface, "2184f4a9198fc1de09ac85301b7a03eebadd9b81");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -4226,7 +4197,7 @@ static void test_alpha_mode(void)
     ID2D1RenderTarget_Clear(rt, &color);
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "6527ec83b4039c895b50f9b3e144fe0cf90d1889");
+    match = compare_surface(ctx.surface, "6527ec83b4039c895b50f9b3e144fe0cf90d1889");
     ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
@@ -4267,7 +4238,7 @@ static void test_alpha_mode(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "465f5a3190d7bde408b3206b4be939fb22f8a3d6");
+    match = compare_surface(ctx.surface, "465f5a3190d7bde408b3206b4be939fb22f8a3d6");
     ok(match, "Surface does not match.\n");
 
     refcount = ID2D1Bitmap_Release(bitmap);
@@ -4275,7 +4246,6 @@ static void test_alpha_mode(void)
     ID2D1SolidColorBrush_Release(color_brush);
     ID2D1BitmapBrush_Release(bitmap_brush);
     ID2D1RenderTarget_Release(rt);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -4286,7 +4256,7 @@ static void test_shared_bitmap(void)
     D2D1_RENDER_TARGET_PROPERTIES desc;
     D2D1_BITMAP_PROPERTIES bitmap_desc;
     ID2D1RenderTarget *rt1, *rt2, *rt3;
-    IDXGISurface *surface1, *surface2;
+    IDXGISurface *surface2;
     ID2D1Factory *factory1, *factory2;
     IWICImagingFactory *wic_factory;
     ID2D1Bitmap *bitmap1, *bitmap2;
@@ -4305,8 +4275,6 @@ static void test_shared_bitmap(void)
 
     window2 = create_window();
     swapchain2 = create_swapchain(ctx.device, window2, TRUE);
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface1);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
     hr = IDXGISwapChain_GetBuffer(swapchain2, 0, &IID_IDXGISurface, (void **)&surface2);
     ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
 
@@ -4341,7 +4309,7 @@ static void test_shared_bitmap(void)
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
 
     /* DXGI surface render targets with the same device and factory. */
-    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory1, surface1, &desc, &rt1);
+    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory1, ctx.surface, &desc, &rt1);
     ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
     hr = ID2D1RenderTarget_CreateBitmap(rt1, size, NULL, 0, &bitmap_desc, &bitmap1);
     check_bitmap_surface(bitmap1, TRUE, 0);
@@ -4521,7 +4489,6 @@ static void test_shared_bitmap(void)
     IWICBitmap_Release(wic_bitmap2);
     IWICBitmap_Release(wic_bitmap1);
     IDXGISurface_Release(surface2);
-    IDXGISurface_Release(surface1);
     IDXGISwapChain_Release(swapchain2);
     ID3D10Device1_Release(device2);
     release_test_context(&ctx);
@@ -4534,7 +4501,6 @@ static void test_bitmap_updates(void)
     D2D1_BITMAP_PROPERTIES bitmap_desc;
     struct d2d1_test_context ctx;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     D2D1_RECT_U dst_rect;
     ID2D1Bitmap *bitmap;
     D2D1_COLOR_F color;
@@ -4554,9 +4520,7 @@ static void test_bitmap_updates(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
 
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
@@ -4615,12 +4579,11 @@ static void test_bitmap_updates(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    match = compare_surface(surface, "cb8136c91fbbdc76bb83b8c09edc1907b0a5d0a6");
+    match = compare_surface(ctx.surface, "cb8136c91fbbdc76bb83b8c09edc1907b0a5d0a6");
     ok(match, "Surface does not match.\n");
 
     ID2D1Bitmap_Release(bitmap);
     ID2D1RenderTarget_Release(rt);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -4633,7 +4596,6 @@ static void test_opacity_brush(void)
     struct d2d1_test_context ctx;
     D2D1_MATRIX_3X2_F matrix;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     ID2D1Factory *factory;
     ID2D1Bitmap *bitmap;
     D2D1_COLOR_F color;
@@ -4654,9 +4616,7 @@ static void test_opacity_brush(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
     ID2D1RenderTarget_GetFactory(rt, &factory);
 
@@ -4742,7 +4702,7 @@ static void test_opacity_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == D2DERR_INCOMPATIBLE_BRUSH_TYPES, "Got unexpected hr %#x.\n", hr);
-    match = compare_surface(surface, "7141c6c7b3decb91196428efb1856bcbf9872935");
+    match = compare_surface(ctx.surface, "7141c6c7b3decb91196428efb1856bcbf9872935");
     ok(match, "Surface does not match.\n");
     ID2D1RenderTarget_BeginDraw(rt);
 
@@ -4784,7 +4744,7 @@ static void test_opacity_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    match = compare_surface(surface, "c3a5802d1750efa3e9122c1a92f6064df3872732");
+    match = compare_surface(ctx.surface, "c3a5802d1750efa3e9122c1a92f6064df3872732");
     ok(match, "Surface does not match.\n");
 
     ID2D1BitmapBrush_Release(bitmap_brush);
@@ -4793,7 +4753,6 @@ static void test_opacity_brush(void)
     ID2D1RenderTarget_Release(rt);
     refcount = ID2D1Factory_Release(factory);
     ok(!refcount, "Factory has %u references left.\n", refcount);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -4802,7 +4761,6 @@ static void test_create_target(void)
     struct d2d1_test_context ctx;
     ID2D1Factory *factory;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     HRESULT hr;
     static const struct
     {
@@ -4824,8 +4782,6 @@ static void test_create_target(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
@@ -4846,7 +4802,7 @@ static void test_create_target(void)
         desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
         desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
 
-        hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory, surface, &desc, &rt);
+        hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory, ctx.surface, &desc, &rt);
         ok(hr == create_dpi_tests[i].hr, "Wrong return code, hr %#x, expected %#x, test %u.\n", hr,
             create_dpi_tests[i].hr, i);
 
@@ -4876,7 +4832,6 @@ static void test_create_target(void)
     }
 
     ID2D1Factory_Release(factory);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -4916,7 +4871,6 @@ static void test_draw_text_layout(void)
     D2D1_RENDER_TARGET_PROPERTIES desc;
     ID2D1Factory *factory, *factory2;
     ID2D1RenderTarget *rt, *rt2;
-    IDXGISurface *surface;
     HRESULT hr;
     IDWriteFactory *dwrite_factory;
     IDWriteTextFormat *text_format;
@@ -4933,8 +4887,6 @@ static void test_draw_text_layout(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
@@ -4951,10 +4903,10 @@ static void test_draw_text_layout(void)
     desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
     desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
 
-    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory, surface, &desc, &rt);
+    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory, ctx.surface, &desc, &rt);
     ok(SUCCEEDED(hr), "Failed to create a target, hr %#x.\n", hr);
 
-    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory2, surface, &desc, &rt2);
+    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory2, ctx.surface, &desc, &rt2);
     ok(SUCCEEDED(hr), "Failed to create a target, hr %#x.\n", hr);
 
     hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory, (IUnknown **)&dwrite_factory);
@@ -5038,7 +4990,6 @@ todo_wine
 
     ID2D1Factory_Release(factory);
     ID2D1Factory_Release(factory2);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -5802,7 +5753,6 @@ static void test_gradient(void)
     D2D1_GRADIENT_STOP stops[3], stops2[3];
     struct d2d1_test_context ctx;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     D2D1_COLOR_F color;
     unsigned int i;
     UINT32 count;
@@ -5811,9 +5761,7 @@ static void test_gradient(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
 
     stops2[0].position = 0.5f;
@@ -5842,7 +5790,6 @@ static void test_gradient(void)
     ID2D1GradientStopCollection_Release(gradient);
     ID2D1RenderTarget_Release(rt);
 
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -5858,7 +5805,6 @@ static void test_draw_geometry(void)
     D2D1_MATRIX_3X2_F matrix;
     ID2D1GeometrySink *sink;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     ID2D1Factory *factory;
     D2D1_POINT_2F p0, p1;
     D2D1_ELLIPSE ellipse;
@@ -5871,9 +5817,7 @@ static void test_draw_geometry(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
     ID2D1RenderTarget_GetFactory(rt, &factory);
 
@@ -5920,18 +5864,18 @@ static void test_draw_geometry(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0, "");
+    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160,   0, 160, 160, 0xff652e89, 0, "yGBQUFBQUFBQUFDoYQAA");
+    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0, "yGBQUFBQUFBQUFDoYQAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0,
             "xjIUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUxjIA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480,   0, 160, 160, 0xff652e89, 2,
+    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 2,
             "zjECnQETjAEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEV"
             "igEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEV"
             "igEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEVigEV"
@@ -5939,18 +5883,18 @@ static void test_draw_geometry(void)
             "igEVigEVigEVigEVjAETnQECzjEA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 0, "5mAUjAEUjAEUjAEUjAEUhmIA");
+    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "5mAUjAEUjAEUjAEUjAEUhmIA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 160, 160, 0xff652e89, 0, "vmBkPGQ8ZDxkPGTeYQAA");
+    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0, "vmBkPGQ8ZDxkPGTeYQAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 160, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0,
             "5i4UjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUhjAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 160, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 0,
             "vi5kPGQ8ZDxkPGQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -5959,18 +5903,18 @@ static void test_draw_geometry(void)
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZDxkPGQ8ZDxk3i8A");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0,
             "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 320, 160, 160, 0xff652e89, 10,
+    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 10,
             "hDAYgwEieyh1LnAybBcIF2gWDhZkFhIWYRUWFV4VGhVbFRwVWRUeFVcVIBVVFCQUUxQmFFEUKBRP"
             "FSgVTRUqFUwULBRLFC4USRQwFEgUMBRHFDIURhQyFEUUNBREFDQUQxQ2FEIUNhRBFDgUQBQ4FEAU"
             "OBQ/FDoUPhQ6FD4UOhQ+FDoUPhQ6FD0UPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
@@ -6013,18 +5957,18 @@ static void test_draw_geometry(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160,   0, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0,
             "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 0,
             "3C4oaUZVUExYRlxCHCgcPxU4FT0UPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6033,18 +5977,18 @@ static void test_draw_geometry(void)
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FD0VOBU/YEJcRlhMUFVG7S8A");
     todo_wine ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 160, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0,
             "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 160, 160, 160, 0xff652e89, 8,
+    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 8,
             "3C4obT5dSFRQTlRKGCgYRhYwFkMVNBVBFTYVPxU5FD4UOhQ9FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6053,18 +5997,18 @@ static void test_draw_geometry(void)
             "PBQ8FDwUPRQ6FD4UOhQ/FTYVQRU0FUMWMBZGWEpVTVBTSltA8C8A");
     todo_wine ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0,
             "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 0,
             "3C4oZU5NWERgP2I9HigePBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6107,18 +6051,18 @@ static void test_draw_geometry(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160,   0, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0,
             "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480,   0, 160, 160, 0xff652e89, 16,
+    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 16,
             "hDAYgwEieyh1LnAybBcIF2gWDhZkFhIWYRUWFV4WGRVbFRwVWRUeFVcVIBVVFSMUUxQmFFEVJxRP"
             "FSgVTRUqFUwULBRLFC4USRUvFEgUMBRHFDIURhQyFEUUNBREFDQUQxQ2FEIUNhRBFDgUQBQ4FEAU"
             "OBQ/FTkUPhQ6FD4UOhQ+FDoUPhQ6FD0UPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
@@ -6127,18 +6071,18 @@ static void test_draw_geometry(void)
             "FRwVWxUaFV4VFhVhFhIWZBYOFmgWChZsMnAudCp6IoMBGIQw");
     todo_wine ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 160, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0,
             "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 160, 160, 160, 0xff652e89, 16,
+    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 16,
             "3C4obzpjQF5EWkhXFSAVVRQkFFMUJhRRFCgUTxQqFE0VKhVMFCwUSxQuFEoULhVIFDAUSBQwFUYU"
             "MhRGFDIURRQ0FEQUNBRDFTQVQhQ2FEIUNhRCFDYUQRQ4FEAUOBRAFDgUQBQ4FD8UOhQ+FDoUPhQ6"
             "FD4UOhQ+FDoUPhQ6FD0VOxQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6147,18 +6091,18 @@ static void test_draw_geometry(void)
             "LhRLFCwUTBUrFE0UKhRPFCgUURQmFFMUJBRVSldIWUZdQWI78i8A");
     todo_wine ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
+    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0, "iGIQjgEUjAEUjgEQiGIA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
+    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0, "yGBQSGA+ZDxkPmDgYQAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0,
             "iDAQjgEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEUjAEU"
             "jAEUjAEUjAEUjAEUjAEUjAEUjAEUjgEQiDAA");
     todo_wine ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 320, 160, 160, 0xff652e89, 8,
+    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 8,
             "9i80ZERWUExYRV5AHCocPRY4FjwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6250,18 +6194,18 @@ static void test_draw_geometry(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     ID2D1PathGeometry_Release(geometry);
 
-    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0, "");
+    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160,   0, 160, 160, 0xff652e89, 0, "");
+    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0, "");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320,   0, 160, 160, 0xff652e89, 0, "");
+    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0, "");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480,   0, 160, 160, 0xff652e89, 0, "q2MKlgEKq2MA");
+    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 0, "q2MKlgEKq2MA");
     todo_wine ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 0, "iGNQUFCIYwAA");
+    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "iGNQUFCIYwAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0,
             "qyIKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEK"
             "lgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEK"
             "lgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKQQpLCkEKSwqWAQqW"
@@ -6269,9 +6213,9 @@ static void test_draw_geometry(void)
             "AQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqW"
             "AQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQrLIwAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 160, 160, 160, 0xff652e89, 0, "4GLAAuBi");
+    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0, "4GLAAuBi");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 160, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 0,
             "qyIKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEK"
             "lgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEK"
             "lgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKlgEKSwpBCksKQQqWAQqWAQqW"
@@ -6280,7 +6224,7 @@ static void test_draw_geometry(void)
             "AQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQqWAQrLIwAA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0,
             "rycCngECnQEEnAEEmwEGmgEGmQEImAEIlwEKlgEKlQEMlAEMkwEOkgEOkQEQkAEQjwESjgESjQEU"
             "jAEUiwEKAgqKAQoCCokBCgQKiAEKBAqHAQoGCoYBCgYKhQEKCAqEAQoICoMBCgoKggEKCgqBAQoM"
             "CoABCgwKfwoOCn4KDgp9ChAKfAoQCnsKEgp6ChIKeQoUCngKFAp3ChYKdgoWCnUKGAp0ChgKcwoa"
@@ -6289,7 +6233,7 @@ static void test_draw_geometry(void)
             "CjYKVQo4ClQKOApTCjoKUgo6ClEKPApQCjwKTwo+Ck4KPgpNCkAKTApACksKQgpKCkIKSQpECkgK"
             "RApHCkYKozIA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0,
             "ozIKRgpHCkQKSApECkkKQgpKCkIKSwpACkwKQApNCj4KTgo+Ck8KPApQCjwKUQo6ClIKOgpTCjgK"
             "VAo4ClUKNgpWCjYKVwo0ClgKNApZCjIKWgoyClsKMApcCjAKXQouCl4KLgpfCiwKYAosCmEKKgpi"
             "CioKYwooCmQKKAplCiYKZgomCmcKJApoCiQKaQoiCmoKIgprCiAKbAogCm0KHgpuCh4KbwocCnAK"
@@ -6298,7 +6242,7 @@ static void test_draw_geometry(void)
             "CgIKiwEUjAEUjQESjgESjwEQkAEQkQEOkgEOkwEMlAEMlQEKlgEKlwEImAEImQEGmgEGmwEEnAEE"
             "nQECngECrycA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0,
             "rycCngECnQEEnAEEmwEGmgEGmQEImAEIlwEKlgEKlQEMlAEMkwEOkgEOkQEQkAEQjwESjgESjQEU"
             "jAEUiwEKAgqKAQoCCokBCgQKiAEKBAqHAQoGCoYBCgYKhQEKCAqEAQoICoMBCgoKggEKCgqBAQoM"
             "CoABCgwKfwoOCn4KDgp9ChAKfAoQCnsKEgp6ChIKeQoUCngKFAp3ChYKdgoWCnUKGAp0ChgKcwoa"
@@ -6307,7 +6251,7 @@ static void test_draw_geometry(void)
             "CjYKVQo4ClQKOApTCjoKUgo6ClEKPApQCjwKTwo+Ck4KPgpNCkAKTApACksKQgpKCkIKSQpECkgK"
             "RApHWkZagzEA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 0,
             "gzFaRlpHCkQKSApECkkKQgpKCkIKSwpACkwKQApNCj4KTgo+Ck8KPApQCjwKUQo6ClIKOgpTCjgK"
             "VAo4ClUKNgpWCjYKVwo0ClgKNApZCjIKWgoyClsKMApcCjAKXQouCl4KLgpfCiwKYAosCmEKKgpi"
             "CioKYwooCmQKKAplCiYKZgomCmcKJApoCiQKaQoiCmoKIgprCiAKbAogCm0KHgpuCh4KbwocCnAK"
@@ -6362,7 +6306,7 @@ static void test_draw_geometry(void)
     ID2D1RectangleGeometry_Release(rect_geometry[1]);
     ID2D1RectangleGeometry_Release(rect_geometry[0]);
 
-    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0,
             "vi5kPGQ8ZDxkPGQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6370,7 +6314,7 @@ static void test_draw_geometry(void)
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZDxkPGQ8ZDxk3i8A");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160,   0, 320, 160, 0xff652e89, 32,
+    match = compare_figure(ctx.surface, 160,   0, 320, 160, 0xff652e89, 32,
             "8XYGtQIOrAIXpAIfmwIokwIwigI4gwJA+gFJ8gFR6QEzAiXhATMKJdgBMxMl0AEzGyXHATMkJb8B"
             "MysmtgEzNCWvATM8JaYBM0UlngEzTSWVATNWJY0BM14lhAEzZyV8M28lczN4JWszgAElYjOIASZa"
             "M5ABJVgtmQElWCWhASVYJaEBJVgloQElWCWhASVYJaEBJVgloQElWCWhASVYJaEBJVglmQEtWCWQ"
@@ -6378,7 +6322,7 @@ static void test_draw_geometry(void)
             "KzO/ASUkM8cBJRsz0AElEzPYASUKM+EBJQIz6QFR8gFJ+gFAgwI4igIwkwIomwIfpAIXrAIOtQIG"
             "8XYA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface,   0, 160, 160, 320, 0xff652e89, 32,
+    match = compare_figure(ctx.surface,   0, 160, 160, 320, 0xff652e89, 32,
             "ujEBngECnQEDnQEEmwEFmgEHmQEHmAEIlwEKlgEKlQELlAENkwENkgEOkQEQjwERjwESjQETjAEU"
             "jAEKAQqKAQoCCokBCgMKiQEKBAqHAQoFCoYBCgYKhgEKBwqEAQoICoMBCgkKgwEKCgqBAQoLCoAB"
             "Cg0KfgsNCn4KDgp9ChAKewsQCnsKEQp6ChMKeAoUCngKFAp3ChYKdQoXCnUKGApzChkKcgoaCnIK"
@@ -6397,7 +6341,7 @@ static void test_draw_geometry(void)
             "CoMBCggKhAEKBwqGAQoGCoYBCgUKhwEKBAqJAQoDCokBCgIKigEKAQqMARSMARONARKPARGPARCR"
             "AQ6SAQ2TAQ2UAQuVAQqWAQqXAQiYAQeZAQeaAQWbAQSdAQOdAQKeAQG6MQAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 320, 320, 0xff652e89, 64,
+    match = compare_figure(ctx.surface, 160, 160, 320, 320, 0xff652e89, 64,
             "82ICvQIEugIHuAIJtgIKtAINsgIPsAIRrQITrAIVqQIYpwIZpgIbowIeoQIgnwIhnQIkmwImmAIp"
             "lgIVARSVAhUDFJICFQUVkAIVBxSPAhUJFIwCFQwUigIVDRWHAhYPFIYCFRIUhAIVFBSBAhUWFf8B"
             "FRgU/gEVGhT7ARUcFfkBFR4U9wEWIBT1ARUjFPMBFSQV8AEVJxTvARUpFOwBFisU6gEVLRXoARUv"
@@ -6533,7 +6477,7 @@ static void test_draw_geometry(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     ID2D1PathGeometry_Release(geometry);
 
-    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0,
             "vi5kPGQ8ZDxkPGQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6541,7 +6485,7 @@ static void test_draw_geometry(void)
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZDxkPGQ8ZDxk3i8A");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0,
             "vi5kPGQ8ZDxkPGQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6549,7 +6493,7 @@ static void test_draw_geometry(void)
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZDxkPGQ8ZDxk3i8A");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0,
             "vi5kPGQ8ZDxkPGQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6557,7 +6501,7 @@ static void test_draw_geometry(void)
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZDxkPGQ8ZDxk3i8A");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 0,
             "yC5aRlpGWjxkPGQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8"
             "FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwU"
@@ -6566,7 +6510,7 @@ static void test_draw_geometry(void)
             "PBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8FDwUPBQ8ZDxkPGQ8ZDxk3i8A");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 64,
+    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 64,
             "3SoDYAM6B1gHOgtQCzoPSA87EkASPBc2FzwcLBw8IiAiPWI+Yj5iPhQBOAEUPhQKJgoUPxQ4FEAU"
             "OBRAFDgUQBQ4FEAUOBRBFDYUQhQ2FEIUNhRCFDYUQhQ2FEIUNhRDFDQURBQ0FEQUNBREFDQURBQ0"
             "FEQUNBREFDQURBQ0FEQUNBREFDQURRQyFEYUMhRGFDIURhQyFEYUMhRGFDIURhQyFEYUMhRGFDIU"
@@ -6575,7 +6519,7 @@ static void test_draw_geometry(void)
             "NhRCFDYUQhQ2FEEUOBRAFDgUQBQ4FEAUOBRAFDgUPxQKJgoUPhQBOAEUPmI+Yj5iPSIgIjwcLBw8"
             "FzYXPBJAEjsPSA86C1ALOgdYBzoDYAPdKgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 160, 160, 0xff652e89, 1024,
+    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 1024,
             "uxUBnwECngEDnQEEnAEFmwEGmwEGmgEHmQEImAEJlwEKlgELlQEMlQEMlAENkwEOkgEPkQEQkAER"
             "VQQ2Ek0KOBJFEDkTPRY6FDUcOxUrJDwYHi09Yj5iP2BAQwkUQDgUFEAUOBRAFDcUQRQ3FEEUNxRC"
             "FDYUQhQ2FEIUNhRCFDUUQxQ1FEMUNRRDFDUUQxQ1FEQUNBREFDQURBQ0FEQUNBREFDQURBQ0FEQU"
@@ -6586,7 +6530,7 @@ static void test_draw_geometry(void)
             "NgRVEZABEJEBD5IBDpMBDZQBDJUBDJUBC5YBCpcBCZgBCJkBB5oBBpsBBpsBBZwBBJ0BA54BAp8B"
             "AbsV");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 160, 160, 160, 0xff652e89, 1024,
+    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 1024,
             "pBYBngECnQEDnAEEmwEFmgEGmQEGmQEHmAEIlwEJlgEKlQELlAEMkwEMkwENkgEOkQEPkAEQNgRV"
             "ETcKTRI4EEUSOhY9EzscNRQ8JCsVPS0eGD5iPmI/YEAUCUNAFBQ4QBQ4FEEUNxRBFDcUQRQ3FEEU"
             "NhRCFDYUQhQ2FEMUNRRDFDUUQxQ1FEMUNRRDFDUUQxQ0FEQUNBREFDQURBQ0FEQUNBREFDQURBQ0"
@@ -6597,7 +6541,7 @@ static void test_draw_geometry(void)
             "EVUENhCQAQ+RAQ6SAQ2TAQyTAQyUAQuVAQqWAQmXAQiYAQeZAQaZAQaaAQWbAQScAQOdAQKeAQGk"
             "FgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 160, 160, 160, 0xff652e89, 64,
+    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 64,
             "wCsDmQEHlQELkQEPSwJAEkgLNhc8HCwcPCIgIj1iPmI+Yj4UATgBFD4UCiYKFD8UOBRAFDgUQBQ4"
             "FEAUOBRAFDgUQRQ2FEIUNhRCFDYUQhQ2FEIUNhRCFDYUQxQ0FEQUNBREFDQURBQ0FEQUNBREFDQU"
             "RBQ0FEQUNBREFDQURBQ0FEUUMhRGFDIURhQyFEYUMhRGFDIURhQyFEYUMhRGFDIURhQyFEYUMhRG"
@@ -6607,7 +6551,7 @@ static void test_draw_geometry(void)
             "QBI7D0gPOgtQCzoHWAc6A2AD3SoA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 64,
+    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 64,
             "3SkmcThiRFdOTVhEICAgPhwsHDwXNhc8FDwUOxQ+FDoUPhQ6FD4UOhQ+FDoUPhQ5FEAUOBRAFDgU"
             "QBQ4FEAUOBRAFDcUQhQ2FEIUNhRCFDYUQhQ2FEIUNhRCFDUURBQ0FEQUNBREFDQURBQ0FEQUNBRE"
             "FDQURBQ0FEQUNBREFDQURBQzFEYUMhRGFDIURhQyFEYUMhRGFDIURhQyFEYUMhRGFDIURhQyFEYU"
@@ -6616,7 +6560,7 @@ static void test_draw_geometry(void)
             "QhQ2FEIUNxRAFDgUQBQ4FEAUOBRAFDgUQBQ5FD4UOhQ+FDoUPhQ6FD4UOhQ+FDsUPBQ8FzYXPBws"
             "HD4gICBEWE1OV0RiOHEm3SkA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 320, 160, 160, 0xff652e89, 1024,
+    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 1024,
             "zykoczhkRVhQTlpEFx4tPRUrJDwUNRw7FDwVOxQ+FDoUPhQ5FEAUOBRAFDgUQBQ4FEAUOBRBFDcU"
             "QRQ3FEEUNhRCFDYUQhQ2FEIUNhRDFDUUQxQ1FEMUNRRDFDUUQxQ0FEQUNBREFDQURBQ0FEQUNBRE"
             "FDQURBQ0FEQUNBREFDQURBQ0FEQUMxRFFDMURRQzFEUUMxRFFDMURRQzFEUUMxRFFDMURRQzFEUU"
@@ -6625,7 +6569,7 @@ static void test_draw_geometry(void)
             "QhQ2FEIUNhRCFDYUQRQ3FEEUNxRBFDgUQBQ4FEAUOBRAFDgUQBQ5FD4UOhQ+FDsVPBQ7HDUUPCQr"
             "FT0tHhdEWk5QWEVkOHMozykA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 1024,
+    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 1024,
             "6SkobThfRVNQSFpALR4XPSQrFTscNRQ7FTwUOhQ+FDoUPhQ5FEAUOBRAFDgUQBQ4FEAUNxRBFDcU"
             "QRQ3FEEUNxRCFDYUQhQ2FEIUNRRDFDUUQxQ1FEMUNRRDFDUUQxQ1FEQUNBREFDQURBQ0FEQUNBRE"
             "FDQURBQ0FEQUNBREFDQURBQ0FEQUNBRFFDMURRQzFEUUMxRFFDMURRQzFEUUMxRFFDMURRQzFEUU"
@@ -6634,7 +6578,7 @@ static void test_draw_geometry(void)
             "QhQ2FEIUNhRCFDcUQRQ3FEEUNxRBFDcUQBQ4FEAUOBRAFDgUQBQ5FD4UOhQ+FDoUPBU7FDUcOxUr"
             "JD0XHi1AWkhQU0VfOG0o6SkA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 320, 160, 160, 0xff652e89, 64,
+    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 64,
             "3SkmcThiRFdOTVhGHiAgRhQsHDwXNhc8FDwUOxQ+FDoUPhQ6FD4UOhQ+FDoUPhQ5FEAUOBRAFDgU"
             "QBQ4FEAUOBRAFDcUQhQ2FEIUNhRCFDYUQhQ2FEIUNhRCFDUURBQ0FEQUNBREFDQURBQ0FEQUNBRE"
             "FDQURBQ0FEQUNBREFDQURBQzFEYUMhRGFDIURhQyFEYUMhRGFDIURhQyFEYUMhRGFDIURhQyFEYU"
@@ -6713,7 +6657,7 @@ static void test_draw_geometry(void)
     ID2D1TransformedGeometry_Release(transformed_geometry[1]);
     ID2D1TransformedGeometry_Release(transformed_geometry[0]);
 
-    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 128,
+    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 128,
             "yjIJkQEHBwaIAQUSBYMBBBYEggEEFgSCAQQWBIIBBBYEggEEFgSCAQQWBIIBBBYEggEEFgSCAQQW"
             "BIIBBBYEggEEFgSDAQQVBIMBBBUEgwEEFQSDAQQVBIMBBBUEgwEEFQSDAQQVBIMBBBUEgwEEFQSD"
             "AQQVBIQBBBQEhAEEFASEAQQTBIUBBBMEhQEEEwSFAQQTBIUBBBMEhQEEEwSGAQQSBIYBBBIEhgEE"
@@ -6722,13 +6666,13 @@ static void test_draw_geometry(void)
             "AQaaAQaaAQaaAQabAQWbAQWbAQWbAQWaAQeZAQeZAQeZAQiXAQQBBJYBBAMElQEEAwWRAQUGBY0B"
             "BQwFhwEFEgSCAQUXBYABBBoFfgUYBIIBBhEFiAEUpTEA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160,   0, 320, 160, 0xff652e89, 512,
+    match = compare_figure(ctx.surface, 160,   0, 320, 160, 0xff652e89, 512,
             "yJIBArkCDa4CGKMCIZoCK5ECM4gCO4ECQ/gBS/EBUesBLAYl5QEsDiPeASwWIdkBLBwh0wEsISHO"
             "ASsgKMsBKR4vyAEnHDPIASUaNMsBIxg1mQEFMCIUN54BCygiDzijAREhIgY9qAEYGWGuAR4RXbMB"
             "JAhbuQGAAcABesYBc84Ba9YBTvQBP4MCOIoCNI4CM5ACMZICL5QCLZYCK5kCKJsCJ54CI6MCHq8C"
             "EraSAQAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface,   0, 160, 160, 320, 0xff652e89, 512,
+    match = compare_figure(ctx.surface,   0, 160, 160, 320, 0xff652e89, 512,
             "xWkCmwEFmAEJlQELlAENkgEOkQEPjwESjQETjAEVigELAQqJAQsCCogBCwQKhwEKBQqGAQoGCoYB"
             "CgcKhAEKCAqEAQoIC4IBCgoKggEKCgqBAQoMCoABCgwKfwoNCn8KDgp9Cg8KfQoPCnwKEQp7ChEK"
             "egoSCnoKEwp4ChQKeAoUCncLFQp2ChYKdgoWCnYKFwp2ChYKdgoWCncKFgp2ChYKdgoWCncKFQt2"
@@ -6742,7 +6686,7 @@ static void test_draw_geometry(void)
             "iQEKAgqJAQoCCooBCgIKiQEKAgqKAQoBCosBCgEKigEKAQqLARSMARSLARSMAROMARONARKOARGO"
             "ARGPARCQAQ6RAQ2YAQTEZAAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 320, 320, 0xff652e89, 1024,
+    match = compare_figure(ctx.surface, 160, 160, 320, 320, 0xff652e89, 1024,
             "ytABA7gCCbICD60CFKkCF6cCGqMCHqACIZ0CJJoCJpgCKZUCFgIUkgIWBBWPAhYHFI4CFQoUjAIV"
             "DBSKAhUNFYgCFQ8UhwIVERSFAhUTFIMCFRQVgQIUFxSAAhQZFP4BFBoV/AEUHBT7ARQeFPkBFB8V"
             "9wEUIRT2ARQjFPQBFSMV8gEVJRTxARUnFPABFCgV7gEUKhTtARQsFOwBFCwV7AEULBTsARUsFOwB"
@@ -6762,7 +6706,6 @@ static void test_draw_geometry(void)
     ID2D1RenderTarget_Release(rt);
     refcount = ID2D1Factory_Release(factory);
     ok(!refcount, "Factory has %u references left.\n", refcount);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -6778,7 +6721,6 @@ static void test_fill_geometry(void)
     D2D1_MATRIX_3X2_F matrix;
     ID2D1GeometrySink *sink;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     ID2D1Factory *factory;
     D2D1_ELLIPSE ellipse;
     D2D1_COLOR_F color;
@@ -6790,9 +6732,7 @@ static void test_fill_geometry(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
     ID2D1RenderTarget_GetFactory(rt, &factory);
 
@@ -6827,25 +6767,25 @@ static void test_fill_geometry(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 160, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 0,
             "qDJQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFCoMgAA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 320, 160, 160, 0xff652e89, 8,
+    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 8,
             "yjIMjwEWhwEcggEgfiR6KHYscy5xMG40azZpOGc6ZTxjPmI+YUBfQl1EXERbRlpGWUhYSFdKVkpV"
             "TFRMVExTTlJOUk5STlJOUVBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUU5STlJOUk5STlNMVExUTFVK"
             "VkpXSFhIWUZaRltEXERdQl9AYT5iPmM8ZTpnOGk2azRuMHEucyx2KHokfiCCARyHARaPAQzKMgAA");
@@ -6885,37 +6825,37 @@ static void test_fill_geometry(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 0,
             "szI6YURZSlROUVBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUU5USllEYTqzMgAA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 160, 160, 160, 0xff652e89, 2,
+    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 2,
             "tjI0aDxhQlxGWEpVTFNOUk5RUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFFOUk5TTFVKWEZcQmA+ZzS2MgAA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 0,
             "sDJAWkxSUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFJMWkCwMgAA");
@@ -6955,37 +6895,37 @@ static void test_fill_geometry(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480,   0, 160, 160, 0xff652e89, 10,
+    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 10,
             "yjIMjwEWhwEcggEgfiR6KHYscy5xMG40azZpOGc6ZTxjPmI+YUBfQl1EXERbRlpGWUhYSFdKVkpV"
             "TFRMVExTTlJOUk5STlJOUVBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUU5STlJOUk5STlNMVExUTFVK"
             "VkpXSFhIWUZaRltEXERdQl9AYT5iPmM8ZTpnOGk2azRuMHEucyx2KHokfiCCARyHARaPAQzKMgAA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 160, 160, 160, 0xff652e89, 10,
+    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 10,
             "uTIucDJsNmk4ZzplPGM+YUBgQF9CXkJdRFxEW0ZaRllIWEhXSlZKVkpWSlVMVExUTFRMU05STlJO"
             "Uk5STlJOUk9QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFFPUU5STlJOUk5STlJOU0xU"
             "TFRMVExVSlZKVkpWSldIWEhZRlpGW0RcRF1CXkJfQGBAYT5jPGU6ZzhpNmwycC65MgAA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 320, 160, 160, 0xff652e89, 10,
+    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 10,
             "vzIiczhhRldMUlBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUkxXRmA6cSS+MgAA");
@@ -7074,43 +7014,43 @@ static void test_fill_geometry(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     ID2D1PathGeometry_Release(geometry);
 
-    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480,   0, 160, 160, 0xff652e89, 0, "gMgB");
-    ok(match, "Figure does not match.\n");
-
-    match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
-    ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
-    ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
-    ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    ok(match, "Figure does not match.\n");
+    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    ok(match, "Figure does not match.\n");
+    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    ok(match, "Figure does not match.\n");
+    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 0, "gMgB");
+    ok(match, "Figure does not match.\n");
+
+    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 0,
             "7zMCngECnQEEnAEEmwEGmgEGmQEImAEIlwEKlgEKlQEMlAEMkwEOkgEOkQEQkAEQjwESjgESjQEU"
             "jAEUiwEWigEWiQEYiAEYhwEahgEahQEchAEcgwEeggEegQEggAEgfyJ+In0kfCR7JnomeSh4KHcq"
             "dip1LHQscy5yLnEwcDBvMm4ybTRsNGs2ajZpOGg4ZzpmOmU8ZDxjPmI+YUBgQF9CXkJdRFxEW0Za"
             "RllIWEhXSlZKVUxUTFNOUk5RUKgy");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 0,
             "qDJQUU5STlNMVExVSlZKV0hYSFlGWkZbRFxEXUJeQl9AYEBhPmI+YzxkPGU6ZjpnOGg4aTZqNms0"
             "bDRtMm4ybzBwMHEuci5zLHQsdSp2KncoeCh5JnomeyR8JH0ifiJ/IIABIIEBHoIBHoMBHIQBHIUB"
             "GoYBGocBGIgBGIkBFooBFosBFIwBFI0BEo4BEo8BEJABEJEBDpIBDpMBDJQBDJUBCpYBCpcBCJgB"
             "CJkBBpoBBpsBBJwBBJ0BAp4BAu8z");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 0,
             "7zMCngECnQEEnAEEmwEGmgEGmQEImAEIlwEKlgEKlQEMlAEMkwEOkgEOkQEQkAEQjwESjgESjQEU"
             "jAEUiwEWigEWiQEYiAEYhwEahgEahQEchAEcgwEeggEegQEggAEgfyJ+In0kfCR7JnomeSh4KHcq"
             "dip1LHQscy5yLnEwcDBvMm4ybTRsNGs2ajZpOGg4ZzpmOmU8ZDxjPmI+YUBgQF9CXkJdRFxEW0Za"
             "RllIWEhXSlZKVUxUTFNOUk5RUKgy");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 320, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 0,
             "qDJQUU5STlNMVExVSlZKV0hYSFlGWkZbRFxEXUJeQl9AYEBhPmI+YzxkPGU6ZjpnOGg4aTZqNms0"
             "bDRtMm4ybzBwMHEuci5zLHQsdSp2KncoeCh5JnomeyR8JH0ifiJ/IIABIIEBHoIBHoMBHIQBHIUB"
             "GoYBGocBGIgBGIkBFooBFosBFIwBFI0BEo4BEo8BEJABEJEBDpIBDpMBDJQBDJUBCpYBCpcBCJgB"
@@ -7162,18 +7102,18 @@ static void test_fill_geometry(void)
     ID2D1RectangleGeometry_Release(rect_geometry[1]);
     ID2D1RectangleGeometry_Release(rect_geometry[0]);
 
-    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0,
             "qDJQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFCoMgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160,   0, 320, 160, 0xff652e89, 32,
+    match = compare_figure(ctx.surface, 160,   0, 320, 160, 0xff652e89, 32,
             "sIMBA7cCDK8CFKYCHZ4CJJYCLY4CNYUCPv0BRvQBT+wBV+MBYNsBaNIBccoBecEBgQG6AYkBsQGS"
             "AakBmgGgAaMBmAGrAY8BtAGHAbwBfsUBfcYBfcYBfcUBfsUBfcYBfcYBfcYBfcYBfcUBfr0BhgG0"
             "AY8BrAGXAaMBoAGbAagBkgGwAYsBuAGCAcEBeskBcdIBadoBYOMBWOsBT/QBR/wBPoUCNowCLpUC"
             "Jp0CHaYCFa4CDLcCBK+DAQAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface,   0, 160, 160, 320, 0xff652e89, 32,
+    match = compare_figure(ctx.surface,   0, 160, 160, 320, 0xff652e89, 32,
             "+D0BngEDnQEDnAEEmwEGmgEGmQEHmAEJlwEJlgELlAEMkwENkwEOkQEPkAEQkAERjgESjQETjQEU"
             "iwEVigEXiQEXiAEYhwEahgEahQEbhAEdggEeggEegQEgfyF/In0jfCR8JXomeSd5KHcpdip2K3Qs"
             "cy5xL3EvcDFuMm4ybTRrNWs1ajdoOGg5ZjplO2U8Yz1iPmFAYEBfQV5DXUNcRVpGWkZZSFdJV0lW"
@@ -7184,7 +7124,7 @@ static void test_fill_geometry(void)
             "KXgneSZ6JXwkfCN9In8hfyCBAR6CAR6CAR2EARuFARuFARqHARiIAReJAReKARWLARSNARONARKO"
             "ARGQARCQAQ+RAQ6TAQ2TAQyUAQuWAQqWAQmYAQeZAQaaAQabAQScAQOdAQOeAQH4PQAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 320, 320, 0xff652e89, 32,
+    match = compare_figure(ctx.surface, 160, 160, 320, 320, 0xff652e89, 32,
             "sXkBvgIDvAIEugIHuAIJtgILswINsgIPrwISrQITrAIVqQIYpwIapQIbowIeoQIgngIjnAIkmwIm"
             "mAIplgIqlQIskgIvkAIxjQIzjAI1igI3hwI5hgI7hAI9gQJA/wFB/QFE+wFG+QFI9gFK9QFM8wFO"
             "8AFQ7wFS7AFV6gFX6AFY5gFb5AFd4gFf3wFh3gFj2wFm2QFn2AFp1QFs0wFu0QFvzwFyzQF0ygF3"
@@ -7312,70 +7252,70 @@ static void test_fill_geometry(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     ID2D1PathGeometry_Release(geometry);
 
-    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0,
             "qDJQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFCoMgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 160,   0, 160, 160, 0xff652e89, 0,
             "qDJQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFCoMgAA");
-    match = compare_figure(surface, 320,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 320,   0, 160, 160, 0xff652e89, 0,
             "qDJQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFCoMgAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480,   0, 160, 160, 0xff652e89, 0,
+    match = compare_figure(ctx.surface, 480,   0, 160, 160, 0xff652e89, 0,
             "qDJQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQ"
             "UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFCoMgAA");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 160, 160, 160, 0xff652e89, 16,
+    match = compare_figure(ctx.surface,   0, 160, 160, 160, 0xff652e89, 16,
             "qDICTAJQB0IHUQs4C1IRLBFSGxgbUk5STlNMVExUTFRMVExVSlZKVkpWSlZKVkpXSFhIWEhYSFhI"
             "WEhYSFhIWEhYSFlGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZa"
             "RllIWEhYSFhIWEhYSFhIWEhYSFhIV0pWSlZKVkpWSlZKVUxUTFRMVExUTFNOUk5SGxgbUhEsEVIL"
             "OAtRB0IHUAJMAqgy");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 160, 160, 0xff652e89, 16,
+    match = compare_figure(ctx.surface, 160, 160, 160, 160, 0xff652e89, 16,
             "qDIBSwRQAkMKUQQ5EVIIKxtTDRkmVExUTFRMVEtVS1VLVkpWSlZKVklXSVdJV0lXSVhIWEhYSFhI"
             "WEhYSFhIWEhYSFhIWUdZR1lHWUdZR1lHWUdZR1lHWUdZSFhIWUdZR1lHWUdZR1lHWUdZR1lHWUdZ"
             "SFhIWEhYSFhIWEhYSFhIWEhYSFhJV0lXSVdJV0lWSlZKVkpWS1VLVUtUTFRMVExUJhkNUxsrCFIR"
             "OQRRCkMCUARLAagy");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 160, 160, 160, 0xff652e89, 16,
+    match = compare_figure(ctx.surface, 320, 160, 160, 160, 0xff652e89, 16,
             "qDIESwFRCkMCUhE5BFIbKwhTJhkNVExUTFRMVUtVS1VLVUpWSlZKV0lXSVdJV0lXSVdIWEhYSFhI"
             "WEhYSFhIWEhYSFhIWEdZR1lHWUdZR1lHWUdZR1lHWUdYSFhIWEdZR1lHWUdZR1lHWUdZR1lHWUdY"
             "SFhIWEhYSFhIWEhYSFhIWEhYSFdJV0lXSVdJV0lXSlZKVkpVS1VLVUtVTFRMVExUDRkmUwgrG1IE"
             "ORFSAkMKUQFLBKgy");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 160, 160, 160, 0xff652e89, 16,
+    match = compare_figure(ctx.surface, 480, 160, 160, 160, 0xff652e89, 16,
             "qDICTAJQB0IHUQs4C1IRLBFSGxgbUk5STlNMVExUTFRMVExVSlZKVkpWSlZKVkpXSFhIWEhYSFhI"
             "WEhYSFhIWEhYSFlGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZa"
             "RllIWEhYSFhIWEhYSFhIWEhYSFhIV0pWSlZKVkpWSlZKVUxUTFRMVExUTFNOUk5SGxgbUhEsEVIL"
             "OAtRB0IHUAJMAqgy");
     ok(match, "Figure does not match.\n");
 
-    match = compare_figure(surface,   0, 320, 160, 160, 0xff652e89, 16,
+    match = compare_figure(ctx.surface,   0, 320, 160, 160, 0xff652e89, 16,
             "pCwYfixuOGNCWUxSUFBQT1JOUk5STlJOUk1UTFRMVExUTFRLVkpWSlZKVkpWSlZJWEhYSFhIWEhY"
             "SFhIWEhYSFhIWEdaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpG"
             "WkdYSFhIWEhYSFhIWEhYSFhIWEhYSVZKVkpWSlZKVkpWS1RMVExUTFRMVE1STlJOUk5STlJPUFBQ"
             "UkxZQmM4bix+GKQs");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 320, 160, 160, 0xff652e89, 16,
+    match = compare_figure(ctx.surface, 160, 320, 160, 160, 0xff652e89, 16,
             "liwZgQErcTllQ1xLVFBQUU9STlJNVExUTFRMVExVS1VLVUpWSlZKVkpXSVdJV0lXSVdIWEhYSFhI"
             "WEhYSFhIWEhYSFhIWEdZR1lHWUdZR1lHWUdZR1lHWUdZR1hIWEdZR1lHWUdZR1lHWUdZR1lHWUdZ"
             "R1hIWEhYSFhIWEhYSFhIWEhYSFhIV0lXSVdJV0lXSlZKVkpWSlVLVUtVTFRMVExUTFRNUk5ST1FQ"
             "UFRLXENlOXErgQEZliwA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 320, 320, 160, 160, 0xff652e89, 16,
+    match = compare_figure(ctx.surface, 320, 320, 160, 160, 0xff652e89, 16,
             "sSwZeytrOV9DVktRUE9RTlJOUk1UTFRMVExUS1VLVUtVS1ZKVkpWSVdJV0lXSVdJV0lYSFhIWEhY"
             "SFhIWEhYSFhIWEhYSFlHWUdZR1lHWUdZR1lHWUdZR1lIWEhYSFlHWUdZR1lHWUdZR1lHWUdZR1lI"
             "WEhYSFhIWEhYSFhIWEhYSFhIWElXSVdJV0lXSVdJVkpWSlZLVUtVS1VLVExUTFRMVE1STlJOUU9Q"
             "UUtWQ185ayt7GbEs");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 480, 320, 160, 160, 0xff652e89, 16,
+    match = compare_figure(ctx.surface, 480, 320, 160, 160, 0xff652e89, 16,
             "pCwYfixuOGNCWUxSUFBQT1JOUk5STlJOUk1UTFRMVExUTFRLVkpWSlZKVkpWSlZJWEhYSFhIWEhY"
             "SFhIWEhYSFhIWEdaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpGWkZaRlpG"
             "WkdYSFhIWEhYSFhIWEhYSFhIWEhYSVZKVkpWSlZKVkpWS1RMVExUTFRMVE1STlJOUk5STlJPUFBQ"
@@ -7451,19 +7391,19 @@ static void test_fill_geometry(void)
     ID2D1TransformedGeometry_Release(transformed_geometry[1]);
     ID2D1TransformedGeometry_Release(transformed_geometry[0]);
 
-    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 32,
+    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 32,
             "6DMNjgEWiAEahgEahgEahgEahgEahgEahgEahgEahgEahgEahgEahwEZhwEZhwEZhwEZhwEZhwEZ"
             "hwEZhwEZhwEZiAEYiAEYiAEYiAEYiAEXiQEXiQEXiQEXigEWigEWigEWigEWigEWigEWigEWiwEU"
             "jAEUjAEUjAEUjQESjgESjwEQkAEQkQEOkgENlAEMlQEKlgEKlwEImAEImQEHmQEGmwEFmwEEnQED"
             "nQECngECngECnwEBnwEBnwEBnwEBnwEBnwECnQEDnQEDnQEEmwEFmgEHmQEHlwELkQERjAEXhgEd"
             "hAEfgwEchgEXjwEMqTEA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160,   0, 320, 160, 0xff652e89, 32,
+    match = compare_figure(ctx.surface, 160,   0, 320, 160, 0xff652e89, 32,
             "h58BBrYCDq0CF6QCIJwCKJMCMIwCNoUCPf8BQ/kBSPQBTu4BTe8BTPEBSfUBRvgBQf0BPYECOYUC"
             "NIoCMI4CK+UBAS0W/AEHIwiPAgsaBZcCEAwIngIepAIaqAIWrAITsAIRsgIPtQIMtwILugIHwAIB"
             "ypwB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface,   0, 160, 160, 320, 0xff652e89, 32,
+    match = compare_figure(ctx.surface,   0, 160, 160, 320, 0xff652e89, 32,
             "wW4DnAEEmwEFmgEHmAEIlwEKlQELlAEMkwEOkQEPkAEQkAERjgESjgETjAEUjAEUiwEWigEWiQEX"
             "iQEYhwEZhwEZhgEbhQEbhAEchAEdggEeggEeggEfgAEggAEggAEhgAEggAEggQEggAEggAEggQEg"
             "gAEggQEfgQEfggEfgQEfgQEfggEfgQEfggEeggEfggEeggEegwEdgwEeggEegwEdgwEegwEdgwEd"
@@ -7474,7 +7414,7 @@ static void test_fill_geometry(void)
             "AQ6SAQ2TAQ2SAQ2TAQ2TAQyTAQyUAQyUAQuUAQuVAQuUAQuVAQqWAQmWAQqWAQmXAQiXAQiYAQeY"
             "AQeZAQWbAQSDZwAA");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 320, 320, 0xff652e89, 32,
+    match = compare_figure(ctx.surface, 160, 160, 320, 320, 0xff652e89, 32,
             "g90BBLkCCLYCC7ICDrACEa0CFKoCF6cCGqQCHKMCHqECIJ8CIpwCJJsCJpkCKJcCKZYCK5QCLZIC"
             "L5ACMI8CMo0CNIsCNYoCN4gCOYcCOYYCO4QCPYICPoECQIACQYACQIECQIACQIECQIECQIECP4IC"
             "P4ICP4ECP4ICP4ICPoMCPoMCPoMCPYQCPYMCPYQCPYQCPYQCPIUCPIUCPIUCO4YCO4YCOoYCO4YC"
@@ -7555,20 +7495,19 @@ static void test_fill_geometry(void)
     ID2D1TransformedGeometry_Release(transformed_geometry[1]);
     ID2D1TransformedGeometry_Release(transformed_geometry[0]);
 
-    match = compare_figure(surface,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
+    match = compare_figure(ctx.surface,   0,   0, 160, 160, 0xff652e89, 0, "gMgB");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160,   0, 320, 160, 0xff652e89, 0, "gJAD");
+    match = compare_figure(ctx.surface, 160,   0, 320, 160, 0xff652e89, 0, "gJAD");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface,   0, 160, 160, 320, 0xff652e89, 0, "gJAD");
+    match = compare_figure(ctx.surface,   0, 160, 160, 320, 0xff652e89, 0, "gJAD");
     ok(match, "Figure does not match.\n");
-    match = compare_figure(surface, 160, 160, 320, 320, 0xff652e89, 0, "gKAG");
+    match = compare_figure(ctx.surface, 160, 160, 320, 320, 0xff652e89, 0, "gKAG");
     ok(match, "Figure does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);
     ID2D1RenderTarget_Release(rt);
     refcount = ID2D1Factory_Release(factory);
     ok(!refcount, "Factory has %u references left.\n", refcount);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -7708,7 +7647,6 @@ static void test_layer(void)
     ID2D1Factory *factory, *layer_factory;
     struct d2d1_test_context ctx;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     ID2D1Layer *layer;
     D2D1_SIZE_F size;
     ULONG refcount;
@@ -7717,9 +7655,7 @@ static void test_layer(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
     ID2D1RenderTarget_GetFactory(rt, &factory);
 
@@ -7747,7 +7683,6 @@ static void test_layer(void)
     ID2D1RenderTarget_Release(rt);
     refcount = ID2D1Factory_Release(factory);
     ok(!refcount, "Factory has %u references left.\n", refcount);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -7759,7 +7694,6 @@ static void test_bezier_intersect(void)
     ID2D1PathGeometry *geometry;
     ID2D1GeometrySink *sink;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     ID2D1Factory *factory;
     D2D1_COLOR_F color;
     ULONG refcount;
@@ -7769,9 +7703,7 @@ static void test_bezier_intersect(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
     ID2D1RenderTarget_GetFactory(rt, &factory);
 
@@ -7816,7 +7748,7 @@ static void test_bezier_intersect(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     ID2D1PathGeometry_Release(geometry);
 
-    match = compare_figure(surface, 160, 120, 320, 240, 0xff652e89, 2048,
+    match = compare_figure(ctx.surface, 160, 120, 320, 240, 0xff652e89, 2048,
             "aRQjIxRpYiIcHCJiXSwXFyxdWTQTEzRZVTsQEDtVUkIMDEJST0cKCkdPTUsICEtNSlEFBVFKSFUD"
             "A1VIRlkBAVlGRFsBAVtEQlwCAlxCQFwEBFxAPl0FBV0+PF0HB108Ol4ICF46OV0KCl05N14LC143"
             "Nl4MDF42NF8NDV80M14PD14zMV8QEF8xMF8REV8wL18SEl8vLWATE2AtLGAUFGAsK2EUFGErKWIV"
@@ -7866,7 +7798,7 @@ static void test_bezier_intersect(void)
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     ID2D1PathGeometry_Release(geometry);
 
-    match = compare_figure(surface, 160, 120, 320, 240, 0xff652e89, 2048,
+    match = compare_figure(ctx.surface, 160, 120, 320, 240, 0xff652e89, 2048,
             "pQIZkgIrhAI5/QE/9gFH7wFO6wFS5wFW4gFb3gFf2wFi2AFl1gFn1AFp0gFszwFuzQFxywFyyQF1"
             "xwF2xgF4xAF5xAF6wgF8wAF+vwF+vwF/vQGBAbwBggG7AYMBugGEAbkBhQG4AYYBtwGHAbcBiAG1"
             "AYkBtAGKAbQBigGzAYsBswGMAbEBjQGxAY0BsQGOAa8BjwGvAZABrgGQAa4BkQGtAZEBrQGSAawB"
@@ -7889,7 +7821,6 @@ static void test_bezier_intersect(void)
     ID2D1RenderTarget_Release(rt);
     refcount = ID2D1Factory_Release(factory);
     ok(!refcount, "Factory has %u references left.\n", refcount);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
@@ -8164,7 +8095,7 @@ static void test_bitmap_surface(void)
     D2D1_RENDER_TARGET_PROPERTIES rt_desc;
     D2D1_BITMAP_PROPERTIES1 bitmap_desc;
     ID2D1DeviceContext *device_context;
-    IDXGISurface *surface, *surface2;
+    IDXGISurface *surface2;
     D2D1_PIXEL_FORMAT pixel_format;
     struct d2d1_test_context ctx;
     IDXGIDevice *dxgi_device;
@@ -8192,9 +8123,7 @@ static void test_bitmap_surface(void)
     }
 
     /* DXGI target */
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
 
     hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context);
@@ -8228,7 +8157,7 @@ static void test_bitmap_surface(void)
         bitmap_desc.pixelFormat = bitmap_format_tests[i].original;
         bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
 
-        hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, surface, &bitmap_desc, &bitmap);
+        hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, ctx.surface, &bitmap_desc, &bitmap);
     todo_wine_if(bitmap_format_tests[i].hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT)
         ok(hr == bitmap_format_tests[i].hr, "%u: unexpected hr %#x.\n", i, hr);
 
@@ -8246,7 +8175,7 @@ static void test_bitmap_surface(void)
     }
 
     /* A8 surface */
-    hr = IDXGISurface_GetDevice(surface, &IID_IDXGIDevice, (void **)&dxgi_device);
+    hr = IDXGISurface_GetDevice(ctx.surface, &IID_IDXGIDevice, (void **)&dxgi_device);
     ok(SUCCEEDED(hr), "Failed to get the device, hr %#x.\n", hr);
 
     surface2 = create_surface(dxgi_device, DXGI_FORMAT_A8_UNORM);
@@ -8267,7 +8196,7 @@ static void test_bitmap_surface(void)
     IDXGIDevice_Release(dxgi_device);
     IDXGISurface_Release(surface2);
 
-    hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, surface, NULL, &bitmap);
+    hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, ctx.surface, NULL, &bitmap);
     ok(SUCCEEDED(hr), "Failed to create a bitmap, hr %#x.\n", hr);
 
     pixel_format = ID2D1Bitmap1_GetPixelFormat(bitmap);
@@ -8325,7 +8254,6 @@ static void test_bitmap_surface(void)
 
     ID2D1Device_Release(device);
     IDXGIDevice_Release(dxgi_device);
-    IDXGISurface_Release(surface);
 
     /* DC target */
     rt_desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
@@ -8442,9 +8370,7 @@ static void test_device_context(void)
     ID2D1DeviceContext_Release(device_context);
 
     /* DXGI target */
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
 
     hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&device_context);
@@ -8455,13 +8381,13 @@ static void test_device_context(void)
             "Unexpected bitmap options %#x.\n", options);
     hr = ID2D1Bitmap1_GetSurface(bitmap, &surface2);
     ok(SUCCEEDED(hr), "Failed to get bitmap surface, hr %#x.\n", hr);
-    ok(surface2 == surface, "Unexpected surface instance.\n");
+    ok(surface2 == ctx.surface, "Unexpected surface instance.\n");
     IDXGISurface_Release(surface2);
 
     ID2D1DeviceContext_BeginDraw(device_context);
     hr = ID2D1Bitmap1_GetSurface(bitmap, &surface2);
     ok(SUCCEEDED(hr), "Failed to get bitmap surface, hr %#x.\n", hr);
-    ok(surface2 == surface, "Unexpected surface instance.\n");
+    ok(surface2 == ctx.surface, "Unexpected surface instance.\n");
     IDXGISurface_Release(surface2);
     ID2D1DeviceContext_EndDraw(device_context, NULL, NULL);
     ID2D1Bitmap1_Release(bitmap);
@@ -8472,7 +8398,6 @@ static void test_device_context(void)
 
     ID2D1DeviceContext_Release(device_context);
     ID2D1RenderTarget_Release(rt);
-    IDXGISurface_Release(surface);
 
     /* WIC target */
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -9100,7 +9025,6 @@ static void test_dpi(void)
     IWICImagingFactory *wic_factory;
     struct d2d1_test_context ctx;
     ID2D1Factory1 *factory;
-    IDXGISurface *surface;
     ID2D1Bitmap1 *bitmap;
     float dpi_x, dpi_y;
     HRESULT hr;
@@ -9135,8 +9059,6 @@ static void test_dpi(void)
         return;
     }
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     device_context = create_device_context(factory, ctx.device);
     ok(!!device_context, "Failed to create device context.\n");
@@ -9156,7 +9078,7 @@ static void test_dpi(void)
         bitmap_desc.dpiY = create_dpi_tests[i].dpi_y;
         bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
         bitmap_desc.colorContext = NULL;
-        hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, surface, &bitmap_desc, &bitmap);
+        hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, ctx.surface, &bitmap_desc, &bitmap);
         /* Native accepts negative DPI values for DXGI surface bitmap. */
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
 
@@ -9304,7 +9226,6 @@ static void test_dpi(void)
     ok(dpi_y == dc_dpi_y, "Got unexpected dpi_y %.8e, expected %.8e.\n", dpi_y, dc_dpi_y);
 
     ID2D1DeviceContext_Release(device_context);
-    IDXGISurface_Release(surface);
     ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
@@ -9316,7 +9237,6 @@ static void test_wic_bitmap_format(void)
     D2D1_PIXEL_FORMAT format;
     IWICBitmap *wic_bitmap;
     ID2D1RenderTarget *rt;
-    IDXGISurface *surface;
     ID2D1Bitmap *bitmap;
     unsigned int i;
     HRESULT hr;
@@ -9336,9 +9256,7 @@ static void test_wic_bitmap_format(void)
     if (!init_test_context(&ctx))
         return;
 
-    hr = IDXGISwapChain_GetBuffer(ctx.swapchain, 0, &IID_IDXGISurface, (void **)&surface);
-    ok(hr == S_OK, "Failed to get buffer, hr %#x.\n", hr);
-    rt = create_render_target(surface);
+    rt = create_render_target(ctx.surface);
     ok(!!rt, "Failed to create render target.\n");
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
@@ -9368,7 +9286,6 @@ static void test_wic_bitmap_format(void)
     IWICImagingFactory_Release(wic_factory);
     CoUninitialize();
     ID2D1RenderTarget_Release(rt);
-    IDXGISurface_Release(surface);
     release_test_context(&ctx);
 }
 
