@@ -753,8 +753,12 @@ static HRESULT WINAPI adoconstruct_get_DSO(ADOConnectionConstruction15 *iface, I
 static HRESULT WINAPI adoconstruct_get_Session(ADOConnectionConstruction15 *iface, IUnknown **session)
 {
     struct connection *connection = impl_from_ADOConnectionConstruction15( iface );
-    FIXME("%p, %p\n", connection, session);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", connection, session);
+
+    *session = connection->session;
+    if (*session)
+        IUnknown_AddRef(*session);
+    return S_OK;
 }
 
 static HRESULT WINAPI adoconstruct_WrapDSOandSession(ADOConnectionConstruction15 *iface, IUnknown *dso,
