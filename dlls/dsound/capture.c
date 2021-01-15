@@ -527,6 +527,8 @@ out:
     return DS_OK;
 }
 
+static void capture_CheckNotify(IDirectSoundCaptureBufferImpl *This, DWORD from, DWORD len);
+
 static HRESULT WINAPI IDirectSoundCaptureBufferImpl_Stop(IDirectSoundCaptureBuffer8 *iface)
 {
     IDirectSoundCaptureBufferImpl *This = impl_from_IDirectSoundCaptureBuffer8(iface);
@@ -544,8 +546,10 @@ static HRESULT WINAPI IDirectSoundCaptureBufferImpl_Stop(IDirectSoundCaptureBuff
     TRACE("old This->device->state=%s\n",captureStateString[This->device->state]);
     if (This->device->state == STATE_CAPTURING)
 	This->device->state = STATE_STOPPING;
-    else if (This->device->state == STATE_STARTING)
+    else if (This->device->state == STATE_STARTING) {
 	This->device->state = STATE_STOPPED;
+	capture_CheckNotify(This->device->capture_buffer, 0, 0);
+    }
     TRACE("new This->device->state=%s\n",captureStateString[This->device->state]);
 
     if(This->device->client){
@@ -880,6 +884,7 @@ static HRESULT DSOUND_capture_data(DirectSoundCaptureDevice *device)
 
     if(device->state == STATE_STOPPING){
         device->state = STATE_STOPPED;
+        capture_CheckNotify(device->capture_buffer, 0, 0);
         return S_FALSE;
     }
 
