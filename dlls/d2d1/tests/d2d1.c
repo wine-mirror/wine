@@ -21,6 +21,7 @@
 #include <math.h>
 #include <float.h>
 #include "d2d1_1.h"
+#include "d3d11.h"
 #include "wincrypt.h"
 #include "wine/test.h"
 #include "initguid.h"
@@ -38,12 +39,14 @@ static BOOL use_mt = TRUE;
 
 static struct test_entry
 {
-    void (*test)(void);
+    void (*test)(BOOL d3d11);
+    BOOL d3d11;
 } *mt_tests;
 size_t mt_tests_size, mt_test_count;
 
 struct d2d1_test_context
 {
+    BOOL d3d11;
     IDXGIDevice *device;
     HWND window;
     IDXGISwapChain *swapchain;
@@ -53,7 +56,12 @@ struct d2d1_test_context
 
 struct resource_readback
 {
-    ID3D10Resource *resource;
+    BOOL d3d11;
+    union
+    {
+        ID3D10Resource *d3d10_resource;
+        ID3D11Resource *d3d11_resource;
+    } u;
     unsigned int pitch, width, height;
     void *data;
 };
@@ -108,14 +116,26 @@ struct expected_geometry_figure
     const struct geometry_segment *segments;
 };
 
-static void queue_test(void (*test)(void))
+static void queue_d3d1x_test(void (*test)(BOOL d3d11), BOOL d3d11)
 {
     if (mt_test_count >= mt_tests_size)
     {
         mt_tests_size = max(16, mt_tests_size * 2);
         mt_tests = heap_realloc(mt_tests, mt_tests_size * sizeof(*mt_tests));
     }
-    mt_tests[mt_test_count++].test = test;
+    mt_tests[mt_test_count].test = test;
+    mt_tests[mt_test_count++].d3d11 = d3d11;
+}
+
+static void queue_d3d10_test(void (*test)(BOOL d3d11))
+{
+    queue_d3d1x_test(test, FALSE);
+}
+
+static void queue_test(void (*test)(BOOL d3d11))
+{
+    queue_d3d1x_test(test, FALSE);
+    queue_d3d1x_test(test, TRUE);
 }
 
 static DWORD WINAPI thread_func(void *ctx)
@@ -126,7 +146,7 @@ static DWORD WINAPI thread_func(void *ctx)
     {
         j = *i;
         if (InterlockedCompareExchange(i, j + 1, j) == j)
-            mt_tests[j].test();
+            mt_tests[j].test(mt_tests[j].d3d11);
     }
 
     return 0;
@@ -143,7 +163,7 @@ static void run_queued_tests(void)
     {
         for (i = 0; i < mt_test_count; ++i)
         {
-            mt_tests[i].test();
+            mt_tests[i].test(mt_tests[i].d3d11);
         }
 
         return;
@@ -311,9 +331,8 @@ static void cubic_to(ID2D1GeometrySink *sink, float x1, float y1, float x2, floa
     ID2D1GeometrySink_AddBezier(sink, &b);
 }
 
-static void get_surface_readback(struct d2d1_test_context *ctx, struct resource_readback *rb)
+static void get_d3d10_surface_readback(IDXGISurface *surface, struct resource_readback *rb)
 {
-    IDXGISurface *surface = ctx->surface;
     D3D10_TEXTURE2D_DESC texture_desc;
     D3D10_MAPPED_TEXTURE2D map_desc;
     DXGI_SURFACE_DESC surface_desc;
@@ -338,27 +357,103 @@ static void get_surface_readback(struct d2d1_test_context *ctx, struct resource_
     texture_desc.BindFlags = 0;
     texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
     texture_desc.MiscFlags = 0;
-    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, (ID3D10Texture2D **)&rb->resource);
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, (ID3D10Texture2D **)&rb->u.d3d10_resource);
     ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
     rb->width = texture_desc.Width;
     rb->height = texture_desc.Height;
 
-    ID3D10Device_CopyResource(device, rb->resource, src_resource);
+    ID3D10Device_CopyResource(device, rb->u.d3d10_resource, src_resource);
     ID3D10Resource_Release(src_resource);
     ID3D10Device_Release(device);
 
-    hr = ID3D10Texture2D_Map((ID3D10Texture2D *)rb->resource, 0, D3D10_MAP_READ, 0, &map_desc);
+    hr = ID3D10Texture2D_Map((ID3D10Texture2D *)rb->u.d3d10_resource, 0, D3D10_MAP_READ, 0, &map_desc);
     ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
 
     rb->pitch = map_desc.RowPitch;
     rb->data = map_desc.pData;
 }
 
+static void get_d3d11_surface_readback(IDXGISurface *surface, struct resource_readback *rb)
+{
+    D3D11_TEXTURE2D_DESC texture_desc;
+    D3D11_MAPPED_SUBRESOURCE map_desc;
+    DXGI_SURFACE_DESC surface_desc;
+    ID3D11Resource *src_resource;
+    ID3D11DeviceContext *context;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    hr = IDXGISurface_GetDevice(surface, &IID_ID3D11Device, (void **)&device);
+    ok(SUCCEEDED(hr), "Failed to get device, hr %#x.\n", hr);
+    hr = IDXGISurface_QueryInterface(surface, &IID_ID3D11Resource, (void **)&src_resource);
+    ok(SUCCEEDED(hr), "Failed to query resource interface, hr %#x.\n", hr);
+
+    hr = IDXGISurface_GetDesc(surface, &surface_desc);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    texture_desc.Width = surface_desc.Width;
+    texture_desc.Height = surface_desc.Height;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = surface_desc.Format;
+    texture_desc.SampleDesc = surface_desc.SampleDesc;
+    texture_desc.Usage = D3D11_USAGE_STAGING;
+    texture_desc.BindFlags = 0;
+    texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, (ID3D11Texture2D **)&rb->u.d3d11_resource);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    rb->width = texture_desc.Width;
+    rb->height = texture_desc.Height;
+
+    ID3D11Device_GetImmediateContext(device, &context);
+    ID3D11DeviceContext_CopyResource(context, rb->u.d3d11_resource, src_resource);
+    ID3D11Resource_Release(src_resource);
+    ID3D11Device_Release(device);
+
+    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)rb->u.d3d11_resource, 0, D3D11_MAP_READ, 0, &map_desc);
+    ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
+    ID3D11DeviceContext_Release(context);
+
+    rb->pitch = map_desc.RowPitch;
+    rb->data = map_desc.pData;
+}
+
+static void get_surface_readback(struct d2d1_test_context *ctx, struct resource_readback *rb)
+{
+    if ((rb->d3d11 = ctx->d3d11))
+        get_d3d11_surface_readback(ctx->surface, rb);
+    else
+        get_d3d10_surface_readback(ctx->surface, rb);
+}
+
+static void release_d3d10_resource_readback(struct resource_readback *rb)
+{
+    ID3D10Texture2D_Unmap((ID3D10Texture2D *)rb->u.d3d10_resource, 0);
+    ID3D10Resource_Release(rb->u.d3d10_resource);
+}
+
+static void release_d3d11_resource_readback(struct resource_readback *rb)
+{
+    ID3D11DeviceContext *context;
+    ID3D11Device *device;
+
+    ID3D11Resource_GetDevice(rb->u.d3d11_resource, &device);
+    ID3D11Device_GetImmediateContext(device, &context);
+    ID3D11Device_Release(device);
+
+    ID3D11DeviceContext_Unmap(context, rb->u.d3d11_resource, 0);
+    ID3D11Resource_Release(rb->u.d3d11_resource);
+    ID3D11DeviceContext_Release(context);
+}
+
 static void release_resource_readback(struct resource_readback *rb)
 {
-    ID3D10Texture2D_Unmap((ID3D10Texture2D *)rb->resource, 0);
-    ID3D10Resource_Release(rb->resource);
+    if (rb->d3d11)
+        release_d3d11_resource_readback(rb);
+    else
+        release_d3d10_resource_readback(rb);
 }
 
 static DWORD get_readback_colour(struct resource_readback *rb, unsigned int x, unsigned int y)
@@ -711,18 +806,47 @@ static ID3D10Device1 *create_d3d10_device(void)
     return NULL;
 }
 
-static IDXGIDevice *create_device(void)
+static ID3D11Device *create_d3d11_device(void)
+{
+    DWORD level = D3D_FEATURE_LEVEL_11_0;
+    ID3D11Device *device;
+
+    if (SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL,
+            D3D10_CREATE_DEVICE_BGRA_SUPPORT, &level, 1, D3D11_SDK_VERSION, &device, NULL, NULL)))
+        return device;
+    if (SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_WARP, NULL,
+            D3D10_CREATE_DEVICE_BGRA_SUPPORT, &level, 1, D3D11_SDK_VERSION, &device, NULL, NULL)))
+        return device;
+    if (SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_REFERENCE, NULL,
+            D3D10_CREATE_DEVICE_BGRA_SUPPORT, &level, 1, D3D11_SDK_VERSION, &device, NULL, NULL)))
+        return device;
+
+    return NULL;
+}
+
+static IDXGIDevice *create_device(BOOL d3d11)
 {
     ID3D10Device1 *d3d10_device;
+    ID3D11Device *d3d11_device;
     IDXGIDevice *device;
     HRESULT hr;
 
-    if (!(d3d10_device = create_d3d10_device()))
-        return NULL;
+    if (d3d11)
+    {
+        if (!(d3d11_device = create_d3d11_device()))
+            return NULL;
+        hr = ID3D11Device_QueryInterface(d3d11_device, &IID_IDXGIDevice, (void **)&device);
+        ID3D11Device_Release(d3d11_device);
+    }
+    else
+    {
+        if (!(d3d10_device = create_d3d10_device()))
+            return NULL;
+        hr = ID3D10Device1_QueryInterface(d3d10_device, &IID_IDXGIDevice, (void **)&device);
+        ID3D10Device1_Release(d3d10_device);
+    }
 
-    hr = ID3D10Device1_QueryInterface(d3d10_device, &IID_IDXGIDevice, (void **)&device);
     ok(SUCCEEDED(hr), "Failed to get DXGI device, hr %#x.\n", hr);
-    ID3D10Device1_Release(d3d10_device);
 
     return device;
 }
@@ -787,7 +911,8 @@ static IDXGISwapChain *create_d3d10_swapchain(ID3D10Device1 *device, HWND window
     return swapchain;
 }
 
-static ID2D1RenderTarget *create_render_target_desc(IDXGISurface *surface, const D2D1_RENDER_TARGET_PROPERTIES *desc)
+static ID2D1RenderTarget *create_render_target_desc(IDXGISurface *surface,
+        const D2D1_RENDER_TARGET_PROPERTIES *desc, BOOL d3d11)
 {
     ID2D1RenderTarget *render_target;
     ID2D1Factory *factory;
@@ -796,13 +921,16 @@ static ID2D1RenderTarget *create_render_target_desc(IDXGISurface *surface, const
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
     hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory, surface, desc, &render_target);
-    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    todo_wine_if(d3d11) ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
     ID2D1Factory_Release(factory);
+
+    if (FAILED(hr))
+        return NULL;
 
     return render_target;
 }
 
-static ID2D1RenderTarget *create_render_target(IDXGISurface *surface)
+static ID2D1RenderTarget *create_render_target(IDXGISurface *surface, BOOL d3d11)
 {
     D2D1_RENDER_TARGET_PROPERTIES desc;
 
@@ -814,7 +942,7 @@ static ID2D1RenderTarget *create_render_target(IDXGISurface *surface)
     desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
     desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
 
-    return create_render_target_desc(surface, &desc);
+    return create_render_target_desc(surface, &desc, d3d11);
 }
 
 #define release_test_context(ctx) release_test_context_(__LINE__, ctx)
@@ -834,14 +962,15 @@ static void release_test_context_(unsigned int line, struct d2d1_test_context *c
     IDXGIDevice_Release(ctx->device);
 }
 
-#define init_test_context(ctx) init_test_context_(__LINE__, ctx)
-static BOOL init_test_context_(unsigned int line, struct d2d1_test_context *ctx)
+#define init_test_context(ctx, d3d11) init_test_context_(__LINE__, ctx, d3d11)
+static BOOL init_test_context_(unsigned int line, struct d2d1_test_context *ctx, BOOL d3d11)
 {
     HRESULT hr;
 
     memset(ctx, 0, sizeof(*ctx));
 
-    if (!(ctx->device = create_device()))
+    ctx->d3d11 = d3d11;
+    if (!(ctx->device = create_device(d3d11)))
     {
         skip_(__FILE__, line)("Failed to create device, skipping tests.\n");
         return FALSE;
@@ -854,7 +983,18 @@ static BOOL init_test_context_(unsigned int line, struct d2d1_test_context *ctx)
     hr = IDXGISwapChain_GetBuffer(ctx->swapchain, 0, &IID_IDXGISurface, (void **)&ctx->surface);
     ok_(__FILE__, line)(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
 
-    ctx->rt = create_render_target(ctx->surface);
+    ctx->rt = create_render_target(ctx->surface, d3d11);
+    if (!ctx->rt && d3d11)
+    {
+        todo_wine win_skip_(__FILE__, line)("Skipping d3d11 tests.\n");
+
+        IDXGISurface_Release(ctx->surface);
+        IDXGISwapChain_Release(ctx->swapchain);
+        DestroyWindow(ctx->window);
+        IDXGIDevice_Release(ctx->device);
+
+        return FALSE;
+    }
     ok_(__FILE__, line)(!!ctx->rt, "Failed to create render target.\n");
 
     return TRUE;
@@ -1166,7 +1306,7 @@ static void geometry_sink_check_(unsigned int line, const struct geometry_sink *
     }
 }
 
-static void test_clip(void)
+static void test_clip(BOOL d3d11)
 {
     struct d2d1_test_context ctx;
     D2D1_MATRIX_3X2_F matrix;
@@ -1186,7 +1326,7 @@ static void test_clip(void)
         0.0f, 0.0f,
     }}};
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -1358,7 +1498,7 @@ static void test_clip(void)
     release_test_context(&ctx);
 }
 
-static void test_state_block(void)
+static void test_state_block(BOOL d3d11)
 {
     IDWriteRenderingParams *text_rendering_params1, *text_rendering_params2;
     D2D1_DRAWING_STATE_DESCRIPTION drawing_state;
@@ -1389,7 +1529,7 @@ static void test_state_block(void)
         11.0f, 12.0f,
     }}};
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -1618,7 +1758,7 @@ static void test_state_block(void)
     release_test_context(&ctx);
 }
 
-static void test_color_brush(void)
+static void test_color_brush(BOOL d3d11)
 {
     D2D1_MATRIX_3X2_F matrix, tmp_matrix;
     D2D1_BRUSH_PROPERTIES brush_desc;
@@ -1631,7 +1771,7 @@ static void test_color_brush(void)
     HRESULT hr;
     BOOL match;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -1703,7 +1843,7 @@ static void test_color_brush(void)
     release_test_context(&ctx);
 }
 
-static void test_bitmap_brush(void)
+static void test_bitmap_brush(BOOL d3d11)
 {
     D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode;
     ID2D1TransformedGeometry *transformed_geometry;
@@ -1756,7 +1896,7 @@ static void test_bitmap_brush(void)
         0xffffffff, 0xff000000, 0xff000000, 0xff000000,
     };
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -2096,7 +2236,7 @@ static void test_bitmap_brush(void)
     release_test_context(&ctx);
 }
 
-static void test_linear_brush(void)
+static void test_linear_brush(BOOL d3d11)
 {
     D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES gradient_properties;
     ID2D1GradientStopCollection *gradient, *tmp_gradient;
@@ -2153,7 +2293,7 @@ static void test_linear_brush(void)
         {520, 390, 0xff90ae40},
     };
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -2287,7 +2427,7 @@ static void test_linear_brush(void)
     release_test_context(&ctx);
 }
 
-static void test_radial_brush(void)
+static void test_radial_brush(BOOL d3d11)
 {
     D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES gradient_properties;
     ID2D1GradientStopCollection *gradient, *tmp_gradient;
@@ -2344,7 +2484,7 @@ static void test_radial_brush(void)
         {520, 390, 0xff4059e6},
     };
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -2601,7 +2741,7 @@ static void fill_geometry_sink_bezier(ID2D1GeometrySink *sink, unsigned int holl
     ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
 }
 
-static void test_path_geometry(void)
+static void test_path_geometry(BOOL d3d11)
 {
     ID2D1TransformedGeometry *transformed_geometry;
     D2D1_MATRIX_3X2_F matrix, tmp_matrix;
@@ -2934,7 +3074,7 @@ static void test_path_geometry(void)
         {D2D1_FIGURE_BEGIN_HOLLOW, D2D1_FIGURE_END_OPEN,   { 40.0f,  20.0f},  2, &expected_segments[172]},
     };
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -3660,7 +3800,7 @@ static void test_path_geometry(void)
     release_test_context(&ctx);
 }
 
-static void test_rectangle_geometry(void)
+static void test_rectangle_geometry(BOOL d3d11)
 {
     ID2D1TransformedGeometry *transformed_geometry;
     ID2D1RectangleGeometry *geometry;
@@ -3941,7 +4081,7 @@ static void test_rectangle_geometry(void)
     ID2D1Factory_Release(factory);
 }
 
-static void test_rounded_rectangle_geometry(void)
+static void test_rounded_rectangle_geometry(BOOL d3d11)
 {
     ID2D1RoundedRectangleGeometry *geometry;
     D2D1_ROUNDED_RECT rect, rect2;
@@ -3987,7 +4127,7 @@ static void test_rounded_rectangle_geometry(void)
     ID2D1Factory_Release(factory);
 }
 
-static void test_bitmap_formats(void)
+static void test_bitmap_formats(BOOL d3d11)
 {
     D2D1_BITMAP_PROPERTIES bitmap_desc;
     struct d2d1_test_context ctx;
@@ -4020,7 +4160,7 @@ static void test_bitmap_formats(void)
         {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,   0x8a},
     };
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -4050,7 +4190,7 @@ static void test_bitmap_formats(void)
     release_test_context(&ctx);
 }
 
-static void test_alpha_mode(void)
+static void test_alpha_mode(BOOL d3d11)
 {
     D2D1_RENDER_TARGET_PROPERTIES rt_desc;
     D2D1_BITMAP_PROPERTIES bitmap_desc;
@@ -4074,7 +4214,7 @@ static void test_alpha_mode(void)
         0x7f7f7f7f, 0x7f000000, 0x7f000000, 0x7f000000,
     };
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -4169,7 +4309,7 @@ static void test_alpha_mode(void)
     rt_desc.dpiY = 0.0f;
     rt_desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
     rt_desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
-    rt = create_render_target_desc(ctx.surface, &rt_desc);
+    rt = create_render_target_desc(ctx.surface, &rt_desc, d3d11);
     ok(!!rt, "Failed to create render target.\n");
 
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
@@ -4264,7 +4404,7 @@ static void test_alpha_mode(void)
     release_test_context(&ctx);
 }
 
-static void test_shared_bitmap(void)
+static void test_shared_bitmap(BOOL d3d11)
 {
     IWICBitmap *wic_bitmap1, *wic_bitmap2;
     ID2D1GdiInteropRenderTarget *interop;
@@ -4285,7 +4425,7 @@ static void test_shared_bitmap(void)
     HWND window2;
     HRESULT hr;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     window2 = create_window();
@@ -4350,7 +4490,7 @@ static void test_shared_bitmap(void)
     /* DXGI surface render targets with different devices but the same factory. */
     IDXGISurface_Release(surface2);
     IDXGISwapChain_Release(swapchain2);
-    device2 = create_device();
+    device2 = create_device(d3d11);
     ok(!!device2, "Failed to create device.\n");
     swapchain2 = create_swapchain(device2, window2, TRUE);
     hr = IDXGISwapChain_GetBuffer(swapchain2, 0, &IID_IDXGISurface, (void **)&surface2);
@@ -4511,7 +4651,7 @@ static void test_shared_bitmap(void)
     CoUninitialize();
 }
 
-static void test_bitmap_updates(void)
+static void test_bitmap_updates(BOOL d3d11)
 {
     D2D1_BITMAP_PROPERTIES bitmap_desc;
     struct d2d1_test_context ctx;
@@ -4532,7 +4672,7 @@ static void test_bitmap_updates(void)
         0xffffffff, 0xff000000, 0xff000000, 0xff000000,
     };
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -4599,7 +4739,7 @@ static void test_bitmap_updates(void)
     release_test_context(&ctx);
 }
 
-static void test_opacity_brush(void)
+static void test_opacity_brush(BOOL d3d11)
 {
     ID2D1BitmapBrush *bitmap_brush, *opacity_brush;
     D2D1_BITMAP_PROPERTIES bitmap_desc;
@@ -4625,7 +4765,7 @@ static void test_opacity_brush(void)
         0xffffffff, 0x40000000, 0x40000000, 0xff000000,
     };
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -4765,7 +4905,7 @@ static void test_opacity_brush(void)
     release_test_context(&ctx);
 }
 
-static void test_create_target(void)
+static void test_create_target(BOOL d3d11)
 {
     struct d2d1_test_context ctx;
     ID2D1Factory *factory;
@@ -4788,7 +4928,7 @@ static void test_create_target(void)
     };
     unsigned int i;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
@@ -4843,7 +4983,7 @@ static void test_create_target(void)
     release_test_context(&ctx);
 }
 
-static void test_draw_text_layout(void)
+static void test_draw_text_layout(BOOL d3d11)
 {
     static const struct
     {
@@ -4892,7 +5032,7 @@ static void test_draw_text_layout(void)
     D2D1_RECT_F rect;
     unsigned int i;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
 
@@ -5021,7 +5161,7 @@ static void create_target_dibsection(HDC hdc, UINT32 width, UINT32 height)
     DeleteObject(SelectObject(hdc, hbm));
 }
 
-static void test_dc_target(void)
+static void test_dc_target(BOOL d3d11)
 {
     static const D2D1_PIXEL_FORMAT invalid_formats[] =
     {
@@ -5051,7 +5191,7 @@ static void test_dc_target(void)
     HRESULT hr;
     RECT rect;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
     release_test_context(&ctx);
 
@@ -5249,7 +5389,7 @@ todo_wine
     ID2D1Factory_Release(factory);
 }
 
-static void test_hwnd_target(void)
+static void test_hwnd_target(BOOL d3d11)
 {
     D2D1_HWND_RENDER_TARGET_PROPERTIES hwnd_rt_desc;
     ID2D1GdiInteropRenderTarget *interop;
@@ -5261,7 +5401,7 @@ static void test_hwnd_target(void)
     D2D1_SIZE_U size;
     HRESULT hr;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
     release_test_context(&ctx);
 
@@ -5409,7 +5549,7 @@ static void test_compatible_target_size_(unsigned int line, ID2D1RenderTarget *r
     ID2D1BitmapRenderTarget_Release(bitmap_rt);
 }
 
-static void test_bitmap_target(void)
+static void test_bitmap_target(BOOL d3d11)
 {
     D2D1_HWND_RENDER_TARGET_PROPERTIES hwnd_rt_desc;
     ID2D1GdiInteropRenderTarget *interop;
@@ -5428,7 +5568,7 @@ static void test_bitmap_target(void)
     ULONG refcount;
     HRESULT hr;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
     release_test_context(&ctx);
 
@@ -5595,7 +5735,7 @@ static void test_bitmap_target(void)
     ID2D1Factory_Release(factory);
 }
 
-static void test_desktop_dpi(void)
+static void test_desktop_dpi(BOOL d3d11)
 {
     ID2D1Factory *factory;
     float dpi_x, dpi_y;
@@ -5611,7 +5751,7 @@ static void test_desktop_dpi(void)
     ID2D1Factory_Release(factory);
 }
 
-static void test_stroke_style(void)
+static void test_stroke_style(BOOL d3d11)
 {
     static const struct
     {
@@ -5755,7 +5895,7 @@ static void test_stroke_style(void)
     ID2D1Factory_Release(factory);
 }
 
-static void test_gradient(void)
+static void test_gradient(BOOL d3d11)
 {
     ID2D1GradientStopCollection *gradient;
     D2D1_GRADIENT_STOP stops[3], stops2[3];
@@ -5766,7 +5906,7 @@ static void test_gradient(void)
     UINT32 count;
     HRESULT hr;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -5798,7 +5938,7 @@ static void test_gradient(void)
     release_test_context(&ctx);
 }
 
-static void test_draw_geometry(void)
+static void test_draw_geometry(BOOL d3d11)
 {
     ID2D1TransformedGeometry *transformed_geometry[4];
     ID2D1RectangleGeometry *rect_geometry[2];
@@ -5818,7 +5958,7 @@ static void test_draw_geometry(void)
     HRESULT hr;
     BOOL match;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -6710,7 +6850,7 @@ static void test_draw_geometry(void)
     release_test_context(&ctx);
 }
 
-static void test_fill_geometry(void)
+static void test_fill_geometry(BOOL d3d11)
 {
     ID2D1TransformedGeometry *transformed_geometry[4];
     ID2D1RectangleGeometry *rect_geometry[2];
@@ -6729,7 +6869,7 @@ static void test_fill_geometry(void)
     HRESULT hr;
     BOOL match;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -7508,7 +7648,7 @@ static void test_fill_geometry(void)
     release_test_context(&ctx);
 }
 
-static void test_gdi_interop(void)
+static void test_gdi_interop(BOOL d3d11)
 {
     ID2D1GdiInteropRenderTarget *interop;
     D2D1_RENDER_TARGET_PROPERTIES desc;
@@ -7524,7 +7664,7 @@ static void test_gdi_interop(void)
     RECT rect;
     HDC dc;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
@@ -7639,7 +7779,7 @@ todo_wine
     release_test_context(&ctx);
 }
 
-static void test_layer(void)
+static void test_layer(BOOL d3d11)
 {
     ID2D1Factory *factory, *layer_factory;
     struct d2d1_test_context ctx;
@@ -7648,7 +7788,7 @@ static void test_layer(void)
     D2D1_SIZE_F size;
     HRESULT hr;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -7679,7 +7819,7 @@ static void test_layer(void)
     release_test_context(&ctx);
 }
 
-static void test_bezier_intersect(void)
+static void test_bezier_intersect(BOOL d3d11)
 {
     D2D1_POINT_2F point = {0.0f, 0.0f};
     struct d2d1_test_context ctx;
@@ -7692,7 +7832,7 @@ static void test_bezier_intersect(void)
     HRESULT hr;
     BOOL match;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -7813,7 +7953,7 @@ static void test_bezier_intersect(void)
     release_test_context(&ctx);
 }
 
-static void test_create_device(void)
+static void test_create_device(BOOL d3d11)
 {
     D2D1_CREATION_PROPERTIES properties = {0};
     struct d2d1_test_context ctx;
@@ -7823,7 +7963,7 @@ static void test_create_device(void)
     ULONG refcount;
     HRESULT hr;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
@@ -8048,7 +8188,7 @@ static IDXGISurface *create_surface(IDXGIDevice *dxgi_device, DXGI_FORMAT format
     return surface;
 }
 
-static void test_bitmap_surface(void)
+static void test_bitmap_surface(BOOL d3d11)
 {
     static const struct bitmap_format_test
     {
@@ -8095,7 +8235,7 @@ static void test_bitmap_surface(void)
     IWICBitmap *wic_bitmap;
     IWICImagingFactory *wic_factory;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
@@ -8283,7 +8423,7 @@ static void test_bitmap_surface(void)
     release_test_context(&ctx);
 }
 
-static void test_device_context(void)
+static void test_device_context(BOOL d3d11)
 {
     D2D1_HWND_RENDER_TARGET_PROPERTIES hwnd_rt_desc;
     D2D1_RENDER_TARGET_PROPERTIES rt_desc;
@@ -8305,7 +8445,7 @@ static void test_device_context(void)
     IWICBitmap *wic_bitmap;
     IWICImagingFactory *wic_factory;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
@@ -8470,7 +8610,7 @@ todo_wine
     release_test_context(&ctx);
 }
 
-static void test_invert_matrix(void)
+static void test_invert_matrix(BOOL d3d11)
 {
     static const struct
     {
@@ -8553,7 +8693,7 @@ static void test_invert_matrix(void)
     }
 }
 
-static void test_skew_matrix(void)
+static void test_skew_matrix(BOOL d3d11)
 {
     static const struct
     {
@@ -8591,7 +8731,7 @@ static void test_skew_matrix(void)
     }
 }
 
-static ID2D1DeviceContext *create_device_context(ID2D1Factory1 *factory, IDXGIDevice *dxgi_device)
+static ID2D1DeviceContext *create_device_context(ID2D1Factory1 *factory, IDXGIDevice *dxgi_device, BOOL d3d11)
 {
     ID2D1DeviceContext *device_context;
     ID2D1Device *device;
@@ -8607,7 +8747,7 @@ static ID2D1DeviceContext *create_device_context(ID2D1Factory1 *factory, IDXGIDe
     return device_context;
 }
 
-static void test_command_list(void)
+static void test_command_list(BOOL d3d11)
 {
     static const DWORD bitmap_data[] =
     {
@@ -8641,7 +8781,7 @@ static void test_command_list(void)
     ULONG refcount;
     HRESULT hr;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
@@ -8651,7 +8791,7 @@ static void test_command_list(void)
         return;
     }
 
-    device_context = create_device_context(factory, ctx.device);
+    device_context = create_device_context(factory, ctx.device, d3d11);
     ok(device_context != NULL, "Failed to create device context.\n");
 
     hr = ID2D1DeviceContext_CreateCommandList(device_context, &command_list);
@@ -8837,7 +8977,7 @@ todo_wine
     ID2D1CommandList_Release(command_list);
 
     /* List created with different context. */
-    device_context2 = create_device_context(factory, ctx.device);
+    device_context2 = create_device_context(factory, ctx.device, d3d11);
     ok(device_context2 != NULL, "Failed to create device context.\n");
 
     hr = ID2D1DeviceContext_CreateCommandList(device_context, &command_list);
@@ -8856,7 +8996,7 @@ todo_wine
     release_test_context(&ctx);
 }
 
-static void test_max_bitmap_size(void)
+static void test_max_bitmap_size(BOOL d3d11)
 {
     D2D1_RENDER_TARGET_PROPERTIES desc;
     D2D1_BITMAP_PROPERTIES bitmap_desc;
@@ -8974,7 +9114,7 @@ static void test_max_bitmap_size(void)
     ID2D1Factory_Release(factory);
 }
 
-static void test_dpi(void)
+static void test_dpi(BOOL d3d11)
 {
     D2D1_BITMAP_PROPERTIES1 bitmap_desc;
     ID2D1DeviceContext *device_context;
@@ -9005,7 +9145,7 @@ static void test_dpi(void)
     static const float dc_dpi_x = 120.0f, dc_dpi_y = 144.0f;
     unsigned int i;
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
@@ -9016,7 +9156,7 @@ static void test_dpi(void)
     }
 
 
-    device_context = create_device_context(factory, ctx.device);
+    device_context = create_device_context(factory, ctx.device, d3d11);
     ok(!!device_context, "Failed to create device context.\n");
 
     ID2D1DeviceContext_GetDpi(device_context, &dpi_x, &dpi_y);
@@ -9186,7 +9326,7 @@ static void test_dpi(void)
     release_test_context(&ctx);
 }
 
-static void test_wic_bitmap_format(void)
+static void test_wic_bitmap_format(BOOL d3d11)
 {
     IWICImagingFactory *wic_factory;
     struct d2d1_test_context ctx;
@@ -9209,7 +9349,7 @@ static void test_wic_bitmap_format(void)
         {&GUID_WICPixelFormat32bppBGR,   {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}},
     };
 
-    if (!init_test_context(&ctx))
+    if (!init_test_context(&ctx, d3d11))
         return;
 
     rt = ctx.rt;
@@ -9243,7 +9383,7 @@ static void test_wic_bitmap_format(void)
     release_test_context(&ctx);
 }
 
-static void test_math(void)
+static void test_math(BOOL d3d11)
 {
     float s, c, t, l;
     unsigned int i;
@@ -9352,8 +9492,8 @@ START_TEST(d2d1)
     queue_test(test_linear_brush);
     queue_test(test_radial_brush);
     queue_test(test_path_geometry);
-    queue_test(test_rectangle_geometry);
-    queue_test(test_rounded_rectangle_geometry);
+    queue_d3d10_test(test_rectangle_geometry);
+    queue_d3d10_test(test_rounded_rectangle_geometry);
     queue_test(test_bitmap_formats);
     queue_test(test_alpha_mode);
     queue_test(test_shared_bitmap);
@@ -9364,8 +9504,8 @@ START_TEST(d2d1)
     queue_test(test_dc_target);
     queue_test(test_hwnd_target);
     queue_test(test_bitmap_target);
-    queue_test(test_desktop_dpi);
-    queue_test(test_stroke_style);
+    queue_d3d10_test(test_desktop_dpi);
+    queue_d3d10_test(test_stroke_style);
     queue_test(test_gradient);
     queue_test(test_draw_geometry);
     queue_test(test_fill_geometry);
@@ -9375,13 +9515,13 @@ START_TEST(d2d1)
     queue_test(test_create_device);
     queue_test(test_bitmap_surface);
     queue_test(test_device_context);
-    queue_test(test_invert_matrix);
-    queue_test(test_skew_matrix);
+    queue_d3d10_test(test_invert_matrix);
+    queue_d3d10_test(test_skew_matrix);
     queue_test(test_command_list);
-    queue_test(test_max_bitmap_size);
+    queue_d3d10_test(test_max_bitmap_size);
     queue_test(test_dpi);
     queue_test(test_wic_bitmap_format);
-    queue_test(test_math);
+    queue_d3d10_test(test_math);
 
     run_queued_tests();
 }
