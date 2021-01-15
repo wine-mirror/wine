@@ -474,6 +474,7 @@ static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw,
     DWORD64             newframe, prolog_offset, off, value;
     M128A               floatvalue;
     union handler_data  handler_data;
+    BOOL                mach_frame = FALSE;
 
     /* FIXME: we have some assumptions here */
     assert(context);
@@ -556,7 +557,23 @@ static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw,
                 set_float_reg(context, info->UnwindCode[i].u.OpInfo, floatvalue);
                 break;
             case UWOP_PUSH_MACHFRAME:
-                FIXME("PUSH_MACHFRAME %u\n", info->UnwindCode[i].u.OpInfo);
+                if (info->Flags & UNW_FLAG_CHAININFO)
+                {
+                    FIXME("PUSH_MACHFRAME with chained unwind info.\n");
+                    break;
+                }
+                if (i + get_opcode_size(info->UnwindCode[i]) < info->CountOfCodes)
+                {
+                    FIXME("PUSH_MACHFRAME is not the last opcode.\n");
+                    break;
+                }
+
+                if (info->UnwindCode[i].u.OpInfo)
+                    context->Rsp += 0x8;
+
+                if (!sw_read_mem(csw, context->Rsp, &context->Rip, sizeof(DWORD64))) return FALSE;
+                if (!sw_read_mem(csw, context->Rsp + 24, &context->Rsp, sizeof(DWORD64))) return FALSE;
+                mach_frame = TRUE;
                 break;
             default:
                 FIXME("unknown code %u\n", info->UnwindCode[i].u.UnwindOp);
@@ -569,7 +586,7 @@ static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw,
                          &handler_data, sizeof(handler_data))) return FALSE;
         function = &handler_data.chain;  /* restart with the chained info */
     }
-    return default_unwind(csw, context);
+    return mach_frame ? TRUE : default_unwind(csw, context);
 }
 
 /* fetch_next_frame()
