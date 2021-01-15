@@ -135,7 +135,7 @@ static const IClassFactoryVtbl class_factory_vtbl =
 };
 
 static struct class_factory avi_splitter_cf = {{&class_factory_vtbl}, avi_splitter_create};
-static struct class_factory gstdemux_cf = {{&class_factory_vtbl}, gstdemux_create};
+static struct class_factory decodebin_parser_cf = {{&class_factory_vtbl}, decodebin_parser_create};
 static struct class_factory mpeg_splitter_cf = {{&class_factory_vtbl}, mpeg_splitter_create};
 static struct class_factory wave_parser_cf = {{&class_factory_vtbl}, wave_parser_create};
 
@@ -154,8 +154,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
 
     if (IsEqualGUID(clsid, &CLSID_AviSplitter))
         factory = &avi_splitter_cf;
-    else if (IsEqualGUID(clsid, &CLSID_Gstreamer_Splitter))
-        factory = &gstdemux_cf;
+    else if (IsEqualGUID(clsid, &CLSID_decodebin_parser))
+        factory = &decodebin_parser_cf;
     else if (IsEqualGUID(clsid, &CLSID_MPEG1Splitter))
         factory = &mpeg_splitter_cf;
     else if (IsEqualGUID(clsid, &CLSID_WAVEParser))
@@ -321,7 +321,7 @@ static const REGFILTER2 reg_wave_parser =
     .u.s2.rgPins2 = reg_wave_parser_pins,
 };
 
-static const REGFILTERPINS2 reg_gstdemux_pins[3] =
+static const REGFILTERPINS2 reg_decodebin_parser_pins[3] =
 {
     {
         .nMediaTypes = 1,
@@ -339,12 +339,12 @@ static const REGFILTERPINS2 reg_gstdemux_pins[3] =
     },
 };
 
-static const REGFILTER2 reg_gstdemux =
+static const REGFILTER2 reg_decodebin_parser =
 {
     .dwVersion = 2,
     .dwMerit = MERIT_PREFERRED,
     .u.s2.cPins2 = 3,
-    .u.s2.rgPins2 = reg_gstdemux_pins,
+    .u.s2.rgPins2 = reg_decodebin_parser_pins,
 };
 
 HRESULT WINAPI DllRegisterServer(void)
@@ -362,8 +362,8 @@ HRESULT WINAPI DllRegisterServer(void)
         return hr;
 
     IFilterMapper2_RegisterFilter(mapper, &CLSID_AviSplitter, avi_splitterW, NULL, NULL, NULL, &reg_avi_splitter);
-    IFilterMapper2_RegisterFilter(mapper, &CLSID_Gstreamer_Splitter,
-            wGstreamer_Splitter, NULL, NULL, NULL, &reg_gstdemux);
+    IFilterMapper2_RegisterFilter(mapper, &CLSID_decodebin_parser,
+            wGstreamer_Splitter, NULL, NULL, NULL, &reg_decodebin_parser);
     IFilterMapper2_RegisterFilter(mapper, &CLSID_MPEG1Splitter, mpeg_splitterW, NULL, NULL, NULL, &reg_mpeg_splitter);
     IFilterMapper2_RegisterFilter(mapper, &CLSID_WAVEParser, wave_parserW, NULL, NULL, NULL, &reg_wave_parser);
 
@@ -387,7 +387,7 @@ HRESULT WINAPI DllUnregisterServer(void)
         return hr;
 
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_AviSplitter);
-    IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_Gstreamer_Splitter);
+    IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_decodebin_parser);
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_MPEG1Splitter);
     IFilterMapper2_UnregisterFilter(mapper, NULL, NULL, &CLSID_WAVEParser);
 

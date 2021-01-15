@@ -43,11 +43,11 @@ coclass MPEG1Splitter {}
 coclass WAVEParser {}
 
 [
-    helpstring("GStreamer splitter"),
+    helpstring("GStreamer parser using decodebin"),
     threading(both),
     uuid(f9d8d64e-a144-47dc-8ee0-f53498372c29)
 ]
-coclass Gstreamer_Splitter {}
+coclass decodebin_parser {}
 
 [
     threading(both),

@@ -1634,7 +1634,7 @@ static const struct strmbase_sink_ops sink_ops =
     .sink_disconnect = parser_sink_disconnect,
 };
 
-static BOOL gstdecoder_init_gst(struct parser *filter)
+static BOOL decodebin_parser_init_gst(struct parser *filter)
 {
     GstElement *element = gst_element_factory_make("decodebin", NULL);
     unsigned int i;
@@ -1692,7 +1692,7 @@ static BOOL gstdecoder_init_gst(struct parser *filter)
     return TRUE;
 }
 
-static HRESULT gstdecoder_source_query_accept(struct parser_source *pin, const AM_MEDIA_TYPE *mt)
+static HRESULT decodebin_parser_source_query_accept(struct parser_source *pin, const AM_MEDIA_TYPE *mt)
 {
     /* At least make sure we can convert it to GstCaps. */
     GstCaps *caps = amt_to_gst_caps(mt);
@@ -1703,7 +1703,7 @@ static HRESULT gstdecoder_source_query_accept(struct parser_source *pin, const A
     return S_OK;
 }
 
-static HRESULT gstdecoder_source_get_media_type(struct parser_source *pin,
+static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
     GstCaps *caps = gst_pad_get_current_caps(pin->my_sink);
@@ -1788,7 +1788,7 @@ static BOOL parser_init_gstreamer(void)
     return TRUE;
 }
 
-HRESULT gstdemux_create(IUnknown *outer, IUnknown **out)
+HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out)
 {
     struct parser *object;
 
@@ -1800,14 +1800,14 @@ HRESULT gstdemux_create(IUnknown *outer, IUnknown **out)
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    strmbase_filter_init(&object->filter, outer, &CLSID_Gstreamer_Splitter, &filter_ops);
+    strmbase_filter_init(&object->filter, outer, &CLSID_decodebin_parser, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, wcsInputPinName, &sink_ops, NULL);
 
     object->no_more_pads_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     object->error_event = CreateEventW(NULL, TRUE, FALSE, NULL);
-    object->init_gst = gstdecoder_init_gst;
-    object->source_query_accept = gstdecoder_source_query_accept;
-    object->source_get_media_type = gstdecoder_source_get_media_type;
+    object->init_gst = decodebin_parser_init_gst;
+    object->source_query_accept = decodebin_parser_source_query_accept;
+    object->source_get_media_type = decodebin_parser_source_get_media_type;
 
     TRACE("Created GStreamer demuxer %p.\n", object);
     *out = &object->filter.IUnknown_inner;
