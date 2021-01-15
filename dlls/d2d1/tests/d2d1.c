@@ -311,8 +311,9 @@ static void cubic_to(ID2D1GeometrySink *sink, float x1, float y1, float x2, floa
     ID2D1GeometrySink_AddBezier(sink, &b);
 }
 
-static void get_surface_readback(IDXGISurface *surface, struct resource_readback *rb)
+static void get_surface_readback(struct d2d1_test_context *ctx, struct resource_readback *rb)
 {
+    IDXGISurface *surface = ctx->surface;
     D3D10_TEXTURE2D_DESC texture_desc;
     D3D10_MAPPED_TEXTURE2D map_desc;
     DXGI_SURFACE_DESC surface_desc;
@@ -466,7 +467,7 @@ static BOOL compare_surface(struct d2d1_test_context *ctx, const char *ref_sha1)
     struct resource_readback rb;
     BOOL ret;
 
-    get_surface_readback(ctx->surface, &rb);
+    get_surface_readback(ctx, &rb);
     ret = compare_sha1(rb.data, rb.pitch, 4, rb.width, rb.height, ref_sha1);
     release_resource_readback(&rb);
 
@@ -638,7 +639,7 @@ static BOOL compare_figure(struct d2d1_test_context *ctx, unsigned int x, unsign
     unsigned int i, j, span, diff;
     struct resource_readback rb;
 
-    get_surface_readback(ctx->surface, &rb);
+    get_surface_readback(ctx, &rb);
 
     figure.span_count = 0;
     figure.spans_size = 64;
@@ -2170,7 +2171,7 @@ static void test_linear_brush(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    get_surface_readback(ctx.surface, &rb);
+    get_surface_readback(&ctx, &rb);
     for (i = 0; i < ARRAY_SIZE(test1); ++i)
     {
         DWORD colour;
@@ -2243,7 +2244,7 @@ static void test_linear_brush(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    get_surface_readback(ctx.surface, &rb);
+    get_surface_readback(&ctx, &rb);
     for (i = 0; i < ARRAY_SIZE(test2); ++i)
     {
         DWORD colour;
@@ -2367,7 +2368,7 @@ static void test_radial_brush(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    get_surface_readback(ctx.surface, &rb);
+    get_surface_readback(&ctx, &rb);
     for (i = 0; i < ARRAY_SIZE(test1); ++i)
     {
         DWORD colour;
@@ -2442,7 +2443,7 @@ static void test_radial_brush(void)
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
-    get_surface_readback(ctx.surface, &rb);
+    get_surface_readback(&ctx, &rb);
     for (i = 0; i < ARRAY_SIZE(test2); ++i)
     {
         DWORD colour;
