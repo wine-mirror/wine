@@ -249,6 +249,7 @@ static void output_relay_debug( DLLSPEC *spec )
     /* then the relay thunks */
 
     output( "\t.text\n" );
+    if (thumb_mode) output( "\t.thumb_func\n" );
     output( "__wine_spec_relay_entry_points:\n" );
     output( "\tnop\n" );  /* to avoid 0 offset */
 
@@ -306,6 +307,7 @@ static void output_relay_debug( DLLSPEC *spec )
 
             val = (odp->u.func.args_str_offset << 16) | (i - spec->base);
             output( "\t.align %d\n", get_alignment(4) );
+            if (thumb_mode) output( "\t.thumb_func\n" );
             output( ".L__wine_spec_relay_entry_point_%d:\n", i );
             output_cfi( ".cfi_startproc" );
             output( "\tpush {r0-r3}\n" );
@@ -317,13 +319,13 @@ static void output_relay_debug( DLLSPEC *spec )
                 if (val & mask) output( "\t%s r1,#%u\n", count++ ? "add" : "mov", val & mask );
             if (!count) output( "\tmov r1,#0\n" );
             output( "\tldr r0, 2f\n");
-            output( "\tadd r0, PC\n");
+            output( "1:\tadd r0, PC\n");
             output( "\tldr IP, [r0, #4]\n");
-            output( "1:\tblx IP\n");
+            output( "\tblx IP\n");
             output( "\tldr IP, [SP, #4]\n" );
             output( "\tadd SP, #%u\n", 24 + (has_float ? 64 : 0) );
             output( "\tbx IP\n");
-            output( "2:\t.long .L__wine_spec_relay_descr-1b\n" );
+            output( "2:\t.long .L__wine_spec_relay_descr-1b-%u\n", thumb_mode ? 4 : 8 );
             output_cfi( ".cfi_endproc" );
             break;
         }

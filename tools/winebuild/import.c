@@ -755,9 +755,10 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         output( "\tjmpq *%s+%d(%%rip)\n", table, pos );
         break;
     case CPU_ARM:
-        output( "\tldr IP,1f\n");
-        output( "\tldr PC,[PC,IP]\n" );
-        output( "1:\t.long %s+%u-(1b+4)\n", table, pos );
+        output( "\tldr ip, 2f\n");
+        output( "1:\tadd ip, pc\n" );
+        output( "\tldr pc, [ip]\n");
+        output( "2:\t.long %s+%u-1b-%u\n", table, pos, thumb_mode ? 4 : 8 );
         break;
     case CPU_ARM64:
         output( "\tadrp x16, %s\n", arm64_page( table ) );
@@ -956,7 +957,7 @@ static void output_delayed_imports( const DLLSPEC *spec )
             struct import_func *func = &import->imports[j];
             const char *name = func->name ? func->name : func->export_name;
             output( "__imp_%s:\n", asm_name( name ));
-            output( "\t%s .L__wine_delay_imp_%s_%s\n",
+            output( "\t%s __wine_delay_imp_%s_%s\n",
                     get_asm_ptr_keyword(), import->c_name, name );
         }
     }
@@ -1066,13 +1067,10 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     case CPU_ARM:
         output( "\tpush {r0-r3,FP,LR}\n" );
         output( "\tmov r0,IP\n" );
-        output( "\tldr IP,2f\n");
-        output( "\tadd IP,PC\n");
-        output( "\tblx IP\n");
-        output( "1:\tmov IP,r0\n");
+        output( "\tbl %s\n", asm_name("__wine_spec_delay_load") );
+        output( "\tmov IP,r0\n");
         output( "\tpop {r0-r3,FP,LR}\n" );
         output( "\tbx IP\n");
-        output( "2:\t.long %s-1b\n", asm_name("__wine_spec_delay_load") );
         break;
     case CPU_ARM64:
         output( "\tstp x29, x30, [sp,#-80]!\n" );
@@ -1153,7 +1151,8 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             struct import_func *func = &import->imports[j];
             const char *name = func->name ? func->name : func->export_name;
 
-            output( ".L__wine_delay_imp_%s_%s:\n", import->c_name, name );
+            if (thumb_mode) output( "\t.thumb_func\n" );
+            output( "__wine_delay_imp_%s_%s:\n", import->c_name, name );
             output_cfi( ".cfi_startproc" );
             switch(target_cpu)
             {
@@ -1349,14 +1348,13 @@ void output_stubs( DLLSPEC *spec )
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
             break;
         case CPU_ARM:
-            output( "\tldr r0,2f\n");
-            output( "\tadd r0,PC\n");
-            output( "\tldr r1,2f+4\n");
-            output( "1:" );
-            if (exp_name) output( "\tadd r1,PC\n");
+            output( "\tldr r0,3f\n");
+            output( "1:\tadd r0,PC\n");
+            output( "\tldr r1,3f+4\n");
+            if (exp_name) output( "2:\tadd r1,PC\n");
             output( "\tbl %s\n", asm_name("__wine_spec_unimplemented_stub") );
-            output( "2:\t.long .L__wine_spec_file_name-1b\n" );
-            if (exp_name) output( "\t.long .L%s_string-2b\n", name );
+            output( "3:\t.long .L__wine_spec_file_name-1b-%u\n", thumb_mode ? 4 : 8 );
+            if (exp_name) output( "\t.long .L%s_string-2b-%u\n", name, thumb_mode ? 4 : 8 );
             else output( "\t.long %u\n", odp->ordinal );
             break;
         case CPU_ARM64:
@@ -1566,28 +1564,30 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tstr ip, [sp, #4]\n" );
             output( "\tstr sp, [r7]\n" );  /* syscall frame */
             output( "\tldr r5, 7f\n");
-            output( "\tadd r5, pc\n");
+            output( "1:\tadd r5, pc\n");
             output( "\tldrb r5, [r5, r4]\n" );  /* syscall args */
-            output( "1:\tsubs r5, #16\n" );   /* first 4 args are in registers */
+            output( "\tsubs r5, #16\n" );   /* first 4 args are in registers */
             output( "\tble 3f\n" );
-            output( "\tsub sp, r5\n" );
-            output( "\tand sp, #~7\n" );
+            output( "\tsub ip, sp, r5\n" );
+            output( "\tand ip, #~7\n" );
+            output( "\tmov sp, ip\n" );
             output( "2:\tsubs r5, r5, #4\n" );
             output( "\tldr ip, [r6, r5]\n" );
             output( "\tstr ip, [sp, r5]\n" );
             output( "\tbgt 2b\n" );
             output( "3:\tldr r5, 6f\n");
-            output( "\tadd r5, pc\n");
+            output( "4:\tadd r5, pc\n");
             output( "\tldr ip, [r5, r4, lsl #2]\n");  /* syscall table */
-            output( "4:\tblx ip\n");
+            output( "\tblx ip\n");
             output( "\tmov ip, #0\n" );
             output( "\tstr ip, [r7]\n" );
-            output( "\tsub sp, r6, #40\n" );
+            output( "\tsub ip, r6, #40\n" );
+            output( "\tmov sp, ip\n" );
             output( "\tpop {r5-r11,pc}\n" );
             output( "5:\tldr r0, 9f\n" );
             output( "\tpop {r5-r11,pc}\n" );
-            output( "6:\t.long .Lsyscall_table-4b\n" );
-            output( "7:\t.long .Lsyscall_args-1b\n" );
+            output( "6:\t.long .Lsyscall_table-4b-%u\n", thumb_mode ? 4 : 8 );
+            output( "7:\t.long .Lsyscall_args-1b-%u\n", thumb_mode ? 4 : 8 );
             output( "8:\t.long %u\n", count );
             output( "9:\t.long 0x%x\n", invalid_param );
             break;
@@ -1731,11 +1731,11 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tpush {r4,lr}\n" );
             output( "\tldr r4, 3f\n");
             output( "\tldr ip, 2f\n");
-            output( "\tadd ip, pc\n");
+            output( "1:\tadd ip, pc\n" );
             output( "\tldr ip, [ip]\n");
-            output( "1:\tblx ip\n");
+            output( "\tblx ip\n");
             output( "\tpop {r4,pc}\n" );
-            output( "2:\t.long %s-1b\n", asm_name("__wine_syscall_dispatcher") );
+            output( "2:\t.long %s-1b-%u\n", asm_name("__wine_syscall_dispatcher"), thumb_mode ? 4 : 8 );
             output( "3:\t.long %u\n", i );
             break;
         case CPU_ARM64:

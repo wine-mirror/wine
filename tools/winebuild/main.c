@@ -244,6 +244,8 @@ static void set_target( const char *target )
     }
 
     free( spec );
+
+    if (target_cpu == CPU_ARM && target_platform == PLATFORM_WINDOWS) thumb_mode = 1;
 }
 
 /* cleanup on program exit */
