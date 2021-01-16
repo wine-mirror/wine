@@ -760,14 +760,11 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         output( "1:\t.long %s+%u-(1b+4)\n", table, pos );
         break;
     case CPU_ARM64:
-        output( "\tadrp x9, %s\n", arm64_page( table ) );
-        output( "\tadd x9, x9, #%s\n", arm64_pageoff( table ) );
-        if (pos & 0xf000) output( "\tadd x9, x9, #%u\n", pos & 0xf000 );
-        if (pos & 0x0f00) output( "\tadd x9, x9, #%u\n", pos & 0x0f00 );
-        if (pos & 0x00f0) output( "\tadd x9, x9, #%u\n", pos & 0x00f0 );
-        if (pos & 0x000f) output( "\tadd x9, x9, #%u\n", pos & 0x000f );
-        output( "\tldur x9, [x9, #0]\n" );
-        output( "\tbr x9\n" );
+        output( "\tadrp x16, %s\n", arm64_page( table ) );
+        output( "\tadd x16, x16, #%s\n", arm64_pageoff( table ) );
+        if (pos & ~0x7fff) output( "\tadd x16, x16, #%u\n", pos & ~0x7fff );
+        output( "\tldr x16, [x16, #%u]\n", pos & 0x7fff );
+        output( "\tbr x16\n" );
         break;
     case CPU_POWERPC:
         output( "\tmr %s, %s\n", ppc_reg(0), ppc_reg(31) );
@@ -1078,18 +1075,21 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "2:\t.long %s-1b\n", asm_name("__wine_spec_delay_load") );
         break;
     case CPU_ARM64:
-        output( "\tstp x29, x30, [sp,#-16]!\n" );
+        output( "\tstp x29, x30, [sp,#-80]!\n" );
         output( "\tmov x29, sp\n" );
-        output( "\tadrp x9, %s\n", arm64_page( asm_name("__wine_spec_delay_load") ) );
-        output( "\tadd x9, x9, #%s\n", arm64_pageoff( asm_name("__wine_spec_delay_load") ) );
-        output( "\tblr x9\n" );
-        output( "\tmov x9, x0\n" );
-        output( "\tldp x29, x30, [sp],#16\n" );
+        output( "\tstp x0, x1, [sp,#16]\n" );
+        output( "\tstp x2, x3, [sp,#32]\n" );
+        output( "\tstp x4, x5, [sp,#48]\n" );
+        output( "\tstp x6, x7, [sp,#64]\n" );
+        output( "\tmov x0, x16\n" );
+        output( "\tbl %s\n", asm_name("__wine_spec_delay_load") );
+        output( "\tmov x16, x0\n" );
         output( "\tldp x0, x1, [sp,#16]\n" );
         output( "\tldp x2, x3, [sp,#32]\n" );
         output( "\tldp x4, x5, [sp,#48]\n" );
-        output( "\tldp x6, x7, [sp],#80\n" );
-        output( "\tbr x9\n" ); /* or "ret x9" */
+        output( "\tldp x6, x7, [sp,#64]\n" );
+        output( "\tldp x29, x30, [sp],#80\n" );
+        output( "\tbr x16\n" );
         break;
     case CPU_POWERPC:
         if (target_platform == PLATFORM_APPLE) extra_stack_storage = 56;
@@ -1176,20 +1176,13 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 break;
             }
             case CPU_ARM64:
-                output( "\tstp x6, x7, [sp,#-80]!\n" );
-                output( "\tstp x4, x5, [sp,#48]\n" );
-                output( "\tstp x2, x3, [sp,#32]\n" );
-                output( "\tstp x0, x1, [sp,#16]\n" );
-                output( "\tmov x0, #%d\n", idx );
-                output( "\tmov x1, #16384\n" );
-                output( "\tmul x1, x0, x1\n" );
-                output( "\tmov x0, x1\n" );
-                output( "\tmov x1, #4\n" );
-                output( "\tmul x1, x0, x1\n" );
-                output( "\tmov x0, x1\n" );
-                output( "\tadd x0, x0, #%d\n", j );
-                output( "\tadr x9, %s\n", asm_name("__wine_delay_load_asm") );
-                output( "\tbr x9\n" );
+                if (idx)
+                {
+                    output( "\tmov x16, #0x%x\n", idx << 16 );
+                    if (j) output( "\tmovk x16, #0x%x\n", j );
+                }
+                else output( "\tmov x16, #0x%x\n", j );
+                output( "\tb %s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_POWERPC:
                 switch(target_platform)
@@ -1378,9 +1371,7 @@ void output_stubs( DLLSPEC *spec )
             }
             else
                 output( "\tmov x1, %u\n", odp->ordinal );
-            output( "\tadrp x2, %s\n", arm64_page( asm_name("__wine_spec_unimplemented_stub") ) );
-            output( "\tadd x2, x2, #%s\n", arm64_pageoff( asm_name("__wine_spec_unimplemented_stub") ) );
-            output( "\tblr x2\n" );
+            output( "\tbl %s\n", asm_name("__wine_spec_unimplemented_stub") );
             break;
         default:
             assert(0);
