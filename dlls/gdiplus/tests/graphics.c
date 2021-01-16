@@ -23,6 +23,7 @@
 
 #include "objbase.h"
 #include "gdiplus.h"
+#include "winspool.h"
 #include "wine/test.h"
 
 #define expect(expected, got) ok((got) == (expected), "Expected %d, got %d\n", (INT)(expected), (INT)(got))
@@ -7071,6 +7072,161 @@ static void test_gdi_interop_hdc(void)
     DeleteObject(hbm);
 }
 
+static HDC create_printer_dc(void)
+{
+    char buffer[260];
+    DWORD len;
+    PRINTER_INFO_2A *pbuf = NULL;
+    DRIVER_INFO_3A *dbuf = NULL;
+    HANDLE hprn = 0;
+    HDC hdc = 0;
+    HMODULE winspool = LoadLibraryA("winspool.drv");
+    BOOL (WINAPI *pOpenPrinterA)(LPSTR, HANDLE *, LPPRINTER_DEFAULTSA);
+    BOOL (WINAPI *pGetDefaultPrinterA)(LPSTR, LPDWORD);
+    BOOL (WINAPI *pGetPrinterA)(HANDLE, DWORD, LPBYTE, DWORD, LPDWORD);
+    BOOL (WINAPI *pGetPrinterDriverA)(HANDLE, LPSTR, DWORD, LPBYTE, DWORD, LPDWORD);
+    BOOL (WINAPI *pClosePrinter)(HANDLE);
+
+    pGetDefaultPrinterA = (void *)GetProcAddress(winspool, "GetDefaultPrinterA");
+    pOpenPrinterA = (void *)GetProcAddress(winspool, "OpenPrinterA");
+    pGetPrinterA = (void *)GetProcAddress(winspool, "GetPrinterA");
+    pGetPrinterDriverA = (void *)GetProcAddress(winspool, "GetPrinterDriverA");
+    pClosePrinter = (void *)GetProcAddress(winspool, "ClosePrinter");
+
+    if (!pGetDefaultPrinterA || !pOpenPrinterA || !pGetPrinterA || !pGetPrinterDriverA || !pClosePrinter)
+        goto done;
+
+    len = sizeof(buffer);
+    if (!pGetDefaultPrinterA(buffer, &len)) goto done;
+    if (!pOpenPrinterA(buffer, &hprn, NULL)) goto done;
+
+    pGetPrinterA(hprn, 2, NULL, 0, &len);
+    pbuf = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!pGetPrinterA(hprn, 2, (LPBYTE)pbuf, len, &len)) goto done;
+
+    pGetPrinterDriverA(hprn, NULL, 3, NULL, 0, &len);
+    dbuf = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!pGetPrinterDriverA(hprn, NULL, 3, (LPBYTE)dbuf, len, &len)) goto done;
+
+    hdc = CreateDCA(dbuf->pDriverPath, pbuf->pPrinterName, pbuf->pPortName, pbuf->pDevMode);
+    trace("hdc %p for driver '%s' printer '%s' port '%s'\n", hdc,
+          dbuf->pDriverPath, pbuf->pPrinterName, pbuf->pPortName);
+done:
+    HeapFree(GetProcessHeap(), 0, dbuf);
+    HeapFree(GetProcessHeap(), 0, pbuf);
+    if (hprn) pClosePrinter(hprn);
+    if (winspool) FreeLibrary(winspool);
+    return hdc;
+}
+
+static BOOL check_rect_pixels(const DWORD *pixel, const RectF *rect, UINT width, DWORD expected, Point *failed)
+{
+    UINT x, y;
+    BOOL ret = TRUE;
+
+    for (y = (UINT)rect->Y; y < (UINT)(rect->Y + rect->Height); y++)
+    {
+        for (x = (UINT)rect->X; x < (UINT)(rect->X + rect->Width); x++)
+        {
+            if (pixel[x + y * width] != expected)
+            {
+                ret = FALSE;
+                goto done;
+            }
+        }
+    }
+
+done:
+    if (!ret)
+    {
+        failed->X = x;
+        failed->Y = y;
+    }
+    else
+    {
+        failed->X = 0;
+        failed->Y = 0;
+    }
+    return ret;
+}
+
+static void test_printer_dc(void)
+{
+    HDC hdc_printer, hdc;
+    Status status;
+    GpGraphics *graphics;
+    REAL dpi_x, dpi_y, pixel_per_unit_x, pixel_per_unit_y;
+    HBITMAP bitmap;
+    UINT width = 16, height = 16;
+    GpUnit unit;
+    GpSolidFill *brush;
+    DWORD *pixel;
+    BOOL match;
+    RectF rect;
+    Point pt;
+
+    hdc_printer = create_printer_dc();
+    if (!hdc_printer)
+    {
+        skip("could not create a DC for the default printer\n");
+        return;
+    }
+
+    hdc = CreateCompatibleDC(hdc_printer);
+    bitmap = CreateCompatibleBitmap(hdc, width, height);
+    SelectObject(hdc, bitmap);
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+
+    GdipGetPageUnit(graphics, &unit);
+    expect(UnitDisplay, unit);
+
+    GdipGetDpiX(graphics, &dpi_x);
+    GdipGetDpiY(graphics, &dpi_y);
+    expectf((REAL)GetDeviceCaps(hdc, LOGPIXELSX), dpi_x);
+    expectf((REAL)GetDeviceCaps(hdc, LOGPIXELSY), dpi_y);
+
+    /* For graphics created from printer DC, UnitDisplay specifies that a unit is 1/100 inch */
+    pixel_per_unit_x = dpi_x / 100.0;
+    pixel_per_unit_y = dpi_y / 100.0;
+
+    status = GdipCreateSolidFill((ARGB)0xffffffff, &brush);
+    expect(Ok, status);
+
+    status = GdipFillRectangleI(graphics, (GpBrush *)brush, 1, 1, 1, 1);
+    expect(Ok, status);
+
+    pixel = GetBitmapPixelBuffer(hdc, bitmap, width, height);
+
+    /* pixels at (0, 0) should all be 0 */
+    rect.X = 0;
+    rect.Y = 0;
+    rect.Width = pixel_per_unit_x;
+    rect.Height = pixel_per_unit_y;
+    match = check_rect_pixels(pixel, &rect, width, 0, &pt);
+    todo_wine
+    ok(match, "Expected pixel (%u, %u) to be %08x, got %08x\n",
+       pt.X, pt.Y, 0, pixel[pt.X + pt.Y * width]);
+
+    /* pixels at (1, 1) should all be 0x00ffffff */
+    rect.X = pixel_per_unit_x;
+    rect.Y = pixel_per_unit_y;
+    rect.Width = pixel_per_unit_x;
+    rect.Height = pixel_per_unit_y;
+    match = check_rect_pixels(pixel, &rect, width, 0x00ffffff, &pt);
+    todo_wine
+    ok(match, "Expected pixel (%u, %u) to be %08x, got %08x\n",
+       pt.X, pt.Y, 0x00ffffff, pixel[pt.X + pt.Y * width]);
+
+    GdipFree(pixel);
+    GdipDeleteBrush((GpBrush *)brush);
+    GdipDeleteGraphics(graphics);
+    DeleteObject(bitmap);
+    DeleteDC(hdc);
+    DeleteDC(hdc_printer);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -7166,6 +7322,7 @@ START_TEST(graphics)
     test_hdc_caching();
     test_gdi_interop_bitmap();
     test_gdi_interop_hdc();
+    test_printer_dc();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow( hwnd );
