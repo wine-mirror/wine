@@ -159,7 +159,7 @@ static struct video_mixer *impl_from_IMFClockStateSink(IMFClockStateSink *iface)
     return CONTAINING_RECORD(iface, struct video_mixer, IMFClockStateSink_iface);
 }
 
-static int video_mixer_compare_input_id(const void *a, const void *b)
+static int __cdecl video_mixer_compare_input_id(const void *a, const void *b)
 {
     const unsigned int *key = a;
     const struct input_stream *input = b;
@@ -509,7 +509,7 @@ static HRESULT WINAPI video_mixer_transform_DeleteInputStream(IMFTransform *ifac
     return hr;
 }
 
-static int video_mixer_add_input_sort_compare(const void *a, const void *b)
+static int __cdecl video_mixer_add_input_sort_compare(const void *a, const void *b)
 {
     const struct input_stream *left = a, *right = b;
     return left->id != right->id ? (left->id < right->id ? -1 : 1) : 0;
@@ -643,7 +643,7 @@ done:
     return hr;
 }
 
-static int rt_formats_sort_compare(const void *left, const void *right)
+static int __cdecl rt_formats_sort_compare(const void *left, const void *right)
 {
     const struct rt_format *format1 = left, *format2 = right;
 
