@@ -4957,7 +4957,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
                                    overlapped, completion);
         if (status != WSAEOPNOTSUPP)
         {
-            if (status == 0 || status == WSA_IO_PENDING)
+            if (status == 0 || status == WSA_IO_PENDING || status == WSAEWOULDBLOCK)
                 TRACE("-> %s request\n", debugstr_wsaioctl(code));
             else
                 ERR("-> %s request failed with status 0x%x\n", debugstr_wsaioctl(code), status);
