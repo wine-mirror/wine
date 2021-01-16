@@ -46,6 +46,7 @@ static NTSTATUS (WINAPI *pNtQueryMutant) ( HANDLE, MUTANT_INFORMATION_CLASS, PVO
 static NTSTATUS (WINAPI *pNtReleaseMutant)( HANDLE, PLONG );
 static NTSTATUS (WINAPI *pNtCreateSemaphore)( PHANDLE, ACCESS_MASK,const POBJECT_ATTRIBUTES,LONG,LONG );
 static NTSTATUS (WINAPI *pNtOpenSemaphore)( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES );
+static NTSTATUS (WINAPI *pNtQuerySemaphore)( PHANDLE, SEMAPHORE_INFORMATION_CLASS, PVOID, ULONG, PULONG );
 static NTSTATUS (WINAPI *pNtCreateTimer) ( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES, TIMER_TYPE );
 static NTSTATUS (WINAPI *pNtOpenTimer)( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES );
 static NTSTATUS (WINAPI *pNtCreateSection)( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES, const PLARGE_INTEGER,
@@ -2024,6 +2025,82 @@ static void test_mutant(void)
     NtClose( mutant );
 }
 
+static void test_semaphore(void)
+{
+    SEMAPHORE_BASIC_INFORMATION info;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING str;
+    NTSTATUS status;
+    HANDLE semaphore;
+    ULONG prev;
+    ULONG len;
+    DWORD ret;
+
+    pRtlInitUnicodeString(&str, L"\\BaseNamedObjects\\test_semaphore");
+    InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
+
+    status = pNtCreateSemaphore(&semaphore, GENERIC_ALL, &attr, 2, 1);
+    ok( status == STATUS_INVALID_PARAMETER, "Failed to create Semaphore(%08x)\n", status );
+    status = pNtCreateSemaphore(&semaphore, GENERIC_ALL, &attr, 1, 2);
+    ok( status == STATUS_SUCCESS, "Failed to create Semaphore(%08x)\n", status );
+
+    /* bogus */
+    status = pNtQuerySemaphore(semaphore, SemaphoreBasicInformation, &info, 0, NULL);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH,
+        "Failed to NtQuerySemaphore, expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
+    status = pNtQuerySemaphore(semaphore, 0x42, &info, sizeof(info), NULL);
+    ok( status == STATUS_INVALID_INFO_CLASS,
+        "Failed to NtQuerySemaphore, expected STATUS_INVALID_INFO_CLASS, got %08x\n", status );
+    status = pNtQuerySemaphore((HANDLE)0xdeadbeef, SemaphoreBasicInformation, &info, sizeof(info), NULL);
+    ok( status == STATUS_INVALID_HANDLE,
+        "Failed to NtQuerySemaphore, expected STATUS_INVALID_HANDLE, got %08x\n", status );
+
+    len = -1;
+    memset(&info, 0xcc, sizeof(info));
+    status = pNtQuerySemaphore(semaphore, SemaphoreBasicInformation, &info, sizeof(info), &len);
+    ok( status == STATUS_SUCCESS, "NtQuerySemaphore failed %08x\n", status );
+    ok( info.CurrentCount == 1, "expected 1, got %d\n", info.CurrentCount );
+    ok( info.MaximumCount == 2, "expected 2, got %d\n", info.MaximumCount );
+    ok( len == sizeof(info), "got %u\n", len );
+
+    ret = WaitForSingleObject( semaphore, 1000 );
+    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject failed %08x\n", ret );
+
+    memset(&info, 0xcc, sizeof(info));
+    status = pNtQuerySemaphore(semaphore, SemaphoreBasicInformation, &info, sizeof(info), NULL);
+    ok( status == STATUS_SUCCESS, "NtQuerySemaphore failed %08x\n", status );
+    ok( info.CurrentCount == 0, "expected 0, got %d\n", info.CurrentCount );
+    ok( info.MaximumCount == 2, "expected 2, got %d\n", info.MaximumCount );
+
+    prev = 0xdeadbeef;
+    status = pNtReleaseSemaphore(semaphore, 3, &prev);
+    ok( status == STATUS_SEMAPHORE_LIMIT_EXCEEDED, "NtReleaseSemaphore failed %08x\n", status );
+    ok( prev == 0xdeadbeef, "NtReleaseSemaphore failed, expected 0xdeadbeef, got %d\n", prev );
+
+    prev = 0xdeadbeef;
+    status = pNtReleaseSemaphore(semaphore, 1, &prev);
+    ok( status == STATUS_SUCCESS, "NtReleaseSemaphore failed %08x\n", status );
+    ok( prev == 0, "NtReleaseSemaphore failed, expected 0, got %d\n", prev );
+
+    prev = 0xdeadbeef;
+    status = pNtReleaseSemaphore(semaphore, 1, &prev);
+    ok( status == STATUS_SUCCESS, "NtReleaseSemaphore failed %08x\n", status );
+    ok( prev == 1, "NtReleaseSemaphore failed, expected 1, got %d\n", prev );
+
+    prev = 0xdeadbeef;
+    status = pNtReleaseSemaphore(semaphore, 1, &prev);
+    ok( status == STATUS_SEMAPHORE_LIMIT_EXCEEDED, "NtReleaseSemaphore failed %08x\n", status );
+    ok( prev == 0xdeadbeef, "NtReleaseSemaphore failed, expected 0xdeadbeef, got %d\n", prev );
+
+    memset(&info, 0xcc, sizeof(info));
+    status = pNtQuerySemaphore(semaphore, SemaphoreBasicInformation, &info, sizeof(info), NULL);
+    ok( status == STATUS_SUCCESS, "NtQuerySemaphore failed %08x\n", status );
+    ok( info.CurrentCount == 2, "expected 2, got %d\n", info.CurrentCount );
+    ok( info.MaximumCount == 2, "expected 2, got %d\n", info.MaximumCount );
+
+    NtClose( semaphore );
+}
+
 static void test_wait_on_address(void)
 {
     DWORD ticks;
@@ -2178,6 +2255,7 @@ START_TEST(om)
     pNtQuerySymbolicLinkObject  = (void *)GetProcAddress(hntdll, "NtQuerySymbolicLinkObject");
     pNtCreateSemaphore      =  (void *)GetProcAddress(hntdll, "NtCreateSemaphore");
     pNtOpenSemaphore        =  (void *)GetProcAddress(hntdll, "NtOpenSemaphore");
+    pNtQuerySemaphore       =  (void *)GetProcAddress(hntdll, "NtQuerySemaphore");
     pNtCreateTimer          =  (void *)GetProcAddress(hntdll, "NtCreateTimer");
     pNtOpenTimer            =  (void *)GetProcAddress(hntdll, "NtOpenTimer");
     pNtCreateSection        =  (void *)GetProcAddress(hntdll, "NtCreateSection");
@@ -2207,6 +2285,7 @@ START_TEST(om)
     test_type_mismatch();
     test_event();
     test_mutant();
+    test_semaphore();
     test_keyed_events();
     test_null_device();
     test_wait_on_address();
