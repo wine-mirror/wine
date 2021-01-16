@@ -657,7 +657,7 @@ static int CALLBACK enum_font_proc(const LOGFONTW *lpelfe, const TEXTMETRICW *lp
     return 1;
 }
 
-static int fonts_desc_compare(const void *a, const void *b)
+static int __cdecl fonts_desc_compare(const void *a, const void *b)
 {
     const struct font_desc *left = a, *right = b;
     return lstrcmpiW(left->name, right->name);
