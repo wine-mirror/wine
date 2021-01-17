@@ -94,6 +94,11 @@ HRESULT WINAPI UiaRaiseAutomationEvent(IRawElementProviderSimple *provider, EVEN
     return S_OK;
 }
 
+void WINAPI UiaRegisterProviderCallback(UiaProviderCallback *callback)
+{
+    FIXME("(%p): stub\n", callback);
+}
+
 HRESULT WINAPI UiaHostProviderFromHwnd(HWND hwnd, IRawElementProviderSimple **provider)
 {
     FIXME("(%p, %p): stub\n", hwnd, provider);
