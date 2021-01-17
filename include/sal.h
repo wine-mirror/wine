@@ -19,10 +19,15 @@
 #ifndef __WINE_SAL_H__
 #define __WINE_SAL_H__
 
+/* These belong in driverspecs.h */
+#define __drv_allocatesMem(ptr)
+#define __drv_freesMem(ptr)
 
 #define _Always_(exp)
 
-#define _At_
+#define _Analysis_noreturn_
+
+#define _At_(a, b)
 #define _At_buffer_(a, b, c, d)
 
 #define _Check_return_
@@ -31,10 +36,12 @@
 #define _COM_Outptr_
 #define _COM_Outptr_result_maybenull_
 
+#define _Deref_in_range_(cnt)
 #define _Deref_out_
 #define _Deref_out_z_
 #define _Deref_out_opt_
 #define _Deref_out_opt_z_
+#define _Deref_out_range_(x, y)
 #define _Deref_post_maybenull_
 #define _Deref_post_opt_cap_(count)
 #define _Deref_post_opt_valid_
@@ -47,6 +54,8 @@
 #define _Deref_ret_z_
 
 #define _Field_range_(min, max)
+
+#define _Frees_ptr_opt_
 
 #define __in
 #define __in_opt
@@ -106,6 +115,9 @@
 #define _Inout_z_cap_(count)
 #define _Inout_z_cap_c_(count)
 
+#define _Must_inspect_result_
+
+#define _Null_
 #define _Null_terminated_
 
 #define __out
@@ -168,7 +180,11 @@
 #define _Out_z_cap_post_count_(count1, count2)
 
 #define _Outptr_opt_
+#define _Outptr_opt_result_buffer_(count)
+#define _Outptr_opt_result_maybenull_
+#define _Outptr_opt_result_z_
 #define _Outptr_result_buffer_(count)
+#define _Outptr_result_buffer_all_maybenull_(ptr)
 #define _Outptr_result_buffer_maybenull_(count)
 #define _Outptr_result_maybenull_
 #define _Outptr_result_maybenull_z_
