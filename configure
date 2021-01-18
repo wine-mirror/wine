@@ -5623,6 +5623,8 @@ case $host in
     ;;
 esac
 
+TARGETFLAGS=""
+
 case $host in
   x86_64*|amd64*)
     if test "x$enable_win64" != "xyes" -a "$cross_compiling" != "yes"
@@ -5660,7 +5662,6 @@ $as_echo "$wine_cv_cc_m32" >&6; }
       host_cpu="i386"
       notice_platform="32-bit "
       TARGETFLAGS="-m32"
-
       PKG_CONFIG_PATH=${PKG_CONFIG_PATH:-/usr/lib/i386-linux-gnu/pkgconfig:/usr/lib32/pkgconfig:/usr/lib/pkgconfig}
       export PKG_CONFIG_PATH
       enable_win16=${enable_win16:-yes}
@@ -5700,37 +5701,43 @@ $as_echo "$wine_cv_builtin_ms_va_list" >&6; }
       host_cpu="x86_64"
       notice_platform="64-bit "
       TARGETFLAGS="-m64"
-
     fi
     ;;
   arm*)
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports Thumb" >&5
-$as_echo_n "checking whether $CC supports Thumb... " >&6; }
-if ${wine_cv_thumb+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports Thumb-2" >&5
+$as_echo_n "checking whether $CC supports Thumb-2... " >&6; }
+if ${wine_cv_thumb2+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int ac_test(int i) { return i; }
+
 int
 main ()
 {
-asm(".thumb\nblx ac_test\n.arm"); if (ac_test(1)) return 1
+asm(".syntax unified\n\t.thumb\n\tldm r0,{r0-r8}");
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  wine_cv_thumb=yes
+  wine_cv_thumb2=yes
 else
-  wine_cv_thumb=no
+  wine_cv_thumb2=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_thumb" >&5
-$as_echo "$wine_cv_thumb" >&6; }
-    test $wine_cv_thumb != no || as_fn_error $? "You need a target with Thumb support to build Wine for ARM." "$LINENO" 5
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_thumb2" >&5
+$as_echo "$wine_cv_thumb2" >&6; }
+    if test x"$wine_cv_thumb2" = xyes
+    then
+        CFLAGS="$CFLAGS -mthumb"
+        TARGETFLAGS="-mthumb"
+    else
+        CFLAGS="$CFLAGS -marm"
+        TARGETFLAGS="-marm"
+    fi
     case $with_float_abi in
       soft|softfp|hard)
         float_abi=$with_float_abi ;;
@@ -5741,7 +5748,7 @@ $as_echo "$wine_cv_thumb" >&6; }
           *)
             float_abi=softfp
             saved_CFLAGS=$CFLAGS
-            CFLAGS="$CFLAGS -marm -mfloat-abi=$float_abi"
+            CFLAGS="$CFLAGS -mfloat-abi=$float_abi"
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -mfloat-abi=$float_abi" >&5
 $as_echo_n "checking whether $CC supports -mfloat-abi=$float_abi... " >&6; }
 if ${wine_cv_float_abi+:} false; then :
@@ -5777,9 +5784,8 @@ $as_echo "$wine_cv_float_abi" >&6; }
         esac
         ;;
     esac
-    CFLAGS="$CFLAGS -marm -mfloat-abi=$float_abi"
-    TARGETFLAGS="-marm -mfloat-abi=$float_abi"
-
+    CFLAGS="$CFLAGS -mfloat-abi=$float_abi"
+    TARGETFLAGS="$TARGETFLAGS -mfloat-abi=$float_abi"
     ;;
   aarch64*)
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports __builtin_ms_va_list" >&5
@@ -5859,7 +5865,6 @@ fi
 if test -n "$host_alias" -a "$host_alias" != "$build_alias"
 then
     TARGETFLAGS="-b $host_alias $TARGETFLAGS"
-
 fi
 
 for ac_prog in flex
