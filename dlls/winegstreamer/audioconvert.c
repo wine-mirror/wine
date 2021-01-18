@@ -517,7 +517,7 @@ static HRESULT WINAPI audio_converter_ProcessMessage(IMFTransform *iface, MFT_ME
 
     switch(message)
     {
-        case MFT_MESSAGE_NOTIFY_START_OF_STREAM:
+        case MFT_MESSAGE_NOTIFY_BEGIN_STREAMING:
             return S_OK;
         default:
             FIXME("Unhandled message type %x.\n", message);
