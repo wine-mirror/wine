@@ -2025,6 +2025,7 @@ static bool adapter_vk_init_driver_info(struct wined3d_adapter_vk *adapter_vk,
     const struct wined3d_gpu_description *gpu_description;
     struct wined3d_gpu_description description;
     UINT64 vram_bytes, sysmem_bytes;
+    const VkMemoryType *type;
     const VkMemoryHeap *heap;
     unsigned int i;
 
@@ -2045,6 +2046,12 @@ static bool adapter_vk_init_driver_info(struct wined3d_adapter_vk *adapter_vk,
     }
     TRACE("Total device memory: 0x%s.\n", wine_dbgstr_longlong(vram_bytes));
     TRACE("Total shared system memory: 0x%s.\n", wine_dbgstr_longlong(sysmem_bytes));
+
+    for (i = 0; i < memory_properties->memoryTypeCount; ++i)
+    {
+        type = &memory_properties->memoryTypes[i];
+        TRACE("Memory type [%u]: flags %#x, heap %u.\n", i, type->propertyFlags, type->heapIndex);
+    }
 
     if (!(gpu_description = wined3d_get_user_override_gpu_description(properties->vendorID, properties->deviceID)))
         gpu_description = wined3d_get_gpu_description(properties->vendorID, properties->deviceID);
