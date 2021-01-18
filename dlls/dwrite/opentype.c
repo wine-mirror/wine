@@ -320,21 +320,23 @@ enum OS2_FSSELECTION {
     OS2_FSSELECTION_OBLIQUE          = 1 << 9
 };
 
-typedef struct {
+struct name_record
+{
     WORD platformID;
     WORD encodingID;
     WORD languageID;
     WORD nameID;
     WORD length;
     WORD offset;
-} TT_NameRecord;
+};
 
-typedef struct {
+struct name_header
+{
     WORD format;
     WORD count;
     WORD stringOffset;
-    TT_NameRecord nameRecord[1];
-} TT_NAME_V0;
+    struct name_record records[1];
+};
 
 struct vdmx_header
 {
@@ -2278,11 +2280,19 @@ static void get_name_record_locale(enum OPENTYPE_PLATFORM_ID platform, USHORT la
     }
 }
 
-static BOOL opentype_decode_namerecord(const TT_NAME_V0 *header, BYTE *storage_area, USHORT recid, IDWriteLocalizedStrings *strings)
+static BOOL opentype_decode_namerecord(const struct dwrite_fonttable *table, unsigned int idx,
+        IDWriteLocalizedStrings *strings)
 {
-    const TT_NameRecord *record = &header->nameRecord[recid];
     USHORT lang_id, length, offset, encoding, platform;
+    const struct name_header *header = (const struct name_header *)table->data;
+    const struct name_record *record;
+    unsigned int i, string_offset;
     BOOL ret = FALSE;
+    const void *name;
+
+    string_offset = table_read_be_word(table, FIELD_OFFSET(struct name_header, stringOffset));
+
+    record = &header->records[idx];
 
     platform = GET_BE_WORD(record->platformID);
     lang_id = GET_BE_WORD(record->languageID);
@@ -2290,7 +2300,11 @@ static BOOL opentype_decode_namerecord(const TT_NAME_V0 *header, BYTE *storage_a
     offset = GET_BE_WORD(record->offset);
     encoding = GET_BE_WORD(record->encodingID);
 
-    if (lang_id < 0x8000) {
+    if (!(name = table_read_ensure(table, string_offset + offset, length)))
+        return FALSE;
+
+    if (lang_id < 0x8000)
+    {
         WCHAR locale[LOCALE_NAME_MAX_LENGTH];
         WCHAR *name_string;
         UINT codepage;
@@ -2298,17 +2312,17 @@ static BOOL opentype_decode_namerecord(const TT_NAME_V0 *header, BYTE *storage_a
         codepage = get_name_record_codepage(platform, encoding);
         get_name_record_locale(platform, lang_id, locale, ARRAY_SIZE(locale));
 
-        if (codepage) {
-            DWORD len = MultiByteToWideChar(codepage, 0, (LPSTR)(storage_area + offset), length, NULL, 0);
+        if (codepage)
+        {
+            DWORD len = MultiByteToWideChar(codepage, 0, name, length, NULL, 0);
             name_string = heap_alloc(sizeof(WCHAR) * (len+1));
-            MultiByteToWideChar(codepage, 0, (LPSTR)(storage_area + offset), length, name_string, len);
+            MultiByteToWideChar(codepage, 0, name, length, name_string, len);
             name_string[len] = 0;
         }
-        else {
-            int i;
-
+        else
+        {
             length /= sizeof(WCHAR);
-            name_string = heap_strdupnW((LPWSTR)(storage_area + offset), length);
+            name_string = heap_strdupnW(name, length);
             for (i = 0; i < length; i++)
                 name_string[i] = GET_BE_WORD(name_string[i]);
         }
@@ -2324,45 +2338,45 @@ static BOOL opentype_decode_namerecord(const TT_NAME_V0 *header, BYTE *storage_a
     return ret;
 }
 
-static HRESULT opentype_get_font_strings_from_id(const void *table_data, enum OPENTYPE_STRING_ID id, IDWriteLocalizedStrings **strings)
+static HRESULT opentype_get_font_strings_from_id(const struct dwrite_fonttable *table, enum OPENTYPE_STRING_ID id,
+        IDWriteLocalizedStrings **strings)
 {
     int i, count, candidate_mac, candidate_unicode;
-    const TT_NAME_V0 *header;
-    BYTE *storage_area = 0;
+    const struct name_record *records;
     WORD format;
     BOOL exists;
     HRESULT hr;
 
-    if (!table_data)
+    if (!table->data)
         return E_FAIL;
 
-    hr = create_localizedstrings(strings);
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr = create_localizedstrings(strings)))
+        return hr;
 
-    header = table_data;
-    format = GET_BE_WORD(header->format);
+    format = table_read_be_word(table, FIELD_OFFSET(struct name_header, format));
 
-    switch (format) {
-    case 0:
-    case 1:
-        break;
-    default:
+    if (format != 0 && format != 1)
         FIXME("unsupported NAME format %d\n", format);
-    }
 
-    storage_area = (LPBYTE)table_data + GET_BE_WORD(header->stringOffset);
-    count = GET_BE_WORD(header->count);
+    count = table_read_be_word(table, FIELD_OFFSET(struct name_header, count));
+
+    if (!(records = table_read_ensure(table, FIELD_OFFSET(struct name_header, records),
+                count * sizeof(struct name_record))))
+    {
+        count = 0;
+    }
 
     exists = FALSE;
     candidate_unicode = candidate_mac = -1;
-    for (i = 0; i < count; i++) {
-        const TT_NameRecord *record = &header->nameRecord[i];
-        USHORT platform;
 
-        if (GET_BE_WORD(record->nameID) != id)
+    for (i = 0; i < count; i++)
+    {
+        unsigned short platform;
+
+        if (GET_BE_WORD(records[i].nameID) != id)
             continue;
 
-        platform = GET_BE_WORD(record->platformID);
+        platform = GET_BE_WORD(records[i].platformID);
         switch (platform)
         {
             /* Skip Unicode or Mac entries for now, fonts tend to duplicate those
@@ -2378,7 +2392,7 @@ static HRESULT opentype_get_font_strings_from_id(const void *table_data, enum OP
                     candidate_mac = i;
                 break;
             case OPENTYPE_PLATFORM_WIN:
-                if (opentype_decode_namerecord(header, storage_area, i, *strings))
+                if (opentype_decode_namerecord(table, i, *strings))
                     exists = TRUE;
                 break;
             default:
@@ -2390,9 +2404,9 @@ static HRESULT opentype_get_font_strings_from_id(const void *table_data, enum OP
     if (!exists)
     {
         if (candidate_mac != -1)
-            exists = opentype_decode_namerecord(header, storage_area, candidate_mac, *strings);
+            exists = opentype_decode_namerecord(table, candidate_mac, *strings);
         if (!exists && candidate_unicode != -1)
-            exists = opentype_decode_namerecord(header, storage_area, candidate_unicode, *strings);
+            exists = opentype_decode_namerecord(table, candidate_unicode, *strings);
 
         if (!exists)
         {
@@ -2527,7 +2541,7 @@ HRESULT opentype_get_font_info_strings(const struct file_stream_desc *stream_des
             break;
         default:
             opentype_get_font_table(stream_desc, MS_NAME_TAG, &name);
-            opentype_get_font_strings_from_id(name.data, dwriteid_to_opentypeid[id], strings);
+            opentype_get_font_strings_from_id(&name, dwriteid_to_opentypeid[id], strings);
             if (name.context)
                 IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, name.context);
     }
@@ -2540,28 +2554,25 @@ HRESULT opentype_get_font_info_strings(const struct file_stream_desc *stream_des
 HRESULT opentype_get_font_familyname(struct file_stream_desc *stream_desc, IDWriteLocalizedStrings **names)
 {
     struct dwrite_fonttable os2, name;
-    const void *name_table;
     UINT16 fsselection;
     HRESULT hr;
 
     opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
     opentype_get_font_table(stream_desc, MS_NAME_TAG, &name);
 
-    name_table = (const void *)name.data;
-
     *names = NULL;
 
     /* If Preferred Family doesn't conform to WWS model try WWS name. */
     fsselection = os2.data ? table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, fsSelection)) : 0;
     if (os2.data && !(fsselection & OS2_FSSELECTION_WWS))
-        hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_WWS_FAMILY_NAME, names);
+        hr = opentype_get_font_strings_from_id(&name, OPENTYPE_STRING_WWS_FAMILY_NAME, names);
     else
         hr = E_FAIL;
 
     if (FAILED(hr))
-        hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_TYPOGRAPHIC_FAMILY_NAME, names);
+        hr = opentype_get_font_strings_from_id(&name, OPENTYPE_STRING_TYPOGRAPHIC_FAMILY_NAME, names);
     if (FAILED(hr))
-        hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_FAMILY_NAME, names);
+        hr = opentype_get_font_strings_from_id(&name, OPENTYPE_STRING_FAMILY_NAME, names);
 
     if (os2.context)
         IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2.context);
@@ -2577,32 +2588,30 @@ HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *
 {
     struct dwrite_fonttable os2, name;
     IDWriteLocalizedStrings *lfnames;
-    const void *name_table;
     UINT16 fsselection;
     HRESULT hr;
 
     opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
     opentype_get_font_table(stream_desc, MS_NAME_TAG, &name);
 
-    name_table = name.data;
-
     *names = NULL;
 
     /* if Preferred Family doesn't conform to WWS model try WWS name */
     fsselection = os2.data ? table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, fsSelection)) : 0;
     if (os2.data && !(fsselection & OS2_FSSELECTION_WWS))
-        hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_WWS_SUBFAMILY_NAME, names);
+        hr = opentype_get_font_strings_from_id(&name, OPENTYPE_STRING_WWS_SUBFAMILY_NAME, names);
     else
         hr = E_FAIL;
 
     if (FAILED(hr))
-        hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_TYPOGRAPHIC_SUBFAMILY_NAME, names);
+        hr = opentype_get_font_strings_from_id(&name, OPENTYPE_STRING_TYPOGRAPHIC_SUBFAMILY_NAME, names);
     if (FAILED(hr))
-        hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_SUBFAMILY_NAME, names);
+        hr = opentype_get_font_strings_from_id(&name, OPENTYPE_STRING_SUBFAMILY_NAME, names);
 
     /* User locale is preferred, with fallback to en-us. */
     *lfname = 0;
-    if (SUCCEEDED(opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_FAMILY_NAME, &lfnames))) {
+    if (SUCCEEDED(opentype_get_font_strings_from_id(&name, OPENTYPE_STRING_FAMILY_NAME, &lfnames)))
+    {
         static const WCHAR enusW[] = {'e','n','-','u','s',0};
         WCHAR localeW[LOCALE_NAME_MAX_LENGTH];
         UINT32 index;
