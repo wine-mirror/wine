@@ -1321,6 +1321,11 @@ static void test_CreateEllipsisTrimmingSign(void)
             DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"en-GB", &format);
     ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
 
+    sign = (void *)0xdeadbeef;
+    hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, NULL, &sign);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(!sign, "Unexpected pointer %p.\n", sign);
+
     EXPECT_REF(format, 1);
     hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &sign);
     ok(hr == S_OK, "got 0x%08x\n", hr);

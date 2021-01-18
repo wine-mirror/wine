@@ -5361,6 +5361,9 @@ HRESULT create_trimmingsign(IDWriteFactory7 *factory, IDWriteTextFormat *format,
 
     *sign = NULL;
 
+    if (!format)
+        return E_INVALIDARG;
+
     /* Validate reading/flow direction here, layout creation won't complain about
        invalid combinations. */
     reading = IDWriteTextFormat_GetReadingDirection(format);
