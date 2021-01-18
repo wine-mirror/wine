@@ -795,7 +795,7 @@ static NTSTATUS export_gnutls_pubkey_dsa( gnutls_privkey_t gnutls_key, ULONG bit
 {
     BCRYPT_DSA_KEY_BLOB *dsa_blob;
     gnutls_datum_t p, q, g, y;
-    UCHAR *dst, *src;
+    UCHAR *dst;
     int ret;
 
     if ((ret = pgnutls_privkey_export_dsa_raw( gnutls_key, &p, &q, &g, &y, NULL )))
@@ -810,7 +810,7 @@ static NTSTATUS export_gnutls_pubkey_dsa( gnutls_privkey_t gnutls_key, ULONG bit
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (!(dsa_blob = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*dsa_blob) + p.size + g.size + y.size )))
+    if (!(dsa_blob = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*dsa_blob) + bitlen / 8 * 3 )))
     {
         pgnutls_perror( ret );
         free( p.data ); free( q.data ); free( g.data ); free( y.data );
@@ -818,40 +818,16 @@ static NTSTATUS export_gnutls_pubkey_dsa( gnutls_privkey_t gnutls_key, ULONG bit
     }
 
     dst = (UCHAR *)(dsa_blob + 1);
-    if (p.size == bitlen / 8 + 1 && !p.data[0])
-    {
-        src = p.data + 1;
-        p.size--;
-    }
-    else src = p.data;
-    memcpy( dst, src, p.size );
+    export_gnutls_datum( dst, bitlen / 8, &p, NULL );
 
-    dst += p.size;
-    if (g.size == bitlen / 8 + 1 && !g.data[0])
-    {
-        src = g.data + 1;
-        g.size--;
-    }
-    else src = g.data;
-    memcpy( dst, src, g.size );
+    dst += bitlen / 8;
+    export_gnutls_datum( dst, bitlen / 8, &g, NULL );
 
-    dst += g.size;
-    if (y.size == bitlen / 8 + 1 && !y.data[0])
-    {
-        src = y.data + 1;
-        y.size--;
-    }
-    else src = y.data;
-    memcpy( dst, src, y.size );
+    dst += bitlen / 8;
+    export_gnutls_datum( dst, bitlen / 8, &y, NULL );
 
     dst = dsa_blob->q;
-    if (q.size == sizeof(dsa_blob->q) + 1 && !q.data[0])
-    {
-        src = q.data + 1;
-        q.size--;
-    }
-    else src = q.data;
-    memcpy( dst, src, sizeof(dsa_blob->q) );
+    export_gnutls_datum( dst, sizeof(dsa_blob->q), &q, NULL );
 
     dsa_blob->dwMagic = BCRYPT_DSA_PUBLIC_MAGIC;
     dsa_blob->cbKey   = bitlen / 8;
@@ -859,7 +835,7 @@ static NTSTATUS export_gnutls_pubkey_dsa( gnutls_privkey_t gnutls_key, ULONG bit
     memset( dsa_blob->Seed, 0, sizeof(dsa_blob->Seed) ); /* FIXME */
 
     *pubkey = (UCHAR *)dsa_blob;
-    *pubkey_len = sizeof(*dsa_blob) + p.size + g.size + y.size;
+    *pubkey_len = sizeof(*dsa_blob) + dsa_blob->cbKey * 3;
 
     free( p.data ); free( q.data ); free( g.data ); free( y.data );
     return STATUS_SUCCESS;
