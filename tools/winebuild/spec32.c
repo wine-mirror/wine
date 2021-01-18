@@ -319,13 +319,14 @@ static void output_relay_debug( DLLSPEC *spec )
                 if (val & mask) output( "\t%s r1,#%u\n", count++ ? "add" : "mov", val & mask );
             if (!count) output( "\tmov r1,#0\n" );
             output( "\tldr r0, 2f\n");
-            output( "1:\tadd r0, PC\n");
+            if (UsePIC) output( "1:\tadd r0, PC\n");
             output( "\tldr IP, [r0, #4]\n");
             output( "\tblx IP\n");
             output( "\tldr IP, [SP, #4]\n" );
             output( "\tadd SP, #%u\n", 24 + (has_float ? 64 : 0) );
             output( "\tbx IP\n");
-            output( "2:\t.long .L__wine_spec_relay_descr-1b-%u\n", thumb_mode ? 4 : 8 );
+            if (UsePIC) output( "2:\t.long .L__wine_spec_relay_descr-1b-%u\n", thumb_mode ? 4 : 8 );
+            else output( "2:\t.long .L__wine_spec_relay_descr\n" );
             output_cfi( ".cfi_endproc" );
             break;
         }

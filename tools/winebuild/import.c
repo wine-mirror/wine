@@ -755,10 +755,19 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         output( "\tjmpq *%s+%d(%%rip)\n", table, pos );
         break;
     case CPU_ARM:
-        output( "\tldr ip, 2f\n");
-        output( "1:\tadd ip, pc\n" );
-        output( "\tldr pc, [ip]\n");
-        output( "2:\t.long %s+%u-1b-%u\n", table, pos, thumb_mode ? 4 : 8 );
+        if (UsePIC)
+        {
+            output( "\tldr ip, 2f\n");
+            output( "1:\tadd ip, pc\n" );
+            output( "\tldr pc, [ip]\n");
+            output( "2:\t.long %s+%u-1b-%u\n", table, pos, thumb_mode ? 4 : 8 );
+        }
+        else
+        {
+            output( "\tldr ip, 1f\n");
+            output( "\tldr pc, [ip]\n");
+            output( "1:\t.long %s+%u\n", table, pos );
+        }
         break;
     case CPU_ARM64:
         output( "\tadrp x16, %s\n", arm64_page( table ) );
@@ -1348,14 +1357,26 @@ void output_stubs( DLLSPEC *spec )
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
             break;
         case CPU_ARM:
-            output( "\tldr r0,3f\n");
-            output( "1:\tadd r0,PC\n");
-            output( "\tldr r1,3f+4\n");
-            if (exp_name) output( "2:\tadd r1,PC\n");
-            output( "\tbl %s\n", asm_name("__wine_spec_unimplemented_stub") );
-            output( "3:\t.long .L__wine_spec_file_name-1b-%u\n", thumb_mode ? 4 : 8 );
-            if (exp_name) output( "\t.long .L%s_string-2b-%u\n", name, thumb_mode ? 4 : 8 );
-            else output( "\t.long %u\n", odp->ordinal );
+            if (UsePIC)
+            {
+                output( "\tldr r0,3f\n");
+                output( "1:\tadd r0,PC\n");
+                output( "\tldr r1,3f+4\n");
+                if (exp_name) output( "2:\tadd r1,PC\n");
+                output( "\tbl %s\n", asm_name("__wine_spec_unimplemented_stub") );
+                output( "3:\t.long .L__wine_spec_file_name-1b-%u\n", thumb_mode ? 4 : 8 );
+                if (exp_name) output( "\t.long .L%s_string-2b-%u\n", name, thumb_mode ? 4 : 8 );
+                else output( "\t.long %u\n", odp->ordinal );
+            }
+            else
+            {
+                output( "\tldr r0,1f\n");
+                output( "\tldr r1,1f+4\n");
+                output( "\tbl %s\n", asm_name("__wine_spec_unimplemented_stub") );
+                output( "1:\t.long .L__wine_spec_file_name\n" );
+                if (exp_name) output( "\t.long .L%s_string\n", name );
+                else output( "\t.long %u\n", odp->ordinal );
+            }
             break;
         case CPU_ARM64:
             output( "\tadrp x0, %s\n", arm64_page(".L__wine_spec_file_name") );
@@ -1552,7 +1573,7 @@ void output_syscalls( DLLSPEC *spec )
         case CPU_ARM:
             output( "\tpush {r5-r11,lr}\n" );
             output( "\tadd r6, sp, #40\n" );  /* stack parameters */
-            output( "\tldr r5, 8f\n" );
+            output( "\tldr r5, 6f+8\n" );
             output( "\tcmp r4, r5\n" );
             output( "\tbcs 5f\n" );
             output( "\tsub sp, sp, #8\n" );
@@ -1563,8 +1584,8 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tmrs ip, CPSR\n" );
             output( "\tstr ip, [sp, #4]\n" );
             output( "\tstr sp, [r7]\n" );  /* syscall frame */
-            output( "\tldr r5, 7f\n");
-            output( "1:\tadd r5, pc\n");
+            output( "\tldr r5, 6f+4\n");
+            if (UsePIC) output( "1:\tadd r5, pc\n");
             output( "\tldrb r5, [r5, r4]\n" );  /* syscall args */
             output( "\tsubs r5, #16\n" );   /* first 4 args are in registers */
             output( "\tble 3f\n" );
@@ -1576,7 +1597,7 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tstr ip, [sp, r5]\n" );
             output( "\tbgt 2b\n" );
             output( "3:\tldr r5, 6f\n");
-            output( "4:\tadd r5, pc\n");
+            if (UsePIC) output( "4:\tadd r5, pc\n");
             output( "\tldr ip, [r5, r4, lsl #2]\n");  /* syscall table */
             output( "\tblx ip\n");
             output( "\tmov ip, #0\n" );
@@ -1584,12 +1605,20 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tsub ip, r6, #40\n" );
             output( "\tmov sp, ip\n" );
             output( "\tpop {r5-r11,pc}\n" );
-            output( "5:\tldr r0, 9f\n" );
+            output( "5:\tldr r0, 6f+12\n" );
             output( "\tpop {r5-r11,pc}\n" );
-            output( "6:\t.long .Lsyscall_table-4b-%u\n", thumb_mode ? 4 : 8 );
-            output( "7:\t.long .Lsyscall_args-1b-%u\n", thumb_mode ? 4 : 8 );
-            output( "8:\t.long %u\n", count );
-            output( "9:\t.long 0x%x\n", invalid_param );
+            if (UsePIC)
+            {
+                output( "6:\t.long .Lsyscall_table-4b-%u\n", thumb_mode ? 4 : 8 );
+                output( "\t.long .Lsyscall_args-1b-%u\n", thumb_mode ? 4 : 8 );
+            }
+            else
+            {
+                output( "6:\t.long .Lsyscall_table\n" );
+                output( "\t.long .Lsyscall_args\n" );
+            }
+            output( "\t.long %u\n", count );
+            output( "\t.long 0x%x\n", invalid_param );
             break;
         case CPU_ARM64:
             output( "\tcmp x8, %u\n", count );
@@ -1731,11 +1760,12 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tpush {r4,lr}\n" );
             output( "\tldr r4, 3f\n");
             output( "\tldr ip, 2f\n");
-            output( "1:\tadd ip, pc\n" );
+            if (UsePIC) output( "1:\tadd ip, pc\n" );
             output( "\tldr ip, [ip]\n");
             output( "\tblx ip\n");
             output( "\tpop {r4,pc}\n" );
-            output( "2:\t.long %s-1b-%u\n", asm_name("__wine_syscall_dispatcher"), thumb_mode ? 4 : 8 );
+            if (UsePIC) output( "2:\t.long %s-1b-%u\n", asm_name("__wine_syscall_dispatcher"), thumb_mode ? 4 : 8 );
+            else output( "2:\t.long %s\n", asm_name("__wine_syscall_dispatcher") );
             output( "3:\t.long %u\n", i );
             break;
         case CPU_ARM64:
