@@ -283,6 +283,7 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
     context->Cpsr = CPSR_sig(sigcontext); /* Current State Register */
     context->R11  = FP_sig(sigcontext);   /* Frame pointer */
     context->R12  = IP_sig(sigcontext);   /* Intra-Procedure-call scratch register */
+    if (CPSR_sig(sigcontext) & 0x20) context->Pc |= 1;  /* Thumb mode */
     save_fpu( context, sigcontext );
 }
 
@@ -305,6 +306,8 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
     CPSR_sig(sigcontext) = context->Cpsr; /* Current State Register */
     FP_sig(sigcontext)   = context->R11;  /* Frame pointer */
     IP_sig(sigcontext)   = context->R12;  /* Intra-Procedure-call scratch register */
+    if (PC_sig(sigcontext) & 1) CPSR_sig(sigcontext) |= 0x20;
+    else CPSR_sig(sigcontext) &= ~0x20;
     restore_fpu( context, sigcontext );
 }
 
@@ -534,19 +537,6 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 }
 
 
-extern void raise_func_trampoline_thumb( EXCEPTION_RECORD *rec, CONTEXT *context, void *func );
-__ASM_GLOBAL_FUNC( raise_func_trampoline_thumb,
-                   ".thumb\n\t"
-                   "bx r2\n\t"
-                   "bkpt\n\t"
-                   ".arm")
-
-extern void raise_func_trampoline_arm( EXCEPTION_RECORD *rec, CONTEXT *context, void *func );
-__ASM_GLOBAL_FUNC( raise_func_trampoline_arm,
-                   ".arm\n\t"
-                   "bx r2\n\t"
-                   "bkpt")
-
 /***********************************************************************
  *           setup_exception
  *
@@ -566,7 +556,8 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 
     rec->ExceptionAddress = (void *)PC_sig(sigcontext);
     save_context( &context, sigcontext );
-    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context.Pc += 4;
+    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT)
+        context.Pc += CPSR_sig(sigcontext) & 0x20 ? 2 : 4;
 
     status = send_debug_event( rec, &context, TRUE );
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
@@ -581,13 +572,11 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 
     /* now modify the sigcontext to return to the raise function */
     SP_sig(sigcontext) = (DWORD)stack;
-    if (CPSR_sig(sigcontext) & 0x20)
-        PC_sig(sigcontext) = (DWORD)raise_func_trampoline_thumb;
-    else
-        PC_sig(sigcontext) = (DWORD)raise_func_trampoline_arm;
+    PC_sig(sigcontext) = (DWORD)pKiUserExceptionDispatcher;
+    if (PC_sig(sigcontext) & 1) CPSR_sig(sigcontext) |= 0x20;
+    else CPSR_sig(sigcontext) &= ~0x20;
     REGn_sig(0, sigcontext) = (DWORD)&stack->rec;  /* first arg for KiUserExceptionDispatcher */
     REGn_sig(1, sigcontext) = (DWORD)&stack->context; /* second arg for KiUserExceptionDispatcher */
-    REGn_sig(2, sigcontext) = (DWORD)pKiUserExceptionDispatcher;
 }
 
 
@@ -999,6 +988,7 @@ static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry,
     context->R1 = (DWORD)arg;
     context->Sp = (DWORD)teb->Tib.StackBase;
     context->Pc = (DWORD)pRtlUserThreadStart;
+    if (context->Pc & 1) context->Cpsr |= 0x20; /* thumb mode */
 }
 
 
