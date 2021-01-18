@@ -1641,9 +1641,8 @@ static NTSTATUS format_gnutls_signature( enum alg_id type, gnutls_datum_t signat
     case ALG_ID_DSA:
     {
         int err;
-        unsigned int pad_size_r, pad_size_s, sig_len = get_signature_length( type );
+        unsigned int sig_len = get_signature_length( type );
         gnutls_datum_t r, s; /* format as r||s */
-        unsigned char *r_data, *s_data;
 
         if ((err = pgnutls_decode_rs_value( &signature, &r, &s )))
         {
@@ -1654,21 +1653,7 @@ static NTSTATUS format_gnutls_signature( enum alg_id type, gnutls_datum_t signat
         *ret_len = sig_len;
         if (output_len < sig_len) return STATUS_BUFFER_TOO_SMALL;
 
-        if (r.size % 2) /* remove prepended zero byte */
-        {
-            r.size--;
-            r_data = r.data + 1;
-        }
-        else r_data = r.data;
-
-        if (s.size % 2)
-        {
-            s.size--;
-            s_data = s.data + 1;
-        }
-        else s_data = s.data;
-
-        if (r.size + s.size > sig_len)
+        if (r.size > sig_len / 2 + 1 || s.size > sig_len / 2 + 1)
         {
             ERR( "we didn't get a correct signature\n" );
             return STATUS_INTERNAL_ERROR;
@@ -1676,12 +1661,8 @@ static NTSTATUS format_gnutls_signature( enum alg_id type, gnutls_datum_t signat
 
         if (output)
         {
-            pad_size_r = (sig_len / 2) - r.size;
-            pad_size_s = (sig_len / 2) - s.size;
-            memset( output, 0, sig_len );
-
-            memcpy( output + pad_size_r, r_data, r.size );
-            memcpy( output + (sig_len / 2) + pad_size_s, s_data, s.size );
+            export_gnutls_datum( output, sig_len / 2, &r, NULL );
+            export_gnutls_datum( output + sig_len / 2, sig_len / 2, &s, NULL );
         }
 
         free( r.data ); free( s.data );
