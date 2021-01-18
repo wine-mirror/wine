@@ -3124,6 +3124,11 @@ static void shader_glsl_get_swizzle(const struct wined3d_shader_src_param *param
 static void shader_glsl_sprintf_cast(struct wined3d_string_buffer *dst_param, const char *src_param,
         enum wined3d_data_type dst_data_type, enum wined3d_data_type src_data_type, unsigned int size)
 {
+    if (dst_data_type == WINED3D_DATA_UNORM || dst_data_type == WINED3D_DATA_SNORM)
+        dst_data_type = WINED3D_DATA_FLOAT;
+    if (src_data_type == WINED3D_DATA_UNORM || src_data_type == WINED3D_DATA_SNORM)
+        src_data_type = WINED3D_DATA_FLOAT;
+
     if (dst_data_type == src_data_type)
     {
         string_buffer_sprintf(dst_param, "%s", src_param);
