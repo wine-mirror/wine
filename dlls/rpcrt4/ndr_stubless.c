@@ -1144,7 +1144,6 @@ __ASM_GLOBAL_FUNC( call_server_func,
 #elif defined __arm__
 LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char *args, unsigned int stack_size);
 __ASM_GLOBAL_FUNC( call_server_func,
-                   ".arm\n\t"
                    "push {r4, r5, LR}\n\t"
                    "mov r4, r0\n\t"
                    "mov r5, SP\n\t"
@@ -1153,6 +1152,7 @@ __ASM_GLOBAL_FUNC( call_server_func,
                    "beq 5f\n\t"
                    "sub SP, SP, r2\n\t"
                    "tst r3, #1\n\t"
+                   "it eq\n\t"
                    "subeq SP, SP, #4\n\t"
                    "1:\tsub r2, r2, #4\n\t"
                    "ldr r0, [r1, r2]\n\t"
