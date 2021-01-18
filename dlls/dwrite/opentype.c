@@ -3587,6 +3587,8 @@ struct glyph_iterator
     p_match_func match_func;
     const UINT16 *glyph_data;
     const struct match_data *match_data;
+    unsigned int ignore_zwnj;
+    unsigned int ignore_zwj;
 };
 
 static void glyph_iterator_init(struct scriptshaping_context *context, unsigned int flags, unsigned int pos,
@@ -3600,6 +3602,9 @@ static void glyph_iterator_init(struct scriptshaping_context *context, unsigned 
     iter->match_func = NULL;
     iter->match_data = NULL;
     iter->glyph_data = NULL;
+    /* Context matching iterators will get these fixed up. */
+    iter->ignore_zwnj = context->table == &context->cache->gpos;
+    iter->ignore_zwj = context->auto_zwj;
 }
 
 struct ot_gdef_mark_glyph_sets
@@ -4682,6 +4687,8 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
 
         context->cur = 0;
         context->lookup_mask = lookup->mask;
+        context->auto_zwnj = lookup->auto_zwnj;
+        context->auto_zwj = lookup->auto_zwj;
 
         while (context->cur < context->glyph_count)
         {
@@ -5092,6 +5099,8 @@ static BOOL opentype_layout_context_match_backtrack(const struct match_context *
     iter.match_func = mc->match_func;
     iter.match_data = &match_data;
     iter.glyph_data = backtrack;
+    iter.ignore_zwnj |= context->auto_zwnj;
+    iter.ignore_zwj = 1;
 
     for (i = 0; i < count; ++i)
     {
@@ -5116,6 +5125,8 @@ static BOOL opentype_layout_context_match_lookahead(const struct match_context *
     iter.match_func = mc->match_func;
     iter.match_data = &match_data;
     iter.glyph_data = lookahead;
+    iter.ignore_zwnj |= context->auto_zwnj;
+    iter.ignore_zwj = 1;
 
     for (i = 0; i < count; ++i)
     {

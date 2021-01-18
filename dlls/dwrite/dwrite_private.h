@@ -585,6 +585,8 @@ struct scriptshaping_context
     } user_features;
     unsigned int global_mask;
     unsigned int lookup_mask; /* Currently processed feature mask, set in main loop. */
+    unsigned int auto_zwj;
+    unsigned int auto_zwnj;
     struct shaping_glyph_info *glyph_infos;
 
     unsigned int cur;
