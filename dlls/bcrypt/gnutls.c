@@ -841,14 +841,28 @@ static NTSTATUS export_gnutls_pubkey_dsa( gnutls_privkey_t gnutls_key, ULONG bit
     return STATUS_SUCCESS;
 }
 
+static void reverse_bytes( UCHAR *buf, ULONG len )
+{
+    unsigned int i;
+    UCHAR tmp;
+
+    for (i = 0; i < len / 2; ++i)
+    {
+        tmp = buf[i];
+        buf[i] = buf[len - i - 1];
+        buf[len - i - 1] = tmp;
+    }
+}
+
+#define Q_SIZE 20
 static NTSTATUS export_gnutls_pubkey_dsa_capi( gnutls_privkey_t gnutls_key, const DSSSEED *seed, ULONG bitlen,
                                                UCHAR **pubkey, ULONG *pubkey_len )
 {
     BLOBHEADER *hdr;
     DSSPUBKEY *dsskey;
     gnutls_datum_t p, q, g, y;
-    UCHAR *dst, *src;
-    int i, ret, size = sizeof(*hdr) + sizeof(*dsskey) + sizeof(*seed);
+    UCHAR *dst;
+    int ret, size = sizeof(*hdr) + sizeof(*dsskey) + sizeof(*seed);
 
     if (bitlen > 1024)
     {
@@ -862,7 +876,7 @@ static NTSTATUS export_gnutls_pubkey_dsa_capi( gnutls_privkey_t gnutls_key, cons
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (!(hdr = RtlAllocateHeap( GetProcessHeap(), 0, size + p.size + q.size + g.size + y.size )))
+    if (!(hdr = RtlAllocateHeap( GetProcessHeap(), 0, size + bitlen / 8 * 3 + Q_SIZE )))
     {
         pgnutls_perror( ret );
         free( p.data ); free( q.data ); free( g.data ); free( y.data );
@@ -879,46 +893,26 @@ static NTSTATUS export_gnutls_pubkey_dsa_capi( gnutls_privkey_t gnutls_key, cons
     dsskey->bitlen = bitlen;
 
     dst = (UCHAR *)(dsskey + 1);
-    if (p.size % 2)
-    {
-        src = p.data + 1;
-        p.size--;
-    }
-    else src = p.data;
-    for (i = 0; i < p.size; i++) dst[i] = src[p.size - i - 1];
+    export_gnutls_datum( dst, bitlen / 8, &p, NULL );
+    reverse_bytes( dst, bitlen / 8 );
+    dst += bitlen / 8;
 
-    dst += p.size;
-    if (q.size % 2)
-    {
-        src = q.data + 1;
-        q.size--;
-    }
-    else src = q.data;
-    for (i = 0; i < q.size; i++) dst[i] = src[q.size - i - 1];
+    export_gnutls_datum( dst, Q_SIZE, &q, NULL );
+    reverse_bytes( dst, Q_SIZE );
+    dst += Q_SIZE;
 
-    dst += q.size;
-    if (g.size % 2)
-    {
-        src = g.data + 1;
-        g.size--;
-    }
-    else src = g.data;
-    for (i = 0; i < g.size; i++) dst[i] = src[g.size - i - 1];
+    export_gnutls_datum( dst, bitlen / 8, &g, NULL );
+    reverse_bytes( dst, bitlen / 8 );
+    dst += bitlen / 8;
 
-    dst += g.size;
-    if (y.size % 2)
-    {
-        src = y.data + 1;
-        y.size--;
-    }
-    else src = y.data;
-    for (i = 0; i < y.size; i++) dst[i] = src[y.size - i - 1];
+    export_gnutls_datum( dst, bitlen / 8, &y, NULL );
+    reverse_bytes( dst, bitlen / 8 );
+    dst += bitlen / 8;
 
-    dst += y.size;
     memcpy( dst, seed, sizeof(*seed) );
 
     *pubkey = (UCHAR *)hdr;
-    *pubkey_len = size + p.size + q.size + g.size + y.size;
+    *pubkey_len = size + bitlen / 8 * 3 + Q_SIZE;
 
     free( p.data ); free( q.data ); free( g.data ); free( y.data );
     return STATUS_SUCCESS;
