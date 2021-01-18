@@ -1000,7 +1000,7 @@ static NTSTATUS CDECL key_export_ecc( struct key *key, UCHAR *buf, ULONG len, UL
     gnutls_ecc_curve_t curve;
     gnutls_datum_t x, y, d;
     DWORD magic, size;
-    UCHAR *src, *dst;
+    UCHAR *dst;
     int ret;
 
     switch (key->alg_id)
@@ -1040,19 +1040,13 @@ static NTSTATUS CDECL key_export_ecc( struct key *key, UCHAR *buf, ULONG len, UL
         ecc_blob->cbKey   = size;
 
         dst = (UCHAR *)(ecc_blob + 1);
-        if (x.size == size + 1) src = x.data + 1;
-        else src = x.data;
-        memcpy( dst, src, size );
-
+        export_gnutls_datum( dst, size, &x, NULL );
         dst += size;
-        if (y.size == size + 1) src = y.data + 1;
-        else src = y.data;
-        memcpy( dst, src, size );
 
+        export_gnutls_datum( dst, size, &y, NULL );
         dst += size;
-        if (d.size == size + 1) src = d.data + 1;
-        else src = d.data;
-        memcpy( dst, src, size );
+
+        export_gnutls_datum( dst, size, &d, NULL );
     }
 
     free( x.data ); free( y.data ); free( d.data );
