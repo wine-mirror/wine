@@ -545,7 +545,6 @@ DECLSPEC_HIDDEN void WINAPI relay_trace_exit( struct relay_descr *descr, unsigne
 
 extern LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const DWORD *stack );
 __ASM_GLOBAL_FUNC( relay_call,
-                   ".arm\n\t"
                    "push {r4-r8,lr}\n\t"
                    "sub sp, #16\n\t"
                    "mov r6, r2\n\t"
@@ -559,8 +558,9 @@ __ASM_GLOBAL_FUNC( relay_call,
                    "lsl r3, r1, #2\n\t"
                    "subs r3, #16\n\t"   /* first 4 args are in registers */
                    "ble 2f\n\t"
+                   "add r3, #7\n\t"
+                   "and r3, #~7\n"
                    "sub sp, r3\n\t"
-                   "and sp, #~7\n"
                    "add r2, r6, #16\n\t"   /* skip r0-r3 */
                    "1:\tsubs r3, r3, #4\n\t"
                    "ldr r0, [r2, r3]\n\t"
@@ -570,6 +570,7 @@ __ASM_GLOBAL_FUNC( relay_call,
 #ifndef __SOFTFP__
                    "tst r1, #0x80000000\n\t"
                    "ldm r6, {r0-r3}\n\t"
+                   "it ne\n\t"
                    "vldmdbne r6!, {s0-s15}\n\t"
 #else
                    "ldm r6, {r0-r3}\n\t"

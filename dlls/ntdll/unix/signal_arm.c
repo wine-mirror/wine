@@ -316,17 +316,18 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
  */
 void DECLSPEC_HIDDEN set_cpu_context( const CONTEXT *context );
 __ASM_GLOBAL_FUNC( set_cpu_context,
-                   ".arm\n\t"
                    "ldr r2, [r0, #0x44]\n\t"  /* context->Cpsr */
                    "tst r2, #0x20\n\t"        /* thumb? */
                    "ldr r1, [r0, #0x40]\n\t"  /* context->Pc */
+                   "ite ne\n\t"
                    "orrne r1, r1, #1\n\t"     /* Adjust PC according to thumb */
                    "biceq r1, r1, #1\n\t"     /* Adjust PC according to arm */
                    "msr CPSR_f, r2\n\t"
                    "ldr lr, [r0, #0x3c]\n\t"  /* context->Lr */
                    "ldr sp, [r0, #0x38]\n\t"  /* context->Sp */
                    "push {r1}\n\t"
-                   "ldmib r0, {r0-r12}\n\t"   /* context->R0..R12 */
+                   "add r0, #0x4\n\t"
+                   "ldm r0, {r0-r12}\n\t"     /* context->R0..R12 */
                    "pop {pc}" )
 
 
@@ -611,7 +612,8 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "mov sp, r0\n\t"
                    "b 2f\n"
                    "1:\tldr r0, [r10]\n\t"
-                   "sub sp, r0, #0x1a0\n\t"
+                   "sub r0, #0x1a0\n\t"
+                   "mov sp, r0\n\t"
                    "mov r0, #3\n\t"
                    "movt r0, #32\n\t"
                    "str r0, [sp]\n\t"         /* context.ContextFlags = CONTEXT_FULL */
@@ -658,7 +660,8 @@ __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
                    "ldm r3, {r5-r11}\n\t"
                    "ldr r4, [r3, #32]\n\t"
                    "ldr lr, [r3, #36]\n\t"
-                   "add sp, r3, #40\n\t"
+                   "add r3, #40\n\t"
+                   "mov sp, r3\n\t"
                    "bx r2" )
 
 
@@ -1031,7 +1034,6 @@ PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void
  *           signal_start_thread
  */
 __ASM_GLOBAL_FUNC( signal_start_thread,
-                   ".arm\n\t"
                    "push {r4-r12,lr}\n\t"
                    "mov r5, r3\n\t"           /* thunk */
                    /* store exit frame */
@@ -1039,7 +1041,8 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "str sp, [r3, #0x1d4]\n\t" /* arm_thread_data()->exit_frame */
                    /* switch to thread stack */
                    "ldr r4, [r3, #4]\n\t"     /* teb->Tib.StackBase */
-                   "sub sp, r4, #0x1000\n\t"
+                   "sub r4, #0x1000\n\t"
+                   "mov sp, r4\n\t"
                    /* attach dlls */
                    "bl " __ASM_NAME("get_initial_context") "\n\t"
                    "mov lr, #0\n\t"
@@ -1048,11 +1051,11 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
 
 extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );
 __ASM_GLOBAL_FUNC( call_thread_exit_func,
-                   ".arm\n\t"
                    "ldr r3, [r2, #0x1d4]\n\t"  /* arm_thread_data()->exit_frame */
                    "mov ip, #0\n\t"
                    "str ip, [r2, #0x1d4]\n\t"
                    "cmp r3, ip\n\t"
+                   "it ne\n\t"
                    "movne sp, r3\n\t"
                    "blx r1" )
 

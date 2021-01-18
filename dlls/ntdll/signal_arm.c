@@ -61,8 +61,8 @@ __ASM_GLOBAL_FUNC( __chkstk, "lsl r4, r4, #2\n\t"
  *		RtlCaptureContext (NTDLL.@)
  */
 __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
-                    ".arm\n\t"
-                    "stmib r0, {r0-r12}\n\t"   /* context->R0..R12 */
+                    "str r0, [r0, #0x4]\n\t"   /* context->R0 */
+                    "str r1, [r0, #0x8]\n\t"   /* context->R1 */
                     "mov r1, #0x0200000\n\t"   /* CONTEXT_ARM */
                     "add r1, r1, #0x3\n\t"     /* CONTEXT_FULL */
                     "str r1, [r0]\n\t"         /* context->ContextFlags */
@@ -70,7 +70,13 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
                     "str LR, [r0, #0x3c]\n\t"  /* context->Lr */
                     "str LR, [r0, #0x40]\n\t"  /* context->Pc */
                     "mrs r1, CPSR\n\t"
+                    "tst lr, #1\n\t"           /* Thumb? */
+                    "ite ne\n\t"
+                    "orrne r1, r1, #0x20\n\t"
+                    "biceq r1, r1, #0x20\n\t"
                     "str r1, [r0, #0x44]\n\t"  /* context->Cpsr */
+                    "add r0, #0x0c\n\t"
+                    "stm r0, {r2-r12}\n\t"     /* context->R2..R12 */
                     "bx lr"
                     )
 
@@ -257,6 +263,12 @@ __ASM_STDCALL_FUNC( RtlRaiseException, 4,
                     "ldr r0, [sp, #0x1a0]\n\t" /* rec */
                     "ldr r1, [sp, #0x1a4]\n\t"
                     "str r1, [sp, #0x40]\n\t"  /* context->Pc */
+                    "ldr r2, [sp, #0x44]\n\t"  /* context->Cpsr */
+                    "tst r1, #1\n\t"           /* Thumb? */
+                    "ite ne\n\t"
+                    "orrne r2, r2, #0x20\n\t"
+                    "biceq r2, r2, #0x20\n\t"
+                    "str r2, [sp, #0x44]\n\t"  /* context->Cpsr */
                     "str r1, [r0, #12]\n\t"    /* rec->ExceptionAddress */
                     "add r1, sp, #0x1a8\n\t"
                     "str r1, [sp, #0x38]\n\t"  /* context->Sp */
