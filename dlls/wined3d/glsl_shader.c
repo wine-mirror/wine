@@ -3271,6 +3271,8 @@ static DWORD shader_glsl_append_dst_ext(struct wined3d_string_buffer *buffer,
         switch (data_type)
         {
             case WINED3D_DATA_FLOAT:
+            case WINED3D_DATA_UNORM:
+            case WINED3D_DATA_SNORM:
                 shader_addline(buffer, "%s%s = %s(",
                         glsl_dst.reg_name, glsl_dst.mask_str, shift_glsl_tab[dst->shift]);
                 break;
