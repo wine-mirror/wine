@@ -4489,6 +4489,110 @@ static DWORD server_ioctl_sock( SOCKET s, DWORD code, LPVOID in_buff, DWORD in_s
     return NtStatusToWSAError( status );
 }
 
+static DWORD get_interface_list(SOCKET s, void *out_buff, DWORD out_size, DWORD *ret_size, DWORD *total_bytes)
+{
+    DWORD size, interface_count = 0, ret;
+    INTERFACE_INFO *info = out_buff;
+    PMIB_IPADDRTABLE table = NULL;
+    DWORD status = 0;
+    int fd;
+
+    if (!out_buff || !ret_size)
+        return WSAEFAULT;
+
+    if ((fd = get_sock_fd(s, 0, NULL)) == -1)
+        return SOCKET_ERROR;
+
+    if ((ret = GetIpAddrTable(NULL, &size, TRUE)) != ERROR_INSUFFICIENT_BUFFER)
+    {
+        if (ret != ERROR_NO_DATA)
+        {
+            ERR("Unable to get ip address table.\n");
+            status = WSAEINVAL;
+        }
+        goto done;
+    }
+    if (!(table = heap_alloc(size)))
+    {
+        ERR("No memory.\n");
+        status = WSAEINVAL;
+        goto done;
+    }
+    if (GetIpAddrTable(table, &size, TRUE) != NO_ERROR)
+    {
+        ERR("Unable to get interface table./\n");
+        status = WSAEINVAL;
+        goto done;
+    }
+    if (table->dwNumEntries * sizeof(INTERFACE_INFO) > out_size)
+    {
+        WARN("Buffer too small, dwNumEntries %u, out_size = %u.\n", table->dwNumEntries, out_size);
+        *ret_size = 0;
+        status = WSAEFAULT;
+        goto done;
+    }
+
+    for (; interface_count < table->dwNumEntries; ++interface_count, ++info)
+    {
+        unsigned int addr, mask;
+        struct ifreq if_info;
+
+        memset(info, 0, sizeof(*info));
+
+        if_info.ifr_ifindex = table->table[interface_count].dwIndex;
+        if (ioctl(fd, SIOCGIFNAME, &if_info) < 0)
+        {
+            ERR("Error obtaining interface name for ifindex %d.\n", if_info.ifr_ifindex);
+            status = WSAEINVAL;
+            break;
+        }
+
+        if (ioctl(fd, SIOCGIFFLAGS, &if_info) < 0)
+        {
+            ERR("Error obtaining status flags for socket!\n");
+            status = WSAEINVAL;
+            break;
+        }
+
+        if (if_info.ifr_flags & IFF_BROADCAST)
+            info->iiFlags |= WS_IFF_BROADCAST;
+#ifdef IFF_POINTOPOINT
+        if (if_info.ifr_flags & IFF_POINTOPOINT)
+            info->iiFlags |= WS_IFF_POINTTOPOINT;
+#endif
+        if (if_info.ifr_flags & IFF_LOOPBACK)
+            info->iiFlags |= WS_IFF_LOOPBACK;
+        if (if_info.ifr_flags & IFF_UP)
+            info->iiFlags |= WS_IFF_UP;
+        if (if_info.ifr_flags & IFF_MULTICAST)
+            info->iiFlags |= WS_IFF_MULTICAST;
+
+        addr = table->table[interface_count].dwAddr;
+        mask = table->table[interface_count].dwMask;
+
+        info->iiAddress.AddressIn.sin_family = WS_AF_INET;
+        info->iiAddress.AddressIn.sin_port = 0;
+        info->iiAddress.AddressIn.sin_addr.WS_s_addr = addr;
+
+        info->iiNetmask.AddressIn.sin_family = WS_AF_INET;
+        info->iiNetmask.AddressIn.sin_port = 0;
+        info->iiNetmask.AddressIn.sin_addr.WS_s_addr = mask;
+
+        if (if_info.ifr_flags & IFF_BROADCAST)
+        {
+            info->iiBroadcastAddress.AddressIn.sin_family = WS_AF_INET;
+            info->iiBroadcastAddress.AddressIn.sin_port = 0;
+            info->iiBroadcastAddress.AddressIn.sin_addr.WS_s_addr = addr | ~mask;
+        }
+    }
+
+done:
+    heap_free(table);
+    *total_bytes = sizeof(INTERFACE_INFO) * interface_count;
+    release_sock_fd(s, fd);
+    return status;
+}
+
 /**********************************************************************
  *              WSAIoctl                (WS2_32.50)
  *
@@ -4584,111 +4688,9 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
    case WS_SIO_GET_INTERFACE_LIST:
        {
-           INTERFACE_INFO* intArray = out_buff;
-           DWORD size, numInt = 0, apiReturn;
-
            TRACE("-> SIO_GET_INTERFACE_LIST request\n");
 
-           if (!out_buff || !ret_size)
-           {
-               SetLastError(WSAEFAULT);
-               return SOCKET_ERROR;
-           }
-
-           fd = get_sock_fd( s, 0, NULL );
-           if (fd == -1) return SOCKET_ERROR;
-
-           apiReturn = GetAdaptersInfo(NULL, &size);
-           if (apiReturn == ERROR_BUFFER_OVERFLOW)
-           {
-               PIP_ADAPTER_INFO table = HeapAlloc(GetProcessHeap(),0,size);
-
-               if (table)
-               {
-                  if (GetAdaptersInfo(table, &size) == NO_ERROR)
-                  {
-                     PIP_ADAPTER_INFO ptr;
-
-                     for (ptr = table, numInt = 0; ptr; ptr = ptr->Next)
-                     {
-                        unsigned int addr, mask, bcast;
-                        struct ifreq ifInfo;
-
-                        /* Skip interfaces without an IPv4 address. */
-                        if (ptr->IpAddressList.IpAddress.String[0] == '\0')
-                            continue;
-
-                        if ((numInt + 1) * sizeof(INTERFACE_INFO) > out_size)
-                        {
-                            WARN("Buffer too small = %u, out_size = %u\n", numInt + 1, out_size);
-                            status = WSAEFAULT;
-                            if (ret_size) *ret_size = 0;
-                            break;
-                        }
-
-                        /* Socket Status Flags */
-                        lstrcpynA(ifInfo.ifr_name, ptr->AdapterName, IFNAMSIZ);
-                        if (ioctl(fd, SIOCGIFFLAGS, &ifInfo) < 0)
-                        {
-                           ERR("Error obtaining status flags for socket!\n");
-                           status = WSAEINVAL;
-                           break;
-                        }
-                        else
-                        {
-                           /* set flags; the values of IFF_* are not the same
-                              under Linux and Windows, therefore must generate
-                              new flags */
-                           intArray->iiFlags = 0;
-                           if (ifInfo.ifr_flags & IFF_BROADCAST)
-                              intArray->iiFlags |= WS_IFF_BROADCAST;
-#ifdef IFF_POINTOPOINT
-                           if (ifInfo.ifr_flags & IFF_POINTOPOINT)
-                              intArray->iiFlags |= WS_IFF_POINTTOPOINT;
-#endif
-                           if (ifInfo.ifr_flags & IFF_LOOPBACK)
-                              intArray->iiFlags |= WS_IFF_LOOPBACK;
-                           if (ifInfo.ifr_flags & IFF_UP)
-                              intArray->iiFlags |= WS_IFF_UP;
-                           if (ifInfo.ifr_flags & IFF_MULTICAST)
-                              intArray->iiFlags |= WS_IFF_MULTICAST;
-                        }
-
-                        addr = inet_addr(ptr->IpAddressList.IpAddress.String);
-                        mask = inet_addr(ptr->IpAddressList.IpMask.String);
-                        bcast = addr | ~mask;
-                        intArray->iiAddress.AddressIn.sin_family = WS_AF_INET;
-                        intArray->iiAddress.AddressIn.sin_port = 0;
-                        intArray->iiAddress.AddressIn.sin_addr.WS_s_addr = addr;
-
-                        intArray->iiNetmask.AddressIn.sin_family = WS_AF_INET;
-                        intArray->iiNetmask.AddressIn.sin_port = 0;
-                        intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr = mask;
-
-                        intArray->iiBroadcastAddress.AddressIn.sin_family = WS_AF_INET;
-                        intArray->iiBroadcastAddress.AddressIn.sin_port = 0;
-                        intArray->iiBroadcastAddress.AddressIn.sin_addr.WS_s_addr = bcast;
-                        intArray++;
-                        numInt++;
-                     }
-                  }
-                  else
-                  {
-                     ERR("Unable to get interface table!\n");
-                     status = WSAEINVAL;
-                  }
-                  HeapFree(GetProcessHeap(),0,table);
-               }
-               else status = WSAEINVAL;
-           }
-           else if (apiReturn != ERROR_NO_DATA)
-           {
-               ERR("Unable to get interface table!\n");
-               status = WSAEINVAL;
-           }
-           /* Calculate the size of the array being returned */
-           total = sizeof(INTERFACE_INFO) * numInt;
-           release_sock_fd( s, fd );
+           status = get_interface_list(s, out_buff, out_size, ret_size, &total);
            break;
        }
 

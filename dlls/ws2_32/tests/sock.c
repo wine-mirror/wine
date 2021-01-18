@@ -10516,6 +10516,9 @@ static void test_WSCGetProviderPath(void)
 
 static void test_wsaioctl(void)
 {
+    unsigned int i, count;
+    INTERFACE_INFO *info;
+    BOOL loopback_found;
     char buffer[4096];
     DWORD size;
     SOCKET s;
@@ -10529,11 +10532,39 @@ static void test_wsaioctl(void)
     ok(!ret, "Got unexpected ret %d.\n", ret);
     ok(size && size != 0xdeadbeef && !(size % sizeof(INTERFACE_INFO)), "Got unexpected size %u.\n", size);
 
+    info = (INTERFACE_INFO *)buffer;
+    count = size / sizeof(INTERFACE_INFO);
+    loopback_found = FALSE;
+    for (i = 0; i < count; ++i)
+    {
+        if (info[i].iiFlags & IFF_LOOPBACK)
+            loopback_found = TRUE;
+
+        ok(info[i].iiAddress.AddressIn.sin_family == AF_INET, "Got unexpected sin_family %#x.\n",
+                info[i].iiAddress.AddressIn.sin_family);
+        ok(info[i].iiNetmask.AddressIn.sin_family == AF_INET, "Got unexpected sin_family %#x.\n",
+                info[i].iiNetmask.AddressIn.sin_family);
+        ok(info[i].iiBroadcastAddress.AddressIn.sin_family
+                == (info[i].iiFlags & IFF_BROADCAST) ? AF_INET : 0, "Got unexpected sin_family %#x.\n",
+                info[i].iiBroadcastAddress.AddressIn.sin_family);
+        ok(info[i].iiAddress.AddressIn.sin_addr.S_un.S_addr, "Got zero iiAddress.\n");
+        ok(info[i].iiNetmask.AddressIn.sin_addr.S_un.S_addr, "Got zero iiNetmask.\n");
+        ok((info[i].iiFlags & IFF_BROADCAST) ? info[i].iiBroadcastAddress.AddressIn.sin_addr.S_un.S_addr
+                : !info[i].iiBroadcastAddress.AddressIn.sin_addr.S_un.S_addr,
+                "Got unexpected iiBroadcastAddress %s.\n", inet_ntoa(info[i].iiBroadcastAddress.AddressIn.sin_addr));
+    }
+
+    ok(loopback_found, "Loopback interface not found.\n");
+
     size = 0xdeadbeef;
     ret = WSAIoctl(s, SIO_GET_INTERFACE_LIST, NULL, 0, buffer, sizeof(INTERFACE_INFO) - 1, &size, NULL, NULL);
     ok(ret == -1, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
     ok(!size, "Got unexpected size %u.\n", size);
+
+    ret = WSAIoctl(s, SIO_GET_INTERFACE_LIST, NULL, 0, buffer, sizeof(buffer), NULL, NULL, NULL);
+    ok(ret == -1, "Got unexpected ret %d.\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
 
     closesocket(s);
 }
