@@ -670,6 +670,7 @@ static void export_gnutls_datum( UCHAR *buffer, ULONG length, gnutls_datum_t *d,
 {
     ULONG size = d->size;
     UCHAR *src = d->data;
+    ULONG offset;
 
     assert( size <= length + 1 );
     if (size == length + 1)
@@ -678,8 +679,17 @@ static void export_gnutls_datum( UCHAR *buffer, ULONG length, gnutls_datum_t *d,
         ++src;
         --size;
     }
-    *actual_length = size;
-    memcpy( buffer, src, size );
+    if (actual_length)
+    {
+        offset = 0;
+        *actual_length = size;
+    }
+    else
+    {
+        offset = length - size;
+        memset( buffer, 0, offset );
+    }
+    memcpy( buffer + offset, src, size );
 }
 
 static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bitlen, UCHAR **pubkey, ULONG *pubkey_len )
@@ -727,7 +737,7 @@ static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, enum alg_
     gnutls_ecc_curve_t curve;
     gnutls_datum_t x, y;
     DWORD magic, size;
-    UCHAR *src, *dst;
+    UCHAR *dst;
     int ret;
 
     switch (alg_id)
@@ -758,7 +768,7 @@ static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, enum alg_
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if (!(ecc_blob = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*ecc_blob) + x.size + y.size )))
+    if (!(ecc_blob = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*ecc_blob) + size * 2 )))
     {
         pgnutls_perror( ret );
         free( x.data ); free( y.data );
@@ -769,14 +779,10 @@ static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, enum alg_
     ecc_blob->cbKey   = size;
 
     dst = (UCHAR *)(ecc_blob + 1);
-    if (x.size == size + 1) src = x.data + 1;
-    else src = x.data;
-    memcpy( dst, src, size );
+    export_gnutls_datum( dst, size, &x, NULL );
 
     dst += size;
-    if (y.size == size + 1) src = y.data + 1;
-    else src = y.data;
-    memcpy( dst, src, size );
+    export_gnutls_datum( dst, size, &y, NULL );
 
     *pubkey = (UCHAR *)ecc_blob;
     *pubkey_len = sizeof(*ecc_blob) + ecc_blob->cbKey * 2;
