@@ -28,6 +28,7 @@
 #ifdef HAVE_GNUTLS_CIPHER_INIT
 
 #include <stdarg.h>
+#include <assert.h>
 #include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>
 #include <gnutls/abstract.h>
@@ -665,11 +666,27 @@ static void CDECL key_symmetric_destroy( struct key *key )
     if (key_data(key)->cipher) pgnutls_cipher_deinit( key_data(key)->cipher );
 }
 
+static void export_gnutls_datum( UCHAR *buffer, ULONG length, gnutls_datum_t *d, ULONG *actual_length )
+{
+    ULONG size = d->size;
+    UCHAR *src = d->data;
+
+    assert( size <= length + 1 );
+    if (size == length + 1)
+    {
+        assert(!src[0]);
+        ++src;
+        --size;
+    }
+    *actual_length = size;
+    memcpy( buffer, src, size );
+}
+
 static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bitlen, UCHAR **pubkey, ULONG *pubkey_len )
 {
     BCRYPT_RSAKEY_BLOB *rsa_blob;
     gnutls_datum_t m, e;
-    UCHAR *dst, *src;
+    UCHAR *dst;
     int ret;
 
     if ((ret = pgnutls_privkey_export_rsa_raw( gnutls_key, &m, &e, NULL, NULL, NULL, NULL, NULL, NULL )))
@@ -686,32 +703,18 @@ static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bit
     }
 
     dst = (UCHAR *)(rsa_blob + 1);
-    if (e.size == bitlen / 8 + 1 && !e.data[0])
-    {
-        src = e.data + 1;
-        e.size--;
-    }
-    else src = e.data;
-    memcpy( dst, src, e.size );
+    export_gnutls_datum( dst, bitlen / 8, &e, &rsa_blob->cbPublicExp );
 
-    dst += e.size;
-    if (m.size == bitlen / 8 + 1 && !m.data[0])
-    {
-        src = m.data + 1;
-        m.size--;
-    }
-    else src = m.data;
-    memcpy( dst, src, m.size );
+    dst += rsa_blob->cbPublicExp;
+    export_gnutls_datum( dst, bitlen / 8, &m, &rsa_blob->cbModulus );
 
     rsa_blob->Magic       = BCRYPT_RSAPUBLIC_MAGIC;
     rsa_blob->BitLength   = bitlen;
-    rsa_blob->cbPublicExp = e.size;
-    rsa_blob->cbModulus   = m.size;
     rsa_blob->cbPrime1    = 0;
     rsa_blob->cbPrime2    = 0;
 
     *pubkey = (UCHAR *)rsa_blob;
-    *pubkey_len = sizeof(*rsa_blob) + e.size + m.size;
+    *pubkey_len = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
 
     free( e.data ); free( m.data );
     return STATUS_SUCCESS;
