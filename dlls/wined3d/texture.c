@@ -4592,9 +4592,9 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
     VkCommandBuffer vk_command_buffer;
     struct wined3d_bo_vk staging_bo;
     VkImageAspectFlags aspect_mask;
-    size_t src_offset, dst_offset;
     struct wined3d_range range;
     VkBufferImageCopy region;
+    size_t src_offset;
     void *map_ptr;
 
     TRACE("context %p, src_bo_addr %s, src_format %s, src_box %s, src_row_pitch %u, src_slice_pitch %u, "
@@ -4649,9 +4649,6 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
     src_offset = src_box->front * src_slice_pitch
             + (src_box->top / src_format->block_height) * src_row_pitch
             + (src_box->left / src_format->block_width) * src_format->block_byte_count;
-    dst_offset = dst_z * src_slice_pitch
-            + (dst_y / src_format->block_height) * src_row_pitch
-            + (dst_x / src_format->block_width) * src_format->block_byte_count;
 
     if (!wined3d_context_vk_create_bo(context_vk, sub_resource->size,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &staging_bo))
@@ -4670,8 +4667,8 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
         return;
     }
 
-    wined3d_format_copy_data(src_format, src_bo_addr->addr + src_offset, src_row_pitch, src_slice_pitch,
-            (uint8_t *)map_ptr + dst_offset, dst_row_pitch, dst_slice_pitch, src_box->right - src_box->left,
+    wined3d_format_copy_data(src_format, src_bo_addr->addr + src_offset, src_row_pitch,
+            src_slice_pitch, map_ptr, dst_row_pitch, dst_slice_pitch, src_box->right - src_box->left,
             src_box->bottom - src_box->top, src_box->back - src_box->front);
 
     range.offset = 0;
@@ -4691,7 +4688,7 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
             dst_texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             dst_texture_vk->vk_image, aspect_mask);
 
-    region.bufferOffset = staging_bo.buffer_offset + dst_offset;
+    region.bufferOffset = staging_bo.buffer_offset;
     region.bufferRowLength = (dst_row_pitch / src_format->block_byte_count) * src_format->block_width;
     if (dst_row_pitch)
         region.bufferImageHeight = (dst_slice_pitch / dst_row_pitch) * src_format->block_height;
