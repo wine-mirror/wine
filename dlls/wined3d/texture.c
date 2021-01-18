@@ -4678,6 +4678,7 @@ static void wined3d_texture_vk_upload_data(struct wined3d_context *context,
     if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
     {
         ERR("Failed to get command buffer.\n");
+        wined3d_context_vk_destroy_bo(context_vk, &staging_bo);
         return;
     }
 
