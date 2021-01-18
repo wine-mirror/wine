@@ -479,6 +479,8 @@ enum glyph_prop_flags
     GLYPH_PROP_BASE = LOOKUP_FLAG_IGNORE_BASE,
     GLYPH_PROP_LIGATURE = LOOKUP_FLAG_IGNORE_LIGATURES,
     GLYPH_PROP_MARK = LOOKUP_FLAG_IGNORE_MARKS,
+    GLYPH_PROP_ZWNJ = 0x10,
+    GLYPH_PROP_ZWJ = 0x20,
 };
 
 enum gpos_lookup_type
@@ -3683,6 +3685,10 @@ static enum iterator_match glyph_iterator_may_skip(const struct glyph_iterator *
     if (!lookup_is_glyph_match(iter->context, iter->pos, iter->flags))
         return ITER_YES;
 
+    if ((iter->ignore_zwnj || !(iter->context->glyph_infos[iter->pos].props & GLYPH_PROP_ZWNJ)) &&
+            (iter->ignore_zwj || !(iter->context->glyph_infos[iter->pos].props & GLYPH_PROP_ZWJ)))
+        return ITER_MAYBE;
+
     return ITER_NO;
 }
 
@@ -5723,6 +5729,10 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
         context->u.buffer.glyphs[g] = font->get_glyph(context->cache->context, codepoint);
         context->u.buffer.glyph_props[g].justification = SCRIPT_JUSTIFY_CHARACTER;
         opentype_set_subst_glyph_props(context, g);
+        if (codepoint == 0x200d)
+            context->glyph_infos[g].props |= GLYPH_PROP_ZWJ;
+        else if (codepoint == 0x200c)
+            context->glyph_infos[g].props |= GLYPH_PROP_ZWNJ;
 
         /* Group diacritics with preceding base. Glyph class is ignored here. */
         if (!g || !opentype_is_diacritic(codepoint))
