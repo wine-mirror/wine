@@ -1143,8 +1143,8 @@ static NTSTATUS CDECL key_export_dsa_capi( struct key *key, UCHAR *buf, ULONG le
     BLOBHEADER *hdr;
     DSSPUBKEY *pubkey;
     gnutls_datum_t p, q, g, y, x;
-    UCHAR *src, *dst;
-    int i, ret, size;
+    UCHAR *dst;
+    int ret, size;
 
     if ((ret = pgnutls_privkey_export_dsa_raw( key_data(key)->privkey, &p, &q, &g, &y, &x )))
     {
@@ -1152,7 +1152,7 @@ static NTSTATUS CDECL key_export_dsa_capi( struct key *key, UCHAR *buf, ULONG le
         return STATUS_INTERNAL_ERROR;
     }
 
-    if ((q.size != 20 && q.size != 21) || (x.size != 20 && x.size != 21))
+    if (q.size > 21 || x.size > 21)
     {
         ERR( "can't export key in this format\n" );
         free( p.data ); free( q.data ); free( g.data ); free( y.data ); free( x.data );
@@ -1174,26 +1174,22 @@ static NTSTATUS CDECL key_export_dsa_capi( struct key *key, UCHAR *buf, ULONG le
         pubkey->bitlen = key->u.a.bitlen;
 
         dst = (UCHAR *)(pubkey + 1);
-        if (p.size % 2) src = p.data + 1;
-        else src = p.data;
-        for (i = 0; i < size; i++) dst[i] = src[size - i - 1];
-
+        export_gnutls_datum( dst, size, &p, NULL );
+        reverse_bytes( dst, size );
         dst += size;
-        if (q.size % 2) src = q.data + 1;
-        else src = q.data;
-        for (i = 0; i < 20; i++) dst[i] = src[20 - i - 1];
 
+        export_gnutls_datum( dst, 20, &q, NULL );
+        reverse_bytes( dst, 20 );
         dst += 20;
-        if (g.size % 2) src = g.data + 1;
-        else src = g.data;
-        for (i = 0; i < size; i++) dst[i] = src[size - i - 1];
 
+        export_gnutls_datum( dst, size, &g, NULL );
+        reverse_bytes( dst, size );
         dst += size;
-        if (x.size % 2) src = x.data + 1;
-        else src = x.data;
-        for (i = 0; i < 20; i++) dst[i] = src[20 - i - 1];
 
+        export_gnutls_datum( dst, 20, &x, NULL );
+        reverse_bytes( dst, 20 );
         dst += 20;
+
         memcpy( dst, &key->u.a.dss_seed, sizeof(key->u.a.dss_seed) );
     }
 
