@@ -5794,6 +5794,8 @@ void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, 
         const struct lookup *lookup = &lookups.lookups[i];
 
         context->lookup_mask = lookup->mask;
+        context->auto_zwnj = lookup->auto_zwnj;
+        context->auto_zwj = lookup->auto_zwj;
 
         if (!opentype_is_gsub_lookup_reversed(context, lookup))
         {
