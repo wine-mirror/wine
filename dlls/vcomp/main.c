@@ -200,7 +200,6 @@ __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
 
 extern void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, __ms_va_list args);
 __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
-                   ".arm\n\t"
                    "push {r4, r5, LR}\n\t"
                    "mov r4, r0\n\t"
                    "mov r5, SP\n\t"
@@ -209,6 +208,7 @@ __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
                    "beq 5f\n\t"
                    "sub SP, SP, r3\n\t"
                    "tst r1, #1\n\t"
+                   "it eq\n\t"
                    "subeq SP, SP, #4\n\t"
                    "1:\tsub r3, r3, #4\n\t"
                    "ldr r0, [r2, r3]\n\t"
