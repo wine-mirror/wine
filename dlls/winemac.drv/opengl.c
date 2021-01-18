@@ -741,7 +741,8 @@ static void enum_renderer_pixel_formats(renderer_properties renderer, CFMutableA
 
                         if (!(renderer.stencil_modes & depth_stencil_modes[stencil_mode].mode))
                             continue;
-                        if (accelerated && depth_stencil_modes[depth_mode].bits != 24 && stencil_mode > 0)
+                        if (accelerated && depth_stencil_modes[depth_mode].bits != 24 &&
+                            depth_stencil_modes[depth_mode].bits != 32 && stencil_mode > 0)
                             continue;
 
                         attribs[n++] = kCGLPFAStencilSize;
