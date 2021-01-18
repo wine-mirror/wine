@@ -189,12 +189,12 @@ static void shape_merge_features(struct scriptshaping_context *context, struct s
 
 HRESULT shape_get_positions(struct scriptshaping_context *context, const unsigned int *scripts)
 {
-    static const unsigned int common_features[] =
+    static const struct shaping_feature common_features[] =
     {
-        DWRITE_MAKE_OPENTYPE_TAG('a','b','v','m'),
-        DWRITE_MAKE_OPENTYPE_TAG('b','l','w','m'),
-        DWRITE_MAKE_OPENTYPE_TAG('m','a','r','k'),
-        DWRITE_MAKE_OPENTYPE_TAG('m','k','m','k'),
+        { DWRITE_MAKE_OPENTYPE_TAG('a','b','v','m') },
+        { DWRITE_MAKE_OPENTYPE_TAG('b','l','w','m') },
+        { DWRITE_MAKE_OPENTYPE_TAG('m','a','r','k'), FEATURE_MANUAL_JOINERS },
+        { DWRITE_MAKE_OPENTYPE_TAG('m','k','m','k'), FEATURE_MANUAL_JOINERS },
     };
     static const unsigned int horizontal_features[] =
     {
@@ -207,7 +207,7 @@ HRESULT shape_get_positions(struct scriptshaping_context *context, const unsigne
     struct shaping_features features = { 0 };
 
     for (i = 0; i < ARRAY_SIZE(common_features); ++i)
-        shape_add_feature(&features, common_features[i]);
+        shape_add_feature_full(&features, common_features[i].tag, FEATURE_GLOBAL | common_features[i].flags, 1);
 
     /* Horizontal features */
     if (!context->is_sideways)

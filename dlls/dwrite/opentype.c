@@ -3508,6 +3508,8 @@ struct lookup
 
     unsigned int mask;
     unsigned int offset;
+    unsigned int auto_zwnj : 1;
+    unsigned int auto_zwj : 1;
 };
 
 static unsigned int opentype_layout_get_gsubgpos_subtable(const struct scriptshaping_context *context,
@@ -4337,8 +4339,8 @@ static int lookups_sorting_compare(const void *a, const void *b)
     return left->index < right->index ? -1 : left->index > right->index ? 1 : 0;
 };
 
-static BOOL opentype_layout_init_lookup(const struct ot_gsubgpos_table *table, unsigned short lookup_index, unsigned int mask,
-        struct lookup *lookup)
+static BOOL opentype_layout_init_lookup(const struct ot_gsubgpos_table *table, unsigned short lookup_index,
+        const struct shaping_feature *feature, struct lookup *lookup)
 {
     unsigned short subtable_count, lookup_type, flags, mark_filtering_set;
     const struct ot_lookup_table *lookup_table;
@@ -4372,8 +4374,13 @@ static BOOL opentype_layout_init_lookup(const struct ot_gsubgpos_table *table, u
     lookup->type = lookup_type;
     lookup->flags = flags;
     lookup->subtable_count = subtable_count;
-    lookup->mask = mask;
     lookup->offset = offset;
+    if (feature)
+    {
+        lookup->mask = feature->mask;
+        lookup->auto_zwnj = !(feature->flags & FEATURE_MANUAL_ZWNJ);
+        lookup->auto_zwj = !(feature->flags & FEATURE_MANUAL_ZWJ);
+    }
 
     return TRUE;
 }
@@ -4409,7 +4416,7 @@ static void opentype_layout_add_lookups(const struct ot_feature_list *feature_li
         if (lookup_index >= total_lookup_count)
             continue;
 
-        if (opentype_layout_init_lookup(table, lookup_index, feature->mask, &lookups->lookups[lookups->count]))
+        if (opentype_layout_init_lookup(table, lookup_index, feature, &lookups->lookups[lookups->count]))
             lookups->count++;
     }
 }
@@ -4567,6 +4574,8 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
                 else
                 {
                     lookups->lookups[j].mask |= lookups->lookups[i].mask;
+                    lookups->lookups[j].auto_zwnj &= lookups->lookups[i].auto_zwnj;
+                    lookups->lookups[j].auto_zwj &= lookups->lookups[i].auto_zwj;
                 }
             }
             lookups->count = j + 1;
@@ -4648,8 +4657,7 @@ static void opentype_layout_set_glyph_masks(struct scriptshaping_context *contex
 static void opentype_layout_apply_gpos_context_lookup(struct scriptshaping_context *context, unsigned int lookup_index)
 {
     struct lookup lookup = { 0 };
-    /* Feature mask is intentionally zero, it's not used outside of main loop. */
-    if (opentype_layout_init_lookup(context->table, lookup_index, 0, &lookup))
+    if (opentype_layout_init_lookup(context->table, lookup_index, NULL, &lookup))
         opentype_layout_apply_gpos_lookup(context, &lookup);
 }
 
@@ -5742,8 +5750,7 @@ static BOOL opentype_is_gsub_lookup_reversed(const struct scriptshaping_context 
 static void opentype_layout_apply_gsub_context_lookup(struct scriptshaping_context *context, unsigned int lookup_index)
 {
     struct lookup lookup = { 0 };
-    /* Feature mask is intentionally zero, it's not used outside of main loop. */
-    if (opentype_layout_init_lookup(context->table, lookup_index, 0, &lookup))
+    if (opentype_layout_init_lookup(context->table, lookup_index, NULL, &lookup))
         opentype_layout_apply_gsub_lookup(context, &lookup);
 }
 

@@ -615,6 +615,9 @@ enum shaping_feature_flags
 {
     FEATURE_GLOBAL = 0x1,
     FEATURE_GLOBAL_SEARCH = 0x2,
+    FEATURE_MANUAL_ZWNJ = 0x4,
+    FEATURE_MANUAL_ZWJ = 0x8,
+    FEATURE_MANUAL_JOINERS = FEATURE_MANUAL_ZWNJ | FEATURE_MANUAL_ZWJ,
 };
 
 struct shaping_feature
