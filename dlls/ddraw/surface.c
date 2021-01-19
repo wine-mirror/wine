@@ -39,6 +39,16 @@ static BOOL ddraw_surface_is_lost(const struct ddraw_surface *surface)
             && (surface->ddraw->device_state != DDRAW_DEVICE_STATE_OK || surface->is_lost);
 }
 
+static BOOL ddraw_gdi_is_front(struct ddraw *ddraw)
+{
+    struct ddraw_surface *surface;
+
+    if (!ddraw->gdi_surface || !(surface = wined3d_texture_get_sub_resource_parent(ddraw->gdi_surface, 0)))
+        return FALSE;
+
+    return surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER;
+}
+
 /* This is slow, of course. Also, in case of locks, we can't prevent other
  * applications from drawing to the screen while we've locked the frontbuffer.
  * We'd like to do this in wined3d instead, but for that to work wined3d needs
@@ -46,6 +56,7 @@ static BOOL ddraw_surface_is_lost(const struct ddraw_surface *surface)
 HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface,
         const RECT *rect, BOOL read, unsigned int swap_interval)
 {
+    struct ddraw *ddraw = surface->ddraw;
     struct wined3d_texture *dst_texture;
     HDC surface_dc, screen_dc;
     int x, y, w, h;
@@ -53,9 +64,9 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface,
     BOOL ret;
     RECT r;
 
-    if (surface->ddraw->flags & DDRAW_SWAPPED && !read)
+    if (ddraw->flags & DDRAW_SWAPPED && !read)
     {
-        surface->ddraw->flags &= ~DDRAW_SWAPPED;
+        ddraw->flags &= ~DDRAW_SWAPPED;
         rect = NULL;
     }
 
@@ -73,7 +84,23 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface,
     if (w <= 0 || h <= 0)
         return DD_OK;
 
-    if (surface->ddraw->swapchain_window)
+    /* The interaction between ddraw and GDI drawing is not all that well
+     * documented, and somewhat arcane. In ddraw exclusive mode, GDI draws
+     * seemingly go to the *original* frontbuffer/primary surface, while ddraw
+     * draws/flips go to the *current* frontbuffer surface. The bottom line is
+     * that if the current frontbuffer is not the GDI frontbuffer, and there's
+     * e.g. a popup window in front of the ddraw swapchain window, we can't
+     * use wined3d_swapchain_present() to get the ddraw contents to the screen
+     * while in exclusive mode, since it would get obscured by the popup
+     * window. On the other hand, if the current frontbuffer *is* the GDI
+     * frontbuffer, that's what's supposed to happen; the popup should obscure
+     * (oart of) the ddraw swapchain window.
+     *
+     * This affects the "Deer Hunter" demo, which uses a popup window and GDI
+     * draws to draw part of the user interface. See also the "fswindow"
+     * sample is the DirectX 7 SDK. */
+    if (ddraw->swapchain_window && (!(ddraw->cooperative_level & DDSCL_EXCLUSIVE)
+            || ddraw->swapchain_window == GetForegroundWindow() || ddraw_gdi_is_front(ddraw)))
     {
         /* Nothing to do, we control the frontbuffer, or at least the parts we
          * care about. */
@@ -81,15 +108,15 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface,
             return DD_OK;
 
         if (swap_interval)
-            dst_texture = wined3d_swapchain_get_back_buffer(surface->ddraw->wined3d_swapchain, 0);
+            dst_texture = wined3d_swapchain_get_back_buffer(ddraw->wined3d_swapchain, 0);
         else
-            dst_texture = surface->ddraw->wined3d_frontbuffer;
+            dst_texture = ddraw->wined3d_frontbuffer;
 
         if (SUCCEEDED(hr = wined3d_texture_blt(dst_texture, 0, rect, surface->wined3d_texture,
                 surface->sub_resource_idx, rect, 0, NULL, WINED3D_TEXF_POINT)) && swap_interval)
         {
-            hr = wined3d_swapchain_present(surface->ddraw->wined3d_swapchain, rect, rect, NULL, swap_interval, 0);
-            surface->ddraw->flags |= DDRAW_SWAPPED;
+            hr = wined3d_swapchain_present(ddraw->wined3d_swapchain, rect, rect, NULL, swap_interval, 0);
+            ddraw->flags |= DDRAW_SWAPPED;
         }
         return hr;
     }
