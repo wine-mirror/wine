@@ -166,6 +166,7 @@ DEFINE_EXPECT(BindHandler);
 #define DISPID_GLOBAL_PROPARGPUTOP  0x1020
 #define DISPID_GLOBAL_THROWINT      0x1021
 #define DISPID_GLOBAL_THROWEI       0x1022
+#define DISPID_GLOBAL_VDATE         0x1023
 
 #define DISPID_GLOBAL_TESTPROPDELETE      0x2000
 #define DISPID_GLOBAL_TESTNOPROPDELETE    0x2001
@@ -966,6 +967,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         return S_OK;
     }
 
+    if(!lstrcmpW(bstrName, L"v_date")) {
+        *pid = DISPID_GLOBAL_VDATE;
+        return S_OK;
+    }
+
     if(!lstrcmpW(bstrName, L"testArgTypes")) {
         *pid = DISPID_GLOBAL_TESTARGTYPES;
         return S_OK;
@@ -1160,6 +1166,9 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
             break;
         case VT_ARRAY|VT_VARIANT:
             V_BSTR(pvarRes) = SysAllocString(L"VT_ARRAY|VT_VARIANT");
+            break;
+        case VT_DATE:
+            V_BSTR(pvarRes) = SysAllocString(L"VT_DATE");
             break;
         default:
             ok(0, "unknown vt %d\n", V_VT(pdp->rgvarg));
@@ -1505,6 +1514,26 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
     case DISPID_GLOBAL_GETSHORT:
         V_VT(pvarRes) = VT_I2;
         V_I2(pvarRes) = 10;
+        return S_OK;
+
+    case DISPID_GLOBAL_VDATE:
+        ok(wFlags == (DISPATCH_METHOD|DISPATCH_PROPERTYGET), "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(pvarRes != NULL, "pvarRes != NULL\n");
+        V_VT(pvarRes) = VT_DATE;
+        switch(V_VT(pdp->rgvarg))
+        {
+        case VT_I4:
+            V_DATE(pvarRes) = V_I4(pdp->rgvarg);
+            break;
+        case VT_R8:
+            V_DATE(pvarRes) = V_R8(pdp->rgvarg);
+            break;
+        default:
+            ok(0, "vt = %u\n", V_VT(pdp->rgvarg));
+            return E_INVALIDARG;
+        }
         return S_OK;
 
     case DISPID_GLOBAL_INTPROP:

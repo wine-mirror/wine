@@ -190,6 +190,15 @@ ok(testFunc1.arguments === null, "testFunc1.arguments = " + testFunc1.arguments)
 (tmp) = 3;
 ok(tmp === 3, "tmp = " + tmp);
 
+(function() {
+    /* VT_DATE handling */
+    var d, e;
+    ok(getVT(v_date(0)) === "VT_DATE", "vt v_date(0) = " + getVT(v_date(0)));
+    d = v_date(0);
+    e = Date.parse("Sat Dec 30 00:00:00 1899");
+    ok(getVT(d) === "VT_DATE", "vt v_date(0) = " + getVT(d));
+})();
+
 function testRecFunc(x) {
     ok(testRecFunc.arguments === arguments, "testRecFunc.arguments = " + testRecFunc.arguments);
     if(x) {
