@@ -50,7 +50,6 @@ struct dsound_render
 
     struct strmbase_sink sink;
 
-    CRITICAL_SECTION stream_cs;
     /* Signaled when the filter has completed a state change. The filter waits
      * for this event in IBaseFilter::GetState(). */
     HANDLE state_event;
@@ -374,7 +373,7 @@ static HRESULT WINAPI dsound_render_sink_Receive(struct strmbase_sink *iface, IM
     if (FAILED(hr = DSoundRender_PrepareReceive(filter, sample)))
         return hr;
 
-    EnterCriticalSection(&filter->stream_cs);
+    EnterCriticalSection(&filter->filter.stream_cs);
 
     if (filter->filter.clock && SUCCEEDED(IMediaSample_GetTime(sample, &start, &stop)))
         strmbase_passthrough_update_time(&filter->passthrough, start);
@@ -384,7 +383,7 @@ static HRESULT WINAPI dsound_render_sink_Receive(struct strmbase_sink *iface, IM
 
     hr = DSoundRender_DoRenderSample(filter, sample);
 
-    LeaveCriticalSection(&filter->stream_cs);
+    LeaveCriticalSection(&filter->filter.stream_cs);
     return hr;
 }
 
@@ -471,7 +470,7 @@ static HRESULT dsound_render_sink_eos(struct strmbase_sink *iface)
     void *buffer;
     DWORD size;
 
-    EnterCriticalSection(&filter->stream_cs);
+    EnterCriticalSection(&filter->filter.stream_cs);
 
     filter->eos = TRUE;
 
@@ -491,7 +490,7 @@ static HRESULT dsound_render_sink_eos(struct strmbase_sink *iface)
     memset(buffer, 0, size);
     IDirectSoundBuffer_Unlock(filter->dsbuffer, buffer, size, NULL, 0);
 
-    LeaveCriticalSection(&filter->stream_cs);
+    LeaveCriticalSection(&filter->filter.stream_cs);
     return S_OK;
 }
 
@@ -507,7 +506,7 @@ static HRESULT dsound_render_sink_end_flush(struct strmbase_sink *iface)
 {
     struct dsound_render *filter = impl_from_strmbase_pin(&iface->pin);
 
-    EnterCriticalSection(&filter->stream_cs);
+    EnterCriticalSection(&filter->filter.stream_cs);
 
     filter->eos = FALSE;
     strmbase_passthrough_invalidate_time(&filter->passthrough);
@@ -525,7 +524,7 @@ static HRESULT dsound_render_sink_end_flush(struct strmbase_sink *iface)
         filter->writepos = filter->buf_size;
     }
 
-    LeaveCriticalSection(&filter->stream_cs);
+    LeaveCriticalSection(&filter->filter.stream_cs);
     return S_OK;
 }
 
@@ -556,9 +555,6 @@ static void dsound_render_destroy(struct strmbase_filter *iface)
         IPin_Disconnect(filter->sink.pin.peer);
     IPin_Disconnect(&filter->sink.pin.IPin_iface);
     strmbase_sink_cleanup(&filter->sink);
-
-    filter->stream_cs.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&filter->stream_cs);
 
     CloseHandle(filter->state_event);
     CloseHandle(filter->flush_event);
@@ -1051,8 +1047,6 @@ HRESULT dsound_render_create(IUnknown *outer, IUnknown **out)
 
     strmbase_sink_init(&object->sink, &object->filter, L"Audio Input pin (rendered)", &sink_ops, NULL);
 
-    InitializeCriticalSection(&object->stream_cs);
-    object->stream_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": dsound_render.stream_cs");
     object->state_event = CreateEventW(NULL, TRUE, TRUE, NULL);
     object->flush_event = CreateEventW(NULL, TRUE, TRUE, NULL);
 
