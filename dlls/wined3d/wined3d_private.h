@@ -6043,6 +6043,15 @@ static inline void wined3d_context_vk_reference_texture(const struct wined3d_con
     texture_vk->command_buffer_id = context_vk->current_command_buffer.id;
 }
 
+static inline void wined3d_context_vk_reference_resource(const struct wined3d_context_vk *context_vk,
+        struct wined3d_resource *resource)
+{
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+        wined3d_context_vk_reference_bo(context_vk, &wined3d_buffer_vk(buffer_from_resource(resource))->bo);
+    else
+        wined3d_context_vk_reference_texture(context_vk, wined3d_texture_vk(texture_from_resource(resource)));
+}
+
 static inline void wined3d_context_vk_reference_query(const struct wined3d_context_vk *context_vk,
         struct wined3d_query_vk *query_vk)
 {
@@ -6058,36 +6067,21 @@ static inline void wined3d_context_vk_reference_sampler(const struct wined3d_con
 static inline void wined3d_context_vk_reference_rendertarget_view(const struct wined3d_context_vk *context_vk,
         struct wined3d_rendertarget_view_vk *rtv_vk)
 {
-    struct wined3d_resource *resource = rtv_vk->v.resource;
-
-    if (resource->type == WINED3D_RTYPE_BUFFER)
-        wined3d_context_vk_reference_bo(context_vk, &wined3d_buffer_vk(buffer_from_resource(resource))->bo);
-    else
-        wined3d_context_vk_reference_texture(context_vk, wined3d_texture_vk(texture_from_resource(resource)));
+    wined3d_context_vk_reference_resource(context_vk, rtv_vk->v.resource);
     rtv_vk->command_buffer_id = context_vk->current_command_buffer.id;
 }
 
 static inline void wined3d_context_vk_reference_shader_resource_view(const struct wined3d_context_vk *context_vk,
         struct wined3d_shader_resource_view_vk *srv_vk)
 {
-    struct wined3d_resource *resource = srv_vk->v.resource;
-
-    if (resource->type == WINED3D_RTYPE_BUFFER)
-        wined3d_context_vk_reference_bo(context_vk, &wined3d_buffer_vk(buffer_from_resource(resource))->bo);
-    else
-        wined3d_context_vk_reference_texture(context_vk, wined3d_texture_vk(texture_from_resource(resource)));
+    wined3d_context_vk_reference_resource(context_vk, srv_vk->v.resource);
     srv_vk->view_vk.command_buffer_id = context_vk->current_command_buffer.id;
 }
 
 static inline void wined3d_context_vk_reference_unordered_access_view(const struct wined3d_context_vk *context_vk,
         struct wined3d_unordered_access_view_vk *uav_vk)
 {
-    struct wined3d_resource *resource = uav_vk->v.resource;
-
-    if (resource->type == WINED3D_RTYPE_BUFFER)
-        wined3d_context_vk_reference_bo(context_vk, &wined3d_buffer_vk(buffer_from_resource(resource))->bo);
-    else
-        wined3d_context_vk_reference_texture(context_vk, wined3d_texture_vk(texture_from_resource(resource)));
+    wined3d_context_vk_reference_resource(context_vk, uav_vk->v.resource);
     uav_vk->view_vk.command_buffer_id = context_vk->current_command_buffer.id;
 }
 
