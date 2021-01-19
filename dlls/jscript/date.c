@@ -1918,7 +1918,7 @@ static const builtin_info_t DateInst_info = {
     NULL
 };
 
-static HRESULT create_date(script_ctx_t *ctx, jsdisp_t *object_prototype, DOUBLE time, jsdisp_t **ret)
+static HRESULT create_date(script_ctx_t *ctx, jsdisp_t *object_prototype, DOUBLE time, DateInstance **ret)
 {
     DateInstance *date;
     HRESULT hres;
@@ -1946,7 +1946,7 @@ static HRESULT create_date(script_ctx_t *ctx, jsdisp_t *object_prototype, DOUBLE
     date->daylightDate = tzi.DaylightDate;
     date->daylightBias = tzi.DaylightBias;
 
-    *ret = &date->dispex;
+    *ret = date;
     return S_OK;
 }
 
@@ -2354,7 +2354,7 @@ static HRESULT DateConstr_now(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 static HRESULT DateConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    jsdisp_t *date;
+    DateInstance *date;
     HRESULT hres;
 
     TRACE("\n");
@@ -2396,7 +2396,6 @@ static HRESULT DateConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
         /* ECMA-262 3rd Edition    15.9.3.1 */
         default: {
             double ret_date;
-            DateInstance *di;
 
             hres = date_utc(ctx, argc, argv, &ret_date);
             if(FAILED(hres))
@@ -2406,12 +2405,11 @@ static HRESULT DateConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
             if(FAILED(hres))
                 return hres;
 
-            di = date_from_jsdisp(date);
-            di->time = utc(di->time, di);
+            date->time = utc(date->time, date);
         }
         }
 
-        *r = jsval_obj(date);
+        *r = jsval_obj(&date->dispex);
         return S_OK;
 
     case INVOKE_FUNC: {
@@ -2451,7 +2449,7 @@ static const builtin_info_t DateConstr_info = {
 
 HRESULT create_date_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp_t **ret)
 {
-    jsdisp_t *date;
+    DateInstance *date;
     HRESULT hres;
 
     hres = create_date(ctx, object_prototype, 0.0, &date);
@@ -2459,8 +2457,8 @@ HRESULT create_date_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp
         return hres;
 
     hres = create_builtin_constructor(ctx, DateConstr_value, L"Date", &DateConstr_info,
-            PROPF_CONSTR|7, date, ret);
+            PROPF_CONSTR|7, &date->dispex, ret);
 
-    jsdisp_release(date);
+    jsdisp_release(&date->dispex);
     return hres;
 }
