@@ -201,6 +201,7 @@ ok(tmp === 3, "tmp = " + tmp);
     ok(getVT(d / d) === "VT_I4", "vt v_date(0) / v_date(0) = " + getVT(d / d));
     ok((+d) === e, "+v_date(0) = " + (+d) + " expected " + e);
     ok(("" + d).match(/^Sat Dec 30 00:00:00 .* 1899$/) != null, "+v_date(0) = " + d);
+    ok(d != d, "date d == d");
 
     d = v_date(2.5);
     e = Date.parse("Mon Jan 1 12:00:00 1900");
@@ -211,6 +212,7 @@ ok(tmp === 3, "tmp = " + tmp);
     e = Date.parse("Sat Mar 28 00:00:00 2015");
     ok((+d) === e, "+v_date(2015y) = " + (+d) + " expected " + e);
     ok(("" + d).match(/^Sat Mar 28 00:00:00 .* 2015$/) != null, "+v_date(2015y) = " + d);
+    ok(d != d, "date d == d");
 })();
 
 function testRecFunc(x) {

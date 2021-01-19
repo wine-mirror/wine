@@ -522,8 +522,9 @@ HRESULT jsval_strict_equal(jsval_t lval, jsval_t rval, BOOL *ret)
         *ret = !get_bool(lval) == !get_bool(rval);
         break;
     case JSV_VARIANT:
-        FIXME("VARIANT not implemented\n");
-        return E_NOTIMPL;
+        WARN("VARIANT type, returning false\n");
+        *ret = FALSE;
+        return S_OK;
     }
 
     return S_OK;
