@@ -647,7 +647,6 @@ static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
             break;
         default:
             WARN("Ignoring \"%s\" event.\n", GST_EVENT_TYPE_NAME(event));
-        case GST_EVENT_TAG:
         case GST_EVENT_QOS:
         case GST_EVENT_RECONFIGURE:
             return gst_pad_event_default(pad, parent, event);
