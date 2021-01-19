@@ -2739,7 +2739,7 @@ static DWORD receive_response( struct request *request, BOOL async )
         break;
     }
 
-    netconn_set_timeout( request->netconn, FALSE, request->receive_timeout );
+    if (request->netconn) netconn_set_timeout( request->netconn, FALSE, request->receive_timeout );
     if (request->content_length) ret = refill_buffer( request, FALSE );
 
     if (async)
