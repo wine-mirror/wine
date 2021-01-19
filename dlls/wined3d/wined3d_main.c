@@ -294,10 +294,6 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
                 wined3d_settings.shader_backend = WINED3D_SHADER_BACKEND_NONE;
             }
         }
-        else if (!get_config_key(hkey, appkey, "UseGLSL", buffer, size) && !strcmp(buffer, "disabled"))
-        {
-            wined3d_settings.shader_backend = WINED3D_SHADER_BACKEND_ARB;
-        }
         if (wined3d_settings.shader_backend == WINED3D_SHADER_BACKEND_ARB
                 || wined3d_settings.shader_backend == WINED3D_SHADER_BACKEND_NONE)
         {
