@@ -6983,7 +6983,50 @@ static FORCEINLINE void * WINAPI InterlockedExchangePointer( void *volatile *des
     return (void *)_InterlockedExchange( (long volatile*)dest, (long)val );
 }
 
-#endif
+#endif /* __i386__ */
+
+#ifdef __i386__
+
+static FORCEINLINE void MemoryBarrier(void)
+{
+    LONG dummy;
+    InterlockedOr(&dummy, 0);
+}
+
+#elif defined(__x86_64__)
+
+#pragma intrinsic(__faststorefence)
+
+void __faststorefence(void);
+
+static FORCEINLINE void MemoryBarrier(void)
+{
+    __faststorefence();
+}
+
+#elif defined(__arm__)
+
+#pragma intrinsic(__dmb)
+
+void __dmb(void);
+
+static FORCEINLINE void MemoryBarrier(void)
+{
+    __dmb(_ARM_BARRIER_SY);
+}
+
+#elif defined(__aarch64__)
+
+#pragma intrinsic(__dmb)
+
+void __dmb(void);
+
+static FORCEINLINE void MemoryBarrier(void)
+{
+    __dmb(_ARM64_BARRIER_SY);
+}
+
+#endif /* __i386__ */
 
 #elif defined(__GNUC__)
 
@@ -7066,6 +7109,11 @@ static FORCEINLINE void * WINAPI InterlockedExchangePointer( void *volatile *des
 static FORCEINLINE LONG WINAPI InterlockedOr( LONG volatile *dest, LONG val )
 {
     return __sync_fetch_and_or( dest, val );
+}
+
+static FORCEINLINE void MemoryBarrier(void)
+{
+    __sync_synchronize();
 }
 
 #endif  /* __GNUC__ */
