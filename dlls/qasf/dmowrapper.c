@@ -582,7 +582,7 @@ static HRESULT WINAPI dmo_wrapper_filter_Init(IDMOWrapperFilter *iface, REFCLSID
                 FALSE, &sinks[0].pin.IPin_iface);
     }
 
-    EnterCriticalSection(&filter->filter.csFilter);
+    EnterCriticalSection(&filter->filter.filter_cs);
 
     filter->dmo = unk;
     filter->sink_count = input_count;
@@ -591,7 +591,7 @@ static HRESULT WINAPI dmo_wrapper_filter_Init(IDMOWrapperFilter *iface, REFCLSID
     filter->sources = sources;
     filter->buffers = buffers;
 
-    LeaveCriticalSection(&filter->filter.csFilter);
+    LeaveCriticalSection(&filter->filter.filter_cs);
 
     IMediaObject_Release(dmo);
 

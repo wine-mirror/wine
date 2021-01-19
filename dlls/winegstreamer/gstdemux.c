@@ -634,16 +634,16 @@ static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
             ret = gst_base_src_perform_seek(This, event);
             break;
         case GST_EVENT_FLUSH_START:
-            EnterCriticalSection(&This->filter.csFilter);
+            EnterCriticalSection(&This->filter.filter_cs);
             if (This->reader)
                 IAsyncReader_BeginFlush(This->reader);
-            LeaveCriticalSection(&This->filter.csFilter);
+            LeaveCriticalSection(&This->filter.filter_cs);
             break;
         case GST_EVENT_FLUSH_STOP:
-            EnterCriticalSection(&This->filter.csFilter);
+            EnterCriticalSection(&This->filter.filter_cs);
             if (This->reader)
                 IAsyncReader_EndFlush(This->reader);
-            LeaveCriticalSection(&This->filter.csFilter);
+            LeaveCriticalSection(&This->filter.filter_cs);
             break;
         case GST_EVENT_QOS:
         case GST_EVENT_RECONFIGURE:
@@ -1264,7 +1264,7 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
 {
     struct parser *This = gst_pad_get_element_private(pad);
 
-    EnterCriticalSection(&This->filter.csFilter);
+    EnterCriticalSection(&This->filter.filter_cs);
     if (!activate) {
         TRACE("Deactivating\n");
         if (!This->initial)
@@ -1285,7 +1285,7 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
         else
             This->push_thread = CreateThread(NULL, 0, push_data, This, 0, NULL);
     }
-    LeaveCriticalSection(&This->filter.csFilter);
+    LeaveCriticalSection(&This->filter.filter_cs);
     return TRUE;
 }
 

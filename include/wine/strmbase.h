@@ -126,7 +126,7 @@ struct strmbase_filter
     IUnknown IUnknown_inner;
     IUnknown *outer_unk;
     LONG refcount;
-    CRITICAL_SECTION csFilter;
+    CRITICAL_SECTION filter_cs;
 
     FILTER_STATE state;
     IReferenceClock *clock;

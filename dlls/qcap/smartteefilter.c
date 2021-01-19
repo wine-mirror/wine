@@ -93,7 +93,7 @@ static HRESULT sink_get_media_type(struct strmbase_pin *base,
     TRACE("(%p)->(%d, %p)\n", This, iPosition, amt);
     if (iPosition)
         return S_FALSE;
-    EnterCriticalSection(&This->filter.csFilter);
+    EnterCriticalSection(&This->filter.filter_cs);
     if (This->sink.pin.peer)
     {
         CopyMediaType(amt, &This->sink.pin.mt);
@@ -101,7 +101,7 @@ static HRESULT sink_get_media_type(struct strmbase_pin *base,
     }
     else
         hr = S_FALSE;
-    LeaveCriticalSection(&This->filter.csFilter);
+    LeaveCriticalSection(&This->filter.filter_cs);
     return hr;
 }
 
@@ -211,19 +211,19 @@ static HRESULT WINAPI SmartTeeFilterInput_Receive(struct strmbase_sink *base, IM
      * that's possible. */
 
     /* FIXME: we should ideally do each of these in a separate thread */
-    EnterCriticalSection(&This->filter.csFilter);
+    EnterCriticalSection(&This->filter.filter_cs);
     if (This->capture.pin.peer)
         hrCapture = copy_sample(inputSample, This->capture.pAllocator, &captureSample);
-    LeaveCriticalSection(&This->filter.csFilter);
+    LeaveCriticalSection(&This->filter.filter_cs);
     if (SUCCEEDED(hrCapture) && This->capture.pMemInputPin)
         hrCapture = IMemInputPin_Receive(This->capture.pMemInputPin, captureSample);
     if (captureSample)
         IMediaSample_Release(captureSample);
 
-    EnterCriticalSection(&This->filter.csFilter);
+    EnterCriticalSection(&This->filter.filter_cs);
     if (This->preview.pin.peer)
         hrPreview = copy_sample(inputSample, This->preview.pAllocator, &previewSample);
-    LeaveCriticalSection(&This->filter.csFilter);
+    LeaveCriticalSection(&This->filter.filter_cs);
     /* No timestamps on preview stream: */
     if (SUCCEEDED(hrPreview))
         hrPreview = IMediaSample_SetTime(previewSample, NULL, NULL);
@@ -259,7 +259,7 @@ static HRESULT source_get_media_type(struct strmbase_pin *iface,
     SmartTeeFilter *filter = impl_from_strmbase_pin(iface);
     HRESULT hr = S_OK;
 
-    EnterCriticalSection(&filter->filter.csFilter);
+    EnterCriticalSection(&filter->filter.filter_cs);
 
     if (!filter->sink.pin.peer)
         hr = VFW_E_NOT_CONNECTED;
@@ -268,7 +268,7 @@ static HRESULT source_get_media_type(struct strmbase_pin *iface,
     else
         hr = VFW_S_NO_MORE_ITEMS;
 
-    LeaveCriticalSection(&filter->filter.csFilter);
+    LeaveCriticalSection(&filter->filter.filter_cs);
     return hr;
 }
 

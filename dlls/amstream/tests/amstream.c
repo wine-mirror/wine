@@ -1039,9 +1039,9 @@ static HRESULT testfilter_wait_state(struct strmbase_filter *iface, DWORD timeou
     struct testfilter *filter = impl_from_BaseFilter(iface);
     HRESULT hr;
 
-    LeaveCriticalSection(&filter->filter.csFilter);
+    LeaveCriticalSection(&filter->filter.filter_cs);
     WaitForSingleObject(filter->wait_state_event, timeout);
-    EnterCriticalSection(&filter->filter.csFilter);
+    EnterCriticalSection(&filter->filter.filter_cs);
 
     hr = filter->wait_state_hr;
 
@@ -2470,10 +2470,10 @@ static void test_set_state(void)
 
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "SetState returned prematurely.\n");
 
-    EnterCriticalSection(&source.filter.csFilter);
+    EnterCriticalSection(&source.filter.filter_cs);
     source.wait_state_hr = S_OK;
     SetEvent(source.wait_state_event);
-    LeaveCriticalSection(&source.filter.csFilter);
+    LeaveCriticalSection(&source.filter.filter_cs);
 
     ok(!WaitForSingleObject(thread, 2000), "Wait timed out.\n");
     CloseHandle(thread);

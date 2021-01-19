@@ -1304,18 +1304,18 @@ static HRESULT WINAPI VMR9FilterConfig_SetNumberOfStreams(IVMRFilterConfig9 *ifa
         return E_INVALIDARG;
     }
 
-    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
 
     if (filter->stream_count)
     {
-        LeaveCriticalSection(&filter->renderer.filter.csFilter);
+        LeaveCriticalSection(&filter->renderer.filter.filter_cs);
         WARN("Stream count is already set; returning VFW_E_WRONG_STATE.\n");
         return VFW_E_WRONG_STATE;
     }
 
     filter->stream_count = count;
 
-    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
     return S_OK;
 }
 
@@ -1325,17 +1325,17 @@ static HRESULT WINAPI VMR9FilterConfig_GetNumberOfStreams(IVMRFilterConfig9 *ifa
 
     TRACE("filter %p, count %p.\n", filter, count);
 
-    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
 
     if (!filter->stream_count)
     {
-        LeaveCriticalSection(&filter->renderer.filter.csFilter);
+        LeaveCriticalSection(&filter->renderer.filter.filter_cs);
         return VFW_E_VMR_NOT_IN_MIXER_MODE;
     }
 
     *count = filter->stream_count;
 
-    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
     return S_OK;
 }
 
@@ -1362,10 +1362,10 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
 
     TRACE("(%p/%p)->(%u)\n", iface, This, mode);
 
-    EnterCriticalSection(&This->renderer.filter.csFilter);
+    EnterCriticalSection(&This->renderer.filter.filter_cs);
     if (This->mode)
     {
-        LeaveCriticalSection(&This->renderer.filter.csFilter);
+        LeaveCriticalSection(&This->renderer.filter.filter_cs);
         return VFW_E_WRONG_STATE;
     }
 
@@ -1400,7 +1400,7 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
     case VMR9Mode_Renderless:
         break;
     default:
-        LeaveCriticalSection(&This->renderer.filter.csFilter);
+        LeaveCriticalSection(&This->renderer.filter.filter_cs);
         return E_INVALIDARG;
     }
 
@@ -1408,7 +1408,7 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
         video_window_cleanup(&This->window);
 
     This->mode = mode;
-    LeaveCriticalSection(&This->renderer.filter.csFilter);
+    LeaveCriticalSection(&This->renderer.filter.filter_cs);
     return hr;
 }
 
@@ -1507,14 +1507,14 @@ static HRESULT WINAPI VMR7WindowlessControl_SetVideoPosition(IVMRWindowlessContr
 
     TRACE("(%p/%p)->(%p, %p)\n", iface, This, source, dest);
 
-    EnterCriticalSection(&This->renderer.filter.csFilter);
+    EnterCriticalSection(&This->renderer.filter.filter_cs);
 
     if (source)
         This->window.src = *source;
     if (dest)
         This->window.dst = *dest;
 
-    LeaveCriticalSection(&This->renderer.filter.csFilter);
+    LeaveCriticalSection(&This->renderer.filter.filter_cs);
 
     return S_OK;
 }
@@ -1705,14 +1705,14 @@ static HRESULT WINAPI VMR9WindowlessControl_SetVideoPosition(IVMRWindowlessContr
 
     TRACE("filter %p, src %s, dst %s.\n", filter, wine_dbgstr_rect(src), wine_dbgstr_rect(dst));
 
-    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
 
     if (src)
         filter->window.src = *src;
     if (dst)
         filter->window.dst = *dst;
 
-    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
 
     return S_OK;
 }
@@ -1738,9 +1738,9 @@ static HRESULT WINAPI VMR9WindowlessControl_GetAspectRatioMode(IVMRWindowlessCon
 
     TRACE("filter %p, mode %p.\n", filter, mode);
 
-    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
     *mode = filter->aspect_mode;
-    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
     return S_OK;
 }
 
@@ -1750,9 +1750,9 @@ static HRESULT WINAPI VMR9WindowlessControl_SetAspectRatioMode(IVMRWindowlessCon
 
     TRACE("filter %p, mode %u.\n", filter, mode);
 
-    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
     filter->aspect_mode = mode;
-    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
     return S_OK;
 }
 
@@ -1769,11 +1769,11 @@ static HRESULT WINAPI VMR9WindowlessControl_SetVideoClippingWindow(IVMRWindowles
         return E_INVALIDARG;
     }
 
-    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
 
     if (filter->renderer.sink.pin.peer)
     {
-        LeaveCriticalSection(&filter->renderer.filter.csFilter);
+        LeaveCriticalSection(&filter->renderer.filter.filter_cs);
         WARN("Attempt to set the clipping window while connected; returning VFW_E_WRONG_STATE.\n");
         return VFW_E_WRONG_STATE;
     }
@@ -1782,7 +1782,7 @@ static HRESULT WINAPI VMR9WindowlessControl_SetVideoClippingWindow(IVMRWindowles
 
     hr = IVMRFilterConfig9_SetNumberOfStreams(&filter->IVMRFilterConfig9_iface, 4);
 
-    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
     return hr;
 }
 
@@ -1793,24 +1793,24 @@ static HRESULT WINAPI VMR9WindowlessControl_RepaintVideo(IVMRWindowlessControl9 
 
     FIXME("(%p/%p)->(...) semi-stub\n", iface, This);
 
-    EnterCriticalSection(&This->renderer.filter.csFilter);
+    EnterCriticalSection(&This->renderer.filter.filter_cs);
     if (hwnd != This->clipping_window)
     {
         ERR("Not handling changing windows yet!!!\n");
-        LeaveCriticalSection(&This->renderer.filter.csFilter);
+        LeaveCriticalSection(&This->renderer.filter.filter_cs);
         return S_OK;
     }
 
     if (!This->allocator_d3d9_dev)
     {
         ERR("No d3d9 device!\n");
-        LeaveCriticalSection(&This->renderer.filter.csFilter);
+        LeaveCriticalSection(&This->renderer.filter.filter_cs);
         return VFW_E_WRONG_STATE;
     }
 
     /* Windowless extension */
     hr = IDirect3DDevice9_Present(This->allocator_d3d9_dev, NULL, NULL, NULL, NULL);
-    LeaveCriticalSection(&This->renderer.filter.csFilter);
+    LeaveCriticalSection(&This->renderer.filter.filter_cs);
 
     return hr;
 }
@@ -1990,20 +1990,20 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AdviseSurfaceAllocator(
 
     TRACE("filter %p, cookie %#Ix, allocator %p.\n", filter, cookie, allocator);
 
-    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
 
     filter->cookie = cookie;
 
     if (filter->renderer.sink.pin.peer)
     {
-        LeaveCriticalSection(&filter->renderer.filter.csFilter);
+        LeaveCriticalSection(&filter->renderer.filter.filter_cs);
         WARN("Attempt to set allocator while connected; returning VFW_E_WRONG_STATE.\n");
         return VFW_E_WRONG_STATE;
     }
 
     if (FAILED(IVMRSurfaceAllocator9_QueryInterface(allocator, &IID_IVMRImagePresenter9, (void **)&presenter)))
     {
-        LeaveCriticalSection(&filter->renderer.filter.csFilter);
+        LeaveCriticalSection(&filter->renderer.filter.filter_cs);
         return E_NOINTERFACE;
     }
 
@@ -2016,7 +2016,7 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_AdviseSurfaceAllocator(
     filter->presenter = presenter;
     IVMRSurfaceAllocator9_AddRef(allocator);
 
-    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
     return S_OK;
 }
 
@@ -2274,9 +2274,9 @@ static HRESULT WINAPI mixer_control9_SetMixingPrefs(IVMRMixerControl9 *iface, DW
 
     FIXME("filter %p, flags %#x, stub!\n", filter, flags);
 
-    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
     filter->mixing_prefs = flags;
-    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
     return S_OK;
 }
 
@@ -2286,9 +2286,9 @@ static HRESULT WINAPI mixer_control9_GetMixingPrefs(IVMRMixerControl9 *iface, DW
 
     FIXME("filter %p, flags %p, stub!\n", filter, flags);
 
-    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
     *flags = filter->mixing_prefs;
-    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
     return S_OK;
 }
 
@@ -2428,9 +2428,9 @@ static HRESULT WINAPI aspect_ratio_control9_GetAspectRatioMode(IVMRAspectRatioCo
 
     TRACE("filter %p, mode %p.\n", filter, mode);
 
-    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
     *mode = filter->aspect_mode;
-    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
     return S_OK;
 }
 
@@ -2440,9 +2440,9 @@ static HRESULT WINAPI aspect_ratio_control9_SetAspectRatioMode(IVMRAspectRatioCo
 
     TRACE("filter %p, mode %u.\n", filter, mode);
 
-    EnterCriticalSection(&filter->renderer.filter.csFilter);
+    EnterCriticalSection(&filter->renderer.filter.filter_cs);
     filter->aspect_mode = mode;
-    LeaveCriticalSection(&filter->renderer.filter.csFilter);
+    LeaveCriticalSection(&filter->renderer.filter.filter_cs);
     return S_OK;
 }
 

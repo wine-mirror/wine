@@ -346,7 +346,7 @@ static HRESULT WINAPI AMStreamConfig_GetFormat(IAMStreamConfig *iface, AM_MEDIA_
     if (!(*mt = CoTaskMemAlloc(sizeof(**mt))))
         return E_OUTOFMEMORY;
 
-    EnterCriticalSection(&filter->filter.csFilter);
+    EnterCriticalSection(&filter->filter.filter_cs);
 
     if (filter->source.pin.peer)
     {
@@ -367,7 +367,7 @@ static HRESULT WINAPI AMStreamConfig_GetFormat(IAMStreamConfig *iface, AM_MEDIA_
         }
     }
 
-    LeaveCriticalSection(&filter->filter.csFilter);
+    LeaveCriticalSection(&filter->filter.filter_cs);
 
     if (SUCCEEDED(hr))
         strmbase_dump_media_type(*mt);

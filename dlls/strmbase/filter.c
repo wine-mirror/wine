@@ -307,7 +307,7 @@ static HRESULT WINAPI filter_Stop(IBaseFilter *iface)
 
     TRACE("filter %p %s.\n", filter, debugstr_w(filter->name));
 
-    EnterCriticalSection(&filter->csFilter);
+    EnterCriticalSection(&filter->filter_cs);
 
     if (filter->state == State_Running && filter->ops->filter_stop_stream)
         hr = filter->ops->filter_stop_stream(filter);
@@ -316,7 +316,7 @@ static HRESULT WINAPI filter_Stop(IBaseFilter *iface)
     if (SUCCEEDED(hr))
         filter->state = State_Stopped;
 
-    LeaveCriticalSection(&filter->csFilter);
+    LeaveCriticalSection(&filter->filter_cs);
 
     return hr;
 }
@@ -328,7 +328,7 @@ static HRESULT WINAPI filter_Pause(IBaseFilter *iface)
 
     TRACE("filter %p %s.\n", filter, debugstr_w(filter->name));
 
-    EnterCriticalSection(&filter->csFilter);
+    EnterCriticalSection(&filter->filter_cs);
 
     if (filter->state == State_Stopped && filter->ops->filter_init_stream)
         hr = filter->ops->filter_init_stream(filter);
@@ -337,7 +337,7 @@ static HRESULT WINAPI filter_Pause(IBaseFilter *iface)
     if (SUCCEEDED(hr))
         filter->state = State_Paused;
 
-    LeaveCriticalSection(&filter->csFilter);
+    LeaveCriticalSection(&filter->filter_cs);
 
     return hr;
 }
@@ -349,7 +349,7 @@ static HRESULT WINAPI filter_Run(IBaseFilter *iface, REFERENCE_TIME start)
 
     TRACE("filter %p %s, start %s.\n", filter, debugstr_w(filter->name), debugstr_time(start));
 
-    EnterCriticalSection(&filter->csFilter);
+    EnterCriticalSection(&filter->filter_cs);
 
     if (filter->state == State_Stopped && filter->ops->filter_init_stream)
         hr = filter->ops->filter_init_stream(filter);
@@ -358,7 +358,7 @@ static HRESULT WINAPI filter_Run(IBaseFilter *iface, REFERENCE_TIME start)
     if (SUCCEEDED(hr))
         filter->state = State_Running;
 
-    LeaveCriticalSection(&filter->csFilter);
+    LeaveCriticalSection(&filter->filter_cs);
 
     return hr;
 }
@@ -370,13 +370,13 @@ static HRESULT WINAPI filter_GetState(IBaseFilter *iface, DWORD timeout, FILTER_
 
     TRACE("filter %p %s, timeout %u, state %p.\n", filter, debugstr_w(filter->name), timeout, state);
 
-    EnterCriticalSection(&filter->csFilter);
+    EnterCriticalSection(&filter->filter_cs);
 
     if (filter->ops->filter_wait_state)
         hr = filter->ops->filter_wait_state(filter, timeout);
     *state = filter->state;
 
-    LeaveCriticalSection(&filter->csFilter);
+    LeaveCriticalSection(&filter->filter_cs);
 
     return hr;
 }
@@ -387,7 +387,7 @@ static HRESULT WINAPI filter_SetSyncSource(IBaseFilter *iface, IReferenceClock *
 
     TRACE("filter %p %s, clock %p.\n", filter, debugstr_w(filter->name), clock);
 
-    EnterCriticalSection(&filter->csFilter);
+    EnterCriticalSection(&filter->filter_cs);
 
     if (filter->clock)
         IReferenceClock_Release(filter->clock);
@@ -395,7 +395,7 @@ static HRESULT WINAPI filter_SetSyncSource(IBaseFilter *iface, IReferenceClock *
     if (filter->clock)
         IReferenceClock_AddRef(filter->clock);
 
-    LeaveCriticalSection(&filter->csFilter);
+    LeaveCriticalSection(&filter->filter_cs);
 
     return S_OK;
 }
@@ -406,13 +406,13 @@ static HRESULT WINAPI filter_GetSyncSource(IBaseFilter *iface, IReferenceClock *
 
     TRACE("filter %p %s, clock %p.\n", filter, debugstr_w(filter->name), clock);
 
-    EnterCriticalSection(&filter->csFilter);
+    EnterCriticalSection(&filter->filter_cs);
 
     *clock = filter->clock;
     if (filter->clock)
         IReferenceClock_AddRef(filter->clock);
 
-    LeaveCriticalSection(&filter->csFilter);
+    LeaveCriticalSection(&filter->filter_cs);
 
     return S_OK;
 }
@@ -467,7 +467,7 @@ static HRESULT WINAPI filter_JoinFilterGraph(IBaseFilter *iface, IFilterGraph *g
 
     TRACE("filter %p %s, graph %p, name %s.\n", filter, debugstr_w(filter->name), graph, debugstr_w(name));
 
-    EnterCriticalSection(&filter->csFilter);
+    EnterCriticalSection(&filter->filter_cs);
 
     if (name)
         lstrcpynW(filter->name, name, ARRAY_SIZE(filter->name));
@@ -476,7 +476,7 @@ static HRESULT WINAPI filter_JoinFilterGraph(IBaseFilter *iface, IFilterGraph *g
     /* The graph references us, so we cannot also reference the graph. */
     filter->graph = graph;
 
-    LeaveCriticalSection(&filter->csFilter);
+    LeaveCriticalSection(&filter->filter_cs);
 
     return S_OK;
 }
@@ -524,9 +524,9 @@ void strmbase_filter_init(struct strmbase_filter *filter, IUnknown *outer,
     filter->outer_unk = outer ? outer : &filter->IUnknown_inner;
     filter->refcount = 1;
 
-    InitializeCriticalSection(&filter->csFilter);
-    if (filter->csFilter.DebugInfo != (RTL_CRITICAL_SECTION_DEBUG *)-1)
-        filter->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": strmbase_filter.csFilter");
+    InitializeCriticalSection(&filter->filter_cs);
+    if (filter->filter_cs.DebugInfo != (RTL_CRITICAL_SECTION_DEBUG *)-1)
+        filter->filter_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": strmbase_filter.filter_cs");
     filter->clsid = *clsid;
     filter->pin_version = 1;
     filter->ops = ops;
@@ -538,7 +538,7 @@ void strmbase_filter_cleanup(struct strmbase_filter *filter)
         IReferenceClock_Release(filter->clock);
 
     filter->IBaseFilter_iface.lpVtbl = NULL;
-    if (filter->csFilter.DebugInfo != (RTL_CRITICAL_SECTION_DEBUG *)-1)
-        filter->csFilter.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&filter->csFilter);
+    if (filter->filter_cs.DebugInfo != (RTL_CRITICAL_SECTION_DEBUG *)-1)
+        filter->filter_cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&filter->filter_cs);
 }
