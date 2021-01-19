@@ -1984,13 +1984,13 @@ static void test_mutant(void)
 
     prev = 0xdeadbeef;
     status = pNtReleaseMutant(mutant, &prev);
-    ok( status == STATUS_SUCCESS, "NtQueryRelease failed %08x\n", status );
-    ok( prev == -1, "NtQueryRelease failed, expected -1, got %d\n", prev );
+    ok( status == STATUS_SUCCESS, "NtReleaseMutant failed %08x\n", status );
+    ok( prev == -1, "NtReleaseMutant failed, expected -1, got %d\n", prev );
 
     prev = 0xdeadbeef;
     status = pNtReleaseMutant(mutant, &prev);
-    ok( status == STATUS_SUCCESS, "NtQueryRelease failed %08x\n", status );
-    ok( prev == 0, "NtQueryRelease failed, expected 0, got %d\n", prev );
+    ok( status == STATUS_SUCCESS, "NtReleaseMutant failed %08x\n", status );
+    ok( prev == 0, "NtReleaseMutant failed, expected 0, got %d\n", prev );
 
     memset(&info, 0xcc, sizeof(info));
     status = pNtQueryMutant(mutant, MutantBasicInformation, &info, sizeof(info), NULL);
