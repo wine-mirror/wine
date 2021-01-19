@@ -567,9 +567,9 @@ WLDAP32_LDAP * CDECL ldap_sslinitW( PWCHAR hostname, ULONG portnumber, int secur
         url = urlify_hostnames( "ldaps://", hostnameU, portnumber );
     else
         url = urlify_hostnames( "ldap://", hostnameU, portnumber );
-
     if (!url) goto exit;
-    ldap_initialize( &ld->ld, url );
+
+    ld = create_context( url );
 
 exit:
     strfreeU( hostnameU );
