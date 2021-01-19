@@ -6898,6 +6898,9 @@ static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
 
 #pragma intrinsic(_InterlockedCompareExchange)
 #pragma intrinsic(_InterlockedCompareExchange64)
+#ifdef _WIN64
+#pragma intrinsic(_InterlockedCompareExchange128)
+#endif
 #pragma intrinsic(_InterlockedExchange)
 #pragma intrinsic(_InterlockedExchangeAdd)
 #pragma intrinsic(_InterlockedIncrement)
@@ -6905,6 +6908,9 @@ static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
 
 long      _InterlockedCompareExchange(long volatile*,long,long);
 long long _InterlockedCompareExchange64(long long volatile*,long long,long long);
+#ifdef _WIN64
+unsigned char _InterlockedCompareExchange128(volatile __int64 *, __int64, __int64, __int64 *);
+#endif
 long      _InterlockedDecrement(long volatile*);
 long      _InterlockedExchange(long volatile*,long);
 long      _InterlockedExchangeAdd(long volatile*,long);
@@ -6919,6 +6925,13 @@ static FORCEINLINE LONGLONG WINAPI InterlockedCompareExchange64( LONGLONG volati
 {
     return _InterlockedCompareExchange64( (long long volatile *)dest, compare, xchg );
 }
+
+#ifdef _WIN64
+static FORCEINLINE unsigned char WINAPI InterlockedCompareExchange128( volatile __int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare )
+{
+    return _InterlockedCompareExchange128( dest, xchg_high, xchg_low, compare );
+}
+#endif
 
 static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
 {
@@ -6982,6 +6995,23 @@ static FORCEINLINE LONGLONG WINAPI InterlockedCompareExchange64( LONGLONG volati
     return __sync_val_compare_and_swap( dest, compare, xchg );
 }
 
+#ifdef _WIN64
+static FORCEINLINE unsigned char InterlockedCompareExchange128( volatile __int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare )
+{
+#ifdef __x86_64__
+    unsigned char ret;
+    __asm__ __volatile__( "lock cmpxchg16b %0; setz %b2"
+                          : "=m" (dest[0]), "=m" (dest[1]), "=r" (ret),
+                            "=a" (compare[0]), "=d" (compare[1])
+                          : "m" (dest[0]), "m" (dest[1]), "3" (compare[0]), "4" (compare[1]),
+                            "c" (xchg_high), "b" (xchg_low) );
+    return ret;
+#else
+    return __sync_bool_compare_and_swap( (__int128 *)dest, *(__int128 *)compare, ((__int128)xchg_high << 64) | xchg_low );
+#endif
+}
+#endif
+
 static FORCEINLINE LONG WINAPI InterlockedExchange( LONG volatile *dest, LONG val )
 {
     LONG ret;
@@ -7023,38 +7053,6 @@ static FORCEINLINE void * WINAPI InterlockedExchangePointer( void *volatile *des
 }
 
 #endif  /* __GNUC__ */
-
-#ifdef _WIN64
-
-#if defined(_MSC_VER)
-
-#define InterlockedCompareExchange128 _InterlockedCompareExchange128
-unsigned char _InterlockedCompareExchange128(volatile __int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare);
-#pragma intrinsic(_InterlockedCompareExchange128)
-
-#elif defined(__x86_64__)
-
-static inline unsigned char InterlockedCompareExchange128(__int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare)
-{
-    unsigned char ret;
-    __asm__ __volatile__( "lock cmpxchg16b %0; setz %b2"
-                          : "=m" (dest[0]), "=m" (dest[1]), "=r" (ret),
-                            "=a" (compare[0]), "=d" (compare[1])
-                          : "m" (dest[0]), "m" (dest[1]), "3" (compare[0]), "4" (compare[1]),
-                            "c" (xchg_high), "b" (xchg_low) );
-    return ret;
-}
-
-#elif defined(__GNUC__)
-
-static inline unsigned char InterlockedCompareExchange128(__int64 *dest, __int64 xchg_high, __int64 xchg_low, __int64 *compare)
-{
-    return __sync_bool_compare_and_swap( (__int128 *)dest, *(__int128 *)compare, ((__int128)xchg_high << 64) | xchg_low );
-}
-
-#endif
-
-#endif /* _WIN64 */
 
 #ifdef __cplusplus
 }
