@@ -2483,3 +2483,28 @@ HRESULT variant_date_to_number(double date, double *ret)
                      make_time(st.wHour, st.wMinute, st.wSecond, st.wMilliseconds));
     return S_OK;
 }
+
+HRESULT variant_date_to_string(script_ctx_t *ctx, double date, jsstr_t **r)
+{
+    DateInstance *date_obj;
+    jsval_t val;
+    double time;
+    HRESULT hres;
+
+    hres = variant_date_to_number(date, &time);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_date(ctx, NULL, time, &date_obj);
+    if(FAILED(hres))
+        return hres;
+
+    hres = dateobj_to_string(date_obj, &val);
+    jsdisp_release(&date_obj->dispex);
+    if(FAILED(hres))
+        return hres;
+
+    assert(is_string(val));
+    *r = get_string(val);
+    return hres;
+}

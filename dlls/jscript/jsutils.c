@@ -773,9 +773,17 @@ HRESULT to_string(script_ctx_t *ctx, jsval_t val, jsstr_t **str)
     case JSV_BOOL:
         *str = jsstr_alloc(get_bool(val) ? L"true" : L"false");
         break;
-    default:
-        FIXME("unsupported %s\n", debugstr_jsval(val));
-        return E_NOTIMPL;
+    default: {
+        const VARIANT *v = get_variant(val);
+        switch(V_VT(v))
+        {
+        case VT_DATE:
+            return variant_date_to_string(ctx, V_DATE(v), str);
+        default:
+            FIXME("unsupported %s\n", debugstr_variant(v));
+            return E_NOTIMPL;
+        }
+    }
     }
 
     return *str ? S_OK : E_OUTOFMEMORY;
