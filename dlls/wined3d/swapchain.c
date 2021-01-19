@@ -1057,6 +1057,7 @@ static void wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain_vk,
             vk_access_mask_from_bind_flags(back_buffer_vk->t.resource.bind_flags),
             vk_layout, back_buffer_vk->layout,
             back_buffer_vk->vk_image, VK_IMAGE_ASPECT_COLOR_BIT);
+    back_buffer_vk->bind_mask = 0;
 
     swapchain_vk->vk_semaphores[present_idx].command_buffer_id = context_vk->current_command_buffer.id;
     wined3d_context_vk_submit_command_buffer(context_vk,

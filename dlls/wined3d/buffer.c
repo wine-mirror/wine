@@ -1561,6 +1561,37 @@ HRESULT wined3d_buffer_vk_init(struct wined3d_buffer_vk *buffer_vk, struct wined
     return wined3d_buffer_init(&buffer_vk->b, device, desc, data, parent, parent_ops, &wined3d_buffer_vk_ops);
 }
 
+void wined3d_buffer_vk_barrier(struct wined3d_buffer_vk *buffer_vk,
+        struct wined3d_context_vk *context_vk, uint32_t bind_mask)
+{
+    TRACE("buffer_vk %p, context_vk %p, bind_mask %s.\n",
+            buffer_vk, context_vk, wined3d_debug_bind_flags(bind_mask));
+
+    if (buffer_vk->bind_mask && buffer_vk->bind_mask != bind_mask)
+    {
+        const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+        VkBufferMemoryBarrier vk_barrier;
+
+        TRACE("    %s -> %s.\n",
+                wined3d_debug_bind_flags(buffer_vk->bind_mask), wined3d_debug_bind_flags(bind_mask));
+
+        vk_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+        vk_barrier.pNext = NULL;
+        vk_barrier.srcAccessMask = vk_access_mask_from_bind_flags(buffer_vk->bind_mask);
+        vk_barrier.dstAccessMask = vk_access_mask_from_bind_flags(bind_mask);
+        vk_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        vk_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        vk_barrier.buffer = buffer_vk->bo.vk_buffer;
+        vk_barrier.offset = buffer_vk->bo.buffer_offset;
+        vk_barrier.size = buffer_vk->b.resource.size;
+        VK_CALL(vkCmdPipelineBarrier(wined3d_context_vk_get_command_buffer(context_vk),
+                vk_pipeline_stage_mask_from_bind_flags(buffer_vk->bind_mask),
+                vk_pipeline_stage_mask_from_bind_flags(bind_mask),
+                0, 0, NULL, 1, &vk_barrier, 0, NULL));
+    }
+    buffer_vk->bind_mask = bind_mask;
+}
+
 HRESULT CDECL wined3d_buffer_create(struct wined3d_device *device, const struct wined3d_buffer_desc *desc,
         const struct wined3d_sub_resource_data *data, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_buffer **buffer)
