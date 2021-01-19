@@ -4494,6 +4494,7 @@ static DWORD get_interface_list(SOCKET s, void *out_buff, DWORD out_size, DWORD 
     DWORD size, interface_count = 0, ret;
     INTERFACE_INFO *info = out_buff;
     PMIB_IPADDRTABLE table = NULL;
+    struct if_nameindex *if_ni;
     DWORD status = 0;
     int fd;
 
@@ -4520,7 +4521,7 @@ static DWORD get_interface_list(SOCKET s, void *out_buff, DWORD out_size, DWORD 
     }
     if (GetIpAddrTable(table, &size, TRUE) != NO_ERROR)
     {
-        ERR("Unable to get interface table./\n");
+        ERR("Unable to get interface table.\n");
         status = WSAEINVAL;
         goto done;
     }
@@ -4532,24 +4533,36 @@ static DWORD get_interface_list(SOCKET s, void *out_buff, DWORD out_size, DWORD 
         goto done;
     }
 
+    if (!(if_ni = if_nameindex()))
+    {
+        ERR("Unable to get interface name index.\n");
+        status = WSAEINVAL;
+        goto done;
+    }
+
     for (; interface_count < table->dwNumEntries; ++interface_count, ++info)
     {
         unsigned int addr, mask;
         struct ifreq if_info;
+        unsigned int i;
 
         memset(info, 0, sizeof(*info));
 
-        if_info.ifr_ifindex = table->table[interface_count].dwIndex;
-        if (ioctl(fd, SIOCGIFNAME, &if_info) < 0)
+        for (i = 0; if_ni[i].if_index || if_ni[i].if_name; ++i)
+            if (if_ni[i].if_index == table->table[interface_count].dwIndex)
+                break;
+
+        if (!if_ni[i].if_name)
         {
-            ERR("Error obtaining interface name for ifindex %d.\n", if_info.ifr_ifindex);
+            ERR("Error obtaining interface name for ifindex %u.\n", table->table[interface_count].dwIndex);
             status = WSAEINVAL;
             break;
         }
 
+        lstrcpynA(if_info.ifr_name, if_ni[i].if_name, IFNAMSIZ);
         if (ioctl(fd, SIOCGIFFLAGS, &if_info) < 0)
         {
-            ERR("Error obtaining status flags for socket!\n");
+            ERR("Error obtaining status flags for socket.\n");
             status = WSAEINVAL;
             break;
         }
@@ -4585,7 +4598,7 @@ static DWORD get_interface_list(SOCKET s, void *out_buff, DWORD out_size, DWORD 
             info->iiBroadcastAddress.AddressIn.sin_addr.WS_s_addr = addr | ~mask;
         }
     }
-
+    if_freenameindex(if_ni);
 done:
     heap_free(table);
     *total_bytes = sizeof(INTERFACE_INFO) * interface_count;
