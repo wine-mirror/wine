@@ -5187,6 +5187,26 @@ HRESULT wined3d_texture_vk_init(struct wined3d_texture_vk *texture_vk, struct wi
             flags, device, parent, parent_ops, &texture_vk[1], &wined3d_texture_vk_ops);
 }
 
+void wined3d_texture_vk_barrier(struct wined3d_texture_vk *texture_vk,
+        struct wined3d_context_vk *context_vk, uint32_t bind_mask)
+{
+    TRACE("texture_vk %p, context_vk %p, bind_mask %s.\n",
+            texture_vk, context_vk, wined3d_debug_bind_flags(bind_mask));
+
+    if (texture_vk->bind_mask && texture_vk->bind_mask != bind_mask)
+    {
+        TRACE("    %s -> %s.\n",
+                wined3d_debug_bind_flags(texture_vk->bind_mask), wined3d_debug_bind_flags(bind_mask));
+        wined3d_context_vk_image_barrier(context_vk, wined3d_context_vk_get_command_buffer(context_vk),
+                vk_pipeline_stage_mask_from_bind_flags(texture_vk->bind_mask),
+                vk_pipeline_stage_mask_from_bind_flags(bind_mask),
+                vk_access_mask_from_bind_flags(texture_vk->bind_mask), vk_access_mask_from_bind_flags(bind_mask),
+                texture_vk->layout, texture_vk->layout, texture_vk->vk_image,
+                vk_aspect_mask_from_format(texture_vk->t.resource.format));
+    }
+    texture_vk->bind_mask = bind_mask;
+}
+
 static void ffp_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_context *context)
 {
     struct wined3d_blitter *next;
@@ -6083,7 +6103,6 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
     struct wined3d_rendertarget_view_vk *rtv_vk;
     struct wined3d_rendertarget_view *view;
     const struct wined3d_vk_info *vk_info;
-    struct wined3d_texture_vk *texture_vk;
     struct wined3d_device_vk *device_vk;
     VkCommandBuffer vk_command_buffer;
     VkRenderPassBeginInfo begin_desc;
@@ -6122,6 +6141,7 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
 
         rtv_vk = wined3d_rendertarget_view_vk(view);
         views[attachment_count] = wined3d_rendertarget_view_vk_get_image_view(rtv_vk, context_vk);
+        wined3d_rendertarget_view_vk_barrier(rtv_vk, context_vk, WINED3D_BIND_RENDER_TARGET);
 
         c = &clear_values[attachment_count].color;
         if (view->format_flags & WINED3DFMT_FLAG_INTEGER)
@@ -6156,6 +6176,7 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
 
         rtv_vk = wined3d_rendertarget_view_vk(view);
         views[attachment_count] = wined3d_rendertarget_view_vk_get_image_view(rtv_vk, context_vk);
+        wined3d_rendertarget_view_vk_barrier(rtv_vk, context_vk, WINED3D_BIND_DEPTH_STENCIL);
 
         clear_values[attachment_count].depthStencil.depth = depth;
         clear_values[attachment_count].depthStencil.stencil = stencil;
@@ -6233,26 +6254,12 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
             continue;
 
         wined3d_context_vk_reference_rendertarget_view(context_vk, wined3d_rendertarget_view_vk(view));
-        texture_vk = wined3d_texture_vk(wined3d_texture_from_resource(view->resource));
-        wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
-                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                vk_access_mask_from_bind_flags(texture_vk->t.resource.bind_flags),
-                texture_vk->layout, texture_vk->layout,
-                texture_vk->vk_image, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 
     if (depth_stencil)
     {
         view = fb->depth_stencil;
         wined3d_context_vk_reference_rendertarget_view(context_vk, wined3d_rendertarget_view_vk(view));
-        texture_vk = wined3d_texture_vk(wined3d_texture_from_resource(view->resource));
-        wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
-                VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-                vk_access_mask_from_bind_flags(texture_vk->t.resource.bind_flags),
-                texture_vk->layout, texture_vk->layout,
-                texture_vk->vk_image, vk_aspect_mask_from_format(texture_vk->t.resource.format));
     }
 }
 

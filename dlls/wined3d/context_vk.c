@@ -2161,6 +2161,7 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
 
         rtv_vk = wined3d_rendertarget_view_vk(view);
         vk_views[attachment_count] = wined3d_rendertarget_view_vk_get_image_view(rtv_vk, context_vk);
+        wined3d_rendertarget_view_vk_barrier(rtv_vk, context_vk, WINED3D_BIND_RENDER_TARGET);
         wined3d_context_vk_reference_rendertarget_view(context_vk, rtv_vk);
 
         if (view->width < fb_width)
@@ -2177,6 +2178,7 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
     {
         rtv_vk = wined3d_rendertarget_view_vk(view);
         vk_views[attachment_count] = wined3d_rendertarget_view_vk_get_image_view(rtv_vk, context_vk);
+        wined3d_rendertarget_view_vk_barrier(rtv_vk, context_vk, WINED3D_BIND_DEPTH_STENCIL);
         wined3d_context_vk_reference_rendertarget_view(context_vk, rtv_vk);
 
         if (view->width < fb_width)
@@ -2807,6 +2809,7 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
                     else
                         context_invalidate_compute_state(&context_vk->c, STATE_COMPUTE_CONSTANT_BUFFER);
                 }
+                wined3d_buffer_vk_barrier(buffer_vk, context_vk, WINED3D_BIND_CONSTANT_BUFFER);
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_SRV:
@@ -2830,6 +2833,7 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
                 {
                     wined3d_texture_load(texture_from_resource(srv->resource), &context_vk->c, FALSE);
                 }
+                wined3d_shader_resource_view_vk_barrier(srv_vk, context_vk, WINED3D_BIND_SHADER_RESOURCE);
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV:
@@ -2856,6 +2860,7 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
                     wined3d_texture_load(texture_from_resource(uav->resource), &context_vk->c, FALSE);
                     wined3d_unordered_access_view_invalidate_location(uav, ~WINED3D_LOCATION_TEXTURE_RGB);
                 }
+                wined3d_unordered_access_view_vk_barrier(uav_vk, context_vk, WINED3D_BIND_UNORDERED_ACCESS);
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV_COUNTER:
@@ -2879,6 +2884,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_rendertarget_view *dsv;
+    struct wined3d_buffer_vk *buffer_vk;
     VkSampleCountFlagBits sample_count;
     VkCommandBuffer vk_command_buffer;
     struct wined3d_buffer *buffer;
@@ -2958,8 +2964,10 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         if (!(buffer = state->streams[i].buffer))
             continue;
 
-        wined3d_buffer_load(buffer, &context_vk->c, state);
-        if (!wined3d_buffer_vk(buffer)->bo_user.valid)
+        buffer_vk = wined3d_buffer_vk(buffer);
+        wined3d_buffer_load(&buffer_vk->b, &context_vk->c, state);
+        wined3d_buffer_vk_barrier(buffer_vk, context_vk, WINED3D_BIND_VERTEX_BUFFER);
+        if (!buffer_vk->bo_user.valid)
             context_invalidate_state(&context_vk->c, STATE_STREAMSRC);
     }
 
@@ -2970,9 +2978,11 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
             if (!(buffer = state->stream_output[i].buffer))
                 continue;
 
-            wined3d_buffer_load(buffer, &context_vk->c, state);
-            wined3d_buffer_invalidate_location(buffer, ~WINED3D_LOCATION_BUFFER);
-            if (!wined3d_buffer_vk(buffer)->bo_user.valid)
+            buffer_vk = wined3d_buffer_vk(buffer);
+            wined3d_buffer_load(&buffer_vk->b, &context_vk->c, state);
+            wined3d_buffer_vk_barrier(buffer_vk, context_vk, WINED3D_BIND_STREAM_OUTPUT);
+            wined3d_buffer_invalidate_location(&buffer_vk->b, ~WINED3D_LOCATION_BUFFER);
+            if (!buffer_vk->bo_user.valid)
                 context_vk->update_stream_output = 1;
         }
         context_vk->c.transform_feedback_active = 1;
@@ -2980,13 +2990,18 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 
     if (indexed || (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_INDEXBUFFER) && state->index_buffer))
     {
-        wined3d_buffer_load(state->index_buffer, &context_vk->c, state);
-        if (!wined3d_buffer_vk(state->index_buffer)->bo_user.valid)
+        buffer_vk = wined3d_buffer_vk(state->index_buffer);
+        wined3d_buffer_load(&buffer_vk->b, &context_vk->c, state);
+        wined3d_buffer_vk_barrier(buffer_vk, context_vk, WINED3D_BIND_INDEX_BUFFER);
+        if (!buffer_vk->bo_user.valid)
             context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
     }
 
     if (indirect_vk)
+    {
         wined3d_buffer_load(&indirect_vk->b, &context_vk->c, state);
+        wined3d_buffer_vk_barrier(indirect_vk, context_vk, WINED3D_BIND_INDIRECT_BUFFER);
+    }
 
     if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
     {
@@ -3031,7 +3046,6 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_INDEXBUFFER) && state->index_buffer)
     {
-        struct wined3d_buffer_vk *buffer_vk = wined3d_buffer_vk(state->index_buffer);
         const VkDescriptorBufferInfo *buffer_info;
         VkIndexType idx_type;
 
@@ -3039,6 +3053,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
             idx_type = VK_INDEX_TYPE_UINT16;
         else
             idx_type = VK_INDEX_TYPE_UINT32;
+        buffer_vk = wined3d_buffer_vk(state->index_buffer);
         buffer_info = wined3d_buffer_vk_get_buffer_info(buffer_vk);
         wined3d_context_vk_reference_bo(context_vk, &buffer_vk->bo);
         VK_CALL(vkCmdBindIndexBuffer(vk_command_buffer, buffer_info->buffer,
@@ -3108,7 +3123,10 @@ VkCommandBuffer wined3d_context_vk_apply_compute_state(struct wined3d_context_vk
     wined3d_context_vk_load_shader_resources(context_vk, state, WINED3D_PIPELINE_COMPUTE);
 
     if (indirect_vk)
+    {
         wined3d_buffer_load_location(&indirect_vk->b, &context_vk->c, WINED3D_LOCATION_BUFFER);
+        wined3d_buffer_vk_barrier(indirect_vk, context_vk, WINED3D_BIND_INDIRECT_BUFFER);
+    }
 
     if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
     {
