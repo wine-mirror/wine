@@ -112,9 +112,9 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
         filter->current_sample = pSample;
 
         SetEvent(filter->renderer.state_event);
-        LeaveCriticalSection(&filter->renderer.csRenderLock);
+        LeaveCriticalSection(&filter->renderer.filter.stream_cs);
         WaitForMultipleObjects(2, events, FALSE, INFINITE);
-        EnterCriticalSection(&filter->renderer.csRenderLock);
+        EnterCriticalSection(&filter->renderer.filter.stream_cs);
 
         filter->current_sample = NULL;
     }
@@ -258,33 +258,33 @@ static HRESULT video_renderer_get_current_image(struct video_window *iface, LONG
     size_t image_size;
     BYTE *sample_data;
 
-    EnterCriticalSection(&filter->renderer.csRenderLock);
+    EnterCriticalSection(&filter->renderer.filter.stream_cs);
 
     bih = get_bitmap_header(&filter->renderer.sink.pin.mt);
     image_size = bih->biWidth * bih->biHeight * bih->biBitCount / 8;
 
     if (!image)
     {
-        LeaveCriticalSection(&filter->renderer.csRenderLock);
+        LeaveCriticalSection(&filter->renderer.filter.stream_cs);
         *size = sizeof(BITMAPINFOHEADER) + image_size;
         return S_OK;
     }
 
     if (filter->renderer.filter.state != State_Paused)
     {
-        LeaveCriticalSection(&filter->renderer.csRenderLock);
+        LeaveCriticalSection(&filter->renderer.filter.stream_cs);
         return VFW_E_NOT_PAUSED;
     }
 
     if (!filter->current_sample)
     {
-        LeaveCriticalSection(&filter->renderer.csRenderLock);
+        LeaveCriticalSection(&filter->renderer.filter.stream_cs);
         return E_UNEXPECTED;
     }
 
     if (*size < sizeof(BITMAPINFOHEADER) + image_size)
     {
-        LeaveCriticalSection(&filter->renderer.csRenderLock);
+        LeaveCriticalSection(&filter->renderer.filter.stream_cs);
         return E_OUTOFMEMORY;
     }
 
@@ -292,7 +292,7 @@ static HRESULT video_renderer_get_current_image(struct video_window *iface, LONG
     IMediaSample_GetPointer(filter->current_sample, &sample_data);
     memcpy((char *)image + sizeof(BITMAPINFOHEADER), sample_data, image_size);
 
-    LeaveCriticalSection(&filter->renderer.csRenderLock);
+    LeaveCriticalSection(&filter->renderer.filter.stream_cs);
     return S_OK;
 }
 

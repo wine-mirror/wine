@@ -317,9 +317,9 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
     if (filter->renderer.filter.state == State_Paused)
     {
         SetEvent(filter->renderer.state_event);
-        LeaveCriticalSection(&filter->renderer.csRenderLock);
+        LeaveCriticalSection(&filter->renderer.filter.stream_cs);
         WaitForMultipleObjects(2, events, FALSE, INFINITE);
-        EnterCriticalSection(&filter->renderer.csRenderLock);
+        EnterCriticalSection(&filter->renderer.filter.stream_cs);
     }
 
     return hr;
@@ -687,7 +687,7 @@ static HRESULT vmr_get_current_image(struct video_window *iface, LONG *size, LON
     char *dst;
     HRESULT hr;
 
-    EnterCriticalSection(&filter->renderer.csRenderLock);
+    EnterCriticalSection(&filter->renderer.filter.stream_cs);
     device = filter->allocator_d3d9_dev;
 
     bih = *get_bitmap_header(&filter->renderer.sink.pin.mt);
@@ -696,7 +696,7 @@ static HRESULT vmr_get_current_image(struct video_window *iface, LONG *size, LON
     if (!image)
     {
         *size = sizeof(BITMAPINFOHEADER) + bih.biSizeImage;
-        LeaveCriticalSection(&filter->renderer.csRenderLock);
+        LeaveCriticalSection(&filter->renderer.filter.stream_cs);
         return S_OK;
     }
 
@@ -732,7 +732,7 @@ static HRESULT vmr_get_current_image(struct video_window *iface, LONG *size, LON
 out:
     if (surface) IDirect3DSurface9_Release(surface);
     if (rt) IDirect3DSurface9_Release(rt);
-    LeaveCriticalSection(&filter->renderer.csRenderLock);
+    LeaveCriticalSection(&filter->renderer.filter.stream_cs);
     return hr;
 }
 

@@ -127,6 +127,7 @@ struct strmbase_filter
     IUnknown *outer_unk;
     LONG refcount;
     CRITICAL_SECTION filter_cs;
+    CRITICAL_SECTION stream_cs;
 
     FILTER_STATE state;
     IReferenceClock *clock;
@@ -295,7 +296,6 @@ struct strmbase_renderer
 
     struct strmbase_sink sink;
 
-    CRITICAL_SECTION csRenderLock;
     /* Signaled when the filter has completed a state change. The filter waits
      * for this event in IBaseFilter::GetState(). */
     HANDLE state_event;
