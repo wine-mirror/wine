@@ -1648,6 +1648,7 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
 {
     GstElement *element = gst_element_factory_make("decodebin", NULL);
     unsigned int i;
+    HANDLE events[2];
     int ret;
 
     if (!element)
@@ -1681,15 +1682,19 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    WaitForSingleObject(filter->no_more_pads_event, INFINITE);
+    events[0] = filter->no_more_pads_event;
+    events[1] = filter->error_event;
+    if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
+        return FALSE;
 
     for (i = 0; i < filter->source_count; ++i)
     {
         struct parser_source *pin = filter->sources[i];
-        const HANDLE events[2] = {pin->caps_event, filter->error_event};
 
         pin->seek.llDuration = pin->seek.llStop = query_duration(pin->their_src);
         pin->seek.llCurrent = 0;
+        events[0] = pin->caps_event;
+        events[1] = filter->error_event;
         if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
             return FALSE;
     }
@@ -2470,6 +2475,7 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
 {
     GstElement *element = gst_element_factory_make("avidemux", NULL);
     unsigned int i;
+    HANDLE events[2];
     int ret;
 
     if (!element)
@@ -2502,15 +2508,19 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    WaitForSingleObject(filter->no_more_pads_event, INFINITE);
+    events[0] = filter->no_more_pads_event;
+    events[1] = filter->error_event;
+    if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
+        return FALSE;
 
     for (i = 0; i < filter->source_count; ++i)
     {
         struct parser_source *pin = filter->sources[i];
-        const HANDLE events[2] = {pin->caps_event, filter->error_event};
 
         pin->seek.llDuration = pin->seek.llStop = query_duration(pin->their_src);
         pin->seek.llCurrent = 0;
+        events[0] = pin->caps_event;
+        events[1] = filter->error_event;
         if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
             return FALSE;
     }
