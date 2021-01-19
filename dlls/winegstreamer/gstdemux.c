@@ -645,11 +645,13 @@ static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
                 IAsyncReader_EndFlush(This->reader);
             LeaveCriticalSection(&This->filter.csFilter);
             break;
-        default:
-            WARN("Ignoring \"%s\" event.\n", GST_EVENT_TYPE_NAME(event));
         case GST_EVENT_QOS:
         case GST_EVENT_RECONFIGURE:
-            return gst_pad_event_default(pad, parent, event);
+            break;
+        default:
+            WARN("Ignoring \"%s\" event.\n", GST_EVENT_TYPE_NAME(event));
+            ret = FALSE;
+            break;
     }
     gst_event_unref(event);
     return ret;
@@ -729,7 +731,6 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
         }
         default:
             WARN("Ignoring \"%s\" event.\n", GST_EVENT_TYPE_NAME(event));
-            return gst_pad_event_default(pad, parent, event);
     }
     gst_event_unref(event);
     return TRUE;
