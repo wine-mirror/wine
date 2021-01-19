@@ -1157,15 +1157,6 @@ static inline void spin_wait_for_next_rwl(rwl_queue *q)
     SpinWait_dtor(&sw);
 }
 
-/* Remove when proper InterlockedOr implementation is added to wine */
-static LONG InterlockedOr(LONG *d, LONG v)
-{
-    LONG l;
-    while (~(l = *d) & v)
-        if (InterlockedCompareExchange(d, l|v, l) == l) break;
-    return l;
-}
-
 static LONG InterlockedAnd(LONG *d, LONG v)
 {
     LONG l = *d, old;

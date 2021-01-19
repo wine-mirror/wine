@@ -6905,6 +6905,7 @@ static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
 #pragma intrinsic(_InterlockedExchangeAdd)
 #pragma intrinsic(_InterlockedIncrement)
 #pragma intrinsic(_InterlockedDecrement)
+#pragma intrinsic(_InterlockedOr)
 
 long      _InterlockedCompareExchange(long volatile*,long,long);
 long long _InterlockedCompareExchange64(long long volatile*,long long,long long);
@@ -6915,6 +6916,7 @@ long      _InterlockedDecrement(long volatile*);
 long      _InterlockedExchange(long volatile*,long);
 long      _InterlockedExchangeAdd(long volatile*,long);
 long      _InterlockedIncrement(long volatile*);
+long      _InterlockedOr(long volatile *,long);
 
 static FORCEINLINE LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
 {
@@ -6951,6 +6953,11 @@ static FORCEINLINE LONG WINAPI InterlockedIncrement( LONG volatile *dest )
 static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 {
     return _InterlockedDecrement( (long volatile *)dest );
+}
+
+static FORCEINLINE LONG WINAPI InterlockedOr( LONG volatile *dest, LONG val )
+{
+    return _InterlockedOr( (long volatile *)dest, val );
 }
 
 #ifndef __i386__
@@ -7054,6 +7061,11 @@ static FORCEINLINE void * WINAPI InterlockedExchangePointer( void *volatile *des
     do ret = *dest; while (!__sync_bool_compare_and_swap( dest, ret, val ));
 #endif
     return ret;
+}
+
+static FORCEINLINE LONG WINAPI InterlockedOr( LONG volatile *dest, LONG val )
+{
+    return __sync_fetch_and_or( dest, val );
 }
 
 #endif  /* __GNUC__ */
