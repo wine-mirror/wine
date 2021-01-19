@@ -1183,7 +1183,7 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawText(ID2D1DeviceContext *if
         return;
     }
 
-    d2d_point_set(&origin, layout_rect->left, layout_rect->top);
+    d2d_point_set(&origin, min(layout_rect->left, layout_rect->right), min(layout_rect->top, layout_rect->bottom));
     ID2D1DeviceContext_DrawTextLayout(iface, origin, text_layout, brush, options);
     IDWriteTextLayout_Release(text_layout);
 }
