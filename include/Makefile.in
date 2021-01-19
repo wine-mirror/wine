@@ -746,6 +746,7 @@ SOURCES = \
 	windns.h \
 	windows.foundation.idl \
 	windows.h \
+	windows.media.speechsynthesis.idl \
 	windowscontracts.idl \
 	windowsx.h \
 	wine/debug.h \
