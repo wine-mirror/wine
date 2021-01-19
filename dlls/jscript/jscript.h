@@ -360,6 +360,7 @@ HRESULT to_object(script_ctx_t*,jsval_t,IDispatch**) DECLSPEC_HIDDEN;
 HRESULT jsval_strict_equal(jsval_t,jsval_t,BOOL*) DECLSPEC_HIDDEN;
 
 HRESULT variant_change_type(script_ctx_t*,VARIANT*,VARIANT*,VARTYPE) DECLSPEC_HIDDEN;
+HRESULT variant_date_to_number(double,double*) DECLSPEC_HIDDEN;
 
 HRESULT decode_source(WCHAR*) DECLSPEC_HIDDEN;
 

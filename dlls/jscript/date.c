@@ -2462,3 +2462,24 @@ HRESULT create_date_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp
     jsdisp_release(&date->dispex);
     return hres;
 }
+
+HRESULT variant_date_to_number(double date, double *ret)
+{
+    SYSTEMTIME st;
+    UDATE udate;
+    HRESULT hres;
+
+    hres = VarUdateFromDate(date, 0, &udate);
+    if(FAILED(hres))
+        return hres;
+
+    if(!TzSpecificLocalTimeToSystemTime(NULL, &udate.st, &st))
+        return E_FAIL;
+
+    TRACE("%uy %um %u %ud %uh %um %u.%us\n", st.wYear, st.wMonth, st.wDayOfWeek, st.wDay, st.wHour, st.wMinute,
+        st.wSecond, st.wMilliseconds);
+
+    *ret = make_date(make_day(st.wYear, st.wMonth - 1, st.wDay),
+                     make_time(st.wHour, st.wMinute, st.wSecond, st.wMilliseconds));
+    return S_OK;
+}

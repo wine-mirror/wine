@@ -611,9 +611,16 @@ HRESULT to_number(script_ctx_t *ctx, jsval_t val, double *ret)
     case JSV_BOOL:
         *ret = get_bool(val) ? 1 : 0;
         return S_OK;
-    case JSV_VARIANT:
-        FIXME("unimplemented for variant %s\n", debugstr_variant(get_variant(val)));
-        return E_NOTIMPL;
+    case JSV_VARIANT: {
+        const VARIANT *v = get_variant(val);
+        switch(V_VT(v)) {
+        case VT_DATE:
+            return variant_date_to_number(V_DATE(v), ret);
+        default:
+            FIXME("unimplemented for variant %s\n", debugstr_variant(v));
+            return E_NOTIMPL;
+        }
+    }
     };
 
     assert(0);
