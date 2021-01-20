@@ -325,6 +325,11 @@ static WCHAR *get_params_string( RTL_USER_PROCESS_PARAMETERS *params, UNICODE_ST
     return (WCHAR *)((char *)params + (UINT_PTR)str->Buffer);
 }
 
+static UINT_PTR align(UINT_PTR size, unsigned int alignment)
+{
+    return (size + (alignment - 1)) & ~(alignment - 1);
+}
+
 static UINT_PTR check_string_( int line, RTL_USER_PROCESS_PARAMETERS *params, UNICODE_STRING *str,
                                const UNICODE_STRING *expect, UINT_PTR pos )
 {
@@ -341,9 +346,9 @@ static UINT_PTR check_string_( int line, RTL_USER_PROCESS_PARAMETERS *params, UN
         ok_(__FILE__,line)( str->Buffer == NULL, "buffer not null %p\n", str->Buffer );
         return pos;
     }
-    ok_(__FILE__,line)( (UINT_PTR)str->Buffer == ((pos + sizeof(void*) - 1) & ~(sizeof(void *) - 1)) ||
+    ok_(__FILE__,line)( (UINT_PTR)str->Buffer == align(pos, sizeof(void *)) ||
                         (!expect && (UINT_PTR)str->Buffer == pos) ||  /* initial params are not aligned */
-                        broken( (UINT_PTR)str->Buffer == ((pos + 3) & ~3) ), "wrong buffer %lx/%lx\n",
+                        broken( (UINT_PTR)str->Buffer == align(pos, 4) ), "wrong buffer %lx/%lx\n",
                         (UINT_PTR)str->Buffer, pos );
     if (str->Length < str->MaximumLength)
     {
@@ -424,7 +429,7 @@ static void test_process_params(void)
     pos = check_string( params, &params->Desktop, &empty_str, pos );
     pos = check_string( params, &params->ShellInfo, &empty_str, pos );
     pos = check_string( params, &params->RuntimeInfo, &null_str, pos );
-    pos = (pos + 3) & ~3;
+    pos = align(pos, 4);
     ok( pos == params->Size || pos + 4 == params->Size,
         "wrong pos %lx/%x\n", pos, params->Size );
     pos = params->Size;
@@ -437,8 +442,8 @@ static void test_process_params(void)
         while (*str) str += lstrlenW(str) + 1;
         str++;
         pos += (str - params->Environment) * sizeof(WCHAR);
-        ok( ((pos + sizeof(void *) - 1) & ~(sizeof(void *) - 1)) == size ||
-            broken( ((pos + 3) & ~3) == size ), "wrong size %lx/%lx\n", pos, size );
+        ok( align(pos, sizeof(void *)) == size ||
+            broken( align(pos, 4) == size ), "wrong size %lx/%lx\n", pos, size );
     }
     else ok( broken(TRUE), "environment not inside block\n" ); /* <= win2k3 */
     pRtlDestroyProcessParameters( params );
@@ -478,7 +483,7 @@ static void test_process_params(void)
     pos = check_string( params, &params->Desktop, &dummy, pos );
     pos = check_string( params, &params->ShellInfo, &dummy, pos );
     pos = check_string( params, &params->RuntimeInfo, &dummy, pos );
-    pos = (pos + 3) & ~3;
+    pos = align(pos, 4);
     ok( pos == params->Size || pos + 4 == params->Size,
         "wrong pos %lx/%x\n", pos, params->Size );
     pos = params->Size;
@@ -491,8 +496,8 @@ static void test_process_params(void)
         while (*str) str += lstrlenW(str) + 1;
         str++;
         pos += (str - params->Environment) * sizeof(WCHAR);
-        ok( ((pos + sizeof(void *) - 1) & ~(sizeof(void *) - 1)) == size ||
-            broken( ((pos + 3) & ~3) == size ), "wrong size %lx/%lx\n", pos, size );
+        ok( align(pos, sizeof(void *)) == size ||
+            broken( align(pos, 4) == size ), "wrong size %lx/%lx\n", pos, size );
     }
     else ok( broken(TRUE), "environment not inside block\n" );  /* <= win2k3 */
     pRtlDestroyProcessParameters( params );
