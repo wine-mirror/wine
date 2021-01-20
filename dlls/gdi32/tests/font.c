@@ -1688,14 +1688,12 @@ static void test_GetGlyphIndices(void)
     charcount = GetGlyphIndicesW(hdc, c, ARRAY_SIZE(c), glyphs, GGI_MARK_NONEXISTING_GLYPHS);
     ok(charcount == ARRAY_SIZE(c), "got %u\n", charcount);
     ok(glyphs[0] == 0x001f || glyphs[0] == 0xffff /* Vista */, "got %#x\n", glyphs[0]);
-todo_wine
     ok(glyphs[1] == 0x001f || glyphs[1] == 0xffff /* Vista */, "got %#x\n", glyphs[1]);
 
     glyphs[0] = glyphs[1] = 0;
     charcount = GetGlyphIndicesW(hdc, c, ARRAY_SIZE(c), glyphs, 0);
     ok(charcount == ARRAY_SIZE(c), "got %u\n", charcount);
     ok(glyphs[0] == textm.tmDefaultChar || glyphs[0] == 0x20 /* CJK Windows */, "got %#x\n", glyphs[0]);
-todo_wine
     ok(glyphs[1] == textm.tmDefaultChar || glyphs[1] == 0x20 /* CJK Windows */, "got %#x\n", glyphs[1]);
 
     DeleteObject(SelectObject(hdc, hOldFont));
