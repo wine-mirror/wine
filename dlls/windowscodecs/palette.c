@@ -679,7 +679,7 @@ static HRESULT WINAPI PaletteImpl_InitializeFromBitmap(IWICPalette *palette,
     else
         rgb24_source = source;
 
-    hr = ImagingFactory_CreateInstance(&IID_IWICImagingFactory, (void **)&factory);
+    hr = create_instance(&CLSID_WICImagingFactory, &IID_IWICImagingFactory, (void **)&factory);
     if (hr != S_OK) goto fail;
 
     hr = IWICImagingFactory_CreateBitmapFromSource(factory, rgb24_source, WICBitmapCacheOnLoad, &rgb24_bitmap);

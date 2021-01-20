@@ -133,7 +133,7 @@ DECLARE_INTERFACE_(IMILUnknown2,IUnknown)
 };
 #undef INTERFACE
 
-HRESULT create_instance(CLSID *clsid, const IID *iid, void **ppv) DECLSPEC_HIDDEN;
+HRESULT create_instance(const CLSID *clsid, const IID *iid, void **ppv) DECLSPEC_HIDDEN;
 
 typedef HRESULT(*class_constructor)(REFIID,void**);
 extern HRESULT FormatConverter_CreateInstance(REFIID riid, void** ppv) DECLSPEC_HIDDEN;

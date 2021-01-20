@@ -665,7 +665,7 @@ static HRESULT WINAPI CommonDecoderFrame_Block_GetReaderByIndex(IWICMetadataBloc
         else
         {
             if (SUCCEEDED(hr))
-                hr = ImagingFactory_CreateInstance(&IID_IWICComponentFactory, (void**)&factory);
+                hr = create_instance(&CLSID_WICImagingFactory, &IID_IWICComponentFactory, (void**)&factory);
 
             if (SUCCEEDED(hr))
             {

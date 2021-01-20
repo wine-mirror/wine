@@ -206,7 +206,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     return ret;
 }
 
-HRESULT create_instance(CLSID *clsid, const IID *iid, void **ppv)
+HRESULT create_instance(const CLSID *clsid, const IID *iid, void **ppv)
 {
     int i;
 
