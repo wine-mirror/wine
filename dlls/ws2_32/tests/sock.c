@@ -2923,10 +2923,28 @@ static void test_WSAAddressToString(void)
     sockaddr.sin_family = AF_INET;
     sockaddr.sin_addr.s_addr = 0;
     sockaddr.sin_port = 0;
+    WSASetLastError( 0xdeadbeef );
     ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, output, &len );
     ok( ret == SOCKET_ERROR, "WSAAddressToStringA() returned %d, expected SOCKET_ERROR\n", ret );
     ok( WSAGetLastError() == WSAEFAULT, "WSAAddressToStringA() gave error %d, expected WSAEFAULT\n", WSAGetLastError() );
     ok( len == 8, "WSAAddressToStringA() gave length %d, expected 8\n", len );
+
+    len = 0;
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_addr.s_addr = 0;
+    sockaddr.sin_port = 0;
+    WSASetLastError( 0xdeadbeef );
+    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, NULL, &len );
+    ok( ret == SOCKET_ERROR, "got %d\n", ret );
+    ok( WSAGetLastError() == WSAEFAULT, "got %08x\n", WSAGetLastError() );
+    ok( len == 8, "got %u\n", len );
+
+    len = ARRAY_SIZE(outputW);
+    memset( outputW, 0, sizeof(outputW) );
+    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, outputW, &len );
+    ok( !ret, "WSAAddressToStringW() returned %d\n", ret );
+    ok( len == 8, "got %u\n", len );
+    ok( !wcscmp(outputW, L"0.0.0.0"), "got %s\n", wine_dbgstr_w(outputW) );
 
     for (i = 0; i < 2; i++)
     {

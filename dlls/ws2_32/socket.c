@@ -8518,30 +8518,15 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
                                 LPWSAPROTOCOL_INFOW info, LPWSTR string,
                                 LPDWORD lenstr )
 {
-    INT   ret;
-    DWORD size;
-    WCHAR buffer[54]; /* 32 digits + 7':' + '[' + '%" + 5 digits + ']:' + 5 digits + '\0' */
-    CHAR bufAddr[54];
+    INT ret;
+    char buf[54]; /* 32 digits + 7':' + '[' + '%" + 5 digits + ']:' + 5 digits + '\0' */
 
     TRACE( "(%p, %d, %p, %p, %p)\n", sockaddr, len, info, string, lenstr );
 
-    size = *lenstr;
-    ret = WSAAddressToStringA(sockaddr, len, NULL, bufAddr, &size);
+    if ((ret = WSAAddressToStringA(sockaddr, len, NULL, buf, lenstr))) return ret;
 
-    if (ret) return ret;
-
-    MultiByteToWideChar(CP_ACP, 0, bufAddr, size, buffer, ARRAY_SIZE(buffer));
-
-    if (*lenstr <  size)
-    {
-        *lenstr = size;
-        SetLastError(WSAEFAULT);
-        return SOCKET_ERROR;
-    }
-
-    TRACE("=> %s,%u bytes\n", debugstr_w(buffer), size);
-    *lenstr = size;
-    lstrcpyW( string, buffer );
+    MultiByteToWideChar(CP_ACP, 0, buf, *lenstr, string, *lenstr);
+    TRACE("=> %s,%u chars\n", debugstr_w(string), *lenstr);
     return 0;
 }
 
