@@ -373,18 +373,13 @@ static HRESULT WINAPI dsound_render_sink_Receive(struct strmbase_sink *iface, IM
     if (FAILED(hr = DSoundRender_PrepareReceive(filter, sample)))
         return hr;
 
-    EnterCriticalSection(&filter->filter.stream_cs);
-
     if (filter->filter.clock && SUCCEEDED(IMediaSample_GetTime(sample, &start, &stop)))
         strmbase_passthrough_update_time(&filter->passthrough, start);
 
     if (filter->filter.state == State_Paused)
         SetEvent(filter->state_event);
 
-    hr = DSoundRender_DoRenderSample(filter, sample);
-
-    LeaveCriticalSection(&filter->filter.stream_cs);
-    return hr;
+    return DSoundRender_DoRenderSample(filter, sample);
 }
 
 static HRESULT dsound_render_sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)

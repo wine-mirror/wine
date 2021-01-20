@@ -192,8 +192,6 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
         DeleteMediaType(mt);
     }
 
-    EnterCriticalSection(&filter->filter.stream_cs);
-
     if (filter->filter.clock && SUCCEEDED(IMediaSample_GetTime(sample, &start, &stop)))
     {
         strmbase_passthrough_update_time(&filter->passthrough, start);
@@ -229,7 +227,6 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
 
             if (ret == 1)
             {
-                LeaveCriticalSection(&filter->filter.stream_cs);
                 TRACE("Flush signaled; discarding current sample.\n");
                 return S_OK;
             }
@@ -244,8 +241,6 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
     }
 
     QualityControlRender_DoQOS(&filter->qc);
-
-    LeaveCriticalSection(&filter->filter.stream_cs);
 
     return hr;
 }

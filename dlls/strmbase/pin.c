@@ -1140,7 +1140,11 @@ static HRESULT WINAPI MemInputPin_Receive(IMemInputPin *iface, IMediaSample *sam
             debugstr_w(pin->pin.name), sample);
 
     if (pin->pFuncsTable->pfnReceive)
+    {
+        EnterCriticalSection(&pin->pin.filter->stream_cs);
         hr = pin->pFuncsTable->pfnReceive(pin, sample);
+        LeaveCriticalSection(&pin->pin.filter->stream_cs);
+    }
     return hr;
 }
 
