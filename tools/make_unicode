@@ -643,7 +643,14 @@ sub load_data()
 
         $category_table[$src] = $categories{$cat};
         $direction_table[$src] = $bidi;
-        $joining_table[$src] = $joining_types{"T"} if $cat eq "Mn" || $cat eq "Me" || $cat eq "Cf";
+        if ($cat eq "Mn" || $cat eq "Me" || $cat eq "Cf")
+        {
+            $joining_table[$src] = $joining_types{"T"};
+        }
+        else
+        {
+            $joining_table[$src] = $joining_types{"U"};
+        }
 
         if ($lower ne "")
         {
