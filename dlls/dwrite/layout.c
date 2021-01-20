@@ -5207,6 +5207,9 @@ HRESULT create_textlayout(const struct textlayout_desc *desc, IDWriteTextLayout 
 
     *layout = NULL;
 
+    if (desc->max_width < 0.0f || desc->max_height < 0.0f)
+        return E_INVALIDARG;
+
     if (!desc->format || !desc->string)
         return E_INVALIDARG;
 

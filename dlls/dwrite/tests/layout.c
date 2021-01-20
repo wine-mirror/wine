@@ -908,7 +908,7 @@ static void test_CreateTextLayout(void)
     factory = create_factory();
 
     layout = (void*)0xdeadbeef;
-    hr = IDWriteFactory_CreateTextLayout(factory, NULL, 0, NULL, 0.0, 0.0, &layout);
+    hr = IDWriteFactory_CreateTextLayout(factory, NULL, 0, NULL, 0.0f, 0.0f, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(layout == NULL, "got %p\n", layout);
 
@@ -940,6 +940,21 @@ static void test_CreateTextLayout(void)
     hr = IDWriteFactory_CreateTextLayout(factory, NULL, 0, format, 100.0f, 100.0f, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(layout == NULL, "got %p\n", layout);
+
+    layout = (void *)0xdeadbeef;
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 6, format, -100.0f, 100.0f, &layout);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(layout == NULL, "Unexpected pointer %p.\n", layout);
+
+    layout = (void *)0xdeadbeef;
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 6, format, 100.0f, -100.0f, &layout);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(layout == NULL, "Unexpected pointer %p.\n", layout);
+
+    layout = (void *)0xdeadbeef;
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 6, format, -100.0f, -100.0f, &layout);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(layout == NULL, "Unexpected pointer %p.\n", layout);
 
     hr = IDWriteFactory_CreateTextLayout(factory, L"string", 0, format, 0.0f, 0.0f, &layout);
     ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
@@ -1031,7 +1046,7 @@ static void test_CreateGdiCompatibleTextLayout(void)
     factory = create_factory();
 
     layout = (void*)0xdeadbeef;
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, NULL, 0, NULL, 0.0, 0.0, 0.0, NULL, FALSE, &layout);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, NULL, 0, NULL, 0.0f, 0.0f, 0.0f, NULL, FALSE, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(layout == NULL, "got %p\n", layout);
 
@@ -1069,6 +1084,24 @@ static void test_CreateGdiCompatibleTextLayout(void)
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, NULL, 0, format, 100.0f, 100.0f, 1.0f, NULL, FALSE, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(layout == NULL, "got %p\n", layout);
+
+    layout = (void *)0xdeadbeef;
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, format, -100.0f, 100.0f, 1.0f,
+            NULL, FALSE, &layout);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(layout == NULL, "Unexpected pointer %p.\n", layout);
+
+    layout = (void *)0xdeadbeef;
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, format, 100.0f, -100.0f, 1.0f,
+            NULL, FALSE, &layout);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(layout == NULL, "Unexpected pointer %p.\n", layout);
+
+    layout = (void *)0xdeadbeef;
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, format, -100.0f, -100.0f, 1.0f,
+            NULL, FALSE, &layout);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(layout == NULL, "Unexpected pointer %p.\n", layout);
 
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, L"string", 6, format, 100.0f, 100.0f, 1.0f, NULL,
             FALSE, &layout);
