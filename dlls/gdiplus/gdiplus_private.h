@@ -57,9 +57,9 @@ extern INT arc2polybezier(GpPointF * points, REAL x1, REAL y1, REAL x2, REAL y2,
     REAL startAngle, REAL sweepAngle) DECLSPEC_HIDDEN;
 extern REAL gdiplus_atan2(REAL dy, REAL dx) DECLSPEC_HIDDEN;
 extern GpStatus hresult_to_status(HRESULT res) DECLSPEC_HIDDEN;
-extern REAL units_to_pixels(REAL units, GpUnit unit, REAL dpi) DECLSPEC_HIDDEN;
-extern REAL pixels_to_units(REAL pixels, GpUnit unit, REAL dpi) DECLSPEC_HIDDEN;
-extern REAL units_scale(GpUnit from, GpUnit to, REAL dpi) DECLSPEC_HIDDEN;
+extern REAL units_to_pixels(REAL units, GpUnit unit, REAL dpi, BOOL printer_display) DECLSPEC_HIDDEN;
+extern REAL pixels_to_units(REAL pixels, GpUnit unit, REAL dpi, BOOL printer_display) DECLSPEC_HIDDEN;
+extern REAL units_scale(GpUnit from, GpUnit to, REAL dpi, BOOL printer_display) DECLSPEC_HIDDEN;
 
 #define WineCoordinateSpaceGdiDevice ((GpCoordinateSpace)4)
 
@@ -231,6 +231,7 @@ struct GpGraphics{
     HWND hwnd;
     BOOL owndc;
     BOOL alpha_hdc;
+    BOOL printer_display;
     GpImage *image;
     ImageType image_type;
     SmoothingMode smoothing;
@@ -413,6 +414,7 @@ struct GpMetafile{
     GpPointF auto_frame_min, auto_frame_max;
     DWORD next_object_id;
     UINT limit_dpi;
+    BOOL printer_display;
 
     /* playback */
     GpGraphics *playback_graphics;

@@ -7205,7 +7205,6 @@ static void test_printer_dc(void)
     rect.Width = pixel_per_unit_x;
     rect.Height = pixel_per_unit_y;
     match = check_rect_pixels(pixel, &rect, width, 0, &pt);
-    todo_wine
     ok(match, "Expected pixel (%u, %u) to be %08x, got %08x\n",
        pt.X, pt.Y, 0, pixel[pt.X + pt.Y * width]);
 
@@ -7215,7 +7214,6 @@ static void test_printer_dc(void)
     rect.Width = pixel_per_unit_x;
     rect.Height = pixel_per_unit_y;
     match = check_rect_pixels(pixel, &rect, width, 0x00ffffff, &pt);
-    todo_wine
     ok(match, "Expected pixel (%u, %u) to be %08x, got %08x\n",
        pt.X, pt.Y, 0x00ffffff, pixel[pt.X + pt.Y * width]);
 

@@ -2195,8 +2195,10 @@ GpStatus WINGDIPAPI GdipGetImageDimension(GpImage *image, REAL *width,
         return InvalidParameter;
 
     if(image->type == ImageTypeMetafile){
-        *height = units_to_pixels(((GpMetafile*)image)->bounds.Height, ((GpMetafile*)image)->unit, image->yres);
-        *width = units_to_pixels(((GpMetafile*)image)->bounds.Width, ((GpMetafile*)image)->unit, image->xres);
+        *height = units_to_pixels(((GpMetafile*)image)->bounds.Height, ((GpMetafile*)image)->unit,
+                                  image->yres, ((GpMetafile*)image)->printer_display);
+        *width = units_to_pixels(((GpMetafile*)image)->bounds.Width, ((GpMetafile*)image)->unit,
+                                 image->xres, ((GpMetafile*)image)->printer_display);
     }
     else if(image->type == ImageTypeBitmap){
         *height = ((GpBitmap*)image)->height;
@@ -2257,7 +2259,8 @@ GpStatus WINGDIPAPI GdipGetImageHeight(GpImage *image, UINT *height)
         return InvalidParameter;
 
     if(image->type == ImageTypeMetafile)
-        *height = units_to_pixels(((GpMetafile*)image)->bounds.Height, ((GpMetafile*)image)->unit, image->yres);
+        *height = units_to_pixels(((GpMetafile*)image)->bounds.Height, ((GpMetafile*)image)->unit,
+                                  image->yres, ((GpMetafile*)image)->printer_display);
     else if(image->type == ImageTypeBitmap)
         *height = ((GpBitmap*)image)->height;
     else
@@ -2366,7 +2369,8 @@ GpStatus WINGDIPAPI GdipGetImageWidth(GpImage *image, UINT *width)
         return InvalidParameter;
 
     if(image->type == ImageTypeMetafile)
-        *width = units_to_pixels(((GpMetafile*)image)->bounds.Width, ((GpMetafile*)image)->unit, image->xres);
+        *width = units_to_pixels(((GpMetafile*)image)->bounds.Width, ((GpMetafile*)image)->unit,
+                                 image->xres, ((GpMetafile*)image)->printer_display);
     else if(image->type == ImageTypeBitmap)
         *width = ((GpBitmap*)image)->width;
     else
