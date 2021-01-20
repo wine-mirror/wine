@@ -22,6 +22,7 @@
 
 #include "objbase.h"
 #include "gdiplus.h"
+#include "winspool.h"
 #include "wine/test.h"
 
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
@@ -3457,6 +3458,86 @@ static void test_lineargradient(void)
     GdipDisposeImage((GpImage*)metafile);
 }
 
+static HDC create_printer_dc(void)
+{
+    char buffer[260];
+    DWORD len;
+    PRINTER_INFO_2A *pbuf = NULL;
+    DRIVER_INFO_3A *dbuf = NULL;
+    HANDLE hprn = 0;
+    HDC hdc = 0;
+    HMODULE winspool = LoadLibraryA("winspool.drv");
+    BOOL (WINAPI *pOpenPrinterA)(LPSTR, HANDLE *, LPPRINTER_DEFAULTSA);
+    BOOL (WINAPI *pGetDefaultPrinterA)(LPSTR, LPDWORD);
+    BOOL (WINAPI *pGetPrinterA)(HANDLE, DWORD, LPBYTE, DWORD, LPDWORD);
+    BOOL (WINAPI *pGetPrinterDriverA)(HANDLE, LPSTR, DWORD, LPBYTE, DWORD, LPDWORD);
+    BOOL (WINAPI *pClosePrinter)(HANDLE);
+
+    pGetDefaultPrinterA = (void *)GetProcAddress(winspool, "GetDefaultPrinterA");
+    pOpenPrinterA = (void *)GetProcAddress(winspool, "OpenPrinterA");
+    pGetPrinterA = (void *)GetProcAddress(winspool, "GetPrinterA");
+    pGetPrinterDriverA = (void *)GetProcAddress(winspool, "GetPrinterDriverA");
+    pClosePrinter = (void *)GetProcAddress(winspool, "ClosePrinter");
+
+    if (!pGetDefaultPrinterA || !pOpenPrinterA || !pGetPrinterA || !pGetPrinterDriverA || !pClosePrinter)
+        goto done;
+
+    len = sizeof(buffer);
+    if (!pGetDefaultPrinterA(buffer, &len)) goto done;
+    if (!pOpenPrinterA(buffer, &hprn, NULL)) goto done;
+
+    pGetPrinterA(hprn, 2, NULL, 0, &len);
+    pbuf = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!pGetPrinterA(hprn, 2, (LPBYTE)pbuf, len, &len)) goto done;
+
+    pGetPrinterDriverA(hprn, NULL, 3, NULL, 0, &len);
+    dbuf = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!pGetPrinterDriverA(hprn, NULL, 3, (LPBYTE)dbuf, len, &len)) goto done;
+
+    hdc = CreateDCA(dbuf->pDriverPath, pbuf->pPrinterName, pbuf->pPortName, pbuf->pDevMode);
+    trace("hdc %p for driver '%s' printer '%s' port '%s'\n", hdc,
+          dbuf->pDriverPath, pbuf->pPrinterName, pbuf->pPortName);
+done:
+    HeapFree(GetProcessHeap(), 0, dbuf);
+    HeapFree(GetProcessHeap(), 0, pbuf);
+    if (hprn) pClosePrinter(hprn);
+    if (winspool) FreeLibrary(winspool);
+    return hdc;
+}
+
+static void test_printer_dc(void)
+{
+    HDC hdc;
+    Status status;
+    RectF frame = { 0.0, 0.0, 1.0, 1.0 };
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    REAL dpix, dpiy;
+
+    hdc = create_printer_dc();
+    if (!hdc)
+    {
+        skip("could not create a DC for the default printer\n");
+        return;
+    }
+
+    status = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitInch, L"winetest", &metafile);
+    expect(Ok, status);
+
+    status = GdipGetImageGraphicsContext((GpImage *)metafile, &graphics);
+    expect(Ok, status);
+
+    GdipGetDpiX(graphics, &dpix);
+    GdipGetDpiX(graphics, &dpiy);
+    todo_wine {
+    expectf((REAL)(GetDeviceCaps(hdc, LOGPIXELSX)), dpix);
+    expectf((REAL)(GetDeviceCaps(hdc, LOGPIXELSY)), dpiy);
+    }
+
+    GdipDeleteGraphics(graphics);
+    GdipDisposeImage((GpImage *)metafile);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3510,6 +3591,7 @@ START_TEST(metafile)
     test_unknownfontdecode();
     test_fillregion();
     test_lineargradient();
+    test_printer_dc();
 
     GdiplusShutdown(gdiplusToken);
 }
