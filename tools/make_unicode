@@ -1603,10 +1603,6 @@ sub dump_bracket($)
 sub dump_shaping($)
 {
     my $filename = shift;
-    my %groups;
-    my $next_group = 0;
-
-    $groups{"No_Joining_Group"} = $next_group++;
 
     my $INPUT = open_data_file( $UNIDATA, "ArabicShaping.txt" );
     while (<$INPUT>)
@@ -1617,9 +1613,7 @@ sub dump_shaping($)
         if (/^\s*([0-9a-fA-F]+)\s*;.*;\s*([RLDCUT])\s*;\s*(\w+)/)
         {
             my $type = $2;
-            my $group = $3;
-            $groups{$group} = $next_group++ unless defined $groups{$group};
-            $joining_table[hex $1] = $joining_types{$type} | ($groups{$group} << 8);
+            $joining_table[hex $1] = $joining_types{$type};
             next;
         }
         die "malformed line $_";
