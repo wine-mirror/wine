@@ -89,13 +89,16 @@ extern const unsigned short indic_syllabic_table[] DECLSPEC_HIDDEN;
 extern const unsigned short wine_shaping_table[] DECLSPEC_HIDDEN;
 extern const unsigned short wine_shaping_forms[LAST_ARABIC_CHAR - FIRST_ARABIC_CHAR + 1][4] DECLSPEC_HIDDEN;
 
-enum joining_types {
-    jtU,
-    jtT,
-    jtR,
-    jtL,
-    jtD,
-    jtC
+enum joining_types
+{
+    jtU = 0,
+    jtL = 1,
+    jtR = 2,
+    jtD = 3,
+    jtC = jtD,
+    jgALAPH = 4,
+    jgDALATH_RISH = 5,
+    jtT = 6,
 };
 
 enum joined_forms {
@@ -988,12 +991,12 @@ static CHAR neighbour_joining_type(int i, int delta, const CHAR* context_type, I
 
 static inline BOOL right_join_causing(CHAR joining_type)
 {
-    return (joining_type == jtL || joining_type == jtD || joining_type == jtC);
+    return joining_type == jtL || joining_type == jtD;
 }
 
 static inline BOOL left_join_causing(CHAR joining_type)
 {
-    return (joining_type == jtR || joining_type == jtD || joining_type == jtC);
+    return joining_type == jtR || joining_type == jtD;
 }
 
 static inline BOOL word_break_causing(WCHAR chr)

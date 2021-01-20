@@ -417,12 +417,14 @@ my %bidi_types =
 
 my %joining_types =
 (
-   "U" => 0,    # Non_Joining
-   "T" => 1,    # Transparent
-   "R" => 2,    # Right_Joining
-   "L" => 3,    # Left_Joining
-   "D" => 4,    # Dual_Joining
-   "C" => 5,    # Join_Causing
+   "U" => 0,           # Non_Joining
+   "L" => 1,           # Left_Joining
+   "R" => 2,           # Right_Joining
+   "D" => 3,           # Dual_Joining
+   "C" => 3,           # Join_Causing
+   "ALAPH" => 4,       # Syriac ALAPH
+   "DALATH RISH" => 5, # Syriac DALATH RISH group
+   "T" => 6,           # Transparent
 );
 
 my @cp2uni = ();
