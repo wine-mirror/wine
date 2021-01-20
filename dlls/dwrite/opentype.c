@@ -4518,7 +4518,10 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
         if ((feature->flags & FEATURE_GLOBAL) && feature->max_value == 1)
             bits_needed = 0;
         else
+        {
             BitScanReverse(&bits_needed, min(feature->max_value, 256));
+            bits_needed++;
+        }
 
         if (!feature->max_value || next_bit + bits_needed > 8 * sizeof (feature->mask))
             continue;
