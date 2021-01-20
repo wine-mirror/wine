@@ -38,7 +38,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 struct acm_wrapper
 {
     struct strmbase_filter filter;
-    CRITICAL_SECTION stream_cs;
 
     struct strmbase_source source;
     IQualityControl source_IQualityControl_iface;
@@ -108,13 +107,10 @@ static HRESULT WINAPI acm_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
     if (This->sink.flushing)
         return S_FALSE;
 
-    EnterCriticalSection(&This->stream_cs);
-
     hr = IMediaSample_GetPointer(pSample, &pbSrcStream);
     if (FAILED(hr))
     {
         ERR("Cannot get pointer to sample data (%x)\n", hr);
-        LeaveCriticalSection(&This->stream_cs);
         return hr;
     }
 
@@ -150,7 +146,6 @@ static HRESULT WINAPI acm_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
         if (FAILED(hr))
         {
             ERR("Unable to get delivery buffer (%x)\n", hr);
-            LeaveCriticalSection(&This->stream_cs);
             return hr;
         }
         IMediaSample_SetPreroll(pOutSample, preroll);
@@ -267,7 +262,6 @@ error:
     This->lasttime_real = tStop;
     This->lasttime_sent = tMed;
 
-    LeaveCriticalSection(&This->stream_cs);
     return hr;
 }
 
@@ -487,8 +481,6 @@ static void acm_wrapper_destroy(struct strmbase_filter *iface)
     strmbase_source_cleanup(&filter->source);
     strmbase_passthrough_cleanup(&filter->passthrough);
 
-    filter->stream_cs.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&filter->stream_cs);
     FreeMediaType(&filter->mt);
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
@@ -531,9 +523,6 @@ HRESULT acm_wrapper_create(IUnknown *outer, IUnknown **out)
         return E_OUTOFMEMORY;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_ACMWrapper, &filter_ops);
-
-    InitializeCriticalSection(&object->stream_cs);
-    object->stream_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__": acm_wrapper.stream_cs");
 
     strmbase_sink_init(&object->sink, &object->filter, L"In", &sink_ops, NULL);
 
