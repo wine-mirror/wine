@@ -45,8 +45,52 @@ HRESULT disable_restore( IWbemClassObject *obj, IWbemClassObject *in, IWbemClass
 
 HRESULT enable_restore( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
 {
-    FIXME("stub\n");
-    return S_OK;
+    VARIANT drive, retval;
+    IWbemClassObject *sig, *out_params = NULL;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", in, out);
+
+    hr = IWbemClassObject_Get( in, L"Drive", 0, &drive, NULL, NULL );
+    if (hr != S_OK) return hr;
+
+    hr = create_signature( L"SystemRestore", L"Enable", PARAM_OUT, &sig );
+    if (hr != S_OK)
+    {
+        VariantClear( &drive );
+        return hr;
+    }
+
+    if (out)
+    {
+        hr = IWbemClassObject_SpawnInstance( sig, 0, &out_params );
+        if (hr != S_OK)
+        {
+            VariantClear( &drive );
+            IWbemClassObject_Release( sig );
+            return hr;
+        }
+    }
+
+    FIXME("%s: stub\n", wine_dbgstr_variant(&drive));
+
+    VariantClear( &drive );
+    IWbemClassObject_Release( sig );
+
+    if (out_params)
+    {
+        set_variant( VT_UI4, ERROR_SUCCESS, NULL, &retval );
+        hr = IWbemClassObject_Put( out_params, L"ReturnValue", 0, &retval, CIM_UINT32 );
+    }
+
+    if (hr == S_OK && out)
+    {
+        *out = out_params;
+        IWbemClassObject_AddRef( out_params );
+    }
+    if (out_params) IWbemClassObject_Release( out_params );
+
+    return hr;
 }
 
 HRESULT get_last_restore_status( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )

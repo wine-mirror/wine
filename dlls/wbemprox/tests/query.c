@@ -1805,7 +1805,7 @@ static void test_SystemRestore( IWbemServices *services )
     out = NULL;
     hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, in, &out, NULL );
     ok( hr == S_OK || hr == WBEM_E_ACCESS_DENIED, "failed to execute method %08x\n", hr );
-    if (hr == S_OK && out)
+    if (hr == S_OK)
     {
         VariantInit( &var );
         hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &var, NULL, NULL );
