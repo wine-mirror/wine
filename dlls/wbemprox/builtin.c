@@ -406,6 +406,20 @@ static const struct column col_systemsecurity[] =
     { L"GetSD", CIM_FLAG_ARRAY|COL_FLAG_METHOD },
     { L"SetSD", CIM_FLAG_ARRAY|COL_FLAG_METHOD },
 };
+static const struct column col_sysrestore[] =
+{
+    { L"CreationTime",         CIM_STRING },
+    { L"Description",          CIM_STRING },
+    { L"EventType",            CIM_UINT32 },
+    { L"RestorePointType",     CIM_UINT32 },
+    { L"SequenceNumber",       CIM_UINT32 },
+    /* methods */
+    { L"CreateRestorePoint",   CIM_FLAG_ARRAY|COL_FLAG_METHOD },
+    { L"Disable",              CIM_FLAG_ARRAY|COL_FLAG_METHOD },
+    { L"Enable",               CIM_FLAG_ARRAY|COL_FLAG_METHOD },
+    { L"GetLastRestoreStatus", CIM_FLAG_ARRAY|COL_FLAG_METHOD },
+    { L"Restore",              CIM_FLAG_ARRAY|COL_FLAG_METHOD },
+};
 static const struct column col_videocontroller[] =
 {
     { L"AdapterCompatibility",        CIM_STRING },
@@ -783,6 +797,19 @@ struct record_stdregprov
     class_method *enumvalues;
     class_method *getstringvalue;
 };
+struct record_sysrestore
+{
+    const WCHAR  *creation_time;
+    const WCHAR  *description;
+    UINT32        event_type;
+    UINT32        restore_point_type;
+    UINT32        sequence_number;
+    class_method *create_restore_point;
+    class_method *disable_restore;
+    class_method *enable_restore;
+    class_method *get_last_restore_status;
+    class_method *restore;
+};
 struct record_systemsecurity
 {
     class_method *getsd;
@@ -865,6 +892,10 @@ static const struct record_param data_param[] =
     { L"StdRegProv", L"GetStringValue", 1, L"sValueName", CIM_STRING },
     { L"StdRegProv", L"GetStringValue", -1, L"ReturnValue", CIM_UINT32 },
     { L"StdRegProv", L"GetStringValue", -1, L"sValue", CIM_STRING },
+    { L"SystemRestore", L"Disable", 1, L"Drive", CIM_STRING },
+    { L"SystemRestore", L"Disable", -1, L"ReturnValue", CIM_UINT32 },
+    { L"SystemRestore", L"Enable", 1, L"Drive", CIM_STRING },
+    { L"SystemRestore", L"Enable", -1, L"ReturnValue", CIM_UINT32 },
     { L"Win32_Process", L"GetOwner", -1, L"ReturnValue", CIM_UINT32 },
     { L"Win32_Process", L"GetOwner", -1, L"User", CIM_STRING },
     { L"Win32_Process", L"GetOwner", -1, L"Domain", CIM_STRING },
@@ -895,6 +926,12 @@ static const struct record_stdregprov data_stdregprov[] =
 {
     { reg_create_key, reg_enum_key, reg_enum_values, reg_get_stringvalue }
 };
+
+static const struct record_sysrestore data_sysrestore[] =
+{
+    { NULL, NULL, 0, 0, 0, create_restore_point, disable_restore, enable_restore, get_last_restore_status, restore }
+};
+
 static UINT16 systemenclosure_chassistypes[] =
 {
     1,
@@ -3981,6 +4018,7 @@ static struct table builtin_classes[] =
     { L"CIM_LogicalDisk", C(col_logicaldisk), 0, 0, NULL, fill_logicaldisk },
     { L"CIM_Processor", C(col_processor), 0, 0, NULL, fill_processor },
     { L"StdRegProv", C(col_stdregprov), D(data_stdregprov) },
+    { L"SystemRestore", C(col_sysrestore), D(data_sysrestore) },
     { L"Win32_BIOS", C(col_bios), 0, 0, NULL, fill_bios },
     { L"Win32_BaseBoard", C(col_baseboard), 0, 0, NULL, fill_baseboard },
     { L"Win32_CDROMDrive", C(col_cdromdrive), 0, 0, NULL, fill_cdromdrive },
