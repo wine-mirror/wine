@@ -6528,6 +6528,21 @@ static char *get_fqdn(void)
     return ret;
 }
 
+static BOOL addrinfo_in_list( const struct WS_addrinfo *list, const struct WS_addrinfo *ai )
+{
+    const struct WS_addrinfo *cursor = list;
+    while (cursor)
+    {
+        if (ai->ai_flags == cursor->ai_flags && ai->ai_family == cursor->ai_family &&
+            ai->ai_socktype == cursor->ai_socktype && ai->ai_protocol == cursor->ai_protocol &&
+            ai->ai_addrlen == cursor->ai_addrlen && !memcmp(ai->ai_addr, cursor->ai_addr, ai->ai_addrlen) &&
+            ((ai->ai_canonname && cursor->ai_canonname && !strcmp(ai->ai_canonname, cursor->ai_canonname))
+            || (!ai->ai_canonname && !cursor->ai_canonname))) return TRUE;
+        cursor = cursor->ai_next;
+    }
+    return FALSE;
+}
+
 /***********************************************************************
  *		getaddrinfo		(WS2_32.@)
  */
@@ -6654,7 +6669,6 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
             if (!ai)
                 goto outofmem;
 
-            *xai = ai;xai = &ai->ai_next;
             ai->ai_flags    = convert_aiflag_u2w(xuai->ai_flags);
             ai->ai_family   = convert_af_u2w(xuai->ai_family);
             /* copy whatever was sent in the hints */
@@ -6690,6 +6704,18 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
                     goto outofmem;
                 ai->ai_addrlen = len;
             } while (1);
+
+            if (addrinfo_in_list(*res, ai))
+            {
+                HeapFree(GetProcessHeap(), 0, ai->ai_canonname);
+                HeapFree(GetProcessHeap(), 0, ai->ai_addr);
+                HeapFree(GetProcessHeap(), 0, ai);
+            }
+            else
+            {
+                *xai = ai;
+                xai = &ai->ai_next;
+            }
             xuai = xuai->ai_next;
         }
         freeaddrinfo(unixaires);
