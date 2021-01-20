@@ -14,6 +14,7 @@ C_SRCS = \
 	security.c \
 	service.c \
 	services.c \
+	sysrestore.c \
 	table.c \
 	wbemlocator.c
 
