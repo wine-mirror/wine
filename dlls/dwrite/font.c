@@ -5931,7 +5931,7 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
     if ((UINT32)desc->measuring_mode > DWRITE_MEASURING_MODE_GDI_NATURAL)
         return E_INVALIDARG;
 
-    analysis = heap_alloc(sizeof(*analysis));
+    analysis = heap_alloc_zero(sizeof(*analysis));
     if (!analysis)
         return E_OUTOFMEMORY;
 
@@ -5945,10 +5945,6 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
     else
         analysis->texture_type = DWRITE_TEXTURE_CLEARTYPE_3x1;
 
-    analysis->flags = 0;
-    analysis->bitmap = NULL;
-    analysis->max_glyph_bitmap_size = 0;
-    SetRectEmpty(&analysis->bounds);
     analysis->run = *desc->run;
     IDWriteFontFace_AddRef(analysis->run.fontFace);
     analysis->glyphs = heap_calloc(desc->run->glyphCount, sizeof(*analysis->glyphs));
@@ -5970,12 +5966,8 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
         analysis->m = *desc->transform;
         analysis->flags |= RUNANALYSIS_USE_TRANSFORM;
     }
-    else
-        memset(&analysis->m, 0, sizeof(analysis->m));
 
     analysis->run.glyphIndices = analysis->glyphs;
-    analysis->run.glyphAdvances = NULL;
-    analysis->run.glyphOffsets = NULL;
 
     rtl_factor = desc->run->bidiLevel & 1 ? -1.0f : 1.0f;
 
