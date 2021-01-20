@@ -595,7 +595,7 @@ static HRESULT WINAPI CommonDecoderFrame_Block_GetReaderByIndex(IWICMetadataBloc
 {
     CommonDecoderFrame *This = impl_from_IWICMetadataBlockReader(iface);
     HRESULT hr;
-    IWICComponentFactory* factory;
+    IWICComponentFactory* factory = NULL;
     IWICStream* stream;
 
     TRACE("%p,%d,%p\n", iface, nIndex, ppIMetadataReader);
@@ -609,7 +609,10 @@ static HRESULT WINAPI CommonDecoderFrame_Block_GetReaderByIndex(IWICMetadataBloc
         hr = E_INVALIDARG;
 
     if (SUCCEEDED(hr))
-        hr = StreamImpl_Create(&stream);
+        hr = create_instance(&CLSID_WICImagingFactory, &IID_IWICComponentFactory, (void**)&factory);
+
+    if (SUCCEEDED(hr))
+        hr = IWICComponentFactory_CreateStream(factory, &stream);
 
     if (SUCCEEDED(hr))
     {
@@ -664,22 +667,16 @@ static HRESULT WINAPI CommonDecoderFrame_Block_GetReaderByIndex(IWICMetadataBloc
         }
         else
         {
-            if (SUCCEEDED(hr))
-                hr = create_instance(&CLSID_WICImagingFactory, &IID_IWICComponentFactory, (void**)&factory);
-
-            if (SUCCEEDED(hr))
-            {
-                hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
-                    &This->parent->decoder_info.block_format, NULL,
-                    This->metadata_blocks[nIndex].options & DECODER_BLOCK_OPTION_MASK,
-                    (IStream*)stream, ppIMetadataReader);
-
-                IWICComponentFactory_Release(factory);
-            }
+            hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
+                &This->parent->decoder_info.block_format, NULL,
+                This->metadata_blocks[nIndex].options & DECODER_BLOCK_OPTION_MASK,
+                (IStream*)stream, ppIMetadataReader);
         }
 
         IWICStream_Release(stream);
     }
+
+    if (factory) IWICComponentFactory_Release(factory);
 
     if (FAILED(hr))
         *ppIMetadataReader = NULL;
