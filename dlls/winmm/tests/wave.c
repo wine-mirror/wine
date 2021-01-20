@@ -519,14 +519,11 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes,
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
     ok(rc==MMSYSERR_NOERROR,
        "waveOutGetPosition(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
-    if (mmtime.wType != TIME_MS && winetest_debug > 1)
-        trace("waveOutGetPosition(%s): TIME_MS not supported, returned %s\n",
-              dev_name(device), wave_time_format(mmtime.wType));
+    todo_wine ok(mmtime.wType == TIME_BYTES, "(waveOutGetPosition(%s): returned %s\n",
+       dev_name(device), wave_time_format(mmtime.wType));
     returned = time_to_bytes(&mmtime, pwfx);
-    ok(returned == bytes, "waveOutGetPosition(%s): returned %d ms, "
-       "(%d bytes), should be %d (%d bytes)\n", dev_name(device),
-       bytes_to_ms(returned, pwfx), returned,
-       bytes_to_ms(bytes, pwfx), bytes);
+    ok(returned == bytes, "waveOutGetPosition(%s): TIME_MS test failed\n",
+       dev_name(device));
 
     mmtime.wType = TIME_SMPTE;
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
