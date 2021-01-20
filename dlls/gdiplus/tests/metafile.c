@@ -3529,10 +3529,8 @@ static void test_printer_dc(void)
 
     GdipGetDpiX(graphics, &dpix);
     GdipGetDpiX(graphics, &dpiy);
-    todo_wine {
     expectf((REAL)(GetDeviceCaps(hdc, LOGPIXELSX)), dpix);
     expectf((REAL)(GetDeviceCaps(hdc, LOGPIXELSY)), dpiy);
-    }
 
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage *)metafile);

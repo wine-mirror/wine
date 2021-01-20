@@ -415,6 +415,8 @@ struct GpMetafile{
     DWORD next_object_id;
     UINT limit_dpi;
     BOOL printer_display;
+    REAL logical_dpix;
+    REAL logical_dpiy;
 
     /* playback */
     GpGraphics *playback_graphics;

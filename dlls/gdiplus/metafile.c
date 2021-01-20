@@ -838,6 +838,8 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
     (*metafile)->limit_dpi = 96;
     (*metafile)->hemf = NULL;
     (*metafile)->printer_display = (GetDeviceCaps(record_dc, TECHNOLOGY) == DT_RASPRINTER);
+    (*metafile)->logical_dpix = (REAL)GetDeviceCaps(record_dc, LOGPIXELSX);
+    (*metafile)->logical_dpiy = (REAL)GetDeviceCaps(record_dc, LOGPIXELSY);
     list_init(&(*metafile)->containers);
 
     if (!frameRect)
@@ -964,8 +966,8 @@ GpStatus METAFILE_GetGraphicsContext(GpMetafile* metafile, GpGraphics **result)
     if (stat == Ok)
     {
         *result = metafile->record_graphics;
-        metafile->record_graphics->xres = 96.0;
-        metafile->record_graphics->yres = 96.0;
+        metafile->record_graphics->xres = metafile->logical_dpix;
+        metafile->record_graphics->yres = metafile->logical_dpiy;
         metafile->record_graphics->printer_display = metafile->printer_display;
     }
 
@@ -1792,12 +1794,16 @@ static GpStatus METAFILE_PlaybackUpdateWorldTransform(GpMetafile *metafile)
 
     if (stat == Ok)
     {
-        REAL scale = units_to_pixels(1.0, metafile->page_unit, 96.0, metafile->printer_display);
+        REAL scale_x = units_to_pixels(1.0, metafile->page_unit, metafile->logical_dpix, metafile->printer_display);
+        REAL scale_y = units_to_pixels(1.0, metafile->page_unit, metafile->logical_dpiy, metafile->printer_display);
 
         if (metafile->page_unit != UnitDisplay)
-            scale *= metafile->page_scale;
+        {
+            scale_x *= metafile->page_scale;
+            scale_y *= metafile->page_scale;
+        }
 
-        stat = GdipScaleMatrix(real_transform, scale, scale, MatrixOrderPrepend);
+        stat = GdipScaleMatrix(real_transform, scale_x, scale_y, MatrixOrderPrepend);
 
         if (stat == Ok)
             stat = GdipMultiplyMatrix(real_transform, metafile->world_transform, MatrixOrderPrepend);
@@ -4070,7 +4076,9 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE hemf, BOOL delete,
     (*metafile)->preserve_hemf = !delete;
     /* If the 31th bit of EmfPlusFlags was set, metafile was recorded with a DC for a video display.
      * If clear, metafile was recorded with a DC for a printer */
-    (*metafile)->printer_display = !(header.EmfPlusFlags & (1 << 31));
+    (*metafile)->printer_display = !(header.EmfPlusFlags & (1u << 31));
+    (*metafile)->logical_dpix = header.LogicalDpiX;
+    (*metafile)->logical_dpix = header.LogicalDpiY;
     list_init(&(*metafile)->containers);
 
     TRACE("<-- %p\n", *metafile);
