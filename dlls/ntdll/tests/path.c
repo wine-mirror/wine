@@ -603,11 +603,6 @@ static void test_RtlDosPathNameToNtPathName_U(void)
 START_TEST(path)
 {
     HMODULE mod = GetModuleHandleA("ntdll.dll");
-    if (!mod)
-    {
-        win_skip("Not running on NT, skipping tests\n");
-        return;
-    }
 
     pRtlMultiByteToUnicodeN = (void *)GetProcAddress(mod,"RtlMultiByteToUnicodeN");
     pRtlUnicodeToMultiByteN = (void *)GetProcAddress(mod,"RtlUnicodeToMultiByteN");

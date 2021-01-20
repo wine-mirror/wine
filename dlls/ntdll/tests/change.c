@@ -313,11 +313,6 @@ static void test_ntncdf_async(void)
 START_TEST(change)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll");
-    if (!hntdll)
-    {
-        win_skip("not running on NT, skipping test\n");
-        return;
-    }
 
     pNtNotifyChangeDirectoryFile = (void *)GetProcAddress(hntdll, "NtNotifyChangeDirectoryFile");
     pNtCancelIoFile = (void *)GetProcAddress(hntdll, "NtCancelIoFile");
