@@ -519,7 +519,7 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes,
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
     ok(rc==MMSYSERR_NOERROR,
        "waveOutGetPosition(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
-    todo_wine ok(mmtime.wType == TIME_BYTES, "(waveOutGetPosition(%s): returned %s\n",
+    ok(mmtime.wType == TIME_BYTES, "(waveOutGetPosition(%s): returned %s\n",
        dev_name(device), wave_time_format(mmtime.wType));
     returned = time_to_bytes(&mmtime, pwfx);
     ok(returned == bytes, "waveOutGetPosition(%s): TIME_MS test failed\n",

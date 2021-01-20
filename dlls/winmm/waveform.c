@@ -2038,9 +2038,6 @@ static MMRESULT WINMM_FramesToMMTime(MMTIME *time, UINT32 played_frames,
     case TIME_SAMPLES:
         time->u.sample = played_frames;
         return MMSYSERR_NOERROR;
-    case TIME_MS:
-        time->u.ms = (UINT64)played_frames * 1000 / sample_rate;
-        return MMSYSERR_NOERROR;
     case TIME_SMPTE:
         time->u.smpte.fps = 30;
         played_frames += sample_rate / time->u.smpte.fps - 1; /* round up */
