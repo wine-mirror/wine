@@ -22,6 +22,7 @@
 #define __GST_PRIVATE_INCLUDED__
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <gst/gst.h>
 #include <gst/video/video.h>
