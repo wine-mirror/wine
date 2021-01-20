@@ -465,8 +465,6 @@ static HRESULT dsound_render_sink_eos(struct strmbase_sink *iface)
     void *buffer;
     DWORD size;
 
-    EnterCriticalSection(&filter->filter.stream_cs);
-
     filter->eos = TRUE;
 
     if (graph && SUCCEEDED(IFilterGraph_QueryInterface(graph,
@@ -485,7 +483,6 @@ static HRESULT dsound_render_sink_eos(struct strmbase_sink *iface)
     memset(buffer, 0, size);
     IDirectSoundBuffer_Unlock(filter->dsbuffer, buffer, size, NULL, 0);
 
-    LeaveCriticalSection(&filter->filter.stream_cs);
     return S_OK;
 }
 

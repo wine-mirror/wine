@@ -268,8 +268,6 @@ static HRESULT sink_eos(struct strmbase_sink *iface)
     IFilterGraph *graph = filter->filter.graph;
     IMediaEventSink *event_sink;
 
-    EnterCriticalSection(&filter->filter.stream_cs);
-
     filter->eos = TRUE;
 
     if (graph && SUCCEEDED(IFilterGraph_QueryInterface(graph,
@@ -282,7 +280,6 @@ static HRESULT sink_eos(struct strmbase_sink *iface)
     strmbase_passthrough_eos(&filter->passthrough);
     SetEvent(filter->state_event);
 
-    LeaveCriticalSection(&filter->filter.stream_cs);
     return S_OK;
 }
 

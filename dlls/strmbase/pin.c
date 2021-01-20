@@ -926,21 +926,26 @@ static HRESULT deliver_endofstream(IPin* pin, LPVOID unused)
 
 static HRESULT WINAPI sink_EndOfStream(IPin *iface)
 {
-    struct strmbase_sink *This = impl_sink_from_IPin(iface);
+    struct strmbase_sink *pin = impl_sink_from_IPin(iface);
     HRESULT hr = S_OK;
 
-    TRACE("pin %p %s:%s.\n", This, debugstr_w(This->pin.filter->name), debugstr_w(This->pin.name));
+    TRACE("pin %p %s:%s.\n", pin, debugstr_w(pin->pin.filter->name), debugstr_w(pin->pin.name));
 
-    if (This->pFuncsTable->sink_eos)
-        return This->pFuncsTable->sink_eos(This);
+    if (pin->pFuncsTable->sink_eos)
+    {
+        EnterCriticalSection(&pin->pin.filter->stream_cs);
+        hr = pin->pFuncsTable->sink_eos(pin);
+        LeaveCriticalSection(&pin->pin.filter->stream_cs);
+        return hr;
+    }
 
-    EnterCriticalSection(&This->pin.filter->filter_cs);
-    if (This->flushing)
+    EnterCriticalSection(&pin->pin.filter->filter_cs);
+    if (pin->flushing)
         hr = S_FALSE;
-    LeaveCriticalSection(&This->pin.filter->filter_cs);
+    LeaveCriticalSection(&pin->pin.filter->filter_cs);
 
     if (hr == S_OK)
-        hr = SendFurther(This, deliver_endofstream, NULL);
+        hr = SendFurther(pin, deliver_endofstream, NULL);
     return hr;
 }
 
