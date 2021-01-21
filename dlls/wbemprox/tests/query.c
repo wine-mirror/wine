@@ -248,6 +248,9 @@ static void _check_property( ULONG line, IWbemClassObject *obj, const WCHAR *pro
     case VT_R4:
         trace( "%s: %f\n", wine_dbgstr_w(prop), V_R4(&val) );
         break;
+    case VT_BOOL:
+        trace( "%s: %d\n", wine_dbgstr_w(prop), V_BOOL(&val) );
+        break;
     default:
         break;
     }
@@ -1162,6 +1165,34 @@ static void test_Win32_NetworkAdapter( IWbemServices *services )
 
         check_property( obj, L"DeviceID", VT_BSTR, CIM_STRING );
         check_property( obj, L"Index", VT_I4, CIM_UINT32 );
+        check_property( obj, L"Name", VT_BSTR, CIM_STRING );
+        IWbemClassObject_Release( obj );
+    }
+
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
+    SysFreeString( wql );
+}
+
+static void test_Win32_NetworkAdapterConfiguration( IWbemServices *services )
+{
+    BSTR wql = SysAllocString( L"wql" ), query = SysAllocString( L"SELECT * FROM Win32_NetworkAdapterConfiguration" );
+    IEnumWbemClassObject *result;
+    IWbemClassObject *obj;
+    HRESULT hr;
+    DWORD count;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    for (;;)
+    {
+        hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+        if (hr != S_OK) break;
+
+        check_property( obj, L"Description", VT_BSTR, CIM_STRING );
+        check_property( obj, L"Index", VT_I4, CIM_UINT32 );
+        check_property( obj, L"IPEnabled", VT_BOOL, CIM_BOOLEAN );
         IWbemClassObject_Release( obj );
     }
 
@@ -1901,6 +1932,7 @@ START_TEST(query)
     test_Win32_DisplayControllerConfiguration( services );
     test_Win32_IP4RouteTable( services );
     test_Win32_NetworkAdapter( services );
+    test_Win32_NetworkAdapterConfiguration( services );
     test_Win32_OperatingSystem( services );
     test_Win32_PhysicalMemory( services );
     test_Win32_PnPEntity( services );
