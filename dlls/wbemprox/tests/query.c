@@ -1160,12 +1160,26 @@ static void test_Win32_NetworkAdapter( IWbemServices *services )
 
     for (;;)
     {
+        VARIANT val;
+        CIMTYPE type;
+
         hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
         if (hr != S_OK) break;
 
+        check_property( obj, L"Description", VT_BSTR, CIM_STRING );
         check_property( obj, L"DeviceID", VT_BSTR, CIM_STRING );
         check_property( obj, L"Index", VT_I4, CIM_UINT32 );
         check_property( obj, L"Name", VT_BSTR, CIM_STRING );
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, L"ServiceName", 0, &val, &type, NULL );
+        ok( hr == S_OK, "failed to get service name %08x\n", hr );
+        ok( V_VT( &val ) == VT_BSTR || broken(V_VT( &val ) == VT_NULL) /* win2k8 */,
+            "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+        VariantClear( &val );
+
         IWbemClassObject_Release( obj );
     }
 
