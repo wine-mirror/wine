@@ -1503,7 +1503,7 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
 
     if (!This->bus) {
         This->bus = gst_bus_new();
-        gst_bus_set_sync_handler(This->bus, watch_bus_wrapper, This, NULL);
+        gst_bus_set_sync_handler(This->bus, watch_bus, This, NULL);
     }
 
     This->container = gst_bin_new(NULL);
@@ -2424,12 +2424,6 @@ void perform_cb_gstdemux(struct cb_data *cbdata)
 {
     switch(cbdata->type)
     {
-    case WATCH_BUS:
-        {
-            struct watch_bus_data *data = &cbdata->u.watch_bus_data;
-            cbdata->u.watch_bus_data.ret = watch_bus(data->bus, data->msg, data->user);
-            break;
-        }
     case EXISTING_NEW_PAD:
         {
             struct pad_added_data *data = &cbdata->u.pad_added_data;

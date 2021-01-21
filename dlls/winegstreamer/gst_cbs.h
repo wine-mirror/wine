@@ -30,7 +30,6 @@ typedef enum {
 } GstAutoplugSelectResult;
 
 enum CB_TYPE {
-    WATCH_BUS,
     EXISTING_NEW_PAD,
     QUERY_FUNCTION,
     ACTIVATE_MODE,
@@ -133,7 +132,6 @@ void mark_wine_thread(void) DECLSPEC_HIDDEN;
 void perform_cb_gstdemux(struct cb_data *data) DECLSPEC_HIDDEN;
 void perform_cb_media_source(struct cb_data *data) DECLSPEC_HIDDEN;
 
-GstBusSyncReply watch_bus_wrapper(GstBus *bus, GstMessage *msg, gpointer user) DECLSPEC_HIDDEN;
 void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
 gboolean query_function_wrapper(GstPad *pad, GstObject *parent, GstQuery *query) DECLSPEC_HIDDEN;
 gboolean activate_mode_wrapper(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate) DECLSPEC_HIDDEN;

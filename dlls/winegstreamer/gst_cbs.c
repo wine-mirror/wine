@@ -136,19 +136,6 @@ static void call_cb(struct cb_data *cbdata)
     pthread_mutex_destroy(&cbdata->lock);
 }
 
-GstBusSyncReply watch_bus_wrapper(GstBus *bus, GstMessage *msg, gpointer user)
-{
-    struct cb_data cbdata = { WATCH_BUS };
-
-    cbdata.u.watch_bus_data.bus = bus;
-    cbdata.u.watch_bus_data.msg = msg;
-    cbdata.u.watch_bus_data.user = user;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.watch_bus_data.ret;
-}
-
 void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
 {
     struct cb_data cbdata = { EXISTING_NEW_PAD };
