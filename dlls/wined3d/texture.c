@@ -4771,8 +4771,8 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
     if (dst_format->id != src_texture->resource.format->id)
     {
         FIXME("Unhandled format conversion (%s -> %s).\n",
-                debug_d3dformat(dst_format->id),
-                debug_d3dformat(src_texture->resource.format->id));
+                debug_d3dformat(src_texture->resource.format->id),
+                debug_d3dformat(dst_format->id));
         return;
     }
 
