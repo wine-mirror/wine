@@ -4133,6 +4133,7 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
     unsigned int flags;
     const char *fixup;
     unsigned int i;
+    uint32_t mask;
     VkResult vr;
 
     for (i = 0; i < ARRAY_SIZE(vulkan_formats); ++i)
@@ -4208,7 +4209,13 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
             ERR("Failed to get image format properties, vr %s.\n", wined3d_debug_vkresult(vr));
             return;
         }
-        format->f.multisample_types = image_properties.sampleCounts;
+
+        mask = image_properties.sampleCounts & 0x3f;
+        while (mask)
+        {
+            i = (1u << wined3d_bit_scan(&mask)) - 1;
+            format->f.multisample_types |= 1u << i;
+        }
     }
 }
 
