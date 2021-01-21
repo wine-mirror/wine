@@ -878,16 +878,10 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *bu
 
     TRACE("pad %p, pin %p, buffer %p.\n", pad, pin, buffer);
 
-    if (filter->initial)
+    if (filter->initial || !pin->pin.pin.peer)
     {
         gst_buffer_unref(buffer);
         return GST_FLOW_OK;
-    }
-
-    if (!pin->pin.pin.peer)
-    {
-        gst_buffer_unref(buffer);
-        return GST_FLOW_NOT_LINKED;
     }
 
     stream_event.type = PARSER_EVENT_BUFFER;
