@@ -2174,7 +2174,7 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
         ++attachment_count;
     }
 
-    if (wined3d_state_uses_depth_buffer(state) && (view = state->fb.depth_stencil))
+    if ((view = state->fb.depth_stencil))
     {
         rtv_vk = wined3d_rendertarget_view_vk(view);
         vk_views[attachment_count] = wined3d_rendertarget_view_vk_get_image_view(rtv_vk, context_vk);
@@ -2191,7 +2191,7 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
     }
 
     if (!(context_vk->vk_render_pass = wined3d_context_vk_get_render_pass(context_vk, &state->fb,
-            ARRAY_SIZE(state->fb.render_targets), wined3d_state_uses_depth_buffer(state), 0)))
+            ARRAY_SIZE(state->fb.render_targets), !!state->fb.depth_stencil, 0)))
     {
         ERR("Failed to get render pass.\n");
         return false;
