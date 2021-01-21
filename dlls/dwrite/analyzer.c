@@ -1154,7 +1154,6 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     struct scriptshaping_context context = { 0 };
     struct dwrite_fontface *font_obj;
     WCHAR digits[NATIVE_DIGITS_LEN];
-    unsigned int script;
     HRESULT hr;
 
     TRACE("(%s:%u %p %d %d %s %s %p %p %p %u %u %p %p %p %p %p)\n", debugstr_wn(text, length),
@@ -1172,6 +1171,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     font_obj = unsafe_impl_from_IDWriteFontFace(fontface);
 
     context.cache = fontface_get_shaping_cache(font_obj);
+    context.script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
     context.text = text;
     context.length = length;
     context.is_rtl = is_rtl;
@@ -1190,8 +1190,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     context.glyph_infos = heap_alloc_zero(sizeof(*context.glyph_infos) * max_glyph_count);
     context.table = &context.cache->gsub;
 
-    script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
-    scriptprops = &dwritescripts_properties[script];
+    scriptprops = &dwritescripts_properties[context.script];
     hr = shape_get_glyphs(&context, scriptprops->scripttags);
     if (SUCCEEDED(hr))
     {
@@ -1217,7 +1216,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
     const struct dwritescript_properties *scriptprops;
     struct scriptshaping_context context;
     struct dwrite_fontface *font_obj;
-    unsigned int i, script;
+    unsigned int i;
     HRESULT hr;
 
     TRACE("%s, %p, %p, %u, %p, %p, %u, %p, %.2f, %d, %d, %s, %s, %p, %p, %u, %p, %p.\n", debugstr_wn(text, text_len),
@@ -1243,10 +1242,8 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
         offsets[i].ascenderOffset = 0.0f;
     }
 
-    script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
-    scriptprops = &dwritescripts_properties[script];
-
     context.cache = fontface_get_shaping_cache(font_obj);
+    context.script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
     context.text = text;
     context.length = text_len;
     context.is_rtl = is_rtl;
@@ -1267,6 +1264,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
     context.glyph_infos = heap_alloc_zero(sizeof(*context.glyph_infos) * glyph_count);
     context.table = &context.cache->gpos;
 
+    scriptprops = &dwritescripts_properties[context.script];
     hr = shape_get_positions(&context, scriptprops->scripttags);
 
     heap_free(context.glyph_infos);
@@ -1286,7 +1284,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     struct scriptshaping_context context;
     DWRITE_MEASURING_MODE measuring_mode;
     struct dwrite_fontface *font_obj;
-    unsigned int i, script;
+    unsigned int i;
     HRESULT hr;
 
     TRACE("%s, %p, %p, %u, %p, %p, %u, %p, %.2f, %.2f, %p, %d, %d, %d, %s, %s, %p, %p, %u, %p, %p.\n",
@@ -1314,10 +1312,8 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
         offsets[i].ascenderOffset = 0.0f;
     }
 
-    script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
-    scriptprops = &dwritescripts_properties[script];
-
     context.cache = fontface_get_shaping_cache(font_obj);
+    context.script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
     context.text = text;
     context.length = text_len;
     context.is_rtl = is_rtl;
@@ -1338,6 +1334,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     context.glyph_infos = heap_alloc_zero(sizeof(*context.glyph_infos) * glyph_count);
     context.table = &context.cache->gpos;
 
+    scriptprops = &dwritescripts_properties[context.script];
     hr = shape_get_positions(&context, scriptprops->scripttags);
 
     heap_free(context.glyph_infos);

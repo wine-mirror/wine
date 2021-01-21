@@ -539,6 +539,7 @@ typedef void (*p_apply_context_lookup)(struct scriptshaping_context *context, un
 struct scriptshaping_context
 {
     struct scriptshaping_cache *cache;
+    unsigned int script;
     UINT32 language_tag;
 
     const WCHAR *text;
