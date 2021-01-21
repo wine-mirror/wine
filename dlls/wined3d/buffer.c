@@ -1575,6 +1575,8 @@ void wined3d_buffer_vk_barrier(struct wined3d_buffer_vk *buffer_vk,
         TRACE("    %s -> %s.\n",
                 wined3d_debug_bind_flags(buffer_vk->bind_mask), wined3d_debug_bind_flags(bind_mask));
 
+        wined3d_context_vk_end_current_render_pass(context_vk);
+
         vk_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
         vk_barrier.pNext = NULL;
         vk_barrier.srcAccessMask = vk_access_mask_from_bind_flags(buffer_vk->bind_mask);
