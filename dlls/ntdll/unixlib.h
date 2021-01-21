@@ -27,12 +27,14 @@
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 106
+#define NTDLL_UNIXLIB_VERSION 107
 
 struct unix_funcs
 {
     /* Nt* functions */
+#ifdef __aarch64__
     TEB *         (WINAPI *NtCurrentTeb)(void);
+#endif
 
     /* other Win32 API functions */
     NTSTATUS      (WINAPI *DbgUiIssueRemoteBreakin)( HANDLE process );

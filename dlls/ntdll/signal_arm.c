@@ -304,12 +304,4 @@ __ASM_STDCALL_FUNC( DbgBreakPoint, 0, "bkpt #0; bx lr; nop; nop; nop; nop" );
  */
 __ASM_STDCALL_FUNC( DbgUserBreakPoint, 0, "bkpt #0; bx lr; nop; nop; nop; nop" );
 
-/**********************************************************************
- *           NtCurrentTeb   (NTDLL.@)
- */
-TEB * WINAPI NtCurrentTeb(void)
-{
-    return unix_funcs->NtCurrentTeb();
-}
-
 #endif  /* __arm__ */

@@ -68,8 +68,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
-static pthread_key_t teb_key;
-
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -584,23 +582,21 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
  *           call_user_apc_dispatcher
  */
 __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
-                   "mov r4, r0\n\t"           /* context_ptr */
                    "mov r5, r1\n\t"           /* ctx */
                    "mov r6, r2\n\t"           /* arg1 */
                    "mov r7, r3\n\t"           /* arg2 */
                    "ldr r8, [sp]\n\t"         /* func */
                    "ldr r9, [sp, #4]\n\t"     /* dispatcher */
-                   "bl " __ASM_NAME("NtCurrentTeb") "\n\t"
-                   "add r10, r0, #0x1d8\n\t"  /* arm_thread_data()->syscall_frame */
-                   "movs r0, r4\n\t"
+                   "mrc p15, 0, r10, c13, c0, 2\n\t"  /* NtCurrentTeb() */
+                   "cmp r0, #0\n\t"           /* context_ptr */
                    "beq 1f\n\t"
                    "ldr r0, [r0, #0x38]\n\t"  /* context_ptr->Sp */
                    "sub r0, r0, #0x1c8\n\t"   /* sizeof(CONTEXT) + offsetof(frame,r4) */
                    "mov ip, #0\n\t"
-                   "str ip, [r10]\n\t"
+                   "str ip, [r10, #0x1d8]\n\t"  /* arm_thread_data()->syscall_frame */
                    "mov sp, r0\n\t"
                    "b 2f\n"
-                   "1:\tldr r0, [r10]\n\t"
+                   "1:\tldr r0, [r10, #0x1d8]\n\t"
                    "sub r0, #0x1a0\n\t"
                    "mov sp, r0\n\t"
                    "mov r0, #3\n\t"
@@ -613,7 +609,7 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "str r0, [sp, #4]\n\t"     /* context.R0 = STATUS_USER_APC */
                    "mov r0, sp\n\t"
                    "mov ip, #0\n\t"
-                   "str ip, [r10]\n\t"
+                   "str ip, [r10, #0x1d8]\n\t"
                    "2:\tmov r1, r5\n\t"       /* ctx */
                    "mov r2, r6\n\t"           /* arg1 */
                    "mov r3, r7\n\t"           /* arg2 */
@@ -634,17 +630,10 @@ __ASM_GLOBAL_FUNC( call_raise_user_exception_dispatcher,
  *           call_user_exception_dispatcher
  */
 __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
-                   "mov r4, r0\n\t"
-                   "mov r5, r1\n\t"
-                   "mov r6, r2\n\t"
-                   "bl " __ASM_NAME("NtCurrentTeb") "\n\t"
-                   "add r7, r0, #0x1d8\n\t"  /* arm_thread_data()->syscall_frame */
-                   "mov r0, r4\n\t"
-                   "mov r1, r5\n\t"
-                   "mov r2, r6\n\t"
-                   "ldr r3, [r7]\n\t"
+                   "mrc p15, 0, r7, c13, c0, 2\n\t"  /* NtCurrentTeb() */
+                   "ldr r3, [r7, #0x1d8]\n\t"  /* arm_thread_data()->syscall_frame */
                    "mov ip, #0\n\t"
-                   "str ip, [r7]\n\t"
+                   "str ip, [r7, #0x1d8]\n\t"
                    "add r3, r3, #8\n\t"
                    "ldm r3, {r5-r11}\n\t"
                    "ldr r4, [r3, #32]\n\t"
@@ -911,7 +900,6 @@ NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_E
  */
 void signal_init_threading(void)
 {
-    pthread_key_create( &teb_key, NULL );
 }
 
 
@@ -937,11 +925,7 @@ void signal_free_thread( TEB *teb )
  */
 void signal_init_thread( TEB *teb )
 {
-#if defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_8A__)
-    /* Win32/ARM applications expect the TEB pointer to be in the TPIDRURW register. */
     __asm__ __volatile__( "mcr p15, 0, %0, c13, c0, 2" : : "r" (teb) );
-#endif
-    pthread_setspecific( teb_key, teb );
 }
 
 
@@ -1055,15 +1039,6 @@ __ASM_GLOBAL_FUNC( call_thread_exit_func,
 void signal_exit_thread( int status, void (*func)(int) )
 {
     call_thread_exit_func( status, func, NtCurrentTeb() );
-}
-
-
-/**********************************************************************
- *           NtCurrentTeb   (NTDLL.@)
- */
-TEB * WINAPI NtCurrentTeb(void)
-{
-    return pthread_getspecific( teb_key );
 }
 
 #endif  /* __arm__ */

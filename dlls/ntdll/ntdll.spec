@@ -189,7 +189,7 @@
 @ stub NtCreateToken
 @ stdcall -syscall NtCreateUserProcess(ptr ptr long long ptr ptr long long ptr ptr ptr)
 # @ stub NtCreateWaitablePort
-@ stdcall -arch=win32,arm64 NtCurrentTeb()
+@ stdcall -arch=i386,arm64 NtCurrentTeb()
 @ stdcall -syscall NtDebugActiveProcess(long long)
 # @ stub NtDebugContinue
 @ stdcall -syscall NtDelayExecution(long ptr)

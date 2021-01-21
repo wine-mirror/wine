@@ -1577,10 +1577,8 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tcmp r4, r5\n" );
             output( "\tbcs 5f\n" );
             output( "\tsub sp, sp, #8\n" );
-            output( "\tpush {r0-r3}\n" );
-            output( "\tbl %s\n", asm_name("NtCurrentTeb") );
-            output( "\tadd r7, r0, #0x1d8\n" );  /* arm_thread_data()->syscall_frame */
-            output( "\tpop {r0-r3}\n" );
+            output( "\tmrc p15, 0, r7, c13, c0, 2\n" ); /* NtCurrentTeb() */
+            output( "\tadd r7, #0x1d8\n" );  /* arm_thread_data()->syscall_frame */
             output( "\tmrs ip, CPSR\n" );
             output( "\tstr ip, [sp, #4]\n" );
             output( "\tstr sp, [r7]\n" );  /* syscall frame */
