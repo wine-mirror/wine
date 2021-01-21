@@ -94,7 +94,11 @@ struct parser_event
     union
     {
         GstBuffer *buffer;
-        GstEvent *segment;
+        struct
+        {
+            uint64_t position, stop;
+            double rate;
+        } segment;
     } u;
 };
 
@@ -709,14 +713,23 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             if (pin->pin.pin.peer)
             {
                 struct parser_event stream_event;
+                const GstSegment *segment;
+
+                gst_event_parse_segment(event, &segment);
+
+                if (segment->format != GST_FORMAT_TIME)
+                {
+                    FIXME("Unhandled format \"%s\".\n", gst_format_get_name(segment->format));
+                    break;
+                }
+
+                gst_segment_copy_into(segment, pin->segment);
 
                 stream_event.type = PARSER_EVENT_SEGMENT;
-                stream_event.u.segment = event;
-                if (queue_stream_event(pin, &stream_event) == GST_FLOW_OK)
-                {
-                    /* Transfer our reference to the event to the thread. */
-                    return TRUE;
-                }
+                stream_event.u.segment.position = segment->position / 100;
+                stream_event.u.segment.stop = segment->stop / 100;
+                stream_event.u.segment.rate = segment->rate * segment->applied_rate;
+                queue_stream_event(pin, &stream_event);
             }
             break;
 
@@ -744,14 +757,11 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
                 {
                     case PARSER_EVENT_NONE:
                     case PARSER_EVENT_EOS:
+                    case PARSER_EVENT_SEGMENT:
                         break;
 
                     case PARSER_EVENT_BUFFER:
                         gst_buffer_unref(pin->event.u.buffer);
-                        break;
-
-                    case PARSER_EVENT_SEGMENT:
-                        gst_event_unref(pin->event.u.segment);
                         break;
                 }
                 pin->event.type = PARSER_EVENT_NONE;
@@ -1057,24 +1067,9 @@ static DWORD CALLBACK stream_thread(void *arg)
                 break;
 
             case PARSER_EVENT_SEGMENT:
-            {
-                const GstSegment *segment;
-
-                gst_event_parse_segment(event.u.segment, &segment);
-
-                if (segment->format != GST_FORMAT_TIME)
-                {
-                    FIXME("Unhandled format \"%s\".\n", gst_format_get_name(segment->format));
-                    break;
-                }
-
-                gst_segment_copy_into(segment, pin->segment);
-
-                IPin_NewSegment(pin->pin.pin.peer, segment->position / 100,
-                        segment->stop / 100, segment->rate * segment->applied_rate);
-                gst_event_unref(event.u.segment);
+                IPin_NewSegment(pin->pin.pin.peer, event.u.segment.position,
+                        event.u.segment.stop, event.u.segment.rate);
                 break;
-            }
 
             case PARSER_EVENT_NONE:
                 assert(0);
