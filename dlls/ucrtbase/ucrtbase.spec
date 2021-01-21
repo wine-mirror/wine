@@ -2381,7 +2381,7 @@
 @ cdecl lgammaf(float)
 @ cdecl lgammal(double) lgamma
 @ cdecl -ret64 llabs(int64)
-@ cdecl lldiv(int64 int64)
+@ cdecl -norelay lldiv(int64 int64)
 @ cdecl -ret64 llrint(double)
 @ cdecl -ret64 llrintf(float)
 @ cdecl -ret64 llrintl(double) llrint

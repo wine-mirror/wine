@@ -22,7 +22,7 @@
 @ cdecl labs(long) ucrtbase.labs
 @ cdecl -ret64 ldiv(long long) ucrtbase.ldiv
 @ cdecl -ret64 llabs(int64) ucrtbase.llabs
-@ cdecl lldiv(int64 int64) ucrtbase.lldiv
+@ cdecl -norelay lldiv(int64 int64) ucrtbase.lldiv
 @ cdecl qsort(ptr long long ptr) ucrtbase.qsort
 @ cdecl qsort_s(ptr long long ptr ptr) ucrtbase.qsort_s
 @ cdecl rand() ucrtbase.rand

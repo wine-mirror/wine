@@ -1733,7 +1733,7 @@
 @ cdecl ldexp(double long)
 @ cdecl -ret64 ldiv(long long)
 @ cdecl -ret64 llabs(int64)
-@ cdecl lldiv(int64 int64)
+@ cdecl -norelay lldiv(int64 int64)
 @ cdecl localeconv()
 @ cdecl log(double)
 @ cdecl -arch=!i386 logf(float)
