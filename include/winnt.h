@@ -7154,6 +7154,19 @@ static FORCEINLINE void MemoryBarrier(void)
 
 #endif  /* __GNUC__ */
 
+static FORCEINLINE void YieldProcessor(void)
+{
+#ifdef __GNUC__
+#if defined(__i386__) || defined(__x86_64__)
+    __asm__ __volatile__( "rep; nop" : : : "memory" );
+#elif defined(__arm__) || defined(__aarch64__)
+    __asm__ __volatile__( "dmb ishst\n\tyield" : : : "memory" );
+#else
+    __asm__ __volatile__( "" : : : "memory" );
+#endif
+#endif
+}
+
 #ifdef __cplusplus
 }
 #endif
