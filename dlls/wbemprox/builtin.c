@@ -197,6 +197,7 @@ static const struct column col_networkadapter[] =
     { L"AdapterTypeID",       CIM_UINT16 },
     { L"Description",         CIM_STRING|COL_FLAG_DYNAMIC },
     { L"DeviceId",            CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { L"GUID",                CIM_STRING|COL_FLAG_DYNAMIC },
     { L"Index",               CIM_UINT32 },
     { L"InterfaceIndex",      CIM_UINT32 },
     { L"MACAddress",          CIM_STRING|COL_FLAG_DYNAMIC },
@@ -603,6 +604,7 @@ struct record_networkadapter
     UINT16       adaptertypeid;
     const WCHAR *description;
     const WCHAR *device_id;
+    const WCHAR *guid;
     UINT32       index;
     UINT32       interface_index;
     const WCHAR *mac_address;
@@ -2651,6 +2653,24 @@ static const WCHAR *get_adaptertype( DWORD type, int *id, int *physical )
     }
 }
 
+#define GUID_SIZE 39
+static WCHAR *guid_to_str( const GUID *ptr )
+{
+    WCHAR *ret;
+    if (!(ret = heap_alloc( GUID_SIZE * sizeof(WCHAR) ))) return NULL;
+    swprintf( ret, GUID_SIZE, L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+              ptr->Data1, ptr->Data2, ptr->Data3, ptr->Data4[0], ptr->Data4[1], ptr->Data4[2],
+              ptr->Data4[3], ptr->Data4[4], ptr->Data4[5], ptr->Data4[6], ptr->Data4[7] );
+    return ret;
+}
+
+static WCHAR *get_networkadapter_guid( const IF_LUID *luid )
+{
+    GUID guid;
+    if (ConvertInterfaceLuidToGuid( luid, &guid )) return NULL;
+    return guid_to_str( &guid );
+}
+
 static enum fill_status fill_networkadapter( struct table *table, const struct expr *cond )
 {
     WCHAR device_id[11];
@@ -2689,6 +2709,7 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
         rec->adaptertypeid        = adaptertypeid;
         rec->description          = heap_strdupW( aa->Description );
         rec->device_id            = heap_strdupW( device_id );
+        rec->guid                 = get_networkadapter_guid( &aa->Luid );
         rec->index                = aa->u.s.IfIndex;
         rec->interface_index      = aa->u.s.IfIndex;
         rec->mac_address          = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
@@ -2877,13 +2898,9 @@ static struct array *get_ipsubnet( IP_ADAPTER_UNICAST_ADDRESS_LH *list )
 static WCHAR *get_settingid( UINT32 index )
 {
     GUID guid;
-    WCHAR *ret, *str;
     memset( &guid, 0, sizeof(guid) );
     guid.Data1 = index;
-    UuidToStringW( &guid, &str );
-    ret = heap_strdupW( str );
-    RpcStringFreeW( &str );
-    return ret;
+    return guid_to_str( &guid );
 }
 
 static enum fill_status fill_networkadapterconfig( struct table *table, const struct expr *cond )
