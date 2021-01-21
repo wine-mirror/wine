@@ -3709,7 +3709,8 @@ static inline bool wined3d_state_uses_depth_buffer(const struct wined3d_state *s
 {
     if (!state->depth_stencil_state)
         return true;
-    return state->depth_stencil_state->desc.depth || state->depth_stencil_state->desc.depth_write;
+    return state->depth_stencil_state->desc.depth || state->depth_stencil_state->desc.depth_write
+            || state->depth_stencil_state->desc.stencil;
 }
 
 struct wined3d_dummy_textures
