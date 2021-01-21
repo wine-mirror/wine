@@ -1431,14 +1431,14 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
     GError *err = NULL;
     gchar *dbg_info = NULL;
 
-    TRACE("filter %p, message type %s.\n", filter, GST_MESSAGE_TYPE_NAME(msg));
+    GST_DEBUG("filter %p, message type %s.", filter, GST_MESSAGE_TYPE_NAME(msg));
 
     switch (msg->type)
     {
     case GST_MESSAGE_ERROR:
         gst_message_parse_error(msg, &err, &dbg_info);
-        ERR("%s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
-        ERR("%s\n", dbg_info);
+        fprintf(stderr, "winegstreamer: error: %s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
+        fprintf(stderr, "winegstreamer: error: %s: %s\n", GST_OBJECT_NAME(msg->src), dbg_info);
         g_error_free(err);
         g_free(dbg_info);
         pthread_mutex_lock(&filter->mutex);
@@ -1449,8 +1449,8 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
 
     case GST_MESSAGE_WARNING:
         gst_message_parse_warning(msg, &err, &dbg_info);
-        WARN("%s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
-        WARN("%s\n", dbg_info);
+        fprintf(stderr, "winegstreamer: warning: %s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
+        fprintf(stderr, "winegstreamer: warning: %s: %s\n", GST_OBJECT_NAME(msg->src), dbg_info);
         g_error_free(err);
         g_free(dbg_info);
         break;
