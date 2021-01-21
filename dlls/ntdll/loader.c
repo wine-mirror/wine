@@ -2016,11 +2016,49 @@ static BOOL convert_to_pe64( HMODULE module, const SECTION_IMAGE_INFORMATION *in
     NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, old_prot, &old_prot );
     return TRUE;
 }
+
+/* check COM header for ILONLY flag, ignoring runtime version */
+static BOOL get_cor_header( HANDLE file, const SECTION_IMAGE_INFORMATION *info, IMAGE_COR20_HEADER *cor )
+{
+    IMAGE_DOS_HEADER mz;
+    IMAGE_NT_HEADERS32 nt;
+    IO_STATUS_BLOCK io;
+    LARGE_INTEGER offset;
+    IMAGE_SECTION_HEADER sec[96];
+    unsigned int i, count;
+    DWORD va, size;
+
+    offset.QuadPart = 0;
+    if (NtReadFile( file, 0, NULL, NULL, &io, &mz, sizeof(mz), &offset, NULL )) return FALSE;
+    if (io.Information != sizeof(mz)) return FALSE;
+    if (mz.e_magic != IMAGE_DOS_SIGNATURE) return FALSE;
+    offset.QuadPart = mz.e_lfanew;
+    if (NtReadFile( file, 0, NULL, NULL, &io, &nt, sizeof(nt), &offset, NULL )) return FALSE;
+    if (io.Information != sizeof(nt)) return FALSE;
+    if (nt.Signature != IMAGE_NT_SIGNATURE) return FALSE;
+    if (nt.OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC) return FALSE;
+    va = nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
+    size = nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
+    if (!va || size < sizeof(*cor)) return FALSE;
+    offset.QuadPart = offsetof( IMAGE_NT_HEADERS32, OptionalHeader ) + nt.FileHeader.SizeOfOptionalHeader;
+    count = min( 96, nt.FileHeader.NumberOfSections );
+    if (NtReadFile( file, 0, NULL, NULL, &io, &sec, count * sizeof(*sec), &offset, NULL )) return FALSE;
+    if (io.Information != count * sizeof(*sec)) return FALSE;
+    for (i = 0; i < count; i++)
+    {
+        if (va < sec[i].VirtualAddress) continue;
+        if (sec[i].Misc.VirtualSize && va - sec[i].VirtualAddress >= sec[i].Misc.VirtualSize) continue;
+        offset.QuadPart = sec->PointerToRawData + va - sec[i].VirtualAddress;
+        if (NtReadFile( file, 0, NULL, NULL, &io, cor, sizeof(*cor), &offset, NULL )) return FALSE;
+        return (io.Information == sizeof(*cor));
+    }
+    return FALSE;
+}
 #endif
 
 /* On WoW64 setups, an image mapping can also be created for the other 32/64 CPU */
 /* but it cannot necessarily be loaded as a dll, so we need some additional checks */
-static BOOL is_valid_binary( HMODULE module, const SECTION_IMAGE_INFORMATION *info )
+static BOOL is_valid_binary( HANDLE file, const SECTION_IMAGE_INFORMATION *info )
 {
 #ifdef __i386__
     return info->Machine == IMAGE_FILE_MACHINE_I386;
@@ -2037,13 +2075,11 @@ static BOOL is_valid_binary( HMODULE module, const SECTION_IMAGE_INFORMATION *in
     if (!info->ImageContainsCode) return TRUE;
     if (!(info->u.ImageFlags & IMAGE_FLAGS_ComPlusNativeReady))
     {
-        /* check COM header directly, ignoring runtime version */
-        DWORD size;
-        const IMAGE_COR20_HEADER *cor_header = RtlImageDirectoryEntryToData( module, TRUE,
-                                                          IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &size );
-        if (!cor_header || !(cor_header->Flags & COMIMAGE_FLAGS_ILONLY)) return FALSE;
+        IMAGE_COR20_HEADER cor_header;
+        if (!get_cor_header( file, info, &cor_header )) return FALSE;
+        if (!(cor_header.Flags & COMIMAGE_FLAGS_ILONLY)) return FALSE;
     }
-    return convert_to_pe64( module, info );
+    return TRUE;
 #else
     return FALSE;  /* no wow64 support on other platforms */
 #endif
@@ -2267,8 +2303,6 @@ static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, void 
     status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
                               SECTION_MAP_READ | SECTION_MAP_EXECUTE,
                               NULL, &size, PAGE_EXECUTE_READ, SEC_IMAGE, handle );
-    NtClose( handle );
-
     if (!status)
     {
         if (*module)
@@ -2282,13 +2316,22 @@ static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, void 
         if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
         NtClose( mapping );
     }
-    if (!status && !is_valid_binary( *module, image_info ))
+    if (!status && !is_valid_binary( handle, image_info ))
     {
         TRACE( "%s is for arch %x, continuing search\n", debugstr_us(nt_name), image_info->Machine );
         NtUnmapViewOfSection( NtCurrentProcess(), *module );
         *module = NULL;
         status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
     }
+#ifdef _WIN64
+    if (!status &&
+        image_info->Machine != IMAGE_FILE_MACHINE_AMD64 &&
+        image_info->Machine != IMAGE_FILE_MACHINE_ARM64)
+    {
+        if (!convert_to_pe64( *module, image_info )) status = STATUS_INVALID_IMAGE_FORMAT;
+    }
+#endif
+    NtClose( handle );
     return status;
 }
 
