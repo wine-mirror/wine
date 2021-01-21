@@ -206,6 +206,7 @@ static const struct column col_networkadapter[] =
     { L"NetConnectionStatus", CIM_UINT16 },
     { L"PhysicalAdapter",     CIM_BOOLEAN },
     { L"PNPDeviceID",         CIM_STRING },
+    { L"ServiceName",         CIM_STRING|COL_FLAG_DYNAMIC },
     { L"Speed",               CIM_UINT64 },
 };
 static const struct column col_networkadapterconfig[] =
@@ -613,6 +614,7 @@ struct record_networkadapter
     UINT16       netconnection_status;
     int          physicaladapter;
     const WCHAR *pnpdevice_id;
+    const WCHAR *servicename;
     UINT64       speed;
 };
 struct record_networkadapterconfig
@@ -2718,6 +2720,7 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
         rec->netconnection_status = get_connection_status( aa->OperStatus );
         rec->physicaladapter      = physical;
         rec->pnpdevice_id         = L"PCI\\VEN_8086&DEV_100E&SUBSYS_001E8086&REV_02\\3&267A616A&1&18";
+        rec->servicename          = heap_strdupW( aa->FriendlyName );
         rec->speed                = 1000000;
         if (!match_row( table, row, cond, &status ))
         {
