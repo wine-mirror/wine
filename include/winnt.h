@@ -6896,6 +6896,7 @@ static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
 
 #ifdef _MSC_VER
 
+#pragma intrinsic(_InterlockedAnd)
 #pragma intrinsic(_InterlockedCompareExchange)
 #pragma intrinsic(_InterlockedCompareExchange64)
 #ifdef _WIN64
@@ -6907,6 +6908,7 @@ static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
 #pragma intrinsic(_InterlockedDecrement)
 #pragma intrinsic(_InterlockedOr)
 
+long      _InterlockedAnd(long volatile *,long);
 long      _InterlockedCompareExchange(long volatile*,long,long);
 long long _InterlockedCompareExchange64(long long volatile*,long long,long long);
 #ifdef _WIN64
@@ -6917,6 +6919,11 @@ long      _InterlockedExchange(long volatile*,long);
 long      _InterlockedExchangeAdd(long volatile*,long);
 long      _InterlockedIncrement(long volatile*);
 long      _InterlockedOr(long volatile *,long);
+
+static FORCEINLINE LONG WINAPI InterlockedAnd( LONG volatile *dest, LONG val )
+{
+    return _InterlockedAnd( (long volatile *)dest, val );
+}
 
 static FORCEINLINE LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
 {
@@ -7029,6 +7036,11 @@ static FORCEINLINE void MemoryBarrier(void)
 #endif /* __i386__ */
 
 #elif defined(__GNUC__)
+
+static FORCEINLINE LONG WINAPI InterlockedAnd( LONG volatile *dest, LONG val )
+{
+    return __sync_fetch_and_and( dest, val );
+}
 
 static FORCEINLINE LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
 {

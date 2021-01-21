@@ -1157,16 +1157,6 @@ static inline void spin_wait_for_next_rwl(rwl_queue *q)
     SpinWait_dtor(&sw);
 }
 
-static LONG InterlockedAnd(LONG *d, LONG v)
-{
-    LONG l = *d, old;
-    while ((l & v) != l) {
-        if((old = InterlockedCompareExchange(d, l&v, l)) == l) break;
-        l = old;
-    }
-    return l;
-}
-
 /* ?lock@reader_writer_lock@Concurrency@@QAEXXZ */
 /* ?lock@reader_writer_lock@Concurrency@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(reader_writer_lock_lock, 4)
