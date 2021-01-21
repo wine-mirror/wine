@@ -1501,9 +1501,9 @@ static HRESULT WINAPI dwritefactory3_GetSystemFontSet(IDWriteFactory7 *iface, ID
 
 static HRESULT WINAPI dwritefactory3_CreateFontSetBuilder(IDWriteFactory7 *iface, IDWriteFontSetBuilder **builder)
 {
-    FIXME("%p, %p: stub\n", iface, builder);
+    TRACE("%p, %p.\n", iface, builder);
 
-    return E_NOTIMPL;
+    return create_fontset_builder(iface, (IDWriteFontSetBuilder2 **)builder);
 }
 
 static HRESULT WINAPI dwritefactory3_CreateFontCollectionFromFontSet(IDWriteFactory7 *iface, IDWriteFontSet *fontset,
@@ -1644,9 +1644,9 @@ static HRESULT WINAPI dwritefactory4_ComputeGlyphOrigins(IDWriteFactory7 *iface,
 
 static HRESULT WINAPI dwritefactory5_CreateFontSetBuilder(IDWriteFactory7 *iface, IDWriteFontSetBuilder1 **builder)
 {
-    FIXME("%p, %p: stub\n", iface, builder);
+    TRACE("%p, %p.\n", iface, builder);
 
-    return E_NOTIMPL;
+    return create_fontset_builder(iface, (IDWriteFontSetBuilder2 **)builder);
 }
 
 static HRESULT WINAPI dwritefactory5_CreateInMemoryFontFileLoader(IDWriteFactory7 *iface,
@@ -1725,9 +1725,9 @@ static HRESULT WINAPI dwritefactory6_CreateFontCollectionFromFontSet(IDWriteFact
 
 static HRESULT WINAPI dwritefactory6_CreateFontSetBuilder(IDWriteFactory7 *iface, IDWriteFontSetBuilder2 **builder)
 {
-    FIXME("%p, %p.\n", iface, builder);
+    TRACE("%p, %p.\n", iface, builder);
 
-    return E_NOTIMPL;
+    return create_fontset_builder(iface, builder);
 }
 
 static HRESULT WINAPI dwritefactory6_CreateTextFormat(IDWriteFactory7 *iface, const WCHAR *familyname,

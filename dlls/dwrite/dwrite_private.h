@@ -346,6 +346,7 @@ extern void factory_unlock(IDWriteFactory7 *factory) DECLSPEC_HIDDEN;
 extern HRESULT create_inmemory_fileloader(IDWriteInMemoryFontFileLoader **loader) DECLSPEC_HIDDEN;
 extern HRESULT create_font_resource(IDWriteFactory7 *factory, IDWriteFontFile *file, UINT32 face_index,
         IDWriteFontResource **resource) DECLSPEC_HIDDEN;
+extern HRESULT create_fontset_builder(IDWriteFactory7 *factory, IDWriteFontSetBuilder2 **ret) DECLSPEC_HIDDEN;
 
 struct dwrite_fontface;
 

@@ -9371,21 +9371,15 @@ static void test_fontsetbuilder(void)
     HRESULT hr;
 
     factory = create_factory_iid(&IID_IDWriteFactory3);
-    if (!factory) {
-        skip("IDWriteFontSetBuilder is not supported.\n");
+    if (!factory)
+    {
+        win_skip("IDWriteFontSetBuilder is not supported.\n");
         return;
     }
 
     EXPECT_REF(factory, 1);
     hr = IDWriteFactory3_CreateFontSetBuilder(factory, &builder);
-todo_wine
     ok(hr == S_OK, "Failed to create font set builder, hr %#x.\n", hr);
-
-    if (FAILED(hr)) {
-        IDWriteFactory3_Release(factory);
-        return;
-    }
-
     EXPECT_REF(factory, 2);
     IDWriteFontSetBuilder_Release(builder);
 
@@ -9419,12 +9413,16 @@ todo_wine
 
             EXPECT_REF(ref, 1);
             hr = IDWriteFontSetBuilder_AddFontFaceReference(builder, ref);
+       todo_wine
             ok(hr == S_OK, "Failed to add fontface reference, hr %#x.\n", hr);
             EXPECT_REF(ref, 1);
 
             hr = IDWriteFontSetBuilder_CreateFontSet(builder, &fontset);
+       todo_wine
             ok(hr == S_OK, "Failed to create a font set, hr %#x.\n", hr);
 
+        if (SUCCEEDED(hr))
+        {
             setcount = IDWriteFontSet_GetFontCount(fontset);
             ok(setcount == 1, "Unexpected font count %u.\n", setcount);
 
@@ -9490,6 +9488,7 @@ todo_wine
             }
 
             IDWriteFontSet_Release(fontset);
+        }
             IDWriteFontFaceReference_Release(ref);
             IDWriteFontSetBuilder_Release(builder);
 
