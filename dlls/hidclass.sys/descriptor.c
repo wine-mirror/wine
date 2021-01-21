@@ -698,6 +698,10 @@ static void build_elements(WINE_HID_REPORT *wine_report, WINE_HID_ELEMENT *elems
     }
 
     wine_element->valueStartBit = wine_report->bitSize;
+
+    wine_element->bitCount = (feature->caps.BitSize * feature->caps.ReportCount);
+    wine_report->bitSize += wine_element->bitCount;
+
     if (feature->caps.BitSize == 1)
     {
         wine_element->ElementType = ButtonElement;
@@ -713,8 +717,6 @@ static void build_elements(WINE_HID_REPORT *wine_report, WINE_HID_ELEMENT *elems
         wine_element->caps.button.IsAbsolute = feature->IsAbsolute;
         if (wine_element->caps.button.IsRange)
         {
-            wine_element->bitCount = (feature->caps.u.Range.UsageMax - feature->caps.u.Range.UsageMin) + 1;
-            wine_report->bitSize += wine_element->bitCount;
             wine_element->caps.button.u.Range.UsageMin = feature->caps.u.Range.UsageMin;
             wine_element->caps.button.u.Range.UsageMax = feature->caps.u.Range.UsageMax;
             wine_element->caps.button.u.Range.StringMin = feature->caps.u.Range.StringMin;
@@ -727,8 +729,6 @@ static void build_elements(WINE_HID_REPORT *wine_report, WINE_HID_ELEMENT *elems
         }
         else
         {
-            wine_report->bitSize++;
-            wine_element->bitCount = 1;
             wine_element->caps.button.u.NotRange.Usage = feature->caps.u.NotRange.Usage;
             wine_element->caps.button.u.NotRange.Reserved1 = feature->caps.u.NotRange.Usage;
             wine_element->caps.button.u.NotRange.StringIndex = feature->caps.u.NotRange.StringIndex;
@@ -756,8 +756,6 @@ static void build_elements(WINE_HID_REPORT *wine_report, WINE_HID_ELEMENT *elems
         wine_element->caps.value.HasNull = feature->HasNull;
         wine_element->caps.value.BitSize = feature->caps.BitSize;
         wine_element->caps.value.ReportCount = feature->caps.ReportCount;
-        wine_element->bitCount = (feature->caps.BitSize * wine_element->caps.value.ReportCount);
-        wine_report->bitSize += wine_element->bitCount;
         wine_element->caps.value.UnitsExp = feature->caps.UnitsExp;
         wine_element->caps.value.Units = feature->caps.Units;
         wine_element->caps.value.LogicalMin = feature->caps.LogicalMin;
