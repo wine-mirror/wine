@@ -1875,7 +1875,7 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    gst_element_set_state(filter->container, GST_STATE_PLAYING);
+    gst_element_set_state(filter->container, GST_STATE_PAUSED);
     ret = gst_element_get_state(filter->container, NULL, NULL, -1);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
@@ -2776,7 +2776,7 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    gst_element_set_state(filter->container, GST_STATE_PLAYING);
+    gst_element_set_state(filter->container, GST_STATE_PAUSED);
     ret = gst_element_get_state(filter->container, NULL, NULL, -1);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
