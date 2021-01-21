@@ -93,6 +93,7 @@ static BOOL eval_like( const WCHAR *lstr, const WCHAR *rstr )
 
     while (*p && *q)
     {
+        if (q[0] == '\\' && q[1] == '\\') q++;
         if (*q == '%')
         {
             while (*q == '%') q++;

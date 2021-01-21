@@ -1171,6 +1171,16 @@ static void test_Win32_NetworkAdapter( IWbemServices *services )
 
     IEnumWbemClassObject_Release( result );
     SysFreeString( query );
+
+    query = SysAllocString( L"SELECT * FROM Win32_NetworkAdapter WHERE PNPDeviceID LIKE \"PCI\\\\%\"" );
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( query );
+
+    query = SysAllocString( L"SELECT * FROM Win32_NetworkAdapter WHERE PNPDeviceID LIKE \"PCI\\%\"" );
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    todo_wine ok( hr == WBEM_E_INVALID_QUERY, "got %08x\n", hr );
+    SysFreeString( query );
     SysFreeString( wql );
 }
 
