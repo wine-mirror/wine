@@ -1144,6 +1144,32 @@ static void test_SystemSecurity( IWbemServices *services )
     SysFreeString( class );
 }
 
+static void test_Win32_NetworkAdapter( IWbemServices *services )
+{
+    BSTR wql = SysAllocString( L"wql" ), query = SysAllocString( L"SELECT * FROM Win32_NetworkAdapter" );
+    IEnumWbemClassObject *result;
+    IWbemClassObject *obj;
+    HRESULT hr;
+    DWORD count;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    for (;;)
+    {
+        hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+        if (hr != S_OK) break;
+
+        check_property( obj, L"DeviceID", VT_BSTR, CIM_STRING );
+        check_property( obj, L"Index", VT_I4, CIM_UINT32 );
+        IWbemClassObject_Release( obj );
+    }
+
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
+    SysFreeString( wql );
+}
+
 static void test_Win32_OperatingSystem( IWbemServices *services )
 {
     BSTR wql = SysAllocString( L"wql" ), query = SysAllocString( L"SELECT * FROM Win32_OperatingSystem" );
@@ -1874,6 +1900,7 @@ START_TEST(query)
     test_Win32_DiskDrive( services );
     test_Win32_DisplayControllerConfiguration( services );
     test_Win32_IP4RouteTable( services );
+    test_Win32_NetworkAdapter( services );
     test_Win32_OperatingSystem( services );
     test_Win32_PhysicalMemory( services );
     test_Win32_PnPEntity( services );
