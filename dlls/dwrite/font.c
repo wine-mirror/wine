@@ -3932,9 +3932,6 @@ static HRESULT init_font_data(const struct fontface_desc *desc, struct dwrite_fo
     data->file = desc->files[0];
     data->face_index = desc->index;
     data->face_type = desc->face_type;
-    data->simulations = DWRITE_FONT_SIMULATIONS_NONE;
-    data->bold_sim_tested = 0;
-    data->oblique_sim_tested = 0;
     IDWriteFontFile_AddRef(data->file);
 
     stream_desc.stream = desc->stream;
