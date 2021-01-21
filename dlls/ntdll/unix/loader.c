@@ -1077,7 +1077,7 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
 
 
 /* check a PE library architecture */
-static BOOL is_valid_binary( HMODULE module, const SECTION_IMAGE_INFORMATION *info )
+static BOOL is_valid_binary( const SECTION_IMAGE_INFORMATION *info )
 {
 #ifdef __i386__
     return info->Machine == IMAGE_FILE_MACHINE_I386;
@@ -1138,7 +1138,7 @@ static inline char *prepend( char *buffer, const char *str, size_t len )
 /***********************************************************************
  *	open_dll_file
  *
- * Open a file for a new dll. Helper for find_dll_file.
+ * Open a file for a new dll. Helper for open_builtin_file.
  */
 static NTSTATUS open_dll_file( const char *name, void **module, SECTION_IMAGE_INFORMATION *image_info )
 {
@@ -1187,37 +1187,40 @@ static NTSTATUS open_dll_file( const char *name, void **module, SECTION_IMAGE_IN
     NtClose( handle );
     if (status) return status;
 
-    if (*module)
-    {
-        NtUnmapViewOfSection( NtCurrentProcess(), *module );
-        *module = NULL;
-    }
     NtQuerySection( mapping, SectionImageInformation, image_info, sizeof(*image_info), NULL );
-    status = NtMapViewOfSection( mapping, NtCurrentProcess(), module, 0, 0, NULL, &len,
-                                 ViewShare, 0, PAGE_EXECUTE_READ );
-    if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
-    NtClose( mapping );
-    if (status) return status;
-
     /* ignore non-builtins */
     if (!(image_info->u.ImageFlags & IMAGE_FLAGS_WineBuiltin))
     {
         WARN( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_a(name) );
         status = STATUS_DLL_NOT_FOUND;
     }
-    else if (!is_valid_binary( *module, image_info ))
+    else if (!is_valid_binary( image_info ))
     {
         TRACE( "%s is for arch %x, continuing search\n", debugstr_a(name), image_info->Machine );
         status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
     }
-
-    if (!status) status = add_builtin_module( *module, NULL, &st );
-
-    if (status)
+    else
     {
-        NtUnmapViewOfSection( NtCurrentProcess(), *module );
-        *module = NULL;
+        if (*module)
+        {
+            NtUnmapViewOfSection( NtCurrentProcess(), *module );
+            *module = NULL;
+        }
+        status = NtMapViewOfSection( mapping, NtCurrentProcess(), module, 0, 0, NULL, &len,
+                                     ViewShare, 0, PAGE_EXECUTE_READ );
+        if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
+
+        if (!status)
+        {
+            status = add_builtin_module( *module, NULL, &st );
+            if (status)
+            {
+                NtUnmapViewOfSection( NtCurrentProcess(), *module );
+                *module = NULL;
+            }
+        }
     }
+    NtClose( mapping );
     return status;
 }
 

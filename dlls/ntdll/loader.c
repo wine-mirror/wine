@@ -1985,6 +1985,8 @@ static BOOL convert_to_pe64( HMODULE module, const SECTION_IMAGE_INFORMATION *in
     void *addr = module;
     ULONG i, old_prot;
 
+    if (nt->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC) return TRUE;  /* already 64-bit */
+
     TRACE( "%p\n", module );
 
     if (NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, PAGE_READWRITE, &old_prot ))
@@ -2305,33 +2307,30 @@ static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, void 
                               NULL, &size, PAGE_EXECUTE_READ, SEC_IMAGE, handle );
     if (!status)
     {
+        NtQuerySection( mapping, SectionImageInformation, image_info, sizeof(*image_info), NULL );
+        if (!is_valid_binary( handle, image_info ))
+        {
+            TRACE( "%s is for arch %x, continuing search\n", debugstr_us(nt_name), image_info->Machine );
+            status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
+            NtClose( mapping );
+        }
+    }
+    NtClose( handle );
+    if (!status)
+    {
         if (*module)
         {
             NtUnmapViewOfSection( NtCurrentProcess(), *module );
             *module = NULL;
         }
-        NtQuerySection( mapping, SectionImageInformation, image_info, sizeof(*image_info), NULL );
         status = NtMapViewOfSection( mapping, NtCurrentProcess(), module, 0, 0, NULL, &len,
                                      ViewShare, 0, PAGE_EXECUTE_READ );
         if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
+#ifdef _WIN64
+        if (!status && !convert_to_pe64( *module, image_info )) status = STATUS_INVALID_IMAGE_FORMAT;
+#endif
         NtClose( mapping );
     }
-    if (!status && !is_valid_binary( handle, image_info ))
-    {
-        TRACE( "%s is for arch %x, continuing search\n", debugstr_us(nt_name), image_info->Machine );
-        NtUnmapViewOfSection( NtCurrentProcess(), *module );
-        *module = NULL;
-        status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
-    }
-#ifdef _WIN64
-    if (!status &&
-        image_info->Machine != IMAGE_FILE_MACHINE_AMD64 &&
-        image_info->Machine != IMAGE_FILE_MACHINE_ARM64)
-    {
-        if (!convert_to_pe64( *module, image_info )) status = STATUS_INVALID_IMAGE_FORMAT;
-    }
-#endif
-    NtClose( handle );
     return status;
 }
 
