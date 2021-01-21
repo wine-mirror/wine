@@ -27,6 +27,7 @@
 #define COBJMACROS
 
 #include "dwrite_private.h"
+#include "scripts.h"
 #include "winternl.h"
 
 #include "wine/debug.h"
@@ -135,6 +136,17 @@ static void shape_add_feature(struct shaping_features *features, unsigned int ta
     shape_add_feature_full(features, tag, FEATURE_GLOBAL, 1);
 }
 
+void shape_enable_feature(struct shaping_features *features, unsigned int tag,
+        unsigned int flags)
+{
+    shape_add_feature_full(features, tag, FEATURE_GLOBAL | flags, 1);
+}
+
+void shape_start_next_stage(struct shaping_features *features)
+{
+    features->stage++;
+}
+
 static int features_sorting_compare(const void *a, const void *b)
 {
     const struct shaping_feature *left = a, *right = b;
@@ -187,6 +199,21 @@ static void shape_merge_features(struct scriptshaping_context *context, struct s
     features->count = j + 1;
 }
 
+static const struct shaper null_shaper;
+
+static void shape_set_shaper(struct scriptshaping_context *context)
+{
+    switch (context->script)
+    {
+        case Script_Arabic:
+        case Script_Syriac:
+            context->shaper = &arabic_shaper;
+            break;
+        default:
+            context->shaper = &null_shaper;
+    }
+}
+
 HRESULT shape_get_positions(struct scriptshaping_context *context, const unsigned int *scripts)
 {
     static const struct shaping_feature common_features[] =
@@ -205,6 +232,8 @@ HRESULT shape_get_positions(struct scriptshaping_context *context, const unsigne
     struct scriptshaping_cache *cache = context->cache;
     unsigned int script_index, language_index, script, i;
     struct shaping_features features = { 0 };
+
+    shape_set_shaper(context);
 
     for (i = 0; i < ARRAY_SIZE(common_features); ++i)
         shape_add_feature_full(&features, common_features[i].tag, FEATURE_GLOBAL | common_features[i].flags, 1);
@@ -279,19 +308,24 @@ HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned i
     struct shaping_features features = { 0 };
     unsigned int i;
 
+    shape_set_shaper(context);
+
     if (!context->is_sideways)
     {
         if (context->is_rtl)
         {
-            shape_add_feature(&features, DWRITE_MAKE_OPENTYPE_TAG('r','t','l','a'));
+            shape_enable_feature(&features, DWRITE_MAKE_OPENTYPE_TAG('r','t','l','a'), 0);
             shape_add_feature_full(&features, DWRITE_MAKE_OPENTYPE_TAG('r','t','l','m'), 0, 1);
         }
         else
         {
-            shape_add_feature(&features, DWRITE_MAKE_OPENTYPE_TAG('l','t','r','a'));
-            shape_add_feature(&features, DWRITE_MAKE_OPENTYPE_TAG('l','t','r','m'));
+            shape_enable_feature(&features, DWRITE_MAKE_OPENTYPE_TAG('l','t','r','a'), 0);
+            shape_enable_feature(&features, DWRITE_MAKE_OPENTYPE_TAG('l','t','r','m'), 0);
         }
     }
+
+    if (context->shaper->collect_features)
+        context->shaper->collect_features(context, &features);
 
     for (i = 0; i < ARRAY_SIZE(common_features); ++i)
         shape_add_feature(&features, common_features[i]);
@@ -303,7 +337,7 @@ HRESULT shape_get_glyphs(struct scriptshaping_context *context, const unsigned i
             shape_add_feature(&features, horizontal_features[i]);
     }
     else
-        shape_add_feature_full(&features, DWRITE_MAKE_OPENTYPE_TAG('v','e','r','t'), FEATURE_GLOBAL | FEATURE_GLOBAL_SEARCH, 1);
+        shape_enable_feature(&features, DWRITE_MAKE_OPENTYPE_TAG('v','e','r','t'), FEATURE_GLOBAL_SEARCH);
 
     shape_merge_features(context, &features);
 

@@ -4647,7 +4647,8 @@ static void opentype_layout_set_glyph_masks(struct scriptshaping_context *contex
    for (g = 0; g < context->glyph_count; ++g)
        context->glyph_infos[g].mask = context->global_mask;
 
-   /* FIXME: set shaper masks */
+   if (context->shaper->setup_masks)
+       context->shaper->setup_masks(context, features);
 
    for (r = 0, start_char = 0; r < context->user_features.range_count; ++r)
    {
