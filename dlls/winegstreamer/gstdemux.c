@@ -1452,8 +1452,29 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
     return GST_BUS_DROP;
 }
 
+static LONGLONG query_duration(GstPad *pad)
+{
+    gint64 duration, byte_length;
+
+    if (gst_pad_query_duration(pad, GST_FORMAT_TIME, &duration))
+        return duration / 100;
+
+    WARN("Failed to query time duration; trying to convert from byte length.\n");
+
+    /* To accurately get a duration for the stream, we want to only consider the
+     * length of that stream. Hence, query for the pad duration, instead of
+     * using the file duration. */
+    if (gst_pad_query_duration(pad, GST_FORMAT_BYTES, &byte_length)
+            && gst_pad_query_convert(pad, GST_FORMAT_BYTES, byte_length, GST_FORMAT_TIME, &duration))
+        return duration / 100;
+
+    ERR("Failed to query duration.\n");
+    return 0;
+}
+
 static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
 {
+    unsigned int i;
     LONGLONG avail;
     GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE(
         "quartz_src",
@@ -1483,28 +1504,19 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
     if (!This->init_gst(This))
         return E_FAIL;
 
+    for (i = 0; i < This->source_count; ++i)
+    {
+        struct parser_source *pin = This->sources[i];
+        const HANDLE events[2] = {pin->caps_event, This->error_event};
+
+        pin->seek.llDuration = pin->seek.llStop = query_duration(pin->their_src);
+        pin->seek.llCurrent = 0;
+        if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
+            return E_FAIL;
+    }
+
     This->nextofs = This->nextpullofs = 0;
     return S_OK;
-}
-
-static LONGLONG query_duration(GstPad *pad)
-{
-    gint64 duration, byte_length;
-
-    if (gst_pad_query_duration(pad, GST_FORMAT_TIME, &duration))
-        return duration / 100;
-
-    WARN("Failed to query time duration; trying to convert from byte length.\n");
-
-    /* To accurately get a duration for the stream, we want to only consider the
-     * length of that stream. Hence, query for the pad duration, instead of
-     * using the file duration. */
-    if (gst_pad_query_duration(pad, GST_FORMAT_BYTES, &byte_length)
-            && gst_pad_query_convert(pad, GST_FORMAT_BYTES, byte_length, GST_FORMAT_TIME, &duration))
-        return duration / 100;
-
-    ERR("Failed to query duration.\n");
-    return 0;
 }
 
 static inline struct parser_source *impl_from_IMediaSeeking(IMediaSeeking *iface)
@@ -1714,7 +1726,6 @@ static const struct strmbase_sink_ops sink_ops =
 static BOOL decodebin_parser_init_gst(struct parser *filter)
 {
     GstElement *element = gst_element_factory_make("decodebin", NULL);
-    unsigned int i;
     HANDLE events[2];
     int ret;
 
@@ -1753,18 +1764,6 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
     events[1] = filter->error_event;
     if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
         return FALSE;
-
-    for (i = 0; i < filter->source_count; ++i)
-    {
-        struct parser_source *pin = filter->sources[i];
-
-        pin->seek.llDuration = pin->seek.llStop = query_duration(pin->their_src);
-        pin->seek.llCurrent = 0;
-        events[0] = pin->caps_event;
-        events[1] = filter->error_event;
-        if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
-            return FALSE;
-    }
 
     return TRUE;
 }
@@ -2506,7 +2505,6 @@ static BOOL wave_parser_init_gst(struct parser *filter)
     static const WCHAR source_name[] = {'o','u','t','p','u','t',0};
     struct parser_source *pin;
     GstElement *element;
-    HANDLE events[2];
     int ret;
 
     if (!(element = gst_element_factory_make("wavparse", NULL)))
@@ -2543,14 +2541,6 @@ static BOOL wave_parser_init_gst(struct parser *filter)
         ERR("Failed to play stream.\n");
         return FALSE;
     }
-
-    pin->seek.llDuration = pin->seek.llStop = query_duration(pin->their_src);
-    pin->seek.llCurrent = 0;
-
-    events[0] = pin->caps_event;
-    events[1] = filter->error_event;
-    if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
-        return FALSE;
 
     return TRUE;
 }
@@ -2621,7 +2611,6 @@ static const struct strmbase_sink_ops avi_splitter_sink_ops =
 static BOOL avi_splitter_init_gst(struct parser *filter)
 {
     GstElement *element = gst_element_factory_make("avidemux", NULL);
-    unsigned int i;
     HANDLE events[2];
     int ret;
 
@@ -2659,18 +2648,6 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
     events[1] = filter->error_event;
     if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
         return FALSE;
-
-    for (i = 0; i < filter->source_count; ++i)
-    {
-        struct parser_source *pin = filter->sources[i];
-
-        pin->seek.llDuration = pin->seek.llStop = query_duration(pin->their_src);
-        pin->seek.llCurrent = 0;
-        events[0] = pin->caps_event;
-        events[1] = filter->error_event;
-        if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
-            return FALSE;
-    }
 
     return TRUE;
 }
@@ -2791,17 +2768,7 @@ static BOOL mpeg_splitter_init_gst(struct parser *filter)
     events[1] = filter->error_event;
     events[2] = pin->eos_event;
     res = WaitForMultipleObjects(3, events, FALSE, INFINITE);
-    if (res == 1)
-        return FALSE;
-
-    pin->seek.llDuration = pin->seek.llStop = query_duration(pin->their_src);
-    pin->seek.llCurrent = 0;
-
-    events[0] = pin->caps_event;
-    if (WaitForMultipleObjects(2, events, FALSE, INFINITE))
-        return FALSE;
-
-    return TRUE;
+    return (res != 1);
 }
 
 static HRESULT mpeg_splitter_source_query_accept(struct parser_source *pin, const AM_MEDIA_TYPE *mt)
