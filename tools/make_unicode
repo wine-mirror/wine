@@ -1235,7 +1235,6 @@ sub dump_linebreak($)
 {
     my $filename = shift;
     my @break_table;
-    my $next_group = 0;
 
     my $INPUT = open_data_file( $UNIDATA, "LineBreak.txt" );
     while (<$INPUT>)
