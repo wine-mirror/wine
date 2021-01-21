@@ -512,10 +512,14 @@ enum dwarf_operation
 };
 
 #define DW_EH_PE_native   0x00
-#define DW_EH_PE_leb128   0x01
-#define DW_EH_PE_data2    0x02
-#define DW_EH_PE_data4    0x03
-#define DW_EH_PE_data8    0x04
+#define DW_EH_PE_uleb128  0x01
+#define DW_EH_PE_udata2   0x02
+#define DW_EH_PE_udata4   0x03
+#define DW_EH_PE_udata8   0x04
+#define DW_EH_PE_sleb128  0x09
+#define DW_EH_PE_sdata2   0x0a
+#define DW_EH_PE_sdata4   0x0b
+#define DW_EH_PE_sdata8   0x0c
 #define DW_EH_PE_signed   0x08
 #define DW_EH_PE_abs      0x00
 #define DW_EH_PE_pcrel    0x10
@@ -609,19 +613,31 @@ static LONG_PTR dwarf_get_sleb128( const unsigned char **p )
     return ret;
 }
 
-static ULONG_PTR dwarf_get_ptr( const unsigned char **p, unsigned char encoding )
+static ULONG_PTR dwarf_get_ptr( const unsigned char **p, unsigned char encoding, const struct dwarf_eh_bases *bases )
 {
     ULONG_PTR base;
 
     if (encoding == DW_EH_PE_omit) return 0;
 
-    switch (encoding & 0xf0)
+    switch (encoding & 0x70)
     {
     case DW_EH_PE_abs:
         base = 0;
         break;
     case DW_EH_PE_pcrel:
         base = (ULONG_PTR)*p;
+        break;
+    case DW_EH_PE_textrel:
+        base = (ULONG_PTR)bases->tbase;
+        break;
+    case DW_EH_PE_datarel:
+        base = (ULONG_PTR)bases->dbase;
+        break;
+    case DW_EH_PE_funcrel:
+        base = (ULONG_PTR)bases->func;
+        break;
+    case DW_EH_PE_aligned:
+        base = ((ULONG_PTR)*p + 7) & ~7ul;
         break;
     default:
         FIXME( "unsupported encoding %02x\n", encoding );
@@ -630,28 +646,21 @@ static ULONG_PTR dwarf_get_ptr( const unsigned char **p, unsigned char encoding 
 
     switch (encoding & 0x0f)
     {
-    case DW_EH_PE_native:
-        return base + dwarf_get_u8( p );
-    case DW_EH_PE_leb128:
-        return base + dwarf_get_uleb128( p );
-    case DW_EH_PE_data2:
-        return base + dwarf_get_u2( p );
-    case DW_EH_PE_data4:
-        return base + dwarf_get_u4( p );
-    case DW_EH_PE_data8:
-        return base + dwarf_get_u8( p );
-    case DW_EH_PE_signed|DW_EH_PE_leb128:
-        return base + dwarf_get_sleb128( p );
-    case DW_EH_PE_signed|DW_EH_PE_data2:
-        return base + (signed short)dwarf_get_u2( p );
-    case DW_EH_PE_signed|DW_EH_PE_data4:
-        return base + (signed int)dwarf_get_u4( p );
-    case DW_EH_PE_signed|DW_EH_PE_data8:
-        return base + (LONG64)dwarf_get_u8( p );
+    case DW_EH_PE_native:  base += dwarf_get_u8( p ); break;
+    case DW_EH_PE_uleb128: base += dwarf_get_uleb128( p ); break;
+    case DW_EH_PE_udata2:  base += dwarf_get_u2( p ); break;
+    case DW_EH_PE_udata4:  base += dwarf_get_u4( p ); break;
+    case DW_EH_PE_udata8:  base += dwarf_get_u8( p ); break;
+    case DW_EH_PE_sleb128: base += dwarf_get_sleb128( p ); break;
+    case DW_EH_PE_sdata2:  base += (signed short)dwarf_get_u2( p ); break;
+    case DW_EH_PE_sdata4:  base += (signed int)dwarf_get_u4( p ); break;
+    case DW_EH_PE_sdata8:  base += (LONG64)dwarf_get_u8( p ); break;
     default:
         FIXME( "unsupported encoding %02x\n", encoding );
         return 0;
     }
+    if (encoding & DW_EH_PE_indirect) base = *(ULONG_PTR *)base;
+    return base;
 }
 
 enum reg_rule
@@ -706,7 +715,8 @@ static BOOL valid_reg( ULONG_PTR reg )
 }
 
 static void execute_cfa_instructions( const unsigned char *ptr, const unsigned char *end,
-                                      ULONG_PTR last_ip, struct frame_info *info )
+                                      ULONG_PTR last_ip, struct frame_info *info,
+                                      const struct dwarf_eh_bases *bases )
 {
     while (ptr < end && info->ip < last_ip + info->signal_frame)
     {
@@ -749,7 +759,7 @@ static void execute_cfa_instructions( const unsigned char *ptr, const unsigned c
             break;
         case DW_CFA_set_loc:
         {
-            ULONG_PTR loc = dwarf_get_ptr( &ptr, info->fde_encoding );
+            ULONG_PTR loc = dwarf_get_ptr( &ptr, info->fde_encoding, bases );
             TRACE( "%lx: DW_CFA_set_loc %lx\n", info->ip, loc );
             info->ip = loc;
             break;
@@ -998,7 +1008,8 @@ static void set_context_reg( CONTEXT *context, ULONG_PTR dw_reg, void *val )
     }
 }
 
-static ULONG_PTR eval_expression( const unsigned char *p, CONTEXT *context )
+static ULONG_PTR eval_expression( const unsigned char *p, CONTEXT *context,
+                                  const struct dwarf_eh_bases *bases )
 {
     ULONG_PTR reg, tmp, stack[64];
     int sp = -1;
@@ -1059,7 +1070,7 @@ static ULONG_PTR eval_expression( const unsigned char *p, CONTEXT *context )
         case DW_OP_ne:          stack[sp-1] = (stack[sp-1] != stack[sp]); sp--; break;
         case DW_OP_skip:        tmp = (short)dwarf_get_u2(&p); p += tmp; break;
         case DW_OP_bra:         tmp = (short)dwarf_get_u2(&p); if (!stack[sp--]) p += tmp; break;
-        case DW_OP_GNU_encoded_addr: tmp = *p++; stack[++sp] = dwarf_get_ptr( &p, tmp ); break;
+        case DW_OP_GNU_encoded_addr: tmp = *p++; stack[++sp] = dwarf_get_ptr( &p, tmp, bases ); break;
         case DW_OP_regx:        stack[++sp] = *(ULONG_PTR *)get_context_reg( context, dwarf_get_uleb128(&p) ); break;
         case DW_OP_bregx:
             reg = dwarf_get_uleb128(&p);
@@ -1083,7 +1094,8 @@ static ULONG_PTR eval_expression( const unsigned char *p, CONTEXT *context )
 }
 
 /* apply the computed frame info to the actual context */
-static void apply_frame_state( CONTEXT *context, struct frame_state *state )
+static void apply_frame_state( CONTEXT *context, struct frame_state *state,
+                               const struct dwarf_eh_bases *bases )
 {
     unsigned int i;
     ULONG_PTR cfa, value;
@@ -1092,10 +1104,10 @@ static void apply_frame_state( CONTEXT *context, struct frame_state *state )
     switch (state->cfa_rule)
     {
     case RULE_EXPRESSION:
-        cfa = *(ULONG_PTR *)eval_expression( (const unsigned char *)state->cfa_offset, context );
+        cfa = *(ULONG_PTR *)eval_expression( (const unsigned char *)state->cfa_offset, context, bases );
         break;
     case RULE_VAL_EXPRESSION:
-        cfa = eval_expression( (const unsigned char *)state->cfa_offset, context );
+        cfa = eval_expression( (const unsigned char *)state->cfa_offset, context, bases );
         break;
     default:
         cfa = *(ULONG_PTR *)get_context_reg( context, state->cfa_reg ) + state->cfa_offset;
@@ -1118,11 +1130,11 @@ static void apply_frame_state( CONTEXT *context, struct frame_state *state )
             set_context_reg( &new_context, i, get_context_reg( context, state->regs[i] ));
             break;
         case RULE_EXPRESSION:
-            value = eval_expression( (const unsigned char *)state->regs[i], context );
+            value = eval_expression( (const unsigned char *)state->regs[i], context, bases );
             set_context_reg( &new_context, i, (void *)value );
             break;
         case RULE_VAL_EXPRESSION:
-            value = eval_expression( (const unsigned char *)state->regs[i], context );
+            value = eval_expression( (const unsigned char *)state->regs[i], context, bases );
             set_context_reg( &new_context, i, &value );
             break;
         }
@@ -1193,7 +1205,7 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *contex
         case 'P':
         {
             unsigned char encoding = *ptr++;
-            *handler = (void *)dwarf_get_ptr( &ptr, encoding );
+            *handler = (void *)dwarf_get_ptr( &ptr, encoding, bases );
             continue;
         }
         case 'R':
@@ -1210,11 +1222,11 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *contex
     if (end) ptr = end;
 
     end = (const unsigned char *)(&cie->length + 1) + cie->length;
-    execute_cfa_instructions( ptr, end, ip, &info );
+    execute_cfa_instructions( ptr, end, ip, &info, bases );
 
     ptr = (const unsigned char *)(fde + 1);
-    info.ip = dwarf_get_ptr( &ptr, info.fde_encoding );  /* fde code start */
-    code_end = info.ip + dwarf_get_ptr( &ptr, info.fde_encoding & 0x0f );  /* fde code length */
+    info.ip = dwarf_get_ptr( &ptr, info.fde_encoding, bases );  /* fde code start */
+    code_end = info.ip + dwarf_get_ptr( &ptr, info.fde_encoding & 0x0f, bases );  /* fde code length */
 
     if (aug_z_format)  /* get length of augmentation data */
     {
@@ -1223,15 +1235,15 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *contex
     }
     else end = NULL;
 
-    *handler_data = (void *)dwarf_get_ptr( &ptr, lsda_encoding );
+    *handler_data = (void *)dwarf_get_ptr( &ptr, lsda_encoding, bases );
     if (end) ptr = end;
 
     end = (const unsigned char *)(&fde->length + 1) + fde->length;
     TRACE( "fde %p len %x personality %p lsda %p code %lx-%lx\n",
            fde, fde->length, *handler, *handler_data, info.ip, code_end );
-    execute_cfa_instructions( ptr, end, ip, &info );
+    execute_cfa_instructions( ptr, end, ip, &info, bases );
     *frame = context->Rsp;
-    apply_frame_state( context, &info.state );
+    apply_frame_state( context, &info.state, bases );
 
     TRACE( "next function rip=%016lx\n", context->Rip );
     TRACE( "  rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
