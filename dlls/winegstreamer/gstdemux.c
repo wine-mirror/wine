@@ -1013,14 +1013,14 @@ static DWORD CALLBACK stream_thread(void *arg)
 
     TRACE("Starting streaming thread for pin %p.\n", pin);
 
-    for (;;)
+    while (filter->streaming)
     {
         struct parser_event event;
 
         EnterCriticalSection(&pin->flushing_cs);
         EnterCriticalSection(&filter->cs);
 
-        while (filter->streaming && !filter->flushing && pin->event.type == PARSER_EVENT_NONE)
+        while (!filter->flushing && pin->event.type == PARSER_EVENT_NONE)
             SleepConditionVariableCS(&pin->event_cv, &filter->cs, INFINITE);
 
         if (filter->flushing)
@@ -1029,13 +1029,6 @@ static DWORD CALLBACK stream_thread(void *arg)
             LeaveCriticalSection(&pin->flushing_cs);
             TRACE("Filter is flushing.\n");
             continue;
-        }
-
-        if (!filter->streaming)
-        {
-            LeaveCriticalSection(&filter->cs);
-            LeaveCriticalSection(&pin->flushing_cs);
-            break;
         }
 
         if (!pin->event.type)
@@ -1585,8 +1578,9 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
     if (!filter->container)
         return S_OK;
 
-    EnterCriticalSection(&filter->cs);
     filter->streaming = true;
+    EnterCriticalSection(&filter->cs);
+    filter->flushing = false;
     LeaveCriticalSection(&filter->cs);
 
     /* DirectShow retains the old seek positions, but resets to them every time
@@ -1624,8 +1618,9 @@ static HRESULT parser_cleanup_stream(struct strmbase_filter *iface)
     if (!filter->container)
         return S_OK;
 
-    EnterCriticalSection(&filter->cs);
     filter->streaming = false;
+    EnterCriticalSection(&filter->cs);
+    filter->flushing = true;
     LeaveCriticalSection(&filter->cs);
 
     for (i = 0; i < filter->source_count; ++i)
@@ -1869,6 +1864,7 @@ static void parser_init_common(struct parser *object)
     object->error_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     InitializeCriticalSection(&object->cs);
     object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": parser.cs");
+    object->flushing = true;
 }
 
 HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out)
