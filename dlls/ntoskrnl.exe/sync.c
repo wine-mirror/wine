@@ -540,15 +540,6 @@ void WINAPI KeInitializeSpinLock( KSPIN_LOCK *lock )
     *lock = 0;
 }
 
-static inline void small_pause(void)
-{
-#ifdef __x86_64__
-    __asm__ __volatile__( "rep;nop" : : : "memory" );
-#else
-    __asm__ __volatile__( "" : : : "memory" );
-#endif
-}
-
 /***********************************************************************
  *           KeAcquireSpinLockAtDpcLevel (NTOSKRNL.EXE.@)
  */
@@ -556,7 +547,7 @@ void WINAPI KeAcquireSpinLockAtDpcLevel( KSPIN_LOCK *lock )
 {
     TRACE("lock %p.\n", lock);
     while (InterlockedCompareExchangePointer( (void **)lock, (void *)1, (void *)0 ))
-        small_pause();
+        YieldProcessor();
 }
 
 /***********************************************************************
@@ -592,7 +583,7 @@ void FASTCALL KeAcquireInStackQueuedSpinLockAtDpcLevel( KSPIN_LOCK *lock, KLOCK_
         while (!((ULONG_PTR)InterlockedCompareExchangePointer( (void **)&queue->LockQueue.Lock, 0, 0 )
                  & QUEUED_SPINLOCK_OWNED))
         {
-            small_pause();
+            YieldProcessor();
         }
     }
 }
@@ -619,7 +610,7 @@ void FASTCALL KeReleaseInStackQueuedSpinLockFromDpcLevel( KLOCK_QUEUE_HANDLE *qu
         /* Otherwise, someone just queued themselves, but hasn't yet set
          * themselves as successor. Spin waiting for them to do so. */
         while (!(next = queue->LockQueue.Next))
-            small_pause();
+            YieldProcessor();
     }
 
     InterlockedExchangePointer( (void **)&next->Lock, (KSPIN_LOCK *)((ULONG_PTR)lock | QUEUED_SPINLOCK_OWNED) );
