@@ -424,13 +424,6 @@ static inline unsigned int wined3d_popcount(unsigned int x)
 #endif
 }
 
-static inline void wined3d_pause(void)
-{
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
-    __asm__ __volatile__( "rep;nop" : : : "memory" );
-#endif
-}
-
 #define ORM_BACKBUFFER  0
 #define ORM_FBO         1
 
@@ -4817,7 +4810,7 @@ static inline void wined3d_resource_wait_idle(struct wined3d_resource *resource)
         return;
 
     while (InterlockedCompareExchange(&resource->access_count, 0, 0))
-        wined3d_pause();
+        YieldProcessor();
 }
 
 /* TODO: Add tests and support for FLOAT16_4 POSITIONT, D3DCOLOR position, other

@@ -646,7 +646,7 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
      * ahead of the worker thread. */
     while (pending >= swapchain->max_frame_latency)
     {
-        wined3d_pause();
+        YieldProcessor();
         pending = InterlockedCompareExchange(&cs->pending_presents, 0, 0);
     }
 }
@@ -2822,7 +2822,7 @@ static void wined3d_cs_mt_finish(struct wined3d_cs *cs, enum wined3d_cs_queue_id
         return wined3d_cs_st_finish(cs, queue_id);
 
     while (cs->queue[queue_id].head != *(volatile LONG *)&cs->queue[queue_id].tail)
-        wined3d_pause();
+        YieldProcessor();
 }
 
 static const struct wined3d_cs_ops wined3d_cs_mt_ops =
