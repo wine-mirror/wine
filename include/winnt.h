@@ -6905,7 +6905,9 @@ static inline BOOLEAN BitScanReverse(DWORD *index, DWORD mask)
 #pragma intrinsic(_InterlockedExchange)
 #pragma intrinsic(_InterlockedExchangeAdd)
 #pragma intrinsic(_InterlockedIncrement)
+#pragma intrinsic(_InterlockedIncrement16)
 #pragma intrinsic(_InterlockedDecrement)
+#pragma intrinsic(_InterlockedDecrement16)
 #pragma intrinsic(_InterlockedOr)
 
 long      _InterlockedAnd(long volatile *,long);
@@ -6915,9 +6917,11 @@ long long _InterlockedCompareExchange64(long long volatile*,long long,long long)
 unsigned char _InterlockedCompareExchange128(volatile __int64 *, __int64, __int64, __int64 *);
 #endif
 long      _InterlockedDecrement(long volatile*);
+short     _InterlockedDecrement16(short volatile*);
 long      _InterlockedExchange(long volatile*,long);
 long      _InterlockedExchangeAdd(long volatile*,long);
 long      _InterlockedIncrement(long volatile*);
+short     _InterlockedIncrement16(short volatile*);
 long      _InterlockedOr(long volatile *,long);
 
 static FORCEINLINE LONG WINAPI InterlockedAnd( LONG volatile *dest, LONG val )
@@ -6957,9 +6961,19 @@ static FORCEINLINE LONG WINAPI InterlockedIncrement( LONG volatile *dest )
     return _InterlockedIncrement( (long volatile *)dest );
 }
 
+static FORCEINLINE short WINAPI InterlockedIncrement16( short volatile *dest )
+{
+    return _InterlockedIncrement16( (long volatile *)dest );
+}
+
 static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 {
     return _InterlockedDecrement( (long volatile *)dest );
+}
+
+static FORCEINLINE short WINAPI InterlockedDecrement16( short volatile *dest )
+{
+    return _InterlockedDecrement16( (long volatile *)dest );
 }
 
 static FORCEINLINE LONG WINAPI InterlockedOr( LONG volatile *dest, LONG val )
@@ -7098,7 +7112,17 @@ static FORCEINLINE LONG WINAPI InterlockedIncrement( LONG volatile *dest )
     return __sync_add_and_fetch( dest, 1 );
 }
 
+static FORCEINLINE short WINAPI InterlockedIncrement16( short volatile *dest )
+{
+    return __sync_add_and_fetch( dest, 1 );
+}
+
 static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
+{
+    return __sync_add_and_fetch( dest, -1 );
+}
+
+static FORCEINLINE short WINAPI InterlockedDecrement16( short volatile *dest )
 {
     return __sync_add_and_fetch( dest, -1 );
 }
