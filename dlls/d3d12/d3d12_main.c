@@ -337,6 +337,11 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
     {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     };
+    static const struct vkd3d_application_info application_info =
+    {
+        .type = VKD3D_STRUCTURE_TYPE_APPLICATION_INFO,
+        .api_version = VKD3D_API_VERSION_1_2,
+    };
 
     TRACE("adapter %p, minimum_feature_level %#x, iid %s, device %p.\n",
             adapter, minimum_feature_level, debugstr_guid(iid), device);
@@ -357,7 +362,7 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
     }
 
     optional_extensions_info.type = VKD3D_STRUCTURE_TYPE_OPTIONAL_INSTANCE_EXTENSIONS_INFO;
-    optional_extensions_info.next = NULL;
+    optional_extensions_info.next = &application_info;
     optional_extensions_info.extensions = optional_instance_extensions;
     optional_extensions_info.extension_count = ARRAY_SIZE(optional_instance_extensions);
 
