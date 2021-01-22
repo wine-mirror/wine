@@ -483,6 +483,8 @@ enum glyph_prop_flags
     GLYPH_PROP_MARK = LOOKUP_FLAG_IGNORE_MARKS,
     GLYPH_PROP_ZWNJ = 0x10,
     GLYPH_PROP_ZWJ = 0x20,
+    GLYPH_PROP_IGNORABLE = 0x40,
+    GLYPH_PROP_HIDDEN = 0x80,
 };
 
 enum gpos_lookup_type
@@ -3691,12 +3693,17 @@ static BOOL lookup_is_glyph_match(const struct scriptshaping_context *context, u
 
 static enum iterator_match glyph_iterator_may_skip(const struct glyph_iterator *iter)
 {
+    unsigned int glyph_props = iter->context->glyph_infos[iter->pos].props & (GLYPH_PROP_IGNORABLE | GLYPH_PROP_HIDDEN);
+
     if (!lookup_is_glyph_match(iter->context, iter->pos, iter->flags))
         return ITER_YES;
 
-    if ((iter->ignore_zwnj || !(iter->context->glyph_infos[iter->pos].props & GLYPH_PROP_ZWNJ)) &&
+    if (glyph_props == GLYPH_PROP_IGNORABLE && !iter->context->u.buffer.glyph_props[iter->pos].components &&
+            (iter->ignore_zwnj || !(iter->context->glyph_infos[iter->pos].props & GLYPH_PROP_ZWNJ)) &&
             (iter->ignore_zwj || !(iter->context->glyph_infos[iter->pos].props & GLYPH_PROP_ZWJ)))
+    {
         return ITER_MAYBE;
+    }
 
     return ITER_NO;
 }
@@ -5687,17 +5694,63 @@ static unsigned int unicode_get_mirrored_char(unsigned int codepoint)
 }
 
 /*
-    * 034F          # Mn       COMBINING GRAPHEME JOINER
-    * 061C          # Cf       ARABIC LETTER MARK
-    * 180B..180D    # Mn   [3] MONGOLIAN FREE VARIATION SELECTOR ONE..MONGOLIAN FREE VARIATION SELECTOR THREE
-    * 180E          # Cf       MONGOLIAN VOWEL SEPARATOR
-    * 200B..200F    # Cf   [5] ZERO WIDTH SPACE..RIGHT-TO-LEFT MARK
-    * FEFF          # Cf       ZERO WIDTH NO-BREAK SPACE
+     * 034F          # Mn       COMBINING GRAPHEME JOINER
+     * 061C          # Cf       ARABIC LETTER MARK
+     * 180B..180D    # Mn   [3] MONGOLIAN FREE VARIATION SELECTOR ONE..MONGOLIAN FREE VARIATION SELECTOR THREE
+     * 180E          # Cf       MONGOLIAN VOWEL SEPARATOR
+     * 200B..200F    # Cf   [5] ZERO WIDTH SPACE..RIGHT-TO-LEFT MARK
+     * FEFF          # Cf       ZERO WIDTH NO-BREAK SPACE
 */
-static unsigned int opentype_is_default_ignorable(unsigned int codepoint)
+static unsigned int opentype_is_zero_width(unsigned int codepoint)
 {
     return codepoint == 0x34f || codepoint == 0x61c || codepoint == 0xfeff ||
             (codepoint >= 0x180b && codepoint <= 0x180e) || (codepoint >= 0x200b && codepoint <= 0x200f);
+}
+
+/*
+    * 00AD          # Cf       SOFT HYPHEN
+    * 034F          # Mn       COMBINING GRAPHEME JOINER
+    * 061C          # Cf       ARABIC LETTER MARK
+    * 115F..1160    # Lo   [2] HANGUL CHOSEONG FILLER..HANGUL JUNGSEONG FILLER
+    * 17B4..17B5    # Mn   [2] KHMER VOWEL INHERENT AQ..KHMER VOWEL INHERENT AA
+    * 180B..180D    # Mn   [3] MONGOLIAN FREE VARIATION SELECTOR ONE..MONGOLIAN FREE VARIATION SELECTOR THREE
+    * 180E          # Cf       MONGOLIAN VOWEL SEPARATOR
+    * 200B..200F    # Cf   [5] ZERO WIDTH SPACE..RIGHT-TO-LEFT MARK
+    * 202A..202E    # Cf   [5] LEFT-TO-RIGHT EMBEDDING..RIGHT-TO-LEFT OVERRIDE
+    * 2060..2064    # Cf   [5] WORD JOINER..INVISIBLE PLUS
+    * 2065          # Cn       <reserved-2065>
+    * 2066..206F    # Cf  [10] LEFT-TO-RIGHT ISOLATE..NOMINAL DIGIT SHAPES
+    * 3164          # Lo       HANGUL FILLER
+    * FE00..FE0F    # Mn  [16] VARIATION SELECTOR-1..VARIATION SELECTOR-16
+    * FEFF          # Cf       ZERO WIDTH NO-BREAK SPACE
+    * FFA0          # Lo       HALFWIDTH HANGUL FILLER
+    * FFF0..FFF8    # Cn   [9] <reserved-FFF0>..<reserved-FFF8>
+    * 1BCA0..1BCA3  # Cf   [4] SHORTHAND FORMAT LETTER OVERLAP..SHORTHAND FORMAT UP STEP
+    * 1D173..1D17A  # Cf   [8] MUSICAL SYMBOL BEGIN BEAM..MUSICAL SYMBOL END PHRASE
+    * E0000         # Cn       <reserved-E0000>
+    * E0001         # Cf       LANGUAGE TAG
+    * E0002..E001F  # Cn  [30] <reserved-E0002>..<reserved-E001F>
+    * E0020..E007F  # Cf  [96] TAG SPACE..CANCEL TAG
+    * E0080..E00FF  # Cn [128] <reserved-E0080>..<reserved-E00FF>
+    * E0100..E01EF  # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
+    * E01F0..E0FFF  # Cn [3600] <reserved-E01F0>..<reserved-E0FFF>
+*/
+static unsigned int opentype_is_default_ignorable(unsigned int codepoint)
+{
+    if (codepoint < 0x80) return 0;
+    return codepoint == 0xad ||
+            codepoint == 0x34f ||
+            codepoint == 0x61c ||
+            (codepoint >= 0x17b4 && codepoint <= 0x17b5) ||
+            (codepoint >= 0x180b && codepoint <= 0x180e) ||
+            (codepoint >= 0x200b && codepoint <= 0x200f) ||
+            (codepoint >= 0x202a && codepoint <= 0x202e) ||
+            (codepoint >= 0x2060 && codepoint <= 0x206f) ||
+            (codepoint >= 0xfe00 && codepoint <= 0xfe0f) ||
+            codepoint == 0xfeff ||
+            (codepoint >= 0xfff0 && codepoint <= 0xfff8) ||
+            (codepoint >= 0x1d173 && codepoint <= 0x1d17a) ||
+            (codepoint >= 0xe0000 && codepoint <= 0xe0fff);
 }
 
 static unsigned int opentype_is_diacritic(unsigned int codepoint)
@@ -5751,10 +5804,21 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
         context->u.buffer.glyphs[g] = font->get_glyph(context->cache->context, codepoint);
         context->u.buffer.glyph_props[g].justification = SCRIPT_JUSTIFY_CHARACTER;
         opentype_set_subst_glyph_props(context, g);
-        if (codepoint == 0x200d)
-            context->glyph_infos[g].props |= GLYPH_PROP_ZWJ;
-        else if (codepoint == 0x200c)
-            context->glyph_infos[g].props |= GLYPH_PROP_ZWNJ;
+        if (opentype_is_default_ignorable(codepoint))
+        {
+            context->glyph_infos[g].props |= GLYPH_PROP_IGNORABLE;
+            if (codepoint == 0x200d)
+                context->glyph_infos[g].props |= GLYPH_PROP_ZWJ;
+            else if (codepoint == 0x200c)
+                context->glyph_infos[g].props |= GLYPH_PROP_ZWNJ;
+            /* Mongolian FVSs, TAGs, COMBINING GRAPHEME JOINER */
+            else if ((codepoint >= 0x180b && codepoint <= 0x180d) ||
+                    (codepoint >= 0xe0020 && codepoint <= 0xe007f) ||
+                    codepoint == 0x34f)
+            {
+                context->glyph_infos[g].props |= GLYPH_PROP_HIDDEN;
+            }
+        }
 
         /* Group diacritics with preceding base. Glyph class is ignored here. */
         if (!g || !opentype_is_diacritic(codepoint))
@@ -5763,9 +5827,9 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
             context->glyph_infos[g].start_text_idx = i;
             cluster_start_idx = g;
         }
-
-        if (opentype_is_default_ignorable(codepoint))
+        if (opentype_is_zero_width(codepoint))
             context->u.buffer.glyph_props[g].isZeroWidthSpace = 1;
+
         context->u.buffer.glyph_props[g].components = 1;
         context->glyph_count++;
 
