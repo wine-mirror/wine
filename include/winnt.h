@@ -6966,7 +6966,7 @@ static FORCEINLINE LONG WINAPI InterlockedIncrement( LONG volatile *dest )
 
 static FORCEINLINE short WINAPI InterlockedIncrement16( short volatile *dest )
 {
-    return _InterlockedIncrement16( (long volatile *)dest );
+    return _InterlockedIncrement16( dest );
 }
 
 static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
@@ -6976,7 +6976,7 @@ static FORCEINLINE LONG WINAPI InterlockedDecrement( LONG volatile *dest )
 
 static FORCEINLINE short WINAPI InterlockedDecrement16( short volatile *dest )
 {
-    return _InterlockedDecrement16( (long volatile *)dest );
+    return _InterlockedDecrement16( dest );
 }
 
 static FORCEINLINE LONG WINAPI InterlockedOr( LONG volatile *dest, LONG val )
