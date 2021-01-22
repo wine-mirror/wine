@@ -215,6 +215,34 @@ ok(tmp === 3, "tmp = " + tmp);
     ok(d != d, "date d == d");
 })();
 
+(function() {
+    /* VT_CY handling */
+    var d;
+    todo_wine_ok(getVT(v_cy(0)) === "VT_R8", "vt v_cy(0) = " + getVT(v_cy(0)));
+    todo_wine_ok(getVT(v_cy(10000)) === "VT_R8", "vt v_cy(10000) = " + getVT(v_cy(0)));
+    d = v_cy(0);
+    todo_wine_ok(getVT(d) === "VT_R8", "vt v_cy(0) = " + getVT(d));
+    todo_wine_ok(getVT(+d) === "VT_R8", "vt +v_cy(0) = " + getVT(d));
+    ok(d == 0, "v_cy(0) != 0\n");
+    ok(d === 0, "v_cy(0) !== 0\n");
+    ok("" + d === "0", "str(v_cy(0)) = " + d);
+    ok(d === d, "date d !== d");
+
+    d = v_cy(1000);
+    ok(getVT(d) === "VT_R8", "vt v_cy(1000) = " + getVT(d));
+    ok(getVT(+d) === "VT_R8", "vt +v_cy(1000) = " + getVT(d));
+    ok(d == 0.1, "v_cy(1000) != 0, d = " + d);
+    ok(d === 0.1, "v_cy(1000) !== 0.1\n");
+    ok("" + d === "0.1", "str(v_cy(1000)) = " + d);
+    ok(d === d, "date d !== d");
+
+    d = v_cy(25000);
+    ok(getVT(d) === "VT_R8", "vt v_cy(25000) = " + getVT(d));
+    ok(getVT(+d) === "VT_R8", "vt +v_cy(25000) = " + getVT(d));
+    ok(d === 2.5, "v_cy(25000) !== 2.5\n");
+    ok("" + d === "2.5", "str(v_cy(25000)) = " + d);
+})();
+
 function testRecFunc(x) {
     ok(testRecFunc.arguments === arguments, "testRecFunc.arguments = " + testRecFunc.arguments);
     if(x) {

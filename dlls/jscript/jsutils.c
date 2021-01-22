@@ -315,6 +315,12 @@ HRESULT variant_to_jsval(VARIANT *var, jsval_t *r)
     case VT_R4:
         *r = jsval_number(V_R4(var));
         return S_OK;
+    case VT_CY:
+        /* FIXME: Native converts VT_CY to a special kind number type, which is
+         * never converted to VT_I4 when it's converted back to VARIANT. */
+        *r = jsval_number((double)V_CY(var).int64 / 10000.0);
+        WARN("VT_CY: %lf\n", get_number(*r));
+        return S_OK;
     case VT_UNKNOWN:
         if(V_UNKNOWN(var)) {
             IDispatch *disp;

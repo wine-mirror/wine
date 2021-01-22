@@ -167,6 +167,8 @@ DEFINE_EXPECT(BindHandler);
 #define DISPID_GLOBAL_THROWINT      0x1021
 #define DISPID_GLOBAL_THROWEI       0x1022
 #define DISPID_GLOBAL_VDATE         0x1023
+#define DISPID_GLOBAL_VCY           0x1024
+#define DISPID_GLOBAL_TODOWINE      0x1025
 
 #define DISPID_GLOBAL_TESTPROPDELETE      0x2000
 #define DISPID_GLOBAL_TESTNOPROPDELETE    0x2001
@@ -809,6 +811,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_TRACE;
         return S_OK;
     }
+    if(!lstrcmpW(bstrName, L"todo_wine_ok")) {
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        *pid = DISPID_GLOBAL_TODOWINE;
+        return S_OK;
+    }
     if(!lstrcmpW(bstrName, L"reportSuccess")) {
         CHECK_EXPECT(global_success_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
@@ -972,6 +979,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         return S_OK;
     }
 
+    if(!lstrcmpW(bstrName, L"v_cy")) {
+        *pid = DISPID_GLOBAL_VCY;
+        return S_OK;
+    }
+
     if(!lstrcmpW(bstrName, L"testArgTypes")) {
         *pid = DISPID_GLOBAL_TESTARGTYPES;
         return S_OK;
@@ -1049,6 +1061,25 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         ok(V_VT(pdp->rgvarg) == VT_BSTR, "V_VT(pdp->rgvarg) = %d\n", V_VT(pdp->rgvarg));
         ok(V_VT(pdp->rgvarg+1) == VT_BOOL, "V_VT(pdp->rgvarg+1) = %d\n", V_VT(pdp->rgvarg+1));
         ok(V_BOOL(pdp->rgvarg+1), "%s: %s\n", test_name, wine_dbgstr_w(V_BSTR(pdp->rgvarg)));
+
+        return S_OK;
+
+    case DISPID_GLOBAL_TODOWINE:
+        ok(wFlags == INVOKE_FUNC || wFlags == (INVOKE_FUNC|INVOKE_PROPERTYGET), "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 2, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        if(wFlags & INVOKE_PROPERTYGET)
+            ok(pvarRes != NULL, "pvarRes == NULL\n");
+        else
+            ok(!pvarRes, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_BSTR, "V_VT(pdp->rgvarg) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_VT(pdp->rgvarg+1) == VT_BOOL, "V_VT(pdp->rgvarg+1) = %d\n", V_VT(pdp->rgvarg+1));
+        todo_wine ok(V_BOOL(pdp->rgvarg+1), "%s: %s\n", test_name, wine_dbgstr_w(V_BSTR(pdp->rgvarg)));
 
         return S_OK;
 
@@ -1529,6 +1560,26 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
             break;
         case VT_R8:
             V_DATE(pvarRes) = V_R8(pdp->rgvarg);
+            break;
+        default:
+            ok(0, "vt = %u\n", V_VT(pdp->rgvarg));
+            return E_INVALIDARG;
+        }
+        return S_OK;
+
+    case DISPID_GLOBAL_VCY:
+        ok(wFlags == (DISPATCH_METHOD|DISPATCH_PROPERTYGET), "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(pvarRes != NULL, "pvarRes != NULL\n");
+        V_VT(pvarRes) = VT_CY;
+        switch(V_VT(pdp->rgvarg))
+        {
+        case VT_I4:
+            V_CY(pvarRes).int64 = V_I4(pdp->rgvarg);
+            break;
+        case VT_R8:
+            V_CY(pvarRes).int64 = V_R8(pdp->rgvarg);
             break;
         default:
             ok(0, "vt = %u\n", V_VT(pdp->rgvarg));
