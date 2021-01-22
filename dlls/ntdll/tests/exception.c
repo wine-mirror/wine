@@ -3867,22 +3867,20 @@ static void test_kiuserexceptiondispatcher(void)
         0x48, 0x8d, 0x8c, 0x24, 0xf0, 0x04, 0x00, 0x00,
                                     /* lea 0x4f0(%rsp),%rcx */
         0x4c, 0x89, 0x22,           /* mov %r12,(%rdx) */
-        0xff, 0x14, 0x25,
-        /* offset: 17 bytes */
-        0x00, 0x00, 0x00, 0x00,     /* callq *addr */ /* call hook implementation. */
+        0x48, 0xb8,                 /* movabs hook_KiUserExceptionDispatcher,%rax */
+        0,0,0,0,0,0,0,0,            /* offset 16 */
+        0xff, 0xd0,                 /* callq *rax */
         0x48, 0x31, 0xc9,           /* xor %rcx, %rcx */
         0x48, 0x31, 0xd2,           /* xor %rdx, %rdx */
-
-        0xff, 0x24, 0x25,
-        /* offset: 30 bytes */
-        0x00, 0x00, 0x00, 0x00,     /* jmpq *addr */ /* jump to original function. */
+        0x48, 0xb8,                 /* movabs pKiUserExceptionDispatcher,%rax */
+        0,0,0,0,0,0,0,0,            /* offset 34 */
+        0xff, 0xe0,                 /* jmpq *rax */
     };
 
-    void *phook_KiUserExceptionDispatcher = hook_KiUserExceptionDispatcher;
     BYTE patched_KiUserExceptionDispatcher_bytes[12];
-    DWORD old_protect1, old_protect2;
+    void *bpt_address, *trampoline_ptr;
     EXCEPTION_RECORD record;
-    void *bpt_address;
+    DWORD old_protect;
     CONTEXT ctx;
     LONG pass;
     BYTE *ptr;
@@ -3898,19 +3896,14 @@ static void test_kiuserexceptiondispatcher(void)
     *(ULONG64 *)(except_code + 2) = (ULONG64)&test_kiuserexceptiondispatcher_regs;
     *(ULONG64 *)(except_code + 0x2a) = (ULONG64)&test_kiuserexceptiondispatcher_regs.new_rax;
 
-    ok(((ULONG64)&phook_KiUserExceptionDispatcher & 0xffffffff) == ((ULONG64)&phook_KiUserExceptionDispatcher),
-            "Address is too long.\n");
-    ok(((ULONG64)&pKiUserExceptionDispatcher & 0xffffffff) == ((ULONG64)&pKiUserExceptionDispatcher),
-            "Address is too long.\n");
-
-    *(unsigned int *)(hook_trampoline + 17) = (unsigned int)(ULONG_PTR)&phook_KiUserExceptionDispatcher;
-    *(unsigned int *)(hook_trampoline + 30) = (unsigned int)(ULONG_PTR)&pKiUserExceptionDispatcher;
-
-    ret = VirtualProtect(hook_trampoline, ARRAY_SIZE(hook_trampoline), PAGE_EXECUTE_READWRITE, &old_protect1);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    *(ULONG_PTR *)(hook_trampoline + 16) = (ULONG_PTR)hook_KiUserExceptionDispatcher;
+    *(ULONG_PTR *)(hook_trampoline + 34) = (ULONG_PTR)pKiUserExceptionDispatcher;
+    trampoline_ptr = (char *)code_mem + 1024;
+    memcpy(trampoline_ptr, hook_trampoline, sizeof(hook_trampoline));
+    ok(((ULONG64)trampoline_ptr & 0xffffffff) == (ULONG64)trampoline_ptr, "Address is too long.\n");
 
     ret = VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes),
-            PAGE_EXECUTE_READWRITE, &old_protect2);
+            PAGE_EXECUTE_READWRITE, &old_protect);
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
 
     memcpy(saved_KiUserExceptionDispatcher_bytes, pKiUserExceptionDispatcher,
@@ -3919,7 +3912,7 @@ static void test_kiuserexceptiondispatcher(void)
     /* mov hook_trampoline, %rax */
     *ptr++ = 0x48;
     *ptr++ = 0xb8;
-    *(void **)ptr = hook_trampoline;
+    *(void **)ptr = trampoline_ptr;
     ptr += sizeof(ULONG64);
     /* jmp *rax */
     *ptr++ = 0xff;
@@ -4042,9 +4035,7 @@ static void test_kiuserexceptiondispatcher(void)
     RemoveVectoredExceptionHandler(vectored_handler);
 
     ret = VirtualProtect(pKiUserExceptionDispatcher, sizeof(saved_KiUserExceptionDispatcher_bytes),
-            old_protect2, &old_protect2);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
-    ret = VirtualProtect(hook_trampoline, ARRAY_SIZE(hook_trampoline), old_protect1, &old_protect1);
+            old_protect, &old_protect);
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
 }
 
