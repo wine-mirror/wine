@@ -955,6 +955,8 @@ class VkHandle(object):
             return "wine_debug_utils_messenger_from_handle({0})->debug_messenger".format(name)
         if self.name == "VkDebugReportCallbackEXT":
             return "wine_debug_report_callback_from_handle({0})->debug_callback".format(name)
+        if self.name == "VkSurfaceKHR":
+            return "wine_surface_from_handle({0})->base.surface".format(name)
 
         native_handle_name = None
 
@@ -979,6 +981,8 @@ class VkHandle(object):
     def is_wrapped(self):
         return self.native_handle("test") is not None
 
+    def is_unwrapped_by_driver(self):
+        return self.name == "VkSurfaceKHR"
 
 class VkMember(object):
     def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
@@ -1601,8 +1605,12 @@ class VkParam(object):
             else:
                 return "&{0}_host".format(self.name)
         else:
-            # We need to pass the native handle to the native Vulkan calls.
-            native_handle = self.handle.native_handle(self.name) if self.is_handle() else None
+            # We need to pass the native handle to the native Vulkan calls unless
+            # the wine driver unwraps the handle for us.
+            if self.is_handle() and not self.handle.is_unwrapped_by_driver():
+                native_handle = self.handle.native_handle(self.name)
+            else:
+                native_handle = None
             return native_handle if native_handle else self.name
 
 

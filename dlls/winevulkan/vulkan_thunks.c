@@ -7262,7 +7262,8 @@ BOOL wine_vk_is_type_wrapped(VkObjectType type)
         type == VK_OBJECT_TYPE_DEVICE ||
         type == VK_OBJECT_TYPE_INSTANCE ||
         type == VK_OBJECT_TYPE_PHYSICAL_DEVICE ||
-        type == VK_OBJECT_TYPE_QUEUE;
+        type == VK_OBJECT_TYPE_QUEUE ||
+        type == VK_OBJECT_TYPE_SURFACE_KHR;
 }
 
 uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle)
@@ -7285,6 +7286,8 @@ uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle)
         return (uint64_t) (uintptr_t) ((VkPhysicalDevice) (uintptr_t) handle)->phys_dev;
     case VK_OBJECT_TYPE_QUEUE:
         return (uint64_t) (uintptr_t) ((VkQueue) (uintptr_t) handle)->queue;
+    case VK_OBJECT_TYPE_SURFACE_KHR:
+        return (uint64_t) wine_surface_from_handle(handle)->base.surface;
     default:
        return handle;
     }
