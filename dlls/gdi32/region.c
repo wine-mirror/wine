@@ -2613,12 +2613,15 @@ static void scan_convert( WINEREGION *obj, EdgeTable *ET, INT mode, const RECT *
                     {
                         obj->rects[obj->numRects].left = active->bres.minor_axis;
                         obj->rects[obj->numRects].top = y;
+                        obj->rects[obj->numRects].bottom = y + 1;
                     }
                     else if (obj->rects[obj->numRects].left != active->bres.minor_axis)
                     {
-                        obj->rects[obj->numRects].right = active->bres.minor_axis;
-                        obj->rects[obj->numRects].bottom = y + 1;
-                        obj->numRects++;
+                        /* create new rect only if we can't merge with the previous one */
+                        if (!obj->numRects || obj->rects[obj->numRects-1].top != y ||
+                            obj->rects[obj->numRects-1].right < obj->rects[obj->numRects].left)
+                            obj->numRects++;
+                        obj->rects[obj->numRects-1].right = active->bres.minor_axis;
                     }
                     first = !first;
                 }
