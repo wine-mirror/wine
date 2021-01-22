@@ -2527,8 +2527,11 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
             case WINED3D_SHADER_DESCRIPTOR_TYPE_CBV:
                 if (!(buffer = state->cb[binding->shader_type][binding->resource_idx]))
                 {
-                    FIXME("NULL constant buffer views not implemented.\n");
-                    return false;
+                    if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
+                            binding->binding_idx, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                            &device_vk->null_resources_vk.buffer_info, NULL, NULL))
+                        return false;
+                    break;
                 }
                 buffer_vk = wined3d_buffer_vk(buffer);
                 buffer_info = wined3d_buffer_vk_get_buffer_info(buffer_vk);

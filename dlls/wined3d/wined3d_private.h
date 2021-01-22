@@ -3875,6 +3875,8 @@ struct wined3d_null_image_vk
 struct wined3d_null_resources_vk
 {
     struct wined3d_bo_vk bo;
+    VkDescriptorBufferInfo buffer_info;
+
     struct wined3d_null_image_vk image_1d;
     struct wined3d_null_image_vk image_2d;
     struct wined3d_null_image_vk image_2dms;
