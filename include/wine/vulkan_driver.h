@@ -13,7 +13,7 @@
 #define __WINE_VULKAN_DRIVER_H
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
-#define WINE_VULKAN_DRIVER_VERSION 8
+#define WINE_VULKAN_DRIVER_VERSION 9
 
 struct vulkan_funcs
 {
@@ -111,5 +111,31 @@ static inline void *get_vulkan_driver_instance_proc_addr(
 
     return get_vulkan_driver_device_proc_addr(vulkan_funcs, name);
 }
+
+struct wine_surface_base
+{
+    VkSurfaceKHR surface; /* native surface */
+    void *driver_data;
+};
+
+static inline void vulkan_driver_init_surface(
+        VkSurfaceKHR surface, VkSurfaceKHR native_surface, void *data)
+{
+    struct wine_surface_base *object = (void *)(uintptr_t)surface;
+    object->surface = native_surface;
+    object->driver_data = data;
+};
+
+static inline VkSurfaceKHR vulkan_driver_get_native_surface(VkSurfaceKHR surface)
+{
+    struct wine_surface_base *object = (void *)(uintptr_t)surface;
+    return object->surface;
+};
+
+static inline void *vulkan_driver_get_surface_data(VkSurfaceKHR surface)
+{
+    struct wine_surface_base *object = (void *)(uintptr_t)surface;
+    return object->driver_data;
+};
 
 #endif /* __WINE_VULKAN_DRIVER_H */

@@ -213,6 +213,23 @@ static inline VkDebugReportCallbackEXT wine_debug_report_callback_to_handle(
     return (VkDebugReportCallbackEXT)(uintptr_t)debug_messenger;
 }
 
+struct wine_surface
+{
+    struct wine_surface_base base;
+
+    struct wine_vk_mapping mapping;
+};
+
+static inline struct wine_surface *wine_surface_from_handle(VkSurfaceKHR handle)
+{
+    return (struct wine_surface *)(uintptr_t)handle;
+}
+
+static inline VkSurfaceKHR wine_surface_to_handle(struct wine_surface *surface)
+{
+    return (VkSurfaceKHR)(uintptr_t)surface;
+}
+
 void *wine_vk_get_device_proc_addr(const char *name) DECLSPEC_HIDDEN;
 void *wine_vk_get_instance_proc_addr(const char *name) DECLSPEC_HIDDEN;
 

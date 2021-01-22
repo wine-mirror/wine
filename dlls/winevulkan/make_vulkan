@@ -131,7 +131,7 @@ CORE_EXTENSIONS = [
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
-DRIVER_VERSION = 8
+DRIVER_VERSION = 9
 
 # Table of functions for which we have a special implementation.
 # These are regular device / instance functions for which we need
@@ -174,7 +174,7 @@ FUNCTION_OVERRIDES = {
     "vkQueueSubmit" : {"dispatch": True, "driver" : False, "thunk" : False},
 
     # VK_KHR_surface
-    "vkDestroySurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkDestroySurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
     "vkGetPhysicalDeviceSurfaceSupportKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkGetPhysicalDeviceSurfaceCapabilitiesKHR" : {"dispatch" : True, "driver" : True, "thunk" : False, "private_thunk" : True},
     "vkGetPhysicalDeviceSurfaceFormatsKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
@@ -185,7 +185,7 @@ FUNCTION_OVERRIDES = {
     "vkGetPhysicalDeviceSurfaceFormats2KHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
 
     # VK_KHR_win32_surface
-    "vkCreateWin32SurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkCreateWin32SurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
     "vkGetPhysicalDeviceWin32PresentationSupportKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
 
     # VK_KHR_swapchain
@@ -2583,6 +2583,32 @@ class VkGenerator(object):
         f.write("\n")
         f.write("    name -= 2;\n\n")
         f.write("    return get_vulkan_driver_device_proc_addr(vulkan_funcs, name);\n}\n\n")
+
+        f.write("struct wine_surface_base\n")
+        f.write("{\n")
+        f.write("    VkSurfaceKHR surface; /* native surface */\n")
+        f.write("    void *driver_data;\n")
+        f.write("};\n\n")
+
+        f.write("static inline void vulkan_driver_init_surface(\n")
+        f.write("        VkSurfaceKHR surface, VkSurfaceKHR native_surface, void *data)\n")
+        f.write("{\n")
+        f.write("    struct wine_surface_base *object = (void *)(uintptr_t)surface;\n")
+        f.write("    object->surface = native_surface;\n")
+        f.write("    object->driver_data = data;\n")
+        f.write("};\n\n")
+
+        f.write("static inline VkSurfaceKHR vulkan_driver_get_native_surface(VkSurfaceKHR surface)\n")
+        f.write("{\n")
+        f.write("    struct wine_surface_base *object = (void *)(uintptr_t)surface;\n")
+        f.write("    return object->surface;\n")
+        f.write("};\n\n")
+
+        f.write("static inline void *vulkan_driver_get_surface_data(VkSurfaceKHR surface)\n")
+        f.write("{\n")
+        f.write("    struct wine_surface_base *object = (void *)(uintptr_t)surface;\n")
+        f.write("    return object->driver_data;\n")
+        f.write("};\n\n")
 
         f.write("#endif /* __WINE_VULKAN_DRIVER_H */\n")
 

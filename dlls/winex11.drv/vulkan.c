@@ -99,7 +99,7 @@ static void *X11DRV_get_vk_instance_proc_addr(VkInstance instance, const char *n
 
 static inline struct wine_vk_surface *surface_from_handle(VkSurfaceKHR handle)
 {
-    return (struct wine_vk_surface *)(uintptr_t)handle;
+    return vulkan_driver_get_surface_data(handle);
 }
 
 static void *vulkan_handle;
@@ -324,7 +324,7 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
     XSaveContext(gdi_display, (XID)create_info->hwnd, vulkan_hwnd_context, (char *)wine_vk_surface_grab(x11_surface));
     LeaveCriticalSection(&context_section);
 
-    *surface = (uintptr_t)x11_surface;
+    vulkan_driver_init_surface(*surface, x11_surface->surface, x11_surface);
 
     TRACE("Created surface=0x%s\n", wine_dbgstr_longlong(*surface));
     return VK_SUCCESS;

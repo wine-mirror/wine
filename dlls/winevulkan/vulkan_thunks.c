@@ -5196,12 +5196,6 @@ static VkResult WINAPI wine_vkCreateValidationCacheEXT(VkDevice device, const Vk
     return device->funcs.p_vkCreateValidationCacheEXT(device->device, pCreateInfo, NULL, pValidationCache);
 }
 
-VkResult WINAPI wine_vkCreateWin32SurfaceKHR(VkInstance instance, const VkWin32SurfaceCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface)
-{
-    TRACE("%p, %p, %p, %p\n", instance, pCreateInfo, pAllocator, pSurface);
-    return instance->funcs.p_vkCreateWin32SurfaceKHR(instance->instance, pCreateInfo, NULL, pSurface);
-}
-
 VkResult thunk_vkDebugMarkerSetObjectNameEXT(VkDevice device, const VkDebugMarkerObjectNameInfoEXT *pNameInfo)
 {
 #if defined(USE_STRUCT_CONVERSION)
@@ -5390,12 +5384,6 @@ void WINAPI wine_vkDestroyShaderModule(VkDevice device, VkShaderModule shaderMod
 {
     TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(shaderModule), pAllocator);
     device->funcs.p_vkDestroyShaderModule(device->device, shaderModule, NULL);
-}
-
-void WINAPI wine_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks *pAllocator)
-{
-    TRACE("%p, 0x%s, %p\n", instance, wine_dbgstr_longlong(surface), pAllocator);
-    instance->funcs.p_vkDestroySurfaceKHR(instance->instance, surface, NULL);
 }
 
 void WINAPI wine_vkDestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapchain, const VkAllocationCallbacks *pAllocator)

@@ -99,7 +99,7 @@ static void *macdrv_get_vk_instance_proc_addr(VkInstance instance, const char *n
 
 static inline struct wine_vk_surface *surface_from_handle(VkSurfaceKHR handle)
 {
-    return (struct wine_vk_surface *)(uintptr_t)handle;
+    return vulkan_driver_get_surface_data(handle);
 }
 
 static void *vulkan_handle;
@@ -320,7 +320,7 @@ static VkResult macdrv_vkCreateWin32SurfaceKHR(VkInstance instance,
         goto err;
     }
 
-    *surface = (uintptr_t)mac_surface;
+    vulkan_driver_init_surface(*surface, mac_surface->surface, mac_surface);
 
     release_win_data(data);
 

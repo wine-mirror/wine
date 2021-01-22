@@ -1770,6 +1770,53 @@ void WINAPI wine_vkGetPrivateDataEXT(VkDevice device, VkObjectType object_type, 
     device->funcs.p_vkGetPrivateDataEXT(device->device, object_type, object_handle, private_data_slot, data);
 }
 
+VkResult WINAPI wine_vkCreateWin32SurfaceKHR(VkInstance instance,
+        const VkWin32SurfaceCreateInfoKHR *createInfo, const VkAllocationCallbacks *allocator, VkSurfaceKHR *surface)
+{
+    struct wine_surface *object;
+    VkResult res;
+
+    TRACE("%p, %p, %p, %p\n", instance, createInfo, allocator, surface);
+
+    if (allocator)
+        FIXME("Support for allocation callbacks not implemented yet\n");
+
+    object = heap_alloc_zero(sizeof(*object));
+
+    if (!object)
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+    *surface = wine_surface_to_handle(object);
+
+    res = instance->funcs.p_vkCreateWin32SurfaceKHR(instance->instance, createInfo, NULL, surface);
+
+    if (res != VK_SUCCESS)
+    {
+        heap_free(object);
+        *surface = VK_NULL_HANDLE;
+        return res;
+    }
+
+    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, object->base.surface);
+
+    return VK_SUCCESS;
+}
+
+void WINAPI wine_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks *allocator)
+{
+    struct wine_surface *object = wine_surface_from_handle(surface);
+
+    TRACE("%p, 0x%s, %p\n", instance, wine_dbgstr_longlong(surface), allocator);
+
+    if (!object)
+        return;
+
+    instance->funcs.p_vkDestroySurfaceKHR(instance->instance, surface, NULL);
+
+    WINE_VK_REMOVE_HANDLE_MAPPING(instance, object);
+    heap_free(object);
+}
+
 static inline void adjust_max_image_count(VkPhysicalDevice phys_dev, VkSurfaceCapabilitiesKHR* capabilities)
 {
     /* Many Windows games, for example Strange Brigade, No Man's Sky, Path of Exile
