@@ -740,9 +740,10 @@ typedef struct
     mem_size_t     stack_commit;
     unsigned int   zerobits;
     unsigned int   subsystem;
-    unsigned short subsystem_low;
-    unsigned short subsystem_high;
-    unsigned int   gp;
+    unsigned short subsystem_minor;
+    unsigned short subsystem_major;
+    unsigned short osversion_major;
+    unsigned short osversion_minor;
     unsigned short image_charact;
     unsigned short dll_charact;
     unsigned short machine;
@@ -760,6 +761,7 @@ typedef struct
 #define IMAGE_FLAGS_ImageDynamicallyRelocated 0x04
 #define IMAGE_FLAGS_ImageMappedFlat           0x08
 #define IMAGE_FLAGS_BaseBelow4gb              0x10
+#define IMAGE_FLAGS_ComPlusPrefer32bit        0x20
 #define IMAGE_FLAGS_WineBuiltin               0x40
 #define IMAGE_FLAGS_WineFakeDll               0x80
 
@@ -6188,7 +6190,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 652
+#define SERVER_PROTOCOL_VERSION 653
 
 /* ### protocol_version end ### */
 

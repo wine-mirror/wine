@@ -2409,6 +2409,9 @@ typedef enum _SECTION_INFORMATION_CLASS
 {
   SectionBasicInformation,
   SectionImageInformation,
+  SectionRelocationInformation,
+  SectionOriginalBaseInformation,
+  SectionInternalImageInformation
 } SECTION_INFORMATION_CLASS;
 
 typedef struct _SECTION_BASIC_INFORMATION {
@@ -2423,9 +2426,10 @@ typedef struct _SECTION_IMAGE_INFORMATION {
   SIZE_T MaximumStackSize;
   SIZE_T CommittedStackSize;
   ULONG SubSystemType;
-  WORD SubsystemVersionLow;
-  WORD SubsystemVersionHigh;
-  ULONG GpValue;
+  USHORT MinorSubsystemVersion;
+  USHORT MajorSubsystemVersion;
+  USHORT MajorOperatingSystemVersion;
+  USHORT MinorOperatingSystemVersion;
   USHORT ImageCharacteristics;
   USHORT DllCharacteristics;
   USHORT Machine;
@@ -2440,7 +2444,8 @@ typedef struct _SECTION_IMAGE_INFORMATION {
           UCHAR ImageDynamicallyRelocated : 1;
           UCHAR ImageMappedFlat           : 1;
           UCHAR BaseBelow4gb              : 1;
-          UCHAR Reserved                  : 3;
+          UCHAR ComPlusPrefer32bit        : 1;
+          UCHAR Reserved                  : 2;
       } DUMMYSTRUCTNAME;
   } DUMMYUNIONNAME;
   ULONG LoaderFlags;

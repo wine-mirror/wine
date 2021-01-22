@@ -4094,22 +4094,23 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
  */
 void virtual_fill_image_information( const pe_image_info_t *pe_info, SECTION_IMAGE_INFORMATION *info )
 {
-    info->TransferAddress      = wine_server_get_ptr( pe_info->entry_point );
-    info->ZeroBits             = pe_info->zerobits;
-    info->MaximumStackSize     = pe_info->stack_size;
-    info->CommittedStackSize   = pe_info->stack_commit;
-    info->SubSystemType        = pe_info->subsystem;
-    info->SubsystemVersionLow  = pe_info->subsystem_low;
-    info->SubsystemVersionHigh = pe_info->subsystem_high;
-    info->GpValue              = pe_info->gp;
-    info->ImageCharacteristics = pe_info->image_charact;
-    info->DllCharacteristics   = pe_info->dll_charact;
-    info->Machine              = pe_info->machine;
-    info->ImageContainsCode    = pe_info->contains_code;
-    info->ImageFlags           = pe_info->image_flags;
-    info->LoaderFlags          = pe_info->loader_flags;
-    info->ImageFileSize        = pe_info->file_size;
-    info->CheckSum             = pe_info->checksum;
+    info->TransferAddress             = wine_server_get_ptr( pe_info->entry_point );
+    info->ZeroBits                    = pe_info->zerobits;
+    info->MaximumStackSize            = pe_info->stack_size;
+    info->CommittedStackSize          = pe_info->stack_commit;
+    info->SubSystemType               = pe_info->subsystem;
+    info->MinorSubsystemVersion       = pe_info->subsystem_minor;
+    info->MajorSubsystemVersion       = pe_info->subsystem_major;
+    info->MajorOperatingSystemVersion = pe_info->osversion_major;
+    info->MinorOperatingSystemVersion = pe_info->osversion_minor;
+    info->ImageCharacteristics        = pe_info->image_charact;
+    info->DllCharacteristics          = pe_info->dll_charact;
+    info->Machine                     = pe_info->machine;
+    info->ImageContainsCode           = pe_info->contains_code;
+    info->ImageFlags                  = pe_info->image_flags;
+    info->LoaderFlags                 = pe_info->loader_flags;
+    info->ImageFileSize               = pe_info->file_size;
+    info->CheckSum                    = pe_info->checksum;
 #ifndef _WIN64 /* don't return 64-bit values to 32-bit processes */
     if (pe_info->machine == IMAGE_FILE_MACHINE_AMD64 || pe_info->machine == IMAGE_FILE_MACHINE_ARM64)
     {

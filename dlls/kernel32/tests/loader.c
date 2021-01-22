@@ -411,12 +411,19 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         ok( image.SubSystemType == nt_header->OptionalHeader.Subsystem,
             "%u: SubSystemType wrong %08x / %08x\n", id,
             image.SubSystemType, nt_header->OptionalHeader.Subsystem );
-    ok( image.SubsystemVersionLow == nt_header->OptionalHeader.MinorSubsystemVersion,
-        "%u: SubsystemVersionLow wrong %04x / %04x\n", id,
-        image.SubsystemVersionLow, nt_header->OptionalHeader.MinorSubsystemVersion );
-    ok( image.SubsystemVersionHigh == nt_header->OptionalHeader.MajorSubsystemVersion,
-        "%u: SubsystemVersionHigh wrong %04x / %04x\n", id,
-        image.SubsystemVersionHigh, nt_header->OptionalHeader.MajorSubsystemVersion );
+    ok( image.MinorSubsystemVersion == nt_header->OptionalHeader.MinorSubsystemVersion,
+        "%u: MinorSubsystemVersion wrong %04x / %04x\n", id,
+        image.MinorSubsystemVersion, nt_header->OptionalHeader.MinorSubsystemVersion );
+    ok( image.MajorSubsystemVersion == nt_header->OptionalHeader.MajorSubsystemVersion,
+        "%u: MajorSubsystemVersion wrong %04x / %04x\n", id,
+        image.MajorSubsystemVersion, nt_header->OptionalHeader.MajorSubsystemVersion );
+    ok( image.MajorOperatingSystemVersion == nt_header->OptionalHeader.MajorOperatingSystemVersion ||
+        broken( !image.MajorOperatingSystemVersion), /* before win10 */
+        "%u: MajorOperatingSystemVersion wrong %04x / %04x\n", id,
+        image.MajorOperatingSystemVersion, nt_header->OptionalHeader.MajorOperatingSystemVersion );
+    ok( image.MinorOperatingSystemVersion == nt_header->OptionalHeader.MinorOperatingSystemVersion,
+        "%u: MinorOperatingSystemVersion wrong %04x / %04x\n", id,
+        image.MinorOperatingSystemVersion, nt_header->OptionalHeader.MinorOperatingSystemVersion );
     ok( image.ImageCharacteristics == nt_header->FileHeader.Characteristics,
         "%u: ImageCharacteristics wrong %04x / %04x\n", id,
         image.ImageCharacteristics, nt_header->FileHeader.Characteristics );
@@ -457,11 +464,19 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         else
             ok( !S(U(image)).ComPlusNativeReady,
                 "%u: wrong ComPlusNativeReady flags %02x\n", id, U(image).ImageFlags );
+        if (nt_header->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
+            (cor_header->Flags & COMIMAGE_FLAGS_32BITPREFERRED))
+            ok( S(U(image)).ComPlusPrefer32bit ||
+                broken( !image.MajorOperatingSystemVersion ), /* before win10 */
+                "%u: wrong ComPlusPrefer32bit flags %02x\n", id, U(image).ImageFlags );
+        else
+            ok( !S(U(image)).ComPlusPrefer32bit, "%u: wrong ComPlusPrefer32bit flags %02x\n", id, U(image).ImageFlags );
     }
     else
     {
         ok( !S(U(image)).ComPlusILOnly, "%u: wrong ComPlusILOnly flags %02x\n", id, U(image).ImageFlags );
         ok( !S(U(image)).ComPlusNativeReady, "%u: wrong ComPlusNativeReady flags %02x\n", id, U(image).ImageFlags );
+        ok( !S(U(image)).ComPlusPrefer32bit, "%u: wrong ComPlusPrefer32bit flags %02x\n", id, U(image).ImageFlags );
     }
     if (!(nt_header->OptionalHeader.SectionAlignment % page_size))
         ok( !S(U(image)).ImageMappedFlat, "%u: wrong ImageMappedFlat flags %02x\n", id, U(image).ImageFlags );
@@ -482,9 +497,6 @@ static BOOL query_image_section( int id, const char *dll_name, const IMAGE_NT_HE
         ok( !S(U(image)).ImageDynamicallyRelocated || broken(TRUE), /* <= win8 */
             "%u: wrong ImageDynamicallyRelocated flags %02x\n", id, U(image).ImageFlags );
     ok( !S(U(image)).BaseBelow4gb, "%u: wrong BaseBelow4gb flags %02x\n", id, U(image).ImageFlags );
-
-    /* FIXME: needs more work: */
-    /* image.GpValue */
 
     map_size.QuadPart = (nt_header->OptionalHeader.SizeOfImage + page_size - 1) & ~(page_size - 1);
     status = pNtQuerySection( mapping, SectionBasicInformation, &info, sizeof(info), NULL );

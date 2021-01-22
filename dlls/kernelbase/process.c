@@ -879,7 +879,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetProcessVersion( DWORD pid )
                                              &info, sizeof(info), NULL );
 
     if (!set_ntstatus( status )) return 0;
-    return MAKELONG( info.SubsystemVersionLow, info.SubsystemVersionHigh );
+    return MAKELONG( info.MinorSubsystemVersion, info.MajorSubsystemVersion );
 }
 
 

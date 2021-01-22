@@ -1728,10 +1728,18 @@ static void test_query_process_image_info(void)
     ok( status == STATUS_SUCCESS, "got %08x\n", status);
     ok( len == sizeof(info), "wrong len %u\n", len );
 
-    ok( info.SubsystemVersionHigh == nt->OptionalHeader.MajorSubsystemVersion, "wrong major version %x/%x\n",
-        info.SubsystemVersionHigh, nt->OptionalHeader.MajorSubsystemVersion );
-    ok( info.SubsystemVersionLow == nt->OptionalHeader.MinorSubsystemVersion, "wrong minor version %x/%x\n",
-        info.SubsystemVersionLow, nt->OptionalHeader.MinorSubsystemVersion );
+    ok( info.MajorSubsystemVersion == nt->OptionalHeader.MajorSubsystemVersion,
+        "wrong major version %x/%x\n",
+        info.MajorSubsystemVersion, nt->OptionalHeader.MajorSubsystemVersion );
+    ok( info.MinorSubsystemVersion == nt->OptionalHeader.MinorSubsystemVersion,
+        "wrong minor version %x/%x\n",
+        info.MinorSubsystemVersion, nt->OptionalHeader.MinorSubsystemVersion );
+    ok( info.MajorOperatingSystemVersion == nt->OptionalHeader.MajorOperatingSystemVersion,
+        "wrong major OS version %x/%x\n",
+        info.MajorOperatingSystemVersion, nt->OptionalHeader.MajorOperatingSystemVersion );
+    ok( info.MinorOperatingSystemVersion == nt->OptionalHeader.MinorOperatingSystemVersion,
+        "wrong minor OS version %x/%x\n",
+        info.MinorOperatingSystemVersion, nt->OptionalHeader.MinorOperatingSystemVersion );
 }
 
 static void test_query_process_debug_object_handle(int argc, char **argv)
