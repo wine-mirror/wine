@@ -4632,6 +4632,12 @@ static unsigned int shaping_features_get_mask(const struct shaping_features *fea
     return feature->mask;
 }
 
+unsigned int shape_get_feature_1_mask(const struct shaping_features *features, unsigned int tag)
+{
+    unsigned int shift, mask = shaping_features_get_mask(features, tag, &shift);
+    return (1 << shift) & mask;
+}
+
 static void opentype_layout_get_glyph_range_for_text(struct scriptshaping_context *context, unsigned int start_char,
         unsigned int end_char, unsigned int *start_glyph, unsigned int *end_glyph)
 {

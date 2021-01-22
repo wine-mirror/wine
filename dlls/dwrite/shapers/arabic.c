@@ -41,6 +41,7 @@ enum arabic_shaping_action
     MED2,
     INIT,
     NONE,
+    NUM_FEATURES = NONE,
 };
 
 static BOOL feature_is_syriac(unsigned int tag)
@@ -134,10 +135,17 @@ static void arabic_set_shaping_action(struct scriptshaping_context *context,
     context->glyph_infos[idx].props |= (action & 0xf) << 16;
 }
 
+static enum arabic_shaping_action arabic_get_shaping_action(const struct scriptshaping_context *context,
+        unsigned int idx)
+{
+    return (context->glyph_infos[idx].props >> 16) & 0xf;
+}
+
 static void arabic_setup_masks(struct scriptshaping_context *context,
         const struct shaping_features *features)
 {
     unsigned int i, prev = ~0u, state = 0;
+    unsigned int masks[NUM_FEATURES];
 
     for (i = 0; i < context->length; ++i)
     {
@@ -160,6 +168,13 @@ static void arabic_setup_masks(struct scriptshaping_context *context,
         prev = i;
         state = entry->next_state;
     }
+
+    for (i = 0; i < ARRAY_SIZE(masks); ++i)
+        masks[i] = shape_get_feature_1_mask(features, arabic_features[i]);
+
+    /* Unaffected glyphs get action NONE with zero mask. */
+    for (i = 0; i < context->length; ++i)
+        context->glyph_infos[i].mask |= masks[arabic_get_shaping_action(context, i)];
 }
 
 const struct shaper arabic_shaper =

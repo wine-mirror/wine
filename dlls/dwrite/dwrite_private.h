@@ -590,6 +590,8 @@ extern void shape_enable_feature(struct shaping_features *features, unsigned int
         unsigned int flags) DECLSPEC_HIDDEN;
 extern void shape_add_feature_full(struct shaping_features *features, unsigned int tag,
         unsigned int flags, unsigned int value) DECLSPEC_HIDDEN;
+extern unsigned int shape_get_feature_1_mask(const struct shaping_features *features,
+        unsigned int tag) DECLSPEC_HIDDEN;
 extern void shape_start_next_stage(struct shaping_features *features, stage_func func) DECLSPEC_HIDDEN;
 
 struct scriptshaping_context
