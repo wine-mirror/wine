@@ -986,8 +986,7 @@ static strarray *get_winebuild_args(struct options *opts)
         for (i = 0; i < opts->prefix->size; i++)
             strarray_add( spec_args, strmake( "-B%s", opts->prefix->base[i] ));
     }
-    if (opts->use_msvcrt) strarray_add( spec_args, "-mno-cygwin" );
-    if (opts->unix_lib) strarray_add( spec_args, "-munix" );
+    strarray_addall( spec_args, opts->winebuild_args );
     if (opts->unwind_tables) strarray_add( spec_args, "-fasynchronous-unwind-tables" );
     else strarray_add( spec_args, "-fno-asynchronous-unwind-tables" );
     return spec_args;
@@ -1266,8 +1265,6 @@ static void build(struct options* opts)
     spec_o_name = get_temp_file(output_name, ".spec.o");
     if (opts->force_pointer_size)
         strarray_add(spec_args, strmake("-m%u", 8 * opts->force_pointer_size ));
-    if(opts->unicode_app)
-        strarray_add(spec_args, "-municode");
     strarray_add(spec_args, "-D_REENTRANT");
     if (opts->pic && !is_pe) strarray_add(spec_args, "-fPIC");
     strarray_add(spec_args, opts->shared ? "--dll" : "--exe");
@@ -1287,7 +1284,6 @@ static void build(struct options* opts)
         strarray_add(spec_args, "-E");
         strarray_add(spec_args, spec_file);
     }
-    if (opts->win16_app) strarray_add(spec_args, "-m16");
 
     if (!opts->shared)
     {
@@ -1314,9 +1310,6 @@ static void build(struct options* opts)
 
     for ( j = 0; j < lib_dirs->size; j++ )
 	strarray_add(spec_args, strmake("-L%s", lib_dirs->base[j]));
-
-    for ( j = 0 ; j < opts->winebuild_args->size ; j++ )
-        strarray_add(spec_args, opts->winebuild_args->base[j]);
 
     if (!is_pe)
     {
@@ -1485,7 +1478,6 @@ static void build(struct options* opts)
         strarray_add(implib_args, opts->out_implib);
         strarray_add(implib_args, "--export");
         strarray_add(implib_args, spec_file);
-        strarray_addall(implib_args, opts->winebuild_args);
 
         spawn(opts->prefix, implib_args, 0);
         strarray_free (implib_args);
@@ -1636,7 +1628,7 @@ static int is_option( struct options *opts, int i, const char *option, const cha
 int main(int argc, char **argv)
 {
     int i, c, next_is_arg = 0, linking = 1;
-    int raw_compiler_arg, raw_linker_arg;
+    int raw_compiler_arg, raw_linker_arg, raw_winebuild_arg;
     const char* option_arg;
     struct options opts;
     char* lang = 0;
@@ -1782,6 +1774,7 @@ int main(int argc, char **argv)
 	    /* determine what options go 'as is' to the linker & the compiler */
 	    raw_linker_arg = is_linker_arg(opts.args->base[i]);
 	    raw_compiler_arg = !raw_linker_arg;
+            raw_winebuild_arg = 0;
 
 	    /* do a bit of semantic analysis */
             switch (opts.args->base[i][1])
@@ -1840,7 +1833,7 @@ int main(int argc, char **argv)
                     {
 			opts.use_msvcrt = 1;
                         raw_compiler_arg = 0;
-                        strarray_add( opts.winebuild_args, opts.args->base[i] );
+                        raw_winebuild_arg = 1;
                     }
 		    else if (strcmp("-mwindows", opts.args->base[i]) == 0)
                     {
@@ -1856,6 +1849,7 @@ int main(int argc, char **argv)
                     {
 			opts.unicode_app = 1;
                         raw_compiler_arg = 0;
+                        raw_winebuild_arg = 1;
                     }
 		    else if (strcmp("-mthreads", opts.args->base[i]) == 0)
                     {
@@ -1865,11 +1859,13 @@ int main(int argc, char **argv)
                     {
 			opts.unix_lib = 1;
                         raw_compiler_arg = 0;
+                        raw_winebuild_arg = 1;
                     }
 		    else if (strcmp("-m16", opts.args->base[i]) == 0)
                     {
 			opts.win16_app = 1;
                         raw_compiler_arg = 0;
+                        raw_winebuild_arg = 1;
                     }
 		    else if (strcmp("-m32", opts.args->base[i]) == 0)
                     {
@@ -1891,14 +1887,14 @@ int main(int argc, char **argv)
                     }
                     else if (!strcmp("-marm", opts.args->base[i] ) || !strcmp("-mthumb", opts.args->base[i] ))
                     {
-                        strarray_add(opts.winebuild_args, opts.args->base[i]);
 			raw_linker_arg = 1;
+                        raw_winebuild_arg = 1;
                     }
                     else if (!strncmp("-mcpu=", opts.args->base[i], 6) ||
                              !strncmp("-mfpu=", opts.args->base[i], 6) ||
                              !strncmp("-march=", opts.args->base[i], 7) ||
                              !strncmp("-mfloat-abi=", opts.args->base[i], 12))
-                        strarray_add(opts.winebuild_args, opts.args->base[i]);
+                        raw_winebuild_arg = 1;
 		    break;
                 case 'n':
                     if (strcmp("-nostdinc", opts.args->base[i]) == 0)
@@ -2073,6 +2069,12 @@ int main(int argc, char **argv)
 		if (next_is_arg && (i + 1 < opts.args->size))
 		    strarray_add( opts.compiler_args, opts.args->base[i + 1] );
 	    }
+            if (raw_winebuild_arg)
+            {
+                strarray_add( opts.winebuild_args, opts.args->base[i] );
+		if (next_is_arg && (i + 1 < opts.args->size))
+		    strarray_add( opts.winebuild_args, opts.args->base[i + 1] );
+            }
 
 	    /* skip the next token if it's an argument */
 	    if (next_is_arg) i++;
