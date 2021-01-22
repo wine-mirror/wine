@@ -75,7 +75,6 @@ static struct object *file_open_file( struct object *obj, unsigned int access,
 static struct list *file_get_kernel_obj_list( struct object *obj );
 static void file_destroy( struct object *obj );
 
-static int file_get_poll_events( struct fd *fd );
 static enum server_fd_type file_get_fd_type( struct fd *fd );
 
 static const struct object_ops file_ops =
@@ -104,7 +103,7 @@ static const struct object_ops file_ops =
 
 static const struct fd_ops file_fd_ops =
 {
-    file_get_poll_events,         /* get_poll_events */
+    default_fd_get_poll_events,   /* get_poll_events */
     default_poll_event,           /* poll_event */
     file_get_fd_type,             /* get_fd_type */
     no_fd_read,                   /* read */
@@ -285,16 +284,6 @@ struct object_type *file_get_type( struct object *obj )
     static const WCHAR name[] = {'F','i','l','e'};
     static const struct unicode_str str = { name, sizeof(name) };
     return get_object_type( &str );
-}
-
-static int file_get_poll_events( struct fd *fd )
-{
-    struct file *file = get_fd_user( fd );
-    int events = 0;
-    assert( file->obj.ops == &file_ops );
-    if (file->access & FILE_UNIX_READ_ACCESS) events |= POLLIN;
-    if (file->access & FILE_UNIX_WRITE_ACCESS) events |= POLLOUT;
-    return events;
 }
 
 static enum server_fd_type file_get_fd_type( struct fd *fd )
