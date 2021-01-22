@@ -1473,7 +1473,11 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return 0;
         }
 
-        if (!(req = alloc_accept_req( acceptsock, async, params ))) return 0;
+        if (!(req = alloc_accept_req( acceptsock, async, params )))
+        {
+            release_object( acceptsock );
+            return 0;
+        }
         list_add_tail( &sock->accept_list, &req->entry );
         acceptsock->accept_recv_req = req;
         release_object( acceptsock );
