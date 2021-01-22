@@ -5795,7 +5795,7 @@ void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, 
         unsigned int language_index, struct shaping_features *features)
 {
     struct lookups lookups = { 0 };
-    unsigned int i, j, start_idx;
+    unsigned int i = 0, j, start_idx;
     BOOL ret;
 
     context->nesting_level_left = SHAPE_MAX_NESTING_LEVEL;
@@ -5805,47 +5805,53 @@ void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, 
     opentype_get_nominal_glyphs(context, features);
     opentype_layout_set_glyph_masks(context, features);
 
-    for (i = 0; i < lookups.count; ++i)
+    for (j = 0; j <= features->stage; ++j)
     {
-        const struct lookup *lookup = &lookups.lookups[i];
-
-        context->lookup_mask = lookup->mask;
-        context->auto_zwnj = lookup->auto_zwnj;
-        context->auto_zwj = lookup->auto_zwj;
-
-        if (!opentype_is_gsub_lookup_reversed(context, lookup))
+        for (; i < features->stages[j].last_lookup; ++i)
         {
-            context->cur = 0;
-            while (context->cur < context->glyph_count)
+            const struct lookup *lookup = &lookups.lookups[i];
+
+            context->lookup_mask = lookup->mask;
+            context->auto_zwnj = lookup->auto_zwnj;
+            context->auto_zwj = lookup->auto_zwj;
+
+            if (!opentype_is_gsub_lookup_reversed(context, lookup))
             {
-                ret = FALSE;
-
-                if ((context->glyph_infos[context->cur].mask & lookup->mask) &&
-                        lookup_is_glyph_match(context, context->cur, lookup->flags))
+                context->cur = 0;
+                while (context->cur < context->glyph_count)
                 {
-                    ret = opentype_layout_apply_gsub_lookup(context, lookup);
-                }
+                    ret = FALSE;
 
-                if (!ret)
-                    context->cur++;
+                    if ((context->glyph_infos[context->cur].mask & lookup->mask) &&
+                            lookup_is_glyph_match(context, context->cur, lookup->flags))
+                    {
+                        ret = opentype_layout_apply_gsub_lookup(context, lookup);
+                    }
+
+                    if (!ret)
+                        context->cur++;
+                }
+            }
+            else
+            {
+                context->cur = context->glyph_count - 1;
+
+                for (;;)
+                {
+                    if ((context->glyph_infos[context->cur].mask & lookup->mask) &&
+                            lookup_is_glyph_match(context, context->cur, lookup->flags))
+                    {
+                        opentype_layout_apply_gsub_lookup(context, lookup);
+                    }
+
+                    if (context->cur == 0) break;
+                    --context->cur;
+                }
             }
         }
-        else
-        {
-            context->cur = context->glyph_count - 1;
 
-            for (;;)
-            {
-                if ((context->glyph_infos[context->cur].mask & lookup->mask) &&
-                        lookup_is_glyph_match(context, context->cur, lookup->flags))
-                {
-                    opentype_layout_apply_gsub_lookup(context, lookup);
-                }
-
-                if (context->cur == 0) break;
-                --context->cur;
-            }
-        }
+        if (features->stages[j].func)
+            features->stages[j].func(context);
     }
 
     /* For every glyph range of [<last>.isClusterStart, <next>.isClusterStart) set corresponding
