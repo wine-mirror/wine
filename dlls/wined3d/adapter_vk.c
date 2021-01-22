@@ -560,7 +560,8 @@ static void adapter_vk_get_wined3d_caps(const struct wined3d_adapter *adapter, s
 {
     const struct wined3d_adapter_vk *adapter_vk = wined3d_adapter_vk_const(adapter);
     const VkPhysicalDeviceLimits *limits = &adapter_vk->device_limits;
-    BOOL sampler_anisotropy = limits->maxSamplerAnisotropy > 1.0f;
+    bool sampler_anisotropy = limits->maxSamplerAnisotropy > 1.0f;
+    const struct wined3d_vk_info *vk_info = &adapter_vk->vk_info;
 
     caps->ddraw_caps.dds_caps |= WINEDDSCAPS_BACKBUFFER
             | WINEDDSCAPS_COMPLEX
@@ -615,8 +616,9 @@ static void adapter_vk_get_wined3d_caps(const struct wined3d_adapter *adapter, s
             | WINED3DPTADDRESSCAPS_CLAMP
             | WINED3DPTADDRESSCAPS_WRAP;
     caps->VolumeTextureAddressCaps |= WINED3DPTADDRESSCAPS_BORDER
-            | WINED3DPTADDRESSCAPS_MIRROR
-            | WINED3DPTADDRESSCAPS_MIRRORONCE;
+            | WINED3DPTADDRESSCAPS_MIRROR;
+    if (vk_info->supported[WINED3D_VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE])
+        caps->VolumeTextureAddressCaps |= WINED3DPTADDRESSCAPS_MIRRORONCE;
 
     caps->MaxVolumeExtent = limits->maxImageDimension3D;
 
@@ -643,8 +645,9 @@ static void adapter_vk_get_wined3d_caps(const struct wined3d_adapter *adapter, s
     }
 
     caps->TextureAddressCaps |= WINED3DPTADDRESSCAPS_BORDER
-            | WINED3DPTADDRESSCAPS_MIRROR
-            | WINED3DPTADDRESSCAPS_MIRRORONCE;
+            | WINED3DPTADDRESSCAPS_MIRROR;
+    if (vk_info->supported[WINED3D_VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE])
+        caps->TextureAddressCaps |= WINED3DPTADDRESSCAPS_MIRRORONCE;
 
     caps->StencilCaps |= WINED3DSTENCILCAPS_DECR
             | WINED3DSTENCILCAPS_INCR
@@ -2170,6 +2173,7 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
         {VK_EXT_TRANSFORM_FEEDBACK_EXTENSION_NAME,          ~0u},
         {VK_EXT_VERTEX_ATTRIBUTE_DIVISOR_EXTENSION_NAME,    ~0u,                true},
         {VK_KHR_MAINTENANCE1_EXTENSION_NAME,                VK_API_VERSION_1_1, true},
+        {VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME,VK_API_VERSION_1_2},
         {VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,      VK_API_VERSION_1_1, true},
         {VK_KHR_SWAPCHAIN_EXTENSION_NAME,                   ~0u,                true},
     };
@@ -2181,7 +2185,8 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
     }
     map[] =
     {
-        {VK_EXT_TRANSFORM_FEEDBACK_EXTENSION_NAME,  WINED3D_VK_EXT_TRANSFORM_FEEDBACK},
+        {VK_EXT_TRANSFORM_FEEDBACK_EXTENSION_NAME,           WINED3D_VK_EXT_TRANSFORM_FEEDBACK},
+        {VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME, WINED3D_VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE},
     };
 
     if ((vr = VK_CALL(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &count, NULL))) < 0)
