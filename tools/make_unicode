@@ -435,7 +435,7 @@ my @tolower_table = ();
 my @toupper_table = ();
 my @digitmap_table = ();
 my @category_table = ();
-my @joining_table = ();
+my @initial_joining_table = ();
 my @direction_table = ();
 my @decomp_table = ();
 my @combining_class_table = ();
@@ -645,11 +645,11 @@ sub load_data()
         $direction_table[$src] = $bidi;
         if ($cat eq "Mn" || $cat eq "Me" || $cat eq "Cf")
         {
-            $joining_table[$src] = $joining_types{"T"};
+            $initial_joining_table[$src] = $joining_types{"T"};
         }
         else
         {
-            $joining_table[$src] = $joining_types{"U"};
+            $initial_joining_table[$src] = $joining_types{"U"};
         }
 
         if ($lower ne "")
@@ -1609,6 +1609,7 @@ sub dump_bracket($)
 sub dump_shaping($)
 {
     my $filename = shift;
+    my @joining_table = @initial_joining_table;
 
     my $INPUT = open_data_file( $UNIDATA, "ArabicShaping.txt" );
     while (<$INPUT>)
@@ -1645,6 +1646,52 @@ sub dump_shaping($)
             ${joining_forms{"medial"}}[$i] || $i;
     }
     print OUTPUT "};\n";
+
+    close OUTPUT;
+    save_file($filename);
+}
+
+################################################################
+# dump the Arabic shaping table
+sub dump_arabic_shaping($)
+{
+    my $filename = shift;
+    my @joining_table = @initial_joining_table;
+
+    my $INPUT = open_data_file( $UNIDATA, "ArabicShaping.txt" );
+    while (<$INPUT>)
+    {
+        next if /^\#/;  # skip comments
+        next if /^\s*$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        if (/^\s*([0-9a-fA-F]+)\s*;.*;\s*([RLDCUT])\s*;\s*(\w+)/)
+        {
+            my $type = $2;
+            my $group = $3;
+
+            if ($group eq "ALAPH" || $group eq "DALATH RISH")
+            {
+                $joining_table[hex $1] = $joining_types{$group};
+            }
+            else
+            {
+                $joining_table[hex $1] = $joining_types{$type};
+            }
+
+            next;
+        }
+        die "malformed line $_";
+    }
+    close $INPUT;
+
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    print "Building $filename\n";
+    print OUTPUT "/* Unicode Arabic shaping */\n";
+    print OUTPUT "/* generated from $UNIDATA:ArabicShaping.txt */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"windef.h\"\n\n";
+
+    dump_two_level_mapping( "arabic_shaping_table", 0, 16, @joining_table );
 
     close OUTPUT;
     save_file($filename);
@@ -2710,6 +2757,7 @@ dump_mirroring( "dlls/dwrite/mirror.c" );
 dump_bracket( "dlls/gdi32/uniscribe/bracket.c" );
 dump_bracket( "dlls/dwrite/bracket.c" );
 dump_shaping( "dlls/gdi32/uniscribe/shaping.c" );
+dump_arabic_shaping( "dlls/dwrite/shapers/arabic_table.c" );
 dump_linebreak( "dlls/gdi32/uniscribe/linebreak.c" );
 dump_linebreak( "dlls/dwrite/linebreak.c" );
 dump_scripts( "dlls/dwrite/scripts" );

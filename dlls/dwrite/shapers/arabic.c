@@ -75,9 +75,91 @@ static void arabic_collect_features(struct scriptshaping_context *context,
     shape_enable_feature(features, DWRITE_MAKE_OPENTYPE_TAG('m','s','e','t'), 0);
 }
 
+enum arabic_joining_type
+{
+    JOINING_TYPE_U = 0,
+    JOINING_TYPE_L = 1,
+    JOINING_TYPE_R = 2,
+    JOINING_TYPE_D = 3,
+    JOINING_TYPE_C = JOINING_TYPE_D,
+    JOINING_GROUP_ALAPH = 4,
+    JOINING_GROUP_DALATH_RISH = 5,
+    JOINING_TYPES = 6,
+    JOINING_TYPE_T = 6,
+};
+
+static const struct arabic_state_table_entry
+{
+    unsigned char prev_action;
+    unsigned char curr_action;
+    unsigned char next_state;
+}
+arabic_state_table[][JOINING_TYPES] =
+{
+    /*     U,              L,             R,             D,           ALAPH,      DALATH_RISH  */
+    /* State 0: prev was U, not willing to join. */
+    { {NONE,NONE,0}, {NONE,ISOL,2}, {NONE,ISOL,1}, {NONE,ISOL,2}, {NONE,ISOL,1}, {NONE,ISOL,6}, },
+
+    /* State 1: prev was R or ISOL/ALAPH, not willing to join. */
+    { {NONE,NONE,0}, {NONE,ISOL,2}, {NONE,ISOL,1}, {NONE,ISOL,2}, {NONE,FIN2,5}, {NONE,ISOL,6}, },
+
+    /* State 2: prev was D/L in ISOL form, willing to join. */
+    { {NONE,NONE,0}, {NONE,ISOL,2}, {INIT,FINA,1}, {INIT,FINA,3}, {INIT,FINA,4}, {INIT,FINA,6}, },
+
+    /* State 3: prev was D in FINA form, willing to join. */
+    { {NONE,NONE,0}, {NONE,ISOL,2}, {MEDI,FINA,1}, {MEDI,FINA,3}, {MEDI,FINA,4}, {MEDI,FINA,6}, },
+
+    /* State 4: prev was FINA ALAPH, not willing to join. */
+    { {NONE,NONE,0}, {NONE,ISOL,2}, {MED2,ISOL,1}, {MED2,ISOL,2}, {MED2,FIN2,5}, {MED2,ISOL,6}, },
+
+    /* State 5: prev was FIN2/FIN3 ALAPH, not willing to join. */
+    { {NONE,NONE,0}, {NONE,ISOL,2}, {ISOL,ISOL,1}, {ISOL,ISOL,2}, {ISOL,FIN2,5}, {ISOL,ISOL,6}, },
+
+    /* State 6: prev was DALATH/RISH, not willing to join. */
+    { {NONE,NONE,0}, {NONE,ISOL,2}, {NONE,ISOL,1}, {NONE,ISOL,2}, {NONE,FIN3,5}, {NONE,ISOL,6}, }
+};
+
+extern const unsigned short arabic_shaping_table[] DECLSPEC_HIDDEN;
+
+static unsigned short arabic_get_joining_type(WCHAR ch)
+{
+    const unsigned short *table = arabic_shaping_table;
+    return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
+}
+
+static void arabic_set_shaping_action(struct scriptshaping_context *context,
+        unsigned int idx, enum arabic_shaping_action action)
+{
+    context->glyph_infos[idx].props &= ~(0xf << 16);
+    context->glyph_infos[idx].props |= (action & 0xf) << 16;
+}
+
 static void arabic_setup_masks(struct scriptshaping_context *context,
         const struct shaping_features *features)
 {
+    unsigned int i, prev = ~0u, state = 0;
+
+    for (i = 0; i < context->length; ++i)
+    {
+        unsigned short this_type = arabic_get_joining_type(context->text[i]);
+        const struct arabic_state_table_entry *entry;
+
+        if (this_type == JOINING_TYPE_T)
+        {
+            arabic_set_shaping_action(context, i, NONE);
+            continue;
+        }
+
+        entry = &arabic_state_table[state][this_type];
+
+        if (entry->prev_action != NONE && prev != ~0u)
+            arabic_set_shaping_action(context, prev, entry->prev_action);
+
+        arabic_set_shaping_action(context, i, entry->curr_action);
+
+        prev = i;
+        state = entry->next_state;
+    }
 }
 
 const struct shaper arabic_shaper =
