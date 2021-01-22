@@ -116,7 +116,7 @@ static void test_ChooseFontA(void)
     cfa.Flags = CF_ENABLEHOOK|CF_INITTOLOGFONTSTRUCT|CF_SCREENFONTS|CF_NOSCRIPTSEL;
     ret = ChooseFontA(&cfa);
     ok(ret == TRUE, "ChooseFontA returned FALSE\n");
-    todo_wine ok(lfa.lfCharSet == DEFAULT_CHARSET, "Expected DEFAULT_CHARSET, got %i\n", lfa.lfCharSet);
+    ok(lfa.lfCharSet == DEFAULT_CHARSET, "Expected DEFAULT_CHARSET, got %i\n", lfa.lfCharSet);
 
     printer_ic = get_printer_ic();
     if (!printer_ic)

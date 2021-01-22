@@ -1032,11 +1032,16 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOSEFO
             get_dialog_font_point_size(hDlg, lpcf);
 
             /* charset */
-            i=SendDlgItemMessageW(hDlg, cmb5, CB_GETCURSEL, 0, 0);
-            if (i!=CB_ERR)
-                lpxx->lfCharSet=SendDlgItemMessageW(hDlg, cmb5, CB_GETITEMDATA, i, 0);
-            else
+            if (lpcf->Flags & CF_NOSCRIPTSEL)
                 lpxx->lfCharSet = DEFAULT_CHARSET;
+            else
+            {
+                i=SendDlgItemMessageW(hDlg, cmb5, CB_GETCURSEL, 0, 0);
+                if (i!=CB_ERR)
+                    lpxx->lfCharSet=SendDlgItemMessageW(hDlg, cmb5, CB_GETITEMDATA, i, 0);
+                else
+                    lpxx->lfCharSet = DEFAULT_CHARSET;
+            }
             lpxx->lfStrikeOut=IsDlgButtonChecked(hDlg,chx1);
             lpxx->lfUnderline=IsDlgButtonChecked(hDlg,chx2);
             lpxx->lfWidth=lpxx->lfOrientation=lpxx->lfEscapement=0;
