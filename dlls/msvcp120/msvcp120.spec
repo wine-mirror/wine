@@ -1291,7 +1291,7 @@
 @ cdecl -arch=arm ?_Getmonths@_Locinfo@std@@QBAPBDXZ(ptr) _Locinfo__Getmonths
 @ thiscall -arch=i386 ?_Getmonths@_Locinfo@std@@QBEPBDXZ(ptr) _Locinfo__Getmonths
 @ cdecl -arch=win64 ?_Getmonths@_Locinfo@std@@QEBAPEBDXZ(ptr) _Locinfo__Getmonths
-@ stub -arch=arm ?_Getname@_Locinfo@std@@QBAPBDXZ
+@ cdecl -arch=arm ?_Getname@_Locinfo@std@@QBAPBDXZ(ptr) _Locinfo__Getname
 @ thiscall -arch=win32 ?_Getname@_Locinfo@std@@QBEPBDXZ(ptr) _Locinfo__Getname
 @ cdecl -arch=win64 ?_Getname@_Locinfo@std@@QEBAPEBDXZ(ptr) _Locinfo__Getname
 @ cdecl -arch=arm ?_Getpfirst@_Container_base12@std@@QBAPAPAU_Iterator_base12@2@XZ(ptr) _Container_base12__Getpfirst
@@ -3723,7 +3723,7 @@
 # extern _FZero
 @ cdecl -ret64 _Getcoll()
 @ cdecl _Getctype(ptr)
-@ cdecl _Getcvt(ptr)
+@ cdecl -ret64 _Getcvt()
 @ cdecl _Getdateorder()
 @ cdecl _Getwctype(long ptr)
 @ cdecl _Getwctypes(ptr ptr ptr ptr)

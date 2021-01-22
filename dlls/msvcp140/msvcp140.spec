@@ -3636,42 +3636,42 @@
 @ stub _Cosh
 @ cdecl _Current_get(ptr)
 @ cdecl _Current_set(wstr) tr2_sys__Current_set_wchar
-@ extern _Denorm _Denorm
-@ cdecl _Dtest(ptr) _Dtest
+@ extern _Denorm
+@ cdecl _Dtest(ptr)
 @ cdecl _Equivalent(wstr wstr) _Equivalent
-@ cdecl _Exp(ptr double long) _Exp
+@ cdecl _Exp(ptr double long)
 @ stub _FCosh
-@ extern _FDenorm _FDenorm
-@ cdecl _FDtest(ptr) _FDtest
-@ cdecl _FExp(ptr float long) _FExp
-@ extern _FInf _FInf
-@ extern _FNan _FNan
+@ extern _FDenorm
+@ cdecl _FDtest(ptr)
+@ cdecl _FExp(ptr float long)
+@ extern _FInf
+@ extern _FNan
 @ stub _FSinh
-@ extern _FSnan _FSnan
+@ extern _FSnan
 @ cdecl _File_size(wstr)
-@ cdecl -ret64 _Getcoll() _Getcoll
-@ cdecl _Getctype(ptr) _Getctype
-@ cdecl _Getcvt(ptr) _Getcvt
-@ cdecl _Getdateorder() _Getdateorder
-@ cdecl _Getwctype(long ptr) _Getwctype
-@ cdecl _Getwctypes(ptr ptr ptr ptr) _Getwctypes
+@ cdecl -ret64 _Getcoll()
+@ cdecl _Getctype(ptr)
+@ cdecl -ret64 _Getcvt()
+@ cdecl _Getdateorder()
+@ cdecl _Getwctype(long ptr)
+@ cdecl _Getwctypes(ptr ptr ptr ptr)
 @ stub _Hard_links
-@ extern _Hugeval _Hugeval
-@ extern _Inf _Inf
+@ extern _Hugeval
+@ extern _Inf
 @ stub _LCosh
-@ extern _LDenorm _LDenorm
+@ extern _LDenorm
 @ cdecl _LDtest(ptr) _Dtest
 @ stub _LExp
-@ extern _LInf _LInf
-@ extern _LNan _LNan
+@ extern _LInf
+@ extern _LNan
 @ stub _LSinh
-@ extern _LSnan _LSnan
+@ extern _LSnan
 @ cdecl _Last_write_time(int64)
 @ cdecl _Link(wstr wstr) tr2_sys__Link_wchar
 @ cdecl _Lock_shared_ptr_spin_lock()
 @ cdecl _Lstat(wstr ptr)
 @ cdecl _Make_dir(wstr) tr2_sys__Make_dir_wchar
-@ cdecl _Mbrtowc(ptr ptr long ptr ptr) _Mbrtowc
+@ cdecl _Mbrtowc(ptr ptr long ptr ptr)
 @ stub _Mtx_clear_owner
 @ cdecl _Mtx_current_owns(ptr) _Mtx_current_owns
 @ cdecl _Mtx_destroy(ptr) _Mtx_destroy
@@ -3688,7 +3688,7 @@
 @ stub _Mtxinit
 @ stub _Mtxlock
 @ stub _Mtxunlock
-@ extern _Nan _Nan
+@ extern _Nan
 @ cdecl _Open_dir(ptr wstr long long) tr2_sys__Open_dir_wchar
 @ cdecl -ret64 _Query_perf_counter()
 @ cdecl -ret64 _Query_perf_frequency()
@@ -3698,23 +3698,23 @@
 @ cdecl _Resize(wstr int64)
 @ cdecl _Set_last_write_time(wstr int64)
 @ stub _Sinh
-@ extern _Snan _Snan
+@ extern _Snan
 @ cdecl _Stat(wstr ptr)
 @ stub _Statvfs
-@ cdecl _Stod(ptr ptr long) _Stod
-@ cdecl _Stodx(ptr ptr long ptr) _Stodx
-@ cdecl _Stof(ptr ptr long) _Stof
-@ cdecl _Stofx(ptr ptr long ptr) _Stofx
+@ cdecl _Stod(ptr ptr long)
+@ cdecl _Stodx(ptr ptr long ptr)
+@ cdecl _Stof(ptr ptr long)
+@ cdecl _Stofx(ptr ptr long ptr)
 @ cdecl _Stold(ptr ptr long) _Stod
 @ cdecl _Stoldx(ptr ptr long ptr) _Stodx
-@ cdecl -ret64 _Stoll(ptr ptr long) _Stoll
-@ cdecl -ret64 _Stollx(ptr ptr long ptr) _Stollx
-@ cdecl _Stolx(ptr ptr long ptr) _Stolx
-@ cdecl _Stoul(ptr ptr long) _Stoul
-@ cdecl -ret64 _Stoull(ptr ptr long) _Stoull
-@ cdecl -ret64 _Stoullx(ptr ptr long ptr) _Stoullx
-@ cdecl _Stoulx(ptr ptr long ptr) _Stoulx
-@ cdecl _Strcoll(ptr ptr ptr ptr ptr) _Strcoll
+@ cdecl -ret64 _Stoll(ptr ptr long)
+@ cdecl -ret64 _Stollx(ptr ptr long ptr)
+@ cdecl _Stolx(ptr ptr long ptr)
+@ cdecl _Stoul(ptr ptr long)
+@ cdecl -ret64 _Stoull(ptr ptr long)
+@ cdecl -ret64 _Stoullx(ptr ptr long ptr)
+@ cdecl _Stoulx(ptr ptr long ptr)
+@ cdecl _Strcoll(ptr ptr ptr ptr ptr)
 @ cdecl _Strxfrm(ptr ptr ptr ptr ptr)
 @ cdecl _Symlink(wstr wstr) tr2_sys__Symlink_wchar
 @ stub _Symlink_get
@@ -3733,10 +3733,10 @@
 @ cdecl _Thrd_yield() _Thrd_yield
 @ cdecl _To_byte(wstr ptr) _To_byte
 @ cdecl _To_wide(str ptr)
-@ cdecl _Tolower(long ptr) _Tolower
-@ cdecl _Toupper(long ptr) _Toupper
-@ cdecl _Towlower(long ptr) _Towlower
-@ cdecl _Towupper(long ptr) _Towupper
+@ cdecl _Tolower(long ptr)
+@ cdecl _Toupper(long ptr)
+@ cdecl _Towlower(long ptr)
+@ cdecl _Towupper(long ptr)
 @ cdecl _Unlink(wstr) tr2_sys__Unlink_wchar
 @ cdecl _Unlock_shared_ptr_spin_lock()
 @ stub _WStod
@@ -3745,8 +3745,8 @@
 @ stub _WStofx
 @ stub _WStold
 @ stub _WStoldx
-@ cdecl _Wcrtomb(ptr long ptr ptr) _Wcrtomb
-@ cdecl _Wcscoll(ptr ptr ptr ptr ptr) _Wcscoll
+@ cdecl _Wcrtomb(ptr long ptr ptr)
+@ cdecl _Wcscoll(ptr ptr ptr ptr ptr)
 @ stub _Wcsxfrm
 @ cdecl _Xtime_diff_to_millis(ptr) _Xtime_diff_to_millis
 @ cdecl _Xtime_diff_to_millis2(ptr ptr) _Xtime_diff_to_millis2

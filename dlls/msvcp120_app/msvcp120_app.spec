@@ -1291,7 +1291,7 @@
 @ cdecl -arch=arm ?_Getmonths@_Locinfo@std@@QBAPBDXZ(ptr) msvcp120.?_Getmonths@_Locinfo@std@@QBAPBDXZ
 @ thiscall -arch=i386 ?_Getmonths@_Locinfo@std@@QBEPBDXZ(ptr) msvcp120.?_Getmonths@_Locinfo@std@@QBEPBDXZ
 @ cdecl -arch=win64 ?_Getmonths@_Locinfo@std@@QEBAPEBDXZ(ptr) msvcp120.?_Getmonths@_Locinfo@std@@QEBAPEBDXZ
-@ stub -arch=arm ?_Getname@_Locinfo@std@@QBAPBDXZ
+@ cdecl -arch=arm ?_Getname@_Locinfo@std@@QBAPBDXZ(ptr) msvcp120.?_Getname@_Locinfo@std@@QBAPBDXZ
 @ thiscall -arch=win32 ?_Getname@_Locinfo@std@@QBEPBDXZ(ptr) msvcp120.?_Getname@_Locinfo@std@@QBEPBDXZ
 @ cdecl -arch=win64 ?_Getname@_Locinfo@std@@QEBAPEBDXZ(ptr) msvcp120.?_Getname@_Locinfo@std@@QEBAPEBDXZ
 @ cdecl -arch=arm ?_Getpfirst@_Container_base12@std@@QBAPAPAU_Iterator_base12@2@XZ(ptr) msvcp120.?_Getpfirst@_Container_base12@std@@QBAPAPAU_Iterator_base12@2@XZ
@@ -3723,7 +3723,7 @@
 # extern _FZero
 @ cdecl -ret64 _Getcoll() msvcp120._Getcoll
 @ cdecl _Getctype(ptr) msvcp120._Getctype
-@ cdecl _Getcvt(ptr) msvcp120._Getcvt
+@ cdecl -ret64 _Getcvt() msvcp120._Getcvt
 @ cdecl _Getdateorder() msvcp120._Getdateorder
 @ cdecl _Getwctype(long ptr) msvcp120._Getwctype
 @ cdecl _Getwctypes(ptr ptr ptr ptr) msvcp120._Getwctypes
