@@ -110,7 +110,13 @@ static void test_ChooseFontA(void)
     ok(cfa.iPointSize == expected_pointsize, "Expected %i, got %i\n", expected_pointsize, cfa.iPointSize);
     ok(lfa.lfHeight == expected_lfheight, "Expected %i, got %i\n", expected_lfheight, lfa.lfHeight);
     ok(lfa.lfWeight == FW_NORMAL, "Expected FW_NORMAL, got %i\n", lfa.lfWeight);
+    ok(lfa.lfCharSet == SYMBOL_CHARSET, "Expected SYMBOL_CHARSET, got %i\n", lfa.lfCharSet);
     ok(strcmp(lfa.lfFaceName, "Symbol") == 0, "Expected Symbol, got %s\n", lfa.lfFaceName);
+
+    cfa.Flags = CF_ENABLEHOOK|CF_INITTOLOGFONTSTRUCT|CF_SCREENFONTS|CF_NOSCRIPTSEL;
+    ret = ChooseFontA(&cfa);
+    ok(ret == TRUE, "ChooseFontA returned FALSE\n");
+    todo_wine ok(lfa.lfCharSet == DEFAULT_CHARSET, "Expected DEFAULT_CHARSET, got %i\n", lfa.lfCharSet);
 
     printer_ic = get_printer_ic();
     if (!printer_ic)
