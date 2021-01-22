@@ -1971,7 +1971,7 @@ dnl **** Check for vkd3d ****
 if test "x$with_vkd3d" != "xno"
 then
     WINE_PACKAGE_FLAGS(VKD3D,[libvkd3d],,,,
-        [WINE_CHECK_SONAME(vkd3d,vkd3d_get_dxgi_format,,,[$VKD3D_LIBS])])
+        [WINE_CHECK_SONAME(vkd3d,vkd3d_serialize_versioned_root_signature,,,[$VKD3D_LIBS])])
     WINE_PACKAGE_FLAGS(VKD3D_SHADER,[libvkd3d-shader],,,,
         [WINE_CHECK_SONAME(vkd3d-shader,vkd3d_shader_compile,,,[$VKD3D_SHADER_LIBS])])
 fi

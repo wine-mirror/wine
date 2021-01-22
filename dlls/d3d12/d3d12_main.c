@@ -420,9 +420,5 @@ HRESULT WINAPI D3D12SerializeVersionedRootSignature(const D3D12_VERSIONED_ROOT_S
 {
     TRACE("desc %p, blob %p, error_blob %p.\n", desc, blob, error_blob);
 
-    if (desc->Version == D3D_ROOT_SIGNATURE_VERSION_1_0)
-        return vkd3d_serialize_root_signature(&desc->Desc_1_0, desc->Version, blob, error_blob);
-
-    FIXME("Unsupported version %#x.\n", desc->Version);
-    return E_NOTIMPL;
+    return vkd3d_serialize_versioned_root_signature(desc, blob, error_blob);
 }

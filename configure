@@ -16642,11 +16642,11 @@ LIBS="-lvkd3d $VKD3D_LIBS $LIBS"
 #ifdef __cplusplus
 extern "C"
 #endif
-char vkd3d_get_dxgi_format ();
+char vkd3d_serialize_versioned_root_signature ();
 int
 main ()
 {
-return vkd3d_get_dxgi_format ();
+return vkd3d_serialize_versioned_root_signature ();
   ;
   return 0;
 }
