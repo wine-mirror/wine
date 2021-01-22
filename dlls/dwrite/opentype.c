@@ -4442,7 +4442,7 @@ static void opentype_layout_add_lookups(const struct ot_feature_list *feature_li
 }
 
 static void opentype_layout_collect_lookups(struct scriptshaping_context *context, unsigned int script_index,
-        unsigned int language_index, const struct shaping_features *features, const struct ot_gsubgpos_table *table,
+        unsigned int language_index, struct shaping_features *features, const struct ot_gsubgpos_table *table,
         struct lookups *lookups)
 {
     unsigned int last_num_lookups = 0, stage, script_feature_count = 0;
@@ -4607,6 +4607,7 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
         }
 
         last_num_lookups = lookups->count;
+        features->stages[stage].last_lookup = last_num_lookups;
     }
 }
 
@@ -4688,7 +4689,7 @@ static void opentype_layout_apply_gpos_context_lookup(struct scriptshaping_conte
 }
 
 void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, unsigned int script_index,
-        unsigned int language_index, const struct shaping_features *features)
+        unsigned int language_index, struct shaping_features *features)
 {
     struct lookups lookups = { 0 };
     unsigned int i;
@@ -5791,7 +5792,7 @@ static void opentype_layout_apply_gsub_context_lookup(struct scriptshaping_conte
 }
 
 void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, unsigned int script_index,
-        unsigned int language_index, const struct shaping_features *features)
+        unsigned int language_index, struct shaping_features *features)
 {
     struct lookups lookups = { 0 };
     unsigned int i, j, start_idx;

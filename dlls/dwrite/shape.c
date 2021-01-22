@@ -142,8 +142,9 @@ void shape_enable_feature(struct shaping_features *features, unsigned int tag,
     shape_add_feature_full(features, tag, FEATURE_GLOBAL | flags, 1);
 }
 
-void shape_start_next_stage(struct shaping_features *features)
+void shape_start_next_stage(struct shaping_features *features, stage_func func)
 {
+    features->stages[features->stage].func = func;
     features->stage++;
 }
 

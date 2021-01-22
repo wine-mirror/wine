@@ -56,21 +56,21 @@ static void arabic_collect_features(struct scriptshaping_context *context,
 
     shape_enable_feature(features, DWRITE_MAKE_OPENTYPE_TAG('c','c','m','p'), 0);
     shape_enable_feature(features, DWRITE_MAKE_OPENTYPE_TAG('l','o','c','l'), 0);
-    shape_start_next_stage(features);
+    shape_start_next_stage(features, NULL);
 
     for (i = 0; i < ARRAY_SIZE(arabic_features); ++i)
     {
         unsigned int flags = context->script == Script_Arabic && !feature_is_syriac(arabic_features[i]) ?
                 FEATURE_HAS_FALLBACK : 0;
         shape_add_feature_full(features, arabic_features[i], flags, 1);
-        shape_start_next_stage(features);
+        shape_start_next_stage(features, NULL);
     }
 
     shape_enable_feature(features, DWRITE_MAKE_OPENTYPE_TAG('r','l','i','g'), FEATURE_MANUAL_ZWJ | FEATURE_HAS_FALLBACK);
 
     shape_enable_feature(features, DWRITE_MAKE_OPENTYPE_TAG('r','c','l','t'), FEATURE_MANUAL_ZWJ);
     shape_enable_feature(features, DWRITE_MAKE_OPENTYPE_TAG('c','a','l','t'), FEATURE_MANUAL_ZWJ);
-    shape_start_next_stage(features);
+    shape_start_next_stage(features, NULL);
 
     shape_enable_feature(features, DWRITE_MAKE_OPENTYPE_TAG('m','s','e','t'), 0);
 }
