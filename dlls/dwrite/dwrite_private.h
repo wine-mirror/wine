@@ -543,6 +543,7 @@ enum shaping_feature_flags
     FEATURE_MANUAL_ZWNJ = 0x4,
     FEATURE_MANUAL_ZWJ = 0x8,
     FEATURE_MANUAL_JOINERS = FEATURE_MANUAL_ZWNJ | FEATURE_MANUAL_ZWJ,
+    FEATURE_HAS_FALLBACK = 0x10,
 };
 
 struct shaping_feature
@@ -575,6 +576,8 @@ extern const struct shaper arabic_shaper DECLSPEC_HIDDEN;
 
 extern void shape_enable_feature(struct shaping_features *features, unsigned int tag,
         unsigned int flags) DECLSPEC_HIDDEN;
+extern void shape_add_feature_full(struct shaping_features *features, unsigned int tag, unsigned int flags,
+        unsigned int value) DECLSPEC_HIDDEN;
 extern void shape_start_next_stage(struct shaping_features *features) DECLSPEC_HIDDEN;
 
 struct scriptshaping_context

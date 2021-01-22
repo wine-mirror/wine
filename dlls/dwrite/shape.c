@@ -115,7 +115,7 @@ static DWORD shape_select_language(const struct scriptshaping_cache *cache, DWOR
     return 0;
 }
 
-static void shape_add_feature_full(struct shaping_features *features, unsigned int tag, unsigned int flags, unsigned int value)
+void shape_add_feature_full(struct shaping_features *features, unsigned int tag, unsigned int flags, unsigned int value)
 {
     unsigned int i = features->count;
 
@@ -193,6 +193,7 @@ static void shape_merge_features(struct scriptshaping_context *context, struct s
                     features->features[j].flags ^= FEATURE_GLOBAL;
                 features->features[j].max_value = max(features->features[j].max_value, features->features[i].max_value);
             }
+            features->features[j].flags |= features->features[i].flags & FEATURE_HAS_FALLBACK;
             features->features[j].stage = min(features->features[j].stage, features->features[i].stage);
         }
     }

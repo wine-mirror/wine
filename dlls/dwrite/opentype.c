@@ -4553,7 +4553,7 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
             }
         }
 
-        if (!found)
+        if (!found && !(features->features[i].flags & FEATURE_HAS_FALLBACK))
             continue;
 
         if (feature->flags & FEATURE_GLOBAL && feature->max_value == 1)

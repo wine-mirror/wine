@@ -18,6 +18,7 @@
  */
 
 #include "dwrite_private.h"
+#include "scripts.h"
 
 static const unsigned int arabic_features[] =
 {
@@ -30,6 +31,24 @@ static const unsigned int arabic_features[] =
     DWRITE_MAKE_OPENTYPE_TAG('i','n','i','t'),
 };
 
+enum arabic_shaping_action
+{
+    ISOL,
+    FINA,
+    FIN2,
+    FIN3,
+    MEDI,
+    MED2,
+    INIT,
+    NONE,
+};
+
+static BOOL feature_is_syriac(unsigned int tag)
+{
+    return tag == arabic_features[FIN2] || tag == arabic_features[FIN3] ||
+            tag == arabic_features[MED2];
+}
+
 static void arabic_collect_features(struct scriptshaping_context *context,
         struct shaping_features *features)
 {
@@ -41,11 +60,13 @@ static void arabic_collect_features(struct scriptshaping_context *context,
 
     for (i = 0; i < ARRAY_SIZE(arabic_features); ++i)
     {
-        shape_enable_feature(features, arabic_features[i], 0);
+        unsigned int flags = context->script == Script_Arabic && !feature_is_syriac(arabic_features[i]) ?
+                FEATURE_HAS_FALLBACK : 0;
+        shape_add_feature_full(features, arabic_features[i], flags, 1);
         shape_start_next_stage(features);
     }
 
-    shape_enable_feature(features, DWRITE_MAKE_OPENTYPE_TAG('r','l','i','g'), FEATURE_MANUAL_ZWJ);
+    shape_enable_feature(features, DWRITE_MAKE_OPENTYPE_TAG('r','l','i','g'), FEATURE_MANUAL_ZWJ | FEATURE_HAS_FALLBACK);
 
     shape_enable_feature(features, DWRITE_MAKE_OPENTYPE_TAG('r','c','l','t'), FEATURE_MANUAL_ZWJ);
     shape_enable_feature(features, DWRITE_MAKE_OPENTYPE_TAG('c','a','l','t'), FEATURE_MANUAL_ZWJ);
