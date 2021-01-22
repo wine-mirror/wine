@@ -544,6 +544,7 @@ enum shaping_feature_flags
     FEATURE_MANUAL_ZWJ = 0x8,
     FEATURE_MANUAL_JOINERS = FEATURE_MANUAL_ZWNJ | FEATURE_MANUAL_ZWJ,
     FEATURE_HAS_FALLBACK = 0x10,
+    FEATURE_NEEDS_FALLBACK = 0x20,
 };
 
 struct shaping_feature

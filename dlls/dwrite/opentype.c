@@ -4568,6 +4568,8 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
             next_bit += bits_needed;
             context->global_mask |= (feature->default_value << feature->shift) & feature->mask;
         }
+        if (!found)
+            feature->flags |= FEATURE_NEEDS_FALLBACK;
     }
 
     for (stage = 0; stage <= features->stage; ++stage)
