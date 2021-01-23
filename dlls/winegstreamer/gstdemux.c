@@ -1398,7 +1398,8 @@ static gboolean activate_mode(GstPad *pad, GstObject *parent, GstPadMode mode, g
 static void no_more_pads(GstElement *decodebin, gpointer user)
 {
     struct parser *filter = user;
-    TRACE("filter %p.\n", filter);
+
+    GST_DEBUG("filter %p.", filter);
 
     pthread_mutex_lock(&filter->mutex);
     filter->no_more_pads = true;
