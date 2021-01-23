@@ -1023,6 +1023,31 @@ static void send_buffer(struct parser_source *pin, GstBuffer *buf)
     gst_buffer_unref(buf);
 }
 
+static bool get_stream_event(struct parser_source *pin, struct parser_event *event)
+{
+    struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
+
+    pthread_mutex_lock(&filter->mutex);
+
+    while (!filter->flushing && pin->event.type == PARSER_EVENT_NONE)
+        pthread_cond_wait(&pin->event_cond, &filter->mutex);
+
+    if (filter->flushing)
+    {
+        pthread_mutex_unlock(&filter->mutex);
+        TRACE("Filter is flushing.\n");
+        return false;
+    }
+
+    *event = pin->event;
+    pin->event.type = PARSER_EVENT_NONE;
+
+    pthread_mutex_unlock(&filter->mutex);
+    pthread_cond_signal(&pin->event_empty_cond);
+
+    return true;
+}
+
 static DWORD CALLBACK stream_thread(void *arg)
 {
     struct parser_source *pin = arg;
@@ -1035,31 +1060,12 @@ static DWORD CALLBACK stream_thread(void *arg)
         struct parser_event event;
 
         EnterCriticalSection(&pin->flushing_cs);
-        pthread_mutex_lock(&filter->mutex);
 
-        while (!filter->flushing && pin->event.type == PARSER_EVENT_NONE)
-            pthread_cond_wait(&pin->event_cond, &filter->mutex);
-
-        if (filter->flushing)
+        if (!get_stream_event(pin, &event))
         {
-            pthread_mutex_unlock(&filter->mutex);
-            LeaveCriticalSection(&pin->flushing_cs);
-            TRACE("Filter is flushing.\n");
-            continue;
-        }
-
-        if (!pin->event.type)
-        {
-            pthread_mutex_unlock(&filter->mutex);
             LeaveCriticalSection(&pin->flushing_cs);
             continue;
         }
-
-        event = pin->event;
-        pin->event.type = PARSER_EVENT_NONE;
-        pthread_cond_signal(&pin->event_empty_cond);
-
-        pthread_mutex_unlock(&filter->mutex);
 
         TRACE("Got event of type %#x.\n", event.type);
 
