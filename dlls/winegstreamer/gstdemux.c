@@ -2378,7 +2378,7 @@ static struct parser_source *create_pin(struct parser *filter, const WCHAR *name
     sprintf(pad_name, "qz_sink_%u", filter->source_count);
     pin->my_sink = gst_pad_new(pad_name, GST_PAD_SINK);
     gst_pad_set_element_private(pin->my_sink, pin);
-    gst_pad_set_chain_function(pin->my_sink, got_data_sink_wrapper);
+    gst_pad_set_chain_function(pin->my_sink, got_data_sink);
     gst_pad_set_event_function(pin->my_sink, event_sink_wrapper);
     gst_pad_set_query_function(pin->my_sink, query_sink_wrapper);
 
@@ -2463,12 +2463,6 @@ void perform_cb_gstdemux(struct cb_data *cbdata)
         {
             struct event_sink_data *data = &cbdata->u.event_sink_data;
             cbdata->u.event_sink_data.ret = event_sink(data->pad, data->parent, data->event);
-            break;
-        }
-    case GOT_DATA_SINK:
-        {
-            struct got_data_sink_data *data = &cbdata->u.got_data_sink_data;
-            cbdata->u.got_data_sink_data.ret = got_data_sink(data->pad, data->parent, data->buf);
             break;
         }
     case REMOVED_DECODED_PAD:

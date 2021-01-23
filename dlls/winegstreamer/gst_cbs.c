@@ -216,19 +216,6 @@ gboolean event_sink_wrapper(GstPad *pad, GstObject *parent, GstEvent *event)
     return cbdata.u.event_sink_data.ret;
 }
 
-GstFlowReturn got_data_sink_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf)
-{
-    struct cb_data cbdata = { GOT_DATA_SINK };
-
-    cbdata.u.got_data_sink_data.pad = pad;
-    cbdata.u.got_data_sink_data.parent = parent;
-    cbdata.u.got_data_sink_data.buf = buf;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.got_data_sink_data.ret;
-}
-
 void removed_decoded_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
 {
     struct cb_data cbdata = { REMOVED_DECODED_PAD };
