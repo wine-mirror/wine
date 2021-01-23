@@ -174,16 +174,6 @@ gboolean activate_mode_wrapper(GstPad *pad, GstObject *parent, GstPadMode mode, 
     return cbdata.u.activate_mode_data.ret;
 }
 
-void no_more_pads_wrapper(GstElement *element, gpointer user)
-{
-    struct cb_data cbdata = { NO_MORE_PADS };
-
-    cbdata.u.no_more_pads_data.element = element;
-    cbdata.u.no_more_pads_data.user = user;
-
-    call_cb(&cbdata);
-}
-
 GstFlowReturn request_buffer_src_wrapper(GstPad *pad, GstObject *parent, guint64 ofs, guint len,
         GstBuffer **buf)
 {

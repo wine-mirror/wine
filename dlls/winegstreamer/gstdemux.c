@@ -1765,7 +1765,7 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
     g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), filter);
     g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), filter);
     g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_blacklist), filter);
-    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads_wrapper), filter);
+    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), filter);
 
     filter->their_sink = gst_element_get_static_pad(element, "sink");
 
@@ -2443,12 +2443,6 @@ void perform_cb_gstdemux(struct cb_data *cbdata)
             cbdata->u.activate_mode_data.ret = activate_mode(data->pad, data->parent, data->mode, data->activate);
             break;
         }
-    case NO_MORE_PADS:
-        {
-            struct no_more_pads_data *data = &cbdata->u.no_more_pads_data;
-            no_more_pads(data->element, data->user);
-            break;
-        }
     case REQUEST_BUFFER_SRC:
         {
             struct getrange_data *data = &cbdata->u.getrange_data;
@@ -2645,7 +2639,7 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
 
     g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), filter);
     g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), filter);
-    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads_wrapper), filter);
+    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), filter);
 
     filter->their_sink = gst_element_get_static_pad(element, "sink");
 
