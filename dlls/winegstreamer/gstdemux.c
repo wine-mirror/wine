@@ -690,13 +690,13 @@ static GstFlowReturn queue_stream_event(struct parser_source *pin, const struct 
     if (pin->flushing)
     {
         pthread_mutex_unlock(&filter->mutex);
-        TRACE("Filter is flushing; discarding event.\n");
+        GST_DEBUG("Filter is flushing; discarding event.");
         return GST_FLOW_FLUSHING;
     }
     pin->event = *event;
     pthread_mutex_unlock(&filter->mutex);
     pthread_cond_signal(&pin->event_cond);
-    TRACE("Event queued.\n");
+    GST_LOG("Event queued.");
     return GST_FLOW_OK;
 }
 
@@ -880,7 +880,7 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *bu
     struct parser_event stream_event;
     GstFlowReturn ret;
 
-    TRACE("pad %p, pin %p, buffer %p.\n", pad, pin, buffer);
+    GST_LOG("pin %p, buffer %p.", pin, buffer);
 
     if (!pin->pin.pin.peer)
     {
