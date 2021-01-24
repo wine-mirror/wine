@@ -1992,6 +1992,161 @@ static void test_handles(void)
     ok(ret, "EnumDisplayMonitors failed, error %#x.\n", GetLastError());
 }
 
+#define check_display_dc(a, b, c) _check_display_dc(__LINE__, a, b, c)
+static void _check_display_dc(INT line, HDC hdc, const DEVMODEA *dm, BOOL allow_todo)
+{
+    INT value;
+
+    value = GetDeviceCaps(hdc, HORZRES);
+    todo_wine_if(allow_todo && dm->dmPelsWidth != GetSystemMetrics(SM_CXSCREEN))
+    ok_(__FILE__, line)(value == dm->dmPelsWidth, "Expected HORZRES %d, got %d.\n",
+            dm->dmPelsWidth, value);
+
+    value = GetDeviceCaps(hdc, VERTRES);
+    todo_wine_if(allow_todo && dm->dmPelsHeight != GetSystemMetrics(SM_CYSCREEN))
+    ok_(__FILE__, line)(value == dm->dmPelsHeight, "Expected VERTRES %d, got %d.\n",
+            dm->dmPelsHeight, value);
+
+    value = GetDeviceCaps(hdc, DESKTOPHORZRES);
+    todo_wine_if(dm->dmPelsWidth != GetSystemMetrics(SM_CXVIRTUALSCREEN)
+            && value == GetSystemMetrics(SM_CXVIRTUALSCREEN))
+    ok_(__FILE__, line)(value == dm->dmPelsWidth, "Expected DESKTOPHORZRES %d, got %d.\n",
+            dm->dmPelsWidth, value);
+
+    value = GetDeviceCaps(hdc, DESKTOPVERTRES);
+    todo_wine_if(dm->dmPelsHeight != GetSystemMetrics(SM_CYVIRTUALSCREEN)
+            && value == GetSystemMetrics(SM_CYVIRTUALSCREEN))
+    ok_(__FILE__, line)(value == dm->dmPelsHeight, "Expected DESKTOPVERTRES %d, got %d.\n",
+            dm->dmPelsHeight, value);
+
+    value = GetDeviceCaps(hdc, VREFRESH);
+    todo_wine_if(value != dm->dmDisplayFrequency && value == 1)
+    ok_(__FILE__, line)(value == dm->dmDisplayFrequency, "Expected VREFRESH %d, got %d.\n",
+            dm->dmDisplayFrequency, value);
+}
+
+static void test_display_dc(void)
+{
+    DWORD device_idx, mode_idx;
+    DEVMODEA dm, dm2, dm3;
+    INT count, old_count;
+    DISPLAY_DEVICEA dd;
+    BOOL ret;
+    LONG res;
+    HDC hdc;
+
+    /* Test DCs covering the entire virtual screen */
+    hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    ok(!!hdc, "CreateDCA failed.\n");
+
+    memset(&dm, 0, sizeof(dm));
+    dm.dmSize = sizeof(dm);
+    ret = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dm);
+    ok(ret, "EnumDisplaySettingsA failed.\n");
+
+    check_display_dc(hdc, &dm, FALSE);
+
+    /* Tests after mode changes */
+    memset(&dm2, 0, sizeof(dm2));
+    dm2.dmSize = sizeof(dm2);
+    for (mode_idx = 0; EnumDisplaySettingsA(NULL, mode_idx, &dm2); ++mode_idx)
+    {
+        if (dm2.dmPelsWidth != dm.dmPelsWidth && dm2.dmPelsHeight != dm.dmPelsHeight)
+            break;
+    }
+    ok(dm2.dmPelsWidth && dm2.dmPelsWidth != dm.dmPelsWidth && dm2.dmPelsHeight != dm.dmPelsHeight,
+            "Failed to find a different resolution.\n");
+
+    res = ChangeDisplaySettingsExA(NULL, &dm2, NULL, CDS_RESET, NULL);
+    ok(res == DISP_CHANGE_SUCCESSFUL || broken(res == DISP_CHANGE_FAILED), /* Win8 TestBots */
+            "ChangeDisplaySettingsExA returned unexpected %d.\n", res);
+    if (res == DISP_CHANGE_SUCCESSFUL)
+    {
+        check_display_dc(hdc, &dm2, FALSE);
+
+        res = ChangeDisplaySettingsExA(NULL, NULL, NULL, 0, NULL);
+        ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA returned unexpected %d.\n", res);
+    }
+
+    DeleteDC(hdc);
+
+    /* Test DCs covering a specific monitor */
+    dd.cb = sizeof(dd);
+    for (device_idx = 0; EnumDisplayDevicesA(NULL, device_idx, &dd, 0); ++device_idx)
+    {
+        if (!(dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP))
+            continue;
+
+        memset(&dm, 0, sizeof(dm));
+        dm.dmSize = sizeof(dm);
+        ret = EnumDisplaySettingsA(dd.DeviceName, ENUM_CURRENT_SETTINGS, &dm);
+        ok(ret, "EnumDisplaySettingsA %s failed.\n", dd.DeviceName);
+
+        hdc = CreateDCA(dd.DeviceName, NULL, NULL, NULL);
+        ok(!!hdc, "CreateDCA %s failed.\n", dd.DeviceName);
+
+        check_display_dc(hdc, &dm, TRUE);
+
+        /* Tests after mode changes */
+        memset(&dm2, 0, sizeof(dm2));
+        dm2.dmSize = sizeof(dm2);
+        for (mode_idx = 0; EnumDisplaySettingsA(dd.DeviceName, mode_idx, &dm2); ++mode_idx)
+        {
+            if (dm2.dmPelsWidth != dm.dmPelsWidth && dm2.dmPelsHeight != dm.dmPelsHeight)
+                break;
+        }
+        ok(dm2.dmPelsWidth && dm2.dmPelsWidth != dm.dmPelsWidth && dm2.dmPelsHeight != dm.dmPelsHeight,
+                "Failed to find a different resolution for %s.\n", dd.DeviceName);
+
+        res = ChangeDisplaySettingsExA(dd.DeviceName, &dm2, NULL, CDS_RESET, NULL);
+        ok(res == DISP_CHANGE_SUCCESSFUL || broken(res == DISP_CHANGE_FAILED), /* Win8 TestBots */
+                "ChangeDisplaySettingsExA %s returned unexpected %d.\n", dd.DeviceName, res);
+        if (res != DISP_CHANGE_SUCCESSFUL)
+        {
+            win_skip("Failed to change display mode for %s.\n", dd.DeviceName);
+            DeleteDC(hdc);
+            continue;
+        }
+
+        check_display_dc(hdc, &dm2, TRUE);
+
+        /* Tests after monitor detach */
+        if (!(dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE))
+        {
+            old_count = GetSystemMetrics(SM_CMONITORS);
+
+            memset(&dm3, 0, sizeof(dm3));
+            dm3.dmSize = sizeof(dm3);
+            ret = EnumDisplaySettingsA(dd.DeviceName, ENUM_CURRENT_SETTINGS, &dm3);
+            ok(ret, "EnumDisplaySettingsA %s failed.\n", dd.DeviceName);
+
+            dm3.dmFields = DM_POSITION | DM_PELSWIDTH | DM_PELSHEIGHT;
+            dm3.dmPelsWidth = 0;
+            dm3.dmPelsHeight = 0;
+            res = ChangeDisplaySettingsExA(dd.DeviceName, &dm3, NULL, CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
+            ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned unexpected %d.\n",
+                    dd.DeviceName, res);
+            res = ChangeDisplaySettingsExA(dd.DeviceName, NULL, NULL, 0, NULL);
+            ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned unexpected %d.\n",
+                    dd.DeviceName, res);
+
+            count = GetSystemMetrics(SM_CMONITORS);
+            ok(count == old_count - 1, "Expected monitor count %d, got %d.\n", old_count - 1, count);
+
+            /* Should report the same values before detach */
+            check_display_dc(hdc, &dm2, TRUE);
+        }
+
+        res = ChangeDisplaySettingsExA(dd.DeviceName, &dm, NULL, CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
+        ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned unexpected %d.\n",
+                dd.DeviceName, res);
+        res = ChangeDisplaySettingsExA(NULL, NULL, NULL, 0, NULL);
+        ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s returned unexpected %d.\n",
+                dd.DeviceName, res);
+        DeleteDC(hdc);
+    }
+}
+
 START_TEST(monitor)
 {
     init_function_pointers();
@@ -2002,4 +2157,5 @@ START_TEST(monitor)
     test_work_area();
     test_display_config();
     test_handles();
+    test_display_dc();
 }
