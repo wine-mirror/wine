@@ -2085,7 +2085,7 @@ static void test_display_dc(void)
         hdc = CreateDCA(dd.DeviceName, NULL, NULL, NULL);
         ok(!!hdc, "CreateDCA %s failed.\n", dd.DeviceName);
 
-        check_display_dc(hdc, &dm, TRUE);
+        check_display_dc(hdc, &dm, FALSE);
 
         /* Tests after mode changes */
         memset(&dm2, 0, sizeof(dm2));
@@ -2108,7 +2108,7 @@ static void test_display_dc(void)
             continue;
         }
 
-        check_display_dc(hdc, &dm2, TRUE);
+        check_display_dc(hdc, &dm2, FALSE);
 
         /* Tests after monitor detach */
         if (!(dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE))

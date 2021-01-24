@@ -623,6 +623,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
 HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
                       const DEVMODEW *initData )
 {
+    const WCHAR *display, *p;
     HDC hdc;
     DC * dc;
     const struct gdi_dc_funcs *funcs;
@@ -661,6 +662,23 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
             free_dc_ptr( dc );
             return 0;
         }
+    }
+
+    if (is_display_device( driver ))
+        display = driver;
+    else if (is_display_device( device ))
+        display = device;
+    else
+        display = NULL;
+
+    if (display)
+    {
+        /* Copy only the display name. For example, \\.\DISPLAY1 in \\.\DISPLAY1\Monitor0 */
+        p = display + 12;
+        while (iswdigit( *p ))
+            ++p;
+        lstrcpynW( dc->display, display, p - display + 1 );
+        dc->display[p - display] = '\0';
     }
 
     dc->vis_rect.left   = 0;

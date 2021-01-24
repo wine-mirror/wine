@@ -81,7 +81,9 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+static BOOL (WINAPI *pEnumDisplayMonitors)(HDC, LPRECT, MONITORENUMPROC, LPARAM);
 static HWND (WINAPI *pGetDesktopWindow)(void);
+static BOOL (WINAPI *pGetMonitorInfoW)(HMONITOR, LPMONITORINFO);
 static INT (WINAPI *pGetSystemMetrics)(INT);
 static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
 
@@ -137,9 +139,12 @@ static const struct gdi_dc_funcs *get_display_driver(void)
 /**********************************************************************
  *	     is_display_device
  */
-static BOOL is_display_device( LPCWSTR name )
+BOOL is_display_device( LPCWSTR name )
 {
     const WCHAR *p = name;
+
+    if (!name)
+        return FALSE;
 
     if (wcsnicmp( name, L"\\\\.\\DISPLAY", lstrlenW(L"\\\\.\\DISPLAY") )) return FALSE;
 
@@ -237,10 +242,33 @@ void CDECL __wine_set_display_driver( HMODULE module )
         HeapFree( GetProcessHeap(), 0, driver );
 
     user32 = LoadLibraryA( "user32.dll" );
+    pGetMonitorInfoW = (void *)GetProcAddress( user32, "GetMonitorInfoW" );
     pGetSystemMetrics = (void *)GetProcAddress( user32, "GetSystemMetrics" );
+    pEnumDisplayMonitors = (void *)GetProcAddress( user32, "EnumDisplayMonitors" );
     pSetThreadDpiAwarenessContext = (void *)GetProcAddress( user32, "SetThreadDpiAwarenessContext" );
 }
 
+struct monitor_info
+{
+    const WCHAR *name;
+    RECT rect;
+};
+
+static BOOL CALLBACK monitor_enum_proc( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lparam )
+{
+    struct monitor_info *info = (struct monitor_info *)lparam;
+    MONITORINFOEXW mi;
+
+    mi.cbSize = sizeof(mi);
+    pGetMonitorInfoW( monitor, (MONITORINFO *)&mi );
+    if (!lstrcmpiW( info->name, mi.szDevice ))
+    {
+        info->rect = mi.rcMonitor;
+        return FALSE;
+    }
+
+    return TRUE;
+}
 
 static INT CDECL nulldrv_AbortDoc( PHYSDEV dev )
 {
@@ -378,8 +406,38 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
                                          GetDeviceCaps( dev->hdc, LOGPIXELSX ) * 10 );
     case VERTSIZE:        return MulDiv( GetDeviceCaps( dev->hdc, VERTRES ), 254,
                                          GetDeviceCaps( dev->hdc, LOGPIXELSY ) * 10 );
-    case HORZRES:         return pGetSystemMetrics ? pGetSystemMetrics( SM_CXSCREEN ) : 640;
-    case VERTRES:         return pGetSystemMetrics ? pGetSystemMetrics( SM_CYSCREEN ) : 480;
+    case HORZRES:
+    {
+        DC *dc = get_nulldrv_dc( dev );
+        struct monitor_info info;
+
+        if (dc->display[0] && pEnumDisplayMonitors && pGetMonitorInfoW)
+        {
+            info.name = dc->display;
+            SetRectEmpty( &info.rect );
+            pEnumDisplayMonitors( NULL, NULL, monitor_enum_proc, (LPARAM)&info );
+            if (!IsRectEmpty( &info.rect ))
+                return info.rect.right - info.rect.left;
+        }
+
+        return pGetSystemMetrics ? pGetSystemMetrics( SM_CXSCREEN ) : 640;
+    }
+    case VERTRES:
+    {
+        DC *dc = get_nulldrv_dc( dev );
+        struct monitor_info info;
+
+        if (dc->display[0] && pEnumDisplayMonitors && pGetMonitorInfoW)
+        {
+            info.name = dc->display;
+            SetRectEmpty( &info.rect );
+            pEnumDisplayMonitors( NULL, NULL, monitor_enum_proc, (LPARAM)&info );
+            if (!IsRectEmpty( &info.rect ))
+                return info.rect.bottom - info.rect.top;
+        }
+
+        return pGetSystemMetrics ? pGetSystemMetrics( SM_CYSCREEN ) : 480;
+    }
     case BITSPIXEL:       return 32;
     case PLANES:          return 1;
     case NUMBRUSHES:      return -1;

@@ -84,6 +84,7 @@ typedef struct tagDC
     int          pixel_format;     /* pixel format (for memory DCs) */
     UINT         aa_flags;         /* anti-aliasing flags to pass to GetGlyphOutline for current font */
     FLOAT        miterLimit;
+    WCHAR        display[CCHDEVICENAME]; /* Display name when created for a specific display device */
 
     int           flags;
     DWORD         layout;
@@ -486,6 +487,9 @@ typedef struct
 #include <poppack.h>
 
 #define WMFC_MAGIC 0x43464d57
+
+/* driver.c */
+extern BOOL is_display_device( LPCWSTR name ) DECLSPEC_HIDDEN;
 
 /* path.c */
 
