@@ -3083,7 +3083,10 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
 
     strarray_add( &make->clean_files, dll_name );
     strarray_add( &make->res_files, strmake( "%s.res", obj ));
-    output( "%s.res: %s\n", obj_dir_path( make, obj ), obj_dir_path( make, dll_name ));
+    output( "%s.res:", obj_dir_path( make, obj ));
+    output_filename( obj_dir_path( make, dll_name ));
+    output_filename( tools_path( make, "wrc" ));
+    output( "\n" );
     output( "\t%secho \"%s.dll TESTDLL \\\"%s\\\"\" | %s -u -o $@\n", cmd_prefix( "WRC" ), obj, output_file,
             tools_path( make, "wrc" ));
 
