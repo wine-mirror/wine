@@ -2020,7 +2020,7 @@ static void _check_display_dc(INT line, HDC hdc, const DEVMODEA *dm, BOOL allow_
             dm->dmPelsHeight, value);
 
     value = GetDeviceCaps(hdc, VREFRESH);
-    todo_wine_if(value != dm->dmDisplayFrequency && value == 1)
+    todo_wine_if(allow_todo)
     ok_(__FILE__, line)(value == dm->dmDisplayFrequency, "Expected VREFRESH %d, got %d.\n",
             dm->dmDisplayFrequency, value);
 }

@@ -82,6 +82,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 static CRITICAL_SECTION driver_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static BOOL (WINAPI *pEnumDisplayMonitors)(HDC, LPRECT, MONITORENUMPROC, LPARAM);
+static BOOL (WINAPI *pEnumDisplaySettingsW)(LPCWSTR, DWORD, LPDEVMODEW);
 static HWND (WINAPI *pGetDesktopWindow)(void);
 static BOOL (WINAPI *pGetMonitorInfoW)(HMONITOR, LPMONITORINFO);
 static INT (WINAPI *pGetSystemMetrics)(INT);
@@ -245,6 +246,7 @@ void CDECL __wine_set_display_driver( HMODULE module )
     pGetMonitorInfoW = (void *)GetProcAddress( user32, "GetMonitorInfoW" );
     pGetSystemMetrics = (void *)GetProcAddress( user32, "GetSystemMetrics" );
     pEnumDisplayMonitors = (void *)GetProcAddress( user32, "EnumDisplayMonitors" );
+    pEnumDisplaySettingsW = (void *)GetProcAddress( user32, "EnumDisplaySettingsW" );
     pSetThreadDpiAwarenessContext = (void *)GetProcAddress( user32, "SetThreadDpiAwarenessContext" );
 }
 
@@ -471,7 +473,28 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     case PHYSICALOFFSETY: return 0;
     case SCALINGFACTORX:  return 0;
     case SCALINGFACTORY:  return 0;
-    case VREFRESH:        return GetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY ? 1 : 0;
+    case VREFRESH:
+    {
+        DEVMODEW devmode;
+        WCHAR *display;
+        DC *dc;
+
+        if (GetDeviceCaps( dev->hdc, TECHNOLOGY ) != DT_RASDISPLAY)
+            return 0;
+
+        if (pEnumDisplaySettingsW)
+        {
+            dc = get_nulldrv_dc( dev );
+
+            memset( &devmode, 0, sizeof(devmode) );
+            devmode.dmSize = sizeof(devmode);
+            display = dc->display[0] ? dc->display : NULL;
+            if (pEnumDisplaySettingsW( display, ENUM_CURRENT_SETTINGS, &devmode ))
+                return devmode.dmDisplayFrequency ? devmode.dmDisplayFrequency : 1;
+        }
+
+        return 1;
+    }
     case DESKTOPHORZRES:
         if (GetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && pGetSystemMetrics)
         {
