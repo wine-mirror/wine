@@ -89,6 +89,7 @@ static const struct {
 	{&CLSID_Shell,          IShellDispatch_Constructor},
 	{&CLSID_DestinationList, CustomDestinationList_Constructor},
 	{&CLSID_ShellImageDataFactory, ShellImageDataFactory_Constructor},
+	{&CLSID_FileOperation, IFileOperation_Constructor},
 	{NULL, NULL}
 };
 

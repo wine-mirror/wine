@@ -166,3 +166,9 @@ coclass KnownFolderManager { interface IKnownFolderManager; }
     threading(apartment),
     uuid(66e4e4fb-f385-4dd0-8d74-a2efd1bc6178)
 ] coclass ShellImageDataFactory { interface IShellImageDataFactory; }
+
+[
+    helpstring("Copy/Move/Rename/Delete/Link Object"),
+    threading(apartment),
+    uuid(3ad05575-8857-4850-9277-11b85bdb8e09)
+] coclass FileOperation { interface IFileOperation; }

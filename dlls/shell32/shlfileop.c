@@ -24,6 +24,8 @@
 #include "config.h"
 #include "wine/port.h"
 
+#define COBJMACROS
+
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
@@ -1808,4 +1810,251 @@ HRESULT WINAPI SHMultiFileProperties(IDataObject *pdtobj, DWORD flags)
 {
     FIXME("stub: %p %u\n", pdtobj, flags);
     return E_NOTIMPL;
+}
+
+struct file_operation
+{
+    IFileOperation IFileOperation_iface;
+    LONG ref;
+};
+
+static inline struct file_operation *impl_from_IFileOperation(IFileOperation *iface)
+{
+    return CONTAINING_RECORD(iface, struct file_operation, IFileOperation_iface);
+}
+
+static HRESULT WINAPI file_operation_QueryInterface(IFileOperation *iface, REFIID riid, void **out)
+{
+    struct file_operation *operation = impl_from_IFileOperation(iface);
+
+    TRACE("(%p, %s, %p).\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualIID(&IID_IFileOperation, riid) ||
+        IsEqualIID(&IID_IUnknown, riid))
+        *out = &operation->IFileOperation_iface;
+    else
+    {
+        FIXME("not implemented for %s.\n", debugstr_guid(riid));
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI file_operation_AddRef(IFileOperation *iface)
+{
+    struct file_operation *operation = impl_from_IFileOperation(iface);
+    ULONG ref = InterlockedIncrement(&operation->ref);
+
+    TRACE("(%p): ref=%u.\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI file_operation_Release(IFileOperation *iface)
+{
+    struct file_operation *operation = impl_from_IFileOperation(iface);
+    ULONG ref = InterlockedDecrement(&operation->ref);
+
+    TRACE("(%p): ref=%u.\n", iface, ref);
+
+    if (!ref)
+    {
+        HeapFree(GetProcessHeap(), 0, operation);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI file_operation_Advise(IFileOperation *iface, IFileOperationProgressSink *sink, DWORD *cookie)
+{
+    FIXME("(%p, %p, %p): stub.\n", iface, sink, cookie);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_Unadvise(IFileOperation *iface, DWORD cookie)
+{
+    FIXME("(%p, %x): stub.\n", iface, cookie);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_SetOperationFlags(IFileOperation *iface, DWORD flags)
+{
+    FIXME("(%p, %x): stub.\n", iface, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_SetProgressMessage(IFileOperation *iface, LPCWSTR message)
+{
+    FIXME("(%p, %s): stub.\n", iface, debugstr_w(message));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_SetProgressDialog(IFileOperation *iface, IOperationsProgressDialog *dialog)
+{
+    FIXME("(%p, %p): stub.\n", iface, dialog);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_SetProperties(IFileOperation *iface, IPropertyChangeArray *array)
+{
+    FIXME("(%p, %p): stub.\n", iface, array);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_SetOwnerWindow(IFileOperation *iface, HWND owner)
+{
+    FIXME("(%p, %p): stub.\n", iface, owner);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_ApplyPropertiesToItem(IFileOperation *iface, IShellItem *item)
+{
+    FIXME("(%p, %p): stub.\n", iface, item);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_ApplyPropertiesToItems(IFileOperation *iface, IUnknown *items)
+{
+    FIXME("(%p, %p): stub.\n", iface, items);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_RenameItem(IFileOperation *iface, IShellItem *item, LPCWSTR name,
+        IFileOperationProgressSink *sink)
+{
+    FIXME("(%p, %p, %s, %p): stub.\n", iface, item, debugstr_w(name), sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_RenameItems(IFileOperation *iface, IUnknown *items, LPCWSTR name)
+{
+    FIXME("(%p, %p, %s): stub.\n", iface, items, debugstr_w(name));
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_MoveItem(IFileOperation *iface, IShellItem *item, IShellItem *folder,
+        LPCWSTR name, IFileOperationProgressSink *sink)
+{
+    FIXME("(%p, %p, %p, %s, %p): stub.\n", iface, item, folder, debugstr_w(name), sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_MoveItems(IFileOperation *iface, IUnknown *items, IShellItem *folder)
+{
+    FIXME("(%p, %p, %p): stub.\n", iface, items, folder);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_CopyItem(IFileOperation *iface, IShellItem *item, IShellItem *folder,
+        LPCWSTR name, IFileOperationProgressSink *sink)
+{
+    FIXME("(%p, %p, %p, %s, %p): stub.\n", iface, item, folder, debugstr_w(name), sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_CopyItems(IFileOperation *iface, IUnknown *items, IShellItem *folder)
+{
+    FIXME("(%p, %p, %p): stub.\n", iface, items, folder);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_DeleteItem(IFileOperation *iface, IShellItem *item,
+        IFileOperationProgressSink *sink)
+{
+    FIXME("(%p, %p, %p): stub.\n", iface, item, sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_DeleteItems(IFileOperation *iface, IUnknown *items)
+{
+    FIXME("(%p, %p): stub.\n", iface, items);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_NewItem(IFileOperation *iface, IShellItem *folder, DWORD attributes,
+        LPCWSTR name, LPCWSTR template, IFileOperationProgressSink *sink)
+{
+    FIXME("(%p, %p, %x, %s, %s, %p): stub.\n", iface, folder, attributes,
+          debugstr_w(name), debugstr_w(template), sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_PerformOperations(IFileOperation *iface)
+{
+    FIXME("(%p): stub.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI file_operation_GetAnyOperationsAborted(IFileOperation *iface, BOOL *aborted)
+{
+    FIXME("(%p, %p): stub.\n", iface, aborted);
+
+    return E_NOTIMPL;
+}
+
+static const IFileOperationVtbl file_operation_vtbl =
+{
+    file_operation_QueryInterface,
+    file_operation_AddRef,
+    file_operation_Release,
+    file_operation_Advise,
+    file_operation_Unadvise,
+    file_operation_SetOperationFlags,
+    file_operation_SetProgressMessage,
+    file_operation_SetProgressDialog,
+    file_operation_SetProperties,
+    file_operation_SetOwnerWindow,
+    file_operation_ApplyPropertiesToItem,
+    file_operation_ApplyPropertiesToItems,
+    file_operation_RenameItem,
+    file_operation_RenameItems,
+    file_operation_MoveItem,
+    file_operation_MoveItems,
+    file_operation_CopyItem,
+    file_operation_CopyItems,
+    file_operation_DeleteItem,
+    file_operation_DeleteItems,
+    file_operation_NewItem,
+    file_operation_PerformOperations,
+    file_operation_GetAnyOperationsAborted
+};
+
+HRESULT WINAPI IFileOperation_Constructor(IUnknown *outer, REFIID riid, void **out)
+{
+    struct file_operation *object;
+    HRESULT hr;
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IFileOperation_iface.lpVtbl = &file_operation_vtbl;
+    object->ref = 1;
+
+    hr = IFileOperation_QueryInterface(&object->IFileOperation_iface, riid, out);
+    IFileOperation_Release(&object->IFileOperation_iface);
+
+    return hr;
 }

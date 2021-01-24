@@ -2706,6 +2706,29 @@ static BOOL is_old_shell32(void)
     return FALSE;
 }
 
+static void test_file_operation(void)
+{
+    IFileOperation *operation;
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_FileOperation, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IFileOperation, (void **)&operation);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG) /* before vista */,
+        "Got hr %#x.\n", hr);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("IFileOperation isn't supported.\n");
+        return;
+    }
+
+    hr = IFileOperation_QueryInterface(operation, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IUnknown_Release(unk);
+
+    IFileOperation_Release(operation);
+}
+
 START_TEST(shlfileop)
 {
     clean_after_shfo_tests();
@@ -2751,4 +2774,10 @@ START_TEST(shlfileop)
     test_unicode();
 
     test_shlmenu();
+
+    CoInitialize(NULL);
+
+    test_file_operation();
+
+    CoUninitialize();
 }
