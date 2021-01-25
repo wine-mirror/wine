@@ -433,6 +433,8 @@ static HRESULT WINAPI CommonDecoderFrame_GetMetadataQueryReader(IWICBitmapFrameD
     IWICMetadataQueryReader **ppIMetadataQueryReader)
 {
     CommonDecoderFrame *This = impl_from_IWICBitmapFrameDecode(iface);
+    IWICComponentFactory* factory;
+    HRESULT hr;
 
     TRACE("(%p,%p)\n", iface, ppIMetadataQueryReader);
 
@@ -442,7 +444,18 @@ static HRESULT WINAPI CommonDecoderFrame_GetMetadataQueryReader(IWICBitmapFrameD
     if (!(This->parent->file_info.flags & WICBitmapDecoderCapabilityCanEnumerateMetadata))
         return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 
-    return MetadataQueryReader_CreateInstance(&This->IWICMetadataBlockReader_iface, NULL, ppIMetadataQueryReader);
+    hr = create_instance(&CLSID_WICImagingFactory, &IID_IWICComponentFactory, (void**)&factory);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, &This->IWICMetadataBlockReader_iface, ppIMetadataQueryReader);
+        IWICComponentFactory_Release(factory);
+    }
+
+    if (FAILED(hr))
+        *ppIMetadataQueryReader = NULL;
+
+    return hr;
 }
 
 static HRESULT WINAPI CommonDecoderFrame_GetColorContexts(IWICBitmapFrameDecode *iface,
