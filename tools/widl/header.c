@@ -45,8 +45,6 @@ generic_handle_list_t generic_handle_list = LIST_INIT(generic_handle_list);
 
 static void write_type_v(FILE *f, const decl_spec_t *t, int is_field, int declonly, const char *name, enum name_type name_type);
 
-static void write_winrt_type_comments(FILE *header, const type_t *type);
-
 static void write_apicontract_guard_start(FILE *header, const expr_t *expr);
 static void write_apicontract_guard_end(FILE *header, const expr_t *expr);
 
@@ -1482,20 +1480,6 @@ static char *format_apicontract_macro(const type_t *type)
     return name;
 }
 
-static void write_winrt_type_comments(FILE *header, const type_t *type)
-{
-    expr_t *contract = get_attrp(type->attrs, ATTR_CONTRACT);
-    fprintf(header, " *\n");
-    if (contract)
-    {
-        const type_t *type = contract->u.tref.type;
-        char *name = format_namespace(type->namespace, "", ".", type->name, NULL);
-        int ver = contract->ref->u.lval;
-        fprintf(header, " * Introduced to %s in version %d.%d\n *\n", name, (ver >> 16) & 0xffff, ver & 0xffff);
-        free(name);
-    }
-}
-
 static void write_apicontract_guard_start(FILE *header, const expr_t *expr)
 {
     const type_t *type;
@@ -1528,7 +1512,6 @@ static void write_com_interface_start(FILE *header, const type_t *iface)
   expr_t *contract = get_attrp(iface->attrs, ATTR_CONTRACT);
   fprintf(header, "/*****************************************************************************\n");
   fprintf(header, " * %s %sinterface\n", iface->name, dispinterface ? "disp" : "");
-  if (winrt_mode) write_winrt_type_comments(header, iface);
   fprintf(header, " */\n");
   if (contract) write_apicontract_guard_start(header, contract);
   fprintf(header,"#ifndef __%s_%sINTERFACE_DEFINED__\n", iface->c_name, dispinterface ? "DISP" : "");
@@ -1630,7 +1613,6 @@ static void write_rpc_interface_start(FILE *header, const type_t *iface)
 
   fprintf(header, "/*****************************************************************************\n");
   fprintf(header, " * %s interface (v%d.%d)\n", iface->name, MAJORVERSION(ver), MINORVERSION(ver));
-  if (winrt_mode) write_winrt_type_comments(header, iface);
   fprintf(header, " */\n");
   if (contract) write_apicontract_guard_start(header, contract);
   fprintf(header,"#ifndef __%s_INTERFACE_DEFINED__\n", iface->name);
