@@ -41,7 +41,8 @@ C_SRCS = \
 	ungif.c \
 	unix_iface.c \
 	unix_lib.c \
-	uuid.c
+	uuid.c \
+	wincodecs_common.c
 
 RC_SRCS = version.rc
 
