@@ -5729,6 +5729,12 @@ static void shader_glsl_sync(const struct wined3d_shader_instruction *ins)
         sync_flags &= ~WINED3DSSF_GROUP_SHARED_MEMORY;
     }
 
+    if (sync_flags & WINED3DSSF_GLOBAL_UAV)
+    {
+        shader_addline(buffer, "memoryBarrier();\n");
+        sync_flags &= ~WINED3DSSF_GLOBAL_UAV;
+    }
+
     if (sync_flags)
         FIXME("Unhandled sync flags %#x.\n", sync_flags);
 }

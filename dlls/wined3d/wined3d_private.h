@@ -656,6 +656,7 @@ enum wined3d_shader_sync_flags
 {
     WINED3DSSF_THREAD_GROUP        = 0x1,
     WINED3DSSF_GROUP_SHARED_MEMORY = 0x2,
+    WINED3DSSF_GLOBAL_UAV          = 0x8,
 };
 
 enum wined3d_shader_uav_flags

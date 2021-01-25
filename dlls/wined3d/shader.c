@@ -1910,6 +1910,11 @@ static void shader_dump_global_flags(struct wined3d_string_buffer *buffer, DWORD
 
 static void shader_dump_sync_flags(struct wined3d_string_buffer *buffer, DWORD sync_flags)
 {
+    if (sync_flags & WINED3DSSF_GLOBAL_UAV)
+    {
+        shader_addline(buffer, "_uglobal");
+        sync_flags &= ~WINED3DSSF_GLOBAL_UAV;
+    }
     if (sync_flags & WINED3DSSF_GROUP_SHARED_MEMORY)
     {
         shader_addline(buffer, "_g");
