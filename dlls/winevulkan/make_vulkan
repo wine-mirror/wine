@@ -2936,7 +2936,13 @@ class VkRegistry(object):
             commands = ext.findall("require/command")
             for command in commands:
                 cmd_name = command.attrib["name"]
-                self.funcs[cmd_name].extensions.append(ext_name)
+                # Need to verify that the command is defined, and otherwise skip it.
+                # vkCreateScreenSurfaceQNX is declared in <extensions> but not defined in
+                # <commands>. A command without a definition cannot be enabled, so it's valid for
+                # the XML file to handle this, but because of the manner in which we parse the XML
+                # file we pre-populate from <commands> before we check if a command is enabled.
+                if cmd_name in self.funcs:
+                    self.funcs[cmd_name].extensions.append(ext_name)
 
             # Some extensions are not ready or have numbers reserved as a place holder.
             if ext.attrib["supported"] == "disabled":
