@@ -1853,6 +1853,12 @@ static BOOL enable_vulkan_instance_extensions(uint32_t *extension_count,
         goto done;
     }
 
+    TRACE("Vulkan instance extensions reported:\n");
+    for (i = 0; i < count; ++i)
+    {
+        TRACE("    - %s.\n", debugstr_a(extensions[i].extensionName));
+    }
+
     for (i = 0; i < ARRAY_SIZE(vulkan_instance_extensions); ++i)
     {
         if (vulkan_instance_extensions[i].core_since_version <= vk_info->api_version)
@@ -2205,6 +2211,12 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
     {
         ERR("Failed to enumerate device extensions, vr %s.\n", wined3d_debug_vkresult(vr));
         goto done;
+    }
+
+    TRACE("Vulkan device extensions reported:\n");
+    for (i = 0; i < count; ++i)
+    {
+        TRACE("    - %s.\n", debugstr_a(extensions[i].extensionName));
     }
 
     for (i = 0, enable_count = 0; i < ARRAY_SIZE(info); ++i)
