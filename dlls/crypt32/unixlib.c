@@ -580,26 +580,35 @@ static void load_root_certs(void)
     DWORD i;
 
 #ifdef HAVE_SECURITY_SECURITY_H
+    const SecTrustSettingsDomain domains[] = {
+        kSecTrustSettingsDomainSystem,
+        kSecTrustSettingsDomainAdmin,
+        kSecTrustSettingsDomainUser
+    };
     OSStatus status;
-    CFArrayRef rootCerts;
+    CFArrayRef certs;
+    DWORD domain;
 
-    status = SecTrustCopyAnchorCertificates(&rootCerts);
-    if (status == noErr)
+    for (domain = 0; domain < ARRAY_SIZE(domains); domain++)
     {
-        for (i = 0; i < CFArrayGetCount(rootCerts); i++)
+        status = SecTrustSettingsCopyCertificates(domains[domain], &certs);
+        if (status == noErr)
         {
-            SecCertificateRef cert = (SecCertificateRef)CFArrayGetValueAtIndex(rootCerts, i);
-            CFDataRef certData;
-            if ((status = SecKeychainItemExport(cert, kSecFormatX509Cert, 0, NULL, &certData)) == noErr)
+            for (i = 0; i < CFArrayGetCount(certs); i++)
             {
-                BYTE *data = add_cert( CFDataGetLength(certData) );
-                if (data) memcpy( data, CFDataGetBytePtr(certData), CFDataGetLength(certData) );
-                CFRelease(certData);
+                SecCertificateRef cert = (SecCertificateRef)CFArrayGetValueAtIndex(certs, i);
+                CFDataRef certData;
+                if ((status = SecKeychainItemExport(cert, kSecFormatX509Cert, 0, NULL, &certData)) == noErr)
+                {
+                    BYTE *data = add_cert( CFDataGetLength(certData) );
+                    if (data) memcpy( data, CFDataGetBytePtr(certData), CFDataGetLength(certData) );
+                    CFRelease(certData);
+                }
+                else
+                    WARN("could not export certificate %d to X509 format: 0x%08x\n", i, (unsigned int)status);
             }
-            else
-                WARN("could not export certificate %d to X509 format: 0x%08x\n", i, (unsigned int)status);
+            CFRelease(certs);
         }
-        CFRelease(rootCerts);
     }
 #endif
 
