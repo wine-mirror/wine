@@ -174,7 +174,9 @@ static typelib_t *current_typelib;
 %token GREATEREQUAL LESSEQUAL
 %token LOGICALOR LOGICALAND
 %token ELLIPSIS
-%token tAGGREGATABLE tALLNODES tALLOCATE tANNOTATION
+%token tAGGREGATABLE
+%token tAGILE
+%token tALLNODES tALLOCATE tANNOTATION
 %token tAPICONTRACT
 %token tAPPOBJECT tASYNC tASYNCUUID
 %token tAUTOHANDLE tBINDABLE tBOOLEAN tBROADCAST tBYTE tBYTECOUNT
@@ -216,12 +218,14 @@ static typelib_t *current_typelib;
 %token tLENGTHIS tLIBRARY
 %token tLICENSED tLOCAL
 %token tLONG
+%token tMARSHALINGBEHAVIOR
 %token tMAYBE tMESSAGE
 %token tMETHODS
 %token tMODULE
 %token tNAMESPACE
 %token tNOCODE tNONBROWSABLE
 %token tNONCREATABLE
+%token tNONE
 %token tNONEXTENSIBLE
 %token tNOTIFY tNOTIFYFLAG
 %token tNULL
@@ -247,6 +251,7 @@ static typelib_t *current_typelib;
 %token tSIZEIS tSIZEOF
 %token tSMALL
 %token tSOURCE
+%token tSTANDARD
 %token tSTATIC
 %token tSTDCALL
 %token tSTRICTCONTEXTHANDLE
@@ -299,7 +304,7 @@ static typelib_t *current_typelib;
 %type <type> coclass coclasshdr coclassdef
 %type <type> apicontract
 %type <num> contract_ver
-%type <num> pointer_type threading_type version
+%type <num> pointer_type threading_type marshaling_behavior version
 %type <str> libraryhdr callconv cppquote importlib import t_ident
 %type <uuid> uuid_string
 %type <import> import_start
@@ -505,6 +510,12 @@ str_list: aSTRING                               { $$ = append_str( NULL, $1 ); }
 	| str_list ',' aSTRING                  { $$ = append_str( $1, $3 ); }
 	;
 
+marshaling_behavior:
+	  tAGILE				{ $$ = MARSHALING_AGILE; }
+	| tNONE					{ $$ = MARSHALING_NONE; }
+	| tSTANDARD				{ $$ = MARSHALING_STANDARD; }
+	;
+
 contract_ver:
 	  aNUM					{ $$ = MAKEVERSION(0, $1); }
 	| aNUM '.' aNUM				{ $$ = MAKEVERSION($3, $1); }
@@ -572,6 +583,8 @@ attribute:					{ $$ = NULL; }
 	| tLCID					{ $$ = make_attr(ATTR_PARAMLCID); }
 	| tLICENSED				{ $$ = make_attr(ATTR_LICENSED); }
 	| tLOCAL				{ $$ = make_attr(ATTR_LOCAL); }
+	| tMARSHALINGBEHAVIOR '(' marshaling_behavior ')'
+						{ $$ = make_attrv(ATTR_MARSHALING_BEHAVIOR, $3); }
 	| tMAYBE				{ $$ = make_attr(ATTR_MAYBE); }
 	| tMESSAGE				{ $$ = make_attr(ATTR_MESSAGE); }
 	| tNOCODE				{ $$ = make_attr(ATTR_NOCODE); }
@@ -2230,6 +2243,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_LIBLCID */             { 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, "lcid" },
     /* ATTR_LICENSED */            { 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, "licensed" },
     /* ATTR_LOCAL */               { 1, 0, 0,  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "local" },
+    /* ATTR_MARSHALING_BEHAVIOR */ { 0, 0, 0,  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "marshaling_behavior" },
     /* ATTR_MAYBE */               { 0, 0, 0,  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "maybe" },
     /* ATTR_MESSAGE */             { 0, 0, 0,  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "message" },
     /* ATTR_NOCODE */              { 0, 1, 0,  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "nocode" },
