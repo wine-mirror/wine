@@ -462,6 +462,7 @@ struct strarray get_ld_command(void)
         case PLATFORM_FREEBSD:
             strarray_add( &args, "-m", (force_pointer_size == 8) ? "elf_x86_64_fbsd" : "elf_i386_fbsd", NULL );
             break;
+        case PLATFORM_MINGW:
         case PLATFORM_WINDOWS:
             strarray_add( &args, "-m", (force_pointer_size == 8) ? "i386pep" : "i386pe", NULL );
             break;
@@ -479,7 +480,7 @@ struct strarray get_ld_command(void)
         }
     }
 
-    if (target_cpu == CPU_ARM && target_platform != PLATFORM_WINDOWS)
+    if (target_cpu == CPU_ARM && !is_pe())
         strarray_add( &args, "--no-wchar-size-warning", NULL );
 
     return args;
@@ -931,7 +932,7 @@ const char *get_link_name( const ORDDEF *odp )
     switch (odp->type)
     {
     case TYPE_STDCALL:
-        if (target_platform == PLATFORM_WINDOWS)
+        if (is_pe())
         {
             if (odp->flags & FLAG_THISCALL) return odp->link_name;
             if (odp->flags & FLAG_FASTCALL) ret = strmake( "@%s@%u", odp->link_name, get_args_size( odp ));
@@ -947,7 +948,7 @@ const char *get_link_name( const ORDDEF *odp )
         break;
 
     case TYPE_PASCAL:
-        if (target_platform == PLATFORM_WINDOWS && !kill_at)
+        if (is_pe() && !kill_at)
         {
             int args = get_args_size( odp );
             if (odp->flags & FLAG_REGISTER) args += get_ptr_size();  /* context argument */
@@ -1099,6 +1100,7 @@ const char *asm_name( const char *sym )
 
     switch (target_platform)
     {
+    case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
         if (target_cpu != CPU_x86) return sym;
         if (sym[0] == '@') return sym;  /* fastcall */
@@ -1122,6 +1124,7 @@ const char *func_declaration( const char *func )
     {
     case PLATFORM_APPLE:
         return "";
+    case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
         free( buffer );
         buffer = strmake( ".def %s\n\t.scl 2\n\t.type 32\n\t.endef%s", asm_name(func),
@@ -1153,6 +1156,7 @@ void output_function_size( const char *name )
     switch (target_platform)
     {
     case PLATFORM_APPLE:
+    case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
         break;
     default:
@@ -1182,6 +1186,7 @@ void output_rva( const char *format, ... )
     va_start( valist, format );
     switch (target_platform)
     {
+    case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
         output( "\t.rva " );
         vfprintf( output_file, format, valist );
@@ -1201,6 +1206,7 @@ void output_gnu_stack_note(void)
 {
     switch (target_platform)
     {
+    case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
     case PLATFORM_APPLE:
         break;
@@ -1230,6 +1236,7 @@ const char *asm_globl( const char *func )
     case PLATFORM_APPLE:
         buffer = strmake( "\t.globl _%s\n\t.private_extern _%s\n_%s:", func, func, func );
         break;
+    case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
         buffer = strmake( "\t.globl %s%s\n%s%s:", target_cpu == CPU_x86 ? "_" : "", func,
                           target_cpu == CPU_x86 ? "_" : "", func );
@@ -1268,6 +1275,7 @@ const char *get_asm_export_section(void)
     switch (target_platform)
     {
     case PLATFORM_APPLE:   return ".data";
+    case PLATFORM_MINGW:
     case PLATFORM_WINDOWS: return ".section .edata";
     default:               return ".section .data";
     }
@@ -1287,6 +1295,7 @@ const char *get_asm_rsrc_section(void)
     switch (target_platform)
     {
     case PLATFORM_APPLE:   return ".data";
+    case PLATFORM_MINGW:
     case PLATFORM_WINDOWS: return ".section .rsrc";
     default:               return ".section .data";
     }

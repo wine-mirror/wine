@@ -1742,7 +1742,7 @@ void output_syscalls( DLLSPEC *spec )
             output( "\t.byte 0xc3\n" );           /* ret */
             output( "\tjmp 1f\n" );
             output( "\t.byte 0xc3\n" );           /* ret */
-            if (target_platform == PLATFORM_WINDOWS)
+            if (is_pe())
             {
                 output( "1:\t.byte 0xff,0x14,0x25\n" ); /* 1: callq *(0x7ffe1000) */
                 output( "\t.long 0x7ffe1000\n" );
@@ -1803,7 +1803,7 @@ void output_syscalls( DLLSPEC *spec )
 /* output the import and delayed import tables of a Win32 module */
 void output_imports( DLLSPEC *spec )
 {
-    if (target_platform == PLATFORM_WINDOWS) return;
+    if (is_pe()) return;
     output_immediate_imports();
     output_delayed_imports( spec );
     output_immediate_import_thunks();
@@ -1958,7 +1958,7 @@ static void build_unix_import_lib( DLLSPEC *spec )
 /* output an import library for a Win32 module and additional object files */
 void output_static_lib( DLLSPEC *spec, char **argv )
 {
-    if (target_platform == PLATFORM_WINDOWS)
+    if (is_pe())
     {
         if (spec) build_windows_import_lib( spec );
         if (argv[0] || !spec) build_library( output_file_name, argv, !spec );

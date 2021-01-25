@@ -153,6 +153,7 @@ enum target_platform
     PLATFORM_UNSPECIFIED,
     PLATFORM_APPLE,
     PLATFORM_FREEBSD,
+    PLATFORM_MINGW,
     PLATFORM_SOLARIS,
     PLATFORM_WINDOWS
 };
@@ -160,6 +161,11 @@ enum target_platform
 extern char *target_alias;
 extern enum target_cpu target_cpu;
 extern enum target_platform target_platform;
+
+static inline int is_pe(void)
+{
+    return target_platform == PLATFORM_MINGW || target_platform == PLATFORM_WINDOWS;
+}
 
 struct strarray
 {

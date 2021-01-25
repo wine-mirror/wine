@@ -410,7 +410,7 @@ void output_exports( DLLSPEC *spec )
     int needs_imports = 0;
     int needs_relay = has_relays( spec );
     int nr_exports = get_exports_count( spec );
-    const char *func_ptr = (target_platform == PLATFORM_WINDOWS) ? ".rva" : get_asm_ptr_keyword();
+    const char *func_ptr = is_pe() ? ".rva" : get_asm_ptr_keyword();
     const char *name;
 
     if (!nr_exports) return;
@@ -447,8 +447,7 @@ void output_exports( DLLSPEC *spec )
     for (i = spec->base; i <= spec->limit; i++)
     {
         ORDDEF *odp = spec->ordinals[i];
-        if (!odp) output( "\t%s 0\n",
-                          (target_platform == PLATFORM_WINDOWS) ? ".long" : get_asm_ptr_keyword() );
+        if (!odp) output( "\t%s 0\n", is_pe() ? ".long" : get_asm_ptr_keyword() );
         else switch(odp->type)
         {
         case TYPE_EXTERN:
@@ -513,7 +512,7 @@ void output_exports( DLLSPEC *spec )
     if (needs_relay)
     {
         output( "\t.long 0xdeb90002\n" );  /* magic */
-        if (target_platform == PLATFORM_WINDOWS) output_rva( ".L__wine_spec_relay_descr" );
+        if (is_pe()) output_rva( ".L__wine_spec_relay_descr" );
         else output( "\t.long 0\n" );
     }
 
@@ -542,7 +541,7 @@ void output_exports( DLLSPEC *spec )
 
     if (needs_relay)
     {
-        if (target_platform == PLATFORM_WINDOWS)
+        if (is_pe())
         {
             output( "\t.data\n" );
             output( "\t.align %d\n", get_alignment(get_ptr_size()) );
@@ -563,7 +562,7 @@ void output_exports( DLLSPEC *spec )
 
         output_relay_debug( spec );
     }
-    else if (target_platform != PLATFORM_WINDOWS)
+    else if (!is_pe())
     {
             output( "\t.align %d\n", get_alignment(get_ptr_size()) );
             output( ".L__wine_spec_exports_end:\n" );
@@ -628,6 +627,7 @@ void output_module( DLLSPEC *spec )
 
     switch (target_platform)
     {
+    case PLATFORM_MINGW:
     case PLATFORM_WINDOWS:
         return;  /* nothing to do */
     case PLATFORM_APPLE:
@@ -1010,7 +1010,7 @@ void output_def_file( DLLSPEC *spec, int import_only )
         if (!is_private) total++;
         if (import_only && odp->type == TYPE_STUB) continue;
 
-        if ((odp->flags & FLAG_FASTCALL) && target_platform == PLATFORM_WINDOWS)
+        if ((odp->flags & FLAG_FASTCALL) && is_pe())
             name = strmake( "@%s", name );
 
         output( "  %s", name );

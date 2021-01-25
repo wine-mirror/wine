@@ -71,7 +71,7 @@ enum target_platform target_platform = PLATFORM_FREEBSD;
 #elif defined(__sun)
 enum target_platform target_platform = PLATFORM_SOLARIS;
 #elif defined(_WIN32)
-enum target_platform target_platform = PLATFORM_WINDOWS;
+enum target_platform target_platform = PLATFORM_MINGW;
 #else
 enum target_platform target_platform = PLATFORM_UNSPECIFIED;
 #endif
@@ -129,13 +129,14 @@ static const struct
     enum target_platform platform;
 } platform_names[] =
 {
-    { "macos",   PLATFORM_APPLE },
-    { "darwin",  PLATFORM_APPLE },
-    { "freebsd", PLATFORM_FREEBSD },
-    { "solaris", PLATFORM_SOLARIS },
-    { "mingw32", PLATFORM_WINDOWS },
-    { "windows", PLATFORM_WINDOWS },
-    { "winnt",   PLATFORM_WINDOWS }
+    { "macos",       PLATFORM_APPLE },
+    { "darwin",      PLATFORM_APPLE },
+    { "freebsd",     PLATFORM_FREEBSD },
+    { "solaris",     PLATFORM_SOLARIS },
+    { "mingw32",     PLATFORM_MINGW },
+    { "windows-gnu", PLATFORM_MINGW },
+    { "windows",     PLATFORM_WINDOWS },
+    { "winnt",       PLATFORM_MINGW }
 };
 
 /* set the dll file name from the input file name */
@@ -245,7 +246,7 @@ static void set_target( const char *target )
 
     free( spec );
 
-    if (target_cpu == CPU_ARM && target_platform == PLATFORM_WINDOWS) thumb_mode = 1;
+    if (target_cpu == CPU_ARM && is_pe()) thumb_mode = 1;
 }
 
 /* cleanup on program exit */
@@ -710,7 +711,7 @@ int main(int argc, char **argv)
             else output_fake_module( spec );
             break;
         }
-        if (target_platform != PLATFORM_WINDOWS)
+        if (!is_pe())
         {
             load_import_libs( argv );
             read_undef_symbols( spec, argv );

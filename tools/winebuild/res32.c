@@ -499,7 +499,7 @@ void output_resources( DLLSPEC *spec )
         dump_res_data( res );
     }
 
-    if (target_platform != PLATFORM_WINDOWS)
+    if (!is_pe())
     {
         output( ".L__wine_spec_resources_end:\n" );
         output( "\t.byte 0\n" );
