@@ -99,6 +99,7 @@ struct media_engine
     MF_MEDIA_ENGINE_READY ready_state;
     MF_MEDIA_ENGINE_PRELOAD preload;
     IMFMediaSession *session;
+    IMFClock *clock;
     IMFSourceResolver *resolver;
     BSTR current_source;
     struct video_frame video_frame;
@@ -774,6 +775,8 @@ static void free_media_engine(struct media_engine *engine)
 {
     if (engine->callback)
         IMFMediaEngineNotify_Release(engine->callback);
+    if (engine->clock)
+        IMFClock_Release(engine->clock);
     if (engine->session)
         IMFMediaSession_Release(engine->session);
     if (engine->attributes)
@@ -987,9 +990,22 @@ static BOOL WINAPI media_engine_IsSeeking(IMFMediaEngine *iface)
 
 static double WINAPI media_engine_GetCurrentTime(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    LONGLONG clocktime;
+    double ret = 0.0;
+    MFTIME systime;
 
-    return 0.0;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&engine->cs);
+    if (SUCCEEDED(IMFClock_GetCorrelatedTime(engine->clock, 0, &clocktime, &systime)))
+    {
+        /* Assume 100ns clock. */
+        ret = (double)clocktime / 10000000.0;
+    }
+    LeaveCriticalSection(&engine->cs);
+
+    return ret;
 }
 
 static HRESULT WINAPI media_engine_SetCurrentTime(IMFMediaEngine *iface, double time)
@@ -1642,6 +1658,9 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
         return hr;
 
     if (FAILED(hr = MFCreateMediaSession(NULL, &engine->session)))
+        return hr;
+
+    if (FAILED(hr = IMFMediaSession_GetClock(engine->session, &engine->clock)))
         return hr;
 
     if (FAILED(hr = IMFMediaSession_BeginGetEvent(engine->session, &engine->session_events, NULL)))
