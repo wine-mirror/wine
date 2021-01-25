@@ -123,9 +123,6 @@ static const UINT button_up_data[NB_BUTTONS] =
 
 XContext cursor_context = 0;
 
-static HWND cursor_window;
-static HCURSOR last_cursor;
-static DWORD last_cursor_change;
 static RECT last_clip_rect;
 static HWND last_clip_foreground_window;
 static BOOL last_clip_refused;
@@ -229,24 +226,6 @@ void set_window_cursor( Window window, HCURSOR handle )
     XDefineCursor( gdi_display, window, cursor );
     /* make the change take effect immediately */
     XFlush( gdi_display );
-}
-
-/***********************************************************************
- *              sync_window_cursor
- */
-void sync_window_cursor( Window window )
-{
-    HCURSOR cursor;
-
-    SERVER_START_REQ( set_cursor )
-    {
-        req->flags = 0;
-        wine_server_call( req );
-        cursor = reply->prev_count >= 0 ? wine_server_ptr_handle( reply->prev_handle ) : 0;
-    }
-    SERVER_END_REQ;
-
-    set_window_cursor( window, cursor );
 }
 
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
@@ -377,6 +356,7 @@ static BOOL grab_clipping_window( const RECT *clip )
     UNICODE_STRING class_name = RTL_CONSTANT_STRING( messageW );
     Window clip_window;
     HWND msg_hwnd = 0;
+    HCURSOR cursor;
     POINT pos;
 
     if (NtUserGetWindowThread( NtUserGetDesktopWindow(), NULL ) == GetCurrentThreadId())
@@ -432,6 +412,17 @@ static BOOL grab_clipping_window( const RECT *clip )
                        GrabModeAsync, GrabModeAsync, clip_window, None, CurrentTime ))
         clipping_cursor = TRUE;
 
+    SERVER_START_REQ( set_cursor )
+    {
+        req->flags = 0;
+        wine_server_call( req );
+        if (reply->prev_count < 0) cursor = 0;
+        else cursor = wine_server_ptr_handle( reply->prev_handle );
+    }
+    SERVER_END_REQ;
+
+    set_window_cursor( clip_window, cursor );
+
     if (!clipping_cursor)
     {
         disable_xinput2();
@@ -439,8 +430,6 @@ static BOOL grab_clipping_window( const RECT *clip )
         return FALSE;
     }
     clip_rect = *clip;
-    if (!data->clip_hwnd) sync_window_cursor( clip_window );
-    InterlockedExchangePointer( (void **)&cursor_window, msg_hwnd );
     data->clip_hwnd = msg_hwnd;
     return TRUE;
 #else
@@ -554,7 +543,6 @@ static void map_event_coords( HWND hwnd, Window window, Window event_root, int x
 static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPUT *input )
 {
     struct x11drv_win_data *data;
-    Window win = 0;
 
     input->type = INPUT_MOUSE;
 
@@ -565,25 +553,12 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
 
         if (!clip_hwnd) return;
         if (thread_data->clip_window != window) return;
-        if (InterlockedExchangePointer( (void **)&cursor_window, clip_hwnd ) != clip_hwnd ||
-            input->u.mi.time - last_cursor_change > 100)
-        {
-            sync_window_cursor( window );
-            last_cursor_change = input->u.mi.time;
-        }
         __wine_send_input( hwnd, input, NULL );
         return;
     }
 
     if (!(data = get_win_data( hwnd ))) return;
-    win = data->whole_window;
     release_win_data( data );
-    if (InterlockedExchangePointer( (void **)&cursor_window, hwnd ) != hwnd ||
-        input->u.mi.time - last_cursor_change > 100)
-    {
-        sync_window_cursor( win );
-        last_cursor_change = input->u.mi.time;
-    }
 
     /* update the wine server Z-order */
 
@@ -1404,13 +1379,15 @@ void X11DRV_DestroyCursorIcon( HCURSOR handle )
  */
 void X11DRV_SetCursor( HWND hwnd, HCURSOR handle )
 {
-    if (InterlockedExchangePointer( (void **)&last_cursor, handle ) != handle ||
-        NtGetTickCount() - last_cursor_change > 100)
+    struct x11drv_win_data *data;
+
+    if ((data = get_win_data( hwnd )))
     {
-        last_cursor_change = NtGetTickCount();
-        if (cursor_window) send_notify_message( cursor_window, WM_X11DRV_SET_CURSOR,
-                                                GetCurrentThreadId(), (LPARAM)handle );
+        set_window_cursor( data->whole_window, handle );
+        release_win_data( data );
     }
+
+    if (clipping_cursor) set_window_cursor( x11drv_thread_data()->clip_window, handle );
 }
 
 /***********************************************************************

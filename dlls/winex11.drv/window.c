@@ -1666,8 +1666,6 @@ static void create_whole_window( struct x11drv_win_data *data )
 
     XFlush( data->display );  /* make sure the window exists before we start painting to it */
 
-    sync_window_cursor( data->whole_window );
-
 done:
     if (win_rgn) NtGdiDeleteObjectApp( win_rgn );
 }
@@ -3064,27 +3062,6 @@ LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
             release_win_data( data );
         }
         return 0;
-    case WM_X11DRV_SET_CURSOR:
-    {
-        Window win = 0;
-
-        if ((data = get_win_data( hwnd )))
-        {
-            win = data->whole_window;
-            release_win_data( data );
-        }
-        else if (hwnd == x11drv_thread_data()->clip_hwnd)
-            win = x11drv_thread_data()->clip_window;
-
-        if (win)
-        {
-            if (wp == GetCurrentThreadId())
-                set_window_cursor( win, (HCURSOR)lp );
-            else
-                sync_window_cursor( win );
-        }
-        return 0;
-    }
     case WM_X11DRV_DELETE_TAB:
         taskbar_delete_tab( hwnd );
         return 0;

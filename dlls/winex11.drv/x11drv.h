@@ -586,7 +586,6 @@ enum x11drv_window_messages
     WM_X11DRV_UPDATE_CLIPBOARD = 0x80001000,
     WM_X11DRV_SET_WIN_REGION,
     WM_X11DRV_DESKTOP_RESIZED,
-    WM_X11DRV_SET_CURSOR,
     WM_X11DRV_DELETE_TAB,
     WM_X11DRV_ADD_TAB
 };
@@ -679,7 +678,6 @@ extern XContext cursor_context DECLSPEC_HIDDEN;
 
 extern void X11DRV_SetFocus( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void set_window_cursor( Window window, HCURSOR handle ) DECLSPEC_HIDDEN;
-extern void sync_window_cursor( Window window ) DECLSPEC_HIDDEN;
 extern void retry_grab_clipping_window(void) DECLSPEC_HIDDEN;
 extern void move_resize_window( HWND hwnd, int dir ) DECLSPEC_HIDDEN;
 extern void X11DRV_InitKeyboard( Display *display ) DECLSPEC_HIDDEN;
