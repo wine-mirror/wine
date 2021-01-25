@@ -497,9 +497,7 @@ static struct wined3d_output * wined3d_get_output_from_window(const struct wined
         }
     }
 
-    /* Because wined3d only supports one output right now. A window can be on non-primary outputs
-     * and thus fails to get its correct output. In this case, return the primary output for now */
-    return &wined3d->adapters[0]->outputs[0];
+    return NULL;
 }
 
 static struct wined3d_wndproc *wined3d_find_wndproc(HWND window, struct wined3d *wined3d)

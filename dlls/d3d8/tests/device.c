@@ -10455,9 +10455,8 @@ static void test_multi_adapter(void)
     }
 
     adapter_count = IDirect3D8_GetAdapterCount(d3d);
-    todo_wine_if(expected_adapter_count > 1)
-        ok(adapter_count == expected_adapter_count, "Got unexpected adapter count %u, expected %u.\n",
-                adapter_count, expected_adapter_count);
+    ok(adapter_count == expected_adapter_count, "Got unexpected adapter count %u, expected %u.\n",
+            adapter_count, expected_adapter_count);
 
     for (i = 0; i < adapter_count; ++i)
     {

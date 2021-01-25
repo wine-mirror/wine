@@ -3368,8 +3368,6 @@ struct wined3d_adapter
     GUID device_uuid;
     LUID luid;
 
-    WCHAR device_name[CCHDEVICENAME]; /* for use with e.g. ChangeDisplaySettings() */
-
     void *formats;
     size_t format_size;
 

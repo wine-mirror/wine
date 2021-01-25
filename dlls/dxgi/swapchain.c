@@ -3000,9 +3000,7 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     VkFenceCreateInfo fence_desc;
     uint32_t queue_family_index;
     VkSurfaceKHR vk_surface;
-    IUnknown *device_parent;
     VkInstance vk_instance;
-    IDXGIAdapter *adapter;
     IDXGIOutput *output;
     VkBool32 supported;
     VkDevice vk_device;
@@ -3043,27 +3041,11 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
         return DXGI_ERROR_UNSUPPORTED;
     }
 
-    device_parent = vkd3d_get_device_parent(device);
-    if (FAILED(hr = IUnknown_QueryInterface(device_parent, &IID_IDXGIAdapter, (void **)&adapter)))
-        return hr;
-
     if (FAILED(hr = dxgi_get_output_from_window((IDXGIFactory *)factory, window, &output)))
     {
         WARN("Failed to get output from window %p, hr %#x.\n", window, hr);
-
-        /* FIXME: As wined3d only supports one output currently, even if a window is on a
-         * non-primary output, the swapchain will use the primary output. Keep this behaviour
-         * until all outputs are correctly enumerated. Otherwise it will create a regression
-         * for applications that specify a device window on a non-primary output */
-        if (FAILED(hr = IDXGIAdapter_EnumOutputs(adapter, 0, &output)))
-        {
-            IDXGIAdapter_Release(adapter);
-            return hr;
-        }
-
-        FIXME("Using the primary output for the device window that is on a non-primary output.\n");
+        return hr;
     }
-    IDXGIAdapter_Release(adapter);
 
     hr = wined3d_swapchain_desc_from_dxgi(&wined3d_desc, output, window, swapchain_desc,
             fullscreen_desc);
