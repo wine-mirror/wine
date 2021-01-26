@@ -161,22 +161,6 @@ gboolean activate_mode_wrapper(GstPad *pad, GstObject *parent, GstPadMode mode, 
     return cbdata.u.activate_mode_data.ret;
 }
 
-GstFlowReturn request_buffer_src_wrapper(GstPad *pad, GstObject *parent, guint64 ofs, guint len,
-        GstBuffer **buf)
-{
-    struct cb_data cbdata = { REQUEST_BUFFER_SRC };
-
-    cbdata.u.getrange_data.pad = pad;
-    cbdata.u.getrange_data.parent = parent;
-    cbdata.u.getrange_data.ofs = ofs;
-    cbdata.u.getrange_data.len = len;
-    cbdata.u.getrange_data.buf = buf;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.getrange_data.ret;
-}
-
 gboolean query_sink_wrapper(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct cb_data cbdata = { QUERY_SINK };

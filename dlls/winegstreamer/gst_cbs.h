@@ -32,7 +32,6 @@ typedef enum {
 enum CB_TYPE {
     EXISTING_NEW_PAD,
     ACTIVATE_MODE,
-    REQUEST_BUFFER_SRC,
     QUERY_SINK,
     GSTDEMUX_MAX,
     BYTESTREAM_WRAPPER_PULL,
@@ -116,7 +115,6 @@ void perform_cb_media_source(struct cb_data *data) DECLSPEC_HIDDEN;
 
 void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
 gboolean activate_mode_wrapper(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate) DECLSPEC_HIDDEN;
-GstFlowReturn request_buffer_src_wrapper(GstPad *pad, GstObject *parent, guint64 ofs, guint len, GstBuffer **buf) DECLSPEC_HIDDEN;
 GstFlowReturn got_data_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf) DECLSPEC_HIDDEN;
 void Gstreamer_transform_pad_added_wrapper(GstElement *filter, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
 gboolean query_sink_wrapper(GstPad *pad, GstObject *parent, GstQuery *query) DECLSPEC_HIDDEN;
