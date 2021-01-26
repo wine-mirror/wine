@@ -147,19 +147,6 @@ void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
     call_cb(&cbdata);
 }
 
-gboolean query_function_wrapper(GstPad *pad, GstObject *parent, GstQuery *query)
-{
-    struct cb_data cbdata = { QUERY_FUNCTION };
-
-    cbdata.u.query_function_data.pad = pad;
-    cbdata.u.query_function_data.parent = parent;
-    cbdata.u.query_function_data.query = query;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.query_function_data.ret;
-}
-
 gboolean activate_mode_wrapper(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate)
 {
     struct cb_data cbdata = { ACTIVATE_MODE };
