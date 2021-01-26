@@ -946,9 +946,42 @@ static void load_libwine(void)
 
 
 /***********************************************************************
+ *           fill_builtin_image_info
+ */
+static void fill_builtin_image_info( void *module, pe_image_info_t *info )
+{
+    const IMAGE_DOS_HEADER *dos = (const IMAGE_DOS_HEADER *)module;
+    const IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)((const BYTE *)dos + dos->e_lfanew);
+
+    info->base            = nt->OptionalHeader.ImageBase;
+    info->entry_point     = info->base + nt->OptionalHeader.AddressOfEntryPoint;
+    info->map_size        = nt->OptionalHeader.SizeOfImage;
+    info->stack_size      = nt->OptionalHeader.SizeOfStackReserve;
+    info->stack_commit    = nt->OptionalHeader.SizeOfStackCommit;
+    info->zerobits        = 0;
+    info->subsystem       = nt->OptionalHeader.Subsystem;
+    info->subsystem_minor = nt->OptionalHeader.MinorSubsystemVersion;
+    info->subsystem_major = nt->OptionalHeader.MajorSubsystemVersion;
+    info->osversion_major = nt->OptionalHeader.MajorOperatingSystemVersion;
+    info->osversion_minor = nt->OptionalHeader.MinorOperatingSystemVersion;
+    info->image_charact   = nt->FileHeader.Characteristics;
+    info->dll_charact     = nt->OptionalHeader.DllCharacteristics;
+    info->machine         = nt->FileHeader.Machine;
+    info->contains_code   = TRUE;
+    info->image_flags     = IMAGE_FLAGS_WineBuiltin;
+    info->loader_flags    = 0;
+    info->header_size     = nt->OptionalHeader.SizeOfHeaders;
+    info->file_size       = nt->OptionalHeader.SizeOfImage;
+    info->checksum        = nt->OptionalHeader.CheckSum;
+    info->cpu             = client_cpu;
+    info->__pad           = 0;
+}
+
+
+/***********************************************************************
  *           dlopen_dll
  */
-static NTSTATUS dlopen_dll( const char *so_name, void **ret_module )
+static NTSTATUS dlopen_dll( const char *so_name, void **ret_module, pe_image_info_t *image_info )
 {
     struct builtin_module *builtin;
     void *module, *handle;
@@ -988,6 +1021,8 @@ static NTSTATUS dlopen_dll( const char *so_name, void **ret_module )
         return STATUS_INVALID_IMAGE_FORMAT;
     }
 
+    fill_builtin_image_info( module, image_info );
+
     if (add_builtin_module( module, handle, NULL ))
     {
         dlclose( handle );
@@ -998,6 +1033,7 @@ static NTSTATUS dlopen_dll( const char *so_name, void **ret_module )
     return STATUS_SUCCESS;
 
 already_loaded:
+    fill_builtin_image_info( builtin->module, image_info );
     *ret_module = builtin->module;
     dlclose( handle );
     return STATUS_SUCCESS;
@@ -1060,6 +1096,7 @@ done:
 static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
 {
     static const WCHAR soW[] = {'.','s','o',0};
+    pe_image_info_t info;
     char *unix_name;
     NTSTATUS status;
     DWORD len;
@@ -1070,7 +1107,7 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
     len = nt_name->Length / sizeof(WCHAR);
     if (len > 3 && !wcsicmp( nt_name->Buffer + len - 3, soW )) nt_name->Length -= 3 * sizeof(WCHAR);
 
-    status = dlopen_dll( unix_name, module );
+    status = dlopen_dll( unix_name, module, &info );
     free( unix_name );
     return status;
 }
@@ -1223,10 +1260,11 @@ static NTSTATUS open_builtin_file( char *name, HANDLE *mapping, void **module,
     {
         if (check_library_arch( fd ))
         {
-            if (!dlopen_dll( name, module ))
+            pe_image_info_t info;
+
+            if (!dlopen_dll( name, module, &info ))
             {
-                memset( image_info, 0, sizeof(*image_info) );
-                image_info->u.ImageFlags = IMAGE_FLAGS_WineBuiltin;
+                virtual_fill_image_information( &info, image_info );
                 status = STATUS_SUCCESS;
             }
             else
