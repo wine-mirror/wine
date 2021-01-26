@@ -1765,7 +1765,7 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
     gst_bin_add(GST_BIN(filter->container), element);
 
     g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), filter);
-    g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), filter);
+    g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad), filter);
     g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_blacklist), filter);
     g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), filter);
 
@@ -2447,12 +2447,6 @@ void perform_cb_gstdemux(struct cb_data *cbdata)
                     data->ofs, data->len, data->buf);
             break;
         }
-    case REMOVED_DECODED_PAD:
-        {
-            struct pad_removed_data *data = &cbdata->u.pad_removed_data;
-            removed_decoded_pad(data->element, data->pad, data->user);
-            break;
-        }
     case QUERY_SINK:
         {
             struct query_sink_data *data = &cbdata->u.query_sink_data;
@@ -2617,7 +2611,7 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
     gst_bin_add(GST_BIN(filter->container), element);
 
     g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), filter);
-    g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), filter);
+    g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad), filter);
     g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), filter);
 
     filter->their_sink = gst_element_get_static_pad(element, "sink");
