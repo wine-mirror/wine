@@ -5053,12 +5053,6 @@ VkResult WINAPI wine_vkCreateGraphicsPipelines(VkDevice device, VkPipelineCache 
 #endif
 }
 
-static VkResult WINAPI wine_vkCreateHeadlessSurfaceEXT(VkInstance instance, const VkHeadlessSurfaceCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface)
-{
-    TRACE("%p, %p, %p, %p\n", instance, pCreateInfo, pAllocator, pSurface);
-    return instance->funcs.p_vkCreateHeadlessSurfaceEXT(instance->instance, pCreateInfo, NULL, pSurface);
-}
-
 VkResult WINAPI wine_vkCreateImage(VkDevice device, const VkImageCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkImage *pImage)
 {
     TRACE("%p, %p, %p, %p\n", device, pCreateInfo, pAllocator, pImage);
@@ -6993,7 +6987,6 @@ static const struct vulkan_func vk_instance_dispatch_table[] =
     {"vkCreateDebugReportCallbackEXT", &wine_vkCreateDebugReportCallbackEXT},
     {"vkCreateDebugUtilsMessengerEXT", &wine_vkCreateDebugUtilsMessengerEXT},
     {"vkCreateDevice", &wine_vkCreateDevice},
-    {"vkCreateHeadlessSurfaceEXT", &wine_vkCreateHeadlessSurfaceEXT},
     {"vkCreateWin32SurfaceKHR", &wine_vkCreateWin32SurfaceKHR},
     {"vkDebugReportMessageEXT", &wine_vkDebugReportMessageEXT},
     {"vkDestroyDebugReportCallbackEXT", &wine_vkDestroyDebugReportCallbackEXT},
@@ -7253,7 +7246,6 @@ static const char * const vk_instance_extensions[] =
 {
     "VK_EXT_debug_report",
     "VK_EXT_debug_utils",
-    "VK_EXT_headless_surface",
     "VK_EXT_swapchain_colorspace",
     "VK_EXT_validation_features",
     "VK_EXT_validation_flags",

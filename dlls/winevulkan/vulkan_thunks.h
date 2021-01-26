@@ -1936,7 +1936,6 @@ struct vulkan_instance_funcs
     VkResult (*p_vkCreateDebugReportCallbackEXT)(VkInstance, const VkDebugReportCallbackCreateInfoEXT *, const VkAllocationCallbacks *, VkDebugReportCallbackEXT *);
     VkResult (*p_vkCreateDebugUtilsMessengerEXT)(VkInstance, const VkDebugUtilsMessengerCreateInfoEXT *, const VkAllocationCallbacks *, VkDebugUtilsMessengerEXT *);
     VkResult (*p_vkCreateDevice)(VkPhysicalDevice, const VkDeviceCreateInfo *, const VkAllocationCallbacks *, VkDevice *);
-    VkResult (*p_vkCreateHeadlessSurfaceEXT)(VkInstance, const VkHeadlessSurfaceCreateInfoEXT *, const VkAllocationCallbacks *, VkSurfaceKHR *);
     VkResult (*p_vkCreateWin32SurfaceKHR)(VkInstance, const VkWin32SurfaceCreateInfoKHR *, const VkAllocationCallbacks *, VkSurfaceKHR *);
     void (*p_vkDebugReportMessageEXT)(VkInstance, VkDebugReportFlagsEXT, VkDebugReportObjectTypeEXT, uint64_t, size_t, int32_t, const char *, const char *);
     void (*p_vkDestroyDebugReportCallbackEXT)(VkInstance, VkDebugReportCallbackEXT, const VkAllocationCallbacks *);
@@ -2357,7 +2356,6 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCreateDebugReportCallbackEXT) \
     USE_VK_FUNC(vkCreateDebugUtilsMessengerEXT) \
     USE_VK_FUNC(vkCreateDevice) \
-    USE_VK_FUNC(vkCreateHeadlessSurfaceEXT) \
     USE_VK_FUNC(vkCreateWin32SurfaceKHR) \
     USE_VK_FUNC(vkDebugReportMessageEXT) \
     USE_VK_FUNC(vkDestroyDebugReportCallbackEXT) \
