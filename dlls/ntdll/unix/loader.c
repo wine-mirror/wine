@@ -1028,7 +1028,7 @@ static NTSTATUS dlopen_dll( const char *so_name, void **ret_module, pe_image_inf
         dlclose( handle );
         return STATUS_NO_MEMORY;
     }
-    virtual_create_builtin_view( module );
+    virtual_create_builtin_view( module, image_info );
     *ret_module = module;
     return STATUS_SUCCESS;
 

@@ -1903,6 +1903,7 @@ struct map_view_request
     client_ptr_t base;
     mem_size_t   size;
     file_pos_t   start;
+    /* VARARG(image,pe_image_info); */
 };
 struct map_view_reply
 {
@@ -6190,7 +6191,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 653
+#define SERVER_PROTOCOL_VERSION 654
 
 /* ### protocol_version end ### */
 

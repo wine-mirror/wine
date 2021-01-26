@@ -316,6 +316,21 @@ static struct memory_view *find_mapped_view( struct process *process, client_ptr
     return NULL;
 }
 
+/* add a view to the process list */
+static void add_process_view( struct process *process, struct memory_view *view )
+{
+    if (view->flags & SEC_IMAGE)
+    {
+        if (!is_process_init_done( process ) && !(view->image.image_charact & IMAGE_FILE_DLL))
+        {
+            /* main exe */
+            list_add_head( &process->views, &view->entry );
+            return;
+        }
+    }
+    list_add_tail( &process->views, &view->entry );
+}
+
 static void free_memory_view( struct memory_view *view )
 {
     if (view->fd) release_object( view->fd );
@@ -1097,6 +1112,19 @@ DECL_HANDLER(map_view)
         return;
     }
 
+    if (!req->mapping)  /* image mapping for a .so dll */
+    {
+        if (!(view = mem_alloc( sizeof(*view) ))) return;
+        memset( view, 0, sizeof(*view) );
+        view->base  = req->base;
+        view->size  = req->size;
+        view->start = req->start;
+        view->flags = SEC_IMAGE;
+        memcpy( &view->image, get_req_data(), min( sizeof(view->image), get_req_data_size() ));
+        add_process_view( current->process, view );
+        return;
+    }
+
     if (!(mapping = get_mapping_obj( current->process, req->mapping, req->access ))) return;
 
     if (mapping->flags & SEC_IMAGE)
@@ -1129,7 +1157,7 @@ DECL_HANDLER(map_view)
             view->image = mapping->image;
             if (view->base != mapping->image.base) set_error( STATUS_IMAGE_NOT_AT_BASE );
         }
-        list_add_tail( &current->process->views, &view->entry );
+        add_process_view( current->process, view );
     }
 
 done:

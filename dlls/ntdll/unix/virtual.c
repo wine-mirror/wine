@@ -2483,20 +2483,18 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
 /***********************************************************************
  *           virtual_create_builtin_view
  */
-NTSTATUS virtual_create_builtin_view( void *module )
+NTSTATUS virtual_create_builtin_view( void *module, pe_image_info_t *info )
 {
     NTSTATUS status;
     sigset_t sigset;
     IMAGE_DOS_HEADER *dos = module;
     IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)((char *)dos + dos->e_lfanew);
-    SIZE_T size = nt->OptionalHeader.SizeOfImage;
+    SIZE_T size = info->map_size;
     IMAGE_SECTION_HEADER *sec;
     struct file_view *view;
-    void *base;
+    void *base = wine_server_get_ptr( info->base );
     int i;
 
-    size = ROUND_SIZE( module, size );
-    base = ROUND_ADDR( module, page_mask );
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     status = create_view( &view, base, size, SEC_IMAGE | SEC_FILE | VPROT_SYSTEM |
                           VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY | VPROT_EXEC );
@@ -2517,10 +2515,25 @@ NTSTATUS virtual_create_builtin_view( void *module )
             if (sec[i].Characteristics & IMAGE_SCN_MEM_WRITE) flags |= VPROT_WRITE;
             set_page_vprot( (char *)base + sec[i].VirtualAddress, sec[i].Misc.VirtualSize, flags );
         }
-        VIRTUAL_DEBUG_DUMP_VIEW( view );
-        if (is_beyond_limit( base, size, working_set_limit )) working_set_limit = address_space_limit;
+
+        SERVER_START_REQ( map_view )
+        {
+            req->base = wine_server_client_ptr( view->base );
+            req->size = size;
+            wine_server_add_data( req, info, sizeof(*info) );
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+
+        if (status >= 0)
+        {
+            VIRTUAL_DEBUG_DUMP_VIEW( view );
+            if (is_beyond_limit( base, size, working_set_limit )) working_set_limit = address_space_limit;
+        }
+        else delete_view( view );
     }
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+
     return status;
 }
 
@@ -4065,22 +4078,14 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     if ((view = find_view( addr, 0 )) && !is_view_valloc( view ))
     {
-        if (!(view->protect & VPROT_SYSTEM))
+        SERVER_START_REQ( unmap_view )
         {
-            SERVER_START_REQ( unmap_view )
-            {
-                req->base = wine_server_client_ptr( view->base );
-                status = wine_server_call( req );
-            }
-            SERVER_END_REQ;
-            if (!status) delete_view( view );
-            else FIXME( "failed to unmap %p %x\n", view->base, status );
+            req->base = wine_server_client_ptr( view->base );
+            status = wine_server_call( req );
         }
-        else
-        {
-            delete_view( view );
-            status = STATUS_SUCCESS;
-        }
+        SERVER_END_REQ;
+        if (!status) delete_view( view );
+        else FIXME( "failed to unmap %p %x\n", view->base, status );
     }
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
     return status;

@@ -2107,6 +2107,7 @@ static void dump_map_view_request( const struct map_view_request *req )
     dump_uint64( ", base=", &req->base );
     dump_uint64( ", size=", &req->size );
     dump_uint64( ", start=", &req->start );
+    dump_varargs_pe_image_info( ", image=", cur_size );
 }
 
 static void dump_unmap_view_request( const struct unmap_view_request *req )
