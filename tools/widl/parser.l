@@ -385,6 +385,7 @@ static const struct keyword attr_keywords[] =
 	{"marshaling_behavior",         tMARSHALINGBEHAVIOR,        1},
 	{"maybe",                       tMAYBE,                     0},
 	{"message",                     tMESSAGE,                   0},
+	{"mta" ,                        tMTA,                       0},
 	{"neutral",                     tNEUTRAL,                   0},
 	{"nocode",                      tNOCODE,                    0},
 	{"nonbrowsable",                tNONBROWSABLE,              0},
