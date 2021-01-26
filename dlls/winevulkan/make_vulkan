@@ -132,7 +132,7 @@ CORE_EXTENSIONS = [
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
-DRIVER_VERSION = 9
+DRIVER_VERSION = 10
 
 # Table of functions for which we have a special implementation.
 # These are regular device / instance functions for which we need
@@ -183,14 +183,14 @@ FUNCTION_OVERRIDES = {
 
     # VK_KHR_get_surface_capabilities2
     "vkGetPhysicalDeviceSurfaceCapabilities2KHR" : {"dispatch" : True, "driver" : True, "thunk" : False, "private_thunk" : True},
-    "vkGetPhysicalDeviceSurfaceFormats2KHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkGetPhysicalDeviceSurfaceFormats2KHR" : {"dispatch" : True, "driver" : True, "thunk" : False, "private_thunk" : True},
 
     # VK_KHR_win32_surface
     "vkCreateWin32SurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : False},
     "vkGetPhysicalDeviceWin32PresentationSupportKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
 
     # VK_KHR_swapchain
-    "vkCreateSwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
+    "vkCreateSwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : False, "private_thunk" : True},
     "vkDestroySwapchainKHR" : {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkGetSwapchainImagesKHR": {"dispatch" : True, "driver" : True, "thunk" : True},
     "vkQueuePresentKHR": {"dispatch" : True, "driver" : True, "thunk" : True},
@@ -957,7 +957,7 @@ class VkHandle(object):
         if self.name == "VkDebugReportCallbackEXT":
             return "wine_debug_report_callback_from_handle({0})->debug_callback".format(name)
         if self.name == "VkSurfaceKHR":
-            return "wine_surface_from_handle({0})->base.surface".format(name)
+            return "wine_surface_from_handle({0})->surface".format(name)
 
         native_handle_name = None
 
@@ -979,11 +979,16 @@ class VkHandle(object):
             LOGGER.error("Unhandled native handle for: {0}".format(self.name))
         return None
 
+    def driver_handle(self, name):
+        """ Provide access to the handle that should be passed to the wine driver """
+
+        if self.name == "VkSurfaceKHR":
+            return "wine_surface_from_handle({0})->driver_surface".format(name)
+
+        return self.native_handle(name)
+
     def is_wrapped(self):
         return self.native_handle("test") is not None
-
-    def is_unwrapped_by_driver(self):
-        return self.name == "VkSurfaceKHR"
 
 class VkMember(object):
     def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
@@ -1606,13 +1611,10 @@ class VkParam(object):
             else:
                 return "&{0}_host".format(self.name)
         else:
-            # We need to pass the native handle to the native Vulkan calls unless
-            # the wine driver unwraps the handle for us.
-            if self.is_handle() and not self.handle.is_unwrapped_by_driver():
-                native_handle = self.handle.native_handle(self.name)
-            else:
-                native_handle = None
-            return native_handle if native_handle else self.name
+            # We need to pass the native handle to the native Vulkan calls and
+            # the wine driver's handle to calls which are wrapped by the driver.
+            driver_handle = self.handle.driver_handle(self.name) if self.is_handle() else None
+            return driver_handle if driver_handle else self.name
 
 
 class VkStruct(Sequence):
@@ -2560,6 +2562,10 @@ class VkGenerator(object):
             # stuff in there. For simplicity substitute with "void *".
             pfn = pfn.replace("PFN_vkVoidFunction", "void *")
             f.write("    {0};\n".format(pfn))
+
+        f.write("\n")
+        f.write("    /* winevulkan specific functions */\n")
+        f.write("    VkSurfaceKHR (*p_wine_get_native_surface)(VkSurfaceKHR);\n")
         f.write("};\n\n")
 
         f.write("extern const struct vulkan_funcs * CDECL __wine_get_vulkan_driver(HDC hdc, UINT version);\n\n")
@@ -2592,32 +2598,6 @@ class VkGenerator(object):
         f.write("\n")
         f.write("    name -= 2;\n\n")
         f.write("    return get_vulkan_driver_device_proc_addr(vulkan_funcs, name);\n}\n\n")
-
-        f.write("struct wine_surface_base\n")
-        f.write("{\n")
-        f.write("    VkSurfaceKHR surface; /* native surface */\n")
-        f.write("    void *driver_data;\n")
-        f.write("};\n\n")
-
-        f.write("static inline void vulkan_driver_init_surface(\n")
-        f.write("        VkSurfaceKHR surface, VkSurfaceKHR native_surface, void *data)\n")
-        f.write("{\n")
-        f.write("    struct wine_surface_base *object = (void *)(uintptr_t)surface;\n")
-        f.write("    object->surface = native_surface;\n")
-        f.write("    object->driver_data = data;\n")
-        f.write("};\n\n")
-
-        f.write("static inline VkSurfaceKHR vulkan_driver_get_native_surface(VkSurfaceKHR surface)\n")
-        f.write("{\n")
-        f.write("    struct wine_surface_base *object = (void *)(uintptr_t)surface;\n")
-        f.write("    return object->surface;\n")
-        f.write("};\n\n")
-
-        f.write("static inline void *vulkan_driver_get_surface_data(VkSurfaceKHR surface)\n")
-        f.write("{\n")
-        f.write("    struct wine_surface_base *object = (void *)(uintptr_t)surface;\n")
-        f.write("    return object->driver_data;\n")
-        f.write("};\n\n")
 
         f.write("#endif /* __WINE_VULKAN_DRIVER_H */\n")
 

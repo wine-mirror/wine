@@ -1770,6 +1770,19 @@ void WINAPI wine_vkGetPrivateDataEXT(VkDevice device, VkObjectType object_type, 
     device->funcs.p_vkGetPrivateDataEXT(device->device, object_type, object_handle, private_data_slot, data);
 }
 
+VkResult WINAPI wine_vkCreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR *create_info,
+        const VkAllocationCallbacks *allocator, VkSwapchainKHR *swapchain)
+{
+    VkSwapchainCreateInfoKHR native_info;
+
+    TRACE("%p, %p, %p, %p\n", device, create_info, allocator, swapchain);
+
+    native_info = *create_info;
+    native_info.surface = wine_surface_from_handle(create_info->surface)->driver_surface;
+
+    return thunk_vkCreateSwapchainKHR(device, &native_info, allocator, swapchain);
+}
+
 VkResult WINAPI wine_vkCreateWin32SurfaceKHR(VkInstance instance,
         const VkWin32SurfaceCreateInfoKHR *createInfo, const VkAllocationCallbacks *allocator, VkSurfaceKHR *surface)
 {
@@ -1786,18 +1799,19 @@ VkResult WINAPI wine_vkCreateWin32SurfaceKHR(VkInstance instance,
     if (!object)
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
-    *surface = wine_surface_to_handle(object);
-
-    res = instance->funcs.p_vkCreateWin32SurfaceKHR(instance->instance, createInfo, NULL, surface);
+    res = instance->funcs.p_vkCreateWin32SurfaceKHR(instance->instance, createInfo, NULL, &object->driver_surface);
 
     if (res != VK_SUCCESS)
     {
         heap_free(object);
-        *surface = VK_NULL_HANDLE;
         return res;
     }
 
-    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, object->base.surface);
+    object->surface = vk_funcs->p_wine_get_native_surface(object->driver_surface);
+
+    WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, object->surface);
+
+    *surface = wine_surface_to_handle(object);
 
     return VK_SUCCESS;
 }
@@ -1811,10 +1825,23 @@ void WINAPI wine_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, 
     if (!object)
         return;
 
-    instance->funcs.p_vkDestroySurfaceKHR(instance->instance, surface, NULL);
+    instance->funcs.p_vkDestroySurfaceKHR(instance->instance, object->driver_surface, NULL);
 
     WINE_VK_REMOVE_HANDLE_MAPPING(instance, object);
     heap_free(object);
+}
+
+VkResult WINAPI wine_vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice phys_dev,
+        const VkPhysicalDeviceSurfaceInfo2KHR *surface_info, uint32_t *formats_count, VkSurfaceFormat2KHR *formats)
+{
+    VkPhysicalDeviceSurfaceInfo2KHR native_info;
+
+    TRACE("%p, %p, %p, %p\n", phys_dev, surface_info, formats_count, formats);
+
+    native_info = *surface_info;
+    native_info.surface = wine_surface_from_handle(surface_info->surface)->driver_surface;
+
+    return thunk_vkGetPhysicalDeviceSurfaceFormats2KHR(phys_dev, &native_info, formats_count, formats);
 }
 
 static inline void adjust_max_image_count(VkPhysicalDevice phys_dev, VkSurfaceCapabilitiesKHR* capabilities)
@@ -1850,11 +1877,15 @@ VkResult WINAPI wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice 
 VkResult WINAPI wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice phys_dev,
         const VkPhysicalDeviceSurfaceInfo2KHR *surface_info, VkSurfaceCapabilities2KHR *capabilities)
 {
+    VkPhysicalDeviceSurfaceInfo2KHR native_info;
     VkResult res;
 
     TRACE("%p, %p, %p\n", phys_dev, surface_info, capabilities);
 
-    res = thunk_vkGetPhysicalDeviceSurfaceCapabilities2KHR(phys_dev, surface_info, capabilities);
+    native_info = *surface_info;
+    native_info.surface = wine_surface_from_handle(surface_info->surface)->driver_surface;
+
+    res = thunk_vkGetPhysicalDeviceSurfaceCapabilities2KHR(phys_dev, &native_info, capabilities);
 
     if (res == VK_SUCCESS)
         adjust_max_image_count(phys_dev, &capabilities->surfaceCapabilities);

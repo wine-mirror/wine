@@ -215,7 +215,8 @@ static inline VkDebugReportCallbackEXT wine_debug_report_callback_to_handle(
 
 struct wine_surface
 {
-    struct wine_surface_base base;
+    VkSurfaceKHR surface; /* native surface */
+    VkSurfaceKHR driver_surface; /* wine driver surface */
 
     struct wine_vk_mapping mapping;
 };
