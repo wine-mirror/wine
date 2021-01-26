@@ -35,7 +35,6 @@ enum CB_TYPE {
     ACTIVATE_MODE,
     REQUEST_BUFFER_SRC,
     EVENT_SRC,
-    EVENT_SINK,
     REMOVED_DECODED_PAD,
     QUERY_SINK,
     GSTDEMUX_MAX,
@@ -95,12 +94,6 @@ struct cb_data {
             GstEvent *event;
             gboolean ret;
         } event_src_data;
-        struct event_sink_data {
-            GstPad *pad;
-            GstObject *parent;
-            GstEvent *event;
-            gboolean ret;
-        } event_sink_data;
         struct pad_removed_data {
             GstElement *element;
             GstPad *pad;
@@ -129,7 +122,6 @@ gboolean query_function_wrapper(GstPad *pad, GstObject *parent, GstQuery *query)
 gboolean activate_mode_wrapper(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate) DECLSPEC_HIDDEN;
 GstFlowReturn request_buffer_src_wrapper(GstPad *pad, GstObject *parent, guint64 ofs, guint len, GstBuffer **buf) DECLSPEC_HIDDEN;
 gboolean event_src_wrapper(GstPad *pad, GstObject *parent, GstEvent *event) DECLSPEC_HIDDEN;
-gboolean event_sink_wrapper(GstPad *pad, GstObject *parent, GstEvent *event) DECLSPEC_HIDDEN;
 GstFlowReturn got_data_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf) DECLSPEC_HIDDEN;
 void removed_decoded_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
 void Gstreamer_transform_pad_added_wrapper(GstElement *filter, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;

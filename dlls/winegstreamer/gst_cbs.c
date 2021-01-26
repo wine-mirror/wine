@@ -203,19 +203,6 @@ gboolean event_src_wrapper(GstPad *pad, GstObject *parent, GstEvent *event)
     return cbdata.u.event_src_data.ret;
 }
 
-gboolean event_sink_wrapper(GstPad *pad, GstObject *parent, GstEvent *event)
-{
-    struct cb_data cbdata = { EVENT_SINK };
-
-    cbdata.u.event_sink_data.pad = pad;
-    cbdata.u.event_sink_data.parent = parent;
-    cbdata.u.event_sink_data.event = event;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.event_sink_data.ret;
-}
-
 void removed_decoded_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
 {
     struct cb_data cbdata = { REMOVED_DECODED_PAD };
