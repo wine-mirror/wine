@@ -1518,7 +1518,7 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
     gst_pad_set_getrange_function(This->my_src, request_buffer_src_wrapper);
     gst_pad_set_query_function(This->my_src, query_function_wrapper);
     gst_pad_set_activatemode_function(This->my_src, activate_mode_wrapper);
-    gst_pad_set_event_function(This->my_src, event_src_wrapper);
+    gst_pad_set_event_function(This->my_src, event_src);
     gst_pad_set_element_private (This->my_src, This);
 
     This->start = This->nextofs = This->nextpullofs = This->stop = 0;
@@ -2451,12 +2451,6 @@ void perform_cb_gstdemux(struct cb_data *cbdata)
             struct getrange_data *data = &cbdata->u.getrange_data;
             cbdata->u.getrange_data.ret = request_buffer_src(data->pad, data->parent,
                     data->ofs, data->len, data->buf);
-            break;
-        }
-    case EVENT_SRC:
-        {
-            struct event_src_data *data = &cbdata->u.event_src_data;
-            cbdata->u.event_src_data.ret = event_src(data->pad, data->parent, data->event);
             break;
         }
     case REMOVED_DECODED_PAD:

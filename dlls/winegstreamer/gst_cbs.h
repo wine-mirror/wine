@@ -34,7 +34,6 @@ enum CB_TYPE {
     QUERY_FUNCTION,
     ACTIVATE_MODE,
     REQUEST_BUFFER_SRC,
-    EVENT_SRC,
     REMOVED_DECODED_PAD,
     QUERY_SINK,
     GSTDEMUX_MAX,
@@ -121,7 +120,6 @@ void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user) DECLS
 gboolean query_function_wrapper(GstPad *pad, GstObject *parent, GstQuery *query) DECLSPEC_HIDDEN;
 gboolean activate_mode_wrapper(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate) DECLSPEC_HIDDEN;
 GstFlowReturn request_buffer_src_wrapper(GstPad *pad, GstObject *parent, guint64 ofs, guint len, GstBuffer **buf) DECLSPEC_HIDDEN;
-gboolean event_src_wrapper(GstPad *pad, GstObject *parent, GstEvent *event) DECLSPEC_HIDDEN;
 GstFlowReturn got_data_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf) DECLSPEC_HIDDEN;
 void removed_decoded_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
 void Gstreamer_transform_pad_added_wrapper(GstElement *filter, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;

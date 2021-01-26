@@ -190,19 +190,6 @@ GstFlowReturn request_buffer_src_wrapper(GstPad *pad, GstObject *parent, guint64
     return cbdata.u.getrange_data.ret;
 }
 
-gboolean event_src_wrapper(GstPad *pad, GstObject *parent, GstEvent *event)
-{
-    struct cb_data cbdata = { EVENT_SRC };
-
-    cbdata.u.event_src_data.pad = pad;
-    cbdata.u.event_src_data.parent = parent;
-    cbdata.u.event_src_data.event = event;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.event_src_data.ret;
-}
-
 void removed_decoded_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
 {
     struct cb_data cbdata = { REMOVED_DECODED_PAD };
