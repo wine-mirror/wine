@@ -29,6 +29,127 @@ static const struct wined3d_parent_ops d3d_null_wined3d_parent_ops =
     d3d_null_wined3d_object_destroyed,
 };
 
+/* ID3DDeviceContextState methods */
+
+static inline struct d3d_device_context_state *impl_from_ID3DDeviceContextState(ID3DDeviceContextState *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d_device_context_state, ID3DDeviceContextState_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d_device_context_state_QueryInterface(ID3DDeviceContextState *iface,
+        REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID3DDeviceContextState)
+            || IsEqualGUID(iid, &IID_ID3D11DeviceChild)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID3DDeviceContextState_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d3d_device_context_state_AddRef(ID3DDeviceContextState *iface)
+{
+    struct d3d_device_context_state *state = impl_from_ID3DDeviceContextState(iface);
+    ULONG refcount = InterlockedIncrement(&state->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", state, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d3d_device_context_state_Release(ID3DDeviceContextState *iface)
+{
+    struct d3d_device_context_state *state = impl_from_ID3DDeviceContextState(iface);
+    ULONG refcount = InterlockedDecrement(&state->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", state, refcount);
+
+    if (!refcount)
+    {
+        wined3d_private_store_cleanup(&state->private_store);
+        ID3D11Device2_Release(state->device);
+        heap_free(state);
+    }
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d3d_device_context_state_GetDevice(ID3DDeviceContextState *iface, ID3D11Device **device)
+{
+    struct d3d_device_context_state *state = impl_from_ID3DDeviceContextState(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = (ID3D11Device *)state->device;
+    ID3D11Device_AddRef(*device);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d_device_context_state_GetPrivateData(ID3DDeviceContextState *iface, REFGUID guid,
+        UINT *data_size, void *data)
+{
+    struct d3d_device_context_state *state = impl_from_ID3DDeviceContextState(iface);
+
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_get_private_data(&state->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d_device_context_state_SetPrivateData(ID3DDeviceContextState *iface, REFGUID guid,
+        UINT data_size, const void *data)
+{
+    struct d3d_device_context_state *state = impl_from_ID3DDeviceContextState(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_set_private_data(&state->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d_device_context_state_SetPrivateDataInterface(ID3DDeviceContextState *iface,
+        REFGUID guid, const IUnknown *data)
+{
+    struct d3d_device_context_state *state = impl_from_ID3DDeviceContextState(iface);
+
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    return d3d_set_private_data_interface(&state->private_store, guid, data);
+}
+
+static const struct ID3DDeviceContextStateVtbl d3d_device_context_state_vtbl =
+{
+    /* IUnknown methods */
+    d3d_device_context_state_QueryInterface,
+    d3d_device_context_state_AddRef,
+    d3d_device_context_state_Release,
+    /* ID3D11DeviceChild methods */
+    d3d_device_context_state_GetDevice,
+    d3d_device_context_state_GetPrivateData,
+    d3d_device_context_state_SetPrivateData,
+    d3d_device_context_state_SetPrivateDataInterface,
+    /* ID3DDeviceContextState methods */
+};
+
+static void d3d_device_context_state_init(struct d3d_device_context_state *state, struct d3d_device *device,
+        REFIID emulated_interface)
+{
+    state->ID3DDeviceContextState_iface.lpVtbl = &d3d_device_context_state_vtbl;
+    state->refcount = 1;
+
+    wined3d_private_store_init(&state->private_store);
+
+    state->emulated_interface = *emulated_interface;
+    state->device = &device->ID3D11Device2_iface;
+    ID3D11Device2_AddRef(state->device);
+}
+
 /* ID3D11DeviceContext - immediate context methods */
 
 static inline struct d3d11_immediate_context *impl_from_ID3D11DeviceContext1(ID3D11DeviceContext1 *iface)
@@ -3738,11 +3859,28 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeviceContextState(ID3D11Dev
         const D3D_FEATURE_LEVEL *feature_levels, UINT feature_levels_count, UINT sdk_version,
         REFIID emulated_interface, D3D_FEATURE_LEVEL *chosen_feature_level, ID3DDeviceContextState **state)
 {
+    struct d3d_device *device = impl_from_ID3D11Device2(iface);
+    struct d3d_device_context_state *state_impl;
+
     FIXME("iface %p, flags %#x, feature_levels %p, feature_level_count %u, sdk_version %u, "
-            "emulated_interface %s, chosen_feature_level %p, state %p stub!\n", iface, flags, feature_levels,
+            "emulated_interface %s, chosen_feature_level %p, state %p semi-stub!\n", iface, flags, feature_levels,
             feature_levels_count, sdk_version, debugstr_guid(emulated_interface), chosen_feature_level, state);
 
-    return E_NOTIMPL;
+    if (chosen_feature_level)
+       FIXME("Device context state feature level not implemented yet.\n");
+
+    if (state)
+    {
+        *state = NULL;
+        if (!(state_impl = heap_alloc(sizeof(*state_impl))))
+            return E_OUTOFMEMORY;
+        d3d_device_context_state_init(state_impl, device, emulated_interface);
+        *state = &state_impl->ID3DDeviceContextState_iface;
+    }
+
+    device->d3d11_only = FALSE;
+    if (chosen_feature_level) *chosen_feature_level = ID3D11Device2_GetFeatureLevel(iface);
+    return state ? S_OK : S_FALSE;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_OpenSharedResource1(ID3D11Device2 *iface, HANDLE handle,

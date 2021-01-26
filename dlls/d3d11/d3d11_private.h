@@ -516,6 +516,18 @@ struct d3d_query *unsafe_impl_from_ID3D11Query(ID3D11Query *iface) DECLSPEC_HIDD
 struct d3d_query *unsafe_impl_from_ID3D10Query(ID3D10Query *iface) DECLSPEC_HIDDEN;
 struct d3d_query *unsafe_impl_from_ID3D11Asynchronous(ID3D11Asynchronous *iface) DECLSPEC_HIDDEN;
 
+/* ID3DDeviceContextState */
+struct d3d_device_context_state
+{
+    ID3DDeviceContextState ID3DDeviceContextState_iface;
+    LONG refcount;
+
+    struct wined3d_private_store private_store;
+
+    GUID emulated_interface;
+    ID3D11Device2 *device;
+};
+
 /* ID3D11DeviceContext - immediate context */
 struct d3d11_immediate_context
 {
