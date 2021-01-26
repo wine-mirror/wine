@@ -808,7 +808,6 @@ typedef struct
     int          inherit_all;    /* inherit all handles from parent */
     unsigned int create_flags;   /* creation flags */
     int          socket_fd;      /* file descriptor for process socket */
-    obj_handle_t exe_file;       /* file handle for main exe */
     unsigned int access;         /* access rights for process object */
     client_cpu_t cpu;            /* CPU that the new process will use */
     data_size_t  info_size;      /* size of startup info */

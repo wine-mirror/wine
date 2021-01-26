@@ -794,7 +794,6 @@ struct new_process_request
     int          inherit_all;
     unsigned int create_flags;
     int          socket_fd;
-    obj_handle_t exe_file;
     unsigned int access;
     client_cpu_t cpu;
     data_size_t  info_size;
@@ -803,7 +802,6 @@ struct new_process_request
     /* VARARG(handles,uints,handles_size); */
     /* VARARG(info,startup_info,info_size); */
     /* VARARG(env,unicode_str); */
-    char __pad_52[4];
 };
 struct new_process_reply
 {
@@ -6191,7 +6189,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 654
+#define SERVER_PROTOCOL_VERSION 655
 
 /* ### protocol_version end ### */
 
