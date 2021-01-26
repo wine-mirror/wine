@@ -6683,10 +6683,9 @@ static void test_device_context_state(void)
     ok(tmp_sampler == sampler, "Got sampler %p, expected %p.\n", tmp_sampler, sampler);
     ID3D11SamplerState_Release(tmp_sampler);
 
-    feature_level = min(feature_level, D3D_FEATURE_LEVEL_10_1);
+    feature_level = min(feature_level, D3D_FEATURE_LEVEL_11_1);
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1, D3D11_SDK_VERSION,
-            &IID_ID3D10Device, NULL, &context_state);
-todo_wine
+            &IID_ID3D11Device1, NULL, &context_state);
     ok(SUCCEEDED(hr), "Failed to create device context state, hr %#x.\n", hr);
     if (FAILED(hr))
     {
@@ -6694,6 +6693,24 @@ todo_wine
         ID3D11Device1_Release(device);
         return;
     }
+    refcount = get_refcount(context_state);
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+
+    context_type = ID3D11DeviceContext1_GetType(context);
+    ok(context_type == D3D11_DEVICE_CONTEXT_IMMEDIATE, "Unexpected context type %u.\n", context_type);
+
+    check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
+    check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
+    check_interface(device, &IID_ID3D11Device, TRUE, FALSE);
+    check_interface(device, &IID_ID3D11Device1, TRUE, FALSE);
+
+    refcount = ID3DDeviceContextState_Release(context_state);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+
+    feature_level = min(feature_level, D3D_FEATURE_LEVEL_10_1);
+    hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1, D3D11_SDK_VERSION,
+            &IID_ID3D10Device, NULL, &context_state);
+    ok(SUCCEEDED(hr), "Failed to create device context state, hr %#x.\n", hr);
     refcount = get_refcount(context_state);
     ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
@@ -6743,73 +6760,90 @@ todo_wine
     ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, &previous_context_state);
     refcount = ID3DDeviceContextState_Release(context_state);
     ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    todo_wine ok(previous_context_state != NULL, "Failed to get previous context state\n");
+
+    context_type = ID3D11DeviceContext1_GetType(context);
+    ok(context_type == D3D11_DEVICE_CONTEXT_IMMEDIATE, "Unexpected context type %u.\n", context_type);
 
     ID3D11DeviceContext1_PSSetSamplers(context, 0, 1, &sampler);
     tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
     ID3D11DeviceContext1_PSGetSamplers(context, 0, 1, &tmp_sampler);
-    ok(tmp_sampler == (ID3D11SamplerState *)0xdeadbeef, "Got unexpected sampler %p.\n", tmp_sampler);
+    todo_wine ok(tmp_sampler == (ID3D11SamplerState *)0xdeadbeef, "Got unexpected sampler %p.\n", tmp_sampler);
+    if (tmp_sampler && tmp_sampler != (ID3D11SamplerState *)0xdeadbeef)
+        ID3D11SamplerState_Release(tmp_sampler);
     if (!enable_debug_layer)
         ID3D11DeviceContext1_PSSetSamplers(context, 0, 1, &tmp_sampler);
 
     ID3D11DeviceContext1_CSSetSamplers(context, 0, 1, &sampler);
     tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
     ID3D11DeviceContext1_CSGetSamplers(context, 0, 1, &tmp_sampler);
-    ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
+    todo_wine ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
+    if (tmp_sampler) ID3D11SamplerState_Release(tmp_sampler);
 
     ID3D11DeviceContext1_DSSetSamplers(context, 0, 1, &sampler);
     tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
     ID3D11DeviceContext1_DSGetSamplers(context, 0, 1, &tmp_sampler);
-    ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
+    todo_wine ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
+    if (tmp_sampler) ID3D11SamplerState_Release(tmp_sampler);
 
     ID3D11DeviceContext1_GSSetSamplers(context, 0, 1, &sampler);
     tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
     ID3D11DeviceContext1_GSGetSamplers(context, 0, 1, &tmp_sampler);
-    ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
+    todo_wine ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
+    if (tmp_sampler) ID3D11SamplerState_Release(tmp_sampler);
 
     ID3D11DeviceContext1_HSSetSamplers(context, 0, 1, &sampler);
     tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
     ID3D11DeviceContext1_HSGetSamplers(context, 0, 1, &tmp_sampler);
-    ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
+    todo_wine ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
+    if (tmp_sampler) ID3D11SamplerState_Release(tmp_sampler);
 
     ID3D11DeviceContext1_VSSetSamplers(context, 0, 1, &sampler);
     tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
     ID3D11DeviceContext1_VSGetSamplers(context, 0, 1, &tmp_sampler);
-    ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
-
-    context_type = ID3D11DeviceContext1_GetType(context);
-    ok(context_type == D3D11_DEVICE_CONTEXT_IMMEDIATE, "Unexpected context type %u.\n", context_type);
+    todo_wine ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
+    if (tmp_sampler) ID3D11SamplerState_Release(tmp_sampler);
 
     tmp_cb = (ID3D11Buffer *)0xdeadbeef;
     ID3D11DeviceContext1_CSGetConstantBuffers(context, 0, 1, &tmp_cb);
-    ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
+    todo_wine ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
+    if (tmp_cb) ID3D11Buffer_Release(tmp_cb);
 
     tmp_cb = (ID3D11Buffer *)0xdeadbeef;
     ID3D11DeviceContext1_PSGetConstantBuffers(context, 0, 1, &tmp_cb);
-    ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
+    todo_wine ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
+    if (tmp_cb) ID3D11Buffer_Release(tmp_cb);
 
     tmp_cb = (ID3D11Buffer *)0xdeadbeef;
     ID3D11DeviceContext1_VSGetConstantBuffers(context, 0, 1, &tmp_cb);
-    ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
+    todo_wine ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
+    if (tmp_cb) ID3D11Buffer_Release(tmp_cb);
 
     tmp_cb = (ID3D11Buffer *)0xdeadbeef;
     ID3D11DeviceContext1_DSGetConstantBuffers(context, 0, 1, &tmp_cb);
-    ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
+    todo_wine ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
+    if (tmp_cb) ID3D11Buffer_Release(tmp_cb);
 
     tmp_cb = (ID3D11Buffer *)0xdeadbeef;
     ID3D11DeviceContext1_GSGetConstantBuffers(context, 0, 1, &tmp_cb);
-    ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
+    todo_wine ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
+    if (tmp_cb) ID3D11Buffer_Release(tmp_cb);
 
     tmp_cb = (ID3D11Buffer *)0xdeadbeef;
     ID3D11DeviceContext1_HSGetConstantBuffers(context, 0, 1, &tmp_cb);
-    ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
+    todo_wine ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
+    if (tmp_cb) ID3D11Buffer_Release(tmp_cb);
 
     check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
     check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
 
+    context_state = NULL;
     ID3D11DeviceContext1_SwapDeviceContextState(context, previous_context_state, &context_state);
-    refcount = ID3DDeviceContextState_Release(context_state);
+    if (!context_state) refcount = 0;
+    else refcount = ID3DDeviceContextState_Release(context_state);
     ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
-    refcount = ID3DDeviceContextState_Release(previous_context_state);
+    if (!previous_context_state) refcount = 0;
+    else refcount = ID3DDeviceContextState_Release(previous_context_state);
     ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
 
     /* ID3DDeviceContextState retains the previous state. */
