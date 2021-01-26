@@ -6613,6 +6613,49 @@ static void test_device_context_state(void)
         0x0000000e, 0x0300005f, 0x001010f2, 0x00000000, 0x03000065, 0x001020f2, 0x00000000, 0x05000036,
         0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
     };
+#if 0
+    struct gs_out
+    {
+        float4 pos : SV_POSITION;
+    };
+
+    [maxvertexcount(4)]
+    void main(point float4 vin[1] : POSITION, inout TriangleStream<gs_out> vout)
+    {
+        float offset = 0.1 * vin[0].w;
+        gs_out v;
+
+        v.pos = float4(vin[0].x - offset, vin[0].y - offset, vin[0].z, vin[0].w);
+        vout.Append(v);
+        v.pos = float4(vin[0].x - offset, vin[0].y + offset, vin[0].z, vin[0].w);
+        vout.Append(v);
+        v.pos = float4(vin[0].x + offset, vin[0].y - offset, vin[0].z, vin[0].w);
+        vout.Append(v);
+        v.pos = float4(vin[0].x + offset, vin[0].y + offset, vin[0].z, vin[0].w);
+        vout.Append(v);
+    }
+#endif
+    static const DWORD simple_gs[] =
+    {
+        0x43425844, 0x000ee786, 0xc624c269, 0x885a5cbe, 0x444b3b1f, 0x00000001, 0x0000023c, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x000001a0, 0x00020040,
+        0x00000068, 0x0400005f, 0x002010f2, 0x00000001, 0x00000000, 0x02000068, 0x00000001, 0x0100085d,
+        0x0100285c, 0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x0200005e, 0x00000004, 0x0f000032,
+        0x00100032, 0x00000000, 0x80201ff6, 0x00000041, 0x00000000, 0x00000000, 0x00004002, 0x3dcccccd,
+        0x3dcccccd, 0x00000000, 0x00000000, 0x00201046, 0x00000000, 0x00000000, 0x05000036, 0x00102032,
+        0x00000000, 0x00100046, 0x00000000, 0x06000036, 0x001020c2, 0x00000000, 0x00201ea6, 0x00000000,
+        0x00000000, 0x01000013, 0x05000036, 0x00102012, 0x00000000, 0x0010000a, 0x00000000, 0x0e000032,
+        0x00100052, 0x00000000, 0x00201ff6, 0x00000000, 0x00000000, 0x00004002, 0x3dcccccd, 0x00000000,
+        0x3dcccccd, 0x00000000, 0x00201106, 0x00000000, 0x00000000, 0x05000036, 0x00102022, 0x00000000,
+        0x0010002a, 0x00000000, 0x06000036, 0x001020c2, 0x00000000, 0x00201ea6, 0x00000000, 0x00000000,
+        0x01000013, 0x05000036, 0x00102012, 0x00000000, 0x0010000a, 0x00000000, 0x05000036, 0x00102022,
+        0x00000000, 0x0010001a, 0x00000000, 0x06000036, 0x001020c2, 0x00000000, 0x00201ea6, 0x00000000,
+        0x00000000, 0x01000013, 0x05000036, 0x00102032, 0x00000000, 0x00100086, 0x00000000, 0x06000036,
+        0x001020c2, 0x00000000, 0x00201ea6, 0x00000000, 0x00000000, 0x01000013, 0x0100003e,
+    };
 
     ID3DDeviceContextState *context_state, *previous_context_state;
     ID3D11SamplerState *sampler, *tmp_sampler;
@@ -6622,6 +6665,7 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1 *context = NULL;
     D3D11_SAMPLER_DESC sampler_desc;
     D3D_FEATURE_LEVEL feature_level;
+    ID3D11GeometryShader *tmp_gs, *gs;
     ID3D11VertexShader *tmp_vs, *vs;
     ID3D11Device *d3d11_device;
     ID3D11Device1 *device;
@@ -6685,12 +6729,6 @@ static void test_device_context_state(void)
     ok(tmp_sampler == sampler, "Got sampler %p, expected %p.\n", tmp_sampler, sampler);
     ID3D11SamplerState_Release(tmp_sampler);
 
-    ID3D11DeviceContext1_GSSetSamplers(context, 0, 1, &sampler);
-    tmp_sampler = NULL;
-    ID3D11DeviceContext1_GSGetSamplers(context, 0, 1, &tmp_sampler);
-    ok(tmp_sampler == sampler, "Got sampler %p, expected %p.\n", tmp_sampler, sampler);
-    ID3D11SamplerState_Release(tmp_sampler);
-
     ID3D11DeviceContext1_HSSetSamplers(context, 0, 1, &sampler);
     tmp_sampler = NULL;
     ID3D11DeviceContext1_HSGetSamplers(context, 0, 1, &tmp_sampler);
@@ -6739,12 +6777,6 @@ static void test_device_context_state(void)
     ok(tmp_cb == cb, "Got buffer %p, expected %p.\n", tmp_cb, cb);
     ID3D11Buffer_Release(tmp_cb);
 
-    ID3D11DeviceContext1_GSSetConstantBuffers(context, 0, 1, &cb);
-    tmp_cb = NULL;
-    ID3D11DeviceContext1_GSGetConstantBuffers(context, 0, 1, &tmp_cb);
-    ok(tmp_cb == cb, "Got buffer %p, expected %p.\n", tmp_cb, cb);
-    ID3D11Buffer_Release(tmp_cb);
-
     ID3D11DeviceContext1_HSSetConstantBuffers(context, 0, 1, &cb);
     tmp_cb = NULL;
     ID3D11DeviceContext1_HSGetConstantBuffers(context, 0, 1, &tmp_cb);
@@ -6753,6 +6785,9 @@ static void test_device_context_state(void)
 
     hr = ID3D11Device1_CreateVertexShader(device, simple_vs, sizeof(simple_vs), NULL, &vs);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+
+    hr = ID3D11Device1_CreateGeometryShader(device, simple_gs, sizeof(simple_gs), NULL, &gs);
+    ok(SUCCEEDED(hr), "Failed to create geometry shader, hr %#x.\n", hr);
 
     srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
@@ -6766,6 +6801,11 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_VSSetSamplers(context, 0, 1, &sampler);
     ID3D11DeviceContext1_VSSetShader(context, vs, NULL, 0);
     ID3D11DeviceContext1_VSSetShaderResources(context, 0, 1, &srv);
+
+    ID3D11DeviceContext1_GSSetConstantBuffers(context, 0, 1, &cb);
+    ID3D11DeviceContext1_GSSetSamplers(context, 0, 1, &sampler);
+    ID3D11DeviceContext1_GSSetShader(context, gs, NULL, 0);
+    ID3D11DeviceContext1_GSSetShaderResources(context, 0, 1, &srv);
 
     previous_context_state = NULL;
     ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, &previous_context_state);
@@ -6787,6 +6827,19 @@ static void test_device_context_state(void)
     ok(!tmp_vs, "Got unexpected shader %p.\n", tmp_vs);
     tmp_srv = (ID3D11ShaderResourceView *)0xdeadbeef;
     ID3D11DeviceContext1_VSGetShaderResources(context, 0, 1, &tmp_srv);
+    ok(!tmp_srv, "Got unexpected srv %p.\n", tmp_srv);
+
+    tmp_cb = (ID3D11Buffer *)0xdeadbeef;
+    ID3D11DeviceContext1_GSGetConstantBuffers(context, 0, 1, &tmp_cb);
+    ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
+    tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
+    ID3D11DeviceContext1_GSGetSamplers(context, 0, 1, &tmp_sampler);
+    ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
+    tmp_gs = (ID3D11GeometryShader *)0xdeadbeef;
+    ID3D11DeviceContext1_GSGetShader(context, &tmp_gs, NULL, NULL);
+    ok(!tmp_gs, "Got unexpected shader %p.\n", tmp_gs);
+    tmp_srv = (ID3D11ShaderResourceView *)0xdeadbeef;
+    ID3D11DeviceContext1_GSGetShaderResources(context, 0, 1, &tmp_srv);
     ok(!tmp_srv, "Got unexpected srv %p.\n", tmp_srv);
 
     ID3D11DeviceContext1_SwapDeviceContextState(context, previous_context_state, &context_state);
@@ -6832,6 +6885,14 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_HSGetConstantBuffers(context, 0, 1, &tmp_cb);
     ok(tmp_cb == cb, "Got buffer %p, expected %p.\n", tmp_cb, cb);
     ID3D11Buffer_Release(tmp_cb);
+    tmp_gs = (ID3D11GeometryShader *)0xdeadbeef;
+    ID3D11DeviceContext1_GSGetShader(context, &tmp_gs, NULL, NULL);
+    ok(tmp_gs == gs, "Got shader %p, expected %p.\n", tmp_gs, gs);
+    ID3D11GeometryShader_Release(tmp_gs);
+    tmp_srv = (ID3D11ShaderResourceView *)0xdeadbeef;
+    ID3D11DeviceContext1_GSGetShaderResources(context, 0, 1, &tmp_srv);
+    ok(tmp_srv == srv, "Got srv %p, expected %p.\n", tmp_srv, srv);
+    ID3D11ShaderResourceView_Release(tmp_srv);
 
     tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
     ID3D11DeviceContext1_DSGetSamplers(context, 0, 1, &tmp_sampler);
@@ -6900,12 +6961,6 @@ static void test_device_context_state(void)
     todo_wine ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
     if (tmp_sampler) ID3D11SamplerState_Release(tmp_sampler);
 
-    ID3D11DeviceContext1_GSSetSamplers(context, 0, 1, &sampler);
-    tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
-    ID3D11DeviceContext1_GSGetSamplers(context, 0, 1, &tmp_sampler);
-    todo_wine ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
-    if (tmp_sampler) ID3D11SamplerState_Release(tmp_sampler);
-
     ID3D11DeviceContext1_HSSetSamplers(context, 0, 1, &sampler);
     tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
     ID3D11DeviceContext1_HSGetSamplers(context, 0, 1, &tmp_sampler);
@@ -6934,6 +6989,28 @@ static void test_device_context_state(void)
     todo_wine ok(!tmp_srv, "Got unexpected srv %p.\n", tmp_srv);
     if (tmp_srv && tmp_srv != (ID3D11ShaderResourceView *)0xdeadbeef) ID3D11ShaderResourceView_Release(tmp_srv);
 
+    ID3D11DeviceContext1_GSSetConstantBuffers(context, 0, 1, &cb);
+    ID3D11DeviceContext1_GSSetSamplers(context, 0, 1, &sampler);
+    ID3D11DeviceContext1_GSSetShader(context, gs, NULL, 0);
+    ID3D11DeviceContext1_GSSetShaderResources(context, 0, 1, &srv);
+
+    tmp_cb = (ID3D11Buffer *)0xdeadbeef;
+    ID3D11DeviceContext1_GSGetConstantBuffers(context, 0, 1, &tmp_cb);
+    todo_wine ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
+    if (tmp_cb && tmp_cb != (ID3D11Buffer *)0xdeadbeef) ID3D11Buffer_Release(tmp_cb);
+    tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
+    ID3D11DeviceContext1_GSGetSamplers(context, 0, 1, &tmp_sampler);
+    todo_wine ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
+    if (tmp_sampler && tmp_sampler != (ID3D11SamplerState *)0xdeadbeef) ID3D11SamplerState_Release(tmp_sampler);
+    tmp_gs = (ID3D11GeometryShader *)0xdeadbeef;
+    ID3D11DeviceContext1_GSGetShader(context, &tmp_gs, NULL, NULL);
+    todo_wine ok(!tmp_gs, "Got unexpected shader %p.\n", tmp_gs);
+    if (tmp_gs && tmp_gs != (ID3D11GeometryShader *)0xdeadbeef) ID3D11GeometryShader_Release(tmp_gs);
+    tmp_srv = (ID3D11ShaderResourceView *)0xdeadbeef;
+    ID3D11DeviceContext1_GSGetShaderResources(context, 0, 1, &tmp_srv);
+    todo_wine ok(!tmp_srv, "Got unexpected srv %p.\n", tmp_srv);
+    if (tmp_srv && tmp_srv != (ID3D11ShaderResourceView *)0xdeadbeef) ID3D11ShaderResourceView_Release(tmp_srv);
+
     tmp_cb = (ID3D11Buffer *)0xdeadbeef;
     ID3D11DeviceContext1_CSGetConstantBuffers(context, 0, 1, &tmp_cb);
     todo_wine ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
@@ -6946,11 +7023,6 @@ static void test_device_context_state(void)
 
     tmp_cb = (ID3D11Buffer *)0xdeadbeef;
     ID3D11DeviceContext1_DSGetConstantBuffers(context, 0, 1, &tmp_cb);
-    todo_wine ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
-    if (tmp_cb) ID3D11Buffer_Release(tmp_cb);
-
-    tmp_cb = (ID3D11Buffer *)0xdeadbeef;
-    ID3D11DeviceContext1_GSGetConstantBuffers(context, 0, 1, &tmp_cb);
     todo_wine ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
     if (tmp_cb) ID3D11Buffer_Release(tmp_cb);
 
@@ -7003,9 +7075,27 @@ static void test_device_context_state(void)
     ok(tmp_srv == srv, "Got srv %p, expected %p.\n", tmp_srv, srv);
     ID3D11ShaderResourceView_Release(tmp_srv);
 
+    tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
+    ID3D11DeviceContext1_GSGetSamplers(context, 0, 1, &tmp_sampler);
+    ok(tmp_sampler == sampler, "Got sampler %p, expected %p.\n", tmp_sampler, sampler);
+    ID3D11SamplerState_Release(tmp_sampler);
+    tmp_cb = (ID3D11Buffer *)0xdeadbeef;
+    ID3D11DeviceContext1_GSGetConstantBuffers(context, 0, 1, &tmp_cb);
+    ok(tmp_cb == cb, "Got buffer %p, expected %p.\n", tmp_cb, cb);
+    ID3D11Buffer_Release(tmp_cb);
+    tmp_gs = (ID3D11GeometryShader *)0xdeadbeef;
+    ID3D11DeviceContext1_GSGetShader(context, &tmp_gs, NULL, NULL);
+    ok(tmp_gs == gs, "Got shader %p, expected %p.\n", tmp_gs, gs);
+    ID3D11GeometryShader_Release(tmp_gs);
+    tmp_srv = (ID3D11ShaderResourceView *)0xdeadbeef;
+    ID3D11DeviceContext1_GSGetShaderResources(context, 0, 1, &tmp_srv);
+    ok(tmp_srv == srv, "Got srv %p, expected %p.\n", tmp_srv, srv);
+    ID3D11ShaderResourceView_Release(tmp_srv);
+
     check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
     check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
 
+    ID3D11GeometryShader_Release(gs);
     ID3D11VertexShader_Release(vs);
     ID3D11Buffer_Release(cb);
     ID3D11ShaderResourceView_Release(srv);
