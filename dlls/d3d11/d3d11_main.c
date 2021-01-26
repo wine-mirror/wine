@@ -137,6 +137,7 @@ HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapte
         return E_FAIL;
     }
     d3d_device->d3d11_only = TRUE;
+    d3d_device->emulated_interface = IID_ID3D11Device2;
 
     return S_OK;
 }

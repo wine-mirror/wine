@@ -551,6 +551,7 @@ struct d3d_device
 
     D3D_FEATURE_LEVEL feature_level;
     BOOL d3d11_only;
+    GUID emulated_interface;
 
     struct d3d11_immediate_context immediate_context;
 

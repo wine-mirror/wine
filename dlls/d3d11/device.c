@@ -29,6 +29,12 @@ static const struct wined3d_parent_ops d3d_null_wined3d_parent_ops =
     d3d_null_wined3d_object_destroyed,
 };
 
+static inline BOOL d3d_device_is_d3d10_active(struct d3d_device *device)
+{
+    return IsEqualGUID(&device->emulated_interface, &IID_ID3D10Device)
+                || IsEqualGUID(&device->emulated_interface, &IID_ID3D10Device1);
+}
+
 /* ID3DDeviceContextState methods */
 
 static inline struct d3d_device_context_state *impl_from_ID3DDeviceContextState(ID3DDeviceContextState *iface)
@@ -2672,7 +2678,29 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetConstantBuffers1(ID3D
 static void STDMETHODCALLTYPE d3d11_immediate_context_SwapDeviceContextState(ID3D11DeviceContext1 *iface,
         ID3DDeviceContextState *state, ID3DDeviceContextState **prev_state)
 {
-    FIXME("iface %p, state %p, prev_state %p stub!\n", iface, state, prev_state);
+    struct d3d_device_context_state *state_impl;
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+
+    FIXME("iface %p, state %p, prev_state %p semi-stub!\n", iface, state, prev_state);
+
+    wined3d_mutex_lock();
+    if (prev_state)
+    {
+        *prev_state = NULL;
+        if ((state_impl = heap_alloc(sizeof(*state_impl))))
+        {
+            d3d_device_context_state_init(state_impl, device, &device->emulated_interface);
+            *prev_state = &state_impl->ID3DDeviceContextState_iface;
+        }
+    }
+
+    if ((state_impl = impl_from_ID3DDeviceContextState(state)))
+    {
+        device->emulated_interface = state_impl->emulated_interface;
+        if (d3d_device_is_d3d10_active(device))
+            FIXME("D3D10 interface emulation not fully implemented yet!\n");
+    }
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_ClearView(ID3D11DeviceContext1 *iface, ID3D11View *view,
@@ -6373,6 +6401,7 @@ void d3d_device_init(struct d3d_device *device, void *outer_unknown)
     /* COM aggregation always takes place */
     device->outer_unk = outer_unknown;
     device->d3d11_only = FALSE;
+    device->emulated_interface = GUID_NULL;
 
     d3d11_immediate_context_init(&device->immediate_context, device);
     ID3D11DeviceContext1_Release(&device->immediate_context.ID3D11DeviceContext1_iface);
