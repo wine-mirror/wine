@@ -622,7 +622,7 @@ static gboolean gst_base_src_perform_seek(struct parser *This, GstEvent *event)
 
     if (seek_format != GST_FORMAT_BYTES)
     {
-        FIXME("Unhandled format \"%s\".\n", gst_format_get_name(seek_format));
+        GST_FIXME("Unhandled format \"%s\".", gst_format_get_name(seek_format));
         return FALSE;
     }
 
@@ -657,7 +657,7 @@ static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
     struct parser *This = gst_pad_get_element_private(pad);
     gboolean ret = TRUE;
 
-    TRACE("filter %p, type \"%s\".\n", This, GST_EVENT_TYPE_NAME(event));
+    GST_LOG("filter %p, type \"%s\".", This, GST_EVENT_TYPE_NAME(event));
 
     switch (event->type)
     {
@@ -672,7 +672,7 @@ static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
             break;
 
         default:
-            WARN("Ignoring \"%s\" event.\n", GST_EVENT_TYPE_NAME(event));
+            GST_WARNING("Ignoring \"%s\" event.", GST_EVENT_TYPE_NAME(event));
             ret = FALSE;
             break;
     }
