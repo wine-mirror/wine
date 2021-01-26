@@ -705,7 +705,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
     struct parser_source *pin = gst_pad_get_element_private(pad);
     struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
 
-    TRACE("pin %p, type \"%s\".\n", pin, GST_EVENT_TYPE_NAME(event));
+    GST_LOG("pin %p, type \"%s\".", pin, GST_EVENT_TYPE_NAME(event));
 
     switch (event->type)
     {
@@ -719,7 +719,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
 
                 if (segment->format != GST_FORMAT_TIME)
                 {
-                    FIXME("Unhandled format \"%s\".\n", gst_format_get_name(segment->format));
+                    GST_FIXME("Unhandled format \"%s\".", gst_format_get_name(segment->format));
                     break;
                 }
 
@@ -798,7 +798,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
         }
 
         default:
-            WARN("Ignoring \"%s\" event.\n", GST_EVENT_TYPE_NAME(event));
+            GST_WARNING("Ignoring \"%s\" event.", GST_EVENT_TYPE_NAME(event));
     }
     gst_event_unref(event);
     return TRUE;
