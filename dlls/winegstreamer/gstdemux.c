@@ -1321,7 +1321,7 @@ static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
     struct parser *This = gst_pad_get_element_private(pad);
     GstFormat format;
 
-    TRACE("filter %p, type %s.\n", This, GST_QUERY_TYPE_NAME(query));
+    GST_LOG("filter %p, type %s.", This, GST_QUERY_TYPE_NAME(query));
 
     switch (GST_QUERY_TYPE(query)) {
         case GST_QUERY_DURATION:
@@ -1341,7 +1341,7 @@ static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
             gst_query_parse_seeking (query, &format, NULL, NULL, NULL);
             if (format != GST_FORMAT_BYTES)
             {
-                WARN("Cannot seek using format \"%s\".\n", gst_format_get_name(format));
+                GST_WARNING("Cannot seek using format \"%s\".", gst_format_get_name(format));
                 return FALSE;
             }
             gst_query_set_seeking(query, GST_FORMAT_BYTES, 1, 0, This->filesize);
@@ -1352,7 +1352,7 @@ static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
             gst_query_add_scheduling_mode(query, GST_PAD_MODE_PULL);
             return TRUE;
         default:
-            WARN("Unhandled query type %s.\n", GST_QUERY_TYPE_NAME(query));
+            GST_WARNING("Unhandled query type %s.", GST_QUERY_TYPE_NAME(query));
             return FALSE;
     }
 }
