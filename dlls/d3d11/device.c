@@ -85,20 +85,24 @@ static ULONG STDMETHODCALLTYPE d3d_device_context_state_Release(ID3DDeviceContex
         wined3d_private_store_cleanup(&state->private_store);
         if (state->vs.shader) ID3D11VertexShader_Release(state->vs.shader);
         if (state->gs.shader) ID3D11GeometryShader_Release(state->gs.shader);
+        if (state->ps.shader) ID3D11PixelShader_Release(state->ps.shader);
         for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
         {
             if (state->vs.samplers[i]) ID3D11SamplerState_Release(state->vs.samplers[i]);
             if (state->gs.samplers[i]) ID3D11SamplerState_Release(state->gs.samplers[i]);
+            if (state->ps.samplers[i]) ID3D11SamplerState_Release(state->ps.samplers[i]);
         }
         for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
         {
             if (state->vs.srvs[i]) ID3D11ShaderResourceView_Release(state->vs.srvs[i]);
             if (state->gs.srvs[i]) ID3D11ShaderResourceView_Release(state->gs.srvs[i]);
+            if (state->ps.srvs[i]) ID3D11ShaderResourceView_Release(state->ps.srvs[i]);
         }
         for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
         {
             if (state->vs.cbs[i]) ID3D11Buffer_Release(state->vs.cbs[i]);
             if (state->gs.cbs[i]) ID3D11Buffer_Release(state->gs.cbs[i]);
+            if (state->ps.cbs[i]) ID3D11Buffer_Release(state->ps.cbs[i]);
         }
         ID3D11Device2_Release(state->device);
         heap_free(state);
@@ -170,6 +174,7 @@ static void d3d_device_context_state_init(struct d3d_device_context_state *state
     wined3d_private_store_init(&state->private_store);
     memset(&state->vs, 0, sizeof(state->vs));
     memset(&state->gs, 0, sizeof(state->gs));
+    memset(&state->ps, 0, sizeof(state->ps));
 
     state->emulated_interface = *emulated_interface;
     state->device = &device->ID3D11Device2_iface;
@@ -2715,6 +2720,14 @@ static void d3d11_immediate_context_capture_state(ID3D11DeviceContext1 *iface, s
     d3d11_immediate_context_GSGetConstantBuffers(iface, 0,
             D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, state->gs.cbs);
 
+    d3d11_immediate_context_PSGetShader(iface, &state->ps.shader, NULL, 0);
+    d3d11_immediate_context_PSGetSamplers(iface, 0,
+            D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, state->ps.samplers);
+    d3d11_immediate_context_PSGetShaderResources(iface, 0,
+            D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, state->ps.srvs);
+    d3d11_immediate_context_PSGetConstantBuffers(iface, 0,
+            D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, state->ps.cbs);
+
     wined3d_mutex_unlock();
 }
 
@@ -2737,6 +2750,14 @@ static void d3d11_immediate_context_restore_state(ID3D11DeviceContext1 *iface, s
             D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, state->gs.srvs);
     d3d11_immediate_context_GSSetConstantBuffers(iface, 0,
             D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, state->gs.cbs);
+
+    d3d11_immediate_context_PSSetShader(iface, state->ps.shader, NULL, 0);
+    d3d11_immediate_context_PSSetSamplers(iface, 0,
+            D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, state->ps.samplers);
+    d3d11_immediate_context_PSSetShaderResources(iface, 0,
+            D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, state->ps.srvs);
+    d3d11_immediate_context_PSSetConstantBuffers(iface, 0,
+            D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, state->ps.cbs);
 
     wined3d_mutex_unlock();
 }
