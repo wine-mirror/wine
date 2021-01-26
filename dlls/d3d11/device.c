@@ -76,12 +76,26 @@ static ULONG STDMETHODCALLTYPE d3d_device_context_state_Release(ID3DDeviceContex
 {
     struct d3d_device_context_state *state = impl_from_ID3DDeviceContextState(iface);
     ULONG refcount = InterlockedDecrement(&state->refcount);
+    unsigned int i;
 
     TRACE("%p decreasing refcount to %u.\n", state, refcount);
 
     if (!refcount)
     {
         wined3d_private_store_cleanup(&state->private_store);
+        if (state->vs.shader) ID3D11VertexShader_Release(state->vs.shader);
+        for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+        {
+            if (state->vs.samplers[i]) ID3D11SamplerState_Release(state->vs.samplers[i]);
+        }
+        for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
+        {
+            if (state->vs.srvs[i]) ID3D11ShaderResourceView_Release(state->vs.srvs[i]);
+        }
+        for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
+        {
+            if (state->vs.cbs[i]) ID3D11Buffer_Release(state->vs.cbs[i]);
+        }
         ID3D11Device2_Release(state->device);
         heap_free(state);
     }
@@ -150,6 +164,7 @@ static void d3d_device_context_state_init(struct d3d_device_context_state *state
     state->refcount = 1;
 
     wined3d_private_store_init(&state->private_store);
+    memset(&state->vs, 0, sizeof(state->vs));
 
     state->emulated_interface = *emulated_interface;
     state->device = &device->ID3D11Device2_iface;
@@ -2675,6 +2690,36 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetConstantBuffers1(ID3D
             iface, start_slot, buffer_count, buffers, first_constant, num_constants);
 }
 
+static void d3d11_immediate_context_capture_state(ID3D11DeviceContext1 *iface, struct d3d_device_context_state *state)
+{
+    wined3d_mutex_lock();
+
+    d3d11_immediate_context_VSGetShader(iface, &state->vs.shader, NULL, 0);
+    d3d11_immediate_context_VSGetSamplers(iface, 0,
+            D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, state->vs.samplers);
+    d3d11_immediate_context_VSGetShaderResources(iface, 0,
+            D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, state->vs.srvs);
+    d3d11_immediate_context_VSGetConstantBuffers(iface, 0,
+            D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, state->vs.cbs);
+
+    wined3d_mutex_unlock();
+}
+
+static void d3d11_immediate_context_restore_state(ID3D11DeviceContext1 *iface, struct d3d_device_context_state *state)
+{
+    wined3d_mutex_lock();
+
+    d3d11_immediate_context_VSSetShader(iface, state->vs.shader, NULL, 0);
+    d3d11_immediate_context_VSSetSamplers(iface, 0,
+            D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, state->vs.samplers);
+    d3d11_immediate_context_VSSetShaderResources(iface, 0,
+            D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, state->vs.srvs);
+    d3d11_immediate_context_VSSetConstantBuffers(iface, 0,
+            D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, state->vs.cbs);
+
+    wined3d_mutex_unlock();
+}
+
 static void STDMETHODCALLTYPE d3d11_immediate_context_SwapDeviceContextState(ID3D11DeviceContext1 *iface,
         ID3DDeviceContextState *state, ID3DDeviceContextState **prev_state)
 {
@@ -2690,12 +2735,14 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_SwapDeviceContextState(ID3
         if ((state_impl = heap_alloc(sizeof(*state_impl))))
         {
             d3d_device_context_state_init(state_impl, device, &device->emulated_interface);
+            d3d11_immediate_context_capture_state(iface, state_impl);
             *prev_state = &state_impl->ID3DDeviceContextState_iface;
         }
     }
 
     if ((state_impl = impl_from_ID3DDeviceContextState(state)))
     {
+        d3d11_immediate_context_restore_state(iface, state_impl);
         device->emulated_interface = state_impl->emulated_interface;
         if (d3d_device_is_d3d10_active(device))
             FIXME("D3D10 interface emulation not fully implemented yet!\n");

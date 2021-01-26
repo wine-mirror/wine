@@ -523,6 +523,13 @@ struct d3d_device_context_state
     LONG refcount;
 
     struct wined3d_private_store private_store;
+    struct
+    {
+        ID3D11VertexShader *shader;
+        ID3D11SamplerState *samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
+        ID3D11ShaderResourceView *srvs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+        ID3D11Buffer *cbs[D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT];
+    } vs;
 
     GUID emulated_interface;
     ID3D11Device2 *device;
