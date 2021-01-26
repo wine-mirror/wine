@@ -1136,7 +1136,7 @@ static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
     unsigned int i;
     char *name;
 
-    TRACE("filter %p, bin %p, pad %p.\n", filter, bin, pad);
+    GST_LOG("filter %p, bin %p, pad %p.", filter, bin, pad);
 
     for (i = 0; i < filter->source_count; ++i)
     {
@@ -1155,7 +1155,7 @@ static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
     }
 
     name = gst_pad_get_name(pad);
-    WARN("No pin matching pad %s found.\n", debugstr_a(name));
+    GST_LOG("No pin matching pad \"%s\" found.", name);
     g_free(name);
 }
 
