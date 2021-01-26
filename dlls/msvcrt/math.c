@@ -64,7 +64,7 @@ typedef int (CDECL *MSVCRT_matherr_func)(struct _exception *);
 
 static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 
-static BOOL sse2_supported;
+BOOL sse2_supported;
 static BOOL sse2_enabled;
 
 static const struct unix_funcs *unix_funcs;
