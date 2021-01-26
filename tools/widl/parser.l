@@ -358,6 +358,7 @@ static const struct keyword attr_keywords[] =
 	{"encode",                      tENCODE,                    0},
 	{"endpoint",                    tENDPOINT,                  0},
 	{"entry",                       tENTRY,                     0},
+	{"exclusiveto",                 tEXCLUSIVETO,               1},
 	{"explicit_handle",             tEXPLICITHANDLE,            0},
 	{"fault_status",                tFAULTSTATUS,               0},
 	{"force_allocate",              tFORCEALLOCATE,             0},

@@ -196,6 +196,7 @@ static typelib_t *current_typelib;
 %token tDLLNAME tDONTFREE tDOUBLE tDUAL
 %token tENABLEALLOCATE tENCODE tENDPOINT
 %token tENTRY tENUM tERRORSTATUST
+%token tEXCLUSIVETO
 %token tEXPLICITHANDLE tEXTERN
 %token tFALSE
 %token tFASTCALL tFAULTSTATUS
@@ -561,6 +562,7 @@ attribute:					{ $$ = NULL; }
 	| tENCODE				{ $$ = make_attr(ATTR_ENCODE); }
 	| tENDPOINT '(' str_list ')'		{ $$ = make_attrp(ATTR_ENDPOINT, $3); }
 	| tENTRY '(' expr_const ')'		{ $$ = make_attrp(ATTR_ENTRY, $3); }
+	| tEXCLUSIVETO '(' decl_spec ')'	{ $$ = make_attrp(ATTR_EXCLUSIVETO, $3->type); }
 	| tEXPLICITHANDLE			{ $$ = make_attr(ATTR_EXPLICIT_HANDLE); }
 	| tFAULTSTATUS				{ $$ = make_attr(ATTR_FAULTSTATUS); }
 	| tFORCEALLOCATE			{ $$ = make_attr(ATTR_FORCEALLOCATE); }
@@ -2223,6 +2225,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_ENCODE */              { 0, 0, 0,  1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "encode" },
     /* ATTR_ENDPOINT */            { 1, 0, 0,  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "endpoint" },
     /* ATTR_ENTRY */               { 0, 0, 0,  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "entry" },
+    /* ATTR_EXCLUSIVETO */         { 0, 0, 0,  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "exclusive_to" },
     /* ATTR_EXPLICIT_HANDLE */     { 1, 1, 0,  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "explicit_handle" },
     /* ATTR_FAULTSTATUS */         { 0, 0, 0,  0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "fault_status" },
     /* ATTR_FORCEALLOCATE */       { 0, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "force_allocate" },
