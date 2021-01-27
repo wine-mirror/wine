@@ -829,15 +829,16 @@ static DWORD CALLBACK push_data(LPVOID iface)
     GstBuffer *buffer;
     LONGLONG maxlen;
 
+    GST_DEBUG("Starting push thread.");
+
     if (!(buffer = gst_buffer_new_allocate(NULL, 16384, NULL)))
     {
-        ERR("Failed to allocate memory.\n");
+        GST_ERROR("Failed to allocate memory.");
         return 0;
     }
 
     maxlen = This->stop ? This->stop : This->filesize;
 
-    TRACE("Starting..\n");
     for (;;) {
         ULONG len;
         int ret;
@@ -848,7 +849,7 @@ static DWORD CALLBACK push_data(LPVOID iface)
 
         if ((ret = request_buffer_src(This->my_src, NULL, This->nextofs, len, &buffer)) < 0)
         {
-            ERR("Failed to read data, ret %s.\n", gst_flow_get_name(ret));
+            GST_ERROR("Failed to read data, ret %s.", gst_flow_get_name(ret));
             break;
         }
 
@@ -857,7 +858,7 @@ static DWORD CALLBACK push_data(LPVOID iface)
         buffer->duration = buffer->pts = -1;
         if ((ret = gst_pad_push(This->my_src, buffer)) < 0)
         {
-            ERR("Failed to push data, ret %s.\n", gst_flow_get_name(ret));
+            GST_ERROR("Failed to push data, ret %s.", gst_flow_get_name(ret));
             break;
         }
     }
@@ -866,7 +867,7 @@ static DWORD CALLBACK push_data(LPVOID iface)
 
     gst_pad_push_event(This->my_src, gst_event_new_eos());
 
-    TRACE("Stopping.\n");
+    GST_DEBUG("Stopping push thread.");
 
     return 0;
 }
