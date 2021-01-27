@@ -3049,6 +3049,92 @@ static void test_queryreader(void)
     IWICComponentFactory_Release(factory);
 }
 
+static void test_metadata_writer(void)
+{
+    static struct
+    {
+        REFCLSID rclsid;
+        BOOL wine_supports_encoder;
+        BOOL metadata_supported;
+        BOOL succeeds_unitialized;
+    }
+    tests[] =
+    {
+        {&CLSID_WICBmpEncoder,   TRUE, FALSE},
+        {&CLSID_WICPngEncoder,   TRUE,  TRUE},
+        {&CLSID_WICJpegEncoder,  TRUE,  TRUE},
+        {&CLSID_WICGifEncoder,   TRUE,  TRUE},
+        {&CLSID_WICTiffEncoder,  TRUE,  TRUE},
+        {&CLSID_WICWmpEncoder,  FALSE,  TRUE, TRUE},
+    };
+
+    IWICMetadataQueryWriter *querywriter, *querywriter2;
+    IWICMetadataBlockWriter *blockwriter;
+    IWICBitmapFrameEncode *frameencode;
+    IWICComponentFactory *factory;
+    IWICBitmapEncoder *encoder;
+    IStream *stream;
+    unsigned int i;
+    HRESULT hr;
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        hr = CoCreateInstance(tests[i].rclsid, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IWICBitmapEncoder, (void **)&encoder);
+        todo_wine_if(!tests[i].wine_supports_encoder) ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+        if (FAILED(hr))
+            continue;
+
+        blockwriter = NULL;
+        querywriter = querywriter2 = NULL;
+
+        hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+        hr = IWICBitmapEncoder_Initialize(encoder, stream, WICBitmapEncoderNoCache);
+        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+        hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frameencode, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+
+        hr = IWICBitmapFrameEncode_QueryInterface(frameencode, &IID_IWICMetadataBlockWriter, (void**)&blockwriter);
+        ok(hr == (tests[i].metadata_supported ? S_OK : E_NOINTERFACE), "Got unexpected hr %#x, i %u.\n", hr, i);
+
+        hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IWICComponentFactory, (void**)&factory);
+        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+
+        hr = IWICComponentFactory_CreateQueryWriterFromBlockWriter(factory, blockwriter, &querywriter);
+        todo_wine ok(hr == (tests[i].metadata_supported ? S_OK : E_INVALIDARG), "Got unexpected hr %#x, i %u.\n", hr, i);
+
+        hr = IWICBitmapFrameEncode_GetMetadataQueryWriter(frameencode, &querywriter2);
+        todo_wine
+        ok(hr == (tests[i].succeeds_unitialized ? S_OK : WINCODEC_ERR_NOTINITIALIZED),
+                "Got unexpected hr %#x, i %u.\n", hr, i);
+        if (hr == S_OK)
+            IWICMetadataQueryWriter_Release(querywriter2);
+
+        hr = IWICBitmapFrameEncode_Initialize(frameencode, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
+
+        hr = IWICBitmapFrameEncode_GetMetadataQueryWriter(frameencode, &querywriter2);
+        todo_wine ok(hr == (tests[i].metadata_supported ? S_OK : WINCODEC_ERR_UNSUPPORTEDOPERATION),
+                "Got unexpected hr %#x, i %u.\n", hr, i);
+
+        if (tests[i].metadata_supported)
+            todo_wine ok(querywriter2 != querywriter, "Got unexpected interfaces %p, %p, i %u.\n", querywriter, querywriter2, i);
+
+        IWICComponentFactory_Release(factory);
+        if (querywriter)
+        {
+            IWICMetadataQueryWriter_Release(querywriter);
+            IWICMetadataQueryWriter_Release(querywriter2);
+            IWICMetadataBlockWriter_Release(blockwriter);
+        }
+        IWICBitmapFrameEncode_Release(frameencode);
+        IStream_Release(stream);
+        IWICBitmapEncoder_Release(encoder);
+    }
+}
+
 START_TEST(metadata)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -3071,6 +3157,7 @@ START_TEST(metadata)
     test_metadata_GCE();
     test_metadata_APE();
     test_metadata_GIF_comment();
+    test_metadata_writer();
 
     CoUninitialize();
 }
