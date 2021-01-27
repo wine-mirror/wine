@@ -298,6 +298,7 @@ static const struct keyword keywords[] = {
 	{"pascal",          tPASCAL,         0},
 	{"properties",      tPROPERTIES,     0},
 	{"register",        tREGISTER,       0},
+	{"runtimeclass",    tRUNTIMECLASS,   1},
 	{"short",           tSHORT,          0},
 	{"signed",          tSIGNED,         0},
 	{"sizeof",          tSIZEOF,         0},

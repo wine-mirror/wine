@@ -218,6 +218,7 @@ unsigned short get_type_vt(type_t *t)
   case TYPE_MODULE:
   case TYPE_UNION:
   case TYPE_ENCAPSULATED_UNION:
+  case TYPE_RUNTIMECLASS:
     return VT_USERDEFINED;
 
   case TYPE_VOID:

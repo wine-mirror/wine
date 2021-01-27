@@ -44,14 +44,17 @@ type_t *type_new_struct(char *name, struct namespace *namespace, int defined, va
 type_t *type_new_nonencapsulated_union(const char *name, int defined, var_list_t *fields);
 type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *union_field, var_list_t *cases);
 type_t *type_new_bitfield(type_t *field_type, const expr_t *bits);
+type_t *type_new_runtimeclass(char *name, struct namespace *namespace);
 void type_interface_define(type_t *iface, type_t *inherit, statement_list_t *stmts);
 void type_dispinterface_define(type_t *iface, var_list_t *props, var_list_t *methods);
 void type_dispinterface_define_from_iface(type_t *dispiface, type_t *iface);
 void type_module_define(type_t *module, statement_list_t *stmts);
 type_t *type_coclass_define(type_t *coclass, ifref_list_t *ifaces);
+type_t *type_runtimeclass_define(type_t *runtimeclass, ifref_list_t *ifaces);
 int type_is_equal(const type_t *type1, const type_t *type2);
 const char *type_get_name(const type_t *type, enum name_type name_type);
 char *gen_name(void);
+extern int is_attr(const attr_list_t *list, enum attr_type t);
 
 /* FIXME: shouldn't need to export this */
 type_t *duptype(type_t *t, int dupname);
@@ -222,6 +225,7 @@ static inline int type_is_complete(const type_t *type)
     case TYPE_POINTER:
     case TYPE_ARRAY:
     case TYPE_BITFIELD:
+    case TYPE_RUNTIMECLASS:
         return TRUE;
     case TYPE_APICONTRACT:
         assert(0);
@@ -320,6 +324,26 @@ static inline ifref_list_t *type_coclass_get_ifaces(const type_t *type)
     type = type_get_real_type(type);
     assert(type_get_type(type) == TYPE_COCLASS);
     return type->details.coclass.ifaces;
+}
+
+static inline ifref_list_t *type_runtimeclass_get_ifaces(const type_t *type)
+{
+    type = type_get_real_type(type);
+    assert(type_get_type(type) == TYPE_RUNTIMECLASS);
+    return type->details.runtimeclass.ifaces;
+}
+
+static inline type_t *type_runtimeclass_get_default_iface(const type_t *type)
+{
+    ifref_list_t *ifaces = type_runtimeclass_get_ifaces(type);
+    ifref_t *entry;
+
+    if (!ifaces) return NULL;
+    LIST_FOR_EACH_ENTRY(entry, ifaces, ifref_t, entry)
+        if (is_attr(entry->attrs, ATTR_DEFAULT))
+            return entry->iface;
+
+    return NULL;
 }
 
 static inline const decl_spec_t *type_pointer_get_ref(const type_t *type)

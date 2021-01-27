@@ -463,6 +463,9 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
       case TYPE_COCLASS:
         fprintf(h, "%s", name);
         break;
+      case TYPE_RUNTIMECLASS:
+        fprintf(h, "%s", type_get_name(type_runtimeclass_get_default_iface(t), name_type));
+        break;
       case TYPE_VOID:
         fprintf(h, "void");
         break;
@@ -545,6 +548,7 @@ void write_type_right(FILE *h, type_t *t, int is_field)
   case TYPE_MODULE:
   case TYPE_COCLASS:
   case TYPE_INTERFACE:
+  case TYPE_RUNTIMECLASS:
     break;
   case TYPE_APICONTRACT:
     /* not supposed to be here */
@@ -1031,7 +1035,8 @@ static int is_aggregate_return(const var_t *func)
 {
   enum type_type type = type_get_type(type_function_get_rettype(func->declspec.type));
   return type == TYPE_STRUCT || type == TYPE_UNION ||
-         type == TYPE_COCLASS || type == TYPE_INTERFACE;
+         type == TYPE_COCLASS || type == TYPE_INTERFACE ||
+         type == TYPE_RUNTIMECLASS;
 }
 
 static char *get_vtbl_entry_name(const type_t *iface, const var_t *func)
@@ -1689,6 +1694,39 @@ static void write_apicontract(FILE *header, type_t *apicontract)
     free(name);
 }
 
+static void write_runtimeclass(FILE *header, type_t *runtimeclass)
+{
+    expr_t *contract = get_attrp(runtimeclass->attrs, ATTR_CONTRACT);
+    char *name, *c_name;
+    name = format_namespace(runtimeclass->namespace, "", ".", runtimeclass->name, NULL);
+    c_name = format_namespace(runtimeclass->namespace, "", "_", runtimeclass->name, NULL);
+    fprintf(header, "/*\n");
+    fprintf(header, " * Class %s\n", name);
+    fprintf(header, " */\n");
+    if (contract) write_apicontract_guard_start(header, contract);
+    fprintf(header, "#ifndef RUNTIMECLASS_%s_DEFINED\n", c_name);
+    fprintf(header, "#define RUNTIMECLASS_%s_DEFINED\n", c_name);
+    fprintf(header, "#endif /* RUNTIMECLASS_%s_DEFINED */\n", c_name);
+    free(c_name);
+    free(name);
+    if (contract) write_apicontract_guard_end(header, contract);
+    fprintf(header, "\n");
+}
+
+static void write_runtimeclass_forward(FILE *header, type_t *runtimeclass)
+{
+    fprintf(header, "#ifndef __%s_FWD_DEFINED__\n", runtimeclass->c_name);
+    fprintf(header, "#define __%s_FWD_DEFINED__\n", runtimeclass->c_name);
+    fprintf(header, "#ifdef __cplusplus\n");
+    write_namespace_start(header, runtimeclass->namespace);
+    write_line(header, 0, "class %s;", runtimeclass->name);
+    write_namespace_end(header, runtimeclass->namespace);
+    fprintf(header, "#else\n");
+    fprintf(header, "typedef struct %s %s;\n", runtimeclass->c_name, runtimeclass->c_name);
+    fprintf(header, "#endif /* defined __cplusplus */\n");
+    fprintf(header, "#endif /* defined __%s_FWD_DEFINED__ */\n\n", runtimeclass->c_name);
+}
+
 static void write_import(FILE *header, const char *fname)
 {
   char *hname, *p;
@@ -1753,6 +1791,8 @@ static void write_forward_decls(FILE *header, const statement_list_t *stmts)
         }
         else if (type_get_type(stmt->u.type) == TYPE_COCLASS)
           write_coclass_forward(header, stmt->u.type);
+        else if (type_get_type(stmt->u.type) == TYPE_RUNTIMECLASS)
+          write_runtimeclass_forward(header, stmt->u.type);
         break;
       case STMT_TYPEREF:
       case STMT_IMPORTLIB:
@@ -1809,6 +1849,8 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
           write_coclass(header, stmt->u.type);
         else if (type_get_type(stmt->u.type) == TYPE_APICONTRACT)
           write_apicontract(header, stmt->u.type);
+        else if (type_get_type(stmt->u.type) == TYPE_RUNTIMECLASS)
+          write_runtimeclass(header, stmt->u.type);
         else
         {
           write_type_definition(header, stmt->u.type, stmt->declonly);

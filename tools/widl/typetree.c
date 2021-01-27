@@ -215,6 +215,16 @@ type_t *type_new_coclass(char *name)
     return type;
 }
 
+type_t *type_new_runtimeclass(char *name, struct namespace *namespace)
+{
+    type_t *type = get_type(TYPE_RUNTIMECLASS, name, NULL, 0);
+    if (type->type_type != TYPE_RUNTIMECLASS || type->defined)
+        error_loc("%s: redefinition error; original definition was at %s:%d\n",
+                  type->name, type->loc_info.input_name, type->loc_info.line_number);
+    type->name = name;
+    type->namespace = namespace;
+    return type;
+}
 
 type_t *type_new_array(const char *name, const decl_spec_t *element, int declptr,
                        unsigned int dim, expr_t *size_is, expr_t *length_is)
@@ -507,6 +517,15 @@ type_t *type_coclass_define(type_t *coclass, ifref_list_t *ifaces)
     coclass->details.coclass.ifaces = ifaces;
     coclass->defined = TRUE;
     return coclass;
+}
+
+type_t *type_runtimeclass_define(type_t *runtimeclass, ifref_list_t *ifaces)
+{
+    runtimeclass->details.runtimeclass.ifaces = ifaces;
+    runtimeclass->defined = TRUE;
+    if (!type_runtimeclass_get_default_iface(runtimeclass))
+        error_loc("missing default interface on runtimeclass %s\n", runtimeclass->name);
+    return runtimeclass;
 }
 
 int type_is_equal(const type_t *type1, const type_t *type2)

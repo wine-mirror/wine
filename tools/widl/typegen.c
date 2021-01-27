@@ -353,6 +353,7 @@ enum typegen_type typegen_detect_type(const type_t *type, const attr_list_t *att
         return TGT_ENUM;
     case TYPE_POINTER:
         if (type_get_type(type_pointer_get_ref_type(type)) == TYPE_INTERFACE ||
+            type_get_type(type_pointer_get_ref_type(type)) == TYPE_RUNTIMECLASS ||
             (type_get_type(type_pointer_get_ref_type(type)) == TYPE_VOID && is_attr(attrs, ATTR_IIDIS)))
             return TGT_IFACE_POINTER;
         else if (is_aliaschain_attr(type_pointer_get_ref_type(type), ATTR_CONTEXTHANDLE))
@@ -373,6 +374,7 @@ enum typegen_type typegen_detect_type(const type_t *type, const attr_list_t *att
     case TYPE_VOID:
     case TYPE_ALIAS:
     case TYPE_BITFIELD:
+    case TYPE_RUNTIMECLASS:
         break;
     case TYPE_APICONTRACT:
         /* not supposed to be here */
@@ -1971,6 +1973,7 @@ unsigned int type_memsize_and_alignment(const type_t *t, unsigned int *align)
     case TYPE_FUNCTION:
     case TYPE_BITFIELD:
     case TYPE_APICONTRACT:
+    case TYPE_RUNTIMECLASS:
         /* these types should not be encountered here due to language
          * restrictions (interface, void, coclass, module), logical
          * restrictions (alias - due to type_get_type call above) or
@@ -2073,6 +2076,7 @@ static unsigned int type_buffer_alignment(const type_t *t)
     case TYPE_FUNCTION:
     case TYPE_BITFIELD:
     case TYPE_APICONTRACT:
+    case TYPE_RUNTIMECLASS:
         /* these types should not be encountered here due to language
          * restrictions (interface, void, coclass, module), logical
          * restrictions (alias - due to type_get_type call above) or
