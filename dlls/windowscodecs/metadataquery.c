@@ -635,6 +635,146 @@ HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *mbr, const W
     return S_OK;
 }
 
+typedef struct
+{
+    IWICMetadataQueryWriter IWICMetadataQueryWriter_iface;
+    LONG ref;
+    IWICMetadataBlockWriter *block;
+    WCHAR *root;
+}
+QueryWriter;
+
+static inline QueryWriter *impl_from_IWICMetadataQueryWriter(IWICMetadataQueryWriter *iface)
+{
+    return CONTAINING_RECORD(iface, QueryWriter, IWICMetadataQueryWriter_iface);
+}
+
+static HRESULT WINAPI mqw_QueryInterface(IWICMetadataQueryWriter *iface, REFIID riid,
+        void **object)
+{
+    QueryWriter *writer = impl_from_IWICMetadataQueryWriter(iface);
+
+    TRACE("writer %p, riid %s, object %p.\n", writer, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_IUnknown)
+            || IsEqualGUID(riid, &IID_IWICMetadataQueryWriter)
+            || IsEqualGUID(riid, &IID_IWICMetadataQueryReader))
+        *object = &writer->IWICMetadataQueryWriter_iface;
+    else
+        *object = NULL;
+
+    if (*object)
+    {
+        IUnknown_AddRef((IUnknown *)*object);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI mqw_AddRef(IWICMetadataQueryWriter *iface)
+{
+    QueryWriter *writer = impl_from_IWICMetadataQueryWriter(iface);
+    ULONG ref = InterlockedIncrement(&writer->ref);
+
+    TRACE("writer %p, refcount=%u\n", writer, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI mqw_Release(IWICMetadataQueryWriter *iface)
+{
+    QueryWriter *writer = impl_from_IWICMetadataQueryWriter(iface);
+    ULONG ref = InterlockedDecrement(&writer->ref);
+
+    TRACE("writer %p, refcount=%u.\n", writer, ref);
+
+    if (!ref)
+    {
+        IWICMetadataBlockWriter_Release(writer->block);
+        HeapFree(GetProcessHeap(), 0, writer->root);
+        HeapFree(GetProcessHeap(), 0, writer);
+    }
+    return ref;
+}
+
+static HRESULT WINAPI mqw_GetContainerFormat(IWICMetadataQueryWriter *iface, GUID *container_format)
+{
+    FIXME("iface %p, container_format %p stub.\n", iface, container_format);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mqw_GetEnumerator(IWICMetadataQueryWriter *iface, IEnumString **enum_string)
+{
+    FIXME("iface %p, enum_string %p stub.\n", iface, enum_string);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mqw_GetLocation(IWICMetadataQueryWriter *iface, UINT max_length, WCHAR *namespace, UINT *actual_length)
+{
+    FIXME("iface %p, max_length %u, namespace %s, actual_length %p stub.\n",
+            iface, max_length, debugstr_w(namespace), actual_length);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mqw_GetMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR name, PROPVARIANT *value)
+{
+    FIXME("name %s, value %p stub.\n", debugstr_w(name), value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mqw_SetMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR name, const PROPVARIANT *value)
+{
+    FIXME("iface %p, name %s, value %p stub.\n", iface, debugstr_w(name), value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mqw_RemoveMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR name)
+{
+    FIXME("iface %p, name %s stub.\n", iface, debugstr_w(name));
+
+    return E_NOTIMPL;
+}
+
+static const IWICMetadataQueryWriterVtbl mqw_vtbl =
+{
+    mqw_QueryInterface,
+    mqw_AddRef,
+    mqw_Release,
+    mqw_GetContainerFormat,
+    mqw_GetLocation,
+    mqw_GetMetadataByName,
+    mqw_GetEnumerator,
+    mqw_SetMetadataByName,
+    mqw_RemoveMetadataByName,
+};
+
+HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataBlockWriter *mbw, const WCHAR *root, IWICMetadataQueryWriter **out)
+{
+    QueryWriter *obj;
+
+    obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj));
+    if (!obj)
+        return E_OUTOFMEMORY;
+
+    obj->IWICMetadataQueryWriter_iface.lpVtbl = &mqw_vtbl;
+    obj->ref = 1;
+
+    IWICMetadataBlockWriter_AddRef(mbw);
+    obj->block = mbw;
+
+    obj->root = root ? heap_strdupW(root) : NULL;
+
+    *out = &obj->IWICMetadataQueryWriter_iface;
+
+    return S_OK;
+}
+
 static const struct
 {
     const GUID *guid;

@@ -1410,8 +1410,12 @@ static HRESULT WINAPI ComponentFactory_CreateQueryReaderFromBlockReader(IWICComp
 static HRESULT WINAPI ComponentFactory_CreateQueryWriterFromBlockWriter(IWICComponentFactory *iface,
         IWICMetadataBlockWriter *block_writer, IWICMetadataQueryWriter **query_writer)
 {
-    FIXME("%p,%p,%p: stub\n", iface, block_writer, query_writer);
-    return E_NOTIMPL;
+    TRACE("%p,%p,%p\n", iface, block_writer, query_writer);
+
+    if (!block_writer || !query_writer)
+        return E_INVALIDARG;
+
+    return MetadataQueryWriter_CreateInstance(block_writer, NULL, query_writer);
 }
 
 static HRESULT WINAPI ComponentFactory_CreateEncoderPropertyBag(IWICComponentFactory *iface,

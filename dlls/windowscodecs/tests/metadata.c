@@ -3103,7 +3103,7 @@ static void test_metadata_writer(void)
         ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
 
         hr = IWICComponentFactory_CreateQueryWriterFromBlockWriter(factory, blockwriter, &querywriter);
-        todo_wine ok(hr == (tests[i].metadata_supported ? S_OK : E_INVALIDARG), "Got unexpected hr %#x, i %u.\n", hr, i);
+        ok(hr == (tests[i].metadata_supported ? S_OK : E_INVALIDARG), "Got unexpected hr %#x, i %u.\n", hr, i);
 
         hr = IWICBitmapFrameEncode_GetMetadataQueryWriter(frameencode, &querywriter2);
         todo_wine
@@ -3120,13 +3120,14 @@ static void test_metadata_writer(void)
                 "Got unexpected hr %#x, i %u.\n", hr, i);
 
         if (tests[i].metadata_supported)
-            todo_wine ok(querywriter2 != querywriter, "Got unexpected interfaces %p, %p, i %u.\n", querywriter, querywriter2, i);
+            ok(querywriter2 != querywriter, "Got unexpected interfaces %p, %p, i %u.\n", querywriter, querywriter2, i);
 
         IWICComponentFactory_Release(factory);
         if (querywriter)
         {
             IWICMetadataQueryWriter_Release(querywriter);
-            IWICMetadataQueryWriter_Release(querywriter2);
+            if (querywriter2)
+                IWICMetadataQueryWriter_Release(querywriter2);
             IWICMetadataBlockWriter_Release(blockwriter);
         }
         IWICBitmapFrameEncode_Release(frameencode);
