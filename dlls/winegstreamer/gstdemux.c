@@ -821,21 +821,19 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
     return TRUE;
 }
 
+static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 offset, guint size, GstBuffer **buffer);
+
 static DWORD CALLBACK push_data(LPVOID iface)
 {
     struct parser *This = iface;
-    GstMapInfo mapping;
     GstBuffer *buffer;
     LONGLONG maxlen;
-    HRESULT hr;
 
     if (!(buffer = gst_buffer_new_allocate(NULL, 16384, NULL)))
     {
         ERR("Failed to allocate memory.\n");
         return 0;
     }
-
-    IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
 
     maxlen = This->stop ? This->stop : This->filesize;
 
@@ -848,42 +846,27 @@ static DWORD CALLBACK push_data(LPVOID iface)
             break;
         len = min(16384, maxlen - This->nextofs);
 
-        if (!gst_buffer_map_range(buffer, -1, len, &mapping, GST_MAP_WRITE))
+        if ((ret = request_buffer_src(This->my_src, NULL, This->nextofs, len, &buffer)) < 0)
         {
-            ERR("Failed to map buffer.\n");
-            break;
-        }
-        hr = IAsyncReader_SyncRead(This->reader, This->nextofs, len, mapping.data);
-        gst_buffer_unmap(buffer, &mapping);
-        if (hr != S_OK)
-        {
-            ERR("Failed to read data, hr %#x.\n", hr);
+            ERR("Failed to read data, ret %s.\n", gst_flow_get_name(ret));
             break;
         }
 
         This->nextofs += len;
 
         buffer->duration = buffer->pts = -1;
-        ret = gst_pad_push(This->my_src, buffer);
-        if (ret >= 0)
-            hr = S_OK;
-        else
-            ERR("Sending returned: %i\n", ret);
-        if (ret == GST_FLOW_ERROR)
-            hr = E_FAIL;
-        else if (ret == GST_FLOW_FLUSHING)
-            hr = VFW_E_WRONG_STATE;
-        if (hr != S_OK)
+        if ((ret = gst_pad_push(This->my_src, buffer)) < 0)
+        {
+            ERR("Failed to push data, ret %s.\n", gst_flow_get_name(ret));
             break;
+        }
     }
 
     gst_buffer_unref(buffer);
 
     gst_pad_push_event(This->my_src, gst_event_new_eos());
 
-    TRACE("Stopping.. %08x\n", hr);
-
-    IBaseFilter_Release(&This->filter.IBaseFilter_iface);
+    TRACE("Stopping.\n");
 
     return 0;
 }
