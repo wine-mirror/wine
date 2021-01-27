@@ -58,6 +58,7 @@ typedef struct CommonEncoder {
 
 typedef struct CommonEncoderFrame {
     IWICBitmapFrameEncode IWICBitmapFrameEncode_iface;
+    IWICMetadataBlockWriter IWICMetadataBlockWriter_iface;
     LONG ref;
     CommonEncoder *parent;
     struct encoder_frame encoder_frame;
@@ -77,10 +78,15 @@ static inline CommonEncoderFrame *impl_from_IWICBitmapFrameEncode(IWICBitmapFram
     return CONTAINING_RECORD(iface, CommonEncoderFrame, IWICBitmapFrameEncode_iface);
 }
 
+static inline CommonEncoderFrame *impl_from_IWICMetadataBlockWriter(IWICMetadataBlockWriter *iface)
+{
+    return CONTAINING_RECORD(iface, CommonEncoderFrame, IWICMetadataBlockWriter_iface);
+}
+
 static HRESULT WINAPI CommonEncoderFrame_QueryInterface(IWICBitmapFrameEncode *iface, REFIID iid,
     void **ppv)
 {
-    CommonEncoderFrame *This = impl_from_IWICBitmapFrameEncode(iface);
+    CommonEncoderFrame *object = impl_from_IWICBitmapFrameEncode(iface);
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -88,7 +94,12 @@ static HRESULT WINAPI CommonEncoderFrame_QueryInterface(IWICBitmapFrameEncode *i
     if (IsEqualIID(&IID_IUnknown, iid) ||
         IsEqualIID(&IID_IWICBitmapFrameEncode, iid))
     {
-        *ppv = &This->IWICBitmapFrameEncode_iface;
+        *ppv = &object->IWICBitmapFrameEncode_iface;
+    }
+    else if (object->parent->encoder_info.flags & ENCODER_FLAGS_SUPPORTS_METADATA
+            && IsEqualIID(&IID_IWICMetadataBlockWriter, iid))
+    {
+        *ppv = &object->IWICMetadataBlockWriter_iface;
     }
     else
     {
@@ -628,6 +639,110 @@ static HRESULT WINAPI CommonEncoder_SetPreview(IWICBitmapEncoder *iface, IWICBit
     return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 }
 
+static HRESULT WINAPI CommonEncoderFrame_Block_QueryInterface(IWICMetadataBlockWriter *iface, REFIID iid, void **ppv)
+{
+    CommonEncoderFrame *encoder = impl_from_IWICMetadataBlockWriter(iface);
+
+    return IWICBitmapFrameEncode_QueryInterface(&encoder->IWICBitmapFrameEncode_iface, iid, ppv);
+}
+
+static ULONG WINAPI CommonEncoderFrame_Block_AddRef(IWICMetadataBlockWriter *iface)
+{
+    CommonEncoderFrame *encoder = impl_from_IWICMetadataBlockWriter(iface);
+
+    return IWICBitmapFrameEncode_AddRef(&encoder->IWICBitmapFrameEncode_iface);
+}
+
+static ULONG WINAPI CommonEncoderFrame_Block_Release(IWICMetadataBlockWriter *iface)
+{
+    CommonEncoderFrame *encoder = impl_from_IWICMetadataBlockWriter(iface);
+
+    return IWICBitmapFrameEncode_Release(&encoder->IWICBitmapFrameEncode_iface);
+}
+
+static HRESULT WINAPI CommonEncoderFrame_Block_GetContainerFormat(IWICMetadataBlockWriter *iface, GUID *container_format)
+{
+    FIXME("iface %p, container_format %p stub.\n", iface, container_format);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CommonEncoderFrame_Block_GetCount(IWICMetadataBlockWriter *iface, UINT *count)
+{
+    FIXME("iface %p, count %p stub.\n", iface, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CommonEncoderFrame_Block_GetReaderByIndex(IWICMetadataBlockWriter *iface,
+        UINT index, IWICMetadataReader **metadata_reader)
+{
+    FIXME("iface %p, index %d, metadata_reader %p stub.\n", iface, index, metadata_reader);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CommonEncoderFrame_Block_GetEnumerator(IWICMetadataBlockWriter *iface, IEnumUnknown **enum_metadata)
+{
+    FIXME("iface %p, ppIEnumMetadata %p stub.\n", iface, enum_metadata);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CommonEncoderFrame_Block_InitializeFromBlockReader(IWICMetadataBlockWriter *iface,
+        IWICMetadataBlockReader *metadata_block_reader)
+{
+    FIXME("iface %p, metadata_block_reader %p stub.\n", iface, metadata_block_reader);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CommonEncoderFrame_Block_GetWriterByIndex(IWICMetadataBlockWriter *iface, UINT index,
+        IWICMetadataWriter **metadata_writer)
+{
+    FIXME("iface %p, index %u, metadata_writer %p stub.\n", iface, index, metadata_writer);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CommonEncoderFrame_Block_AddWriter(IWICMetadataBlockWriter *iface, IWICMetadataWriter *metadata_writer)
+{
+    FIXME("iface %p, metadata_writer %p.\n", iface, metadata_writer);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CommonEncoderFrame_Block_SetWriterByIndex(IWICMetadataBlockWriter *iface, UINT index,
+        IWICMetadataWriter *metadata_writer)
+{
+    FIXME("iface %p, index %u, metadata_writer %p stub.\n", iface, index, metadata_writer);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI CommonEncoderFrame_Block_RemoveWriterByIndex(IWICMetadataBlockWriter *iface, UINT index)
+{
+    FIXME("iface %p, index %u.\n", iface, index);
+
+    return E_NOTIMPL;
+}
+
+static const IWICMetadataBlockWriterVtbl CommonEncoderFrame_BlockVtbl =
+{
+    CommonEncoderFrame_Block_QueryInterface,
+    CommonEncoderFrame_Block_AddRef,
+    CommonEncoderFrame_Block_Release,
+    CommonEncoderFrame_Block_GetContainerFormat,
+    CommonEncoderFrame_Block_GetCount,
+    CommonEncoderFrame_Block_GetReaderByIndex,
+    CommonEncoderFrame_Block_GetEnumerator,
+    CommonEncoderFrame_Block_InitializeFromBlockReader,
+    CommonEncoderFrame_Block_GetWriterByIndex,
+    CommonEncoderFrame_Block_AddWriter,
+    CommonEncoderFrame_Block_SetWriterByIndex,
+    CommonEncoderFrame_Block_RemoveWriterByIndex,
+};
+
 static HRESULT WINAPI CommonEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     IWICBitmapFrameEncode **ppIFrameEncode, IPropertyBag2 **ppIEncoderOptions)
 {
@@ -661,6 +776,7 @@ static HRESULT WINAPI CommonEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     }
 
     result->IWICBitmapFrameEncode_iface.lpVtbl = &CommonEncoderFrame_Vtbl;
+    result->IWICMetadataBlockWriter_iface.lpVtbl = &CommonEncoderFrame_BlockVtbl;
     result->ref = 1;
     result->parent = This;
 

@@ -997,7 +997,7 @@ HRESULT CDECL png_encoder_create(struct encoder_info *info, struct encoder **res
     This->data = NULL;
     *result = &This->encoder;
 
-    info->flags = 0;
+    info->flags = ENCODER_FLAGS_SUPPORTS_METADATA;
     info->container_format = GUID_ContainerFormatPng;
     info->clsid = CLSID_WICPngEncoder;
     info->encoder_options[0] = ENCODER_OPTION_INTERLACE;

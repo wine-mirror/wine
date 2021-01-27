@@ -1414,7 +1414,7 @@ HRESULT CDECL tiff_encoder_create(struct encoder_info *info, struct encoder **re
     This->tiff = NULL;
     This->num_frames = 0;
 
-    info->flags = ENCODER_FLAGS_MULTI_FRAME;
+    info->flags = ENCODER_FLAGS_MULTI_FRAME | ENCODER_FLAGS_SUPPORTS_METADATA;
     info->container_format = GUID_ContainerFormatTiff;
     info->clsid = CLSID_WICTiffEncoder;
     info->encoder_options[0] = ENCODER_OPTION_COMPRESSION_METHOD;

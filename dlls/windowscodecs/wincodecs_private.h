@@ -355,6 +355,7 @@ enum encoder_option
 
 #define ENCODER_FLAGS_MULTI_FRAME 0x1
 #define ENCODER_FLAGS_ICNS_SIZE 0x2
+#define ENCODER_FLAGS_SUPPORTS_METADATA 0x4
 
 struct encoder_info
 {
