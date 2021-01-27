@@ -28,7 +28,7 @@
 struct process;
 struct thread_wait;
 struct thread_apc;
-struct debug_ctx;
+struct debug_obj;
 struct debug_event;
 struct msg_queue;
 
@@ -54,7 +54,7 @@ struct thread
     struct process        *process;
     thread_id_t            id;            /* thread id */
     struct list            mutex_list;    /* list of currently owned mutexes */
-    struct debug_ctx      *debug_ctx;     /* debugger context if this thread is a debugger */
+    struct debug_obj      *debug_obj;     /* debugger context if this thread is a debugger */
     unsigned int           system_regs;   /* which system regs have been set */
     struct msg_queue      *queue;         /* message queue */
     struct thread_wait    *wait;          /* current wait condition if sleeping */
