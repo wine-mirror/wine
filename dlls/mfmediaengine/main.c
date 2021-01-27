@@ -1152,11 +1152,22 @@ static HRESULT WINAPI media_engine_SetPreload(IMFMediaEngine *iface, MF_MEDIA_EN
     return S_OK;
 }
 
-static HRESULT WINAPI media_engine_GetBuffered(IMFMediaEngine *iface, IMFMediaTimeRange **buffered)
+static HRESULT WINAPI media_engine_GetBuffered(IMFMediaEngine *iface, IMFMediaTimeRange **range)
 {
-    FIXME("(%p, %p): stub.\n", iface, buffered);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, range);
+
+    if (FAILED(hr = create_time_range(range)))
+        return hr;
+
+    EnterCriticalSection(&engine->cs);
+    if (!isnan(engine->duration))
+        hr = IMFMediaTimeRange_AddRange(*range, 0.0, engine->duration);
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_Load(IMFMediaEngine *iface)
