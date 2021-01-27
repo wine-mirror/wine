@@ -2329,6 +2329,7 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
                   msvcrt_set_errno(GetLastError());
                   return *_errno();
               }
+              oflags |= _O_U16TEXT;
           }
       }
       else if (access & GENERIC_READ)
@@ -2346,8 +2347,9 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
       return *_errno();
 
   if (oflags & _O_WTEXT)
-      get_ioinfo_nolock(*fd)->exflag |= EF_UTF16|EF_UNK_UNICODE;
-  else if (oflags & _O_U16TEXT)
+      get_ioinfo_nolock(*fd)->exflag |= EF_UNK_UNICODE;
+
+  if (oflags & _O_U16TEXT)
       get_ioinfo_nolock(*fd)->exflag |= EF_UTF16;
   else if (oflags & _O_U8TEXT)
       get_ioinfo_nolock(*fd)->exflag |= EF_UTF8;
