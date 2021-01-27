@@ -1473,6 +1473,7 @@ static inline GifEncoder *impl_from_IWICBitmapEncoder(IWICBitmapEncoder *iface)
 typedef struct GifFrameEncode
 {
     IWICBitmapFrameEncode IWICBitmapFrameEncode_iface;
+    IWICMetadataBlockWriter IWICMetadataBlockWriter_iface;
     LONG ref;
     GifEncoder *encoder;
     BOOL initialized, interlace, committed;
@@ -1488,8 +1489,15 @@ static inline GifFrameEncode *impl_from_IWICBitmapFrameEncode(IWICBitmapFrameEnc
     return CONTAINING_RECORD(iface, GifFrameEncode, IWICBitmapFrameEncode_iface);
 }
 
+static inline GifFrameEncode *impl_from_IWICMetadataBlockWriter(IWICMetadataBlockWriter *iface)
+{
+    return CONTAINING_RECORD(iface, GifFrameEncode, IWICMetadataBlockWriter_iface);
+}
+
 static HRESULT WINAPI GifFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface, REFIID iid, void **ppv)
 {
+    GifFrameEncode *encoder = impl_from_IWICBitmapFrameEncode(iface);
+
     TRACE("%p,%s,%p\n", iface, debugstr_guid(iid), ppv);
 
     if (!ppv) return E_INVALIDARG;
@@ -1497,13 +1505,20 @@ static HRESULT WINAPI GifFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface
     if (IsEqualIID(&IID_IUnknown, iid) ||
         IsEqualIID(&IID_IWICBitmapFrameEncode, iid))
     {
-        IWICBitmapFrameEncode_AddRef(iface);
         *ppv = iface;
-        return S_OK;
+    }
+    else if (IsEqualIID(&IID_IWICMetadataBlockWriter, iid))
+    {
+        *ppv = &encoder->IWICMetadataBlockWriter_iface;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
     }
 
-    *ppv = NULL;
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI GifFrameEncode_AddRef(IWICBitmapFrameEncode *iface)
@@ -2259,6 +2274,109 @@ static HRESULT WINAPI GifEncoder_SetPreview(IWICBitmapEncoder *iface, IWICBitmap
     return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 }
 
+static HRESULT WINAPI GifEncoderFrame_Block_QueryInterface(IWICMetadataBlockWriter *iface, REFIID iid, void **ppv)
+{
+    GifFrameEncode *frame_encoder = impl_from_IWICMetadataBlockWriter(iface);
+
+    return IWICBitmapFrameEncode_QueryInterface(&frame_encoder->IWICBitmapFrameEncode_iface, iid, ppv);
+}
+
+static ULONG WINAPI GifEncoderFrame_Block_AddRef(IWICMetadataBlockWriter *iface)
+{
+    GifFrameEncode *frame_encoder = impl_from_IWICMetadataBlockWriter(iface);
+
+    return IWICBitmapFrameEncode_AddRef(&frame_encoder->IWICBitmapFrameEncode_iface);
+}
+
+static ULONG WINAPI GifEncoderFrame_Block_Release(IWICMetadataBlockWriter *iface)
+{
+    GifFrameEncode *frame_encoder = impl_from_IWICMetadataBlockWriter(iface);
+
+    return IWICBitmapFrameEncode_Release(&frame_encoder->IWICBitmapFrameEncode_iface);
+}
+
+static HRESULT WINAPI GifEncoderFrame_Block_GetContainerFormat(IWICMetadataBlockWriter *iface, GUID *container_format)
+{
+    FIXME("iface %p, container_format %p stub.\n", iface, container_format);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GifEncoderFrame_Block_GetCount(IWICMetadataBlockWriter *iface, UINT *count)
+{
+    FIXME("iface %p, count %p stub.\n", iface, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GifEncoderFrame_Block_GetReaderByIndex(IWICMetadataBlockWriter *iface,
+        UINT index, IWICMetadataReader **metadata_reader)
+{
+    FIXME("iface %p, index %d, metadata_reader %p stub.\n", iface, index, metadata_reader);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GifEncoderFrame_Block_GetEnumerator(IWICMetadataBlockWriter *iface, IEnumUnknown **enum_metadata)
+{
+    FIXME("iface %p, enum_metadata %p stub.\n", iface, enum_metadata);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GifEncoderFrame_Block_InitializeFromBlockReader(IWICMetadataBlockWriter *iface,
+        IWICMetadataBlockReader *block_reader)
+{
+    FIXME("iface %p, block_reader %p stub.\n", iface, block_reader);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GifEncoderFrame_Block_GetWriterByIndex(IWICMetadataBlockWriter *iface, UINT index,
+        IWICMetadataWriter **metadata_writer)
+{
+    FIXME("iface %p, index %u, metadata_writer %p stub.\n", iface, index, metadata_writer);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GifEncoderFrame_Block_AddWriter(IWICMetadataBlockWriter *iface, IWICMetadataWriter *metadata_writer)
+{
+    FIXME("iface %p, metadata_writer %p stub.\n", iface, metadata_writer);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GifEncoderFrame_Block_SetWriterByIndex(IWICMetadataBlockWriter *iface, UINT index,
+        IWICMetadataWriter *metadata_writer)
+{
+    FIXME("iface %p, index %u, metadata_writer %p stub.\n", iface, index, metadata_writer);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI GifEncoderFrame_Block_RemoveWriterByIndex(IWICMetadataBlockWriter *iface, UINT index)
+{
+    FIXME("iface %p, index %u stub.\n", iface, index);
+
+    return E_NOTIMPL;
+}
+
+static const IWICMetadataBlockWriterVtbl GifFrameEncode_BlockVtbl = {
+    GifEncoderFrame_Block_QueryInterface,
+    GifEncoderFrame_Block_AddRef,
+    GifEncoderFrame_Block_Release,
+    GifEncoderFrame_Block_GetContainerFormat,
+    GifEncoderFrame_Block_GetCount,
+    GifEncoderFrame_Block_GetReaderByIndex,
+    GifEncoderFrame_Block_GetEnumerator,
+    GifEncoderFrame_Block_InitializeFromBlockReader,
+    GifEncoderFrame_Block_GetWriterByIndex,
+    GifEncoderFrame_Block_AddWriter,
+    GifEncoderFrame_Block_SetWriterByIndex,
+    GifEncoderFrame_Block_RemoveWriterByIndex,
+};
+
 static HRESULT WINAPI GifEncoder_CreateNewFrame(IWICBitmapEncoder *iface, IWICBitmapFrameEncode **frame, IPropertyBag2 **options)
 {
     GifEncoder *This = impl_from_IWICBitmapEncoder(iface);
@@ -2278,6 +2396,8 @@ static HRESULT WINAPI GifEncoder_CreateNewFrame(IWICBitmapEncoder *iface, IWICBi
             This->n_frames++;
 
             ret->IWICBitmapFrameEncode_iface.lpVtbl = &GifFrameEncode_Vtbl;
+            ret->IWICMetadataBlockWriter_iface.lpVtbl = &GifFrameEncode_BlockVtbl;
+
             ret->ref = 1;
             ret->encoder = This;
             ret->initialized = FALSE;
