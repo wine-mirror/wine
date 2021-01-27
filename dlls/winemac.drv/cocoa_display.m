@@ -183,7 +183,9 @@ done:
 /***********************************************************************
  *              macdrv_get_gpu_info_from_entry
  *
- * Starting from entry, search upwards to find the PCI GPU. And get GPU information from the PCI GPU entry.
+ * Starting from entry (which must be the GPU or a child below the GPU),
+ * search upwards to find the IOPCIDevice and get information from it.
+ * In case the GPU is not a PCI device, get properties from 'entry'.
  *
  * Returns non-zero value on failure.
  */
@@ -193,18 +195,21 @@ static int macdrv_get_gpu_info_from_entry(struct macdrv_gpu* gpu, io_registry_en
     io_registry_entry_t gpu_entry;
     kern_return_t result;
     int ret = -1;
-    char buffer[64];
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
     gpu_entry = entry;
-    while (![@"IOPCIDevice" isEqualToString:[(NSString*)IOObjectCopyClass(gpu_entry) autorelease]]
-           || get_entry_property_string(gpu_entry, CFSTR("IOName"), buffer, sizeof(buffer))
-           || strcmp(buffer, "display"))
+    while (![@"IOPCIDevice" isEqualToString:[(NSString*)IOObjectCopyClass(gpu_entry) autorelease]])
     {
         result = IORegistryEntryGetParentEntry(gpu_entry, kIOServicePlane, &parent_entry);
         if (gpu_entry != entry)
             IOObjectRelease(gpu_entry);
-        if (result != kIOReturnSuccess)
+        if (result == kIOReturnNoDevice)
+        {
+            /* If no IOPCIDevice node is found, get properties from the given entry. */
+            gpu_entry = entry;
+            break;
+        }
+        else if (result != kIOReturnSuccess)
         {
             [pool release];
             return ret;
@@ -409,6 +414,7 @@ static int macdrv_get_gpus_from_iokit(struct macdrv_gpu** new_gpus, int* count)
     int integrated_index = -1;
     int primary_index = 0;
     int gpu_count = 0;
+    char buffer[64];
     int ret = -1;
     int i;
 
@@ -422,7 +428,9 @@ static int macdrv_get_gpus_from_iokit(struct macdrv_gpu** new_gpus, int* count)
 
     while ((entry = IOIteratorNext(iterator)))
     {
-        if (!macdrv_get_gpu_info_from_entry(&gpus[gpu_count], entry))
+        if (!get_entry_property_string(entry, CFSTR("IOName"), buffer, sizeof(buffer)) &&
+            !strcmp(buffer, "display") &&
+            !macdrv_get_gpu_info_from_entry(&gpus[gpu_count], entry))
         {
             gpu_count++;
             assert(gpu_count < MAX_GPUS);
