@@ -467,8 +467,20 @@ static HRESULT WINAPI CommonEncoderFrame_Commit(IWICBitmapFrameEncode *iface)
 static HRESULT WINAPI CommonEncoderFrame_GetMetadataQueryWriter(IWICBitmapFrameEncode *iface,
     IWICMetadataQueryWriter **ppIMetadataQueryWriter)
 {
-    FIXME("(%p, %p): stub\n", iface, ppIMetadataQueryWriter);
-    return E_NOTIMPL;
+    CommonEncoderFrame *encoder = impl_from_IWICBitmapFrameEncode(iface);
+
+    TRACE("iface, %p, ppIMetadataQueryWriter %p.\n", iface, ppIMetadataQueryWriter);
+
+    if (!ppIMetadataQueryWriter)
+        return E_INVALIDARG;
+
+    if (!encoder->initialized)
+        return WINCODEC_ERR_NOTINITIALIZED;
+
+    if (!(encoder->parent->encoder_info.flags & ENCODER_FLAGS_SUPPORTS_METADATA))
+        return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+
+    return MetadataQueryWriter_CreateInstance(&encoder->IWICMetadataBlockWriter_iface, NULL, ppIMetadataQueryWriter);
 }
 
 static const IWICBitmapFrameEncodeVtbl CommonEncoderFrame_Vtbl = {

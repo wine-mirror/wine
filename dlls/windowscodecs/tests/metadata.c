@@ -3106,8 +3106,7 @@ static void test_metadata_writer(void)
         ok(hr == (tests[i].metadata_supported ? S_OK : E_INVALIDARG), "Got unexpected hr %#x, i %u.\n", hr, i);
 
         hr = IWICBitmapFrameEncode_GetMetadataQueryWriter(frameencode, &querywriter2);
-        todo_wine
-        ok(hr == (tests[i].succeeds_unitialized ? S_OK : WINCODEC_ERR_NOTINITIALIZED),
+        todo_wine_if(!i) ok(hr == (tests[i].succeeds_unitialized ? S_OK : WINCODEC_ERR_NOTINITIALIZED),
                 "Got unexpected hr %#x, i %u.\n", hr, i);
         if (hr == S_OK)
             IWICMetadataQueryWriter_Release(querywriter2);
@@ -3116,7 +3115,7 @@ static void test_metadata_writer(void)
         ok(hr == S_OK, "Got unexpected hr %#x, i %u.\n", hr, i);
 
         hr = IWICBitmapFrameEncode_GetMetadataQueryWriter(frameencode, &querywriter2);
-        todo_wine ok(hr == (tests[i].metadata_supported ? S_OK : WINCODEC_ERR_UNSUPPORTEDOPERATION),
+        todo_wine_if(!i) ok(hr == (tests[i].metadata_supported ? S_OK : WINCODEC_ERR_UNSUPPORTEDOPERATION),
                 "Got unexpected hr %#x, i %u.\n", hr, i);
 
         if (tests[i].metadata_supported)
@@ -3126,8 +3125,7 @@ static void test_metadata_writer(void)
         if (querywriter)
         {
             IWICMetadataQueryWriter_Release(querywriter);
-            if (querywriter2)
-                IWICMetadataQueryWriter_Release(querywriter2);
+            IWICMetadataQueryWriter_Release(querywriter2);
             IWICMetadataBlockWriter_Release(blockwriter);
         }
         IWICBitmapFrameEncode_Release(frameencode);

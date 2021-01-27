@@ -2117,8 +2117,17 @@ static HRESULT WINAPI GifFrameEncode_Commit(IWICBitmapFrameEncode *iface)
 
 static HRESULT WINAPI GifFrameEncode_GetMetadataQueryWriter(IWICBitmapFrameEncode *iface, IWICMetadataQueryWriter **writer)
 {
-    FIXME("%p, %p: stub\n", iface, writer);
-    return E_NOTIMPL;
+    GifFrameEncode *encode = impl_from_IWICBitmapFrameEncode(iface);
+
+    TRACE("iface, %p, writer %p.\n", iface, writer);
+
+    if (!writer)
+        return E_INVALIDARG;
+
+    if (!encode->initialized)
+        return WINCODEC_ERR_NOTINITIALIZED;
+
+    return MetadataQueryWriter_CreateInstance(&encode->IWICMetadataBlockWriter_iface, NULL, writer);
 }
 
 static const IWICBitmapFrameEncodeVtbl GifFrameEncode_Vtbl =
