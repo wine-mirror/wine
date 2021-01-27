@@ -190,6 +190,7 @@ DECL_HANDLER(get_mapping_committed_range);
 DECL_HANDLER(add_mapping_committed_range);
 DECL_HANDLER(is_same_mapping);
 DECL_HANDLER(list_processes);
+DECL_HANDLER(create_debug_obj);
 DECL_HANDLER(wait_debug_event);
 DECL_HANDLER(queue_exception_event);
 DECL_HANDLER(get_exception_status);
@@ -470,6 +471,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_add_mapping_committed_range,
     (req_handler)req_is_same_mapping,
     (req_handler)req_list_processes,
+    (req_handler)req_create_debug_obj,
     (req_handler)req_wait_debug_event,
     (req_handler)req_queue_exception_event,
     (req_handler)req_get_exception_status,
@@ -1130,6 +1132,10 @@ C_ASSERT( sizeof(struct list_processes_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct list_processes_reply, info_size) == 8 );
 C_ASSERT( FIELD_OFFSET(struct list_processes_reply, process_count) == 12 );
 C_ASSERT( sizeof(struct list_processes_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct create_debug_obj_request, access) == 12 );
+C_ASSERT( sizeof(struct create_debug_obj_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct create_debug_obj_reply, handle) == 8 );
+C_ASSERT( sizeof(struct create_debug_obj_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct wait_debug_event_request, get_handle) == 12 );
 C_ASSERT( sizeof(struct wait_debug_event_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct wait_debug_event_reply, pid) == 8 );

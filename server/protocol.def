@@ -1587,6 +1587,15 @@ struct process_info
 @END
 
 
+/* Create a debug object */
+@REQ(create_debug_obj)
+    unsigned int access;       /* wanted access rights */
+    VARARG(objattr,object_attributes); /* object attributes */
+@REPLY
+    obj_handle_t handle;       /* handle to the debug object */
+@END
+
+
 /* Wait for a debug event */
 @REQ(wait_debug_event)
     int           get_handle;  /* should we alloc a handle for waiting? */

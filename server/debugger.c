@@ -90,27 +90,29 @@ static const struct object_ops debug_event_ops =
 };
 
 static void debug_obj_dump( struct object *obj, int verbose );
+static struct object_type *debug_obj_get_type( struct object *obj );
 static int debug_obj_signaled( struct object *obj, struct wait_queue_entry *entry );
+static unsigned int debug_obj_map_access( struct object *obj, unsigned int access );
 static void debug_obj_destroy( struct object *obj );
 
 static const struct object_ops debug_obj_ops =
 {
     sizeof(struct debug_obj),      /* size */
     debug_obj_dump,                /* dump */
-    no_get_type,                   /* get_type */
+    debug_obj_get_type,            /* get_type */
     add_queue,                     /* add_queue */
     remove_queue,                  /* remove_queue */
     debug_obj_signaled,            /* signaled */
     no_satisfied,                  /* satisfied */
     no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
-    no_map_access,                 /* map_access */
+    debug_obj_map_access,          /* map_access */
     default_get_sd,                /* get_sd */
     default_set_sd,                /* set_sd */
-    no_get_full_name,              /* get_full_name */
+    default_get_full_name,         /* get_full_name */
     no_lookup_name,                /* lookup_name */
-    no_link_name,                  /* link_name */
-    NULL,                          /* unlink_name */
+    directory_link_name,           /* link_name */
+    default_unlink_name,           /* unlink_name */
     no_open_file,                  /* open_file */
     no_kernel_obj_list,            /* get_kernel_obj_list */
     no_close_handle,               /* close_handle */
@@ -360,11 +362,27 @@ static void debug_obj_dump( struct object *obj, int verbose )
              debug_obj->event_queue.next, debug_obj->event_queue.prev );
 }
 
+static struct object_type *debug_obj_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'D','e','b','u','g','O','b','j','e','c','t'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
+}
+
 static int debug_obj_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct debug_obj *debug_obj = (struct debug_obj *)obj;
     assert( obj->ops == &debug_obj_ops );
     return find_event_to_send( debug_obj ) != NULL;
+}
+
+static unsigned int debug_obj_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | DEBUG_READ_EVENT | DEBUG_QUERY_INFORMATION;
+    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | DEBUG_SET_INFORMATION;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE | DEBUG_PROCESS_ASSIGN;
+    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL | EVENT_QUERY_STATE | EVENT_MODIFY_STATE;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void debug_obj_destroy( struct object *obj )
@@ -376,6 +394,22 @@ static void debug_obj_destroy( struct object *obj )
     /* free all pending events */
     while ((ptr = list_head( &debug_obj->event_queue )))
         unlink_event( debug_obj, LIST_ENTRY( ptr, struct debug_event, entry ));
+}
+
+static struct debug_obj *create_debug_obj( struct object *root, const struct unicode_str *name,
+                                           unsigned int attr, const struct security_descriptor *sd )
+{
+    struct debug_obj *debug_obj;
+
+    if ((debug_obj = create_named_object( root, &debug_obj_ops, name, attr, sd )))
+    {
+        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
+        {
+            debug_obj->kill_on_exit = 1;
+            list_init( &debug_obj->event_queue );
+        }
+    }
+    return debug_obj;
 }
 
 /* continue a debug event */
@@ -638,6 +672,28 @@ void debug_exit_thread( struct thread *thread )
         release_object( thread->debug_obj );
         thread->debug_obj = NULL;
     }
+}
+
+/* create a debug object */
+DECL_HANDLER(create_debug_obj)
+{
+    struct debug_obj *debug_obj;
+    struct unicode_str name;
+    struct object *root;
+    const struct security_descriptor *sd;
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
+
+    if (!objattr) return;
+    if ((debug_obj = create_debug_obj( root, &name, objattr->attributes, sd )))
+    {
+        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
+            reply->handle = alloc_handle( current->process, debug_obj, req->access, objattr->attributes );
+        else
+            reply->handle = alloc_handle_no_access_check( current->process, debug_obj,
+                                                          req->access, objattr->attributes );
+        release_object( debug_obj );
+    }
+    if (root) release_object( root );
 }
 
 /* Wait for a debug event */

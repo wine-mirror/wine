@@ -2008,6 +2008,21 @@ struct list_processes_reply
 
 
 
+struct create_debug_obj_request
+{
+    struct request_header __header;
+    unsigned int access;
+    /* VARARG(objattr,object_attributes); */
+};
+struct create_debug_obj_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+    char __pad_12[4];
+};
+
+
+
 struct wait_debug_event_request
 {
     struct request_header __header;
@@ -5422,6 +5437,7 @@ enum request
     REQ_add_mapping_committed_range,
     REQ_is_same_mapping,
     REQ_list_processes,
+    REQ_create_debug_obj,
     REQ_wait_debug_event,
     REQ_queue_exception_event,
     REQ_get_exception_status,
@@ -5703,6 +5719,7 @@ union generic_request
     struct add_mapping_committed_range_request add_mapping_committed_range_request;
     struct is_same_mapping_request is_same_mapping_request;
     struct list_processes_request list_processes_request;
+    struct create_debug_obj_request create_debug_obj_request;
     struct wait_debug_event_request wait_debug_event_request;
     struct queue_exception_event_request queue_exception_event_request;
     struct get_exception_status_request get_exception_status_request;
@@ -5982,6 +5999,7 @@ union generic_reply
     struct add_mapping_committed_range_reply add_mapping_committed_range_reply;
     struct is_same_mapping_reply is_same_mapping_reply;
     struct list_processes_reply list_processes_reply;
+    struct create_debug_obj_reply create_debug_obj_reply;
     struct wait_debug_event_reply wait_debug_event_reply;
     struct queue_exception_event_reply queue_exception_event_reply;
     struct get_exception_status_reply get_exception_status_reply;
@@ -6189,7 +6207,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 655
+#define SERVER_PROTOCOL_VERSION 656
 
 /* ### protocol_version end ### */
 

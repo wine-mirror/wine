@@ -906,6 +906,31 @@ NTSTATUS WINAPI NtAssignProcessToJobObject( HANDLE job, HANDLE process )
 }
 
 
+/**********************************************************************
+ *           NtCreateDebugObject  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateDebugObject( HANDLE *handle, ACCESS_MASK access,
+                                     OBJECT_ATTRIBUTES *attr, ULONG flags )
+{
+    NTSTATUS ret;
+    data_size_t len;
+    struct object_attributes *objattr;
+
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+
+    SERVER_START_REQ( create_debug_obj )
+    {
+        req->access = access;
+        wine_server_add_data( req, objattr, len );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    free( objattr );
+    return ret;
+}
+
+
 /**************************************************************************
  *           NtCreateDirectoryObject   (NTDLL.@)
  */

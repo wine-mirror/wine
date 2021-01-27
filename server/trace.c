@@ -2150,6 +2150,17 @@ static void dump_list_processes_reply( const struct list_processes_reply *req )
     dump_varargs_process_info( ", data=", min(cur_size,req->info_size) );
 }
 
+static void dump_create_debug_obj_request( const struct create_debug_obj_request *req )
+{
+    fprintf( stderr, " access=%08x", req->access );
+    dump_varargs_object_attributes( ", objattr=", cur_size );
+}
+
+static void dump_create_debug_obj_reply( const struct create_debug_obj_reply *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
 static void dump_wait_debug_event_request( const struct wait_debug_event_request *req )
 {
     fprintf( stderr, " get_handle=%d", req->get_handle );
@@ -4455,6 +4466,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_add_mapping_committed_range_request,
     (dump_func)dump_is_same_mapping_request,
     (dump_func)dump_list_processes_request,
+    (dump_func)dump_create_debug_obj_request,
     (dump_func)dump_wait_debug_event_request,
     (dump_func)dump_queue_exception_event_request,
     (dump_func)dump_get_exception_status_request,
@@ -4732,6 +4744,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     NULL,
     (dump_func)dump_list_processes_reply,
+    (dump_func)dump_create_debug_obj_reply,
     (dump_func)dump_wait_debug_event_reply,
     (dump_func)dump_queue_exception_event_reply,
     NULL,
@@ -5009,6 +5022,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "add_mapping_committed_range",
     "is_same_mapping",
     "list_processes",
+    "create_debug_obj",
     "wait_debug_event",
     "queue_exception_event",
     "get_exception_status",

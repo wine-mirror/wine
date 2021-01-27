@@ -75,6 +75,7 @@ static NTSTATUS (WINAPI *pRtlWaitOnAddress)( const void *, const void *, SIZE_T,
 static void     (WINAPI *pRtlWakeAddressAll)( const void * );
 static void     (WINAPI *pRtlWakeAddressSingle)( const void * );
 static NTSTATUS (WINAPI *pNtOpenProcess)( HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *, const CLIENT_ID * );
+static NTSTATUS (WINAPI *pNtCreateDebugObject)( HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *, ULONG );
 
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002
@@ -418,6 +419,9 @@ static void test_all_kernel_objects( UINT line, OBJECT_ATTRIBUTES *attr,
     ok( status2 == open_expect, "%u: NtOpenSection failed %x\n", line, status2 );
     if (!status) pNtClose( ret );
     if (!status2) pNtClose( ret2 );
+    status = pNtCreateDebugObject( &ret, DEBUG_ALL_ACCESS, attr, 0 );
+    ok( status == create_expect, "%u: NtCreateDebugObject failed %x\n", line, status );
+    if (!status) pNtClose( ret );
 }
 
 static void test_name_limits(void)
@@ -1450,6 +1454,15 @@ static void test_query_object(void)
 
     pNtClose( handle );
 
+    RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_debug" );
+    status = pNtCreateDebugObject( &handle, DEBUG_ALL_ACCESS, &attr, 0 );
+    ok(!status, "NtCreateDebugObject failed: %x\n", status);
+
+    test_object_name( handle, L"\\BaseNamedObjects\\test_debug", FALSE );
+    test_object_type( handle, L"DebugObject" );
+    test_no_file_info( handle );
+    pNtClose(handle);
+
     status = pNtCreateDirectoryObject( &handle, DIRECTORY_QUERY, NULL );
     ok(status == STATUS_SUCCESS, "Failed to create Directory %08x\n", status);
 
@@ -2294,6 +2307,7 @@ START_TEST(om)
     pRtlWakeAddressAll      =  (void *)GetProcAddress(hntdll, "RtlWakeAddressAll");
     pRtlWakeAddressSingle   =  (void *)GetProcAddress(hntdll, "RtlWakeAddressSingle");
     pNtOpenProcess          =  (void *)GetProcAddress(hntdll, "NtOpenProcess");
+    pNtCreateDebugObject    =  (void *)GetProcAddress(hntdll, "NtCreateDebugObject");
 
     test_case_sensitive();
     test_namespace_pipe();
