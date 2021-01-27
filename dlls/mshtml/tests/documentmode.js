@@ -122,6 +122,20 @@ sync_test("xhr_props", function() {
     test_exposed("dispatchEvent", v >= 9);
 });
 
+sync_test("xhr open", function() {
+    var e = false;
+    try {
+        (new XMLHttpRequest()).open("GET", "https://www.winehq.org/");
+    }catch(ex) {
+        e = true;
+    }
+
+    if(document.documentMode < 10)
+        ok(e, "expected exception");
+    else
+        ok(!e, "unexpected exception");
+});
+
 sync_test("style_props", function() {
     var style = document.body.style;
 
