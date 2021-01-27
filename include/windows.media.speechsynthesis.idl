@@ -29,6 +29,7 @@ namespace Windows {
             typedef enum VoiceGender VoiceGender;
             interface IInstalledVoicesStatic;
             interface IVoiceInformation;
+            runtimeclass VoiceInformation;
         }
     }
 }
@@ -42,6 +43,29 @@ namespace Windows {
                 Male   = 0,
                 Female = 1
             };
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechSynthesis.VoiceInformation),
+                uuid(b127d6a4-1291-4604-aa9c-83134083352c)
+            ]
+            interface IVoiceInformation : IInspectable
+            {
+                [propget] HRESULT DisplayName([out] [retval] HSTRING* value);
+                [propget] HRESULT Id([out] [retval] HSTRING* value);
+                [propget] HRESULT Language([out] [retval] HSTRING* value);
+                [propget] HRESULT Description([out] [retval] HSTRING* value);
+                [propget] HRESULT Gender([out] [retval] VoiceGender* value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass VoiceInformation
+            {
+                [default] interface IVoiceInformation;
+            }
         }
     }
 }
