@@ -6673,19 +6673,19 @@ static void test_device_context_state(void)
         0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
     };
 
-    ID3DDeviceContextState *context_state, *previous_context_state;
+    ID3DDeviceContextState *context_state, *previous_context_state, *tmp_context_state, *context_state2;
     ID3D11SamplerState *sampler, *tmp_sampler;
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
     ID3D11ShaderResourceView *tmp_srv, *srv;
     D3D11_DEVICE_CONTEXT_TYPE context_type;
-    ID3D11DeviceContext1 *context = NULL;
+    ID3D11DeviceContext1 *context = NULL, *context2;
     D3D11_SAMPLER_DESC sampler_desc;
     D3D_FEATURE_LEVEL feature_level;
     ID3D11GeometryShader *tmp_gs, *gs;
-    ID3D11VertexShader *tmp_vs, *vs;
+    ID3D11VertexShader *tmp_vs, *vs, *vs2;
     ID3D11PixelShader *tmp_ps, *ps;
-    ID3D11Device *d3d11_device;
-    ID3D11Device1 *device;
+    ID3D11Device *d3d11_device, *d3d11_device2;
+    ID3D11Device1 *device, *device2;
     struct vec4 constant;
     ID3D11Buffer *cb, *srvb, *tmp_cb;
     ULONG refcount;
@@ -6809,6 +6809,8 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_VSSetSamplers(context, 0, 1, &sampler);
     ID3D11DeviceContext1_VSSetShader(context, vs, NULL, 0);
     ID3D11DeviceContext1_VSSetShaderResources(context, 0, 1, &srv);
+    refcount = get_refcount(vs);
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
     ID3D11DeviceContext1_GSSetConstantBuffers(context, 0, 1, &cb);
     ID3D11DeviceContext1_GSSetSamplers(context, 0, 1, &sampler);
@@ -6820,11 +6822,15 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_PSSetShader(context, ps, NULL, 0);
     ID3D11DeviceContext1_PSSetShaderResources(context, 0, 1, &srv);
 
+    previous_context_state = (ID3DDeviceContextState *)0xdeadbeef;
+    ID3D11DeviceContext1_SwapDeviceContextState(context, NULL, &previous_context_state);
+    todo_wine ok(previous_context_state == NULL, "Got unexpected state pointer.\n");
+    if (previous_context_state) ID3DDeviceContextState_Release(previous_context_state);
     previous_context_state = NULL;
     ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, &previous_context_state);
-    refcount = ID3DDeviceContextState_Release(context_state);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
     ok(previous_context_state != NULL, "Failed to get previous context state\n");
+    refcount = get_refcount(vs);
+    todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
     context_type = ID3D11DeviceContext1_GetType(context);
     ok(context_type == D3D11_DEVICE_CONTEXT_IMMEDIATE, "Unexpected context type %u.\n", context_type);
@@ -6868,11 +6874,64 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_PSGetShaderResources(context, 0, 1, &tmp_srv);
     ok(!tmp_srv, "Got unexpected srv %p.\n", tmp_srv);
 
-    ID3D11DeviceContext1_SwapDeviceContextState(context, previous_context_state, &context_state);
-    refcount = ID3DDeviceContextState_Release(context_state);
-    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    /* updating the device context should also update the device context state */
+    hr = ID3D11Device1_CreateVertexShader(device, simple_vs, sizeof(simple_vs), NULL, &vs2);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    ID3D11DeviceContext1_VSSetShader(context, vs2, NULL, 0);
+    ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, &tmp_context_state);
+    refcount = ID3DDeviceContextState_Release(tmp_context_state);
+    todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    todo_wine ok(tmp_context_state == context_state, "Got unexpected state pointer.\n");
+    tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
+    ID3D11DeviceContext1_VSGetShader(context, &tmp_vs, NULL, NULL);
+    todo_wine ok(tmp_vs == vs2, "Got shader %p, expected %p.\n", tmp_vs, vs2);
+    if (tmp_vs) refcount = ID3D11VertexShader_Release(tmp_vs);
+    else refcount = 0;
+    todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+
+    /* context states may be used with other devices instances too */
+    d3d11_device2 = create_device(NULL);
+    ok(!!d3d11_device2, "Failed to create device.\n");
+    hr = ID3D11Device_QueryInterface(d3d11_device2, &IID_ID3D11Device1, (void **)&device2);
+    ok(SUCCEEDED(hr), "Failed to query device interface, hr %#x.\n", hr);
+    ID3D11Device_Release(d3d11_device2);
+    ID3D11Device1_GetImmediateContext1(device2, &context2);
+    ok(!!context2, "Failed to get immediate context.\n");
+
+    ID3D11DeviceContext1_SwapDeviceContextState(context2, context_state, &tmp_context_state);
+    ok(!!tmp_context_state, "Failed to get context state.\n");
+    tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
+    ID3D11DeviceContext1_VSGetShader(context, &tmp_vs, NULL, NULL);
+    todo_wine ok(tmp_vs == vs2, "Got shader %p, expected %p.\n", tmp_vs, vs2);
+    if (tmp_vs) refcount = ID3D11VertexShader_Release(tmp_vs);
+    else refcount = 0;
+    todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ID3D11DeviceContext1_SwapDeviceContextState(context2, tmp_context_state, &context_state2);
+    refcount = ID3DDeviceContextState_Release(tmp_context_state);
+    ok(refcount == 0, "Got refcount %u, expected 1.\n", refcount);
+    refcount = ID3DDeviceContextState_Release(context_state2);
+    todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    todo_wine ok(context_state2 == context_state, "Got unexpected state pointer.\n");
+
+    refcount = ID3D11DeviceContext1_Release(context2);
+    ok(refcount == 0, "Got refcount %u, expected 0.\n", refcount);
+    refcount = ID3D11Device1_Release(device2);
+    ok(refcount == 0, "Got refcount %u, expected 0.\n", refcount);
+
+    ID3D11DeviceContext1_VSSetShader(context, NULL, NULL, 0);
+    refcount = ID3D11VertexShader_Release(vs2);
+    ok(refcount == 0, "Got refcount %u, expected 0.\n", refcount);
+
+    ID3D11DeviceContext1_SwapDeviceContextState(context, previous_context_state, &tmp_context_state);
     refcount = ID3DDeviceContextState_Release(previous_context_state);
     ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    refcount = ID3DDeviceContextState_Release(tmp_context_state);
+    todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    refcount = ID3DDeviceContextState_Release(context_state);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    todo_wine ok(tmp_context_state == context_state, "Got unexpected state pointer.\n");
+    refcount = get_refcount(vs);
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
     /* ID3DDeviceContextState retains the previous state. */
 
