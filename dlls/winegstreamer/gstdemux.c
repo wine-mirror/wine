@@ -823,10 +823,10 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
 
 static DWORD CALLBACK push_data(LPVOID iface)
 {
-    LONGLONG maxlen, curlen;
     struct parser *This = iface;
     GstMapInfo mapping;
     GstBuffer *buffer;
+    LONGLONG maxlen;
     HRESULT hr;
 
     if (!(buffer = gst_buffer_new_allocate(NULL, 16384, NULL)))
@@ -837,10 +837,7 @@ static DWORD CALLBACK push_data(LPVOID iface)
 
     IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
 
-    if (!This->stop)
-        IAsyncReader_Length(This->reader, &maxlen, &curlen);
-    else
-        maxlen = This->stop;
+    maxlen = This->stop ? This->stop : This->filesize;
 
     TRACE("Starting..\n");
     for (;;) {
