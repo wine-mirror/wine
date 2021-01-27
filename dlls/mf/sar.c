@@ -228,7 +228,13 @@ static ULONG WINAPI audio_renderer_sink_AddRef(IMFMediaSink *iface)
 
 static void audio_renderer_release_audio_client(struct audio_renderer *renderer)
 {
+    struct queued_object *obj, *obj2;
+
     MFCancelWorkItem(renderer->buffer_ready_key);
+    LIST_FOR_EACH_ENTRY_SAFE(obj, obj2, &renderer->queue, struct queued_object, entry)
+    {
+        release_pending_object(obj);
+    }
     renderer->buffer_ready_key = 0;
     if (renderer->audio_client)
     {
@@ -253,7 +259,6 @@ static ULONG WINAPI audio_renderer_sink_Release(IMFMediaSink *iface)
 {
     struct audio_renderer *renderer = impl_from_IMFMediaSink(iface);
     ULONG refcount = InterlockedDecrement(&renderer->refcount);
-    struct queued_object *obj, *obj2;
 
     TRACE("%p, refcount %u.\n", iface, refcount);
 
@@ -273,10 +278,6 @@ static ULONG WINAPI audio_renderer_sink_Release(IMFMediaSink *iface)
             IMFMediaType_Release(renderer->current_media_type);
         audio_renderer_release_audio_client(renderer);
         CloseHandle(renderer->buffer_ready_event);
-        LIST_FOR_EACH_ENTRY_SAFE(obj, obj2, &renderer->queue, struct queued_object, entry)
-        {
-            release_pending_object(obj);
-        }
         DeleteCriticalSection(&renderer->cs);
         heap_free(renderer);
     }
