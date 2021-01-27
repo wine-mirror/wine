@@ -590,6 +590,103 @@ static void test_error(void)
     IMFMediaError_Release(eo);
 }
 
+static void test_time_range(void)
+{
+    IMFMediaTimeRange *range;
+    double start, end;
+    DWORD count;
+    HRESULT hr;
+    BOOL ret;
+
+    hr = IMFMediaEngineClassFactory_CreateTimeRange(factory, &range);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Empty ranges. */
+    hr = IMFMediaTimeRange_Clear(range);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    ret = IMFMediaTimeRange_ContainsTime(range, 10.0);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+
+    count = IMFMediaTimeRange_GetLength(range);
+    ok(!count, "Unexpected range count.\n");
+
+    hr = IMFMediaTimeRange_GetStart(range, 0, &start);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    /* Add a range. */
+    hr = IMFMediaTimeRange_AddRange(range, 10.0, 1.0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = IMFMediaTimeRange_GetLength(range);
+    ok(count == 1, "Unexpected range count.\n");
+
+    hr = IMFMediaTimeRange_GetStart(range, 0, &start);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(start == 10.0, "Unexpected start %.e.\n", start);
+
+    hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(end == 1.0, "Unexpected end %.e.\n", end);
+
+    hr = IMFMediaTimeRange_AddRange(range, 2.0, 3.0);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = IMFMediaTimeRange_GetLength(range);
+    ok(count == 1, "Unexpected range count.\n");
+
+    hr = IMFMediaTimeRange_GetStart(range, 0, &start);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(start == 2.0, "Unexpected start %.8e.\n", start);
+
+    hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(end == 3.0, "Unexpected end %.8e.\n", end);
+
+    hr = IMFMediaTimeRange_AddRange(range, 10.0, 9.0);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = IMFMediaTimeRange_GetLength(range);
+todo_wine
+    ok(count == 2, "Unexpected range count.\n");
+
+    hr = IMFMediaTimeRange_GetStart(range, 0, &start);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(start == 2.0, "Unexpected start %.8e.\n", start);
+
+    hr = IMFMediaTimeRange_GetEnd(range, 0, &end);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(end == 3.0, "Unexpected end %.8e.\n", end);
+
+    start = 0.0;
+    hr = IMFMediaTimeRange_GetStart(range, 1, &start);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(start == 10.0, "Unexpected start %.8e.\n", start);
+}
+    hr = IMFMediaTimeRange_GetEnd(range, 1, &end);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(end == 9.0, "Unexpected end %.8e.\n", end);
+}
+    hr = IMFMediaTimeRange_Clear(range);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = IMFMediaTimeRange_GetLength(range);
+    ok(!count, "Unexpected range count.\n");
+
+    IMFMediaTimeRange_Release(range);
+}
+
 START_TEST(mfmediaengine)
 {
     HRESULT hr;
@@ -617,6 +714,7 @@ START_TEST(mfmediaengine)
     test_playback_rate();
     test_mute();
     test_error();
+    test_time_range();
 
     IMFMediaEngineClassFactory_Release(factory);
 
