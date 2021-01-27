@@ -1106,6 +1106,36 @@ static void test_css_style_declaration2(IHTMLCSSStyleDeclaration2 *css_style)
     ok(hres == S_OK, "get_perspective failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) && !lstrcmpW(V_BSTR(&v), L"100px"), "perspective = %s\n", wine_dbgstr_variant(&v));
     VariantClear(&v);
+
+    /* animation property */
+    hres = IHTMLCSSStyleDeclaration2_put_animation(css_style, NULL);
+    ok(hres == S_OK, "put_animation failed: %08x\n", hres);
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLCSSStyleDeclaration2_get_animation(css_style, &str);
+    ok(hres == S_OK, "get_animation failed: %08x\n", hres);
+    ok(!str, "animation = %s\n", wine_dbgstr_w(str));
+
+    str = SysAllocString(L"test");
+    hres = IHTMLCSSStyleDeclaration2_put_animation(css_style, str);
+    ok(hres == S_OK, "put_animation failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLCSSStyleDeclaration2_get_animation(css_style, &str);
+    ok(hres == S_OK, "get_animation failed: %08x\n", hres);
+    todo_wine
+    ok(!lstrcmpW(str, L"test"), "animation = %s\n", wine_dbgstr_w(str));
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLCSSStyleDeclaration2_get_animationName(css_style, &str);
+    ok(hres == S_OK, "get_animationName failed: %08x\n", hres);
+    ok(!lstrcmpW(str, L"test"), "animationName = %s\n", wine_dbgstr_w(str));
+
+    str = SysAllocString(L"test");
+    hres = IHTMLCSSStyleDeclaration2_put_animation(css_style, NULL);
+    ok(hres == S_OK, "put_animation failed: %08x\n", hres);
+    SysFreeString(str);
 }
 
 static void test_body_style(IHTMLStyle *style)

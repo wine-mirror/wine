@@ -44,6 +44,7 @@ struct HTMLStyle {
 
 /* NOTE: Make sure to keep in sync with style_tbl in htmlstyle.c */
 typedef enum {
+    STYLEID_ANIMATION,
     STYLEID_ANIMATION_NAME,
     STYLEID_BACKGROUND,
     STYLEID_BACKGROUND_ATTACHMENT,
