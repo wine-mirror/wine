@@ -397,10 +397,16 @@ static HRESULT WINAPI BmpFrameEncode_Commit(IWICBitmapFrameEncode *iface)
 }
 
 static HRESULT WINAPI BmpFrameEncode_GetMetadataQueryWriter(IWICBitmapFrameEncode *iface,
-    IWICMetadataQueryWriter **ppIMetadataQueryWriter)
+        IWICMetadataQueryWriter **query_writer)
 {
-    FIXME("(%p, %p): stub\n", iface, ppIMetadataQueryWriter);
-    return E_NOTIMPL;
+    BmpFrameEncode *encoder = impl_from_IWICBitmapFrameEncode(iface);
+
+    TRACE("iface %p, query_writer %p.\n", iface, query_writer);
+
+    if (!encoder->initialized)
+        return WINCODEC_ERR_NOTINITIALIZED;
+
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 }
 
 static const IWICBitmapFrameEncodeVtbl BmpFrameEncode_Vtbl = {
