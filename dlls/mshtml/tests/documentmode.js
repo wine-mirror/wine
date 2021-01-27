@@ -17,8 +17,9 @@
  */
 
 var compat_version;
+var tests = [];
 
-function test_elem_props() {
+sync_test("elem_props", function() {
     var elem = document.documentElement;
 
     function test_exposed(prop, expect) {
@@ -41,11 +42,9 @@ function test_elem_props() {
     test_exposed("addEventListener", v >= 9);
     test_exposed("removeEventListener", v >= 9);
     test_exposed("dispatchEvent", v >= 9);
+});
 
-    next_test();
-}
-
-function test_doc_props() {
+sync_test("doc_props", function() {
     function test_exposed(prop, expect) {
         if(expect)
             ok(prop in document, prop + " not found in document.");
@@ -66,11 +65,9 @@ function test_doc_props() {
 
     test_exposed("parentWindow", true);
     if(v >= 9) ok(document.defaultView === document.parentWindow, "defaultView != parentWindow");
+});
 
-    next_test();
-}
-
-function test_docfrag_props() {
+sync_test("docfrag_props", function() {
     var docfrag = document.createDocumentFragment();
 
     function test_exposed(prop, expect) {
@@ -83,11 +80,9 @@ function test_docfrag_props() {
     var v = document.documentMode;
 
     test_exposed("compareDocumentPosition", v >= 9);
+});
 
-    next_test();
-}
-
-function test_window_props() {
+sync_test("window_props", function() {
     function test_exposed(prop, expect) {
         if(expect)
             ok(prop in window, prop + " not found in window.");
@@ -108,11 +103,9 @@ function test_window_props() {
     test_exposed("getComputedStyle", v >= 9);
     if(v >= 9) /* FIXME: native exposes it in all compat modes */
         test_exposed("performance", true);
+});
 
-    next_test();
-}
-
-function test_xhr_props() {
+sync_test("xhr_props", function() {
     var xhr = new XMLHttpRequest();
 
     function test_exposed(prop, expect) {
@@ -127,11 +120,9 @@ function test_xhr_props() {
     test_exposed("addEventListener", v >= 9);
     test_exposed("removeEventListener", v >= 9);
     test_exposed("dispatchEvent", v >= 9);
+});
 
-    next_test();
-}
-
-function test_style_props() {
+sync_test("style_props", function() {
     var style = document.body.style;
 
     function test_exposed(prop, expect) {
@@ -186,11 +177,9 @@ function test_style_props() {
         test_exposed("background-clip", v >= 9);
         test_exposed("transform", v >= 10);
     }
+});
 
-    next_test();
-}
-
-function test_javascript() {
+sync_test("JS objs", function() {
     var g = window;
 
     function test_exposed(func, obj, expect) {
@@ -239,11 +228,9 @@ function test_javascript() {
     test_parses("if(false) { o.default; }", v >= 9);
     test_parses("if(false) { o.with; }", v >= 9);
     test_parses("if(false) { o.if; }", v >= 9);
+});
 
-    next_test();
-}
-
-function test_elem_by_id() {
+sync_test("elem_by_id", function() {
     document.body.innerHTML = '<form id="testid" name="testname"></form>';
 
     var id_elem = document.getElementById("testid");
@@ -254,11 +241,9 @@ function test_elem_by_id() {
         ok(id_elem === name_elem, "id_elem != id_elem");
     else
         ok(name_elem === null, "name_elem != null");
+});
 
-    next_test();
-}
-
-function test_doc_mode() {
+sync_test("doc_mode", function() {
     compat_version = parseInt(document.location.search.substring(1));
 
     trace("Testing compatibility mode " + compat_version);
@@ -275,11 +260,9 @@ function test_doc_mode() {
         ok(document.compatMode === "CSS1Compat", "document.compatMode = " + document.compatMode);
     else
         ok(document.compatMode === "BackCompat", "document.compatMode = " + document.compatMode);
+});
 
-    next_test();
-}
-
-function test_iframe_doc_mode() {
+async_test("iframe_doc_mode", function() {
     var iframe = document.createElement("iframe");
 
     iframe.onload = function() {
@@ -293,9 +276,9 @@ function test_iframe_doc_mode() {
 
     iframe.src = "about:blank";
     document.body.appendChild(iframe);
-}
+});
 
-function test_conditional_comments() {
+sync_test("conditional_comments", function() {
     var div = document.createElement("div");
     document.body.appendChild(div);
 
@@ -323,20 +306,4 @@ function test_conditional_comments() {
     test_version(6);
     test_version(7);
     test_version(8);
-
-    next_test();
-}
-
-var tests = [
-    test_doc_mode,
-    test_iframe_doc_mode,
-    test_elem_props,
-    test_doc_props,
-    test_docfrag_props,
-    test_window_props,
-    test_javascript,
-    test_xhr_props,
-    test_style_props,
-    test_elem_by_id,
-    test_conditional_comments
-];
+});
