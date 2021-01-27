@@ -1750,17 +1750,14 @@ static HRESULT WINAPI audio_renderer_render_callback_GetParameters(IMFAsyncCallb
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI audio_renderer_render_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+static void audio_renderer_render(struct audio_renderer *renderer, IMFAsyncResult *result)
 {
-    struct audio_renderer *renderer = impl_from_render_callback_IMFAsyncCallback(iface);
     unsigned int src_frames, dst_frames, max_frames, src_len;
     struct queued_object *obj, *obj2;
     BOOL keep_sample = FALSE;
     IMFMediaBuffer *buffer;
     BYTE *dst, *src;
     HRESULT hr;
-
-    EnterCriticalSection(&renderer->cs);
 
     LIST_FOR_EACH_ENTRY_SAFE(obj, obj2, &renderer->queue, struct queued_object, entry)
     {
@@ -1816,7 +1813,15 @@ static HRESULT WINAPI audio_renderer_render_callback_Invoke(IMFAsyncCallback *if
 
     if (FAILED(hr = MFPutWaitingWorkItem(renderer->buffer_ready_event, 0, result, &renderer->buffer_ready_key)))
         WARN("Failed to submit wait item, hr %#x.\n", hr);
+}
 
+static HRESULT WINAPI audio_renderer_render_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    struct audio_renderer *renderer = impl_from_render_callback_IMFAsyncCallback(iface);
+
+    EnterCriticalSection(&renderer->cs);
+    if (!(renderer->flags & SAR_SHUT_DOWN))
+        audio_renderer_render(renderer, result);
     LeaveCriticalSection(&renderer->cs);
 
     return S_OK;
