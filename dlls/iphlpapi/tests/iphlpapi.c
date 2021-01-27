@@ -1277,6 +1277,7 @@ static void testWin2KFunctions(void)
 
 static void test_GetAdaptersAddresses(void)
 {
+    BOOL dns_eligible_found = FALSE;
     ULONG ret, size, osize, i;
     IP_ADAPTER_ADDRESSES *aa, *ptr;
     IP_ADAPTER_UNICAST_ADDRESS *ua;
@@ -1349,6 +1350,10 @@ static void test_GetAdaptersAddresses(void)
                   S(U(*ua)).Flags, ua->PrefixOrigin, ua->SuffixOrigin, ua->DadState,
                   ua->ValidLifetime, ua->PreferredLifetime, ua->LeaseLifetime,
                   S(U(*ua)).Length < sizeof(IP_ADAPTER_UNICAST_ADDRESS_LH) ? 0 : ua->OnLinkPrefixLength);
+
+            if (ua->Flags & IP_ADAPTER_ADDRESS_DNS_ELIGIBLE)
+                dns_eligible_found = TRUE;
+
             ua = ua->Next;
         }
         for (i = 0, temp[0] = '\0'; i < ARRAY_SIZE(aa->ZoneIndices); i++)
@@ -1380,6 +1385,7 @@ static void test_GetAdaptersAddresses(void)
             ok(!strcasecmp(aa->AdapterName, buf), "expected '%s' got '%s'\n", aa->AdapterName, buf);
         }
     }
+    ok(dns_eligible_found, "Did not find any dns eligible addresses.\n");
     HeapFree(GetProcessHeap(), 0, ptr);
 }
 

@@ -94,6 +94,9 @@ typedef NL_DAD_STATE IP_DAD_STATE;
 
 #ifdef _WINSOCK2API_
 
+#define IP_ADAPTER_ADDRESS_DNS_ELIGIBLE 0x00000001
+#define IP_ADAPTER_ADDRESS_TRANSIENT    0x00000002
+
 typedef struct _IP_ADAPTER_UNICAST_ADDRESS_LH {
     union {
         struct {
