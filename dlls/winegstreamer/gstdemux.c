@@ -74,7 +74,7 @@ struct parser
     pthread_cond_t init_cond;
     bool no_more_pads, has_duration, error;
 
-    HANDLE push_thread;
+    pthread_t push_thread;
 
     HANDLE read_thread;
     pthread_cond_t read_cond, read_done_cond;
@@ -823,7 +823,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
 
 static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 offset, guint size, GstBuffer **buffer);
 
-static DWORD CALLBACK push_data(LPVOID iface)
+static void *push_data(void *iface)
 {
     struct parser *This = iface;
     GstBuffer *buffer;
@@ -834,7 +834,7 @@ static DWORD CALLBACK push_data(LPVOID iface)
     if (!(buffer = gst_buffer_new_allocate(NULL, 16384, NULL)))
     {
         GST_ERROR("Failed to allocate memory.");
-        return 0;
+        return NULL;
     }
 
     maxlen = This->stop ? This->stop : This->filesize;
@@ -869,7 +869,7 @@ static DWORD CALLBACK push_data(LPVOID iface)
 
     GST_DEBUG("Stopping push thread.");
 
-    return 0;
+    return NULL;
 }
 
 static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *buffer)
@@ -1426,16 +1426,22 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
         TRACE("Deactivating\n");
         IAsyncReader_BeginFlush(This->reader);
         if (This->push_thread) {
-            WaitForSingleObject(This->push_thread, -1);
-            CloseHandle(This->push_thread);
-            This->push_thread = NULL;
+            pthread_join(This->push_thread, NULL);
+            This->push_thread = 0;
         }
         IAsyncReader_EndFlush(This->reader);
         if (This->filter.state == State_Stopped)
             This->nextofs = This->start;
     } else if (!This->push_thread) {
+        int ret;
+
         TRACE("Activating\n");
-        This->push_thread = CreateThread(NULL, 0, push_data, This, 0, NULL);
+        if ((ret = pthread_create(&This->push_thread, NULL, push_data, This)))
+        {
+            GST_ERROR("Failed to create push thread: %s", strerror(errno));
+            This->push_thread = 0;
+            return FALSE;
+        }
     }
     LeaveCriticalSection(&This->filter.filter_cs);
     return TRUE;
