@@ -52,7 +52,8 @@
 struct notify
 {
     struct list       entry;    /* entry in list of notifications */
-    struct event     *event;    /* event to set when changing this key */
+    struct event    **events;   /* events to set when changing this key */
+    unsigned int      event_count; /* number of events */
     int               subtree;  /* true if subtree notification */
     unsigned int      filter;   /* which events to notify on */
     obj_handle_t      hkey;     /* hkey associated with this notification */
@@ -314,12 +315,17 @@ static struct object_type *key_get_type( struct object *obj )
 /* notify waiter and maybe delete the notification */
 static void do_notification( struct key *key, struct notify *notify, int del )
 {
-    if (notify->event)
+    unsigned int i;
+
+    for (i = 0; i < notify->event_count; ++i)
     {
-        set_event( notify->event );
-        release_object( notify->event );
-        notify->event = NULL;
+        set_event( notify->events[i] );
+        release_object( notify->events[i] );
     }
+    free( notify->events );
+    notify->events = NULL;
+    notify->event_count = 0;
+
     if (del)
     {
         list_remove( &notify->entry );
@@ -2283,20 +2289,13 @@ DECL_HANDLER(set_registry_notification)
         if (event)
         {
             notify = find_notify( key, current->process, req->hkey );
-            if (notify)
-            {
-                if (notify->event)
-                    release_object( notify->event );
-                grab_object( event );
-                notify->event = event;
-            }
-            else
+            if (!notify)
             {
                 notify = mem_alloc( sizeof(*notify) );
                 if (notify)
                 {
-                    grab_object( event );
-                    notify->event   = event;
+                    notify->events  = NULL;
+                    notify->event_count = 0;
                     notify->subtree = req->subtree;
                     notify->filter  = req->filter;
                     notify->hkey    = req->hkey;
@@ -2306,8 +2305,16 @@ DECL_HANDLER(set_registry_notification)
             }
             if (notify)
             {
-                reset_event( event );
-                set_error( STATUS_PENDING );
+                struct event **new_array;
+
+                if ((new_array = realloc( notify->events, (notify->event_count + 1) * sizeof(*notify->events) )))
+                {
+                    notify->events = new_array;
+                    notify->events[notify->event_count++] = (struct event *)grab_object( event );
+                    reset_event( event );
+                    set_error( STATUS_PENDING );
+                }
+                else set_error( STATUS_NO_MEMORY );
             }
             release_object( event );
         }
