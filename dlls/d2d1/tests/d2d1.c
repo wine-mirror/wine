@@ -412,7 +412,7 @@ static void get_d3d11_surface_readback(IDXGISurface *surface, struct resource_re
     ID3D11Resource_Release(src_resource);
     ID3D11Device_Release(device);
 
-    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)rb->u.d3d11_resource, 0, D3D11_MAP_READ, 0, &map_desc);
+    hr = ID3D11DeviceContext_Map(context, rb->u.d3d11_resource, 0, D3D11_MAP_READ, 0, &map_desc);
     ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
     ID3D11DeviceContext_Release(context);
 
