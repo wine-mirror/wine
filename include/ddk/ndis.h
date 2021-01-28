@@ -21,6 +21,8 @@
 #ifndef _NDIS_
 #define _NDIS_
 
+#include <ntddndis.h>
+
 typedef ULONG NDIS_AF, *PNDIS_AF;
 typedef MDL   NDIS_BUFFER, *PNDIS_BUFFER;
 typedef void *NDIS_HANDLE, *PNDIS_HANDLE, *PNDIS_PACKET_POOL;
