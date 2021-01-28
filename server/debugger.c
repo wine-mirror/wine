@@ -47,6 +47,7 @@ struct debug_event
     struct list            entry;     /* entry in event queue */
     struct thread         *sender;    /* thread which sent this event */
     struct thread         *debugger;  /* debugger thread receiving the event */
+    struct file           *file;      /* file object for events that need one */
     enum debug_event_state state;     /* event state */
     int                    status;    /* continuation status */
     debug_event_t          data;      /* event data */
@@ -122,51 +123,29 @@ static const struct object_ops debug_obj_ops =
 
 /* routines to build an event according to its type */
 
-static int fill_exception_event( struct debug_event *event, const void *arg )
+static void fill_exception_event( struct debug_event *event, const void *arg )
 {
     const debug_event_t *data = arg;
     event->data.exception = data->exception;
     event->data.exception.nb_params = min( event->data.exception.nb_params, EXCEPTION_MAXIMUM_PARAMETERS );
-    return 1;
 }
 
-static int fill_create_thread_event( struct debug_event *event, const void *arg )
+static void fill_create_thread_event( struct debug_event *event, const void *arg )
 {
-    struct process *debugger = event->debugger->process;
     struct thread *thread = event->sender;
     const client_ptr_t *entry = arg;
-    obj_handle_t handle;
 
-    /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
-    if (!(handle = alloc_handle( debugger, thread, THREAD_ALL_ACCESS, 0 ))) return 0;
-    event->data.create_thread.handle = handle;
     event->data.create_thread.teb    = thread->teb;
     if (entry) event->data.create_thread.start = *entry;
-    return 1;
 }
 
-static int fill_create_process_event( struct debug_event *event, const void *arg )
+static void fill_create_process_event( struct debug_event *event, const void *arg )
 {
-    struct process *debugger = event->debugger->process;
     struct thread *thread = event->sender;
     struct process *process = thread->process;
     struct process_dll *exe_module = get_process_exe_module( process );
     const client_ptr_t *entry = arg;
-    struct file *file;
-    obj_handle_t handle;
 
-    /* documented: PROCESS_VM_READ | PROCESS_VM_WRITE */
-    if (!(handle = alloc_handle( debugger, process, PROCESS_ALL_ACCESS, 0 ))) return 0;
-    event->data.create_process.process = handle;
-
-    /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
-    if (!(handle = alloc_handle( debugger, thread, THREAD_ALL_ACCESS, 0 )))
-    {
-        close_handle( debugger, event->data.create_process.process );
-        return 0;
-    }
-    event->data.create_process.thread     = handle;
-    event->data.create_process.file       = 0;
     event->data.create_process.teb        = thread->teb;
     event->data.create_process.base       = exe_module->base;
     event->data.create_process.start      = *entry;
@@ -176,35 +155,26 @@ static int fill_create_process_event( struct debug_event *event, const void *arg
     event->data.create_process.unicode    = 1;
 
     /* the doc says write access too, but this doesn't seem a good idea */
-    if ((file = get_mapping_file( process, exe_module->base, GENERIC_READ,
-                                  FILE_SHARE_READ | FILE_SHARE_WRITE )))
-    {
-        event->data.create_process.file = alloc_handle( debugger, file, GENERIC_READ, 0 );
-        release_object( file );
-    }
-    return 1;
+    event->file = get_mapping_file( process, exe_module->base, GENERIC_READ,
+                                    FILE_SHARE_READ | FILE_SHARE_WRITE );
 }
 
-static int fill_exit_thread_event( struct debug_event *event, const void *arg )
+static void fill_exit_thread_event( struct debug_event *event, const void *arg )
 {
     const struct thread *thread = arg;
     event->data.exit.exit_code = thread->exit_code;
-    return 1;
 }
 
-static int fill_exit_process_event( struct debug_event *event, const void *arg )
+static void fill_exit_process_event( struct debug_event *event, const void *arg )
 {
     const struct process *process = arg;
     event->data.exit.exit_code = process->exit_code;
-    return 1;
 }
 
-static int fill_load_dll_event( struct debug_event *event, const void *arg )
+static void fill_load_dll_event( struct debug_event *event, const void *arg )
 {
     struct process *process = event->sender->process;
-    struct process *debugger = event->debugger->process;
     const struct process_dll *dll = arg;
-    struct file *file;
 
     event->data.load_dll.handle     = 0;
     event->data.load_dll.base       = dll->base;
@@ -212,22 +182,16 @@ static int fill_load_dll_event( struct debug_event *event, const void *arg )
     event->data.load_dll.dbg_size   = dll->dbg_size;
     event->data.load_dll.name       = dll->name;
     event->data.load_dll.unicode    = 1;
-    if ((file = get_mapping_file( process, dll->base, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE )))
-    {
-        event->data.load_dll.handle = alloc_handle( debugger, file, GENERIC_READ, 0 );
-        release_object( file );
-    }
-    return 1;
+    event->file = get_mapping_file( process, dll->base, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE );
 }
 
-static int fill_unload_dll_event( struct debug_event *event, const void *arg )
+static void fill_unload_dll_event( struct debug_event *event, const void *arg )
 {
     const mod_handle_t *base = arg;
     event->data.unload_dll.base = *base;
-    return 1;
 }
 
-typedef int (*fill_event_func)( struct debug_event *event, const void *arg );
+typedef void (*fill_event_func)( struct debug_event *event, const void *arg );
 
 #define NB_DEBUG_EVENTS UNLOAD_DLL_DEBUG_EVENT
 
@@ -242,6 +206,30 @@ static const fill_event_func fill_debug_event[NB_DEBUG_EVENTS] =
     fill_unload_dll_event            /* UNLOAD_DLL_DEBUG_EVENT */
 };
 
+/* allocate the necessary handles in the event data */
+static void alloc_event_handles( struct debug_event *event, struct process *process )
+{
+    switch (event->data.code)
+    {
+    case CREATE_THREAD_DEBUG_EVENT:
+        /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
+        event->data.create_thread.handle = alloc_handle( process, event->sender, THREAD_ALL_ACCESS, 0 );
+        break;
+    case CREATE_PROCESS_DEBUG_EVENT:
+        event->data.create_process.thread = alloc_handle( process, event->sender, THREAD_ALL_ACCESS, 0 );
+        /* documented: PROCESS_VM_READ | PROCESS_VM_WRITE */
+        event->data.create_process.process = alloc_handle( process, event->sender->process,
+                                                           PROCESS_ALL_ACCESS, 0 );
+        if (event->file)
+            event->data.create_process.file = alloc_handle( process, event->file, GENERIC_READ, 0 );
+        break;
+    case LOAD_DLL_DEBUG_EVENT:
+        if (event->file)
+            event->data.load_dll.handle = alloc_handle( process, event->file, GENERIC_READ, 0 );
+        break;
+    }
+    clear_error();  /* ignore errors, simply set handles to 0 */
+}
 
 /* unlink the first event from the queue */
 static void unlink_event( struct debug_obj *debug_obj, struct debug_event *event )
@@ -328,28 +316,7 @@ static void debug_event_destroy( struct object *obj )
     struct debug_event *event = (struct debug_event *)obj;
     assert( obj->ops == &debug_event_ops );
 
-    /* If the event has been sent already, the handles are now under the */
-    /* responsibility of the debugger process, so we don't touch them    */
-    if (event->state == EVENT_QUEUED)
-    {
-        struct process *debugger = event->debugger->process;
-        switch(event->data.code)
-        {
-        case CREATE_THREAD_DEBUG_EVENT:
-            close_handle( debugger, event->data.create_thread.handle );
-            break;
-        case CREATE_PROCESS_DEBUG_EVENT:
-            if (event->data.create_process.file)
-                close_handle( debugger, event->data.create_process.file );
-            close_handle( debugger, event->data.create_process.thread );
-            close_handle( debugger, event->data.create_process.process );
-            break;
-        case LOAD_DLL_DEBUG_EVENT:
-            if (event->data.load_dll.handle)
-                close_handle( debugger, event->data.load_dll.handle );
-            break;
-        }
-    }
+    if (event->file) release_object( event->file );
     release_object( event->sender );
     release_object( event->debugger );
 }
@@ -480,14 +447,10 @@ static struct debug_event *alloc_debug_event( struct thread *thread, int code, c
     event->state     = EVENT_QUEUED;
     event->sender    = (struct thread *)grab_object( thread );
     event->debugger  = (struct thread *)grab_object( debugger );
+    event->file      = NULL;
     memset( &event->data, 0, sizeof(event->data) );
 
-    if (!fill_debug_event[code-1]( event, arg ))
-    {
-        event->data.code = -1;  /* make sure we don't attempt to close handles */
-        release_object( event );
-        return NULL;
-    }
+    fill_debug_event[code-1]( event, arg );
     event->data.code = code;
     return event;
 }
@@ -710,13 +673,12 @@ DECL_HANDLER(wait_debug_event)
     reply->wait = 0;
     if ((event = find_event_to_send( debug_obj )))
     {
-        data_size_t size = get_reply_max_size();
         event->state = EVENT_SENT;
         event->sender->process->debug_event = event;
         reply->pid = get_process_id( event->sender->process );
         reply->tid = get_thread_id( event->sender );
-        if (size > sizeof(debug_event_t)) size = sizeof(debug_event_t);
-        set_reply_data( &event->data, size );
+        alloc_event_handles( event, current->process );
+        set_reply_data( &event->data, min( get_reply_max_size(), sizeof(event->data) ));
     }
     else  /* no event ready */
     {
