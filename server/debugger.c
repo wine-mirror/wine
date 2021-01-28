@@ -46,7 +46,6 @@ struct debug_event
     struct object          obj;       /* object header */
     struct list            entry;     /* entry in event queue */
     struct thread         *sender;    /* thread which sent this event */
-    struct thread         *debugger;  /* debugger thread receiving the event */
     struct file           *file;      /* file object for events that need one */
     enum debug_event_state state;     /* event state */
     int                    status;    /* continuation status */
@@ -240,11 +239,8 @@ static void unlink_event( struct debug_obj *debug_obj, struct debug_event *event
 }
 
 /* link an event at the end of the queue */
-static void link_event( struct debug_event *event )
+static void link_event( struct debug_obj *debug_obj, struct debug_event *event )
 {
-    struct debug_obj *debug_obj = event->debugger->debug_obj;
-
-    assert( debug_obj );
     grab_object( event );
     list_add_tail( &debug_obj->event_queue, &event->entry );
     if (!event->sender->process->debug_event)
@@ -257,11 +253,8 @@ static void link_event( struct debug_event *event )
 }
 
 /* resume a delayed debug event already in the queue */
-static void resume_event( struct debug_event *event )
+static void resume_event( struct debug_obj *debug_obj, struct debug_event *event )
 {
-    struct debug_obj *debug_obj = event->debugger->debug_obj;
-
-    assert( debug_obj );
     event->state = EVENT_QUEUED;
     if (!event->sender->process->debug_event)
     {
@@ -272,11 +265,8 @@ static void resume_event( struct debug_event *event )
 }
 
 /* delay a debug event already in the queue to be replayed when thread wakes up */
-static void delay_event( struct debug_event *event )
+static void delay_event( struct debug_obj *debug_obj, struct debug_event *event )
 {
-    struct debug_obj *debug_obj = event->debugger->debug_obj;
-
-    assert( debug_obj );
     event->state = EVENT_DELAYED;
     if (event->sender->process->debug_event == event) event->sender->process->debug_event = NULL;
 }
@@ -318,7 +308,6 @@ static void debug_event_destroy( struct object *obj )
 
     if (event->file) release_object( event->file );
     release_object( event->sender );
-    release_object( event->debugger );
 }
 
 static void debug_obj_dump( struct object *obj, int verbose )
@@ -397,14 +386,14 @@ static int continue_debug_event( struct process *process, struct thread *thread,
                 if (event->sender != thread) continue;
                 if (thread->suspend)
                 {
-                    delay_event( event );
+                    delay_event( debug_obj, event );
                     resume_process( process );
                 }
                 else if (event->state == EVENT_SENT)
                 {
                     assert( event->sender->process->debug_event == event );
                     event->sender->process->debug_event = NULL;
-                    resume_event( event );
+                    resume_event( debug_obj, event );
                     return 1;
                 }
             }
@@ -446,7 +435,6 @@ static struct debug_event *alloc_debug_event( struct thread *thread, int code, c
     if (!(event = alloc_object( &debug_event_ops ))) return NULL;
     event->state     = EVENT_QUEUED;
     event->sender    = (struct thread *)grab_object( thread );
-    event->debugger  = (struct thread *)grab_object( debugger );
     event->file      = NULL;
     memset( &event->data, 0, sizeof(event->data) );
 
@@ -460,10 +448,11 @@ void generate_debug_event( struct thread *thread, int code, const void *arg )
 {
     if (thread->process->debugger)
     {
+        struct debug_obj *debug_obj = thread->process->debugger->debug_obj;
         struct debug_event *event = alloc_debug_event( thread, code, arg );
         if (event)
         {
-            link_event( event );
+            link_event( debug_obj, event );
             suspend_process( thread->process );
             release_object( event );
         }
@@ -483,7 +472,7 @@ void resume_delayed_debug_events( struct thread *thread )
         {
             if (event->sender != thread) continue;
             if (event->state != EVENT_DELAYED) continue;
-            resume_event( event );
+            resume_event( debugger->debug_obj, event );
             suspend_process( thread->process );
         }
     }
@@ -740,6 +729,7 @@ DECL_HANDLER(queue_exception_event)
     if (current->process->debugger)
     {
         debug_event_t data;
+        struct debug_obj *debug_obj = current->process->debugger->debug_obj;
         struct debug_event *event;
         struct thread *thread = current;
 
@@ -763,7 +753,7 @@ DECL_HANDLER(queue_exception_event)
         {
             if ((reply->handle = alloc_handle( thread->process, event, SYNCHRONIZE, 0 )))
             {
-                link_event( event );
+                link_event( debug_obj, event );
                 suspend_process( thread->process );
             }
             release_object( event );
