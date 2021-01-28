@@ -456,24 +456,12 @@ DWORD bytes_to_samples(DWORD bytes, LPWAVEFORMATEX pwfx)
     return bytes / pwfx->nBlockAlign;
 }
 
-DWORD bytes_to_ms(DWORD bytes, LPWAVEFORMATEX pwfx)
-{
-    return bytes_to_samples(bytes, pwfx) * 1000 / pwfx->nSamplesPerSec;
-}
-
 DWORD time_to_bytes(LPMMTIME mmtime, LPWAVEFORMATEX pwfx)
 {
     if (mmtime->wType == TIME_BYTES)
         return mmtime->u.cb;
     else if (mmtime->wType == TIME_SAMPLES)
         return mmtime->u.sample * pwfx->nBlockAlign;
-    else if (mmtime->wType == TIME_MS)
-        return mmtime->u.ms * pwfx->nAvgBytesPerSec / 1000;
-    else if (mmtime->wType == TIME_SMPTE)
-        return ((mmtime->u.smpte.hour * 60 * 60) +
-                (mmtime->u.smpte.min * 60) +
-                (mmtime->u.smpte.sec)) * pwfx->nAvgBytesPerSec +
-                mmtime->u.smpte.frame  * pwfx->nAvgBytesPerSec / 30;
 
     trace("FIXME: time_to_bytes() type not supported\n");
     return -1;

@@ -76,5 +76,4 @@ extern const char* wave_out_error(MMRESULT);
 extern const char* get_format_str(WORD format);
 extern const char* wave_time_format(UINT type);
 extern DWORD bytes_to_samples(DWORD bytes, LPWAVEFORMATEX pwfx);
-extern DWORD bytes_to_ms(DWORD bytes, LPWAVEFORMATEX pwfx);
 extern DWORD time_to_bytes(LPMMTIME mmtime, LPWAVEFORMATEX pwfx);
