@@ -1115,6 +1115,11 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
             memcpy(p, hash, hash_size);
             return SEC_E_OK;
         }
+        case SECPKG_ATTR_UNIQUE_BINDINGS:
+        {
+            SecPkgContext_Bindings *bindings = buffer;
+            return schan_imp_get_unique_channel_binding(ctx->session, bindings);
+        }
         case SECPKG_ATTR_APPLICATION_PROTOCOL:
         {
             SecPkgContext_ApplicationProtocol *protocol = buffer;
@@ -1153,6 +1158,8 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesA(
         case SECPKG_ATTR_CONNECTION_INFO:
             return schan_QueryContextAttributesW(context_handle, attribute, buffer);
         case SECPKG_ATTR_ENDPOINT_BINDINGS:
+            return schan_QueryContextAttributesW(context_handle, attribute, buffer);
+        case SECPKG_ATTR_UNIQUE_BINDINGS:
             return schan_QueryContextAttributesW(context_handle, attribute, buffer);
         case SECPKG_ATTR_APPLICATION_PROTOCOL:
             return schan_QueryContextAttributesW(context_handle, attribute, buffer);

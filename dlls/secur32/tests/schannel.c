@@ -925,6 +925,32 @@ todo_wine
             win_skip("SECPKG_ATTR_ENDPOINT_BINDINGS not supported\n");
         }
 
+        status = pQueryContextAttributesA(&context, SECPKG_ATTR_UNIQUE_BINDINGS, &bindings);
+        ok(status == SEC_E_OK || broken(status == SEC_E_UNSUPPORTED_FUNCTION),
+           "QueryContextAttributesW(SECPKG_ATTR_UNIQUE_BINDINGS) failed: %08x\n", status);
+        if(status == SEC_E_OK) {
+            const char *p;
+            static const char prefix[] = "tls-unique:";
+
+            ok(bindings.BindingsLength > sizeof(*bindings.Bindings) + sizeof(prefix)-1,
+               "bindings.BindingsLength = %u\n", bindings.BindingsLength);
+            ok(!bindings.Bindings->dwInitiatorAddrType, "dwInitiatorAddrType = %x\n", bindings.Bindings->dwInitiatorAddrType);
+            ok(!bindings.Bindings->cbInitiatorLength, "cbInitiatorLength = %x\n", bindings.Bindings->cbInitiatorLength);
+            ok(!bindings.Bindings->dwInitiatorOffset, "dwInitiatorOffset = %x\n", bindings.Bindings->dwInitiatorOffset);
+            ok(!bindings.Bindings->dwAcceptorAddrType, "dwAcceptorAddrType = %x\n", bindings.Bindings->dwAcceptorAddrType);
+            ok(!bindings.Bindings->cbAcceptorLength, "cbAcceptorLength = %x\n", bindings.Bindings->cbAcceptorLength);
+            ok(!bindings.Bindings->dwAcceptorOffset, "dwAcceptorOffset = %x\n", bindings.Bindings->dwAcceptorOffset);
+            ok(sizeof(*bindings.Bindings) + bindings.Bindings->cbApplicationDataLength == bindings.BindingsLength,
+               "cbApplicationDataLength = %x\n", bindings.Bindings->cbApplicationDataLength);
+            ok(bindings.Bindings->dwApplicationDataOffset == sizeof(*bindings.Bindings),
+               "dwApplicationDataOffset = %x\n", bindings.Bindings->dwApplicationDataOffset);
+            p = (const char*)(bindings.Bindings+1);
+            ok(!memcmp(p, prefix, sizeof(prefix)-1), "wrong prefix\n");
+            FreeContextBuffer(bindings.Bindings);
+        } else {
+            win_skip("SECPKG_ATTR_UNIQUE_BINDINGS not supported\n");
+        }
+
         CertFreeCertificateContext(cert);
     }
 

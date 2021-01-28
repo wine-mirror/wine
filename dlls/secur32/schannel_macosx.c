@@ -1039,6 +1039,13 @@ SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
     return SEC_E_OK;
 }
 
+SECURITY_STATUS schan_imp_get_unique_channel_binding(schan_imp_session session,
+                                                     SecPkgContext_Bindings *bindings)
+{
+    FIXME("SECPKG_ATTR_UNIQUE_BINDINGS is unsupported on MacOS\n");
+    return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
 #ifndef HAVE_SSLCOPYPEERCERTIFICATES
 static void schan_imp_cf_release(const void *arg, void *ctx)
 {

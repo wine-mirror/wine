@@ -95,6 +95,7 @@ MAKE_FUNCPTR(gnutls_record_get_max_size);
 MAKE_FUNCPTR(gnutls_record_recv);
 MAKE_FUNCPTR(gnutls_record_send);
 MAKE_FUNCPTR(gnutls_server_name_set);
+MAKE_FUNCPTR(gnutls_session_channel_binding);
 MAKE_FUNCPTR(gnutls_transport_get_ptr);
 MAKE_FUNCPTR(gnutls_transport_set_errno);
 MAKE_FUNCPTR(gnutls_transport_set_ptr);
@@ -505,6 +506,41 @@ SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
     /* FIXME: info->dwExchStrength? */
     info->dwExchStrength = 0;
     return SEC_E_OK;
+}
+
+SECURITY_STATUS schan_imp_get_unique_channel_binding(schan_imp_session session,
+                                                     SecPkgContext_Bindings *bindings)
+{
+    static const char prefix[] = "tls-unique:";
+    gnutls_datum_t datum;
+    int rc;
+    SECURITY_STATUS ret;
+    char *p;
+    gnutls_session_t s = (gnutls_session_t)session;
+
+    rc = pgnutls_session_channel_binding(s, GNUTLS_CB_TLS_UNIQUE, &datum);
+    if (rc)
+    {
+        pgnutls_perror(rc);
+        return SEC_E_INTERNAL_ERROR;
+    }
+
+    bindings->BindingsLength = sizeof(SEC_CHANNEL_BINDINGS) + sizeof(prefix)-1 + datum.size;
+    bindings->Bindings = heap_alloc_zero(bindings->BindingsLength);
+    if (!bindings->Bindings)
+        ret = SEC_E_INSUFFICIENT_MEMORY;
+    else
+    {
+        bindings->Bindings->cbApplicationDataLength = sizeof(prefix)-1 + datum.size;
+        bindings->Bindings->dwApplicationDataOffset = sizeof(SEC_CHANNEL_BINDINGS);
+        p = (char*)(bindings->Bindings+1);
+        memcpy(p, prefix, sizeof(prefix)-1);
+        p += sizeof(prefix)-1;
+        memcpy(p, datum.data, datum.size);
+        ret = SEC_E_OK;
+    }
+    free(datum.data);
+    return ret;
 }
 
 ALG_ID schan_imp_get_key_signature_algorithm(schan_imp_session session)
@@ -1032,6 +1068,7 @@ BOOL schan_imp_init(void)
     LOAD_FUNCPTR(gnutls_record_recv);
     LOAD_FUNCPTR(gnutls_record_send);
     LOAD_FUNCPTR(gnutls_server_name_set)
+    LOAD_FUNCPTR(gnutls_session_channel_binding)
     LOAD_FUNCPTR(gnutls_transport_get_ptr)
     LOAD_FUNCPTR(gnutls_transport_set_errno)
     LOAD_FUNCPTR(gnutls_transport_set_ptr)

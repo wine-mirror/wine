@@ -237,6 +237,8 @@ extern unsigned int schan_imp_get_max_message_size(schan_imp_session session) DE
 extern ALG_ID schan_imp_get_key_signature_algorithm(schan_imp_session session) DECLSPEC_HIDDEN;
 extern SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
                                                      SecPkgContext_ConnectionInfo *info) DECLSPEC_HIDDEN;
+extern SECURITY_STATUS schan_imp_get_unique_channel_binding(schan_imp_session session,
+                                                            SecPkgContext_Bindings *bindings) DECLSPEC_HIDDEN;
 extern SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session, HCERTSTORE,
                                                               PCCERT_CONTEXT *cert) DECLSPEC_HIDDEN;
 extern SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
