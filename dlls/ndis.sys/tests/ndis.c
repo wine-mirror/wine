@@ -22,7 +22,6 @@
 #define WIN32_NO_STATUS
 #include <windows.h>
 #include <winioctl.h>
-#include <ntddndis.h>
 #include <winsock2.h>
 #include <ws2ipdef.h>
 #include <iphlpapi.h>

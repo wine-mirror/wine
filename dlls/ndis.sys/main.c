@@ -32,7 +32,6 @@
 #include "ws2ipdef.h"
 #include "iphlpapi.h"
 #include "netioapi.h"
-#include "ntddndis.h"
 #include "ddk/wdm.h"
 #include "ddk/ndis.h"
 #include "winreg.h"
