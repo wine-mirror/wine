@@ -34,7 +34,7 @@
 @ stub DbgPrompt
 # @ stub DbgQueryDebugFilterState
 # @ stub DbgSetDebugFilterState
-@ stub DbgUiConnectToDbg
+@ stdcall DbgUiConnectToDbg()
 @ stub DbgUiContinue
 @ stub DbgUiConvertStateChangeStructure
 # @ stub DbgUiDebugActiveProcess

@@ -135,6 +135,22 @@ void WINAPI DbgUiSetThreadDebugObject( HANDLE handle )
 }
 
 /***********************************************************************
+ *      DbgUiConnectToDbg (NTDLL.@)
+ */
+NTSTATUS WINAPI DbgUiConnectToDbg(void)
+{
+    HANDLE handle;
+    NTSTATUS status;
+    OBJECT_ATTRIBUTES attr = { sizeof(attr) };
+
+    if (DbgUiGetThreadDebugObject()) return STATUS_SUCCESS;  /* already connected */
+
+    status = NtCreateDebugObject( &handle, DEBUG_ALL_ACCESS, &attr, 0 );
+    if (!status) DbgUiSetThreadDebugObject( handle );
+    return status;
+}
+
+/***********************************************************************
  *      DbgUiRemoteBreakin (NTDLL.@)
  */
 void WINAPI DbgUiRemoteBreakin( void *arg )

@@ -3020,6 +3020,7 @@ typedef struct _PS_CREATE_INFO
 NTSYSAPI void      WINAPI DbgBreakPoint(void);
 NTSYSAPI NTSTATUS WINAPIV DbgPrint(LPCSTR fmt, ...);
 NTSYSAPI NTSTATUS WINAPIV DbgPrintEx(ULONG iComponentId, ULONG Level, LPCSTR fmt, ...);
+NTSYSAPI NTSTATUS  WINAPI DbgUiConnectToDbg(void);
 NTSYSAPI HANDLE    WINAPI DbgUiGetThreadDebugObject(void);
 NTSYSAPI NTSTATUS  WINAPI DbgUiIssueRemoteBreakin(HANDLE);
 NTSYSAPI void      WINAPI DbgUiRemoteBreakin(void*);
