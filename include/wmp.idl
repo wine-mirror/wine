@@ -845,6 +845,18 @@ library WMPLib {
 
     [
         odl,
+        uuid(ab7c88bb-143e-4ea4-acc3-e4350b2106c3),
+        dual,
+        oleautomation
+    ]
+    interface IWMPMedia2 : IWMPMedia
+    {
+        [id(0x0300), propget]
+        HRESULT error([out, retval] IWMPErrorItem **out);
+    }
+
+    [
+        odl,
         uuid(a12dcf7d-14ab-4c1b-a8cd-63909f06025b),
         dual,
         oleautomation
@@ -1473,7 +1485,7 @@ library WMPLib {
         interface IWMPClosedCaption;
         interface IWMPDVD;
         interface IWMPControls2;
-        /* interface IWMPMedia2; */
+        interface IWMPMedia2;
         /* interface IWMPMedia3; */
         /* interface IWMPMetadataPicture; */
         /* interface IWMPMetadataText; */
