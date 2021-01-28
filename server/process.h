@@ -56,7 +56,7 @@ struct process
     struct list          entry;           /* entry in system-wide process list */
     process_id_t         parent_id;       /* parent process id (at the time of creation) */
     struct list          thread_list;     /* thread list */
-    struct thread       *debugger;        /* thread debugging this process */
+    struct debug_obj    *debug_obj;       /* debug object debugging this process */
     struct debug_event  *debug_event;     /* debug event being sent to debugger */
     struct handle_table *handles;         /* handle entries */
     struct fd           *msg_fd;          /* fd for sendmsg/recvmsg */
@@ -115,7 +115,7 @@ extern struct thread *get_process_first_thread( struct process *process );
 extern struct process *get_process_from_id( process_id_t id );
 extern struct process *get_process_from_handle( obj_handle_t handle, unsigned int access );
 extern int process_set_debugger( struct process *process, struct thread *thread );
-extern int debugger_detach( struct process* process, struct thread* debugger );
+extern void debugger_detach( struct process *process, struct debug_obj *debug_obj );
 extern int set_process_debug_flag( struct process *process, int flag );
 
 extern void add_process_thread( struct process *process,
@@ -126,8 +126,7 @@ extern void suspend_process( struct process *process );
 extern void resume_process( struct process *process );
 extern void kill_process( struct process *process, int violent_death );
 extern void kill_console_processes( struct thread *renderer, int exit_code );
-extern void kill_debugged_processes( struct thread *debugger, int exit_code );
-extern void detach_debugged_processes( struct thread *debugger );
+extern void detach_debugged_processes( struct debug_obj *debug_obj, int exit_code );
 extern void enum_processes( int (*cb)(struct process*, void*), void *user);
 
 /* console functions */

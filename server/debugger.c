@@ -347,6 +347,8 @@ static void debug_obj_destroy( struct object *obj )
     struct debug_obj *debug_obj = (struct debug_obj *)obj;
     assert( obj->ops == &debug_obj_ops );
 
+    detach_debugged_processes( debug_obj, debug_obj->kill_on_exit ? STATUS_DEBUGGER_INACTIVE : 0 );
+
     /* free all pending events */
     while ((ptr = list_head( &debug_obj->event_queue )))
         unlink_event( debug_obj, LIST_ENTRY( ptr, struct debug_event, entry ));
@@ -373,7 +375,7 @@ static int continue_debug_event( struct process *process, struct thread *thread,
 {
     struct debug_obj *debug_obj = current->debug_obj;
 
-    if (debug_obj && process->debugger == current && thread->process == process)
+    if (debug_obj && process->debug_obj == debug_obj && thread->process == process)
     {
         struct debug_event *event;
 
@@ -424,12 +426,9 @@ static int continue_debug_event( struct process *process, struct thread *thread,
 /* alloc a debug event for a debugger */
 static struct debug_event *alloc_debug_event( struct thread *thread, int code, const void *arg )
 {
-    struct thread *debugger = thread->process->debugger;
     struct debug_event *event;
 
     assert( code > 0 && code <= NB_DEBUG_EVENTS );
-    /* cannot queue a debug event for myself */
-    assert( debugger->process != thread->process );
 
     /* build the event */
     if (!(event = alloc_object( &debug_event_ops ))) return NULL;
@@ -446,9 +445,10 @@ static struct debug_event *alloc_debug_event( struct thread *thread, int code, c
 /* generate a debug event from inside the server and queue it */
 void generate_debug_event( struct thread *thread, int code, const void *arg )
 {
-    if (thread->process->debugger)
+    struct debug_obj *debug_obj = thread->process->debug_obj;
+
+    if (debug_obj)
     {
-        struct debug_obj *debug_obj = thread->process->debugger->debug_obj;
         struct debug_event *event = alloc_debug_event( thread, code, arg );
         if (event)
         {
@@ -462,17 +462,16 @@ void generate_debug_event( struct thread *thread, int code, const void *arg )
 
 void resume_delayed_debug_events( struct thread *thread )
 {
-    struct thread *debugger = thread->process->debugger;
+    struct debug_obj *debug_obj = thread->process->debug_obj;
     struct debug_event *event;
 
-    if (debugger)
+    if (debug_obj)
     {
-        assert( debugger->debug_obj );
-        LIST_FOR_EACH_ENTRY( event, &debugger->debug_obj->event_queue, struct debug_event, entry )
+        LIST_FOR_EACH_ENTRY( event, &debug_obj->event_queue, struct debug_event, entry )
         {
             if (event->sender != thread) continue;
             if (event->state != EVENT_DELAYED) continue;
-            resume_event( debugger->debug_obj, event );
+            resume_event( debug_obj, event );
             suspend_process( thread->process );
         }
     }
@@ -481,7 +480,7 @@ void resume_delayed_debug_events( struct thread *thread )
 /* attach a process to a debugger thread and suspend it */
 static int debugger_attach( struct process *process, struct thread *debugger )
 {
-    if (process->debugger) goto error;  /* already being debugged */
+    if (process->debug_obj) goto error;  /* already being debugged */
     if (debugger->process == process) goto error;
     if (!is_process_init_done( process )) goto error;  /* still starting up */
     if (list_empty( &process->thread_list )) goto error;  /* no thread running in the process */
@@ -502,7 +501,7 @@ static int debugger_attach( struct process *process, struct thread *debugger )
     }
     if (!set_process_debug_flag( process, 1 ))
     {
-        process->debugger = NULL;
+        process->debug_obj = NULL;
         resume_process( process );
         return 0;
     }
@@ -515,23 +514,17 @@ static int debugger_attach( struct process *process, struct thread *debugger )
 }
 
 
-/* detach a process from a debugger thread (and resume it ?) */
-int debugger_detach( struct process *process, struct thread *debugger )
+/* detach a process from a debugger thread (and resume it) */
+void debugger_detach( struct process *process, struct debug_obj *debug_obj )
 {
     struct debug_event *event, *next;
-    struct debug_obj *debug_obj;
 
-    if (!process->debugger || process->debugger != debugger)
-        goto error;  /* not currently debugged, or debugged by another debugger */
-    if (!debugger->debug_obj ) goto error; /* should be a debugger */
     /* init should be done, otherwise wouldn't be attached */
     assert(is_process_init_done(process));
 
     suspend_process( process );
-    /* send continue indication for all events */
-    debug_obj = debugger->debug_obj;
 
-    /* free all events from this process */
+    /* send continue indication for all events */
     LIST_FOR_EACH_ENTRY_SAFE( event, next, &debug_obj->event_queue, struct debug_event, entry )
     {
         if (event->sender->process != process) continue;
@@ -546,16 +539,11 @@ int debugger_detach( struct process *process, struct thread *debugger )
     }
 
     /* remove relationships between process and its debugger */
-    process->debugger = NULL;
+    process->debug_obj = NULL;
     if (!set_process_debug_flag( process, 0 )) clear_error();  /* ignore error */
 
     /* from this function */
     resume_process( process );
-    return 0;
-
- error:
-    set_error( STATUS_ACCESS_DENIED );
-    return 0;
 }
 
 /* generate all startup events of a given process */
@@ -594,7 +582,7 @@ int set_process_debugger( struct process *process, struct thread *debugger )
 {
     struct debug_obj *debug_obj;
 
-    assert( !process->debugger );
+    assert( !process->debug_obj );
 
     if (!debugger->debug_obj)  /* need to allocate a context */
     {
@@ -603,24 +591,18 @@ int set_process_debugger( struct process *process, struct thread *debugger )
         list_init( &debug_obj->event_queue );
         debugger->debug_obj = debug_obj;
     }
-    process->debugger = debugger;
+    process->debug_obj = debugger->debug_obj;
     return 1;
 }
 
 /* a thread is exiting */
 void debug_exit_thread( struct thread *thread )
 {
-    if (thread->debug_obj)  /* this thread is a debugger */
+    struct debug_obj *debug_obj = thread->debug_obj;
+
+    if (debug_obj)  /* this thread is a debugger */
     {
-        if (thread->debug_obj->kill_on_exit)
-        {
-            /* kill all debugged processes */
-            kill_debugged_processes( thread, STATUS_DEBUGGER_INACTIVE );
-        }
-        else
-        {
-            detach_debugged_processes( thread );
-        }
+        detach_debugged_processes( debug_obj, debug_obj->kill_on_exit ? STATUS_DEBUGGER_INACTIVE : 0 );
         release_object( thread->debug_obj );
         thread->debug_obj = NULL;
     }
@@ -712,7 +694,10 @@ DECL_HANDLER(debug_process)
 
     if (!req->attach)
     {
-        debugger_detach( process, current );
+        if (current->debug_obj && process->debug_obj == current->debug_obj)
+            debugger_detach( process, current->debug_obj );
+        else
+            set_error( STATUS_ACCESS_DENIED );
     }
     else if (debugger_attach( process, current ))
     {
@@ -725,11 +710,12 @@ DECL_HANDLER(debug_process)
 /* queue an exception event */
 DECL_HANDLER(queue_exception_event)
 {
+    struct debug_obj *debug_obj = current->process->debug_obj;
+
     reply->handle = 0;
-    if (current->process->debugger)
+    if (debug_obj)
     {
         debug_event_t data;
-        struct debug_obj *debug_obj = current->process->debugger->debug_obj;
         struct debug_event *event;
         struct thread *thread = current;
 
