@@ -70,7 +70,7 @@ Mac OS X:
 
 Базові вимоги:
   У вас повинні бути встановлені файли заголовків X11
-  (Xlib6g-dev в Debian та XFree86-devel в Red Hat).
+  (xorg-dev в Debian та libX11-devel в Red Hat).
 
   Звісно, вам потрібен "make" (краще всього використовувати GNU make).
 

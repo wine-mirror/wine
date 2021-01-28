@@ -80,7 +80,7 @@ Unterstützte Dateisysteme:
 
 Grundsätzliche Voraussetzungen:
   Sie müssen die Entwicklungsdateien für X11 installiert haben
-  (Debian nennt diese xlib6g-dev, Red Hat XFree86-devel).
+  (Debian nennt diese xorg-dev, Red Hat libX11-devel).
 
   Selbstverständlich benötigen Sie auch "make" (höchstwahrscheinlich GNU make).
 

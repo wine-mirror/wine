@@ -71,8 +71,8 @@ Tuetut tiedostojärjestelmät:
   on suotavaa.
 
 Perusvaatimukset:
-  Koneella täytyy olla X11:n kehitystiedostot (Debianissa xlib6g-dev,
-  Red Hatissa XFree86-devel).
+  Koneella täytyy olla X11:n kehitystiedostot (Debianissa xorg-dev,
+  Red Hatissa libX11-devel).
 
   Luonnollisesti myös make (yleensä GNU make) on tarpeen.
 

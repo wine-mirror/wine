@@ -74,8 +74,8 @@ Systèmes de fichiers pris en charge :
   est recommandée.
 
 Configuration de base requise :
-  Les fichiers d'en-tête de X11 (appelés xlib6g-dev sous Debian et
-  XFree86-devel sous Red Hat) doivent être installés.
+  Les fichiers d'en-tête de X11 (appelés xorg-dev sous Debian et
+  libX11-devel sous Red Hat) doivent être installés.
 
   Bien entendu, vous aurez besoin du programme « make » (très probablement
   GNU make).

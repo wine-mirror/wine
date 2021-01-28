@@ -73,7 +73,7 @@ Támogatott fájlrendszerek:
 
 Alap követelmények:
   Önnek fel kell telepítenie az X11 fejlesztõi fájlokat
-  (xlib6g-dev néven van a Debianban és XFree86-devel néven a Red Hat-ben).
+  (xorg-dev néven van a Debianban és libX11-devel néven a Red Hat-ben).
 
 Fordítási eszköz követelmények:
   x86 rendszereken gcc >= 2.7.2 szükséges.
