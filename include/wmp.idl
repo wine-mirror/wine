@@ -362,6 +362,22 @@ library WMPLib {
 
     [
         odl,
+        uuid(cbb92747-741f-44fe-ab5b-f1a48f3b2a59),
+        oleautomation
+    ]
+    interface IWMPRemoteMediaServices : IUnknown
+    {
+        HRESULT GetServiceType([out, retval] BSTR *type);
+
+        HRESULT GetApplicationName([out, retval] BSTR *name);
+
+        HRESULT GetScriptableObject([out, retval] BSTR *name, [out, retval] IDispatch **out);
+
+        HRESULT GetCustomUIMode([out, retval] BSTR *file);
+    }
+
+    [
+        odl,
         uuid(9104d1ab-80c9-4fed-abf0-2e6417a6df14),
         dual,
         oleautomation
