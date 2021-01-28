@@ -857,6 +857,21 @@ library WMPLib {
 
     [
         odl,
+        uuid(f118efc7-f03a-4fb4-99c9-1c02a5c1065b),
+        dual,
+        oleautomation
+    ]
+    interface IWMPMedia3 : IWMPMedia2
+    {
+        [id(0x0301)]
+        HRESULT getAttributeCountByType([in] BSTR type, [in] BSTR language, [out, retval] long *out);
+
+        [id(0x0302)]
+        HRESULT getItemInfoByType([in] BSTR type, [in] BSTR language, [in] long index, [out, retval] VARIANT *out);
+    }
+
+    [
+        odl,
         uuid(a12dcf7d-14ab-4c1b-a8cd-63909f06025b),
         dual,
         oleautomation
@@ -1486,7 +1501,7 @@ library WMPLib {
         interface IWMPDVD;
         interface IWMPControls2;
         interface IWMPMedia2;
-        /* interface IWMPMedia3; */
+        interface IWMPMedia3;
         /* interface IWMPMetadataPicture; */
         /* interface IWMPMetadataText; */
         /* interface IWMPSettings2; */
