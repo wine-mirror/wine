@@ -3179,8 +3179,7 @@ static HRESULT WINAPI d3d_device3_SetTransform(IDirect3DDevice3 *iface,
 
         wined3d_mutex_lock();
         multiply_matrix(&projection, &device->legacy_clipspace, (struct wined3d_matrix *)matrix);
-        wined3d_stateblock_set_transform(device->state,
-                WINED3D_TS_PROJECTION, (struct wined3d_matrix *)&projection);
+        wined3d_stateblock_set_transform(device->state, WINED3D_TS_PROJECTION, &projection);
         memcpy(&device->legacy_projection, matrix, sizeof(*matrix));
         wined3d_mutex_unlock();
 
