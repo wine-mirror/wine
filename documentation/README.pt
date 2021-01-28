@@ -73,7 +73,7 @@ possa escrever.
 
 Requisitos básicos:
 Tu precisas de ter instalados os fucheiros de include do X11 development
-(chamados xlib6g-dev em Debian e Xfree86-devel no RedHat).
+(chamados xorg-dev em Debian e libX11-devel no RedHat).
 
 Requisitos para as ferramentas de construção:
 Em sistemas x86 o gcc >= 2.7.2 é requerido.

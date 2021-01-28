@@ -69,7 +69,7 @@ Desteklenen dosya sistemleri:
 
 Temel gereksinimler:
   X11 geliştirme dosyalarının kurulu olması gereklidir.
-  (Debian'da xlib6g-dev, Red Hat'da XFree86-devel adlı paketler).
+  (Debian'da xorg-dev, Red Hat'da libX11-devel adlı paketler).
 
   "make" komutuna kesinlikle ihtiyacınız vardır. (çoğunlukla GNU make)
 

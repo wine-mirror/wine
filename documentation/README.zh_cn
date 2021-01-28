@@ -63,10 +63,8 @@ Mac OS X 信息:
   文件系统。
 
 基本要求：
-  您需要安装 X11 开发用头文件（在 Debian 中可能被称为 xlib6g-dev
-  ，在 Red Hat 中可能被称为 XFree86-devel [译注：在新版本的 Linux
-  发行版中可能有其它名称，例如使用替代 Xlib 的 XCB library，此时
-  Debian 的包名称应为 libxcb1-dev]）。
+  您需要安装 X11 开发用头文件（在 Debian 中可能被称为 xorg-dev
+  ，在 Red Hat 中可能被称为 libX11-devel）。
 
   当然您同样需要“make”工具（一般应当为 GNU make）。
 

@@ -68,7 +68,7 @@ Sistemas de arquivo suportados:
 
 Requisitos básicos:
   Você necessita ter instalados os arquivos de inclusão para desenvolvimento
-  do X11 (chamados de xlib6g-dev no Debian e XFree86-devel no RedHat).
+  do X11 (chamados de xorg-dev no Debian e libX11-devel no RedHat).
 
   Obviamente você também irá precisar do "make" (comumente o GNU make).
 

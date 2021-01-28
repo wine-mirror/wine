@@ -64,8 +64,8 @@ Støttede filsystemer:
   programmer trenger. Det anbefales å bruke et ekte Unix-filsystem.
 
 Basiskrav:
-  Inkluderingsfilene for X11 må være installert (kalt «xlib6g-dev» i
-  Debian og «XFree86-devel» i RedHat).
+  Inkluderingsfilene for X11 må være installert (kalt «xorg-dev» i
+  Debian og «libX11-devel» i RedHat).
 
   Du må selvfølgelig også ha «make», sannsynligvis «GNU make».
 

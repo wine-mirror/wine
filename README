@@ -75,7 +75,7 @@ Supported file systems:
 
 Basic requirements:
   You need to have the X11 development include files installed
-  (called xlib6g-dev in Debian and XFree86-devel in Red Hat).
+  (called xorg-dev in Debian and libX11-devel in Red Hat).
 
   Of course you also need "make" (most likely GNU make).
 
