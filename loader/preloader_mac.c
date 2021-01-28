@@ -54,6 +54,17 @@
 #include "wine/asm.h"
 #include "main.h"
 
+/* Rosetta on Apple Silicon allocates memory starting at 0x100000000 (the 4GB line)
+ * before the preloader runs, which prevents any nonrelocatable EXEs with that
+ * base address from running.
+ *
+ * This empty linker section forces Rosetta's allocations (currently ~132 MB)
+ * to start at 0x114000000, and they should end below 0x120000000.
+ */
+#if defined(__x86_64__)
+__asm__(".zerofill WINE_4GB_RESERVE,WINE_4GB_RESERVE,___wine_4gb_reserve,0x14000000");
+#endif
+
 #ifndef LC_MAIN
 #define LC_MAIN 0x80000028
 struct entry_point_command
@@ -79,6 +90,7 @@ static struct wine_preload_info preload_info[] =
     { (void *)0x000000010000, 0x00100000 },  /* DOS area */
     { (void *)0x000000110000, 0x67ef0000 },  /* low memory area */
     { (void *)0x00007ff00000, 0x000f0000 },  /* shared user data */
+    { (void *)0x000100000000, 0x14000000 },  /* WINE_4GB_RESERVE section */
     { (void *)0x7ffd00000000, 0x01ff0000 },  /* top-down allocations + virtual heap */
 #endif /* __i386__ */
     { 0, 0 },                            /* PE exe range set with WINEPRELOADRESERVE */
@@ -395,6 +407,10 @@ static int preloader_overlaps_range( const void *start, const void *end )
             struct target_segment_command *seg = (struct target_segment_command*)cmd;
             const void *seg_start = (const void*)(seg->vmaddr + slide);
             const void *seg_end = (const char*)seg_start + seg->vmsize;
+            static const char reserved_segname[] = "WINE_4GB_RESERVE";
+
+            if (!wld_strncmp( seg->segname, reserved_segname, sizeof(reserved_segname)-1 ))
+                continue;
 
             if (end > seg_start && start <= seg_end)
             {
