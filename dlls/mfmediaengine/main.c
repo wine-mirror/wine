@@ -822,10 +822,8 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
         return E_UNEXPECTED;
     }
 
-    if (sd_video)
-        engine->flags |= FLAGS_ENGINE_HAS_VIDEO;
-    if (sd_audio)
-        engine->flags |= FLAGS_ENGINE_HAS_AUDIO;
+    media_engine_set_flag(engine, FLAGS_ENGINE_HAS_VIDEO, !!sd_video);
+    media_engine_set_flag(engine, FLAGS_ENGINE_HAS_AUDIO, !!sd_audio);
 
     /* Assume live source if duration was not provided. */
     if (SUCCEEDED(IMFPresentationDescriptor_GetUINT64(pd, &MF_PD_DURATION, &duration)))
@@ -1421,13 +1419,13 @@ static HRESULT WINAPI media_engine_Play(IMFMediaEngine *iface)
 
     if (!(engine->flags & FLAGS_ENGINE_WAITING))
     {
-        engine->flags &= ~FLAGS_ENGINE_PAUSED;
+        media_engine_set_flag(engine, FLAGS_ENGINE_PAUSED, FALSE);
         IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PLAY, 0, 0);
 
         var.vt = VT_EMPTY;
         IMFMediaSession_Start(engine->session, &GUID_NULL, &var);
 
-        engine->flags |= FLAGS_ENGINE_WAITING;
+        media_engine_set_flag(engine, FLAGS_ENGINE_WAITING, TRUE);
     }
 
     IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_WAITING, 0, 0);
@@ -1447,8 +1445,8 @@ static HRESULT WINAPI media_engine_Pause(IMFMediaEngine *iface)
 
     if (!(engine->flags & FLAGS_ENGINE_PAUSED))
     {
-        engine->flags &= ~FLAGS_ENGINE_WAITING;
-        engine->flags |= FLAGS_ENGINE_PAUSED;
+        media_engine_set_flag(engine, FLAGS_ENGINE_WAITING, FALSE);
+        media_engine_set_flag(engine, FLAGS_ENGINE_PAUSED, TRUE);
 
         IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_TIMEUPDATE, 0, 0);
         IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PAUSE, 0, 0);
@@ -1623,7 +1621,7 @@ static HRESULT WINAPI media_engine_Shutdown(IMFMediaEngine *iface)
         hr = MF_E_SHUTDOWN;
     else
     {
-        engine->flags |= FLAGS_ENGINE_SHUT_DOWN;
+        media_engine_set_flag(engine, FLAGS_ENGINE_SHUT_DOWN, TRUE);
         IMFMediaSession_Shutdown(engine->session);
     }
     LeaveCriticalSection(&engine->cs);
@@ -1794,7 +1792,7 @@ static HRESULT WINAPI media_engine_grabber_callback_OnProcessSample(IMFSampleGra
     if (!(engine->flags & FLAGS_ENGINE_FIRST_FRAME))
     {
         IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_FIRSTFRAMEREADY, 0, 0);
-        engine->flags |= FLAGS_ENGINE_FIRST_FRAME;
+        media_engine_set_flag(engine, FLAGS_ENGINE_FIRST_FRAME, TRUE);
     }
     engine->video_frame.pts = sample_time;
 
