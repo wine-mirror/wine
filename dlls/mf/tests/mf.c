@@ -1176,6 +1176,15 @@ static void test_media_session(void)
 
     check_interface(session, &IID_IMFGetService, TRUE);
     check_interface(session, &IID_IMFAttributes, FALSE);
+    check_interface(session, &IID_IMFTopologyNodeAttributeEditor, FALSE);
+
+    hr = MFGetService((IUnknown *)session, &MF_TOPONODE_ATTRIBUTE_EDITOR_SERVICE, &IID_IMFTopologyNodeAttributeEditor,
+            (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    check_interface(unk, &IID_IMFMediaSession, FALSE);
+
+    IUnknown_Release(unk);
 
     hr = MFGetService((IUnknown *)session, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rate_support);
     ok(hr == S_OK, "Failed to get rate support interface, hr %#x.\n", hr);

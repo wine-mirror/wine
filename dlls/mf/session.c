@@ -213,6 +213,7 @@ struct media_session
     IMFGetService IMFGetService_iface;
     IMFRateSupport IMFRateSupport_iface;
     IMFRateControl IMFRateControl_iface;
+    IMFTopologyNodeAttributeEditor IMFTopologyNodeAttributeEditor_iface;
     IMFAsyncCallback commands_callback;
     IMFAsyncCallback events_callback;
     IMFAsyncCallback sink_finalizer_callback;
@@ -360,6 +361,11 @@ static struct media_session *impl_session_from_IMFRateSupport(IMFRateSupport *if
 static struct media_session *impl_session_from_IMFRateControl(IMFRateControl *iface)
 {
     return CONTAINING_RECORD(iface, struct media_session, IMFRateControl_iface);
+}
+
+static struct media_session *impl_session_from_IMFTopologyNodeAttributeEditor(IMFTopologyNodeAttributeEditor *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_session, IMFTopologyNodeAttributeEditor_iface);
 }
 
 static struct session_op *impl_op_from_IUnknown(IUnknown *iface)
@@ -1999,6 +2005,10 @@ static HRESULT WINAPI session_get_service_GetService(IMFGetService *iface, REFGU
     {
         return IMFLocalMFTRegistration_QueryInterface(&local_mft_registration, riid, obj);
     }
+    else if (IsEqualGUID(service, &MF_TOPONODE_ATTRIBUTE_EDITOR_SERVICE))
+    {
+        *obj = &session->IMFTopologyNodeAttributeEditor_iface;
+    }
     else if (IsEqualGUID(service, &MR_VIDEO_RENDER_SERVICE))
     {
         IMFStreamSink *stream_sink;
@@ -3566,6 +3576,52 @@ static const IMFRateControlVtbl session_rate_control_vtbl =
     session_rate_control_GetRate,
 };
 
+static HRESULT WINAPI node_attribute_editor_QueryInterface(IMFTopologyNodeAttributeEditor *iface,
+        REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFTopologyNodeAttributeEditor) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFTopologyNodeAttributeEditor_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI node_attribute_editor_AddRef(IMFTopologyNodeAttributeEditor *iface)
+{
+    struct media_session *session = impl_session_from_IMFTopologyNodeAttributeEditor(iface);
+    return IMFMediaSession_AddRef(&session->IMFMediaSession_iface);
+}
+
+static ULONG WINAPI node_attribute_editor_Release(IMFTopologyNodeAttributeEditor *iface)
+{
+    struct media_session *session = impl_session_from_IMFTopologyNodeAttributeEditor(iface);
+    return IMFMediaSession_Release(&session->IMFMediaSession_iface);
+}
+
+static HRESULT WINAPI node_attribute_editor_UpdateNodeAttributes(IMFTopologyNodeAttributeEditor *iface,
+        TOPOID id, DWORD count, MFTOPONODE_ATTRIBUTE_UPDATE *updates)
+{
+    FIXME("%p, %s, %u, %p.\n", iface, wine_dbgstr_longlong(id), count, updates);
+
+    return E_NOTIMPL;
+}
+
+static const IMFTopologyNodeAttributeEditorVtbl node_attribute_editor_vtbl =
+{
+    node_attribute_editor_QueryInterface,
+    node_attribute_editor_AddRef,
+    node_attribute_editor_Release,
+    node_attribute_editor_UpdateNodeAttributes,
+};
+
 /***********************************************************************
  *      MFCreateMediaSession (mf.@)
  */
@@ -3585,6 +3641,7 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
     object->IMFGetService_iface.lpVtbl = &session_get_service_vtbl;
     object->IMFRateSupport_iface.lpVtbl = &session_rate_support_vtbl;
     object->IMFRateControl_iface.lpVtbl = &session_rate_control_vtbl;
+    object->IMFTopologyNodeAttributeEditor_iface.lpVtbl = &node_attribute_editor_vtbl;
     object->commands_callback.lpVtbl = &session_commands_callback_vtbl;
     object->events_callback.lpVtbl = &session_events_callback_vtbl;
     object->sink_finalizer_callback.lpVtbl = &session_sink_finalizer_callback_vtbl;
