@@ -110,6 +110,8 @@ extern "C" {
 #ifndef DECLSPEC_SELECTANY
 #if defined(_MSC_VER) && (_MSC_VER >= 1100)
 #define DECLSPEC_SELECTANY __declspec(selectany)
+#elif defined(__MINGW32__)
+#define DECLSPEC_SELECTANY __attribute__((selectany))
 #else
 #define DECLSPEC_SELECTANY
 #endif
