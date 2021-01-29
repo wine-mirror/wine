@@ -1421,7 +1421,6 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
 {
     struct parser *This = gst_pad_get_element_private(pad);
 
-    EnterCriticalSection(&This->filter.filter_cs);
     if (!activate) {
         TRACE("Deactivating\n");
         if (This->push_thread) {
@@ -1441,7 +1440,6 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
             return FALSE;
         }
     }
-    LeaveCriticalSection(&This->filter.filter_cs);
     return TRUE;
 }
 
