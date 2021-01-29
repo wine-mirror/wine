@@ -385,3 +385,12 @@ static inline LPSTR co_strdupWtoA(LPCWSTR str)
         WideCharToMultiByte(CP_ACP, 0, str, -1, ret, len, 0, 0);
     return ret;
 }
+
+enum SessionOp
+{
+    SESSION_QUERY,
+    SESSION_INCREMENT,
+    SESSION_DECREMENT
+};
+
+LONG WINAPI SetQueryNetSessionCount(DWORD session_op);

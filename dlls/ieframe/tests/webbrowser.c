@@ -173,6 +173,15 @@ static const WCHAR *current_url;
 static int wb_version, expect_update_commands_enable, set_update_commands_enable;
 static BOOL nav_back_todo, nav_forward_todo; /* FIXME */
 
+enum SessionOp
+{
+    SESSION_QUERY,
+    SESSION_INCREMENT,
+    SESSION_DECREMENT
+};
+
+static LONG (WINAPI *pSetQueryNetSessionCount)(DWORD);
+
 #define BUSY_FAIL 2
 
 #define DWL_EXPECT_BEFORE_NAVIGATE  0x01
@@ -1946,6 +1955,7 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
 {
     IOleObject *oleobj;
     IOleInPlaceObject *inplace;
+    DWORD session_count;
     HWND hwnd;
     HRESULT hres;
 
@@ -1969,6 +1979,8 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
     ok((hwnd == NULL) ^ (client == NULL), "unexpected hwnd %p\n", hwnd);
 
     if(client) {
+        session_count = pSetQueryNetSessionCount(SESSION_QUERY);
+
         SET_EXPECT(GetContainer);
         SET_EXPECT(Site_GetWindow);
         SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
@@ -1995,6 +2007,9 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
     ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
 
     if(client) {
+        DWORD count = pSetQueryNetSessionCount(SESSION_QUERY);
+        ok(count == session_count + 1, "count = %u expected %u\n", count, session_count + 1);
+
         CHECK_CALLED(GetContainer);
         CHECK_CALLED(Site_GetWindow);
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
@@ -3837,6 +3852,7 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
     test_EnumVerbs(webbrowser);
     test_LocationURL(webbrowser, L"");
     test_ConnectionPoint(webbrowser, TRUE);
+
     test_ClientSite(webbrowser, &ClientSite, !do_download);
     test_Extent(webbrowser);
     test_wb_funcs(webbrowser, TRUE);
@@ -4401,6 +4417,29 @@ static void test_SetAdvise(void)
     IWebBrowser2_Release(browser);
 }
 
+static void test_SetQueryNetSessionCount(void)
+{
+    LONG count;
+
+    count = pSetQueryNetSessionCount(SESSION_QUERY);
+    ok(count == 0, "count = %d\n", count);
+
+    count = pSetQueryNetSessionCount(SESSION_INCREMENT);
+    ok(count == 1, "count = %d\n", count);
+
+    count = pSetQueryNetSessionCount(SESSION_QUERY);
+    ok(count == 1, "count = %d\n", count);
+
+    count = pSetQueryNetSessionCount(0xdeadbeef);
+    ok(count == 0, "count = %d\n", count);
+
+    count = pSetQueryNetSessionCount(SESSION_DECREMENT);
+    ok(count == 0, "count = %d\n", count);
+
+    count = pSetQueryNetSessionCount(SESSION_QUERY);
+    ok(count == 0, "count = %d\n", count);
+}
+
 static HRESULT WINAPI outer_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &outer_test_iid)) {
@@ -4460,7 +4499,13 @@ static void test_com_aggregation(void)
 
 START_TEST(webbrowser)
 {
+    HMODULE ieframe = LoadLibraryW(L"ieframe.dll");
+
+    pSetQueryNetSessionCount = (void*)GetProcAddress(ieframe, "SetQueryNetSessionCount");
+
     OleInitialize(NULL);
+
+    test_SetQueryNetSessionCount();
 
     container_hwnd = create_container_window();
 
