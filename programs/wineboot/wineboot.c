@@ -291,6 +291,7 @@ static void create_user_shared_data(void)
     data->NtMinorVersion              = version.dwMinorVersion;
     data->SuiteMask                   = version.wSuiteMask;
     data->NumberOfPhysicalPages       = sbi.MmNumberOfPhysicalPages;
+    data->NXSupportPolicy             = NX_SUPPORT_POLICY_OPTIN;
     wcscpy( data->NtSystemRoot, L"C:\\windows" );
 
     features = data->ProcessorFeatures;
