@@ -495,7 +495,7 @@ static IWICBitmapDecoder *create_decoder(void)
     hr = IWICBitmapDecoder_GetContainerFormat(decoder, &guidresult);
     ok(hr == S_OK, "GetContainerFormat failed, hr %#x\n", hr);
     ok(IsEqualGUID(&guidresult, &GUID_ContainerFormatDds),
-       "Got unexpected container format %s\n", debugstr_guid(&GUID_ContainerFormatDds));
+       "Got unexpected container format %s\n", debugstr_guid(&guidresult));
 
     return decoder;
 }
