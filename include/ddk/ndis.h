@@ -21,14 +21,14 @@
 #ifndef _NDIS_
 #define _NDIS_
 
-#include <ntddndis.h>
-
 typedef ULONG NDIS_AF, *PNDIS_AF;
 typedef MDL   NDIS_BUFFER, *PNDIS_BUFFER;
 typedef void *NDIS_HANDLE, **PNDIS_HANDLE, *PNDIS_PACKET_POOL;
 typedef ULONG NDIS_OID, *PNDIS_OID;
 typedef int   NDIS_STATUS, *PNDIS_STATUS;
 typedef UNICODE_STRING NDIS_STRING, *PNDIS_STRING;
+
+#include <ntddndis.h>
 
 typedef enum _NDIS_REQUEST_TYPE
 {
