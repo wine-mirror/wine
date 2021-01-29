@@ -1422,7 +1422,6 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
     struct parser *This = gst_pad_get_element_private(pad);
 
     if (!activate) {
-        TRACE("Deactivating\n");
         if (This->push_thread) {
             pthread_join(This->push_thread, NULL);
             This->push_thread = 0;
@@ -1432,7 +1431,6 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
     } else if (!This->push_thread) {
         int ret;
 
-        TRACE("Activating\n");
         if ((ret = pthread_create(&This->push_thread, NULL, push_data, This)))
         {
             GST_ERROR("Failed to create push thread: %s", strerror(errno));
@@ -1447,7 +1445,7 @@ static gboolean activate_mode(GstPad *pad, GstObject *parent, GstPadMode mode, g
 {
     struct parser *filter = gst_pad_get_element_private(pad);
 
-    TRACE("%s source pad for filter %p in %s mode.\n",
+    GST_DEBUG("%s source pad for filter %p in %s mode.",
             activate ? "Activating" : "Deactivating", filter, gst_pad_mode_get_name(mode));
 
     switch (mode) {
