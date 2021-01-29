@@ -1424,12 +1424,10 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
     EnterCriticalSection(&This->filter.filter_cs);
     if (!activate) {
         TRACE("Deactivating\n");
-        IAsyncReader_BeginFlush(This->reader);
         if (This->push_thread) {
             pthread_join(This->push_thread, NULL);
             This->push_thread = 0;
         }
-        IAsyncReader_EndFlush(This->reader);
         if (This->filter.state == State_Stopped)
             This->nextofs = This->start;
     } else if (!This->push_thread) {
