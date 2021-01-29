@@ -952,7 +952,7 @@ static const IMFAsyncCallbackVtbl media_engine_load_handler_vtbl =
 
 static HRESULT WINAPI media_engine_QueryInterface(IMFMediaEngine *iface, REFIID riid, void **obj)
 {
-    TRACE("(%p, %s, %p).\n", iface, debugstr_guid(riid), obj);
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IMFMediaEngine) ||
         IsEqualIID(riid, &IID_IUnknown))
@@ -972,7 +972,7 @@ static ULONG WINAPI media_engine_AddRef(IMFMediaEngine *iface)
     struct media_engine *engine = impl_from_IMFMediaEngine(iface);
     ULONG refcount = InterlockedIncrement(&engine->refcount);
 
-    TRACE("(%p) ref=%u.\n", iface, refcount);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
     return refcount;
 }
@@ -999,7 +999,7 @@ static ULONG WINAPI media_engine_Release(IMFMediaEngine *iface)
     struct media_engine *engine = impl_from_IMFMediaEngine(iface);
     ULONG refcount = InterlockedDecrement(&engine->refcount);
 
-    TRACE("(%p) ref=%u.\n", iface, refcount);
+    TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
         free_media_engine(engine);
@@ -1978,7 +1978,7 @@ static IMFMediaEngineClassFactory media_engine_factory = { &media_engine_factory
 
 static HRESULT WINAPI classfactory_QueryInterface(IClassFactory *iface, REFIID riid, void **obj)
 {
-    TRACE("(%s, %p).\n", debugstr_guid(riid), obj);
+    TRACE("%s, %p.\n", debugstr_guid(riid), obj);
 
     if (IsEqualGUID(riid, &IID_IClassFactory) ||
         IsEqualGUID(riid, &IID_IUnknown))
@@ -2005,7 +2005,7 @@ static ULONG WINAPI classfactory_Release(IClassFactory *iface)
 
 static HRESULT WINAPI classfactory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **obj)
 {
-    TRACE("(%p, %s, %p).\n", outer, debugstr_guid(riid), obj);
+    TRACE("%p, %s, %p.\n", outer, debugstr_guid(riid), obj);
 
     *obj = NULL;
 
@@ -2034,7 +2034,7 @@ static IClassFactory classfactory = { &class_factory_vtbl };
 
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **obj)
 {
-    TRACE("(%s, %s, %p).\n", debugstr_guid(clsid), debugstr_guid(riid), obj);
+    TRACE("%s, %s, %p.\n", debugstr_guid(clsid), debugstr_guid(riid), obj);
 
     if (IsEqualGUID(clsid, &CLSID_MFMediaEngineClassFactory))
         return IClassFactory_QueryInterface(&classfactory, riid, obj);
