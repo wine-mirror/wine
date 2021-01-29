@@ -96,6 +96,7 @@ enum media_engine_flags
     FLAGS_ENGINE_HAS_AUDIO = 0x800,
     FLAGS_ENGINE_HAS_VIDEO = 0x1000,
     FLAGS_ENGINE_FIRST_FRAME = 0x2000,
+    FLAGS_ENGINE_IS_ENDED = 0x4000,
 };
 
 struct video_frame
@@ -634,6 +635,7 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
 
             EnterCriticalSection(&engine->cs);
             media_engine_set_flag(engine, FLAGS_ENGINE_FIRST_FRAME, FALSE);
+            media_engine_set_flag(engine, FLAGS_ENGINE_IS_ENDED, TRUE);
             engine->video_frame.pts = MINLONGLONG;
             LeaveCriticalSection(&engine->cs);
 
@@ -1347,9 +1349,16 @@ static HRESULT WINAPI media_engine_GetSeekable(IMFMediaEngine *iface, IMFMediaTi
 
 static BOOL WINAPI media_engine_IsEnded(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    BOOL value;
 
-    return FALSE;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&engine->cs);
+    value = !!(engine->flags & FLAGS_ENGINE_IS_ENDED);
+    LeaveCriticalSection(&engine->cs);
+
+    return value;
 }
 
 static BOOL WINAPI media_engine_GetAutoPlay(IMFMediaEngine *iface)
@@ -1419,7 +1428,7 @@ static HRESULT WINAPI media_engine_Play(IMFMediaEngine *iface)
 
     if (!(engine->flags & FLAGS_ENGINE_WAITING))
     {
-        media_engine_set_flag(engine, FLAGS_ENGINE_PAUSED, FALSE);
+        media_engine_set_flag(engine, FLAGS_ENGINE_PAUSED | FLAGS_ENGINE_IS_ENDED, FALSE);
         IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PLAY, 0, 0);
 
         var.vt = VT_EMPTY;
@@ -1445,7 +1454,7 @@ static HRESULT WINAPI media_engine_Pause(IMFMediaEngine *iface)
 
     if (!(engine->flags & FLAGS_ENGINE_PAUSED))
     {
-        media_engine_set_flag(engine, FLAGS_ENGINE_WAITING, FALSE);
+        media_engine_set_flag(engine, FLAGS_ENGINE_WAITING | FLAGS_ENGINE_IS_ENDED, FALSE);
         media_engine_set_flag(engine, FLAGS_ENGINE_PAUSED, TRUE);
 
         IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_TIMEUPDATE, 0, 0);
