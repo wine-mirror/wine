@@ -126,7 +126,7 @@ struct media_engine
     MF_MEDIA_ENGINE_READY ready_state;
     MF_MEDIA_ENGINE_PRELOAD preload;
     IMFMediaSession *session;
-    IMFClock *clock;
+    IMFPresentationClock *clock;
     IMFSourceResolver *resolver;
     BSTR current_source;
     struct video_frame video_frame;
@@ -982,7 +982,7 @@ static void free_media_engine(struct media_engine *engine)
     if (engine->callback)
         IMFMediaEngineNotify_Release(engine->callback);
     if (engine->clock)
-        IMFClock_Release(engine->clock);
+        IMFPresentationClock_Release(engine->clock);
     if (engine->session)
         IMFMediaSession_Release(engine->session);
     if (engine->attributes)
@@ -1208,16 +1208,14 @@ static BOOL WINAPI media_engine_IsSeeking(IMFMediaEngine *iface)
 static double WINAPI media_engine_GetCurrentTime(IMFMediaEngine *iface)
 {
     struct media_engine *engine = impl_from_IMFMediaEngine(iface);
-    LONGLONG clocktime;
     double ret = 0.0;
-    MFTIME systime;
+    MFTIME clocktime;
 
     TRACE("%p.\n", iface);
 
     EnterCriticalSection(&engine->cs);
-    if (SUCCEEDED(IMFClock_GetCorrelatedTime(engine->clock, 0, &clocktime, &systime)))
+    if (SUCCEEDED(IMFPresentationClock_GetTime(engine->clock, &clocktime)))
     {
-        /* Assume 100ns clock. */
         ret = (double)clocktime / 10000000.0;
     }
     LeaveCriticalSection(&engine->cs);
@@ -1854,6 +1852,7 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
 {
     DXGI_FORMAT output_format;
     UINT64 playback_hwnd;
+    IMFClock *clock;
     HRESULT hr;
 
     engine->IMFMediaEngine_iface.lpVtbl = &media_engine_vtbl;
@@ -1877,7 +1876,12 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
     if (FAILED(hr = MFCreateMediaSession(NULL, &engine->session)))
         return hr;
 
-    if (FAILED(hr = IMFMediaSession_GetClock(engine->session, &engine->clock)))
+    if (FAILED(hr = IMFMediaSession_GetClock(engine->session, &clock)))
+        return hr;
+
+    hr = IMFClock_QueryInterface(clock, &IID_IMFPresentationClock, (void **)&engine->clock);
+    IMFClock_Release(clock);
+    if (FAILED(hr))
         return hr;
 
     if (FAILED(hr = IMFMediaSession_BeginGetEvent(engine->session, &engine->session_events, NULL)))
