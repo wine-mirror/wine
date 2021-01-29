@@ -201,6 +201,7 @@ static typelib_t *current_typelib;
 %token tEXPLICITHANDLE tEXTERN
 %token tFALSE
 %token tFASTCALL tFAULTSTATUS
+%token tFLAGS
 %token tFLOAT tFORCEALLOCATE
 %token tHANDLE
 %token tHANDLET
@@ -576,6 +577,7 @@ attribute:					{ $$ = NULL; }
 						  $$ = make_attrp(ATTR_EXCLUSIVETO, $3->type); }
 	| tEXPLICITHANDLE			{ $$ = make_attr(ATTR_EXPLICIT_HANDLE); }
 	| tFAULTSTATUS				{ $$ = make_attr(ATTR_FAULTSTATUS); }
+	| tFLAGS				{ $$ = make_attr(ATTR_FLAGS); }
 	| tFORCEALLOCATE			{ $$ = make_attr(ATTR_FORCEALLOCATE); }
 	| tHANDLE				{ $$ = make_attr(ATTR_HANDLE); }
 	| tHELPCONTEXT '(' expr_int_const ')'	{ $$ = make_attrp(ATTR_HELPCONTEXT, $3); }
@@ -2259,6 +2261,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_EXCLUSIVETO */         { 0, 0, 0,  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "exclusive_to" },
     /* ATTR_EXPLICIT_HANDLE */     { 1, 1, 0,  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "explicit_handle" },
     /* ATTR_FAULTSTATUS */         { 0, 0, 0,  0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "fault_status" },
+    /* ATTR_FLAGS */               { 0, 0, 0,  0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "flags" },
     /* ATTR_FORCEALLOCATE */       { 0, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "force_allocate" },
     /* ATTR_HANDLE */              { 1, 0, 0,  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "handle" },
     /* ATTR_HELPCONTEXT */         { 0, 0, 0,  1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, "helpcontext" },

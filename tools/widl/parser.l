@@ -362,6 +362,7 @@ static const struct keyword attr_keywords[] =
 	{"exclusiveto",                 tEXCLUSIVETO,               1},
 	{"explicit_handle",             tEXPLICITHANDLE,            0},
 	{"fault_status",                tFAULTSTATUS,               0},
+	{"flags",                       tFLAGS,                     1},
 	{"force_allocate",              tFORCEALLOCATE,             0},
 	{"free",                        tFREE,                      0},
 	{"handle",                      tHANDLE,                    0},
