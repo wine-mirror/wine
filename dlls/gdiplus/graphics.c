@@ -972,9 +972,9 @@ static ARGB sample_bitmap_pixel(GDIPCONST GpRect *src_rect, LPBYTE bits, UINT wi
     {
         /* Tiling. Make sure co-ordinates are positive as it simplifies the math. */
         if (x < 0)
-            x = width*2 + x % (width * 2);
+            x = width*2 + x % (INT)(width * 2);
         if (y < 0)
-            y = height*2 + y % (height * 2);
+            y = height*2 + y % (INT)(height * 2);
 
         if (attributes->wrap & WrapModeTileFlipX)
         {
