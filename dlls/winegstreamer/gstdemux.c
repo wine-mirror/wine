@@ -1581,7 +1581,7 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
     This->my_src = gst_pad_new_from_static_template(&src_template, "quartz-src");
     gst_pad_set_getrange_function(This->my_src, request_buffer_src);
     gst_pad_set_query_function(This->my_src, query_function);
-    gst_pad_set_activatemode_function(This->my_src, activate_mode_wrapper);
+    gst_pad_set_activatemode_function(This->my_src, activate_mode);
     gst_pad_set_event_function(This->my_src, event_src);
     gst_pad_set_element_private (This->my_src, This);
 
@@ -2509,12 +2509,6 @@ void perform_cb_gstdemux(struct cb_data *cbdata)
         {
             struct pad_added_data *data = &cbdata->u.pad_added_data;
             existing_new_pad(data->element, data->pad, data->user);
-            break;
-        }
-    case ACTIVATE_MODE:
-        {
-            struct activate_mode_data *data = &cbdata->u.activate_mode_data;
-            cbdata->u.activate_mode_data.ret = activate_mode(data->pad, data->parent, data->mode, data->activate);
             break;
         }
     case QUERY_SINK:

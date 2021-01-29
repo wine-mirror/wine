@@ -147,20 +147,6 @@ void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
     call_cb(&cbdata);
 }
 
-gboolean activate_mode_wrapper(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate)
-{
-    struct cb_data cbdata = { ACTIVATE_MODE };
-
-    cbdata.u.activate_mode_data.pad = pad;
-    cbdata.u.activate_mode_data.parent = parent;
-    cbdata.u.activate_mode_data.mode = mode;
-    cbdata.u.activate_mode_data.activate = activate;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.activate_mode_data.ret;
-}
-
 gboolean query_sink_wrapper(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct cb_data cbdata = { QUERY_SINK };
