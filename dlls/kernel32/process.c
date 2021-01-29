@@ -34,12 +34,15 @@
 #include "wincon.h"
 #include "kernel_private.h"
 #include "psapi.h"
+#include "ddk/wdm.h"
 #include "wine/exception.h"
 #include "wine/server.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
+
+static const struct _KUSER_SHARED_DATA *user_shared_data = (struct _KUSER_SHARED_DATA *)0x7ffe0000;
 
 typedef struct
 {
@@ -553,8 +556,7 @@ DWORD WINAPI WTSGetActiveConsoleSessionId(void)
  */
 DEP_SYSTEM_POLICY_TYPE WINAPI GetSystemDEPPolicy(void)
 {
-    FIXME("stub\n");
-    return OptIn;
+    return user_shared_data->NXSupportPolicy;
 }
 
 /**********************************************************************
