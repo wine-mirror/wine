@@ -2153,6 +2153,7 @@ static void dump_list_processes_reply( const struct list_processes_reply *req )
 static void dump_create_debug_obj_request( const struct create_debug_obj_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
+    fprintf( stderr, ", flags=%08x", req->flags );
     dump_varargs_object_attributes( ", objattr=", cur_size );
 }
 

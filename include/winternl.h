@@ -3013,6 +3013,8 @@ typedef struct _PS_CREATE_INFO
 #define DEBUG_QUERY_INFORMATION 0x0008
 #define DEBUG_ALL_ACCESS        (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x0f)
 
+#define DEBUG_KILL_ON_CLOSE 0x1
+
 /***********************************************************************
  * Function declarations
  */

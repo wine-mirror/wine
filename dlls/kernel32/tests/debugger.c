@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include <ntstatus.h>
+#define WIN32_NO_STATUS
 #include <windows.h>
 #include <winternl.h>
 #include <winreg.h>
@@ -43,6 +45,10 @@ static void (WINAPI *pDbgBreakPoint)(void);
 
 static NTSTATUS  (WINAPI *pNtSuspendProcess)(HANDLE process);
 static NTSTATUS  (WINAPI *pNtResumeProcess)(HANDLE process);
+static NTSTATUS  (WINAPI *pNtCreateDebugObject)(HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *, ULONG);
+static NTSTATUS  (WINAPI *pDbgUiConnectToDbg)(void);
+static HANDLE    (WINAPI *pDbgUiGetThreadDebugObject)(void);
+static void      (WINAPI *pDbgUiSetThreadDebugObject)(HANDLE);
 
 static LONG child_failures;
 
@@ -1699,6 +1705,69 @@ static void test_debugger(const char *argv0)
     ok(ret, "CloseHandle failed, last error %d.\n", GetLastError());
 }
 
+static DWORD run_child_wait( char *cmd, HANDLE event )
+{
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si = { sizeof(si) };
+    BOOL ret;
+    DWORD exit_code;
+
+    ret = CreateProcessA(NULL, cmd, NULL, NULL, TRUE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess failed, last error %#x.\n", GetLastError());
+    Sleep(200);
+    CloseHandle( pDbgUiGetThreadDebugObject() );
+    pDbgUiSetThreadDebugObject( 0 );
+    SetEvent( event );
+    WaitForSingleObject( pi.hProcess, 1000 );
+    ret = GetExitCodeProcess( pi.hProcess, &exit_code );
+    ok( ret, "GetExitCodeProcess failed err=%d\n", GetLastError());
+    CloseHandle( pi.hProcess );
+    CloseHandle( pi.hThread );
+    return exit_code;
+}
+
+static void test_kill_on_exit(const char *argv0)
+{
+    static const char arguments[] = " debugger wait ";
+    SECURITY_ATTRIBUTES sa = { sizeof(sa), NULL, TRUE };
+    OBJECT_ATTRIBUTES attr = { sizeof(attr) };
+    NTSTATUS status;
+    HANDLE event, debug;
+    DWORD exit_code;
+    char *cmd;
+
+    event = CreateEventW(&sa, FALSE, FALSE, NULL);
+    ok(event != NULL, "CreateEvent failed: %u\n", GetLastError());
+
+    cmd = heap_alloc(strlen(argv0) + strlen(arguments) + 16);
+    sprintf(cmd, "%s%s%x\n", argv0, arguments, (DWORD)(DWORD_PTR)event);
+
+    status = pNtCreateDebugObject( &debug, DEBUG_ALL_ACCESS, &attr, 0 );
+    ok( !status, "NtCreateDebugObject failed %x\n", status );
+    pDbgUiSetThreadDebugObject( debug );
+    exit_code = run_child_wait( cmd, event );
+    todo_wine
+    ok( exit_code == 0, "exit code = %08x\n", exit_code);
+
+    status = pNtCreateDebugObject( &debug, DEBUG_ALL_ACCESS, &attr, DEBUG_KILL_ON_CLOSE );
+    ok( !status, "NtCreateDebugObject failed %x\n", status );
+    pDbgUiSetThreadDebugObject( debug );
+    exit_code = run_child_wait( cmd, event );
+    todo_wine
+    ok( exit_code == STATUS_DEBUGGER_INACTIVE, "exit code = %08x\n", exit_code);
+
+    status = pNtCreateDebugObject( &debug, DEBUG_ALL_ACCESS, &attr, 0xfffe );
+    ok( status == STATUS_INVALID_PARAMETER, "NtCreateDebugObject failed %x\n", status );
+
+    status = pDbgUiConnectToDbg();
+    ok( !status, "DbgUiConnectToDbg failed %x\n", status );
+    exit_code = run_child_wait( cmd, event );
+    todo_wine
+    ok( exit_code == STATUS_DEBUGGER_INACTIVE, "exit code = %08x\n", exit_code);
+
+    heap_free(cmd);
+}
+
 START_TEST(debugger)
 {
     HMODULE hdll;
@@ -1710,6 +1779,10 @@ START_TEST(debugger)
     pDbgBreakPoint = (void*)GetProcAddress(ntdll, "DbgBreakPoint");
     pNtSuspendProcess = (void*)GetProcAddress(ntdll, "NtSuspendProcess");
     pNtResumeProcess = (void*)GetProcAddress(ntdll, "NtResumeProcess");
+    pNtCreateDebugObject = (void*)GetProcAddress(ntdll, "NtCreateDebugObject");
+    pDbgUiConnectToDbg = (void*)GetProcAddress(ntdll, "DbgUiConnectToDbg");
+    pDbgUiGetThreadDebugObject = (void*)GetProcAddress(ntdll, "DbgUiGetThreadDebugObject");
+    pDbgUiSetThreadDebugObject = (void*)GetProcAddress(ntdll, "DbgUiSetThreadDebugObject");
 
     myARGC=winetest_get_mainargs(&myARGV);
     if (myARGC >= 3 && strcmp(myARGV[2], "crash") == 0)
@@ -1746,5 +1819,6 @@ START_TEST(debugger)
         test_debug_children(myARGV[0], 0, FALSE, TRUE);
         test_debug_children(myARGV[0], DEBUG_ONLY_THIS_PROCESS, FALSE, TRUE);
         test_debugger(myARGV[0]);
+        test_kill_on_exit(myARGV[0]);
     }
 }

@@ -2012,7 +2012,9 @@ struct create_debug_obj_request
 {
     struct request_header __header;
     unsigned int access;
+    unsigned int flags;
     /* VARARG(objattr,object_attributes); */
+    char __pad_20[4];
 };
 struct create_debug_obj_reply
 {
@@ -6207,7 +6209,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 656
+#define SERVER_PROTOCOL_VERSION 657
 
 /* ### protocol_version end ### */
 

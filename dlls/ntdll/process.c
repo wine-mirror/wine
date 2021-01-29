@@ -145,7 +145,7 @@ NTSTATUS WINAPI DbgUiConnectToDbg(void)
 
     if (DbgUiGetThreadDebugObject()) return STATUS_SUCCESS;  /* already connected */
 
-    status = NtCreateDebugObject( &handle, DEBUG_ALL_ACCESS, &attr, 0 );
+    status = NtCreateDebugObject( &handle, DEBUG_ALL_ACCESS, &attr, DEBUG_KILL_ON_CLOSE );
     if (!status) DbgUiSetThreadDebugObject( handle );
     return status;
 }

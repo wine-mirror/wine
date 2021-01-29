@@ -57,7 +57,7 @@ struct debug_obj
 {
     struct object        obj;         /* object header */
     struct list          event_queue; /* pending events queue */
-    int                  kill_on_exit;/* kill debuggees on debugger exit ? */
+    unsigned int         flags;       /* debug flags */
 };
 
 
@@ -347,7 +347,8 @@ static void debug_obj_destroy( struct object *obj )
     struct debug_obj *debug_obj = (struct debug_obj *)obj;
     assert( obj->ops == &debug_obj_ops );
 
-    detach_debugged_processes( debug_obj, debug_obj->kill_on_exit ? STATUS_DEBUGGER_INACTIVE : 0 );
+    detach_debugged_processes( debug_obj,
+                               (debug_obj->flags & DEBUG_KILL_ON_CLOSE) ? STATUS_DEBUGGER_INACTIVE : 0 );
 
     /* free all pending events */
     while ((ptr = list_head( &debug_obj->event_queue )))
@@ -355,7 +356,8 @@ static void debug_obj_destroy( struct object *obj )
 }
 
 static struct debug_obj *create_debug_obj( struct object *root, const struct unicode_str *name,
-                                           unsigned int attr, const struct security_descriptor *sd )
+                                           unsigned int attr, unsigned int flags,
+                                           const struct security_descriptor *sd )
 {
     struct debug_obj *debug_obj;
 
@@ -363,7 +365,7 @@ static struct debug_obj *create_debug_obj( struct object *root, const struct uni
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
-            debug_obj->kill_on_exit = 1;
+            debug_obj->flags = flags;
             list_init( &debug_obj->event_queue );
         }
     }
@@ -586,9 +588,7 @@ int set_process_debugger( struct process *process, struct thread *debugger )
 
     if (!debugger->debug_obj)  /* need to allocate a context */
     {
-        if (!(debug_obj = alloc_object( &debug_obj_ops ))) return 0;
-        debug_obj->kill_on_exit = 1;
-        list_init( &debug_obj->event_queue );
+        if (!(debug_obj = create_debug_obj( NULL, NULL, 0, DEBUG_KILL_ON_CLOSE, NULL ))) return 0;
         debugger->debug_obj = debug_obj;
     }
     process->debug_obj = debugger->debug_obj;
@@ -602,7 +602,8 @@ void debug_exit_thread( struct thread *thread )
 
     if (debug_obj)  /* this thread is a debugger */
     {
-        detach_debugged_processes( debug_obj, debug_obj->kill_on_exit ? STATUS_DEBUGGER_INACTIVE : 0 );
+        detach_debugged_processes( debug_obj,
+                                   (debug_obj->flags & DEBUG_KILL_ON_CLOSE) ? STATUS_DEBUGGER_INACTIVE : 0 );
         release_object( thread->debug_obj );
         thread->debug_obj = NULL;
     }
@@ -618,7 +619,7 @@ DECL_HANDLER(create_debug_obj)
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
     if (!objattr) return;
-    if ((debug_obj = create_debug_obj( root, &name, objattr->attributes, sd )))
+    if ((debug_obj = create_debug_obj( root, &name, objattr->attributes, req->flags, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
             reply->handle = alloc_handle( current->process, debug_obj, req->access, objattr->attributes );
@@ -769,5 +770,5 @@ DECL_HANDLER(set_debugger_kill_on_exit)
         set_error( STATUS_ACCESS_DENIED );
         return;
     }
-    current->debug_obj->kill_on_exit = req->kill_on_exit;
+    current->debug_obj->flags = req->kill_on_exit ? DEBUG_KILL_ON_CLOSE : 0;
 }

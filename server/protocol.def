@@ -1590,6 +1590,7 @@ struct process_info
 /* Create a debug object */
 @REQ(create_debug_obj)
     unsigned int access;       /* wanted access rights */
+    unsigned int flags;        /* object flags */
     VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     obj_handle_t handle;       /* handle to the debug object */
