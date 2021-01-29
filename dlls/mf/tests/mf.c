@@ -1154,7 +1154,6 @@ static void test_session_events(IMFMediaSession *session)
 static void test_media_session(void)
 {
     IMFRateControl *rate_control, *rate_control2;
-    IMFLocalMFTRegistration *local_reg;
     MFCLOCK_PROPERTIES clock_props;
     IMFRateSupport *rate_support;
     IMFAttributes *attributes;
@@ -1163,7 +1162,6 @@ static void test_media_session(void)
     IMFShutdown *shutdown;
     PROPVARIANT propvar;
     DWORD status, caps;
-    IMFGetService *gs;
     IMFClock *clock;
     IUnknown *unk;
     HRESULT hr;
@@ -1176,23 +1174,19 @@ static void test_media_session(void)
     hr = MFCreateMediaSession(NULL, &session);
     ok(hr == S_OK, "Failed to create media session, hr %#x.\n", hr);
 
-    hr = IMFMediaSession_QueryInterface(session, &IID_IMFAttributes, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+    check_interface(session, &IID_IMFGetService, TRUE);
+    check_interface(session, &IID_IMFAttributes, FALSE);
 
-    hr = IMFMediaSession_QueryInterface(session, &IID_IMFGetService, (void **)&gs);
-    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
-
-    hr = IMFGetService_GetService(gs, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rate_support);
+    hr = MFGetService((IUnknown *)session, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rate_support);
     ok(hr == S_OK, "Failed to get rate support interface, hr %#x.\n", hr);
 
-    hr = IMFGetService_GetService(gs, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl, (void **)&rate_control);
+    hr = MFGetService((IUnknown *)session, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl, (void **)&rate_control);
     ok(hr == S_OK, "Failed to get rate control interface, hr %#x.\n", hr);
 
-    hr = IMFGetService_GetService(gs, &MF_LOCAL_MFT_REGISTRATION_SERVICE, &IID_IMFLocalMFTRegistration,
-            (void **)&local_reg);
+    hr = MFGetService((IUnknown *)session, &MF_LOCAL_MFT_REGISTRATION_SERVICE, &IID_IMFLocalMFTRegistration, (void **)&unk);
     ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Vista */, "Failed to get registration service, hr %#x.\n", hr);
     if (SUCCEEDED(hr))
-        IMFLocalMFTRegistration_Release(local_reg);
+        IUnknown_Release(unk);
 
     hr = IMFRateSupport_QueryInterface(rate_support, &IID_IMFMediaSession, (void **)&unk);
     ok(hr == S_OK, "Failed to get session interface, hr %#x.\n", hr);
@@ -1220,6 +1214,8 @@ static void test_media_session(void)
     hr = IMFMediaSession_GetClock(session, &clock);
     ok(hr == S_OK, "Failed to get clock, hr %#x.\n", hr);
 
+    check_interface(clock, &IID_IMFPresentationClock, TRUE);
+
     hr = IMFClock_QueryInterface(clock, &IID_IMFRateControl, (void **)&rate_control2);
     ok(hr == S_OK, "Failed to get rate control, hr %#x.\n", hr);
 
@@ -1240,8 +1236,6 @@ todo_wine
 
     IMFRateControl_Release(rate_control);
     IMFRateSupport_Release(rate_support);
-
-    IMFGetService_Release(gs);
 
     IMFMediaSession_Release(session);
 
