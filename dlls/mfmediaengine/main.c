@@ -1214,7 +1214,11 @@ static double WINAPI media_engine_GetCurrentTime(IMFMediaEngine *iface)
     TRACE("%p.\n", iface);
 
     EnterCriticalSection(&engine->cs);
-    if (SUCCEEDED(IMFPresentationClock_GetTime(engine->clock, &clocktime)))
+    if (engine->flags & FLAGS_ENGINE_IS_ENDED)
+    {
+        ret = engine->duration;
+    }
+    else if (SUCCEEDED(IMFPresentationClock_GetTime(engine->clock, &clocktime)))
     {
         ret = (double)clocktime / 10000000.0;
     }
