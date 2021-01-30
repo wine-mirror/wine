@@ -52,7 +52,7 @@ struct wg_parser
     GstBus *bus;
     GstPad *my_src, *their_sink;
 
-    guint64 start_offset, next_offset, stop_offset;
+    guint64 file_size, start_offset, next_offset, stop_offset;
 };
 
 struct parser
@@ -67,7 +67,7 @@ struct parser
     unsigned int source_count;
     BOOL enum_sink_first;
 
-    LONGLONG filesize;
+    LONGLONG file_size;
 
     struct wg_parser *wg_parser;
 
@@ -847,7 +847,7 @@ static void *push_data(void *iface)
         return NULL;
     }
 
-    maxlen = parser->stop_offset ? parser->stop_offset : This->filesize;
+    maxlen = parser->stop_offset ? parser->stop_offset : parser->file_size;
 
     for (;;) {
         ULONG len;
@@ -1151,12 +1151,13 @@ static GstFlowReturn read_buffer(struct parser *This, guint64 ofs, guint len, Gs
 
     if (ofs == GST_BUFFER_OFFSET_NONE)
         ofs = This->next_pull_offset;
-    if (ofs >= This->filesize) {
+    if (ofs >= This->file_size)
+    {
         WARN("Reading past eof: %s, %u\n", wine_dbgstr_longlong(ofs), len);
         return GST_FLOW_EOS;
     }
-    if (len + ofs > This->filesize)
-        len = This->filesize - ofs;
+    if (len + ofs > This->file_size)
+        len = This->file_size - ofs;
     This->next_pull_offset = ofs + len;
 
     gst_buffer_map(buffer, &info, GST_MAP_WRITE);
@@ -1390,6 +1391,7 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
 static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct parser *This = gst_pad_get_element_private(pad);
+    struct wg_parser *parser = This->wg_parser;
     GstFormat format;
 
     GST_LOG("filter %p, type %s.", This, GST_QUERY_TYPE_NAME(query));
@@ -1404,7 +1406,7 @@ static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
             }
             else if (format == GST_FORMAT_BYTES)
             {
-                gst_query_set_duration(query, GST_FORMAT_BYTES, This->filesize);
+                gst_query_set_duration(query, GST_FORMAT_BYTES, parser->file_size);
                 return TRUE;
             }
             return FALSE;
@@ -1415,7 +1417,7 @@ static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
                 GST_WARNING("Cannot seek using format \"%s\".", gst_format_get_name(format));
                 return FALSE;
             }
-            gst_query_set_seeking(query, GST_FORMAT_BYTES, 1, 0, This->filesize);
+            gst_query_set_seeking(query, GST_FORMAT_BYTES, 1, 0, parser->file_size);
             return TRUE;
         case GST_QUERY_SCHEDULING:
             gst_query_set_scheduling(query, GST_SCHEDULING_FLAG_SEEKABLE, 1, -1, 0);
@@ -1577,7 +1579,8 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
         GST_PAD_ALWAYS,
         GST_STATIC_CAPS_ANY);
 
-    IAsyncReader_Length(This->reader, &This->filesize, &avail);
+    IAsyncReader_Length(This->reader, &This->file_size, &avail);
+    parser->file_size = This->file_size;
 
     This->sink_connected = true;
 
