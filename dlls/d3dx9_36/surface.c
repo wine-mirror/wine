@@ -887,6 +887,41 @@ static BOOL convert_dib_to_bmp(const void **data, unsigned int *size)
     return TRUE;
 }
 
+/* windowscodecs always returns xRGB, but we should return ARGB if and only if
+ * at least one pixel has a non-zero alpha component. */
+static BOOL image_is_argb(IWICBitmapFrameDecode *frame, const D3DXIMAGE_INFO *info)
+{
+    unsigned int size, i;
+    BYTE *buffer;
+    HRESULT hr;
+
+    if (info->Format != D3DFMT_X8R8G8B8 || info->ImageFileFormat != D3DXIFF_BMP)
+        return FALSE;
+
+    size = info->Width * info->Height * 4;
+    if (!(buffer = malloc(size)))
+        return FALSE;
+
+    if (FAILED(hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, info->Width * 4, size, buffer)))
+    {
+        ERR("Failed to copy pixels, hr %#x.\n", hr);
+        free(buffer);
+        return FALSE;
+    }
+
+    for (i = 0; i < info->Width * info->Height; ++i)
+    {
+        if (buffer[i * 4 + 3])
+        {
+            free(buffer);
+            return TRUE;
+        }
+    }
+
+    free(buffer);
+    return FALSE;
+}
+
 /************************************************************
  * D3DXGetImageInfoFromFileInMemory
  *
@@ -1005,6 +1040,9 @@ HRESULT WINAPI D3DXGetImageInfoFromFileInMemory(const void *data, UINT datasize,
                     }
                 }
             }
+
+            if (SUCCEEDED(hr) && image_is_argb(frame, info))
+                info->Format = D3DFMT_A8R8G8B8;
 
             if (frame)
                  IWICBitmapFrameDecode_Release(frame);
