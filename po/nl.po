@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-01-26 12:00+0100\n"
+"PO-Revision-Date: 2021-01-30 22:00+0100\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -37,7 +37,7 @@ msgid ""
 msgstr ""
 "De volgende software kan automatisch verwijderd worden. Om een programma te "
 "verwijderen of de geïnstalleerde onderdelen te wijzigen, selecteer het in de "
-"lijst en druk op Wijzigen/Verwijderen."
+"lijst en druk op Wijzigen of Verwijderen."
 
 #: dlls/appwiz.cpl/appwiz.rc:67
 msgid "&Support Information"
@@ -7018,7 +7018,7 @@ msgstr "De sink is niet voltooid.\n"
 
 #: dlls/mferror/mferror.mc:732
 msgid "Clock was stopped\n"
-msgstr "Klok is gestopt.\n"
+msgstr "Klok is gestopt\n"
 
 #: dlls/mferror/mferror.mc:32
 msgid "Media Foundation platform is not initialized.\n"
@@ -7844,7 +7844,7 @@ msgstr "Dienst: [1]"
 
 #: dlls/msi/msi.rc:167 dlls/msi/msi.rc:170 dlls/msi/msi.rc:174
 msgid "File: [1],  Directory: [9],  Size: [6]"
-msgstr "Bestand: [1], Map: [9], Grootte: [6]"
+msgstr "Bestand: [1],  Map: [9],  Grootte: [6]"
 
 #: dlls/msi/msi.rc:168
 msgid "Found application: [1]"
@@ -7860,7 +7860,7 @@ msgstr "Dienst: [2]"
 
 #: dlls/msi/msi.rc:172
 msgid "File: [1],  Dependencies: [2]"
-msgstr "Bestand: [1], Afhankelijkheden: [2]"
+msgstr "Bestand: [1],  Afhankelijkheden: [2]"
 
 #: dlls/msi/msi.rc:173
 msgid "Application: [1]"
@@ -7872,7 +7872,7 @@ msgstr "Toepassingscontext:[1], Assemblynaam:[2]"
 
 #: dlls/msi/msi.rc:177
 msgid "File: [1],  Directory: [2],  Size: [3]"
-msgstr "Bestand: [1], Map: [2], Grootte: [3]"
+msgstr "Bestand: [1],  Map: [2],  Grootte: [3]"
 
 #: dlls/msi/msi.rc:178 dlls/msi/msi.rc:199
 msgid "Component ID: [1], Qualifier: [2]"
@@ -7924,7 +7924,7 @@ msgstr "Programma: [1], Opdrachtregel: [2]"
 
 #: dlls/msi/msi.rc:192 dlls/msi/msi.rc:209
 msgid "File: [1],  Section: [2],  Key: [3], Value: [4]"
-msgstr "Bestand: [1], Selectie: [2], Sleutel: [3], Waarde; [4]"
+msgstr "Bestand: [1],  Selectie: [2],  Sleutel: [3], Waarde; [4]"
 
 #: dlls/msi/msi.rc:193
 msgid "Key: [1], Name: [2]"
@@ -9336,7 +9336,7 @@ msgstr "Ja op &alles"
 
 #: dlls/shell32/shell32.rc:319
 msgid "About %s"
-msgstr "Info %s"
+msgstr "Over %s"
 
 #: dlls/shell32/shell32.rc:323
 msgid "Wine &license"
@@ -9794,6 +9794,7 @@ msgstr ""
 "binnen de voorwaarden van de GNU Lesser General Public License zoals "
 "gepubliceerd door de Free Software Foundation; versie 2.1 van de licentie, "
 "of (naar keuze) een latere versie.\n"
+"\n"
 "Wine is gemaakt in de hoop dat het nuttig is, maar komt met GEEN ENKELE "
 "GARANTIE; zelfs zonder de impliciete garantie van VERKOOPBAARHEID of "
 "GESCHIKTHEID VOOR EEN BEPAALD DOEL. Lees de GNU Lesser General Public "
@@ -12307,8 +12308,7 @@ msgid ""
 "It is mainly useful in batch files to allow the user to read the output of\n"
 "a previous command before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE toont een bericht op het scherm waarin de gebruiker word gevraagd een\n"
-"toets in te drukken.\n"
+"PAUSE toont een bericht waarin wordt gevraagd een toets in te drukken.\n"
 "\n"
 "Dit is vooral handig in batchbestanden om de gebruiker in staat te stellen\n"
 "om de uitvoer van een voorafgaande opdracht te bekijken, voordat het van\n"
@@ -15040,7 +15040,8 @@ msgid ""
 msgstr ""
 "Wine DLL Registratie Hulpprogramma\n"
 "\n"
-"Biedt DLL-registratiediensten\n"
+"Biedt DLL-registratiediensten.\n"
+"\n"
 
 #: programs/regsvr32/regsvr32.rc:40
 msgid ""
@@ -16778,7 +16779,7 @@ msgstr "&Naam wijzigen..."
 
 #: programs/winefile/winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
-msgstr "&Eigenschappent\tAlt+Enter"
+msgstr "&Eigenschappen\tAlt+Enter"
 
 #: programs/winefile/winefile.rc:38
 msgid "Cr&eate Directory..."
