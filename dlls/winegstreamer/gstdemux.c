@@ -51,6 +51,8 @@ struct wg_parser
     GstElement *container;
     GstBus *bus;
     GstPad *my_src, *their_sink;
+
+    guint64 start_offset, next_offset, stop_offset;
 };
 
 struct parser
@@ -74,7 +76,7 @@ struct parser
      * separate lock. */
     bool streaming, flushing, sink_connected;
 
-    guint64 start, nextofs, nextpullofs, stop;
+    uint64_t next_pull_offset;
 
     pthread_mutex_t mutex;
     pthread_cond_t init_cond;
@@ -656,7 +658,7 @@ static gboolean gst_base_src_perform_seek(struct parser *This, GstEvent *event)
             gst_pad_set_active(parser->my_src, 1);
     }
 
-    This->nextofs = This->start = cur;
+    parser->next_offset = parser->start_offset = cur;
 
     /* and prepare to continue streaming */
     if (flush) {
@@ -845,23 +847,23 @@ static void *push_data(void *iface)
         return NULL;
     }
 
-    maxlen = This->stop ? This->stop : This->filesize;
+    maxlen = parser->stop_offset ? parser->stop_offset : This->filesize;
 
     for (;;) {
         ULONG len;
         int ret;
 
-        if (This->nextofs >= maxlen)
+        if (parser->next_offset >= maxlen)
             break;
-        len = min(16384, maxlen - This->nextofs);
+        len = min(16384, maxlen - parser->next_offset);
 
-        if ((ret = request_buffer_src(parser->my_src, NULL, This->nextofs, len, &buffer)) < 0)
+        if ((ret = request_buffer_src(parser->my_src, NULL, parser->next_offset, len, &buffer)) < 0)
         {
             GST_ERROR("Failed to read data, ret %s.", gst_flow_get_name(ret));
             break;
         }
 
-        This->nextofs += len;
+        parser->next_offset += len;
 
         buffer->duration = buffer->pts = -1;
         if ((ret = gst_pad_push(parser->my_src, buffer)) < 0)
@@ -1148,14 +1150,14 @@ static GstFlowReturn read_buffer(struct parser *This, guint64 ofs, guint len, Gs
     TRACE("filter %p, offset %s, length %u, buffer %p.\n", This, wine_dbgstr_longlong(ofs), len, buffer);
 
     if (ofs == GST_BUFFER_OFFSET_NONE)
-        ofs = This->nextpullofs;
+        ofs = This->next_pull_offset;
     if (ofs >= This->filesize) {
         WARN("Reading past eof: %s, %u\n", wine_dbgstr_longlong(ofs), len);
         return GST_FLOW_EOS;
     }
     if (len + ofs > This->filesize)
         len = This->filesize - ofs;
-    This->nextpullofs = ofs + len;
+    This->next_pull_offset = ofs + len;
 
     gst_buffer_map(buffer, &info, GST_MAP_WRITE);
     hr = IAsyncReader_SyncRead(This->reader, ofs, len, info.data);
@@ -1429,6 +1431,7 @@ static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
 static gboolean activate_push(GstPad *pad, gboolean activate)
 {
     struct parser *This = gst_pad_get_element_private(pad);
+    struct wg_parser *parser = This->wg_parser;
 
     if (!activate) {
         if (This->push_thread) {
@@ -1436,7 +1439,7 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
             This->push_thread = 0;
         }
         if (This->filter.state == State_Stopped)
-            This->nextofs = This->start;
+            parser->next_offset = parser->start_offset;
     } else if (!This->push_thread) {
         int ret;
 
@@ -1596,7 +1599,8 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
     gst_pad_set_event_function(parser->my_src, event_src);
     gst_pad_set_element_private (parser->my_src, This);
 
-    This->start = This->nextofs = This->nextpullofs = This->stop = 0;
+    parser->start_offset = parser->next_offset = parser->stop_offset = 0;
+    This->next_pull_offset = 0;
 
     if (!This->init_gst(This))
         return E_FAIL;
@@ -1620,7 +1624,8 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
 
     pthread_mutex_unlock(&This->mutex);
 
-    This->nextofs = This->nextpullofs = 0;
+    parser->next_offset = 0;
+    This->next_pull_offset = 0;
     return S_OK;
 }
 
