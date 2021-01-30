@@ -378,8 +378,8 @@ void WINAPI WinExecErrorW(HWND hwnd,INT error, LPCWSTR lpstrFileName, LPCWSTR lp
 #define NIM_SETFOCUS            0x00000003
 #define NIM_SETVERSION          0x00000004
 
-#define NOTIFY_VERSION   3     /* supported by Windows 2000 and later */
-#define NOTIFY_VERSION_4 4     /* supported by Windows Vista */
+#define NOTIFYICON_VERSION   3
+#define NOTIFYICON_VERSION_4 4
 
 /* callback message lParam values */
 #define NIN_SELECT              (WM_USER+0)

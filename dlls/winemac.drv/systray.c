@@ -283,7 +283,7 @@ static BOOL notify_owner(struct tray_icon *icon, UINT msg, int x, int y)
     WPARAM wp = icon->id;
     LPARAM lp = msg;
 
-    if (icon->version >= NOTIFY_VERSION_4)
+    if (icon->version >= NOTIFYICON_VERSION_4)
     {
         wp = MAKEWPARAM(x, y);
         lp = MAKELPARAM(msg, icon->id);

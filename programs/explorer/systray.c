@@ -723,7 +723,7 @@ static BOOL notify_owner( struct icon *icon, UINT msg, POINT pt )
     WPARAM wp = icon->id;
     LPARAM lp = msg;
 
-    if (icon->version >= NOTIFY_VERSION_4)
+    if (icon->version >= NOTIFYICON_VERSION_4)
     {
         ClientToScreen( tray_window, &pt );
         wp = MAKEWPARAM( pt.x, pt.y );

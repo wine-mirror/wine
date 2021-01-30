@@ -441,7 +441,7 @@ static BOOL notify_owner( struct tray_icon *icon, UINT msg, LPARAM lparam )
     WPARAM wp = icon->id;
     LPARAM lp = msg;
 
-    if (icon->version >= NOTIFY_VERSION_4)
+    if (icon->version >= NOTIFYICON_VERSION_4)
     {
         POINT pt = { (short)LOWORD(lparam), (short)HIWORD(lparam) };
 
