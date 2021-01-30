@@ -48,6 +48,7 @@ static const GUID MEDIASUBTYPE_CVID = {mmioFOURCC('c','v','i','d'), 0x0000, 0x00
 
 struct wg_parser
 {
+    GstElement *container;
     GstBus *bus;
 };
 
@@ -72,7 +73,6 @@ struct parser
      * separate lock. */
     bool streaming, flushing, sink_connected;
 
-    GstElement *container;
     GstPad *my_src, *their_sink;
     guint64 start, nextofs, nextpullofs, stop;
 
@@ -1228,6 +1228,7 @@ static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
 static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *This)
 {
     static const WCHAR formatW[] = {'S','t','r','e','a','m',' ','%','0','2','u',0};
+    struct wg_parser *parser = This->wg_parser;
     const char *typename;
     char *name;
     GstCaps *caps;
@@ -1296,13 +1297,13 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *Th
         }
 
         /* The bin takes ownership of these elements. */
-        gst_bin_add(GST_BIN(This->container), deinterlace);
+        gst_bin_add(GST_BIN(parser->container), deinterlace);
         gst_element_sync_state_with_parent(deinterlace);
-        gst_bin_add(GST_BIN(This->container), vconv);
+        gst_bin_add(GST_BIN(parser->container), vconv);
         gst_element_sync_state_with_parent(vconv);
-        gst_bin_add(GST_BIN(This->container), flip);
+        gst_bin_add(GST_BIN(parser->container), flip);
         gst_element_sync_state_with_parent(flip);
-        gst_bin_add(GST_BIN(This->container), vconv2);
+        gst_bin_add(GST_BIN(parser->container), vconv2);
         gst_element_sync_state_with_parent(vconv2);
 
         gst_element_link(deinterlace, vconv);
@@ -1328,7 +1329,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *Th
             goto out;
         }
 
-        gst_bin_add(GST_BIN(This->container), convert);
+        gst_bin_add(GST_BIN(parser->container), convert);
         gst_element_sync_state_with_parent(convert);
 
         pin->post_sink = gst_element_get_static_pad(convert, "sink");
@@ -1583,8 +1584,8 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
         gst_bus_set_sync_handler(parser->bus, watch_bus, This, NULL);
     }
 
-    This->container = gst_bin_new(NULL);
-    gst_element_set_bus(This->container, parser->bus);
+    parser->container = gst_bin_new(NULL);
+    gst_element_set_bus(parser->container, parser->bus);
 
     This->my_src = gst_pad_new_from_static_template(&src_template, "quartz-src");
     gst_pad_set_getrange_function(This->my_src, request_buffer_src);
@@ -1691,11 +1692,12 @@ static void parser_destroy(struct strmbase_filter *iface)
 static HRESULT parser_init_stream(struct strmbase_filter *iface)
 {
     struct parser *filter = impl_from_strmbase_filter(iface);
+    struct wg_parser *parser = filter->wg_parser;
     GstSeekType stop_type = GST_SEEK_TYPE_NONE;
     const SourceSeeking *seeking;
     unsigned int i;
 
-    if (!filter->container)
+    if (!parser->container)
         return S_OK;
 
     filter->streaming = true;
@@ -1733,9 +1735,10 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
 static HRESULT parser_cleanup_stream(struct strmbase_filter *iface)
 {
     struct parser *filter = impl_from_strmbase_filter(iface);
+    struct wg_parser *parser = filter->wg_parser;
     unsigned int i;
 
-    if (!filter->container)
+    if (!parser->container)
         return S_OK;
 
     filter->streaming = false;
@@ -1834,6 +1837,7 @@ static const struct strmbase_sink_ops sink_ops =
 static BOOL decodebin_parser_init_gst(struct parser *filter)
 {
     GstElement *element = gst_element_factory_make("decodebin", NULL);
+    struct wg_parser *parser = filter->wg_parser;
     int ret;
 
     if (!element)
@@ -1843,7 +1847,7 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    gst_bin_add(GST_BIN(filter->container), element);
+    gst_bin_add(GST_BIN(parser->container), element);
 
     g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), filter);
     g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad), filter);
@@ -1862,8 +1866,8 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    gst_element_set_state(filter->container, GST_STATE_PAUSED);
-    ret = gst_element_get_state(filter->container, NULL, NULL, -1);
+    gst_element_set_state(parser->container, GST_STATE_PAUSED);
+    ret = gst_element_get_state(parser->container, NULL, NULL, -1);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
         ERR("Failed to play stream.\n");
@@ -2488,12 +2492,13 @@ static struct parser_source *create_pin(struct parser *filter, const WCHAR *name
 
 static HRESULT GST_RemoveOutputPins(struct parser *This)
 {
+    struct wg_parser *parser = This->wg_parser;
     unsigned int i;
 
     TRACE("(%p)\n", This);
     mark_wine_thread();
 
-    if (!This->container)
+    if (!parser->container)
         return S_OK;
 
     /* Unblock all of our streams. */
@@ -2505,7 +2510,7 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     }
     pthread_mutex_unlock(&This->mutex);
 
-    gst_element_set_state(This->container, GST_STATE_NULL);
+    gst_element_set_state(parser->container, GST_STATE_NULL);
     gst_pad_unlink(This->my_src, This->their_sink);
     gst_object_unref(This->my_src);
     gst_object_unref(This->their_sink);
@@ -2526,9 +2531,9 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     This->source_count = 0;
     heap_free(This->sources);
     This->sources = NULL;
-    gst_element_set_bus(This->container, NULL);
-    gst_object_unref(This->container);
-    This->container = NULL;
+    gst_element_set_bus(parser->container, NULL);
+    gst_object_unref(parser->container);
+    parser->container = NULL;
     BaseFilterImpl_IncrementPinVersion(&This->filter);
     return S_OK;
 }
@@ -2587,6 +2592,7 @@ static const struct strmbase_sink_ops wave_parser_sink_ops =
 static BOOL wave_parser_init_gst(struct parser *filter)
 {
     static const WCHAR source_name[] = {'o','u','t','p','u','t',0};
+    struct wg_parser *parser = filter->wg_parser;
     struct parser_source *pin;
     GstElement *element;
     int ret;
@@ -2598,7 +2604,7 @@ static BOOL wave_parser_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    gst_bin_add(GST_BIN(filter->container), element);
+    gst_bin_add(GST_BIN(parser->container), element);
 
     filter->their_sink = gst_element_get_static_pad(element, "sink");
     if ((ret = gst_pad_link(filter->my_src, filter->their_sink)) < 0)
@@ -2618,8 +2624,8 @@ static BOOL wave_parser_init_gst(struct parser *filter)
     }
 
     gst_pad_set_active(pin->my_sink, 1);
-    gst_element_set_state(filter->container, GST_STATE_PAUSED);
-    ret = gst_element_get_state(filter->container, NULL, NULL, -1);
+    gst_element_set_state(parser->container, GST_STATE_PAUSED);
+    ret = gst_element_get_state(parser->container, NULL, NULL, -1);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
         ERR("Failed to play stream.\n");
@@ -2701,6 +2707,7 @@ static const struct strmbase_sink_ops avi_splitter_sink_ops =
 static BOOL avi_splitter_init_gst(struct parser *filter)
 {
     GstElement *element = gst_element_factory_make("avidemux", NULL);
+    struct wg_parser *parser = filter->wg_parser;
     int ret;
 
     if (!element)
@@ -2710,7 +2717,7 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    gst_bin_add(GST_BIN(filter->container), element);
+    gst_bin_add(GST_BIN(parser->container), element);
 
     g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), filter);
     g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad), filter);
@@ -2728,8 +2735,8 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    gst_element_set_state(filter->container, GST_STATE_PAUSED);
-    ret = gst_element_get_state(filter->container, NULL, NULL, -1);
+    gst_element_set_state(parser->container, GST_STATE_PAUSED);
+    ret = gst_element_get_state(parser->container, NULL, NULL, -1);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
         ERR("Failed to play stream.\n");
@@ -2825,6 +2832,7 @@ static const struct strmbase_sink_ops mpeg_splitter_sink_ops =
 static BOOL mpeg_splitter_init_gst(struct parser *filter)
 {
     static const WCHAR source_name[] = {'A','u','d','i','o',0};
+    struct wg_parser *parser = filter->wg_parser;
     struct parser_source *pin;
     GstElement *element;
     int ret;
@@ -2836,7 +2844,7 @@ static BOOL mpeg_splitter_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    gst_bin_add(GST_BIN(filter->container), element);
+    gst_bin_add(GST_BIN(parser->container), element);
 
     filter->their_sink = gst_element_get_static_pad(element, "sink");
     if ((ret = gst_pad_link(filter->my_src, filter->their_sink)) < 0)
@@ -2855,8 +2863,8 @@ static BOOL mpeg_splitter_init_gst(struct parser *filter)
     }
 
     gst_pad_set_active(pin->my_sink, 1);
-    gst_element_set_state(filter->container, GST_STATE_PAUSED);
-    ret = gst_element_get_state(filter->container, NULL, NULL, -1);
+    gst_element_set_state(parser->container, GST_STATE_PAUSED);
+    ret = gst_element_get_state(parser->container, NULL, NULL, -1);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
         ERR("Failed to play stream.\n");
