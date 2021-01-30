@@ -46,6 +46,11 @@ GST_DEBUG_CATEGORY_STATIC(wine);
 
 static const GUID MEDIASUBTYPE_CVID = {mmioFOURCC('c','v','i','d'), 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
 
+struct wg_parser
+{
+    GstBus *bus;
+};
+
 struct parser
 {
     struct strmbase_filter filter;
@@ -60,6 +65,8 @@ struct parser
 
     LONGLONG filesize;
 
+    struct wg_parser *wg_parser;
+
     /* FIXME: It would be nice to avoid duplicating these with strmbase.
      * However, synchronization is tricky; we need access to be protected by a
      * separate lock. */
@@ -67,7 +74,6 @@ struct parser
 
     GstElement *container;
     GstPad *my_src, *their_sink;
-    GstBus *bus;
     guint64 start, nextofs, nextpullofs, stop;
 
     pthread_mutex_t mutex;
@@ -1556,6 +1562,7 @@ static LONGLONG query_duration(GstPad *pad)
 
 static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
 {
+    struct wg_parser *parser = This->wg_parser;
     unsigned int i;
     LONGLONG avail;
     GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE(
@@ -1570,13 +1577,14 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
 
     This->read_thread = CreateThread(NULL, 0, read_thread, This, 0, NULL);
 
-    if (!This->bus) {
-        This->bus = gst_bus_new();
-        gst_bus_set_sync_handler(This->bus, watch_bus, This, NULL);
+    if (!parser->bus)
+    {
+        parser->bus = gst_bus_new();
+        gst_bus_set_sync_handler(parser->bus, watch_bus, This, NULL);
     }
 
     This->container = gst_bin_new(NULL);
-    gst_element_set_bus(This->container, This->bus);
+    gst_element_set_bus(This->container, parser->bus);
 
     This->my_src = gst_pad_new_from_static_template(&src_template, "quartz-src");
     gst_pad_set_getrange_function(This->my_src, request_buffer_src);
@@ -1639,6 +1647,17 @@ static struct strmbase_pin *parser_get_pin(struct strmbase_filter *base, unsigne
     return NULL;
 }
 
+static void wg_parser_destroy(struct wg_parser *parser)
+{
+    if (parser->bus)
+    {
+        gst_bus_set_sync_handler(parser->bus, NULL, NULL, NULL);
+        gst_object_unref(parser->bus);
+    }
+
+    free(parser);
+}
+
 static void parser_destroy(struct strmbase_filter *iface)
 {
     struct parser *filter = impl_from_strmbase_filter(iface);
@@ -1657,11 +1676,7 @@ static void parser_destroy(struct strmbase_filter *iface)
         IAsyncReader_Release(filter->reader);
     filter->reader = NULL;
 
-    if (filter->bus)
-    {
-        gst_bus_set_sync_handler(filter->bus, NULL, NULL, NULL);
-        gst_object_unref(filter->bus);
-    }
+    wg_parser_destroy(filter->wg_parser);
 
     pthread_cond_destroy(&filter->read_cond);
     pthread_cond_destroy(&filter->read_done_cond);
@@ -1966,6 +1981,17 @@ static void parser_init_common(struct parser *object)
     object->flushing = true;
 }
 
+static struct wg_parser *wg_parser_create(void)
+{
+    struct wg_parser *parser;
+
+    if (!(parser = calloc(1, sizeof(*parser))))
+        return NULL;
+
+    TRACE("Created winegstreamer parser %p.\n", parser);
+    return parser;
+}
+
 HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out)
 {
     struct parser *object;
@@ -1977,6 +2003,12 @@ HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out)
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
+
+    if (!(object->wg_parser = wg_parser_create()))
+    {
+        heap_free(object);
+        return E_OUTOFMEMORY;
+    }
 
     parser_init_common(object);
 
@@ -2632,6 +2664,12 @@ HRESULT wave_parser_create(IUnknown *outer, IUnknown **out)
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
+    if (!(object->wg_parser = wg_parser_create()))
+    {
+        heap_free(object);
+        return E_OUTOFMEMORY;
+    }
+
     parser_init_common(object);
 
     strmbase_filter_init(&object->filter, outer, &CLSID_WAVEParser, &filter_ops);
@@ -2744,6 +2782,12 @@ HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out)
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
+
+    if (!(object->wg_parser = wg_parser_create()))
+    {
+        heap_free(object);
+        return E_OUTOFMEMORY;
+    }
 
     parser_init_common(object);
 
@@ -2888,6 +2932,12 @@ HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out)
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
+
+    if (!(object->wg_parser = wg_parser_create()))
+    {
+        heap_free(object);
+        return E_OUTOFMEMORY;
+    }
 
     parser_init_common(object);
 
