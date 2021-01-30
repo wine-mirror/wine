@@ -50,6 +50,7 @@ struct wg_parser
 {
     GstElement *container;
     GstBus *bus;
+    GstPad *my_src, *their_sink;
 };
 
 struct parser
@@ -73,7 +74,6 @@ struct parser
      * separate lock. */
     bool streaming, flushing, sink_connected;
 
-    GstPad *my_src, *their_sink;
     guint64 start, nextofs, nextpullofs, stop;
 
     pthread_mutex_t mutex;
@@ -623,6 +623,7 @@ static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
 
 static gboolean gst_base_src_perform_seek(struct parser *This, GstEvent *event)
 {
+    struct wg_parser *parser = This->wg_parser;
     gboolean res = TRUE;
     gdouble rate;
     GstFormat seek_format;
@@ -650,9 +651,9 @@ static gboolean gst_base_src_perform_seek(struct parser *This, GstEvent *event)
     if (flush) {
         tevent = gst_event_new_flush_start();
         gst_event_set_seqnum(tevent, seqnum);
-        gst_pad_push_event(This->my_src, tevent);
+        gst_pad_push_event(parser->my_src, tevent);
         if (thread)
-            gst_pad_set_active(This->my_src, 1);
+            gst_pad_set_active(parser->my_src, 1);
     }
 
     This->nextofs = This->start = cur;
@@ -661,9 +662,9 @@ static gboolean gst_base_src_perform_seek(struct parser *This, GstEvent *event)
     if (flush) {
         tevent = gst_event_new_flush_stop(TRUE);
         gst_event_set_seqnum(tevent, seqnum);
-        gst_pad_push_event(This->my_src, tevent);
+        gst_pad_push_event(parser->my_src, tevent);
         if (thread)
-            gst_pad_set_active(This->my_src, 1);
+            gst_pad_set_active(parser->my_src, 1);
     }
 
     return res;
@@ -832,6 +833,7 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
 static void *push_data(void *iface)
 {
     struct parser *This = iface;
+    struct wg_parser *parser = This->wg_parser;
     GstBuffer *buffer;
     LONGLONG maxlen;
 
@@ -853,7 +855,7 @@ static void *push_data(void *iface)
             break;
         len = min(16384, maxlen - This->nextofs);
 
-        if ((ret = request_buffer_src(This->my_src, NULL, This->nextofs, len, &buffer)) < 0)
+        if ((ret = request_buffer_src(parser->my_src, NULL, This->nextofs, len, &buffer)) < 0)
         {
             GST_ERROR("Failed to read data, ret %s.", gst_flow_get_name(ret));
             break;
@@ -862,7 +864,7 @@ static void *push_data(void *iface)
         This->nextofs += len;
 
         buffer->duration = buffer->pts = -1;
-        if ((ret = gst_pad_push(This->my_src, buffer)) < 0)
+        if ((ret = gst_pad_push(parser->my_src, buffer)) < 0)
         {
             GST_ERROR("Failed to push data, ret %s.", gst_flow_get_name(ret));
             break;
@@ -871,7 +873,7 @@ static void *push_data(void *iface)
 
     gst_buffer_unref(buffer);
 
-    gst_pad_push_event(This->my_src, gst_event_new_eos());
+    gst_pad_push_event(parser->my_src, gst_event_new_eos());
 
     GST_DEBUG("Stopping push thread.");
 
@@ -1587,12 +1589,12 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
     parser->container = gst_bin_new(NULL);
     gst_element_set_bus(parser->container, parser->bus);
 
-    This->my_src = gst_pad_new_from_static_template(&src_template, "quartz-src");
-    gst_pad_set_getrange_function(This->my_src, request_buffer_src);
-    gst_pad_set_query_function(This->my_src, query_function);
-    gst_pad_set_activatemode_function(This->my_src, activate_mode);
-    gst_pad_set_event_function(This->my_src, event_src);
-    gst_pad_set_element_private (This->my_src, This);
+    parser->my_src = gst_pad_new_from_static_template(&src_template, "quartz-src");
+    gst_pad_set_getrange_function(parser->my_src, request_buffer_src);
+    gst_pad_set_query_function(parser->my_src, query_function);
+    gst_pad_set_activatemode_function(parser->my_src, activate_mode);
+    gst_pad_set_event_function(parser->my_src, event_src);
+    gst_pad_set_element_private (parser->my_src, This);
 
     This->start = This->nextofs = This->nextpullofs = This->stop = 0;
 
@@ -1854,13 +1856,13 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
     g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_blacklist), filter);
     g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), filter);
 
-    filter->their_sink = gst_element_get_static_pad(element, "sink");
+    parser->their_sink = gst_element_get_static_pad(element, "sink");
 
     pthread_mutex_lock(&filter->mutex);
     filter->no_more_pads = filter->error = false;
     pthread_mutex_unlock(&filter->mutex);
 
-    if ((ret = gst_pad_link(filter->my_src, filter->their_sink)) < 0)
+    if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
     {
         ERR("Failed to link pads, error %d.\n", ret);
         return FALSE;
@@ -2511,10 +2513,10 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     pthread_mutex_unlock(&This->mutex);
 
     gst_element_set_state(parser->container, GST_STATE_NULL);
-    gst_pad_unlink(This->my_src, This->their_sink);
-    gst_object_unref(This->my_src);
-    gst_object_unref(This->their_sink);
-    This->my_src = This->their_sink = NULL;
+    gst_pad_unlink(parser->my_src, parser->their_sink);
+    gst_object_unref(parser->my_src);
+    gst_object_unref(parser->their_sink);
+    parser->my_src = parser->their_sink = NULL;
 
     /* read_thread() needs to stay alive to service any read requests GStreamer
      * sends, so we can only shut it down after GStreamer stops. */
@@ -2606,8 +2608,8 @@ static BOOL wave_parser_init_gst(struct parser *filter)
 
     gst_bin_add(GST_BIN(parser->container), element);
 
-    filter->their_sink = gst_element_get_static_pad(element, "sink");
-    if ((ret = gst_pad_link(filter->my_src, filter->their_sink)) < 0)
+    parser->their_sink = gst_element_get_static_pad(element, "sink");
+    if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
     {
         ERR("Failed to link sink pads, error %d.\n", ret);
         return FALSE;
@@ -2723,13 +2725,13 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
     g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad), filter);
     g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), filter);
 
-    filter->their_sink = gst_element_get_static_pad(element, "sink");
+    parser->their_sink = gst_element_get_static_pad(element, "sink");
 
     pthread_mutex_lock(&filter->mutex);
     filter->no_more_pads = filter->error = false;
     pthread_mutex_unlock(&filter->mutex);
 
-    if ((ret = gst_pad_link(filter->my_src, filter->their_sink)) < 0)
+    if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
     {
         ERR("Failed to link pads, error %d.\n", ret);
         return FALSE;
@@ -2846,8 +2848,8 @@ static BOOL mpeg_splitter_init_gst(struct parser *filter)
 
     gst_bin_add(GST_BIN(parser->container), element);
 
-    filter->their_sink = gst_element_get_static_pad(element, "sink");
-    if ((ret = gst_pad_link(filter->my_src, filter->their_sink)) < 0)
+    parser->their_sink = gst_element_get_static_pad(element, "sink");
+    if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
     {
         ERR("Failed to link sink pads, error %d.\n", ret);
         return FALSE;
