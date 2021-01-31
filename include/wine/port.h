@@ -85,7 +85,7 @@ typedef int ssize_t;
 #else  /* _WIN32 */
 
 #ifndef __int64
-#  if defined(__x86_64__) || defined(__aarch64__) || defined(_WIN64)
+#  if defined(__x86_64__) || defined(__aarch64__) || defined(__powerpc64__) || defined(_WIN64)
 #    define __int64 long
 #  else
 #    define __int64 long long
