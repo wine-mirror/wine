@@ -275,6 +275,10 @@ typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
 # undef  WORDS_BIGENDIAN
 #elif defined(__x86_64__)
 # undef  WORDS_BIGENDIAN
+#elif defined(__powerpc64__) && defined(__BIG_ENDIAN__)
+# define WORDS_BIGENDIAN
+#elif defined(__powerpc64__)
+# undef  WORDS_BIGENDIAN
 #elif defined(__powerpc__)
 # define WORDS_BIGENDIAN
 #elif defined(__ALPHA__)
