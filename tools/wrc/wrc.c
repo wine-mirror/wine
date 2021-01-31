@@ -328,7 +328,8 @@ static void set_target( const char *target )
     if (!(p = strchr( cpu, '-' ))) error( "Invalid target specification '%s'\n", target );
     *p = 0;
     if (!strcmp( cpu, "amd64" ) || !strcmp( cpu, "x86_64" ) ||
-        !strcmp( cpu, "ia64" ) || !strcmp( cpu, "aarch64" ))
+        !strcmp( cpu, "ia64" )  || !strcmp( cpu, "aarch64" ) ||
+        !strcmp( cpu, "powerpc64" ) || !strcmp( cpu, "powerpc64le" ))
         pointer_size = 8;
     else
         pointer_size = 4;
