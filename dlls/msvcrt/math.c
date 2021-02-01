@@ -1165,13 +1165,14 @@ double CDECL sinh( double x )
   return ret;
 }
 
-static inline double CDECL ret_nan( void )
+static inline double CDECL ret_nan( BOOL update_sw )
 {
     double x = 1.0;
+    if (!update_sw) return -NAN;
     return (x - x) / (x - x);
 }
 
-BOOL sqrt_validate( double *x )
+BOOL sqrt_validate( double *x, BOOL update_sw )
 {
     short c = _dclass(*x);
 
@@ -1179,7 +1180,8 @@ BOOL sqrt_validate( double *x )
     if (c == FP_NAN)
     {
 #ifdef __i386__
-        *x = math_error(_DOMAIN, "sqrt", *x, 0, *x);
+        if (update_sw)
+            *x = math_error(_DOMAIN, "sqrt", *x, 0, *x);
 #else
         /* set signaling bit */
         *(ULONGLONG*)x |= 0x8000000000000ULL;
@@ -1188,14 +1190,14 @@ BOOL sqrt_validate( double *x )
     }
     if (signbit(*x))
     {
-        *x = math_error(_DOMAIN, "sqrt", *x, 0, ret_nan());
+        *x = math_error(_DOMAIN, "sqrt", *x, 0, ret_nan(update_sw));
         return FALSE;
     }
     if (c == FP_INFINITE) return FALSE;
     return TRUE;
 }
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__i386__)
 double CDECL sse2_sqrt(double);
 __ASM_GLOBAL_FUNC( sse2_sqrt,
         "sqrtsd %xmm0, %xmm0\n\t"
@@ -1241,12 +1243,12 @@ __ASM_GLOBAL_FUNC( x87_sqrt,
 double CDECL sqrt( double x )
 {
 #ifdef __x86_64__
-    if (!sqrt_validate(&x))
+    if (!sqrt_validate(&x, TRUE))
         return x;
 
     return sse2_sqrt(x);
 #elif defined( __i386__ )
-    if (!sqrt_validate(&x))
+    if (!sqrt_validate(&x, TRUE))
         return x;
 
     return x87_sqrt(x);
@@ -1259,7 +1261,7 @@ double CDECL sqrt( double x )
     unsigned int r,t1,s1,ix1,q1;
     ULONGLONG ix;
 
-    if (!sqrt_validate(&x))
+    if (!sqrt_validate(&x, TRUE))
         return x;
 
     ix = *(ULONGLONG*)&x;
@@ -3344,12 +3346,25 @@ void __cdecl __libm_sse2_tanf(void)
  */
 void __cdecl __libm_sse2_sqrt_precise(void)
 {
+    unsigned int cw;
     double d;
-    __asm__ __volatile__( "movq %%xmm0,%0" : "=m" (d) );
-    d = sqrt( d );
-    __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d) );
-}
 
+    __asm__ __volatile__( "movq %%xmm0,%0" : "=m" (d) );
+    __control87_2(0, 0, NULL, &cw);
+    if (cw & _MCW_RC)
+    {
+        d = sqrt(d);
+        __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d) );
+        return;
+    }
+
+    if (!sqrt_validate(&d, FALSE))
+    {
+        __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d) );
+        return;
+    }
+    __asm__ __volatile__( "call " __ASM_NAME( "sse2_sqrt" ) );
+}
 #endif  /* __i386__ */
 
 /*********************************************************************
