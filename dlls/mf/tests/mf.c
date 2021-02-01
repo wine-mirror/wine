@@ -3647,16 +3647,67 @@ failed:
 
 static void test_quality_manager(void)
 {
+    IMFPresentationClock *clock;
     IMFQualityManager *manager;
     HRESULT hr;
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Startup failure, hr %#x.\n", hr);
+
+    hr = MFCreatePresentationClock(&clock);
+    ok(hr == S_OK, "Failed to create presentation clock, hr %#x.\n", hr);
 
     hr = MFCreateStandardQualityManager(&manager);
     ok(hr == S_OK, "Failed to create quality manager, hr %#x.\n", hr);
 
+    check_interface(manager, &IID_IMFQualityManager, TRUE);
+todo_wine
+    check_interface(manager, &IID_IMFClockStateSink, TRUE);
+
     hr = IMFQualityManager_NotifyPresentationClock(manager, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
+    /* Set clock, then shutdown. */
+    EXPECT_REF(clock, 1);
+    EXPECT_REF(manager, 1);
+    hr = IMFQualityManager_NotifyPresentationClock(manager, clock);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(clock, 2);
+todo_wine
+    EXPECT_REF(manager, 2);
+
+    hr = IMFQualityManager_Shutdown(manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(clock, 1);
+
+    hr = IMFQualityManager_NotifyPresentationClock(manager, clock);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFQualityManager_NotifyPresentationClock(manager, NULL);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFQualityManager_Shutdown(manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     IMFQualityManager_Release(manager);
+
+    /* Set clock, then release without shutting down. */
+    hr = MFCreateStandardQualityManager(&manager);
+    ok(hr == S_OK, "Failed to create quality manager, hr %#x.\n", hr);
+
+    EXPECT_REF(clock, 1);
+    hr = IMFQualityManager_NotifyPresentationClock(manager, clock);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(clock, 2);
+
+    IMFQualityManager_Release(manager);
+todo_wine
+    EXPECT_REF(clock, 2);
+
+    IMFPresentationClock_Release(clock);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
 }
 
 static void test_sar(void)

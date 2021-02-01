@@ -319,12 +319,19 @@ struct presentation_clock
     BOOL is_shut_down;
 };
 
+enum quality_manager_state
+{
+    QUALITY_MANAGER_READY = 0,
+    QUALITY_MANAGER_SHUT_DOWN,
+};
+
 struct quality_manager
 {
     IMFQualityManager IMFQualityManager_iface;
     LONG refcount;
 
     IMFPresentationClock *clock;
+    unsigned int state;
     CRITICAL_SECTION cs;
 };
 
@@ -4794,24 +4801,35 @@ static HRESULT WINAPI standard_quality_manager_NotifyTopology(IMFQualityManager 
     return S_OK;
 }
 
+static void standard_quality_manager_release_clock(struct quality_manager *manager)
+{
+    if (manager->clock)
+        IMFPresentationClock_Release(manager->clock);
+    manager->clock = NULL;
+}
+
 static HRESULT WINAPI standard_quality_manager_NotifyPresentationClock(IMFQualityManager *iface,
         IMFPresentationClock *clock)
 {
     struct quality_manager *manager = impl_from_IMFQualityManager(iface);
+    HRESULT hr = S_OK;
 
     TRACE("%p, %p.\n", iface, clock);
 
-    if (!clock)
-        return E_POINTER;
-
     EnterCriticalSection(&manager->cs);
-    if (manager->clock)
-        IMFPresentationClock_Release(manager->clock);
-    manager->clock = clock;
-    IMFPresentationClock_AddRef(manager->clock);
+    if (manager->state == QUALITY_MANAGER_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (!clock)
+        hr = E_POINTER;
+    else
+    {
+        standard_quality_manager_release_clock(manager);
+        manager->clock = clock;
+        IMFPresentationClock_AddRef(manager->clock);
+    }
     LeaveCriticalSection(&manager->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI standard_quality_manager_NotifyProcessInput(IMFQualityManager *iface, IMFTopologyNode *node,
@@ -4840,9 +4858,19 @@ static HRESULT WINAPI standard_quality_manager_NotifyQualityEvent(IMFQualityMana
 
 static HRESULT WINAPI standard_quality_manager_Shutdown(IMFQualityManager *iface)
 {
-    FIXME("%p stub.\n", iface);
+    struct quality_manager *manager = impl_from_IMFQualityManager(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&manager->cs);
+    if (manager->state != QUALITY_MANAGER_SHUT_DOWN)
+    {
+        standard_quality_manager_release_clock(manager);
+        manager->state = QUALITY_MANAGER_SHUT_DOWN;
+    }
+    LeaveCriticalSection(&manager->cs);
+
+    return S_OK;
 }
 
 static IMFQualityManagerVtbl standard_quality_manager_vtbl =
