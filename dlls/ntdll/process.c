@@ -151,6 +151,26 @@ NTSTATUS WINAPI DbgUiConnectToDbg(void)
 }
 
 /***********************************************************************
+ *      DbgUiDebugActiveProcess (NTDLL.@)
+ */
+NTSTATUS WINAPI DbgUiDebugActiveProcess( HANDLE process )
+{
+    NTSTATUS status;
+
+    if ((status = NtDebugActiveProcess( process, DbgUiGetThreadDebugObject() ))) return status;
+    if ((status = DbgUiIssueRemoteBreakin( process ))) DbgUiStopDebugging( process );
+    return status;
+}
+
+/***********************************************************************
+ *      DbgUiStopDebugging (NTDLL.@)
+ */
+NTSTATUS WINAPI DbgUiStopDebugging( HANDLE process )
+{
+    return NtRemoveProcessDebug( process, DbgUiGetThreadDebugObject() );
+}
+
+/***********************************************************************
  *      DbgUiRemoteBreakin (NTDLL.@)
  */
 void WINAPI DbgUiRemoteBreakin( void *arg )

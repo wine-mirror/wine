@@ -91,22 +91,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH ContinueDebugEvent( DWORD pid, DWORD tid, DWORD st
 BOOL WINAPI DECLSPEC_HOTPATCH DebugActiveProcess( DWORD pid )
 {
     HANDLE process;
-    BOOL ret;
+    NTSTATUS status;
 
-    SERVER_START_REQ( debug_process )
-    {
-        req->pid = pid;
-        req->attach = 1;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    if (!ret) return FALSE;
-
-    if (!(process = OpenProcess( PROCESS_CREATE_THREAD, FALSE, pid ))) return FALSE;
-    ret = set_ntstatus( DbgUiIssueRemoteBreakin( process ));
+    if (!set_ntstatus( DbgUiConnectToDbg() )) return FALSE;
+    if (!(process = OpenProcess( PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_SUSPEND_RESUME |
+                                 PROCESS_CREATE_THREAD, FALSE, pid )))
+        return FALSE;
+    status = DbgUiDebugActiveProcess( process );
     NtClose( process );
-    if (!ret) DebugActiveProcessStop( pid );
-    return ret;
+    return set_ntstatus( status );
 }
 
 
@@ -115,16 +108,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH DebugActiveProcess( DWORD pid )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH DebugActiveProcessStop( DWORD pid )
 {
-    BOOL ret;
+    HANDLE process;
+    NTSTATUS status;
 
-    SERVER_START_REQ( debug_process )
-    {
-        req->pid = pid;
-        req->attach = 0;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    if (!(process = OpenProcess( PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_SUSPEND_RESUME, FALSE, pid )))
+        return FALSE;
+    status = DbgUiStopDebugging( process );
+    NtClose( process );
+    return set_ntstatus( status );
 }
 
 

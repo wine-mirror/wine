@@ -2094,9 +2094,9 @@ struct continue_debug_event_reply
 struct debug_process_request
 {
     struct request_header __header;
-    process_id_t pid;
+    obj_handle_t handle;
+    obj_handle_t debug;
     int          attach;
-    char __pad_20[4];
 };
 struct debug_process_reply
 {
@@ -6211,7 +6211,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 658
+#define SERVER_PROTOCOL_VERSION 659
 
 /* ### protocol_version end ### */
 

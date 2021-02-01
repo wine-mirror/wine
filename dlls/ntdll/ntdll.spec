@@ -37,12 +37,12 @@
 @ stdcall DbgUiConnectToDbg()
 @ stub DbgUiContinue
 @ stub DbgUiConvertStateChangeStructure
-# @ stub DbgUiDebugActiveProcess
+@ stdcall DbgUiDebugActiveProcess(long)
 @ stdcall DbgUiGetThreadDebugObject()
 @ stdcall DbgUiIssueRemoteBreakin(long)
 @ stdcall DbgUiRemoteBreakin(ptr)
 @ stdcall DbgUiSetThreadDebugObject(long)
-# @ stub DbgUiStopDebugging
+@ stdcall DbgUiStopDebugging(long)
 @ stub DbgUiWaitStateChange
 @ stdcall DbgUserBreakPoint()
 @ stdcall EtwEventActivityIdControl(long ptr)
@@ -340,7 +340,7 @@
 @ stdcall -syscall NtReleaseSemaphore(long long ptr)
 @ stdcall -syscall NtRemoveIoCompletion(ptr ptr ptr ptr ptr)
 @ stdcall -syscall NtRemoveIoCompletionEx(ptr ptr long ptr ptr long)
-# @ stub NtRemoveProcessDebug
+@ stdcall -syscall NtRemoveProcessDebug(long long)
 @ stdcall -syscall NtRenameKey(long ptr)
 @ stdcall -syscall NtReplaceKey(ptr long ptr)
 @ stub NtReplyPort
@@ -1345,7 +1345,7 @@
 @ stdcall -private -syscall ZwReleaseSemaphore(long long ptr) NtReleaseSemaphore
 @ stdcall -private -syscall ZwRemoveIoCompletion(ptr ptr ptr ptr ptr) NtRemoveIoCompletion
 @ stdcall -private -syscall ZwRemoveIoCompletionEx(ptr ptr long ptr ptr long) NtRemoveIoCompletionEx
-# @ stub ZwRemoveProcessDebug
+@ stdcall -private -syscall ZwRemoveProcessDebug(long long) NtRemoveProcessDebug
 @ stdcall -private -syscall ZwRenameKey(long ptr) NtRenameKey
 @ stdcall -private -syscall ZwReplaceKey(ptr long ptr) NtReplaceKey
 @ stub ZwReplyPort

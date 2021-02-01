@@ -1637,9 +1637,10 @@ struct process_info
 @END
 
 
-/* Start/stop debugging an existing process */
+/* Start or stop debugging an existing process */
 @REQ(debug_process)
-    process_id_t pid;          /* id of the process to debug */
+    obj_handle_t handle;       /* process handle */
+    obj_handle_t debug;        /* debug object to attach to the process */
     int          attach;       /* 1=attaching / 0=detaching from the process */
 @END
 

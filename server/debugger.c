@@ -485,34 +485,30 @@ void resume_delayed_debug_events( struct thread *thread )
 }
 
 /* attach a process to a debugger thread and suspend it */
-static int debugger_attach( struct process *process, struct thread *debugger )
+static int debugger_attach( struct process *process, struct thread *debugger, struct debug_obj *debug_obj )
 {
-    if (process->debug_obj) goto error;  /* already being debugged */
     if (debugger->process == process) goto error;
     if (!is_process_init_done( process )) goto error;  /* still starting up */
     if (list_empty( &process->thread_list )) goto error;  /* no thread running in the process */
-
     /* don't let a debugger debug its console... won't work */
     if (debugger->process->console)
     {
         struct thread *renderer = console_get_renderer(debugger->process->console);
-        if (renderer && renderer->process == process)
-            goto error;
+        if (renderer && renderer->process == process) goto error;
     }
+    if (!debugger->debug_obj) debugger->debug_obj = (struct debug_obj *)grab_object( debug_obj );
 
     suspend_process( process );
-    if (!set_process_debugger( process, debugger ))
-    {
-        resume_process( process );
-        return 0;
-    }
+
     if (!set_process_debug_flag( process, 1 ))
     {
-        process->debug_obj = NULL;
         resume_process( process );
         return 0;
     }
+    process->debug_obj = debug_obj;
     process->debug_children = 0;
+    generate_startup_debug_events( process, 0 );
+    resume_process( process );
     return 1;
 
  error:
@@ -525,9 +521,6 @@ static int debugger_attach( struct process *process, struct thread *debugger )
 void debugger_detach( struct process *process, struct debug_obj *debug_obj )
 {
     struct debug_event *event, *next;
-
-    /* init should be done, otherwise wouldn't be attached */
-    assert(is_process_init_done(process));
 
     suspend_process( process );
 
@@ -549,7 +542,6 @@ void debugger_detach( struct process *process, struct debug_obj *debug_obj )
     process->debug_obj = NULL;
     if (!set_process_debug_flag( process, 0 )) clear_error();  /* ignore error */
 
-    /* from this function */
     resume_process( process );
 }
 
@@ -582,22 +574,6 @@ void generate_startup_debug_events( struct process *process, client_ptr_t entry 
         struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
         generate_debug_event( first_thread, LOAD_DLL_DEBUG_EVENT, dll );
     }
-}
-
-/* set the debugger of a given process */
-int set_process_debugger( struct process *process, struct thread *debugger )
-{
-    struct debug_obj *debug_obj;
-
-    assert( !process->debug_obj );
-
-    if (!debugger->debug_obj)  /* need to allocate a context */
-    {
-        if (!(debug_obj = create_debug_obj( NULL, NULL, 0, DEBUG_KILL_ON_CLOSE, NULL ))) return 0;
-        debugger->debug_obj = debug_obj;
-    }
-    process->debug_obj = debugger->debug_obj;
-    return 1;
 }
 
 /* a thread is exiting */
@@ -692,23 +668,27 @@ DECL_HANDLER(continue_debug_event)
     }
 }
 
-/* Start debugging an existing process */
+/* start or stop debugging an existing process */
 DECL_HANDLER(debug_process)
 {
-    struct process *process = get_process_from_id( req->pid );
-    if (!process) return;
+    struct debug_obj *debug_obj;
+    struct process *process = get_process_from_handle( req->handle,
+                                            PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_SUSPEND_RESUME );
 
-    if (!req->attach)
+    if (!process) return;
+    if ((debug_obj = get_debug_obj( current->process, req->debug, DEBUG_PROCESS_ASSIGN )))
     {
-        if (current->debug_obj && process->debug_obj == current->debug_obj)
-            debugger_detach( process, current->debug_obj );
+        if (req->attach)
+        {
+            if (!process->debug_obj) debugger_attach( process, current, debug_obj );
+            else set_error( STATUS_ACCESS_DENIED );
+        }
         else
-            set_error( STATUS_ACCESS_DENIED );
-    }
-    else if (debugger_attach( process, current ))
-    {
-        generate_startup_debug_events( process, 0 );
-        resume_process( process );
+        {
+            if (process->debug_obj == debug_obj) debugger_detach( process, debug_obj );
+            else set_error( STATUS_ACCESS_DENIED );
+        }
+        release_object( debug_obj );
     }
     release_object( process );
 }

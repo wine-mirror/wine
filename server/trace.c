@@ -2206,7 +2206,8 @@ static void dump_continue_debug_event_request( const struct continue_debug_event
 
 static void dump_debug_process_request( const struct debug_process_request *req )
 {
-    fprintf( stderr, " pid=%04x", req->pid );
+    fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, ", debug=%04x", req->debug );
     fprintf( stderr, ", attach=%d", req->attach );
 }
 

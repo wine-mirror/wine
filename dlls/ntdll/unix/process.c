@@ -1746,10 +1746,38 @@ NTSTATUS WINAPI NtResumeProcess( HANDLE handle )
 /**********************************************************************
  *           NtDebugActiveProcess  (NTDLL.@)
  */
-NTSTATUS WINAPI NtDebugActiveProcess( HANDLE process, HANDLE debug_object )
+NTSTATUS WINAPI NtDebugActiveProcess( HANDLE process, HANDLE debug )
 {
-    FIXME( "(%p %p), stub!\n", process, debug_object );
-    return STATUS_SUCCESS;
+    NTSTATUS ret;
+
+    SERVER_START_REQ( debug_process )
+    {
+        req->handle = wine_server_obj_handle( process );
+        req->debug  = wine_server_obj_handle( debug );
+        req->attach = 1;
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**********************************************************************
+ *           NtRemoveProcessDebug  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtRemoveProcessDebug( HANDLE process, HANDLE debug )
+{
+    NTSTATUS ret;
+
+    SERVER_START_REQ( debug_process )
+    {
+        req->handle = wine_server_obj_handle( process );
+        req->debug  = wine_server_obj_handle( debug );
+        req->attach = 0;
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
