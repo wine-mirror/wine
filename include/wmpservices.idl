@@ -19,6 +19,8 @@
 import "oaidl.idl";
 import "ocidl.idl";
 
+cpp_quote("#define WMPGC_FLAGS_SUPPRESS_DIALOGS 0x00000002")
+
 [
     odl,
     uuid(bfb377e5-c594-4369-a970-de896d5ece74),
