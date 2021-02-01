@@ -36,7 +36,7 @@
 # @ stub DbgSetDebugFilterState
 @ stdcall DbgUiConnectToDbg()
 @ stdcall DbgUiContinue(ptr long)
-@ stub DbgUiConvertStateChangeStructure
+@ stdcall DbgUiConvertStateChangeStructure(ptr ptr)
 @ stdcall DbgUiDebugActiveProcess(long)
 @ stdcall DbgUiGetThreadDebugObject()
 @ stdcall DbgUiIssueRemoteBreakin(long)

@@ -178,6 +178,115 @@ NTSTATUS WINAPI DbgUiContinue( CLIENT_ID *client, NTSTATUS status )
     return NtDebugContinue( DbgUiGetThreadDebugObject(), client, status );
 }
 
+/* helper for DbgUiConvertStateChangeStructure */
+static inline void *get_thread_teb( HANDLE thread )
+{
+    THREAD_BASIC_INFORMATION info;
+
+    if (NtQueryInformationThread( thread, ThreadBasicInformation, &info, sizeof(info), NULL )) return NULL;
+    return info.TebBaseAddress;
+}
+
+/***********************************************************************
+ *      DbgUiConvertStateChangeStructure (NTDLL.@)
+ */
+NTSTATUS WINAPI DbgUiConvertStateChangeStructure( DBGUI_WAIT_STATE_CHANGE *state, DEBUG_EVENT *event )
+{
+    event->dwProcessId = HandleToULong( state->AppClientId.UniqueProcess );
+    event->dwThreadId  = HandleToULong( state->AppClientId.UniqueThread );
+    switch (state->NewState)
+    {
+    case DbgCreateThreadStateChange:
+    {
+        DBGUI_CREATE_THREAD *info = &state->StateInfo.CreateThread;
+        event->dwDebugEventCode = CREATE_THREAD_DEBUG_EVENT;
+        event->u.CreateThread.hThread           = info->HandleToThread;
+        event->u.CreateThread.lpThreadLocalBase = get_thread_teb( info->HandleToThread );
+        event->u.CreateThread.lpStartAddress    = info->NewThread.StartAddress;
+        break;
+    }
+    case DbgCreateProcessStateChange:
+    {
+        DBGUI_CREATE_PROCESS *info = &state->StateInfo.CreateProcessInfo;
+        event->dwDebugEventCode = CREATE_PROCESS_DEBUG_EVENT;
+        event->u.CreateProcessInfo.hFile                 = info->NewProcess.FileHandle;
+        event->u.CreateProcessInfo.hProcess              = info->HandleToProcess;
+        event->u.CreateProcessInfo.hThread               = info->HandleToThread;
+        event->u.CreateProcessInfo.lpBaseOfImage         = info->NewProcess.BaseOfImage;
+        event->u.CreateProcessInfo.dwDebugInfoFileOffset = info->NewProcess.DebugInfoFileOffset;
+        event->u.CreateProcessInfo.nDebugInfoSize        = info->NewProcess.DebugInfoSize;
+        event->u.CreateProcessInfo.lpThreadLocalBase     = get_thread_teb( info->HandleToThread );
+        event->u.CreateProcessInfo.lpStartAddress        = info->NewProcess.InitialThread.StartAddress;
+        event->u.CreateProcessInfo.lpImageName           = NULL;
+        event->u.CreateProcessInfo.fUnicode              = TRUE;
+        break;
+    }
+    case DbgExitThreadStateChange:
+    {
+        DBGKM_EXIT_THREAD *info = &state->StateInfo.ExitThread;
+        event->dwDebugEventCode = EXIT_THREAD_DEBUG_EVENT;
+        event->u.ExitThread.dwExitCode = info->ExitStatus;
+        break;
+    }
+    case DbgExitProcessStateChange:
+    {
+        DBGKM_EXIT_PROCESS *info = &state->StateInfo.ExitProcess;
+        event->dwDebugEventCode = EXIT_PROCESS_DEBUG_EVENT;
+        event->u.ExitProcess.dwExitCode = info->ExitStatus;
+        break;
+    }
+    case DbgExceptionStateChange:
+    case DbgBreakpointStateChange:
+    case DbgSingleStepStateChange:
+    {
+        DBGKM_EXCEPTION *info = &state->StateInfo.Exception;
+        DWORD code = info->ExceptionRecord.ExceptionCode;
+        if (code == DBG_PRINTEXCEPTION_C && info->ExceptionRecord.NumberParameters >= 2)
+        {
+            event->dwDebugEventCode = OUTPUT_DEBUG_STRING_EVENT;
+            event->u.DebugString.lpDebugStringData  = (void *)info->ExceptionRecord.ExceptionInformation[1];
+            event->u.DebugString.fUnicode           = FALSE;
+            event->u.DebugString.nDebugStringLength = info->ExceptionRecord.ExceptionInformation[0];
+        }
+        else if (code == DBG_RIPEXCEPTION && info->ExceptionRecord.NumberParameters >= 2)
+        {
+            event->dwDebugEventCode = RIP_EVENT;
+            event->u.RipInfo.dwError = info->ExceptionRecord.ExceptionInformation[0];
+            event->u.RipInfo.dwType  = info->ExceptionRecord.ExceptionInformation[1];
+        }
+        else
+        {
+            event->dwDebugEventCode = EXCEPTION_DEBUG_EVENT;
+            event->u.Exception.ExceptionRecord = info->ExceptionRecord;
+            event->u.Exception.dwFirstChance   = info->FirstChance;
+        }
+        break;
+    }
+    case DbgLoadDllStateChange:
+    {
+        DBGKM_LOAD_DLL *info = &state->StateInfo.LoadDll;
+        event->dwDebugEventCode = LOAD_DLL_DEBUG_EVENT;
+        event->u.LoadDll.hFile                 = info->FileHandle;
+        event->u.LoadDll.lpBaseOfDll           = info->BaseOfDll;
+        event->u.LoadDll.dwDebugInfoFileOffset = info->DebugInfoFileOffset;
+        event->u.LoadDll.nDebugInfoSize        = info->DebugInfoSize;
+        event->u.LoadDll.lpImageName           = info->NamePointer;
+        event->u.LoadDll.fUnicode              = TRUE;
+        break;
+    }
+    case DbgUnloadDllStateChange:
+    {
+        DBGKM_UNLOAD_DLL *info = &state->StateInfo.UnloadDll;
+        event->dwDebugEventCode = UNLOAD_DLL_DEBUG_EVENT;
+        event->u.UnloadDll.lpBaseOfDll = info->BaseAddress;
+        break;
+    }
+    default:
+        return STATUS_UNSUCCESSFUL;
+    }
+    return STATUS_SUCCESS;
+}
+
 /***********************************************************************
  *      DbgUiRemoteBreakin (NTDLL.@)
  */

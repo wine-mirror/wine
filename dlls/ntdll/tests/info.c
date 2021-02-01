@@ -45,6 +45,7 @@ static NTSTATUS (WINAPI * pNtOpenThread)(HANDLE *, ACCESS_MASK, const OBJECT_ATT
 static NTSTATUS (WINAPI * pNtQueryObject)(HANDLE, OBJECT_INFORMATION_CLASS, void *, ULONG, ULONG *);
 static NTSTATUS (WINAPI * pNtCreateDebugObject)( HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *, ULONG );
 static NTSTATUS (WINAPI * pNtSetInformationDebugObject)(HANDLE,DEBUGOBJECTINFOCLASS,PVOID,ULONG,ULONG*);
+static NTSTATUS (WINAPI * pDbgUiConvertStateChangeStructure)(DBGUI_WAIT_STATE_CHANGE*,DEBUG_EVENT*);
 
 static BOOL is_wow64;
 
@@ -96,6 +97,7 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtQueryObject);
     NTDLL_GET_PROC(NtCreateDebugObject);
     NTDLL_GET_PROC(NtSetInformationDebugObject);
+    NTDLL_GET_PROC(DbgUiConvertStateChangeStructure);
 
     /* not present before XP */
     pNtGetCurrentProcessorNumber = (void *) GetProcAddress(hntdll, "NtGetCurrentProcessorNumber");
@@ -2759,6 +2761,8 @@ static void test_debug_object(void)
     HANDLE handle;
     OBJECT_ATTRIBUTES attr = { sizeof(attr) };
     ULONG len, flag = 0;
+    DBGUI_WAIT_STATE_CHANGE state;
+    DEBUG_EVENT event;
 
     status = pNtCreateDebugObject( &handle, DEBUG_ALL_ACCESS, &attr, 0 );
     ok( !status, "NtCreateDebugObject failed %x\n", status );
@@ -2802,6 +2806,57 @@ static void test_debug_object(void)
     }
 
     pNtClose( handle );
+
+    memset( &state, 0xdd, sizeof(state) );
+    state.NewState = DbgIdle;
+    memset( &event, 0xcc, sizeof(event) );
+    status = pDbgUiConvertStateChangeStructure( &state, &event );
+    ok( status == STATUS_UNSUCCESSFUL, "DbgUiConvertStateChangeStructure failed %x\n", status );
+    ok( event.dwProcessId == 0xdddddddd, "event not updated %x\n", event.dwProcessId );
+    ok( event.dwThreadId == 0xdddddddd, "event not updated %x\n", event.dwThreadId );
+
+    state.NewState = DbgReplyPending;
+    memset( &event, 0xcc, sizeof(event) );
+    status = pDbgUiConvertStateChangeStructure( &state, &event );
+    ok( status == STATUS_UNSUCCESSFUL, "DbgUiConvertStateChangeStructure failed %x\n", status );
+    ok( event.dwProcessId == 0xdddddddd, "event not updated %x\n", event.dwProcessId );
+    ok( event.dwThreadId == 0xdddddddd, "event not updated %x\n", event.dwThreadId );
+
+    state.NewState = 11;
+    memset( &event, 0xcc, sizeof(event) );
+    status = pDbgUiConvertStateChangeStructure( &state, &event );
+    ok( status == STATUS_UNSUCCESSFUL, "DbgUiConvertStateChangeStructure failed %x\n", status );
+    ok( event.dwProcessId == 0xdddddddd, "event not updated %x\n", event.dwProcessId );
+    ok( event.dwThreadId == 0xdddddddd, "event not updated %x\n", event.dwThreadId );
+
+    state.NewState = DbgExitProcessStateChange;
+    state.StateInfo.ExitProcess.ExitStatus = 0x123456;
+    status = pDbgUiConvertStateChangeStructure( &state, &event );
+    ok( !status, "DbgUiConvertStateChangeStructure failed %x\n", status );
+    ok( event.dwProcessId == 0xdddddddd, "event not updated %x\n", event.dwProcessId );
+    ok( event.dwThreadId == 0xdddddddd, "event not updated %x\n", event.dwThreadId );
+    ok( event.u.ExitProcess.dwExitCode == 0x123456, "event not updated %x\n", event.u.ExitProcess.dwExitCode );
+
+    memset( &state, 0xdd, sizeof(state) );
+    state.NewState = DbgCreateProcessStateChange;
+    status = pDbgUiConvertStateChangeStructure( &state, &event );
+    ok( !status, "DbgUiConvertStateChangeStructure failed %x\n", status );
+    ok( event.dwProcessId == 0xdddddddd, "event not updated %x\n", event.dwProcessId );
+    ok( event.dwThreadId == 0xdddddddd, "event not updated %x\n", event.dwThreadId );
+    ok( event.u.CreateProcessInfo.nDebugInfoSize == 0xdddddddd, "event not updated %x\n", event.u.CreateProcessInfo.nDebugInfoSize );
+    ok( event.u.CreateProcessInfo.lpThreadLocalBase == NULL, "event not updated %p\n", event.u.CreateProcessInfo.lpThreadLocalBase );
+    ok( event.u.CreateProcessInfo.lpImageName == NULL, "event not updated %p\n", event.u.CreateProcessInfo.lpImageName );
+    ok( event.u.CreateProcessInfo.fUnicode == TRUE, "event not updated %x\n", event.u.CreateProcessInfo.fUnicode );
+
+    memset( &state, 0xdd, sizeof(state) );
+    state.NewState = DbgLoadDllStateChange;
+    status = pDbgUiConvertStateChangeStructure( &state, &event );
+    ok( !status, "DbgUiConvertStateChangeStructure failed %x\n", status );
+    ok( event.dwProcessId == 0xdddddddd, "event not updated %x\n", event.dwProcessId );
+    ok( event.dwThreadId == 0xdddddddd, "event not updated %x\n", event.dwThreadId );
+    ok( event.u.LoadDll.nDebugInfoSize == 0xdddddddd, "event not updated %x\n", event.u.LoadDll.nDebugInfoSize );
+    ok( PtrToUlong(event.u.LoadDll.lpImageName) == 0xdddddddd, "event not updated %p\n", event.u.LoadDll.lpImageName );
+    ok( event.u.LoadDll.fUnicode == TRUE, "event not updated %x\n", event.u.LoadDll.fUnicode );
 }
 
 START_TEST(info)

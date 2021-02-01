@@ -3007,6 +3007,98 @@ typedef struct _PS_CREATE_INFO
     };
 } PS_CREATE_INFO, *PPS_CREATE_INFO;
 
+typedef struct _DBGKM_EXCEPTION
+{
+    EXCEPTION_RECORD ExceptionRecord;
+    ULONG FirstChance;
+} DBGKM_EXCEPTION, *PDBGKM_EXCEPTION;
+
+typedef struct _DBGKM_CREATE_THREAD
+{
+    ULONG SubSystemKey;
+    PVOID StartAddress;
+} DBGKM_CREATE_THREAD, *PDBGKM_CREATE_THREAD;
+
+typedef struct _DBGKM_CREATE_PROCESS
+{
+    ULONG SubSystemKey;
+    HANDLE FileHandle;
+    PVOID BaseOfImage;
+    ULONG DebugInfoFileOffset;
+    ULONG DebugInfoSize;
+    DBGKM_CREATE_THREAD InitialThread;
+} DBGKM_CREATE_PROCESS, *PDBGKM_CREATE_PROCESS;
+
+typedef struct _DBGKM_EXIT_THREAD
+{
+    NTSTATUS ExitStatus;
+} DBGKM_EXIT_THREAD, *PDBGKM_EXIT_THREAD;
+
+typedef struct _DBGKM_EXIT_PROCESS
+{
+    NTSTATUS ExitStatus;
+} DBGKM_EXIT_PROCESS, *PDBGKM_EXIT_PROCESS;
+
+typedef struct _DBGKM_LOAD_DLL
+{
+    HANDLE FileHandle;
+    PVOID BaseOfDll;
+    ULONG DebugInfoFileOffset;
+    ULONG DebugInfoSize;
+    PVOID NamePointer;
+} DBGKM_LOAD_DLL, *PDBGKM_LOAD_DLL;
+
+typedef struct _DBGKM_UNLOAD_DLL
+{
+    PVOID BaseAddress;
+} DBGKM_UNLOAD_DLL, *PDBGKM_UNLOAD_DLL;
+
+typedef enum _DBG_STATE
+{
+    DbgIdle,
+    DbgReplyPending,
+    DbgCreateThreadStateChange,
+    DbgCreateProcessStateChange,
+    DbgExitThreadStateChange,
+    DbgExitProcessStateChange,
+    DbgExceptionStateChange,
+    DbgBreakpointStateChange,
+    DbgSingleStepStateChange,
+    DbgLoadDllStateChange,
+    DbgUnloadDllStateChange
+} DBG_STATE, *PDBG_STATE;
+
+typedef struct _DBGUI_CREATE_THREAD
+{
+    HANDLE HandleToThread;
+    DBGKM_CREATE_THREAD NewThread;
+} DBGUI_CREATE_THREAD, *PDBGUI_CREATE_THREAD;
+
+typedef struct _DBGUI_CREATE_PROCESS
+{
+    HANDLE HandleToProcess;
+    HANDLE HandleToThread;
+    DBGKM_CREATE_PROCESS NewProcess;
+} DBGUI_CREATE_PROCESS, *PDBGUI_CREATE_PROCESS;
+
+typedef struct _DBGUI_WAIT_STATE_CHANGE
+{
+    DBG_STATE NewState;
+    CLIENT_ID AppClientId;
+    union
+    {
+        DBGKM_EXCEPTION Exception;
+        DBGUI_CREATE_THREAD CreateThread;
+        DBGUI_CREATE_PROCESS CreateProcessInfo;
+        DBGKM_EXIT_THREAD ExitThread;
+        DBGKM_EXIT_PROCESS ExitProcess;
+        DBGKM_LOAD_DLL LoadDll;
+        DBGKM_UNLOAD_DLL UnloadDll;
+    } StateInfo;
+} DBGUI_WAIT_STATE_CHANGE, *PDBGUI_WAIT_STATE_CHANGE;
+
+struct _DEBUG_EVENT;
+
 #define DEBUG_READ_EVENT        0x0001
 #define DEBUG_PROCESS_ASSIGN    0x0002
 #define DEBUG_SET_INFORMATION   0x0004
@@ -3030,6 +3122,7 @@ NTSYSAPI NTSTATUS WINAPIV DbgPrint(LPCSTR fmt, ...);
 NTSYSAPI NTSTATUS WINAPIV DbgPrintEx(ULONG iComponentId, ULONG Level, LPCSTR fmt, ...);
 NTSYSAPI NTSTATUS  WINAPI DbgUiConnectToDbg(void);
 NTSYSAPI NTSTATUS  WINAPI DbgUiContinue(CLIENT_ID*,NTSTATUS);
+NTSYSAPI NTSTATUS  WINAPI DbgUiConvertStateChangeStructure(DBGUI_WAIT_STATE_CHANGE*,struct _DEBUG_EVENT*);
 NTSYSAPI NTSTATUS WINAPI  DbgUiDebugActiveProcess(HANDLE);
 NTSYSAPI HANDLE    WINAPI DbgUiGetThreadDebugObject(void);
 NTSYSAPI NTSTATUS  WINAPI DbgUiIssueRemoteBreakin(HANDLE);
