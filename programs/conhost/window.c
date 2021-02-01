@@ -1885,7 +1885,7 @@ static void apply_config( struct console *console, const struct console_config *
     console->active->attr = config->attr;
     console->active->popup_attr = config->popup_attr;
     console->active->win.left   = config->win_pos.X;
-    console->active->win.right  = config->win_pos.Y;
+    console->active->win.top    = config->win_pos.Y;
     console->active->win.right  = config->win_pos.X + config->win_width - 1;
     console->active->win.bottom = config->win_pos.Y + config->win_height - 1;
     memcpy( console->active->color_map, config->color_map, sizeof(config->color_map) );
