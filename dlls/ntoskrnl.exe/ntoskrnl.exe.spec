@@ -515,8 +515,8 @@
 @ stub IoWriteTransferCount
 @ extern KdDebuggerEnabled
 @ stub KdDebuggerNotPresent
-@ stub KdDisableDebugger
-@ stub KdEnableDebugger
+@ stdcall KdDisableDebugger()
+@ stdcall KdEnableDebugger()
 @ stub KdEnteredDebugger
 @ stub KdPollBreakIn
 @ stub KdPowerTransition
