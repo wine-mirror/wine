@@ -3347,7 +3347,7 @@ static void test_video_processor(void)
     IMFTransform *transform;
     IMFMediaBuffer *buffer;
     IMFMediaEvent *event;
-    IUnknown *unk;
+    unsigned int value;
     HRESULT hr;
     GUID guid;
 
@@ -3362,15 +3362,28 @@ static void test_video_processor(void)
         goto failed;
     }
 
-    hr = IMFTransform_QueryInterface(transform, &IID_IMFMediaEventGenerator, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFTransform_QueryInterface(transform, &IID_IMFShutdown, (void **)&unk);
-    ok(hr == E_NOINTERFACE, "Unexpected hr %#x.\n", hr);
+todo_wine
+    check_interface(transform, &IID_IMFVideoProcessorControl, TRUE);
+todo_wine
+    check_interface(transform, &IID_IMFRealTimeClientEx, TRUE);
+    check_interface(transform, &IID_IMFMediaEventGenerator, FALSE);
+    check_interface(transform, &IID_IMFShutdown, FALSE);
 
     /* Transform global attributes. */
     hr = IMFTransform_GetAttributes(transform, &attributes);
     ok(hr == S_OK, "Failed to get attributes, hr %#x.\n", hr);
+
+    hr = IMFAttributes_GetCount(attributes, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    ok(!!count, "Unexpected attribute count %u.\n", count);
+
+    value = 0;
+    hr = IMFAttributes_GetUINT32(attributes, &MF_SA_D3D11_AWARE, &value);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(value == 1, "Unexpected attribute value %u.\n", value);
+}
     hr = IMFTransform_GetAttributes(transform, &attributes2);
     ok(hr == S_OK, "Failed to get attributes, hr %#x.\n", hr);
     ok(attributes == attributes2, "Unexpected instance.\n");

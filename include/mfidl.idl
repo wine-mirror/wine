@@ -1163,6 +1163,112 @@ interface IMFVideoSampleAllocatorEx : IMFVideoSampleAllocator
     );
 }
 
+typedef enum _MF_VIDEO_PROCESSOR_MIRROR
+{
+    MIRROR_NONE,
+    MIRROR_HORIZONTAL,
+    MIRROR_VERTICAL
+} MF_VIDEO_PROCESSOR_MIRROR;
+
+typedef enum _MF_VIDEO_PROCESSOR_ROTATION
+{
+    ROTATION_NONE,
+    ROTATION_NORMAL
+} MF_VIDEO_PROCESSOR_ROTATION;
+
+[
+    object,
+    uuid(a3f675d5-6119-4f7f-a100-1d8b280f0efb),
+    local,
+    pointer_default(unique)
+]
+interface IMFVideoProcessorControl : IUnknown
+{
+    HRESULT SetBorderColor(
+        [in] MFARGB *color
+    );
+
+    HRESULT SetSourceRectangle(
+        [in] RECT *rect
+    );
+
+    HRESULT SetDestinationRectangle(
+        [in] RECT *rect
+    );
+
+    HRESULT SetMirror(
+        [in] MF_VIDEO_PROCESSOR_MIRROR mirror
+    );
+
+    HRESULT SetRotation(
+        [in] MF_VIDEO_PROCESSOR_ROTATION rotation
+    );
+
+    HRESULT SetConstrictionSize(
+        [in] SIZE *size
+    );
+}
+
+[
+    object,
+    uuid(bde633d3-e1dc-4a7f-a693-bbae399c4a20),
+    local,
+    pointer_default(unique)
+]
+interface IMFVideoProcessorControl2 : IMFVideoProcessorControl
+{
+    HRESULT SetRotationOverride(
+        [in] UINT rotation
+    );
+
+    HRESULT EnableHardwareEffects(
+        [in] BOOL enabled
+    );
+
+    HRESULT GetSupportedHardwareEffects(
+        [out, retval] UINT *support
+    );
+}
+
+[
+   object,
+   uuid(2347d60b-3fb5-480c-8803-8df3adcd3ef0),
+   local
+]
+interface IMFRealTimeClient : IUnknown
+{
+    HRESULT RegisterThreads(
+        [in] DWORD task_index,
+        [in] LPCWSTR classname
+    );
+
+    HRESULT UnregisterThreads();
+
+    HRESULT SetWorkQueue(
+        [in] DWORD queue_id
+    );
+}
+
+[
+   object,
+   uuid(03910848-ab16-4611-b100-17b88ae2f248),
+]
+interface IMFRealTimeClientEx : IUnknown
+{
+    HRESULT RegisterThreadsEx(
+        [in, out] DWORD *task_index,
+        [in] LPCWSTR classname,
+        [in] LONG basepriority
+    );
+
+    HRESULT UnregisterThreads( );
+
+    HRESULT SetWorkQueueEx(
+        [in] DWORD mtqueue_id,
+        [in] LONG base_priority
+    );
+}
+
 enum
 {
     MF_ACTIVATE_CUSTOM_MIXER_ALLOWFAIL = 0x00000001,
