@@ -3649,6 +3649,7 @@ static void test_quality_manager(void)
 {
     IMFPresentationClock *clock;
     IMFQualityManager *manager;
+    IMFTopology *topology;
     HRESULT hr;
 
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
@@ -3666,6 +3667,9 @@ static void test_quality_manager(void)
     hr = IMFQualityManager_NotifyPresentationClock(manager, NULL);
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFQualityManager_NotifyTopology(manager, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     /* Set clock, then shutdown. */
     EXPECT_REF(clock, 1);
     EXPECT_REF(manager, 1);
@@ -3679,6 +3683,9 @@ static void test_quality_manager(void)
     EXPECT_REF(clock, 1);
 
     hr = IMFQualityManager_NotifyPresentationClock(manager, clock);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFQualityManager_NotifyTopology(manager, NULL);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFQualityManager_NotifyPresentationClock(manager, NULL);
@@ -3702,6 +3709,48 @@ static void test_quality_manager(void)
     EXPECT_REF(clock, 2);
 
     IMFPresentationClock_Release(clock);
+
+    /* Set topology. */
+    hr = MFCreateStandardQualityManager(&manager);
+    ok(hr == S_OK, "Failed to create quality manager, hr %#x.\n", hr);
+
+    hr = MFCreateTopology(&topology);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    EXPECT_REF(topology, 1);
+    hr = IMFQualityManager_NotifyTopology(manager, topology);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(topology, 2);
+
+    hr = IMFQualityManager_NotifyTopology(manager, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(topology, 1);
+
+    hr = IMFQualityManager_NotifyTopology(manager, topology);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    EXPECT_REF(topology, 2);
+    hr = IMFQualityManager_Shutdown(manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(topology, 1);
+
+    hr = IMFQualityManager_NotifyTopology(manager, topology);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    IMFQualityManager_Release(manager);
+
+    hr = MFCreateStandardQualityManager(&manager);
+    ok(hr == S_OK, "Failed to create quality manager, hr %#x.\n", hr);
+
+    EXPECT_REF(topology, 1);
+    hr = IMFQualityManager_NotifyTopology(manager, topology);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(topology, 2);
+
+    IMFQualityManager_Release(manager);
+    EXPECT_REF(topology, 1);
+
+    IMFTopology_Release(topology);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);

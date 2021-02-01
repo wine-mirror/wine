@@ -331,6 +331,7 @@ struct quality_manager
     IMFClockStateSink IMFClockStateSink_iface;
     LONG refcount;
 
+    IMFTopology *topology;
     IMFPresentationClock *clock;
     unsigned int state;
     CRITICAL_SECTION cs;
@@ -4802,6 +4803,8 @@ static ULONG WINAPI standard_quality_manager_Release(IMFQualityManager *iface)
     {
         if (manager->clock)
             IMFPresentationClock_Release(manager->clock);
+        if (manager->topology)
+            IMFTopology_Release(manager->topology);
         DeleteCriticalSection(&manager->cs);
         heap_free(manager);
     }
@@ -4809,11 +4812,32 @@ static ULONG WINAPI standard_quality_manager_Release(IMFQualityManager *iface)
     return refcount;
 }
 
+static void standard_quality_manager_set_topology(struct quality_manager *manager, IMFTopology *topology)
+{
+    if (manager->topology)
+        IMFTopology_Release(manager->topology);
+    manager->topology = topology;
+    if (manager->topology)
+        IMFTopology_AddRef(manager->topology);
+}
+
 static HRESULT WINAPI standard_quality_manager_NotifyTopology(IMFQualityManager *iface, IMFTopology *topology)
 {
-    FIXME("%p, %p stub.\n", iface, topology);
+    struct quality_manager *manager = impl_from_IMFQualityManager(iface);
+    HRESULT hr = S_OK;
 
-    return S_OK;
+    TRACE("%p, %p.\n", iface, topology);
+
+    EnterCriticalSection(&manager->cs);
+    if (manager->state == QUALITY_MANAGER_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+    {
+        standard_quality_manager_set_topology(manager, topology);
+    }
+    LeaveCriticalSection(&manager->cs);
+
+    return hr;
 }
 
 static void standard_quality_manager_release_clock(struct quality_manager *manager)
@@ -4886,6 +4910,7 @@ static HRESULT WINAPI standard_quality_manager_Shutdown(IMFQualityManager *iface
     if (manager->state != QUALITY_MANAGER_SHUT_DOWN)
     {
         standard_quality_manager_release_clock(manager);
+        standard_quality_manager_set_topology(manager, NULL);
         manager->state = QUALITY_MANAGER_SHUT_DOWN;
     }
     LeaveCriticalSection(&manager->cs);
