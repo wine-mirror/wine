@@ -3661,7 +3661,6 @@ static void test_quality_manager(void)
     ok(hr == S_OK, "Failed to create quality manager, hr %#x.\n", hr);
 
     check_interface(manager, &IID_IMFQualityManager, TRUE);
-todo_wine
     check_interface(manager, &IID_IMFClockStateSink, TRUE);
 
     hr = IMFQualityManager_NotifyPresentationClock(manager, NULL);
@@ -3673,7 +3672,6 @@ todo_wine
     hr = IMFQualityManager_NotifyPresentationClock(manager, clock);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     EXPECT_REF(clock, 2);
-todo_wine
     EXPECT_REF(manager, 2);
 
     hr = IMFQualityManager_Shutdown(manager);
@@ -3701,7 +3699,6 @@ todo_wine
     EXPECT_REF(clock, 2);
 
     IMFQualityManager_Release(manager);
-todo_wine
     EXPECT_REF(clock, 2);
 
     IMFPresentationClock_Release(clock);
