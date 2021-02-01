@@ -72,7 +72,7 @@ BOOL WINAPI EvtSetChannelConfigProperty(EVT_HANDLE ChannelConfig,
                                         PEVT_VARIANT PropertyValue)
 {
     FIXME("(%p %i %u %p) stub\n", ChannelConfig, PropertyId, Flags, PropertyValue);
-    return FALSE;
+    return TRUE;
 }
 
 EVT_HANDLE WINAPI EvtSubscribe(EVT_HANDLE Session, HANDLE SignalEvent, LPCWSTR ChannelPath,
