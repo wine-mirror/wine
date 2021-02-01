@@ -29,3 +29,15 @@ interface IWMPVideoRenderConfig : IUnknown
 {
     [propput] HRESULT presenterActivate([in] IMFActivate *activate);
 }
+
+[
+    odl,
+    uuid(959506c1-0314-4ec5-9e61-8528db5e5478),
+    oleautomation
+]
+interface IWMPRenderConfig : IUnknown
+{
+    [propput] HRESULT inProcOnly([in] BOOL fInProc);
+
+    [propget] HRESULT inProcOnly([out, retval] BOOL *pfInProc);
+}
