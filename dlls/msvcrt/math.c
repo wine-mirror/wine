@@ -1202,6 +1202,37 @@ __ASM_GLOBAL_FUNC( sse2_sqrt,
         "ret" )
 #endif
 
+#ifdef __i386__
+#define SET_X87_CW \
+    "subl $4, %esp\n\t" \
+    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t") \
+    "fnstcw (%esp)\n\t" \
+    "movw (%esp), %ax\n\t" \
+    "testw $0xc00, %ax\n\t" \
+    "jz 1f\n\t" \
+    "andw $0xf3ff, %ax\n\t" \
+    "movw %ax, 2(%esp)\n\t" \
+    "fldcw 2(%esp)\n\t" \
+    "1:\n\t"
+
+#define RESET_X87_CW \
+    "movw (%esp), %ax\n\t" \
+    "testw $0xc00, %ax\n\t" \
+    "jz 1f\n\t" \
+    "fldcw (%esp)\n\t" \
+    "1:\n\t" \
+    "addl $4, %esp\n\t" \
+    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+
+double CDECL x87_sqrt(double);
+__ASM_GLOBAL_FUNC( x87_sqrt,
+        "fldl 4(%esp)\n\t"
+        SET_X87_CW
+        "fsqrt\n\t"
+        RESET_X87_CW
+        "ret" )
+#endif
+
 /*********************************************************************
  *		sqrt (MSVCRT.@)
  *
@@ -1214,6 +1245,11 @@ double CDECL sqrt( double x )
         return x;
 
     return sse2_sqrt(x);
+#elif defined( __i386__ )
+    if (!sqrt_validate(&x))
+        return x;
+
+    return x87_sqrt(x);
 #else
     static const double tiny = 1.0e-300;
 
