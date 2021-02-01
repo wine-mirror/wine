@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -33,7 +34,6 @@
 #include "werapi.h"
 
 #include "wine/exception.h"
-#include "wine/server.h"
 #include "wine/asm.h"
 #include "kernelbase.h"
 #include "wine/debug.h"
@@ -310,111 +310,6 @@ LPTOP_LEVEL_EXCEPTION_FILTER WINAPI DECLSPEC_HOTPATCH SetUnhandledExceptionFilte
     LPTOP_LEVEL_EXCEPTION_FILTER filter )
 {
     return InterlockedExchangePointer( (void **)&top_filter, filter );
-}
-
-
-/******************************************************************************
- *           WaitForDebugEvent   (kernelbase.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH WaitForDebugEvent( DEBUG_EVENT *event, DWORD timeout )
-{
-    BOOL ret;
-    DWORD res;
-    int i;
-
-    for (;;)
-    {
-        HANDLE wait = 0;
-        debug_event_t data;
-        SERVER_START_REQ( wait_debug_event )
-        {
-            req->get_handle = (timeout != 0);
-            wine_server_set_reply( req, &data, sizeof(data) );
-            if (!(ret = !wine_server_call_err( req ))) goto done;
-
-            if (!wine_server_reply_size( reply ))  /* timeout */
-            {
-                wait = wine_server_ptr_handle( reply->wait );
-                ret = FALSE;
-                goto done;
-            }
-            event->dwDebugEventCode = data.code;
-            event->dwProcessId      = (DWORD)reply->pid;
-            event->dwThreadId       = (DWORD)reply->tid;
-            switch (data.code)
-            {
-            case EXCEPTION_DEBUG_EVENT:
-                if (data.exception.exc_code == DBG_PRINTEXCEPTION_C && data.exception.nb_params >= 2)
-                {
-                    event->dwDebugEventCode = OUTPUT_DEBUG_STRING_EVENT;
-                    event->u.DebugString.lpDebugStringData  = wine_server_get_ptr( data.exception.params[1] );
-                    event->u.DebugString.fUnicode           = FALSE;
-                    event->u.DebugString.nDebugStringLength = data.exception.params[0];
-                    break;
-                }
-                else if (data.exception.exc_code == DBG_RIPEXCEPTION && data.exception.nb_params >= 2)
-                {
-                    event->dwDebugEventCode = RIP_EVENT;
-                    event->u.RipInfo.dwError = data.exception.params[0];
-                    event->u.RipInfo.dwType  = data.exception.params[1];
-                    break;
-                }
-                event->u.Exception.dwFirstChance = data.exception.first;
-                event->u.Exception.ExceptionRecord.ExceptionCode    = data.exception.exc_code;
-                event->u.Exception.ExceptionRecord.ExceptionFlags   = data.exception.flags;
-                event->u.Exception.ExceptionRecord.ExceptionRecord  = wine_server_get_ptr( data.exception.record );
-                event->u.Exception.ExceptionRecord.ExceptionAddress = wine_server_get_ptr( data.exception.address );
-                event->u.Exception.ExceptionRecord.NumberParameters = data.exception.nb_params;
-                for (i = 0; i < data.exception.nb_params; i++)
-                    event->u.Exception.ExceptionRecord.ExceptionInformation[i] = data.exception.params[i];
-                break;
-            case CREATE_THREAD_DEBUG_EVENT:
-                event->u.CreateThread.hThread           = wine_server_ptr_handle( data.create_thread.handle );
-                event->u.CreateThread.lpThreadLocalBase = wine_server_get_ptr( data.create_thread.teb );
-                event->u.CreateThread.lpStartAddress    = wine_server_get_ptr( data.create_thread.start );
-                break;
-            case CREATE_PROCESS_DEBUG_EVENT:
-                event->u.CreateProcessInfo.hFile                 = wine_server_ptr_handle( data.create_process.file );
-                event->u.CreateProcessInfo.hProcess              = wine_server_ptr_handle( data.create_process.process );
-                event->u.CreateProcessInfo.hThread               = wine_server_ptr_handle( data.create_process.thread );
-                event->u.CreateProcessInfo.lpBaseOfImage         = wine_server_get_ptr( data.create_process.base );
-                event->u.CreateProcessInfo.dwDebugInfoFileOffset = data.create_process.dbg_offset;
-                event->u.CreateProcessInfo.nDebugInfoSize        = data.create_process.dbg_size;
-                event->u.CreateProcessInfo.lpThreadLocalBase     = wine_server_get_ptr( data.create_process.teb );
-                event->u.CreateProcessInfo.lpStartAddress        = wine_server_get_ptr( data.create_process.start );
-                event->u.CreateProcessInfo.lpImageName           = wine_server_get_ptr( data.create_process.name );
-                event->u.CreateProcessInfo.fUnicode              = data.create_process.unicode;
-                break;
-            case EXIT_THREAD_DEBUG_EVENT:
-                event->u.ExitThread.dwExitCode = data.exit.exit_code;
-                break;
-            case EXIT_PROCESS_DEBUG_EVENT:
-                event->u.ExitProcess.dwExitCode = data.exit.exit_code;
-                break;
-            case LOAD_DLL_DEBUG_EVENT:
-                event->u.LoadDll.hFile                 = wine_server_ptr_handle( data.load_dll.handle );
-                event->u.LoadDll.lpBaseOfDll           = wine_server_get_ptr( data.load_dll.base );
-                event->u.LoadDll.dwDebugInfoFileOffset = data.load_dll.dbg_offset;
-                event->u.LoadDll.nDebugInfoSize        = data.load_dll.dbg_size;
-                event->u.LoadDll.lpImageName           = wine_server_get_ptr( data.load_dll.name );
-                event->u.LoadDll.fUnicode              = data.load_dll.unicode;
-                break;
-            case UNLOAD_DLL_DEBUG_EVENT:
-                event->u.UnloadDll.lpBaseOfDll = wine_server_get_ptr( data.unload_dll.base );
-                break;
-            }
-        done:
-            /* nothing */ ;
-        }
-        SERVER_END_REQ;
-        if (ret) return TRUE;
-        if (!wait) break;
-        res = WaitForSingleObject( wait, timeout );
-        CloseHandle( wait );
-        if (res != STATUS_WAIT_0) break;
-    }
-    SetLastError( ERROR_SEM_TIMEOUT );
-    return FALSE;
 }
 
 

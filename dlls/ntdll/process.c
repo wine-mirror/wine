@@ -178,6 +178,14 @@ NTSTATUS WINAPI DbgUiContinue( CLIENT_ID *client, NTSTATUS status )
     return NtDebugContinue( DbgUiGetThreadDebugObject(), client, status );
 }
 
+/***********************************************************************
+ *      DbgUiWaitStateChange (NTDLL.@)
+ */
+NTSTATUS WINAPI DbgUiWaitStateChange( DBGUI_WAIT_STATE_CHANGE *state, LARGE_INTEGER *timeout )
+{
+    return NtWaitForDebugEvent( DbgUiGetThreadDebugObject(), TRUE, timeout, state );
+}
+
 /* helper for DbgUiConvertStateChangeStructure */
 static inline void *get_thread_teb( HANDLE thread )
 {

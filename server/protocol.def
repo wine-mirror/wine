@@ -76,7 +76,7 @@ typedef union
     int code;   /* event code */
     struct
     {
-        int              code;       /* EXCEPTION_DEBUG_EVENT */
+        int              code;       /* DbgExceptionStateChange */
         int              first;      /* first chance exception? */
         unsigned int     exc_code;   /* exception code */
         unsigned int     flags;      /* exception flags */
@@ -88,43 +88,38 @@ typedef union
     } exception;
     struct
     {
-        int          code;       /* CREATE_THREAD_DEBUG_EVENT */
+        int          code;       /* DbgCreateThreadStateChange */
         obj_handle_t handle;     /* handle to the new thread */
-        client_ptr_t teb;        /* thread teb (in debugged process address space) */
         client_ptr_t start;      /* thread startup routine */
     } create_thread;
     struct
     {
-        int          code;       /* CREATE_PROCESS_DEBUG_EVENT */
+        int          code;       /* DbgCreateProcessStateChange */
         obj_handle_t file;       /* handle to the process exe file */
         obj_handle_t process;    /* handle to the new process */
         obj_handle_t thread;     /* handle to the new thread */
         mod_handle_t base;       /* base of executable image */
         int          dbg_offset; /* offset of debug info in file */
         int          dbg_size;   /* size of debug info */
-        client_ptr_t teb;        /* thread teb (in debugged process address space) */
         client_ptr_t start;      /* thread startup routine */
-        client_ptr_t name;       /* image name (optional) */
-        int          unicode;    /* is it Unicode? */
     } create_process;
     struct
     {
-        int          code;       /* EXIT_THREAD_DEBUG_EVENT/EXIT_PROCESS_DEBUG_EVENT */
+        int          code;       /* DbgExitThreadStateChange/DbgExitProcessStateChange */
         int          exit_code;  /* thread or process exit code */
     } exit;
     struct
     {
-        int          code;       /* LOAD_DLL_DEBUG_EVENT */
+        int          code;       /* DbgLoadDllStateChange */
         obj_handle_t handle;     /* file handle for the dll */
         mod_handle_t base;       /* base address of the dll */
         int          dbg_offset; /* offset of debug info in file */
         int          dbg_size;   /* size of debug info */
         client_ptr_t name;       /* image name (optional) */
-        int          unicode;    /* is it Unicode? */
     } load_dll;
     struct
     {
-        int          code;       /* UNLOAD_DLL_DEBUG_EVENT */
+        int          code;       /* DbgUnloadDllStateChange */
         int          __pad;
         mod_handle_t base;       /* base address of the dll */
     } unload_dll;
@@ -1600,11 +1595,10 @@ struct process_info
 
 /* Wait for a debug event */
 @REQ(wait_debug_event)
-    int           get_handle;  /* should we alloc a handle for waiting? */
+    obj_handle_t debug;        /* debug object */
 @REPLY
     process_id_t  pid;         /* process id */
     thread_id_t   tid;         /* thread id */
-    obj_handle_t  wait;        /* wait handle if no event ready */
     VARARG(event,debug_event); /* debug event data */
 @END
 

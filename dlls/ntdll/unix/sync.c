@@ -964,6 +964,108 @@ NTSTATUS WINAPI NtSetInformationDebugObject( HANDLE handle, DEBUGOBJECTINFOCLASS
 }
 
 
+/* convert the server event data to an NT state change; helper for NtWaitForDebugEvent */
+static NTSTATUS event_data_to_state_change( const debug_event_t *data, DBGUI_WAIT_STATE_CHANGE *state )
+{
+    int i;
+
+    switch (data->code)
+    {
+    case DbgIdle:
+    case DbgReplyPending:
+        return STATUS_PENDING;
+    case DbgCreateThreadStateChange:
+    {
+        DBGUI_CREATE_THREAD *info = &state->StateInfo.CreateThread;
+        info->HandleToThread         = wine_server_ptr_handle( data->create_thread.handle );
+        info->NewThread.StartAddress = wine_server_get_ptr( data->create_thread.start );
+        return STATUS_SUCCESS;
+    }
+    case DbgCreateProcessStateChange:
+    {
+        DBGUI_CREATE_PROCESS *info = &state->StateInfo.CreateProcessInfo;
+        info->HandleToProcess                       = wine_server_ptr_handle( data->create_process.process );
+        info->HandleToThread                        = wine_server_ptr_handle( data->create_process.thread );
+        info->NewProcess.FileHandle                 = wine_server_ptr_handle( data->create_process.file );
+        info->NewProcess.BaseOfImage                = wine_server_get_ptr( data->create_process.base );
+        info->NewProcess.DebugInfoFileOffset        = data->create_process.dbg_offset;
+        info->NewProcess.DebugInfoSize              = data->create_process.dbg_size;
+        info->NewProcess.InitialThread.StartAddress = wine_server_get_ptr( data->create_process.start );
+        return STATUS_SUCCESS;
+    }
+    case DbgExitThreadStateChange:
+        state->StateInfo.ExitThread.ExitStatus = data->exit.exit_code;
+        return STATUS_SUCCESS;
+    case DbgExitProcessStateChange:
+        state->StateInfo.ExitProcess.ExitStatus = data->exit.exit_code;
+        return STATUS_SUCCESS;
+    case DbgExceptionStateChange:
+    case DbgBreakpointStateChange:
+    case DbgSingleStepStateChange:
+    {
+        DBGKM_EXCEPTION *info = &state->StateInfo.Exception;
+        info->FirstChance = data->exception.first;
+        info->ExceptionRecord.ExceptionCode    = data->exception.exc_code;
+        info->ExceptionRecord.ExceptionFlags   = data->exception.flags;
+        info->ExceptionRecord.ExceptionRecord  = wine_server_get_ptr( data->exception.record );
+        info->ExceptionRecord.ExceptionAddress = wine_server_get_ptr( data->exception.address );
+        info->ExceptionRecord.NumberParameters = data->exception.nb_params;
+        for (i = 0; i < data->exception.nb_params; i++)
+            info->ExceptionRecord.ExceptionInformation[i] = data->exception.params[i];
+        return STATUS_SUCCESS;
+    }
+    case DbgLoadDllStateChange:
+    {
+        DBGKM_LOAD_DLL *info = &state->StateInfo.LoadDll;
+        info->FileHandle          = wine_server_ptr_handle( data->load_dll.handle );
+        info->BaseOfDll           = wine_server_get_ptr( data->load_dll.base );
+        info->DebugInfoFileOffset = data->load_dll.dbg_offset;
+        info->DebugInfoSize       = data->load_dll.dbg_size;
+        info->NamePointer         = wine_server_get_ptr( data->load_dll.name );
+        return STATUS_SUCCESS;
+    }
+    case DbgUnloadDllStateChange:
+        state->StateInfo.UnloadDll.BaseAddress = wine_server_get_ptr( data->unload_dll.base );
+        return STATUS_SUCCESS;
+    }
+    return STATUS_INTERNAL_ERROR;
+}
+
+/**********************************************************************
+ *           NtWaitForDebugEvent  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtWaitForDebugEvent( HANDLE handle, BOOLEAN alertable, LARGE_INTEGER *timeout,
+                                     DBGUI_WAIT_STATE_CHANGE *state )
+{
+    debug_event_t data;
+    NTSTATUS ret;
+    BOOL wait = TRUE;
+
+    for (;;)
+    {
+        SERVER_START_REQ( wait_debug_event )
+        {
+            req->debug = wine_server_obj_handle( handle );
+            wine_server_set_reply( req, &data, sizeof(data) );
+            ret = wine_server_call( req );
+            if (!ret && !(ret = event_data_to_state_change( &data, state )))
+            {
+                state->NewState = data.code;
+                state->AppClientId.UniqueProcess = ULongToHandle( reply->pid );
+                state->AppClientId.UniqueThread  = ULongToHandle( reply->tid );
+            }
+        }
+        SERVER_END_REQ;
+
+        if (ret != STATUS_PENDING) return ret;
+        if (!wait) return STATUS_TIMEOUT;
+        wait = FALSE;
+        ret = NtWaitForSingleObject( handle, alertable, timeout );
+        if (ret != STATUS_WAIT_0) return ret;
+    }
+}
+
+
 /**************************************************************************
  *           NtCreateDirectoryObject   (NTDLL.@)
  */

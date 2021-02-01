@@ -837,7 +837,7 @@ static void process_unload_dll( struct process *process, mod_handle_t base )
         free( dll->filename );
         list_remove( &dll->entry );
         free( dll );
-        generate_debug_event( current, UNLOAD_DLL_DEBUG_EVENT, &base );
+        generate_debug_event( current, DbgUnloadDllStateChange, &base );
     }
     else set_error( STATUS_INVALID_PARAMETER );
 }
@@ -968,10 +968,10 @@ void remove_process_thread( struct process *process, struct thread *thread )
     {
         /* we have removed the last running thread, exit the process */
         process->exit_code = thread->exit_code;
-        generate_debug_event( thread, EXIT_PROCESS_DEBUG_EVENT, process );
+        generate_debug_event( thread, DbgExitProcessStateChange, process );
         process_killed( process );
     }
-    else generate_debug_event( thread, EXIT_THREAD_DEBUG_EVENT, thread );
+    else generate_debug_event( thread, DbgExitThreadStateChange, thread );
     release_object( thread );
 }
 
@@ -1562,7 +1562,7 @@ DECL_HANDLER(load_dll)
         dll->name       = req->name;
         /* only generate event if initialization is done */
         if (is_process_init_done( current->process ))
-            generate_debug_event( current, LOAD_DLL_DEBUG_EVENT, dll );
+            generate_debug_event( current, DbgLoadDllStateChange, dll );
     }
 }
 

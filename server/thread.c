@@ -1449,7 +1449,7 @@ DECL_HANDLER(init_thread)
         if (process->unix_pid != current->unix_pid)
             process->unix_pid = -1;  /* can happen with linuxthreads */
         init_thread_context( current );
-        generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT, &req->entry );
+        generate_debug_event( current, DbgCreateThreadStateChange, &req->entry );
         set_thread_affinity( current, current->affinity );
     }
     debug_level = max( debug_level, req->debug_level );

@@ -131,10 +131,8 @@ static void fill_exception_event( struct debug_event *event, const void *arg )
 
 static void fill_create_thread_event( struct debug_event *event, const void *arg )
 {
-    struct thread *thread = event->sender;
     const client_ptr_t *entry = arg;
 
-    event->data.create_thread.teb    = thread->teb;
     if (entry) event->data.create_thread.start = *entry;
 }
 
@@ -145,13 +143,10 @@ static void fill_create_process_event( struct debug_event *event, const void *ar
     struct process_dll *exe_module = get_process_exe_module( process );
     const client_ptr_t *entry = arg;
 
-    event->data.create_process.teb        = thread->teb;
     event->data.create_process.base       = exe_module->base;
     event->data.create_process.start      = *entry;
     event->data.create_process.dbg_offset = exe_module->dbg_offset;
     event->data.create_process.dbg_size   = exe_module->dbg_size;
-    event->data.create_process.name       = exe_module->name;
-    event->data.create_process.unicode    = 1;
 
     /* the doc says write access too, but this doesn't seem a good idea */
     event->file = get_mapping_file( process, exe_module->base, GENERIC_READ,
@@ -180,7 +175,6 @@ static void fill_load_dll_event( struct debug_event *event, const void *arg )
     event->data.load_dll.dbg_offset = dll->dbg_offset;
     event->data.load_dll.dbg_size   = dll->dbg_size;
     event->data.load_dll.name       = dll->name;
-    event->data.load_dll.unicode    = 1;
     event->file = get_mapping_file( process, dll->base, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE );
 }
 
@@ -192,17 +186,17 @@ static void fill_unload_dll_event( struct debug_event *event, const void *arg )
 
 typedef void (*fill_event_func)( struct debug_event *event, const void *arg );
 
-#define NB_DEBUG_EVENTS UNLOAD_DLL_DEBUG_EVENT
-
-static const fill_event_func fill_debug_event[NB_DEBUG_EVENTS] =
+static const fill_event_func fill_debug_event[] =
 {
-    fill_exception_event,            /* EXCEPTION_DEBUG_EVENT */
-    fill_create_thread_event,        /* CREATE_THREAD_DEBUG_EVENT */
-    fill_create_process_event,       /* CREATE_PROCESS_DEBUG_EVENT */
-    fill_exit_thread_event,          /* EXIT_THREAD_DEBUG_EVENT */
-    fill_exit_process_event,         /* EXIT_PROCESS_DEBUG_EVENT */
-    fill_load_dll_event,             /* LOAD_DLL_DEBUG_EVENT */
-    fill_unload_dll_event            /* UNLOAD_DLL_DEBUG_EVENT */
+    fill_create_thread_event,  /* DbgCreateThreadStateChange */
+    fill_create_process_event, /* DbgCreateProcessStateChange */
+    fill_exit_thread_event,    /* DbgExitThreadStateChange */
+    fill_exit_process_event,   /* DbgExitProcessStateChange */
+    fill_exception_event,      /* DbgExceptionStateChange */
+    fill_exception_event,      /* DbgBreakpointStateChange */
+    fill_exception_event,      /* DbgSingleStepStateChange */
+    fill_load_dll_event,       /* DbgLoadDllStateChange */
+    fill_unload_dll_event      /* DbgUnloadDllStateChange */
 };
 
 /* allocate the necessary handles in the event data */
@@ -210,11 +204,11 @@ static void alloc_event_handles( struct debug_event *event, struct process *proc
 {
     switch (event->data.code)
     {
-    case CREATE_THREAD_DEBUG_EVENT:
+    case DbgCreateThreadStateChange:
         /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
         event->data.create_thread.handle = alloc_handle( process, event->sender, THREAD_ALL_ACCESS, 0 );
         break;
-    case CREATE_PROCESS_DEBUG_EVENT:
+    case DbgCreateProcessStateChange:
         event->data.create_process.thread = alloc_handle( process, event->sender, THREAD_ALL_ACCESS, 0 );
         /* documented: PROCESS_VM_READ | PROCESS_VM_WRITE */
         event->data.create_process.process = alloc_handle( process, event->sender->process,
@@ -222,7 +216,7 @@ static void alloc_event_handles( struct debug_event *event, struct process *proc
         if (event->file)
             event->data.create_process.file = alloc_handle( process, event->file, GENERIC_READ, 0 );
         break;
-    case LOAD_DLL_DEBUG_EVENT:
+    case DbgLoadDllStateChange:
         if (event->file)
             event->data.load_dll.handle = alloc_handle( process, event->file, GENERIC_READ, 0 );
         break;
@@ -434,7 +428,7 @@ static struct debug_event *alloc_debug_event( struct thread *thread, int code, c
 {
     struct debug_event *event;
 
-    assert( code > 0 && code <= NB_DEBUG_EVENTS );
+    assert( code >= DbgCreateThreadStateChange && code <= DbgUnloadDllStateChange );
 
     /* build the event */
     if (!(event = alloc_object( &debug_event_ops ))) return NULL;
@@ -442,8 +436,7 @@ static struct debug_event *alloc_debug_event( struct thread *thread, int code, c
     event->sender    = (struct thread *)grab_object( thread );
     event->file      = NULL;
     memset( &event->data, 0, sizeof(event->data) );
-
-    fill_debug_event[code-1]( event, arg );
+    fill_debug_event[code - DbgCreateThreadStateChange]( event, arg );
     event->data.code = code;
     return event;
 }
@@ -550,28 +543,28 @@ void generate_startup_debug_events( struct process *process, client_ptr_t entry 
     struct list *ptr;
     struct thread *thread, *first_thread = get_process_first_thread( process );
 
-    generate_debug_event( first_thread, CREATE_PROCESS_DEBUG_EVENT, &entry );
+    generate_debug_event( first_thread, DbgCreateProcessStateChange, &entry );
     ptr = list_head( &process->dlls ); /* skip main module reported in create process event */
 
     /* generate ntdll.dll load event */
     if (ptr && (ptr = list_next( &process->dlls, ptr )))
     {
         struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
-        generate_debug_event( first_thread, LOAD_DLL_DEBUG_EVENT, dll );
+        generate_debug_event( first_thread, DbgLoadDllStateChange, dll );
     }
 
     /* generate creation events */
     LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
     {
         if (thread != first_thread)
-            generate_debug_event( thread, CREATE_THREAD_DEBUG_EVENT, NULL );
+            generate_debug_event( thread, DbgCreateThreadStateChange, NULL );
     }
 
     /* generate dll events (in loading order) */
     while (ptr && (ptr = list_next( &process->dlls, ptr )))
     {
         struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
-        generate_debug_event( first_thread, LOAD_DLL_DEBUG_EVENT, dll );
+        generate_debug_event( first_thread, DbgLoadDllStateChange, dll );
     }
 }
 
@@ -614,15 +607,11 @@ DECL_HANDLER(create_debug_obj)
 /* Wait for a debug event */
 DECL_HANDLER(wait_debug_event)
 {
-    struct debug_obj *debug_obj = current->debug_obj;
+    struct debug_obj *debug_obj;
     struct debug_event *event;
 
-    if (!debug_obj)  /* current thread is not a debugger */
-    {
-        set_error( STATUS_INVALID_HANDLE );
-        return;
-    }
-    reply->wait = 0;
+    if (!(debug_obj = get_debug_obj( current->process, req->debug, DEBUG_READ_EVENT ))) return;
+
     if ((event = find_event_to_send( debug_obj )))
     {
         event->state = EVENT_SENT;
@@ -632,13 +621,12 @@ DECL_HANDLER(wait_debug_event)
         alloc_event_handles( event, current->process );
         set_reply_data( &event->data, min( get_reply_max_size(), sizeof(event->data) ));
     }
-    else  /* no event ready */
+    else
     {
-        reply->pid  = 0;
-        reply->tid  = 0;
-        if (req->get_handle)
-            reply->wait = alloc_handle( current->process, debug_obj, SYNCHRONIZE, 0 );
+        int state = list_empty( &debug_obj->event_queue ) ? DbgIdle : DbgReplyPending;
+        set_reply_data( &state, min( get_reply_max_size(), sizeof(state) ));
     }
+    release_object( debug_obj );
 }
 
 /* Continue a debug event */
@@ -724,7 +712,7 @@ DECL_HANDLER(queue_exception_event)
         data.exception.nb_params = req->len / sizeof(client_ptr_t);
         memcpy( data.exception.params, get_req_data(), req->len );
 
-        if ((event = alloc_debug_event( thread, EXCEPTION_DEBUG_EVENT, &data )))
+        if ((event = alloc_debug_event( thread, DbgExceptionStateChange, &data )))
         {
             if ((reply->handle = alloc_handle( thread->process, event, SYNCHRONIZE, 0 )))
             {

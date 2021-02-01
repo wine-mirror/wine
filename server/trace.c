@@ -780,8 +780,39 @@ static void dump_varargs_debug_event( const char *prefix, data_size_t size )
 
     switch(event.code)
     {
-    case EXCEPTION_DEBUG_EVENT:
-        fprintf( stderr, "%s{exception,first=%d,exc_code=%08x,flags=%08x", prefix,
+    case DbgIdle:
+        fprintf( stderr, "%s{idle}", prefix );
+        break;
+    case DbgReplyPending:
+        fprintf( stderr, "%s{pending}", prefix );
+        break;
+    case DbgCreateThreadStateChange:
+        fprintf( stderr, "%s{create_thread,thread=%04x", prefix, event.create_thread.handle );
+        dump_uint64( ",start=", &event.create_thread.start );
+        fputc( '}', stderr );
+        break;
+    case DbgCreateProcessStateChange:
+        fprintf( stderr, "%s{create_process,file=%04x,process=%04x,thread=%04x", prefix,
+                 event.create_process.file, event.create_process.process,
+                 event.create_process.thread );
+        dump_uint64( ",base=", &event.create_process.base );
+        fprintf( stderr, ",offset=%d,size=%d",
+                 event.create_process.dbg_offset, event.create_process.dbg_size );
+        dump_uint64( ",start=", &event.create_process.start );
+        fputc( '}', stderr );
+        break;
+    case DbgExitThreadStateChange:
+        fprintf( stderr, "%s{exit_thread,code=%d}", prefix, event.exit.exit_code );
+        break;
+    case DbgExitProcessStateChange:
+        fprintf( stderr, "%s{exit_process,code=%d}", prefix, event.exit.exit_code );
+        break;
+    case DbgExceptionStateChange:
+    case DbgBreakpointStateChange:
+    case DbgSingleStepStateChange:
+        fprintf( stderr, "%s{%s,first=%d,exc_code=%08x,flags=%08x", prefix,
+                 event.code == DbgBreakpointStateChange ? "breakpoint" :
+                 event.code == DbgSingleStepStateChange ? "singlestep" : "exception",
                  event.exception.first, event.exception.exc_code, event.exception.flags );
         dump_uint64( ",record=", &event.exception.record );
         dump_uint64( ",address=", &event.exception.address );
@@ -794,45 +825,18 @@ static void dump_varargs_debug_event( const char *prefix, data_size_t size )
         }
         fprintf( stderr, "}}" );
         break;
-    case CREATE_THREAD_DEBUG_EVENT:
-        fprintf( stderr, "%s{create_thread,thread=%04x", prefix, event.create_thread.handle );
-        dump_uint64( ",teb=", &event.create_thread.teb );
-        dump_uint64( ",start=", &event.create_thread.start );
-        fputc( '}', stderr );
-        break;
-    case CREATE_PROCESS_DEBUG_EVENT:
-        fprintf( stderr, "%s{create_process,file=%04x,process=%04x,thread=%04x", prefix,
-                 event.create_process.file, event.create_process.process,
-                 event.create_process.thread );
-        dump_uint64( ",base=", &event.create_process.base );
-        fprintf( stderr, ",offset=%d,size=%d",
-                 event.create_process.dbg_offset, event.create_process.dbg_size );
-        dump_uint64( ",teb=", &event.create_process.teb );
-        dump_uint64( ",start=", &event.create_process.start );
-        dump_uint64( ",name=", &event.create_process.name );
-        fprintf( stderr, ",unicode=%d}", event.create_process.unicode );
-        break;
-    case EXIT_THREAD_DEBUG_EVENT:
-        fprintf( stderr, "%s{exit_thread,code=%d}", prefix, event.exit.exit_code );
-        break;
-    case EXIT_PROCESS_DEBUG_EVENT:
-        fprintf( stderr, "%s{exit_process,code=%d}", prefix, event.exit.exit_code );
-        break;
-    case LOAD_DLL_DEBUG_EVENT:
+    case DbgLoadDllStateChange:
         fprintf( stderr, "%s{load_dll,file=%04x", prefix, event.load_dll.handle );
         dump_uint64( ",base=", &event.load_dll.base );
         fprintf( stderr, ",offset=%d,size=%d",
                  event.load_dll.dbg_offset, event.load_dll.dbg_size );
         dump_uint64( ",name=", &event.load_dll.name );
-        fprintf( stderr, ",unicode=%d}", event.load_dll.unicode );
+        fputc( '}', stderr );
         break;
-    case UNLOAD_DLL_DEBUG_EVENT:
+    case DbgUnloadDllStateChange:
         fprintf( stderr, "%s{unload_dll", prefix );
         dump_uint64( ",base=", &event.unload_dll.base );
         fputc( '}', stderr );
-        break;
-    case 0:  /* zero is the code returned on timeouts */
-        fprintf( stderr, "%s{}", prefix );
         break;
     default:
         fprintf( stderr, "%s{code=??? (%d)}", prefix, event.code );
@@ -2165,14 +2169,13 @@ static void dump_create_debug_obj_reply( const struct create_debug_obj_reply *re
 
 static void dump_wait_debug_event_request( const struct wait_debug_event_request *req )
 {
-    fprintf( stderr, " get_handle=%d", req->get_handle );
+    fprintf( stderr, " debug=%04x", req->debug );
 }
 
 static void dump_wait_debug_event_reply( const struct wait_debug_event_reply *req )
 {
     fprintf( stderr, " pid=%04x", req->pid );
     fprintf( stderr, ", tid=%04x", req->tid );
-    fprintf( stderr, ", wait=%04x", req->wait );
     dump_varargs_debug_event( ", event=", cur_size );
 }
 

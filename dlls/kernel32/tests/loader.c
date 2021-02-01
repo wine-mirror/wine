@@ -2614,7 +2614,6 @@ todo_wine
         SetLastError(0xdeadbeef);
         ret = WaitForDebugEvent(&de, 0);
         ok(!ret, "WaitForDebugEvent should fail\n");
-todo_wine
         ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
         SetLastError(0xdeadbeef);

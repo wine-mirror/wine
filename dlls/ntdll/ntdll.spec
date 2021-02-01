@@ -43,7 +43,7 @@
 @ stdcall DbgUiRemoteBreakin(ptr)
 @ stdcall DbgUiSetThreadDebugObject(long)
 @ stdcall DbgUiStopDebugging(long)
-@ stub DbgUiWaitStateChange
+@ stdcall DbgUiWaitStateChange(ptr ptr)
 @ stdcall DbgUserBreakPoint()
 @ stdcall EtwEventActivityIdControl(long ptr)
 @ stdcall EtwEventEnabled(int64 ptr)
@@ -422,7 +422,7 @@
 @ stdcall -syscall NtUnmapViewOfSection(long ptr)
 @ stub NtVdmControl
 @ stub NtW32Call
-# @ stub NtWaitForDebugEvent
+@ stdcall -syscall NtWaitForDebugEvent(long long ptr ptr)
 @ stdcall -syscall NtWaitForKeyedEvent(long ptr long ptr)
 @ stdcall -syscall NtWaitForMultipleObjects(long ptr long long ptr)
 @ stub NtWaitForProcessMutant
@@ -1427,7 +1427,7 @@
 @ stdcall -private -syscall ZwUnmapViewOfSection(long ptr) NtUnmapViewOfSection
 @ stub ZwVdmControl
 @ stub ZwW32Call
-# @ stub ZwWaitForDebugEvent
+@ stdcall -private -syscall ZwWaitForDebugEvent(long long ptr ptr) NtWaitForDebugEvent
 @ stdcall -private -syscall ZwWaitForKeyedEvent(long ptr long ptr) NtWaitForKeyedEvent
 @ stdcall -private -syscall ZwWaitForMultipleObjects(long ptr long long ptr) NtWaitForMultipleObjects
 @ stub ZwWaitForProcessMutant

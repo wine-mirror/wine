@@ -74,7 +74,6 @@ typedef union
     {
         int          code;
         obj_handle_t handle;
-        client_ptr_t teb;
         client_ptr_t start;
     } create_thread;
     struct
@@ -86,10 +85,7 @@ typedef union
         mod_handle_t base;
         int          dbg_offset;
         int          dbg_size;
-        client_ptr_t teb;
         client_ptr_t start;
-        client_ptr_t name;
-        int          unicode;
     } create_process;
     struct
     {
@@ -104,7 +100,6 @@ typedef union
         int          dbg_offset;
         int          dbg_size;
         client_ptr_t name;
-        int          unicode;
     } load_dll;
     struct
     {
@@ -2030,16 +2025,14 @@ struct create_debug_obj_reply
 struct wait_debug_event_request
 {
     struct request_header __header;
-    int           get_handle;
+    obj_handle_t debug;
 };
 struct wait_debug_event_reply
 {
     struct reply_header __header;
     process_id_t  pid;
     thread_id_t   tid;
-    obj_handle_t  wait;
     /* VARARG(event,debug_event); */
-    char __pad_20[4];
 };
 
 
