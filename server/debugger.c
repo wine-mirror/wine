@@ -355,6 +355,11 @@ static void debug_obj_destroy( struct object *obj )
         unlink_event( debug_obj, LIST_ENTRY( ptr, struct debug_event, entry ));
 }
 
+struct debug_obj *get_debug_obj( struct process *process, obj_handle_t handle, unsigned int access )
+{
+    return (struct debug_obj *)get_handle_obj( process, handle, access, &debug_obj_ops );
+}
+
 static struct debug_obj *create_debug_obj( struct object *root, const struct unicode_str *name,
                                            unsigned int attr, unsigned int flags,
                                            const struct security_descriptor *sd )

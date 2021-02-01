@@ -804,6 +804,7 @@ typedef struct
 /* Create a new process from the context of the parent */
 @REQ(new_process)
     obj_handle_t token;          /* process token */
+    obj_handle_t debug;          /* process debug object */
     obj_handle_t parent_process; /* parent process */
     int          inherit_all;    /* inherit all handles from parent */
     unsigned int create_flags;   /* creation flags */

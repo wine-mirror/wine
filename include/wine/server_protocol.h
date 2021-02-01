@@ -790,6 +790,7 @@ struct new_process_request
 {
     struct request_header __header;
     obj_handle_t token;
+    obj_handle_t debug;
     obj_handle_t parent_process;
     int          inherit_all;
     unsigned int create_flags;
@@ -802,6 +803,7 @@ struct new_process_request
     /* VARARG(handles,uints,handles_size); */
     /* VARARG(info,startup_info,info_size); */
     /* VARARG(env,unicode_str); */
+    char __pad_52[4];
 };
 struct new_process_reply
 {
@@ -6209,7 +6211,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 657
+#define SERVER_PROTOCOL_VERSION 658
 
 /* ### protocol_version end ### */
 

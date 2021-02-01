@@ -114,6 +114,7 @@ extern data_size_t init_process( struct thread *thread );
 extern struct thread *get_process_first_thread( struct process *process );
 extern struct process *get_process_from_id( process_id_t id );
 extern struct process *get_process_from_handle( obj_handle_t handle, unsigned int access );
+extern struct debug_obj *get_debug_obj( struct process *process, obj_handle_t handle, unsigned int access );
 extern int process_set_debugger( struct process *process, struct thread *thread );
 extern void debugger_detach( struct process *process, struct debug_obj *debug_obj );
 extern int set_process_debug_flag( struct process *process, int flag );

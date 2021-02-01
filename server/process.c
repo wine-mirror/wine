@@ -1092,6 +1092,7 @@ DECL_HANDLER(new_process)
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, NULL );
     struct process *process = NULL;
     struct token *token = NULL;
+    struct debug_obj *debug_obj = NULL;
     struct process *parent;
     struct thread *parent_thread = current;
     int socket_fd = thread_get_inflight_fd( current, req->socket_fd );
@@ -1215,6 +1216,11 @@ DECL_HANDLER(new_process)
         close( socket_fd );
         goto done;
     }
+    if (req->debug && !(debug_obj = get_debug_obj( current->process, req->debug, DEBUG_PROCESS_ASSIGN )))
+    {
+        close( socket_fd );
+        goto done;
+    }
 
     if (!(process = create_process( socket_fd, parent, req->inherit_all, info->data, sd,
                                     handles, req->handles_size / sizeof(*handles), token )))
@@ -1249,15 +1255,17 @@ DECL_HANDLER(new_process)
         if (get_error() == STATUS_INVALID_HANDLE ||
             get_error() == STATUS_OBJECT_TYPE_MISMATCH) clear_error();
     }
-    /* attach to the debugger if requested */
-    if (req->create_flags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS))
+
+    /* attach to the debugger */
+    if (debug_obj)
     {
-        set_process_debugger( process, current );
+        process->debug_obj = debug_obj;
         process->debug_children = !(req->create_flags & DEBUG_ONLY_THIS_PROCESS);
+        if (!current->debug_obj) current->debug_obj = (struct debug_obj *)grab_object( debug_obj );
     }
-    else if (current->process->debug_children)
+    else if (parent->debug_children)
     {
-        process->debug_obj = current->process->debug_obj;
+        process->debug_obj = parent->debug_obj;
         /* debug_children is set to 1 by default */
     }
 
@@ -1271,6 +1279,7 @@ DECL_HANDLER(new_process)
 
  done:
     if (process) release_object( process );
+    if (debug_obj) release_object( debug_obj );
     if (token) release_object( token );
     release_object( parent );
     release_object( info );

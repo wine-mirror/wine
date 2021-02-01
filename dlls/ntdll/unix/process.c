@@ -893,7 +893,6 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
 
     TRACE( "%s image %s cmdline %s parent %p\n", debugstr_us( &path ),
            debugstr_us( &params->ImagePathName ), debugstr_us( &params->CommandLine ), parent );
-    if (debug) FIXME( "debug port %p not supported yet\n", debug );
 
     unixdir = get_unix_curdir( params );
 
@@ -942,6 +941,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     SERVER_START_REQ( new_process )
     {
         req->token          = wine_server_obj_handle( token );
+        req->debug          = wine_server_obj_handle( debug );
         req->parent_process = wine_server_obj_handle( parent );
         req->inherit_all    = !!(process_flags & PROCESS_CREATE_FLAGS_INHERIT_HANDLES);
         req->create_flags   = params->DebugFlags; /* hack: creation flags stored in DebugFlags for now */

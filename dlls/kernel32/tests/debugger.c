@@ -1746,14 +1746,12 @@ static void test_kill_on_exit(const char *argv0)
     ok( !status, "NtCreateDebugObject failed %x\n", status );
     pDbgUiSetThreadDebugObject( debug );
     exit_code = run_child_wait( cmd, event );
-    todo_wine
     ok( exit_code == 0, "exit code = %08x\n", exit_code);
 
     status = pNtCreateDebugObject( &debug, DEBUG_ALL_ACCESS, &attr, DEBUG_KILL_ON_CLOSE );
     ok( !status, "NtCreateDebugObject failed %x\n", status );
     pDbgUiSetThreadDebugObject( debug );
     exit_code = run_child_wait( cmd, event );
-    todo_wine
     ok( exit_code == STATUS_DEBUGGER_INACTIVE, "exit code = %08x\n", exit_code);
 
     status = pNtCreateDebugObject( &debug, DEBUG_ALL_ACCESS, &attr, 0xfffe );
@@ -1762,7 +1760,6 @@ static void test_kill_on_exit(const char *argv0)
     status = pDbgUiConnectToDbg();
     ok( !status, "DbgUiConnectToDbg failed %x\n", status );
     exit_code = run_child_wait( cmd, event );
-    todo_wine
     ok( exit_code == STATUS_DEBUGGER_INACTIVE, "exit code = %08x\n", exit_code);
 
     heap_free(cmd);
