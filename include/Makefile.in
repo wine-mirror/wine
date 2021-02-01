@@ -797,6 +797,7 @@ SOURCES = \
 	wmiutils.idl \
 	wmp.idl \
 	wmpids.h \
+	wmprealestate.idl \
 	wmsbuffer.idl \
 	wmsdk.h \
 	wmsdkidl.idl \
