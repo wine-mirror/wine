@@ -4256,6 +4256,18 @@ void WINAPI KeUnstackDetachProcess(KAPC_STATE *apc_state)
     FIXME("apc_state %p stub.\n", apc_state);
 }
 
+NTSTATUS WINAPI KdDisableDebugger(void)
+{
+    FIXME(": stub.\n");
+    return STATUS_DEBUGGER_INACTIVE;
+}
+
+NTSTATUS WINAPI KdEnableDebugger(void)
+{
+    FIXME(": stub.\n");
+    return STATUS_DEBUGGER_INACTIVE;
+}
+
 /*****************************************************
  *           DllMain
  */
