@@ -72,16 +72,11 @@ BOOL WINAPI DECLSPEC_HOTPATCH CheckRemoteDebuggerPresent( HANDLE process, BOOL *
  */
 BOOL WINAPI DECLSPEC_HOTPATCH ContinueDebugEvent( DWORD pid, DWORD tid, DWORD status )
 {
-    BOOL ret;
-    SERVER_START_REQ( continue_debug_event )
-    {
-        req->pid    = pid;
-        req->tid    = tid;
-        req->status = status;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    CLIENT_ID id;
+
+    id.UniqueProcess = ULongToHandle( pid );
+    id.UniqueThread  = ULongToHandle( tid );
+    return set_ntstatus( DbgUiContinue( &id, status ));
 }
 
 

@@ -378,11 +378,10 @@ static struct debug_obj *create_debug_obj( struct object *root, const struct uni
 }
 
 /* continue a debug event */
-static int continue_debug_event( struct process *process, struct thread *thread, int status )
+static int continue_debug_event( struct debug_obj *debug_obj, struct process *process,
+                                 struct thread *thread, int status )
 {
-    struct debug_obj *debug_obj = current->debug_obj;
-
-    if (debug_obj && process->debug_obj == debug_obj && thread->process == process)
+    if (process->debug_obj == debug_obj && thread->process == process)
     {
         struct debug_event *event;
 
@@ -645,6 +644,7 @@ DECL_HANDLER(wait_debug_event)
 /* Continue a debug event */
 DECL_HANDLER(continue_debug_event)
 {
+    struct debug_obj *debug_obj;
     struct process *process;
 
     if (req->status != DBG_EXCEPTION_NOT_HANDLED &&
@@ -656,16 +656,19 @@ DECL_HANDLER(continue_debug_event)
         return;
     }
 
+    if (!(debug_obj = get_debug_obj( current->process, req->debug, DEBUG_READ_EVENT ))) return;
+
     if ((process = get_process_from_id( req->pid )))
     {
         struct thread *thread = get_thread_from_id( req->tid );
         if (thread)
         {
-            continue_debug_event( process, thread, req->status );
+            continue_debug_event( debug_obj, process, thread, req->status );
             release_object( thread );
         }
         release_object( process );
     }
+    release_object( debug_obj );
 }
 
 /* start or stop debugging an existing process */

@@ -2199,9 +2199,10 @@ static void dump_get_exception_status_request( const struct get_exception_status
 
 static void dump_continue_debug_event_request( const struct continue_debug_event_request *req )
 {
-    fprintf( stderr, " pid=%04x", req->pid );
+    fprintf( stderr, " debug=%04x", req->debug );
+    fprintf( stderr, ", pid=%04x", req->pid );
     fprintf( stderr, ", tid=%04x", req->tid );
-    fprintf( stderr, ", status=%d", req->status );
+    fprintf( stderr, ", status=%08x", req->status );
 }
 
 static void dump_debug_process_request( const struct debug_process_request *req )

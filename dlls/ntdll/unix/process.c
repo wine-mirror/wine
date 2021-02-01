@@ -1781,6 +1781,26 @@ NTSTATUS WINAPI NtRemoveProcessDebug( HANDLE process, HANDLE debug )
 }
 
 
+/**********************************************************************
+ *           NtDebugContinue  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtDebugContinue( HANDLE handle, CLIENT_ID *client, NTSTATUS status )
+{
+    NTSTATUS ret;
+
+    SERVER_START_REQ( continue_debug_event )
+    {
+        req->debug  = wine_server_obj_handle( handle );
+        req->pid    = HandleToULong( client->UniqueProcess );
+        req->tid    = HandleToULong( client->UniqueThread );
+        req->status = status;
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
 /***********************************************************************
  *           __wine_make_process_system   (NTDLL.@)
  *

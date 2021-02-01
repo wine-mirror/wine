@@ -2080,9 +2080,11 @@ struct get_exception_status_reply
 struct continue_debug_event_request
 {
     struct request_header __header;
+    obj_handle_t debug;
     process_id_t pid;
     thread_id_t  tid;
-    int          status;
+    unsigned int status;
+    char __pad_28[4];
 };
 struct continue_debug_event_reply
 {
@@ -6213,7 +6215,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 660
+#define SERVER_PROTOCOL_VERSION 661
 
 /* ### protocol_version end ### */
 

@@ -171,6 +171,14 @@ NTSTATUS WINAPI DbgUiStopDebugging( HANDLE process )
 }
 
 /***********************************************************************
+ *      DbgUiContinue (NTDLL.@)
+ */
+NTSTATUS WINAPI DbgUiContinue( CLIENT_ID *client, NTSTATUS status )
+{
+    return NtDebugContinue( DbgUiGetThreadDebugObject(), client, status );
+}
+
+/***********************************************************************
  *      DbgUiRemoteBreakin (NTDLL.@)
  */
 void WINAPI DbgUiRemoteBreakin( void *arg )

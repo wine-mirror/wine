@@ -1631,9 +1631,10 @@ struct process_info
 
 /* Continue a debug event */
 @REQ(continue_debug_event)
+    obj_handle_t debug;        /* debug object */
     process_id_t pid;          /* process id to continue */
     thread_id_t  tid;          /* thread id to continue */
-    int          status;       /* continuation status */
+    unsigned int status;       /* continuation status */
 @END
 
 

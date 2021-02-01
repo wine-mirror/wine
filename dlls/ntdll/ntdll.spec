@@ -35,7 +35,7 @@
 # @ stub DbgQueryDebugFilterState
 # @ stub DbgSetDebugFilterState
 @ stdcall DbgUiConnectToDbg()
-@ stub DbgUiContinue
+@ stdcall DbgUiContinue(ptr long)
 @ stub DbgUiConvertStateChangeStructure
 @ stdcall DbgUiDebugActiveProcess(long)
 @ stdcall DbgUiGetThreadDebugObject()
@@ -191,7 +191,7 @@
 # @ stub NtCreateWaitablePort
 @ stdcall -arch=i386,arm64 NtCurrentTeb()
 @ stdcall -syscall NtDebugActiveProcess(long long)
-# @ stub NtDebugContinue
+@ stdcall -syscall NtDebugContinue(long ptr long)
 @ stdcall -syscall NtDelayExecution(long ptr)
 @ stdcall -syscall NtDeleteAtom(long)
 # @ stub NtDeleteBootEntry
@@ -1196,7 +1196,7 @@
 @ stdcall -private -syscall ZwCreateUserProcess(ptr ptr long long ptr ptr long long ptr ptr ptr) NtCreateUserProcess
 # @ stub ZwCreateWaitablePort
 @ stdcall -private -syscall ZwDebugActiveProcess(long long) NtDebugActiveProcess
-# @ stub ZwDebugContinue
+@ stdcall -private -syscall ZwDebugContinue(long ptr long) NtDebugContinue
 @ stdcall -private -syscall ZwDelayExecution(long ptr) NtDelayExecution
 @ stdcall -private -syscall ZwDeleteAtom(long) NtDeleteAtom
 # @ stub ZwDeleteBootEntry
