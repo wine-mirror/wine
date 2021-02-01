@@ -488,7 +488,6 @@ static int debugger_attach( struct process *process, struct thread *debugger, st
         struct thread *renderer = console_get_renderer(debugger->process->console);
         if (renderer && renderer->process == process) goto error;
     }
-    if (!debugger->debug_obj) debugger->debug_obj = (struct debug_obj *)grab_object( debug_obj );
 
     suspend_process( process );
 
@@ -565,20 +564,6 @@ void generate_startup_debug_events( struct process *process, client_ptr_t entry 
     {
         struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
         generate_debug_event( first_thread, DbgLoadDllStateChange, dll );
-    }
-}
-
-/* a thread is exiting */
-void debug_exit_thread( struct thread *thread )
-{
-    struct debug_obj *debug_obj = thread->debug_obj;
-
-    if (debug_obj)  /* this thread is a debugger */
-    {
-        detach_debugged_processes( debug_obj,
-                                   (debug_obj->flags & DEBUG_KILL_ON_CLOSE) ? STATUS_DEBUGGER_INACTIVE : 0 );
-        release_object( thread->debug_obj );
-        thread->debug_obj = NULL;
     }
 }
 

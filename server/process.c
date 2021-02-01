@@ -1261,7 +1261,6 @@ DECL_HANDLER(new_process)
     {
         process->debug_obj = debug_obj;
         process->debug_children = !(req->create_flags & DEBUG_ONLY_THIS_PROCESS);
-        if (!current->debug_obj) current->debug_obj = (struct debug_obj *)grab_object( debug_obj );
     }
     else if (parent->debug_children)
     {

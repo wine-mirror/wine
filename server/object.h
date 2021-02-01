@@ -215,7 +215,6 @@ extern void sock_init(void);
 extern void generate_debug_event( struct thread *thread, int code, const void *arg );
 extern void resume_delayed_debug_events( struct thread *thread );
 extern void generate_startup_debug_events( struct process *process, client_ptr_t entry );
-extern void debug_exit_thread( struct thread *thread );
 
 /* registry functions */
 

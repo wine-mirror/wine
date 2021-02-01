@@ -1727,15 +1727,29 @@ static DWORD run_child_wait( char *cmd, HANDLE event )
     return exit_code;
 }
 
+static PROCESS_INFORMATION pi;
+static char *cmd;
+
+static DWORD WINAPI debug_and_exit(void *arg)
+{
+    STARTUPINFOA si = { sizeof(si) };
+    BOOL ret;
+
+    ret = CreateProcessA(NULL, cmd, NULL, NULL, TRUE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess failed, last error %#x.\n", GetLastError());
+    Sleep(200);
+    *(HANDLE *)arg = pDbgUiGetThreadDebugObject();
+    ExitThread(0);
+}
+
 static void test_kill_on_exit(const char *argv0)
 {
     static const char arguments[] = " debugger wait ";
     SECURITY_ATTRIBUTES sa = { sizeof(sa), NULL, TRUE };
     OBJECT_ATTRIBUTES attr = { sizeof(attr) };
     NTSTATUS status;
-    HANDLE event, debug;
-    DWORD exit_code;
-    char *cmd;
+    HANDLE event, debug, thread;
+    DWORD exit_code, tid;
     ULONG val;
 
     event = CreateEventW(&sa, FALSE, FALSE, NULL);
@@ -1783,6 +1797,26 @@ static void test_kill_on_exit(const char *argv0)
     ok( !status, "DbgUiConnectToDbg failed %x\n", status );
     exit_code = run_child_wait( cmd, event );
     ok( exit_code == STATUS_DEBUGGER_INACTIVE, "exit code = %08x\n", exit_code);
+
+    /* test that threads don't close the debug port on exit */
+    thread = CreateThread(NULL, 0, debug_and_exit, &debug, 0, &tid);
+    WaitForSingleObject( thread, 1000 );
+    ok( debug != 0, "no debug port\n" );
+    SetEvent( event );
+    WaitForSingleObject( pi.hProcess, 100 );
+    GetExitCodeProcess( pi.hProcess, &exit_code );
+    ok( exit_code == STILL_ACTIVE, "exit code = %08x\n", exit_code);
+    val = 0;
+    status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
+                                           &val, sizeof(val), NULL );
+    ok( !status, "NtSetInformationDebugObject failed %x\n", status );
+    CloseHandle( debug );
+    WaitForSingleObject( pi.hProcess, 1000 );
+    GetExitCodeProcess( pi.hProcess, &exit_code );
+    ok( exit_code == 0, "exit code = %08x\n", exit_code);
+    CloseHandle( pi.hProcess );
+    CloseHandle( pi.hThread );
+    CloseHandle( thread );
 
     heap_free(cmd);
 }
