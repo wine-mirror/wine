@@ -108,6 +108,12 @@ EVT_HANDLE WINAPI EvtQuery(EVT_HANDLE session, const WCHAR *path, const WCHAR *q
     return NULL;
 }
 
+BOOL WINAPI EvtSaveChannelConfig(EVT_HANDLE channel, DWORD flags)
+{
+    FIXME("(%p,%08x) stub\n", channel, flags);
+    return TRUE;
+}
+
 BOOL WINAPI EvtClose(EVT_HANDLE handle)
 {
     FIXME("(%p) stub\n", handle);

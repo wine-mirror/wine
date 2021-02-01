@@ -128,7 +128,7 @@ EVT_HANDLE WINAPI EvtSubscribe(EVT_HANDLE Session, HANDLE SignalEvent, LPCWSTR C
                                LPCWSTR Query, EVT_HANDLE Bookmark, PVOID context,
                                EVT_SUBSCRIBE_CALLBACK Callback, DWORD Flags);
 EVT_HANDLE WINAPI EvtOpenChannelConfig(EVT_HANDLE Session, LPCWSTR ChannelPath, DWORD Flags);
-
+BOOL WINAPI EvtSaveChannelConfig(EVT_HANDLE, DWORD);
 
 #ifdef __cplusplus
 } /* extern "C" */
