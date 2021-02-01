@@ -1165,6 +1165,43 @@ double CDECL sinh( double x )
   return ret;
 }
 
+static inline double CDECL ret_nan( void )
+{
+    double x = 1.0;
+    return (x - x) / (x - x);
+}
+
+BOOL sqrt_validate( double *x )
+{
+    short c = _dclass(*x);
+
+    if (c == FP_ZERO) return FALSE;
+    if (c == FP_NAN)
+    {
+#ifdef __i386__
+        *x = math_error(_DOMAIN, "sqrt", *x, 0, *x);
+#else
+        /* set signaling bit */
+        *(ULONGLONG*)x |= 0x8000000000000ULL;
+#endif
+        return FALSE;
+    }
+    if (signbit(*x))
+    {
+        *x = math_error(_DOMAIN, "sqrt", *x, 0, ret_nan());
+        return FALSE;
+    }
+    if (c == FP_INFINITE) return FALSE;
+    return TRUE;
+}
+
+#if defined(__x86_64__)
+double CDECL sse2_sqrt(double);
+__ASM_GLOBAL_FUNC( sse2_sqrt,
+        "sqrtsd %xmm0, %xmm0\n\t"
+        "ret" )
+#endif
+
 /*********************************************************************
  *		sqrt (MSVCRT.@)
  *
@@ -1172,6 +1209,12 @@ double CDECL sinh( double x )
  */
 double CDECL sqrt( double x )
 {
+#ifdef __x86_64__
+    if (!sqrt_validate(&x))
+        return x;
+
+    return sse2_sqrt(x);
+#else
     static const double tiny = 1.0e-300;
 
     double z;
@@ -1180,21 +1223,13 @@ double CDECL sqrt( double x )
     unsigned int r,t1,s1,ix1,q1;
     ULONGLONG ix;
 
+    if (!sqrt_validate(&x))
+        return x;
+
     ix = *(ULONGLONG*)&x;
     ix0 = ix >> 32;
     ix1 = ix;
 
-    /* take care of Inf and NaN */
-    if (isnan(x) || (isinf(x) && x > 0))
-        return x;
-
-    /* take care of zero */
-    if (ix0 <= 0) {
-        if (((ix0 & ~sign) | ix1) == 0)
-            return x;  /* sqrt(+-0) = +-0 */
-        if (ix0 < 0)
-            return math_error(_DOMAIN, "sqrt", x, 0, (x - x) / (x - x));
-    }
     /* normalize x */
     m = ix0 >> 20;
     if (m == 0) {  /* subnormal x */
@@ -1278,6 +1313,7 @@ double CDECL sqrt( double x )
     ix <<= 32;
     ix |= ix1;
     return *(double*)&ix;
+#endif
 }
 
 /*********************************************************************
@@ -3424,6 +3460,21 @@ __int64 CDECL llrintf(float x)
     return unix_funcs->llrintf( x );
 }
 
+/*********************************************************************
+ *      _dclass (MSVCR120.@)
+ *
+ * Copied from musl: src/math/__fpclassify.c
+ */
+short CDECL _dclass(double x)
+{
+    union { double f; UINT64 i; } u = { x };
+    int e = u.i >> 52 & 0x7ff;
+
+    if (!e) return u.i << 1 ? FP_SUBNORMAL : FP_ZERO;
+    if (e == 0x7ff) return (u.i << 12) ? FP_NAN : FP_INFINITE;
+    return FP_NORMAL;
+}
+
 #if _MSVCR_VER>=120
 
 /*********************************************************************
@@ -3488,21 +3539,6 @@ double CDECL trunc(double x)
 float CDECL truncf(float x)
 {
     return unix_funcs->truncf(x);
-}
-
-/*********************************************************************
- *      _dclass (MSVCR120.@)
- *
- * Copied from musl: src/math/__fpclassify.c
- */
-short CDECL _dclass(double x)
-{
-    union { double f; UINT64 i; } u = { x };
-    int e = u.i >> 52 & 0x7ff;
-
-    if (!e) return u.i << 1 ? FP_SUBNORMAL : FP_ZERO;
-    if (e == 0x7ff) return (u.i << 12) ? FP_NAN : FP_INFINITE;
-    return FP_NORMAL;
 }
 
 /*********************************************************************
