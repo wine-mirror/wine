@@ -911,7 +911,8 @@ static HRESULT WINAPI gdiinterop1_GetMatchingFontsByLOGFONT(IDWriteGdiInterop1 *
     return E_NOTIMPL;
 }
 
-static const struct IDWriteGdiInterop1Vtbl gdiinteropvtbl = {
+static const IDWriteGdiInterop1Vtbl gdiinteropvtbl =
+{
     gdiinterop_QueryInterface,
     gdiinterop_AddRef,
     gdiinterop_Release,
@@ -1022,7 +1023,7 @@ static HRESULT WINAPI memresourcestream_GetLastWriteTime(IDWriteFontFileStream *
     return E_NOTIMPL;
 }
 
-static const struct IDWriteFontFileStreamVtbl memresourcestreamvtbl =
+static const IDWriteFontFileStreamVtbl memresourcestreamvtbl =
 {
     memresourcestream_QueryInterface,
     memresourcestream_AddRef,
@@ -1082,7 +1083,8 @@ static HRESULT WINAPI memresourceloader_CreateStreamFromKey(IDWriteFontFileLoade
     return S_OK;
 }
 
-static const struct IDWriteFontFileLoaderVtbl memresourceloadervtbl = {
+static const IDWriteFontFileLoaderVtbl memresourceloadervtbl =
+{
     memresourceloader_QueryInterface,
     memresourceloader_AddRef,
     memresourceloader_Release,

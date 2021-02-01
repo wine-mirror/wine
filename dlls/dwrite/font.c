@@ -4567,7 +4567,7 @@ err:
     return hr;
 }
 
-static const struct IDWriteFontFileEnumeratorVtbl systemfontfileenumeratorvtbl =
+static const IDWriteFontFileEnumeratorVtbl systemfontfileenumeratorvtbl =
 {
     systemfontfileenumerator_QueryInterface,
     systemfontfileenumerator_AddRef,
@@ -5450,7 +5450,7 @@ static HRESULT WINAPI localfontfileloader_GetLastWriteTimeFromKey(IDWriteLocalFo
     return S_OK;
 }
 
-static const struct IDWriteLocalFontFileLoaderVtbl localfontfileloadervtbl =
+static const IDWriteLocalFontFileLoaderVtbl localfontfileloadervtbl =
 {
     localfontfileloader_QueryInterface,
     localfontfileloader_AddRef,
@@ -5873,7 +5873,7 @@ static HRESULT WINAPI glyphrunanalysis_GetAlphaBlendParams(IDWriteGlyphRunAnalys
     return S_OK;
 }
 
-static const struct IDWriteGlyphRunAnalysisVtbl glyphrunanalysisvtbl =
+static const IDWriteGlyphRunAnalysisVtbl glyphrunanalysisvtbl =
 {
     glyphrunanalysis_QueryInterface,
     glyphrunanalysis_AddRef,

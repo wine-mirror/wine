@@ -204,7 +204,7 @@ static DWRITE_RENDERING_MODE1 WINAPI renderingparams3_GetRenderingMode1(IDWriteR
     return params->mode;
 }
 
-static const struct IDWriteRenderingParams3Vtbl renderingparamsvtbl =
+static const IDWriteRenderingParams3Vtbl renderingparamsvtbl =
 {
     renderingparams_QueryInterface,
     renderingparams_AddRef,
@@ -1756,7 +1756,7 @@ static HRESULT WINAPI dwritefactory7_GetSystemFontCollection(IDWriteFactory7 *if
     return E_NOTIMPL;
 }
 
-static const struct IDWriteFactory7Vtbl dwritefactoryvtbl =
+static const IDWriteFactory7Vtbl dwritefactoryvtbl =
 {
     dwritefactory_QueryInterface,
     dwritefactory_AddRef,
@@ -1831,7 +1831,7 @@ static ULONG WINAPI shareddwritefactory_Release(IDWriteFactory7 *iface)
     return 1;
 }
 
-static const struct IDWriteFactory7Vtbl shareddwritefactoryvtbl =
+static const IDWriteFactory7Vtbl shareddwritefactoryvtbl =
 {
     dwritefactory_QueryInterface,
     shareddwritefactory_AddRef,

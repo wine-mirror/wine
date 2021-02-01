@@ -1815,7 +1815,8 @@ static HRESULT WINAPI dwritetextanalyzer2_CheckTypographicFeature(IDWriteTextAna
     return hr;
 }
 
-static const struct IDWriteTextAnalyzer2Vtbl textanalyzervtbl = {
+static const IDWriteTextAnalyzer2Vtbl textanalyzervtbl =
+{
     dwritetextanalyzer_QueryInterface,
     dwritetextanalyzer_AddRef,
     dwritetextanalyzer_Release,
@@ -1891,7 +1892,8 @@ static ULONG WINAPI dwritenumbersubstitution_Release(IDWriteNumberSubstitution *
     return ref;
 }
 
-static const struct IDWriteNumberSubstitutionVtbl numbersubstitutionvtbl = {
+static const IDWriteNumberSubstitutionVtbl numbersubstitutionvtbl =
+{
     dwritenumbersubstitution_QueryInterface,
     dwritenumbersubstitution_AddRef,
     dwritenumbersubstitution_Release
