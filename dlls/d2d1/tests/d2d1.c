@@ -7701,7 +7701,8 @@ static void test_gdi_interop(BOOL d3d11)
 todo_wine
     ok(dc == NULL, "Expected NULL dc, got %p.\n", dc);
     ID2D1GdiInteropRenderTarget_Release(interop);
-    ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
 
     ID2D1RenderTarget_Release(rt);
 
