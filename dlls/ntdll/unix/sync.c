@@ -934,6 +934,36 @@ NTSTATUS WINAPI NtCreateDebugObject( HANDLE *handle, ACCESS_MASK access,
 }
 
 
+/**********************************************************************
+ *           NtSetInformationDebugObject  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSetInformationDebugObject( HANDLE handle, DEBUGOBJECTINFOCLASS class,
+                                             void *info, ULONG len, ULONG *ret_len )
+{
+    NTSTATUS ret;
+    ULONG flags;
+
+    if (class != DebugObjectKillProcessOnExitInformation) return STATUS_INVALID_PARAMETER;
+    if (len != sizeof(ULONG))
+    {
+        if (ret_len) *ret_len = sizeof(ULONG);
+        return STATUS_INFO_LENGTH_MISMATCH;
+    }
+    flags = *(ULONG *)info;
+    if (flags & ~DEBUG_KILL_ON_CLOSE) return STATUS_INVALID_PARAMETER;
+
+    SERVER_START_REQ( set_debug_obj_info )
+    {
+        req->debug = wine_server_obj_handle( handle );
+        req->flags = flags;
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (!ret && ret_len) *ret_len = 0;
+    return ret;
+}
+
+
 /**************************************************************************
  *           NtCreateDirectoryObject   (NTDLL.@)
  */

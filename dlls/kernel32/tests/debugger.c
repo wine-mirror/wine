@@ -46,6 +46,7 @@ static void (WINAPI *pDbgBreakPoint)(void);
 static NTSTATUS  (WINAPI *pNtSuspendProcess)(HANDLE process);
 static NTSTATUS  (WINAPI *pNtResumeProcess)(HANDLE process);
 static NTSTATUS  (WINAPI *pNtCreateDebugObject)(HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *, ULONG);
+static NTSTATUS  (WINAPI *pNtSetInformationDebugObject)(HANDLE,DEBUGOBJECTINFOCLASS,void *,ULONG,ULONG*);
 static NTSTATUS  (WINAPI *pDbgUiConnectToDbg)(void);
 static HANDLE    (WINAPI *pDbgUiGetThreadDebugObject)(void);
 static void      (WINAPI *pDbgUiSetThreadDebugObject)(HANDLE);
@@ -1735,6 +1736,7 @@ static void test_kill_on_exit(const char *argv0)
     HANDLE event, debug;
     DWORD exit_code;
     char *cmd;
+    ULONG val;
 
     event = CreateEventW(&sa, FALSE, FALSE, NULL);
     ok(event != NULL, "CreateEvent failed: %u\n", GetLastError());
@@ -1757,6 +1759,26 @@ static void test_kill_on_exit(const char *argv0)
     status = pNtCreateDebugObject( &debug, DEBUG_ALL_ACCESS, &attr, 0xfffe );
     ok( status == STATUS_INVALID_PARAMETER, "NtCreateDebugObject failed %x\n", status );
 
+    status = pNtCreateDebugObject( &debug, DEBUG_ALL_ACCESS, &attr, 0 );
+    ok( !status, "NtCreateDebugObject failed %x\n", status );
+    pDbgUiSetThreadDebugObject( debug );
+    val = DEBUG_KILL_ON_CLOSE;
+    status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
+                                           &val, sizeof(val), NULL );
+    ok( !status, "NtSetInformationDebugObject failed %x\n", status );
+    exit_code = run_child_wait( cmd, event );
+    ok( exit_code == STATUS_DEBUGGER_INACTIVE, "exit code = %08x\n", exit_code);
+
+    status = pNtCreateDebugObject( &debug, DEBUG_ALL_ACCESS, &attr, DEBUG_KILL_ON_CLOSE );
+    ok( !status, "NtCreateDebugObject failed %x\n", status );
+    pDbgUiSetThreadDebugObject( debug );
+    val = 0;
+    status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
+                                           &val, sizeof(val), NULL );
+    ok( !status, "NtSetInformationDebugObject failed %x\n", status );
+    exit_code = run_child_wait( cmd, event );
+    ok( exit_code == 0, "exit code = %08x\n", exit_code);
+
     status = pDbgUiConnectToDbg();
     ok( !status, "DbgUiConnectToDbg failed %x\n", status );
     exit_code = run_child_wait( cmd, event );
@@ -1777,6 +1799,7 @@ START_TEST(debugger)
     pNtSuspendProcess = (void*)GetProcAddress(ntdll, "NtSuspendProcess");
     pNtResumeProcess = (void*)GetProcAddress(ntdll, "NtResumeProcess");
     pNtCreateDebugObject = (void*)GetProcAddress(ntdll, "NtCreateDebugObject");
+    pNtSetInformationDebugObject = (void*)GetProcAddress(ntdll, "NtSetInformationDebugObject");
     pDbgUiConnectToDbg = (void*)GetProcAddress(ntdll, "DbgUiConnectToDbg");
     pDbgUiGetThreadDebugObject = (void*)GetProcAddress(ntdll, "DbgUiGetThreadDebugObject");
     pDbgUiSetThreadDebugObject = (void*)GetProcAddress(ntdll, "DbgUiSetThreadDebugObject");

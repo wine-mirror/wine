@@ -373,7 +373,7 @@
 @ stub NtSetHighEventPair
 @ stub NtSetHighWaitLowEventPair
 @ stub NtSetHighWaitLowThread
-# @ stub NtSetInformationDebugObject
+@ stdcall -syscall NtSetInformationDebugObject(long long ptr long ptr)
 @ stdcall -syscall NtSetInformationFile(long ptr ptr long long)
 @ stdcall -syscall NtSetInformationJobObject(long long ptr long)
 @ stdcall -syscall NtSetInformationKey(long long ptr long)
@@ -1378,7 +1378,7 @@
 @ stub ZwSetHighEventPair
 @ stub ZwSetHighWaitLowEventPair
 @ stub ZwSetHighWaitLowThread
-# @ stub ZwSetInformationDebugObject
+@ stdcall -private -syscall ZwSetInformationDebugObject(long long ptr long ptr) NtSetInformationDebugObject
 @ stdcall -private -syscall ZwSetInformationFile(long ptr ptr long long) NtSetInformationFile
 @ stdcall -private -syscall ZwSetInformationJobObject(long long ptr long) NtSetInformationJobObject
 @ stdcall -private -syscall ZwSetInformationKey(long long ptr long) NtSetInformationKey

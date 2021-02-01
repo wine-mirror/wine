@@ -2105,12 +2105,14 @@ struct debug_process_reply
 
 
 
-struct set_debugger_kill_on_exit_request
+struct set_debug_obj_info_request
 {
     struct request_header __header;
-    int          kill_on_exit;
+    obj_handle_t debug;
+    unsigned int flags;
+    char __pad_20[4];
 };
-struct set_debugger_kill_on_exit_reply
+struct set_debug_obj_info_reply
 {
     struct reply_header __header;
 };
@@ -5447,7 +5449,7 @@ enum request
     REQ_get_exception_status,
     REQ_continue_debug_event,
     REQ_debug_process,
-    REQ_set_debugger_kill_on_exit,
+    REQ_set_debug_obj_info,
     REQ_read_process_memory,
     REQ_write_process_memory,
     REQ_create_key,
@@ -5729,7 +5731,7 @@ union generic_request
     struct get_exception_status_request get_exception_status_request;
     struct continue_debug_event_request continue_debug_event_request;
     struct debug_process_request debug_process_request;
-    struct set_debugger_kill_on_exit_request set_debugger_kill_on_exit_request;
+    struct set_debug_obj_info_request set_debug_obj_info_request;
     struct read_process_memory_request read_process_memory_request;
     struct write_process_memory_request write_process_memory_request;
     struct create_key_request create_key_request;
@@ -6009,7 +6011,7 @@ union generic_reply
     struct get_exception_status_reply get_exception_status_reply;
     struct continue_debug_event_reply continue_debug_event_reply;
     struct debug_process_reply debug_process_reply;
-    struct set_debugger_kill_on_exit_reply set_debugger_kill_on_exit_reply;
+    struct set_debug_obj_info_reply set_debug_obj_info_reply;
     struct read_process_memory_reply read_process_memory_reply;
     struct write_process_memory_reply write_process_memory_reply;
     struct create_key_reply create_key_reply;
@@ -6211,7 +6213,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 659
+#define SERVER_PROTOCOL_VERSION 660
 
 /* ### protocol_version end ### */
 

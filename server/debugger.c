@@ -747,13 +747,12 @@ DECL_HANDLER(get_exception_status)
     }
 }
 
-/* set debugger kill on exit flag */
-DECL_HANDLER(set_debugger_kill_on_exit)
+/* set debug object information */
+DECL_HANDLER(set_debug_obj_info)
 {
-    if (!current->debug_obj)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return;
-    }
-    current->debug_obj->flags = req->kill_on_exit ? DEBUG_KILL_ON_CLOSE : 0;
+    struct debug_obj *debug_obj;
+
+    if (!(debug_obj = get_debug_obj( current->process, req->debug, DEBUG_SET_INFORMATION ))) return;
+    debug_obj->flags = req->flags;
+    release_object( debug_obj );
 }

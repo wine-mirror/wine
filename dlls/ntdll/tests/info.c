@@ -43,6 +43,8 @@ static BOOL     (WINAPI * pGetLogicalProcessorInformationEx)(LOGICAL_PROCESSOR_R
 static DEP_SYSTEM_POLICY_TYPE (WINAPI * pGetSystemDEPPolicy)(void);
 static NTSTATUS (WINAPI * pNtOpenThread)(HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *, const CLIENT_ID *);
 static NTSTATUS (WINAPI * pNtQueryObject)(HANDLE, OBJECT_INFORMATION_CLASS, void *, ULONG, ULONG *);
+static NTSTATUS (WINAPI * pNtCreateDebugObject)( HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *, ULONG );
+static NTSTATUS (WINAPI * pNtSetInformationDebugObject)(HANDLE,DEBUGOBJECTINFOCLASS,PVOID,ULONG,ULONG*);
 
 static BOOL is_wow64;
 
@@ -92,6 +94,8 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtUnmapViewOfSection);
     NTDLL_GET_PROC(NtOpenThread);
     NTDLL_GET_PROC(NtQueryObject);
+    NTDLL_GET_PROC(NtCreateDebugObject);
+    NTDLL_GET_PROC(NtSetInformationDebugObject);
 
     /* not present before XP */
     pNtGetCurrentProcessorNumber = (void *) GetProcAddress(hntdll, "NtGetCurrentProcessorNumber");
@@ -2749,6 +2753,56 @@ static void test_wow64(void)
     ok( !NtCurrentTeb()->WowTebOffset, "WowTebOffset set to %x\n", NtCurrentTeb()->WowTebOffset );
 }
 
+static void test_debug_object(void)
+{
+    NTSTATUS status;
+    HANDLE handle;
+    OBJECT_ATTRIBUTES attr = { sizeof(attr) };
+    ULONG len, flag = 0;
+
+    status = pNtCreateDebugObject( &handle, DEBUG_ALL_ACCESS, &attr, 0 );
+    ok( !status, "NtCreateDebugObject failed %x\n", status );
+    status = pNtSetInformationDebugObject( handle, 0, &flag, sizeof(ULONG), &len );
+    ok( status == STATUS_INVALID_PARAMETER, "NtSetInformationDebugObject failed %x\n", status );
+    status = pNtSetInformationDebugObject( handle, 2, &flag, sizeof(ULONG), &len );
+    ok( status == STATUS_INVALID_PARAMETER, "NtSetInformationDebugObject failed %x\n", status );
+    status = pNtSetInformationDebugObject( (HANDLE)0xdead, DebugObjectKillProcessOnExitInformation,
+                                           &flag, sizeof(ULONG), &len );
+    ok( status == STATUS_INVALID_HANDLE, "NtSetInformationDebugObject failed %x\n", status );
+
+    len = 0xdead;
+    status = pNtSetInformationDebugObject( handle, DebugObjectKillProcessOnExitInformation,
+                                           &flag, sizeof(ULONG) + 1, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtSetInformationDebugObject failed %x\n", status );
+    ok( len == sizeof(ULONG), "wrong len %u\n", len );
+
+    len = 0xdead;
+    status = pNtSetInformationDebugObject( handle, DebugObjectKillProcessOnExitInformation,
+                                           &flag, sizeof(ULONG) - 1, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtSetInformationDebugObject failed %x\n", status );
+    ok( len == sizeof(ULONG), "wrong len %u\n", len );
+
+    len = 0xdead;
+    status = pNtSetInformationDebugObject( handle, DebugObjectKillProcessOnExitInformation,
+                                           &flag, sizeof(ULONG), &len );
+    ok( !status, "NtSetInformationDebugObject failed %x\n", status );
+    ok( !len, "wrong len %u\n", len );
+
+    flag = DEBUG_KILL_ON_CLOSE;
+    status = pNtSetInformationDebugObject( handle, DebugObjectKillProcessOnExitInformation,
+                                           &flag, sizeof(ULONG), &len );
+    ok( !status, "NtSetInformationDebugObject failed %x\n", status );
+    ok( !len, "wrong len %u\n", len );
+
+    for (flag = 2; flag; flag <<= 1)
+    {
+        status = pNtSetInformationDebugObject( handle, DebugObjectKillProcessOnExitInformation,
+                                               &flag, sizeof(ULONG), &len );
+        ok( status == STATUS_INVALID_PARAMETER, "NtSetInformationDebugObject failed %x\n", status );
+    }
+
+    pNtClose( handle );
+}
 
 START_TEST(info)
 {
@@ -2808,6 +2862,7 @@ START_TEST(info)
 
     test_affinity();
     test_wow64();
+    test_debug_object();
 
     /* belongs to its own file */
     test_readvirtualmemory();

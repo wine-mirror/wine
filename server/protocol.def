@@ -1645,9 +1645,10 @@ struct process_info
 @END
 
 
-/* Set debugger kill on exit flag */
-@REQ(set_debugger_kill_on_exit)
-    int          kill_on_exit;  /* 0=detach/1=kill debuggee when debugger dies */
+/* Set debug object information */
+@REQ(set_debug_obj_info)
+    obj_handle_t debug;        /* debug object */
+    unsigned int flags;        /* object flags */
 @END
 
 

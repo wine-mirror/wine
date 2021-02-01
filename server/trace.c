@@ -2211,9 +2211,10 @@ static void dump_debug_process_request( const struct debug_process_request *req 
     fprintf( stderr, ", attach=%d", req->attach );
 }
 
-static void dump_set_debugger_kill_on_exit_request( const struct set_debugger_kill_on_exit_request *req )
+static void dump_set_debug_obj_info_request( const struct set_debug_obj_info_request *req )
 {
-    fprintf( stderr, " kill_on_exit=%d", req->kill_on_exit );
+    fprintf( stderr, " debug=%04x", req->debug );
+    fprintf( stderr, ", flags=%08x", req->flags );
 }
 
 static void dump_read_process_memory_request( const struct read_process_memory_request *req )
@@ -4475,7 +4476,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_exception_status_request,
     (dump_func)dump_continue_debug_event_request,
     (dump_func)dump_debug_process_request,
-    (dump_func)dump_set_debugger_kill_on_exit_request,
+    (dump_func)dump_set_debug_obj_info_request,
     (dump_func)dump_read_process_memory_request,
     (dump_func)dump_write_process_memory_request,
     (dump_func)dump_create_key_request,
@@ -5031,7 +5032,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_exception_status",
     "continue_debug_event",
     "debug_process",
-    "set_debugger_kill_on_exit",
+    "set_debug_obj_info",
     "read_process_memory",
     "write_process_memory",
     "create_key",
