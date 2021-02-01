@@ -2011,7 +2011,7 @@ static HRESULT WINAPI src_reader_GetPresentationAttribute(IMFSourceReader *iface
     return hr;
 }
 
-struct IMFSourceReaderVtbl srcreader_vtbl =
+static const IMFSourceReaderVtbl srcreader_vtbl =
 {
     src_reader_QueryInterface,
     src_reader_AddRef,
@@ -2536,7 +2536,7 @@ static HRESULT WINAPI classfactory_LockServer(IClassFactory *iface, BOOL dolock)
     return S_OK;
 }
 
-static const struct IClassFactoryVtbl classfactoryvtbl =
+static const IClassFactoryVtbl classfactoryvtbl =
 {
     classfactory_QueryInterface,
     classfactory_AddRef,
