@@ -136,6 +136,8 @@ void update_window_config( struct console *console );
 
 NTSTATUS write_console_input( struct console *console, const INPUT_RECORD *records,
                               unsigned int count, BOOL flush );
+
+void notify_screen_buffer_size( struct screen_buffer *screen_buffer );
 NTSTATUS change_screen_buffer_size( struct screen_buffer *screen_buffer, int new_width, int new_height );
 
 static inline void empty_update_rect( struct screen_buffer *screen_buffer, RECT *rect )

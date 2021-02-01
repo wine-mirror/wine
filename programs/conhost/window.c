@@ -1901,6 +1901,8 @@ static void apply_config( struct console *console, const struct console_config *
     }
 
     update_window( console );
+
+    notify_screen_buffer_size( console->active );
 }
 
 static void current_config( struct console *console, struct console_config *config )
