@@ -4078,7 +4078,7 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE hemf, BOOL delete,
      * If clear, metafile was recorded with a DC for a printer */
     (*metafile)->printer_display = !(header.EmfPlusFlags & (1u << 31));
     (*metafile)->logical_dpix = header.LogicalDpiX;
-    (*metafile)->logical_dpix = header.LogicalDpiY;
+    (*metafile)->logical_dpiy = header.LogicalDpiY;
     list_init(&(*metafile)->containers);
 
     TRACE("<-- %p\n", *metafile);
