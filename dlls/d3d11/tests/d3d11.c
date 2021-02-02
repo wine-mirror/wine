@@ -6797,9 +6797,11 @@ static void test_device_context_state(void)
     enum D3D_PRIMITIVE_TOPOLOGY topo;
     ID3D11ComputeShader *tmp_cs, *cs;
     D3D11_DEPTH_STENCIL_DESC ds_desc;
+    ID3D11Predicate *tmp_pred, *pred;
     ID3D11DomainShader *tmp_ds, *ds;
     D3D11_SAMPLER_DESC sampler_desc;
     D3D_FEATURE_LEVEL feature_level;
+    D3D11_QUERY_DESC predicate_desc;
     ID3D11Device1 *device, *device2;
     ID3D11InputLayout *il, *tmp_il;
     ID3D11PixelShader *tmp_ps, *ps;
@@ -6814,6 +6816,7 @@ static void test_device_context_state(void)
     float blend_factor[4];
     struct vec4 constant;
     DWORD data_size;
+    BOOL pred_value;
     ULONG refcount;
     char data[64];
     HRESULT hr;
@@ -7020,6 +7023,10 @@ static void test_device_context_state(void)
     vp.MinDepth = 0.f;
     vp.MaxDepth = 0.01f;
 
+    predicate_desc.Query = D3D11_QUERY_OCCLUSION_PREDICATE;
+    predicate_desc.MiscFlags = 0;
+    ID3D11Device1_CreatePredicate(device, &predicate_desc, &pred);
+
     ID3D11DeviceContext1_VSSetConstantBuffers(context, 0, 1, &cb);
     ID3D11DeviceContext1_VSSetSamplers(context, 0, 1, &sampler);
     ID3D11DeviceContext1_VSSetShader(context, vs, NULL, 0);
@@ -7067,6 +7074,7 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_RSSetState(context, rs);
 
     ID3D11DeviceContext1_SOSetTargets(context, 1, &sob, &so_offset);
+    ID3D11DeviceContext1_SetPredication(context, pred, TRUE);
 
     previous_context_state = (ID3DDeviceContextState *)0xdeadbeef;
     ID3D11DeviceContext1_SwapDeviceContextState(context, NULL, &previous_context_state);
@@ -7256,6 +7264,13 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_SOGetTargets(context, 1, &tmp_sob);
     todo_wine ok(!tmp_sob, "Got unexpected stream output buffer %p.\n", tmp_sob);
     if (tmp_sob) ID3D11Buffer_Release(tmp_sob);
+
+    tmp_pred = (ID3D11Predicate *)0xdeadbeef;
+    pred_value = 0xdeadbeef;
+    ID3D11DeviceContext1_GetPredication(context, &tmp_pred, &pred_value);
+    todo_wine ok(!tmp_pred, "Got unexpected predicate %p.\n", tmp_pred);
+    if (tmp_pred) ID3D11Predicate_Release(tmp_pred);
+    todo_wine ok(!pred_value, "Got unexpected predicate value %d.\n", pred_value);
 
     /* updating the device context should also update the device context state */
     hr = ID3D11Device1_CreateVertexShader(device, simple_vs, sizeof(simple_vs), NULL, &vs2);
@@ -7537,6 +7552,13 @@ static void test_device_context_state(void)
     ok(tmp_sob == sob, "Got stream output buffer %p, expected %p.\n", tmp_sob, sob);
     ID3D11Buffer_Release(tmp_sob);
 
+    tmp_pred = (ID3D11Predicate *)0xdeadbeef;
+    pred_value = 0xdeadbeef;
+    ID3D11DeviceContext1_GetPredication(context, &tmp_pred, &pred_value);
+    ok(tmp_pred == pred, "Got predicate %p, expected %p.\n", tmp_pred, pred);
+    ID3D11Predicate_Release(tmp_pred);
+    ok(pred_value == TRUE, "Got predicate value %#x, expected TRUE.\n", pred_value);
+
     feature_level = min(feature_level, D3D_FEATURE_LEVEL_10_1);
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1, D3D11_SDK_VERSION,
             &IID_ID3D10Device, NULL, &context_state);
@@ -7759,6 +7781,7 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_RSSetState(context, rs);
 
     ID3D11DeviceContext1_SOSetTargets(context, 1, &sob, &so_offset);
+    ID3D11DeviceContext1_SetPredication(context, pred, TRUE);
 
     tmp_rs = (ID3D11RasterizerState *)0xdeadbeef;
     ID3D11DeviceContext1_RSGetState(context, &tmp_rs);
@@ -7777,6 +7800,13 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_SOGetTargets(context, 1, &tmp_sob);
     todo_wine ok(!tmp_sob, "Got unexpected stream output buffer %p.\n", tmp_sob);
     if (tmp_sob) ID3D11Buffer_Release(tmp_sob);
+
+    tmp_pred = (ID3D11Predicate *)0xdeadbeef;
+    pred_value = 0xdeadbeef;
+    ID3D11DeviceContext1_GetPredication(context, &tmp_pred, &pred_value);
+    todo_wine ok(!tmp_pred, "Got unexpected predicate %p.\n", tmp_pred);
+    if (tmp_pred) ID3D11Predicate_Release(tmp_pred);
+    todo_wine ok(!pred_value, "Got unexpected predicate value %d.\n", pred_value);
 
     check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
     check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
@@ -7970,9 +8000,17 @@ static void test_device_context_state(void)
     ok(tmp_sob == sob, "Got stream output buffer %p, expected %p.\n", tmp_sob, sob);
     ID3D11Buffer_Release(tmp_sob);
 
+    tmp_pred = (ID3D11Predicate *)0xdeadbeef;
+    pred_value = 0xdeadbeef;
+    ID3D11DeviceContext1_GetPredication(context, &tmp_pred, &pred_value);
+    ok(tmp_pred == pred, "Got predicate %p, expected %p.\n", tmp_pred, pred);
+    ID3D11Predicate_Release(tmp_pred);
+    ok(pred_value == TRUE, "Got predicate value %#x, expected TRUE.\n", pred_value);
+
     check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
     check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
 
+    ID3D11Predicate_Release(pred);
     ID3D11Buffer_Release(sob);
     ID3D11RasterizerState_Release(rs);
     ID3D11BlendState_Release(bs);
