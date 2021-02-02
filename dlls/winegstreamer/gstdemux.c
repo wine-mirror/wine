@@ -68,6 +68,8 @@ struct wg_parser
         bool done;
         GstFlowReturn ret;
     } read_request;
+
+    bool flushing;
 };
 
 struct parser
@@ -89,7 +91,7 @@ struct parser
     /* FIXME: It would be nice to avoid duplicating these with strmbase.
      * However, synchronization is tricky; we need access to be protected by a
      * separate lock. */
-    bool streaming, flushing, sink_connected;
+    bool streaming, sink_connected;
 
     uint64_t next_pull_offset;
 
@@ -1037,13 +1039,14 @@ static void send_buffer(struct parser_source *pin, GstBuffer *buf)
 static bool get_stream_event(struct parser_source *pin, struct parser_event *event)
 {
     struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
+    struct wg_parser *parser = filter->wg_parser;
 
     pthread_mutex_lock(&filter->mutex);
 
-    while (!filter->flushing && pin->event.type == PARSER_EVENT_NONE)
+    while (!parser->flushing && pin->event.type == PARSER_EVENT_NONE)
         pthread_cond_wait(&pin->event_cond, &filter->mutex);
 
-    if (filter->flushing)
+    if (parser->flushing)
     {
         pthread_mutex_unlock(&filter->mutex);
         TRACE("Filter is flushing.\n");
@@ -1720,7 +1723,7 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
 
     filter->streaming = true;
     pthread_mutex_lock(&filter->mutex);
-    filter->flushing = false;
+    parser->flushing = false;
     pthread_mutex_unlock(&filter->mutex);
 
     /* DirectShow retains the old seek positions, but resets to them every time
@@ -1761,7 +1764,7 @@ static HRESULT parser_cleanup_stream(struct strmbase_filter *iface)
 
     filter->streaming = false;
     pthread_mutex_lock(&filter->mutex);
-    filter->flushing = true;
+    parser->flushing = true;
     pthread_mutex_unlock(&filter->mutex);
 
     for (i = 0; i < filter->source_count; ++i)
@@ -1997,7 +2000,6 @@ static BOOL parser_init_gstreamer(void)
 static void parser_init_common(struct parser *object)
 {
     pthread_mutex_init(&object->mutex, NULL);
-    object->flushing = true;
 }
 
 static struct wg_parser *wg_parser_create(void)
@@ -2010,6 +2012,7 @@ static struct wg_parser *wg_parser_create(void)
     pthread_cond_init(&parser->init_cond, NULL);
     pthread_cond_init(&parser->read_cond, NULL);
     pthread_cond_init(&parser->read_done_cond, NULL);
+    parser->flushing = true;
 
     TRACE("Created winegstreamer parser %p.\n", parser);
     return parser;
@@ -2149,6 +2152,7 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
     GstSeekType current_type = GST_SEEK_TYPE_SET, stop_type = GST_SEEK_TYPE_SET;
     struct parser_source *pin = impl_from_IMediaSeeking(iface);
     struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
+    struct wg_parser *parser = filter->wg_parser;
     GstSeekFlags flags = 0;
     HRESULT hr = S_OK;
     int i;
@@ -2168,7 +2172,7 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
     if (!(current_flags & AM_SEEKING_NoFlush))
     {
         pthread_mutex_lock(&filter->mutex);
-        filter->flushing = true;
+        parser->flushing = true;
         pthread_mutex_unlock(&filter->mutex);
 
         for (i = 0; i < filter->source_count; ++i)
@@ -2217,7 +2221,7 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
     if (!(current_flags & AM_SEEKING_NoFlush))
     {
         pthread_mutex_lock(&filter->mutex);
-        filter->flushing = false;
+        parser->flushing = false;
         pthread_mutex_unlock(&filter->mutex);
 
         for (i = 0; i < filter->source_count; ++i)
