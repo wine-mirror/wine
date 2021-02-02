@@ -538,6 +538,229 @@ static void test_createinstance(void)
     }
 }
 
+static BOOL write_resource(const WCHAR *resource, const WCHAR *filename)
+{
+    HANDLE file;
+    HRSRC rsrc;
+    void *data;
+    DWORD size;
+    BOOL ret;
+
+    rsrc = FindResourceW(GetModuleHandleW(NULL), resource, MAKEINTRESOURCEW(RT_RCDATA));
+    if (!rsrc) return FALSE;
+
+    data = LockResource(LoadResource(GetModuleHandleA(NULL), rsrc));
+    if (!data) return FALSE;
+
+    size = SizeofResource(GetModuleHandleA(NULL), rsrc);
+    if (!size) return FALSE;
+
+    file = CreateFileW(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+    if (file == INVALID_HANDLE_VALUE) return FALSE;
+
+    ret = WriteFile(file, data, size, &size, NULL);
+    CloseHandle(file);
+    return ret;
+}
+
+static BOOL compile_cs(const WCHAR *source, const WCHAR *target, const WCHAR *type, const WCHAR *args)
+{
+    static const WCHAR *csc = L"C:\\windows\\Microsoft.NET\\Framework\\v2.0.50727\\csc.exe";
+    WCHAR cmdline[2 * MAX_PATH + 74];
+    PROCESS_INFORMATION pi;
+    STARTUPINFOW si = { 0 };
+    BOOL ret;
+
+    if (!PathFileExistsW(csc))
+    {
+        skip("Can't find csc.exe\n");
+        return FALSE;
+    }
+
+    swprintf(cmdline, ARRAY_SIZE(cmdline), L"%s /t:%s %s /out:\"%s\" \"%s\"", csc, type, args, target, source);
+
+    si.cb = sizeof(si);
+    ret = CreateProcessW(csc, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "Could not create process: %u\n", GetLastError());
+
+    wait_child_process(pi.hProcess);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+
+    ret = PathFileExistsW(target);
+    ok(ret, "Compilation failed\n");
+
+    return ret;
+}
+
+static void test_loadpaths_execute(const WCHAR *exe_name, const WCHAR *dll_name, const WCHAR *cfg_name,
+                                   const WCHAR *dll_dest, BOOL expect_failure, BOOL todo)
+{
+    WCHAR tmp[MAX_PATH], tmpdir[MAX_PATH], tmpexe[MAX_PATH], tmpcfg[MAX_PATH], tmpdll[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    STARTUPINFOW si = { 0 };
+    WCHAR *ptr, *end;
+    DWORD exit_code = 0xdeadbeef;
+    LUID id;
+    BOOL ret;
+
+    GetTempPathW(MAX_PATH, tmp);
+    ret = AllocateLocallyUniqueId(&id);
+    ok(ret, "AllocateLocallyUniqueId failed: %u\n", GetLastError());
+    ret = GetTempFileNameW(tmp, L"loadpaths", id.LowPart, tmpdir);
+    ok(ret, "GetTempFileNameW failed: %u\n", GetLastError());
+
+    ret = CreateDirectoryW(tmpdir, NULL);
+    ok(ret, "CreateDirectoryW(%s) failed: %u\n", debugstr_w(tmpdir), GetLastError());
+
+    wcscpy(tmpexe, tmpdir);
+    PathAppendW(tmpexe, exe_name);
+    ret = CopyFileW(exe_name, tmpexe, FALSE);
+    ok(ret, "CopyFileW(%s) failed: %u\n", debugstr_w(tmpexe), GetLastError());
+
+    if (cfg_name)
+    {
+        wcscpy(tmpcfg, tmpdir);
+        PathAppendW(tmpcfg, cfg_name);
+        ret = CopyFileW(cfg_name, tmpcfg, FALSE);
+        ok(ret, "CopyFileW(%s) failed: %u\n", debugstr_w(tmpcfg), GetLastError());
+    }
+
+    ptr = tmpdir + wcslen(tmpdir);
+    PathAppendW(tmpdir, dll_dest);
+    while (*ptr && (ptr = wcschr(ptr + 1, '\\')))
+    {
+        *ptr = '\0';
+        ret = CreateDirectoryW(tmpdir, NULL);
+        ok(ret, "CreateDirectoryW(%s) failed: %u\n", debugstr_w(tmpdir), GetLastError());
+        *ptr = '\\';
+    }
+
+    wcscpy(tmpdll, tmpdir);
+    if ((ptr = wcsrchr(tmpdir, '\\'))) *ptr = '\0';
+
+    ret = CopyFileW(dll_name, tmpdll, FALSE);
+    ok(ret, "CopyFileW(%s) failed: %u\n", debugstr_w(tmpdll), GetLastError());
+
+    si.cb = sizeof(si);
+    ret = CreateProcessW(tmpexe, tmpexe, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcessW(%s) failed: %u\n", debugstr_w(tmpexe), GetLastError());
+
+    if (expect_failure) ret = WaitForSingleObject(pi.hProcess, 500);
+    else
+    {
+        ret = WaitForSingleObject(pi.hProcess, 5000);
+        ok(ret == WAIT_OBJECT_0, "%s: WaitForSingleObject returned %d: %u\n", debugstr_w(dll_dest), ret, GetLastError());
+    }
+
+    GetExitCodeProcess(pi.hProcess, &exit_code);
+    if (ret == WAIT_TIMEOUT) TerminateProcess(pi.hProcess, 0xdeadbeef);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+
+    if (expect_failure) todo_wine_if(todo) ok(exit_code != 0, "%s: Succeeded to execute process\n", debugstr_w(dll_dest));
+    else ok(exit_code == 0, "%s: Failed to execute process\n", debugstr_w(dll_dest));
+
+    /* sometimes the failing process never returns, in which case cleaning up won't work */
+    if (ret == WAIT_TIMEOUT && expect_failure) return;
+
+    if (cfg_name)
+    {
+        ret = DeleteFileW(tmpcfg);
+        ok(ret, "DeleteFileW(%s) failed: %u\n", debugstr_w(tmpcfg), GetLastError());
+    }
+    ret = DeleteFileW(tmpdll);
+    ok(ret, "DeleteFileW(%s) failed: %u\n", debugstr_w(tmpdll), GetLastError());
+    ret = DeleteFileW(tmpexe);
+    ok(ret, "DeleteFileW(%s) failed: %u\n", debugstr_w(tmpexe), GetLastError());
+
+    end = tmpdir + wcslen(tmp);
+    ptr = tmpdir + wcslen(tmpdir) - 1;
+    while (ptr > end && (ptr = wcsrchr(tmpdir, '\\')))
+    {
+        ret = RemoveDirectoryW(tmpdir);
+        ok(ret, "RemoveDirectoryW(%s) failed: %u\n", debugstr_w(tmpdir), GetLastError());
+        *ptr = '\0';
+    }
+}
+
+static void test_loadpaths(BOOL neutral)
+{
+    static const WCHAR *loadpaths[] = {L"", L"en", L"libloadpaths", L"en\\libloadpaths"};
+    static const WCHAR *dll_source = L"loadpaths.dll.cs";
+    static const WCHAR *dll_name = L"libloadpaths.dll";
+    static const WCHAR *exe_source = L"loadpaths.exe.cs";
+    static const WCHAR *exe_name = L"loadpaths.exe";
+    static const WCHAR *cfg_name = L"loadpaths.exe.config";
+    WCHAR tmp[MAX_PATH];
+    BOOL ret;
+    int i;
+
+    DeleteFileW(dll_source);
+    ret = write_resource(dll_source, dll_source);
+    ok(ret, "Could not write resource: %u\n", GetLastError());
+    DeleteFileW(dll_name);
+    ret = compile_cs(dll_source, dll_name, L"library", neutral ? L"-define:NEUTRAL" : L"");
+    if (!ret) return;
+    ret = DeleteFileW(dll_source);
+    ok(ret, "DeleteFileW failed: %u\n", GetLastError());
+
+    DeleteFileW(exe_source);
+    ret = write_resource(exe_source, exe_source);
+    ok(ret, "Could not write resource: %u\n", GetLastError());
+    DeleteFileW(exe_name);
+    ret = compile_cs(exe_source, exe_name, L"exe", L"/reference:libloadpaths.dll");
+    if (!ret) return;
+    ret = DeleteFileW(exe_source);
+    ok(ret, "DeleteFileW failed: %u\n", GetLastError());
+
+    DeleteFileW(cfg_name);
+    ret = write_resource(cfg_name, cfg_name);
+    ok(ret, "Could not write resource: %u\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(loadpaths); ++i)
+    {
+        const WCHAR *path = loadpaths[i];
+        BOOL expect_failure = neutral ? wcsstr(path, L"en") != NULL
+                                      : wcsstr(path, L"en") == NULL;
+
+        wcscpy(tmp, path);
+        PathAppendW(tmp, dll_name);
+        test_loadpaths_execute(exe_name, dll_name, NULL, tmp, expect_failure, !neutral && !*path);
+
+        wcscpy(tmp, L"private");
+        if (*path) PathAppendW(tmp, path);
+        PathAppendW(tmp, dll_name);
+
+        test_loadpaths_execute(exe_name, dll_name, NULL, tmp, TRUE, FALSE);
+        test_loadpaths_execute(exe_name, dll_name, cfg_name, tmp, expect_failure, FALSE);
+
+        /* exe name for dll should work too */
+        if (*path)
+        {
+            wcscpy(tmp, path);
+            PathAppendW(tmp, dll_name);
+            wcscpy(tmp + wcslen(tmp) - 4, L".exe");
+            test_loadpaths_execute(exe_name, dll_name, NULL, tmp, expect_failure, FALSE);
+        }
+
+        wcscpy(tmp, L"private");
+        if (*path) PathAppendW(tmp, path);
+        PathAppendW(tmp, dll_name);
+        wcscpy(tmp + wcslen(tmp) - 4, L".exe");
+
+        test_loadpaths_execute(exe_name, dll_name, NULL, tmp, TRUE, FALSE);
+        test_loadpaths_execute(exe_name, dll_name, cfg_name, tmp, expect_failure, FALSE);
+    }
+
+    ret = DeleteFileW(cfg_name);
+    ok(ret, "DeleteFileW failed: %u\n", GetLastError());
+    ret = DeleteFileW(exe_name);
+    ok(ret, "DeleteFileW failed: %u\n", GetLastError());
+    ret = DeleteFileW(dll_name);
+    ok(ret, "DeleteFileW failed: %u\n", GetLastError());
+}
+
 static void test_createdomain(void)
 {
     static const WCHAR test_name[] = {'t','e','s','t',0};
@@ -649,6 +872,9 @@ START_TEST(mscoree)
     {
         test_createdomain();
     }
+
+    test_loadpaths(FALSE);
+    test_loadpaths(TRUE);
 
     FreeLibrary(hmscoree);
 }

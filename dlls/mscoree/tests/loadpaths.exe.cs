@@ -1,7 +1,5 @@
 /*
- * Resources for mscoree test suite.
- *
- * Copyright 2018 Fabian Maurer
+ * Copyright 2021 Rémi Bernon for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,22 +16,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windef.h"
-
-/* @makedep: comtest.cs */
-comtest.cs RCDATA comtest.cs
-
-/* @makedep: comtest_exe.manifest */
-comtest_exe.manifest RCDATA comtest_exe.manifest
-
-/* @makedep: comtest_dll.manifest */
-comtest_dll.manifest RCDATA comtest_dll.manifest
-
-/* @makedep: loadpaths.exe.cs */
-loadpaths.exe.cs RCDATA loadpaths.exe.cs
-
-/* @makedep: loadpaths.dll.cs */
-loadpaths.dll.cs RCDATA loadpaths.dll.cs
-
-/* @makedep: loadpaths.exe.config */
-loadpaths.exe.config RCDATA loadpaths.exe.config
+namespace LoadPaths
+{
+    public static class Test
+    {
+        static int Main(string[] args)
+        {
+	     return new Test2().Foo();
+        }
+    }
+}
