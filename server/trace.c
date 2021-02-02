@@ -1392,26 +1392,40 @@ static void dump_init_process_done_reply( const struct init_process_done_reply *
     fprintf( stderr, " suspend=%d", req->suspend );
 }
 
-static void dump_init_thread_request( const struct init_thread_request *req )
+static void dump_init_first_thread_request( const struct init_first_thread_request *req )
 {
     fprintf( stderr, " unix_pid=%d", req->unix_pid );
     fprintf( stderr, ", unix_tid=%d", req->unix_tid );
     fprintf( stderr, ", debug_level=%d", req->debug_level );
     dump_uint64( ", teb=", &req->teb );
-    dump_uint64( ", entry=", &req->entry );
+    dump_uint64( ", peb=", &req->peb );
     fprintf( stderr, ", reply_fd=%d", req->reply_fd );
     fprintf( stderr, ", wait_fd=%d", req->wait_fd );
     dump_client_cpu( ", cpu=", &req->cpu );
+}
+
+static void dump_init_first_thread_reply( const struct init_first_thread_reply *req )
+{
+    fprintf( stderr, " pid=%04x", req->pid );
+    fprintf( stderr, ", tid=%04x", req->tid );
+    dump_timeout( ", server_start=", &req->server_start );
+    fprintf( stderr, ", info_size=%u", req->info_size );
+    fprintf( stderr, ", all_cpus=%08x", req->all_cpus );
+}
+
+static void dump_init_thread_request( const struct init_thread_request *req )
+{
+    fprintf( stderr, " unix_tid=%d", req->unix_tid );
+    fprintf( stderr, ", reply_fd=%d", req->reply_fd );
+    fprintf( stderr, ", wait_fd=%d", req->wait_fd );
+    dump_uint64( ", teb=", &req->teb );
+    dump_uint64( ", entry=", &req->entry );
 }
 
 static void dump_init_thread_reply( const struct init_thread_reply *req )
 {
     fprintf( stderr, " pid=%04x", req->pid );
     fprintf( stderr, ", tid=%04x", req->tid );
-    dump_timeout( ", server_start=", &req->server_start );
-    fprintf( stderr, ", info_size=%u", req->info_size );
-    fprintf( stderr, ", version=%d", req->version );
-    fprintf( stderr, ", all_cpus=%08x", req->all_cpus );
     fprintf( stderr, ", suspend=%d", req->suspend );
 }
 
@@ -4407,6 +4421,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_thread_request,
     (dump_func)dump_get_startup_info_request,
     (dump_func)dump_init_process_done_request,
+    (dump_func)dump_init_first_thread_request,
     (dump_func)dump_init_thread_request,
     (dump_func)dump_terminate_process_request,
     (dump_func)dump_terminate_thread_request,
@@ -4685,6 +4700,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_thread_reply,
     (dump_func)dump_get_startup_info_reply,
     (dump_func)dump_init_process_done_reply,
+    (dump_func)dump_init_first_thread_reply,
     (dump_func)dump_init_thread_reply,
     (dump_func)dump_terminate_process_reply,
     (dump_func)dump_terminate_thread_reply,
@@ -4963,6 +4979,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "new_thread",
     "get_startup_info",
     "init_process_done",
+    "init_first_thread",
     "init_thread",
     "terminate_process",
     "terminate_thread",

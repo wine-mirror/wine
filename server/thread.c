@@ -1384,24 +1384,20 @@ done:
     release_object( process );
 }
 
-/* initialize a new thread */
-DECL_HANDLER(init_thread)
+static int init_thread( struct thread *thread, int reply_fd, int wait_fd )
 {
-    struct process *process = current->process;
-    int wait_fd, reply_fd;
-
-    if ((reply_fd = thread_get_inflight_fd( current, req->reply_fd )) == -1)
+    if ((reply_fd = thread_get_inflight_fd( thread, reply_fd )) == -1)
     {
         set_error( STATUS_TOO_MANY_OPENED_FILES );
-        return;
+        return 0;
     }
-    if ((wait_fd = thread_get_inflight_fd( current, req->wait_fd )) == -1)
+    if ((wait_fd = thread_get_inflight_fd( thread, wait_fd )) == -1)
     {
         set_error( STATUS_TOO_MANY_OPENED_FILES );
         goto error;
     }
 
-    if (current->reply_fd)  /* already initialised */
+    if (thread->reply_fd)  /* already initialised */
     {
         set_error( STATUS_INVALID_PARAMETER );
         goto error;
@@ -1409,9 +1405,55 @@ DECL_HANDLER(init_thread)
 
     if (fcntl( reply_fd, F_SETFL, O_NONBLOCK ) == -1) goto error;
 
-    current->reply_fd = create_anonymous_fd( &thread_fd_ops, reply_fd, &current->obj, 0 );
-    current->wait_fd  = create_anonymous_fd( &thread_fd_ops, wait_fd, &current->obj, 0 );
-    if (!current->reply_fd || !current->wait_fd) return;
+    thread->reply_fd = create_anonymous_fd( &thread_fd_ops, reply_fd, &thread->obj, 0 );
+    thread->wait_fd  = create_anonymous_fd( &thread_fd_ops, wait_fd, &thread->obj, 0 );
+    return thread->reply_fd && thread->wait_fd;
+
+ error:
+    if (reply_fd != -1) close( reply_fd );
+    if (wait_fd != -1) close( wait_fd );
+    return 0;
+}
+
+/* initialize the first thread of a new process */
+DECL_HANDLER(init_first_thread)
+{
+    struct process *process = current->process;
+
+    if (!init_thread( current, req->reply_fd, req->wait_fd )) return;
+
+    if (!is_valid_address(req->teb) || !is_valid_address(req->peb))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if (!is_cpu_supported( req->cpu )) return;
+
+    current->unix_pid = process->unix_pid = req->unix_pid;
+    current->unix_tid = req->unix_tid;
+    current->teb      = req->teb;
+    process->peb      = req->peb;
+    process->cpu      = req->cpu;
+
+    if (!process->parent_id)
+        process->affinity = current->affinity = get_thread_affinity( current );
+    else
+        set_thread_affinity( current, current->affinity );
+
+    debug_level = max( debug_level, req->debug_level );
+
+    reply->pid          = get_process_id( process );
+    reply->tid          = get_thread_id( current );
+    reply->info_size    = get_process_startup_info_size( process );
+    reply->server_start = server_start_time;
+    reply->all_cpus     = supported_cpus & get_prefix_cpu_mask();
+}
+
+/* initialize a new thread */
+DECL_HANDLER(init_thread)
+{
+    if (!init_thread( current, req->reply_fd, req->wait_fd )) return;
 
     if (!is_valid_address(req->teb))
     {
@@ -1419,49 +1461,18 @@ DECL_HANDLER(init_thread)
         return;
     }
 
-    current->unix_pid = req->unix_pid;
+    current->unix_pid = current->process->unix_pid;
     current->unix_tid = req->unix_tid;
     current->teb      = req->teb;
-    current->entry_point = process->peb ? req->entry : 0;
+    current->entry_point = req->entry;
 
-    if (!process->peb)  /* first thread, initialize the process too */
-    {
-        if (!is_cpu_supported( req->cpu )) return;
-        process->unix_pid = current->unix_pid;
-        process->peb      = req->entry;
-        process->cpu      = req->cpu;
-        reply->info_size  = init_process( current );
-        if (!process->parent_id)
-            process->affinity = current->affinity = get_thread_affinity( current );
-        else
-            set_thread_affinity( current, current->affinity );
-    }
-    else
-    {
-        if (req->cpu != process->cpu)
-        {
-            set_error( STATUS_INVALID_PARAMETER );
-            return;
-        }
-        if (process->unix_pid != current->unix_pid)
-            process->unix_pid = -1;  /* can happen with linuxthreads */
-        init_thread_context( current );
-        generate_debug_event( current, DbgCreateThreadStateChange, &req->entry );
-        set_thread_affinity( current, current->affinity );
-    }
-    debug_level = max( debug_level, req->debug_level );
+    init_thread_context( current );
+    generate_debug_event( current, DbgCreateThreadStateChange, &req->entry );
+    set_thread_affinity( current, current->affinity );
 
-    reply->pid     = get_process_id( process );
+    reply->pid     = get_process_id( current->process );
     reply->tid     = get_thread_id( current );
-    reply->version = SERVER_PROTOCOL_VERSION;
-    reply->server_start = server_start_time;
-    reply->all_cpus     = supported_cpus & get_prefix_cpu_mask();
-    reply->suspend      = (current->suspend || process->suspend || current->context != NULL);
-    return;
-
- error:
-    if (reply_fd != -1) close( reply_fd );
-    if (wait_fd != -1) close( wait_fd );
+    reply->suspend = (current->suspend || current->process->suspend || current->context != NULL);
 }
 
 /* terminate a thread */

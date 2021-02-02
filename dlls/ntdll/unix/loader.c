@@ -1618,7 +1618,6 @@ static struct unix_funcs unix_funcs =
  */
 static void start_main_thread(void)
 {
-    BOOL suspend;
     NTSTATUS status;
     TEB *teb = virtual_alloc_first_teb();
 
@@ -1626,8 +1625,7 @@ static void start_main_thread(void)
     signal_alloc_thread( teb );
     signal_init_thread( teb );
     dbg_init();
-    server_init_process();
-    startup_info_size = server_init_thread( teb->Peb, &suspend );
+    startup_info_size = server_init_process();
     virtual_map_user_shared_data();
     init_cpu_info();
     init_files();

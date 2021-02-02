@@ -870,13 +870,13 @@ typedef struct
 @END
 
 
-/* Initialize a thread; called from the child after fork()/clone() */
-@REQ(init_thread)
-    int          unix_pid;     /* Unix pid of new thread */
+/* Initialize the first thread of a new process */
+@REQ(init_first_thread)
+    int          unix_pid;     /* Unix pid of new process */
     int          unix_tid;     /* Unix tid of new thread */
     int          debug_level;  /* new debug level */
-    client_ptr_t teb;          /* TEB of new thread (in thread address space) */
-    client_ptr_t entry;        /* entry point or PEB if initial thread (in thread address space) */
+    client_ptr_t teb;          /* TEB of new thread (in process address space) */
+    client_ptr_t peb;          /* PEB of new process (in process address space) */
     int          reply_fd;     /* fd for reply pipe */
     int          wait_fd;      /* fd for blocking calls pipe */
     client_cpu_t cpu;          /* CPU that this thread is running on */
@@ -885,8 +885,20 @@ typedef struct
     thread_id_t  tid;          /* thread id of the new thread */
     timeout_t    server_start; /* server start time */
     data_size_t  info_size;    /* total size of startup info */
-    int          version;      /* protocol version */
     unsigned int all_cpus;     /* bitset of supported CPUs */
+@END
+
+
+/* Initialize a new thread; called from the child after pthread_create() */
+@REQ(init_thread)
+    int          unix_tid;     /* Unix tid of new thread */
+    int          reply_fd;     /* fd for reply pipe */
+    int          wait_fd;      /* fd for blocking calls pipe */
+    client_ptr_t teb;          /* TEB of new thread (in thread address space) */
+    client_ptr_t entry;        /* entry point (in thread address space) */
+@REPLY
+    process_id_t pid;          /* process id of the new thread's process */
+    thread_id_t  tid;          /* thread id of the new thread */
     int          suspend;      /* is thread suspended? */
 @END
 

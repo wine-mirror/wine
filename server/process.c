@@ -607,10 +607,9 @@ struct process *create_process( int fd, struct process *parent, int inherit_all,
     return NULL;
 }
 
-/* initialize the current process and fill in the request */
-data_size_t init_process( struct thread *thread )
+/* get the process data size */
+data_size_t get_process_startup_info_size( struct process *process )
 {
-    struct process *process = thread->process;
     struct startup_info *info = process->startup_info;
 
     if (!info) return 0;

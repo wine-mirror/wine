@@ -893,29 +893,47 @@ struct init_process_done_reply
 
 
 
-struct init_thread_request
+struct init_first_thread_request
 {
     struct request_header __header;
     int          unix_pid;
     int          unix_tid;
     int          debug_level;
     client_ptr_t teb;
-    client_ptr_t entry;
+    client_ptr_t peb;
     int          reply_fd;
     int          wait_fd;
     client_cpu_t cpu;
     char __pad_52[4];
 };
-struct init_thread_reply
+struct init_first_thread_reply
 {
     struct reply_header __header;
     process_id_t pid;
     thread_id_t  tid;
     timeout_t    server_start;
     data_size_t  info_size;
-    int          version;
     unsigned int all_cpus;
+};
+
+
+
+struct init_thread_request
+{
+    struct request_header __header;
+    int          unix_tid;
+    int          reply_fd;
+    int          wait_fd;
+    client_ptr_t teb;
+    client_ptr_t entry;
+};
+struct init_thread_reply
+{
+    struct reply_header __header;
+    process_id_t pid;
+    thread_id_t  tid;
     int          suspend;
+    char __pad_20[4];
 };
 
 
@@ -5373,6 +5391,7 @@ enum request
     REQ_new_thread,
     REQ_get_startup_info,
     REQ_init_process_done,
+    REQ_init_first_thread,
     REQ_init_thread,
     REQ_terminate_process,
     REQ_terminate_thread,
@@ -5655,6 +5674,7 @@ union generic_request
     struct new_thread_request new_thread_request;
     struct get_startup_info_request get_startup_info_request;
     struct init_process_done_request init_process_done_request;
+    struct init_first_thread_request init_first_thread_request;
     struct init_thread_request init_thread_request;
     struct terminate_process_request terminate_process_request;
     struct terminate_thread_request terminate_thread_request;
@@ -5935,6 +5955,7 @@ union generic_reply
     struct new_thread_reply new_thread_reply;
     struct get_startup_info_reply get_startup_info_reply;
     struct init_process_done_reply init_process_done_reply;
+    struct init_first_thread_reply init_first_thread_reply;
     struct init_thread_reply init_thread_reply;
     struct terminate_process_reply terminate_process_reply;
     struct terminate_thread_reply terminate_thread_reply;
@@ -6208,7 +6229,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 662
+#define SERVER_PROTOCOL_VERSION 663
 
 /* ### protocol_version end ### */
 
