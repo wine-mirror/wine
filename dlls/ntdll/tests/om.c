@@ -21,6 +21,8 @@
 
 #include "ntdll_test.h"
 #include "winternl.h"
+#include "winuser.h"
+#include "ddk/wdm.h"
 #include "stdio.h"
 #include "winnt.h"
 #include "stdlib.h"
@@ -188,9 +190,6 @@ static void test_namespace_pipe(void)
 
     pNtClose(pipe);
 }
-
-#define DIRECTORY_QUERY (0x0001)
-#define SYMBOLIC_LINK_QUERY 0x0001
 
 #define check_create_open_dir(parent, name, status) check_create_open_dir_(__LINE__, parent, name, status)
 static void check_create_open_dir_( int line, HANDLE parent, const WCHAR *name, NTSTATUS expect )
@@ -1299,7 +1298,8 @@ static BOOL compare_unicode_string( const UNICODE_STRING *string, const WCHAR *e
 static void _test_object_type( unsigned line, HANDLE handle, const WCHAR *expected_name )
 {
     char buffer[1024];
-    UNICODE_STRING *str = (UNICODE_STRING *)buffer, expect;
+    OBJECT_TYPE_INFORMATION *type = (OBJECT_TYPE_INFORMATION *)buffer;
+    UNICODE_STRING expect;
     ULONG len = 0;
     NTSTATUS status;
 
@@ -1309,8 +1309,9 @@ static void _test_object_type( unsigned line, HANDLE handle, const WCHAR *expect
     status = pNtQueryObject( handle, ObjectTypeInformation, buffer, sizeof(buffer), &len );
     ok_(__FILE__,line)( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
     ok_(__FILE__,line)( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
-    ok_(__FILE__,line)( len >= sizeof(OBJECT_TYPE_INFORMATION) + str->Length, "unexpected len %u\n", len );
-    ok_(__FILE__,line)(compare_unicode_string( str, expected_name ), "wrong name %s\n", debugstr_w( str->Buffer ));
+    ok_(__FILE__,line)( len >= sizeof(*type) + type->TypeName.Length, "unexpected len %u\n", len );
+    ok_(__FILE__,line)(compare_unicode_string( &type->TypeName, expected_name ), "wrong name %s\n",
+                       debugstr_w( type->TypeName.Buffer ));
 }
 
 #define test_object_name(a,b,c) _test_object_name(__LINE__,a,b,c)
@@ -1339,7 +1340,7 @@ static void test_query_object(void)
     NTSTATUS status;
     ULONG len, expected_len;
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING path, *str;
+    UNICODE_STRING path, target, *str;
     char dir[MAX_PATH], tmp_path[MAX_PATH], file1[MAX_PATH + 16];
     WCHAR expect[100];
     LARGE_INTEGER size;
@@ -1457,11 +1458,76 @@ static void test_query_object(void)
     RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_debug" );
     status = pNtCreateDebugObject( &handle, DEBUG_ALL_ACCESS, &attr, 0 );
     ok(!status, "NtCreateDebugObject failed: %x\n", status);
-
     test_object_name( handle, L"\\BaseNamedObjects\\test_debug", FALSE );
     test_object_type( handle, L"DebugObject" );
     test_no_file_info( handle );
     pNtClose(handle);
+
+    RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_mutant" );
+    status = pNtCreateMutant( &handle, MUTANT_ALL_ACCESS, &attr, 0 );
+    ok(!status, "NtCreateMutant failed: %x\n", status);
+    test_object_name( handle, L"\\BaseNamedObjects\\test_mutant", FALSE );
+    test_object_type( handle, L"Mutant" );
+    test_no_file_info( handle );
+    pNtClose(handle);
+
+    RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_sem" );
+    status = pNtCreateSemaphore( &handle, SEMAPHORE_ALL_ACCESS, &attr, 1, 2 );
+    ok(!status, "NtCreateSemaphore failed: %x\n", status);
+    test_object_name( handle, L"\\BaseNamedObjects\\test_sem", FALSE );
+    test_object_type( handle, L"Semaphore" );
+    test_no_file_info( handle );
+    pNtClose(handle);
+
+    RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_keyed" );
+    status = pNtCreateKeyedEvent( &handle, KEYEDEVENT_ALL_ACCESS, &attr, 0 );
+    ok(!status, "NtCreateKeyedEvent failed: %x\n", status);
+    test_object_name( handle, L"\\BaseNamedObjects\\test_keyed", FALSE );
+    test_object_type( handle, L"KeyedEvent" );
+    test_no_file_info( handle );
+    pNtClose(handle);
+
+    RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_compl" );
+    status = pNtCreateIoCompletion( &handle, IO_COMPLETION_ALL_ACCESS, &attr, 0 );
+    ok(!status, "NtCreateIoCompletion failed: %x\n", status);
+    test_object_name( handle, L"\\BaseNamedObjects\\test_compl", FALSE );
+    test_object_type( handle, L"IoCompletion" );
+    test_no_file_info( handle );
+    pNtClose(handle);
+
+    RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_job" );
+    status = pNtCreateJobObject( &handle, JOB_OBJECT_ALL_ACCESS, &attr );
+    ok(!status, "NtCreateJobObject failed: %x\n", status);
+    test_object_name( handle, L"\\BaseNamedObjects\\test_job", FALSE );
+    test_object_type( handle, L"Job" );
+    test_no_file_info( handle );
+    pNtClose(handle);
+
+    RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_timer" );
+    status = pNtCreateTimer( &handle, TIMER_ALL_ACCESS, &attr, NotificationTimer );
+    ok(!status, "NtCreateTimer failed: %x\n", status);
+    test_object_type( handle, L"Timer" );
+    test_no_file_info( handle );
+    pNtClose(handle);
+
+    RtlInitUnicodeString( &path, L"\\DosDevices\\test_link" );
+    RtlInitUnicodeString( &target, L"\\DosDevices" );
+    status = pNtCreateSymbolicLinkObject( &handle, SYMBOLIC_LINK_ALL_ACCESS, &attr, &target );
+    ok(!status, "NtCreateSymbolicLinkObject failed: %x\n", status);
+    test_object_type( handle, L"SymbolicLink" );
+    test_no_file_info( handle );
+    pNtClose(handle);
+
+    handle = GetProcessWindowStation();
+    swprintf( expect, ARRAY_SIZE(expect), L"\\Sessions\\%u\\Windows\\WindowStations\\WinSta0", NtCurrentTeb()->Peb->SessionId );
+    test_object_name( handle, expect, FALSE );
+    test_object_type( handle, L"WindowStation" );
+    test_no_file_info( handle );
+
+    handle = GetThreadDesktop( GetCurrentThreadId() );
+    test_object_name( handle, L"\\Default", FALSE );
+    test_object_type( handle, L"Desktop" );
+    test_no_file_info( handle );
 
     status = pNtCreateDirectoryObject( &handle, DIRECTORY_QUERY, NULL );
     ok(status == STATUS_SUCCESS, "Failed to create Directory %08x\n", status);
@@ -1568,6 +1634,13 @@ static void test_query_object(void)
     test_no_file_info( handle );
 
     pNtClose(handle);
+
+    handle = CreateFileA( "nul", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError() );
+    test_object_name( handle, L"\\Device\\Null", TRUE );
+    test_object_type( handle, L"File" );
+    test_file_info( handle );
+    pNtClose( handle );
 }
 
 static void test_type_mismatch(void)
