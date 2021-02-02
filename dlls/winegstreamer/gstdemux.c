@@ -53,6 +53,8 @@ struct wg_parser
     GstPad *my_src, *their_sink;
 
     guint64 file_size, start_offset, next_offset, stop_offset;
+
+    pthread_t push_thread;
 };
 
 struct parser
@@ -81,8 +83,6 @@ struct parser
     pthread_mutex_t mutex;
     pthread_cond_t init_cond;
     bool no_more_pads, has_duration, error;
-
-    pthread_t push_thread;
 
     HANDLE read_thread;
     pthread_cond_t read_cond, read_done_cond;
@@ -635,7 +635,7 @@ static gboolean gst_base_src_perform_seek(struct parser *This, GstEvent *event)
     gboolean flush;
     guint32 seqnum;
     GstEvent *tevent;
-    BOOL thread = !!This->push_thread;
+    BOOL thread = !!parser->push_thread;
 
     gst_event_parse_seek(event, &rate, &seek_format, &flags,
                          &cur_type, &cur, &stop_type, &stop);
@@ -1436,19 +1436,19 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
     struct wg_parser *parser = This->wg_parser;
 
     if (!activate) {
-        if (This->push_thread) {
-            pthread_join(This->push_thread, NULL);
-            This->push_thread = 0;
+        if (parser->push_thread) {
+            pthread_join(parser->push_thread, NULL);
+            parser->push_thread = 0;
         }
         if (This->filter.state == State_Stopped)
             parser->next_offset = parser->start_offset;
-    } else if (!This->push_thread) {
+    } else if (!parser->push_thread) {
         int ret;
 
-        if ((ret = pthread_create(&This->push_thread, NULL, push_data, This)))
+        if ((ret = pthread_create(&parser->push_thread, NULL, push_data, This)))
         {
             GST_ERROR("Failed to create push thread: %s", strerror(errno));
-            This->push_thread = 0;
+            parser->push_thread = 0;
             return FALSE;
         }
     }
