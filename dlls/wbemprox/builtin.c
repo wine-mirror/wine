@@ -3514,13 +3514,13 @@ static enum fill_status fill_operatingsystem( struct table *table, const struct 
 {
     struct record_operatingsystem *rec;
     enum fill_status status = FILL_STATUS_UNFILTERED;
-    OSVERSIONINFOEXW ver;
+    RTL_OSVERSIONINFOEXW ver;
     UINT row = 0;
 
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     ver.dwOSVersionInfoSize = sizeof(ver);
-    GetVersionExW( (OSVERSIONINFOW *)&ver );
+    RtlGetVersion( &ver );
 
     rec = (struct record_operatingsystem *)table->data;
     rec->buildnumber            = get_osbuildnumber( &ver );
