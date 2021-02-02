@@ -2021,7 +2021,7 @@ static HRESULT WINAPI classfactory_LockServer(IClassFactory *iface, BOOL dolock)
     return S_OK;
 }
 
-static const struct IClassFactoryVtbl class_factory_vtbl =
+static const IClassFactoryVtbl class_factory_vtbl =
 {
     classfactory_QueryInterface,
     classfactory_AddRef,
