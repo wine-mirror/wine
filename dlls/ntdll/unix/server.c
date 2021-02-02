@@ -1535,6 +1535,9 @@ size_t server_init_process(void)
         req->unix_tid    = get_unix_tid();
         req->teb         = wine_server_client_ptr( NtCurrentTeb() );
         req->peb         = wine_server_client_ptr( NtCurrentTeb()->Peb );
+#ifdef __i386__
+        req->ldt_copy    = wine_server_client_ptr( &__wine_ldt_copy );
+#endif
         req->reply_fd    = reply_pipe;
         req->wait_fd     = ntdll_get_thread_data()->wait_fd[1];
         req->debug_level = (TRACE_ON(server) != 0);
@@ -1611,9 +1614,6 @@ void server_init_process_done(void)
     SERVER_START_REQ( init_process_done )
     {
         req->module   = wine_server_client_ptr( peb->ImageBaseAddress );
-#ifdef __i386__
-        req->ldt_copy = wine_server_client_ptr( &__wine_ldt_copy );
-#endif
         req->entry    = wine_server_client_ptr( entry );
         req->gui      = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
         status = wine_server_call( req );

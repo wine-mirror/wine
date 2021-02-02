@@ -1369,7 +1369,6 @@ DECL_HANDLER(init_process_done)
     list_remove( &dll->entry );
     list_add_head( &process->dlls, &dll->entry );
 
-    process->ldt_copy = req->ldt_copy;
     process->start_time = current_time;
     current->entry_point = req->entry;
 

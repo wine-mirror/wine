@@ -881,7 +881,6 @@ struct init_process_done_request
     struct request_header __header;
     int          gui;
     mod_handle_t module;
-    client_ptr_t ldt_copy;
     client_ptr_t entry;
 };
 struct init_process_done_reply
@@ -901,10 +900,11 @@ struct init_first_thread_request
     int          debug_level;
     client_ptr_t teb;
     client_ptr_t peb;
+    client_ptr_t ldt_copy;
     int          reply_fd;
     int          wait_fd;
     client_cpu_t cpu;
-    char __pad_52[4];
+    char __pad_60[4];
 };
 struct init_first_thread_reply
 {
@@ -6229,7 +6229,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 663
+#define SERVER_PROTOCOL_VERSION 664
 
 /* ### protocol_version end ### */
 

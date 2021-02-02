@@ -1434,6 +1434,7 @@ DECL_HANDLER(init_first_thread)
     current->unix_tid = req->unix_tid;
     current->teb      = req->teb;
     process->peb      = req->peb;
+    process->ldt_copy = req->ldt_copy;
     process->cpu      = req->cpu;
 
     if (!process->parent_id)
