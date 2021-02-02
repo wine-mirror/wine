@@ -2450,9 +2450,10 @@ static HRESULT topology_loader_connect_d3d_aware_input(struct topoloader_context
     unsigned int upstream_output;
     IMFStreamSink *stream_sink;
     IMFTransform *copier = NULL;
-    HRESULT hr = S_OK;
+    HRESULT hr;
 
-    topology_node_get_object(node, &IID_IMFStreamSink, (void **)&stream_sink);
+    if (FAILED(hr = topology_node_get_object(node, &IID_IMFStreamSink, (void **)&stream_sink)))
+        return hr;
 
     if (topology_loader_is_node_d3d_aware(node))
     {
@@ -2480,6 +2481,7 @@ static void topology_loader_resolve_complete(struct topoloader_context *context)
     MF_TOPOLOGY_TYPE node_type;
     IMFTopologyNode *node;
     WORD i, node_count;
+    HRESULT hr;
 
     IMFTopology_GetNodeCount(context->output_topology, &node_count);
 
@@ -2495,7 +2497,8 @@ static void topology_loader_resolve_complete(struct topoloader_context *context)
                 if (FAILED(IMFTopologyNode_GetItem(node, &MF_TOPONODE_STREAMID, NULL)))
                     IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_STREAMID, 0);
 
-                topology_loader_connect_d3d_aware_input(context, node);
+                if (FAILED(hr = topology_loader_connect_d3d_aware_input(context, node)))
+                    WARN("Failed to connect D3D-aware input, hr %#x.\n", hr);
             }
             else if (node_type == MF_TOPOLOGY_SOURCESTREAM_NODE)
             {
