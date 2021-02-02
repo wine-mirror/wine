@@ -58,6 +58,16 @@ struct wg_parser
 
     pthread_cond_t init_cond;
     bool no_more_pads, has_duration, error;
+
+    pthread_cond_t read_cond, read_done_cond;
+    struct
+    {
+        GstBuffer *buffer;
+        uint64_t offset;
+        uint32_t size;
+        bool done;
+        GstFlowReturn ret;
+    } read_request;
 };
 
 struct parser
@@ -86,15 +96,6 @@ struct parser
     pthread_mutex_t mutex;
 
     HANDLE read_thread;
-    pthread_cond_t read_cond, read_done_cond;
-    struct
-    {
-        GstBuffer *buffer;
-        uint64_t offset;
-        uint32_t size;
-        bool done;
-        GstFlowReturn ret;
-    } read_request;
 
     BOOL (*init_gst)(struct parser *filter);
     HRESULT (*source_query_accept)(struct parser_source *pin, const AM_MEDIA_TYPE *mt);
@@ -1108,6 +1109,7 @@ static DWORD CALLBACK stream_thread(void *arg)
 static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 offset, guint size, GstBuffer **buffer)
 {
     struct parser *filter = gst_pad_get_element_private(pad);
+    struct wg_parser *parser = filter->wg_parser;
     GstBuffer *new_buffer = NULL;
     GstFlowReturn ret;
 
@@ -1118,21 +1120,21 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
 
     pthread_mutex_lock(&filter->mutex);
 
-    assert(!filter->read_request.buffer);
-    filter->read_request.buffer = *buffer;
-    filter->read_request.offset = offset;
-    filter->read_request.size = size;
-    filter->read_request.done = false;
-    pthread_cond_signal(&filter->read_cond);
+    assert(!parser->read_request.buffer);
+    parser->read_request.buffer = *buffer;
+    parser->read_request.offset = offset;
+    parser->read_request.size = size;
+    parser->read_request.done = false;
+    pthread_cond_signal(&parser->read_cond);
 
     /* Note that we don't unblock this wait on GST_EVENT_FLUSH_START. We expect
      * the upstream pin to flush if necessary. We should never be blocked on
      * read_thread() not running. */
 
-    while (!filter->read_request.done)
-        pthread_cond_wait(&filter->read_done_cond, &filter->mutex);
+    while (!parser->read_request.done)
+        pthread_cond_wait(&parser->read_done_cond, &filter->mutex);
 
-    ret = filter->read_request.ret;
+    ret = parser->read_request.ret;
 
     pthread_mutex_unlock(&filter->mutex);
 
@@ -1177,6 +1179,7 @@ static GstFlowReturn read_buffer(struct parser *This, guint64 ofs, guint len, Gs
 static DWORD CALLBACK read_thread(void *arg)
 {
     struct parser *filter = arg;
+    struct wg_parser *parser = filter->wg_parser;
 
     TRACE("Starting read thread for filter %p.\n", filter);
 
@@ -1184,17 +1187,17 @@ static DWORD CALLBACK read_thread(void *arg)
 
     for (;;)
     {
-        while (filter->sink_connected && !filter->read_request.buffer)
-            pthread_cond_wait(&filter->read_cond, &filter->mutex);
+        while (filter->sink_connected && !parser->read_request.buffer)
+            pthread_cond_wait(&parser->read_cond, &filter->mutex);
 
         if (!filter->sink_connected)
             break;
 
-        filter->read_request.done = true;
-        filter->read_request.ret = read_buffer(filter, filter->read_request.offset,
-                filter->read_request.size, filter->read_request.buffer);
-        filter->read_request.buffer = NULL;
-        pthread_cond_signal(&filter->read_done_cond);
+        parser->read_request.done = true;
+        parser->read_request.ret = read_buffer(filter, parser->read_request.offset,
+                parser->read_request.size, parser->read_request.buffer);
+        parser->read_request.buffer = NULL;
+        pthread_cond_signal(&parser->read_done_cond);
     }
 
     pthread_mutex_unlock(&filter->mutex);
@@ -1671,6 +1674,8 @@ static void wg_parser_destroy(struct wg_parser *parser)
     }
 
     pthread_cond_destroy(&parser->init_cond);
+    pthread_cond_destroy(&parser->read_cond);
+    pthread_cond_destroy(&parser->read_done_cond);
 
     free(parser);
 }
@@ -1695,8 +1700,6 @@ static void parser_destroy(struct strmbase_filter *iface)
 
     wg_parser_destroy(filter->wg_parser);
 
-    pthread_cond_destroy(&filter->read_cond);
-    pthread_cond_destroy(&filter->read_done_cond);
     pthread_mutex_destroy(&filter->mutex);
 
     strmbase_sink_cleanup(&filter->sink);
@@ -1994,8 +1997,6 @@ static BOOL parser_init_gstreamer(void)
 static void parser_init_common(struct parser *object)
 {
     pthread_mutex_init(&object->mutex, NULL);
-    pthread_cond_init(&object->read_cond, NULL);
-    pthread_cond_init(&object->read_done_cond, NULL);
     object->flushing = true;
 }
 
@@ -2007,6 +2008,8 @@ static struct wg_parser *wg_parser_create(void)
         return NULL;
 
     pthread_cond_init(&parser->init_cond, NULL);
+    pthread_cond_init(&parser->read_cond, NULL);
+    pthread_cond_init(&parser->read_done_cond, NULL);
 
     TRACE("Created winegstreamer parser %p.\n", parser);
     return parser;
@@ -2537,7 +2540,7 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     pthread_mutex_lock(&This->mutex);
     This->sink_connected = false;
     pthread_mutex_unlock(&This->mutex);
-    pthread_cond_signal(&This->read_cond);
+    pthread_cond_signal(&parser->read_cond);
     WaitForSingleObject(This->read_thread, INFINITE);
     CloseHandle(This->read_thread);
 
