@@ -336,7 +336,6 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set )
             && !SetupDiOpenDeviceInfoW( set, device_instance_id, NULL, 0, &sp_device ))
     {
         ERR("Failed to create or open device %s, error %#x.\n", debugstr_w(device_instance_id), GetLastError());
-        SetupDiDestroyDeviceInfoList( set );
         return;
     }
 
@@ -353,10 +352,7 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set )
     }
 
     if (need_driver && !install_device_driver( device, set, &sp_device ))
-    {
-        SetupDiDestroyDeviceInfoList( set );
         return;
-    }
 
     start_device( device, set, &sp_device );
 }
