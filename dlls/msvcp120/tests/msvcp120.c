@@ -216,6 +216,7 @@ static void (CDECL *p__Do_call)(void *this);
 static short (__cdecl *p__Dtest)(double *d);
 static short (__cdecl *p__Dscale)(double *d, int exp);
 static short (__cdecl *p__FExp)(float *x, float y, int exp);
+static const char* (__cdecl *p__Syserror_map)(int err);
 
 /* filesystem */
 static ULONGLONG(__cdecl *p_tr2_sys__File_size)(char const*);
@@ -575,6 +576,8 @@ static BOOL init(void)
                 "?_Internal_reserve@_Concurrent_vector_base_v4@details@Concurrency@@IEAAX_K00@Z");
         SET(p_vector_base_v4__Internal_resize,
                 "?_Internal_resize@_Concurrent_vector_base_v4@details@Concurrency@@IEAAX_K00P6AXPEAX0@ZP6AX1PEBX0@Z3@Z");
+        SET(p__Syserror_map,
+                "?_Syserror_map@std@@YAPEBDH@Z");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
@@ -648,6 +651,8 @@ static BOOL init(void)
                 "?_Mtx_unlock@threads@stdext@@YAXPAX@Z");
         SET(p_vector_base_v4__Segment_index_of,
                 "?_Segment_index_of@_Concurrent_vector_base_v4@details@Concurrency@@KAII@Z");
+        SET(p__Syserror_map,
+                "?_Syserror_map@std@@YAPBDH@Z");
 #ifdef __i386__
         SET(p_i386_Thrd_current,
                 "_Thrd_current");
@@ -1168,6 +1173,14 @@ static void test__FExp(void)
     ret = p__FExp(&d, 1, -50);
     ok(compare_float(d, 1.0839359e+024, 4), "d = %g\n", d);
     ok(ret == FP_NORMAL, "ret = %x\n", ret);
+}
+
+static void test__Syserror_map(void)
+{
+    const char *r;
+
+    r = p__Syserror_map(0);
+    ok(!r, "_Syserror_map(0) returned %p\n", r);
 }
 
 static void test_tr2_sys__File_size(void)
@@ -3306,6 +3319,7 @@ START_TEST(msvcp120)
     test__Dtest();
     test__Dscale();
     test__FExp();
+    test__Syserror_map();
 
     test_tr2_sys__File_size();
     test_tr2_sys__Equivalent();

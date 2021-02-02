@@ -2864,7 +2864,11 @@ const char* __cdecl _Syserror_map(int err)
         if(syserror_map[i].err == err)
             return syserror_map[i].str;
     }
+#if _MSVCP_VER >= 140
+    return "unknown error";
+#else
     return NULL;
+#endif
 }
 #endif
 
