@@ -1,5 +1,6 @@
 /*
  * Copyright 2017 Vincent Povirk for CodeWeavers
+ * Copyright 2020 Rémi Bernon for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,24 +19,121 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
 #include "rpcproxy.h"
 
+#include "wincodecs_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
-static HINSTANCE WMPHOTO_hInstance;
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+HRESULT create_instance(const CLSID *clsid, const IID *iid, void **ppv)
 {
-    switch (fdwReason)
+    return CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, iid, ppv);
+}
+
+HRESULT get_decoder_info(REFCLSID clsid, IWICBitmapDecoderInfo **info)
+{
+    IWICImagingFactory* factory;
+    IWICComponentInfo *compinfo;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IWICImagingFactory, (void **)&factory);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IWICImagingFactory_CreateComponentInfo(factory, clsid, &compinfo);
+    if (FAILED(hr))
+    {
+        IWICImagingFactory_Release(factory);
+        return hr;
+    }
+
+    hr = IWICComponentInfo_QueryInterface(compinfo, &IID_IWICBitmapDecoderInfo,
+        (void **)info);
+
+    IWICComponentInfo_Release(compinfo);
+    IWICImagingFactory_Release(factory);
+    return hr;
+}
+
+struct class_factory
+{
+    IClassFactory IClassFactory_iface;
+};
+
+static HRESULT WINAPI wmp_class_factory_QueryInterface(IClassFactory *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IClassFactory))
+    {
+        *out = iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    *out = NULL;
+    FIXME("%s not implemented.\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI wmp_class_factory_AddRef(IClassFactory *iface) { return 2; }
+
+static ULONG WINAPI wmp_class_factory_Release(IClassFactory *iface) { return 1; }
+
+static HRESULT WINAPI wmp_class_factory_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID iid, void **out)
+{
+    struct decoder_info decoder_info;
+    struct decoder *decoder;
+    HRESULT hr;
+
+    TRACE("iface %p, outer %p, iid %s, out %p.\n", iface, outer, debugstr_guid(iid), out);
+
+    *out = NULL;
+    if (outer) return CLASS_E_NOAGGREGATION;
+
+    hr = get_unix_decoder(&CLSID_WICWmpDecoder, &decoder_info, &decoder);
+
+    if (SUCCEEDED(hr))
+        hr = CommonDecoder_CreateInstance(decoder, &decoder_info, iid, out);
+
+    return hr;
+}
+
+static HRESULT WINAPI wmp_class_factory_LockServer(IClassFactory *iface, BOOL lock)
+{
+    FIXME("iface %p, lock %d, stub!\n", iface, lock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl wmp_class_factory_vtbl =
+{
+    wmp_class_factory_QueryInterface,
+    wmp_class_factory_AddRef,
+    wmp_class_factory_Release,
+    wmp_class_factory_CreateInstance,
+    wmp_class_factory_LockServer,
+};
+
+static struct class_factory wmp_class_factory = {{&wmp_class_factory_vtbl}};
+
+HMODULE windowscodecs_module = 0;
+
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
+{
+    TRACE("instance %p, reason %d, reserved %p\n", instance, reason, reserved);
+
+    switch (reason)
     {
     case DLL_PROCESS_ATTACH:
-        WMPHOTO_hInstance = hinstDLL;
-        DisableThreadLibraryCalls(hinstDLL);
+        windowscodecs_module = instance;
+        DisableThreadLibraryCalls(instance);
         break;
     case DLL_WINE_PREATTACH:
         return FALSE; /* prefer native version */
@@ -49,18 +147,28 @@ HRESULT WINAPI DllCanUnloadNow(void)
     return S_FALSE;
 }
 
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *out)
 {
-    FIXME("wmphoto: stub\n");
-    return E_NOTIMPL;
+    struct class_factory *factory;
+
+    TRACE("clsid %s, iid %s, out %p.\n", debugstr_guid(clsid), debugstr_guid(iid), out);
+
+    if (IsEqualGUID(clsid, &CLSID_WICWmpDecoder)) factory = &wmp_class_factory;
+    else
+    {
+        FIXME("%s not implemented.\n", debugstr_guid(clsid));
+        return CLASS_E_CLASSNOTAVAILABLE;
+    }
+
+    return IClassFactory_QueryInterface(&factory->IClassFactory_iface, iid, out);
 }
 
 HRESULT WINAPI DllRegisterServer(void)
 {
-    return __wine_register_resources( WMPHOTO_hInstance );
+    return __wine_register_resources( windowscodecs_module );
 }
 
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return __wine_unregister_resources( WMPHOTO_hInstance );
+    return __wine_unregister_resources( windowscodecs_module );
 }

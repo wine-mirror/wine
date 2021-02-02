@@ -1,7 +1,15 @@
 MODULE = wmphoto.dll
+IMPORTS = windowscodecs uuid ole32 oleaut32 propsys rpcrt4 shlwapi
+PARENTSRC = ../windowscodecs
 
 EXTRADLLFLAGS = -mno-cygwin
+EXTRAINCL = $(JXRLIB_CFLAGS)
 
-C_SRCS = main.c
+C_SRCS = \
+	decoder.c \
+	main.c \
+	unix_iface.c \
+	unix_lib.c \
+	wincodecs_common.c
 
 IDL_SRCS = wmphoto.idl
