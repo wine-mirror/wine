@@ -693,14 +693,6 @@ static inline HRESULT flush_output_buffer(mxwriter *This)
     return write_data_to_stream(This);
 }
 
-/* Resets the mxwriter's output buffer by closing it, then creating a new
- * output buffer using the given encoding.
- */
-static inline void reset_output_buffer(mxwriter *This)
-{
-    close_output_buffer(This);
-}
-
 static HRESULT writer_set_property(mxwriter *writer, mxwriter_prop property, VARIANT_BOOL value)
 {
     writer->props[property] = value;
@@ -927,7 +919,7 @@ static HRESULT WINAPI mxwriter_put_output(IMXWriter *iface, VARIANT dest)
     {
         if (This->dest) IStream_Release(This->dest);
         This->dest = NULL;
-        reset_output_buffer(This);
+        close_output_buffer(This);
         break;
     }
     case VT_UNKNOWN:
@@ -938,7 +930,7 @@ static HRESULT WINAPI mxwriter_put_output(IMXWriter *iface, VARIANT dest)
         if (hr == S_OK)
         {
             /* Recreate the output buffer to make sure it's using the correct encoding. */
-            reset_output_buffer(This);
+            close_output_buffer(This);
 
             if (This->dest) IStream_Release(This->dest);
             This->dest = stream;
@@ -1028,7 +1020,7 @@ static HRESULT WINAPI mxwriter_put_encoding(IMXWriter *iface, BSTR encoding)
     This->xml_enc = enc;
 
     TRACE("got encoding %d\n", This->xml_enc);
-    reset_output_buffer(This);
+    close_output_buffer(This);
     return S_OK;
 }
 
@@ -1229,7 +1221,7 @@ static HRESULT WINAPI SAXContentHandler_startDocument(ISAXContentHandler *iface)
      * be how Windows works.
      */
     if (This->prop_changed) {
-        reset_output_buffer(This);
+        close_output_buffer(This);
         This->prop_changed = FALSE;
     }
 
