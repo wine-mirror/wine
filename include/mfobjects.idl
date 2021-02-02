@@ -169,6 +169,34 @@ interface IMF2DBuffer2 : IMF2DBuffer
 
 [
     object,
+    uuid(e7174cfa-1c9e-48b1-8866-626226bfc258),
+    local
+]
+interface IMFDXGIBuffer : IUnknown
+{
+    HRESULT GetResource(
+        [in] REFIID riid,
+        [out] void **object
+    );
+
+    HRESULT GetSubresourceIndex(
+        [out] UINT *index
+    );
+
+    HRESULT GetUnknown(
+        [in] REFIID guid,
+        [in] REFIID riid,
+        [out] void **object
+    );
+
+    HRESULT SetUnknown(
+        [in] REFIID guid,
+        [in] IUnknown *data
+    );
+}
+
+[
+    object,
     uuid(44ae0fa8-ea31-4109-8d2e-4cae4997c555),
     local
 ]
