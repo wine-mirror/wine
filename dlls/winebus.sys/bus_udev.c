@@ -141,6 +141,11 @@ static const BYTE ABS_TO_HID_MAP[][2] = {
     {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_WHEEL},          /*ABS_WHEEL*/
     {HID_USAGE_PAGE_SIMULATION, HID_USAGE_SIMULATION_ACCELERATOR}, /*ABS_GAS*/
     {HID_USAGE_PAGE_SIMULATION, HID_USAGE_SIMULATION_BRAKE},    /*ABS_BRAKE*/
+    {0,0},
+    {0,0},
+    {0,0},
+    {0,0},
+    {0,0},
     {0,0},                                                      /*ABS_HAT0X*/
     {0,0},                                                      /*ABS_HAT0Y*/
     {0,0},                                                      /*ABS_HAT1X*/
@@ -160,6 +165,7 @@ static const BYTE ABS_TO_HID_MAP[][2] = {
     {HID_USAGE_PAGE_CONSUMER, HID_USAGE_CONSUMER_VOLUME}        /*ABS_VOLUME*/
 };
 #define HID_ABS_MAX (ABS_VOLUME+1)
+C_ASSERT(ARRAY_SIZE(ABS_TO_HID_MAP) == HID_ABS_MAX);
 #define TOP_ABS_PAGE (HID_USAGE_PAGE_DIGITIZER+1)
 
 static const BYTE REL_TO_HID_MAP[][2] = {
