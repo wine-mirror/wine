@@ -121,9 +121,17 @@ HRESULT write_source(IWICBitmapFrameEncode *iface,
 
     if (need_palette)
     {
+        IWICImagingFactory *factory;
         IWICPalette *palette;
 
-        hr = PaletteImpl_Create(&palette);
+        hr = create_instance(&CLSID_WICImagingFactory, &IID_IWICImagingFactory, (void**)&factory);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICImagingFactory_CreatePalette(factory, &palette);
+            IWICImagingFactory_Release(factory);
+        }
+
         if (SUCCEEDED(hr))
         {
             hr = IWICBitmapSource_CopyPalette(converted_source, palette);
