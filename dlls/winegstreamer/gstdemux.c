@@ -69,7 +69,7 @@ struct wg_parser
         GstFlowReturn ret;
     } read_request;
 
-    bool flushing;
+    bool flushing, sink_connected;
 };
 
 struct parser
@@ -1188,12 +1188,12 @@ static DWORD CALLBACK read_thread(void *arg)
 
     pthread_mutex_lock(&filter->mutex);
 
-    for (;;)
+    while (filter->sink_connected)
     {
-        while (filter->sink_connected && !parser->read_request.buffer)
+        while (parser->sink_connected && !parser->read_request.buffer)
             pthread_cond_wait(&parser->read_cond, &filter->mutex);
 
-        if (!filter->sink_connected)
+        if (!parser->sink_connected)
             break;
 
         parser->read_request.done = true;
@@ -1593,6 +1593,7 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
     parser->file_size = This->file_size;
 
     This->sink_connected = true;
+    parser->sink_connected = true;
 
     This->read_thread = CreateThread(NULL, 0, read_thread, This, 0, NULL);
 
@@ -2541,8 +2542,9 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
 
     /* read_thread() needs to stay alive to service any read requests GStreamer
      * sends, so we can only shut it down after GStreamer stops. */
-    pthread_mutex_lock(&This->mutex);
     This->sink_connected = false;
+    pthread_mutex_lock(&This->mutex);
+    parser->sink_connected = false;
     pthread_mutex_unlock(&This->mutex);
     pthread_cond_signal(&parser->read_cond);
     WaitForSingleObject(This->read_thread, INFINITE);
