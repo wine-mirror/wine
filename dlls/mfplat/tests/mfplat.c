@@ -6219,6 +6219,9 @@ static void test_sample_allocator(void)
     IMFVideoSampleAllocator *allocator;
     IMFDXGIDeviceManager *manager;
     IMFSample *sample, *sample2;
+    IMFDXGIBuffer *dxgi_buffer;
+    D3D11_TEXTURE2D_DESC desc;
+    ID3D11Texture2D *texture;
     IMFMediaBuffer *buffer;
     ID3D11Device *device;
     LONG refcount, count;
@@ -6402,6 +6405,29 @@ static void test_sample_allocator(void)
     check_interface(buffer, &IID_IMF2DBuffer2, TRUE);
     check_interface(buffer, &IID_IMFDXGIBuffer, TRUE);
     check_interface(buffer, &IID_IMFGetService, FALSE);
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **)&dxgi_buffer);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+
+    hr = IMFDXGIBuffer_GetResource(dxgi_buffer, &IID_ID3D11Texture2D, (void **)&texture);
+    ok(hr == S_OK, "Failed to get resource, hr %#x.\n", hr);
+
+    ID3D11Texture2D_GetDesc(texture, &desc);
+    ok(desc.Width == 320, "Unexpected width %u.\n", desc.Width);
+    ok(desc.Height == 240, "Unexpected height %u.\n", desc.Height);
+    ok(desc.MipLevels == 1, "Unexpected miplevels %u.\n", desc.MipLevels);
+    ok(desc.ArraySize == 1, "Unexpected array size %u.\n", desc.ArraySize);
+    ok(desc.Format == DXGI_FORMAT_B8G8R8X8_UNORM, "Unexpected format %u.\n", desc.Format);
+    ok(desc.SampleDesc.Count == 1, "Unexpected sample count %u.\n", desc.SampleDesc.Count);
+    ok(desc.SampleDesc.Quality == 0, "Unexpected sample quality %u.\n", desc.SampleDesc.Quality);
+    ok(desc.Usage == D3D11_USAGE_DEFAULT, "Unexpected usage %u.\n", desc.Usage);
+    ok(desc.BindFlags == (D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET), "Unexpected bind flags %#x.\n",
+            desc.BindFlags);
+    ok(desc.CPUAccessFlags == 0, "Unexpected CPU access flags %#x.\n", desc.CPUAccessFlags);
+    ok(desc.MiscFlags == 0, "Unexpected misc flags %#x.\n", desc.MiscFlags);
+
+    ID3D11Texture2D_Release(texture);
+    IMFDXGIBuffer_Release(dxgi_buffer);
 
     hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
