@@ -63,12 +63,14 @@ __lc_time_data cloc_time_data =
     MAKELCID(LANG_ENGLISH, SORT_DEFAULT),
 #endif
     1, 0,
+#if _MSVCR_VER == 0 || _MSVCR_VER >= 100
     {{L"Sun", L"Mon", L"Tue", L"Wed", L"Thu", L"Fri", L"Sat",
       L"Sunday", L"Monday", L"Tuesday", L"Wednesday", L"Thursday", L"Friday", L"Saturday",
       L"Jan", L"Feb", L"Mar", L"Apr", L"May", L"Jun", L"Jul", L"Aug", L"Sep", L"Oct", L"Nov", L"Dec",
       L"January", L"February", L"March", L"April", L"May", L"June", L"July",
       L"August", L"September", L"October", L"November", L"December",
       L"AM", L"PM", L"MM/dd/yy", L"dddd, MMMM dd, yyyy", L"HH:mm:ss"}},
+#endif
 #if _MSVCR_VER >= 110
     L"en-US",
 #endif
@@ -1184,10 +1186,12 @@ static __lc_time_data* create_time_data(LCID lcid)
             return NULL;
         size += ret;
 
+#if _MSVCR_VER == 0 || _MSVCR_VER >= 100
         ret = GetLocaleInfoW(lcid, time_data[i], NULL, 0);
         if(!ret)
             return NULL;
         size += ret*sizeof(wchar_t);
+#endif
     }
 #if _MSVCR_VER >= 110
     size += LCIDToLocaleName(lcid, NULL, 0, 0)*sizeof(wchar_t);
@@ -1202,11 +1206,13 @@ static __lc_time_data* create_time_data(LCID lcid)
         cur->str.str[i] = &cur->data[ret];
         ret += GetLocaleInfoA(lcid, time_data[i], &cur->data[ret], size-ret);
     }
+#if _MSVCR_VER == 0 || _MSVCR_VER >= 100
     for(i=0; i<ARRAY_SIZE(time_data); i++) {
         cur->wstr.wstr[i] = (wchar_t*)&cur->data[ret];
         ret += GetLocaleInfoW(lcid, time_data[i],
                 (wchar_t*)&cur->data[ret], size-ret)*sizeof(wchar_t);
     }
+#endif
 #if _MSVCR_VER >= 110
     cur->locname = (wchar_t*)&cur->data[ret];
     LCIDToLocaleName(lcid, (wchar_t*)&cur->data[ret], (size-ret)/sizeof(wchar_t), 0);
