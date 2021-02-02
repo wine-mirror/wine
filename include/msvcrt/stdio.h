@@ -218,19 +218,19 @@ static inline int __cdecl vsprintf(char *buffer, const char *format, __ms_va_lis
     return ret < 0 ? -1 : ret;
 }
 
-static inline int __cdecl vsprintf_s(char *buffer, const char *format, __ms_va_list args)
+static inline int __cdecl vsprintf_s(char *buffer, size_t size, const char *format, __ms_va_list args)
 {
-    int ret = __stdio_common_vsprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, -1, format, NULL, args);
+    int ret = __stdio_common_vsprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, format, NULL, args);
     return ret < 0 ? -1 : ret;
 }
 
-static inline int WINAPIV sprintf_s(char *buffer, size_t size, size_t count, const char *format, ...)
+static inline int WINAPIV sprintf_s(char *buffer, size_t size, const char *format, ...)
 {
     int ret;
     __ms_va_list args;
 
     __ms_va_start(args, format);
-    ret = __stdio_common_vsprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, -1, format, NULL, args);
+    ret = __stdio_common_vsprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, format, NULL, args);
     __ms_va_end(args);
     return ret;
 }
