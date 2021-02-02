@@ -196,6 +196,7 @@ static int (__cdecl *p_To_wide)(const char *src, WCHAR *dst);
 static int (__cdecl *p_Unlink)(WCHAR const*);
 static ULONG (__cdecl *p__Winerror_message)(ULONG, char*, ULONG);
 static int (__cdecl *p__Winerror_map)(int);
+static const char* (__cdecl *p__Syserror_map)(int err);
 
 static BOOLEAN (WINAPI *pCreateSymbolicLinkW)(const WCHAR *, const WCHAR *, DWORD);
 
@@ -234,6 +235,7 @@ static BOOL init(void)
         SET(p__Reschedule_chore, "?_Reschedule_chore@details@Concurrency@@YAHPEBU_Threadpool_chore@12@@Z");
         SET(p__Release_chore, "?_Release_chore@details@Concurrency@@YAXPEAU_Threadpool_chore@12@@Z");
         SET(p__Winerror_message, "?_Winerror_message@std@@YAKKPEADK@Z");
+        SET(p__Syserror_map, "?_Syserror_map@std@@YAPEBDH@Z");
     } else {
 #ifdef __arm__
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAA@XZ");
@@ -264,6 +266,7 @@ static BOOL init(void)
         SET(p__Reschedule_chore, "?_Reschedule_chore@details@Concurrency@@YAHPBU_Threadpool_chore@12@@Z");
         SET(p__Release_chore, "?_Release_chore@details@Concurrency@@YAXPAU_Threadpool_chore@12@@Z");
         SET(p__Winerror_message, "?_Winerror_message@std@@YAKKPADK@Z");
+        SET(p__Syserror_map, "?_Syserror_map@std@@YAPBDH@Z");
     }
 
     SET(p_Close_dir, "_Close_dir");
@@ -1314,6 +1317,17 @@ static void test__Winerror_map(void)
     }
 }
 
+static void test__Syserror_map(void)
+{
+    const char *r1, *r2;
+
+    r1 = p__Syserror_map(0);
+    ok(r1 != NULL, "_Syserror_map(0) returned NULL\n");
+    r2 = p__Syserror_map(1234);
+    ok(r2 != NULL, "_Syserror_map(1234) returned NULL\n");
+    ok(r1 == r2, "r1 = %p(%s), r2 = %p(%s)\n", r1, r1, r2, r2);
+}
+
 static void test_Equivalent(void)
 {
     int val, i;
@@ -1391,6 +1405,7 @@ START_TEST(msvcp140)
     test_Last_write_time();
     test__Winerror_message();
     test__Winerror_map();
+    test__Syserror_map();
     test_Equivalent();
     FreeLibrary(msvcp);
 }
