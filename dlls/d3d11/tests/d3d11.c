@@ -6597,6 +6597,8 @@ static void test_state_refcounting(const D3D_FEATURE_LEVEL feature_level)
 
 static void test_device_context_state(void)
 {
+    static const GUID test_guid =
+            {0xfdb37466, 0x428f, 0x4edf, {0xa3, 0x7f, 0x9b, 0x1d, 0xf4, 0x88, 0xc5, 0xfc}};
 #if 0
     float4 main(float4 pos : POSITION) : POSITION
     {
@@ -6781,7 +6783,9 @@ static void test_device_context_state(void)
     ID3D11Device1 *device, *device2;
     struct vec4 constant;
     ID3D11Buffer *cb, *srvb, *uavb, *tmp_cb;
+    DWORD data_size;
     ULONG refcount;
+    char data[64];
     HRESULT hr;
 
     if (!(d3d11_device = create_device(NULL)))
@@ -6935,6 +6939,19 @@ static void test_device_context_state(void)
     ok(previous_context_state != NULL, "Failed to get previous context state\n");
     refcount = get_refcount(vs);
     todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+
+    hr = ID3DDeviceContextState_SetPrivateData(context_state, &test_guid, sizeof(constant), &constant);
+    ok(hr == S_OK, "Failed to set private data, hr %#x.\n", hr);
+    refcount = ID3DDeviceContextState_Release(context_state);
+    ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
+    ID3D11DeviceContext1_SwapDeviceContextState(context, previous_context_state, &context_state);
+    data_size = sizeof(data);
+    memset(data, 0xa5, sizeof(data));
+    hr = ID3DDeviceContextState_GetPrivateData(context_state, &test_guid, &data_size, data);
+    todo_wine ok(hr == S_OK, "Failed to get private data, hr %#x.\n", hr);
+    todo_wine ok(data_size == sizeof(constant), "Got private data size %x, expected %x.\n", data_size, sizeof(constant));
+    todo_wine ok(!memcmp(data, &constant, sizeof(constant)), "Got unexpected private data.\n");
+    ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, NULL);
 
     context_type = ID3D11DeviceContext1_GetType(context);
     ok(context_type == D3D11_DEVICE_CONTEXT_IMMEDIATE, "Unexpected context type %u.\n", context_type);
