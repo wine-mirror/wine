@@ -6599,6 +6599,10 @@ static void test_device_context_state(void)
 {
     static const GUID test_guid =
             {0xfdb37466, 0x428f, 0x4edf, {0xa3, 0x7f, 0x9b, 0x1d, 0xf4, 0x88, 0xc5, 0xfc}};
+    static const D3D11_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
 #if 0
     float4 main(float4 pos : POSITION) : POSITION
     {
@@ -6764,6 +6768,8 @@ static void test_device_context_state(void)
     };
 
     ID3DDeviceContextState *context_state, *previous_context_state, *tmp_context_state, *context_state2;
+    ID3D11Buffer *cb, *srvb, *uavb, *ib, *vb, *tmp_cb, *tmp_ib, *tmp_vb;
+    UINT ib_offset, vb_offset, vb_stride, offset, stride;
     ID3D11SamplerState *sampler, *tmp_sampler;
     D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
@@ -6771,6 +6777,7 @@ static void test_device_context_state(void)
     ID3D11ShaderResourceView *tmp_srv, *srv;
     D3D11_DEVICE_CONTEXT_TYPE context_type;
     ID3D11DeviceContext1 *context = NULL, *context2;
+    enum D3D_PRIMITIVE_TOPOLOGY topo;
     D3D11_SAMPLER_DESC sampler_desc;
     D3D_FEATURE_LEVEL feature_level;
     ID3D11GeometryShader *tmp_gs, *gs;
@@ -6781,8 +6788,9 @@ static void test_device_context_state(void)
     ID3D11HullShader *tmp_hs, *hs;
     ID3D11Device *d3d11_device, *d3d11_device2;
     ID3D11Device1 *device, *device2;
+    ID3D11InputLayout *il, *tmp_il;
+    enum DXGI_FORMAT format;
     struct vec4 constant;
-    ID3D11Buffer *cb, *srvb, *uavb, *tmp_cb;
     DWORD data_size;
     ULONG refcount;
     char data[64];
@@ -6849,6 +6857,8 @@ static void test_device_context_state(void)
     cb = create_buffer((ID3D11Device *)device, D3D11_BIND_CONSTANT_BUFFER, sizeof(constant), NULL);
     srvb = create_buffer((ID3D11Device *)device, D3D11_BIND_SHADER_RESOURCE, 1024, NULL);
     uavb = create_buffer((ID3D11Device *)device, D3D11_BIND_UNORDERED_ACCESS, 1024, NULL);
+    ib = create_buffer((ID3D11Device *)device, D3D11_BIND_INDEX_BUFFER, 1024, NULL);
+    vb = create_buffer((ID3D11Device *)device, D3D11_BIND_VERTEX_BUFFER, 1024, NULL);
 
     hr = ID3D11Device1_CreateVertexShader(device, simple_vs, sizeof(simple_vs), NULL, &vs);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
@@ -6897,6 +6907,14 @@ static void test_device_context_state(void)
     ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
     ID3D11Buffer_Release(uavb);
 
+    hr = ID3D11Device1_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+            simple_vs, sizeof(simple_vs), &il);
+    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+
+    ib_offset = 16;
+    vb_offset = 16;
+    vb_stride = 16;
+
     ID3D11DeviceContext1_VSSetConstantBuffers(context, 0, 1, &cb);
     ID3D11DeviceContext1_VSSetSamplers(context, 0, 1, &sampler);
     ID3D11DeviceContext1_VSSetShader(context, vs, NULL, 0);
@@ -6929,6 +6947,11 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_CSSetShader(context, cs, NULL, 0);
     ID3D11DeviceContext1_CSSetShaderResources(context, 0, 1, &srv);
     ID3D11DeviceContext1_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
+
+    ID3D11DeviceContext1_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    ID3D11DeviceContext1_IASetInputLayout(context, il);
+    ID3D11DeviceContext1_IASetIndexBuffer(context, ib, DXGI_FORMAT_R32_UINT, ib_offset);
+    ID3D11DeviceContext1_IASetVertexBuffers(context, 0, 1, &vb, &vb_stride, &vb_offset);
 
     previous_context_state = (ID3DDeviceContextState *)0xdeadbeef;
     ID3D11DeviceContext1_SwapDeviceContextState(context, NULL, &previous_context_state);
@@ -7049,6 +7072,30 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_CSGetUnorderedAccessViews(context, 0, 1, &tmp_uav);
     todo_wine ok(!tmp_uav, "Got unexpected uav %p.\n", tmp_uav);
     if (tmp_uav) ID3D11UnorderedAccessView_Release(tmp_uav);
+
+    topo = 0xdeadbeef;
+    ID3D11DeviceContext1_IAGetPrimitiveTopology(context, &topo);
+    todo_wine ok(topo == D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED, "Got unexpected topology %#x.\n", topo);
+    tmp_il = (ID3D11InputLayout *)0xdeadbeef;
+    ID3D11DeviceContext1_IAGetInputLayout(context, &tmp_il);
+    todo_wine ok(!tmp_il, "Got unexpected input layout %p.\n", tmp_il);
+    if (tmp_il) ID3D11InputLayout_Release(tmp_il);
+    tmp_ib = (ID3D11Buffer *)0xdeadbeef;
+    format = 0xdeadbeef;
+    offset = 0xdeadbeef;
+    ID3D11DeviceContext1_IAGetIndexBuffer(context, &tmp_ib, &format, &offset);
+    todo_wine ok(!tmp_ib, "Got unexpected input buffer %p.\n", tmp_ib);
+    if (tmp_ib) ID3D11Buffer_Release(tmp_ib);
+    todo_wine ok(format == DXGI_FORMAT_UNKNOWN, "Got unexpected input buffer format %#x.\n", format);
+    todo_wine ok(offset == 0, "Got unexpected input buffer offset %#x.\n", offset);
+    tmp_vb = (ID3D11Buffer *)0xdeadbeef;
+    stride = 0xdeadbeef;
+    offset = 0xdeadbeef;
+    ID3D11DeviceContext1_IAGetVertexBuffers(context, 0, 1, &tmp_vb, &stride, &offset);
+    todo_wine ok(!tmp_vb, "Got unexpected vertex buffer %p.\n", tmp_vb);
+    if (tmp_vb) ID3D11Buffer_Release(tmp_vb);
+    todo_wine ok(stride == 0, "Got unexpected vertex buffer stride %#x.\n", stride);
+    todo_wine ok(offset == 0, "Got unexpected vertex buffer offset %#x.\n", offset);
 
     /* updating the device context should also update the device context state */
     hr = ID3D11Device1_CreateVertexShader(device, simple_vs, sizeof(simple_vs), NULL, &vs2);
@@ -7256,6 +7303,30 @@ static void test_device_context_state(void)
     ok(tmp_srv == srv, "Got srv %p, expected %p.\n", tmp_srv, srv);
     ID3D11ShaderResourceView_Release(tmp_srv);
 
+    topo = 0xdeadbeef;
+    ID3D11DeviceContext1_IAGetPrimitiveTopology(context, &topo);
+    ok(topo == D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, "Got topology %#x, expected %#x.\n", topo, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    tmp_il = (ID3D11InputLayout *)0xdeadbeef;
+    ID3D11DeviceContext1_IAGetInputLayout(context, &tmp_il);
+    ok(tmp_il == il, "Got input layout %p, expected %p.\n", tmp_il, il);
+    ID3D11InputLayout_Release(tmp_il);
+    tmp_ib = (ID3D11Buffer *)0xdeadbeef;
+    format = 0xdeadbeef;
+    offset = 0xdeadbeef;
+    ID3D11DeviceContext1_IAGetIndexBuffer(context, &tmp_ib, &format, &offset);
+    ok(tmp_ib == ib, "Got input buffer %p, expected %p.\n", tmp_ib, ib);
+    ID3D11Buffer_Release(tmp_ib);
+    ok(format == DXGI_FORMAT_R32_UINT, "Got input buffer format %#x, expected %#x.\n", format, DXGI_FORMAT_R32_UINT);
+    ok(offset == 16, "Got input buffer offset %#x, expected 16.\n", offset);
+    tmp_vb = (ID3D11Buffer *)0xdeadbeef;
+    stride = 0xdeadbeef;
+    offset = 0xdeadbeef;
+    ID3D11DeviceContext1_IAGetVertexBuffers(context, 0, 1, &tmp_vb, &stride, &offset);
+    ok(tmp_vb == vb, "Got vertex buffer %p, expected %p.\n", tmp_vb, vb);
+    ID3D11Buffer_Release(tmp_vb);
+    ok(stride == 16, "Got vertex buffer stride %#x, expected 16.\n", stride);
+    ok(offset == 16, "Got vertex buffer offset %#x, expected 16.\n", offset);
+
     feature_level = min(feature_level, D3D_FEATURE_LEVEL_10_1);
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1, D3D11_SDK_VERSION,
             &IID_ID3D10Device, NULL, &context_state);
@@ -7413,6 +7484,35 @@ static void test_device_context_state(void)
     todo_wine ok(!tmp_uav, "Got unexpected uav %p.\n", tmp_uav);
     if (tmp_uav && tmp_uav != (ID3D11UnorderedAccessView *)0xdeadbeef) ID3D11UnorderedAccessView_Release(tmp_uav);
 
+    ID3D11DeviceContext1_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    ID3D11DeviceContext1_IASetInputLayout(context, il);
+    ID3D11DeviceContext1_IASetIndexBuffer(context, ib, DXGI_FORMAT_R32_UINT, ib_offset);
+    ID3D11DeviceContext1_IASetVertexBuffers(context, 0, 1, &vb, &vb_stride, &vb_offset);
+
+    topo = 0xdeadbeef;
+    ID3D11DeviceContext1_IAGetPrimitiveTopology(context, &topo);
+    todo_wine ok(topo == D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED, "Got unexpected topology %#x.\n", topo);
+    tmp_il = (ID3D11InputLayout *)0xdeadbeef;
+    ID3D11DeviceContext1_IAGetInputLayout(context, &tmp_il);
+    todo_wine ok(!tmp_il, "Got unexpected input layout %p.\n", tmp_il);
+    if (tmp_il) ID3D11InputLayout_Release(tmp_il);
+    tmp_ib = (ID3D11Buffer *)0xdeadbeef;
+    format = 0xdeadbeef;
+    offset = 0xdeadbeef;
+    ID3D11DeviceContext1_IAGetIndexBuffer(context, &tmp_ib, &format, &offset);
+    todo_wine ok(!tmp_ib, "Got unexpected input buffer %p.\n", tmp_ib);
+    if (tmp_ib) ID3D11Buffer_Release(tmp_ib);
+    todo_wine ok(format == DXGI_FORMAT_UNKNOWN, "Got unexpected input buffer format %#x.\n", format);
+    todo_wine ok(offset == 0, "Got unexpected input buffer offset %#x.\n", offset);
+    tmp_vb = (ID3D11Buffer *)0xdeadbeef;
+    stride = 0xdeadbeef;
+    offset = 0xdeadbeef;
+    ID3D11DeviceContext1_IAGetVertexBuffers(context, 0, 1, &tmp_vb, &stride, &offset);
+    todo_wine ok(!tmp_vb, "Got unexpected vertex buffer %p.\n", tmp_vb);
+    if (tmp_vb) ID3D11Buffer_Release(tmp_vb);
+    todo_wine ok(stride == 0, "Got unexpected vertex buffer stride %#x.\n", stride);
+    todo_wine ok(offset == 0, "Got unexpected vertex buffer offset %#x.\n", offset);
+
     check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
     check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
 
@@ -7531,9 +7631,36 @@ static void test_device_context_state(void)
     ok(tmp_uav == uav, "Got uav %p, expected %p.\n", tmp_uav, uav);
     ID3D11UnorderedAccessView_Release(tmp_uav);
 
+    topo = 0xdeadbeef;
+    ID3D11DeviceContext1_IAGetPrimitiveTopology(context, &topo);
+    ok(topo == D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP, "Got topology %#x, expected %#x.\n", topo, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    tmp_il = (ID3D11InputLayout *)0xdeadbeef;
+    ID3D11DeviceContext1_IAGetInputLayout(context, &tmp_il);
+    ok(tmp_il == il, "Got input layout %p, expected %p.\n", tmp_il, il);
+    ID3D11InputLayout_Release(tmp_il);
+    tmp_ib = (ID3D11Buffer *)0xdeadbeef;
+    format = 0xdeadbeef;
+    offset = 0xdeadbeef;
+    ID3D11DeviceContext1_IAGetIndexBuffer(context, &tmp_ib, &format, &offset);
+    ok(tmp_ib == ib, "Got input buffer %p, expected %p.\n", tmp_ib, ib);
+    ID3D11Buffer_Release(tmp_ib);
+    ok(format == DXGI_FORMAT_R32_UINT, "Got input buffer format %#x, expected %#x.\n", format, DXGI_FORMAT_R32_UINT);
+    ok(offset == 16, "Got input buffer offset %#x, expected 16.\n", offset);
+    tmp_vb = (ID3D11Buffer *)0xdeadbeef;
+    stride = 0xdeadbeef;
+    offset = 0xdeadbeef;
+    ID3D11DeviceContext1_IAGetVertexBuffers(context, 0, 1, &tmp_vb, &stride, &offset);
+    ok(tmp_vb == vb, "Got vertex buffer %p, expected %p.\n", tmp_vb, vb);
+    ID3D11Buffer_Release(tmp_vb);
+    ok(stride == 16, "Got vertex buffer stride %#x, expected 16.\n", stride);
+    ok(offset == 16, "Got vertex buffer offset %#x, expected 16.\n", offset);
+
     check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
     check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
 
+    ID3D11InputLayout_Release(il);
+    ID3D11Buffer_Release(ib);
+    ID3D11Buffer_Release(vb);
     if (cs) ID3D11ComputeShader_Release(cs);
     if (ds) ID3D11DomainShader_Release(ds);
     if (hs) ID3D11HullShader_Release(hs);
