@@ -6777,8 +6777,8 @@ static void test_device_context_state(void)
     };
 
     ID3DDeviceContextState *context_state, *previous_context_state, *tmp_context_state, *context_state2;
-    UINT ib_offset, vb_offset, vb_stride, offset, stride, sample_mask, stencil_ref, count;
-    ID3D11Buffer *cb, *srvb, *uavb, *ib, *vb, *tmp_cb, *tmp_ib, *tmp_vb;
+    UINT ib_offset, vb_offset, vb_stride, so_offset, offset, stride, sample_mask, stencil_ref, count;
+    ID3D11Buffer *cb, *srvb, *uavb, *ib, *vb, *sob, *tmp_cb, *tmp_ib, *tmp_vb, *tmp_sob;
     ID3D11UnorderedAccessView *tmp_uav, *uav, *ps_uav;
     ID3D11Device *d3d11_device, *d3d11_device2;
     ID3D11SamplerState *sampler, *tmp_sampler;
@@ -6882,6 +6882,7 @@ static void test_device_context_state(void)
     uavb = create_buffer((ID3D11Device *)device, D3D11_BIND_UNORDERED_ACCESS, 1024, NULL);
     ib = create_buffer((ID3D11Device *)device, D3D11_BIND_INDEX_BUFFER, 1024, NULL);
     vb = create_buffer((ID3D11Device *)device, D3D11_BIND_VERTEX_BUFFER, 1024, NULL);
+    sob = create_buffer((ID3D11Device *)device, D3D11_BIND_STREAM_OUTPUT, 1024, NULL);
 
     hr = ID3D11Device1_CreateVertexShader(device, simple_vs, sizeof(simple_vs), NULL, &vs);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
@@ -6942,6 +6943,7 @@ static void test_device_context_state(void)
     ib_offset = 16;
     vb_offset = 16;
     vb_stride = 16;
+    so_offset = 16;
 
     texture_desc.Width = 512;
     texture_desc.Height = 512;
@@ -7063,6 +7065,8 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_RSSetScissorRects(context, 1, &rect);
     ID3D11DeviceContext1_RSSetViewports(context, 1, &vp);
     ID3D11DeviceContext1_RSSetState(context, rs);
+
+    ID3D11DeviceContext1_SOSetTargets(context, 1, &sob, &so_offset);
 
     previous_context_state = (ID3DDeviceContextState *)0xdeadbeef;
     ID3D11DeviceContext1_SwapDeviceContextState(context, NULL, &previous_context_state);
@@ -7247,6 +7251,11 @@ static void test_device_context_state(void)
     count = 2;
     ID3D11DeviceContext1_RSGetScissorRects(context, &count, tmp_rect);
     todo_wine ok(count == 0, "Got unexpected scissor rect count %u.\n", count);
+
+    tmp_sob = (ID3D11Buffer *)0xdeadbeef;
+    ID3D11DeviceContext1_SOGetTargets(context, 1, &tmp_sob);
+    todo_wine ok(!tmp_sob, "Got unexpected stream output buffer %p.\n", tmp_sob);
+    if (tmp_sob) ID3D11Buffer_Release(tmp_sob);
 
     /* updating the device context should also update the device context state */
     hr = ID3D11Device1_CreateVertexShader(device, simple_vs, sizeof(simple_vs), NULL, &vs2);
@@ -7523,6 +7532,11 @@ static void test_device_context_state(void)
     ok(!memcmp(tmp_rect, &rect, sizeof(rect)), "Got scissor rect %s, expected %s.\n",
             wine_dbgstr_rect(tmp_rect), wine_dbgstr_rect(&rect));
 
+    tmp_sob = (ID3D11Buffer *)0xdeadbeef;
+    ID3D11DeviceContext1_SOGetTargets(context, 1, &tmp_sob);
+    ok(tmp_sob == sob, "Got stream output buffer %p, expected %p.\n", tmp_sob, sob);
+    ID3D11Buffer_Release(tmp_sob);
+
     feature_level = min(feature_level, D3D_FEATURE_LEVEL_10_1);
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1, D3D11_SDK_VERSION,
             &IID_ID3D10Device, NULL, &context_state);
@@ -7744,6 +7758,8 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_RSSetViewports(context, 1, &vp);
     ID3D11DeviceContext1_RSSetState(context, rs);
 
+    ID3D11DeviceContext1_SOSetTargets(context, 1, &sob, &so_offset);
+
     tmp_rs = (ID3D11RasterizerState *)0xdeadbeef;
     ID3D11DeviceContext1_RSGetState(context, &tmp_rs);
     todo_wine ok(!tmp_rs, "Got unexpected rasterizer state %p.\n", tmp_rs);
@@ -7756,6 +7772,11 @@ static void test_device_context_state(void)
     count = 2;
     ID3D11DeviceContext1_RSGetScissorRects(context, &count, tmp_rect);
     todo_wine ok(count == 0, "Got unexpected scissor rect count %u.\n", count);
+
+    tmp_sob = (ID3D11Buffer *)0xdeadbeef;
+    ID3D11DeviceContext1_SOGetTargets(context, 1, &tmp_sob);
+    todo_wine ok(!tmp_sob, "Got unexpected stream output buffer %p.\n", tmp_sob);
+    if (tmp_sob) ID3D11Buffer_Release(tmp_sob);
 
     check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
     check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
@@ -7944,9 +7965,15 @@ static void test_device_context_state(void)
     ok(!memcmp(tmp_rect, &rect, sizeof(rect)), "Got scissor rect %s, expected %s.\n",
             wine_dbgstr_rect(tmp_rect), wine_dbgstr_rect(&rect));
 
+    tmp_sob = (ID3D11Buffer *)0xdeadbeef;
+    ID3D11DeviceContext1_SOGetTargets(context, 1, &tmp_sob);
+    ok(tmp_sob == sob, "Got stream output buffer %p, expected %p.\n", tmp_sob, sob);
+    ID3D11Buffer_Release(tmp_sob);
+
     check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
     check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
 
+    ID3D11Buffer_Release(sob);
     ID3D11RasterizerState_Release(rs);
     ID3D11BlendState_Release(bs);
     ID3D11DepthStencilState_Release(dss);
