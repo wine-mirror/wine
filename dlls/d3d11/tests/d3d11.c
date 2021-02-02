@@ -6603,6 +6603,8 @@ static void test_device_context_state(void)
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
+    static const float custom_blend_factor[] = {0.1f, 0.2f, 0.3f, 0.4f};
+    static const float default_blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 #if 0
     float4 main(float4 pos : POSITION) : POSITION
     {
@@ -6768,28 +6770,37 @@ static void test_device_context_state(void)
     };
 
     ID3DDeviceContextState *context_state, *previous_context_state, *tmp_context_state, *context_state2;
+    UINT ib_offset, vb_offset, vb_stride, offset, stride, sample_mask, stencil_ref;
     ID3D11Buffer *cb, *srvb, *uavb, *ib, *vb, *tmp_cb, *tmp_ib, *tmp_vb;
-    UINT ib_offset, vb_offset, vb_stride, offset, stride;
+    ID3D11UnorderedAccessView *tmp_uav, *uav, *ps_uav;
+    ID3D11Device *d3d11_device, *d3d11_device2;
     ID3D11SamplerState *sampler, *tmp_sampler;
     D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
-    ID3D11UnorderedAccessView *tmp_uav, *uav;
+    ID3D11DeviceContext1 *context, *context2;
     ID3D11ShaderResourceView *tmp_srv, *srv;
     D3D11_DEVICE_CONTEXT_TYPE context_type;
-    ID3D11DeviceContext1 *context = NULL, *context2;
+    ID3D11DepthStencilState *tmp_dss, *dss;
+    ID3D11RenderTargetView *tmp_rtv, *rtv;
+    ID3D11DepthStencilView *tmp_dsv, *dsv;
+    ID3D11VertexShader *tmp_vs, *vs, *vs2;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11GeometryShader *tmp_gs, *gs;
     enum D3D_PRIMITIVE_TOPOLOGY topo;
+    ID3D11ComputeShader *tmp_cs, *cs;
+    D3D11_DEPTH_STENCIL_DESC ds_desc;
+    ID3D11DomainShader *tmp_ds, *ds;
     D3D11_SAMPLER_DESC sampler_desc;
     D3D_FEATURE_LEVEL feature_level;
-    ID3D11GeometryShader *tmp_gs, *gs;
-    ID3D11ComputeShader *tmp_cs, *cs;
-    ID3D11DomainShader *tmp_ds, *ds;
-    ID3D11VertexShader *tmp_vs, *vs, *vs2;
-    ID3D11PixelShader *tmp_ps, *ps;
-    ID3D11HullShader *tmp_hs, *hs;
-    ID3D11Device *d3d11_device, *d3d11_device2;
     ID3D11Device1 *device, *device2;
     ID3D11InputLayout *il, *tmp_il;
+    ID3D11PixelShader *tmp_ps, *ps;
+    ID3D11BlendState *tmp_bs, *bs;
+    ID3D11HullShader *tmp_hs, *hs;
+    D3D11_BLEND_DESC blend_desc;
+    ID3D11Texture2D *texture;
     enum DXGI_FORMAT format;
+    float blend_factor[4];
     struct vec4 constant;
     DWORD data_size;
     ULONG refcount;
@@ -6814,6 +6825,7 @@ static void test_device_context_state(void)
     check_interface(device, &IID_ID3D10Device1, FALSE, FALSE);
 
     feature_level = ID3D11Device1_GetFeatureLevel(device);
+    context = NULL;
     ID3D11Device1_GetImmediateContext1(device, &context);
     ok(!!context, "Failed to get immediate context.\n");
 
@@ -6907,6 +6919,11 @@ static void test_device_context_state(void)
     ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
     ID3D11Buffer_Release(uavb);
 
+    uavb = create_buffer((ID3D11Device *)device, D3D11_BIND_UNORDERED_ACCESS, 1024, NULL);
+    hr = ID3D11Device1_CreateUnorderedAccessView(device, (ID3D11Resource *)uavb, &uav_desc, &ps_uav);
+    ok(hr == S_OK, "Failed to create unordered access view, hr %#x.\n", hr);
+    ID3D11Buffer_Release(uavb);
+
     hr = ID3D11Device1_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             simple_vs, sizeof(simple_vs), &il);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
@@ -6914,6 +6931,60 @@ static void test_device_context_state(void)
     ib_offset = 16;
     vb_offset = 16;
     vb_stride = 16;
+
+    texture_desc.Width = 512;
+    texture_desc.Height = 512;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D11Device1_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device1_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
+    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+    ID3D11Texture2D_Release(texture);
+
+    texture_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    hr = ID3D11Device1_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device1_CreateDepthStencilView(device, (ID3D11Resource *)texture, NULL, &dsv);
+    ok(SUCCEEDED(hr), "Failed to create depth/stencil view, hr %#x.\n", hr);
+    ID3D11Texture2D_Release(texture);
+
+    memset(&blend_desc, 0, sizeof(blend_desc));
+    blend_desc.RenderTarget[0].BlendEnable = TRUE;
+    blend_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+    blend_desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+    blend_desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+    blend_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
+    blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+    blend_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+    hr = ID3D11Device1_CreateBlendState(device, &blend_desc, &bs);
+    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+
+    ds_desc.DepthEnable = TRUE;
+    ds_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    ds_desc.DepthFunc = D3D11_COMPARISON_LESS;
+    ds_desc.StencilEnable = FALSE;
+    ds_desc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
+    ds_desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
+    ds_desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+    ds_desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+    ds_desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+    ds_desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+    ds_desc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+    ds_desc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+    ds_desc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+    ds_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+    hr = ID3D11Device1_CreateDepthStencilState(device, &ds_desc, &dss);
+    ok(SUCCEEDED(hr), "Failed to create depthstencil state, hr %#x.\n", hr);
 
     ID3D11DeviceContext1_VSSetConstantBuffers(context, 0, 1, &cb);
     ID3D11DeviceContext1_VSSetSamplers(context, 0, 1, &sampler);
@@ -6952,6 +7023,10 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_IASetInputLayout(context, il);
     ID3D11DeviceContext1_IASetIndexBuffer(context, ib, DXGI_FORMAT_R32_UINT, ib_offset);
     ID3D11DeviceContext1_IASetVertexBuffers(context, 0, 1, &vb, &vb_stride, &vb_offset);
+
+    ID3D11DeviceContext1_OMSetBlendState(context, bs, custom_blend_factor, 0xff00ff00);
+    ID3D11DeviceContext1_OMSetDepthStencilState(context, dss, 3);
+    ID3D11DeviceContext1_OMSetRenderTargetsAndUnorderedAccessViews(context, 1, &rtv, dsv, 1, 1, &ps_uav, NULL);
 
     previous_context_state = (ID3DDeviceContextState *)0xdeadbeef;
     ID3D11DeviceContext1_SwapDeviceContextState(context, NULL, &previous_context_state);
@@ -7096,6 +7171,33 @@ static void test_device_context_state(void)
     if (tmp_vb) ID3D11Buffer_Release(tmp_vb);
     todo_wine ok(stride == 0, "Got unexpected vertex buffer stride %#x.\n", stride);
     todo_wine ok(offset == 0, "Got unexpected vertex buffer offset %#x.\n", offset);
+
+    tmp_rtv = (ID3D11RenderTargetView *)0xdeadbeef;
+    tmp_dsv = (ID3D11DepthStencilView *)0xdeadbeef;
+    tmp_uav = (ID3D11UnorderedAccessView *)0xdeadbeef;
+    ID3D11DeviceContext1_OMGetRenderTargetsAndUnorderedAccessViews(context, 1, &tmp_rtv, &tmp_dsv, 1, 1, &tmp_uav);
+    todo_wine ok(!tmp_rtv, "Got unexpected rendertarget view %p.\n", tmp_rtv);
+    if (tmp_rtv) ID3D11RenderTargetView_Release(tmp_rtv);
+    todo_wine ok(!tmp_dsv, "Got unexpected depth/stencil view %p.\n", tmp_dsv);
+    if (tmp_dsv) ID3D11DepthStencilView_Release(tmp_dsv);
+    todo_wine ok(!tmp_uav, "Got unexpected unordered access view %p.\n", tmp_uav);
+    if (tmp_uav) ID3D11UnorderedAccessView_Release(tmp_uav);
+    tmp_bs = (ID3D11BlendState *)0xdeadbeef;
+    memset(blend_factor, 0xcd, sizeof(blend_factor));
+    sample_mask = 0xdeadbeef;
+    ID3D11DeviceContext1_OMGetBlendState(context, &tmp_bs, blend_factor, &sample_mask);
+    todo_wine ok(!tmp_bs, "Got unexpected blend state %p.\n", tmp_bs);
+    if (tmp_bs) ID3D11BlendState_Release(tmp_bs);
+    todo_wine ok(!memcmp(blend_factor, default_blend_factor, sizeof(blend_factor)),
+            "Got unexpected blend factor %f,%f,%f,%f.\n",
+            blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3]);
+    todo_wine ok(sample_mask == ~0, "Got unexpected sample mask %#x.\n", sample_mask);
+    tmp_dss = (ID3D11DepthStencilState *)0xdeadbeef;
+    stencil_ref = 0xdeadbeef;
+    ID3D11DeviceContext1_OMGetDepthStencilState(context, &tmp_dss, &stencil_ref);
+    todo_wine ok(!tmp_dss, "Got unexpected depth/stencil state %p.\n", tmp_dss);
+    if (tmp_dss) ID3D11DepthStencilState_Release(tmp_dss);
+    todo_wine ok(stencil_ref == 0, "Got unexpected stencil ref %#x.\n", stencil_ref);
 
     /* updating the device context should also update the device context state */
     hr = ID3D11Device1_CreateVertexShader(device, simple_vs, sizeof(simple_vs), NULL, &vs2);
@@ -7327,6 +7429,34 @@ static void test_device_context_state(void)
     ok(stride == 16, "Got vertex buffer stride %#x, expected 16.\n", stride);
     ok(offset == 16, "Got vertex buffer offset %#x, expected 16.\n", offset);
 
+    tmp_rtv = (ID3D11RenderTargetView *)0xdeadbeef;
+    tmp_dsv = (ID3D11DepthStencilView *)0xdeadbeef;
+    tmp_uav = (ID3D11UnorderedAccessView *)0xdeadbeef;
+    ID3D11DeviceContext1_OMGetRenderTargetsAndUnorderedAccessViews(context, 1, &tmp_rtv, &tmp_dsv, 1, 1, &tmp_uav);
+    ok(tmp_rtv == rtv, "Got rendertarget view %p, expected %p.\n", tmp_rtv, rtv);
+    ID3D11RenderTargetView_Release(tmp_rtv);
+    ok(tmp_dsv == dsv, "Got depth/stencil view %p, expected %p.\n", tmp_dsv, dsv);
+    ID3D11DepthStencilView_Release(tmp_dsv);
+    ok(tmp_uav == ps_uav, "Got unordered access view %p, expected %p.\n", tmp_uav, ps_uav);
+    ID3D11UnorderedAccessView_Release(tmp_uav);
+    tmp_bs = (ID3D11BlendState *)0xdeadbeef;
+    memset(blend_factor, 0xcd, sizeof(blend_factor));
+    sample_mask = 0xdeadbeef;
+    ID3D11DeviceContext1_OMGetBlendState(context, &tmp_bs, blend_factor, &sample_mask);
+    ok(tmp_bs == bs, "Got blend state %p, expected %p.\n", tmp_bs, bs);
+    ID3D11BlendState_Release(tmp_bs);
+    ok(!memcmp(blend_factor, custom_blend_factor, sizeof(blend_factor)),
+            "Got blend factor %f,%f,%f,%f, expected %f,%f,%f,%f.\n",
+            blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3],
+            custom_blend_factor[0], custom_blend_factor[1], custom_blend_factor[2], custom_blend_factor[3]);
+    ok(sample_mask == 0xff00ff00, "Got sample mask %#x, expected %#x.\n", sample_mask, 0xff00ff00);
+    tmp_dss = (ID3D11DepthStencilState *)0xdeadbeef;
+    stencil_ref = 0xdeadbeef;
+    ID3D11DeviceContext1_OMGetDepthStencilState(context, &tmp_dss, &stencil_ref);
+    ok(tmp_dss == dss, "Got depth/stencil state %p, expected %p.\n", tmp_dss, dss);
+    ID3D11DepthStencilState_Release(tmp_dss);
+    ok(stencil_ref == 3, "Got stencil ref %#x, expected 3.\n", stencil_ref);
+
     feature_level = min(feature_level, D3D_FEATURE_LEVEL_10_1);
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1, D3D11_SDK_VERSION,
             &IID_ID3D10Device, NULL, &context_state);
@@ -7513,6 +7643,37 @@ static void test_device_context_state(void)
     todo_wine ok(stride == 0, "Got unexpected vertex buffer stride %#x.\n", stride);
     todo_wine ok(offset == 0, "Got unexpected vertex buffer offset %#x.\n", offset);
 
+    ID3D11DeviceContext1_OMSetBlendState(context, bs, custom_blend_factor, 0xff00ff00);
+    ID3D11DeviceContext1_OMSetDepthStencilState(context, dss, 3);
+    ID3D11DeviceContext1_OMSetRenderTargetsAndUnorderedAccessViews(context, 1, &rtv, dsv, 1, 1, &ps_uav, NULL);
+
+    tmp_rtv = (ID3D11RenderTargetView *)0xdeadbeef;
+    tmp_dsv = (ID3D11DepthStencilView *)0xdeadbeef;
+    tmp_uav = (ID3D11UnorderedAccessView *)0xdeadbeef;
+    ID3D11DeviceContext1_OMGetRenderTargetsAndUnorderedAccessViews(context, 1, &tmp_rtv, &tmp_dsv, 1, 1, &tmp_uav);
+    todo_wine ok(!tmp_rtv, "Got unexpected rendertarget view %p.\n", tmp_rtv);
+    if (tmp_rtv) ID3D11RenderTargetView_Release(tmp_rtv);
+    todo_wine ok(!tmp_dsv, "Got unexpected depth/stencil view %p.\n", tmp_dsv);
+    if (tmp_dsv) ID3D11DepthStencilView_Release(tmp_dsv);
+    todo_wine ok(!tmp_uav, "Got unexpected unordered access view %p.\n", tmp_uav);
+    if (tmp_uav) ID3D11UnorderedAccessView_Release(tmp_uav);
+    tmp_bs = (ID3D11BlendState *)0xdeadbeef;
+    memset(blend_factor, 0xcd, sizeof(blend_factor));
+    sample_mask = 0xdeadbeef;
+    ID3D11DeviceContext1_OMGetBlendState(context, &tmp_bs, blend_factor, &sample_mask);
+    todo_wine ok(!tmp_bs, "Got unexpected blend state %p.\n", tmp_bs);
+    if (tmp_bs) ID3D11BlendState_Release(tmp_bs);
+    todo_wine ok(!memcmp(blend_factor, default_blend_factor, sizeof(blend_factor)),
+            "Got unexpected blend factor %f,%f,%f,%f.\n",
+            blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3]);
+    todo_wine ok(sample_mask == ~0, "Got unexpected sample mask %#x.\n", sample_mask);
+    tmp_dss = (ID3D11DepthStencilState *)0xdeadbeef;
+    stencil_ref = 0xdeadbeef;
+    ID3D11DeviceContext1_OMGetDepthStencilState(context, &tmp_dss, &stencil_ref);
+    todo_wine ok(!tmp_dss, "Got unexpected depth/stencil state %p.\n", tmp_dss);
+    if (tmp_dss) ID3D11DepthStencilState_Release(tmp_dss);
+    todo_wine ok(stencil_ref == 0, "Got unexpected stencil ref %#x.\n", stencil_ref);
+
     check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
     check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
 
@@ -7655,9 +7816,42 @@ static void test_device_context_state(void)
     ok(stride == 16, "Got vertex buffer stride %#x, expected 16.\n", stride);
     ok(offset == 16, "Got vertex buffer offset %#x, expected 16.\n", offset);
 
+    tmp_rtv = (ID3D11RenderTargetView *)0xdeadbeef;
+    tmp_dsv = (ID3D11DepthStencilView *)0xdeadbeef;
+    tmp_uav = (ID3D11UnorderedAccessView *)0xdeadbeef;
+    ID3D11DeviceContext1_OMGetRenderTargetsAndUnorderedAccessViews(context, 1, &tmp_rtv, &tmp_dsv, 1, 1, &tmp_uav);
+    ok(tmp_rtv == rtv, "Got rendertarget view %p, expected %p.\n", tmp_rtv, rtv);
+    ID3D11RenderTargetView_Release(tmp_rtv);
+    ok(tmp_dsv == dsv, "Got depth/stencil view %p, expected %p.\n", tmp_dsv, dsv);
+    ID3D11DepthStencilView_Release(tmp_dsv);
+    ok(tmp_uav == ps_uav, "Got unordered access view %p, expected %p.\n", tmp_uav, ps_uav);
+    ID3D11UnorderedAccessView_Release(tmp_uav);
+    tmp_bs = (ID3D11BlendState *)0xdeadbeef;
+    memset(blend_factor, 0xcd, sizeof(blend_factor));
+    sample_mask = 0xdeadbeef;
+    ID3D11DeviceContext1_OMGetBlendState(context, &tmp_bs, blend_factor, &sample_mask);
+    ok(tmp_bs == bs, "Got blend state %p, expected %p.\n", tmp_bs, bs);
+    ID3D11BlendState_Release(tmp_bs);
+    ok(!memcmp(blend_factor, custom_blend_factor, sizeof(blend_factor)),
+            "Got blend factor %f,%f,%f,%f, expected %f,%f,%f,%f.\n",
+            blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3],
+            custom_blend_factor[0], custom_blend_factor[1], custom_blend_factor[2], custom_blend_factor[3]);
+    ok(sample_mask == 0xff00ff00, "Got sample mask %#x, expected %#x.\n", sample_mask, 0xff00ff00);
+    tmp_dss = (ID3D11DepthStencilState *)0xdeadbeef;
+    stencil_ref = 0xdeadbeef;
+    ID3D11DeviceContext1_OMGetDepthStencilState(context, &tmp_dss, &stencil_ref);
+    ok(tmp_dss == dss, "Got depth/stencil state %p, expected %p.\n", tmp_dss, dss);
+    ID3D11DepthStencilState_Release(tmp_dss);
+    ok(stencil_ref == 3, "Got stencil ref %#x, expected 3.\n", stencil_ref);
+
     check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
     check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
 
+    ID3D11BlendState_Release(bs);
+    ID3D11DepthStencilState_Release(dss);
+    ID3D11DepthStencilView_Release(dsv);
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11UnorderedAccessView_Release(ps_uav);
     ID3D11InputLayout_Release(il);
     ID3D11Buffer_Release(ib);
     ID3D11Buffer_Release(vb);
