@@ -538,7 +538,7 @@ HRESULT WINAPI MFGetAttributesAsBlobSize(IMFAttributes *attributes, UINT32 *size
 HRESULT WINAPI MFGetStrideForBitmapInfoHeader(DWORD format, DWORD width, LONG *stride);
 HRESULT WINAPI MFGetPlaneSize(DWORD format, DWORD width, DWORD height, DWORD *size);
 HRESULT WINAPI MFGetTimerPeriodicity(DWORD *periodicity);
-HRESULT WINAPI MFGetWorkQueueMMCSSClass(DWORD queue, WCHAR *class, DWORD *length);
+HRESULT WINAPI MFGetWorkQueueMMCSSClass(DWORD queue, WCHAR *mmcss_class, DWORD *length);
 HRESULT WINAPI MFGetWorkQueueMMCSSPriority(DWORD queue, LONG *priority);
 HRESULT WINAPI MFGetWorkQueueMMCSSTaskId(DWORD queue, DWORD *taskid);
 HRESULT WINAPI MFTEnum(GUID category, UINT32 flags, MFT_REGISTER_TYPE_INFO *input_type,
