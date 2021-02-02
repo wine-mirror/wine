@@ -138,19 +138,14 @@ static void fill_create_thread_event( struct debug_event *event, const void *arg
 
 static void fill_create_process_event( struct debug_event *event, const void *arg )
 {
-    struct thread *thread = event->sender;
-    struct process *process = thread->process;
-    struct process_dll *exe_module = get_process_exe_module( process );
-    const client_ptr_t *entry = arg;
+    const struct memory_view *view = arg;
+    const pe_image_info_t *image_info = get_view_image_info( view, &event->data.create_process.base );
 
-    event->data.create_process.base       = exe_module->base;
-    event->data.create_process.start      = *entry;
-    event->data.create_process.dbg_offset = exe_module->dbg_offset;
-    event->data.create_process.dbg_size   = exe_module->dbg_size;
-
+    event->data.create_process.start      = image_info->entry_point;
+    event->data.create_process.dbg_offset = image_info->dbg_offset;
+    event->data.create_process.dbg_size   = image_info->dbg_size;
     /* the doc says write access too, but this doesn't seem a good idea */
-    event->file = get_mapping_file( process, exe_module->base, GENERIC_READ,
-                                    FILE_SHARE_READ | FILE_SHARE_WRITE );
+    event->file = get_view_file( view, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE );
 }
 
 static void fill_exit_thread_event( struct debug_event *event, const void *arg )
@@ -169,13 +164,13 @@ static void fill_load_dll_event( struct debug_event *event, const void *arg )
 {
     struct process *process = event->sender->process;
     const struct process_dll *dll = arg;
+    struct memory_view *view = find_mapped_view( process, dll->base );
+    const pe_image_info_t *image_info = get_view_image_info( view, &event->data.load_dll.base );
 
-    event->data.load_dll.handle     = 0;
-    event->data.load_dll.base       = dll->base;
-    event->data.load_dll.dbg_offset = dll->dbg_offset;
-    event->data.load_dll.dbg_size   = dll->dbg_size;
+    event->data.load_dll.dbg_offset = image_info->dbg_offset;
+    event->data.load_dll.dbg_size   = image_info->dbg_size;
     event->data.load_dll.name       = dll->name;
-    event->file = get_mapping_file( process, dll->base, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE );
+    event->file = get_view_file( view, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE );
 }
 
 static void fill_unload_dll_event( struct debug_event *event, const void *arg )
@@ -498,7 +493,7 @@ static int debugger_attach( struct process *process, struct thread *debugger, st
     }
     process->debug_obj = debug_obj;
     process->debug_children = 0;
-    generate_startup_debug_events( process, 0 );
+    generate_startup_debug_events( process );
     resume_process( process );
     return 1;
 
@@ -537,12 +532,14 @@ void debugger_detach( struct process *process, struct debug_obj *debug_obj )
 }
 
 /* generate all startup events of a given process */
-void generate_startup_debug_events( struct process *process, client_ptr_t entry )
+void generate_startup_debug_events( struct process *process )
 {
     struct list *ptr;
+    struct memory_view *view = get_exe_view( process );
     struct thread *thread, *first_thread = get_process_first_thread( process );
 
-    generate_debug_event( first_thread, DbgCreateProcessStateChange, &entry );
+    if (!view) return;
+    generate_debug_event( first_thread, DbgCreateProcessStateChange, view );
     ptr = list_head( &process->dlls ); /* skip main module reported in create process event */
 
     /* generate ntdll.dll load event */

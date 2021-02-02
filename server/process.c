@@ -1375,7 +1375,7 @@ DECL_HANDLER(init_process_done)
     current->entry_point = req->entry;
 
     init_process_tracing( process );
-    generate_startup_debug_events( process, req->entry );
+    generate_startup_debug_events( process );
     set_process_startup_state( process, STARTUP_DONE );
 
     if (req->gui) process->idle_event = create_event( NULL, NULL, 0, 1, 0, NULL );
@@ -1432,9 +1432,10 @@ DECL_HANDLER(get_process_info)
         reply->debug_children   = process->debug_children;
         if (get_reply_max_size())
         {
+            client_ptr_t base;
             const pe_image_info_t *info;
-            struct process_dll *exe = get_process_exe_module( process );
-            if (exe && (info = get_mapping_image_info( process, exe->base )))
+            struct memory_view *view = get_exe_view( process );
+            if (view && (info = get_view_image_info( view, &base )))
                 set_reply_data( info, min( sizeof(*info), get_reply_max_size() ));
         }
         release_object( process );
@@ -1556,9 +1557,7 @@ DECL_HANDLER(load_dll)
 
     if ((dll = process_load_dll( current->process, req->base, get_req_data(), get_req_data_size() )))
     {
-        dll->dbg_offset = req->dbg_offset;
-        dll->dbg_size   = req->dbg_size;
-        dll->name       = req->name;
+        dll->name = req->name;
         /* only generate event if initialization is done */
         if (is_process_init_done( current->process ))
             generate_debug_event( current, DbgLoadDllStateChange, dll );

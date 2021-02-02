@@ -38,8 +38,6 @@ struct process_dll
     struct list          entry;           /* entry in per-process dll list */
     mod_handle_t         base;            /* dll base address (in process addr space) */
     client_ptr_t         name;            /* ptr to ptr to name (in process addr space) */
-    int                  dbg_offset;      /* debug info offset */
-    int                  dbg_size;        /* debug info size */
     data_size_t          namelen;         /* length of dll file name */
     WCHAR               *filename;        /* dll file name */
 };

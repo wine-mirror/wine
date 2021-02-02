@@ -1562,10 +1562,8 @@ static void dump_resume_thread_reply( const struct resume_thread_reply *req )
 
 static void dump_load_dll_request( const struct load_dll_request *req )
 {
-    fprintf( stderr, " dbg_offset=%u", req->dbg_offset );
-    dump_uint64( ", base=", &req->base );
+    dump_uint64( " base=", &req->base );
     dump_uint64( ", name=", &req->name );
-    fprintf( stderr, ", dbg_size=%u", req->dbg_size );
     dump_varargs_unicode_str( ", filename=", cur_size );
 }
 

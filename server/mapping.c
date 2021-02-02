@@ -305,7 +305,7 @@ static int create_temp_file( file_pos_t size )
 }
 
 /* find a memory view from its base address */
-static struct memory_view *find_mapped_view( struct process *process, client_ptr_t base )
+struct memory_view *find_mapped_view( struct process *process, client_ptr_t base )
 {
     struct memory_view *view;
 
@@ -314,6 +314,12 @@ static struct memory_view *find_mapped_view( struct process *process, client_ptr
 
     set_error( STATUS_NOT_MAPPED_VIEW );
     return NULL;
+}
+
+/* get the main exe memory view */
+struct memory_view *get_exe_view( struct process *process )
+{
+    return LIST_ENTRY( list_head( &process->views ), struct memory_view, entry );
 }
 
 /* add a view to the process list */
@@ -724,6 +730,8 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
 
     mapping->image.image_charact = nt.FileHeader.Characteristics;
     mapping->image.machine       = nt.FileHeader.Machine;
+    mapping->image.dbg_offset    = nt.FileHeader.PointerToSymbolTable;
+    mapping->image.dbg_size      = nt.FileHeader.NumberOfSymbols;
     mapping->image.zerobits      = 0; /* FIXME */
     mapping->image.file_size     = file_size;
     mapping->image.loader_flags  = clr_va && clr_size;
@@ -945,22 +953,18 @@ static struct mapping *get_mapping_obj( struct process *process, obj_handle_t ha
     return (struct mapping *)get_handle_obj( process, handle, access, &mapping_ops );
 }
 
-/* open a new file for the file descriptor backing the mapping */
-struct file *get_mapping_file( struct process *process, client_ptr_t base,
-                               unsigned int access, unsigned int sharing )
+/* open a new file for the file descriptor backing the view */
+struct file *get_view_file( const struct memory_view *view, unsigned int access, unsigned int sharing )
 {
-    struct memory_view *view = find_mapped_view( process, base );
-
-    if (!view || !view->fd) return NULL;
+    if (!view->fd) return NULL;
     return create_file_for_fd_obj( view->fd, access, sharing );
 }
 
-/* get the image info for a SEC_IMAGE mapping */
-const pe_image_info_t *get_mapping_image_info( struct process *process, client_ptr_t base )
+/* get the image info for a SEC_IMAGE mapped view */
+const pe_image_info_t *get_view_image_info( const struct memory_view *view, client_ptr_t *base )
 {
-    struct memory_view *view = find_mapped_view( process, base );
-
-    if (!view || !(view->flags & SEC_IMAGE)) return NULL;
+    if (!(view->flags & SEC_IMAGE)) return NULL;
+    *base = view->base;
     return &view->image;
 }
 

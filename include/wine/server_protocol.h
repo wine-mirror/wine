@@ -748,6 +748,8 @@ typedef struct
     unsigned int   header_size;
     unsigned int   file_size;
     unsigned int   checksum;
+    unsigned int   dbg_offset;
+    unsigned int   dbg_size;
     client_cpu_t   cpu;
     int            __pad;
 } pe_image_info_t;
@@ -1124,12 +1126,10 @@ struct resume_thread_reply
 struct load_dll_request
 {
     struct request_header __header;
-    data_size_t  dbg_offset;
+    char __pad_12[4];
     mod_handle_t base;
     client_ptr_t name;
-    data_size_t  dbg_size;
     /* VARARG(filename,unicode_str); */
-    char __pad_36[4];
 };
 struct load_dll_reply
 {
@@ -6208,7 +6208,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 661
+#define SERVER_PROTOCOL_VERSION 662
 
 /* ### protocol_version end ### */
 

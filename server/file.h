@@ -166,9 +166,12 @@ extern int is_file_executable( const char *name );
 
 /* file mapping functions */
 
-extern struct file *get_mapping_file( struct process *process, client_ptr_t base,
-                                      unsigned int access, unsigned int sharing );
-extern const pe_image_info_t *get_mapping_image_info( struct process *process, client_ptr_t base );
+struct memory_view;
+
+extern struct memory_view *find_mapped_view( struct process *process, client_ptr_t base );
+extern struct memory_view *get_exe_view( struct process *process );
+extern struct file *get_view_file( const struct memory_view *view, unsigned int access, unsigned int sharing );
+extern const pe_image_info_t *get_view_image_info( const struct memory_view *view, client_ptr_t *base );
 extern void free_mapped_views( struct process *process );
 extern int get_page_size(void);
 extern struct mapping *create_fd_mapping( struct object *root, const struct unicode_str *name, struct fd *fd,
