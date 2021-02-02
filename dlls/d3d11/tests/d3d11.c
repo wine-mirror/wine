@@ -280,6 +280,13 @@ static BOOL compare_color(DWORD c1, DWORD c2, BYTE max_diff)
             && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
 }
 
+static char const *debugstr_viewport(D3D11_VIEWPORT *vp)
+{
+    if (!vp) return "(null)";
+    return wine_dbg_sprintf("{%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}",
+            vp->TopLeftX, vp->TopLeftY, vp->Width, vp->Height, vp->MinDepth, vp->MaxDepth);
+}
+
 struct srv_desc
 {
     DXGI_FORMAT format;
@@ -6770,7 +6777,7 @@ static void test_device_context_state(void)
     };
 
     ID3DDeviceContextState *context_state, *previous_context_state, *tmp_context_state, *context_state2;
-    UINT ib_offset, vb_offset, vb_stride, offset, stride, sample_mask, stencil_ref;
+    UINT ib_offset, vb_offset, vb_stride, offset, stride, sample_mask, stencil_ref, count;
     ID3D11Buffer *cb, *srvb, *uavb, *ib, *vb, *tmp_cb, *tmp_ib, *tmp_vb;
     ID3D11UnorderedAccessView *tmp_uav, *uav, *ps_uav;
     ID3D11Device *d3d11_device, *d3d11_device2;
@@ -6784,6 +6791,7 @@ static void test_device_context_state(void)
     ID3D11RenderTargetView *tmp_rtv, *rtv;
     ID3D11DepthStencilView *tmp_dsv, *dsv;
     ID3D11VertexShader *tmp_vs, *vs, *vs2;
+    ID3D11RasterizerState *tmp_rs, *rs;
     D3D11_TEXTURE2D_DESC texture_desc;
     ID3D11GeometryShader *tmp_gs, *gs;
     enum D3D_PRIMITIVE_TOPOLOGY topo;
@@ -6795,8 +6803,11 @@ static void test_device_context_state(void)
     ID3D11Device1 *device, *device2;
     ID3D11InputLayout *il, *tmp_il;
     ID3D11PixelShader *tmp_ps, *ps;
+    D3D11_RASTERIZER_DESC rs_desc;
     ID3D11BlendState *tmp_bs, *bs;
     ID3D11HullShader *tmp_hs, *hs;
+    D3D11_VIEWPORT tmp_vp[2], vp;
+    D3D11_RECT tmp_rect[2], rect;
     D3D11_BLEND_DESC blend_desc;
     ID3D11Texture2D *texture;
     enum DXGI_FORMAT format;
@@ -6986,6 +6997,27 @@ static void test_device_context_state(void)
     hr = ID3D11Device1_CreateDepthStencilState(device, &ds_desc, &dss);
     ok(SUCCEEDED(hr), "Failed to create depthstencil state, hr %#x.\n", hr);
 
+    rs_desc.FillMode = D3D11_FILL_SOLID;
+    rs_desc.CullMode = D3D11_CULL_BACK;
+    rs_desc.FrontCounterClockwise = FALSE;
+    rs_desc.DepthBias = 0;
+    rs_desc.DepthBiasClamp = 0.0f;
+    rs_desc.SlopeScaledDepthBias = 0.0f;
+    rs_desc.DepthClipEnable = TRUE;
+    rs_desc.ScissorEnable = TRUE;
+    rs_desc.MultisampleEnable = FALSE;
+    rs_desc.AntialiasedLineEnable = FALSE;
+    hr = ID3D11Device1_CreateRasterizerState(device, &rs_desc, &rs);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+
+    SetRect(&rect, 0, 0, 1, 2);
+    vp.TopLeftX = 0;
+    vp.TopLeftY = 0;
+    vp.Width = 3;
+    vp.Height = 4;
+    vp.MinDepth = 0.f;
+    vp.MaxDepth = 0.01f;
+
     ID3D11DeviceContext1_VSSetConstantBuffers(context, 0, 1, &cb);
     ID3D11DeviceContext1_VSSetSamplers(context, 0, 1, &sampler);
     ID3D11DeviceContext1_VSSetShader(context, vs, NULL, 0);
@@ -7027,6 +7059,10 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_OMSetBlendState(context, bs, custom_blend_factor, 0xff00ff00);
     ID3D11DeviceContext1_OMSetDepthStencilState(context, dss, 3);
     ID3D11DeviceContext1_OMSetRenderTargetsAndUnorderedAccessViews(context, 1, &rtv, dsv, 1, 1, &ps_uav, NULL);
+
+    ID3D11DeviceContext1_RSSetScissorRects(context, 1, &rect);
+    ID3D11DeviceContext1_RSSetViewports(context, 1, &vp);
+    ID3D11DeviceContext1_RSSetState(context, rs);
 
     previous_context_state = (ID3DDeviceContextState *)0xdeadbeef;
     ID3D11DeviceContext1_SwapDeviceContextState(context, NULL, &previous_context_state);
@@ -7198,6 +7234,19 @@ static void test_device_context_state(void)
     todo_wine ok(!tmp_dss, "Got unexpected depth/stencil state %p.\n", tmp_dss);
     if (tmp_dss) ID3D11DepthStencilState_Release(tmp_dss);
     todo_wine ok(stencil_ref == 0, "Got unexpected stencil ref %#x.\n", stencil_ref);
+
+    tmp_rs = (ID3D11RasterizerState *)0xdeadbeef;
+    ID3D11DeviceContext1_RSGetState(context, &tmp_rs);
+    todo_wine ok(!tmp_rs, "Got unexpected rasterizer state %p.\n", tmp_rs);
+    if (tmp_rs) ID3D11RasterizerState_Release(tmp_rs);
+    memset(tmp_vp, 0xa5, sizeof(tmp_vp));
+    count = 2;
+    ID3D11DeviceContext1_RSGetViewports(context, &count, tmp_vp);
+    todo_wine ok(count == 0, "Got unexpected viewport count %u.\n", count);
+    memset(tmp_rect, 0xa5, sizeof(tmp_rect));
+    count = 2;
+    ID3D11DeviceContext1_RSGetScissorRects(context, &count, tmp_rect);
+    todo_wine ok(count == 0, "Got unexpected scissor rect count %u.\n", count);
 
     /* updating the device context should also update the device context state */
     hr = ID3D11Device1_CreateVertexShader(device, simple_vs, sizeof(simple_vs), NULL, &vs2);
@@ -7457,6 +7506,23 @@ static void test_device_context_state(void)
     ID3D11DepthStencilState_Release(tmp_dss);
     ok(stencil_ref == 3, "Got stencil ref %#x, expected 3.\n", stencil_ref);
 
+    tmp_rs = (ID3D11RasterizerState *)0xdeadbeef;
+    ID3D11DeviceContext1_RSGetState(context, &tmp_rs);
+    ok(tmp_rs == rs, "Got unexpected rasterizer state %p.\n", tmp_rs);
+    ID3D11RasterizerState_Release(tmp_rs);
+    memset(tmp_vp, 0xa5, sizeof(tmp_vp));
+    count = 2;
+    ID3D11DeviceContext1_RSGetViewports(context, &count, tmp_vp);
+    ok(count == 1, "Got viewport count %u, expected 1.\n", count);
+    ok(!memcmp(tmp_vp, &vp, sizeof(vp)), "Got viewport %s, expected %s.\n",
+            debugstr_viewport(tmp_vp), debugstr_viewport(&vp));
+    memset(tmp_rect, 0xa5, sizeof(tmp_rect));
+    count = 2;
+    ID3D11DeviceContext1_RSGetScissorRects(context, &count, tmp_rect);
+    todo_wine ok(count == 1, "Got scissor rect count %u, expected 1.\n", count);
+    ok(!memcmp(tmp_rect, &rect, sizeof(rect)), "Got scissor rect %s, expected %s.\n",
+            wine_dbgstr_rect(tmp_rect), wine_dbgstr_rect(&rect));
+
     feature_level = min(feature_level, D3D_FEATURE_LEVEL_10_1);
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1, D3D11_SDK_VERSION,
             &IID_ID3D10Device, NULL, &context_state);
@@ -7674,6 +7740,23 @@ static void test_device_context_state(void)
     if (tmp_dss) ID3D11DepthStencilState_Release(tmp_dss);
     todo_wine ok(stencil_ref == 0, "Got unexpected stencil ref %#x.\n", stencil_ref);
 
+    ID3D11DeviceContext1_RSSetScissorRects(context, 1, &rect);
+    ID3D11DeviceContext1_RSSetViewports(context, 1, &vp);
+    ID3D11DeviceContext1_RSSetState(context, rs);
+
+    tmp_rs = (ID3D11RasterizerState *)0xdeadbeef;
+    ID3D11DeviceContext1_RSGetState(context, &tmp_rs);
+    todo_wine ok(!tmp_rs, "Got unexpected rasterizer state %p.\n", tmp_rs);
+    if (tmp_rs) ID3D11RasterizerState_Release(tmp_rs);
+    memset(tmp_vp, 0xa5, sizeof(tmp_vp));
+    count = 2;
+    ID3D11DeviceContext1_RSGetViewports(context, &count, tmp_vp);
+    todo_wine ok(count == 0, "Got unexpected viewport count %u.\n", count);
+    memset(tmp_rect, 0xa5, sizeof(tmp_rect));
+    count = 2;
+    ID3D11DeviceContext1_RSGetScissorRects(context, &count, tmp_rect);
+    todo_wine ok(count == 0, "Got unexpected scissor rect count %u.\n", count);
+
     check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
     check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
 
@@ -7844,9 +7927,27 @@ static void test_device_context_state(void)
     ID3D11DepthStencilState_Release(tmp_dss);
     ok(stencil_ref == 3, "Got stencil ref %#x, expected 3.\n", stencil_ref);
 
+    tmp_rs = (ID3D11RasterizerState *)0xdeadbeef;
+    ID3D11DeviceContext1_RSGetState(context, &tmp_rs);
+    ok(tmp_rs == rs, "Got unexpected rasterizer state %p.\n", tmp_rs);
+    ID3D11RasterizerState_Release(tmp_rs);
+    memset(tmp_vp, 0xa5, sizeof(tmp_vp));
+    count = 2;
+    ID3D11DeviceContext1_RSGetViewports(context, &count, tmp_vp);
+    ok(count == 1, "Got viewport count %u, expected 1.\n", count);
+    ok(!memcmp(tmp_vp, &vp, sizeof(vp)), "Got viewport %s, expected %s.\n",
+            debugstr_viewport(tmp_vp), debugstr_viewport(&vp));
+    memset(tmp_rect, 0xa5, sizeof(tmp_rect));
+    count = 2;
+    ID3D11DeviceContext1_RSGetScissorRects(context, &count, tmp_rect);
+    todo_wine ok(count == 1, "Got scissor rect count %u, expected 1.\n", count);
+    ok(!memcmp(tmp_rect, &rect, sizeof(rect)), "Got scissor rect %s, expected %s.\n",
+            wine_dbgstr_rect(tmp_rect), wine_dbgstr_rect(&rect));
+
     check_interface(device, &IID_ID3D10Device, TRUE, FALSE);
     check_interface(device, &IID_ID3D10Device1, TRUE, FALSE);
 
+    ID3D11RasterizerState_Release(rs);
     ID3D11BlendState_Release(bs);
     ID3D11DepthStencilState_Release(dss);
     ID3D11DepthStencilView_Release(dsv);
