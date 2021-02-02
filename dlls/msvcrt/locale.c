@@ -802,6 +802,10 @@ void* CDECL _Gettnames(void)
 
     for(i=0; i<ARRAY_SIZE(cur->str.str); i++)
         size += strlen(cur->str.str[i])+1;
+#if _MSVCR_VER >= 110
+    for(i=0; i<ARRAY_SIZE(cur->wstr.wstr); i++)
+        size += (wcslen(cur->wstr.wstr[i]) + 1) * sizeof(wchar_t);
+#endif
 
     ret = malloc(size);
     if(!ret)
@@ -815,6 +819,14 @@ void* CDECL _Gettnames(void)
         ret->str.str[i] = &ret->data[size];
         size += len;
     }
+#if _MSVCR_VER >= 110
+    for(i=0; i<ARRAY_SIZE(cur->wstr.wstr); i++) {
+        len = (wcslen(cur->wstr.wstr[i]) + 1) * sizeof(wchar_t);
+        memcpy(&ret->data[size], cur->wstr.wstr[i], len);
+        ret->wstr.wstr[i] = (wchar_t*)&ret->data[size];
+        size += len;
+    }
+#endif
 
     return ret;
 }

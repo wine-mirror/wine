@@ -733,6 +733,10 @@ static void test__Gettnames(void)
         ok(!strcmp(ret->str[i], buf), "ret->str[%i] = %s, expected %s\n", i, ret->str[i], buf);
     }
 
+    ok(ret->wstr[0] != NULL, "ret->wstr[0] = NULL\n");
+    ok(ret->str[42] + strlen(ret->str[42])+1 != (char*)ret->wstr[0],
+            "ret->str[42] = %p len = %d, ret->wstr[0] = %p\n",
+            ret->str[42], strlen(ret->str[42]), ret->wstr[0]);
     free(ret);
 
     if(!setlocale(LC_TIME, "german"))
