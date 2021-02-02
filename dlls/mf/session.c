@@ -549,7 +549,7 @@ static ULONG WINAPI session_op_Release(IUnknown *iface)
     return refcount;
 }
 
-static IUnknownVtbl session_op_vtbl =
+static const IUnknownVtbl session_op_vtbl =
 {
     session_op_QueryInterface,
     session_op_AddRef,
@@ -4918,7 +4918,7 @@ static HRESULT WINAPI standard_quality_manager_Shutdown(IMFQualityManager *iface
     return S_OK;
 }
 
-static IMFQualityManagerVtbl standard_quality_manager_vtbl =
+static const IMFQualityManagerVtbl standard_quality_manager_vtbl =
 {
     standard_quality_manager_QueryInterface,
     standard_quality_manager_AddRef,
