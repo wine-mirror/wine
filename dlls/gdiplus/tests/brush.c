@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include <math.h>
 
 #include "objbase.h"
@@ -274,6 +275,37 @@ static void test_transform(void)
     GpPointF start, end;
     GpRectF rectf;
     REAL elements[6];
+    UINT buf[15];
+    HBITMAP hbmp,old;
+    HDC dcmem;
+    BITMAP bm;
+    GpImage *image;
+    IStream *stream;
+    HGLOBAL hglob;
+    VOID *data;
+    HRESULT hr;
+    LONG size;
+
+    /* 3*5 bmp 32bit*/
+    static const unsigned char bmpimage[] = {
+            0x42,0x4d,0x74,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x36,0x00,
+            0x00,0x00,0x28,0x00,0x00,0x00,0x03,0x00,0x00,0x00,0x05,0x00,
+            0x00,0x00,0x01,0x00,0x20,0x00,0x00,0x00,0x00,0x00,0x3e,0x00,
+            0x00,0x00,0x12,0x0b,0x00,0x00,0x12,0x0b,0x00,0x00,0x00,0x00,
+            0x00,0x00,0x00,0x00,0x00,0x00,
+            0xff,0x11,0xff,0x00,0xff,0x11,0xff,0x00,0xff,0x11,0xff,0x00,
+            0xff,0x33,0xff,0x00,0xff,0x33,0xff,0x00,0xff,0x33,0xff,0x00,
+            0xff,0x55,0xff,0x00,0xff,0x55,0xff,0x00,0xff,0x55,0xff,0x00,
+            0xff,0xaa,0xff,0x00,0xff,0xaa,0xff,0x00,0xff,0xaa,0xff,0x00,
+            0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,0xff,0xff,0xff,0x00,
+            0x00,0x00,0x00,0x00};
+
+    static const UINT buf_rotate_180[15] = {
+            0xffffffff, 0xffffffff, 0xffffffff,
+            0xffff11ff, 0xffff11ff, 0xffff11ff,
+            0xffff33ff, 0xffff33ff, 0xffff33ff,
+            0xffff55ff, 0xffff55ff, 0xffff55ff,
+            0xffffaaff, 0xffffaaff, 0xffffaaff};
 
     /* GpTexture */
     status = GdipCreateMatrix2(2.0, 0.0, 0.0, 0.0, 0.0, 0.0, &m);
@@ -556,6 +588,38 @@ static void test_transform(void)
     expect(Ok, status);
     status = GdipDeleteBrush((GpBrush*)line);
     expect(Ok,status);
+    GdipDeleteGraphics(graphics);
+
+    dcmem = CreateCompatibleDC(hdc);
+    hbmp = CreateBitmap(3, 5, 1, 32, NULL);
+    old = SelectObject(dcmem, hbmp);
+    status = GdipCreateFromHDC(dcmem, &graphics);
+    expect(Ok, status);
+    hglob = GlobalAlloc(0, sizeof(bmpimage));
+    data = GlobalLock (hglob);
+    memcpy(data, bmpimage, sizeof(bmpimage));
+    GlobalUnlock(hglob);
+    hr = CreateStreamOnHGlobal(hglob, TRUE, &stream);
+    expect(S_OK, hr);
+    status = GdipLoadImageFromStream(stream, &image);
+    expect(Ok, status);
+    status = GdipCreateTexture(image, WrapModeTile, &texture);
+    expect(Ok, status);
+    status = GdipRotateTextureTransform(texture, 180.0f, MatrixOrderPrepend);
+    expect(Ok, status);
+    status = GdipFillRectangle(graphics, (GpBrush*)texture, .0f, .0f, (REAL)3, (REAL)5);
+    expect(Ok, status);
+    GdipDeleteBrush((GpBrush*)texture);
+    GdipDisposeImage(image);
+    GdipDeleteGraphics(graphics);
+    IStream_Release(stream);
+    hbmp = SelectObject(dcmem, old);
+    GetObjectW(hbmp, sizeof(bm), &bm);
+    size = GetBitmapBits(hbmp, sizeof(buf), buf);
+    expect(sizeof(buf), size);
+    DeleteObject(hbmp);
+    DeleteDC(dcmem);
+    ok(!memcmp(buf, buf_rotate_180, sizeof(buf)), "Failed to rotate image.\n");
 
     if(0){
         /* enable to visually compare with Windows */
