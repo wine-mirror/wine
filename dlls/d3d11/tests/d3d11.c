@@ -7373,6 +7373,7 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_CSSetSamplers(context, 0, 1, &sampler);
     ID3D11DeviceContext1_CSSetShader(context, cs, NULL, 0);
     ID3D11DeviceContext1_CSSetShaderResources(context, 0, 1, &srv);
+    ID3D11DeviceContext1_CSSetUnorderedAccessViews(context, 0, 1, &uav, NULL);
 
     tmp_cb = (ID3D11Buffer *)0xdeadbeef;
     ID3D11DeviceContext1_CSGetConstantBuffers(context, 0, 1, &tmp_cb);
