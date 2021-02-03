@@ -1342,6 +1342,7 @@ static BOOLEAN match_filename( const WCHAR *name, int length, const UNICODE_STRI
             next_to_retry = name;
             break;
         case '?':
+        case '>':
             mask++;
             name++;
             break;
