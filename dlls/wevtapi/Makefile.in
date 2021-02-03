@@ -1,4 +1,5 @@
 MODULE    = wevtapi.dll
+IMPORTLIB = wevtapi
 
 EXTRADLLFLAGS = -mno-cygwin
 
