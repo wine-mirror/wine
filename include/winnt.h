@@ -4323,17 +4323,16 @@ typedef enum _TOKEN_INFORMATION_CLASS {
 #define LUA_TOKEN                    0x4
 #define WRITE_RESTRICTED             0x8
 
-#define TOKEN_TOKEN_ADJUST_DEFAULT   0x0080
-#define TOKEN_ADJUST_GROUPS          0x0040
-#define TOKEN_ADJUST_PRIVILEGES      0x0020
-#define TOKEN_ADJUST_SESSIONID       0x0100
 #define TOKEN_ASSIGN_PRIMARY         0x0001
 #define TOKEN_DUPLICATE              0x0002
-#define TOKEN_EXECUTE                STANDARD_RIGHTS_EXECUTE
 #define TOKEN_IMPERSONATE            0x0004
 #define TOKEN_QUERY                  0x0008
 #define TOKEN_QUERY_SOURCE           0x0010
+#define TOKEN_ADJUST_PRIVILEGES      0x0020
+#define TOKEN_ADJUST_GROUPS          0x0040
 #define TOKEN_ADJUST_DEFAULT         0x0080
+#define TOKEN_ADJUST_SESSIONID       0x0100
+#define TOKEN_EXECUTE                STANDARD_RIGHTS_EXECUTE
 #define TOKEN_READ                   (STANDARD_RIGHTS_READ|TOKEN_QUERY)
 #define TOKEN_WRITE                  (STANDARD_RIGHTS_WRITE     | \
 					TOKEN_ADJUST_PRIVILEGES | \
@@ -5416,7 +5415,8 @@ typedef enum tagSID_NAME_USE {
 #define JOB_OBJECT_QUERY                    0x0004
 #define JOB_OBJECT_TERMINATE                0x0008
 #define JOB_OBJECT_SET_SECURITY_ATTRIBUTES  0x0010
-#define JOB_OBJECT_ALL_ACCESS               (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x1f)
+#define JOB_OBJECT_IMPERSONATE              0x0020
+#define JOB_OBJECT_ALL_ACCESS               (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x3f)
 
 #define TIMER_QUERY_STATE          0x0001
 #define TIMER_MODIFY_STATE         0x0002
