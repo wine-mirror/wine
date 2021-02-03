@@ -8,4 +8,5 @@ C_SRCS = \
 	buffer.c \
 	main.c \
 	mediatype.c \
-	queue.c
+	queue.c \
+	sample.c
