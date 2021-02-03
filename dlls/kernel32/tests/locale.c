@@ -2768,7 +2768,6 @@ struct neutralsublang_name_t {
     WCHAR name[3];
     WCHAR sname[16];
     LCID lcid;
-    int todo;
 };
 
 static const struct neutralsublang_name_t neutralsublang_names[] = {
@@ -2782,7 +2781,7 @@ static const struct neutralsublang_name_t neutralsublang_names[] = {
     { {'m','s',0}, {'m','s','-','M','Y',0}, MAKELCID(MAKELANGID(LANG_MALAY, SUBLANG_MALAY_MALAYSIA), SORT_DEFAULT) },
     { {'n','l',0}, {'n','l','-','N','L',0}, MAKELCID(MAKELANGID(LANG_DUTCH, SUBLANG_DUTCH), SORT_DEFAULT) },
     { {'p','t',0}, {'p','t','-','B','R',0}, MAKELCID(MAKELANGID(LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN), SORT_DEFAULT) },
-    { {'s','r',0}, {'s','r','-','L','a','t','n','-','R','S',0}, MAKELCID(MAKELANGID(LANG_SERBIAN, SUBLANG_SERBIAN_SERBIA_LATIN), SORT_DEFAULT), 1 },
+    { {'s','r',0}, {'s','r','-','L','a','t','n','-','R','S',0}, MAKELCID(MAKELANGID(LANG_SERBIAN, SUBLANG_SERBIAN_SERBIA_LATIN), SORT_DEFAULT) },
     { {'s','v',0}, {'s','v','-','S','E',0}, MAKELCID(MAKELANGID(LANG_SWEDISH, SUBLANG_SWEDISH), SORT_DEFAULT) },
     { {'u','z',0}, {'u','z','-','L','a','t','n','-','U','Z',0}, MAKELCID(MAKELANGID(LANG_UZBEK, SUBLANG_UZBEK_LATIN), SORT_DEFAULT) },
     { {'z','h',0}, {'z','h','-','C','N',0}, MAKELCID(MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED), SORT_DEFAULT) },
@@ -2977,7 +2976,6 @@ static void test_LocaleNameToLCID(void)
             status = pRtlLocaleNameToLcid( ptr->sname, &lcid, 0 );
             ok( !status || broken(ptr->lcid == MAKELANGID(LANG_SERBIAN, SUBLANG_SERBIAN_SERBIA_LATIN)), /* vista */
                 "%s failed error %x\n", wine_dbgstr_w(ptr->name), status );
-            todo_wine_if(ptr->todo)
             if (!status) ok( lcid == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
                              wine_dbgstr_w(ptr->name), lcid, ptr->lcid );
         }
