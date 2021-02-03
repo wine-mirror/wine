@@ -106,7 +106,7 @@ struct wg_parser_stream
     pthread_cond_t event_cond, event_empty_cond;
     struct wg_parser_event event;
 
-    bool flushing, eos;
+    bool flushing, eos, enabled;
 };
 
 struct parser
@@ -546,6 +546,7 @@ static GstCaps *amt_to_gst_caps(const AM_MEDIA_TYPE *mt)
 static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct parser_source *pin = gst_pad_get_element_private(pad);
+    struct wg_parser_stream *stream = pin->wg_stream;
 
     TRACE("pin %p, type \"%s\".\n", pin, gst_query_type_get_name(query->type));
 
@@ -557,7 +558,7 @@ static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
 
             gst_query_parse_caps(query, &filter);
 
-            if (pin->pin.pin.peer)
+            if (stream->enabled)
                 caps = amt_to_gst_caps(&pin->pin.pin.mt);
             else
                 caps = gst_caps_new_any();
@@ -581,7 +582,7 @@ static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
             AM_MEDIA_TYPE mt;
             GstCaps *caps;
 
-            if (!pin->pin.pin.peer)
+            if (!stream->enabled)
             {
                 gst_query_set_accept_caps_result(query, TRUE);
                 return TRUE;
@@ -751,7 +752,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
     switch (event->type)
     {
         case GST_EVENT_SEGMENT:
-            if (pin->pin.pin.peer)
+            if (stream->enabled)
             {
                 struct wg_parser_event stream_event;
                 const GstSegment *segment;
@@ -775,7 +776,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             break;
 
         case GST_EVENT_EOS:
-            if (pin->pin.pin.peer)
+            if (stream->enabled)
             {
                 struct wg_parser_event stream_event;
 
@@ -792,7 +793,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             break;
 
         case GST_EVENT_FLUSH_START:
-            if (pin->pin.pin.peer)
+            if (stream->enabled)
             {
                 pthread_mutex_lock(&parser->mutex);
 
@@ -818,7 +819,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
 
         case GST_EVENT_FLUSH_STOP:
             gst_segment_init(stream->segment, GST_FORMAT_TIME);
-            if (pin->pin.pin.peer)
+            if (stream->enabled)
             {
                 pthread_mutex_lock(&parser->mutex);
                 stream->flushing = false;
@@ -900,12 +901,13 @@ static void *push_data(void *iface)
 static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *buffer)
 {
     struct parser_source *pin = gst_pad_get_element_private(pad);
+    struct wg_parser_stream *stream = pin->wg_stream;
     struct wg_parser_event stream_event;
     GstFlowReturn ret;
 
     GST_LOG("pin %p, buffer %p.", pin, buffer);
 
-    if (!pin->pin.pin.peer)
+    if (!stream->enabled)
     {
         gst_buffer_unref(buffer);
         return GST_FLOW_OK;
@@ -2434,6 +2436,8 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
         buffer_size = format->nAvgBytesPerSec;
     }
 
+    stream->enabled = true;
+
     gst_pad_push_event(stream->my_sink, gst_event_new_reconfigure());
     /* We do need to drop any buffers that might have been sent with the old
      * caps, but this will be handled in parser_init_stream(). */
@@ -2442,6 +2446,14 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
     props->cbBuffer = max(props->cbBuffer, buffer_size);
     props->cbAlign = max(props->cbAlign, 1);
     return IMemAllocator_SetProperties(allocator, props, &ret_props);
+}
+
+static void source_disconnect(struct strmbase_source *iface)
+{
+    struct parser_source *pin = impl_source_from_IPin(&iface->pin.IPin_iface);
+    struct wg_parser_stream *stream = pin->wg_stream;
+
+    stream->enabled = false;
 }
 
 static void free_source_pin(struct parser_source *pin)
@@ -2493,6 +2505,7 @@ static const struct strmbase_source_ops source_ops =
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
     .pfnDecideBufferSize = GSTOutPin_DecideBufferSize,
+    .source_disconnect = source_disconnect,
 };
 
 static struct parser_source *create_pin(struct parser *filter, const WCHAR *name)
