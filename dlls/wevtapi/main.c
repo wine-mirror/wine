@@ -19,12 +19,16 @@
 
 #include <stdarg.h>
 
+#define NONAMELESSUNION
+
 #include "windef.h"
 #include "winbase.h"
 #include "winevt.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wevtapi);
+
+static const WCHAR log_pathW[] = L"C:\\windows\\temp\\evt.log";
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -63,6 +67,28 @@ BOOL WINAPI EvtGetChannelConfigProperty(EVT_HANDLE ChannelConfig,
 {
     FIXME("(%p %i %u %u %p %p) stub\n", ChannelConfig, PropertyId, Flags, PropertyValueBufferSize,
           PropertyValueBuffer, PropertyValueBufferUsed);
+
+    switch (PropertyId)
+    {
+    case EvtChannelLoggingConfigLogFilePath:
+        *PropertyValueBufferUsed = sizeof(log_pathW) + sizeof(EVT_VARIANT);
+
+        if (PropertyValueBufferSize < sizeof(log_pathW) + sizeof(EVT_VARIANT) || !PropertyValueBuffer)
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return FALSE;
+        }
+
+        PropertyValueBuffer->u.StringVal = (LPWSTR)(PropertyValueBuffer + 1);
+        wcscpy((LPWSTR)PropertyValueBuffer->u.StringVal, log_pathW);
+        PropertyValueBuffer->Type = EvtVarTypeString;
+        return TRUE;
+
+    default:
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        break;
+    }
+
     return FALSE;
 }
 

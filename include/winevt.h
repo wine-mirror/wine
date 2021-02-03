@@ -62,6 +62,36 @@ typedef enum _EVT_SUBSCRIBE_NOTIFY_ACTION {
     EvtSubscribeActionDeliver
 } EVT_SUBSCRIBE_NOTIFY_ACTION;
 
+typedef enum _EVT_VARIANT_TYPE {
+    EvtVarTypeNull,
+    EvtVarTypeString,
+    EvtVarTypeAnsiString,
+    EvtVarTypeSByte,
+    EvtVarTypeByte,
+    EvtVarTypeInt16,
+    EvtVarTypeUInt16,
+    EvtVarTypeInt32,
+    EvtVarTypeUInt32,
+    EvtVarTypeInt64,
+    EvtVarTypeUInt64,
+    EvtVarTypeSingle,
+    EvtVarTypeDouble,
+    EvtVarTypeBoolean,
+    EvtVarTypeBinary,
+    EvtVarTypeGuid,
+    EvtVarTypeSizeT,
+    EvtVarTypeFileTime,
+    EvtVarTypeSysTime,
+    EvtVarTypeSid,
+    EvtVarTypeHexInt32,
+    EvtVarTypeHexInt64,
+    EvtVarTypeEvtHandle = 32,
+    EvtVarTypeEvtXml = 35
+} EVT_VARIANT_TYPE;
+
+#define EVT_VARIANT_TYPE_MASK  0x7f
+#define EVT_VARIANT_TYPE_ARRAY 128
+
 typedef struct _EVT_VARIANT {
     union {
         BOOL        BooleanVal;
