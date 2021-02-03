@@ -2045,6 +2045,9 @@ void WINAPI wine_vkDestroyDebugReportCallbackEXT(
 
     object = wine_debug_report_callback_from_handle(callback);
 
+    if (!object)
+        return;
+
     instance->funcs.p_vkDestroyDebugReportCallbackEXT(instance->instance, object->debug_callback, NULL);
 
     WINE_VK_REMOVE_HANDLE_MAPPING(instance, object);
