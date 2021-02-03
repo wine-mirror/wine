@@ -74,6 +74,11 @@ struct wg_parser
     bool flushing, sink_connected;
 };
 
+struct wg_parser_stream
+{
+    GstSegment *segment;
+};
+
 struct parser
 {
     struct strmbase_filter filter;
@@ -131,9 +136,10 @@ struct parser_source
     struct strmbase_source pin;
     IQualityControl IQualityControl_iface;
 
+    struct wg_parser_stream *wg_stream;
+
     GstPad *their_src, *post_sink, *post_src, *my_sink;
     GstElement *flip;
-    GstSegment *segment;
     GstCaps *caps;
     SourceSeeking seek;
 
@@ -733,6 +739,7 @@ static GstFlowReturn queue_stream_event(struct parser_source *pin, const struct 
 static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
 {
     struct parser_source *pin = gst_pad_get_element_private(pad);
+    struct wg_parser_stream *stream = pin->wg_stream;
     struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
     struct wg_parser *parser = filter->wg_parser;
 
@@ -754,7 +761,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
                     break;
                 }
 
-                gst_segment_copy_into(segment, pin->segment);
+                gst_segment_copy_into(segment, stream->segment);
 
                 stream_event.type = PARSER_EVENT_SEGMENT;
                 stream_event.u.segment.position = segment->position / 100;
@@ -807,7 +814,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             break;
 
         case GST_EVENT_FLUSH_STOP:
-            gst_segment_init(pin->segment, GST_FORMAT_TIME);
+            gst_segment_init(stream->segment, GST_FORMAT_TIME);
             if (pin->pin.pin.peer)
             {
                 pthread_mutex_lock(&parser->mutex);
@@ -913,6 +920,7 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *bu
 static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
         GstBuffer *buf, GstMapInfo *info, gsize offset, gsize size, DWORD bytes_per_second)
 {
+    struct wg_parser_stream *stream = pin->wg_stream;
     HRESULT hr;
     BYTE *ptr = NULL;
 
@@ -931,7 +939,7 @@ static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
         GstClockTime ptsStart = buf->pts;
         if (offset > 0)
             ptsStart = buf->pts + gst_util_uint64_scale(offset, GST_SECOND, bytes_per_second);
-        rtStart = gst_segment_to_running_time(pin->segment, GST_FORMAT_TIME, ptsStart);
+        rtStart = gst_segment_to_running_time(stream->segment, GST_FORMAT_TIME, ptsStart);
         if (rtStart >= 0)
             rtStart /= 100;
 
@@ -944,7 +952,7 @@ static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
                 ptsStop = buf->pts + gst_util_uint64_scale(offset + size, GST_SECOND, bytes_per_second);
             tStart = ptsStart / 100;
             tStop = ptsStop / 100;
-            rtStop = gst_segment_to_running_time(pin->segment, GST_FORMAT_TIME, ptsStop);
+            rtStop = gst_segment_to_running_time(stream->segment, GST_FORMAT_TIME, ptsStop);
             if (rtStop >= 0)
                 rtStop /= 100;
             TRACE("Current time on %p: %i to %i ms\n", pin, (int)(rtStart / 10000), (int)(rtStop / 10000));
@@ -2426,6 +2434,8 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
 
 static void free_source_pin(struct parser_source *pin)
 {
+    struct wg_parser_stream *stream = pin->wg_stream;
+
     if (pin->pin.pin.peer)
     {
         if (SUCCEEDED(IMemAllocator_Decommit(pin->pin.pAllocator)))
@@ -2448,10 +2458,12 @@ static void free_source_pin(struct parser_source *pin)
         gst_object_unref(pin->their_src);
     }
     gst_object_unref(pin->my_sink);
-    gst_segment_free(pin->segment);
+    gst_segment_free(stream->segment);
 
     pthread_cond_destroy(&pin->event_cond);
     pthread_cond_destroy(&pin->event_empty_cond);
+
+    free(stream);
 
     pin->flushing_cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&pin->flushing_cs);
@@ -2474,6 +2486,7 @@ static const struct strmbase_source_ops source_ops =
 static struct parser_source *create_pin(struct parser *filter, const WCHAR *name)
 {
     struct parser_source *pin, **new_array;
+    struct wg_parser_stream *stream;
     char pad_name[19];
 
     if (!(new_array = heap_realloc(filter->sources, (filter->source_count + 1) * sizeof(*new_array))))
@@ -2483,9 +2496,16 @@ static struct parser_source *create_pin(struct parser *filter, const WCHAR *name
     if (!(pin = heap_alloc_zero(sizeof(*pin))))
         return NULL;
 
+    if (!(stream = calloc(1, sizeof(*stream))))
+    {
+        heap_free(pin);
+        return NULL;
+    }
+    pin->wg_stream = stream;
+
     strmbase_source_init(&pin->pin, &filter->filter, name, &source_ops);
-    pin->segment = gst_segment_new();
-    gst_segment_init(pin->segment, GST_FORMAT_TIME);
+    stream->segment = gst_segment_new();
+    gst_segment_init(stream->segment, GST_FORMAT_TIME);
     pin->IQualityControl_iface.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
     strmbase_seeking_init(&pin->seek, &GST_Seeking_Vtbl, GST_ChangeStop,
             GST_ChangeCurrent, GST_ChangeRate);
