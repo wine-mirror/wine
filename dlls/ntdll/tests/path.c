@@ -441,6 +441,18 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         {L"c:/",            L"\\??\\c:\\",                  -1},
         {L"c:/foo",         L"\\??\\c:\\foo",                7},
         {L"c:/foo.",        L"\\??\\c:\\foo",                7},
+        {L"c:/foo ",        L"\\??\\c:\\foo",                7},
+        {L"c:/foo . .",     L"\\??\\c:\\foo",                7},
+        {L"c:/foo.a",       L"\\??\\c:\\foo.a",              7},
+        {L"c:/foo a",       L"\\??\\c:\\foo a",              7},
+        {L"c:/foo*",        L"\\??\\c:\\foo*",               7},
+        {L"c:/foo*a",       L"\\??\\c:\\foo*a",              7},
+        {L"c:/foo?",        L"\\??\\c:\\foo?",               7},
+        {L"c:/foo?a",       L"\\??\\c:\\foo?a",              7},
+        {L"c:/foo<",        L"\\??\\c:\\foo<",               7},
+        {L"c:/foo<a",       L"\\??\\c:\\foo<a",              7},
+        {L"c:/foo>",        L"\\??\\c:\\foo>",               7},
+        {L"c:/foo>a",       L"\\??\\c:\\foo>a",              7},
         {L"c:/foo/",        L"\\??\\c:\\foo\\",             -1},
         {L"c:/foo//",       L"\\??\\c:\\foo\\",             -1},
         {L"C:/foo",         L"\\??\\C:\\foo",                7},
@@ -485,6 +497,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         {L"//./foo/bar",    L"\\??\\foo\\bar",               8},
         {L"//./foo/.",      L"\\??\\foo",                    4},
         {L"//./foo/..",     L"\\??\\",                      -1},
+        {L"//./foo. . ",    L"\\??\\foo",                    4},
 
         {L"//?",            L"\\??\\",                      -1},
         {L"//?/",           L"\\??\\",                      -1},
@@ -494,6 +507,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         {L"//?/foo/bar",    L"\\??\\foo\\bar",               8},
         {L"//?/foo/.",      L"\\??\\foo",                    4},
         {L"//?/foo/..",     L"\\??\\",                      -1},
+        {L"//?/foo. . ",    L"\\??\\foo",                    4},
 
         {L"\\\\.",          L"\\??\\",                      -1},
         {L"\\\\.\\",        L"\\??\\",                      -1},
@@ -503,6 +517,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         {L"\\\\.\\foo/bar", L"\\??\\foo\\bar",               8},
         {L"\\\\.\\foo/.",   L"\\??\\foo",                    4},
         {L"\\\\.\\foo/..",  L"\\??\\",                      -1},
+        {L"\\\\.\\foo. . ", L"\\??\\foo",                    4},
 
         {L"\\\\?",          L"\\??\\",                      -1},
         {L"\\\\?\\",        L"\\??\\",                      -1},
@@ -519,6 +534,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         {L"\\\\?\\foo\\bar",L"\\??\\foo\\bar",               8},
         {L"\\\\?\\foo\\.",  L"\\??\\foo\\.",                 8},
         {L"\\\\?\\foo\\..", L"\\??\\foo\\..",                8},
+        {L"\\\\?\\foo. . ", L"\\??\\foo. . ",                4},
 
         {L"\\??",           L"\\??\\C:\\??",                 7},
         {L"\\??\\",         L"\\??\\C:\\??\\",              -1},
@@ -535,6 +551,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         {L"\\??\\foo\\bar", L"\\??\\foo\\bar",               8},
         {L"\\??\\foo\\.",   L"\\??\\foo\\.",                 8},
         {L"\\??\\foo\\..",  L"\\??\\foo\\..",                8},
+        {L"\\??\\foo. . ",  L"\\??\\foo. . ",                4},
 
         {L"CONIN$",         L"\\??\\CONIN$",                -1, L"\\??\\C:\\windows\\CONIN$"  /* winxp */ },
         {L"CONOUT$",        L"\\??\\CONOUT$",               -1, L"\\??\\C:\\windows\\CONOUT$" /* winxp */ },
