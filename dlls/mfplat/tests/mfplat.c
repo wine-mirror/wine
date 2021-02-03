@@ -6439,6 +6439,9 @@ todo_wine
     hr = IMFAttributes_SetUINT32(attributes, &MF_SA_BUFFERS_PER_SAMPLE, 2);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFVideoSampleAllocatorEx_AllocateSample(allocatorex, &sample);
+    ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
+
     EXPECT_REF(attributes, 1);
     hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(allocatorex, 0, 0, attributes, video_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -6454,7 +6457,6 @@ todo_wine
 
     hr = IMFSample_GetBufferCount(sample, &buffer_count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(buffer_count == 2, "Unexpected buffer count %u.\n", buffer_count);
 
     hr = IMFVideoSampleAllocatorEx_AllocateSample(allocatorex, &sample2);

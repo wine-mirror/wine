@@ -1355,12 +1355,15 @@ static HRESULT sample_allocator_initialize(struct sample_allocator *allocator, u
     {
         allocator->attributes = attributes;
         IMFAttributes_AddRef(allocator->attributes);
+
+        IMFAttributes_GetUINT32(attributes, &MF_SA_BUFFERS_PER_SAMPLE, &allocator->frame_desc.buffer_count);
     }
 
     allocator->frame_desc.d3d9_format = subtype.Data1;
     allocator->frame_desc.dxgi_format = MFMapDX9FormatToDXGIFormat(allocator->frame_desc.d3d9_format);
     allocator->frame_desc.width = frame_size >> 32;
     allocator->frame_desc.height = frame_size;
+    allocator->frame_desc.buffer_count = max(1, allocator->frame_desc.buffer_count);
 
     if (FAILED(hr = sample_allocator_get_surface_service(allocator, &service)))
         return hr;
@@ -1673,7 +1676,6 @@ HRESULT WINAPI MFCreateVideoSampleAllocatorEx(REFIID riid, void **obj)
     object->IMFVideoSampleAllocatorCallback_iface.lpVtbl = &sample_allocator_callback_vtbl;
     object->tracking_callback.lpVtbl = &sample_allocator_tracking_callback_vtbl;
     object->refcount = 1;
-    object->frame_desc.buffer_count = 1;
     list_init(&object->used_samples);
     list_init(&object->free_samples);
     InitializeCriticalSection(&object->cs);
