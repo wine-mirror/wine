@@ -585,7 +585,7 @@ static HRESULT sample_allocator_create_samples(struct sample_allocator *allocato
 
     for (i = 0; i < sample_count; ++i)
     {
-        struct queued_sample *queued_sample = heap_alloc(sizeof(*queued_sample));
+        struct queued_sample *queued_sample;
         IMFMediaBuffer *buffer;
 
         if (SUCCEEDED(hr = MFCreateVideoSampleFromSurface(NULL, &sample)))
