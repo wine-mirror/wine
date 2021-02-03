@@ -1774,28 +1774,30 @@ struct wined3d_blend_state * CDECL wined3d_device_get_blend_state(const struct w
 }
 
 void CDECL wined3d_device_set_depth_stencil_state(struct wined3d_device *device,
-        struct wined3d_depth_stencil_state *state)
+        struct wined3d_depth_stencil_state *state, unsigned int stencil_ref)
 {
     struct wined3d_depth_stencil_state *prev;
 
-    TRACE("device %p, state %p.\n", device, state);
+    TRACE("device %p, state %p, stencil_ref %u.\n", device, state, stencil_ref);
 
     prev = device->state.depth_stencil_state;
-    if (prev == state)
+    if (prev == state && device->state.stencil_ref == stencil_ref)
         return;
 
     if (state)
         wined3d_depth_stencil_state_incref(state);
     device->state.depth_stencil_state = state;
-    wined3d_cs_emit_set_depth_stencil_state(device->cs, state);
+    device->state.stencil_ref = stencil_ref;
+    wined3d_cs_emit_set_depth_stencil_state(device->cs, state, stencil_ref);
     if (prev)
         wined3d_depth_stencil_state_decref(prev);
 }
 
-struct wined3d_depth_stencil_state * CDECL wined3d_device_get_depth_stencil_state(const struct wined3d_device *device)
+struct wined3d_depth_stencil_state * CDECL wined3d_device_get_depth_stencil_state(const struct wined3d_device *device, unsigned int *stencil_ref)
 {
-    TRACE("device %p.\n", device);
+    TRACE("device %p, stencil_ref %p.\n", device, stencil_ref);
 
+    *stencil_ref = device->state.stencil_ref;
     return device->state.depth_stencil_state;
 }
 
@@ -3704,6 +3706,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_STENCILENABLE:
                 case WINED3D_RS_STENCILFAIL:
                 case WINED3D_RS_STENCILFUNC:
+                case WINED3D_RS_STENCILREF:
                 case WINED3D_RS_STENCILMASK:
                 case WINED3D_RS_STENCILPASS:
                 case WINED3D_RS_STENCILWRITEMASK:
@@ -3848,6 +3851,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         struct wined3d_depth_stencil_state *depth_stencil_state;
         struct wined3d_depth_stencil_state_desc desc;
         struct wine_rb_entry *entry;
+        unsigned int stencil_ref;
 
         memset(&desc, 0, sizeof(desc));
         switch (state->rs[WINED3D_RS_ZENABLE])
@@ -3887,15 +3891,20 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             desc.back = desc.front;
         }
 
+        if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_STENCILREF))
+            stencil_ref = state->rs[WINED3D_RS_STENCILREF];
+        else
+            wined3d_device_get_depth_stencil_state(device, &stencil_ref);
+
         if ((entry = wine_rb_get(&device->depth_stencil_states, &desc)))
         {
             depth_stencil_state = WINE_RB_ENTRY_VALUE(entry, struct wined3d_depth_stencil_state, entry);
-            wined3d_device_set_depth_stencil_state(device, depth_stencil_state);
+            wined3d_device_set_depth_stencil_state(device, depth_stencil_state, stencil_ref);
         }
         else if (SUCCEEDED(wined3d_depth_stencil_state_create(device, &desc, NULL,
                 &wined3d_null_parent_ops, &depth_stencil_state)))
         {
-            wined3d_device_set_depth_stencil_state(device, depth_stencil_state);
+            wined3d_device_set_depth_stencil_state(device, depth_stencil_state, stencil_ref);
             if (wine_rb_put(&device->depth_stencil_states, &desc, &depth_stencil_state->entry) == -1)
             {
                 ERR("Failed to insert depth/stencil state.\n");

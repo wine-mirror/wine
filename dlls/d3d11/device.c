@@ -881,27 +881,19 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetDepthStencilState(ID3
 {
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
     struct d3d_depthstencil_state *state_impl;
-    const D3D11_DEPTH_STENCIL_DESC *desc;
 
     TRACE("iface %p, depth_stencil_state %p, stencil_ref %u.\n",
             iface, depth_stencil_state, stencil_ref);
 
     wined3d_mutex_lock();
-    device->stencil_ref = stencil_ref;
     if (!(state_impl = unsafe_impl_from_ID3D11DepthStencilState(depth_stencil_state)))
     {
-        wined3d_device_set_depth_stencil_state(device->wined3d_device, NULL);
+        wined3d_device_set_depth_stencil_state(device->wined3d_device, NULL, stencil_ref);
         wined3d_mutex_unlock();
         return;
     }
 
-    wined3d_device_set_depth_stencil_state(device->wined3d_device, state_impl->wined3d_state);
-    desc = &state_impl->desc;
-
-    if (desc->StencilEnable)
-    {
-        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_STENCILREF, stencil_ref);
-    }
+    wined3d_device_set_depth_stencil_state(device->wined3d_device, state_impl->wined3d_state, stencil_ref);
     wined3d_mutex_unlock();
 }
 
@@ -2022,7 +2014,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMGetDepthStencilState(ID3
             iface, depth_stencil_state, stencil_ref);
 
     wined3d_mutex_lock();
-    if ((wined3d_state = wined3d_device_get_depth_stencil_state(device->wined3d_device)))
+    if ((wined3d_state = wined3d_device_get_depth_stencil_state(device->wined3d_device, stencil_ref)))
     {
         state_impl = wined3d_depth_stencil_state_get_parent(wined3d_state);
         ID3D11DepthStencilState_AddRef(*depth_stencil_state = &state_impl->ID3D11DepthStencilState_iface);
@@ -2031,7 +2023,6 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMGetDepthStencilState(ID3
     {
         *depth_stencil_state = NULL;
     }
-    *stencil_ref = device->stencil_ref;
     wined3d_mutex_unlock();
 }
 

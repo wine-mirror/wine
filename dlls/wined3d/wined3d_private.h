@@ -1827,7 +1827,10 @@ enum wined3d_pipeline
 #define STATE_DEPTH_STENCIL (STATE_SAMPLE_MASK + 1)
 #define STATE_IS_DEPTH_STENCIL(a) ((a) == STATE_DEPTH_STENCIL)
 
-#define STATE_COMPUTE_OFFSET (STATE_DEPTH_STENCIL + 1)
+#define STATE_STENCIL_REF (STATE_DEPTH_STENCIL + 1)
+#define STATE_IS_STENCIL_REF(a) ((a) == STATE_STENCIL_REF)
+
+#define STATE_COMPUTE_OFFSET (STATE_STENCIL_REF + 1)
 
 #define STATE_COMPUTE_SHADER (STATE_COMPUTE_OFFSET)
 #define STATE_IS_COMPUTE_SHADER(a) ((a) == STATE_COMPUTE_SHADER)
@@ -3701,6 +3704,7 @@ struct wined3d_state
     struct wined3d_color blend_factor;
     unsigned int sample_mask;
     struct wined3d_depth_stencil_state *depth_stencil_state;
+    unsigned int stencil_ref;
     struct wined3d_rasterizer_state *rasterizer_state;
 };
 
@@ -4740,7 +4744,7 @@ void wined3d_cs_emit_set_color_key(struct wined3d_cs *cs, struct wined3d_texture
 void wined3d_cs_emit_set_constant_buffer(struct wined3d_cs *cs, enum wined3d_shader_type type,
         UINT cb_idx, struct wined3d_buffer *buffer) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_depth_stencil_state(struct wined3d_cs *cs,
-        struct wined3d_depth_stencil_state *state) DECLSPEC_HIDDEN;
+        struct wined3d_depth_stencil_state *state, unsigned int stencil_ref) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_depth_stencil_view(struct wined3d_cs *cs,
         struct wined3d_rendertarget_view *view) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_index_buffer(struct wined3d_cs *cs, struct wined3d_buffer *buffer,

@@ -275,6 +275,7 @@ struct wined3d_cs_set_depth_stencil_state
 {
     enum wined3d_cs_op opcode;
     struct wined3d_depth_stencil_state *state;
+    unsigned int stencil_ref;
 };
 
 struct wined3d_cs_set_rasterizer_state
@@ -1235,7 +1236,7 @@ static void wined3d_cs_exec_set_depth_stencil_view(struct wined3d_cs *cs, const 
         if (prev->format->depth_bias_scale != op->view->format->depth_bias_scale)
             device_invalidate_state(device, STATE_RASTERIZER);
         if (prev->format->stencil_size != op->view->format->stencil_size)
-            device_invalidate_state(device, STATE_RENDER(WINED3D_RS_STENCILREF));
+            device_invalidate_state(device, STATE_STENCIL_REF);
     }
 
     device_invalidate_state(device, STATE_FRAMEBUFFER);
@@ -1665,19 +1666,26 @@ void wined3d_cs_emit_set_blend_state(struct wined3d_cs *cs, struct wined3d_blend
 static void wined3d_cs_exec_set_depth_stencil_state(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_set_depth_stencil_state *op = data;
+    struct wined3d_state *state = &cs->state;
 
-    cs->state.depth_stencil_state = op->state;
-    device_invalidate_state(cs->device, STATE_DEPTH_STENCIL);
+    if (state->depth_stencil_state != op->state)
+    {
+        state->depth_stencil_state = op->state;
+        device_invalidate_state(cs->device, STATE_DEPTH_STENCIL);
+    }
+    state->stencil_ref = op->stencil_ref;
+    device_invalidate_state(cs->device, STATE_STENCIL_REF);
 }
 
 void wined3d_cs_emit_set_depth_stencil_state(struct wined3d_cs *cs,
-        struct wined3d_depth_stencil_state *state)
+        struct wined3d_depth_stencil_state *state, unsigned int stencil_ref)
 {
     struct wined3d_cs_set_depth_stencil_state *op;
 
     op = wined3d_cs_require_space(cs, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_SET_DEPTH_STENCIL_STATE;
     op->state = state;
+    op->stencil_ref = stencil_ref;
 
     wined3d_cs_submit(cs, WINED3D_CS_QUEUE_DEFAULT);
 }

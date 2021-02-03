@@ -583,8 +583,6 @@ struct d3d_device
     struct wine_rb_tree depthstencil_states;
     struct wine_rb_tree rasterizer_states;
     struct wine_rb_tree sampler_states;
-
-    UINT stencil_ref;
 };
 
 static inline struct d3d_device *impl_from_ID3D11Device(ID3D11Device *iface)

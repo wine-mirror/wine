@@ -2392,7 +2392,7 @@ struct wined3d_sampler * __cdecl wined3d_device_get_cs_sampler(const struct wine
 struct wined3d_unordered_access_view * __cdecl wined3d_device_get_cs_uav(const struct wined3d_device *device,
         unsigned int idx);
 struct wined3d_depth_stencil_state * __cdecl wined3d_device_get_depth_stencil_state(
-        const struct wined3d_device *device);
+        const struct wined3d_device *device, unsigned int *stencil_ref);
 struct wined3d_rendertarget_view * __cdecl wined3d_device_get_depth_stencil_view(const struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_device_caps(const struct wined3d_device *device, struct wined3d_caps *caps);
 HRESULT __cdecl wined3d_device_get_display_mode(const struct wined3d_device *device, UINT swapchain_idx,
@@ -2480,7 +2480,7 @@ void __cdecl wined3d_device_set_cursor_position(struct wined3d_device *device,
 HRESULT __cdecl wined3d_device_set_cursor_properties(struct wined3d_device *device,
         UINT x_hotspot, UINT y_hotspot, struct wined3d_texture *texture, unsigned int sub_resource_idx);
 void __cdecl wined3d_device_set_depth_stencil_state(struct wined3d_device *device,
-        struct wined3d_depth_stencil_state *state);
+        struct wined3d_depth_stencil_state *state, unsigned int stencil_ref);
 HRESULT __cdecl wined3d_device_set_depth_stencil_view(struct wined3d_device *device,
         struct wined3d_rendertarget_view *view);
 HRESULT __cdecl wined3d_device_set_dialog_box_mode(struct wined3d_device *device, BOOL enable_dialogs);
