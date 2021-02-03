@@ -12701,6 +12701,43 @@ size_t __cdecl _Strxfrm(char *dest, char *dest_end, const char *src, const char 
     return len;
 }
 
+size_t __cdecl _Wcsxfrm(wchar_t *dest, wchar_t *dest_end,
+        const wchar_t *src, const wchar_t *src_end, _Collvec *coll)
+{
+    size_t dest_len = dest_end - dest;
+    size_t src_len = src_end - src;
+    _Collvec cv;
+    LCID lcid;
+    int i, len;
+
+    TRACE("(%p %p %p %p %p)\n", dest, dest_end, src, src_end, coll);
+
+    if (coll) cv = *coll;
+    else getcoll(&cv);
+
+#if _MSVCP_VER < 110
+    lcid = cv.handle;
+#else
+    lcid = LocaleNameToLCID(cv.lc_name, 0);
+#endif
+
+    if (!lcid)
+    {
+        if (src_len > dest_len) return src_len;
+        memcpy(dest, src, src_len * sizeof(wchar_t));
+        return src_len;
+    }
+
+    len = LCMapStringW(lcid, LCMAP_SORTKEY, src, src_len, NULL, 0);
+    if (!len) return INT_MAX;
+    if (len > dest_len) return len;
+
+    LCMapStringW(lcid, LCMAP_SORTKEY, src, src_len, dest, dest_len);
+    for (i = len - 1; i >= 0; i--)
+        dest[i] = ((BYTE*)dest)[i];
+    return len;
+}
+
 DEFINE_RTTI_DATA0(_Facet_base, 0, ".?AV_Facet_base@std@@")
 DEFINE_RTTI_DATA0(locale_facet, 0, ".?AVfacet@locale@std@@")
 DEFINE_RTTI_DATA1(locale__Locimp, 0, &locale_facet_rtti_base_descriptor, ".?AV_Locimp@locale@std@@")

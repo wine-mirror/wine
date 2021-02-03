@@ -3824,7 +3824,7 @@
 @ cdecl _Unlock_shared_ptr_spin_lock()
 @ cdecl _Wcrtomb(ptr long ptr ptr)
 @ cdecl _Wcscoll(ptr ptr ptr ptr ptr)
-@ stub _Wcsxfrm
+@ cdecl _Wcsxfrm(ptr ptr ptr ptr ptr)
 # extern _Xbig
 @ stub _Xp_addh
 @ stub _Xp_addx

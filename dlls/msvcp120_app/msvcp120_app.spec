@@ -3824,7 +3824,7 @@
 @ cdecl _Unlock_shared_ptr_spin_lock() msvcp120._Unlock_shared_ptr_spin_lock
 @ cdecl _Wcrtomb(ptr long ptr ptr) msvcp120._Wcrtomb
 @ cdecl _Wcscoll(ptr ptr ptr ptr ptr) msvcp120._Wcscoll
-@ stub _Wcsxfrm
+@ cdecl _Wcsxfrm(ptr ptr ptr ptr ptr) msvcp120._Wcsxfrm
 # extern _Xbig
 @ stub _Xp_addh
 @ stub _Xp_addx

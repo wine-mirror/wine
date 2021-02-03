@@ -3747,7 +3747,7 @@
 @ stub _WStoldx
 @ cdecl _Wcrtomb(ptr long ptr ptr)
 @ cdecl _Wcscoll(ptr ptr ptr ptr ptr)
-@ stub _Wcsxfrm
+@ cdecl _Wcsxfrm(ptr ptr ptr ptr ptr)
 @ cdecl _Xtime_diff_to_millis(ptr) _Xtime_diff_to_millis
 @ cdecl _Xtime_diff_to_millis2(ptr ptr) _Xtime_diff_to_millis2
 @ cdecl -ret64 _Xtime_get_ticks() _Xtime_get_ticks
