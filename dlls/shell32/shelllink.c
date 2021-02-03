@@ -367,7 +367,12 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
     TRACE("(%p)->(%s)\n",This,debugstr_w(pszFileName));
 
     if (!pszFileName)
-        return E_FAIL;
+    {
+        if (!This->filepath) return S_OK;
+
+        pszFileName = This->filepath;
+        fRemember = FALSE;
+    }
 
     r = SHCreateStreamOnFileW( pszFileName, STGM_READWRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE, &stm );
     if( SUCCEEDED( r ) )
@@ -379,9 +384,12 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
 	{
             StartLinkProcessor( pszFileName );
 
-            /* update file path */
-            heap_free(This->filepath);
-            This->filepath = strdupW(pszFileName);
+            if (fRemember)
+            {
+                /* update file path */
+                heap_free(This->filepath);
+                This->filepath = strdupW(pszFileName);
+            }
 
             This->bDirty = FALSE;
         }

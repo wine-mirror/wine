@@ -388,7 +388,7 @@ static void test_get_set(void)
 
 void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
 {
-    HRESULT r;
+    HRESULT r, init_dirty;
     IShellLinkA *sl;
     IPersistFile *pf;
 
@@ -451,6 +451,17 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
         IPersistFile_GetCurFile(pf, NULL);
     }
 
+        init_dirty = IPersistFile_IsDirty(pf); /* empty links start off as clean */
+        r = IPersistFile_Save(pf, NULL, FALSE);
+        lok(r == S_OK || r == E_INVALIDARG /* before Windows 7 */, "save failed (0x%08x)\n", r);
+        r = IPersistFile_IsDirty(pf);
+        lok(r == init_dirty, "dirty (0x%08x)\n", r);
+
+        r = IPersistFile_Save(pf, NULL, TRUE);
+        lok(r == S_OK || r == E_INVALIDARG /* before Windows 7 */, "save failed (0x%08x)\n", r);
+        r = IPersistFile_IsDirty(pf);
+        lok(r == init_dirty, "dirty (0x%08x)\n", r);
+
         /* test GetCurFile before ::Save */
         str = (LPWSTR)0xdeadbeef;
         r = IPersistFile_GetCurFile(pf, &str);
@@ -458,6 +469,18 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
         lok(str == NULL, "got %p\n", str);
 
         r = IPersistFile_Save(pf, path, TRUE);
+        lok(r == S_OK, "save failed (0x%08x)\n", r);
+        r = IPersistFile_IsDirty(pf);
+        lok(r == S_FALSE, "dirty (0x%08x)\n", r);
+
+        /* test GetCurFile after ::Save */
+        r = IPersistFile_GetCurFile(pf, &str);
+        lok(r == S_OK, "got 0x%08x\n", r);
+        lok(str != NULL, "Didn't expect NULL\n");
+        lok(!wcscmp(path, str), "Expected %s, got %s\n", wine_dbgstr_w(path), wine_dbgstr_w(str));
+        CoTaskMemFree(str);
+
+        r = IPersistFile_Save(pf, NULL, TRUE);
         lok(r == S_OK, "save failed (0x%08x)\n", r);
 
         /* test GetCurFile after ::Save */
