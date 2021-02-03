@@ -79,6 +79,7 @@ struct wg_parser_stream
     GstPad *their_src, *post_sink, *post_src, *my_sink;
     GstElement *flip;
     GstSegment *segment;
+    GstCaps *caps;
 };
 
 struct parser
@@ -140,7 +141,6 @@ struct parser_source
 
     struct wg_parser_stream *wg_stream;
 
-    GstCaps *caps;
     SourceSeeking seek;
 
     CRITICAL_SECTION flushing_cs;
@@ -829,7 +829,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
 
             gst_event_parse_caps(event, &caps);
             pthread_mutex_lock(&parser->mutex);
-            gst_caps_replace(&pin->caps, caps);
+            gst_caps_replace(&stream->caps, caps);
             pthread_mutex_unlock(&parser->mutex);
             pthread_cond_signal(&parser->init_cond);
             break;
@@ -1638,7 +1638,7 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
 
         pin->seek.llDuration = pin->seek.llStop = query_duration(stream->their_src);
         pin->seek.llCurrent = 0;
-        while (!pin->caps && !parser->error)
+        while (!stream->caps && !parser->error)
             pthread_cond_wait(&parser->init_cond, &parser->mutex);
         if (parser->error)
         {
@@ -1932,7 +1932,8 @@ static HRESULT decodebin_parser_source_query_accept(struct parser_source *pin, c
 static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
-    const GstCaps *caps = pin->caps;
+    struct wg_parser_stream *stream = pin->wg_stream;
+    const GstCaps *caps = stream->caps;
     const GstStructure *structure;
     const char *type;
 
@@ -2684,10 +2685,11 @@ static BOOL wave_parser_init_gst(struct parser *filter)
 
 static HRESULT wave_parser_source_query_accept(struct parser_source *pin, const AM_MEDIA_TYPE *mt)
 {
+    struct wg_parser_stream *stream = pin->wg_stream;
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    if (!amt_from_gst_caps(pin->caps, &pad_mt))
+    if (!amt_from_gst_caps(stream->caps, &pad_mt))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -2697,9 +2699,11 @@ static HRESULT wave_parser_source_query_accept(struct parser_source *pin, const 
 static HRESULT wave_parser_source_get_media_type(struct parser_source *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
+    struct wg_parser_stream *stream = pin->wg_stream;
+
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    if (!amt_from_gst_caps(pin->caps, mt))
+    if (!amt_from_gst_caps(stream->caps, mt))
         return E_OUTOFMEMORY;
     return S_OK;
 }
@@ -2802,10 +2806,11 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
 
 static HRESULT avi_splitter_source_query_accept(struct parser_source *pin, const AM_MEDIA_TYPE *mt)
 {
+    struct wg_parser_stream *stream = pin->wg_stream;
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    if (!amt_from_gst_caps(pin->caps, &pad_mt))
+    if (!amt_from_gst_caps(stream->caps, &pad_mt))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -2815,9 +2820,11 @@ static HRESULT avi_splitter_source_query_accept(struct parser_source *pin, const
 static HRESULT avi_splitter_source_get_media_type(struct parser_source *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
+    struct wg_parser_stream *stream = pin->wg_stream;
+
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    if (!amt_from_gst_caps(pin->caps, mt))
+    if (!amt_from_gst_caps(stream->caps, mt))
         return E_OUTOFMEMORY;
     return S_OK;
 }
@@ -2930,10 +2937,11 @@ static BOOL mpeg_splitter_init_gst(struct parser *filter)
 
 static HRESULT mpeg_splitter_source_query_accept(struct parser_source *pin, const AM_MEDIA_TYPE *mt)
 {
+    struct wg_parser_stream *stream = pin->wg_stream;
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    if (!amt_from_gst_caps(pin->caps, &pad_mt))
+    if (!amt_from_gst_caps(stream->caps, &pad_mt))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -2943,9 +2951,11 @@ static HRESULT mpeg_splitter_source_query_accept(struct parser_source *pin, cons
 static HRESULT mpeg_splitter_source_get_media_type(struct parser_source *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
+    struct wg_parser_stream *stream = pin->wg_stream;
+
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    if (!amt_from_gst_caps(pin->caps, mt))
+    if (!amt_from_gst_caps(stream->caps, mt))
         return E_OUTOFMEMORY;
     return S_OK;
 }
