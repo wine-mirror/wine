@@ -5083,15 +5083,19 @@ static void test_queue_com_state(const char *name)
         queue_type = name[1] - '0';
 
         hr = pMFAllocateWorkQueueEx(queue_type, &queue);
-        ok(hr == S_OK, "Failed to allocate a queue, hr %#x.\n", hr);
+        ok(hr == S_OK || broken(queue_type == MF_MULTITHREADED_WORKQUEUE && hr == E_INVALIDARG) /* Win7 */,
+                "Failed to allocate a queue of type %u, hr %#x.\n", queue_type, hr);
 
-        callback.param = queue;
-        hr = MFPutWorkItem(queue, &callback.IMFAsyncCallback_iface, NULL);
-        ok(SUCCEEDED(hr), "Failed to queue work item, hr %#x.\n", hr);
-        WaitForSingleObject(callback.event, INFINITE);
+        if (SUCCEEDED(hr))
+        {
+            callback.param = queue;
+            hr = MFPutWorkItem(queue, &callback.IMFAsyncCallback_iface, NULL);
+            ok(SUCCEEDED(hr), "Failed to queue work item, hr %#x.\n", hr);
+            WaitForSingleObject(callback.event, INFINITE);
 
-        hr = MFUnlockWorkQueue(queue);
-        ok(hr == S_OK, "Failed to unlock the queue, hr %#x.\n", hr);
+            hr = MFUnlockWorkQueue(queue);
+            ok(hr == S_OK, "Failed to unlock the queue, hr %#x.\n", hr);
+        }
     }
 
     CloseHandle(callback.event);
