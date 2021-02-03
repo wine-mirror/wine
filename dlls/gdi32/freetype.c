@@ -714,21 +714,27 @@ static const LANGID mac_langid_table[] =
     MAKELANGID(LANG_AZERI,SUBLANG_AZERI_LATIN),              /* TT_MAC_LANGID_AZERBAIJANI_ROMAN_SCRIPT */
 };
 
-static CPTABLEINFO *get_mac_code_page( const FT_SfntName *name )
+static CPTABLEINFO *get_cptable( WORD cp )
 {
     static CPTABLEINFO tables[100];
-    int id = name->encoding_id;
+    unsigned int i;
     USHORT *ptr;
     SIZE_T size;
 
+    for (i = 0; i < ARRAY_SIZE(tables) && tables[i].CodePage; i++)
+        if (tables[i].CodePage == cp) return &tables[i];
+    if (NtGetNlsSectionPtr( 11, cp, NULL, (void **)&ptr, &size )) return NULL;
+    if (i == ARRAY_SIZE(tables)) ERR( "too many code pages\n" );
+    RtlInitCodePageTable( ptr, &tables[i] );
+    return &tables[i];
+}
+
+static CPTABLEINFO *get_mac_code_page( const FT_SfntName *name )
+{
+    int id = name->encoding_id;
+
     if (name->encoding_id == TT_MAC_ID_SIMPLIFIED_CHINESE) id = 8;  /* special case */
-    if (id >= ARRAY_SIZE(tables)) return NULL;
-    if (!tables[id].CodePage)
-    {
-        if (NtGetNlsSectionPtr( 11, 10000 + id, NULL, (void **)&ptr, &size )) return NULL;
-        RtlInitCodePageTable( ptr, &tables[id] );
-    }
-    return &tables[id];
+    return get_cptable( 10000 + id );
 }
 
 static int match_name_table_language( const FT_SfntName *name, LANGID lang )
@@ -1144,9 +1150,6 @@ static BOOL search_face_name_callback( LANGID langid, struct opentype_name *name
 
 static WCHAR *decode_opentype_name( struct opentype_name *name )
 {
-    CPTABLEINFO codepage_info;
-    USHORT *codepage_ptr;
-    SIZE_T codepage_size;
     WCHAR buffer[512];
     DWORD len;
 
@@ -1158,11 +1161,10 @@ static WCHAR *decode_opentype_name( struct opentype_name *name )
     }
     else
     {
-        NtGetNlsSectionPtr( 11, name->codepage, NULL, (void **)&codepage_ptr, &codepage_size );
-        RtlInitCodePageTable( codepage_ptr, &codepage_info );
-        RtlCustomCPToUnicodeN( &codepage_info, buffer, sizeof(buffer), &len, name->bytes, name->length );
+        CPTABLEINFO *cptable = get_cptable( name->codepage );
+        if (!cptable) return NULL;
+        RtlCustomCPToUnicodeN( cptable, buffer, sizeof(buffer), &len, name->bytes, name->length );
         len /= sizeof(WCHAR);
-        NtUnmapViewOfSection( GetCurrentProcess(), codepage_ptr );
     }
 
     buffer[ARRAY_SIZE(buffer) - 1] = 0;
