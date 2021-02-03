@@ -3316,3 +3316,91 @@ DWORD WINAPI MFMapDXGIFormatToDX9Format(DXGI_FORMAT dxgi_format)
             return 0;
     }
 }
+
+/***********************************************************************
+ *      MFMapDX9FormatToDXGIFormat (mfplat.@)
+ */
+DXGI_FORMAT WINAPI MFMapDX9FormatToDXGIFormat(DWORD format)
+{
+    switch (format)
+    {
+        case D3DFMT_A32B32G32R32F:
+            return DXGI_FORMAT_R32G32B32A32_FLOAT;
+        case D3DFMT_A16B16G16R16F:
+            return DXGI_FORMAT_R16G16B16A16_FLOAT;
+        case D3DFMT_A16B16G16R16:
+            return DXGI_FORMAT_R16G16B16A16_UNORM;
+        case D3DFMT_Q16W16V16U16:
+            return DXGI_FORMAT_R16G16B16A16_SNORM;
+        case D3DFMT_G32R32F:
+            return DXGI_FORMAT_R32G32_FLOAT;
+        case D3DFMT_A2B10G10R10:
+            return DXGI_FORMAT_R10G10B10A2_UNORM;
+        case D3DFMT_Q8W8V8U8:
+            return DXGI_FORMAT_R8G8B8A8_SNORM;
+        case D3DFMT_G16R16F:
+            return DXGI_FORMAT_R16G16_FLOAT;
+        case D3DFMT_G16R16:
+            return DXGI_FORMAT_R16G16_UNORM;
+        case D3DFMT_V16U16:
+            return DXGI_FORMAT_R16G16_SNORM;
+        case D3DFMT_D32F_LOCKABLE:
+            return DXGI_FORMAT_D32_FLOAT;
+        case D3DFMT_R32F:
+            return DXGI_FORMAT_R32_FLOAT;
+        case D3DFMT_D24S8:
+            return DXGI_FORMAT_D24_UNORM_S8_UINT;
+        case D3DFMT_V8U8:
+            return DXGI_FORMAT_R8G8_SNORM;
+        case D3DFMT_R16F:
+            return DXGI_FORMAT_R16_FLOAT;
+        case D3DFMT_L16:
+            return DXGI_FORMAT_R16_UNORM;
+        case D3DFMT_L8:
+            return DXGI_FORMAT_R8_UNORM;
+        case D3DFMT_A8:
+            return DXGI_FORMAT_A8_UNORM;
+        case D3DFMT_DXT1:
+            return DXGI_FORMAT_BC1_UNORM;
+        case D3DFMT_DXT2:
+            return DXGI_FORMAT_BC2_UNORM;
+        case D3DFMT_DXT4:
+            return DXGI_FORMAT_BC3_UNORM;
+        case D3DFMT_A8R8G8B8:
+            return DXGI_FORMAT_B8G8R8A8_UNORM;
+        case D3DFMT_X8R8G8B8:
+            return DXGI_FORMAT_B8G8R8X8_UNORM;
+        case MAKEFOURCC('A','Y','U','V'):
+            return DXGI_FORMAT_AYUV;
+        case MAKEFOURCC('Y','4','1','0'):
+            return DXGI_FORMAT_Y410;
+        case MAKEFOURCC('Y','4','1','6'):
+            return DXGI_FORMAT_Y416;
+        case MAKEFOURCC('N','V','1','2'):
+            return DXGI_FORMAT_NV12;
+        case MAKEFOURCC('P','0','1','0'):
+            return DXGI_FORMAT_P010;
+        case MAKEFOURCC('P','0','1','6'):
+            return DXGI_FORMAT_P016;
+        case MAKEFOURCC('4','2','0','O'):
+            return DXGI_FORMAT_420_OPAQUE;
+        case D3DFMT_YUY2:
+            return DXGI_FORMAT_YUY2;
+        case MAKEFOURCC('Y','2','1','0'):
+            return DXGI_FORMAT_Y210;
+        case MAKEFOURCC('Y','2','1','6'):
+            return DXGI_FORMAT_Y216;
+        case MAKEFOURCC('N','V','1','1'):
+            return DXGI_FORMAT_NV11;
+        case MAKEFOURCC('A','I','4','4'):
+            return DXGI_FORMAT_AI44;
+        case MAKEFOURCC('I','A','4','4'):
+            return DXGI_FORMAT_IA44;
+        case D3DFMT_P8:
+            return DXGI_FORMAT_P8;
+        case D3DFMT_A8P8:
+            return DXGI_FORMAT_A8P8;
+        default:
+            return DXGI_FORMAT_UNKNOWN;
+    }
+}

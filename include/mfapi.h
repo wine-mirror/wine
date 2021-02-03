@@ -553,6 +553,7 @@ HRESULT WINAPI MFInitAttributesFromBlob(IMFAttributes *attributes, const UINT8 *
 HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WAVEFORMATEX *format, UINT32 size);
 HRESULT WINAPI MFInvokeCallback(IMFAsyncResult *result);
 HRESULT WINAPI MFLockPlatform(void);
+DXGI_FORMAT WINAPI MFMapDX9FormatToDXGIFormat(DWORD format);
 DWORD WINAPI MFMapDXGIFormatToDX9Format(DXGI_FORMAT dxgi_format);
 HRESULT WINAPI MFPutWaitingWorkItem(HANDLE event, LONG priority, IMFAsyncResult *result, MFWORKITEM_KEY *key);
 HRESULT WINAPI MFPutWorkItem(DWORD queue, IMFAsyncCallback *callback, IUnknown *state);
