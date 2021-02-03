@@ -74,12 +74,37 @@ struct wg_parser
     bool flushing, sink_connected;
 };
 
+enum wg_parser_event_type
+{
+    WG_PARSER_EVENT_NONE = 0,
+    WG_PARSER_EVENT_BUFFER,
+    WG_PARSER_EVENT_EOS,
+    WG_PARSER_EVENT_SEGMENT,
+};
+
+struct wg_parser_event
+{
+    enum wg_parser_event_type type;
+    union
+    {
+        GstBuffer *buffer;
+        struct
+        {
+            uint64_t position, stop;
+            double rate;
+        } segment;
+    } u;
+};
+
 struct wg_parser_stream
 {
     GstPad *their_src, *post_sink, *post_src, *my_sink;
     GstElement *flip;
     GstSegment *segment;
     GstCaps *caps;
+
+    pthread_cond_t event_cond, event_empty_cond;
+    struct wg_parser_event event;
 };
 
 struct parser
@@ -112,28 +137,6 @@ struct parser
     HRESULT (*source_get_media_type)(struct parser_source *pin, unsigned int index, AM_MEDIA_TYPE *mt);
 };
 
-enum parser_event_type
-{
-    PARSER_EVENT_NONE = 0,
-    PARSER_EVENT_BUFFER,
-    PARSER_EVENT_EOS,
-    PARSER_EVENT_SEGMENT,
-};
-
-struct parser_event
-{
-    enum parser_event_type type;
-    union
-    {
-        GstBuffer *buffer;
-        struct
-        {
-            uint64_t position, stop;
-            double rate;
-        } segment;
-    } u;
-};
-
 struct parser_source
 {
     struct strmbase_source pin;
@@ -144,9 +147,7 @@ struct parser_source
     SourceSeeking seek;
 
     CRITICAL_SECTION flushing_cs;
-    pthread_cond_t event_cond, event_empty_cond;
     bool flushing, eos;
-    struct parser_event event;
     HANDLE thread;
 };
 
@@ -710,9 +711,10 @@ static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
     return ret;
 }
 
-static GstFlowReturn queue_stream_event(struct parser_source *pin, const struct parser_event *event)
+static GstFlowReturn queue_stream_event(struct parser_source *pin, const struct wg_parser_event *event)
 {
     struct wg_parser *parser = impl_from_strmbase_filter(pin->pin.pin.filter)->wg_parser;
+    struct wg_parser_stream *stream = pin->wg_stream;
 
     /* Unlike request_buffer_src() [q.v.], we need to watch for GStreamer
      * flushes here. The difference is that we can be blocked by the streaming
@@ -721,17 +723,17 @@ static GstFlowReturn queue_stream_event(struct parser_source *pin, const struct 
      * is solved by flushing the upstream source. */
 
     pthread_mutex_lock(&parser->mutex);
-    while (!pin->flushing && pin->event.type != PARSER_EVENT_NONE)
-        pthread_cond_wait(&pin->event_empty_cond, &parser->mutex);
+    while (!pin->flushing && stream->event.type != WG_PARSER_EVENT_NONE)
+        pthread_cond_wait(&stream->event_empty_cond, &parser->mutex);
     if (pin->flushing)
     {
         pthread_mutex_unlock(&parser->mutex);
         GST_DEBUG("Filter is flushing; discarding event.");
         return GST_FLOW_FLUSHING;
     }
-    pin->event = *event;
+    stream->event = *event;
     pthread_mutex_unlock(&parser->mutex);
-    pthread_cond_signal(&pin->event_cond);
+    pthread_cond_signal(&stream->event_cond);
     GST_LOG("Event queued.");
     return GST_FLOW_OK;
 }
@@ -750,7 +752,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
         case GST_EVENT_SEGMENT:
             if (pin->pin.pin.peer)
             {
-                struct parser_event stream_event;
+                struct wg_parser_event stream_event;
                 const GstSegment *segment;
 
                 gst_event_parse_segment(event, &segment);
@@ -763,7 +765,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
 
                 gst_segment_copy_into(segment, stream->segment);
 
-                stream_event.type = PARSER_EVENT_SEGMENT;
+                stream_event.type = WG_PARSER_EVENT_SEGMENT;
                 stream_event.u.segment.position = segment->position / 100;
                 stream_event.u.segment.stop = segment->stop / 100;
                 stream_event.u.segment.rate = segment->rate * segment->applied_rate;
@@ -774,9 +776,9 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
         case GST_EVENT_EOS:
             if (pin->pin.pin.peer)
             {
-                struct parser_event stream_event;
+                struct wg_parser_event stream_event;
 
-                stream_event.type = PARSER_EVENT_EOS;
+                stream_event.type = WG_PARSER_EVENT_EOS;
                 queue_stream_event(pin, &stream_event);
             }
             else
@@ -794,20 +796,20 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
                 pthread_mutex_lock(&parser->mutex);
 
                 pin->flushing = true;
-                pthread_cond_signal(&pin->event_empty_cond);
+                pthread_cond_signal(&stream->event_empty_cond);
 
-                switch (pin->event.type)
+                switch (stream->event.type)
                 {
-                    case PARSER_EVENT_NONE:
-                    case PARSER_EVENT_EOS:
-                    case PARSER_EVENT_SEGMENT:
+                    case WG_PARSER_EVENT_NONE:
+                    case WG_PARSER_EVENT_EOS:
+                    case WG_PARSER_EVENT_SEGMENT:
                         break;
 
-                    case PARSER_EVENT_BUFFER:
-                        gst_buffer_unref(pin->event.u.buffer);
+                    case WG_PARSER_EVENT_BUFFER:
+                        gst_buffer_unref(stream->event.u.buffer);
                         break;
                 }
-                pin->event.type = PARSER_EVENT_NONE;
+                stream->event.type = WG_PARSER_EVENT_NONE;
 
                 pthread_mutex_unlock(&parser->mutex);
             }
@@ -897,7 +899,7 @@ static void *push_data(void *iface)
 static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *buffer)
 {
     struct parser_source *pin = gst_pad_get_element_private(pad);
-    struct parser_event stream_event;
+    struct wg_parser_event stream_event;
     GstFlowReturn ret;
 
     GST_LOG("pin %p, buffer %p.", pin, buffer);
@@ -908,7 +910,7 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *bu
         return GST_FLOW_OK;
     }
 
-    stream_event.type = PARSER_EVENT_BUFFER;
+    stream_event.type = WG_PARSER_EVENT_BUFFER;
     stream_event.u.buffer = buffer;
     /* Transfer our reference to the buffer to the thread. */
     if ((ret = queue_stream_event(pin, &stream_event)) != GST_FLOW_OK)
@@ -1044,15 +1046,16 @@ static void send_buffer(struct parser_source *pin, GstBuffer *buf)
     gst_buffer_unref(buf);
 }
 
-static bool get_stream_event(struct parser_source *pin, struct parser_event *event)
+static bool get_stream_event(struct parser_source *pin, struct wg_parser_event *event)
 {
     struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
+    struct wg_parser_stream *stream = pin->wg_stream;
     struct wg_parser *parser = filter->wg_parser;
 
     pthread_mutex_lock(&parser->mutex);
 
-    while (!parser->flushing && pin->event.type == PARSER_EVENT_NONE)
-        pthread_cond_wait(&pin->event_cond, &parser->mutex);
+    while (!parser->flushing && stream->event.type == WG_PARSER_EVENT_NONE)
+        pthread_cond_wait(&stream->event_cond, &parser->mutex);
 
     if (parser->flushing)
     {
@@ -1061,11 +1064,11 @@ static bool get_stream_event(struct parser_source *pin, struct parser_event *eve
         return false;
     }
 
-    *event = pin->event;
-    pin->event.type = PARSER_EVENT_NONE;
+    *event = stream->event;
+    stream->event.type = WG_PARSER_EVENT_NONE;
 
     pthread_mutex_unlock(&parser->mutex);
-    pthread_cond_signal(&pin->event_empty_cond);
+    pthread_cond_signal(&stream->event_empty_cond);
 
     return true;
 }
@@ -1079,7 +1082,7 @@ static DWORD CALLBACK stream_thread(void *arg)
 
     while (filter->streaming)
     {
-        struct parser_event event;
+        struct wg_parser_event event;
 
         EnterCriticalSection(&pin->flushing_cs);
 
@@ -1093,20 +1096,20 @@ static DWORD CALLBACK stream_thread(void *arg)
 
         switch (event.type)
         {
-            case PARSER_EVENT_BUFFER:
+            case WG_PARSER_EVENT_BUFFER:
                 send_buffer(pin, event.u.buffer);
                 break;
 
-            case PARSER_EVENT_EOS:
+            case WG_PARSER_EVENT_EOS:
                 IPin_EndOfStream(pin->pin.pin.peer);
                 break;
 
-            case PARSER_EVENT_SEGMENT:
+            case WG_PARSER_EVENT_SEGMENT:
                 IPin_NewSegment(pin->pin.pin.peer, event.u.segment.position,
                         event.u.segment.stop, event.u.segment.rate);
                 break;
 
-            case PARSER_EVENT_NONE:
+            case WG_PARSER_EVENT_NONE:
                 assert(0);
         }
 
@@ -1785,7 +1788,7 @@ static HRESULT parser_cleanup_stream(struct strmbase_filter *iface)
         if (!pin->pin.pin.peer)
             continue;
 
-        pthread_cond_signal(&pin->event_cond);
+        pthread_cond_signal(&pin->wg_stream->event_cond);
     }
 
     for (i = 0; i < filter->source_count; ++i)
@@ -2187,7 +2190,7 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
         {
             if (filter->sources[i]->pin.pin.peer)
             {
-                pthread_cond_signal(&pin->event_cond);
+                pthread_cond_signal(&stream->event_cond);
                 IPin_BeginFlush(filter->sources[i]->pin.pin.peer);
             }
         }
@@ -2468,8 +2471,8 @@ static void free_source_pin(struct parser_source *pin)
     gst_object_unref(stream->my_sink);
     gst_segment_free(stream->segment);
 
-    pthread_cond_destroy(&pin->event_cond);
-    pthread_cond_destroy(&pin->event_empty_cond);
+    pthread_cond_destroy(&stream->event_cond);
+    pthread_cond_destroy(&stream->event_empty_cond);
 
     free(stream);
 
@@ -2517,8 +2520,8 @@ static struct parser_source *create_pin(struct parser *filter, const WCHAR *name
     pin->IQualityControl_iface.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
     strmbase_seeking_init(&pin->seek, &GST_Seeking_Vtbl, GST_ChangeStop,
             GST_ChangeCurrent, GST_ChangeRate);
-    pthread_cond_init(&pin->event_cond, NULL);
-    pthread_cond_init(&pin->event_empty_cond, NULL);
+    pthread_cond_init(&stream->event_cond, NULL);
+    pthread_cond_init(&stream->event_empty_cond, NULL);
     BaseFilterImpl_IncrementPinVersion(&filter->filter);
 
     InitializeCriticalSection(&pin->flushing_cs);
@@ -2551,7 +2554,7 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     for (i = 0; i < This->source_count; ++i)
     {
         This->sources[i]->flushing = true;
-        pthread_cond_signal(&This->sources[i]->event_empty_cond);
+        pthread_cond_signal(&This->sources[i]->wg_stream->event_empty_cond);
     }
     pthread_mutex_unlock(&parser->mutex);
 
