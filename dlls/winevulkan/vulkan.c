@@ -1940,6 +1940,9 @@ void WINAPI wine_vkDestroyDebugUtilsMessengerEXT(
 
     object = wine_debug_utils_messenger_from_handle(messenger);
 
+    if (!object)
+        return;
+
     instance->funcs.p_vkDestroyDebugUtilsMessengerEXT(instance->instance, object->debug_messenger, NULL);
     WINE_VK_REMOVE_HANDLE_MAPPING(instance, object);
 
