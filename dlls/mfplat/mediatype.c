@@ -20,10 +20,10 @@
 
 #include "mfplat_private.h"
 
+#include "dxva2api.h"
 #include "initguid.h"
 #include "ks.h"
 #include "ksmedia.h"
-#include "dxva2api.h"
 
 #include "wine/debug.h"
 

@@ -20,8 +20,13 @@
 
 #include "mfplat_private.h"
 #include "rtworkq.h"
+#include "d3d9.h"
+#include "d3d11.h"
+#include "initguid.h"
+#include "dxva2api.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -49,6 +54,54 @@ struct sample
     IRtwqAsyncResult *tracked_result;
     LONG tracked_refcount;
 };
+
+struct sample_allocator
+{
+    IMFVideoSampleAllocatorEx IMFVideoSampleAllocatorEx_iface;
+    IMFVideoSampleAllocatorCallback IMFVideoSampleAllocatorCallback_iface;
+    IMFAsyncCallback tracking_callback;
+    LONG refcount;
+
+    IMFVideoSampleAllocatorNotify *callback;
+    IDirect3DDeviceManager9 *d3d9_device_manager;
+    IMFDXGIDeviceManager *dxgi_device_manager;
+
+    struct
+    {
+        unsigned int width;
+        unsigned int height;
+        D3DFORMAT d3d9_format;
+        DXGI_FORMAT dxgi_format;
+        unsigned int buffer_count;
+    } frame_desc;
+
+    unsigned int free_sample_count;
+    unsigned int cold_sample_count;
+    struct list free_samples;
+    struct list used_samples;
+    CRITICAL_SECTION cs;
+};
+
+struct queued_sample
+{
+    struct list entry;
+    IMFSample *sample;
+};
+
+static struct sample_allocator *impl_from_IMFVideoSampleAllocatorEx(IMFVideoSampleAllocatorEx *iface)
+{
+    return CONTAINING_RECORD(iface, struct sample_allocator, IMFVideoSampleAllocatorEx_iface);
+}
+
+static struct sample_allocator *impl_from_IMFVideoSampleAllocatorCallback(IMFVideoSampleAllocatorCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct sample_allocator, IMFVideoSampleAllocatorCallback_iface);
+}
+
+static struct sample_allocator *impl_from_IMFAsyncCallback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct sample_allocator, tracking_callback);
+}
 
 static struct sample *impl_from_IMFSample(IMFSample *iface)
 {
@@ -1004,4 +1057,622 @@ HRESULT WINAPI MFCreateTrackedSample(IMFTrackedSample **sample)
     *sample = &object->IMFTrackedSample_iface;
 
     return S_OK;
+}
+
+static HRESULT WINAPI sample_allocator_QueryInterface(IMFVideoSampleAllocatorEx *iface, REFIID riid, void **obj)
+{
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorEx(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IMFVideoSampleAllocatorEx) ||
+            IsEqualIID(riid, &IID_IMFVideoSampleAllocator) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = &allocator->IMFVideoSampleAllocatorEx_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFVideoSampleAllocatorCallback))
+    {
+        *obj = &allocator->IMFVideoSampleAllocatorCallback_iface;
+    }
+    else
+    {
+        WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*obj);
+    return S_OK;
+}
+
+static ULONG WINAPI sample_allocator_AddRef(IMFVideoSampleAllocatorEx *iface)
+{
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorEx(iface);
+    ULONG refcount = InterlockedIncrement(&allocator->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static void sample_allocator_release_samples(struct sample_allocator *allocator)
+{
+    struct queued_sample *iter, *iter2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &allocator->free_samples, struct queued_sample, entry)
+    {
+        list_remove(&iter->entry);
+        IMFSample_Release(iter->sample);
+        heap_free(iter);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &allocator->used_samples, struct queued_sample, entry)
+    {
+        list_remove(&iter->entry);
+        heap_free(iter);
+    }
+}
+
+static ULONG WINAPI sample_allocator_Release(IMFVideoSampleAllocatorEx *iface)
+{
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorEx(iface);
+    ULONG refcount = InterlockedDecrement(&allocator->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        if (allocator->callback)
+            IMFVideoSampleAllocatorNotify_Release(allocator->callback);
+        if (allocator->d3d9_device_manager)
+            IDirect3DDeviceManager9_Release(allocator->d3d9_device_manager);
+        if (allocator->dxgi_device_manager)
+            IMFDXGIDeviceManager_Release(allocator->dxgi_device_manager);
+        sample_allocator_release_samples(allocator);
+        DeleteCriticalSection(&allocator->cs);
+        heap_free(allocator);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI sample_allocator_SetDirectXManager(IMFVideoSampleAllocatorEx *iface,
+        IUnknown *manager)
+{
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorEx(iface);
+    IDirect3DDeviceManager9 *d3d9_device_manager = NULL;
+    IMFDXGIDeviceManager *dxgi_device_manager = NULL;
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", iface, manager);
+
+    if (manager)
+    {
+        if (FAILED(hr = IUnknown_QueryInterface(manager, &IID_IMFDXGIDeviceManager, (void **)&dxgi_device_manager)))
+        {
+            hr = IUnknown_QueryInterface(manager, &IID_IDirect3DDeviceManager9, (void **)&d3d9_device_manager);
+        }
+
+        if (FAILED(hr))
+            return hr;
+    }
+
+    EnterCriticalSection(&allocator->cs);
+
+    if (allocator->d3d9_device_manager)
+        IDirect3DDeviceManager9_Release(allocator->d3d9_device_manager);
+    if (allocator->dxgi_device_manager)
+        IMFDXGIDeviceManager_Release(allocator->dxgi_device_manager);
+    allocator->d3d9_device_manager = NULL;
+    allocator->dxgi_device_manager = NULL;
+
+    if (dxgi_device_manager)
+        allocator->dxgi_device_manager = dxgi_device_manager;
+    else if (d3d9_device_manager)
+        allocator->d3d9_device_manager = d3d9_device_manager;
+
+    LeaveCriticalSection(&allocator->cs);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI sample_allocator_UninitializeSampleAllocator(IMFVideoSampleAllocatorEx *iface)
+{
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorEx(iface);
+
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&allocator->cs);
+
+    sample_allocator_release_samples(allocator);
+    allocator->free_sample_count = 0;
+
+    LeaveCriticalSection(&allocator->cs);
+
+    return S_OK;
+}
+
+struct surface_service
+{
+    IDirectXVideoProcessorService *dxva_service;
+    ID3D11Device *d3d11_device;
+    HANDLE hdevice;
+};
+
+static HRESULT sample_allocator_get_surface_service(struct sample_allocator *allocator, struct surface_service *service)
+{
+    HRESULT hr = S_OK;
+
+    memset(service, 0, sizeof(*service));
+
+    if (allocator->d3d9_device_manager)
+    {
+        if (SUCCEEDED(hr = IDirect3DDeviceManager9_OpenDeviceHandle(allocator->d3d9_device_manager, &service->hdevice)))
+        {
+            if (FAILED(hr = IDirect3DDeviceManager9_GetVideoService(allocator->d3d9_device_manager, service->hdevice,
+                    &IID_IDirectXVideoProcessorService, (void **)&service->dxva_service)))
+            {
+                WARN("Failed to get DXVA processor service, hr %#x.\n", hr);
+                IDirect3DDeviceManager9_CloseDeviceHandle(allocator->d3d9_device_manager, service->hdevice);
+            }
+        }
+    }
+    else if (allocator->dxgi_device_manager)
+    {
+        if (SUCCEEDED(hr = IMFDXGIDeviceManager_OpenDeviceHandle(allocator->dxgi_device_manager, &service->hdevice)))
+        {
+            if (FAILED(hr = IMFDXGIDeviceManager_GetVideoService(allocator->dxgi_device_manager, service->hdevice,
+                    &IID_ID3D11Device, (void **)&service->d3d11_device)))
+            {
+                WARN("Failed to get D3D11 device, hr %#x.\n", hr);
+                IMFDXGIDeviceManager_CloseDeviceHandle(allocator->dxgi_device_manager, service->hdevice);
+            }
+        }
+    }
+
+    if (FAILED(hr))
+        memset(service, 0, sizeof(*service));
+
+    return hr;
+}
+
+static void sample_allocator_release_surface_service(struct sample_allocator *allocator,
+        struct surface_service *service)
+{
+    if (service->dxva_service)
+        IDirectXVideoProcessorService_Release(service->dxva_service);
+    if (service->d3d11_device)
+        ID3D11Device_Release(service->d3d11_device);
+
+    if (allocator->d3d9_device_manager)
+        IDirect3DDeviceManager9_CloseDeviceHandle(allocator->d3d9_device_manager, service->hdevice);
+    else if (allocator->dxgi_device_manager)
+        IMFDXGIDeviceManager_CloseDeviceHandle(allocator->dxgi_device_manager, service->hdevice);
+}
+
+static HRESULT sample_allocator_allocate_sample(struct sample_allocator *allocator, const struct surface_service *service,
+        IMFSample **sample)
+{
+    struct queued_sample *queued_sample = heap_alloc(sizeof(*queued_sample));
+    IMFTrackedSample *tracked_sample;
+    IMFMediaBuffer *buffer;
+    unsigned int i;
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateTrackedSample(&tracked_sample)))
+    {
+        return hr;
+    }
+
+    IMFTrackedSample_QueryInterface(tracked_sample, &IID_IMFSample, (void **)sample);
+    IMFTrackedSample_Release(tracked_sample);
+
+    for (i = 0; i < allocator->frame_desc.buffer_count; ++i)
+    {
+        if (service->dxva_service)
+        {
+            IDirect3DSurface9 *surface;
+
+            if (SUCCEEDED(hr = IDirectXVideoProcessorService_CreateSurface(service->dxva_service, allocator->frame_desc.width,
+                    allocator->frame_desc.height, 0, allocator->frame_desc.d3d9_format, D3DPOOL_DEFAULT, 0,
+                    DXVA2_VideoProcessorRenderTarget, &surface, NULL)))
+            {
+                hr = MFCreateDXSurfaceBuffer(&IID_IDirect3DSurface9, (IUnknown *)surface, FALSE, &buffer);
+                IDirect3DSurface9_Release(surface);
+            }
+        }
+        else if (service->d3d11_device)
+        {
+            D3D11_TEXTURE2D_DESC desc = { 0 };
+            ID3D11Texture2D *texture;
+
+            desc.Width = allocator->frame_desc.width;
+            desc.Height = allocator->frame_desc.height;
+            desc.MipLevels = 1;
+            desc.ArraySize = 1;
+            desc.Format = allocator->frame_desc.dxgi_format;
+            desc.SampleDesc.Count = 1;
+            desc.SampleDesc.Quality = 0;
+            desc.Usage = 0;
+            desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+
+            if (SUCCEEDED(hr = ID3D11Device_CreateTexture2D(service->d3d11_device, &desc, NULL, &texture)))
+            {
+                hr = MFCreateDXGISurfaceBuffer(&IID_ID3D11Texture2D, (IUnknown *)texture, 0, FALSE, &buffer);
+                ID3D11Texture2D_Release(texture);
+            }
+        }
+        else
+        {
+            hr = MFCreate2DMediaBuffer(allocator->frame_desc.width, allocator->frame_desc.height,
+                    allocator->frame_desc.d3d9_format, FALSE, &buffer);
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IMFSample_AddBuffer(*sample, buffer);
+            IMFMediaBuffer_Release(buffer);
+        }
+    }
+
+    return hr;
+}
+
+static HRESULT sample_allocator_initialize(struct sample_allocator *allocator, unsigned int sample_count,
+        unsigned int max_sample_count, IMFAttributes *attributes, IMFMediaType *media_type)
+{
+    struct surface_service service;
+    unsigned int i;
+    GUID major, subtype;
+    UINT64 frame_size;
+    IMFSample *sample;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFMediaType_GetMajorType(media_type, &major)))
+        return hr;
+
+    if (!IsEqualGUID(&major, &MFMediaType_Video))
+        return MF_E_INVALIDMEDIATYPE;
+
+    if (FAILED(hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &frame_size)))
+        return hr;
+
+    if (FAILED(hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &subtype)))
+        return hr;
+
+    if (sample_count > max_sample_count)
+        return E_INVALIDARG;
+
+    sample_count = max(1, sample_count);
+    max_sample_count = max(1, max_sample_count);
+
+    if (attributes)
+        FIXME("Initialization attributes ignored.\n");
+
+    allocator->frame_desc.d3d9_format = subtype.Data1;
+    allocator->frame_desc.dxgi_format = MFMapDX9FormatToDXGIFormat(allocator->frame_desc.d3d9_format);
+    allocator->frame_desc.width = frame_size >> 32;
+    allocator->frame_desc.height = frame_size;
+
+    if (FAILED(hr = sample_allocator_get_surface_service(allocator, &service)))
+        return hr;
+
+    sample_allocator_release_samples(allocator);
+
+    for (i = 0; i < sample_count; ++i)
+    {
+        struct queued_sample *queued_sample;
+
+        if (SUCCEEDED(hr = sample_allocator_allocate_sample(allocator, &service, &sample)))
+        {
+            queued_sample = heap_alloc(sizeof(*queued_sample));
+            queued_sample->sample = sample;
+            list_add_tail(&allocator->free_samples, &queued_sample->entry);
+            allocator->free_sample_count++;
+        }
+    }
+    allocator->cold_sample_count = max_sample_count - allocator->free_sample_count;
+
+    sample_allocator_release_surface_service(allocator, &service);
+
+    return hr;
+}
+
+static HRESULT WINAPI sample_allocator_InitializeSampleAllocator(IMFVideoSampleAllocatorEx *iface,
+        DWORD sample_count, IMFMediaType *media_type)
+{
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorEx(iface);
+    HRESULT hr;
+
+    TRACE("%p, %u, %p.\n", iface, sample_count, media_type);
+
+    if (!sample_count)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&allocator->cs);
+
+    hr = sample_allocator_initialize(allocator, sample_count, sample_count, NULL, media_type);
+
+    LeaveCriticalSection(&allocator->cs);
+
+    return hr;
+}
+
+static HRESULT sample_allocator_track_sample(struct sample_allocator *allocator, IMFSample *sample)
+{
+    IMFTrackedSample *tracked_sample;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = IMFSample_QueryInterface(sample, &IID_IMFTrackedSample, (void **)&tracked_sample)))
+    {
+        hr = IMFTrackedSample_SetAllocator(tracked_sample, &allocator->tracking_callback, NULL);
+        IMFTrackedSample_Release(tracked_sample);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI sample_allocator_AllocateSample(IMFVideoSampleAllocatorEx *iface, IMFSample **out)
+{
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorEx(iface);
+    IMFSample *sample;
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", iface, out);
+
+    EnterCriticalSection(&allocator->cs);
+
+    if (list_empty(&allocator->free_samples) && list_empty(&allocator->used_samples))
+        hr = MF_E_NOT_INITIALIZED;
+    else if (list_empty(&allocator->free_samples) && !allocator->cold_sample_count)
+        hr = MF_E_SAMPLEALLOCATOR_EMPTY;
+    else if (!list_empty(&allocator->free_samples))
+    {
+        struct list *head = list_head(&allocator->free_samples);
+
+        sample = LIST_ENTRY(head, struct queued_sample, entry)->sample;
+
+        if (SUCCEEDED(hr = sample_allocator_track_sample(allocator, sample)))
+        {
+            list_remove(head);
+            list_add_tail(&allocator->used_samples, head);
+            allocator->free_sample_count--;
+
+            /* Reference counter is not increased when sample is returned, so next release could trigger
+               tracking condition. This is balanced by incremented reference counter when sample is returned
+               back to the free list. */
+            *out = sample;
+        }
+    }
+    else /* allocator->cold_sample_count != 0 */
+    {
+        struct surface_service service;
+
+        if (SUCCEEDED(hr = sample_allocator_get_surface_service(allocator, &service)))
+        {
+            if (SUCCEEDED(hr = sample_allocator_allocate_sample(allocator, &service, &sample)))
+            {
+                if (SUCCEEDED(hr = sample_allocator_track_sample(allocator, sample)))
+                {
+                    struct queued_sample *queued_sample = heap_alloc(sizeof(*queued_sample));
+
+                    queued_sample->sample = sample;
+                    list_add_tail(&allocator->used_samples, &queued_sample->entry);
+                    allocator->cold_sample_count--;
+
+                    *out = queued_sample->sample;
+                }
+            }
+
+            sample_allocator_release_surface_service(allocator, &service);
+        }
+    }
+
+    LeaveCriticalSection(&allocator->cs);
+
+    return hr;
+}
+
+static HRESULT WINAPI sample_allocator_InitializeSampleAllocatorEx(IMFVideoSampleAllocatorEx *iface, DWORD initial_sample_count,
+        DWORD max_sample_count, IMFAttributes *attributes, IMFMediaType *media_type)
+{
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorEx(iface);
+    HRESULT hr;
+
+    TRACE("%p, %u, %u, %p, %p.\n", iface, initial_sample_count, max_sample_count, attributes, media_type);
+
+    EnterCriticalSection(&allocator->cs);
+
+    hr = sample_allocator_initialize(allocator, initial_sample_count, max_sample_count, attributes, media_type);
+
+    LeaveCriticalSection(&allocator->cs);
+
+    return hr;
+}
+
+static const IMFVideoSampleAllocatorExVtbl sample_allocator_vtbl =
+{
+    sample_allocator_QueryInterface,
+    sample_allocator_AddRef,
+    sample_allocator_Release,
+    sample_allocator_SetDirectXManager,
+    sample_allocator_UninitializeSampleAllocator,
+    sample_allocator_InitializeSampleAllocator,
+    sample_allocator_AllocateSample,
+    sample_allocator_InitializeSampleAllocatorEx,
+};
+
+static HRESULT WINAPI sample_allocator_callback_QueryInterface(IMFVideoSampleAllocatorCallback *iface,
+        REFIID riid, void **obj)
+{
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorCallback(iface);
+    return IMFVideoSampleAllocatorEx_QueryInterface(&allocator->IMFVideoSampleAllocatorEx_iface, riid, obj);
+}
+
+static ULONG WINAPI sample_allocator_callback_AddRef(IMFVideoSampleAllocatorCallback *iface)
+{
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorCallback(iface);
+    return IMFVideoSampleAllocatorEx_AddRef(&allocator->IMFVideoSampleAllocatorEx_iface);
+}
+
+static ULONG WINAPI sample_allocator_callback_Release(IMFVideoSampleAllocatorCallback *iface)
+{
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorCallback(iface);
+    return IMFVideoSampleAllocatorEx_Release(&allocator->IMFVideoSampleAllocatorEx_iface);
+}
+
+static HRESULT WINAPI sample_allocator_callback_SetCallback(IMFVideoSampleAllocatorCallback *iface,
+        IMFVideoSampleAllocatorNotify *callback)
+{
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorCallback(iface);
+
+    TRACE("%p, %p.\n", iface, callback);
+
+    EnterCriticalSection(&allocator->cs);
+    if (allocator->callback)
+        IMFVideoSampleAllocatorNotify_Release(allocator->callback);
+    allocator->callback = callback;
+    if (allocator->callback)
+        IMFVideoSampleAllocatorNotify_AddRef(allocator->callback);
+    LeaveCriticalSection(&allocator->cs);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI sample_allocator_callback_GetFreeSampleCount(IMFVideoSampleAllocatorCallback *iface,
+        LONG *count)
+{
+    struct sample_allocator *allocator = impl_from_IMFVideoSampleAllocatorCallback(iface);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    if (!count)
+        return E_POINTER;
+
+    EnterCriticalSection(&allocator->cs);
+    *count = allocator->free_sample_count;
+    LeaveCriticalSection(&allocator->cs);
+
+    return S_OK;
+}
+
+static const IMFVideoSampleAllocatorCallbackVtbl sample_allocator_callback_vtbl =
+{
+    sample_allocator_callback_QueryInterface,
+    sample_allocator_callback_AddRef,
+    sample_allocator_callback_Release,
+    sample_allocator_callback_SetCallback,
+    sample_allocator_callback_GetFreeSampleCount,
+};
+
+static HRESULT WINAPI sample_allocator_tracking_callback_QueryInterface(IMFAsyncCallback *iface,
+        REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFAsyncCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI sample_allocator_tracking_callback_AddRef(IMFAsyncCallback *iface)
+{
+    struct sample_allocator *allocator = impl_from_IMFAsyncCallback(iface);
+    return IMFVideoSampleAllocatorEx_AddRef(&allocator->IMFVideoSampleAllocatorEx_iface);
+}
+
+static ULONG WINAPI sample_allocator_tracking_callback_Release(IMFAsyncCallback *iface)
+{
+    struct sample_allocator *allocator = impl_from_IMFAsyncCallback(iface);
+    return IMFVideoSampleAllocatorEx_Release(&allocator->IMFVideoSampleAllocatorEx_iface);
+}
+
+static HRESULT WINAPI sample_allocator_tracking_callback_GetParameters(IMFAsyncCallback *iface,
+        DWORD *flags, DWORD *queue)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI sample_allocator_tracking_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    struct sample_allocator *allocator = impl_from_IMFAsyncCallback(iface);
+    struct queued_sample *iter;
+    IUnknown *object = NULL;
+    IMFSample *sample = NULL;
+    HRESULT hr;
+
+    if (FAILED(IMFAsyncResult_GetObject(result, &object)))
+        return E_UNEXPECTED;
+
+    hr = IUnknown_QueryInterface(object, &IID_IMFSample, (void **)&sample);
+    IUnknown_Release(object);
+    if (FAILED(hr))
+        return E_UNEXPECTED;
+
+    EnterCriticalSection(&allocator->cs);
+
+    LIST_FOR_EACH_ENTRY(iter, &allocator->used_samples, struct queued_sample, entry)
+    {
+        if (sample == iter->sample)
+        {
+            list_remove(&iter->entry);
+            list_add_tail(&allocator->free_samples, &iter->entry);
+            IMFSample_AddRef(iter->sample);
+            allocator->free_sample_count++;
+            break;
+        }
+    }
+
+    IMFSample_Release(sample);
+
+    if (allocator->callback)
+        IMFVideoSampleAllocatorNotify_NotifyRelease(allocator->callback);
+
+    LeaveCriticalSection(&allocator->cs);
+
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl sample_allocator_tracking_callback_vtbl =
+{
+    sample_allocator_tracking_callback_QueryInterface,
+    sample_allocator_tracking_callback_AddRef,
+    sample_allocator_tracking_callback_Release,
+    sample_allocator_tracking_callback_GetParameters,
+    sample_allocator_tracking_callback_Invoke,
+};
+
+/***********************************************************************
+ *      MFCreateVideoSampleAllocatorEx (mfplat.@)
+ */
+HRESULT WINAPI MFCreateVideoSampleAllocatorEx(REFIID riid, void **obj)
+{
+    struct sample_allocator *object;
+    HRESULT hr;
+
+    TRACE("%s, %p.\n", debugstr_guid(riid), obj);
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IMFVideoSampleAllocatorEx_iface.lpVtbl = &sample_allocator_vtbl;
+    object->IMFVideoSampleAllocatorCallback_iface.lpVtbl = &sample_allocator_callback_vtbl;
+    object->tracking_callback.lpVtbl = &sample_allocator_tracking_callback_vtbl;
+    object->refcount = 1;
+    object->frame_desc.buffer_count = 1;
+    list_init(&object->used_samples);
+    list_init(&object->free_samples);
+    InitializeCriticalSection(&object->cs);
+
+    hr = IMFVideoSampleAllocatorEx_QueryInterface(&object->IMFVideoSampleAllocatorEx_iface, riid, obj);
+    IMFVideoSampleAllocatorEx_Release(&object->IMFVideoSampleAllocatorEx_iface);
+
+    return hr;
 }

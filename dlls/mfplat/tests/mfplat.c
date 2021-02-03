@@ -6302,7 +6302,7 @@ static void test_sample_allocator(void)
 
     if (!pMFCreateVideoSampleAllocatorEx)
     {
-        skip("MFCreateVideoSampleAllocatorEx() is not available.\n");
+        win_skip("MFCreateVideoSampleAllocatorEx() is not available.\n");
         return;
     }
 
@@ -6392,6 +6392,7 @@ static void test_sample_allocator(void)
 
     hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_cb, &count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
     ok(!count, "Unexpected count %d.\n", count);
 
     check_interface(sample, &IID_IMFTrackedSample, TRUE);
@@ -6500,9 +6501,11 @@ static void test_sample_allocator(void)
     IMFDXGIBuffer_Release(dxgi_buffer);
 
     hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaBuffer_Unlock(buffer);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     IMFSample_Release(sample);
