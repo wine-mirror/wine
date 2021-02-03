@@ -2928,7 +2928,7 @@ static void test_FindFirstFile_wildcards(void)
         {0, "*.. ", ", '.', '..', '..a', '..a.a', '.a', '.a..a', '.a.a', '.aaa', 'a', 'a..a', 'a.a', 'a.a.a', 'aa', 'aaa', 'aaaa'"},
         {1, "*. .", ", '.', '..', 'a', '.a', '..a', 'aa', 'aaa', 'aaaa', '.aaa'"},
         {1, "* ..", ", '.', '..', 'a', '.a', '..a', 'aa', 'aaa', 'aaaa', '.aaa'"},
-        {1, " *..", ", '.aaa'"},
+        {0, " *..", ""},
         {0, "..* ", ", '.', '..', '..a', '..a.a'"},
         {1, "?", ", '.', '..', 'a'"},
         {1, "?.", ", '.', '..', 'a'"},
@@ -2954,23 +2954,26 @@ static void test_FindFirstFile_wildcards(void)
         correct[0] = incorrect[0] = 0;
 
         handle = FindFirstFileA(tests[i].pattern, &find_data);
-        if (handle) do {
-            char* ptr;
-            char quoted[16];
+        if (handle != INVALID_HANDLE_VALUE)
+        {
+            do {
+                char *ptr;
+                char quoted[16];
 
-            sprintf( quoted, ", '%.10s'", find_data.cFileName );
+                sprintf(quoted, ", '%.10s'", find_data.cFileName);
 
-            if ((ptr = strstr(missing, quoted)))
-            {
-                int len = strlen(quoted);
-                while ((ptr[0] = ptr[len]) != 0)
-                    ++ptr;
-                strcat(correct, quoted);
-            }
-            else
-                strcat(incorrect, quoted);
-        } while (FindNextFileA(handle, &find_data));
-        FindClose(handle);
+                if ((ptr = strstr(missing, quoted)))
+                {
+                    int len = strlen(quoted);
+                    while ((ptr[0] = ptr[len]) != 0)
+                        ++ptr;
+                    strcat(correct, quoted);
+                }
+                else
+                    strcat(incorrect, quoted);
+            } while (FindNextFileA(handle, &find_data));
+            FindClose(handle);
+        }
 
         todo_wine_if (tests[i].todo)
         ok(missing[0] == 0 && incorrect[0] == 0,
