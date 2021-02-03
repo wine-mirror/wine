@@ -1493,6 +1493,7 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
     context_invalidate_state(&context_vk->c, STATE_STREAMSRC);
     context_invalidate_state(&context_vk->c, STATE_INDEXBUFFER);
     context_invalidate_state(&context_vk->c, STATE_BLEND_FACTOR);
+    context_invalidate_state(&context_vk->c, STATE_STENCIL_REF);
 
     VK_CALL(vkEndCommandBuffer(buffer->vk_command_buffer));
 
@@ -1701,6 +1702,7 @@ static void wined3d_context_vk_init_graphics_pipeline_key(struct wined3d_context
     static const VkDynamicState dynamic_states[] =
     {
         VK_DYNAMIC_STATE_BLEND_CONSTANTS,
+        VK_DYNAMIC_STATE_STENCIL_REFERENCE,
     };
 
     key = &context_vk->graphics.pipeline_key_vk;
@@ -2076,8 +2078,6 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
                 key->ds_desc.front.compareOp = vk_compare_op_from_wined3d(d->desc.front.func);
                 key->ds_desc.front.compareMask = d->desc.stencil_read_mask;
                 key->ds_desc.front.writeMask = d->desc.stencil_write_mask;
-                key->ds_desc.front.reference = state->stencil_ref
-                        & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
 
                 key->ds_desc.back.failOp = vk_stencil_op_from_wined3d(d->desc.back.fail_op);
                 key->ds_desc.back.passOp = vk_stencil_op_from_wined3d(d->desc.back.pass_op);
@@ -2085,8 +2085,6 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
                 key->ds_desc.back.compareOp = vk_compare_op_from_wined3d(d->desc.back.func);
                 key->ds_desc.back.compareMask = d->desc.stencil_read_mask;
                 key->ds_desc.back.writeMask = d->desc.stencil_write_mask;
-                key->ds_desc.back.reference = state->stencil_ref
-                        & ((1 << state->fb.depth_stencil->format->stencil_size) - 1);
             }
             else
             {
@@ -3031,6 +3029,12 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 
         VK_CALL(vkCmdBindPipeline(vk_command_buffer,
                 VK_PIPELINE_BIND_POINT_GRAPHICS, context_vk->graphics.vk_pipeline));
+    }
+
+    if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_STENCIL_REF) && dsv)
+    {
+        VK_CALL(vkCmdSetStencilReference(vk_command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK,
+            state->stencil_ref & ((1 << dsv->format->stencil_size) - 1)));
     }
 
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_STREAMSRC))
