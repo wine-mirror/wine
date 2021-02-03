@@ -5197,6 +5197,12 @@ const char *debug_d3dstate(DWORD state)
         return "STATE_BLEND";
     if (STATE_IS_BLEND_FACTOR(state))
         return "STATE_BLEND_FACTOR";
+    if (STATE_IS_SAMPLE_MASK(state))
+        return "STATE_SAMPLE_MASK";
+    if (STATE_IS_DEPTH_STENCIL(state))
+        return "STATE_DEPTH_STENCIL";
+    if (STATE_IS_STENCIL_REF(state))
+        return "STATE_STENCIL_REF";
 
     return wine_dbg_sprintf("UNKNOWN_STATE(%#x)", state);
 }
