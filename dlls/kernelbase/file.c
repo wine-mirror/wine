@@ -3528,7 +3528,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFileInformationByHandle( HANDLE file, FILE_INFO
     case FileNameInfo:
     case FileRenameInfo:
     case FileAllocationInfo:
-    case FileEndOfFileInfo:
     case FileStreamInfo:
     case FileIdBothDirectoryInfo:
     case FileIdBothDirectoryRestartInfo:
@@ -3543,6 +3542,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFileInformationByHandle( HANDLE file, FILE_INFO
         SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
         return FALSE;
 
+    case FileEndOfFileInfo:
+        status = NtSetInformationFile( file, &io, info, size, FileEndOfFileInformation );
+        break;
     case FileBasicInfo:
         status = NtSetInformationFile( file, &io, info, size, FileBasicInformation );
         break;
