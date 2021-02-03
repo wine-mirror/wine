@@ -76,6 +76,7 @@ struct wg_parser
 
 struct wg_parser_stream
 {
+    GstPad *their_src, *post_sink, *post_src, *my_sink;
     GstSegment *segment;
 };
 
@@ -138,7 +139,6 @@ struct parser_source
 
     struct wg_parser_stream *wg_stream;
 
-    GstPad *their_src, *post_sink, *post_src, *my_sink;
     GstElement *flip;
     GstCaps *caps;
     SourceSeeking seek;
@@ -1227,16 +1227,16 @@ static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
 
     for (i = 0; i < filter->source_count; ++i)
     {
-        struct parser_source *pin = filter->sources[i];
+        struct wg_parser_stream *stream = filter->sources[i]->wg_stream;
 
-        if (pin->their_src == pad)
+        if (stream->their_src == pad)
         {
-            if (pin->post_sink)
-                gst_pad_unlink(pin->their_src, pin->post_sink);
+            if (stream->post_sink)
+                gst_pad_unlink(stream->their_src, stream->post_sink);
             else
-                gst_pad_unlink(pin->their_src, pin->my_sink);
-            gst_object_unref(pin->their_src);
-            pin->their_src = NULL;
+                gst_pad_unlink(stream->their_src, stream->my_sink);
+            gst_object_unref(stream->their_src);
+            stream->their_src = NULL;
             return;
         }
     }
@@ -1250,6 +1250,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *Th
 {
     static const WCHAR formatW[] = {'S','t','r','e','a','m',' ','%','0','2','u',0};
     struct wg_parser *parser = This->wg_parser;
+    struct wg_parser_stream *stream;
     const char *typename;
     char *name;
     GstCaps *caps;
@@ -1276,6 +1277,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *Th
         ERR("Failed to allocate memory.\n");
         goto out;
     }
+    stream = pin->wg_stream;
 
     if (!strcmp(typename, "video/x-raw"))
     {
@@ -1331,8 +1333,8 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *Th
         gst_element_link(vconv, flip);
         gst_element_link(flip, vconv2);
 
-        pin->post_sink = gst_element_get_static_pad(deinterlace, "sink");
-        pin->post_src = gst_element_get_static_pad(vconv2, "src");
+        stream->post_sink = gst_element_get_static_pad(deinterlace, "sink");
+        stream->post_src = gst_element_get_static_pad(vconv2, "src");
         pin->flip = flip;
     }
     else if (!strcmp(typename, "audio/x-raw"))
@@ -1353,41 +1355,41 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *Th
         gst_bin_add(GST_BIN(parser->container), convert);
         gst_element_sync_state_with_parent(convert);
 
-        pin->post_sink = gst_element_get_static_pad(convert, "sink");
-        pin->post_src = gst_element_get_static_pad(convert, "src");
+        stream->post_sink = gst_element_get_static_pad(convert, "sink");
+        stream->post_src = gst_element_get_static_pad(convert, "src");
     }
 
-    if (pin->post_sink)
+    if (stream->post_sink)
     {
-        if ((ret = gst_pad_link(pad, pin->post_sink)) < 0)
+        if ((ret = gst_pad_link(pad, stream->post_sink)) < 0)
         {
             ERR("Failed to link decodebin source pad to post-processing elements, error %s.\n",
                     gst_pad_link_get_name(ret));
-            gst_object_unref(pin->post_sink);
-            pin->post_sink = NULL;
+            gst_object_unref(stream->post_sink);
+            stream->post_sink = NULL;
             goto out;
         }
 
-        if ((ret = gst_pad_link(pin->post_src, pin->my_sink)) < 0)
+        if ((ret = gst_pad_link(stream->post_src, stream->my_sink)) < 0)
         {
             ERR("Failed to link post-processing elements to our sink pad, error %s.\n",
                     gst_pad_link_get_name(ret));
-            gst_object_unref(pin->post_src);
-            pin->post_src = NULL;
-            gst_object_unref(pin->post_sink);
-            pin->post_sink = NULL;
+            gst_object_unref(stream->post_src);
+            stream->post_src = NULL;
+            gst_object_unref(stream->post_sink);
+            stream->post_sink = NULL;
             goto out;
         }
     }
-    else if ((ret = gst_pad_link(pad, pin->my_sink)) < 0)
+    else if ((ret = gst_pad_link(pad, stream->my_sink)) < 0)
     {
         ERR("Failed to link decodebin source pad to our sink pad, error %s.\n",
                 gst_pad_link_get_name(ret));
         goto out;
     }
 
-    gst_pad_set_active(pin->my_sink, 1);
-    gst_object_ref(pin->their_src = pad);
+    gst_pad_set_active(stream->my_sink, 1);
+    gst_object_ref(stream->their_src = pad);
 out:
     gst_caps_unref(caps);
 }
@@ -1632,8 +1634,9 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
     for (i = 0; i < This->source_count; ++i)
     {
         struct parser_source *pin = This->sources[i];
+        struct wg_parser_stream *stream = pin->wg_stream;
 
-        pin->seek.llDuration = pin->seek.llStop = query_duration(pin->their_src);
+        pin->seek.llDuration = pin->seek.llStop = query_duration(stream->their_src);
         pin->seek.llCurrent = 0;
         while (!pin->caps && !parser->error)
             pthread_cond_wait(&parser->init_cond, &parser->mutex);
@@ -1740,7 +1743,7 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
     seeking = &filter->sources[0]->seek;
     if (seeking->llStop && seeking->llStop != seeking->llDuration)
         stop_type = GST_SEEK_TYPE_SET;
-    gst_pad_push_event(filter->sources[0]->my_sink, gst_event_new_seek(
+    gst_pad_push_event(filter->sources[0]->wg_stream->my_sink, gst_event_new_seek(
             seeking->dRate, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
             GST_SEEK_TYPE_SET, seeking->llCurrent * 100,
             stop_type, seeking->llStop * 100));
@@ -2123,10 +2126,11 @@ static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface)
 static HRESULT WINAPI GST_ChangeRate(IMediaSeeking *iface)
 {
     struct parser_source *This = impl_from_IMediaSeeking(iface);
+    struct wg_parser_stream *stream = This->wg_stream;
     GstEvent *ev = gst_event_new_seek(This->seek.dRate, GST_FORMAT_TIME, 0, GST_SEEK_TYPE_NONE, -1, GST_SEEK_TYPE_NONE, -1);
     TRACE("(%p) New rate %g\n", This, This->seek.dRate);
     mark_wine_thread();
-    gst_pad_push_event(This->my_sink, ev);
+    gst_pad_push_event(stream->my_sink, ev);
     return S_OK;
 }
 
@@ -2153,6 +2157,7 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
 {
     GstSeekType current_type = GST_SEEK_TYPE_SET, stop_type = GST_SEEK_TYPE_SET;
     struct parser_source *pin = impl_from_IMediaSeeking(iface);
+    struct wg_parser_stream *stream = pin->wg_stream;
     struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
     struct wg_parser *parser = filter->wg_parser;
     GstSeekFlags flags = 0;
@@ -2212,7 +2217,7 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
     if ((stop_flags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_NoPositioning)
         stop_type = GST_SEEK_TYPE_NONE;
 
-    if (!gst_pad_push_event(pin->my_sink, gst_event_new_seek(pin->seek.dRate, GST_FORMAT_TIME, flags,
+    if (!gst_pad_push_event(stream->my_sink, gst_event_new_seek(pin->seek.dRate, GST_FORMAT_TIME, flags,
             current_type, pin->seek.llCurrent * 100, stop_type, pin->seek.llStop * 100)))
     {
         ERR("Failed to seek (current %s, stop %s).\n",
@@ -2296,6 +2301,7 @@ static ULONG WINAPI GST_QualityControl_Release(IQualityControl *iface)
 static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality q)
 {
     struct parser_source *pin = impl_from_IQualityControl(iface);
+    struct wg_parser_stream *stream = pin->wg_stream;
     GstQOSType type = GST_QOS_TYPE_OVERFLOW;
     GstClockTime timestamp;
     GstClockTimeDiff diff;
@@ -2343,7 +2349,7 @@ static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFil
     if (!(event = gst_event_new_qos(type, 1000.0 / q.Proportion, diff, timestamp)))
         ERR("Failed to create QOS event.\n");
 
-    gst_pad_push_event(pin->my_sink, event);
+    gst_pad_push_event(stream->my_sink, event);
 
     return S_OK;
 }
@@ -2402,6 +2408,7 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
         IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props)
 {
     struct parser_source *pin = impl_source_from_IPin(&iface->pin.IPin_iface);
+    struct wg_parser_stream *stream = pin->wg_stream;
     unsigned int buffer_size = 16384;
     ALLOCATOR_PROPERTIES ret_props;
 
@@ -2422,7 +2429,7 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
         buffer_size = format->nAvgBytesPerSec;
     }
 
-    gst_pad_push_event(pin->my_sink, gst_event_new_reconfigure());
+    gst_pad_push_event(stream->my_sink, gst_event_new_reconfigure());
     /* We do need to drop any buffers that might have been sent with the old
      * caps, but this will be handled in parser_init_stream(). */
 
@@ -2443,21 +2450,21 @@ static void free_source_pin(struct parser_source *pin)
         IPin_Disconnect(&pin->pin.pin.IPin_iface);
     }
 
-    if (pin->their_src)
+    if (stream->their_src)
     {
-        if (pin->post_sink)
+        if (stream->post_sink)
         {
-            gst_pad_unlink(pin->their_src, pin->post_sink);
-            gst_pad_unlink(pin->post_src, pin->my_sink);
-            gst_object_unref(pin->post_src);
-            gst_object_unref(pin->post_sink);
-            pin->post_src = pin->post_sink = NULL;
+            gst_pad_unlink(stream->their_src, stream->post_sink);
+            gst_pad_unlink(stream->post_src, stream->my_sink);
+            gst_object_unref(stream->post_src);
+            gst_object_unref(stream->post_sink);
+            stream->post_src = stream->post_sink = NULL;
         }
         else
-            gst_pad_unlink(pin->their_src, pin->my_sink);
-        gst_object_unref(pin->their_src);
+            gst_pad_unlink(stream->their_src, stream->my_sink);
+        gst_object_unref(stream->their_src);
     }
-    gst_object_unref(pin->my_sink);
+    gst_object_unref(stream->my_sink);
     gst_segment_free(stream->segment);
 
     pthread_cond_destroy(&pin->event_cond);
@@ -2517,11 +2524,11 @@ static struct parser_source *create_pin(struct parser *filter, const WCHAR *name
     pin->flushing_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": pin.flushing_cs");
 
     sprintf(pad_name, "qz_sink_%u", filter->source_count);
-    pin->my_sink = gst_pad_new(pad_name, GST_PAD_SINK);
-    gst_pad_set_element_private(pin->my_sink, pin);
-    gst_pad_set_chain_function(pin->my_sink, got_data_sink);
-    gst_pad_set_event_function(pin->my_sink, event_sink);
-    gst_pad_set_query_function(pin->my_sink, query_sink_wrapper);
+    stream->my_sink = gst_pad_new(pad_name, GST_PAD_SINK);
+    gst_pad_set_element_private(stream->my_sink, pin);
+    gst_pad_set_chain_function(stream->my_sink, got_data_sink);
+    gst_pad_set_event_function(stream->my_sink, event_sink);
+    gst_pad_set_query_function(stream->my_sink, query_sink_wrapper);
 
     filter->sources[filter->source_count++] = pin;
     return pin;
@@ -2631,6 +2638,7 @@ static BOOL wave_parser_init_gst(struct parser *filter)
 {
     static const WCHAR source_name[] = {'o','u','t','p','u','t',0};
     struct wg_parser *parser = filter->wg_parser;
+    struct wg_parser_stream *stream;
     struct parser_source *pin;
     GstElement *element;
     int ret;
@@ -2653,15 +2661,16 @@ static BOOL wave_parser_init_gst(struct parser *filter)
 
     if (!(pin = create_pin(filter, source_name)))
         return FALSE;
-    pin->their_src = gst_element_get_static_pad(element, "src");
-    gst_object_ref(pin->their_src);
-    if ((ret = gst_pad_link(pin->their_src, pin->my_sink)) < 0)
+    stream = pin->wg_stream;
+    stream->their_src = gst_element_get_static_pad(element, "src");
+    gst_object_ref(stream->their_src);
+    if ((ret = gst_pad_link(stream->their_src, stream->my_sink)) < 0)
     {
         ERR("Failed to link source pads, error %d.\n", ret);
         return FALSE;
     }
 
-    gst_pad_set_active(pin->my_sink, 1);
+    gst_pad_set_active(stream->my_sink, 1);
     gst_element_set_state(parser->container, GST_STATE_PAUSED);
     ret = gst_element_get_state(parser->container, NULL, NULL, -1);
     if (ret == GST_STATE_CHANGE_FAILURE)
@@ -2867,6 +2876,7 @@ static BOOL mpeg_splitter_init_gst(struct parser *filter)
 {
     static const WCHAR source_name[] = {'A','u','d','i','o',0};
     struct wg_parser *parser = filter->wg_parser;
+    struct wg_parser_stream *stream;
     struct parser_source *pin;
     GstElement *element;
     int ret;
@@ -2889,14 +2899,15 @@ static BOOL mpeg_splitter_init_gst(struct parser *filter)
 
     if (!(pin = create_pin(filter, source_name)))
         return FALSE;
-    gst_object_ref(pin->their_src = gst_element_get_static_pad(element, "src"));
-    if ((ret = gst_pad_link(pin->their_src, pin->my_sink)) < 0)
+    stream = pin->wg_stream;
+    gst_object_ref(stream->their_src = gst_element_get_static_pad(element, "src"));
+    if ((ret = gst_pad_link(stream->their_src, stream->my_sink)) < 0)
     {
         ERR("Failed to link source pads, error %d.\n", ret);
         return FALSE;
     }
 
-    gst_pad_set_active(pin->my_sink, 1);
+    gst_pad_set_active(stream->my_sink, 1);
     gst_element_set_state(parser->container, GST_STATE_PAUSED);
     ret = gst_element_get_state(parser->container, NULL, NULL, -1);
     if (ret == GST_STATE_CHANGE_FAILURE)
