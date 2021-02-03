@@ -106,7 +106,7 @@ struct wg_parser_stream
     pthread_cond_t event_cond, event_empty_cond;
     struct wg_parser_event event;
 
-    bool eos;
+    bool flushing, eos;
 };
 
 struct parser
@@ -149,7 +149,6 @@ struct parser_source
     SourceSeeking seek;
 
     CRITICAL_SECTION flushing_cs;
-    bool flushing;
     HANDLE thread;
 };
 
@@ -725,9 +724,9 @@ static GstFlowReturn queue_stream_event(struct parser_source *pin, const struct 
      * is solved by flushing the upstream source. */
 
     pthread_mutex_lock(&parser->mutex);
-    while (!pin->flushing && stream->event.type != WG_PARSER_EVENT_NONE)
+    while (!stream->flushing && stream->event.type != WG_PARSER_EVENT_NONE)
         pthread_cond_wait(&stream->event_empty_cond, &parser->mutex);
-    if (pin->flushing)
+    if (stream->flushing)
     {
         pthread_mutex_unlock(&parser->mutex);
         GST_DEBUG("Filter is flushing; discarding event.");
@@ -797,7 +796,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             {
                 pthread_mutex_lock(&parser->mutex);
 
-                pin->flushing = true;
+                stream->flushing = true;
                 pthread_cond_signal(&stream->event_empty_cond);
 
                 switch (stream->event.type)
@@ -822,7 +821,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             if (pin->pin.pin.peer)
             {
                 pthread_mutex_lock(&parser->mutex);
-                pin->flushing = false;
+                stream->flushing = false;
                 pthread_mutex_unlock(&parser->mutex);
             }
             break;
@@ -2555,7 +2554,7 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     pthread_mutex_lock(&parser->mutex);
     for (i = 0; i < This->source_count; ++i)
     {
-        This->sources[i]->flushing = true;
+        This->sources[i]->wg_stream->flushing = true;
         pthread_cond_signal(&This->sources[i]->wg_stream->event_empty_cond);
     }
     pthread_mutex_unlock(&parser->mutex);
