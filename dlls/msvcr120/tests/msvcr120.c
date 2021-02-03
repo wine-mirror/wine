@@ -1111,7 +1111,6 @@ static void test_CurrentContext(void)
 START_TEST(msvcr120)
 {
     if (!init()) return;
-    test__strtof();
     test_lconv();
     test__dsign();
     test__dpcomp();
