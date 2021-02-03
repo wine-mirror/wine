@@ -106,6 +106,8 @@ static wctrans_t (__cdecl *p_wctrans)(const char*);
 static wint_t (__cdecl *p_towctrans)(wint_t, wctrans_t);
 static void (__cdecl *p_locale__Locimp__Locimp_Addfac)(locale__Locimp*,locale_facet*,size_t);
 static size_t (__cdecl *p__Strxfrm)(char*, char*, const char*, const char*, const MSVCP__Collvec*);
+static size_t (__cdecl *p__Wcsxfrm)(wchar_t*, wchar_t*, const wchar_t*,
+        const wchar_t*, const MSVCP__Collvec*);
 
 #undef __thiscall
 #ifdef __i386__
@@ -250,6 +252,7 @@ static BOOL init(void)
     SET(p_wctrans, "wctrans");
     SET(p_towctrans, "towctrans");
     SET(p__Strxfrm, "_Strxfrm");
+    SET(p__Wcsxfrm, "_Wcsxfrm");
     SET(basic_ostringstream_char_vbtable, "??_8?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B@");
 
     SET(p_std_Ctraits_float__Isnan, "?_Isnan@?$_Ctraits@M@std@@SA_NM@Z");
@@ -1110,6 +1113,26 @@ static void test__Strxfrm(void)
     ok(!strcmp(in, out), "out = %s\n", out);
 }
 
+static void test__Wcsxfrm(void)
+{
+    const wchar_t in[] = L"abc";
+
+    MSVCP__Collvec coll;
+    wchar_t out[64];
+    size_t ret;
+
+    memset(&coll, 0, sizeof(coll));
+
+    out[0] = 'z';
+    ret = p__Wcsxfrm(out, out + 1, in, in + 2, &coll);
+    ok(ret == 2, "ret = %d\n", (int)ret);
+    ok(out[0] == 'z', "out[0] = %x\n", out[0]);
+
+    ret = p__Wcsxfrm(out, out + ARRAY_SIZE(out), in, in + 4, &coll);
+    ok(ret == 4, "ret = %d\n", (int)ret);
+    ok(!wcscmp(in, out), "out = %s\n", wine_dbgstr_w(out));
+}
+
 START_TEST(misc)
 {
     if(!init())
@@ -1131,6 +1154,7 @@ START_TEST(misc)
     test_locale__Locimp__Locimp_Addfac();
     test_raise_handler();
     test__Strxfrm();
+    test__Wcsxfrm();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 
