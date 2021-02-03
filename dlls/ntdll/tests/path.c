@@ -580,8 +580,10 @@ static void test_RtlDosPathNameToNtPathName_U(void)
             continue;
         }
 
-        ok(!wcscmp(nameW.Buffer, tests[i].nt) || broken(!wcscmp(nameW.Buffer, tests[i].alt_nt)), "%s: Expected %s, got %s.\n",
-            debugstr_w(tests[i].dos), debugstr_w(tests[i].nt), debugstr_w(nameW.Buffer));
+        ok(!wcscmp(nameW.Buffer, tests[i].nt)
+                || (tests[i].alt_nt && broken(!wcscmp(nameW.Buffer, tests[i].alt_nt))),
+                "%s: Expected %s, got %s.\n", debugstr_w(tests[i].dos),
+                debugstr_w(tests[i].nt), debugstr_w(nameW.Buffer));
 
         if (!wcscmp(nameW.Buffer, tests[i].nt))
         {
