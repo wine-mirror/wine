@@ -6442,7 +6442,6 @@ todo_wine
     EXPECT_REF(attributes, 1);
     hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(allocatorex, 0, 0, attributes, video_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     EXPECT_REF(attributes, 2);
 
     count = 0;

@@ -75,6 +75,8 @@ struct sample_allocator
         unsigned int buffer_count;
     } frame_desc;
 
+    IMFAttributes *attributes;
+
     unsigned int free_sample_count;
     unsigned int cold_sample_count;
     struct list free_samples;
@@ -1129,6 +1131,8 @@ static ULONG WINAPI sample_allocator_Release(IMFVideoSampleAllocatorEx *iface)
             IDirect3DDeviceManager9_Release(allocator->d3d9_device_manager);
         if (allocator->dxgi_device_manager)
             IMFDXGIDeviceManager_Release(allocator->dxgi_device_manager);
+        if (allocator->attributes)
+            IMFAttributes_Release(allocator->attributes);
         sample_allocator_release_samples(allocator);
         DeleteCriticalSection(&allocator->cs);
         heap_free(allocator);
@@ -1348,7 +1352,10 @@ static HRESULT sample_allocator_initialize(struct sample_allocator *allocator, u
     max_sample_count = max(1, max_sample_count);
 
     if (attributes)
-        FIXME("Initialization attributes ignored.\n");
+    {
+        allocator->attributes = attributes;
+        IMFAttributes_AddRef(allocator->attributes);
+    }
 
     allocator->frame_desc.d3d9_format = subtype.Data1;
     allocator->frame_desc.dxgi_format = MFMapDX9FormatToDXGIFormat(allocator->frame_desc.d3d9_format);
