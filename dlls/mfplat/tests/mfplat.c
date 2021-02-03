@@ -6212,7 +6212,7 @@ static void test_dxgi_surface_buffer(void)
     desc.Width = 64;
     desc.Height = 64;
     desc.ArraySize = 1;
-    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
     desc.SampleDesc.Count = 1;
     desc.SampleDesc.Quality = 0;
 
@@ -6220,14 +6220,7 @@ static void test_dxgi_surface_buffer(void)
     ok(hr == S_OK, "Failed to create a texture, hr %#x.\n", hr);
 
     hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D11Texture2D, (IUnknown *)texture, 0, FALSE, &buffer);
-    ok(hr == S_OK || broken(hr == MF_E_INVALIDMEDIATYPE) /* Win8 */, "Failed to create a buffer, hr %#x.\n", hr);
-
-    if (FAILED(hr))
-    {
-        ID3D11Texture2D_Release(texture);
-        ID3D11Device_Release(device);
-        return;
-    }
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
 
     check_interface(buffer, &IID_IMF2DBuffer, TRUE);
     check_interface(buffer, &IID_IMF2DBuffer2, TRUE);
