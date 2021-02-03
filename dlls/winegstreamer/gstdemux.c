@@ -77,6 +77,7 @@ struct wg_parser
 struct wg_parser_stream
 {
     GstPad *their_src, *post_sink, *post_src, *my_sink;
+    GstElement *flip;
     GstSegment *segment;
 };
 
@@ -139,7 +140,6 @@ struct parser_source
 
     struct wg_parser_stream *wg_stream;
 
-    GstElement *flip;
     GstCaps *caps;
     SourceSeeking seek;
 
@@ -1335,7 +1335,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *Th
 
         stream->post_sink = gst_element_get_static_pad(deinterlace, "sink");
         stream->post_src = gst_element_get_static_pad(vconv2, "src");
-        pin->flip = flip;
+        stream->flip = flip;
     }
     else if (!strcmp(typename, "audio/x-raw"))
     {
@@ -2417,7 +2417,7 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
         VIDEOINFOHEADER *format = (VIDEOINFOHEADER *)pin->pin.pin.mt.pbFormat;
         buffer_size = format->bmiHeader.biSizeImage;
 
-        gst_util_set_object_arg(G_OBJECT(pin->flip), "method",
+        gst_util_set_object_arg(G_OBJECT(stream->flip), "method",
                 (format->bmiHeader.biCompression == BI_RGB
                 || format->bmiHeader.biCompression == BI_BITFIELDS) ? "vertical-flip" : "none");
     }
