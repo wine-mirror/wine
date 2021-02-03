@@ -143,6 +143,7 @@
 #include "nls/hrv.nls"   /* 0x041a  LANG_SERBIAN, SUBLANG_DEFAULT */
 #include "nls/srl.nls"   /* 0x081a  LANG_SERBIAN, SUBLANG_SERBIAN_LATIN */
 #include "nls/srb.nls"   /* 0x0c1a  LANG_SERBIAN, SUBLANG_SERBIAN_CYRILLIC */
+#include "nls/srm.nls"   /* 0x241a  LANG_SERBIAN, SUBLANG_SERBIAN_SERBIA_LATIN */
 
 #include "nls/sky.nls"   /* 0x041b  LANG_SLOVAK, SUBLANG_DEFAULT */
 
