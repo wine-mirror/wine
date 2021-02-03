@@ -105,6 +105,8 @@ struct wg_parser_stream
 
     pthread_cond_t event_cond, event_empty_cond;
     struct wg_parser_event event;
+
+    bool eos;
 };
 
 struct parser
@@ -147,7 +149,7 @@ struct parser_source
     SourceSeeking seek;
 
     CRITICAL_SECTION flushing_cs;
-    bool flushing, eos;
+    bool flushing;
     HANDLE thread;
 };
 
@@ -784,7 +786,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             else
             {
                 pthread_mutex_lock(&parser->mutex);
-                pin->eos = true;
+                stream->eos = true;
                 pthread_mutex_unlock(&parser->mutex);
                 pthread_cond_signal(&parser->init_cond);
             }
@@ -2927,7 +2929,7 @@ static BOOL mpeg_splitter_init_gst(struct parser *filter)
     }
 
     pthread_mutex_lock(&parser->mutex);
-    while (!parser->has_duration && !parser->error && !pin->eos)
+    while (!parser->has_duration && !parser->error && !stream->eos)
         pthread_cond_wait(&parser->init_cond, &parser->mutex);
     if (parser->error)
     {
