@@ -32,7 +32,7 @@
 #include "rtworkq.h"
 #include "ole2.h"
 #include "propsys.h"
-#include "dxgi.h"
+#include "d3d11.h"
 #include "uuids.h"
 
 #include "wine/debug.h"

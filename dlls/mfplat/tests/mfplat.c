@@ -6206,7 +6206,7 @@ static void test_dxgi_surface_buffer(void)
 
     if (!pMFCreateDXGISurfaceBuffer)
     {
-        skip("MFCreateDXGISurfaceBuffer() is not available.\n");
+        win_skip("MFCreateDXGISurfaceBuffer() is not available.\n");
         return;
     }
 
@@ -6248,8 +6248,14 @@ static void test_dxgi_surface_buffer(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(index == 0, "Unexpected subresource index.\n");
 
+    hr = IMFDXGIBuffer_SetUnknown(dxgi_buffer, &IID_IMFDXGIBuffer, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     hr = IMFDXGIBuffer_SetUnknown(dxgi_buffer, &IID_IMFDXGIBuffer, (void *)device);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFDXGIBuffer_SetUnknown(dxgi_buffer, &IID_IMFDXGIBuffer, (void *)device);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_OBJECT_ALREADY_EXISTS), "Unexpected hr %#x.\n", hr);
 
     hr = ID3D11Texture2D_GetPrivateData(texture, &IID_IMFDXGIBuffer, &size, &data);
     ok(hr == DXGI_ERROR_NOT_FOUND, "Unexpected hr %#x.\n", hr);

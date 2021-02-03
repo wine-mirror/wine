@@ -21,6 +21,7 @@
 #include "mfplat_private.h"
 #include "rtworkq.h"
 
+#include "d3d11.h"
 #include "initguid.h"
 #include "d3d9.h"
 #include "evr.h"
@@ -35,6 +36,7 @@ struct memory_buffer
 {
     IMFMediaBuffer IMFMediaBuffer_iface;
     IMF2DBuffer2 IMF2DBuffer2_iface;
+    IMFDXGIBuffer IMFDXGIBuffer_iface;
     IMFGetService IMFGetService_iface;
     LONG refcount;
 
@@ -59,6 +61,12 @@ struct memory_buffer
         IDirect3DSurface9 *surface;
         D3DLOCKED_RECT rect;
     } d3d9_surface;
+    struct
+    {
+        IUnknown *surface;
+        unsigned int subresource;
+        struct attributes attributes;
+    } dxgi_surface;
 
     CRITICAL_SECTION cs;
 };
@@ -76,6 +84,11 @@ static struct memory_buffer *impl_from_IMF2DBuffer2(IMF2DBuffer2 *iface)
 static struct memory_buffer *impl_from_IMFGetService(IMFGetService *iface)
 {
     return CONTAINING_RECORD(iface, struct memory_buffer, IMFGetService_iface);
+}
+
+static struct memory_buffer *impl_from_IMFDXGIBuffer(IMFDXGIBuffer *iface)
+{
+    return CONTAINING_RECORD(iface, struct memory_buffer, IMFDXGIBuffer_iface);
 }
 
 static HRESULT WINAPI memory_buffer_QueryInterface(IMFMediaBuffer *iface, REFIID riid, void **out)
@@ -118,6 +131,11 @@ static ULONG WINAPI memory_buffer_Release(IMFMediaBuffer *iface)
     {
         if (buffer->d3d9_surface.surface)
             IDirect3DSurface9_Release(buffer->d3d9_surface.surface);
+        if (buffer->dxgi_surface.surface)
+        {
+            IUnknown_Release(buffer->dxgi_surface.surface);
+            clear_attributes_object(&buffer->dxgi_surface.attributes);
+        }
         DeleteCriticalSection(&buffer->cs);
         heap_free(buffer->_2d.linear_buffer);
         heap_free(buffer->data);
@@ -781,6 +799,204 @@ static const IMFGetServiceVtbl d3d9_surface_buffer_gs_vtbl =
     d3d9_surface_buffer_gs_GetService,
 };
 
+static HRESULT WINAPI dxgi_1d_2d_buffer_QueryInterface(IMFMediaBuffer *iface, REFIID riid, void **out)
+{
+    struct memory_buffer *buffer = impl_from_IMFMediaBuffer(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualIID(riid, &IID_IMFMediaBuffer) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *out = &buffer->IMFMediaBuffer_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMF2DBuffer2) ||
+            IsEqualIID(riid, &IID_IMF2DBuffer))
+    {
+        *out = &buffer->IMF2DBuffer2_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFDXGIBuffer))
+    {
+        *out = &buffer->IMFDXGIBuffer_iface;
+    }
+    else
+    {
+        WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+        *out = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*out);
+    return S_OK;
+}
+
+static HRESULT WINAPI dxgi_surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **data, DWORD *max_length,
+        DWORD *current_length)
+{
+    FIXME("%p, %p, %p, %p.\n", iface, data, max_length, current_length);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dxgi_surface_buffer_Unlock(IMFMediaBuffer *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dxgi_surface_buffer_Lock2D(IMF2DBuffer2 *iface, BYTE **scanline0, LONG *pitch)
+{
+    FIXME("%p, %p, %p.\n", iface, scanline0, pitch);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dxgi_surface_buffer_Unlock2D(IMF2DBuffer2 *iface)
+{
+    FIXME("%p.\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dxgi_surface_buffer_GetScanline0AndPitch(IMF2DBuffer2 *iface, BYTE **scanline0, LONG *pitch)
+{
+    FIXME("%p, %p, %p.\n", iface, scanline0, pitch);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dxgi_surface_buffer_GetContiguousLength(IMF2DBuffer2 *iface, DWORD *length)
+{
+    FIXME("%p, %p.\n", iface, length);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dxgi_surface_buffer_Lock2DSize(IMF2DBuffer2 *iface, MF2DBuffer_LockFlags flags,
+        BYTE **scanline0, LONG *pitch, BYTE **buffer_start, DWORD *buffer_length)
+{
+    FIXME("%p, %#x, %p, %p, %p, %p.\n", iface, flags, scanline0, pitch, buffer_start, buffer_length);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dxgi_buffer_QueryInterface(IMFDXGIBuffer *iface, REFIID riid, void **obj)
+{
+    struct memory_buffer *buffer = impl_from_IMFDXGIBuffer(iface);
+    return IMFMediaBuffer_QueryInterface(&buffer->IMFMediaBuffer_iface, riid, obj);
+}
+
+static ULONG WINAPI dxgi_buffer_AddRef(IMFDXGIBuffer *iface)
+{
+    struct memory_buffer *buffer = impl_from_IMFDXGIBuffer(iface);
+    return IMFMediaBuffer_AddRef(&buffer->IMFMediaBuffer_iface);
+}
+
+static ULONG WINAPI dxgi_buffer_Release(IMFDXGIBuffer *iface)
+{
+    struct memory_buffer *buffer = impl_from_IMFDXGIBuffer(iface);
+    return IMFMediaBuffer_Release(&buffer->IMFMediaBuffer_iface);
+}
+
+static HRESULT WINAPI dxgi_buffer_GetResource(IMFDXGIBuffer *iface, REFIID riid, void **obj)
+{
+    struct memory_buffer *buffer = impl_from_IMFDXGIBuffer(iface);
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    return IUnknown_QueryInterface(buffer->dxgi_surface.surface, riid, obj);
+}
+
+static HRESULT WINAPI dxgi_buffer_GetSubresourceIndex(IMFDXGIBuffer *iface, UINT *index)
+{
+    struct memory_buffer *buffer = impl_from_IMFDXGIBuffer(iface);
+
+    TRACE("%p, %p.\n", iface, index);
+
+    if (!index)
+        return E_POINTER;
+
+    *index = buffer->dxgi_surface.subresource;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI dxgi_buffer_GetUnknown(IMFDXGIBuffer *iface, REFIID guid, REFIID riid, void **object)
+{
+    struct memory_buffer *buffer = impl_from_IMFDXGIBuffer(iface);
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(guid), debugstr_guid(riid), object);
+
+    if (attributes_GetUnknown(&buffer->dxgi_surface.attributes, guid, riid, object) == MF_E_ATTRIBUTENOTFOUND)
+        return MF_E_NOT_FOUND;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI dxgi_buffer_SetUnknown(IMFDXGIBuffer *iface, REFIID guid, IUnknown *data)
+{
+    struct memory_buffer *buffer = impl_from_IMFDXGIBuffer(iface);
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(guid), data);
+
+    EnterCriticalSection(&buffer->dxgi_surface.attributes.cs);
+    if (data)
+    {
+        if (SUCCEEDED(attributes_GetItem(&buffer->dxgi_surface.attributes, guid, NULL)))
+            hr = HRESULT_FROM_WIN32(ERROR_OBJECT_ALREADY_EXISTS);
+        else
+            hr = attributes_SetUnknown(&buffer->dxgi_surface.attributes, guid, data);
+    }
+    else
+    {
+        attributes_DeleteItem(&buffer->dxgi_surface.attributes, guid);
+    }
+    LeaveCriticalSection(&buffer->dxgi_surface.attributes.cs);
+
+    return hr;
+}
+
+static const IMFMediaBufferVtbl dxgi_surface_1d_buffer_vtbl =
+{
+    dxgi_1d_2d_buffer_QueryInterface,
+    memory_buffer_AddRef,
+    memory_buffer_Release,
+    dxgi_surface_buffer_Lock,
+    dxgi_surface_buffer_Unlock,
+    memory_buffer_GetCurrentLength,
+    memory_buffer_SetCurrentLength,
+    memory_buffer_GetMaxLength,
+};
+
+static const IMF2DBuffer2Vtbl dxgi_surface_buffer_vtbl =
+{
+    memory_2d_buffer_QueryInterface,
+    memory_2d_buffer_AddRef,
+    memory_2d_buffer_Release,
+    dxgi_surface_buffer_Lock2D,
+    dxgi_surface_buffer_Unlock2D,
+    dxgi_surface_buffer_GetScanline0AndPitch,
+    memory_2d_buffer_IsContiguousFormat,
+    dxgi_surface_buffer_GetContiguousLength,
+    memory_2d_buffer_ContiguousCopyTo,
+    memory_2d_buffer_ContiguousCopyFrom,
+    dxgi_surface_buffer_Lock2DSize,
+    memory_2d_buffer_Copy2DTo,
+};
+
+static const IMFDXGIBufferVtbl dxgi_buffer_vtbl =
+{
+    dxgi_buffer_QueryInterface,
+    dxgi_buffer_AddRef,
+    dxgi_buffer_Release,
+    dxgi_buffer_GetResource,
+    dxgi_buffer_GetSubresourceIndex,
+    dxgi_buffer_GetUnknown,
+    dxgi_buffer_SetUnknown,
+};
+
 static HRESULT memory_buffer_init(struct memory_buffer *buffer, DWORD max_length, DWORD alignment,
         const IMFMediaBufferVtbl *vtbl)
 {
@@ -941,6 +1157,55 @@ static HRESULT create_d3d9_surface_buffer(IUnknown *surface, BOOL bottom_up, IMF
     return S_OK;
 }
 
+static HRESULT create_dxgi_surface_buffer(IUnknown *surface, UINT subresource, BOOL bottom_up,
+        IMFMediaBuffer **buffer)
+{
+    struct memory_buffer *object;
+    D3D11_TEXTURE2D_DESC desc;
+    unsigned int stride;
+    D3DFORMAT format;
+    GUID subtype;
+    BOOL is_yuv;
+    HRESULT hr;
+
+    ID3D11Texture2D_GetDesc((ID3D11Texture2D *)surface, &desc);
+    TRACE("format %#x, %u x %u.\n", desc.Format, desc.Width, desc.Height);
+
+    memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
+    subtype.Data1 = format = MFMapDXGIFormatToDX9Format(desc.Format);
+
+    if (!(stride = mf_format_get_stride(&subtype, desc.Width, &is_yuv)))
+        return MF_E_INVALIDMEDIATYPE;
+
+    object = heap_alloc_zero(sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->IMFMediaBuffer_iface.lpVtbl = &dxgi_surface_1d_buffer_vtbl;
+    object->IMF2DBuffer2_iface.lpVtbl = &dxgi_surface_buffer_vtbl;
+    object->IMFDXGIBuffer_iface.lpVtbl = &dxgi_buffer_vtbl;
+    object->refcount = 1;
+    InitializeCriticalSection(&object->cs);
+    object->dxgi_surface.surface = surface;
+    IUnknown_AddRef(surface);
+    object->dxgi_surface.subresource = subresource;
+
+    MFGetPlaneSize(format, desc.Width, desc.Height, &object->_2d.plane_size);
+    object->_2d.width = stride;
+    object->_2d.height = desc.Height;
+    object->max_length = object->_2d.plane_size;
+
+    if (FAILED(hr = init_attributes_object(&object->dxgi_surface.attributes, 0)))
+    {
+        IMFMediaBuffer_Release(&object->IMFMediaBuffer_iface);
+        return hr;
+    }
+
+    *buffer = &object->IMFMediaBuffer_iface;
+
+    return S_OK;
+}
+
 /***********************************************************************
  *      MFCreateMemoryBuffer (mfplat.@)
  */
@@ -982,6 +1247,20 @@ HRESULT WINAPI MFCreateDXSurfaceBuffer(REFIID riid, IUnknown *surface, BOOL bott
         return E_INVALIDARG;
 
     return create_d3d9_surface_buffer(surface, bottom_up, buffer);
+}
+
+/***********************************************************************
+ *      MFCreateDXGISurfaceBuffer (mfplat.@)
+ */
+HRESULT WINAPI MFCreateDXGISurfaceBuffer(REFIID riid, IUnknown *surface, UINT subresource, BOOL bottom_up,
+        IMFMediaBuffer **buffer)
+{
+    TRACE("%s, %p, %u, %d, %p.\n", debugstr_guid(riid), surface, subresource, bottom_up, buffer);
+
+    if (!IsEqualIID(riid, &IID_ID3D11Texture2D))
+        return E_INVALIDARG;
+
+    return create_dxgi_surface_buffer(surface, subresource, bottom_up, buffer);
 }
 
 static unsigned int buffer_get_aligned_length(unsigned int length, unsigned int alignment)
