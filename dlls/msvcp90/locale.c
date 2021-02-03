@@ -12663,7 +12663,8 @@ int __cdecl _To_wide(const char *src, wchar_t *dst)
     return MultiByteToWideChar(CP_ACP, 0, src, -1, dst, MAX_PATH);
 }
 
-size_t __cdecl _Strxfrm(char *dest, char *dest_end, const char *src, const char *src_end, _Collvec *coll)
+size_t __cdecl _Strxfrm(char *dest, char *dest_end,
+        const char *src, const char *src_end, _Collvec *coll)
 {
     size_t dest_len = dest_end - dest;
     size_t src_len = src_end - src;
@@ -12691,12 +12692,14 @@ size_t __cdecl _Strxfrm(char *dest, char *dest_end, const char *src, const char 
     }
 
     len = MultiByteToWideChar(cv.page, MB_ERR_INVALID_CHARS, src, src_len, NULL, 0);
-    if (!len) return 0;
+    if (!len) return INT_MAX;
     buf = heap_alloc(len * sizeof(WCHAR));
-    if (!buf) return 0;
+    if (!buf) return INT_MAX;
     MultiByteToWideChar(cv.page, MB_ERR_INVALID_CHARS, src, src_len, buf, len);
 
-    len = LCMapStringW(lcid, LCMAP_SORTKEY, buf, len, (WCHAR*)dest, dest_len);
+    len = LCMapStringW(lcid, LCMAP_SORTKEY, buf, len, NULL, 0);
+    if (len <= dest_len)
+        LCMapStringW(lcid, LCMAP_SORTKEY, buf, len, (WCHAR*)dest, dest_len);
     heap_free(buf);
     return len;
 }
