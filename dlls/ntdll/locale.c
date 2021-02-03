@@ -1358,6 +1358,9 @@ NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags 
             case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_HONGKONG ):
                 *lcid = MAKELCID( 0x7c04, SORT_DEFAULT );
                 break;
+            case MAKELANGID( LANG_SERBIAN, SUBLANG_NEUTRAL ):
+                *lcid = LANG_SERBIAN_NEUTRAL;
+                break;
             default:
                 *lcid = MAKELANGID( PRIMARYLANGID(id), SUBLANG_NEUTRAL );
                 break;

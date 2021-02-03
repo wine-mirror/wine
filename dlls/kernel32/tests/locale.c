@@ -2861,14 +2861,12 @@ static void test_LocaleNameToLCID(void)
         for (ptr = neutralsublang_names; *ptr->name; ptr++)
         {
             lcid = pLocaleNameToLCID(ptr->name, 0);
-            todo_wine_if (ptr->todo)
-                ok(lcid == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
-                    wine_dbgstr_w(ptr->name), lcid, ptr->lcid);
+            ok(lcid == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
+                wine_dbgstr_w(ptr->name), lcid, ptr->lcid);
 
             *buffer = 0;
             ret = pLCIDToLocaleName(lcid, buffer, ARRAY_SIZE(buffer), 0);
             ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(ptr->name), ret);
-            todo_wine_if (ptr->todo)
             ok(!lstrcmpW(ptr->sname, buffer), "%s: got wrong locale name %s\n",
                 wine_dbgstr_w(ptr->name), wine_dbgstr_w(buffer));
 
@@ -2974,7 +2972,6 @@ static void test_LocaleNameToLCID(void)
             status = pRtlLocaleNameToLcid( ptr->name, &lcid, 2 );
             ok( !status || broken(ptr->lcid == MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED)), /* vista */
                 "%s failed error %x\n", wine_dbgstr_w(ptr->name), status );
-            todo_wine_if(ptr->todo)
             if (!status) ok( lcid == expect, "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
                              wine_dbgstr_w(ptr->name), lcid, expect );
             status = pRtlLocaleNameToLcid( ptr->sname, &lcid, 0 );
@@ -4824,8 +4821,7 @@ static void test_GetLocaleInfoEx(void)
         {
             val = 0;
             pGetLocaleInfoEx(ptr->name, LOCALE_ILANGUAGE|LOCALE_RETURN_NUMBER, (WCHAR*)&val, sizeof(val)/sizeof(WCHAR));
-            todo_wine_if (ptr->todo)
-                ok(val == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n", wine_dbgstr_w(ptr->name), val, ptr->lcid);
+            ok(val == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n", wine_dbgstr_w(ptr->name), val, ptr->lcid);
             bufferW[0] = 0;
             ret = pGetLocaleInfoEx(ptr->name, LOCALE_SNAME, bufferW, ARRAY_SIZE(bufferW));
             ok(ret == lstrlenW(bufferW)+1, "%s: got ret value %d\n", wine_dbgstr_w(ptr->name), ret);
