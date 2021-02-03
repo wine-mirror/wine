@@ -1,5 +1,5 @@
 TESTDLL   = mfplat.dll
-IMPORTS   = ole32 mfplat user32 d3d9 mfuuid propsys uuid strmiids
+IMPORTS   = ole32 mfplat user32 d3d9 dxva2 mfuuid propsys uuid strmiids
 
 C_SRCS = \
 	mfplat.c
