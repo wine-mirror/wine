@@ -5823,6 +5823,8 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
     BOOL ret;
     LPINT lpDxW = NULL;
 
+    if (count > INT_MAX) return FALSE;
+
     if (flags & ETO_GLYPH_INDEX)
         return ExtTextOutW( hdc, x, y, flags, lprect, (LPCWSTR)str, count, lpDx );
 
@@ -5932,6 +5934,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     static int quietfixme = 0;
 
     if (!dc) return FALSE;
+    if (count > INT_MAX) return FALSE;
 
     align = dc->textAlign;
     breakRem = dc->breakRem;

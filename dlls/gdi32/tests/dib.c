@@ -3020,8 +3020,9 @@ static void draw_text_2( HDC hdc, const BITMAPINFO *bmi, BYTE *bits, BOOL aa )
     static const char str[] = "Hello Wine";
     POINT origin, g_org;
     static const BYTE vals[4] = { 0x00, 0x00, 0x00, 0x00 };
+    COLORREF bk_color, text_color;
     TEXTMETRICA tm;
-    COLORREF text_color;
+    RECT rect;
 
     for(i = 0; i < dib_size; i++)
         bits[i] = vals[i % 4];
@@ -3115,6 +3116,18 @@ static void draw_text_2( HDC hdc, const BITMAPINFO *bmi, BYTE *bits, BOOL aa )
 
     diy_hash = hash_dib( hdc, bmi, bits );
     ok( !strcmp( eto_hash, diy_hash ), "hash mismatch - aa %d\n", aa );
+
+    bk_color = GetBkColor( hdc );
+    SetBkColor( hdc, RGB(128,64,32) );
+
+    SetRect( &rect, 0, 0, bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight );
+    ret = ExtTextOutA( hdc, 10, 100, ETO_OPAQUE, &rect, str, -1, NULL );
+    ok( !ret, "ExtTextOutA succeeded\n" );
+
+    diy_hash = hash_dib( hdc, bmi, bits );
+    ok( !strcmp( eto_hash, diy_hash ), "hash mismatch - aa %d\n", aa );
+
+    SetBkColor( hdc, bk_color );
 
     HeapFree( GetProcessHeap(), 0, diy_hash );
     HeapFree( GetProcessHeap(), 0, eto_hash );
