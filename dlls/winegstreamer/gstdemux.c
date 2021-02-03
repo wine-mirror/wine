@@ -56,6 +56,8 @@ struct wg_parser
 
     pthread_t push_thread;
 
+    pthread_mutex_t mutex;
+
     pthread_cond_t init_cond;
     bool no_more_pads, has_duration, error;
 
@@ -94,8 +96,6 @@ struct parser
     bool streaming, sink_connected;
 
     uint64_t next_pull_offset;
-
-    pthread_mutex_t mutex;
 
     HANDLE read_thread;
 
@@ -706,7 +706,7 @@ static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
 
 static GstFlowReturn queue_stream_event(struct parser_source *pin, const struct parser_event *event)
 {
-    struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
+    struct wg_parser *parser = impl_from_strmbase_filter(pin->pin.pin.filter)->wg_parser;
 
     /* Unlike request_buffer_src() [q.v.], we need to watch for GStreamer
      * flushes here. The difference is that we can be blocked by the streaming
@@ -714,17 +714,17 @@ static GstFlowReturn queue_stream_event(struct parser_source *pin, const struct 
      * request_buffer_src() can only be blocked by the upstream source, and that
      * is solved by flushing the upstream source. */
 
-    pthread_mutex_lock(&filter->mutex);
+    pthread_mutex_lock(&parser->mutex);
     while (!pin->flushing && pin->event.type != PARSER_EVENT_NONE)
-        pthread_cond_wait(&pin->event_empty_cond, &filter->mutex);
+        pthread_cond_wait(&pin->event_empty_cond, &parser->mutex);
     if (pin->flushing)
     {
-        pthread_mutex_unlock(&filter->mutex);
+        pthread_mutex_unlock(&parser->mutex);
         GST_DEBUG("Filter is flushing; discarding event.");
         return GST_FLOW_FLUSHING;
     }
     pin->event = *event;
-    pthread_mutex_unlock(&filter->mutex);
+    pthread_mutex_unlock(&parser->mutex);
     pthread_cond_signal(&pin->event_cond);
     GST_LOG("Event queued.");
     return GST_FLOW_OK;
@@ -774,9 +774,9 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             }
             else
             {
-                pthread_mutex_lock(&filter->mutex);
+                pthread_mutex_lock(&parser->mutex);
                 pin->eos = true;
-                pthread_mutex_unlock(&filter->mutex);
+                pthread_mutex_unlock(&parser->mutex);
                 pthread_cond_signal(&parser->init_cond);
             }
             break;
@@ -784,7 +784,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
         case GST_EVENT_FLUSH_START:
             if (pin->pin.pin.peer)
             {
-                pthread_mutex_lock(&filter->mutex);
+                pthread_mutex_lock(&parser->mutex);
 
                 pin->flushing = true;
                 pthread_cond_signal(&pin->event_empty_cond);
@@ -802,7 +802,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
                 }
                 pin->event.type = PARSER_EVENT_NONE;
 
-                pthread_mutex_unlock(&filter->mutex);
+                pthread_mutex_unlock(&parser->mutex);
             }
             break;
 
@@ -810,9 +810,9 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             gst_segment_init(pin->segment, GST_FORMAT_TIME);
             if (pin->pin.pin.peer)
             {
-                pthread_mutex_lock(&filter->mutex);
+                pthread_mutex_lock(&parser->mutex);
                 pin->flushing = false;
-                pthread_mutex_unlock(&filter->mutex);
+                pthread_mutex_unlock(&parser->mutex);
             }
             break;
 
@@ -821,9 +821,9 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             GstCaps *caps;
 
             gst_event_parse_caps(event, &caps);
-            pthread_mutex_lock(&filter->mutex);
+            pthread_mutex_lock(&parser->mutex);
             gst_caps_replace(&pin->caps, caps);
-            pthread_mutex_unlock(&filter->mutex);
+            pthread_mutex_unlock(&parser->mutex);
             pthread_cond_signal(&parser->init_cond);
             break;
         }
@@ -1041,14 +1041,14 @@ static bool get_stream_event(struct parser_source *pin, struct parser_event *eve
     struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
     struct wg_parser *parser = filter->wg_parser;
 
-    pthread_mutex_lock(&filter->mutex);
+    pthread_mutex_lock(&parser->mutex);
 
     while (!parser->flushing && pin->event.type == PARSER_EVENT_NONE)
-        pthread_cond_wait(&pin->event_cond, &filter->mutex);
+        pthread_cond_wait(&pin->event_cond, &parser->mutex);
 
     if (parser->flushing)
     {
-        pthread_mutex_unlock(&filter->mutex);
+        pthread_mutex_unlock(&parser->mutex);
         TRACE("Filter is flushing.\n");
         return false;
     }
@@ -1056,7 +1056,7 @@ static bool get_stream_event(struct parser_source *pin, struct parser_event *eve
     *event = pin->event;
     pin->event.type = PARSER_EVENT_NONE;
 
-    pthread_mutex_unlock(&filter->mutex);
+    pthread_mutex_unlock(&parser->mutex);
     pthread_cond_signal(&pin->event_empty_cond);
 
     return true;
@@ -1121,7 +1121,7 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
     if (!*buffer)
         *buffer = new_buffer = gst_buffer_new_and_alloc(size);
 
-    pthread_mutex_lock(&filter->mutex);
+    pthread_mutex_lock(&parser->mutex);
 
     assert(!parser->read_request.buffer);
     parser->read_request.buffer = *buffer;
@@ -1135,11 +1135,11 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
      * read_thread() not running. */
 
     while (!parser->read_request.done)
-        pthread_cond_wait(&parser->read_done_cond, &filter->mutex);
+        pthread_cond_wait(&parser->read_done_cond, &parser->mutex);
 
     ret = parser->read_request.ret;
 
-    pthread_mutex_unlock(&filter->mutex);
+    pthread_mutex_unlock(&parser->mutex);
 
     GST_LOG("Request returned %s.", gst_flow_get_name(ret));
 
@@ -1186,12 +1186,12 @@ static DWORD CALLBACK read_thread(void *arg)
 
     TRACE("Starting read thread for filter %p.\n", filter);
 
-    pthread_mutex_lock(&filter->mutex);
+    pthread_mutex_lock(&parser->mutex);
 
     while (filter->sink_connected)
     {
         while (parser->sink_connected && !parser->read_request.buffer)
-            pthread_cond_wait(&parser->read_cond, &filter->mutex);
+            pthread_cond_wait(&parser->read_cond, &parser->mutex);
 
         if (!parser->sink_connected)
             break;
@@ -1203,7 +1203,7 @@ static DWORD CALLBACK read_thread(void *arg)
         pthread_cond_signal(&parser->read_done_cond);
     }
 
-    pthread_mutex_unlock(&filter->mutex);
+    pthread_mutex_unlock(&parser->mutex);
 
     TRACE("Streaming stopped; exiting.\n");
     return 0;
@@ -1488,9 +1488,9 @@ static void no_more_pads(GstElement *decodebin, gpointer user)
 
     GST_DEBUG("filter %p.", filter);
 
-    pthread_mutex_lock(&filter->mutex);
+    pthread_mutex_lock(&parser->mutex);
     parser->no_more_pads = true;
-    pthread_mutex_unlock(&filter->mutex);
+    pthread_mutex_unlock(&parser->mutex);
     pthread_cond_signal(&parser->init_cond);
 }
 
@@ -1530,9 +1530,9 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
         fprintf(stderr, "winegstreamer: error: %s: %s\n", GST_OBJECT_NAME(msg->src), dbg_info);
         g_error_free(err);
         g_free(dbg_info);
-        pthread_mutex_lock(&filter->mutex);
+        pthread_mutex_lock(&parser->mutex);
         parser->error = true;
-        pthread_mutex_unlock(&filter->mutex);
+        pthread_mutex_unlock(&parser->mutex);
         pthread_cond_signal(&parser->init_cond);
         break;
 
@@ -1545,9 +1545,9 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
         break;
 
     case GST_MESSAGE_DURATION_CHANGED:
-        pthread_mutex_lock(&filter->mutex);
+        pthread_mutex_lock(&parser->mutex);
         parser->has_duration = true;
-        pthread_mutex_unlock(&filter->mutex);
+        pthread_mutex_unlock(&parser->mutex);
         pthread_cond_signal(&parser->init_cond);
         break;
 
@@ -1619,7 +1619,7 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
     if (!This->init_gst(This))
         return E_FAIL;
 
-    pthread_mutex_lock(&This->mutex);
+    pthread_mutex_lock(&parser->mutex);
 
     for (i = 0; i < This->source_count; ++i)
     {
@@ -1628,15 +1628,15 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
         pin->seek.llDuration = pin->seek.llStop = query_duration(pin->their_src);
         pin->seek.llCurrent = 0;
         while (!pin->caps && !parser->error)
-            pthread_cond_wait(&parser->init_cond, &This->mutex);
+            pthread_cond_wait(&parser->init_cond, &parser->mutex);
         if (parser->error)
         {
-            pthread_mutex_unlock(&This->mutex);
+            pthread_mutex_unlock(&parser->mutex);
             return E_FAIL;
         }
     }
 
-    pthread_mutex_unlock(&This->mutex);
+    pthread_mutex_unlock(&parser->mutex);
 
     parser->next_offset = 0;
     This->next_pull_offset = 0;
@@ -1677,6 +1677,7 @@ static void wg_parser_destroy(struct wg_parser *parser)
         gst_object_unref(parser->bus);
     }
 
+    pthread_mutex_destroy(&parser->mutex);
     pthread_cond_destroy(&parser->init_cond);
     pthread_cond_destroy(&parser->read_cond);
     pthread_cond_destroy(&parser->read_done_cond);
@@ -1704,8 +1705,6 @@ static void parser_destroy(struct strmbase_filter *iface)
 
     wg_parser_destroy(filter->wg_parser);
 
-    pthread_mutex_destroy(&filter->mutex);
-
     strmbase_sink_cleanup(&filter->sink);
     strmbase_filter_cleanup(&filter->filter);
     heap_free(filter);
@@ -1723,9 +1722,9 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
         return S_OK;
 
     filter->streaming = true;
-    pthread_mutex_lock(&filter->mutex);
+    pthread_mutex_lock(&parser->mutex);
     parser->flushing = false;
-    pthread_mutex_unlock(&filter->mutex);
+    pthread_mutex_unlock(&parser->mutex);
 
     /* DirectShow retains the old seek positions, but resets to them every time
      * it transitions from stopped -> paused. */
@@ -1764,9 +1763,9 @@ static HRESULT parser_cleanup_stream(struct strmbase_filter *iface)
         return S_OK;
 
     filter->streaming = false;
-    pthread_mutex_lock(&filter->mutex);
+    pthread_mutex_lock(&parser->mutex);
     parser->flushing = true;
-    pthread_mutex_unlock(&filter->mutex);
+    pthread_mutex_unlock(&parser->mutex);
 
     for (i = 0; i < filter->source_count; ++i)
     {
@@ -1878,9 +1877,9 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
 
     parser->their_sink = gst_element_get_static_pad(element, "sink");
 
-    pthread_mutex_lock(&filter->mutex);
+    pthread_mutex_lock(&parser->mutex);
     parser->no_more_pads = parser->error = false;
-    pthread_mutex_unlock(&filter->mutex);
+    pthread_mutex_unlock(&parser->mutex);
 
     if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
     {
@@ -1896,15 +1895,15 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    pthread_mutex_lock(&filter->mutex);
+    pthread_mutex_lock(&parser->mutex);
     while (!parser->no_more_pads && !parser->error)
-        pthread_cond_wait(&parser->init_cond, &filter->mutex);
+        pthread_cond_wait(&parser->init_cond, &parser->mutex);
     if (parser->error)
     {
-        pthread_mutex_unlock(&filter->mutex);
+        pthread_mutex_unlock(&parser->mutex);
         return FALSE;
     }
-    pthread_mutex_unlock(&filter->mutex);
+    pthread_mutex_unlock(&parser->mutex);
     return TRUE;
 }
 
@@ -1998,11 +1997,6 @@ static BOOL parser_init_gstreamer(void)
     return TRUE;
 }
 
-static void parser_init_common(struct parser *object)
-{
-    pthread_mutex_init(&object->mutex, NULL);
-}
-
 static struct wg_parser *wg_parser_create(void)
 {
     struct wg_parser *parser;
@@ -2010,6 +2004,7 @@ static struct wg_parser *wg_parser_create(void)
     if (!(parser = calloc(1, sizeof(*parser))))
         return NULL;
 
+    pthread_mutex_init(&parser->mutex, NULL);
     pthread_cond_init(&parser->init_cond, NULL);
     pthread_cond_init(&parser->read_cond, NULL);
     pthread_cond_init(&parser->read_done_cond, NULL);
@@ -2036,8 +2031,6 @@ HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out)
         heap_free(object);
         return E_OUTOFMEMORY;
     }
-
-    parser_init_common(object);
 
     strmbase_filter_init(&object->filter, outer, &CLSID_decodebin_parser, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, wcsInputPinName, &sink_ops, NULL);
@@ -2172,9 +2165,9 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
 
     if (!(current_flags & AM_SEEKING_NoFlush))
     {
-        pthread_mutex_lock(&filter->mutex);
+        pthread_mutex_lock(&parser->mutex);
         parser->flushing = true;
-        pthread_mutex_unlock(&filter->mutex);
+        pthread_mutex_unlock(&parser->mutex);
 
         for (i = 0; i < filter->source_count; ++i)
         {
@@ -2221,9 +2214,9 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
 
     if (!(current_flags & AM_SEEKING_NoFlush))
     {
-        pthread_mutex_lock(&filter->mutex);
+        pthread_mutex_lock(&parser->mutex);
         parser->flushing = false;
-        pthread_mutex_unlock(&filter->mutex);
+        pthread_mutex_unlock(&parser->mutex);
 
         for (i = 0; i < filter->source_count; ++i)
         {
@@ -2526,13 +2519,13 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
         return S_OK;
 
     /* Unblock all of our streams. */
-    pthread_mutex_lock(&This->mutex);
+    pthread_mutex_lock(&parser->mutex);
     for (i = 0; i < This->source_count; ++i)
     {
         This->sources[i]->flushing = true;
         pthread_cond_signal(&This->sources[i]->event_empty_cond);
     }
-    pthread_mutex_unlock(&This->mutex);
+    pthread_mutex_unlock(&parser->mutex);
 
     gst_element_set_state(parser->container, GST_STATE_NULL);
     gst_pad_unlink(parser->my_src, parser->their_sink);
@@ -2543,9 +2536,9 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     /* read_thread() needs to stay alive to service any read requests GStreamer
      * sends, so we can only shut it down after GStreamer stops. */
     This->sink_connected = false;
-    pthread_mutex_lock(&This->mutex);
+    pthread_mutex_lock(&parser->mutex);
     parser->sink_connected = false;
-    pthread_mutex_unlock(&This->mutex);
+    pthread_mutex_unlock(&parser->mutex);
     pthread_cond_signal(&parser->read_cond);
     WaitForSingleObject(This->read_thread, INFINITE);
     CloseHandle(This->read_thread);
@@ -2701,8 +2694,6 @@ HRESULT wave_parser_create(IUnknown *outer, IUnknown **out)
         return E_OUTOFMEMORY;
     }
 
-    parser_init_common(object);
-
     strmbase_filter_init(&object->filter, outer, &CLSID_WAVEParser, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, sink_name, &wave_parser_sink_ops, NULL);
     object->init_gst = wave_parser_init_gst;
@@ -2750,9 +2741,9 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
 
     parser->their_sink = gst_element_get_static_pad(element, "sink");
 
-    pthread_mutex_lock(&filter->mutex);
+    pthread_mutex_lock(&parser->mutex);
     parser->no_more_pads = parser->error = false;
-    pthread_mutex_unlock(&filter->mutex);
+    pthread_mutex_unlock(&parser->mutex);
 
     if ((ret = gst_pad_link(parser->my_src, parser->their_sink)) < 0)
     {
@@ -2768,15 +2759,15 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    pthread_mutex_lock(&filter->mutex);
+    pthread_mutex_lock(&parser->mutex);
     while (!parser->no_more_pads && !parser->error)
-        pthread_cond_wait(&parser->init_cond, &filter->mutex);
+        pthread_cond_wait(&parser->init_cond, &parser->mutex);
     if (parser->error)
     {
-        pthread_mutex_unlock(&filter->mutex);
+        pthread_mutex_unlock(&parser->mutex);
         return FALSE;
     }
-    pthread_mutex_unlock(&filter->mutex);
+    pthread_mutex_unlock(&parser->mutex);
     return TRUE;
 }
 
@@ -2820,8 +2811,6 @@ HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out)
         heap_free(object);
         return E_OUTOFMEMORY;
     }
-
-    parser_init_common(object);
 
     strmbase_filter_init(&object->filter, outer, &CLSID_AviSplitter, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, sink_name, &avi_splitter_sink_ops, NULL);
@@ -2896,15 +2885,15 @@ static BOOL mpeg_splitter_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    pthread_mutex_lock(&filter->mutex);
+    pthread_mutex_lock(&parser->mutex);
     while (!parser->has_duration && !parser->error && !pin->eos)
-        pthread_cond_wait(&parser->init_cond, &filter->mutex);
+        pthread_cond_wait(&parser->init_cond, &parser->mutex);
     if (parser->error)
     {
-        pthread_mutex_unlock(&filter->mutex);
+        pthread_mutex_unlock(&parser->mutex);
         return FALSE;
     }
-    pthread_mutex_unlock(&filter->mutex);
+    pthread_mutex_unlock(&parser->mutex);
     return TRUE;
 }
 
@@ -2971,8 +2960,6 @@ HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out)
         heap_free(object);
         return E_OUTOFMEMORY;
     }
-
-    parser_init_common(object);
 
     strmbase_filter_init(&object->filter, outer, &CLSID_MPEG1Splitter, &mpeg_splitter_ops);
     strmbase_sink_init(&object->sink, &object->filter, sink_name, &mpeg_splitter_sink_ops, NULL);
