@@ -1464,8 +1464,6 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
             pthread_join(parser->push_thread, NULL);
             parser->push_thread = 0;
         }
-        if (This->filter.state == State_Stopped)
-            parser->next_offset = parser->start_offset;
     } else if (!parser->push_thread) {
         int ret;
 
@@ -1745,6 +1743,8 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
 
     /* DirectShow retains the old seek positions, but resets to them every time
      * it transitions from stopped -> paused. */
+
+    parser->next_offset = parser->start_offset;
 
     seeking = &filter->sources[0]->seek;
     if (seeking->llStop && seeking->llStop != seeking->llDuration)
