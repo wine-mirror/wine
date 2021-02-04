@@ -104,29 +104,6 @@ __ASM_GLOBAL_FUNC( wine_call_on_stack_obsolete,
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
                    __ASM_CFI(".cfi_same_value %rbp\n\t")
                    "ret")
-#elif defined(__arm__) && defined(__GNUC__)
-__ASM_GLOBAL_FUNC( wine_call_on_stack_obsolete,
-                   "push {r4,LR}\n\t"   /* save return address on stack */
-                   "mov r4, sp\n\t"     /* store old sp in local var */
-                   "mov sp, r2\n\t"     /* stack */
-                   "mov r2, r0\n\t"     /* func -> scratch register */
-                   "mov r0, r1\n\t"     /* arg */
-                   "blx r2\n\t"         /* call func */
-                   "mov sp, r4\n\t"     /* restore old sp from local var */
-                   "pop {r4,PC}")       /* fetch return address into pc */
-#elif defined(__aarch64__) && defined(__GNUC__)
-__ASM_GLOBAL_FUNC( wine_call_on_stack_obsolete,
-                   "stp x29, x30, [sp,#-32]!\n\t"    /* save return address on stack */
-                   "str x19, [sp,#16]\n\t"           /* save register on stack */
-                   "mov x19, sp\n\t"                 /* store old sp in local var */
-                   "mov sp, x2\n\t"                  /* stack */
-                   "mov x2, x0\n\t"                  /* func -> scratch register */
-                   "mov x0, x1\n\t"                  /* arg */
-                   "blr x2\n\t"                      /* call func */
-                   "mov sp, x19\n\t"                 /* restore old sp from local var */
-                   "ldr x19, [sp,#16]\n\t"           /* restore register from stack */
-                   "ldp x29, x30, [sp],#32\n\t"      /* restore return address */
-                   "ret")                            /* return */
 #endif
 
 /***********************************************************************
