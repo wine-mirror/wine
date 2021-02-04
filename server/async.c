@@ -65,8 +65,8 @@ static void async_destroy( struct object *obj );
 static const struct object_ops async_ops =
 {
     sizeof(struct async),      /* size */
+    &no_type,                  /* type */
     async_dump,                /* dump */
-    no_get_type,               /* get_type */
     add_queue,                 /* add_queue */
     remove_queue,              /* remove_queue */
     async_signaled,            /* signaled */
@@ -479,8 +479,8 @@ static void iosb_destroy( struct object *obj );
 static const struct object_ops iosb_ops =
 {
     sizeof(struct iosb),      /* size */
+    &no_type,                 /* type */
     iosb_dump,                /* dump */
-    no_get_type,              /* get_type */
     no_add_queue,             /* add_queue */
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */

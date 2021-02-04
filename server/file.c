@@ -52,6 +52,13 @@
 #include "process.h"
 #include "security.h"
 
+static const WCHAR file_name[] = {'F','i','l','e'};
+
+struct type_descr file_type =
+{
+    { file_name, sizeof(file_name) },   /* name */
+};
+
 struct file
 {
     struct object       obj;            /* object header */
@@ -80,8 +87,8 @@ static enum server_fd_type file_get_fd_type( struct fd *fd );
 static const struct object_ops file_ops =
 {
     sizeof(struct file),          /* size */
+    &file_type,                   /* type */
     file_dump,                    /* dump */
-    file_get_type,                /* get_type */
     add_queue,                    /* add_queue */
     remove_queue,                 /* remove_queue */
     default_fd_signaled,          /* signaled */
@@ -277,13 +284,6 @@ static void file_dump( struct object *obj, int verbose )
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
     fprintf( stderr, "File fd=%p\n", file->fd );
-}
-
-struct object_type *file_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'F','i','l','e'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
 }
 
 static enum server_fd_type file_get_fd_type( struct fd *fd )

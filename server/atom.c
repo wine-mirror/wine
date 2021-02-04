@@ -75,8 +75,8 @@ static void atom_table_destroy( struct object *obj );
 static const struct object_ops atom_table_ops =
 {
     sizeof(struct atom_table),    /* size */
+    &no_type,                     /* type */
     atom_table_dump,              /* dump */
-    no_get_type,                  /* get_type */
     no_add_queue,                 /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */

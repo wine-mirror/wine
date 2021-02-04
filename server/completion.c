@@ -43,6 +43,13 @@
 #include "request.h"
 
 
+static const WCHAR completion_name[] = {'I','o','C','o','m','p','l','e','t','i','o','n'};
+
+struct type_descr completion_type =
+{
+    { completion_name, sizeof(completion_name) },   /* name */
+};
+
 struct completion
 {
     struct object  obj;
@@ -51,7 +58,6 @@ struct completion
 };
 
 static void completion_dump( struct object*, int );
-static struct object_type *completion_get_type( struct object *obj );
 static int completion_signaled( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int completion_map_access( struct object *obj, unsigned int access );
 static void completion_destroy( struct object * );
@@ -59,8 +65,8 @@ static void completion_destroy( struct object * );
 static const struct object_ops completion_ops =
 {
     sizeof(struct completion), /* size */
+    &completion_type,          /* type */
     completion_dump,           /* dump */
-    completion_get_type,       /* get_type */
     add_queue,                 /* add_queue */
     remove_queue,              /* remove_queue */
     completion_signaled,       /* signaled */
@@ -106,13 +112,6 @@ static void completion_dump( struct object *obj, int verbose )
 
     assert( obj->ops == &completion_ops );
     fprintf( stderr, "Completion depth=%u\n", completion->depth );
-}
-
-static struct object_type *completion_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'I','o','C','o','m','p','l','e','t','i','o','n'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
 }
 
 static int completion_signaled( struct object *obj, struct wait_queue_entry *entry )

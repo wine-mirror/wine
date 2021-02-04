@@ -36,6 +36,13 @@
 #include "request.h"
 #include "security.h"
 
+static const WCHAR semaphore_name[] = {'S','e','m','a','p','h','o','r','e'};
+
+struct type_descr semaphore_type =
+{
+    { semaphore_name, sizeof(semaphore_name) },   /* name */
+};
+
 struct semaphore
 {
     struct object  obj;    /* object header */
@@ -44,7 +51,6 @@ struct semaphore
 };
 
 static void semaphore_dump( struct object *obj, int verbose );
-static struct object_type *semaphore_get_type( struct object *obj );
 static int semaphore_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void semaphore_satisfied( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int semaphore_map_access( struct object *obj, unsigned int access );
@@ -53,8 +59,8 @@ static int semaphore_signal( struct object *obj, unsigned int access );
 static const struct object_ops semaphore_ops =
 {
     sizeof(struct semaphore),      /* size */
+    &semaphore_type,               /* type */
     semaphore_dump,                /* dump */
-    semaphore_get_type,            /* get_type */
     add_queue,                     /* add_queue */
     remove_queue,                  /* remove_queue */
     semaphore_signaled,            /* signaled */
@@ -125,13 +131,6 @@ static void semaphore_dump( struct object *obj, int verbose )
     struct semaphore *sem = (struct semaphore *)obj;
     assert( obj->ops == &semaphore_ops );
     fprintf( stderr, "Semaphore count=%d max=%d\n", sem->count, sem->max );
-}
-
-static struct object_type *semaphore_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'S','e','m','a','p','h','o','r','e'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
 }
 
 static int semaphore_signaled( struct object *obj, struct wait_queue_entry *entry )

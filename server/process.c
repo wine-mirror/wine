@@ -50,7 +50,7 @@
 #include "user.h"
 #include "security.h"
 
-/* process structure */
+/* process object */
 
 static struct list process_list = LIST_INIT(process_list);
 static int running_processes, user_processes;
@@ -58,10 +58,14 @@ static struct event *shutdown_event;           /* signaled when shutdown starts 
 static struct timeout_user *shutdown_timeout;  /* timeout for server shutdown */
 static int shutdown_stage;  /* current stage in the shutdown process */
 
-/* process operations */
+static const WCHAR process_name[] = {'P','r','o','c','e','s','s'};
+
+struct type_descr process_type =
+{
+    { process_name, sizeof(process_name) },   /* name */
+};
 
 static void process_dump( struct object *obj, int verbose );
-static struct object_type *process_get_type( struct object *obj );
 static int process_signaled( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int process_map_access( struct object *obj, unsigned int access );
 static struct security_descriptor *process_get_sd( struct object *obj );
@@ -73,8 +77,8 @@ static void terminate_process( struct process *process, struct thread *skip, int
 static const struct object_ops process_ops =
 {
     sizeof(struct process),      /* size */
+    &process_type,               /* type */
     process_dump,                /* dump */
-    process_get_type,            /* get_type */
     add_queue,                   /* add_queue */
     remove_queue,                /* remove_queue */
     process_signaled,            /* signaled */
@@ -124,8 +128,8 @@ static void startup_info_destroy( struct object *obj );
 static const struct object_ops startup_info_ops =
 {
     sizeof(struct startup_info),   /* size */
+    &no_type,                      /* type */
     startup_info_dump,             /* dump */
-    no_get_type,                   /* get_type */
     add_queue,                     /* add_queue */
     remove_queue,                  /* remove_queue */
     startup_info_signaled,         /* signaled */
@@ -147,8 +151,14 @@ static const struct object_ops startup_info_ops =
 
 /* job object */
 
+static const WCHAR job_name[] = {'J','o','b'};
+
+struct type_descr job_type =
+{
+    { job_name, sizeof(job_name) },   /* name */
+};
+
 static void job_dump( struct object *obj, int verbose );
-static struct object_type *job_get_type( struct object *obj );
 static int job_signaled( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int job_map_access( struct object *obj, unsigned int access );
 static int job_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
@@ -170,8 +180,8 @@ struct job
 static const struct object_ops job_ops =
 {
     sizeof(struct job),            /* size */
+    &job_type,                     /* type */
     job_dump,                      /* dump */
-    job_get_type,                  /* get_type */
     add_queue,                     /* add_queue */
     remove_queue,                  /* remove_queue */
     job_signaled,                  /* signaled */
@@ -218,13 +228,6 @@ static struct job *get_job_obj( struct process *process, obj_handle_t handle, un
 {
     return (struct job *)get_handle_obj( process, handle, access, &job_ops );
 }
-
-static struct object_type *job_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'J','o','b'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
-};
 
 static unsigned int job_map_access( struct object *obj, unsigned int access )
 {
@@ -652,13 +655,6 @@ static void process_dump( struct object *obj, int verbose )
     assert( obj->ops == &process_ops );
 
     fprintf( stderr, "Process id=%04x handles=%p\n", process->id, process->handles );
-}
-
-static struct object_type *process_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'P','r','o','c','e','s','s'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
 }
 
 static int process_signaled( struct object *obj, struct wait_queue_entry *entry )

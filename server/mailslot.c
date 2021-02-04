@@ -73,8 +73,8 @@ static void mailslot_destroy( struct object * );
 static const struct object_ops mailslot_ops =
 {
     sizeof(struct mailslot),   /* size */
+    &file_type,                /* type */
     mailslot_dump,             /* dump */
-    file_get_type,             /* get_type */
     add_queue,                 /* add_queue */
     remove_queue,              /* remove_queue */
     default_fd_signaled,       /* signaled */
@@ -131,8 +131,8 @@ static void mail_writer_destroy( struct object *obj);
 static const struct object_ops mail_writer_ops =
 {
     sizeof(struct mail_writer), /* size */
+    &file_type,                 /* type */
     mail_writer_dump,           /* dump */
-    file_get_type,              /* get_type */
     no_add_queue,               /* add_queue */
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
@@ -184,7 +184,6 @@ struct mailslot_device_file
 };
 
 static void mailslot_device_dump( struct object *obj, int verbose );
-static struct object_type *mailslot_device_get_type( struct object *obj );
 static struct object *mailslot_device_lookup_name( struct object *obj, struct unicode_str *name,
                                                    unsigned int attr, struct object *root );
 static struct object *mailslot_device_open_file( struct object *obj, unsigned int access,
@@ -194,8 +193,8 @@ static void mailslot_device_destroy( struct object *obj );
 static const struct object_ops mailslot_device_ops =
 {
     sizeof(struct mailslot_device), /* size */
+    &device_type,                   /* type */
     mailslot_device_dump,           /* dump */
-    mailslot_device_get_type,       /* get_type */
     no_add_queue,                   /* add_queue */
     NULL,                           /* remove_queue */
     NULL,                           /* signaled */
@@ -224,8 +223,8 @@ static enum server_fd_type mailslot_device_file_get_fd_type( struct fd *fd );
 static const struct object_ops mailslot_device_file_ops =
 {
     sizeof(struct mailslot_device_file),    /* size */
+    &file_type,                             /* type */
     mailslot_device_file_dump,              /* dump */
-    file_get_type,                          /* get_type */
     add_queue,                              /* add_queue */
     remove_queue,                           /* remove_queue */
     default_fd_signaled,                    /* signaled */
@@ -385,13 +384,6 @@ static void mailslot_queue_async( struct fd *fd, struct async *async, int type, 
 static void mailslot_device_dump( struct object *obj, int verbose )
 {
     fputs( "Mailslot device\n", stderr );
-}
-
-static struct object_type *mailslot_device_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'D','e','v','i','c','e'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
 }
 
 static struct object *mailslot_device_lookup_name( struct object *obj, struct unicode_str *name,

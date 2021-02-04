@@ -52,6 +52,13 @@ struct debug_event
     debug_event_t          data;      /* event data */
 };
 
+static const WCHAR debug_obj_name[] = {'D','e','b','u','g','O','b','j','e','c','t'};
+
+struct type_descr debug_obj_type =
+{
+    { debug_obj_name, sizeof(debug_obj_name) },   /* name */
+};
+
 /* debug object */
 struct debug_obj
 {
@@ -68,8 +75,8 @@ static void debug_event_destroy( struct object *obj );
 static const struct object_ops debug_event_ops =
 {
     sizeof(struct debug_event),    /* size */
+    &no_type,                      /* type */
     debug_event_dump,              /* dump */
-    no_get_type,                   /* get_type */
     add_queue,                     /* add_queue */
     remove_queue,                  /* remove_queue */
     debug_event_signaled,          /* signaled */
@@ -90,7 +97,6 @@ static const struct object_ops debug_event_ops =
 };
 
 static void debug_obj_dump( struct object *obj, int verbose );
-static struct object_type *debug_obj_get_type( struct object *obj );
 static int debug_obj_signaled( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int debug_obj_map_access( struct object *obj, unsigned int access );
 static void debug_obj_destroy( struct object *obj );
@@ -98,8 +104,8 @@ static void debug_obj_destroy( struct object *obj );
 static const struct object_ops debug_obj_ops =
 {
     sizeof(struct debug_obj),      /* size */
+    &debug_obj_type,               /* type */
     debug_obj_dump,                /* dump */
-    debug_obj_get_type,            /* get_type */
     add_queue,                     /* add_queue */
     remove_queue,                  /* remove_queue */
     debug_obj_signaled,            /* signaled */
@@ -305,13 +311,6 @@ static void debug_obj_dump( struct object *obj, int verbose )
     assert( obj->ops == &debug_obj_ops );
     fprintf( stderr, "Debug context head=%p tail=%p\n",
              debug_obj->event_queue.next, debug_obj->event_queue.prev );
-}
-
-static struct object_type *debug_obj_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'D','e','b','u','g','O','b','j','e','c','t'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
 }
 
 static int debug_obj_signaled( struct object *obj, struct wait_queue_entry *entry )

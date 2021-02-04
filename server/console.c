@@ -76,8 +76,8 @@ static struct object *console_open_file( struct object *obj, unsigned int access
 static const struct object_ops console_ops =
 {
     sizeof(struct console),           /* size */
+    &file_type,                       /* type */
     console_dump,                     /* dump */
-    no_get_type,                      /* get_type */
     add_queue,                        /* add_queue */
     remove_queue,                     /* remove_queue */
     console_signaled,                 /* signaled */
@@ -151,8 +151,8 @@ static struct object *console_server_open_file( struct object *obj, unsigned int
 static const struct object_ops console_server_ops =
 {
     sizeof(struct console_server),    /* size */
+    &file_type,                       /* type */
     console_server_dump,              /* dump */
-    no_get_type,                      /* get_type */
     add_queue,                        /* add_queue */
     remove_queue,                     /* remove_queue */
     console_server_signaled,          /* signaled */
@@ -219,8 +219,8 @@ static struct object *screen_buffer_open_file( struct object *obj, unsigned int 
 static const struct object_ops screen_buffer_ops =
 {
     sizeof(struct screen_buffer),     /* size */
+    &file_type,                       /* type */
     screen_buffer_dump,               /* dump */
-    no_get_type,                      /* get_type */
     screen_buffer_add_queue,          /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
@@ -258,7 +258,6 @@ static const struct fd_ops screen_buffer_fd_ops =
     default_fd_reselect_async     /* reselect_async */
 };
 
-static struct object_type *console_device_get_type( struct object *obj );
 static void console_device_dump( struct object *obj, int verbose );
 static struct object *console_device_lookup_name( struct object *obj, struct unicode_str *name,
                                                 unsigned int attr, struct object *root );
@@ -268,8 +267,8 @@ static struct object *console_device_open_file( struct object *obj, unsigned int
 static const struct object_ops console_device_ops =
 {
     sizeof(struct object),            /* size */
+    &device_type,                     /* type */
     console_device_dump,              /* dump */
-    console_device_get_type,          /* get_type */
     no_add_queue,                     /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
@@ -305,8 +304,8 @@ static void console_input_destroy( struct object *obj );
 static const struct object_ops console_input_ops =
 {
     sizeof(struct console_input),     /* size */
+    &device_type,                     /* type */
     console_input_dump,               /* dump */
-    console_device_get_type,          /* get_type */
     console_input_add_queue,          /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
@@ -361,8 +360,8 @@ static void console_output_destroy( struct object *obj );
 static const struct object_ops console_output_ops =
 {
     sizeof(struct console_output),    /* size */
+    &device_type,                     /* type */
     console_output_dump,              /* dump */
-    console_device_get_type,          /* get_type */
     console_output_add_queue,         /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
@@ -418,8 +417,8 @@ static void console_connection_destroy( struct object *obj );
 static const struct object_ops console_connection_ops =
 {
     sizeof(struct console_connection),/* size */
+    &device_type,                     /* type */
     console_connection_dump,          /* dump */
-    console_device_get_type,          /* get_type */
     no_add_queue,                     /* add_queue */
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
@@ -1190,13 +1189,6 @@ static void console_connection_destroy( struct object *obj )
 {
     struct console_connection *connection = (struct console_connection *)obj;
     if (connection->fd) release_object( connection->fd );
-}
-
-static struct object_type *console_device_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'D','e','v','i','c','e'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
 }
 
 static void console_device_dump( struct object *obj, int verbose )

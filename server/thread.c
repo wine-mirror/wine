@@ -105,8 +105,8 @@ static void clear_apc_queue( struct list *queue );
 static const struct object_ops thread_apc_ops =
 {
     sizeof(struct thread_apc),  /* size */
+    &no_type,                   /* type */
     dump_thread_apc,            /* dump */
-    no_get_type,                /* get_type */
     add_queue,                  /* add_queue */
     remove_queue,               /* remove_queue */
     thread_apc_signaled,        /* signaled */
@@ -142,8 +142,8 @@ static int context_signaled( struct object *obj, struct wait_queue_entry *entry 
 static const struct object_ops context_ops =
 {
     sizeof(struct context),     /* size */
+    &no_type,                   /* type */
     dump_context,               /* dump */
-    no_get_type,                /* get_type */
     add_queue,                  /* add_queue */
     remove_queue,               /* remove_queue */
     context_signaled,           /* signaled */
@@ -166,8 +166,14 @@ static const struct object_ops context_ops =
 
 /* thread operations */
 
+static const WCHAR thread_name[] = {'T','h','r','e','a','d'};
+
+struct type_descr thread_type =
+{
+    { thread_name, sizeof(thread_name) },   /* name */
+};
+
 static void dump_thread( struct object *obj, int verbose );
-static struct object_type *thread_get_type( struct object *obj );
 static int thread_signaled( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int thread_map_access( struct object *obj, unsigned int access );
 static void thread_poll_event( struct fd *fd, int event );
@@ -177,8 +183,8 @@ static void destroy_thread( struct object *obj );
 static const struct object_ops thread_ops =
 {
     sizeof(struct thread),      /* size */
+    &thread_type,               /* type */
     dump_thread,                /* dump */
-    thread_get_type,            /* get_type */
     add_queue,                  /* add_queue */
     remove_queue,               /* remove_queue */
     thread_signaled,            /* signaled */
@@ -443,13 +449,6 @@ static void dump_thread( struct object *obj, int verbose )
 
     fprintf( stderr, "Thread id=%04x unix pid=%d unix tid=%d state=%d\n",
              thread->id, thread->unix_pid, thread->unix_tid, thread->state );
-}
-
-static struct object_type *thread_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'T','h','r','e','a','d'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
 }
 
 static int thread_signaled( struct object *obj, struct wait_queue_entry *entry )

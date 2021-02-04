@@ -50,6 +50,8 @@ struct namespace
 };
 
 
+struct type_descr no_type = {{ 0 }};
+
 #ifdef DEBUG_OBJECTS
 static struct list object_list = LIST_INIT(object_list);
 
@@ -490,11 +492,6 @@ struct namespace *create_namespace( unsigned int hash_size )
 }
 
 /* functions for unimplemented/default object operations */
-
-struct object_type *no_get_type( struct object *obj )
-{
-    return NULL;
-}
 
 int no_add_queue( struct object *obj, struct wait_queue_entry *entry )
 {

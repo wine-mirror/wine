@@ -63,8 +63,8 @@ static void ranges_destroy( struct object *obj );
 static const struct object_ops ranges_ops =
 {
     sizeof(struct ranges),     /* size */
+    &no_type,                  /* type */
     ranges_dump,               /* dump */
-    no_get_type,               /* get_type */
     no_add_queue,              /* add_queue */
     NULL,                      /* remove_queue */
     NULL,                      /* signaled */
@@ -99,8 +99,8 @@ static void shared_map_destroy( struct object *obj );
 static const struct object_ops shared_map_ops =
 {
     sizeof(struct shared_map), /* size */
+    &no_type,                  /* type */
     shared_map_dump,           /* dump */
-    no_get_type,               /* get_type */
     no_add_queue,              /* add_queue */
     NULL,                      /* remove_queue */
     NULL,                      /* signaled */
@@ -136,6 +136,14 @@ struct memory_view
     file_pos_t      start;           /* start offset in mapping */
 };
 
+
+static const WCHAR mapping_name[] = {'S','e','c','t','i','o','n'};
+
+struct type_descr mapping_type =
+{
+    { mapping_name, sizeof(mapping_name) },   /* name */
+};
+
 struct mapping
 {
     struct object   obj;             /* object header */
@@ -148,7 +156,6 @@ struct mapping
 };
 
 static void mapping_dump( struct object *obj, int verbose );
-static struct object_type *mapping_get_type( struct object *obj );
 static struct fd *mapping_get_fd( struct object *obj );
 static unsigned int mapping_map_access( struct object *obj, unsigned int access );
 static void mapping_destroy( struct object *obj );
@@ -157,8 +164,8 @@ static enum server_fd_type mapping_get_fd_type( struct fd *fd );
 static const struct object_ops mapping_ops =
 {
     sizeof(struct mapping),      /* size */
+    &mapping_type,               /* type */
     mapping_dump,                /* dump */
-    mapping_get_type,            /* get_type */
     no_add_queue,                /* add_queue */
     NULL,                        /* remove_queue */
     NULL,                        /* signaled */
@@ -975,13 +982,6 @@ static void mapping_dump( struct object *obj, int verbose )
     fprintf( stderr, "Mapping size=%08x%08x flags=%08x fd=%p shared=%p\n",
              (unsigned int)(mapping->size >> 32), (unsigned int)mapping->size,
              mapping->flags, mapping->fd, mapping->shared );
-}
-
-static struct object_type *mapping_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'S','e','c','t','i','o','n'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
 }
 
 static struct fd *mapping_get_fd( struct object *obj )

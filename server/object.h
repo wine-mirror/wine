@@ -53,15 +53,22 @@ struct unicode_str
     data_size_t  len;
 };
 
+/* object type descriptor */
+struct type_descr
+{
+    struct unicode_str name;          /* type name */
+    unsigned int       index;         /* index in global array of types */
+};
+
 /* operations valid on all objects */
 struct object_ops
 {
     /* size of this object type */
     size_t size;
+    /* type descriptor */
+    struct type_descr *type;
     /* dump the object (for debugging) */
     void (*dump)(struct object *,int);
-    /* return the object type */
-    struct object_type *(*get_type)(struct object *);
     /* add a thread to the object wait queue */
     int  (*add_queue)(struct object *,struct wait_queue_entry *);
     /* remove a thread from the object wait queue */
@@ -154,7 +161,6 @@ extern void release_object( void *obj );
 extern struct object *find_object( const struct namespace *namespace, const struct unicode_str *name,
                                    unsigned int attributes );
 extern struct object *find_object_index( const struct namespace *namespace, unsigned int index );
-extern struct object_type *no_get_type( struct object *obj );
 extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void no_satisfied( struct object *obj, struct wait_queue_entry *entry );
 extern int no_signal( struct object *obj, unsigned int access );
@@ -240,7 +246,6 @@ extern void release_global_atom( struct winstation *winstation, atom_t atom );
 
 extern struct object *get_root_directory(void);
 extern struct object *get_directory_obj( struct process *process, obj_handle_t handle );
-extern struct object_type *get_object_type( const struct unicode_str *name );
 extern int directory_link_name( struct object *obj, struct object_name *name, struct object *parent );
 extern void init_directories( struct fd *intl_fd );
 
@@ -263,6 +268,29 @@ extern const char *server_argv0;
 
   /* server start time used for GetTickCount() */
 extern timeout_t server_start_time;
+
+/* object types */
+extern struct type_descr no_type;
+extern struct type_descr objtype_type;
+extern struct type_descr directory_type;
+extern struct type_descr symlink_type;
+extern struct type_descr token_type;
+extern struct type_descr job_type;
+extern struct type_descr process_type;
+extern struct type_descr thread_type;
+extern struct type_descr debug_obj_type;
+extern struct type_descr event_type;
+extern struct type_descr mutex_type;
+extern struct type_descr semaphore_type;
+extern struct type_descr timer_type;
+extern struct type_descr keyed_event_type;
+extern struct type_descr winstation_type;
+extern struct type_descr desktop_type;
+extern struct type_descr device_type;
+extern struct type_descr completion_type;
+extern struct type_descr file_type;
+extern struct type_descr mapping_type;
+extern struct type_descr key_type;
 
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002

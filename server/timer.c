@@ -37,6 +37,13 @@
 #include "handle.h"
 #include "request.h"
 
+static const WCHAR timer_name[] = {'T','i','m','e','r'};
+
+struct type_descr timer_type =
+{
+    { timer_name, sizeof(timer_name) },   /* name */
+};
+
 struct timer
 {
     struct object        obj;       /* object header */
@@ -51,7 +58,6 @@ struct timer
 };
 
 static void timer_dump( struct object *obj, int verbose );
-static struct object_type *timer_get_type( struct object *obj );
 static int timer_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void timer_satisfied( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int timer_map_access( struct object *obj, unsigned int access );
@@ -60,8 +66,8 @@ static void timer_destroy( struct object *obj );
 static const struct object_ops timer_ops =
 {
     sizeof(struct timer),      /* size */
+    &timer_type,               /* type */
     timer_dump,                /* dump */
-    timer_get_type,            /* get_type */
     add_queue,                 /* add_queue */
     remove_queue,              /* remove_queue */
     timer_signaled,            /* signaled */
@@ -190,13 +196,6 @@ static void timer_dump( struct object *obj, int verbose )
     assert( obj->ops == &timer_ops );
     fprintf( stderr, "Timer manual=%d when=%s period=%u\n",
              timer->manual, get_timeout_str(timeout), timer->period );
-}
-
-static struct object_type *timer_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'T','i','m','e','r'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
 }
 
 static int timer_signaled( struct object *obj, struct wait_queue_entry *entry )

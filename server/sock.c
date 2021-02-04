@@ -183,8 +183,8 @@ static unsigned int sock_get_error( int err );
 static const struct object_ops sock_ops =
 {
     sizeof(struct sock),          /* size */
+    &file_type,                   /* type */
     sock_dump,                    /* dump */
-    no_get_type,                  /* get_type */
     add_queue,                    /* add_queue */
     remove_queue,                 /* remove_queue */
     sock_signaled,                /* signaled */
@@ -1528,8 +1528,8 @@ struct ifchange
 static const struct object_ops ifchange_ops =
 {
     sizeof(struct ifchange), /* size */
+    &no_type,                /* type */
     ifchange_dump,           /* dump */
-    no_get_type,             /* get_type */
     add_queue,               /* add_queue */
     NULL,                    /* remove_queue */
     NULL,                    /* signaled */
@@ -1739,7 +1739,6 @@ static void sock_release_ifchange( struct sock *sock )
     }
 }
 
-static struct object_type *socket_device_get_type( struct object *obj );
 static void socket_device_dump( struct object *obj, int verbose );
 static struct object *socket_device_lookup_name( struct object *obj, struct unicode_str *name,
                                                  unsigned int attr, struct object *root );
@@ -1749,8 +1748,8 @@ static struct object *socket_device_open_file( struct object *obj, unsigned int 
 static const struct object_ops socket_device_ops =
 {
     sizeof(struct object),      /* size */
+    &device_type,               /* type */
     socket_device_dump,         /* dump */
-    socket_device_get_type,     /* get_type */
     no_add_queue,               /* add_queue */
     NULL,                       /* remove_queue */
     NULL,                       /* signaled */
@@ -1769,13 +1768,6 @@ static const struct object_ops socket_device_ops =
     no_close_handle,            /* close_handle */
     no_destroy                  /* destroy */
 };
-
-static struct object_type *socket_device_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'D','e','v','i','c','e'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
-}
 
 static void socket_device_dump( struct object *obj, int verbose )
 {

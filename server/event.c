@@ -36,6 +36,13 @@
 #include "request.h"
 #include "security.h"
 
+static const WCHAR event_name[] = {'E','v','e','n','t'};
+
+struct type_descr event_type =
+{
+    { event_name, sizeof(event_name) },   /* name */
+};
+
 struct event
 {
     struct object  obj;             /* object header */
@@ -45,7 +52,6 @@ struct event
 };
 
 static void event_dump( struct object *obj, int verbose );
-static struct object_type *event_get_type( struct object *obj );
 static int event_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void event_satisfied( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int event_map_access( struct object *obj, unsigned int access );
@@ -55,8 +61,8 @@ static struct list *event_get_kernel_obj_list( struct object *obj );
 static const struct object_ops event_ops =
 {
     sizeof(struct event),      /* size */
+    &event_type,               /* type */
     event_dump,                /* dump */
-    event_get_type,            /* get_type */
     add_queue,                 /* add_queue */
     remove_queue,              /* remove_queue */
     event_signaled,            /* signaled */
@@ -77,21 +83,27 @@ static const struct object_ops event_ops =
 };
 
 
+static const WCHAR keyed_event_name[] = {'K','e','y','e','d','E','v','e','n','t'};
+
+struct type_descr keyed_event_type =
+{
+    { keyed_event_name, sizeof(keyed_event_name) },   /* name */
+};
+
 struct keyed_event
 {
     struct object  obj;             /* object header */
 };
 
 static void keyed_event_dump( struct object *obj, int verbose );
-static struct object_type *keyed_event_get_type( struct object *obj );
 static int keyed_event_signaled( struct object *obj, struct wait_queue_entry *entry );
 static unsigned int keyed_event_map_access( struct object *obj, unsigned int access );
 
 static const struct object_ops keyed_event_ops =
 {
     sizeof(struct keyed_event),  /* size */
+    &keyed_event_type,           /* type */
     keyed_event_dump,            /* dump */
-    keyed_event_get_type,        /* get_type */
     add_queue,                   /* add_queue */
     remove_queue,                /* remove_queue */
     keyed_event_signaled,        /* signaled */
@@ -164,13 +176,6 @@ static void event_dump( struct object *obj, int verbose )
              event->manual_reset, event->signaled );
 }
 
-static struct object_type *event_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'E','v','e','n','t'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
-}
-
 static int event_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
     struct event *event = (struct event *)obj;
@@ -238,13 +243,6 @@ struct keyed_event *get_keyed_event_obj( struct process *process, obj_handle_t h
 static void keyed_event_dump( struct object *obj, int verbose )
 {
     fputs( "Keyed event\n", stderr );
-}
-
-static struct object_type *keyed_event_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'K','e','y','e','d','E','v','e','n','t'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
 }
 
 static enum select_op matching_op( enum select_op op )

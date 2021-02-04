@@ -60,6 +60,13 @@ struct notify
     struct process   *process;  /* process in which the hkey is valid */
 };
 
+static const WCHAR key_name[] = {'K','e','y'};
+
+struct type_descr key_type =
+{
+    { key_name, sizeof(key_name) },   /* name */
+};
+
 /* a registry key */
 struct key
 {
@@ -146,7 +153,6 @@ struct file_load_info
 
 
 static void key_dump( struct object *obj, int verbose );
-static struct object_type *key_get_type( struct object *obj );
 static unsigned int key_map_access( struct object *obj, unsigned int access );
 static struct security_descriptor *key_get_sd( struct object *obj );
 static WCHAR *key_get_full_name( struct object *obj, data_size_t *len );
@@ -156,8 +162,8 @@ static void key_destroy( struct object *obj );
 static const struct object_ops key_ops =
 {
     sizeof(struct key),      /* size */
+    &key_type,               /* type */
     key_dump,                /* dump */
-    key_get_type,            /* get_type */
     no_add_queue,            /* add_queue */
     NULL,                    /* remove_queue */
     NULL,                    /* signaled */
@@ -303,13 +309,6 @@ static void key_dump( struct object *obj, int verbose )
     fprintf( stderr, "Key flags=%x ", key->flags );
     dump_path( key, NULL, stderr );
     fprintf( stderr, "\n" );
-}
-
-static struct object_type *key_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'K','e','y'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
 }
 
 /* notify waiter and maybe delete the notification */

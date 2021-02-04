@@ -76,8 +76,8 @@ static void hook_table_destroy( struct object *obj );
 static const struct object_ops hook_table_ops =
 {
     sizeof(struct hook_table),    /* size */
+    &no_type,                     /* type */
     hook_table_dump,              /* dump */
-    no_get_type,                  /* get_type */
     no_add_queue,                 /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */

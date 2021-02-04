@@ -43,24 +43,29 @@
 static struct list winstation_list = LIST_INIT(winstation_list);
 
 static void winstation_dump( struct object *obj, int verbose );
-static struct object_type *winstation_get_type( struct object *obj );
 static int winstation_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static struct object *winstation_lookup_name( struct object *obj, struct unicode_str *name,
                                               unsigned int attr, struct object *root );
 static void winstation_destroy( struct object *obj );
 static unsigned int winstation_map_access( struct object *obj, unsigned int access );
 static void desktop_dump( struct object *obj, int verbose );
-static struct object_type *desktop_get_type( struct object *obj );
 static int desktop_link_name( struct object *obj, struct object_name *name, struct object *parent );
 static int desktop_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void desktop_destroy( struct object *obj );
 static unsigned int desktop_map_access( struct object *obj, unsigned int access );
 
+static const WCHAR winstation_name[] = {'W','i','n','d','o','w','S','t','a','t','i','o','n'};
+
+struct type_descr winstation_type =
+{
+    { winstation_name, sizeof(winstation_name) },   /* name */
+};
+
 static const struct object_ops winstation_ops =
 {
     sizeof(struct winstation),    /* size */
+    &winstation_type,             /* type */
     winstation_dump,              /* dump */
-    winstation_get_type,          /* get_type */
     no_add_queue,                 /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
@@ -81,11 +86,18 @@ static const struct object_ops winstation_ops =
 };
 
 
+static const WCHAR desktop_name[] = {'D','e','s','k','t','o','p'};
+
+struct type_descr desktop_type =
+{
+    { desktop_name, sizeof(desktop_name) },   /* name */
+};
+
 static const struct object_ops desktop_ops =
 {
     sizeof(struct desktop),       /* size */
+    &desktop_type,                /* type */
     desktop_dump,                 /* dump */
-    desktop_get_type,             /* get_type */
     no_add_queue,                 /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
@@ -140,13 +152,6 @@ static void winstation_dump( struct object *obj, int verbose )
 
     fprintf( stderr, "Winstation flags=%x clipboard=%p atoms=%p\n",
              winstation->flags, winstation->clipboard, winstation->atom_table );
-}
-
-static struct object_type *winstation_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'W','i','n','d','o','w','S','t','a','t','i','o','n'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
 }
 
 static int winstation_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
@@ -245,13 +250,6 @@ static void desktop_dump( struct object *obj, int verbose )
 
     fprintf( stderr, "Desktop flags=%x winstation=%p top_win=%p hooks=%p\n",
              desktop->flags, desktop->winstation, desktop->top_window, desktop->global_hooks );
-}
-
-static struct object_type *desktop_get_type( struct object *obj )
-{
-    static const WCHAR name[] = {'D','e','s','k','t','o','p'};
-    static const struct unicode_str str = { name, sizeof(name) };
-    return get_object_type( &str );
 }
 
 static int desktop_link_name( struct object *obj, struct object_name *name, struct object *parent )

@@ -205,8 +205,8 @@ static void fd_destroy( struct object *obj );
 static const struct object_ops fd_ops =
 {
     sizeof(struct fd),        /* size */
+    &no_type,                 /* type */
     fd_dump,                  /* dump */
-    no_get_type,              /* get_type */
     no_add_queue,             /* add_queue */
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
@@ -246,8 +246,8 @@ static void device_destroy( struct object *obj );
 static const struct object_ops device_ops =
 {
     sizeof(struct device),    /* size */
+    &no_type,                 /* type */
     device_dump,              /* dump */
-    no_get_type,              /* get_type */
     no_add_queue,             /* add_queue */
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
@@ -286,8 +286,8 @@ static void inode_destroy( struct object *obj );
 static const struct object_ops inode_ops =
 {
     sizeof(struct inode),     /* size */
+    &no_type,                 /* type */
     inode_dump,               /* dump */
-    no_get_type,              /* get_type */
     no_add_queue,             /* add_queue */
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
@@ -328,8 +328,8 @@ static int file_lock_signaled( struct object *obj, struct wait_queue_entry *entr
 static const struct object_ops file_lock_ops =
 {
     sizeof(struct file_lock),   /* size */
+    &no_type,                   /* type */
     file_lock_dump,             /* dump */
-    no_get_type,                /* get_type */
     add_queue,                  /* add_queue */
     remove_queue,               /* remove_queue */
     file_lock_signaled,         /* signaled */
