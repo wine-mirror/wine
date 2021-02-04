@@ -98,7 +98,6 @@ static attr_list_t *check_field_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_library_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_module_attrs(const char *name, attr_list_t *attrs);
-static attr_list_t *check_runtimeclass_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_apicontract_attrs(const char *name, attr_list_t *attrs);
 const char *get_attr_display_name(enum attr_type type);
 static void add_explicit_handle_if_necessary(const type_t *iface, var_t *func);
@@ -306,7 +305,7 @@ static typelib_t *current_typelib;
 %type <declarator> m_abstract_declarator abstract_declarator abstract_declarator_no_direct abstract_direct_declarator
 %type <declarator_list> declarator_list struct_declarator_list
 %type <type> coclass coclassdef
-%type <type> runtimeclass runtimeclass_hdr runtimeclass_def
+%type <type> runtimeclass runtimeclass_def
 %type <type> apicontract
 %type <num> contract_ver
 %type <num> pointer_type threading_type marshaling_behavior version
@@ -905,22 +904,12 @@ coclassdef: attributes coclass '{' class_interfaces '}' semicolon_opt
 	;
 
 runtimeclass:
-	  tRUNTIMECLASS aIDENTIFIER		{ $$ = type_new_runtimeclass($2, current_namespace); }
-	| tRUNTIMECLASS aKNOWNTYPE		{ $$ = find_type($2, NULL, 0);
-						  if (type_get_type_detect_alias($$) != TYPE_RUNTIMECLASS)
-						    error_loc("%s was not declared a runtimeclass at %s:%d\n", $2,
-						              $$->loc_info.input_name, $$->loc_info.line_number);
-						}
+	  tRUNTIMECLASS aIDENTIFIER		{ $$ = type_runtimeclass_declare($2, current_namespace); }
+	| tRUNTIMECLASS aKNOWNTYPE		{ $$ = type_runtimeclass_declare($2, current_namespace); }
 	;
 
-runtimeclass_hdr: attributes runtimeclass	{ $$ = $2;
-						  check_def($$);
-						  $$->attrs = check_runtimeclass_attrs($2->name, $1);
-						}
-	;
-
-runtimeclass_def: runtimeclass_hdr '{' class_interfaces '}' semicolon_opt
-						{ $$ = type_runtimeclass_define($1, $3); }
+runtimeclass_def: attributes runtimeclass '{' class_interfaces '}' semicolon_opt
+						{ $$ = type_runtimeclass_define($2, $1, $4); }
 	;
 
 apicontract: attributes tAPICONTRACT aIDENTIFIER '{' '}'
@@ -2529,7 +2518,7 @@ attr_list_t *check_coclass_attrs(const char *name, attr_list_t *attrs)
   return attrs;
 }
 
-static attr_list_t *check_runtimeclass_attrs(const char *name, attr_list_t *attrs)
+attr_list_t *check_runtimeclass_attrs(const char *name, attr_list_t *attrs)
 {
     const attr_t *attr;
     if (!attrs) return attrs;
