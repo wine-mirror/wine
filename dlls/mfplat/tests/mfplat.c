@@ -136,6 +136,7 @@ static DXGI_FORMAT (WINAPI *pMFMapDX9FormatToDXGIFormat)(DWORD format);
 static HRESULT (WINAPI *pMFCreateVideoSampleAllocatorEx)(REFIID riid, void **allocator);
 static HRESULT (WINAPI *pMFCreateDXGISurfaceBuffer)(REFIID riid, IUnknown *surface, UINT subresource, BOOL bottomup,
         IMFMediaBuffer **buffer);
+static HRESULT (WINAPI *pMFCreateVideoMediaTypeFromSubtype)(const GUID *subtype, IMFVideoMediaType **media_type);
 
 static HWND create_window(void)
 {
@@ -799,6 +800,7 @@ static void init_functions(void)
     X(MFCreateMFByteStreamOnStream);
     X(MFCreateTrackedSample);
     X(MFCreateTransformActivate);
+    X(MFCreateVideoMediaTypeFromSubtype);
     X(MFCreateVideoSampleAllocatorEx);
     X(MFGetPlaneSize);
     X(MFGetStrideForBitmapInfoHeader);
@@ -965,28 +967,32 @@ if(0)
     IUnknown_Release(unk2);
 
     IUnknown_Release(unk);
-
-    hr = MFCreateVideoMediaTypeFromSubtype(&MFVideoFormat_RGB555, &video_type);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    check_interface(video_type, &IID_IMFMediaType, TRUE);
-    check_interface(video_type, &IID_IMFVideoMediaType, TRUE);
-
-    /* Major and subtype are set on creation. */
-    hr = IMFVideoMediaType_GetCount(video_type, &count);
-    ok(count == 2, "Unexpected attribute count %#x.\n", hr);
-
-    hr = IMFVideoMediaType_DeleteAllItems(video_type);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFVideoMediaType_GetCount(video_type, &count);
-    ok(!count, "Unexpected attribute count %#x.\n", hr);
-
-    check_interface(video_type, &IID_IMFVideoMediaType, FALSE);
-
-    IMFVideoMediaType_Release(video_type);
-
     IMFMediaType_Release(mediatype);
+
+    if (pMFCreateVideoMediaTypeFromSubtype)
+    {
+        hr = pMFCreateVideoMediaTypeFromSubtype(&MFVideoFormat_RGB555, &video_type);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        check_interface(video_type, &IID_IMFMediaType, TRUE);
+        check_interface(video_type, &IID_IMFVideoMediaType, TRUE);
+
+        /* Major and subtype are set on creation. */
+        hr = IMFVideoMediaType_GetCount(video_type, &count);
+        ok(count == 2, "Unexpected attribute count %#x.\n", hr);
+
+        hr = IMFVideoMediaType_DeleteAllItems(video_type);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFVideoMediaType_GetCount(video_type, &count);
+        ok(!count, "Unexpected attribute count %#x.\n", hr);
+
+        check_interface(video_type, &IID_IMFVideoMediaType, FALSE);
+
+        IMFVideoMediaType_Release(video_type);
+    }
+    else
+        win_skip("MFCreateVideoMediaTypeFromSubtype() is not available.\n");
 
     /* IMFAudioMediaType */
     hr = MFCreateMediaType(&mediatype);
