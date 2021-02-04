@@ -205,16 +205,6 @@ type_t *type_new_module(char *name)
     return type;
 }
 
-type_t *type_new_coclass(char *name)
-{
-    type_t *type = get_type(TYPE_COCLASS, name, NULL, 0);
-    if (type->type_type != TYPE_COCLASS || type->defined)
-        error_loc("%s: redefinition error; original definition was at %s:%d\n",
-                  type->name, type->loc_info.input_name, type->loc_info.line_number);
-    type->name = name;
-    return type;
-}
-
 type_t *type_new_runtimeclass(char *name, struct namespace *namespace)
 {
     type_t *type = get_type(TYPE_RUNTIMECLASS, name, NULL, 0);
@@ -512,8 +502,21 @@ void type_module_define(type_t *module, statement_list_t *stmts)
     module->defined = TRUE;
 }
 
-type_t *type_coclass_define(type_t *coclass, ifref_list_t *ifaces)
+type_t *type_coclass_declare(char *name)
 {
+    type_t *type = get_type(TYPE_COCLASS, name, NULL, 0);
+    if (type_get_type_detect_alias(type) != TYPE_COCLASS)
+        error_loc("coclass %s previously not declared a coclass at %s:%d\n",
+                  type->name, type->loc_info.input_name, type->loc_info.line_number);
+    return type;
+}
+
+type_t *type_coclass_define(type_t *coclass, attr_list_t *attrs, ifref_list_t *ifaces)
+{
+    if (coclass->defined)
+        error_loc("coclass %s already defined at %s:%d\n",
+                  coclass->name, coclass->loc_info.input_name, coclass->loc_info.line_number);
+    coclass->attrs = check_coclass_attrs(coclass->name, attrs);
     coclass->details.coclass.ifaces = ifaces;
     coclass->defined = TRUE;
     return coclass;

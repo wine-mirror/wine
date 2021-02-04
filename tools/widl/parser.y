@@ -98,7 +98,6 @@ static attr_list_t *check_field_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_library_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_module_attrs(const char *name, attr_list_t *attrs);
-static attr_list_t *check_coclass_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_runtimeclass_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_apicontract_attrs(const char *name, attr_list_t *attrs);
 const char *get_attr_display_name(enum attr_type type);
@@ -306,7 +305,7 @@ static typelib_t *current_typelib;
 %type <declarator> m_any_declarator any_declarator any_declarator_no_direct any_direct_declarator
 %type <declarator> m_abstract_declarator abstract_declarator abstract_declarator_no_direct abstract_direct_declarator
 %type <declarator_list> declarator_list struct_declarator_list
-%type <type> coclass coclasshdr coclassdef
+%type <type> coclass coclassdef
 %type <type> runtimeclass runtimeclass_hdr runtimeclass_def
 %type <type> apicontract
 %type <num> contract_ver
@@ -897,23 +896,12 @@ qualified_type:
     | aNAMESPACE '.' { init_lookup_namespace($1); } qualified_seq { $$ = $4; }
     ;
 
-coclass:  tCOCLASS aIDENTIFIER			{ $$ = type_new_coclass($2); }
-	| tCOCLASS aKNOWNTYPE			{ $$ = find_type($2, NULL, 0);
-						  if (type_get_type_detect_alias($$) != TYPE_COCLASS)
-						    error_loc("%s was not declared a coclass at %s:%d\n",
-							      $2, $$->loc_info.input_name,
-							      $$->loc_info.line_number);
-						}
+coclass:  tCOCLASS aIDENTIFIER			{ $$ = type_coclass_declare($2); }
+	| tCOCLASS aKNOWNTYPE			{ $$ = type_coclass_declare($2); }
 	;
 
-coclasshdr: attributes coclass			{ $$ = $2;
-						  check_def($$);
-						  $$->attrs = check_coclass_attrs($2->name, $1);
-						}
-	;
-
-coclassdef: coclasshdr '{' class_interfaces '}' semicolon_opt
-						{ $$ = type_coclass_define($1, $3); }
+coclassdef: attributes coclass '{' class_interfaces '}' semicolon_opt
+						{ $$ = type_coclass_define($2, $1, $4); }
 	;
 
 runtimeclass:
@@ -2528,7 +2516,7 @@ static attr_list_t *check_module_attrs(const char *name, attr_list_t *attrs)
   return attrs;
 }
 
-static attr_list_t *check_coclass_attrs(const char *name, attr_list_t *attrs)
+attr_list_t *check_coclass_attrs(const char *name, attr_list_t *attrs)
 {
   const attr_t *attr;
   if (!attrs) return attrs;
