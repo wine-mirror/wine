@@ -286,7 +286,8 @@ static typelib_t *current_typelib;
 %type <type_qualifier> type_qualifier m_type_qual_list
 %type <function_specifier> function_specifier
 %type <declspec> decl_spec decl_spec_no_type m_decl_spec_no_type
-%type <type> inherit interface interfacedef interfacedec
+%type <type> inherit interface interfacedef
+%type <type> interfaceref
 %type <type> dispinterface dispinterfacehdr dispinterfacedef
 %type <type> module modulehdr moduledef
 %type <str> namespacedef
@@ -356,7 +357,8 @@ m_acf: /* empty */ | aACF acf_statements
 gbl_statements:					{ $$ = NULL; }
 	| gbl_statements namespacedef '{' { push_namespace($2); } gbl_statements '}'
 						{ pop_namespace($2); $$ = append_statements($1, $5); }
-	| gbl_statements interfacedec		{ $$ = append_statement($1, make_statement_reference($2)); }
+	| gbl_statements interface ';'		{ $$ = append_statement($1, make_statement_reference($2)); }
+	| gbl_statements dispinterface ';'	{ $$ = append_statement($1, make_statement_reference($2)); }
 	| gbl_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
 	| gbl_statements coclass ';'		{ $$ = $1;
 						  reg_type($2, $2->name, current_namespace, 0);
@@ -375,7 +377,8 @@ gbl_statements:					{ $$ = NULL; }
 	;
 
 imp_statements:					{ $$ = NULL; }
-	| imp_statements interfacedec		{ $$ = append_statement($1, make_statement_reference($2)); }
+	| imp_statements interface ';'		{ $$ = append_statement($1, make_statement_reference($2)); }
+	| imp_statements dispinterface ';'	{ $$ = append_statement($1, make_statement_reference($2)); }
 	| imp_statements namespacedef '{' { push_namespace($2); } imp_statements '}'
 						{ pop_namespace($2); $$ = append_statements($1, $5); }
 	| imp_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
@@ -928,7 +931,7 @@ class_interfaces:				{ $$ = NULL; }
 	;
 
 class_interface:
-	  m_attributes interfacedec		{ $$ = make_ifref($2); $$->attrs = $1; }
+	  m_attributes interfaceref ';'		{ $$ = make_ifref($2); $$->attrs = $1; }
 	;
 
 dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
@@ -996,9 +999,11 @@ interfacedef: interfacehdr inherit
 	| dispinterfacedef semicolon_opt	{ $$ = $1; }
 	;
 
-interfacedec:
-	  interface ';'				{ $$ = $1; }
-	| dispinterface ';'			{ $$ = $1; }
+interfaceref:
+	  tINTERFACE aIDENTIFIER		{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
+	| tINTERFACE aKNOWNTYPE			{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
+	| tDISPINTERFACE aIDENTIFIER		{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
+	| tDISPINTERFACE aKNOWNTYPE		{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
 	;
 
 module:   tMODULE aIDENTIFIER			{ $$ = type_new_module($2); }
