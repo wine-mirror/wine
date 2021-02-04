@@ -4935,7 +4935,7 @@ static HRESULT WINAPI dwritetextlayout_source_GetTextAtPosition(IDWriteTextAnaly
 {
     struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSource1(iface);
 
-    TRACE("(%p)->(%u %p %p)\n", layout, position, text, text_len);
+    TRACE("%p, %u, %p, %p.\n", iface, position, text, text_len);
 
     if (position < layout->len) {
         *text = &layout->str[position];
@@ -4954,7 +4954,7 @@ static HRESULT WINAPI dwritetextlayout_source_GetTextBeforePosition(IDWriteTextA
 {
     struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSource1(iface);
 
-    TRACE("(%p)->(%u %p %p)\n", layout, position, text, text_len);
+    TRACE("%p, %u, %p, %p.\n", iface, position, text, text_len);
 
     if (position > 0 && position < layout->len) {
         *text = layout->str;

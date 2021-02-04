@@ -1931,7 +1931,7 @@ HRESULT WINAPI DWriteCreateFactory(DWRITE_FACTORY_TYPE type, REFIID riid, IUnkno
     struct dwritefactory *factory;
     HRESULT hr;
 
-    TRACE("(%d, %s, %p)\n", type, debugstr_guid(riid), ret);
+    TRACE("%d, %s, %p.\n", type, debugstr_guid(riid), ret);
 
     *ret = NULL;
 

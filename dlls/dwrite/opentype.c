@@ -2159,7 +2159,7 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
         IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, colr.context);
     }
 
-    TRACE("stretch=%d, weight=%d, style %d\n", props->stretch, props->weight, props->style);
+    TRACE("stretch %d, weight %d, style %d\n", props->stretch, props->weight, props->style);
 
     if (os2.data)
         IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2.context);
