@@ -6596,37 +6596,37 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
     case ObjectTypeInformation:
     {
         OBJECT_TYPE_INFORMATION *p = ptr;
+        char buffer[sizeof(struct object_type_info) + 64];
+        struct object_type_info *info = (struct object_type_info *)buffer;
 
         SERVER_START_REQ( get_object_type )
         {
             req->handle = wine_server_obj_handle( handle );
-            if (len > sizeof(*p)) wine_server_set_reply( req, p + 1, len - sizeof(*p) );
+            wine_server_set_reply( req, buffer, sizeof(buffer) );
             status = wine_server_call( req );
-            if (status == STATUS_SUCCESS)
-            {
-                if (!reply->total)  /* no name */
-                {
-                    if (sizeof(*p) > len) status = STATUS_INFO_LENGTH_MISMATCH;
-                    else memset( p, 0, sizeof(*p) );
-                    if (used_len) *used_len = sizeof(*p);
-                }
-                else if (sizeof(*p) + reply->total + sizeof(WCHAR) > len)
-                {
-                    if (used_len) *used_len = sizeof(*p) + reply->total + sizeof(WCHAR);
-                    status = STATUS_INFO_LENGTH_MISMATCH;
-                }
-                else
-                {
-                    ULONG res = wine_server_reply_size( reply );
-                    p->TypeName.Buffer = (WCHAR *)(p + 1);
-                    p->TypeName.Length = res;
-                    p->TypeName.MaximumLength = res + sizeof(WCHAR);
-                    p->TypeName.Buffer[res / sizeof(WCHAR)] = 0;
-                    if (used_len) *used_len = sizeof(*p) + p->TypeName.MaximumLength;
-                }
-            }
         }
         SERVER_END_REQ;
+        if (status) break;
+        if (sizeof(*p) + info->name_len + sizeof(WCHAR) <= len)
+        {
+            memset( p, 0, sizeof(*p) );
+            p->TypeName.Buffer               = (WCHAR *)(p + 1);
+            p->TypeName.Length               = info->name_len;
+            p->TypeName.MaximumLength        = info->name_len + sizeof(WCHAR);
+            p->TotalNumberOfObjects          = info->obj_count;
+            p->TotalNumberOfHandles          = info->handle_count;
+            p->HighWaterNumberOfObjects      = info->obj_max;
+            p->HighWaterNumberOfHandles      = info->handle_max;
+            p->TypeIndex                     = info->index + 2;
+            memcpy( p->TypeName.Buffer, info + 1, info->name_len );
+            p->TypeName.Buffer[info->name_len / sizeof(WCHAR)] = 0;
+            if (used_len) *used_len = sizeof(*p) + p->TypeName.MaximumLength;
+        }
+        else
+        {
+            if (used_len) *used_len = sizeof(*p) + info->name_len + sizeof(WCHAR);
+            status = STATUS_INFO_LENGTH_MISMATCH;
+        }
         break;
     }
 

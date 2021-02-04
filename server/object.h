@@ -58,6 +58,10 @@ struct type_descr
 {
     struct unicode_str name;          /* type name */
     unsigned int       index;         /* index in global array of types */
+    unsigned int       obj_count;     /* count of objects of this type */
+    unsigned int       handle_count;  /* count of handles of this type */
+    unsigned int       obj_max;       /* max count of objects of this type */
+    unsigned int       handle_max;    /* max count of handles of this type */
 };
 
 /* operations valid on all objects */

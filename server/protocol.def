@@ -415,6 +415,17 @@ struct object_attributes
     /* VARARG(name,unicode_str); */
 };
 
+struct object_type_info
+{
+    data_size_t   name_len;      /* length of the name string */
+    unsigned int  index;         /* type index in global table */
+    unsigned int  obj_count;     /* count of objects of this type */
+    unsigned int  handle_count;  /* count of handles of this type */
+    unsigned int  obj_max;       /* max count of objects of this type */
+    unsigned int  handle_max;    /* max count of handles of this type */
+    /* VARARG(name,unicode_str); */
+};
+
 struct token_groups
 {
     unsigned int count;
@@ -3309,8 +3320,7 @@ struct handle_info
 @REQ(get_object_type)
     obj_handle_t   handle;        /* handle to the object */
 @REPLY
-    data_size_t    total;         /* needed size for type name */
-    VARARG(type,unicode_str);     /* type name */
+    VARARG(info,object_type_info); /* type information */
 @END
 
 

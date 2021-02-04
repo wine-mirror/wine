@@ -553,11 +553,25 @@ DECL_HANDLER(get_object_type)
 {
     struct object *obj;
     struct type_descr *type;
+    struct object_type_info *info;
 
     if (!(obj = get_handle_obj( current->process, req->handle, 0, NULL ))) return;
 
     type = obj->ops->type;
-    reply->total = type->name.len;
-    set_reply_data( type->name.str, min( reply->total, get_reply_max_size() ) );
+    if (sizeof(*info) + type->name.len <= get_reply_max_size())
+    {
+        if ((info = set_reply_data_size( sizeof(*info) + type->name.len )))
+        {
+            info->name_len     = type->name.len;
+            info->index        = type->index;
+            info->obj_count    = type->obj_count;
+            info->handle_count = type->handle_count;
+            info->obj_max      = type->obj_max;
+            info->handle_max   = type->handle_max;
+            memcpy( info + 1, type->name.str, type->name.len );
+        }
+    }
+    else set_error( STATUS_BUFFER_OVERFLOW );
+
     release_object( obj );
 }

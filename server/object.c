@@ -199,6 +199,8 @@ void *alloc_object( const struct object_ops *ops )
 #ifdef DEBUG_OBJECTS
         list_add_head( &object_list, &obj->obj_list );
 #endif
+        obj->ops->type->obj_count++;
+        obj->ops->type->obj_max = max( obj->ops->type->obj_max, obj->ops->type->obj_count );
         return obj;
     }
     return NULL;
@@ -208,6 +210,7 @@ void *alloc_object( const struct object_ops *ops )
 static void free_object( struct object *obj )
 {
     free( obj->sd );
+    obj->ops->type->obj_count--;
 #ifdef DEBUG_OBJECTS
     list_remove( &obj->obj_list );
     memset( obj, 0xaa, obj->ops->size );

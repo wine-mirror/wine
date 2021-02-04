@@ -1214,6 +1214,29 @@ static void dump_varargs_object_attributes( const char *prefix, data_size_t size
     fputc( '}', stderr );
 }
 
+static void dump_varargs_object_type_info( const char *prefix, data_size_t size )
+{
+    const struct object_type_info *info = cur_data;
+
+    fprintf( stderr,"%s{", prefix );
+    if (size)
+    {
+        if (size < sizeof(*info) || (size - sizeof(*info) < info->name_len))
+        {
+            fprintf( stderr, "***invalid***}" );
+            remove_data( size );
+            return;
+        }
+
+        fprintf( stderr, "index=%u,obj_count=%u,handle_count=%u,obj_max=%u,handle_max=%u,name=L\"",
+                 info->index,info->obj_count, info->handle_count, info->obj_max, info->handle_max );
+        dump_strW( (const WCHAR *)(info + 1), info->name_len, stderr, "\"\"" );
+        fputc( '\"', stderr );
+        remove_data( min( size, sizeof(*info) + ((info->name_len + 2) & ~3 )));
+    }
+    fputc( '}', stderr );
+}
+
 static void dump_varargs_filesystem_event( const char *prefix, data_size_t size )
 {
     static const char * const actions[] = {
@@ -4021,8 +4044,7 @@ static void dump_get_object_type_request( const struct get_object_type_request *
 
 static void dump_get_object_type_reply( const struct get_object_type_reply *req )
 {
-    fprintf( stderr, " total=%u", req->total );
-    dump_varargs_unicode_str( ", type=", cur_size );
+    dump_varargs_object_type_info( " info=", cur_size );
 }
 
 static void dump_get_token_impersonation_level_request( const struct get_token_impersonation_level_request *req )

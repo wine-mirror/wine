@@ -1599,7 +1599,28 @@ typedef struct _OBJECT_NAME_INFORMATION {
 
 typedef struct __OBJECT_TYPE_INFORMATION {
     UNICODE_STRING TypeName;
-    ULONG Reserved [22];
+    ULONG TotalNumberOfObjects;
+    ULONG TotalNumberOfHandles;
+    ULONG TotalPagedPoolUsage;
+    ULONG TotalNonPagedPoolUsage;
+    ULONG TotalNamePoolUsage;
+    ULONG TotalHandleTableUsage;
+    ULONG HighWaterNumberOfObjects;
+    ULONG HighWaterNumberOfHandles;
+    ULONG HighWaterPagedPoolUsage;
+    ULONG HighWaterNonPagedPoolUsage;
+    ULONG HighWaterNamePoolUsage;
+    ULONG HighWaterHandleTableUsage;
+    ULONG InvalidAttributes;
+    GENERIC_MAPPING GenericMapping;
+    ULONG ValidAccessMask;
+    BOOLEAN SecurityRequired;
+    BOOLEAN MaintainHandleCount;
+    UCHAR TypeIndex;
+    CHAR ReservedByte;
+    ULONG PoolType;
+    ULONG DefaultPagedPoolCharge;
+    ULONG DefaultNonPagedPoolCharge;
 } OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;
 
 typedef struct _PROCESS_BASIC_INFORMATION {
