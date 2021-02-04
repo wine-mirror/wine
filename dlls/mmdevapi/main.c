@@ -37,6 +37,7 @@
 #include "audiopolicy.h"
 #include "devpkey.h"
 #include "winreg.h"
+#include "spatialaudioclient.h"
 
 #include "mmdevapi.h"
 #include "wine/debug.h"

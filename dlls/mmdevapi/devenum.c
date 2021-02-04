@@ -35,6 +35,7 @@
 #include "audioclient.h"
 #include "endpointvolume.h"
 #include "audiopolicy.h"
+#include "spatialaudioclient.h"
 
 #include "mmdevapi.h"
 #include "devpkey.h"
@@ -634,6 +635,10 @@ static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD cls
             if (FAILED(hr))
                 IDirectSoundCapture_Release((IDirectSoundCapture*)*ppv);
         }
+    }
+    else if (IsEqualIID(riid, &IID_ISpatialAudioClient))
+    {
+        hr = SpatialAudioClient_Create(iface, (ISpatialAudioClient**)ppv);
     }
     else
         ERR("Invalid/unknown iid %s\n", debugstr_guid(riid));

@@ -33,6 +33,7 @@
 #include "audioclient.h"
 #include "endpointvolume.h"
 #include "audiopolicy.h"
+#include "spatialaudioclient.h"
 
 #include "mmdevapi.h"
 
