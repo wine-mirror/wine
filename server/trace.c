@@ -427,6 +427,12 @@ static void dump_luid( const char *prefix, const luid_t *luid )
     fprintf( stderr, "%s%d.%u", prefix, luid->high_part, luid->low_part );
 }
 
+static void dump_generic_map( const char *prefix, const generic_map_t *map )
+{
+    fprintf( stderr, "%s{r=%08x,w=%08x,x=%08x,a=%08x}",
+             prefix, map->read, map->write, map->exec, map->all );
+}
+
 static void dump_varargs_ints( const char *prefix, data_size_t size )
 {
     const int *data = cur_data;
@@ -3814,10 +3820,7 @@ static void dump_access_check_request( const struct access_check_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", desired_access=%08x", req->desired_access );
-    fprintf( stderr, ", mapping_read=%08x", req->mapping_read );
-    fprintf( stderr, ", mapping_write=%08x", req->mapping_write );
-    fprintf( stderr, ", mapping_execute=%08x", req->mapping_execute );
-    fprintf( stderr, ", mapping_all=%08x", req->mapping_all );
+    dump_generic_map( ", mapping=", &req->mapping );
     dump_varargs_security_descriptor( ", sd=", cur_size );
 }
 

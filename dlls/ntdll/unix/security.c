@@ -723,10 +723,10 @@ NTSTATUS WINAPI NtAccessCheck( PSECURITY_DESCRIPTOR descr, HANDLE token, ACCESS_
     {
         req->handle = wine_server_obj_handle( token );
         req->desired_access = access;
-        req->mapping_read = mapping->GenericRead;
-        req->mapping_write = mapping->GenericWrite;
-        req->mapping_execute = mapping->GenericExecute;
-        req->mapping_all = mapping->GenericAll;
+        req->mapping.read = mapping->GenericRead;
+        req->mapping.write = mapping->GenericWrite;
+        req->mapping.exec = mapping->GenericExecute;
+        req->mapping.all = mapping->GenericAll;
         wine_server_add_data( req, objattr + 1, objattr->sd_len );
         wine_server_set_reply( req, privs->Privilege, *retlen - offsetof( PRIVILEGE_SET, Privilege ) );
 

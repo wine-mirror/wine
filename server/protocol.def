@@ -382,6 +382,14 @@ typedef struct
     int          high_part;
 } luid_t;
 
+typedef struct
+{
+    unsigned int read;
+    unsigned int write;
+    unsigned int exec;
+    unsigned int all;
+} generic_map_t;
+
 #define MAX_ACL_LEN 65535
 
 struct security_descriptor
@@ -3135,10 +3143,7 @@ enum caret_state
 @REQ(access_check)
     obj_handle_t    handle; /* handle to the token */
     unsigned int    desired_access; /* desired access to the object */
-    unsigned int    mapping_read; /* mapping from generic read to specific rights */
-    unsigned int    mapping_write; /* mapping from generic write to specific rights */
-    unsigned int    mapping_execute; /* mapping from generic execute to specific rights */
-    unsigned int    mapping_all; /* mapping from generic all to specific rights */
+    generic_map_t   mapping;        /* mapping to specific rights */
     VARARG(sd,security_descriptor); /* security descriptor to check */
 @REPLY
     unsigned int    access_granted; /* access rights actually granted */

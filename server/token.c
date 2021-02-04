@@ -464,13 +464,13 @@ ACL *replace_security_labels( const ACL *old_sacl, const ACL *new_sacl )
 }
 
 /* maps from generic rights to specific rights as given by a mapping */
-static inline void map_generic_mask(unsigned int *mask, const GENERIC_MAPPING *mapping)
+static inline void map_generic_mask( unsigned int *mask, const generic_map_t *mapping )
 {
-    if (*mask & GENERIC_READ) *mask |= mapping->GenericRead;
-    if (*mask & GENERIC_WRITE) *mask |= mapping->GenericWrite;
-    if (*mask & GENERIC_EXECUTE) *mask |= mapping->GenericExecute;
-    if (*mask & GENERIC_ALL) *mask |= mapping->GenericAll;
-    *mask &= 0x0FFFFFFF;
+    if (*mask & GENERIC_READ)    *mask |= mapping->read;
+    if (*mask & GENERIC_WRITE)   *mask |= mapping->write;
+    if (*mask & GENERIC_EXECUTE) *mask |= mapping->exec;
+    if (*mask & GENERIC_ALL)     *mask |= mapping->all;
+    *mask &= ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static inline int is_equal_luid( const LUID *luid1, const LUID *luid2 )
@@ -1039,7 +1039,7 @@ static unsigned int token_access_check( struct token *token,
                                  unsigned int desired_access,
                                  LUID_AND_ATTRIBUTES *privs,
                                  unsigned int *priv_count,
-                                 const GENERIC_MAPPING *mapping,
+                                 const generic_map_t *mapping,
                                  unsigned int *granted_access,
                                  unsigned int *status )
 {
@@ -1074,7 +1074,7 @@ static unsigned int token_access_check( struct token *token,
     {
         if (priv_count) *priv_count = 0;
         if (desired_access & MAXIMUM_ALLOWED)
-            *granted_access = mapping->GenericAll;
+            *granted_access = mapping->all;
         else
             *granted_access = desired_access;
         return *status = STATUS_SUCCESS;
@@ -1212,25 +1212,24 @@ const SID *token_get_primary_group( struct token *token )
 
 int check_object_access(struct token *token, struct object *obj, unsigned int *access)
 {
-    GENERIC_MAPPING mapping;
+    generic_map_t mapping;
     unsigned int status;
     int res;
 
     if (!token)
         token = current->token ? current->token : current->process->token;
 
-    mapping.GenericAll = obj->ops->map_access( obj, GENERIC_ALL );
+    mapping.all = obj->ops->map_access( obj, GENERIC_ALL );
 
     if (!obj->sd)
     {
-        if (*access & MAXIMUM_ALLOWED)
-            *access = mapping.GenericAll;
+        if (*access & MAXIMUM_ALLOWED) *access = mapping.all;
         return TRUE;
     }
 
-    mapping.GenericRead  = obj->ops->map_access( obj, GENERIC_READ );
-    mapping.GenericWrite = obj->ops->map_access( obj, GENERIC_WRITE );
-    mapping.GenericExecute = obj->ops->map_access( obj, GENERIC_EXECUTE );
+    mapping.read  = obj->ops->map_access( obj, GENERIC_READ );
+    mapping.write = obj->ops->map_access( obj, GENERIC_WRITE );
+    mapping.exec = obj->ops->map_access( obj, GENERIC_EXECUTE );
 
     res = token_access_check( token, obj->sd, *access, NULL, NULL,
                               &mapping, access, &status ) == STATUS_SUCCESS &&
@@ -1451,7 +1450,6 @@ DECL_HANDLER(access_check)
                                                  TOKEN_QUERY,
                                                  &token_ops )))
     {
-        GENERIC_MAPPING mapping;
         unsigned int status;
         LUID_AND_ATTRIBUTES priv;
         unsigned int priv_count = 1;
@@ -1473,14 +1471,8 @@ DECL_HANDLER(access_check)
             return;
         }
 
-        mapping.GenericRead = req->mapping_read;
-        mapping.GenericWrite = req->mapping_write;
-        mapping.GenericExecute = req->mapping_execute;
-        mapping.GenericAll = req->mapping_all;
-
-        status = token_access_check(
-            token, sd, req->desired_access, &priv, &priv_count, &mapping,
-            &reply->access_granted, &reply->access_status );
+        status = token_access_check( token, sd, req->desired_access, &priv, &priv_count, &req->mapping,
+                                     &reply->access_granted, &reply->access_status );
 
         reply->privileges_len = priv_count*sizeof(LUID_AND_ATTRIBUTES);
 

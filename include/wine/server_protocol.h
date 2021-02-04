@@ -366,6 +366,14 @@ typedef struct
     int          high_part;
 } luid_t;
 
+typedef struct
+{
+    unsigned int read;
+    unsigned int write;
+    unsigned int exec;
+    unsigned int all;
+} generic_map_t;
+
 #define MAX_ACL_LEN 65535
 
 struct security_descriptor
@@ -4454,10 +4462,7 @@ struct access_check_request
     struct request_header __header;
     obj_handle_t    handle;
     unsigned int    desired_access;
-    unsigned int    mapping_read;
-    unsigned int    mapping_write;
-    unsigned int    mapping_execute;
-    unsigned int    mapping_all;
+    generic_map_t   mapping;
     /* VARARG(sd,security_descriptor); */
     char __pad_36[4];
 };
@@ -6229,7 +6234,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 664
+#define SERVER_PROTOCOL_VERSION 665
 
 /* ### protocol_version end ### */
 
