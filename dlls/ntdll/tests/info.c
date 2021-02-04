@@ -1740,7 +1740,8 @@ static void test_query_process_image_info(void)
     ok( info.MinorSubsystemVersion == nt->OptionalHeader.MinorSubsystemVersion,
         "wrong minor version %x/%x\n",
         info.MinorSubsystemVersion, nt->OptionalHeader.MinorSubsystemVersion );
-    ok( info.MajorOperatingSystemVersion == nt->OptionalHeader.MajorOperatingSystemVersion,
+    ok( info.MajorOperatingSystemVersion == nt->OptionalHeader.MajorOperatingSystemVersion ||
+        broken( !info.MajorOperatingSystemVersion ),  /* <= win8 */
         "wrong major OS version %x/%x\n",
         info.MajorOperatingSystemVersion, nt->OptionalHeader.MajorOperatingSystemVersion );
     ok( info.MinorOperatingSystemVersion == nt->OptionalHeader.MinorOperatingSystemVersion,
@@ -2752,7 +2753,8 @@ static void test_wow64(void)
     }
 #endif
     ok( !NtCurrentTeb()->GdiBatchCount, "GdiBatchCount set to %x\n", NtCurrentTeb()->GdiBatchCount );
-    ok( !NtCurrentTeb()->WowTebOffset, "WowTebOffset set to %x\n", NtCurrentTeb()->WowTebOffset );
+    ok( !NtCurrentTeb()->WowTebOffset || broken( NtCurrentTeb()->WowTebOffset == 1 ), /* vista */
+        "WowTebOffset set to %x\n", NtCurrentTeb()->WowTebOffset );
 }
 
 static void test_debug_object(void)
