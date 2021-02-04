@@ -2708,6 +2708,7 @@ static void test_SetVerticalGlyphOrientation(void)
 {
     DWRITE_VERTICAL_GLYPH_ORIENTATION orientation;
     IDWriteTextLayout2 *layout2;
+    IDWriteTextFormat1 *format1;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     IDWriteFactory *factory;
@@ -2737,6 +2738,29 @@ static void test_SetVerticalGlyphOrientation(void)
 
     hr = IDWriteTextLayout2_SetVerticalGlyphOrientation(layout2, DWRITE_VERTICAL_GLYPH_ORIENTATION_STACKED+1);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout2_QueryInterface(layout2, &IID_IDWriteTextFormat1, (void **)&format1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    orientation = IDWriteTextFormat1_GetVerticalGlyphOrientation(format1);
+    ok(orientation == DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT, "Unexpected orientation %d.\n", orientation);
+
+    hr = IDWriteTextLayout2_SetVerticalGlyphOrientation(layout2, DWRITE_VERTICAL_GLYPH_ORIENTATION_STACKED);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    orientation = IDWriteTextLayout2_GetVerticalGlyphOrientation(layout2);
+    ok(orientation == DWRITE_VERTICAL_GLYPH_ORIENTATION_STACKED, "Unexpected orientation %d.\n", orientation);
+
+    orientation = IDWriteTextFormat1_GetVerticalGlyphOrientation(format1);
+    ok(orientation == DWRITE_VERTICAL_GLYPH_ORIENTATION_STACKED, "Unexpected orientation %d.\n", orientation);
+
+    hr = IDWriteTextFormat1_SetVerticalGlyphOrientation(format1, DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    orientation = IDWriteTextLayout2_GetVerticalGlyphOrientation(layout2);
+    ok(orientation == DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT, "Unexpected orientation %d.\n", orientation);
+
+    IDWriteTextFormat1_Release(format1);
 
     IDWriteTextLayout2_Release(layout2);
     IDWriteFactory_Release(factory);

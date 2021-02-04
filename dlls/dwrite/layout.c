@@ -492,6 +492,19 @@ static HRESULT format_set_optical_alignment(struct dwrite_textformat_data *forma
     return S_OK;
 }
 
+static HRESULT format_set_vertical_orientation(struct dwrite_textformat_data *format,
+        DWRITE_VERTICAL_GLYPH_ORIENTATION orientation, BOOL *changed)
+{
+    if ((UINT32)orientation > DWRITE_VERTICAL_GLYPH_ORIENTATION_STACKED)
+        return E_INVALIDARG;
+
+    if (changed)
+        *changed = format->vertical_orientation != orientation;
+
+    format->vertical_orientation = orientation;
+    return S_OK;
+}
+
 static BOOL is_run_rtl(const struct layout_effective_run *run)
 {
     return run->run->u.regular.run.bidiLevel & 1;
@@ -3957,6 +3970,21 @@ static HRESULT WINAPI dwritetextlayout2_GetMetrics(IDWriteTextLayout4 *iface, DW
     return hr;
 }
 
+static HRESULT layout_set_vertical_orientation(struct dwrite_textlayout *layout,
+        DWRITE_VERTICAL_GLYPH_ORIENTATION orientation)
+{
+    BOOL changed;
+    HRESULT hr;
+
+    if (FAILED(hr = format_set_vertical_orientation(&layout->format, orientation, &changed)))
+        return hr;
+
+    if (changed)
+        layout->recompute = RECOMPUTE_EVERYTHING;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI dwritetextlayout2_SetVerticalGlyphOrientation(IDWriteTextLayout4 *iface,
         DWRITE_VERTICAL_GLYPH_ORIENTATION orientation)
 {
@@ -3964,11 +3992,7 @@ static HRESULT WINAPI dwritetextlayout2_SetVerticalGlyphOrientation(IDWriteTextL
 
     TRACE("%p, %d.\n", iface, orientation);
 
-    if ((UINT32)orientation > DWRITE_VERTICAL_GLYPH_ORIENTATION_STACKED)
-        return E_INVALIDARG;
-
-    layout->format.vertical_orientation = orientation;
-    return S_OK;
+    return layout_set_vertical_orientation(layout, orientation);
 }
 
 static DWRITE_VERTICAL_GLYPH_ORIENTATION WINAPI dwritetextlayout2_GetVerticalGlyphOrientation(IDWriteTextLayout4 *iface)
@@ -4591,16 +4615,20 @@ static HRESULT WINAPI dwritetextformat_layout_GetLocaleName(IDWriteTextFormat3 *
 static HRESULT WINAPI dwritetextformat1_layout_SetVerticalGlyphOrientation(IDWriteTextFormat3 *iface,
         DWRITE_VERTICAL_GLYPH_ORIENTATION orientation)
 {
-    FIXME("%p, %d: stub\n", iface, orientation);
+    struct dwrite_textlayout *layout = impl_layout_from_IDWriteTextFormat3(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %d.\n", iface, orientation);
+
+    return layout_set_vertical_orientation(layout, orientation);
 }
 
 static DWRITE_VERTICAL_GLYPH_ORIENTATION WINAPI dwritetextformat1_layout_GetVerticalGlyphOrientation(IDWriteTextFormat3 *iface)
 {
-    FIXME("%p: stub\n", iface);
+    struct dwrite_textlayout *layout = impl_layout_from_IDWriteTextFormat3(iface);
 
-    return DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT;
+    TRACE("%p.\n", iface);
+
+    return layout->format.vertical_orientation;
 }
 
 static HRESULT WINAPI dwritetextformat1_layout_SetLastLineWrapping(IDWriteTextFormat3 *iface,
@@ -5709,11 +5737,7 @@ static HRESULT WINAPI dwritetextformat1_SetVerticalGlyphOrientation(IDWriteTextF
 
     TRACE("%p, %d.\n", iface, orientation);
 
-    if ((UINT32)orientation > DWRITE_VERTICAL_GLYPH_ORIENTATION_STACKED)
-        return E_INVALIDARG;
-
-    format->format.vertical_orientation = orientation;
-    return S_OK;
+    return format_set_vertical_orientation(&format->format, orientation, NULL);
 }
 
 static DWRITE_VERTICAL_GLYPH_ORIENTATION WINAPI dwritetextformat1_GetVerticalGlyphOrientation(IDWriteTextFormat3 *iface)
