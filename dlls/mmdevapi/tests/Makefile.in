@@ -6,4 +6,5 @@ C_SRCS = \
 	dependency.c \
 	mmdevenum.c \
 	propstore.c \
-	render.c
+	render.c \
+	spatialaudio.c
