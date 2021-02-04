@@ -11574,7 +11574,6 @@ todo_wine
     ret = GetWindowPlacement(hwnd, &wp);
     ok(ret, "failed to get window placement, error %u\n", GetLastError());
     ok(wp.showCmd == SW_SHOWMINIMIZED, "got show cmd %u\n", wp.showCmd);
-todo_wine
     ok(wp.ptMinPosition.x == -32000 && wp.ptMinPosition.y == -32000,
         "got minimized pos (%d,%d)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
 todo_wine
@@ -11583,7 +11582,6 @@ todo_wine
     ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
         wine_dbgstr_rect(&wp.rcNormalPosition));
     GetWindowRect(hwnd, &rect);
-todo_wine
     ok(rect.left == -32000 && rect.top == -32000, "got window rect %s\n", wine_dbgstr_rect(&rect));
 
     ShowWindow(hwnd, SW_SHOWNORMAL);
@@ -11591,7 +11589,6 @@ todo_wine
     ret = GetWindowPlacement(hwnd, &wp);
     ok(ret, "failed to get window placement, error %u\n", GetLastError());
     ok(wp.showCmd == SW_NORMAL, "got show cmd %u\n", wp.showCmd);
-todo_wine
     ok(wp.ptMinPosition.x == -32000 && wp.ptMinPosition.y == -32000,
         "got minimized pos (%d,%d)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
 todo_wine

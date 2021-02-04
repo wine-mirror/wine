@@ -1688,6 +1688,14 @@ static BOOL SWP_DoWinPosChanging( WINDOWPOS *pWinpos, RECT *old_window_rect, REC
     }
     if (!(pWinpos->flags & SWP_NOMOVE))
     {
+        /* If the window is toplevel minimized off-screen, force keep it there */
+        if ((wndPtr->dwStyle & WS_MINIMIZE) &&
+             wndPtr->window_rect.left <= -32000 && wndPtr->window_rect.top <= -32000 &&
+            (!wndPtr->parent || wndPtr->parent == GetDesktopWindow()))
+        {
+            pWinpos->x = -32000;
+            pWinpos->y = -32000;
+        }
         new_window_rect->left    = pWinpos->x;
         new_window_rect->top     = pWinpos->y;
         new_window_rect->right  += pWinpos->x - old_window_rect->left;
