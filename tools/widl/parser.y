@@ -76,7 +76,6 @@ static warning_list_t *append_warning(warning_list_t *, int);
 
 static type_t *reg_typedefs(decl_spec_t *decl_spec, var_list_t *names, attr_list_t *attrs);
 static type_t *find_type_or_error(const char *name, int t);
-static type_t *find_type_or_error2(char *name, int t);
 
 static var_t *reg_const(var_t *var);
 
@@ -1015,7 +1014,7 @@ interfacedef: interfacehdr inherit
 	| interfacehdr ':' aIDENTIFIER
 	  '{' import int_statements '}'
 	   semicolon_opt			{ $$ = $1;
-						  type_interface_define($$, find_type_or_error2($3, 0), $6);
+						  type_interface_define($$, find_type_or_error($3, 0), $6);
 						}
 	| dispinterfacedef semicolon_opt	{ $$ = $1; }
 	;
@@ -1255,7 +1254,7 @@ acf_int_statement
 
 acf_interface
         : acf_attributes tINTERFACE aKNOWNTYPE '{' acf_int_statements '}'
-                                                {  type_t *iface = find_type_or_error2($3, 0);
+                                                {  type_t *iface = find_type_or_error($3, 0);
                                                    if (type_get_type(iface) != TYPE_INTERFACE)
                                                        error_loc("%s is not an interface\n", iface->name);
                                                    iface->attrs = append_attr_list(iface->attrs, $1);
@@ -2103,13 +2102,6 @@ static type_t *find_type_or_error(const char *name, int t)
         return NULL;
     }
     return type;
-}
-
-static type_t *find_type_or_error2(char *name, int t)
-{
-  type_t *tp = find_type_or_error(name, t);
-  free(name);
-  return tp;
 }
 
 int is_type(const char *name)
