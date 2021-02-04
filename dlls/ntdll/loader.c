@@ -2040,7 +2040,7 @@ static BOOL get_cor_header( HANDLE file, const SECTION_IMAGE_INFORMATION *info, 
     va = nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
     size = nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
     if (!va || size < sizeof(*cor)) return FALSE;
-    offset.QuadPart = offsetof( IMAGE_NT_HEADERS32, OptionalHeader ) + nt.FileHeader.SizeOfOptionalHeader;
+    offset.QuadPart += offsetof( IMAGE_NT_HEADERS32, OptionalHeader ) + nt.FileHeader.SizeOfOptionalHeader;
     count = min( 96, nt.FileHeader.NumberOfSections );
     if (NtReadFile( file, 0, NULL, NULL, &io, &sec, count * sizeof(*sec), &offset, NULL )) return FALSE;
     if (io.Information != count * sizeof(*sec)) return FALSE;
