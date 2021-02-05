@@ -87,7 +87,6 @@ static void push_lookup_namespace(const char *name);
 static void check_arg_attrs(const var_t *arg);
 static void check_statements(const statement_list_t *stmts, int is_inside_library);
 static void check_all_user_types(const statement_list_t *stmts);
-static attr_list_t *check_iface_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_function_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_typedef_attrs(attr_list_t *attrs);
 static attr_list_t *check_enum_attrs(attr_list_t *attrs);
@@ -281,7 +280,6 @@ static typelib_t *current_typelib;
 %type <expr> m_expr expr expr_const expr_int_const array m_bitfield
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_int_const
 %type <expr> contract_req
-%type <type> interfacehdr
 %type <stgclass> storage_cls_spec
 %type <type_qualifier> type_qualifier m_type_qual_list
 %type <function_specifier> function_specifier
@@ -971,31 +969,20 @@ inherit:					{ $$ = NULL; }
 	| ':' qualified_type                    { $$ = $2; }
 	;
 
-interface: tINTERFACE aIDENTIFIER		{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
-	|  tINTERFACE aKNOWNTYPE		{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
+interface:
+	  tINTERFACE aIDENTIFIER		{ $$ = type_interface_declare($2, current_namespace); }
+	| tINTERFACE aKNOWNTYPE			{ $$ = type_interface_declare($2, current_namespace); }
 	;
 
-interfacehdr: attributes interface		{ $$ = $2;
-						  check_def($2);
-						  $2->attrs = check_iface_attrs($2->name, $1);
-						  $2->defined = TRUE;
-						}
-	;
-
-interfacedef: interfacehdr inherit
-	  '{' int_statements '}' semicolon_opt	{ $$ = $1;
-						  if($$ == $2)
-						    error_loc("Interface can't inherit from itself\n");
-						  type_interface_define($$, $2, $4);
+interfacedef: attributes interface inherit
+	  '{' int_statements '}' semicolon_opt	{ $$ = type_interface_define($2, $1, $3, $5);
 						  check_async_uuid($$);
 						}
 /* MIDL is able to import the definition of a base class from inside the
  * definition of a derived class, I'll try to support it with this rule */
-	| interfacehdr ':' aIDENTIFIER
+	| attributes interface ':' aIDENTIFIER
 	  '{' import int_statements '}'
-	   semicolon_opt			{ $$ = $1;
-						  type_interface_define($$, find_type_or_error($3), $6);
-						}
+	   semicolon_opt			{ $$ = type_interface_define($2, $1, find_type_or_error($4), $7); }
 	| dispinterfacedef semicolon_opt	{ $$ = $1; }
 	;
 
@@ -2340,7 +2327,7 @@ const char *get_attr_display_name(enum attr_type type)
     return allowed_attr[type].display_name;
 }
 
-static attr_list_t *check_iface_attrs(const char *name, attr_list_t *attrs)
+attr_list_t *check_interface_attrs(const char *name, attr_list_t *attrs)
 {
   const attr_t *attr;
   if (!attrs) return attrs;
@@ -2978,8 +2965,7 @@ static void check_async_uuid(type_t *iface)
     if (!inherit)
         error_loc("async_uuid applied to an interface with incompatible parent\n");
 
-    async_iface = get_type(TYPE_INTERFACE, strmake("Async%s", iface->name), iface->namespace, 0);
-    async_iface->attrs = map_attrs(iface->attrs, async_iface_attrs);
+    async_iface = type_interface_declare(strmake("Async%s", iface->name), iface->namespace);
 
     STATEMENTS_FOR_EACH_FUNC( stmt, type_iface_get_stmts(iface) )
     {
@@ -3010,7 +2996,7 @@ static void check_async_uuid(type_t *iface)
         stmts = append_statement(stmts, make_statement_declaration(finish_func));
     }
 
-    type_interface_define(async_iface, inherit, stmts);
+    type_interface_define(async_iface, map_attrs(iface->attrs, async_iface_attrs), inherit, stmts);
     iface->details.iface->async_iface = async_iface->details.iface->async_iface = async_iface;
 }
 

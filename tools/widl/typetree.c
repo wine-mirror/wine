@@ -442,8 +442,24 @@ static unsigned int compute_method_indexes(type_t *iface)
     return idx;
 }
 
-void type_interface_define(type_t *iface, type_t *inherit, statement_list_t *stmts)
+type_t *type_interface_declare(char *name, struct namespace *namespace)
 {
+    type_t *type = get_type(TYPE_INTERFACE, name, namespace, 0);
+    if (type_get_type_detect_alias(type) != TYPE_INTERFACE)
+        error_loc("interface %s previously not declared an interface at %s:%d\n",
+                  type->name, type->loc_info.input_name, type->loc_info.line_number);
+    return type;
+}
+
+type_t *type_interface_define(type_t *iface, attr_list_t *attrs, type_t *inherit, statement_list_t *stmts)
+{
+    if (iface->defined)
+        error_loc("interface %s already defined at %s:%d\n",
+                  iface->name, iface->loc_info.input_name, iface->loc_info.line_number);
+    if (iface == inherit)
+        error_loc("interface %s can't inherit from itself\n",
+                  iface->name);
+    iface->attrs = check_interface_attrs(iface->name, attrs);
     iface->details.iface = xmalloc(sizeof(*iface->details.iface));
     iface->details.iface->disp_props = NULL;
     iface->details.iface->disp_methods = NULL;
@@ -453,6 +469,7 @@ void type_interface_define(type_t *iface, type_t *inherit, statement_list_t *stm
     iface->details.iface->async_iface = NULL;
     iface->defined = TRUE;
     compute_method_indexes(iface);
+    return iface;
 }
 
 void type_dispinterface_define(type_t *iface, var_list_t *props, var_list_t *methods)
