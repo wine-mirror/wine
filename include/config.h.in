@@ -300,6 +300,9 @@
 /* Define to 1 if you have the <jpeglib.h> header file. */
 #undef HAVE_JPEGLIB_H
 
+/* Define to 1 if you have the <JXRGlue.h> header file. */
+#undef HAVE_JXRGLUE_H
+
 /* Define to 1 if you have the `kqueue' function. */
 #undef HAVE_KQUEUE
 
@@ -1264,6 +1267,9 @@
 
 /* Define to the soname of the libjpeg library. */
 #undef SONAME_LIBJPEG
+
+/* Define to the soname of the libjxrglue library. */
+#undef SONAME_LIBJXRGLUE
 
 /* Define to the soname of the libkrb5 library. */
 #undef SONAME_LIBKRB5

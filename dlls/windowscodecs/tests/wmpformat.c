@@ -89,7 +89,7 @@ static void test_decode(void)
                           &IID_IWICBitmapDecoder, (void **)&decoder);
     if (FAILED(hr))
     {
-        todo_wine win_skip("WmpDecoder isn't available, skipping test\n");
+        win_skip("WmpDecoder isn't available, skipping test\n");
         return;
     }
 
@@ -123,7 +123,7 @@ static void test_decode(void)
     ok(count == 1, "unexpected count %u\n", count);
 
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, NULL);
-    ok(hr == E_INVALIDARG, "GetFrame(NULL) returned hr=%x\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "GetFrame(NULL) returned hr=%x\n", hr);
 
     for (j = 2; j > 0; --j)
     {
