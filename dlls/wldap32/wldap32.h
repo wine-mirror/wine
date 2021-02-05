@@ -100,9 +100,10 @@ static inline LPWSTR strnAtoW( LPCSTR str, DWORD inlen, DWORD *outlen )
     if (str)
     {
         DWORD len = MultiByteToWideChar( CP_ACP, 0, str, inlen, NULL, 0 );
-        if ((ret = heap_alloc( len * sizeof(WCHAR) )))
+        if ((ret = heap_alloc( (len+1) * sizeof(WCHAR) )))
         {
             MultiByteToWideChar( CP_ACP, 0, str, inlen, ret, len );
+            ret[len] = 0;
             *outlen = len;
         }
     }
@@ -116,9 +117,10 @@ static inline char *strnWtoU( LPCWSTR str, DWORD inlen, DWORD *outlen )
     if (str)
     {
         DWORD len = WideCharToMultiByte( CP_UTF8, 0, str, inlen, NULL, 0, NULL, NULL );
-        if ((ret = heap_alloc( len )))
+        if ((ret = heap_alloc( len + 1 )))
         {
             WideCharToMultiByte( CP_UTF8, 0, str, inlen, ret, len, NULL, NULL );
+            ret[len] = 0;
             *outlen = len;
         }
     }
