@@ -636,9 +636,8 @@ static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
     }
 }
 
-static gboolean gst_base_src_perform_seek(struct parser *This, GstEvent *event)
+static gboolean gst_base_src_perform_seek(struct wg_parser *parser, GstEvent *event)
 {
-    struct wg_parser *parser = This->wg_parser;
     gboolean res = TRUE;
     gdouble rate;
     GstFormat seek_format;
@@ -687,15 +686,15 @@ static gboolean gst_base_src_perform_seek(struct parser *This, GstEvent *event)
 
 static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
 {
-    struct parser *This = gst_pad_get_element_private(pad);
+    struct wg_parser *parser = gst_pad_get_element_private(pad);
     gboolean ret = TRUE;
 
-    GST_LOG("filter %p, type \"%s\".", This, GST_EVENT_TYPE_NAME(event));
+    GST_LOG("parser %p, type \"%s\".", parser, GST_EVENT_TYPE_NAME(event));
 
     switch (event->type)
     {
         case GST_EVENT_SEEK:
-            ret = gst_base_src_perform_seek(This, event);
+            ret = gst_base_src_perform_seek(parser, event);
             break;
 
         case GST_EVENT_FLUSH_START:
@@ -848,10 +847,9 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
 
 static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 offset, guint size, GstBuffer **buffer);
 
-static void *push_data(void *iface)
+static void *push_data(void *arg)
 {
-    struct parser *This = iface;
-    struct wg_parser *parser = This->wg_parser;
+    struct wg_parser *parser = arg;
     GstBuffer *buffer;
     LONGLONG maxlen;
 
@@ -1125,8 +1123,7 @@ static DWORD CALLBACK stream_thread(void *arg)
 
 static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 offset, guint size, GstBuffer **buffer)
 {
-    struct parser *filter = gst_pad_get_element_private(pad);
-    struct wg_parser *parser = filter->wg_parser;
+    struct wg_parser *parser = gst_pad_get_element_private(pad);
     GstBuffer *new_buffer = NULL;
     GstFlowReturn ret;
 
@@ -1414,11 +1411,10 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
 
 static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
 {
-    struct parser *This = gst_pad_get_element_private(pad);
-    struct wg_parser *parser = This->wg_parser;
+    struct wg_parser *parser = gst_pad_get_element_private(pad);
     GstFormat format;
 
-    GST_LOG("filter %p, type %s.", This, GST_QUERY_TYPE_NAME(query));
+    GST_LOG("parser %p, type %s.", parser, GST_QUERY_TYPE_NAME(query));
 
     switch (GST_QUERY_TYPE(query)) {
         case GST_QUERY_DURATION:
@@ -1456,8 +1452,7 @@ static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
 
 static gboolean activate_push(GstPad *pad, gboolean activate)
 {
-    struct parser *This = gst_pad_get_element_private(pad);
-    struct wg_parser *parser = This->wg_parser;
+    struct wg_parser *parser = gst_pad_get_element_private(pad);
 
     if (!activate) {
         if (parser->push_thread) {
@@ -1467,7 +1462,7 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
     } else if (!parser->push_thread) {
         int ret;
 
-        if ((ret = pthread_create(&parser->push_thread, NULL, push_data, This)))
+        if ((ret = pthread_create(&parser->push_thread, NULL, push_data, parser)))
         {
             GST_ERROR("Failed to create push thread: %s", strerror(errno));
             parser->push_thread = 0;
@@ -1479,10 +1474,10 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
 
 static gboolean activate_mode(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate)
 {
-    struct parser *filter = gst_pad_get_element_private(pad);
+    struct wg_parser *parser = gst_pad_get_element_private(pad);
 
-    GST_DEBUG("%s source pad for filter %p in %s mode.",
-            activate ? "Activating" : "Deactivating", filter, gst_pad_mode_get_name(mode));
+    GST_DEBUG("%s source pad for parser %p in %s mode.",
+            activate ? "Activating" : "Deactivating", parser, gst_pad_mode_get_name(mode));
 
     switch (mode) {
       case GST_PAD_MODE_PULL:
@@ -1625,7 +1620,7 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
     gst_pad_set_query_function(parser->my_src, query_function);
     gst_pad_set_activatemode_function(parser->my_src, activate_mode);
     gst_pad_set_event_function(parser->my_src, event_src);
-    gst_pad_set_element_private (parser->my_src, This);
+    gst_pad_set_element_private(parser->my_src, parser);
 
     parser->start_offset = parser->next_offset = parser->stop_offset = 0;
     This->next_pull_offset = 0;
