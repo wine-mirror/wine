@@ -49,10 +49,7 @@
 
 static void test_VarFormatNumber(void)
 {
-  static const WCHAR szSrc1[] = { '1','\0' };
-  static const WCHAR szResult1[] = { '1','.','0','0','\0' };
-  static const WCHAR szSrc2[] = { '-','1','\0' };
-  static const WCHAR szResult2[] = { '(','1','.','0','0',')','\0' };
+  static const WCHAR szResult1[] = L"1.00";
   char buff[8];
   HRESULT hres;
   VARIANT v;
@@ -78,7 +75,7 @@ static void test_VarFormatNumber(void)
   FMT_NUMBER(VT_BOOL, V_BOOL);
 
   V_VT(&v) = VT_BSTR;
-  V_BSTR(&v) = SysAllocString(szSrc1);
+  V_BSTR(&v) = SysAllocString(L"1");
 
   hres = VarFormatNumber(&v,2,0,0,0,0,&str);
   ok(hres == S_OK, "VarFormatNumber (bstr): returned %8x\n", hres);
@@ -87,11 +84,11 @@ static void test_VarFormatNumber(void)
   SysFreeString(V_BSTR(&v));
   SysFreeString(str);
 
-  V_BSTR(&v) = SysAllocString(szSrc2);
+  V_BSTR(&v) = SysAllocString(L"-1");
   hres = VarFormatNumber(&v,2,0,-1,0,0,&str);
   ok(hres == S_OK, "VarFormatNumber (bstr): returned %8x\n", hres);
   if (hres == S_OK)
-    ok(str && wcscmp(str, szResult2) == 0, "VarFormatNumber (-bstr): string different\n");
+    ok(str && wcscmp(str, L"(1.00)") == 0, "VarFormatNumber (-bstr): string different\n");
   SysFreeString(V_BSTR(&v));
   SysFreeString(str);
 }
@@ -212,8 +209,6 @@ static const FMTDATERES VarFormat_namedtime_results[] =
 
 static void test_VarFormat(void)
 {
-  static const WCHAR szTesting[] = { 't','e','s','t','i','n','g','\0' };
-  static const WCHAR szNum[] = { '3','9','6','9','7','.','1','1','\0' };
   size_t i;
   WCHAR buffW[256];
   char buff[256];
@@ -292,7 +287,7 @@ static void test_VarFormat(void)
   }
 
   /* Strings */
-  bstrin = SysAllocString(szTesting);
+  bstrin = SysAllocString(L"testing");
   VARFMT(VT_BSTR,V_BSTR,bstrin,"",S_OK,"testing");
   VARFMT(VT_BSTR,V_BSTR,bstrin,"@",S_OK,"testing");
   VARFMT(VT_BSTR,V_BSTR,bstrin,"&",S_OK,"testing");
@@ -308,7 +303,7 @@ static void test_VarFormat(void)
   VARFMT(VT_BSTR,V_BSTR,bstrin,"<&&",S_OK,"testing");
   VARFMT(VT_BSTR,V_BSTR,bstrin,"<&>&",S_OK,"testing");
   SysFreeString(bstrin);
-  bstrin = SysAllocString(szNum);
+  bstrin = SysAllocString(L"39697.11");
   todo_wine VARFMT(VT_BSTR,V_BSTR,bstrin,"hh:mm",S_OK,"02:38");
   todo_wine VARFMT(VT_BSTR,V_BSTR,bstrin,"mm-dd-yy",S_OK,"09-06-08");
   SysFreeString(bstrin);
@@ -522,17 +517,9 @@ static void test_VarWeekdayName(void)
 
 static void test_VarFormatFromTokens(void)
 {
-    static WCHAR number_fmt[] = {'#','#','#',',','#','#','0','.','0','0',0};
-    static const WCHAR number[] = {'6',',','9','0',0};
-    static const WCHAR number_us[] = {'6','9','0','.','0','0',0};
-
-    static WCHAR date_fmt[] = {'d','d','-','m','m',0};
-    static const WCHAR date[] = {'1','2','-','1','1',0};
-    static const WCHAR date_us[] = {'1','1','-','1','2',0};
-
-    static WCHAR string_fmt[] = {'@',0};
-    static const WCHAR string_de[] = {'1',',','5',0};
-    static const WCHAR string_us[] = {'1','.','5',0};
+    static WCHAR number_fmt[] = L"###,##0.00";
+    static WCHAR date_fmt[] = L"dd-mm";
+    static WCHAR string_fmt[] = L"@";
 
     BYTE buff[256];
     LCID lcid;
@@ -541,14 +528,14 @@ static void test_VarFormatFromTokens(void)
     HRESULT hres;
 
     V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = SysAllocString(number);
+    V_BSTR(&var) = SysAllocString(L"6,90");
 
     lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
     hres = VarTokenizeFormatString(number_fmt, buff, sizeof(buff), 1, 1, lcid, NULL);
     ok(hres == S_OK, "VarTokenizeFormatString failed: %x\n", hres);
     hres = VarFormatFromTokens(&var, number_fmt, buff, 0, &bstr, lcid);
     ok(hres == S_OK, "VarFormatFromTokens failed: %x\n", hres);
-    ok(!wcscmp(bstr, number_us), "incorrectly formatted number: %s\n", wine_dbgstr_w(bstr));
+    ok(!wcscmp(bstr, L"690.00"), "incorrectly formatted number: %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
     lcid = MAKELCID(MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN), SORT_DEFAULT);
@@ -556,20 +543,20 @@ static void test_VarFormatFromTokens(void)
     ok(hres == S_OK, "VarTokenizeFormatString failed: %x\n", hres);
     hres = VarFormatFromTokens(&var, number_fmt, buff, 0, &bstr, lcid);
     ok(hres == S_OK, "VarFormatFromTokens failed: %x\n", hres);
-    ok(!wcscmp(bstr, number), "incorrectly formatted number: %s\n", wine_dbgstr_w(bstr));
+    ok(!wcscmp(bstr, L"6,90"), "incorrectly formatted number: %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
     VariantClear(&var);
 
     V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = SysAllocString(date);
+    V_BSTR(&var) = SysAllocString(L"12-11");
 
     lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
     hres = VarTokenizeFormatString(date_fmt, buff, sizeof(buff), 1, 1, lcid, NULL);
     ok(hres == S_OK, "VarTokenizeFormatString failed: %x\n", hres);
     hres = VarFormatFromTokens(&var, date_fmt, buff, 0, &bstr, lcid);
     ok(hres == S_OK, "VarFormatFromTokens failed: %x\n", hres);
-    ok(!wcscmp(bstr, date_us), "incorrectly formatted date: %s\n", wine_dbgstr_w(bstr));
+    ok(!wcscmp(bstr, L"11-12"), "incorrectly formatted date: %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
     lcid = MAKELCID(MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN), SORT_DEFAULT);
@@ -577,7 +564,7 @@ static void test_VarFormatFromTokens(void)
     ok(hres == S_OK, "VarTokenizeFormatString failed: %x\n", hres);
     hres = VarFormatFromTokens(&var, date_fmt, buff, 0, &bstr, lcid);
     ok(hres == S_OK, "VarFormatFromTokens failed: %x\n", hres);
-    ok(!wcscmp(bstr, date), "incorrectly formatted date: %s\n", wine_dbgstr_w(bstr));
+    ok(!wcscmp(bstr, L"12-11"), "incorrectly formatted date: %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
     VariantClear(&var);
@@ -590,7 +577,7 @@ static void test_VarFormatFromTokens(void)
     ok(hres == S_OK, "VarTokenizeFormatString failed: %x\n", hres);
     hres = VarFormatFromTokens(&var, string_fmt, buff, 0, &bstr, lcid);
     ok(hres == S_OK, "VarFormatFromTokens failed: %x\n", hres);
-    ok(!wcscmp(bstr, string_us), "incorrectly formatted string: %s\n", wine_dbgstr_w(bstr));
+    ok(!wcscmp(bstr, L"1.5"), "incorrectly formatted string: %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
     lcid = MAKELCID(MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN), SORT_DEFAULT);
@@ -598,7 +585,7 @@ static void test_VarFormatFromTokens(void)
     ok(hres == S_OK, "VarTokenizeFormatString failed: %x\n", hres);
     hres = VarFormatFromTokens(&var, string_fmt, buff, 0, &bstr, lcid);
     ok(hres == S_OK, "VarFormatFromTokens failed: %x\n", hres);
-    ok(!wcscmp(bstr, string_de), "incorrectly formatted string: %s\n", wine_dbgstr_w(bstr));
+    ok(!wcscmp(bstr, L"1,5"), "incorrectly formatted string: %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 }
 
