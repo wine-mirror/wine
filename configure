@@ -9274,7 +9274,33 @@ fi
     case $host_cpu in
       *i[3456789]86*)
         DLLFLAGS="$DLLFLAGS -fno-PIC"
-        LDDLLFLAGS="-fno-PIC" ;;
+        LDDLLFLAGS="-fno-PIC"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-PIC -Wl,-z,notext" >&5
+$as_echo_n "checking whether the compiler supports -fno-PIC -Wl,-z,notext... " >&6; }
+if ${ac_cv_cflags__fno_PIC__Wl__z_notext+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -fno-PIC -Wl,-z,notext"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__fno_PIC__Wl__z_notext=yes
+else
+  ac_cv_cflags__fno_PIC__Wl__z_notext=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fno_PIC__Wl__z_notext" >&5
+$as_echo "$ac_cv_cflags__fno_PIC__Wl__z_notext" >&6; }
+if test "x$ac_cv_cflags__fno_PIC__Wl__z_notext" = xyes; then :
+  LDDLLFLAGS="$LDDLLFLAGS -Wl,-z,notext"
+fi
+        ;;
       *)
         DLLFLAGS="$DLLFLAGS -fPIC"
         LDDLLFLAGS="-fPIC" ;;
