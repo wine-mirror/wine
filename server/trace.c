@@ -1240,6 +1240,13 @@ static void dump_varargs_object_type_info( const char *prefix, data_size_t size 
     fputc( '}', stderr );
 }
 
+static void dump_varargs_object_types_info( const char *prefix, data_size_t size )
+{
+    fprintf( stderr,"%s{", prefix );
+    while (cur_size) dump_varargs_object_type_info( ",", cur_size );
+    fputc( '}', stderr );
+}
+
 static void dump_varargs_filesystem_event( const char *prefix, data_size_t size )
 {
     static const char * const actions[] = {
@@ -4050,6 +4057,16 @@ static void dump_get_object_type_reply( const struct get_object_type_reply *req 
     dump_varargs_object_type_info( " info=", cur_size );
 }
 
+static void dump_get_object_types_request( const struct get_object_types_request *req )
+{
+}
+
+static void dump_get_object_types_reply( const struct get_object_types_reply *req )
+{
+    fprintf( stderr, " count=%d", req->count );
+    dump_varargs_object_types_info( ", info=", cur_size );
+}
+
 static void dump_get_token_impersonation_level_request( const struct get_token_impersonation_level_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4677,6 +4694,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_query_symlink_request,
     (dump_func)dump_get_object_info_request,
     (dump_func)dump_get_object_type_request,
+    (dump_func)dump_get_object_types_request,
     (dump_func)dump_get_token_impersonation_level_request,
     (dump_func)dump_allocate_locally_unique_id_request,
     (dump_func)dump_create_device_manager_request,
@@ -4956,6 +4974,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_query_symlink_reply,
     (dump_func)dump_get_object_info_reply,
     (dump_func)dump_get_object_type_reply,
+    (dump_func)dump_get_object_types_reply,
     (dump_func)dump_get_token_impersonation_level_reply,
     (dump_func)dump_allocate_locally_unique_id_reply,
     (dump_func)dump_create_device_manager_reply,
@@ -5235,6 +5254,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "query_symlink",
     "get_object_info",
     "get_object_type",
+    "get_object_types",
     "get_token_impersonation_level",
     "allocate_locally_unique_id",
     "create_device_manager",

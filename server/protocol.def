@@ -3326,6 +3326,14 @@ struct handle_info
 @END
 
 
+/* Query type information for all types */
+@REQ(get_object_types)
+@REPLY
+    int            count;          /* total count of object types */
+    VARARG(info,object_types_info); /* type information */
+@END
+
+
 /* Query the impersonation level of an impersonation token */
 @REQ(get_token_impersonation_level)
     obj_handle_t   handle;        /* handle to the object */

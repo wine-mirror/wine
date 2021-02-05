@@ -6491,6 +6491,30 @@ NTSTATUS WINAPI NtSetEaFile( HANDLE handle, IO_STATUS_BLOCK *io, void *buffer, U
 }
 
 
+/* convert type information from server format; helper for NtQueryObject */
+static void *put_object_type_info( OBJECT_TYPE_INFORMATION *p, struct object_type_info *info )
+{
+    const ULONG align = sizeof(DWORD_PTR) - 1;
+
+    memset( p, 0, sizeof(*p) );
+    p->TypeName.Buffer               = (WCHAR *)(p + 1);
+    p->TypeName.Length               = info->name_len;
+    p->TypeName.MaximumLength        = info->name_len + sizeof(WCHAR);
+    p->TotalNumberOfObjects          = info->obj_count;
+    p->TotalNumberOfHandles          = info->handle_count;
+    p->HighWaterNumberOfObjects      = info->obj_max;
+    p->HighWaterNumberOfHandles      = info->handle_max;
+    p->TypeIndex                     = info->index + 2;
+    p->GenericMapping.GenericRead    = info->mapping.read;
+    p->GenericMapping.GenericWrite   = info->mapping.write;
+    p->GenericMapping.GenericExecute = info->mapping.exec;
+    p->GenericMapping.GenericAll     = info->mapping.all;
+    p->ValidAccessMask               = info->valid_access;
+    memcpy( p->TypeName.Buffer, info + 1, info->name_len );
+    p->TypeName.Buffer[info->name_len / sizeof(WCHAR)] = 0;
+    return (char *)(p + 1) + ((p->TypeName.MaximumLength + align) & ~align);
+}
+
 /**************************************************************************
  *           NtQueryObject   (NTDLL.@)
  */
@@ -6609,22 +6633,7 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
         if (status) break;
         if (sizeof(*p) + info->name_len + sizeof(WCHAR) <= len)
         {
-            memset( p, 0, sizeof(*p) );
-            p->TypeName.Buffer               = (WCHAR *)(p + 1);
-            p->TypeName.Length               = info->name_len;
-            p->TypeName.MaximumLength        = info->name_len + sizeof(WCHAR);
-            p->TotalNumberOfObjects          = info->obj_count;
-            p->TotalNumberOfHandles          = info->handle_count;
-            p->HighWaterNumberOfObjects      = info->obj_max;
-            p->HighWaterNumberOfHandles      = info->handle_max;
-            p->TypeIndex                     = info->index + 2;
-            p->GenericMapping.GenericRead    = info->mapping.read;
-            p->GenericMapping.GenericWrite   = info->mapping.write;
-            p->GenericMapping.GenericExecute = info->mapping.exec;
-            p->GenericMapping.GenericAll     = info->mapping.all;
-            p->ValidAccessMask               = info->valid_access;
-            memcpy( p->TypeName.Buffer, info + 1, info->name_len );
-            p->TypeName.Buffer[info->name_len / sizeof(WCHAR)] = 0;
+            put_object_type_info( p, info );
             if (used_len) *used_len = sizeof(*p) + p->TypeName.MaximumLength;
         }
         else
@@ -6632,6 +6641,44 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
             if (used_len) *used_len = sizeof(*p) + info->name_len + sizeof(WCHAR);
             status = STATUS_INFO_LENGTH_MISMATCH;
         }
+        break;
+    }
+
+    case ObjectTypesInformation:
+    {
+        OBJECT_TYPES_INFORMATION *types = ptr;
+        OBJECT_TYPE_INFORMATION *p;
+        struct object_type_info *buffer;
+        /* assume at most 32 types, with an average 16-char name */
+        ULONG size = 32 * (sizeof(struct object_type_info) + 16 * sizeof(WCHAR));
+        ULONG i, count, pos, total, align = sizeof(DWORD_PTR) - 1;
+
+        buffer = malloc( size );
+        SERVER_START_REQ( get_object_types )
+        {
+            wine_server_set_reply( req, buffer, size );
+            status = wine_server_call( req );
+            count = reply->count;
+        }
+        SERVER_END_REQ;
+        if (!status)
+        {
+            if (len >= sizeof(*types)) types->NumberOfTypes = count;
+            total = (sizeof(*types) + align) & ~align;
+            p = (OBJECT_TYPE_INFORMATION *)((char *)ptr + total);
+            for (i = pos = 0; i < count; i++)
+            {
+                struct object_type_info *info = (struct object_type_info *)((char *)buffer + pos);
+                pos += sizeof(*info) + ((info->name_len + 3) & ~3);
+                total += sizeof(*p) + ((info->name_len + sizeof(WCHAR) + align) & ~align);
+                if (total <= len) p = put_object_type_info( p, info );
+            }
+            if (used_len) *used_len = total;
+            if (total > len) status = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        else if (status == STATUS_BUFFER_OVERFLOW) FIXME( "size %u too small\n", size );
+
+        free( buffer );
         break;
     }
 

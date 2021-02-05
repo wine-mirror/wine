@@ -591,3 +591,42 @@ DECL_HANDLER(get_object_type)
 
     release_object( obj );
 }
+
+/* query type information for all types */
+DECL_HANDLER(get_object_types)
+{
+    struct object_type_info *info;
+    data_size_t size = ARRAY_SIZE(types) * sizeof(*info);
+    unsigned int i;
+    char *next;
+
+    for (i = 0; i < ARRAY_SIZE(types); i++) size += (types[i]->name.len + 3) & ~3;
+
+    if (size <= get_reply_max_size())
+    {
+        if ((info = set_reply_data_size( size )))
+        {
+            for (i = 0; i < ARRAY_SIZE(types); i++)
+            {
+                info->name_len     = types[i]->name.len;
+                info->index        = types[i]->index;
+                info->obj_count    = types[i]->obj_count;
+                info->handle_count = types[i]->handle_count;
+                info->obj_max      = types[i]->obj_max;
+                info->handle_max   = types[i]->handle_max;
+                info->valid_access = types[i]->valid_access;
+                info->mapping      = types[i]->mapping;
+                memcpy( info + 1, types[i]->name.str, types[i]->name.len );
+                next = (char *)(info + 1) + types[i]->name.len;
+                if (types[i]->name.len & 3)
+                {
+                    memset( next, 0, 4 - (types[i]->name.len & 3) );
+                    next += 4 - (types[i]->name.len & 3);
+                }
+                info = (struct object_type_info *)next;
+            }
+            reply->count = i;
+        }
+    }
+    else set_error( STATUS_BUFFER_OVERFLOW );
+}
