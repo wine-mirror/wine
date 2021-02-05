@@ -995,8 +995,35 @@ static HRESULT WINAPI IXACT3EngineImpl_PrepareWave(IXACT3Engine *iface,
         IXACT3Wave **ppWave)
 {
     XACT3EngineImpl *This = impl_from_IXACT3Engine(iface);
-    FIXME("(%p): stub!\n", This);
-    return E_NOTIMPL;
+    XACT3WaveImpl *wave;
+    FACTWave *fwave = NULL;
+    UINT ret;
+
+    TRACE("(%p)->(0x%08x, %s, %d, %d, %d, %d, %p)\n", This, dwFlags, debugstr_a(szWavePath),
+          wStreamingPacketSize, dwAlignment, dwPlayOffset, nLoopCount, ppWave);
+
+    ret = FACTAudioEngine_PrepareWave(This->fact_engine, dwFlags, szWavePath, wStreamingPacketSize,
+            dwAlignment, dwPlayOffset, nLoopCount, &fwave);
+    if(ret != 0 || !fwave)
+    {
+        ERR("Failed to CreateWave: %d (%p)\n", ret, fwave);
+        return E_FAIL;
+    }
+
+    wave = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wave));
+    if (!wave)
+    {
+        FACTWave_Destroy(fwave);
+        return E_OUTOFMEMORY;
+    }
+
+    wave->IXACT3Wave_iface.lpVtbl = &XACT3Wave_Vtbl;
+    wave->fact_wave = fwave;
+    *ppWave = &wave->IXACT3Wave_iface;
+
+    TRACE("Created Wave: %p\n", wave);
+
+    return S_OK;
 }
 
 enum {
