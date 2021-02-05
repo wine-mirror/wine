@@ -37,22 +37,9 @@
 #include "wtypes.h"
 #include "oleauto.h"
 
-static HMODULE hOleaut32;
-
-static HRESULT (WINAPI *pVarFormatNumber)(LPVARIANT,int,int,int,int,ULONG,BSTR*);
-static HRESULT (WINAPI *pVarFormat)(LPVARIANT,LPOLESTR,int,int,ULONG,BSTR*);
-static HRESULT (WINAPI *pVarWeekdayName)(int,int,int,ULONG,BSTR*);
-
-/* Has I8/UI8 data type? */
-static BOOL has_i8;
-
-/* Get a conversion function ptr, return if function not available */
-#define CHECKPTR(func) p##func = (void*)GetProcAddress(hOleaut32, #func); \
-  if (!p##func) { win_skip("function " # func " not available, not testing it\n"); return; }
-
 #define FMT_NUMBER(vt,val) \
   VariantInit(&v); V_VT(&v) = vt; val(&v) = 1; \
-  hres = pVarFormatNumber(&v,2,0,0,0,0,&str); \
+  hres = VarFormatNumber(&v,2,0,0,0,0,&str); \
   ok(hres == S_OK, "VarFormatNumber (vt %d): returned %8x\n", vt, hres); \
   if (hres == S_OK) { \
     ok(str && wcscmp(str,szResult1) == 0, \
@@ -71,8 +58,6 @@ static void test_VarFormatNumber(void)
   VARIANT v;
   BSTR str = NULL;
 
-  CHECKPTR(VarFormatNumber);
-
   GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buff, ARRAY_SIZE(buff));
   if (buff[0] != '.' || buff[1])
   {
@@ -86,11 +71,8 @@ static void test_VarFormatNumber(void)
   FMT_NUMBER(VT_UI2, V_UI2);
   FMT_NUMBER(VT_I4, V_I4);
   FMT_NUMBER(VT_UI4, V_UI4);
-  if (has_i8)
-  {
-    FMT_NUMBER(VT_I8, V_I8);
-    FMT_NUMBER(VT_UI8, V_UI8);
-  }
+  FMT_NUMBER(VT_I8, V_I8);
+  FMT_NUMBER(VT_UI8, V_UI8);
   FMT_NUMBER(VT_R4, V_R4);
   FMT_NUMBER(VT_R8, V_R8);
   FMT_NUMBER(VT_BOOL, V_BOOL);
@@ -98,7 +80,7 @@ static void test_VarFormatNumber(void)
   V_VT(&v) = VT_BSTR;
   V_BSTR(&v) = SysAllocString(szSrc1);
 
-  hres = pVarFormatNumber(&v,2,0,0,0,0,&str);
+  hres = VarFormatNumber(&v,2,0,0,0,0,&str);
   ok(hres == S_OK, "VarFormatNumber (bstr): returned %8x\n", hres);
   if (hres == S_OK)
     ok(str && wcscmp(str, szResult1) == 0, "VarFormatNumber (bstr): string different\n");
@@ -106,7 +88,7 @@ static void test_VarFormatNumber(void)
   SysFreeString(str);
 
   V_BSTR(&v) = SysAllocString(szSrc2);
-  hres = pVarFormatNumber(&v,2,0,-1,0,0,&str);
+  hres = VarFormatNumber(&v,2,0,-1,0,0,&str);
   ok(hres == S_OK, "VarFormatNumber (bstr): returned %8x\n", hres);
   if (hres == S_OK)
     ok(str && wcscmp(str, szResult2) == 0, "VarFormatNumber (-bstr): string different\n");
@@ -121,7 +103,7 @@ static const char *szVarFmtFail = "VT %d|0x%04x Format %s: expected 0x%08x, '%s'
   out = NULL; \
   V_VT(&in) = (vt); v(&in) = val; \
   if (fmt) MultiByteToWideChar(CP_ACP, 0, fmt, -1, buffW, ARRAY_SIZE(buffW)); \
-  hres = pVarFormat(&in,fmt ? buffW : NULL,fd,fw,flags,&out); \
+  hres = VarFormat(&in,fmt ? buffW : NULL,fd,fw,flags,&out); \
   if (SUCCEEDED(hres)) WideCharToMultiByte(CP_ACP, 0, out, -1, buff, sizeof(buff),0,0); \
   else buff[0] = '\0'; \
   ok(hres == ret && (FAILED(ret) || !strcmp(buff, str)), \
@@ -242,8 +224,6 @@ static void test_VarFormat(void)
   BSTR bstrin, out = NULL;
   HRESULT hres;
 
-  CHECKPTR(VarFormat);
-
   if (PRIMARYLANGID(LANGIDFROMLCID(GetUserDefaultLCID())) != LANG_ENGLISH)
   {
     skip("Skipping VarFormat tests for non English language\n");
@@ -268,18 +248,12 @@ static void test_VarFormat(void)
   VNUMFMT(VT_I1,V_I1);
   VNUMFMT(VT_I2,V_I2);
   VNUMFMT(VT_I4,V_I4);
-  if (has_i8)
-  {
-    VNUMFMT(VT_I8,V_I8);
-  }
+  VNUMFMT(VT_I8,V_I8);
   VNUMFMT(VT_INT,V_INT);
   VNUMFMT(VT_UI1,V_UI1);
   VNUMFMT(VT_UI2,V_UI2);
   VNUMFMT(VT_UI4,V_UI4);
-  if (has_i8)
-  {
-    VNUMFMT(VT_UI8,V_UI8);
-  }
+  VNUMFMT(VT_UI8,V_UI8);
   VNUMFMT(VT_UINT,V_UINT);
   VNUMFMT(VT_R4,V_R4);
   VNUMFMT(VT_R8,V_R8);
@@ -414,21 +388,21 @@ static void test_VarFormat(void)
 
   /* 'out' is not cleared */
   out = (BSTR)0x1;
-  hres = pVarFormat(&in,NULL,fd,fw,flags,&out); /* Would crash if out is cleared */
+  hres = VarFormat(&in,NULL,fd,fw,flags,&out); /* Would crash if out is cleared */
   ok(hres == S_OK, "got %08x\n", hres);
   SysFreeString(out);
   out = NULL;
 
   /* VT_NULL */
   V_VT(&in) = VT_NULL;
-  hres = pVarFormat(&in,NULL,fd,fw,0,&out);
+  hres = VarFormat(&in,NULL,fd,fw,0,&out);
   ok(hres == S_OK, "VarFormat failed with 0x%08x\n", hres);
   ok(out == NULL, "expected NULL formatted string\n");
 
   /* Invalid args */
-  hres = pVarFormat(&in,NULL,fd,fw,flags,NULL);
+  hres = VarFormat(&in,NULL,fd,fw,flags,NULL);
   ok(hres == E_INVALIDARG, "Null out: expected E_INVALIDARG, got 0x%08x\n", hres);
-  hres = pVarFormat(NULL,NULL,fd,fw,flags,&out);
+  hres = VarFormat(NULL,NULL,fd,fw,flags,&out);
   ok(hres == E_INVALIDARG, "Null in: expected E_INVALIDARG, got 0x%08x\n", hres);
   fd = -1;
   VARFMT(VT_BOOL,V_BOOL,VARIANT_TRUE,"",E_INVALIDARG,"");
@@ -444,7 +418,7 @@ static const char *szVarWdnFail =
     "VarWeekdayName (%d, %d, %d, %d, %x): returned %8x, expected %8x\n";
 #define VARWDN(iWeekday, fAbbrev, iFirstDay, dwFlags, ret, buff, out, freeOut) \
 do { \
-  hres = pVarWeekdayName(iWeekday, fAbbrev, iFirstDay, dwFlags, &out); \
+  hres = VarWeekdayName(iWeekday, fAbbrev, iFirstDay, dwFlags, &out); \
   if (SUCCEEDED(hres)) { \
     WideCharToMultiByte(CP_ACP, 0, out, -1, buff, sizeof(buff), 0, 0); \
     if (freeOut) SysFreeString(out); \
@@ -475,8 +449,6 @@ static void test_VarWeekdayName(void)
   int day;
   int size;
   DWORD localeValue;
-
-  CHECKPTR(VarWeekdayName);
 
   SetLastError(0xdeadbeef);
   GetLocaleInfoW(LOCALE_USER_DEFAULT, 0, NULL, 0);
@@ -511,7 +483,7 @@ static void test_VarWeekdayName(void)
   VARWDN_F(4, 0, -1, 0, E_INVALIDARG);
   VARWDN_F(4, 0, 8, 0, E_INVALIDARG);
 
-  hres = pVarWeekdayName(1, 0, 0, 0, NULL);
+  hres = VarWeekdayName(1, 0, 0, 0, NULL);
   ok(E_INVALIDARG == hres,
      "Null pointer: expected E_INVALIDARG, got 0x%08x\n", hres);
 
@@ -668,13 +640,9 @@ static void test_GetAltMonthNames(void)
 
 START_TEST(varformat)
 {
-  hOleaut32 = GetModuleHandleA("oleaut32.dll");
-
-  has_i8 = GetProcAddress(hOleaut32, "VarI8FromI1") != NULL;
-
-  test_VarFormatNumber();
-  test_VarFormat();
-  test_VarWeekdayName();
-  test_VarFormatFromTokens();
-  test_GetAltMonthNames();
+    test_VarFormatNumber();
+    test_VarFormat();
+    test_VarWeekdayName();
+    test_VarFormatFromTokens();
+    test_GetAltMonthNames();
 }
