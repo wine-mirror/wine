@@ -33,12 +33,13 @@ attr_list_t *check_apicontract_attrs(const char *name, attr_list_t *attrs);
 attr_list_t *check_coclass_attrs(const char *name, attr_list_t *attrs);
 attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs);
 attr_list_t *check_interface_attrs(const char *name, attr_list_t *attrs);
+attr_list_t *check_module_attrs(const char *name, attr_list_t *attrs);
 attr_list_t *check_runtimeclass_attrs(const char *name, attr_list_t *attrs);
 
 type_t *type_new_function(var_list_t *args);
 type_t *type_new_pointer(type_t *ref);
 type_t *type_new_alias(const decl_spec_t *t, const char *name);
-type_t *type_new_module(char *name);
+type_t *type_module_declare(char *name);
 type_t *type_new_array(const char *name, const decl_spec_t *element, int declptr,
                        unsigned int dim, expr_t *size_is, expr_t *length_is);
 type_t *type_new_basic(enum type_basic_type basic_type);
@@ -56,7 +57,7 @@ type_t *type_interface_define(type_t *iface, attr_list_t *attrs, type_t *inherit
 type_t *type_dispinterface_declare(char *name);
 type_t *type_dispinterface_define(type_t *iface, attr_list_t *attrs, var_list_t *props, var_list_t *methods);
 type_t *type_dispinterface_define_from_iface(type_t *dispiface, attr_list_t *attrs, type_t *iface);
-void type_module_define(type_t *module, statement_list_t *stmts);
+type_t *type_module_define(type_t* module, attr_list_t *attrs, statement_list_t *stmts);
 type_t *type_coclass_define(type_t *coclass, attr_list_t *attrs, ifref_list_t *ifaces);
 type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs, ifref_list_t *ifaces);
 type_t *type_apicontract_declare(char *name, struct namespace *namespace);

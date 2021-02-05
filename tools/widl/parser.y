@@ -95,7 +95,6 @@ static attr_list_t *check_struct_attrs(attr_list_t *attrs);
 static attr_list_t *check_union_attrs(attr_list_t *attrs);
 static attr_list_t *check_field_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_library_attrs(const char *name, attr_list_t *attrs);
-static attr_list_t *check_module_attrs(const char *name, attr_list_t *attrs);
 const char *get_attr_display_name(enum attr_type type);
 static void add_explicit_handle_if_necessary(const type_t *iface, var_t *func);
 
@@ -285,7 +284,7 @@ static typelib_t *current_typelib;
 %type <type> inherit interface interfacedef
 %type <type> interfaceref
 %type <type> dispinterface dispinterfacedef
-%type <type> module modulehdr moduledef
+%type <type> module moduledef
 %type <str> namespacedef
 %type <type> base_type int_std
 %type <type> enumdef structdef uniondef typedecl
@@ -985,19 +984,12 @@ interfaceref:
 	| tDISPINTERFACE aKNOWNTYPE		{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
 	;
 
-module:   tMODULE aIDENTIFIER			{ $$ = type_new_module($2); }
-	| tMODULE aKNOWNTYPE			{ $$ = type_new_module($2); }
+module:   tMODULE aIDENTIFIER			{ $$ = type_module_declare($2); }
+	| tMODULE aKNOWNTYPE			{ $$ = type_module_declare($2); }
 	;
 
-modulehdr: attributes module			{ $$ = $2;
-						  $$->attrs = check_module_attrs($2->name, $1);
-						}
-	;
-
-moduledef: modulehdr '{' int_statements '}'
-	   semicolon_opt			{ $$ = $1;
-                                                  type_module_define($$, $3);
-						}
+moduledef: attributes module '{' int_statements '}' semicolon_opt
+						{ $$ = type_module_define($2, $1, $4); }
 	;
 
 storage_cls_spec:
@@ -2476,7 +2468,7 @@ attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs)
   return attrs;
 }
 
-static attr_list_t *check_module_attrs(const char *name, attr_list_t *attrs)
+attr_list_t *check_module_attrs(const char *name, attr_list_t *attrs)
 {
   const attr_t *attr;
   if (!attrs) return attrs;

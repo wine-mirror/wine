@@ -195,16 +195,6 @@ type_t *type_new_alias(const decl_spec_t *t, const char *name)
     return a;
 }
 
-type_t *type_new_module(char *name)
-{
-    type_t *type = get_type(TYPE_MODULE, name, NULL, 0);
-    if (type->type_type != TYPE_MODULE || type->defined)
-        error_loc("%s: redefinition error; original definition was at %s:%d\n",
-                  type->name, type->loc_info.input_name, type->loc_info.line_number);
-    type->name = name;
-    return type;
-}
-
 type_t *type_new_array(const char *name, const decl_spec_t *element, int declptr,
                        unsigned int dim, expr_t *size_is, expr_t *length_is)
 {
@@ -519,12 +509,25 @@ type_t *type_dispinterface_define_from_iface(type_t *dispiface, attr_list_t *att
     return dispiface;
 }
 
-void type_module_define(type_t *module, statement_list_t *stmts)
+type_t *type_module_declare(char *name)
 {
-    if (module->details.module) error_loc("multiple definition error\n");
+    type_t *type = get_type(TYPE_MODULE, name, NULL, 0);
+    if (type_get_type_detect_alias(type) != TYPE_MODULE)
+        error_loc("module %s previously not declared a module at %s:%d\n",
+                  type->name, type->loc_info.input_name, type->loc_info.line_number);
+    return type;
+}
+
+type_t *type_module_define(type_t* module, attr_list_t *attrs, statement_list_t *stmts)
+{
+    if (module->defined)
+        error_loc("module %s already defined at %s:%d\n",
+                  module->name, module->loc_info.input_name, module->loc_info.line_number);
+    module->attrs = check_module_attrs(module->name, attrs);
     module->details.module = xmalloc(sizeof(*module->details.module));
     module->details.module->stmts = stmts;
     module->defined = TRUE;
+    return module;
 }
 
 type_t *type_coclass_declare(char *name)
