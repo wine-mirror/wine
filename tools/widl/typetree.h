@@ -29,6 +29,7 @@ enum name_type {
     NAME_C
 };
 
+attr_list_t *check_apicontract_attrs(const char *name, attr_list_t *attrs);
 attr_list_t *check_coclass_attrs(const char *name, attr_list_t *attrs);
 attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs);
 attr_list_t *check_interface_attrs(const char *name, attr_list_t *attrs);
@@ -58,6 +59,8 @@ type_t *type_dispinterface_define_from_iface(type_t *dispiface, attr_list_t *att
 void type_module_define(type_t *module, statement_list_t *stmts);
 type_t *type_coclass_define(type_t *coclass, attr_list_t *attrs, ifref_list_t *ifaces);
 type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs, ifref_list_t *ifaces);
+type_t *type_apicontract_declare(char *name, struct namespace *namespace);
+type_t *type_apicontract_define(type_t *apicontract, attr_list_t *attrs);
 int type_is_equal(const type_t *type1, const type_t *type2);
 const char *type_get_name(const type_t *type, enum name_type name_type);
 char *gen_name(void);

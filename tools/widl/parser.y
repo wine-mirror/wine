@@ -96,10 +96,8 @@ static attr_list_t *check_union_attrs(attr_list_t *attrs);
 static attr_list_t *check_field_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_library_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_module_attrs(const char *name, attr_list_t *attrs);
-static attr_list_t *check_apicontract_attrs(const char *name, attr_list_t *attrs);
 const char *get_attr_display_name(enum attr_type type);
 static void add_explicit_handle_if_necessary(const type_t *iface, var_t *func);
-static void check_def(const type_t *t);
 
 static void check_async_uuid(type_t *iface);
 
@@ -305,7 +303,7 @@ static typelib_t *current_typelib;
 %type <declarator_list> declarator_list struct_declarator_list
 %type <type> coclass coclassdef
 %type <type> runtimeclass runtimeclass_def
-%type <type> apicontract
+%type <type> apicontract apicontract_def
 %type <num> contract_ver
 %type <num> pointer_type threading_type marshaling_behavior version
 %type <str> libraryhdr callconv cppquote importlib import t_ident
@@ -364,8 +362,9 @@ gbl_statements:					{ $$ = NULL; }
 	| gbl_statements coclassdef		{ $$ = append_statement($1, make_statement_type_decl($2));
 						  reg_type($2, $2->name, current_namespace, 0);
 						}
-	| gbl_statements apicontract ';'        { $$ = append_statement($1, make_statement_type_decl($2));
-	                                          reg_type($2, $2->name, current_namespace, 0); }
+	| gbl_statements apicontract ';'	{ $$ = $1; reg_type($2, $2->name, current_namespace, 0); }
+	| gbl_statements apicontract_def	{ $$ = append_statement($1, make_statement_type_decl($2));
+						  reg_type($2, $2->name, current_namespace, 0); }
 	| gbl_statements runtimeclass ';'       { $$ = $1; reg_type($2, $2->name, current_namespace, 0); }
 	| gbl_statements runtimeclass_def       { $$ = append_statement($1, make_statement_type_decl($2));
 	                                          reg_type($2, $2->name, current_namespace, 0); }
@@ -384,8 +383,9 @@ imp_statements:					{ $$ = NULL; }
 	| imp_statements coclassdef		{ $$ = append_statement($1, make_statement_type_decl($2));
 						  reg_type($2, $2->name, current_namespace, 0);
 						}
-	| imp_statements apicontract ';'        { $$ = append_statement($1, make_statement_type_decl($2));
-	                                          reg_type($2, $2->name, current_namespace, 0); }
+	| imp_statements apicontract ';'	{ $$ = $1; reg_type($2, $2->name, current_namespace, 0); }
+	| imp_statements apicontract_def	{ $$ = append_statement($1, make_statement_type_decl($2));
+						  reg_type($2, $2->name, current_namespace, 0); }
 	| imp_statements runtimeclass ';'       { $$ = $1; reg_type($2, $2->name, current_namespace, 0); }
 	| imp_statements runtimeclass_def       { $$ = append_statement($1, make_statement_type_decl($2));
 	                                          reg_type($2, $2->name, current_namespace, 0); }
@@ -913,11 +913,13 @@ runtimeclass_def: attributes runtimeclass '{' class_interfaces '}' semicolon_opt
 						{ $$ = type_runtimeclass_define($2, $1, $4); }
 	;
 
-apicontract: attributes tAPICONTRACT aIDENTIFIER '{' '}'
-						{ $$ = get_type(TYPE_APICONTRACT, $3, current_namespace, 0);
-						  check_def($$);
-						  $$->attrs = check_apicontract_attrs($$->name, $1);
-						}
+apicontract:
+	  tAPICONTRACT aIDENTIFIER		{ $$ = type_apicontract_declare($2, current_namespace); }
+	| tAPICONTRACT aKNOWNTYPE		{ $$ = type_apicontract_declare($2, current_namespace); }
+	;
+
+apicontract_def: attributes apicontract '{' '}' semicolon_opt
+						{ $$ = type_apicontract_define($2, $1); }
 	;
 
 namespacedef: tNAMESPACE aIDENTIFIER		{ $$ = $2; }
@@ -2511,7 +2513,7 @@ attr_list_t *check_runtimeclass_attrs(const char *name, attr_list_t *attrs)
     return attrs;
 }
 
-static attr_list_t *check_apicontract_attrs(const char *name, attr_list_t *attrs)
+attr_list_t *check_apicontract_attrs(const char *name, attr_list_t *attrs)
 {
     const attr_t *attr;
     if (!attrs) return attrs;
@@ -3204,11 +3206,4 @@ void init_loc_info(loc_info_t *i)
     i->input_name = input_name ? input_name : "stdin";
     i->line_number = line_number;
     i->near_text = parser_text;
-}
-
-static void check_def(const type_t *t)
-{
-    if (t->defined)
-        error_loc("%s: redefinition error; original definition was at %s:%d\n",
-                  t->name, t->loc_info.input_name, t->loc_info.line_number);
 }

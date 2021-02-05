@@ -569,6 +569,25 @@ type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs, ifref
     return runtimeclass;
 }
 
+type_t *type_apicontract_declare(char *name, struct namespace *namespace)
+{
+    type_t *type = get_type(TYPE_APICONTRACT, name, namespace, 0);
+    if (type_get_type_detect_alias(type) != TYPE_APICONTRACT)
+        error_loc("apicontract %s previously not declared a apicontract at %s:%d\n",
+                  type->name, type->loc_info.input_name, type->loc_info.line_number);
+    return type;
+}
+
+type_t *type_apicontract_define(type_t *apicontract, attr_list_t *attrs)
+{
+    if (apicontract->defined)
+        error_loc("apicontract %s already defined at %s:%d\n",
+                  apicontract->name, apicontract->loc_info.input_name, apicontract->loc_info.line_number);
+    apicontract->attrs = check_apicontract_attrs(apicontract->name, attrs);
+    apicontract->defined = TRUE;
+    return apicontract;
+}
+
 int type_is_equal(const type_t *type1, const type_t *type2)
 {
     if (type_get_type_detect_alias(type1) != type_get_type_detect_alias(type2))
