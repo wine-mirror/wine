@@ -344,7 +344,7 @@ NTSTATUS errno_to_status( int err )
     case EACCES:    return STATUS_ACCESS_DENIED;
     case ENOTDIR:   return STATUS_OBJECT_PATH_NOT_FOUND;
     case ENOENT:    return STATUS_OBJECT_NAME_NOT_FOUND;
-    case EISDIR:    return STATUS_FILE_IS_A_DIRECTORY;
+    case EISDIR:    return STATUS_INVALID_DEVICE_REQUEST;
     case EMFILE:
     case ENFILE:    return STATUS_TOO_MANY_OPENED_FILES;
     case EINVAL:    return STATUS_INVALID_PARAMETER;
