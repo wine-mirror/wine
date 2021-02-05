@@ -30,6 +30,7 @@ enum name_type {
 };
 
 attr_list_t *check_coclass_attrs(const char *name, attr_list_t *attrs);
+attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs);
 attr_list_t *check_interface_attrs(const char *name, attr_list_t *attrs);
 attr_list_t *check_runtimeclass_attrs(const char *name, attr_list_t *attrs);
 
@@ -51,8 +52,9 @@ type_t *type_new_bitfield(type_t *field_type, const expr_t *bits);
 type_t *type_runtimeclass_declare(char *name, struct namespace *namespace);
 type_t *type_interface_declare(char *name, struct namespace *namespace);
 type_t *type_interface_define(type_t *iface, attr_list_t *attrs, type_t *inherit, statement_list_t *stmts);
-void type_dispinterface_define(type_t *iface, var_list_t *props, var_list_t *methods);
-void type_dispinterface_define_from_iface(type_t *dispiface, type_t *iface);
+type_t *type_dispinterface_declare(char *name);
+type_t *type_dispinterface_define(type_t *iface, attr_list_t *attrs, var_list_t *props, var_list_t *methods);
+type_t *type_dispinterface_define_from_iface(type_t *dispiface, attr_list_t *attrs, type_t *iface);
 void type_module_define(type_t *module, statement_list_t *stmts);
 type_t *type_coclass_define(type_t *coclass, attr_list_t *attrs, ifref_list_t *ifaces);
 type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs, ifref_list_t *ifaces);

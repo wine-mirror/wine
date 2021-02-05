@@ -95,7 +95,6 @@ static attr_list_t *check_struct_attrs(attr_list_t *attrs);
 static attr_list_t *check_union_attrs(attr_list_t *attrs);
 static attr_list_t *check_field_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_library_attrs(const char *name, attr_list_t *attrs);
-static attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_module_attrs(const char *name, attr_list_t *attrs);
 static attr_list_t *check_apicontract_attrs(const char *name, attr_list_t *attrs);
 const char *get_attr_display_name(enum attr_type type);
@@ -276,6 +275,7 @@ static typelib_t *current_typelib;
 %type <attr> attribute acf_attribute
 %type <attr_list> m_attributes attributes attrib_list
 %type <attr_list> acf_attributes acf_attribute_list
+%type <attr_list> dispattributes
 %type <str_list> str_list
 %type <expr> m_expr expr expr_const expr_int_const array m_bitfield
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_int_const
@@ -286,7 +286,7 @@ static typelib_t *current_typelib;
 %type <declspec> decl_spec decl_spec_no_type m_decl_spec_no_type
 %type <type> inherit interface interfacedef
 %type <type> interfaceref
-%type <type> dispinterface dispinterfacehdr dispinterfacedef
+%type <type> dispinterface dispinterfacedef
 %type <type> module modulehdr moduledef
 %type <str> namespacedef
 %type <type> base_type int_std
@@ -932,17 +932,12 @@ class_interface:
 	  m_attributes interfaceref ';'		{ $$ = make_ifref($2); $$->attrs = $1; }
 	;
 
-dispinterface: tDISPINTERFACE aIDENTIFIER	{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
-	|      tDISPINTERFACE aKNOWNTYPE	{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
+dispinterface:
+	  tDISPINTERFACE aIDENTIFIER		{ $$ = type_dispinterface_declare($2); }
+	| tDISPINTERFACE aKNOWNTYPE		{ $$ = type_dispinterface_declare($2); }
 	;
 
-dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
-						  $$ = $2;
-						  check_def($$);
-						  attrs = make_attr(ATTR_DISPINTERFACE);
-						  $$->attrs = append_attr( check_dispiface_attrs($2->name, $1), attrs );
-						  $$->defined = TRUE;
-						}
+dispattributes: attributes			{ $$ = append_attr($1, make_attr(ATTR_DISPINTERFACE)); }
 	;
 
 dispint_props: tPROPERTIES ':'			{ $$ = NULL; }
@@ -953,16 +948,11 @@ dispint_meths: tMETHODS ':'			{ $$ = NULL; }
 	| dispint_meths funcdef ';'		{ $$ = append_var( $1, $2 ); }
 	;
 
-dispinterfacedef: dispinterfacehdr '{'
-	  dispint_props
-	  dispint_meths
-	  '}'					{ $$ = $1;
-						  type_dispinterface_define($$, $3, $4);
-						}
-	| dispinterfacehdr
-	 '{' interface ';' '}' 			{ $$ = $1;
-						  type_dispinterface_define_from_iface($$, $3);
-						}
+dispinterfacedef:
+	  dispattributes dispinterface '{' dispint_props dispint_meths '}'
+						{ $$ = type_dispinterface_define($2, $1, $4, $5); }
+	| dispattributes dispinterface '{' interface ';' '}'
+						{ $$ = type_dispinterface_define_from_iface($2, $1, $4); }
 	;
 
 inherit:					{ $$ = NULL; }
@@ -2214,7 +2204,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_DEFAULTVALUE */        { 0, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "defaultvalue" },
     /* ATTR_DEFAULTVTABLE */       { 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, "defaultvtable" },
  /* ATTR_DISABLECONSISTENCYCHECK */{ 0, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "disable_consistency_check" },
-    /* ATTR_DISPINTERFACE */       { 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL },
+    /* ATTR_DISPINTERFACE */       { 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, NULL },
     /* ATTR_DISPLAYBIND */         { 0, 0, 0,  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "displaybind" },
     /* ATTR_DLLNAME */             { 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, "dllname" },
     /* ATTR_DUAL */                { 0, 0, 0,  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "dual" },
@@ -2471,7 +2461,7 @@ static attr_list_t *check_library_attrs(const char *name, attr_list_t *attrs)
   return attrs;
 }
 
-static attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs)
+attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs)
 {
   const attr_t *attr;
   if (!attrs) return attrs;

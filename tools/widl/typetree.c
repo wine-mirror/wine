@@ -472,8 +472,21 @@ type_t *type_interface_define(type_t *iface, attr_list_t *attrs, type_t *inherit
     return iface;
 }
 
-void type_dispinterface_define(type_t *iface, var_list_t *props, var_list_t *methods)
+type_t *type_dispinterface_declare(char *name)
 {
+    type_t *type = get_type(TYPE_INTERFACE, name, NULL, 0);
+    if (type_get_type_detect_alias(type) != TYPE_INTERFACE)
+        error_loc("dispinterface %s previously not declared a dispinterface at %s:%d\n",
+                  type->name, type->loc_info.input_name, type->loc_info.line_number);
+    return type;
+}
+
+type_t *type_dispinterface_define(type_t *iface, attr_list_t *attrs, var_list_t *props, var_list_t *methods)
+{
+    if (iface->defined)
+        error_loc("dispinterface %s already defined at %s:%d\n",
+                  iface->name, iface->loc_info.input_name, iface->loc_info.line_number);
+    iface->attrs = check_dispiface_attrs(iface->name, attrs);
     iface->details.iface = xmalloc(sizeof(*iface->details.iface));
     iface->details.iface->disp_props = props;
     iface->details.iface->disp_methods = methods;
@@ -484,10 +497,15 @@ void type_dispinterface_define(type_t *iface, var_list_t *props, var_list_t *met
     iface->details.iface->async_iface = NULL;
     iface->defined = TRUE;
     compute_method_indexes(iface);
+    return iface;
 }
 
-void type_dispinterface_define_from_iface(type_t *dispiface, type_t *iface)
+type_t *type_dispinterface_define_from_iface(type_t *dispiface, attr_list_t *attrs, type_t *iface)
 {
+    if (dispiface->defined)
+        error_loc("dispinterface %s already defined at %s:%d\n",
+                  dispiface->name, dispiface->loc_info.input_name, dispiface->loc_info.line_number);
+    dispiface->attrs = check_dispiface_attrs(dispiface->name, attrs);
     dispiface->details.iface = xmalloc(sizeof(*dispiface->details.iface));
     dispiface->details.iface->disp_props = NULL;
     dispiface->details.iface->disp_methods = NULL;
@@ -498,6 +516,7 @@ void type_dispinterface_define_from_iface(type_t *dispiface, type_t *iface)
     dispiface->details.iface->async_iface = NULL;
     dispiface->defined = TRUE;
     compute_method_indexes(dispiface);
+    return dispiface;
 }
 
 void type_module_define(type_t *module, statement_list_t *stmts)
