@@ -123,7 +123,7 @@ static void test_decode(void)
     ok(count == 1, "unexpected count %u\n", count);
 
     hr = IWICBitmapDecoder_GetFrame(decoder, 0, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "GetFrame(NULL) returned hr=%x\n", hr);
+    ok(hr == E_INVALIDARG, "GetFrame(NULL) returned hr=%x\n", hr);
 
     for (j = 2; j > 0; --j)
     {

@@ -724,7 +724,7 @@ static HRESULT WINAPI CommonDecoder_GetFrame(IWICBitmapDecoder *iface,
     TRACE("(%p,%u,%p)\n", iface, index, ppIBitmapFrame);
 
     if (!ppIBitmapFrame)
-        return E_POINTER;
+        return E_INVALIDARG;
 
     EnterCriticalSection(&This->lock);
 
