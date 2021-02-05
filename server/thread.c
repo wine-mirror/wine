@@ -113,7 +113,7 @@ static const struct object_ops thread_apc_ops =
     no_satisfied,               /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
-    no_map_access,              /* map_access */
+    default_map_access,         /* map_access */
     default_get_sd,             /* get_sd */
     default_set_sd,             /* set_sd */
     no_get_full_name,           /* get_full_name */
@@ -150,7 +150,7 @@ static const struct object_ops context_ops =
     no_satisfied,               /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
-    no_map_access,              /* map_access */
+    default_map_access,         /* map_access */
     default_get_sd,             /* get_sd */
     default_set_sd,             /* set_sd */
     no_get_full_name,           /* get_full_name */
@@ -467,16 +467,10 @@ static int thread_signaled( struct object *obj, struct wait_queue_entry *entry )
 
 static unsigned int thread_map_access( struct object *obj, unsigned int access )
 {
-    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | THREAD_QUERY_INFORMATION | THREAD_GET_CONTEXT;
-    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | THREAD_SET_INFORMATION | THREAD_SET_CONTEXT |
-                                            THREAD_TERMINATE | THREAD_SUSPEND_RESUME;
-    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE | THREAD_QUERY_LIMITED_INFORMATION;
-    if (access & GENERIC_ALL)     access |= THREAD_ALL_ACCESS;
-
+    access = default_map_access( obj, access );
     if (access & THREAD_QUERY_INFORMATION) access |= THREAD_QUERY_LIMITED_INFORMATION;
     if (access & THREAD_SET_INFORMATION) access |= THREAD_SET_LIMITED_INFORMATION;
-
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+    return access;
 }
 
 static void dump_thread_apc( struct object *obj, int verbose )

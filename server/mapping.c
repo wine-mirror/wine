@@ -71,7 +71,7 @@ static const struct object_ops ranges_ops =
     NULL,                      /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
-    no_map_access,             /* map_access */
+    default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */
     default_set_sd,            /* set_sd */
     no_get_full_name,          /* get_full_name */
@@ -107,7 +107,7 @@ static const struct object_ops shared_map_ops =
     NULL,                      /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
-    no_map_access,             /* map_access */
+    default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */
     default_set_sd,            /* set_sd */
     no_get_full_name,          /* get_full_name */
@@ -164,7 +164,6 @@ struct mapping
 
 static void mapping_dump( struct object *obj, int verbose );
 static struct fd *mapping_get_fd( struct object *obj );
-static unsigned int mapping_map_access( struct object *obj, unsigned int access );
 static void mapping_destroy( struct object *obj );
 static enum server_fd_type mapping_get_fd_type( struct fd *fd );
 
@@ -179,7 +178,7 @@ static const struct object_ops mapping_ops =
     NULL,                        /* satisfied */
     no_signal,                   /* signal */
     mapping_get_fd,              /* get_fd */
-    mapping_map_access,          /* map_access */
+    default_map_access,          /* map_access */
     default_get_sd,              /* get_sd */
     default_set_sd,              /* set_sd */
     default_get_full_name,       /* get_full_name */
@@ -995,15 +994,6 @@ static struct fd *mapping_get_fd( struct object *obj )
 {
     struct mapping *mapping = (struct mapping *)obj;
     return (struct fd *)grab_object( mapping->fd );
-}
-
-static unsigned int mapping_map_access( struct object *obj, unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | SECTION_QUERY | SECTION_MAP_READ;
-    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | SECTION_MAP_WRITE;
-    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE | SECTION_MAP_EXECUTE;
-    if (access & GENERIC_ALL)     access |= SECTION_ALL_ACCESS;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void mapping_destroy( struct object *obj )

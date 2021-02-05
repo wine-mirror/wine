@@ -352,13 +352,9 @@ static inline struct notify *find_notify( struct key *key, struct process *proce
 
 static unsigned int key_map_access( struct object *obj, unsigned int access )
 {
-    if (access & GENERIC_READ)    access |= KEY_READ;
-    if (access & GENERIC_WRITE)   access |= KEY_WRITE;
-    if (access & GENERIC_EXECUTE) access |= KEY_EXECUTE;
-    if (access & GENERIC_ALL)     access |= KEY_ALL_ACCESS;
+    access = default_map_access( obj, access );
     /* filter the WOW64 masks, as they aren't real access bits */
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL |
-                      KEY_WOW64_64KEY | KEY_WOW64_32KEY);
+    return access & ~(KEY_WOW64_64KEY | KEY_WOW64_32KEY);
 }
 
 static struct security_descriptor *key_get_sd( struct object *obj )

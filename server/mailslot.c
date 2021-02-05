@@ -201,7 +201,7 @@ static const struct object_ops mailslot_device_ops =
     no_satisfied,                   /* satisfied */
     no_signal,                      /* signal */
     no_get_fd,                      /* get_fd */
-    no_map_access,                  /* map_access */
+    default_map_access,             /* map_access */
     default_get_sd,                 /* get_sd */
     default_set_sd,                 /* set_sd */
     default_get_full_name,          /* get_full_name */
@@ -231,7 +231,7 @@ static const struct object_ops mailslot_device_file_ops =
     no_satisfied,                           /* satisfied */
     no_signal,                              /* signal */
     mailslot_device_file_get_fd,            /* get_fd */
-    default_fd_map_access,                  /* map_access */
+    default_map_access,                     /* map_access */
     default_get_sd,                         /* get_sd */
     default_set_sd,                         /* set_sd */
     mailslot_device_file_get_full_name,     /* get_full_name */
@@ -297,9 +297,7 @@ static struct fd *mailslot_get_fd( struct object *obj )
 static unsigned int mailslot_map_access( struct object *obj, unsigned int access )
 {
     /* mailslots can only be read */
-    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
-    if (access & GENERIC_ALL)     access |= FILE_GENERIC_READ;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+    return default_map_access( obj, access ) & FILE_GENERIC_READ;
 }
 
 static int mailslot_link_name( struct object *obj, struct object_name *name, struct object *parent )
@@ -538,9 +536,7 @@ static struct fd *mail_writer_get_fd( struct object *obj )
 static unsigned int mail_writer_map_access( struct object *obj, unsigned int access )
 {
     /* mailslot writers can only get write access */
-    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
-    if (access & GENERIC_ALL)     access |= FILE_GENERIC_WRITE;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+    return default_map_access( obj, access ) & FILE_GENERIC_WRITE;
 }
 
 static struct mailslot *get_mailslot_obj( struct process *process, obj_handle_t handle,

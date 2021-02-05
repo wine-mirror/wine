@@ -117,7 +117,7 @@ static const struct object_ops dir_ops =
     no_satisfied,             /* satisfied */
     no_signal,                /* signal */
     dir_get_fd,               /* get_fd */
-    default_fd_map_access,    /* map_access */
+    default_map_access,       /* map_access */
     dir_get_sd,               /* get_sd */
     dir_set_sd,               /* set_sd */
     no_get_full_name,         /* get_full_name */

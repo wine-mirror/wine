@@ -60,7 +60,6 @@ struct symlink
 };
 
 static void symlink_dump( struct object *obj, int verbose );
-static unsigned int symlink_map_access( struct object *obj, unsigned int access );
 static struct object *symlink_lookup_name( struct object *obj, struct unicode_str *name,
                                            unsigned int attr, struct object *root );
 static void symlink_destroy( struct object *obj );
@@ -76,7 +75,7 @@ static const struct object_ops symlink_ops =
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
-    symlink_map_access,           /* map_access */
+    default_map_access,           /* map_access */
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
     default_get_full_name,        /* get_full_name */
@@ -124,15 +123,6 @@ static struct object *symlink_lookup_name( struct object *obj, struct unicode_st
         }
     }
     return target;
-}
-
-static unsigned int symlink_map_access( struct object *obj, unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | SYMBOLIC_LINK_QUERY;
-    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE;
-    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
-    if (access & GENERIC_ALL)     access |= SYMBOLIC_LINK_ALL_ACCESS;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void symlink_destroy( struct object *obj )

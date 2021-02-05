@@ -171,7 +171,7 @@ extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void no_satisfied( struct object *obj, struct wait_queue_entry *entry );
 extern int no_signal( struct object *obj, unsigned int access );
 extern struct fd *no_get_fd( struct object *obj );
-extern unsigned int no_map_access( struct object *obj, unsigned int access );
+extern unsigned int default_map_access( struct object *obj, unsigned int access );
 extern struct security_descriptor *default_get_sd( struct object *obj );
 extern int default_set_sd( struct object *obj, const struct security_descriptor *sd, unsigned int set_info );
 extern int set_sd_defaults_from_token( struct object *obj, const struct security_descriptor *sd,
@@ -193,6 +193,15 @@ extern void close_objects(void);
 
 static inline void make_object_permanent( struct object *obj ) { obj->is_permanent = 1; }
 static inline void make_object_temporary( struct object *obj ) { obj->is_permanent = 0; }
+
+static inline unsigned int map_access( unsigned int access, const generic_map_t *mapping )
+{
+    if (access & GENERIC_READ)    access |= mapping->read;
+    if (access & GENERIC_WRITE)   access |= mapping->write;
+    if (access & GENERIC_EXECUTE) access |= mapping->exec;
+    if (access & GENERIC_ALL)     access |= mapping->all;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
 
 /* event functions */
 

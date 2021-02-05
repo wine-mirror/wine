@@ -150,7 +150,6 @@ struct group
 };
 
 static void token_dump( struct object *obj, int verbose );
-static unsigned int token_map_access( struct object *obj, unsigned int access );
 static void token_destroy( struct object *obj );
 
 static const struct object_ops token_ops =
@@ -164,7 +163,7 @@ static const struct object_ops token_ops =
     NULL,                      /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
-    token_map_access,          /* map_access */
+    default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */
     default_set_sd,            /* set_sd */
     no_get_full_name,          /* get_full_name */
@@ -183,15 +182,6 @@ static void token_dump( struct object *obj, int verbose )
     assert( obj->ops == &token_ops );
     fprintf( stderr, "Token id=%d.%u primary=%u impersonation level=%d\n", token->token_id.high_part,
              token->token_id.low_part, token->primary, token->impersonation_level );
-}
-
-static unsigned int token_map_access( struct object *obj, unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= TOKEN_READ;
-    if (access & GENERIC_WRITE)   access |= TOKEN_WRITE;
-    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
-    if (access & GENERIC_ALL)     access |= TOKEN_ALL_ACCESS;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static SID *security_sid_alloc( const SID_IDENTIFIER_AUTHORITY *idauthority, int subauthcount, const unsigned int subauth[] )
@@ -468,16 +458,6 @@ ACL *replace_security_labels( const ACL *old_sacl, const ACL *new_sacl )
     }
 
     return replaced_acl;
-}
-
-/* maps from generic rights to specific rights as given by a mapping */
-static inline void map_generic_mask( unsigned int *mask, const generic_map_t *mapping )
-{
-    if (*mask & GENERIC_READ)    *mask |= mapping->read;
-    if (*mask & GENERIC_WRITE)   *mask |= mapping->write;
-    if (*mask & GENERIC_EXECUTE) *mask |= mapping->exec;
-    if (*mask & GENERIC_ALL)     *mask |= mapping->all;
-    *mask &= ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static inline int is_equal_luid( const LUID *luid1, const LUID *luid2 )
@@ -1157,8 +1137,7 @@ static unsigned int token_access_check( struct token *token,
             sid = (const SID *)&ad_ace->SidStart;
             if (token_sid_present( token, sid, TRUE ))
             {
-                unsigned int access = ad_ace->Mask;
-                map_generic_mask(&access, mapping);
+                unsigned int access = map_access( ad_ace->Mask, mapping );
                 if (desired_access & MAXIMUM_ALLOWED)
                     denied_access |= access;
                 else
@@ -1173,8 +1152,7 @@ static unsigned int token_access_check( struct token *token,
             sid = (const SID *)&aa_ace->SidStart;
             if (token_sid_present( token, sid, FALSE ))
             {
-                unsigned int access = aa_ace->Mask;
-                map_generic_mask(&access, mapping);
+                unsigned int access = map_access( aa_ace->Mask, mapping );
                 if (desired_access & MAXIMUM_ALLOWED)
                     current_access |= access;
                 else

@@ -528,13 +528,9 @@ struct fd *no_get_fd( struct object *obj )
     return NULL;
 }
 
-unsigned int no_map_access( struct object *obj, unsigned int access )
+unsigned int default_map_access( struct object *obj, unsigned int access )
 {
-    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ;
-    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE;
-    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
-    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+    return map_access( access, &obj->ops->type->mapping );
 }
 
 struct security_descriptor *default_get_sd( struct object *obj )

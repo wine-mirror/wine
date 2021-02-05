@@ -84,7 +84,7 @@ static const struct object_ops console_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     console_get_fd,                   /* get_fd */
-    default_fd_map_access,            /* map_access */
+    default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     no_get_full_name,                 /* get_full_name */
@@ -159,7 +159,7 @@ static const struct object_ops console_server_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     console_server_get_fd,            /* get_fd */
-    default_fd_map_access,            /* map_access */
+    default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     no_get_full_name,                 /* get_full_name */
@@ -227,7 +227,7 @@ static const struct object_ops screen_buffer_ops =
     NULL,                             /* satisfied */
     no_signal,                        /* signal */
     screen_buffer_get_fd,             /* get_fd */
-    default_fd_map_access,            /* map_access */
+    default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     no_get_full_name,                 /* get_full_name */
@@ -275,7 +275,7 @@ static const struct object_ops console_device_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     no_get_fd,                        /* get_fd */
-    default_fd_map_access,            /* map_access */
+    default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     default_get_full_name,            /* get_full_name */
@@ -312,7 +312,7 @@ static const struct object_ops console_input_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     console_input_get_fd,             /* get_fd */
-    no_map_access,                    /* map_access */
+    default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     no_get_full_name,                 /* get_full_name */
@@ -368,7 +368,7 @@ static const struct object_ops console_output_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     console_output_get_fd,            /* get_fd */
-    no_map_access,                    /* map_access */
+    default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     no_get_full_name,                 /* get_full_name */
@@ -425,7 +425,7 @@ static const struct object_ops console_connection_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     console_connection_get_fd,        /* get_fd */
-    no_map_access,                    /* map_access */
+    default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     no_get_full_name,                 /* get_full_name */
@@ -1296,7 +1296,7 @@ static struct object *console_device_open_file( struct object *obj, unsigned int
                                                 unsigned int sharing, unsigned int options )
 {
     int is_output;
-    access = default_fd_map_access( obj, access );
+    access = default_map_access( obj, access );
     is_output = access & FILE_WRITE_DATA;
     if (!current->process->console || (is_output && !current->process->console))
     {

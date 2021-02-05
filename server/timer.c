@@ -67,7 +67,6 @@ struct timer
 static void timer_dump( struct object *obj, int verbose );
 static int timer_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void timer_satisfied( struct object *obj, struct wait_queue_entry *entry );
-static unsigned int timer_map_access( struct object *obj, unsigned int access );
 static void timer_destroy( struct object *obj );
 
 static const struct object_ops timer_ops =
@@ -81,7 +80,7 @@ static const struct object_ops timer_ops =
     timer_satisfied,           /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
-    timer_map_access,          /* map_access */
+    default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */
     default_set_sd,            /* set_sd */
     default_get_full_name,     /* get_full_name */
@@ -217,15 +216,6 @@ static void timer_satisfied( struct object *obj, struct wait_queue_entry *entry 
     struct timer *timer = (struct timer *)obj;
     assert( obj->ops == &timer_ops );
     if (!timer->manual) timer->signaled = 0;
-}
-
-static unsigned int timer_map_access( struct object *obj, unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | SYNCHRONIZE | TIMER_QUERY_STATE;
-    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | TIMER_MODIFY_STATE;
-    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
-    if (access & GENERIC_ALL)     access |= TIMER_ALL_ACCESS;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void timer_destroy( struct object *obj )

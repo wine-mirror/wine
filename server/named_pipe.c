@@ -170,7 +170,7 @@ static const struct object_ops pipe_server_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     pipe_end_get_fd,              /* get_fd */
-    default_fd_map_access,        /* map_access */
+    default_map_access,           /* map_access */
     pipe_end_get_sd,              /* get_sd */
     pipe_end_set_sd,              /* set_sd */
     pipe_end_get_full_name,       /* get_full_name */
@@ -213,7 +213,7 @@ static const struct object_ops pipe_client_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     pipe_end_get_fd,              /* get_fd */
-    default_fd_map_access,        /* map_access */
+    default_map_access,           /* map_access */
     pipe_end_get_sd,              /* get_sd */
     pipe_end_set_sd,              /* set_sd */
     pipe_end_get_full_name,       /* get_full_name */
@@ -259,7 +259,7 @@ static const struct object_ops named_pipe_device_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     no_get_fd,                        /* get_fd */
-    no_map_access,                    /* map_access */
+    default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     default_get_full_name,            /* get_full_name */
@@ -290,7 +290,7 @@ static const struct object_ops named_pipe_device_file_ops =
     no_satisfied,                            /* satisfied */
     no_signal,                               /* signal */
     named_pipe_device_file_get_fd,           /* get_fd */
-    default_fd_map_access,                   /* map_access */
+    default_map_access,                      /* map_access */
     default_get_sd,                          /* get_sd */
     default_set_sd,                          /* set_sd */
     named_pipe_device_file_get_full_name,    /* get_full_name */

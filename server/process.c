@@ -145,7 +145,7 @@ static const struct object_ops startup_info_ops =
     no_satisfied,                  /* satisfied */
     no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
-    no_map_access,                 /* map_access */
+    default_map_access,            /* map_access */
     default_get_sd,                /* get_sd */
     default_set_sd,                /* set_sd */
     no_get_full_name,              /* get_full_name */
@@ -176,7 +176,6 @@ struct type_descr job_type =
 
 static void job_dump( struct object *obj, int verbose );
 static int job_signaled( struct object *obj, struct wait_queue_entry *entry );
-static unsigned int job_map_access( struct object *obj, unsigned int access );
 static int job_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void job_destroy( struct object *obj );
 
@@ -204,7 +203,7 @@ static const struct object_ops job_ops =
     no_satisfied,                  /* satisfied */
     no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
-    job_map_access,                /* map_access */
+    default_map_access,            /* map_access */
     default_get_sd,                /* get_sd */
     default_set_sd,                /* set_sd */
     default_get_full_name,         /* get_full_name */
@@ -243,15 +242,6 @@ static struct job *create_job_object( struct object *root, const struct unicode_
 static struct job *get_job_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct job *)get_handle_obj( process, handle, access, &job_ops );
-}
-
-static unsigned int job_map_access( struct object *obj, unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ;
-    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE;
-    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
-    if (access & GENERIC_ALL)     access |= JOB_OBJECT_ALL_ACCESS;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void add_job_completion( struct job *job, apc_param_t msg, apc_param_t pid )
@@ -681,16 +671,10 @@ static int process_signaled( struct object *obj, struct wait_queue_entry *entry 
 
 static unsigned int process_map_access( struct object *obj, unsigned int access )
 {
-    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
-    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | PROCESS_SET_QUOTA | PROCESS_SET_INFORMATION | PROCESS_SUSPEND_RESUME |
-                                            PROCESS_VM_WRITE | PROCESS_DUP_HANDLE | PROCESS_CREATE_PROCESS | PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION;
-    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_TERMINATE;
-    if (access & GENERIC_ALL)     access |= PROCESS_ALL_ACCESS;
-
+    access = default_map_access( obj, access );
     if (access & PROCESS_QUERY_INFORMATION) access |= PROCESS_QUERY_LIMITED_INFORMATION;
     if (access & PROCESS_SET_INFORMATION) access |= PROCESS_SET_LIMITED_INFORMATION;
-
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+    return access;
 }
 
 static struct list *process_get_kernel_obj_list( struct object *obj )

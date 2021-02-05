@@ -61,7 +61,6 @@ struct event
 static void event_dump( struct object *obj, int verbose );
 static int event_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void event_satisfied( struct object *obj, struct wait_queue_entry *entry );
-static unsigned int event_map_access( struct object *obj, unsigned int access );
 static int event_signal( struct object *obj, unsigned int access);
 static struct list *event_get_kernel_obj_list( struct object *obj );
 
@@ -76,7 +75,7 @@ static const struct object_ops event_ops =
     event_satisfied,           /* satisfied */
     event_signal,              /* signal */
     no_get_fd,                 /* get_fd */
-    event_map_access,          /* map_access */
+    default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */
     default_set_sd,            /* set_sd */
     default_get_full_name,     /* get_full_name */
@@ -111,7 +110,6 @@ struct keyed_event
 
 static void keyed_event_dump( struct object *obj, int verbose );
 static int keyed_event_signaled( struct object *obj, struct wait_queue_entry *entry );
-static unsigned int keyed_event_map_access( struct object *obj, unsigned int access );
 
 static const struct object_ops keyed_event_ops =
 {
@@ -124,7 +122,7 @@ static const struct object_ops keyed_event_ops =
     no_satisfied,                /* satisfied */
     no_signal,                   /* signal */
     no_get_fd,                   /* get_fd */
-    keyed_event_map_access,      /* map_access */
+    default_map_access,          /* map_access */
     default_get_sd,              /* get_sd */
     default_set_sd,              /* set_sd */
     default_get_full_name,       /* get_full_name */
@@ -205,15 +203,6 @@ static void event_satisfied( struct object *obj, struct wait_queue_entry *entry 
     if (!event->manual_reset) event->signaled = 0;
 }
 
-static unsigned int event_map_access( struct object *obj, unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | EVENT_QUERY_STATE;
-    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | EVENT_MODIFY_STATE;
-    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE;
-    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL | EVENT_QUERY_STATE | EVENT_MODIFY_STATE;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
-}
-
 static int event_signal( struct object *obj, unsigned int access )
 {
     struct event *event = (struct event *)obj;
@@ -285,15 +274,6 @@ static int keyed_event_signaled( struct object *obj, struct wait_queue_entry *en
         if (wake_thread_queue_entry( ptr )) return 1;
     }
     return 0;
-}
-
-static unsigned int keyed_event_map_access( struct object *obj, unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | KEYEDEVENT_WAIT;
-    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | KEYEDEVENT_WAKE;
-    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
-    if (access & GENERIC_ALL)     access |= KEYEDEVENT_ALL_ACCESS;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 /* create an event */

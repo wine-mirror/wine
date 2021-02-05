@@ -90,7 +90,7 @@ static const struct object_ops debug_event_ops =
     no_satisfied,                  /* satisfied */
     no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
-    no_map_access,                 /* map_access */
+    default_map_access,            /* map_access */
     default_get_sd,                /* get_sd */
     default_set_sd,                /* set_sd */
     no_get_full_name,              /* get_full_name */
@@ -105,7 +105,6 @@ static const struct object_ops debug_event_ops =
 
 static void debug_obj_dump( struct object *obj, int verbose );
 static int debug_obj_signaled( struct object *obj, struct wait_queue_entry *entry );
-static unsigned int debug_obj_map_access( struct object *obj, unsigned int access );
 static void debug_obj_destroy( struct object *obj );
 
 static const struct object_ops debug_obj_ops =
@@ -119,7 +118,7 @@ static const struct object_ops debug_obj_ops =
     no_satisfied,                  /* satisfied */
     no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
-    debug_obj_map_access,          /* map_access */
+    default_map_access,            /* map_access */
     default_get_sd,                /* get_sd */
     default_set_sd,                /* set_sd */
     default_get_full_name,         /* get_full_name */
@@ -325,15 +324,6 @@ static int debug_obj_signaled( struct object *obj, struct wait_queue_entry *entr
     struct debug_obj *debug_obj = (struct debug_obj *)obj;
     assert( obj->ops == &debug_obj_ops );
     return find_event_to_send( debug_obj ) != NULL;
-}
-
-static unsigned int debug_obj_map_access( struct object *obj, unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | DEBUG_READ_EVENT | DEBUG_QUERY_INFORMATION;
-    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | DEBUG_SET_INFORMATION;
-    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE | DEBUG_PROCESS_ASSIGN;
-    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL | EVENT_QUERY_STATE | EVENT_MODIFY_STATE;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static void debug_obj_destroy( struct object *obj )

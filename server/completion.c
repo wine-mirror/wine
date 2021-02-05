@@ -66,7 +66,6 @@ struct completion
 
 static void completion_dump( struct object*, int );
 static int completion_signaled( struct object *obj, struct wait_queue_entry *entry );
-static unsigned int completion_map_access( struct object *obj, unsigned int access );
 static void completion_destroy( struct object * );
 
 static const struct object_ops completion_ops =
@@ -80,7 +79,7 @@ static const struct object_ops completion_ops =
     no_satisfied,              /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
-    completion_map_access,     /* map_access */
+    default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */
     default_set_sd,            /* set_sd */
     default_get_full_name,     /* get_full_name */
@@ -126,15 +125,6 @@ static int completion_signaled( struct object *obj, struct wait_queue_entry *ent
     struct completion *completion = (struct completion *)obj;
 
     return !list_empty( &completion->queue );
-}
-
-static unsigned int completion_map_access( struct object *obj, unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | SYNCHRONIZE | IO_COMPLETION_QUERY_STATE;
-    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE;
-    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
-    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL | IO_COMPLETION_ALL_ACCESS;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 static struct completion *create_completion( struct object *root, const struct unicode_str *name,

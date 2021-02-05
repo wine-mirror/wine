@@ -76,8 +76,6 @@ struct file
     struct list         kernel_object;  /* list of kernel object pointers */
 };
 
-static unsigned int generic_file_map_access( unsigned int access );
-
 static void file_dump( struct object *obj, int verbose );
 static struct fd *file_get_fd( struct object *obj );
 static struct security_descriptor *file_get_sd( struct object *obj );
@@ -102,7 +100,7 @@ static const struct object_ops file_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     file_get_fd,                  /* get_fd */
-    default_fd_map_access,        /* map_access */
+    default_map_access,           /* map_access */
     file_get_sd,                  /* get_sd */
     file_set_sd,                  /* set_sd */
     no_get_full_name,             /* get_full_name */
@@ -151,7 +149,7 @@ struct file *create_file_for_fd( int fd, unsigned int access, unsigned int shari
     }
 
     file->mode = st.st_mode;
-    file->access = default_fd_map_access( &file->obj, access );
+    file->access = default_map_access( &file->obj, access );
     list_init( &file->kernel_object );
     if (!(file->fd = create_anonymous_fd( &file_fd_ops, fd, &file->obj,
                                           FILE_SYNCHRONOUS_IO_NONALERT )))
@@ -178,7 +176,7 @@ struct file *create_file_for_fd_obj( struct fd *fd, unsigned int access, unsigne
     if ((file = alloc_object( &file_ops )))
     {
         file->mode = st.st_mode;
-        file->access = default_fd_map_access( &file->obj, access );
+        file->access = default_map_access( &file->obj, access );
         list_init( &file->kernel_object );
         if (!(file->fd = dup_fd_object( fd, access, sharing, FILE_SYNCHRONOUS_IO_NONALERT )))
         {
@@ -266,7 +264,7 @@ static struct object *create_file( struct fd *root, const char *nameptr, data_si
             mode |= S_IXOTH;
     }
 
-    access = generic_file_map_access( access );
+    access = map_access( access, &file_type.mapping );
 
     /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
     fd = open_fd( root, name, flags | O_NONBLOCK | O_LARGEFILE, &mode, access, sharing, options );
@@ -307,15 +305,6 @@ static struct fd *file_get_fd( struct object *obj )
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
     return (struct fd *)grab_object( file->fd );
-}
-
-static unsigned int generic_file_map_access( unsigned int access )
-{
-    if (access & GENERIC_READ)    access |= FILE_GENERIC_READ;
-    if (access & GENERIC_WRITE)   access |= FILE_GENERIC_WRITE;
-    if (access & GENERIC_EXECUTE) access |= FILE_GENERIC_EXECUTE;
-    if (access & GENERIC_ALL)     access |= FILE_ALL_ACCESS;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID *group )
@@ -469,7 +458,7 @@ static mode_t file_access_to_mode( unsigned int access )
 {
     mode_t mode = 0;
 
-    access = generic_file_map_access( access );
+    access = map_access( access, &file_type.mapping );
     if (access & FILE_READ_DATA)  mode |= 4;
     if (access & (FILE_WRITE_DATA|FILE_APPEND_DATA)) mode |= 2;
     if (access & FILE_EXECUTE)    mode |= 1;
