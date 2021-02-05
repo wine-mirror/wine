@@ -771,6 +771,113 @@ static void test_SQLConfigDataSource(void)
     check_error(ODBC_ERROR_COMPONENT_NOT_FOUND);
 }
 
+static void test_SQLWriteDSNToIni(void)
+{
+    BOOL ret;
+    char buffer[MAX_PATH];
+    char path[MAX_PATH];
+    DWORD type, size;
+
+    SQLSetConfigMode(ODBC_SYSTEM_DSN);
+
+    ret = SQLWriteDSNToIni("wine_dbs", "SQL Server");
+    if (!ret)
+    {
+        win_skip("Doesn't have permission to write a System DSN\n");
+        return;
+    }
+
+    if(ret)
+    {
+        HKEY hkey;
+        LONG res;
+
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\ODBC\\ODBC.INI\\ODBC Data Sources", 0,
+                            KEY_READ, &hkey);
+        ok(res == ERROR_SUCCESS, "RegOpenKeyExW failed\n");
+        if (res == ERROR_SUCCESS)
+        {
+            type = 0xdeadbeef;
+            size = MAX_PATH;
+
+            memset(buffer, 0, sizeof(buffer));
+            res = RegQueryValueExA(hkey, "wine_dbs", NULL, &type, (BYTE *)buffer, &size);
+            ok(res == ERROR_SUCCESS, "RegGetValueA failed\n");
+            ok(type == REG_SZ, "got %u\n", type);
+            ok(!strcmp(buffer, "SQL Server"), "incorrect string '%s'\n", buffer);
+
+            RegCloseKey(hkey);
+        }
+
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\ODBC\\ODBC.INI\\wine_dbs", 0,
+                            KEY_READ, &hkey);
+        ok(res == ERROR_SUCCESS, "RegOpenKeyExW failed\n");
+        if (res == ERROR_SUCCESS)
+        {
+            type = 0xdeadbeef;
+            size = MAX_PATH;
+
+            memset(path, 0, sizeof(path));
+            res = RegQueryValueExA(hkey, "driver", NULL, &type, (BYTE *)path, &size);
+            ok(res == ERROR_SUCCESS, "RegGetValueA failed\n");
+            ok(type == REG_SZ, "got %u\n", type);
+            /* WINE doesn't have a 'SQL Server' driver available */
+            todo_wine ok(strlen(path) != 0, "Invalid value\n");
+
+            RegCloseKey(hkey);
+        }
+
+        ret = SQLRemoveDSNFromIni("wine_dbs");
+        ok(ret, "got %d\n", ret);
+    }
+
+    /* Show that values are writen, even though an invalid driver was specified. */
+    ret = SQLWriteDSNToIni("wine_mis", "Missing Access Driver (*.mis)");
+    ok(ret, "got %d\n", ret);
+    if(ret)
+    {
+        HKEY hkey;
+        LONG res;
+
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\ODBC\\ODBC.INI\\ODBC Data Sources", 0,
+                            KEY_READ, &hkey);
+        ok(res == ERROR_SUCCESS, "RegOpenKeyExW failed\n");
+        if (res == ERROR_SUCCESS)
+        {
+            type = 0xdeadbeef;
+            size = MAX_PATH;
+
+            memset(buffer, 0, sizeof(buffer));
+            res = RegQueryValueExA(hkey, "wine_mis", NULL, &type, (BYTE *)buffer, &size);
+            ok(res == ERROR_SUCCESS, "RegGetValueA failed\n");
+            ok(type == REG_SZ, "got %u\n", type);
+            ok(!strcmp(buffer, "Missing Access Driver (*.mis)"), "incorrect string '%s'\n", buffer);
+
+            RegCloseKey(hkey);
+        }
+
+        res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\ODBC\\ODBC.INI\\wine_mis", 0,
+                            KEY_READ, &hkey);
+        ok(res == ERROR_SUCCESS, "RegOpenKeyExW failed\n");
+        if (res == ERROR_SUCCESS)
+        {
+            type = 0xdeadbeef;
+            size = MAX_PATH;
+
+            memset(path, 0, sizeof(path));
+            res = RegQueryValueExA(hkey, "driver", NULL, &type, (BYTE *)path, &size);
+            ok(res == ERROR_SUCCESS, "RegGetValueA failed\n");
+            ok(type == REG_SZ, "got %u\n", type);
+            ok(strlen(path) == 0, "Invalid value\n");
+
+            RegCloseKey(hkey);
+        }
+
+        ret = SQLRemoveDSNFromIni("wine_mis");
+        ok(ret, "got %d\n", ret);
+    }
+}
+
 START_TEST(misc)
 {
     test_SQLConfigMode();
@@ -785,4 +892,5 @@ START_TEST(misc)
     test_SQLValidDSN();
     test_SQLValidDSNW();
     test_SQLConfigDataSource();
+    test_SQLWriteDSNToIni();
 }
