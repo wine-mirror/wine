@@ -515,6 +515,11 @@ NTSTATUS WINAPI KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *conte
     }
     else
     {
+        if (rec->ExceptionFlags & EH_NONCONTINUABLE)
+            ERR( "Fatal %s exception (code=%x) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
+        else
+            WARN( "%s exception (code=%x) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
+
         TRACE("  x0=%016lx  x1=%016lx  x2=%016lx  x3=%016lx\n",
               context->u.s.X0, context->u.s.X1, context->u.s.X2, context->u.s.X3 );
         TRACE("  x4=%016lx  x5=%016lx  x6=%016lx  x7=%016lx\n",

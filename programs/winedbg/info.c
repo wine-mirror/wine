@@ -951,11 +951,11 @@ void info_win32_exception(void)
     case EXCEPTION_FLT_STACK_CHECK:
         dbg_printf("floating point stack check");
         break;
-    case CXX_EXCEPTION:
-        if(rec->NumberParameters == 3 && rec->ExceptionInformation[0] == CXX_FRAME_MAGIC)
+    case EXCEPTION_WINE_CXX_EXCEPTION:
+        if(rec->NumberParameters == 3 && rec->ExceptionInformation[0] == EXCEPTION_WINE_CXX_FRAME_MAGIC)
             dbg_printf("C++ exception(object = 0x%08lx, type = 0x%08lx)",
                        rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
-        else if(rec->NumberParameters == 4 && rec->ExceptionInformation[0] == CXX_FRAME_MAGIC)
+        else if(rec->NumberParameters == 4 && rec->ExceptionInformation[0] == EXCEPTION_WINE_CXX_FRAME_MAGIC)
             dbg_printf("C++ exception(object = %p, type = %p, base = %p)",
                        (void*)rec->ExceptionInformation[1], (void*)rec->ExceptionInformation[2],
                        (void*)rec->ExceptionInformation[3]);

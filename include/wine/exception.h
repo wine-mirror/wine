@@ -308,6 +308,15 @@ static inline EXCEPTION_REGISTRATION_RECORD *__wine_get_frame(void)
    for more info. */
 #define EXCEPTION_WINE_NAME_THREAD     0x406D1388
 
+/* used for C++ exceptions in msvcrt
+ * parameters:
+ * [0] CXX_FRAME_MAGIC
+ * [1] pointer to exception object
+ * [2] pointer to type
+ */
+#define EXCEPTION_WINE_CXX_EXCEPTION   0xe06d7363
+#define EXCEPTION_WINE_CXX_FRAME_MAGIC 0x19930520
+
 #ifdef __cplusplus
 }
 #endif

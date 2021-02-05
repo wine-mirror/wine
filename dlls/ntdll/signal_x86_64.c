@@ -552,6 +552,11 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
     }
     else
     {
+        if (rec->ExceptionFlags & EH_NONCONTINUABLE)
+            ERR( "Fatal %s exception (code=%x) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
+        else
+            WARN( "%s exception (code=%x) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
+
         TRACE(" rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
               context->Rax, context->Rbx, context->Rcx, context->Rdx );
         TRACE(" rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",

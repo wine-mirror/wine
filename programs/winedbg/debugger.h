@@ -146,15 +146,6 @@ struct dbg_breakpoint
     struct expr*        condition;
 };
 
-/* used for C++ exceptions in msvcrt
- * parameters:
- * [0] CXX_FRAME_MAGIC
- * [1] pointer to exception object
- * [2] pointer to type
- */
-#define CXX_EXCEPTION                       0xe06d7363
-#define CXX_FRAME_MAGIC                     0x19930520
-
 /* Helper structure */
 typedef struct tagTHREADNAME_INFO
 {
