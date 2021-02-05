@@ -71,7 +71,12 @@ static const struct unix_funcs *unix_funcs;
 
 void msvcrt_init_math( void *module )
 {
-    sse2_supported = sse2_enabled = IsProcessorFeaturePresent( PF_XMMI64_INSTRUCTIONS_AVAILABLE );
+    sse2_supported = IsProcessorFeaturePresent( PF_XMMI64_INSTRUCTIONS_AVAILABLE );
+#if _MSVCR_VER <=71
+    sse2_enabled = FALSE;
+#else
+    sse2_enabled = sse2_supported;
+#endif
     __wine_init_unix_lib( module, DLL_PROCESS_ATTACH, NULL, &unix_funcs );
 }
 
