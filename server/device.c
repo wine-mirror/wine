@@ -132,6 +132,13 @@ static const WCHAR device_name[] = {'D','e','v','i','c','e'};
 struct type_descr device_type =
 {
     { device_name, sizeof(device_name) },   /* name */
+    FILE_ALL_ACCESS,                        /* valid_access */
+    {                                       /* mapping */
+        FILE_GENERIC_READ,
+        FILE_GENERIC_WRITE,
+        FILE_GENERIC_EXECUTE,
+        FILE_ALL_ACCESS
+    },
 };
 
 struct device

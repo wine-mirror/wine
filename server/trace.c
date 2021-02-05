@@ -1228,8 +1228,11 @@ static void dump_varargs_object_type_info( const char *prefix, data_size_t size 
             return;
         }
 
-        fprintf( stderr, "index=%u,obj_count=%u,handle_count=%u,obj_max=%u,handle_max=%u,name=L\"",
-                 info->index,info->obj_count, info->handle_count, info->obj_max, info->handle_max );
+        fprintf( stderr, "index=%u,obj_count=%u,handle_count=%u,obj_max=%u,handle_max=%u,valid=%08x",
+                 info->index,info->obj_count, info->handle_count, info->obj_max, info->handle_max,
+                 info->valid_access );
+        dump_generic_map( ",access=", &info->mapping );
+        fprintf( stderr, ",name=L\"" );
         dump_strW( (const WCHAR *)(info + 1), info->name_len, stderr, "\"\"" );
         fputc( '\"', stderr );
         remove_data( min( size, sizeof(*info) + ((info->name_len + 2) & ~3 )));

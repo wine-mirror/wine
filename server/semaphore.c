@@ -41,6 +41,13 @@ static const WCHAR semaphore_name[] = {'S','e','m','a','p','h','o','r','e'};
 struct type_descr semaphore_type =
 {
     { semaphore_name, sizeof(semaphore_name) },   /* name */
+    SEMAPHORE_ALL_ACCESS,                         /* valid_access */
+    {                                             /* mapping */
+        STANDARD_RIGHTS_READ | SEMAPHORE_QUERY_STATE,
+        STANDARD_RIGHTS_WRITE | SEMAPHORE_MODIFY_STATE,
+        STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE,
+        SEMAPHORE_ALL_ACCESS
+    },
 };
 
 struct semaphore

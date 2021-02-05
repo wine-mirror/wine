@@ -42,6 +42,13 @@ static const WCHAR timer_name[] = {'T','i','m','e','r'};
 struct type_descr timer_type =
 {
     { timer_name, sizeof(timer_name) },   /* name */
+    TIMER_ALL_ACCESS,                     /* valid_access */
+    {                                     /* mapping */
+        STANDARD_RIGHTS_READ | TIMER_QUERY_STATE,
+        STANDARD_RIGHTS_WRITE | TIMER_MODIFY_STATE,
+        STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE,
+        TIMER_ALL_ACCESS
+    },
 };
 
 struct timer

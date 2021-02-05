@@ -407,6 +407,8 @@ struct object_type_info
     unsigned int  handle_count;
     unsigned int  obj_max;
     unsigned int  handle_max;
+    unsigned int  valid_access;
+    generic_map_t mapping;
 
 };
 
@@ -6243,7 +6245,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 666
+#define SERVER_PROTOCOL_VERSION 667
 
 /* ### protocol_version end ### */
 

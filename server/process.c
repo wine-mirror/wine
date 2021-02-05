@@ -63,6 +63,15 @@ static const WCHAR process_name[] = {'P','r','o','c','e','s','s'};
 struct type_descr process_type =
 {
     { process_name, sizeof(process_name) },   /* name */
+    PROCESS_ALL_ACCESS,                       /* valid_access */
+    {                                         /* mapping */
+        STANDARD_RIGHTS_READ | PROCESS_VM_READ | PROCESS_QUERY_INFORMATION,
+        STANDARD_RIGHTS_WRITE | PROCESS_SUSPEND_RESUME | PROCESS_SET_INFORMATION | PROCESS_SET_QUOTA
+        | PROCESS_CREATE_PROCESS | PROCESS_DUP_HANDLE | PROCESS_VM_WRITE | PROCESS_VM_OPERATION
+        | PROCESS_CREATE_THREAD,
+        STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_TERMINATE,
+        PROCESS_ALL_ACCESS
+    },
 };
 
 static void process_dump( struct object *obj, int verbose );
@@ -156,6 +165,13 @@ static const WCHAR job_name[] = {'J','o','b'};
 struct type_descr job_type =
 {
     { job_name, sizeof(job_name) },   /* name */
+    JOB_OBJECT_ALL_ACCESS,            /* valid_access */
+    {                                 /* mapping */
+        STANDARD_RIGHTS_READ | JOB_OBJECT_QUERY,
+        STANDARD_RIGHTS_WRITE | JOB_OBJECT_TERMINATE | JOB_OBJECT_SET_ATTRIBUTES | JOB_OBJECT_ASSIGN_PROCESS,
+        STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE,
+        JOB_OBJECT_ALL_ACCESS
+    },
 };
 
 static void job_dump( struct object *obj, int verbose );

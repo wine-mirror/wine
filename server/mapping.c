@@ -142,6 +142,13 @@ static const WCHAR mapping_name[] = {'S','e','c','t','i','o','n'};
 struct type_descr mapping_type =
 {
     { mapping_name, sizeof(mapping_name) },   /* name */
+    SECTION_ALL_ACCESS | SYNCHRONIZE,         /* valid_access */
+    {                                         /* mapping */
+        STANDARD_RIGHTS_READ | SECTION_QUERY | SECTION_MAP_READ,
+        STANDARD_RIGHTS_WRITE | SECTION_MAP_WRITE,
+        STANDARD_RIGHTS_EXECUTE | SECTION_MAP_EXECUTE,
+        SECTION_ALL_ACCESS
+    },
 };
 
 struct mapping

@@ -65,6 +65,13 @@ static const WCHAR key_name[] = {'K','e','y'};
 struct type_descr key_type =
 {
     { key_name, sizeof(key_name) },   /* name */
+    KEY_ALL_ACCESS | SYNCHRONIZE,     /* valid_access */
+    {                                 /* mapping */
+        STANDARD_RIGHTS_READ | KEY_NOTIFY | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE,
+        STANDARD_RIGHTS_WRITE | KEY_CREATE_SUB_KEY | KEY_SET_VALUE,
+        STANDARD_RIGHTS_EXECUTE | KEY_CREATE_LINK | KEY_NOTIFY | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE,
+        KEY_ALL_ACCESS
+    },
 };
 
 /* a registry key */

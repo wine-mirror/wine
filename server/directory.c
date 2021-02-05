@@ -45,7 +45,14 @@ static const WCHAR objtype_name[] = {'T','y','p','e'};
 
 struct type_descr objtype_type =
 {
-    { objtype_name, sizeof(objtype_name) },   /* name */
+    { objtype_name, sizeof(objtype_name) },        /* name */
+    STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x1,  /* valid_access */
+    {                                              /* mapping */
+        STANDARD_RIGHTS_READ,
+        STANDARD_RIGHTS_WRITE,
+        STANDARD_RIGHTS_EXECUTE,
+        STANDARD_RIGHTS_REQUIRED | 0x1
+    },
 };
 
 struct object_type
@@ -85,6 +92,13 @@ static const WCHAR directory_name[] = {'D','i','r','e','c','t','o','r','y'};
 struct type_descr directory_type =
 {
     { directory_name, sizeof(directory_name) },   /* name */
+    DIRECTORY_ALL_ACCESS,                         /* valid_access */
+    {                                             /* mapping */
+        STANDARD_RIGHTS_READ | DIRECTORY_TRAVERSE | DIRECTORY_QUERY,
+        STANDARD_RIGHTS_WRITE | DIRECTORY_CREATE_SUBDIRECTORY | DIRECTORY_CREATE_OBJECT,
+        STANDARD_RIGHTS_EXECUTE | DIRECTORY_TRAVERSE | DIRECTORY_QUERY,
+        DIRECTORY_ALL_ACCESS
+    },
 };
 
 struct directory
@@ -568,6 +582,8 @@ DECL_HANDLER(get_object_type)
             info->handle_count = type->handle_count;
             info->obj_max      = type->obj_max;
             info->handle_max   = type->handle_max;
+            info->valid_access = type->valid_access;
+            info->mapping      = type->mapping;
             memcpy( info + 1, type->name.str, type->name.len );
         }
     }

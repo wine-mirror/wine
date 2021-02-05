@@ -171,6 +171,14 @@ static const WCHAR thread_name[] = {'T','h','r','e','a','d'};
 struct type_descr thread_type =
 {
     { thread_name, sizeof(thread_name) },   /* name */
+    THREAD_ALL_ACCESS,                      /* valid_access */
+    {                                       /* mapping */
+        STANDARD_RIGHTS_READ | THREAD_QUERY_INFORMATION | THREAD_GET_CONTEXT,
+        STANDARD_RIGHTS_WRITE | THREAD_SET_LIMITED_INFORMATION | THREAD_SET_INFORMATION
+        | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME | THREAD_TERMINATE | 0x04,
+        STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE | THREAD_RESUME | THREAD_QUERY_LIMITED_INFORMATION,
+        THREAD_ALL_ACCESS
+    },
 };
 
 static void dump_thread( struct object *obj, int verbose );

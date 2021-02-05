@@ -41,6 +41,13 @@ static const WCHAR event_name[] = {'E','v','e','n','t'};
 struct type_descr event_type =
 {
     { event_name, sizeof(event_name) },   /* name */
+    EVENT_ALL_ACCESS,                     /* valid_access */
+    {                                     /* mapping */
+        STANDARD_RIGHTS_READ | EVENT_QUERY_STATE,
+        STANDARD_RIGHTS_WRITE | EVENT_MODIFY_STATE,
+        STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE,
+        EVENT_ALL_ACCESS
+    },
 };
 
 struct event
@@ -88,6 +95,13 @@ static const WCHAR keyed_event_name[] = {'K','e','y','e','d','E','v','e','n','t'
 struct type_descr keyed_event_type =
 {
     { keyed_event_name, sizeof(keyed_event_name) },   /* name */
+    KEYEDEVENT_ALL_ACCESS | SYNCHRONIZE,              /* valid_access */
+    {                                                 /* mapping */
+        STANDARD_RIGHTS_READ | KEYEDEVENT_WAIT,
+        STANDARD_RIGHTS_WRITE | KEYEDEVENT_WAKE,
+        STANDARD_RIGHTS_EXECUTE,
+        KEYEDEVENT_ALL_ACCESS
+    },
 };
 
 struct keyed_event

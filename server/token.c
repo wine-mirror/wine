@@ -102,6 +102,14 @@ static const WCHAR token_name[] = {'T','o','k','e','n'};
 struct type_descr token_type =
 {
     { token_name, sizeof(token_name) },   /* name */
+    TOKEN_ALL_ACCESS | SYNCHRONIZE,       /* valid_access */
+    {                                     /* mapping */
+        STANDARD_RIGHTS_READ | TOKEN_QUERY_SOURCE | TOKEN_QUERY | TOKEN_DUPLICATE,
+        STANDARD_RIGHTS_WRITE | TOKEN_ADJUST_SESSIONID | TOKEN_ADJUST_DEFAULT | TOKEN_ADJUST_GROUPS
+        | TOKEN_ADJUST_PRIVILEGES,
+        STANDARD_RIGHTS_EXECUTE | TOKEN_IMPERSONATE | TOKEN_ASSIGN_PRIMARY,
+        TOKEN_ALL_ACCESS
+    },
 };
 
 struct token

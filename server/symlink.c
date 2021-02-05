@@ -43,6 +43,13 @@ static const WCHAR symlink_name[] = {'S','y','m','b','o','l','i','c','L','i','n'
 struct type_descr symlink_type =
 {
     { symlink_name, sizeof(symlink_name) },   /* name */
+    SYMBOLIC_LINK_ALL_ACCESS,                 /* valid_access */
+    {                                         /* mapping */
+        STANDARD_RIGHTS_READ | SYMBOLIC_LINK_QUERY,
+        STANDARD_RIGHTS_WRITE,
+        STANDARD_RIGHTS_EXECUTE | SYMBOLIC_LINK_QUERY,
+        SYMBOLIC_LINK_ALL_ACCESS
+    },
 };
 
 struct symlink

@@ -57,6 +57,8 @@ struct unicode_str
 struct type_descr
 {
     struct unicode_str name;          /* type name */
+    unsigned int       valid_access;  /* mask for valid access bits */
+    generic_map_t      mapping;       /* generic access mapping */
     unsigned int       index;         /* index in global array of types */
     unsigned int       obj_count;     /* count of objects of this type */
     unsigned int       handle_count;  /* count of handles of this type */

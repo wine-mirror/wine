@@ -39,6 +39,7 @@
 #include "file.h"
 #include "security.h"
 
+#define DESKTOP_ALL_ACCESS 0x01ff
 
 static struct list winstation_list = LIST_INIT(winstation_list);
 
@@ -59,6 +60,13 @@ static const WCHAR winstation_name[] = {'W','i','n','d','o','w','S','t','a','t',
 struct type_descr winstation_type =
 {
     { winstation_name, sizeof(winstation_name) },   /* name */
+    STANDARD_RIGHTS_REQUIRED | WINSTA_ALL_ACCESS,   /* valid_access */
+    {                                               /* mapping */
+        STANDARD_RIGHTS_READ | WINSTA_READSCREEN | WINSTA_ENUMERATE | WINSTA_READATTRIBUTES | WINSTA_ENUMDESKTOPS,
+        STANDARD_RIGHTS_WRITE | WINSTA_WRITEATTRIBUTES | WINSTA_CREATEDESKTOP | WINSTA_ACCESSCLIPBOARD,
+        STANDARD_RIGHTS_EXECUTE | WINSTA_EXITWINDOWS | WINSTA_ACCESSGLOBALATOMS,
+        STANDARD_RIGHTS_REQUIRED | WINSTA_ALL_ACCESS
+    },
 };
 
 static const struct object_ops winstation_ops =
@@ -91,6 +99,14 @@ static const WCHAR desktop_name[] = {'D','e','s','k','t','o','p'};
 struct type_descr desktop_type =
 {
     { desktop_name, sizeof(desktop_name) },   /* name */
+    STANDARD_RIGHTS_REQUIRED | DESKTOP_ALL_ACCESS,  /* valid_access */
+    {                                         /* mapping */
+        STANDARD_RIGHTS_READ | DESKTOP_ENUMERATE | DESKTOP_READOBJECTS,
+        STANDARD_RIGHTS_WRITE | DESKTOP_WRITEOBJECTS | DESKTOP_JOURNALPLAYBACK | DESKTOP_JOURNALRECORD
+        | DESKTOP_HOOKCONTROL | DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW,
+        STANDARD_RIGHTS_EXECUTE | DESKTOP_SWITCHDESKTOP,
+        STANDARD_RIGHTS_REQUIRED | DESKTOP_ALL_ACCESS
+    },
 };
 
 static const struct object_ops desktop_ops =
@@ -116,8 +132,6 @@ static const struct object_ops desktop_ops =
     desktop_close_handle,         /* close_handle */
     desktop_destroy               /* destroy */
 };
-
-#define DESKTOP_ALL_ACCESS 0x01ff
 
 /* create a winstation object */
 static struct winstation *create_winstation( struct object *root, const struct unicode_str *name,

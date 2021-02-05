@@ -50,7 +50,17 @@ struct namespace
 };
 
 
-struct type_descr no_type = {{ 0 }};
+struct type_descr no_type =
+{
+    { NULL, 0 },                /* name */
+    STANDARD_RIGHTS_REQUIRED,   /* valid_access */
+    {                           /* mapping */
+        STANDARD_RIGHTS_READ,
+        STANDARD_RIGHTS_WRITE,
+        STANDARD_RIGHTS_EXECUTE,
+        STANDARD_RIGHTS_REQUIRED
+    },
+};
 
 #ifdef DEBUG_OBJECTS
 static struct list object_list = LIST_INIT(object_list);

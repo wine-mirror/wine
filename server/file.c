@@ -57,6 +57,13 @@ static const WCHAR file_name[] = {'F','i','l','e'};
 struct type_descr file_type =
 {
     { file_name, sizeof(file_name) },   /* name */
+    FILE_ALL_ACCESS,                    /* valid_access */
+    {                                   /* mapping */
+        FILE_GENERIC_READ,
+        FILE_GENERIC_WRITE,
+        FILE_GENERIC_EXECUTE,
+        FILE_ALL_ACCESS
+    },
 };
 
 struct file

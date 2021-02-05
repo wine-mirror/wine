@@ -57,6 +57,13 @@ static const WCHAR debug_obj_name[] = {'D','e','b','u','g','O','b','j','e','c','
 struct type_descr debug_obj_type =
 {
     { debug_obj_name, sizeof(debug_obj_name) },   /* name */
+    DEBUG_ALL_ACCESS | SYNCHRONIZE,               /* valid_access */
+    {                                             /* mapping */
+        STANDARD_RIGHTS_READ | DEBUG_READ_EVENT,
+        STANDARD_RIGHTS_WRITE | DEBUG_PROCESS_ASSIGN,
+        STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE,
+        DEBUG_ALL_ACCESS
+    },
 };
 
 /* debug object */

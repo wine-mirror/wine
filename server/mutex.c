@@ -41,6 +41,13 @@ static const WCHAR mutex_name[] = {'M','u','t','a','n','t'};
 struct type_descr mutex_type =
 {
     { mutex_name, sizeof(mutex_name) },   /* name */
+    MUTANT_ALL_ACCESS,                    /* valid_access */
+    {                                     /* mapping */
+        STANDARD_RIGHTS_READ | MUTANT_QUERY_STATE,
+        STANDARD_RIGHTS_WRITE,
+        STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE,
+        MUTANT_ALL_ACCESS
+    },
 };
 
 struct mutex

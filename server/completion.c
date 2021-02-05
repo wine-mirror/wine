@@ -48,6 +48,13 @@ static const WCHAR completion_name[] = {'I','o','C','o','m','p','l','e','t','i',
 struct type_descr completion_type =
 {
     { completion_name, sizeof(completion_name) },   /* name */
+    IO_COMPLETION_ALL_ACCESS,                       /* valid_access */
+    {                                               /* mapping */
+        STANDARD_RIGHTS_READ | IO_COMPLETION_QUERY_STATE,
+        STANDARD_RIGHTS_WRITE | IO_COMPLETION_MODIFY_STATE,
+        STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE,
+        IO_COMPLETION_ALL_ACCESS
+    },
 };
 
 struct completion
