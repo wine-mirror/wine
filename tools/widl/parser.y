@@ -305,7 +305,8 @@ static typelib_t *current_typelib;
 %type <type> apicontract apicontract_def
 %type <num> contract_ver
 %type <num> pointer_type threading_type marshaling_behavior version
-%type <str> libraryhdr callconv cppquote importlib import t_ident
+%type <str> libraryhdr callconv cppquote importlib import
+%type <str> typename m_typename
 %type <uuid> uuid_string
 %type <import> import_start
 %type <typelib> library_start librarydef
@@ -459,8 +460,7 @@ importlib: tIMPORTLIB '(' aSTRING ')'
 	   semicolon_opt			{ $$ = $3; if(!parse_only) add_importlib($3, current_typelib); }
 	;
 
-libraryhdr: tLIBRARY aIDENTIFIER		{ $$ = $2; }
-	|   tLIBRARY aKNOWNTYPE			{ $$ = $2; }
+libraryhdr: tLIBRARY typename			{ $$ = $2; }
 	;
 library_start: attributes libraryhdr '{'	{ $$ = make_library($2, check_library_attrs($2, $1));
 						  if (!parse_only && do_typelib) current_typelib = $$;
@@ -715,7 +715,7 @@ enum:	  enum_member '=' expr_int_const	{ $$ = reg_const($1);
 						}
 	;
 
-enumdef: tENUM t_ident '{' enums '}'		{ $$ = type_new_enum($2, current_namespace, TRUE, $4); }
+enumdef: tENUM m_typename '{' enums '}'		{ $$ = type_new_enum($2, current_namespace, TRUE, $4); }
 	;
 
 m_exprs:  m_expr                                { $$ = append_expr( NULL, $1 ); }
@@ -847,14 +847,15 @@ m_ident:					{ $$ = NULL; }
 	| ident
 	;
 
-t_ident:					{ $$ = NULL; }
-	| aIDENTIFIER				{ $$ = $1; }
-	| aKNOWNTYPE				{ $$ = $1; }
+m_typename:					{ $$ = NULL; }
+	| typename
 	;
 
-ident:	  aIDENTIFIER				{ $$ = make_var($1); }
-/* some "reserved words" used in attributes are also used as field names in some MS IDL files */
-	| aKNOWNTYPE				{ $$ = make_var($<str>1); }
+typename: aIDENTIFIER
+	| aKNOWNTYPE
+	;
+
+ident:	  typename				{ $$ = make_var($1); }
 	;
 
 base_type: tBYTE				{ $$ = find_type_or_error($<str>1); }
@@ -895,26 +896,21 @@ qualified_type:
     | aNAMESPACE '.' { init_lookup_namespace($1); } qualified_seq { $$ = $4; }
     ;
 
-coclass:  tCOCLASS aIDENTIFIER			{ $$ = type_coclass_declare($2); }
-	| tCOCLASS aKNOWNTYPE			{ $$ = type_coclass_declare($2); }
+coclass:  tCOCLASS typename			{ $$ = type_coclass_declare($2); }
 	;
 
 coclassdef: attributes coclass '{' class_interfaces '}' semicolon_opt
 						{ $$ = type_coclass_define($2, $1, $4); }
 	;
 
-runtimeclass:
-	  tRUNTIMECLASS aIDENTIFIER		{ $$ = type_runtimeclass_declare($2, current_namespace); }
-	| tRUNTIMECLASS aKNOWNTYPE		{ $$ = type_runtimeclass_declare($2, current_namespace); }
+runtimeclass: tRUNTIMECLASS typename		{ $$ = type_runtimeclass_declare($2, current_namespace); }
 	;
 
 runtimeclass_def: attributes runtimeclass '{' class_interfaces '}' semicolon_opt
 						{ $$ = type_runtimeclass_define($2, $1, $4); }
 	;
 
-apicontract:
-	  tAPICONTRACT aIDENTIFIER		{ $$ = type_apicontract_declare($2, current_namespace); }
-	| tAPICONTRACT aKNOWNTYPE		{ $$ = type_apicontract_declare($2, current_namespace); }
+apicontract: tAPICONTRACT typename		{ $$ = type_apicontract_declare($2, current_namespace); }
 	;
 
 apicontract_def: attributes apicontract '{' '}' semicolon_opt
@@ -933,9 +929,7 @@ class_interface:
 	  m_attributes interfaceref ';'		{ $$ = make_ifref($2); $$->attrs = $1; }
 	;
 
-dispinterface:
-	  tDISPINTERFACE aIDENTIFIER		{ $$ = type_dispinterface_declare($2); }
-	| tDISPINTERFACE aKNOWNTYPE		{ $$ = type_dispinterface_declare($2); }
+dispinterface: tDISPINTERFACE typename		{ $$ = type_dispinterface_declare($2); }
 	;
 
 dispattributes: attributes			{ $$ = append_attr($1, make_attr(ATTR_DISPINTERFACE)); }
@@ -960,9 +954,7 @@ inherit:					{ $$ = NULL; }
 	| ':' qualified_type                    { $$ = $2; }
 	;
 
-interface:
-	  tINTERFACE aIDENTIFIER		{ $$ = type_interface_declare($2, current_namespace); }
-	| tINTERFACE aKNOWNTYPE			{ $$ = type_interface_declare($2, current_namespace); }
+interface: tINTERFACE typename			{ $$ = type_interface_declare($2, current_namespace); }
 	;
 
 interfacedef: attributes interface inherit
@@ -978,14 +970,11 @@ interfacedef: attributes interface inherit
 	;
 
 interfaceref:
-	  tINTERFACE aIDENTIFIER		{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
-	| tINTERFACE aKNOWNTYPE			{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
-	| tDISPINTERFACE aIDENTIFIER		{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
-	| tDISPINTERFACE aKNOWNTYPE		{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
+	  tINTERFACE typename			{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
+	| tDISPINTERFACE typename		{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
 	;
 
-module:   tMODULE aIDENTIFIER			{ $$ = type_module_declare($2); }
-	| tMODULE aKNOWNTYPE			{ $$ = type_module_declare($2); }
+module:   tMODULE typename			{ $$ = type_module_declare($2); }
 	;
 
 moduledef: attributes module '{' int_statements '}' semicolon_opt
@@ -1153,7 +1142,7 @@ pointer_type:
 	| tPTR					{ $$ = FC_FP; }
 	;
 
-structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = type_new_struct($2, current_namespace, TRUE, $4); }
+structdef: tSTRUCT m_typename '{' fields '}'	{ $$ = type_new_struct($2, current_namespace, TRUE, $4); }
 	;
 
 type:	  tVOID					{ $$ = type_new_void(); }
@@ -1175,9 +1164,9 @@ typedef: m_attributes tTYPEDEF m_attributes decl_spec declarator_list
 						}
 	;
 
-uniondef: tUNION t_ident '{' ne_union_fields '}'
+uniondef: tUNION m_typename '{' ne_union_fields '}'
 						{ $$ = type_new_nonencapsulated_union($2, TRUE, $4); }
-	| tUNION t_ident
+	| tUNION m_typename
 	  tSWITCH '(' s_field ')'
 	  m_ident '{' cases '}'			{ $$ = type_new_encapsulated_union($2, $5, $7, $9); }
 	;
