@@ -1228,14 +1228,15 @@ static DWORD CALLBACK read_thread(void *arg)
 static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
 {
     struct parser *filter = user;
+    struct wg_parser *parser = filter->wg_parser;
     unsigned int i;
     char *name;
 
     GST_LOG("filter %p, bin %p, pad %p.", filter, bin, pad);
 
-    for (i = 0; i < filter->source_count; ++i)
+    for (i = 0; i < parser->stream_count; ++i)
     {
-        struct wg_parser_stream *stream = filter->sources[i]->wg_stream;
+        struct wg_parser_stream *stream = parser->streams[i];
 
         if (stream->their_src == pad)
         {
@@ -1785,14 +1786,12 @@ static HRESULT parser_cleanup_stream(struct strmbase_filter *iface)
     parser->flushing = true;
     pthread_mutex_unlock(&parser->mutex);
 
-    for (i = 0; i < filter->source_count; ++i)
+    for (i = 0; i < parser->stream_count; ++i)
     {
-        struct parser_source *pin = filter->sources[i];
+        struct wg_parser_stream *stream = parser->streams[i];
 
-        if (!pin->pin.pin.peer)
-            continue;
-
-        pthread_cond_signal(&pin->wg_stream->event_cond);
+        if (stream->enabled)
+            pthread_cond_signal(&stream->event_cond);
     }
 
     for (i = 0; i < filter->source_count; ++i)
@@ -2573,10 +2572,10 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
 
     /* Unblock all of our streams. */
     pthread_mutex_lock(&parser->mutex);
-    for (i = 0; i < This->source_count; ++i)
+    for (i = 0; i < parser->stream_count; ++i)
     {
-        This->sources[i]->wg_stream->flushing = true;
-        pthread_cond_signal(&This->sources[i]->wg_stream->event_empty_cond);
+        parser->streams[i]->flushing = true;
+        pthread_cond_signal(&parser->streams[i]->event_empty_cond);
     }
     pthread_mutex_unlock(&parser->mutex);
 
