@@ -1752,23 +1752,22 @@ NTSTATUS query_unix_device( ULONGLONG unix_dev, enum device_type *type,
     return status;
 }
 
-static void query_property( struct disk_device *device, IRP *irp )
+static NTSTATUS query_property( struct disk_device *device, IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     STORAGE_PROPERTY_QUERY *query = irp->AssociatedIrp.SystemBuffer;
+    NTSTATUS status;
 
     if (!irp->AssociatedIrp.SystemBuffer
         || irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(STORAGE_PROPERTY_QUERY))
     {
-        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
-        return;
+        return STATUS_INVALID_PARAMETER;
     }
 
     /* Try to persuade application not to check property */
     if (query->QueryType == PropertyExistsQuery)
     {
-        irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
-        return;
+        return STATUS_NOT_SUPPORTED;
     }
 
     switch (query->PropertyId)
@@ -1781,14 +1780,14 @@ static void query_property( struct disk_device *device, IRP *irp )
         if (device->serial) len += strlen( device->serial ) + 1;
 
         if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(STORAGE_DESCRIPTOR_HEADER))
-            irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+            status = STATUS_INVALID_PARAMETER;
         else if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < len)
         {
             descriptor = irp->AssociatedIrp.SystemBuffer;
             descriptor->Version = sizeof(STORAGE_DEVICE_DESCRIPTOR);
             descriptor->Size = len;
             irp->IoStatus.Information = sizeof(STORAGE_DESCRIPTOR_HEADER);
-            irp->IoStatus.u.Status = STATUS_SUCCESS;
+            status = STATUS_SUCCESS;
         }
         else
         {
@@ -1814,16 +1813,17 @@ static void query_property( struct disk_device *device, IRP *irp )
                 strcpy( (char *)descriptor + descriptor->SerialNumberOffset, device->serial );
             }
             irp->IoStatus.Information = len;
-            irp->IoStatus.u.Status = STATUS_SUCCESS;
+            status = STATUS_SUCCESS;
         }
 
         break;
     }
     default:
         FIXME( "Unsupported property %#x\n", query->PropertyId );
-        irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+        status = STATUS_NOT_SUPPORTED;
         break;
     }
+    return status;
 }
 
 /* handler for ioctls on the harddisk device */
@@ -1831,6 +1831,7 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     struct disk_device *dev = device->DeviceExtension;
+    NTSTATUS status;
 
     TRACE( "ioctl %x insize %u outsize %u\n",
            irpsp->Parameters.DeviceIoControl.IoControlCode,
@@ -1853,7 +1854,7 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
         info.BytesPerSector = 512;
         memcpy( irp->AssociatedIrp.SystemBuffer, &info, len );
         irp->IoStatus.Information = len;
-        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        status = STATUS_SUCCESS;
         break;
     }
     case IOCTL_DISK_GET_DRIVE_GEOMETRY_EX:
@@ -1873,7 +1874,7 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
         info.Data[0]  = 0;
         memcpy( irp->AssociatedIrp.SystemBuffer, &info, len );
         irp->IoStatus.Information = len;
-        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        status = STATUS_SUCCESS;
         break;
     }
     case IOCTL_STORAGE_GET_DEVICE_NUMBER:
@@ -1882,11 +1883,11 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
         memcpy( irp->AssociatedIrp.SystemBuffer, &dev->devnum, len );
         irp->IoStatus.Information = len;
-        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        status = STATUS_SUCCESS;
         break;
     }
     case IOCTL_CDROM_READ_TOC:
-        irp->IoStatus.u.Status = STATUS_INVALID_DEVICE_REQUEST;
+        status = STATUS_INVALID_DEVICE_REQUEST;
         break;
     case IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS:
     {
@@ -1895,25 +1896,26 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
         FIXME( "returning zero-filled buffer for IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS\n" );
         memset( irp->AssociatedIrp.SystemBuffer, 0, len );
         irp->IoStatus.Information = len;
-        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        status = STATUS_SUCCESS;
         break;
     }
     case IOCTL_STORAGE_QUERY_PROPERTY:
-        query_property( dev, irp );
+        status = query_property( dev, irp );
         break;
     default:
     {
         ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
         FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
               code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
-        irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+        status = STATUS_NOT_SUPPORTED;
         break;
     }
     }
 
+    irp->IoStatus.u.Status = status;
     LeaveCriticalSection( &device_section );
     IoCompleteRequest( irp, IO_NO_INCREMENT );
-    return STATUS_SUCCESS;
+    return status;
 }
 
 /* driver entry point for the harddisk driver */
