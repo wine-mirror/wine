@@ -1691,16 +1691,78 @@ BOOL WINAPI SQLValidDSN(LPCSTR lpszDSN)
 
 BOOL WINAPI SQLWriteDSNToIniW(LPCWSTR lpszDSN, LPCWSTR lpszDriver)
 {
+    DWORD ret;
+    HKEY hkey, hkeydriver;
+    WCHAR filename[MAX_PATH];
+
+    TRACE("%s %s\n", debugstr_w(lpszDSN), debugstr_w(lpszDriver));
+
     clear_errors();
-    FIXME("%s %s\n", debugstr_w(lpszDSN), debugstr_w(lpszDriver));
-    return TRUE;
+
+    if (!SQLValidDSNW(lpszDSN))
+    {
+        push_error(ODBC_ERROR_INVALID_DSN, odbc_error_invalid_dsn);
+        return FALSE;
+    }
+
+    /* It doesn't matter if we cannot find the driver, windows just writes a blank value. */
+    filename[0] = 0;
+    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, odbcini, &hkey) == ERROR_SUCCESS)
+    {
+        HKEY hkeydriver;
+
+        if (RegOpenKeyW(hkey, lpszDriver, &hkeydriver) == ERROR_SUCCESS)
+        {
+            DWORD size = MAX_PATH * sizeof(WCHAR);
+            RegGetValueW(hkeydriver, NULL, L"driver", RRF_RT_REG_SZ, NULL, filename, &size);
+            RegCloseKey(hkeydriver);
+        }
+        RegCloseKey(hkey);
+    }
+
+    if ((ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\ODBC\\ODBC.INI", &hkey)) == ERROR_SUCCESS)
+    {
+        HKEY sources;
+
+        if ((ret = RegCreateKeyW(hkey, L"ODBC Data Sources", &sources)) == ERROR_SUCCESS)
+        {
+            RegSetValueExW(sources, lpszDSN, 0, REG_SZ, (BYTE*)lpszDriver, (lstrlenW(lpszDriver)+1)*sizeof(WCHAR));
+            RegCloseKey(sources);
+
+            RegDeleteTreeW(hkey, lpszDSN);
+            if ((ret = RegCreateKeyW(hkey, lpszDSN, &hkeydriver)) == ERROR_SUCCESS)
+            {
+                RegSetValueExW(sources, L"driver", 0, REG_SZ, (BYTE*)filename, (lstrlenW(filename)+1)*sizeof(WCHAR));
+                RegCloseKey(hkeydriver);
+            }
+        }
+        RegCloseKey(hkey);
+    }
+
+    if (ret != ERROR_SUCCESS)
+        push_error(ODBC_ERROR_REQUEST_FAILED, odbc_error_request_failed);
+
+    return ret == ERROR_SUCCESS;
 }
 
 BOOL WINAPI SQLWriteDSNToIni(LPCSTR lpszDSN, LPCSTR lpszDriver)
 {
-    clear_errors();
-    FIXME("%s %s\n", debugstr_a(lpszDSN), debugstr_a(lpszDriver));
-    return TRUE;
+    BOOL ret = FALSE;
+    WCHAR *dsn, *driver;
+
+    TRACE("%s %s\n", debugstr_a(lpszDSN), debugstr_a(lpszDriver));
+
+    dsn = SQLInstall_strdup(lpszDSN);
+    driver = SQLInstall_strdup(lpszDriver);
+    if (dsn && driver)
+        ret = SQLWriteDSNToIniW(dsn, driver);
+    else
+        push_error(ODBC_ERROR_OUT_OF_MEM, odbc_error_out_of_mem);
+
+    heap_free(dsn);
+    heap_free(driver);
+
+    return ret;
 }
 
 BOOL WINAPI SQLWriteFileDSNW(LPCWSTR lpszFileName, LPCWSTR lpszAppName,
