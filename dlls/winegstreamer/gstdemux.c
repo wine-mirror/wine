@@ -48,6 +48,9 @@ static const GUID MEDIASUBTYPE_CVID = {mmioFOURCC('c','v','i','d'), 0x0000, 0x00
 
 struct wg_parser
 {
+    struct wg_parser_stream **streams;
+    unsigned int stream_count;
+
     GstElement *container;
     GstBus *bus;
     GstPad *my_src, *their_sink;
@@ -2505,13 +2508,19 @@ static const struct strmbase_source_ops source_ops =
 
 static struct parser_source *create_pin(struct parser *filter, const WCHAR *name)
 {
-    struct parser_source *pin, **new_array;
+    struct wg_parser *parser = filter->wg_parser;
     struct wg_parser_stream *stream;
+    struct parser_source *pin;
     char pad_name[19];
+    void *new_array;
 
-    if (!(new_array = heap_realloc(filter->sources, (filter->source_count + 1) * sizeof(*new_array))))
+    if (!(new_array = heap_realloc(filter->sources, (filter->source_count + 1) * sizeof(*filter->sources))))
         return NULL;
     filter->sources = new_array;
+
+    if (!(new_array = realloc(parser->streams, (parser->stream_count + 1) * sizeof(*parser->streams))))
+        return NULL;
+    parser->streams = new_array;
 
     if (!(pin = heap_alloc_zero(sizeof(*pin))))
         return NULL;
@@ -2544,6 +2553,7 @@ static struct parser_source *create_pin(struct parser *filter, const WCHAR *name
     gst_pad_set_query_function(stream->my_sink, query_sink_wrapper);
 
     filter->sources[filter->source_count++] = pin;
+    parser->streams[parser->stream_count++] = stream;
     return pin;
 }
 
@@ -2589,6 +2599,9 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     This->source_count = 0;
     heap_free(This->sources);
     This->sources = NULL;
+    parser->stream_count = 0;
+    free(parser->streams);
+    parser->streams = NULL;
     gst_element_set_bus(parser->container, NULL);
     gst_object_unref(parser->container);
     parser->container = NULL;
