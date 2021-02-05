@@ -110,6 +110,8 @@ struct wg_parser_stream
     struct wg_parser_event event;
 
     bool flushing, eos, enabled;
+
+    uint64_t duration;
 };
 
 struct parser
@@ -1638,7 +1640,8 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
         struct parser_source *pin = This->sources[i];
         struct wg_parser_stream *stream = pin->wg_stream;
 
-        pin->seek.llDuration = pin->seek.llStop = query_duration(stream->their_src);
+        stream->duration = query_duration(stream->their_src);
+        pin->seek.llDuration = pin->seek.llStop = stream->duration;
         pin->seek.llCurrent = 0;
         while (!stream->caps && !parser->error)
             pthread_cond_wait(&parser->init_cond, &parser->mutex);
