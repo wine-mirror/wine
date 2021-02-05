@@ -5587,6 +5587,22 @@ static ULONG WINAPI ITypeInfo_fnAddRef( ITypeInfo2 *iface)
     return ref;
 }
 
+static void typeinfo_release_funcdesc(TLBFuncDesc *func)
+{
+    unsigned int i;
+
+    for (i = 0; i < func->funcdesc.cParams; ++i)
+    {
+        ELEMDESC *elemdesc = &func->funcdesc.lprgelemdescParam[i];
+        if (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+            VariantClear(&elemdesc->u.paramdesc.pparamdescex->varDefaultValue);
+        TLB_FreeCustData(&func->pParamDesc[i].custdata_list);
+    }
+    heap_free(func->funcdesc.lprgelemdescParam);
+    heap_free(func->pParamDesc);
+    TLB_FreeCustData(&func->custdata_list);
+}
+
 static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
 {
     UINT i;
@@ -5595,18 +5611,7 @@ static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
 
     for (i = 0; i < This->typeattr.cFuncs; ++i)
     {
-        int j;
-        TLBFuncDesc *pFInfo = &This->funcdescs[i];
-        for(j = 0; j < pFInfo->funcdesc.cParams; j++)
-        {
-            ELEMDESC *elemdesc = &pFInfo->funcdesc.lprgelemdescParam[j];
-            if (elemdesc->u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
-                VariantClear(&elemdesc->u.paramdesc.pparamdescex->varDefaultValue);
-            TLB_FreeCustData(&pFInfo->pParamDesc[j].custdata_list);
-        }
-        heap_free(pFInfo->funcdesc.lprgelemdescParam);
-        heap_free(pFInfo->pParamDesc);
-        TLB_FreeCustData(&pFInfo->custdata_list);
+        typeinfo_release_funcdesc(&This->funcdescs[i]);
     }
     heap_free(This->funcdescs);
 
@@ -11373,8 +11378,27 @@ static HRESULT WINAPI ICreateTypeInfo2_fnDeleteFuncDesc(ICreateTypeInfo2 *iface,
         UINT index)
 {
     ITypeInfoImpl *This = info_impl_from_ICreateTypeInfo2(iface);
-    FIXME("%p %u - stub\n", This, index);
-    return E_NOTIMPL;
+    unsigned int i;
+
+    TRACE("%p %u\n", This, index);
+
+    if (index >= This->typeattr.cFuncs)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    typeinfo_release_funcdesc(&This->funcdescs[index]);
+
+    --This->typeattr.cFuncs;
+    if (index != This->typeattr.cFuncs)
+    {
+        memmove(This->funcdescs + index, This->funcdescs + index + 1,
+                sizeof(*This->funcdescs) * (This->typeattr.cFuncs - index));
+        for (i = index; i < This->typeattr.cFuncs; ++i)
+            TLB_relink_custdata(&This->funcdescs[i].custdata_list);
+    }
+
+    This->needs_layout = TRUE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ICreateTypeInfo2_fnDeleteFuncDescByMemId(ICreateTypeInfo2 *iface,

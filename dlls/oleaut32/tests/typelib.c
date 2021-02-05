@@ -8241,6 +8241,83 @@ static void test_DeleteImplType(void)
     DeleteFileW(filenameW);
 }
 
+static void test_DeleteFuncDesc(void)
+{
+    OLECHAR interface1W[] = L"interface1";
+    WCHAR filenameW[MAX_PATH], temp_path[MAX_PATH];
+    ICreateTypeInfo2 *createti2;
+    ICreateTypeInfo *createti;
+    ICreateTypeLib2 *createtl;
+    FUNCDESC funcdesc;
+    TYPEATTR *typeattr;
+    ITypeInfo *ti;
+    ITypeLib *tl;
+    HRESULT hr;
+
+    GetTempPathW(ARRAY_SIZE(temp_path), temp_path);
+    GetTempFileNameW(temp_path, L"tlb", 0, filenameW);
+
+    hr = CreateTypeLib2(SYS_WIN32, filenameW, &createtl);
+    ok(hr == S_OK, "Failed to create instance, hr %#x.\n", hr);
+
+    hr = ICreateTypeLib2_CreateTypeInfo(createtl, interface1W, TKIND_INTERFACE, &createti);
+    ok(hr == S_OK, "Failed to create instance, hr %#x.\n", hr);
+    hr = ICreateTypeInfo_QueryInterface(createti, &IID_ICreateTypeInfo2, (void **)&createti2);
+    ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+    ICreateTypeInfo_Release(createti);
+
+    hr = ICreateTypeInfo2_QueryInterface(createti2, &IID_ITypeInfo, (void **)&ti);
+    ok(hr == S_OK, "Failed to get typeinfo, hr %#x.\n", hr);
+
+    memset(&funcdesc, 0, sizeof(FUNCDESC));
+    funcdesc.funckind = FUNC_PUREVIRTUAL;
+    funcdesc.invkind = INVOKE_PROPERTYGET;
+    funcdesc.callconv = CC_STDCALL;
+    funcdesc.elemdescFunc.tdesc.vt = VT_BSTR;
+    U(funcdesc.elemdescFunc).idldesc.wIDLFlags = IDLFLAG_NONE;
+
+    hr = ICreateTypeInfo2_AddFuncDesc(createti2, 0, &funcdesc);
+    ok(hr == S_OK, "Failed to add a funcdesc, hr %#x.\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hr == S_OK, "Failed to get type attr, hr %#x.\n", hr);
+    ok(typeattr->cFuncs == 1, "Unexpected cFuncs %u.\n", typeattr->cFuncs);
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    hr = ICreateTypeInfo2_DeleteFuncDesc(createti2, 1);
+    ok(hr == TYPE_E_ELEMENTNOTFOUND, "Unexpected hr %#x.\n", hr);
+
+    hr = ICreateTypeInfo2_DeleteFuncDesc(createti2, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hr == S_OK, "Failed to get type attr, hr %#x.\n", hr);
+    ok(!typeattr->cFuncs, "Unexpected cFuncs %u.\n", typeattr->cFuncs);
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+
+    hr = ICreateTypeLib2_SaveAllChanges(createtl);
+    ok(hr == S_OK, "Failed to save changes, hr %#x.\n", hr);
+    ICreateTypeLib2_Release(createtl);
+    ITypeInfo_Release(ti);
+    ICreateTypeInfo2_Release(createti2);
+
+    /* Load and check typeinfo. */
+    hr = LoadTypeLibEx(filenameW, REGKIND_NONE, &tl);
+    ok(hr == S_OK, "Failed to load typelib, hr %#x.\n", hr);
+
+    hr = ITypeLib_GetTypeInfo(tl, 0, &ti);
+    ok(hr == S_OK, "Failed to get typeinfo, hr %#x.\n", hr);
+    hr = ITypeInfo_GetTypeAttr(ti, &typeattr);
+    ok(hr == S_OK, "Failed to get type attr, hr %#x.\n", hr);
+    ok(!typeattr->cFuncs, "Unexpected cFuncs value.\n");
+    ITypeInfo_ReleaseTypeAttr(ti, typeattr);
+    ITypeInfo_Release(ti);
+
+    ITypeLib_Release(tl);
+
+    DeleteFileW(filenameW);
+}
+
 START_TEST(typelib)
 {
     const WCHAR *filename;
@@ -8282,4 +8359,5 @@ START_TEST(typelib)
     test_stub();
     test_dep();
     test_DeleteImplType();
+    test_DeleteFuncDesc();
 }
