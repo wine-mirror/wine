@@ -2456,17 +2456,8 @@ static void source_disconnect(struct strmbase_source *iface)
     stream->enabled = false;
 }
 
-static void free_source_pin(struct parser_source *pin)
+static void free_stream(struct wg_parser_stream *stream)
 {
-    struct wg_parser_stream *stream = pin->wg_stream;
-
-    if (pin->pin.pin.peer)
-    {
-        if (SUCCEEDED(IMemAllocator_Decommit(pin->pin.pAllocator)))
-            IPin_Disconnect(pin->pin.pin.peer);
-        IPin_Disconnect(&pin->pin.pin.IPin_iface);
-    }
-
     if (stream->their_src)
     {
         if (stream->post_sink)
@@ -2488,6 +2479,18 @@ static void free_source_pin(struct parser_source *pin)
     pthread_cond_destroy(&stream->event_empty_cond);
 
     free(stream);
+}
+
+static void free_source_pin(struct parser_source *pin)
+{
+    if (pin->pin.pin.peer)
+    {
+        if (SUCCEEDED(IMemAllocator_Decommit(pin->pin.pAllocator)))
+            IPin_Disconnect(pin->pin.pin.peer);
+        IPin_Disconnect(&pin->pin.pin.IPin_iface);
+    }
+
+    free_stream(pin->wg_stream);
 
     pin->flushing_cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&pin->flushing_cs);
