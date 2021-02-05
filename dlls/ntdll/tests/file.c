@@ -171,7 +171,6 @@ static void create_file_test(void)
     U(io).Status = 0xdeadbeef;
     offset.QuadPart = 0;
     status = pNtReadFile( dir, NULL, NULL, NULL, &io, buf, sizeof(buf), &offset, NULL );
-    todo_wine
     ok( status == STATUS_INVALID_DEVICE_REQUEST || status == STATUS_PENDING, "NtReadFile error %08x\n", status );
     if (status == STATUS_PENDING)
     {
