@@ -94,6 +94,31 @@ static inline double CDECL ret_nan( BOOL update_sw )
     return (x - x) / (x - x);
 }
 
+#define SET_X87_CW(MASK) \
+    "subl $4, %esp\n\t" \
+    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t") \
+    "fnstcw (%esp)\n\t" \
+    "movw (%esp), %ax\n\t" \
+    "movw %ax, 2(%esp)\n\t" \
+    "testw $" #MASK ", %ax\n\t" \
+    "jz 1f\n\t" \
+    "andw $~" #MASK ", %ax\n\t" \
+    "movw %ax, 2(%esp)\n\t" \
+    "fldcw 2(%esp)\n\t" \
+    "1:\n\t"
+
+#define RESET_X87_CW \
+    "movw (%esp), %ax\n\t" \
+    "cmpw %ax, 2(%esp)\n\t" \
+    "je 1f\n\t" \
+    "fstpl 8(%esp)\n\t" \
+    "fldcw (%esp)\n\t" \
+    "fldl 8(%esp)\n\t" \
+    "fwait\n\t" \
+    "1:\n\t" \
+    "addl $4, %esp\n\t" \
+    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+
 /*********************************************************************
  *      _matherr (CRTDLL.@)
  */
@@ -886,6 +911,23 @@ static double asin_R(double z)
     return p / q;
 }
 
+#ifdef __i386__
+double CDECL x87_asin(double);
+__ASM_GLOBAL_FUNC( x87_asin,
+        "fldl 4(%esp)\n\t"
+        SET_X87_CW(~0x37f)
+        "fld %st\n\t"
+        "fld1\n\t"
+        "fsubp\n\t"
+        "fld1\n\t"
+        "fadd %st(2)\n\t"
+        "fmulp\n\t"
+        "fsqrt\n\t"
+        "fpatan\n\t"
+        RESET_X87_CW
+        "ret" )
+#endif
+
 double CDECL asin( double x )
 {
     static const double pio2_hi = 1.57079632679489655800e+00,
@@ -894,6 +936,9 @@ double CDECL asin( double x )
     double z, r, s;
     unsigned int hx, ix;
     ULONGLONG llx;
+#ifdef __i386__
+    unsigned int x87_cw, sse2_cw;
+#endif
 
     hx = *(ULONGLONG*)&x >> 32;
     ix = hx & 0x7fffffff;
@@ -904,9 +949,24 @@ double CDECL asin( double x )
         if (((ix - 0x3ff00000) | lx) == 0)
             /* asin(1) = +-pi/2 with inexact */
             return x * pio2_hi + 7.5231638452626401e-37;
-        if (isnan(x)) return x;
+        if (isnan(x))
+        {
+#ifdef __i386__
+            return math_error(_DOMAIN, "sqrt", x, 0, x);
+#else
+            return x;
+#endif
+        }
         return math_error(_DOMAIN, "asin", x, 0, 0 / (x - x));
     }
+
+#ifdef __i386__
+    __control87_2(0, 0, &x87_cw, &sse2_cw);
+    if (!sse2_enabled || (x87_cw & _MCW_EM) != _MCW_EM
+            || (sse2_cw & (_MCW_EM | _MCW_RC)) != _MCW_EM)
+        return x87_asin(x);
+#endif
+
     /* |x| < 0.5 */
     if (ix < 0x3fe00000) {
         /* if 0x1p-1022 <= |x| < 0x1p-26, avoid raising underflow */
@@ -1231,31 +1291,10 @@ __ASM_GLOBAL_FUNC( sse2_sqrt,
 #endif
 
 #ifdef __i386__
-#define SET_X87_CW \
-    "subl $4, %esp\n\t" \
-    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t") \
-    "fnstcw (%esp)\n\t" \
-    "movw (%esp), %ax\n\t" \
-    "testw $0xc00, %ax\n\t" \
-    "jz 1f\n\t" \
-    "andw $0xf3ff, %ax\n\t" \
-    "movw %ax, 2(%esp)\n\t" \
-    "fldcw 2(%esp)\n\t" \
-    "1:\n\t"
-
-#define RESET_X87_CW \
-    "movw (%esp), %ax\n\t" \
-    "testw $0xc00, %ax\n\t" \
-    "jz 1f\n\t" \
-    "fldcw (%esp)\n\t" \
-    "1:\n\t" \
-    "addl $4, %esp\n\t" \
-    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
-
 double CDECL x87_sqrt(double);
 __ASM_GLOBAL_FUNC( x87_sqrt,
         "fldl 4(%esp)\n\t"
-        SET_X87_CW
+        SET_X87_CW(0xc00)
         "fsqrt\n\t"
         RESET_X87_CW
         "ret" )
