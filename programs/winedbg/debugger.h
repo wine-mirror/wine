@@ -155,12 +155,6 @@ struct dbg_breakpoint
 #define CXX_EXCEPTION                       0xe06d7363
 #define CXX_FRAME_MAGIC                     0x19930520
 
-/* Wine extension; Windows doesn't have a name for this code.  This is an
-   undocumented exception understood by MS VC debugger, allowing the program
-   to name a particular thread.  Search google.com or deja.com for "0x406d1388"
-   for more info. */
-#define EXCEPTION_NAME_THREAD               0x406D1388
-
 /* Helper structure */
 typedef struct tagTHREADNAME_INFO
 {

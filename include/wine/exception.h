@@ -302,6 +302,12 @@ static inline EXCEPTION_REGISTRATION_RECORD *__wine_get_frame(void)
 #define EXCEPTION_WINE_STUB       0x80000100  /* stub entry point called */
 #define EXCEPTION_WINE_ASSERTION  0x80000101  /* assertion failed */
 
+/* Wine extension; Windows doesn't have a name for this code.  This is an
+   undocumented exception understood by MS VC debugger, allowing the program
+   to name a particular thread.  Search google.com or deja.com for "0x406d1388"
+   for more info. */
+#define EXCEPTION_WINE_NAME_THREAD     0x406D1388
+
 #ifdef __cplusplus
 }
 #endif

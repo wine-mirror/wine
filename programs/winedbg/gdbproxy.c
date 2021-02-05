@@ -63,6 +63,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "tlhelp32.h"
+#include "wine/exception.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
@@ -349,7 +350,7 @@ static unsigned char signal_from_debug_event(DEBUG_EVENT* de)
         return SIGALRM;
     /* should not be here */
     case EXCEPTION_INVALID_HANDLE:
-    case EXCEPTION_NAME_THREAD:
+    case EXCEPTION_WINE_NAME_THREAD:
         return SIGTRAP;
     default:
         ERR("Unknown exception code 0x%08x\n", ec);
@@ -363,7 +364,7 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
 
     switch (rec->ExceptionCode)
     {
-    case EXCEPTION_NAME_THREAD:
+    case EXCEPTION_WINE_NAME_THREAD:
     {
         const THREADNAME_INFO *threadname = (const THREADNAME_INFO *)rec->ExceptionInformation;
         struct dbg_thread *thread;

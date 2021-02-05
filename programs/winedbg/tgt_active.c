@@ -246,7 +246,7 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
     case EXCEPTION_SINGLE_STEP:
         is_debug = TRUE;
         break;
-    case EXCEPTION_NAME_THREAD:
+    case EXCEPTION_WINE_NAME_THREAD:
         pThreadName = (const THREADNAME_INFO*)(rec->ExceptionInformation);
         if (pThreadName->dwThreadID == -1)
             pThread = dbg_curr_thread;
