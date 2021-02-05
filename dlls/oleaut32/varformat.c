@@ -2401,6 +2401,7 @@ HRESULT WINAPI VarFormatCurrency(LPVARIANT pVarIn, INT nDigits, INT nLeading,
 {
   HRESULT hRet;
   VARIANT vStr;
+  CY cy;
 
   TRACE("(%s,%d,%d,%d,%d,0x%08x,%p)\n", debugstr_variant(pVarIn), nDigits, nLeading,
         nParens, nGrouping, dwFlags, pbstrOut);
@@ -2410,8 +2411,18 @@ HRESULT WINAPI VarFormatCurrency(LPVARIANT pVarIn, INT nDigits, INT nLeading,
 
   *pbstrOut = NULL;
 
-  V_VT(&vStr) = VT_EMPTY;
-  hRet = VariantCopyInd(&vStr, pVarIn);
+  if (V_VT(pVarIn) == VT_BSTR || V_VT(pVarIn) == (VT_BSTR | VT_BYREF))
+  {
+    hRet = VarCyFromStr(V_ISBYREF(pVarIn) ? *V_BSTRREF(pVarIn) : V_BSTR(pVarIn), LOCALE_USER_DEFAULT, 0, &cy);
+    if (FAILED(hRet)) return hRet;
+    V_VT(&vStr) = VT_CY;
+    V_CY(&vStr) = cy;
+  }
+  else
+  {
+    V_VT(&vStr) = VT_EMPTY;
+    hRet = VariantCopyInd(&vStr, pVarIn);
+  }
 
   if (SUCCEEDED(hRet))
     hRet = VariantChangeTypeEx(&vStr, &vStr, LOCALE_USER_DEFAULT, 0, VT_BSTR);

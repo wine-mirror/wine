@@ -638,6 +638,40 @@ static void test_GetAltMonthNames(void)
     ok(str != NULL, "Got %p\n", str);
 }
 
+static void test_VarFormatCurrency(void)
+{
+    HRESULT hr;
+    VARIANT in;
+    BSTR str, str2;
+
+    V_CY(&in).int64 = 0;
+    V_VT(&in) = VT_CY;
+    hr = VarFormatCurrency(&in, 3, -2, -2, -2, 0, &str);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    V_VT(&in) = VT_BSTR;
+    V_BSTR(&in) = str;
+    hr = VarFormatCurrency(&in, 1, -2, -2, -2, 0, &str2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(lstrcmpW(str, str2), "Expected different string.\n");
+    SysFreeString(str2);
+
+    V_VT(&in) = VT_BSTR | VT_BYREF;
+    V_BSTRREF(&in) = &str;
+    hr = VarFormatCurrency(&in, 1, -2, -2, -2, 0, &str2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(lstrcmpW(str, str2), "Expected different string.\n");
+
+    SysFreeString(str);
+    SysFreeString(str2);
+
+    V_VT(&in) = VT_BSTR;
+    V_BSTR(&in) = SysAllocString(L"test");
+    hr = VarFormatCurrency(&in, 1, -2, -2, -2, 0, &str2);
+    ok(hr == DISP_E_TYPEMISMATCH, "Unexpected hr %#x.\n", hr);
+    VariantClear(&in);
+}
+
 START_TEST(varformat)
 {
     test_VarFormatNumber();
@@ -645,4 +679,5 @@ START_TEST(varformat)
     test_VarWeekdayName();
     test_VarFormatFromTokens();
     test_GetAltMonthNames();
+    test_VarFormatCurrency();
 }
