@@ -737,9 +737,9 @@ static HRESULT WINAPI OleObject_EnumAdvise(IOleObject *iface, IEnumSTATDATA **ad
 static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD aspect, DWORD *status)
 {
     DHTMLEditImpl *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%u, %p) stub\n", This, aspect, status);
-    *status = 0;
-    return E_NOTIMPL;
+    TRACE("(%p)->(%u, %p)\n", This, aspect, status);
+
+    return OleRegGetMiscStatus(&CLSID_DHTMLEdit, aspect, status);
 }
 
 static HRESULT WINAPI OleObject_SetColorScheme(IOleObject *iface, LOGPALETTE *palette)
