@@ -1,5 +1,5 @@
 MODULE    = dhtmled.ocx
-IMPORTS   = uuid
+IMPORTS   = uuid ole32
 
 EXTRADLLFLAGS = -mno-cygwin
 
