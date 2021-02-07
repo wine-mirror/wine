@@ -1358,7 +1358,8 @@ DECL_HANDLER(duplicate_token)
         struct token *token = token_duplicate( src_token, req->primary, req->impersonation_level, sd, NULL, 0, NULL, 0 );
         if (token)
         {
-            reply->new_handle = alloc_handle_no_access_check( current->process, token, req->access, objattr->attributes );
+            unsigned int access = req->access ? req->access : get_handle_access( current->process, req->handle );
+            reply->new_handle = alloc_handle_no_access_check( current->process, token, access, objattr->attributes );
             release_object( token );
         }
         release_object( src_token );
