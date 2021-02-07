@@ -7926,6 +7926,37 @@ static void test_pseudo_handle_security(void)
     }
 }
 
+static void test_duplicate_token(void)
+{
+    HANDLE token, token2;
+    BOOL ret;
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY | TOKEN_DUPLICATE | TOKEN_ADJUST_DEFAULT, &token);
+    ok(ret, "got error %u\n", GetLastError());
+
+    ret = DuplicateToken(token, SecurityAnonymous, &token2);
+    ok(ret, "got error %u\n", GetLastError());
+    TEST_GRANTED_ACCESS(token2, TOKEN_QUERY | TOKEN_IMPERSONATE);
+    CloseHandle(token2);
+
+    ret = DuplicateTokenEx(token, 0, NULL, SecurityAnonymous, TokenPrimary, &token2);
+    ok(ret, "got error %u\n", GetLastError());
+    TEST_GRANTED_ACCESS(token2, TOKEN_QUERY | TOKEN_DUPLICATE | TOKEN_ADJUST_DEFAULT);
+    CloseHandle(token2);
+
+    ret = DuplicateTokenEx(token, MAXIMUM_ALLOWED, NULL, SecurityAnonymous, TokenPrimary, &token2);
+    ok(ret, "got error %u\n", GetLastError());
+    TEST_GRANTED_ACCESS(token2, TOKEN_ALL_ACCESS);
+    CloseHandle(token2);
+
+    ret = DuplicateTokenEx(token, TOKEN_QUERY_SOURCE, NULL, SecurityAnonymous, TokenPrimary, &token2);
+    ok(ret, "got error %u\n", GetLastError());
+    TEST_GRANTED_ACCESS(token2, TOKEN_QUERY_SOURCE);
+    CloseHandle(token2);
+
+    CloseHandle(token);
+}
+
 START_TEST(security)
 {
     init();
@@ -7989,6 +8020,7 @@ START_TEST(security)
     test_duplicate_handle_access();
     test_create_process_token();
     test_pseudo_handle_security();
+    test_duplicate_token();
 
     /* Must be the last test, modifies process token */
     test_token_security_descriptor();
