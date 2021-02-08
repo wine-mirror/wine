@@ -104,12 +104,12 @@ struct wg_parser_stream
 {
     GstPad *their_src, *post_sink, *post_src, *my_sink;
     GstElement *flip;
-    GstCaps *caps;
+    struct wg_format preferred_format;
 
     pthread_cond_t event_cond, event_empty_cond;
     struct wg_parser_event event;
 
-    bool flushing, eos, enabled;
+    bool flushing, eos, enabled, has_caps;
 
     uint64_t duration;
 };
@@ -171,152 +171,6 @@ static HRESULT GST_RemoveOutputPins(struct parser *This);
 static HRESULT WINAPI GST_ChangeCurrent(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeRate(IMediaSeeking *iface);
-
-static gboolean amt_from_gst_audio_info(const GstAudioInfo *info, AM_MEDIA_TYPE *amt)
-{
-    WAVEFORMATEXTENSIBLE *wfe;
-    WAVEFORMATEX *wfx;
-    gint32 depth, bpp;
-
-    wfe = CoTaskMemAlloc(sizeof(*wfe));
-    wfx = (WAVEFORMATEX*)wfe;
-    amt->majortype = MEDIATYPE_Audio;
-    amt->subtype = MEDIASUBTYPE_PCM;
-    amt->formattype = FORMAT_WaveFormatEx;
-    amt->pbFormat = (BYTE*)wfe;
-    amt->cbFormat = sizeof(*wfe);
-    amt->bFixedSizeSamples = TRUE;
-    amt->bTemporalCompression = FALSE;
-    amt->pUnk = NULL;
-
-    wfx->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-
-    wfx->nChannels = info->channels;
-    wfx->nSamplesPerSec = info->rate;
-    depth = GST_AUDIO_INFO_WIDTH(info);
-    bpp = GST_AUDIO_INFO_DEPTH(info);
-
-    if (!depth || depth > 32 || depth % 8)
-        depth = bpp;
-    else if (!bpp)
-        bpp = depth;
-    wfe->Samples.wValidBitsPerSample = depth;
-    wfx->wBitsPerSample = bpp;
-    wfx->cbSize = sizeof(*wfe)-sizeof(*wfx);
-    switch (wfx->nChannels) {
-        case 1: wfe->dwChannelMask = KSAUDIO_SPEAKER_MONO; break;
-        case 2: wfe->dwChannelMask = KSAUDIO_SPEAKER_STEREO; break;
-        case 4: wfe->dwChannelMask = KSAUDIO_SPEAKER_SURROUND; break;
-        case 5: wfe->dwChannelMask = (KSAUDIO_SPEAKER_5POINT1 & ~SPEAKER_LOW_FREQUENCY); break;
-        case 6: wfe->dwChannelMask = KSAUDIO_SPEAKER_5POINT1; break;
-        case 8: wfe->dwChannelMask = KSAUDIO_SPEAKER_7POINT1; break;
-        default:
-        wfe->dwChannelMask = 0;
-    }
-    if (GST_AUDIO_INFO_IS_FLOAT(info))
-    {
-        amt->subtype = MEDIASUBTYPE_IEEE_FLOAT;
-        wfe->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
-    } else {
-        wfe->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-        if (wfx->nChannels <= 2 && bpp <= 16 && depth == bpp)  {
-            wfx->wFormatTag = WAVE_FORMAT_PCM;
-            wfx->cbSize = 0;
-            amt->cbFormat = sizeof(WAVEFORMATEX);
-        }
-    }
-    amt->lSampleSize = wfx->nBlockAlign = wfx->nChannels * wfx->wBitsPerSample/8;
-    wfx->nAvgBytesPerSec = wfx->nSamplesPerSec * wfx->nBlockAlign;
-    return TRUE;
-}
-
-static gboolean amt_from_gst_video_info(const GstVideoInfo *info, AM_MEDIA_TYPE *amt)
-{
-    VIDEOINFO *vih;
-    BITMAPINFOHEADER *bih;
-    gint32 width, height;
-
-    width = GST_VIDEO_INFO_WIDTH(info);
-    height = GST_VIDEO_INFO_HEIGHT(info);
-
-    vih = CoTaskMemAlloc(sizeof(*vih));
-    bih = &vih->bmiHeader;
-
-    amt->formattype = FORMAT_VideoInfo;
-    amt->pbFormat = (BYTE*)vih;
-    amt->cbFormat = sizeof(VIDEOINFOHEADER);
-    amt->bFixedSizeSamples = FALSE;
-    amt->bTemporalCompression = TRUE;
-    amt->lSampleSize = 1;
-    amt->pUnk = NULL;
-    ZeroMemory(vih, sizeof(*vih));
-    amt->majortype = MEDIATYPE_Video;
-
-    if (GST_VIDEO_INFO_IS_RGB(info))
-    {
-        bih->biCompression = BI_RGB;
-        switch (GST_VIDEO_INFO_FORMAT(info))
-        {
-        case GST_VIDEO_FORMAT_BGRA:
-            amt->subtype = MEDIASUBTYPE_ARGB32;
-            bih->biBitCount = 32;
-            break;
-        case GST_VIDEO_FORMAT_BGRx:
-            amt->subtype = MEDIASUBTYPE_RGB32;
-            bih->biBitCount = 32;
-            break;
-        case GST_VIDEO_FORMAT_BGR:
-            amt->subtype = MEDIASUBTYPE_RGB24;
-            bih->biBitCount = 24;
-            break;
-        case GST_VIDEO_FORMAT_RGB16:
-            amt->subtype = MEDIASUBTYPE_RGB565;
-            amt->cbFormat = offsetof(VIDEOINFO, u.dwBitMasks[3]);
-            vih->u.dwBitMasks[iRED] = 0xf800;
-            vih->u.dwBitMasks[iGREEN] = 0x07e0;
-            vih->u.dwBitMasks[iBLUE] = 0x001f;
-            bih->biBitCount = 16;
-            bih->biCompression = BI_BITFIELDS;
-            break;
-        case GST_VIDEO_FORMAT_RGB15:
-            amt->subtype = MEDIASUBTYPE_RGB555;
-            bih->biBitCount = 16;
-            break;
-        default:
-            WARN("Cannot convert %s to a DirectShow type.\n", GST_VIDEO_INFO_NAME(info));
-            CoTaskMemFree(vih);
-            return FALSE;
-        }
-    } else {
-        amt->subtype = MEDIATYPE_Video;
-        if (!(amt->subtype.Data1 = gst_video_format_to_fourcc(GST_VIDEO_INFO_FORMAT(info))))
-        {
-            CoTaskMemFree(vih);
-            return FALSE;
-        }
-        switch (amt->subtype.Data1) {
-            case mmioFOURCC('I','4','2','0'):
-            case mmioFOURCC('Y','V','1','2'):
-            case mmioFOURCC('N','V','1','2'):
-            case mmioFOURCC('N','V','2','1'):
-                bih->biBitCount = 12; break;
-            case mmioFOURCC('Y','U','Y','2'):
-            case mmioFOURCC('Y','V','Y','U'):
-            case mmioFOURCC('U','Y','V','Y'):
-                bih->biBitCount = 16; break;
-        }
-        bih->biCompression = amt->subtype.Data1;
-    }
-    bih->biSizeImage = GST_VIDEO_INFO_SIZE(info);
-    if ((vih->AvgTimePerFrame = (REFERENCE_TIME)MulDiv(10000000,
-            GST_VIDEO_INFO_FPS_D(info), GST_VIDEO_INFO_FPS_N(info))) == -1)
-        vih->AvgTimePerFrame = 0; /* zero division or integer overflow */
-    bih->biSize = sizeof(*bih);
-    bih->biWidth = width;
-    bih->biHeight = height;
-    bih->biPlanes = 1;
-    return TRUE;
-}
 
 static enum wg_audio_format wg_audio_format_from_gst(GstAudioFormat format)
 {
@@ -1281,7 +1135,8 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
 
             gst_event_parse_caps(event, &caps);
             pthread_mutex_lock(&parser->mutex);
-            gst_caps_replace(&stream->caps, caps);
+            wg_format_from_caps(&stream->preferred_format, caps);
+            stream->has_caps = true;
             pthread_mutex_unlock(&parser->mutex);
             pthread_cond_signal(&parser->init_cond);
             break;
@@ -2080,7 +1935,7 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
         stream->duration = query_duration(stream->their_src);
         pin->seek.llDuration = pin->seek.llStop = stream->duration;
         pin->seek.llCurrent = 0;
-        while (!stream->caps && !parser->error)
+        while (!stream->has_caps && !parser->error)
             pthread_cond_wait(&parser->init_cond, &parser->mutex);
         if (parser->error)
         {
@@ -2375,67 +2230,47 @@ static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
     struct wg_parser_stream *stream = pin->wg_stream;
-    const GstCaps *caps = stream->caps;
-    const GstStructure *structure;
-    const char *type;
+    struct wg_format format = stream->preferred_format;
 
-    static const GstVideoFormat video_formats[] =
+    static const enum wg_video_format video_formats[] =
     {
         /* Try to prefer YUV formats over RGB ones. Most decoders output in the
          * YUV color space, and it's generally much less expensive for
          * videoconvert to do YUV -> YUV transformations. */
-        GST_VIDEO_FORMAT_AYUV,
-        GST_VIDEO_FORMAT_I420,
-        GST_VIDEO_FORMAT_YV12,
-        GST_VIDEO_FORMAT_YUY2,
-        GST_VIDEO_FORMAT_UYVY,
-        GST_VIDEO_FORMAT_YVYU,
-        GST_VIDEO_FORMAT_NV12,
-        GST_VIDEO_FORMAT_BGRA,
-        GST_VIDEO_FORMAT_BGRx,
-        GST_VIDEO_FORMAT_BGR,
-        GST_VIDEO_FORMAT_RGB16,
-        GST_VIDEO_FORMAT_RGB15,
+        WG_VIDEO_FORMAT_AYUV,
+        WG_VIDEO_FORMAT_I420,
+        WG_VIDEO_FORMAT_YV12,
+        WG_VIDEO_FORMAT_YUY2,
+        WG_VIDEO_FORMAT_UYVY,
+        WG_VIDEO_FORMAT_YVYU,
+        WG_VIDEO_FORMAT_NV12,
+        WG_VIDEO_FORMAT_BGRA,
+        WG_VIDEO_FORMAT_BGRx,
+        WG_VIDEO_FORMAT_BGR,
+        WG_VIDEO_FORMAT_RGB16,
+        WG_VIDEO_FORMAT_RGB15,
     };
-
-    assert(caps); /* We shouldn't be able to get here if caps haven't been set. */
-    structure = gst_caps_get_structure(caps, 0);
-    type = gst_structure_get_name(structure);
 
     memset(mt, 0, sizeof(AM_MEDIA_TYPE));
 
-    if (amt_from_gst_caps(caps, mt))
+    if (amt_from_wg_format(mt, &format))
     {
         if (!index--)
             return S_OK;
         FreeMediaType(mt);
     }
 
-    if (!strcmp(type, "video/x-raw") && index < ARRAY_SIZE(video_formats))
+    if (format.major_type == WG_MAJOR_TYPE_VIDEO && index < ARRAY_SIZE(video_formats))
     {
-        gint width, height, fps_n, fps_d;
-        GstVideoInfo info;
-
-        gst_structure_get_int(structure, "width", &width);
-        gst_structure_get_int(structure, "height", &height);
-        gst_video_info_set_format(&info, video_formats[index], width, height);
-        if (gst_structure_get_fraction(structure, "framerate", &fps_n, &fps_d) && fps_n)
-        {
-            info.fps_n = fps_n;
-            info.fps_d = fps_d;
-        }
-        if (!amt_from_gst_video_info(&info, mt))
+        format.u.video.format = video_formats[index];
+        if (!amt_from_wg_format(mt, &format))
             return E_OUTOFMEMORY;
         return S_OK;
     }
-    else if (!strcmp(type, "audio/x-raw") && !index)
+    else if (format.major_type == WG_MAJOR_TYPE_AUDIO && !index)
     {
-        GstAudioInfo info;
-        gint rate;
-
-        gst_structure_get_int(structure, "rate", &rate);
-        gst_audio_info_set_format(&info, GST_AUDIO_FORMAT_S16LE, rate, 2, NULL);
-        if (!amt_from_gst_audio_info(&info, mt))
+        format.u.audio.format = WG_AUDIO_FORMAT_S16LE;
+        if (!amt_from_wg_format(mt, &format))
             return E_OUTOFMEMORY;
         return S_OK;
     }
@@ -3152,7 +2987,7 @@ static HRESULT wave_parser_source_query_accept(struct parser_source *pin, const 
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    if (!amt_from_gst_caps(stream->caps, &pad_mt))
+    if (!amt_from_wg_format(&pad_mt, &stream->preferred_format))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -3166,7 +3001,7 @@ static HRESULT wave_parser_source_get_media_type(struct parser_source *pin,
 
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    if (!amt_from_gst_caps(stream->caps, mt))
+    if (!amt_from_wg_format(mt, &stream->preferred_format))
         return E_OUTOFMEMORY;
     return S_OK;
 }
@@ -3273,7 +3108,7 @@ static HRESULT avi_splitter_source_query_accept(struct parser_source *pin, const
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    if (!amt_from_gst_caps(stream->caps, &pad_mt))
+    if (!amt_from_wg_format(&pad_mt, &stream->preferred_format))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -3287,7 +3122,7 @@ static HRESULT avi_splitter_source_get_media_type(struct parser_source *pin,
 
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    if (!amt_from_gst_caps(stream->caps, mt))
+    if (!amt_from_wg_format(mt, &stream->preferred_format))
         return E_OUTOFMEMORY;
     return S_OK;
 }
@@ -3404,7 +3239,7 @@ static HRESULT mpeg_splitter_source_query_accept(struct parser_source *pin, cons
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    if (!amt_from_gst_caps(stream->caps, &pad_mt))
+    if (!amt_from_wg_format(&pad_mt, &stream->preferred_format))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -3418,7 +3253,7 @@ static HRESULT mpeg_splitter_source_get_media_type(struct parser_source *pin,
 
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    if (!amt_from_gst_caps(stream->caps, mt))
+    if (!amt_from_wg_format(mt, &stream->preferred_format))
         return E_OUTOFMEMORY;
     return S_OK;
 }
