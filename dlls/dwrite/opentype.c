@@ -5929,7 +5929,7 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
                 context->glyph_infos[i].mask |= rtlm_mask;
         }
 
-        /* TODO: should this check for glyph availability? */
+        /* Glyph availability is not tested for a replacement digit. */
         if (*context->u.subst.digits && codepoint >= '0' && codepoint <= '9')
             codepoint = context->u.subst.digits[codepoint - '0'];
 
