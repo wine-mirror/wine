@@ -1149,9 +1149,8 @@ BOOLEAN WINAPI RtlFirstFreeAce(
 			return FALSE;
 		ace = (PACE_HEADER)(((BYTE*)ace)+ace->AceSize);
 	}
-	if ((BYTE *)ace >= (BYTE *)acl + acl->AclSize)
-		return FALSE;
-	*x = ace;
+	if ((BYTE *)ace <= (BYTE *)acl + acl->AclSize)
+		*x = ace;
 	return TRUE;
 }
 
