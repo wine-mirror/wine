@@ -165,6 +165,7 @@ struct sock
 static void sock_dump( struct object *obj, int verbose );
 static int sock_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *sock_get_fd( struct object *obj );
+static int sock_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void sock_destroy( struct object *obj );
 static struct object *sock_get_ifchange( struct sock *sock );
 static void sock_release_ifchange( struct sock *sock );
@@ -201,7 +202,7 @@ static const struct object_ops sock_ops =
     NULL,                         /* unlink_name */
     no_open_file,                 /* open_file */
     no_kernel_obj_list,           /* get_kernel_obj_list */
-    fd_close_handle,              /* close_handle */
+    sock_close_handle,            /* close_handle */
     sock_destroy                  /* destroy */
 };
 
@@ -885,10 +886,26 @@ static struct fd *sock_get_fd( struct object *obj )
     return (struct fd *)grab_object( sock->fd );
 }
 
-static void sock_destroy( struct object *obj )
+static int sock_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
 {
     struct sock *sock = (struct sock *)obj;
     struct accept_req *req, *next;
+
+    if (sock->obj.handle_count == 1) /* last handle */
+    {
+        if (sock->accept_recv_req)
+            async_terminate( sock->accept_recv_req->async, STATUS_CANCELLED );
+
+        LIST_FOR_EACH_ENTRY_SAFE( req, next, &sock->accept_list, struct accept_req, entry )
+            async_terminate( req->async, STATUS_CANCELLED );
+    }
+
+    return fd_close_handle( obj, process, handle );
+}
+
+static void sock_destroy( struct object *obj )
+{
+    struct sock *sock = (struct sock *)obj;
 
     assert( obj->ops == &sock_ops );
 
@@ -896,12 +913,6 @@ static void sock_destroy( struct object *obj )
 
     if ( sock->deferred )
         release_object( sock->deferred );
-
-    if (sock->accept_recv_req)
-        async_terminate( sock->accept_recv_req->async, STATUS_CANCELLED );
-
-    LIST_FOR_EACH_ENTRY_SAFE( req, next, &sock->accept_list, struct accept_req, entry )
-        async_terminate( req->async, STATUS_CANCELLED );
 
     async_wake_up( &sock->ifchange_q, STATUS_CANCELLED );
     sock_release_ifchange( sock );
