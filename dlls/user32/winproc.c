@@ -172,7 +172,7 @@ static inline WINDOWPROC *alloc_winproc( WNDPROC func, BOOL unicode )
 }
 
 #ifdef __i386__
-/* Some window procedures modify register they shouldn't, or are not
+/* Some window procedures modify registers they shouldn't, or are not
  * properly declared stdcall; so we need a small assembly wrapper to
  * call them. */
 extern LRESULT WINPROC_wrapper( WNDPROC proc, HWND hwnd, UINT msg,
