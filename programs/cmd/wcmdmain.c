@@ -1817,6 +1817,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     static const WCHAR forCmd[] = {'f','o','r'};
     static const WCHAR ifCmd[]  = {'i','f'};
     static const WCHAR ifElse[] = {'e','l','s','e'};
+    static const WCHAR setCmd[] = {'s','e','t'};
     BOOL      inOneLine = FALSE;
     BOOL      inFor = FALSE;
     BOOL      inIn  = FALSE;
@@ -1829,6 +1830,8 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     BOOL      lastWasElse = FALSE;
     BOOL      lastWasRedirect = TRUE;
     BOOL      lastWasCaret = FALSE;
+    BOOL      ignoreBracket = FALSE;         /* Some expressions after if (set) require */
+                                             /* handling brackets as a normal character */
     int       lineCurDepth;                  /* Bracket depth when line was read in */
     BOOL      resetAtEndOfLine = FALSE;      /* Do we need to reset curdepth at EOL */
 
@@ -1956,6 +1959,9 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
               (*curLen)+=if_condition_len;
               curPos+=if_condition_len;
           }
+
+          if (WCMD_keyword_ws_found(setCmd, ARRAY_SIZE(setCmd), curPos))
+              ignoreBracket = TRUE;
 
         } else if (WCMD_keyword_ws_found(ifElse, ARRAY_SIZE(ifElse), curPos)) {
           const int keyw_len = ARRAY_SIZE(ifElse) + 1;
@@ -2146,7 +2152,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
                    In an ELSE statement, only allow it straight away after
                       the ELSE and whitespace
                  */
-                } else if (inIf ||
+                } else if ((inIf && !ignoreBracket) ||
                            (inElse && lastWasElse && onlyWhiteSpace) ||
                            (inFor && (lastWasIn || lastWasDo) && onlyWhiteSpace)) {
 
