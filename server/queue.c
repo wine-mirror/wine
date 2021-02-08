@@ -3256,12 +3256,11 @@ DECL_HANDLER(get_rawinput_buffer)
     struct thread_input *input = current->queue->input;
     data_size_t size = 0, next_size = 0;
     struct list *ptr;
-    char *buf, *cur;
-    int count = 0;
+    char *buf, *cur, *tmp;
+    int count = 0, buf_size = 16 * sizeof(struct hardware_msg_data);
 
     if (!req->buffer_size) buf = NULL;
-    else if (!(buf = mem_alloc( get_reply_max_size() )))
-        return;
+    else if (!(buf = mem_alloc( buf_size ))) return;
 
     cur = buf;
     ptr = list_head( &input->msg_list );
@@ -3276,6 +3275,17 @@ DECL_HANDLER(get_rawinput_buffer)
         next_size = req->rawinput_size;
         if (size + next_size > req->buffer_size) break;
         if (cur + sizeof(*data) > buf + get_reply_max_size()) break;
+        if (cur + sizeof(*data) > buf + buf_size)
+        {
+            buf_size += buf_size / 2;
+            if (!(tmp = realloc( buf, buf_size )))
+            {
+                set_error( STATUS_NO_MEMORY );
+                return;
+            }
+            cur = tmp + (cur - buf);
+            buf = tmp;
+        }
 
         memcpy(cur, data, sizeof(*data));
         list_remove( &msg->entry );
