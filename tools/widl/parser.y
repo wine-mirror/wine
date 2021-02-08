@@ -892,7 +892,7 @@ namespace_pfx:
 	;
 
 qualified_type:
-	  aKNOWNTYPE				{ $$ = find_type_or_error(current_namespace, $1); }
+	  typename				{ $$ = find_type_or_error(current_namespace, $1); }
 	| namespace_pfx typename		{ $$ = find_type_or_error($1, $2); }
 	;
 
@@ -960,11 +960,6 @@ interfacedef: attributes interface inherit
 	  '{' int_statements '}' semicolon_opt	{ $$ = type_interface_define($2, $1, $3, $5);
 						  check_async_uuid($$);
 						}
-/* MIDL is able to import the definition of a base class from inside the
- * definition of a derived class, I'll try to support it with this rule */
-	| attributes interface ':' aIDENTIFIER
-	  '{' import int_statements '}'
-	   semicolon_opt			{ $$ = type_interface_define($2, $1, find_type_or_error(current_namespace, $4), $7); }
 	| dispinterfacedef semicolon_opt	{ $$ = $1; }
 	;
 
