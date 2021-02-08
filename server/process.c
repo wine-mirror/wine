@@ -1422,8 +1422,6 @@ DECL_HANDLER(get_process_info)
         reply->start_time       = process->start_time;
         reply->end_time         = process->end_time;
         reply->cpu              = process->cpu;
-        reply->debugger_present = !!process->debug_obj;
-        reply->debug_children   = process->debug_children;
         if (get_reply_max_size())
         {
             client_ptr_t base;
@@ -1434,6 +1432,19 @@ DECL_HANDLER(get_process_info)
         }
         release_object( process );
     }
+}
+
+/* retrieve debug information about a process */
+DECL_HANDLER(get_process_debug_info)
+{
+    struct process *process;
+
+    if (!(process = get_process_from_handle( req->handle, PROCESS_QUERY_LIMITED_INFORMATION ))) return;
+
+    reply->debug_children = process->debug_children;
+    if (!process->debug_obj) set_error( STATUS_PORT_NOT_SET );
+    else reply->debug = alloc_handle( current->process, process->debug_obj, DEBUG_ALL_ACCESS, 0 );
+    release_object( process );
 }
 
 /* retrieve information about a process memory usage */

@@ -1008,8 +1008,22 @@ struct get_process_info_reply
     int          exit_code;
     int          priority;
     client_cpu_t cpu;
-    short int    debugger_present;
-    short int    debug_children;
+    /* VARARG(image,pe_image_info); */
+    char __pad_60[4];
+};
+
+
+
+struct get_process_debug_info_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct get_process_debug_info_reply
+{
+    struct reply_header __header;
+    obj_handle_t debug;
+    int          debug_children;
     /* VARARG(image,pe_image_info); */
 };
 
@@ -5427,6 +5441,7 @@ enum request
     REQ_terminate_process,
     REQ_terminate_thread,
     REQ_get_process_info,
+    REQ_get_process_debug_info,
     REQ_get_process_vm_counters,
     REQ_set_process_info,
     REQ_get_thread_info,
@@ -5711,6 +5726,7 @@ union generic_request
     struct terminate_process_request terminate_process_request;
     struct terminate_thread_request terminate_thread_request;
     struct get_process_info_request get_process_info_request;
+    struct get_process_debug_info_request get_process_debug_info_request;
     struct get_process_vm_counters_request get_process_vm_counters_request;
     struct set_process_info_request set_process_info_request;
     struct get_thread_info_request get_thread_info_request;
@@ -5993,6 +6009,7 @@ union generic_reply
     struct terminate_process_reply terminate_process_reply;
     struct terminate_thread_reply terminate_thread_reply;
     struct get_process_info_reply get_process_info_reply;
+    struct get_process_debug_info_reply get_process_debug_info_reply;
     struct get_process_vm_counters_reply get_process_vm_counters_reply;
     struct set_process_info_reply set_process_info_reply;
     struct get_thread_info_reply get_thread_info_reply;
@@ -6263,7 +6280,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 668
+#define SERVER_PROTOCOL_VERSION 669
 
 /* ### protocol_version end ### */
 

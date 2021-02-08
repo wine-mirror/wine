@@ -955,8 +955,16 @@ typedef struct
     int          exit_code;        /* process exit code */
     int          priority;         /* priority class */
     client_cpu_t cpu;              /* CPU that this process is running on */
-    short int    debugger_present; /* process is being debugged */
-    short int    debug_children;   /* inherit debugger to child processes */
+    VARARG(image,pe_image_info);   /* image info for main exe */
+@END
+
+
+/* Retrieve debug information about a process */
+@REQ(get_process_debug_info)
+    obj_handle_t handle;           /* process handle */
+@REPLY
+    obj_handle_t debug;            /* handle to debug port */
+    int          debug_children;   /* inherit debugger to child processes */
     VARARG(image,pe_image_info);   /* image info for main exe */
 @END
 

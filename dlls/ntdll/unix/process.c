@@ -1366,15 +1366,25 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
             if (!info) ret = STATUS_ACCESS_VIOLATION;
             else
             {
-                SERVER_START_REQ(get_process_info)
+                HANDLE debug;
+
+                SERVER_START_REQ(get_process_debug_info)
                 {
                     req->handle = wine_server_obj_handle( handle );
-                    if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
-                    {
-                        *(DWORD_PTR *)info = reply->debugger_present ? ~(DWORD_PTR)0 : 0;
-                    }
+                    ret = wine_server_call( req );
+                    debug = wine_server_ptr_handle( reply->debug );
                 }
                 SERVER_END_REQ;
+                if (ret == STATUS_SUCCESS)
+                {
+                    *(DWORD_PTR *)info = ~0ul;
+                    NtClose( debug );
+                }
+                else if (ret == STATUS_PORT_NOT_SET)
+                {
+                    *(DWORD_PTR *)info = 0;
+                    ret = STATUS_SUCCESS;
+                }
             }
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
@@ -1387,15 +1397,18 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
             if (!info) ret = STATUS_ACCESS_VIOLATION;
             else
             {
-                SERVER_START_REQ(get_process_info)
+                HANDLE debug;
+
+                SERVER_START_REQ(get_process_debug_info)
                 {
                     req->handle = wine_server_obj_handle( handle );
-                    if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
-                    {
-                        *(DWORD *)info = reply->debug_children;
-                    }
+                    ret = wine_server_call( req );
+                    debug = wine_server_ptr_handle( reply->debug );
+                    *(DWORD *)info = reply->debug_children;
                 }
                 SERVER_END_REQ;
+                if (ret == STATUS_SUCCESS) NtClose( debug );
+                else if (ret == STATUS_PORT_NOT_SET) ret = STATUS_SUCCESS;
             }
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
@@ -1408,17 +1421,19 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
         break;
 
     case ProcessDebugObjectHandle:
-        /* "These are not the debuggers you are looking for." *
-         * set it to 0 aka "no debugger" to satisfy copy protections */
         len = sizeof(HANDLE);
         if (size == len)
         {
             if (!info) ret = STATUS_ACCESS_VIOLATION;
-            else if (!handle) ret = STATUS_INVALID_HANDLE;
             else
             {
-                memset(info, 0, size);
-                ret = STATUS_PORT_NOT_SET;
+                SERVER_START_REQ(get_process_debug_info)
+                {
+                    req->handle = wine_server_obj_handle( handle );
+                    ret = wine_server_call( req );
+                    *(HANDLE *)info = wine_server_ptr_handle( reply->debug );
+                }
+                SERVER_END_REQ;
             }
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
