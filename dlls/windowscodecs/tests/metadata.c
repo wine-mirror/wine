@@ -3056,7 +3056,7 @@ static void test_metadata_writer(void)
         REFCLSID rclsid;
         BOOL wine_supports_encoder;
         BOOL metadata_supported;
-        BOOL succeeds_unitialized;
+        BOOL succeeds_uninitialized;
     }
     tests[] =
     {
@@ -3106,7 +3106,7 @@ static void test_metadata_writer(void)
         ok(hr == (tests[i].metadata_supported ? S_OK : E_INVALIDARG), "Got unexpected hr %#x, i %u.\n", hr, i);
 
         hr = IWICBitmapFrameEncode_GetMetadataQueryWriter(frameencode, &querywriter2);
-        ok(hr == (tests[i].succeeds_unitialized ? S_OK : WINCODEC_ERR_NOTINITIALIZED),
+        ok(hr == (tests[i].succeeds_uninitialized ? S_OK : WINCODEC_ERR_NOTINITIALIZED),
                 "Got unexpected hr %#x, i %u.\n", hr, i);
         if (hr == S_OK)
             IWICMetadataQueryWriter_Release(querywriter2);
