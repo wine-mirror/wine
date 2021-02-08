@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include "wine/heap.h"
 #include "wine/unicode.h"
 
@@ -293,16 +294,14 @@ static inline void strarrayfreeU( char **strarray )
     }
 }
 
-#ifdef HAVE_LDAP
-
-static inline struct berval *bvdup( struct berval *bv )
+static inline struct WLDAP32_berval *bervalWtoW( struct WLDAP32_berval *bv )
 {
-    struct berval *berval;
-    DWORD size = sizeof(struct berval) + bv->bv_len;
+    struct WLDAP32_berval *berval;
+    DWORD size = sizeof(*berval) + bv->bv_len;
 
     if ((berval = heap_alloc( size )))
     {
-        char *val = (char *)berval + sizeof(struct berval);
+        char *val = (char *)(berval + 1);
 
         berval->bv_len = bv->bv_len;
         berval->bv_val = val;
@@ -311,34 +310,124 @@ static inline struct berval *bvdup( struct berval *bv )
     return berval;
 }
 
-static inline DWORD bvarraylen( struct berval **bv )
+static inline void bvarrayfreeW( struct WLDAP32_berval **bv )
+{
+    struct WLDAP32_berval **p = bv;
+    while (*p) heap_free( *p++ );
+    heap_free( bv );
+}
+
+#ifdef HAVE_LDAP
+
+static inline struct berval *bervalWtoU( struct WLDAP32_berval *bv )
+{
+    struct berval *berval;
+    DWORD size = sizeof(*berval) + bv->bv_len;
+
+    if ((berval = heap_alloc( size )))
+    {
+        char *val = (char *)(berval + 1);
+
+        berval->bv_len = bv->bv_len;
+        berval->bv_val = val;
+        memcpy( val, bv->bv_val, bv->bv_len );
+    }
+    return berval;
+}
+
+static inline struct WLDAP32_berval *bervalUtoW( struct berval *bv )
+{
+    struct WLDAP32_berval *berval;
+    DWORD size = sizeof(*berval) + bv->bv_len;
+
+    assert( bv->bv_len <= ~0u );
+
+    if ((berval = heap_alloc( size )))
+    {
+        char *val = (char *)(berval + 1);
+
+        berval->bv_len = bv->bv_len;
+        berval->bv_val = val;
+        memcpy( val, bv->bv_val, bv->bv_len );
+    }
+    return berval;
+}
+
+static inline DWORD bvarraylenU( struct berval **bv )
 {
     struct berval **p = bv;
     while (*p) p++;
     return p - bv;
 }
 
-static inline struct berval **bvarraydup( struct berval **bv )
+static inline DWORD bvarraylenW( struct WLDAP32_berval **bv )
 {
-    struct berval **berval = NULL;
+    struct WLDAP32_berval **p = bv;
+    while (*p) p++;
+    return p - bv;
+}
+
+static inline struct WLDAP32_berval **bvarrayWtoW( struct WLDAP32_berval **bv )
+{
+    struct WLDAP32_berval **berval = NULL;
     DWORD size;
 
     if (bv)
     {
-        size = sizeof(struct berval *) * (bvarraylen( bv ) + 1);
+        size = sizeof(*berval) * (bvarraylenW( bv ) + 1);
         if ((berval = heap_alloc( size )))
         {
-            struct berval **p = bv;
-            struct berval **q = berval;
+            struct WLDAP32_berval **p = bv;
+            struct WLDAP32_berval **q = berval;
 
-            while (*p) *q++ = bvdup( *p++ );
+            while (*p) *q++ = bervalWtoW( *p++ );
             *q = NULL;
         }
     }
     return berval;
 }
 
-static inline void bvarrayfree( struct berval **bv )
+static inline struct berval **bvarrayWtoU( struct WLDAP32_berval **bv )
+{
+    struct berval **berval = NULL;
+    DWORD size;
+
+    if (bv)
+    {
+        size = sizeof(*berval) * (bvarraylenW( bv ) + 1);
+        if ((berval = heap_alloc( size )))
+        {
+            struct WLDAP32_berval **p = bv;
+            struct berval **q = berval;
+
+            while (*p) *q++ = bervalWtoU( *p++ );
+            *q = NULL;
+        }
+    }
+    return berval;
+}
+
+static inline struct WLDAP32_berval **bvarrayUtoW( struct berval **bv )
+{
+    struct WLDAP32_berval **berval = NULL;
+    DWORD size;
+
+    if (bv)
+    {
+        size = sizeof(*berval) * (bvarraylenU( bv ) + 1);
+        if ((berval = heap_alloc( size )))
+        {
+            struct berval **p = bv;
+            struct WLDAP32_berval **q = berval;
+
+            while (*p) *q++ = bervalUtoW( *p++ );
+            *q = NULL;
+        }
+    }
+    return berval;
+}
+
+static inline void bvarrayfreeU( struct berval **bv )
 {
     struct berval **p = bv;
     while (*p) heap_free( *p++ );
@@ -355,7 +444,7 @@ static inline LDAPModW *modAtoW( LDAPModA *mod )
         modW->mod_type = strAtoW( mod->mod_type );
 
         if (mod->mod_op & LDAP_MOD_BVALUES)
-            modW->mod_vals.modv_bvals = bvarraydup( mod->mod_vals.modv_bvals );
+            modW->mod_vals.modv_bvals = bvarrayWtoW( mod->mod_vals.modv_bvals );
         else
             modW->mod_vals.modv_strvals = strarrayAtoW( mod->mod_vals.modv_strvals );
     }
@@ -372,7 +461,7 @@ static inline LDAPMod *modWtoU( LDAPModW *mod )
         modU->mod_type = strWtoU( mod->mod_type );
 
         if (mod->mod_op & LDAP_MOD_BVALUES)
-            modU->mod_vals.modv_bvals = bvarraydup( mod->mod_vals.modv_bvals );
+            modU->mod_vals.modv_bvals = bvarrayWtoU( mod->mod_vals.modv_bvals );
         else
             modU->mod_vals.modv_strvals = strarrayWtoU( mod->mod_vals.modv_strvals );
     }
@@ -382,7 +471,7 @@ static inline LDAPMod *modWtoU( LDAPModW *mod )
 static inline void modfreeW( LDAPModW *mod )
 {
     if (mod->mod_op & LDAP_MOD_BVALUES)
-        bvarrayfree( mod->mod_vals.modv_bvals );
+        bvarrayfreeW( mod->mod_vals.modv_bvals );
     else
         strarrayfreeW( mod->mod_vals.modv_strvals );
     heap_free( mod );
@@ -391,7 +480,7 @@ static inline void modfreeW( LDAPModW *mod )
 static inline void modfreeU( LDAPMod *mod )
 {
     if (mod->mod_op & LDAP_MOD_BVALUES)
-        bvarrayfree( mod->mod_vals.modv_bvals );
+        bvarrayfreeU( mod->mod_vals.modv_bvals );
     else
         strarrayfreeU( mod->mod_vals.modv_strvals );
     heap_free( mod );
