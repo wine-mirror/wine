@@ -279,7 +279,7 @@ static typelib_t *current_typelib;
 %type <stgclass> storage_cls_spec
 %type <type_qualifier> type_qualifier m_type_qual_list
 %type <function_specifier> function_specifier
-%type <declspec> decl_spec decl_spec_no_type m_decl_spec_no_type
+%type <declspec> decl_spec unqualified_decl_spec decl_spec_no_type m_decl_spec_no_type
 %type <type> inherit interface interfacedef
 %type <type> interfaceref
 %type <type> dispinterface dispinterfacedef
@@ -287,7 +287,7 @@ static typelib_t *current_typelib;
 %type <str> namespacedef
 %type <type> base_type int_std
 %type <type> enumdef structdef uniondef typedecl
-%type <type> type qualified_type
+%type <type> type unqualified_type qualified_type
 %type <ifref> class_interface
 %type <ifref_list> class_interfaces
 %type <var> arg ne_union_field union_field s_field case enum enum_member declaration
@@ -763,9 +763,9 @@ expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| '*' expr %prec PPTR			{ $$ = make_expr1(EXPR_PPTR, $2); }
 	| expr MEMBERPTR aIDENTIFIER		{ $$ = make_expr2(EXPR_MEMBER, make_expr1(EXPR_PPTR, $1), make_exprs(EXPR_IDENTIFIER, $3)); }
 	| expr '.' aIDENTIFIER			{ $$ = make_expr2(EXPR_MEMBER, $1, make_exprs(EXPR_IDENTIFIER, $3)); }
-	| '(' decl_spec m_abstract_declarator ')' expr %prec CAST
+	| '(' unqualified_decl_spec m_abstract_declarator ')' expr %prec CAST
 						{ $$ = make_exprt(EXPR_CAST, declare_var(NULL, $2, $3, 0), $5); free($2); free($3); }
-	| tSIZEOF '(' decl_spec m_abstract_declarator ')'
+	| tSIZEOF '(' unqualified_decl_spec m_abstract_declarator ')'
 						{ $$ = make_exprt(EXPR_SIZEOF, declare_var(NULL, $3, $4, 0), NULL); free($3); free($4); }
 	| expr '[' expr ']'			{ $$ = make_expr2(EXPR_ARRAY, $1, $3); }
 	| '(' expr ')'				{ $$ = $2; }
@@ -1005,6 +1005,12 @@ decl_spec: type m_decl_spec_no_type		{ $$ = make_decl_spec($1, $2, NULL, STG_NON
 						{ $$ = make_decl_spec($2, $1, $3, STG_NONE, 0, 0); }
 	;
 
+unqualified_decl_spec: unqualified_type m_decl_spec_no_type
+						{ $$ = make_decl_spec($1, $2, NULL, STG_NONE, 0, 0); }
+	| decl_spec_no_type unqualified_type m_decl_spec_no_type
+						{ $$ = make_decl_spec($2, $1, $3, STG_NONE, 0, 0); }
+	;
+
 m_decl_spec_no_type:				{ $$ = NULL; }
 	| decl_spec_no_type
 	;
@@ -1146,8 +1152,8 @@ pointer_type:
 structdef: tSTRUCT m_typename '{' fields '}'	{ $$ = type_new_struct($2, current_namespace, TRUE, $4); }
 	;
 
-type:	  tVOID					{ $$ = type_new_void(); }
-	| qualified_type                        { $$ = $1; }
+unqualified_type:
+	  tVOID					{ $$ = type_new_void(); }
 	| base_type				{ $$ = $1; }
 	| enumdef				{ $$ = $1; }
 	| tENUM aIDENTIFIER			{ $$ = type_new_enum($2, current_namespace, FALSE, NULL); }
@@ -1156,6 +1162,12 @@ type:	  tVOID					{ $$ = type_new_void(); }
 	| uniondef				{ $$ = $1; }
 	| tUNION aIDENTIFIER			{ $$ = type_new_nonencapsulated_union($2, FALSE, NULL); }
 	| tSAFEARRAY '(' type ')'		{ $$ = make_safearray($3); }
+	| aKNOWNTYPE				{ $$ = find_type_or_error(current_namespace, $1); }
+	;
+
+type:
+	  unqualified_type
+	| namespace_pfx typename		{ $$ = find_type_or_error($1, $2); }
 	;
 
 typedef: m_attributes tTYPEDEF m_attributes decl_spec declarator_list
