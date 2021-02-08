@@ -282,6 +282,7 @@ static typelib_t *current_typelib;
 %type <declspec> decl_spec unqualified_decl_spec decl_spec_no_type m_decl_spec_no_type
 %type <type> inherit interface interfacedef
 %type <type> interfaceref
+%type <type> dispinterfaceref
 %type <type> dispinterface dispinterfacedef
 %type <type> module moduledef
 %type <str> namespacedef
@@ -926,6 +927,7 @@ class_interfaces:				{ $$ = NULL; }
 
 class_interface:
 	  m_attributes interfaceref ';'		{ $$ = make_ifref($2); $$->attrs = $1; }
+	| m_attributes dispinterfaceref ';'	{ $$ = make_ifref($2); $$->attrs = $1; }
 	;
 
 dispinterface: tDISPINTERFACE typename		{ $$ = type_dispinterface_declare($2); }
@@ -965,7 +967,11 @@ interfacedef: attributes interface inherit
 
 interfaceref:
 	  tINTERFACE typename			{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
-	| tDISPINTERFACE typename		{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
+	| tINTERFACE namespace_pfx typename	{ $$ = get_type(TYPE_INTERFACE, $3, $2, 0); }
+	;
+
+dispinterfaceref:
+	  tDISPINTERFACE typename		{ $$ = get_type(TYPE_INTERFACE, $2, current_namespace, 0); }
 	;
 
 module:   tMODULE typename			{ $$ = type_module_declare($2); }

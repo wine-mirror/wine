@@ -64,7 +64,7 @@ namespace Windows {
             ]
             runtimeclass VoiceInformation
             {
-                [default] interface IVoiceInformation;
+                [default] interface Windows.Media.SpeechSynthesis.IVoiceInformation;
             }
         }
     }
