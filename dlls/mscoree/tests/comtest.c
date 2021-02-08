@@ -195,7 +195,7 @@ static void run_registry_test(run_type run)
         ok(hr == S_OK, "Got %x\n", hr);
         ok(i == 42, "Expected 42, got %d\n", i);
         hr = ITest_QueryInterface(test, &IID_ITest2, (void**)&unk);
-        todo_wine ok(hr == S_OK, "ITest_QueryInterface returned %x\n", hr);
+        ok(hr == S_OK, "ITest_QueryInterface returned %x\n", hr);
         if (hr == S_OK) IUnknown_Release(unk);
         ITest_Release(test);
     }
