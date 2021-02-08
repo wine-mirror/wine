@@ -3525,6 +3525,16 @@ struct lookup
     unsigned int auto_zwj : 1;
 };
 
+static unsigned int opentype_layout_is_subst_context(const struct scriptshaping_context *context)
+{
+    return context->table == &context->cache->gsub;
+}
+
+static unsigned int opentype_layout_is_pos_context(const struct scriptshaping_context *context)
+{
+    return context->table == &context->cache->gpos;
+}
+
 static unsigned int opentype_layout_get_gsubgpos_subtable(const struct scriptshaping_context *context,
         const struct lookup *lookup, unsigned int subtable, unsigned int *lookup_type)
 {
@@ -3534,8 +3544,8 @@ static unsigned int opentype_layout_get_gsubgpos_subtable(const struct scriptsha
 
     subtable_offset += lookup->offset;
 
-    if ((context->table == &context->cache->gsub && lookup->type != GSUB_LOOKUP_EXTENSION_SUBST) ||
-            (context->table == &context->cache->gpos && lookup->type != GPOS_LOOKUP_EXTENSION_POSITION))
+    if ((opentype_layout_is_subst_context(context) && lookup->type != GSUB_LOOKUP_EXTENSION_SUBST) ||
+            (opentype_layout_is_pos_context(context) && lookup->type != GPOS_LOOKUP_EXTENSION_POSITION))
     {
         *lookup_type = lookup->type;
         return subtable_offset;
@@ -3616,7 +3626,7 @@ static void glyph_iterator_init(struct scriptshaping_context *context, unsigned 
     iter->match_data = NULL;
     iter->glyph_data = NULL;
     /* Context matching iterators will get these fixed up. */
-    iter->ignore_zwnj = context->table == &context->cache->gpos;
+    iter->ignore_zwnj = !!opentype_layout_is_pos_context(context);
     iter->ignore_zwj = context->auto_zwj;
 }
 
@@ -4663,7 +4673,7 @@ static void opentype_layout_set_glyph_masks(struct scriptshaping_context *contex
    for (g = 0; g < context->glyph_count; ++g)
        context->glyph_infos[g].mask = context->global_mask;
 
-   if (context->shaper->setup_masks)
+   if (opentype_layout_is_subst_context(context) && context->shaper->setup_masks)
        context->shaper->setup_masks(context, features);
 
    for (r = 0, start_char = 0; r < context->user_features.range_count; ++r)
@@ -6154,7 +6164,7 @@ BOOL opentype_layout_check_feature(struct scriptshaping_context *context, unsign
 
     opentype_layout_collect_lookups(context, script_index, language_index, &features, context->table, &lookups);
 
-    func_is_covered = context->table == &context->cache->gsub ? opentype_layout_gsub_lookup_is_glyph_covered :
+    func_is_covered = opentype_layout_is_subst_context(context) ? opentype_layout_gsub_lookup_is_glyph_covered :
             opentype_layout_gpos_lookup_is_glyph_covered;
 
     for (i = 0; i < lookups.count; ++i)
