@@ -1420,14 +1420,12 @@ static void dump_get_startup_info_reply( const struct get_startup_info_reply *re
 
 static void dump_init_process_done_request( const struct init_process_done_request *req )
 {
-    fprintf( stderr, " gui=%d", req->gui );
-    dump_uint64( ", module=", &req->module );
-    dump_uint64( ", entry=", &req->entry );
 }
 
 static void dump_init_process_done_reply( const struct init_process_done_reply *req )
 {
-    fprintf( stderr, " suspend=%d", req->suspend );
+    dump_uint64( " entry=", &req->entry );
+    fprintf( stderr, ", suspend=%d", req->suspend );
 }
 
 static void dump_init_first_thread_request( const struct init_first_thread_request *req )

@@ -900,15 +900,14 @@ struct get_startup_info_reply
 struct init_process_done_request
 {
     struct request_header __header;
-    int          gui;
-    mod_handle_t module;
-    client_ptr_t entry;
+    char __pad_12[4];
 };
 struct init_process_done_reply
 {
     struct reply_header __header;
+    client_ptr_t entry;
     int          suspend;
-    char __pad_12[4];
+    char __pad_20[4];
 };
 
 
@@ -6280,7 +6279,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 669
+#define SERVER_PROTOCOL_VERSION 670
 
 /* ### protocol_version end ### */
 

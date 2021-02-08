@@ -1587,7 +1587,7 @@ void server_init_process_done(void)
 {
     PEB *peb = NtCurrentTeb()->Peb;
     IMAGE_NT_HEADERS *nt = get_exe_nt_header();
-    void *entry = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
+    void *entry;
     NTSTATUS status;
     int suspend, needs_close, unixdir;
 
@@ -1613,11 +1613,9 @@ void server_init_process_done(void)
     /* Signal the parent process to continue */
     SERVER_START_REQ( init_process_done )
     {
-        req->module   = wine_server_client_ptr( peb->ImageBaseAddress );
-        req->entry    = wine_server_client_ptr( entry );
-        req->gui      = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
         status = wine_server_call( req );
         suspend = reply->suspend;
+        entry = wine_server_get_ptr( reply->entry );
     }
     SERVER_END_REQ;
 

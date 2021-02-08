@@ -1349,31 +1349,40 @@ DECL_HANDLER(init_process_done)
 {
     struct process_dll *dll;
     struct process *process = current->process;
+    struct memory_view *view;
+    client_ptr_t base;
+    const pe_image_info_t *image_info;
 
     if (is_process_init_done(process))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-    if (!(dll = find_process_dll( process, req->module )))
+    if (!(view = get_exe_view( process )))
     {
         set_error( STATUS_DLL_NOT_FOUND );
         return;
     }
+    if (!(image_info = get_view_image_info( view, &base ))) return;
 
-    /* main exe is the first in the dll list */
-    list_remove( &dll->entry );
-    list_add_head( &process->dlls, &dll->entry );
+    if ((dll = find_process_dll( process, base )))
+    {
+        /* main exe is the first in the dll list */
+        list_remove( &dll->entry );
+        list_add_head( &process->dlls, &dll->entry );
+    }
 
     process->start_time = current_time;
-    current->entry_point = req->entry;
+    current->entry_point = image_info->entry_point;
 
     init_process_tracing( process );
     generate_startup_debug_events( process );
     set_process_startup_state( process, STARTUP_DONE );
 
-    if (req->gui) process->idle_event = create_event( NULL, NULL, 0, 1, 0, NULL );
+    if (image_info->subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI)
+        process->idle_event = create_event( NULL, NULL, 0, 1, 0, NULL );
     if (process->debug_obj) set_process_debug_flag( process, 1 );
+    reply->entry = image_info->entry_point;
     reply->suspend = (current->suspend || process->suspend);
 }
 
