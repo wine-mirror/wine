@@ -127,7 +127,7 @@ struct accept_req
     struct list entry;
     struct async *async;
     struct iosb *iosb;
-    struct sock *acceptsock;
+    struct sock *sock, *acceptsock;
     int accepted;
     unsigned int recv_len, local_len;
 };
@@ -452,9 +452,14 @@ static inline int sock_error( struct fd *fd )
 static void free_accept_req( struct accept_req *req )
 {
     list_remove( &req->entry );
-    if (req->acceptsock) req->acceptsock->accept_recv_req = NULL;
+    if (req->acceptsock)
+    {
+        req->acceptsock->accept_recv_req = NULL;
+        release_object( req->acceptsock );
+    }
     release_object( req->async );
     release_object( req->iosb );
+    release_object( req->sock );
     free( req );
 }
 
@@ -1361,7 +1366,7 @@ static int sock_get_ntstatus( int err )
     }
 }
 
-static struct accept_req *alloc_accept_req( struct sock *acceptsock, struct async *async,
+static struct accept_req *alloc_accept_req( struct sock *sock, struct sock *acceptsock, struct async *async,
                                             const struct afd_accept_into_params *params )
 {
     struct accept_req *req = mem_alloc( sizeof(*req) );
@@ -1370,7 +1375,9 @@ static struct accept_req *alloc_accept_req( struct sock *acceptsock, struct asyn
     {
         req->async = (struct async *)grab_object( async );
         req->iosb = async_get_iosb( async );
+        req->sock = (struct sock *)grab_object( sock );
         req->acceptsock = acceptsock;
+        if (acceptsock) grab_object( acceptsock );
         req->accepted = 0;
         req->recv_len = 0;
         req->local_len = 0;
@@ -1424,7 +1431,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             if (sock->state & FD_WINE_NONBLOCKING) return 0;
             if (get_error() != (0xc0010000 | WSAEWOULDBLOCK)) return 0;
 
-            if (!(req = alloc_accept_req( NULL, async, NULL ))) return 0;
+            if (!(req = alloc_accept_req( sock, NULL, async, NULL ))) return 0;
             list_add_tail( &sock->accept_list, &req->entry );
 
             queue_async( &sock->accept_q, async );
@@ -1473,7 +1480,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return 0;
         }
 
-        if (!(req = alloc_accept_req( acceptsock, async, params )))
+        if (!(req = alloc_accept_req( sock, acceptsock, async, params )))
         {
             release_object( acceptsock );
             return 0;
