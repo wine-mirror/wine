@@ -358,6 +358,8 @@ HRESULT d3d8_vertex_declaration_init(struct d3d8_vertex_declaration *declaration
     {
         WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
         heap_free(declaration->elements);
+        if (hr == E_INVALIDARG)
+            hr = E_FAIL;
         return hr;
     }
 
@@ -379,6 +381,8 @@ HRESULT d3d8_vertex_declaration_init_fvf(struct d3d8_vertex_declaration *declara
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
+        if (hr == E_INVALIDARG)
+            hr = E_FAIL;
         return hr;
     }
 

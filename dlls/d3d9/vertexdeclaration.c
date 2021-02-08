@@ -406,6 +406,8 @@ static HRESULT vertexdeclaration_init(struct d3d9_vertex_declaration *declaratio
     {
         heap_free(declaration->elements);
         WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
+        if (hr == E_INVALIDARG)
+            hr = E_FAIL;
         return hr;
     }
 

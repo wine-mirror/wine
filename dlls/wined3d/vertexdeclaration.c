@@ -226,10 +226,10 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
 
         if (!(e->format->flags[WINED3D_GL_RES_TYPE_BUFFER] & WINED3DFMT_FLAG_VERTEX_ATTRIBUTE))
         {
-            FIXME("The application tries to use an unsupported format (%s), returning E_FAIL.\n",
+            FIXME("The application tries to use an unsupported format (%s).\n",
                     debug_d3dformat(elements[i].format));
             heap_free(declaration->elements);
-            return E_FAIL;
+            return E_INVALIDARG;
         }
 
         if (e->offset == WINED3D_APPEND_ALIGNED_ELEMENT)
@@ -254,7 +254,7 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
             WARN("Declaration element %u with format %s and offset %u is not %u byte aligned.\n",
                     i, debug_d3dformat(elements[i].format), e->offset, alignment);
             heap_free(declaration->elements);
-            return E_FAIL;
+            return E_INVALIDARG;
         }
     }
 
