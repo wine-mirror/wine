@@ -103,7 +103,6 @@ struct wg_parser_stream
 {
     GstPad *their_src, *post_sink, *post_src, *my_sink;
     GstElement *flip;
-    GstSegment *segment;
     GstCaps *caps;
 
     pthread_cond_t event_cond, event_empty_cond;
@@ -769,8 +768,6 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
                     break;
                 }
 
-                gst_segment_copy_into(segment, stream->segment);
-
                 stream_event.type = WG_PARSER_EVENT_SEGMENT;
                 stream_event.u.segment.position = segment->position / 100;
                 stream_event.u.segment.stop = segment->stop / 100;
@@ -822,7 +819,6 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
             break;
 
         case GST_EVENT_FLUSH_STOP:
-            gst_segment_init(stream->segment, GST_FORMAT_TIME);
             if (stream->enabled)
             {
                 pthread_mutex_lock(&parser->mutex);
@@ -928,7 +924,6 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *bu
 static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
         GstBuffer *buf, GstMapInfo *info, gsize offset, gsize size, DWORD bytes_per_second)
 {
-    struct wg_parser_stream *stream = pin->wg_stream;
     HRESULT hr;
     BYTE *ptr = NULL;
 
@@ -943,26 +938,19 @@ static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
     memcpy(ptr, &info->data[offset], size);
 
     if (GST_BUFFER_PTS_IS_VALID(buf)) {
-        REFERENCE_TIME rtStart;
-        GstClockTime ptsStart = buf->pts;
+        REFERENCE_TIME rtStart, ptsStart = buf->pts;
+
         if (offset > 0)
             ptsStart = buf->pts + gst_util_uint64_scale(offset, GST_SECOND, bytes_per_second);
-        rtStart = gst_segment_to_running_time(stream->segment, GST_FORMAT_TIME, ptsStart);
-        if (rtStart >= 0)
-            rtStart /= 100;
+        rtStart = ((ptsStart / 100) - pin->seek.llCurrent) * pin->seek.dRate;
 
         if (GST_BUFFER_DURATION_IS_VALID(buf)) {
-            REFERENCE_TIME rtStop;
-            REFERENCE_TIME tStart;
-            REFERENCE_TIME tStop;
-            GstClockTime ptsStop = buf->pts + buf->duration;
+            REFERENCE_TIME rtStop, tStart, tStop, ptsStop = buf->pts + buf->duration;
             if (offset + size < info->size)
                 ptsStop = buf->pts + gst_util_uint64_scale(offset + size, GST_SECOND, bytes_per_second);
             tStart = ptsStart / 100;
             tStop = ptsStop / 100;
-            rtStop = gst_segment_to_running_time(stream->segment, GST_FORMAT_TIME, ptsStop);
-            if (rtStop >= 0)
-                rtStop /= 100;
+            rtStop = ((ptsStop / 100) - pin->seek.llCurrent) * pin->seek.dRate;
             TRACE("Current time on %p: %i to %i ms\n", pin, (int)(rtStart / 10000), (int)(rtStop / 10000));
             IMediaSample_SetTime(sample, &rtStart, rtStop >= 0 ? &rtStop : NULL);
             IMediaSample_SetMediaTime(sample, &tStart, &tStop);
@@ -2473,7 +2461,6 @@ static void free_stream(struct wg_parser_stream *stream)
         gst_object_unref(stream->their_src);
     }
     gst_object_unref(stream->my_sink);
-    gst_segment_free(stream->segment);
 
     pthread_cond_destroy(&stream->event_cond);
     pthread_cond_destroy(&stream->event_empty_cond);
@@ -2538,8 +2525,6 @@ static struct parser_source *create_pin(struct parser *filter, const WCHAR *name
     pin->wg_stream = stream;
 
     strmbase_source_init(&pin->pin, &filter->filter, name, &source_ops);
-    stream->segment = gst_segment_new();
-    gst_segment_init(stream->segment, GST_FORMAT_TIME);
     pin->IQualityControl_iface.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
     strmbase_seeking_init(&pin->seek, &GST_Seeking_Vtbl, GST_ChangeStop,
             GST_ChangeCurrent, GST_ChangeRate);
