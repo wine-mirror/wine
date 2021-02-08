@@ -1599,8 +1599,14 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
            the same bracket depth as the IF, then the IF statement is over. This is required
            to handle nested ifs properly                                                     */
         } else if (isIF && (*cmdList)->bracketDepth == myDepth) {
-          WINE_TRACE("Found end of this nested IF statement, ending this if\n");
-          break;
+          static const WCHAR doW[] = {'d','o'};
+          if (WCMD_keyword_ws_found(doW, ARRAY_SIZE(doW), (*cmdList)->command)) {
+              WINE_TRACE("Still inside FOR-loop, not an end of IF statement\n");
+              *cmdList = (*cmdList)->nextcommand;
+          } else {
+              WINE_TRACE("Found end of this nested IF statement, ending this if\n");
+              break;
+          }
         } else if (!processThese) {
           if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
           WINE_TRACE("Skipping this command, as in not process mode (next = %p)\n", *cmdList);

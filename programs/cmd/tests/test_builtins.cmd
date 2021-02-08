@@ -1242,6 +1242,10 @@ goto :eof
 set WINE_STR_PARMS=
 set WINE_INT_PARMS=
 
+echo ------------ Testing if/for ------------
+if ""=="" for %%i in (A) DO (echo %%i)
+if not ""=="" for %%i in (B) DO (echo %%i)
+
 echo ------------ Testing for ------------
 echo --- plain FOR
 for %%i in (A B C) do echo %%i
