@@ -479,6 +479,7 @@ enum gsub_gpos_lookup_flags
 enum attach_type
 {
     GLYPH_ATTACH_NONE = 0,
+    GLYPH_ATTACH_MARK,
     GLYPH_ATTACH_CURSIVE,
 };
 
@@ -4221,6 +4222,10 @@ static BOOL opentype_layout_apply_mark_array(struct scriptshaping_context *conte
     else
         context->offsets[context->cur].advanceOffset = -context->advances[glyph_pos] + base_x - mark_x;
     context->offsets[context->cur].ascenderOffset = base_y - mark_y;
+    opentype_set_glyph_attach_type(context, context->cur, GLYPH_ATTACH_MARK);
+    context->glyph_infos[context->cur].attach_chain = (int)glyph_pos - (int)context->cur;
+    context->has_gpos_attachment = 1;
+
     context->cur++;
 
     return TRUE;
@@ -4781,7 +4786,7 @@ static void opentype_propagate_attachment_offsets(struct scriptshaping_context *
 {
     enum attach_type type = opentype_get_glyph_attach_type(context, i);
     int chain = context->glyph_infos[i].attach_chain;
-    unsigned int j;
+    unsigned int j, k;
 
     if (!chain)
         return;
@@ -4798,6 +4803,27 @@ static void opentype_propagate_attachment_offsets(struct scriptshaping_context *
     {
         /* FIXME: handle vertical direction. */
         context->offsets[i].ascenderOffset += context->offsets[j].ascenderOffset;
+    }
+    else if (type == GLYPH_ATTACH_MARK)
+    {
+        context->offsets[i].advanceOffset += context->offsets[j].advanceOffset;
+        context->offsets[i].ascenderOffset += context->offsets[j].ascenderOffset;
+
+        /* FIXME: handle vertical adjustment. */
+        if (context->is_rtl)
+        {
+            for (k = j + 1; k < i + 1; ++k)
+            {
+                context->offsets[i].advanceOffset += context->advances[k];
+            }
+        }
+        else
+        {
+            for (k = j; k < i; k++)
+            {
+                context->offsets[i].advanceOffset -= context->advances[k];
+            }
+        }
     }
 }
 
