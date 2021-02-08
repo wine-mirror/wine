@@ -470,10 +470,16 @@ enum gsub_gpos_lookup_flags
     LOOKUP_FLAG_IGNORE_BASE = 0x2,
     LOOKUP_FLAG_IGNORE_LIGATURES = 0x4,
     LOOKUP_FLAG_IGNORE_MARKS = 0x8,
-    LOOKUP_FLAG_IGNORE_MASK = 0xe,
+    LOOKUP_FLAG_IGNORE_MASK = 0xe, /* Combined LOOKUP_FLAG_IGNORE_* flags. */
 
     LOOKUP_FLAG_USE_MARK_FILTERING_SET = 0x10,
     LOOKUP_FLAG_MARK_ATTACHMENT_TYPE = 0xff00,
+};
+
+enum attach_type
+{
+    GLYPH_ATTACH_NONE = 0,
+    GLYPH_ATTACH_CURSIVE,
 };
 
 enum glyph_prop_flags
@@ -481,10 +487,14 @@ enum glyph_prop_flags
     GLYPH_PROP_BASE = LOOKUP_FLAG_IGNORE_BASE,
     GLYPH_PROP_LIGATURE = LOOKUP_FLAG_IGNORE_LIGATURES,
     GLYPH_PROP_MARK = LOOKUP_FLAG_IGNORE_MARKS,
+
     GLYPH_PROP_ZWNJ = 0x10,
     GLYPH_PROP_ZWJ = 0x20,
     GLYPH_PROP_IGNORABLE = 0x40,
     GLYPH_PROP_HIDDEN = 0x80,
+
+    GLYPH_PROP_MARK_ATTACH_CLASS_MASK = 0xff00, /* Used with LOOKUP_FLAG_MARK_ATTACHMENT_TYPE. */
+    GLYPH_PROP_ATTACH_TYPE_MASK = 0xff0000,
 };
 
 enum gpos_lookup_type
@@ -4036,6 +4046,43 @@ static void opentype_layout_gpos_get_anchor(const struct scriptshaping_context *
         WARN("Unknown anchor format %u.\n", format);
 }
 
+static void opentype_set_glyph_attach_type(struct scriptshaping_context *context, unsigned int idx,
+        enum attach_type attach_type)
+{
+    context->glyph_infos[idx].props &= ~GLYPH_PROP_ATTACH_TYPE_MASK;
+    context->glyph_infos[idx].props |= attach_type << 16;
+}
+
+static enum attach_type opentype_get_glyph_attach_type(const struct scriptshaping_context *context, unsigned int idx)
+{
+    return (context->glyph_infos[idx].props >> 16) & 0xff;
+}
+
+static void opentype_reverse_cursive_offset(struct scriptshaping_context *context, unsigned int i,
+        unsigned int new_parent)
+{
+    enum attach_type type = opentype_get_glyph_attach_type(context, i);
+    int chain = context->glyph_infos[i].attach_chain;
+    unsigned int j;
+
+    if (!chain || type != GLYPH_ATTACH_CURSIVE)
+        return;
+
+    context->glyph_infos[i].attach_chain = 0;
+
+    j = (int)i + chain;
+    if (j == new_parent)
+        return;
+
+    opentype_reverse_cursive_offset(context, j, new_parent);
+
+    /* FIXME: handle vertical flow direction */
+    context->offsets[j].ascenderOffset = -context->offsets[i].ascenderOffset;
+
+    context->glyph_infos[j].attach_chain = -chain;
+    opentype_set_glyph_attach_type(context, j, type);
+}
+
 static BOOL opentype_layout_apply_gpos_cursive_attachment(struct scriptshaping_context *context,
         const struct lookup *lookup, unsigned int subtable_offset)
 {
@@ -4049,9 +4096,10 @@ static BOOL opentype_layout_apply_gpos_cursive_attachment(struct scriptshaping_c
     {
         WORD coverage_offset = table_read_be_word(table, subtable_offset +
                 FIELD_OFFSET(struct ot_gpos_cursive_format1, coverage));
-        unsigned int glyph_index, entry_count, entry_anchor, exit_anchor;
+        unsigned int glyph_index, entry_count, entry_anchor, exit_anchor, child, parent;
         float entry_x, entry_y, exit_x, exit_y, delta;
         struct glyph_iterator prev_iter;
+        float y_offset;
 
         if (!coverage_offset)
             return FALSE;
@@ -4100,9 +4148,28 @@ static BOOL opentype_layout_apply_gpos_cursive_attachment(struct scriptshaping_c
         }
 
         if (lookup->flags & LOOKUP_FLAG_RTL)
-            context->offsets[prev_iter.pos].ascenderOffset = entry_y - exit_y;
+        {
+            y_offset = entry_y - exit_y;
+            child = prev_iter.pos;
+            parent = context->cur;
+        }
         else
-            context->offsets[context->cur].ascenderOffset = exit_y - entry_y;
+        {
+            y_offset = exit_y - entry_y;
+            child = context->cur;
+            parent = prev_iter.pos;
+        }
+
+        opentype_reverse_cursive_offset(context, child, parent);
+
+        context->offsets[child].ascenderOffset = y_offset;
+
+        opentype_set_glyph_attach_type(context, child, GLYPH_ATTACH_CURSIVE);
+        context->glyph_infos[child].attach_chain = (int)parent - (int)child;
+        context->has_gpos_attachment = 1;
+
+        if (context->glyph_infos[parent].attach_chain == -context->glyph_infos[child].attach_chain)
+            context->glyph_infos[parent].attach_chain = 0;
 
         context->cur++;
     }
@@ -4153,7 +4220,6 @@ static BOOL opentype_layout_apply_mark_array(struct scriptshaping_context *conte
         context->offsets[context->cur].advanceOffset = mark_x - base_x;
     else
         context->offsets[context->cur].advanceOffset = -context->advances[glyph_pos] + base_x - mark_x;
-
     context->offsets[context->cur].ascenderOffset = base_y - mark_y;
     context->cur++;
 
@@ -4711,6 +4777,30 @@ static void opentype_layout_apply_gpos_context_lookup(struct scriptshaping_conte
         opentype_layout_apply_gpos_lookup(context, &lookup);
 }
 
+static void opentype_propagate_attachment_offsets(struct scriptshaping_context *context, unsigned int i)
+{
+    enum attach_type type = opentype_get_glyph_attach_type(context, i);
+    int chain = context->glyph_infos[i].attach_chain;
+    unsigned int j;
+
+    if (!chain)
+        return;
+
+    context->glyph_infos[i].attach_chain = 0;
+
+    j = (int)i + chain;
+    if (j >= context->glyph_count)
+        return;
+
+    opentype_propagate_attachment_offsets(context, j);
+
+    if (type == GLYPH_ATTACH_CURSIVE)
+    {
+        /* FIXME: handle vertical direction. */
+        context->offsets[i].ascenderOffset += context->offsets[j].ascenderOffset;
+    }
+}
+
 void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, unsigned int script_index,
         unsigned int language_index, struct shaping_features *features)
 {
@@ -4751,6 +4841,12 @@ void opentype_layout_apply_gpos_features(struct scriptshaping_context *context, 
     }
 
     heap_free(lookups.lookups);
+
+    if (context->has_gpos_attachment)
+    {
+        for (i = 0; i < context->glyph_count; ++i)
+            opentype_propagate_attachment_offsets(context, i);
+    }
 }
 
 static void opentype_layout_replace_glyph(struct scriptshaping_context *context, UINT16 glyph)

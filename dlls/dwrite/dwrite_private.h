@@ -517,6 +517,8 @@ struct shaping_glyph_info
     unsigned int mask;
     /* Derived from glyph class, supplied by GDEF. */
     unsigned int props;
+    /* Used for GPOS mark and cursive attachments. */
+    int attach_chain;
     /* Only relevant for isClusterStart glyphs. Indicates text position for this cluster. */
     unsigned int start_text_idx;
 };
@@ -649,6 +651,7 @@ struct scriptshaping_context
     unsigned int auto_zwj;
     unsigned int auto_zwnj;
     struct shaping_glyph_info *glyph_infos;
+    unsigned int has_gpos_attachment : 1;
 
     unsigned int cur;
     unsigned int glyph_count;
