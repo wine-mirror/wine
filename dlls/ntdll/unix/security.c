@@ -709,11 +709,13 @@ NTSTATUS WINAPI NtAccessCheck( PSECURITY_DESCRIPTOR descr, HANDLE token, ACCESS_
     data_size_t len;
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
+    ULONG priv_len;
 
     TRACE( "(%p, %p, %08x, %p, %p, %p, %p, %p)\n",
            descr, token, access, mapping, privs, retlen, access_granted, access_status );
 
     if (!privs || !retlen) return STATUS_ACCESS_VIOLATION;
+    priv_len = *retlen;
 
     /* reuse the object attribute SD marshalling */
     InitializeObjectAttributes( &attr, NULL, 0, 0, descr );
@@ -728,16 +730,20 @@ NTSTATUS WINAPI NtAccessCheck( PSECURITY_DESCRIPTOR descr, HANDLE token, ACCESS_
         req->mapping.exec = mapping->GenericExecute;
         req->mapping.all = mapping->GenericAll;
         wine_server_add_data( req, objattr + 1, objattr->sd_len );
-        wine_server_set_reply( req, privs->Privilege, *retlen - offsetof( PRIVILEGE_SET, Privilege ) );
+        wine_server_set_reply( req, privs->Privilege, priv_len - offsetof( PRIVILEGE_SET, Privilege ) );
 
         status = wine_server_call( req );
 
         if (status == STATUS_SUCCESS)
         {
             *retlen = max( offsetof( PRIVILEGE_SET, Privilege ) + reply->privileges_len, sizeof(PRIVILEGE_SET) );
-            privs->PrivilegeCount = reply->privileges_len / sizeof(LUID_AND_ATTRIBUTES);
-            *access_status = reply->access_status;
-            *access_granted = reply->access_granted;
+            if (priv_len >= *retlen)
+            {
+                privs->PrivilegeCount = reply->privileges_len / sizeof(LUID_AND_ATTRIBUTES);
+                *access_status = reply->access_status;
+                *access_granted = reply->access_granted;
+            }
+            else status = STATUS_BUFFER_TOO_SMALL;
         }
     }
     SERVER_END_REQ;
