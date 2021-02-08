@@ -75,7 +75,7 @@ static void append_chain_callconv(type_t *chain, char *callconv);
 static warning_list_t *append_warning(warning_list_t *, int);
 
 static type_t *reg_typedefs(decl_spec_t *decl_spec, var_list_t *names, attr_list_t *attrs);
-static type_t *find_type_or_error(const char *name);
+static type_t *find_type_or_error(struct namespace *parent, const char *name);
 
 static var_t *reg_const(var_t *var);
 
@@ -858,17 +858,17 @@ typename: aIDENTIFIER
 ident:	  typename				{ $$ = make_var($1); }
 	;
 
-base_type: tBYTE				{ $$ = find_type_or_error($<str>1); }
-	| tWCHAR				{ $$ = find_type_or_error($<str>1); }
+base_type: tBYTE				{ $$ = find_type_or_error(NULL, $<str>1); }
+	| tWCHAR				{ $$ = find_type_or_error(NULL, $<str>1); }
 	| int_std
 	| tSIGNED int_std			{ $$ = type_new_int(type_basic_get_type($2), -1); }
 	| tUNSIGNED int_std			{ $$ = type_new_int(type_basic_get_type($2), 1); }
 	| tUNSIGNED				{ $$ = type_new_int(TYPE_BASIC_INT, 1); }
-	| tFLOAT				{ $$ = find_type_or_error($<str>1); }
-	| tDOUBLE				{ $$ = find_type_or_error($<str>1); }
-	| tBOOLEAN				{ $$ = find_type_or_error($<str>1); }
-	| tERRORSTATUST				{ $$ = find_type_or_error($<str>1); }
-	| tHANDLET				{ $$ = find_type_or_error($<str>1); }
+	| tFLOAT				{ $$ = find_type_or_error(NULL, $<str>1); }
+	| tDOUBLE				{ $$ = find_type_or_error(NULL, $<str>1); }
+	| tBOOLEAN				{ $$ = find_type_or_error(NULL, $<str>1); }
+	| tERRORSTATUST				{ $$ = find_type_or_error(NULL, $<str>1); }
+	| tHANDLET				{ $$ = find_type_or_error(NULL, $<str>1); }
 	;
 
 m_int:
@@ -887,12 +887,12 @@ int_std:  tINT					{ $$ = type_new_int(TYPE_BASIC_INT, 0); }
 	;
 
 qualified_seq:
-      aKNOWNTYPE      { $$ = find_type_or_error($1); }
+      aKNOWNTYPE      { $$ = find_type_or_error(lookup_namespace, $1); }
     | aIDENTIFIER '.' { push_lookup_namespace($1); } qualified_seq { $$ = $4; }
     ;
 
 qualified_type:
-      aKNOWNTYPE     { $$ = find_type_or_error($1); }
+      aKNOWNTYPE     { $$ = find_type_or_error(current_namespace, $1); }
     | aNAMESPACE '.' { init_lookup_namespace($1); } qualified_seq { $$ = $4; }
     ;
 
@@ -965,7 +965,7 @@ interfacedef: attributes interface inherit
  * definition of a derived class, I'll try to support it with this rule */
 	| attributes interface ':' aIDENTIFIER
 	  '{' import int_statements '}'
-	   semicolon_opt			{ $$ = type_interface_define($2, $1, find_type_or_error($4), $7); }
+	   semicolon_opt			{ $$ = type_interface_define($2, $1, find_type_or_error(current_namespace, $4), $7); }
 	| dispinterfacedef semicolon_opt	{ $$ = $1; }
 	;
 
@@ -1189,14 +1189,14 @@ acf_int_statements
 
 acf_int_statement
         : tTYPEDEF acf_attributes aKNOWNTYPE ';'
-                                                { type_t *type = find_type_or_error($3);
+                                                { type_t *type = find_type_or_error(current_namespace, $3);
                                                   type->attrs = append_attr_list(type->attrs, $2);
                                                 }
 	;
 
 acf_interface
         : acf_attributes tINTERFACE aKNOWNTYPE '{' acf_int_statements '}'
-                                                {  type_t *iface = find_type_or_error($3);
+                                                {  type_t *iface = find_type_or_error(current_namespace, $3);
                                                    if (type_get_type(iface) != TYPE_INTERFACE)
                                                        error_loc("%s is not an interface\n", iface->name);
                                                    iface->attrs = append_attr_list(iface->attrs, $1);
@@ -2034,13 +2034,12 @@ type_t *find_type(const char *name, struct namespace *namespace, int t)
   return NULL;
 }
 
-static type_t *find_type_or_error(const char *name)
+static type_t *find_type_or_error(struct namespace *namespace, const char *name)
 {
     type_t *type;
-    if (!(type = find_type(name, current_namespace, 0)) &&
-        !(type = find_type(name, lookup_namespace, 0)))
+    if (!(type = find_type(name, namespace, 0)))
     {
-        error_loc("type '%s' not found\n", name);
+        error_loc("type '%s' not found in %s namespace\n", name, namespace && namespace->name ? namespace->name : "global");
         return NULL;
     }
     return type;
@@ -2851,7 +2850,7 @@ static void add_explicit_handle_if_necessary(const type_t *iface, var_t *func)
          * function */
         var_t *idl_handle = make_var(xstrdup("IDL_handle"));
         idl_handle->attrs = append_attr(NULL, make_attr(ATTR_IN));
-        idl_handle->declspec.type = find_type_or_error("handle_t");
+        idl_handle->declspec.type = find_type_or_error(NULL, "handle_t");
         type_function_add_head_arg(func->declspec.type, idl_handle);
     }
 }
@@ -3141,7 +3140,7 @@ static statement_t *make_statement_typedef(declarator_list_t *decls, int declonl
     LIST_FOR_EACH_ENTRY_SAFE( decl, next, decls, declarator_t, entry )
     {
         var_t *var = decl->var;
-        type_t *type = find_type_or_error(var->name);
+        type_t *type = find_type_or_error(current_namespace, var->name);
         *type_list = xmalloc(sizeof(type_list_t));
         (*type_list)->type = type;
         (*type_list)->next = NULL;
