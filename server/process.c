@@ -711,7 +711,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
     if (!parent)
     {
         process->handles = alloc_handle_table( process, 0 );
-        process->token = token_create_admin( TRUE, -1, TokenElevationTypeFull, default_session_id );
+        process->token = token_create_admin( TRUE, -1, TokenElevationTypeLimited, default_session_id );
         process->affinity = ~0;
     }
     else
