@@ -66,6 +66,66 @@ static inline const char *debugstr_time(REFERENCE_TIME time)
 
 #define MEDIATIME_FROM_BYTES(x) ((LONGLONG)(x) * 10000000)
 
+struct wg_format
+{
+    enum wg_major_type
+    {
+        WG_MAJOR_TYPE_UNKNOWN,
+        WG_MAJOR_TYPE_VIDEO,
+        WG_MAJOR_TYPE_AUDIO,
+    } major_type;
+
+    union
+    {
+        struct
+        {
+            enum wg_video_format
+            {
+                WG_VIDEO_FORMAT_UNKNOWN,
+
+                WG_VIDEO_FORMAT_BGRA,
+                WG_VIDEO_FORMAT_BGRx,
+                WG_VIDEO_FORMAT_BGR,
+                WG_VIDEO_FORMAT_RGB15,
+                WG_VIDEO_FORMAT_RGB16,
+
+                WG_VIDEO_FORMAT_AYUV,
+                WG_VIDEO_FORMAT_I420,
+                WG_VIDEO_FORMAT_NV12,
+                WG_VIDEO_FORMAT_UYVY,
+                WG_VIDEO_FORMAT_YUY2,
+                WG_VIDEO_FORMAT_YV12,
+                WG_VIDEO_FORMAT_YVYU,
+
+                WG_VIDEO_FORMAT_CINEPAK,
+            } format;
+            uint32_t width, height;
+            uint32_t fps_n, fps_d;
+        } video;
+        struct
+        {
+            enum wg_audio_format
+            {
+                WG_AUDIO_FORMAT_UNKNOWN,
+
+                WG_AUDIO_FORMAT_U8,
+                WG_AUDIO_FORMAT_S16LE,
+                WG_AUDIO_FORMAT_S24LE,
+                WG_AUDIO_FORMAT_S32LE,
+                WG_AUDIO_FORMAT_F32LE,
+                WG_AUDIO_FORMAT_F64LE,
+
+                WG_AUDIO_FORMAT_MPEG1_LAYER1,
+                WG_AUDIO_FORMAT_MPEG1_LAYER2,
+                WG_AUDIO_FORMAT_MPEG1_LAYER3,
+            } format;
+
+            uint32_t channels;
+            uint32_t rate;
+        } audio;
+    } u;
+};
+
 extern LONG object_locks;
 
 HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out) DECLSPEC_HIDDEN;
