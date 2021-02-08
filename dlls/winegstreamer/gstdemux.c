@@ -782,52 +782,183 @@ static bool amt_from_gst_caps(const GstCaps *caps, AM_MEDIA_TYPE *mt)
     return amt_from_wg_format(mt, &wg_format);
 }
 
-static GstCaps *amt_to_gst_caps_video(const AM_MEDIA_TYPE *mt)
+static bool amt_to_wg_format_audio(const AM_MEDIA_TYPE *mt, struct wg_format *format)
 {
     static const struct
     {
         const GUID *subtype;
-        GstVideoFormat format;
+        WORD depth;
+        enum wg_audio_format format;
     }
     format_map[] =
     {
-        {&MEDIASUBTYPE_ARGB32,  GST_VIDEO_FORMAT_BGRA},
-        {&MEDIASUBTYPE_RGB32,   GST_VIDEO_FORMAT_BGRx},
-        {&MEDIASUBTYPE_RGB24,   GST_VIDEO_FORMAT_BGR},
-        {&MEDIASUBTYPE_RGB565,  GST_VIDEO_FORMAT_RGB16},
-        {&MEDIASUBTYPE_RGB555,  GST_VIDEO_FORMAT_RGB15},
+        {&MEDIASUBTYPE_PCM,          8, WG_AUDIO_FORMAT_U8},
+        {&MEDIASUBTYPE_PCM,         16, WG_AUDIO_FORMAT_S16LE},
+        {&MEDIASUBTYPE_PCM,         24, WG_AUDIO_FORMAT_S24LE},
+        {&MEDIASUBTYPE_PCM,         32, WG_AUDIO_FORMAT_S32LE},
+        {&MEDIASUBTYPE_IEEE_FLOAT,  32, WG_AUDIO_FORMAT_F32LE},
+        {&MEDIASUBTYPE_IEEE_FLOAT,  64, WG_AUDIO_FORMAT_F64LE},
     };
 
-    const VIDEOINFOHEADER *vih = (VIDEOINFOHEADER *)mt->pbFormat;
-    GstVideoFormat format = GST_VIDEO_FORMAT_UNKNOWN;
-    GstVideoInfo info;
+    const WAVEFORMATEX *audio_format = (const WAVEFORMATEX *)mt->pbFormat;
     unsigned int i;
-    GstCaps *caps;
 
-    if (!IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo)
-            || mt->cbFormat < sizeof(VIDEOINFOHEADER) || !mt->pbFormat)
-        return NULL;
+    if (!IsEqualGUID(&mt->formattype, &FORMAT_WaveFormatEx))
+    {
+        FIXME("Unknown format type %s.\n", debugstr_guid(&mt->formattype));
+        return false;
+    }
+    if (mt->cbFormat < sizeof(WAVEFORMATEX) || !mt->pbFormat)
+    {
+        ERR("Unexpected format size %u.\n", mt->cbFormat);
+        return false;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_AUDIO;
+    format->u.audio.channels = audio_format->nChannels;
+    format->u.audio.rate = audio_format->nSamplesPerSec;
+
+    for (i = 0; i < ARRAY_SIZE(format_map); ++i)
+    {
+        if (IsEqualGUID(&mt->subtype, format_map[i].subtype)
+                && audio_format->wBitsPerSample == format_map[i].depth)
+        {
+            format->u.audio.format = format_map[i].format;
+            return true;
+        }
+    }
+
+    FIXME("Unknown subtype %s, depth %u.\n", debugstr_guid(&mt->subtype), audio_format->wBitsPerSample);
+    return false;
+}
+
+static bool amt_to_wg_format_video(const AM_MEDIA_TYPE *mt, struct wg_format *format)
+{
+    static const struct
+    {
+        const GUID *subtype;
+        enum wg_video_format format;
+    }
+    format_map[] =
+    {
+        {&MEDIASUBTYPE_ARGB32,  WG_VIDEO_FORMAT_BGRA},
+        {&MEDIASUBTYPE_RGB32,   WG_VIDEO_FORMAT_BGRx},
+        {&MEDIASUBTYPE_RGB24,   WG_VIDEO_FORMAT_BGR},
+        {&MEDIASUBTYPE_RGB555,  WG_VIDEO_FORMAT_RGB15},
+        {&MEDIASUBTYPE_RGB565,  WG_VIDEO_FORMAT_RGB16},
+        {&MEDIASUBTYPE_AYUV,    WG_VIDEO_FORMAT_AYUV},
+        {&MEDIASUBTYPE_I420,    WG_VIDEO_FORMAT_I420},
+        {&MEDIASUBTYPE_NV12,    WG_VIDEO_FORMAT_NV12},
+        {&MEDIASUBTYPE_UYVY,    WG_VIDEO_FORMAT_UYVY},
+        {&MEDIASUBTYPE_YUY2,    WG_VIDEO_FORMAT_YUY2},
+        {&MEDIASUBTYPE_YV12,    WG_VIDEO_FORMAT_YV12},
+        {&MEDIASUBTYPE_YVYU,    WG_VIDEO_FORMAT_YVYU},
+        {&MEDIASUBTYPE_CVID,    WG_VIDEO_FORMAT_CINEPAK},
+    };
+
+    const VIDEOINFOHEADER *video_format = (const VIDEOINFOHEADER *)mt->pbFormat;
+    unsigned int i;
+
+    if (!IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+    {
+        FIXME("Unknown format type %s.\n", debugstr_guid(&mt->formattype));
+        return false;
+    }
+    if (mt->cbFormat < sizeof(VIDEOINFOHEADER) || !mt->pbFormat)
+    {
+        ERR("Unexpected format size %u.\n", mt->cbFormat);
+        return false;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_VIDEO;
+    format->u.video.width = video_format->bmiHeader.biWidth;
+    format->u.video.height = video_format->bmiHeader.biHeight;
+    format->u.video.fps_n = 10000000;
+    format->u.video.fps_d = video_format->AvgTimePerFrame;
 
     for (i = 0; i < ARRAY_SIZE(format_map); ++i)
     {
         if (IsEqualGUID(&mt->subtype, format_map[i].subtype))
         {
-            format = format_map[i].format;
-            break;
+            format->u.video.format = format_map[i].format;
+            return true;
         }
     }
 
-    if (format == GST_VIDEO_FORMAT_UNKNOWN)
-        format = gst_video_format_from_fourcc(vih->bmiHeader.biCompression);
+    FIXME("Unknown subtype %s.\n", debugstr_guid(&mt->subtype));
+    return false;
+}
 
-    if (format == GST_VIDEO_FORMAT_UNKNOWN)
+static bool amt_to_wg_format(const AM_MEDIA_TYPE *mt, struct wg_format *format)
+{
+    memset(format, 0, sizeof(*format));
+
+    if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Video))
+        return amt_to_wg_format_video(mt, format);
+    if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio))
+        return amt_to_wg_format_audio(mt, format);
+
+    FIXME("Unknown major type %s.\n", debugstr_guid(&mt->majortype));
+    return false;
+}
+
+static GstAudioFormat wg_audio_format_to_gst(enum wg_audio_format format)
+{
+    switch (format)
     {
-        FIXME("Unknown video format (subtype %s, compression %#x).\n",
-                debugstr_guid(&mt->subtype), vih->bmiHeader.biCompression);
-        return NULL;
+        case WG_AUDIO_FORMAT_U8:    return GST_AUDIO_FORMAT_U8;
+        case WG_AUDIO_FORMAT_S16LE: return GST_AUDIO_FORMAT_S16LE;
+        case WG_AUDIO_FORMAT_S24LE: return GST_AUDIO_FORMAT_S24LE;
+        case WG_AUDIO_FORMAT_S32LE: return GST_AUDIO_FORMAT_S32LE;
+        case WG_AUDIO_FORMAT_F32LE: return GST_AUDIO_FORMAT_F32LE;
+        case WG_AUDIO_FORMAT_F64LE: return GST_AUDIO_FORMAT_F64LE;
+        default: return GST_AUDIO_FORMAT_UNKNOWN;
     }
+}
 
-    gst_video_info_set_format(&info, format, vih->bmiHeader.biWidth, vih->bmiHeader.biHeight);
+static GstCaps *wg_format_to_caps_audio(const struct wg_format *format)
+{
+    GstAudioFormat audio_format;
+    GstAudioInfo info;
+
+    if ((audio_format = wg_audio_format_to_gst(format->u.audio.format)) == GST_AUDIO_FORMAT_UNKNOWN)
+        return NULL;
+
+    gst_audio_info_set_format(&info, audio_format, format->u.audio.rate, format->u.audio.channels, NULL);
+    return gst_audio_info_to_caps(&info);
+}
+
+static GstVideoFormat wg_video_format_to_gst(enum wg_video_format format)
+{
+    switch (format)
+    {
+        case WG_VIDEO_FORMAT_BGRA:  return GST_VIDEO_FORMAT_BGRA;
+        case WG_VIDEO_FORMAT_BGRx:  return GST_VIDEO_FORMAT_BGRx;
+        case WG_VIDEO_FORMAT_BGR:   return GST_VIDEO_FORMAT_BGR;
+        case WG_VIDEO_FORMAT_RGB15: return GST_VIDEO_FORMAT_RGB15;
+        case WG_VIDEO_FORMAT_RGB16: return GST_VIDEO_FORMAT_RGB16;
+        case WG_VIDEO_FORMAT_AYUV:  return GST_VIDEO_FORMAT_AYUV;
+        case WG_VIDEO_FORMAT_I420:  return GST_VIDEO_FORMAT_I420;
+        case WG_VIDEO_FORMAT_NV12:  return GST_VIDEO_FORMAT_NV12;
+        case WG_VIDEO_FORMAT_UYVY:  return GST_VIDEO_FORMAT_UYVY;
+        case WG_VIDEO_FORMAT_YUY2:  return GST_VIDEO_FORMAT_YUY2;
+        case WG_VIDEO_FORMAT_YV12:  return GST_VIDEO_FORMAT_YV12;
+        case WG_VIDEO_FORMAT_YVYU:  return GST_VIDEO_FORMAT_YVYU;
+        default: return GST_VIDEO_FORMAT_UNKNOWN;
+    }
+}
+
+static GstCaps *wg_format_to_caps_video(const struct wg_format *format)
+{
+    GstVideoFormat video_format;
+    GstVideoInfo info;
+    unsigned int i;
+    GstCaps *caps;
+
+    if ((video_format = wg_video_format_to_gst(format->u.video.format)) == GST_VIDEO_FORMAT_UNKNOWN)
+        return NULL;
+
+    gst_video_info_set_format(&info, video_format, format->u.video.width, format->u.video.height);
     if ((caps = gst_video_info_to_caps(&info)))
     {
         /* Clear some fields that shouldn't prevent us from connecting. */
@@ -840,47 +971,28 @@ static GstCaps *amt_to_gst_caps_video(const AM_MEDIA_TYPE *mt)
     return caps;
 }
 
-static GstCaps *amt_to_gst_caps_audio(const AM_MEDIA_TYPE *mt)
+static GstCaps *wg_format_to_caps(const struct wg_format *format)
 {
-    const WAVEFORMATEX *wfx = (WAVEFORMATEX *)mt->pbFormat;
-    GstAudioFormat format = GST_AUDIO_FORMAT_UNKNOWN;
-    GstAudioInfo info;
-
-    if (!IsEqualGUID(&mt->formattype, &FORMAT_WaveFormatEx)
-            || mt->cbFormat < sizeof(WAVEFORMATEX) || !mt->pbFormat)
-        return NULL;
-
-    if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_PCM))
-        format = gst_audio_format_build_integer(wfx->wBitsPerSample != 8,
-                G_LITTLE_ENDIAN, wfx->wBitsPerSample, wfx->wBitsPerSample);
-    else if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_IEEE_FLOAT))
+    switch (format->major_type)
     {
-        if (wfx->wBitsPerSample == 32)
-            format = GST_AUDIO_FORMAT_F32LE;
-        else if (wfx->wBitsPerSample == 64)
-            format = GST_AUDIO_FORMAT_F64LE;
+        case WG_MAJOR_TYPE_UNKNOWN:
+            return NULL;
+        case WG_MAJOR_TYPE_AUDIO:
+            return wg_format_to_caps_audio(format);
+        case WG_MAJOR_TYPE_VIDEO:
+            return wg_format_to_caps_video(format);
     }
-
-    if (format == GST_AUDIO_FORMAT_UNKNOWN)
-    {
-        FIXME("Unknown audio format (subtype %s, depth %u).\n",
-                debugstr_guid(&mt->subtype), wfx->wBitsPerSample);
-        return NULL;
-    }
-
-    gst_audio_info_set_format(&info, format, wfx->nSamplesPerSec, wfx->nChannels, NULL);
-    return gst_audio_info_to_caps(&info);
+    assert(0);
+    return NULL;
 }
 
 static GstCaps *amt_to_gst_caps(const AM_MEDIA_TYPE *mt)
 {
-    if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Video))
-        return amt_to_gst_caps_video(mt);
-    else if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio))
-        return amt_to_gst_caps_audio(mt);
+    struct wg_format wg_format;
 
-    FIXME("Unknown major type %s.\n", debugstr_guid(&mt->majortype));
-    return NULL;
+    if (!amt_to_wg_format(mt, &wg_format))
+        return NULL;
+    return wg_format_to_caps(&wg_format);
 }
 
 static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
