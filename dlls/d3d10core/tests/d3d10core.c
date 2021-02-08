@@ -12270,6 +12270,98 @@ static void test_create_input_layout(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_input_layout_alignment(void)
+{
+    ID3D10InputLayout *layout;
+    ID3D10Device *device;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    static const DWORD vs_code[] =
+    {
+#if 0
+        float4 main(float4 position : POSITION) : SV_POSITION
+        {
+            return position;
+        }
+#endif
+        0x43425844, 0xa7a2f22d, 0x83ff2560, 0xe61638bd, 0x87e3ce90, 0x00000001, 0x000000d8, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x0000003c, 0x00010040,
+        0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
+        0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
+    };
+
+    static const struct
+    {
+        D3D10_INPUT_ELEMENT_DESC elements[2];
+        HRESULT hr;
+    }
+    test_data[] =
+    {
+        {{
+            {"POSITION", 0, DXGI_FORMAT_R8_UINT,            0,  0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+            {"COLOR",    0, DXGI_FORMAT_R16_UINT,           0,  2, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        }, S_OK},
+        {{
+            {"POSITION", 0, DXGI_FORMAT_R8_UINT,            0,  0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+            {"COLOR",    0, DXGI_FORMAT_R16_UINT,           0,  1, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        }, E_INVALIDARG},
+        {{
+            {"POSITION", 0, DXGI_FORMAT_R8_UINT,            0,  0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+            {"COLOR",    0, DXGI_FORMAT_R8_UINT,            0,  1, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        }, S_OK},
+        {{
+            {"POSITION", 0, DXGI_FORMAT_R16_UINT,           0,  0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+            {"COLOR",    0, DXGI_FORMAT_R32_UINT,           0,  2, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        }, E_INVALIDARG},
+        {{
+            {"POSITION", 0, DXGI_FORMAT_R16_UINT,           0,  0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+            {"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,  2, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        }, E_INVALIDARG},
+        {{
+            {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0,  0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+            {"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        }, S_OK},
+        {{
+            {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0,  0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+            {"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 17, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        }, E_INVALIDARG},
+        {{
+            {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0,  0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+            {"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 18, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        }, E_INVALIDARG},
+        {{
+            {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0,  0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+            {"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 19, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        }, E_INVALIDARG},
+        {{
+            {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0,  0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+            {"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 20, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        }, S_OK},
+    };
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
+    {
+        hr = ID3D10Device_CreateInputLayout(device, test_data[i].elements, 2, vs_code, sizeof(vs_code), &layout);
+        ok(hr == test_data[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n", i, hr, test_data[i].hr);
+        if (SUCCEEDED(hr))
+            ID3D10InputLayout_Release(layout);
+    }
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_input_assembler(void)
 {
     enum layout_id
@@ -18511,6 +18603,7 @@ START_TEST(d3d10core)
     queue_test(test_sm4_continuec_instruction);
     queue_test(test_sm4_discard_instruction);
     queue_test(test_create_input_layout);
+    queue_test(test_input_layout_alignment);
     queue_test(test_input_assembler);
     queue_test(test_null_sampler);
     queue_test(test_immediate_constant_buffer);
