@@ -732,10 +732,10 @@ NTSTATUS WINAPI NtAccessCheck( PSECURITY_DESCRIPTOR descr, HANDLE token, ACCESS_
 
         status = wine_server_call( req );
 
-        *retlen = max( offsetof( PRIVILEGE_SET, Privilege ) + reply->privileges_len, sizeof(PRIVILEGE_SET) );
-        privs->PrivilegeCount = reply->privileges_len / sizeof(LUID_AND_ATTRIBUTES);
         if (status == STATUS_SUCCESS)
         {
+            *retlen = max( offsetof( PRIVILEGE_SET, Privilege ) + reply->privileges_len, sizeof(PRIVILEGE_SET) );
+            privs->PrivilegeCount = reply->privileges_len / sizeof(LUID_AND_ATTRIBUTES);
             *access_status = reply->access_status;
             *access_granted = reply->access_granted;
         }

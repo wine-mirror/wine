@@ -1344,7 +1344,7 @@ static void test_AccessCheck(void)
          "NtAccessCheck shouldn't set last error, got %d\n", err);
       ok(Access == 0x1abe11ed && ntAccessStatus == 0x1abe11ed,
          "Access and/or AccessStatus were changed!\n");
-      todo_wine ok(ntPrivSetLen == 0, "PrivSetLen returns %d\n", ntPrivSetLen);
+      ok(ntPrivSetLen == 0, "PrivSetLen returns %d\n", ntPrivSetLen);
 
       /* Generic access mask - insufficient returnlength */
       SetLastError(0xdeadbeef);
@@ -1359,7 +1359,7 @@ static void test_AccessCheck(void)
          "NtAccessCheck shouldn't set last error, got %d\n", err);
       ok(Access == 0x1abe11ed && ntAccessStatus == 0x1abe11ed,
          "Access and/or AccessStatus were changed!\n");
-      todo_wine ok(ntPrivSetLen == sizeof(PRIVILEGE_SET)-1, "PrivSetLen returns %d\n", ntPrivSetLen);
+      ok(ntPrivSetLen == sizeof(PRIVILEGE_SET)-1, "PrivSetLen returns %d\n", ntPrivSetLen);
 
       /* Key access mask - zero returnlength */
       SetLastError(0xdeadbeef);
