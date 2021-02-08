@@ -154,7 +154,7 @@ static typelib_t *current_typelib;
 }
 
 %token <str> aIDENTIFIER aPRAGMA
-%token <str> aKNOWNTYPE aNAMESPACE
+%token <str> aKNOWNTYPE
 %token <num> aNUM aHEXNUM
 %token <dbl> aDOUBLE
 %token <str> aSTRING aWSTRING aSQSTRING
@@ -887,8 +887,7 @@ int_std:  tINT					{ $$ = type_new_int(TYPE_BASIC_INT, 0); }
 	;
 
 namespace_pfx:
-	  aNAMESPACE '.'			{ $$ = find_namespace_or_error(&global_namespace, $1); }
-	| namespace_pfx aNAMESPACE '.'		{ $$ = find_namespace_or_error($1, $2); }
+	  aIDENTIFIER '.'			{ $$ = find_namespace_or_error(&global_namespace, $1); }
 	| namespace_pfx aIDENTIFIER '.'		{ $$ = find_namespace_or_error($1, $2); }
 	;
 
@@ -919,7 +918,6 @@ apicontract_def: attributes apicontract '{' '}' semicolon_opt
 	;
 
 namespacedef: tNAMESPACE aIDENTIFIER		{ $$ = $2; }
-	| tNAMESPACE aNAMESPACE                 { $$ = $2; }
 	;
 
 class_interfaces:				{ $$ = NULL; }
@@ -2059,13 +2057,6 @@ static struct namespace *find_namespace_or_error(struct namespace *parent, const
 int is_type(const char *name)
 {
     return find_type(name, current_namespace, 0) != NULL;
-}
-
-int is_namespace(const char *name)
-{
-    if (!winrt_mode) return 0;
-    return find_sub_namespace(current_namespace, name) != NULL ||
-           find_sub_namespace(&global_namespace, name) != NULL;
 }
 
 type_t *get_type(enum type_type type, char *name, struct namespace *namespace, int t)
