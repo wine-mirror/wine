@@ -126,6 +126,7 @@ struct accept_req
 {
     struct list entry;
     struct async *async;
+    struct iosb *iosb;
     struct sock *acceptsock;
     int accepted;
     unsigned int recv_len, local_len;
@@ -452,11 +453,13 @@ static void free_accept_req( struct accept_req *req )
     list_remove( &req->entry );
     if (req->acceptsock) req->acceptsock->accept_recv_req = NULL;
     release_object( req->async );
+    release_object( req->iosb );
     free( req );
 }
 
-static void fill_accept_output( struct accept_req *req, struct iosb *iosb )
+static void fill_accept_output( struct accept_req *req )
 {
+    struct iosb *iosb = req->iosb;
     union unix_sockaddr unix_addr;
     struct WS_sockaddr *win_addr;
     unsigned int remote_len;
@@ -527,20 +530,17 @@ static void complete_async_accept( struct sock *sock, struct accept_req *req )
 {
     struct sock *acceptsock = req->acceptsock;
     struct async *async = req->async;
-    struct iosb *iosb;
 
     if (debug_level) fprintf( stderr, "completing accept request for socket %p\n", sock );
 
     if (acceptsock)
     {
         if (!accept_into_socket( sock, acceptsock )) return;
-
-        iosb = async_get_iosb( async );
-        fill_accept_output( req, iosb );
-        release_object( iosb );
+        fill_accept_output( req );
     }
     else
     {
+        struct iosb *iosb = req->iosb;
         obj_handle_t handle;
 
         if (!(acceptsock = accept_socket( sock ))) return;
@@ -550,32 +550,22 @@ static void complete_async_accept( struct sock *sock, struct accept_req *req )
         release_object( acceptsock );
         if (!handle) return;
 
-        iosb = async_get_iosb( async );
-        if (!(iosb->out_data = malloc( sizeof(handle) )))
-        {
-            release_object( iosb );
-            return;
-        }
+        if (!(iosb->out_data = malloc( sizeof(handle) ))) return;
+
         iosb->status = STATUS_SUCCESS;
         iosb->out_size = sizeof(handle);
         memcpy( iosb->out_data, &handle, sizeof(handle) );
-        release_object( iosb );
         set_error( STATUS_ALERTED );
     }
 }
 
 static void complete_async_accept_recv( struct accept_req *req )
 {
-    struct async *async = req->async;
-    struct iosb *iosb;
-
     if (debug_level) fprintf( stderr, "completing accept recv request for socket %p\n", req->acceptsock );
 
     assert( req->recv_len );
 
-    iosb = async_get_iosb( async );
-    fill_accept_output( req, iosb );
-    release_object( iosb );
+    fill_accept_output( req );
 }
 
 static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
@@ -880,10 +870,8 @@ static void sock_reselect_async( struct fd *fd, struct async_queue *queue )
 
     LIST_FOR_EACH_ENTRY_SAFE( req, next, &sock->accept_list, struct accept_req, entry )
     {
-        struct iosb *iosb = async_get_iosb( req->async );
-        if (iosb->status != STATUS_PENDING)
+        if (req->iosb->status != STATUS_PENDING)
             free_accept_req( req );
-        release_object( iosb );
     }
 
     /* ignore reselect on ifchange queue */
@@ -1370,6 +1358,7 @@ static struct accept_req *alloc_accept_req( struct sock *acceptsock, struct asyn
     if (req)
     {
         req->async = (struct async *)grab_object( async );
+        req->iosb = async_get_iosb( async );
         req->acceptsock = acceptsock;
         req->accepted = 0;
         req->recv_len = 0;
