@@ -1374,7 +1374,7 @@ static void test_AccessCheck(void)
          "NtAccessCheck shouldn't set last error, got %d\n", err);
       todo_wine ok(Access == 0x1abe11ed && ntAccessStatus == 0x1abe11ed,
          "Access and/or AccessStatus were changed!\n");
-      todo_wine ok(ntPrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", ntPrivSetLen);
+      ok(ntPrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", ntPrivSetLen);
 
       /* Key access mask - insufficient returnlength */
       SetLastError(0xdeadbeef);
@@ -1389,7 +1389,7 @@ static void test_AccessCheck(void)
          "NtAccessCheck shouldn't set last error, got %d\n", err);
       todo_wine ok(Access == 0x1abe11ed && ntAccessStatus == 0x1abe11ed,
          "Access and/or AccessStatus were changed!\n");
-      todo_wine ok(ntPrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", ntPrivSetLen);
+      ok(ntPrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", ntPrivSetLen);
     }
     else
        win_skip("NtAccessCheck unavailable. Skipping.\n");
@@ -1520,7 +1520,6 @@ todo_wine
 todo_wine
     ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "AccessCheck should have "
        "failed with ERROR_INSUFFICIENT_BUFFER, instead of %d\n", err);
-todo_wine
     ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
 todo_wine
     ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
@@ -1536,7 +1535,6 @@ todo_wine
 todo_wine
     ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "AccessCheck should have "
        "failed with ERROR_INSUFFICIENT_BUFFER, instead of %d\n", err);
-todo_wine
     ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
 todo_wine
     ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
@@ -1552,7 +1550,6 @@ todo_wine
 todo_wine
     ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "AccessCheck should have "
        "failed with ERROR_INSUFFICIENT_BUFFER, instead of %d\n", err);
-todo_wine
     ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
 todo_wine
     ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
@@ -1567,7 +1564,6 @@ todo_wine
                       PrivSet, &PrivSetLen, &Access, &AccessStatus);
     err = GetLastError();
     ok(ret, "AccessCheck failed with error %d\n", GetLastError());
-todo_wine
     ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
     ok(AccessStatus && (Access == KEY_READ),
         "AccessCheck failed to grant access with error %d\n", GetLastError());
@@ -1637,7 +1633,6 @@ todo_wine
     todo_wine
         ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "AccessCheck should have "
            "failed with ERROR_INSUFFICIENT_BUFFER, instead of %d\n", err);
-    todo_wine
         ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
     todo_wine
         ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
@@ -1653,7 +1648,6 @@ todo_wine
     todo_wine
         ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "AccessCheck should have "
            "failed with ERROR_INSUFFICIENT_BUFFER, instead of %d\n", err);
-    todo_wine
         ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
     todo_wine
         ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
