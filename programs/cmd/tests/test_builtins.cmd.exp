@@ -916,6 +916,8 @@ x@space@
 ---
 ------------ Testing if/for ------------
 A
+------------ Testing if/set ------------
+C:\Program Files (x86)\dummy
 ------------ Testing for ------------
 --- plain FOR
 A
