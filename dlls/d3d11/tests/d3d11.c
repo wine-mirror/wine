@@ -26557,6 +26557,13 @@ static void test_format_compatibility(void)
         {DXGI_FORMAT_R16G16_SNORM,        DXGI_FORMAT_R16G16_SINT,         4, TRUE},
         {DXGI_FORMAT_R16G16_SINT,         DXGI_FORMAT_R16G16_TYPELESS,     4, TRUE},
         {DXGI_FORMAT_R16G16_TYPELESS,     DXGI_FORMAT_R32_TYPELESS,        4, FALSE},
+        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,  DXGI_FORMAT_R32_TYPELESS,        4, TRUE},
+        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,  DXGI_FORMAT_R32_FLOAT,           4, TRUE},
+        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,  DXGI_FORMAT_R32_UINT,            4, TRUE},
+        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,  DXGI_FORMAT_R32_SINT,            4, TRUE},
+        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,  DXGI_FORMAT_R8G8B8A8_TYPELESS,   4, FALSE},
+        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,  DXGI_FORMAT_B8G8R8A8_TYPELESS,   4, FALSE},
+        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,  DXGI_FORMAT_R16G16_TYPELESS,     4, FALSE},
         {DXGI_FORMAT_R32G32_TYPELESS,     DXGI_FORMAT_R32G32_FLOAT,        8, TRUE},
         {DXGI_FORMAT_R32G32_FLOAT,        DXGI_FORMAT_R32G32_UINT,         8, TRUE},
         {DXGI_FORMAT_R32G32_UINT,         DXGI_FORMAT_R32G32_SINT,         8, TRUE},
@@ -26590,6 +26597,7 @@ static void test_format_compatibility(void)
     for (i = 0; i < ARRAY_SIZE(test_data); ++i)
     {
         unsigned int x, y, texel_dwords;
+        BOOL broken = FALSE;
         D3D11_BOX box;
 
         texture_desc.Width = sizeof(bitmap_data) / (texture_desc.Height * test_data[i].texel_size);
@@ -26617,15 +26625,23 @@ static void test_format_compatibility(void)
 
         texel_dwords = test_data[i].texel_size / sizeof(DWORD);
         get_texture_readback(dst_texture, 0, &rb);
-        for (j = 0; j < ARRAY_SIZE(bitmap_data); ++j)
+        colour = get_readback_color(&rb, 0, 0, 0);
+        if (test_data[i].src_format == DXGI_FORMAT_R9G9B9E5_SHAREDEXP && colour == bitmap_data[0])
+        {
+            win_skip("Broken destination offset for %#x -> %#x copy.\n",
+                    test_data[i].src_format, test_data[i].dst_format);
+            broken = TRUE;
+        }
+        for (j = 0; j < ARRAY_SIZE(bitmap_data) && !broken; ++j)
         {
             x = j % 4;
             y = j / 4;
             colour = get_readback_color(&rb, x, y, 0);
             expected = test_data[i].success && x >= texel_dwords && y
                     ? bitmap_data[j - (4 + texel_dwords)] : initial_data[j];
-            ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
-                    i, colour, x, y, expected);
+            todo_wine_if(test_data[i].src_format == DXGI_FORMAT_R9G9B9E5_SHAREDEXP && expected)
+                ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
+                        i, colour, x, y, expected);
         }
         release_resource_readback(&rb);
 
@@ -26638,8 +26654,9 @@ static void test_format_compatibility(void)
             y = j / 4;
             colour = get_readback_color(&rb, x, y, 0);
             expected = test_data[i].success ? bitmap_data[j] : initial_data[j];
-            ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
-                    i, colour, x, y, expected);
+            todo_wine_if(test_data[i].src_format == DXGI_FORMAT_R9G9B9E5_SHAREDEXP && expected)
+                ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
+                        i, colour, x, y, expected);
         }
         release_resource_readback(&rb);
 
