@@ -889,15 +889,6 @@ static GstCaps *wg_format_to_caps(const struct wg_format *format)
     return NULL;
 }
 
-static GstCaps *amt_to_gst_caps(const AM_MEDIA_TYPE *mt)
-{
-    struct wg_format wg_format;
-
-    if (!amt_to_wg_format(mt, &wg_format))
-        return NULL;
-    return wg_format_to_caps(&wg_format);
-}
-
 static bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
 {
     if (a->major_type != b->major_type)
@@ -2261,13 +2252,10 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
 
 static HRESULT decodebin_parser_source_query_accept(struct parser_source *pin, const AM_MEDIA_TYPE *mt)
 {
-    /* At least make sure we can convert it to GstCaps. */
-    GstCaps *caps = amt_to_gst_caps(mt);
+    struct wg_format format;
 
-    if (!caps)
-        return S_FALSE;
-    gst_caps_unref(caps);
-    return S_OK;
+    /* At least make sure we can convert it to wg_format. */
+    return amt_to_wg_format(mt, &format) ? S_OK : S_FALSE;
 }
 
 static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
