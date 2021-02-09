@@ -78,8 +78,9 @@ struct fd_ops
 
 extern struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *user,
                                    unsigned int options );
-extern struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode,
-                           unsigned int access, unsigned int sharing, unsigned int options );
+extern struct fd *open_fd( struct fd *root, const char *name, struct unicode_str nt_name,
+                           int flags, mode_t *mode, unsigned int access,
+                           unsigned int sharing, unsigned int options );
 extern struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops,
                                        int unix_fd, struct object *user, unsigned int options );
 extern struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sharing,
@@ -100,6 +101,7 @@ extern void unlock_fd( struct fd *fd, file_pos_t offset, file_pos_t count );
 extern void allow_fd_caching( struct fd *fd );
 extern void set_fd_signaled( struct fd *fd, int signaled );
 extern char *dup_fd_name( struct fd *root, const char *name );
+extern void get_nt_name( struct fd *fd, struct unicode_str *name );
 
 extern int default_fd_signaled( struct object *obj, struct wait_queue_entry *entry );
 extern int default_fd_get_poll_events( struct fd *fd );
