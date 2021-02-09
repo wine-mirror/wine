@@ -166,6 +166,7 @@ static typelib_t *current_typelib;
 %token GREATEREQUAL LESSEQUAL
 %token LOGICALOR LOGICALAND
 %token ELLIPSIS
+%token tACTIVATABLE
 %token tAGGREGATABLE
 %token tAGILE
 %token tALLNODES tALLOCATE tANNOTATION
@@ -539,6 +540,7 @@ contract_req: decl_spec ',' contract_ver	{ if ($1->type->type_type != TYPE_APICO
 						}
 
 attribute:					{ $$ = NULL; }
+	| tACTIVATABLE '(' contract_req ')'	{ $$ = make_attrp(ATTR_ACTIVATABLE, $3); }
 	| tAGGREGATABLE				{ $$ = make_attr(ATTR_AGGREGATABLE); }
 	| tANNOTATION '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ANNOTATION, $3); }
 	| tAPPOBJECT				{ $$ = make_attr(ATTR_APPOBJECT); }
@@ -2162,6 +2164,7 @@ struct allowed_attr
 struct allowed_attr allowed_attr[] =
 {
     /* attr                        { D ACF M   I Fn ARG T En Enm St Un Fi L  DI M  C AC  R  <display name> } */
+    /* ATTR_ACTIVATABLE */         { 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "activatable" },
     /* ATTR_AGGREGATABLE */        { 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, "aggregatable" },
     /* ATTR_ALLOCATE */            { 0, 1, 0,  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "allocate" },
     /* ATTR_ANNOTATION */          { 0, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "annotation" },
