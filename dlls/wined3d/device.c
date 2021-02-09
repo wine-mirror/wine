@@ -4508,6 +4508,24 @@ void CDECL wined3d_device_copy_uav_counter(struct wined3d_device *device,
     wined3d_cs_emit_copy_uav_counter(device->cs, dst_buffer, offset, uav);
 }
 
+static bool resources_format_compatible(const struct wined3d_resource *src_resource,
+        const struct wined3d_resource *dst_resource)
+{
+    if (src_resource->format->id == dst_resource->format->id)
+        return true;
+    if (src_resource->format->typeless_id && src_resource->format->typeless_id == dst_resource->format->typeless_id)
+        return true;
+    if (src_resource->device->feature_level < WINED3D_FEATURE_LEVEL_10_1)
+        return false;
+    if ((src_resource->format_flags & WINED3DFMT_FLAG_BLOCKS)
+            && (dst_resource->format_flags & WINED3DFMT_FLAG_CAST_TO_BLOCK))
+        return src_resource->format->block_byte_count == dst_resource->format->byte_count;
+    if ((src_resource->format_flags & WINED3DFMT_FLAG_CAST_TO_BLOCK)
+            && (dst_resource->format_flags & WINED3DFMT_FLAG_BLOCKS))
+        return src_resource->format->byte_count == dst_resource->format->block_byte_count;
+    return false;
+}
+
 void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
         struct wined3d_resource *dst_resource, struct wined3d_resource *src_resource)
 {
@@ -4541,8 +4559,7 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
         return;
     }
 
-    if (src_resource->format->typeless_id != dst_resource->format->typeless_id
-            || (!src_resource->format->typeless_id && src_resource->format->id != dst_resource->format->id))
+    if (!resources_format_compatible(src_resource, dst_resource))
     {
         WARN("Resource formats %s and %s are incompatible.\n",
                 debug_d3dformat(dst_resource->format->id),
@@ -4604,8 +4621,7 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (src_resource->format->typeless_id != dst_resource->format->typeless_id
-            || (!src_resource->format->typeless_id && src_resource->format->id != dst_resource->format->id))
+    if (!resources_format_compatible(src_resource, dst_resource))
     {
         WARN("Resource formats %s and %s are incompatible.\n",
                 debug_d3dformat(dst_resource->format->id),

@@ -26639,9 +26639,8 @@ static void test_format_compatibility(void)
             colour = get_readback_color(&rb, x, y, 0);
             expected = test_data[i].success && x >= texel_dwords && y
                     ? bitmap_data[j - (4 + texel_dwords)] : initial_data[j];
-            todo_wine_if(test_data[i].src_format == DXGI_FORMAT_R9G9B9E5_SHAREDEXP && expected)
-                ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
-                        i, colour, x, y, expected);
+            ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    i, colour, x, y, expected);
         }
         release_resource_readback(&rb);
 
@@ -26654,9 +26653,8 @@ static void test_format_compatibility(void)
             y = j / 4;
             colour = get_readback_color(&rb, x, y, 0);
             expected = test_data[i].success ? bitmap_data[j] : initial_data[j];
-            todo_wine_if(test_data[i].src_format == DXGI_FORMAT_R9G9B9E5_SHAREDEXP && expected)
-                ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
-                        i, colour, x, y, expected);
+            ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    i, colour, x, y, expected);
         }
         release_resource_readback(&rb);
 
