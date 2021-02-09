@@ -28182,9 +28182,8 @@ static void test_compressed_format_compatibility(const D3D_FEATURE_LEVEL feature
                         expected = texture_data[k - ((row_block_count + 1) * dst_format->block_size) / sizeof(colour)];
                     else
                         expected = initial_data[k];
-                    todo_wine_if(supported && x == 1 && y == 1)
-                        ok(colour == expected, "%#x -> %#x: Got unexpected colour 0x%08x at %u, expected 0x%08x.\n",
-                                src_format->id, dst_format->id, colour, k, expected);
+                    ok(colour == expected, "%#x -> %#x: Got unexpected colour 0x%08x at %u, expected 0x%08x.\n",
+                            src_format->id, dst_format->id, colour, k, expected);
                     if (colour != expected)
                         break;
                 }

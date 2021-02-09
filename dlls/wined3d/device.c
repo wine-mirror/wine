@@ -4694,6 +4694,7 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
         struct wined3d_texture *dst_texture = texture_from_resource(dst_resource);
         struct wined3d_texture *src_texture = texture_from_resource(src_resource);
         unsigned int src_level = src_sub_resource_idx % src_texture->level_count;
+        unsigned int src_row_block_count, src_row_count;
 
         if (dst_sub_resource_idx >= dst_texture->level_count * dst_texture->layer_count)
         {
@@ -4741,8 +4742,23 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
             return WINED3DERR_INVALIDCALL;
         }
 
-        wined3d_box_set(&dst_box, dst_x, dst_y, dst_x + (src_box->right - src_box->left),
-                dst_y + (src_box->bottom - src_box->top), dst_z, dst_z + (src_box->back - src_box->front));
+        if (src_resource->format->block_width == dst_resource->format->block_width
+                && src_resource->format->block_height == dst_resource->format->block_height)
+        {
+            wined3d_box_set(&dst_box, dst_x, dst_y, dst_x + (src_box->right - src_box->left),
+                    dst_y + (src_box->bottom - src_box->top), dst_z, dst_z + (src_box->back - src_box->front));
+        }
+        else
+        {
+            src_row_block_count = (src_box->right - src_box->left + src_resource->format->block_width - 1)
+                    / src_resource->format->block_width;
+            src_row_count = (src_box->bottom - src_box->top + src_resource->format->block_height - 1)
+                    / src_resource->format->block_height;
+            wined3d_box_set(&dst_box, dst_x, dst_y,
+                    dst_x + (src_row_block_count * dst_resource->format->block_width),
+                    dst_y + (src_row_count * dst_resource->format->block_height),
+                    dst_z, dst_z + (src_box->back - src_box->front));
+        }
         if (FAILED(wined3d_texture_check_box_dimensions(dst_texture,
                 dst_sub_resource_idx % dst_texture->level_count, &dst_box)))
         {
