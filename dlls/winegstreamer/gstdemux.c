@@ -628,14 +628,6 @@ static bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format
     return false;
 }
 
-static bool amt_from_gst_caps(const GstCaps *caps, AM_MEDIA_TYPE *mt)
-{
-    struct wg_format wg_format;
-
-    wg_format_from_caps(&wg_format, caps);
-    return amt_from_wg_format(mt, &wg_format);
-}
-
 static bool amt_to_wg_format_audio(const AM_MEDIA_TYPE *mt, struct wg_format *format)
 {
     static const struct
@@ -906,6 +898,32 @@ static GstCaps *amt_to_gst_caps(const AM_MEDIA_TYPE *mt)
     return wg_format_to_caps(&wg_format);
 }
 
+static bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
+{
+    if (a->major_type != b->major_type)
+        return false;
+
+    switch (a->major_type)
+    {
+        case WG_MAJOR_TYPE_UNKNOWN:
+            return false;
+
+        case WG_MAJOR_TYPE_AUDIO:
+            return a->u.audio.format == b->u.audio.format
+                    && a->u.audio.channels == b->u.audio.channels
+                    && a->u.audio.rate == b->u.audio.rate;
+
+        case WG_MAJOR_TYPE_VIDEO:
+            return a->u.video.format == b->u.video.format
+                    && a->u.video.width == b->u.video.width
+                    && a->u.video.height == b->u.video.height
+                    && a->u.video.fps_d * b->u.video.fps_n == a->u.video.fps_n * b->u.video.fps_d;
+    }
+
+    assert(0);
+    return false;
+}
+
 static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct parser_source *pin = gst_pad_get_element_private(pad);
@@ -941,8 +959,8 @@ static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
         }
         case GST_QUERY_ACCEPT_CAPS:
         {
+            struct wg_format format;
             gboolean ret = TRUE;
-            AM_MEDIA_TYPE mt;
             GstCaps *caps;
 
             if (!stream->enabled)
@@ -952,45 +970,14 @@ static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
             }
 
             gst_query_parse_accept_caps(query, &caps);
-            if (!amt_from_gst_caps(caps, &mt))
-                return FALSE;
-
-            if (!IsEqualGUID(&mt.majortype, &pin->pin.pin.mt.majortype)
-                    || !IsEqualGUID(&mt.subtype, &pin->pin.pin.mt.subtype)
-                    || !IsEqualGUID(&mt.formattype, &pin->pin.pin.mt.formattype))
-                ret = FALSE;
-
-            if (IsEqualGUID(&mt.majortype, &MEDIATYPE_Video))
-            {
-                const VIDEOINFOHEADER *req_vih = (VIDEOINFOHEADER *)mt.pbFormat;
-                const VIDEOINFOHEADER *our_vih = (VIDEOINFOHEADER *)pin->pin.pin.mt.pbFormat;
-
-                if (req_vih->bmiHeader.biWidth != our_vih->bmiHeader.biWidth
-                        || req_vih->bmiHeader.biHeight != our_vih->bmiHeader.biHeight
-                        || req_vih->bmiHeader.biBitCount != our_vih->bmiHeader.biBitCount
-                        || req_vih->bmiHeader.biCompression != our_vih->bmiHeader.biCompression)
-                    ret = FALSE;
-            }
-            else if (IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio))
-            {
-                const WAVEFORMATEX *req_wfx = (WAVEFORMATEX *)mt.pbFormat;
-                const WAVEFORMATEX *our_wfx = (WAVEFORMATEX *)pin->pin.pin.mt.pbFormat;
-
-                if (req_wfx->nChannels != our_wfx->nChannels
-                        || req_wfx->nSamplesPerSec != our_wfx->nSamplesPerSec
-                        || req_wfx->wBitsPerSample != our_wfx->wBitsPerSample)
-                    ret = FALSE;
-            }
-
-            FreeMediaType(&mt);
-
+            wg_format_from_caps(&format, caps);
+            ret = wg_format_compare(&format, &stream->current_format);
             if (!ret && WARN_ON(gstreamer))
             {
                 gchar *str = gst_caps_to_string(caps);
                 WARN("Rejecting caps \"%s\".\n", debugstr_a(str));
                 g_free(str);
             }
-
             gst_query_set_accept_caps_result(query, ret);
             return TRUE;
         }
