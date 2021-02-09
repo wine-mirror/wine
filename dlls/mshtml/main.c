@@ -524,9 +524,15 @@ DWORD WINAPI RNIGetCompatibleVersion(void)
 /***********************************************************************
  *          DllInstall (MSHTML.@)
  */
-HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
+HRESULT WINAPI DllInstall(BOOL install, const WCHAR *cmdline)
 {
-    FIXME("stub %d %s: returning S_OK\n", bInstall, debugstr_w(cmdline));
+    TRACE("(%x %s)\n", install, debugstr_w(cmdline));
+
+    if(cmdline && *cmdline)
+        FIXME("unsupported cmdline: %s\n", debugstr_w(cmdline));
+    else if(install)
+        load_gecko();
+
     return S_OK;
 }
 
@@ -669,9 +675,6 @@ HRESULT WINAPI DllRegisterServer(void)
     hres = __wine_register_resources( hInst );
     if(SUCCEEDED(hres))
         hres = register_server(TRUE);
-    if(SUCCEEDED(hres))
-        load_gecko();
-
     return hres;
 }
 
