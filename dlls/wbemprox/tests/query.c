@@ -1905,6 +1905,33 @@ static void test_SystemRestore( IWbemServices *services )
     SysFreeString( class );
 }
 
+static void test_Win32_LogicalDisk( IWbemServices *services )
+{
+    BSTR wql = SysAllocString( L"wql" );
+    BSTR query = SysAllocString( L"SELECT * FROM Win32_LogicalDisk" );
+    IEnumWbemClassObject *result;
+    IWbemClassObject *obj;
+    HRESULT hr;
+    DWORD count;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    for (;;)
+    {
+        hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+        if (hr != S_OK) break;
+
+        check_property( obj, L"Caption", VT_BSTR, CIM_STRING );
+        check_property( obj, L"Name", VT_BSTR, CIM_STRING );
+        IWbemClassObject_Release( obj );
+    }
+
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
+    SysFreeString( wql );
+}
+
 START_TEST(query)
 {
     BSTR path = SysAllocString( L"ROOT\\CIMV2" );
@@ -1955,6 +1982,7 @@ START_TEST(query)
     test_Win32_DiskDrive( services );
     test_Win32_DisplayControllerConfiguration( services );
     test_Win32_IP4RouteTable( services );
+    test_Win32_LogicalDisk( services );
     test_Win32_NetworkAdapter( services );
     test_Win32_NetworkAdapterConfiguration( services );
     test_Win32_OperatingSystem( services );

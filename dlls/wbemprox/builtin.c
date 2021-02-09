@@ -177,6 +177,7 @@ static const struct column col_ip4routetable[] =
 };
 static const struct column col_logicaldisk[] =
 {
+    { L"Caption",            CIM_STRING|COL_FLAG_DYNAMIC },
     { L"DeviceId",           CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { L"DriveType",          CIM_UINT32 },
     { L"FileSystem",         CIM_STRING|COL_FLAG_DYNAMIC },
@@ -585,6 +586,7 @@ struct record_ip4routetable
 };
 struct record_logicaldisk
 {
+    const WCHAR *caption;
     const WCHAR *device_id;
     UINT32       drivetype;
     const WCHAR *filesystem;
@@ -2501,6 +2503,7 @@ static enum fill_status fill_logicaldisk( struct table *table, const struct expr
 
             rec = (struct record_logicaldisk *)(table->data + offset);
             swprintf( device_id, ARRAY_SIZE( device_id ), L"%c:", 'A' + i );
+            rec->caption            = heap_strdupW( device_id );
             rec->device_id          = heap_strdupW( device_id );
             rec->drivetype          = type;
             rec->filesystem         = get_filesystem( root );
