@@ -686,6 +686,57 @@ static bool amt_to_wg_format_audio(const AM_MEDIA_TYPE *mt, struct wg_format *fo
     return false;
 }
 
+static bool amt_to_wg_format_audio_mpeg1(const AM_MEDIA_TYPE *mt, struct wg_format *format)
+{
+    const MPEG1WAVEFORMAT *audio_format = (const MPEG1WAVEFORMAT *)mt->pbFormat;
+
+    if (!IsEqualGUID(&mt->formattype, &FORMAT_WaveFormatEx))
+    {
+        FIXME("Unknown format type %s.\n", debugstr_guid(&mt->formattype));
+        return false;
+    }
+    if (mt->cbFormat < sizeof(*audio_format) || !mt->pbFormat)
+    {
+        ERR("Unexpected format size %u.\n", mt->cbFormat);
+        return false;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_AUDIO;
+    format->u.audio.channels = audio_format->wfx.nChannels;
+    format->u.audio.rate = audio_format->wfx.nSamplesPerSec;
+    if (audio_format->fwHeadLayer == 1)
+        format->u.audio.format = WG_AUDIO_FORMAT_MPEG1_LAYER1;
+    else if (audio_format->fwHeadLayer == 2)
+        format->u.audio.format = WG_AUDIO_FORMAT_MPEG1_LAYER2;
+    else if (audio_format->fwHeadLayer == 3)
+        format->u.audio.format = WG_AUDIO_FORMAT_MPEG1_LAYER3;
+    else
+        return false;
+    return true;
+}
+
+static bool amt_to_wg_format_audio_mpeg1_layer3(const AM_MEDIA_TYPE *mt, struct wg_format *format)
+{
+    const MPEGLAYER3WAVEFORMAT *audio_format = (const MPEGLAYER3WAVEFORMAT *)mt->pbFormat;
+
+    if (!IsEqualGUID(&mt->formattype, &FORMAT_WaveFormatEx))
+    {
+        FIXME("Unknown format type %s.\n", debugstr_guid(&mt->formattype));
+        return false;
+    }
+    if (mt->cbFormat < sizeof(*audio_format) || !mt->pbFormat)
+    {
+        ERR("Unexpected format size %u.\n", mt->cbFormat);
+        return false;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_AUDIO;
+    format->u.audio.channels = audio_format->wfx.nChannels;
+    format->u.audio.rate = audio_format->wfx.nSamplesPerSec;
+    format->u.audio.format = WG_AUDIO_FORMAT_MPEG1_LAYER3;
+    return true;
+}
+
 static bool amt_to_wg_format_video(const AM_MEDIA_TYPE *mt, struct wg_format *format)
 {
     static const struct
@@ -750,7 +801,13 @@ static bool amt_to_wg_format(const AM_MEDIA_TYPE *mt, struct wg_format *format)
     if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Video))
         return amt_to_wg_format_video(mt, format);
     if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio))
+    {
+        if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_MPEG1AudioPayload))
+            return amt_to_wg_format_audio_mpeg1(mt, format);
+        if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_MP3))
+            return amt_to_wg_format_audio_mpeg1_layer3(mt, format);
         return amt_to_wg_format_audio(mt, format);
+    }
 
     FIXME("Unknown major type %s.\n", debugstr_guid(&mt->majortype));
     return false;
