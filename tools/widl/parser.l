@@ -427,6 +427,7 @@ static const struct keyword attr_keywords[] =
 	{"size_is",                     tSIZEIS,                    0},
 	{"source",                      tSOURCE,                    0},
 	{"standard",                    tSTANDARD,                  1},
+	{"static",                      tSTATIC,                    1},
 	{"strict_context_handle",       tSTRICTCONTEXTHANDLE,       0},
 	{"string",                      tSTRING,                    0},
 	{"switch_is",                   tSWITCHIS,                  0},

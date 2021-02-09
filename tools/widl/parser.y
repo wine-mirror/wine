@@ -277,6 +277,7 @@ static typelib_t *current_typelib;
 %type <expr> m_expr expr expr_const expr_int_const array m_bitfield
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_int_const
 %type <expr> contract_req
+%type <expr> static_attr
 %type <stgclass> storage_cls_spec
 %type <type_qualifier> type_qualifier m_type_qual_list
 %type <function_specifier> function_specifier
@@ -539,6 +540,11 @@ contract_req: decl_spec ',' contract_ver	{ if ($1->type->type_type != TYPE_APICO
 						  $$ = make_exprt(EXPR_GTREQL, declare_var(NULL, $1, make_declarator(NULL), 0), $$);
 						}
 
+static_attr: decl_spec ',' contract_req		{ if ($1->type->type_type != TYPE_INTERFACE)
+						      error_loc("type %s is not an interface\n", $1->type->name);
+						  $$ = make_exprt(EXPR_MEMBER, declare_var(NULL, $1, make_declarator(NULL), 0), $3);
+						}
+
 attribute:					{ $$ = NULL; }
 	| tACTIVATABLE '(' contract_req ')'	{ $$ = make_attrp(ATTR_ACTIVATABLE, $3); }
 	| tAGGREGATABLE				{ $$ = make_attr(ATTR_AGGREGATABLE); }
@@ -637,6 +643,7 @@ attribute:					{ $$ = NULL; }
 	| tRETVAL				{ $$ = make_attr(ATTR_RETVAL); }
 	| tSIZEIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_SIZEIS, $3); }
 	| tSOURCE				{ $$ = make_attr(ATTR_SOURCE); }
+	| tSTATIC '(' static_attr ')'		{ $$ = make_attrp(ATTR_STATIC, $3); }
 	| tSTRICTCONTEXTHANDLE                  { $$ = make_attr(ATTR_STRICTCONTEXTHANDLE); }
 	| tSTRING				{ $$ = make_attr(ATTR_STRING); }
 	| tSWITCHIS '(' expr ')'		{ $$ = make_attrp(ATTR_SWITCHIS, $3); }
@@ -2258,6 +2265,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_RETVAL */              { 0, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "retval" },
     /* ATTR_SIZEIS */              { 0, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "size_is" },
     /* ATTR_SOURCE */              { 0, 0, 0,  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, "source" },
+    /* ATTR_STATIC */              { 0, 0, 1,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "static" },
     /* ATTR_STRICTCONTEXTHANDLE */ { 0, 0, 0,  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "strict_context_handle" },
     /* ATTR_STRING */              { 1, 0, 0,  0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "string" },
     /* ATTR_SWITCHIS */            { 1, 0, 0,  0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, "switch_is" },
