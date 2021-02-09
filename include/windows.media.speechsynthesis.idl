@@ -24,10 +24,16 @@ import "inspectable.idl";
 import "windows.foundation.idl";
 
 namespace Windows {
+    namespace Foundation {
+        interface IClosable;
+    }
     namespace Media {
         namespace SpeechSynthesis {
             typedef enum VoiceGender VoiceGender;
             interface IInstalledVoicesStatic;
+            interface IInstalledVoicesStatic2;
+            interface ISpeechSynthesizer;
+            interface ISpeechSynthesizer2;
             interface IVoiceInformation;
             runtimeclass VoiceInformation;
         }
@@ -65,6 +71,20 @@ namespace Windows {
             runtimeclass VoiceInformation
             {
                 [default] interface Windows.Media.SpeechSynthesis.IVoiceInformation;
+            }
+
+            [
+                activatable(Windows.Foundation.UniversalApiContract, 1.0),
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                static(Windows.Media.SpeechSynthesis.IInstalledVoicesStatic, Windows.Foundation.UniversalApiContract, 1.0),
+                static(Windows.Media.SpeechSynthesis.IInstalledVoicesStatic2, Windows.Foundation.UniversalApiContract, 5.0)
+            ]
+            runtimeclass SpeechSynthesizer
+            {
+                [default] interface Windows.Media.SpeechSynthesis.ISpeechSynthesizer;
+                interface Windows.Foundation.IClosable;
+                [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Media.SpeechSynthesis.ISpeechSynthesizer2;
             }
         }
     }
