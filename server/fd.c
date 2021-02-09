@@ -2825,6 +2825,12 @@ DECL_HANDLER(set_fd_name_info)
 {
     struct fd *fd, *root_fd = NULL;
 
+    if (req->namelen > get_req_data_size())
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
     if (req->rootdir)
     {
         struct dir *root;
@@ -2837,7 +2843,8 @@ DECL_HANDLER(set_fd_name_info)
 
     if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
     {
-        set_fd_name( fd, root_fd, get_req_data(), get_req_data_size(), req->link, req->replace );
+        set_fd_name( fd, root_fd, (const char *)get_req_data() + req->namelen,
+                     get_req_data_size() - req->namelen, req->link, req->replace );
         release_object( fd );
     }
     if (root_fd) release_object( root_fd );

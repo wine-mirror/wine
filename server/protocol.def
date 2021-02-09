@@ -3542,8 +3542,10 @@ struct handle_info
 @REQ(set_fd_name_info)
     obj_handle_t handle;          /* handle to a file or directory */
     obj_handle_t rootdir;         /* root directory */
+    data_size_t  namelen;         /* length of NT name in bytes */
     int          link;            /* link instead of renaming */
     int          replace;         /* replace an existing file? */
+    VARARG(name,unicode_str,namelen); /* NT name */
     VARARG(filename,string);      /* new file name */
 @END
 

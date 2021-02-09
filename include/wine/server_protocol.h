@@ -5130,10 +5130,11 @@ struct set_fd_name_info_request
     struct request_header __header;
     obj_handle_t handle;
     obj_handle_t rootdir;
+    data_size_t  namelen;
     int          link;
     int          replace;
+    /* VARARG(name,unicode_str,namelen); */
     /* VARARG(filename,string); */
-    char __pad_28[4];
 };
 struct set_fd_name_info_reply
 {
@@ -6279,7 +6280,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 670
+#define SERVER_PROTOCOL_VERSION 671
 
 /* ### protocol_version end ### */
 

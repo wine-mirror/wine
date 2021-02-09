@@ -4387,8 +4387,10 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             {
                 req->handle   = wine_server_obj_handle( handle );
                 req->rootdir  = wine_server_obj_handle( attr.RootDirectory );
+                req->namelen  = nt_name.Length;
                 req->link     = FALSE;
                 req->replace  = info->ReplaceIfExists;
+                wine_server_add_data( req, nt_name.Buffer, nt_name.Length );
                 wine_server_add_data( req, unix_name, strlen(unix_name) );
                 io->u.Status = wine_server_call( req );
             }
@@ -4425,8 +4427,10 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             {
                 req->handle   = wine_server_obj_handle( handle );
                 req->rootdir  = wine_server_obj_handle( attr.RootDirectory );
+                req->namelen  = nt_name.Length;
                 req->link     = TRUE;
                 req->replace  = info->ReplaceIfExists;
+                wine_server_add_data( req, nt_name.Buffer, nt_name.Length );
                 wine_server_add_data( req, unix_name, strlen(unix_name) );
                 io->u.Status  = wine_server_call( req );
             }
