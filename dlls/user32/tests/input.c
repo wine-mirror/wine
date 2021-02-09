@@ -3715,74 +3715,151 @@ static void test_attach_input(void)
     DestroyWindow(Wnd2);
 }
 
+struct get_key_state_test_desc
+{
+    BOOL peek_message;
+    BOOL peek_message_main;
+};
+
+struct get_key_state_test_desc get_key_state_tests[] =
+{
+    /* 0: not peeking in thread, no msg queue: GetKeyState misses key press */
+    {FALSE,  TRUE},
+    /* 1: peeking on thread init, not in main: GetKeyState catches key press */
+    { TRUE, FALSE},
+    /* 2: peeking on thread init, and in main: GetKeyState catches key press */
+    { TRUE,  TRUE},
+};
+
+struct get_key_state_thread_params
+{
+    HANDLE semaphores[2];
+    int index;
+};
+
 static DWORD WINAPI get_key_state_thread(void *arg)
 {
-    HANDLE *semaphores = arg;
+    struct get_key_state_thread_params *params = arg;
+    struct get_key_state_test_desc* test;
+    HANDLE *semaphores = params->semaphores;
     DWORD result;
+    BOOL has_queue;
+    MSG msg;
+    int i = params->index;
 
+    test = get_key_state_tests + i;
+    has_queue = test->peek_message;
+
+    if (test->peek_message)
+    {
+        while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
+            ok(!is_keyboard_message(msg.message), "%d: PeekMessageA got keyboard message.\n", i);
+    }
+
+    /* initialization */
     ReleaseSemaphore(semaphores[0], 1, NULL);
     result = WaitForSingleObject(semaphores[1], 1000);
-    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ok(result == WAIT_OBJECT_0, "%d: WaitForSingleObject returned %u\n", i, result);
 
-    result = GetKeyState('X');
-    ok((result & 0x8000) || broken(!(result & 0x8000)), /* > Win 2003 */
-       "expected that highest bit is set, got %x\n", result);
-
-    ok((SHORT)(result & 0x007e) == 0,
-        "expected that undefined bits are unset, got %x\n", result);
-
+    /* key pressed */
     ReleaseSemaphore(semaphores[0], 1, NULL);
     result = WaitForSingleObject(semaphores[1], 1000);
-    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ok(result == WAIT_OBJECT_0, "%d: WaitForSingleObject returned %u\n", i, result);
 
     result = GetKeyState('X');
-    ok(!(result & 0x8000), "expected that highest bit is unset, got %x\n", result);
+    if (!has_queue) todo_wine ok(!(result & 0x8000), "%d: expected that highest bit is unset, got %#x\n", i, result);
+    else todo_wine ok((result & 0x8000), "%d: expected that highest bit is set, got %#x\n", i, result);
+    ok(!(result & 0x007e), "%d: expected that undefined bits are unset, got %#x\n", i, result);
 
-    ok((SHORT)(result & 0x007e) == 0,
-        "expected that undefined bits are unset, got %x\n", result);
+    /* key released */
+    ReleaseSemaphore(semaphores[0], 1, NULL);
+    result = WaitForSingleObject(semaphores[1], 1000);
+    ok(result == WAIT_OBJECT_0, "%d: WaitForSingleObject returned %u\n", i, result);
+
+    result = GetKeyState('X');
+    ok(!(result & 0x8000), "%d: expected that highest bit is unset, got %#x\n", i, result);
+    ok(!(result & 0x007e), "%d: expected that undefined bits are unset, got %#x\n", i, result);
 
     return 0;
 }
 
 static void test_GetKeyState(void)
 {
-    HANDLE semaphores[2];
+    struct get_key_state_thread_params params;
     HANDLE thread;
     DWORD result;
     HWND hwnd;
+    MSG msg;
+    int i;
 
-    semaphores[0] = CreateSemaphoreA(NULL, 0, 1, NULL);
-    ok(semaphores[0] != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
-    semaphores[1] = CreateSemaphoreA(NULL, 0, 1, NULL);
-    ok(semaphores[1] != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
+    BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
+    if (!us_kbd)
+    {
+        skip("skipping test with inconsistent results on non-us keyboard\n");
+        return;
+    }
+
+    params.semaphores[0] = CreateSemaphoreA(NULL, 0, 1, NULL);
+    ok(params.semaphores[0] != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
+    params.semaphores[1] = CreateSemaphoreA(NULL, 0, 1, NULL);
+    ok(params.semaphores[1] != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
 
     hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                          10, 10, 200, 200, NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "CreateWindowA failed %u\n", GetLastError());
+    empty_message_queue();
 
-    thread = CreateThread(NULL, 0, get_key_state_thread, semaphores, 0, NULL);
-    ok(thread != NULL, "CreateThread failed %u\n", GetLastError());
-    result = WaitForSingleObject(semaphores[0], 1000);
-    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    for (i = 0; i < ARRAY_SIZE(get_key_state_tests); ++i)
+    {
+        struct get_key_state_test_desc* test = get_key_state_tests + i;
 
-    SetForegroundWindow(hwnd);
-    SetFocus(hwnd);
-    keybd_event('X', 0, 0, 0);
+        params.index = i;
+        thread = CreateThread(NULL, 0, get_key_state_thread, &params, 0, NULL);
+        ok(thread != NULL, "CreateThread failed %u\n", GetLastError());
 
-    ReleaseSemaphore(semaphores[1], 1, NULL);
-    result = WaitForSingleObject(semaphores[0], 1000);
-    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+        /* initialization */
+        result = WaitForSingleObject(params.semaphores[0], 1000);
+        ok(result == WAIT_OBJECT_0, "%d: WaitForSingleObject returned %u\n", i, result);
 
-    keybd_event('X', 0, KEYEVENTF_KEYUP, 0);
+        SetForegroundWindow(hwnd);
+        SetFocus(hwnd);
+        empty_message_queue();
 
-    ReleaseSemaphore(semaphores[1], 1, NULL);
-    result = WaitForSingleObject(thread, 1000);
-    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
-    CloseHandle(thread);
+        ReleaseSemaphore(params.semaphores[1], 1, NULL);
+
+        /* key pressed */
+        result = WaitForSingleObject(params.semaphores[0], 1000);
+        ok(result == WAIT_OBJECT_0, "%d: WaitForSingleObject returned %u\n", i, result);
+
+        keybd_event('X', 0, 0, 0);
+        if (test->peek_message_main) while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+
+        result = GetKeyState('X');
+        if (test->peek_message_main) ok((result & 0x8000), "%d: expected that highest bit is set, got %#x\n", i, result);
+        else ok(!(result & 0x8000), "%d: expected that highest bit is unset, got %#x\n", i, result);
+
+        ReleaseSemaphore(params.semaphores[1], 1, NULL);
+
+        /* key released */
+        result = WaitForSingleObject(params.semaphores[0], 1000);
+        ok(result == WAIT_OBJECT_0, "%d: WaitForSingleObject returned %u\n", i, result);
+
+        keybd_event('X', 0, KEYEVENTF_KEYUP, 0);
+        if (test->peek_message_main) while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+
+        result = GetKeyState('X');
+        ok(!(result & 0x8000), "%d: expected that highest bit is unset, got %#x\n", i, result);
+
+        ReleaseSemaphore(params.semaphores[1], 1, NULL);
+
+        result = WaitForSingleObject(thread, 1000);
+        ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+        CloseHandle(thread);
+    }
 
     DestroyWindow(hwnd);
-    CloseHandle(semaphores[0]);
-    CloseHandle(semaphores[1]);
+    CloseHandle(params.semaphores[0]);
+    CloseHandle(params.semaphores[1]);
 }
 
 static void test_OemKeyScan(void)
