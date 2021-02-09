@@ -1822,6 +1822,7 @@ DECL_HANDLER(list_processes)
 {
     struct process *process;
     struct thread *thread;
+    struct unicode_str nt_name;
     unsigned int pos = 0;
     char *buffer;
 
@@ -1830,10 +1831,10 @@ DECL_HANDLER(list_processes)
 
     LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
     {
-        struct process_dll *exe = get_process_exe_module( process );
+        struct memory_view *view = get_exe_view( process );
+        if (!view || !get_view_nt_name( view, &nt_name )) nt_name.len = 0;
         reply->info_size = (reply->info_size + 7) & ~7;
-        reply->info_size += sizeof(struct process_info);
-        if (exe) reply->info_size += exe->namelen;
+        reply->info_size += sizeof(struct process_info) + nt_name.len;
         reply->info_size = (reply->info_size + 7) & ~7;
         reply->info_size += process->running_threads * sizeof(struct thread_info);
         reply->process_count++;
@@ -1851,12 +1852,13 @@ DECL_HANDLER(list_processes)
     LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
     {
         struct process_info *process_info;
-        struct process_dll *exe = get_process_exe_module( process );
+        struct memory_view *view = get_exe_view( process );
 
         pos = (pos + 7) & ~7;
+        if (!view || !get_view_nt_name( view, &nt_name )) nt_name.len = 0;
         process_info = (struct process_info *)(buffer + pos);
         process_info->start_time = process->start_time;
-        process_info->name_len = exe ? exe->namelen : 0;
+        process_info->name_len = nt_name.len;
         process_info->thread_count = process->running_threads;
         process_info->priority = process->priority;
         process_info->pid = process->id;
@@ -1864,13 +1866,8 @@ DECL_HANDLER(list_processes)
         process_info->handle_count = get_handle_table_count(process);
         process_info->unix_pid = process->unix_pid;
         pos += sizeof(*process_info);
-
-        if (exe)
-        {
-            memcpy( buffer + pos, exe->filename, exe->namelen );
-            pos += exe->namelen;
-        }
-
+        memcpy( buffer + pos, nt_name.str, nt_name.len );
+        pos += nt_name.len;
         pos = (pos + 7) & ~7;
         LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
         {

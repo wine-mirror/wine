@@ -153,10 +153,4 @@ static inline int is_process_init_done( struct process *process )
     return process->startup_state == STARTUP_DONE;
 }
 
-static inline struct process_dll *get_process_exe_module( struct process *process )
-{
-    struct list *ptr = list_head( &process->dlls );
-    return ptr ? LIST_ENTRY( ptr, struct process_dll, entry ) : NULL;
-}
-
 #endif  /* __WINE_SERVER_PROCESS_H */
