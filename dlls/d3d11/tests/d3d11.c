@@ -27958,6 +27958,275 @@ static void test_format_compatibility(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_compressed_format_compatibility(const D3D_FEATURE_LEVEL feature_level)
+{
+    const struct format_info *src_format, *dst_format;
+    unsigned int row_block_count, row_count, i, j, k;
+    ID3D11Texture2D *src_texture, *dst_texture;
+    BOOL supported, broken_dst_offset = FALSE;
+    D3D11_SUBRESOURCE_DATA resource_data;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11DeviceContext *context;
+    unsigned int block_idx, x, y;
+    struct resource_readback rb;
+    DWORD colour, expected;
+    ID3D11Device *device;
+    UINT format_support;
+    const BYTE *row;
+    ULONG refcount;
+    D3D11_BOX box;
+    HRESULT hr;
+    const struct device_desc device_desc =
+    {
+        .feature_level = &feature_level,
+    };
+
+    static const struct format_info
+    {
+        DXGI_FORMAT id;
+        size_t block_size;
+        size_t block_edge;
+        BOOL supported;
+        BOOL skip_if_broken;
+    }
+    formats[] =
+    {
+        {DXGI_FORMAT_R32G32B32A32_TYPELESS, 16, 1, TRUE},
+        {DXGI_FORMAT_R32G32B32A32_FLOAT,    16, 1, TRUE},
+        {DXGI_FORMAT_R32G32B32A32_UINT,     16, 1, TRUE},
+        {DXGI_FORMAT_R32G32B32A32_SINT,     16, 1, TRUE},
+
+        {DXGI_FORMAT_R16G16B16A16_TYPELESS, 8,  1, TRUE},
+        {DXGI_FORMAT_R16G16B16A16_FLOAT,    8,  1, TRUE},
+        {DXGI_FORMAT_R16G16B16A16_UNORM,    8,  1, TRUE},
+        {DXGI_FORMAT_R16G16B16A16_UINT,     8,  1, TRUE},
+        {DXGI_FORMAT_R16G16B16A16_SNORM,    8,  1, TRUE},
+        {DXGI_FORMAT_R16G16B16A16_SINT,     8,  1, TRUE},
+
+        {DXGI_FORMAT_R32G32_TYPELESS,       8,  1, TRUE},
+        {DXGI_FORMAT_R32G32_FLOAT,          8,  1, TRUE},
+        {DXGI_FORMAT_R32G32_UINT,           8,  1, TRUE},
+        {DXGI_FORMAT_R32G32_SINT,           8,  1, TRUE},
+
+        {DXGI_FORMAT_R32_TYPELESS,          4,  1, TRUE},
+        {DXGI_FORMAT_R32_FLOAT,             4,  1, TRUE},
+        {DXGI_FORMAT_R32_UINT,              4,  1, TRUE},
+        {DXGI_FORMAT_R32_SINT,              4,  1, TRUE},
+
+        {DXGI_FORMAT_R32G8X24_TYPELESS,     8,  1},
+        {DXGI_FORMAT_R10G10B10A2_TYPELESS,  4,  1},
+        {DXGI_FORMAT_R8G8B8A8_TYPELESS,     4,  1},
+        {DXGI_FORMAT_R16G16_TYPELESS,       4,  1},
+        {DXGI_FORMAT_R24G8_TYPELESS,        4,  1},
+        {DXGI_FORMAT_R9G9B9E5_SHAREDEXP,    4,  1},
+        {DXGI_FORMAT_B8G8R8A8_TYPELESS,     4,  1},
+        {DXGI_FORMAT_R8G8_TYPELESS,         2,  1},
+        {DXGI_FORMAT_R16_TYPELESS,          2,  1},
+        {DXGI_FORMAT_R8_TYPELESS,           1,  1},
+
+        {DXGI_FORMAT_BC1_TYPELESS,          8,  4},
+        {DXGI_FORMAT_BC1_UNORM,             8,  4},
+        {DXGI_FORMAT_BC1_UNORM_SRGB,        8,  4},
+
+        {DXGI_FORMAT_BC2_TYPELESS,          16, 4},
+        {DXGI_FORMAT_BC2_UNORM,             16, 4},
+        {DXGI_FORMAT_BC2_UNORM_SRGB,        16, 4},
+
+        {DXGI_FORMAT_BC3_TYPELESS,          16, 4},
+        {DXGI_FORMAT_BC3_UNORM,             16, 4},
+        {DXGI_FORMAT_BC3_UNORM_SRGB,        16, 4},
+
+        {DXGI_FORMAT_BC4_TYPELESS,          8,  4},
+        {DXGI_FORMAT_BC4_UNORM,             8,  4},
+        {DXGI_FORMAT_BC4_SNORM,             8,  4},
+
+        {DXGI_FORMAT_BC5_TYPELESS,          16, 4},
+        {DXGI_FORMAT_BC5_UNORM,             16, 4},
+        {DXGI_FORMAT_BC5_SNORM,             16, 4},
+
+        {DXGI_FORMAT_BC6H_TYPELESS,         16, 4, FALSE, TRUE},
+        {DXGI_FORMAT_BC6H_UF16,             16, 4, FALSE, TRUE},
+        {DXGI_FORMAT_BC6H_SF16,             16, 4, FALSE, TRUE},
+
+        {DXGI_FORMAT_BC7_TYPELESS,          16, 4, FALSE, TRUE},
+        {DXGI_FORMAT_BC7_UNORM,             16, 4, FALSE, TRUE},
+        {DXGI_FORMAT_BC7_UNORM_SRGB,        16, 4, FALSE, TRUE},
+    };
+
+    static const DWORD initial_data[64] = {0};
+    static const DWORD texture_data[] =
+    {
+        0xff0000ff, 0xff00ffff, 0xff00ff00, 0xffffff00,
+        0xffff0000, 0xffff00ff, 0xff000000, 0xff7f7f7f,
+        0xffffffff, 0xffffffff, 0xffffffff, 0xff000000,
+        0xffffffff, 0xff000000, 0xff000000, 0xff000000,
+
+        0xffffffff, 0xff000000, 0xff000000, 0xff000000,
+        0xffffffff, 0xffffffff, 0xffffffff, 0xff000000,
+        0xffff0000, 0xffff00ff, 0xff000000, 0xff7f7f7f,
+        0xff0000ff, 0xff00ffff, 0xff00ff00, 0xffffff00,
+
+        0xff00ff00, 0xffffff00, 0xff0000ff, 0xff00ffff,
+        0xff000000, 0xff7f7f7f, 0xffff0000, 0xffff00ff,
+        0xffffffff, 0xff000000, 0xffffffff, 0xffffffff,
+        0xff000000, 0xff000000, 0xffffffff, 0xff000000,
+
+        0xff000000, 0xff000000, 0xffffffff, 0xff000000,
+        0xffffffff, 0xff000000, 0xffffffff, 0xffffffff,
+        0xff000000, 0xff7f7f7f, 0xffff0000, 0xffff00ff,
+        0xff00ff00, 0xffffff00, 0xff0000ff, 0xff00ffff,
+    };
+
+    if (!(device = create_device(&device_desc)))
+    {
+        skip("Failed to create device for feature level %#x.\n", feature_level);
+        return;
+    }
+    ID3D11Device_GetImmediateContext(device, &context);
+
+    row_block_count = 4;
+
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    resource_data.SysMemSlicePitch = 0;
+
+    for (i = 0; i < ARRAY_SIZE(formats); ++i)
+    {
+        src_format = &formats[i];
+        row_count = sizeof(texture_data) / (row_block_count * src_format->block_size);
+        texture_desc.Width = row_block_count * src_format->block_edge;
+        texture_desc.Height = row_count * src_format->block_edge;
+        texture_desc.Format = src_format->id;
+        texture_desc.Usage = D3D11_USAGE_IMMUTABLE;
+
+        resource_data.pSysMem = texture_data;
+        resource_data.SysMemPitch = row_block_count * src_format->block_size;
+
+        hr = ID3D11Device_CheckFormatSupport(device, src_format->id, &format_support);
+        if (hr == E_FAIL || !(format_support & D3D11_FORMAT_SUPPORT_TEXTURE2D))
+            continue;
+
+        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &src_texture);
+        ok(hr == S_OK, "Source format %#x: Got unexpected hr %#x.\n", src_format->id, hr);
+
+        for (j = 0; j < ARRAY_SIZE(formats); ++j)
+        {
+            dst_format = &formats[j];
+
+            if ((src_format->block_edge == 1 && dst_format->block_edge == 1)
+                    || (src_format->block_edge != 1 && dst_format->block_edge != 1))
+                continue;
+
+            hr = ID3D11Device_CheckFormatSupport(device, dst_format->id, &format_support);
+            if (hr == E_FAIL || !(format_support & D3D11_FORMAT_SUPPORT_TEXTURE2D))
+                continue;
+
+            supported = ((src_format->block_edge != 1 && dst_format->supported)
+                    || (src_format->supported && dst_format->block_edge != 1))
+                    && src_format->block_size == dst_format->block_size
+                    && feature_level >= D3D_FEATURE_LEVEL_10_1;
+
+            /* These cause the device to be removed on some versions of Windows. */
+            if (supported && broken_dst_offset && (src_format->skip_if_broken || dst_format->skip_if_broken))
+            {
+                win_skip("Skipping %#x -> %#x tests because of broken destination offset.\n",
+                        src_format->id, dst_format->id);
+                continue;
+            }
+
+            row_count = sizeof(initial_data) / (row_block_count * dst_format->block_size);
+            texture_desc.Width = row_block_count * dst_format->block_edge;
+            texture_desc.Height = row_count * dst_format->block_edge;
+            texture_desc.Format = dst_format->id;
+            texture_desc.Usage = D3D11_USAGE_DEFAULT;
+
+            resource_data.pSysMem = initial_data;
+            resource_data.SysMemPitch = row_block_count * dst_format->block_size;
+
+            hr = ID3D11Device_CreateTexture2D(device, &texture_desc, &resource_data, &dst_texture);
+            ok(hr == S_OK, "%#x -> %#x: Got unexpected hr %#x.\n", src_format->id, dst_format->id, hr);
+
+            if (supported && broken_dst_offset)
+            {
+                win_skip("Skipping %#x -> %#x CopySubresourceRegion() test because of broken destination offset.\n",
+                        src_format->id, dst_format->id);
+            }
+            else
+            {
+                set_box(&box, 0, 0, 0, src_format->block_edge, src_format->block_edge, 1);
+                ID3D11DeviceContext_CopySubresourceRegion(context, (ID3D11Resource *)dst_texture, 0,
+                        dst_format->block_edge, dst_format->block_edge, 0, (ID3D11Resource *)src_texture, 0, &box);
+                get_texture_readback(dst_texture, 0, &rb);
+                colour = get_readback_color(&rb, 0, 0, 0);
+                if (supported && colour == texture_data[0])
+                {
+                    win_skip("Detected broken destination offset for %#x -> %#x copy.\n",
+                            src_format->id, dst_format->id);
+                    broken_dst_offset = TRUE;
+                }
+                for (k = 0; k < ARRAY_SIZE(texture_data) && (!supported || !broken_dst_offset); ++k)
+                {
+                    block_idx = (k * sizeof(colour)) / dst_format->block_size;
+                    x = block_idx % row_block_count;
+                    y = block_idx / row_block_count;
+
+                    row = rb.map_desc.pData;
+                    row += y * rb.map_desc.RowPitch;
+                    colour = ((DWORD *)row)[k % ((row_block_count * dst_format->block_size) / sizeof(colour))];
+
+                    if (supported && x == 1 && y == 1)
+                        expected = texture_data[k - ((row_block_count + 1) * dst_format->block_size) / sizeof(colour)];
+                    else
+                        expected = initial_data[k];
+                    todo_wine_if(supported && x == 1 && y == 1)
+                        ok(colour == expected, "%#x -> %#x: Got unexpected colour 0x%08x at %u, expected 0x%08x.\n",
+                                src_format->id, dst_format->id, colour, k, expected);
+                    if (colour != expected)
+                        break;
+                }
+                release_resource_readback(&rb);
+            }
+
+            ID3D11DeviceContext_CopyResource(context, (ID3D11Resource *)dst_texture, (ID3D11Resource *)src_texture);
+            get_texture_readback(dst_texture, 0, &rb);
+            for (k = 0; k < ARRAY_SIZE(texture_data); ++k)
+            {
+                block_idx = (k * sizeof(colour)) / dst_format->block_size;
+                y = block_idx / row_block_count;
+
+                row = rb.map_desc.pData;
+                row += y * rb.map_desc.RowPitch;
+                colour = ((DWORD *)row)[k % ((row_block_count * dst_format->block_size) / sizeof(colour))];
+
+                if (supported)
+                    expected = texture_data[k];
+                else
+                    expected = initial_data[k];
+                todo_wine_if(supported)
+                    ok(colour == expected, "%#x -> %#x: Got unexpected colour 0x%08x at %u, expected 0x%08x.\n",
+                            src_format->id, dst_format->id, colour, k, expected);
+                if (colour != expected)
+                    break;
+            }
+            release_resource_readback(&rb);
+
+            ID3D11Texture2D_Release(dst_texture);
+        }
+
+        ID3D11Texture2D_Release(src_texture);
+    }
+
+    ID3D11DeviceContext_Release(context);
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void check_clip_distance(struct d3d11_test_context *test_context, ID3D11Buffer *vb)
 {
     static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -31918,6 +32187,8 @@ START_TEST(d3d11)
     queue_test(test_early_depth_stencil);
     queue_test(test_conservative_depth_output);
     queue_test(test_format_compatibility);
+    queue_for_each_feature_level_in_range(D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_11_0,
+            test_compressed_format_compatibility);
     queue_test(test_clip_distance);
     queue_test(test_combined_clip_and_cull_distances);
     queue_test(test_generate_mips);
