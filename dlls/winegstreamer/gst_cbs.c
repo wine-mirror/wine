@@ -147,19 +147,6 @@ void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
     call_cb(&cbdata);
 }
 
-gboolean query_sink_wrapper(GstPad *pad, GstObject *parent, GstQuery *query)
-{
-    struct cb_data cbdata = { QUERY_SINK };
-
-    cbdata.u.query_sink_data.pad = pad;
-    cbdata.u.query_sink_data.parent = parent;
-    cbdata.u.query_sink_data.query = query;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.query_sink_data.ret;
-}
-
 GstFlowReturn bytestream_wrapper_pull_wrapper(GstPad *pad, GstObject *parent, guint64 ofs, guint len,
         GstBuffer **buf)
 {

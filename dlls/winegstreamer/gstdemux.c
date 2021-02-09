@@ -2858,7 +2858,7 @@ static struct parser_source *create_pin(struct parser *filter, const WCHAR *name
     gst_pad_set_element_private(stream->my_sink, pin);
     gst_pad_set_chain_function(stream->my_sink, got_data_sink);
     gst_pad_set_event_function(stream->my_sink, event_sink);
-    gst_pad_set_query_function(stream->my_sink, query_sink_wrapper);
+    gst_pad_set_query_function(stream->my_sink, query_sink);
 
     filter->sources[filter->source_count++] = pin;
     parser->streams[parser->stream_count++] = stream;
@@ -2925,13 +2925,6 @@ void perform_cb_gstdemux(struct cb_data *cbdata)
         {
             struct pad_added_data *data = &cbdata->u.pad_added_data;
             existing_new_pad(data->element, data->pad, data->user);
-            break;
-        }
-    case QUERY_SINK:
-        {
-            struct query_sink_data *data = &cbdata->u.query_sink_data;
-            cbdata->u.query_sink_data.ret = query_sink(data->pad, data->parent,
-                    data->query);
             break;
         }
     default:
