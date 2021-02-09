@@ -441,7 +441,7 @@ type_t *type_interface_declare(char *name, struct namespace *namespace)
     return type;
 }
 
-type_t *type_interface_define(type_t *iface, attr_list_t *attrs, type_t *inherit, statement_list_t *stmts)
+type_t *type_interface_define(type_t *iface, attr_list_t *attrs, type_t *inherit, statement_list_t *stmts, ifref_list_t *requires)
 {
     if (iface->defined)
         error_loc("interface %s already defined at %s:%d\n",
@@ -457,6 +457,7 @@ type_t *type_interface_define(type_t *iface, attr_list_t *attrs, type_t *inherit
     iface->details.iface->inherit = inherit;
     iface->details.iface->disp_inherit = NULL;
     iface->details.iface->async_iface = NULL;
+    iface->details.iface->requires = requires;
     iface->defined = TRUE;
     compute_method_indexes(iface);
     return iface;
@@ -485,6 +486,7 @@ type_t *type_dispinterface_define(type_t *iface, attr_list_t *attrs, var_list_t 
     if (!iface->details.iface->inherit) error_loc("IDispatch is undefined\n");
     iface->details.iface->disp_inherit = NULL;
     iface->details.iface->async_iface = NULL;
+    iface->details.iface->requires = NULL;
     iface->defined = TRUE;
     compute_method_indexes(iface);
     return iface;
@@ -504,6 +506,7 @@ type_t *type_dispinterface_define_from_iface(type_t *dispiface, attr_list_t *att
     if (!dispiface->details.iface->inherit) error_loc("IDispatch is undefined\n");
     dispiface->details.iface->disp_inherit = iface;
     dispiface->details.iface->async_iface = NULL;
+    dispiface->details.iface->requires = NULL;
     dispiface->defined = TRUE;
     compute_method_indexes(dispiface);
     return dispiface;
@@ -561,6 +564,9 @@ type_t *type_runtimeclass_declare(char *name, struct namespace *namespace)
 
 type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs, ifref_list_t *ifaces)
 {
+    ifref_t *ifref, *required, *tmp;
+    ifref_list_t *requires;
+
     if (runtimeclass->defined)
         error_loc("runtimeclass %s already defined at %s:%d\n",
                   runtimeclass->name, runtimeclass->loc_info.input_name, runtimeclass->loc_info.line_number);
@@ -569,6 +575,28 @@ type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs, ifref
     runtimeclass->defined = TRUE;
     if (!type_runtimeclass_get_default_iface(runtimeclass))
         error_loc("missing default interface on runtimeclass %s\n", runtimeclass->name);
+
+    LIST_FOR_EACH_ENTRY(ifref, ifaces, ifref_t, entry)
+    {
+        /* FIXME: this should probably not be allowed, here or in coclass, */
+        /* but for now there's too many places in Wine IDL where it is to */
+        /* even print a warning. */
+        if (!(ifref->iface->defined)) continue;
+        if (!(requires = type_iface_get_requires(ifref->iface))) continue;
+        LIST_FOR_EACH_ENTRY(required, requires, ifref_t, entry)
+        {
+            int found = 0;
+
+            LIST_FOR_EACH_ENTRY(tmp, ifaces, ifref_t, entry)
+                if ((found = type_is_equal(tmp->iface, required->iface))) break;
+
+            if (!found)
+                error_loc("interface '%s' also requires interface '%s', "
+                          "but runtimeclass '%s' does not implement it.\n",
+                          ifref->iface->name, required->iface->name, runtimeclass->name);
+        }
+    }
+
     return runtimeclass;
 }
 
@@ -593,7 +621,11 @@ type_t *type_apicontract_define(type_t *apicontract, attr_list_t *attrs)
 
 int type_is_equal(const type_t *type1, const type_t *type2)
 {
+    if (type1 == type2)
+        return TRUE;
     if (type_get_type_detect_alias(type1) != type_get_type_detect_alias(type2))
+        return FALSE;
+    if (type1->namespace != type2->namespace)
         return FALSE;
 
     if (type1->name && type2->name)

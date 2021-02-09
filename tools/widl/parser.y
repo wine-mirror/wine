@@ -240,6 +240,7 @@ static typelib_t *current_typelib;
 %token tREADONLY tREF
 %token tREGISTER tREPRESENTAS
 %token tREQUESTEDIT
+%token tREQUIRES
 %token tRESTRICTED
 %token tRETVAL
 %token tRUNTIMECLASS
@@ -293,6 +294,7 @@ static typelib_t *current_typelib;
 %type <type> type unqualified_type qualified_type
 %type <ifref> class_interface
 %type <ifref_list> class_interfaces
+%type <ifref_list> requires required_types
 %type <var> arg ne_union_field union_field s_field case enum enum_member declaration
 %type <var> funcdef
 %type <var_list> m_args arg_list args dispint_meths
@@ -967,8 +969,16 @@ inherit:					{ $$ = NULL; }
 interface: tINTERFACE typename			{ $$ = type_interface_declare($2, current_namespace); }
 	;
 
-interfacedef: attributes interface inherit
-	  '{' int_statements '}' semicolon_opt	{ $$ = type_interface_define($2, $1, $3, $5);
+required_types:
+	  qualified_type			{ $$ = append_ifref(NULL, make_ifref($1)); }
+	| required_types ',' qualified_type	{ $$ = append_ifref($1, make_ifref($3)); }
+
+requires:					{ $$ = NULL; }
+	| tREQUIRES required_types		{ $$ = $2; }
+	;
+
+interfacedef: attributes interface inherit requires
+	  '{' int_statements '}' semicolon_opt	{ $$ = type_interface_define($2, $1, $3, $6, $4);
 						  check_async_uuid($$);
 						}
 	| dispinterfacedef semicolon_opt	{ $$ = $1; }
@@ -2981,7 +2991,7 @@ static void check_async_uuid(type_t *iface)
         stmts = append_statement(stmts, make_statement_declaration(finish_func));
     }
 
-    type_interface_define(async_iface, map_attrs(iface->attrs, async_iface_attrs), inherit, stmts);
+    type_interface_define(async_iface, map_attrs(iface->attrs, async_iface_attrs), inherit, stmts, NULL);
     iface->details.iface->async_iface = async_iface->details.iface->async_iface = async_iface;
 }
 
