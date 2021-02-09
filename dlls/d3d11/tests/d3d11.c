@@ -28205,7 +28205,8 @@ static void test_compressed_format_compatibility(const D3D_FEATURE_LEVEL feature
                     expected = texture_data[k];
                 else
                     expected = initial_data[k];
-                todo_wine_if(supported)
+                todo_wine_if(supported && (dst_format->block_edge != 1
+                        || k >= src_format->block_size / (sizeof(colour))))
                     ok(colour == expected, "%#x -> %#x: Got unexpected colour 0x%08x at %u, expected 0x%08x.\n",
                             src_format->id, dst_format->id, colour, k, expected);
                 if (colour != expected)

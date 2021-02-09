@@ -4541,7 +4541,9 @@ static bool resources_format_compatible(const struct wined3d_resource *src_resou
 void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
         struct wined3d_resource *dst_resource, struct wined3d_resource *src_resource)
 {
+    unsigned int src_row_block_count, dst_row_block_count;
     struct wined3d_texture *dst_texture, *src_texture;
+    unsigned int src_row_count, dst_row_count;
     struct wined3d_box box;
     unsigned int i, j;
 
@@ -4561,21 +4563,29 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
         return;
     }
 
-    if (src_resource->width != dst_resource->width
-            || src_resource->height != dst_resource->height
-            || src_resource->depth != dst_resource->depth)
-    {
-        WARN("Resource dimensions (%ux%ux%u / %ux%ux%u) don't match.\n",
-                dst_resource->width, dst_resource->height, dst_resource->depth,
-                src_resource->width, src_resource->height, src_resource->depth);
-        return;
-    }
-
     if (!resources_format_compatible(src_resource, dst_resource))
     {
         WARN("Resource formats %s and %s are incompatible.\n",
                 debug_d3dformat(dst_resource->format->id),
                 debug_d3dformat(src_resource->format->id));
+        return;
+    }
+
+    src_row_block_count = (src_resource->width + (src_resource->format->block_width - 1))
+            / src_resource->format->block_width;
+    dst_row_block_count = (dst_resource->width + (dst_resource->format->block_width - 1))
+            / dst_resource->format->block_width;
+    src_row_count = (src_resource->height + (src_resource->format->block_height - 1))
+            / src_resource->format->block_height;
+    dst_row_count = (dst_resource->height + (dst_resource->format->block_height - 1))
+            / dst_resource->format->block_height;
+
+    if (src_row_block_count != dst_row_block_count || src_row_count != dst_row_count
+            || src_resource->depth != dst_resource->depth)
+    {
+        WARN("Resource block dimensions (%ux%ux%u / %ux%ux%u) don't match.\n",
+                dst_row_block_count, dst_row_count, dst_resource->depth,
+                src_row_block_count, src_row_count, src_resource->depth);
         return;
     }
 
