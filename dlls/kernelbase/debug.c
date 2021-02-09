@@ -1526,14 +1526,13 @@ BOOL WINAPI DECLSPEC_HOTPATCH QueryFullProcessImageNameW( HANDLE process, DWORD 
     NTSTATUS status;
     DWORD needed;
 
-    /* FIXME: On Windows, ProcessImageFileName return an NT path. In Wine it
-     * is a DOS path and we depend on this. */
-    status = NtQueryInformationProcess( process, ProcessImageFileName, buffer,
+    /* FIXME: Use ProcessImageFileName for the PROCESS_NAME_NATIVE case */
+    status = NtQueryInformationProcess( process, ProcessImageFileNameWin32, buffer,
                                         sizeof(buffer) - sizeof(WCHAR), &needed );
     if (status == STATUS_INFO_LENGTH_MISMATCH)
     {
         dynamic_buffer = HeapAlloc( GetProcessHeap(), 0, needed + sizeof(WCHAR) );
-        status = NtQueryInformationProcess( process, ProcessImageFileName, dynamic_buffer,
+        status = NtQueryInformationProcess( process, ProcessImageFileNameWin32, dynamic_buffer,
                                             needed, &needed );
         result = dynamic_buffer;
     }

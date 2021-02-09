@@ -1502,22 +1502,21 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
     case ProcessImageFileName:
         /* FIXME: Should return a device path */
     case ProcessImageFileNameWin32:
-        SERVER_START_REQ(get_dll_info)
+        SERVER_START_REQ( get_process_image_name )
         {
-            UNICODE_STRING *image_file_name_str = info;
+            UNICODE_STRING *str = info;
 
             req->handle = wine_server_obj_handle( handle );
-            req->base_address = 0; /* main module */
-            wine_server_set_reply( req, image_file_name_str ? image_file_name_str + 1 : NULL,
+            req->win32  = (class == ProcessImageFileNameWin32);
+            wine_server_set_reply( req, str ? str + 1 : NULL,
                                    size > sizeof(UNICODE_STRING) ? size - sizeof(UNICODE_STRING) : 0 );
             ret = wine_server_call( req );
             if (ret == STATUS_BUFFER_TOO_SMALL) ret = STATUS_INFO_LENGTH_MISMATCH;
-
-            len = sizeof(UNICODE_STRING) + reply->filename_len;
+            len = sizeof(UNICODE_STRING) + reply->len;
             if (ret == STATUS_SUCCESS)
             {
-                image_file_name_str->MaximumLength = image_file_name_str->Length = reply->filename_len;
-                image_file_name_str->Buffer = (PWSTR)(image_file_name_str + 1);
+                str->MaximumLength = str->Length = reply->len;
+                str->Buffer = (PWSTR)(str + 1);
             }
         }
         SERVER_END_REQ;

@@ -131,12 +131,12 @@ DECL_HANDLER(terminate_process);
 DECL_HANDLER(terminate_thread);
 DECL_HANDLER(get_process_info);
 DECL_HANDLER(get_process_debug_info);
+DECL_HANDLER(get_process_image_name);
 DECL_HANDLER(get_process_vm_counters);
 DECL_HANDLER(set_process_info);
 DECL_HANDLER(get_thread_info);
 DECL_HANDLER(get_thread_times);
 DECL_HANDLER(set_thread_info);
-DECL_HANDLER(get_dll_info);
 DECL_HANDLER(suspend_thread);
 DECL_HANDLER(resume_thread);
 DECL_HANDLER(load_dll);
@@ -415,12 +415,12 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_terminate_thread,
     (req_handler)req_get_process_info,
     (req_handler)req_get_process_debug_info,
+    (req_handler)req_get_process_image_name,
     (req_handler)req_get_process_vm_counters,
     (req_handler)req_set_process_info,
     (req_handler)req_get_thread_info,
     (req_handler)req_get_thread_times,
     (req_handler)req_set_thread_info,
-    (req_handler)req_get_dll_info,
     (req_handler)req_suspend_thread,
     (req_handler)req_resume_thread,
     (req_handler)req_load_dll,
@@ -805,6 +805,11 @@ C_ASSERT( sizeof(struct get_process_debug_info_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_process_debug_info_reply, debug) == 8 );
 C_ASSERT( FIELD_OFFSET(struct get_process_debug_info_reply, debug_children) == 12 );
 C_ASSERT( sizeof(struct get_process_debug_info_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_process_image_name_request, handle) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_process_image_name_request, win32) == 16 );
+C_ASSERT( sizeof(struct get_process_image_name_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_process_image_name_reply, len) == 8 );
+C_ASSERT( sizeof(struct get_process_image_name_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_process_vm_counters_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_process_vm_counters_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_process_vm_counters_reply, peak_virtual_size) == 8 );
@@ -848,12 +853,6 @@ C_ASSERT( FIELD_OFFSET(struct set_thread_info_request, affinity) == 24 );
 C_ASSERT( FIELD_OFFSET(struct set_thread_info_request, entry_point) == 32 );
 C_ASSERT( FIELD_OFFSET(struct set_thread_info_request, token) == 40 );
 C_ASSERT( sizeof(struct set_thread_info_request) == 48 );
-C_ASSERT( FIELD_OFFSET(struct get_dll_info_request, handle) == 12 );
-C_ASSERT( FIELD_OFFSET(struct get_dll_info_request, base_address) == 16 );
-C_ASSERT( sizeof(struct get_dll_info_request) == 24 );
-C_ASSERT( FIELD_OFFSET(struct get_dll_info_reply, entry_point) == 8 );
-C_ASSERT( FIELD_OFFSET(struct get_dll_info_reply, filename_len) == 16 );
-C_ASSERT( sizeof(struct get_dll_info_reply) == 24 );
 C_ASSERT( FIELD_OFFSET(struct suspend_thread_request, handle) == 12 );
 C_ASSERT( sizeof(struct suspend_thread_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct suspend_thread_reply, count) == 8 );

@@ -1519,6 +1519,18 @@ static void dump_get_process_debug_info_reply( const struct get_process_debug_in
     dump_varargs_pe_image_info( ", image=", cur_size );
 }
 
+static void dump_get_process_image_name_request( const struct get_process_image_name_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, ", win32=%d", req->win32 );
+}
+
+static void dump_get_process_image_name_reply( const struct get_process_image_name_reply *req )
+{
+    fprintf( stderr, " len=%u", req->len );
+    dump_varargs_unicode_str( ", name=", cur_size );
+}
+
 static void dump_get_process_vm_counters_request( const struct get_process_vm_counters_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -1586,19 +1598,6 @@ static void dump_set_thread_info_request( const struct set_thread_info_request *
     dump_uint64( ", entry_point=", &req->entry_point );
     fprintf( stderr, ", token=%04x", req->token );
     dump_varargs_unicode_str( ", desc=", cur_size );
-}
-
-static void dump_get_dll_info_request( const struct get_dll_info_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    dump_uint64( ", base_address=", &req->base_address );
-}
-
-static void dump_get_dll_info_reply( const struct get_dll_info_reply *req )
-{
-    dump_uint64( " entry_point=", &req->entry_point );
-    fprintf( stderr, ", filename_len=%u", req->filename_len );
-    dump_varargs_unicode_str( ", filename=", cur_size );
 }
 
 static void dump_suspend_thread_request( const struct suspend_thread_request *req )
@@ -4482,12 +4481,12 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_terminate_thread_request,
     (dump_func)dump_get_process_info_request,
     (dump_func)dump_get_process_debug_info_request,
+    (dump_func)dump_get_process_image_name_request,
     (dump_func)dump_get_process_vm_counters_request,
     (dump_func)dump_set_process_info_request,
     (dump_func)dump_get_thread_info_request,
     (dump_func)dump_get_thread_times_request,
     (dump_func)dump_set_thread_info_request,
-    (dump_func)dump_get_dll_info_request,
     (dump_func)dump_suspend_thread_request,
     (dump_func)dump_resume_thread_request,
     (dump_func)dump_load_dll_request,
@@ -4763,12 +4762,12 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_terminate_thread_reply,
     (dump_func)dump_get_process_info_reply,
     (dump_func)dump_get_process_debug_info_reply,
+    (dump_func)dump_get_process_image_name_reply,
     (dump_func)dump_get_process_vm_counters_reply,
     NULL,
     (dump_func)dump_get_thread_info_reply,
     (dump_func)dump_get_thread_times_reply,
     NULL,
-    (dump_func)dump_get_dll_info_reply,
     (dump_func)dump_suspend_thread_reply,
     (dump_func)dump_resume_thread_reply,
     NULL,
@@ -5044,12 +5043,12 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "terminate_thread",
     "get_process_info",
     "get_process_debug_info",
+    "get_process_image_name",
     "get_process_vm_counters",
     "set_process_info",
     "get_thread_info",
     "get_thread_times",
     "set_thread_info",
-    "get_dll_info",
     "suspend_thread",
     "resume_thread",
     "load_dll",

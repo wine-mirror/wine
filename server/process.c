@@ -1456,6 +1456,36 @@ DECL_HANDLER(get_process_debug_info)
     release_object( process );
 }
 
+/* fetch the name of the process image */
+DECL_HANDLER(get_process_image_name)
+{
+    struct unicode_str name;
+    struct memory_view *view;
+    struct process *process = get_process_from_handle( req->handle, PROCESS_QUERY_LIMITED_INFORMATION );
+
+    if (!process) return;
+    if ((view = get_exe_view( process )) && get_view_nt_name( view, &name ))
+    {
+        /* skip the \??\ prefix */
+        if (req->win32 && name.len > 6 * sizeof(WCHAR) && name.str[5] == ':')
+        {
+            name.str += 4;
+            name.len -= 4 * sizeof(WCHAR);
+        }
+        /* FIXME: else resolve symlinks in NT path */
+
+        reply->len = name.len;
+        if (name.len <= get_reply_max_size())
+        {
+            WCHAR *ptr = set_reply_data( name.str, name.len );
+            /* change \??\ to \\?\ */
+            if (req->win32 && name.len > sizeof(WCHAR) && ptr[1] == '?') ptr[1] = '\\';
+        }
+        else set_error( STATUS_BUFFER_TOO_SMALL );
+    }
+    release_object( process );
+}
+
 /* retrieve information about a process memory usage */
 DECL_HANDLER(get_process_vm_counters)
 {
@@ -1582,40 +1612,6 @@ DECL_HANDLER(load_dll)
 DECL_HANDLER(unload_dll)
 {
     process_unload_dll( current->process, req->base );
-}
-
-/* retrieve information about a module in a process */
-DECL_HANDLER(get_dll_info)
-{
-    struct process *process;
-
-    if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_LIMITED_INFORMATION )))
-    {
-        struct process_dll *dll;
-
-        if (req->base_address)
-            dll = find_process_dll( process, req->base_address );
-        else /* NULL means main module */
-            dll = list_head( &process->dlls ) ?
-                LIST_ENTRY(list_head( &process->dlls ), struct process_dll, entry) : NULL;
-
-        if (dll)
-        {
-            reply->entry_point = 0; /* FIXME */
-            reply->filename_len = dll->namelen;
-            if (dll->filename)
-            {
-                if (dll->namelen <= get_reply_max_size())
-                    set_reply_data( dll->filename, dll->namelen );
-                else
-                    set_error( STATUS_BUFFER_TOO_SMALL );
-            }
-        }
-        else
-            set_error( STATUS_DLL_NOT_FOUND );
-
-        release_object( process );
-    }
 }
 
 /* retrieve the process idle event */

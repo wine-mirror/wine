@@ -172,6 +172,7 @@ extern struct memory_view *find_mapped_view( struct process *process, client_ptr
 extern struct memory_view *get_exe_view( struct process *process );
 extern struct file *get_view_file( const struct memory_view *view, unsigned int access, unsigned int sharing );
 extern const pe_image_info_t *get_view_image_info( const struct memory_view *view, client_ptr_t *base );
+extern int get_view_nt_name( const struct memory_view *view, struct unicode_str *name );
 extern void free_mapped_views( struct process *process );
 extern int get_page_size(void);
 extern struct mapping *create_fd_mapping( struct object *root, const struct unicode_str *name, struct fd *fd,

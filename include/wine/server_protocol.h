@@ -1028,6 +1028,23 @@ struct get_process_debug_info_reply
 
 
 
+struct get_process_image_name_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+    int          win32;
+    char __pad_20[4];
+};
+struct get_process_image_name_reply
+{
+    struct reply_header __header;
+    data_size_t  len;
+    /* VARARG(name,unicode_str); */
+    char __pad_12[4];
+};
+
+
+
 struct get_process_vm_counters_request
 {
     struct request_header __header;
@@ -1127,23 +1144,6 @@ struct set_thread_info_reply
 #define SET_THREAD_INFO_ENTRYPOINT  0x08
 #define SET_THREAD_INFO_DESCRIPTION 0x10
 #define SET_THREAD_INFO_DBG_HIDDEN  0x20
-
-
-
-struct get_dll_info_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-    mod_handle_t base_address;
-};
-struct get_dll_info_reply
-{
-    struct reply_header __header;
-    client_ptr_t entry_point;
-    data_size_t  filename_len;
-    /* VARARG(filename,unicode_str); */
-    char __pad_20[4];
-};
 
 
 
@@ -5442,12 +5442,12 @@ enum request
     REQ_terminate_thread,
     REQ_get_process_info,
     REQ_get_process_debug_info,
+    REQ_get_process_image_name,
     REQ_get_process_vm_counters,
     REQ_set_process_info,
     REQ_get_thread_info,
     REQ_get_thread_times,
     REQ_set_thread_info,
-    REQ_get_dll_info,
     REQ_suspend_thread,
     REQ_resume_thread,
     REQ_load_dll,
@@ -5727,12 +5727,12 @@ union generic_request
     struct terminate_thread_request terminate_thread_request;
     struct get_process_info_request get_process_info_request;
     struct get_process_debug_info_request get_process_debug_info_request;
+    struct get_process_image_name_request get_process_image_name_request;
     struct get_process_vm_counters_request get_process_vm_counters_request;
     struct set_process_info_request set_process_info_request;
     struct get_thread_info_request get_thread_info_request;
     struct get_thread_times_request get_thread_times_request;
     struct set_thread_info_request set_thread_info_request;
-    struct get_dll_info_request get_dll_info_request;
     struct suspend_thread_request suspend_thread_request;
     struct resume_thread_request resume_thread_request;
     struct load_dll_request load_dll_request;
@@ -6010,12 +6010,12 @@ union generic_reply
     struct terminate_thread_reply terminate_thread_reply;
     struct get_process_info_reply get_process_info_reply;
     struct get_process_debug_info_reply get_process_debug_info_reply;
+    struct get_process_image_name_reply get_process_image_name_reply;
     struct get_process_vm_counters_reply get_process_vm_counters_reply;
     struct set_process_info_reply set_process_info_reply;
     struct get_thread_info_reply get_thread_info_reply;
     struct get_thread_times_reply get_thread_times_reply;
     struct set_thread_info_reply set_thread_info_reply;
-    struct get_dll_info_reply get_dll_info_reply;
     struct suspend_thread_reply suspend_thread_reply;
     struct resume_thread_reply resume_thread_reply;
     struct load_dll_reply load_dll_reply;
@@ -6280,7 +6280,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 671
+#define SERVER_PROTOCOL_VERSION 672
 
 /* ### protocol_version end ### */
 

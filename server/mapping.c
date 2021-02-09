@@ -981,6 +981,14 @@ const pe_image_info_t *get_view_image_info( const struct memory_view *view, clie
     return &view->image;
 }
 
+/* get the file name for a mapped view */
+int get_view_nt_name( const struct memory_view *view, struct unicode_str *name )
+{
+    if (!view->fd) return 0;
+    get_nt_name( view->fd, name );
+    return 1;
+}
+
 static void mapping_dump( struct object *obj, int verbose )
 {
     struct mapping *mapping = (struct mapping *)obj;

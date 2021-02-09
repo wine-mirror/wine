@@ -967,6 +967,16 @@ typedef struct
 @END
 
 
+/* Fetch the name of the process image */
+@REQ(get_process_image_name)
+    obj_handle_t handle;           /* process handle */
+    int          win32;            /* return a win32 filename? */
+@REPLY
+    data_size_t  len;              /* len in bytes required to store filename */
+    VARARG(name,unicode_str);      /* image name for main exe */
+@END
+
+
 /* Retrieve information about a process memory usage */
 @REQ(get_process_vm_counters)
     obj_handle_t handle;                        /* process handle */
@@ -1038,17 +1048,6 @@ typedef struct
 #define SET_THREAD_INFO_ENTRYPOINT  0x08
 #define SET_THREAD_INFO_DESCRIPTION 0x10
 #define SET_THREAD_INFO_DBG_HIDDEN  0x20
-
-
-/* Retrieve information about a module */
-@REQ(get_dll_info)
-    obj_handle_t handle;       /* process handle */
-    mod_handle_t base_address; /* base address of module */
-@REPLY
-    client_ptr_t entry_point;
-    data_size_t  filename_len;    /* buffer len in bytes required to store filename */
-    VARARG(filename,unicode_str); /* file name of module */
-@END
 
 
 /* Suspend a thread */
