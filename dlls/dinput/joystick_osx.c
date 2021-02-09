@@ -661,7 +661,7 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
                 case kIOHIDElementTypeInput_Button:
                 {
                     TRACE("kIOHIDElementTypeInput_Button usage_page %d\n", usage_page);
-                    if (usage_page != kHIDPage_Button)
+                    if ((usage_page != kHIDPage_Button) && (usage_page != kHIDPage_Consumer))
                     {
                         /* avoid strange elements found on the 360 controller */
                         continue;
