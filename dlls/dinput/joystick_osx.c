@@ -840,10 +840,10 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
                                 return;
                             val = IOHIDValueGetIntegerValue(valueRef);
                             oldVal = device->generic.js.rgdwPOV[pov_idx];
-                            if (val >= 8)
+                            if ((val > device->generic.props[idx].lDevMax) || (val < device->generic.props[idx].lDevMin))
                                 newVal = -1;
                             else
-                                newVal = val * 4500;
+                                newVal = (val - device->generic.props[idx].lDevMin) * 4500;
                             device->generic.js.rgdwPOV[pov_idx] = newVal;
                             TRACE("valueRef %s val %d oldVal %d newVal %d\n", debugstr_cf(valueRef), val, oldVal, newVal);
                             if (oldVal != newVal)
