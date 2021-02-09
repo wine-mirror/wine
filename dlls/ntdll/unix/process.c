@@ -723,7 +723,7 @@ static NTSTATUS fork_and_exec( UNICODE_STRING *path, int unixdir,
     char *unix_name;
     NTSTATUS status;
 
-    status = nt_to_unix_file_name( path, &unix_name, FILE_OPEN );
+    status = nt_to_unix_file_name( path, &unix_name, NULL, FILE_OPEN );
     if (status) return status;
 
 #ifdef HAVE_PIPE2

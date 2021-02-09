@@ -157,27 +157,28 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
 
     NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
     IO_STATUS_BLOCK io;
-    OBJECT_ATTRIBUTES attr = { sizeof(attr) };
+    OBJECT_ATTRIBUTES attr;
     UNICODE_STRING valueW;
     WCHAR buffer[ARRAY_SIZE(sortdirW) + 16];
     char *p, *path = get_nls_file_path( type, id );
 
     if (!path) return STATUS_OBJECT_NAME_NOT_FOUND;
 
+    /* try to open file in system dir */
+    ntdll_wcscpy( buffer, type == NLS_SECTION_SORTKEYS ? sortdirW : systemdirW );
+    p = strrchr( path, '/' ) + 1;
+    ascii_to_unicode( buffer + ntdll_wcslen(buffer), p, strlen(p) + 1 );
+    valueW.Buffer = buffer;
+    valueW.Length = ntdll_wcslen( buffer ) * sizeof(WCHAR);
+    valueW.MaximumLength = sizeof( buffer );
+    InitializeObjectAttributes( &attr, &valueW, 0, 0, NULL );
+
     status = open_unix_file( file, path, GENERIC_READ, &attr, 0, FILE_SHARE_READ,
                              FILE_OPEN, FILE_SYNCHRONOUS_IO_ALERT, NULL, 0 );
     if (status == STATUS_NO_SUCH_FILE)
-    {
         /* try to open file in system dir */
-        ntdll_wcscpy( buffer, type == NLS_SECTION_SORTKEYS ? sortdirW : systemdirW );
-        p = strrchr( path, '/' ) + 1;
-        ascii_to_unicode( buffer + ntdll_wcslen(buffer), p, strlen(p) + 1 );
-        valueW.Buffer = buffer;
-        valueW.Length = ntdll_wcslen( buffer ) * sizeof(WCHAR);
-        valueW.MaximumLength = sizeof( buffer );
-        InitializeObjectAttributes( &attr, &valueW, 0, 0, NULL );
         status = NtOpenFile( file, GENERIC_READ, &attr, &io, FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_ALERT );
-    }
+
     free( path );
     return status;
 }
