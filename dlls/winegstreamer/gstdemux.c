@@ -940,7 +940,7 @@ static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
             gst_query_parse_caps(query, &filter);
 
             if (stream->enabled)
-                caps = amt_to_gst_caps(&pin->pin.pin.mt);
+                caps = wg_format_to_caps(&stream->current_format);
             else
                 caps = gst_caps_new_any();
             if (!caps)
