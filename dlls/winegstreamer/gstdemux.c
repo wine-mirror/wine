@@ -920,7 +920,7 @@ static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
     struct parser_source *pin = gst_pad_get_element_private(pad);
     struct wg_parser_stream *stream = pin->wg_stream;
 
-    TRACE("pin %p, type \"%s\".\n", pin, gst_query_type_get_name(query->type));
+    GST_LOG("pin %p, type \"%s\".", pin, gst_query_type_get_name(query->type));
 
     switch (query->type)
     {
@@ -966,7 +966,7 @@ static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
             if (!ret && WARN_ON(gstreamer))
             {
                 gchar *str = gst_caps_to_string(caps);
-                WARN("Rejecting caps \"%s\".\n", debugstr_a(str));
+                GST_WARNING("Rejecting caps \"%s\".", str);
                 g_free(str);
             }
             gst_query_set_accept_caps_result(query, ret);
