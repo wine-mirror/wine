@@ -2369,34 +2369,28 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
 /***********************************************************************
  *           load_builtin_dll
  */
-static NTSTATUS load_builtin_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
+static NTSTATUS load_builtin_dll( LPCWSTR load_path, UNICODE_STRING *nt_name,
                                   DWORD flags, WINE_MODREF** pwm )
 {
-    const WCHAR *name, *p;
     NTSTATUS status;
     void *module, *unix_entry = NULL;
     SECTION_IMAGE_INFORMATION image_info;
 
-    /* Fix the name in case we have a full path and extension */
-    name = nt_name->Buffer;
-    if ((p = wcsrchr( name, '\\' ))) name = p + 1;
-    if ((p = wcsrchr( name, '/' ))) name = p + 1;
+    TRACE("Trying built-in %s\n", debugstr_us(nt_name));
 
-    TRACE("Trying built-in %s\n", debugstr_w(name));
-
-    status = unix_funcs->load_builtin_dll( name, &module, &unix_entry, &image_info );
+    status = unix_funcs->load_builtin_dll( nt_name, &module, &unix_entry, &image_info );
     if (status) return status;
 
     if ((*pwm = get_modref( module )))  /* already loaded */
     {
         if ((*pwm)->ldr.LoadCount != -1) (*pwm)->ldr.LoadCount++;
         TRACE( "Found %s for %s at %p, count=%d\n",
-               debugstr_w((*pwm)->ldr.FullDllName.Buffer), debugstr_w(name),
+               debugstr_us(&(*pwm)->ldr.FullDllName), debugstr_us(nt_name),
                (*pwm)->ldr.DllBase, (*pwm)->ldr.LoadCount);
         return STATUS_SUCCESS;
     }
 
-    TRACE( "loading %s from %s\n", debugstr_w(name), debugstr_us(nt_name) );
+    TRACE( "loading %s\n", debugstr_us(nt_name) );
     status = build_module( load_path, nt_name, &module, &image_info, NULL, flags, pwm );
     if (!status) (*pwm)->unix_entry = unix_entry;
     else if (module) unix_funcs->unload_builtin_dll( module );

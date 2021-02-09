@@ -1177,16 +1177,15 @@ static inline char *prepend( char *buffer, const char *str, size_t len )
  *
  * Open a file for a new dll. Helper for open_builtin_file.
  */
-static NTSTATUS open_dll_file( const char *name, HANDLE *mapping, void **module,
+static NTSTATUS open_dll_file( const char *name, OBJECT_ATTRIBUTES *attr, HANDLE *mapping, void **module,
                                SECTION_IMAGE_INFORMATION *image_info, struct stat *st )
 {
     struct builtin_module *builtin;
-    OBJECT_ATTRIBUTES attr = { sizeof(attr) };
     LARGE_INTEGER size;
     NTSTATUS status;
     HANDLE handle;
 
-    if ((status = open_unix_file( &handle, name, GENERIC_READ | SYNCHRONIZE, &attr, 0,
+    if ((status = open_unix_file( &handle, name, GENERIC_READ | SYNCHRONIZE, attr, 0,
                                   FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_OPEN,
                                   FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE, NULL, 0 )))
     {
@@ -1244,13 +1243,13 @@ static NTSTATUS open_dll_file( const char *name, HANDLE *mapping, void **module,
 /***********************************************************************
  *           open_builtin_file
  */
-static NTSTATUS open_builtin_file( char *name, HANDLE *mapping, void **module,
+static NTSTATUS open_builtin_file( char *name, OBJECT_ATTRIBUTES *attr, HANDLE *mapping, void **module,
                                    SECTION_IMAGE_INFORMATION *image_info, struct stat *st )
 {
     NTSTATUS status;
     int fd;
 
-    status = open_dll_file( name, mapping, module, image_info, st );
+    status = open_dll_file( name, attr, mapping, module, image_info, st );
     if (status != STATUS_DLL_NOT_FOUND) return status;
 
     /* try .so file */
@@ -1305,17 +1304,24 @@ static NTSTATUS map_builtin_module( HANDLE mapping, void **module, struct stat *
 /***********************************************************************
  *           load_builtin_dll
  */
-static NTSTATUS CDECL load_builtin_dll( const WCHAR *name, void **module, void **unix_entry,
+static NTSTATUS CDECL load_builtin_dll( UNICODE_STRING *nt_name, void **module, void **unix_entry,
                                         SECTION_IMAGE_INFORMATION *image_info )
 {
-    unsigned int i, pos, len, namelen, maxlen = 0;
+    unsigned int i, pos, namepos, namelen, maxlen = 0;
+    unsigned int len = nt_name->Length / sizeof(WCHAR);
     char *ptr = NULL, *file, *ext = NULL;
+    OBJECT_ATTRIBUTES attr;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     BOOL found_image = FALSE;
     HANDLE mapping;
     struct stat st;
 
-    len = wcslen( name );
+    for (i = namepos = 0; i < len; i++)
+        if (nt_name->Buffer[i] == '/' || nt_name->Buffer[i] == '\\') namepos = i + 1;
+    len -= namepos;
+    if (!len) return STATUS_DLL_NOT_FOUND;
+    InitializeObjectAttributes( &attr, nt_name, 0, 0, NULL );
+
     if (build_dir) maxlen = strlen(build_dir) + sizeof("/programs/") + len;
     maxlen = max( maxlen, dll_path_maxlen + 1 ) + len + sizeof(".so");
 
@@ -1325,8 +1331,8 @@ static NTSTATUS CDECL load_builtin_dll( const WCHAR *name, void **module, void *
     /* we don't want to depend on the current codepage here */
     for (i = 0; i < len; i++)
     {
-        if (name[i] > 127) goto done;
-        file[pos + i] = (char)name[i];
+        if (nt_name->Buffer[namepos + i] > 127) goto done;
+        file[pos + i] = (char)nt_name->Buffer[namepos + i];
         if (file[pos + i] >= 'A' && file[pos + i] <= 'Z') file[pos + i] += 'a' - 'A';
         else if (file[pos + i] == '.') ext = file + pos + i;
     }
@@ -1342,7 +1348,7 @@ static NTSTATUS CDECL load_builtin_dll( const WCHAR *name, void **module, void *
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, "/dlls", sizeof("/dlls") - 1 );
         ptr = prepend( ptr, build_dir, strlen(build_dir) );
-        status = open_builtin_file( ptr, &mapping, module, image_info, &st );
+        status = open_builtin_file( ptr, &attr, &mapping, module, image_info, &st );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
 
         /* now as a program */
@@ -1353,7 +1359,7 @@ static NTSTATUS CDECL load_builtin_dll( const WCHAR *name, void **module, void *
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, "/programs", sizeof("/programs") - 1 );
         ptr = prepend( ptr, build_dir, strlen(build_dir) );
-        status = open_builtin_file( ptr, &mapping, module, image_info, &st );
+        status = open_builtin_file( ptr, &attr, &mapping, module, image_info, &st );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
     }
 
@@ -1361,13 +1367,13 @@ static NTSTATUS CDECL load_builtin_dll( const WCHAR *name, void **module, void *
     {
         file[pos + len + 1] = 0;
         ptr = prepend( file + pos, dll_paths[i], strlen(dll_paths[i]) );
-        status = open_builtin_file( ptr, &mapping, module, image_info, &st );
+        status = open_builtin_file( ptr, &attr, &mapping, module, image_info, &st );
         if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) found_image = TRUE;
         else if (status != STATUS_DLL_NOT_FOUND) goto done;
     }
 
     if (found_image) status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
-    WARN( "cannot find builtin library for %s\n", debugstr_w(name) );
+    WARN( "cannot find builtin library for %s\n", debugstr_us(nt_name) );
 
 done:
     if (!status && !*module)
@@ -1495,15 +1501,23 @@ found:
  */
 static void load_ntdll(void)
 {
+    static WCHAR path[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
+                           's','y','s','t','e','m','3','2','\\','n','t','d','l','l','.','d','l','l',0};
     NTSTATUS status;
     SECTION_IMAGE_INFORMATION info;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING str;
     HANDLE mapping;
     struct stat st;
     void *module;
     char *name = build_path( dll_dir, "ntdll.dll.so" );
 
+    str.Buffer = path;
+    str.Length = sizeof(path) - sizeof(WCHAR);
+    str.MaximumLength = sizeof(path);
+    InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
     name[strlen(name) - 3] = 0;  /* remove .so */
-    status = open_builtin_file( name, &mapping, &module, &info, &st );
+    status = open_builtin_file( name, &attr, &mapping, &module, &info, &st );
     if (!status && !module)
     {
         status = map_builtin_module( mapping, &module, &st );
