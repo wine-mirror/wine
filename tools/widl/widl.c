@@ -831,19 +831,17 @@ int main(int argc,char *argv[])
     set_everything(TRUE);
   }
 
-  if (!output_name) output_name = dup_basename(input_name, ".idl");
-
   if (do_header + do_typelib + do_proxies + do_client +
-      do_server + do_regscript + do_idfile + do_dlldata == 1)
+      do_server + do_regscript + do_idfile + do_dlldata == 1 && output_name)
   {
-      if (do_header) header_name = output_name;
-      else if (do_typelib) typelib_name = output_name;
-      else if (do_proxies) proxy_name = output_name;
-      else if (do_client) client_name = output_name;
-      else if (do_server) server_name = output_name;
-      else if (do_regscript) regscript_name = output_name;
-      else if (do_idfile) idfile_name = output_name;
-      else if (do_dlldata) dlldata_name = output_name;
+      if (do_header && !header_name) header_name = output_name;
+      else if (do_typelib && !typelib_name) typelib_name = output_name;
+      else if (do_proxies && !proxy_name) proxy_name = output_name;
+      else if (do_client && !client_name) client_name = output_name;
+      else if (do_server && !server_name) server_name = output_name;
+      else if (do_regscript && !regscript_name) regscript_name = output_name;
+      else if (do_idfile && !idfile_name) idfile_name = output_name;
+      else if (do_dlldata && !dlldata_name) dlldata_name = output_name;
   }
 
   if (!dlldata_name && do_dlldata)
