@@ -104,7 +104,7 @@ struct wg_parser_stream
 {
     GstPad *their_src, *post_sink, *post_src, *my_sink;
     GstElement *flip;
-    struct wg_format preferred_format;
+    struct wg_format preferred_format, current_format;
 
     pthread_cond_t event_cond, event_empty_cond;
     struct wg_parser_event event;
@@ -2746,6 +2746,7 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
     struct wg_parser_stream *stream = pin->wg_stream;
     unsigned int buffer_size = 16384;
     ALLOCATOR_PROPERTIES ret_props;
+    bool ret;
 
     if (IsEqualGUID(&pin->pin.pin.mt.formattype, &FORMAT_VideoInfo))
     {
@@ -2764,6 +2765,8 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
         buffer_size = format->nAvgBytesPerSec;
     }
 
+    ret = amt_to_wg_format(&pin->pin.pin.mt, &stream->current_format);
+    assert(ret);
     stream->enabled = true;
 
     gst_pad_push_event(stream->my_sink, gst_event_new_reconfigure());
