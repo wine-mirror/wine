@@ -76,6 +76,7 @@ struct sample_allocator
     } frame_desc;
 
     IMFAttributes *attributes;
+    IMFMediaType *media_type;
 
     unsigned int free_sample_count;
     unsigned int cold_sample_count;
@@ -1114,6 +1115,48 @@ static void sample_allocator_release_samples(struct sample_allocator *allocator)
         list_remove(&iter->entry);
         heap_free(iter);
     }
+
+    allocator->free_sample_count = 0;
+    allocator->cold_sample_count = 0;
+}
+
+static void sample_allocator_set_media_type(struct sample_allocator *allocator, IMFMediaType *media_type)
+{
+    UINT64 frame_size;
+    GUID subtype;
+
+    if (!media_type)
+    {
+        if (allocator->media_type)
+            IMFMediaType_Release(allocator->media_type);
+        allocator->media_type = NULL;
+        return;
+    }
+
+    /* Check if type is the same. */
+    IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &frame_size);
+    IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &subtype);
+
+    if (frame_size == ((UINT64) allocator->frame_desc.width << 32 | allocator->frame_desc.height) &&
+            subtype.Data1 == allocator->frame_desc.d3d9_format)
+    {
+        return;
+    }
+
+    if (allocator->media_type)
+        IMFMediaType_Release(allocator->media_type);
+    allocator->media_type = media_type;
+    if (allocator->media_type)
+        IMFMediaType_AddRef(allocator->media_type);
+}
+
+static void sample_allocator_set_attributes(struct sample_allocator *allocator, IMFAttributes *attributes)
+{
+    if (allocator->attributes)
+        IMFAttributes_Release(allocator->attributes);
+    allocator->attributes = attributes;
+    if (allocator->attributes)
+        IMFAttributes_AddRef(allocator->attributes);
 }
 
 static ULONG WINAPI sample_allocator_Release(IMFVideoSampleAllocatorEx *iface)
@@ -1133,6 +1176,8 @@ static ULONG WINAPI sample_allocator_Release(IMFVideoSampleAllocatorEx *iface)
             IMFDXGIDeviceManager_Release(allocator->dxgi_device_manager);
         if (allocator->attributes)
             IMFAttributes_Release(allocator->attributes);
+        sample_allocator_set_media_type(allocator, NULL);
+        sample_allocator_set_attributes(allocator, NULL);
         sample_allocator_release_samples(allocator);
         DeleteCriticalSection(&allocator->cs);
         heap_free(allocator);
@@ -1190,7 +1235,9 @@ static HRESULT WINAPI sample_allocator_UninitializeSampleAllocator(IMFVideoSampl
     EnterCriticalSection(&allocator->cs);
 
     sample_allocator_release_samples(allocator);
-    allocator->free_sample_count = 0;
+    sample_allocator_set_media_type(allocator, NULL);
+    sample_allocator_set_attributes(allocator, NULL);
+    memset(&allocator->frame_desc, 0, sizeof(allocator->frame_desc));
 
     LeaveCriticalSection(&allocator->cs);
 
@@ -1348,16 +1395,14 @@ static HRESULT sample_allocator_initialize(struct sample_allocator *allocator, u
     if (sample_count > max_sample_count)
         return E_INVALIDARG;
 
+    sample_allocator_set_media_type(allocator, media_type);
+    sample_allocator_set_attributes(allocator, attributes);
+
     sample_count = max(1, sample_count);
     max_sample_count = max(1, max_sample_count);
 
     if (attributes)
-    {
-        allocator->attributes = attributes;
-        IMFAttributes_AddRef(allocator->attributes);
-
         IMFAttributes_GetUINT32(attributes, &MF_SA_BUFFERS_PER_SAMPLE, &allocator->frame_desc.buffer_count);
-    }
 
     allocator->frame_desc.d3d9_format = subtype.Data1;
     allocator->frame_desc.dxgi_format = MFMapDX9FormatToDXGIFormat(allocator->frame_desc.d3d9_format);

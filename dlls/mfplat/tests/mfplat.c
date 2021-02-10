@@ -6290,27 +6290,27 @@ static void test_dxgi_surface_buffer(void)
 static void test_sample_allocator(void)
 {
     IMFVideoSampleAllocatorNotify test_notify = { &test_notify_callback_vtbl };
+    IMFMediaType *media_type, *video_type, *video_type2;
     IMFVideoSampleAllocatorCallback *allocator_cb;
     IMFVideoSampleAllocatorEx *allocatorex;
-    IMFMediaType *media_type, *video_type;
+    IDirect3DDeviceManager9 *d3d9_manager;
     IMFVideoSampleAllocator *allocator;
+    unsigned int buffer_count, token;
+    IDirect3DDevice9 *d3d9_device;
     IMFDXGIDeviceManager *manager;
     IMFSample *sample, *sample2;
     IMFDXGIBuffer *dxgi_buffer;
     IMFAttributes *attributes;
     D3D11_TEXTURE2D_DESC desc;
-    unsigned int buffer_count, token;
     ID3D11Texture2D *texture;
     IMFMediaBuffer *buffer;
     ID3D11Device *device;
     LONG refcount, count;
+    IDirect3D9 *d3d9;
     IUnknown *unk;
     HRESULT hr;
     BYTE *data;
-    IDirect3D9 *d3d9;
     HWND window;
-    IDirect3DDeviceManager9 *d3d9_manager;
-    IDirect3DDevice9 *d3d9_device;
 
     if (!pMFCreateVideoSampleAllocatorEx)
     {
@@ -6366,6 +6366,7 @@ static void test_sample_allocator(void)
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
 
     video_type = create_video_type(&MFVideoFormat_RGB32);
+    video_type2 = create_video_type(&MFVideoFormat_RGB32);
 
     hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 2, video_type);
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#x.\n", hr);
@@ -6374,11 +6375,42 @@ static void test_sample_allocator(void)
     hr = IMFMediaType_SetUINT64(video_type, &MF_MT_FRAME_SIZE, (UINT64) 320 << 32 | 240);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IMFMediaType_SetUINT64(video_type2, &MF_MT_FRAME_SIZE, (UINT64) 320 << 32 | 240);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
     hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 0, video_type);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
+    EXPECT_REF(video_type, 1);
     hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 1, video_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(video_type, 2);
+
+    hr = IMFMediaType_SetUINT64(video_type2, &IID_IUnknown, (UINT64) 320 << 32 | 240);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Setting identical type does not replace it. */
+    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 1, video_type2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(video_type, 2);
+    EXPECT_REF(video_type2, 1);
+
+    hr = IMFMediaType_SetUINT64(video_type2, &MF_MT_FRAME_SIZE, (UINT64) 64 << 32 | 64);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 1, video_type2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(video_type2, 2);
+    EXPECT_REF(video_type, 1);
+
+    /* Modify referenced type. */
+    hr = IMFMediaType_SetUINT64(video_type2, &MF_MT_FRAME_SIZE, (UINT64) 320 << 32 | 64);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 1, video_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(video_type, 2);
+    EXPECT_REF(video_type2, 1);
 
     count = 0;
     hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_cb, &count);
@@ -6401,6 +6433,7 @@ static void test_sample_allocator(void)
     hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 2, video_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(refcount == get_refcount(sample), "Unexpected refcount %u.\n", get_refcount(sample));
+    EXPECT_REF(video_type, 2);
 
     hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_cb, &count);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -6425,6 +6458,18 @@ todo_wine
     ok(buffer_count == 1, "Unexpected buffer count %u.\n", buffer_count);
 
     IMFSample_Release(sample);
+
+    hr = IMFVideoSampleAllocator_UninitializeSampleAllocator(allocator);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+todo_wine
+    EXPECT_REF(video_type, 2);
+
+    hr = IMFVideoSampleAllocatorCallback_GetFreeSampleCount(allocator_cb, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!count, "Unexpected count %d.\n", count);
+
+    hr = IMFVideoSampleAllocator_AllocateSample(allocator, &sample);
+    ok(hr == MF_E_NOT_INITIALIZED, "Unexpected hr %#x.\n", hr);
 
     IMFVideoSampleAllocatorCallback_Release(allocator_cb);
     IMFVideoSampleAllocator_Release(allocator);
@@ -6468,6 +6513,15 @@ todo_wine
     hr = IMFVideoSampleAllocatorEx_AllocateSample(allocatorex, &sample2);
     ok(hr == MF_E_SAMPLEALLOCATOR_EMPTY, "Unexpected hr %#x.\n", hr);
 
+    /* Reinitialize with already allocated samples. */
+    hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(allocatorex, 0, 0, NULL, video_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(attributes, 1);
+
+    hr = IMFVideoSampleAllocatorEx_AllocateSample(allocatorex, &sample2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMFSample_Release(sample2);
+
     IMFSample_Release(sample);
 
     IMFVideoSampleAllocatorCallback_Release(allocator_cb);
@@ -6490,8 +6544,10 @@ todo_wine
     hr = pMFCreateVideoSampleAllocatorEx(&IID_IMFVideoSampleAllocator, (void **)&allocator);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    EXPECT_REF(manager, 1);
     hr = IMFVideoSampleAllocator_SetDirectXManager(allocator, (IUnknown *)manager);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    EXPECT_REF(manager, 2);
 
     hr = IMFVideoSampleAllocator_InitializeSampleAllocator(allocator, 0, video_type);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
