@@ -575,7 +575,8 @@ static void test_gettnames(void* (CDECL *p_gettnames)(void))
                 i, wine_dbgstr_w(ret->wstr[i]), wine_dbgstr_w(buf));
     }
 
-    ok(ret->str[42] + strlen(ret->str[42])+1 == (char*)ret->wstr[0],
+    ok(ret->str[42] + strlen(ret->str[42]) + 1 == (char*)ret->wstr[0] ||
+            ret->str[42] + strlen(ret->str[42]) + 2 == (char*)ret->wstr[0],
             "ret->str[42] = %p len = %d, ret->wstr[0] = %p\n",
             ret->str[42], strlen(ret->str[42]), ret->wstr[0]);
     p_free(ret);
