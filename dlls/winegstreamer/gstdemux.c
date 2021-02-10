@@ -1552,12 +1552,11 @@ static DWORD CALLBACK read_thread(void *arg)
 
 static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
 {
-    struct parser *filter = user;
-    struct wg_parser *parser = filter->wg_parser;
+    struct wg_parser *parser = user;
     unsigned int i;
     char *name;
 
-    GST_LOG("filter %p, bin %p, pad %p.", filter, bin, pad);
+    GST_LOG("parser %p, bin %p, pad %p.", parser, bin, pad);
 
     for (i = 0; i < parser->stream_count; ++i)
     {
@@ -1582,9 +1581,8 @@ static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
 
 static void free_stream(struct wg_parser_stream *stream);
 
-static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *This)
+static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct wg_parser *parser)
 {
-    struct wg_parser *parser = This->wg_parser;
     struct wg_parser_stream *stream;
     const char *typename;
     char *name;
@@ -1592,7 +1590,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *Th
     GstStructure *arg;
     int ret;
 
-    TRACE("%p %p %p\n", This, bin, pad);
+    TRACE("parser %p, bin %p, pad %p.\n", parser, bin, pad);
 
     name = gst_pad_get_name(pad);
     TRACE("Name: %s\n", name);
@@ -1723,7 +1721,7 @@ out:
 
 static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
 {
-    struct parser *This = user;
+    struct wg_parser *This = user;
 
     TRACE("%p %p %p\n", This, bin, pad);
 
@@ -1816,10 +1814,9 @@ static gboolean activate_mode(GstPad *pad, GstObject *parent, GstPadMode mode, g
 
 static void no_more_pads(GstElement *decodebin, gpointer user)
 {
-    struct parser *filter = user;
-    struct wg_parser *parser = filter->wg_parser;
+    struct wg_parser *parser = user;
 
-    GST_DEBUG("filter %p.", filter);
+    GST_DEBUG("parser %p.", parser);
 
     pthread_mutex_lock(&parser->mutex);
     parser->no_more_pads = true;
@@ -2208,10 +2205,10 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
 
     gst_bin_add(GST_BIN(parser->container), element);
 
-    g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), filter);
-    g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad), filter);
-    g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_blacklist), filter);
-    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), filter);
+    g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), parser);
+    g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad), parser);
+    g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_blacklist), parser);
+    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), parser);
 
     parser->their_sink = gst_element_get_static_pad(element, "sink");
 
@@ -3113,9 +3110,9 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
 
     gst_bin_add(GST_BIN(parser->container), element);
 
-    g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), filter);
-    g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad), filter);
-    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), filter);
+    g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), parser);
+    g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad), parser);
+    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), parser);
 
     parser->their_sink = gst_element_get_static_pad(element, "sink");
 
