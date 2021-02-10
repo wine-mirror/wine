@@ -169,6 +169,7 @@ struct source_reader
     IMFMediaSource *source;
     IMFPresentationDescriptor *descriptor;
     IMFSourceReaderCallback *async_callback;
+    IMFAttributes *attributes;
     unsigned int first_audio_stream_index;
     unsigned int first_video_stream_index;
     unsigned int last_read_index;
@@ -1268,6 +1269,8 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
             IMFMediaSource_Shutdown(reader->source);
         if (reader->descriptor)
             IMFPresentationDescriptor_Release(reader->descriptor);
+        if (reader->attributes)
+            IMFAttributes_Release(reader->attributes);
         IMFMediaSource_Release(reader->source);
 
         for (i = 0; i < reader->stream_count; ++i)
@@ -2162,6 +2165,9 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
 
     if (attributes)
     {
+        object->attributes = attributes;
+        IMFAttributes_AddRef(object->attributes);
+
         IMFAttributes_GetUnknown(attributes, &MF_SOURCE_READER_ASYNC_CALLBACK, &IID_IMFSourceReaderCallback,
                 (void **)&object->async_callback);
         if (object->async_callback)

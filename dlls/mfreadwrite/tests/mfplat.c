@@ -41,6 +41,13 @@ DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 #include "wine/heap.h"
 #include "wine/test.h"
 
+static ULONG get_refcount(void *iface)
+{
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
+}
+
 static HRESULT (WINAPI *pMFCreateMFByteStreamOnStream)(IStream *stream, IMFByteStream **bytestream);
 
 static void init_functions(void)
@@ -620,6 +627,7 @@ static void test_source_reader(void)
     IMFByteStream *stream;
     LONGLONG timestamp;
     IMFSample *sample;
+    ULONG refcount;
     BOOL selected;
     HRESULT hr;
 
@@ -836,9 +844,12 @@ skip_read_sample:
     ok(hr == S_OK, "Failed to set attribute value, hr %#x.\n", hr);
     IMFSourceReaderCallback_Release(&callback->IMFSourceReaderCallback_iface);
 
+    refcount = get_refcount(attributes);
     hr = MFCreateSourceReaderFromByteStream(stream, attributes, &reader);
-todo_wine
+todo_wine {
     ok(hr == S_OK, "Failed to create source reader, hr %#x.\n", hr);
+    ok(get_refcount(attributes) > refcount, "Unexpected refcount.\n");
+}
     IMFAttributes_Release(attributes);
     if (hr == S_OK)
         IMFSourceReader_Release(reader);
@@ -856,6 +867,7 @@ static void test_source_reader_from_media_source(void)
     IMFSample *sample;
     LONGLONG timestamp;
     IMFAttributes *attributes;
+    ULONG refcount;
     int i;
 
     source = create_test_source();
@@ -967,8 +979,10 @@ static void test_source_reader_from_media_source(void)
     ok(hr == S_OK, "Failed to set attribute value, hr %#x.\n", hr);
     IMFSourceReaderCallback_Release(&callback->IMFSourceReaderCallback_iface);
 
+    refcount = get_refcount(attributes);
     hr = MFCreateSourceReaderFromMediaSource(source, attributes, &reader);
     ok(hr == S_OK, "Failed to create source reader, hr %#x.\n", hr);
+    ok(get_refcount(attributes) > refcount, "Unexpected refcount.\n");
 
     hr = IMFSourceReader_SetStreamSelection(reader, 0, TRUE);
     ok(hr == S_OK, "Failed to select a stream, hr %#x.\n", hr);
