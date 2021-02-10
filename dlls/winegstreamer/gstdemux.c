@@ -102,6 +102,8 @@ struct wg_parser_event
 
 struct wg_parser_stream
 {
+    struct wg_parser *parser;
+
     GstPad *their_src, *post_sink, *post_src, *my_sink;
     GstElement *flip;
     struct wg_format preferred_format, current_format;
@@ -917,10 +919,9 @@ static bool wg_format_compare(const struct wg_format *a, const struct wg_format 
 
 static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
 {
-    struct parser_source *pin = gst_pad_get_element_private(pad);
-    struct wg_parser_stream *stream = pin->wg_stream;
+    struct wg_parser_stream *stream = gst_pad_get_element_private(pad);
 
-    GST_LOG("pin %p, type \"%s\".", pin, gst_query_type_get_name(query->type));
+    GST_LOG("stream %p, type \"%s\".", stream, gst_query_type_get_name(query->type));
 
     switch (query->type)
     {
@@ -1053,10 +1054,9 @@ static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
     return ret;
 }
 
-static GstFlowReturn queue_stream_event(struct parser_source *pin, const struct wg_parser_event *event)
+static GstFlowReturn queue_stream_event(struct wg_parser_stream *stream, const struct wg_parser_event *event)
 {
-    struct wg_parser *parser = impl_from_strmbase_filter(pin->pin.pin.filter)->wg_parser;
-    struct wg_parser_stream *stream = pin->wg_stream;
+    struct wg_parser *parser = stream->parser;
 
     /* Unlike request_buffer_src() [q.v.], we need to watch for GStreamer
      * flushes here. The difference is that we can be blocked by the streaming
@@ -1082,12 +1082,10 @@ static GstFlowReturn queue_stream_event(struct parser_source *pin, const struct 
 
 static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
 {
-    struct parser_source *pin = gst_pad_get_element_private(pad);
-    struct wg_parser_stream *stream = pin->wg_stream;
-    struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
-    struct wg_parser *parser = filter->wg_parser;
+    struct wg_parser_stream *stream = gst_pad_get_element_private(pad);
+    struct wg_parser *parser = stream->parser;
 
-    GST_LOG("pin %p, type \"%s\".", pin, GST_EVENT_TYPE_NAME(event));
+    GST_LOG("stream %p, type \"%s\".", stream, GST_EVENT_TYPE_NAME(event));
 
     switch (event->type)
     {
@@ -1109,7 +1107,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
                 stream_event.u.segment.position = segment->position / 100;
                 stream_event.u.segment.stop = segment->stop / 100;
                 stream_event.u.segment.rate = segment->rate * segment->applied_rate;
-                queue_stream_event(pin, &stream_event);
+                queue_stream_event(stream, &stream_event);
             }
             break;
 
@@ -1119,7 +1117,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
                 struct wg_parser_event stream_event;
 
                 stream_event.type = WG_PARSER_EVENT_EOS;
-                queue_stream_event(pin, &stream_event);
+                queue_stream_event(stream, &stream_event);
             }
             else
             {
@@ -1237,12 +1235,11 @@ static void *push_data(void *arg)
 
 static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *buffer)
 {
-    struct parser_source *pin = gst_pad_get_element_private(pad);
-    struct wg_parser_stream *stream = pin->wg_stream;
+    struct wg_parser_stream *stream = gst_pad_get_element_private(pad);
     struct wg_parser_event stream_event;
     GstFlowReturn ret;
 
-    GST_LOG("pin %p, buffer %p.", pin, buffer);
+    GST_LOG("stream %p, buffer %p.", stream, buffer);
 
     if (!stream->enabled)
     {
@@ -1253,7 +1250,7 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *bu
     stream_event.type = WG_PARSER_EVENT_BUFFER;
     stream_event.u.buffer = buffer;
     /* Transfer our reference to the buffer to the thread. */
-    if ((ret = queue_stream_event(pin, &stream_event)) != GST_FLOW_OK)
+    if ((ret = queue_stream_event(stream, &stream_event)) != GST_FLOW_OK)
         gst_buffer_unref(buffer);
     return ret;
 }
@@ -2842,6 +2839,7 @@ static struct parser_source *create_pin(struct parser *filter, const WCHAR *name
     }
     pin->wg_stream = stream;
 
+    stream->parser = parser;
     strmbase_source_init(&pin->pin, &filter->filter, name, &source_ops);
     pin->IQualityControl_iface.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
     strmbase_seeking_init(&pin->seek, &GST_Seeking_Vtbl, GST_ChangeStop,
@@ -2855,7 +2853,7 @@ static struct parser_source *create_pin(struct parser *filter, const WCHAR *name
 
     sprintf(pad_name, "qz_sink_%u", filter->source_count);
     stream->my_sink = gst_pad_new(pad_name, GST_PAD_SINK);
-    gst_pad_set_element_private(stream->my_sink, pin);
+    gst_pad_set_element_private(stream->my_sink, stream);
     gst_pad_set_chain_function(stream->my_sink, got_data_sink);
     gst_pad_set_event_function(stream->my_sink, event_sink);
     gst_pad_set_query_function(stream->my_sink, query_sink);
