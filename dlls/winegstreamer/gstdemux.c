@@ -2198,7 +2198,7 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
 
     gst_bin_add(GST_BIN(parser->container), element);
 
-    g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), parser);
+    g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad), parser);
     g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad), parser);
     g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_blacklist), parser);
     g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), parser);
@@ -2917,23 +2917,6 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     return S_OK;
 }
 
-void perform_cb_gstdemux(struct cb_data *cbdata)
-{
-    switch(cbdata->type)
-    {
-    case EXISTING_NEW_PAD:
-        {
-            struct pad_added_data *data = &cbdata->u.pad_added_data;
-            existing_new_pad(data->element, data->pad, data->user);
-            break;
-        }
-    default:
-        {
-            assert(0);
-        }
-    }
-}
-
 static BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TYPE *b)
 {
     return IsEqualGUID(&a->majortype, &b->majortype)
@@ -3103,7 +3086,7 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
 
     gst_bin_add(GST_BIN(parser->container), element);
 
-    g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad_wrapper), parser);
+    g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad), parser);
     g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad), parser);
     g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), parser);
 

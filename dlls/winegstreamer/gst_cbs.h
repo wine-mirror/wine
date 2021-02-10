@@ -30,8 +30,6 @@ typedef enum {
 } GstAutoplugSelectResult;
 
 enum CB_TYPE {
-    EXISTING_NEW_PAD,
-    GSTDEMUX_MAX,
     BYTESTREAM_WRAPPER_PULL,
     BYTESTREAM_QUERY,
     BYTESTREAM_PAD_MODE_ACTIVATE,
@@ -102,10 +100,8 @@ struct cb_data {
 };
 
 void mark_wine_thread(void) DECLSPEC_HIDDEN;
-void perform_cb_gstdemux(struct cb_data *data) DECLSPEC_HIDDEN;
 void perform_cb_media_source(struct cb_data *data) DECLSPEC_HIDDEN;
 
-void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
 GstFlowReturn got_data_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf) DECLSPEC_HIDDEN;
 void Gstreamer_transform_pad_added_wrapper(GstElement *filter, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
 GstFlowReturn bytestream_wrapper_pull_wrapper(GstPad *pad, GstObject *parent, guint64 ofs, guint len, GstBuffer **buf) DECLSPEC_HIDDEN;
