@@ -37,6 +37,8 @@ DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 #include "mfidl.h"
 #include "mferror.h"
 #include "mfreadwrite.h"
+#include "d3d9.h"
+#include "dxva2api.h"
 
 #include "wine/heap.h"
 #include "wine/test.h"
@@ -46,6 +48,37 @@ static ULONG get_refcount(void *iface)
     IUnknown *unknown = iface;
     IUnknown_AddRef(unknown);
     return IUnknown_Release(unknown);
+}
+
+static HWND create_window(void)
+{
+    RECT r = {0, 0, 640, 480};
+
+    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
+
+    return CreateWindowA("static", "mfreadwrite_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
+}
+
+static IDirect3DDevice9 *create_d3d9_device(IDirect3D9 *d3d9, HWND focus_window)
+{
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DDevice9 *device = NULL;
+
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_X8R8G8B8;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.hDeviceWindow = focus_window;
+    present_parameters.Windowed = TRUE;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+    present_parameters.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
+
+    IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+
+    return device;
 }
 
 static HRESULT (WINAPI *pMFCreateMFByteStreamOnStream)(IStream *stream, IMFByteStream **bytestream);
@@ -1054,6 +1087,57 @@ static void test_source_reader_from_media_source(void)
     fail_request_sample = FALSE;
 }
 
+static void test_reader_d3d9(void)
+{
+    IDirect3DDeviceManager9 *d3d9_manager;
+    IDirect3DDevice9 *d3d9_device;
+    IMFAttributes *attributes;
+    IMFSourceReader *reader;
+    IMFMediaSource *source;
+    IDirect3D9 *d3d9;
+    HWND window;
+    HRESULT hr;
+    UINT token;
+
+    window = create_window();
+    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d9, "Failed to create a D3D9 object.\n");
+    if (!(d3d9_device = create_d3d9_device(d3d9, window)))
+    {
+        skip("Failed to create a D3D9 device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = DXVA2CreateDirect3DDeviceManager9(&token, &d3d9_manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDeviceManager9_ResetDevice(d3d9_manager, d3d9_device, token);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    source = create_test_source();
+    ok(!!source, "Failed to create test source.\n");
+
+    hr = MFCreateAttributes(&attributes, 1);
+    ok(hr == S_OK, "Failed to create attributes object, hr %#x.\n", hr);
+
+    hr = IMFAttributes_SetUnknown(attributes, &MF_SOURCE_READER_D3D_MANAGER, (IUnknown *)d3d9_manager);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = MFCreateSourceReaderFromMediaSource(source, attributes, &reader);
+    ok(hr == S_OK, "Failed to create source reader, hr %#x.\n", hr);
+
+    IMFAttributes_Release(attributes);
+
+    IMFSourceReader_Release(reader);
+
+    IDirect3DDeviceManager9_Release(d3d9_manager);
+    IDirect3DDevice9_Release(d3d9_device);
+
+done:
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(mfplat)
 {
     HRESULT hr;
@@ -1066,6 +1150,7 @@ START_TEST(mfplat)
     test_factory();
     test_source_reader();
     test_source_reader_from_media_source();
+    test_reader_d3d9();
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
