@@ -191,6 +191,7 @@ DECL_HANDLER(unmap_view);
 DECL_HANDLER(get_mapping_committed_range);
 DECL_HANDLER(add_mapping_committed_range);
 DECL_HANDLER(is_same_mapping);
+DECL_HANDLER(get_mapping_filename);
 DECL_HANDLER(list_processes);
 DECL_HANDLER(create_debug_obj);
 DECL_HANDLER(wait_debug_event);
@@ -475,6 +476,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_mapping_committed_range,
     (req_handler)req_add_mapping_committed_range,
     (req_handler)req_is_same_mapping,
+    (req_handler)req_get_mapping_filename,
     (req_handler)req_list_processes,
     (req_handler)req_create_debug_obj,
     (req_handler)req_wait_debug_event,
@@ -1142,6 +1144,11 @@ C_ASSERT( sizeof(struct add_mapping_committed_range_request) == 40 );
 C_ASSERT( FIELD_OFFSET(struct is_same_mapping_request, base1) == 16 );
 C_ASSERT( FIELD_OFFSET(struct is_same_mapping_request, base2) == 24 );
 C_ASSERT( sizeof(struct is_same_mapping_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct get_mapping_filename_request, process) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_mapping_filename_request, addr) == 16 );
+C_ASSERT( sizeof(struct get_mapping_filename_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_mapping_filename_reply, len) == 8 );
+C_ASSERT( sizeof(struct get_mapping_filename_reply) == 16 );
 C_ASSERT( sizeof(struct list_processes_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct list_processes_reply, info_size) == 8 );
 C_ASSERT( FIELD_OFFSET(struct list_processes_reply, process_count) == 12 );

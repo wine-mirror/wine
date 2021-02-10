@@ -372,14 +372,7 @@ static BOOL nt_get_mapped_file_name(HANDLE process, LPVOID addr, LPWSTR name, DW
 
     ret_len = 0xdeadbeef;
     status = pNtQueryVirtualMemory(process, addr, MemorySectionName, buf, buf_len, &ret_len);
-todo_wine
     ok(!status, "NtQueryVirtualMemory error %x\n", status);
-    /* FIXME: remove once Wine is fixed */
-    if (status)
-    {
-        HeapFree(GetProcessHeap(), 0, buf);
-        return FALSE;
-    }
 
     section_name = (MEMORY_SECTION_NAME *)buf;
     ok(ret_len == section_name->SectionFileName.MaximumLength + sizeof(*section_name), "got %lu, %u\n",
@@ -501,6 +494,7 @@ todo_wine {
     {
         ok(memcmp(map_nameW, nt_map_name, lstrlenW(map_nameW)) == 0, "map name does not start with a device name: %s\n", map_name);
         WideCharToMultiByte(CP_ACP, 0, map_nameW, -1, map_name, MAX_PATH, NULL, NULL);
+        todo_wine
         ok(memcmp(map_name, device_name, strlen(device_name)) == 0, "map name does not start with a device name: %s\n", map_name);
     }
 

@@ -329,6 +329,18 @@ struct memory_view *find_mapped_view( struct process *process, client_ptr_t base
     return NULL;
 }
 
+/* find a memory view from any address inside it */
+static struct memory_view *find_mapped_addr( struct process *process, client_ptr_t addr )
+{
+    struct memory_view *view;
+
+    LIST_FOR_EACH_ENTRY( view, &process->views, struct memory_view, entry )
+        if (addr >= view->base && addr < view->base + view->size) return view;
+
+    set_error( STATUS_NOT_MAPPED_VIEW );
+    return NULL;
+}
+
 /* get the main exe memory view */
 struct memory_view *get_exe_view( struct process *process )
 {
@@ -1208,4 +1220,24 @@ DECL_HANDLER(is_same_mapping)
         !(view1->flags & SEC_IMAGE) || !(view2->flags & SEC_IMAGE) ||
         !is_same_file_fd( view1->fd, view2->fd ))
         set_error( STATUS_NOT_SAME_DEVICE );
+}
+
+/* get the filename of a mapping */
+DECL_HANDLER(get_mapping_filename)
+{
+    struct process *process;
+    struct memory_view *view;
+    struct unicode_str name;
+
+    if (!(process = get_process_from_handle( req->process, PROCESS_QUERY_INFORMATION ))) return;
+
+    if ((view = find_mapped_addr( process, req->addr )) && get_view_nt_name( view, &name ))
+    {
+        reply->len = name.len;
+        if (name.len <= get_reply_max_size()) set_reply_data( name.str, name.len );
+        else set_error( STATUS_BUFFER_OVERFLOW );
+    }
+    else set_error( STATUS_INVALID_ADDRESS );
+
+    release_object( process );
 }

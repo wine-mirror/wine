@@ -2202,6 +2202,18 @@ static void dump_is_same_mapping_request( const struct is_same_mapping_request *
     dump_uint64( ", base2=", &req->base2 );
 }
 
+static void dump_get_mapping_filename_request( const struct get_mapping_filename_request *req )
+{
+    fprintf( stderr, " process=%04x", req->process );
+    dump_uint64( ", addr=", &req->addr );
+}
+
+static void dump_get_mapping_filename_reply( const struct get_mapping_filename_reply *req )
+{
+    fprintf( stderr, " len=%u", req->len );
+    dump_varargs_unicode_str( ", filename=", cur_size );
+}
+
 static void dump_list_processes_request( const struct list_processes_request *req )
 {
 }
@@ -4541,6 +4553,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_mapping_committed_range_request,
     (dump_func)dump_add_mapping_committed_range_request,
     (dump_func)dump_is_same_mapping_request,
+    (dump_func)dump_get_mapping_filename_request,
     (dump_func)dump_list_processes_request,
     (dump_func)dump_create_debug_obj_request,
     (dump_func)dump_wait_debug_event_request,
@@ -4822,6 +4835,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_mapping_committed_range_reply,
     NULL,
     NULL,
+    (dump_func)dump_get_mapping_filename_reply,
     (dump_func)dump_list_processes_reply,
     (dump_func)dump_create_debug_obj_reply,
     (dump_func)dump_wait_debug_event_reply,
@@ -5103,6 +5117,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_mapping_committed_range",
     "add_mapping_committed_range",
     "is_same_mapping",
+    "get_mapping_filename",
     "list_processes",
     "create_debug_obj",
     "wait_debug_event",
@@ -5363,6 +5378,7 @@ static const struct
     { "INFO_LENGTH_MISMATCH",        STATUS_INFO_LENGTH_MISMATCH },
     { "INSTANCE_NOT_AVAILABLE",      STATUS_INSTANCE_NOT_AVAILABLE },
     { "INSUFFICIENT_RESOURCES",      STATUS_INSUFFICIENT_RESOURCES },
+    { "INVALID_ADDRESS",             STATUS_INVALID_ADDRESS },
     { "INVALID_CID",                 STATUS_INVALID_CID },
     { "INVALID_DEVICE_REQUEST",      STATUS_INVALID_DEVICE_REQUEST },
     { "INVALID_FILE_FOR_SECTION",    STATUS_INVALID_FILE_FOR_SECTION },

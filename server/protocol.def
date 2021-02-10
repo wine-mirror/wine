@@ -1588,6 +1588,16 @@ enum server_fd_type
 @END
 
 
+/* Get the filename of a mapping */
+@REQ(get_mapping_filename)
+    obj_handle_t process;       /* process handle */
+    client_ptr_t addr;          /* address inside mapped view (in process address space) */
+@REPLY
+    data_size_t  len;           /* total filename length in bytes */
+    VARARG(filename,unicode_str); /* filename in NT format */
+@END
+
+
 struct thread_info
 {
     timeout_t       start_time;
