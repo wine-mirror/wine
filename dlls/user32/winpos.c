@@ -1179,7 +1179,13 @@ static BOOL show_window( HWND hwnd, INT cmd )
     else WIN_ReleasePtr( wndPtr );
 
     /* if previous state was minimized Windows sets focus to the window */
-    if (style & WS_MINIMIZE) SetFocus( hwnd );
+    if (style & WS_MINIMIZE)
+    {
+        SetFocus( hwnd );
+        /* Send a WM_ACTIVATE message for a top level window, even if the window is already active */
+        if (GetAncestor( hwnd, GA_ROOT ) == hwnd && !(swp & SWP_NOACTIVATE))
+            SendMessageW( hwnd, WM_ACTIVATE, WA_ACTIVE, 0 );
+    }
 
 done:
     SetThreadDpiAwarenessContext( context );
