@@ -1154,6 +1154,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     struct scriptshaping_context context = { 0 };
     struct dwrite_fontface *font_obj;
     WCHAR digits[NATIVE_DIGITS_LEN];
+    unsigned int glyph_count;
     HRESULT hr;
 
     TRACE("%s:%u, %p, %d, %d, %s, %s, %p, %p, %p, %u, %u, %p, %p, %p, %p, %p.\n", debugstr_wn(text, length),
@@ -1163,12 +1164,9 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
 
     analyzer_dump_user_features(features, feature_range_lengths, feature_ranges);
 
-    if (max_glyph_count < length)
-        return E_NOT_SUFFICIENT_BUFFER;
-
     get_number_substitutes(substitution, is_rtl, digits);
-
     font_obj = unsafe_impl_from_IDWriteFontFace(fontface);
+    glyph_count = max(max_glyph_count, length);
 
     context.cache = fontface_get_shaping_cache(font_obj);
     context.script = analysis->script > Script_LastId ? Script_Unknown : analysis->script;
@@ -1176,18 +1174,18 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     context.length = length;
     context.is_rtl = is_rtl;
     context.is_sideways = is_sideways;
-    context.u.subst.glyphs = heap_calloc(max_glyph_count, sizeof(*glyphs));
-    context.u.subst.glyph_props = heap_calloc(max_glyph_count, sizeof(*glyph_props));
+    context.u.subst.glyphs = heap_calloc(glyph_count, sizeof(*glyphs));
+    context.u.subst.glyph_props = heap_calloc(glyph_count, sizeof(*glyph_props));
     context.u.subst.text_props = text_props;
     context.u.subst.clustermap = clustermap;
     context.u.subst.max_glyph_count = max_glyph_count;
-    context.u.subst.capacity = max_glyph_count;
+    context.u.subst.capacity = glyph_count;
     context.u.subst.digits = digits;
     context.language_tag = get_opentype_language(locale);
     context.user_features.features = features;
     context.user_features.range_lengths = feature_range_lengths;
     context.user_features.range_count = feature_ranges;
-    context.glyph_infos = heap_alloc_zero(sizeof(*context.glyph_infos) * max_glyph_count);
+    context.glyph_infos = heap_calloc(glyph_count, sizeof(*context.glyph_infos));
     context.table = &context.cache->gsub;
 
     scriptprops = &dwritescripts_properties[context.script];
