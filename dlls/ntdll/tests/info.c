@@ -2196,7 +2196,7 @@ static void test_threadstack(void)
 static void test_queryvirtualmemory(void)
 {
     NTSTATUS status;
-    SIZE_T readcount;
+    SIZE_T readcount, prev;
     static const char teststring[] = "test string";
     static char datatestbuf[42] = "abc";
     static char rwtestbuf[42];
@@ -2204,6 +2204,8 @@ static void test_queryvirtualmemory(void)
     char stackbuf[42];
     HMODULE module;
     void *user_shared_data = (void *)0x7ffe0000;
+    char buffer[1024];
+    MEMORY_SECTION_NAME *name = (MEMORY_SECTION_NAME *)buffer;
 
     module = GetModuleHandleA( "ntdll.dll" );
     status = pNtQueryVirtualMemory(NtCurrentProcess(), module, MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION), &readcount);
@@ -2286,6 +2288,82 @@ static void test_queryvirtualmemory(void)
     /* check error code when len is less than MEMORY_BASIC_INFORMATION size */
     status = pNtQueryVirtualMemory(NtCurrentProcess(), GetProcessHeap(), MemoryBasicInformation, &mbi, sizeof(MEMORY_BASIC_INFORMATION) - 1, &readcount);
     ok(status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+
+    module = GetModuleHandleA( "ntdll.dll" );
+    memset(buffer, 0xcc, sizeof(buffer));
+    readcount = 0xdeadbeef;
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), module, MemorySectionName,
+                                   name, sizeof(*name) + 16, &readcount);
+    ok(status == STATUS_BUFFER_OVERFLOW, "got %08x\n", status);
+    ok(name->SectionFileName.Length == 0xcccc || broken(!name->SectionFileName.Length),  /* vista64 */
+       "Wrong len %u\n", name->SectionFileName.Length);
+    ok(readcount > sizeof(*name), "Wrong count %lu\n", readcount);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    readcount = 0xdeadbeef;
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), (char *)module + 1234, MemorySectionName,
+                                   name, sizeof(buffer), &readcount);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+    ok(name->SectionFileName.Buffer == (WCHAR *)(name + 1), "Wrong ptr %p/%p\n",
+       name->SectionFileName.Buffer, name + 1 );
+    ok(name->SectionFileName.Length != 0xcccc, "Wrong len %u\n", name->SectionFileName.Length);
+    ok(name->SectionFileName.MaximumLength == name->SectionFileName.Length + sizeof(WCHAR),
+       "Wrong maxlen %u/%u\n", name->SectionFileName.MaximumLength, name->SectionFileName.Length);
+    ok(readcount == sizeof(name->SectionFileName) + name->SectionFileName.MaximumLength,
+       "Wrong count %lu/%u\n", readcount, name->SectionFileName.MaximumLength);
+    ok( !name->SectionFileName.Buffer[name->SectionFileName.Length / sizeof(WCHAR)],
+        "buffer not null-terminated\n" );
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), (char *)module + 1234, MemorySectionName,
+                                   name, sizeof(buffer), NULL);
+    ok(status == STATUS_SUCCESS, "got %08x\n", status);
+
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), (char *)module + 1234, MemorySectionName,
+                                   NULL, sizeof(buffer), NULL);
+    ok(status == STATUS_ACCESS_VIOLATION, "got %08x\n", status);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    prev = readcount;
+    readcount = 0xdeadbeef;
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), (char *)module + 321, MemorySectionName,
+                                   name, sizeof(*name) - 1, &readcount);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "got %08x\n", status);
+    ok(name->SectionFileName.Length == 0xcccc, "Wrong len %u\n", name->SectionFileName.Length);
+    ok(readcount == prev, "Wrong count %lu\n", readcount);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    readcount = 0xdeadbeef;
+    status = pNtQueryVirtualMemory((HANDLE)0xdead, (char *)module + 1234, MemorySectionName,
+                                   name, sizeof(buffer), &readcount);
+    ok(status == STATUS_INVALID_HANDLE, "got %08x\n", status);
+    ok(readcount == 0xdeadbeef || broken(readcount == 1024 + sizeof(*name)), /* wow64 */
+       "Wrong count %lu\n", readcount);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    readcount = 0xdeadbeef;
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), buffer, MemorySectionName,
+                                   name, sizeof(buffer), &readcount);
+    ok(status == STATUS_INVALID_ADDRESS, "got %08x\n", status);
+    ok(name->SectionFileName.Length == 0xcccc, "Wrong len %u\n", name->SectionFileName.Length);
+    ok(readcount == 0xdeadbeef || broken(readcount == 1024 + sizeof(*name)), /* wow64 */
+       "Wrong count %lu\n", readcount);
+
+    readcount = 0xdeadbeef;
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), (void *)0x1234, MemorySectionName,
+                                   name, sizeof(buffer), &readcount);
+    ok(status == STATUS_INVALID_ADDRESS, "got %08x\n", status);
+    ok(name->SectionFileName.Length == 0xcccc, "Wrong len %u\n", name->SectionFileName.Length);
+    ok(readcount == 0xdeadbeef || broken(readcount == 1024 + sizeof(*name)), /* wow64 */
+       "Wrong count %lu\n", readcount);
+
+    readcount = 0xdeadbeef;
+    status = pNtQueryVirtualMemory(NtCurrentProcess(), (void *)0x1234, MemorySectionName,
+                                   name, sizeof(*name) - 1, &readcount);
+    ok(status == STATUS_INVALID_ADDRESS, "got %08x\n", status);
+    ok(name->SectionFileName.Length == 0xcccc, "Wrong len %u\n", name->SectionFileName.Length);
+    ok(readcount == 0xdeadbeef || broken(readcount == 15), /* wow64 */
+       "Wrong count %lu\n", readcount);
 }
 
 static void test_affinity(void)
