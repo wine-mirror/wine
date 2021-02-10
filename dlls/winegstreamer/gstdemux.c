@@ -168,7 +168,9 @@ static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
 static const IMediaSeekingVtbl GST_Seeking_Vtbl;
 static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl;
 
-static struct parser_source *create_pin(struct parser *filter, const WCHAR *name);
+static struct wg_parser_stream *create_stream(struct wg_parser *parser);
+static struct parser_source *create_pin(struct parser *filter,
+        struct wg_parser_stream *stream, const WCHAR *name);
 static HRESULT GST_RemoveOutputPins(struct parser *This);
 static HRESULT WINAPI GST_ChangeCurrent(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface);
@@ -1578,6 +1580,8 @@ static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
     g_free(name);
 }
 
+static void free_stream(struct wg_parser_stream *stream);
+
 static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *This)
 {
     static const WCHAR formatW[] = {'S','t','r','e','a','m',' ','%','0','2','u',0};
@@ -1604,12 +1608,14 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *Th
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
 
-    if (!(pin = create_pin(This, nameW)))
+    if (!(stream = create_stream(parser)))
+        goto out;
+
+    if (!(pin = create_pin(This, stream, nameW)))
     {
-        ERR("Failed to allocate memory.\n");
+        free_stream(stream);
         goto out;
     }
-    stream = pin->wg_stream;
 
     if (!strcmp(typename, "video/x-raw"))
     {
@@ -2813,53 +2819,56 @@ static const struct strmbase_source_ops source_ops =
     .source_disconnect = source_disconnect,
 };
 
-static struct parser_source *create_pin(struct parser *filter, const WCHAR *name)
+static struct wg_parser_stream *create_stream(struct wg_parser *parser)
 {
-    struct wg_parser *parser = filter->wg_parser;
-    struct wg_parser_stream *stream;
-    struct parser_source *pin;
+    struct wg_parser_stream *stream, **new_array;
     char pad_name[19];
-    void *new_array;
-
-    if (!(new_array = heap_realloc(filter->sources, (filter->source_count + 1) * sizeof(*filter->sources))))
-        return NULL;
-    filter->sources = new_array;
 
     if (!(new_array = realloc(parser->streams, (parser->stream_count + 1) * sizeof(*parser->streams))))
         return NULL;
     parser->streams = new_array;
 
-    if (!(pin = heap_alloc_zero(sizeof(*pin))))
-        return NULL;
-
     if (!(stream = calloc(1, sizeof(*stream))))
-    {
-        heap_free(pin);
         return NULL;
-    }
-    pin->wg_stream = stream;
 
     stream->parser = parser;
-    strmbase_source_init(&pin->pin, &filter->filter, name, &source_ops);
-    pin->IQualityControl_iface.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
-    strmbase_seeking_init(&pin->seek, &GST_Seeking_Vtbl, GST_ChangeStop,
-            GST_ChangeCurrent, GST_ChangeRate);
     pthread_cond_init(&stream->event_cond, NULL);
     pthread_cond_init(&stream->event_empty_cond, NULL);
-    BaseFilterImpl_IncrementPinVersion(&filter->filter);
 
-    InitializeCriticalSection(&pin->flushing_cs);
-    pin->flushing_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": pin.flushing_cs");
-
-    sprintf(pad_name, "qz_sink_%u", filter->source_count);
+    sprintf(pad_name, "qz_sink_%u", parser->stream_count);
     stream->my_sink = gst_pad_new(pad_name, GST_PAD_SINK);
     gst_pad_set_element_private(stream->my_sink, stream);
     gst_pad_set_chain_function(stream->my_sink, got_data_sink);
     gst_pad_set_event_function(stream->my_sink, event_sink);
     gst_pad_set_query_function(stream->my_sink, query_sink);
 
-    filter->sources[filter->source_count++] = pin;
     parser->streams[parser->stream_count++] = stream;
+    return stream;
+}
+
+static struct parser_source *create_pin(struct parser *filter,
+        struct wg_parser_stream *stream, const WCHAR *name)
+{
+    struct parser_source *pin, **new_array;
+
+    if (!(new_array = heap_realloc(filter->sources, (filter->source_count + 1) * sizeof(*filter->sources))))
+        return NULL;
+    filter->sources = new_array;
+
+    if (!(pin = heap_alloc_zero(sizeof(*pin))))
+        return NULL;
+
+    pin->wg_stream = stream;
+    strmbase_source_init(&pin->pin, &filter->filter, name, &source_ops);
+    pin->IQualityControl_iface.lpVtbl = &GSTOutPin_QualityControl_Vtbl;
+    strmbase_seeking_init(&pin->seek, &GST_Seeking_Vtbl, GST_ChangeStop,
+            GST_ChangeCurrent, GST_ChangeRate);
+    BaseFilterImpl_IncrementPinVersion(&filter->filter);
+
+    InitializeCriticalSection(&pin->flushing_cs);
+    pin->flushing_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": pin.flushing_cs");
+
+    filter->sources[filter->source_count++] = pin;
     return pin;
 }
 
@@ -2984,9 +2993,15 @@ static BOOL wave_parser_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    if (!(pin = create_pin(filter, source_name)))
+    if (!(stream = create_stream(parser)))
         return FALSE;
-    stream = pin->wg_stream;
+
+    if (!(pin = create_pin(filter, stream, source_name)))
+    {
+        free_stream(stream);
+        return FALSE;
+    }
+
     stream->their_src = gst_element_get_static_pad(element, "src");
     gst_object_ref(stream->their_src);
     if ((ret = gst_pad_link(stream->their_src, stream->my_sink)) < 0)
@@ -3228,9 +3243,15 @@ static BOOL mpeg_splitter_init_gst(struct parser *filter)
         return FALSE;
     }
 
-    if (!(pin = create_pin(filter, source_name)))
+    if (!(stream = create_stream(parser)))
         return FALSE;
-    stream = pin->wg_stream;
+
+    if (!(pin = create_pin(filter, stream, source_name)))
+    {
+        free_stream(stream);
+        return FALSE;
+    }
+
     gst_object_ref(stream->their_src = gst_element_get_static_pad(element, "src"));
     if ((ret = gst_pad_link(stream->their_src, stream->my_sink)) < 0)
     {
