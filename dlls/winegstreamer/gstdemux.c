@@ -1584,20 +1584,15 @@ static void free_stream(struct wg_parser_stream *stream);
 
 static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *This)
 {
-    static const WCHAR formatW[] = {'S','t','r','e','a','m',' ','%','0','2','u',0};
     struct wg_parser *parser = This->wg_parser;
     struct wg_parser_stream *stream;
     const char *typename;
     char *name;
     GstCaps *caps;
     GstStructure *arg;
-    struct parser_source *pin;
     int ret;
-    WCHAR nameW[128];
 
     TRACE("%p %p %p\n", This, bin, pad);
-
-    sprintfW(nameW, formatW, This->source_count);
 
     name = gst_pad_get_name(pad);
     TRACE("Name: %s\n", name);
@@ -1610,12 +1605,6 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct parser *Th
 
     if (!(stream = create_stream(parser)))
         goto out;
-
-    if (!(pin = create_pin(This, stream, nameW)))
-    {
-        free_stream(stream);
-        goto out;
-    }
 
     if (!strcmp(typename, "video/x-raw"))
     {
@@ -2203,8 +2192,11 @@ static const struct strmbase_sink_ops sink_ops =
 
 static BOOL decodebin_parser_init_gst(struct parser *filter)
 {
+    static const WCHAR formatW[] = {'S','t','r','e','a','m',' ','%','0','2','u',0};
     GstElement *element = gst_element_factory_make("decodebin", NULL);
     struct wg_parser *parser = filter->wg_parser;
+    WCHAR source_name[20];
+    unsigned int i;
     int ret;
 
     if (!element)
@@ -2250,6 +2242,14 @@ static BOOL decodebin_parser_init_gst(struct parser *filter)
         return FALSE;
     }
     pthread_mutex_unlock(&parser->mutex);
+
+    for (i = 0; i < parser->stream_count; ++i)
+    {
+        sprintfW(source_name, formatW, i);
+        if (!create_pin(filter, parser->streams[i], source_name))
+            return FALSE;
+    }
+
     return TRUE;
 }
 
@@ -2909,7 +2909,10 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     CloseHandle(This->read_thread);
 
     for (i = 0; i < This->source_count; ++i)
-        free_source_pin(This->sources[i]);
+    {
+        if (This->sources[i])
+            free_source_pin(This->sources[i]);
+    }
 
     This->source_count = 0;
     heap_free(This->sources);
@@ -3094,8 +3097,11 @@ static const struct strmbase_sink_ops avi_splitter_sink_ops =
 
 static BOOL avi_splitter_init_gst(struct parser *filter)
 {
+    static const WCHAR formatW[] = {'S','t','r','e','a','m',' ','%','0','2','u',0};
     GstElement *element = gst_element_factory_make("avidemux", NULL);
     struct wg_parser *parser = filter->wg_parser;
+    WCHAR source_name[20];
+    unsigned int i;
     int ret;
 
     if (!element)
@@ -3140,6 +3146,14 @@ static BOOL avi_splitter_init_gst(struct parser *filter)
         return FALSE;
     }
     pthread_mutex_unlock(&parser->mutex);
+
+    for (i = 0; i < parser->stream_count; ++i)
+    {
+        sprintfW(source_name, formatW, i);
+        if (!create_pin(filter, parser->streams[i], source_name))
+            return FALSE;
+    }
+
     return TRUE;
 }
 
