@@ -678,7 +678,7 @@ static LRESULT on_nm_click(NSTC2Impl *This, NMHDR *nmhdr)
 {
     TVHITTESTINFO tvhit;
     IShellItem *psi;
-    HRESULT hr;
+
     TRACE("%p (%p)\n", This, nmhdr);
 
     GetCursorPos(&tvhit.pt);
@@ -690,17 +690,7 @@ static LRESULT on_nm_click(NSTC2Impl *This, NMHDR *nmhdr)
 
     /* TVHT_ maps onto the corresponding NSTCEHT_ */
     psi = shellitem_from_treeitem(This, tvhit.hItem);
-    hr = events_OnItemClick(This, psi, tvhit.flags, NSTCECT_LBUTTON);
-
-    /* The expando should not be expanded unless
-     * double-clicked. */
-    if(tvhit.flags == TVHT_ONITEMBUTTON)
-        return TRUE;
-
-    if(SUCCEEDED(hr))
-        return FALSE;
-    else
-        return TRUE;
+    return FAILED(events_OnItemClick(This, psi, tvhit.flags, NSTCECT_LBUTTON));
 }
 
 static LRESULT on_wm_mbuttonup(NSTC2Impl *This, WPARAM wParam, LPARAM lParam)
