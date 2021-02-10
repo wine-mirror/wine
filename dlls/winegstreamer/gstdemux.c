@@ -1585,16 +1585,9 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct wg_parser 
 {
     struct wg_parser_stream *stream;
     const char *typename;
-    char *name;
     GstCaps *caps;
     GstStructure *arg;
     int ret;
-
-    TRACE("parser %p, bin %p, pad %p.\n", parser, bin, pad);
-
-    name = gst_pad_get_name(pad);
-    TRACE("Name: %s\n", name);
-    g_free(name);
 
     caps = gst_pad_query_caps(pad, NULL);
     caps = gst_caps_make_writable(caps);
@@ -1612,7 +1605,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct wg_parser 
          * necessarily consume it. In particular, the video renderer can't. */
         if (!(deinterlace = gst_element_factory_make("deinterlace", NULL)))
         {
-            ERR("Failed to create deinterlace, are %u-bit GStreamer \"good\" plugins installed?\n",
+            fprintf(stderr, "winegstreamer: failed to create deinterlace, are %u-bit GStreamer \"good\" plugins installed?\n",
                     8 * (int)sizeof(void *));
             goto out;
         }
@@ -1622,7 +1615,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct wg_parser 
          * formats either. Add a videoconvert to swap color spaces. */
         if (!(vconv = gst_element_factory_make("videoconvert", NULL)))
         {
-            ERR("Failed to create videoconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
+            fprintf(stderr, "winegstreamer: failed to create videoconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
                     8 * (int)sizeof(void *));
             goto out;
         }
@@ -1630,7 +1623,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct wg_parser 
         /* GStreamer outputs RGB video top-down, but DirectShow expects bottom-up. */
         if (!(flip = gst_element_factory_make("videoflip", NULL)))
         {
-            ERR("Failed to create videoflip, are %u-bit GStreamer \"good\" plugins installed?\n",
+            fprintf(stderr, "winegstreamer: failed to create videoflip, are %u-bit GStreamer \"good\" plugins installed?\n",
                     8 * (int)sizeof(void *));
             goto out;
         }
@@ -1639,7 +1632,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct wg_parser 
          * to do the final conversion. */
         if (!(vconv2 = gst_element_factory_make("videoconvert", NULL)))
         {
-            ERR("Failed to create videoconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
+            fprintf(stderr, "winegstreamer: failed to create videoconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
                     8 * (int)sizeof(void *));
             goto out;
         }
@@ -1672,7 +1665,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct wg_parser 
          * depth and channel count. */
         if (!(convert = gst_element_factory_make("audioconvert", NULL)))
         {
-            ERR("Failed to create audioconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
+            fprintf(stderr, "winegstreamer: failed to create audioconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
                     8 * (int)sizeof(void *));
             goto out;
         }
@@ -1688,7 +1681,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct wg_parser 
     {
         if ((ret = gst_pad_link(pad, stream->post_sink)) < 0)
         {
-            ERR("Failed to link decodebin source pad to post-processing elements, error %s.\n",
+            GST_ERROR("Failed to link decodebin source pad to post-processing elements, error %s.",
                     gst_pad_link_get_name(ret));
             gst_object_unref(stream->post_sink);
             stream->post_sink = NULL;
@@ -1697,7 +1690,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct wg_parser 
 
         if ((ret = gst_pad_link(stream->post_src, stream->my_sink)) < 0)
         {
-            ERR("Failed to link post-processing elements to our sink pad, error %s.\n",
+            GST_ERROR("Failed to link post-processing elements to our sink pad, error %s.",
                     gst_pad_link_get_name(ret));
             gst_object_unref(stream->post_src);
             stream->post_src = NULL;
@@ -1708,7 +1701,7 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, struct wg_parser 
     }
     else if ((ret = gst_pad_link(pad, stream->my_sink)) < 0)
     {
-        ERR("Failed to link decodebin source pad to our sink pad, error %s.\n",
+        GST_ERROR("Failed to link decodebin source pad to our sink pad, error %s.",
                 gst_pad_link_get_name(ret));
         goto out;
     }
@@ -1723,7 +1716,7 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
 {
     struct wg_parser *This = user;
 
-    TRACE("%p %p %p\n", This, bin, pad);
+    GST_LOG("parser %p, bin %p, pad %p.", This, bin, pad);
 
     if (gst_pad_is_linked(pad))
         return;
