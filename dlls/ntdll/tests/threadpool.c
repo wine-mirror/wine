@@ -203,7 +203,7 @@ static void test_RtlRegisterWait(void)
     struct rtl_wait_info info;
     HANDLE semaphores[2];
     NTSTATUS status;
-    DWORD result;
+    DWORD result, threadid;
 
     semaphores[0] = CreateSemaphoreW(NULL, 0, 2, NULL);
     ok(semaphores[0] != NULL, "failed to create semaphore\n");
@@ -288,6 +288,69 @@ static void test_RtlRegisterWait(void)
     result = WaitForSingleObject(semaphores[0], 100);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
     ok(info.userdata == 1, "expected info.userdata = 1, got %u\n", info.userdata);
+    result = WaitForSingleObject(semaphores[1], 0);
+    ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
+    Sleep(50);
+    status = RtlDeregisterWait(wait1);
+    ok(!status, "RtlDeregisterWait failed with status %x\n", status);
+
+    /* test RtlRegisterWait WT_EXECUTEINWAITTHREAD flag */
+    info.userdata = 0;
+    info.threadid = 0;
+    status = RtlRegisterWait(&wait1, semaphores[1], rtl_wait_cb, &info, 200, WT_EXECUTEINWAITTHREAD|WT_EXECUTEONLYONCE);
+    ok(!status, "RtlRegisterWait failed with status %x\n", status);
+    ReleaseSemaphore(semaphores[1], 1, NULL);
+    result = WaitForSingleObject(semaphores[0], 200);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ok(info.userdata == 1, "expected info.userdata = 1, got %u\n", info.userdata);
+    ok(info.threadid && info.threadid != GetCurrentThreadId(), "unexpected wait thread id %x\n", info.threadid);
+    threadid = info.threadid;
+    result = WaitForSingleObject(semaphores[1], 0);
+    ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
+    Sleep(50);
+    status = RtlDeregisterWait(wait1);
+    ok(!status, "RtlDeregisterWait failed with status %x\n", status);
+
+    info.userdata = 0;
+    info.threadid = 0;
+    status = RtlRegisterWait(&wait1, semaphores[1], rtl_wait_cb, &info, 200, WT_EXECUTEINWAITTHREAD|WT_EXECUTEONLYONCE);
+    ok(!status, "RtlRegisterWait failed with status %x\n", status);
+    ReleaseSemaphore(semaphores[1], 1, NULL);
+    result = WaitForSingleObject(semaphores[0], 200);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ok(info.userdata == 1, "expected info.userdata = 1, got %u\n", info.userdata);
+    todo_wine ok(info.threadid == threadid, "unexpected different wait thread id %x\n", info.threadid);
+    result = WaitForSingleObject(semaphores[1], 0);
+    ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
+    Sleep(50);
+    status = RtlDeregisterWait(wait1);
+    ok(!status, "RtlDeregisterWait failed with status %x\n", status);
+
+    /* test RtlRegisterWait WT_EXECUTEINWAITTHREAD flag with 0 timeout */
+    info.userdata = 0;
+    info.threadid = 0;
+    status = RtlRegisterWait(&wait1, semaphores[1], rtl_wait_cb, &info, 0, WT_EXECUTEINWAITTHREAD|WT_EXECUTEONLYONCE);
+    ok(!status, "RtlRegisterWait failed with status %x\n", status);
+    result = WaitForSingleObject(semaphores[0], 100);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ok(info.userdata == 0x10000, "expected info.userdata = 0x10000, got %u\n", info.userdata);
+    ok(info.threadid == threadid, "unexpected different wait thread id %x\n", info.threadid);
+    result = WaitForSingleObject(semaphores[1], 0);
+    ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
+    Sleep(50);
+    status = RtlDeregisterWait(wait1);
+    ok(!status, "RtlDeregisterWait failed with status %x\n", status);
+
+    /* test RtlRegisterWait WT_EXECUTEINWAITTHREAD flag with already signaled event */
+    info.userdata = 0;
+    info.threadid = 0;
+    ReleaseSemaphore(semaphores[1], 1, NULL);
+    status = RtlRegisterWait(&wait1, semaphores[1], rtl_wait_cb, &info, 200, WT_EXECUTEINWAITTHREAD|WT_EXECUTEONLYONCE);
+    ok(!status, "RtlRegisterWait failed with status %x\n", status);
+    result = WaitForSingleObject(semaphores[0], 200);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ok(info.userdata == 1, "expected info.userdata = 1, got %u\n", info.userdata);
+    todo_wine ok(info.threadid == threadid, "unexpected different wait thread id %x\n", info.threadid);
     result = WaitForSingleObject(semaphores[1], 0);
     ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
     Sleep(50);
@@ -428,6 +491,19 @@ static void test_RtlRegisterWait(void)
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
 
     info.userdata = 0;
+    status = RtlRegisterWait(&wait1, semaphores[1], rtl_wait_cb, &info, INFINITE, WT_EXECUTEINWAITTHREAD|WT_EXECUTEONLYONCE);
+    ok(!status, "RtlRegisterWait failed with status %x\n", status);
+    ReleaseSemaphore(semaphores[1], 1, NULL);
+    result = WaitForSingleObject(semaphores[0], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ok(info.userdata == 1, "expected info.userdata = 1, got %u\n", info.userdata);
+    status = RtlDeregisterWait(wait1);
+    ok(status == STATUS_PENDING, "expected STATUS_PENDING, got %x\n", status);
+    ReleaseSemaphore(semaphores[1], 1, NULL);
+    result = WaitForSingleObject(semaphores[0], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    info.userdata = 0;
     status = RtlRegisterWait(&wait1, semaphores[1], rtl_wait_cb, &info, INFINITE, WT_EXECUTEONLYONCE);
     ok(!status, "RtlRegisterWait failed with status %x\n", status);
     ReleaseSemaphore(semaphores[1], 1, NULL);
@@ -443,6 +519,19 @@ static void test_RtlRegisterWait(void)
     info.wait_result = WAIT_TIMEOUT;
     info.userdata = 0;
     status = RtlRegisterWait(&wait1, semaphores[1], rtl_wait_cb, &info, INFINITE, WT_EXECUTEONLYONCE);
+    ok(!status, "RtlRegisterWait failed with status %x\n", status);
+    ReleaseSemaphore(semaphores[1], 1, NULL);
+    result = WaitForSingleObject(semaphores[0], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ok(info.userdata == 1, "expected info.userdata = 1, got %u\n", info.userdata);
+    status = RtlDeregisterWaitEx(wait1, INVALID_HANDLE_VALUE);
+    ok(!status, "RtlDeregisterWaitEx failed with status %x\n", status);
+    result = WaitForSingleObject(semaphores[0], 0);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    info.wait_result = WAIT_TIMEOUT;
+    info.userdata = 0;
+    status = RtlRegisterWait(&wait1, semaphores[1], rtl_wait_cb, &info, INFINITE, WT_EXECUTEINWAITTHREAD|WT_EXECUTEONLYONCE);
     ok(!status, "RtlRegisterWait failed with status %x\n", status);
     ReleaseSemaphore(semaphores[1], 1, NULL);
     result = WaitForSingleObject(semaphores[0], 1000);
