@@ -387,6 +387,17 @@ struct strarray find_tool( const char *name, const char * const *names )
     fatal_error( "cannot find the '%s' tool\n", name );
 }
 
+/* find a link tool in the path */
+struct strarray find_link_tool(void)
+{
+    struct strarray ret = empty_strarray;
+    const char *file;
+    if (!(file = find_binary( NULL, "lld-link" )))
+        fatal_error( "cannot find the 'lld-link tool\n" );
+    strarray_add_one( &ret, file );
+    return ret;
+}
+
 struct strarray get_as_command(void)
 {
     struct strarray args;
