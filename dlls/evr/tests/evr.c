@@ -1422,16 +1422,13 @@ static void test_MFCreateVideoSampleAllocator(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(count == 4, "Unexpected count %d.\n", count);
 
-    hr = IMFSample_QueryInterface(sample, &IID_IMFDesiredSample, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
-
-    hr = IMFSample_QueryInterface(sample, &IID_IMFTrackedSample, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
+    check_interface(sample, &IID_IMFDesiredSample, TRUE);
+    check_interface(sample, &IID_IMFTrackedSample, TRUE);
 
     hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    check_interface(buffer, &IID_IMF2DBuffer, TRUE);
 
     hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFGetService, (void **)&gs);
     ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Win7 */, "Unexpected hr %#x.\n", hr);
@@ -1443,10 +1440,6 @@ static void test_MFCreateVideoSampleAllocator(void)
         ok(hr == E_NOTIMPL, "Unexpected hr %#x.\n", hr);
         IMFGetService_Release(gs);
     }
-
-    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
 
     IMFMediaBuffer_Release(buffer);
 
@@ -1489,14 +1482,15 @@ static void test_MFCreateVideoSampleAllocator(void)
     hr = IMFVideoSampleAllocator_AllocateSample(allocator, &sample);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    check_interface(sample, &IID_IMFTrackedSample, TRUE);
+    check_interface(sample, &IID_IMFDesiredSample, TRUE);
+
     hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     check_service_interface(buffer, &MR_BUFFER_SERVICE, &IID_IDirect3DSurface9, TRUE);
-
-    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
+    check_interface(buffer, &IID_IMF2DBuffer, TRUE);
+    check_interface(buffer, &IID_IMF2DBuffer2, TRUE);
 
     hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
