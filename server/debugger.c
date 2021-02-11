@@ -181,9 +181,7 @@ static void fill_exit_process_event( struct debug_event *event, const void *arg 
 
 static void fill_load_dll_event( struct debug_event *event, const void *arg )
 {
-    struct process *process = event->sender->process;
-    const struct process_dll *dll = arg;
-    struct memory_view *view = find_mapped_view( process, dll->base );
+    const struct memory_view *view = arg;
     const pe_image_info_t *image_info = get_view_image_info( view, &event->data.load_dll.base );
 
     event->data.load_dll.dbg_offset = image_info->dbg_offset;
@@ -194,8 +192,8 @@ static void fill_load_dll_event( struct debug_event *event, const void *arg )
 
 static void fill_unload_dll_event( struct debug_event *event, const void *arg )
 {
-    const mod_handle_t *base = arg;
-    event->data.unload_dll.base = *base;
+    const struct memory_view *view = arg;
+    get_view_image_info( view, &event->data.unload_dll.base );
 }
 
 typedef void (*fill_event_func)( struct debug_event *event, const void *arg );
@@ -532,39 +530,6 @@ void debugger_detach( struct process *process, struct debug_obj *debug_obj )
     if (!set_process_debug_flag( process, 0 )) clear_error();  /* ignore error */
 
     resume_process( process );
-}
-
-/* generate all startup events of a given process */
-void generate_startup_debug_events( struct process *process )
-{
-    struct list *ptr;
-    struct memory_view *view = get_exe_view( process );
-    struct thread *thread, *first_thread = get_process_first_thread( process );
-
-    if (!view) return;
-    generate_debug_event( first_thread, DbgCreateProcessStateChange, view );
-    ptr = list_head( &process->dlls ); /* skip main module reported in create process event */
-
-    /* generate ntdll.dll load event */
-    if (ptr && (ptr = list_next( &process->dlls, ptr )))
-    {
-        struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
-        generate_debug_event( first_thread, DbgLoadDllStateChange, dll );
-    }
-
-    /* generate creation events */
-    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
-    {
-        if (thread != first_thread)
-            generate_debug_event( thread, DbgCreateThreadStateChange, NULL );
-    }
-
-    /* generate dll events (in loading order) */
-    while (ptr && (ptr = list_next( &process->dlls, ptr )))
-    {
-        struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
-        generate_debug_event( first_thread, DbgLoadDllStateChange, dll );
-    }
 }
 
 /* create a debug object */

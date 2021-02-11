@@ -26,6 +26,7 @@
 #include <windows.h>
 #include <winternl.h>
 #include <winreg.h>
+#include <psapi.h>
 #include "wine/test.h"
 #include "wine/heap.h"
 #include "wine/rbtree.h"
@@ -828,7 +829,9 @@ static void doChild(int argc, char **argv)
 {
     struct child_blackbox blackbox;
     const char *blackbox_file;
-    HANDLE parent;
+    WCHAR path[MAX_PATH];
+    HMODULE mod;
+    HANDLE parent, file, map;
     DWORD ppid;
     BOOL debug;
     BOOL ret;
@@ -876,8 +879,47 @@ static void doChild(int argc, char **argv)
 
     NtCurrentTeb()->Peb->BeingDebugged = TRUE;
 
+    mod = LoadLibraryW( L"ole32.dll" );
+    FreeLibrary( mod );
+
+    GetSystemDirectoryW( path, MAX_PATH );
+    wcscat( path, L"\\oleaut32.dll" );
+    file = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    child_ok( file != INVALID_HANDLE_VALUE, "failed to open %s: %u\n", debugstr_w(path), GetLastError());
+    map = CreateFileMappingW( file, NULL, SEC_IMAGE | PAGE_READONLY, 0, 0, NULL );
+    child_ok( map != NULL, "failed to create mapping %s: %u\n", debugstr_w(path), GetLastError() );
+    mod = MapViewOfFile( map, FILE_MAP_READ, 0, 0, 0 );
+    child_ok( mod != NULL, "failed to map %s: %u\n", debugstr_w(path), GetLastError() );
+    CloseHandle( file );
+    CloseHandle( map );
+    UnmapViewOfFile( mod );
+
     blackbox.failures = child_failures;
     save_blackbox(blackbox_file, &blackbox, sizeof(blackbox), NULL);
+}
+
+static HMODULE ole32_mod, oleaut32_mod;
+
+static void check_dll_event( HANDLE process, DEBUG_EVENT *ev )
+{
+    WCHAR *p, module[MAX_PATH];
+
+    switch (ev->dwDebugEventCode)
+    {
+    case CREATE_PROCESS_DEBUG_EVENT:
+        break;
+    case LOAD_DLL_DEBUG_EVENT:
+        if (!GetMappedFileNameW( process, ev->u.LoadDll.lpBaseOfDll, module, MAX_PATH )) module[0] = 0;
+        if ((p = wcsrchr( module, '\\' ))) p++;
+        else p = module;
+        if (!wcsicmp( p, L"ole32.dll" )) ole32_mod = ev->u.LoadDll.lpBaseOfDll;
+        else if (!wcsicmp( p, L"oleaut32.dll" )) oleaut32_mod = ev->u.LoadDll.lpBaseOfDll;
+        break;
+    case UNLOAD_DLL_DEBUG_EVENT:
+        if (ev->u.UnloadDll.lpBaseOfDll == ole32_mod) ole32_mod = (HMODULE)1;
+        if (ev->u.UnloadDll.lpBaseOfDll == oleaut32_mod) oleaut32_mod = (HMODULE)1;
+        break;
+    }
 }
 
 static void test_debug_loop(int argc, char **argv)
@@ -926,6 +968,7 @@ static void test_debug_loop(int argc, char **argv)
         if (!ret) break;
 
         if (ev.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT) break;
+        check_dll_event( pi.hProcess, &ev );
 #if defined(__i386__) || defined(__x86_64__)
         if (ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT &&
             ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
@@ -939,6 +982,9 @@ static void test_debug_loop(int argc, char **argv)
         ok(ret, "ContinueDebugEvent failed, last error %#x.\n", GetLastError());
         if (!ret) break;
     }
+
+    ok( ole32_mod == (HMODULE)1, "ole32.dll was not reported\n" );
+    ok( oleaut32_mod == (HMODULE)1, "oleaut32.dll was not reported\n" );
 
     ret = CloseHandle(pi.hThread);
     ok(ret, "CloseHandle failed, last error %#x.\n", GetLastError());

@@ -832,7 +832,6 @@ static void process_unload_dll( struct process *process, mod_handle_t base )
         free( dll->filename );
         list_remove( &dll->entry );
         free( dll );
-        generate_debug_event( current, DbgUnloadDllStateChange, &base );
     }
     else set_error( STATUS_INVALID_PARAMETER );
 }
@@ -1602,9 +1601,6 @@ DECL_HANDLER(load_dll)
     if ((dll = process_load_dll( current->process, req->base, get_req_data(), get_req_data_size() )))
     {
         dll->name = req->name;
-        /* only generate event if initialization is done */
-        if (is_process_init_done( current->process ))
-            generate_debug_event( current, DbgLoadDllStateChange, dll );
     }
 }
 

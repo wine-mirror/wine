@@ -348,11 +348,15 @@ struct memory_view *get_exe_view( struct process *process )
 }
 
 /* add a view to the process list */
-static void add_process_view( struct process *process, struct memory_view *view )
+static void add_process_view( struct thread *thread, struct memory_view *view )
 {
+    struct process *process = thread->process;
+
     if (view->flags & SEC_IMAGE)
     {
-        if (!is_process_init_done( process ) && !(view->image.image_charact & IMAGE_FILE_DLL))
+        if (is_process_init_done( process ))
+            generate_debug_event( thread, DbgLoadDllStateChange, view );
+        else if (!(view->image.image_charact & IMAGE_FILE_DLL))
         {
             /* main exe */
             list_add_head( &process->views, &view->entry );
@@ -1001,6 +1005,42 @@ int get_view_nt_name( const struct memory_view *view, struct unicode_str *name )
     return 1;
 }
 
+/* generate all startup events of a given process */
+void generate_startup_debug_events( struct process *process )
+{
+    struct memory_view *view;
+    struct list *ptr = list_head( &process->views );
+    struct thread *thread, *first_thread = get_process_first_thread( process );
+
+    if (!ptr) return;
+    view = LIST_ENTRY( ptr, struct memory_view, entry );
+    generate_debug_event( first_thread, DbgCreateProcessStateChange, view );
+
+    /* generate ntdll.dll load event */
+    while (ptr && (ptr = list_next( &process->views, ptr )))
+    {
+        view = LIST_ENTRY( ptr, struct memory_view, entry );
+        if (!(view->flags & SEC_IMAGE)) continue;
+        generate_debug_event( first_thread, DbgLoadDllStateChange, view );
+        break;
+    }
+
+    /* generate creation events */
+    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
+    {
+        if (thread != first_thread)
+            generate_debug_event( thread, DbgCreateThreadStateChange, NULL );
+    }
+
+    /* generate dll events (in loading order) */
+    while (ptr && (ptr = list_next( &process->views, ptr )))
+    {
+        view = LIST_ENTRY( ptr, struct memory_view, entry );
+        if (!(view->flags & SEC_IMAGE)) continue;
+        generate_debug_event( first_thread, DbgLoadDllStateChange, view );
+    }
+}
+
 static void mapping_dump( struct object *obj, int verbose )
 {
     struct mapping *mapping = (struct mapping *)obj;
@@ -1142,7 +1182,7 @@ DECL_HANDLER(map_view)
         view->start = req->start;
         view->flags = SEC_IMAGE;
         memcpy( &view->image, get_req_data(), min( sizeof(view->image), get_req_data_size() ));
-        add_process_view( current->process, view );
+        add_process_view( current, view );
         return;
     }
 
@@ -1173,12 +1213,10 @@ DECL_HANDLER(map_view)
         view->fd        = !is_fd_removable( mapping->fd ) ? (struct fd *)grab_object( mapping->fd ) : NULL;
         view->committed = mapping->committed ? (struct ranges *)grab_object( mapping->committed ) : NULL;
         view->shared    = mapping->shared ? (struct shared_map *)grab_object( mapping->shared ) : NULL;
-        if (mapping->flags & SEC_IMAGE)
-        {
-            view->image = mapping->image;
-            if (view->base != mapping->image.base) set_error( STATUS_IMAGE_NOT_AT_BASE );
-        }
-        add_process_view( current->process, view );
+        if (view->flags & SEC_IMAGE) view->image = mapping->image;
+        add_process_view( current, view );
+        if (view->flags & SEC_IMAGE && view->base != mapping->image.base)
+            set_error( STATUS_IMAGE_NOT_AT_BASE );
     }
 
 done:
@@ -1190,7 +1228,9 @@ DECL_HANDLER(unmap_view)
 {
     struct memory_view *view = find_mapped_view( current->process, req->base );
 
-    if (view) free_memory_view( view );
+    if (!view) return;
+    if (view->flags & SEC_IMAGE) generate_debug_event( current, DbgUnloadDllStateChange, view );
+    free_memory_view( view );
 }
 
 /* get a range of committed pages in a file mapping */
