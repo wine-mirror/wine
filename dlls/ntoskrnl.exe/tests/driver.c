@@ -846,6 +846,8 @@ static void test_call_driver(DEVICE_OBJECT *device)
     KEVENT event;
     NTSTATUS status;
 
+    iosb.Status = 0xdeadbeef;
+    iosb.Information = 0xdeadbeef;
     irp = IoBuildAsynchronousFsdRequest(IRP_MJ_FLUSH_BUFFERS, device, NULL, 0, NULL, &iosb);
     ok(irp->UserIosb == &iosb, "unexpected UserIosb\n");
     ok(!irp->Cancel, "Cancel = %x\n", irp->Cancel);
@@ -854,6 +856,10 @@ static void test_call_driver(DEVICE_OBJECT *device)
     ok(irp->CurrentLocation == 2, "CurrentLocation = %u\n", irp->CurrentLocation);
     ok(irp->Tail.Overlay.Thread == (PETHREAD)KeGetCurrentThread(),
        "IRP thread is not the current thread\n");
+    ok(!irp->IoStatus.Status, "got status %#x\n", irp->IoStatus.Status);
+    ok(!irp->IoStatus.Information, "got information %#x\n", irp->IoStatus.Information);
+    ok(iosb.Status == 0xdeadbeef, "got status %#x\n", iosb.Status);
+    ok(iosb.Information == 0xdeadbeef, "got information %#x\n", iosb.Information);
 
     irpsp = IoGetNextIrpStackLocation(irp);
     ok(irpsp->MajorFunction == IRP_MJ_FLUSH_BUFFERS, "MajorFunction = %u\n", irpsp->MajorFunction);
@@ -863,10 +869,16 @@ static void test_call_driver(DEVICE_OBJECT *device)
 
     status = IoCallDriver(device, irp);
     ok(status == STATUS_PENDING, "IoCallDriver returned %#x\n", status);
+    ok(!irp->IoStatus.Status, "got status %#x\n", irp->IoStatus.Status);
+    ok(!irp->IoStatus.Information, "got information %#x\n", irp->IoStatus.Information);
+    ok(iosb.Status == 0xdeadbeef, "got status %#x\n", iosb.Status);
+    ok(iosb.Information == 0xdeadbeef, "got information %#x\n", iosb.Information);
 
     irp->IoStatus.Status = STATUS_SUCCESS;
-    irp->IoStatus.Information = 0;
+    irp->IoStatus.Information = 123;
     IoCompleteRequest(irp, IO_NO_INCREMENT);
+    todo_wine ok(iosb.Status == STATUS_SUCCESS, "got status %#x\n", iosb.Status);
+    todo_wine ok(iosb.Information == 123, "got information %#x\n", iosb.Information);
 
     KeInitializeEvent(&event, NotificationEvent, FALSE);
 
