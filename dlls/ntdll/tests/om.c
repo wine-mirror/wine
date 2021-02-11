@@ -2500,7 +2500,7 @@ static void test_object_types(void)
     memset( info, 0xcc, sizeof(*info) );
     status = pNtQueryObject( NULL, ObjectTypesInformation, info, len, &retlen );
     ok( retlen <= len + 16, "wrong len %x/%x\n", len, retlen );
-    ok( len == retlen || broken( retlen == len + 16 || retlen == len - 16 ),  /* wow64 */
+    ok( len == retlen || broken( retlen >= len - 32 && retlen <= len + 32 ),  /* wow64 */
         "wrong len %x/%x\n", len, retlen );
     ok( !status, "NtQueryObject failed %x\n", status );
     if (!status)
