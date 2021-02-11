@@ -1088,26 +1088,6 @@ HRESULT wined3d_device_set_implicit_swapchain(struct wined3d_device *device, str
     if (device->d3d_initialized)
         return WINED3DERR_INVALIDCALL;
 
-    swapchain_desc = &swapchain->state.desc;
-    if (swapchain_desc->backbuffer_count && swapchain_desc->backbuffer_bind_flags & WINED3D_BIND_RENDER_TARGET)
-    {
-        struct wined3d_resource *back_buffer = &swapchain->back_buffers[0]->resource;
-        struct wined3d_view_desc view_desc;
-
-        view_desc.format_id = back_buffer->format->id;
-        view_desc.flags = 0;
-        view_desc.u.texture.level_idx = 0;
-        view_desc.u.texture.level_count = 1;
-        view_desc.u.texture.layer_idx = 0;
-        view_desc.u.texture.layer_count = 1;
-        if (FAILED(hr = wined3d_rendertarget_view_create(&view_desc, back_buffer,
-                NULL, &wined3d_null_parent_ops, &device->back_buffer_view)))
-        {
-            ERR("Failed to create rendertarget view, hr %#x.\n", hr);
-            return hr;
-        }
-    }
-
     device->swapchain_count = 1;
     if (!(device->swapchains = heap_calloc(device->swapchain_count, sizeof(*device->swapchains))))
     {
@@ -1125,6 +1105,28 @@ HRESULT wined3d_device_set_implicit_swapchain(struct wined3d_device *device, str
     if (FAILED(hr = device->adapter->adapter_ops->adapter_init_3d(device)))
         goto err_out;
     device->d3d_initialized = TRUE;
+
+    swapchain_desc = &swapchain->state.desc;
+    if (swapchain_desc->backbuffer_count && swapchain_desc->backbuffer_bind_flags & WINED3D_BIND_RENDER_TARGET)
+    {
+        struct wined3d_resource *back_buffer = &swapchain->back_buffers[0]->resource;
+        struct wined3d_view_desc view_desc;
+
+        view_desc.format_id = back_buffer->format->id;
+        view_desc.flags = 0;
+        view_desc.u.texture.level_idx = 0;
+        view_desc.u.texture.level_count = 1;
+        view_desc.u.texture.layer_idx = 0;
+        view_desc.u.texture.layer_count = 1;
+        if (FAILED(hr = wined3d_rendertarget_view_create(&view_desc, back_buffer,
+                NULL, &wined3d_null_parent_ops, &device->back_buffer_view)))
+        {
+            ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+            device->adapter->adapter_ops->adapter_uninit_3d(device);
+            device->d3d_initialized = FALSE;
+            goto err_out;
+        }
+    }
 
     device_init_swapchain_state(device, swapchain);
 
@@ -1147,11 +1149,6 @@ err_out:
     heap_free(device->swapchains);
     device->swapchains = NULL;
     device->swapchain_count = 0;
-    if (device->back_buffer_view)
-    {
-        wined3d_rendertarget_view_decref(device->back_buffer_view);
-        device->back_buffer_view = NULL;
-    }
 
     return hr;
 }
