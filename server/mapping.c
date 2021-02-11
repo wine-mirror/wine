@@ -1234,8 +1234,9 @@ DECL_HANDLER(get_mapping_filename)
     if ((view = find_mapped_addr( process, req->addr )) && get_view_nt_name( view, &name ))
     {
         reply->len = name.len;
-        if (name.len <= get_reply_max_size()) set_reply_data( name.str, name.len );
-        else set_error( STATUS_BUFFER_OVERFLOW );
+        if (name.len > get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
+        else if (!name.len) set_error( STATUS_FILE_INVALID );
+        else set_reply_data( name.str, name.len );
     }
     else set_error( STATUS_INVALID_ADDRESS );
 

@@ -1130,9 +1130,23 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetDeviceDriverFileNameW( void *image_base, WCHAR
  */
 DWORD WINAPI DECLSPEC_HOTPATCH GetMappedFileNameA( HANDLE process, void *addr, char *name, DWORD size )
 {
-    FIXME( "(%p, %p, %p, %d): stub\n", process, addr, name, size );
-    if (name && size) name[0] = 0;
-    return 0;
+    WCHAR nameW[MAX_PATH];
+    DWORD len;
+
+    if (size && !name)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (!GetMappedFileNameW( process, addr, nameW, MAX_PATH )) return 0;
+    if (!size)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    len = file_name_WtoA( nameW, wcslen(nameW), name, size );
+    name[min(len, size - 1)] = 0;
+    return len;
 }
 
 
@@ -1142,9 +1156,23 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetMappedFileNameA( HANDLE process, void *addr, c
  */
 DWORD WINAPI DECLSPEC_HOTPATCH GetMappedFileNameW( HANDLE process, void *addr, WCHAR *name, DWORD size )
 {
-    FIXME( "(%p, %p, %p, %d): stub\n", process, addr, name, size );
-    if (name && size) name[0] = 0;
-    return 0;
+    ULONG_PTR buffer[(sizeof(MEMORY_SECTION_NAME) + MAX_PATH * sizeof(WCHAR)) / sizeof(ULONG_PTR)];
+    MEMORY_SECTION_NAME *mem = (MEMORY_SECTION_NAME *)buffer;
+    DWORD len;
+
+    if (size && !name)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (!set_ntstatus( NtQueryVirtualMemory( process, addr, MemorySectionName, mem, sizeof(buffer), NULL )))
+        return 0;
+
+    len = mem->SectionFileName.Length / sizeof(WCHAR);
+    memcpy( name, mem->SectionFileName.Buffer, min( mem->SectionFileName.Length, size * sizeof(WCHAR) ));
+    if (len >= size) SetLastError( ERROR_INSUFFICIENT_BUFFER );
+    name[min(len, size - 1)] = 0;
+    return len;
 }
 
 
