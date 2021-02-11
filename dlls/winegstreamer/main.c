@@ -174,41 +174,16 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
 
 static BOOL CALLBACK init_gstreamer_proc(INIT_ONCE *once, void *param, void **ctx)
 {
-    BOOL *status = param;
-    char argv0[] = "wine";
-    char argv1[] = "--gst-disable-registry-fork";
-    char *args[3];
-    char **argv = args;
-    int argc = 2;
-    GError *err = NULL;
+    HINSTANCE handle;
 
-    TRACE("Initializing...\n");
+    /* Unloading glib is a bad idea.. it installs atexit handlers,
+     * so never unload the dll after loading */
+    GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
+            (LPCWSTR)winegstreamer_instance, &handle);
+    if (!handle)
+        ERR("Failed to pin module %p.\n", winegstreamer_instance);
 
-    argv[0] = argv0;
-    argv[1] = argv1;
-    argv[2] = NULL;
-    *status = gst_init_check(&argc, &argv, &err);
-    if (*status)
-    {
-        HINSTANCE handle;
-
-        TRACE("Initialized, version %s. Built with %d.%d.%d.\n", gst_version_string(),
-                GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
-
-        /* Unloading glib is a bad idea.. it installs atexit handlers,
-         * so never unload the dll after loading */
-        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
-                (LPCWSTR)winegstreamer_instance, &handle);
-        if (!handle)
-            ERR("Failed to pin module %p.\n", winegstreamer_instance);
-
-        start_dispatch_thread();
-    }
-    else if (err)
-    {
-        ERR("Failed to initialize gstreamer: %s\n", debugstr_a(err->message));
-        g_error_free(err);
-    }
+    start_dispatch_thread();
 
     return TRUE;
 }
@@ -216,11 +191,10 @@ static BOOL CALLBACK init_gstreamer_proc(INIT_ONCE *once, void *param, void **ct
 BOOL init_gstreamer(void)
 {
     static INIT_ONCE once = INIT_ONCE_STATIC_INIT;
-    static BOOL status;
 
-    InitOnceExecuteOnce(&once, init_gstreamer_proc, &status, NULL);
+    InitOnceExecuteOnce(&once, init_gstreamer_proc, NULL, NULL);
 
-    return status;
+    return TRUE;
 }
 
 static const REGPINTYPES reg_audio_mt = {&MEDIATYPE_Audio, &GUID_NULL};

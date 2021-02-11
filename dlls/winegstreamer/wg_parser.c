@@ -1023,7 +1023,24 @@ NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *pt
 {
     if (reason == DLL_PROCESS_ATTACH)
     {
+        char arg0[] = "wine";
+        char arg1[] = "--gst-disable-registry-fork";
+        char *args[] = {arg0, arg1, NULL};
+        int argc = ARRAY_SIZE(args) - 1;
+        char **argv = args;
+        GError *err;
+
+        if (!gst_init_check(&argc, &argv, &err))
+        {
+            ERR("Failed to initialize GStreamer: %s\n", debugstr_a(err->message));
+            g_error_free(err);
+            return STATUS_UNSUCCESSFUL;
+        }
+        TRACE("GStreamer library version %s; wine built with %d.%d.%d.\n",
+                gst_version_string(), GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
+
         GST_DEBUG_CATEGORY_INIT(wine, "WINE", GST_DEBUG_FG_RED, "Wine GStreamer support");
+
         *(const struct unix_funcs **)ptr_out = &funcs;
     }
     return STATUS_SUCCESS;
