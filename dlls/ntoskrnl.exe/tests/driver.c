@@ -877,8 +877,8 @@ static void test_call_driver(DEVICE_OBJECT *device)
     irp->IoStatus.Status = STATUS_SUCCESS;
     irp->IoStatus.Information = 123;
     IoCompleteRequest(irp, IO_NO_INCREMENT);
-    todo_wine ok(iosb.Status == STATUS_SUCCESS, "got status %#x\n", iosb.Status);
-    todo_wine ok(iosb.Information == 123, "got information %#x\n", iosb.Information);
+    ok(iosb.Status == STATUS_SUCCESS, "got status %#x\n", iosb.Status);
+    ok(iosb.Information == 123, "got information %#x\n", iosb.Information);
 
     KeInitializeEvent(&event, NotificationEvent, FALSE);
 
