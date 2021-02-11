@@ -1367,7 +1367,6 @@ static void CALLBACK waitthread_test_function(PVOID p, BOOLEAN TimerOrWaitFired)
 
     SetEvent(param->trigger_event);
     ret = WaitForSingleObject(param->wait_event, 100);
-    todo_wine
     ok(ret == WAIT_TIMEOUT, "wait should have timed out\n");
     SetEvent(param->complete_event);
 }
