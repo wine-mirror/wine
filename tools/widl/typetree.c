@@ -619,6 +619,45 @@ type_t *type_apicontract_define(type_t *apicontract, attr_list_t *attrs)
     return apicontract;
 }
 
+type_t *type_parameterized_interface_declare(char *name, struct namespace *namespace, type_list_t *params)
+{
+    type_t *type = get_type(TYPE_PARAMETERIZED_TYPE, name, namespace, 0);
+    if (type_get_type_detect_alias(type) != TYPE_PARAMETERIZED_TYPE)
+        error_loc("pinterface %s previously not declared a pinterface at %s:%d\n",
+                  type->name, type->loc_info.input_name, type->loc_info.line_number);
+    type->details.parameterized.type = make_type(TYPE_INTERFACE);
+    type->details.parameterized.params = params;
+    return type;
+}
+
+type_t *type_parameterized_interface_define(type_t *type, attr_list_t *attrs, type_t *inherit, statement_list_t *stmts, ifref_list_t *requires)
+{
+    type_t *iface;
+    if (type->defined)
+        error_loc("pinterface %s already defined at %s:%d\n",
+                  type->name, type->loc_info.input_name, type->loc_info.line_number);
+
+    /* The parameterized type UUID is actually a PIID that is then used as a seed to generate
+     * a new type GUID with the rules described in:
+     *   https://docs.microsoft.com/en-us/uwp/winrt-cref/winrt-type-system#parameterized-types
+     * TODO: store type signatures for generated interfaces, and generate their GUIDs
+     */
+    type->attrs = check_interface_attrs(type->name, attrs);
+
+    iface = type->details.parameterized.type;
+    iface->details.iface = xmalloc(sizeof(*iface->details.iface));
+    iface->details.iface->disp_props = NULL;
+    iface->details.iface->disp_methods = NULL;
+    iface->details.iface->stmts = stmts;
+    iface->details.iface->inherit = inherit;
+    iface->details.iface->disp_inherit = NULL;
+    iface->details.iface->async_iface = NULL;
+    iface->details.iface->requires = requires;
+
+    type->defined = TRUE;
+    return type;
+}
+
 int type_is_equal(const type_t *type1, const type_t *type2)
 {
     if (type1 == type2)

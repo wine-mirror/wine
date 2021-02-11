@@ -464,6 +464,8 @@ static type_t *find_identifier(const char *identifier, const type_t *cont_type, 
         case TYPE_BITFIELD:
         case TYPE_APICONTRACT:
         case TYPE_RUNTIMECLASS:
+        case TYPE_PARAMETERIZED_TYPE:
+        case TYPE_PARAMETER:
             /* nothing to do */
             break;
         case TYPE_ALIAS:

@@ -38,12 +38,6 @@
 #include "expr.h"
 #include "typetree.h"
 
-typedef struct list typelist_t;
-struct typenode {
-  type_t *type;
-  struct list entry;
-};
-
 struct _import_t
 {
   char *name;
@@ -51,6 +45,7 @@ struct _import_t
 };
 
 static str_list_t *append_str(str_list_t *list, char *str);
+static type_list_t *append_type(type_list_t *list, type_t *type);
 static attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
 static attr_list_t *append_attr_list(attr_list_t *new_list, attr_list_t *old_list);
 static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t *right,
@@ -82,6 +77,8 @@ static var_t *reg_const(var_t *var);
 
 static void push_namespace(const char *name);
 static void pop_namespace(const char *name);
+static void push_parameters_namespace(const char *name);
+static void pop_parameters_namespace(const char *name);
 
 static void check_arg_attrs(const var_t *arg);
 static void check_statements(const statement_list_t *stmts, int is_inside_library);
@@ -119,6 +116,7 @@ static struct namespace global_namespace = {
 };
 
 static struct namespace *current_namespace = &global_namespace;
+static struct namespace *parameters_namespace = NULL;
 
 static typelib_t *current_typelib;
 
@@ -130,6 +128,7 @@ static typelib_t *current_typelib;
 	expr_t *expr;
 	expr_list_t *expr_list;
 	type_t *type;
+	type_list_t *type_list;
 	var_t *var;
 	var_list_t *var_list;
 	declarator_t *declarator;
@@ -292,6 +291,8 @@ static typelib_t *current_typelib;
 %type <type> base_type int_std
 %type <type> enumdef structdef uniondef typedecl
 %type <type> type unqualified_type qualified_type
+%type <type> type_parameter
+%type <type_list> type_parameters
 %type <ifref> class_interface
 %type <ifref_list> class_interfaces
 %type <ifref_list> requires required_types
@@ -966,7 +967,18 @@ inherit:					{ $$ = NULL; }
 	| ':' qualified_type                    { $$ = $2; }
 	;
 
-interface: tINTERFACE typename			{ $$ = type_interface_declare($2, current_namespace); }
+type_parameter: typename			{ $$ = get_type(TYPE_PARAMETER, $1, parameters_namespace, 0); }
+	;
+
+type_parameters:
+	  type_parameter			{ $$ = append_type(NULL, $1); }
+	| type_parameters ',' type_parameter	{ $$ = append_type($1, $3); }
+	;
+
+interface:
+	  tINTERFACE typename			{ $$ = type_interface_declare($2, current_namespace); }
+	| tINTERFACE typename '<' { push_parameters_namespace($2); } type_parameters { pop_parameters_namespace($2); } '>'
+						{ $$ = type_parameterized_interface_declare($2, current_namespace, $5); }
 	;
 
 required_types:
@@ -977,9 +989,18 @@ requires:					{ $$ = NULL; }
 	| tREQUIRES required_types		{ $$ = $2; }
 	;
 
-interfacedef: attributes interface inherit requires
-	  '{' int_statements '}' semicolon_opt	{ $$ = type_interface_define($2, $1, $3, $6, $4);
-						  check_async_uuid($$);
+interfacedef: attributes interface		{ if ($2->type_type == TYPE_PARAMETERIZED_TYPE) push_parameters_namespace($2->name); }
+	  inherit requires '{' int_statements '}' semicolon_opt
+						{ if ($2->type_type == TYPE_PARAMETERIZED_TYPE)
+						  {
+						      $$ = type_parameterized_interface_define($2, $1, $4, $7, $5);
+						      pop_parameters_namespace($2->name);
+						  }
+						  else
+						  {
+						      $$ = type_interface_define($2, $1, $4, $7, $5);
+						      check_async_uuid($$);
+						  }
 						}
 	| dispinterfacedef semicolon_opt	{ $$ = $1; }
 	;
@@ -1808,6 +1829,16 @@ static ifref_t *make_ifref(type_t *iface)
   return l;
 }
 
+static type_list_t *append_type(type_list_t *list, type_t *type)
+{
+    type_list_t *entry;
+    if (!type) return list;
+    entry = xmalloc( sizeof(*entry) );
+    entry->type = type;
+    entry->next = list;
+    return entry;
+}
+
 var_list_t *append_var(var_list_t *list, var_t *var)
 {
     if (!var) return list;
@@ -1942,6 +1973,29 @@ static void pop_namespace(const char *name)
   current_namespace = current_namespace->parent;
 }
 
+static void push_parameters_namespace(const char *name)
+{
+    struct namespace *namespace;
+
+    if (!(namespace = find_sub_namespace(current_namespace, name)))
+    {
+        namespace = xmalloc(sizeof(*namespace));
+        namespace->name = xstrdup(name);
+        namespace->parent = current_namespace;
+        list_add_tail(&current_namespace->children, &namespace->entry);
+        list_init(&namespace->children);
+        memset(namespace->type_hash, 0, sizeof(namespace->type_hash));
+    }
+
+    parameters_namespace = namespace;
+}
+
+static void pop_parameters_namespace(const char *name)
+{
+    assert(!strcmp(parameters_namespace->name, name) && parameters_namespace->parent);
+    parameters_namespace = NULL;
+}
+
 struct rtype {
   const char *name;
   type_t *type;
@@ -2054,7 +2108,8 @@ type_t *find_type(const char *name, struct namespace *namespace, int t)
 static type_t *find_type_or_error(struct namespace *namespace, const char *name)
 {
     type_t *type;
-    if (!(type = find_type(name, namespace, 0)))
+    if (!(type = find_type(name, namespace, 0)) &&
+        !(type = find_type(name, parameters_namespace, 0)))
     {
         error_loc("type '%s' not found in %s namespace\n", name, namespace && namespace->name ? namespace->name : "global");
         return NULL;
@@ -2076,7 +2131,8 @@ static struct namespace *find_namespace_or_error(struct namespace *parent, const
 
 int is_type(const char *name)
 {
-    return find_type(name, current_namespace, 0) != NULL;
+    return find_type(name, current_namespace, 0) != NULL ||
+           find_type(name, parameters_namespace, 0);
 }
 
 type_t *get_type(enum type_type type, char *name, struct namespace *namespace, int t)
@@ -2568,6 +2624,8 @@ static int is_allowed_conf_type(const type_t *type)
     case TYPE_RUNTIMECLASS:
         return FALSE;
     case TYPE_APICONTRACT:
+    case TYPE_PARAMETERIZED_TYPE:
+    case TYPE_PARAMETER:
         /* not supposed to be here */
         assert(0);
         break;

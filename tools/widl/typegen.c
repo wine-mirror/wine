@@ -377,6 +377,8 @@ enum typegen_type typegen_detect_type(const type_t *type, const attr_list_t *att
     case TYPE_RUNTIMECLASS:
         break;
     case TYPE_APICONTRACT:
+    case TYPE_PARAMETERIZED_TYPE:
+    case TYPE_PARAMETER:
         /* not supposed to be here */
         assert(0);
         break;
@@ -1974,6 +1976,8 @@ unsigned int type_memsize_and_alignment(const type_t *t, unsigned int *align)
     case TYPE_BITFIELD:
     case TYPE_APICONTRACT:
     case TYPE_RUNTIMECLASS:
+    case TYPE_PARAMETERIZED_TYPE:
+    case TYPE_PARAMETER:
         /* these types should not be encountered here due to language
          * restrictions (interface, void, coclass, module), logical
          * restrictions (alias - due to type_get_type call above) or
@@ -2077,6 +2081,8 @@ static unsigned int type_buffer_alignment(const type_t *t)
     case TYPE_BITFIELD:
     case TYPE_APICONTRACT:
     case TYPE_RUNTIMECLASS:
+    case TYPE_PARAMETERIZED_TYPE:
+    case TYPE_PARAMETER:
         /* these types should not be encountered here due to language
          * restrictions (interface, void, coclass, module), logical
          * restrictions (alias - due to type_get_type call above) or

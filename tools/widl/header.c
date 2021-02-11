@@ -488,6 +488,8 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
         break;
       }
       case TYPE_APICONTRACT:
+      case TYPE_PARAMETERIZED_TYPE:
+      case TYPE_PARAMETER:
         /* shouldn't be here */
         assert(0);
         break;
@@ -555,6 +557,8 @@ void write_type_right(FILE *h, type_t *t, int is_field)
   case TYPE_RUNTIMECLASS:
     break;
   case TYPE_APICONTRACT:
+  case TYPE_PARAMETERIZED_TYPE:
+  case TYPE_PARAMETER:
     /* not supposed to be here */
     assert(0);
     break;
@@ -1864,10 +1868,8 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
           write_apicontract(header, stmt->u.type);
         else if (type_get_type(stmt->u.type) == TYPE_RUNTIMECLASS)
           write_runtimeclass(header, stmt->u.type);
-        else
-        {
+        else if (type_get_type(stmt->u.type) != TYPE_PARAMETERIZED_TYPE)
           write_type_definition(header, stmt->u.type, stmt->declonly);
-        }
         break;
       case STMT_TYPEREF:
         /* FIXME: shouldn't write out forward declarations for undefined

@@ -111,5 +111,34 @@ namespace Windows {
         {
             HRESULT ToString([out, retval] HSTRING *value);
         }
+
+#ifdef __WIDL__
+        namespace Collections
+        {
+            [
+                contract(Windows.Foundation.FoundationContract, 1.0),
+                uuid(6a79e863-4300-459a-9966-cbb660963ee1)
+            ]
+            interface IIterator<T> : IInspectable
+            {
+                [propget] HRESULT Current([out, retval] T *value);
+                [propget] HRESULT HasCurrent([out, retval] BOOL *value);
+                HRESULT MoveNext([out, retval] BOOL *value);
+                HRESULT GetMany([in] UINT32 count, [out] T *items, [out, retval] UINT32 *value);
+            }
+
+            [
+                contract(Windows.Foundation.FoundationContract, 1.0),
+                uuid(bbe1fa4c-b0e3-4583-baef-1f1b2e483e56)
+            ]
+            interface IVectorView<T> : IInspectable
+            {
+                HRESULT GetAt([in] ULONG index, [out, retval] T *value);
+                [propget] HRESULT Size([out, retval] ULONG *value);
+                HRESULT IndexOf([in, optional] T element, [out] ULONG *index, [out, retval] BOOLEAN *value);
+                HRESULT GetMany([in] ULONG start_index, [out] T *items, [out, retval] ULONG *value);
+            }
+        }
+#endif
     }
 }

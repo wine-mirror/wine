@@ -226,6 +226,8 @@ unsigned short get_type_vt(type_t *t)
 
   case TYPE_ALIAS:
   case TYPE_APICONTRACT:
+  case TYPE_PARAMETERIZED_TYPE:
+  case TYPE_PARAMETER:
     /* not supposed to be here */
     assert(0);
     break;
