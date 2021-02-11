@@ -5126,10 +5126,28 @@ static BOOL opentype_layout_context_match_input(const struct match_context *mc, 
     return TRUE;
 }
 
-static void opentype_layout_unsafe_to_break(struct scriptshaping_context *context, unsigned int idx)
+/* Marks text segment as unsafe to break between [start, end) glyphs. */
+static void opentype_layout_unsafe_to_break(struct scriptshaping_context *context, unsigned int start,
+        unsigned int end)
 {
-    if (context->u.buffer.glyph_props[idx].isClusterStart)
-        context->u.buffer.text_props[context->glyph_infos[idx].start_text_idx].canBreakShapingAfter = 0;
+    unsigned int i;
+
+    while (start && !context->u.buffer.glyph_props[start].isClusterStart)
+        --start;
+
+    while (--end && !context->u.buffer.glyph_props[end].isClusterStart)
+        ;
+
+    if (start == end)
+    {
+        context->u.buffer.text_props[context->glyph_infos[start].start_text_idx].canBreakShapingAfter = 0;
+        return;
+    }
+
+    for (i = context->glyph_infos[start].start_text_idx; i < context->glyph_infos[end].start_text_idx; ++i)
+    {
+        context->u.buffer.text_props[i].canBreakShapingAfter = 0;
+    }
 }
 
 static void opentype_layout_delete_glyph(struct scriptshaping_context *context, unsigned int idx)
@@ -5194,10 +5212,8 @@ static BOOL opentype_layout_apply_ligature(struct scriptshaping_context *context
         {
             context->u.buffer.glyph_props[j++].lig_component = comp_count - i;
         }
-        opentype_layout_unsafe_to_break(context, i);
-        context->u.buffer.glyph_props[i].isClusterStart = 0;
-        context->glyph_infos[i].start_text_idx = 0;
     }
+    opentype_layout_unsafe_to_break(context, match_positions[0], match_positions[comp_count - 1] + 1);
 
     /* Delete ligated glyphs, backwards to preserve index. */
     for (i = 1; i < comp_count; ++i)
