@@ -174,7 +174,12 @@ static void arabic_setup_masks(struct scriptshaping_context *context,
 
     /* Unaffected glyphs get action NONE with zero mask. */
     for (i = 0; i < context->glyph_count; ++i)
-        context->glyph_infos[i].mask |= masks[arabic_get_shaping_action(context, i)];
+    {
+        enum arabic_shaping_action action = arabic_get_shaping_action(context, i);
+        if (action != NONE)
+            opentype_layout_unsafe_to_break(context, i, i + 1);
+        context->glyph_infos[i].mask |= masks[action];
+    }
 }
 
 const struct shaper arabic_shaper =

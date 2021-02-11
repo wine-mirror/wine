@@ -690,6 +690,8 @@ extern void opentype_layout_apply_gpos_features(struct scriptshaping_context *co
 extern BOOL opentype_layout_check_feature(struct scriptshaping_context *context, unsigned int script_index,
         unsigned int language_index, struct shaping_feature *feature, unsigned int glyph_count,
         const UINT16 *glyphs, UINT8 *feature_applies) DECLSPEC_HIDDEN;
+extern void opentype_layout_unsafe_to_break(struct scriptshaping_context *context, unsigned int start,
+        unsigned int end) DECLSPEC_HIDDEN;
 extern BOOL opentype_has_vertical_variants(struct dwrite_fontface *fontface) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_vertical_glyph_variants(struct dwrite_fontface *fontface, unsigned int glyph_count,
         const UINT16 *nominal_glyphs, UINT16 *glyphs) DECLSPEC_HIDDEN;

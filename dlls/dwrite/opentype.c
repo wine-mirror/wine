@@ -5127,7 +5127,7 @@ static BOOL opentype_layout_context_match_input(const struct match_context *mc, 
 }
 
 /* Marks text segment as unsafe to break between [start, end) glyphs. */
-static void opentype_layout_unsafe_to_break(struct scriptshaping_context *context, unsigned int start,
+void opentype_layout_unsafe_to_break(struct scriptshaping_context *context, unsigned int start,
         unsigned int end)
 {
     unsigned int i;
