@@ -68,7 +68,7 @@ typedef struct {
 } NSTC2Impl;
 
 static const DWORD unsupported_styles =
-    NSTCS_SINGLECLICKEXPAND | NSTCS_NOREPLACEOPEN | NSTCS_NOORDERSTREAM | NSTCS_FAVORITESMODE |
+    NSTCS_NOREPLACEOPEN | NSTCS_NOORDERSTREAM | NSTCS_FAVORITESMODE |
     NSTCS_EMPTYTEXT | NSTCS_ALLOWJUNCTIONS | NSTCS_SHOWTABSBUTTON | NSTCS_SHOWDELETEBUTTON |
     NSTCS_SHOWREFRESHBUTTON | NSTCS_SPRINGEXPAND | NSTCS_RICHTOOLTIP | NSTCS_NOINDENTCHECKS;
 static const DWORD unsupported_styles2 =
@@ -213,6 +213,7 @@ static DWORD treeview_style_from_nstcs(NSTC2Impl *This, NSTCSTYLE nstcs,
     if(nstcs_mask & NSTCS_DISABLEDRAGDROP)     tv_mask |= TVS_DISABLEDRAGDROP;
     if(nstcs_mask & NSTCS_NOEDITLABELS)        tv_mask |= TVS_EDITLABELS;
     if(nstcs_mask & NSTCS_CHECKBOXES)          tv_mask |= TVS_CHECKBOXES;
+    if(nstcs_mask & NSTCS_SINGLECLICKEXPAND)   tv_mask |= TVS_SINGLEEXPAND;
 
     *new_style = 0;
 
@@ -227,6 +228,7 @@ static DWORD treeview_style_from_nstcs(NSTC2Impl *This, NSTCSTYLE nstcs,
     if(nstcs & NSTCS_DISABLEDRAGDROP)     *new_style |= TVS_DISABLEDRAGDROP;
     if(!(nstcs & NSTCS_NOEDITLABELS))     *new_style |= TVS_EDITLABELS;
     if(nstcs & NSTCS_CHECKBOXES)          *new_style |= TVS_CHECKBOXES;
+    if(nstcs & NSTCS_SINGLECLICKEXPAND)   *new_style |= TVS_SINGLEEXPAND;
 
     *new_style = (old_style & ~tv_mask) | (*new_style & tv_mask);
 
