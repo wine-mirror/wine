@@ -1725,6 +1725,8 @@ void wined3d_swapchain_gl_destroy_contexts(struct wined3d_swapchain_gl *swapchai
 {
     unsigned int i;
 
+    TRACE("swapchain_gl %p.\n", swapchain_gl);
+
     for (i = 0; i < swapchain_gl->context_count; ++i)
     {
         wined3d_context_gl_destroy(swapchain_gl->contexts[i]);

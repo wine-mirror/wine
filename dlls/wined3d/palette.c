@@ -35,6 +35,8 @@ ULONG CDECL wined3d_palette_incref(struct wined3d_palette *palette)
 
 static void wined3d_palette_destroy_object(void *object)
 {
+    TRACE("object %p.\n", object);
+
     heap_free(object);
 }
 

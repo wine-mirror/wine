@@ -511,6 +511,8 @@ static void wined3d_render_target_view_gl_cs_init(void *object)
     struct wined3d_resource *resource = view_gl->v.resource;
     const struct wined3d_view_desc *desc = &view_gl->v.desc;
 
+    TRACE("view_gl %p.\n", view_gl);
+
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         FIXME("Not implemented for resources %s.\n", debug_d3dresourcetype(resource->type));
@@ -792,6 +794,8 @@ static void wined3d_render_target_view_vk_cs_init(void *object)
     struct wined3d_context *context;
     uint32_t default_flags = 0;
 
+    TRACE("view_vk %p.\n", view_vk);
+
     resource = view_vk->v.resource;
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
@@ -934,6 +938,8 @@ static void wined3d_shader_resource_view_gl_cs_init(void *object)
     const struct wined3d_view_desc *desc;
     GLenum view_target;
 
+    TRACE("view_gl %p.\n", view_gl);
+
     view_format = view_gl->v.format;
     gl_info = &resource->device->adapter->gl_info;
     desc = &view_gl->v.desc;
@@ -1054,6 +1060,8 @@ static void wined3d_shader_resource_view_vk_cs_init(void *object)
     VkBufferView vk_buffer_view;
     uint32_t default_flags = 0;
     VkImageView vk_image_view;
+
+    TRACE("srv_vk %p.\n", srv_vk);
 
     resource = srv_vk->v.resource;
     format = srv_vk->v.format;
@@ -1421,6 +1429,8 @@ static void wined3d_unordered_access_view_gl_cs_init(void *object)
     struct wined3d_view_desc *desc = &view_gl->v.desc;
     const struct wined3d_gl_info *gl_info;
 
+    TRACE("view_gl %p.\n", view_gl);
+
     gl_info = &resource->device->adapter->gl_info;
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
@@ -1597,6 +1607,8 @@ static void wined3d_unordered_access_view_vk_cs_init(void *object)
     uint32_t default_flags = 0;
     VkImageView vk_image_view;
     VkResult vr;
+
+    TRACE("uav_vk %p.\n", uav_vk);
 
     resource = uav_vk->v.resource;
     device_vk = wined3d_device_vk(resource->device);

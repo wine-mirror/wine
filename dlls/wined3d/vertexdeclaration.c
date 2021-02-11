@@ -54,6 +54,8 @@ static void wined3d_vertex_declaration_destroy_object(void *object)
 {
     struct wined3d_vertex_declaration *declaration = object;
 
+    TRACE("declaration %p.\n", declaration);
+
     heap_free(declaration->elements);
     heap_free(declaration);
 }

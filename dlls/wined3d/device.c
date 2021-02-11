@@ -1005,6 +1005,8 @@ void wined3d_device_delete_opengl_contexts_cs(void *object)
     struct wined3d_context *context;
     struct wined3d_shader *shader;
 
+    TRACE("device %p.\n", device);
+
     device_gl = wined3d_device_gl(device);
 
     LIST_FOR_EACH_ENTRY(shader, &device->shaders, struct wined3d_shader, shader_list_entry)
@@ -1037,6 +1039,8 @@ void wined3d_device_create_primary_opengl_context_cs(void *object)
     struct wined3d_context *context;
     struct wined3d_texture *target;
     HRESULT hr;
+
+    TRACE("device %p.\n", device);
 
     swapchain = device->swapchains[0];
     target = swapchain->back_buffers ? swapchain->back_buffers[0] : swapchain->front_buffer;

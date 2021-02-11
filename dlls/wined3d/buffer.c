@@ -669,6 +669,8 @@ static void wined3d_buffer_destroy_object(void *object)
     struct wined3d_buffer *buffer = object;
     struct wined3d_context *context;
 
+    TRACE("buffer %p.\n", buffer);
+
     if (buffer->buffer_object)
     {
         context = context_acquire(buffer->resource.device, NULL, 0);

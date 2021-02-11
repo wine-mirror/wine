@@ -48,6 +48,8 @@ ULONG CDECL wined3d_blend_state_incref(struct wined3d_blend_state *state)
 
 static void wined3d_blend_state_destroy_object(void *object)
 {
+    TRACE("object %p.\n", object);
+
     heap_free(object);
 }
 
@@ -120,6 +122,8 @@ ULONG CDECL wined3d_depth_stencil_state_incref(struct wined3d_depth_stencil_stat
 
 static void wined3d_depth_stencil_state_destroy_object(void *object)
 {
+    TRACE("object %p.\n", object);
+
     heap_free(object);
 }
 
@@ -181,6 +185,8 @@ ULONG CDECL wined3d_rasterizer_state_incref(struct wined3d_rasterizer_state *sta
 
 static void wined3d_rasterizer_state_destroy_object(void *object)
 {
+    TRACE("object %p.\n", object);
+
     heap_free(object);
 }
 

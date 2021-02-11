@@ -76,6 +76,8 @@ static void wined3d_sampler_gl_cs_init(void *object)
     struct wined3d_context *context;
     GLuint name;
 
+    TRACE("sampler_gl %p.\n", sampler_gl);
+
     context = context_acquire(sampler_gl->s.device, NULL, 0);
     gl_info = wined3d_context_gl(context)->gl_info;
 
@@ -181,6 +183,8 @@ static void wined3d_sampler_vk_cs_init(void *object)
     struct wined3d_device_vk *device_vk;
     VkSampler vk_sampler;
     VkResult vr;
+
+    TRACE("sampler_vk %p.\n", sampler_vk);
 
     context_vk = wined3d_context_vk(context_acquire(sampler_vk->s.device, NULL, 0));
     device_vk = wined3d_device_vk(context_vk->c.device);

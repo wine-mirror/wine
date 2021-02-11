@@ -428,6 +428,8 @@ static void wined3d_query_destroy_object(void *object)
 {
     struct wined3d_query *query = object;
 
+    TRACE("query %p.\n", query);
+
     if (!list_empty(&query->poll_list_entry))
         list_remove(&query->poll_list_entry);
 }

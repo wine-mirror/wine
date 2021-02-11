@@ -1021,6 +1021,8 @@ static void wined3d_texture_destroy_dc(void *object)
     struct wined3d_range range;
     NTSTATUS status;
 
+    TRACE("texture %p, sub_resource_idx %u.\n", idx->texture, idx->sub_resource_idx);
+
     texture = idx->texture;
     sub_resource_idx = idx->sub_resource_idx;
     device = texture->resource.device;
