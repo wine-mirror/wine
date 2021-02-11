@@ -85,7 +85,6 @@ void WINAPI RtlExitUserThread( ULONG status )
     NtQueryInformationThread( GetCurrentThread(), ThreadAmILastThread, &last, sizeof(last), NULL );
     if (last) RtlExitUserProcess( status );
     LdrShutdownThread();
-    RtlFreeThreadActivationContextStack();
     for (;;) NtTerminateThread( GetCurrentThread(), status );
 }
 

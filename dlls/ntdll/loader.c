@@ -3278,6 +3278,8 @@ void WINAPI LdrShutdownThread(void)
     RtlReleasePebLock();
 
     RtlLeaveCriticalSection( &loader_section );
+    if (DbgUiGetThreadDebugObject()) NtClose( DbgUiGetThreadDebugObject() );
+    RtlFreeThreadActivationContextStack();
 }
 
 

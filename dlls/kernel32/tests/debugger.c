@@ -1779,12 +1779,49 @@ static char *cmd;
 static DWORD WINAPI debug_and_exit(void *arg)
 {
     STARTUPINFOA si = { sizeof(si) };
+    HANDLE debug;
+    ULONG val = 0;
+    NTSTATUS status;
     BOOL ret;
 
     ret = CreateProcessA(NULL, cmd, NULL, NULL, TRUE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess failed, last error %#x.\n", GetLastError());
+    debug = pDbgUiGetThreadDebugObject();
+    status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
+                                           &val, sizeof(val), NULL );
+    ok( !status, "NtSetInformationDebugObject failed %x\n", status );
+    *(HANDLE *)arg = debug;
     Sleep(200);
+    ExitThread(0);
+}
+
+static DWORD WINAPI debug_and_wait(void *arg)
+{
+    STARTUPINFOA si = { sizeof(si) };
+    HANDLE debug = *(HANDLE *)arg;
+    ULONG val = 0;
+    NTSTATUS status;
+    BOOL ret;
+
+    pDbgUiSetThreadDebugObject( debug );
+    ret = CreateProcessA(NULL, cmd, NULL, NULL, TRUE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess failed, last error %#x.\n", GetLastError());
+    debug = pDbgUiGetThreadDebugObject();
+    status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
+                                           &val, sizeof(val), NULL );
+    ok( !status, "NtSetInformationDebugObject failed %x\n", status );
+    Sleep(INFINITE);
+    ExitThread(0);
+}
+
+static DWORD WINAPI create_debug_port(void *arg)
+{
+    STARTUPINFOA si = { sizeof(si) };
+    NTSTATUS status = pDbgUiConnectToDbg();
+
+    ok( !status, "DbgUiConnectToDbg failed %x\n", status );
     *(HANDLE *)arg = pDbgUiGetThreadDebugObject();
+    Sleep( INFINITE );
     ExitThread(0);
 }
 
@@ -1844,19 +1881,23 @@ static void test_kill_on_exit(const char *argv0)
     exit_code = run_child_wait( cmd, event );
     ok( exit_code == STATUS_DEBUGGER_INACTIVE, "exit code = %08x\n", exit_code);
 
-    /* test that threads don't close the debug port on exit */
+    /* test that threads close the debug port on exit */
     thread = CreateThread(NULL, 0, debug_and_exit, &debug, 0, &tid);
     WaitForSingleObject( thread, 1000 );
     ok( debug != 0, "no debug port\n" );
-    SetEvent( event );
-    WaitForSingleObject( pi.hProcess, 100 );
-    GetExitCodeProcess( pi.hProcess, &exit_code );
-    ok( exit_code == STILL_ACTIVE, "exit code = %08x\n", exit_code);
     val = 0;
     status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
                                            &val, sizeof(val), NULL );
-    ok( !status, "NtSetInformationDebugObject failed %x\n", status );
-    CloseHandle( debug );
+    ok( status == STATUS_INVALID_HANDLE || broken(status == STATUS_SUCCESS),  /* wow64 */
+        "NtSetInformationDebugObject failed %x\n", status );
+    SetEvent( event );
+    if (!status)
+    {
+        WaitForSingleObject( pi.hProcess, 100 );
+        GetExitCodeProcess( pi.hProcess, &exit_code );
+        ok( exit_code == STILL_ACTIVE, "exit code = %08x\n", exit_code);
+        CloseHandle( debug );
+    }
     WaitForSingleObject( pi.hProcess, 1000 );
     GetExitCodeProcess( pi.hProcess, &exit_code );
     ok( exit_code == 0, "exit code = %08x\n", exit_code);
@@ -1864,6 +1905,46 @@ static void test_kill_on_exit(const char *argv0)
     CloseHandle( pi.hThread );
     CloseHandle( thread );
 
+    /* but not on forced exit */
+    status = pNtCreateDebugObject( &debug, DEBUG_ALL_ACCESS, &attr, DEBUG_KILL_ON_CLOSE );
+    ok( !status, "NtCreateDebugObject failed %x\n", status );
+    thread = CreateThread(NULL, 0, debug_and_wait, &debug, 0, &tid);
+    Sleep( 100 );
+    ok( debug != 0, "no debug port\n" );
+    val = 1;
+    status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
+                                           &val, sizeof(val), NULL );
+    ok( status == STATUS_SUCCESS, "NtSetInformationDebugObject failed %x\n", status );
+    TerminateThread( thread, 0 );
+    status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
+                                           &val, sizeof(val), NULL );
+    ok( status == STATUS_SUCCESS, "NtSetInformationDebugObject failed %x\n", status );
+    WaitForSingleObject( pi.hProcess, 300 );
+    GetExitCodeProcess( pi.hProcess, &exit_code );
+    todo_wine
+    ok( exit_code == STATUS_DEBUGGER_INACTIVE || broken(exit_code == STILL_ACTIVE), /* wow64 */
+        "exit code = %08x\n", exit_code);
+    CloseHandle( pi.hProcess );
+    CloseHandle( pi.hThread );
+    CloseHandle( thread );
+    CloseHandle( debug );
+
+    debug = 0;
+    thread = CreateThread(NULL, 0, create_debug_port, &debug, 0, &tid);
+    Sleep(100);
+    ok( debug != 0, "no debug port\n" );
+    val = 0;
+    status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
+                                           &val, sizeof(val), NULL );
+    ok( status == STATUS_SUCCESS, "NtSetInformationDebugObject failed %x\n", status );
+    TerminateThread( thread, 0 );
+    status = pNtSetInformationDebugObject( debug, DebugObjectKillProcessOnExitInformation,
+                                           &val, sizeof(val), NULL );
+    ok( status == STATUS_SUCCESS, "NtSetInformationDebugObject failed %x\n", status );
+    CloseHandle( debug );
+    CloseHandle( thread );
+
+    CloseHandle( event );
     heap_free(cmd);
 }
 
