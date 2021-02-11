@@ -2941,7 +2941,6 @@ VOID WINAPI TpSetWait( TP_WAIT *wait, HANDLE handle, LARGE_INTEGER *timeout )
 {
     struct threadpool_object *this = impl_from_TP_WAIT( wait );
     ULONGLONG timestamp = TIMEOUT_INFINITE;
-    BOOL submit_wait = FALSE;
 
     TRACE( "%p %p %p\n", wait, handle, timeout );
 
@@ -2965,11 +2964,6 @@ VOID WINAPI TpSetWait( TP_WAIT *wait, HANDLE handle, LARGE_INTEGER *timeout )
                 NtQuerySystemTime( &now );
                 timestamp = now.QuadPart - timestamp;
             }
-            else if (!timestamp)
-            {
-                submit_wait = TRUE;
-                handle = NULL;
-            }
         }
 
         /* Add wait object back into one of the queues. */
@@ -2990,9 +2984,6 @@ VOID WINAPI TpSetWait( TP_WAIT *wait, HANDLE handle, LARGE_INTEGER *timeout )
     }
 
     RtlLeaveCriticalSection( &waitqueue.cs );
-
-    if (submit_wait)
-        tp_object_submit( this, FALSE );
 }
 
 /***********************************************************************
