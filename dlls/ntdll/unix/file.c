@@ -1968,7 +1968,7 @@ static NTSTATUS get_mountmgr_fs_info( HANDLE handle, int fd, struct mountmgr_uni
         struct stat st;
 
         fstat( fd, &st );
-        drive->unix_dev = st.st_dev;
+        drive->unix_dev = st.st_rdev ? st.st_rdev : st.st_dev;
         drive->letter = 0;
     }
     else
