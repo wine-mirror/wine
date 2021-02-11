@@ -330,6 +330,18 @@ static void test_choosepixelformat(void)
     ok( test_pfd(&pfd, NULL), "PFD_STEREO_DONTCARE failed\n" );
     pfd.dwFlags &= ~PFD_STEREO_DONTCARE;
     pfd.cAuxBuffers = 0;
+
+    pfd.dwFlags |= PFD_DEPTH_DONTCARE;
+    pfd.cDepthBits = 24;
+    ok( test_pfd(&pfd, &ret_fmt), "PFD_DEPTH_DONTCARE failed.\n" );
+    ok( !ret_fmt.cDepthBits, "Got unexpected cDepthBits %u.\n", ret_fmt.cDepthBits );
+    pfd.cStencilBits = 8;
+    ok( test_pfd(&pfd, &ret_fmt), "PFD_DEPTH_DONTCARE, depth 24, stencil 8 failed.\n" );
+    ok( !ret_fmt.cDepthBits || ret_fmt.cDepthBits == 24, "Got unexpected cDepthBits %u.\n", ret_fmt.cDepthBits );
+    ok( ret_fmt.cStencilBits == 8, "Got unexpected cStencilBits %u.\n", ret_fmt.cStencilBits );
+    pfd.cDepthBits = 0;
+    pfd.cStencilBits = 0;
+    pfd.dwFlags &= ~PFD_DEPTH_DONTCARE;
 }
 
 static void WINAPI gl_debug_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
