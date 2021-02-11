@@ -1225,22 +1225,6 @@ static struct strmbase_pin *parser_get_pin(struct strmbase_filter *base, unsigne
     return NULL;
 }
 
-static void wg_parser_destroy(struct wg_parser *parser)
-{
-    if (parser->bus)
-    {
-        gst_bus_set_sync_handler(parser->bus, NULL, NULL, NULL);
-        gst_object_unref(parser->bus);
-    }
-
-    pthread_mutex_destroy(&parser->mutex);
-    pthread_cond_destroy(&parser->init_cond);
-    pthread_cond_destroy(&parser->read_cond);
-    pthread_cond_destroy(&parser->read_done_cond);
-
-    free(parser);
-}
-
 static void parser_destroy(struct strmbase_filter *iface)
 {
     struct parser *filter = impl_from_strmbase_filter(iface);
@@ -1259,7 +1243,7 @@ static void parser_destroy(struct strmbase_filter *iface)
         IAsyncReader_Release(filter->reader);
     filter->reader = NULL;
 
-    wg_parser_destroy(filter->wg_parser);
+    unix_funcs->wg_parser_destroy(filter->wg_parser);
 
     strmbase_sink_cleanup(&filter->sink);
     strmbase_filter_cleanup(&filter->filter);

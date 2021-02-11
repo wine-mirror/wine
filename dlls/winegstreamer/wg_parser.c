@@ -1011,12 +1011,29 @@ static struct wg_parser * CDECL wg_wave_parser_create(void)
     return parser;
 }
 
+static void CDECL wg_parser_destroy(struct wg_parser *parser)
+{
+    if (parser->bus)
+    {
+        gst_bus_set_sync_handler(parser->bus, NULL, NULL, NULL);
+        gst_object_unref(parser->bus);
+    }
+
+    pthread_mutex_destroy(&parser->mutex);
+    pthread_cond_destroy(&parser->init_cond);
+    pthread_cond_destroy(&parser->read_cond);
+    pthread_cond_destroy(&parser->read_done_cond);
+
+    free(parser);
+}
+
 static const struct unix_funcs funcs =
 {
     wg_decodebin_parser_create,
     wg_avi_parser_create,
     wg_mpeg_audio_parser_create,
     wg_wave_parser_create,
+    wg_parser_destroy,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)

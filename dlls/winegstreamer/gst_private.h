@@ -210,6 +210,7 @@ struct unix_funcs
     struct wg_parser *(CDECL *wg_avi_parser_create)(void);
     struct wg_parser *(CDECL *wg_mpeg_audio_parser_create)(void);
     struct wg_parser *(CDECL *wg_wave_parser_create)(void);
+    void (CDECL *wg_parser_destroy)(struct wg_parser *parser);
 };
 
 extern const struct unix_funcs *unix_funcs;
