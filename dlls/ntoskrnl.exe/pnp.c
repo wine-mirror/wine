@@ -73,45 +73,27 @@ static int interface_rb_compare( const void *key, const struct wine_rb_entry *en
 
 static struct wine_rb_tree device_interfaces = { interface_rb_compare };
 
-static NTSTATUS WINAPI internal_complete( DEVICE_OBJECT *device, IRP *irp, void *context )
-{
-    HANDLE event = context;
-    SetEvent( event );
-    return STATUS_MORE_PROCESSING_REQUIRED;
-}
-
-static void send_device_irp( DEVICE_OBJECT *device, IRP *irp )
-{
-    HANDLE event = CreateEventA( NULL, FALSE, FALSE, NULL );
-    DEVICE_OBJECT *toplevel_device;
-
-    irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
-    IoSetCompletionRoutine( irp, internal_complete, event, TRUE, TRUE, TRUE );
-
-    toplevel_device = IoGetAttachedDeviceReference( device );
-    if (IoCallDriver( toplevel_device, irp ) == STATUS_PENDING)
-        WaitForSingleObject( event, INFINITE );
-    IoCompleteRequest( irp, IO_NO_INCREMENT );
-    ObDereferenceObject( toplevel_device );
-    CloseHandle( event );
-}
-
 static NTSTATUS get_device_id( DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCHAR **id )
 {
     IO_STACK_LOCATION *irpsp;
     IO_STATUS_BLOCK irp_status;
+    KEVENT event;
     IRP *irp;
 
     device = IoGetAttachedDevice( device );
 
-    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_PNP, device, NULL, 0, NULL, NULL, &irp_status )))
+    KeInitializeEvent( &event, NotificationEvent, FALSE );
+    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_PNP, device, NULL, 0, NULL, &event, &irp_status )))
         return STATUS_NO_MEMORY;
 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MinorFunction = IRP_MN_QUERY_ID;
     irpsp->Parameters.QueryId.IdType = type;
 
-    send_device_irp( device, irp );
+    irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+    if (IoCallDriver( device, irp ) == STATUS_PENDING)
+        KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
+
     *id = (WCHAR *)irp_status.Information;
     return irp_status.u.Status;
 }
@@ -120,10 +102,12 @@ static NTSTATUS send_pnp_irp( DEVICE_OBJECT *device, UCHAR minor )
 {
     IO_STACK_LOCATION *irpsp;
     IO_STATUS_BLOCK irp_status;
+    KEVENT event;
     IRP *irp;
 
     device = IoGetAttachedDevice( device );
 
+    KeInitializeEvent( &event, NotificationEvent, FALSE );
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_PNP, device, NULL, 0, NULL, NULL, &irp_status )))
         return STATUS_NO_MEMORY;
 
@@ -133,7 +117,10 @@ static NTSTATUS send_pnp_irp( DEVICE_OBJECT *device, UCHAR minor )
     irpsp->Parameters.StartDevice.AllocatedResources = NULL;
     irpsp->Parameters.StartDevice.AllocatedResourcesTranslated = NULL;
 
-    send_device_irp( device, irp );
+    irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+    if (IoCallDriver( device, irp ) == STATUS_PENDING)
+        KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
+
     return irp_status.u.Status;
 }
 
@@ -171,12 +158,14 @@ static void send_power_irp( DEVICE_OBJECT *device, DEVICE_POWER_STATE power )
 {
     IO_STATUS_BLOCK irp_status;
     IO_STACK_LOCATION *irpsp;
+    KEVENT event;
     IRP *irp;
 
     device = IoGetAttachedDevice( device );
 
-    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_POWER, device, NULL, 0, NULL, NULL, &irp_status )))
-        return STATUS_NO_MEMORY;
+    KeInitializeEvent( &event, NotificationEvent, FALSE );
+    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_POWER, device, NULL, 0, NULL, &event, &irp_status )))
+        return;
 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MinorFunction = IRP_MN_SET_POWER;
@@ -184,7 +173,9 @@ static void send_power_irp( DEVICE_OBJECT *device, DEVICE_POWER_STATE power )
     irpsp->Parameters.Power.Type = DevicePowerState;
     irpsp->Parameters.Power.State.DeviceState = power;
 
-    send_device_irp( device, irp );
+    irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+    if (IoCallDriver( device, irp ) == STATUS_PENDING)
+        KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
 }
 
 static void load_function_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *sp_device )
@@ -389,6 +380,7 @@ static void handle_bus_relations( DEVICE_OBJECT *parent )
     IO_STATUS_BLOCK irp_status;
     IO_STACK_LOCATION *irpsp;
     HDEVINFO set;
+    KEVENT event;
     IRP *irp;
     ULONG i;
 
@@ -398,7 +390,8 @@ static void handle_bus_relations( DEVICE_OBJECT *parent )
 
     parent = IoGetAttachedDevice( parent );
 
-    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_PNP, parent, NULL, 0, NULL, NULL, &irp_status )))
+    KeInitializeEvent( &event, NotificationEvent, FALSE );
+    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_PNP, parent, NULL, 0, NULL, &event, &irp_status )))
     {
         SetupDiDestroyDeviceInfoList( set );
         return;
@@ -407,7 +400,11 @@ static void handle_bus_relations( DEVICE_OBJECT *parent )
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->MinorFunction = IRP_MN_QUERY_DEVICE_RELATIONS;
     irpsp->Parameters.QueryDeviceRelations.Type = BusRelations;
-    send_device_irp( parent, irp );
+
+    irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+    if (IoCallDriver( parent, irp ) == STATUS_PENDING)
+        KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
+
     relations = (DEVICE_RELATIONS *)irp_status.Information;
     if (irp_status.u.Status)
     {
