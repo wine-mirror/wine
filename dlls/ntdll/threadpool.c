@@ -3226,9 +3226,12 @@ NTSTATUS WINAPI RtlRegisterWait( HANDLE *out, HANDLE handle, RTL_WAITORTIMERCALL
     object = impl_from_TP_WAIT(wait);
     object->u.wait.rtl_callback = callback;
 
+    RtlEnterCriticalSection( &waitqueue.cs );
     TpSetWait( (TP_WAIT *)object, handle, get_nt_timeout( &timeout, milliseconds ) );
 
     *out = object;
+    RtlLeaveCriticalSection( &waitqueue.cs );
+
     return STATUS_SUCCESS;
 }
 

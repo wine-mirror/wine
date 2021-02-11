@@ -1346,6 +1346,15 @@ static void CALLBACK signaled_function(PVOID p, BOOLEAN TimerOrWaitFired)
     ok(!TimerOrWaitFired, "wait shouldn't have timed out\n");
 }
 
+static void CALLBACK wait_complete_function(PVOID p, BOOLEAN TimerOrWaitFired)
+{
+    HANDLE event = p;
+    DWORD res;
+    ok(!TimerOrWaitFired, "wait shouldn't have timed out\n");
+    res = WaitForSingleObject(event, INFINITE);
+    ok(res == WAIT_OBJECT_0, "WaitForSingleObject returned %x\n", res);
+}
+
 static void CALLBACK timeout_function(PVOID p, BOOLEAN TimerOrWaitFired)
 {
     HANDLE event = p;
@@ -1371,6 +1380,23 @@ static void CALLBACK waitthread_test_function(PVOID p, BOOLEAN TimerOrWaitFired)
     SetEvent(param->complete_event);
 }
 
+struct unregister_params
+{
+    HANDLE wait_handle;
+    HANDLE complete_event;
+};
+
+static void CALLBACK unregister_function(PVOID p, BOOLEAN TimerOrWaitFired)
+{
+    struct unregister_params *param = p;
+    HANDLE wait_handle = param->wait_handle;
+    BOOL ret;
+    ok(wait_handle != INVALID_HANDLE_VALUE, "invalid wait handle\n");
+    ret = pUnregisterWait(param->wait_handle);
+    todo_wine ok(ret, "UnregisterWait failed with error %d\n", GetLastError());
+    SetEvent(param->complete_event);
+}
+
 static void test_RegisterWaitForSingleObject(void)
 {
     BOOL ret;
@@ -1379,6 +1405,8 @@ static void test_RegisterWaitForSingleObject(void)
     HANDLE complete_event;
     HANDLE waitthread_trigger_event, waitthread_wait_event;
     struct waitthread_test_param param;
+    struct unregister_params unregister_param;
+    DWORD i;
 
     if (!pRegisterWaitForSingleObject || !pUnregisterWait)
     {
@@ -1411,7 +1439,25 @@ static void test_RegisterWaitForSingleObject(void)
     ret = pUnregisterWait(wait_handle);
     ok(ret, "UnregisterWait failed with error %d\n", GetLastError());
 
+    /* test unregister while running */
+
+    SetEvent(handle);
+    ret = pRegisterWaitForSingleObject(&wait_handle, handle, wait_complete_function, complete_event, INFINITE, WT_EXECUTEONLYONCE);
+    ok(ret, "RegisterWaitForSingleObject failed with error %d\n", GetLastError());
+
+    /* give worker thread chance to start */
+    Sleep(50);
+    ret = pUnregisterWait(wait_handle);
+    ok(!ret, "UnregisterWait succeeded\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "UnregisterWait failed with error %d\n", GetLastError());
+
+    /* give worker thread chance to complete */
+    SetEvent(complete_event);
+    Sleep(50);
+
     /* test timeout case */
+
+    ResetEvent(handle);
 
     ret = pRegisterWaitForSingleObject(&wait_handle, handle, timeout_function, complete_event, 0, WT_EXECUTEONLYONCE);
     ok(ret, "RegisterWaitForSingleObject failed with error %d\n", GetLastError());
@@ -1441,6 +1487,21 @@ static void test_RegisterWaitForSingleObject(void)
 
     ret = pUnregisterWait(wait_handle);
     ok(ret, "UnregisterWait failed with error %d\n", GetLastError());
+
+    /* the callback execution should be sequentially consistent with the wait handle return,
+       even if the event is already set */
+
+    for (i = 0; i < 100; ++i)
+    {
+        SetEvent(handle);
+        unregister_param.complete_event = complete_event;
+        unregister_param.wait_handle = INVALID_HANDLE_VALUE;
+
+        ret = pRegisterWaitForSingleObject(&unregister_param.wait_handle, handle, unregister_function, &unregister_param, INFINITE, WT_EXECUTEONLYONCE | WT_EXECUTEINWAITTHREAD);
+        ok(ret, "RegisterWaitForSingleObject failed with error %d\n", GetLastError());
+
+        WaitForSingleObject(complete_event, INFINITE);
+    }
 
     /* test multiple waits with WT_EXECUTEINWAITTHREAD.
      * Windows puts multiple waits on the same wait thread, and using WT_EXECUTEINWAITTHREAD causes the callbacks to run serially.
