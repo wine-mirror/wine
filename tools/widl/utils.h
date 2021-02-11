@@ -45,6 +45,7 @@ void warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
 void warning_loc_info(const loc_info_t *, const char *s, ...) __attribute__((format (printf, 2, 3)));
 void chat(const char *s, ...) __attribute__((format (printf, 1, 2)));
 char *strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
+size_t strappend(char **buf, size_t *len, size_t pos, const char* fmt, ...) __attribute__((__format__ (__printf__, 4, 5 )));
 
 char *dup_basename(const char *name, const char *ext);
 size_t widl_getline(char **linep, size_t *lenp, FILE *fp);

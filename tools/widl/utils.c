@@ -245,6 +245,43 @@ char *strmake( const char* fmt, ... )
     }
 }
 
+size_t strappend(char **buf, size_t *len, size_t pos, const char* fmt, ...)
+{
+    size_t size;
+    va_list ap;
+    char *ptr;
+    int n;
+
+    assert( buf && len );
+    assert( (*len == 0 && *buf == NULL) || (*len != 0 && *buf != NULL) );
+
+    if (*buf)
+    {
+        size = *len;
+        ptr = *buf;
+    }
+    else
+    {
+        size = 100;
+        ptr = xmalloc( size );
+    }
+
+    for (;;)
+    {
+        va_start( ap, fmt );
+        n = vsnprintf( ptr + pos, size - pos, fmt, ap );
+        va_end( ap );
+        if (n == -1) size *= 2;
+        else if (pos + (size_t)n >= size) size = pos + n + 1;
+        else break;
+        ptr = xrealloc( ptr, size );
+    }
+
+    *len = size;
+    *buf = ptr;
+    return n;
+}
+
 char *xstrdup(const char *str)
 {
 	char *s;

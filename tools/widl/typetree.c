@@ -89,41 +89,25 @@ const char *type_get_name(const type_t *type, enum name_type name_type)
     return NULL;
 }
 
-static char *append_namespace(char *ptr, struct namespace *namespace, const char *separator, const char *abi_prefix)
+static size_t append_namespace(char **buf, size_t *len, size_t pos, struct namespace *namespace, const char *separator, const char *abi_prefix)
 {
-    if(is_global_namespace(namespace)) {
-        if(!abi_prefix) return ptr;
-        strcpy(ptr, abi_prefix);
-        strcat(ptr, separator);
-        return ptr + strlen(ptr);
-    }
-
-    ptr = append_namespace(ptr, namespace->parent, separator, abi_prefix);
-    strcpy(ptr, namespace->name);
-    strcat(ptr, separator);
-    return ptr + strlen(ptr);
+    int nested = namespace && !is_global_namespace(namespace);
+    const char *name = nested ? namespace->name : abi_prefix;
+    size_t n = 0;
+    if (!name) return 0;
+    if (nested) n += append_namespace(buf, len, pos + n, namespace->parent, separator, abi_prefix);
+    n += strappend(buf, len, pos + n, "%s%s", name, separator);
+    return n;
 }
 
-char *format_namespace(struct namespace *namespace, const char *prefix, const char *separator, const char *suffix,
-                       const char *abi_prefix)
+char *format_namespace(struct namespace *namespace, const char *prefix, const char *separator, const char *suffix, const char *abi_prefix)
 {
-    unsigned len = strlen(prefix) + strlen(suffix);
-    unsigned sep_len = strlen(separator);
-    struct namespace *iter;
-    char *ret, *ptr;
-
-    if(abi_prefix)
-        len += strlen(abi_prefix) + sep_len;
-
-    for(iter = namespace; !is_global_namespace(iter); iter = iter->parent)
-        len += strlen(iter->name) + sep_len;
-
-    ret = xmalloc(len+1);
-    strcpy(ret, prefix);
-    ptr = append_namespace(ret + strlen(ret), namespace, separator, abi_prefix);
-    strcpy(ptr, suffix);
-
-    return ret;
+    size_t len = 0, pos = 0;
+    char *buf = NULL;
+    pos += strappend(&buf, &len, pos, "%s", prefix);
+    pos += append_namespace(&buf, &len, pos, namespace, separator, abi_prefix);
+    pos += strappend(&buf, &len, pos, "%s", suffix);
+    return buf;
 }
 
 type_t *type_new_function(var_list_t *args)
