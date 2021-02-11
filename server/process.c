@@ -556,7 +556,6 @@ struct process *create_process( int fd, struct process *parent, int inherit_all,
     list_init( &process->asyncs );
     list_init( &process->classes );
     list_init( &process->views );
-    list_init( &process->dlls );
     list_init( &process->rawinput_devices );
 
     process->end_time = 0;
@@ -782,60 +781,6 @@ struct process *get_process_from_handle( obj_handle_t handle, unsigned int acces
                                              access, &process_ops );
 }
 
-/* find a dll from its base address */
-static inline struct process_dll *find_process_dll( struct process *process, mod_handle_t base )
-{
-    struct process_dll *dll;
-
-    LIST_FOR_EACH_ENTRY( dll, &process->dlls, struct process_dll, entry )
-    {
-        if (dll->base == base) return dll;
-    }
-    return NULL;
-}
-
-/* add a dll to a process list */
-static struct process_dll *process_load_dll( struct process *process, mod_handle_t base,
-                                             const WCHAR *filename, data_size_t name_len )
-{
-    struct process_dll *dll;
-
-    /* make sure we don't already have one with the same base address */
-    if (find_process_dll( process, base ))
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return NULL;
-    }
-
-    if ((dll = mem_alloc( sizeof(*dll) )))
-    {
-        dll->base = base;
-        dll->filename = NULL;
-        dll->namelen  = name_len;
-        if (name_len && !(dll->filename = memdup( filename, name_len )))
-        {
-            free( dll );
-            return NULL;
-        }
-        list_add_tail( &process->dlls, &dll->entry );
-    }
-    return dll;
-}
-
-/* remove a dll from a process list */
-static void process_unload_dll( struct process *process, mod_handle_t base )
-{
-    struct process_dll *dll = find_process_dll( process, base );
-
-    if (dll && (&dll->entry != list_head( &process->dlls )))  /* main exe can't be unloaded */
-    {
-        free( dll->filename );
-        list_remove( &dll->entry );
-        free( dll );
-    }
-    else set_error( STATUS_INVALID_PARAMETER );
-}
-
 /* terminate a process with the given exit code */
 static void terminate_process( struct process *process, struct thread *skip, int exit_code )
 {
@@ -912,13 +857,6 @@ static void process_killed( struct process *process )
         struct rawinput_device_entry *entry = LIST_ENTRY( ptr, struct rawinput_device_entry, entry );
         list_remove( &entry->entry );
         free( entry );
-    }
-    while ((ptr = list_head( &process->dlls )))
-    {
-        struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
-        free( dll->filename );
-        list_remove( &dll->entry );
-        free( dll );
     }
     destroy_process_classes( process );
     free_mapped_views( process );
@@ -1346,7 +1284,6 @@ DECL_HANDLER(get_startup_info)
 /* signal the end of the process initialization */
 DECL_HANDLER(init_process_done)
 {
-    struct process_dll *dll;
     struct process *process = current->process;
     struct memory_view *view;
     client_ptr_t base;
@@ -1363,13 +1300,6 @@ DECL_HANDLER(init_process_done)
         return;
     }
     if (!(image_info = get_view_image_info( view, &base ))) return;
-
-    if ((dll = find_process_dll( process, base )))
-    {
-        /* main exe is the first in the dll list */
-        list_remove( &dll->entry );
-        list_add_head( &process->dlls, &dll->entry );
-    }
 
     process->start_time = current_time;
     current->entry_point = image_info->entry_point;
@@ -1591,23 +1521,6 @@ DECL_HANDLER(write_process_memory)
         else set_error( STATUS_INVALID_PARAMETER );
         release_object( process );
     }
-}
-
-/* notify the server that a dll has been loaded */
-DECL_HANDLER(load_dll)
-{
-    struct process_dll *dll;
-
-    if ((dll = process_load_dll( current->process, req->base, get_req_data(), get_req_data_size() )))
-    {
-        dll->name = req->name;
-    }
-}
-
-/* notify the server that a dll is being unloaded */
-DECL_HANDLER(unload_dll)
-{
-    process_unload_dll( current->process, req->base );
 }
 
 /* retrieve the process idle event */

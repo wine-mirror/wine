@@ -1620,18 +1620,6 @@ static void dump_resume_thread_reply( const struct resume_thread_reply *req )
     fprintf( stderr, " count=%d", req->count );
 }
 
-static void dump_load_dll_request( const struct load_dll_request *req )
-{
-    dump_uint64( " base=", &req->base );
-    dump_uint64( ", name=", &req->name );
-    dump_varargs_unicode_str( ", filename=", cur_size );
-}
-
-static void dump_unload_dll_request( const struct unload_dll_request *req )
-{
-    dump_uint64( " base=", &req->base );
-}
-
 static void dump_queue_apc_request( const struct queue_apc_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4501,8 +4489,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_thread_info_request,
     (dump_func)dump_suspend_thread_request,
     (dump_func)dump_resume_thread_request,
-    (dump_func)dump_load_dll_request,
-    (dump_func)dump_unload_dll_request,
     (dump_func)dump_queue_apc_request,
     (dump_func)dump_get_apc_result_request,
     (dump_func)dump_close_handle_request,
@@ -4783,8 +4769,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     (dump_func)dump_suspend_thread_reply,
     (dump_func)dump_resume_thread_reply,
-    NULL,
-    NULL,
     (dump_func)dump_queue_apc_reply,
     (dump_func)dump_get_apc_result_reply,
     NULL,
@@ -5065,8 +5049,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_thread_info",
     "suspend_thread",
     "resume_thread",
-    "load_dll",
-    "unload_dll",
     "queue_apc",
     "get_apc_result",
     "close_handle",
@@ -5367,6 +5349,7 @@ static const struct
     { "ERROR_NO_MORE_USER_HANDLES",  0xc0010000 | ERROR_NO_MORE_USER_HANDLES },
     { "ERROR_WINDOW_OF_OTHER_THREAD", 0xc0010000 | ERROR_WINDOW_OF_OTHER_THREAD },
     { "FILE_DELETED",                STATUS_FILE_DELETED },
+    { "FILE_INVALID",                STATUS_FILE_INVALID },
     { "FILE_IS_A_DIRECTORY",         STATUS_FILE_IS_A_DIRECTORY },
     { "FILE_LOCK_CONFLICT",          STATUS_FILE_LOCK_CONFLICT },
     { "GENERIC_NOT_MAPPED",          STATUS_GENERIC_NOT_MAPPED },

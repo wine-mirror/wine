@@ -139,8 +139,6 @@ DECL_HANDLER(get_thread_times);
 DECL_HANDLER(set_thread_info);
 DECL_HANDLER(suspend_thread);
 DECL_HANDLER(resume_thread);
-DECL_HANDLER(load_dll);
-DECL_HANDLER(unload_dll);
 DECL_HANDLER(queue_apc);
 DECL_HANDLER(get_apc_result);
 DECL_HANDLER(close_handle);
@@ -424,8 +422,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_thread_info,
     (req_handler)req_suspend_thread,
     (req_handler)req_resume_thread,
-    (req_handler)req_load_dll,
-    (req_handler)req_unload_dll,
     (req_handler)req_queue_apc,
     (req_handler)req_get_apc_result,
     (req_handler)req_close_handle,
@@ -863,11 +859,6 @@ C_ASSERT( FIELD_OFFSET(struct resume_thread_request, handle) == 12 );
 C_ASSERT( sizeof(struct resume_thread_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct resume_thread_reply, count) == 8 );
 C_ASSERT( sizeof(struct resume_thread_reply) == 16 );
-C_ASSERT( FIELD_OFFSET(struct load_dll_request, base) == 16 );
-C_ASSERT( FIELD_OFFSET(struct load_dll_request, name) == 24 );
-C_ASSERT( sizeof(struct load_dll_request) == 32 );
-C_ASSERT( FIELD_OFFSET(struct unload_dll_request, base) == 16 );
-C_ASSERT( sizeof(struct unload_dll_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct queue_apc_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct queue_apc_request, call) == 16 );
 C_ASSERT( sizeof(struct queue_apc_request) == 64 );

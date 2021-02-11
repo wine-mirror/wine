@@ -1175,34 +1175,6 @@ struct resume_thread_reply
 
 
 
-struct load_dll_request
-{
-    struct request_header __header;
-    char __pad_12[4];
-    mod_handle_t base;
-    client_ptr_t name;
-    /* VARARG(filename,unicode_str); */
-};
-struct load_dll_reply
-{
-    struct reply_header __header;
-};
-
-
-
-struct unload_dll_request
-{
-    struct request_header __header;
-    char __pad_12[4];
-    mod_handle_t base;
-};
-struct unload_dll_reply
-{
-    struct reply_header __header;
-};
-
-
-
 struct queue_apc_request
 {
     struct request_header __header;
@@ -5466,8 +5438,6 @@ enum request
     REQ_set_thread_info,
     REQ_suspend_thread,
     REQ_resume_thread,
-    REQ_load_dll,
-    REQ_unload_dll,
     REQ_queue_apc,
     REQ_get_apc_result,
     REQ_close_handle,
@@ -5752,8 +5722,6 @@ union generic_request
     struct set_thread_info_request set_thread_info_request;
     struct suspend_thread_request suspend_thread_request;
     struct resume_thread_request resume_thread_request;
-    struct load_dll_request load_dll_request;
-    struct unload_dll_request unload_dll_request;
     struct queue_apc_request queue_apc_request;
     struct get_apc_result_request get_apc_result_request;
     struct close_handle_request close_handle_request;
@@ -6036,8 +6004,6 @@ union generic_reply
     struct set_thread_info_reply set_thread_info_reply;
     struct suspend_thread_reply suspend_thread_reply;
     struct resume_thread_reply resume_thread_reply;
-    struct load_dll_reply load_dll_reply;
-    struct unload_dll_reply unload_dll_reply;
     struct queue_apc_reply queue_apc_reply;
     struct get_apc_result_reply get_apc_result_reply;
     struct close_handle_reply close_handle_reply;
@@ -6299,7 +6265,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 673
+#define SERVER_PROTOCOL_VERSION 674
 
 /* ### protocol_version end ### */
 

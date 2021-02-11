@@ -35,7 +35,6 @@
 #include "wine/exception.h"
 #include "wine/debug.h"
 #include "wine/list.h"
-#include "wine/server.h"
 #include "ntdll_misc.h"
 #include "ddk/wdm.h"
 
@@ -1917,17 +1916,6 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
 
     TRACE( "loaded %s %p %p\n", debugstr_us(nt_name), wm, *module );
 
-    /* send DLL load event */
-
-    SERVER_START_REQ( load_dll )
-    {
-        req->base = wine_server_client_ptr( *module );
-        req->name = wine_server_client_ptr( &wm->ldr.FullDllName.Buffer );
-        wine_server_add_data( req, wm->ldr.FullDllName.Buffer, wm->ldr.FullDllName.Length );
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
     if (image_info->u.ImageFlags & IMAGE_FLAGS_WineBuiltin)
     {
         if (TRACE_ON(relay)) RELAY_SetupDLL( *module );
@@ -3299,13 +3287,6 @@ static void free_modref( WINE_MODREF *wm )
         TRACE_(loaddll)("Unloaded module %s : %s\n",
                         debugstr_w(wm->ldr.FullDllName.Buffer),
                         (wm->ldr.Flags & LDR_WINE_INTERNAL) ? "builtin" : "native" );
-
-    SERVER_START_REQ( unload_dll )
-    {
-        req->base = wine_server_client_ptr( wm->ldr.DllBase );
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
 
     free_tls_slot( &wm->ldr );
     RtlReleaseActivationContext( wm->ldr.ActivationContext );
