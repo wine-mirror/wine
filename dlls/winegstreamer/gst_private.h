@@ -43,6 +43,13 @@
 #include "wine/heap.h"
 #include "wine/strmbase.h"
 
+typedef enum
+{
+    GST_AUTOPLUG_SELECT_TRY,
+    GST_AUTOPLUG_SELECT_EXPOSE,
+    GST_AUTOPLUG_SELECT_SKIP,
+} GstAutoplugSelectResult;
+
 static inline const char *debugstr_time(REFERENCE_TIME time)
 {
     ULONGLONG abstime = time >= 0 ? time : -time;
@@ -125,6 +132,87 @@ struct wg_format
         } audio;
     } u;
 };
+
+struct wg_parser
+{
+    BOOL (*init_gst)(struct wg_parser *parser);
+
+    struct wg_parser_stream **streams;
+    unsigned int stream_count;
+
+    GstElement *container;
+    GstBus *bus;
+    GstPad *my_src, *their_sink;
+
+    guint64 file_size, start_offset, next_offset, stop_offset;
+
+    pthread_t push_thread;
+
+    pthread_mutex_t mutex;
+
+    pthread_cond_t init_cond;
+    bool no_more_pads, has_duration, error;
+
+    pthread_cond_t read_cond, read_done_cond;
+    struct
+    {
+        GstBuffer *buffer;
+        uint64_t offset;
+        uint32_t size;
+        bool done;
+        GstFlowReturn ret;
+    } read_request;
+
+    bool flushing, sink_connected;
+};
+
+enum wg_parser_event_type
+{
+    WG_PARSER_EVENT_NONE = 0,
+    WG_PARSER_EVENT_BUFFER,
+    WG_PARSER_EVENT_EOS,
+    WG_PARSER_EVENT_SEGMENT,
+};
+
+struct wg_parser_event
+{
+    enum wg_parser_event_type type;
+    union
+    {
+        GstBuffer *buffer;
+        struct
+        {
+            uint64_t position, stop;
+            double rate;
+        } segment;
+    } u;
+};
+
+struct wg_parser_stream
+{
+    struct wg_parser *parser;
+
+    GstPad *their_src, *post_sink, *post_src, *my_sink;
+    GstElement *flip;
+    struct wg_format preferred_format, current_format;
+
+    pthread_cond_t event_cond, event_empty_cond;
+    struct wg_parser_event event;
+
+    bool flushing, eos, enabled, has_caps;
+
+    uint64_t duration;
+};
+
+struct unix_funcs
+{
+    struct wg_parser *(CDECL *wg_decodebin_parser_create)(void);
+    struct wg_parser *(CDECL *wg_avi_parser_create)(void);
+    struct wg_parser *(CDECL *wg_mpeg_audio_parser_create)(void);
+    struct wg_parser *(CDECL *wg_wave_parser_create)(void);
+};
+
+extern const struct unix_funcs *unix_funcs;
 
 extern LONG object_locks;
 

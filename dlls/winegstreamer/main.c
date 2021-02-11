@@ -40,12 +40,15 @@ static const WCHAR avi_splitterW[] =
 static const WCHAR mpeg_splitterW[] =
 {'M','P','E','G','-','I',' ','S','t','r','e','a','m',' ','S','p','l','i','t','t','e','r',0};
 
+const struct unix_funcs *unix_funcs = NULL;
+
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH)
     {
         winegstreamer_instance = instance;
         DisableThreadLibraryCalls(instance);
+        __wine_init_unix_lib(instance, reason, NULL, &unix_funcs);
     }
     return TRUE;
 }

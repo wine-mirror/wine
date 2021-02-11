@@ -23,12 +23,6 @@
 #include "windef.h"
 #include <pthread.h>
 
-typedef enum {
-  GST_AUTOPLUG_SELECT_TRY,
-  GST_AUTOPLUG_SELECT_EXPOSE,
-  GST_AUTOPLUG_SELECT_SKIP
-} GstAutoplugSelectResult;
-
 enum CB_TYPE {
     BYTESTREAM_WRAPPER_PULL,
     BYTESTREAM_QUERY,
