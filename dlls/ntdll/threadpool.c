@@ -553,222 +553,6 @@ static inline PLARGE_INTEGER get_nt_timeout( PLARGE_INTEGER pTime, ULONG timeout
     return pTime;
 }
 
-static void delete_wait_work_item(struct wait_work_item *wait_work_item)
-{
-    NtClose( wait_work_item->CancelEvent );
-    RtlFreeHeap( GetProcessHeap(), 0, wait_work_item );
-}
-
-static DWORD CALLBACK wait_thread_proc(LPVOID Arg)
-{
-    struct wait_work_item *wait_work_item = Arg;
-    NTSTATUS status;
-    BOOLEAN alertable = (wait_work_item->Flags & WT_EXECUTEINIOTHREAD) != 0;
-    HANDLE handles[2] = { wait_work_item->Object, wait_work_item->CancelEvent };
-    LARGE_INTEGER timeout;
-    HANDLE completion_event;
-
-    TRACE("\n");
-
-    while (TRUE)
-    {
-        status = NtWaitForMultipleObjects( 2, handles, TRUE, alertable,
-                                           get_nt_timeout( &timeout, wait_work_item->Milliseconds ) );
-        if (status == STATUS_WAIT_0 || status == STATUS_TIMEOUT)
-        {
-            BOOLEAN TimerOrWaitFired;
-
-            if (status == STATUS_WAIT_0)
-            {
-                TRACE( "object %p signaled, calling callback %p with context %p\n",
-                    wait_work_item->Object, wait_work_item->Callback,
-                    wait_work_item->Context );
-                TimerOrWaitFired = FALSE;
-            }
-            else
-            {
-                TRACE( "wait for object %p timed out, calling callback %p with context %p\n",
-                    wait_work_item->Object, wait_work_item->Callback,
-                    wait_work_item->Context );
-                TimerOrWaitFired = TRUE;
-            }
-            InterlockedExchange( &wait_work_item->CallbackInProgress, TRUE );
-            if (wait_work_item->CompletionEvent)
-            {
-                TRACE( "Work has been canceled.\n" );
-                break;
-            }
-            wait_work_item->Callback( wait_work_item->Context, TimerOrWaitFired );
-            InterlockedExchange( &wait_work_item->CallbackInProgress, FALSE );
-
-            if (wait_work_item->Flags & WT_EXECUTEONLYONCE)
-                break;
-        }
-        else if (status != STATUS_USER_APC)
-            break;
-    }
-
-
-    if (InterlockedIncrement( &wait_work_item->DeleteCount ) == 2 )
-    {
-        completion_event = wait_work_item->CompletionEvent;
-        delete_wait_work_item( wait_work_item );
-        if (completion_event && completion_event != INVALID_HANDLE_VALUE)
-            NtSetEvent( completion_event, NULL );
-    }
-
-    return 0;
-}
-
-/***********************************************************************
- *              RtlRegisterWait   (NTDLL.@)
- *
- * Registers a wait for a handle to become signaled.
- *
- * PARAMS
- *  NewWaitObject [I] Handle to the new wait object. Use RtlDeregisterWait() to free it.
- *  Object   [I] Object to wait to become signaled.
- *  Callback [I] Callback function to execute when the wait times out or the handle is signaled.
- *  Context  [I] Context to pass to the callback function when it is executed.
- *  Milliseconds [I] Number of milliseconds to wait before timing out.
- *  Flags    [I] Flags. See notes.
- *
- * RETURNS
- *  Success: STATUS_SUCCESS.
- *  Failure: Any NTSTATUS code.
- *
- * NOTES
- *  Flags can be one or more of the following:
- *|WT_EXECUTEDEFAULT - Executes the work item in a non-I/O worker thread.
- *|WT_EXECUTEINIOTHREAD - Executes the work item in an I/O worker thread.
- *|WT_EXECUTEINPERSISTENTTHREAD - Executes the work item in a thread that is persistent.
- *|WT_EXECUTELONGFUNCTION - Hints that the execution can take a long time.
- *|WT_TRANSFER_IMPERSONATION - Executes the function with the current access token.
- */
-NTSTATUS WINAPI RtlRegisterWait(PHANDLE NewWaitObject, HANDLE Object,
-                                RTL_WAITORTIMERCALLBACKFUNC Callback,
-                                PVOID Context, ULONG Milliseconds, ULONG Flags)
-{
-    struct wait_work_item *wait_work_item;
-    NTSTATUS status;
-
-    TRACE( "(%p, %p, %p, %p, %d, 0x%x)\n", NewWaitObject, Object, Callback, Context, Milliseconds, Flags );
-
-    wait_work_item = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*wait_work_item) );
-    if (!wait_work_item)
-        return STATUS_NO_MEMORY;
-
-    wait_work_item->Object = Object;
-    wait_work_item->Callback = Callback;
-    wait_work_item->Context = Context;
-    wait_work_item->Milliseconds = Milliseconds;
-    wait_work_item->Flags = Flags;
-    wait_work_item->CallbackInProgress = FALSE;
-    wait_work_item->DeleteCount = 0;
-    wait_work_item->CompletionEvent = NULL;
-
-    status = NtCreateEvent( &wait_work_item->CancelEvent, EVENT_ALL_ACCESS, NULL, NotificationEvent, FALSE );
-    if (status != STATUS_SUCCESS)
-    {
-        RtlFreeHeap( GetProcessHeap(), 0, wait_work_item );
-        return status;
-    }
-
-    Flags = Flags & (WT_EXECUTEINIOTHREAD | WT_EXECUTEINPERSISTENTTHREAD |
-                     WT_EXECUTELONGFUNCTION | WT_TRANSFER_IMPERSONATION);
-    status = RtlQueueWorkItem( wait_thread_proc, wait_work_item, Flags );
-    if (status != STATUS_SUCCESS)
-    {
-        delete_wait_work_item( wait_work_item );
-        return status;
-    }
-
-    *NewWaitObject = wait_work_item;
-    return status;
-}
-
-/***********************************************************************
- *              RtlDeregisterWaitEx   (NTDLL.@)
- *
- * Cancels a wait operation and frees the resources associated with calling
- * RtlRegisterWait().
- *
- * PARAMS
- *  WaitObject [I] Handle to the wait object to free.
- *
- * RETURNS
- *  Success: STATUS_SUCCESS.
- *  Failure: Any NTSTATUS code.
- */
-NTSTATUS WINAPI RtlDeregisterWaitEx(HANDLE WaitHandle, HANDLE CompletionEvent)
-{
-    struct wait_work_item *wait_work_item = WaitHandle;
-    NTSTATUS status;
-    HANDLE LocalEvent = NULL;
-    int CallbackInProgress;
-
-    TRACE( "(%p %p)\n", WaitHandle, CompletionEvent );
-
-    if (WaitHandle == NULL)
-        return STATUS_INVALID_HANDLE;
-
-    InterlockedExchangePointer( &wait_work_item->CompletionEvent, INVALID_HANDLE_VALUE );
-    CallbackInProgress = wait_work_item->CallbackInProgress;
-    TRACE( "callback in progress %u\n", CallbackInProgress );
-    if (CompletionEvent == INVALID_HANDLE_VALUE || !CallbackInProgress)
-    {
-        status = NtCreateEvent( &LocalEvent, EVENT_ALL_ACCESS, NULL, NotificationEvent, FALSE );
-        if (status != STATUS_SUCCESS)
-            return status;
-        InterlockedExchangePointer( &wait_work_item->CompletionEvent, LocalEvent );
-    }
-    else if (CompletionEvent != NULL)
-    {
-        InterlockedExchangePointer( &wait_work_item->CompletionEvent, CompletionEvent );
-    }
-
-    NtSetEvent( wait_work_item->CancelEvent, NULL );
-
-    if (InterlockedIncrement( &wait_work_item->DeleteCount ) == 2 )
-    {
-        status = STATUS_SUCCESS;
-        delete_wait_work_item( wait_work_item );
-    }
-    else if (LocalEvent)
-    {
-        TRACE( "Waiting for completion event\n" );
-        NtWaitForSingleObject( LocalEvent, FALSE, NULL );
-        status = STATUS_SUCCESS;
-    }
-    else
-    {
-        status = STATUS_PENDING;
-    }
-
-    if (LocalEvent)
-        NtClose( LocalEvent );
-
-    return status;
-}
-
-/***********************************************************************
- *              RtlDeregisterWait   (NTDLL.@)
- *
- * Cancels a wait operation and frees the resources associated with calling
- * RtlRegisterWait().
- *
- * PARAMS
- *  WaitObject [I] Handle to the wait object to free.
- *
- * RETURNS
- *  Success: STATUS_SUCCESS.
- *  Failure: Any NTSTATUS code.
- */
-NTSTATUS WINAPI RtlDeregisterWait(HANDLE WaitHandle)
-{
-    return RtlDeregisterWaitEx(WaitHandle, NULL);
-}
-
 
 /************************** Timer Queue Impl **************************/
 
@@ -3349,4 +3133,220 @@ NTSTATUS WINAPI TpQueryPoolStackInformation( TP_POOL *pool, TP_POOL_STACK_INFORM
     RtlLeaveCriticalSection( &this->cs );
 
     return STATUS_SUCCESS;
+}
+
+static void delete_wait_work_item(struct wait_work_item *wait_work_item)
+{
+    NtClose( wait_work_item->CancelEvent );
+    RtlFreeHeap( GetProcessHeap(), 0, wait_work_item );
+}
+
+static DWORD CALLBACK wait_thread_proc(LPVOID Arg)
+{
+    struct wait_work_item *wait_work_item = Arg;
+    NTSTATUS status;
+    BOOLEAN alertable = (wait_work_item->Flags & WT_EXECUTEINIOTHREAD) != 0;
+    HANDLE handles[2] = { wait_work_item->Object, wait_work_item->CancelEvent };
+    LARGE_INTEGER timeout;
+    HANDLE completion_event;
+
+    TRACE("\n");
+
+    while (TRUE)
+    {
+        status = NtWaitForMultipleObjects( 2, handles, TRUE, alertable,
+                                           get_nt_timeout( &timeout, wait_work_item->Milliseconds ) );
+        if (status == STATUS_WAIT_0 || status == STATUS_TIMEOUT)
+        {
+            BOOLEAN TimerOrWaitFired;
+
+            if (status == STATUS_WAIT_0)
+            {
+                TRACE( "object %p signaled, calling callback %p with context %p\n",
+                    wait_work_item->Object, wait_work_item->Callback,
+                    wait_work_item->Context );
+                TimerOrWaitFired = FALSE;
+            }
+            else
+            {
+                TRACE( "wait for object %p timed out, calling callback %p with context %p\n",
+                    wait_work_item->Object, wait_work_item->Callback,
+                    wait_work_item->Context );
+                TimerOrWaitFired = TRUE;
+            }
+            InterlockedExchange( &wait_work_item->CallbackInProgress, TRUE );
+            if (wait_work_item->CompletionEvent)
+            {
+                TRACE( "Work has been canceled.\n" );
+                break;
+            }
+            wait_work_item->Callback( wait_work_item->Context, TimerOrWaitFired );
+            InterlockedExchange( &wait_work_item->CallbackInProgress, FALSE );
+
+            if (wait_work_item->Flags & WT_EXECUTEONLYONCE)
+                break;
+        }
+        else if (status != STATUS_USER_APC)
+            break;
+    }
+
+
+    if (InterlockedIncrement( &wait_work_item->DeleteCount ) == 2 )
+    {
+        completion_event = wait_work_item->CompletionEvent;
+        delete_wait_work_item( wait_work_item );
+        if (completion_event && completion_event != INVALID_HANDLE_VALUE)
+            NtSetEvent( completion_event, NULL );
+    }
+
+    return 0;
+}
+
+/***********************************************************************
+ *              RtlRegisterWait   (NTDLL.@)
+ *
+ * Registers a wait for a handle to become signaled.
+ *
+ * PARAMS
+ *  NewWaitObject [I] Handle to the new wait object. Use RtlDeregisterWait() to free it.
+ *  Object   [I] Object to wait to become signaled.
+ *  Callback [I] Callback function to execute when the wait times out or the handle is signaled.
+ *  Context  [I] Context to pass to the callback function when it is executed.
+ *  Milliseconds [I] Number of milliseconds to wait before timing out.
+ *  Flags    [I] Flags. See notes.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS.
+ *  Failure: Any NTSTATUS code.
+ *
+ * NOTES
+ *  Flags can be one or more of the following:
+ *|WT_EXECUTEDEFAULT - Executes the work item in a non-I/O worker thread.
+ *|WT_EXECUTEINIOTHREAD - Executes the work item in an I/O worker thread.
+ *|WT_EXECUTEINPERSISTENTTHREAD - Executes the work item in a thread that is persistent.
+ *|WT_EXECUTELONGFUNCTION - Hints that the execution can take a long time.
+ *|WT_TRANSFER_IMPERSONATION - Executes the function with the current access token.
+ */
+NTSTATUS WINAPI RtlRegisterWait(PHANDLE NewWaitObject, HANDLE Object,
+                                RTL_WAITORTIMERCALLBACKFUNC Callback,
+                                PVOID Context, ULONG Milliseconds, ULONG Flags)
+{
+    struct wait_work_item *wait_work_item;
+    NTSTATUS status;
+
+    TRACE( "(%p, %p, %p, %p, %d, 0x%x)\n", NewWaitObject, Object, Callback, Context, Milliseconds, Flags );
+
+    wait_work_item = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*wait_work_item) );
+    if (!wait_work_item)
+        return STATUS_NO_MEMORY;
+
+    wait_work_item->Object = Object;
+    wait_work_item->Callback = Callback;
+    wait_work_item->Context = Context;
+    wait_work_item->Milliseconds = Milliseconds;
+    wait_work_item->Flags = Flags;
+    wait_work_item->CallbackInProgress = FALSE;
+    wait_work_item->DeleteCount = 0;
+    wait_work_item->CompletionEvent = NULL;
+
+    status = NtCreateEvent( &wait_work_item->CancelEvent, EVENT_ALL_ACCESS, NULL, NotificationEvent, FALSE );
+    if (status != STATUS_SUCCESS)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, wait_work_item );
+        return status;
+    }
+
+    Flags = Flags & (WT_EXECUTEINIOTHREAD | WT_EXECUTEINPERSISTENTTHREAD |
+                     WT_EXECUTELONGFUNCTION | WT_TRANSFER_IMPERSONATION);
+    status = RtlQueueWorkItem( wait_thread_proc, wait_work_item, Flags );
+    if (status != STATUS_SUCCESS)
+    {
+        delete_wait_work_item( wait_work_item );
+        return status;
+    }
+
+    *NewWaitObject = wait_work_item;
+    return status;
+}
+
+/***********************************************************************
+ *              RtlDeregisterWaitEx   (NTDLL.@)
+ *
+ * Cancels a wait operation and frees the resources associated with calling
+ * RtlRegisterWait().
+ *
+ * PARAMS
+ *  WaitObject [I] Handle to the wait object to free.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS.
+ *  Failure: Any NTSTATUS code.
+ */
+NTSTATUS WINAPI RtlDeregisterWaitEx(HANDLE WaitHandle, HANDLE CompletionEvent)
+{
+    struct wait_work_item *wait_work_item = WaitHandle;
+    NTSTATUS status;
+    HANDLE LocalEvent = NULL;
+    int CallbackInProgress;
+
+    TRACE( "(%p %p)\n", WaitHandle, CompletionEvent );
+
+    if (WaitHandle == NULL)
+        return STATUS_INVALID_HANDLE;
+
+    InterlockedExchangePointer( &wait_work_item->CompletionEvent, INVALID_HANDLE_VALUE );
+    CallbackInProgress = wait_work_item->CallbackInProgress;
+    TRACE( "callback in progress %u\n", CallbackInProgress );
+    if (CompletionEvent == INVALID_HANDLE_VALUE || !CallbackInProgress)
+    {
+        status = NtCreateEvent( &LocalEvent, EVENT_ALL_ACCESS, NULL, NotificationEvent, FALSE );
+        if (status != STATUS_SUCCESS)
+            return status;
+        InterlockedExchangePointer( &wait_work_item->CompletionEvent, LocalEvent );
+    }
+    else if (CompletionEvent != NULL)
+    {
+        InterlockedExchangePointer( &wait_work_item->CompletionEvent, CompletionEvent );
+    }
+
+    NtSetEvent( wait_work_item->CancelEvent, NULL );
+
+    if (InterlockedIncrement( &wait_work_item->DeleteCount ) == 2 )
+    {
+        status = STATUS_SUCCESS;
+        delete_wait_work_item( wait_work_item );
+    }
+    else if (LocalEvent)
+    {
+        TRACE( "Waiting for completion event\n" );
+        NtWaitForSingleObject( LocalEvent, FALSE, NULL );
+        status = STATUS_SUCCESS;
+    }
+    else
+    {
+        status = STATUS_PENDING;
+    }
+
+    if (LocalEvent)
+        NtClose( LocalEvent );
+
+    return status;
+}
+
+/***********************************************************************
+ *              RtlDeregisterWait   (NTDLL.@)
+ *
+ * Cancels a wait operation and frees the resources associated with calling
+ * RtlRegisterWait().
+ *
+ * PARAMS
+ *  WaitObject [I] Handle to the wait object to free.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS.
+ *  Failure: Any NTSTATUS code.
+ */
+NTSTATUS WINAPI RtlDeregisterWait(HANDLE WaitHandle)
+{
+    return RtlDeregisterWaitEx(WaitHandle, NULL);
 }
