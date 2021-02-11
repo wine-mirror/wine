@@ -621,6 +621,7 @@ static void get_osx_device_elements(JoystickImpl *device, uint64_t axis_map[8])
     IOHIDElementRef device_main_element;
     CFMutableArrayRef elements;
     DWORD           sliders = 0;
+    BOOL            use_accel_brake_for_rx_ry = TRUE;
 
     TRACE("device %p device->id %d\n", device, device->id);
 
@@ -643,6 +644,23 @@ static void get_osx_device_elements(JoystickImpl *device, uint64_t axis_map[8])
         CFMutableArrayRef axes = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
         CFMutableArrayRef buttons = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
         CFMutableArrayRef povs = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
+
+        /* Scan the elements to see if Rx/Ry is present, if not then Accelerator/Brake can be mapped to it.
+         * (Xbox One controller triggers use accelerator/brake)
+         */
+        for ( idx = 0; idx < cnt; idx++ )
+        {
+            IOHIDElementRef element = ( IOHIDElementRef ) CFArrayGetValueAtIndex( elements, idx );
+            IOHIDElementType type = IOHIDElementGetType( element );
+            uint32_t usage_page = IOHIDElementGetUsagePage( element );
+            uint32_t usage = IOHIDElementGetUsage( element );
+
+            if (type == kIOHIDElementTypeInput_Misc && usage_page == kHIDPage_GenericDesktop &&
+                (usage == kHIDUsage_GD_Rx || usage == kHIDUsage_GD_Ry))
+            {
+                use_accel_brake_for_rx_ry = FALSE;
+            }
+        }
 
         for ( idx = 0; idx < cnt; idx++ )
         {
@@ -701,7 +719,17 @@ static void get_osx_device_elements(JoystickImpl *device, uint64_t axis_map[8])
                         case MAKEUINT64(kHIDPage_GenericDesktop, kHIDUsage_GD_Rx):
                         case MAKEUINT64(kHIDPage_GenericDesktop, kHIDUsage_GD_Ry):
                         case MAKEUINT64(kHIDPage_GenericDesktop, kHIDUsage_GD_Rz):
+                        case MAKEUINT64(kHIDPage_Simulation, kHIDUsage_Sim_Accelerator):
+                        case MAKEUINT64(kHIDPage_Simulation, kHIDUsage_Sim_Brake):
                         {
+                            if (usage == kHIDUsage_Sim_Accelerator || usage == kHIDUsage_Sim_Brake)
+                            {
+                                if (use_accel_brake_for_rx_ry)
+                                    TRACE("Using Sim_Accelerator/Brake for GD_Rx/Ry\n");
+                                else
+                                    break;
+                            }
+
                             TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_* (%d)\n", usage);
                             axis_map[CFArrayGetCount(axes)]=MAKEUINT64(usage_page, usage);
                             CFArrayAppendValue(axes, element);
@@ -864,6 +892,8 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
                         case MAKEUINT64(kHIDPage_GenericDesktop, kHIDUsage_GD_Ry):
                         case MAKEUINT64(kHIDPage_GenericDesktop, kHIDUsage_GD_Rz):
                         case MAKEUINT64(kHIDPage_GenericDesktop, kHIDUsage_GD_Slider):
+                        case MAKEUINT64(kHIDPage_Simulation, kHIDUsage_Sim_Accelerator):
+                        case MAKEUINT64(kHIDPage_Simulation, kHIDUsage_Sim_Brake):
                         {
                             int wine_obj = -1;
 
@@ -895,12 +925,14 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
                                 device->generic.js.lZ = newVal;
                                 break;
                             case MAKEUINT64(kHIDPage_GenericDesktop, kHIDUsage_GD_Rx):
+                            case MAKEUINT64(kHIDPage_Simulation, kHIDUsage_Sim_Accelerator):
                                 TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Rx\n");
                                 wine_obj = 3;
                                 oldVal = device->generic.js.lRx;
                                 device->generic.js.lRx = newVal;
                                 break;
                             case MAKEUINT64(kHIDPage_GenericDesktop, kHIDUsage_GD_Ry):
+                            case MAKEUINT64(kHIDPage_Simulation, kHIDUsage_Sim_Brake):
                                 TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Ry\n");
                                 wine_obj = 4;
                                 oldVal = device->generic.js.lRy;
@@ -1200,10 +1232,12 @@ static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
                 has_ff = (newDevice->ff != 0) && osx_axis_has_ff(&ffcaps, FFJOFS_Z);
                 break;
             case MAKEUINT64(kHIDPage_GenericDesktop, kHIDUsage_GD_Rx):
+            case MAKEUINT64(kHIDPage_Simulation, kHIDUsage_Sim_Accelerator):
                 wine_obj = 3;
                 has_ff = (newDevice->ff != 0) && osx_axis_has_ff(&ffcaps, FFJOFS_RX);
                 break;
             case MAKEUINT64(kHIDPage_GenericDesktop, kHIDUsage_GD_Ry):
+            case MAKEUINT64(kHIDPage_Simulation, kHIDUsage_Sim_Brake):
                 wine_obj = 4;
                 has_ff = (newDevice->ff != 0) && osx_axis_has_ff(&ffcaps, FFJOFS_RY);
                 break;
