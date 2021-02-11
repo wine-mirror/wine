@@ -147,9 +147,9 @@ static void arabic_setup_masks(struct scriptshaping_context *context,
     unsigned int i, prev = ~0u, state = 0;
     unsigned int masks[NUM_FEATURES];
 
-    for (i = 0; i < context->length; ++i)
+    for (i = 0; i < context->glyph_count; ++i)
     {
-        unsigned short this_type = arabic_get_joining_type(context->text[i]);
+        unsigned short this_type = arabic_get_joining_type(context->glyph_infos[i].codepoint);
         const struct arabic_state_table_entry *entry;
 
         if (this_type == JOINING_TYPE_T)
@@ -173,7 +173,7 @@ static void arabic_setup_masks(struct scriptshaping_context *context,
         masks[i] = shape_get_feature_1_mask(features, arabic_features[i]);
 
     /* Unaffected glyphs get action NONE with zero mask. */
-    for (i = 0; i < context->length; ++i)
+    for (i = 0; i < context->glyph_count; ++i)
         context->glyph_infos[i].mask |= masks[arabic_get_shaping_action(context, i)];
 }
 

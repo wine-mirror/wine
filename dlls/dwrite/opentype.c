@@ -5949,6 +5949,7 @@ static void opentype_get_nominal_glyphs(struct scriptshaping_context *context, c
         if (*context->u.subst.digits && codepoint >= '0' && codepoint <= '9')
             codepoint = context->u.subst.digits[codepoint - '0'];
 
+        context->glyph_infos[g].codepoint = codepoint;
         context->u.buffer.glyphs[g] = font->get_glyph(context->cache->context, codepoint);
         context->u.buffer.glyph_props[g].justification = SCRIPT_JUSTIFY_CHARACTER;
         opentype_set_subst_glyph_props(context, g);

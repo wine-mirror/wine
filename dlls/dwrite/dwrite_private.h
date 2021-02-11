@@ -521,6 +521,7 @@ struct shaping_glyph_info
     int attach_chain;
     /* Only relevant for isClusterStart glyphs. Indicates text position for this cluster. */
     unsigned int start_text_idx;
+    unsigned int codepoint;
 };
 
 struct shaping_glyph_properties
