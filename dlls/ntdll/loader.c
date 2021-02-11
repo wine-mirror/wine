@@ -2641,6 +2641,7 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WC
     HANDLE mapping = 0;
     SECTION_IMAGE_INFORMATION image_info;
     NTSTATUS nts;
+    void *prev;
 
     TRACE( "looking for %s in %s\n", debugstr_w(libname), debugstr_w(load_path) );
 
@@ -2661,6 +2662,9 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WC
 
     main_exe = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
     loadorder = get_load_order( main_exe ? main_exe->ldr.BaseDllName.Buffer : NULL, &nt_name );
+
+    prev = NtCurrentTeb()->Tib.ArbitraryUserPointer;
+    NtCurrentTeb()->Tib.ArbitraryUserPointer = nt_name.Buffer + 4;
 
     switch (nts)
     {
@@ -2748,6 +2752,7 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WC
         }
         break;
     }
+    NtCurrentTeb()->Tib.ArbitraryUserPointer = prev;
 
 done:
     if (nts == STATUS_SUCCESS)

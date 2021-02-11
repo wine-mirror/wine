@@ -131,6 +131,13 @@ static const struct object_ops debug_obj_ops =
     debug_obj_destroy              /* destroy */
 };
 
+/* get a pointer to TEB->ArbitraryUserPointer in the client address space */
+static client_ptr_t get_teb_user_ptr( struct thread *thread )
+{
+    unsigned int ptr_size = (CPU_FLAG( thread->process->cpu ) & CPU_64BIT_MASK) ? 8 : 4;
+    return thread->teb + 5 * ptr_size;
+}
+
 
 /* routines to build an event according to its type */
 
@@ -181,7 +188,7 @@ static void fill_load_dll_event( struct debug_event *event, const void *arg )
 
     event->data.load_dll.dbg_offset = image_info->dbg_offset;
     event->data.load_dll.dbg_size   = image_info->dbg_size;
-    event->data.load_dll.name       = dll->name;
+    event->data.load_dll.name       = get_teb_user_ptr( event->sender );
     event->file = get_view_file( view, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE );
 }
 
