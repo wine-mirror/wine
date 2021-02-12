@@ -754,7 +754,9 @@ static void test_ExitCode(void)
             reg_save_value crash_dlg_value;
             save_value(hkeyWinedbg, "ShowCrashDialog", &crash_dlg_value);
             RegSetValueExA(hkeyWinedbg, "ShowCrashDialog", 0, REG_DWORD, (BYTE *)&zero, sizeof(DWORD));
+            ignore_exceptions(TRUE);
             crash_and_winedbg(hkey, test_exe);
+            ignore_exceptions(FALSE);
             restore_value(hkeyWinedbg, &crash_dlg_value);
             RegCloseKey(hkeyWinedbg);
         }
