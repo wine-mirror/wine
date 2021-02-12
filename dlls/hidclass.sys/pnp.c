@@ -205,7 +205,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     return STATUS_SUCCESS;
 }
 
-NTSTATUS PNP_RemoveDevice(minidriver *minidriver, DEVICE_OBJECT *device, IRP *irp)
+static NTSTATUS remove_device(minidriver *minidriver, DEVICE_OBJECT *device, IRP *irp)
 {
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     hid_device *hiddev;
@@ -306,7 +306,7 @@ NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
         }
         case IRP_MN_REMOVE_DEVICE:
         {
-            return PNP_RemoveDevice(minidriver, device, irp);
+            return remove_device(minidriver, device, irp);
         }
         default:
         {
