@@ -26,7 +26,6 @@
 #include <windows.h>
 #include <winternl.h>
 #include <winreg.h>
-#include <psapi.h>
 #include "wine/test.h"
 #include "wine/heap.h"
 #include "wine/rbtree.h"
@@ -51,6 +50,7 @@ static NTSTATUS  (WINAPI *pNtSetInformationDebugObject)(HANDLE,DEBUGOBJECTINFOCL
 static NTSTATUS  (WINAPI *pDbgUiConnectToDbg)(void);
 static HANDLE    (WINAPI *pDbgUiGetThreadDebugObject)(void);
 static void      (WINAPI *pDbgUiSetThreadDebugObject)(HANDLE);
+static DWORD     (WINAPI *pGetMappedFileNameW)(HANDLE,void*,WCHAR*,DWORD);
 
 static LONG child_failures;
 
@@ -909,7 +909,7 @@ static void check_dll_event( HANDLE process, DEBUG_EVENT *ev )
     case CREATE_PROCESS_DEBUG_EVENT:
         break;
     case LOAD_DLL_DEBUG_EVENT:
-        if (!GetMappedFileNameW( process, ev->u.LoadDll.lpBaseOfDll, module, MAX_PATH )) module[0] = 0;
+        if (!pGetMappedFileNameW( process, ev->u.LoadDll.lpBaseOfDll, module, MAX_PATH )) module[0] = 0;
         if ((p = wcsrchr( module, '\\' ))) p++;
         else p = module;
         if (!wcsicmp( p, L"ole32.dll" )) ole32_mod = ev->u.LoadDll.lpBaseOfDll;
@@ -1954,7 +1954,9 @@ START_TEST(debugger)
 
     hdll=GetModuleHandleA("kernel32.dll");
     pCheckRemoteDebuggerPresent=(void*)GetProcAddress(hdll, "CheckRemoteDebuggerPresent");
-
+    pGetMappedFileNameW = (void*)GetProcAddress(hdll, "GetMappedFileNameW");
+    if (!pGetMappedFileNameW) pGetMappedFileNameW = (void*)GetProcAddress(LoadLibraryA("psapi.dll"),
+                                                                          "GetMappedFileNameW");
     ntdll = GetModuleHandleA("ntdll.dll");
     pDbgBreakPoint = (void*)GetProcAddress(ntdll, "DbgBreakPoint");
     pNtSuspendProcess = (void*)GetProcAddress(ntdll, "NtSuspendProcess");
