@@ -81,8 +81,6 @@ NTSTATUS WINAPI HidRegisterMinidriver(HID_MINIDRIVER_REGISTRATION *registration)
     driver->minidriver = *registration;
     list_add_tail(&minidriver_list, &driver->entry);
 
-    list_init(&driver->device_list);
-
     return STATUS_SUCCESS;
 }
 

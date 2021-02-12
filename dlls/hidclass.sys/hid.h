@@ -72,12 +72,6 @@ void RingBuffer_Destroy(struct ReportRingBuffer *buffer) DECLSPEC_HIDDEN;
 struct ReportRingBuffer* RingBuffer_Create(UINT buffer_size) DECLSPEC_HIDDEN;
 NTSTATUS RingBuffer_SetSize(struct ReportRingBuffer *buffer, UINT size) DECLSPEC_HIDDEN;
 
-typedef struct _hiddevice
-{
-    struct list entry;
-    DEVICE_OBJECT *device;
-} hid_device;
-
 typedef struct _minidriver
 {
     struct list entry;
@@ -88,7 +82,6 @@ typedef struct _minidriver
 
     PDRIVER_ADD_DEVICE AddDevice;
     PDRIVER_DISPATCH PNPDispatch;
-    struct list device_list;
 } minidriver;
 
 NTSTATUS call_minidriver(ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG in_size, void *out_buff, ULONG out_size) DECLSPEC_HIDDEN;

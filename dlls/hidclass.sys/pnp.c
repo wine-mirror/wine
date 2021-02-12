@@ -72,7 +72,6 @@ static NTSTATUS get_device_id(DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCH
 NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
 {
     WCHAR device_id[MAX_DEVICE_ID_LEN], instance_id[MAX_DEVICE_ID_LEN];
-    hid_device *hiddev;
     DEVICE_OBJECT *device = NULL;
     NTSTATUS status;
     minidriver *minidriver;
@@ -97,18 +96,12 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     TRACE("Adding device to PDO %p, id %s\\%s.\n", PDO, debugstr_w(device_id), debugstr_w(instance_id));
     minidriver = find_minidriver(driver);
 
-    hiddev = HeapAlloc(GetProcessHeap(), 0, sizeof(*hiddev));
-    if (!hiddev)
-        return STATUS_NO_MEMORY;
-
-    status = HID_CreateDevice(PDO, &minidriver->minidriver, &hiddev->device);
+    status = HID_CreateDevice(PDO, &minidriver->minidriver, &device);
     if (status != STATUS_SUCCESS)
     {
         ERR("Failed to create HID object (%x)\n",status);
-        HeapFree(GetProcessHeap(), 0, hiddev);
         return status;
     }
-    device = hiddev->device;
 
     ext = device->DeviceExtension;
     InitializeListHead(&ext->irp_queue);
@@ -120,7 +113,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     {
         ERR("Minidriver AddDevice failed (%x)\n",status);
         HID_DeleteDevice(device);
-        HeapFree(GetProcessHeap(), 0, hiddev);
         return status;
     }
 
@@ -131,7 +123,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     {
         ERR("Minidriver failed to get Attributes(%x)\n",status);
         HID_DeleteDevice(device);
-        HeapFree(GetProcessHeap(), 0, hiddev);
         return status;
     }
 
@@ -146,7 +137,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     {
         ERR("Cannot get Device Descriptor(%x)\n",status);
         HID_DeleteDevice(device);
-        HeapFree(GetProcessHeap(), 0, hiddev);
         return status;
     }
     for (i = 0; i < descriptor.bNumDescriptors; i++)
@@ -157,7 +147,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     {
         ERR("No Report Descriptor found in reply\n");
         HID_DeleteDevice(device);
-        HeapFree(GetProcessHeap(), 0, hiddev);
         return status;
     }
 
@@ -169,7 +158,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
         ERR("Cannot get Report Descriptor(%x)\n",status);
         HID_DeleteDevice(device);
         HeapFree(GetProcessHeap(), 0, reportDescriptor);
-        HeapFree(GetProcessHeap(), 0, hiddev);
         return status;
     }
 
@@ -180,11 +168,8 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     {
         ERR("Cannot parse Report Descriptor\n");
         HID_DeleteDevice(device);
-        HeapFree(GetProcessHeap(), 0, hiddev);
         return STATUS_NOT_SUPPORTED;
     }
-
-    list_add_tail(&(minidriver->device_list), &hiddev->entry);
 
     ext->information.DescriptorSize = ext->preparseData->dwSize;
 
@@ -208,7 +193,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
 static NTSTATUS remove_device(minidriver *minidriver, DEVICE_OBJECT *device, IRP *irp)
 {
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
-    hid_device *hiddev;
     NTSTATUS rc = STATUS_NOT_SUPPORTED;
 
     rc = IoSetDeviceInterfaceState(&ext->link_name, FALSE);
@@ -224,15 +208,6 @@ static NTSTATUS remove_device(minidriver *minidriver, DEVICE_OBJECT *device, IRP
     if (irp)
         rc = minidriver->PNPDispatch(device, irp);
     HID_DeleteDevice(device);
-    LIST_FOR_EACH_ENTRY(hiddev,  &minidriver->device_list, hid_device, entry)
-    {
-        if (hiddev->device == device)
-        {
-            list_remove(&hiddev->entry);
-            HeapFree(GetProcessHeap(), 0, hiddev);
-            break;
-        }
-    }
     return rc;
 }
 
