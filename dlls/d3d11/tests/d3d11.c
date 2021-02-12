@@ -19950,6 +19950,9 @@ static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
             ok(!(format_support[format] & D3D11_FORMAT_SUPPORT_SHADER_SAMPLE_COMPARISON),
                     "Unexpected SHADER_SAMPLE_COMPARISON for format %#x, feature level %#x.\n",
                     format, feature_level);
+            ok(!(format_support[format] & D3D11_FORMAT_SUPPORT_BUFFER),
+                    "Unexpected BUFFER for format %#x, feature level %#x.\n",
+                    format, feature_level);
         }
         if (feature_level < D3D_FEATURE_LEVEL_10_1)
         {
