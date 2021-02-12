@@ -20947,6 +20947,7 @@ wine_fn_config_makefile dlls/vcomp enable_vcomp
 wine_fn_config_makefile dlls/vcomp/tests enable_tests
 wine_fn_config_makefile dlls/vcomp100 enable_vcomp100
 wine_fn_config_makefile dlls/vcomp110 enable_vcomp110
+wine_fn_config_makefile dlls/vcomp110/tests enable_tests
 wine_fn_config_makefile dlls/vcomp120 enable_vcomp120
 wine_fn_config_makefile dlls/vcomp140 enable_vcomp140
 wine_fn_config_makefile dlls/vcomp90 enable_vcomp90
