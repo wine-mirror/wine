@@ -370,7 +370,7 @@ void bus_remove_hid_device(DEVICE_OBJECT *device)
     while ((entry = RemoveHeadList(&ext->irp_queue)) != &ext->irp_queue)
     {
         irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
-        irp->IoStatus.u.Status = STATUS_CANCELLED;
+        irp->IoStatus.u.Status = STATUS_DELETE_PENDING;
         irp->IoStatus.Information = 0;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
     }
