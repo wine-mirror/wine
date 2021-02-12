@@ -1371,6 +1371,8 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, DWORD dwOptions, MSIPACKAGE **pPackage)
         r = get_local_package( db, localfile );
         if (r != ERROR_SUCCESS || GetFileAttributesW( localfile ) == INVALID_FILE_ATTRIBUTES)
         {
+            DWORD localfile_attr;
+
             r = msi_create_empty_local_file( localfile, L".msi" );
             if (r != ERROR_SUCCESS)
             {
@@ -1387,6 +1389,11 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, DWORD dwOptions, MSIPACKAGE **pPackage)
                 return r;
             }
             delete_on_close = TRUE;
+
+            /* Remove read-only bit, we are opening it with write access in MSI_OpenDatabaseW below. */
+            localfile_attr = GetFileAttributesW( localfile );
+            if (localfile_attr & FILE_ATTRIBUTE_READONLY)
+                SetFileAttributesW( localfile, localfile_attr & ~FILE_ATTRIBUTE_READONLY);
         }
         else if (dwOptions & WINE_OPENPACKAGEFLAGS_RECACHE)
         {
