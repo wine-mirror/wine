@@ -1,4 +1,4 @@
-@ stub C2VectParallel
+@ varargs C2VectParallel(long long long long long long ptr long)
 @ cdecl _vcomp_atomic_add_i1(ptr long)
 @ cdecl _vcomp_atomic_add_i2(ptr long)
 @ cdecl _vcomp_atomic_add_i4(ptr long)
