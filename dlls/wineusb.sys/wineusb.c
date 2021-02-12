@@ -391,7 +391,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             while ((entry = RemoveHeadList(&device->irp_list)) != &device->irp_list)
             {
                 irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
-                irp->IoStatus.Status = STATUS_CANCELLED;
+                irp->IoStatus.Status = STATUS_DELETE_PENDING;
                 irp->IoStatus.Information = 0;
                 IoCompleteRequest(irp, IO_NO_INCREMENT);
             }
