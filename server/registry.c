@@ -2244,7 +2244,9 @@ DECL_HANDLER(load_registry)
 
 DECL_HANDLER(unload_registry)
 {
-    struct key *key;
+    struct key *key, *parent;
+    struct unicode_str name;
+    unsigned int access = 0;
 
     if (!thread_single_check_privilege( current, &SeRestorePrivilege ))
     {
@@ -2252,10 +2254,17 @@ DECL_HANDLER(unload_registry)
         return;
     }
 
-    if ((key = get_hkey_obj( req->hkey, 0 )))
+    if (!is_wow64_thread( current )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
+
+    if ((parent = get_parent_hkey_obj( req->parent )))
     {
-        delete_key( key, 1 );     /* FIXME */
-        release_object( key );
+        get_req_path( &name, !req->parent );
+        if ((key = open_key( parent, &name, access, req->attributes )))
+        {
+            delete_key( key, 1 );     /* FIXME */
+            release_object( key );
+        }
+        release_object( parent );
     }
 }
 

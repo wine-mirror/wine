@@ -1812,7 +1812,9 @@ struct process_info
 
 /* UnLoad a registry branch from a file */
 @REQ(unload_registry)
-    obj_handle_t hkey;         /* root key to unload to */
+    obj_handle_t parent;       /* handle to the parent key */
+    unsigned int attributes;   /* object attributes */
+    VARARG(name,unicode_str);  /* key name */
 @END
 
 

@@ -2417,7 +2417,9 @@ static void dump_load_registry_request( const struct load_registry_request *req 
 
 static void dump_unload_registry_request( const struct unload_registry_request *req )
 {
-    fprintf( stderr, " hkey=%04x", req->hkey );
+    fprintf( stderr, " parent=%04x", req->parent );
+    fprintf( stderr, ", attributes=%08x", req->attributes );
+    dump_varargs_unicode_str( ", name=", cur_size );
 }
 
 static void dump_save_registry_request( const struct save_registry_request *req )

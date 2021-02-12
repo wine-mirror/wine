@@ -2349,24 +2349,16 @@ LSTATUS WINAPI RegRestoreKeyA( HKEY hkey, LPCSTR lpFile, DWORD dwFlags )
  */
 LSTATUS WINAPI RegUnLoadKeyW( HKEY hkey, LPCWSTR lpSubKey )
 {
-    DWORD ret;
-    HKEY shkey;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING subkey;
 
     TRACE("(%p,%s)\n",hkey, debugstr_w(lpSubKey));
 
-    ret = RegOpenKeyExW( hkey, lpSubKey, 0, MAXIMUM_ALLOWED, &shkey );
-    if( ret )
-        return ERROR_INVALID_PARAMETER;
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
     RtlInitUnicodeString(&subkey, lpSubKey);
-    InitializeObjectAttributes(&attr, &subkey, OBJ_CASE_INSENSITIVE, shkey, NULL);
-    ret = RtlNtStatusToDosError(NtUnloadKey(&attr));
-
-    RegCloseKey(shkey);
-
-    return ret;
+    InitializeObjectAttributes(&attr, &subkey, OBJ_CASE_INSENSITIVE, hkey, NULL);
+    return RtlNtStatusToDosError( NtUnloadKey(&attr) );
 }
 
 

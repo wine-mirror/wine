@@ -2356,7 +2356,10 @@ struct load_registry_reply
 struct unload_registry_request
 {
     struct request_header __header;
-    obj_handle_t hkey;
+    obj_handle_t parent;
+    unsigned int attributes;
+    /* VARARG(name,unicode_str); */
+    char __pad_20[4];
 };
 struct unload_registry_reply
 {
@@ -6223,7 +6226,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 681
+#define SERVER_PROTOCOL_VERSION 682
 
 /* ### protocol_version end ### */
 

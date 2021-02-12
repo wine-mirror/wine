@@ -677,9 +677,15 @@ NTSTATUS WINAPI NtUnloadKey( OBJECT_ATTRIBUTES *attr )
 
     TRACE( "(%p)\n", attr );
 
+    if (!attr || !attr->ObjectName) return STATUS_ACCESS_VIOLATION;
+    if (attr->Length != sizeof(*attr)) return STATUS_INVALID_PARAMETER;
+    if (attr->ObjectName->Length & 1) return STATUS_OBJECT_NAME_INVALID;
+
     SERVER_START_REQ( unload_registry )
     {
-        req->hkey = wine_server_obj_handle( attr->RootDirectory );
+        req->parent     = wine_server_obj_handle( attr->RootDirectory );
+        req->attributes = attr->Attributes;
+        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
         ret = wine_server_call(req);
     }
     SERVER_END_REQ;
