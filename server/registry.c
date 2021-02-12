@@ -2261,7 +2261,10 @@ DECL_HANDLER(unload_registry)
         get_req_path( &name, !req->parent );
         if ((key = open_key( parent, &name, access, req->attributes )))
         {
-            delete_key( key, 1 );     /* FIXME */
+            if (key->obj.handle_count)
+                set_error( STATUS_CANNOT_DELETE );
+            else
+                delete_key( key, 1 );     /* FIXME */
             release_object( key );
         }
         release_object( parent );
