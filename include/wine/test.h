@@ -507,14 +507,14 @@ void winetest_wait_child_process( HANDLE process )
         {
             DWORD pid = GetProcessId( process );
             printf( "%s:%d:%s unhandled exception %08x in child process %04x\n",
-                    current_test->name, data->current_line, winetest_elapsed(),
+                    data->current_file, data->current_line, winetest_elapsed(),
                     exit_code, pid );
             InterlockedIncrement( &failures );
         }
         else if (exit_code)
         {
             printf( "%s:%d:%s %u failures in child process\n",
-                    current_test->name, data->current_line, winetest_elapsed(),
+                    data->current_file, data->current_line, winetest_elapsed(),
                     exit_code );
             while (exit_code-- > 0)
                 InterlockedIncrement(&failures);
