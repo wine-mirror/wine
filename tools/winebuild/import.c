@@ -1838,20 +1838,19 @@ static void assemble_files( const char *prefix )
 }
 
 /* build a library from the current asm files and any additional object files in argv */
-static void build_library( const char *output_name, char **argv, const char *importlib )
+static void build_library( const char *output_name, char **argv, int create )
 {
-    int create = !importlib || importlib != output_name;
     struct strarray args;
 
-    if (target_platform != PLATFORM_WINDOWS)
+    if (!create || target_platform != PLATFORM_WINDOWS)
     {
         args = find_tool( "ar", NULL );
-        strarray_add( &args, create ? "rc" : "r", output_name, importlib, NULL );
+        strarray_add( &args, create ? "rc" : "r", output_name, NULL );
     }
     else
     {
         args = find_link_tool();
-        strarray_add( &args, "/lib", strmake( "-out:%s", output_name ), importlib, NULL );
+        strarray_add( &args, "/lib", strmake( "-out:%s", output_name ), NULL );
     }
     strarray_addall( &args, as_files );
     strarray_addv( &args, argv );
@@ -1974,19 +1973,12 @@ void output_static_lib( DLLSPEC *spec, char **argv )
 {
     if (is_pe())
     {
-        const char *importlib = NULL;
-        if (spec)
-        {
-            importlib = (argv[0] && target_platform == PLATFORM_WINDOWS)
-                ? get_temp_file_name( output_file_name, ".a" )
-                : output_file_name;
-            build_windows_import_lib( importlib, spec );
-        }
-        if (argv[0] || !spec) build_library( output_file_name, argv, importlib );
+        if (spec) build_windows_import_lib( output_file_name, spec );
+        if (argv[0] || !spec) build_library( output_file_name, argv, !spec );
     }
     else
     {
         if (spec) build_unix_import_lib( spec );
-        build_library( output_file_name, argv, NULL );
+        build_library( output_file_name, argv, 1 );
     }
 }
