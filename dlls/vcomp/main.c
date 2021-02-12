@@ -117,9 +117,14 @@ struct vcomp_task_data
     unsigned int            dynamic_chunksize;
 };
 
+static void **ptr_from_va_list(__ms_va_list valist)
+{
+    return *(void ***)&valist;
+}
+
 #if defined(__i386__)
 
-extern void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, __ms_va_list args);
+extern void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, void **args);
 __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
                    "pushl %ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -154,7 +159,7 @@ __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
 
 #elif defined(__x86_64__)
 
-extern void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, __ms_va_list args);
+extern void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, void **args);
 __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
                    "pushq %rbp\n\t"
                    __ASM_SEH(".seh_pushreg %rbp\n\t")
@@ -198,7 +203,7 @@ __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
 
 #elif defined(__arm__)
 
-extern void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, __ms_va_list args);
+extern void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, void **args);
 __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
                    "push {r4, r5, LR}\n\t"
                    "mov r4, r0\n\t"
@@ -234,7 +239,7 @@ __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
 
 #elif defined(__aarch64__)
 
-extern void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, __ms_va_list args);
+extern void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, void **args);
 __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
                    "stp x29, x30, [SP,#-16]!\n\t"
                    "mov x29, SP\n\t"
@@ -263,7 +268,7 @@ __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
 
 #else
 
-static void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, __ms_va_list args)
+static void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, void **args)
 {
     ERR("Not implemented for this architecture\n");
 }
@@ -1406,7 +1411,7 @@ static DWORD WINAPI _vcomp_fork_worker(void *param)
         if (team != NULL)
         {
             LeaveCriticalSection(&vcomp_section);
-            _vcomp_fork_call_wrapper(team->wrapper, team->nargs, team->valist);
+            _vcomp_fork_call_wrapper(team->wrapper, team->nargs, ptr_from_va_list(team->valist));
             EnterCriticalSection(&vcomp_section);
 
             thread_data->team = NULL;
@@ -1540,7 +1545,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
     }
 
     vcomp_set_thread_data(&thread_data);
-    _vcomp_fork_call_wrapper(team_data.wrapper, team_data.nargs, team_data.valist);
+    _vcomp_fork_call_wrapper(team_data.wrapper, team_data.nargs, ptr_from_va_list(team_data.valist));
     vcomp_set_thread_data(prev_thread_data);
     prev_thread_data->fork_threads = 0;
 
