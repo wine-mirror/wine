@@ -22,6 +22,8 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
@@ -48,8 +50,10 @@ static LONG (WINAPI *pRegDeleteTreeA)(HKEY,const char *);
 static DWORD (WINAPI *pRegDeleteKeyExA)(HKEY,LPCSTR,REGSAM,DWORD);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
 static NTSTATUS (WINAPI * pNtDeleteKey)(HANDLE);
+static NTSTATUS (WINAPI * pNtUnloadKey)(POBJECT_ATTRIBUTES);
 static NTSTATUS (WINAPI * pRtlFormatCurrentUserKeyPath)(UNICODE_STRING*);
 static NTSTATUS (WINAPI * pRtlFreeUnicodeString)(PUNICODE_STRING);
+static NTSTATUS (WINAPI * pRtlInitUnicodeString)(PUNICODE_STRING,PCWSTR);
 static LONG (WINAPI *pRegDeleteKeyValueA)(HKEY,LPCSTR,LPCSTR);
 static LONG (WINAPI *pRegSetKeyValueW)(HKEY,LPCWSTR,LPCWSTR,DWORD,const void*,DWORD);
 static LONG (WINAPI *pRegLoadMUIStringA)(HKEY,LPCSTR,LPSTR,DWORD,LPDWORD,DWORD,LPCSTR);
@@ -90,7 +94,9 @@ static void InitFunctionPtrs(void)
     pIsWow64Process = (void *)GetProcAddress( hkernel32, "IsWow64Process" );
     pRtlFormatCurrentUserKeyPath = (void *)GetProcAddress( hntdll, "RtlFormatCurrentUserKeyPath" );
     pRtlFreeUnicodeString = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
+    pRtlInitUnicodeString = (void *)GetProcAddress(hntdll, "RtlInitUnicodeString");
     pNtDeleteKey = (void *)GetProcAddress( hntdll, "NtDeleteKey" );
+    pNtUnloadKey = (void *)GetProcAddress( hntdll, "NtUnloadKey" );
 }
 
 /* delete key and all its subkeys */
@@ -1561,7 +1567,11 @@ static void test_reg_load_key(void)
 
 static void test_reg_unload_key(void)
 {
+    UNICODE_STRING key_name;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
     DWORD ret;
+    HKEY key;
 
     if (!set_privileges(SE_RESTORE_NAME, TRUE) ||
         !set_privileges(SE_BACKUP_NAME, FALSE))
@@ -1569,6 +1579,17 @@ static void test_reg_unload_key(void)
         win_skip("Failed to set SE_RESTORE_NAME privileges, skipping tests\n");
         return;
     }
+
+    ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Test", 0, KEY_READ, &key);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+
+    /* try to unload though the key handle is live */
+    pRtlInitUnicodeString(&key_name, L"\\REGISTRY\\Machine\\Test");
+    InitializeObjectAttributes(&attr, &key_name, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    status = pNtUnloadKey(&attr);
+    ok(status == STATUS_CANNOT_DELETE, "expected STATUS_CANNOT_DELETE, got %08x\n", status);
+
+    RegCloseKey(key);
 
     ret = RegUnLoadKeyA(HKEY_LOCAL_MACHINE, "Test");
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
