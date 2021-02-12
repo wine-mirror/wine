@@ -600,16 +600,17 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
         case IRP_MN_QUERY_ID:
             TRACE("IRP_MN_QUERY_ID\n");
             status = handle_IRP_MN_QUERY_ID(device, irp);
-            irp->IoStatus.u.Status = status;
             break;
         case IRP_MN_QUERY_CAPABILITIES:
             TRACE("IRP_MN_QUERY_CAPABILITIES\n");
+            status = STATUS_SUCCESS;
             break;
         default:
             FIXME("Unhandled function %08x\n", irpsp->MinorFunction);
             break;
     }
 
+    irp->IoStatus.u.Status = status;
     IoCompleteRequest(irp, IO_NO_INCREMENT);
     return status;
 }
