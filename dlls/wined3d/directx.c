@@ -1781,6 +1781,19 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
             gl_type = gl_type_end = WINED3D_GL_RES_TYPE_TEX_3D;
             break;
 
+        case WINED3D_RTYPE_BUFFER:
+            if (wined3d_format_is_typeless(format))
+            {
+                TRACE("Requested WINED3D_RTYPE_BUFFER, but format %s is typeless.\n", debug_d3dformat(check_format_id));
+                return WINED3DERR_NOTAVAILABLE;
+            }
+
+            allowed_usage = WINED3DUSAGE_DYNAMIC;
+            allowed_bind_flags = WINED3D_BIND_SHADER_RESOURCE
+                    | WINED3D_BIND_UNORDERED_ACCESS;
+            gl_type = gl_type_end = WINED3D_GL_RES_TYPE_BUFFER;
+            break;
+
         default:
             FIXME("Unhandled resource type %s.\n", debug_d3dresourcetype(resource_type));
             return WINED3DERR_NOTAVAILABLE;
