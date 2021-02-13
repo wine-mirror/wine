@@ -26,19 +26,11 @@
 #include "winerror.h"
 #include "winnt.h"
 #include "imagehlp.h"
+#define PSAPI_VERSION 1
 #include "psapi.h"
 
-static HMODULE hImageHlp, hPsapi, hNtdll;
+static HMODULE hNtdll;
 static char test_dll_path[MAX_PATH];
-
-static BOOL (WINAPI *pImageAddCertificate)(HANDLE, LPWIN_CERTIFICATE, PDWORD);
-static BOOL (WINAPI *pImageEnumerateCertificates)(HANDLE, WORD, PDWORD, PDWORD, DWORD);
-static BOOL (WINAPI *pImageGetCertificateData)(HANDLE, DWORD, LPWIN_CERTIFICATE, PDWORD);
-static BOOL (WINAPI *pImageGetCertificateHeader)(HANDLE, DWORD, LPWIN_CERTIFICATE);
-static BOOL (WINAPI *pImageRemoveCertificate)(HANDLE, DWORD);
-static PIMAGE_NT_HEADERS (WINAPI *pCheckSumMappedFile)(PVOID, DWORD, PDWORD, PDWORD);
-
-static BOOL (WINAPI *pGetModuleInformation)(HANDLE, HMODULE, LPMODULEINFO, DWORD);
 
 static PIMAGE_NT_HEADERS (WINAPI *pRtlImageNtHeader)(PVOID);
 
@@ -193,7 +185,7 @@ static DWORD test_add_certificate(const char *cert_data, int len)
     cert->wCertificateType = WIN_CERT_TYPE_PKCS_SIGNED_DATA;
     CopyMemory(cert->bCertificate, cert_data, len);
 
-    ret = pImageAddCertificate(hFile, cert, &index);
+    ret = ImageAddCertificate(hFile, cert, &index);
     ok(ret, "Unable to add certificate to image, error %x\n", GetLastError());
     trace("added cert index %d\n", index);
 
@@ -218,7 +210,7 @@ static void test_get_certificate(const char *cert_data, int index)
         return;
     }
 
-    ret = pImageGetCertificateData(hFile, index, NULL, &cert_len);
+    ret = ImageGetCertificateData(hFile, index, NULL, &cert_len);
     err = GetLastError();
 
     ok ((ret == FALSE) && (err == ERROR_INSUFFICIENT_BUFFER), "ImageGetCertificateData gave unexpected result; ret=%d / err=%x\n", ret, err);
@@ -232,7 +224,7 @@ static void test_get_certificate(const char *cert_data, int index)
         return;
     }
 
-    ret = pImageGetCertificateData(hFile, index, cert, &cert_len);
+    ret = ImageGetCertificateData(hFile, index, cert, &cert_len);
     ok(ret, "Unable to retrieve certificate; err=%x\n", GetLastError());
     ok(memcmp(cert->bCertificate, cert_data, cert_len - sizeof(WIN_CERTIFICATE)) == 0, "Certificate retrieved did not match original\n");
 
@@ -254,13 +246,13 @@ static void test_remove_certificate(int index)
         return;
     }
 
-    ret = pImageEnumerateCertificates(hFile, CERT_SECTION_TYPE_ANY, &orig_count, NULL, 0);
+    ret = ImageEnumerateCertificates(hFile, CERT_SECTION_TYPE_ANY, &orig_count, NULL, 0);
     ok (ret, "Unable to enumerate certificates in file; err=%x\n", GetLastError());
-    ret = pImageRemoveCertificate(hFile, index);
+    ret = ImageRemoveCertificate(hFile, index);
     ok (ret, "Unable to remove certificate from file; err=%x\n", GetLastError());
 
     /* Test to see if the certificate has actually been removed */
-    pImageEnumerateCertificates(hFile, CERT_SECTION_TYPE_ANY, &count, NULL, 0);
+    ImageEnumerateCertificates(hFile, CERT_SECTION_TYPE_ANY, &count, NULL, 0);
     ok (count == orig_count - 1, "Certificate count mismatch; orig=%d new=%d\n", orig_count, count);
 
     CloseHandle(hFile);
@@ -275,20 +267,14 @@ static void test_pe_checksum(void)
     char buffer[20];
     BOOL ret_bool;
 
-    if (!pCheckSumMappedFile)
-    {
-        win_skip("CheckSumMappedFile not supported, skipping tests\n");
-        return;
-    }
-
     SetLastError(0xdeadbeef);
-    ret = pCheckSumMappedFile(NULL, 0, &checksum_orig, &checksum_new);
+    ret = CheckSumMappedFile(NULL, 0, &checksum_orig, &checksum_new);
     ok(!ret, "Expected CheckSumMappedFile to fail, got %p\n", ret);
     ok(((GetLastError() == ERROR_INVALID_PARAMETER)||(GetLastError() == 0xdeadbeef)),
        "Expected 0xdeadbeef (XP) or ERROR_INVALID_PARAMETER (Vista+), got %x\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    ret = pCheckSumMappedFile((void *)0xdeadbeef, 0, &checksum_orig, &checksum_new);
+    ret = CheckSumMappedFile((void *)0xdeadbeef, 0, &checksum_orig, &checksum_new);
     ok(!ret, "Expected CheckSumMappedFile to fail, got %p\n", ret);
     ok(((GetLastError() == ERROR_INVALID_PARAMETER)||(GetLastError() == 0xdeadbeef)),
        "Expected 0xdeadbeef (XP) or ERROR_INVALID_PARAMETER (Vista+), got %x\n", GetLastError());
@@ -296,53 +282,47 @@ static void test_pe_checksum(void)
     /* basic checksum tests */
     memset(buffer, 0x11, sizeof(buffer));
     checksum_orig = checksum_new = 0xdeadbeef;
-    ret = pCheckSumMappedFile(buffer, sizeof(buffer), &checksum_orig, &checksum_new);
+    ret = CheckSumMappedFile(buffer, sizeof(buffer), &checksum_orig, &checksum_new);
     ok(ret == NULL, "Expected NULL, got %p\n", ret);
     todo_wine ok(checksum_orig == 0, "Expected 0, got %x\n", checksum_orig);
     todo_wine ok(checksum_new == 0xaabe, "Expected 0xaabe, got %x\n", checksum_new);
 
     memset(buffer, 0x22, sizeof(buffer));
     checksum_orig = checksum_new = 0xdeadbeef;
-    ret = pCheckSumMappedFile(buffer, sizeof(buffer), &checksum_orig, &checksum_new);
+    ret = CheckSumMappedFile(buffer, sizeof(buffer), &checksum_orig, &checksum_new);
     ok(ret == NULL, "Expected NULL, got %p\n", ret);
     todo_wine ok(checksum_orig == 0, "Expected 0, got %x\n", checksum_orig);
     todo_wine ok(checksum_new == 0x5569, "Expected 0x5569, got %x\n", checksum_new);
 
     memset(buffer, 0x22, sizeof(buffer));
     checksum_orig = checksum_new = 0xdeadbeef;
-    ret = pCheckSumMappedFile(buffer, 10, &checksum_orig, &checksum_new);
+    ret = CheckSumMappedFile(buffer, 10, &checksum_orig, &checksum_new);
     ok(ret == NULL, "Expected NULL, got %p\n", ret);
     todo_wine ok(checksum_orig == 0, "Expected 0, got %x\n", checksum_orig);
     todo_wine ok(checksum_new == 0xaab4, "Expected 0xaab4, got %x\n", checksum_new);
 
     memset(buffer, 0x22, sizeof(buffer));
     checksum_orig = checksum_new = 0xdeadbeef;
-    ret = pCheckSumMappedFile(buffer, 11, &checksum_orig, &checksum_new);
+    ret = CheckSumMappedFile(buffer, 11, &checksum_orig, &checksum_new);
     ok(ret == NULL, "Expected NULL, got %p\n", ret);
     todo_wine ok(checksum_orig == 0, "Expected 0, got %x\n", checksum_orig);
     todo_wine ok(checksum_new == 0xaad7, "Expected 0xaad7, got %x\n", checksum_new);
 
     /* test checksum of PE module */
     checksum_orig = checksum_new = 0xdeadbeef;
-    ret = pCheckSumMappedFile(test_pe_executable, sizeof(test_pe_executable),
+    ret = CheckSumMappedFile(test_pe_executable, sizeof(test_pe_executable),
                               &checksum_orig, &checksum_new);
     ok((char *)ret == test_pe_executable + 0x80, "Expected %p, got %p\n", test_pe_executable + 0x80, ret);
     ok(checksum_orig == 0xabcdef11, "Expected 0xabcdef11, got %x\n", checksum_orig);
     ok(checksum_new == 0xaa4, "Expected 0xaa4, got %x\n", checksum_new);
 
-    if (!pGetModuleInformation)
-    {
-        win_skip("GetModuleInformation not supported, skipping tests\n");
-        return;
-    }
-
-    ret_bool = pGetModuleInformation(GetCurrentProcess(), GetModuleHandleA(NULL),
+    ret_bool = GetModuleInformation(GetCurrentProcess(), GetModuleHandleA(NULL),
                                      &modinfo, sizeof(modinfo));
     ok(ret_bool, "GetModuleInformation failed, error: %x\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     checksum_orig = checksum_new = 0xdeadbeef;
-    ret = pCheckSumMappedFile(modinfo.lpBaseOfDll, modinfo.SizeOfImage, &checksum_orig, &checksum_new);
+    ret = CheckSumMappedFile(modinfo.lpBaseOfDll, modinfo.SizeOfImage, &checksum_orig, &checksum_new);
     ok(ret != NULL, "Expected CheckSumMappedFile to succeed\n");
     ok(GetLastError() == 0xdeadbeef, "Expected err=0xdeadbeef, got %x\n", GetLastError());
     ok(checksum_orig != 0xdeadbeef, "Expected orig checksum != 0xdeadbeef\n");
@@ -350,7 +330,7 @@ static void test_pe_checksum(void)
 
     SetLastError(0xdeadbeef);
     checksum_orig = checksum_new = 0xdeadbeef;
-    ret = pCheckSumMappedFile((char *)modinfo.lpBaseOfDll + 100, modinfo.SizeOfImage - 100,
+    ret = CheckSumMappedFile((char *)modinfo.lpBaseOfDll + 100, modinfo.SizeOfImage - 100,
                               &checksum_orig, &checksum_new);
     ok(!ret, "Expected CheckSumMappedFile to fail, got %p\n", ret);
     ok(GetLastError() == 0xdeadbeef, "Expected err=0xdeadbeef, got %x\n", GetLastError());
@@ -361,27 +341,27 @@ static void test_pe_checksum(void)
     checksum_correct = nt_header->OptionalHeader.CheckSum;
 
     checksum_orig = checksum_new = 0xdeadbeef;
-    ret = pCheckSumMappedFile(modinfo.lpBaseOfDll, (char *)nt_header - (char *)modinfo.lpBaseOfDll,
+    ret = CheckSumMappedFile(modinfo.lpBaseOfDll, (char *)nt_header - (char *)modinfo.lpBaseOfDll,
                               &checksum_orig, &checksum_new);
     ok(!ret || (ret == nt_header), "Expected CheckSumMappedFile to fail, got %p\n", ret);
     ok((checksum_orig == 0) || (checksum_orig == checksum_correct), "Expected %x, got %x\n", checksum_correct, checksum_orig);
     ok(checksum_new != 0 && checksum_new != 0xdeadbeef, "Got unexpected value %x\n", checksum_new);
 
     checksum_orig = checksum_new = 0xdeadbeef;
-    ret = pCheckSumMappedFile(modinfo.lpBaseOfDll, sizeof(IMAGE_DOS_HEADER),
+    ret = CheckSumMappedFile(modinfo.lpBaseOfDll, sizeof(IMAGE_DOS_HEADER),
                               &checksum_orig, &checksum_new);
     ok(!ret || (ret == nt_header), "Expected CheckSumMappedFile to fail, got %p\n", ret);
     ok((checksum_orig == 0) || (checksum_orig == checksum_correct), "Expected %x, got %x\n", checksum_correct, checksum_orig);
     ok(checksum_new != 0 && checksum_new != 0xdeadbeef, "Got unexpected value %x\n", checksum_new);
 
     checksum_orig = checksum_new = 0xdeadbeef;
-    ret = pCheckSumMappedFile(modinfo.lpBaseOfDll, 0, &checksum_orig, &checksum_new);
+    ret = CheckSumMappedFile(modinfo.lpBaseOfDll, 0, &checksum_orig, &checksum_new);
     ok(!ret || (ret == nt_header), "Expected CheckSumMappedFile to fail, got %p\n", ret);
     ok((checksum_orig == 0xdeadbeef) || (checksum_orig == checksum_correct), "Expected %x, got %x\n", checksum_correct, checksum_orig);
     ok((checksum_new == 0xdeadbeef) || (checksum_new != 0 && checksum_new != 0xdeadbeef), "Got unexpected value %x\n", checksum_new);
 
     checksum_orig = checksum_new = 0xdeadbeef;
-    ret = pCheckSumMappedFile((char *)modinfo.lpBaseOfDll + 1, 0,
+    ret = CheckSumMappedFile((char *)modinfo.lpBaseOfDll + 1, 0,
                               &checksum_orig, &checksum_new);
     ok(ret == NULL, "Expected NULL, got %p\n", ret);
     ok((checksum_orig == 0) || (checksum_orig == 0xdeadbeef), "Expected 0, got %x\n", checksum_orig);
@@ -392,32 +372,10 @@ START_TEST(integrity)
 {
     DWORD file_size, file_size_orig, first, second;
 
-    hImageHlp = LoadLibraryA("imagehlp.dll");
-
-    if (!hImageHlp)
-    {
-        win_skip("ImageHlp unavailable\n");
-        return;
-    }
-
     if (!copy_dll_file())
-    {
-        FreeLibrary(hImageHlp);
         return;
-    }
 
     file_size_orig = get_file_size();
-
-    pImageAddCertificate = (void *) GetProcAddress(hImageHlp, "ImageAddCertificate");
-    pImageEnumerateCertificates = (void *) GetProcAddress(hImageHlp, "ImageEnumerateCertificates");
-    pImageGetCertificateData = (void *) GetProcAddress(hImageHlp, "ImageGetCertificateData");
-    pImageGetCertificateHeader = (void *) GetProcAddress(hImageHlp, "ImageGetCertificateHeader");
-    pImageRemoveCertificate = (void *) GetProcAddress(hImageHlp, "ImageRemoveCertificate");
-    pCheckSumMappedFile = (void *) GetProcAddress(hImageHlp, "CheckSumMappedFile");
-
-    hPsapi = LoadLibraryA("psapi.dll");
-    if (hPsapi)
-        pGetModuleInformation = (void *) GetProcAddress(hPsapi, "GetModuleInformation");
 
     hNtdll = LoadLibraryA("ntdll.dll");
     if (hNtdll)
@@ -450,8 +408,6 @@ START_TEST(integrity)
 
     test_pe_checksum();
 
-    if (hPsapi) FreeLibrary(hPsapi);
     if (hNtdll) FreeLibrary(hNtdll);
-    FreeLibrary(hImageHlp);
     DeleteFileA(test_dll_path);
 }
