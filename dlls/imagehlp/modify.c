@@ -44,15 +44,90 @@ BOOL WINAPI BindImage(
 /***********************************************************************
  *		BindImageEx (IMAGEHLP.@)
  */
-BOOL WINAPI BindImageEx(
-  DWORD Flags, PCSTR ImageName, PCSTR DllPath, PCSTR SymbolPath,
-  PIMAGEHLP_STATUS_ROUTINE StatusRoutine)
+BOOL WINAPI BindImageEx(DWORD flags, const char *module, const char *dll_path,
+        const char *symbol_path, PIMAGEHLP_STATUS_ROUTINE cb)
 {
-  FIXME("(%d, %s, %s, %s, %p): stub\n",
-    Flags, debugstr_a(ImageName), debugstr_a(DllPath),
-    debugstr_a(SymbolPath), StatusRoutine
-  );
-  return TRUE;
+    const IMAGE_IMPORT_DESCRIPTOR *import;
+    LOADED_IMAGE image;
+    ULONG size;
+
+    TRACE("flags %#x, module %s, dll_path %s, symbol_path %s, cb %p.\n",
+            flags, debugstr_a(module), debugstr_a(dll_path), debugstr_a(symbol_path), cb);
+
+    if (!(flags & BIND_NO_UPDATE))
+        FIXME("Image modification is not implemented.\n");
+    if (flags & ~BIND_NO_UPDATE)
+        FIXME("Ignoring flags %#x.\n", flags);
+
+    if (!MapAndLoad(module, dll_path, &image, TRUE, TRUE))
+        return FALSE;
+
+    if (!(import = ImageDirectoryEntryToData(image.MappedAddress, FALSE, IMAGE_DIRECTORY_ENTRY_IMPORT, &size)))
+    {
+        UnMapAndLoad(&image);
+        return TRUE; /* no imports */
+    }
+
+    if (image.FileHeader->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR_MAGIC)
+    {
+        FIXME("Unhandled architecture %#x.\n", image.FileHeader->OptionalHeader.Magic);
+        UnMapAndLoad(&image);
+        return TRUE;
+    }
+
+    for (; import->Name && import->FirstThunk; ++import)
+    {
+        char full_path[MAX_PATH];
+        IMAGE_THUNK_DATA *thunk;
+        const char *dll_name;
+        DWORD thunk_rva;
+
+        if (!(dll_name = ImageRvaToVa(image.FileHeader, image.MappedAddress, import->Name, 0)))
+        {
+            ERR("Failed to get VA for import name RVA %#x.\n", import->Name);
+            continue;
+        }
+
+        if (cb) cb(BindImportModule, module, dll_name, 0, 0);
+
+        if (!SearchPathA(dll_path, dll_name, 0, sizeof(full_path), full_path, 0))
+        {
+            ERR("Import %s was not found.\n", debugstr_a(dll_path));
+            continue;
+        }
+
+        thunk_rva = import->OriginalFirstThunk ? import->OriginalFirstThunk : import->FirstThunk;
+        if (!(thunk = ImageRvaToVa(image.FileHeader, image.MappedAddress, thunk_rva, 0)))
+        {
+            ERR("Failed to get VA for import thunk RVA %#x.\n", thunk_rva);
+            continue;
+        }
+
+        for (; thunk->u1.Ordinal; ++thunk)
+        {
+            if (IMAGE_SNAP_BY_ORDINAL(thunk->u1.Ordinal))
+            {
+                /* FIXME: We apparently need to subtract the actual module's
+                 * ordinal base. */
+                FIXME("Ordinal imports are not implemented.\n");
+            }
+            else
+            {
+                IMAGE_IMPORT_BY_NAME *name;
+
+                if (!(name = ImageRvaToVa(image.FileHeader, image.MappedAddress, thunk->u1.AddressOfData, 0)))
+                {
+                    ERR("Failed to get VA for name RVA %#x.\n", thunk->u1.AddressOfData);
+                    continue;
+                }
+
+                if (cb) cb(BindImportProcedure, module, full_path, 0, (ULONG_PTR)name->Name);
+            }
+        }
+    }
+
+    UnMapAndLoad(&image);
+    return TRUE;
 }
 
 
