@@ -1070,14 +1070,13 @@ static gboolean activate_mode(GstPad *pad, GstObject *parent, GstPadMode mode, g
     return FALSE;
 }
 
-static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
+static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer user)
 {
-    struct parser *filter = data;
-    struct wg_parser *parser = filter->wg_parser;
+    struct wg_parser *parser = user;
     GError *err = NULL;
     gchar *dbg_info = NULL;
 
-    GST_DEBUG("filter %p, message type %s.", filter, GST_MESSAGE_TYPE_NAME(msg));
+    GST_DEBUG("parser %p, message type %s.", parser, GST_MESSAGE_TYPE_NAME(msg));
 
     switch (msg->type)
     {
@@ -1157,7 +1156,7 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
     if (!parser->bus)
     {
         parser->bus = gst_bus_new();
-        gst_bus_set_sync_handler(parser->bus, watch_bus, This, NULL);
+        gst_bus_set_sync_handler(parser->bus, watch_bus, parser, NULL);
     }
 
     parser->container = gst_bin_new(NULL);
