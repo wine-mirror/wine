@@ -1134,24 +1134,17 @@ static LONGLONG query_duration(GstPad *pad)
     return 0;
 }
 
-static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
+static HRESULT GST_Connect(struct wg_parser *parser, LONGLONG file_size)
 {
-    struct wg_parser *parser = This->wg_parser;
     unsigned int i;
-    LONGLONG avail;
     GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE(
         "quartz_src",
         GST_PAD_SRC,
         GST_PAD_ALWAYS,
         GST_STATIC_CAPS_ANY);
 
-    IAsyncReader_Length(This->reader, &This->file_size, &avail);
-    parser->file_size = This->file_size;
-
-    This->sink_connected = true;
+    parser->file_size = file_size;
     parser->sink_connected = true;
-
-    This->read_thread = CreateThread(NULL, 0, read_thread, This, 0, NULL);
 
     if (!parser->bus)
     {
@@ -1170,7 +1163,6 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
     gst_pad_set_element_private(parser->my_src, parser);
 
     parser->start_offset = parser->next_offset = parser->stop_offset = 0;
-    This->next_pull_offset = 0;
 
     if (!parser->init_gst(parser))
         return E_FAIL;
@@ -1194,7 +1186,6 @@ static HRESULT GST_Connect(struct parser *This, IPin *pConnectPin)
     pthread_mutex_unlock(&parser->mutex);
 
     parser->next_offset = 0;
-    This->next_pull_offset = 0;
     return S_OK;
 }
 
@@ -1357,6 +1348,7 @@ static HRESULT parser_sink_connect(struct strmbase_sink *iface, IPin *peer, cons
 {
     struct parser *filter = impl_from_strmbase_sink(iface);
     HRESULT hr = S_OK;
+    LONGLONG unused;
     unsigned int i;
 
     mark_wine_thread();
@@ -1365,7 +1357,13 @@ static HRESULT parser_sink_connect(struct strmbase_sink *iface, IPin *peer, cons
     if (FAILED(hr = IPin_QueryInterface(peer, &IID_IAsyncReader, (void **)&filter->reader)))
         return hr;
 
-    if (FAILED(hr = GST_Connect(filter, peer)))
+    IAsyncReader_Length(filter->reader, &filter->file_size, &unused);
+
+    filter->sink_connected = true;
+    filter->read_thread = CreateThread(NULL, 0, read_thread, filter, 0, NULL);
+    filter->next_pull_offset = 0;
+
+    if (FAILED(hr = GST_Connect(filter->wg_parser, filter->file_size)))
         goto err;
 
     if (!filter->init_gst(filter))
