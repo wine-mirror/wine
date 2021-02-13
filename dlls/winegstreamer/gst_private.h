@@ -213,6 +213,7 @@ struct unix_funcs
     void (CDECL *wg_parser_destroy)(struct wg_parser *parser);
 
     HRESULT (CDECL *wg_parser_connect)(struct wg_parser *parser, uint64_t file_size);
+    void (CDECL *wg_parser_disconnect)(struct wg_parser *parser);
 };
 
 extern const struct unix_funcs *unix_funcs;

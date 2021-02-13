@@ -1546,30 +1546,6 @@ static void source_disconnect(struct strmbase_source *iface)
     stream->enabled = false;
 }
 
-static void free_stream(struct wg_parser_stream *stream)
-{
-    if (stream->their_src)
-    {
-        if (stream->post_sink)
-        {
-            gst_pad_unlink(stream->their_src, stream->post_sink);
-            gst_pad_unlink(stream->post_src, stream->my_sink);
-            gst_object_unref(stream->post_src);
-            gst_object_unref(stream->post_sink);
-            stream->post_src = stream->post_sink = NULL;
-        }
-        else
-            gst_pad_unlink(stream->their_src, stream->my_sink);
-        gst_object_unref(stream->their_src);
-    }
-    gst_object_unref(stream->my_sink);
-
-    pthread_cond_destroy(&stream->event_cond);
-    pthread_cond_destroy(&stream->event_empty_cond);
-
-    free(stream);
-}
-
 static void free_source_pin(struct parser_source *pin)
 {
     if (pin->pin.pin.peer)
@@ -1578,8 +1554,6 @@ static void free_source_pin(struct parser_source *pin)
             IPin_Disconnect(pin->pin.pin.peer);
         IPin_Disconnect(&pin->pin.pin.IPin_iface);
     }
-
-    free_stream(pin->wg_stream);
 
     pin->flushing_cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&pin->flushing_cs);
@@ -1628,37 +1602,19 @@ static struct parser_source *create_pin(struct parser *filter,
 
 static HRESULT GST_RemoveOutputPins(struct parser *This)
 {
-    struct wg_parser *parser = This->wg_parser;
     unsigned int i;
 
     TRACE("(%p)\n", This);
     mark_wine_thread();
 
-    if (!parser->container)
+    if (!This->sink_connected)
         return S_OK;
 
-    /* Unblock all of our streams. */
-    pthread_mutex_lock(&parser->mutex);
-    for (i = 0; i < parser->stream_count; ++i)
-    {
-        parser->streams[i]->flushing = true;
-        pthread_cond_signal(&parser->streams[i]->event_empty_cond);
-    }
-    pthread_mutex_unlock(&parser->mutex);
-
-    gst_element_set_state(parser->container, GST_STATE_NULL);
-    gst_pad_unlink(parser->my_src, parser->their_sink);
-    gst_object_unref(parser->my_src);
-    gst_object_unref(parser->their_sink);
-    parser->my_src = parser->their_sink = NULL;
+    unix_funcs->wg_parser_disconnect(This->wg_parser);
 
     /* read_thread() needs to stay alive to service any read requests GStreamer
      * sends, so we can only shut it down after GStreamer stops. */
     This->sink_connected = false;
-    pthread_mutex_lock(&parser->mutex);
-    parser->sink_connected = false;
-    pthread_mutex_unlock(&parser->mutex);
-    pthread_cond_signal(&parser->read_cond);
     WaitForSingleObject(This->read_thread, INFINITE);
     CloseHandle(This->read_thread);
 
@@ -1671,12 +1627,7 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     This->source_count = 0;
     heap_free(This->sources);
     This->sources = NULL;
-    parser->stream_count = 0;
-    free(parser->streams);
-    parser->streams = NULL;
-    gst_element_set_bus(parser->container, NULL);
-    gst_object_unref(parser->container);
-    parser->container = NULL;
+
     BaseFilterImpl_IncrementPinVersion(&This->filter);
     return S_OK;
 }

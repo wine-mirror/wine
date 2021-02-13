@@ -1127,6 +1127,66 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
     return S_OK;
 }
 
+static void free_stream(struct wg_parser_stream *stream)
+{
+    if (stream->their_src)
+    {
+        if (stream->post_sink)
+        {
+            gst_pad_unlink(stream->their_src, stream->post_sink);
+            gst_pad_unlink(stream->post_src, stream->my_sink);
+            gst_object_unref(stream->post_src);
+            gst_object_unref(stream->post_sink);
+            stream->post_src = stream->post_sink = NULL;
+        }
+        else
+            gst_pad_unlink(stream->their_src, stream->my_sink);
+        gst_object_unref(stream->their_src);
+    }
+    gst_object_unref(stream->my_sink);
+
+    pthread_cond_destroy(&stream->event_cond);
+    pthread_cond_destroy(&stream->event_empty_cond);
+
+    free(stream);
+}
+
+static void CDECL wg_parser_disconnect(struct wg_parser *parser)
+{
+    unsigned int i;
+
+    /* Unblock all of our streams. */
+    pthread_mutex_lock(&parser->mutex);
+    for (i = 0; i < parser->stream_count; ++i)
+    {
+        parser->streams[i]->flushing = true;
+        pthread_cond_signal(&parser->streams[i]->event_empty_cond);
+    }
+    pthread_mutex_unlock(&parser->mutex);
+
+    gst_element_set_state(parser->container, GST_STATE_NULL);
+    gst_pad_unlink(parser->my_src, parser->their_sink);
+    gst_object_unref(parser->my_src);
+    gst_object_unref(parser->their_sink);
+    parser->my_src = parser->their_sink = NULL;
+
+    pthread_mutex_lock(&parser->mutex);
+    parser->sink_connected = false;
+    pthread_mutex_unlock(&parser->mutex);
+    pthread_cond_signal(&parser->read_cond);
+
+    for (i = 0; i < parser->stream_count; ++i)
+        free_stream(parser->streams[i]);
+
+    parser->stream_count = 0;
+    free(parser->streams);
+    parser->streams = NULL;
+
+    gst_element_set_bus(parser->container, NULL);
+    gst_object_unref(parser->container);
+    parser->container = NULL;
+}
+
 static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
 {
     GstElement *element = gst_element_factory_make("decodebin", NULL);
@@ -1406,6 +1466,7 @@ static const struct unix_funcs funcs =
     wg_parser_destroy,
 
     wg_parser_connect,
+    wg_parser_disconnect,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
