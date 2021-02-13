@@ -24,9 +24,35 @@
 #include <winbase.h>
 #include <winver.h>
 #include <winnt.h>
+#include <winuser.h>
 #include <imagehlp.h>
 
 #include "wine/test.h"
+
+static char *load_resource(const char *name)
+{
+    static char path[MAX_PATH];
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    GetTempPathA(ARRAY_SIZE(path), path);
+    strcat(path, name);
+
+    file = CreateFileA(path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s, error %u.\n",
+            debugstr_a(path), GetLastError());
+
+    res = FindResourceA(NULL, name, "TESTDLL");
+    ok(!!res, "Failed to load resource, error %u.\n", GetLastError());
+    ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
+    WriteFile(file, ptr, SizeofResource( GetModuleHandleA(NULL), res), &written, NULL);
+    ok(written == SizeofResource(GetModuleHandleA(NULL), res), "Failed to write resource.\n");
+    CloseHandle(file);
+
+    return path;
+}
 
 /* minimal PE file image */
 #define VA_START 0x400000
@@ -144,9 +170,6 @@ struct expected_update_accum
     const struct expected_blob *updates;
     BOOL  todo;
 };
-
-static int status_routine_called[BindSymbolsNotUpdated+1];
-
 
 static BOOL WINAPI accumulating_stream_output(DIGEST_HANDLE handle, BYTE *pb,
  DWORD cb)
@@ -270,40 +293,6 @@ static void update_checksum(void)
     bin.nt_headers.OptionalHeader.CheckSum = sum;
 }
 
-static BOOL CALLBACK testing_status_routine(IMAGEHLP_STATUS_REASON reason, const char *ImageName,
-                                            const char *DllName, ULONG_PTR Va, ULONG_PTR Parameter)
-{
-    char kernel32_path[MAX_PATH];
-
-    if (0 <= (int)reason && reason <= BindSymbolsNotUpdated)
-      status_routine_called[reason]++;
-    else
-      ok(0, "expected reason between 0 and %d, got %d\n", BindSymbolsNotUpdated+1, reason);
-
-    switch(reason)
-    {
-        case BindImportModule:
-            ok(!strcmp(DllName, "KERNEL32.DLL"), "expected DllName to be KERNEL32.DLL, got %s\n",
-               DllName);
-            break;
-
-        case BindImportProcedure:
-        case BindForwarderNOT:
-            GetSystemDirectoryA(kernel32_path, MAX_PATH);
-            strcat(kernel32_path, "\\KERNEL32.DLL");
-            ok(!lstrcmpiA(DllName, kernel32_path), "expected DllName to be %s, got %s\n",
-               kernel32_path, DllName);
-            ok(!strcmp((char *)Parameter, "ExitProcess"),
-               "expected Parameter to be ExitProcess, got %s\n", (char *)Parameter);
-            break;
-
-        default:
-            ok(0, "got unexpected reason %d\n", reason);
-            break;
-    }
-    return TRUE;
-}
-
 static void test_get_digest_stream(void)
 {
     BOOL ret;
@@ -360,52 +349,78 @@ static void test_get_digest_stream(void)
     DeleteFileA(temp_file);
 }
 
+static unsigned int got_SysAllocString, got_GetOpenFileNameA, got_SHRegGetIntW;
+
+static BOOL WINAPI bind_image_cb(IMAGEHLP_STATUS_REASON reason, const char *file,
+        const char *module, ULONG_PTR va, ULONG_PTR param)
+{
+    static char last_module[MAX_PATH];
+
+    if (winetest_debug > 1)
+        trace("reason %u, file %s, module %s, va %#Ix, param %#Ix\n",
+                reason, debugstr_a(file), debugstr_a(module), va, param);
+
+    if (reason == BindImportModule)
+    {
+        ok(!strchr(module, '\\'), "got module name %s\n", debugstr_a(module));
+        strcpy(last_module, module);
+        ok(!va, "got VA %#Ix\n", va);
+        ok(!param, "got param %#Ix\n", param);
+    }
+    else if (reason == BindImportProcedure)
+    {
+        char full_path[MAX_PATH];
+        BOOL ret;
+
+        ok(!!va, "expected nonzero VA\n");
+        ret = SearchPathA(NULL, last_module, ".dll", sizeof(full_path), full_path, NULL);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(!strcmp(module, full_path), "expected %s, got %s\n", debugstr_a(full_path), debugstr_a(module));
+
+        if (!strcmp((const char *)param, "SysAllocString"))
+        {
+            ok(!strcmp(last_module, "oleaut32.dll"), "got wrong module %s\n", debugstr_a(module));
+            ++got_SysAllocString;
+        }
+        else if (!strcmp((const char *)param, "GetOpenFileNameA"))
+        {
+            ok(!strcmp(last_module, "comdlg32.dll"), "got wrong module %s\n", debugstr_a(module));
+            ++got_GetOpenFileNameA;
+        }
+        else if (!strcmp((const char *)param, "Ordinal117"))
+        {
+            ok(!strcmp(last_module, "shlwapi.dll"), "got wrong module %s\n", debugstr_a(module));
+            ++got_SHRegGetIntW;
+        }
+    }
+    else
+    {
+        ok(0, "got unexpected reason %#x\n", reason);
+    }
+    return TRUE;
+}
+
 static void test_bind_image_ex(void)
 {
+    const char *filename = load_resource("testdll.dll");
     BOOL ret;
-    HANDLE file;
-    char temp_file[MAX_PATH];
-    DWORD count;
 
-    /* call with a non-existent file */
     SetLastError(0xdeadbeef);
-    ret = BindImageEx(BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE | BIND_ALL_IMAGES, "nonexistent.dll", 0, 0,
-                       testing_status_routine);
-    todo_wine ok(!ret && ((GetLastError() == ERROR_FILE_NOT_FOUND) ||
-                 (GetLastError() == ERROR_INVALID_PARAMETER)),
-                 "expected ERROR_FILE_NOT_FOUND or ERROR_INVALID_PARAMETER, got %d\n",
-                 GetLastError());
+    ret = BindImageEx(BIND_ALL_IMAGES | BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE,
+            "nonexistent.dll", 0, 0, bind_image_cb);
+    todo_wine ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_INVALID_PARAMETER,
+            "got error %u\n", GetLastError());
 
-    file = create_temp_file(temp_file);
-    if (file == INVALID_HANDLE_VALUE)
-    {
-        skip("couldn't create temp file\n");
-        return;
-    }
+    ret = BindImageEx(BIND_ALL_IMAGES | BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE,
+            filename, NULL, NULL, bind_image_cb);
+    ok(ret, "got error %u\n", GetLastError());
+    todo_wine ok(got_SysAllocString == 1, "got %u imports of SysAllocString\n", got_SysAllocString);
+    todo_wine ok(got_GetOpenFileNameA == 1, "got %u imports of GetOpenFileNameA\n", got_GetOpenFileNameA);
+    todo_wine ok(got_SHRegGetIntW == 1, "got %u imports of SHRegGetIntW\n", got_SHRegGetIntW);
 
-    WriteFile(file, &bin, sizeof(bin), &count, NULL);
-    CloseHandle(file);
-
-    /* call with a proper PE file, but with StatusRoutine set to NULL */
-    ret = BindImageEx(BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE | BIND_ALL_IMAGES, temp_file, 0, 0,
-                       NULL);
-    ok(ret, "BindImageEx failed: %d\n", GetLastError());
-
-    /* call with a proper PE file and StatusRoutine */
-    ret = BindImageEx(BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE | BIND_ALL_IMAGES, temp_file, 0, 0,
-                       testing_status_routine);
-    ok(ret, "BindImageEx failed: %d\n", GetLastError());
-
-    todo_wine ok(status_routine_called[BindImportModule] == 1,
-                 "StatusRoutine was called %d times\n", status_routine_called[BindImportModule]);
-
-    todo_wine ok((status_routine_called[BindImportProcedure] == 1)
-#if defined(_WIN64)
-                 || broken(status_routine_called[BindImportProcedure] == 0) /* < Win8 */
-#endif
-                 , "StatusRoutine was called %d times\n", status_routine_called[BindImportProcedure]);
-
-    DeleteFileA(temp_file);
+    ret = DeleteFileA(filename);
+    ok(ret, "got error %u\n", GetLastError());
 }
 
 static void test_image_load(void)
