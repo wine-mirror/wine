@@ -317,6 +317,16 @@ static bool wg_format_compare(const struct wg_format *a, const struct wg_format 
     return false;
 }
 
+static uint32_t CDECL wg_parser_get_stream_count(struct wg_parser *parser)
+{
+    return parser->stream_count;
+}
+
+static struct wg_parser_stream * CDECL wg_parser_get_stream(struct wg_parser *parser, uint32_t index)
+{
+    return parser->streams[index];
+}
+
 static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, gpointer user)
 {
     const char *name = gst_element_factory_get_longname(fact);
@@ -1467,6 +1477,9 @@ static const struct unix_funcs funcs =
 
     wg_parser_connect,
     wg_parser_disconnect,
+
+    wg_parser_get_stream_count,
+    wg_parser_get_stream,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)

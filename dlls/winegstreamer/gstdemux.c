@@ -1039,13 +1039,14 @@ static BOOL decodebin_parser_filter_init_gst(struct parser *filter)
 {
     static const WCHAR formatW[] = {'S','t','r','e','a','m',' ','%','0','2','u',0};
     struct wg_parser *parser = filter->wg_parser;
+    unsigned int i, stream_count;
     WCHAR source_name[20];
-    unsigned int i;
 
-    for (i = 0; i < parser->stream_count; ++i)
+    stream_count = unix_funcs->wg_parser_get_stream_count(parser);
+    for (i = 0; i < stream_count; ++i)
     {
         sprintfW(source_name, formatW, i);
-        if (!create_pin(filter, parser->streams[i], source_name))
+        if (!create_pin(filter, unix_funcs->wg_parser_get_stream(parser, i), source_name))
             return FALSE;
     }
 
@@ -1664,7 +1665,7 @@ static BOOL wave_parser_filter_init_gst(struct parser *filter)
     static const WCHAR source_name[] = {'o','u','t','p','u','t',0};
     struct wg_parser *parser = filter->wg_parser;
 
-    if (!create_pin(filter, parser->streams[0], source_name))
+    if (!create_pin(filter, unix_funcs->wg_parser_get_stream(parser, 0), source_name))
         return FALSE;
 
     return TRUE;
@@ -1744,13 +1745,14 @@ static BOOL avi_splitter_filter_init_gst(struct parser *filter)
 {
     static const WCHAR formatW[] = {'S','t','r','e','a','m',' ','%','0','2','u',0};
     struct wg_parser *parser = filter->wg_parser;
+    uint32_t i, stream_count;
     WCHAR source_name[20];
-    unsigned int i;
 
-    for (i = 0; i < parser->stream_count; ++i)
+    stream_count = unix_funcs->wg_parser_get_stream_count(parser);
+    for (i = 0; i < stream_count; ++i)
     {
         sprintfW(source_name, formatW, i);
-        if (!create_pin(filter, parser->streams[i], source_name))
+        if (!create_pin(filter, unix_funcs->wg_parser_get_stream(parser, i), source_name))
             return FALSE;
     }
 
@@ -1837,7 +1839,7 @@ static BOOL mpeg_splitter_filter_init_gst(struct parser *filter)
     static const WCHAR source_name[] = {'A','u','d','i','o',0};
     struct wg_parser *parser = filter->wg_parser;
 
-    if (!create_pin(filter, parser->streams[0], source_name))
+    if (!create_pin(filter, unix_funcs->wg_parser_get_stream(parser, 0), source_name))
         return FALSE;
 
     return TRUE;
