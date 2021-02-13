@@ -29,10 +29,7 @@
 #define PSAPI_VERSION 1
 #include "psapi.h"
 
-static HMODULE hNtdll;
 static char test_dll_path[MAX_PATH];
-
-static PIMAGE_NT_HEADERS (WINAPI *pRtlImageNtHeader)(PVOID);
 
 static const char test_cert_data[] =
 {0x30,0x82,0x02,0xE1,0x06,0x09,0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x07,0x02
@@ -337,7 +334,7 @@ static void test_pe_checksum(void)
     todo_wine ok(checksum_orig == 0, "Expected 0, got %x\n", checksum_orig);
     todo_wine ok(checksum_new != 0 && checksum_new != 0xdeadbeef, "Got unexpected value %x\n", checksum_new);
 
-    nt_header = pRtlImageNtHeader( modinfo.lpBaseOfDll );
+    nt_header = ImageNtHeader( modinfo.lpBaseOfDll );
     checksum_correct = nt_header->OptionalHeader.CheckSum;
 
     checksum_orig = checksum_new = 0xdeadbeef;
@@ -377,10 +374,6 @@ START_TEST(integrity)
 
     file_size_orig = get_file_size();
 
-    hNtdll = LoadLibraryA("ntdll.dll");
-    if (hNtdll)
-        pRtlImageNtHeader = (void *) GetProcAddress(hNtdll, "RtlImageNtHeader");
-
     first = test_add_certificate(test_cert_data, sizeof(test_cert_data));
     test_get_certificate(test_cert_data, first);
     test_remove_certificate(first);
@@ -408,6 +401,5 @@ START_TEST(integrity)
 
     test_pe_checksum();
 
-    if (hNtdll) FreeLibrary(hNtdll);
     DeleteFileA(test_dll_path);
 }
