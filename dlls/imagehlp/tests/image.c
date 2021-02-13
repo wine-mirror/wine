@@ -28,16 +28,6 @@
 
 #include "wine/test.h"
 
-static HMODULE hImageHlp;
-
-static BOOL (WINAPI *pImageGetDigestStream)(HANDLE, DWORD, DIGEST_FUNCTION, DIGEST_HANDLE);
-static BOOL (WINAPI *pBindImageEx)(DWORD Flags, const char *ImageName, const char *DllPath,
-                                   const char *SymbolPath, PIMAGEHLP_STATUS_ROUTINE StatusRoutine);
-static DWORD (WINAPI *pGetImageUnusedHeaderBytes)(PLOADED_IMAGE, LPDWORD);
-static PLOADED_IMAGE (WINAPI *pImageLoad)(PCSTR, PCSTR);
-static BOOL (WINAPI *pImageUnload)(PLOADED_IMAGE);
-
-
 /* minimal PE file image */
 #define VA_START 0x400000
 #define FILE_PE_START 0x50
@@ -322,13 +312,8 @@ static void test_get_digest_stream(void)
     DWORD count;
     struct update_accum accum = { 0, NULL };
 
-    if (!pImageGetDigestStream)
-    {
-        win_skip("ImageGetDigestStream function is not available\n");
-        return;
-    }
     SetLastError(0xdeadbeef);
-    ret = pImageGetDigestStream(NULL, 0, NULL, NULL);
+    ret = ImageGetDigestStream(NULL, 0, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     file = create_temp_file(temp_file);
@@ -338,16 +323,16 @@ static void test_get_digest_stream(void)
         return;
     }
     SetLastError(0xdeadbeef);
-    ret = pImageGetDigestStream(file, 0, NULL, NULL);
+    ret = ImageGetDigestStream(file, 0, NULL, NULL);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
-    ret = pImageGetDigestStream(NULL, 0, accumulating_stream_output, &accum);
+    ret = ImageGetDigestStream(NULL, 0, accumulating_stream_output, &accum);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     /* Even with "valid" parameters, it fails with an empty file */
     SetLastError(0xdeadbeef);
-    ret = pImageGetDigestStream(file, 0, accumulating_stream_output, &accum);
+    ret = ImageGetDigestStream(file, 0, accumulating_stream_output, &accum);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
      "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     /* Finally, with a valid executable in the file, it succeeds.  Note that
@@ -362,11 +347,11 @@ static void test_get_digest_stream(void)
     bin.nt_headers.OptionalHeader.SizeOfInitializedData = 0;
     bin.nt_headers.OptionalHeader.SizeOfImage = 0;
 
-    ret = pImageGetDigestStream(file, 0, accumulating_stream_output, &accum);
+    ret = ImageGetDigestStream(file, 0, accumulating_stream_output, &accum);
     ok(ret, "ImageGetDigestStream failed: %d\n", GetLastError());
     check_updates("flags = 0", &a1, &accum);
     free_updates(&accum);
-    ret = pImageGetDigestStream(file, CERT_PE_IMAGE_DIGEST_ALL_IMPORT_INFO,
+    ret = ImageGetDigestStream(file, CERT_PE_IMAGE_DIGEST_ALL_IMPORT_INFO,
      accumulating_stream_output, &accum);
     ok(ret, "ImageGetDigestStream failed: %d\n", GetLastError());
     check_updates("flags = CERT_PE_IMAGE_DIGEST_ALL_IMPORT_INFO", &a2, &accum);
@@ -382,15 +367,9 @@ static void test_bind_image_ex(void)
     char temp_file[MAX_PATH];
     DWORD count;
 
-    if (!pBindImageEx)
-    {
-        win_skip("BindImageEx function is not available\n");
-        return;
-    }
-
     /* call with a non-existent file */
     SetLastError(0xdeadbeef);
-    ret = pBindImageEx(BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE | BIND_ALL_IMAGES, "nonexistent.dll", 0, 0,
+    ret = BindImageEx(BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE | BIND_ALL_IMAGES, "nonexistent.dll", 0, 0,
                        testing_status_routine);
     todo_wine ok(!ret && ((GetLastError() == ERROR_FILE_NOT_FOUND) ||
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
@@ -408,12 +387,12 @@ static void test_bind_image_ex(void)
     CloseHandle(file);
 
     /* call with a proper PE file, but with StatusRoutine set to NULL */
-    ret = pBindImageEx(BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE | BIND_ALL_IMAGES, temp_file, 0, 0,
+    ret = BindImageEx(BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE | BIND_ALL_IMAGES, temp_file, 0, 0,
                        NULL);
     ok(ret, "BindImageEx failed: %d\n", GetLastError());
 
     /* call with a proper PE file and StatusRoutine */
-    ret = pBindImageEx(BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE | BIND_ALL_IMAGES, temp_file, 0, 0,
+    ret = BindImageEx(BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE | BIND_ALL_IMAGES, temp_file, 0, 0,
                        testing_status_routine);
     ok(ret, "BindImageEx failed: %d\n", GetLastError());
 
@@ -436,12 +415,6 @@ static void test_image_load(void)
     DWORD ret, count;
     HANDLE file;
 
-    if (!pImageLoad || !pImageUnload || !pGetImageUnusedHeaderBytes)
-    {
-        win_skip("ImageLoad functions are not available\n");
-        return;
-    }
-
     file = create_temp_file(temp_file);
     if (file == INVALID_HANDLE_VALUE)
     {
@@ -452,7 +425,7 @@ static void test_image_load(void)
     WriteFile(file, &bin, sizeof(bin), &count, NULL);
     CloseHandle(file);
 
-    img = pImageLoad(temp_file, NULL);
+    img = ImageLoad(temp_file, NULL);
     ok(img != NULL, "ImageLoad unexpectedly failed\n");
 
     if (img)
@@ -499,13 +472,13 @@ static void test_image_load(void)
            "unexpected SizeOfImage, got 0x%x instead of 0x600\n", img->SizeOfImage);
 
         count = 0xdeadbeef;
-        ret = pGetImageUnusedHeaderBytes(img, &count);
+        ret = GetImageUnusedHeaderBytes(img, &count);
         todo_wine
         ok(ret == 448, "GetImageUnusedHeaderBytes returned %u instead of 448\n", ret);
         todo_wine
         ok(count == 64, "unexpected size for unused header bytes, got %u instead of 64\n", count);
 
-        pImageUnload(img);
+        ImageUnload(img);
     }
 
     DeleteFileA(temp_file);
@@ -513,23 +486,7 @@ static void test_image_load(void)
 
 START_TEST(image)
 {
-    hImageHlp = LoadLibraryA("imagehlp.dll");
-
-    if (!hImageHlp)
-    {
-        win_skip("ImageHlp unavailable\n");
-        return;
-    }
-
-    pImageGetDigestStream = (void *) GetProcAddress(hImageHlp, "ImageGetDigestStream");
-    pBindImageEx = (void *) GetProcAddress(hImageHlp, "BindImageEx");
-    pGetImageUnusedHeaderBytes = (void *) GetProcAddress(hImageHlp, "GetImageUnusedHeaderBytes");
-    pImageLoad = (void *) GetProcAddress(hImageHlp, "ImageLoad");
-    pImageUnload = (void *) GetProcAddress(hImageHlp, "ImageUnload");
-
     test_get_digest_stream();
     test_bind_image_ex();
     test_image_load();
-
-    FreeLibrary(hImageHlp);
 }
