@@ -372,7 +372,7 @@ static BOOL WINAPI bind_image_cb(IMAGEHLP_STATUS_REASON reason, const char *file
         char full_path[MAX_PATH];
         BOOL ret;
 
-        ok(!!va, "expected nonzero VA\n");
+        todo_wine ok(!!va, "expected nonzero VA\n");
         ret = SearchPathA(NULL, last_module, ".dll", sizeof(full_path), full_path, NULL);
         ok(ret, "got error %u\n", GetLastError());
         ok(!strcmp(module, full_path), "expected %s, got %s\n", debugstr_a(full_path), debugstr_a(module));
@@ -408,15 +408,15 @@ static void test_bind_image_ex(void)
     SetLastError(0xdeadbeef);
     ret = BindImageEx(BIND_ALL_IMAGES | BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE,
             "nonexistent.dll", 0, 0, bind_image_cb);
-    todo_wine ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_INVALID_PARAMETER,
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_INVALID_PARAMETER,
             "got error %u\n", GetLastError());
 
     ret = BindImageEx(BIND_ALL_IMAGES | BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE,
             filename, NULL, NULL, bind_image_cb);
     ok(ret, "got error %u\n", GetLastError());
-    todo_wine ok(got_SysAllocString == 1, "got %u imports of SysAllocString\n", got_SysAllocString);
-    todo_wine ok(got_GetOpenFileNameA == 1, "got %u imports of GetOpenFileNameA\n", got_GetOpenFileNameA);
+    ok(got_SysAllocString == 1, "got %u imports of SysAllocString\n", got_SysAllocString);
+    ok(got_GetOpenFileNameA == 1, "got %u imports of GetOpenFileNameA\n", got_GetOpenFileNameA);
     todo_wine ok(got_SHRegGetIntW == 1, "got %u imports of SHRegGetIntW\n", got_SHRegGetIntW);
 
     ret = DeleteFileA(filename);
