@@ -307,10 +307,10 @@ static bool wg_format_compare(const struct wg_format *a, const struct wg_format 
                     && a->u.audio.rate == b->u.audio.rate;
 
         case WG_MAJOR_TYPE_VIDEO:
+            /* Do not compare FPS. */
             return a->u.video.format == b->u.video.format
                     && a->u.video.width == b->u.video.width
-                    && a->u.video.height == b->u.video.height
-                    && a->u.video.fps_d * b->u.video.fps_n == a->u.video.fps_n * b->u.video.fps_d;
+                    && a->u.video.height == b->u.video.height;
     }
 
     assert(0);
