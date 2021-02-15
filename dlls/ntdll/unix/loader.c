@@ -1608,7 +1608,6 @@ static struct unix_funcs unix_funcs =
     ntdll_sqrt,
     ntdll_tan,
     get_initial_environment,
-    get_startup_info,
     get_dynamic_environment,
     get_initial_console,
     get_initial_directory,
@@ -1644,6 +1643,7 @@ static void start_main_thread(void)
     virtual_map_user_shared_data();
     init_cpu_info();
     init_files();
+    init_startup_info();
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
     load_ntdll();
     load_libwine();

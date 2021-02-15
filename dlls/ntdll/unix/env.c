@@ -1164,32 +1164,6 @@ static void add_path_var( WCHAR *env, SIZE_T *pos, const char *name, const char 
 
 
 /*************************************************************************
- *		get_startup_info
- *
- * Get the startup information from the server.
- */
-NTSTATUS CDECL get_startup_info( startup_info_t *info, SIZE_T *total_size, SIZE_T *info_size )
-{
-    NTSTATUS status;
-
-    if (*total_size < startup_info_size)
-    {
-        *total_size = startup_info_size;
-        return STATUS_BUFFER_TOO_SMALL;
-    }
-    SERVER_START_REQ( get_startup_info )
-    {
-        wine_server_set_reply( req, info, *total_size );
-        status = wine_server_call( req );
-        *total_size = wine_server_reply_size( reply );
-        *info_size = reply->info_size;
-    }
-    SERVER_END_REQ;
-    return status;
-}
-
-
-/*************************************************************************
  *		get_dynamic_environment
  *
  * Get the environment variables that can differ between processes.
@@ -1372,6 +1346,130 @@ void CDECL get_locales( WCHAR *sys, WCHAR *user )
 {
     ntdll_umbstowcs( system_locale, strlen(system_locale) + 1, sys, LOCALE_NAME_MAX_LENGTH );
     ntdll_umbstowcs( user_locale, strlen(user_locale) + 1, user, LOCALE_NAME_MAX_LENGTH );
+}
+
+
+static inline void copy_unicode_string( WCHAR **src, WCHAR **dst, UNICODE_STRING *str, UINT len )
+{
+    str->Buffer = *dst;
+    str->Length = len;
+    str->MaximumLength = len + sizeof(WCHAR);
+    memcpy( *dst, *src, len );
+    (*dst)[len / sizeof(WCHAR)] = 0;
+    *src += len / sizeof(WCHAR);
+    *dst += len / sizeof(WCHAR) + 1;
+}
+
+
+/*************************************************************************
+ *		build_initial_params
+ *
+ * Build process parameters from scratch, for processes without a parent.
+ */
+static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
+{
+    RTL_USER_PROCESS_PARAMETERS *params = NULL;
+    SIZE_T size;
+    NTSTATUS status;
+
+    size = sizeof(*params);
+
+    status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&params, 0, &size,
+                                      MEM_COMMIT, PAGE_READWRITE );
+    assert( !status );
+
+    params->AllocationSize  = size;
+    params->Size            = size;
+    params->Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
+    params->wShowWindow     = 1; /* SW_SHOWNORMAL */
+    return params;
+}
+
+
+/*************************************************************************
+ *		init_startup_info
+ */
+void init_startup_info(void)
+{
+    WCHAR *src, *dst;
+    NTSTATUS status;
+    SIZE_T size, info_size, env_size;
+    RTL_USER_PROCESS_PARAMETERS *params = NULL;
+    startup_info_t *info;
+
+    if (!startup_info_size)
+    {
+        NtCurrentTeb()->Peb->ProcessParameters = build_initial_params();
+        return;
+    }
+
+    info = malloc( startup_info_size );
+
+    SERVER_START_REQ( get_startup_info )
+    {
+        wine_server_set_reply( req, info, startup_info_size );
+        status = wine_server_call( req );
+        info_size = reply->info_size;
+        env_size = wine_server_reply_size( reply ) - info_size;
+    }
+    SERVER_END_REQ;
+    assert( !status );
+
+    size = (sizeof(*params)
+            + MAX_PATH * sizeof(WCHAR)  /* curdir */
+            + info->dllpath_len + sizeof(WCHAR)
+            + info->imagepath_len + sizeof(WCHAR)
+            + info->cmdline_len + sizeof(WCHAR)
+            + info->title_len + sizeof(WCHAR)
+            + info->desktop_len + sizeof(WCHAR)
+            + info->shellinfo_len + sizeof(WCHAR)
+            + info->runtime_len + sizeof(WCHAR)
+            + env_size);
+
+    status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&params, 0, &size,
+                                      MEM_COMMIT, PAGE_READWRITE );
+    assert( !status );
+
+    params->AllocationSize  = size;
+    params->Size            = size;
+    params->Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
+    params->EnvironmentSize = env_size;
+    params->DebugFlags      = info->debug_flags;
+    params->ConsoleHandle   = wine_server_ptr_handle( info->console );
+    params->ConsoleFlags    = info->console_flags;
+    params->hStdInput       = wine_server_ptr_handle( info->hstdin );
+    params->hStdOutput      = wine_server_ptr_handle( info->hstdout );
+    params->hStdError       = wine_server_ptr_handle( info->hstderr );
+    params->dwX             = info->x;
+    params->dwY             = info->y;
+    params->dwXSize         = info->xsize;
+    params->dwYSize         = info->ysize;
+    params->dwXCountChars   = info->xchars;
+    params->dwYCountChars   = info->ychars;
+    params->dwFillAttribute = info->attribute;
+    params->dwFlags         = info->flags;
+    params->wShowWindow     = info->show;
+
+    src = (WCHAR *)(info + 1);
+    dst = (WCHAR *)(params + 1);
+
+    /* curdir is special */
+    copy_unicode_string( &src, &dst, &params->CurrentDirectory.DosPath, info->curdir_len );
+    params->CurrentDirectory.DosPath.MaximumLength = MAX_PATH * sizeof(WCHAR);
+    dst = params->CurrentDirectory.DosPath.Buffer + MAX_PATH;
+
+    copy_unicode_string( &src, &dst, &params->DllPath, info->dllpath_len );
+    copy_unicode_string( &src, &dst, &params->ImagePathName, info->imagepath_len );
+    copy_unicode_string( &src, &dst, &params->CommandLine, info->cmdline_len );
+    copy_unicode_string( &src, &dst, &params->WindowTitle, info->title_len );
+    copy_unicode_string( &src, &dst, &params->Desktop, info->desktop_len );
+    copy_unicode_string( &src, &dst, &params->ShellInfo, info->shellinfo_len );
+    copy_unicode_string( &src, &dst, &params->RuntimeInfo, info->runtime_len );
+    params->RuntimeInfo.MaximumLength = params->RuntimeInfo.Length;  /* runtime info isn't a real string */
+    params->Environment = dst;
+    memcpy( dst, src, env_size );
+    free( info );
+    NtCurrentTeb()->Peb->ProcessParameters = params;
 }
 
 

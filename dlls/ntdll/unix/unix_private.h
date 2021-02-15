@@ -100,7 +100,6 @@ extern NTSTATUS CDECL fast_wait_cv( RTL_CONDITION_VARIABLE *variable, const void
                                     const LARGE_INTEGER *timeout ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS CDECL get_initial_environment( WCHAR **wargv[], WCHAR *env, SIZE_T *size ) DECLSPEC_HIDDEN;
-extern NTSTATUS CDECL get_startup_info( startup_info_t *info, SIZE_T *total_size, SIZE_T *info_size ) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL get_dynamic_environment( WCHAR *env, SIZE_T *size ) DECLSPEC_HIDDEN;
 extern void CDECL get_initial_directory( UNICODE_STRING *dir ) DECLSPEC_HIDDEN;
 extern void CDECL get_initial_console( RTL_USER_PROCESS_PARAMETERS *params ) DECLSPEC_HIDDEN;
@@ -138,6 +137,7 @@ extern struct ldt_copy __wine_ldt_copy DECLSPEC_HIDDEN;
 #endif
 
 extern void init_environment( int argc, char *argv[], char *envp[] ) DECLSPEC_HIDDEN;
+extern void init_startup_info(void) DECLSPEC_HIDDEN;
 extern DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen ) DECLSPEC_HIDDEN;
 extern int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict ) DECLSPEC_HIDDEN;
 extern char **build_envp( const WCHAR *envW ) DECLSPEC_HIDDEN;

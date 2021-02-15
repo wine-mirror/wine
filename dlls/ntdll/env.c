@@ -1168,44 +1168,41 @@ wait:
  */
 void init_user_process_params(void)
 {
-    WCHAR *src, *load_path, *dummy;
-    SIZE_T info_size, env_size, data_size = 0;
-    startup_info_t *info = NULL;
-    RTL_USER_PROCESS_PARAMETERS *params = NULL;
-    UNICODE_STRING curdir, dllpath, imagepath, cmdline, title, desktop, shellinfo, runtime;
+    WCHAR *env, *load_path, *dummy;
+    SIZE_T env_size;
+    RTL_USER_PROCESS_PARAMETERS *new_params, *params = NtCurrentTeb()->Peb->ProcessParameters;
+    UNICODE_STRING curdir, dllpath, cmdline;
     WCHAR **wargv;
 
-    unix_funcs->get_startup_info( NULL, &data_size, &info_size );
-    if (!data_size)
+    if (!params->DllPath.MaximumLength)  /* not inherited from parent process */
     {
-        RTL_USER_PROCESS_PARAMETERS initial_params = {0};
-        WCHAR *env, curdir_buffer[MAX_PATH];
+        WCHAR curdir_buffer[MAX_PATH];
 
-        NtCurrentTeb()->Peb->ProcessParameters = &initial_params;
-        initial_params.Environment = build_initial_environment( &wargv );
+        params->Environment = build_initial_environment( &wargv );
         curdir.Buffer = curdir_buffer;
         curdir.MaximumLength = sizeof(curdir_buffer);
         get_current_directory( &curdir );
-        initial_params.CurrentDirectory.DosPath = curdir;
-        get_image_path( wargv[0], &initial_params.ImagePathName );
-        wargv[0] = initial_params.ImagePathName.Buffer;
+        params->CurrentDirectory.DosPath = curdir;
+        get_image_path( wargv[0], &params->ImagePathName );
+        wargv[0] = params->ImagePathName.Buffer;
         build_command_line( wargv, &cmdline );
-        LdrGetDllPath( initial_params.ImagePathName.Buffer, 0, &load_path, &dummy );
+        LdrGetDllPath( params->ImagePathName.Buffer, 0, &load_path, &dummy );
         RtlInitUnicodeString( &dllpath, load_path );
 
-        env = initial_params.Environment;
-        initial_params.Environment = NULL;  /* avoid copying it */
-        if (RtlCreateProcessParametersEx( &params, &initial_params.ImagePathName, &dllpath, &curdir,
-                                          &cmdline, NULL, &initial_params.ImagePathName, NULL, NULL, NULL,
+        env = params->Environment;
+        params->Environment = NULL;  /* avoid copying it */
+        if (RtlCreateProcessParametersEx( &new_params, &params->ImagePathName, &dllpath, &curdir,
+                                          &cmdline, NULL, &params->ImagePathName, NULL, NULL, NULL,
                                           PROCESS_PARAMS_FLAG_NORMALIZED ))
             return;
 
-        params->Environment = env;
-        NtCurrentTeb()->Peb->ProcessParameters = params;
-        RtlFreeUnicodeString( &initial_params.ImagePathName );
+        new_params->Environment = env;
+        NtCurrentTeb()->Peb->ProcessParameters = new_params;
+        RtlFreeUnicodeString( &params->ImagePathName );
         RtlFreeUnicodeString( &cmdline );
         RtlReleasePath( load_path );
 
+        params = new_params;
         unix_funcs->get_initial_console( params );
         params->wShowWindow = 1; /* SW_SHOWNORMAL */
 
@@ -1213,54 +1210,16 @@ void init_user_process_params(void)
         goto done;
     }
 
-    if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, data_size ))) return;
-
-    if (unix_funcs->get_startup_info( info, &data_size, &info_size )) goto done;
-
-    src = (WCHAR *)(info + 1);
-    get_unicode_string( &curdir, &src, info->curdir_len );
-    get_unicode_string( &dllpath, &src, info->dllpath_len );
-    get_unicode_string( &imagepath, &src, info->imagepath_len );
-    get_unicode_string( &cmdline, &src, info->cmdline_len );
-    get_unicode_string( &title, &src, info->title_len );
-    get_unicode_string( &desktop, &src, info->desktop_len );
-    get_unicode_string( &shellinfo, &src, info->shellinfo_len );
-    get_unicode_string( &runtime, &src, info->runtime_len );
-
-    runtime.MaximumLength = runtime.Length;  /* runtime info isn't a real string */
-
-    if (RtlCreateProcessParametersEx( &params, &imagepath, &dllpath, &curdir, &cmdline, NULL,
-                                      &title, &desktop, &shellinfo, &runtime,
-                                      PROCESS_PARAMS_FLAG_NORMALIZED ))
-        goto done;
-
-    NtCurrentTeb()->Peb->ProcessParameters = params;
-    params->DebugFlags      = info->debug_flags;
-    params->ConsoleHandle   = wine_server_ptr_handle( info->console );
-    params->ConsoleFlags    = info->console_flags;
-    params->hStdInput       = wine_server_ptr_handle( info->hstdin );
-    params->hStdOutput      = wine_server_ptr_handle( info->hstdout );
-    params->hStdError       = wine_server_ptr_handle( info->hstderr );
-    params->dwX             = info->x;
-    params->dwY             = info->y;
-    params->dwXSize         = info->xsize;
-    params->dwYSize         = info->ysize;
-    params->dwXCountChars   = info->xchars;
-    params->dwYCountChars   = info->ychars;
-    params->dwFillAttribute = info->attribute;
-    params->dwFlags         = info->flags;
-    params->wShowWindow     = info->show;
-
     /* environment needs to be a separate memory block */
-    env_size = data_size - info_size;
-    if ((params->Environment = RtlAllocateHeap( GetProcessHeap(), 0, max( env_size, sizeof(WCHAR) ))))
+    env_size = params->EnvironmentSize;
+    if ((env = RtlAllocateHeap( GetProcessHeap(), 0, max( env_size, sizeof(WCHAR) ))))
     {
-        if (env_size) memcpy( params->Environment, (char *)info + info_size, env_size );
-        else params->Environment[0] = 0;
+        if (env_size) memcpy( env, params->Environment, env_size );
+        else env[0] = 0;
+        params->Environment = env;
     }
 
 done:
-    RtlFreeHeap( GetProcessHeap(), 0, info );
     if (RtlSetCurrentDirectory_U( &params->CurrentDirectory.DosPath ))
     {
         MESSAGE("wine: could not open working directory %s, starting in the Windows directory.\n",
