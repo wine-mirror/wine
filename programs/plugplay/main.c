@@ -142,8 +142,8 @@ void __cdecl plugplay_send_event( DWORD code, const BYTE *data, unsigned int siz
     struct listener *listener;
     struct event *event;
 
-    BroadcastSystemMessageW( BSF_FORCEIFHUNG | BSF_QUERY, NULL, WM_DEVICECHANGE, code, (LPARAM)data );
-    BroadcastSystemMessageW( BSF_FORCEIFHUNG | BSF_QUERY, NULL, WM_DEVICECHANGE, DBT_DEVNODES_CHANGED, 0 );
+    BroadcastSystemMessageW( 0, NULL, WM_DEVICECHANGE, code, (LPARAM)data );
+    BroadcastSystemMessageW( 0, NULL, WM_DEVICECHANGE, DBT_DEVNODES_CHANGED, 0 );
 
     EnterCriticalSection( &plugplay_cs );
 
