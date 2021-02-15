@@ -1923,16 +1923,16 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
     {
         if (needed_flags & CONTEXT_INTEGER)
         {
-            context->Rax = 0;
+            context->Rax = frame->rax;
             context->Rbx = frame->rbx;
-            context->Rcx = 0;
-            context->Rdx = 0;
+            context->Rcx = frame->rcx;
+            context->Rdx = frame->rdx;
             context->Rsi = frame->rsi;
             context->Rdi = frame->rdi;
-            context->R8  = 0;
-            context->R9  = 0;
-            context->R10 = 0;
-            context->R11 = 0;
+            context->R8  = frame->r8;
+            context->R9  = frame->r9;
+            context->R10 = frame->r10;
+            context->R11 = frame->r11;
             context->R12 = frame->r12;
             context->R13 = frame->r13;
             context->R14 = frame->r14;
