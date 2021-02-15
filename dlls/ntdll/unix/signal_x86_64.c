@@ -1945,16 +1945,16 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
             context->Rbp    = frame->rbp;
             context->Rip    = frame->rip;
             context->EFlags = frame->eflags;
-            __asm__( "movw %%cs,%0" : "=g" (context->SegCs) );
-            __asm__( "movw %%ss,%0" : "=g" (context->SegSs) );
+            context->SegCs  = frame->cs;
+            context->SegSs  = frame->ss;
             context->ContextFlags |= CONTEXT_CONTROL;
         }
         if (needed_flags & CONTEXT_SEGMENTS)
         {
-            __asm__( "movw %%ds,%0" : "=g" (context->SegDs) );
-            __asm__( "movw %%es,%0" : "=g" (context->SegEs) );
-            __asm__( "movw %%fs,%0" : "=g" (context->SegFs) );
-            __asm__( "movw %%gs,%0" : "=g" (context->SegGs) );
+            context->SegDs  = frame->ds;
+            context->SegEs  = frame->es;
+            context->SegFs  = frame->fs;
+            context->SegGs  = frame->gs;
             context->ContextFlags |= CONTEXT_SEGMENTS;
         }
         if (needed_flags & CONTEXT_FLOATING_POINT)
