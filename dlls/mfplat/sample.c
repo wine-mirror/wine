@@ -184,17 +184,20 @@ static ULONG WINAPI sample_tracked_Release(IMFSample *iface)
     HRESULT hr;
 
     EnterCriticalSection(&sample->attributes.cs);
-    refcount = InterlockedDecrement(&sample->attributes.ref);
-    if (sample->tracked_result && sample->tracked_refcount == refcount)
+    if (sample->tracked_result && sample->tracked_refcount == (sample->attributes.ref - 1))
     {
-        /* Call could fail if queue system is not initialized, it's not critical. */
-        if (FAILED(hr = RtwqInvokeCallback(sample->tracked_result)))
-            WARN("Failed to invoke tracking callback, hr %#x.\n", hr);
-        IRtwqAsyncResult_Release(sample->tracked_result);
+        IRtwqAsyncResult *tracked_result = sample->tracked_result;
         sample->tracked_result = NULL;
         sample->tracked_refcount = 0;
+
+        /* Call could fail if queue system is not initialized, it's not critical. */
+        if (FAILED(hr = RtwqInvokeCallback(tracked_result)))
+            WARN("Failed to invoke tracking callback, hr %#x.\n", hr);
+        IRtwqAsyncResult_Release(tracked_result);
     }
     LeaveCriticalSection(&sample->attributes.cs);
+
+    refcount = InterlockedDecrement(&sample->attributes.ref);
 
     TRACE("%p, refcount %u.\n", iface, refcount);
 
