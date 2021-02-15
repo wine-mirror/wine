@@ -344,6 +344,31 @@ static void CDECL wg_parser_stream_disable(struct wg_parser_stream *stream)
     stream->enabled = false;
 }
 
+static bool CDECL wg_parser_stream_get_event(struct wg_parser_stream *stream, struct wg_parser_event *event)
+{
+    struct wg_parser *parser = stream->parser;
+
+    pthread_mutex_lock(&parser->mutex);
+
+    while (!parser->flushing && stream->event.type == WG_PARSER_EVENT_NONE)
+        pthread_cond_wait(&stream->event_cond, &parser->mutex);
+
+    if (parser->flushing)
+    {
+        pthread_mutex_unlock(&parser->mutex);
+        TRACE("Filter is flushing.\n");
+        return false;
+    }
+
+    *event = stream->event;
+    stream->event.type = WG_PARSER_EVENT_NONE;
+
+    pthread_mutex_unlock(&parser->mutex);
+    pthread_cond_signal(&stream->event_empty_cond);
+
+    return true;
+}
+
 static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, gpointer user)
 {
     const char *name = gst_element_factory_get_longname(fact);
@@ -1501,6 +1526,8 @@ static const struct unix_funcs funcs =
     wg_parser_stream_get_preferred_format,
     wg_parser_stream_enable,
     wg_parser_stream_disable,
+
+    wg_parser_stream_get_event,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)

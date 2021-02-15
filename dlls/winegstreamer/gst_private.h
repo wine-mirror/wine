@@ -221,6 +221,8 @@ struct unix_funcs
     void (CDECL *wg_parser_stream_get_preferred_format)(struct wg_parser_stream *stream, struct wg_format *format);
     void (CDECL *wg_parser_stream_enable)(struct wg_parser_stream *stream, const struct wg_format *format);
     void (CDECL *wg_parser_stream_disable)(struct wg_parser_stream *stream);
+
+    bool (CDECL *wg_parser_stream_get_event)(struct wg_parser_stream *stream, struct wg_parser_event *event);
 };
 
 extern const struct unix_funcs *unix_funcs;

@@ -686,33 +686,6 @@ static void send_buffer(struct parser_source *pin, GstBuffer *buf)
     gst_buffer_unref(buf);
 }
 
-static bool get_stream_event(struct parser_source *pin, struct wg_parser_event *event)
-{
-    struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
-    struct wg_parser_stream *stream = pin->wg_stream;
-    struct wg_parser *parser = filter->wg_parser;
-
-    pthread_mutex_lock(&parser->mutex);
-
-    while (!parser->flushing && stream->event.type == WG_PARSER_EVENT_NONE)
-        pthread_cond_wait(&stream->event_cond, &parser->mutex);
-
-    if (parser->flushing)
-    {
-        pthread_mutex_unlock(&parser->mutex);
-        TRACE("Filter is flushing.\n");
-        return false;
-    }
-
-    *event = stream->event;
-    stream->event.type = WG_PARSER_EVENT_NONE;
-
-    pthread_mutex_unlock(&parser->mutex);
-    pthread_cond_signal(&stream->event_empty_cond);
-
-    return true;
-}
-
 static DWORD CALLBACK stream_thread(void *arg)
 {
     struct parser_source *pin = arg;
@@ -726,7 +699,7 @@ static DWORD CALLBACK stream_thread(void *arg)
 
         EnterCriticalSection(&pin->flushing_cs);
 
-        if (!get_stream_event(pin, &event))
+        if (!unix_funcs->wg_parser_stream_get_event(pin->wg_stream, &event))
         {
             LeaveCriticalSection(&pin->flushing_cs);
             continue;
