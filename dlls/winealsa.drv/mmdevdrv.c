@@ -22,6 +22,8 @@
 #include "config.h"
 
 #include <stdarg.h>
+#define _GNU_SOURCE
+#include <stdio.h>
 #include <math.h>
 
 #include "windef.h"
@@ -521,6 +523,36 @@ static void get_reg_devices(EDataFlow flow, snd_pcm_stream_t stream, WCHAR ***id
     }
 }
 
+struct card_type {
+    struct list entry;
+    int first_card_number;
+    char string[1];
+};
+
+static struct list card_types = LIST_INIT(card_types);
+
+static BOOL need_card_number(int card, const char *string)
+{
+    struct card_type *cptr;
+
+    LIST_FOR_EACH_ENTRY(cptr, &card_types, struct card_type, entry)
+    {
+        if(!strcmp(string, cptr->string))
+            return card != cptr->first_card_number;
+    }
+
+    /* this is the first instance of string */
+    cptr = HeapAlloc(GetProcessHeap(), 0, sizeof(struct card_type) + strlen(string));
+    if(!cptr)
+        /* Default to displaying card number if we can't track cards */
+        return TRUE;
+
+    cptr->first_card_number = card;
+    strcpy(cptr->string, string);
+    list_add_head(&card_types, &cptr->entry);
+    return FALSE;
+}
+
 static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR ***ids, GUID **guids,
         UINT *num)
 {
@@ -564,6 +596,17 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR ***ids, GUID **guids,
                     cardpath, err, snd_strerror(err));
             alsa_get_card_devices(flow, stream, ids, guids, num, ctl, card, nameW);
         }else{
+            if(need_card_number(card, cardname)){
+                char *cardnameN;
+                /*
+                 * For identical card names, second and subsequent instances get
+                 * card number prefix to distinguish them (like Windows).
+                 */
+                if(asprintf(&cardnameN, "%u-%s", card, cardname) > 0){
+                    free(cardname);
+                    cardname = cardnameN;
+                }
+            }
             len = MultiByteToWideChar(CP_UNIXCP, 0, cardname, -1, NULL, 0);
             cardnameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
 
