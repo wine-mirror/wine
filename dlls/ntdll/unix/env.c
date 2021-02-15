@@ -165,11 +165,11 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
     if (!path) return STATUS_OBJECT_NAME_NOT_FOUND;
 
     /* try to open file in system dir */
-    ntdll_wcscpy( buffer, type == NLS_SECTION_SORTKEYS ? sortdirW : systemdirW );
+    wcscpy( buffer, type == NLS_SECTION_SORTKEYS ? sortdirW : systemdirW );
     p = strrchr( path, '/' ) + 1;
-    ascii_to_unicode( buffer + ntdll_wcslen(buffer), p, strlen(p) + 1 );
+    ascii_to_unicode( buffer + wcslen(buffer), p, strlen(p) + 1 );
     valueW.Buffer = buffer;
-    valueW.Length = ntdll_wcslen( buffer ) * sizeof(WCHAR);
+    valueW.Length = wcslen( buffer ) * sizeof(WCHAR);
     valueW.MaximumLength = sizeof( buffer );
     InitializeObjectAttributes( &attr, &valueW, 0, 0, NULL );
 
@@ -1080,12 +1080,22 @@ static const char overrides_help_message[] =
  *
  * Return the initial environment.
  */
-NTSTATUS CDECL get_initial_environment( WCHAR **wargv[], WCHAR *env, SIZE_T *size )
+static WCHAR *get_initial_environment( SIZE_T *ret_size )
 {
     char **e;
-    WCHAR *ptr = env, *end = env + *size;
+    SIZE_T size = 1;
+    WCHAR *env, *ptr, *end;
 
-    *wargv = main_wargv;
+    /* estimate needed size */
+    for (e = main_envp; *e; e++)
+    {
+        if (is_special_env_var( *e )) continue;
+        size += strlen(*e) + 1;
+    }
+
+    if (!(env = malloc( size * sizeof(WCHAR) ))) return NULL;
+    ptr = env;
+    end = env + size;
     for (e = main_envp; *e && ptr < end; e++)
     {
         char *str = *e;
@@ -1105,17 +1115,9 @@ NTSTATUS CDECL get_initial_environment( WCHAR **wargv[], WCHAR *env, SIZE_T *siz
 
         ptr += ntdll_umbstowcs( str, strlen(str) + 1, ptr, end - ptr );
     }
-
-    if (ptr < end)
-    {
-        *ptr++ = 0;
-        *size = ptr - env;
-        return STATUS_SUCCESS;
-    }
-
-    /* estimate needed size */
-    for (e = main_envp, *size = 1; *e; e++) if (!is_special_env_var( *e )) *size += strlen(*e) + 1;
-    return STATUS_BUFFER_TOO_SMALL;
+    *ptr++ = 0;
+    *ret_size = (ptr - env) * sizeof(WCHAR);
+    return env;
 }
 
 
@@ -1220,7 +1222,7 @@ NTSTATUS CDECL get_dynamic_environment( WCHAR *env, SIZE_T *size )
  *
  * Return the initial console handles.
  */
-void CDECL get_initial_console( RTL_USER_PROCESS_PARAMETERS *params )
+static void get_initial_console( RTL_USER_PROCESS_PARAMETERS *params )
 {
     int output_fd = -1;
 
@@ -1264,12 +1266,13 @@ void CDECL get_initial_console( RTL_USER_PROCESS_PARAMETERS *params )
  *
  * Get the current directory at startup.
  */
-void CDECL get_initial_directory( UNICODE_STRING *dir )
+static void get_initial_directory( UNICODE_STRING *dir )
 {
     const char *pwd;
     char *cwd;
     int size;
 
+    dir->MaximumLength = MAX_PATH * sizeof(WCHAR);
     dir->Length = 0;
 
     /* try to get it from the Unix cwd */
@@ -1320,8 +1323,22 @@ void CDECL get_initial_directory( UNICODE_STRING *dir )
     }
 
     if (!dir->Length)  /* still not initialized */
+    {
+        static const WCHAR windows_dir[] = {'C',':','\\','w','i','n','d','o','w','s'};
+
         MESSAGE("Warning: could not find DOS drive for current working directory '%s', "
                 "starting in the Windows directory.\n", cwd ? cwd : "" );
+        memcpy( dir->Buffer, windows_dir, sizeof(windows_dir) );
+        dir->Length = sizeof(windows_dir);
+    }
+
+    /* add trailing backslash */
+    if (dir->Buffer[dir->Length / sizeof(WCHAR) - 1] != '\\')
+    {
+        dir->Buffer[dir->Length / sizeof(WCHAR)] = '\\';
+        dir->Length += sizeof(WCHAR);
+    }
+    dir->Buffer[dir->Length / sizeof(WCHAR)] = 0;
     free( cwd );
 }
 
@@ -1349,6 +1366,91 @@ void CDECL get_locales( WCHAR *sys, WCHAR *user )
 }
 
 
+/***********************************************************************
+ *           build_command_line
+ *
+ * Build the command line of a process from the argv array.
+ *
+ * We must quote and escape characters so that the argv array can be rebuilt
+ * from the command line:
+ * - spaces and tabs must be quoted
+ *   'a b'   -> '"a b"'
+ * - quotes must be escaped
+ *   '"'     -> '\"'
+ * - if '\'s are followed by a '"', they must be doubled and followed by '\"',
+ *   resulting in an odd number of '\' followed by a '"'
+ *   '\"'    -> '\\\"'
+ *   '\\"'   -> '\\\\\"'
+ * - '\'s are followed by the closing '"' must be doubled,
+ *   resulting in an even number of '\' followed by a '"'
+ *   ' \'    -> '" \\"'
+ *   ' \\'    -> '" \\\\"'
+ * - '\'s that are not followed by a '"' can be left as is
+ *   'a\b'   == 'a\b'
+ *   'a\\b'  == 'a\\b'
+ */
+static WCHAR *build_command_line( WCHAR **wargv )
+{
+    int len;
+    WCHAR **arg, *ret;
+    LPWSTR p;
+
+    len = 1;
+    for (arg = wargv; *arg; arg++) len += 3 + 2 * wcslen( *arg );
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
+
+    p = ret;
+    for (arg = wargv; *arg; arg++)
+    {
+        BOOL has_space, has_quote;
+        int i, bcount;
+        WCHAR *a;
+
+        /* check for quotes and spaces in this argument */
+        has_space = !**arg || wcschr( *arg, ' ' ) || wcschr( *arg, '\t' );
+        has_quote = wcschr( *arg, '"' ) != NULL;
+
+        /* now transfer it to the command line */
+        if (has_space) *p++ = '"';
+        if (has_quote || has_space)
+        {
+            bcount = 0;
+            for (a = *arg; *a; a++)
+            {
+                if (*a == '\\') bcount++;
+                else
+                {
+                    if (*a == '"') /* double all the '\\' preceding this '"', plus one */
+                        for (i = 0; i <= bcount; i++) *p++ = '\\';
+                    bcount = 0;
+                }
+                *p++ = *a;
+            }
+        }
+        else
+        {
+            wcscpy( p, *arg );
+            p += wcslen( p );
+        }
+        if (has_space)
+        {
+            /* Double all the '\' preceding the closing quote */
+            for (i = 0; i < bcount; i++) *p++ = '\\';
+            *p++ = '"';
+        }
+        *p++ = ' ';
+    }
+    if (p > ret) p--;  /* remove last space */
+    *p = 0;
+    if (p - ret >= 32767)
+    {
+        ERR( "command line too long (%u)\n", (DWORD)(p - ret) );
+        NtTerminateProcess( GetCurrentProcess(), 1 );
+    }
+    return ret;
+}
+
+
 static inline void copy_unicode_string( WCHAR **src, WCHAR **dst, UNICODE_STRING *str, UINT len )
 {
     str->Buffer = *dst;
@@ -1360,6 +1462,11 @@ static inline void copy_unicode_string( WCHAR **src, WCHAR **dst, UNICODE_STRING
     *dst += len / sizeof(WCHAR) + 1;
 }
 
+static inline void put_unicode_string( WCHAR *src, WCHAR **dst, UNICODE_STRING *str )
+{
+    copy_unicode_string( &src, dst, str, wcslen(src) * sizeof(WCHAR) );
+}
+
 
 /*************************************************************************
  *		build_initial_params
@@ -1369,10 +1476,17 @@ static inline void copy_unicode_string( WCHAR **src, WCHAR **dst, UNICODE_STRING
 static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
 {
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
-    SIZE_T size;
+    SIZE_T size, env_size;
+    WCHAR *dst;
+    WCHAR *cmdline = build_command_line( main_wargv + 1 );
+    WCHAR *env = get_initial_environment( &env_size );
     NTSTATUS status;
 
-    size = sizeof(*params);
+    size = (sizeof(*params)
+            + MAX_PATH * sizeof(WCHAR)  /* curdir */
+            + (wcslen( cmdline ) + 1) * sizeof(WCHAR)  /* command line */
+            + (wcslen( main_wargv[0] ) + 1) * sizeof(WCHAR)  /* image path */
+            + env_size);
 
     status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&params, 0, &size,
                                       MEM_COMMIT, PAGE_READWRITE );
@@ -1382,6 +1496,22 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     params->Size            = size;
     params->Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
     params->wShowWindow     = 1; /* SW_SHOWNORMAL */
+
+    params->CurrentDirectory.DosPath.Buffer = (WCHAR *)(params + 1);
+    get_initial_directory( &params->CurrentDirectory.DosPath );
+    dst = params->CurrentDirectory.DosPath.Buffer + MAX_PATH;
+
+    put_unicode_string( main_wargv[0], &dst, &params->ImagePathName );
+    put_unicode_string( cmdline, &dst, &params->CommandLine );
+    free( cmdline );
+
+    params->Environment = dst;
+    params->EnvironmentSize = env_size;
+    memcpy( dst, env, env_size );
+    free( env );
+
+    get_initial_console( params );
+
     return params;
 }
 
@@ -1487,7 +1617,7 @@ NTSTATUS WINAPI NtGetNlsSectionPtr( ULONG type, ULONG id, void *unknown, void **
     if ((status = get_nls_section_name( type, id, name ))) return status;
 
     nameW.Buffer = name;
-    nameW.Length = ntdll_wcslen(name) * sizeof(WCHAR);
+    nameW.Length = wcslen(name) * sizeof(WCHAR);
     nameW.MaximumLength = sizeof(name);
     InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
     if ((status = NtOpenSection( &handle, SECTION_MAP_READ, &attr )))

@@ -361,52 +361,6 @@ static void set_wow64_environment( WCHAR **env )
 
 
 /***********************************************************************
- *           build_initial_environment
- *
- * Build the Win32 environment from the Unix environment
- */
-static WCHAR *build_initial_environment( WCHAR **wargv[] )
-{
-    SIZE_T size = 1024;
-    WCHAR *ptr;
-
-    for (;;)
-    {
-        if (!(ptr = RtlAllocateHeap( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return NULL;
-        if (!unix_funcs->get_initial_environment( wargv, ptr, &size )) break;
-        RtlFreeHeap( GetProcessHeap(), 0, ptr );
-    }
-    first_prefix_start = set_registry_environment( &ptr, TRUE );
-    set_additional_environment( &ptr );
-    return ptr;
-}
-
-
-/***********************************************************************
- *           get_current_directory
- *
- * Initialize the current directory from the Unix cwd.
- */
-static void get_current_directory( UNICODE_STRING *dir )
-{
-    unix_funcs->get_initial_directory( dir );
-
-    if (!dir->Length)  /* still not initialized */
-    {
-        dir->Length = wcslen( windows_dir ) * sizeof(WCHAR);
-        memcpy( dir->Buffer, windows_dir, dir->Length );
-    }
-    /* add trailing backslash */
-    if (dir->Buffer[dir->Length / sizeof(WCHAR) - 1] != '\\')
-    {
-        dir->Buffer[dir->Length / sizeof(WCHAR)] = '\\';
-        dir->Length += sizeof(WCHAR);
-    }
-    dir->Buffer[dir->Length / sizeof(WCHAR)] = 0;
-}
-
-
-/***********************************************************************
  *           is_path_prefix
  */
 static inline BOOL is_path_prefix( const WCHAR *prefix, const WCHAR *path, const WCHAR *file )
@@ -422,22 +376,22 @@ static inline BOOL is_path_prefix( const WCHAR *prefix, const WCHAR *path, const
 /***********************************************************************
  *           get_image_path
  */
-static void get_image_path( const WCHAR *name, UNICODE_STRING *path )
+static void get_image_path( const WCHAR *name, WCHAR *full_name, UINT size )
 {
-    WCHAR *load_path, *file_part, full_name[MAX_PATH];
+    WCHAR *load_path, *file_part;
     DWORD len;
 
     if (RtlDetermineDosPathNameType_U( name ) != RELATIVE_PATH ||
         wcschr( name, '/' ) || wcschr( name, '\\' ))
     {
-        len = RtlGetFullPathName_U( name, sizeof(full_name), full_name, &file_part );
-        if (!len || len > sizeof(full_name)) goto failed;
+        len = RtlGetFullPathName_U( name, size, full_name, &file_part );
+        if (!len || len > size) goto failed;
         /* try first without extension */
-        if (RtlDoesFileExists_U( full_name )) goto done;
-        if (len < (MAX_PATH - 4) * sizeof(WCHAR) && !wcschr( file_part, '.' ))
+        if (RtlDoesFileExists_U( full_name )) return;
+        if (len < size - 4 * sizeof(WCHAR) && !wcschr( file_part, '.' ))
         {
             wcscat( file_part, L".exe" );
-            if (RtlDoesFileExists_U( full_name )) goto done;
+            if (RtlDoesFileExists_U( full_name )) return;
         }
         /* check for builtin path inside system directory */
         if (!is_path_prefix( system_dir, full_name, file_part ))
@@ -449,115 +403,23 @@ static void get_image_path( const WCHAR *name, UNICODE_STRING *path )
     else
     {
         RtlGetExePath( name, &load_path );
-        len = RtlDosSearchPath_U( load_path, name, L".exe", sizeof(full_name), full_name, &file_part );
+        len = RtlDosSearchPath_U( load_path, name, L".exe", size, full_name, &file_part );
         RtlReleasePath( load_path );
-        if (!len || len > sizeof(full_name))
+        if (!len || len > size)
         {
             /* build builtin path inside system directory */
             len = wcslen( system_dir );
-            if (wcslen( name ) >= MAX_PATH - 4 - len) goto failed;
+            if (wcslen( name ) >= size/sizeof(WCHAR) - 4 - len) goto failed;
             wcscpy( full_name, system_dir );
             wcscat( full_name, name );
             if (!wcschr( name, '.' )) wcscat( full_name, L".exe" );
         }
     }
-done:
-    RtlCreateUnicodeString( path, full_name );
     return;
 
 failed:
     MESSAGE( "wine: cannot find %s\n", debugstr_w(name) );
     RtlExitUserProcess( STATUS_DLL_NOT_FOUND );
-}
-
-
-/***********************************************************************
- *           build_command_line
- *
- * Build the command line of a process from the argv array.
- *
- * Note that it does NOT necessarily include the file name.
- * Sometimes we don't even have any command line options at all.
- *
- * We must quote and escape characters so that the argv array can be rebuilt
- * from the command line:
- * - spaces and tabs must be quoted
- *   'a b'   -> '"a b"'
- * - quotes must be escaped
- *   '"'     -> '\"'
- * - if '\'s are followed by a '"', they must be doubled and followed by '\"',
- *   resulting in an odd number of '\' followed by a '"'
- *   '\"'    -> '\\\"'
- *   '\\"'   -> '\\\\\"'
- * - '\'s are followed by the closing '"' must be doubled,
- *   resulting in an even number of '\' followed by a '"'
- *   ' \'    -> '" \\"'
- *   ' \\'    -> '" \\\\"'
- * - '\'s that are not followed by a '"' can be left as is
- *   'a\b'   == 'a\b'
- *   'a\\b'  == 'a\\b'
- */
-static void build_command_line( WCHAR **argv, UNICODE_STRING *cmdline )
-{
-    int len;
-    WCHAR **arg;
-    LPWSTR p;
-
-    len = 1;
-    for (arg = argv; *arg; arg++) len += 3 + 2 * wcslen( *arg );
-    if (!(cmdline->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return;
-
-    p = cmdline->Buffer;
-    for (arg = argv; *arg; arg++)
-    {
-        BOOL has_space, has_quote;
-        int i, bcount;
-        WCHAR *a;
-
-        /* check for quotes and spaces in this argument */
-        if (arg == argv || !**arg) has_space = TRUE;
-        else has_space = wcschr( *arg, ' ' ) || wcschr( *arg, '\t' );
-        has_quote = wcschr( *arg, '"' ) != NULL;
-
-        /* now transfer it to the command line */
-        if (has_space) *p++ = '"';
-        if (has_quote || has_space)
-        {
-            bcount = 0;
-            for (a = *arg; *a; a++)
-            {
-                if (*a == '\\') bcount++;
-                else
-                {
-                    if (*a == '"') /* double all the '\\' preceding this '"', plus one */
-                        for (i = 0; i <= bcount; i++) *p++ = '\\';
-                    bcount = 0;
-                }
-                *p++ = *a;
-            }
-        }
-        else
-        {
-            wcscpy( p, *arg );
-            p += wcslen( p );
-        }
-        if (has_space)
-        {
-            /* Double all the '\' preceding the closing quote */
-            for (i = 0; i < bcount; i++) *p++ = '\\';
-            *p++ = '"';
-        }
-        *p++ = ' ';
-    }
-    if (p > cmdline->Buffer) p--;  /* remove last space */
-    *p = 0;
-    if (p - cmdline->Buffer >= 32767)
-    {
-        ERR( "command line too long (%u)\n", (DWORD)(p - cmdline->Buffer) );
-        NtTerminateProcess( GetCurrentProcess(), 1 );
-    }
-    cmdline->Length = (p - cmdline->Buffer) * sizeof(WCHAR);
-    cmdline->MaximumLength = cmdline->Length + sizeof(WCHAR);
 }
 
 
@@ -1168,50 +1030,14 @@ wait:
  */
 void init_user_process_params(void)
 {
-    WCHAR *env, *load_path, *dummy;
+    WCHAR *env, *load_path, *dummy, image[MAX_PATH];
     SIZE_T env_size;
     RTL_USER_PROCESS_PARAMETERS *new_params, *params = NtCurrentTeb()->Peb->ProcessParameters;
     UNICODE_STRING curdir, dllpath, cmdline;
-    WCHAR **wargv;
-
-    if (!params->DllPath.MaximumLength)  /* not inherited from parent process */
-    {
-        WCHAR curdir_buffer[MAX_PATH];
-
-        params->Environment = build_initial_environment( &wargv );
-        curdir.Buffer = curdir_buffer;
-        curdir.MaximumLength = sizeof(curdir_buffer);
-        get_current_directory( &curdir );
-        params->CurrentDirectory.DosPath = curdir;
-        get_image_path( wargv[0], &params->ImagePathName );
-        wargv[0] = params->ImagePathName.Buffer;
-        build_command_line( wargv, &cmdline );
-        LdrGetDllPath( params->ImagePathName.Buffer, 0, &load_path, &dummy );
-        RtlInitUnicodeString( &dllpath, load_path );
-
-        env = params->Environment;
-        params->Environment = NULL;  /* avoid copying it */
-        if (RtlCreateProcessParametersEx( &new_params, &params->ImagePathName, &dllpath, &curdir,
-                                          &cmdline, NULL, &params->ImagePathName, NULL, NULL, NULL,
-                                          PROCESS_PARAMS_FLAG_NORMALIZED ))
-            return;
-
-        new_params->Environment = env;
-        NtCurrentTeb()->Peb->ProcessParameters = new_params;
-        RtlFreeUnicodeString( &params->ImagePathName );
-        RtlFreeUnicodeString( &cmdline );
-        RtlReleasePath( load_path );
-
-        params = new_params;
-        unix_funcs->get_initial_console( params );
-        params->wShowWindow = 1; /* SW_SHOWNORMAL */
-
-        run_wineboot( &params->Environment );
-        goto done;
-    }
 
     /* environment needs to be a separate memory block */
     env_size = params->EnvironmentSize;
+    env = params->Environment;
     if ((env = RtlAllocateHeap( GetProcessHeap(), 0, max( env_size, sizeof(WCHAR) ))))
     {
         if (env_size) memcpy( env, params->Environment, env_size );
@@ -1219,7 +1045,47 @@ void init_user_process_params(void)
         params->Environment = env;
     }
 
-done:
+    if (!params->DllPath.MaximumLength)  /* not inherited from parent process */
+    {
+        first_prefix_start = set_registry_environment( &params->Environment, TRUE );
+        set_additional_environment( &params->Environment );
+
+        get_image_path( params->ImagePathName.Buffer, image, sizeof(image) );
+        RtlInitUnicodeString( &params->ImagePathName, image );
+
+        cmdline.Length = params->ImagePathName.Length + params->CommandLine.MaximumLength + 3 * sizeof(WCHAR);
+        cmdline.MaximumLength = cmdline.Length + sizeof(WCHAR);
+        cmdline.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, cmdline.MaximumLength );
+        swprintf( cmdline.Buffer, cmdline.MaximumLength / sizeof(WCHAR),
+                  L"\"%s\" %s", params->ImagePathName.Buffer, params->CommandLine.Buffer );
+
+        LdrGetDllPath( params->ImagePathName.Buffer, 0, &load_path, &dummy );
+        RtlInitUnicodeString( &dllpath, load_path );
+
+        env = params->Environment;
+        params->Environment = NULL;  /* avoid copying it */
+        if (RtlCreateProcessParametersEx( &new_params, &params->ImagePathName, &dllpath,
+                                          &params->CurrentDirectory.DosPath,
+                                          &cmdline, NULL, &params->ImagePathName, NULL, NULL, NULL,
+                                          PROCESS_PARAMS_FLAG_NORMALIZED ))
+            return;
+
+        new_params->Environment   = env;
+        new_params->hStdInput     = params->hStdInput;
+        new_params->hStdOutput    = params->hStdOutput;
+        new_params->hStdError     = params->hStdError;
+        new_params->ConsoleHandle = params->ConsoleHandle;
+        new_params->dwXCountChars = params->dwXCountChars;
+        new_params->dwYCountChars = params->dwYCountChars;
+        new_params->wShowWindow   = params->wShowWindow;
+        NtCurrentTeb()->Peb->ProcessParameters = params = new_params;
+
+        RtlFreeUnicodeString( &cmdline );
+        RtlReleasePath( load_path );
+
+        run_wineboot( &params->Environment );
+    }
+
     if (RtlSetCurrentDirectory_U( &params->CurrentDirectory.DosPath ))
     {
         MESSAGE("wine: could not open working directory %s, starting in the Windows directory.\n",
