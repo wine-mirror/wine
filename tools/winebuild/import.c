@@ -1527,6 +1527,8 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tsubq $0xb,0x8(%%rbp)\n" );
             output( "\tmovq 0x8(%%rbp),%%rbx\n" );
             output( "\tmovq %%rbx,-0x28(%%rbp)\n" );
+            output( "\tleaq 0x10(%%rbp),%%rbx\n" );
+            output( "\tmovq %%rbx,-0x10(%%rbp)\n" );
             output( "\tfxsave64 (%%rsp)\n" );
             output( "\tmovq %%gs:0x30,%%rcx\n" );
             output( "\tleaq -0x98(%%rbp),%%rbx\n" );

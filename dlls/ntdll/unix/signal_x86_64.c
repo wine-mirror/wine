@@ -300,12 +300,9 @@ struct syscall_frame
     WORD                  gs;      /* 0092 */
     WORD                  pad[2];  /* 0094 */
     ULONG64               rbp;     /* 0098 */
-    ULONG64               thunk_addr;
-    ULONG64               ret_addr;
 };
 
-/* Should match the offset in call_user_apc_dispatcher(). */
-C_ASSERT( offsetof( struct syscall_frame, ret_addr ) == 0xa8);
+C_ASSERT( sizeof( struct syscall_frame ) == 0xa0);
 
 struct amd64_thread_data
 {
@@ -1944,7 +1941,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         }
         if (needed_flags & CONTEXT_CONTROL)
         {
-            context->Rsp    = (ULONG64)&frame->ret_addr;
+            context->Rsp    = frame->rsp;
             context->Rbp    = frame->rbp;
             context->Rip    = frame->rip;
             context->EFlags = frame->eflags;
@@ -2104,7 +2101,7 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "movq 0x98(%rcx),%rdx\n\t"        /* context->Rsp */
                    "jmp 2f\n\t"
                    "1:\tmovq 0x328(%rbx),%rax\n\t"   /* amd64_thread_data()->syscall_frame */
-                   "leaq 0xa8(%rax),%rdx\n\t"        /* &amd64_thread_data()->syscall_frame->ret_addr */
+                   "movq 0x88(%rax),%rdx\n\t"        /* frame->rsp */
                    "2:\tsubq $0x510,%rdx\n\t"        /* sizeof(struct apc_stack_layout) */
                    "andq $~0xf,%rdx\n\t"
                    "addq $8,%rsp\n\t"                /* pop return address */
@@ -2399,7 +2396,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
     {
         XMM_SAVE_AREA32 *fpu = FPU_sig(sigcontext);
 
-        TRACE( "returning to user mode ip=%016lx ret=%08x\n", frame->ret_addr, rec->ExceptionCode );
+        TRACE( "returning to user mode ip=%016lx ret=%08x\n", frame->rip, rec->ExceptionCode );
         RAX_sig(sigcontext) = rec->ExceptionCode;
         RBX_sig(sigcontext) = frame->rbx;
         RSI_sig(sigcontext) = frame->rsi;
@@ -2409,7 +2406,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
         R13_sig(sigcontext) = frame->r13;
         R14_sig(sigcontext) = frame->r14;
         R15_sig(sigcontext) = frame->r15;
-        RSP_sig(sigcontext) = (ULONG_PTR)&frame->ret_addr;
+        RSP_sig(sigcontext) = frame->rsp;
         RIP_sig(sigcontext) = frame->rip;
         if (fpu) *fpu = get_syscall_xsave( frame )->xsave;
         amd64_thread_data()->syscall_frame = NULL;
