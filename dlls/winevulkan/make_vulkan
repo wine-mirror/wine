@@ -1375,7 +1375,14 @@ class VkParam(object):
         if self.is_static_array() or self.is_pointer():
             self.format_str = "%p"
         else:
-            if self.type_info["category"] in ["bitmask", "enum"]:
+            if self.type_info["category"] in ["bitmask"]:
+                # Since 1.2.170 bitmasks can be 32 or 64-bit, check the basetype.
+                if self.type_info["data"].type == "VkFlags64":
+                    self.format_str = "0x%s"
+                    self.format_conv = "wine_dbgstr_longlong({0})"
+                else:
+                    self.format_str = "%#x"
+            elif self.type_info["category"] in ["enum"]:
                 self.format_str = "%#x"
             elif self.is_handle():
                 # We use uint64_t for non-dispatchable handles as opposed to pointers
@@ -1577,7 +1584,13 @@ class VkParam(object):
             return "str"
         if self.is_dispatchable() or self.is_pointer() or self.is_static_array():
             return "ptr"
-        if self.type_info["category"] in ["bitmask", "enum"]:
+        if self.type_info["category"] in ["bitmask"]:
+            # Since 1.2.170 bitmasks can be 32 or 64-bit, check the basetype.
+            if self.type_info["data"].type == "VkFlags64":
+                return "int64"
+            else:
+                return "long"
+        if self.type_info["category"] in ["enum"]:
             return "long"
         if self.is_handle() and not self.is_dispatchable():
             return "int64"
