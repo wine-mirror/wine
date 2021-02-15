@@ -1508,19 +1508,9 @@ void output_syscalls( DLLSPEC *spec )
             output_cfi( ".cfi_rel_offset %%rbp,0" );
             output( "\tmovq %%rsp,%%rbp\n" );
             output_cfi( ".cfi_def_cfa_register %%rbp" );
-            output( "\tleaq -0xe0(%%rbp),%%rsp\n" );
+            output( "\tleaq -0x238(%%rbp),%%rsp\n" );
+            output( "\tandq $~63,%%rsp\n" );
             output( "\tmovq %%gs:0x30,%%rcx\n" );
-            output( "\tmovdqu %%xmm6,-0xe0(%%rbp)\n" );
-            output( "\tmovdqu %%xmm7,-0xd0(%%rbp)\n" );
-            output( "\tmovdqu %%xmm8,-0xc0(%%rbp)\n" );
-            output( "\tmovdqu %%xmm9,-0xb0(%%rbp)\n" );
-            output( "\tmovdqu %%xmm10,-0xa0(%%rbp)\n" );
-            output( "\tmovdqu %%xmm11,-0x90(%%rbp)\n" );
-            output( "\tmovdqu %%xmm12,-0x80(%%rbp)\n" );
-            output( "\tmovdqu %%xmm13,-0x70(%%rbp)\n" );
-            output( "\tmovdqu %%xmm14,-0x60(%%rbp)\n" );
-            output( "\tmovdqu %%xmm15,-0x50(%%rbp)\n" );
-            output( "\tstmxcsr -0x40(%%rbp)\n" );
             output( "\tmovq %%r12,-0x38(%%rbp)\n" );
             output( "\tmovq %%r13,-0x30(%%rbp)\n" );
             output( "\tmovq %%r14,-0x28(%%rbp)\n" );
@@ -1531,10 +1521,12 @@ void output_syscalls( DLLSPEC *spec )
             output_cfi( ".cfi_rel_offset %%rsi,-16" );
             output( "\tmovq %%rbx,-0x08(%%rbp)\n" );
             output_cfi( ".cfi_rel_offset %%rbx,-8" );
+            output( "\tfxsave64 (%%rsp)\n" );
             /* Legends of Runeterra hooks the first system call return instruction, and
              * depends on us returning to it. Adjust the return address accordingly. */
             output( "\tsubq $0xb,0x8(%%rbp)\n" );
-            output( "\tmovq %%rsp,0x328(%%rcx)\n" );  /* amd64_thread_data()->syscall_frame */
+            output( "\tleaq -0x38(%%rbp),%%rbx\n" );
+            output( "\tmovq %%rbx,0x328(%%rcx)\n" );  /* amd64_thread_data()->syscall_frame */
             output( "\tcmpq $%u,%%rax\n", count );
             output( "\tjae 4f\n" );
             output( "\tleaq .Lsyscall_args(%%rip),%%rcx\n" );
