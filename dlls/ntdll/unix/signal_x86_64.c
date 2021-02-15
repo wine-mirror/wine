@@ -1946,7 +1946,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         {
             context->Rsp    = (ULONG64)&frame->ret_addr;
             context->Rbp    = frame->rbp;
-            context->Rip    = frame->thunk_addr;
+            context->Rip    = frame->rip;
             context->EFlags = frame->eflags;
             __asm__( "movw %%cs,%0" : "=g" (context->SegCs) );
             __asm__( "movw %%ss,%0" : "=g" (context->SegSs) );
@@ -2410,7 +2410,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
         R14_sig(sigcontext) = frame->r14;
         R15_sig(sigcontext) = frame->r15;
         RSP_sig(sigcontext) = (ULONG_PTR)&frame->ret_addr;
-        RIP_sig(sigcontext) = frame->thunk_addr;
+        RIP_sig(sigcontext) = frame->rip;
         if (fpu) *fpu = get_syscall_xsave( frame )->xsave;
         amd64_thread_data()->syscall_frame = NULL;
     }

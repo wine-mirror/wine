@@ -1522,10 +1522,12 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tmovq %%r13,-0x40(%%rbp)\n" );
             output( "\tmovq %%r14,-0x38(%%rbp)\n" );
             output( "\tmovq %%r15,-0x30(%%rbp)\n" );
-            output( "\tfxsave64 (%%rsp)\n" );
             /* Legends of Runeterra hooks the first system call return instruction, and
              * depends on us returning to it. Adjust the return address accordingly. */
             output( "\tsubq $0xb,0x8(%%rbp)\n" );
+            output( "\tmovq 0x8(%%rbp),%%rbx\n" );
+            output( "\tmovq %%rbx,-0x28(%%rbp)\n" );
+            output( "\tfxsave64 (%%rsp)\n" );
             output( "\tmovq %%gs:0x30,%%rcx\n" );
             output( "\tleaq -0x98(%%rbp),%%rbx\n" );
             output( "\tmovq %%rbx,0x328(%%rcx)\n" );  /* amd64_thread_data()->syscall_frame */
