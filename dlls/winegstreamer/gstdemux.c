@@ -1507,6 +1507,7 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
     struct wg_parser_stream *stream = pin->wg_stream;
     unsigned int buffer_size = 16384;
     ALLOCATOR_PROPERTIES ret_props;
+    struct wg_format format;
     bool ret;
 
     if (IsEqualGUID(&pin->pin.pin.mt.formattype, &FORMAT_VideoInfo))
@@ -1526,11 +1527,10 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
         buffer_size = format->nAvgBytesPerSec;
     }
 
-    ret = amt_to_wg_format(&pin->pin.pin.mt, &stream->current_format);
+    ret = amt_to_wg_format(&pin->pin.pin.mt, &format);
     assert(ret);
-    stream->enabled = true;
+    unix_funcs->wg_parser_stream_enable(pin->wg_stream, &format);
 
-    gst_pad_push_event(stream->my_sink, gst_event_new_reconfigure());
     /* We do need to drop any buffers that might have been sent with the old
      * caps, but this will be handled in parser_init_stream(). */
 
@@ -1543,9 +1543,8 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
 static void source_disconnect(struct strmbase_source *iface)
 {
     struct parser_source *pin = impl_source_from_IPin(&iface->pin.IPin_iface);
-    struct wg_parser_stream *stream = pin->wg_stream;
 
-    stream->enabled = false;
+    unix_funcs->wg_parser_stream_disable(pin->wg_stream);
 }
 
 static void free_source_pin(struct parser_source *pin)

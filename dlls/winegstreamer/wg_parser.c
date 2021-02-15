@@ -332,6 +332,18 @@ static void CDECL wg_parser_stream_get_preferred_format(struct wg_parser_stream 
     *format = stream->preferred_format;
 }
 
+static void CDECL wg_parser_stream_enable(struct wg_parser_stream *stream, const struct wg_format *format)
+{
+    stream->current_format = *format;
+    stream->enabled = true;
+    gst_pad_push_event(stream->my_sink, gst_event_new_reconfigure());
+}
+
+static void CDECL wg_parser_stream_disable(struct wg_parser_stream *stream)
+{
+    stream->enabled = false;
+}
+
 static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, gpointer user)
 {
     const char *name = gst_element_factory_get_longname(fact);
@@ -1487,6 +1499,8 @@ static const struct unix_funcs funcs =
     wg_parser_get_stream,
 
     wg_parser_stream_get_preferred_format,
+    wg_parser_stream_enable,
+    wg_parser_stream_disable,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
