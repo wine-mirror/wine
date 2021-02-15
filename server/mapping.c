@@ -134,6 +134,8 @@ struct memory_view
     client_ptr_t    base;            /* view base address (in process addr space) */
     mem_size_t      size;            /* view size */
     file_pos_t      start;           /* start offset in mapping */
+    data_size_t     namelen;
+    WCHAR           name[1];         /* filename for .so dll image views */
 };
 
 
@@ -1000,6 +1002,12 @@ const pe_image_info_t *get_view_image_info( const struct memory_view *view, clie
 /* get the file name for a mapped view */
 int get_view_nt_name( const struct memory_view *view, struct unicode_str *name )
 {
+    if (view->namelen)  /* .so builtin */
+    {
+        name->str = view->name;
+        name->len = view->namelen;
+        return 1;
+    }
     if (!view->fd) return 0;
     get_nt_name( view->fd, name );
     return 1;
@@ -1157,6 +1165,7 @@ DECL_HANDLER(map_view)
 {
     struct mapping *mapping = NULL;
     struct memory_view *view;
+    data_size_t namelen = 0;
 
     if (!req->size || (req->base & page_mask) || req->base + req->size < req->base)  /* overflow */
     {
@@ -1175,13 +1184,16 @@ DECL_HANDLER(map_view)
 
     if (!req->mapping)  /* image mapping for a .so dll */
     {
-        if (!(view = mem_alloc( sizeof(*view) ))) return;
+        if (get_req_data_size() > sizeof(view->image)) namelen = get_req_data_size() - sizeof(view->image);
+        if (!(view = mem_alloc( offsetof( struct memory_view, name[namelen] )))) return;
         memset( view, 0, sizeof(*view) );
-        view->base  = req->base;
-        view->size  = req->size;
-        view->start = req->start;
-        view->flags = SEC_IMAGE;
+        view->base    = req->base;
+        view->size    = req->size;
+        view->start   = req->start;
+        view->flags   = SEC_IMAGE;
+        view->namelen = namelen;
         memcpy( &view->image, get_req_data(), min( sizeof(view->image), get_req_data_size() ));
+        memcpy( view->name, (pe_image_info_t *)get_req_data() + 1, namelen );
         add_process_view( current, view );
         return;
     }
@@ -1204,12 +1216,13 @@ DECL_HANDLER(map_view)
         goto done;
     }
 
-    if ((view = mem_alloc( sizeof(*view) )))
+    if ((view = mem_alloc( offsetof( struct memory_view, name[namelen] ))))
     {
         view->base      = req->base;
         view->size      = req->size;
         view->start     = req->start;
         view->flags     = mapping->flags;
+        view->namelen   = namelen;
         view->fd        = !is_fd_removable( mapping->fd ) ? (struct fd *)grab_object( mapping->fd ) : NULL;
         view->committed = mapping->committed ? (struct ranges *)grab_object( mapping->committed ) : NULL;
         view->shared    = mapping->shared ? (struct shared_map *)grab_object( mapping->shared ) : NULL;

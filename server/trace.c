@@ -1308,7 +1308,7 @@ static void dump_varargs_pe_image_info( const char *prefix, data_size_t size )
              info.header_size, info.file_size, info.checksum );
     dump_client_cpu( ",cpu=", &info.cpu );
     fputc( '}', stderr );
-    remove_data( size );
+    remove_data( min( size, sizeof(info) ));
 }
 
 static void dump_varargs_rawinput_devices(const char *prefix, data_size_t size )
@@ -2158,6 +2158,7 @@ static void dump_map_view_request( const struct map_view_request *req )
     dump_uint64( ", size=", &req->size );
     dump_uint64( ", start=", &req->start );
     dump_varargs_pe_image_info( ", image=", cur_size );
+    dump_varargs_unicode_str( ", name=", cur_size );
 }
 
 static void dump_unmap_view_request( const struct unmap_view_request *req )

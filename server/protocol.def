@@ -1540,6 +1540,7 @@ enum server_fd_type
     mem_size_t   size;          /* view size */
     file_pos_t   start;         /* start offset in mapping */
     VARARG(image,pe_image_info);/* image info for .so builtins */
+    VARARG(name,unicode_str);   /* image filename for .so builtins */
 @END
 
 

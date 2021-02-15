@@ -981,7 +981,8 @@ static void fill_builtin_image_info( void *module, pe_image_info_t *info )
 /***********************************************************************
  *           dlopen_dll
  */
-static NTSTATUS dlopen_dll( const char *so_name, void **ret_module, pe_image_info_t *image_info )
+static NTSTATUS dlopen_dll( const char *so_name, UNICODE_STRING *nt_name,
+                            void **ret_module, pe_image_info_t *image_info )
 {
     struct builtin_module *builtin;
     void *module, *handle;
@@ -1028,7 +1029,7 @@ static NTSTATUS dlopen_dll( const char *so_name, void **ret_module, pe_image_inf
         dlclose( handle );
         return STATUS_NO_MEMORY;
     }
-    virtual_create_builtin_view( module, image_info );
+    virtual_create_builtin_view( module, nt_name, image_info );
     *ret_module = module;
     return STATUS_SUCCESS;
 
@@ -1107,7 +1108,7 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
     len = nt_name->Length / sizeof(WCHAR);
     if (len > 3 && !wcsicmp( nt_name->Buffer + len - 3, soW )) nt_name->Length -= 3 * sizeof(WCHAR);
 
-    status = dlopen_dll( unix_name, module, &info );
+    status = dlopen_dll( unix_name, nt_name, module, &info );
     free( unix_name );
     return status;
 }
@@ -1261,7 +1262,7 @@ static NTSTATUS open_builtin_file( char *name, OBJECT_ATTRIBUTES *attr, HANDLE *
         {
             pe_image_info_t info;
 
-            if (!dlopen_dll( name, module, &info ))
+            if (!dlopen_dll( name, attr->ObjectName, module, &info ))
             {
                 virtual_fill_image_information( &info, image_info );
                 status = STATUS_SUCCESS;
