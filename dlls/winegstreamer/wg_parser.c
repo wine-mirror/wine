@@ -327,6 +327,28 @@ static struct wg_parser_stream * CDECL wg_parser_get_stream(struct wg_parser *pa
     return parser->streams[index];
 }
 
+static void CDECL wg_parser_begin_flush(struct wg_parser *parser)
+{
+    unsigned int i;
+
+    pthread_mutex_lock(&parser->mutex);
+    parser->flushing = true;
+    pthread_mutex_unlock(&parser->mutex);
+
+    for (i = 0; i < parser->stream_count; ++i)
+    {
+        if (parser->streams[i]->enabled)
+            pthread_cond_signal(&parser->streams[i]->event_cond);
+    }
+}
+
+static void CDECL wg_parser_end_flush(struct wg_parser *parser)
+{
+    pthread_mutex_lock(&parser->mutex);
+    parser->flushing = false;
+    pthread_mutex_unlock(&parser->mutex);
+}
+
 static void CDECL wg_parser_stream_get_preferred_format(struct wg_parser_stream *stream, struct wg_format *format)
 {
     *format = stream->preferred_format;
@@ -1519,6 +1541,9 @@ static const struct unix_funcs funcs =
 
     wg_parser_connect,
     wg_parser_disconnect,
+
+    wg_parser_begin_flush,
+    wg_parser_end_flush,
 
     wg_parser_get_stream_count,
     wg_parser_get_stream,

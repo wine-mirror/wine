@@ -856,9 +856,7 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
         return S_OK;
 
     filter->streaming = true;
-    pthread_mutex_lock(&parser->mutex);
-    parser->flushing = false;
-    pthread_mutex_unlock(&parser->mutex);
+    unix_funcs->wg_parser_end_flush(filter->wg_parser);
 
     /* DirectShow retains the old seek positions, but resets to them every time
      * it transitions from stopped -> paused. */
@@ -899,17 +897,7 @@ static HRESULT parser_cleanup_stream(struct strmbase_filter *iface)
         return S_OK;
 
     filter->streaming = false;
-    pthread_mutex_lock(&parser->mutex);
-    parser->flushing = true;
-    pthread_mutex_unlock(&parser->mutex);
-
-    for (i = 0; i < parser->stream_count; ++i)
-    {
-        struct wg_parser_stream *stream = parser->streams[i];
-
-        if (stream->enabled)
-            pthread_cond_signal(&stream->event_cond);
-    }
+    unix_funcs->wg_parser_begin_flush(filter->wg_parser);
 
     for (i = 0; i < filter->source_count; ++i)
     {
@@ -1228,7 +1216,6 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
     struct parser_source *pin = impl_from_IMediaSeeking(iface);
     struct wg_parser_stream *stream = pin->wg_stream;
     struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
-    struct wg_parser *parser = filter->wg_parser;
     GstSeekFlags flags = 0;
     HRESULT hr = S_OK;
     int i;
@@ -1247,17 +1234,12 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
 
     if (!(current_flags & AM_SEEKING_NoFlush))
     {
-        pthread_mutex_lock(&parser->mutex);
-        parser->flushing = true;
-        pthread_mutex_unlock(&parser->mutex);
+        unix_funcs->wg_parser_begin_flush(filter->wg_parser);
 
         for (i = 0; i < filter->source_count; ++i)
         {
             if (filter->sources[i]->pin.pin.peer)
-            {
-                pthread_cond_signal(&stream->event_cond);
                 IPin_BeginFlush(filter->sources[i]->pin.pin.peer);
-            }
         }
 
         if (filter->reader)
@@ -1296,9 +1278,7 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
 
     if (!(current_flags & AM_SEEKING_NoFlush))
     {
-        pthread_mutex_lock(&parser->mutex);
-        parser->flushing = false;
-        pthread_mutex_unlock(&parser->mutex);
+        unix_funcs->wg_parser_end_flush(filter->wg_parser);
 
         for (i = 0; i < filter->source_count; ++i)
         {
