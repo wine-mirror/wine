@@ -1564,11 +1564,12 @@ void output_syscalls( DLLSPEC *spec )
             output_cfi( ".cfi_same_value %%rsi" );
             output( "\tmovq -0x90(%%rbp),%%rbx\n" );
             output_cfi( ".cfi_same_value %%rbx" );
+            output( "\tleaq -0x28(%%rbp),%%rsp\n" );
             output_cfi( ".cfi_def_cfa_register %%rsp" );
-            output( "\tleave\n" );
-            output_cfi( ".cfi_adjust_cfa_offset -8" );
+            output_cfi( ".cfi_adjust_cfa_offset 40" );
+            output( "\tmovq (%%rbp),%%rbp\n" );
             output_cfi( ".cfi_same_value %%rbp" );
-            output( "\tret\n" );
+            output( "\tiretq\n" );
             output( "3:\tmovl $0x%x,%%eax\n", invalid_param );
             output( "\tjmp 2b\n" );
             break;
