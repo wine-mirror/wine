@@ -1528,25 +1528,23 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tleaq -0x38(%%rbp),%%rbx\n" );
             output( "\tmovq %%rbx,0x328(%%rcx)\n" );  /* amd64_thread_data()->syscall_frame */
             output( "\tcmpq $%u,%%rax\n", count );
-            output( "\tjae 4f\n" );
+            output( "\tjae 3f\n" );
             output( "\tleaq .Lsyscall_args(%%rip),%%rcx\n" );
             output( "\tmovzbl (%%rcx,%%rax),%%ecx\n" );
             output( "\tsubq $0x20,%%rcx\n" );
-            output( "\tja 1f\n" );
-            output( "\tandq $~15,%%rsp\n\t" );
-            output( "\tjmp 2f\n" );
-            output( "1:\tsubq %%rcx,%%rsp\n" );
+            output( "\tjbe 1f\n" );
+            output( "\tsubq %%rcx,%%rsp\n" );
             output( "\tshrq $3,%%rcx\n" );
             output( "\tleaq 0x38(%%rbp),%%rsi\n" );
             output( "\tandq $~15,%%rsp\n\t" );
             output( "\tmovq %%rsp,%%rdi\n" );
             output( "\tcld\n" );
             output( "\trep; movsq\n" );
-            output( "2:\tmovq %%r10,%%rcx\n" );
+            output( "1:\tmovq %%r10,%%rcx\n" );
             output( "\tsubq $0x20,%%rsp\n" );
             output( "\tleaq .Lsyscall_table(%%rip),%%r10\n" );
             output( "\tcallq *(%%r10,%%rax,8)\n" );
-            output( "3:\tmovq %%gs:0x30,%%rcx\n" );
+            output( "2:\tmovq %%gs:0x30,%%rcx\n" );
             output( "\tmovq $0,0x328(%%rcx)\n" );
             output( "\tmovq -0x18(%%rbp),%%rdi\n" );
             output_cfi( ".cfi_same_value %%rdi" );
@@ -1559,8 +1557,8 @@ void output_syscalls( DLLSPEC *spec )
             output_cfi( ".cfi_adjust_cfa_offset -8" );
             output_cfi( ".cfi_same_value %%rbp" );
             output( "\tret\n" );
-            output( "4:\tmovl $0x%x,%%eax\n", invalid_param );
-            output( "\tjmp 3b\n" );
+            output( "3:\tmovl $0x%x,%%eax\n", invalid_param );
+            output( "\tjmp 2b\n" );
             break;
         case CPU_ARM:
             output( "\tpush {r5-r11,lr}\n" );
