@@ -27,7 +27,7 @@
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 110
+#define NTDLL_UNIXLIB_VERSION 111
 
 struct unix_funcs
 {
@@ -71,7 +71,6 @@ struct unix_funcs
     double        (CDECL *tan)( double d );
 
     /* environment functions */
-    NTSTATUS      (CDECL *get_dynamic_environment)( WCHAR *env, SIZE_T *size );
     USHORT *      (CDECL *get_unix_codepage_data)(void);
     void          (CDECL *get_locales)( WCHAR *sys, WCHAR *user );
 

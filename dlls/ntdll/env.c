@@ -286,22 +286,7 @@ static void set_wow64_environment( WCHAR **env )
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     HANDLE hkey;
-    SIZE_T size = 1024;
-    WCHAR *ptr, *val, *p;
-
-    for (;;)
-    {
-        if (!(ptr = RtlAllocateHeap( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) break;
-        if (!unix_funcs->get_dynamic_environment( ptr, &size )) break;
-        RtlFreeHeap( GetProcessHeap(), 0, ptr );
-    }
-    for (p = ptr; *p; p += wcslen(p) + 1)
-    {
-        if ((val = wcschr( p, '=' ))) *val++ = 0;
-        set_env_var( env, p, val );
-        if (val) p = val;
-    }
-    RtlFreeHeap( GetProcessHeap(), 0, ptr );
+    WCHAR *val;
 
     /* set the PROCESSOR_ARCHITECTURE variable */
 
