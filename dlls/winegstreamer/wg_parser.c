@@ -327,6 +327,11 @@ static struct wg_parser_stream * CDECL wg_parser_get_stream(struct wg_parser *pa
     return parser->streams[index];
 }
 
+static void CDECL wg_parser_stream_get_preferred_format(struct wg_parser_stream *stream, struct wg_format *format)
+{
+    *format = stream->preferred_format;
+}
+
 static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, gpointer user)
 {
     const char *name = gst_element_factory_get_longname(fact);
@@ -1480,6 +1485,8 @@ static const struct unix_funcs funcs =
 
     wg_parser_get_stream_count,
     wg_parser_get_stream,
+
+    wg_parser_stream_get_preferred_format,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)

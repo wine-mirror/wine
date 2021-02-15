@@ -1064,8 +1064,7 @@ static HRESULT decodebin_parser_source_query_accept(struct parser_source *pin, c
 static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
-    struct wg_parser_stream *stream = pin->wg_stream;
-    struct wg_format format = stream->preferred_format;
+    struct wg_format format;
 
     static const enum wg_video_format video_formats[] =
     {
@@ -1085,6 +1084,8 @@ static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
         WG_VIDEO_FORMAT_RGB16,
         WG_VIDEO_FORMAT_RGB15,
     };
+
+    unix_funcs->wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
 
     memset(mt, 0, sizeof(AM_MEDIA_TYPE));
 
@@ -1673,11 +1674,12 @@ static BOOL wave_parser_filter_init_gst(struct parser *filter)
 
 static HRESULT wave_parser_source_query_accept(struct parser_source *pin, const AM_MEDIA_TYPE *mt)
 {
-    struct wg_parser_stream *stream = pin->wg_stream;
+    struct wg_format format;
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    if (!amt_from_wg_format(&pad_mt, &stream->preferred_format))
+    unix_funcs->wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
+    if (!amt_from_wg_format(&pad_mt, &format))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -1687,11 +1689,12 @@ static HRESULT wave_parser_source_query_accept(struct parser_source *pin, const 
 static HRESULT wave_parser_source_get_media_type(struct parser_source *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
-    struct wg_parser_stream *stream = pin->wg_stream;
+    struct wg_format format;
 
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    if (!amt_from_wg_format(mt, &stream->preferred_format))
+    unix_funcs->wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
+    if (!amt_from_wg_format(mt, &format))
         return E_OUTOFMEMORY;
     return S_OK;
 }
@@ -1761,11 +1764,12 @@ static BOOL avi_splitter_filter_init_gst(struct parser *filter)
 
 static HRESULT avi_splitter_source_query_accept(struct parser_source *pin, const AM_MEDIA_TYPE *mt)
 {
-    struct wg_parser_stream *stream = pin->wg_stream;
+    struct wg_format format;
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    if (!amt_from_wg_format(&pad_mt, &stream->preferred_format))
+    unix_funcs->wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
+    if (!amt_from_wg_format(&pad_mt, &format))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -1775,11 +1779,12 @@ static HRESULT avi_splitter_source_query_accept(struct parser_source *pin, const
 static HRESULT avi_splitter_source_get_media_type(struct parser_source *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
-    struct wg_parser_stream *stream = pin->wg_stream;
+    struct wg_format format;
 
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    if (!amt_from_wg_format(mt, &stream->preferred_format))
+    unix_funcs->wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
+    if (!amt_from_wg_format(mt, &format))
         return E_OUTOFMEMORY;
     return S_OK;
 }
@@ -1847,11 +1852,12 @@ static BOOL mpeg_splitter_filter_init_gst(struct parser *filter)
 
 static HRESULT mpeg_splitter_source_query_accept(struct parser_source *pin, const AM_MEDIA_TYPE *mt)
 {
-    struct wg_parser_stream *stream = pin->wg_stream;
+    struct wg_format format;
     AM_MEDIA_TYPE pad_mt;
     HRESULT hr;
 
-    if (!amt_from_wg_format(&pad_mt, &stream->preferred_format))
+    unix_funcs->wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
+    if (!amt_from_wg_format(&pad_mt, &format))
         return E_OUTOFMEMORY;
     hr = compare_media_types(mt, &pad_mt) ? S_OK : S_FALSE;
     FreeMediaType(&pad_mt);
@@ -1861,11 +1867,12 @@ static HRESULT mpeg_splitter_source_query_accept(struct parser_source *pin, cons
 static HRESULT mpeg_splitter_source_get_media_type(struct parser_source *pin,
         unsigned int index, AM_MEDIA_TYPE *mt)
 {
-    struct wg_parser_stream *stream = pin->wg_stream;
+    struct wg_format format;
 
     if (index > 0)
         return VFW_S_NO_MORE_ITEMS;
-    if (!amt_from_wg_format(mt, &stream->preferred_format))
+    unix_funcs->wg_parser_stream_get_preferred_format(pin->wg_stream, &format);
+    if (!amt_from_wg_format(mt, &format))
         return E_OUTOFMEMORY;
     return S_OK;
 }
