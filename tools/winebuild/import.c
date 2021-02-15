@@ -1508,7 +1508,9 @@ void output_syscalls( DLLSPEC *spec )
             output_cfi( ".cfi_rel_offset %%rbp,0" );
             output( "\tmovq %%rsp,%%rbp\n" );
             output_cfi( ".cfi_def_cfa_register %%rbp" );
-            output( "\tleaq -0x2a8(%%rbp),%%rsp\n" );
+            output( "\tleaq -0x10(%%rbp),%%rsp\n" );
+            output( "\tpushfq\n" );
+            output( "\tsubq $0x280,%%rsp\n" );
             output( "\tandq $~63,%%rsp\n" );
             output( "\tmovq %%rbx,-0x90(%%rbp)\n" );
             output_cfi( ".cfi_rel_offset %%rbx,-144" );

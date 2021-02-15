@@ -1947,7 +1947,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
             context->Rsp    = (ULONG64)&frame->ret_addr;
             context->Rbp    = frame->rbp;
             context->Rip    = frame->thunk_addr;
-            context->EFlags = 0x202;
+            context->EFlags = frame->eflags;
             __asm__( "movw %%cs,%0" : "=g" (context->SegCs) );
             __asm__( "movw %%ss,%0" : "=g" (context->SegSs) );
             context->ContextFlags |= CONTEXT_CONTROL;
