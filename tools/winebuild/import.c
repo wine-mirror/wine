@@ -1508,24 +1508,24 @@ void output_syscalls( DLLSPEC *spec )
             output_cfi( ".cfi_rel_offset %%rbp,0" );
             output( "\tmovq %%rsp,%%rbp\n" );
             output_cfi( ".cfi_def_cfa_register %%rbp" );
-            output( "\tleaq -0x238(%%rbp),%%rsp\n" );
+            output( "\tleaq -0x2a8(%%rbp),%%rsp\n" );
             output( "\tandq $~63,%%rsp\n" );
-            output( "\tmovq %%gs:0x30,%%rcx\n" );
-            output( "\tmovq %%r12,-0x38(%%rbp)\n" );
-            output( "\tmovq %%r13,-0x30(%%rbp)\n" );
-            output( "\tmovq %%r14,-0x28(%%rbp)\n" );
-            output( "\tmovq %%r15,-0x20(%%rbp)\n" );
-            output( "\tmovq %%rdi,-0x18(%%rbp)\n" );
-            output_cfi( ".cfi_rel_offset %%rdi,-24" );
-            output( "\tmovq %%rsi,-0x10(%%rbp)\n" );
-            output_cfi( ".cfi_rel_offset %%rsi,-16" );
-            output( "\tmovq %%rbx,-0x08(%%rbp)\n" );
-            output_cfi( ".cfi_rel_offset %%rbx,-8" );
+            output( "\tmovq %%rbx,-0x90(%%rbp)\n" );
+            output_cfi( ".cfi_rel_offset %%rbx,-144" );
+            output( "\tmovq %%rsi,-0x78(%%rbp)\n" );
+            output_cfi( ".cfi_rel_offset %%rsi,-120" );
+            output( "\tmovq %%rdi,-0x70(%%rbp)\n" );
+            output_cfi( ".cfi_rel_offset %%rdi,-112" );
+            output( "\tmovq %%r12,-0x48(%%rbp)\n" );
+            output( "\tmovq %%r13,-0x40(%%rbp)\n" );
+            output( "\tmovq %%r14,-0x38(%%rbp)\n" );
+            output( "\tmovq %%r15,-0x30(%%rbp)\n" );
             output( "\tfxsave64 (%%rsp)\n" );
             /* Legends of Runeterra hooks the first system call return instruction, and
              * depends on us returning to it. Adjust the return address accordingly. */
             output( "\tsubq $0xb,0x8(%%rbp)\n" );
-            output( "\tleaq -0x38(%%rbp),%%rbx\n" );
+            output( "\tmovq %%gs:0x30,%%rcx\n" );
+            output( "\tleaq -0x98(%%rbp),%%rbx\n" );
             output( "\tmovq %%rbx,0x328(%%rcx)\n" );  /* amd64_thread_data()->syscall_frame */
             output( "\tcmpq $%u,%%rax\n", count );
             output( "\tjae 3f\n" );
@@ -1546,11 +1546,11 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tcallq *(%%r10,%%rax,8)\n" );
             output( "2:\tmovq %%gs:0x30,%%rcx\n" );
             output( "\tmovq $0,0x328(%%rcx)\n" );
-            output( "\tmovq -0x18(%%rbp),%%rdi\n" );
+            output( "\tmovq -0x70(%%rbp),%%rdi\n" );
             output_cfi( ".cfi_same_value %%rdi" );
-            output( "\tmovq -0x10(%%rbp),%%rsi\n" );
+            output( "\tmovq -0x78(%%rbp),%%rsi\n" );
             output_cfi( ".cfi_same_value %%rsi" );
-            output( "\tmovq -0x8(%%rbp),%%rbx\n" );
+            output( "\tmovq -0x90(%%rbp),%%rbx\n" );
             output_cfi( ".cfi_same_value %%rbx" );
             output_cfi( ".cfi_def_cfa_register %%rsp" );
             output( "\tleave\n" );

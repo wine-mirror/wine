@@ -275,20 +275,37 @@ C_ASSERT( sizeof(struct syscall_xsave) == 0x200 );
 
 struct syscall_frame
 {
-    ULONG64               r12;
-    ULONG64               r13;
-    ULONG64               r14;
-    ULONG64               r15;
-    ULONG64               rdi;
-    ULONG64               rsi;
-    ULONG64               rbx;
-    ULONG64               rbp;
+    ULONG64               rax;     /* 0000 */
+    ULONG64               rbx;     /* 0008 */
+    ULONG64               rcx;     /* 0010 */
+    ULONG64               rdx;     /* 0018 */
+    ULONG64               rsi;     /* 0020 */
+    ULONG64               rdi;     /* 0028 */
+    ULONG64               r8;      /* 0030 */
+    ULONG64               r9;      /* 0038 */
+    ULONG64               r10;     /* 0040 */
+    ULONG64               r11;     /* 0048 */
+    ULONG64               r12;     /* 0050 */
+    ULONG64               r13;     /* 0058 */
+    ULONG64               r14;     /* 0060 */
+    ULONG64               r15;     /* 0068 */
+    ULONG64               rip;     /* 0070 */
+    WORD                  cs;      /* 0078 */
+    WORD                  ds;      /* 007a */
+    WORD                  es;      /* 007c */
+    WORD                  fs;      /* 007e */
+    ULONG64               eflags;  /* 0080 */
+    ULONG64               rsp;     /* 0088 */
+    WORD                  ss;      /* 0090 */
+    WORD                  gs;      /* 0092 */
+    WORD                  pad[2];  /* 0094 */
+    ULONG64               rbp;     /* 0098 */
     ULONG64               thunk_addr;
     ULONG64               ret_addr;
 };
 
 /* Should match the offset in call_user_apc_dispatcher(). */
-C_ASSERT( offsetof( struct syscall_frame, ret_addr ) == 0x48);
+C_ASSERT( offsetof( struct syscall_frame, ret_addr ) == 0xa8);
 
 struct amd64_thread_data
 {
@@ -2087,7 +2104,7 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "movq 0x98(%rcx),%rdx\n\t"        /* context->Rsp */
                    "jmp 2f\n\t"
                    "1:\tmovq 0x328(%rbx),%rax\n\t"   /* amd64_thread_data()->syscall_frame */
-                   "leaq 0x48(%rax),%rdx\n\t"        /* &amd64_thread_data()->syscall_frame->ret_addr */
+                   "leaq 0xa8(%rax),%rdx\n\t"        /* &amd64_thread_data()->syscall_frame->ret_addr */
                    "2:\tsubq $0x510,%rdx\n\t"        /* sizeof(struct apc_stack_layout) */
                    "andq $~0xf,%rdx\n\t"
                    "addq $8,%rsp\n\t"                /* pop return address */
@@ -2135,12 +2152,12 @@ __ASM_GLOBAL_FUNC( call_raise_user_exception_dispatcher,
                    "leaq -0x200(%rax),%r8\n\t"
                    "andq $~63,%r8\n\t"
                    "fxrstor64 (%r8)\n\t"
-                   "movq 0x20(%rax),%rdi\n\t"     /* frame->rdi */
-                   "movq 0x28(%rax),%rsi\n\t"     /* frame->rsi */
-                   "movq 0x30(%rax),%rbx\n\t"     /* frame->rbx */
-                   "movq 0x38(%rax),%rbp\n\t"     /* frame->rbp */
+                   "movq 0x8(%rax),%rbx\n\t"      /* frame->rbx */
+                   "movq 0x20(%rax),%rsi\n\t"     /* frame->rsi */
+                   "movq 0x28(%rax),%rdi\n\t"     /* frame->rdi */
+                   "movq 0x98(%rax),%rbp\n\t"     /* frame->rbp */
                    "movq $0,0x328(%rdx)\n\t"
-                   "leaq 0x48(%rax),%rsp\n\t"
+                   "leaq 0xa8(%rax),%rsp\n\t"
                    "jmpq *%rcx" )
 
 
