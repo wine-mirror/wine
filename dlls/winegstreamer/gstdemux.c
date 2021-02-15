@@ -1350,11 +1350,8 @@ static ULONG WINAPI GST_QualityControl_Release(IQualityControl *iface)
 static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality q)
 {
     struct parser_source *pin = impl_from_IQualityControl(iface);
-    struct wg_parser_stream *stream = pin->wg_stream;
-    GstQOSType type = GST_QOS_TYPE_OVERFLOW;
-    GstClockTime timestamp;
-    GstClockTimeDiff diff;
-    GstEvent *event;
+    uint64_t timestamp;
+    int64_t diff;
 
     TRACE("pin %p, sender %p, type %s, proportion %u, late %s, timestamp %s.\n",
             pin, sender, q.Type == Famine ? "Famine" : "Flood", q.Proportion,
@@ -1362,20 +1359,14 @@ static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFil
 
     mark_wine_thread();
 
-    /* GST_QOS_TYPE_OVERFLOW is also used for buffers that arrive on time, but
-     * DirectShow filters might use Famine, so check that there actually is an
-     * underrun. */
-    if (q.Type == Famine && q.Proportion < 1000)
-        type = GST_QOS_TYPE_UNDERFLOW;
-
     /* DirectShow filters sometimes pass negative timestamps (Audiosurf uses the
      * current time instead of the time of the last buffer). GstClockTime is
      * unsigned, so clamp it to 0. */
-    timestamp = max(q.TimeStamp * 100, 0);
+    timestamp = max(q.TimeStamp, 0);
 
     /* The documentation specifies that timestamp + diff must be nonnegative. */
-    diff = q.Late * 100;
-    if (diff < 0 && timestamp < (GstClockTime)-diff)
+    diff = q.Late;
+    if (diff < 0 && timestamp < (uint64_t)-diff)
         diff = -timestamp;
 
     /* DirectShow "Proportion" describes what percentage of buffers the upstream
@@ -1395,10 +1386,11 @@ static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFil
         return S_OK;
     }
 
-    if (!(event = gst_event_new_qos(type, 1000.0 / q.Proportion, diff, timestamp)))
-        ERR("Failed to create QOS event.\n");
-
-    gst_pad_push_event(stream->my_sink, event);
+    /* GST_QOS_TYPE_OVERFLOW is also used for buffers that arrive on time, but
+     * DirectShow filters might use Famine, so check that there actually is an
+     * underrun. */
+    unix_funcs->wg_parser_stream_notify_qos(pin->wg_stream, q.Type == Famine && q.Proportion < 1000,
+            1000.0 / q.Proportion, diff, timestamp);
 
     return S_OK;
 }

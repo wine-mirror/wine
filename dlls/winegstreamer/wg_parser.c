@@ -391,6 +391,17 @@ static bool CDECL wg_parser_stream_get_event(struct wg_parser_stream *stream, st
     return true;
 }
 
+static void CDECL wg_parser_stream_notify_qos(struct wg_parser_stream *stream,
+        bool underflow, double proportion, int64_t diff, uint64_t timestamp)
+{
+    GstEvent *event;
+
+    if (!(event = gst_event_new_qos(underflow ? GST_QOS_TYPE_UNDERFLOW : GST_QOS_TYPE_OVERFLOW,
+            1000.0 / proportion, diff * 100, timestamp * 100)))
+        ERR("Failed to create QOS event.\n");
+    gst_pad_push_event(stream->my_sink, event);
+}
+
 static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, gpointer user)
 {
     const char *name = gst_element_factory_get_longname(fact);
@@ -1553,6 +1564,7 @@ static const struct unix_funcs funcs =
     wg_parser_stream_disable,
 
     wg_parser_stream_get_event,
+    wg_parser_stream_notify_qos,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
