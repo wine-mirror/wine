@@ -6295,7 +6295,7 @@ static void test_sample_allocator(void)
     IMFVideoSampleAllocatorEx *allocatorex;
     IDirect3DDeviceManager9 *d3d9_manager;
     IMFVideoSampleAllocator *allocator;
-    unsigned int buffer_count, token;
+    unsigned int i, buffer_count, token;
     IDirect3DDevice9 *d3d9_device;
     IMFDXGIDeviceManager *manager;
     IMFSample *sample, *sample2;
@@ -6311,6 +6311,14 @@ static void test_sample_allocator(void)
     HRESULT hr;
     BYTE *data;
     HWND window;
+    static const unsigned int usage[] =
+    {
+        D3D11_USAGE_DEFAULT,
+        D3D11_USAGE_IMMUTABLE,
+        D3D11_USAGE_DYNAMIC,
+        D3D11_USAGE_STAGING,
+        D3D11_USAGE_STAGING + 1,
+    };
 
     if (!pMFCreateVideoSampleAllocatorEx)
     {
@@ -6600,6 +6608,78 @@ todo_wine
     IMFSample_Release(sample);
 
     IMFVideoSampleAllocator_Release(allocator);
+
+    /* MF_SA_D3D11_USAGE */
+    hr = MFCreateAttributes(&attributes, 1);
+    ok(hr == S_OK, "Failed to create attributes, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(usage); ++i)
+    {
+        hr = pMFCreateVideoSampleAllocatorEx(&IID_IMFVideoSampleAllocatorEx, (void **)&allocatorex);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFVideoSampleAllocatorEx_SetDirectXManager(allocatorex, (IUnknown *)manager);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFAttributes_SetUINT32(attributes, &MF_SA_D3D11_USAGE, usage[i]);
+        ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+        hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(allocatorex, 0, 0, attributes, video_type);
+        if (usage[i] == D3D11_USAGE_IMMUTABLE || usage[i] > D3D11_USAGE_STAGING)
+        {
+            ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+            IMFVideoSampleAllocatorEx_Release(allocatorex);
+            continue;
+        }
+        ok(hr == S_OK, "%u: Unexpected hr %#x.\n", usage[i], hr);
+
+        hr = IMFAttributes_SetUINT32(attributes, &MF_SA_D3D11_USAGE, D3D11_USAGE_DEFAULT);
+        ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+        hr = IMFVideoSampleAllocatorEx_AllocateSample(allocatorex, &sample);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFSample_GetBufferByIndex(sample, 0, &buffer);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **)&dxgi_buffer);
+        ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
+
+        hr = IMFDXGIBuffer_GetResource(dxgi_buffer, &IID_ID3D11Texture2D, (void **)&texture);
+        ok(hr == S_OK, "Failed to get resource, hr %#x.\n", hr);
+
+        ID3D11Texture2D_GetDesc(texture, &desc);
+        ok(desc.Usage == usage[i], "Unexpected usage %u.\n", desc.Usage);
+        if (usage[i] == D3D11_USAGE_DEFAULT)
+        {
+            ok(desc.BindFlags == (D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET), "Unexpected bind flags %#x.\n",
+                desc.BindFlags);
+            ok(desc.CPUAccessFlags == 0, "Unexpected CPU access flags %#x.\n", desc.CPUAccessFlags);
+        }
+        else if (usage[i] == D3D11_USAGE_DYNAMIC)
+        {
+            ok(desc.BindFlags == D3D11_BIND_SHADER_RESOURCE, "Unexpected bind flags %#x.\n", desc.BindFlags);
+            ok(desc.CPUAccessFlags == D3D11_CPU_ACCESS_WRITE, "Unexpected CPU access flags %#x.\n", desc.CPUAccessFlags);
+        }
+        else if (usage[i] == D3D11_USAGE_STAGING)
+        {
+            ok(desc.BindFlags == 0, "Unexpected bind flags %#x.\n", desc.BindFlags);
+            ok(desc.CPUAccessFlags == (D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ), "Unexpected CPU access flags %#x.\n",
+                    desc.CPUAccessFlags);
+        }
+        ok(desc.MiscFlags == 0, "Unexpected misc flags %#x.\n", desc.MiscFlags);
+
+        ID3D11Texture2D_Release(texture);
+        IMFDXGIBuffer_Release(dxgi_buffer);
+        IMFMediaBuffer_Release(buffer);
+
+        IMFSample_Release(sample);
+
+        IMFVideoSampleAllocatorEx_Release(allocatorex);
+    }
+
+    IMFAttributes_Release(attributes);
+
     IMFDXGIDeviceManager_Release(manager);
     ID3D11Device_Release(device);
 
