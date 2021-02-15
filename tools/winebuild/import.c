@@ -1519,6 +1519,7 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tmovq %%rdi,-0x70(%%rbp)\n" );
             output_cfi( ".cfi_rel_offset %%rdi,-112" );
             output( "\tmovq %%r12,-0x48(%%rbp)\n" );
+            output_cfi( ".cfi_rel_offset %%r12,-72" );
             output( "\tmovq %%r13,-0x40(%%rbp)\n" );
             output( "\tmovq %%r14,-0x38(%%rbp)\n" );
             output( "\tmovq %%r15,-0x30(%%rbp)\n" );
@@ -1535,7 +1536,8 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tmovw %%fs,-0x1a(%%rbp)\n" );
             output( "\tmovw %%ss,-0x8(%%rbp)\n" );
             output( "\tmovw %%gs,-0x6(%%rbp)\n" );
-            output( "\tfxsave64 (%%rsp)\n" );
+            output( "\tmovq %%rsp,%%r12\n" );
+            output( "\tfxsave64 (%%r12)\n" );
             output( "\tmovq %%gs:0x30,%%rcx\n" );
             output( "\tleaq -0x98(%%rbp),%%rbx\n" );
             output( "\tmovq %%rbx,0x328(%%rcx)\n" );  /* amd64_thread_data()->syscall_frame */
@@ -1558,6 +1560,12 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tcallq *(%%r10,%%rax,8)\n" );
             output( "2:\tmovq %%gs:0x30,%%rcx\n" );
             output( "\tmovq $0,0x328(%%rcx)\n" );
+            output( "\tfxrstor64 (%%r12)\n" );
+            output( "\tmovq -0x30(%%rbp),%%r15\n" );
+            output( "\tmovq -0x38(%%rbp),%%r14\n" );
+            output( "\tmovq -0x40(%%rbp),%%r13\n" );
+            output( "\tmovq -0x48(%%rbp),%%r12\n" );
+            output_cfi( ".cfi_same_value %%r12" );
             output( "\tmovq -0x70(%%rbp),%%rdi\n" );
             output_cfi( ".cfi_same_value %%rdi" );
             output( "\tmovq -0x78(%%rbp),%%rsi\n" );

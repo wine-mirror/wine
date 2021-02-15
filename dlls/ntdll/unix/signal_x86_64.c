@@ -2152,6 +2152,7 @@ __ASM_GLOBAL_FUNC( call_raise_user_exception_dispatcher,
                    "movq 0x8(%rax),%rbx\n\t"      /* frame->rbx */
                    "movq 0x20(%rax),%rsi\n\t"     /* frame->rsi */
                    "movq 0x28(%rax),%rdi\n\t"     /* frame->rdi */
+                   "movq 0x50(%rax),%r12\n\t"     /* frame->r12 */
                    "movq 0x98(%rax),%rbp\n\t"     /* frame->rbp */
                    "movq $0,0x328(%rdx)\n\t"
                    "leaq 0xa8(%rax),%rsp\n\t"
