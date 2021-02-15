@@ -390,6 +390,9 @@ static inline BOOL call_event_handler( Display *display, XEvent *event )
         return FALSE;  /* no handler, ignore it */
     }
 
+#ifdef GenericEvent
+    if (event->type == GenericEvent) hwnd = 0; else
+#endif
     if (XFindContext( display, event->xany.window, winContext, (char **)&hwnd ) != 0)
         hwnd = 0;  /* not for a registered window */
     if (!hwnd && event->xany.window == root_window) hwnd = GetDesktopWindow();
