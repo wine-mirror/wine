@@ -1174,8 +1174,6 @@ static ULONG WINAPI sample_allocator_Release(IMFVideoSampleAllocatorEx *iface)
             IDirect3DDeviceManager9_Release(allocator->d3d9_device_manager);
         if (allocator->dxgi_device_manager)
             IMFDXGIDeviceManager_Release(allocator->dxgi_device_manager);
-        if (allocator->attributes)
-            IMFAttributes_Release(allocator->attributes);
         sample_allocator_set_media_type(allocator, NULL);
         sample_allocator_set_attributes(allocator, NULL);
         sample_allocator_release_samples(allocator);
