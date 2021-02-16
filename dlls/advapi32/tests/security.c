@@ -246,7 +246,7 @@ static void test_group_equal(HANDLE Handle, PSID expected, int line)
     HeapFree(GetProcessHeap(), 0, queriedSD);
 }
 
-static void test_sid(void)
+static void test_ConvertStringSidToSid(void)
 {
     struct sidRef refs[] = {
      { { {0x00,0x00,0x33,0x44,0x55,0x66} }, "S-1-860116326-1" },
@@ -7961,7 +7961,7 @@ START_TEST(security)
         return;
     }
     test_kernel_objects_security();
-    test_sid();
+    test_ConvertStringSidToSid();
     test_trustee();
     test_luid();
     test_CreateWellKnownSid();
