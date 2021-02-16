@@ -181,6 +181,17 @@ static inline int WINAPIV swprintf_s(wchar_t *buffer, size_t size, const wchar_t
     return ret;
 }
 
+static inline int WINAPIV _swprintf_l(wchar_t *buffer, size_t size, const wchar_t* format, _locale_t locale, ...)
+{
+    int ret;
+    __ms_va_list args;
+
+    __ms_va_start(args, locale);
+    ret = __stdio_common_vswprintf_s(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS, buffer, size, format, locale, args);
+    __ms_va_end(args);
+    return ret;
+}
+
 static inline int __cdecl _vscwprintf(const wchar_t *format, __ms_va_list args)
 {
     int ret = __stdio_common_vswprintf(_CRT_INTERNAL_LOCAL_PRINTF_OPTIONS | _CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR,
