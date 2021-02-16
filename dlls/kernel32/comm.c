@@ -24,12 +24,11 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "winnls.h"
 #include "winerror.h"
 #include "winioctl.h"
 #include "ddk/ntddser.h"
-
-#include "wine/server.h"
 
 #include "wine/debug.h"
 

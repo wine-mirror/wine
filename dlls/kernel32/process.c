@@ -36,7 +36,6 @@
 #include "psapi.h"
 #include "ddk/wdm.h"
 #include "wine/exception.h"
-#include "wine/server.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
 

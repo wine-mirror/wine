@@ -33,11 +33,11 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "winnls.h"
 #include "winerror.h"
 #include "wincon.h"
 #include "wine/condrv.h"
-#include "wine/server.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 #include "excpt.h"
@@ -59,7 +59,7 @@ HWND WINAPI GetConsoleWindow(void)
 
     ret = DeviceIoControl( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle,
                            IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL, NULL );
-    return ret ? wine_server_ptr_handle(info.win) : NULL;
+    return ret ? LongToHandle( info.win ) : NULL;
 }
 
 
