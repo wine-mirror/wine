@@ -4594,7 +4594,7 @@ static void test_PrivateObjectSecurity(void)
 #undef CHECK_RESULT_AND_FREE
 #undef CHECK_ONE_OF_AND_FREE
 
-static void test_acls(void)
+static void test_InitializeAcl(void)
 {
     char buffer[256];
     PACL pAcl = (PACL)buffer;
@@ -7976,7 +7976,7 @@ START_TEST(security)
     test_ConvertStringSecurityDescriptor();
     test_ConvertSecurityDescriptorToString();
     test_PrivateObjectSecurity();
-    test_acls();
+    test_InitializeAcl();
     test_GetWindowsAccountDomainSid();
     test_EqualDomainSid();
     test_GetSecurityInfo();
