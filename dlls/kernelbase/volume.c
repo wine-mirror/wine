@@ -38,7 +38,6 @@
 #include "ddk/mountmgr.h"
 #include "ddk/wdm.h"
 #include "kernelbase.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(volume);

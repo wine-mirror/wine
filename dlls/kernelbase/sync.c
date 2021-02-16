@@ -37,7 +37,6 @@
 #include "kernelbase.h"
 #include "wine/asm.h"
 #include "wine/exception.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(sync);
