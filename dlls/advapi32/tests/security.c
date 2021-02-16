@@ -6395,13 +6395,13 @@ static void test_AddMandatoryAce(void)
     static SID_IDENTIFIER_AUTHORITY sia_world = {SECURITY_WORLD_SID_AUTHORITY};
     char buffer_sd[SECURITY_DESCRIPTOR_MIN_LENGTH];
     SECURITY_DESCRIPTOR *sd2, *sd = (SECURITY_DESCRIPTOR *)&buffer_sd;
-    BOOL defaulted, present, ret, found, found2;
+    BOOL defaulted, present, ret;
     ACL_SIZE_INFORMATION acl_size_info;
     SYSTEM_MANDATORY_LABEL_ACE *ace;
     char buffer_acl[256];
     ACL *acl = (ACL *)&buffer_acl;
     SECURITY_ATTRIBUTES sa;
-    DWORD index, size;
+    DWORD size;
     HANDLE handle;
     SID *everyone;
     ACL *sacl;
@@ -6453,18 +6453,17 @@ static void test_AddMandatoryAce(void)
     ret = pAddMandatoryAce(acl, ACL_REVISION, 0, SYSTEM_MANDATORY_LABEL_NO_WRITE_UP, &low_level);
     ok(ret, "AddMandatoryAce failed with %u\n", GetLastError());
 
-    index = 0;
-    found = FALSE;
-    while (GetAce(acl, index++, (void **)&ace))
-    {
-        if (ace->Header.AceType != SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
-        ok(ace->Header.AceFlags == 0, "Expected flags 0, got %x\n", ace->Header.AceFlags);
-        ok(ace->Mask == SYSTEM_MANDATORY_LABEL_NO_WRITE_UP,
-           "Expected mask SYSTEM_MANDATORY_LABEL_NO_WRITE_UP, got %x\n", ace->Mask);
-        ok(EqualSid(&ace->SidStart, &low_level), "Expected low integrity level\n");
-        found = TRUE;
-    }
-    ok(found, "Could not find mandatory label ace\n");
+    ret = GetAce(acl, 0, (void **)&ace);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(ace->Header.AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE, "got type %#x\n", ace->Header.AceType);
+    ok(!ace->Header.AceFlags, "got flags %#x\n", ace->Header.AceFlags);
+    ok(ace->Mask == SYSTEM_MANDATORY_LABEL_NO_WRITE_UP, "got mask %#x\n", ace->Mask);
+    ok(EqualSid(&ace->SidStart, &low_level), "wrong sid\n");
+
+    SetLastError(0xdeadbeef);
+    ret = GetAce(acl, 1, (void **)&ace);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
 
     ret = SetSecurityDescriptorSacl(sd, TRUE, acl, FALSE);
     ok(ret, "SetSecurityDescriptorSacl failed with error %u\n", GetLastError());
@@ -6525,30 +6524,24 @@ static void test_AddMandatoryAce(void)
     ok(sacl->AceCount == 2, "Expected 2 ACEs, got %d\n", sacl->AceCount);
     ok(!defaulted, "SACL defaulted\n");
 
-    index = 0;
-    found = found2 = FALSE;
-    while (GetAce(sacl, index++, (void **)&ace))
-    {
-        if (ace->Header.AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE)
-        {
-            if (EqualSid(&ace->SidStart, &low_level))
-            {
-                found = TRUE;
-                ok(!ace->Header.AceFlags, "Expected 0 as flags, got %#x\n", ace->Header.AceFlags);
-                ok(ace->Mask == SYSTEM_MANDATORY_LABEL_NO_WRITE_UP,
-                   "Expected SYSTEM_MANDATORY_LABEL_NO_WRITE_UP as mask, got %#x\n", ace->Mask);
-            }
-            if (EqualSid(&ace->SidStart, &medium_level))
-            {
-                found2 = TRUE;
-                ok(!ace->Header.AceFlags, "Expected 0 as flags, got %#x\n", ace->Header.AceFlags);
-                ok(ace->Mask == SYSTEM_MANDATORY_LABEL_NO_EXECUTE_UP,
-                   "Expected SYSTEM_MANDATORY_LABEL_NO_EXECUTE_UP as mask, got %#x\n", ace->Mask);
-            }
-        }
-    }
-    ok(found, "Could not find low mandatory label\n");
-    ok(found2, "Could not find medium mandatory label\n");
+    ret = GetAce(acl, 0, (void **)&ace);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(ace->Header.AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE, "got type %#x\n", ace->Header.AceType);
+    ok(!ace->Header.AceFlags, "got flags %#x\n", ace->Header.AceFlags);
+    ok(ace->Mask == SYSTEM_MANDATORY_LABEL_NO_WRITE_UP, "got mask %#x\n", ace->Mask);
+    ok(EqualSid(&ace->SidStart, &low_level), "wrong sid\n");
+
+    ret = GetAce(acl, 1, (void **)&ace);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(ace->Header.AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE, "got type %#x\n", ace->Header.AceType);
+    ok(!ace->Header.AceFlags, "got flags %#x\n", ace->Header.AceFlags);
+    ok(ace->Mask == SYSTEM_MANDATORY_LABEL_NO_EXECUTE_UP, "got mask %#x\n", ace->Mask);
+    ok(EqualSid(&ace->SidStart, &medium_level), "wrong sid\n");
+
+    SetLastError(0xdeadbeef);
+    ret = GetAce(acl, 2, (void **)&ace);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
 
     HeapFree(GetProcessHeap(), 0, sd2);
 
