@@ -195,6 +195,14 @@ static void set_tty_cursor( struct console *console, unsigned int x, unsigned in
     else if (!x && y == console->tty_cursor_y) strcpy( buf, "\r" );
     else if (y == console->tty_cursor_y)
     {
+        if (console->is_unix && console->tty_cursor_x >= console->active->width)
+        {
+            /* Unix will usually have the cursor at width-1 in this case. instead of depending
+             * on the exact behaviour, move the cursor to the first column and move forward
+             * from threre. */
+            tty_write( console, "\r", 1 );
+            console->tty_cursor_x = 0;
+        }
         if (x + 1 == console->tty_cursor_x) strcpy( buf, "\b" );
         else if (x > console->tty_cursor_x) sprintf( buf, "\x1b[%uC", x - console->tty_cursor_x );
         else sprintf( buf, "\x1b[%uD", console->tty_cursor_x - x );
