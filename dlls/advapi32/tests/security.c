@@ -769,13 +769,6 @@ static void test_lookupPrivilegeValue(void)
     }
 }
 
-static void test_luid(void)
-{
-    test_allocateLuid();
-    test_lookupPrivilegeName();
-    test_lookupPrivilegeValue();
-}
-
 static void test_FileSecurity(void)
 {
     char wintmpdir [MAX_PATH];
@@ -7963,7 +7956,9 @@ START_TEST(security)
     test_kernel_objects_security();
     test_ConvertStringSidToSid();
     test_trustee();
-    test_luid();
+    test_allocateLuid();
+    test_lookupPrivilegeName();
+    test_lookupPrivilegeValue();
     test_CreateWellKnownSid();
     test_FileSecurity();
     test_AccessCheck();
