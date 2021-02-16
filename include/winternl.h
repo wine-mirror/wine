@@ -2154,12 +2154,6 @@ typedef struct _PORT_MESSAGE_HEADER {
 
 typedef unsigned short RTL_ATOM, *PRTL_ATOM;
 
-/* Wine doesn't implement atom table as NT does:
- * - in NT, atom tables are user space tables, which ntdll directly accesses
- * - on Wine, (even local) atom tables are wineserver objects, hence a HANDLE
- */
-typedef struct atom_table *RTL_ATOM_TABLE, **PRTL_ATOM_TABLE;
-
 typedef enum _ATOM_INFORMATION_CLASS {
    AtomBasicInformation         = 0,
    AtomTableInformation         = 1,
@@ -2189,6 +2183,26 @@ typedef struct _RTL_HANDLE_TABLE
     PVOID ReservedMemory;  /* 0x18 */
     PVOID MaxHandle;       /* 0x1c */
 } RTL_HANDLE_TABLE;
+
+typedef struct _RTL_ATOM_TABLE_ENTRY
+{
+    struct _RTL_ATOM_TABLE_ENTRY *HashLink;
+    WORD                          HandleIndex;
+    WORD                          Atom;
+    WORD                          ReferenceCount;
+    UCHAR                         Flags;
+    UCHAR                         NameLength;
+    WCHAR                         Name[1];
+} RTL_ATOM_TABLE_ENTRY, *PRTL_ATOM_TABLE_ENTRY;
+
+typedef struct _RTL_ATOM_TABLE
+{
+    ULONG                 Signature;
+    RTL_CRITICAL_SECTION  CriticalSection;
+    RTL_HANDLE_TABLE      HandleTable;
+    ULONG                 NumberOfBuckets;
+    RTL_ATOM_TABLE_ENTRY *Buckets[1];
+} *RTL_ATOM_TABLE, **PRTL_ATOM_TABLE;
 
 /***********************************************************************
  * Defines

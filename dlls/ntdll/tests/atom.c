@@ -153,6 +153,8 @@ static void test_NtAtom(void)
     ok(!res, "We're unable to create an atom table with a valid table size retval: %x\n", res);
     if (!res)
     {
+        ok( *(DWORD *)AtomTable == 0x6d6f7441, "wrong signature %x\n", *(DWORD *)AtomTable );
+
         res = pRtlAddAtomToAtomTable(AtomTable, testAtom1, &Atom1);
         ok(!res, "We were unable to add a simple atom to the atom table, retval: %x\n", res);
 

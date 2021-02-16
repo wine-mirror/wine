@@ -1,7 +1,7 @@
 /*
  * Atom table functions
  *
- * Copyright 1993, 1994, 1995 Alexandre Julliard
+ * Copyright 1993, 1994, 1995, 2021 Alexandre Julliard
  * Copyright 2004,2005 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,88 @@
 WINE_DEFAULT_DEBUG_CHANNEL(atom);
 
 #define MAX_ATOM_LEN    255
+#define MAX_ATOMS       0x4000
 #define IS_INTATOM(x)   (((ULONG_PTR)(x) >> 16) == 0)
+#define TABLE_SIGNATURE 0x6d6f7441  /* 'Atom' */
+#define HASH_SIZE       37
+#define MIN_HASH_SIZE   4
+#define MAX_HASH_SIZE   0x200
+
+struct atom_handle
+{
+    RTL_HANDLE            hdr;
+    RTL_ATOM_TABLE_ENTRY *entry;
+};
+
+
+static NTSTATUS lock_atom_table( RTL_ATOM_TABLE table )
+{
+    if (!table) return STATUS_INVALID_PARAMETER;
+    if (table->Signature != TABLE_SIGNATURE) return STATUS_INVALID_PARAMETER;
+    RtlEnterCriticalSection( &table->CriticalSection );
+    return STATUS_SUCCESS;
+}
+
+static void unlock_atom_table( RTL_ATOM_TABLE table )
+{
+    RtlLeaveCriticalSection( &table->CriticalSection );
+}
+
+static ULONG hash_str( RTL_ATOM_TABLE table, const WCHAR *name, ULONG len )
+{
+    UNICODE_STRING str = { len * sizeof(WCHAR), len * sizeof(WCHAR), (WCHAR *)name };
+    ULONG hash;
+
+    RtlHashUnicodeString( &str, TRUE, HASH_STRING_ALGORITHM_X65599, &hash );
+    return hash % table->NumberOfBuckets;
+}
+
+static RTL_ATOM_TABLE_ENTRY *find_entry( RTL_ATOM_TABLE table, const WCHAR *name, ULONG len, ULONG hash )
+{
+    RTL_ATOM_TABLE_ENTRY *entry = table->Buckets[hash];
+
+    while (entry)
+    {
+        if (!RtlCompareUnicodeStrings( entry->Name, entry->NameLength, name, len, TRUE )) break;
+        entry = entry->HashLink;
+    }
+    return entry;
+}
+
+static NTSTATUS add_atom( RTL_ATOM_TABLE table, const WCHAR *name, ULONG len, RTL_ATOM *atom )
+{
+    RTL_ATOM_TABLE_ENTRY *entry;
+    struct atom_handle *handle;
+    ULONG index, hash = hash_str( table, name, len );
+
+    if ((entry = find_entry( table, name, len, hash )))  /* exists already */
+    {
+        entry->ReferenceCount++;
+        *atom = entry->Atom;
+        return STATUS_SUCCESS;
+    }
+
+    if (!(handle = (struct atom_handle *)RtlAllocateHandle( &table->HandleTable, &index )))
+        return STATUS_NO_MEMORY;
+
+    if (!(entry = RtlAllocateHeap( GetProcessHeap(), 0, offsetof( RTL_ATOM_TABLE_ENTRY, Name[len] ) )))
+    {
+        RtlFreeHandle( &table->HandleTable, &handle->hdr );
+        return STATUS_NO_MEMORY;
+    }
+    entry->HandleIndex = index;
+    entry->Atom = MAXINTATOM + index;
+    entry->ReferenceCount = 1;
+    entry->Flags = 0;
+    entry->NameLength = len;
+    entry->HashLink = table->Buckets[hash];
+    memcpy( entry->Name, name, len * sizeof(WCHAR) );
+    handle->hdr.Next = (RTL_HANDLE *)1;
+    table->Buckets[hash] = entry;
+    handle->entry = entry;
+    *atom = entry->Atom;
+    return STATUS_SUCCESS;
+}
 
 /******************************************************************
  *		is_integral_atom
@@ -78,20 +159,30 @@ done:
  */
 NTSTATUS WINAPI RtlDeleteAtomFromAtomTable( RTL_ATOM_TABLE table, RTL_ATOM atom )
 {
-    NTSTATUS    status;
+    NTSTATUS status;
+    struct atom_handle *handle;
 
-    TRACE( "%p %x\n", table, atom );
-    if (!table) status = STATUS_INVALID_PARAMETER;
-    else
+    if ((status = lock_atom_table( table ))) return status;
+
+    if (atom >= MAXINTATOM && RtlIsValidIndexHandle( &table->HandleTable, atom - MAXINTATOM,
+                                                     (RTL_HANDLE **)&handle ))
     {
-        SERVER_START_REQ( delete_atom )
+        if (handle->entry->Flags) status = STATUS_WAS_LOCKED;
+        else if (!--handle->entry->ReferenceCount)
         {
-            req->atom = atom;
-            req->table = wine_server_obj_handle( table );
-            status = wine_server_call( req );
+            ULONG hash = hash_str( table, handle->entry->Name, handle->entry->NameLength );
+            RTL_ATOM_TABLE_ENTRY **ptr = &table->Buckets[hash];
+
+            while (*ptr != handle->entry) ptr = &(*ptr)->HashLink;
+            *ptr = (*ptr)->HashLink;
+            RtlFreeHeap( GetProcessHeap(), 0, handle->entry );
+            RtlFreeHandle( &table->HandleTable, &handle->hdr );
         }
-        SERVER_END_REQ;
     }
+    else status = STATUS_INVALID_HANDLE;
+
+    unlock_atom_table( table );
+    TRACE( "%p %x\n", table, atom );
     return status;
 }
 
@@ -119,46 +210,43 @@ static ULONG integral_atom_name(WCHAR* buffer, ULONG len, RTL_ATOM atom)
 NTSTATUS WINAPI RtlQueryAtomInAtomTable( RTL_ATOM_TABLE table, RTL_ATOM atom, ULONG* ref,
                                          ULONG* pin, WCHAR* name, ULONG* len )
 {
-    NTSTATUS    status = STATUS_SUCCESS;
-    DWORD       wlen = 0;
+    NTSTATUS status;
+    struct atom_handle *handle;
+    ULONG wlen = 0;
 
-    if (!table) status = STATUS_INVALID_PARAMETER;
-    else if (atom < MAXINTATOM)
+    if (!atom) return STATUS_INVALID_PARAMETER;
+    if ((status = lock_atom_table( table ))) return status;
+
+    if (atom < MAXINTATOM)
     {
-        if (!atom) return STATUS_INVALID_PARAMETER;
         if (len) wlen = integral_atom_name( name, *len, atom);
         if (ref) *ref = 1;
         if (pin) *pin = 1;
     }
-    else
+    else if (RtlIsValidIndexHandle( &table->HandleTable, atom - MAXINTATOM, (RTL_HANDLE **)&handle ))
     {
-        SERVER_START_REQ( get_atom_information )
-        {
-            req->atom = atom;
-            req->table = wine_server_obj_handle( table );
-            if (len && *len && name)
-                wine_server_set_reply( req, name, *len );
-            status = wine_server_call( req );
-            if (status == STATUS_SUCCESS)
-            {
-                wlen = reply->total;
-                if (ref) *ref = reply->count;
-                if (pin) *pin = reply->pinned;
-            }
-        }
-        SERVER_END_REQ;
-    }
-    if (status == STATUS_SUCCESS && len)
-    {
-        if (*len)
+        wlen = handle->entry->NameLength * sizeof(WCHAR);
+        if (ref) *ref = handle->entry->ReferenceCount;
+        if (pin) *pin = handle->entry->Flags;
+        if (len && *len)
         {
             wlen = min( *len - sizeof(WCHAR), wlen );
-            if (name) name[wlen / sizeof(WCHAR)] = 0;
+            if (name)
+            {
+                memcpy( name, handle->entry->Name, wlen );
+                name[wlen / sizeof(WCHAR)] = 0;
+            }
         }
-        else status = STATUS_BUFFER_TOO_SMALL;
+    }
+    else status = STATUS_INVALID_HANDLE;
+
+    unlock_atom_table( table );
+
+    if (status == STATUS_SUCCESS && len)
+    {
+        if (!*len) status = STATUS_BUFFER_TOO_SMALL;
         *len = wlen;
     }
-
     TRACE( "%p %x -> %s (%x)\n",
            table, atom, len ? debugstr_wn(name, wlen / sizeof(WCHAR)) : "(null)", status );
     return status;
@@ -167,26 +255,25 @@ NTSTATUS WINAPI RtlQueryAtomInAtomTable( RTL_ATOM_TABLE table, RTL_ATOM atom, UL
 /******************************************************************
  *		RtlCreateAtomTable (NTDLL.@)
  */
-NTSTATUS WINAPI RtlCreateAtomTable( ULONG size, RTL_ATOM_TABLE* table )
+NTSTATUS WINAPI RtlCreateAtomTable( ULONG size, RTL_ATOM_TABLE *ret_table )
 {
-    NTSTATUS    status;
+    RTL_ATOM_TABLE table;
 
-    if (*table)
-    {
-        if (size) status = STATUS_INVALID_PARAMETER;
-        else status = STATUS_SUCCESS;
-    }
-    else
-    {
-        SERVER_START_REQ( init_atom_table )
-        {
-            req->entries = size;
-            status = wine_server_call( req );
-            *table = wine_server_ptr_handle( reply->table );
-        }
-        SERVER_END_REQ;
-    }
-    return status;
+    if (*ret_table) return size ? STATUS_INVALID_PARAMETER : STATUS_SUCCESS;
+
+    if ((size < MIN_HASH_SIZE) || (size > MAX_HASH_SIZE)) size = HASH_SIZE;
+
+    if (!(table = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                   offsetof( struct _RTL_ATOM_TABLE, Buckets[size] ))))
+        return STATUS_NO_MEMORY;
+
+    table->Signature       = TABLE_SIGNATURE;
+    table->NumberOfBuckets = size;
+
+    RtlInitializeCriticalSection( &table->CriticalSection );
+    RtlInitializeHandleTable( MAX_ATOMS, sizeof(struct atom_handle), &table->HandleTable );
+    *ret_table = table;
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************
@@ -194,8 +281,12 @@ NTSTATUS WINAPI RtlCreateAtomTable( ULONG size, RTL_ATOM_TABLE* table )
  */
 NTSTATUS WINAPI RtlDestroyAtomTable( RTL_ATOM_TABLE table )
 {
-    if (!table) return STATUS_INVALID_PARAMETER;
-    return NtClose( table );
+    if (!table || table->Signature != TABLE_SIGNATURE) return STATUS_INVALID_PARAMETER;
+    RtlDestroyHandleTable( &table->HandleTable );
+    RtlDeleteCriticalSection( &table->CriticalSection );
+    table->Signature = 0;
+    RtlFreeHeap( GetProcessHeap(), 0, table );
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************
@@ -203,28 +294,16 @@ NTSTATUS WINAPI RtlDestroyAtomTable( RTL_ATOM_TABLE table )
  */
 NTSTATUS WINAPI RtlAddAtomToAtomTable( RTL_ATOM_TABLE table, const WCHAR* name, RTL_ATOM* atom )
 {
-    NTSTATUS    status;
+    NTSTATUS status;
+    size_t len;
 
-    if (!table) status = STATUS_INVALID_PARAMETER;
-    else
-    {
-        size_t len = IS_INTATOM(name) ?  0 : wcslen(name);
-        status = is_integral_atom( name, len, atom );
-        if (status == STATUS_MORE_ENTRIES)
-        {
-            SERVER_START_REQ( add_atom )
-            {
-                wine_server_add_data( req, name, len * sizeof(WCHAR) );
-                req->table = wine_server_obj_handle( table );
-                status = wine_server_call( req );
-                *atom = reply->atom;
-            }
-            SERVER_END_REQ;
-        }
-    }
-    TRACE( "%p %s -> %x\n",
-           table, debugstr_w(name), status == STATUS_SUCCESS ? *atom : 0 );
+    if ((status = lock_atom_table( table ))) return status;
 
+    len = IS_INTATOM( name ) ? 0 : wcslen( name );
+    status = is_integral_atom( name, len, atom );
+    if (status == STATUS_MORE_ENTRIES) status = add_atom( table, name, len, atom );
+    unlock_atom_table( table );
+    TRACE( "%p %s -> %x\n", table, debugstr_w(name), status == STATUS_SUCCESS ? *atom : 0 );
     return status;
 }
 
@@ -233,25 +312,24 @@ NTSTATUS WINAPI RtlAddAtomToAtomTable( RTL_ATOM_TABLE table, const WCHAR* name, 
  */
 NTSTATUS WINAPI RtlLookupAtomInAtomTable( RTL_ATOM_TABLE table, const WCHAR* name, RTL_ATOM* atom )
 {
-    NTSTATUS    status;
+    RTL_ATOM_TABLE_ENTRY *entry;
+    NTSTATUS status;
+    ULONG len;
 
-    if (!table) status = STATUS_INVALID_PARAMETER;
-    else
+    if ((status = lock_atom_table( table ))) return status;
+
+    len = IS_INTATOM(name) ? 0 : wcslen(name);
+    status = is_integral_atom( name, len, atom );
+    if (status == STATUS_MORE_ENTRIES)
     {
-        size_t len = IS_INTATOM(name) ? 0 : wcslen(name);
-        status = is_integral_atom( name, len, atom );
-        if (status == STATUS_MORE_ENTRIES)
+        if ((entry = find_entry( table, name, len, hash_str( table, name, len ))))
         {
-            SERVER_START_REQ( find_atom )
-            {
-                wine_server_add_data( req, name, len * sizeof(WCHAR) );
-                req->table = wine_server_obj_handle( table );
-                status = wine_server_call( req );
-                *atom = reply->atom;
-            }
-            SERVER_END_REQ;
+            *atom = entry->Atom;
+            status = STATUS_SUCCESS;
         }
+        else status = STATUS_OBJECT_NAME_NOT_FOUND;
     }
+    unlock_atom_table( table );
     TRACE( "%p %s -> %x\n",
            table, debugstr_w(name), status == STATUS_SUCCESS ? *atom : 0 );
     return status;
@@ -262,20 +340,31 @@ NTSTATUS WINAPI RtlLookupAtomInAtomTable( RTL_ATOM_TABLE table, const WCHAR* nam
  */
 NTSTATUS WINAPI RtlEmptyAtomTable( RTL_ATOM_TABLE table, BOOLEAN delete_pinned )
 {
-    NTSTATUS    status;
+    struct atom_handle *handle;
+    NTSTATUS status;
+    ULONG i;
 
-    if (!table) status = STATUS_INVALID_PARAMETER;
-    else
+    if ((status = lock_atom_table( table ))) return status;
+
+    for (i = 0; i < table->NumberOfBuckets; i++)
     {
-        SERVER_START_REQ( empty_atom_table )
+        RTL_ATOM_TABLE_ENTRY **ptr = &table->Buckets[i];
+        while (*ptr)
         {
-            req->table = wine_server_obj_handle( table );
-            req->if_pinned = delete_pinned;
-            status = wine_server_call( req );
+            if (!delete_pinned && (*ptr)->Flags) ptr = &(*ptr)->HashLink;
+            else
+            {
+                RTL_ATOM_TABLE_ENTRY *entry = *ptr;
+                *ptr = entry->HashLink;
+                if (RtlIsValidIndexHandle( &table->HandleTable, entry->HandleIndex,
+                                           (RTL_HANDLE **)&handle ))
+                    RtlFreeHandle( &table->HandleTable, &handle->hdr );
+                RtlFreeHeap( GetProcessHeap(), 0, entry );
+            }
         }
-        SERVER_END_REQ;
     }
-    return status;
+    unlock_atom_table( table );
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************
@@ -283,19 +372,16 @@ NTSTATUS WINAPI RtlEmptyAtomTable( RTL_ATOM_TABLE table, BOOLEAN delete_pinned )
  */
 NTSTATUS WINAPI RtlPinAtomInAtomTable( RTL_ATOM_TABLE table, RTL_ATOM atom )
 {
+    struct atom_handle *handle;
     NTSTATUS status;
 
-    if (!table) return STATUS_INVALID_PARAMETER;
-    if (atom < MAXINTATOM) return STATUS_SUCCESS;
+    if ((status = lock_atom_table( table ))) return status;
 
-    SERVER_START_REQ( set_atom_information )
+    if (atom >= MAXINTATOM && RtlIsValidIndexHandle( &table->HandleTable, atom - MAXINTATOM,
+                                                     (RTL_HANDLE **)&handle ))
     {
-        req->table = wine_server_obj_handle( table );
-        req->atom = atom;
-        req->pinned = TRUE;
-        status = wine_server_call( req );
+        handle->entry->Flags = 1;
     }
-    SERVER_END_REQ;
-
-    return status;
+    unlock_atom_table( table );
+    return STATUS_SUCCESS;
 }
