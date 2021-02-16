@@ -842,6 +842,7 @@ enable_option_checking
 enable_win16
 enable_win64
 enable_tests
+enable_build_id
 enable_maintainer_mode
 enable_silent_rules
 enable_werror
@@ -2580,6 +2581,7 @@ Optional Features:
   --enable-win64          build a Win64 emulator on AMD64 (won't run Win32
                           binaries)
   --disable-tests         do not build the regression tests
+  --enable-build-id       include .buildid section in output objects
   --enable-maintainer-mode
                           enable maintainer-specific build rules
   --enable-silent-rules   use silent build rules (override: "make V=1")
@@ -3908,6 +3910,11 @@ fi
 # Check whether --enable-tests was given.
 if test "${enable_tests+set}" = set; then :
   enableval=$enable_tests;
+fi
+
+# Check whether --enable-build-id was given.
+if test "${enable_build_id+set}" = set; then :
+  enableval=$enable_build_id;
 fi
 
 # Check whether --enable-maintainer-mode was given.
@@ -10675,6 +10682,41 @@ fi
 $as_echo "$ac_cv_crosscflags__Werror" >&6; }
 if test "x$ac_cv_crosscflags__Werror" = xyes; then :
   EXTRACROSSCFLAGS="$EXTRACROSSCFLAGS -Werror"
+fi
+        fi
+        if test "x$enable_build_id" = "xyes"
+        then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -Wl,--build-id" >&5
+$as_echo_n "checking whether the cross-compiler supports -Wl,--build-id... " >&6; }
+if ${ac_cv_crosscflags__Wl___build_id+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_cc=$CC
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS $EXTRACROSSCFLAGS -nostartfiles -nodefaultlibs -Wl,--build-id"
+CC="$CROSSCC"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_crosscflags__Wl___build_id=yes
+else
+  ac_cv_crosscflags__Wl___build_id=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+CC=$ac_wine_try_cflags_saved_cc
+ac_exeext=$ac_wine_try_cflags_saved_exeext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_crosscflags__Wl___build_id" >&5
+$as_echo "$ac_cv_crosscflags__Wl___build_id" >&6; }
+if test "x$ac_cv_crosscflags__Wl___build_id" = xyes; then :
+  CROSSCFLAGS="$CROSSCFLAGS -Wl,--build-id"
+                            CROSSLDFLAGS="$CROSSLDFLAGS -Wl,--build-id"
 fi
         fi
 
@@ -17795,6 +17837,35 @@ fi
 $as_echo "$ac_cv_cflags__Werror" >&6; }
 if test "x$ac_cv_cflags__Werror" = xyes; then :
   EXTRACFLAGS="$EXTRACFLAGS -Werror"
+fi
+  fi
+  if test "x$enable_build_id" = "xyes"
+  then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--build-id" >&5
+$as_echo_n "checking whether the compiler supports -Wl,--build-id... " >&6; }
+if ${ac_cv_cflags__Wl___build_id+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wl,--build-id"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__Wl___build_id=yes
+else
+  ac_cv_cflags__Wl___build_id=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl___build_id" >&5
+$as_echo "$ac_cv_cflags__Wl___build_id" >&6; }
+if test "x$ac_cv_cflags__Wl___build_id" = xyes; then :
+  CFLAGS="$CFLAGS -Wl,--build-id"
+                      LDFLAGS="$LDFLAGS -Wl,--build-id"
 fi
   fi
 fi

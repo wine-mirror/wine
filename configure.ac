@@ -31,6 +31,7 @@ dnl **** Command-line arguments ****
 AC_ARG_ENABLE(win16, AS_HELP_STRING([--disable-win16],[do not include Win16 support]))
 AC_ARG_ENABLE(win64, AS_HELP_STRING([--enable-win64],[build a Win64 emulator on AMD64 (won't run Win32 binaries)]))
 AC_ARG_ENABLE(tests, AS_HELP_STRING([--disable-tests],[do not build the regression tests]))
+AC_ARG_ENABLE(build-id, AS_HELP_STRING([--enable-build-id],[include .buildid section in output objects]))
 AC_ARG_ENABLE(maintainer-mode, AS_HELP_STRING([--enable-maintainer-mode],[enable maintainer-specific build rules]))
 AC_ARG_ENABLE(silent-rules, AS_HELP_STRING([--enable-silent-rules],[use silent build rules (override: "make V=1")]))
 AC_ARG_ENABLE(werror, AS_HELP_STRING([--enable-werror],[treat compilation warnings as errors]))
@@ -1086,6 +1087,11 @@ then
         then
             WINE_TRY_CROSSCFLAGS([-Werror])
         fi
+        if test "x$enable_build_id" = "xyes"
+        then
+            WINE_TRY_CROSSCFLAGS([-Wl,--build-id], [CROSSCFLAGS="$CROSSCFLAGS -Wl,--build-id"
+                            CROSSLDFLAGS="$CROSSLDFLAGS -Wl,--build-id"])
+        fi
 
         CFLAGS=$saved_CFLAGS
         CC="$ac_save_CC"
@@ -2110,6 +2116,11 @@ char*f(const char *h,char n) {return strchr(h,n);}]])],[ac_cv_c_logicalop_noisy=
   if test "x$enable_werror" = "xyes"
   then
       WINE_TRY_CFLAGS([-Werror])
+  fi
+  if test "x$enable_build_id" = "xyes"
+  then
+      WINE_TRY_CFLAGS([-Wl,--build-id], [CFLAGS="$CFLAGS -Wl,--build-id"
+                      LDFLAGS="$LDFLAGS -Wl,--build-id"])
   fi
 fi
 
