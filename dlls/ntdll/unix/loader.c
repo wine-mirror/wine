@@ -1225,7 +1225,7 @@ static NTSTATUS open_dll_file( const char *name, OBJECT_ATTRIBUTES *attr, HANDLE
 
     NtQuerySection( *mapping, SectionImageInformation, image_info, sizeof(*image_info), NULL );
     /* ignore non-builtins */
-    if (!(image_info->u.ImageFlags & IMAGE_FLAGS_WineBuiltin))
+    if (!(image_info->u.s.WineBuiltin))
     {
         WARN( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_a(name) );
         status = STATUS_DLL_NOT_FOUND;
