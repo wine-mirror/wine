@@ -39,7 +39,7 @@ void pop_import(void);
 
 int is_type(const char *name);
 
-int do_warning(char *toggle, warning_list_t *wnum);
+int do_warning(const char *toggle, warning_list_t *wnum);
 int is_warning_enabled(int warning);
 
 extern char *temp_name;

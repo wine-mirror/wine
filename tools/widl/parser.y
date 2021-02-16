@@ -425,7 +425,12 @@ pragma_warning: tPRAGMA_WARNING '(' aIDENTIFIER ':' warnings ')'
                       $$ = NULL;
                       result = do_warning($3, $5);
                       if(!result)
-                          error_loc("expected \"disable\" or \"enable\"\n");
+                          error_loc("expected \"disable\", \"enable\" or \"default\"\n");
+                  }
+              | tPRAGMA_WARNING '(' tDEFAULT ':' warnings ')'
+                  {
+                      $$ = NULL;
+                      do_warning("default", $5);
                   }
 	;
 
