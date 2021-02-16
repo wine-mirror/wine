@@ -6955,6 +6955,12 @@ static void test_token_label(void)
     char *str;
     SID *sid;
 
+    if (!pAddMandatoryAce)
+    {
+        win_skip("Mandatory integrity control is not supported.\n");
+        return;
+    }
+
     ret = OpenProcessToken(GetCurrentProcess(), READ_CONTROL | WRITE_OWNER, &token);
     ok(ret, "OpenProcessToken failed with error %u\n", GetLastError());
 
@@ -6968,8 +6974,7 @@ static void test_token_label(void)
 
     ret = GetSecurityDescriptorControl(sd, &control, &revision);
     ok(ret, "GetSecurityDescriptorControl failed with error %u\n", GetLastError());
-    todo_wine ok(control == (SE_SELF_RELATIVE | SE_SACL_AUTO_INHERITED | SE_SACL_PRESENT) ||
-                 broken(control == SE_SELF_RELATIVE) /* WinXP, Win2003 */,
+    todo_wine ok(control == (SE_SELF_RELATIVE | SE_SACL_AUTO_INHERITED | SE_SACL_PRESENT),
                  "Unexpected security descriptor control %#x\n", control);
     ok(revision == 1, "Unexpected security descriptor revision %u\n", revision);
 
@@ -6989,28 +6994,24 @@ static void test_token_label(void)
 
     ret = GetSecurityDescriptorSacl(sd, &present, &sacl, &defaulted);
     ok(ret, "GetSecurityDescriptorSacl failed with error %u\n", GetLastError());
-    ok(present || broken(!present) /* WinXP, Win2003 */, "No SACL in the security descriptor\n");
-    ok(sacl || broken(!sacl) /* WinXP, Win2003 */, "NULL SACL in the security descriptor\n");
+    ok(present, "No SACL in the security descriptor\n");
+    ok(!!sacl, "NULL SACL in the security descriptor\n");
+    ok(!defaulted, "SACL defaulted\n");
+    ok(sacl->AceCount == 1, "SACL contains an unexpected ACE count %u\n", sacl->AceCount);
 
-    if (present)
-    {
-        ok(!defaulted, "SACL defaulted\n");
-        ok(sacl->AceCount == 1, "SACL contains an unexpected ACE count %u\n", sacl->AceCount);
+    ret = GetAce(sacl, 0, (void **)&ace);
+    ok(ret, "GetAce failed with error %u\n", GetLastError());
 
-        ret = GetAce(sacl, 0, (void **)&ace);
-        ok(ret, "GetAce failed with error %u\n", GetLastError());
+    ok(ace->Header.AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE,
+       "Unexpected ACE type %#x\n", ace->Header.AceType);
+    ok(!ace->Header.AceFlags, "Unexpected ACE flags %#x\n", ace->Header.AceFlags);
+    ok(ace->Header.AceSize, "Unexpected ACE size %u\n", ace->Header.AceSize);
+    ok(ace->Mask == SYSTEM_MANDATORY_LABEL_NO_WRITE_UP, "Unexpected ACE mask %#x\n", ace->Mask);
 
-        ok(ace->Header.AceType == SYSTEM_MANDATORY_LABEL_ACE_TYPE,
-           "Unexpected ACE type %#x\n", ace->Header.AceType);
-        ok(!ace->Header.AceFlags, "Unexpected ACE flags %#x\n", ace->Header.AceFlags);
-        ok(ace->Header.AceSize, "Unexpected ACE size %u\n", ace->Header.AceSize);
-        ok(ace->Mask == SYSTEM_MANDATORY_LABEL_NO_WRITE_UP, "Unexpected ACE mask %#x\n", ace->Mask);
-
-        sid = (SID *)&ace->SidStart;
-        ConvertSidToStringSidA(sid, &str);
-        ok(EqualSid(sid, &medium_sid) || EqualSid(sid, &high_sid), "Got unexpected SID %s\n", str);
-        LocalFree(str);
-    }
+    sid = (SID *)&ace->SidStart;
+    ConvertSidToStringSidA(sid, &str);
+    ok(EqualSid(sid, &medium_sid) || EqualSid(sid, &high_sid), "Got unexpected SID %s\n", str);
+    LocalFree(str);
 
     ret = GetSecurityDescriptorDacl(sd, &present, &dacl, &defaulted);
     ok(ret, "GetSecurityDescriptorDacl failed with error %u\n", GetLastError());
