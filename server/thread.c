@@ -1644,7 +1644,7 @@ DECL_HANDLER(select)
         if (apc->result.type == APC_CREATE_THREAD)  /* transfer the handle to the caller process */
         {
             obj_handle_t handle = duplicate_handle( current->process, apc->result.create_thread.handle,
-                                                    apc->caller->process, 0, 0, DUP_HANDLE_SAME_ACCESS );
+                                                    apc->caller->process, 0, 0, DUPLICATE_SAME_ACCESS );
             close_handle( current->process, apc->result.create_thread.handle );
             apc->result.create_thread.handle = handle;
             clear_error();  /* ignore errors from the above calls */
@@ -1740,7 +1740,7 @@ DECL_HANDLER(queue_apc)
         {
             /* duplicate the handle into the target process */
             obj_handle_t handle = duplicate_handle( current->process, apc->call.map_view.handle,
-                                                    process, 0, 0, DUP_HANDLE_SAME_ACCESS );
+                                                    process, 0, 0, DUPLICATE_SAME_ACCESS );
             if (handle) apc->call.map_view.handle = handle;
             else
             {

@@ -376,7 +376,7 @@ void connect_process_winstation( struct process *process, struct thread *parent_
     else if (parent_process->winstation)
     {
         handle = duplicate_handle( parent_process, parent_process->winstation,
-                                   process, 0, 0, DUP_HANDLE_SAME_ACCESS );
+                                   process, 0, 0, DUPLICATE_SAME_ACCESS );
         winstation = (struct winstation *)get_handle_obj( process, handle, 0, &winstation_ops );
     }
     if (!winstation) goto done;
@@ -400,7 +400,7 @@ void connect_process_winstation( struct process *process, struct thread *parent_
 
         if (!desktop || desktop->winstation != winstation) goto done;
 
-        handle = duplicate_handle( parent_process, handle, process, 0, 0, DUP_HANDLE_SAME_ACCESS );
+        handle = duplicate_handle( parent_process, handle, process, 0, 0, DUPLICATE_SAME_ACCESS );
     }
     if (handle) set_process_default_desktop( process, desktop, handle );
 

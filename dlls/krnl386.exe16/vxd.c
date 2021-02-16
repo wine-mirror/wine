@@ -213,7 +213,7 @@ done:
     RtlLeaveCriticalSection( &vxd_section );
     if (!DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(), &handle, 0,
                           (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle),
-                          DUP_HANDLE_SAME_ACCESS ))
+                          DUPLICATE_SAME_ACCESS ))
         handle = 0;
     return handle;
 }

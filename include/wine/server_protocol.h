@@ -1259,9 +1259,6 @@ struct dup_handle_reply
     int          closed;
     char __pad_20[4];
 };
-#define DUP_HANDLE_CLOSE_SOURCE  DUPLICATE_CLOSE_SOURCE
-#define DUP_HANDLE_SAME_ACCESS   DUPLICATE_SAME_ACCESS
-#define DUP_HANDLE_MAKE_GLOBAL   0x80000000
 
 
 

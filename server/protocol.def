@@ -1122,9 +1122,6 @@ typedef struct
     int          self;         /* is the source the current process? */
     int          closed;       /* whether the source handle has been closed */
 @END
-#define DUP_HANDLE_CLOSE_SOURCE  DUPLICATE_CLOSE_SOURCE
-#define DUP_HANDLE_SAME_ACCESS   DUPLICATE_SAME_ACCESS
-#define DUP_HANDLE_MAKE_GLOBAL   0x80000000  /* Not a Windows flag */
 
 
 /* Make an object temporary */
