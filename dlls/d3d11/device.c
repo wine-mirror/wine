@@ -2761,6 +2761,9 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_SwapDeviceContextState(ID3
 
     FIXME("iface %p, state %p, prev_state %p semi-stub!\n", iface, state, prev_state);
 
+    if (prev_state) *prev_state = NULL;
+    if (!state) return;
+
     wined3d_mutex_lock();
     if (prev_state)
     {

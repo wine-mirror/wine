@@ -7078,8 +7078,7 @@ static void test_device_context_state(void)
 
     previous_context_state = (ID3DDeviceContextState *)0xdeadbeef;
     ID3D11DeviceContext1_SwapDeviceContextState(context, NULL, &previous_context_state);
-    todo_wine ok(previous_context_state == NULL, "Got unexpected state pointer.\n");
-    if (previous_context_state) ID3DDeviceContextState_Release(previous_context_state);
+    ok(previous_context_state == NULL, "Got unexpected state pointer.\n");
     previous_context_state = NULL;
     ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, &previous_context_state);
     ok(previous_context_state != NULL, "Failed to get previous context state\n");
