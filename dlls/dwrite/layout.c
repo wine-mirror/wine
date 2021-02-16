@@ -979,7 +979,7 @@ static HRESULT layout_shape_get_glyphs(struct dwrite_textlayout *layout, struct 
             heap_free(run->glyphs);
             heap_free(context->glyph_props);
 
-            max_count = run->glyphcount;
+            max_count *= 2;
 
             run->glyphs = heap_calloc(max_count, sizeof(*run->glyphs));
             context->glyph_props = heap_calloc(max_count, sizeof(*context->glyph_props));
