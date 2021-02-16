@@ -29,6 +29,8 @@
 #include "variant.h"
 #include "resource.h"
 
+#include "locale.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(variant);
 
 extern HMODULE hProxyDll DECLSPEC_HIDDEN;
@@ -6501,12 +6503,15 @@ static BSTR VARIANT_BstrReplaceDecimal(const WCHAR * buff, LCID lcid, ULONG dwFl
 static HRESULT VARIANT_BstrFromReal(DOUBLE dblIn, LCID lcid, ULONG dwFlags,
                                     BSTR* pbstrOut, LPCWSTR lpszFormat)
 {
+  _locale_t locale;
   WCHAR buff[256];
 
   if (!pbstrOut)
     return E_INVALIDARG;
 
-  swprintf( buff, ARRAY_SIZE(buff), lpszFormat, dblIn );
+  if (!(locale = _create_locale(LC_ALL, "C"))) return E_OUTOFMEMORY;
+  _swprintf_l(buff, ARRAY_SIZE(buff), lpszFormat, locale, dblIn);
+  _free_locale(locale);
 
   /* Negative zeroes are disallowed (some applications depend on this).
      If buff starts with a minus, and then nothing follows but zeroes
