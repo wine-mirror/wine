@@ -37,7 +37,6 @@
 #include "dosexe.h"
 #include "winerror.h"
 #include "winuser.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 

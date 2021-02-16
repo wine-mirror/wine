@@ -21,7 +21,6 @@
 #include <string.h>
 
 #include "wine/winbase16.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 #include "kernel16_private.h"
 
