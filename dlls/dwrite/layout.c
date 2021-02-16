@@ -934,47 +934,57 @@ fatal:
     return hr;
 }
 
-static HRESULT layout_shape_run(struct dwrite_textlayout *layout, struct regular_layout_run *run)
+struct shaping_context
 {
+    IDWriteTextAnalyzer *analyzer;
+    struct regular_layout_run *run;
     DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
     DWRITE_SHAPING_TEXT_PROPERTIES *text_props;
-    IDWriteTextAnalyzer *analyzer;
-    struct layout_range *range;
-    UINT32 max_count;
+};
+
+static void layout_shape_clear_context(struct shaping_context *context)
+{
+    heap_free(context->glyph_props);
+    heap_free(context->text_props);
+}
+
+static HRESULT layout_shape_get_glyphs(struct dwrite_textlayout *layout, struct shaping_context *context)
+{
+    struct regular_layout_run *run = context->run;
+    unsigned int max_count;
     HRESULT hr;
 
-    range = get_layout_range_by_pos(layout, run->descr.textPosition);
-    run->descr.localeName = range->locale;
+    run->descr.localeName = get_layout_range_by_pos(layout, run->descr.textPosition)->locale;
     run->clustermap = heap_calloc(run->descr.stringLength, sizeof(*run->clustermap));
+    if (!run->clustermap)
+        return E_OUTOFMEMORY;
 
     max_count = 3 * run->descr.stringLength / 2 + 16;
     run->glyphs = heap_calloc(max_count, sizeof(*run->glyphs));
-    if (!run->clustermap || !run->glyphs)
+    if (!run->glyphs)
         return E_OUTOFMEMORY;
 
-    text_props = heap_calloc(run->descr.stringLength, sizeof(*text_props));
-    glyph_props = heap_calloc(max_count, sizeof(*glyph_props));
-    if (!text_props || !glyph_props) {
-        heap_free(text_props);
-        heap_free(glyph_props);
+    context->text_props = heap_calloc(run->descr.stringLength, sizeof(*context->text_props));
+    context->glyph_props = heap_calloc(max_count, sizeof(*context->glyph_props));
+    if (!context->text_props || !context->glyph_props)
         return E_OUTOFMEMORY;
-    }
 
-    analyzer = get_text_analyzer();
-
-    for (;;) {
-        hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, run->descr.string, run->descr.stringLength, run->run.fontFace,
+    for (;;)
+    {
+        hr = IDWriteTextAnalyzer_GetGlyphs(context->analyzer, run->descr.string, run->descr.stringLength, run->run.fontFace,
                 run->run.isSideways, run->run.bidiLevel & 1, &run->sa, run->descr.localeName, NULL /* FIXME */, NULL,
-                NULL, 0, max_count, run->clustermap, text_props, run->glyphs, glyph_props, &run->glyphcount);
-        if (hr == E_NOT_SUFFICIENT_BUFFER) {
+                NULL, 0, max_count, run->clustermap, context->text_props, run->glyphs, context->glyph_props, &run->glyphcount);
+        if (hr == E_NOT_SUFFICIENT_BUFFER)
+        {
             heap_free(run->glyphs);
-            heap_free(glyph_props);
+            heap_free(context->glyph_props);
 
             max_count = run->glyphcount;
 
             run->glyphs = heap_calloc(max_count, sizeof(*run->glyphs));
-            glyph_props = heap_calloc(max_count, sizeof(*glyph_props));
-            if (!run->glyphs || !glyph_props) {
+            context->glyph_props = heap_calloc(max_count, sizeof(*context->glyph_props));
+            if (!run->glyphs || !context->glyph_props)
+            {
                 hr = E_OUTOFMEMORY;
                 break;
             }
@@ -985,15 +995,19 @@ static HRESULT layout_shape_run(struct dwrite_textlayout *layout, struct regular
         break;
     }
 
-    if (FAILED(hr)) {
-        heap_free(text_props);
-        heap_free(glyph_props);
+    if (FAILED(hr))
         WARN("%s: shaping failed, hr %#x.\n", debugstr_rundescr(&run->descr), hr);
-        return hr;
-    }
 
     run->run.glyphIndices = run->glyphs;
     run->descr.clusterMap = run->clustermap;
+
+    return hr;
+}
+
+static HRESULT layout_shape_get_positions(struct dwrite_textlayout *layout, struct shaping_context *context)
+{
+    struct regular_layout_run *run = context->run;
+    HRESULT hr;
 
     run->advances = heap_calloc(run->glyphcount, sizeof(*run->advances));
     run->offsets = heap_calloc(run->glyphcount, sizeof(*run->offsets));
@@ -1002,20 +1016,19 @@ static HRESULT layout_shape_run(struct dwrite_textlayout *layout, struct regular
 
     /* Get advances and offsets. */
     if (is_layout_gdi_compatible(layout))
-        hr = IDWriteTextAnalyzer_GetGdiCompatibleGlyphPlacements(analyzer, run->descr.string, run->descr.clusterMap,
-                text_props, run->descr.stringLength, run->run.glyphIndices, glyph_props, run->glyphcount,
+        hr = IDWriteTextAnalyzer_GetGdiCompatibleGlyphPlacements(context->analyzer, run->descr.string, run->descr.clusterMap,
+                context->text_props, run->descr.stringLength, run->run.glyphIndices, context->glyph_props, run->glyphcount,
                 run->run.fontFace, run->run.fontEmSize, layout->ppdip, &layout->transform,
                 layout->measuringmode == DWRITE_MEASURING_MODE_GDI_NATURAL, run->run.isSideways, run->run.bidiLevel & 1,
                 &run->sa, run->descr.localeName, NULL, NULL, 0, run->advances, run->offsets);
     else
-        hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, run->descr.string, run->descr.clusterMap, text_props,
-                run->descr.stringLength, run->run.glyphIndices, glyph_props, run->glyphcount, run->run.fontFace,
-                run->run.fontEmSize, run->run.isSideways, run->run.bidiLevel & 1, &run->sa, run->descr.localeName,
-                NULL, NULL, 0, run->advances, run->offsets);
+        hr = IDWriteTextAnalyzer_GetGlyphPlacements(context->analyzer, run->descr.string, run->descr.clusterMap,
+                context->text_props, run->descr.stringLength, run->run.glyphIndices, context->glyph_props, run->glyphcount,
+                run->run.fontFace, run->run.fontEmSize, run->run.isSideways, run->run.bidiLevel & 1, &run->sa,
+                run->descr.localeName, NULL, NULL, 0, run->advances, run->offsets);
 
-    heap_free(text_props);
-    heap_free(glyph_props);
-    if (FAILED(hr)) {
+    if (FAILED(hr))
+    {
         memset(run->advances, 0, run->glyphcount * sizeof(*run->advances));
         memset(run->offsets, 0, run->glyphcount * sizeof(*run->offsets));
         WARN("%s: failed to get glyph placement info, hr %#x.\n", debugstr_rundescr(&run->descr), hr);
@@ -1023,6 +1036,22 @@ static HRESULT layout_shape_run(struct dwrite_textlayout *layout, struct regular
 
     run->run.glyphAdvances = run->advances;
     run->run.glyphOffsets = run->offsets;
+
+    return hr;
+}
+
+static HRESULT layout_shape_run(struct dwrite_textlayout *layout, struct regular_layout_run *run)
+{
+    struct shaping_context context = { 0 };
+    HRESULT hr;
+
+    context.analyzer = get_text_analyzer();
+    context.run = run;
+
+    if (SUCCEEDED(hr = layout_shape_get_glyphs(layout, &context)))
+        hr = layout_shape_get_positions(layout, &context);
+
+    layout_shape_clear_context(&context);
 
     /* Special treatment for runs that don't produce visual output, shaping code adds normal glyphs for them,
        with valid cluster map and potentially with non-zero advances; layout code exposes those as zero
@@ -1032,7 +1061,7 @@ static HRESULT layout_shape_run(struct dwrite_textlayout *layout, struct regular
     else
         run->run.glyphCount = run->glyphcount;
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
