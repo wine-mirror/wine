@@ -564,7 +564,10 @@ struct shaping_feature
 
 #define MAX_SHAPING_STAGE 16
 
-typedef void (*stage_func)(struct scriptshaping_context *context);
+struct shaping_features;
+
+typedef void (*stage_func)(struct scriptshaping_context *context,
+        const struct shaping_features *features);
 
 struct shaping_stage
 {

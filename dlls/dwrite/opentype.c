@@ -6070,7 +6070,7 @@ void opentype_layout_apply_gsub_features(struct scriptshaping_context *context, 
         }
 
         if (features->stages[j].func)
-            features->stages[j].func(context);
+            features->stages[j].func(context, features);
     }
 
     /* For every glyph range of [<last>.isClusterStart, <next>.isClusterStart) set corresponding
