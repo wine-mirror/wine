@@ -2157,7 +2157,6 @@ NTSTATUS WINAPI NtAddAtom( const WCHAR *name, ULONG length, RTL_ATOM *atom )
         SERVER_START_REQ( add_atom )
         {
             wine_server_add_data( req, name, length );
-            req->table = 0;
             status = wine_server_call( req );
             *atom = reply->atom;
         }
@@ -2178,7 +2177,6 @@ NTSTATUS WINAPI NtDeleteAtom( RTL_ATOM atom )
     SERVER_START_REQ( delete_atom )
     {
         req->atom = atom;
-        req->table = 0;
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -2198,7 +2196,6 @@ NTSTATUS WINAPI NtFindAtom( const WCHAR *name, ULONG length, RTL_ATOM *atom )
         SERVER_START_REQ( find_atom )
         {
             wine_server_add_data( req, name, length );
-            req->table = 0;
             status = wine_server_call( req );
             *atom = reply->atom;
         }

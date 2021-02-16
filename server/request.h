@@ -225,9 +225,6 @@ DECL_HANDLER(add_atom);
 DECL_HANDLER(delete_atom);
 DECL_HANDLER(find_atom);
 DECL_HANDLER(get_atom_information);
-DECL_HANDLER(set_atom_information);
-DECL_HANDLER(empty_atom_table);
-DECL_HANDLER(init_atom_table);
 DECL_HANDLER(get_msg_queue);
 DECL_HANDLER(set_queue_fd);
 DECL_HANDLER(set_queue_mask);
@@ -508,9 +505,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_delete_atom,
     (req_handler)req_find_atom,
     (req_handler)req_get_atom_information,
-    (req_handler)req_set_atom_information,
-    (req_handler)req_empty_atom_table,
-    (req_handler)req_init_atom_table,
     (req_handler)req_get_msg_queue,
     (req_handler)req_set_queue_fd,
     (req_handler)req_set_queue_mask,
@@ -1292,35 +1286,20 @@ C_ASSERT( FIELD_OFFSET(struct get_selector_entry_reply, base) == 8 );
 C_ASSERT( FIELD_OFFSET(struct get_selector_entry_reply, limit) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_selector_entry_reply, flags) == 16 );
 C_ASSERT( sizeof(struct get_selector_entry_reply) == 24 );
-C_ASSERT( FIELD_OFFSET(struct add_atom_request, table) == 12 );
 C_ASSERT( sizeof(struct add_atom_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct add_atom_reply, atom) == 8 );
 C_ASSERT( sizeof(struct add_atom_reply) == 16 );
-C_ASSERT( FIELD_OFFSET(struct delete_atom_request, table) == 12 );
-C_ASSERT( FIELD_OFFSET(struct delete_atom_request, atom) == 16 );
-C_ASSERT( sizeof(struct delete_atom_request) == 24 );
-C_ASSERT( FIELD_OFFSET(struct find_atom_request, table) == 12 );
+C_ASSERT( FIELD_OFFSET(struct delete_atom_request, atom) == 12 );
+C_ASSERT( sizeof(struct delete_atom_request) == 16 );
 C_ASSERT( sizeof(struct find_atom_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct find_atom_reply, atom) == 8 );
 C_ASSERT( sizeof(struct find_atom_reply) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_atom_information_request, table) == 12 );
-C_ASSERT( FIELD_OFFSET(struct get_atom_information_request, atom) == 16 );
-C_ASSERT( sizeof(struct get_atom_information_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_atom_information_request, atom) == 12 );
+C_ASSERT( sizeof(struct get_atom_information_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_atom_information_reply, count) == 8 );
 C_ASSERT( FIELD_OFFSET(struct get_atom_information_reply, pinned) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_atom_information_reply, total) == 16 );
 C_ASSERT( sizeof(struct get_atom_information_reply) == 24 );
-C_ASSERT( FIELD_OFFSET(struct set_atom_information_request, table) == 12 );
-C_ASSERT( FIELD_OFFSET(struct set_atom_information_request, atom) == 16 );
-C_ASSERT( FIELD_OFFSET(struct set_atom_information_request, pinned) == 20 );
-C_ASSERT( sizeof(struct set_atom_information_request) == 24 );
-C_ASSERT( FIELD_OFFSET(struct empty_atom_table_request, table) == 12 );
-C_ASSERT( FIELD_OFFSET(struct empty_atom_table_request, if_pinned) == 16 );
-C_ASSERT( sizeof(struct empty_atom_table_request) == 24 );
-C_ASSERT( FIELD_OFFSET(struct init_atom_table_request, entries) == 12 );
-C_ASSERT( sizeof(struct init_atom_table_request) == 16 );
-C_ASSERT( FIELD_OFFSET(struct init_atom_table_reply, table) == 8 );
-C_ASSERT( sizeof(struct init_atom_table_reply) == 16 );
 C_ASSERT( sizeof(struct get_msg_queue_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_msg_queue_reply, handle) == 8 );
 C_ASSERT( sizeof(struct get_msg_queue_reply) == 16 );

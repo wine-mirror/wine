@@ -312,22 +312,6 @@ static struct atom_table *get_global_table( struct winstation *winstation, int c
     return table;
 }
 
-static struct atom_table *get_table( obj_handle_t h, int create )
-{
-    struct atom_table *table = NULL;
-
-    if (h)
-    {
-        table = (struct atom_table *)get_handle_obj( current->process, h, 0, &atom_table_ops );
-    }
-    else
-    {
-        table = get_global_table( NULL, 1 );
-        if (table) grab_object( table );
-    }
-    return table;
-}
-
 /* add an atom in the global table; used for window properties */
 atom_t add_global_atom( struct winstation *winstation, const struct unicode_str *str )
 {
@@ -379,43 +363,33 @@ void release_global_atom( struct winstation *winstation, atom_t atom )
 DECL_HANDLER(add_atom)
 {
     struct unicode_str name = get_req_unicode_str();
-    struct atom_table *table = get_table( req->table, 1 );
+    struct atom_table *table = get_global_table( NULL, 1 );
 
-    if (table)
-    {
-        reply->atom = add_atom( table, &name );
-        release_object( table );
-    }
+    if (table) reply->atom = add_atom( table, &name );
 }
 
 /* delete a global atom */
 DECL_HANDLER(delete_atom)
 {
-    struct atom_table *table = get_table( req->table, 0 );
-    if (table)
-    {
-        delete_atom( table, req->atom, 0 );
-        release_object( table );
-    }
+    struct atom_table *table = get_global_table( NULL, 0 );
+
+    if (table) delete_atom( table, req->atom, 0 );
 }
 
 /* find a global atom */
 DECL_HANDLER(find_atom)
 {
     struct unicode_str name = get_req_unicode_str();
-    struct atom_table *table = get_table( req->table, 0 );
+    struct atom_table *table = get_global_table( NULL, 0 );
 
-    if (table)
-    {
-        reply->atom = find_atom( table, &name );
-        release_object( table );
-    }
+    if (table) reply->atom = find_atom( table, &name );
 }
 
 /* get global atom name */
 DECL_HANDLER(get_atom_information)
 {
-    struct atom_table *table = get_table( req->table, 0 );
+    struct atom_table *table = get_global_table( NULL, 0 );
+
     if (table)
     {
         struct atom_entry *entry;
@@ -428,59 +402,5 @@ DECL_HANDLER(get_atom_information)
             reply->total = entry->len;
         }
         else reply->count = -1;
-        release_object( table );
-    }
-}
-
-/* set global atom name */
-DECL_HANDLER(set_atom_information)
-{
-    struct atom_table *table = get_table( req->table, 0 );
-    if (table)
-    {
-        struct atom_entry *entry;
-
-        if ((entry = get_atom_entry( table, req->atom )))
-        {
-            if (req->pinned) entry->pinned = 1;
-        }
-        release_object( table );
-    }
-}
-
-/* init a (local) atom table */
-DECL_HANDLER(init_atom_table)
-{
-    struct atom_table* table = create_table( req->entries );
-
-    if (table)
-    {
-        reply->table = alloc_handle( current->process, table, 0, 0 );
-        release_object( table );
-    }
-}
-
-/* set global atom name */
-DECL_HANDLER(empty_atom_table)
-{
-    struct atom_table *table = get_table( req->table, 1 );
-    if (table)
-    {
-        int i;
-        struct atom_entry *entry;
-
-        for (i = 0; i <= table->last; i++)
-        {
-            entry = table->handles[i];
-            if (entry && (!entry->pinned || req->if_pinned))
-            {
-                if (entry->next) entry->next->prev = entry->prev;
-                if (entry->prev) entry->prev->next = entry->next;
-                else table->entries[entry->hash] = entry->next;
-                table->handles[i] = NULL;
-                free( entry );
-            }
-        }
-        release_object( table );
     }
 }

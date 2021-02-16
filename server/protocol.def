@@ -1915,7 +1915,6 @@ struct process_info
 
 /* Add an atom */
 @REQ(add_atom)
-    obj_handle_t  table;       /* which table to add atom to */
     VARARG(name,unicode_str);  /* atom name */
 @REPLY
     atom_t        atom;        /* resulting atom */
@@ -1924,14 +1923,12 @@ struct process_info
 
 /* Delete an atom */
 @REQ(delete_atom)
-    obj_handle_t  table;       /* which table to delete atom from */
     atom_t        atom;        /* atom handle */
 @END
 
 
 /* Find an atom */
 @REQ(find_atom)
-    obj_handle_t table;        /* which table to find atom from */
     VARARG(name,unicode_str);  /* atom name */
 @REPLY
     atom_t       atom;         /* atom handle */
@@ -1940,36 +1937,12 @@ struct process_info
 
 /* Get information about an atom */
 @REQ(get_atom_information)
-    obj_handle_t table;        /* which table to find atom from */
     atom_t       atom;         /* atom handle */
 @REPLY
     int          count;        /* atom lock count */
     int          pinned;       /* whether the atom has been pinned */
     data_size_t  total;        /* actual length of atom name */
     VARARG(name,unicode_str);  /* atom name */
-@END
-
-
-/* Set information about an atom */
-@REQ(set_atom_information)
-    obj_handle_t table;        /* which table to find atom from */
-    atom_t       atom;         /* atom handle */
-    int          pinned;       /* whether to bump atom information */
-@END
-
-
-/* Empty an atom table */
-@REQ(empty_atom_table)
-    obj_handle_t table;        /* which table to find atom from */
-    int          if_pinned;    /* whether to delete pinned atoms */
-@END
-
-
-/* Init an atom table */
-@REQ(init_atom_table)
-    int          entries;      /* number of entries (only for local) */
-@REPLY
-    obj_handle_t table;        /* handle to the atom table */
 @END
 
 
