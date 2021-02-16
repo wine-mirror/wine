@@ -520,7 +520,7 @@ struct d3d_query *unsafe_impl_from_ID3D11Asynchronous(ID3D11Asynchronous *iface)
 struct d3d_device_context_state
 {
     ID3DDeviceContextState ID3DDeviceContextState_iface;
-    LONG refcount;
+    LONG refcount, private_refcount;
 
     struct wined3d_private_store private_store;
     struct
@@ -546,6 +546,8 @@ struct d3d_device_context_state
     } ps;
 
     GUID emulated_interface;
+
+    struct wined3d_device *wined3d_device;
     ID3D11Device2 *device;
 };
 
@@ -572,8 +574,8 @@ struct d3d_device
 
     D3D_FEATURE_LEVEL feature_level;
     BOOL d3d11_only;
-    GUID emulated_interface;
 
+    struct d3d_device_context_state *state;
     struct d3d11_immediate_context immediate_context;
 
     struct wined3d_device_parent device_parent;

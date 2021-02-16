@@ -31,8 +31,9 @@ static const struct wined3d_parent_ops d3d_null_wined3d_parent_ops =
 
 static inline BOOL d3d_device_is_d3d10_active(struct d3d_device *device)
 {
-    return IsEqualGUID(&device->emulated_interface, &IID_ID3D10Device)
-                || IsEqualGUID(&device->emulated_interface, &IID_ID3D10Device1);
+    return !device->state
+                || IsEqualGUID(&device->state->emulated_interface, &IID_ID3D10Device)
+                || IsEqualGUID(&device->state->emulated_interface, &IID_ID3D10Device1);
 }
 
 /* ID3DDeviceContextState methods */
@@ -62,6 +63,15 @@ static HRESULT STDMETHODCALLTYPE d3d_device_context_state_QueryInterface(ID3DDev
     return E_NOINTERFACE;
 }
 
+static ULONG d3d_device_context_state_private_addref(struct d3d_device_context_state *state)
+{
+    ULONG refcount = InterlockedIncrement(&state->private_refcount);
+
+    TRACE("%p increasing private refcount to %u.\n", state, refcount);
+
+    return refcount;
+}
+
 static ULONG STDMETHODCALLTYPE d3d_device_context_state_AddRef(ID3DDeviceContextState *iface)
 {
     struct d3d_device_context_state *state = impl_from_ID3DDeviceContextState(iface);
@@ -69,16 +79,21 @@ static ULONG STDMETHODCALLTYPE d3d_device_context_state_AddRef(ID3DDeviceContext
 
     TRACE("%p increasing refcount to %u.\n", state, refcount);
 
+    if (refcount == 1)
+    {
+        d3d_device_context_state_private_addref(state);
+        ID3D11Device2_AddRef(state->device);
+    }
+
     return refcount;
 }
 
-static ULONG STDMETHODCALLTYPE d3d_device_context_state_Release(ID3DDeviceContextState *iface)
+static void d3d_device_context_state_private_release(struct d3d_device_context_state *state)
 {
-    struct d3d_device_context_state *state = impl_from_ID3DDeviceContextState(iface);
-    ULONG refcount = InterlockedDecrement(&state->refcount);
+    ULONG refcount = InterlockedDecrement(&state->private_refcount);
     unsigned int i;
 
-    TRACE("%p decreasing refcount to %u.\n", state, refcount);
+    TRACE("%p decreasing private refcount to %u.\n", state, refcount);
 
     if (!refcount)
     {
@@ -104,8 +119,22 @@ static ULONG STDMETHODCALLTYPE d3d_device_context_state_Release(ID3DDeviceContex
             if (state->gs.cbs[i]) ID3D11Buffer_Release(state->gs.cbs[i]);
             if (state->ps.cbs[i]) ID3D11Buffer_Release(state->ps.cbs[i]);
         }
-        ID3D11Device2_Release(state->device);
+        wined3d_device_decref(state->wined3d_device);
         heap_free(state);
+    }
+}
+
+static ULONG STDMETHODCALLTYPE d3d_device_context_state_Release(ID3DDeviceContextState *iface)
+{
+    struct d3d_device_context_state *state = impl_from_ID3DDeviceContextState(iface);
+    ULONG refcount = InterlockedDecrement(&state->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", state, refcount);
+
+    if (!refcount)
+    {
+        ID3D11Device2_Release(state->device);
+        d3d_device_context_state_private_release(state);
     }
 
     return refcount;
@@ -169,7 +198,7 @@ static void d3d_device_context_state_init(struct d3d_device_context_state *state
         REFIID emulated_interface)
 {
     state->ID3DDeviceContextState_iface.lpVtbl = &d3d_device_context_state_vtbl;
-    state->refcount = 1;
+    state->refcount = state->private_refcount = 0;
 
     wined3d_private_store_init(&state->private_store);
     memset(&state->vs, 0, sizeof(state->vs));
@@ -177,8 +206,10 @@ static void d3d_device_context_state_init(struct d3d_device_context_state *state
     memset(&state->ps, 0, sizeof(state->ps));
 
     state->emulated_interface = *emulated_interface;
+    wined3d_device_incref(state->wined3d_device = device->wined3d_device);
     state->device = &device->ID3D11Device2_iface;
-    ID3D11Device2_AddRef(state->device);
+
+    d3d_device_context_state_AddRef(&state->ID3DDeviceContextState_iface);
 }
 
 /* ID3D11DeviceContext - immediate context methods */
@@ -2770,7 +2801,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_SwapDeviceContextState(ID3
         *prev_state = NULL;
         if ((state_impl = heap_alloc(sizeof(*state_impl))))
         {
-            d3d_device_context_state_init(state_impl, device, &device->emulated_interface);
+            d3d_device_context_state_init(state_impl, device, &device->state->emulated_interface);
             d3d11_immediate_context_capture_state(iface, state_impl);
             *prev_state = &state_impl->ID3DDeviceContextState_iface;
         }
@@ -2779,7 +2810,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_SwapDeviceContextState(ID3
     if ((state_impl = impl_from_ID3DDeviceContextState(state)))
     {
         d3d11_immediate_context_restore_state(iface, state_impl);
-        device->emulated_interface = state_impl->emulated_interface;
+        device->state->emulated_interface = state_impl->emulated_interface;
         if (d3d_device_is_d3d10_active(device))
             FIXME("D3D10 interface emulation not fully implemented yet!\n");
     }
@@ -4175,6 +4206,7 @@ static ULONG STDMETHODCALLTYPE d3d_device_inner_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        if (device->state) d3d_device_context_state_private_release(device->state);
         d3d11_immediate_context_destroy(&device->immediate_context);
         if (device->wined3d_device)
         {
@@ -6352,6 +6384,8 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
         struct wined3d_device *wined3d_device)
 {
     struct d3d_device *device = device_from_wined3d_device_parent(device_parent);
+    ID3DDeviceContextState *state;
+    HRESULT hr;
 
     TRACE("device_parent %p, wined3d_device %p.\n", device_parent, wined3d_device);
 
@@ -6359,6 +6393,17 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
     device->wined3d_device = wined3d_device;
 
     device->feature_level = d3d_feature_level_from_wined3d(wined3d_device_get_feature_level(wined3d_device));
+
+    if (FAILED(hr = d3d11_device_CreateDeviceContextState(&device->ID3D11Device2_iface, 0, &device->feature_level,
+            1, D3D11_SDK_VERSION, device->d3d11_only ? &IID_ID3D11Device2 : &IID_ID3D10Device1, NULL,
+            &state)))
+        ERR("Failed to create the initial device context state, hr %#x.\n", hr);
+    else
+    {
+        device->state = impl_from_ID3DDeviceContextState(state);
+        d3d_device_context_state_private_addref(device->state);
+        ID3DDeviceContextState_Release(state);
+    }
 }
 
 static void CDECL device_parent_mode_changed(struct wined3d_device_parent *device_parent)
@@ -6488,7 +6533,7 @@ void d3d_device_init(struct d3d_device *device, void *outer_unknown)
     /* COM aggregation always takes place */
     device->outer_unk = outer_unknown;
     device->d3d11_only = FALSE;
-    device->emulated_interface = GUID_NULL;
+    device->state = NULL;
 
     d3d11_immediate_context_init(&device->immediate_context, device);
     ID3D11DeviceContext1_Release(&device->immediate_context.ID3D11DeviceContext1_iface);
