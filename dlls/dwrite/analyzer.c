@@ -1188,6 +1188,8 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
     context.glyph_infos = heap_calloc(glyph_count, sizeof(*context.glyph_infos));
     context.table = &context.cache->gsub;
 
+    *actual_glyph_count = 0;
+
     scriptprops = &dwritescripts_properties[context.script];
     hr = shape_get_glyphs(&context, scriptprops->scripttags);
     if (SUCCEEDED(hr))
