@@ -596,7 +596,7 @@ static void test_ADORecordsetConstruction(void)
 
     count = -1;
     hr = Fields_get_Count( fields, &count );
-    todo_wine ok( count == 1, "got %d\n", count );
+    ok( count == 1, "got %d\n", count );
     if (count > 0)
     {
         VARIANT index;

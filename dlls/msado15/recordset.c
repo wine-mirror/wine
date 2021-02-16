@@ -721,6 +721,46 @@ static const ISupportErrorInfoVtbl fields_supporterrorinfo_vtbl =
     fields_supporterrorinfo_InterfaceSupportsErrorInfo
 };
 
+static void map_rowset_fields(struct recordset *recordset, struct fields *fields)
+{
+    HRESULT hr;
+    IColumnsInfo *columninfo;
+    DBORDINAL columns, i;
+    DBCOLUMNINFO *colinfo;
+    OLECHAR *stringsbuffer;
+
+    /* Not Finding the interface or GetColumnInfo failing just causes 0 Fields to be returned */
+    hr = IRowset_QueryInterface(recordset->row_set, &IID_IColumnsInfo, (void**)&columninfo);
+    if (FAILED(hr))
+        return;
+
+    hr = IColumnsInfo_GetColumnInfo(columninfo, &columns, &colinfo, &stringsbuffer);
+    if (SUCCEEDED(hr))
+    {
+        for (i=0; i < columns; i++)
+        {
+            TRACE("Adding Column %lu, pwszName: %s, pTypeInfo %p, iOrdinal %lu, dwFlags 0x%08x, "
+                  "ulColumnSize %lu, wType %d, bPrecision %d, bScale %d\n",
+                  i, debugstr_w(colinfo[i].pwszName), colinfo[i].pTypeInfo, colinfo[i].iOrdinal,
+                  colinfo[i].dwFlags, colinfo[i].ulColumnSize, colinfo[i].wType,
+                  colinfo[i].bPrecision, colinfo[i].bScale);
+
+            hr = append_field(fields, colinfo[i].pwszName, colinfo[i].wType, colinfo[i].ulColumnSize,
+                     colinfo[i].dwFlags, NULL);
+            if (FAILED(hr))
+            {
+                ERR("Failed to add Field name - 0x%08x\n", hr);
+                return;
+            }
+        }
+
+        CoTaskMemFree(colinfo);
+        CoTaskMemFree(stringsbuffer);
+    }
+
+    IColumnsInfo_Release(columninfo);
+}
+
 static HRESULT fields_create( struct recordset *recordset, struct fields **ret )
 {
     struct fields *fields;
@@ -731,6 +771,9 @@ static HRESULT fields_create( struct recordset *recordset, struct fields **ret )
     fields->refs = 1;
     fields->recordset = recordset;
     _Recordset_AddRef( &fields->recordset->Recordset_iface );
+
+    if ( recordset->row_set )
+        map_rowset_fields(recordset, fields);
 
     *ret = fields;
     TRACE( "returning %p\n", *ret );
