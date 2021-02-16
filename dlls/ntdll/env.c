@@ -933,15 +933,6 @@ void WINAPI RtlDestroyProcessParameters( RTL_USER_PROCESS_PARAMETERS *params )
 }
 
 
-static inline void get_unicode_string( UNICODE_STRING *str, WCHAR **src, UINT len )
-{
-    str->Buffer = *src;
-    str->Length = len;
-    str->MaximumLength = len + sizeof(WCHAR);
-    *src += len / sizeof(WCHAR);
-}
-
-
 /***********************************************************************
  *           run_wineboot
  */
