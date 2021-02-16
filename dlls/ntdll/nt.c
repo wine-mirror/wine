@@ -33,7 +33,6 @@
 #include "windef.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
-#include "wine/server.h"
 #include "ddk/wdm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);

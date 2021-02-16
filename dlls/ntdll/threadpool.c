@@ -1090,8 +1090,7 @@ static void CALLBACK timerqueue_thread_proc( void *param )
             }
         }
 
-        timeout_lower = TIMEOUT_INFINITE;
-        timeout_upper = TIMEOUT_INFINITE;
+        timeout_lower = timeout_upper = MAXLONGLONG;
 
         /* Determine next timeout and use the window length to optimize wakeup times. */
         LIST_FOR_EACH_ENTRY( other_timer, &timerqueue.pending_timers,
@@ -1247,7 +1246,7 @@ static void CALLBACK waitqueue_thread_proc( void *param )
     for (;;)
     {
         NtQuerySystemTime( &now );
-        timeout.QuadPart = TIMEOUT_INFINITE;
+        timeout.QuadPart = MAXLONGLONG;
         num_handles = 0;
 
         LIST_FOR_EACH_ENTRY_SAFE( wait, next, &bucket->waiting, struct threadpool_object,
@@ -2985,7 +2984,7 @@ VOID WINAPI TpSetTimer( TP_TIMER *timer, LARGE_INTEGER *timeout, LONG period, LO
 VOID WINAPI TpSetWait( TP_WAIT *wait, HANDLE handle, LARGE_INTEGER *timeout )
 {
     struct threadpool_object *this = impl_from_TP_WAIT( wait );
-    ULONGLONG timestamp = TIMEOUT_INFINITE;
+    ULONGLONG timestamp = MAXLONGLONG;
 
     TRACE( "%p %p %p\n", wait, handle, timeout );
 

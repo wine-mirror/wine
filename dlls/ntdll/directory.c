@@ -36,7 +36,6 @@
 #include "winternl.h"
 #include "ddk/wdm.h"
 #include "ntdll_misc.h"
-#include "wine/server.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 #include "wine/exception.h"

@@ -24,6 +24,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include "unixlib.h"
+#include "wine/server.h"
 #include "wine/list.h"
 
 #ifdef __i386__

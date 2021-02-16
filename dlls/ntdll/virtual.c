@@ -31,7 +31,6 @@
 #define NONAMELESSUNION
 #include "windef.h"
 #include "winternl.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 
