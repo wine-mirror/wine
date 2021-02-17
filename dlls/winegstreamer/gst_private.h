@@ -245,6 +245,8 @@ struct unix_funcs
     void (CDECL *wg_parser_stream_notify_qos)(struct wg_parser_stream *stream,
             bool underflow, double proportion, int64_t diff, uint64_t timestamp);
 
+    /* Returns the duration in 100-nanosecond units. */
+    uint64_t (CDECL *wg_parser_stream_get_duration)(struct wg_parser_stream *stream);
     /* start_pos and stop_pos are in 100-nanosecond units. */
     bool (CDECL *wg_parser_stream_seek)(struct wg_parser_stream *stream, double rate,
             uint64_t start_pos, uint64_t stop_pos, DWORD start_flags, DWORD stop_flags);

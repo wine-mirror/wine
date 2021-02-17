@@ -977,7 +977,7 @@ static HRESULT parser_sink_connect(struct strmbase_sink *iface, IPin *peer, cons
     {
         struct parser_source *pin = filter->sources[i];
 
-        pin->seek.llDuration = pin->seek.llStop = pin->wg_stream->duration;
+        pin->seek.llDuration = pin->seek.llStop = unix_funcs->wg_parser_stream_get_duration(pin->wg_stream);
         pin->seek.llCurrent = 0;
     }
 

@@ -492,6 +492,11 @@ static void CDECL wg_parser_stream_release_buffer(struct wg_parser_stream *strea
     pthread_cond_signal(&stream->event_empty_cond);
 }
 
+static uint64_t CDECL wg_parser_stream_get_duration(struct wg_parser_stream *stream)
+{
+    return stream->duration;
+}
+
 static bool CDECL wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,
         uint64_t start_pos, uint64_t stop_pos, DWORD start_flags, DWORD stop_flags)
 {
@@ -1724,6 +1729,7 @@ static const struct unix_funcs funcs =
     wg_parser_stream_release_buffer,
     wg_parser_stream_notify_qos,
 
+    wg_parser_stream_get_duration,
     wg_parser_stream_seek,
 };
 
