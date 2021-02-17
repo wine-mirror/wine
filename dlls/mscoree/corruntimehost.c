@@ -1319,7 +1319,6 @@ static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
                 ULONG_PTR *tokens = fixup->tokens;
                 for (i=0; i<fixup->fixup->count; i++)
                 {
-                    TRACE("%#lx\n", tokens[i]);
                     vtable[i] = mono_marshal_get_vtfixup_ftnptr(
                         image, tokens[i], fixup->fixup->type);
                 }
@@ -1363,7 +1362,6 @@ static void FixupVTableEntry(HMODULE hmodule, VTableFixup *vtable_fixup)
     fixup->vtable = (BYTE*)hmodule + vtable_fixup->rva;
     fixup->done = FALSE;
 
-    TRACE("vtable_fixup->type=0x%x\n",vtable_fixup->type);
 #if __x86_64__
     if (vtable_fixup->type & COR_VTABLE_64BIT)
 #else
