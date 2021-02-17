@@ -822,28 +822,21 @@ static GstFlowReturn read_buffer(struct parser *This, guint64 ofs, guint len, Gs
 static DWORD CALLBACK read_thread(void *arg)
 {
     struct parser *filter = arg;
-    struct wg_parser *parser = filter->wg_parser;
 
     TRACE("Starting read thread for filter %p.\n", filter);
 
-    pthread_mutex_lock(&parser->mutex);
-
     while (filter->sink_connected)
     {
-        while (parser->sink_connected && !parser->read_request.buffer)
-            pthread_cond_wait(&parser->read_cond, &parser->mutex);
+        GstBuffer *buffer;
+        uint64_t offset;
+        uint32_t size;
 
-        if (!parser->sink_connected)
-            break;
+        if (!unix_funcs->wg_parser_get_read_request(filter->wg_parser, &buffer, &offset, &size))
+            continue;
 
-        parser->read_request.done = true;
-        parser->read_request.ret = read_buffer(filter, parser->read_request.offset,
-                parser->read_request.size, parser->read_request.buffer);
-        parser->read_request.buffer = NULL;
-        pthread_cond_signal(&parser->read_done_cond);
+        unix_funcs->wg_parser_complete_read_request(filter->wg_parser,
+                read_buffer(filter, offset, size, buffer));
     }
-
-    pthread_mutex_unlock(&parser->mutex);
 
     TRACE("Streaming stopped; exiting.\n");
     return 0;

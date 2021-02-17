@@ -349,6 +349,38 @@ static void CDECL wg_parser_end_flush(struct wg_parser *parser)
     pthread_mutex_unlock(&parser->mutex);
 }
 
+static bool CDECL wg_parser_get_read_request(struct wg_parser *parser,
+        GstBuffer **buffer, uint64_t *offset, uint32_t *size)
+{
+    pthread_mutex_lock(&parser->mutex);
+
+    while (parser->sink_connected && !parser->read_request.buffer)
+        pthread_cond_wait(&parser->read_cond, &parser->mutex);
+
+    if (!parser->sink_connected)
+    {
+        pthread_mutex_unlock(&parser->mutex);
+        return false;
+    }
+
+    *buffer = parser->read_request.buffer;
+    *offset = parser->read_request.offset;
+    *size = parser->read_request.size;
+
+    pthread_mutex_unlock(&parser->mutex);
+    return true;
+}
+
+static void CDECL wg_parser_complete_read_request(struct wg_parser *parser, GstFlowReturn ret)
+{
+    pthread_mutex_lock(&parser->mutex);
+    parser->read_request.done = true;
+    parser->read_request.ret = ret;
+    parser->read_request.buffer = NULL;
+    pthread_mutex_unlock(&parser->mutex);
+    pthread_cond_signal(&parser->read_done_cond);
+}
+
 static void CDECL wg_parser_stream_get_preferred_format(struct wg_parser_stream *stream, struct wg_format *format)
 {
     *format = stream->preferred_format;
@@ -1662,6 +1694,9 @@ static const struct unix_funcs funcs =
 
     wg_parser_begin_flush,
     wg_parser_end_flush,
+
+    wg_parser_get_read_request,
+    wg_parser_complete_read_request,
 
     wg_parser_get_stream_count,
     wg_parser_get_stream,
