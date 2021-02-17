@@ -717,18 +717,18 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
               for (i = 0; i < ipAddrTable->dwNumEntries; i++) {
                 if (ipAddrTable->table[i].dwIndex == ptr->Index) {
                   if (firstIPAddr) {
-                    toIPAddressString(ipAddrTable->table[i].dwAddr,
+                    RtlIpv4AddressToStringA((IN_ADDR *)&ipAddrTable->table[i].dwAddr,
                      ptr->IpAddressList.IpAddress.String);
-                    toIPAddressString(ipAddrTable->table[i].dwMask,
+                    RtlIpv4AddressToStringA((IN_ADDR *)&ipAddrTable->table[i].dwMask,
                      ptr->IpAddressList.IpMask.String);
                     firstIPAddr = FALSE;
                   }
                   else {
                     currentIPAddr->Next = nextIPAddr;
                     currentIPAddr = nextIPAddr;
-                    toIPAddressString(ipAddrTable->table[i].dwAddr,
+                    RtlIpv4AddressToStringA((IN_ADDR *)&ipAddrTable->table[i].dwAddr,
                      currentIPAddr->IpAddress.String);
-                    toIPAddressString(ipAddrTable->table[i].dwMask,
+                    RtlIpv4AddressToStringA((IN_ADDR *)&ipAddrTable->table[i].dwMask,
                      currentIPAddr->IpMask.String);
                     nextIPAddr++;
                   }
@@ -749,9 +749,9 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
                  && routeTable->table[i].u1.ForwardType ==
                  MIB_IPROUTE_TYPE_INDIRECT)
                 {
-                  toIPAddressString(routeTable->table[i].dwForwardNextHop,
+                  RtlIpv4AddressToStringA((IN_ADDR *)&routeTable->table[i].dwForwardNextHop,
                    ptr->GatewayList.IpAddress.String);
-                  toIPAddressString(routeTable->table[i].dwForwardMask,
+                  RtlIpv4AddressToStringA((IN_ADDR *)&routeTable->table[i].dwForwardMask,
                    ptr->GatewayList.IpMask.String);
                 }
               if (winsEnabled) {
@@ -2224,7 +2224,7 @@ static DWORD get_dns_server_list(PIP_ADDR_STRING list,
     get_dns_servers( addr, num, TRUE );
 
     for (i = 0, ptr = list; i < num; i++, ptr = ptr->Next) {
-        toIPAddressString(((struct sockaddr_in *)(addr + i))->sin_addr.s_addr,
+        RtlIpv4AddressToStringA((IN_ADDR *)&((struct sockaddr_in *)(addr + i))->sin_addr.s_addr,
        ptr->IpAddress.String);
       if (i == num - 1)
         ptr->Next = NULL;

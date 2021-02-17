@@ -109,11 +109,6 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags) 
 ULONG v6addressesFromIndex(IF_INDEX index, SOCKET_ADDRESS **addrs, ULONG *num_addrs,
  SOCKET_ADDRESS **masks) DECLSPEC_HIDDEN;
 
-/* Converts the network-order bytes in addr to a printable string.  Returns
- * string.
- */
-char *toIPAddressString(unsigned int addr, char string[16]) DECLSPEC_HIDDEN;
-
 DWORD getInterfaceMtuByName(const char *name, PDWORD mtu) DECLSPEC_HIDDEN;
 DWORD getInterfaceStatusByName(const char *name, INTERNAL_IF_OPER_STATUS *status) DECLSPEC_HIDDEN;
 
