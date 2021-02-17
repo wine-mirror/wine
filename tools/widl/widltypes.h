@@ -60,7 +60,7 @@ typedef struct list str_list_t;
 typedef struct list expr_list_t;
 typedef struct list var_list_t;
 typedef struct list declarator_list_t;
-typedef struct list ifref_list_t;
+typedef struct list typeref_list_t;
 typedef struct list user_type_list_t;
 typedef struct list context_handle_list_t;
 typedef struct list generic_handle_list_t;
@@ -386,7 +386,7 @@ struct iface_details
   struct _type_t *inherit;
   struct _type_t *disp_inherit;
   struct _type_t *async_iface;
-  ifref_list_t *requires;
+  typeref_list_t *requires;
 };
 
 struct module_details
@@ -406,7 +406,7 @@ struct array_details
 
 struct coclass_details
 {
-  ifref_list_t *ifaces;
+  typeref_list_t *ifaces;
 };
 
 struct basic_details
@@ -433,7 +433,7 @@ struct alias_details
 
 struct runtimeclass_details
 {
-    ifref_list_t *ifaces;
+    typeref_list_t *ifaces;
 };
 
 struct parameterized_details

@@ -425,7 +425,7 @@ type_t *type_interface_declare(char *name, struct namespace *namespace)
     return type;
 }
 
-type_t *type_interface_define(type_t *iface, attr_list_t *attrs, type_t *inherit, statement_list_t *stmts, ifref_list_t *requires)
+type_t *type_interface_define(type_t *iface, attr_list_t *attrs, type_t *inherit, statement_list_t *stmts, typeref_list_t *requires)
 {
     if (iface->defined)
         error_loc("interface %s already defined at %s:%d\n",
@@ -526,7 +526,7 @@ type_t *type_coclass_declare(char *name)
     return type;
 }
 
-type_t *type_coclass_define(type_t *coclass, attr_list_t *attrs, ifref_list_t *ifaces)
+type_t *type_coclass_define(type_t *coclass, attr_list_t *attrs, typeref_list_t *ifaces)
 {
     if (coclass->defined)
         error_loc("coclass %s already defined at %s:%d\n",
@@ -546,10 +546,10 @@ type_t *type_runtimeclass_declare(char *name, struct namespace *namespace)
     return type;
 }
 
-type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs, ifref_list_t *ifaces)
+type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs, typeref_list_t *ifaces)
 {
     typeref_t *ref, *required, *tmp;
-    ifref_list_t *requires;
+    typeref_list_t *requires;
 
     if (runtimeclass->defined)
         error_loc("runtimeclass %s already defined at %s:%d\n",
@@ -614,7 +614,7 @@ type_t *type_parameterized_interface_declare(char *name, struct namespace *names
     return type;
 }
 
-type_t *type_parameterized_interface_define(type_t *type, attr_list_t *attrs, type_t *inherit, statement_list_t *stmts, ifref_list_t *requires)
+type_t *type_parameterized_interface_define(type_t *type, attr_list_t *attrs, type_t *inherit, statement_list_t *stmts, typeref_list_t *requires)
 {
     type_t *iface;
     if (type->defined)

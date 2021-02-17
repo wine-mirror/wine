@@ -57,7 +57,7 @@ static attr_t *make_custom_attr(UUID *id, expr_t *pval);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
 static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_t *decl, int top);
 static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_list_t *decls);
-static ifref_list_t *append_typeref(ifref_list_t *list, typeref_t *ref);
+static typeref_list_t *append_typeref(typeref_list_t *list, typeref_t *ref);
 static typeref_t *make_typeref(type_t *type);
 static var_list_t *append_var_list(var_list_t *list, var_list_t *vars);
 static declarator_list_t *append_declarator(declarator_list_t *list, declarator_t *p);
@@ -138,7 +138,7 @@ static typelib_t *current_typelib;
 	warning_t *warning;
 	warning_list_t *warning_list;
 	typeref_t *typeref;
-	ifref_list_t *ifref_list;
+	typeref_list_t *typeref_list;
 	char *str;
 	UUID *uuid;
 	unsigned int num;
@@ -294,8 +294,8 @@ static typelib_t *current_typelib;
 %type <type> type_parameter
 %type <type_list> type_parameters
 %type <typeref> class_interface
-%type <ifref_list> class_interfaces
-%type <ifref_list> requires required_types
+%type <typeref_list> class_interfaces
+%type <typeref_list> requires required_types
 %type <var> arg ne_union_field union_field s_field case enum enum_member declaration
 %type <var> funcdef
 %type <var_list> m_args arg_list args dispint_meths
@@ -1814,7 +1814,7 @@ static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, dec
   return var_list;
 }
 
-static ifref_list_t *append_typeref(ifref_list_t *list, typeref_t *ref)
+static typeref_list_t *append_typeref(typeref_list_t *list, typeref_t *ref)
 {
     if (!ref) return list;
     if (!list)
