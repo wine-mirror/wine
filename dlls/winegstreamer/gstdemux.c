@@ -864,12 +864,11 @@ static void parser_destroy(struct strmbase_filter *iface)
 static HRESULT parser_init_stream(struct strmbase_filter *iface)
 {
     struct parser *filter = impl_from_strmbase_filter(iface);
-    struct wg_parser *parser = filter->wg_parser;
     DWORD stop_flags = AM_SEEKING_NoPositioning;
     const SourceSeeking *seeking;
     unsigned int i;
 
-    if (!parser->container)
+    if (!filter->sink_connected)
         return S_OK;
 
     filter->streaming = true;
@@ -903,10 +902,9 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
 static HRESULT parser_cleanup_stream(struct strmbase_filter *iface)
 {
     struct parser *filter = impl_from_strmbase_filter(iface);
-    struct wg_parser *parser = filter->wg_parser;
     unsigned int i;
 
-    if (!parser->container)
+    if (!filter->sink_connected)
         return S_OK;
 
     filter->streaming = false;
