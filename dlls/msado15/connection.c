@@ -20,6 +20,7 @@
 #include "windef.h"
 #include "winbase.h"
 #define COBJMACROS
+#define DBINITCONSTANTS
 #include "initguid.h"
 #include "ocidl.h"
 #include "objbase.h"
@@ -266,8 +267,75 @@ static HRESULT WINAPI connection_Close( _Connection *iface )
 static HRESULT WINAPI connection_Execute( _Connection *iface, BSTR command, VARIANT *records_affected,
                                           LONG options, _Recordset **record_set )
 {
-    FIXME( "%p, %s, %p, %08x, %p\n", iface, debugstr_w(command), records_affected, options, record_set );
-    return E_NOTIMPL;
+    struct connection *connection = impl_from_Connection( iface );
+    HRESULT hr;
+    IOpenRowset *openrowset;
+    IDBCreateCommand *create_command = NULL;
+    ICommand *cmd = NULL;
+    ICommandText *comand_text = NULL;
+    DBROWCOUNT affected;
+    IUnknown *rowset = NULL;
+    _Recordset *recordset = NULL;
+    ADORecordsetConstruction *construct;
+
+    FIXME( "%p, %s, %p, 0x%08x, %p Semi-stub\n", iface, debugstr_w(command), records_affected, options, record_set );
+
+    if (connection->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    hr = IUnknown_QueryInterface(connection->session, &IID_IOpenRowset, (void**)&openrowset);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IOpenRowset_QueryInterface(openrowset, &IID_IDBCreateCommand, (void**)&create_command);
+    if (FAILED(hr))
+        goto done;
+
+    hr = IDBCreateCommand_CreateCommand(create_command, NULL, &IID_IUnknown, (IUnknown **)&cmd);
+    if (FAILED(hr))
+        goto done;
+
+    hr = ICommand_QueryInterface(cmd, &IID_ICommandText, (void**)&comand_text);
+    if (FAILED(hr))
+    {
+        FIXME("Currently only ICommandText interface is support\n");
+        goto done;
+    }
+
+    hr = ICommandText_SetCommandText(comand_text, &DBGUID_DEFAULT, command);
+    if (FAILED(hr))
+        goto done;
+
+    hr = ICommandText_Execute(comand_text, NULL, &IID_IUnknown, NULL, &affected, &rowset);
+    if (FAILED(hr))
+        goto done;
+
+    hr = Recordset_create( (void**)&recordset);
+    if (FAILED(hr))
+        goto done;
+
+    hr = _Recordset_QueryInterface(recordset, &IID_ADORecordsetConstruction, (void**)&construct);
+    if (FAILED(hr))
+        goto done;
+
+    ADORecordsetConstruction_put_Rowset(construct, rowset);
+    ADORecordsetConstruction_Release(construct);
+
+    if (records_affected)
+    {
+        V_VT(records_affected) = VT_I4;
+        V_I4(records_affected) = affected;
+    }
+
+    _Recordset_put_CursorLocation(recordset, connection->location);
+    *record_set = recordset;
+
+done:
+    if (rowset) IUnknown_Release(rowset);
+    if (comand_text) ICommandText_Release(comand_text);
+    if (cmd) ICommand_Release(cmd);
+    if (create_command) IDBCreateCommand_Release(create_command);
+    if (openrowset) IOpenRowset_Release(openrowset);
+    return hr;
 }
 
 static HRESULT WINAPI connection_BeginTrans( _Connection *iface, LONG *transaction_level )
