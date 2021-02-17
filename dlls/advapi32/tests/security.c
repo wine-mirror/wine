@@ -8019,6 +8019,268 @@ static void test_GetKernelObjectSecurity(void)
     free(sd);
 }
 
+static void check_different_token(HANDLE token1, HANDLE token2)
+{
+    TOKEN_STATISTICS stats1, stats2;
+    DWORD size;
+    BOOL ret;
+
+    ret = GetTokenInformation(token1, TokenStatistics, &stats1, sizeof(stats1), &size);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = GetTokenInformation(token2, TokenStatistics, &stats2, sizeof(stats2), &size);
+    ok(ret, "got error %u\n", GetLastError());
+
+    ok(memcmp(&stats1.TokenId, &stats2.TokenId, sizeof(LUID)), "expected different IDs\n");
+}
+
+static void test_elevation(void)
+{
+    TOKEN_LINKED_TOKEN linked, linked2;
+    DWORD orig_type, type, size;
+    TOKEN_ELEVATION elevation;
+    HANDLE token, token2;
+    BOOL ret;
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY | READ_CONTROL | TOKEN_DUPLICATE
+            | TOKEN_ASSIGN_PRIMARY | TOKEN_ADJUST_PRIVILEGES | TOKEN_ADJUST_DEFAULT, &token);
+    ok(ret, "got error %u\n", GetLastError());
+
+    ret = GetTokenInformation(token, TokenElevationType, &type, sizeof(type), &size);
+    ok(ret, "got error %u\n", GetLastError());
+    orig_type = type;
+    ret = GetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation), &size);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = GetTokenInformation(token, TokenLinkedToken, &linked, sizeof(linked), &size);
+    if (!ret && GetLastError() == ERROR_NO_SUCH_LOGON_SESSION) /* fails on w2008s64 */
+    {
+        win_skip("Failed to get linked token.\n");
+        CloseHandle(token);
+        return;
+    }
+    todo_wine ok(ret, "got error %u\n", GetLastError());
+    if (!ret) return;
+
+    if (type == TokenElevationTypeDefault)
+    {
+        ok(elevation.TokenIsElevated == FALSE, "got elevation %#x\n", elevation.TokenIsElevated);
+        ok(!linked.LinkedToken, "expected no linked token\n");
+    }
+    else if (type == TokenElevationTypeLimited)
+    {
+        ok(elevation.TokenIsElevated == FALSE, "got elevation %#x\n", elevation.TokenIsElevated);
+        ok(!!linked.LinkedToken, "expected a linked token\n");
+
+        TEST_GRANTED_ACCESS(linked.LinkedToken, TOKEN_ALL_ACCESS);
+        ret = GetTokenInformation(linked.LinkedToken, TokenElevationType, &type, sizeof(type), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(type == TokenElevationTypeFull, "got type %#x\n", type);
+        ret = GetTokenInformation(linked.LinkedToken, TokenElevation, &elevation, sizeof(elevation), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(elevation.TokenIsElevated == TRUE, "got elevation %#x\n", elevation.TokenIsElevated);
+
+        /* Asking for the linked token again gives us a different token. */
+        ret = GetTokenInformation(token, TokenLinkedToken, &linked2, sizeof(linked2), &size);
+        ok(ret, "got error %u\n", GetLastError());
+
+        ret = GetTokenInformation(linked2.LinkedToken, TokenElevationType, &type, sizeof(type), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(type == TokenElevationTypeFull, "got type %#x\n", type);
+        ret = GetTokenInformation(linked2.LinkedToken, TokenElevation, &elevation, sizeof(elevation), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(elevation.TokenIsElevated == TRUE, "got elevation %#x\n", elevation.TokenIsElevated);
+
+        check_different_token(linked.LinkedToken, linked2.LinkedToken);
+
+        CloseHandle(linked2.LinkedToken);
+
+        /* Asking for the linked token's linked token gives us a new limited token. */
+        ret = GetTokenInformation(linked.LinkedToken, TokenLinkedToken, &linked2, sizeof(linked2), &size);
+        ok(ret, "got error %u\n", GetLastError());
+
+        ret = GetTokenInformation(linked2.LinkedToken, TokenElevationType, &type, sizeof(type), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(type == TokenElevationTypeLimited, "got type %#x\n", type);
+        ret = GetTokenInformation(linked2.LinkedToken, TokenElevation, &elevation, sizeof(elevation), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(elevation.TokenIsElevated == FALSE, "got elevation %#x\n", elevation.TokenIsElevated);
+
+        check_different_token(token, linked2.LinkedToken);
+
+        CloseHandle(linked2.LinkedToken);
+
+        CloseHandle(linked.LinkedToken);
+
+        type = TokenElevationTypeLimited;
+        ret = SetTokenInformation(token, TokenElevationType, &type, sizeof(type));
+        ok(!ret, "expected failure\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
+
+        elevation.TokenIsElevated = FALSE;
+        ret = SetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation));
+        ok(!ret, "expected failure\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
+    }
+    else
+    {
+        ok(elevation.TokenIsElevated == TRUE, "got elevation %#x\n", elevation.TokenIsElevated);
+        ok(!!linked.LinkedToken, "expected a linked token\n");
+
+        TEST_GRANTED_ACCESS(linked.LinkedToken, TOKEN_ALL_ACCESS);
+        ret = GetTokenInformation(linked.LinkedToken, TokenElevationType, &type, sizeof(type), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(type == TokenElevationTypeLimited, "got type %#x\n", type);
+        ret = GetTokenInformation(linked.LinkedToken, TokenElevation, &elevation, sizeof(elevation), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(elevation.TokenIsElevated == FALSE, "got elevation %#x\n", elevation.TokenIsElevated);
+
+        /* Asking for the linked token again gives us a different token. */
+        ret = GetTokenInformation(token, TokenLinkedToken, &linked2, sizeof(linked2), &size);
+        ok(ret, "got error %u\n", GetLastError());
+
+        ret = GetTokenInformation(linked2.LinkedToken, TokenElevationType, &type, sizeof(type), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(type == TokenElevationTypeLimited, "got type %#x\n", type);
+        ret = GetTokenInformation(linked2.LinkedToken, TokenElevation, &elevation, sizeof(elevation), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(elevation.TokenIsElevated == FALSE, "got elevation %#x\n", elevation.TokenIsElevated);
+
+        check_different_token(linked.LinkedToken, linked2.LinkedToken);
+
+        CloseHandle(linked2.LinkedToken);
+
+        /* Asking for the linked token's linked token gives us a new elevated token. */
+        ret = GetTokenInformation(linked.LinkedToken, TokenLinkedToken, &linked2, sizeof(linked2), &size);
+        ok(ret, "got error %u\n", GetLastError());
+
+        ret = GetTokenInformation(linked2.LinkedToken, TokenElevationType, &type, sizeof(type), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(type == TokenElevationTypeFull, "got type %#x\n", type);
+        ret = GetTokenInformation(linked2.LinkedToken, TokenElevation, &elevation, sizeof(elevation), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(elevation.TokenIsElevated == TRUE, "got elevation %#x\n", elevation.TokenIsElevated);
+
+        check_different_token(token, linked2.LinkedToken);
+
+        CloseHandle(linked2.LinkedToken);
+
+        CloseHandle(linked.LinkedToken);
+
+        type = TokenElevationTypeLimited;
+        ret = SetTokenInformation(token, TokenElevationType, &type, sizeof(type));
+        ok(!ret, "expected failure\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
+
+        elevation.TokenIsElevated = FALSE;
+        ret = SetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation));
+        ok(!ret, "expected failure\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
+    }
+
+    ret = DuplicateTokenEx(token, TOKEN_ALL_ACCESS, NULL, SecurityAnonymous, TokenPrimary, &token2);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = GetTokenInformation(token2, TokenElevationType, &type, sizeof(type), &size);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(type == orig_type, "expected same type\n");
+    ret = GetTokenInformation(token2, TokenElevation, &elevation, sizeof(elevation), &size);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(elevation.TokenIsElevated == (type == TokenElevationTypeFull), "got elevation %#x\n", elevation.TokenIsElevated);
+    ret = GetTokenInformation(token2, TokenLinkedToken, &linked, sizeof(linked), &size);
+    ok(ret, "got error %u\n", GetLastError());
+    if (type == TokenElevationTypeDefault)
+        ok(!linked.LinkedToken, "expected no linked token\n");
+    else
+        ok(!!linked.LinkedToken, "expected a linked token\n");
+    CloseHandle(linked.LinkedToken);
+    CloseHandle(token2);
+
+    ret = CreateRestrictedToken(token, 0, 0, NULL, 0, NULL, 0, NULL, &token2);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = GetTokenInformation(token2, TokenElevationType, &type, sizeof(type), &size);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(type == orig_type, "expected same type\n");
+    ret = GetTokenInformation(token2, TokenElevation, &elevation, sizeof(elevation), &size);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(elevation.TokenIsElevated == (type == TokenElevationTypeFull), "got elevation %#x\n", elevation.TokenIsElevated);
+    ret = GetTokenInformation(token2, TokenLinkedToken, &linked, sizeof(linked), &size);
+    ok(ret, "got error %u\n", GetLastError());
+    if (type == TokenElevationTypeDefault)
+        ok(!linked.LinkedToken, "expected no linked token\n");
+    else
+        ok(!!linked.LinkedToken, "expected a linked token\n");
+    CloseHandle(linked.LinkedToken);
+    CloseHandle(token2);
+
+    if (type != TokenElevationTypeDefault)
+    {
+        char prev_privs_buffer[128], acl_buffer[256], prev_acl_buffer[256];
+        TOKEN_PRIVILEGES privs, *prev_privs = (TOKEN_PRIVILEGES *)prev_privs_buffer;
+        TOKEN_DEFAULT_DACL *prev_acl = (TOKEN_DEFAULT_DACL *)prev_acl_buffer;
+        TOKEN_DEFAULT_DACL *ret_acl = (TOKEN_DEFAULT_DACL *)acl_buffer;
+        TOKEN_DEFAULT_DACL default_acl;
+        PRIVILEGE_SET priv_set;
+        BOOL ret, is_member;
+        DWORD size;
+        ACL acl;
+
+        /* Linked tokens do not preserve privilege modifications. */
+
+        privs.PrivilegeCount = 1;
+        ret = LookupPrivilegeValueA(NULL, "SeChangeNotifyPrivilege", &privs.Privileges[0].Luid);
+        ok(ret, "got error %u\n", GetLastError());
+        privs.Privileges[0].Attributes = SE_PRIVILEGE_REMOVED;
+        ret = AdjustTokenPrivileges(token, FALSE, &privs, sizeof(prev_privs_buffer), prev_privs, &size);
+        ok(ret, "got error %u\n", GetLastError());
+
+        priv_set.PrivilegeCount = 1;
+        priv_set.Control = 0;
+        priv_set.Privilege[0] = privs.Privileges[0];
+        ret = PrivilegeCheck(token, &priv_set, &is_member);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(!is_member, "not a member\n");
+
+        ret = GetTokenInformation(token, TokenLinkedToken, &linked, sizeof(linked), &size);
+        ok(ret, "got error %u\n", GetLastError());
+
+        ret = PrivilegeCheck(linked.LinkedToken, &priv_set, &is_member);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(is_member, "not a member\n");
+
+        CloseHandle(linked.LinkedToken);
+
+        ret = AdjustTokenPrivileges(token, FALSE, prev_privs, 0, NULL, NULL);
+        ok(ret, "got error %u\n", GetLastError());
+
+        /* Linked tokens do not preserve default DACL modifications. */
+
+        ret = GetTokenInformation(token, TokenDefaultDacl, prev_acl, sizeof(prev_acl_buffer), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(prev_acl->DefaultDacl->AceCount, "expected non-empty default DACL\n");
+
+        InitializeAcl(&acl, sizeof(acl), ACL_REVISION);
+        default_acl.DefaultDacl = &acl;
+        ret = SetTokenInformation(token, TokenDefaultDacl, &default_acl, sizeof(default_acl));
+        ok(ret, "got error %u\n", GetLastError());
+
+        ret = GetTokenInformation(token, TokenDefaultDacl, ret_acl, sizeof(acl_buffer), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(!ret_acl->DefaultDacl->AceCount, "expected empty default DACL\n");
+
+        ret = GetTokenInformation(token, TokenLinkedToken, &linked, sizeof(linked), &size);
+        ok(ret, "got error %u\n", GetLastError());
+
+        ret = GetTokenInformation(linked.LinkedToken, TokenDefaultDacl, ret_acl, sizeof(acl_buffer), &size);
+        ok(ret, "got error %u\n", GetLastError());
+        ok(ret_acl->DefaultDacl->AceCount, "expected non-empty default DACL\n");
+
+        CloseHandle(linked.LinkedToken);
+
+        ret = SetTokenInformation(token, TokenDefaultDacl, prev_acl, sizeof(*prev_acl));
+        ok(ret, "got error %u\n", GetLastError());
+    }
+
+    CloseHandle(token);
+}
+
 START_TEST(security)
 {
     init();
@@ -8086,6 +8348,7 @@ START_TEST(security)
     test_pseudo_handle_security();
     test_duplicate_token();
     test_GetKernelObjectSecurity();
+    test_elevation();
 
     /* Must be the last test, modifies process token */
     test_token_security_descriptor();
