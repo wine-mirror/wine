@@ -145,6 +145,7 @@ struct wg_parser
     GstPad *my_src, *their_sink;
 
     guint64 file_size, start_offset, next_offset, stop_offset;
+    guint64 next_pull_offset;
 
     pthread_t push_thread;
 

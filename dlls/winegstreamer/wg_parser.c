@@ -989,6 +989,10 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
 
     GST_LOG("pad %p, offset %" G_GINT64_MODIFIER "u, length %u, buffer %p.", pad, offset, size, *buffer);
 
+    if (offset == GST_BUFFER_OFFSET_NONE)
+        offset = parser->next_pull_offset;
+    parser->next_pull_offset = offset + size;
+
     if (!*buffer)
         *buffer = new_buffer = gst_buffer_new_and_alloc(size);
 
@@ -1325,6 +1329,7 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
     gst_pad_set_element_private(parser->my_src, parser);
 
     parser->start_offset = parser->next_offset = parser->stop_offset = 0;
+    parser->next_pull_offset = 0;
 
     if (!parser->init_gst(parser))
         return E_FAIL;

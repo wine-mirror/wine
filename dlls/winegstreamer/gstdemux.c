@@ -66,8 +66,6 @@ struct parser
      * separate lock. */
     bool streaming, sink_connected;
 
-    uint64_t next_pull_offset;
-
     HANDLE read_thread;
 
     BOOL (*init_gst)(struct parser *filter);
@@ -796,8 +794,6 @@ static GstFlowReturn read_buffer(struct parser *This, guint64 ofs, guint len, Gs
 
     TRACE("filter %p, offset %s, length %u, buffer %p.\n", This, wine_dbgstr_longlong(ofs), len, buffer);
 
-    if (ofs == GST_BUFFER_OFFSET_NONE)
-        ofs = This->next_pull_offset;
     if (ofs >= This->file_size)
     {
         WARN("Reading past eof: %s, %u\n", wine_dbgstr_longlong(ofs), len);
@@ -805,7 +801,6 @@ static GstFlowReturn read_buffer(struct parser *This, guint64 ofs, guint len, Gs
     }
     if (len + ofs > This->file_size)
         len = This->file_size - ofs;
-    This->next_pull_offset = ofs + len;
 
     gst_buffer_map(buffer, &info, GST_MAP_WRITE);
     hr = IAsyncReader_SyncRead(This->reader, ofs, len, info.data);
@@ -998,7 +993,6 @@ static HRESULT parser_sink_connect(struct strmbase_sink *iface, IPin *peer, cons
 
     filter->sink_connected = true;
     filter->read_thread = CreateThread(NULL, 0, read_thread, filter, 0, NULL);
-    filter->next_pull_offset = 0;
 
     if (FAILED(hr = unix_funcs->wg_parser_connect(filter->wg_parser, filter->file_size)))
         goto err;
