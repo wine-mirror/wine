@@ -566,6 +566,53 @@ static bool amt_to_wg_format(const AM_MEDIA_TYPE *mt, struct wg_format *format)
     return false;
 }
 
+/*
+ * scale_uint64() is based on gst_util_scale_int() from GStreamer, which is
+ * covered by the following license:
+ *
+ * GStreamer
+ * Copyright (C) 1999,2000 Erik Walthinsen <omega@cse.ogi.edu>
+ *                    2000 Wim Taymans <wtay@chello.be>
+ *                    2002 Thomas Vander Stichele <thomas@apestaart.org>
+ *                    2004 Wim Taymans <wim@fluendo.com>
+ *                    2015 Jan Schmidt <jan@centricular.com>
+ *
+ * gstutils.c: Utility functions
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
+ */
+static uint64_t scale_uint64(uint64_t value, uint32_t numerator, uint32_t denominator)
+{
+    ULARGE_INTEGER i, high, low;
+
+    if (!value)
+        return 0;
+
+    i.QuadPart = value;
+    low.QuadPart = i.u.LowPart * numerator;
+    high.QuadPart = i.u.HighPart * numerator + low.u.HighPart;
+    low.u.HighPart = 0;
+
+    if (high.u.HighPart >= denominator)
+        return ULLONG_MAX;
+
+    low.QuadPart += (high.QuadPart % denominator) << 32;
+    return ((high.QuadPart / denominator) << 32) + (low.QuadPart / denominator);
+}
+
 /* Fill and send a single IMediaSample. */
 static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
         const struct wg_parser_event *event, uint32_t offset, uint32_t size, DWORD bytes_per_second)
@@ -594,7 +641,7 @@ static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
         REFERENCE_TIME start_pts = event->u.buffer.pts;
 
         if (offset)
-            start_pts += gst_util_uint64_scale(offset, 10000000, bytes_per_second);
+            start_pts += scale_uint64(offset, 10000000, bytes_per_second);
         start_pts -= pin->seek.llCurrent;
         start_pts *= pin->seek.dRate;
 
@@ -603,7 +650,7 @@ static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
             REFERENCE_TIME end_pts = event->u.buffer.pts + event->u.buffer.duration;
 
             if (offset + size < event->u.buffer.size)
-                end_pts = event->u.buffer.pts + gst_util_uint64_scale(offset + size, 10000000, bytes_per_second);
+                end_pts = event->u.buffer.pts + scale_uint64(offset + size, 10000000, bytes_per_second);
             end_pts -= pin->seek.llCurrent;
             end_pts *= pin->seek.dRate;
 
