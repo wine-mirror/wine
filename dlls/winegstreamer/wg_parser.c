@@ -350,11 +350,11 @@ static void CDECL wg_parser_end_flush(struct wg_parser *parser)
 }
 
 static bool CDECL wg_parser_get_read_request(struct wg_parser *parser,
-        GstBuffer **buffer, uint64_t *offset, uint32_t *size)
+        void **data, uint64_t *offset, uint32_t *size)
 {
     pthread_mutex_lock(&parser->mutex);
 
-    while (parser->sink_connected && !parser->read_request.buffer)
+    while (parser->sink_connected && !parser->read_request.data)
         pthread_cond_wait(&parser->read_cond, &parser->mutex);
 
     if (!parser->sink_connected)
@@ -363,7 +363,7 @@ static bool CDECL wg_parser_get_read_request(struct wg_parser *parser,
         return false;
     }
 
-    *buffer = parser->read_request.buffer;
+    *data = parser->read_request.data;
     *offset = parser->read_request.offset;
     *size = parser->read_request.size;
 
@@ -371,12 +371,12 @@ static bool CDECL wg_parser_get_read_request(struct wg_parser *parser,
     return true;
 }
 
-static void CDECL wg_parser_complete_read_request(struct wg_parser *parser, GstFlowReturn ret)
+static void CDECL wg_parser_complete_read_request(struct wg_parser *parser, bool ret)
 {
     pthread_mutex_lock(&parser->mutex);
     parser->read_request.done = true;
     parser->read_request.ret = ret;
-    parser->read_request.buffer = NULL;
+    parser->read_request.data = NULL;
     pthread_mutex_unlock(&parser->mutex);
     pthread_cond_signal(&parser->read_done_cond);
 }
@@ -985,7 +985,8 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
 {
     struct wg_parser *parser = gst_pad_get_element_private(pad);
     GstBuffer *new_buffer = NULL;
-    GstFlowReturn ret;
+    GstMapInfo map_info;
+    bool ret;
 
     GST_LOG("pad %p, offset %" G_GINT64_MODIFIER "u, length %u, buffer %p.", pad, offset, size, *buffer);
 
@@ -1000,10 +1001,12 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
     if (!*buffer)
         *buffer = new_buffer = gst_buffer_new_and_alloc(size);
 
+    gst_buffer_map(*buffer, &map_info, GST_MAP_WRITE);
+
     pthread_mutex_lock(&parser->mutex);
 
-    assert(!parser->read_request.buffer);
-    parser->read_request.buffer = *buffer;
+    assert(!parser->read_request.data);
+    parser->read_request.data = map_info.data;
     parser->read_request.offset = offset;
     parser->read_request.size = size;
     parser->read_request.done = false;
@@ -1020,12 +1023,14 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
 
     pthread_mutex_unlock(&parser->mutex);
 
-    GST_LOG("Request returned %s.", gst_flow_get_name(ret));
+    gst_buffer_unmap(*buffer, &map_info);
 
-    if (ret != GST_FLOW_OK && new_buffer)
+    GST_LOG("Request returned %d.", ret);
+
+    if (!ret && new_buffer)
         gst_buffer_unref(new_buffer);
 
-    return ret;
+    return ret ? GST_FLOW_OK : GST_FLOW_ERROR;
 }
 
 static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)

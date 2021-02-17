@@ -157,11 +157,11 @@ struct wg_parser
     pthread_cond_t read_cond, read_done_cond;
     struct
     {
-        GstBuffer *buffer;
+        void *data;
         uint64_t offset;
         uint32_t size;
         bool done;
-        GstFlowReturn ret;
+        bool ret;
     } read_request;
 
     bool flushing, sink_connected;
@@ -228,8 +228,8 @@ struct unix_funcs
     void (CDECL *wg_parser_end_flush)(struct wg_parser *parser);
 
     bool (CDECL *wg_parser_get_read_request)(struct wg_parser *parser,
-            GstBuffer **buffer, uint64_t *offset, uint32_t *size);
-    void (CDECL *wg_parser_complete_read_request)(struct wg_parser *parser, GstFlowReturn ret);
+            void **data, uint64_t *offset, uint32_t *size);
+    void (CDECL *wg_parser_complete_read_request)(struct wg_parser *parser, bool ret);
 
     uint32_t (CDECL *wg_parser_get_stream_count)(struct wg_parser *parser);
     struct wg_parser_stream *(CDECL *wg_parser_get_stream)(struct wg_parser *parser, uint32_t index);

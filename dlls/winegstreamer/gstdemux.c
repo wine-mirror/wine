@@ -787,25 +787,6 @@ static DWORD CALLBACK stream_thread(void *arg)
     return 0;
 }
 
-static GstFlowReturn read_buffer(struct parser *This, guint64 ofs, guint len, GstBuffer *buffer)
-{
-    HRESULT hr;
-    GstMapInfo info;
-
-    TRACE("filter %p, offset %s, length %u, buffer %p.\n", This, wine_dbgstr_longlong(ofs), len, buffer);
-
-    gst_buffer_map(buffer, &info, GST_MAP_WRITE);
-    hr = IAsyncReader_SyncRead(This->reader, ofs, len, info.data);
-    gst_buffer_unmap(buffer, &info);
-    if (FAILED(hr))
-    {
-        ERR("Failed to read data, hr %#x.\n", hr);
-        return GST_FLOW_ERROR;
-    }
-
-    return GST_FLOW_OK;
-}
-
 static DWORD CALLBACK read_thread(void *arg)
 {
     struct parser *filter = arg;
@@ -814,15 +795,15 @@ static DWORD CALLBACK read_thread(void *arg)
 
     while (filter->sink_connected)
     {
-        GstBuffer *buffer;
         uint64_t offset;
         uint32_t size;
+        HRESULT hr;
+        void *data;
 
-        if (!unix_funcs->wg_parser_get_read_request(filter->wg_parser, &buffer, &offset, &size))
+        if (!unix_funcs->wg_parser_get_read_request(filter->wg_parser, &data, &offset, &size))
             continue;
-
-        unix_funcs->wg_parser_complete_read_request(filter->wg_parser,
-                read_buffer(filter, offset, size, buffer));
+        hr = IAsyncReader_SyncRead(filter->reader, offset, size, data);
+        unix_funcs->wg_parser_complete_read_request(filter->wg_parser, SUCCEEDED(hr));
     }
 
     TRACE("Streaming stopped; exiting.\n");
