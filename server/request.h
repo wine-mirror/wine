@@ -351,7 +351,6 @@ DECL_HANDLER(query_symlink);
 DECL_HANDLER(get_object_info);
 DECL_HANDLER(get_object_type);
 DECL_HANDLER(get_object_types);
-DECL_HANDLER(get_token_impersonation_level);
 DECL_HANDLER(allocate_locally_unique_id);
 DECL_HANDLER(create_device_manager);
 DECL_HANDLER(create_device);
@@ -363,8 +362,7 @@ DECL_HANDLER(grab_kernel_object);
 DECL_HANDLER(release_kernel_object);
 DECL_HANDLER(get_kernel_object_handle);
 DECL_HANDLER(make_process_system);
-DECL_HANDLER(get_token_statistics);
-DECL_HANDLER(get_token_elevation);
+DECL_HANDLER(get_token_info);
 DECL_HANDLER(create_linked_token);
 DECL_HANDLER(create_completion);
 DECL_HANDLER(open_completion);
@@ -633,7 +631,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_object_info,
     (req_handler)req_get_object_type,
     (req_handler)req_get_object_types,
-    (req_handler)req_get_token_impersonation_level,
     (req_handler)req_allocate_locally_unique_id,
     (req_handler)req_create_device_manager,
     (req_handler)req_create_device,
@@ -645,8 +642,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_release_kernel_object,
     (req_handler)req_get_kernel_object_handle,
     (req_handler)req_make_process_system,
-    (req_handler)req_get_token_statistics,
-    (req_handler)req_get_token_elevation,
+    (req_handler)req_get_token_info,
     (req_handler)req_create_linked_token,
     (req_handler)req_create_completion,
     (req_handler)req_open_completion,
@@ -2046,10 +2042,6 @@ C_ASSERT( sizeof(struct get_object_type_reply) == 8 );
 C_ASSERT( sizeof(struct get_object_types_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_object_types_reply, count) == 8 );
 C_ASSERT( sizeof(struct get_object_types_reply) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_token_impersonation_level_request, handle) == 12 );
-C_ASSERT( sizeof(struct get_token_impersonation_level_request) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_token_impersonation_level_reply, impersonation_level) == 8 );
-C_ASSERT( sizeof(struct get_token_impersonation_level_reply) == 16 );
 C_ASSERT( sizeof(struct allocate_locally_unique_id_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct allocate_locally_unique_id_reply, luid) == 8 );
 C_ASSERT( sizeof(struct allocate_locally_unique_id_reply) == 16 );
@@ -2100,19 +2092,16 @@ C_ASSERT( sizeof(struct get_kernel_object_handle_reply) == 16 );
 C_ASSERT( sizeof(struct make_process_system_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct make_process_system_reply, event) == 8 );
 C_ASSERT( sizeof(struct make_process_system_reply) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_token_statistics_request, handle) == 12 );
-C_ASSERT( sizeof(struct get_token_statistics_request) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_token_statistics_reply, token_id) == 8 );
-C_ASSERT( FIELD_OFFSET(struct get_token_statistics_reply, modified_id) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_token_statistics_reply, primary) == 24 );
-C_ASSERT( FIELD_OFFSET(struct get_token_statistics_reply, impersonation_level) == 28 );
-C_ASSERT( FIELD_OFFSET(struct get_token_statistics_reply, group_count) == 32 );
-C_ASSERT( FIELD_OFFSET(struct get_token_statistics_reply, privilege_count) == 36 );
-C_ASSERT( sizeof(struct get_token_statistics_reply) == 40 );
-C_ASSERT( FIELD_OFFSET(struct get_token_elevation_request, handle) == 12 );
-C_ASSERT( sizeof(struct get_token_elevation_request) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_token_elevation_reply, elevation) == 8 );
-C_ASSERT( sizeof(struct get_token_elevation_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_token_info_request, handle) == 12 );
+C_ASSERT( sizeof(struct get_token_info_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_token_info_reply, token_id) == 8 );
+C_ASSERT( FIELD_OFFSET(struct get_token_info_reply, modified_id) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_token_info_reply, primary) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_token_info_reply, impersonation_level) == 28 );
+C_ASSERT( FIELD_OFFSET(struct get_token_info_reply, elevation) == 32 );
+C_ASSERT( FIELD_OFFSET(struct get_token_info_reply, group_count) == 36 );
+C_ASSERT( FIELD_OFFSET(struct get_token_info_reply, privilege_count) == 40 );
+C_ASSERT( sizeof(struct get_token_info_reply) == 48 );
 C_ASSERT( FIELD_OFFSET(struct create_linked_token_request, handle) == 12 );
 C_ASSERT( sizeof(struct create_linked_token_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct create_linked_token_reply, linked) == 8 );

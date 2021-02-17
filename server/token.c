@@ -1586,38 +1586,19 @@ DECL_HANDLER(get_token_groups)
     }
 }
 
-DECL_HANDLER(get_token_impersonation_level)
+DECL_HANDLER(get_token_info)
 {
     struct token *token;
 
-    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
-                                                 TOKEN_QUERY,
-                                                 &token_ops )))
-    {
-        if (token->primary)
-            set_error( STATUS_INVALID_PARAMETER );
-        else
-            reply->impersonation_level = token->impersonation_level;
-
-        release_object( token );
-    }
-}
-
-DECL_HANDLER(get_token_statistics)
-{
-    struct token *token;
-
-    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
-                                                 TOKEN_QUERY,
-                                                 &token_ops )))
+    if ((token = (struct token *)get_handle_obj( current->process, req->handle, TOKEN_QUERY, &token_ops )))
     {
         reply->token_id = token->token_id;
         reply->modified_id = token->modified_id;
         reply->primary = token->primary;
         reply->impersonation_level = token->impersonation_level;
+        reply->elevation = token->elevation;
         reply->group_count = list_count( &token->groups );
         reply->privilege_count = list_count( &token->privileges );
-
         release_object( token );
     }
 }
@@ -1664,18 +1645,6 @@ DECL_HANDLER(set_token_default_dacl)
         if (acl_size)
             token->default_dacl = memdup( acl, acl_size );
 
-        release_object( token );
-    }
-}
-
-DECL_HANDLER(get_token_elevation)
-{
-    struct token *token;
-
-    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
-                                                 TOKEN_QUERY, &token_ops )))
-    {
-        reply->elevation = token->elevation;
         release_object( token );
     }
 }

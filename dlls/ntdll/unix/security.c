@@ -317,18 +317,21 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
         break;
 
     case TokenImpersonationLevel:
-        SERVER_START_REQ( get_token_impersonation_level )
+        SERVER_START_REQ( get_token_info )
         {
             SECURITY_IMPERSONATION_LEVEL *level = info;
             req->handle = wine_server_obj_handle( token );
-            status = wine_server_call( req );
-            if (status == STATUS_SUCCESS) *level = reply->impersonation_level;
+            if (!(status = wine_server_call( req )))
+            {
+                if (!reply->primary) *level = reply->impersonation_level;
+                else status = STATUS_INVALID_PARAMETER;
+            }
         }
         SERVER_END_REQ;
         break;
 
     case TokenStatistics:
-        SERVER_START_REQ( get_token_statistics )
+        SERVER_START_REQ( get_token_info )
         {
             TOKEN_STATISTICS *statistics = info;
             req->handle = wine_server_obj_handle( token );
@@ -358,7 +361,7 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
         break;
 
     case TokenType:
-        SERVER_START_REQ( get_token_statistics )
+        SERVER_START_REQ( get_token_info )
         {
             TOKEN_TYPE *type = info;
             req->handle = wine_server_obj_handle( token );
@@ -391,7 +394,7 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
         break;
 
     case TokenElevationType:
-        SERVER_START_REQ( get_token_elevation )
+        SERVER_START_REQ( get_token_info )
         {
             TOKEN_ELEVATION_TYPE *type = info;
 
@@ -403,7 +406,7 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
         break;
 
     case TokenElevation:
-        SERVER_START_REQ( get_token_elevation )
+        SERVER_START_REQ( get_token_info )
         {
             TOKEN_ELEVATION *elevation = info;
 

@@ -3317,13 +3317,6 @@ struct handle_info
 @END
 
 
-/* Query the impersonation level of an impersonation token */
-@REQ(get_token_impersonation_level)
-    obj_handle_t   handle;        /* handle to the object */
-@REPLY
-    int            impersonation_level; /* impersonation level of the impersonation token */
-@END
-
 /* Allocate a locally-unique identifier */
 @REQ(allocate_locally_unique_id)
 @REPLY
@@ -3421,23 +3414,16 @@ struct handle_info
 
 
 /* Get detailed fixed-size information about a token */
-@REQ(get_token_statistics)
+@REQ(get_token_info)
     obj_handle_t   handle;        /* handle to the object */
 @REPLY
     luid_t         token_id;      /* locally-unique identifier of the token */
     luid_t         modified_id;   /* locally-unique identifier of the modified version of the token */
     int            primary;       /* is the token primary or impersonation? */
     int            impersonation_level; /* level of impersonation */
+    int            elevation;     /* elevation type */
     int            group_count;   /* the number of groups the token is a member of */
     int            privilege_count; /* the number of privileges the token has */
-@END
-
-
-/* Get the token elevation type */
-@REQ(get_token_elevation)
-    obj_handle_t   handle;        /* handle to the token */
-@REPLY
-    int            elevation;     /* token elevation type */
 @END
 
 
