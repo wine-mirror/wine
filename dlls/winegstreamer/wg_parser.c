@@ -36,6 +36,58 @@ WINE_DEFAULT_DEBUG_CHANNEL(gstreamer);
 GST_DEBUG_CATEGORY_STATIC(wine);
 #define GST_CAT_DEFAULT wine
 
+struct wg_parser
+{
+    BOOL (*init_gst)(struct wg_parser *parser);
+
+    struct wg_parser_stream **streams;
+    unsigned int stream_count;
+
+    GstElement *container;
+    GstBus *bus;
+    GstPad *my_src, *their_sink;
+
+    guint64 file_size, start_offset, next_offset, stop_offset;
+    guint64 next_pull_offset;
+
+    pthread_t push_thread;
+
+    pthread_mutex_t mutex;
+
+    pthread_cond_t init_cond;
+    bool no_more_pads, has_duration, error;
+
+    pthread_cond_t read_cond, read_done_cond;
+    struct
+    {
+        void *data;
+        uint64_t offset;
+        uint32_t size;
+        bool done;
+        bool ret;
+    } read_request;
+
+    bool flushing, sink_connected;
+};
+
+struct wg_parser_stream
+{
+    struct wg_parser *parser;
+
+    GstPad *their_src, *post_sink, *post_src, *my_sink;
+    GstElement *flip;
+    struct wg_format preferred_format, current_format;
+
+    pthread_cond_t event_cond, event_empty_cond;
+    struct wg_parser_event event;
+    GstBuffer *buffer;
+    GstMapInfo map_info;
+
+    bool flushing, eos, enabled, has_caps;
+
+    uint64_t duration;
+};
+
 static enum wg_audio_format wg_audio_format_from_gst(GstAudioFormat format)
 {
     switch (format)
