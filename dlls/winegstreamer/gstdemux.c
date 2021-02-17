@@ -848,7 +848,7 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
 {
     struct parser *filter = impl_from_strmbase_filter(iface);
     struct wg_parser *parser = filter->wg_parser;
-    GstSeekType stop_type = GST_SEEK_TYPE_NONE;
+    DWORD stop_flags = AM_SEEKING_NoPositioning;
     const SourceSeeking *seeking;
     unsigned int i;
 
@@ -861,15 +861,11 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
     /* DirectShow retains the old seek positions, but resets to them every time
      * it transitions from stopped -> paused. */
 
-    parser->next_offset = parser->start_offset;
-
     seeking = &filter->sources[0]->seek;
     if (seeking->llStop && seeking->llStop != seeking->llDuration)
-        stop_type = GST_SEEK_TYPE_SET;
-    gst_pad_push_event(filter->sources[0]->wg_stream->my_sink, gst_event_new_seek(
-            seeking->dRate, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
-            GST_SEEK_TYPE_SET, seeking->llCurrent * 100,
-            stop_type, seeking->llStop * 100));
+        stop_flags = AM_SEEKING_AbsolutePositioning;
+    unix_funcs->wg_parser_stream_seek(filter->sources[0]->wg_stream, seeking->dRate,
+            seeking->llCurrent, seeking->llStop, AM_SEEKING_AbsolutePositioning, stop_flags);
 
     for (i = 0; i < filter->source_count; ++i)
     {
@@ -1212,11 +1208,8 @@ static ULONG WINAPI GST_Seeking_Release(IMediaSeeking *iface)
 static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
         LONGLONG *current, DWORD current_flags, LONGLONG *stop, DWORD stop_flags)
 {
-    GstSeekType current_type = GST_SEEK_TYPE_SET, stop_type = GST_SEEK_TYPE_SET;
     struct parser_source *pin = impl_from_IMediaSeeking(iface);
-    struct wg_parser_stream *stream = pin->wg_stream;
     struct parser *filter = impl_from_strmbase_filter(pin->pin.pin.filter);
-    GstSeekFlags flags = 0;
     HRESULT hr = S_OK;
     int i;
 
@@ -1256,20 +1249,8 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
 
     SourceSeekingImpl_SetPositions(iface, current, current_flags, stop, stop_flags);
 
-    if (current_flags & AM_SEEKING_SeekToKeyFrame)
-        flags |= GST_SEEK_FLAG_KEY_UNIT;
-    if (current_flags & AM_SEEKING_Segment)
-        flags |= GST_SEEK_FLAG_SEGMENT;
-    if (!(current_flags & AM_SEEKING_NoFlush))
-        flags |= GST_SEEK_FLAG_FLUSH;
-
-    if ((current_flags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_NoPositioning)
-        current_type = GST_SEEK_TYPE_NONE;
-    if ((stop_flags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_NoPositioning)
-        stop_type = GST_SEEK_TYPE_NONE;
-
-    if (!gst_pad_push_event(stream->my_sink, gst_event_new_seek(pin->seek.dRate, GST_FORMAT_TIME, flags,
-            current_type, pin->seek.llCurrent * 100, stop_type, pin->seek.llStop * 100)))
+    if (!unix_funcs->wg_parser_stream_seek(pin->wg_stream, pin->seek.dRate,
+            pin->seek.llCurrent, pin->seek.llStop, current_flags, stop_flags))
     {
         ERR("Failed to seek (current %s, stop %s).\n",
                 debugstr_time(pin->seek.llCurrent), debugstr_time(pin->seek.llStop));

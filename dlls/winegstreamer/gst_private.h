@@ -228,6 +228,10 @@ struct unix_funcs
     bool (CDECL *wg_parser_stream_get_event)(struct wg_parser_stream *stream, struct wg_parser_event *event);
     void (CDECL *wg_parser_stream_notify_qos)(struct wg_parser_stream *stream,
             bool underflow, double proportion, int64_t diff, uint64_t timestamp);
+
+    /* start_pos and stop_pos are in 100-nanosecond units. */
+    bool (CDECL *wg_parser_stream_seek)(struct wg_parser_stream *stream, double rate,
+            uint64_t start_pos, uint64_t stop_pos, DWORD start_flags, DWORD stop_flags);
 };
 
 extern const struct unix_funcs *unix_funcs;

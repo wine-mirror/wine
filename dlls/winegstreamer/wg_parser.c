@@ -391,6 +391,28 @@ static bool CDECL wg_parser_stream_get_event(struct wg_parser_stream *stream, st
     return true;
 }
 
+static bool CDECL wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,
+        uint64_t start_pos, uint64_t stop_pos, DWORD start_flags, DWORD stop_flags)
+{
+    GstSeekType start_type = GST_SEEK_TYPE_SET, stop_type = GST_SEEK_TYPE_SET;
+    GstSeekFlags flags = 0;
+
+    if (start_flags & AM_SEEKING_SeekToKeyFrame)
+        flags |= GST_SEEK_FLAG_KEY_UNIT;
+    if (start_flags & AM_SEEKING_Segment)
+        flags |= GST_SEEK_FLAG_SEGMENT;
+    if (!(start_flags & AM_SEEKING_NoFlush))
+        flags |= GST_SEEK_FLAG_FLUSH;
+
+    if ((start_flags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_NoPositioning)
+        start_type = GST_SEEK_TYPE_NONE;
+    if ((stop_flags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_NoPositioning)
+        stop_type = GST_SEEK_TYPE_NONE;
+
+    return gst_pad_push_event(stream->my_sink, gst_event_new_seek(rate,
+            GST_FORMAT_TIME, flags, start_type, start_pos * 100, stop_type, stop_pos * 100));
+}
+
 static void CDECL wg_parser_stream_notify_qos(struct wg_parser_stream *stream,
         bool underflow, double proportion, int64_t diff, uint64_t timestamp)
 {
@@ -1565,6 +1587,8 @@ static const struct unix_funcs funcs =
 
     wg_parser_stream_get_event,
     wg_parser_stream_notify_qos,
+
+    wg_parser_stream_seek,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
