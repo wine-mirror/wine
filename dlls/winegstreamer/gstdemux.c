@@ -1178,12 +1178,11 @@ static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface)
 
 static HRESULT WINAPI GST_ChangeRate(IMediaSeeking *iface)
 {
-    struct parser_source *This = impl_from_IMediaSeeking(iface);
-    struct wg_parser_stream *stream = This->wg_stream;
-    GstEvent *ev = gst_event_new_seek(This->seek.dRate, GST_FORMAT_TIME, 0, GST_SEEK_TYPE_NONE, -1, GST_SEEK_TYPE_NONE, -1);
-    TRACE("(%p) New rate %g\n", This, This->seek.dRate);
+    struct parser_source *pin = impl_from_IMediaSeeking(iface);
+
     mark_wine_thread();
-    gst_pad_push_event(stream->my_sink, ev);
+    unix_funcs->wg_parser_stream_seek(pin->wg_stream, pin->seek.dRate, 0, 0,
+            AM_SEEKING_NoPositioning, AM_SEEKING_NoPositioning);
     return S_OK;
 }
 
