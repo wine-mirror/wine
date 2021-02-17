@@ -8130,7 +8130,7 @@ static void test_elevation(void)
         ok(type == TokenElevationTypeLimited, "got type %#x\n", type);
         ret = GetTokenInformation(linked.LinkedToken, TokenElevation, &elevation, sizeof(elevation), &size);
         ok(ret, "got error %u\n", GetLastError());
-        todo_wine ok(elevation.TokenIsElevated == FALSE, "got elevation %#x\n", elevation.TokenIsElevated);
+        ok(elevation.TokenIsElevated == FALSE, "got elevation %#x\n", elevation.TokenIsElevated);
 
         /* Asking for the linked token again gives us a different token. */
         ret = GetTokenInformation(token, TokenLinkedToken, &linked2, sizeof(linked2), &size);
@@ -8141,7 +8141,7 @@ static void test_elevation(void)
         ok(type == TokenElevationTypeLimited, "got type %#x\n", type);
         ret = GetTokenInformation(linked2.LinkedToken, TokenElevation, &elevation, sizeof(elevation), &size);
         ok(ret, "got error %u\n", GetLastError());
-        todo_wine ok(elevation.TokenIsElevated == FALSE, "got elevation %#x\n", elevation.TokenIsElevated);
+        ok(elevation.TokenIsElevated == FALSE, "got elevation %#x\n", elevation.TokenIsElevated);
 
         check_different_token(linked.LinkedToken, linked2.LinkedToken);
 

@@ -403,11 +403,15 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
         break;
 
     case TokenElevation:
+        SERVER_START_REQ( get_token_elevation )
         {
             TOKEN_ELEVATION *elevation = info;
-            FIXME("QueryInformationToken( ..., TokenElevation, ...) semi-stub\n");
-            elevation->TokenIsElevated = TRUE;
+
+            req->handle = wine_server_obj_handle( token );
+            status = wine_server_call( req );
+            if (!status) elevation->TokenIsElevated = (reply->elevation == TokenElevationTypeFull);
         }
+        SERVER_END_REQ;
         break;
 
     case TokenSessionId:
