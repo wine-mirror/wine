@@ -6043,7 +6043,7 @@ msgstr "Geen MDI-kindvenster.\n"
 
 #: dlls/kernel32/winerror.mc:2628
 msgid "Popup menu already active.\n"
-msgstr "Popup-menu reeds actief.\n"
+msgstr "Pop-up menu reeds actief.\n"
 
 #: dlls/kernel32/winerror.mc:2633
 msgid "No scrollbars.\n"
@@ -8102,7 +8102,7 @@ msgstr "client"
 
 #: dlls/oleacc/oleacc.rc:42
 msgid "popup menu"
-msgstr "popupmenu"
+msgstr "pop-up menu"
 
 #: dlls/oleacc/oleacc.rc:43
 msgid "menu item"
@@ -12961,7 +12961,7 @@ msgstr "&Verwijder dubbelen"
 
 #: programs/conhost/conhost.rc:65
 msgid "Popup menu"
-msgstr "Popup menu"
+msgstr "Pop-up menu"
 
 #: programs/conhost/conhost.rc:66
 msgid "&Control"
@@ -13021,7 +13021,7 @@ msgstr "H&oogte :"
 
 #: programs/conhost/conhost.rc:111
 msgid "End of program"
-msgstr "Programma is beëindigd"
+msgstr "Einde programma"
 
 #: programs/conhost/conhost.rc:112
 msgid "&Close console"
@@ -13029,7 +13029,7 @@ msgstr "&Console afsluiten"
 
 #: programs/conhost/conhost.rc:114
 msgid "Edition"
-msgstr "Versie"
+msgstr "Modus"
 
 #: programs/conhost/conhost.rc:120
 msgid "Console parameters"
@@ -16108,7 +16108,8 @@ msgstr ""
 #: programs/wineboot/wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr ""
-"De Wine configuratie in %s wordt bijgewerkt, even geduld alstublieft..."
+"De Wine configuratie in %s wordt bijgewerkt.\n"
+"Even geduld alstublieft..."
 
 #: programs/winecfg/winecfg.rc:140
 msgid ""
@@ -16205,7 +16206,7 @@ msgid ""
 msgstr ""
 "Elke DLL (Dynamic Link Library) kan apart worden ingesteld op "
 "'ingebouwd' (de versie van Wine) of 'windows' (afkomstig van Windows of "
-"meegeleverd met een programma."
+"meegeleverd met een programma)."
 
 #: programs/winecfg/winecfg.rc:193
 msgid "&New override for library:"
