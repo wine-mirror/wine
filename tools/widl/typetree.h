@@ -363,7 +363,7 @@ static inline type_t *type_runtimeclass_get_default_iface(const type_t *type)
     if (!ifaces) return NULL;
     LIST_FOR_EACH_ENTRY(entry, ifaces, ifref_t, entry)
         if (is_attr(entry->attrs, ATTR_DEFAULT))
-            return entry->iface;
+            return entry->type;
 
     return NULL;
 }

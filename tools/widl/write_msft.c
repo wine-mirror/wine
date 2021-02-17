@@ -2352,10 +2352,10 @@ static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls)
 
     i = 0;
     if (ifaces) LIST_FOR_EACH_ENTRY( iref, ifaces, ifref_t, entry ) {
-        if(iref->iface->typelib_idx == -1)
-            add_interface_typeinfo(typelib, iref->iface);
+        if(iref->type->typelib_idx == -1)
+            add_interface_typeinfo(typelib, iref->type);
         ref = (MSFT_RefRecord*) (typelib->typelib_segment_data[MSFT_SEG_REFERENCES] + offset + i * sizeof(*ref));
-        ref->reftype = typelib->typelib_typeinfo_offsets[iref->iface->typelib_idx];
+        ref->reftype = typelib->typelib_typeinfo_offsets[iref->type->typelib_idx];
         ref->flags = 0;
         ref->oCustData = -1;
         ref->onext = -1;

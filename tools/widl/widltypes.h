@@ -538,7 +538,7 @@ struct _declarator_t {
 };
 
 struct _ifref_t {
-  type_t *iface;
+  type_t *type;
   attr_list_t *attrs;
 
   /* parser-internal */

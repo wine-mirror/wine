@@ -1826,10 +1826,10 @@ static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface)
     return list;
 }
 
-static ifref_t *make_ifref(type_t *iface)
+static ifref_t *make_ifref(type_t *type)
 {
   ifref_t *l = xmalloc(sizeof(ifref_t));
-  l->iface = iface;
+  l->type = type;
   l->attrs = NULL;
   return l;
 }
