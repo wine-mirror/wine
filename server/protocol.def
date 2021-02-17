@@ -3433,6 +3433,14 @@ struct handle_info
 @END
 
 
+/* Get the token elevation type */
+@REQ(get_token_elevation)
+    obj_handle_t   handle;        /* handle to the token */
+@REPLY
+    int            elevation;     /* token elevation type */
+@END
+
+
 /* Create I/O completion port */
 @REQ(create_completion)
     unsigned int access;          /* desired access to a port */

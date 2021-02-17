@@ -391,11 +391,15 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
         break;
 
     case TokenElevationType:
+        SERVER_START_REQ( get_token_elevation )
         {
             TOKEN_ELEVATION_TYPE *type = info;
-            FIXME("QueryInformationToken( ..., TokenElevationType, ...) semi-stub\n");
-            *type = TokenElevationTypeFull;
+
+            req->handle = wine_server_obj_handle( token );
+            status = wine_server_call( req );
+            if (!status) *type = reply->elevation;
         }
+        SERVER_END_REQ;
         break;
 
     case TokenElevation:
