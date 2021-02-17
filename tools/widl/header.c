@@ -1479,7 +1479,8 @@ static void write_forward(FILE *header, type_t *iface)
   fprintf(header, "typedef interface %s %s;\n", iface->c_name, iface->c_name);
   fprintf(header, "#ifdef __cplusplus\n");
   write_namespace_start(header, iface->namespace);
-  write_line(header, 0, "interface %s;", iface->name);
+  if (strchr(iface->name, '<')) write_line(header, 0, "template<> struct %s;", iface->name);
+  else write_line(header, 0, "interface %s;", iface->name);
   write_namespace_end(header, iface->namespace);
   fprintf(header, "#endif /* __cplusplus */\n");
   fprintf(header, "#endif\n\n" );
@@ -1548,11 +1549,13 @@ static void write_com_interface_end(FILE *header, type_t *iface)
       write_namespace_start(header, iface->namespace);
   }
   if (uuid) {
+      if (strchr(iface->name, '<')) write_line(header, 0, "template<>");
       write_line(header, 0, "MIDL_INTERFACE(\"%s\")", uuid_string(uuid));
       indent(header, 0);
   }else {
       indent(header, 0);
-      fprintf(header, "interface ");
+      if (strchr(iface->name, '<')) fprintf(header, "template<> struct ");
+      else fprintf(header, "interface ");
   }
   if (type_iface_get_inherit(iface))
   {

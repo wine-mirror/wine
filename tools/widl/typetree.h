@@ -67,10 +67,15 @@ type_t *type_apicontract_define(type_t *apicontract, attr_list_t *attrs);
 type_t *type_parameterized_interface_declare(char *name, struct namespace *namespace, typeref_list_t *params);
 type_t *type_parameterized_interface_define(type_t *type, attr_list_t *attrs, type_t *inherit, statement_list_t *stmts, typeref_list_t *requires);
 type_t *type_parameterized_type_specialize_partial(type_t *type, typeref_list_t *params);
+type_t *type_parameterized_type_specialize_declare(type_t *type, typeref_list_t *params);
+type_t *type_parameterized_type_specialize_define(type_t *type);
 int type_is_equal(const type_t *type1, const type_t *type2);
 const char *type_get_name(const type_t *type, enum name_type name_type);
 char *gen_name(void);
 extern int is_attr(const attr_list_t *list, enum attr_type t);
+
+typeref_t *make_typeref(type_t *type);
+typeref_list_t *append_typeref(typeref_list_t *list, typeref_t *ref);
 
 /* FIXME: shouldn't need to export this */
 type_t *duptype(type_t *t, int dupname);

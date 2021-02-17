@@ -35,7 +35,20 @@ namespace Windows {
             interface ISpeechSynthesizer;
             interface ISpeechSynthesizer2;
             interface IVoiceInformation;
+            runtimeclass SpeechSynthesizer;
             runtimeclass VoiceInformation;
+        }
+    }
+}
+
+namespace Windows {
+    namespace Media {
+        namespace SpeechSynthesis {
+            declare {
+                interface Windows.Foundation.Collections.IIterator<Windows.Media.SpeechSynthesis.VoiceInformation*>;
+                interface Windows.Foundation.Collections.IIterable<Windows.Media.SpeechSynthesis.VoiceInformation*>;
+                interface Windows.Foundation.Collections.IVectorView<Windows.Media.SpeechSynthesis.VoiceInformation*>;
+            }
         }
     }
 }
@@ -62,6 +75,17 @@ namespace Windows {
                 [propget] HRESULT Language([out] [retval] HSTRING* value);
                 [propget] HRESULT Description([out] [retval] HSTRING* value);
                 [propget] HRESULT Gender([out] [retval] VoiceGender* value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechSynthesis.SpeechSynthesizer),
+                uuid(7d526ecc-7533-4c3f-85be-888c2baeebdc)
+            ]
+            interface IInstalledVoicesStatic : IInspectable
+            {
+                [propget] HRESULT AllVoices([out, retval] Windows.Foundation.Collections.IVectorView<VoiceInformation*>** value);
+                [propget] HRESULT DefaultVoice([out, retval] VoiceInformation** value);
             }
 
             [

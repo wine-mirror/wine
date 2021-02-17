@@ -276,6 +276,7 @@ static const struct keyword keywords[] = {
 	{"coclass",         tCOCLASS,        0},
 	{"const",           tCONST,          0},
 	{"cpp_quote",       tCPPQUOTE,       0},
+	{"declare",         tDECLARE,        1},
 	{"default",         tDEFAULT,        0},
 	{"dispinterface",   tDISPINTERFACE,  0},
 	{"double",          tDOUBLE,         0},

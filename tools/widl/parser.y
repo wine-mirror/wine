@@ -56,8 +56,6 @@ static attr_t *make_custom_attr(UUID *id, expr_t *pval);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
 static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_t *decl, int top);
 static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_list_t *decls);
-static typeref_list_t *append_typeref(typeref_list_t *list, typeref_t *ref);
-static typeref_t *make_typeref(type_t *type);
 static var_list_t *append_var_list(var_list_t *list, var_list_t *vars);
 static declarator_list_t *append_declarator(declarator_list_t *list, declarator_t *p);
 static declarator_t *make_declarator(var_t *var);
@@ -79,6 +77,7 @@ static void pop_namespace(const char *name);
 static void push_parameters_namespace(const char *name);
 static void pop_parameters_namespace(const char *name);
 
+static statement_list_t *append_parameterized_type_stmts(statement_list_t *stmts);
 static void check_arg_attrs(const var_t *arg);
 static void check_statements(const statement_list_t *stmts, int is_inside_library);
 static void check_all_user_types(const statement_list_t *stmts);
@@ -106,6 +105,7 @@ static statement_t *make_statement_importlib(const char *str);
 static statement_t *make_statement_module(type_t *type);
 static statement_t *make_statement_typedef(var_list_t *names, int declonly);
 static statement_t *make_statement_import(const char *str);
+static statement_t *make_statement_parameterized_type(type_t *type, typeref_list_t *params);
 static statement_list_t *append_statement(statement_list_t *list, statement_t *stmt);
 static statement_list_t *append_statements(statement_list_t *, statement_list_t *);
 static attr_list_t *append_attribs(attr_list_t *, attr_list_t *);
@@ -116,6 +116,7 @@ static struct namespace global_namespace = {
 
 static struct namespace *current_namespace = &global_namespace;
 static struct namespace *parameters_namespace = NULL;
+static statement_list_t *parameterized_type_stmts = NULL;
 
 static typelib_t *current_typelib;
 
@@ -177,6 +178,7 @@ static typelib_t *current_typelib;
 %token tCONTRACTVERSION
 %token tCONTROL tCPPQUOTE
 %token tCUSTOM
+%token tDECLARE
 %token tDECODE tDEFAULT tDEFAULTBIND
 %token tDEFAULTCOLLELEM
 %token tDEFAULTVALUE
@@ -318,6 +320,8 @@ static typelib_t *current_typelib;
 %type <typelib> library_start librarydef
 %type <statement> statement typedef pragma_warning
 %type <stmt_list> gbl_statements imp_statements int_statements
+%type <stmt_list> decl_block decl_statements
+%type <stmt_list> imp_decl_block imp_decl_statements
 %type <warning_list> warnings
 %type <num> allocate_option_list allocate_option
 %type <namespace> namespace_pfx
@@ -341,7 +345,8 @@ static typelib_t *current_typelib;
 
 %%
 
-input: gbl_statements m_acf			{ check_statements($1, FALSE);
+input: gbl_statements m_acf			{ $1 = append_parameterized_type_stmts($1);
+						  check_statements($1, FALSE);
 						  check_all_user_types($1);
 						  write_header($1);
 						  write_id_data($1);
@@ -356,6 +361,22 @@ input: gbl_statements m_acf			{ check_statements($1, FALSE);
 	;
 
 m_acf: /* empty */ | aACF acf_statements
+
+decl_statements:				{ $$ = NULL; }
+	| decl_statements tINTERFACE qualified_type '<' parameterized_type_args '>' ';'
+						{ parameterized_type_stmts = append_statement(parameterized_type_stmts, make_statement_parameterized_type($3, $5));
+						  $$ = append_statement($1, make_statement_reference(type_parameterized_type_specialize_declare($3, $5)));
+						}
+	;
+
+decl_block: tDECLARE '{' decl_statements '}' { $$ = $3; }
+
+imp_decl_statements:				{ $$ = NULL; }
+	| imp_decl_statements tINTERFACE qualified_type '<' parameterized_type_args '>' ';'
+						{ $$ = append_statement($1, make_statement_reference(type_parameterized_type_specialize_declare($3, $5))); }
+	;
+
+imp_decl_block: tDECLARE '{' imp_decl_statements '}' { $$ = $3; }
 
 gbl_statements:					{ $$ = NULL; }
 	| gbl_statements namespacedef '{' { push_namespace($2); } gbl_statements '}'
@@ -378,6 +399,7 @@ gbl_statements:					{ $$ = NULL; }
 	| gbl_statements moduledef		{ $$ = append_statement($1, make_statement_module($2)); }
 	| gbl_statements librarydef		{ $$ = append_statement($1, make_statement_library($2)); }
 	| gbl_statements statement		{ $$ = append_statement($1, $2); }
+	| gbl_statements decl_block		{ $$ = append_statements($1, $2); }
 	;
 
 imp_statements:					{ $$ = NULL; }
@@ -400,6 +422,7 @@ imp_statements:					{ $$ = NULL; }
 	| imp_statements statement		{ $$ = append_statement($1, $2); }
 	| imp_statements importlib		{ $$ = append_statement($1, make_statement_importlib($2)); }
 	| imp_statements librarydef		{ $$ = append_statement($1, make_statement_library($2)); }
+	| imp_statements imp_decl_block		{ $$ = append_statements($1, $2); }
 	;
 
 int_statements:					{ $$ = NULL; }
@@ -1837,7 +1860,7 @@ static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, dec
   return var_list;
 }
 
-static typeref_list_t *append_typeref(typeref_list_t *list, typeref_t *ref)
+typeref_list_t *append_typeref(typeref_list_t *list, typeref_t *ref)
 {
     if (!ref) return list;
     if (!list)
@@ -1849,7 +1872,7 @@ static typeref_list_t *append_typeref(typeref_list_t *list, typeref_t *ref)
     return list;
 }
 
-static typeref_t *make_typeref(type_t *type)
+typeref_t *make_typeref(type_t *type)
 {
     typeref_t *ref = xmalloc(sizeof(typeref_t));
     ref->type = type;
@@ -3071,6 +3094,29 @@ static void check_async_uuid(type_t *iface)
     iface->details.iface->async_iface = async_iface->details.iface->async_iface = async_iface;
 }
 
+static statement_list_t *append_parameterized_type_stmts(statement_list_t *stmts)
+{
+    statement_t *stmt, *next;
+
+    if (stmts && parameterized_type_stmts) LIST_FOR_EACH_ENTRY_SAFE(stmt, next, parameterized_type_stmts, statement_t, entry)
+    {
+        switch(stmt->type)
+        {
+        case STMT_TYPE:
+            stmt->u.type = type_parameterized_type_specialize_define(stmt->u.type);
+            stmt->declonly = FALSE;
+            list_remove(&stmt->entry);
+            stmts = append_statement(stmts, stmt);
+            break;
+        default:
+            assert(0); /* should not be there */
+            break;
+        }
+    }
+
+    return stmts;
+}
+
 static void check_statements(const statement_list_t *stmts, int is_inside_library)
 {
     const statement_t *stmt;
@@ -3246,6 +3292,13 @@ static statement_t *make_statement_typedef(declarator_list_t *decls, int declonl
     return stmt;
 }
 
+static statement_t *make_statement_parameterized_type(type_t *type, typeref_list_t *params)
+{
+    statement_t *stmt = make_statement(STMT_TYPE);
+    stmt->u.type = type_parameterized_type_specialize_partial(type, params);
+    return stmt;
+}
+
 static statement_list_t *append_statements(statement_list_t *l1, statement_list_t *l2)
 {
     if (!l2) return l1;
@@ -3290,8 +3343,10 @@ type_t *find_parameterized_type(type_t *type, typeref_list_t *params)
         assert(type->type_type == TYPE_PARAMETERIZED_TYPE);
         type = type_parameterized_type_specialize_partial(type, params);
     }
-    /* FIXME: If not in another parameterized type, we'll have to look for the declared specialization. */
-    else error_loc("parameterized type '%s' not declared\n", name);
+    else if ((type = find_type(name, type->namespace, 0)))
+        assert(type->type_type != TYPE_PARAMETERIZED_TYPE);
+    else
+        error_loc("parameterized type '%s' not declared\n", name);
 
     free(name);
     return type;
