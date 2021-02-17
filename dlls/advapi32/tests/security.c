@@ -7930,6 +7930,95 @@ static void test_duplicate_token(void)
     CloseHandle(token);
 }
 
+static void test_GetKernelObjectSecurity(void)
+{
+    /* Basic tests for parameter validation. */
+
+    SECURITY_DESCRIPTOR_CONTROL control;
+    DWORD size, ret_size, revision;
+    BOOL ret, present, defaulted;
+    PSECURITY_DESCRIPTOR sd;
+    PSID sid;
+    ACL *acl;
+
+    SetLastError(0xdeadbeef);
+    size = 0xdeadbeef;
+    ret = GetKernelObjectSecurity(NULL, OWNER_SECURITY_INFORMATION, NULL, 0, &size);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got error %u\n", GetLastError());
+    ok(size == 0xdeadbeef, "got size %u\n", size);
+
+    SetLastError(0xdeadbeef);
+    ret = GetKernelObjectSecurity(GetCurrentProcess(), OWNER_SECURITY_INFORMATION, NULL, 0, NULL);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_NOACCESS, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    size = 0xdeadbeef;
+    ret = GetKernelObjectSecurity(GetCurrentProcess(), OWNER_SECURITY_INFORMATION, NULL, 0, &size);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
+    ok(size > 0 && size != 0xdeadbeef, "got size 0\n");
+
+    sd = malloc(size + 1);
+
+    SetLastError(0xdeadbeef);
+    ret = GetKernelObjectSecurity(GetCurrentProcess(), OWNER_SECURITY_INFORMATION, sd, size - 1, &ret_size);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
+    ok(ret_size == size, "expected size %u, got %u\n", size, ret_size);
+
+    SetLastError(0xdeadbeef);
+    ret = GetKernelObjectSecurity(GetCurrentProcess(), OWNER_SECURITY_INFORMATION, sd, size + 1, &ret_size);
+    ok(ret, "expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "got error %u\n", GetLastError());
+    ok(ret_size == size, "expected size %u, got %u\n", size, ret_size);
+
+    free(sd);
+
+    /* Calling the function with flags not defined succeeds and yields an empty
+     * descriptor. */
+
+    SetLastError(0xdeadbeef);
+    ret = GetKernelObjectSecurity(GetCurrentProcess(), 0x100000, NULL, 0, &size);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %u\n", GetLastError());
+
+    sd = malloc(size);
+    SetLastError(0xdeadbeef);
+    ret = GetKernelObjectSecurity(GetCurrentProcess(), 0x100000, sd, size, &ret_size);
+    ok(ret, "expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "got error %u\n", GetLastError());
+    ok(ret_size == size, "expected size %u, got %u\n", size, ret_size);
+
+    ret = GetSecurityDescriptorControl(sd, &control, &revision);
+    ok(ret, "got error %u\n", GetLastError());
+    todo_wine ok(control == SE_SELF_RELATIVE, "got control %#x\n", control);
+    ok(revision == SECURITY_DESCRIPTOR_REVISION1, "got revision %u\n", revision);
+
+    ret = GetSecurityDescriptorOwner(sd, &sid, &defaulted);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!sid, "expected no owner SID\n");
+    ok(!defaulted, "expected owner not defaulted\n");
+
+    ret = GetSecurityDescriptorGroup(sd, &sid, &defaulted);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!sid, "expected no group SID\n");
+    ok(!defaulted, "expected group not defaulted\n");
+
+    ret = GetSecurityDescriptorDacl(sd, &present, &acl, &defaulted);
+    ok(ret, "got error %u\n", GetLastError());
+    todo_wine ok(!present, "expeced no DACL present\n");
+    /* the descriptor is defaulted only on Windows >= 7 */
+
+    ret = GetSecurityDescriptorSacl(sd, &present, &acl, &defaulted);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!present, "expeced no SACL present\n");
+    /* the descriptor is defaulted only on Windows >= 7 */
+
+    free(sd);
+}
+
 START_TEST(security)
 {
     init();
@@ -7996,6 +8085,7 @@ START_TEST(security)
     test_create_process_token();
     test_pseudo_handle_security();
     test_duplicate_token();
+    test_GetKernelObjectSecurity();
 
     /* Must be the last test, modifies process token */
     test_token_security_descriptor();
