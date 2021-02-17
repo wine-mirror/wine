@@ -358,6 +358,33 @@ static void CDECL wg_parser_stream_enable(struct wg_parser_stream *stream, const
 {
     stream->current_format = *format;
     stream->enabled = true;
+
+    if (format->major_type == WG_MAJOR_TYPE_VIDEO)
+    {
+        switch (format->u.video.format)
+        {
+            case WG_VIDEO_FORMAT_BGRA:
+            case WG_VIDEO_FORMAT_BGRx:
+            case WG_VIDEO_FORMAT_BGR:
+            case WG_VIDEO_FORMAT_RGB15:
+            case WG_VIDEO_FORMAT_RGB16:
+                gst_util_set_object_arg(G_OBJECT(stream->flip), "method", "vertical-flip");
+                break;
+
+            case WG_VIDEO_FORMAT_AYUV:
+            case WG_VIDEO_FORMAT_I420:
+            case WG_VIDEO_FORMAT_NV12:
+            case WG_VIDEO_FORMAT_UYVY:
+            case WG_VIDEO_FORMAT_YUY2:
+            case WG_VIDEO_FORMAT_YV12:
+            case WG_VIDEO_FORMAT_YVYU:
+            case WG_VIDEO_FORMAT_UNKNOWN:
+            case WG_VIDEO_FORMAT_CINEPAK:
+                gst_util_set_object_arg(G_OBJECT(stream->flip), "method", "none");
+                break;
+        }
+    }
+
     gst_pad_push_event(stream->my_sink, gst_event_new_reconfigure());
 }
 
