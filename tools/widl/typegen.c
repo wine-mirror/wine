@@ -3747,13 +3747,13 @@ static void process_tfs_iface(type_t *iface, FILE *file, int indent, unsigned in
         }
         case STMT_TYPEDEF:
         {
-            const type_list_t *type_entry;
-            for (type_entry = stmt->u.type_list; type_entry; type_entry = type_entry->next)
+            typeref_t *ref;
+            if (stmt->u.type_list) LIST_FOR_EACH_ENTRY(ref, stmt->u.type_list, typeref_t, entry)
             {
-                if (is_attr(type_entry->type->attrs, ATTR_ENCODE)
-                    || is_attr(type_entry->type->attrs, ATTR_DECODE))
-                    type_entry->type->typestring_offset = write_type_tfs( file,
-                            type_entry->type->attrs, type_entry->type, type_entry->type->name,
+                if (is_attr(ref->type->attrs, ATTR_ENCODE)
+                    || is_attr(ref->type->attrs, ATTR_DECODE))
+                    ref->type->typestring_offset = write_type_tfs( file,
+                            ref->type->attrs, ref->type, ref->type->name,
                             TYPE_CONTEXT_CONTAINER, offset);
             }
             break;

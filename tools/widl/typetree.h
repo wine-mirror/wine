@@ -62,7 +62,7 @@ type_t *type_coclass_define(type_t *coclass, attr_list_t *attrs, typeref_list_t 
 type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs, typeref_list_t *ifaces);
 type_t *type_apicontract_declare(char *name, struct namespace *namespace);
 type_t *type_apicontract_define(type_t *apicontract, attr_list_t *attrs);
-type_t *type_parameterized_interface_declare(char *name, struct namespace *namespace, type_list_t *params);
+type_t *type_parameterized_interface_declare(char *name, struct namespace *namespace, typeref_list_t *params);
 type_t *type_parameterized_interface_define(type_t *type, attr_list_t *attrs, type_t *inherit, statement_list_t *stmts, typeref_list_t *requires);
 int type_is_equal(const type_t *type1, const type_t *type2);
 const char *type_get_name(const type_t *type, enum name_type name_type);

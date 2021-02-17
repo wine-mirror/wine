@@ -51,7 +51,6 @@ typedef struct _typelib_t typelib_t;
 typedef struct _user_type_t user_type_t;
 typedef struct _user_type_t context_handle_t;
 typedef struct _user_type_t generic_handle_t;
-typedef struct _type_list_t type_list_t;
 typedef struct _statement_t statement_t;
 typedef struct _warning_t warning_t;
 
@@ -439,7 +438,7 @@ struct runtimeclass_details
 struct parameterized_details
 {
     type_t *type;
-    type_list_t *params;
+    typeref_list_t *params;
 };
 
 #define HASHMAX 64
@@ -591,11 +590,6 @@ struct _user_type_t {
     const char *name;
 };
 
-struct _type_list_t {
-    type_t *type;
-    struct _type_list_t *next;
-};
-
 struct _statement_t {
     struct list entry;
     enum statement_type type;
@@ -605,7 +599,7 @@ struct _statement_t {
         const char *str;
         var_t *var;
         typelib_t *lib;
-        type_list_t *type_list;
+        typeref_list_t *type_list;
     } u;
     unsigned int declonly : 1; /* for STMT_TYPE and STMT_TYPEDEF */
 };

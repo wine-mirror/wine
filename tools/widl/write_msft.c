@@ -2479,14 +2479,14 @@ static void add_entry(msft_typelib_t *typelib, const statement_t *stmt)
         break;
     case STMT_TYPEDEF:
     {
-        const type_list_t *type_entry = stmt->u.type_list;
-        for (; type_entry; type_entry = type_entry->next) {
+        typeref_t *ref;
+        if (stmt->u.type_list) LIST_FOR_EACH_ENTRY(ref, stmt->u.type_list, typeref_t, entry) {
             /* if the type is public then add the typedef, otherwise attempt
              * to add the aliased type */
-            if (is_attr(type_entry->type->attrs, ATTR_PUBLIC))
-                add_typedef_typeinfo(typelib, type_entry->type);
+            if (is_attr(ref->type->attrs, ATTR_PUBLIC))
+                add_typedef_typeinfo(typelib, ref->type);
             else
-                add_type_typeinfo(typelib, type_alias_get_aliasee_type(type_entry->type));
+                add_type_typeinfo(typelib, type_alias_get_aliasee_type(ref->type));
         }
         break;
     }

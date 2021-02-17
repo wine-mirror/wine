@@ -776,7 +776,7 @@ static int for_each_serializable(const statement_list_t *stmts, FILE *header,
 {
     statement_t *stmt, *iface_stmt;
     statement_list_t *iface_stmts;
-    const type_list_t *type_entry;
+    typeref_t *ref;
 
     if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, statement_t, entry )
     {
@@ -787,12 +787,12 @@ static int for_each_serializable(const statement_list_t *stmts, FILE *header,
         if (iface_stmts) LIST_FOR_EACH_ENTRY( iface_stmt, iface_stmts, statement_t, entry )
         {
             if (iface_stmt->type != STMT_TYPEDEF) continue;
-            for (type_entry = iface_stmt->u.type_list; type_entry; type_entry = type_entry->next)
+            if (iface_stmt->u.type_list) LIST_FOR_EACH_ENTRY(ref, iface_stmt->u.type_list, typeref_t, entry)
             {
-                if (!is_attr(type_entry->type->attrs, ATTR_ENCODE)
-                    && !is_attr(type_entry->type->attrs, ATTR_DECODE))
+                if (!is_attr(ref->type->attrs, ATTR_ENCODE)
+                    && !is_attr(ref->type->attrs, ATTR_DECODE))
                     continue;
-                if (!proc(header, type_entry->type))
+                if (!proc(header, ref->type))
                     return 0;
             }
         }
@@ -1887,9 +1887,9 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
         break;
       case STMT_TYPEDEF:
       {
-        const type_list_t *type_entry = stmt->u.type_list;
-        for (; type_entry; type_entry = type_entry->next)
-          write_typedef(header, type_entry->type, stmt->declonly);
+        typeref_t *ref;
+        if (stmt->u.type_list) LIST_FOR_EACH_ENTRY(ref, stmt->u.type_list, typeref_t, entry)
+          write_typedef(header, ref->type, stmt->declonly);
         break;
       }
       case STMT_LIBRARY:

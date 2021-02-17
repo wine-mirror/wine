@@ -45,7 +45,6 @@ struct _import_t
 };
 
 static str_list_t *append_str(str_list_t *list, char *str);
-static type_list_t *append_type(type_list_t *list, type_t *type);
 static attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
 static attr_list_t *append_attr_list(attr_list_t *new_list, attr_list_t *old_list);
 static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t *right,
@@ -128,7 +127,6 @@ static typelib_t *current_typelib;
 	expr_t *expr;
 	expr_list_t *expr_list;
 	type_t *type;
-	type_list_t *type_list;
 	var_t *var;
 	var_list_t *var_list;
 	declarator_t *declarator;
@@ -292,7 +290,7 @@ static typelib_t *current_typelib;
 %type <type> enumdef structdef uniondef typedecl
 %type <type> type unqualified_type qualified_type
 %type <type> type_parameter
-%type <type_list> type_parameters
+%type <typeref_list> type_parameters
 %type <typeref> class_interface
 %type <typeref_list> class_interfaces
 %type <typeref_list> requires required_types
@@ -976,8 +974,8 @@ type_parameter: typename			{ $$ = get_type(TYPE_PARAMETER, $1, parameters_namesp
 	;
 
 type_parameters:
-	  type_parameter			{ $$ = append_type(NULL, $1); }
-	| type_parameters ',' type_parameter	{ $$ = append_type($1, $3); }
+	  type_parameter			{ $$ = append_typeref(NULL, make_typeref($1)); }
+	| type_parameters ',' type_parameter	{ $$ = append_typeref($1, make_typeref($3)); }
 	;
 
 interface:
@@ -1832,16 +1830,6 @@ static typeref_t *make_typeref(type_t *type)
     ref->type = type;
     ref->attrs = NULL;
     return ref;
-}
-
-static type_list_t *append_type(type_list_t *list, type_t *type)
-{
-    type_list_t *entry;
-    if (!type) return list;
-    entry = xmalloc( sizeof(*entry) );
-    entry->type = type;
-    entry->next = list;
-    return entry;
 }
 
 var_list_t *append_var(var_list_t *list, var_t *var)
@@ -3214,24 +3202,18 @@ static statement_t *make_statement_typedef(declarator_list_t *decls, int declonl
 {
     declarator_t *decl, *next;
     statement_t *stmt;
-    type_list_t **type_list;
 
     if (!decls) return NULL;
 
     stmt = make_statement(STMT_TYPEDEF);
     stmt->u.type_list = NULL;
-    type_list = &stmt->u.type_list;
     stmt->declonly = declonly;
 
     LIST_FOR_EACH_ENTRY_SAFE( decl, next, decls, declarator_t, entry )
     {
         var_t *var = decl->var;
         type_t *type = find_type_or_error(current_namespace, var->name);
-        *type_list = xmalloc(sizeof(type_list_t));
-        (*type_list)->type = type;
-        (*type_list)->next = NULL;
-
-        type_list = &(*type_list)->next;
+        stmt->u.type_list = append_typeref(stmt->u.type_list, make_typeref(type));
         free(decl);
         free(var);
     }

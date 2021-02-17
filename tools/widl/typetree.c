@@ -603,7 +603,7 @@ type_t *type_apicontract_define(type_t *apicontract, attr_list_t *attrs)
     return apicontract;
 }
 
-type_t *type_parameterized_interface_declare(char *name, struct namespace *namespace, type_list_t *params)
+type_t *type_parameterized_interface_declare(char *name, struct namespace *namespace, typeref_list_t *params)
 {
     type_t *type = get_type(TYPE_PARAMETERIZED_TYPE, name, namespace, 0);
     if (type_get_type_detect_alias(type) != TYPE_PARAMETERIZED_TYPE)
