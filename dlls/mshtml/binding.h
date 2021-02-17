@@ -35,6 +35,7 @@ typedef struct {
     nsIHttpChannel         nsIHttpChannel_iface;
     nsIUploadChannel       nsIUploadChannel_iface;
     nsIHttpChannelInternal nsIHttpChannelInternal_iface;
+    nsICacheInfoChannel    nsICacheInfoChannel_iface;
 
     LONG ref;
 

@@ -730,6 +730,23 @@ interface nsIFormPOSTActionChannel : nsIUploadChannel
 
 [
     object,
+    uuid(72c34415-c6eb-48af-851f-772fa9ee5972),
+    local
+]
+interface nsICacheInfoChannel : nsISupports
+{
+    nsresult GetCacheTokenExpirationTime(uint32_t *aCacheTokenExpirationTime);
+    nsresult GetCacheTokenCachedCharset(nsACString *aCacheTokenCachedCharset);
+    nsresult SetCacheTokenCachedCharset(const nsACString *aCacheTokenCachedCharset);
+    nsresult IsFromCache(bool *_retval);
+    nsresult GetCacheKey(nsISupports **aCacheKey);
+    nsresult SetCacheKey(nsISupports *aCacheKey);
+    nsresult GetAllowStaleCacheContent(bool *aAllowStaleCacheContent);
+    nsresult SetAllowStaleCacheContent(bool aAllowStaleCacheContent);
+}
+
+[
+    object,
     uuid(8d171460-a716-41f1-92be-8c659db39b45),
     local
 ]

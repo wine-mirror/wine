@@ -521,6 +521,9 @@ static nsresult NSAPI nsChannel_QueryInterface(nsIHttpChannel *iface, nsIIDRef r
     }else if(IsEqualGUID(&IID_nsIHttpChannelInternal, riid)) {
         TRACE("(%p)->(IID_nsIHttpChannelInternal %p)\n", This, result);
         *result = is_http_channel(This) ? &This->nsIHttpChannelInternal_iface : NULL;
+    }else if(IsEqualGUID(&IID_nsICacheInfoChannel, riid)) {
+        TRACE("(%p)->(IID_nsICacheInfoChannel %p)\n", This, result);
+        *result = is_http_channel(This) ? &This->nsICacheInfoChannel_iface : NULL;
     }else {
         TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), result);
         *result = NULL;
@@ -2138,6 +2141,100 @@ static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
     nsHttpChannelInternal_SetBlockAuthPrompt
 };
 
+static inline nsChannel *impl_from_nsICacheInfoChannel(nsICacheInfoChannel *iface)
+{
+    return CONTAINING_RECORD(iface, nsChannel, nsICacheInfoChannel_iface);
+}
+
+static nsresult NSAPI nsCacheInfoChannel_QueryInterface(nsICacheInfoChannel *iface, nsIIDRef riid,
+        void **result)
+{
+    nsChannel *This = impl_from_nsICacheInfoChannel(iface);
+    return nsIHttpChannel_QueryInterface(&This->nsIHttpChannel_iface, riid, result);
+}
+
+static nsrefcnt NSAPI nsCacheInfoChannel_AddRef(nsICacheInfoChannel *iface)
+{
+    nsChannel *This = impl_from_nsICacheInfoChannel(iface);
+    return nsIHttpChannel_AddRef(&This->nsIHttpChannel_iface);
+}
+
+static nsrefcnt NSAPI nsCacheInfoChannel_Release(nsICacheInfoChannel *iface)
+{
+    nsChannel *This = impl_from_nsICacheInfoChannel(iface);
+    return nsIHttpChannel_Release(&This->nsIHttpChannel_iface);
+}
+
+static nsresult NSAPI nsCacheInfoChannel_GetCacheTokenExpirationTime(nsICacheInfoChannel *iface, UINT32 *p)
+{
+    nsChannel *This = impl_from_nsICacheInfoChannel(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static nsresult NSAPI nsCacheInfoChannel_GetCacheTokenCachedCharset(nsICacheInfoChannel *iface, nsACString *p)
+{
+    nsChannel *This = impl_from_nsICacheInfoChannel(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static nsresult NSAPI nsCacheInfoChannel_SetCacheTokenCachedCharset(nsICacheInfoChannel *iface, const nsACString *p)
+{
+    nsChannel *This = impl_from_nsICacheInfoChannel(iface);
+    FIXME("(%p)->(%p)\n", This, debugstr_nsacstr(p));
+    return E_NOTIMPL;
+}
+
+static nsresult NSAPI nsCacheInfoChannel_IsFromCache(nsICacheInfoChannel *iface, cpp_bool *p)
+{
+    nsChannel *This = impl_from_nsICacheInfoChannel(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    *p = FALSE;
+    return NS_OK;
+}
+
+static nsresult NSAPI nsCacheInfoChannel_GetCacheKey(nsICacheInfoChannel *iface, nsISupports **p)
+{
+    nsChannel *This = impl_from_nsICacheInfoChannel(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static nsresult NSAPI nsCacheInfoChannel_SetCacheKey(nsICacheInfoChannel *iface, nsISupports *key)
+{
+    nsChannel *This = impl_from_nsICacheInfoChannel(iface);
+    FIXME("(%p)->(%p)\n", This, key);
+    return E_NOTIMPL;
+}
+
+static nsresult NSAPI nsCacheInfoChannel_GetAllowStaleCacheContent(nsICacheInfoChannel *iface, cpp_bool *p)
+{
+    nsChannel *This = impl_from_nsICacheInfoChannel(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static nsresult NSAPI nsCacheInfoChannel_SetAllowStaleCacheContent(nsICacheInfoChannel *iface, cpp_bool allow)
+{
+    nsChannel *This = impl_from_nsICacheInfoChannel(iface);
+    FIXME("(%p)->(%x)\n", This, allow);
+    return E_NOTIMPL;
+}
+
+static const nsICacheInfoChannelVtbl nsCacheInfoChannelVtbl = {
+    nsCacheInfoChannel_QueryInterface,
+    nsCacheInfoChannel_AddRef,
+    nsCacheInfoChannel_Release,
+    nsCacheInfoChannel_GetCacheTokenExpirationTime,
+    nsCacheInfoChannel_GetCacheTokenCachedCharset,
+    nsCacheInfoChannel_SetCacheTokenCachedCharset,
+    nsCacheInfoChannel_IsFromCache,
+    nsCacheInfoChannel_GetCacheKey,
+    nsCacheInfoChannel_SetCacheKey,
+    nsCacheInfoChannel_GetAllowStaleCacheContent,
+    nsCacheInfoChannel_SetAllowStaleCacheContent
+};
 
 static void invalidate_uri(nsWineURI *This)
 {
@@ -3382,6 +3479,7 @@ static nsresult create_nschannel(nsWineURI *uri, nsChannel **ret)
     channel->nsIHttpChannel_iface.lpVtbl = &nsChannelVtbl;
     channel->nsIUploadChannel_iface.lpVtbl = &nsUploadChannelVtbl;
     channel->nsIHttpChannelInternal_iface.lpVtbl = &nsHttpChannelInternalVtbl;
+    channel->nsICacheInfoChannel_iface.lpVtbl = &nsCacheInfoChannelVtbl;
     channel->ref = 1;
     channel->request_method = METHOD_GET;
     list_init(&channel->response_headers);
