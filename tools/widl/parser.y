@@ -57,8 +57,8 @@ static attr_t *make_custom_attr(UUID *id, expr_t *pval);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
 static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_t *decl, int top);
 static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_list_t *decls);
-static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface);
-static ifref_t *make_ifref(type_t *iface);
+static ifref_list_t *append_typeref(ifref_list_t *list, typeref_t *ref);
+static typeref_t *make_typeref(type_t *type);
 static var_list_t *append_var_list(var_list_t *list, var_list_t *vars);
 static declarator_list_t *append_declarator(declarator_list_t *list, declarator_t *p);
 static declarator_t *make_declarator(var_t *var);
@@ -137,7 +137,7 @@ static typelib_t *current_typelib;
 	statement_list_t *stmt_list;
 	warning_t *warning;
 	warning_list_t *warning_list;
-	ifref_t *ifref;
+	typeref_t *typeref;
 	ifref_list_t *ifref_list;
 	char *str;
 	UUID *uuid;
@@ -293,7 +293,7 @@ static typelib_t *current_typelib;
 %type <type> type unqualified_type qualified_type
 %type <type> type_parameter
 %type <type_list> type_parameters
-%type <ifref> class_interface
+%type <typeref> class_interface
 %type <ifref_list> class_interfaces
 %type <ifref_list> requires required_types
 %type <var> arg ne_union_field union_field s_field case enum enum_member declaration
@@ -939,12 +939,12 @@ namespacedef: tNAMESPACE aIDENTIFIER		{ $$ = $2; }
 	;
 
 class_interfaces:				{ $$ = NULL; }
-	| class_interfaces class_interface	{ $$ = append_ifref( $1, $2 ); }
+	| class_interfaces class_interface	{ $$ = append_typeref( $1, $2 ); }
 	;
 
 class_interface:
-	  m_attributes interfaceref ';'		{ $$ = make_ifref($2); $$->attrs = $1; }
-	| m_attributes dispinterfaceref ';'	{ $$ = make_ifref($2); $$->attrs = $1; }
+	  m_attributes interfaceref ';'		{ $$ = make_typeref($2); $$->attrs = $1; }
+	| m_attributes dispinterfaceref ';'	{ $$ = make_typeref($2); $$->attrs = $1; }
 	;
 
 dispinterface: tDISPINTERFACE typename		{ $$ = type_dispinterface_declare($2); }
@@ -987,8 +987,8 @@ interface:
 	;
 
 required_types:
-	  qualified_type			{ $$ = append_ifref(NULL, make_ifref($1)); }
-	| required_types ',' qualified_type	{ $$ = append_ifref($1, make_ifref($3)); }
+	  qualified_type			{ $$ = append_typeref(NULL, make_typeref($1)); }
+	| required_types ',' qualified_type	{ $$ = append_typeref($1, make_typeref($3)); }
 
 requires:					{ $$ = NULL; }
 	| tREQUIRES required_types		{ $$ = $2; }
@@ -1814,24 +1814,24 @@ static var_list_t *set_var_types(attr_list_t *attrs, decl_spec_t *decl_spec, dec
   return var_list;
 }
 
-static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface)
+static ifref_list_t *append_typeref(ifref_list_t *list, typeref_t *ref)
 {
-    if (!iface) return list;
+    if (!ref) return list;
     if (!list)
     {
         list = xmalloc( sizeof(*list) );
         list_init( list );
     }
-    list_add_tail( list, &iface->entry );
+    list_add_tail( list, &ref->entry );
     return list;
 }
 
-static ifref_t *make_ifref(type_t *type)
+static typeref_t *make_typeref(type_t *type)
 {
-  ifref_t *l = xmalloc(sizeof(ifref_t));
-  l->type = type;
-  l->attrs = NULL;
-  return l;
+    typeref_t *ref = xmalloc(sizeof(typeref_t));
+    ref->type = type;
+    ref->attrs = NULL;
+    return ref;
 }
 
 static type_list_t *append_type(type_list_t *list, type_t *type)

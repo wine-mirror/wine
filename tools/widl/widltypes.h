@@ -43,7 +43,7 @@ typedef struct _type_t type_t;
 typedef struct _var_t var_t;
 typedef struct _decl_spec_t decl_spec_t;
 typedef struct _declarator_t declarator_t;
-typedef struct _ifref_t ifref_t;
+typedef struct _typeref_t typeref_t;
 typedef struct _typelib_entry_t typelib_entry_t;
 typedef struct _importlib_t importlib_t;
 typedef struct _importinfo_t importinfo_t;
@@ -537,7 +537,7 @@ struct _declarator_t {
   struct list entry;
 };
 
-struct _ifref_t {
+struct _typeref_t {
   type_t *type;
   attr_list_t *attrs;
 
@@ -601,7 +601,6 @@ struct _statement_t {
     enum statement_type type;
     union
     {
-        ifref_t iface;
         type_t *type;
         const char *str;
         var_t *var;

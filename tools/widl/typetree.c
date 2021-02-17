@@ -548,7 +548,7 @@ type_t *type_runtimeclass_declare(char *name, struct namespace *namespace)
 
 type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs, ifref_list_t *ifaces)
 {
-    ifref_t *ifref, *required, *tmp;
+    typeref_t *ref, *required, *tmp;
     ifref_list_t *requires;
 
     if (runtimeclass->defined)
@@ -560,24 +560,24 @@ type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs, ifref
     if (!type_runtimeclass_get_default_iface(runtimeclass))
         error_loc("missing default interface on runtimeclass %s\n", runtimeclass->name);
 
-    LIST_FOR_EACH_ENTRY(ifref, ifaces, ifref_t, entry)
+    LIST_FOR_EACH_ENTRY(ref, ifaces, typeref_t, entry)
     {
         /* FIXME: this should probably not be allowed, here or in coclass, */
         /* but for now there's too many places in Wine IDL where it is to */
         /* even print a warning. */
-        if (!(ifref->type->defined)) continue;
-        if (!(requires = type_iface_get_requires(ifref->type))) continue;
-        LIST_FOR_EACH_ENTRY(required, requires, ifref_t, entry)
+        if (!(ref->type->defined)) continue;
+        if (!(requires = type_iface_get_requires(ref->type))) continue;
+        LIST_FOR_EACH_ENTRY(required, requires, typeref_t, entry)
         {
             int found = 0;
 
-            LIST_FOR_EACH_ENTRY(tmp, ifaces, ifref_t, entry)
+            LIST_FOR_EACH_ENTRY(tmp, ifaces, typeref_t, entry)
                 if ((found = type_is_equal(tmp->type, required->type))) break;
 
             if (!found)
                 error_loc("interface '%s' also requires interface '%s', "
                           "but runtimeclass '%s' does not implement it.\n",
-                          ifref->type->name, required->type->name, runtimeclass->name);
+                          ref->type->name, required->type->name, runtimeclass->name);
         }
     }
 

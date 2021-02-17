@@ -358,12 +358,12 @@ static inline ifref_list_t *type_runtimeclass_get_ifaces(const type_t *type)
 static inline type_t *type_runtimeclass_get_default_iface(const type_t *type)
 {
     ifref_list_t *ifaces = type_runtimeclass_get_ifaces(type);
-    ifref_t *entry;
+    typeref_t *ref;
 
     if (!ifaces) return NULL;
-    LIST_FOR_EACH_ENTRY(entry, ifaces, ifref_t, entry)
-        if (is_attr(entry->attrs, ATTR_DEFAULT))
-            return entry->type;
+    LIST_FOR_EACH_ENTRY(ref, ifaces, typeref_t, entry)
+        if (is_attr(ref->attrs, ATTR_DEFAULT))
+            return ref->type;
 
     return NULL;
 }
