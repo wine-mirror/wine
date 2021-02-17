@@ -648,7 +648,33 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
     return S_OK;
 }
 
-static struct layout_range *get_layout_range_by_pos(struct dwrite_textlayout *layout, UINT32 pos);
+static struct layout_range *get_layout_range_by_pos(struct dwrite_textlayout *layout, UINT32 pos)
+{
+    struct layout_range *cur;
+
+    LIST_FOR_EACH_ENTRY(cur, &layout->ranges, struct layout_range, h.entry)
+    {
+        DWRITE_TEXT_RANGE *r = &cur->h.range;
+        if (r->startPosition <= pos && pos < r->startPosition + r->length)
+            return cur;
+    }
+
+    return NULL;
+}
+
+static struct layout_range_header *get_layout_range_header_by_pos(struct list *ranges, UINT32 pos)
+{
+    struct layout_range_header *cur;
+
+    LIST_FOR_EACH_ENTRY(cur, ranges, struct layout_range_header, entry)
+    {
+        DWRITE_TEXT_RANGE *r = &cur->range;
+        if (r->startPosition <= pos && pos < r->startPosition + r->length)
+            return cur;
+    }
+
+    return NULL;
+}
 
 static inline DWRITE_LINE_BREAKPOINT get_effective_breakpoint(const struct dwrite_textlayout *layout, UINT32 pos)
 {
@@ -940,12 +966,121 @@ struct shaping_context
     struct regular_layout_run *run;
     DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
     DWRITE_SHAPING_TEXT_PROPERTIES *text_props;
+
+    struct
+    {
+        DWRITE_TYPOGRAPHIC_FEATURES **features;
+        unsigned int *range_lengths;
+        unsigned int range_count;
+    } user_features;
 };
+
+static void layout_shape_clear_user_features_context(struct shaping_context *context)
+{
+    unsigned int i;
+
+    for (i = 0; i < context->user_features.range_count; ++i)
+    {
+        heap_free(context->user_features.features[i]->features);
+        heap_free(context->user_features.features[i]);
+    }
+    heap_free(context->user_features.features);
+    memset(&context->user_features, 0, sizeof(context->user_features));
+}
 
 static void layout_shape_clear_context(struct shaping_context *context)
 {
+    layout_shape_clear_user_features_context(context);
     heap_free(context->glyph_props);
     heap_free(context->text_props);
+}
+
+static HRESULT layout_shape_add_empty_user_features_range(struct shaping_context *context, unsigned int length)
+{
+    DWRITE_TYPOGRAPHIC_FEATURES *features;
+    unsigned int r = context->user_features.range_count;
+
+    if (!(context->user_features.features[r] = heap_alloc_zero(sizeof(*features))))
+        return E_OUTOFMEMORY;
+
+    context->user_features.range_lengths[r] = length;
+    context->user_features.range_count++;
+
+    return S_OK;
+}
+
+static HRESULT layout_shape_get_user_features(struct dwrite_textlayout *layout, struct shaping_context *context)
+{
+    unsigned int i, f, start = 0, r, covered_length = 0, length, feature_count;
+    struct regular_layout_run *run = context->run;
+    DWRITE_TYPOGRAPHIC_FEATURES *features;
+    struct layout_range_iface *range;
+    IDWriteTypography *typography;
+    HRESULT hr = E_OUTOFMEMORY;
+
+    range = (struct layout_range_iface *)get_layout_range_header_by_pos(&layout->typographies, 0);
+    if (range->h.range.length >= run->descr.stringLength && !range->iface)
+        return S_OK;
+
+    if (!(context->user_features.features = heap_calloc(run->descr.stringLength, sizeof(*context->user_features.features))))
+        goto failed;
+    if (!(context->user_features.range_lengths = heap_calloc(run->descr.stringLength, sizeof(*context->user_features.range_lengths))))
+        goto failed;
+
+    for (i = run->descr.textPosition; i < run->descr.textPosition + run->descr.stringLength; ++i)
+    {
+        range = (struct layout_range_iface *)get_layout_range_header_by_pos(&layout->typographies, i);
+        if (!range || !range->iface) continue;
+
+        typography = (IDWriteTypography *)range->iface;
+        feature_count = IDWriteTypography_GetFontFeatureCount(typography);
+        if (!feature_count)
+        {
+            i = range->h.range.length - i + 1;
+            continue;
+        }
+
+        if (start != i)
+        {
+            if (FAILED(hr = layout_shape_add_empty_user_features_range(context, i - start))) goto failed;
+            covered_length += i - start;
+            start += range->h.range.length;
+        }
+
+        r = context->user_features.range_count;
+        if (!(features = context->user_features.features[r] = heap_alloc(sizeof(*features))))
+            goto failed;
+
+        context->user_features.range_lengths[r] = length = min(run->descr.textPosition + run->descr.stringLength,
+                range->h.range.startPosition + range->h.range.length) - i;
+        features->featureCount = feature_count;
+        if (!(features->features = heap_calloc(feature_count, sizeof(*features->features))))
+            goto failed;
+
+        for (f = 0; f < feature_count; ++f)
+        {
+            IDWriteTypography_GetFontFeature(typography, f, &features->features[f]);
+        }
+
+        i += length;
+        covered_length += length;
+        context->user_features.range_count++;
+    }
+
+    if (context->user_features.range_count && covered_length < run->descr.stringLength)
+    {
+        if (FAILED(hr = layout_shape_add_empty_user_features_range(context, run->descr.stringLength - covered_length)))
+            goto failed;
+    }
+
+    hr = S_OK;
+
+failed:
+
+    if (!context->user_features.range_count || FAILED(hr))
+        layout_shape_clear_user_features_context(context);
+
+    return hr;
 }
 
 static HRESULT layout_shape_get_glyphs(struct dwrite_textlayout *layout, struct shaping_context *context)
@@ -969,11 +1104,16 @@ static HRESULT layout_shape_get_glyphs(struct dwrite_textlayout *layout, struct 
     if (!context->text_props || !context->glyph_props)
         return E_OUTOFMEMORY;
 
+    if (FAILED(hr = layout_shape_get_user_features(layout, context)))
+        return hr;
+
     for (;;)
     {
         hr = IDWriteTextAnalyzer_GetGlyphs(context->analyzer, run->descr.string, run->descr.stringLength, run->run.fontFace,
-                run->run.isSideways, run->run.bidiLevel & 1, &run->sa, run->descr.localeName, NULL /* FIXME */, NULL,
-                NULL, 0, max_count, run->clustermap, context->text_props, run->glyphs, context->glyph_props, &run->glyphcount);
+                run->run.isSideways, run->run.bidiLevel & 1, &run->sa, run->descr.localeName, NULL /* FIXME */,
+                (const DWRITE_TYPOGRAPHIC_FEATURES **)context->user_features.features, context->user_features.range_lengths,
+                context->user_features.range_count, max_count, run->clustermap, context->text_props, run->glyphs,
+                context->glyph_props, &run->glyphcount);
         if (hr == E_NOT_SUFFICIENT_BUFFER)
         {
             heap_free(run->glyphs);
@@ -1020,12 +1160,14 @@ static HRESULT layout_shape_get_positions(struct dwrite_textlayout *layout, stru
                 context->text_props, run->descr.stringLength, run->run.glyphIndices, context->glyph_props, run->glyphcount,
                 run->run.fontFace, run->run.fontEmSize, layout->ppdip, &layout->transform,
                 layout->measuringmode == DWRITE_MEASURING_MODE_GDI_NATURAL, run->run.isSideways, run->run.bidiLevel & 1,
-                &run->sa, run->descr.localeName, NULL, NULL, 0, run->advances, run->offsets);
+                &run->sa, run->descr.localeName, (const DWRITE_TYPOGRAPHIC_FEATURES **)context->user_features.features,
+                context->user_features.range_lengths, context->user_features.range_count, run->advances, run->offsets);
     else
         hr = IDWriteTextAnalyzer_GetGlyphPlacements(context->analyzer, run->descr.string, run->descr.clusterMap,
                 context->text_props, run->descr.stringLength, run->run.glyphIndices, context->glyph_props, run->glyphcount,
                 run->run.fontFace, run->run.fontEmSize, run->run.isSideways, run->run.bidiLevel & 1, &run->sa,
-                run->descr.localeName, NULL, NULL, 0, run->advances, run->offsets);
+                run->descr.localeName, (const DWRITE_TYPOGRAPHIC_FEATURES **)context->user_features.features,
+                context->user_features.range_lengths, context->user_features.range_count, run->advances, run->offsets);
 
     if (FAILED(hr))
     {
@@ -1202,19 +1344,6 @@ static inline FLOAT get_cluster_range_width(struct dwrite_textlayout *layout, UI
     for (; start < end; start++)
         width += layout->clustermetrics[start].width;
     return width;
-}
-
-static struct layout_range_header *get_layout_range_header_by_pos(struct list *ranges, UINT32 pos)
-{
-    struct layout_range_header *cur;
-
-    LIST_FOR_EACH_ENTRY(cur, ranges, struct layout_range_header, entry) {
-        DWRITE_TEXT_RANGE *r = &cur->range;
-        if (r->startPosition <= pos && pos < r->startPosition + r->length)
-            return cur;
-    }
-
-    return NULL;
 }
 
 static inline IUnknown *layout_get_effect_from_pos(struct dwrite_textlayout *layout, UINT32 pos)
@@ -2477,19 +2606,6 @@ static struct layout_range_header *find_outer_range(struct list *ranges, const D
             (range->startPosition < cur->range.startPosition + cur->range.length))
             return NULL;
         if (cur->range.startPosition + cur->range.length >= range->startPosition + range->length)
-            return cur;
-    }
-
-    return NULL;
-}
-
-static struct layout_range *get_layout_range_by_pos(struct dwrite_textlayout *layout, UINT32 pos)
-{
-    struct layout_range *cur;
-
-    LIST_FOR_EACH_ENTRY(cur, &layout->ranges, struct layout_range, h.entry) {
-        DWRITE_TEXT_RANGE *r = &cur->h.range;
-        if (r->startPosition <= pos && pos < r->startPosition + r->length)
             return cur;
     }
 
