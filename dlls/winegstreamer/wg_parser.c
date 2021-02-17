@@ -992,6 +992,10 @@ static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 
     if (offset == GST_BUFFER_OFFSET_NONE)
         offset = parser->next_pull_offset;
     parser->next_pull_offset = offset + size;
+    if (offset >= parser->file_size)
+        return GST_FLOW_EOS;
+    if (offset + size >= parser->file_size)
+        size = parser->file_size - offset;
 
     if (!*buffer)
         *buffer = new_buffer = gst_buffer_new_and_alloc(size);

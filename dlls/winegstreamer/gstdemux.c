@@ -794,14 +794,6 @@ static GstFlowReturn read_buffer(struct parser *This, guint64 ofs, guint len, Gs
 
     TRACE("filter %p, offset %s, length %u, buffer %p.\n", This, wine_dbgstr_longlong(ofs), len, buffer);
 
-    if (ofs >= This->file_size)
-    {
-        WARN("Reading past eof: %s, %u\n", wine_dbgstr_longlong(ofs), len);
-        return GST_FLOW_EOS;
-    }
-    if (len + ofs > This->file_size)
-        len = This->file_size - ofs;
-
     gst_buffer_map(buffer, &info, GST_MAP_WRITE);
     hr = IAsyncReader_SyncRead(This->reader, ofs, len, info.data);
     gst_buffer_unmap(buffer, &info);
