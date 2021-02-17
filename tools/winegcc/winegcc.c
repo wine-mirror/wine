@@ -560,12 +560,12 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
             strarray_add(link_args, "-Wl,-debug");
             strarray_add(link_args, strmake("-Wl,-pdb:%s", opts->debug_file));
         }
+        else if (!opts->strip)
+            strarray_add(link_args, "-Wl,-debug:dwarf");
 
         if (opts->out_implib)
             strarray_add(link_args, strmake("-Wl,-implib:%s", opts->out_implib));
 
-        else if (!opts->strip)
-            strarray_add(link_args, "-Wl,-debug:dwarf");
         strarray_add( link_args, strmake( "-Wl,-filealign:%s", opts->file_align ? opts->file_align : "0x1000" ));
 
         strarray_addall( link_args, flags );
