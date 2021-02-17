@@ -5148,6 +5148,135 @@ static void test_autoplug_uyvy(void)
     ok(source_pin.ref == 1, "Got outstanding refcount %d.\n", source_pin.ref);
 }
 
+static void test_set_notify_flags(void)
+{
+    IFilterGraph2 *graph = create_graph();
+    IMediaEventSink *media_event_sink;
+    IMediaControl *media_control;
+    IMediaEventEx *media_event;
+    struct testfilter filter;
+    LONG_PTR param1, param2;
+    HANDLE event;
+    HWND window;
+    BSTR status;
+    HRESULT hr;
+    ULONG ref;
+    LONG code;
+    MSG msg;
+
+    window = CreateWindowA("static", NULL, WS_OVERLAPPEDWINDOW,
+            50, 50, 150, 150, NULL, NULL, NULL, NULL);
+    ok(!!window, "Failed to create window.\n");
+    status = SysAllocString(L"status");
+
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEventEx, (void **)&media_event);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IFilterGraph2_QueryInterface(graph, &IID_IMediaEventSink, (void **)&media_event_sink);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    testfilter_init(&filter, NULL, 0);
+    filter.IAMFilterMiscFlags_iface.lpVtbl = &testmiscflags_vtbl;
+    filter.misc_flags = AM_FILTER_MISC_FLAGS_IS_RENDERER;
+
+    hr = IFilterGraph2_AddFilter(graph, &filter.IBaseFilter_iface, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaEventEx_GetEventHandle(media_event, (OAEVENT *)&event);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaEventEx_SetNotifyWindow(media_event, (OAHWND)window, WM_USER, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Run(media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
+
+    while (PeekMessageA(&msg, window, WM_USER, WM_USER, PM_REMOVE));
+
+    hr = IMediaEventEx_SetNotifyFlags(media_event, AM_MEDIAEVENT_NONOTIFY);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    todo_wine ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+
+    hr = IMediaEventEx_GetEvent(media_event, &code, &param1, &param2, 50);
+    todo_wine ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    todo_wine ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+
+    ok(!PeekMessageA(&msg, window, WM_USER, WM_USER, PM_REMOVE), "Window should not be notified.\n");
+
+    hr = IMediaEventEx_GetEvent(media_event, &code, &param1, &param2, 50);
+    todo_wine ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    hr = IMediaEventSink_Notify(media_event_sink, EC_COMPLETE, S_OK,
+            (LONG_PTR)&filter.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
+
+    hr = IMediaControl_Stop(media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
+
+    hr = IMediaControl_Pause(media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
+
+    hr = IMediaControl_Run(media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    todo_wine ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+
+    hr = IMediaEventSink_Notify(media_event_sink, EC_COMPLETE, S_OK,
+            (LONG_PTR)&filter.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
+
+    hr = IMediaEventEx_GetEvent(media_event, &code, &param1, &param2, 50);
+    todo_wine ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    todo_wine ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+
+    hr = IMediaEventEx_SetNotifyFlags(media_event, 0);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaControl_Stop(media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaControl_Run(media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaEventSink_Notify(media_event_sink, EC_COMPLETE, S_OK,
+            (LONG_PTR)&filter.IBaseFilter_iface);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaEventEx_SetNotifyFlags(media_event, AM_MEDIAEVENT_NONOTIFY);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    todo_wine ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+
+    hr = IMediaControl_Stop(media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IMediaControl_Release(media_control);
+    IMediaEventEx_Release(media_event);
+    IMediaEventSink_Release(media_event_sink);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ok(filter.ref == 1, "Got outstanding refcount %d.\n", filter.ref);
+
+    SysFreeString(status);
+    DestroyWindow(window);
+}
+
 START_TEST(filtergraph)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -5172,6 +5301,7 @@ START_TEST(filtergraph)
     test_add_source_filter();
     test_window_threading();
     test_autoplug_uyvy();
+    test_set_notify_flags();
 
     CoUninitialize();
     test_render_with_multithread();
