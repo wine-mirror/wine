@@ -4733,7 +4733,7 @@ static void opentype_layout_get_glyph_range_for_text(struct scriptshaping_contex
     if (end_char >= context->length - 1)
         *end_glyph = context->glyph_count - 1;
     else
-        *end_glyph = context->u.buffer.clustermap[end_char + 1] - 1;
+        *end_glyph = context->u.buffer.clustermap[end_char] - 1;
 }
 
 static void opentype_layout_set_glyph_masks(struct scriptshaping_context *context, const struct shaping_features *features)
@@ -4753,6 +4753,9 @@ static void opentype_layout_set_glyph_masks(struct scriptshaping_context *contex
 
        if (start_char >= context->length)
            break;
+
+       if (!context->user_features.range_lengths[r])
+           continue;
 
        opentype_layout_get_glyph_range_for_text(context, start_char, start_char + context->user_features.range_lengths[r],
                &start_glyph, &end_glyph);
