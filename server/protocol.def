@@ -3441,6 +3441,14 @@ struct handle_info
 @END
 
 
+/* Create a token which is an elevation counterpart to this token */
+@REQ(create_linked_token)
+    obj_handle_t   handle;        /* handle to the token */
+@REPLY
+    obj_handle_t   linked;        /* handle to the linked token */
+@END
+
+
 /* Create I/O completion port */
 @REQ(create_completion)
     unsigned int access;          /* desired access to a port */

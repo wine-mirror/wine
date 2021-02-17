@@ -8057,8 +8057,7 @@ static void test_elevation(void)
         CloseHandle(token);
         return;
     }
-    todo_wine ok(ret, "got error %u\n", GetLastError());
-    if (!ret) return;
+    ok(ret, "got error %u\n", GetLastError());
 
     if (type == TokenElevationTypeDefault)
     {
@@ -8131,7 +8130,7 @@ static void test_elevation(void)
         ok(type == TokenElevationTypeLimited, "got type %#x\n", type);
         ret = GetTokenInformation(linked.LinkedToken, TokenElevation, &elevation, sizeof(elevation), &size);
         ok(ret, "got error %u\n", GetLastError());
-        ok(elevation.TokenIsElevated == FALSE, "got elevation %#x\n", elevation.TokenIsElevated);
+        todo_wine ok(elevation.TokenIsElevated == FALSE, "got elevation %#x\n", elevation.TokenIsElevated);
 
         /* Asking for the linked token again gives us a different token. */
         ret = GetTokenInformation(token, TokenLinkedToken, &linked2, sizeof(linked2), &size);
@@ -8142,7 +8141,7 @@ static void test_elevation(void)
         ok(type == TokenElevationTypeLimited, "got type %#x\n", type);
         ret = GetTokenInformation(linked2.LinkedToken, TokenElevation, &elevation, sizeof(elevation), &size);
         ok(ret, "got error %u\n", GetLastError());
-        ok(elevation.TokenIsElevated == FALSE, "got elevation %#x\n", elevation.TokenIsElevated);
+        todo_wine ok(elevation.TokenIsElevated == FALSE, "got elevation %#x\n", elevation.TokenIsElevated);
 
         check_different_token(linked.LinkedToken, linked2.LinkedToken);
 
@@ -8168,12 +8167,12 @@ static void test_elevation(void)
         type = TokenElevationTypeLimited;
         ret = SetTokenInformation(token, TokenElevationType, &type, sizeof(type));
         ok(!ret, "expected failure\n");
-        ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
+        todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
 
         elevation.TokenIsElevated = FALSE;
         ret = SetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation));
         ok(!ret, "expected failure\n");
-        ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
+        todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
     }
 
     ret = DuplicateTokenEx(token, TOKEN_ALL_ACCESS, NULL, SecurityAnonymous, TokenPrimary, &token2);

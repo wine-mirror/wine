@@ -167,7 +167,7 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
         0,    /* TokenAuditPolicy */
         0,    /* TokenOrigin */
         sizeof(TOKEN_ELEVATION_TYPE), /* TokenElevationType */
-        0,    /* TokenLinkedToken */
+        sizeof(TOKEN_LINKED_TOKEN), /* TokenLinkedToken */
         sizeof(TOKEN_ELEVATION), /* TokenElevation */
         0,    /* TokenHasRestrictions */
         0,    /* TokenAccessInformation */
@@ -472,6 +472,18 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
                 groups->Groups[0].Sid = sid;
                 groups->Groups[0].Attributes = 0;
             }
+        }
+        SERVER_END_REQ;
+        break;
+
+    case TokenLinkedToken:
+        SERVER_START_REQ( create_linked_token )
+        {
+            TOKEN_LINKED_TOKEN *linked = info;
+
+            req->handle = wine_server_obj_handle( token );
+            status = wine_server_call( req );
+            if (!status) linked->LinkedToken = wine_server_ptr_handle( reply->linked );
         }
         SERVER_END_REQ;
         break;

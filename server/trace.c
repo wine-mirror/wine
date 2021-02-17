@@ -4194,6 +4194,16 @@ static void dump_get_token_elevation_reply( const struct get_token_elevation_rep
     fprintf( stderr, " elevation=%d", req->elevation );
 }
 
+static void dump_create_linked_token_request( const struct create_linked_token_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
+static void dump_create_linked_token_reply( const struct create_linked_token_reply *req )
+{
+    fprintf( stderr, " linked=%04x", req->linked );
+}
+
 static void dump_create_completion_request( const struct create_completion_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
@@ -4707,6 +4717,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_make_process_system_request,
     (dump_func)dump_get_token_statistics_request,
     (dump_func)dump_get_token_elevation_request,
+    (dump_func)dump_create_linked_token_request,
     (dump_func)dump_create_completion_request,
     (dump_func)dump_open_completion_request,
     (dump_func)dump_add_completion_request,
@@ -4985,6 +4996,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_make_process_system_reply,
     (dump_func)dump_get_token_statistics_reply,
     (dump_func)dump_get_token_elevation_reply,
+    (dump_func)dump_create_linked_token_reply,
     (dump_func)dump_create_completion_reply,
     (dump_func)dump_open_completion_reply,
     NULL,
@@ -5263,6 +5275,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "make_process_system",
     "get_token_statistics",
     "get_token_elevation",
+    "create_linked_token",
     "create_completion",
     "open_completion",
     "add_completion",

@@ -54,7 +54,7 @@ extern const PSID security_high_label_sid;
 /* token functions */
 
 extern struct token *get_token_obj( struct process *process, obj_handle_t handle, unsigned int access );
-extern struct token *token_create_admin(void);
+extern struct token *token_create_admin( int elevation );
 extern int token_assign_label( struct token *token, PSID label );
 extern struct token *token_duplicate( struct token *src_token, unsigned primary,
                                       int impersonation_level, const struct security_descriptor *sd,
