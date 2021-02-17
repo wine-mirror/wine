@@ -5207,12 +5207,12 @@ static void test_set_notify_flags(void)
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    todo_wine ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+    ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
 
     ok(!PeekMessageA(&msg, window, WM_USER, WM_USER, PM_REMOVE), "Window should not be notified.\n");
 
     hr = IMediaEventEx_GetEvent(media_event, &code, &param1, &param2, 50);
-    todo_wine ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(media_event_sink, EC_COMPLETE, S_OK,
             (LONG_PTR)&filter.IBaseFilter_iface);
@@ -5242,7 +5242,7 @@ static void test_set_notify_flags(void)
     ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
 
     hr = IMediaEventEx_GetEvent(media_event, &code, &param1, &param2, 50);
-    todo_wine ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     todo_wine ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
 

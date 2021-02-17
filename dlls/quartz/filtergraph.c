@@ -5288,15 +5288,22 @@ static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, LONG EventCo
         TRACE("Process EC_COMPLETE notification\n");
         if (++This->EcCompleteCount == This->nRenderers)
         {
-            evt.lEventCode = EC_COMPLETE;
-            evt.lParam1 = S_OK;
-            evt.lParam2 = 0;
-            TRACE("Send EC_COMPLETE to app\n");
-            EventsQueue_PutEvent(&This->evqueue, &evt);
-            if (!This->notif.disabled && This->notif.hWnd)
-	    {
-                TRACE("Send Window message\n");
-                PostMessageW(This->notif.hWnd, This->notif.msg, 0, This->notif.instance);
+            if (!This->notif.disabled)
+            {
+                evt.lEventCode = EC_COMPLETE;
+                evt.lParam1 = S_OK;
+                evt.lParam2 = 0;
+                TRACE("Send EC_COMPLETE to app\n");
+                EventsQueue_PutEvent(&This->evqueue, &evt);
+                if (This->notif.hWnd)
+                {
+                    TRACE("Send Window message\n");
+                    PostMessageW(This->notif.hWnd, This->notif.msg, 0, This->notif.instance);
+                }
+            }
+            else
+            {
+                SetEvent(This->evqueue.msg_event);
             }
             This->CompletionStatus = EC_COMPLETE;
             This->got_ec_complete = 1;
@@ -5307,13 +5314,13 @@ static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, LONG EventCo
     {
         /* FIXME: Not handled yet */
     }
-    else
+    else if (!This->notif.disabled)
     {
         evt.lEventCode = EventCode;
         evt.lParam1 = EventParam1;
         evt.lParam2 = EventParam2;
         EventsQueue_PutEvent(&This->evqueue, &evt);
-        if (!This->notif.disabled && This->notif.hWnd)
+        if (This->notif.hWnd)
             PostMessageW(This->notif.hWnd, This->notif.msg, 0, This->notif.instance);
     }
 
