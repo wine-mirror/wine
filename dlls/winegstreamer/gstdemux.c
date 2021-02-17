@@ -568,10 +568,12 @@ static bool amt_to_wg_format(const AM_MEDIA_TYPE *mt, struct wg_format *format)
 
 /* Fill and send a single IMediaSample. */
 static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
-        GstBuffer *buf, GstMapInfo *info, gsize offset, gsize size, DWORD bytes_per_second)
+        const struct wg_parser_event *event, uint32_t offset, uint32_t size, DWORD bytes_per_second)
 {
     HRESULT hr;
     BYTE *ptr = NULL;
+
+    TRACE("offset %u, size %u, sample size %u\n", offset, size, IMediaSample_GetSize(sample));
 
     hr = IMediaSample_SetActualDataLength(sample, size);
     if(FAILED(hr)){
@@ -581,37 +583,48 @@ static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
 
     IMediaSample_GetPointer(sample, &ptr);
 
-    memcpy(ptr, &info->data[offset], size);
+    if (!unix_funcs->wg_parser_stream_copy_buffer(pin->wg_stream, ptr, offset, size))
+    {
+        /* The GStreamer pin has been flushed. */
+        return S_OK;
+    }
 
-    if (GST_BUFFER_PTS_IS_VALID(buf)) {
-        REFERENCE_TIME rtStart, ptsStart = buf->pts;
+    if (event->u.buffer.has_pts)
+    {
+        REFERENCE_TIME start_pts = event->u.buffer.pts;
 
-        if (offset > 0)
-            ptsStart = buf->pts + gst_util_uint64_scale(offset, GST_SECOND, bytes_per_second);
-        rtStart = ((ptsStart / 100) - pin->seek.llCurrent) * pin->seek.dRate;
+        if (offset)
+            start_pts += gst_util_uint64_scale(offset, 10000000, bytes_per_second);
+        start_pts -= pin->seek.llCurrent;
+        start_pts *= pin->seek.dRate;
 
-        if (GST_BUFFER_DURATION_IS_VALID(buf)) {
-            REFERENCE_TIME rtStop, tStart, tStop, ptsStop = buf->pts + buf->duration;
-            if (offset + size < info->size)
-                ptsStop = buf->pts + gst_util_uint64_scale(offset + size, GST_SECOND, bytes_per_second);
-            tStart = ptsStart / 100;
-            tStop = ptsStop / 100;
-            rtStop = ((ptsStop / 100) - pin->seek.llCurrent) * pin->seek.dRate;
-            TRACE("Current time on %p: %i to %i ms\n", pin, (int)(rtStart / 10000), (int)(rtStop / 10000));
-            IMediaSample_SetTime(sample, &rtStart, rtStop >= 0 ? &rtStop : NULL);
-            IMediaSample_SetMediaTime(sample, &tStart, &tStop);
-        } else {
-            IMediaSample_SetTime(sample, rtStart >= 0 ? &rtStart : NULL, NULL);
+        if (event->u.buffer.has_duration)
+        {
+            REFERENCE_TIME end_pts = event->u.buffer.pts + event->u.buffer.duration;
+
+            if (offset + size < event->u.buffer.size)
+                end_pts = event->u.buffer.pts + gst_util_uint64_scale(offset + size, 10000000, bytes_per_second);
+            end_pts -= pin->seek.llCurrent;
+            end_pts *= pin->seek.dRate;
+
+            IMediaSample_SetTime(sample, &start_pts, &end_pts);
+            IMediaSample_SetMediaTime(sample, &start_pts, &end_pts);
+        }
+        else
+        {
+            IMediaSample_SetTime(sample, &start_pts, NULL);
             IMediaSample_SetMediaTime(sample, NULL, NULL);
         }
-    } else {
+    }
+    else
+    {
         IMediaSample_SetTime(sample, NULL, NULL);
         IMediaSample_SetMediaTime(sample, NULL, NULL);
     }
 
-    IMediaSample_SetDiscontinuity(sample, !offset && GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DISCONT));
-    IMediaSample_SetPreroll(sample, GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_LIVE));
-    IMediaSample_SetSyncPoint(sample, !GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DELTA_UNIT));
+    IMediaSample_SetDiscontinuity(sample, !offset && event->u.buffer.discontinuity);
+    IMediaSample_SetPreroll(sample, event->u.buffer.preroll);
+    IMediaSample_SetSyncPoint(sample, !event->u.buffer.delta);
 
     if (!pin->pin.pin.peer)
         hr = VFW_E_NOT_CONNECTED;
@@ -625,23 +638,21 @@ static HRESULT send_sample(struct parser_source *pin, IMediaSample *sample,
 
 /* Send a single GStreamer buffer (splitting it into multiple IMediaSamples if
  * necessary). */
-static void send_buffer(struct parser_source *pin, GstBuffer *buf)
+static void send_buffer(struct parser_source *pin, const struct wg_parser_event *event)
 {
     HRESULT hr;
     IMediaSample *sample;
-    GstMapInfo info;
-
-    gst_buffer_map(buf, &info, GST_MAP_READ);
 
     if (IsEqualGUID(&pin->pin.pin.mt.formattype, &FORMAT_WaveFormatEx)
             && (IsEqualGUID(&pin->pin.pin.mt.subtype, &MEDIASUBTYPE_PCM)
             || IsEqualGUID(&pin->pin.pin.mt.subtype, &MEDIASUBTYPE_IEEE_FLOAT)))
     {
         WAVEFORMATEX *format = (WAVEFORMATEX *)pin->pin.pin.mt.pbFormat;
-        gsize offset = 0;
-        while (offset < info.size)
+        uint32_t offset = 0;
+
+        while (offset < event->u.buffer.size)
         {
-            gsize advance;
+            uint32_t advance;
 
             hr = BaseOutputPinImpl_GetDeliveryBuffer(&pin->pin, &sample, NULL, NULL, 0);
 
@@ -652,9 +663,9 @@ static void send_buffer(struct parser_source *pin, GstBuffer *buf)
                 break;
             }
 
-            advance = min(IMediaSample_GetSize(sample), info.size - offset);
+            advance = min(IMediaSample_GetSize(sample), event->u.buffer.size - offset);
 
-            hr = send_sample(pin, sample, buf, &info, offset, advance, format->nAvgBytesPerSec);
+            hr = send_sample(pin, sample, event, offset, advance, format->nAvgBytesPerSec);
 
             IMediaSample_Release(sample);
 
@@ -675,15 +686,13 @@ static void send_buffer(struct parser_source *pin, GstBuffer *buf)
         }
         else
         {
-            hr = send_sample(pin, sample, buf, &info, 0, info.size, 0);
+            hr = send_sample(pin, sample, event, 0, event->u.buffer.size, 0);
 
             IMediaSample_Release(sample);
         }
     }
 
-    gst_buffer_unmap(buf, &info);
-
-    gst_buffer_unref(buf);
+    unix_funcs->wg_parser_stream_release_buffer(pin->wg_stream);
 }
 
 static DWORD CALLBACK stream_thread(void *arg)
@@ -710,7 +719,7 @@ static DWORD CALLBACK stream_thread(void *arg)
         switch (event.type)
         {
             case WG_PARSER_EVENT_BUFFER:
-                send_buffer(pin, event.u.buffer);
+                send_buffer(pin, &event);
                 break;
 
             case WG_PARSER_EVENT_EOS:

@@ -179,7 +179,13 @@ struct wg_parser_event
     enum wg_parser_event_type type;
     union
     {
-        GstBuffer *buffer;
+        struct
+        {
+            /* pts and duration are in 100-nanosecond units. */
+            uint64_t pts, duration;
+            uint32_t size;
+            bool discontinuity, preroll, delta, has_pts, has_duration;
+        } buffer;
         struct
         {
             uint64_t position, stop;
@@ -198,6 +204,8 @@ struct wg_parser_stream
 
     pthread_cond_t event_cond, event_empty_cond;
     struct wg_parser_event event;
+    GstBuffer *buffer;
+    GstMapInfo map_info;
 
     bool flushing, eos, enabled, has_caps;
 
@@ -226,6 +234,9 @@ struct unix_funcs
     void (CDECL *wg_parser_stream_disable)(struct wg_parser_stream *stream);
 
     bool (CDECL *wg_parser_stream_get_event)(struct wg_parser_stream *stream, struct wg_parser_event *event);
+    bool (CDECL *wg_parser_stream_copy_buffer)(struct wg_parser_stream *stream,
+            void *data, uint32_t offset, uint32_t size);
+    void (CDECL *wg_parser_stream_release_buffer)(struct wg_parser_stream *stream);
     void (CDECL *wg_parser_stream_notify_qos)(struct wg_parser_stream *stream,
             bool underflow, double proportion, int64_t diff, uint64_t timestamp);
 
