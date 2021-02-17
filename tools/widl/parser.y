@@ -291,6 +291,9 @@ static typelib_t *current_typelib;
 %type <type> type unqualified_type qualified_type
 %type <type> type_parameter
 %type <typeref_list> type_parameters
+%type <type> parameterized_type
+%type <type> parameterized_type_arg
+%type <typeref_list> parameterized_type_args
 %type <typeref> class_interface
 %type <typeref_list> class_interfaces
 %type <typeref_list> requires required_types
@@ -912,6 +915,24 @@ qualified_type:
 	| namespace_pfx typename		{ $$ = find_type_or_error($1, $2); }
 	;
 
+parameterized_type: qualified_type '<' parameterized_type_args '>'
+						{ $$ = find_parameterized_type($1, $3); }
+	;
+
+parameterized_type_arg:
+	  base_type				{ $$ = $1; }
+	| qualified_type			{ $$ = $1; }
+	| qualified_type '*'			{ $$ = type_new_pointer($1); }
+	| parameterized_type			{ $$ = $1; }
+	| parameterized_type '*'		{ $$ = type_new_pointer($1); }
+	;
+
+parameterized_type_args:
+	  parameterized_type_arg		{ $$ = append_typeref(NULL, make_typeref($1)); }
+	| parameterized_type_args ',' parameterized_type_arg
+						{ $$ = append_typeref($1, make_typeref($3)); }
+	;
+
 coclass:  tCOCLASS typename			{ $$ = type_coclass_declare($2); }
 	;
 
@@ -968,6 +989,7 @@ dispinterfacedef:
 
 inherit:					{ $$ = NULL; }
 	| ':' qualified_type                    { $$ = $2; }
+	| ':' parameterized_type		{ $$ = $2; }
 	;
 
 type_parameter: typename			{ $$ = get_type(TYPE_PARAMETER, $1, parameters_namespace, 0); }
@@ -986,7 +1008,9 @@ interface:
 
 required_types:
 	  qualified_type			{ $$ = append_typeref(NULL, make_typeref($1)); }
+	| parameterized_type			{ $$ = append_typeref(NULL, make_typeref($1)); }
 	| required_types ',' qualified_type	{ $$ = append_typeref($1, make_typeref($3)); }
+	| required_types ',' parameterized_type	{ $$ = append_typeref($1, make_typeref($3)); }
 
 requires:					{ $$ = NULL; }
 	| tREQUIRES required_types		{ $$ = $2; }
@@ -1210,6 +1234,7 @@ unqualified_type:
 type:
 	  unqualified_type
 	| namespace_pfx typename		{ $$ = find_type_or_error($1, $2); }
+	| parameterized_type			{ $$ = $1; }
 	;
 
 typedef: m_attributes tTYPEDEF m_attributes decl_spec declarator_list
@@ -3254,4 +3279,20 @@ void init_loc_info(loc_info_t *i)
     i->input_name = input_name ? input_name : "stdin";
     i->line_number = line_number;
     i->near_text = parser_text;
+}
+
+type_t *find_parameterized_type(type_t *type, typeref_list_t *params)
+{
+    char *name = format_parameterized_type_name(type, params);
+
+    if (parameters_namespace)
+    {
+        assert(type->type_type == TYPE_PARAMETERIZED_TYPE);
+        type = type_parameterized_type_specialize_partial(type, params);
+    }
+    /* FIXME: If not in another parameterized type, we'll have to look for the declared specialization. */
+    else error_loc("parameterized type '%s' not declared\n", name);
+
+    free(name);
+    return type;
 }

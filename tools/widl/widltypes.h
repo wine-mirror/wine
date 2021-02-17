@@ -643,6 +643,7 @@ void init_loc_info(loc_info_t *);
 
 char *format_namespace(struct namespace *namespace, const char *prefix, const char *separator, const char *suffix,
                        const char *abi_prefix);
+char *format_parameterized_type_name(type_t *type, typeref_list_t *params);
 
 static inline enum type_type type_get_type_detect_alias(const type_t *type)
 {
