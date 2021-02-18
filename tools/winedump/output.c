@@ -234,41 +234,25 @@ void  output_c_preamble (void)
       puts ("Creating a forwarding DLL");
 
     fputs ("\nHMODULE hDLL=0;    /* DLL to call */\n\n", cfile);
-  }
 
-  fprintf (cfile,
-           "BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void "
-           "*reserved)\n{\n"
+    fprintf (cfile,
+           "BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)\n{\n"
            "    TRACE(\"(%%p, %%u, %%p)\\n\", instance, reason, reserved);\n\n"
            "    switch (reason)\n"
            "    {\n"
-           "        case DLL_WINE_PREATTACH:\n"
-           "            return FALSE;    /* prefer native version */\n"
-           "        case DLL_PROCESS_ATTACH:\n");
-
-  if (globals.forward_dll)
-    fprintf (cfile,
+           "        case DLL_PROCESS_ATTACH:\n"
            "            hDLL = LoadLibraryA(\"%s\");\n"
-           "            TRACE(\"Forwarding DLL (%s) loaded (%%p)\\n\", hDLL);\n",
-           globals.forward_dll, globals.forward_dll);
-  else
-    fprintf (cfile,
-           "            DisableThreadLibraryCalls(instance);\n");
-
-  fprintf (cfile,
-           "            break;\n");
-
-  if (globals.forward_dll)
-    fprintf (cfile,
+           "            TRACE(\"Forwarding DLL (%s) loaded (%%p)\\n\", hDLL);\n"
+           "            DisableThreadLibraryCalls(instance);\n"
+           "            break;\n"
            "        case DLL_PROCESS_DETACH:\n"
            "            FreeLibrary(hDLL);\n"
            "            TRACE(\"Forwarding DLL (%s) freed\\n\");\n"
-           "            break;\n",
-           globals.forward_dll);
-
-  fprintf (cfile,
+           "            break;\n"
            "    }\n\n"
-           "    return TRUE;\n}\n");
+           "    return TRUE;\n}\n",
+           globals.forward_dll, globals.forward_dll, globals.forward_dll);
+  }
 }
 
 

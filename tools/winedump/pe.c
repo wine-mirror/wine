@@ -45,7 +45,13 @@
 #include "winbase.h"
 #include "winedump.h"
 
+#define IMAGE_DLLCHARACTERISTICS_PREFER_NATIVE 0x0010 /* Wine extension */
+
 static const IMAGE_NT_HEADERS32*        PE_nt_headers;
+
+static const char builtin_signature[] = "Wine builtin DLL";
+static const char fakedll_signature[] = "Wine placeholder DLL";
+static int is_builtin;
 
 const char *get_machine_str(int mach)
 {
@@ -95,13 +101,13 @@ static const IMAGE_NT_HEADERS32 *get_nt_header( void )
     const IMAGE_DOS_HEADER *dos;
     dos = PRD(0, sizeof(*dos));
     if (!dos) return NULL;
+    is_builtin = (dos->e_lfanew >= sizeof(*dos) + 32 &&
+                  !memcmp( dos + 1, builtin_signature, sizeof(builtin_signature) ));
     return PRD(dos->e_lfanew, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
 }
 
 void print_fake_dll( void )
 {
-    static const char builtin_signature[] = "Wine builtin DLL";
-    static const char fakedll_signature[] = "Wine placeholder DLL";
     const IMAGE_DOS_HEADER *dos;
 
     dos = PRD(0, sizeof(*dos) + 32);
@@ -214,7 +220,8 @@ static inline void print_subsys(const char *title, WORD value)
 static inline void print_dllflags(const char *title, WORD value)
 {
     printf("  %-34s 0x%04X\n", title, value);
-#define X(f,s) if (value & f) printf("    %s\n", s)
+#define X(f,s) do { if (value & f) printf("    %s\n", s); } while(0)
+    if (is_builtin) X(IMAGE_DLLCHARACTERISTICS_PREFER_NATIVE, "PREFER_NATIVE (Wine extension)");
     X(IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA,       "HIGH_ENTROPY_VA");
     X(IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE,          "DYNAMIC_BASE");
     X(IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY,       "FORCE_INTEGRITY");
