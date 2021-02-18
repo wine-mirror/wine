@@ -102,20 +102,6 @@ static HRESULT WINAPI GST_ChangeCurrent(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeRate(IMediaSeeking *iface);
 
-static DWORD channel_mask_from_count(uint32_t count)
-{
-    switch (count)
-    {
-        case 1: return KSAUDIO_SPEAKER_MONO;
-        case 2: return KSAUDIO_SPEAKER_STEREO;
-        case 4: return KSAUDIO_SPEAKER_SURROUND;
-        case 5: return KSAUDIO_SPEAKER_5POINT1 & ~SPEAKER_LOW_FREQUENCY;
-        case 6: return KSAUDIO_SPEAKER_5POINT1;
-        case 8: return KSAUDIO_SPEAKER_7POINT1;
-        default: return 0;
-    }
-}
-
 static bool amt_from_wg_format_audio(AM_MEDIA_TYPE *mt, const struct wg_format *format)
 {
     mt->majortype = MEDIATYPE_Audio;
@@ -220,7 +206,7 @@ static bool amt_from_wg_format_audio(AM_MEDIA_TYPE *mt, const struct wg_format *
             wave_format->Format.wBitsPerSample = depth;
             wave_format->Format.cbSize = sizeof(*wave_format) - sizeof(WAVEFORMATEX);
             wave_format->Samples.wValidBitsPerSample = depth;
-            wave_format->dwChannelMask = channel_mask_from_count(format->u.audio.channels);
+            wave_format->dwChannelMask = format->u.audio.channel_mask;
             wave_format->SubFormat = is_float ? KSDATAFORMAT_SUBTYPE_IEEE_FLOAT : KSDATAFORMAT_SUBTYPE_PCM;
             mt->lSampleSize = wave_format->Format.nBlockAlign;
         }
@@ -422,6 +408,25 @@ static bool amt_to_wg_format_audio(const AM_MEDIA_TYPE *mt, struct wg_format *fo
     format->major_type = WG_MAJOR_TYPE_AUDIO;
     format->u.audio.channels = audio_format->nChannels;
     format->u.audio.rate = audio_format->nSamplesPerSec;
+
+    if (audio_format->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+    {
+        const WAVEFORMATEXTENSIBLE *ext_format = (const WAVEFORMATEXTENSIBLE *)mt->pbFormat;
+
+        format->u.audio.channel_mask = ext_format->dwChannelMask;
+    }
+    else
+    {
+        if (audio_format->nChannels == 1)
+            format->u.audio.channel_mask = KSAUDIO_SPEAKER_MONO;
+        else if (audio_format->nChannels == 2)
+            format->u.audio.channel_mask = KSAUDIO_SPEAKER_STEREO;
+        else
+        {
+            ERR("Unexpected channel count %u.\n", audio_format->nChannels);
+            return false;
+        }
+    }
 
     for (i = 0; i < ARRAY_SIZE(format_map); ++i)
     {

@@ -128,6 +128,7 @@ struct wg_format
             } format;
 
             uint32_t channels;
+            uint32_t channel_mask; /* In WinMM format. */
             uint32_t rate;
         } audio;
     } u;
