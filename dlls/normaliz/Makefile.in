@@ -1,7 +1,2 @@
 MODULE    = normaliz.dll
 IMPORTLIB = normaliz
-
-EXTRADLLFLAGS = -mno-cygwin
-
-C_SRCS = \
-	normaliz.c
