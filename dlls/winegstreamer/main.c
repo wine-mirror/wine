@@ -183,8 +183,6 @@ static BOOL CALLBACK init_gstreamer_proc(INIT_ONCE *once, void *param, void **ct
     if (!handle)
         ERR("Failed to pin module %p.\n", winegstreamer_instance);
 
-    start_dispatch_thread();
-
     return TRUE;
 }
 

@@ -1,5 +1,6 @@
 /*
  * Copyright 2019 Nikolay Sivov for CodeWeavers
+ * Copyright 2020 Zebediah Figura for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,11 +22,14 @@
 
 #include "gst_private.h"
 
+#include <assert.h>
 #include <stdarg.h>
 
 #include "gst_private.h"
 #include "mfapi.h"
 #include "mfidl.h"
+#include "ks.h"
+#include "ksmedia.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -517,351 +521,227 @@ HRESULT mfplat_DllRegisterServer(void)
 static const struct
 {
     const GUID *subtype;
-    GstVideoFormat format;
+    enum wg_video_format format;
 }
-uncompressed_video_formats[] =
+video_formats[] =
 {
-    {&MFVideoFormat_ARGB32,  GST_VIDEO_FORMAT_BGRA},
-    {&MFVideoFormat_RGB32,   GST_VIDEO_FORMAT_BGRx},
-    {&MFVideoFormat_RGB24,   GST_VIDEO_FORMAT_BGR},
-    {&MFVideoFormat_RGB565,  GST_VIDEO_FORMAT_BGR16},
-    {&MFVideoFormat_RGB555,  GST_VIDEO_FORMAT_BGR15},
+    {&MFVideoFormat_ARGB32, WG_VIDEO_FORMAT_BGRA},
+    {&MFVideoFormat_RGB32,  WG_VIDEO_FORMAT_BGRx},
+    {&MFVideoFormat_RGB24,  WG_VIDEO_FORMAT_BGR},
+    {&MFVideoFormat_RGB555, WG_VIDEO_FORMAT_RGB15},
+    {&MFVideoFormat_RGB565, WG_VIDEO_FORMAT_RGB16},
+    {&MFVideoFormat_AYUV,   WG_VIDEO_FORMAT_AYUV},
+    {&MFVideoFormat_I420,   WG_VIDEO_FORMAT_I420},
+    {&MFVideoFormat_NV12,   WG_VIDEO_FORMAT_NV12},
+    {&MFVideoFormat_UYVY,   WG_VIDEO_FORMAT_UYVY},
+    {&MFVideoFormat_YUY2,   WG_VIDEO_FORMAT_YUY2},
+    {&MFVideoFormat_YV12,   WG_VIDEO_FORMAT_YV12},
+    {&MFVideoFormat_YVYU,   WG_VIDEO_FORMAT_YVYU},
 };
 
-/* returns NULL if doesn't match exactly */
-IMFMediaType *mf_media_type_from_caps(const GstCaps *caps)
+static const struct
 {
-    IMFMediaType *media_type;
-    GstStructure *info;
-    const char *mime_type;
+    const GUID *subtype;
+    UINT32 depth;
+    enum wg_audio_format format;
+}
+audio_formats[] =
+{
+    {&MFAudioFormat_PCM,     8, WG_AUDIO_FORMAT_U8},
+    {&MFAudioFormat_PCM,    16, WG_AUDIO_FORMAT_S16LE},
+    {&MFAudioFormat_PCM,    24, WG_AUDIO_FORMAT_S24LE},
+    {&MFAudioFormat_PCM,    32, WG_AUDIO_FORMAT_S32LE},
+    {&MFAudioFormat_Float,  32, WG_AUDIO_FORMAT_F32LE},
+    {&MFAudioFormat_Float,  64, WG_AUDIO_FORMAT_F64LE},
+};
 
-    if (TRACE_ON(mfplat))
-    {
-        gchar *human_readable = gst_caps_to_string(caps);
-        TRACE("caps = %s\n", debugstr_a(human_readable));
-        g_free(human_readable);
-    }
-
-    if (FAILED(MFCreateMediaType(&media_type)))
-        return NULL;
-
-    info = gst_caps_get_structure(caps, 0);
-    mime_type = gst_structure_get_name(info);
-
-    if (!strncmp(mime_type, "video", 5))
-    {
-        GstVideoInfo video_info;
-
-        if (!gst_video_info_from_caps(&video_info, caps))
-        {
-            return NULL;
-        }
-
-        IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
-
-        IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, ((UINT64)video_info.width << 32) | video_info.height);
-
-        IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_RATE, ((UINT64)video_info.fps_n << 32) | video_info.fps_d);
-
-        if (!strcmp(mime_type, "video/x-raw"))
-        {
-            GUID fourcc_subtype = MFVideoFormat_Base;
-            unsigned int i;
-
-            IMFMediaType_SetUINT32(media_type, &MF_MT_COMPRESSED, FALSE);
-
-            /* First try FOURCC */
-            if ((fourcc_subtype.Data1 = gst_video_format_to_fourcc(video_info.finfo->format)))
-            {
-                IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &fourcc_subtype);
-            }
-            else
-            {
-                for (i = 0; i < ARRAY_SIZE(uncompressed_video_formats); i++)
-                {
-                    if (uncompressed_video_formats[i].format == video_info.finfo->format)
-                    {
-                        IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, uncompressed_video_formats[i].subtype);
-                        break;
-                    }
-                }
-                if (i == ARRAY_SIZE(uncompressed_video_formats))
-                {
-                    FIXME("Unrecognized uncompressed video format %s\n", gst_video_format_to_string(video_info.finfo->format));
-                    IMFMediaType_Release(media_type);
-                    return NULL;
-                }
-            }
-        }
-        else
-        {
-            FIXME("Unrecognized video format %s\n", mime_type);
-            return NULL;
-        }
-    }
-    else if (!strncmp(mime_type, "audio", 5))
-    {
-        gint rate, channels, bitrate;
-        guint64 channel_mask;
-        IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
-
-        if (gst_structure_get_int(info, "rate", &rate))
-            IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, rate);
-
-        if (gst_structure_get_int(info, "channels", &channels))
-            IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_NUM_CHANNELS, channels);
-
-        if (gst_structure_get(info, "channel-mask", GST_TYPE_BITMASK, &channel_mask, NULL))
-            IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_CHANNEL_MASK, channel_mask);
-
-        if (gst_structure_get_int(info, "bitrate", &bitrate))
-            IMFMediaType_SetUINT32(media_type, &MF_MT_AVG_BITRATE, bitrate);
-
-        if (!strcmp(mime_type, "audio/x-raw"))
-        {
-            GstAudioInfo audio_info;
-            DWORD depth;
-
-            if (!gst_audio_info_from_caps(&audio_info, caps))
-            {
-                ERR("Failed to get caps audio info\n");
-                IMFMediaType_Release(media_type);
-                return NULL;
-            }
-
-            depth = GST_AUDIO_INFO_DEPTH(&audio_info);
-
-            /* validation */
-            if ((audio_info.finfo->flags & GST_AUDIO_FORMAT_FLAG_INTEGER && depth > 8) ||
-                (audio_info.finfo->flags & GST_AUDIO_FORMAT_FLAG_SIGNED && depth <= 8) ||
-                (audio_info.finfo->endianness != G_LITTLE_ENDIAN && depth > 8))
-            {
-                IMFMediaType_Release(media_type);
-                return NULL;
-            }
-
-            /* conversion */
-            switch (audio_info.finfo->flags)
-            {
-                case GST_AUDIO_FORMAT_FLAG_FLOAT:
-                    IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_Float);
-                    break;
-                case GST_AUDIO_FORMAT_FLAG_INTEGER:
-                case GST_AUDIO_FORMAT_FLAG_SIGNED:
-                    IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
-                    break;
-                default:
-                    FIXME("Unrecognized audio format %x\n", audio_info.finfo->format);
-                    IMFMediaType_Release(media_type);
-                    return NULL;
-            }
-
-            IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, depth);
-        }
-        else
-        {
-            FIXME("Unrecognized audio format %s\n", mime_type);
-            IMFMediaType_Release(media_type);
-            return NULL;
-        }
-    }
-    else
-    {
-        IMFMediaType_Release(media_type);
-        return NULL;
-    }
-
-    return media_type;
+static inline UINT64 make_uint64(UINT32 high, UINT32 low)
+{
+    return ((UINT64)high << 32) | low;
 }
 
-GstCaps *caps_from_mf_media_type(IMFMediaType *type)
+static IMFMediaType *mf_media_type_from_wg_format_audio(const struct wg_format *format)
 {
-    GUID major_type;
-    GUID subtype;
-    GstCaps *output = NULL;
+    IMFMediaType *type;
+    unsigned int i;
 
-    if (FAILED(IMFMediaType_GetMajorType(type, &major_type)))
-        return NULL;
-    if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
-        return NULL;
-
-    if (IsEqualGUID(&major_type, &MFMediaType_Video))
+    for (i = 0; i < ARRAY_SIZE(audio_formats); ++i)
     {
-        UINT64 frame_rate = 0, frame_size = 0;
-        DWORD width, height;
-        GstVideoFormat format = GST_VIDEO_FORMAT_UNKNOWN;
-        GUID subtype_base;
-        GstVideoInfo info;
-        unsigned int i;
-
-        if (FAILED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size)))
-            return NULL;
-        width = frame_size >> 32;
-        height = frame_size;
-
-        output = gst_caps_new_empty_simple("video/x-raw");
-
-        for (i = 0; i < ARRAY_SIZE(uncompressed_video_formats); i++)
+        if (format->u.audio.format == audio_formats[i].format)
         {
-            if (IsEqualGUID(uncompressed_video_formats[i].subtype, &subtype))
-            {
-                format = uncompressed_video_formats[i].format;
-                break;
-            }
-        }
-
-        subtype_base = subtype;
-        subtype_base.Data1 = 0;
-        if (format == GST_VIDEO_FORMAT_UNKNOWN && IsEqualGUID(&MFVideoFormat_Base, &subtype_base))
-            format = gst_video_format_from_fourcc(subtype.Data1);
-
-        if (format == GST_VIDEO_FORMAT_UNKNOWN)
-        {
-            FIXME("Unrecognized format %s\n", debugstr_guid(&subtype));
-            return NULL;
-        }
-
-        gst_video_info_set_format(&info, format, width, height);
-        output = gst_video_info_to_caps(&info);
-
-        if (frame_size)
-        {
-            gst_caps_set_simple(output, "width", G_TYPE_INT, width, NULL);
-            gst_caps_set_simple(output, "height", G_TYPE_INT, height, NULL);
-        }
-        if (SUCCEEDED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_RATE, &frame_rate)))
-        {
-            /* Darksiders: Warmastered Edition uses a MF_MT_FRAME_RATE of 0,
-               and gstreamer won't accept an undefined number as the framerate. */
-            if (!(DWORD32)frame_rate)
-                frame_rate = 1;
-            gst_caps_set_simple(output, "framerate", GST_TYPE_FRACTION, (DWORD32)(frame_rate >> 32), (DWORD32) frame_rate, NULL);
-        }
-        return output;
-    }
-    else if (IsEqualGUID(&major_type, &MFMediaType_Audio))
-    {
-        DWORD rate = -1, channels = -1, channel_mask = -1;
-
-        if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &rate)))
-        {
-            ERR("Sample rate not set.\n");
-            return NULL;
-        }
-        if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_NUM_CHANNELS, &channels)))
-        {
-            ERR("Channel count not set.\n");
-            return NULL;
-        }
-        IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_CHANNEL_MASK, &channel_mask);
-
-        if (IsEqualGUID(&subtype, &MFAudioFormat_Float))
-        {
-            GstAudioInfo float_info;
-
-            gst_audio_info_set_format(&float_info, GST_AUDIO_FORMAT_F32LE, rate, channels, NULL);
-            output = gst_audio_info_to_caps(&float_info);
-        }
-        else if (IsEqualGUID(&subtype, &MFAudioFormat_PCM))
-        {
-            GstAudioFormat pcm_format;
-            GstAudioInfo pcm_info;
-            DWORD bits_per_sample;
-
-            if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_BITS_PER_SAMPLE, &bits_per_sample)))
-            {
-                pcm_format = gst_audio_format_build_integer(bits_per_sample > 8, G_LITTLE_ENDIAN, bits_per_sample, bits_per_sample);
-
-                gst_audio_info_set_format(&pcm_info, pcm_format, rate, channels, NULL);
-                output = gst_audio_info_to_caps(&pcm_info);
-            }
-            else
-            {
-                ERR("Bits per sample not set.\n");
+            if (FAILED(MFCreateMediaType(&type)))
                 return NULL;
-            }
-        }
-        else
-        {
-            FIXME("Unrecognized subtype %s\n", debugstr_guid(&subtype));
-            return NULL;
-        }
 
-        if (channel_mask != -1)
-            gst_caps_set_simple(output, "channel-mask", GST_TYPE_BITMASK, (guint64) channel_mask, NULL);
+            IMFMediaType_SetGUID(type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+            IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, audio_formats[i].subtype);
+            IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_BITS_PER_SAMPLE, audio_formats[i].depth);
+            IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, format->u.audio.rate);
+            IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_NUM_CHANNELS, format->u.audio.channels);
+            IMFMediaType_SetUINT32(type, &MF_MT_AUDIO_CHANNEL_MASK, format->u.audio.channel_mask);
 
-        return output;
+            return type;
+        }
     }
 
-    FIXME("Unrecognized major type %s\n", debugstr_guid(&major_type));
     return NULL;
 }
 
-/* IMFSample = GstBuffer
-   IMFBuffer = GstMemory */
-
-/* TODO: Future optimization could be to create a custom
-   IMFMediaBuffer wrapper around GstMemory, and to utilize
-   gst_memory_new_wrapped on IMFMediaBuffer data.  However,
-   this wouldn't work if we allow the callers to allocate
-   the buffers. */
-
-IMFSample* mf_sample_from_gst_buffer(GstBuffer *gst_buffer)
+static IMFMediaType *mf_media_type_from_wg_format_video(const struct wg_format *format)
 {
-    IMFMediaBuffer *mf_buffer = NULL;
-    GstMapInfo map_info = {0};
-    LONGLONG duration, time;
-    BYTE *mapped_buf = NULL;
-    IMFSample *out = NULL;
-    HRESULT hr;
+    IMFMediaType *type;
+    unsigned int i;
 
-    if (FAILED(hr = MFCreateSample(&out)))
-        goto done;
-
-    duration = GST_BUFFER_DURATION(gst_buffer);
-    time = GST_BUFFER_PTS(gst_buffer);
-
-    if (FAILED(hr = IMFSample_SetSampleDuration(out, duration / 100)))
-        goto done;
-
-    if (FAILED(hr = IMFSample_SetSampleTime(out, time / 100)))
-        goto done;
-
-    if (!gst_buffer_map(gst_buffer, &map_info, GST_MAP_READ))
+    for (i = 0; i < ARRAY_SIZE(video_formats); ++i)
     {
-        hr = E_FAIL;
-        goto done;
+        if (format->u.video.format == video_formats[i].format)
+        {
+            if (FAILED(MFCreateMediaType(&type)))
+                return NULL;
+
+            IMFMediaType_SetGUID(type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+            IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, video_formats[i].subtype);
+            IMFMediaType_SetUINT64(type, &MF_MT_FRAME_SIZE,
+                    make_uint64(format->u.video.width, format->u.video.height));
+            IMFMediaType_SetUINT64(type, &MF_MT_FRAME_RATE,
+                    make_uint64(format->u.video.fps_n, format->u.video.fps_d));
+            IMFMediaType_SetUINT32(type, &MF_MT_COMPRESSED, FALSE);
+
+            return type;
+        }
     }
 
-    if (FAILED(hr = MFCreateMemoryBuffer(map_info.maxsize, &mf_buffer)))
-        goto done;
+    return NULL;
+}
 
-    if (FAILED(hr = IMFMediaBuffer_Lock(mf_buffer, &mapped_buf, NULL, NULL)))
-        goto done;
-
-    memcpy(mapped_buf, map_info.data, map_info.size);
-
-    if (FAILED(hr = IMFMediaBuffer_Unlock(mf_buffer)))
-        goto done;
-
-    if (FAILED(hr = IMFMediaBuffer_SetCurrentLength(mf_buffer, map_info.size)))
-        goto done;
-
-    if (FAILED(hr = IMFSample_AddBuffer(out, mf_buffer)))
-        goto done;
-
-done:
-    if (mf_buffer)
-        IMFMediaBuffer_Release(mf_buffer);
-    if (map_info.data)
-        gst_buffer_unmap(gst_buffer, &map_info);
-    if (FAILED(hr))
+IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
+{
+    switch (format->major_type)
     {
-        ERR("Failed to copy IMFSample to GstBuffer, hr = %#x\n", hr);
-        if (out)
-            IMFSample_Release(out);
-        out = NULL;
+        case WG_MAJOR_TYPE_UNKNOWN:
+            return NULL;
+
+        case WG_MAJOR_TYPE_AUDIO:
+            return mf_media_type_from_wg_format_audio(format);
+
+        case WG_MAJOR_TYPE_VIDEO:
+            return mf_media_type_from_wg_format_video(format);
     }
 
-    return out;
+    assert(0);
+    return NULL;
+}
+
+static void mf_media_type_to_wg_format_audio(IMFMediaType *type, struct wg_format *format)
+{
+    UINT32 rate, channels, channel_mask, depth;
+    unsigned int i;
+    GUID subtype;
+
+    if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
+    {
+        FIXME("Subtype is not set.\n");
+        return;
+    }
+    if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &rate)))
+    {
+        FIXME("Sample rate is not set.\n");
+        return;
+    }
+    if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_NUM_CHANNELS, &channels)))
+    {
+        FIXME("Channel count is not set.\n");
+        return;
+    }
+    if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_BITS_PER_SAMPLE, &depth)))
+    {
+        FIXME("Depth is not set.\n");
+        return;
+    }
+    if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AUDIO_CHANNEL_MASK, &channel_mask)))
+    {
+        if (channels == 1)
+            channel_mask = KSAUDIO_SPEAKER_MONO;
+        else if (channels == 2)
+            channel_mask = KSAUDIO_SPEAKER_STEREO;
+        else
+        {
+            FIXME("Channel mask is not set.\n");
+            return;
+        }
+    }
+
+    format->major_type = WG_MAJOR_TYPE_AUDIO;
+    format->u.audio.channels = channels;
+    format->u.audio.channel_mask = channel_mask;
+    format->u.audio.rate = rate;
+
+    for (i = 0; i < ARRAY_SIZE(audio_formats); ++i)
+    {
+        if (IsEqualGUID(&subtype, audio_formats[i].subtype) && depth == audio_formats[i].depth)
+        {
+            format->u.audio.format = audio_formats[i].format;
+            return;
+        }
+    }
+    FIXME("Unrecognized audio subtype %s, depth %u.\n", debugstr_guid(&subtype), depth);
+}
+
+static void mf_media_type_to_wg_format_video(IMFMediaType *type, struct wg_format *format)
+{
+    UINT64 frame_rate, frame_size;
+    unsigned int i;
+    GUID subtype;
+
+    if (FAILED(IMFMediaType_GetGUID(type, &MF_MT_SUBTYPE, &subtype)))
+    {
+        FIXME("Subtype is not set.\n");
+        return;
+    }
+    if (FAILED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size)))
+    {
+        FIXME("Frame size is not set.\n");
+        return;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_VIDEO;
+    format->u.video.width = (UINT32)(frame_size >> 32);
+    format->u.video.height = (UINT32)frame_size;
+    format->u.video.fps_n = 1;
+    format->u.video.fps_d = 1;
+
+    if (SUCCEEDED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_RATE, &frame_rate)) && (UINT32)frame_rate)
+    {
+        format->u.video.fps_n = (UINT32)(frame_rate >> 32);
+        format->u.video.fps_d = (UINT32)frame_rate;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(video_formats); ++i)
+    {
+        if (IsEqualGUID(&subtype, video_formats[i].subtype))
+        {
+            format->u.video.format = video_formats[i].format;
+            return;
+        }
+    }
+    FIXME("Unrecognized video subtype %s.\n", debugstr_guid(&subtype));
+}
+
+void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)
+{
+    GUID major_type;
+
+    memset(format, 0, sizeof(*format));
+
+    if (FAILED(IMFMediaType_GetMajorType(type, &major_type)))
+    {
+        FIXME("Major type is not set.\n");
+        return;
+    }
+
+    if (IsEqualGUID(&major_type, &MFMediaType_Audio))
+        mf_media_type_to_wg_format_audio(type, format);
+    else if (IsEqualGUID(&major_type, &MFMediaType_Video))
+        mf_media_type_to_wg_format_video(type, format);
+    else
+        FIXME("Unrecognized major type %s.\n", debugstr_guid(&major_type));
 }

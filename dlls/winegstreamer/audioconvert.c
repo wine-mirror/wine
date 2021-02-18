@@ -277,7 +277,6 @@ fail:
 static HRESULT WINAPI audio_converter_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
     GUID major_type, subtype;
-    GstCaps *input_caps;
     DWORD unused;
     HRESULT hr;
 
@@ -323,11 +322,6 @@ static HRESULT WINAPI audio_converter_SetInputType(IMFTransform *iface, DWORD id
     if (!IsEqualGUID(&subtype, &MFAudioFormat_PCM) && !IsEqualGUID(&subtype, &MFAudioFormat_Float))
         return MF_E_INVALIDTYPE;
 
-    if (!(input_caps = caps_from_mf_media_type(type)))
-        return MF_E_INVALIDTYPE;
-
-    gst_caps_unref(input_caps);
-
     if (flags & MFT_SET_TYPE_TEST_ONLY)
         return S_OK;
 
@@ -356,7 +350,6 @@ static HRESULT WINAPI audio_converter_SetOutputType(IMFTransform *iface, DWORD i
 {
     struct audio_converter *converter = impl_audio_converter_from_IMFTransform(iface);
     GUID major_type, subtype;
-    GstCaps *output_caps;
     DWORD unused;
     HRESULT hr;
 
@@ -402,11 +395,6 @@ static HRESULT WINAPI audio_converter_SetOutputType(IMFTransform *iface, DWORD i
 
     if (!IsEqualGUID(&subtype, &MFAudioFormat_PCM) && !IsEqualGUID(&subtype, &MFAudioFormat_Float))
         return MF_E_INVALIDTYPE;
-
-    if (!(output_caps = caps_from_mf_media_type(type)))
-        return MF_E_INVALIDTYPE;
-
-    gst_caps_unref(output_caps);
 
     if (flags & MFT_SET_TYPE_TEST_ONLY)
         return S_OK;

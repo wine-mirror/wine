@@ -23,7 +23,6 @@
 #include "config.h"
 #include "gst_private.h"
 #include "gst_guids.h"
-#include "gst_cbs.h"
 
 #include "vfwmsgs.h"
 #include "amvideo.h"
@@ -959,8 +958,6 @@ static HRESULT parser_sink_connect(struct strmbase_sink *iface, IPin *peer, cons
     LONGLONG unused;
     unsigned int i;
 
-    mark_wine_thread();
-
     filter->reader = NULL;
     if (FAILED(hr = IPin_QueryInterface(peer, &IID_IAsyncReader, (void **)&filter->reader)))
         return hr;
@@ -995,8 +992,6 @@ err:
 static void parser_sink_disconnect(struct strmbase_sink *iface)
 {
     struct parser *filter = impl_from_strmbase_sink(iface);
-
-    mark_wine_thread();
 
     GST_RemoveOutputPins(filter);
 
@@ -1104,8 +1099,6 @@ HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out)
     if (!parser_init_gstreamer())
         return E_FAIL;
 
-    mark_wine_thread();
-
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
@@ -1199,7 +1192,6 @@ static HRESULT WINAPI GST_ChangeRate(IMediaSeeking *iface)
 {
     struct parser_source *pin = impl_from_IMediaSeeking(iface);
 
-    mark_wine_thread();
     unix_funcs->wg_parser_stream_seek(pin->wg_stream, pin->seek.dRate, 0, 0,
             AM_SEEKING_NoPositioning, AM_SEEKING_NoPositioning);
     return S_OK;
@@ -1234,8 +1226,6 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
     TRACE("pin %p, current %s, current_flags %#x, stop %s, stop_flags %#x.\n",
             pin, current ? debugstr_time(*current) : "<null>", current_flags,
             stop ? debugstr_time(*stop) : "<null>", stop_flags);
-
-    mark_wine_thread();
 
     if (pin->pin.pin.filter->state == State_Stopped)
     {
@@ -1355,8 +1345,6 @@ static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFil
     TRACE("pin %p, sender %p, type %s, proportion %u, late %s, timestamp %s.\n",
             pin, sender, q.Type == Famine ? "Famine" : "Flood", q.Proportion,
             debugstr_time(q.Late), debugstr_time(q.TimeStamp));
-
-    mark_wine_thread();
 
     /* DirectShow filters sometimes pass negative timestamps (Audiosurf uses the
      * current time instead of the time of the last buffer). GstClockTime is
@@ -1545,7 +1533,6 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     unsigned int i;
 
     TRACE("(%p)\n", This);
-    mark_wine_thread();
 
     if (!This->sink_connected)
         return S_OK;
@@ -1645,8 +1632,6 @@ HRESULT wave_parser_create(IUnknown *outer, IUnknown **out)
     if (!parser_init_gstreamer())
         return E_FAIL;
 
-    mark_wine_thread();
-
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
@@ -1734,8 +1719,6 @@ HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out)
 
     if (!parser_init_gstreamer())
         return E_FAIL;
-
-    mark_wine_thread();
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -1845,8 +1828,6 @@ HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out)
 
     if (!parser_init_gstreamer())
         return E_FAIL;
-
-    mark_wine_thread();
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;

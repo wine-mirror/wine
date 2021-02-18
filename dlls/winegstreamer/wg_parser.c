@@ -43,7 +43,7 @@ struct wg_parser
     struct wg_parser_stream **streams;
     unsigned int stream_count;
 
-    GstElement *container;
+    GstElement *container, *decodebin;
     GstBus *bus;
     GstPad *my_src, *their_sink;
 
@@ -538,6 +538,13 @@ static void CDECL wg_parser_complete_read_request(struct wg_parser *parser, bool
     parser->read_request.data = NULL;
     pthread_mutex_unlock(&parser->mutex);
     pthread_cond_signal(&parser->read_done_cond);
+}
+
+static void CDECL wg_parser_set_unlimited_buffering(struct wg_parser *parser)
+{
+    g_object_set(parser->decodebin, "max-size-buffers", 0, NULL);
+    g_object_set(parser->decodebin, "max-size-time", G_GUINT64_CONSTANT(0), NULL);
+    g_object_set(parser->decodebin, "max-size-bytes", 0, NULL);
 }
 
 static void CDECL wg_parser_stream_get_preferred_format(struct wg_parser_stream *stream, struct wg_format *format)
@@ -1602,6 +1609,7 @@ static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
     }
 
     gst_bin_add(GST_BIN(parser->container), element);
+    parser->decodebin = element;
 
     g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad), parser);
     g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad), parser);
@@ -1875,6 +1883,8 @@ static const struct unix_funcs funcs =
 
     wg_parser_get_read_request,
     wg_parser_complete_read_request,
+
+    wg_parser_set_unlimited_buffering,
 
     wg_parser_get_stream_count,
     wg_parser_get_stream,

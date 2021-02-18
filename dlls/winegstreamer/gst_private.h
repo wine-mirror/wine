@@ -180,6 +180,8 @@ struct unix_funcs
             void **data, uint64_t *offset, uint32_t *size);
     void (CDECL *wg_parser_complete_read_request)(struct wg_parser *parser, bool ret);
 
+    void (CDECL *wg_parser_set_unlimited_buffering)(struct wg_parser *parser);
+
     uint32_t (CDECL *wg_parser_get_stream_count)(struct wg_parser *parser);
     struct wg_parser_stream *(CDECL *wg_parser_get_stream)(struct wg_parser *parser, uint32_t index);
 
@@ -217,10 +219,8 @@ void start_dispatch_thread(void) DECLSPEC_HIDDEN;
 extern HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj) DECLSPEC_HIDDEN;
 extern HRESULT mfplat_DllRegisterServer(void) DECLSPEC_HIDDEN;
 
-HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj) DECLSPEC_HIDDEN;
-IMFMediaType *mf_media_type_from_caps(const GstCaps *caps) DECLSPEC_HIDDEN;
-GstCaps *caps_from_mf_media_type(IMFMediaType *type) DECLSPEC_HIDDEN;
-IMFSample *mf_sample_from_gst_buffer(GstBuffer *in) DECLSPEC_HIDDEN;
+IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format) DECLSPEC_HIDDEN;
+void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format) DECLSPEC_HIDDEN;
 
 HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj) DECLSPEC_HIDDEN;
 
