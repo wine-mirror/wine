@@ -142,15 +142,15 @@ static char const *parameterized_type_shorthands[][2] = {
     {"Windows_CFoundation_C", "__F"},
 };
 
-static char *format_parameterized_type_c_name(type_t *type, typeref_list_t *params)
+static char *format_parameterized_type_c_name(type_t *type, typeref_list_t *params, const char *prefix)
 {
     size_t len = 0, pos = 0;
     char *buf = NULL, *tmp;
     int i, count = params ? list_count(params) : 0;
     typeref_t *ref;
 
-    pos += append_namespaces(&buf, &len, pos, type->namespace, "__x_", "_C", type->name, use_abi_namespace ? "ABI" : NULL);
-    pos += strappend(&buf, &len, pos, "_%d", count);
+    pos += append_namespaces(&buf, &len, pos, type->namespace, "__x_", "_C", "", use_abi_namespace ? "ABI" : NULL);
+    pos += strappend(&buf, &len, pos, "%s%s_%d", prefix, type->name, count);
     if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
     {
         for (type = ref->type; type->type_type == TYPE_POINTER; type = type_pointer_get_ref_type(type)) {}
@@ -664,12 +664,13 @@ type_t *type_apicontract_define(type_t *apicontract, attr_list_t *attrs)
     return apicontract;
 }
 
-static void compute_delegate_iface_names(type_t *delegate)
+static void compute_delegate_iface_names(type_t *delegate, type_t *type, typeref_list_t *params)
 {
     type_t *iface = delegate->details.delegate.iface;
     iface->namespace = delegate->namespace;
     iface->name = strmake("I%s", delegate->name);
-    iface->c_name = format_namespace(delegate->namespace, "__x_", "_C", iface->name, use_abi_namespace ? "ABI" : NULL);
+    if (type) iface->c_name = format_parameterized_type_c_name(type, params, "I");
+    else iface->c_name = format_namespace(delegate->namespace, "__x_", "_C", iface->name, use_abi_namespace ? "ABI" : NULL);
 }
 
 type_t *type_delegate_declare(char *name, struct namespace *namespace)
@@ -707,7 +708,7 @@ type_t *type_delegate_define(type_t *delegate, attr_list_t *attrs, statement_lis
 
     delegate->details.delegate.iface = iface;
     delegate->defined = TRUE;
-    compute_delegate_iface_names(delegate);
+    compute_delegate_iface_names(delegate, NULL, NULL);
 
     return delegate;
 }
@@ -746,6 +747,46 @@ type_t *type_parameterized_interface_define(type_t *type, attr_list_t *attrs, ty
     iface->details.iface->disp_inherit = NULL;
     iface->details.iface->async_iface = NULL;
     iface->details.iface->requires = requires;
+
+    type->defined = TRUE;
+    return type;
+}
+
+type_t *type_parameterized_delegate_declare(char *name, struct namespace *namespace, typeref_list_t *params)
+{
+    type_t *type = get_type(TYPE_PARAMETERIZED_TYPE, name, namespace, 0);
+    if (type_get_type_detect_alias(type) != TYPE_PARAMETERIZED_TYPE)
+        error_loc("pdelegate %s previously not declared a pdelegate at %s:%d\n",
+                  type->name, type->loc_info.input_name, type->loc_info.line_number);
+    type->details.parameterized.type = make_type(TYPE_DELEGATE);
+    type->details.parameterized.params = params;
+    return type;
+}
+
+type_t *type_parameterized_delegate_define(type_t *type, attr_list_t *attrs, statement_list_t *stmts)
+{
+    type_t *iface, *delegate;
+
+    if (type->defined)
+        error_loc("pdelegate %s already defined at %s:%d\n",
+                  type->name, type->loc_info.input_name, type->loc_info.line_number);
+
+    type->attrs = check_interface_attrs(type->name, attrs);
+
+    delegate = type->details.parameterized.type;
+    delegate->attrs = type->attrs;
+    delegate->details.delegate.iface = make_type(TYPE_INTERFACE);
+
+    iface = delegate->details.delegate.iface;
+    iface->details.iface = xmalloc(sizeof(*iface->details.iface));
+    iface->details.iface->disp_props = NULL;
+    iface->details.iface->disp_methods = NULL;
+    iface->details.iface->stmts = stmts;
+    iface->details.iface->inherit = find_type("IUnknown", NULL, 0);
+    if (!iface->details.iface->inherit) error_loc("IUnknown is undefined\n");
+    iface->details.iface->disp_inherit = NULL;
+    iface->details.iface->async_iface = NULL;
+    iface->details.iface->requires = NULL;
 
     type->defined = TRUE;
     return type;
@@ -932,6 +973,11 @@ static void type_parameterized_interface_specialize(type_t *tmpl, type_t *iface,
     iface->details.iface->requires = NULL;
 }
 
+static void type_parameterized_delegate_specialize(type_t *tmpl, type_t *delegate, typeref_list_t *orig, typeref_list_t *repl)
+{
+    type_parameterized_interface_specialize(tmpl->details.delegate.iface, delegate->details.delegate.iface, orig, repl);
+}
+
 type_t *type_parameterized_type_specialize_declare(type_t *type, typeref_list_t *params)
 {
     type_t *tmpl = type->details.parameterized.type;
@@ -940,7 +986,13 @@ type_t *type_parameterized_type_specialize_declare(type_t *type, typeref_list_t 
     new_type->namespace = type->namespace;
     new_type->name = format_parameterized_type_name(type, params);
     reg_type(new_type, new_type->name, new_type->namespace, 0);
-    new_type->c_name = format_parameterized_type_c_name(type, params);
+    new_type->c_name = format_parameterized_type_c_name(type, params, "");
+
+    if (new_type->type_type == TYPE_DELEGATE)
+    {
+        new_type->details.delegate.iface = duptype(tmpl->details.delegate.iface, 0);
+        compute_delegate_iface_names(new_type, type, params);
+    }
 
     return new_type;
 }
@@ -960,11 +1012,19 @@ type_t *type_parameterized_type_specialize_define(type_t *type)
     if (type_get_type_detect_alias(tmpl->details.parameterized.type) == TYPE_INTERFACE &&
         type_get_type_detect_alias(iface) == TYPE_INTERFACE)
         type_parameterized_interface_specialize(tmpl->details.parameterized.type, iface, orig, repl);
+    else if (type_get_type_detect_alias(tmpl->details.parameterized.type) == TYPE_DELEGATE &&
+             type_get_type_detect_alias(iface) == TYPE_DELEGATE)
+        type_parameterized_delegate_specialize(tmpl->details.parameterized.type, iface, orig, repl);
     else
-        error_loc("pinterface %s previously not declared a pinterface at %s:%d\n",
+        error_loc("pinterface/pdelegate %s previously not declared a pinterface/pdelegate at %s:%d\n",
                   iface->name, iface->loc_info.input_name, iface->loc_info.line_number);
 
     iface->defined = TRUE;
+    if (iface->type_type == TYPE_DELEGATE)
+    {
+        iface = iface->details.delegate.iface;
+        iface->defined = TRUE;
+    }
     compute_method_indexes(iface);
     return iface;
 }

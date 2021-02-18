@@ -1038,6 +1038,12 @@ delegatedef: m_attributes tDELEGATE type ident '(' m_args ')' semicolon_opt
 						{ $$ = type_delegate_declare($4->name, current_namespace);
 						  $$ = type_delegate_define($$, $1, append_statement(NULL, make_statement_delegate($3, $6)));
 						}
+	| m_attributes tDELEGATE type ident
+	  '<' { push_parameters_namespace($4->name); } type_parameters '>'
+	  '(' m_args ')' { pop_parameters_namespace($4->name); } semicolon_opt
+						{ $$ = type_parameterized_delegate_declare($4->name, current_namespace, $7);
+						  $$ = type_parameterized_delegate_define($$, $1, append_statement(NULL, make_statement_delegate($3, $10)));
+						}
 	;
 
 required_types:

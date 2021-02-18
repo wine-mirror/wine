@@ -113,6 +113,12 @@ namespace Windows {
         }
 
 #ifdef __WIDL__
+        [
+            contract(Windows.Foundation.FoundationContract, 1.0),
+            uuid(9de1c535-6ae1-11e0-84e1-18a905bcc53f)
+        ]
+        delegate HRESULT EventHandler<T>([in] IInspectable *sender, [in] T args);
+
         namespace Collections
         {
             [
