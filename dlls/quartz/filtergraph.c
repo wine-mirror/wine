@@ -1690,12 +1690,24 @@ static void update_render_count(struct filter_graph *graph)
 /* Perform the paused -> running transition. The caller must hold graph->cs. */
 static HRESULT graph_start(struct filter_graph *graph, REFERENCE_TIME stream_start)
 {
+    struct media_event *event, *next;
     REFERENCE_TIME stream_stop;
     struct filter *filter;
     HRESULT hr = S_OK;
 
     graph->EcCompleteCount = 0;
     update_render_count(graph);
+
+    LIST_FOR_EACH_ENTRY_SAFE(event, next, &graph->media_events, struct media_event, entry)
+    {
+        if (event->code == EC_COMPLETE)
+        {
+            list_remove(&event->entry);
+            free(event);
+        }
+    }
+    if (list_empty(&graph->media_events))
+        ResetEvent(graph->media_event_handle);
 
     if (graph->defaultclock && !graph->refClock)
         IFilterGraph2_SetDefaultSyncSource(&graph->IFilterGraph2_iface);
