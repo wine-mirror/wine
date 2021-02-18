@@ -1,6 +1,3 @@
 MODULE = esent.dll
 
-EXTRADLLFLAGS = -mno-cygwin
-
-C_SRCS = \
-	esent_main.c
+EXTRADLLFLAGS = -Wb,--prefer-native
