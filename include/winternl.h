@@ -1867,6 +1867,25 @@ typedef struct _SYSTEM_HANDLE_INFORMATION {
     SYSTEM_HANDLE_ENTRY Handle[1];
 } SYSTEM_HANDLE_INFORMATION, *PSYSTEM_HANDLE_INFORMATION;
 
+typedef struct _SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX
+{
+    void *Object;
+    ULONG_PTR UniqueProcessId;
+    ULONG_PTR HandleValue;
+    ULONG GrantedAccess;
+    USHORT CreatorBackTraceIndex;
+    USHORT ObjectTypeIndex;
+    ULONG HandleAttributes;
+    ULONG Reserved;
+} SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX;
+
+typedef struct _SYSTEM_HANDLE_INFORMATION_EX
+{
+    ULONG_PTR NumberOfHandles;
+    ULONG_PTR Reserved;
+    SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX Handles[1];
+} SYSTEM_HANDLE_INFORMATION_EX;
+
 /* System Information Class 0x15 */
 
 typedef struct _SYSTEM_CACHE_INFORMATION {
@@ -2244,6 +2263,7 @@ typedef struct _RTL_HANDLE_TABLE
 
 #define LOGONID_CURRENT    ((ULONG)-1)
 
+#define OBJ_PROTECT_CLOSE    0x00000001
 #define OBJ_INHERIT          0x00000002
 #define OBJ_PERMANENT        0x00000010
 #define OBJ_EXCLUSIVE        0x00000020
