@@ -62,7 +62,6 @@ typedef struct {
     int ring_buffer_size;
     int msg_tosave;
     int msg_toget;
-    CRITICAL_SECTION msg_crst;
     HANDLE msg_event; /* Signaled for no empty queue */
 } EventsQueue;
 
@@ -75,8 +74,6 @@ static int EventsQueue_Init(EventsQueue* omr)
     omr->messages = CoTaskMemAlloc(omr->ring_buffer_size * sizeof(Event));
     ZeroMemory(omr->messages, omr->ring_buffer_size * sizeof(Event));
 
-    InitializeCriticalSection(&omr->msg_crst);
-    omr->msg_crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": EventsQueue.msg_crst");
     return TRUE;
 }
 
@@ -84,14 +81,11 @@ static int EventsQueue_Destroy(EventsQueue* omr)
 {
     CloseHandle(omr->msg_event);
     CoTaskMemFree(omr->messages);
-    omr->msg_crst.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&omr->msg_crst);
     return TRUE;
 }
 
 static BOOL EventsQueue_PutEvent(EventsQueue* omr, const Event* evt)
 {
-    EnterCriticalSection(&omr->msg_crst);
     if (omr->msg_toget == ((omr->msg_tosave + 1) % omr->ring_buffer_size))
     {
 	int old_ring_buffer_size = omr->ring_buffer_size;
@@ -114,22 +108,13 @@ static BOOL EventsQueue_PutEvent(EventsQueue* omr, const Event* evt)
     omr->messages[omr->msg_tosave] = *evt;
     SetEvent(omr->msg_event);
     omr->msg_tosave = (omr->msg_tosave + 1) % omr->ring_buffer_size;
-    LeaveCriticalSection(&omr->msg_crst);
     return TRUE;
 }
 
-static BOOL EventsQueue_GetEvent(EventsQueue* omr, Event* evt, LONG msTimeOut)
+static BOOL EventsQueue_GetEvent(EventsQueue* omr, Event* evt)
 {
-    if (WaitForSingleObject(omr->msg_event, msTimeOut) != WAIT_OBJECT_0)
-	return FALSE;
-	
-    EnterCriticalSection(&omr->msg_crst);
-
     if (omr->msg_toget == omr->msg_tosave) /* buffer empty ? */
-    {
-        LeaveCriticalSection(&omr->msg_crst);
 	return FALSE;
-    }
 
     *evt = omr->messages[omr->msg_toget];
     omr->msg_toget = (omr->msg_toget + 1) % omr->ring_buffer_size;
@@ -138,7 +123,6 @@ static BOOL EventsQueue_GetEvent(EventsQueue* omr, Event* evt, LONG msTimeOut)
     if (omr->msg_toget == omr->msg_tosave) /* buffer empty ? */
 	ResetEvent(omr->msg_event);
 
-    LeaveCriticalSection(&omr->msg_crst);
     return TRUE;
 }
 
@@ -4786,14 +4770,24 @@ static HRESULT WINAPI MediaEvent_GetEvent(IMediaEventEx *iface, LONG *lEventCode
 
     TRACE("(%p/%p)->(%p, %p, %p, %d)\n", This, iface, lEventCode, lParam1, lParam2, msTimeout);
 
-    if (EventsQueue_GetEvent(&This->evqueue, &evt, msTimeout))
+    if (WaitForSingleObject(This->evqueue.msg_event, msTimeout))
+    {
+        *lEventCode = 0;
+        return E_ABORT;
+    }
+
+    EnterCriticalSection(&This->cs);
+
+    if (EventsQueue_GetEvent(&This->evqueue, &evt))
     {
 	*lEventCode = evt.lEventCode;
 	*lParam1 = evt.lParam1;
 	*lParam2 = evt.lParam2;
+        LeaveCriticalSection(&This->cs);
 	return S_OK;
     }
 
+    LeaveCriticalSection(&This->cs);
     *lEventCode = 0;
     return E_ABORT;
 }
@@ -5280,8 +5274,7 @@ static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, LONG EventCo
 
     TRACE("(%p/%p)->(%d, %ld, %ld)\n", This, iface, EventCode, EventParam1, EventParam2);
 
-    /* We need thread safety here, let's use the events queue's one */
-    EnterCriticalSection(&This->evqueue.msg_crst);
+    EnterCriticalSection(&This->cs);
 
     if ((EventCode == EC_COMPLETE) && This->HandleEcComplete)
     {
@@ -5324,7 +5317,7 @@ static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, LONG EventCo
             PostMessageW(This->notif.hWnd, This->notif.msg, 0, This->notif.instance);
     }
 
-    LeaveCriticalSection(&This->evqueue.msg_crst);
+    LeaveCriticalSection(&This->cs);
     return S_OK;
 }
 
