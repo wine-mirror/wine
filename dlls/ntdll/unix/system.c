@@ -2461,6 +2461,56 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
+    case SystemExtendedHandleInformation:
+    {
+        struct handle_info *handle_info;
+        DWORD i, num_handles;
+
+        if (size < sizeof(SYSTEM_HANDLE_INFORMATION_EX))
+        {
+            ret = STATUS_INFO_LENGTH_MISMATCH;
+            break;
+        }
+
+        if (!info)
+        {
+            ret = STATUS_ACCESS_VIOLATION;
+            break;
+        }
+
+        num_handles = (size - FIELD_OFFSET( SYSTEM_HANDLE_INFORMATION_EX, Handles ))
+                      / sizeof(SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX);
+        if (!(handle_info = malloc( sizeof(*handle_info) * num_handles ))) return STATUS_NO_MEMORY;
+
+        SERVER_START_REQ( get_system_handles )
+        {
+            wine_server_set_reply( req, handle_info, sizeof(*handle_info) * num_handles );
+            if (!(ret = wine_server_call( req )))
+            {
+                SYSTEM_HANDLE_INFORMATION_EX *shi = info;
+                shi->NumberOfHandles = wine_server_reply_size( req ) / sizeof(*handle_info);
+                len = FIELD_OFFSET( SYSTEM_HANDLE_INFORMATION_EX, Handles[shi->NumberOfHandles] );
+                for (i = 0; i < shi->NumberOfHandles; i++)
+                {
+                    memset( &shi->Handles[i], 0, sizeof(shi->Handles[i]) );
+                    shi->Handles[i].UniqueProcessId = handle_info[i].owner;
+                    shi->Handles[i].HandleValue     = handle_info[i].handle;
+                    shi->Handles[i].GrantedAccess   = handle_info[i].access;
+                    /* FIXME: Fill out Object, HandleAttributes, ObjectTypeIndex */
+                }
+            }
+            else if (ret == STATUS_BUFFER_TOO_SMALL)
+            {
+                len = FIELD_OFFSET( SYSTEM_HANDLE_INFORMATION_EX, Handles[reply->count] );
+                ret = STATUS_INFO_LENGTH_MISMATCH;
+            }
+        }
+        SERVER_END_REQ;
+
+        free( handle_info );
+        break;
+    }
+
     case SystemCacheInformation:
     {
         SYSTEM_CACHE_INFORMATION sci = { 0 };
