@@ -1,7 +1,5 @@
 MODULE    = olethk32.dll
 
-EXTRADLLFLAGS = -mno-cygwin
-
-C_SRCS = main.c
+EXTRADLLFLAGS = -Wb,--prefer-native
 
 RC_SRCS = version.rc
