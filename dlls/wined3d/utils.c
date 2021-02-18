@@ -4702,6 +4702,8 @@ const char *wined3d_debug_view_desc(const struct wined3d_view_desc *d, const str
     VIEW_FLAG_TO_STR(WINED3D_VIEW_BUFFER_COUNTER);
     VIEW_FLAG_TO_STR(WINED3D_VIEW_TEXTURE_CUBE);
     VIEW_FLAG_TO_STR(WINED3D_VIEW_TEXTURE_ARRAY);
+    VIEW_FLAG_TO_STR(WINED3D_VIEW_READ_ONLY_DEPTH);
+    VIEW_FLAG_TO_STR(WINED3D_VIEW_READ_ONLY_STENCIL);
 #undef VIEW_FLAG_TO_STR
     if (flags)
         FIXME("Unrecognised view flag(s) %#x.\n", flags);
