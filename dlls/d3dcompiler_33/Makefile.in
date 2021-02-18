@@ -3,14 +3,13 @@ IMPORTS   = dxguid uuid
 EXTRADEFS = -DD3D_COMPILER_VERSION=33
 PARENTSRC = ../d3dcompiler_43
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	asmparser.c \
 	blob.c \
 	bytecodewriter.c \
 	compiler.c \
-	main.c \
 	preproc.c \
 	reflection.c \
 	utils.c
