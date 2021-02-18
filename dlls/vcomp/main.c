@@ -1772,7 +1772,7 @@ static void CDECL c2vectparallel_wrapper(int start, int end, int step, int end_i
     _vcomp_fork_call_wrapper(function, nargs, wrapper_args);
 }
 
-void CDECL C2VectParallel(int start, int end, int step, BOOL end_included, int thread_count,
+void WINAPIV C2VectParallel(int start, int end, int step, BOOL end_included, int thread_count,
         BOOL dynamic_distribution, void *function, int nargs, ...)
 {
     struct vcomp_thread_data *thread_data;

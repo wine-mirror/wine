@@ -23,7 +23,7 @@
 
 static HMODULE vcomp_handle;
 
-static void  (CDECL   *pC2VectParallel)(int start, int end, int step, BOOL end_included, int thread_count,
+static void  (WINAPIV *pC2VectParallel)(int start, int end, int step, BOOL end_included, int thread_count,
         BOOL dynamic_distribution, void *function, int nargs, ...);
 static int   (CDECL   *p_vcomp_get_thread_num)(void);
 static int   (CDECL   *pomp_get_num_threads)(void);
