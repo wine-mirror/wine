@@ -42,13 +42,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-typedef struct {
-    HWND     hWnd;      /* Target window */
-    UINT     msg;       /* User window message */
-    LONG_PTR instance;  /* User data */
-    int      disabled;  /* Disabled messages posting */
-} WndNotify;
-
 struct media_event
 {
     struct list entry;
@@ -113,9 +106,11 @@ struct filter_graph
 
     struct list media_events;
     HANDLE media_event_handle;
+    HWND media_event_window;
+    UINT media_event_message;
+    LPARAM media_event_lparam;
     HANDLE hEventCompletion;
     int CompletionStatus;
-    WndNotify notif;
     int nRenderers;
     int EcCompleteCount;
     int HandleEcComplete;
@@ -141,6 +136,7 @@ struct filter_graph
 
     unsigned int needs_async_run : 1;
     unsigned int got_ec_complete : 1;
+    unsigned int media_events_disabled : 1;
 };
 
 struct enum_filters
@@ -317,8 +313,8 @@ static BOOL queue_media_event(struct filter_graph *graph, LONG code,
     list_add_tail(&graph->media_events, &event->entry);
 
     SetEvent(graph->media_event_handle);
-    if (graph->notif.hWnd)
-        PostMessageW(graph->notif.hWnd, graph->notif.msg, 0, graph->notif.instance);
+    if (graph->media_event_window)
+        PostMessageW(graph->media_event_window, graph->media_event_message, 0, graph->media_event_lparam);
 
     return TRUE;
 }
@@ -4826,44 +4822,47 @@ static HRESULT WINAPI MediaEvent_FreeEventParams(IMediaEventEx *iface, LONG lEvC
 }
 
 /*** IMediaEventEx methods ***/
-static HRESULT WINAPI MediaEvent_SetNotifyWindow(IMediaEventEx *iface, OAHWND hwnd, LONG lMsg,
-        LONG_PTR lInstanceData)
+static HRESULT WINAPI MediaEvent_SetNotifyWindow(IMediaEventEx *iface,
+        OAHWND window, LONG message, LONG_PTR lparam)
 {
-    struct filter_graph *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *graph = impl_from_IMediaEventEx(iface);
 
-    TRACE("(%p/%p)->(%08lx, %d, %08lx)\n", This, iface, hwnd, lMsg, lInstanceData);
+    TRACE("graph %p, window %#Ix, message %#x, lparam %#Ix.\n", graph, window, message, lparam);
 
-    This->notif.hWnd = (HWND)hwnd;
-    This->notif.msg = lMsg;
-    This->notif.instance = lInstanceData;
+    graph->media_event_window = (HWND)window;
+    graph->media_event_message = message;
+    graph->media_event_lparam = lparam;
 
     return S_OK;
 }
 
-static HRESULT WINAPI MediaEvent_SetNotifyFlags(IMediaEventEx *iface, LONG lNoNotifyFlags)
+static HRESULT WINAPI MediaEvent_SetNotifyFlags(IMediaEventEx *iface, LONG flags)
 {
-    struct filter_graph *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *graph = impl_from_IMediaEventEx(iface);
 
-    TRACE("(%p/%p)->(%d)\n", This, iface, lNoNotifyFlags);
+    TRACE("graph %p, flags %#x.\n", graph, flags);
 
-    if ((lNoNotifyFlags != 0) && (lNoNotifyFlags != 1))
-	return E_INVALIDARG;
+    if (flags & ~AM_MEDIAEVENT_NONOTIFY)
+    {
+        WARN("Invalid flags %#x, returning E_INVALIDARG.\n", flags);
+        return E_INVALIDARG;
+    }
 
-    This->notif.disabled = lNoNotifyFlags;
+    graph->media_events_disabled = flags;
 
     return S_OK;
 }
 
-static HRESULT WINAPI MediaEvent_GetNotifyFlags(IMediaEventEx *iface, LONG *lplNoNotifyFlags)
+static HRESULT WINAPI MediaEvent_GetNotifyFlags(IMediaEventEx *iface, LONG *flags)
 {
-    struct filter_graph *This = impl_from_IMediaEventEx(iface);
+    struct filter_graph *graph = impl_from_IMediaEventEx(iface);
 
-    TRACE("(%p/%p)->(%p)\n", This, iface, lplNoNotifyFlags);
+    TRACE("graph %p, flags %p.\n", graph, flags);
 
-    if (!lplNoNotifyFlags)
-	return E_POINTER;
+    if (!flags)
+        return E_POINTER;
 
-    *lplNoNotifyFlags = This->notif.disabled;
+    *flags = graph->media_events_disabled;
 
     return S_OK;
 }
@@ -5246,7 +5245,7 @@ static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, LONG code,
     {
         if (++graph->EcCompleteCount == graph->nRenderers)
         {
-            if (graph->notif.disabled)
+            if (graph->media_events_disabled)
                 SetEvent(graph->media_event_handle);
             else
                 queue_media_event(graph, EC_COMPLETE, S_OK, 0);
@@ -5259,7 +5258,7 @@ static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, LONG code,
     {
         FIXME("EC_REPAINT is not handled.\n");
     }
-    else if (!graph->notif.disabled)
+    else if (!graph->media_events_disabled)
     {
         queue_media_event(graph, code, param1, param2);
     }
