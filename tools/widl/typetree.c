@@ -49,6 +49,7 @@ type_t *make_type(enum type_type type)
     t->type_type = type;
     t->attrs = NULL;
     t->c_name = NULL;
+    t->signature = NULL;
     memset(&t->details, 0, sizeof(t->details));
     t->typestring_offset = 0;
     t->ptrdesc = 0;
@@ -110,6 +111,128 @@ static size_t append_namespaces(char **buf, size_t *len, size_t pos, struct name
     return n;
 }
 
+static size_t append_type_signature(char **buf, size_t *len, size_t pos, type_t *type);
+
+static size_t append_var_list_signature(char **buf, size_t *len, size_t pos, var_list_t *var_list)
+{
+    var_t *var;
+    size_t n = 0;
+
+    if (!var_list) n += strappend(buf, len, pos + n, ";");
+    else LIST_FOR_EACH_ENTRY(var, var_list, var_t, entry)
+    {
+        n += strappend(buf, len, pos + n, ";");
+        n += append_type_signature(buf, len, pos + n, var->declspec.type);
+    }
+
+    return n;
+}
+
+static size_t append_type_signature(char **buf, size_t *len, size_t pos, type_t *type)
+{
+    const GUID *uuid;
+    size_t n = 0;
+
+    if (!type) return 0;
+    switch (type->type_type)
+    {
+    case TYPE_INTERFACE:
+        if (type->signature) n += strappend(buf, len, pos + n, "%s", type->signature);
+        else
+        {
+            if (!(uuid = get_attrp(type->attrs, ATTR_UUID)))
+                error_loc_info(&type->loc_info, "cannot compute type signature, no uuid found for type %s.\n", type->name);
+
+            n += strappend(buf, len, pos + n, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                           uuid->Data1, uuid->Data2, uuid->Data3,
+                           uuid->Data4[0], uuid->Data4[1], uuid->Data4[2], uuid->Data4[3],
+                           uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7]);
+        }
+        return n;
+    case TYPE_DELEGATE:
+        n += strappend(buf, len, pos + n, "delegate(");
+        n += append_type_signature(buf, len, pos + n, type_delegate_get_iface(type));
+        n += strappend(buf, len, pos + n, ")");
+        return n;
+    case TYPE_RUNTIMECLASS:
+        n += strappend(buf, len, pos + n, "rc(");
+        n += append_namespaces(buf, len, pos + n, type->namespace, "", ".", type->name, NULL);
+        n += strappend(buf, len, pos + n, ";");
+        n += append_type_signature(buf, len, pos + n, type_runtimeclass_get_default_iface(type));
+        n += strappend(buf, len, pos + n, ")");
+        return n;
+    case TYPE_POINTER:
+        n += append_type_signature(buf, len, pos + n, type->details.pointer.ref.type);
+        return n;
+    case TYPE_ALIAS:
+        if (!strcmp(type->name, "boolean")) n += strappend(buf, len, pos + n, "b1");
+        else n += append_type_signature(buf, len, pos + n, type->details.alias.aliasee.type);
+        return n;
+    case TYPE_STRUCT:
+        n += strappend(buf, len, pos + n, "struct(");
+        n += append_namespaces(buf, len, pos + n, type->namespace, "", ".", type->name, NULL);
+        n += append_var_list_signature(buf, len, pos + n, type->details.structure->fields);
+        n += strappend(buf, len, pos + n, ")");
+        return n;
+    case TYPE_BASIC:
+        switch (type_basic_get_type(type))
+        {
+        case TYPE_BASIC_INT:
+        case TYPE_BASIC_INT32:
+            n += strappend(buf, len, pos + n, type_basic_get_sign(type) < 0 ? "i4" : "u4");
+            return n;
+        case TYPE_BASIC_INT64:
+            n += strappend(buf, len, pos + n, type_basic_get_sign(type) < 0 ? "i8" : "u8");
+            return n;
+        case TYPE_BASIC_INT8:
+            assert(type_basic_get_sign(type) >= 0); /* signature string for signed char isn't specified */
+            n += strappend(buf, len, pos + n, "u1");
+            return n;
+        case TYPE_BASIC_FLOAT:
+            n += strappend(buf, len, pos + n, "f4");
+            return n;
+        case TYPE_BASIC_DOUBLE:
+            n += strappend(buf, len, pos + n, "f8");
+            return n;
+        case TYPE_BASIC_INT16:
+        case TYPE_BASIC_INT3264:
+        case TYPE_BASIC_LONG:
+        case TYPE_BASIC_CHAR:
+        case TYPE_BASIC_HYPER:
+        case TYPE_BASIC_BYTE:
+        case TYPE_BASIC_WCHAR:
+        case TYPE_BASIC_ERROR_STATUS_T:
+        case TYPE_BASIC_HANDLE:
+            error_loc_info(&type->loc_info, "unimplemented type signature for basic type %d.\n", type_basic_get_type(type));
+            break;
+        }
+    case TYPE_ENUM:
+        n += strappend(buf, len, pos + n, "enum(");
+        n += append_namespaces(buf, len, pos + n, type->namespace, "", ".", type->name, NULL);
+        if (is_attr(type->attrs, ATTR_FLAGS)) n += strappend(buf, len, pos + n, ";u4");
+        else n += strappend(buf, len, pos + n, ";i4");
+        n += strappend(buf, len, pos + n, ")");
+        return n;
+    case TYPE_ARRAY:
+    case TYPE_ENCAPSULATED_UNION:
+    case TYPE_UNION:
+    case TYPE_COCLASS:
+    case TYPE_VOID:
+    case TYPE_FUNCTION:
+    case TYPE_BITFIELD:
+    case TYPE_MODULE:
+    case TYPE_APICONTRACT:
+        error_loc_info(&type->loc_info, "unimplemented type signature for type %s of type %d.\n", type->name, type->type_type);
+        break;
+    case TYPE_PARAMETERIZED_TYPE:
+    case TYPE_PARAMETER:
+        assert(0); /* should not be there */
+        break;
+    }
+
+    return n;
+}
+
 char *format_namespace(struct namespace *namespace, const char *prefix, const char *separator, const char *suffix, const char *abi_prefix)
 {
     size_t len = 0;
@@ -167,6 +290,30 @@ static char *format_parameterized_type_c_name(type_t *type, typeref_list_t *para
            memmove(buf + 3, tmp, len - (tmp - buf));
         }
     }
+
+    return buf;
+}
+
+static char *format_parameterized_type_signature(type_t *type, typeref_list_t *params)
+{
+    size_t len = 0, pos = 0;
+    char *buf = NULL;
+    typeref_t *ref;
+    const GUID *uuid;
+
+     if (!(uuid = get_attrp(type->attrs, ATTR_UUID)))
+        error_loc_info(&type->loc_info, "cannot compute type signature, no uuid found for type %s.\n", type->name);
+
+    pos += strappend(&buf, &len, pos, "pinterface({%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                     uuid->Data1, uuid->Data2, uuid->Data3,
+                     uuid->Data4[0], uuid->Data4[1], uuid->Data4[2], uuid->Data4[3],
+                     uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7]);
+    if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
+    {
+        pos += strappend(&buf, &len, pos, ";");
+        pos += append_type_signature(&buf, &len, pos, ref->type);
+    }
+    pos += strappend(&buf, &len, pos, ")");
 
     return buf;
 }
@@ -1019,10 +1166,12 @@ type_t *type_parameterized_type_specialize_define(type_t *type)
         error_loc("pinterface/pdelegate %s previously not declared a pinterface/pdelegate at %s:%d\n",
                   iface->name, iface->loc_info.input_name, iface->loc_info.line_number);
 
+    iface->signature = format_parameterized_type_signature(type, repl);
     iface->defined = TRUE;
     if (iface->type_type == TYPE_DELEGATE)
     {
         iface = iface->details.delegate.iface;
+        iface->signature = format_parameterized_type_signature(type, repl);
         iface->defined = TRUE;
     }
     compute_method_indexes(iface);

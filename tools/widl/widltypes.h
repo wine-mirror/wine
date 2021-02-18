@@ -502,6 +502,7 @@ struct _type_t {
     struct delegate_details delegate;
   } details;
   const char *c_name;
+  const char *signature;
   unsigned int typestring_offset;
   unsigned int ptrdesc;           /* used for complex structs */
   int typelib_idx;
