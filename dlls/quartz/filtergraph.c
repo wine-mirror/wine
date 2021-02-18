@@ -4744,6 +4744,7 @@ static HRESULT WINAPI MediaEvent_GetEvent(IMediaEventEx *iface, LONG *code,
 
     if (!(entry = list_head(&graph->media_events)))
     {
+        ResetEvent(graph->media_event_handle);
         LeaveCriticalSection(&graph->cs);
         return E_ABORT;
     }
@@ -4753,9 +4754,6 @@ static HRESULT WINAPI MediaEvent_GetEvent(IMediaEventEx *iface, LONG *code,
     *param1 = event->param1;
     *param2 = event->param2;
     free(event);
-
-    if (list_empty(&graph->media_events))
-        ResetEvent(graph->media_event_handle);
 
     LeaveCriticalSection(&graph->cs);
     return S_OK;
