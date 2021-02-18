@@ -470,6 +470,9 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
       case TYPE_RUNTIMECLASS:
         fprintf(h, "%s", type_get_name(type_runtimeclass_get_default_iface(t), name_type));
         break;
+      case TYPE_DELEGATE:
+        fprintf(h, "%s", type_get_name(type_delegate_get_iface(t), name_type));
+        break;
       case TYPE_VOID:
         fprintf(h, "void");
         break;
@@ -555,6 +558,7 @@ void write_type_right(FILE *h, type_t *t, int is_field)
   case TYPE_COCLASS:
   case TYPE_INTERFACE:
   case TYPE_RUNTIMECLASS:
+  case TYPE_DELEGATE:
     break;
   case TYPE_APICONTRACT:
   case TYPE_PARAMETERIZED_TYPE:
@@ -974,7 +978,7 @@ int has_out_arg_or_return(const var_t *func)
 int is_object(const type_t *iface)
 {
     const attr_t *attr;
-    if (type_is_defined(iface) && type_iface_get_inherit(iface))
+    if (type_is_defined(iface) && (type_get_type(iface) == TYPE_DELEGATE || type_iface_get_inherit(iface)))
         return 1;
     if (iface->attrs) LIST_FOR_EACH_ENTRY( attr, iface->attrs, const attr_t, entry )
         if (attr->type == ATTR_OBJECT || attr->type == ATTR_ODL) return 1;
@@ -1799,9 +1803,10 @@ static void write_forward_decls(FILE *header, const statement_list_t *stmts)
     switch (stmt->type)
     {
       case STMT_TYPE:
-        if (type_get_type(stmt->u.type) == TYPE_INTERFACE)
+        if (type_get_type(stmt->u.type) == TYPE_INTERFACE || type_get_type(stmt->u.type) == TYPE_DELEGATE)
         {
           type_t *iface = stmt->u.type;
+          if (type_get_type(iface) == TYPE_DELEGATE) iface = type_delegate_get_iface(iface);
           if (is_object(iface) || is_attr(iface->attrs, ATTR_DISPINTERFACE))
           {
             write_forward(header, iface);
@@ -1841,10 +1846,11 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
     switch (stmt->type)
     {
       case STMT_TYPE:
-        if (type_get_type(stmt->u.type) == TYPE_INTERFACE)
+        if (type_get_type(stmt->u.type) == TYPE_INTERFACE || type_get_type(stmt->u.type) == TYPE_DELEGATE)
         {
-          type_t *iface = stmt->u.type;
-          type_t *async_iface = type_iface_get_async_iface(iface);
+          type_t *iface = stmt->u.type, *async_iface;
+          if (type_get_type(stmt->u.type) == TYPE_DELEGATE) iface = type_delegate_get_iface(iface);
+          async_iface = type_iface_get_async_iface(iface);
           if (is_object(iface)) is_object_interface++;
           if (is_attr(stmt->u.type->attrs, ATTR_DISPINTERFACE) || is_object(stmt->u.type))
           {

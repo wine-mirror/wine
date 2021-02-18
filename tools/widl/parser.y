@@ -106,6 +106,7 @@ static statement_t *make_statement_module(type_t *type);
 static statement_t *make_statement_typedef(var_list_t *names, int declonly);
 static statement_t *make_statement_import(const char *str);
 static statement_t *make_statement_parameterized_type(type_t *type, typeref_list_t *params);
+static statement_t *make_statement_delegate(type_t *ret, var_list_t *args);
 static statement_list_t *append_statement(statement_list_t *list, statement_t *stmt);
 static statement_list_t *append_statements(statement_list_t *, statement_list_t *);
 static attr_list_t *append_attribs(attr_list_t *, attr_list_t *);
@@ -180,6 +181,7 @@ static typelib_t *current_typelib;
 %token tCUSTOM
 %token tDECLARE
 %token tDECODE tDEFAULT tDEFAULTBIND
+%token tDELEGATE
 %token tDEFAULTCOLLELEM
 %token tDEFAULTVALUE
 %token tDEFAULTVTABLE
@@ -278,6 +280,7 @@ static typelib_t *current_typelib;
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_int_const
 %type <expr> contract_req
 %type <expr> static_attr
+%type <type> delegatedef
 %type <stgclass> storage_cls_spec
 %type <type_qualifier> type_qualifier m_type_qual_list
 %type <function_specifier> function_specifier
@@ -384,6 +387,7 @@ gbl_statements:					{ $$ = NULL; }
 	| gbl_statements interface ';'		{ $$ = append_statement($1, make_statement_reference($2)); }
 	| gbl_statements dispinterface ';'	{ $$ = append_statement($1, make_statement_reference($2)); }
 	| gbl_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
+	| gbl_statements delegatedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
 	| gbl_statements coclass ';'		{ $$ = $1;
 						  reg_type($2, $2->name, current_namespace, 0);
 						}
@@ -408,6 +412,7 @@ imp_statements:					{ $$ = NULL; }
 	| imp_statements namespacedef '{' { push_namespace($2); } imp_statements '}'
 						{ pop_namespace($2); $$ = append_statements($1, $5); }
 	| imp_statements interfacedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
+	| imp_statements delegatedef		{ $$ = append_statement($1, make_statement_type_decl($2)); }
 	| imp_statements coclass ';'		{ $$ = $1; reg_type($2, $2->name, current_namespace, 0); }
 	| imp_statements coclassdef		{ $$ = append_statement($1, make_statement_type_decl($2));
 						  reg_type($2, $2->name, current_namespace, 0);
@@ -1027,6 +1032,12 @@ interface:
 	  tINTERFACE typename			{ $$ = type_interface_declare($2, current_namespace); }
 	| tINTERFACE typename '<' { push_parameters_namespace($2); } type_parameters { pop_parameters_namespace($2); } '>'
 						{ $$ = type_parameterized_interface_declare($2, current_namespace, $5); }
+	;
+
+delegatedef: m_attributes tDELEGATE type ident '(' m_args ')' semicolon_opt
+						{ $$ = type_delegate_declare($4->name, current_namespace);
+						  $$ = type_delegate_define($$, $1, append_statement(NULL, make_statement_delegate($3, $6)));
+						}
 	;
 
 required_types:
@@ -2663,6 +2674,7 @@ static int is_allowed_conf_type(const type_t *type)
     case TYPE_INTERFACE:
     case TYPE_BITFIELD:
     case TYPE_RUNTIMECLASS:
+    case TYPE_DELEGATE:
         return FALSE;
     case TYPE_APICONTRACT:
     case TYPE_PARAMETERIZED_TYPE:
@@ -3297,6 +3309,14 @@ static statement_t *make_statement_parameterized_type(type_t *type, typeref_list
     statement_t *stmt = make_statement(STMT_TYPE);
     stmt->u.type = type_parameterized_type_specialize_partial(type, params);
     return stmt;
+}
+
+static statement_t *make_statement_delegate(type_t *ret, var_list_t *args)
+{
+    declarator_t *decl = make_declarator(make_var(xstrdup("Invoke")));
+    decl_spec_t *spec = make_decl_spec(ret, NULL, NULL, STG_NONE, 0, 0);
+    append_chain_type(decl, type_new_function(args), 0);
+    return make_statement_declaration(declare_var(NULL, spec, decl, FALSE));
 }
 
 static statement_list_t *append_statements(statement_list_t *l1, statement_list_t *l2)

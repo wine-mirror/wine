@@ -664,6 +664,54 @@ type_t *type_apicontract_define(type_t *apicontract, attr_list_t *attrs)
     return apicontract;
 }
 
+static void compute_delegate_iface_names(type_t *delegate)
+{
+    type_t *iface = delegate->details.delegate.iface;
+    iface->namespace = delegate->namespace;
+    iface->name = strmake("I%s", delegate->name);
+    iface->c_name = format_namespace(delegate->namespace, "__x_", "_C", iface->name, use_abi_namespace ? "ABI" : NULL);
+}
+
+type_t *type_delegate_declare(char *name, struct namespace *namespace)
+{
+    type_t *type = get_type(TYPE_DELEGATE, name, NULL, 0);
+    if (type_get_type_detect_alias(type) != TYPE_DELEGATE)
+        error_loc("delegate %s previously not declared a delegate at %s:%d\n",
+                  type->name, type->loc_info.input_name, type->loc_info.line_number);
+    return type;
+}
+
+type_t *type_delegate_define(type_t *delegate, attr_list_t *attrs, statement_list_t *stmts)
+{
+    type_t *iface;
+
+    if (delegate->defined)
+        error_loc("delegate %s already defined at %s:%d\n",
+                  delegate->name, delegate->loc_info.input_name, delegate->loc_info.line_number);
+
+    delegate->attrs = check_interface_attrs(delegate->name, attrs);
+
+    iface = make_type(TYPE_INTERFACE);
+    iface->attrs = delegate->attrs;
+    iface->details.iface = xmalloc(sizeof(*iface->details.iface));
+    iface->details.iface->disp_props = NULL;
+    iface->details.iface->disp_methods = NULL;
+    iface->details.iface->stmts = stmts;
+    iface->details.iface->inherit = find_type("IUnknown", NULL, 0);
+    if (!iface->details.iface->inherit) error_loc("IUnknown is undefined\n");
+    iface->details.iface->disp_inherit = NULL;
+    iface->details.iface->async_iface = NULL;
+    iface->details.iface->requires = NULL;
+    iface->defined = TRUE;
+    compute_method_indexes(iface);
+
+    delegate->details.delegate.iface = iface;
+    delegate->defined = TRUE;
+    compute_delegate_iface_names(delegate);
+
+    return delegate;
+}
+
 type_t *type_parameterized_interface_declare(char *name, struct namespace *namespace, typeref_list_t *params)
 {
     type_t *type = get_type(TYPE_PARAMETERIZED_TYPE, name, namespace, 0);
@@ -821,6 +869,7 @@ static type_t *replace_type_parameters_in_type(type_t *type, typeref_list_t *ori
     case TYPE_BITFIELD:
     case TYPE_INTERFACE:
     case TYPE_RUNTIMECLASS:
+    case TYPE_DELEGATE:
         return type;
     case TYPE_PARAMETER:
         if (!orig || !repl) return NULL;

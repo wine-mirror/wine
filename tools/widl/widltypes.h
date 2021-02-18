@@ -441,6 +441,11 @@ struct parameterized_details
     typeref_list_t *params;
 };
 
+struct delegate_details
+{
+    type_t *iface;
+};
+
 #define HASHMAX 64
 
 struct namespace {
@@ -471,6 +476,7 @@ enum type_type
     TYPE_RUNTIMECLASS,
     TYPE_PARAMETERIZED_TYPE,
     TYPE_PARAMETER,
+    TYPE_DELEGATE,
 };
 
 struct _type_t {
@@ -493,6 +499,7 @@ struct _type_t {
     struct alias_details alias;
     struct runtimeclass_details runtimeclass;
     struct parameterized_details parameterized;
+    struct delegate_details delegate;
   } details;
   const char *c_name;
   unsigned int typestring_offset;

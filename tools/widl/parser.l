@@ -278,6 +278,7 @@ static const struct keyword keywords[] = {
 	{"cpp_quote",       tCPPQUOTE,       0},
 	{"declare",         tDECLARE,        1},
 	{"default",         tDEFAULT,        0},
+	{"delegate",        tDELEGATE,       1},
 	{"dispinterface",   tDISPINTERFACE,  0},
 	{"double",          tDOUBLE,         0},
 	{"enum",            tENUM,           0},
