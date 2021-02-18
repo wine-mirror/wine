@@ -29,6 +29,7 @@
 #include "parser.h"
 #include "typetree.h"
 #include "header.h"
+#include "hash.h"
 
 type_t *duptype(type_t *t, int dupname)
 {
@@ -1144,6 +1145,44 @@ type_t *type_parameterized_type_specialize_declare(type_t *type, typeref_list_t 
     return new_type;
 }
 
+static void compute_interface_signature_uuid(type_t *iface)
+{
+    static const char winrt_pinterface_namespace[] = {0x11,0xf4,0x7a,0xd5,0x7b,0x73,0x42,0xc0,0xab,0xae,0x87,0x8b,0x1e,0x16,0xad,0xee};
+    static const int version = 5;
+    struct sha1_context ctx;
+    unsigned char hash[20];
+    GUID *uuid;
+
+    if (!(uuid = get_attrp(iface->attrs, ATTR_UUID)))
+    {
+        uuid = xmalloc(sizeof(GUID));
+        iface->attrs = append_attr(iface->attrs, make_attrp(ATTR_UUID, uuid));
+    }
+
+    sha1_init(&ctx);
+    sha1_update(&ctx, winrt_pinterface_namespace, sizeof(winrt_pinterface_namespace));
+    sha1_update(&ctx, iface->signature, strlen(iface->signature));
+    sha1_finalize(&ctx, (ULONG *)hash);
+
+    /* https://tools.ietf.org/html/rfc4122:
+
+       * Set the four most significant bits (bits 12 through 15) of the
+         time_hi_and_version field to the appropriate 4-bit version number
+         from Section 4.1.3.
+
+       * Set the two most significant bits (bits 6 and 7) of the
+         clock_seq_hi_and_reserved to zero and one, respectively.
+    */
+
+    hash[6] = ((hash[6] & 0x0f) | (version << 4));
+    hash[8] = ((hash[8] & 0x3f) | 0x80);
+
+    uuid->Data1 = ((DWORD)hash[0] << 24)|((DWORD)hash[1] << 16)|((DWORD)hash[2] << 8)|(DWORD)hash[3];
+    uuid->Data2 = ((WORD)hash[4] << 8)|(WORD)hash[5];
+    uuid->Data3 = ((WORD)hash[6] << 8)|(WORD)hash[7];
+    memcpy(&uuid->Data4, hash + 8, sizeof(*uuid) - offsetof(GUID, Data4));
+}
+
 type_t *type_parameterized_type_specialize_define(type_t *type)
 {
     type_t *tmpl = type->details.parameterized.type;
@@ -1174,6 +1213,7 @@ type_t *type_parameterized_type_specialize_define(type_t *type)
         iface->signature = format_parameterized_type_signature(type, repl);
         iface->defined = TRUE;
     }
+    compute_interface_signature_uuid(iface);
     compute_method_indexes(iface);
     return iface;
 }

@@ -80,6 +80,8 @@ extern int is_attr(const attr_list_t *list, enum attr_type t);
 
 typeref_t *make_typeref(type_t *type);
 typeref_list_t *append_typeref(typeref_list_t *list, typeref_t *ref);
+attr_t *make_attrp(enum attr_type type, void *val);
+attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
 
 /* FIXME: shouldn't need to export this */
 type_t *duptype(type_t *t, int dupname);

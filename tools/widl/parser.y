@@ -45,13 +45,11 @@ struct _import_t
 };
 
 static str_list_t *append_str(str_list_t *list, char *str);
-static attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
 static attr_list_t *append_attr_list(attr_list_t *new_list, attr_list_t *old_list);
 static decl_spec_t *make_decl_spec(type_t *type, decl_spec_t *left, decl_spec_t *right,
         enum storage_class stgclass, enum type_qualifier qual, enum function_specifier func_specifier);
 static attr_t *make_attr(enum attr_type type);
 static attr_t *make_attrv(enum attr_type type, unsigned int val);
-static attr_t *make_attrp(enum attr_type type, void *val);
 static attr_t *make_custom_attr(UUID *id, expr_t *pval);
 static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
 static var_t *declare_var(attr_list_t *attrs, decl_spec_t *decl_spec, declarator_t *decl, int top);
@@ -1507,7 +1505,7 @@ static attr_t *make_attrv(enum attr_type type, unsigned int val)
   return a;
 }
 
-static attr_t *make_attrp(enum attr_type type, void *val)
+attr_t *make_attrp(enum attr_type type, void *val)
 {
   attr_t *a = xmalloc(sizeof(attr_t));
   a->type = type;
@@ -2407,7 +2405,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_WIREMARSHAL */         { 1, 0, 0,  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "wire_marshal" },
 };
 
-static attr_list_t *append_attr(attr_list_t *list, attr_t *attr)
+attr_list_t *append_attr(attr_list_t *list, attr_t *attr)
 {
     attr_t *attr_existing;
     if (!attr) return list;
