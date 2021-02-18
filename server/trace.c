@@ -1342,8 +1342,8 @@ static void dump_varargs_handle_infos( const char *prefix, data_size_t size )
     while (size >= sizeof(*handle))
     {
         handle = cur_data;
-        fprintf( stderr, "{owner=%04x,handle=%04x,access=%08x}",
-                 handle->owner, handle->handle, handle->access );
+        fprintf( stderr, "{owner=%04x,handle=%04x,access=%08x,attributes=%08x}",
+                 handle->owner, handle->handle, handle->access, handle->attributes );
         size -= sizeof(*handle);
         remove_data( sizeof(*handle) );
         if (size) fputc( ',', stderr );

@@ -542,11 +542,14 @@ static void test_query_handle(void)
     ULONG SystemInformationLength = sizeof(SYSTEM_HANDLE_INFORMATION);
     SYSTEM_HANDLE_INFORMATION* shi = HeapAlloc(GetProcessHeap(), 0, SystemInformationLength);
     HANDLE EventHandle;
-    BOOL found;
+    BOOL found, ret;
     INT i;
 
     EventHandle = CreateEventA(NULL, FALSE, FALSE, NULL);
     ok( EventHandle != NULL, "CreateEventA failed %u\n", GetLastError() );
+    ret = SetHandleInformation(EventHandle, HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE,
+            HANDLE_FLAG_INHERIT | HANDLE_FLAG_PROTECT_FROM_CLOSE);
+    ok(ret, "got error %u\n", GetLastError());
 
     /* Request the needed length : a SystemInformationLength greater than one struct sets ReturnLength */
     ReturnLength = 0xdeadbeef;
@@ -581,11 +584,22 @@ static void test_query_handle(void)
         goto done;
     }
 
-    for (i = 0, found = FALSE; i < shi->Count && !found; i++)
-        found = (shi->Handle[i].OwnerPid == GetCurrentProcessId()) &&
-                ((HANDLE)(ULONG_PTR)shi->Handle[i].HandleValue == EventHandle);
+    found = FALSE;
+    for (i = 0; i < shi->Count; i++)
+    {
+        if (shi->Handle[i].OwnerPid == GetCurrentProcessId() &&
+                (HANDLE)(ULONG_PTR)shi->Handle[i].HandleValue == EventHandle)
+        {
+            ok(shi->Handle[i].HandleFlags == (OBJ_INHERIT | OBJ_PROTECT_CLOSE),
+                    "got attributes %#x\n", shi->Handle[i].HandleFlags);
+            found = TRUE;
+            break;
+        }
+    }
     ok( found, "Expected to find event handle %p (pid %x) in handle list\n", EventHandle, GetCurrentProcessId() );
 
+    ret = SetHandleInformation(EventHandle, HANDLE_FLAG_PROTECT_FROM_CLOSE, 0);
+    ok(ret, "got error %u\n", GetLastError());
     CloseHandle(EventHandle);
 
     ReturnLength = 0xdeadbeef;
@@ -645,7 +659,7 @@ static void test_query_handle_ex(void)
         if (info->Handles[i].UniqueProcessId == GetCurrentProcessId()
                 && (HANDLE)info->Handles[i].HandleValue == event)
         {
-            todo_wine ok(info->Handles[i].HandleAttributes == (OBJ_INHERIT | OBJ_PROTECT_CLOSE),
+            ok(info->Handles[i].HandleAttributes == (OBJ_INHERIT | OBJ_PROTECT_CLOSE),
                     "got flags %#x\n", info->Handles[i].HandleAttributes);
             ok(info->Handles[i].GrantedAccess == EVENT_ALL_ACCESS, "got access %#x\n", info->Handles[i].GrantedAccess);
             found = TRUE;

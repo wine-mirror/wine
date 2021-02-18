@@ -3197,6 +3197,7 @@ struct handle_info
     process_id_t owner;
     obj_handle_t handle;
     unsigned int access;
+    unsigned int attributes;
 };
 
 /* Return a list of all opened handles */

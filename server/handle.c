@@ -830,9 +830,12 @@ static int enum_handles( struct process *process, void *user )
         }
         assert( info->count );
         handle = info->handle++;
-        handle->owner  = process->id;
-        handle->handle = index_to_handle(i);
-        handle->access = entry->access & ~RESERVED_ALL;
+        handle->owner      = process->id;
+        handle->handle     = index_to_handle(i);
+        handle->access     = entry->access & ~RESERVED_ALL;
+        handle->attributes = 0;
+        if (entry->access & RESERVED_INHERIT) handle->attributes |= OBJ_INHERIT;
+        if (entry->access & RESERVED_CLOSE_PROTECT) handle->attributes |= OBJ_PROTECT_CLOSE;
         info->count--;
     }
 
