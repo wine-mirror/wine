@@ -2,7 +2,4 @@ MODULE    = cryptdll.dll
 IMPORTLIB = cryptdll
 IMPORTS   = advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
-
-C_SRCS = \
-	cryptdll.c
+EXTRADLLFLAGS = -Wb,--prefer-native
