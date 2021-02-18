@@ -1,6 +1,3 @@
 MODULE    = npptools.dll
 
-EXTRADLLFLAGS = -mno-cygwin
-
-C_SRCS = \
-	main.c
+EXTRADLLFLAGS = -Wb,--prefer-native
