@@ -1,7 +1,4 @@
 MODULE    = mscat32.dll
 IMPORTS   = wintrust
 
-EXTRADLLFLAGS = -mno-cygwin
-
-C_SRCS = \
-	main.c
+EXTRADLLFLAGS = -Wb,--prefer-native
