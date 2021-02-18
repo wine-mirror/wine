@@ -64,6 +64,7 @@ struct media_stream
 enum source_async_op
 {
     SOURCE_ASYNC_START,
+    SOURCE_ASYNC_STOP,
     SOURCE_ASYNC_REQUEST_SAMPLE,
 };
 
@@ -360,6 +361,24 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
     gst_element_set_state(source->container, GST_STATE_PLAYING);
 }
 
+static void stop_pipeline(struct media_source *source)
+{
+    unsigned int i;
+
+    gst_element_set_state(source->container, GST_STATE_PAUSED);
+
+    for (i = 0; i < source->stream_count; i++)
+    {
+        struct media_stream *stream = source->streams[i];
+        if (stream->state != STREAM_INACTIVE)
+            IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamStopped, &GUID_NULL, S_OK, NULL);
+    }
+
+    IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MESourceStopped, &GUID_NULL, S_OK, NULL);
+
+    source->state = SOURCE_STOPPED;
+}
+
 static void dispatch_end_of_presentation(struct media_source *source)
 {
     PROPVARIANT empty = {.vt = VT_EMPTY};
@@ -433,6 +452,9 @@ static HRESULT WINAPI source_async_commands_Invoke(IMFAsyncCallback *iface, IMFA
     {
         case SOURCE_ASYNC_START:
             start_pipeline(source, command);
+            break;
+        case SOURCE_ASYNC_STOP:
+            stop_pipeline(source);
             break;
         case SOURCE_ASYNC_REQUEST_SAMPLE:
             wait_on_sample(command->u.request_sample.stream, command->u.request_sample.token);
@@ -1177,13 +1199,18 @@ static HRESULT WINAPI media_source_Start(IMFMediaSource *iface, IMFPresentationD
 static HRESULT WINAPI media_source_Stop(IMFMediaSource *iface)
 {
     struct media_source *source = impl_from_IMFMediaSource(iface);
+    struct source_async_command *command;
+    HRESULT hr;
 
-    FIXME("(%p): stub\n", source);
+    TRACE("(%p)\n", source);
 
     if (source->state == SOURCE_SHUTDOWN)
         return MF_E_SHUTDOWN;
 
-    return E_NOTIMPL;
+    if (SUCCEEDED(hr = source_create_async_op(SOURCE_ASYNC_STOP, &command)))
+        hr = MFPutWorkItem(source->async_commands_queue, &source->async_commands_callback, &command->IUnknown_iface);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_source_Pause(IMFMediaSource *iface)
