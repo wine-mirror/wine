@@ -1,6 +1,3 @@
 MODULE    = svrapi.dll
 
-EXTRADLLFLAGS = -mno-cygwin
-
-C_SRCS = \
-	svrapi_main.c
+EXTRADLLFLAGS = -Wb,--prefer-native
