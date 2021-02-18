@@ -1076,6 +1076,19 @@ void make_builtin_files( char *argv[] )
             if (header.e_lfanew < sizeof(header) + sizeof(builtin_signature))
                 fatal_error( "%s: Not enough space (%x) for Wine signature\n", argv[i], header.e_lfanew );
             write( fd, builtin_signature, sizeof(builtin_signature) );
+
+            if (prefer_native)
+            {
+                unsigned int pos = header.e_lfanew + 0x5e;  /* OptionalHeader.DllCharacteristics */
+                unsigned short dll_charact;
+                lseek( fd, pos, SEEK_SET );
+                if (read( fd, &dll_charact, sizeof(dll_charact) ) == sizeof(dll_charact))
+                {
+                    dll_charact |= IMAGE_DLLCHARACTERISTICS_PREFER_NATIVE;
+                    lseek( fd, pos, SEEK_SET );
+                    write( fd, &dll_charact, sizeof(dll_charact) );
+                }
+            }
         }
         else fatal_error( "%s: Unrecognized file format\n", argv[i] );
         close( fd );

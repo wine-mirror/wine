@@ -217,7 +217,8 @@ struct strarray
 #define IMAGE_FILE_UP_SYSTEM_ONLY	   0x4000
 #define IMAGE_FILE_BYTES_REVERSED_HI	   0x8000
 
-#define IMAGE_DLLCHARACTERISTICS_NX_COMPAT 0x0100
+#define IMAGE_DLLCHARACTERISTICS_PREFER_NATIVE 0x0010 /* Wine extension */
+#define IMAGE_DLLCHARACTERISTICS_NX_COMPAT     0x0100
 
 #define	IMAGE_SUBSYSTEM_NATIVE      1
 #define	IMAGE_SUBSYSTEM_WINDOWS_GUI 2
@@ -380,6 +381,7 @@ extern int unwind_tables;
 extern int use_msvcrt;
 extern int unix_lib;
 extern int safe_seh;
+extern int prefer_native;
 
 extern char *input_file_name;
 extern char *spec_file_name;

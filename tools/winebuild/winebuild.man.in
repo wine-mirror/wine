@@ -209,6 +209,10 @@ output file name ends in .o, the text output is sent to a
 temporary file that is then assembled to produce the specified .o
 file.
 .TP
+.B --prefer-native
+Specify that the native DLL should be preferred if available at run
+time. This can be used on modules that are mostly unimplemented.
+.TP
 .BI \-r,\ --res= rsrc.res
 Load resources from the specified binary resource file. The
 \fIrsrc.res\fR file can be produced from a source resource file with

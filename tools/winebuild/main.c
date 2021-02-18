@@ -49,6 +49,7 @@ int unwind_tables = 0;
 int use_msvcrt = 0;
 int unix_lib = 0;
 int safe_seh = 0;
+int prefer_native = 0;
 
 #ifdef __i386__
 enum target_cpu target_cpu = CPU_x86;
@@ -294,6 +295,7 @@ static const char usage_str[] =
 "       --nxcompat=y|n        Set the NX compatibility flag (default: yes)\n"
 "   -N, --dll-name=DLLNAME    Set the DLL name (default: from input file name)\n"
 "   -o, --output=NAME         Set the output file name (default: stdout)\n"
+"       --prefer-native       Set the flag to prefer loading native at run time\n"
 "   -r, --res=RSRC.RES        Load resources from RSRC.RES\n"
 "       --safeseh             Mark object files as SEH compatible\n"
 "       --save-temps          Do not delete the generated intermediate files\n"
@@ -329,6 +331,7 @@ enum long_options_values
     LONG_OPT_LDCMD,
     LONG_OPT_NMCMD,
     LONG_OPT_NXCOMPAT,
+    LONG_OPT_PREFER_NATIVE,
     LONG_OPT_RESOURCES,
     LONG_OPT_SAFE_SEH,
     LONG_OPT_SAVE_TEMPS,
@@ -356,6 +359,7 @@ static const struct option long_options[] =
     { "ld-cmd",        1, 0, LONG_OPT_LDCMD },
     { "nm-cmd",        1, 0, LONG_OPT_NMCMD },
     { "nxcompat",      1, 0, LONG_OPT_NXCOMPAT },
+    { "prefer-native", 0, 0, LONG_OPT_PREFER_NATIVE },
     { "resources",     0, 0, LONG_OPT_RESOURCES },
     { "safeseh",       0, 0, LONG_OPT_SAFE_SEH },
     { "save-temps",    0, 0, LONG_OPT_SAVE_TEMPS },
@@ -574,6 +578,10 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case LONG_OPT_SAFE_SEH:
             safe_seh = 1;
+            break;
+        case LONG_OPT_PREFER_NATIVE:
+            prefer_native = 1;
+            spec->dll_characteristics |= IMAGE_DLLCHARACTERISTICS_PREFER_NATIVE;
             break;
         case LONG_OPT_RESOURCES:
             set_exec_mode( MODE_RESOURCES );
