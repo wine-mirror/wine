@@ -5215,10 +5215,10 @@ static void test_set_notify_flags(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(flags == AM_MEDIAEVENT_NONOTIFY, "Got flags %#x\n", flags);
 
-    todo_wine ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+    ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
 
     hr = IMediaEventEx_GetEvent(media_event, &code, &param1, &param2, 50);
-    todo_wine ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+    ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     hr = IMediaEventSink_Notify(media_event_sink, EC_STATUS, (LONG_PTR)status, (LONG_PTR)status);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -5282,7 +5282,7 @@ static void test_set_notify_flags(void)
     hr = IMediaEventEx_SetNotifyFlags(media_event, AM_MEDIAEVENT_NONOTIFY);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    todo_wine ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+    ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
 
     hr = IMediaControl_Stop(media_control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

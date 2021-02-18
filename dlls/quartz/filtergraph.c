@@ -319,6 +319,19 @@ static BOOL queue_media_event(struct filter_graph *graph, LONG code,
     return TRUE;
 }
 
+static void flush_media_events(struct filter_graph *graph)
+{
+    struct list *cursor;
+
+    while ((cursor = list_head(&graph->media_events)))
+    {
+        struct media_event *event = LIST_ENTRY(cursor, struct media_event, entry);
+
+        list_remove(&event->entry);
+        free(event);
+    }
+}
+
 static struct filter_graph *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, struct filter_graph, IUnknown_inner);
@@ -443,14 +456,7 @@ static ULONG WINAPI FilterGraphInner_Release(IUnknown *iface)
 
         if (This->pSite) IUnknown_Release(This->pSite);
 
-        while ((cursor = list_head(&This->media_events)))
-        {
-            struct media_event *event = LIST_ENTRY(cursor, struct media_event, entry);
-
-            list_remove(&event->entry);
-            free(event);
-        }
-
+        flush_media_events(This);
         CloseHandle(This->media_event_handle);
 
         This->cs.DebugInfo->Spare[0] = 0;
@@ -4849,6 +4855,12 @@ static HRESULT WINAPI MediaEvent_SetNotifyFlags(IMediaEventEx *iface, LONG flags
     }
 
     graph->media_events_disabled = flags;
+
+    if (flags)
+    {
+        flush_media_events(graph);
+        ResetEvent(graph->media_event_handle);
+    }
 
     return S_OK;
 }
