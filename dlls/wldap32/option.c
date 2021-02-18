@@ -497,11 +497,20 @@ ULONG CDECL ldap_set_optionW( WLDAP32_LDAP *ld, int option, void *value )
         controlarrayfreeU( ctrlsU );
         return ret;
     }
+    case WLDAP32_LDAP_OPT_REFERRALS:
+    {
+        void *openldap_referral = LDAP_OPT_ON;
+        if (value == LDAP_OPT_OFF)
+            openldap_referral = LDAP_OPT_OFF;
+        else
+            FIXME("upgrading referral value %p to LDAP_OPT_ON (OpenLDAP lacks sufficient granularity)\n", value);
+        return map_error( ldap_set_option( ld->ld, option, openldap_referral ));
+        break;
+    }
     case WLDAP32_LDAP_OPT_DEREF:
     case WLDAP32_LDAP_OPT_DESC:
     case WLDAP32_LDAP_OPT_ERROR_NUMBER:
     case WLDAP32_LDAP_OPT_PROTOCOL_VERSION:
-    case WLDAP32_LDAP_OPT_REFERRALS:
     case WLDAP32_LDAP_OPT_SIZELIMIT:
     case WLDAP32_LDAP_OPT_TIMELIMIT:
         return map_error( ldap_set_option( ld->ld, option, value ));
