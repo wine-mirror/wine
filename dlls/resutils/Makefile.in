@@ -1,7 +1,4 @@
 MODULE    = resutils.dll
 IMPORTLIB = resutils
 
-EXTRADLLFLAGS = -mno-cygwin
-
-C_SRCS = \
-	resutils.c
+EXTRADLLFLAGS = -Wb,--prefer-native
