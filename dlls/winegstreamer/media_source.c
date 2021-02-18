@@ -111,6 +111,8 @@ struct media_source
         SOURCE_SHUTDOWN,
     } state;
     HANDLE no_more_pads_event;
+
+    uint64_t file_size, next_pull_offset;
 };
 
 static inline struct media_stream *impl_from_IMFMediaStream(IMFMediaStream *iface)
@@ -449,11 +451,12 @@ GstFlowReturn bytestream_wrapper_pull(GstPad *pad, GstObject *parent, guint64 of
 
     TRACE("requesting %u bytes at %s from source %p into buffer %p\n", len, wine_dbgstr_longlong(ofs), source, *buf);
 
-    if (ofs != GST_BUFFER_OFFSET_NONE)
-    {
-        if (FAILED(IMFByteStream_SetCurrentPosition(byte_stream, ofs)))
-            return GST_FLOW_ERROR;
-    }
+    if (ofs == GST_BUFFER_OFFSET_NONE)
+        ofs = source->next_pull_offset;
+    source->next_pull_offset = ofs + len;
+
+    if (FAILED(IMFByteStream_SetCurrentPosition(byte_stream, ofs)))
+        return GST_FLOW_ERROR;
 
     if (FAILED(IMFByteStream_IsEndOfStream(byte_stream, &is_eof)))
         return GST_FLOW_ERROR;
@@ -1244,6 +1247,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     struct media_source *object;
     gint64 total_pres_time = 0;
     DWORD bytestream_caps;
+    uint64_t file_size;
     unsigned int i;
     HRESULT hr;
     int ret;
@@ -1257,6 +1261,12 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
         return MF_E_BYTESTREAM_NOT_SEEKABLE;
     }
 
+    if (FAILED(hr = IMFByteStream_GetLength(bytestream, &file_size)))
+    {
+        FIXME("Failed to get byte stream length, hr %#x.\n", hr);
+        return hr;
+    }
+
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
@@ -1266,6 +1276,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     object->byte_stream = bytestream;
     IMFByteStream_AddRef(bytestream);
     object->no_more_pads_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    object->file_size = file_size;
 
     if (FAILED(hr = MFCreateEventQueue(&object->event_queue)))
         goto fail;
