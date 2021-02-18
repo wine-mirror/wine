@@ -4544,6 +4544,7 @@ struct handle_info
     obj_handle_t handle;
     unsigned int access;
     unsigned int attributes;
+    unsigned int type;
 };
 
 
@@ -6227,7 +6228,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 683
+#define SERVER_PROTOCOL_VERSION 684
 
 /* ### protocol_version end ### */
 

@@ -3198,6 +3198,7 @@ struct handle_info
     obj_handle_t handle;
     unsigned int access;
     unsigned int attributes;
+    unsigned int type;
 };
 
 /* Return a list of all opened handles */
