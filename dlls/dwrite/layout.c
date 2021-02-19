@@ -3542,9 +3542,6 @@ static HRESULT WINAPI dwritetextlayout_GetInlineObject(IDWriteTextLayout4 *iface
 
     TRACE("%p, %u, %p, %p.\n", iface, position, object, r);
 
-    if (position >= layout->len)
-        return S_OK;
-
     range = get_layout_range_by_pos(layout, position);
     *object = range->object;
     if (*object)

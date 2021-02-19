@@ -6224,11 +6224,9 @@ todo_wine
     object = NULL;
     hr = IDWriteTextLayout_GetInlineObject(layout, 10, &object, &range);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(range.startPosition == 10 && range.length == ~0u - 10, "Unexpected range (%u, %u).\n",
             range.startPosition, range.length);
-    if (object)
-        IDWriteInlineObject_Release(object);
+    IDWriteInlineObject_Release(object);
 
     range.startPosition = 0;
     range.length = ~0u;
