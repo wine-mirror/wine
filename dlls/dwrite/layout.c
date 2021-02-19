@@ -2728,6 +2728,9 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
     if (value->range.length == 0)
         return S_OK;
 
+    if (~0u - value->range.startPosition < value->range.length)
+        return E_INVALIDARG;
+
     /* select from ranges lists */
     switch (attr)
     {
