@@ -4062,9 +4062,6 @@ static HRESULT WINAPI dwritetextlayout1_GetPairKerning(IDWriteTextLayout4 *iface
 
     TRACE("%p, %u, %p, %p.\n", iface, position, is_pairkerning_enabled, r);
 
-    if (position >= layout->len)
-        return S_OK;
-
     range = get_layout_range_by_pos(layout, position);
     *is_pairkerning_enabled = range->pair_kerning;
 

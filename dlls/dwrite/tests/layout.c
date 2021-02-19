@@ -6337,11 +6337,10 @@ todo_wine
         value = FALSE;
         hr = IDWriteTextLayout1_GetPairKerning(layout1, 10, &value, &range);
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    todo_wine {
         ok(range.startPosition == 10 && range.length == ~0u - 10, "Unexpected range (%u, %u).\n",
                 range.startPosition, range.length);
         ok(!!value, "Unexpected value %d.\n", value);
-    }
+
         range.startPosition = 0;
         range.length = ~0u;
         hr = IDWriteTextLayout1_SetPairKerning(layout1, FALSE, range);
