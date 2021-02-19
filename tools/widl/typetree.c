@@ -105,9 +105,10 @@ static size_t append_namespace(char **buf, size_t *len, size_t pos, struct names
 static size_t append_namespaces(char **buf, size_t *len, size_t pos, struct namespace *namespace, const char *prefix,
                                 const char *separator, const char *suffix, const char *abi_prefix)
 {
+    int nested = namespace && !is_global_namespace(namespace);
     size_t n = 0;
     n += strappend(buf, len, pos + n, "%s", prefix);
-    n += append_namespace(buf, len, pos + n, namespace, separator, abi_prefix);
+    if (nested) n += append_namespace(buf, len, pos + n, namespace, separator, abi_prefix);
     n += strappend(buf, len, pos + n, "%s", suffix);
     return n;
 }
