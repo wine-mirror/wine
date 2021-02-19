@@ -1336,6 +1336,7 @@ static void schan_decrypt_fill_buffer(PSecBufferDesc message, ULONG buffer_type,
 static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle,
         PSecBufferDesc message, ULONG message_seq_no, PULONG quality)
 {
+    SECURITY_STATUS status = SEC_E_OK;
     struct schan_context *ctx;
     SecBuffer *buffer;
     SIZE_T data_size;
@@ -1385,10 +1386,16 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     while (received < data_size)
     {
         SIZE_T length = data_size - received;
-        SECURITY_STATUS status = schan_imp_recv(ctx->session, data + received, &length);
+        status = schan_imp_recv(ctx->session, data + received, &length);
+
+        if (status == SEC_I_RENEGOTIATE)
+            break;
 
         if (status == SEC_I_CONTINUE_NEEDED)
+        {
+            status = SEC_E_OK;
             break;
+        }
 
         if (status != SEC_E_OK)
         {
@@ -1421,7 +1428,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     buffer->BufferType = SECBUFFER_STREAM_HEADER;
     buffer->cbBuffer = 5;
 
-    return SEC_E_OK;
+    return status;
 }
 
 static SECURITY_STATUS SEC_ENTRY schan_DeleteSecurityContext(PCtxtHandle context_handle)
