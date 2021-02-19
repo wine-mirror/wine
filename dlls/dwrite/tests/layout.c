@@ -6022,7 +6022,6 @@ static void test_layout_range_length(void)
     range.startPosition = range.length = 0;
     hr = IDWriteTextLayout_GetFontWeight(layout, 10, &weight, &range);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-todo_wine
     ok(range.startPosition == 10 && range.length == ~0u - 10, "Unexpected range (%u, %u).\n",
             range.startPosition, range.length);
 

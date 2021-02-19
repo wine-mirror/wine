@@ -1,7 +1,7 @@
 /*
  *    Text format and layout
  *
- * Copyright 2012, 2014-2017 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2021 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -3441,9 +3441,6 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontWeight(IDWriteTextLayout4 *
     struct layout_range *range;
 
     TRACE("%p, %u, %p, %p.\n", iface, position, weight, r);
-
-    if (position >= layout->len)
-        return S_OK;
 
     range = get_layout_range_by_pos(layout, position);
     *weight = range->weight;
