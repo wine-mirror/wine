@@ -701,6 +701,9 @@ done:
     case STATUS_INVALID_IMAGE_NOT_MZ:
         ERR( "%s not supported on this system\n", debugstr_us(&params->ImagePathName) );
         break;
+    case STATUS_REVISION_MISMATCH:
+        ERR( "ntdll library version mismatch\n" );
+        break;
     default:
         ERR( "failed to load %s error %x\n", debugstr_us(&params->ImagePathName), status );
         break;

@@ -4108,7 +4108,7 @@ static NTSTATUS process_init(void)
  */
 NTSTATUS CDECL __wine_set_unix_funcs( int version, const struct unix_funcs *funcs )
 {
-    assert( version == NTDLL_UNIXLIB_VERSION );
+    if (version != NTDLL_UNIXLIB_VERSION) return STATUS_REVISION_MISMATCH;
     unix_funcs = funcs;
     return process_init();
 }
