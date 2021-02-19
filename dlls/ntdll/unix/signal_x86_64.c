@@ -270,9 +270,10 @@ C_ASSERT( sizeof(struct apc_stack_layout) == 0x510 );
 struct syscall_xsave
 {
     XMM_SAVE_AREA32       xsave;
+    XSTATE                xstate;
 };
 
-C_ASSERT( sizeof(struct syscall_xsave) == 0x200 );
+C_ASSERT( sizeof(struct syscall_xsave) == 0x340 );
 
 struct syscall_frame
 {
@@ -2147,7 +2148,7 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
 __ASM_GLOBAL_FUNC( call_raise_user_exception_dispatcher,
                    "movq %gs:0x30,%rdx\n\t"
                    "movq 0x328(%rdx),%rax\n\t"    /* amd64_thread_data()->syscall_frame */
-                   "leaq -0x200(%rax),%r8\n\t"
+                   "leaq -0x340(%rax),%r8\n\t"
                    "andq $~63,%r8\n\t"
                    "fxrstor64 (%r8)\n\t"
                    "movq 0x8(%rax),%rbx\n\t"      /* frame->rbx */
@@ -2793,14 +2794,23 @@ void signal_init_process(void)
  */
 void *signal_init_syscalls(void)
 {
-    void *ptr;
+    SYSTEM_CPU_INFORMATION cpu_info;
+    void *ptr, *syscall_dispatcher;
+
+    extern void __wine_syscall_dispatcher_xsave(void) DECLSPEC_HIDDEN;
+
+    NtQuerySystemInformation( SystemCpuInformation, &cpu_info, sizeof(cpu_info), NULL );
+    if (cpu_info.FeatureSet & CPU_FEATURE_XSAVE)
+        syscall_dispatcher = __wine_syscall_dispatcher_xsave;
+    else
+        syscall_dispatcher = __wine_syscall_dispatcher;
 
     /* sneak in a syscall dispatcher pointer at a fixed address (7ffe1000) */
     ptr = (char *)user_shared_data + page_size;
     anon_mmap_fixed( ptr, page_size, PROT_READ | PROT_WRITE, 0 );
-    *(void **)ptr = __wine_syscall_dispatcher;
+    *(void **)ptr = syscall_dispatcher;
 
-    return __wine_syscall_dispatcher;
+    return syscall_dispatcher;
 }
 
 

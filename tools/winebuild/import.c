@@ -1426,13 +1426,14 @@ static int cmp_link_name( const void *e1, const void *e2 )
 
 
 /* output dispatcher for system calls */
-static void output_syscall_dispatcher( int count )
+static void output_syscall_dispatcher( int count, const char *variant )
 {
     const unsigned int invalid_param = 0xc000000d; /* STATUS_INVALID_PARAMETER */
+    const char *symbol = strmake( "__wine_syscall_dispatcher%s", variant );
 
     output( "\t.align %d\n", get_alignment(4) );
-    output( "\t%s\n", func_declaration("__wine_syscall_dispatcher") );
-    output( "%s\n", asm_globl("__wine_syscall_dispatcher") );
+    output( "\t%s\n", func_declaration(symbol) );
+    output( "%s\n", asm_globl(symbol) );
     output_cfi( ".cfi_startproc" );
     switch (target_cpu)
     {
@@ -1493,7 +1494,7 @@ static void output_syscall_dispatcher( int count )
         output_cfi( ".cfi_def_cfa_register %%rbp" );
         output( "\tleaq -0x10(%%rbp),%%rsp\n" );
         output( "\tpushfq\n" );
-        output( "\tsubq $0x280,%%rsp\n" );
+        output( "\tsubq $0x3c0,%%rsp\n" );
         output( "\tandq $~63,%%rsp\n" );
         output( "\tmovq %%rbx,-0x90(%%rbp)\n" );
         output_cfi( ".cfi_rel_offset %%rbx,-144" );
@@ -1520,14 +1521,29 @@ static void output_syscall_dispatcher( int count )
         output( "\tmovw %%ss,-0x8(%%rbp)\n" );
         output( "\tmovw %%gs,-0x6(%%rbp)\n" );
         output( "\tmovq %%rsp,%%r12\n" );
-        output( "\tfxsave64 (%%r12)\n" );
+        output( "\tmovq %%rax,%%r11\n" );
+        if (!*variant)
+        {
+            output( "\tfxsave64 (%%r12)\n" );
+        }
+        else
+        {
+            output( "\tmovl $7,%%eax\n" );
+            output( "\tmovq %%rdx,%%rsi\n" );
+            output( "\txorq %%rdx,%%rdx\n" );
+            output( "\tmovq %%rdx,0x200(%%r12)\n" );
+            output( "\tmovq %%rdx,0x208(%%r12)\n" );
+            output( "\tmovq %%rdx,0x210(%%r12)\n" );
+            output( "\txsave64 (%%r12)\n" );
+            output( "\tmovq %%rsi,%%rdx\n" );
+        }
         output( "\tmovq %%gs:0x30,%%rcx\n" );
         output( "\tleaq -0x98(%%rbp),%%rbx\n" );
         output( "\tmovq %%rbx,0x328(%%rcx)\n" );  /* amd64_thread_data()->syscall_frame */
-        output( "\tcmpq $%u,%%rax\n", count );
+        output( "\tcmpq $%u,%%r11\n", count );
         output( "\tjae 3f\n" );
         output( "\tleaq .Lsyscall_args(%%rip),%%rcx\n" );
-        output( "\tmovzbl (%%rcx,%%rax),%%ecx\n" );
+        output( "\tmovzbl (%%rcx,%%r11),%%ecx\n" );
         output( "\tsubq $0x20,%%rcx\n" );
         output( "\tjbe 1f\n" );
         output( "\tsubq %%rcx,%%rsp\n" );
@@ -1540,7 +1556,7 @@ static void output_syscall_dispatcher( int count )
         output( "1:\tmovq %%r10,%%rcx\n" );
         output( "\tsubq $0x20,%%rsp\n" );
         output( "\tleaq .Lsyscall_table(%%rip),%%r10\n" );
-        output( "\tcallq *(%%r10,%%rax,8)\n" );
+        output( "\tcallq *(%%r10,%%r11,8)\n" );
         output( "2:\tmovq %%gs:0x30,%%rcx\n" );
         output( "\tmovq $0,0x328(%%rcx)\n" );
         output( "\tfxrstor64 (%%r12)\n" );
@@ -1682,7 +1698,7 @@ static void output_syscall_dispatcher( int count )
         assert(0);
     }
     output_cfi( ".cfi_endproc" );
-    output_function_size( "__wine_syscall_dispatcher" );
+    output_function_size( symbol );
 }
 
 
@@ -1707,7 +1723,16 @@ void output_syscalls( DLLSPEC *spec )
 
     if (unix_lib)
     {
-        output_syscall_dispatcher( count );
+        output_syscall_dispatcher( count, "" );
+
+        switch( target_cpu )
+        {
+        case CPU_x86_64:
+            output_syscall_dispatcher( count, "_xsave" );
+            break;
+        default:
+            break;
+        }
 
         output( "\t.data\n" );
         output( "\t.align %d\n", get_alignment( get_ptr_size() ) );
