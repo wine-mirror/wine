@@ -70,7 +70,7 @@
 @ stub DRMIsWindowProtected
 @ stub DRMLoadLibrary
 @ stub DRMParseUnboundLicense
-@ stub DRMRegisterContent
+@ stdcall DRMRegisterContent(long)
 @ stub DRMRegisterProtectedWindow
 @ stub DRMRegisterRevocationList
 @ stub DRMRepair
