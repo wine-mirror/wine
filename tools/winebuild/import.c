@@ -1425,10 +1425,270 @@ static int cmp_link_name( const void *e1, const void *e2 )
 }
 
 
+/* output dispatcher for system calls */
+static void output_syscall_dispatcher( int count )
+{
+    const unsigned int invalid_param = 0xc000000d; /* STATUS_INVALID_PARAMETER */
+
+    output( "\t.align %d\n", get_alignment(4) );
+    output( "\t%s\n", func_declaration("__wine_syscall_dispatcher") );
+    output( "%s\n", asm_globl("__wine_syscall_dispatcher") );
+    output_cfi( ".cfi_startproc" );
+    switch (target_cpu)
+    {
+    case CPU_x86:
+        output( "\tpushl %%ebp\n" );
+        output_cfi( ".cfi_adjust_cfa_offset 4\n" );
+        output_cfi( ".cfi_rel_offset %%ebp,0\n" );
+        output( "\tmovl %%esp,%%ebp\n" );
+        output_cfi( ".cfi_def_cfa_register %%ebp\n" );
+        output( "\tpushl %%ebx\n" );
+        output_cfi( ".cfi_rel_offset %%ebx,-4\n" );
+        output( "\tpushl %%esi\n" );
+        output_cfi( ".cfi_rel_offset %%esi,-8\n" );
+        output( "\tpushl %%edi\n" );
+        output_cfi( ".cfi_rel_offset %%edi,-12\n" );
+        output( "\tmovl %%esp,%%fs:0x1f8\n" );  /* x86_thread_data()->syscall_frame */
+        output( "\tcmpl $%u,%%eax\n", count );
+        output( "\tjae 3f\n" );
+        if (UsePIC)
+        {
+            output( "\tmovl %%eax,%%edx\n" );
+            output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
+            output( "1:\tmovzbl .Lsyscall_args-1b(%%eax,%%edx,1),%%ecx\n" );
+            needs_get_pc_thunk = 1;
+        }
+        else output( "\tmovzbl .Lsyscall_args(%%eax),%%ecx\n" );
+        output( "\tsubl %%ecx,%%esp\n" );
+        output( "\tshrl $2,%%ecx\n" );
+        output( "\tleal 12(%%ebp),%%esi\n" );
+        output( "\tandl $~15,%%esp\n" );
+        output( "\tmovl %%esp,%%edi\n" );
+        output( "\tcld\n" );
+        output( "\trep; movsl\n" );
+        if (UsePIC)
+            output( "\tcall *.Lsyscall_table-1b(%%eax,%%edx,4)\n" );
+        else
+            output( "\tcall *.Lsyscall_table(,%%eax,4)\n" );
+        output( "\tleal -12(%%ebp),%%esp\n" );
+        output( "2:\tmovl $0,%%fs:0x1f8\n" );
+        output( "\tpopl %%edi\n" );
+        output_cfi( ".cfi_same_value %%edi\n" );
+        output( "\tpopl %%esi\n" );
+        output_cfi( ".cfi_same_value %%esi\n" );
+        output( "\tpopl %%ebx\n" );
+        output_cfi( ".cfi_same_value %%ebx\n" );
+        output( "\tpopl %%ebp\n" );
+        output_cfi( ".cfi_def_cfa %%esp,4\n" );
+        output_cfi( ".cfi_same_value %%ebp\n" );
+        output( "\tret\n" );
+        output( "3:\tmovl $0x%x,%%eax\n", invalid_param );
+        output( "\tjmp 2b\n" );
+        break;
+    case CPU_x86_64:
+        output( "\tpushq %%rbp\n" );
+        output_cfi( ".cfi_adjust_cfa_offset 8" );
+        output_cfi( ".cfi_rel_offset %%rbp,0" );
+        output( "\tmovq %%rsp,%%rbp\n" );
+        output_cfi( ".cfi_def_cfa_register %%rbp" );
+        output( "\tleaq -0x10(%%rbp),%%rsp\n" );
+        output( "\tpushfq\n" );
+        output( "\tsubq $0x280,%%rsp\n" );
+        output( "\tandq $~63,%%rsp\n" );
+        output( "\tmovq %%rbx,-0x90(%%rbp)\n" );
+        output_cfi( ".cfi_rel_offset %%rbx,-144" );
+        output( "\tmovq %%rsi,-0x78(%%rbp)\n" );
+        output_cfi( ".cfi_rel_offset %%rsi,-120" );
+        output( "\tmovq %%rdi,-0x70(%%rbp)\n" );
+        output_cfi( ".cfi_rel_offset %%rdi,-112" );
+        output( "\tmovq %%r12,-0x48(%%rbp)\n" );
+        output_cfi( ".cfi_rel_offset %%r12,-72" );
+        output( "\tmovq %%r13,-0x40(%%rbp)\n" );
+        output( "\tmovq %%r14,-0x38(%%rbp)\n" );
+        output( "\tmovq %%r15,-0x30(%%rbp)\n" );
+        /* Legends of Runeterra hooks the first system call return instruction, and
+         * depends on us returning to it. Adjust the return address accordingly. */
+        output( "\tsubq $0xb,0x8(%%rbp)\n" );
+        output( "\tmovq 0x8(%%rbp),%%rbx\n" );
+        output( "\tmovq %%rbx,-0x28(%%rbp)\n" );
+        output( "\tleaq 0x10(%%rbp),%%rbx\n" );
+        output( "\tmovq %%rbx,-0x10(%%rbp)\n" );
+        output( "\tmovw %%cs,-0x20(%%rbp)\n" );
+        output( "\tmovw %%ds,-0x1e(%%rbp)\n" );
+        output( "\tmovw %%es,-0x1c(%%rbp)\n" );
+        output( "\tmovw %%fs,-0x1a(%%rbp)\n" );
+        output( "\tmovw %%ss,-0x8(%%rbp)\n" );
+        output( "\tmovw %%gs,-0x6(%%rbp)\n" );
+        output( "\tmovq %%rsp,%%r12\n" );
+        output( "\tfxsave64 (%%r12)\n" );
+        output( "\tmovq %%gs:0x30,%%rcx\n" );
+        output( "\tleaq -0x98(%%rbp),%%rbx\n" );
+        output( "\tmovq %%rbx,0x328(%%rcx)\n" );  /* amd64_thread_data()->syscall_frame */
+        output( "\tcmpq $%u,%%rax\n", count );
+        output( "\tjae 3f\n" );
+        output( "\tleaq .Lsyscall_args(%%rip),%%rcx\n" );
+        output( "\tmovzbl (%%rcx,%%rax),%%ecx\n" );
+        output( "\tsubq $0x20,%%rcx\n" );
+        output( "\tjbe 1f\n" );
+        output( "\tsubq %%rcx,%%rsp\n" );
+        output( "\tshrq $3,%%rcx\n" );
+        output( "\tleaq 0x38(%%rbp),%%rsi\n" );
+        output( "\tandq $~15,%%rsp\n\t" );
+        output( "\tmovq %%rsp,%%rdi\n" );
+        output( "\tcld\n" );
+        output( "\trep; movsq\n" );
+        output( "1:\tmovq %%r10,%%rcx\n" );
+        output( "\tsubq $0x20,%%rsp\n" );
+        output( "\tleaq .Lsyscall_table(%%rip),%%r10\n" );
+        output( "\tcallq *(%%r10,%%rax,8)\n" );
+        output( "2:\tmovq %%gs:0x30,%%rcx\n" );
+        output( "\tmovq $0,0x328(%%rcx)\n" );
+        output( "\tfxrstor64 (%%r12)\n" );
+        output( "\tmovq -0x30(%%rbp),%%r15\n" );
+        output( "\tmovq -0x38(%%rbp),%%r14\n" );
+        output( "\tmovq -0x40(%%rbp),%%r13\n" );
+        output( "\tmovq -0x48(%%rbp),%%r12\n" );
+        output_cfi( ".cfi_same_value %%r12" );
+        output( "\tmovq -0x70(%%rbp),%%rdi\n" );
+        output_cfi( ".cfi_same_value %%rdi" );
+        output( "\tmovq -0x78(%%rbp),%%rsi\n" );
+        output_cfi( ".cfi_same_value %%rsi" );
+        output( "\tmovq -0x90(%%rbp),%%rbx\n" );
+        output_cfi( ".cfi_same_value %%rbx" );
+        output( "\tleaq -0x28(%%rbp),%%rsp\n" );
+        output_cfi( ".cfi_def_cfa_register %%rsp" );
+        output_cfi( ".cfi_adjust_cfa_offset 40" );
+        output( "\tmovq (%%rbp),%%rbp\n" );
+        output_cfi( ".cfi_same_value %%rbp" );
+        output( "\tiretq\n" );
+        output( "3:\tmovl $0x%x,%%eax\n", invalid_param );
+        output( "\tjmp 2b\n" );
+        break;
+    case CPU_ARM:
+        output( "\tpush {r5-r11,lr}\n" );
+        output( "\tadd r6, sp, #40\n" );  /* stack parameters */
+        output( "\tldr r5, 6f+8\n" );
+        output( "\tcmp r4, r5\n" );
+        output( "\tbcs 5f\n" );
+        output( "\tsub sp, sp, #8\n" );
+        output( "\tmrc p15, 0, r7, c13, c0, 2\n" ); /* NtCurrentTeb() */
+        output( "\tadd r7, #0x1d8\n" );  /* arm_thread_data()->syscall_frame */
+        output( "\tmrs ip, CPSR\n" );
+        output( "\tstr ip, [sp, #4]\n" );
+        output( "\tstr sp, [r7]\n" );  /* syscall frame */
+        output( "\tldr r5, 6f+4\n");
+        if (UsePIC) output( "1:\tadd r5, pc\n");
+        output( "\tldrb r5, [r5, r4]\n" );  /* syscall args */
+        output( "\tsubs r5, #16\n" );   /* first 4 args are in registers */
+        output( "\tble 3f\n" );
+        output( "\tsub ip, sp, r5\n" );
+        output( "\tand ip, #~7\n" );
+        output( "\tmov sp, ip\n" );
+        output( "2:\tsubs r5, r5, #4\n" );
+        output( "\tldr ip, [r6, r5]\n" );
+        output( "\tstr ip, [sp, r5]\n" );
+        output( "\tbgt 2b\n" );
+        output( "3:\tldr r5, 6f\n");
+        if (UsePIC) output( "4:\tadd r5, pc\n");
+        output( "\tldr ip, [r5, r4, lsl #2]\n");  /* syscall table */
+        output( "\tblx ip\n");
+        output( "\tmov ip, #0\n" );
+        output( "\tstr ip, [r7]\n" );
+        output( "\tsub ip, r6, #40\n" );
+        output( "\tmov sp, ip\n" );
+        output( "\tpop {r5-r11,pc}\n" );
+        output( "5:\tldr r0, 6f+12\n" );
+        output( "\tpop {r5-r11,pc}\n" );
+        if (UsePIC)
+        {
+            output( "6:\t.long .Lsyscall_table-4b-%u\n", thumb_mode ? 4 : 8 );
+            output( "\t.long .Lsyscall_args-1b-%u\n", thumb_mode ? 4 : 8 );
+        }
+        else
+        {
+            output( "6:\t.long .Lsyscall_table\n" );
+            output( "\t.long .Lsyscall_args\n" );
+        }
+        output( "\t.long %u\n", count );
+        output( "\t.long 0x%x\n", invalid_param );
+        break;
+    case CPU_ARM64:
+        output( "\tcmp x8, %u\n", count );
+        output( "\tbcs 3f\n" );
+        output( "\tstp x29, x30, [sp,#-160]!\n" );
+        output_cfi( "\t.cfi_def_cfa_offset 160\n" );
+        output_cfi( "\t.cfi_offset 29, -160\n" );
+        output_cfi( "\t.cfi_offset 30, -152\n" );
+        output( "\tmov x29, sp\n" );
+        output_cfi( "\t.cfi_def_cfa_register 29\n" );
+        output( "\tstp x27, x28, [sp, #144]\n" );
+        output_cfi( "\t.cfi_offset 27, -16\n" );
+        output_cfi( "\t.cfi_offset 28, -8\n" );
+        output( "\tstp x25, x26, [sp, #128]\n" );
+        output_cfi( "\t.cfi_offset 25, -32\n" );
+        output_cfi( "\t.cfi_offset 26, -24\n" );
+        output( "\tstp x23, x24, [sp, #112]\n" );
+        output_cfi( "\t.cfi_offset 23, -48\n" );
+        output_cfi( "\t.cfi_offset 24, -40\n" );
+        output( "\tstp x21, x22, [sp, #96]\n" );
+        output_cfi( "\t.cfi_offset 21, -64\n" );
+        output_cfi( "\t.cfi_offset 22, -56\n" );
+        output( "\tstp x19, x20, [sp, #80]\n" );
+        output_cfi( "\t.cfi_offset 19, -80\n" );
+        output_cfi( "\t.cfi_offset 20, -72\n" );
+        output( "\tstp x6, x7, [sp, #64]\n" );
+        output( "\tstp x4, x5, [sp, #48]\n" );
+        output( "\tstp x2, x3, [sp, #32]\n" );
+        output( "\tstp x0, x1, [sp, #16]\n" );
+        output( "\tmov x20, x8\n" );
+        output( "\tbl %s\n", asm_name("NtCurrentTeb") );
+        output( "\tadd x19, x0, #0x2f8\n" );  /* arm64_thread_data()->syscall_frame */
+        output( "\tstr x29, [x19]\n" );
+        output( "\tldp x0, x1, [sp, #16]\n" );
+        output( "\tldp x2, x3, [sp, #32]\n" );
+        output( "\tldp x4, x5, [sp, #48]\n" );
+        output( "\tldp x6, x7, [sp, #64]\n" );
+        output( "\tadrp x16, %s\n", arm64_page(".Lsyscall_args") );
+        output( "\tadd x16, x16, #%s\n", arm64_pageoff(".Lsyscall_args") );
+        output( "\tldrb w9, [x16, x20]\n" );
+        output( "\tsubs x9, x9, #64\n" );
+        output( "\tbls 2f\n" );
+        output( "\tadd x11, x29, #176\n" );
+        output( "\tsub sp, sp, x9\n" );
+        output( "\ttbz x9, #3, 1f\n" );
+        output( "\tsub sp, sp, #8\n" );
+        output( "1:\tsub x9, x9, #8\n" );
+        output( "\tldr x10, [x11, x9]\n" );
+        output( "\tstr x10, [sp, x9]\n" );
+        output( "\tcbnz x9, 1b\n" );
+        output( "2:\tadrp x16, %s\n", arm64_page(".Lsyscall_table") );
+        output( "\tadd x16, x16, #%s\n", arm64_pageoff(".Lsyscall_table") );
+        output( "\tldr x16, [x16, x20, lsl 3]\n" );
+        output( "\tblr x16\n" );
+        output( "\tmov sp, x29\n" );
+        output( "\tstr xzr, [x19]\n" );
+        output( "\tldp x19, x20, [sp, #80]\n" );
+        output( "\tldp x21, x22, [sp, #96]\n" );
+        output( "\tldp x23, x24, [sp, #112]\n" );
+        output( "\tldp x25, x26, [sp, #128]\n" );
+        output( "\tldp x27, x28, [sp, #144]\n" );
+        output( "\tldp x29, x30, [sp], #160\n" );
+        output( "\tret\n" );
+        output( "3:\tmov x0, #0x%x\n", invalid_param & 0xffff0000 );
+        output( "\tmovk x0, #0x%x\n", invalid_param & 0x0000ffff );
+        output( "\tret\n" );
+        break;
+    default:
+        assert(0);
+    }
+    output_cfi( ".cfi_endproc" );
+    output_function_size( "__wine_syscall_dispatcher" );
+}
+
+
 /* output the functions for system calls */
 void output_syscalls( DLLSPEC *spec )
 {
-    const unsigned int invalid_param = 0xc000000d; /* STATUS_INVALID_PARAMETER */
     int i, count;
     ORDDEF **syscalls = NULL;
 
@@ -1447,259 +1707,7 @@ void output_syscalls( DLLSPEC *spec )
 
     if (unix_lib)
     {
-        output( "\t.align %d\n", get_alignment(4) );
-        output( "\t%s\n", func_declaration("__wine_syscall_dispatcher") );
-        output( "%s\n", asm_globl("__wine_syscall_dispatcher") );
-        output_cfi( ".cfi_startproc" );
-        switch (target_cpu)
-        {
-        case CPU_x86:
-            output( "\tpushl %%ebp\n" );
-            output_cfi( ".cfi_adjust_cfa_offset 4\n" );
-            output_cfi( ".cfi_rel_offset %%ebp,0\n" );
-            output( "\tmovl %%esp,%%ebp\n" );
-            output_cfi( ".cfi_def_cfa_register %%ebp\n" );
-            output( "\tpushl %%ebx\n" );
-            output_cfi( ".cfi_rel_offset %%ebx,-4\n" );
-            output( "\tpushl %%esi\n" );
-            output_cfi( ".cfi_rel_offset %%esi,-8\n" );
-            output( "\tpushl %%edi\n" );
-            output_cfi( ".cfi_rel_offset %%edi,-12\n" );
-            output( "\tmovl %%esp,%%fs:0x1f8\n" );  /* x86_thread_data()->syscall_frame */
-            output( "\tcmpl $%u,%%eax\n", count );
-            output( "\tjae 3f\n" );
-            if (UsePIC)
-            {
-                output( "\tmovl %%eax,%%edx\n" );
-                output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
-                output( "1:\tmovzbl .Lsyscall_args-1b(%%eax,%%edx,1),%%ecx\n" );
-                needs_get_pc_thunk = 1;
-            }
-            else output( "\tmovzbl .Lsyscall_args(%%eax),%%ecx\n" );
-            output( "\tsubl %%ecx,%%esp\n" );
-            output( "\tshrl $2,%%ecx\n" );
-            output( "\tleal 12(%%ebp),%%esi\n" );
-            output( "\tandl $~15,%%esp\n" );
-            output( "\tmovl %%esp,%%edi\n" );
-            output( "\tcld\n" );
-            output( "\trep; movsl\n" );
-            if (UsePIC)
-                output( "\tcall *.Lsyscall_table-1b(%%eax,%%edx,4)\n" );
-            else
-                output( "\tcall *.Lsyscall_table(,%%eax,4)\n" );
-            output( "\tleal -12(%%ebp),%%esp\n" );
-            output( "2:\tmovl $0,%%fs:0x1f8\n" );
-            output( "\tpopl %%edi\n" );
-            output_cfi( ".cfi_same_value %%edi\n" );
-            output( "\tpopl %%esi\n" );
-            output_cfi( ".cfi_same_value %%esi\n" );
-            output( "\tpopl %%ebx\n" );
-            output_cfi( ".cfi_same_value %%ebx\n" );
-            output( "\tpopl %%ebp\n" );
-            output_cfi( ".cfi_def_cfa %%esp,4\n" );
-            output_cfi( ".cfi_same_value %%ebp\n" );
-            output( "\tret\n" );
-            output( "3:\tmovl $0x%x,%%eax\n", invalid_param );
-            output( "\tjmp 2b\n" );
-            break;
-        case CPU_x86_64:
-            output( "\tpushq %%rbp\n" );
-            output_cfi( ".cfi_adjust_cfa_offset 8" );
-            output_cfi( ".cfi_rel_offset %%rbp,0" );
-            output( "\tmovq %%rsp,%%rbp\n" );
-            output_cfi( ".cfi_def_cfa_register %%rbp" );
-            output( "\tleaq -0x10(%%rbp),%%rsp\n" );
-            output( "\tpushfq\n" );
-            output( "\tsubq $0x280,%%rsp\n" );
-            output( "\tandq $~63,%%rsp\n" );
-            output( "\tmovq %%rbx,-0x90(%%rbp)\n" );
-            output_cfi( ".cfi_rel_offset %%rbx,-144" );
-            output( "\tmovq %%rsi,-0x78(%%rbp)\n" );
-            output_cfi( ".cfi_rel_offset %%rsi,-120" );
-            output( "\tmovq %%rdi,-0x70(%%rbp)\n" );
-            output_cfi( ".cfi_rel_offset %%rdi,-112" );
-            output( "\tmovq %%r12,-0x48(%%rbp)\n" );
-            output_cfi( ".cfi_rel_offset %%r12,-72" );
-            output( "\tmovq %%r13,-0x40(%%rbp)\n" );
-            output( "\tmovq %%r14,-0x38(%%rbp)\n" );
-            output( "\tmovq %%r15,-0x30(%%rbp)\n" );
-            /* Legends of Runeterra hooks the first system call return instruction, and
-             * depends on us returning to it. Adjust the return address accordingly. */
-            output( "\tsubq $0xb,0x8(%%rbp)\n" );
-            output( "\tmovq 0x8(%%rbp),%%rbx\n" );
-            output( "\tmovq %%rbx,-0x28(%%rbp)\n" );
-            output( "\tleaq 0x10(%%rbp),%%rbx\n" );
-            output( "\tmovq %%rbx,-0x10(%%rbp)\n" );
-            output( "\tmovw %%cs,-0x20(%%rbp)\n" );
-            output( "\tmovw %%ds,-0x1e(%%rbp)\n" );
-            output( "\tmovw %%es,-0x1c(%%rbp)\n" );
-            output( "\tmovw %%fs,-0x1a(%%rbp)\n" );
-            output( "\tmovw %%ss,-0x8(%%rbp)\n" );
-            output( "\tmovw %%gs,-0x6(%%rbp)\n" );
-            output( "\tmovq %%rsp,%%r12\n" );
-            output( "\tfxsave64 (%%r12)\n" );
-            output( "\tmovq %%gs:0x30,%%rcx\n" );
-            output( "\tleaq -0x98(%%rbp),%%rbx\n" );
-            output( "\tmovq %%rbx,0x328(%%rcx)\n" );  /* amd64_thread_data()->syscall_frame */
-            output( "\tcmpq $%u,%%rax\n", count );
-            output( "\tjae 3f\n" );
-            output( "\tleaq .Lsyscall_args(%%rip),%%rcx\n" );
-            output( "\tmovzbl (%%rcx,%%rax),%%ecx\n" );
-            output( "\tsubq $0x20,%%rcx\n" );
-            output( "\tjbe 1f\n" );
-            output( "\tsubq %%rcx,%%rsp\n" );
-            output( "\tshrq $3,%%rcx\n" );
-            output( "\tleaq 0x38(%%rbp),%%rsi\n" );
-            output( "\tandq $~15,%%rsp\n\t" );
-            output( "\tmovq %%rsp,%%rdi\n" );
-            output( "\tcld\n" );
-            output( "\trep; movsq\n" );
-            output( "1:\tmovq %%r10,%%rcx\n" );
-            output( "\tsubq $0x20,%%rsp\n" );
-            output( "\tleaq .Lsyscall_table(%%rip),%%r10\n" );
-            output( "\tcallq *(%%r10,%%rax,8)\n" );
-            output( "2:\tmovq %%gs:0x30,%%rcx\n" );
-            output( "\tmovq $0,0x328(%%rcx)\n" );
-            output( "\tfxrstor64 (%%r12)\n" );
-            output( "\tmovq -0x30(%%rbp),%%r15\n" );
-            output( "\tmovq -0x38(%%rbp),%%r14\n" );
-            output( "\tmovq -0x40(%%rbp),%%r13\n" );
-            output( "\tmovq -0x48(%%rbp),%%r12\n" );
-            output_cfi( ".cfi_same_value %%r12" );
-            output( "\tmovq -0x70(%%rbp),%%rdi\n" );
-            output_cfi( ".cfi_same_value %%rdi" );
-            output( "\tmovq -0x78(%%rbp),%%rsi\n" );
-            output_cfi( ".cfi_same_value %%rsi" );
-            output( "\tmovq -0x90(%%rbp),%%rbx\n" );
-            output_cfi( ".cfi_same_value %%rbx" );
-            output( "\tleaq -0x28(%%rbp),%%rsp\n" );
-            output_cfi( ".cfi_def_cfa_register %%rsp" );
-            output_cfi( ".cfi_adjust_cfa_offset 40" );
-            output( "\tmovq (%%rbp),%%rbp\n" );
-            output_cfi( ".cfi_same_value %%rbp" );
-            output( "\tiretq\n" );
-            output( "3:\tmovl $0x%x,%%eax\n", invalid_param );
-            output( "\tjmp 2b\n" );
-            break;
-        case CPU_ARM:
-            output( "\tpush {r5-r11,lr}\n" );
-            output( "\tadd r6, sp, #40\n" );  /* stack parameters */
-            output( "\tldr r5, 6f+8\n" );
-            output( "\tcmp r4, r5\n" );
-            output( "\tbcs 5f\n" );
-            output( "\tsub sp, sp, #8\n" );
-            output( "\tmrc p15, 0, r7, c13, c0, 2\n" ); /* NtCurrentTeb() */
-            output( "\tadd r7, #0x1d8\n" );  /* arm_thread_data()->syscall_frame */
-            output( "\tmrs ip, CPSR\n" );
-            output( "\tstr ip, [sp, #4]\n" );
-            output( "\tstr sp, [r7]\n" );  /* syscall frame */
-            output( "\tldr r5, 6f+4\n");
-            if (UsePIC) output( "1:\tadd r5, pc\n");
-            output( "\tldrb r5, [r5, r4]\n" );  /* syscall args */
-            output( "\tsubs r5, #16\n" );   /* first 4 args are in registers */
-            output( "\tble 3f\n" );
-            output( "\tsub ip, sp, r5\n" );
-            output( "\tand ip, #~7\n" );
-            output( "\tmov sp, ip\n" );
-            output( "2:\tsubs r5, r5, #4\n" );
-            output( "\tldr ip, [r6, r5]\n" );
-            output( "\tstr ip, [sp, r5]\n" );
-            output( "\tbgt 2b\n" );
-            output( "3:\tldr r5, 6f\n");
-            if (UsePIC) output( "4:\tadd r5, pc\n");
-            output( "\tldr ip, [r5, r4, lsl #2]\n");  /* syscall table */
-            output( "\tblx ip\n");
-            output( "\tmov ip, #0\n" );
-            output( "\tstr ip, [r7]\n" );
-            output( "\tsub ip, r6, #40\n" );
-            output( "\tmov sp, ip\n" );
-            output( "\tpop {r5-r11,pc}\n" );
-            output( "5:\tldr r0, 6f+12\n" );
-            output( "\tpop {r5-r11,pc}\n" );
-            if (UsePIC)
-            {
-                output( "6:\t.long .Lsyscall_table-4b-%u\n", thumb_mode ? 4 : 8 );
-                output( "\t.long .Lsyscall_args-1b-%u\n", thumb_mode ? 4 : 8 );
-            }
-            else
-            {
-                output( "6:\t.long .Lsyscall_table\n" );
-                output( "\t.long .Lsyscall_args\n" );
-            }
-            output( "\t.long %u\n", count );
-            output( "\t.long 0x%x\n", invalid_param );
-            break;
-        case CPU_ARM64:
-            output( "\tcmp x8, %u\n", count );
-            output( "\tbcs 3f\n" );
-            output( "\tstp x29, x30, [sp,#-160]!\n" );
-            output_cfi( "\t.cfi_def_cfa_offset 160\n" );
-            output_cfi( "\t.cfi_offset 29, -160\n" );
-            output_cfi( "\t.cfi_offset 30, -152\n" );
-            output( "\tmov x29, sp\n" );
-            output_cfi( "\t.cfi_def_cfa_register 29\n" );
-            output( "\tstp x27, x28, [sp, #144]\n" );
-            output_cfi( "\t.cfi_offset 27, -16\n" );
-            output_cfi( "\t.cfi_offset 28, -8\n" );
-            output( "\tstp x25, x26, [sp, #128]\n" );
-            output_cfi( "\t.cfi_offset 25, -32\n" );
-            output_cfi( "\t.cfi_offset 26, -24\n" );
-            output( "\tstp x23, x24, [sp, #112]\n" );
-            output_cfi( "\t.cfi_offset 23, -48\n" );
-            output_cfi( "\t.cfi_offset 24, -40\n" );
-            output( "\tstp x21, x22, [sp, #96]\n" );
-            output_cfi( "\t.cfi_offset 21, -64\n" );
-            output_cfi( "\t.cfi_offset 22, -56\n" );
-            output( "\tstp x19, x20, [sp, #80]\n" );
-            output_cfi( "\t.cfi_offset 19, -80\n" );
-            output_cfi( "\t.cfi_offset 20, -72\n" );
-            output( "\tstp x6, x7, [sp, #64]\n" );
-            output( "\tstp x4, x5, [sp, #48]\n" );
-            output( "\tstp x2, x3, [sp, #32]\n" );
-            output( "\tstp x0, x1, [sp, #16]\n" );
-            output( "\tmov x20, x8\n" );
-            output( "\tbl %s\n", asm_name("NtCurrentTeb") );
-            output( "\tadd x19, x0, #0x2f8\n" );  /* arm64_thread_data()->syscall_frame */
-            output( "\tstr x29, [x19]\n" );
-            output( "\tldp x0, x1, [sp, #16]\n" );
-            output( "\tldp x2, x3, [sp, #32]\n" );
-            output( "\tldp x4, x5, [sp, #48]\n" );
-            output( "\tldp x6, x7, [sp, #64]\n" );
-            output( "\tadrp x16, %s\n", arm64_page(".Lsyscall_args") );
-            output( "\tadd x16, x16, #%s\n", arm64_pageoff(".Lsyscall_args") );
-            output( "\tldrb w9, [x16, x20]\n" );
-            output( "\tsubs x9, x9, #64\n" );
-            output( "\tbls 2f\n" );
-            output( "\tadd x11, x29, #176\n" );
-            output( "\tsub sp, sp, x9\n" );
-            output( "\ttbz x9, #3, 1f\n" );
-            output( "\tsub sp, sp, #8\n" );
-            output( "1:\tsub x9, x9, #8\n" );
-            output( "\tldr x10, [x11, x9]\n" );
-            output( "\tstr x10, [sp, x9]\n" );
-            output( "\tcbnz x9, 1b\n" );
-            output( "2:\tadrp x16, %s\n", arm64_page(".Lsyscall_table") );
-            output( "\tadd x16, x16, #%s\n", arm64_pageoff(".Lsyscall_table") );
-            output( "\tldr x16, [x16, x20, lsl 3]\n" );
-            output( "\tblr x16\n" );
-            output( "\tmov sp, x29\n" );
-            output( "\tstr xzr, [x19]\n" );
-            output( "\tldp x19, x20, [sp, #80]\n" );
-            output( "\tldp x21, x22, [sp, #96]\n" );
-            output( "\tldp x23, x24, [sp, #112]\n" );
-            output( "\tldp x25, x26, [sp, #128]\n" );
-            output( "\tldp x27, x28, [sp, #144]\n" );
-            output( "\tldp x29, x30, [sp], #160\n" );
-            output( "\tret\n" );
-            output( "3:\tmov x0, #0x%x\n", invalid_param & 0xffff0000 );
-            output( "\tmovk x0, #0x%x\n", invalid_param & 0x0000ffff );
-            output( "\tret\n" );
-            break;
-        default:
-            assert(0);
-        }
-        output_cfi( ".cfi_endproc" );
-        output_function_size( "__wine_syscall_dispatcher" );
+        output_syscall_dispatcher( count );
 
         output( "\t.data\n" );
         output( "\t.align %d\n", get_alignment( get_ptr_size() ) );
