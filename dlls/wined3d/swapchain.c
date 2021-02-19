@@ -400,6 +400,73 @@ HRESULT CDECL wined3d_swapchain_get_gamma_ramp(const struct wined3d_swapchain *s
     return WINED3D_OK;
 }
 
+/* The is a fallback for cases where we e.g. can't create a GL context or
+ * Vulkan swapchain for the swapchain window. */
+static void swapchain_blit_gdi(struct wined3d_swapchain *swapchain,
+        struct wined3d_context *context, const RECT *src_rect, const RECT *dst_rect)
+{
+    struct wined3d_texture *back_buffer = swapchain->back_buffers[0];
+    D3DKMT_DESTROYDCFROMMEMORY destroy_desc;
+    D3DKMT_CREATEDCFROMMEMORY create_desc;
+    const struct wined3d_format *format;
+    unsigned int row_pitch, slice_pitch;
+    HDC src_dc, dst_dc;
+    NTSTATUS status;
+    HBITMAP bitmap;
+
+    static unsigned int once;
+
+    TRACE("swapchain %p, context %p, src_rect %s, dst_rect %s.\n",
+            swapchain, context, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect));
+
+    if (!once++)
+        FIXME("Using GDI present.\n");
+
+    format = back_buffer->resource.format;
+    if (!format->ddi_format)
+    {
+        WARN("Cannot create a DC for format %s.\n", debug_d3dformat(format->id));
+        return;
+    }
+
+    wined3d_texture_load_location(back_buffer, 0, context, WINED3D_LOCATION_SYSMEM);
+    wined3d_texture_get_pitch(back_buffer, 0, &row_pitch, &slice_pitch);
+
+    create_desc.pMemory = back_buffer->resource.heap_memory;
+    create_desc.Format = format->ddi_format;
+    create_desc.Width = wined3d_texture_get_level_width(back_buffer, 0);
+    create_desc.Height = wined3d_texture_get_level_height(back_buffer, 0);
+    create_desc.Pitch = row_pitch;
+    create_desc.hDeviceDc = CreateCompatibleDC(NULL);
+    create_desc.pColorTable = NULL;
+
+    status = D3DKMTCreateDCFromMemory(&create_desc);
+    DeleteDC(create_desc.hDeviceDc);
+    if (status)
+    {
+        WARN("Failed to create DC, status %#x.\n", status);
+        return;
+    }
+
+    src_dc = create_desc.hDc;
+    bitmap = create_desc.hBitmap;
+
+    TRACE("Created source DC %p, bitmap %p for backbuffer %p.\n", src_dc, bitmap, back_buffer);
+
+    if (!(dst_dc = GetDCEx(swapchain->win_handle, 0, DCX_USESTYLE | DCX_CACHE)))
+        ERR("Failed to get destination DC.\n");
+
+    if (!BitBlt(dst_dc, dst_rect->left, dst_rect->top, dst_rect->right - dst_rect->left,
+            dst_rect->bottom - dst_rect->top, src_dc, src_rect->left, src_rect->top, SRCCOPY))
+        ERR("Failed to blit.\n");
+
+    ReleaseDC(swapchain->win_handle, dst_dc);
+    destroy_desc.hDc = src_dc;
+    destroy_desc.hBitmap = bitmap;
+    if ((status = D3DKMTDestroyDCFromMemory(&destroy_desc)))
+        ERR("Failed to destroy src dc, status %#x.\n", status);
+}
+
 /* A GL context is provided by the caller */
 static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         struct wined3d_context *context, const RECT *src_rect, const RECT *dst_rect)
@@ -522,6 +589,9 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
     swapchain_gl_set_swap_interval(swapchain, context_gl, swap_interval);
 
     TRACE("Presenting DC %p.\n", context_gl->dc);
+
+    if (context_gl->dc == swapchain_gl->backup_dc)
+        swapchain_blit_gdi(swapchain, context, src_rect, dst_rect);
 
     if (!(render_to_fbo = swapchain->render_to_fbo)
             && (src_rect->left || src_rect->top
@@ -1152,6 +1222,8 @@ static void swapchain_vk_present(struct wined3d_swapchain *swapchain, const RECT
 
     if (swapchain_vk->vk_swapchain)
         wined3d_swapchain_vk_blit(swapchain_vk, context_vk, src_rect, dst_rect, swap_interval);
+    else
+        swapchain_blit_gdi(swapchain, &context_vk->c, src_rect, dst_rect);
 
     wined3d_swapchain_vk_rotate(swapchain, context_vk);
 
