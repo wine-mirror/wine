@@ -5973,8 +5973,8 @@ if (SUCCEEDED(hr))
 
 static void test_layout_range_length(void)
 {
+    IDWriteFontCollection *collection, *collection2;
     IDWriteInlineObject *sign, *object;
-    IDWriteFontCollection *collection;
     IDWriteTypography *typography;
     DWRITE_FONT_STRETCH stretch;
     IDWriteTextLayout1 *layout1;
@@ -6304,6 +6304,14 @@ static void test_layout_range_length(void)
     range.length = ~0u;
     hr = IDWriteTextLayout_SetFontCollection(layout, NULL, range);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    range.startPosition = range.length = 0;
+    collection2 = NULL;
+    hr = IDWriteTextLayout_GetFontCollection(layout, 10, &collection2, &range);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(range.length == ~0u, "Unexpected range length %u.\n", range.length);
+    if (collection2)
+        IDWriteFontCollection_Release(collection2);
 
     IDWriteFontCollection_Release(collection);
 

@@ -3403,9 +3403,6 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontCollection(IDWriteTextLayou
 
     TRACE("%p, %u, %p, %p.\n", iface, position, collection, r);
 
-    if (position >= layout->len)
-        return S_OK;
-
     range = get_layout_range_by_pos(layout, position);
     *collection = range->collection;
     if (*collection)
