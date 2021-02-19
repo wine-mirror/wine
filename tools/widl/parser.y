@@ -2073,9 +2073,15 @@ type_t *reg_type(type_t *type, const char *name, struct namespace *namespace, in
   nt = xmalloc(sizeof(struct rtype));
   nt->name = name;
   if (is_global_namespace(namespace))
+  {
     type->c_name = name;
+    type->qualified_name = name;
+  }
   else
+  {
     type->c_name = format_namespace(namespace, "__x_", "_C", name, use_abi_namespace ? "ABI" : NULL);
+    type->qualified_name = format_namespace(namespace, "", "::", name, use_abi_namespace ? "ABI" : NULL);
+  }
   nt->type = type;
   nt->t = t;
   nt->next = namespace->type_hash[hash];

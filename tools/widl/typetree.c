@@ -51,6 +51,7 @@ type_t *make_type(enum type_type type)
     t->attrs = NULL;
     t->c_name = NULL;
     t->signature = NULL;
+    t->qualified_name = NULL;
     memset(&t->details, 0, sizeof(t->details));
     t->typestring_offset = 0;
     t->ptrdesc = 0;
@@ -85,6 +86,19 @@ const char *type_get_name(const type_t *type, enum name_type name_type)
         return type->name;
     case NAME_C:
         return type->c_name ? type->c_name : type->name;
+    }
+
+    assert(0);
+    return NULL;
+}
+
+const char *type_get_qualified_name(const type_t *type, enum name_type name_type)
+{
+    switch(name_type) {
+    case NAME_DEFAULT:
+        return type->qualified_name;
+    case NAME_C:
+        return type->c_name;
     }
 
     assert(0);
@@ -820,6 +834,7 @@ static void compute_delegate_iface_names(type_t *delegate, type_t *type, typeref
     iface->name = strmake("I%s", delegate->name);
     if (type) iface->c_name = format_parameterized_type_c_name(type, params, "I");
     else iface->c_name = format_namespace(delegate->namespace, "__x_", "_C", iface->name, use_abi_namespace ? "ABI" : NULL);
+    iface->qualified_name = format_namespace(delegate->namespace, "", "::", iface->name, use_abi_namespace ? "ABI" : NULL);
 }
 
 type_t *type_delegate_declare(char *name, struct namespace *namespace)
