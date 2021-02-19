@@ -4918,19 +4918,50 @@ static void test_sample_copier(void)
     IMFTransform_Release(copier);
 }
 
-static void sample_copier_process(IMFTransform *copier, IMFMediaBuffer *input_buffer,
-        IMFMediaBuffer *output_buffer)
+struct sample_metadata
 {
+    unsigned int flags;
+    LONGLONG duration;
+    LONGLONG time;
+};
+
+static void sample_copier_process(IMFTransform *copier, IMFMediaBuffer *input_buffer,
+        IMFMediaBuffer *output_buffer, const struct sample_metadata *md)
+{
+    static const struct sample_metadata zero_md = { 0, ~0u, ~0u };
     IMFSample *input_sample, *output_sample;
     MFT_OUTPUT_DATA_BUFFER buffer;
+    unsigned int flags;
+    LONGLONG time;
     DWORD status;
     HRESULT hr;
 
     hr = MFCreateSample(&input_sample);
     ok(hr == S_OK, "Failed to create a sample, hr %#x.\n", hr);
 
+    if (md)
+    {
+        hr = IMFSample_SetSampleFlags(input_sample, md->flags);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFSample_SetSampleTime(input_sample, md->time);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IMFSample_SetSampleDuration(input_sample, md->duration);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    }
+
     hr = MFCreateSample(&output_sample);
     ok(hr == S_OK, "Failed to create a sample, hr %#x.\n", hr);
+
+    hr = IMFSample_SetSampleFlags(output_sample, ~0u);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_SetSampleTime(output_sample, ~0u);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFSample_SetSampleDuration(output_sample, ~0u);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFSample_AddBuffer(input_sample, input_buffer);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -4947,6 +4978,18 @@ static void sample_copier_process(IMFTransform *copier, IMFMediaBuffer *input_bu
     hr = IMFTransform_ProcessOutput(copier, 0, 1, &buffer, &status);
     ok(hr == S_OK, "Failed to get output, hr %#x.\n", hr);
 
+    if (!md) md = &zero_md;
+
+    hr = IMFSample_GetSampleFlags(output_sample, &flags);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(md->flags == flags, "Unexpected flags.\n");
+    hr = IMFSample_GetSampleTime(output_sample, &time);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(md->time == time, "Unexpected time.\n");
+    hr = IMFSample_GetSampleDuration(output_sample, &time);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(md->duration == time, "Unexpected duration.\n");
+
     IMFSample_Release(input_sample);
     IMFSample_Release(output_sample);
 }
@@ -4955,6 +4998,7 @@ static void test_sample_copier_output_processing(void)
 {
     IMFMediaBuffer *input_buffer, *output_buffer;
     MFT_OUTPUT_STREAM_INFO output_info;
+    struct sample_metadata md;
     IMFMediaType *mediatype;
     IMFTransform *copier;
     DWORD max_length;
@@ -5007,7 +5051,7 @@ static void test_sample_copier_output_processing(void)
     hr = IMFMediaBuffer_SetCurrentLength(input_buffer, 4);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    sample_copier_process(copier, input_buffer, output_buffer);
+    sample_copier_process(copier, input_buffer, output_buffer, NULL);
 
     hr = IMFMediaBuffer_Lock(output_buffer, &ptr, &max_length, NULL);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -5015,6 +5059,14 @@ static void test_sample_copier_output_processing(void)
 
     hr = IMFMediaBuffer_Unlock(output_buffer);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    md.flags = 123;
+    md.time = 10;
+    md.duration = 2;
+    sample_copier_process(copier, input_buffer, output_buffer, &md);
+
+    IMFMediaBuffer_Release(input_buffer);
+    IMFMediaBuffer_Release(output_buffer);
 
     IMFMediaType_Release(mediatype);
     IMFTransform_Release(copier);
