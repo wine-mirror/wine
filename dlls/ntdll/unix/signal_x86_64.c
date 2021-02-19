@@ -34,6 +34,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -2784,6 +2785,22 @@ void signal_init_process(void)
  error:
     perror("sigaction");
     exit(1);
+}
+
+
+/**********************************************************************
+ *		signal_init_syscalls
+ */
+void *signal_init_syscalls(void)
+{
+    void *ptr;
+
+    /* sneak in a syscall dispatcher pointer at a fixed address (7ffe1000) */
+    ptr = (char *)user_shared_data + page_size;
+    anon_mmap_fixed( ptr, page_size, PROT_READ | PROT_WRITE, 0 );
+    *(void **)ptr = __wine_syscall_dispatcher;
+
+    return __wine_syscall_dispatcher;
 }
 
 
