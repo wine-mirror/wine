@@ -2889,41 +2889,26 @@ IMAGE_BASE_RELOCATION * WINAPI LdrProcessRelocationBlock( void *page, UINT count
 #elif defined(__arm__)
         case IMAGE_REL_BASED_THUMB_MOV32:
         {
-            DWORD inst = *(INT_PTR *)((char *)page + offset);
-            DWORD imm16 = ((inst << 1) & 0x0800) + ((inst << 12) & 0xf000) +
-                          ((inst >> 20) & 0x0700) + ((inst >> 16) & 0x00ff);
-            DWORD hi_delta;
+            DWORD *inst = (DWORD *)((char *)page + offset);
+            WORD lo = ((inst[0] << 1) & 0x0800) + ((inst[0] << 12) & 0xf000) +
+                      ((inst[0] >> 20) & 0x0700) + ((inst[0] >> 16) & 0x00ff);
+            WORD hi = ((inst[1] << 1) & 0x0800) + ((inst[1] << 12) & 0xf000) +
+                      ((inst[1] >> 20) & 0x0700) + ((inst[1] >> 16) & 0x00ff);
+            DWORD imm = MAKELONG( lo, hi ) + delta;
 
-            if ((inst & 0x8000fbf0) != 0x0000f240)
-                ERR("wrong Thumb2 instruction %08x, expected MOVW\n", inst);
+            lo = LOWORD( imm );
+            hi = HIWORD( imm );
 
-            imm16 += LOWORD(delta);
-            hi_delta = HIWORD(delta) + HIWORD(imm16);
-            *(INT_PTR *)((char *)page + offset) = (inst & 0x8f00fbf0) + ((imm16 >> 1) & 0x0400) +
-                                                  ((imm16 >> 12) & 0x000f) +
-                                                  ((imm16 << 20) & 0x70000000) +
-                                                  ((imm16 << 16) & 0xff0000);
+            if ((inst[0] & 0x8000fbf0) != 0x0000f240 || (inst[1] & 0x8000fbf0) != 0x0000f2c0)
+                ERR("wrong Thumb2 instruction @%p %08x:%08x, expected MOVW/MOVT\n",
+                    inst, inst[0], inst[1] );
 
-            if (hi_delta != 0)
-            {
-                inst = *(INT_PTR *)((char *)page + offset + 4);
-                imm16 = ((inst << 1) & 0x0800) + ((inst << 12) & 0xf000) +
-                        ((inst >> 20) & 0x0700) + ((inst >> 16) & 0x00ff);
-
-                if ((inst & 0x8000fbf0) != 0x0000f2c0)
-                    ERR("wrong Thumb2 instruction %08x, expected MOVT\n", inst);
-
-                imm16 += hi_delta;
-                if (imm16 > 0xffff)
-                    ERR("resulting immediate value won't fit: %08x\n", imm16);
-                *(INT_PTR *)((char *)page + offset + 4) = (inst & 0x8f00fbf0) +
-                                                          ((imm16 >> 1) & 0x0400) +
-                                                          ((imm16 >> 12) & 0x000f) +
-                                                          ((imm16 << 20) & 0x70000000) +
-                                                          ((imm16 << 16) & 0xff0000);
-            }
-        }
+            inst[0] = (inst[0] & 0x8f00fbf0) + ((lo >> 1) & 0x0400) + ((lo >> 12) & 0x000f) +
+                                               ((lo << 20) & 0x70000000) + ((lo << 16) & 0xff0000);
+            inst[1] = (inst[1] & 0x8f00fbf0) + ((hi >> 1) & 0x0400) + ((hi >> 12) & 0x000f) +
+                                               ((hi << 20) & 0x70000000) + ((hi << 16) & 0xff0000);
             break;
+        }
 #endif
         default:
             FIXME("Unknown/unsupported fixup type %x.\n", type);
