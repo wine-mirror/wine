@@ -1710,12 +1710,9 @@ HRESULT wined3d_swapchain_vk_init(struct wined3d_swapchain_vk *swapchain_vk, str
     }
 
     if (FAILED(hr = wined3d_swapchain_vk_create_vulkan_swapchain(swapchain_vk)))
-    {
-        wined3d_swapchain_cleanup(&swapchain_vk->s);
-        return hr;
-    }
+        WARN("Failed to create a Vulkan swapchain, hr %#x.\n", hr);
 
-    return hr;
+    return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_swapchain_create(struct wined3d_device *device,
