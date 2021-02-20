@@ -20,17 +20,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
 #include "gst_private.h"
 #include "gst_guids.h"
 
 #include "vfwmsgs.h"
 #include "amvideo.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include <assert.h>
+#include <limits.h>
 
 #include "dvdmedia.h"
 #include "mmreg.h"
@@ -1016,7 +1015,7 @@ static BOOL decodebin_parser_filter_init_gst(struct parser *filter)
     stream_count = unix_funcs->wg_parser_get_stream_count(parser);
     for (i = 0; i < stream_count; ++i)
     {
-        sprintfW(source_name, formatW, i);
+        swprintf(source_name, ARRAY_SIZE(source_name), formatW, i);
         if (!create_pin(filter, unix_funcs->wg_parser_get_stream(parser, i), source_name))
             return FALSE;
     }
@@ -1677,7 +1676,7 @@ static BOOL avi_splitter_filter_init_gst(struct parser *filter)
     stream_count = unix_funcs->wg_parser_get_stream_count(parser);
     for (i = 0; i < stream_count; ++i)
     {
-        sprintfW(source_name, formatW, i);
+        swprintf(source_name, ARRAY_SIZE(source_name), formatW, i);
         if (!create_pin(filter, unix_funcs->wg_parser_get_stream(parser, i), source_name))
             return FALSE;
     }

@@ -18,10 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
-#include <gst/gst.h>
-
 #include "gst_private.h"
 
 #include <assert.h>
@@ -1083,7 +1079,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
 {
     IMFStreamDescriptor **descriptors = NULL;
     struct media_source *object;
-    gint64 total_pres_time = 0;
+    UINT64 total_pres_time = 0;
     struct wg_parser *parser;
     DWORD bytestream_caps;
     uint64_t file_size;

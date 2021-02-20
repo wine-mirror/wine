@@ -25,9 +25,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <gst/gst.h>
-#include <gst/video/video.h>
-#include <gst/audio/audio.h>
 
 #define COBJMACROS
 #define NONAMELESSSTRUCT

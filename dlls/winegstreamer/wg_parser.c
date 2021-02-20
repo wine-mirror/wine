@@ -29,7 +29,11 @@
 #define WIN32_NO_STATUS
 #include "gst_private.h"
 #include "winternl.h"
+
 #include <assert.h>
+#include <gst/gst.h>
+#include <gst/video/video.h>
+#include <gst/audio/audio.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(gstreamer);
 

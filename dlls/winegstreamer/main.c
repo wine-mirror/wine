@@ -19,9 +19,9 @@
  */
 
 #include "gst_private.h"
+#include "winternl.h"
 #include "rpcproxy.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 #include "initguid.h"
 #include "gst_guids.h"
