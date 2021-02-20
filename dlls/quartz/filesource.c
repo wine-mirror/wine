@@ -340,7 +340,7 @@ static void async_reader_destroy(struct strmbase_filter *iface)
         DeleteCriticalSection(&filter->sample_cs);
         strmbase_source_cleanup(&filter->source);
 
-        CoTaskMemFree(filter->pszFileName);
+        free(filter->pszFileName);
         FreeMediaType(&filter->mt);
     }
 
