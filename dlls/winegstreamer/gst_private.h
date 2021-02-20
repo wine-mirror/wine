@@ -150,17 +150,18 @@ struct wg_parser_event
         struct
         {
             /* pts and duration are in 100-nanosecond units. */
-            uint64_t pts, duration;
+            ULONGLONG pts, duration;
             uint32_t size;
             bool discontinuity, preroll, delta, has_pts, has_duration;
         } buffer;
         struct
         {
-            uint64_t position, stop;
-            double rate;
+            ULONGLONG position, stop;
+            DOUBLE rate;
         } segment;
     } u;
 };
+C_ASSERT(sizeof(struct wg_parser_event) == 40);
 
 struct unix_funcs
 {
