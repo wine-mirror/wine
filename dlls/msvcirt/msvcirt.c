@@ -4811,6 +4811,66 @@ stdiobuf* __thiscall stdiostream_rdbuf(const iostream *this)
     return (stdiobuf*) istream_get_ios(&this->base1)->sb;
 }
 
+/* ??0fstream@@QAE@ABV0@@Z */
+/* ??0fstream@@QEAA@AEBV0@@Z */
+DEFINE_THISCALL_WRAPPER(fstream_copy_ctor, 12)
+iostream* __thiscall fstream_copy_ctor(iostream *this, const iostream *copy, BOOL virt_init)
+{
+    TRACE("(%p %p %d)\n", this, copy, virt_init);
+    iostream_internal_copy_ctor(this, copy, &MSVCP_fstream_vtable, virt_init);
+    return this;
+}
+
+/* ??0fstream@@QAE@HPADH@Z */
+/* ??0fstream@@QEAA@HPEADH@Z */
+DEFINE_THISCALL_WRAPPER(fstream_buffer_ctor, 20)
+iostream* __thiscall fstream_buffer_ctor(iostream *this, filedesc fd, char *buffer, int length, BOOL virt_init)
+{
+    ios *base;
+    filebuf *fb = MSVCRT_operator_new(sizeof(filebuf));
+
+    TRACE("(%p %d %p %d %d)\n", this, fd, buffer, length, virt_init);
+
+    if (!fb) {
+        FIXME("out of memory\n");
+        return NULL;
+    }
+
+    filebuf_fd_reserve_ctor(fb, fd, buffer, length);
+
+    iostream_internal_sb_ctor(this, &fb->base, &MSVCP_fstream_vtable, virt_init);
+
+    base = istream_get_ios(&this->base1);
+    base->delbuf = 1;
+
+    return this;
+}
+
+/* ??0fstream@@QAE@H@Z */
+/* ??0fstream@@QEAA@H@Z */
+DEFINE_THISCALL_WRAPPER(fstream_fd_ctor, 12)
+iostream* __thiscall fstream_fd_ctor(iostream *this, filedesc fd, BOOL virt_init)
+{
+    ios *base;
+    filebuf *fb = MSVCRT_operator_new(sizeof(filebuf));
+
+    TRACE("(%p %d %d)\n", this, fd, virt_init);
+
+    if (!fb) {
+        FIXME("out of memory\n");
+        return NULL;
+    }
+
+    filebuf_fd_ctor(fb, fd);
+
+    iostream_internal_sb_ctor(this, &fb->base, &MSVCP_fstream_vtable, virt_init);
+
+    base = istream_get_ios(&this->base1);
+    base->delbuf = 1;
+
+    return this;
+}
+
 /* ??0fstream@@QAE@PBDHH@Z */
 /* ??0fstream@@QEAA@PEBDHH@Z */
 DEFINE_THISCALL_WRAPPER(fstream_open_ctor, 20)
@@ -4836,6 +4896,103 @@ iostream* __thiscall fstream_open_ctor(iostream *this, const char *name, ios_ope
     if (filebuf_open(fb, name, mode, protection) == NULL)
         base->state |= IOSTATE_failbit;
     return this;
+}
+
+/* ??0fstream@@QAE@XZ */
+/* ??0fstream@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(fstream_ctor, 8)
+iostream* __thiscall fstream_ctor(iostream *this, BOOL virt_init)
+{
+    return fstream_fd_ctor(this, -1, virt_init);
+}
+
+/* ?rdbuf@fstream@@QBEPAVfilebuf@@XZ */
+/* ?rdbuf@fstream@@QEBAPEAVfilebuf@@XZ */
+DEFINE_THISCALL_WRAPPER(fstream_rdbuf, 4)
+filebuf* __thiscall fstream_rdbuf(const iostream *this)
+{
+    TRACE("(%p)\n", this);
+    return (filebuf*) istream_get_ios(&this->base1)->sb;
+}
+
+/* ?fd@fstream@@QBEHXZ */
+/* ?fd@fstream@@QEBAHXZ */
+DEFINE_THISCALL_WRAPPER(fstream_fd, 4)
+filedesc __thiscall fstream_fd(iostream *this)
+{
+    TRACE("(%p)\n", this);
+    return filebuf_fd(fstream_rdbuf(this));
+}
+
+/* ?attach@fstream@@QAEXH@Z */
+/* ?attach@fstream@@QEAAXH@Z */
+DEFINE_THISCALL_WRAPPER(fstream_attach, 8)
+void __thiscall fstream_attach(iostream *this, filedesc fd)
+{
+    ios *base = istream_get_ios(&this->base1);
+    TRACE("(%p %d)\n", this, fd);
+    if (filebuf_attach(fstream_rdbuf(this), fd) == NULL)
+        ios_clear(base, base->state | IOSTATE_failbit);
+}
+
+/* ?close@fstream@@QAEXXZ */
+/* ?close@fstream@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(fstream_close, 4)
+void __thiscall fstream_close(iostream *this)
+{
+    ios *base = istream_get_ios(&this->base1);
+    TRACE("(%p)\n", this);
+    if (filebuf_close(fstream_rdbuf(this)) == NULL)
+        ios_clear(base, base->state | IOSTATE_failbit);
+    else
+        ios_clear(base, IOSTATE_goodbit);
+}
+
+/* ?is_open@fstream@@QBEHXZ */
+/* ?is_open@fstream@@QEBAHXZ */
+DEFINE_THISCALL_WRAPPER(fstream_is_open, 4)
+int __thiscall fstream_is_open(const iostream *this)
+{
+    TRACE("(%p)\n", this);
+    return filebuf_is_open(fstream_rdbuf(this));
+}
+
+/* ?open@fstream@@QAEXPBDHH@Z */
+/* ?open@fstream@@QEAAXPEBDHH@Z */
+DEFINE_THISCALL_WRAPPER(fstream_open, 16)
+void __thiscall fstream_open(iostream *this, const char *name, ios_open_mode mode, int protection)
+{
+    ios *base = istream_get_ios(&this->base1);
+    TRACE("(%p %s %d %d)\n", this, name, mode, protection);
+    if (filebuf_open(fstream_rdbuf(this), name, mode|OPENMODE_out, protection) == NULL)
+        ios_clear(base, base->state | IOSTATE_failbit);
+}
+
+/* ?setbuf@fstream@@QAEPAVstreambuf@@PADH@Z */
+/* ?setbuf@fstream@@QEAAPEAVstreambuf@@PEADH@Z */
+DEFINE_THISCALL_WRAPPER(fstream_setbuf, 12)
+streambuf* __thiscall fstream_setbuf(iostream *this, char *buffer, int length)
+{
+    ios *base = istream_get_ios(&this->base1);
+    filebuf* fb = fstream_rdbuf(this);
+
+    TRACE("(%p %p %d)\n", this, buffer, length);
+
+    if (filebuf_is_open(fb)) {
+        ios_clear(base, base->state | IOSTATE_failbit);
+        return NULL;
+    }
+
+    return filebuf_setbuf(fb, buffer, length);
+}
+
+/* ?setmode@fstream@@QAEHH@Z */
+/* ?setmode@fstream@@QEAAHH@Z */
+DEFINE_THISCALL_WRAPPER(fstream_setmode, 8)
+int __thiscall fstream_setmode(iostream *this, int mode)
+{
+    TRACE("(%p %d)\n", this, mode);
+    return filebuf_setmode(fstream_rdbuf(this), mode);
 }
 
 /* ??0Iostream_init@@QAE@AAVios@@H@Z */
