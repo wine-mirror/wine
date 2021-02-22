@@ -30,25 +30,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;    /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        /* TODO: Initialization */
-        DisableThreadLibraryCalls(hinstDLL);
-        break;
-    }
-
-    return TRUE;
-}
-
-
 static HRESULT WINAPI DPWSCB_EnumSessions( LPDPSP_ENUMSESSIONSDATA data )
 {
     FIXME( "(%p,%d,%p,%u) stub\n",
