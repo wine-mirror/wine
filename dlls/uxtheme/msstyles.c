@@ -46,8 +46,6 @@ static BOOL MSSTYLES_GetNextToken(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LP
 static void MSSTYLES_ParseThemeIni(PTHEME_FILE tf, BOOL setMetrics);
 static HRESULT MSSTYLES_GetFont (LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LOGFONTW* logfont);
 
-extern int alphaBlendMode;
-
 #define MSSTYLES_VERSION 0x0003
 
 static PTHEME_FILE tfActiveTheme;
