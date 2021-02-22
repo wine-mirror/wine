@@ -32,20 +32,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dwmapi);
 
 
-/* At process attach */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
-{
-    switch(fdwReason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( hInstDLL );
-        break;
-    }
-    return TRUE;
-}
-
 /**********************************************************************
  *           DwmIsCompositionEnabled         (DWMAPI.@)
  */
