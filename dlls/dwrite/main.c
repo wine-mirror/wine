@@ -1550,7 +1550,7 @@ static HRESULT WINAPI dwritefactory4_TranslateColorGlyphRun(IDWriteFactory7 *ifa
     return E_NOTIMPL;
 }
 
-static HRESULT compute_glyph_origins(DWRITE_GLYPH_RUN const *run, DWRITE_MEASURING_MODE measuring_mode,
+HRESULT compute_glyph_origins(DWRITE_GLYPH_RUN const *run, DWRITE_MEASURING_MODE measuring_mode,
     D2D1_POINT_2F baseline_origin, DWRITE_MATRIX const *transform, D2D1_POINT_2F *origins)
 {
     struct dwrite_fontface *font_obj;

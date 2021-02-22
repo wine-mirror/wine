@@ -5918,10 +5918,7 @@ float fontface_get_scaled_design_advance(struct dwrite_fontface *fontface, DWRIT
 HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWriteGlyphRunAnalysis **ret)
 {
     struct dwrite_glyphrunanalysis *analysis;
-    struct dwrite_fontface *fontface;
-    D2D_POINT_2F origin;
-    FLOAT rtl_factor;
-    UINT32 i;
+    unsigned int i;
 
     *ret = NULL;
 
@@ -5977,57 +5974,13 @@ HRESULT create_glyphrunanalysis(const struct glyphrunanalysis_desc *desc, IDWrit
     }
 
     analysis->run.glyphIndices = analysis->glyphs;
-
-    rtl_factor = desc->run->bidiLevel & 1 ? -1.0f : 1.0f;
-
     memcpy(analysis->glyphs, desc->run->glyphIndices, desc->run->glyphCount*sizeof(*desc->run->glyphIndices));
 
-    fontface = unsafe_impl_from_IDWriteFontFace(desc->run->fontFace);
-
-    origin.x = desc->origin.x;
-    origin.y = desc->origin.y;
-    for (i = 0; i < desc->run->glyphCount; ++i)
+    compute_glyph_origins(desc->run, desc->measuring_mode, desc->origin, desc->transform, analysis->origins);
+    if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
     {
-        float advance;
-
-        /* Use nominal advances if not provided by caller. */
-        if (desc->run->glyphAdvances)
-            advance = rtl_factor * desc->run->glyphAdvances[i];
-        else
-            advance = rtl_factor * fontface_get_scaled_design_advance(fontface, desc->measuring_mode,
-                    desc->run->fontEmSize, 1.0f, desc->transform, desc->run->glyphIndices[i], desc->run->isSideways);
-
-        analysis->origins[i] = origin;
-        if (desc->run->bidiLevel & 1)
-        {
-            if (desc->run->isSideways)
-                analysis->origins[i].y += advance;
-            else
-                analysis->origins[i].x += advance;
-        }
-
-        /* Offsets are optional, appled to pre-transformed origin. */
-        if (desc->run->glyphOffsets) {
-            FLOAT advanceoffset = rtl_factor * desc->run->glyphOffsets[i].advanceOffset;
-            FLOAT ascenderoffset = -desc->run->glyphOffsets[i].ascenderOffset;
-
-            if (desc->run->isSideways) {
-                analysis->origins[i].x += ascenderoffset;
-                analysis->origins[i].y += advanceoffset;
-            }
-            else {
-                analysis->origins[i].x += advanceoffset;
-                analysis->origins[i].y += ascenderoffset;
-            }
-        }
-
-        if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
-            transform_point(analysis->origins + i, &analysis->m);
-
-        if (desc->run->isSideways)
-            origin.y += advance;
-        else
-            origin.x += advance;
+        for (i = 0; i < desc->run->glyphCount; ++i)
+            transform_point(&analysis->origins[i], &analysis->m);
     }
 
     *ret = &analysis->IDWriteGlyphRunAnalysis_iface;

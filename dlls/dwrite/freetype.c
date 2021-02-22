@@ -488,8 +488,8 @@ HRESULT freetype_get_glyphrun_outline(IDWriteFontFace5 *fontface, float emSize, 
     scaler.y_res = 0;
 
     EnterCriticalSection(&freetype_cs);
-    if (pFTC_Manager_LookupSize(cache_manager, &scaler, &size) == 0) {
-        float rtl_factor = is_rtl ? -1.0f : 1.0f;
+    if (pFTC_Manager_LookupSize(cache_manager, &scaler, &size) == 0)
+    {
         D2D1_POINT_2F origin;
         unsigned int i;
 
@@ -501,7 +501,6 @@ HRESULT freetype_get_glyphrun_outline(IDWriteFontFace5 *fontface, float emSize, 
                 FLOAT ft_advance = size->face->glyph->metrics.horiAdvance >> 6;
                 FT_Outline *outline = &size->face->glyph->outline;
                 D2D1_POINT_2F glyph_origin;
-                float advance;
                 FT_Matrix m;
 
                 if (simulations & DWRITE_FONT_SIMULATIONS_BOLD)
@@ -514,25 +513,32 @@ HRESULT freetype_get_glyphrun_outline(IDWriteFontFace5 *fontface, float emSize, 
 
                 pFT_Outline_Transform(outline, &m);
 
-                if (advances)
-                    advance = rtl_factor * advances[i];
-                else
-                    advance = rtl_factor * ft_advance;
-
                 glyph_origin = origin;
-                if (is_rtl)
-                    glyph_origin.x += advance;
 
-                /* glyph offsets act as current glyph adjustment */
-                if (offsets)
+                if (is_rtl)
                 {
-                    glyph_origin.x += rtl_factor * offsets[i].advanceOffset;
-                    glyph_origin.y -= offsets[i].ascenderOffset;
+                    glyph_origin.x -= ft_advance;
+
+                    if (offsets)
+                    {
+                        glyph_origin.x -= offsets[i].advanceOffset;
+                        glyph_origin.y -= offsets[i].ascenderOffset;
+                    }
+
+                    origin.x -= advances ? advances[i] : ft_advance;
+                }
+                else
+                {
+                    if (offsets)
+                    {
+                        glyph_origin.x += offsets[i].advanceOffset;
+                        glyph_origin.y -= offsets[i].ascenderOffset;
+                    }
+
+                    origin.x += advances ? advances[i] : ft_advance;
                 }
 
                 decompose_outline(outline, glyph_origin, sink);
-
-                origin.x += advance;
             }
         }
     }
