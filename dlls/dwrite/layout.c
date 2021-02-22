@@ -1144,6 +1144,82 @@ static HRESULT layout_shape_get_glyphs(struct dwrite_textlayout *layout, struct 
     return hr;
 }
 
+static struct layout_range_spacing *layout_get_next_spacing_range(struct dwrite_textlayout *layout,
+        struct layout_range_spacing *cur)
+{
+    return (struct layout_range_spacing *)LIST_ENTRY(list_next(&layout->spacing, &cur->h.entry),
+            struct layout_range_header, entry);
+}
+
+static HRESULT layout_shape_apply_character_spacing(struct dwrite_textlayout *layout, struct shaping_context *context)
+{
+    struct regular_layout_run *run = context->run;
+    struct layout_range_spacing *first = NULL, *last = NULL, *cur;
+    unsigned int i, length, pos, start, end, g0, glyph_count;
+    struct layout_range_header *h;
+    UINT16 *clustermap;
+
+    LIST_FOR_EACH_ENTRY(h, &layout->spacing, struct layout_range_header, entry)
+    {
+        if ((h->range.startPosition >= run->descr.textPosition &&
+                h->range.startPosition <= run->descr.textPosition + run->descr.stringLength) ||
+            (run->descr.textPosition >= h->range.startPosition &&
+                run->descr.textPosition <= h->range.startPosition + h->range.length))
+        {
+            if (!first) first = last = (struct layout_range_spacing *)h;
+        }
+        else if (last) break;
+    }
+    if (!first) return S_OK;
+
+    if (!(clustermap = heap_calloc(run->descr.stringLength, sizeof(*clustermap)))) return E_OUTOFMEMORY;
+
+    pos = run->descr.textPosition;
+
+    for (cur = first;; cur = layout_get_next_spacing_range(layout, cur))
+    {
+        float leading, trailing;
+
+        /* The range current spacing settings apply to. */
+        start = max(pos, cur->h.range.startPosition);
+        pos = end = min(pos + run->descr.stringLength, cur->h.range.startPosition + cur->h.range.length);
+
+        /* Back to run-relative index. */
+        start -= run->descr.textPosition;
+        end -= run->descr.textPosition;
+
+        length = end - start;
+
+        g0 = run->descr.clusterMap[start];
+
+        for (i = 0; i < length; ++i)
+            clustermap[i] = run->descr.clusterMap[start + i] - run->descr.clusterMap[start];
+
+        glyph_count = (end < run->descr.stringLength ? run->descr.clusterMap[end] + 1 : run->glyphcount) - g0;
+
+        /* There is no direction argument for spacing interface, we have to swap arguments here to get desired output. */
+        if (run->run.bidiLevel & 1)
+        {
+            leading = cur->trailing;
+            trailing = cur->leading;
+        }
+        else
+        {
+            leading = cur->leading;
+            trailing = cur->trailing;
+        }
+        IDWriteTextAnalyzer2_ApplyCharacterSpacing(context->analyzer, leading, trailing, cur->min_advance,
+                length, glyph_count, clustermap, &run->advances[g0], &run->offsets[g0], &context->glyph_props[g0],
+                &run->advances[g0], &run->offsets[g0]);
+
+        if (cur == last) break;
+    }
+
+    heap_free(clustermap);
+
+    return S_OK;
+}
+
 static HRESULT layout_shape_get_positions(struct dwrite_textlayout *layout, struct shaping_context *context)
 {
     struct regular_layout_run *run = context->run;
@@ -1175,6 +1251,9 @@ static HRESULT layout_shape_get_positions(struct dwrite_textlayout *layout, stru
         memset(run->offsets, 0, run->glyphcount * sizeof(*run->offsets));
         WARN("%s: failed to get glyph placement info, hr %#x.\n", debugstr_rundescr(&run->descr), hr);
     }
+
+    if (SUCCEEDED(hr))
+        hr = layout_shape_apply_character_spacing(layout, context);
 
     run->run.glyphAdvances = run->advances;
     run->run.glyphOffsets = run->offsets;

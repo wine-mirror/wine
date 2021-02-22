@@ -2121,8 +2121,8 @@ static void test_GetClusterMetrics(void)
         hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics2, ARRAY_SIZE(metrics2), &count);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(count == 4, "got %u\n", count);
-        for (i = 0; i < count; i++) {
-todo_wine
+        for (i = 0; i < count; ++i)
+        {
             ok(metrics2[i].width > metrics[i].width, "%u: got width %.2f, was %.2f\n", i, metrics2[i].width,
                 metrics[i].width);
             ok(metrics2[i].length == 1, "%u: got length %u\n", i, metrics2[i].length);
