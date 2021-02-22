@@ -428,7 +428,7 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
     NTSTATUS status = send_debug_event( rec, context, first_chance );
 
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
-        NtSetContextThread( GetCurrentThread(), context );
+        return NtContinue( context, FALSE );
 
     if (first_chance) call_user_exception_dispatcher( rec, context, pKiUserExceptionDispatcher );
 
