@@ -1534,7 +1534,17 @@ static void output_syscall_dispatcher( int count, const char *variant )
             output( "\tmovq %%rdx,0x200(%%r12)\n" );
             output( "\tmovq %%rdx,0x208(%%r12)\n" );
             output( "\tmovq %%rdx,0x210(%%r12)\n" );
-            output( "\txsave64 (%%r12)\n" );
+            if (!strcmp( variant, "_xsavec" ))
+            {
+                output( "\tmovq %%rdx,0x218(%%r12)\n" );
+                output( "\tmovq %%rdx,0x220(%%r12)\n" );
+                output( "\tmovq %%rdx,0x228(%%r12)\n" );
+                output( "\tmovq %%rdx,0x230(%%r12)\n" );
+                output( "\tmovq %%rdx,0x238(%%r12)\n" );
+                output( "\txsavec64 (%%r12)\n" );
+            }
+            else
+                output( "\txsave64 (%%r12)\n" );
             output( "\tmovq %%rsi,%%rdx\n" );
         }
         output( "\tmovq %%gs:0x30,%%rcx\n" );
@@ -1740,6 +1750,7 @@ void output_syscalls( DLLSPEC *spec )
         {
         case CPU_x86_64:
             output_syscall_dispatcher( count, "_xsave" );
+            output_syscall_dispatcher( count, "_xsavec" );
             break;
         default:
             break;

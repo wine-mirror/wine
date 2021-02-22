@@ -305,6 +305,12 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
             if (regs3[1] & (1 << 5)) info->FeatureSet |= CPU_FEATURE_AVX2;
         }
 
+        if (info->FeatureSet & CPU_FEATURE_XSAVE)
+        {
+            do_cpuid( 0x0000000d, regs3 ); /* get XSAVE details */
+            if (regs3[0] & 2) info->FeatureSet |= CPU_FEATURE_XSAVEC;
+        }
+
         if (regs[1] == AUTH && regs[3] == ENTI && regs[2] == CAMD)
         {
             info->Level = (regs2[0] >> 8) & 0xf; /* family */

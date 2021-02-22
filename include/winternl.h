@@ -1754,6 +1754,7 @@ typedef struct _SYSTEM_CPU_INFORMATION {
 
 /* FIXME: following values are made up, actual flags are unknown */
 #define CPU_FEATURE_SSSE3         0x00008000   /* SSSE3 instructions */
+#define CPU_FEATURE_XSAVEC        0x00400000   /* XSAVEC instructions */
 #define CPU_FEATURE_SSE41         0x01000000   /* SSE41 instructions */
 #define CPU_FEATURE_SSE42         0x02000000   /* SSE42 instructions */
 #define CPU_FEATURE_AVX           0x40000000   /* AVX instructions */

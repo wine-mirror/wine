@@ -2814,9 +2814,12 @@ void *signal_init_syscalls(void)
     void *ptr, *syscall_dispatcher;
 
     extern void __wine_syscall_dispatcher_xsave(void) DECLSPEC_HIDDEN;
+    extern void __wine_syscall_dispatcher_xsavec(void) DECLSPEC_HIDDEN;
 
     NtQuerySystemInformation( SystemCpuInformation, &cpu_info, sizeof(cpu_info), NULL );
-    if (cpu_info.FeatureSet & CPU_FEATURE_XSAVE)
+    if (cpu_info.FeatureSet & CPU_FEATURE_XSAVEC)
+        syscall_dispatcher = __wine_syscall_dispatcher_xsavec;
+    else if (cpu_info.FeatureSet & CPU_FEATURE_XSAVE)
         syscall_dispatcher = __wine_syscall_dispatcher_xsave;
     else
         syscall_dispatcher = __wine_syscall_dispatcher;
