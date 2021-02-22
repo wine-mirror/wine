@@ -1,6 +1,6 @@
 MODULE = dhcpcsvc.dll
 IMPORTLIB = dhcpcsvc
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = dhcpcsvc.c
