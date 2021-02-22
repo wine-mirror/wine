@@ -115,20 +115,3 @@ DWORD WINAPI ClusterEnum(HCLUSENUM hEnum, DWORD dwIndex, LPDWORD lpdwType, LPWST
 
     return ERROR_NO_MORE_ITEMS;
 }
-
-/***********************************************************************
- *             DllMain   (CLUSAPI.@)
- *
- */
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    switch(fdwReason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( hinstDLL );
-        break;
-    }
-    return TRUE;
-}
