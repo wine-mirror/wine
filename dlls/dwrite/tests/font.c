@@ -8468,7 +8468,6 @@ static void test_ComputeGlyphOrigins(void)
         ok(hr == S_OK, "%u: failed to compute glyph origins, hr %#x.\n", i, hr);
         for (j = 0; j < run.glyphCount; ++j)
         {
-        todo_wine_if(run.bidiLevel & 1)
             ok(!memcmp(&origins[j], &expected_origins[j], sizeof(origins[j])),
                     "%u: unexpected origin[%u] (%f, %f) - (%f, %f).\n", i, j, origins[j].x, origins[j].y,
                     expected_origins[j].x, expected_origins[j].y);
