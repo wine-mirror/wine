@@ -790,7 +790,7 @@ static void layout_get_font_height(FLOAT emsize, DWRITE_FONT_METRICS *fontmetric
 
 static HRESULT layout_itemize(struct dwrite_textlayout *layout)
 {
-    IDWriteTextAnalyzer *analyzer;
+    IDWriteTextAnalyzer2 *analyzer;
     struct layout_range *range;
     struct layout_run *r;
     HRESULT hr = S_OK;
@@ -818,14 +818,14 @@ static HRESULT layout_itemize(struct dwrite_textlayout *layout)
         }
 
         /* Initial splitting by script. */
-        hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, (IDWriteTextAnalysisSource *)&layout->IDWriteTextAnalysisSource1_iface,
+        hr = IDWriteTextAnalyzer2_AnalyzeScript(analyzer, (IDWriteTextAnalysisSource *)&layout->IDWriteTextAnalysisSource1_iface,
                 range->h.range.startPosition, get_clipped_range_length(layout, range),
                 (IDWriteTextAnalysisSink *)&layout->IDWriteTextAnalysisSink1_iface);
         if (FAILED(hr))
             break;
 
         /* Splitting further by bidi levels. */
-        hr = IDWriteTextAnalyzer_AnalyzeBidi(analyzer, (IDWriteTextAnalysisSource *)&layout->IDWriteTextAnalysisSource1_iface,
+        hr = IDWriteTextAnalyzer2_AnalyzeBidi(analyzer, (IDWriteTextAnalysisSource *)&layout->IDWriteTextAnalysisSource1_iface,
                 range->h.range.startPosition, get_clipped_range_length(layout, range),
                 (IDWriteTextAnalysisSink *)&layout->IDWriteTextAnalysisSink1_iface);
         if (FAILED(hr))
@@ -962,7 +962,7 @@ fatal:
 
 struct shaping_context
 {
-    IDWriteTextAnalyzer *analyzer;
+    IDWriteTextAnalyzer2 *analyzer;
     struct regular_layout_run *run;
     DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props;
     DWRITE_SHAPING_TEXT_PROPERTIES *text_props;
@@ -1109,7 +1109,7 @@ static HRESULT layout_shape_get_glyphs(struct dwrite_textlayout *layout, struct 
 
     for (;;)
     {
-        hr = IDWriteTextAnalyzer_GetGlyphs(context->analyzer, run->descr.string, run->descr.stringLength, run->run.fontFace,
+        hr = IDWriteTextAnalyzer2_GetGlyphs(context->analyzer, run->descr.string, run->descr.stringLength, run->run.fontFace,
                 run->run.isSideways, run->run.bidiLevel & 1, &run->sa, run->descr.localeName, NULL /* FIXME */,
                 (const DWRITE_TYPOGRAPHIC_FEATURES **)context->user_features.features, context->user_features.range_lengths,
                 context->user_features.range_count, max_count, run->clustermap, context->text_props, run->glyphs,
@@ -1156,14 +1156,14 @@ static HRESULT layout_shape_get_positions(struct dwrite_textlayout *layout, stru
 
     /* Get advances and offsets. */
     if (is_layout_gdi_compatible(layout))
-        hr = IDWriteTextAnalyzer_GetGdiCompatibleGlyphPlacements(context->analyzer, run->descr.string, run->descr.clusterMap,
+        hr = IDWriteTextAnalyzer2_GetGdiCompatibleGlyphPlacements(context->analyzer, run->descr.string, run->descr.clusterMap,
                 context->text_props, run->descr.stringLength, run->run.glyphIndices, context->glyph_props, run->glyphcount,
                 run->run.fontFace, run->run.fontEmSize, layout->ppdip, &layout->transform,
                 layout->measuringmode == DWRITE_MEASURING_MODE_GDI_NATURAL, run->run.isSideways, run->run.bidiLevel & 1,
                 &run->sa, run->descr.localeName, (const DWRITE_TYPOGRAPHIC_FEATURES **)context->user_features.features,
                 context->user_features.range_lengths, context->user_features.range_count, run->advances, run->offsets);
     else
-        hr = IDWriteTextAnalyzer_GetGlyphPlacements(context->analyzer, run->descr.string, run->descr.clusterMap,
+        hr = IDWriteTextAnalyzer2_GetGlyphPlacements(context->analyzer, run->descr.string, run->descr.clusterMap,
                 context->text_props, run->descr.stringLength, run->run.glyphIndices, context->glyph_props, run->glyphcount,
                 run->run.fontFace, run->run.fontEmSize, run->run.isSideways, run->run.bidiLevel & 1, &run->sa,
                 run->descr.localeName, (const DWRITE_TYPOGRAPHIC_FEATURES **)context->user_features.features,
@@ -1302,8 +1302,9 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
         return S_OK;
 
     /* nominal breakpoints are evaluated only once, because string never changes */
-    if (!layout->nominal_breakpoints) {
-        IDWriteTextAnalyzer *analyzer;
+    if (!layout->nominal_breakpoints)
+    {
+        IDWriteTextAnalyzer2 *analyzer;
 
         layout->nominal_breakpoints = heap_calloc(layout->len, sizeof(*layout->nominal_breakpoints));
         if (!layout->nominal_breakpoints)
@@ -1311,7 +1312,7 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
 
         analyzer = get_text_analyzer();
 
-        if (FAILED(hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer,
+        if (FAILED(hr = IDWriteTextAnalyzer2_AnalyzeLineBreakpoints(analyzer,
                 (IDWriteTextAnalysisSource *)&layout->IDWriteTextAnalysisSource1_iface,
                 0, layout->len, (IDWriteTextAnalysisSink *)&layout->IDWriteTextAnalysisSink1_iface)))
             WARN("Line breakpoints analysis failed, hr %#x.\n", hr);

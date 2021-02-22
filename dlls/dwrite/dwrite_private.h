@@ -304,7 +304,7 @@ extern void    set_en_localizedstring(IDWriteLocalizedStrings*,const WCHAR*) DEC
 extern void    sort_localizedstrings(IDWriteLocalizedStrings*) DECLSPEC_HIDDEN;
 extern HRESULT get_system_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection1 **collection) DECLSPEC_HIDDEN;
 extern HRESULT get_eudc_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection3 **collection) DECLSPEC_HIDDEN;
-extern IDWriteTextAnalyzer *get_text_analyzer(void) DECLSPEC_HIDDEN;
+extern IDWriteTextAnalyzer2 *get_text_analyzer(void) DECLSPEC_HIDDEN;
 extern HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *reference_key, UINT32 key_size, IDWriteFontFile **font_file) DECLSPEC_HIDDEN;
 extern void    init_local_fontfile_loader(void) DECLSPEC_HIDDEN;
 extern IDWriteFontFileLoader *get_local_fontfile_loader(void) DECLSPEC_HIDDEN;

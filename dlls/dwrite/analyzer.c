@@ -1844,9 +1844,9 @@ static const IDWriteTextAnalyzer2Vtbl textanalyzervtbl =
 
 static IDWriteTextAnalyzer2 textanalyzer = { &textanalyzervtbl };
 
-IDWriteTextAnalyzer *get_text_analyzer(void)
+IDWriteTextAnalyzer2 *get_text_analyzer(void)
 {
-    return (IDWriteTextAnalyzer *)&textanalyzer;
+    return &textanalyzer;
 }
 
 static HRESULT WINAPI dwritenumbersubstitution_QueryInterface(IDWriteNumberSubstitution *iface, REFIID riid, void **obj)

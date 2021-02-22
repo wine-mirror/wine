@@ -1243,7 +1243,7 @@ static HRESULT WINAPI dwritefactory_CreateTextAnalyzer(IDWriteFactory7 *iface, I
 {
     TRACE("%p, %p.\n", iface, analyzer);
 
-    *analyzer = get_text_analyzer();
+    *analyzer = (IDWriteTextAnalyzer *)get_text_analyzer();
 
     return S_OK;
 }
