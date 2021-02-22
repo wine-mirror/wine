@@ -1094,21 +1094,21 @@ static void test_basic_import_unicode(void)
 static void test_basic_import_31(void)
 {
     HKEY hkey;
+    DWORD dispos;
     LONG lr;
-
-    lr = RegDeleteKeyA(HKEY_CLASSES_ROOT, KEY_BASE);
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND,
-            "RegDeleteKeyA failed: %d\n", lr);
 
     /* Check if regedit.exe is running with elevated privileges */
     lr = RegCreateKeyExA(HKEY_CLASSES_ROOT, KEY_BASE, 0, NULL, REG_OPTION_NON_VOLATILE,
-                         KEY_READ, NULL, &hkey, NULL);
+                         KEY_READ|KEY_SET_VALUE, NULL, &hkey, &dispos);
     if (lr == ERROR_ACCESS_DENIED)
     {
         win_skip("regedit.exe is not running with elevated privileges; "
                  "skipping Windows 3.1 import tests\n");
         return;
     }
+
+    if (dispos == REG_OPENED_EXISTING_KEY)
+        delete_value(hkey, NULL);
 
     /* Test simple value */
     exec_import_str("REGEDIT\r\n"
