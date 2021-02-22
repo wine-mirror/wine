@@ -25,20 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(connect);
 
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
-{
-    switch (reason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(instance);
-            break;
-    }
-
-    return TRUE;
-}
-
 HRESULT WINAPI IsInternetConnected(void)
 {
     FIXME("stub, faking success!\n");
