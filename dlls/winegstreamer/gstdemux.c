@@ -89,7 +89,6 @@ static inline struct parser *impl_from_strmbase_filter(struct strmbase_filter *i
     return CONTAINING_RECORD(iface, struct parser, filter);
 }
 
-static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
 static const IMediaSeekingVtbl GST_Seeking_Vtbl;
 static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl;
 
@@ -1007,7 +1006,6 @@ static const struct strmbase_sink_ops sink_ops =
 
 static BOOL decodebin_parser_filter_init_gst(struct parser *filter)
 {
-    static const WCHAR formatW[] = {'S','t','r','e','a','m',' ','%','0','2','u',0};
     struct wg_parser *parser = filter->wg_parser;
     unsigned int i, stream_count;
     WCHAR source_name[20];
@@ -1015,7 +1013,7 @@ static BOOL decodebin_parser_filter_init_gst(struct parser *filter)
     stream_count = unix_funcs->wg_parser_get_stream_count(parser);
     for (i = 0; i < stream_count; ++i)
     {
-        swprintf(source_name, ARRAY_SIZE(source_name), formatW, i);
+        swprintf(source_name, ARRAY_SIZE(source_name), L"Stream %02u", i);
         if (!create_pin(filter, unix_funcs->wg_parser_get_stream(parser, i), source_name))
             return FALSE;
     }
@@ -1108,7 +1106,7 @@ HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out)
     }
 
     strmbase_filter_init(&object->filter, outer, &CLSID_decodebin_parser, &filter_ops);
-    strmbase_sink_init(&object->sink, &object->filter, wcsInputPinName, &sink_ops, NULL);
+    strmbase_sink_init(&object->sink, &object->filter, L"input pin", &sink_ops, NULL);
 
     object->init_gst = decodebin_parser_filter_init_gst;
     object->source_query_accept = decodebin_parser_source_query_accept;
@@ -1587,10 +1585,9 @@ static const struct strmbase_sink_ops wave_parser_sink_ops =
 
 static BOOL wave_parser_filter_init_gst(struct parser *filter)
 {
-    static const WCHAR source_name[] = {'o','u','t','p','u','t',0};
     struct wg_parser *parser = filter->wg_parser;
 
-    if (!create_pin(filter, unix_funcs->wg_parser_get_stream(parser, 0), source_name))
+    if (!create_pin(filter, unix_funcs->wg_parser_get_stream(parser, 0), L"output"))
         return FALSE;
 
     return TRUE;
@@ -1625,7 +1622,6 @@ static HRESULT wave_parser_source_get_media_type(struct parser_source *pin,
 
 HRESULT wave_parser_create(IUnknown *outer, IUnknown **out)
 {
-    static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
     struct parser *object;
 
     if (!parser_init_gstreamer())
@@ -1641,7 +1637,7 @@ HRESULT wave_parser_create(IUnknown *outer, IUnknown **out)
     }
 
     strmbase_filter_init(&object->filter, outer, &CLSID_WAVEParser, &filter_ops);
-    strmbase_sink_init(&object->sink, &object->filter, sink_name, &wave_parser_sink_ops, NULL);
+    strmbase_sink_init(&object->sink, &object->filter, L"input pin", &wave_parser_sink_ops, NULL);
     object->init_gst = wave_parser_filter_init_gst;
     object->source_query_accept = wave_parser_source_query_accept;
     object->source_get_media_type = wave_parser_source_get_media_type;
@@ -1668,7 +1664,6 @@ static const struct strmbase_sink_ops avi_splitter_sink_ops =
 
 static BOOL avi_splitter_filter_init_gst(struct parser *filter)
 {
-    static const WCHAR formatW[] = {'S','t','r','e','a','m',' ','%','0','2','u',0};
     struct wg_parser *parser = filter->wg_parser;
     uint32_t i, stream_count;
     WCHAR source_name[20];
@@ -1676,7 +1671,7 @@ static BOOL avi_splitter_filter_init_gst(struct parser *filter)
     stream_count = unix_funcs->wg_parser_get_stream_count(parser);
     for (i = 0; i < stream_count; ++i)
     {
-        swprintf(source_name, ARRAY_SIZE(source_name), formatW, i);
+        swprintf(source_name, ARRAY_SIZE(source_name), L"Stream %02u", i);
         if (!create_pin(filter, unix_funcs->wg_parser_get_stream(parser, i), source_name))
             return FALSE;
     }
@@ -1713,7 +1708,6 @@ static HRESULT avi_splitter_source_get_media_type(struct parser_source *pin,
 
 HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out)
 {
-    static const WCHAR sink_name[] = {'i','n','p','u','t',' ','p','i','n',0};
     struct parser *object;
 
     if (!parser_init_gstreamer())
@@ -1729,7 +1723,7 @@ HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out)
     }
 
     strmbase_filter_init(&object->filter, outer, &CLSID_AviSplitter, &filter_ops);
-    strmbase_sink_init(&object->sink, &object->filter, sink_name, &avi_splitter_sink_ops, NULL);
+    strmbase_sink_init(&object->sink, &object->filter, L"input pin", &avi_splitter_sink_ops, NULL);
     object->init_gst = avi_splitter_filter_init_gst;
     object->source_query_accept = avi_splitter_source_query_accept;
     object->source_get_media_type = avi_splitter_source_get_media_type;
@@ -1761,10 +1755,9 @@ static const struct strmbase_sink_ops mpeg_splitter_sink_ops =
 
 static BOOL mpeg_splitter_filter_init_gst(struct parser *filter)
 {
-    static const WCHAR source_name[] = {'A','u','d','i','o',0};
     struct wg_parser *parser = filter->wg_parser;
 
-    if (!create_pin(filter, unix_funcs->wg_parser_get_stream(parser, 0), source_name))
+    if (!create_pin(filter, unix_funcs->wg_parser_get_stream(parser, 0), L"Audio"))
         return FALSE;
 
     return TRUE;
@@ -1822,7 +1815,6 @@ static const struct strmbase_filter_ops mpeg_splitter_ops =
 
 HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out)
 {
-    static const WCHAR sink_name[] = {'I','n','p','u','t',0};
     struct parser *object;
 
     if (!parser_init_gstreamer())
@@ -1838,7 +1830,7 @@ HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out)
     }
 
     strmbase_filter_init(&object->filter, outer, &CLSID_MPEG1Splitter, &mpeg_splitter_ops);
-    strmbase_sink_init(&object->sink, &object->filter, sink_name, &mpeg_splitter_sink_ops, NULL);
+    strmbase_sink_init(&object->sink, &object->filter, L"Input", &mpeg_splitter_sink_ops, NULL);
     object->IAMStreamSelect_iface.lpVtbl = &stream_select_vtbl;
 
     object->init_gst = mpeg_splitter_filter_init_gst;

@@ -446,7 +446,7 @@ HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-static WCHAR audio_converterW[] = {'A','u','d','i','o',' ','C','o','n','v','e','r','t','e','r',0};
+static WCHAR audio_converterW[] = L"Audio Converter";
 static const GUID *audio_converter_supported_types[] =
 {
     &MFAudioFormat_PCM,
