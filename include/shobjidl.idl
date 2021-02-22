@@ -3984,7 +3984,7 @@ interface IFileOperation : IUnknown
                        [in, unique] IFileOperationProgressSink *sink);
     HRESULT DeleteItems([in] IUnknown *items);
     HRESULT NewItem([in] IShellItem *folder, [in] DWORD attributes,
-                    [in, unique, string] LPCWSTR name, [in, unique, string] LPCWSTR template,
+                    [in, unique, string] LPCWSTR name, [in, unique, string] LPCWSTR template_name,
                     [in, unique] IFileOperationProgressSink *sink);
     HRESULT PerformOperations();
     HRESULT GetAnyOperationsAborted([out] BOOL *aborted);
