@@ -1,6 +1,6 @@
 MODULE    = d3dx10_35.dll
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	d3dx10_35_main.c

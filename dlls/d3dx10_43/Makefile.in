@@ -3,7 +3,7 @@ IMPORTLIB = d3dx10
 IMPORTS   = d3d10_1 d3dcompiler dxguid
 DELAYIMPORTS = windowscodecs
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	async.c \

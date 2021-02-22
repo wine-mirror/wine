@@ -35,20 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    switch (fdwReason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-    }
-
-   return TRUE;
-}
-
 /***********************************************************************
  * D3DX10CheckVersion
  *
