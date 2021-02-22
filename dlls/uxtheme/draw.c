@@ -1660,6 +1660,7 @@ HRESULT WINAPI DrawThemeTextEx(HTHEME hTheme, HDC hdc, int iPartId, int iStateId
     COLORREF textColor;
     COLORREF oldTextColor;
     int oldBkMode;
+    int fontProp;
 
     TRACE("%p %p %d %d %s:%d 0x%08x %p %p\n", hTheme, hdc, iPartId, iStateId,
         debugstr_wn(pszText, iCharCount), iCharCount, flags, rect, options);
@@ -1667,10 +1668,15 @@ HRESULT WINAPI DrawThemeTextEx(HTHEME hTheme, HDC hdc, int iPartId, int iStateId
     if(!hTheme)
         return E_HANDLE;
 
-    if (options->dwFlags & ~DTT_TEXTCOLOR)
+    if (options->dwFlags & ~(DTT_TEXTCOLOR | DTT_FONTPROP))
         FIXME("unsupported flags 0x%08x\n", options->dwFlags);
-    
-    hr = GetThemeFont(hTheme, hdc, iPartId, iStateId, TMT_FONT, &logfont);
+
+    if (options->dwFlags & DTT_FONTPROP)
+        fontProp = options->iFontPropId;
+    else
+        fontProp = TMT_FONT;
+
+    hr = GetThemeFont(hTheme, hdc, iPartId, iStateId, fontProp, &logfont);
     if(SUCCEEDED(hr)) {
         hFont = CreateFontIndirectW(&logfont);
         if(!hFont)
