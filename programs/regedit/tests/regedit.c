@@ -273,9 +273,8 @@ static void test_basic_import(void)
     char buffer[256];
     BYTE hex[8];
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND,
-            "RegDeleteKeyA failed: %d\n", lr);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
+    verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE);
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -685,8 +684,8 @@ static void test_basic_import_unicode(void)
     char buffer[256];
     BYTE hex[8];
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
+    verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE);
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1155,12 +1154,11 @@ static void test_basic_import_31(void)
 
 static void test_invalid_import(void)
 {
-    LONG lr;
     HKEY hkey;
     DWORD dword = 0x8;
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
+    verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE);
 
     exec_import_str("REGEDIT4\n\n"
                 "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -1661,12 +1659,11 @@ static void test_invalid_import(void)
 
 static void test_invalid_import_unicode(void)
 {
-    LONG lr;
     HKEY hkey;
     DWORD dword = 0x8;
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
+    verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE);
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2227,12 +2224,11 @@ static void test_invalid_import_31(void)
 
 static void test_comments(void)
 {
-    LONG lr;
     HKEY hkey;
     DWORD dword;
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
+    verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2466,12 +2462,11 @@ static void test_comments(void)
 
 static void test_comments_unicode(void)
 {
-    LONG lr;
     HKEY hkey;
     DWORD dword;
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
+    verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE);
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
@@ -2711,8 +2706,8 @@ static void test_import_with_whitespace(void)
     LONG lr;
     DWORD dword;
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
+    verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE);
 
     exec_import_str("  REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n");
@@ -2859,8 +2854,8 @@ static void test_import_with_whitespace_unicode(void)
     LONG lr;
     DWORD dword;
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
+    verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE);
 
     exec_import_wstr("\xef\xbb\xbf  Windows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n");
@@ -3006,8 +3001,8 @@ static void test_key_creation_and_deletion(void)
     HKEY hkey, subkey;
     LONG lr;
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
+    verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n");
@@ -3146,8 +3141,8 @@ static void test_key_creation_and_deletion_unicode(void)
     HKEY hkey, subkey;
     LONG lr;
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
+    verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE);
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n");
@@ -3288,8 +3283,8 @@ static void test_value_deletion(void)
     DWORD dword = 0x8;
     BYTE hex[4] = {0x11, 0x22, 0x33, 0x44};
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
+    verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE);
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n");
@@ -3342,8 +3337,8 @@ static void test_value_deletion_unicode(void)
     DWORD dword = 0x8;
     BYTE hex[4] = {0x11, 0x22, 0x33, 0x44};
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
+    verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE);
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "]\n\n");
@@ -3527,8 +3522,8 @@ static void test_export(void)
         "\"Wine4g\"=\"Value2\"\r\n"
         "\"Wine4h\"=\"abc\"\r\n\r\n";
 
-    lr = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS || lr == ERROR_FILE_NOT_FOUND, "RegDeleteKeyA failed: %d\n", lr);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
+    verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE);
 
     /* Test registry export with an empty key */
     add_key(HKEY_CURRENT_USER, KEY_BASE, &hkey);
