@@ -23,14 +23,9 @@
 #include "gst_private.h"
 #include "gst_guids.h"
 
-#include "vfwmsgs.h"
 #include "amvideo.h"
 
-#include "wine/debug.h"
-
-#include <assert.h>
 #include <limits.h>
-
 #include "dvdmedia.h"
 #include "mmreg.h"
 #include "ks.h"

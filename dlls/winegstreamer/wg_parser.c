@@ -30,7 +30,6 @@
 #include "gst_private.h"
 #include "winternl.h"
 
-#include <assert.h>
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #include <gst/audio/audio.h>

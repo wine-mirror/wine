@@ -21,6 +21,7 @@
 #ifndef __GST_PRIVATE_INCLUDED__
 #define __GST_PRIVATE_INCLUDED__
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -29,13 +30,8 @@
 #define COBJMACROS
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
-#include "windef.h"
-#include "winbase.h"
-#include "wtypes.h"
-#include "winuser.h"
 #include "dshow.h"
-#include "strmif.h"
-#include "mfobjects.h"
+#include "mfidl.h"
 #include "wine/debug.h"
 #include "wine/strmbase.h"
 

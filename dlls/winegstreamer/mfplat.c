@@ -19,12 +19,7 @@
 
 #include "gst_private.h"
 
-#include <assert.h>
-#include <stdarg.h>
-
-#include "gst_private.h"
 #include "mfapi.h"
-#include "mfidl.h"
 #include "ks.h"
 #include "ksmedia.h"
 

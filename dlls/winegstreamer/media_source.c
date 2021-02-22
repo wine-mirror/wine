@@ -20,19 +20,9 @@
 
 #include "gst_private.h"
 
-#include <assert.h>
-#include <stdarg.h>
-#include <assert.h>
-
-#define COBJMACROS
-#define NONAMELESSUNION
-
 #include "mfapi.h"
 #include "mferror.h"
-#include "mfidl.h"
-#include "mfobjects.h"
 
-#include "wine/debug.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);

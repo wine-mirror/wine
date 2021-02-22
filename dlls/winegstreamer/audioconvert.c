@@ -21,7 +21,6 @@
 
 #include "mfapi.h"
 #include "mferror.h"
-#include "mfidl.h"
 #include "ks.h"
 #include "ksmedia.h"
 
