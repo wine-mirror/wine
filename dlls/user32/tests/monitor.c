@@ -743,16 +743,17 @@ static void test_ChangeDisplaySettingsEx(void)
         {
             dm.dmPosition = position;
             dm.dmFields |= DM_POSITION;
-            res = ChangeDisplaySettingsExA(devices[device].name, &dm, NULL, CDS_RESET, NULL);
             /* Reattach detached non-primary adapters, otherwise ChangeDisplaySettingsExA with only CDS_RESET fails */
             if (mode == 0 && device)
             {
-                todo_wine ok(res == DISP_CHANGE_FAILED, "ChangeDisplaySettingsExA %s mode %d returned unexpected %d\n",
-                        devices[device].name, mode, res);
                 res = ChangeDisplaySettingsExA(devices[device].name, &dm, NULL, CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
                 ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA %s mode %d returned unexpected %d\n",
                         devices[device].name, mode, res);
                 res = ChangeDisplaySettingsExA(NULL, NULL, NULL, 0, NULL);
+            }
+            else
+            {
+                res = ChangeDisplaySettingsExA(devices[device].name, &dm, NULL, CDS_RESET, NULL);
             }
 
             ok(res == DISP_CHANGE_SUCCESSFUL ||
