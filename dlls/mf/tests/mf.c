@@ -47,6 +47,8 @@ DEFINE_GUID(MFVideoFormat_ABGR32, 0x00000020, 0x0000, 0x0010, 0x80, 0x00, 0x00, 
 
 #include "wine/test.h"
 
+static HRESULT (WINAPI *pMFCreateSampleCopierMFT)(IMFTransform **copier);
+
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG expected_refcount, int line)
 {
@@ -4669,7 +4671,13 @@ static void test_sample_copier(void)
     UINT32 value;
     HRESULT hr;
 
-    hr = MFCreateSampleCopierMFT(&copier);
+    if (!pMFCreateSampleCopierMFT)
+    {
+        win_skip("MFCreateSampleCopierMFT() is not available.\n");
+        return;
+    }
+
+    hr = pMFCreateSampleCopierMFT(&copier);
     ok(hr == S_OK, "Failed to create sample copier, hr %#x.\n", hr);
 
     hr = IMFTransform_GetAttributes(copier, &attributes);
@@ -5005,7 +5013,10 @@ static void test_sample_copier_output_processing(void)
     HRESULT hr;
     BYTE *ptr;
 
-    hr = MFCreateSampleCopierMFT(&copier);
+    if (!pMFCreateSampleCopierMFT)
+        return;
+
+    hr = pMFCreateSampleCopierMFT(&copier);
     ok(hr == S_OK, "Failed to create sample copier, hr %#x.\n", hr);
 
     /* Configure for 16 x 16 of D3DFMT_X8R8G8B8. */
@@ -5152,8 +5163,19 @@ static void test_MFGetTopoNodeCurrentType(void)
     IMFMediaType_Release(media_type2);
 }
 
+static void init_functions(void)
+{
+    HMODULE mod = GetModuleHandleA("mf.dll");
+
+#define X(f) p##f = (void*)GetProcAddress(mod, #f)
+    X(MFCreateSampleCopierMFT);
+#undef X
+}
+
 START_TEST(mf)
 {
+    init_functions();
+
     test_topology();
     test_topology_tee_node();
     test_topology_loader();
