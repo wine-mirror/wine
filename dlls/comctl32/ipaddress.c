@@ -130,7 +130,6 @@ static int IPADDRESS_GetPartIndex(const IPADDRESS_INFO *infoPtr, HWND hwnd)
     for (i = 0; i < 4; i++)
         if (infoPtr->Part[i].EditHwnd == hwnd) return i;
 
-    ERR("We subclassed the wrong window! (hwnd=%p)\n", hwnd);
     return -1;
 }
 
@@ -503,7 +502,11 @@ IPADDRESS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     TRACE("(hwnd=%p msg=0x%x wparam=0x%lx lparam=0x%lx)\n", hwnd, uMsg, wParam, lParam);
 
-    if ( (index = IPADDRESS_GetPartIndex(infoPtr, hwnd)) < 0) return 0;
+    if ((index = IPADDRESS_GetPartIndex(infoPtr, hwnd)) < 0)
+    {
+        ERR("We subclassed the wrong window! (hwnd=%p)\n", hwnd);
+        return 0;
+    }
     part = &infoPtr->Part[index];
 
     if (uMsg == WM_CHAR || uMsg == WM_KEYDOWN) {
