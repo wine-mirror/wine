@@ -726,7 +726,10 @@ NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
         status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, 0, NULL, NULL, &apc );
         if (status == STATUS_USER_APC) invoke_apc( context, &apc );
     }
-    return NtSetContextThread( GetCurrentThread(), context );
+    status = NtSetContextThread( GetCurrentThread(), context );
+    if (!status && (context->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+        signal_restore_full_cpu_context();
+    return status;
 }
 
 

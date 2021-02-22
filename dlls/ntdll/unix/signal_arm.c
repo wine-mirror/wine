@@ -333,6 +333,16 @@ __ASM_GLOBAL_FUNC( set_cpu_context,
 
 
 /***********************************************************************
+ *           signal_restore_full_cpu_context
+ *
+ * Restore full context from syscall frame
+ */
+void signal_restore_full_cpu_context(void)
+{
+}
+
+
+/***********************************************************************
  *           get_server_context_flags
  *
  * Convert CPU-specific flags to generic server flags

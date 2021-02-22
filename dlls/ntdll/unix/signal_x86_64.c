@@ -1591,7 +1591,12 @@ __ASM_GLOBAL_FUNC( set_full_cpu_context,
                    "leaq 0x70(%rsp),%rsp\n\t"
                    "iretq" )
 
-static void signal_restore_full_cpu_context(void)
+/***********************************************************************
+ *           signal_restore_full_cpu_context
+ *
+ * Restore full context from syscall frame
+ */
+void signal_restore_full_cpu_context(void)
 {
     struct syscall_xsave *xsave = get_syscall_xsave( get_syscall_frame() );
     SYSTEM_CPU_INFORMATION cpu_info;
@@ -1863,9 +1868,6 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         else if (xs->CompactionMask & XSTATE_MASK_GSSE)
             xsave->xstate.Mask &= ~XSTATE_MASK_GSSE;
     }
-
-    if (!(flags & CONTEXT_INTEGER)) frame->rax = STATUS_SUCCESS;
-    signal_restore_full_cpu_context();
     return STATUS_SUCCESS;
 }
 
@@ -2614,11 +2616,24 @@ static void quit_handler( int signal, siginfo_t *siginfo, void *ucontext )
  */
 static void usr1_handler( int signal, siginfo_t *siginfo, void *ucontext )
 {
+    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
     struct xcontext context;
+    if (frame)
+    {
+        DECLSPEC_ALIGN(64) XSTATE xs;
+        context.c.ContextFlags = CONTEXT_FULL;
+        context_init_xstate( &context.c, &xs );
 
-    save_context( &context, ucontext );
-    wait_suspend( &context.c );
-    restore_context( &context, ucontext );
+        NtGetContextThread( GetCurrentThread(), &context.c );
+        wait_suspend( &context.c );
+        NtSetContextThread( GetCurrentThread(), &context.c );
+    }
+    else
+    {
+        save_context( &context, ucontext );
+        wait_suspend( &context.c );
+        restore_context( &context, ucontext );
+    }
 }
 
 

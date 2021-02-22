@@ -807,6 +807,17 @@ static inline void restore_xstate( const CONTEXT *context )
     __asm__ volatile( "xrstor %0" : : "m"(*xrstor_base), "a" (4), "d" (0) );
 }
 
+
+/***********************************************************************
+ *           signal_restore_full_cpu_context
+ *
+ * Restore full context from syscall frame
+ */
+void signal_restore_full_cpu_context(void)
+{
+}
+
+
 /***********************************************************************
  *           fpux_to_fpu
  *

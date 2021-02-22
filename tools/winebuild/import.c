@@ -1559,7 +1559,18 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\tcallq *(%%r10,%%r11,8)\n" );
         output( "2:\tmovq %%gs:0x30,%%rcx\n" );
         output( "\tmovq $0,0x328(%%rcx)\n" );
-        output( "\tfxrstor64 (%%r12)\n" );
+        if (!*variant)
+        {
+            output( "\tfxrstor64 (%%r12)\n" );
+        }
+        else
+        {
+            output( "\tmovq %%rax,%%r11\n" );
+            output( "\tmovl $7,%%eax\n" );
+            output( "\txorq %%rdx,%%rdx\n" );
+            output( "\txrstor64 (%%r12)\n" );
+            output( "\tmovq %%r11,%%rax\n" );
+        }
         output( "\tmovq -0x30(%%rbp),%%r15\n" );
         output( "\tmovq -0x38(%%rbp),%%r14\n" );
         output( "\tmovq -0x40(%%rbp),%%r13\n" );
