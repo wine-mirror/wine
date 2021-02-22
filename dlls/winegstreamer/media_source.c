@@ -1379,7 +1379,7 @@ static HRESULT WINAPI winegstreamer_stream_handler_BeginCreateObject(IMFByteStre
     if (FAILED(hr = MFCreateAsyncResult(NULL, callback, state, &caller)))
         return hr;
 
-    context = heap_alloc(sizeof(*context));
+    context = heap_alloc_zero(sizeof(*context));
     if (!context)
     {
         IMFAsyncResult_Release(caller);
