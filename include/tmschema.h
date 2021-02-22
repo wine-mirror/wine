@@ -188,8 +188,11 @@ BEGIN_TM_PROPS()
     TM_PROP(804, TMT, STATUSFONT,                 FONT)
     TM_PROP(805, TMT, MSGBOXFONT,                 FONT)
     TM_PROP(806, TMT, ICONTITLEFONT,              FONT)
+    TM_PROP(807, TMT, HEADING1FONT,               FONT)
+    TM_PROP(808, TMT, HEADING2FONT,               FONT)
+    TM_PROP(809, TMT, BODYFONT,                   FONT)
 #   define TMT_FIRSTFONT                          TMT_CAPTIONFONT
-#   define TMT_LASTFONT                           TMT_ICONTITLEFONT
+#   define TMT_LASTFONT                           TMT_BODYFONT
 
     /* Bool theme metric properties */
     TM_PROP(1001, TMT, FLATMENUS,                 BOOL)
