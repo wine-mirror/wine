@@ -114,7 +114,7 @@ F:	dlls/qdvd/
 F:	dlls/qedit/
 F:	dlls/quartz/
 F:	dlls/strmbase/
-F:	dlls/winegstreamer/gstdemux.c
+F:	dlls/winegstreamer/quartz_parser.c
 F:	dlls/wineqtdecoder/
 
 DirectWrite

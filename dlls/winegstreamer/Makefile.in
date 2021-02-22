@@ -10,13 +10,13 @@ EXTRADLLFLAGS = -mno-cygwin
 C_SRCS = \
 	audioconvert.c \
 	filter.c \
-	gstdemux.c \
 	main.c \
 	media_source.c \
 	mediatype.c \
 	mfplat.c \
 	pin.c \
 	qualitycontrol.c \
+	quartz_parser.c \
 	seeking.c \
 	wg_parser.c
 
