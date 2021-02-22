@@ -22,6 +22,7 @@
 #define COBJMACROS
 #include "objbase.h"
 #include "rpcproxy.h"
+#include "msdasc.h"
 #include "msado15_backcompat.h"
 
 #include "wine/debug.h"

@@ -21,6 +21,7 @@
 #include "winbase.h"
 #define COBJMACROS
 #include "objbase.h"
+#include "msdasc.h"
 #include "msado15_backcompat.h"
 
 #include "wine/debug.h"
