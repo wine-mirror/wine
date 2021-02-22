@@ -1649,13 +1649,28 @@ static void test_invalid_import(void)
                     "\"Wine33c\"=\"Value1\\0\n"
                     "\"Wine33d\"=\"Value2\\0\\0\\0\\0\n"
                     "\"Wine33e\"=\"Value3\\0Value4\n"
-                    "\"Wine33f\"=\"\\0Value4\n\n");
+                    "\"Wine33f\"=\"\\0Value5\n\n");
     verify_reg_nonexist(hkey, "Wine33a");
     verify_reg_nonexist(hkey, "Wine33b");
     verify_reg_nonexist(hkey, "Wine33c");
     verify_reg_nonexist(hkey, "Wine33d");
     verify_reg_nonexist(hkey, "Wine33e");
     verify_reg_nonexist(hkey, "Wine33f");
+
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"Wine34a\"=\"\\0\"\n"
+                    "\"Wine34b\"=\"\\0\\0\"\n"
+                    "\"Wine34c\"=\"Value1\\0\"\n"
+                    "\"Wine34d\"=\"Value2\\0\\0\\0\\0\"\n"
+                    "\"Wine34e\"=\"Value3\\0Value4\"\n"
+                    "\"Wine34f\"=\"\\0Value5\"\n\n");
+    todo_wine verify_reg_nonexist(hkey, "Wine34a");
+    todo_wine verify_reg_nonexist(hkey, "Wine34b");
+    todo_wine verify_reg_nonexist(hkey, "Wine34c");
+    todo_wine verify_reg_nonexist(hkey, "Wine34d");
+    todo_wine verify_reg_nonexist(hkey, "Wine34e");
+    todo_wine verify_reg_nonexist(hkey, "Wine34f");
 
     close_key(hkey);
 
@@ -2160,13 +2175,28 @@ static void test_invalid_import_unicode(void)
                      "\"Wine33c\"=\"Value1\\0\n"
                      "\"Wine33d\"=\"Value2\\0\\0\\0\\0\n"
                      "\"Wine33e\"=\"Value3\\0Value4\n"
-                     "\"Wine33f\"=\"\\0Value4\n\n");
+                     "\"Wine33f\"=\"\\0Value5\n\n");
     verify_reg_nonexist(hkey, "Wine33a");
     verify_reg_nonexist(hkey, "Wine33b");
     verify_reg_nonexist(hkey, "Wine33c");
     verify_reg_nonexist(hkey, "Wine33d");
     verify_reg_nonexist(hkey, "Wine33e");
     verify_reg_nonexist(hkey, "Wine33f");
+
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                     "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                     "\"Wine34a\"=\"\\0\"\n"
+                     "\"Wine34b\"=\"\\0\\0\"\n"
+                     "\"Wine34c\"=\"Value1\\0\"\n"
+                     "\"Wine34d\"=\"Value2\\0\\0\\0\\0\"\n"
+                     "\"Wine34e\"=\"Value3\\0Value4\"\n"
+                     "\"Wine34f\"=\"\\0Value5\"\n\n");
+    todo_wine verify_reg_nonexist(hkey, "Wine34a");
+    todo_wine verify_reg_nonexist(hkey, "Wine34b");
+    todo_wine verify_reg_nonexist(hkey, "Wine34c");
+    todo_wine verify_reg_nonexist(hkey, "Wine34d");
+    todo_wine verify_reg_nonexist(hkey, "Wine34e");
+    todo_wine verify_reg_nonexist(hkey, "Wine34f");
 
     close_key(hkey);
 
