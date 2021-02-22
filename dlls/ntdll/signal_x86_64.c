@@ -1210,7 +1210,7 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
     }
 
     TRACE( "returning to %p stack %p\n", (void *)context->Rip, (void *)context->Rsp );
-    NtSetContextThread( GetCurrentThread(), context );
+    NtContinue( context, FALSE );
 }
 
 
