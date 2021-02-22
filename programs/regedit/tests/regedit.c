@@ -492,7 +492,7 @@ static void test_basic_import(void)
     open_key(hkey, "Subkey\"1", 0, &subkey);
     verify_reg(subkey, "Wine\\31", REG_SZ, "Test value", 11, 0);
     close_key(subkey);
-    delete_key(HKEY_CURRENT_USER, KEY_BASE "\\Subkey\"1");
+    delete_key(hkey, "Subkey\"1");
 
     exec_import_str("REGEDIT4\n\n"
                     "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey/2]\n"
@@ -500,7 +500,7 @@ static void test_basic_import(void)
     open_key(hkey, "Subkey/2", 0, &subkey);
     verify_reg(subkey, "123/\"4;'5", REG_SZ, "Random value name", 18, 0);
     close_key(subkey);
-    delete_key(HKEY_CURRENT_USER, KEY_BASE "\\Subkey/2");
+    delete_key(hkey, "Subkey/2");
 
     /* Test the accepted range of the hex-based data types */
     exec_import_str("REGEDIT4\n\n"
@@ -902,7 +902,7 @@ static void test_basic_import_unicode(void)
     open_key(hkey, "Subkey\"1", 0, &subkey);
     verify_reg(subkey, "Wine\\31", REG_SZ, "Test value", 11, 0);
     close_key(subkey);
-    delete_key(HKEY_CURRENT_USER, KEY_BASE "\\Subkey\"1");
+    delete_key(hkey, "Subkey\"1");
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
                      "[HKEY_CURRENT_USER\\" KEY_BASE "\\Subkey/2]\n"
@@ -910,7 +910,7 @@ static void test_basic_import_unicode(void)
     open_key(hkey, "Subkey/2", 0, &subkey);
     verify_reg(subkey, "123/\"4;'5", REG_SZ, "Random value name", 18, 0);
     close_key(subkey);
-    delete_key(HKEY_CURRENT_USER, KEY_BASE "\\Subkey/2");
+    delete_key(hkey, "Subkey/2");
 
     /* Test the accepted range of the hex-based data types */
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -3424,7 +3424,6 @@ error:
 
 static void test_export(void)
 {
-    LONG lr;
     HKEY hkey, subkey;
     DWORD dword;
     BYTE hex[4];
@@ -3567,9 +3566,7 @@ static void test_export(void)
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
     ok(compare_export("file.reg", complex_test, 0), "compare_export() failed\n");
-
-    lr = delete_tree(HKEY_CURRENT_USER, KEY_BASE);
-    ok(lr == ERROR_SUCCESS, "delete_tree() failed: %d\n", lr);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
 
     /* Test the export order of registry keys */
     add_key(HKEY_CURRENT_USER, KEY_BASE, &hkey);
@@ -3580,7 +3577,6 @@ static void test_export(void)
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
     ok(compare_export("file.reg", key_order_test, 0), "compare_export() failed\n");
-
     delete_key(hkey, "Subkey1");
     delete_key(hkey, "Subkey2");
 
@@ -3593,7 +3589,6 @@ static void test_export(void)
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
     ok(compare_export("file.reg", value_order_test, TODO_REG_COMPARE), "compare_export() failed\n");
-
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 
     /* Test registry export with empty hex data */
@@ -3610,7 +3605,6 @@ static void test_export(void)
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
     ok(compare_export("file.reg", empty_hex_test, 0), "compare_export() failed\n");
-
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 
     /* Test registry export after importing alternative registry data types */
@@ -3627,7 +3621,6 @@ static void test_export(void)
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
     ok(compare_export("file.reg", empty_hex_test2, 0), "compare_export() failed\n");
-
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 
     /* Test registry export with embedded null characters */
@@ -3646,7 +3639,6 @@ static void test_export(void)
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
     ok(compare_export("file.reg", hex_types_test, 0), "compare_export() failed\n");
-
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 
     exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
@@ -3675,7 +3667,6 @@ static void test_export(void)
 
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
     ok(compare_export("file.reg", embedded_null_test, 0), "compare_export() failed\n");
-
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
 }
 
