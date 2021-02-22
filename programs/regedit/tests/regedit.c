@@ -677,9 +677,19 @@ static void test_basic_import(void)
     verify_reg(hkey, "Wine22h", REG_BINARY, NULL, 0, 0);
     verify_reg(hkey, "Wine22i", REG_NONE, NULL, 0, 0);
 
+    /* Test forward and back slashes */
+    exec_import_str("REGEDIT4\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"count/up\"=\"one/two/three\"\n"
+                    "\"\\\\foo\\\\bar\"=\"\"\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\https://winehq.org]\n\n");
+    verify_reg(hkey, "count/up", REG_SZ, "one/two/three", 14, 0);
+    verify_reg(hkey, "\\foo\\bar", REG_SZ, "", 1, 0);
+    verify_key(hkey, "https://winehq.org");
+
     close_key(hkey);
 
-    delete_key(HKEY_CURRENT_USER, KEY_BASE);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 static void test_basic_import_unicode(void)
@@ -1090,9 +1100,19 @@ static void test_basic_import_unicode(void)
     verify_reg(hkey, "Wine22h", REG_BINARY, NULL, 0, 0);
     verify_reg(hkey, "Wine22i", REG_NONE, NULL, 0, 0);
 
+    /* Test forward and back slashes */
+    exec_import_wstr("\xef\xbb\xbfWindows Registry Editor Version 5.00\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "]\n"
+                    "\"count/up\"=\"one/two/three\"\n"
+                    "\"\\\\foo\\\\bar\"=\"\"\n\n"
+                    "[HKEY_CURRENT_USER\\" KEY_BASE "\\https://winehq.org]\n\n");
+    verify_reg(hkey, "count/up", REG_SZ, "one/two/three", 14, 0);
+    verify_reg(hkey, "\\foo\\bar", REG_SZ, "", 1, 0);
+    verify_key(hkey, "https://winehq.org");
+
     close_key(hkey);
 
-    delete_key(HKEY_CURRENT_USER, KEY_BASE);
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 static void test_basic_import_31(void)
@@ -3544,6 +3564,13 @@ static void test_export(void)
         "\"Wine4g\"=\"Value2\"\r\n"
         "\"Wine4h\"=\"abc\"\r\n\r\n";
 
+    const char *slashes_test =
+        "\xef\xbb\xbfWindows Registry Editor Version 5.00\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "]\r\n"
+        "\"count/up\"=\"one/two/three\"\r\n"
+        "\"\\\\foo\\\\bar\"=\"\"\r\n\r\n"
+        "[HKEY_CURRENT_USER\\" KEY_BASE "\\https://winehq.org]\r\n\r\n";
+
     delete_tree(HKEY_CURRENT_USER, KEY_BASE);
     verify_key_nonexist(HKEY_CURRENT_USER, KEY_BASE);
 
@@ -3698,6 +3725,18 @@ static void test_export(void)
     run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
     ok(compare_export("file.reg", embedded_null_test, 0), "compare_export() failed\n");
     delete_key(HKEY_CURRENT_USER, KEY_BASE);
+
+    /* Test registry export with forward and back slashes */
+    add_key(HKEY_CURRENT_USER, KEY_BASE, &hkey);
+    add_key(hkey, "https://winehq.org", &subkey);
+    close_key(subkey);
+    add_value(hkey, "count/up", REG_SZ, "one/two/three", 14);
+    add_value(hkey, "\\foo\\bar", REG_SZ, "", 1);
+    close_key(hkey);
+
+    run_regedit_exe("regedit.exe /e file.reg HKEY_CURRENT_USER\\" KEY_BASE);
+    ok(compare_export("file.reg", slashes_test, TODO_REG_COMPARE), "compare_export() failed\n");
+    delete_tree(HKEY_CURRENT_USER, KEY_BASE);
 }
 
 START_TEST(regedit)
