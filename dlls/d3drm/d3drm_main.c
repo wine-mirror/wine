@@ -20,22 +20,6 @@
 #include "initguid.h"
 #include "d3drm_private.h"
 
-/***********************************************************************
- *		DllMain  (D3DRM.@)
- */
-BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
-{
-    switch(reason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( inst );
-        break;
-    }
-    return TRUE;
-}
-
 void d3drm_object_init(struct d3drm_object *object, const char *classname)
 {
     object->ref = 1;
