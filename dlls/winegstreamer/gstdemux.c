@@ -860,7 +860,7 @@ static void parser_destroy(struct strmbase_filter *iface)
 
     strmbase_sink_cleanup(&filter->sink);
     strmbase_filter_cleanup(&filter->filter);
-    heap_free(filter);
+    free(filter);
 }
 
 static HRESULT parser_init_stream(struct strmbase_filter *iface)
@@ -1096,12 +1096,12 @@ HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out)
     if (!parser_init_gstreamer())
         return E_FAIL;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (!(object->wg_parser = unix_funcs->wg_decodebin_parser_create()))
     {
-        heap_free(object);
+        free(object);
         return E_OUTOFMEMORY;
     }
 
@@ -1485,7 +1485,7 @@ static void free_source_pin(struct parser_source *pin)
 
     strmbase_seeking_cleanup(&pin->seek);
     strmbase_source_cleanup(&pin->pin);
-    heap_free(pin);
+    free(pin);
 }
 
 static const struct strmbase_source_ops source_ops =
@@ -1504,11 +1504,11 @@ static struct parser_source *create_pin(struct parser *filter,
 {
     struct parser_source *pin, **new_array;
 
-    if (!(new_array = heap_realloc(filter->sources, (filter->source_count + 1) * sizeof(*filter->sources))))
+    if (!(new_array = realloc(filter->sources, (filter->source_count + 1) * sizeof(*filter->sources))))
         return NULL;
     filter->sources = new_array;
 
-    if (!(pin = heap_alloc_zero(sizeof(*pin))))
+    if (!(pin = calloc(1, sizeof(*pin))))
         return NULL;
 
     pin->wg_stream = stream;
@@ -1549,7 +1549,7 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     }
 
     This->source_count = 0;
-    heap_free(This->sources);
+    free(This->sources);
     This->sources = NULL;
 
     BaseFilterImpl_IncrementPinVersion(&This->filter);
@@ -1627,12 +1627,12 @@ HRESULT wave_parser_create(IUnknown *outer, IUnknown **out)
     if (!parser_init_gstreamer())
         return E_FAIL;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (!(object->wg_parser = unix_funcs->wg_wave_parser_create()))
     {
-        heap_free(object);
+        free(object);
         return E_OUTOFMEMORY;
     }
 
@@ -1713,12 +1713,12 @@ HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out)
     if (!parser_init_gstreamer())
         return E_FAIL;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (!(object->wg_parser = unix_funcs->wg_avi_parser_create()))
     {
-        heap_free(object);
+        free(object);
         return E_OUTOFMEMORY;
     }
 
@@ -1820,12 +1820,12 @@ HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out)
     if (!parser_init_gstreamer())
         return E_FAIL;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (!(object->wg_parser = unix_funcs->wg_mpeg_audio_parser_create()))
     {
-        heap_free(object);
+        free(object);
         return E_OUTOFMEMORY;
     }
 

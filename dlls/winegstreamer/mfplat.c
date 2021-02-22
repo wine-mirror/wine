@@ -29,7 +29,6 @@
 #include "ksmedia.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -86,7 +85,7 @@ static ULONG WINAPI video_processor_Release(IMFTransform *iface)
             IMFAttributes_Release(transform->attributes);
         if (transform->output_attributes)
             IMFAttributes_Release(transform->output_attributes);
-        heap_free(transform);
+        free(transform);
     }
 
     return refcount;
@@ -337,7 +336,7 @@ static ULONG WINAPI class_factory_Release(IClassFactory *iface)
     ULONG refcount = InterlockedDecrement(&factory->refcount);
 
     if (!refcount)
-        heap_free(factory);
+        free(factory);
 
     return refcount;
 }
@@ -383,7 +382,7 @@ static HRESULT video_processor_create(REFIID riid, void **ret)
     struct video_processor *object;
     HRESULT hr;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFTransform_iface.lpVtbl = &video_processor_vtbl;
@@ -430,7 +429,7 @@ HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
     {
         if (IsEqualGUID(class_objects[i].clsid, rclsid))
         {
-            if (!(factory = heap_alloc(sizeof(*factory))))
+            if (!(factory = malloc(sizeof(*factory))))
                 return E_OUTOFMEMORY;
 
             factory->IClassFactory_iface.lpVtbl = &class_factory_vtbl;

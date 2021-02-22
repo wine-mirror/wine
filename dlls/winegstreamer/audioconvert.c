@@ -26,7 +26,6 @@
 #include "ksmedia.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -82,7 +81,7 @@ static ULONG WINAPI audio_converter_Release(IMFTransform *iface)
     {
         transform->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&transform->cs);
-        heap_free(transform);
+        free(transform);
     }
 
     return refcount;
@@ -572,7 +571,7 @@ HRESULT audio_converter_create(REFIID riid, void **ret)
 
     TRACE("%s %p\n", debugstr_guid(riid), ret);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFTransform_iface.lpVtbl = &audio_converter_vtbl;
