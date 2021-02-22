@@ -1212,18 +1212,3 @@ BOOL WINAPI SetVCPFeature( HMONITOR monitor, BYTE vcpCode, DWORD value )
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
-
-BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("%p,%x,%p\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason) {
-        case DLL_WINE_PREATTACH:
-            return FALSE;  /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-    }
-
-    return TRUE;
-}
