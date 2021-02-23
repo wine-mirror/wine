@@ -7083,7 +7083,7 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, &previous_context_state);
     ok(previous_context_state != NULL, "Failed to get previous context state\n");
     refcount = get_refcount(vs);
-    todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
     hr = ID3DDeviceContextState_SetPrivateData(context_state, &test_guid, sizeof(constant), &constant);
     ok(hr == S_OK, "Failed to set private data, hr %#x.\n", hr);
@@ -7093,9 +7093,9 @@ static void test_device_context_state(void)
     data_size = sizeof(data);
     memset(data, 0xa5, sizeof(data));
     hr = ID3DDeviceContextState_GetPrivateData(context_state, &test_guid, &data_size, data);
-    todo_wine ok(hr == S_OK, "Failed to get private data, hr %#x.\n", hr);
-    todo_wine ok(data_size == sizeof(constant), "Got private data size %x, expected %x.\n", data_size, sizeof(constant));
-    todo_wine ok(!memcmp(data, &constant, sizeof(constant)), "Got unexpected private data.\n");
+    ok(hr == S_OK, "Failed to get private data, hr %#x.\n", hr);
+    ok(data_size == sizeof(constant), "Got private data size %x, expected %x.\n", data_size, sizeof(constant));
+    ok(!memcmp(data, &constant, sizeof(constant)), "Got unexpected private data.\n");
     ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, NULL);
 
     context_type = ID3D11DeviceContext1_GetType(context);
@@ -7142,118 +7142,96 @@ static void test_device_context_state(void)
 
     tmp_cb = (ID3D11Buffer *)0xdeadbeef;
     ID3D11DeviceContext1_HSGetConstantBuffers(context, 0, 1, &tmp_cb);
-    todo_wine ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
-    if (tmp_cb) ID3D11Buffer_Release(tmp_cb);
+    ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
     tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
     ID3D11DeviceContext1_HSGetSamplers(context, 0, 1, &tmp_sampler);
-    todo_wine ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
-    if (tmp_sampler) ID3D11SamplerState_Release(tmp_sampler);
+    ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
     tmp_hs = (ID3D11HullShader *)0xdeadbeef;
     ID3D11DeviceContext1_HSGetShader(context, &tmp_hs, NULL, NULL);
-    if (hs) todo_wine ok(!tmp_hs, "Got unexpected shader %p.\n", tmp_hs);
-    if (tmp_hs) ID3D11HullShader_Release(tmp_hs);
+    if (hs) ok(!tmp_hs, "Got unexpected shader %p.\n", tmp_hs);
     tmp_srv = (ID3D11ShaderResourceView *)0xdeadbeef;
     ID3D11DeviceContext1_HSGetShaderResources(context, 0, 1, &tmp_srv);
-    todo_wine ok(!tmp_srv, "Got unexpected srv %p.\n", tmp_srv);
-    if (tmp_srv) ID3D11ShaderResourceView_Release(tmp_srv);
+    ok(!tmp_srv, "Got unexpected srv %p.\n", tmp_srv);
 
     tmp_cb = (ID3D11Buffer *)0xdeadbeef;
     ID3D11DeviceContext1_DSGetConstantBuffers(context, 0, 1, &tmp_cb);
-    todo_wine ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
-    if (tmp_cb) ID3D11Buffer_Release(tmp_cb);
+    ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
     tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
     ID3D11DeviceContext1_DSGetSamplers(context, 0, 1, &tmp_sampler);
-    todo_wine ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
-    if (tmp_sampler) ID3D11SamplerState_Release(tmp_sampler);
+    ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
     tmp_ds = (ID3D11DomainShader *)0xdeadbeef;
     ID3D11DeviceContext1_DSGetShader(context, &tmp_ds, NULL, NULL);
-    if (ds) todo_wine ok(!tmp_ds, "Got unexpected shader %p.\n", tmp_ds);
-    if (tmp_ds) ID3D11DomainShader_Release(tmp_ds);
+    if (ds) ok(!tmp_ds, "Got unexpected shader %p.\n", tmp_ds);
     tmp_srv = (ID3D11ShaderResourceView *)0xdeadbeef;
     ID3D11DeviceContext1_DSGetShaderResources(context, 0, 1, &tmp_srv);
-    todo_wine ok(!tmp_srv, "Got unexpected srv %p.\n", tmp_srv);
-    if (tmp_srv) ID3D11ShaderResourceView_Release(tmp_srv);
+    ok(!tmp_srv, "Got unexpected srv %p.\n", tmp_srv);
 
     tmp_cb = (ID3D11Buffer *)0xdeadbeef;
     ID3D11DeviceContext1_CSGetConstantBuffers(context, 0, 1, &tmp_cb);
-    todo_wine ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
-    if (tmp_cb) ID3D11Buffer_Release(tmp_cb);
+    ok(!tmp_cb, "Got unexpected buffer %p.\n", tmp_cb);
     tmp_sampler = (ID3D11SamplerState *)0xdeadbeef;
     ID3D11DeviceContext1_CSGetSamplers(context, 0, 1, &tmp_sampler);
-    todo_wine ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
-    if (tmp_sampler) ID3D11SamplerState_Release(tmp_sampler);
+    ok(!tmp_sampler, "Got unexpected sampler %p.\n", tmp_sampler);
     tmp_cs = (ID3D11ComputeShader *)0xdeadbeef;
     ID3D11DeviceContext1_CSGetShader(context, &tmp_cs, NULL, NULL);
-    if (cs) todo_wine ok(!tmp_cs, "Got unexpected shader %p.\n", tmp_cs);
-    if (tmp_cs) ID3D11ComputeShader_Release(tmp_cs);
+    if (cs) ok(!tmp_cs, "Got unexpected shader %p.\n", tmp_cs);
     tmp_srv = (ID3D11ShaderResourceView *)0xdeadbeef;
     ID3D11DeviceContext1_CSGetShaderResources(context, 0, 1, &tmp_srv);
-    todo_wine ok(!tmp_srv, "Got unexpected srv %p.\n", tmp_srv);
-    if (tmp_srv) ID3D11ShaderResourceView_Release(tmp_srv);
+    ok(!tmp_srv, "Got unexpected srv %p.\n", tmp_srv);
     tmp_uav = (ID3D11UnorderedAccessView *)0xdeadbeef;
     ID3D11DeviceContext1_CSGetUnorderedAccessViews(context, 0, 1, &tmp_uav);
-    todo_wine ok(!tmp_uav, "Got unexpected uav %p.\n", tmp_uav);
-    if (tmp_uav) ID3D11UnorderedAccessView_Release(tmp_uav);
+    ok(!tmp_uav, "Got unexpected uav %p.\n", tmp_uav);
 
     topo = 0xdeadbeef;
     ID3D11DeviceContext1_IAGetPrimitiveTopology(context, &topo);
-    todo_wine ok(topo == D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED, "Got unexpected topology %#x.\n", topo);
+    ok(topo == D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED, "Got unexpected topology %#x.\n", topo);
     tmp_il = (ID3D11InputLayout *)0xdeadbeef;
     ID3D11DeviceContext1_IAGetInputLayout(context, &tmp_il);
-    todo_wine ok(!tmp_il, "Got unexpected input layout %p.\n", tmp_il);
-    if (tmp_il) ID3D11InputLayout_Release(tmp_il);
+    ok(!tmp_il, "Got unexpected input layout %p.\n", tmp_il);
     tmp_ib = (ID3D11Buffer *)0xdeadbeef;
     format = 0xdeadbeef;
     offset = 0xdeadbeef;
     ID3D11DeviceContext1_IAGetIndexBuffer(context, &tmp_ib, &format, &offset);
-    todo_wine ok(!tmp_ib, "Got unexpected input buffer %p.\n", tmp_ib);
-    if (tmp_ib) ID3D11Buffer_Release(tmp_ib);
-    todo_wine ok(format == DXGI_FORMAT_UNKNOWN, "Got unexpected input buffer format %#x.\n", format);
-    todo_wine ok(offset == 0, "Got unexpected input buffer offset %#x.\n", offset);
+    ok(!tmp_ib, "Got unexpected input buffer %p.\n", tmp_ib);
+    ok(format == DXGI_FORMAT_UNKNOWN, "Got unexpected input buffer format %#x.\n", format);
+    ok(offset == 0, "Got unexpected input buffer offset %#x.\n", offset);
     tmp_vb = (ID3D11Buffer *)0xdeadbeef;
     stride = 0xdeadbeef;
     offset = 0xdeadbeef;
     ID3D11DeviceContext1_IAGetVertexBuffers(context, 0, 1, &tmp_vb, &stride, &offset);
-    todo_wine ok(!tmp_vb, "Got unexpected vertex buffer %p.\n", tmp_vb);
-    if (tmp_vb) ID3D11Buffer_Release(tmp_vb);
-    todo_wine ok(stride == 0, "Got unexpected vertex buffer stride %#x.\n", stride);
-    todo_wine ok(offset == 0, "Got unexpected vertex buffer offset %#x.\n", offset);
+    ok(!tmp_vb, "Got unexpected vertex buffer %p.\n", tmp_vb);
+    ok(stride == 0, "Got unexpected vertex buffer stride %#x.\n", stride);
+    ok(offset == 0, "Got unexpected vertex buffer offset %#x.\n", offset);
 
     tmp_rtv = (ID3D11RenderTargetView *)0xdeadbeef;
     tmp_dsv = (ID3D11DepthStencilView *)0xdeadbeef;
     tmp_uav = (ID3D11UnorderedAccessView *)0xdeadbeef;
     ID3D11DeviceContext1_OMGetRenderTargetsAndUnorderedAccessViews(context, 1, &tmp_rtv, &tmp_dsv, 1, 1, &tmp_uav);
-    todo_wine ok(!tmp_rtv, "Got unexpected rendertarget view %p.\n", tmp_rtv);
-    if (tmp_rtv) ID3D11RenderTargetView_Release(tmp_rtv);
-    todo_wine ok(!tmp_dsv, "Got unexpected depth/stencil view %p.\n", tmp_dsv);
-    if (tmp_dsv) ID3D11DepthStencilView_Release(tmp_dsv);
-    todo_wine ok(!tmp_uav, "Got unexpected unordered access view %p.\n", tmp_uav);
-    if (tmp_uav) ID3D11UnorderedAccessView_Release(tmp_uav);
+    ok(!tmp_rtv, "Got unexpected rendertarget view %p.\n", tmp_rtv);
+    ok(!tmp_dsv, "Got unexpected depth/stencil view %p.\n", tmp_dsv);
+    ok(!tmp_uav, "Got unexpected unordered access view %p.\n", tmp_uav);
     tmp_bs = (ID3D11BlendState *)0xdeadbeef;
     memset(blend_factor, 0xcd, sizeof(blend_factor));
     sample_mask = 0xdeadbeef;
     ID3D11DeviceContext1_OMGetBlendState(context, &tmp_bs, blend_factor, &sample_mask);
-    todo_wine ok(!tmp_bs, "Got unexpected blend state %p.\n", tmp_bs);
-    if (tmp_bs) ID3D11BlendState_Release(tmp_bs);
-    todo_wine ok(!memcmp(blend_factor, default_blend_factor, sizeof(blend_factor)),
+    ok(!tmp_bs, "Got unexpected blend state %p.\n", tmp_bs);
+    ok(!memcmp(blend_factor, default_blend_factor, sizeof(blend_factor)),
             "Got unexpected blend factor %f,%f,%f,%f.\n",
             blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3]);
-    todo_wine ok(sample_mask == ~0, "Got unexpected sample mask %#x.\n", sample_mask);
+    ok(sample_mask == ~0, "Got unexpected sample mask %#x.\n", sample_mask);
     tmp_dss = (ID3D11DepthStencilState *)0xdeadbeef;
     stencil_ref = 0xdeadbeef;
     ID3D11DeviceContext1_OMGetDepthStencilState(context, &tmp_dss, &stencil_ref);
-    todo_wine ok(!tmp_dss, "Got unexpected depth/stencil state %p.\n", tmp_dss);
-    if (tmp_dss) ID3D11DepthStencilState_Release(tmp_dss);
-    todo_wine ok(stencil_ref == 0, "Got unexpected stencil ref %#x.\n", stencil_ref);
+    ok(!tmp_dss, "Got unexpected depth/stencil state %p.\n", tmp_dss);
+    ok(stencil_ref == 0, "Got unexpected stencil ref %#x.\n", stencil_ref);
 
     tmp_rs = (ID3D11RasterizerState *)0xdeadbeef;
     ID3D11DeviceContext1_RSGetState(context, &tmp_rs);
-    todo_wine ok(!tmp_rs, "Got unexpected rasterizer state %p.\n", tmp_rs);
-    if (tmp_rs) ID3D11RasterizerState_Release(tmp_rs);
+    ok(!tmp_rs, "Got unexpected rasterizer state %p.\n", tmp_rs);
     memset(tmp_vp, 0xa5, sizeof(tmp_vp));
     count = 2;
     ID3D11DeviceContext1_RSGetViewports(context, &count, tmp_vp);
-    todo_wine ok(count == 0, "Got unexpected viewport count %u.\n", count);
+    ok(count == 0, "Got unexpected viewport count %u.\n", count);
     memset(tmp_rect, 0xa5, sizeof(tmp_rect));
     count = 2;
     ID3D11DeviceContext1_RSGetScissorRects(context, &count, tmp_rect);
@@ -7261,15 +7239,13 @@ static void test_device_context_state(void)
 
     tmp_sob = (ID3D11Buffer *)0xdeadbeef;
     ID3D11DeviceContext1_SOGetTargets(context, 1, &tmp_sob);
-    todo_wine ok(!tmp_sob, "Got unexpected stream output buffer %p.\n", tmp_sob);
-    if (tmp_sob) ID3D11Buffer_Release(tmp_sob);
+    ok(!tmp_sob, "Got unexpected stream output buffer %p.\n", tmp_sob);
 
     tmp_pred = (ID3D11Predicate *)0xdeadbeef;
     pred_value = 0xdeadbeef;
     ID3D11DeviceContext1_GetPredication(context, &tmp_pred, &pred_value);
-    todo_wine ok(!tmp_pred, "Got unexpected predicate %p.\n", tmp_pred);
-    if (tmp_pred) ID3D11Predicate_Release(tmp_pred);
-    todo_wine ok(!pred_value, "Got unexpected predicate value %d.\n", pred_value);
+    ok(!tmp_pred, "Got unexpected predicate %p.\n", tmp_pred);
+    ok(!pred_value, "Got unexpected predicate value %d.\n", pred_value);
 
     /* updating the device context should also update the device context state */
     hr = ID3D11Device1_CreateVertexShader(device, simple_vs, sizeof(simple_vs), NULL, &vs2);
@@ -7277,14 +7253,13 @@ static void test_device_context_state(void)
     ID3D11DeviceContext1_VSSetShader(context, vs2, NULL, 0);
     ID3D11DeviceContext1_SwapDeviceContextState(context, context_state, &tmp_context_state);
     refcount = ID3DDeviceContextState_Release(tmp_context_state);
-    todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
-    todo_wine ok(tmp_context_state == context_state, "Got unexpected state pointer.\n");
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(tmp_context_state == context_state, "Got unexpected state pointer.\n");
     tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
     ID3D11DeviceContext1_VSGetShader(context, &tmp_vs, NULL, NULL);
-    todo_wine ok(tmp_vs == vs2, "Got shader %p, expected %p.\n", tmp_vs, vs2);
-    if (tmp_vs) refcount = ID3D11VertexShader_Release(tmp_vs);
-    else refcount = 0;
-    todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(tmp_vs == vs2, "Got shader %p, expected %p.\n", tmp_vs, vs2);
+    refcount = ID3D11VertexShader_Release(tmp_vs);
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
     /* context states may be used with other devices instances too */
     d3d11_device2 = create_device(NULL);
@@ -7305,17 +7280,16 @@ static void test_device_context_state(void)
     /* updating context2 vertex shader doesn't update other contexts using the same state */
     ID3D11DeviceContext1_VSSetShader(context2, vs, NULL, 0);
     ID3D11DeviceContext1_VSGetShader(context, &tmp_vs, NULL, NULL);
-    todo_wine ok(tmp_vs == vs2, "Got shader %p, expected %p.\n", tmp_vs, vs2);
-    if (tmp_vs) refcount = ID3D11VertexShader_Release(tmp_vs);
-    else refcount = 0;
-    todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(tmp_vs == vs2, "Got shader %p, expected %p.\n", tmp_vs, vs2);
+    refcount = ID3D11VertexShader_Release(tmp_vs);
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
     ID3D11DeviceContext1_SwapDeviceContextState(context2, tmp_context_state, &context_state2);
     refcount = ID3DDeviceContextState_Release(tmp_context_state);
     ok(refcount == 0, "Got refcount %u, expected 1.\n", refcount);
     refcount = ID3DDeviceContextState_Release(context_state2);
-    todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
-    todo_wine ok(context_state2 == context_state, "Got unexpected state pointer.\n");
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(context_state2 == context_state, "Got unexpected state pointer.\n");
 
     /* swapping the default state on context2 effectively clears the vertex shader */
     tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
@@ -7333,19 +7307,17 @@ static void test_device_context_state(void)
     ok(refcount == 0, "Got refcount %u, expected 0.\n", refcount);
     tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
     ID3D11DeviceContext1_VSGetShader(context2, &tmp_vs, NULL, NULL);
-    todo_wine ok(tmp_vs == vs, "Got shader %p, expected %p.\n", tmp_vs, vs);
-    if (tmp_vs) refcount = ID3D11VertexShader_Release(tmp_vs);
-    else refcount = 0;
-    todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(tmp_vs == vs, "Got shader %p, expected %p.\n", tmp_vs, vs);
+    refcount = ID3D11VertexShader_Release(tmp_vs);
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
     /* even after swapping it again */
     ID3D11DeviceContext1_SwapDeviceContextState(context2, context_state, NULL);
     tmp_vs = (ID3D11VertexShader *)0xdeadbeef;
     ID3D11DeviceContext1_VSGetShader(context2, &tmp_vs, NULL, NULL);
-    todo_wine ok(tmp_vs == vs, "Got shader %p, expected %p.\n", tmp_vs, vs);
-    if (tmp_vs) refcount = ID3D11VertexShader_Release(tmp_vs);
-    else refcount = 0;
-    todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(tmp_vs == vs, "Got shader %p, expected %p.\n", tmp_vs, vs);
+    refcount = ID3D11VertexShader_Release(tmp_vs);
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
     /* swapping the initial state on context2 doesn't have side effect on context either */
     ID3D11DeviceContext1_SwapDeviceContextState(context2, previous_context_state, NULL);
@@ -7362,10 +7334,10 @@ static void test_device_context_state(void)
     refcount = ID3DDeviceContextState_Release(previous_context_state);
     ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
     refcount = ID3DDeviceContextState_Release(tmp_context_state);
-    todo_wine ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
     refcount = ID3DDeviceContextState_Release(context_state);
     ok(!refcount, "Got refcount %u, expected 0.\n", refcount);
-    todo_wine ok(tmp_context_state == context_state, "Got unexpected state pointer.\n");
+    ok(tmp_context_state == context_state, "Got unexpected state pointer.\n");
     refcount = get_refcount(vs);
     ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 

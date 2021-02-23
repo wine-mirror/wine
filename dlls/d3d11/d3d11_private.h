@@ -516,6 +516,12 @@ struct d3d_query *unsafe_impl_from_ID3D11Query(ID3D11Query *iface) DECLSPEC_HIDD
 struct d3d_query *unsafe_impl_from_ID3D10Query(ID3D10Query *iface) DECLSPEC_HIDDEN;
 struct d3d_query *unsafe_impl_from_ID3D11Asynchronous(ID3D11Asynchronous *iface) DECLSPEC_HIDDEN;
 
+struct d3d_device_context_state_entry
+{
+    struct d3d_device *device;
+    struct wined3d_state *wined3d_state;
+};
+
 /* ID3DDeviceContextState */
 struct d3d_device_context_state
 {
@@ -523,29 +529,11 @@ struct d3d_device_context_state
     LONG refcount, private_refcount;
 
     struct wined3d_private_store private_store;
-    struct
-    {
-        ID3D11VertexShader *shader;
-        ID3D11SamplerState *samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-        ID3D11ShaderResourceView *srvs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
-        ID3D11Buffer *cbs[D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT];
-    } vs;
-    struct
-    {
-        ID3D11GeometryShader *shader;
-        ID3D11SamplerState *samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-        ID3D11ShaderResourceView *srvs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
-        ID3D11Buffer *cbs[D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT];
-    } gs;
-    struct
-    {
-        ID3D11PixelShader *shader;
-        ID3D11SamplerState *samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-        ID3D11ShaderResourceView *srvs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
-        ID3D11Buffer *cbs[D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT];
-    } ps;
-
     GUID emulated_interface;
+
+    struct d3d_device_context_state_entry *entries;
+    SIZE_T entries_size;
+    SIZE_T entry_count;
 
     struct wined3d_device *wined3d_device;
     ID3D11Device2 *device;
@@ -585,6 +573,10 @@ struct d3d_device
     struct wine_rb_tree depthstencil_states;
     struct wine_rb_tree rasterizer_states;
     struct wine_rb_tree sampler_states;
+
+    struct d3d_device_context_state **context_states;
+    SIZE_T context_states_size;
+    SIZE_T context_state_count;
 };
 
 static inline struct d3d_device *impl_from_ID3D11Device(ID3D11Device *iface)

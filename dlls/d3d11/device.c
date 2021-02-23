@@ -22,6 +22,32 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
+static BOOL d3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T size)
+{
+    SIZE_T max_capacity, new_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~(SIZE_T)0 / size;
+    if (count > max_capacity)
+        return FALSE;
+
+    new_capacity = max(1, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = count;
+
+    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+        return FALSE;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+    return TRUE;
+}
+
 static void STDMETHODCALLTYPE d3d_null_wined3d_object_destroyed(void *parent) {}
 
 static const struct wined3d_parent_ops d3d_null_wined3d_parent_ops =
@@ -88,9 +114,27 @@ static ULONG STDMETHODCALLTYPE d3d_device_context_state_AddRef(ID3DDeviceContext
     return refcount;
 }
 
+static void d3d_device_remove_context_state(struct d3d_device *device, struct d3d_device_context_state *state)
+{
+    unsigned int i;
+
+    for (i = 0; i < device->context_state_count; ++i)
+    {
+        if (device->context_states[i] != state)
+            continue;
+
+        if (i != device->context_state_count - 1)
+            device->context_states[i] = device->context_states[device->context_state_count - 1];
+        --device->context_state_count;
+        break;
+    }
+}
+
 static void d3d_device_context_state_private_release(struct d3d_device_context_state *state)
 {
     ULONG refcount = InterlockedDecrement(&state->private_refcount);
+    struct d3d_device_context_state_entry *entry;
+    struct d3d_device *device;
     unsigned int i;
 
     TRACE("%p decreasing private refcount to %u.\n", state, refcount);
@@ -98,27 +142,17 @@ static void d3d_device_context_state_private_release(struct d3d_device_context_s
     if (!refcount)
     {
         wined3d_private_store_cleanup(&state->private_store);
-        if (state->vs.shader) ID3D11VertexShader_Release(state->vs.shader);
-        if (state->gs.shader) ID3D11GeometryShader_Release(state->gs.shader);
-        if (state->ps.shader) ID3D11PixelShader_Release(state->ps.shader);
-        for (i = 0; i < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++i)
+        for (i = 0; i < state->entry_count; ++i)
         {
-            if (state->vs.samplers[i]) ID3D11SamplerState_Release(state->vs.samplers[i]);
-            if (state->gs.samplers[i]) ID3D11SamplerState_Release(state->gs.samplers[i]);
-            if (state->ps.samplers[i]) ID3D11SamplerState_Release(state->ps.samplers[i]);
+            entry = &state->entries[i];
+            device = entry->device;
+
+            if (entry->wined3d_state != wined3d_device_get_state(device->wined3d_device))
+                wined3d_state_destroy(entry->wined3d_state);
+
+            d3d_device_remove_context_state(device, state);
         }
-        for (i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i)
-        {
-            if (state->vs.srvs[i]) ID3D11ShaderResourceView_Release(state->vs.srvs[i]);
-            if (state->gs.srvs[i]) ID3D11ShaderResourceView_Release(state->gs.srvs[i]);
-            if (state->ps.srvs[i]) ID3D11ShaderResourceView_Release(state->ps.srvs[i]);
-        }
-        for (i = 0; i < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++i)
-        {
-            if (state->vs.cbs[i]) ID3D11Buffer_Release(state->vs.cbs[i]);
-            if (state->gs.cbs[i]) ID3D11Buffer_Release(state->gs.cbs[i]);
-            if (state->ps.cbs[i]) ID3D11Buffer_Release(state->ps.cbs[i]);
-        }
+        heap_free(state->entries);
         wined3d_device_decref(state->wined3d_device);
         heap_free(state);
     }
@@ -194,6 +228,85 @@ static const struct ID3DDeviceContextStateVtbl d3d_device_context_state_vtbl =
     /* ID3DDeviceContextState methods */
 };
 
+static struct d3d_device_context_state_entry *d3d_device_context_state_get_entry(
+        struct d3d_device_context_state *state, struct d3d_device *device)
+{
+    unsigned int i;
+
+    for (i = 0; i < state->entry_count; ++i)
+    {
+        if (state->entries[i].device == device)
+            return &state->entries[i];
+    }
+
+    return NULL;
+}
+
+static BOOL d3d_device_context_state_add_entry(struct d3d_device_context_state *state,
+        struct d3d_device *device, struct wined3d_state *wined3d_state)
+{
+    struct d3d_device_context_state_entry *entry;
+
+    if (!d3d_array_reserve((void **)&state->entries, &state->entries_size,
+            state->entry_count + 1, sizeof(*state->entries)))
+        return FALSE;
+
+    if (!d3d_array_reserve((void **)&device->context_states, &device->context_states_size,
+            device->context_state_count + 1, sizeof(*device->context_states)))
+        return FALSE;
+
+    entry = &state->entries[state->entry_count++];
+    entry->device = device;
+    entry->wined3d_state = wined3d_state;
+
+    device->context_states[device->context_state_count++] = state;
+
+    return TRUE;
+}
+
+static void d3d_device_context_state_remove_entry(struct d3d_device_context_state *state, struct d3d_device *device)
+{
+    struct d3d_device_context_state_entry *entry;
+    unsigned int i;
+
+    for (i = 0; i < state->entry_count; ++i)
+    {
+        entry = &state->entries[i];
+        if (entry->device != device)
+            continue;
+
+        if (entry->wined3d_state != wined3d_device_get_state(device->wined3d_device))
+            wined3d_state_destroy(entry->wined3d_state);
+
+        if (i != state->entry_count)
+            state->entries[i] = state->entries[state->entry_count - 1];
+        --state->entry_count;
+
+        break;
+    }
+}
+
+static struct wined3d_state *d3d_device_context_state_get_wined3d_state(struct d3d_device_context_state *state,
+        struct d3d_device *device)
+{
+    struct d3d_device_context_state_entry *entry;
+    struct wined3d_state *wined3d_state;
+
+    if ((entry = d3d_device_context_state_get_entry(state, device)))
+        return entry->wined3d_state;
+
+    if (FAILED(wined3d_state_create(device->wined3d_device, &wined3d_state)))
+        return NULL;
+
+    if (!d3d_device_context_state_add_entry(state, device, wined3d_state))
+    {
+        wined3d_state_destroy(wined3d_state);
+        return NULL;
+    }
+
+    return wined3d_state;
+}
+
 static void d3d_device_context_state_init(struct d3d_device_context_state *state, struct d3d_device *device,
         REFIID emulated_interface)
 {
@@ -201,9 +314,6 @@ static void d3d_device_context_state_init(struct d3d_device_context_state *state
     state->refcount = state->private_refcount = 0;
 
     wined3d_private_store_init(&state->private_store);
-    memset(&state->vs, 0, sizeof(state->vs));
-    memset(&state->gs, 0, sizeof(state->gs));
-    memset(&state->ps, 0, sizeof(state->ps));
 
     state->emulated_interface = *emulated_interface;
     wined3d_device_incref(state->wined3d_device = device->wined3d_device);
@@ -2722,98 +2832,39 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetConstantBuffers1(ID3D
             iface, start_slot, buffer_count, buffers, first_constant, num_constants);
 }
 
-static void d3d11_immediate_context_capture_state(ID3D11DeviceContext1 *iface, struct d3d_device_context_state *state)
-{
-    wined3d_mutex_lock();
-
-    d3d11_immediate_context_VSGetShader(iface, &state->vs.shader, NULL, 0);
-    d3d11_immediate_context_VSGetSamplers(iface, 0,
-            D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, state->vs.samplers);
-    d3d11_immediate_context_VSGetShaderResources(iface, 0,
-            D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, state->vs.srvs);
-    d3d11_immediate_context_VSGetConstantBuffers(iface, 0,
-            D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, state->vs.cbs);
-
-    d3d11_immediate_context_GSGetShader(iface, &state->gs.shader, NULL, 0);
-    d3d11_immediate_context_GSGetSamplers(iface, 0,
-            D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, state->gs.samplers);
-    d3d11_immediate_context_GSGetShaderResources(iface, 0,
-            D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, state->gs.srvs);
-    d3d11_immediate_context_GSGetConstantBuffers(iface, 0,
-            D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, state->gs.cbs);
-
-    d3d11_immediate_context_PSGetShader(iface, &state->ps.shader, NULL, 0);
-    d3d11_immediate_context_PSGetSamplers(iface, 0,
-            D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, state->ps.samplers);
-    d3d11_immediate_context_PSGetShaderResources(iface, 0,
-            D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, state->ps.srvs);
-    d3d11_immediate_context_PSGetConstantBuffers(iface, 0,
-            D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, state->ps.cbs);
-
-    wined3d_mutex_unlock();
-}
-
-static void d3d11_immediate_context_restore_state(ID3D11DeviceContext1 *iface, struct d3d_device_context_state *state)
-{
-    wined3d_mutex_lock();
-
-    d3d11_immediate_context_VSSetShader(iface, state->vs.shader, NULL, 0);
-    d3d11_immediate_context_VSSetSamplers(iface, 0,
-            D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, state->vs.samplers);
-    d3d11_immediate_context_VSSetShaderResources(iface, 0,
-            D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, state->vs.srvs);
-    d3d11_immediate_context_VSSetConstantBuffers(iface, 0,
-            D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, state->vs.cbs);
-
-    d3d11_immediate_context_GSSetShader(iface, state->gs.shader, NULL, 0);
-    d3d11_immediate_context_GSSetSamplers(iface, 0,
-            D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, state->gs.samplers);
-    d3d11_immediate_context_GSSetShaderResources(iface, 0,
-            D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, state->gs.srvs);
-    d3d11_immediate_context_GSSetConstantBuffers(iface, 0,
-            D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, state->gs.cbs);
-
-    d3d11_immediate_context_PSSetShader(iface, state->ps.shader, NULL, 0);
-    d3d11_immediate_context_PSSetSamplers(iface, 0,
-            D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT, state->ps.samplers);
-    d3d11_immediate_context_PSSetShaderResources(iface, 0,
-            D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, state->ps.srvs);
-    d3d11_immediate_context_PSSetConstantBuffers(iface, 0,
-            D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, state->ps.cbs);
-
-    wined3d_mutex_unlock();
-}
-
 static void STDMETHODCALLTYPE d3d11_immediate_context_SwapDeviceContextState(ID3D11DeviceContext1 *iface,
-        ID3DDeviceContextState *state, ID3DDeviceContextState **prev_state)
+        ID3DDeviceContextState *state, ID3DDeviceContextState **prev)
 {
-    struct d3d_device_context_state *state_impl;
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d_device_context_state *state_impl, *prev_impl;
+    struct wined3d_state *wined3d_state;
 
-    FIXME("iface %p, state %p, prev_state %p semi-stub!\n", iface, state, prev_state);
+    FIXME("iface %p, state %p, prev %p semi-stub!\n", iface, state, prev);
 
-    if (prev_state) *prev_state = NULL;
-    if (!state) return;
+    if (!state)
+    {
+        if (prev)
+            *prev = NULL;
+        return;
+    }
 
     wined3d_mutex_lock();
-    if (prev_state)
-    {
-        *prev_state = NULL;
-        if ((state_impl = heap_alloc(sizeof(*state_impl))))
-        {
-            d3d_device_context_state_init(state_impl, device, &device->state->emulated_interface);
-            d3d11_immediate_context_capture_state(iface, state_impl);
-            *prev_state = &state_impl->ID3DDeviceContextState_iface;
-        }
-    }
 
-    if ((state_impl = impl_from_ID3DDeviceContextState(state)))
-    {
-        d3d11_immediate_context_restore_state(iface, state_impl);
-        device->state->emulated_interface = state_impl->emulated_interface;
-        if (d3d_device_is_d3d10_active(device))
-            FIXME("D3D10 interface emulation not fully implemented yet!\n");
-    }
+    prev_impl = device->state;
+    state_impl = impl_from_ID3DDeviceContextState(state);
+    if (!(wined3d_state = d3d_device_context_state_get_wined3d_state(state_impl, device)))
+        ERR("Failed to get wined3d state for device context state %p.\n", state_impl);
+    wined3d_device_set_state(device->wined3d_device, wined3d_state);
+
+    if (prev)
+        ID3DDeviceContextState_AddRef(*prev = &prev_impl->ID3DDeviceContextState_iface);
+
+    d3d_device_context_state_private_addref(state_impl);
+    device->state = state_impl;
+    d3d_device_context_state_private_release(prev_impl);
+
+    if (d3d_device_is_d3d10_active(device))
+        FIXME("D3D10 interface emulation not fully implemented yet!\n");
     wined3d_mutex_unlock();
 }
 
@@ -4027,9 +4078,12 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeviceContextState(ID3D11Dev
 
     if (state)
     {
-        *state = NULL;
-        if (!(state_impl = heap_alloc(sizeof(*state_impl))))
+        if (!(state_impl = heap_alloc_zero(sizeof(*state_impl))))
+        {
+            *state = NULL;
             return E_OUTOFMEMORY;
+        }
+
         d3d_device_context_state_init(state_impl, device, emulated_interface);
         *state = &state_impl->ID3DDeviceContextState_iface;
     }
@@ -4211,12 +4265,19 @@ static ULONG STDMETHODCALLTYPE d3d_device_inner_Release(IUnknown *iface)
 {
     struct d3d_device *device = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&device->refcount);
+    unsigned int i;
 
     TRACE("%p decreasing refcount to %u.\n", device, refcount);
 
     if (!refcount)
     {
-        if (device->state) d3d_device_context_state_private_release(device->state);
+        if (device->state)
+            d3d_device_context_state_private_release(device->state);
+        for (i = 0; i < device->context_state_count; ++i)
+        {
+            d3d_device_context_state_remove_entry(device->context_states[i], device);
+        }
+        heap_free(device->context_states);
         d3d11_immediate_context_destroy(&device->immediate_context);
         if (device->wined3d_device)
         {
@@ -6394,6 +6455,7 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
         struct wined3d_device *wined3d_device)
 {
     struct d3d_device *device = device_from_wined3d_device_parent(device_parent);
+    struct wined3d_state *wined3d_state;
     ID3DDeviceContextState *state;
     HRESULT hr;
 
@@ -6407,13 +6469,18 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
     if (FAILED(hr = d3d11_device_CreateDeviceContextState(&device->ID3D11Device2_iface, 0, &device->feature_level,
             1, D3D11_SDK_VERSION, device->d3d11_only ? &IID_ID3D11Device2 : &IID_ID3D10Device1, NULL,
             &state)))
-        ERR("Failed to create the initial device context state, hr %#x.\n", hr);
-    else
     {
-        device->state = impl_from_ID3DDeviceContextState(state);
-        d3d_device_context_state_private_addref(device->state);
-        ID3DDeviceContextState_Release(state);
+        ERR("Failed to create the initial device context state, hr %#x.\n", hr);
+        return;
     }
+
+    device->state = impl_from_ID3DDeviceContextState(state);
+    wined3d_state = wined3d_device_get_state(device->wined3d_device);
+    if (!d3d_device_context_state_add_entry(device->state, device, wined3d_state))
+        ERR("Failed to add entry for wined3d state %p, device %p.\n", wined3d_state, device);
+
+    d3d_device_context_state_private_addref(device->state);
+    ID3DDeviceContextState_Release(state);
 }
 
 static void CDECL device_parent_mode_changed(struct wined3d_device_parent *device_parent)
