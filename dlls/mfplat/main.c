@@ -702,20 +702,6 @@ static BOOL GUIDFromString(LPCWSTR s, GUID *id)
     return FALSE;
 }
 
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
-{
-    switch (reason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(instance);
-            break;
-    }
-
-    return TRUE;
-}
-
 static HRESULT register_transform(const CLSID *clsid, const WCHAR *name, UINT32 flags,
         UINT32 cinput, const MFT_REGISTER_TYPE_INFO *input_types, UINT32 coutput,
         const MFT_REGISTER_TYPE_INFO *output_types, IMFAttributes *attributes)

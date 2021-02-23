@@ -2,7 +2,7 @@ MODULE    = mfplat.dll
 IMPORTLIB = mfplat
 IMPORTS   = advapi32 ole32 mfuuid propsys rtworkq
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	buffer.c \
