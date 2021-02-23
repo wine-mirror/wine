@@ -48,6 +48,12 @@ DEFINE_GUID(MFVideoFormat_ABGR32, 0x00000020, 0x0000, 0x0010, 0x80, 0x00, 0x00, 
 #include "wine/test.h"
 
 static HRESULT (WINAPI *pMFCreateSampleCopierMFT)(IMFTransform **copier);
+static HRESULT (WINAPI *pMFGetTopoNodeCurrentType)(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaType **type);
+
+static BOOL is_vista(void)
+{
+    return !pMFGetTopoNodeCurrentType;
+}
 
 #define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG expected_refcount, int line)
@@ -5089,14 +5095,20 @@ static void test_MFGetTopoNodeCurrentType(void)
     IMFTopologyNode *node;
     HRESULT hr;
 
+    if (!pMFGetTopoNodeCurrentType)
+    {
+        win_skip("MFGetTopoNodeCurrentType() is unsupported.\n");
+        return;
+    }
+
     /* Tee node. */
     hr = MFCreateTopologyNode(MF_TOPOLOGY_TEE_NODE, &node);
     ok(hr == S_OK, "Failed to create a node, hr %#x.\n", hr);
 
-    hr = MFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
+    hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
-    hr = MFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     hr = MFCreateMediaType(&media_type2);
@@ -5109,7 +5121,7 @@ static void test_MFGetTopoNodeCurrentType(void)
     hr = IMFTopologyNode_SetInputPrefType(node, 0, media_type2);
     ok(hr == S_OK, "Failed to set media type, hr %#x.\n", hr);
 
-    hr = MFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(media_type == media_type2, "Unexpected pointer.\n");
     IMFMediaType_Release(media_type);
@@ -5117,14 +5129,14 @@ static void test_MFGetTopoNodeCurrentType(void)
     hr = IMFTopologyNode_SetInputPrefType(node, 0, NULL);
     ok(hr == S_OK, "Failed to set media type, hr %#x.\n", hr);
 
-    hr = MFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
     ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
 
     /* Set second output. */
     hr = IMFTopologyNode_SetOutputPrefType(node, 1, media_type2);
     ok(hr == S_OK, "Failed to set media type, hr %#x.\n", hr);
 
-    hr = MFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
     ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
 
     hr = IMFTopologyNode_SetOutputPrefType(node, 1, NULL);
@@ -5134,7 +5146,7 @@ static void test_MFGetTopoNodeCurrentType(void)
     hr = IMFTopologyNode_SetOutputPrefType(node, 0, media_type2);
     ok(hr == S_OK, "Failed to set media type, hr %#x.\n", hr);
 
-    hr = MFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(media_type == media_type2, "Unexpected pointer.\n");
     IMFMediaType_Release(media_type);
@@ -5149,12 +5161,12 @@ static void test_MFGetTopoNodeCurrentType(void)
     hr = IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_PRIMARYOUTPUT, 1);
     ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
 
-    hr = MFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
+    hr = pMFGetTopoNodeCurrentType(node, 0, FALSE, &media_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(media_type == media_type2, "Unexpected pointer.\n");
     IMFMediaType_Release(media_type);
 
-    hr = MFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
+    hr = pMFGetTopoNodeCurrentType(node, 0, TRUE, &media_type);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(media_type == media_type2, "Unexpected pointer.\n");
     IMFMediaType_Release(media_type);
@@ -5169,12 +5181,19 @@ static void init_functions(void)
 
 #define X(f) p##f = (void*)GetProcAddress(mod, #f)
     X(MFCreateSampleCopierMFT);
+    X(MFGetTopoNodeCurrentType);
 #undef X
 }
 
 START_TEST(mf)
 {
     init_functions();
+
+    if (is_vista())
+    {
+        win_skip("Skipping tests on Vista.\n");
+        return;
+    }
 
     test_topology();
     test_topology_tee_node();
