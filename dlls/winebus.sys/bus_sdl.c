@@ -199,7 +199,6 @@ static const BYTE CONTROLLER_TRIGGERS [] = {
 static const BYTE HAPTIC_RUMBLE[] = {
     0x06, 0x00, 0xff,   /* USAGE PAGE (vendor-defined) */
     0x09, 0x01,         /* USAGE (1) */
-    0x85, 0x00,         /* REPORT_ID (0) */
     /* padding */
     0x95, 0x02,         /* REPORT_COUNT (2) */
     0x75, 0x08,         /* REPORT_SIZE (8) */
