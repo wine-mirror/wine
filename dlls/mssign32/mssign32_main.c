@@ -31,20 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mssign);
 
-BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID lpv )
-{
-    switch(reason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( hinst );
-        break;
-    }
-    return TRUE;
-}
-
-
 HRESULT WINAPI PvkGetCryptProv(HWND hwnd, LPCWSTR pwszCaption, LPCWSTR pwszCapiProvider,
                     DWORD dwProviderType, LPCWSTR pwszPvkFile, LPCWSTR pwszKeyContainerName,
                     DWORD *pdwKeySpec, LPWSTR *ppwszTmpContainer, HCRYPTPROV *phCryptProv)
