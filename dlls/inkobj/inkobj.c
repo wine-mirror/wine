@@ -22,24 +22,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(inkobj);
 static LONG INKOBJ_refCount;
 
 /*****************************************************
- *    DllMain (INKOBJ.init)
- */
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
-{
-    TRACE("(%p, %d, %p)\n", hinst, reason, reserved);
-
-    switch(reason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE; /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( hinst );
-        break;
-    }
-    return TRUE;
-}
-
-/*****************************************************
  *    DllCanUnloadNow (INKOBJ.@)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
