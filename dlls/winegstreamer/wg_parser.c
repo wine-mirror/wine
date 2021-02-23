@@ -987,12 +987,18 @@ static struct wg_parser_stream *create_stream(struct wg_parser *parser)
     return stream;
 }
 
-static void init_new_decoded_pad(GstElement *element, GstPad *pad, struct wg_parser *parser)
+static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
 {
+    struct wg_parser *parser = user;
     struct wg_parser_stream *stream;
     const char *name;
     GstCaps *caps;
     int ret;
+
+    GST_LOG("parser %p, element %p, pad %p.", parser, element, pad);
+
+    if (gst_pad_is_linked(pad))
+        return;
 
     caps = gst_caps_make_writable(gst_pad_query_caps(pad, NULL));
     name = gst_structure_get_name(gst_caps_get_structure(caps, 0));
@@ -1113,18 +1119,6 @@ static void init_new_decoded_pad(GstElement *element, GstPad *pad, struct wg_par
     gst_object_ref(stream->their_src = pad);
 out:
     gst_caps_unref(caps);
-}
-
-static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
-{
-    struct wg_parser *parser = user;
-
-    GST_LOG("parser %p, element %p, pad %p.", parser, element, pad);
-
-    if (gst_pad_is_linked(pad))
-        return;
-
-    init_new_decoded_pad(element, pad, parser);
 }
 
 static void pad_removed_cb(GstElement *element, GstPad *pad, gpointer user)
