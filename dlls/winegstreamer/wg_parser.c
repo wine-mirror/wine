@@ -1387,7 +1387,7 @@ static GstBusSyncReply bus_handler_cb(GstBus *bus, GstMessage *msg, gpointer use
     return GST_BUS_DROP;
 }
 
-static gboolean gst_base_src_perform_seek(struct wg_parser *parser, GstEvent *event)
+static gboolean src_perform_seek(struct wg_parser *parser, GstEvent *event)
 {
     BOOL thread = !!parser->push_thread;
     GstSeekType cur_type, stop_type;
@@ -1444,7 +1444,7 @@ static gboolean src_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
     switch (event->type)
     {
         case GST_EVENT_SEEK:
-            ret = gst_base_src_perform_seek(parser, event);
+            ret = src_perform_seek(parser, event);
             break;
 
         case GST_EVENT_FLUSH_START:
