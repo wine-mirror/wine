@@ -25,21 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(fontsub);
 
-BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("%p,%x,%p\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason) {
-        case DLL_WINE_PREATTACH:
-            return FALSE;  /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-    }
-
-    return TRUE;
-}
-
 ULONG __cdecl CreateFontPackage(const unsigned char *src, const ULONG src_len, unsigned char **dest,
     ULONG *dest_len, ULONG *written, const unsigned short flags, const unsigned short face_index,
     const unsigned short format, const unsigned short lang, const unsigned short platform, const unsigned short encoding,
