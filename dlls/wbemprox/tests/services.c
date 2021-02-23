@@ -149,10 +149,22 @@ static void test_IWbemLocator(void)
     IWbemLocator_Release( locator );
 }
 
+static void test_IWbemContext(void)
+{
+    IWbemContext *context;
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_WbemContext, NULL, CLSCTX_INPROC_SERVER, &IID_IWbemContext, (void **)&context );
+    ok(hr == S_OK, "Failed to create context object, hr %#x.\n", hr);
+
+    IWbemContext_Release( context );
+}
+
 START_TEST(services)
 {
     CoInitialize( NULL );
     test_IClientSecurity();
     test_IWbemLocator();
+    test_IWbemContext();
     CoUninitialize();
 }

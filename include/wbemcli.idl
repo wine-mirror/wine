@@ -936,3 +936,12 @@ coclass WbemRefresher
     interface IWbemRefresher;
     interface IWbemConfigureRefresher;
 };
+
+[
+    restricted,
+    uuid(674b6698-ee92-11d0-ad71-00c04fd8fdff)
+]
+coclass WbemContext
+{
+    interface IWbemContext;
+}

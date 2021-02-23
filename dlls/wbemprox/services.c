@@ -954,3 +954,178 @@ HRESULT WbemServices_create( const WCHAR *namespace, LPVOID *ppObj )
     TRACE("returning iface %p\n", *ppObj);
     return S_OK;
 }
+
+struct wbem_context
+{
+    IWbemContext IWbemContext_iface;
+    LONG refs;
+};
+
+static struct wbem_context *impl_from_IWbemContext( IWbemContext *iface )
+{
+    return CONTAINING_RECORD( iface, struct wbem_context, IWbemContext_iface );
+}
+
+static HRESULT WINAPI wbem_context_QueryInterface(
+    IWbemContext *iface,
+    REFIID riid,
+    void **obj)
+{
+    TRACE("%p, %s, %p\n", iface, debugstr_guid( riid ), obj );
+
+    if ( IsEqualGUID( riid, &IID_IWbemContext ) ||
+         IsEqualGUID( riid, &IID_IUnknown ) )
+    {
+        *obj = iface;
+    }
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IWbemContext_AddRef( iface );
+    return S_OK;
+}
+
+static ULONG WINAPI wbem_context_AddRef(
+    IWbemContext *iface )
+{
+    struct wbem_context *context = impl_from_IWbemContext( iface );
+    return InterlockedIncrement( &context->refs );
+}
+
+static ULONG WINAPI wbem_context_Release(
+    IWbemContext *iface )
+{
+    struct wbem_context *context = impl_from_IWbemContext( iface );
+    LONG refs = InterlockedDecrement( &context->refs );
+
+    if (!refs)
+    {
+        TRACE("destroying %p\n", context);
+        heap_free( context );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI wbem_context_Clone(
+    IWbemContext *iface,
+    IWbemContext **newcopy )
+{
+    FIXME("%p, %p\n", iface, newcopy);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI wbem_context_GetNames(
+    IWbemContext *iface,
+    LONG flags,
+    SAFEARRAY **names )
+{
+    FIXME("%p, %#x, %p\n", iface, flags, names);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI wbem_context_BeginEnumeration(
+    IWbemContext *iface,
+    LONG flags )
+{
+    FIXME("%p, %#x\n", iface, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI wbem_context_Next(
+    IWbemContext *iface,
+    LONG flags,
+    BSTR *name,
+    VARIANT *value )
+{
+    FIXME("%p, %#x, %p, %p\n", iface, flags, name, value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI wbem_context_EndEnumeration(
+    IWbemContext *iface )
+{
+    FIXME("%p\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI wbem_context_SetValue(
+    IWbemContext *iface,
+    LPCWSTR name,
+    LONG flags,
+    VARIANT *value )
+{
+    FIXME("%p, %s, %#x, %p\n", iface, debugstr_w(name), flags, value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI wbem_context_GetValue(
+    IWbemContext *iface,
+    LPCWSTR name,
+    LONG flags,
+    VARIANT *value )
+{
+    FIXME("%p, %s, %#x, %p\n", iface, debugstr_w(name), flags, value);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI wbem_context_DeleteValue(
+    IWbemContext *iface,
+    LPCWSTR name,
+    LONG flags )
+{
+    FIXME("%p, %s, %#x\n", iface, debugstr_w(name), flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI wbem_context_DeleteAll(
+    IWbemContext *iface )
+{
+    FIXME("%p\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static const IWbemContextVtbl wbem_context_vtbl =
+{
+    wbem_context_QueryInterface,
+    wbem_context_AddRef,
+    wbem_context_Release,
+    wbem_context_Clone,
+    wbem_context_GetNames,
+    wbem_context_BeginEnumeration,
+    wbem_context_Next,
+    wbem_context_EndEnumeration,
+    wbem_context_SetValue,
+    wbem_context_GetValue,
+    wbem_context_DeleteValue,
+    wbem_context_DeleteAll,
+};
+
+HRESULT WbemContext_create( void **obj )
+{
+    struct wbem_context *context;
+
+    TRACE("(%p)\n", obj);
+
+    context = heap_alloc( sizeof(*context) );
+    if (!context) return E_OUTOFMEMORY;
+
+    context->IWbemContext_iface.lpVtbl = &wbem_context_vtbl;
+    context->refs = 1;
+
+    *obj = &context->IWbemContext_iface;
+
+    TRACE("returning iface %p\n", *obj);
+    return S_OK;
+}
