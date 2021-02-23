@@ -7235,7 +7235,7 @@ static void test_device_context_state(void)
     memset(tmp_rect, 0xa5, sizeof(tmp_rect));
     count = 2;
     ID3D11DeviceContext1_RSGetScissorRects(context, &count, tmp_rect);
-    todo_wine ok(count == 0, "Got unexpected scissor rect count %u.\n", count);
+    ok(count == 0, "Got unexpected scissor rect count %u.\n", count);
 
     tmp_sob = (ID3D11Buffer *)0xdeadbeef;
     ID3D11DeviceContext1_SOGetTargets(context, 1, &tmp_sob);
@@ -7514,7 +7514,7 @@ static void test_device_context_state(void)
     memset(tmp_rect, 0xa5, sizeof(tmp_rect));
     count = 2;
     ID3D11DeviceContext1_RSGetScissorRects(context, &count, tmp_rect);
-    todo_wine ok(count == 1, "Got scissor rect count %u, expected 1.\n", count);
+    ok(count == 1, "Got scissor rect count %u, expected 1.\n", count);
     ok(!memcmp(tmp_rect, &rect, sizeof(rect)), "Got scissor rect %s, expected %s.\n",
             wine_dbgstr_rect(tmp_rect), wine_dbgstr_rect(&rect));
 
@@ -7962,7 +7962,7 @@ static void test_device_context_state(void)
     memset(tmp_rect, 0xa5, sizeof(tmp_rect));
     count = 2;
     ID3D11DeviceContext1_RSGetScissorRects(context, &count, tmp_rect);
-    todo_wine ok(count == 1, "Got scissor rect count %u, expected 1.\n", count);
+    ok(count == 1, "Got scissor rect count %u, expected 1.\n", count);
     ok(!memcmp(tmp_rect, &rect, sizeof(rect)), "Got scissor rect %s, expected %s.\n",
             wine_dbgstr_rect(tmp_rect), wine_dbgstr_rect(&rect));
 

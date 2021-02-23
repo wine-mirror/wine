@@ -2270,14 +2270,9 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetScissorRects(ID3D11De
     wined3d_device_get_scissor_rects(device->wined3d_device, &actual_count, rects);
     wined3d_mutex_unlock();
 
-    if (!rects)
-    {
-        *rect_count = actual_count;
-        return;
-    }
-
-    if (*rect_count > actual_count)
+    if (rects && *rect_count > actual_count)
         memset(&rects[actual_count], 0, (*rect_count - actual_count) * sizeof(*rects));
+    *rect_count = actual_count;
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_HSGetShaderResources(ID3D11DeviceContext1 *iface,
