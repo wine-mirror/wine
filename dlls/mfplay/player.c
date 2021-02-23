@@ -26,20 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
-{
-    switch (reason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(instance);
-            break;
-    }
-
-    return TRUE;
-}
-
 HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_CREATION_OPTIONS options,
         IMFPMediaPlayerCallback *callback, HWND hwnd, IMFPMediaPlayer **player)
 {
