@@ -719,7 +719,7 @@ static GstAutoplugSelectResult autoplug_select_cb(GstElement *bin, GstPad *pad,
     return GST_AUTOPLUG_SELECT_TRY;
 }
 
-static void no_more_pads(GstElement *element, gpointer user)
+static void no_more_pads_cb(GstElement *element, gpointer user)
 {
     struct wg_parser *parser = user;
 
@@ -769,7 +769,7 @@ static GstFlowReturn queue_stream_event(struct wg_parser_stream *stream,
     return GST_FLOW_OK;
 }
 
-static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
+static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
 {
     struct wg_parser_stream *stream = gst_pad_get_element_private(pad);
     struct wg_parser *parser = stream->parser;
@@ -897,7 +897,7 @@ static GstFlowReturn sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *bu
     return ret;
 }
 
-static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
+static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct wg_parser_stream *stream = gst_pad_get_element_private(pad);
 
@@ -980,8 +980,8 @@ static struct wg_parser_stream *create_stream(struct wg_parser *parser)
     stream->my_sink = gst_pad_new(pad_name, GST_PAD_SINK);
     gst_pad_set_element_private(stream->my_sink, stream);
     gst_pad_set_chain_function(stream->my_sink, sink_chain_cb);
-    gst_pad_set_event_function(stream->my_sink, event_sink);
-    gst_pad_set_query_function(stream->my_sink, query_sink);
+    gst_pad_set_event_function(stream->my_sink, sink_event_cb);
+    gst_pad_set_query_function(stream->my_sink, sink_query_cb);
 
     parser->streams[parser->stream_count++] = stream;
     return stream;
@@ -1209,7 +1209,7 @@ static GstFlowReturn src_getrange_cb(GstPad *pad, GstObject *parent,
     return ret ? GST_FLOW_OK : GST_FLOW_ERROR;
 }
 
-static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
+static gboolean src_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct wg_parser *parser = gst_pad_get_element_private(pad);
     GstFormat format;
@@ -1330,7 +1330,7 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
     return TRUE;
 }
 
-static gboolean activate_mode(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate)
+static gboolean src_activate_mode_cb(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate)
 {
     struct wg_parser *parser = gst_pad_get_element_private(pad);
 
@@ -1440,7 +1440,7 @@ static gboolean gst_base_src_perform_seek(struct wg_parser *parser, GstEvent *ev
     return TRUE;
 }
 
-static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
+static gboolean src_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
 {
     struct wg_parser *parser = gst_pad_get_element_private(pad);
     gboolean ret = TRUE;
@@ -1508,9 +1508,9 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
 
     parser->my_src = gst_pad_new_from_static_template(&src_template, "quartz-src");
     gst_pad_set_getrange_function(parser->my_src, src_getrange_cb);
-    gst_pad_set_query_function(parser->my_src, query_function);
-    gst_pad_set_activatemode_function(parser->my_src, activate_mode);
-    gst_pad_set_event_function(parser->my_src, event_src);
+    gst_pad_set_query_function(parser->my_src, src_query_cb);
+    gst_pad_set_activatemode_function(parser->my_src, src_activate_mode_cb);
+    gst_pad_set_event_function(parser->my_src, src_event_cb);
     gst_pad_set_element_private(parser->my_src, parser);
 
     parser->start_offset = parser->next_offset = parser->stop_offset = 0;
@@ -1619,7 +1619,7 @@ static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
     g_signal_connect(element, "pad-added", G_CALLBACK(pad_added_cb), parser);
     g_signal_connect(element, "pad-removed", G_CALLBACK(pad_removed_cb), parser);
     g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_select_cb), parser);
-    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), parser);
+    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads_cb), parser);
 
     parser->their_sink = gst_element_get_static_pad(element, "sink");
 
@@ -1670,7 +1670,7 @@ static BOOL avi_parser_init_gst(struct wg_parser *parser)
 
     g_signal_connect(element, "pad-added", G_CALLBACK(pad_added_cb), parser);
     g_signal_connect(element, "pad-removed", G_CALLBACK(pad_removed_cb), parser);
-    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), parser);
+    g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads_cb), parser);
 
     parser->their_sink = gst_element_get_static_pad(element, "sink");
 
