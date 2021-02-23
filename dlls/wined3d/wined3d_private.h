@@ -3776,7 +3776,7 @@ struct wined3d_device
 
     enum wined3d_feature_level feature_level;
 
-    struct wined3d_state state;
+    struct wined3d_state *state;
 
     /* Internal use fields  */
     struct wined3d_device_creation_parameters create_parms;
