@@ -28,22 +28,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msisip);
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-    }
-
-    return TRUE;
-}
-
 static GUID mySubject = { 0x000c10f1, 0x0000, 0x0000,
  { 0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46 }};
 
