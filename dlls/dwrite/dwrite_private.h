@@ -118,11 +118,6 @@ static inline unsigned short get_table_entry(const unsigned short *table, WCHAR 
     return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
 }
 
-static inline FLOAT get_scaled_advance_width(INT32 advance, FLOAT emSize, const DWRITE_FONT_METRICS *metrics)
-{
-    return (FLOAT)advance * emSize / (FLOAT)metrics->designUnitsPerEm;
-}
-
 static inline BOOL is_simulation_valid(DWRITE_FONT_SIMULATIONS simulations)
 {
     return (simulations & ~(DWRITE_FONT_SIMULATIONS_NONE | DWRITE_FONT_SIMULATIONS_BOLD |
