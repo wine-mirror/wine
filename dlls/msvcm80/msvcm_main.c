@@ -25,19 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcm);
 
-BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
-{
-    switch (reason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;  /* prefer native version */
-
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hdll);
-    }
-    return TRUE;
-}
-
 /* void __cdecl <CrtImplementationDetails>::DoDllLanguageSupportValidation(void) */
 void __cdecl CrtImplementationDetails_DoDllLanguageSupportValidation(void)
 {
