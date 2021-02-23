@@ -1000,7 +1000,7 @@ static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
     if (gst_pad_is_linked(pad))
         return;
 
-    caps = gst_caps_make_writable(gst_pad_query_caps(pad, NULL));
+    caps = gst_pad_query_caps(pad, NULL);
     name = gst_structure_get_name(gst_caps_get_structure(caps, 0));
 
     if (!(stream = create_stream(parser)))
