@@ -276,19 +276,3 @@ GLboolean WINAPI wine_gluCheckExtension( const GLubyte *extName, const GLubyte *
     }
     return GLU_FALSE;
 }
-
-/***********************************************************************
- *		DllMain
- */
-BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, LPVOID reserved )
-{
-    switch (reason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls( instance );
-            break;
-    }
-    return TRUE;
-}
