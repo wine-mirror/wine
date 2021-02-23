@@ -699,7 +699,8 @@ static void CDECL wg_parser_stream_notify_qos(struct wg_parser_stream *stream,
     gst_pad_push_event(stream->my_sink, event);
 }
 
-static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, gpointer user)
+static GstAutoplugSelectResult autoplug_select_cb(GstElement *bin, GstPad *pad,
+        GstCaps *caps, GstElementFactory *fact, gpointer user)
 {
     const char *name = gst_element_factory_get_longname(fact);
 
@@ -865,7 +866,7 @@ static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
     return TRUE;
 }
 
-static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *buffer)
+static GstFlowReturn sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *buffer)
 {
     struct wg_parser_stream *stream = gst_pad_get_element_private(pad);
     struct wg_parser_event stream_event;
@@ -978,7 +979,7 @@ static struct wg_parser_stream *create_stream(struct wg_parser *parser)
     sprintf(pad_name, "qz_sink_%u", parser->stream_count);
     stream->my_sink = gst_pad_new(pad_name, GST_PAD_SINK);
     gst_pad_set_element_private(stream->my_sink, stream);
-    gst_pad_set_chain_function(stream->my_sink, got_data_sink);
+    gst_pad_set_chain_function(stream->my_sink, sink_chain_cb);
     gst_pad_set_event_function(stream->my_sink, event_sink);
     gst_pad_set_query_function(stream->my_sink, query_sink);
 
@@ -1114,7 +1115,7 @@ out:
     gst_caps_unref(caps);
 }
 
-static void existing_new_pad(GstElement *element, GstPad *pad, gpointer user)
+static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
 {
     struct wg_parser *parser = user;
 
@@ -1126,7 +1127,7 @@ static void existing_new_pad(GstElement *element, GstPad *pad, gpointer user)
     init_new_decoded_pad(element, pad, parser);
 }
 
-static void removed_decoded_pad(GstElement *element, GstPad *pad, gpointer user)
+static void pad_removed_cb(GstElement *element, GstPad *pad, gpointer user)
 {
     struct wg_parser *parser = user;
     unsigned int i;
@@ -1155,7 +1156,8 @@ static void removed_decoded_pad(GstElement *element, GstPad *pad, gpointer user)
     g_free(name);
 }
 
-static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 offset, guint size, GstBuffer **buffer)
+static GstFlowReturn src_getrange_cb(GstPad *pad, GstObject *parent,
+        guint64 offset, guint size, GstBuffer **buffer)
 {
     struct wg_parser *parser = gst_pad_get_element_private(pad);
     GstBuffer *new_buffer = NULL;
@@ -1277,7 +1279,7 @@ static void *push_data(void *arg)
             break;
         size = min(16384, max_size - parser->next_offset);
 
-        if ((ret = request_buffer_src(parser->my_src, NULL, parser->next_offset, size, &buffer)) < 0)
+        if ((ret = src_getrange_cb(parser->my_src, NULL, parser->next_offset, size, &buffer)) < 0)
         {
             GST_ERROR("Failed to read data, ret %s.", gst_flow_get_name(ret));
             break;
@@ -1347,7 +1349,7 @@ static gboolean activate_mode(GstPad *pad, GstObject *parent, GstPadMode mode, g
     return FALSE;
 }
 
-static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer user)
+static GstBusSyncReply bus_handler_cb(GstBus *bus, GstMessage *msg, gpointer user)
 {
     struct wg_parser *parser = user;
     gchar *dbg_info = NULL;
@@ -1498,14 +1500,14 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
     if (!parser->bus)
     {
         parser->bus = gst_bus_new();
-        gst_bus_set_sync_handler(parser->bus, watch_bus, parser, NULL);
+        gst_bus_set_sync_handler(parser->bus, bus_handler_cb, parser, NULL);
     }
 
     parser->container = gst_bin_new(NULL);
     gst_element_set_bus(parser->container, parser->bus);
 
     parser->my_src = gst_pad_new_from_static_template(&src_template, "quartz-src");
-    gst_pad_set_getrange_function(parser->my_src, request_buffer_src);
+    gst_pad_set_getrange_function(parser->my_src, src_getrange_cb);
     gst_pad_set_query_function(parser->my_src, query_function);
     gst_pad_set_activatemode_function(parser->my_src, activate_mode);
     gst_pad_set_event_function(parser->my_src, event_src);
@@ -1614,9 +1616,9 @@ static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
     gst_bin_add(GST_BIN(parser->container), element);
     parser->decodebin = element;
 
-    g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad), parser);
-    g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad), parser);
-    g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_blacklist), parser);
+    g_signal_connect(element, "pad-added", G_CALLBACK(pad_added_cb), parser);
+    g_signal_connect(element, "pad-removed", G_CALLBACK(pad_removed_cb), parser);
+    g_signal_connect(element, "autoplug-select", G_CALLBACK(autoplug_select_cb), parser);
     g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), parser);
 
     parser->their_sink = gst_element_get_static_pad(element, "sink");
@@ -1666,8 +1668,8 @@ static BOOL avi_parser_init_gst(struct wg_parser *parser)
 
     gst_bin_add(GST_BIN(parser->container), element);
 
-    g_signal_connect(element, "pad-added", G_CALLBACK(existing_new_pad), parser);
-    g_signal_connect(element, "pad-removed", G_CALLBACK(removed_decoded_pad), parser);
+    g_signal_connect(element, "pad-added", G_CALLBACK(pad_added_cb), parser);
+    g_signal_connect(element, "pad-removed", G_CALLBACK(pad_removed_cb), parser);
     g_signal_connect(element, "no-more-pads", G_CALLBACK(no_more_pads), parser);
 
     parser->their_sink = gst_element_get_static_pad(element, "sink");
