@@ -374,6 +374,7 @@ void state_unbind_resources(struct wined3d_state *state)
     struct wined3d_shader_resource_view *srv;
     struct wined3d_vertex_declaration *decl;
     struct wined3d_blend_state *blend_state;
+    struct wined3d_rendertarget_view *rtv;
     struct wined3d_sampler *sampler;
     struct wined3d_texture *texture;
     struct wined3d_buffer *buffer;
@@ -472,6 +473,21 @@ void state_unbind_resources(struct wined3d_state *state)
     {
         state->blend_state = NULL;
         wined3d_blend_state_decref(blend_state);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
+    {
+        if ((rtv = state->fb.render_targets[i]))
+        {
+            state->fb.render_targets[i] = NULL;
+            wined3d_rendertarget_view_decref(rtv);
+        }
+    }
+
+    if ((rtv = state->fb.depth_stencil))
+    {
+        state->fb.depth_stencil = NULL;
+        wined3d_rendertarget_view_decref(rtv);
     }
 }
 

@@ -1196,7 +1196,6 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
     struct wined3d_resource *resource, *cursor;
     struct wined3d_rendertarget_view *view;
     struct wined3d_texture *texture;
-    unsigned int i;
 
     TRACE("device %p.\n", device);
 
@@ -1224,10 +1223,6 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
 
     wined3d_cs_emit_reset_state(device->cs);
     state_cleanup(state);
-    for (i = 0; i < device->adapter->d3d_info.limits.max_rt_count; ++i)
-    {
-        wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
-    }
 
     wine_rb_clear(&device->samplers, device_free_sampler, NULL);
     wine_rb_clear(&device->rasterizer_states, device_free_rasterizer_state, NULL);
@@ -1242,14 +1237,6 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
 
     device->adapter->adapter_ops->adapter_uninit_3d(device);
     device->d3d_initialized = FALSE;
-
-    if ((view = state->fb.depth_stencil))
-    {
-        TRACE("Releasing depth/stencil view %p.\n", view);
-
-        state->fb.depth_stencil = NULL;
-        wined3d_rendertarget_view_decref(view);
-    }
 
     if ((view = device->auto_depth_stencil_view))
     {
