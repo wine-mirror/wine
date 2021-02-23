@@ -29,21 +29,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msasn1);
 
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
-{
-
-    switch (reason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(instance);
-            break;
-    }
-
-    return TRUE;
-}
-
 ASN1module_t WINAPI ASN1_CreateModule(ASN1uint32_t ver, ASN1encodingrule_e rule, ASN1uint32_t flags,
                                       ASN1uint32_t pdu, const ASN1GenericFun_t encoder[],
                                       const ASN1GenericFun_t decoder[], const ASN1FreeFun_t freemem[],
