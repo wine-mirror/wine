@@ -98,6 +98,7 @@
 @ cdecl wined3d_device_get_rendertarget_view(ptr long)
 @ cdecl wined3d_device_get_scissor_rects(ptr ptr ptr)
 @ cdecl wined3d_device_get_software_vertex_processing(ptr)
+@ cdecl wined3d_device_get_state(ptr)
 @ cdecl wined3d_device_get_stream_output(ptr long ptr)
 @ cdecl wined3d_device_get_stream_source(ptr long ptr ptr ptr)
 @ cdecl wined3d_device_get_swapchain(ptr long)
@@ -151,6 +152,7 @@
 @ cdecl wined3d_device_set_rendertarget_view(ptr long ptr long)
 @ cdecl wined3d_device_set_scissor_rects(ptr long ptr)
 @ cdecl wined3d_device_set_software_vertex_processing(ptr long)
+@ cdecl wined3d_device_set_state(ptr ptr)
 @ cdecl wined3d_device_set_stream_output(ptr long ptr long)
 @ cdecl wined3d_device_set_stream_source(ptr long ptr long long)
 @ cdecl wined3d_device_set_unordered_access_view(ptr long ptr long)
@@ -236,6 +238,9 @@
 @ cdecl wined3d_shader_resource_view_generate_mipmaps(ptr)
 @ cdecl wined3d_shader_resource_view_get_parent(ptr)
 @ cdecl wined3d_shader_resource_view_incref(ptr)
+
+@ cdecl wined3d_state_create(ptr ptr)
+@ cdecl wined3d_state_destroy(ptr)
 
 @ cdecl wined3d_stateblock_apply(ptr ptr)
 @ cdecl wined3d_stateblock_capture(ptr ptr)

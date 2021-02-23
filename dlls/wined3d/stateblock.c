@@ -1885,6 +1885,28 @@ void state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_
         state_init_default(state, d3d_info);
 }
 
+HRESULT CDECL wined3d_state_create(struct wined3d_device *device, struct wined3d_state **state)
+{
+    struct wined3d_state *object;
+
+    TRACE("device %p, state %p.\n", device, state);
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+    state_init(object, &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT);
+
+    *state = object;
+    return S_OK;
+}
+
+void CDECL wined3d_state_destroy(struct wined3d_state *state)
+{
+    TRACE("state %p.\n", state);
+
+    state_cleanup(state);
+    heap_free(state);
+}
+
 static void stateblock_state_init_default(struct wined3d_stateblock_state *state,
         const struct wined3d_d3d_info *d3d_info)
 {

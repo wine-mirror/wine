@@ -2223,6 +2223,7 @@ struct wined3d_resource;
 struct wined3d_sampler;
 struct wined3d_shader;
 struct wined3d_shader_resource_view;
+struct wined3d_state;
 struct wined3d_stateblock;
 struct wined3d_swapchain;
 struct wined3d_swapchain_state;
@@ -2432,6 +2433,7 @@ struct wined3d_rendertarget_view * __cdecl wined3d_device_get_rendertarget_view(
 void __cdecl wined3d_device_get_scissor_rects(const struct wined3d_device *device, unsigned int *rect_count,
         RECT *rect);
 BOOL __cdecl wined3d_device_get_software_vertex_processing(const struct wined3d_device *device);
+struct wined3d_state * __cdecl wined3d_device_get_state(struct wined3d_device *device);
 struct wined3d_buffer * __cdecl wined3d_device_get_stream_output(struct wined3d_device *device,
         UINT idx, UINT *offset);
 HRESULT __cdecl wined3d_device_get_stream_source(const struct wined3d_device *device,
@@ -2522,6 +2524,7 @@ HRESULT __cdecl wined3d_device_set_rendertarget_view(struct wined3d_device *devi
 void __cdecl wined3d_device_set_scissor_rects(struct wined3d_device *device,
         unsigned int rect_count, const RECT *rect);
 void __cdecl wined3d_device_set_software_vertex_processing(struct wined3d_device *device, BOOL software);
+void __cdecl wined3d_device_set_state(struct wined3d_device *device, struct wined3d_state *state);
 void __cdecl wined3d_device_set_stream_output(struct wined3d_device *device, UINT idx,
         struct wined3d_buffer *buffer, UINT offset);
 HRESULT __cdecl wined3d_device_set_stream_source(struct wined3d_device *device,
@@ -2729,6 +2732,9 @@ ULONG __cdecl wined3d_shader_resource_view_decref(struct wined3d_shader_resource
 void __cdecl wined3d_shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *view);
 void * __cdecl wined3d_shader_resource_view_get_parent(const struct wined3d_shader_resource_view *view);
 ULONG __cdecl wined3d_shader_resource_view_incref(struct wined3d_shader_resource_view *view);
+
+HRESULT __cdecl wined3d_state_create(struct wined3d_device *device, struct wined3d_state **state);
+void __cdecl wined3d_state_destroy(struct wined3d_state *state);
 
 void __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         struct wined3d_stateblock *device_state);

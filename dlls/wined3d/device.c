@@ -251,7 +251,7 @@ void wined3d_device_cleanup(struct wined3d_device *device)
     wine_rb_destroy(&device->depth_stencil_states, device_leftover_depth_stencil_state, NULL);
     wine_rb_destroy(&device->so_descs, device_free_so_desc, NULL);
 
-    heap_free(device->state);
+    wined3d_state_destroy(device->state);
     device->state = NULL;
     wined3d_decref(device->wined3d);
     device->wined3d = NULL;
@@ -1924,6 +1924,136 @@ void CDECL wined3d_device_get_scissor_rects(const struct wined3d_device *device,
         memcpy(rects, state->scissor_rects, count * sizeof(*rects));
     if (rect_count)
         *rect_count = state->scissor_rect_count;
+}
+
+void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3d_state *state)
+{
+    const struct wined3d_light_info *light;
+    unsigned int i, j;
+
+    TRACE("device %p, state %p.\n", device, state);
+
+    device->state = state;
+
+    for (i = 0; i < WINED3D_MAX_RENDER_TARGETS; ++i)
+    {
+        wined3d_cs_emit_set_rendertarget_view(device->cs, i, state->fb.render_targets[i]);
+    }
+
+    wined3d_cs_emit_set_depth_stencil_view(device->cs, state->fb.depth_stencil);
+    wined3d_cs_emit_set_vertex_declaration(device->cs, state->vertex_declaration);
+
+    for (i = 0; i < WINED3D_MAX_STREAM_OUTPUT_BUFFERS; ++i)
+    {
+        wined3d_cs_emit_set_stream_output(device->cs, i,
+                state->stream_output[i].buffer, state->stream_output[i].offset);
+    }
+
+    for (i = 0; i < WINED3D_MAX_STREAMS; ++i)
+    {
+        wined3d_cs_emit_set_stream_source(device->cs, i, state->streams[i].buffer,
+                state->streams[i].offset, state->streams[i].stride);
+    }
+
+    wined3d_cs_emit_set_index_buffer(device->cs, state->index_buffer, state->index_format, state->index_offset);
+
+    wined3d_cs_emit_set_predication(device->cs, state->predicate, state->predicate_value);
+
+    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
+    {
+        wined3d_cs_emit_set_shader(device->cs, i, state->shader[i]);
+        for (j = 0; j < MAX_CONSTANT_BUFFERS; ++j)
+        {
+            wined3d_cs_emit_set_constant_buffer(device->cs, i, j, state->cb[i][j]);
+        }
+        for (j = 0; j < MAX_SAMPLER_OBJECTS; ++j)
+        {
+            wined3d_cs_emit_set_sampler(device->cs, i, j, state->sampler[i][j]);
+        }
+        for (j = 0; j < MAX_SHADER_RESOURCE_VIEWS; ++j)
+        {
+            wined3d_cs_emit_set_shader_resource_view(device->cs, i, j, state->shader_resource_view[i][j]);
+        }
+    }
+
+    for (i = 0; i < WINED3D_PIPELINE_COUNT; ++i)
+    {
+        for (j = 0; j < MAX_UNORDERED_ACCESS_VIEWS; ++j)
+        {
+            wined3d_cs_emit_set_unordered_access_view(device->cs, i, j, state->unordered_access_view[i][j], ~0);
+        }
+    }
+
+    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_VS_F,
+            0, WINED3D_MAX_VS_CONSTS_F, state->vs_consts_f);
+    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_VS_I,
+            0, WINED3D_MAX_CONSTS_I, state->vs_consts_i);
+    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_VS_B,
+            0, WINED3D_MAX_CONSTS_B, state->vs_consts_b);
+
+    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_PS_F,
+            0, WINED3D_MAX_PS_CONSTS_F, state->ps_consts_f);
+    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_PS_I,
+            0, WINED3D_MAX_CONSTS_I, state->ps_consts_i);
+    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_PS_B,
+            0, WINED3D_MAX_CONSTS_B, state->ps_consts_b);
+
+    for (i = 0; i < WINED3D_MAX_COMBINED_SAMPLERS; ++i)
+    {
+        wined3d_cs_emit_set_texture(device->cs, i, state->textures[i]);
+        for (j = 0; j < WINED3D_HIGHEST_SAMPLER_STATE + 1; ++j)
+        {
+            wined3d_cs_emit_set_sampler_state(device->cs, i, j, state->sampler_states[i][j]);
+        }
+    }
+
+    for (i = 0; i < WINED3D_MAX_TEXTURES; ++i)
+    {
+        for (j = 0; j < WINED3D_HIGHEST_TEXTURE_STATE + 1; ++j)
+        {
+            wined3d_cs_emit_set_texture_state(device->cs, i, j, state->texture_states[i][j]);
+        }
+    }
+
+    for (i = 0; i < WINED3D_HIGHEST_TRANSFORM_STATE + 1; ++i)
+    {
+        wined3d_cs_emit_set_transform(device->cs, i, state->transforms + i);
+    }
+
+    for (i = 0; i < WINED3D_MAX_CLIP_DISTANCES; ++i)
+    {
+        wined3d_cs_emit_set_clip_plane(device->cs, i, state->clip_planes + i);
+    }
+
+    wined3d_cs_emit_set_material(device->cs, &state->material);
+
+    wined3d_cs_emit_set_viewports(device->cs, state->viewport_count, state->viewports);
+    wined3d_cs_emit_set_scissor_rects(device->cs, state->scissor_rect_count, state->scissor_rects);
+
+    for (i = 0; i < LIGHTMAP_SIZE; ++i)
+    {
+        LIST_FOR_EACH_ENTRY(light, &state->light_state.light_map[i], struct wined3d_light_info, entry)
+        {
+            wined3d_device_set_light(device, light->OriginalIndex, &light->OriginalParms);
+            wined3d_cs_emit_set_light_enable(device->cs, light->OriginalIndex, light->glIndex != -1);
+        }
+    }
+
+    for (i = 0; i < WINEHIGHEST_RENDER_STATE + 1; ++i)
+    {
+        wined3d_cs_emit_set_render_state(device->cs, i, state->render_states[i]);
+    }
+
+    wined3d_cs_emit_set_blend_state(device->cs, state->blend_state, &state->blend_factor, state->sample_mask);
+    wined3d_cs_emit_set_depth_stencil_state(device->cs, state->depth_stencil_state, state->stencil_ref);
+    wined3d_cs_emit_set_rasterizer_state(device->cs, state->rasterizer_state);
+}
+
+struct wined3d_state * CDECL wined3d_device_get_state(struct wined3d_device *device)
+{
+    TRACE("device %p.\n", device);
+
+    return device->state;
 }
 
 void CDECL wined3d_device_set_vertex_declaration(struct wined3d_device *device,
@@ -5952,12 +6082,11 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
         return hr;
     }
 
-    if (!(state = heap_alloc_zero(sizeof(*state))))
+    if (FAILED(hr = wined3d_state_create(device, &state)))
     {
-        hr = E_OUTOFMEMORY;
+        ERR("Failed to create device state, hr %#x.\n", hr);
         goto err;
     }
-    state_init(state, &adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT);
 
     device->state = state;
     device->max_frame_latency = 3;
@@ -5974,7 +6103,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
 
 err:
     if (state)
-        heap_free(state);
+        wined3d_state_destroy(state);
     for (i = 0; i < ARRAY_SIZE(device->multistate_funcs); ++i)
     {
         heap_free(device->multistate_funcs[i]);
