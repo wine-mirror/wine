@@ -29,22 +29,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msnet);
 
 
 /***********************************************************************
- *		DllMain  (MSNET32.@)
- */
-BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
-{
-    switch(reason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( inst );
-        break;
-    }
-    return TRUE;
-}
-
-/***********************************************************************
  *		@  (MSNET32.57)
  */
 LONG WINAPI MSNET32_57( LONG a1, LONG a2, LPVOID a3, LONG a4, LPVOID a5 )
