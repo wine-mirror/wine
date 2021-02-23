@@ -154,6 +154,8 @@ static void test_CryptReleaseContext(void)
 
     ret = CryptContextAddRef(0, NULL, 0);
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %u\n", GetLastError());
+    ret = CryptContextAddRef(0xdeadbeef, NULL, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %u\n", GetLastError());
 
     ret = CryptReleaseContext(prov, 0);
     ok(ret, "got %u\n", GetLastError());
@@ -272,6 +274,9 @@ static void test_incorrect_api_usage(void)
     ok (result, "%08x\n", GetLastError());
     if (!result) return;
 
+    /* Looks like native handles are just pointers. */
+    ok(!!*(void **)hProv, "Got zero *(void **)hProv.\n");
+
     result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash);
     ok (result, "%d\n", GetLastError());
     if (!result) return;
@@ -301,6 +306,9 @@ static void test_incorrect_api_usage(void)
     result = CryptDestroyHash(0);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
 
+    result = CryptCreateHash(0xdeadbeef, CALG_SHA, 0, 0, &hHash);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
+
     result = CryptCreateHash(0, CALG_SHA, 0, 0, &hHash);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
 
@@ -310,12 +318,24 @@ static void test_incorrect_api_usage(void)
     dwLen = 1;
     result = CryptDecrypt(hKey, 0, TRUE, 0, &temp, &dwLen);
     ok (result, "%d\n", GetLastError());
+    result = CryptDecrypt(hKey, 0xdeadbeef, TRUE, 0, &temp, &dwLen);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
     result = CryptDecrypt(0, 0, TRUE, 0, &temp, &dwLen);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
+    result = CryptDecrypt(0xdeadbeef, 0, TRUE, 0, &temp, &dwLen);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
 
     result = CryptEncrypt(hKey, 0, TRUE, 0, &temp, &dwLen, sizeof(temp));
     ok (result, "%d\n", GetLastError());
+    result = CryptEncrypt(hKey, 0xdeadbeef, TRUE, 0, &temp, &dwLen, sizeof(temp));
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
     result = CryptEncrypt(0, 0, TRUE, 0, &temp, &dwLen, sizeof(temp));
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
+    result = CryptEncrypt(0xdeadbeef, 0, TRUE, 0, &temp, &dwLen, sizeof(temp));
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
+
+    dwLen = 1;
+    result = CryptExportKey(hKey, 0xdeadbeef, 0, 0, &temp, &dwLen);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%d\n", GetLastError());
 
     result = CryptDestroyKey(hKey);

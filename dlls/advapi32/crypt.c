@@ -37,6 +37,7 @@
 #include "winreg.h"
 #include "rpc.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 #include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
@@ -59,12 +60,22 @@ static HWND crypt_hWindow;
 
 static void *pointer_from_handle(UINT_PTR handle, DWORD magic)
 {
-    if (!handle || *(DWORD *)handle != magic)
+    void *ret = NULL;
+
+    __TRY
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return NULL;
+        if (handle && *(DWORD *)handle == magic)
+            ret = (void *)handle;
     }
-    return (void *)handle;
+    __EXCEPT_PAGE_FAULT
+    {
+    }
+    __ENDTRY
+
+    if (!ret)
+        SetLastError(ERROR_INVALID_PARAMETER);
+
+    return ret;
 }
 
 static PCRYPTPROV provider_from_handle(HCRYPTPROV handle)
