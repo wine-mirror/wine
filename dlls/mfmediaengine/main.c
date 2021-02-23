@@ -61,20 +61,6 @@ static BOOL mf_array_reserve(void **elements, size_t *capacity, size_t count, si
     return TRUE;
 }
 
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
-{
-    switch (reason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(instance);
-            break;
-    }
-
-    return TRUE;
-}
-
 enum media_engine_mode
 {
     MEDIA_ENGINE_INVALID,
