@@ -5366,12 +5366,10 @@ static void ffp_blitter_clear_rendertargets(struct wined3d_device *device, unsig
 
         if (rtv && rtv->format->id != WINED3DFMT_NULL)
         {
-            struct wined3d_texture *rt = wined3d_texture_from_resource(rtv->resource);
-
             if (flags & WINED3DCLEAR_TARGET && !is_full_clear(rtv, draw_rect, rect_count ? clear_rect : NULL))
-                wined3d_texture_load_location(rt, rtv->sub_resource_idx, context, rtv->resource->draw_binding);
+                wined3d_rendertarget_view_load_location(rtv, context, rtv->resource->draw_binding);
             else
-                wined3d_texture_prepare_location(rt, rtv->sub_resource_idx, context, rtv->resource->draw_binding);
+                wined3d_rendertarget_view_prepare_location(rtv, context, rtv->resource->draw_binding);
         }
     }
 
@@ -5392,18 +5390,17 @@ static void ffp_blitter_clear_rendertargets(struct wined3d_device *device, unsig
     if (depth_stencil)
     {
         DWORD ds_location = render_offscreen ? dsv->resource->draw_binding : WINED3D_LOCATION_DRAWABLE;
-        struct wined3d_texture *ds = wined3d_texture_from_resource(dsv->resource);
 
         if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL)
                 && !is_full_clear(dsv, draw_rect, rect_count ? clear_rect : NULL))
-            wined3d_texture_load_location(ds, dsv->sub_resource_idx, context, ds_location);
+            wined3d_rendertarget_view_load_location(dsv, context, ds_location);
         else
-            wined3d_texture_prepare_location(ds, dsv->sub_resource_idx, context, ds_location);
+            wined3d_rendertarget_view_prepare_location(dsv, context, ds_location);
 
         if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
         {
-            wined3d_texture_validate_location(ds, dsv->sub_resource_idx, ds_location);
-            wined3d_texture_invalidate_location(ds, dsv->sub_resource_idx, ~ds_location);
+            wined3d_rendertarget_view_validate_location(dsv, ds_location);
+            wined3d_rendertarget_view_invalidate_location(dsv, ~ds_location);
         }
     }
 
@@ -5443,7 +5440,6 @@ static void ffp_blitter_clear_rendertargets(struct wined3d_device *device, unsig
         for (i = 0; i < rt_count; ++i)
         {
             struct wined3d_rendertarget_view *rtv = fb->render_targets[i];
-            struct wined3d_texture *texture;
 
             if (!rtv)
                 continue;
@@ -5454,9 +5450,8 @@ static void ffp_blitter_clear_rendertargets(struct wined3d_device *device, unsig
                 continue;
             }
 
-            texture = texture_from_resource(rtv->resource);
-            wined3d_texture_validate_location(texture, rtv->sub_resource_idx, rtv->resource->draw_binding);
-            wined3d_texture_invalidate_location(texture, rtv->sub_resource_idx, ~rtv->resource->draw_binding);
+            wined3d_rendertarget_view_validate_location(rtv, rtv->resource->draw_binding);
+            wined3d_rendertarget_view_invalidate_location(rtv, ~rtv->resource->draw_binding);
         }
 
         if (!gl_info->supported[ARB_FRAMEBUFFER_SRGB] && needs_srgb_write(context->d3d_info, state, fb))

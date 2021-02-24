@@ -15580,12 +15580,12 @@ static void test_clear_render_target_view_2d(void)
 
     get_texture_readback(texture, 3, &rb);
     colour = get_readback_color(&rb, 8, 8, 0);
-    todo_wine ok(compare_color(colour, 0x8000ff00, 1), "Got unexpected colour 0x%08x.\n", colour);
+    ok(compare_color(colour, 0x8000ff00, 1), "Got unexpected colour 0x%08x.\n", colour);
     release_resource_readback(&rb);
 
     get_texture_readback(texture, 4, &rb);
     colour = get_readback_color(&rb, 8, 8, 0);
-    todo_wine ok(compare_color(colour, 0x80ff0000, 1), "Got unexpected colour 0x%08x.\n", colour);
+    ok(compare_color(colour, 0x80ff0000, 1), "Got unexpected colour 0x%08x.\n", colour);
     release_resource_readback(&rb);
 
     ID3D11RenderTargetView_Release(rtv[2]);
