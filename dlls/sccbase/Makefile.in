@@ -1,6 +1,6 @@
 MODULE    = sccbase.dll
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	main.c
