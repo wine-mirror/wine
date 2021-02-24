@@ -716,7 +716,7 @@ static inline NTSTATUS save_xstate( CONTEXT *context )
             || context_ex->XState.Length > sizeof(XSTATE))
         return STATUS_INVALID_PARAMETER;
 
-    if (user_shared_data->XState.CompactionEnabled)
+    if (xstate_compaction_enabled)
     {
         /* xsavec doesn't use anything from the save area. */
         __asm__ volatile( "xsavec %0" : "=m"(xsave_area)
@@ -1650,7 +1650,7 @@ C_ASSERT( (offsetof(struct stack_layout, xstate) == sizeof(struct stack_layout))
         assert(!((ULONG_PTR)dst_xs & 63));
         context_init_xstate( &stack->context, stack->xstate );
         memset( dst_xs, 0, offsetof(XSTATE, YmmContext) );
-        dst_xs->CompactionMask = user_shared_data->XState.CompactionEnabled ? 0x8000000000000004 : 0;
+        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000004 : 0;
         if (src_xs->Mask & 4)
         {
             dst_xs->Mask = 4;

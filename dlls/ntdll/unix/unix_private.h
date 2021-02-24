@@ -307,6 +307,8 @@ struct xcontext
 };
 
 #if defined(__i386__) || defined(__x86_64__)
+extern BOOL xstate_compaction_enabled DECLSPEC_HIDDEN;
+
 static inline XSTATE *xstate_from_context( const CONTEXT *context )
 {
     CONTEXT_EX *xctx = (CONTEXT_EX *)(context + 1);

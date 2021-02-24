@@ -178,6 +178,8 @@ static SYSTEM_CPU_INFORMATION cpu_info;
  */
 #if defined(__i386__) || defined(__x86_64__)
 
+BOOL xstate_compaction_enabled = FALSE;
+
 #define AUTH	0x68747541	/* "Auth" */
 #define ENTI	0x69746e65	/* "enti" */
 #define CAMD	0x444d4163	/* "cAMD" */
@@ -308,7 +310,7 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
         if (info->FeatureSet & CPU_FEATURE_XSAVE)
         {
             do_cpuid( 0x0000000d, regs3 ); /* get XSAVE details */
-            if (regs3[0] & 2) info->FeatureSet |= CPU_FEATURE_XSAVEC;
+            if (regs3[0] & 2) xstate_compaction_enabled = TRUE;
         }
 
         if (regs[1] == AUTH && regs[3] == ENTI && regs[2] == CAMD)

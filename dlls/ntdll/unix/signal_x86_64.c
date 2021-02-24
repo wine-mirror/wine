@@ -1959,16 +1959,15 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         {
             struct syscall_xsave *xsave = get_syscall_xsave( frame );
             CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
-            const BOOL compaction_enabled = user_shared_data->XState.CompactionEnabled;
             unsigned int mask;
 
             if (context_ex->XState.Length < offsetof(XSTATE, YmmContext)
                 || context_ex->XState.Length > sizeof(XSTATE))
                 return STATUS_INVALID_PARAMETER;
 
-            mask = (compaction_enabled ? xstate->CompactionMask : xstate->Mask) & XSTATE_MASK_GSSE;
+            mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & XSTATE_MASK_GSSE;
             xstate->Mask = xsave->xstate.Mask & mask;
-            xstate->CompactionMask = compaction_enabled ? (0x8000000000000000 | mask) : 0;
+            xstate->CompactionMask = xstate_compaction_enabled ? (0x8000000000000000 | mask) : 0;
             memset( xstate->Reserved, 0, sizeof(xstate->Reserved) );
             if (xstate->Mask)
             {
@@ -2044,7 +2043,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
         assert( !((ULONG_PTR)dst_xs & 63) );
         context_init_xstate( &stack->context, stack->xstate );
         memset( dst_xs, 0, offsetof(XSTATE, YmmContext) );
-        dst_xs->CompactionMask = user_shared_data->XState.CompactionEnabled ? 0x8000000000000004 : 0;
+        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000004 : 0;
         if (src_xs->Mask & 4)
         {
             dst_xs->Mask = 4;
@@ -2807,7 +2806,7 @@ void *signal_init_syscalls(void)
     extern void __wine_syscall_dispatcher_xsavec(void) DECLSPEC_HIDDEN;
 
     NtQuerySystemInformation( SystemCpuInformation, &cpu_info, sizeof(cpu_info), NULL );
-    if (cpu_info.FeatureSet & CPU_FEATURE_XSAVEC)
+    if (xstate_compaction_enabled)
         syscall_dispatcher = __wine_syscall_dispatcher_xsavec;
     else if (cpu_info.FeatureSet & CPU_FEATURE_XSAVE)
         syscall_dispatcher = __wine_syscall_dispatcher_xsave;
