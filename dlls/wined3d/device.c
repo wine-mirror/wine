@@ -5093,12 +5093,6 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (view->layer_count != max(1, resource->depth >> view->desc.u.texture.level_idx))
-    {
-        FIXME("Layered clears not implemented.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     if (!rect)
     {
         SetRect(&r, 0, 0, view->width, view->height);
