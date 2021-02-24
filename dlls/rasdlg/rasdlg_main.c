@@ -27,24 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(rasdlg);
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-        default:
-            break;
-    }
-
-    return TRUE;
-}
-
 BOOL WINAPI RasEntryDlgW(LPWSTR phonebook, LPWSTR entry, RASENTRYDLGW *lpInfo)
 {
     FIXME("(%s %s %p) stub\n", debugstr_w(phonebook), debugstr_w(entry), lpInfo);
