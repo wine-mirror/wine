@@ -1182,15 +1182,63 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
                                       CursorTypeEnum cursor_type, LockTypeEnum lock_type, LONG options )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+    ADOConnectionConstruction15 *construct;
+    IUnknown *session;
+    ICommandText *command_text;
+    DBROWCOUNT affected;
+    IUnknown *rowset;
+    HRESULT hr;
 
-    FIXME( "%p, %s, %s, %d, %d, %d\n", recordset, debugstr_variant(&source), debugstr_variant(&active_connection),
+    FIXME( "%p, %s, %s, %d, %d, %d Semi-stub\n", recordset, debugstr_variant(&source), debugstr_variant(&active_connection),
            cursor_type, lock_type, options );
 
-    if (!recordset->fields) return MAKE_ADO_HRESULT( adErrInvalidConnection );
     if (recordset->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
 
+    if (recordset->fields)
+    {
+        recordset->state = adStateOpen;
+        return S_OK;
+    }
+
+    if (V_VT(&active_connection) != VT_DISPATCH)
+    {
+        FIXME("Unsupported Active connection type %d\n", V_VT(&active_connection));
+        return MAKE_ADO_HRESULT( adErrInvalidConnection );
+    }
+
+    hr = IDispatch_QueryInterface(V_DISPATCH(&active_connection), &IID_ADOConnectionConstruction15, (void**)&construct);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    hr = ADOConnectionConstruction15_get_Session(construct, &session);
+    ADOConnectionConstruction15_Release(construct);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    if (V_VT(&source) != VT_BSTR)
+    {
+        FIXME("Unsupported source type!\n");
+        IUnknown_Release(session);
+        return E_FAIL;
+    }
+
+    hr = create_command_text(session, V_BSTR(&source), &command_text);
+    IUnknown_Release(session);
+    if (FAILED(hr))
+        return hr;
+
+    hr = ICommandText_Execute(command_text, NULL, &IID_IUnknown, NULL, &affected, &rowset);
+    ICommandText_Release(command_text);
+    if (FAILED(hr))
+        return hr;
+
+    ADORecordsetConstruction_put_Rowset(&recordset->ADORecordsetConstruction_iface, rowset);
+    recordset->cursor_type = cursor_type;
     recordset->state = adStateOpen;
-    return S_OK;
+
+    IUnknown_Release(rowset);
+
+    return hr;
 }
 
 static HRESULT WINAPI recordset_Requery( _Recordset *iface, LONG options )
