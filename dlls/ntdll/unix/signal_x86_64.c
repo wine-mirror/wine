@@ -1848,6 +1848,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     if (flags & CONTEXT_FLOATING_POINT)
     {
         xsave->xsave = context->u.FltSave;
+        xsave->xstate.Mask |= XSTATE_MASK_LEGACY;
     }
     if (user_shared_data->XState.EnabledFeatures && (xs = xstate_from_context( context )))
     {
@@ -1941,8 +1942,39 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         }
         if (needed_flags & CONTEXT_FLOATING_POINT)
         {
-            context->u.FltSave = get_syscall_xsave(frame)->xsave;
-            context->MxCsr     = context->u.FltSave.MxCsr;
+            struct syscall_xsave *xsave = get_syscall_xsave( frame );
+
+            if (!xstate_compaction_enabled ||
+                (xsave->xstate.Mask & XSTATE_MASK_LEGACY_FLOATING_POINT))
+            {
+                memcpy( &context->u.FltSave, &xsave->xsave, FIELD_OFFSET( XSAVE_FORMAT, MxCsr ));
+                memcpy( context->u.FltSave.FloatRegisters, xsave->xsave.FloatRegisters,
+                        sizeof( context->u.FltSave.FloatRegisters ));
+            }
+            else
+            {
+                memset( &context->u.FltSave, 0, FIELD_OFFSET( XSAVE_FORMAT, MxCsr ));
+                memset( context->u.FltSave.FloatRegisters, 0,
+                        sizeof( context->u.FltSave.FloatRegisters ));
+                context->u.FltSave.ControlWord = 0x37f;
+            }
+
+            if (!xstate_compaction_enabled || (xsave->xstate.Mask & XSTATE_MASK_LEGACY_SSE))
+            {
+                memcpy( context->u.FltSave.XmmRegisters, xsave->xsave.XmmRegisters,
+                        sizeof( context->u.FltSave.XmmRegisters ));
+                context->u.FltSave.MxCsr      = xsave->xsave.MxCsr;
+                context->u.FltSave.MxCsr_Mask = xsave->xsave.MxCsr_Mask;
+            }
+            else
+            {
+                memset( context->u.FltSave.XmmRegisters, 0,
+                        sizeof( context->u.FltSave.XmmRegisters ));
+                context->u.FltSave.MxCsr      = 0x1f80;
+                context->u.FltSave.MxCsr_Mask = 0x2ffff;
+            }
+
+            context->MxCsr = context->u.FltSave.MxCsr;
             context->ContextFlags |= CONTEXT_FLOATING_POINT;
         }
         /* update the cached version of the debug registers */
