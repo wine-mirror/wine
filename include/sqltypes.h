@@ -241,9 +241,6 @@ typedef struct  tagSQLGUID
 
 typedef SQLULEN BOOKMARK;
 
-#define SQL_WCHAR             (-8)
-#define SQL_C_WCHAR            SQL_WCHAR
-
 #ifdef __cplusplus
 }
 #endif

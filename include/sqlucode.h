@@ -27,6 +27,11 @@
 extern "C" {
 #endif
 
+#define SQL_WCHAR             (-8)
+#define SQL_C_WCHAR           SQL_WCHAR
+#define SQL_WVARCHAR          (-9)
+#define SQL_WLONGVARCHAR      (-10)
+
 SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle,
            SQLWCHAR *ServerName, SQLSMALLINT NameLength1,
            SQLWCHAR *UserName, SQLSMALLINT NameLength2,
