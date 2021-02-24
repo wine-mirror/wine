@@ -2,7 +2,7 @@ MODULE    = t2embed.dll
 IMPORTLIB = t2embed
 IMPORTS   = gdi32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	main.c

@@ -28,20 +28,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(t2embed);
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    switch (fdwReason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-    }
-
-    return TRUE;
-}
-
 LONG WINAPI TTLoadEmbeddedFont(HANDLE *phFontReference, ULONG ulFlags,
                                ULONG *pulPrivStatus, ULONG ulPrivs,
                                ULONG *pulStatus, READEMBEDPROC lpfnReadFromStream,
