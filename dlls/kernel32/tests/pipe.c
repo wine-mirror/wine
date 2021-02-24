@@ -4116,6 +4116,66 @@ static void test_GetOverlappedResultEx(void)
     CloseHandle(server);
 }
 
+static void child_process_exit_process_async(DWORD parent_pid, HANDLE parent_pipe)
+{
+    OVERLAPPED overlapped = {0};
+    static char buffer[1];
+    HANDLE parent, pipe;
+    BOOL ret;
+
+    parent = OpenProcess(PROCESS_DUP_HANDLE, FALSE, parent_pid);
+    ok(!!parent, "got parent %p\n", parent);
+
+    ret = DuplicateHandle(parent, parent_pipe, GetCurrentProcess(), &pipe, 0,
+            FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
+    ok(ret, "got error %u\n", GetLastError());
+
+    overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    ret = ReadFile(pipe, buffer, sizeof(buffer), NULL, &overlapped);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
+
+    /* exit without closing the pipe handle */
+}
+
+static void test_exit_process_async(void)
+{
+    HANDLE client, server, port;
+    OVERLAPPED *overlapped;
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si = {0};
+    char cmdline[300];
+    ULONG_PTR key;
+    char **argv;
+    DWORD size;
+    BOOL ret;
+
+    winetest_get_mainargs(&argv);
+
+    create_overlapped_pipe(PIPE_TYPE_BYTE, &client, &server);
+    port = CreateIoCompletionPort(client, NULL, 123, 0);
+
+    sprintf(cmdline, "%s pipe exit_process_async %x %p", argv[0], GetCurrentProcessId(), client);
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = WaitForSingleObject(pi.hProcess, 1000);
+    ok(!ret, "wait timed out\n");
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+
+    key = 0xdeadbeef;
+    size = 0xdeadbeef;
+    ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped, 1000);
+    ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == ERROR_OPERATION_ABORTED, "got error %u\n", GetLastError());
+    todo_wine ok(!size, "got size %u\n", size);
+    todo_wine ok(key == 123, "got key %Iu\n", key);
+
+    CloseHandle(port);
+    CloseHandle(server);
+}
+
 START_TEST(pipe)
 {
     char **argv;
@@ -4158,6 +4218,15 @@ START_TEST(pipe)
             child_process_check_session_id(id);
             return;
         }
+        if (!strcmp(argv[2], "exit_process_async"))
+        {
+            HANDLE handle;
+            DWORD pid;
+            sscanf(argv[3], "%x", &pid);
+            sscanf(argv[4], "%p", &handle);
+            child_process_exit_process_async(pid, handle);
+            return;
+        }
     }
 
     if (test_DisconnectNamedPipe())
@@ -4186,4 +4255,5 @@ START_TEST(pipe)
     test_nowait(PIPE_TYPE_BYTE);
     test_nowait(PIPE_TYPE_MESSAGE);
     test_GetOverlappedResultEx();
+    test_exit_process_async();
 }
