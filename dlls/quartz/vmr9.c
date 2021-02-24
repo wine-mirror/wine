@@ -1383,19 +1383,23 @@ static HRESULT WINAPI VMR9FilterConfig_SetRenderingMode(IVMRFilterConfig9 *iface
     case VMR9Mode_Windowless:
         This->cookie = ~0;
 
-        hr = VMR9DefaultAllocatorPresenterImpl_create(This, (LPVOID*)&This->presenter);
-        if (SUCCEEDED(hr))
-            hr = IVMRImagePresenter9_QueryInterface(This->presenter,
-                    &IID_IVMRSurfaceAllocator9, (void **)&This->allocator);
-        if (FAILED(hr))
+        if (FAILED(hr = VMR9DefaultAllocatorPresenterImpl_create(This, (void **)&This->presenter)))
         {
-            ERR("Unable to find Presenter interface\n");
+            ERR("Failed to create default presenter, hr %#x.\n", hr);
+            break;
+        }
+
+        if (FAILED(hr = IVMRImagePresenter9_QueryInterface(This->presenter,
+                    &IID_IVMRSurfaceAllocator9, (void **)&This->allocator)))
+        {
+            ERR("Failed to query for IVMRSurfaceAllocator9, hr %#x.\n", hr);
             IVMRImagePresenter9_Release(This->presenter);
             This->allocator = NULL;
             This->presenter = NULL;
+            break;
         }
-        else
-            hr = IVMRSurfaceAllocator9_AdviseNotify(This->allocator, &This->IVMRSurfaceAllocatorNotify9_iface);
+
+        hr = IVMRSurfaceAllocator9_AdviseNotify(This->allocator, &This->IVMRSurfaceAllocatorNotify9_iface);
         break;
     case VMR9Mode_Renderless:
         break;
