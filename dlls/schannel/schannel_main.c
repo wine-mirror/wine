@@ -27,18 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(schannel);
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-	TRACE("(0x%p, %d, %p)\n",hinstDLL,fdwReason,lpvReserved);
-
-	if (fdwReason == DLL_WINE_PREATTACH) return FALSE;	/* prefer native version */
-
-	if (fdwReason == DLL_PROCESS_ATTACH)
-		DisableThreadLibraryCalls(hinstDLL);
-
-	return TRUE;
-}
-
 BOOL WINAPI SslEmptyCacheA(LPSTR target, DWORD flags)
 {
     FIXME("%s %x\n", debugstr_a(target), flags);
