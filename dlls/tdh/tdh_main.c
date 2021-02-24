@@ -27,22 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(tdh);
 
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
-{
-    TRACE("(%p, %u, %p)\n", instance, reason, reserved);
-
-    switch (reason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(instance);
-            break;
-    }
-
-    return TRUE;
-}
-
 ULONG WINAPI TdhLoadManifest(LPWSTR manifest)
 {
     FIXME("(%s): stub\n", debugstr_w(manifest));
