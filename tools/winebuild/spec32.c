@@ -297,14 +297,12 @@ static void output_relay_debug( DLLSPEC *spec )
 
         case CPU_ARM:
         {
-            unsigned int mask, val, count = 0;
             int j, has_float = 0;
 
             if (strcmp( float_abi_option, "soft" ))
                 for (j = 0; j < odp->u.func.nb_args && !has_float; j++)
                     has_float = is_float_arg( odp, j );
 
-            val = (odp->u.func.args_str_offset << 16) | (i - spec->base);
             output( "\t.align %d\n", get_alignment(4) );
             if (thumb_mode) output( "\t.thumb_func\n" );
             output( "__wine_spec_relay_entry_point_%d:\n", i );
@@ -314,18 +312,24 @@ static void output_relay_debug( DLLSPEC *spec )
             if (has_float) output( "\tvpush {s0-s15}\n" );
             output( "\tpush {LR}\n" );
             output( "\tsub SP, #4\n");
-            for (mask = 0xff; mask; mask <<= 8)
-                if (val & mask) output( "\t%s r1,#%u\n", count++ ? "add" : "mov", val & mask );
-            if (!count) output( "\tmov r1,#0\n" );
-            output( "\tldr r0, 2f\n");
-            if (UsePIC) output( "1:\tadd r0, PC\n");
+            output( "\tmov r1,#%u\n", i - spec->base );
+            output( "\tmovt r1,#%u\n", odp->u.func.args_str_offset );
+            if (UsePIC)
+            {
+                output( "\tldr r0, 2f\n");
+                output( "1:\tadd r0, PC\n");
+            }
+            else
+            {
+                output( "\tmovw r0, :lower16:.L__wine_spec_relay_descr\n" );
+                output( "\tmovt r0, :upper16:.L__wine_spec_relay_descr\n" );
+            }
             output( "\tldr IP, [r0, #4]\n");
             output( "\tblx IP\n");
             output( "\tldr IP, [SP, #4]\n" );
             output( "\tadd SP, #%u\n", 24 + (has_float ? 64 : 0) );
             output( "\tbx IP\n");
             if (UsePIC) output( "2:\t.long .L__wine_spec_relay_descr-1b-%u\n", thumb_mode ? 4 : 8 );
-            else output( "2:\t.long .L__wine_spec_relay_descr\n" );
             output_cfi( ".cfi_endproc" );
             break;
         }
