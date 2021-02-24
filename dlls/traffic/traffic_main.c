@@ -26,24 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(traffic);
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-        default:
-            break;
-    }
-
-    return TRUE;
-}
-
 /*****************************************************************************
  * TcRegisterClient [TRAFFIC.@]
  */
