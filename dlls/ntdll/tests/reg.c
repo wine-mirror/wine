@@ -1850,7 +1850,7 @@ static void test_NtQueryKey(void)
 static void test_notify(void)
 {
     OBJECT_ATTRIBUTES attr;
-    LARGE_INTEGER timeout;
+    static const LARGE_INTEGER timeout;
     IO_STATUS_BLOCK iosb;
     UNICODE_STRING str;
     HANDLE key, key2, events[4], subkey;
@@ -1952,7 +1952,6 @@ static void test_notify(void)
         status = pNtNotifyChangeMultipleKeys(key, 0, NULL, events[0], NULL, NULL, &iosb, REG_NOTIFY_CHANGE_NAME, FALSE, NULL, 0, TRUE);
         ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
 
-        timeout.QuadPart = 0;
         status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
         ok(status == STATUS_TIMEOUT, "NtWaitForSingleObject returned %x\n", status);
 
