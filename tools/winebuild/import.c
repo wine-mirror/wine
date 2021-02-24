@@ -1611,6 +1611,7 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\tmrc p15, 0, r7, c13, c0, 2\n" ); /* NtCurrentTeb() */
         output( "\tadd r7, #0x1d8\n" );  /* arm_thread_data()->syscall_frame */
         output( "\tmrs ip, CPSR\n" );
+        output( "\tbfi ip, lr, #5, #1\n" );  /* set thumb bit */
         output( "\tstr ip, [sp, #4]\n" );
         output( "\tstr sp, [r7]\n" );  /* syscall frame */
         output( "\tldr r5, 6f+4\n");

@@ -4233,7 +4233,8 @@ static void test_thread_context(void)
     COMPARE( R9 );
     COMPARE( R10 );
     COMPARE( R11 );
-    COMPARE( Cpsr );
+    ok( (context.Cpsr & 0xff0f0000) == (expect.Cpsr & 0xff0f0000),
+        "wrong Cpsr %08x/%08x\n", context.Cpsr, expect.Cpsr );
     ok( context.Sp == expect.Sp - 8,
         "wrong Sp %08x/%08x\n", context.Sp, expect.Sp - 8 );
     /* Pc is somewhere close to the NtGetContextThread implementation */
