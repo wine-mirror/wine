@@ -4168,9 +4168,9 @@ static void test_exit_process_async(void)
     size = 0xdeadbeef;
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped, 1000);
     ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_OPERATION_ABORTED, "got error %u\n", GetLastError());
-    todo_wine ok(!size, "got size %u\n", size);
-    todo_wine ok(key == 123, "got key %Iu\n", key);
+    ok(GetLastError() == ERROR_OPERATION_ABORTED, "got error %u\n", GetLastError());
+    ok(!size, "got size %u\n", size);
+    ok(key == 123, "got key %Iu\n", key);
 
     CloseHandle(port);
     CloseHandle(server);
