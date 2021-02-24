@@ -236,7 +236,7 @@ static void output_relay_debug( DLLSPEC *spec )
         ORDDEF *odp = spec->ordinals[i];
 
         if (needs_relay( odp ))
-            output( "\t.long .L__wine_spec_relay_entry_point_%d-__wine_spec_relay_entry_points\n", i );
+            output( "\t.long __wine_spec_relay_entry_point_%d-__wine_spec_relay_entry_points\n", i );
         else
             output( "\t.long 0\n" );
     }
@@ -249,7 +249,6 @@ static void output_relay_debug( DLLSPEC *spec )
     /* then the relay thunks */
 
     output( "\t.text\n" );
-    if (thumb_mode) output( "\t.thumb_func\n" );
     output( "__wine_spec_relay_entry_points:\n" );
     output( "\tnop\n" );  /* to avoid 0 offset */
 
@@ -264,7 +263,7 @@ static void output_relay_debug( DLLSPEC *spec )
         case CPU_x86:
             output( "\t.align %d\n", get_alignment(4) );
             output( "\t.long 0x90909090,0x90909090\n" );
-            output( ".L__wine_spec_relay_entry_point_%d:\n", i );
+            output( "__wine_spec_relay_entry_point_%d:\n", i );
             output_cfi( ".cfi_startproc" );
             output( "\t.byte 0x8b,0xff,0x55,0x8b,0xec,0x5d\n" );  /* hotpatch prolog */
             if (odp->flags & (FLAG_THISCALL | FLAG_FASTCALL))  /* add the register arguments */
@@ -308,7 +307,7 @@ static void output_relay_debug( DLLSPEC *spec )
             val = (odp->u.func.args_str_offset << 16) | (i - spec->base);
             output( "\t.align %d\n", get_alignment(4) );
             if (thumb_mode) output( "\t.thumb_func\n" );
-            output( ".L__wine_spec_relay_entry_point_%d:\n", i );
+            output( "__wine_spec_relay_entry_point_%d:\n", i );
             output_cfi( ".cfi_startproc" );
             output( "\tpush {r0-r3}\n" );
             output( "\tmov r2, SP\n");
@@ -333,7 +332,7 @@ static void output_relay_debug( DLLSPEC *spec )
 
         case CPU_ARM64:
             output( "\t.align %d\n", get_alignment(4) );
-            output( ".L__wine_spec_relay_entry_point_%d:\n", i );
+            output( "__wine_spec_relay_entry_point_%d:\n", i );
             output_cfi( ".cfi_startproc" );
             switch (odp->u.func.nb_args)
             {
@@ -372,7 +371,7 @@ static void output_relay_debug( DLLSPEC *spec )
         case CPU_x86_64:
             output( "\t.align %d\n", get_alignment(4) );
             output( "\t.long 0x90909090,0x90909090\n" );
-            output( ".L__wine_spec_relay_entry_point_%d:\n", i );
+            output( "__wine_spec_relay_entry_point_%d:\n", i );
             output_cfi( ".cfi_startproc" );
             switch (odp->u.func.nb_args)
             {
