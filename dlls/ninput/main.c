@@ -165,18 +165,3 @@ HRESULT WINAPI ProcessInertiaInteractionContext(HINTERACTIONCONTEXT context)
     FIXME("context %p: stub!\n", context);
     return E_NOTIMPL;
 }
-
-BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
-{
-    TRACE("(%p, %d, %p)\n", inst, reason, reserved);
-
-    switch (reason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;    /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(inst);
-        break;
-    }
-    return TRUE;
-}
