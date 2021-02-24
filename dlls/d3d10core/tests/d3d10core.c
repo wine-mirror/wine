@@ -11104,17 +11104,19 @@ static void test_clear_render_target_view_1d(void)
 static void test_clear_render_target_view_2d(void)
 {
     static const DWORD expected_color = 0xbf4c7f19, expected_srgb_color = 0xbf95bc59;
-    static const float color[] = {0.1f, 0.5f, 0.3f, 0.75f};
+    static const float clear_colour[] = {0.1f, 0.5f, 0.3f, 0.75f};
     static const float green[] = {0.0f, 1.0f, 0.0f, 0.5f};
+    static const float blue[] = {0.0f, 0.0f, 1.0f, 0.5f};
 
+    ID3D10RenderTargetView *rtv[3], *srgb_rtv;
     struct d3d10core_test_context test_context;
     ID3D10Texture2D *texture, *srgb_texture;
-    ID3D10RenderTargetView *rtv, *srgb_rtv;
     D3D10_RENDER_TARGET_VIEW_DESC rtv_desc;
     D3D10_TEXTURE2D_DESC texture_desc;
     struct resource_readback rb;
     ID3D10Device *device;
     unsigned int i, j;
+    DWORD colour;
     HRESULT hr;
 
     if (!init_test_context(&test_context))
@@ -11140,16 +11142,16 @@ static void test_clear_render_target_view_2d(void)
     hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &srgb_texture);
     ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
-    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, NULL, &rtv);
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, NULL, &rtv[0]);
     ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
 
     hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)srgb_texture, NULL, &srgb_rtv);
     ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
 
-    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, color);
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, clear_colour);
     check_texture_color(test_context.backbuffer, expected_color, 1);
 
-    ID3D10Device_ClearRenderTargetView(device, rtv, color);
+    ID3D10Device_ClearRenderTargetView(device, rtv[0], clear_colour);
     check_texture_color(texture, expected_color, 1);
 
     if (is_d3d11_interface_available(device) && !enable_debug_layer)
@@ -11158,11 +11160,11 @@ static void test_clear_render_target_view_2d(void)
         check_texture_color(texture, expected_color, 1);
     }
 
-    ID3D10Device_ClearRenderTargetView(device, srgb_rtv, color);
+    ID3D10Device_ClearRenderTargetView(device, srgb_rtv, clear_colour);
     check_texture_color(srgb_texture, expected_srgb_color, 1);
 
     ID3D10RenderTargetView_Release(srgb_rtv);
-    ID3D10RenderTargetView_Release(rtv);
+    ID3D10RenderTargetView_Release(rtv[0]);
     ID3D10Texture2D_Release(srgb_texture);
     ID3D10Texture2D_Release(texture);
 
@@ -11179,30 +11181,88 @@ static void test_clear_render_target_view_2d(void)
     rtv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     rtv_desc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2D;
     U(rtv_desc).Texture2D.MipSlice = 0;
-    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, &rtv_desc, &rtv);
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, &rtv_desc, &rtv[0]);
     ok(SUCCEEDED(hr), "Failed to create render target view, hr %#x.\n", hr);
 
-    ID3D10Device_ClearRenderTargetView(device, rtv, color);
+    ID3D10Device_ClearRenderTargetView(device, rtv[0], clear_colour);
     check_texture_color(texture, expected_color, 1);
 
-    ID3D10Device_ClearRenderTargetView(device, srgb_rtv, color);
+    ID3D10Device_ClearRenderTargetView(device, srgb_rtv, clear_colour);
     get_texture_readback(texture, 0, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
         {
             BOOL broken_device = is_warp_device(device) || is_nvidia_device(device);
-            DWORD color = get_readback_color(&rb, 80 + i * 160, 60 + j * 120);
-            ok(compare_color(color, expected_srgb_color, 1)
-                    || broken(compare_color(color, expected_color, 1) && broken_device),
-                    "Got unexpected color 0x%08x.\n", color);
+            colour = get_readback_color(&rb, 80 + i * 160, 60 + j * 120);
+            ok(compare_color(colour, expected_srgb_color, 1)
+                    || broken(compare_color(colour, expected_color, 1) && broken_device),
+                    "Got unexpected colour 0x%08x.\n", colour);
         }
     }
     release_resource_readback(&rb);
 
     ID3D10RenderTargetView_Release(srgb_rtv);
-    ID3D10RenderTargetView_Release(rtv);
+    ID3D10RenderTargetView_Release(rtv[0]);
     ID3D10Texture2D_Release(texture);
+
+    texture_desc.Width = 16;
+    texture_desc.Height = 16;
+    texture_desc.ArraySize = 5;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    rtv_desc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE2DARRAY;
+    U(rtv_desc).Texture2DArray.MipSlice = 0;
+    U(rtv_desc).Texture2DArray.FirstArraySlice = 0;
+    U(rtv_desc).Texture2DArray.ArraySize = 5;
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, &rtv_desc, &rtv[0]);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    U(rtv_desc).Texture2DArray.FirstArraySlice = 1;
+    U(rtv_desc).Texture2DArray.ArraySize = 3;
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, &rtv_desc, &rtv[1]);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    U(rtv_desc).Texture2DArray.FirstArraySlice = 2;
+    U(rtv_desc).Texture2DArray.ArraySize = 1;
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, &rtv_desc, &rtv[2]);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ID3D10Device_ClearRenderTargetView(device, rtv[0], blue);
+    ID3D10Device_ClearRenderTargetView(device, rtv[1], green);
+    ID3D10Device_ClearRenderTargetView(device, rtv[2], clear_colour);
+
+    get_texture_readback(texture, 0, &rb);
+    colour = get_readback_color(&rb, 8, 8);
+    todo_wine ok(compare_color(colour, 0x80ff0000, 1), "Got unexpected colour 0x%08x.\n", colour);
+    release_resource_readback(&rb);
+
+    get_texture_readback(texture, 1, &rb);
+    colour = get_readback_color(&rb, 8, 8);
+    todo_wine ok(compare_color(colour, 0x8000ff00, 1), "Got unexpected colour 0x%08x.\n", colour);
+    release_resource_readback(&rb);
+
+    get_texture_readback(texture, 2, &rb);
+    colour = get_readback_color(&rb, 8, 8);
+    ok(compare_color(colour, 0xbf4c7f19, 1), "Got unexpected colour 0x%08x.\n", colour);
+    release_resource_readback(&rb);
+
+    get_texture_readback(texture, 3, &rb);
+    colour = get_readback_color(&rb, 8, 8);
+    todo_wine ok(compare_color(colour, 0x8000ff00, 1), "Got unexpected colour 0x%08x.\n", colour);
+    release_resource_readback(&rb);
+
+    get_texture_readback(texture, 4, &rb);
+    colour = get_readback_color(&rb, 8, 8);
+    todo_wine ok(compare_color(colour, 0x80ff0000, 1), "Got unexpected colour 0x%08x.\n", colour);
+    release_resource_readback(&rb);
+
+    ID3D10RenderTargetView_Release(rtv[2]);
+    ID3D10RenderTargetView_Release(rtv[1]);
+    ID3D10RenderTargetView_Release(rtv[0]);
+    ID3D10Texture2D_Release(texture);
+
     release_test_context(&test_context);
 }
 
