@@ -356,23 +356,25 @@ float CDECL acosf( float x )
 static float asinf_R(float z)
 {
     /* coefficients for R(x^2) */
-    static const float pS0 =  1.6666586697e-01,
-                 pS1 = -4.2743422091e-02,
-                 pS2 = -8.6563630030e-03,
-                 qS1 = -7.0662963390e-01;
+    static const float p1 = 1.66666672e-01,
+                 p2 = -5.11644611e-02,
+                 p3 = -1.21124933e-02,
+                 p4 = -3.58742251e-03,
+                 q1 = -7.56982703e-01;
 
     float p, q;
-    p = z * (pS0 + z * (pS1 + z * pS2));
-    q = 1.0f + z * qS1;
+    p = z * (p1 + z * (p2 + z * (p3 + z * p4)));
+    q = 1.0f + z * q1;
     return p / q;
 }
 
 float CDECL asinf( float x )
 {
     static const double pio2 = 1.570796326794896558e+00;
+    static const float pio4_hi = 0.785398125648;
+    static const float pio2_lo = 7.54978941586e-08;
 
-    double s;
-    float z;
+    float s, z, f, c;
     unsigned int hx, ix;
 
     hx = *(unsigned int*)&x;
@@ -391,8 +393,11 @@ float CDECL asinf( float x )
     }
     /* 1 > |x| >= 0.5 */
     z = (1 - fabsf(x)) * 0.5f;
-    s = sqrt(z);
-    x = pio2 - 2 * (s + s * asinf_R(z));
+    s = sqrtf(z);
+    /* f+c = sqrt(z) */
+    *(unsigned int*)&f = *(unsigned int*)&s & 0xffff0000;
+    c = (z - f * f) / (s + f);
+    x = pio4_hi - (2 * s * asinf_R(z) - (pio2_lo - 2 * c) - (pio4_hi - 2 * f));
     if (hx >> 31)
         return -x;
     return x;
