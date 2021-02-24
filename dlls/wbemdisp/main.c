@@ -262,6 +262,7 @@ static const struct IClassFactoryVtbl factory_vtbl =
 };
 
 static struct factory swbem_locator_cf = { { &factory_vtbl }, SWbemLocator_create };
+static struct factory swbem_namedvalueset_cf = { { &factory_vtbl }, SWbemNamedValueSet_create };
 static struct factory winmgmts_cf = { { &factory_vtbl }, WinMGMTS_create };
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
@@ -289,6 +290,8 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *obj )
         cf = &swbem_locator_cf.IClassFactory_iface;
     else if (IsEqualGUID( rclsid, &CLSID_WinMGMTS ))
         cf = &winmgmts_cf.IClassFactory_iface;
+    else if (IsEqualGUID( rclsid, &CLSID_SWbemNamedValueSet ))
+        cf = &swbem_namedvalueset_cf.IClassFactory_iface;
     else
         return CLASS_E_CLASSNOTAVAILABLE;
 

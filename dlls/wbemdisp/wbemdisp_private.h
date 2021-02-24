@@ -17,3 +17,4 @@
  */
 
 HRESULT SWbemLocator_create(LPVOID *) DECLSPEC_HIDDEN;
+HRESULT SWbemNamedValueSet_create(void **) DECLSPEC_HIDDEN;

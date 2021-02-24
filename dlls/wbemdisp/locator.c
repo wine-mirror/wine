@@ -47,6 +47,7 @@ enum type_id
     ISWbemPropertySet_tid,
     ISWbemServices_tid,
     ISWbemSecurity_tid,
+    ISWbemNamedValueSet_tid,
     last_tid
 };
 
@@ -61,7 +62,8 @@ static REFIID wbemdisp_tid_id[] =
     &IID_ISWbemProperty,
     &IID_ISWbemPropertySet,
     &IID_ISWbemServices,
-    &IID_ISWbemSecurity
+    &IID_ISWbemSecurity,
+    &IID_ISWbemNamedValueSet,
 };
 
 static HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
@@ -2453,6 +2455,239 @@ static HRESULT ISWbemSecurity_create( ISWbemSecurity **obj )
     security->authlevel = wbemAuthenticationLevelPktPrivacy;
 
     *obj = &security->ISWbemSecurity_iface;
+    TRACE( "returning iface %p\n", *obj );
+    return S_OK;
+}
+
+struct namedvalueset
+{
+    ISWbemNamedValueSet ISWbemNamedValueSet_iface;
+    LONG refs;
+};
+
+static struct namedvalueset *impl_from_ISWbemNamedValueSet( ISWbemNamedValueSet *iface )
+{
+    return CONTAINING_RECORD( iface, struct namedvalueset, ISWbemNamedValueSet_iface );
+}
+
+static HRESULT WINAPI namedvalueset_QueryInterface(
+    ISWbemNamedValueSet *iface,
+    REFIID riid,
+    void **ppvObject )
+{
+    struct namedvalueset *set = impl_from_ISWbemNamedValueSet( iface );
+
+    TRACE( "%p, %s, %p\n", set, debugstr_guid( riid ), ppvObject );
+
+    if (IsEqualGUID( riid, &IID_ISWbemNamedValueSet ) ||
+        IsEqualGUID( riid, &IID_IDispatch ) ||
+        IsEqualGUID( riid, &IID_IUnknown ))
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        return E_NOINTERFACE;
+    }
+    ISWbemNamedValueSet_AddRef( iface );
+    return S_OK;
+}
+
+static ULONG WINAPI namedvalueset_AddRef(
+    ISWbemNamedValueSet *iface )
+{
+    struct namedvalueset *set = impl_from_ISWbemNamedValueSet( iface );
+    return InterlockedIncrement( &set->refs );
+}
+
+static ULONG WINAPI namedvalueset_Release(
+    ISWbemNamedValueSet *iface )
+{
+    struct namedvalueset *set = impl_from_ISWbemNamedValueSet( iface );
+    LONG refs = InterlockedDecrement( &set->refs );
+    if (!refs)
+    {
+        TRACE( "destroying %p\n", set );
+        heap_free( set );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI namedvalueset_GetTypeInfoCount(
+    ISWbemNamedValueSet *iface,
+    UINT *count )
+{
+    struct namedvalueset *set = impl_from_ISWbemNamedValueSet( iface );
+    TRACE( "%p, %p\n", set, count );
+
+    *count = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI namedvalueset_GetTypeInfo(
+    ISWbemNamedValueSet *iface,
+    UINT index,
+    LCID lcid,
+    ITypeInfo **info )
+{
+    struct namedvalueset *set = impl_from_ISWbemNamedValueSet( iface );
+
+    TRACE( "%p, %u, %u, %p\n", set, index, lcid, info );
+
+    return get_typeinfo( ISWbemNamedValueSet_tid, info );
+}
+
+static HRESULT WINAPI namedvalueset_GetIDsOfNames(
+    ISWbemNamedValueSet *iface,
+    REFIID riid,
+    LPOLESTR *names,
+    UINT count,
+    LCID lcid,
+    DISPID *dispid )
+{
+    struct namedvalueset *set = impl_from_ISWbemNamedValueSet( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE( "%p, %s, %p, %u, %u, %p\n", set, debugstr_guid(riid), names, count, lcid, dispid );
+
+    if (!names || !count || !dispid) return E_INVALIDARG;
+
+    hr = get_typeinfo( ISWbemNamedValueSet_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames( typeinfo, names, count, dispid );
+        ITypeInfo_Release( typeinfo );
+    }
+    return hr;
+}
+
+static HRESULT WINAPI namedvalueset_Invoke(
+    ISWbemNamedValueSet *iface,
+    DISPID member,
+    REFIID riid,
+    LCID lcid,
+    WORD flags,
+    DISPPARAMS *params,
+    VARIANT *result,
+    EXCEPINFO *excep_info,
+    UINT *arg_err )
+{
+    struct namedvalueset *set = impl_from_ISWbemNamedValueSet( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", set, member, debugstr_guid(riid),
+           lcid, flags, params, result, excep_info, arg_err );
+
+    hr = get_typeinfo( ISWbemNamedValueSet_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke( typeinfo, &set->ISWbemNamedValueSet_iface, member, flags,
+                               params, result, excep_info, arg_err );
+        ITypeInfo_Release( typeinfo );
+    }
+    return hr;
+}
+
+static HRESULT WINAPI namedvalueset_get__NewEnum(
+    ISWbemNamedValueSet *iface,
+    IUnknown **unk )
+{
+    FIXME("\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI namedvalueset_Item(
+    ISWbemNamedValueSet *iface,
+    BSTR name,
+    LONG flags,
+    ISWbemNamedValue **value )
+{
+    FIXME("\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI namedvalueset_Count(
+    ISWbemNamedValueSet *iface,
+    LONG *count )
+{
+    FIXME("\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI namedvalueset_Add(
+    ISWbemNamedValueSet *iface,
+    BSTR name,
+    VARIANT *value,
+    LONG flags,
+    ISWbemNamedValue **namedvalue )
+{
+    FIXME("\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI namedvalueset_Remove(
+    ISWbemNamedValueSet *iface,
+    BSTR name,
+    LONG flags )
+{
+    FIXME("\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI namedvalueset_Clone(
+    ISWbemNamedValueSet *iface,
+    ISWbemNamedValueSet **valueset )
+{
+    FIXME("\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI namedvalueset_DeleteAll(
+    ISWbemNamedValueSet *iface )
+{
+    FIXME("\n");
+
+    return E_NOTIMPL;
+}
+
+static const ISWbemNamedValueSetVtbl namedvalueset_vtbl =
+{
+    namedvalueset_QueryInterface,
+    namedvalueset_AddRef,
+    namedvalueset_Release,
+    namedvalueset_GetTypeInfoCount,
+    namedvalueset_GetTypeInfo,
+    namedvalueset_GetIDsOfNames,
+    namedvalueset_Invoke,
+    namedvalueset_get__NewEnum,
+    namedvalueset_Item,
+    namedvalueset_Count,
+    namedvalueset_Add,
+    namedvalueset_Remove,
+    namedvalueset_Clone,
+    namedvalueset_DeleteAll,
+};
+
+HRESULT SWbemNamedValueSet_create( void **obj )
+{
+    struct namedvalueset *set;
+
+    TRACE( "%p\n", obj );
+
+    if (!(set = heap_alloc_zero( sizeof(*set) ))) return E_OUTOFMEMORY;
+    set->ISWbemNamedValueSet_iface.lpVtbl = &namedvalueset_vtbl;
+    set->refs = 1;
+
+    *obj = &set->ISWbemNamedValueSet_iface;
     TRACE( "returning iface %p\n", *obj );
     return S_OK;
 }

@@ -1196,4 +1196,15 @@ coclass SWbemLocator
     interface ISWbemLocator;
 }
 
+[
+    threading(apartment),
+    uuid(9aed384e-ce8b-11d1-8b05-00600806d9b6),
+    progid("WbemScripting.SWbemNamedValueSet.1"),
+    vi_progid("WbemScripting.SWbemNamedValueSet")
+]
+coclass SWbemNamedValueSet
+{
+    interface ISWbemNamedValueSet;
+}
+
 } /* WbemScripting */

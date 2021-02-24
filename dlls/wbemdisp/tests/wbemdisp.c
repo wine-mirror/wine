@@ -402,12 +402,24 @@ static void test_locator(void)
     ISWbemLocator_Release( locator );
 }
 
+static void test_namedvalueset(void)
+{
+    ISWbemNamedValueSet *set;
+    HRESULT hr;
+
+    hr = CoCreateInstance( &CLSID_SWbemNamedValueSet, NULL, CLSCTX_INPROC_SERVER, &IID_ISWbemNamedValueSet, (void **)&set );
+    ok( hr == S_OK, "got %x\n", hr );
+
+    ISWbemNamedValueSet_Release(set);
+}
+
 START_TEST(wbemdisp)
 {
     CoInitialize( NULL );
 
     test_ParseDisplayName();
     test_locator();
+    test_namedvalueset();
 
     CoUninitialize();
 }
