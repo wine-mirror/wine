@@ -26,21 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qwave);
 
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD reason, LPVOID lpv)
-{
-    TRACE("(%p, %d, %p)\n", hInstDLL, reason, lpv);
-
-    switch (reason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;    /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hInstDLL);
-        break;
-    }
-    return TRUE;
-}
-
 BOOL WINAPI QOSCreateHandle(PQOS_VERSION version, PHANDLE handle)
 {
     FIXME("%p %p stub!\n", version, handle);
