@@ -1764,6 +1764,62 @@ static void test_swap_control(HDC oldhdc)
     wglMakeCurrent(oldhdc, oldctx);
 }
 
+static void test_wglChoosePixelFormatARB(HDC hdc)
+{
+    static int attrib_list[] =
+    {
+        WGL_DRAW_TO_WINDOW_ARB, 1,
+        WGL_SUPPORT_OPENGL_ARB, 1,
+        0
+    };
+
+    PIXELFORMATDESCRIPTOR fmt, last_fmt;
+    BYTE depth, last_depth;
+    UINT format_count;
+    int formats[1024];
+    unsigned int i;
+    int res;
+
+    if (!pwglChoosePixelFormatARB)
+    {
+        skip("wglChoosePixelFormatARB is not available\n");
+        return;
+    }
+
+    format_count = 0;
+    res = pwglChoosePixelFormatARB(hdc, attrib_list, NULL, ARRAY_SIZE(formats), formats, &format_count);
+    ok(res, "Got unexpected result %d.\n", res);
+
+    memset(&last_fmt, 0, sizeof(last_fmt));
+    last_depth = 0;
+
+    for (i = 0; i < format_count; ++i)
+    {
+        memset(&fmt, 0, sizeof(fmt));
+        if (!DescribePixelFormat(hdc, formats[i], sizeof(fmt), &fmt)
+                || (fmt.dwFlags & PFD_GENERIC_FORMAT))
+        {
+            memset(&fmt, 0, sizeof(fmt));
+            continue;
+        }
+
+        depth = fmt.cDepthBits;
+        fmt.cDepthBits = 0;
+        fmt.cStencilBits = 0;
+
+        if (memcmp(&fmt, &last_fmt, sizeof(fmt)))
+        {
+            last_fmt = fmt;
+            last_depth = depth;
+        }
+        else
+        {
+            ok(last_depth <= depth, "Got unexpected depth %u, last_depth %u, i %u, format %u.\n",
+                    depth, last_depth, i, formats[i]);
+        }
+    }
+}
+
 START_TEST(opengl)
 {
     HWND hwnd;
@@ -1858,6 +1914,7 @@ START_TEST(opengl)
         }
 
         test_choosepixelformat();
+        test_wglChoosePixelFormatARB(hdc);
         test_debug_message_callback();
         test_setpixelformat(hdc);
         test_destroy(hdc);
