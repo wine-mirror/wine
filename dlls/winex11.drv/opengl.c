@@ -1533,8 +1533,7 @@ void destroy_gl_drawable( HWND hwnd )
  *
  * Get the pixel-format descriptor associated to the given id
  */
-static int WINAPI glxdrv_wglDescribePixelFormat( HDC hdc, int iPixelFormat,
-                                                 UINT nBytes, PIXELFORMATDESCRIPTOR *ppfd)
+static int WINAPI describe_pixel_format( int iPixelFormat, PIXELFORMATDESCRIPTOR *ppfd, BOOL allow_offscreen )
 {
   /*XVisualInfo *vis;*/
   int value;
@@ -1543,21 +1542,11 @@ static int WINAPI glxdrv_wglDescribePixelFormat( HDC hdc, int iPixelFormat,
 
   if (!has_opengl()) return 0;
 
-  TRACE("(%p,%d,%d,%p)\n", hdc, iPixelFormat, nBytes, ppfd);
-
-  if (!ppfd) return nb_onscreen_formats;
-
   /* Look for the iPixelFormat in our list of supported formats. If it is supported we get the index in the FBConfig table and the number of supported formats back */
-  fmt = get_pixel_format(gdi_display, iPixelFormat, FALSE /* Offscreen */);
+  fmt = get_pixel_format(gdi_display, iPixelFormat, allow_offscreen);
   if (!fmt) {
       WARN("unexpected format %d\n", iPixelFormat);
       return 0;
-  }
-
-  if (nBytes < sizeof(PIXELFORMATDESCRIPTOR)) {
-    ERR("Wrong structure size !\n");
-    /* Should set error */
-    return 0;
   }
 
   memset(ppfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
@@ -1660,6 +1649,28 @@ static int WINAPI glxdrv_wglDescribePixelFormat( HDC hdc, int iPixelFormat,
   }
 
   return nb_onscreen_formats;
+}
+
+/**
+ * glxdrv_DescribePixelFormat
+ *
+ * Get the pixel-format descriptor associated to the given id
+ */
+static int WINAPI glxdrv_wglDescribePixelFormat( HDC hdc, int iPixelFormat,
+                                                 UINT nBytes, PIXELFORMATDESCRIPTOR *ppfd)
+{
+  TRACE("(%p,%d,%d,%p)\n", hdc, iPixelFormat, nBytes, ppfd);
+
+  if (!ppfd) return nb_onscreen_formats;
+
+  if (nBytes < sizeof(PIXELFORMATDESCRIPTOR))
+  {
+    ERR("Wrong structure size !\n");
+    /* Should set error */
+    return 0;
+  }
+
+  return describe_pixel_format(iPixelFormat, ppfd, FALSE);
 }
 
 /***********************************************************************
