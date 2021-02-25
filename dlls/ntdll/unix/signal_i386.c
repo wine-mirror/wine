@@ -821,16 +821,6 @@ static inline void restore_xstate( const CONTEXT *context )
 
 
 /***********************************************************************
- *           signal_restore_full_cpu_context
- *
- * Restore full context from syscall frame
- */
-void signal_restore_full_cpu_context(void)
-{
-}
-
-
-/***********************************************************************
  *           fpux_to_fpu
  *
  * Build a standard FPU context from an extended one.
@@ -991,36 +981,36 @@ static inline void restore_context( const struct xcontext *xcontext, ucontext_t 
  *
  * Set the new CPU context.
  */
-extern void set_full_cpu_context( const CONTEXT *context );
+extern void set_full_cpu_context(void);
 __ASM_GLOBAL_FUNC( set_full_cpu_context,
-                   "movl $0,%fs:0x1f8\n\t"     /* x86_thread_data()->syscall_frame = NULL */
-                   "movl 4(%esp),%ecx\n\t"
-                   "movw 0x8c(%ecx),%gs\n\t"  /* SegGs */
-                   "movw 0x90(%ecx),%fs\n\t"  /* SegFs */
-                   "movw 0x94(%ecx),%es\n\t"  /* SegEs */
-                   "movl 0x9c(%ecx),%edi\n\t" /* Edi */
-                   "movl 0xa0(%ecx),%esi\n\t" /* Esi */
-                   "movl 0xa4(%ecx),%ebx\n\t" /* Ebx */
-                   "movl 0xb4(%ecx),%ebp\n\t" /* Ebp */
+                   "movl %fs:0x1f8,%ecx\n\t"
+                   "movl $0,%fs:0x1f8\n\t"    /* x86_thread_data()->syscall_frame = NULL */
+                   "movw 0x16(%ecx),%gs\n\t"  /* SegGs */
+                   "movw 0x14(%ecx),%fs\n\t"  /* SegFs */
+                   "movw 0x12(%ecx),%es\n\t"  /* SegEs */
+                   "movl 0x1c(%ecx),%ebx\n\t" /* Ebx */
+                   "movl 0x28(%ecx),%edi\n\t" /* Edi */
+                   "movl 0x2c(%ecx),%esi\n\t" /* Esi */
+                   "movl 0x30(%ecx),%ebp\n\t" /* Ebp */
                    "movw %ss,%ax\n\t"
-                   "cmpw 0xc8(%ecx),%ax\n\t"  /* SegSs */
+                   "cmpw 0x0e(%ecx),%ax\n\t"  /* SegSs */
                    "jne 1f\n\t"
                    /* As soon as we have switched stacks the context structure could
                     * be invalid (when signal handlers are executed for example). Copy
                     * values on the target stack before changing ESP. */
-                   "movl 0xc4(%ecx),%eax\n\t" /* Esp */
+                   "movl 0x08(%ecx),%eax\n\t" /* Esp */
                    "leal -4*4(%eax),%eax\n\t"
-                   "movl 0xc0(%ecx),%edx\n\t" /* EFlags */
+                   "movl (%ecx),%edx\n\t"     /* EFlags */
                    "movl %edx,3*4(%eax)\n\t"
-                   "movl 0xbc(%ecx),%edx\n\t" /* SegCs */
+                   "movl 0x0c(%ecx),%edx\n\t" /* SegCs */
                    "movl %edx,2*4(%eax)\n\t"
-                   "movl 0xb8(%ecx),%edx\n\t" /* Eip */
+                   "movl 0x04(%ecx),%edx\n\t" /* Eip */
                    "movl %edx,1*4(%eax)\n\t"
-                   "movl 0xb0(%ecx),%edx\n\t" /* Eax */
+                   "movl 0x18(%ecx),%edx\n\t" /* Eax */
                    "movl %edx,0*4(%eax)\n\t"
-                   "pushl 0x98(%ecx)\n\t"     /* SegDs */
-                   "movl 0xa8(%ecx),%edx\n\t" /* Edx */
-                   "movl 0xac(%ecx),%ecx\n\t" /* Ecx */
+                   "pushl 0x10(%ecx)\n\t"     /* SegDs */
+                   "movl 0x24(%ecx),%edx\n\t" /* Edx */
+                   "movl 0x20(%ecx),%ecx\n\t" /* Ecx */
                    "popl %ds\n\t"
                    "movl %eax,%esp\n\t"
                    "popl %eax\n\t"
@@ -1030,17 +1020,28 @@ __ASM_GLOBAL_FUNC( set_full_cpu_context,
                     * is 16 or 32 bit, and 'movl' will throw an exception when we try to
                     * access memory above the limit. */
                    "1:\n\t"
-                   "movl 0xa8(%ecx),%edx\n\t" /* Edx */
-                   "movl 0xb0(%ecx),%eax\n\t" /* Eax */
-                   "movw 0xc8(%ecx),%ss\n\t"  /* SegSs */
-                   "movl 0xc4(%ecx),%esp\n\t" /* Esp */
-                   "pushl 0xc0(%ecx)\n\t"     /* EFlags */
-                   "pushl 0xbc(%ecx)\n\t"     /* SegCs */
-                   "pushl 0xb8(%ecx)\n\t"     /* Eip */
-                   "pushl 0x98(%ecx)\n\t"     /* SegDs */
-                   "movl 0xac(%ecx),%ecx\n\t" /* Ecx */
+                   "movl 0x24(%ecx),%edx\n\t" /* Edx */
+                   "movl 0x18(%ecx),%eax\n\t" /* Eax */
+                   "movw 0x0e(%ecx),%ss\n\t"  /* SegSs */
+                   "movl 0x08(%ecx),%esp\n\t" /* Esp */
+                   "pushl 0x00(%ecx)\n\t"     /* EFlags */
+                   "pushl 0x0c(%ecx)\n\t"     /* SegCs */
+                   "pushl 0x04(%ecx)\n\t"     /* Eip */
+                   "pushl 0x10(%ecx)\n\t"     /* SegDs */
+                   "movl 0x20(%ecx),%ecx\n\t" /* Ecx */
                    "popl %ds\n\t"
                    "iret" )
+
+
+/***********************************************************************
+ *           signal_restore_full_cpu_context
+ *
+ * Restore full context from syscall frame
+ */
+void signal_restore_full_cpu_context(void)
+{
+    set_full_cpu_context();
+}
 
 
 /***********************************************************************
@@ -1215,6 +1216,7 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 {
     NTSTATUS ret = STATUS_SUCCESS;
+    struct syscall_frame *frame = x86_thread_data()->syscall_frame;
     DWORD flags = context->ContextFlags & ~CONTEXT_i386;
     BOOL self = (handle == GetCurrentThread());
 
@@ -1244,28 +1246,39 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         }
     }
 
+    if (flags & CONTEXT_INTEGER)
+    {
+        frame->eax = context->Eax;
+        frame->ebx = context->Ebx;
+        frame->ecx = context->Ecx;
+        frame->edx = context->Edx;
+        frame->esi = context->Esi;
+        frame->edi = context->Edi;
+    }
+    if (flags & CONTEXT_CONTROL)
+    {
+        frame->esp    = context->Esp;
+        frame->ebp    = context->Ebp;
+        frame->eip    = context->Eip;
+        frame->eflags = context->EFlags;
+        frame->cs     = context->SegCs;
+        frame->ss     = context->SegSs;
+    }
+    if (flags & CONTEXT_SEGMENTS)
+    {
+        frame->ds = context->SegDs;
+        frame->es = context->SegEs;
+        frame->fs = context->SegFs;
+        frame->gs = context->SegGs;
+    }
     if (flags & CONTEXT_EXTENDED_REGISTERS) restore_fpux( context );
     else if (flags & CONTEXT_FLOATING_POINT) restore_fpu( context );
 
     restore_xstate( context );
 
-    if (flags & CONTEXT_FULL)
-    {
-        if (!(flags & CONTEXT_CONTROL))
-            FIXME( "setting partial context (%x) not supported\n", flags );
-        else if (flags & CONTEXT_SEGMENTS)
-            set_full_cpu_context( context );
-        else
-        {
-            CONTEXT newcontext = *context;
-            newcontext.SegDs = get_ds();
-            newcontext.SegEs = get_ds();
-            newcontext.SegFs = get_fs();
-            newcontext.SegGs = get_gs();
-            set_full_cpu_context( &newcontext );
-        }
-    }
-    return ret;
+    if (!(flags & CONTEXT_INTEGER)) frame->eax = STATUS_SUCCESS;
+    signal_restore_full_cpu_context();
+    return STATUS_SUCCESS;
 }
 
 
