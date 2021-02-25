@@ -30,22 +30,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wevtapi);
 
 static const WCHAR log_pathW[] = L"C:\\windows\\temp\\evt.log";
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-    }
-
-    return TRUE;
-}
-
 EVT_HANDLE WINAPI EvtOpenSession(EVT_LOGIN_CLASS login_class, void *login, DWORD timeout, DWORD flags)
 {
     FIXME("(%u %p %u %u) stub\n", login_class, login, timeout, flags);
