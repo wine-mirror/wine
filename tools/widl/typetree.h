@@ -96,6 +96,14 @@ static inline type_t *type_get_real_type(const type_t *type)
         return (type_t *)type;
 }
 
+static inline type_t *type_parameterized_type_get_real_type(const type_t *type)
+{
+    if (type->type_type == TYPE_PARAMETERIZED_TYPE)
+        return type_parameterized_type_get_real_type(type->details.parameterized.type);
+    else
+        return (type_t *)type;
+}
+
 static inline enum type_type type_get_type(const type_t *type)
 {
     return type_get_type_detect_alias(type_get_real_type(type));
