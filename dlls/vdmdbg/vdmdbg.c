@@ -42,19 +42,3 @@ INT WINAPI VDMEnumProcessWOW(PROCESSENUMPROC fp, LPARAM lparam)
     FIXME("%p: stub!\n", fp);
     return 0;
 }
-
-/***********************************************************************
- *		DllMain  (VDMDBG.@)
- */
-BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
-{
-    switch(reason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( inst );
-        break;
-    }
-    return TRUE;
-}
