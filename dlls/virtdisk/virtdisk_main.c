@@ -26,25 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(virtdisk);
 
-/*****************************************************
- *    DllMain (VIRTDISK.@)
- */
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
-{
-    TRACE("(%p, %d, %p)\n", hinst, reason, reserved);
-
-    switch (reason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinst);
-            break;
-    }
-
-    return TRUE;
-}
-
 DWORD WINAPI GetStorageDependencyInformation(HANDLE obj, GET_STORAGE_DEPENDENCY_FLAG flags, ULONG size, STORAGE_DEPENDENCY_INFO *info, ULONG *used)
 {
     ULONG temp_size = sizeof(STORAGE_DEPENDENCY_INFO);
