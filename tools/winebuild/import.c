@@ -1438,13 +1438,24 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output_cfi( ".cfi_rel_offset %%ebp,0\n" );
         output( "\tmovl %%esp,%%ebp\n" );
         output_cfi( ".cfi_def_cfa_register %%ebp\n" );
-        output( "\tsubl $0x30,%%esp\n" );
+        output( "\tleal -0x2c(%%esp),%%esp\n" );
         output( "\tmovl %%ebx,-0x14(%%ebp)\n" );
         output_cfi( ".cfi_rel_offset %%ebx,-0x14\n" );
         output( "\tmovl %%edi,-0x08(%%ebp)\n" );
         output_cfi( ".cfi_rel_offset %%edi,-0x08\n" );
         output( "\tmovl %%esi,-0x04(%%ebp)\n" );
         output_cfi( ".cfi_rel_offset %%esi,-0x04\n" );
+        output( "\tpushfl\n" );
+        output( "\tmovw %%gs,-0x1a(%%ebp)\n" );
+        output( "\tmovw %%fs,-0x1c(%%ebp)\n" );
+        output( "\tmovw %%es,-0x1e(%%ebp)\n" );
+        output( "\tmovw %%ds,-0x20(%%ebp)\n" );
+        output( "\tmovw %%ss,-0x22(%%ebp)\n" );
+        output( "\tmovw %%cs,-0x24(%%ebp)\n" );
+        output( "\tleal 8(%%ebp),%%ecx\n" );
+        output( "\tmovl %%ecx,-0x28(%%ebp)\n" ); /* frame->esp */
+        output( "\tmovl 4(%%ebp),%%ecx\n" );
+        output( "\tmovl %%ecx,-0x2c(%%ebp)\n" ); /* frame->eip */
         output( "\tmovl %%esp,%%fs:0x1f8\n" );  /* x86_thread_data()->syscall_frame */
         output( "\tcmpl $%u,%%eax\n", count );
         output( "\tjae 3f\n" );

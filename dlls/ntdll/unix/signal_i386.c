@@ -479,9 +479,9 @@ struct syscall_frame
     DWORD              edi;     /* 28 */
     DWORD              esi;     /* 2c */
     DWORD              ebp;     /* 30 */
-    DWORD              thunk_addr;
-    DWORD              ret_addr;
 };
+
+C_ASSERT( sizeof(struct syscall_frame) == 0x34 );
 
 struct x86_thread_data
 {
@@ -1314,20 +1314,20 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         }
         if (needed_flags & CONTEXT_CONTROL)
         {
-            context->Esp    = (DWORD)&frame->ret_addr;
+            context->Esp    = frame->esp;
             context->Ebp    = frame->ebp;
-            context->Eip    = frame->thunk_addr;
-            context->EFlags = 0x202;
-            context->SegCs  = get_cs();
-            context->SegSs  = get_ds();
+            context->Eip    = frame->eip;
+            context->EFlags = frame->eflags;
+            context->SegCs  = frame->cs;
+            context->SegSs  = frame->ds;
             context->ContextFlags |= CONTEXT_CONTROL;
         }
         if (needed_flags & CONTEXT_SEGMENTS)
         {
-            context->SegDs = get_ds();
-            context->SegEs = get_ds();
-            context->SegFs = get_fs();
-            context->SegGs = get_gs();
+            context->SegDs = frame->ds;
+            context->SegEs = frame->es;
+            context->SegFs = frame->fs;
+            context->SegGs = frame->gs;
             context->ContextFlags |= CONTEXT_SEGMENTS;
         }
         if (needed_flags & CONTEXT_FLOATING_POINT) save_fpu( context );
@@ -1732,7 +1732,6 @@ struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *conte
 }
 
 C_ASSERT( sizeof(struct apc_stack_layout) == 0x2e0 );
-C_ASSERT( offsetof(struct syscall_frame, ret_addr) == 0x38 );
 C_ASSERT( offsetof(struct apc_stack_layout, context) == 20 );
 
 /***********************************************************************
@@ -1916,14 +1915,14 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
     }
     else
     {
-        TRACE( "returning to user mode ip=%08x ret=%08x\n", frame->ret_addr, rec->ExceptionCode );
+        TRACE( "returning to user mode ip=%08x ret=%08x\n", frame->eip, rec->ExceptionCode );
         EAX_sig(sigcontext) = rec->ExceptionCode;
         EBX_sig(sigcontext) = frame->ebx;
         ESI_sig(sigcontext) = frame->esi;
         EDI_sig(sigcontext) = frame->edi;
         EBP_sig(sigcontext) = frame->ebp;
-        ESP_sig(sigcontext) = (DWORD)&frame->ret_addr;
-        EIP_sig(sigcontext) = frame->thunk_addr;
+        ESP_sig(sigcontext) = frame->esp;
+        EIP_sig(sigcontext) = frame->eip;
         x86_thread_data()->syscall_frame = NULL;
     }
     return TRUE;
