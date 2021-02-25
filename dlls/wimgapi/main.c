@@ -28,22 +28,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wimgapi);
 
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
-{
-    TRACE("(0x%p, %d, %p)\n", instance, reason, reserved);
-
-    switch (reason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(instance);
-            break;
-    }
-
-    return TRUE;
-}
-
 DWORD WINAPI WIMRegisterMessageCallback(HANDLE wim, FARPROC callback, PVOID data)
 {
     FIXME("(%p %p %p) stub\n", wim, callback, data);
