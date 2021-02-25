@@ -197,19 +197,3 @@ void *WINAPI WlanAllocateMemory(DWORD size)
 
     return ret;
 }
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *reserved)
-{
-    TRACE("(0x%p, %u, %p)\n", hinstDLL, reason, reserved);
-
-    switch (reason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-    }
-
-    return TRUE;
-}
