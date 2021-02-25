@@ -404,11 +404,87 @@ static void test_locator(void)
 
 static void test_namedvalueset(void)
 {
+    static const WCHAR nameW[] = {'n','a','m','e',0,'2'};
+    ISWbemNamedValue *value, *value2;
     ISWbemNamedValueSet *set;
+    VARIANT var;
     HRESULT hr;
+    BSTR name;
+    LONG count;
 
     hr = CoCreateInstance( &CLSID_SWbemNamedValueSet, NULL, CLSCTX_INPROC_SERVER, &IID_ISWbemNamedValueSet, (void **)&set );
     ok( hr == S_OK, "got %x\n", hr );
+
+    name = SysAllocString( L"name" );
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 10;
+
+    hr = ISWbemNamedValueSet_Add( set, name, &var, 0, NULL );
+    ok( hr == WBEM_E_INVALID_PARAMETER, "Unexpected hr %#x.\n", hr );
+
+    hr = ISWbemNamedValueSet_Add( set, name, &var, 0, &value );
+    ok( hr == S_OK, "Unexpected hr %#x.\n", hr );
+
+    /* New instance is returned, referencing same entry. */
+    hr = ISWbemNamedValueSet_Item( set, name, 0, &value2 );
+    ok( hr == S_OK, "Unexpected hr %#x.\n", hr );
+    ok( value != value2, "Unexpected value instance.\n" );
+
+    V_I4(&var) = 20;
+    hr = ISWbemNamedValue_put_Value( value2, &var );
+todo_wine
+    ok( hr == S_OK, "Unexpected hr %#x.\n", hr );
+
+    V_I4(&var) = 0;
+    hr = ISWbemNamedValue_get_Value( value, &var );
+todo_wine {
+    ok( hr == S_OK, "Unexpected hr %#x.\n", hr );
+    ok( V_I4(&var) == 20, "Unexpected value %d.\n", V_I4(&var) );
+}
+    ISWbemNamedValue_Release( value );
+    ISWbemNamedValue_Release( value2 );
+
+    SysFreeString( name );
+
+    /* Embedded nulls in names */
+    name = SysAllocStringLen(nameW, ARRAY_SIZE(nameW));
+    hr = ISWbemNamedValueSet_Item( set, name, 0, &value );
+    ok( hr == S_OK, "Unexpected hr %#x.\n", hr );
+    ISWbemNamedValue_Release( value );
+
+    V_I4(&var) = 11;
+    hr = ISWbemNamedValueSet_Add( set, name, &var, 0, &value );
+    ok( hr == S_OK, "Unexpected hr %#x.\n", hr );
+
+    count = 0;
+    hr = ISWbemNamedValueSet_get_Count( set, &count );
+todo_wine {
+    ok( hr == S_OK, "Unexpected hr %#x.\n", hr );
+    ok( count == 1, "Unexpected count %d.\n", count );
+}
+    hr = ISWbemNamedValueSet_DeleteAll( set );
+todo_wine
+    ok( hr == S_OK, "Unexpected hr %#x.\n", hr );
+
+    count = 1;
+    hr = ISWbemNamedValueSet_get_Count( set, &count );
+todo_wine {
+    ok( hr == S_OK, "Unexpected hr %#x.\n", hr );
+    ok( count == 0, "Unexpected count %d.\n", count );
+}
+    V_I4(&var) = 20;
+    hr = ISWbemNamedValue_put_Value( value, &var );
+todo_wine
+    ok( hr == S_OK, "Unexpected hr %#x.\n", hr );
+
+    count = 0;
+    hr = ISWbemNamedValueSet_get_Count( set, &count );
+todo_wine {
+    ok( hr == S_OK, "Unexpected hr %#x.\n", hr );
+    ok( count == 1, "Unexpected count %d.\n", count );
+}
+    ISWbemNamedValue_Release( value );
+    SysFreeString( name );
 
     ISWbemNamedValueSet_Release(set);
 }
