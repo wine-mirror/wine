@@ -1119,17 +1119,9 @@ static void test_basic_import_31(void)
 {
     HKEY hkey;
     DWORD dispos;
-    LONG lr;
 
-    /* Check if regedit.exe is running with elevated privileges */
-    lr = RegCreateKeyExA(HKEY_CLASSES_ROOT, KEY_BASE, 0, NULL, REG_OPTION_NON_VOLATILE,
-                         KEY_READ|KEY_SET_VALUE, NULL, &hkey, &dispos);
-    if (lr == ERROR_ACCESS_DENIED)
-    {
-        win_skip("regedit.exe is not running with elevated privileges; "
-                 "skipping Windows 3.1 import tests\n");
-        return;
-    }
+    RegCreateKeyExA(HKEY_CLASSES_ROOT, KEY_BASE, 0, NULL, REG_OPTION_NON_VOLATILE,
+                    KEY_READ|KEY_SET_VALUE, NULL, &hkey, &dispos);
 
     if (dispos == REG_OPENED_EXISTING_KEY)
         delete_value(hkey, NULL);
@@ -2226,17 +2218,13 @@ static void test_invalid_import_unicode(void)
 static void test_invalid_import_31(void)
 {
     HKEY hkey;
-    LONG lr;
+    DWORD dispos;
 
-    /* Check if regedit.exe is running with elevated privileges */
-    lr = RegCreateKeyExA(HKEY_CLASSES_ROOT, KEY_BASE, 0, NULL, REG_OPTION_NON_VOLATILE,
-                         KEY_READ, NULL, &hkey, NULL);
-    if (lr == ERROR_ACCESS_DENIED)
-    {
-        win_skip("regedit.exe is not running with elevated privileges; "
-            "skipping Windows 3.1 invalid import tests\n");
-        return;
-    }
+    RegCreateKeyExA(HKEY_CLASSES_ROOT, KEY_BASE, 0, NULL, REG_OPTION_NON_VOLATILE,
+                     KEY_READ|KEY_SET_VALUE, NULL, &hkey, &dispos);
+
+    if (dispos == REG_OPENED_EXISTING_KEY)
+        delete_value(hkey, NULL);
 
     /* Test character validity at the start of the line */
     exec_import_str("REGEDIT\r\n"
