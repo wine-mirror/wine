@@ -411,6 +411,12 @@ static inline type_t *type_pointer_get_ref_type(const type_t *type)
     return type_pointer_get_ref(type)->type;
 }
 
+static inline type_t *type_pointer_get_root_type(type_t *type)
+{
+    for (; type && type->type_type == TYPE_POINTER; type = type_pointer_get_ref_type(type)) {}
+    return type;
+}
+
 static inline type_t *type_bitfield_get_field(const type_t *type)
 {
     type = type_get_real_type(type);

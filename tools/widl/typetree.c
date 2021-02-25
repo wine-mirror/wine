@@ -52,6 +52,7 @@ type_t *make_type(enum type_type type)
     t->c_name = NULL;
     t->signature = NULL;
     t->qualified_name = NULL;
+    t->impl_name = NULL;
     memset(&t->details, 0, sizeof(t->details));
     t->typestring_offset = 0;
     t->ptrdesc = 0;
@@ -124,6 +125,13 @@ static size_t append_namespaces(char **buf, size_t *len, size_t pos, struct name
     n += strappend(buf, len, pos + n, "%s", prefix);
     if (nested) n += append_namespace(buf, len, pos + n, namespace, separator, abi_prefix);
     n += strappend(buf, len, pos + n, "%s", suffix);
+    return n;
+}
+
+static size_t append_pointer_stars(char **buf, size_t *len, size_t pos, type_t *type)
+{
+    size_t n = 0;
+    for (; type && type->type_type == TYPE_POINTER; type = type_pointer_get_ref_type(type)) n += strappend(buf, len, pos + n, "*");
     return n;
 }
 
@@ -266,9 +274,9 @@ char *format_parameterized_type_name(type_t *type, typeref_list_t *params)
     pos += strappend(&buf, &len, pos, "%s<", type->name);
     if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
     {
-        for (type = ref->type; type->type_type == TYPE_POINTER; type = type_pointer_get_ref_type(type)) {}
-        pos += append_namespaces(&buf, &len, pos, type->namespace, "", "::", type->name, use_abi_namespace ? "ABI" : NULL);
-        for (type = ref->type; type->type_type == TYPE_POINTER; type = type_pointer_get_ref_type(type)) pos += strappend(&buf, &len, pos, "*");
+        type = type_pointer_get_root_type(ref->type);
+        pos += strappend(&buf, &len, pos, "%s", type->qualified_name);
+        pos += append_pointer_stars(&buf, &len, pos, ref->type);
         if (list_next(params, &ref->entry)) pos += strappend(&buf, &len, pos, ",");
     }
     pos += strappend(&buf, &len, pos, ">");
@@ -292,7 +300,7 @@ static char *format_parameterized_type_c_name(type_t *type, typeref_list_t *para
     pos += strappend(&buf, &len, pos, "%s%s_%d", prefix, type->name, count);
     if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
     {
-        for (type = ref->type; type->type_type == TYPE_POINTER; type = type_pointer_get_ref_type(type)) {}
+        type = type_pointer_get_root_type(ref->type);
         pos += append_namespaces(&buf, &len, pos, type->namespace, "_", "__C", type->name, NULL);
     }
 
@@ -330,6 +338,38 @@ static char *format_parameterized_type_signature(type_t *type, typeref_list_t *p
         pos += append_type_signature(&buf, &len, pos, ref->type);
     }
     pos += strappend(&buf, &len, pos, ")");
+
+    return buf;
+}
+
+static char *format_parameterized_type_impl_name(type_t *type, typeref_list_t *params, const char *prefix)
+{
+    size_t len = 0, pos = 0;
+    char *buf = NULL;
+    typeref_t *ref;
+    type_t *iface;
+
+    pos += strappend(&buf, &len, pos, "%s%s_impl<", prefix, type->name);
+    if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
+    {
+        type = type_pointer_get_root_type(ref->type);
+        if (type->type_type == TYPE_RUNTIMECLASS)
+        {
+            pos += strappend(&buf, &len, pos, "ABI::Windows::Foundation::Internal::AggregateType<%s", type->qualified_name);
+            pos += append_pointer_stars(&buf, &len, pos, ref->type);
+            iface = type_runtimeclass_get_default_iface(type);
+            pos += strappend(&buf, &len, pos, ", %s", iface->qualified_name);
+            pos += append_pointer_stars(&buf, &len, pos, ref->type);
+            pos += strappend(&buf, &len, pos, ">");
+        }
+        else
+        {
+            pos += strappend(&buf, &len, pos, "%s", type->qualified_name);
+            pos += append_pointer_stars(&buf, &len, pos, ref->type);
+        }
+        if (list_next(params, &ref->entry)) pos += strappend(&buf, &len, pos, ", ");
+    }
+    pos += strappend(&buf, &len, pos, ">");
 
     return buf;
 }
@@ -1226,11 +1266,13 @@ type_t *type_parameterized_type_specialize_define(type_t *type)
         error_loc("pinterface/pdelegate %s previously not declared a pinterface/pdelegate at %s:%d\n",
                   iface->name, iface->loc_info.input_name, iface->loc_info.line_number);
 
+    iface->impl_name = format_parameterized_type_impl_name(type, repl, "");
     iface->signature = format_parameterized_type_signature(type, repl);
     iface->defined = TRUE;
     if (iface->type_type == TYPE_DELEGATE)
     {
         iface = iface->details.delegate.iface;
+        iface->impl_name = format_parameterized_type_impl_name(type, repl, "I");
         iface->signature = format_parameterized_type_signature(type, repl);
         iface->defined = TRUE;
     }

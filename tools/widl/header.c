@@ -1588,10 +1588,12 @@ static void write_forward(FILE *header, type_t *iface)
   fprintf(header, "#ifdef __cplusplus\n");
   if (iface->namespace && !is_global_namespace(iface->namespace))
     fprintf(header, "#define %s %s\n", iface->c_name, iface->qualified_name);
-  write_namespace_start(header, iface->namespace);
-  if (strchr(iface->name, '<')) write_line(header, 0, "template<> struct %s;", iface->name);
-  else write_line(header, 0, "interface %s;", iface->name);
-  write_namespace_end(header, iface->namespace);
+  if (!iface->impl_name)
+  {
+    write_namespace_start(header, iface->namespace);
+    write_line(header, 0, "interface %s;", iface->name);
+    write_namespace_end(header, iface->namespace);
+  }
   fprintf(header, "#endif /* __cplusplus */\n");
   fprintf(header, "#endif\n\n" );
 }
@@ -1667,7 +1669,12 @@ static void write_com_interface_end(FILE *header, type_t *iface)
       if (strchr(iface->name, '<')) fprintf(header, "template<> struct ");
       else fprintf(header, "interface ");
   }
-  if (type_iface_get_inherit(iface))
+  if (iface->impl_name)
+  {
+    fprintf(header, "%s : %s\n", iface->name, iface->impl_name);
+    write_line(header, 1, "{");
+  }
+  else if (type_iface_get_inherit(iface))
   {
     fprintf(header, "%s : public %s\n", iface->name,
             type_iface_get_inherit(iface)->name);
@@ -1681,9 +1688,9 @@ static void write_com_interface_end(FILE *header, type_t *iface)
   }
   /* dispinterfaces don't have real functions, so don't write C++ functions for
    * them */
-  if (!dispinterface)
+  if (!dispinterface && !iface->impl_name)
     write_cpp_method_def(header, iface);
-  if (!type_iface_get_inherit(iface))
+  if (!type_iface_get_inherit(iface) && !iface->impl_name)
     write_line(header, 0, "END_INTERFACE\n");
   write_line(header, -1, "};");
   if (!is_global_namespace(iface->namespace)) {
