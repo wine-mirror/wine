@@ -912,6 +912,8 @@ type_t *type_parameterized_interface_define(type_t *type, attr_list_t *attrs, ty
     iface->details.iface->async_iface = NULL;
     iface->details.iface->requires = requires;
 
+    iface->name = type->name;
+
     type->defined = TRUE;
     return type;
 }
@@ -951,6 +953,9 @@ type_t *type_parameterized_delegate_define(type_t *type, attr_list_t *attrs, sta
     iface->details.iface->disp_inherit = NULL;
     iface->details.iface->async_iface = NULL;
     iface->details.iface->requires = NULL;
+
+    delegate->name = type->name;
+    compute_delegate_iface_names(delegate, type, type->details.parameterized.params);
 
     type->defined = TRUE;
     return type;

@@ -123,6 +123,25 @@ unsigned int get_attrv(const attr_list_t *list, enum attr_type t)
     return 0;
 }
 
+static char *format_parameterized_type_args(const type_t *type, const char *prefix, const char *suffix)
+{
+    typeref_list_t *params;
+    typeref_t *ref;
+    size_t len = 0, pos = 0;
+    char *buf = NULL;
+
+    params = type->details.parameterized.params;
+    if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
+    {
+        assert(ref->type->type_type != TYPE_POINTER);
+        pos += strappend(&buf, &len, pos, "%s%s%s", prefix, ref->type->name, suffix);
+        if (list_next(params, &ref->entry)) pos += strappend(&buf, &len, pos, ", ");
+    }
+
+    if (!buf) return xstrdup("");
+    return buf;
+}
+
 static void write_guid(FILE *f, const char *guid_prefix, const char *name, const UUID *uuid)
 {
   if (!uuid) return;
@@ -1474,6 +1493,30 @@ static void write_function_proto(FILE *header, const type_t *iface, const var_t 
   fprintf(header, ");\n\n");
 }
 
+static void write_parameterized_type_forward(FILE *header, type_t *type)
+{
+    type_t *iface = type->details.parameterized.type;
+    char *args;
+
+    if (type_get_type(iface) == TYPE_DELEGATE) iface = type_delegate_get_iface(iface);
+
+    fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
+    write_namespace_start(header, type->namespace);
+
+    args = format_parameterized_type_args(type, "class ", "");
+    write_line(header, 0, "template <%s>", args);
+    write_line(header, 0, "struct %s_impl;\n", iface->name);
+
+    write_line(header, 0, "template <%s>", args);
+    free(args);
+    args = format_parameterized_type_args(type, "", "");
+    write_line(header, 0, "struct %s : %s_impl<%s> {};", iface->name, iface->name, args);
+    free(args);
+
+    write_namespace_end(header, type->namespace);
+    fprintf(header, "#endif\n\n" );
+}
+
 static void write_forward(FILE *header, type_t *iface)
 {
   fprintf(header, "#ifndef __%s_FWD_DEFINED__\n", iface->c_name);
@@ -1818,6 +1861,8 @@ static void write_forward_decls(FILE *header, const statement_list_t *stmts)
           write_coclass_forward(header, stmt->u.type);
         else if (type_get_type(stmt->u.type) == TYPE_RUNTIMECLASS)
           write_runtimeclass_forward(header, stmt->u.type);
+        else if (type_get_type(stmt->u.type) == TYPE_PARAMETERIZED_TYPE)
+          write_parameterized_type_forward(header, stmt->u.type);
         break;
       case STMT_TYPEREF:
       case STMT_IMPORTLIB:
