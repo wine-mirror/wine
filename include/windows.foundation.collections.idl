@@ -27,6 +27,19 @@ import "windowscontracts.idl";
 
 namespace Windows {
     namespace Foundation {
+
+cpp_quote("#ifdef __cplusplus")
+cpp_quote("} /* extern \"C\" */")
+cpp_quote("namespace ABI { namespace Windows { namespace Foundation { namespace Internal {")
+cpp_quote("template <class T> struct GetAbiType { typedef T type; };")
+cpp_quote("template <class T> struct GetLogicalType { typedef T type; };")
+cpp_quote("template <class L, class A> struct AggregateType {};")
+cpp_quote("template <class L, class A> struct GetAbiType<AggregateType<L, A>> { typedef A type; };")
+cpp_quote("template <class L, class A> struct GetLogicalType<AggregateType<L, A>> { typedef L type; };")
+cpp_quote("}}}}")
+cpp_quote("extern \"C\" {")
+cpp_quote("#endif")
+
 #ifdef __WIDL__
         [
             contract(Windows.Foundation.FoundationContract, 1.0),
