@@ -955,11 +955,32 @@ HRESULT WbemServices_create( const WCHAR *namespace, LPVOID *ppObj )
     return S_OK;
 }
 
+struct wbem_context_value
+{
+    struct list entry;
+    WCHAR *name;
+    VARIANT value;
+};
+
 struct wbem_context
 {
     IWbemContext IWbemContext_iface;
     LONG refs;
+    struct list values;
 };
+
+static void wbem_context_delete_values(struct wbem_context *context)
+{
+    struct wbem_context_value *value, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE(value, next, &context->values, struct wbem_context_value, entry)
+    {
+        list_remove( &value->entry );
+        VariantClear( &value->value );
+        heap_free( value->name );
+        heap_free( value );
+    }
+}
 
 static struct wbem_context *impl_from_IWbemContext( IWbemContext *iface )
 {
@@ -1004,6 +1025,7 @@ static ULONG WINAPI wbem_context_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", context);
+        wbem_context_delete_values( context );
         heap_free( context );
     }
     return refs;
@@ -1056,26 +1078,78 @@ static HRESULT WINAPI wbem_context_EndEnumeration(
     return E_NOTIMPL;
 }
 
+static struct wbem_context_value *wbem_context_get_value( struct wbem_context *context, const WCHAR *name )
+{
+    struct wbem_context_value *value;
+
+    LIST_FOR_EACH_ENTRY( value, &context->values, struct wbem_context_value, entry )
+    {
+        if (!lstrcmpiW( value->name, name )) return value;
+    }
+
+    return NULL;
+}
+
 static HRESULT WINAPI wbem_context_SetValue(
     IWbemContext *iface,
     LPCWSTR name,
     LONG flags,
-    VARIANT *value )
+    VARIANT *var )
 {
-    FIXME("%p, %s, %#x, %p\n", iface, debugstr_w(name), flags, value);
+    struct wbem_context *context = impl_from_IWbemContext( iface );
+    struct wbem_context_value *value;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %#x, %s\n", iface, debugstr_w(name), flags, debugstr_variant(var));
+
+    if (!name || !var)
+        return WBEM_E_INVALID_PARAMETER;
+
+    if ((value = wbem_context_get_value( context, name )))
+    {
+        VariantClear( &value->value );
+        hr = VariantCopy( &value->value, var );
+    }
+    else
+    {
+        if (!(value = heap_alloc_zero( sizeof(*value) ))) return E_OUTOFMEMORY;
+        if (!(value->name = heap_strdupW( name )))
+        {
+            heap_free( value );
+            return E_OUTOFMEMORY;
+        }
+        if (FAILED(hr = VariantCopy( &value->value, var )))
+        {
+            heap_free( value->name );
+            heap_free( value );
+            return hr;
+        }
+
+        list_add_tail( &context->values, &value->entry );
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI wbem_context_GetValue(
     IWbemContext *iface,
     LPCWSTR name,
     LONG flags,
-    VARIANT *value )
+    VARIANT *var )
 {
-    FIXME("%p, %s, %#x, %p\n", iface, debugstr_w(name), flags, value);
+    struct wbem_context *context = impl_from_IWbemContext( iface );
+    struct wbem_context_value *value;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %#x, %p\n", iface, debugstr_w(name), flags, var);
+
+    if (!name || !var)
+        return WBEM_E_INVALID_PARAMETER;
+
+    if (!(value = wbem_context_get_value( context, name )))
+        return WBEM_E_NOT_FOUND;
+
+    V_VT(var) = VT_EMPTY;
+    return VariantCopy( var, &value->value );
 }
 
 static HRESULT WINAPI wbem_context_DeleteValue(
@@ -1123,6 +1197,7 @@ HRESULT WbemContext_create( void **obj )
 
     context->IWbemContext_iface.lpVtbl = &wbem_context_vtbl;
     context->refs = 1;
+    list_init(&context->values);
 
     *obj = &context->IWbemContext_iface;
 

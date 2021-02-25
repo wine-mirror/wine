@@ -152,10 +152,73 @@ static void test_IWbemLocator(void)
 static void test_IWbemContext(void)
 {
     IWbemContext *context;
+    VARIANT var;
     HRESULT hr;
+    BSTR str;
 
     hr = CoCreateInstance( &CLSID_WbemContext, NULL, CLSCTX_INPROC_SERVER, &IID_IWbemContext, (void **)&context );
     ok(hr == S_OK, "Failed to create context object, hr %#x.\n", hr);
+
+    hr = IWbemContext_SetValue(context, L"name", 0, NULL);
+    ok(hr == WBEM_E_INVALID_PARAMETER, "Unexpected hr %#x.\n", hr);
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 12;
+    hr = IWbemContext_SetValue(context, NULL, 0, &var);
+    ok(hr == WBEM_E_INVALID_PARAMETER, "Unexpected hr %#x.\n", hr);
+
+    hr = IWbemContext_SetValue(context, L"name", 0, &var);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IWbemContext_GetValue(context, NULL, 0, &var);
+    ok(hr == WBEM_E_INVALID_PARAMETER, "Unexpected hr %#x.\n", hr);
+
+    hr = IWbemContext_GetValue(context, L"name", 0, NULL);
+    ok(hr == WBEM_E_INVALID_PARAMETER, "Unexpected hr %#x.\n", hr);
+
+    hr = IWbemContext_GetValue(context, L"noname", 0, &var);
+    ok(hr == WBEM_E_NOT_FOUND, "Unexpected hr %#x.\n", hr);
+
+    V_VT(&var) = VT_EMPTY;
+    hr = IWbemContext_GetValue(context, L"NAME", 0, &var);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(V_VT(&var) == VT_I4, "Unexpected value type.\n");
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 13;
+    hr = IWbemContext_SetValue(context, L"name2", 0, &var);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IWbemContext_Next(context, 0, &str, &var);
+todo_wine
+    ok(hr == WBEM_E_UNEXPECTED, "Unexpected hr %#x.\n", hr);
+
+    hr = IWbemContext_BeginEnumeration(context, 0);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    str = NULL;
+    hr = IWbemContext_Next(context, 0, &str, &var);
+todo_wine {
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!lstrcmpW(str, L"name"), "Unexpected name %s.\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+}
+    hr = IWbemContext_EndEnumeration(context);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Overwrite */
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 14;
+    hr = IWbemContext_SetValue(context, L"name", 0, &var);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    V_VT(&var) = VT_EMPTY;
+    hr = IWbemContext_GetValue(context, L"name", 0, &var);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(V_VT(&var) == VT_I4, "Unexpected value type.\n");
+    ok(V_I4(&var) == 14, "Unexpected value.\n");
 
     IWbemContext_Release( context );
 }
