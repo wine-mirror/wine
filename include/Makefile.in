@@ -746,6 +746,7 @@ SOURCES = \
 	wincrypt.h \
 	windef.h \
 	windns.h \
+	windows.foundation.collections.idl \
 	windows.foundation.idl \
 	windows.h \
 	windows.media.speechsynthesis.idl \
