@@ -3999,7 +3999,6 @@ static NTSTATUS process_init(void)
 #endif
 
     init_unix_codepage();
-    init_directories();
     init_user_process_params();
     params = peb->ProcessParameters;
 

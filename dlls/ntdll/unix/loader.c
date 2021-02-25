@@ -1718,7 +1718,6 @@ static struct unix_funcs unix_funcs =
     get_unix_codepage_data,
     get_locales,
     virtual_release_address_space,
-    set_show_dot_files,
     load_so_dll,
     load_builtin_dll,
     unload_builtin_dll,
