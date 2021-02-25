@@ -630,21 +630,6 @@ static HRESULT TransactionManager_Create(REFIID riid, void **ppv)
 }
 /* DTC Proxy Core Object end */
 
-BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
-{
-    TRACE("%p, %u, %p\n", hinst, reason, reserved);
-
-    switch (reason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls( hinst );
-            break;
-    }
-    return TRUE;
-}
-
 static BOOL is_local_machineA( const CHAR *server )
 {
     static const CHAR dot[] = ".";
