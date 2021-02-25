@@ -1,7 +1,7 @@
 MODULE = uiautomationcore.dll
 IMPORTLIB = uiautomationcore
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	uia_main.c
