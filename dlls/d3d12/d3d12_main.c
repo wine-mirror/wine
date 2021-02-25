@@ -265,7 +265,9 @@ static VkPhysicalDevice d3d12_get_vk_physical_device(struct vkd3d_instance *inst
     if ((vr = pfn_vkEnumeratePhysicalDevices(vk_instance, &count, vk_physical_devices)) < 0)
         goto done;
 
-    if (!IsEqualGUID(&adapter_info->driver_uuid, &GUID_NULL) && pfn_vkGetPhysicalDeviceProperties2)
+    if (!IsEqualGUID(&adapter_info->driver_uuid, &GUID_NULL) && pfn_vkGetPhysicalDeviceProperties2
+            && check_vk_instance_extension(vk_instance, pfn_vkGetInstanceProcAddr,
+                    VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME))
     {
         TRACE("Matching adapters by UUIDs.\n");
 
@@ -331,6 +333,7 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
     };
     static const char * const optional_instance_extensions[] =
     {
+        VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
         VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
     };
     static const char * const device_extensions[] =
