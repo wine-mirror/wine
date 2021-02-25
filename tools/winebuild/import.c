@@ -1438,12 +1438,13 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output_cfi( ".cfi_rel_offset %%ebp,0\n" );
         output( "\tmovl %%esp,%%ebp\n" );
         output_cfi( ".cfi_def_cfa_register %%ebp\n" );
-        output( "\tpushl %%ebx\n" );
-        output_cfi( ".cfi_rel_offset %%ebx,-4\n" );
-        output( "\tpushl %%esi\n" );
-        output_cfi( ".cfi_rel_offset %%esi,-8\n" );
-        output( "\tpushl %%edi\n" );
-        output_cfi( ".cfi_rel_offset %%edi,-12\n" );
+        output( "\tsubl $0x30,%%esp\n" );
+        output( "\tmovl %%ebx,-0x14(%%ebp)\n" );
+        output_cfi( ".cfi_rel_offset %%ebx,-0x14\n" );
+        output( "\tmovl %%edi,-0x08(%%ebp)\n" );
+        output_cfi( ".cfi_rel_offset %%edi,-0x08\n" );
+        output( "\tmovl %%esi,-0x04(%%ebp)\n" );
+        output_cfi( ".cfi_rel_offset %%esi,-0x04\n" );
         output( "\tmovl %%esp,%%fs:0x1f8\n" );  /* x86_thread_data()->syscall_frame */
         output( "\tcmpl $%u,%%eax\n", count );
         output( "\tjae 3f\n" );
@@ -1466,16 +1467,17 @@ static void output_syscall_dispatcher( int count, const char *variant )
             output( "\tcall *.Lsyscall_table-1b(%%eax,%%edx,4)\n" );
         else
             output( "\tcall *.Lsyscall_table(,%%eax,4)\n" );
-        output( "\tleal -12(%%ebp),%%esp\n" );
         output( "2:\tmovl $0,%%fs:0x1f8\n" );
-        output( "\tpopl %%edi\n" );
-        output_cfi( ".cfi_same_value %%edi\n" );
-        output( "\tpopl %%esi\n" );
-        output_cfi( ".cfi_same_value %%esi\n" );
-        output( "\tpopl %%ebx\n" );
+        output( "\tmovl -0x14(%%ebp),%%ebx\n" );
         output_cfi( ".cfi_same_value %%ebx\n" );
+        output( "\tmovl -0x08(%%ebp),%%edi\n" );
+        output_cfi( ".cfi_same_value %%edi\n" );
+        output( "\tmovl -0x04(%%ebp),%%esi\n" );
+        output_cfi( ".cfi_same_value %%esi\n" );
+        output( "\tmovl %%ebp,%%esp\n" );
+        output_cfi( ".cfi_def_cfa %%esp,8\n" );
         output( "\tpopl %%ebp\n" );
-        output_cfi( ".cfi_def_cfa %%esp,4\n" );
+        output_cfi( ".cfi_adjust_cfa_offset -4\n" );
         output_cfi( ".cfi_same_value %%ebp\n" );
         output( "\tret\n" );
         output( "3:\tmovl $0x%x,%%eax\n", invalid_param );

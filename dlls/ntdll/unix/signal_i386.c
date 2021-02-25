@@ -463,12 +463,24 @@ enum i386_trap_code
 
 struct syscall_frame
 {
-    DWORD                 edi;
-    DWORD                 esi;
-    DWORD                 ebx;
-    DWORD                 ebp;
-    DWORD                 thunk_addr;
-    DWORD                 ret_addr;
+    DWORD              eflags;  /* 00 */
+    DWORD              eip;     /* 04 */
+    DWORD              esp;     /* 08 */
+    WORD               cs;      /* 0c */
+    WORD               ss;      /* 0e */
+    WORD               ds;      /* 10 */
+    WORD               es;      /* 12 */
+    WORD               fs;      /* 14 */
+    WORD               gs;      /* 16 */
+    DWORD              eax;     /* 18 */
+    DWORD              ebx;     /* 1c */
+    DWORD              ecx;     /* 20 */
+    DWORD              edx;     /* 24 */
+    DWORD              edi;     /* 28 */
+    DWORD              esi;     /* 2c */
+    DWORD              ebp;     /* 30 */
+    DWORD              thunk_addr;
+    DWORD              ret_addr;
 };
 
 struct x86_thread_data
@@ -1292,10 +1304,10 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
     {
         if (needed_flags & CONTEXT_INTEGER)
         {
-            context->Eax = 0;
+            context->Eax = frame->eax;
             context->Ebx = frame->ebx;
-            context->Ecx = 0;
-            context->Edx = 0;
+            context->Ecx = frame->ecx;
+            context->Edx = frame->edx;
             context->Esi = frame->esi;
             context->Edi = frame->edi;
             context->ContextFlags |= CONTEXT_INTEGER;
@@ -1720,7 +1732,7 @@ struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *conte
 }
 
 C_ASSERT( sizeof(struct apc_stack_layout) == 0x2e0 );
-C_ASSERT( offsetof(struct syscall_frame, ret_addr) == 0x14 );
+C_ASSERT( offsetof(struct syscall_frame, ret_addr) == 0x38 );
 C_ASSERT( offsetof(struct apc_stack_layout, context) == 20 );
 
 /***********************************************************************
@@ -1735,7 +1747,7 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "movl 0xc4(%esi),%eax\n\t"    /* context_ptr->Esp */
                    "jmp 2f\n\t"
                    "1:\tmovl %fs:0x1f8,%eax\n\t" /* x86_thread_data()->syscall_frame */
-                   "leal 0x14(%eax),%eax\n\t"    /* &x86_thread_data()->syscall_frame->ret_addr */
+                   "leal 0x38(%eax),%eax\n\t"    /* &x86_thread_data()->syscall_frame->ret_addr */
                    "2:\tsubl $0x2e0,%eax\n\t"    /* sizeof(struct apc_stack_layout) */
                    "movl %ebp,%esp\n\t"          /* pop return address */
                    "cmpl %esp,%eax\n\t"
@@ -1759,14 +1771,14 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
  *           call_raise_user_exception_dispatcher
  */
 __ASM_GLOBAL_FUNC( call_raise_user_exception_dispatcher,
-                   "movl %fs:0x1f8,%eax\n\t"  /* x86_thread_data()->syscall_frame */
-                   "movl 0(%eax),%edi\n\t"    /* frame->edi */
-                   "movl 4(%eax),%esi\n\t"    /* frame->esi */
-                   "movl 8(%eax),%ebx\n\t"    /* frame->ebx */
-                   "movl 12(%eax),%ebp\n\t"   /* frame->ebp */
-                   "movl 4(%esp),%edx\n\t"    /* dispatcher */
+                   "movl %fs:0x1f8,%eax\n\t"   /* x86_thread_data()->syscall_frame */
+                   "movl 0x1c(%eax),%ebx\n\t"  /* frame->ebx */
+                   "movl 0x28(%eax),%edi\n\t"  /* frame->edi */
+                   "movl 0x2c(%eax),%esi\n\t"  /* frame->esi */
+                   "movl 0x30(%eax),%ebp\n\t"  /* frame->ebp */
+                   "movl 4(%esp),%edx\n\t"     /* dispatcher */
                    "movl $0,%fs:0x1f8\n\t"
-                   "leal 20(%eax),%esp\n\t"
+                   "leal 0x38(%eax),%esp\n\t"
                    "jmp *%edx" )
 
 
@@ -1780,15 +1792,15 @@ __ASM_GLOBAL_FUNC( call_user_exception_dispatcher,
                    "jne 1f\n\t"
                    "decl 0xb8(%ecx)\n"            /* context->Eip */
                    "1:\tmovl %fs:0x1f8,%eax\n\t"  /* x86_thread_data()->syscall_frame */
-                   "movl 0(%eax),%edi\n\t"        /* frame->edi */
-                   "movl 4(%eax),%esi\n\t"        /* frame->esi */
-                   "movl 8(%eax),%ebx\n\t"        /* frame->ebx */
-                   "movl 12(%eax),%ebp\n\t"       /* frame->ebp */
-                   "movl %edx,12(%eax)\n\t"
-                   "movl %ecx,16(%eax)\n\t"
+                   "movl 0x1c(%eax),%ebx\n\t"     /* frame->ebx */
+                   "movl 0x28(%eax),%edi\n\t"     /* frame->edi */
+                   "movl 0x2c(%eax),%esi\n\t"     /* frame->esi */
+                   "movl 0x30(%eax),%ebp\n\t"     /* frame->ebp */
+                   "movl %edx,0x30(%eax)\n\t"
+                   "movl %ecx,0x34(%eax)\n\t"
                    "movl 12(%esp),%edx\n\t"       /* dispatcher */
                    "movl $0,%fs:0x1f8\n\t"
-                   "leal 12(%eax),%esp\n\t"
+                   "leal 0x30(%eax),%esp\n\t"
                    "jmp *%edx" )
 
 /**********************************************************************
