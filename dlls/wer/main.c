@@ -50,22 +50,6 @@ static struct list report_table = LIST_INIT(report_table);
 
 static const WCHAR regpath_exclude[] = L"Software\\Microsoft\\Windows Error Reporting\\ExcludedApplications";
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-    }
-
-    return TRUE;
-}
-
 /***********************************************************************
  * WerAddExcludedApplication (wer.@)
  *
