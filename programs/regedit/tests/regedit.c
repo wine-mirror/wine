@@ -3741,15 +3741,26 @@ static void test_export(void)
 
 START_TEST(regedit)
 {
-    if(!exec_import_str("REGEDIT4\r\n\r\n")){
-        win_skip("regedit not available, skipping regedit tests\n");
-        return;
-    }
+    HKEY hkey;
+    LONG err;
 
-    if (!run_regedit_exe("regedit.exe /s test.reg") && GetLastError() == ERROR_ELEVATION_REQUIRED)
+    /* Check if regedit.exe is running with elevated privileges */
+    err = RegDeleteKeyA(HKEY_CLASSES_ROOT, KEY_BASE);
+    if (err == ERROR_ACCESS_DENIED)
     {
         win_skip("User is a non-elevated admin; skipping regedit tests.\n");
         return;
+    }
+    if (err == ERROR_FILE_NOT_FOUND)
+    {
+        if (RegCreateKeyExA(HKEY_CLASSES_ROOT, KEY_BASE, 0, NULL, REG_OPTION_NON_VOLATILE,
+                            KEY_READ, NULL, &hkey, NULL))
+        {
+            win_skip("User is a non-elevated admin; skipping regedit tests.\n");
+            return;
+        }
+        RegCloseKey(hkey);
+        RegDeleteKeyA(HKEY_CLASSES_ROOT, KEY_BASE);
     }
 
     test_basic_import();
