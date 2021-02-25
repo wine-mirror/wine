@@ -23,22 +23,6 @@
 #include "winnls32.h"
 
 /***********************************************************************
- *		DllMain  (WINNLS.@)
- */
-BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
-{
-    switch(reason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( inst );
-        break;
-    }
-    return TRUE;
-}
-
-/***********************************************************************
  *		WINNLS32GetEnableStatus (WINNLS32.2)
  */
 BOOL WINAPI WINNLS32GetEnableStatus(HWND hWnd)
