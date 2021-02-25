@@ -2,7 +2,7 @@ MODULE    = userenv.dll
 IMPORTS   = advapi32
 IMPORTLIB = userenv
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	userenv_main.c
