@@ -891,6 +891,98 @@ static void load_ntdll_functions( HMODULE module )
 #undef SET_PTR
 }
 
+/* reimplementation of LdrProcessRelocationBlock */
+static IMAGE_BASE_RELOCATION *process_relocation_block( void *module, IMAGE_BASE_RELOCATION *rel,
+                                                        INT_PTR delta )
+{
+    char *page = get_rva( module, rel->VirtualAddress );
+    UINT count = (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT);
+    USHORT *relocs = (USHORT *)(rel + 1);
+
+    while (count--)
+    {
+        USHORT offset = *relocs & 0xfff;
+        switch (*relocs >> 12)
+        {
+        case IMAGE_REL_BASED_ABSOLUTE:
+            break;
+        case IMAGE_REL_BASED_HIGH:
+            *(short *)(page + offset) += HIWORD(delta);
+            break;
+        case IMAGE_REL_BASED_LOW:
+            *(short *)(page + offset) += LOWORD(delta);
+            break;
+        case IMAGE_REL_BASED_HIGHLOW:
+            *(int *)(page + offset) += delta;
+            break;
+#ifdef _WIN64
+        case IMAGE_REL_BASED_DIR64:
+            *(INT_PTR *)(page + offset) += delta;
+            break;
+#elif defined(__arm__)
+        case IMAGE_REL_BASED_THUMB_MOV32:
+        {
+            DWORD *inst = (DWORD *)(page + offset);
+            WORD lo = ((inst[0] << 1) & 0x0800) + ((inst[0] << 12) & 0xf000) +
+                      ((inst[0] >> 20) & 0x0700) + ((inst[0] >> 16) & 0x00ff);
+            WORD hi = ((inst[1] << 1) & 0x0800) + ((inst[1] << 12) & 0xf000) +
+                      ((inst[1] >> 20) & 0x0700) + ((inst[1] >> 16) & 0x00ff);
+            DWORD imm = MAKELONG( lo, hi ) + delta;
+
+            lo = LOWORD( imm );
+            hi = HIWORD( imm );
+            inst[0] = (inst[0] & 0x8f00fbf0) + ((lo >> 1) & 0x0400) + ((lo >> 12) & 0x000f) +
+                                               ((lo << 20) & 0x70000000) + ((lo << 16) & 0xff0000);
+            inst[1] = (inst[1] & 0x8f00fbf0) + ((hi >> 1) & 0x0400) + ((hi >> 12) & 0x000f) +
+                                               ((hi << 20) & 0x70000000) + ((hi << 16) & 0xff0000);
+            break;
+        }
+#endif
+        default:
+            FIXME("Unknown/unsupported relocation %x\n", *relocs);
+            return NULL;
+        }
+        relocs++;
+    }
+    return (IMAGE_BASE_RELOCATION *)relocs;  /* return address of next block */
+}
+
+static void relocate_ntdll( void *module )
+{
+    IMAGE_DOS_HEADER *dos = module;
+    IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)((char *)dos + dos->e_lfanew);
+    IMAGE_DATA_DIRECTORY *relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+    IMAGE_BASE_RELOCATION *rel, *end;
+    IMAGE_SECTION_HEADER *sec;
+    ULONG protect_old[96], i;
+    INT_PTR delta;
+
+    ERR( "ntdll could not be mapped at preferred address (%p/%p), expect trouble\n",
+         module, (void *)nt->OptionalHeader.ImageBase );
+
+    if (!relocs->Size || !relocs->VirtualAddress) return;
+
+    sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
+    {
+        void *addr = get_rva( module, sec[i].VirtualAddress );
+        SIZE_T size = sec[i].SizeOfRawData;
+        NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, PAGE_READWRITE, &protect_old[i] );
+    }
+
+    rel = get_rva( module, relocs->VirtualAddress );
+    end = get_rva( module, relocs->VirtualAddress + relocs->Size );
+    delta = (char *)module - (char *)nt->OptionalHeader.ImageBase;
+    while (rel && rel < end - 1 && rel->SizeOfBlock) rel = process_relocation_block( module, rel, delta );
+
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
+    {
+        void *addr = get_rva( module, sec[i].VirtualAddress );
+        SIZE_T size = sec[i].SizeOfRawData;
+        NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size, protect_old[i], &protect_old[i] );
+    }
+}
+
 
 static void *callback_module;
 
@@ -1534,8 +1626,11 @@ static void load_ntdll(void)
     status = open_builtin_file( name, &attr, &mapping, &module, &info, &st, FALSE );
     if (!status && !module)
     {
-        status = map_builtin_module( mapping, &module, &st );
-        NtClose( mapping );
+        SIZE_T len = 0;
+        status = NtMapViewOfSection( mapping, NtCurrentProcess(), &module, 0, 0, NULL, &len,
+                                     ViewShare, 0, PAGE_EXECUTE_READ );
+        if (status == STATUS_IMAGE_NOT_AT_BASE) relocate_ntdll( module );
+        status = add_builtin_module( module, NULL, &st );
     }
     if (status) fatal_error( "failed to load %s error %x\n", name, status );
     free( name );
