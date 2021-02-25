@@ -24,21 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wsnmp32);
 
-BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
-{
-    TRACE("%p, %u, %p\n", hinst, reason, reserved);
-
-    switch (reason)
-    {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls( hinst );
-            break;
-    }
-    return TRUE;
-}
-
 SNMPAPI_STATUS WINAPI SnmpCleanup( void )
 {
     FIXME( "\n" );
