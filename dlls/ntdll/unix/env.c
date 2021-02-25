@@ -1622,8 +1622,14 @@ void init_startup_info(void)
     copy_unicode_string( &src, &dst, &params->WindowTitle, info->title_len );
     copy_unicode_string( &src, &dst, &params->Desktop, info->desktop_len );
     copy_unicode_string( &src, &dst, &params->ShellInfo, info->shellinfo_len );
-    copy_unicode_string( &src, &dst, &params->RuntimeInfo, info->runtime_len );
-    params->RuntimeInfo.MaximumLength = params->RuntimeInfo.Length;  /* runtime info isn't a real string */
+    /* runtime info isn't a real string */
+    params->RuntimeInfo.MaximumLength = params->RuntimeInfo.Length = info->runtime_len;
+    params->RuntimeInfo.Buffer = dst;
+    memcpy( dst, src, info->runtime_len );
+    src += (info->runtime_len + 1) / sizeof(WCHAR);
+    dst += (info->runtime_len + 1) / sizeof(WCHAR);
+    assert( (char *)src == (char *)info + info_size );
+
     params->Environment = dst;
     dst += copy_environment( dst, src );
     memcpy( dst, dyn_env, dyn_size );
