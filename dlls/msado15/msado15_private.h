@@ -43,6 +43,7 @@ static inline WCHAR *strdupW( const WCHAR *src )
 }
 
 typedef enum tid_t {
+    ADORecordsetConstruction_tid,
     Command_tid,
     Connection_tid,
     Field_tid,

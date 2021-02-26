@@ -1768,16 +1768,27 @@ static HRESULT WINAPI rsconstruction_GetTypeInfo(ADORecordsetConstruction *iface
     LCID lcid, ITypeInfo **ppTInfo)
 {
     struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
-    FIXME( "%p %u %u %p\n", recordset, iTInfo, lcid, ppTInfo );
-    return E_NOTIMPL;
+    TRACE( "%p %u %u %p\n", recordset, iTInfo, lcid, ppTInfo );
+    return get_typeinfo(ADORecordsetConstruction_tid, ppTInfo);
 }
 
 static HRESULT WINAPI rsconstruction_GetIDsOfNames(ADORecordsetConstruction *iface, REFIID riid,
     LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
-    FIXME( "%p %s %p %u %u %p\n", recordset, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId );
-    return E_NOTIMPL;
+    HRESULT hr;
+    ITypeInfo *typeinfo;
+
+    TRACE( "%p %s %p %u %u %p\n", recordset, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId );
+
+    hr = get_typeinfo(ADORecordsetConstruction_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI rsconstruction_Invoke(ADORecordsetConstruction *iface, DISPID dispIdMember,
@@ -1785,9 +1796,21 @@ static HRESULT WINAPI rsconstruction_Invoke(ADORecordsetConstruction *iface, DIS
     EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     struct recordset *recordset = impl_from_ADORecordsetConstruction( iface );
-    FIXME( "%p %d %s %d %d %p %p %p %p\n", recordset, dispIdMember, debugstr_guid(riid),
+    HRESULT hr;
+    ITypeInfo *typeinfo;
+
+    TRACE( "%p %d %s %d %d %p %p %p %p\n", recordset, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr );
-    return E_NOTIMPL;
+
+    hr = get_typeinfo(ADORecordsetConstruction_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, &recordset->ADORecordsetConstruction_iface, dispIdMember, wFlags,
+                              pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI rsconstruction_get_Rowset(ADORecordsetConstruction *iface, IUnknown **row_set)

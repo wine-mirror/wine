@@ -179,6 +179,7 @@ static ITypeLib *typelib;
 static ITypeInfo *typeinfos[LAST_tid];
 
 static REFIID tid_ids[] = {
+    &IID_ADORecordsetConstruction,
     &IID__Command,
     &IID__Connection,
     &IID_Field,
