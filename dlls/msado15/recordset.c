@@ -519,29 +519,57 @@ static HRESULT WINAPI fields_QueryInterface( Fields *iface, REFIID riid, void **
 
 static HRESULT WINAPI fields_GetTypeInfoCount( Fields *iface, UINT *count )
 {
-    FIXME( "%p, %p\n", iface, count );
-    return E_NOTIMPL;
+    struct fields *fields = impl_from_Fields( iface );
+    TRACE( "%p, %p\n", fields, count );
+    *count = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI fields_GetTypeInfo( Fields *iface, UINT index, LCID lcid, ITypeInfo **info )
 {
-    FIXME( "%p, %u, %u, %p\n", iface, index, lcid, info );
-    return E_NOTIMPL;
+    struct fields *fields = impl_from_Fields( iface );
+    TRACE( "%p, %u, %u, %p\n", fields, index, lcid, info );
+    return get_typeinfo(Fields_tid, info);
 }
 
 static HRESULT WINAPI fields_GetIDsOfNames( Fields *iface, REFIID riid, LPOLESTR *names, UINT count,
                                             LCID lcid, DISPID *dispid )
 {
-    FIXME( "%p, %s, %p, %u, %u, %p\n", iface, debugstr_guid(riid), names, count, lcid, dispid );
-    return E_NOTIMPL;
+    struct fields *fields = impl_from_Fields( iface );
+    HRESULT hr;
+    ITypeInfo *typeinfo;
+
+    TRACE( "%p, %s, %p, %u, %u, %p\n", fields, debugstr_guid(riid), names, count, lcid, dispid );
+
+    hr = get_typeinfo(Fields_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, names, count, dispid);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI fields_Invoke( Fields *iface, DISPID member, REFIID riid, LCID lcid, WORD flags,
                                      DISPPARAMS *params, VARIANT *result, EXCEPINFO *excep_info, UINT *arg_err )
 {
-    FIXME( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", iface, member, debugstr_guid(riid), lcid, flags, params,
+    struct fields *fields = impl_from_Fields( iface );
+    HRESULT hr;
+    ITypeInfo *typeinfo;
+
+    TRACE( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", fields, member, debugstr_guid(riid), lcid, flags, params,
            result, excep_info, arg_err );
-    return E_NOTIMPL;
+
+    hr = get_typeinfo(Fields_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, &fields->Fields_iface, member, flags, params,
+                               result, excep_info, arg_err);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI fields_get_Count( Fields *iface, LONG *count )
