@@ -1,0 +1,9 @@
+@ stub BTCpuGetBopCode
+@ stub BTCpuGetContext
+@ stub BTCpuProcessInit
+@ stub BTCpuResetToConsistentState
+@ stub BTCpuSetContext
+@ stub BTCpuSimulate
+@ stub BTCpuTurboThunkControl
+@ stub TurboDispatchJumpAddressEnd
+@ stub TurboDispatchJumpAddressStart

@@ -1700,6 +1700,7 @@ enable_wmp
 enable_wmphoto
 enable_wmvcore
 enable_wnaspi32
+enable_wow64cpu
 enable_wpc
 enable_wpcap
 enable_ws2_32
@@ -5724,6 +5725,7 @@ $as_echo "$wine_cv_builtin_ms_va_list" >&6; }
       host_cpu="x86_64"
       notice_platform="64-bit "
       TARGETFLAGS="-m64"
+      enable_wow64cpu=${enable_wow64cpu:-yes}
     fi
     ;;
   arm*)
@@ -5846,6 +5848,7 @@ esac
 
 enable_win16=${enable_win16:-no}
 enable_win64=${enable_win64:-no}
+enable_wow64cpu=${enable_wow64cpu:-no}
 
 enable_winetest=${enable_winetest:-$enable_tests}
 
@@ -21123,6 +21126,7 @@ wine_fn_config_makefile dlls/wmvcore enable_wmvcore
 wine_fn_config_makefile dlls/wmvcore/tests enable_tests
 wine_fn_config_makefile dlls/wnaspi32 enable_wnaspi32
 wine_fn_config_makefile dlls/wow32 enable_win16
+wine_fn_config_makefile dlls/wow64cpu enable_wow64cpu
 wine_fn_config_makefile dlls/wpc enable_wpc
 wine_fn_config_makefile dlls/wpc/tests enable_tests
 wine_fn_config_makefile dlls/wpcap enable_wpcap
