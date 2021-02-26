@@ -2,7 +2,7 @@ MODULE    = credui.dll
 IMPORTLIB = credui
 IMPORTS   = comctl32 user32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	credui_main.c
