@@ -2360,8 +2360,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
 
     switch (reason)
     {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hinst);
             scrobj_instance = hinst;
