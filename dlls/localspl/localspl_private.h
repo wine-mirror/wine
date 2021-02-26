@@ -23,10 +23,6 @@
 
 #include <windef.h>
 
-/* ## DLL-wide Globals ## */
-extern HINSTANCE LOCALSPL_hInstance DECLSPEC_HIDDEN;
-void setup_provider(void) DECLSPEC_HIDDEN;
-
 /* ## Resource-ID ## */
 #define IDS_LOCALPORT       500
 #define IDS_LOCALMONITOR    507

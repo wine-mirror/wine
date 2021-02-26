@@ -81,6 +81,24 @@ static struct list xcv_handles = LIST_INIT( xcv_handles );
 static const WCHAR WinNT_CV_PortsW[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Ports";
 static const WCHAR WinNT_CV_WindowsW[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows";
 
+static HINSTANCE LOCALSPL_hInstance;
+
+/*****************************************************
+ *      DllMain
+ */
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    TRACE("(%p, %d, %p)\n",hinstDLL, fdwReason, lpvReserved);
+
+    switch(fdwReason)
+    {
+        case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls( hinstDLL );
+            LOCALSPL_hInstance = hinstDLL;
+            break;
+    }
+    return TRUE;
+}
 
 /******************************************************************
  * does_port_exist (internal)

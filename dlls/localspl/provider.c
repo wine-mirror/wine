@@ -99,8 +99,6 @@ typedef struct {
 static struct list monitor_handles = LIST_INIT( monitor_handles );
 static monitor_t * pm_localport;
 
-static const PRINTPROVIDOR * pprovider = NULL;
-
 static const WCHAR fmt_driversW[] =
     L"System\\CurrentControlSet\\control\\Print\\Environments\\%s\\Drivers%s";
 static const WCHAR fmt_printprocessorsW[] =
@@ -2508,12 +2506,7 @@ static BOOL WINAPI fpXcvData(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
     return TRUE;
 }
 
-/*****************************************************
- *  setup_provider [internal]
- */
-void setup_provider(void)
-{
-    static const PRINTPROVIDOR backend = {
+static const PRINTPROVIDOR backend = {
         fpOpenPrinter,
         NULL,   /* fpSetJob */
         NULL,   /* fpGetJob */
@@ -2600,10 +2593,7 @@ void setup_provider(void)
         NULL,   /* fpFlushPrinter */
         NULL,   /* fpSendRecvBidiData */
         NULL    /* fpAddDriverCatalog */
-    };
-    pprovider = &backend;
-
-}
+};
 
 /*****************************************************
  * InitializePrintProvidor     (localspl.@)
@@ -2631,7 +2621,7 @@ BOOL WINAPI InitializePrintProvidor(LPPRINTPROVIDOR pPrintProvidor,
 {
 
     TRACE("(%p, %u, %s)\n", pPrintProvidor, cbPrintProvidor, debugstr_w(pFullRegistryPath));
-    memcpy(pPrintProvidor, pprovider,
+    memcpy(pPrintProvidor, &backend,
           (cbPrintProvidor < sizeof(PRINTPROVIDOR)) ? cbPrintProvidor : sizeof(PRINTPROVIDOR));
 
     return TRUE;
