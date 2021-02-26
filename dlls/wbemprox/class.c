@@ -674,13 +674,21 @@ static HRESULT WINAPI class_object_SpawnInstance(
     struct class_object *co = impl_from_IWbemClassObject( iface );
     struct enum_class_object *ec = impl_from_IEnumWbemClassObject( co->iter );
     struct table *table = get_view_table( ec->query->view, co->index );
+    IEnumWbemClassObject *iter;
     struct record *record;
+    HRESULT hr;
 
     TRACE("%p, %08x, %p\n", iface, lFlags, ppNewInstance);
 
     if (!(record = create_record( table ))) return E_OUTOFMEMORY;
-
-    return create_class_object( co->name, NULL, 0, record, ppNewInstance );
+    if (FAILED(hr = IEnumWbemClassObject_Clone( co->iter, &iter )))
+    {
+        destroy_record( record );
+        return hr;
+    }
+    hr = create_class_object( co->name, iter, 0, record, ppNewInstance );
+    IEnumWbemClassObject_Release( iter );
+    return hr;
 }
 
 static HRESULT WINAPI class_object_CompareTo(

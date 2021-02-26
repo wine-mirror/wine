@@ -753,6 +753,16 @@ static void test_StdRegProv( IWbemServices *services )
     hr = IWbemClassObject_SpawnInstance( sig_in, 0, &in );
     ok( hr == S_OK, "failed to spawn instance %08x\n", hr );
 
+    hr = IWbemClassObject_BeginEnumeration( in, 0 );
+    ok( hr == S_OK, "failed to start enumeration %08x\n", hr );
+
+    hr = IWbemClassObject_Next( in, 0, &name, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( name );
+
+    hr = IWbemClassObject_EndEnumeration( in );
+    ok( hr == S_OK, "failed to end enumeration %08x\n", hr );
+
     V_VT( &defkey ) = VT_I4;
     V_I4( &defkey ) = 0x80000001;
     hr = IWbemClassObject_Put( in, L"hDefKey", 0, &defkey, 0 );
