@@ -40,4 +40,11 @@ static inline WCHAR *strdupW( const WCHAR *src )
     return dst;
 }
 
+typedef enum tid_t {
+    Connection_tid,
+    LAST_tid
+} tid_t;
+
+HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
+
 #endif /* _WINE_MSADO15_PRIVATE_H_ */
