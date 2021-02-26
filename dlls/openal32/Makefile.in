@@ -1,5 +1,7 @@
 MODULE    = openal32.dll
 EXTRALIBS = $(OPENAL_LIBS)
 
+EXTRADLLFLAGS = -Wb,--prefer-native
+
 C_SRCS = \
 	openal.c

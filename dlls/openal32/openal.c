@@ -99,8 +99,6 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     switch(reason)
     {
-    case DLL_WINE_PREATTACH:
-        return FALSE;    /* prefer native version */
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hinst);
 #define LOADFUNC(x) x = alcGetProcAddress(NULL, #x)
