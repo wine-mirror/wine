@@ -1226,16 +1226,28 @@ static HRESULT WINAPI object_Invoke(
         return hr;
     }
 
-    if (flags != (DISPATCH_METHOD|DISPATCH_PROPERTYGET))
+    if (!(name = get_member_name( object, member )))
+        return DISP_E_MEMBERNOTFOUND;
+
+    if (flags == (DISPATCH_METHOD|DISPATCH_PROPERTYGET))
+    {
+        memset( params, 0, sizeof(*params) );
+        return IWbemClassObject_Get( object->object, name, 0, result, NULL, NULL );
+    }
+    else if (flags == DISPATCH_PROPERTYPUT)
+    {
+        if (!params->cArgs || !params->rgvarg)
+        {
+            WARN( "Missing put property value\n" );
+            return E_INVALIDARG;
+        }
+        return IWbemClassObject_Put( object->object, name, 0, params->rgvarg, 0 );
+    }
+    else
     {
         FIXME( "flags %x not supported\n", flags );
         return E_NOTIMPL;
     }
-    if (!(name = get_member_name( object, member )))
-        return DISP_E_MEMBERNOTFOUND;
-
-    memset( params, 0, sizeof(*params) );
-    return IWbemClassObject_Get( object->object, name, 0, result, NULL, NULL );
 }
 
 static HRESULT WINAPI object_Put_(
