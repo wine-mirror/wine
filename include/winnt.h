@@ -32,6 +32,11 @@
 #endif
 
 
+#if defined(_MSC_VER) && (defined(__arm__) || defined(__aarch64__))
+#include <intrin.h>
+#endif
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -7035,20 +7040,12 @@ static FORCEINLINE void MemoryBarrier(void)
 
 #elif defined(__arm__)
 
-#pragma intrinsic(__dmb)
-
-void __dmb(void);
-
 static FORCEINLINE void MemoryBarrier(void)
 {
     __dmb(_ARM_BARRIER_SY);
 }
 
 #elif defined(__aarch64__)
-
-#pragma intrinsic(__dmb)
-
-void __dmb(void);
 
 static FORCEINLINE void MemoryBarrier(void)
 {
