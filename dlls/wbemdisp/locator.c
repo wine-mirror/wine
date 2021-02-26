@@ -50,6 +50,7 @@ enum type_id
     ISWbemNamedValueSet_tid,
     ISWbemNamedValue_tid,
     ISWbemMethodSet_tid,
+    ISWbemMethod_tid,
     last_tid
 };
 
@@ -68,6 +69,7 @@ static REFIID wbemdisp_tid_id[] =
     &IID_ISWbemNamedValueSet,
     &IID_ISWbemNamedValue,
     &IID_ISWbemMethodSet,
+    &IID_ISWbemMethod,
 };
 
 static HRESULT get_typeinfo( enum type_id tid, ITypeInfo **ret )
@@ -502,10 +504,232 @@ static HRESULT SWbemPropertySet_create( IWbemClassObject *wbem_object, ISWbemPro
     return S_OK;
 }
 
+struct member
+{
+    BSTR name;
+    BOOL is_method;
+    DISPID dispid;
+};
+
+struct object
+{
+    ISWbemObject ISWbemObject_iface;
+    LONG refs;
+    IWbemClassObject *object;
+    struct member *members;
+    UINT nb_members;
+    DISPID last_dispid;
+    DISPID last_dispid_method;
+};
+
+struct method
+{
+    ISWbemMethod ISWbemMethod_iface;
+    LONG refs;
+};
+
+static struct method *impl_from_ISWbemMethod( ISWbemMethod *iface )
+{
+    return CONTAINING_RECORD( iface, struct method, ISWbemMethod_iface );
+}
+
+static HRESULT WINAPI method_QueryInterface( ISWbemMethod *iface, REFIID riid, void **ppvObject )
+{
+    struct method *method = impl_from_ISWbemMethod( iface );
+
+    TRACE( "%p %s %p\n", method, debugstr_guid(riid), ppvObject );
+
+    if (IsEqualGUID( riid, &IID_ISWbemMethod ) ||
+        IsEqualGUID( riid, &IID_IDispatch ) ||
+        IsEqualGUID( riid, &IID_IUnknown ))
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        return E_NOINTERFACE;
+    }
+    ISWbemMethod_AddRef( iface );
+    return S_OK;
+}
+
+static ULONG WINAPI method_AddRef( ISWbemMethod *iface )
+{
+    struct method *method = impl_from_ISWbemMethod( iface );
+    return InterlockedIncrement( &method->refs );
+}
+
+static ULONG WINAPI method_Release( ISWbemMethod *iface )
+{
+    struct method *method = impl_from_ISWbemMethod( iface );
+    LONG refs = InterlockedDecrement( &method->refs );
+    if (!refs)
+    {
+        TRACE( "destroying %p\n", method );
+        heap_free( method );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI method_GetTypeInfoCount(
+    ISWbemMethod *iface,
+    UINT *count )
+{
+    struct method *method = impl_from_ISWbemMethod( iface );
+
+    TRACE( "%p, %p\n", method, count );
+    *count = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI method_GetTypeInfo(
+    ISWbemMethod *iface,
+    UINT index,
+    LCID lcid,
+    ITypeInfo **info )
+{
+    struct method *method = impl_from_ISWbemMethod( iface );
+
+    TRACE( "%p, %u, %u, %p\n", method, index, lcid, info );
+
+    return get_typeinfo( ISWbemMethod_tid, info );
+}
+
+static HRESULT WINAPI method_GetIDsOfNames(
+    ISWbemMethod *iface,
+    REFIID riid,
+    LPOLESTR *names,
+    UINT count,
+    LCID lcid,
+    DISPID *dispid )
+{
+    struct method *method = impl_from_ISWbemMethod( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE( "%p, %s, %p, %u, %u, %p\n", method, debugstr_guid(riid), names, count, lcid, dispid );
+
+    if (!names || !count || !dispid) return E_INVALIDARG;
+
+    hr = get_typeinfo( ISWbemMethod_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames( typeinfo, names, count, dispid );
+        ITypeInfo_Release( typeinfo );
+    }
+    return hr;
+}
+
+static HRESULT WINAPI method_Invoke(
+    ISWbemMethod *iface,
+    DISPID member,
+    REFIID riid,
+    LCID lcid,
+    WORD flags,
+    DISPPARAMS *params,
+    VARIANT *result,
+    EXCEPINFO *excep_info,
+    UINT *arg_err )
+{
+    struct method *method = impl_from_ISWbemMethod( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", method, member, debugstr_guid(riid),
+           lcid, flags, params, result, excep_info, arg_err );
+
+    hr = get_typeinfo( ISWbemMethod_tid, &typeinfo );
+    if (SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke( typeinfo, &method->ISWbemMethod_iface, member, flags,
+                               params, result, excep_info, arg_err );
+        ITypeInfo_Release( typeinfo );
+    }
+    return hr;
+}
+
+static HRESULT WINAPI method_get_Name(
+    ISWbemMethod *iface,
+    BSTR *name )
+{
+    FIXME("\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI method_get_Origin(
+    ISWbemMethod *iface,
+    BSTR *origin )
+{
+    FIXME("\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI method_get_InParameters(
+    ISWbemMethod *iface,
+    ISWbemObject **params )
+{
+    FIXME("\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI method_get_OutParameters(
+    ISWbemMethod *iface,
+    ISWbemObject **params )
+{
+    FIXME("\n");
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI method_get_Qualifiers_(
+    ISWbemMethod *iface,
+    ISWbemQualifierSet **qualifiers )
+{
+    FIXME("\n");
+
+    return E_NOTIMPL;
+}
+
+static const ISWbemMethodVtbl methodvtbl =
+{
+    method_QueryInterface,
+    method_AddRef,
+    method_Release,
+    method_GetTypeInfoCount,
+    method_GetTypeInfo,
+    method_GetIDsOfNames,
+    method_Invoke,
+    method_get_Name,
+    method_get_Origin,
+    method_get_InParameters,
+    method_get_OutParameters,
+    method_get_Qualifiers_,
+};
+
+static HRESULT SWbemMethod_create( ISWbemMethod **obj )
+{
+    struct method *method;
+
+    if (!(method = heap_alloc(sizeof(*method))))
+        return E_OUTOFMEMORY;
+
+    method->ISWbemMethod_iface.lpVtbl = &methodvtbl;
+    method->refs = 1;
+
+    *obj = &method->ISWbemMethod_iface;
+
+    return S_OK;
+}
+
 struct methodset
 {
     ISWbemMethodSet ISWbemMethodSet_iface;
     LONG refs;
+    struct object *object;
 };
 
 static struct methodset *impl_from_ISWbemMethodSet( ISWbemMethodSet *iface )
@@ -547,6 +771,7 @@ static ULONG WINAPI methodset_Release( ISWbemMethodSet *iface )
     if (!refs)
     {
         TRACE( "destroying %p\n", set );
+        ISWbemObject_Release( &set->object->ISWbemObject_iface );
         heap_free( set );
     }
     return refs;
@@ -643,9 +868,26 @@ static HRESULT WINAPI methodset_Item(
     LONG flags,
     ISWbemMethod **method )
 {
-    FIXME("\n");
+    struct methodset *set = impl_from_ISWbemMethodSet( iface );
+    IWbemClassObject *in_sign, *out_sign;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %#x, %p\n", set, debugstr_w(name), flags, method);
+
+    *method = NULL;
+
+    if (SUCCEEDED(hr = IWbemClassObject_GetMethod( set->object->object,
+            name, flags, &in_sign, &out_sign )))
+    {
+        if (in_sign)
+            IWbemClassObject_Release( in_sign );
+        if (out_sign)
+            IWbemClassObject_Release( out_sign );
+
+        return SWbemMethod_create( method );
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI methodset_get_Count(
@@ -671,7 +913,7 @@ static const ISWbemMethodSetVtbl methodsetvtbl =
     methodset_get_Count,
 };
 
-static HRESULT SWbemMethodSet_create( ISWbemMethodSet **obj )
+static HRESULT SWbemMethodSet_create( struct object *object, ISWbemMethodSet **obj )
 {
     struct methodset *set;
 
@@ -680,6 +922,8 @@ static HRESULT SWbemMethodSet_create( ISWbemMethodSet **obj )
 
     set->ISWbemMethodSet_iface.lpVtbl = &methodsetvtbl;
     set->refs = 1;
+    set->object = object;
+    ISWbemObject_AddRef( &object->ISWbemObject_iface );
 
     *obj = &set->ISWbemMethodSet_iface;
 
@@ -688,24 +932,6 @@ static HRESULT SWbemMethodSet_create( ISWbemMethodSet **obj )
 
 #define DISPID_BASE         0x1800000
 #define DISPID_BASE_METHOD  0x1000000
-
-struct member
-{
-    BSTR name;
-    BOOL is_method;
-    DISPID dispid;
-};
-
-struct object
-{
-    ISWbemObject ISWbemObject_iface;
-    LONG refs;
-    IWbemClassObject *object;
-    struct member *members;
-    UINT nb_members;
-    DISPID last_dispid;
-    DISPID last_dispid_method;
-};
 
 static inline struct object *impl_from_ISWbemObject(
     ISWbemObject *iface )
@@ -1218,7 +1444,7 @@ static HRESULT WINAPI object_get_Methods_(
     struct object *object = impl_from_ISWbemObject( iface );
 
     TRACE( "%p, %p\n", object, set );
-    return SWbemMethodSet_create( set );
+    return SWbemMethodSet_create( object, set );
 }
 
 static HRESULT WINAPI object_get_Derivation_(
