@@ -1835,11 +1835,15 @@ static void write_runtimeclass(FILE *header, type_t *runtimeclass)
     if (contract) write_apicontract_guard_start(header, contract);
     fprintf(header, "#ifndef RUNTIMECLASS_%s_DEFINED\n", c_name);
     fprintf(header, "#define RUNTIMECLASS_%s_DEFINED\n", c_name);
-    fprintf(header, "#if defined(_MSC_VER) || defined(__MINGW32__)\n");
+    fprintf(header, "#if !defined(_MSC_VER) && !defined(__MINGW32__)\n");
+    fprintf(header, "static const WCHAR RuntimeClass_%s[] = {", c_name);
+    for (i = 0, len = strlen(name); i < len; ++i) fprintf(header, "'%c',", name[i]);
+    fprintf(header, "0};\n");
+    fprintf(header, "#elif defined(__GNUC__) && !defined(__cplusplus)\n");
     /* FIXME: MIDL generates extern const here but GCC warns if extern is initialized */
     fprintf(header, "const DECLSPEC_SELECTANY WCHAR RuntimeClass_%s[] = L\"%s\";\n", c_name, name);
     fprintf(header, "#else\n");
-    fprintf(header, "static const WCHAR RuntimeClass_%s[] = {", c_name);
+    fprintf(header, "extern const DECLSPEC_SELECTANY WCHAR RuntimeClass_%s[] = {", c_name);
     for (i = 0, len = strlen(name); i < len; ++i) fprintf(header, "'%c',", name[i]);
     fprintf(header, "0};\n");
     fprintf(header, "#endif\n");
