@@ -137,8 +137,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(0x%p, %d, %p)\n",hInstDLL,fdwReason,lpvReserved);
 
-    if (fdwReason == DLL_WINE_PREATTACH)
-        return FALSE;
     return STI_DllMain(hInstDLL, fdwReason, lpvReserved);
 }
 
