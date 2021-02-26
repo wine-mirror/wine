@@ -6944,7 +6944,7 @@ static FORCEINLINE LONG WINAPI InterlockedCompareExchange( LONG volatile *dest, 
 
 static FORCEINLINE LONGLONG WINAPI InterlockedCompareExchange64( LONGLONG volatile *dest, LONGLONG xchg, LONGLONG compare )
 {
-    return _InterlockedCompareExchange64( (long long volatile *)dest, compare, xchg );
+    return _InterlockedCompareExchange64( (long long volatile *)dest, xchg, compare );
 }
 
 #ifdef _WIN64
