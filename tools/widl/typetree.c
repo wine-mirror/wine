@@ -279,7 +279,7 @@ char *format_parameterized_type_name(type_t *type, typeref_list_t *params)
         pos += append_pointer_stars(&buf, &len, pos, ref->type);
         if (list_next(params, &ref->entry)) pos += strappend(&buf, &len, pos, ",");
     }
-    pos += strappend(&buf, &len, pos, ">");
+    pos += strappend(&buf, &len, pos, " >");
 
     return buf;
 }
@@ -360,7 +360,7 @@ static char *format_parameterized_type_impl_name(type_t *type, typeref_list_t *p
             iface = type_runtimeclass_get_default_iface(type);
             pos += strappend(&buf, &len, pos, ", %s", iface->qualified_name);
             pos += append_pointer_stars(&buf, &len, pos, ref->type);
-            pos += strappend(&buf, &len, pos, ">");
+            pos += strappend(&buf, &len, pos, " >");
         }
         else
         {
@@ -369,7 +369,7 @@ static char *format_parameterized_type_impl_name(type_t *type, typeref_list_t *p
         }
         if (list_next(params, &ref->entry)) pos += strappend(&buf, &len, pos, ", ");
     }
-    pos += strappend(&buf, &len, pos, ">");
+    pos += strappend(&buf, &len, pos, " >");
 
     return buf;
 }
