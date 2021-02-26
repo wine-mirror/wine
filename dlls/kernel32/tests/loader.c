@@ -4003,6 +4003,34 @@ static void test_LoadPackagedLibrary(void)
             h, GetLastError());
 }
 
+static void test_Wow64Transition(void)
+{
+    char buffer[400];
+    MEMORY_SECTION_NAME *name = (MEMORY_SECTION_NAME *)buffer;
+    const WCHAR *filepart;
+    void **pWow64Transition;
+    NTSTATUS status;
+
+    if (!(pWow64Transition = (void *)GetProcAddress(GetModuleHandleA("ntdll"), "Wow64Transition")))
+    {
+        skip("Wow64Transition is not present\n");
+        return;
+    }
+    if (!is_wow64)
+    {
+        skip("Wow64Transition is not patched\n");
+        return;
+    }
+
+    status = NtQueryVirtualMemory(GetCurrentProcess(), *pWow64Transition,
+            MemorySectionName, name, sizeof(buffer), NULL);
+    ok(!status, "got %#x\n", status);
+    filepart = name->SectionFileName.Buffer + name->SectionFileName.Length / sizeof(WCHAR);
+    while (*filepart != '\\') --filepart;
+    ok(!wcsnicmp(filepart, L"\\wow64cpu.dll", wcslen(L"\\wow64cpu.dll")), "got file name %s\n",
+            debugstr_wn(name->SectionFileName.Buffer, name->SectionFileName.Length / sizeof(WCHAR)));
+}
+
 START_TEST(loader)
 {
     int argc;
@@ -4079,6 +4107,7 @@ START_TEST(loader)
     test_dll_file( "kernel32.dll" );
     test_dll_file( "advapi32.dll" );
     test_dll_file( "user32.dll" );
+    test_Wow64Transition();
     /* loader test must be last, it can corrupt the internal loader state on Windows */
     test_Loader();
 }
