@@ -47,6 +47,7 @@ typedef enum tid_t {
     Connection_tid,
     Field_tid,
     Fields_tid,
+    Recordset_tid,
     Stream_tid,
     LAST_tid
 } tid_t;
