@@ -1,7 +1,7 @@
 MODULE    = joy.cpl
 IMPORTS   = dxguid dinput dinput8 ole32 comctl32 user32 advapi32
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	main.c
