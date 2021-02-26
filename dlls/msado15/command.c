@@ -91,29 +91,57 @@ static ULONG WINAPI command_Release( _Command *iface )
 
 static HRESULT WINAPI command_GetTypeInfoCount( _Command *iface, UINT *count )
 {
-    FIXME( "%p, %p\n", iface, count );
-    return E_NOTIMPL;
+    struct command *command = impl_from_Command( iface );
+    TRACE( "%p, %p\n", command, count );
+    *count = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI command_GetTypeInfo( _Command *iface, UINT index, LCID lcid, ITypeInfo **info )
 {
-    FIXME( "%p, %u, %u, %p\n", iface, index, lcid, info );
-    return E_NOTIMPL;
+    struct command *command = impl_from_Command( iface );
+    TRACE( "%p, %u, %u, %p\n", command, index, lcid, info );
+    return get_typeinfo(Command_tid, info);
 }
 
 static HRESULT WINAPI command_GetIDsOfNames( _Command *iface, REFIID riid, LPOLESTR *names, UINT count,
                                              LCID lcid, DISPID *dispid )
 {
-    FIXME( "%p, %s, %p, %u, %u, %p\n", iface, debugstr_guid(riid), names, count, lcid, dispid );
-    return E_NOTIMPL;
+    struct command *command = impl_from_Command( iface );
+    HRESULT hr;
+    ITypeInfo *typeinfo;
+
+    TRACE( "%p, %s, %p, %u, %u, %p\n", command, debugstr_guid(riid), names, count, lcid, dispid );
+
+    hr = get_typeinfo(Command_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, names, count, dispid);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI command_Invoke( _Command *iface, DISPID member, REFIID riid, LCID lcid, WORD flags,
                                       DISPPARAMS *params, VARIANT *result, EXCEPINFO *excep_info, UINT *arg_err )
 {
-    FIXME( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", iface, member, debugstr_guid(riid), lcid, flags, params,
+    struct command *command = impl_from_Command( iface );
+    HRESULT hr;
+    ITypeInfo *typeinfo;
+
+    TRACE( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", command, member, debugstr_guid(riid), lcid, flags, params,
            result, excep_info, arg_err );
-    return E_NOTIMPL;
+
+    hr = get_typeinfo(Connection_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, &command->Command_iface, member, flags, params,
+                               result, excep_info, arg_err);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI command_get_Properties( _Command *iface, Properties **props )
