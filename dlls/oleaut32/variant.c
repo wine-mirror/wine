@@ -689,10 +689,10 @@ HRESULT WINAPI DECLSPEC_HOTPATCH VariantClear(VARIANTARG* pVarg)
 /******************************************************************************
  * Copy an IRecordInfo object contained in a variant.
  */
-static HRESULT VARIANT_CopyIRecordInfo(VARIANT *dest, VARIANT *src)
+static HRESULT VARIANT_CopyIRecordInfo(VARIANT *dest, const VARIANT *src)
 {
   struct __tagBRECORD *dest_rec = &V_UNION(dest, brecVal);
-  struct __tagBRECORD *src_rec = &V_UNION(src, brecVal);
+  const struct __tagBRECORD *src_rec = &V_UNION(src, brecVal);
   HRESULT hr = S_OK;
   ULONG size;
 
@@ -745,7 +745,7 @@ static HRESULT VARIANT_CopyIRecordInfo(VARIANT *dest, VARIANT *src)
  *    reference count increased using IUnknown_AddRef().
  *  - For all by-reference types, only the referencing pointer is copied.
  */
-HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
+HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, const VARIANTARG* pvargSrc)
 {
   HRESULT hres = S_OK;
 
@@ -844,9 +844,10 @@ static inline size_t VARIANT_DataSize(const VARIANT* pv)
  *    pvargDest is always cleared using VariantClear() before pvargSrc is copied
  *    to it. If clearing pvargDest fails, so does this function.
  */
-HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
+HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, const VARIANTARG* pvargSrc)
 {
-  VARIANTARG vTmp, *pSrc = pvargSrc;
+  const VARIANTARG *pSrc = pvargSrc;
+  VARIANTARG vTmp;
   VARTYPE vt;
   HRESULT hres = S_OK;
 
@@ -934,7 +935,7 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 VariantCopyInd_Return:
 
   if (pSrc != pvargSrc)
-    VariantClear(pSrc);
+    VariantClear(&vTmp);
 
   TRACE("returning 0x%08x, %s\n", hres, debugstr_variant(pvargDest));
   return hres;
