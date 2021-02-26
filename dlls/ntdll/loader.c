@@ -1438,35 +1438,6 @@ static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
 }
 
 
-/**********************************************************************
- *	    attach_implicitly_loaded_dlls
- *
- * Attach to the (builtin) dlls that have been implicitly loaded because
- * of a dependency at the Unix level, but not imported at the Win32 level.
- */
-static void attach_implicitly_loaded_dlls( LPVOID reserved )
-{
-    for (;;)
-    {
-        PLIST_ENTRY mark, entry;
-
-        mark = &NtCurrentTeb()->Peb->LdrData->InLoadOrderModuleList;
-        for (entry = mark->Flink; entry != mark; entry = entry->Flink)
-        {
-            LDR_DATA_TABLE_ENTRY *mod = CONTAINING_RECORD(entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
-
-            if (!(mod->Flags & LDR_IMAGE_IS_DLL)) continue;
-            if (mod->Flags & (LDR_LOAD_IN_PROGRESS | LDR_PROCESS_ATTACHED)) continue;
-            TRACE( "found implicitly loaded %s, attaching to it\n",
-                   debugstr_w(mod->BaseDllName.Buffer));
-            process_attach( CONTAINING_RECORD(mod, WINE_MODREF, ldr), reserved );
-            break;  /* restart the search from the start */
-        }
-        if (entry == mark) break;  /* nothing found */
-    }
-}
-
-
 /*************************************************************************
  *		process_detach
  *
@@ -3536,7 +3507,6 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
                 NtTerminateProcess( GetCurrentProcess(), status );
             }
         }
-        attach_implicitly_loaded_dlls( context );
         unix_funcs->virtual_release_address_space();
         if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.DllBase, DLL_PROCESS_ATTACH );
         if (wm->ldr.Flags & LDR_WINE_INTERNAL) unix_funcs->init_builtin_dll( wm->ldr.DllBase );
