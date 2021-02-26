@@ -721,7 +721,7 @@ static inline NTSTATUS save_xstate( CONTEXT *context )
     xsave_area;
     XSTATE *xs;
 
-    if (!(user_shared_data->XState.EnabledFeatures && (xs = xstate_from_context( context ))))
+    if (!(cpu_info.FeatureSet & CPU_FEATURE_AVX) || !(xs = xstate_from_context( context )))
         return STATUS_SUCCESS;
 
     if (context_ex->XState.Length < offsetof(XSTATE, YmmContext)
@@ -796,7 +796,7 @@ static inline void restore_xstate( const CONTEXT *context )
     XSAVE_FORMAT *xrstor_base;
     XSTATE *xs;
 
-    if (!(user_shared_data->XState.EnabledFeatures && (xs = xstate_from_context( context ))))
+    if (!(cpu_info.FeatureSet & CPU_FEATURE_AVX) || !(xs = xstate_from_context( context )))
         return;
 
     xrstor_base = (XSAVE_FORMAT *)xs - 1;
@@ -914,7 +914,7 @@ static inline void save_context( struct xcontext *xcontext, const ucontext_t *si
         context->ContextFlags |= CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
         memcpy( context->ExtendedRegisters, fpux, sizeof(*fpux) );
         if (!fpu) fpux_to_fpu( &context->FloatSave, fpux );
-        if (user_shared_data->XState.EnabledFeatures && (xs = XState_sig(fpux)))
+        if ((cpu_info.FeatureSet & CPU_FEATURE_AVX) && (xs = XState_sig(fpux)))
         {
             context_init_xstate( context, xs );
             xcontext->host_compaction_mask = xs->CompactionMask;

@@ -1528,7 +1528,7 @@ static void save_context( struct xcontext *xcontext, const ucontext_t *sigcontex
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
         context->u.FltSave = *FPU_sig(sigcontext);
         context->MxCsr = context->u.FltSave.MxCsr;
-        if (user_shared_data->XState.EnabledFeatures && (xs = XState_sig(FPU_sig(sigcontext))))
+        if ((cpu_info.FeatureSet & CPU_FEATURE_AVX) && (xs = XState_sig(FPU_sig(sigcontext))))
         {
             /* xcontext and sigcontext are both on the signal stack, so we can
              * just reference sigcontext without overflowing 32 bit XState.Offset */
@@ -1558,7 +1558,7 @@ static void restore_context( const struct xcontext *xcontext, ucontext_t *sigcon
     amd64_thread_data()->dr7 = context->Dr7;
     set_sigcontext( context, sigcontext );
     if (FPU_sig(sigcontext)) *FPU_sig(sigcontext) = context->u.FltSave;
-    if (user_shared_data->XState.EnabledFeatures && (xs = XState_sig(FPU_sig(sigcontext))))
+    if ((cpu_info.FeatureSet & CPU_FEATURE_AVX) && (xs = XState_sig(FPU_sig(sigcontext))))
         xs->CompactionMask = xcontext->host_compaction_mask;
 }
 
@@ -1599,9 +1599,7 @@ __ASM_GLOBAL_FUNC( set_full_cpu_context,
 void signal_restore_full_cpu_context(void)
 {
     struct syscall_xsave *xsave = get_syscall_xsave( get_syscall_frame() );
-    SYSTEM_CPU_INFORMATION cpu_info;
 
-    NtQuerySystemInformation( SystemCpuInformation, &cpu_info, sizeof(cpu_info), NULL );
     if (cpu_info.FeatureSet & CPU_FEATURE_XSAVE)
     {
         __asm__ volatile( "xrstor64 %0" : : "m"(xsave->xsave), "a" (7), "d" (0) );
@@ -1850,7 +1848,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         xsave->xsave = context->u.FltSave;
         xsave->xstate.Mask |= XSTATE_MASK_LEGACY;
     }
-    if (user_shared_data->XState.EnabledFeatures && (xs = xstate_from_context( context )))
+    if ((cpu_info.FeatureSet & CPU_FEATURE_AVX) && (xs = xstate_from_context( context )))
     {
         CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
 
@@ -1987,7 +1985,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
             amd64_thread_data()->dr6 = context->Dr6;
             amd64_thread_data()->dr7 = context->Dr7;
         }
-        if (user_shared_data->XState.EnabledFeatures && (xstate = xstate_from_context( context )))
+        if ((cpu_info.FeatureSet & CPU_FEATURE_AVX) && (xstate = xstate_from_context( context )))
         {
             struct syscall_xsave *xsave = get_syscall_xsave( frame );
             CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
@@ -2831,13 +2829,11 @@ void signal_init_process(void)
  */
 void *signal_init_syscalls(void)
 {
-    SYSTEM_CPU_INFORMATION cpu_info;
     void *ptr, *syscall_dispatcher;
 
     extern void __wine_syscall_dispatcher_xsave(void) DECLSPEC_HIDDEN;
     extern void __wine_syscall_dispatcher_xsavec(void) DECLSPEC_HIDDEN;
 
-    NtQuerySystemInformation( SystemCpuInformation, &cpu_info, sizeof(cpu_info), NULL );
     if (xstate_compaction_enabled)
         syscall_dispatcher = __wine_syscall_dispatcher_xsavec;
     else if (cpu_info.FeatureSet & CPU_FEATURE_XSAVE)

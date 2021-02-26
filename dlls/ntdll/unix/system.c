@@ -168,7 +168,7 @@ struct smbios_boot_info
 #define FIRM 0x4649524D
 #define RSMB 0x52534D42
 
-static SYSTEM_CPU_INFORMATION cpu_info;
+SYSTEM_CPU_INFORMATION cpu_info = { 0 };
 
 /*******************************************************************************
  * Architecture specific feature detection for CPUs
