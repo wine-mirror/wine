@@ -3928,6 +3928,38 @@ static void restart_winevdm( RTL_USER_PROCESS_PARAMETERS *params )
     RtlInitUnicodeString( &params->CommandLine, cmdline );
 }
 
+#ifndef _WIN64
+void *Wow64Transition = NULL;
+
+static void map_wow64cpu(void)
+{
+    SIZE_T size = 0;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING string;
+    HANDLE file, section;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    RtlInitUnicodeString( &string, L"\\??\\C:\\windows\\sysnative\\wow64cpu.dll" );
+    InitializeObjectAttributes( &attr, &string, 0, NULL, NULL );
+    if ((status = NtOpenFile( &file, GENERIC_READ | SYNCHRONIZE, &attr, &io, FILE_SHARE_READ,
+                              FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE )))
+    {
+        WARN("failed to open wow64cpu, status %#x\n", status);
+        return;
+    }
+    if (!NtCreateSection( &section, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
+                          SECTION_MAP_READ | SECTION_MAP_EXECUTE,
+                          NULL, NULL, PAGE_EXECUTE_READ, SEC_COMMIT, file ))
+    {
+        NtMapViewOfSection( section, NtCurrentProcess(), &Wow64Transition, 0,
+                            0, NULL, &size, ViewShare, 0, PAGE_EXECUTE_READ );
+        NtClose( section );
+    }
+    NtClose( file );
+}
+#endif
+
 
 /***********************************************************************
  *           process_init
@@ -4036,6 +4068,11 @@ static NTSTATUS process_init(void)
 #endif
 
     build_ntdll_module();
+
+#ifndef _WIN64
+    if (is_wow64)
+        map_wow64cpu();
+#endif
 
     if ((status = load_dll( params->DllPath.Buffer, L"C:\\windows\\system32\\kernel32.dll",
                             NULL, 0, &wm )) != STATUS_SUCCESS)
