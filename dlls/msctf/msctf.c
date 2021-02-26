@@ -556,8 +556,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
     TRACE("%p 0x%x %p\n", hinst, fdwReason, fImpLoad);
     switch (fdwReason)
     {
-        case DLL_WINE_PREATTACH:
-            return FALSE;   /* prefer native version */
         case DLL_PROCESS_ATTACH:
             MSCTF_hinstance = hinst;
             tlsIndex = TlsAlloc();
