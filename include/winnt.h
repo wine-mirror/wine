@@ -2815,6 +2815,12 @@ static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
     __asm__("mrc p15, 0, %0, c13, c0, 2" : "=r" (teb));
     return teb;
 }
+#elif defined(__arm__) && defined(_MSC_VER)
+#pragma intrinsic(_MoveFromCoprocessor)
+static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
+{
+    return (struct _TEB *)(ULONG_PTR)_MoveFromCoprocessor(15, 0, 13, 0, 2);
+}
 #else
 extern struct _TEB * WINAPI NtCurrentTeb(void);
 #endif
