@@ -123,8 +123,6 @@ BOOL WINAPI DllMain(
     TRACE("(%p,%d,%p)\n", hInstDLL, fdwReason, lpvReserved);
 
     switch(fdwReason) {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hInstDLL);
         startTime = GetTickCount64();
