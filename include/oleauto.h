@@ -188,8 +188,8 @@ void    WINAPI VariantInit(VARIANT*);
 HRESULT WINAPI VariantClear(VARIANT*);
 HRESULT WINAPI VariantCopy(VARIANTARG *dst, const VARIANTARG *src);
 HRESULT WINAPI VariantCopyInd(VARIANT *dst, const VARIANTARG *src);
-HRESULT WINAPI VariantChangeType(VARIANT*,VARIANT*,USHORT,VARTYPE);
-HRESULT WINAPI VariantChangeTypeEx(VARIANT*,VARIANT*,LCID,USHORT,VARTYPE);
+HRESULT WINAPI VariantChangeType(VARIANTARG *dst, const VARIANTARG *src, USHORT flags, VARTYPE vt);
+HRESULT WINAPI VariantChangeTypeEx(VARIANTARG *dst, const VARIANTARG *src, LCID lcid, USHORT flags, VARTYPE vt);
 
 /* VariantChangeType/VariantChangeTypeEx flags */
 #define VARIANT_NOVALUEPROP        0x01 /* Don't get the default value property from IDispatch */

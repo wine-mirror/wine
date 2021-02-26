@@ -960,7 +960,7 @@ VariantCopyInd_Return:
  *  The LCID used for the conversion is LOCALE_USER_DEFAULT.
  *  See VariantChangeTypeEx.
  */
-HRESULT WINAPI DECLSPEC_HOTPATCH VariantChangeType(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
+HRESULT WINAPI DECLSPEC_HOTPATCH VariantChangeType(VARIANTARG* pvargDest, const VARIANTARG* pvargSrc,
                                                    USHORT wFlags, VARTYPE vt)
 {
   return VariantChangeTypeEx( pvargDest, pvargSrc, LOCALE_USER_DEFAULT, wFlags, vt );
@@ -986,7 +986,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH VariantChangeType(VARIANTARG* pvargDest, VARIAN
  *  pvargDest and pvargSrc can point to the same variant to perform an in-place
  *  conversion. If the conversion is successful, pvargSrc will be freed.
  */
-HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
+HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, const VARIANTARG* pvargSrc,
                                    LCID lcid, USHORT wFlags, VARTYPE vt)
 {
   HRESULT res = S_OK;
