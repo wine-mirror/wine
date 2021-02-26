@@ -181,6 +181,7 @@ static ITypeInfo *typeinfos[LAST_tid];
 static REFIID tid_ids[] = {
     &IID__Command,
     &IID__Connection,
+    &IID_Field,
     &IID__Stream,
 };
 

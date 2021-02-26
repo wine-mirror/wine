@@ -45,6 +45,7 @@ static inline WCHAR *strdupW( const WCHAR *src )
 typedef enum tid_t {
     Command_tid,
     Connection_tid,
+    Field_tid,
     Stream_tid,
     LAST_tid
 } tid_t;
