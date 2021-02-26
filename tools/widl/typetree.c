@@ -53,6 +53,7 @@ type_t *make_type(enum type_type type)
     t->signature = NULL;
     t->qualified_name = NULL;
     t->impl_name = NULL;
+    t->short_name = NULL;
     memset(&t->details, 0, sizeof(t->details));
     t->typestring_offset = 0;
     t->ptrdesc = 0;
@@ -343,6 +344,22 @@ static char *format_parameterized_type_signature(type_t *type, typeref_list_t *p
         pos += append_type_signature(&buf, &len, pos, ref->type);
     }
     pos += strappend(&buf, &len, pos, ")");
+
+    return buf;
+}
+
+static char *format_parameterized_type_short_name(type_t *type, typeref_list_t *params, const char *prefix)
+{
+    size_t len = 0, pos = 0;
+    char *buf = NULL;
+    typeref_t *ref;
+
+    pos += strappend(&buf, &len, pos, "%s%s", prefix, type->name);
+    if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
+    {
+        type = type_pointer_get_root_type(ref->type);
+        pos += strappend(&buf, &len, pos, "_%s", type->name);
+    }
 
     return buf;
 }
@@ -1201,11 +1218,13 @@ type_t *type_parameterized_type_specialize_declare(type_t *type, typeref_list_t 
     new_type->name = format_parameterized_type_name(type, params);
     reg_type(new_type, new_type->name, new_type->namespace, 0);
     new_type->c_name = format_parameterized_type_c_name(type, params, "");
+    new_type->short_name = format_parameterized_type_short_name(type, params, "");
 
     if (new_type->type_type == TYPE_DELEGATE)
     {
         new_type->details.delegate.iface = duptype(tmpl->details.delegate.iface, 0);
         compute_delegate_iface_names(new_type, type, params);
+        new_type->details.delegate.iface->short_name = format_parameterized_type_short_name(type, params, "I");
     }
 
     return new_type;

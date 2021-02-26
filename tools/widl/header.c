@@ -48,6 +48,8 @@ static void write_type_v(FILE *f, const decl_spec_t *t, int is_field, int declon
 static void write_apicontract_guard_start(FILE *header, const expr_t *expr);
 static void write_apicontract_guard_end(FILE *header, const expr_t *expr);
 
+static void write_widl_using_macros(FILE *header, type_t *iface);
+
 static void indent(FILE *h, int delta)
 {
   int c;
@@ -634,6 +636,7 @@ static void write_type_definition(FILE *f, type_t *t, int declonly)
         fprintf(f, "#else\n");
         write_type_left(f, &ds, NAME_C, declonly, TRUE);
         fprintf(f, ";\n");
+        if (winrt_mode) write_widl_using_macros(f, t);
         fprintf(f, "#endif\n\n");
     }
     if (contract) write_apicontract_guard_end(f, contract);
@@ -1644,6 +1647,47 @@ static void write_com_interface_start(FILE *header, const type_t *iface)
   fprintf(header,"#define __%s_%sINTERFACE_DEFINED__\n\n", iface->c_name, dispinterface ? "DISP" : "");
 }
 
+static void write_widl_using_method_macros(FILE *header, const type_t *iface, const type_t *top_iface)
+{
+    const statement_t *stmt;
+    const char *name = top_iface->short_name ? top_iface->short_name : top_iface->name;
+
+    if (type_iface_get_inherit(iface)) write_widl_using_method_macros(header, type_iface_get_inherit(iface), top_iface);
+
+    STATEMENTS_FOR_EACH_FUNC(stmt, type_iface_get_stmts(iface))
+    {
+        const var_t *func = stmt->u.var;
+        const char *func_name;
+
+        if (is_override_method(iface, top_iface, func)) continue;
+        if (is_callas(func->attrs)) continue;
+
+        func_name = get_name(func);
+        fprintf(header, "#define %s_%s %s_%s\n", name, func_name, top_iface->c_name, func_name);
+    }
+}
+
+static void write_widl_using_macros(FILE *header, type_t *iface)
+{
+    const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
+    const char *name = iface->short_name ? iface->short_name : iface->name;
+    char *macro;
+
+    if (!strcmp(iface->name, iface->c_name)) return;
+
+    macro = format_namespace(iface->namespace, "WIDL_using_", "_", NULL, NULL);
+    fprintf(header, "#ifdef %s\n", macro);
+
+    if (uuid) fprintf(header, "#define IID_%s IID_%s\n", name, iface->c_name);
+    if (iface->type_type == TYPE_INTERFACE) fprintf(header, "#define %sVtbl %sVtbl\n", name, iface->c_name);
+    fprintf(header, "#define %s %s\n", name, iface->c_name);
+
+    if (iface->type_type == TYPE_INTERFACE) write_widl_using_method_macros(header, iface, iface);
+
+    fprintf(header, "#endif /* %s */\n", macro);
+    free(macro);
+}
+
 static void write_com_interface_end(FILE *header, type_t *iface)
 {
   int dispinterface = is_attr(iface->attrs, ATTR_DISPINTERFACE);
@@ -1721,6 +1765,7 @@ static void write_com_interface_end(FILE *header, type_t *iface)
   fprintf(header, "#else\n");
   write_inline_wrappers(header, type, type, iface->c_name);
   fprintf(header, "#endif\n");
+  if (winrt_mode) write_widl_using_macros(header, iface);
   fprintf(header, "#endif\n");
   fprintf(header, "\n");
   fprintf(header, "#endif\n");

@@ -505,6 +505,7 @@ struct _type_t {
   const char *signature;
   const char *qualified_name;
   const char *impl_name;
+  const char *short_name;
   unsigned int typestring_offset;
   unsigned int ptrdesc;           /* used for complex structs */
   int typelib_idx;
