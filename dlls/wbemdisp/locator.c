@@ -35,8 +35,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemdisp);
 
+static WCHAR *heap_strdupW( const WCHAR *src )
+{
+    WCHAR *dst;
+    if (!src) return NULL;
+    if ((dst = heap_alloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) ))) lstrcpyW( dst, src );
+    return dst;
+}
+
 static HRESULT EnumVARIANT_create( IEnumWbemClassObject *, IEnumVARIANT ** );
 static HRESULT ISWbemSecurity_create( ISWbemSecurity ** );
+static HRESULT SWbemObject_create( IWbemClassObject *, ISWbemObject ** );
 
 enum type_id
 {
@@ -522,10 +531,19 @@ struct object
     DISPID last_dispid_method;
 };
 
+struct methodset
+{
+    ISWbemMethodSet ISWbemMethodSet_iface;
+    LONG refs;
+    struct object *object;
+};
+
 struct method
 {
     ISWbemMethod ISWbemMethod_iface;
     LONG refs;
+    struct methodset *set;
+    WCHAR *name;
 };
 
 static struct method *impl_from_ISWbemMethod( ISWbemMethod *iface )
@@ -567,6 +585,8 @@ static ULONG WINAPI method_Release( ISWbemMethod *iface )
     if (!refs)
     {
         TRACE( "destroying %p\n", method );
+        ISWbemMethodSet_Release( &method->set->ISWbemMethodSet_iface );
+        heap_free( method->name );
         heap_free( method );
     }
     return refs;
@@ -671,9 +691,27 @@ static HRESULT WINAPI method_get_InParameters(
     ISWbemMethod *iface,
     ISWbemObject **params )
 {
-    FIXME("\n");
+    struct method *method = impl_from_ISWbemMethod( iface );
+    IWbemClassObject *in_sign = NULL, *instance;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", method, params);
+
+    *params = NULL;
+
+    if (SUCCEEDED(hr = IWbemClassObject_GetMethod( method->set->object->object,
+            method->name, 0, &in_sign, NULL )) && in_sign != NULL)
+    {
+        hr = IWbemClassObject_SpawnInstance( in_sign, 0, &instance );
+        IWbemClassObject_Release( in_sign );
+        if (SUCCEEDED(hr))
+        {
+            hr = SWbemObject_create( instance, params );
+            IWbemClassObject_Release( instance );
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI method_get_OutParameters(
@@ -710,7 +748,7 @@ static const ISWbemMethodVtbl methodvtbl =
     method_get_Qualifiers_,
 };
 
-static HRESULT SWbemMethod_create( ISWbemMethod **obj )
+static HRESULT SWbemMethod_create( struct methodset *set, const WCHAR *name, ISWbemMethod **obj )
 {
     struct method *method;
 
@@ -719,18 +757,18 @@ static HRESULT SWbemMethod_create( ISWbemMethod **obj )
 
     method->ISWbemMethod_iface.lpVtbl = &methodvtbl;
     method->refs = 1;
+    method->set = set;
+    ISWbemMethodSet_AddRef( &method->set->ISWbemMethodSet_iface );
+    if (!(method->name = heap_strdupW( name )))
+    {
+        ISWbemMethod_Release( &method->ISWbemMethod_iface );
+        return E_OUTOFMEMORY;
+    }
 
     *obj = &method->ISWbemMethod_iface;
 
     return S_OK;
 }
-
-struct methodset
-{
-    ISWbemMethodSet ISWbemMethodSet_iface;
-    LONG refs;
-    struct object *object;
-};
 
 static struct methodset *impl_from_ISWbemMethodSet( ISWbemMethodSet *iface )
 {
@@ -884,7 +922,7 @@ static HRESULT WINAPI methodset_Item(
         if (out_sign)
             IWbemClassObject_Release( out_sign );
 
-        return SWbemMethod_create( method );
+        return SWbemMethod_create( set, name, method );
     }
 
     return hr;
