@@ -113,7 +113,7 @@ static HRESULT WINAPI stream_GetIDsOfNames( _Stream *iface, REFIID riid, LPOLEST
 
     TRACE( "%p, %s, %p, %u, %u, %p\n", stream, debugstr_guid(riid), names, count, lcid, dispid );
 
-    hr = get_typeinfo(Connection_tid, &typeinfo);
+    hr = get_typeinfo(Stream_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
         hr = ITypeInfo_GetIDsOfNames(typeinfo, names, count, dispid);
@@ -133,7 +133,7 @@ static HRESULT WINAPI stream_Invoke( _Stream *iface, DISPID member, REFIID riid,
     TRACE( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", stream, member, debugstr_guid(riid), lcid, flags, params,
            result, excep_info, arg_err );
 
-    hr = get_typeinfo(Connection_tid, &typeinfo);
+    hr = get_typeinfo(Stream_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
         hr = ITypeInfo_Invoke(typeinfo, &stream->Stream_iface, member, flags, params,

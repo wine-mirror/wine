@@ -133,7 +133,7 @@ static HRESULT WINAPI command_Invoke( _Command *iface, DISPID member, REFIID rii
     TRACE( "%p, %d, %s, %d, %d, %p, %p, %p, %p\n", command, member, debugstr_guid(riid), lcid, flags, params,
            result, excep_info, arg_err );
 
-    hr = get_typeinfo(Connection_tid, &typeinfo);
+    hr = get_typeinfo(Command_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
         hr = ITypeInfo_Invoke(typeinfo, &command->Command_iface, member, flags, params,
