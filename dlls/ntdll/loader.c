@@ -2325,7 +2325,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
         SECTION_IMAGE_INFORMATION image_info = { 0 };
 
         image_info.u.s.WineBuiltin = 1;
-        if ((status = build_module( load_path, &win_name, &module, &image_info, NULL, flags, pwm )))
+        if ((status = build_module( load_path, &win_name, &module, &image_info, NULL, flags, &wm )))
         {
             if (module) unix_funcs->unload_builtin_dll( module );
             return status;
