@@ -1591,7 +1591,6 @@ void init_startup_info(void)
     params->AllocationSize  = size;
     params->Size            = size;
     params->Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
-    params->EnvironmentSize = env_size;
     params->DebugFlags      = info->debug_flags;
     params->ConsoleHandle   = wine_server_ptr_handle( info->console );
     params->ConsoleFlags    = info->console_flags;
@@ -1637,7 +1636,8 @@ void init_startup_info(void)
     dst += copy_environment( dst, src );
     memcpy( dst, dyn_env, dyn_size );
     dst += dyn_size / sizeof(WCHAR);
-    *dst = 0;
+    *dst++ = 0;
+    params->EnvironmentSize = (dst - params->Environment) * sizeof(WCHAR);
     free( dyn_env );
     free( info );
     NtCurrentTeb()->Peb->ProcessParameters = params;
