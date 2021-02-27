@@ -1534,7 +1534,7 @@ static void write_parameterized_type_forward(FILE *header, type_t *type)
 static void write_parameterized_implementation(FILE *header, type_t *type, int declonly)
 {
     const statement_t *stmt;
-    typeref_list_t *params = params = type->details.parameterized.params;
+    typeref_list_t *params = type->details.parameterized.params;
     typeref_t *ref;
     type_t *iface = type->details.parameterized.type, *base;
     char *args = NULL;
