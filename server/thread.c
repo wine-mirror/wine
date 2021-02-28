@@ -1890,8 +1890,7 @@ DECL_HANDLER(set_thread_context)
     reply->self = (thread == current);
 
     if (thread->state == TERMINATED) set_error( STATUS_UNSUCCESSFUL );
-    else if (context->cpu != thread->process->cpu) set_error( STATUS_INVALID_PARAMETER );
-    else
+    else if (context->cpu == thread->process->cpu)
     {
         unsigned int system_flags = get_context_system_regs(context->cpu) & context->flags;
 
@@ -1903,6 +1902,25 @@ DECL_HANDLER(set_thread_context)
             thread->context->regs.flags |= context->flags;
         }
     }
+    else if (context->cpu == CPU_x86_64 && thread->process->cpu == CPU_x86)
+    {
+        /* convert the WoW64 context */
+        unsigned int system_flags = get_context_system_regs( context->cpu ) & context->flags;
+        if (system_flags)
+        {
+            set_thread_context( thread, context, system_flags );
+            if (thread->context && !get_error())
+            {
+                thread->context->regs.debug.i386_regs.dr0 = context->debug.x86_64_regs.dr0;
+                thread->context->regs.debug.i386_regs.dr1 = context->debug.x86_64_regs.dr1;
+                thread->context->regs.debug.i386_regs.dr2 = context->debug.x86_64_regs.dr2;
+                thread->context->regs.debug.i386_regs.dr3 = context->debug.x86_64_regs.dr3;
+                thread->context->regs.debug.i386_regs.dr6 = context->debug.x86_64_regs.dr6;
+                thread->context->regs.debug.i386_regs.dr7 = context->debug.x86_64_regs.dr7;
+            }
+        }
+    }
+    else set_error( STATUS_INVALID_PARAMETER );
 
     release_object( thread );
 }

@@ -5841,7 +5841,6 @@ static void test_debug_registers_wow64(void)
     ZeroMemory(&ctx, sizeof(ctx));
     ctx.ContextFlags = CONTEXT_ALL;
     bret = GetThreadContext(pi.hThread, &ctx);
-    todo_wine
     ok(bret, "GetThreadContext failed\n");
 
     ctx.Dr0 = 0x12340000;
@@ -5850,14 +5849,12 @@ static void test_debug_registers_wow64(void)
     ctx.Dr3 = 0x12340003;
     ctx.Dr7 = 0x155; /* enable all breakpoints (local) */
     bret = SetThreadContext(pi.hThread, &ctx);
-    todo_wine
     ok(bret, "SetThreadContext failed\n");
 
     if (bret) {
         ZeroMemory(&ctx, sizeof(ctx));
         ctx.ContextFlags = CONTEXT_ALL;
         bret = GetThreadContext(pi.hThread, &ctx);
-        todo_wine
         ok(bret, "GetThreadContext failed\n");
         if (bret)
         {
@@ -5896,22 +5893,16 @@ static void test_debug_registers_wow64(void)
     ok(ret == STATUS_SUCCESS, "Wow64GetThreadContext failed with %lx\n", ret);
     if (ret == STATUS_SUCCESS)
     {
-        todo_wine
         ok(wow64_ctx.Dr0 == 0x56780000, "expected 0x56780000, got %lx\n", wow64_ctx.Dr0);
-        todo_wine
         ok(wow64_ctx.Dr1 == 0x56780001, "expected 0x56780001, got %lx\n", wow64_ctx.Dr1);
-        todo_wine
         ok(wow64_ctx.Dr2 == 0x56780002, "expected 0x56780002, got %lx\n", wow64_ctx.Dr2);
-        todo_wine
         ok(wow64_ctx.Dr3 == 0x56780003, "expected 0x56780003, got %lx\n", wow64_ctx.Dr3);
-        todo_wine
         ok(wow64_ctx.Dr7 == 0x101, "expected 0x101, got %lx\n", wow64_ctx.Dr7);
     }
 
     ZeroMemory(&ctx, sizeof(ctx));
     ctx.ContextFlags = CONTEXT_ALL;
     bret = GetThreadContext(pi.hThread, &ctx);
-    todo_wine
     ok(bret, "GetThreadContext failed\n");
     if (bret)
     {

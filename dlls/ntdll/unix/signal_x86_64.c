@@ -1707,6 +1707,65 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
  */
 NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 {
+    if (from->cpu == CPU_x86)
+    {
+        /* convert the WoW64 context */
+        to->ContextFlags = CONTEXT_AMD64;
+        if (from->flags & SERVER_CTX_CONTROL)
+        {
+            to->ContextFlags |= CONTEXT_CONTROL;
+            to->Rbp    = from->ctl.i386_regs.ebp;
+            to->Rip    = from->ctl.i386_regs.eip;
+            to->Rsp    = from->ctl.i386_regs.esp;
+            to->SegCs  = from->ctl.i386_regs.cs;
+            to->SegSs  = from->ctl.i386_regs.ss;
+            to->EFlags = from->ctl.i386_regs.eflags;
+        }
+
+        if (from->flags & SERVER_CTX_INTEGER)
+        {
+            to->ContextFlags |= CONTEXT_INTEGER;
+            to->Rax = from->integer.i386_regs.eax;
+            to->Rcx = from->integer.i386_regs.ecx;
+            to->Rdx = from->integer.i386_regs.edx;
+            to->Rbx = from->integer.i386_regs.ebx;
+            to->Rsi = from->integer.i386_regs.esi;
+            to->Rdi = from->integer.i386_regs.edi;
+            to->R8  = 0;
+            to->R9  = 0;
+            to->R10 = 0;
+            to->R11 = 0;
+            to->R12 = 0;
+            to->R13 = 0;
+            to->R14 = 0;
+            to->R15 = 0;
+        }
+        if (from->flags & SERVER_CTX_SEGMENTS)
+        {
+            to->ContextFlags |= CONTEXT_SEGMENTS;
+            to->SegDs = from->seg.i386_regs.ds;
+            to->SegEs = from->seg.i386_regs.es;
+            to->SegFs = from->seg.i386_regs.fs;
+            to->SegGs = from->seg.i386_regs.gs;
+        }
+        if (from->flags & SERVER_CTX_FLOATING_POINT)
+        {
+            to->ContextFlags |= CONTEXT_FLOATING_POINT;
+            memset(&to->u.FltSave, 0, sizeof(to->u.FltSave));
+        }
+        if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+        {
+            to->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
+            to->Dr0 = from->debug.i386_regs.dr0;
+            to->Dr1 = from->debug.i386_regs.dr1;
+            to->Dr2 = from->debug.i386_regs.dr2;
+            to->Dr3 = from->debug.i386_regs.dr3;
+            to->Dr6 = from->debug.i386_regs.dr6;
+            to->Dr7 = from->debug.i386_regs.dr7;
+        }
+        return STATUS_SUCCESS;
+    }
+
     if (from->cpu != CPU_x86_64) return STATUS_INVALID_PARAMETER;
 
     to->ContextFlags = CONTEXT_AMD64 | (to->ContextFlags & 0x40);
