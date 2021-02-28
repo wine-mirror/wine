@@ -1,6 +1,6 @@
 MODULE    = aclui.dll
 IMPORTLIB = aclui
-IMPORTS   = comctl32 user32
+IMPORTS   = comctl32 user32 advapi32
 
 EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
