@@ -1696,62 +1696,38 @@ static enum mountmgr_fs_type get_mountmgr_fs_type(enum fs_type fs_type)
 }
 
 /* query information about an existing dos drive, by letter or udi */
-static NTSTATUS query_dos_device( int letter, enum device_type *type, enum mountmgr_fs_type *fs_type,
-                                  DWORD *serial, char **device, char **mount_point, WCHAR **label )
+static struct volume *find_volume_by_letter( int letter )
 {
-    NTSTATUS status = STATUS_NO_SUCH_DEVICE;
+    struct volume *volume = NULL;
     struct dos_drive *drive;
-    struct disk_device *disk_device;
 
-    EnterCriticalSection( &device_section );
     LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
     {
         if (drive->drive != letter) continue;
-        disk_device = drive->volume->device;
-        if (type) *type = disk_device->type;
-        if (fs_type) *fs_type = get_mountmgr_fs_type( drive->volume->fs_type );
-        if (serial) *serial = drive->volume->serial;
-        if (device) *device = strdupA( disk_device->unix_device );
-        if (mount_point) *mount_point = strdupA( disk_device->unix_mount );
-        if (label) *label = strdupW( drive->volume->label );
-        status = STATUS_SUCCESS;
+        volume = grab_volume( drive->volume );
+        TRACE( "found matching volume %s for drive letter %c:\n", debugstr_guid(&volume->guid),
+               'a' + letter );
         break;
     }
-    LeaveCriticalSection( &device_section );
-    return status;
+    return volume;
 }
 
 /* query information about an existing unix device, by dev_t */
-static NTSTATUS query_unix_device( ULONGLONG unix_dev, enum device_type *type,
-                                   enum mountmgr_fs_type *fs_type, DWORD *serial, char **device,
-                                   char **mount_point, WCHAR **label )
+static struct volume *find_volume_by_unixdev( ULONGLONG unix_dev )
 {
-    NTSTATUS status = STATUS_NO_SUCH_DEVICE;
     struct volume *volume;
-    struct disk_device *disk_device;
     struct stat st;
 
-    EnterCriticalSection( &device_section );
     LIST_FOR_EACH_ENTRY( volume, &volumes_list, struct volume, entry )
     {
-        disk_device = volume->device;
-
-        if (!disk_device->unix_device
-            || stat( disk_device->unix_device, &st ) < 0
+        if (!volume->device->unix_device || stat( volume->device->unix_device, &st ) < 0
             || st.st_rdev != unix_dev)
             continue;
 
-        if (type) *type = disk_device->type;
-        if (fs_type) *fs_type = get_mountmgr_fs_type( volume->fs_type );
-        if (serial) *serial = volume->serial;
-        if (device) *device = strdupA( disk_device->unix_device );
-        if (mount_point) *mount_point = strdupA( disk_device->unix_mount );
-        if (label) *label = strdupW( volume->label );
-        status = STATUS_SUCCESS;
-        break;
+        TRACE( "found matching volume %s\n", debugstr_guid(&volume->guid) );
+        return grab_volume( volume );
     }
-    LeaveCriticalSection( &device_section );
-    return status;
+    return NULL;
 }
 
 /* implementation of IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE */
@@ -1761,27 +1737,35 @@ NTSTATUS query_unix_drive( void *buff, SIZE_T insize, SIZE_T outsize, IO_STATUS_
     struct mountmgr_unix_drive *output = NULL;
     char *device, *mount_point;
     int letter = tolowerW( input->letter );
-    NTSTATUS status;
     DWORD size, type = DEVICE_UNKNOWN, serial;
+    NTSTATUS status = STATUS_SUCCESS;
     enum mountmgr_fs_type fs_type;
     enum device_type device_type;
+    struct volume *volume;
     char *ptr;
     WCHAR *label;
 
-    if (!letter)
-    {
-        if ((status = query_unix_device( input->unix_dev, &device_type, &fs_type,
-                                         &serial, &device, &mount_point, &label )))
-            return status;
-    }
-    else
-    {
-        if (letter < 'a' || letter > 'z') return STATUS_INVALID_PARAMETER;
+    if (letter && (letter < 'a' || letter > 'z')) return STATUS_INVALID_PARAMETER;
 
-        if ((status = query_dos_device( letter - 'a', &device_type, &fs_type, &serial, &device,
-                                        &mount_point, &label )))
-            return status;
+    EnterCriticalSection( &device_section );
+    if (letter)
+        volume = find_volume_by_letter( letter - 'a' );
+    else
+        volume = find_volume_by_unixdev( input->unix_dev );
+    if (volume)
+    {
+        device_type = volume->device->type;
+        fs_type = get_mountmgr_fs_type( volume->fs_type );
+        serial = volume->serial;
+        device = strdupA( volume->device->unix_device );
+        mount_point = strdupA( volume->device->unix_mount );
+        label = strdupW( volume->label );
+        release_volume( volume );
     }
+    LeaveCriticalSection( &device_section );
+
+    if (!volume)
+        return STATUS_NO_SUCH_DEVICE;
 
     switch (device_type)
     {
