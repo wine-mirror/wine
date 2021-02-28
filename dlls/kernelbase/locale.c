@@ -696,6 +696,27 @@ done:
 }
 
 
+static LCID locale_to_lcid( WCHAR *win_name )
+{
+    WCHAR *p;
+    LCID lcid;
+
+    if (!RtlLocaleNameToLcid( win_name, &lcid, 0 )) return lcid;
+
+    /* try neutral name */
+    if ((p = wcsrchr( win_name, '-' )))
+    {
+        *p = 0;
+        if (!RtlLocaleNameToLcid( win_name, &lcid, 2 ))
+        {
+            if (SUBLANGID(lcid) == SUBLANG_NEUTRAL)
+                lcid = MAKELANGID( PRIMARYLANGID(lcid), SUBLANG_DEFAULT );
+            return lcid;
+        }
+    }
+    return 0;
+}
+
 /***********************************************************************
  *		init_locale
  */
@@ -704,8 +725,8 @@ void init_locale(void)
     UINT ansi_cp = 0, oem_cp = 0;
     USHORT *ansi_ptr, *oem_ptr;
     void *sort_ptr;
-    LCID lcid = GetUserDefaultLCID();
-    WCHAR bufferW[80];
+    LCID user_lcid = 0, system_lcid = 0;
+    WCHAR bufferW[LOCALE_NAME_MAX_LENGTH];
     DYNAMIC_TIME_ZONE_INFORMATION timezone;
     GEOID geoid = GEOID_NOT_AVAILABLE;
     DWORD count, dispos, i;
@@ -714,6 +735,16 @@ void init_locale(void)
 
     if (GetEnvironmentVariableW( L"WINEUNIXCP", bufferW, ARRAY_SIZE(bufferW) ))
         unix_cp = wcstoul( bufferW, NULL, 10 );
+    if (GetEnvironmentVariableW( L"WINELOCALE", bufferW, ARRAY_SIZE(bufferW) ))
+        system_lcid = locale_to_lcid( bufferW );
+    if (GetEnvironmentVariableW( L"WINEUSERLOCALE", bufferW, ARRAY_SIZE(bufferW) ))
+        user_lcid = locale_to_lcid( bufferW );
+    if (!system_lcid) system_lcid = MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
+    if (!user_lcid) user_lcid = system_lcid;
+
+    NtSetDefaultUILanguage( LANGIDFROMLCID(user_lcid) );
+    NtSetDefaultLocale( TRUE, user_lcid );
+    NtSetDefaultLocale( FALSE, system_lcid );
 
     kernel32_handle = GetModuleHandleW( L"kernel32.dll" );
 
@@ -775,11 +806,11 @@ void init_locale(void)
     count = sizeof(bufferW);
     if (!RegQueryValueExW( intl_key, L"Locale", NULL, NULL, (BYTE *)bufferW, &count ))
     {
-        if (wcstoul( bufferW, NULL, 16 ) == lcid) return;  /* already set correctly */
-        TRACE( "updating registry, locale changed %s -> %08x\n", debugstr_w(bufferW), lcid );
+        if (wcstoul( bufferW, NULL, 16 ) == user_lcid) return;  /* already set correctly */
+        TRACE( "updating registry, locale changed %s -> %08x\n", debugstr_w(bufferW), user_lcid );
     }
-    else TRACE( "updating registry, locale changed none -> %08x\n", lcid );
-    swprintf( bufferW, ARRAY_SIZE(bufferW), L"%08x", lcid );
+    else TRACE( "updating registry, locale changed none -> %08x\n", user_lcid );
+    swprintf( bufferW, ARRAY_SIZE(bufferW), L"%08x", user_lcid );
     RegSetValueExW( intl_key, L"Locale", 0, REG_SZ,
                     (BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR) );
 

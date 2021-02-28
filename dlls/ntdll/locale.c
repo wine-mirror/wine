@@ -533,48 +533,12 @@ static unsigned int compose_string( const struct norm_table *info, WCHAR *str, u
 }
 
 
-static LCID locale_to_lcid( WCHAR *win_name )
-{
-    WCHAR *p;
-    LCID lcid;
-
-    if (!RtlLocaleNameToLcid( win_name, &lcid, 0 )) return lcid;
-
-    /* try neutral name */
-    if ((p = wcsrchr( win_name, '-' )))
-    {
-        *p = 0;
-        if (!RtlLocaleNameToLcid( win_name, &lcid, 2 ))
-        {
-            if (SUBLANGID(lcid) == SUBLANG_NEUTRAL)
-                lcid = MAKELANGID( PRIMARYLANGID(lcid), SUBLANG_DEFAULT );
-            return lcid;
-        }
-    }
-    return 0;
-}
-
-
 /******************************************************************
  *		init_locale
  */
 void init_locale( HMODULE module )
 {
-    WCHAR system_locale[LOCALE_NAME_MAX_LENGTH];
-    WCHAR user_locale[LOCALE_NAME_MAX_LENGTH];
-
     kernel32_handle = module;
-
-    unix_funcs->get_locales( system_locale, user_locale );
-    system_lcid = locale_to_lcid( system_locale );
-    user_lcid = locale_to_lcid( user_locale );
-    if (!system_lcid) system_lcid = MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
-    if (!user_lcid) user_lcid = system_lcid;
-
-    NtSetDefaultUILanguage( LANGIDFROMLCID(user_lcid) );
-    NtSetDefaultLocale( TRUE, user_lcid );
-    NtSetDefaultLocale( FALSE, system_lcid );
-    TRACE( "system=%04x user=%04x\n", system_lcid, user_lcid );
 }
 
 

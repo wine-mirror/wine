@@ -545,6 +545,8 @@ static BOOL is_dynamic_env_var( const char *var )
             STARTS_WITH( var, "WINECONFIGDIR=" ) ||
             STARTS_WITH( var, "WINEDLLDIR" ) ||
             STARTS_WITH( var, "WINEUNIXCP=" ) ||
+            STARTS_WITH( var, "WINELOCALE=" ) ||
+            STARTS_WITH( var, "WINEUSERLOCALE=" ) ||
             STARTS_WITH( var, "WINEUSERNAME=" ) ||
             STARTS_WITH( var, "WINEPRELOADRESERVE=" ) ||
             STARTS_WITH( var, "WINELOADERNOEXEC=" ) ||
@@ -1197,13 +1199,14 @@ static WCHAR *get_dynamic_environment( SIZE_T *size )
     DWORD i;
     char str[22];
 
-    alloc = 20 * 8;  /* 8 variable names */
+    alloc = 20 * 10;  /* 10 variable names */
     if (data_dir) alloc += strlen( data_dir ) + 9;
     if (home_dir) alloc += strlen( home_dir ) + 9;
     if (build_dir) alloc += strlen( build_dir ) + 9;
     if (config_dir) alloc += strlen( config_dir ) + 9;
     if (user_name) alloc += strlen( user_name );
     if (overrides) alloc += strlen( overrides );
+    alloc += strlen(system_locale) + strlen(user_locale);
     for (i = 0; dll_paths[i]; i++) alloc += 20 + strlen( dll_paths[i] ) + 9;
 
     if (!(buffer = malloc( alloc * sizeof(WCHAR) ))) return NULL;
@@ -1223,6 +1226,8 @@ static WCHAR *get_dynamic_environment( SIZE_T *size )
         sprintf( str, "%u", unix_cp.data[1] );
         append_envA( buffer, &pos, "WINEUNIXCP", str );
     }
+    append_envA( buffer, &pos, "WINELOCALE", system_locale );
+    if (strcmp( user_locale, system_locale )) append_envA( buffer, &pos, "WINEUSERLOCALE", user_locale );
     assert( pos <= alloc );
     *size = pos * sizeof(WCHAR);
     return buffer;
@@ -1352,18 +1357,6 @@ static void get_initial_directory( UNICODE_STRING *dir )
     }
     dir->Buffer[dir->Length / sizeof(WCHAR)] = 0;
     free( cwd );
-}
-
-
-/*************************************************************************
- *		get_locales
- *
- * Return the system and user locales. Buffers must be at least LOCALE_NAME_MAX_LENGTH chars long.
- */
-void CDECL get_locales( WCHAR *sys, WCHAR *user )
-{
-    ntdll_umbstowcs( system_locale, strlen(system_locale) + 1, sys, LOCALE_NAME_MAX_LENGTH );
-    ntdll_umbstowcs( user_locale, strlen(user_locale) + 1, user, LOCALE_NAME_MAX_LENGTH );
 }
 
 

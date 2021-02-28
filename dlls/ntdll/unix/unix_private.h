@@ -100,7 +100,6 @@ extern LONGLONG CDECL fast_RtlGetSystemTimePrecise(void) DECLSPEC_HIDDEN;
 extern NTSTATUS CDECL fast_wait_cv( RTL_CONDITION_VARIABLE *variable, const void *value,
                                     const LARGE_INTEGER *timeout ) DECLSPEC_HIDDEN;
 
-extern void CDECL get_locales( WCHAR *sys, WCHAR *user ) DECLSPEC_HIDDEN;
 extern void CDECL virtual_release_address_space(void) DECLSPEC_HIDDEN;
 
 extern NTSTATUS CDECL unwind_builtin_dll( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
