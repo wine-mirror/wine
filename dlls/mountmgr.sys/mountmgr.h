@@ -59,11 +59,8 @@ extern NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
                                 const char *mount_point, enum device_type type, const GUID *guid,
                                 UNICODE_STRING *devname ) DECLSPEC_HIDDEN;
 extern NTSTATUS remove_dos_device( int letter, const char *udi ) DECLSPEC_HIDDEN;
-extern NTSTATUS query_dos_device( int letter, enum device_type *type, enum mountmgr_fs_type *fs_type, DWORD *serial,
-                                  char **device, char **mount_point, WCHAR **label ) DECLSPEC_HIDDEN;
-extern NTSTATUS query_unix_device( ULONGLONG unix_dev, enum device_type *type,
-                                   DWORD *serial, enum mountmgr_fs_type *fs_type, char **device,
-                                   char **mount_point, WCHAR **label ) DECLSPEC_HIDDEN;
+extern NTSTATUS query_unix_drive( void *buff, SIZE_T insize, SIZE_T outsize,
+                                  IO_STATUS_BLOCK *iosb ) DECLSPEC_HIDDEN;
 extern NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path ) DECLSPEC_HIDDEN;
 extern NTSTATUS WINAPI serial_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path ) DECLSPEC_HIDDEN;
 extern NTSTATUS WINAPI parallel_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path ) DECLSPEC_HIDDEN;

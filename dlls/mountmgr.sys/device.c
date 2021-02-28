@@ -1696,8 +1696,8 @@ static enum mountmgr_fs_type get_mountmgr_fs_type(enum fs_type fs_type)
 }
 
 /* query information about an existing dos drive, by letter or udi */
-NTSTATUS query_dos_device( int letter, enum device_type *type, enum mountmgr_fs_type *fs_type,
-                           DWORD *serial, char **device, char **mount_point, WCHAR **label )
+static NTSTATUS query_dos_device( int letter, enum device_type *type, enum mountmgr_fs_type *fs_type,
+                                  DWORD *serial, char **device, char **mount_point, WCHAR **label )
 {
     NTSTATUS status = STATUS_NO_SUCH_DEVICE;
     struct dos_drive *drive;
@@ -1722,9 +1722,9 @@ NTSTATUS query_dos_device( int letter, enum device_type *type, enum mountmgr_fs_
 }
 
 /* query information about an existing unix device, by dev_t */
-NTSTATUS query_unix_device( ULONGLONG unix_dev, enum device_type *type,
-                            enum mountmgr_fs_type *fs_type, DWORD *serial, char **device,
-                            char **mount_point, WCHAR **label )
+static NTSTATUS query_unix_device( ULONGLONG unix_dev, enum device_type *type,
+                                   enum mountmgr_fs_type *fs_type, DWORD *serial, char **device,
+                                   char **mount_point, WCHAR **label )
 {
     NTSTATUS status = STATUS_NO_SUCH_DEVICE;
     struct volume *volume;
@@ -1751,6 +1751,96 @@ NTSTATUS query_unix_device( ULONGLONG unix_dev, enum device_type *type,
         break;
     }
     LeaveCriticalSection( &device_section );
+    return status;
+}
+
+/* implementation of IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE */
+NTSTATUS query_unix_drive( void *buff, SIZE_T insize, SIZE_T outsize, IO_STATUS_BLOCK *iosb )
+{
+    const struct mountmgr_unix_drive *input = buff;
+    struct mountmgr_unix_drive *output = NULL;
+    char *device, *mount_point;
+    int letter = tolowerW( input->letter );
+    NTSTATUS status;
+    DWORD size, type = DEVICE_UNKNOWN, serial;
+    enum mountmgr_fs_type fs_type;
+    enum device_type device_type;
+    char *ptr;
+    WCHAR *label;
+
+    if (!letter)
+    {
+        if ((status = query_unix_device( input->unix_dev, &device_type, &fs_type,
+                                         &serial, &device, &mount_point, &label )))
+            return status;
+    }
+    else
+    {
+        if (letter < 'a' || letter > 'z') return STATUS_INVALID_PARAMETER;
+
+        if ((status = query_dos_device( letter - 'a', &device_type, &fs_type, &serial, &device,
+                                        &mount_point, &label )))
+            return status;
+    }
+
+    switch (device_type)
+    {
+    case DEVICE_UNKNOWN:      type = DRIVE_UNKNOWN; break;
+    case DEVICE_HARDDISK:     type = DRIVE_REMOVABLE; break;
+    case DEVICE_HARDDISK_VOL: type = DRIVE_FIXED; break;
+    case DEVICE_FLOPPY:       type = DRIVE_REMOVABLE; break;
+    case DEVICE_CDROM:        type = DRIVE_CDROM; break;
+    case DEVICE_DVD:          type = DRIVE_CDROM; break;
+    case DEVICE_NETWORK:      type = DRIVE_REMOTE; break;
+    case DEVICE_RAMDISK:      type = DRIVE_RAMDISK; break;
+    }
+
+    size = sizeof(*output);
+    if (label) size += (strlenW(label) + 1) * sizeof(WCHAR);
+    if (device) size += strlen(device) + 1;
+    if (mount_point) size += strlen(mount_point) + 1;
+
+    input = NULL;
+    output = buff;
+    output->size = size;
+    output->letter = letter;
+    output->type = type;
+    output->fs_type = fs_type;
+    output->serial = serial;
+    output->mount_point_offset = 0;
+    output->device_offset = 0;
+    output->label_offset = 0;
+
+    ptr = (char *)(output + 1);
+
+    if (label && ptr + (strlenW(label) + 1) * sizeof(WCHAR) - (char *)output <= outsize)
+    {
+        output->label_offset = ptr - (char *)output;
+        strcpyW( (WCHAR *)ptr, label );
+        ptr += (strlenW(label) + 1) * sizeof(WCHAR);
+    }
+    if (mount_point && ptr + strlen(mount_point) + 1 - (char *)output <= outsize)
+    {
+        output->mount_point_offset = ptr - (char *)output;
+        strcpy( ptr, mount_point );
+        ptr += strlen(ptr) + 1;
+    }
+    if (device && ptr + strlen(device) + 1 - (char *)output <= outsize)
+    {
+        output->device_offset = ptr - (char *)output;
+        strcpy( ptr, device );
+        ptr += strlen(ptr) + 1;
+    }
+
+    TRACE( "returning %c: dev %s mount %s type %u\n",
+           letter, debugstr_a(device), debugstr_a(mount_point), type );
+
+    iosb->Information = ptr - (char *)output;
+    if (size > outsize) status = STATUS_BUFFER_OVERFLOW;
+
+    RtlFreeHeap( GetProcessHeap(), 0, device );
+    RtlFreeHeap( GetProcessHeap(), 0, mount_point );
+    RtlFreeHeap( GetProcessHeap(), 0, label );
     return status;
 }
 
