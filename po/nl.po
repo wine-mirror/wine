@@ -13112,11 +13112,11 @@ msgstr "Wine Verkenner"
 
 #: programs/explorer/explorer.rc:33
 msgid "Start"
-msgstr "Opstarten"
+msgstr "Start"
 
 #: programs/explorer/explorer.rc:34 programs/winefile/winefile.rc:36
 msgid "&Run..."
-msgstr "&Starten..."
+msgstr "&Uitvoeren..."
 
 #: programs/fsutil/fsutil.mc:28
 msgid ""
@@ -16145,10 +16145,10 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine geeft de mogelijkheid om per toepassing de Windows versie in te "
-"stellen. Dit tabblad is gekoppeld aan de tabbladen 'Bibliotheken' en "
-"'Grafisch' om zowel systeembreed als programmaspecifiek instellingen in deze "
-"tabbladen mogelijk te maken."
+"Voor elk programma kan Wine apart de Windows versie instellen. Dit tabblad "
+"isgekoppeld aan de tabbladen 'Bibliotheken' en 'Grafisch'. Hierdoor kan per "
+"programma de standaardinstellingen of programmaspecifieke instellingen "
+"gebruikt worden."
 
 #: programs/winecfg/winecfg.rc:158
 msgid "Add appli&cation..."
@@ -16180,7 +16180,7 @@ msgstr "Laat de vensterbeheerder de vensters &beheren"
 
 #: programs/winecfg/winecfg.rc:172
 msgid "&Emulate a virtual desktop"
-msgstr "&Emuleer een virtueel bureaublad"
+msgstr "Maak een &virtueel bureaublad"
 
 #: programs/winecfg/winecfg.rc:174
 msgid "Desktop &size:"
@@ -16514,7 +16514,7 @@ msgstr "Automatisch"
 
 #: programs/winecfg/winecfg.rc:69
 msgid "Local hard disk"
-msgstr "Hardeschijf"
+msgstr "Harde schijf"
 
 #: programs/winecfg/winecfg.rc:70
 msgid "Network share"
@@ -16526,7 +16526,7 @@ msgstr "Diskettestation"
 
 #: programs/winecfg/winecfg.rc:72
 msgid "CD-ROM"
-msgstr "Cd-rom"
+msgstr "CD-ROM"
 
 #: programs/winecfg/winecfg.rc:73
 msgid ""
@@ -16536,7 +16536,7 @@ msgid ""
 msgstr ""
 "U kunt geen schijven meer toevoegen.\n"
 "\n"
-"Elke schijf moet een letter van A tot Z hebben dus het kunnen er niet meer "
+"Elke schijf moet een letter van A tot Z hebben. Het kunnen er dus niet meer "
 "dan 26 zijn."
 
 #: programs/winecfg/winecfg.rc:74
@@ -16727,8 +16727,8 @@ msgid ""
 "Database</a> for tips about running this application."
 msgstr ""
 "Dit kan veroorzaakt worden door een probleem in het programma of een fout in "
-"Wine. U kunt zoeken op <a href=\"https://appdb.winehq.org\">Application "
-"Database</a> naar tips voor dit programma."
+"Wine. Zoek in de <a href=\"https://appdb.winehq.org\">Programma Database</a> "
+"naar tips voor dit programma."
 
 #: programs/winedbg/winedbg.rc:62
 msgid "Show &Details"
@@ -16745,9 +16745,9 @@ msgid ""
 "button, then <a href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
-"Indien dit probleem zich niet voordoet onder Windows en het probleem is nog "
-"niet gerapporteerd, dan kunt U gedetailleerde informatie in een bestand "
-"opslaan met de \"Opslaan als\" knop. Dit bestand kunt U via <a href="
+"Indien dit probleem zich niet voordoet onder Windows en het probleem nog "
+"niet is gerapporteerd, dan kunt u gedetailleerde informatie in een bestand "
+"opslaan met de \"Opslaan als\" knop. Dit bestand kunt u via <a href="
 "\"https://wiki.winehq.org/Bugs\">file a bug report</a> versturen."
 
 #: programs/winedbg/winedbg.rc:40
