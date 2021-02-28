@@ -36,6 +36,11 @@ msgstr "צהוב"
 msgid "Deny"
 msgstr ""
 
+#: dlls/aclui/aclui.rc:47
+#, fuzzy
+msgid "Permissions for %1"
+msgstr "הגישה נדחתה.\n"
+
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
 msgstr "התקנה/הסרה"

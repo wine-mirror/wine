@@ -34,6 +34,10 @@ msgstr "மஞ்சள்"
 msgid "Deny"
 msgstr ""
 
+#: dlls/aclui/aclui.rc:47
+msgid "Permissions for %1"
+msgstr ""
+
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
 msgstr "நிறுவு/நிறுவல்நீக்கு"

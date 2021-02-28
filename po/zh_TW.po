@@ -35,6 +35,12 @@ msgstr "黃色"
 msgid "Deny"
 msgstr ""
 
+#: dlls/aclui/aclui.rc:47
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Permissions for %1"
+msgstr "存取被拒。\n"
+
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
 msgstr "安裝/移除"

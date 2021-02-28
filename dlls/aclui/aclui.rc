@@ -41,6 +41,11 @@ BEGIN
                                           5, 115, 230, 95, WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE
 END
 
+STRINGTABLE
+BEGIN
+    IDS_PERMISSION_FOR "Permissions for %1"
+END
+
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: user_icons.bmp */

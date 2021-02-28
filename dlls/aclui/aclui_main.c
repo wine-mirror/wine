@@ -51,6 +51,9 @@ struct security_page
     SI_OBJECT_INFO info;
     PSECURITY_DESCRIPTOR sd;
 
+    SI_ACCESS *access;
+    ULONG access_count;
+
     struct user *users;
     unsigned int user_count;
 
@@ -59,6 +62,19 @@ struct security_page
 };
 
 static HINSTANCE aclui_instance;
+
+static WCHAR *WINAPIV load_formatstr(UINT resource, ...)
+{
+    __ms_va_list valist;
+    WCHAR *str;
+    DWORD ret;
+
+    __ms_va_start(valist, resource);
+    ret = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_HMODULE,
+                         aclui_instance, resource, 0, (WCHAR*)&str, 0, &valist);
+    __ms_va_end(valist);
+    return ret ? str : NULL;
+}
 
 static WCHAR *get_sid_name(PSID sid, SID_NAME_USE *sid_type)
 {
@@ -135,6 +151,80 @@ static PSID get_sid_from_ace(ACE_HEADER *ace)
     }
 }
 
+static void compute_access_masks(PSECURITY_DESCRIPTOR sd, PSID sid, ACCESS_MASK *allowed, ACCESS_MASK *denied)
+{
+    BOOL defaulted, present;
+    ACE_HEADER *ace;
+    PSID ace_sid;
+    DWORD index;
+    ACL *dacl;
+
+    *allowed = 0;
+    *denied  = 0;
+
+    if (!GetSecurityDescriptorDacl(sd, &present, &dacl, &defaulted) || !present)
+        return;
+
+    for (index = 0; index < dacl->AceCount; index++)
+    {
+        if (!GetAce(dacl, index, (void**)&ace))
+            break;
+
+        ace_sid = get_sid_from_ace(ace);
+        if (!ace_sid || !EqualSid(ace_sid, sid))
+            continue;
+
+        if (ace->AceType == ACCESS_ALLOWED_ACE_TYPE)
+            *allowed |= ((ACCESS_ALLOWED_ACE*)ace)->Mask;
+        else if (ace->AceType == ACCESS_DENIED_ACE_TYPE)
+            *denied |= ((ACCESS_DENIED_ACE*)ace)->Mask;
+    }
+}
+
+static void update_access_list(struct security_page *page, struct user *user)
+{
+    ACCESS_MASK allowed, denied;
+    WCHAR *infotext;
+    ULONG i, index;
+    LVITEMW item;
+    HWND control;
+
+    compute_access_masks(page->sd, user->sid, &allowed, &denied);
+
+    if ((infotext = load_formatstr(IDS_PERMISSION_FOR, user->name)))
+    {
+        SetDlgItemTextW(page->dialog, IDC_ACE_USER, infotext);
+        LocalFree(infotext);
+    }
+
+    control = GetDlgItem(page->dialog, IDC_ACE);
+    index = 0;
+    for (i = 0; i < page->access_count; i++)
+    {
+        if (!(page->access[i].dwFlags & SI_ACCESS_GENERAL))
+            continue;
+
+        item.mask = LVIF_TEXT;
+        item.iItem = index;
+
+        item.iSubItem = 1;
+        if ((page->access[i].mask & allowed) == page->access[i].mask)
+            item.pszText = (WCHAR *)L"X";
+        else
+            item.pszText = (WCHAR *)L"-";
+        SendMessageW(control, LVM_SETITEMW, 0, (LPARAM)&item);
+
+        item.iSubItem = 2;
+        if ((page->access[i].mask & denied) == page->access[i].mask)
+            item.pszText = (WCHAR *)L"X";
+        else
+            item.pszText = (WCHAR *)L"-";
+        SendMessageW(control, LVM_SETITEMW, 0, (LPARAM)&item);
+
+        index++;
+    }
+}
+
 static void init_users(struct security_page *page)
 {
     BOOL defaulted, present;
@@ -159,6 +249,37 @@ static void init_users(struct security_page *page)
         if (!(sid = get_sid_from_ace(ace)))
             continue;
         add_user(page, sid);
+    }
+}
+
+static void init_access_list(struct security_page *page)
+{
+    ULONG i, index;
+    WCHAR str[256];
+    LVITEMW item;
+    HWND control;
+
+    control = GetDlgItem(page->dialog, IDC_ACE);
+    index = 0;
+    for (i = 0; i < page->access_count; i++)
+    {
+        if (!(page->access[i].dwFlags & SI_ACCESS_GENERAL))
+            continue;
+
+        item.mask     = LVIF_TEXT;
+        item.iItem    = index;
+        item.iSubItem = 0;
+        if (IS_INTRESOURCE(page->access[i].pszName))
+        {
+            str[0] = 0;
+            LoadStringW(page->info.hInstance, (DWORD_PTR)page->access[i].pszName, str, ARRAY_SIZE(str));
+            item.pszText = str;
+        }
+        else
+            item.pszText = (WCHAR *)page->access[i].pszName;
+        SendMessageW(control, LVM_INSERTITEMW, 0, (LPARAM)&item);
+
+        index++;
     }
 }
 
@@ -207,6 +328,7 @@ static void security_page_init_dlg(HWND hwnd, struct security_page *page)
     LVCOLUMNW column;
     HWND control;
     HRESULT hr;
+    ULONG def;
     RECT rect;
 
     page->dialog = hwnd;
@@ -217,6 +339,15 @@ static void security_page_init_dlg(HWND hwnd, struct security_page *page)
         ERR("Failed to get security descriptor, hr %#x.\n", hr);
         return;
     }
+
+    if (FAILED(hr = ISecurityInformation_GetAccessRights(page->security,
+            NULL, 0, &page->access, &page->access_count, &def)))
+    {
+        ERR("Failed to get access mapping, hr %#x.\n", hr);
+        return;
+    }
+
+    /* user list */
 
     control = GetDlgItem(hwnd, IDC_USERS);
     SendMessageW(control, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
@@ -232,6 +363,23 @@ static void security_page_init_dlg(HWND hwnd, struct security_page *page)
     SendMessageW(control, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)page->image_list);
 
     init_users(page);
+
+    /* ACE list */
+
+    control = GetDlgItem(hwnd, IDC_ACE);
+    SendMessageW(control, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
+
+    column.mask = LVCF_FMT | LVCF_WIDTH;
+    column.fmt = LVCFMT_LEFT;
+    column.cx = 170;
+    SendMessageW(control, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+
+    column.fmt = LVCFMT_CENTER;
+    column.cx = 85;
+    SendMessageW(control, LVM_INSERTCOLUMNW, 1, (LPARAM)&column);
+    SendMessageW(control, LVM_INSERTCOLUMNW, 2, (LPARAM)&column);
+
+    init_access_list(page);
 
     if (page->user_count)
     {
@@ -252,7 +400,23 @@ static INT_PTR CALLBACK security_page_proc(HWND dialog, UINT msg, WPARAM wparam,
         case WM_INITDIALOG:
         {
             PROPSHEETPAGEW *propsheet = (PROPSHEETPAGEW *)lparam;
+            SetWindowLongPtrW(dialog, DWLP_USER, propsheet->lParam);
             security_page_init_dlg(dialog, (struct security_page *)propsheet->lParam);
+            break;
+        }
+
+        case WM_NOTIFY:
+        {
+            struct security_page *page = (struct security_page *)GetWindowLongPtrW(dialog, DWLP_USER);
+            NMHDR *hdr = (NMHDR *)lparam;
+
+            if (hdr->hwndFrom == GetDlgItem(dialog, IDC_USERS) && hdr->code == LVN_ITEMCHANGED)
+            {
+                NMLISTVIEW *listview = (NMLISTVIEW *)lparam;
+                if (!(listview->uOldState & LVIS_SELECTED) && (listview->uNewState & LVIS_SELECTED))
+                    update_access_list(page, (struct user *)listview->lParam);
+                return TRUE;
+            }
             break;
         }
     }

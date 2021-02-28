@@ -33,6 +33,12 @@ msgstr "Жълт"
 msgid "Deny"
 msgstr ""
 
+#: dlls/aclui/aclui.rc:47
+#, fuzzy
+#| msgid "Properties for %s"
+msgid "Permissions for %1"
+msgstr "Свойства на %s"
+
 #: dlls/appwiz.cpl/appwiz.rc:58
 #, fuzzy
 msgid "Install/Uninstall"

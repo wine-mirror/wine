@@ -30,6 +30,11 @@ msgstr ""
 msgid "Deny"
 msgstr ""
 
+#: dlls/aclui/aclui.rc:47
+#, fuzzy
+msgid "Permissions for %1"
+msgstr "ସୂଚନା (&o)"
+
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
 msgstr ""

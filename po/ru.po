@@ -35,6 +35,12 @@ msgstr "Жёлтый"
 msgid "Deny"
 msgstr ""
 
+#: dlls/aclui/aclui.rc:47
+#, fuzzy
+#| msgid "Access denied.\n"
+msgid "Permissions for %1"
+msgstr "Доступ запрещён.\n"
+
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
 msgstr "Установка/Удаление"

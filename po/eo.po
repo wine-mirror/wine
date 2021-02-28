@@ -34,6 +34,12 @@ msgstr "Flavo"
 msgid "Deny"
 msgstr ""
 
+#: dlls/aclui/aclui.rc:47
+#, fuzzy
+#| msgid "Properties for %s"
+msgid "Permissions for %1"
+msgstr "Ecoj laŭ %s"
+
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
 msgstr "Instali/Malinstali"
