@@ -1356,17 +1356,6 @@ static void get_initial_directory( UNICODE_STRING *dir )
 
 
 /*************************************************************************
- *		get_unix_codepage_data
- *
- * Return the Unix codepage data.
- */
-USHORT * CDECL get_unix_codepage_data(void)
-{
-    return unix_cp.data;
-}
-
-
-/*************************************************************************
  *		get_locales
  *
  * Return the system and user locales. Buffers must be at least LOCALE_NAME_MAX_LENGTH chars long.

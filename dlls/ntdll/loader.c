@@ -3968,7 +3968,6 @@ static NTSTATUS process_init(void)
     is_wow64 = !!NtCurrentTeb64();
 #endif
 
-    init_unix_codepage();
     init_user_process_params();
     params = peb->ProcessParameters;
 

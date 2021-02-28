@@ -1715,7 +1715,6 @@ static struct unix_funcs unix_funcs =
     ntdll_sin,
     ntdll_sqrt,
     ntdll_tan,
-    get_unix_codepage_data,
     get_locales,
     virtual_release_address_space,
     load_so_dll,

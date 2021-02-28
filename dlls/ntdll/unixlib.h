@@ -26,7 +26,7 @@
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 113
+#define NTDLL_UNIXLIB_VERSION 114
 
 struct unix_funcs
 {
@@ -70,7 +70,6 @@ struct unix_funcs
     double        (CDECL *tan)( double d );
 
     /* environment functions */
-    USHORT *      (CDECL *get_unix_codepage_data)(void);
     void          (CDECL *get_locales)( WCHAR *sys, WCHAR *user );
 
     /* virtual memory functions */

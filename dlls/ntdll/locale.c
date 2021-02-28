@@ -104,7 +104,6 @@ LCID user_lcid = 0, system_lcid = 0;
 
 static NLSTABLEINFO nls_info;
 static HMODULE kernel32_handle;
-static CPTABLEINFO unix_table;
 static struct norm_table *norm_tables[16];
 
 
@@ -534,13 +533,6 @@ static unsigned int compose_string( const struct norm_table *info, WCHAR *str, u
 }
 
 
-void init_unix_codepage(void)
-{
-    USHORT *data = unix_funcs->get_unix_codepage_data();
-    if (data) RtlInitCodePageTable( data, &unix_table );
-}
-
-
 static LCID locale_to_lcid( WCHAR *win_name )
 {
     WCHAR *p;
@@ -583,72 +575,6 @@ void init_locale( HMODULE module )
     NtSetDefaultLocale( TRUE, user_lcid );
     NtSetDefaultLocale( FALSE, system_lcid );
     TRACE( "system=%04x user=%04x\n", system_lcid, user_lcid );
-}
-
-
-/******************************************************************
- *      ntdll_umbstowcs
- */
-DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
-{
-    DWORD reslen;
-
-    if (unix_table.CodePage)
-        RtlCustomCPToUnicodeN( &unix_table, dst, dstlen * sizeof(WCHAR), &reslen, src, srclen );
-    else
-        RtlUTF8ToUnicodeN( dst, dstlen * sizeof(WCHAR), &reslen, src, srclen );
-    return reslen / sizeof(WCHAR);
-}
-
-
-/******************************************************************
- *      ntdll_wcstoumbs
- */
-int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict )
-{
-    DWORD i, reslen;
-
-    if (!unix_table.CodePage)
-        RtlUnicodeToUTF8N( dst, dstlen, &reslen, src, srclen * sizeof(WCHAR) );
-    else if (!strict)
-        RtlUnicodeToCustomCPN( &unix_table, dst, dstlen, &reslen, src, srclen * sizeof(WCHAR) );
-    else  /* do it by hand to make sure every character roundtrips correctly */
-    {
-        if (unix_table.DBCSOffsets)
-        {
-            const unsigned short *uni2cp = unix_table.WideCharTable;
-            for (i = dstlen; srclen && i; i--, srclen--, src++)
-            {
-                unsigned short ch = uni2cp[*src];
-                if (ch >> 8)
-                {
-                    if (unix_table.DBCSOffsets[unix_table.DBCSOffsets[ch >> 8] + (ch & 0xff)] != *src)
-                        return -1;
-                    if (i == 1) break;  /* do not output a partial char */
-                    i--;
-                    *dst++ = ch >> 8;
-                }
-                else
-                {
-                    if (unix_table.MultiByteTable[ch] != *src) return -1;
-                    *dst++ = (char)ch;
-                }
-            }
-            reslen = dstlen - i;
-        }
-        else
-        {
-            const unsigned char *uni2cp = unix_table.WideCharTable;
-            reslen = min( srclen, dstlen );
-            for (i = 0; i < reslen; i++)
-            {
-                unsigned char ch = uni2cp[src[i]];
-                if (unix_table.MultiByteTable[ch] != src[i]) return -1;
-                dst[i] = ch;
-            }
-        }
-    }
-    return reslen;
 }
 
 
