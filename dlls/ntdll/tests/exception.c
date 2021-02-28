@@ -5816,6 +5816,120 @@ static void test_debug_registers(void)
     CloseHandle(thread);
 }
 
+#if defined(__x86_64__)
+
+static void test_debug_registers_wow64(void)
+{
+    char cmdline[] = "C:\\windows\\syswow64\\notepad.exe";
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si = {0};
+    WOW64_CONTEXT wow64_ctx;
+    CONTEXT ctx;
+    BOOL is_wow64;
+    NTSTATUS ret;
+    BOOL bret;
+
+    si.cb = sizeof(si);
+    bret = CreateProcessA(cmdline, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(bret, "CreateProcessA failed\n");
+
+    bret = pIsWow64Process(pi.hProcess, &is_wow64);
+    ok(bret && is_wow64, "expected Wow64 process\n");
+
+    SuspendThread(pi.hThread);
+
+    ZeroMemory(&ctx, sizeof(ctx));
+    ctx.ContextFlags = CONTEXT_ALL;
+    bret = GetThreadContext(pi.hThread, &ctx);
+    todo_wine
+    ok(bret, "GetThreadContext failed\n");
+
+    ctx.Dr0 = 0x12340000;
+    ctx.Dr1 = 0x12340001;
+    ctx.Dr2 = 0x12340002;
+    ctx.Dr3 = 0x12340003;
+    ctx.Dr7 = 0x155; /* enable all breakpoints (local) */
+    bret = SetThreadContext(pi.hThread, &ctx);
+    todo_wine
+    ok(bret, "SetThreadContext failed\n");
+
+    if (bret) {
+        ZeroMemory(&ctx, sizeof(ctx));
+        ctx.ContextFlags = CONTEXT_ALL;
+        bret = GetThreadContext(pi.hThread, &ctx);
+        todo_wine
+        ok(bret, "GetThreadContext failed\n");
+        if (bret)
+        {
+            ok(ctx.Dr0 == 0x12340000, "expected 0x12340000, got %lx\n", ctx.Dr0);
+            ok(ctx.Dr1 == 0x12340001, "expected 0x12340001, got %lx\n", ctx.Dr1);
+            ok(ctx.Dr2 == 0x12340002, "expected 0x12340002, got %lx\n", ctx.Dr2);
+            ok(ctx.Dr3 == 0x12340003, "expected 0x12340003, got %lx\n", ctx.Dr3);
+            ok(ctx.Dr7 == 0x155, "expected 0x155, got %lx\n", ctx.Dr7);
+        }
+
+        ZeroMemory(&wow64_ctx, sizeof(wow64_ctx));
+        wow64_ctx.ContextFlags = WOW64_CONTEXT_ALL;
+        ret = pRtlWow64GetThreadContext(pi.hThread, &wow64_ctx);
+        ok(ret == STATUS_SUCCESS, "Wow64GetThreadContext failed with %lx\n", ret);
+        if (ret == STATUS_SUCCESS)
+        {
+            ok(wow64_ctx.Dr0 == 0x12340000, "expected 0x12340000, got %lx\n", wow64_ctx.Dr0);
+            ok(wow64_ctx.Dr1 == 0x12340001, "expected 0x12340001, got %lx\n", wow64_ctx.Dr1);
+            ok(wow64_ctx.Dr2 == 0x12340002, "expected 0x12340002, got %lx\n", wow64_ctx.Dr2);
+            ok(wow64_ctx.Dr3 == 0x12340003, "expected 0x12340003, got %lx\n", wow64_ctx.Dr3);
+            ok(wow64_ctx.Dr7 == 0x155, "expected 0x155, got %lx\n", wow64_ctx.Dr7);
+        }
+    }
+
+    wow64_ctx.Dr0 = 0x56780000;
+    wow64_ctx.Dr1 = 0x56780001;
+    wow64_ctx.Dr2 = 0x56780002;
+    wow64_ctx.Dr3 = 0x56780003;
+    wow64_ctx.Dr7 = 0x101; /* enable only the first breakpoint */
+    ret = pRtlWow64SetThreadContext(pi.hThread, &wow64_ctx);
+    ok(ret == STATUS_SUCCESS, "Wow64SetThreadContext failed with %lx\n", ret);
+
+    ZeroMemory(&wow64_ctx, sizeof(wow64_ctx));
+    wow64_ctx.ContextFlags = WOW64_CONTEXT_ALL;
+    ret = pRtlWow64GetThreadContext(pi.hThread, &wow64_ctx);
+    ok(ret == STATUS_SUCCESS, "Wow64GetThreadContext failed with %lx\n", ret);
+    if (ret == STATUS_SUCCESS)
+    {
+        todo_wine
+        ok(wow64_ctx.Dr0 == 0x56780000, "expected 0x56780000, got %lx\n", wow64_ctx.Dr0);
+        todo_wine
+        ok(wow64_ctx.Dr1 == 0x56780001, "expected 0x56780001, got %lx\n", wow64_ctx.Dr1);
+        todo_wine
+        ok(wow64_ctx.Dr2 == 0x56780002, "expected 0x56780002, got %lx\n", wow64_ctx.Dr2);
+        todo_wine
+        ok(wow64_ctx.Dr3 == 0x56780003, "expected 0x56780003, got %lx\n", wow64_ctx.Dr3);
+        todo_wine
+        ok(wow64_ctx.Dr7 == 0x101, "expected 0x101, got %lx\n", wow64_ctx.Dr7);
+    }
+
+    ZeroMemory(&ctx, sizeof(ctx));
+    ctx.ContextFlags = CONTEXT_ALL;
+    bret = GetThreadContext(pi.hThread, &ctx);
+    todo_wine
+    ok(bret, "GetThreadContext failed\n");
+    if (bret)
+    {
+        ok(ctx.Dr0 == 0x56780000, "expected 0x56780000, got %lx\n", ctx.Dr0);
+        ok(ctx.Dr1 == 0x56780001, "expected 0x56780001, got %lx\n", ctx.Dr1);
+        ok(ctx.Dr2 == 0x56780002, "expected 0x56780002, got %lx\n", ctx.Dr2);
+        ok(ctx.Dr3 == 0x56780003, "expected 0x56780003, got %lx\n", ctx.Dr3);
+        ok(ctx.Dr7 == 0x101, "expected 0x101, got %lx\n", ctx.Dr7);
+    }
+
+    ResumeThread(pi.hThread);
+    TerminateProcess(pi.hProcess, 0);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+}
+
+#endif
+
 static DWORD debug_service_exceptions;
 
 static LONG CALLBACK debug_service_handler(EXCEPTION_POINTERS *ExceptionInfo)
@@ -8314,6 +8428,7 @@ START_TEST(exception)
 
     test_rtlraiseexception();
     test_debug_registers();
+    test_debug_registers_wow64();
     test_debug_service(1);
     test_virtual_unwind();
     test___C_specific_handler();
