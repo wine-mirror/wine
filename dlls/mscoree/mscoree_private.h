@@ -147,6 +147,18 @@ typedef void (CDECL *MonoProfileFunc)(MonoProfiler *prof);
 
 typedef void (CDECL *MonoPrintCallback) (const char *string, INT is_stdout);
 
+typedef enum {
+    MONO_AOT_MODE_NONE,
+    MONO_AOT_MODE_NORMAL,
+    MONO_AOT_MODE_HYBRID,
+    MONO_AOT_MODE_FULL,
+    MONO_AOT_MODE_LLVMONLY,
+    MONO_AOT_MODE_INTERP,
+    MONO_AOT_MODE_INTERP_LLVMONLY,
+    MONO_AOT_MODE_LLVMONLY_INTERP,
+    MONO_AOT_MODE_INTERP_ONLY
+} MonoAotMode;
+
 extern BOOL is_mono_started DECLSPEC_HIDDEN;
 
 extern MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly) DECLSPEC_HIDDEN;
