@@ -55,6 +55,7 @@ struct security_page
     unsigned int user_count;
 
     HWND dialog;
+    HIMAGELIST image_list;
 };
 
 static HINSTANCE aclui_instance;
@@ -110,11 +111,12 @@ static void add_user(struct security_page *page, PSID sid)
     user->name = name;
     user->sid = sid;
 
-    item.mask     = LVIF_PARAM | LVIF_TEXT;
+    item.mask     = LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE;
     item.iItem    = -1;
     item.iSubItem = 0;
     item.pszText  = name;
     item.lParam   = (LPARAM)user;
+    item.iImage = (sid_type == SidTypeGroup || sid_type == SidTypeWellKnownGroup) ? 0 : 1;
 
     SendMessageW(GetDlgItem(page->dialog, IDC_USERS), LVM_INSERTITEMW, 0, (LPARAM)&item);
 }
@@ -160,6 +162,30 @@ static void init_users(struct security_page *page)
     }
 }
 
+static HIMAGELIST create_image_list(UINT resource, UINT width, UINT height, UINT count, COLORREF mask_color)
+{
+    HIMAGELIST image_list;
+    HBITMAP image;
+    INT ret;
+
+    if (!(image_list = ImageList_Create(width, height, ILC_COLOR32 | ILC_MASK, 0, count)))
+        return NULL;
+    if (!(image = LoadBitmapW(aclui_instance, MAKEINTRESOURCEW(resource))))
+    {
+        ImageList_Destroy(image_list);
+        return NULL;
+    }
+
+    ret = ImageList_AddMasked(image_list, image, mask_color);
+    DeleteObject(image);
+    if (ret == -1)
+    {
+        ImageList_Destroy(image_list);
+        return NULL;
+    }
+    return image_list;
+}
+
 static void security_page_free(struct security_page *page)
 {
     unsigned int i;
@@ -169,6 +195,8 @@ static void security_page_free(struct security_page *page)
     free(page->users);
 
     LocalFree(page->sd);
+    if (page->image_list)
+        ImageList_Destroy(page->image_list);
     if (page->security)
         ISecurityInformation_Release(page->security);
     free(page);
@@ -198,6 +226,10 @@ static void security_page_init_dlg(HWND hwnd, struct security_page *page)
     column.fmt = LVCFMT_LEFT;
     column.cx = rect.right - rect.left;
     SendMessageW(control, LVM_INSERTCOLUMNW, 0, (LPARAM)&column);
+
+    if (!(page->image_list = create_image_list(IDB_USER_ICONS, 18, 18, 2, RGB(255, 0, 255))))
+        return;
+    SendMessageW(control, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)page->image_list);
 
     init_users(page);
 

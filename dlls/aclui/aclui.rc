@@ -40,3 +40,8 @@ BEGIN
                                           | WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP,
                                           5, 115, 230, 95, WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE
 END
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+/* @makedep: user_icons.bmp */
+IDB_USER_ICONS BITMAP user_icons.bmp
