@@ -544,6 +544,7 @@ static BOOL is_dynamic_env_var( const char *var )
             STARTS_WITH( var, "WINEBUILDDIR=" ) ||
             STARTS_WITH( var, "WINECONFIGDIR=" ) ||
             STARTS_WITH( var, "WINEDLLDIR" ) ||
+            STARTS_WITH( var, "WINEUNIXCP=" ) ||
             STARTS_WITH( var, "WINEUSERNAME=" ) ||
             STARTS_WITH( var, "WINEPRELOADRESERVE=" ) ||
             STARTS_WITH( var, "WINELOADERNOEXEC=" ) ||
@@ -1194,9 +1195,9 @@ static WCHAR *get_dynamic_environment( SIZE_T *size )
     SIZE_T alloc, pos = 0;
     WCHAR *buffer;
     DWORD i;
-    char dlldir[22];
+    char str[22];
 
-    alloc = 20 * 7;  /* 7 variable names */
+    alloc = 20 * 8;  /* 8 variable names */
     if (data_dir) alloc += strlen( data_dir ) + 9;
     if (home_dir) alloc += strlen( home_dir ) + 9;
     if (build_dir) alloc += strlen( build_dir ) + 9;
@@ -1212,11 +1213,16 @@ static WCHAR *get_dynamic_environment( SIZE_T *size )
     if (config_dir) add_path_var( buffer, &pos, "WINECONFIGDIR", config_dir );
     for (i = 0; dll_paths[i]; i++)
     {
-        sprintf( dlldir, "WINEDLLDIR%u", i );
-        add_path_var( buffer, &pos, dlldir, dll_paths[i] );
+        sprintf( str, "WINEDLLDIR%u", i );
+        add_path_var( buffer, &pos, str, dll_paths[i] );
     }
     if (user_name) append_envA( buffer, &pos, "WINEUSERNAME", user_name );
     if (overrides) append_envA( buffer, &pos, "WINEDLLOVERRIDES", overrides );
+    if (unix_cp.data)
+    {
+        sprintf( str, "%u", unix_cp.data[1] );
+        append_envA( buffer, &pos, "WINEUNIXCP", str );
+    }
     assert( pos <= alloc );
     *size = pos * sizeof(WCHAR);
     return buffer;

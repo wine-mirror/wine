@@ -42,8 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
 #define CALINFO_MAX_YEAR 2029
 
-extern UINT CDECL __wine_get_unix_codepage(void);
-
 extern const unsigned int collation_table[] DECLSPEC_HIDDEN;
 
 static HANDLE kernel32_handle;
@@ -568,6 +566,7 @@ struct norm_table
 };
 
 static NLSTABLEINFO nls_info;
+static UINT unix_cp = CP_UTF8;
 static UINT mac_cp = 10000;
 static HKEY intl_key;
 static HKEY nls_key;
@@ -712,6 +711,9 @@ void init_locale(void)
     DWORD count, dispos, i;
     SIZE_T size;
     HKEY hkey;
+
+    if (GetEnvironmentVariableW( L"WINEUNIXCP", bufferW, ARRAY_SIZE(bufferW) ))
+        unix_cp = wcstoul( bufferW, NULL, 10 );
 
     kernel32_handle = GetModuleHandleW( L"kernel32.dll" );
 
@@ -5532,8 +5534,7 @@ INT WINAPI DECLSPEC_HOTPATCH MultiByteToWideChar( UINT codepage, DWORD flags, co
         ret = mbstowcs_utf8( flags, src, srclen, dst, dstlen );
         break;
     case CP_UNIXCP:
-        codepage = __wine_get_unix_codepage();
-        if (codepage == CP_UTF8)
+        if (unix_cp == CP_UTF8)
         {
             ret = mbstowcs_utf8( flags, src, srclen, dst, dstlen );
 #ifdef __APPLE__  /* work around broken Mac OS X filesystem that enforces decomposed Unicode */
@@ -5541,6 +5542,7 @@ INT WINAPI DECLSPEC_HOTPATCH MultiByteToWideChar( UINT codepage, DWORD flags, co
 #endif
             break;
         }
+        codepage = unix_cp;
         /* fall through */
     default:
         ret = mbstowcs_codepage( codepage, flags, src, srclen, dst, dstlen );
@@ -5829,13 +5831,13 @@ INT WINAPI DECLSPEC_HOTPATCH WideCharToMultiByte( UINT codepage, DWORD flags, LP
         ret = wcstombs_utf8( flags, src, srclen, dst, dstlen, defchar, used );
         break;
     case CP_UNIXCP:
-        codepage = __wine_get_unix_codepage();
-        if (codepage == CP_UTF8)
+        if (unix_cp == CP_UTF8)
         {
             if (used) *used = FALSE;
             ret = wcstombs_utf8( flags, src, srclen, dst, dstlen, NULL, NULL );
             break;
         }
+        codepage = unix_cp;
         /* fall through */
     default:
         ret = wcstombs_codepage( codepage, flags, src, srclen, dst, dstlen, defchar, used );

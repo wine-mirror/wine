@@ -1625,9 +1625,6 @@
 @ cdecl -syscall wine_get_build_id()
 @ cdecl -syscall wine_get_host_version(ptr ptr)
 
-# Codepages
-@ cdecl __wine_get_unix_codepage()
-
 # Filesystem
 @ cdecl -syscall wine_nt_to_unix_file_name(ptr ptr ptr long)
 @ cdecl -syscall wine_unix_to_nt_file_name(str ptr ptr)

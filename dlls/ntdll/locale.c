@@ -652,16 +652,6 @@ int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BO
 }
 
 
-/******************************************************************
- *      __wine_get_unix_codepage   (NTDLL.@)
- */
-UINT CDECL __wine_get_unix_codepage(void)
-{
-    if (!unix_table.CodePage) return CP_UTF8;
-    return unix_table.CodePage;
-}
-
-
 static NTSTATUS get_dummy_preferred_ui_language( DWORD flags, LANGID lang, ULONG *count,
                                                  WCHAR *buffer, ULONG *size )
 {
