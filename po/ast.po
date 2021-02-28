@@ -15,6 +15,25 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Lokalize 18.12.2\n"
 
+#: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
+#: programs/winefile/winefile.rc:114
+msgid "Security"
+msgstr "Seguranza"
+
+#: dlls/aclui/aclui.rc:32
+msgid "&Group or user names:"
+msgstr ""
+
+#: dlls/aclui/aclui.rc:38
+#, fuzzy
+#| msgid "Yellow"
+msgid "Allow"
+msgstr "Mariellu"
+
+#: dlls/aclui/aclui.rc:39
+msgid "Deny"
+msgstr ""
+
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
 msgstr ""
@@ -3506,10 +3525,6 @@ msgstr ""
 #: dlls/inetcpl.cpl/inetcpl.rc:82 programs/progman/progman.rc:67
 msgid "Delete"
 msgstr ""
-
-#: dlls/inetcpl.cpl/inetcpl.rc:90 programs/winefile/winefile.rc:114
-msgid "Security"
-msgstr "Seguranza"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:112
 msgid ""

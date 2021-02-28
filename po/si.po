@@ -16,6 +16,27 @@ msgstr ""
 "X-Generator: Lokalize 19.04.1\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
+#: programs/winefile/winefile.rc:114
+msgid "Security"
+msgstr "ආරක්ෂණය"
+
+#: dlls/aclui/aclui.rc:32
+#, fuzzy
+#| msgid "&User name:"
+msgid "&Group or user names:"
+msgstr "පරිශීලක නම (&U):"
+
+#: dlls/aclui/aclui.rc:38
+#, fuzzy
+#| msgid "Yellow"
+msgid "Allow"
+msgstr "කහ"
+
+#: dlls/aclui/aclui.rc:39
+msgid "Deny"
+msgstr ""
+
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
 msgstr "ස්ථාපනය/අස්ථාපනය කරන්න"
@@ -3531,10 +3552,6 @@ msgstr ""
 #: dlls/inetcpl.cpl/inetcpl.rc:82 programs/progman/progman.rc:67
 msgid "Delete"
 msgstr "මකන්න"
-
-#: dlls/inetcpl.cpl/inetcpl.rc:90 programs/winefile/winefile.rc:114
-msgid "Security"
-msgstr "ආරක්ෂණය"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:112
 msgid ""

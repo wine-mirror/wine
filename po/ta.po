@@ -15,6 +15,25 @@ msgstr ""
 "X-Generator: Lokalize 18.12.3\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
+#: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
+#: programs/winefile/winefile.rc:114
+msgid "Security"
+msgstr ""
+
+#: dlls/aclui/aclui.rc:32
+msgid "&Group or user names:"
+msgstr ""
+
+#: dlls/aclui/aclui.rc:38
+#, fuzzy
+#| msgid "Yellow"
+msgid "Allow"
+msgstr "மஞ்சள்"
+
+#: dlls/aclui/aclui.rc:39
+msgid "Deny"
+msgstr ""
+
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
 msgstr "நிறுவு/நிறுவல்நீக்கு"
@@ -3473,10 +3492,6 @@ msgstr ""
 
 #: dlls/inetcpl.cpl/inetcpl.rc:82 programs/progman/progman.rc:67
 msgid "Delete"
-msgstr ""
-
-#: dlls/inetcpl.cpl/inetcpl.rc:90 programs/winefile/winefile.rc:114
-msgid "Security"
 msgstr ""
 
 #: dlls/inetcpl.cpl/inetcpl.rc:112

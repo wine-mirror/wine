@@ -14,6 +14,27 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 2.0.6\n"
 
+#: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
+#: programs/winefile/winefile.rc:114
+msgid "Security"
+msgstr "Seguridad"
+
+#: dlls/aclui/aclui.rc:32
+#, fuzzy
+#| msgid "&User name:"
+msgid "&Group or user names:"
+msgstr "&Usuario:"
+
+#: dlls/aclui/aclui.rc:38
+#, fuzzy
+#| msgid "Yellow"
+msgid "Allow"
+msgstr "Amarillo"
+
+#: dlls/aclui/aclui.rc:39
+msgid "Deny"
+msgstr ""
+
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
 msgstr "Instalar/Desinstalar"
@@ -3616,10 +3637,6 @@ msgstr ""
 #: dlls/inetcpl.cpl/inetcpl.rc:82 programs/progman/progman.rc:67
 msgid "Delete"
 msgstr "Eliminar"
-
-#: dlls/inetcpl.cpl/inetcpl.rc:90 programs/winefile/winefile.rc:114
-msgid "Security"
-msgstr "Seguridad"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:112
 msgid ""

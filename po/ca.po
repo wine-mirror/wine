@@ -15,6 +15,27 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 2.4.1\n"
 
+#: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
+#: programs/winefile/winefile.rc:114
+msgid "Security"
+msgstr "Seguretat"
+
+#: dlls/aclui/aclui.rc:32
+#, fuzzy
+#| msgid "&User name:"
+msgid "&Group or user names:"
+msgstr "&Nom d'usuari:"
+
+#: dlls/aclui/aclui.rc:38
+#, fuzzy
+#| msgid "Yellow"
+msgid "Allow"
+msgstr "Groga"
+
+#: dlls/aclui/aclui.rc:39
+msgid "Deny"
+msgstr ""
+
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
 msgstr "Instal·la/desinstal·la"
@@ -3609,10 +3630,6 @@ msgstr ""
 #: dlls/inetcpl.cpl/inetcpl.rc:82 programs/progman/progman.rc:67
 msgid "Delete"
 msgstr "Suprimeix"
-
-#: dlls/inetcpl.cpl/inetcpl.rc:90 programs/winefile/winefile.rc:114
-msgid "Security"
-msgstr "Seguretat"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:112
 msgid ""

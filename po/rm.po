@@ -13,6 +13,24 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
+#: programs/winefile/winefile.rc:114
+msgid "Security"
+msgstr ""
+
+#: dlls/aclui/aclui.rc:32
+#, fuzzy
+msgid "&Group or user names:"
+msgstr "&Datoteca"
+
+#: dlls/aclui/aclui.rc:38
+msgid "Allow"
+msgstr ""
+
+#: dlls/aclui/aclui.rc:39
+msgid "Deny"
+msgstr ""
+
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
 msgstr ""
@@ -3536,10 +3554,6 @@ msgstr ""
 
 #: dlls/inetcpl.cpl/inetcpl.rc:82 programs/progman/progman.rc:67
 msgid "Delete"
-msgstr ""
-
-#: dlls/inetcpl.cpl/inetcpl.rc:90 programs/winefile/winefile.rc:114
-msgid "Security"
 msgstr ""
 
 #: dlls/inetcpl.cpl/inetcpl.rc:112
