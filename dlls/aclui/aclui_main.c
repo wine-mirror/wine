@@ -480,10 +480,32 @@ HPROPSHEETPAGE WINAPI CreateSecurityPage(ISecurityInformation *security)
     return ret;
 }
 
-BOOL WINAPI EditSecurity(HWND owner, LPSECURITYINFO psi)
+BOOL WINAPI EditSecurity(HWND owner, ISecurityInformation *security)
 {
-    FIXME("(%p, %p): stub\n", owner, psi);
-    return FALSE;
+    PROPSHEETHEADERW sheet = {0};
+    HPROPSHEETPAGE pages[1];
+    SI_OBJECT_INFO info;
+    BOOL ret;
+
+    TRACE("(%p, %p)\n", owner, security);
+
+    if (FAILED(ISecurityInformation_GetObjectInformation(security, &info)))
+        return FALSE;
+    if (!(pages[0] = CreateSecurityPage(security)))
+        return FALSE;
+
+    sheet.dwSize = sizeof(sheet);
+    sheet.dwFlags = PSH_DEFAULT;
+    sheet.hwndParent = owner;
+    sheet.hInstance = aclui_instance;
+    sheet.pszCaption = load_formatstr(IDS_PERMISSION_FOR, info.pszObjectName);
+    sheet.nPages = 1;
+    sheet.nStartPage = 0;
+    sheet.phpage = pages;
+
+    ret = PropertySheetW(&sheet) != -1;
+    LocalFree((void *)sheet.pszCaption);
+    return ret;
 }
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
