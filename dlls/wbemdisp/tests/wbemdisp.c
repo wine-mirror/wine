@@ -279,6 +279,15 @@ static void test_ParseDisplayName(void)
     IParseDisplayName_Release( displayname );
 }
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+}
+
 static void test_locator(void)
 {
     HRESULT hr;
@@ -307,12 +316,14 @@ static void test_locator(void)
     SysFreeString( root_bstr );
     SysFreeString( host_bstr );
 
+    EXPECT_REF( services, 1 );
     query_bstr = SysAllocString( L"Select ProcessorId from Win32_Processor" );
     lang_bstr = SysAllocString( L"WQL" );
     hr = ISWbemServices_ExecQuery( services, query_bstr, lang_bstr, wbemFlagForwardOnly, NULL, &object_set);
     ok( hr == S_OK, "got %x\n", hr );
     SysFreeString( lang_bstr );
     SysFreeString( query_bstr );
+    EXPECT_REF( services, 2 );
 
     hr = ISWbemLocator_get_Security_( locator, &security );
     ok( hr == S_OK, "got %x\n", hr );

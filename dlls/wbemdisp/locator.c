@@ -43,9 +43,11 @@ static WCHAR *heap_strdupW( const WCHAR *src )
     return dst;
 }
 
-static HRESULT EnumVARIANT_create( IEnumWbemClassObject *, IEnumVARIANT ** );
+struct services;
+
+static HRESULT EnumVARIANT_create( struct services *, IEnumWbemClassObject *, IEnumVARIANT ** );
 static HRESULT ISWbemSecurity_create( ISWbemSecurity ** );
-static HRESULT SWbemObject_create( IWbemClassObject *, ISWbemObject ** );
+static HRESULT SWbemObject_create( struct services *, IWbemClassObject *, ISWbemObject ** );
 
 enum type_id
 {
@@ -513,6 +515,13 @@ static HRESULT SWbemPropertySet_create( IWbemClassObject *wbem_object, ISWbemPro
     return S_OK;
 }
 
+struct services
+{
+    ISWbemServices ISWbemServices_iface;
+    LONG refs;
+    IWbemServices *services;
+};
+
 struct member
 {
     BSTR name;
@@ -529,6 +538,7 @@ struct object
     UINT nb_members;
     DISPID last_dispid;
     DISPID last_dispid_method;
+    struct services *services;
 };
 
 struct methodset
@@ -706,7 +716,7 @@ static HRESULT WINAPI method_get_InParameters(
         IWbemClassObject_Release( in_sign );
         if (SUCCEEDED(hr))
         {
-            hr = SWbemObject_create( instance, params );
+            hr = SWbemObject_create( method->set->object->services, instance, params );
             IWbemClassObject_Release( instance );
         }
     }
@@ -995,6 +1005,7 @@ static ULONG WINAPI object_Release(
 
         TRACE( "destroying %p\n", object );
         IWbemClassObject_Release( object->object );
+        ISWbemServices_Release( &object->services->ISWbemServices_iface );
         for (i = 0; i < object->nb_members; i++) SysFreeString( object->members[i].name );
         heap_free( object->members );
         heap_free( object );
@@ -1557,7 +1568,8 @@ static const ISWbemObjectVtbl object_vtbl =
     object_get_Security_
 };
 
-static HRESULT SWbemObject_create( IWbemClassObject *wbem_object, ISWbemObject **obj )
+static HRESULT SWbemObject_create( struct services *services, IWbemClassObject *wbem_object,
+        ISWbemObject **obj )
 {
     struct object *object;
 
@@ -1572,6 +1584,8 @@ static HRESULT SWbemObject_create( IWbemClassObject *wbem_object, ISWbemObject *
     object->nb_members = 0;
     object->last_dispid = DISPID_BASE;
     object->last_dispid_method = DISPID_BASE_METHOD;
+    object->services = services;
+    ISWbemServices_AddRef( &object->services->ISWbemServices_iface );
 
     *obj = &object->ISWbemObject_iface;
     TRACE( "returning iface %p\n", *obj );
@@ -1584,6 +1598,7 @@ struct objectset
     LONG refs;
     IEnumWbemClassObject *objectenum;
     LONG count;
+    struct services *services;
 };
 
 static inline struct objectset *impl_from_ISWbemObjectSet(
@@ -1608,6 +1623,7 @@ static ULONG WINAPI objectset_Release(
     {
         TRACE( "destroying %p\n", objectset );
         IEnumWbemClassObject_Release( objectset->objectenum );
+        ISWbemServices_Release( &objectset->services->ISWbemServices_iface );
         heap_free( objectset );
     }
     return refs;
@@ -1725,7 +1741,7 @@ static HRESULT WINAPI objectset_get__NewEnum(
     hr = IEnumWbemClassObject_Clone( objectset->objectenum, &objectenum );
     if (FAILED( hr )) return hr;
 
-    hr = EnumVARIANT_create( objectenum, (IEnumVARIANT **)pUnk );
+    hr = EnumVARIANT_create( objectset->services, objectenum, (IEnumVARIANT **)pUnk );
     IEnumWbemClassObject_Release( objectenum );
     return hr;
 }
@@ -1824,7 +1840,8 @@ static LONG get_object_count( IEnumWbemClassObject *iter )
     return count;
 }
 
-static HRESULT SWbemObjectSet_create( IEnumWbemClassObject *wbem_objectenum, ISWbemObjectSet **obj )
+static HRESULT SWbemObjectSet_create( struct services *services, IEnumWbemClassObject *wbem_objectenum,
+        ISWbemObjectSet **obj )
 {
     struct objectset *objectset;
 
@@ -1836,6 +1853,8 @@ static HRESULT SWbemObjectSet_create( IEnumWbemClassObject *wbem_objectenum, ISW
     objectset->objectenum = wbem_objectenum;
     IEnumWbemClassObject_AddRef( objectset->objectenum );
     objectset->count = get_object_count( objectset->objectenum );
+    objectset->services = services;
+    ISWbemServices_AddRef( &services->ISWbemServices_iface );
 
     *obj = &objectset->ISWbemObjectSet_iface;
     TRACE( "returning iface %p\n", *obj );
@@ -1847,6 +1866,7 @@ struct enumvar
     IEnumVARIANT IEnumVARIANT_iface;
     LONG refs;
     IEnumWbemClassObject *objectenum;
+    struct services *services;
 };
 
 static inline struct enumvar *impl_from_IEnumVARIANT(
@@ -1871,6 +1891,7 @@ static ULONG WINAPI enumvar_Release(
     {
         TRACE( "destroying %p\n", enumvar );
         IEnumWbemClassObject_Release( enumvar->objectenum );
+        ISWbemServices_Release( &enumvar->services->ISWbemServices_iface );
         heap_free( enumvar );
     }
     return refs;
@@ -1913,7 +1934,7 @@ static HRESULT WINAPI enumvar_Next( IEnumVARIANT *iface, ULONG celt, VARIANT *va
         ISWbemObject *sobj;
         HRESULT hr;
 
-        hr = SWbemObject_create( obj, &sobj );
+        hr = SWbemObject_create( enumvar->services, obj, &sobj );
         IWbemClassObject_Release( obj );
         if (FAILED( hr )) return hr;
 
@@ -1959,7 +1980,8 @@ static const struct IEnumVARIANTVtbl enumvar_vtbl =
     enumvar_Clone
 };
 
-static HRESULT EnumVARIANT_create( IEnumWbemClassObject *objectenum, IEnumVARIANT **obj )
+static HRESULT EnumVARIANT_create( struct services *services, IEnumWbemClassObject *objectenum,
+        IEnumVARIANT **obj )
 {
     struct enumvar *enumvar;
 
@@ -1968,18 +1990,13 @@ static HRESULT EnumVARIANT_create( IEnumWbemClassObject *objectenum, IEnumVARIAN
     enumvar->refs = 1;
     enumvar->objectenum = objectenum;
     IEnumWbemClassObject_AddRef( enumvar->objectenum );
+    enumvar->services = services;
+    ISWbemServices_AddRef( &services->ISWbemServices_iface );
 
     *obj = &enumvar->IEnumVARIANT_iface;
     TRACE( "returning iface %p\n", *obj );
     return S_OK;
 }
-
-struct services
-{
-    ISWbemServices ISWbemServices_iface;
-    LONG refs;
-    IWbemServices *services;
-};
 
 static inline struct services *impl_from_ISWbemServices(
     ISWbemServices *iface )
@@ -2127,7 +2144,7 @@ static HRESULT WINAPI services_Get(
     hr = IWbemServices_GetObject( services->services, strObjectPath, iFlags, NULL, &obj, NULL );
     if (hr != S_OK) return hr;
 
-    hr = SWbemObject_create( obj, objWbemObject );
+    hr = SWbemObject_create( services, obj, objWbemObject );
     IWbemClassObject_Release( obj );
     return hr;
 }
@@ -2256,7 +2273,7 @@ static HRESULT WINAPI services_ExecQuery(
     hr = IWbemServices_ExecQuery( services->services, strQueryLanguage, strQuery, iFlags, NULL, &iter );
     if (hr != S_OK) return hr;
 
-    hr = SWbemObjectSet_create( iter, objWbemObjectSet );
+    hr = SWbemObjectSet_create( services, iter, objWbemObjectSet );
     IEnumWbemClassObject_Release( iter );
     return hr;
 }
