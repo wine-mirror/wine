@@ -3,6 +3,7 @@ IMPORTS   = advapi32
 
 C_SRCS = \
 	delete.c \
+	export.c \
 	import.c \
 	query.c \
 	reg.c
