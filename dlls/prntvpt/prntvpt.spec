@@ -19,7 +19,7 @@
 @ stdcall -private DllUnregisterServer()
 @ stub GetDeviceDefaultPrintTicketThunk
 @ stub GetDeviceNamespacesThunk
-@ stub GetPrintCapabilitiesThunk2
+@ stdcall GetPrintCapabilitiesThunk2(ptr ptr long ptr ptr ptr)
 @ stub GetPrintCapabilitiesThunk
 @ stub GetSchemaVersionThunk
 @ stub MergeAndValidatePrintTicketThunk2

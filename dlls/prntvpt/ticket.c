@@ -1576,3 +1576,54 @@ HRESULT WINAPI PTGetPrintCapabilities(HPTPROVIDER provider, IStream *stream, ISt
 
     return write_print_capabilities(prov->name, caps);
 }
+
+HRESULT WINAPI GetPrintCapabilitiesThunk2(HPTPROVIDER provider, BYTE *ticket, INT ticket_size,
+                                          BYTE **print_caps, INT *print_caps_length, BSTR *error)
+{
+    static const LARGE_INTEGER zero;
+    HRESULT hr;
+    IStream *stream, *caps = NULL;
+    HGLOBAL hmem;
+    DWORD mem_size;
+
+    TRACE("%p,%p,%d,%p,%p,%p\n", provider, ticket, ticket_size, print_caps, print_caps_length, error);
+
+    if (!is_valid_provider(provider) || !ticket || !print_caps || !print_caps_length)
+        return E_INVALIDARG;
+
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    if (hr != S_OK) return hr;
+
+    hr = IStream_Write(stream, ticket, ticket_size, NULL);
+    if (hr != S_OK) goto fail;
+
+    IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+
+    hr = CreateStreamOnHGlobal(0, TRUE, &caps);
+    if (hr != S_OK) goto fail;
+
+    hr = PTGetPrintCapabilities(provider, stream, caps, error);
+    if (hr != S_OK) goto fail;
+
+    hr = GetHGlobalFromStream(caps, &hmem);
+    if (hr == S_OK)
+    {
+        mem_size = GlobalSize(hmem);
+        *print_caps = CoTaskMemAlloc(mem_size);
+        if (*print_caps)
+        {
+            BYTE *p = GlobalLock(hmem);
+            memcpy(*print_caps, p, mem_size);
+            GlobalUnlock(hmem);
+            *print_caps_length = mem_size;
+        }
+        else
+            hr = E_OUTOFMEMORY;
+    }
+
+fail:
+    IStream_Release(stream);
+    if (caps) IStream_Release(caps);
+
+    return hr;
+}
