@@ -1458,7 +1458,7 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\tmovl %%ecx,-0x2c(%%ebp)\n" ); /* frame->eip */
         output( "\tmovl %%esp,%%fs:0x1f8\n" );  /* x86_thread_data()->syscall_frame */
         output( "\tcmpl $%u,%%eax\n", count );
-        output( "\tjae 3f\n" );
+        output( "\tjae 4f\n" );
         if (UsePIC)
         {
             output( "\tmovl %%eax,%%edx\n" );
@@ -1479,19 +1479,54 @@ static void output_syscall_dispatcher( int count, const char *variant )
         else
             output( "\tcall *.Lsyscall_table(,%%eax,4)\n" );
         output( "2:\tmovl $0,%%fs:0x1f8\n" );
-        output( "\tmovl -0x14(%%ebp),%%ebx\n" );
-        output_cfi( ".cfi_same_value %%ebx\n" );
-        output( "\tmovl -0x08(%%ebp),%%edi\n" );
-        output_cfi( ".cfi_same_value %%edi\n" );
-        output( "\tmovl -0x04(%%ebp),%%esi\n" );
-        output_cfi( ".cfi_same_value %%esi\n" );
-        output( "\tmovl %%ebp,%%esp\n" );
-        output_cfi( ".cfi_def_cfa %%esp,8\n" );
-        output( "\tpopl %%ebp\n" );
-        output_cfi( ".cfi_adjust_cfa_offset -4\n" );
-        output_cfi( ".cfi_same_value %%ebp\n" );
-        output( "\tret\n" );
-        output( "3:\tmovl $0x%x,%%eax\n", invalid_param );
+        output( "\tleal -0x30(%%ebp),%%ebx\n" );
+        output_cfi( ".cfi_def_cfa_register %%ebx" );
+        output_cfi( ".cfi_adjust_cfa_offset 0x30\n" );
+        output( "\tmovl %%eax,0x18(%%ebx)\n" );
+        output( "\tmovw 0x16(%%ebx),%%gs\n" );
+        output( "\tmovw 0x14(%%ebx),%%fs\n" );
+        output( "\tmovw 0x12(%%ebx),%%es\n" );
+        output( "\tmovl 0x28(%%ebx),%%edi\n" );
+        output_cfi( ".cfi_same_value %%edi" );
+        output( "\tmovl 0x2c(%%ebx),%%esi\n" );
+        output_cfi( ".cfi_same_value %%esi" );
+        output( "\tmovl (%%ebp),%%ebp\n" );
+        output_cfi( ".cfi_same_value %%ebp" );
+        output( "\tmovw %%ss,%%cx\n" );
+        output( "\tcmpw 0x0e(%%ebx),%%cx\n" );
+        output( "\tjne 3f\n" );
+        /* As soon as we have switched stacks the context structure could
+         * be invalid (when signal handlers are executed for example). Copy
+         * values on the target stack before changing ESP. */
+        output( "\tmovl 0x08(%%ebx),%%ecx\n" );
+        output( "\tleal -3*4(%%ecx),%%ecx\n" );
+        output( "\tmovl (%%ebx),%%edx\n" );
+        output( "\tmovl %%edx,2*4(%%ecx)\n" );
+        output( "\tmovl 0x0c(%%ebx),%%edx\n" );
+        output( "\tmovl %%edx,1*4(%%ecx)\n" );
+        output( "\tmovl 0x04(%%ebx),%%edx\n" );
+        output( "\tmovl %%edx,0*4(%%ecx)\n" );
+        output( "\tpushl 0x10(%%ebx)\n" );
+        output( "\tmovl 0x1c(%%ebx),%%ebx\n" );
+        output_cfi( ".cfi_same_value %%ebx" );
+        output( "\tpopl %%ds\n" );
+        output( "\tmovl %%ecx,%%esp\n" );
+        output( "\tiret\n" );
+        /* Restore the context when the stack segment changes. We can't use
+         * the same code as above because we do not know if the stack segment
+         * is 16 or 32 bit, and 'movl' will throw an exception when we try to
+         * access memory above the limit. */
+        output( "\t3:\tmovl 0x18(%%ebx),%%ecx\n" );
+        output( "\tmovw 0x0e(%%ebx),%%ss\n" );
+        output( "\tmovl 0x08(%%ebx),%%esp\n" );
+        output( "\tpushl 0x00(%%ebx)\n" );
+        output( "\tpushl 0x0c(%%ebx)\n" );
+        output( "\tpushl 0x04(%%ebx)\n" );
+        output( "\tpushl 0x10(%%ebx)\n" );
+        output( "\tmovl 0x1c(%%ebx),%%ebx\n" );
+        output( "\tpopl %%ds\n" );
+        output( "\tiret\n" );
+        output( "4:\tmovl $0x%x,%%eax\n", invalid_param );
         output( "\tjmp 2b\n" );
         break;
     case CPU_x86_64:
