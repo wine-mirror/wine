@@ -650,13 +650,14 @@ static void ticket_to_devmode(const struct ticket *ticket, DEVMODEW *dm)
 
     dm->dmSize = sizeof(*dm);
     dm->dmFields = DM_ORIENTATION | DM_PAPERSIZE | DM_PAPERLENGTH | DM_PAPERWIDTH | DM_SCALE |
-                   DM_COPIES | DM_COLOR | DM_PRINTQUALITY | DM_YRESOLUTION | DM_COLLATE;
+                   DM_COPIES | DM_DEFAULTSOURCE | DM_COLOR | DM_PRINTQUALITY | DM_YRESOLUTION | DM_COLLATE;
     dm->dmOrientation = ticket->page.orientation;
     dm->dmPaperSize = ticket->page.media.paper;
     dm->dmPaperWidth = ticket->page.media.size.width / 100;
     dm->dmPaperLength = ticket->page.media.size.height / 100;
     dm->dmScale = ticket->page.scaling;
     dm->dmCopies = ticket->job.copies;
+    dm->dmDefaultSource = ticket->job.input_bin;
     dm->dmColor = ticket->page.color;
     dm->dmPrintQuality = ticket->page.resolution.x;
     dm->dmYResolution = ticket->page.resolution.y;
@@ -677,6 +678,8 @@ static void devmode_to_ticket(const DEVMODEW *dm, struct ticket *ticket)
         ticket->page.scaling = dm->dmScale;
     if (dm->dmFields & DM_COPIES)
         ticket->job.copies = dm->dmCopies;
+    if (dm->dmFields & DM_DEFAULTSOURCE)
+        ticket->job.input_bin = dm->dmDefaultSource;
     if (dm->dmFields & DM_COLOR)
         ticket->page.color = dm->dmColor;
     if (dm->dmFields & DM_PRINTQUALITY)
