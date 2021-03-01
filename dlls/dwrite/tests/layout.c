@@ -5894,7 +5894,7 @@ static void test_text_format_axes(void)
 {
     IDWriteFontCollection *collection;
     IDWriteFontCollection2 *collection2;
-    DWRITE_FONT_AXIS_VALUE axis;
+    DWRITE_FONT_AXIS_VALUE axes[2];
     IDWriteTextFormat3 *format3;
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
@@ -5944,9 +5944,9 @@ if (SUCCEEDED(hr))
     ok(weight == DWRITE_FONT_WEIGHT_NORMAL, "Unexpected font weight %d.\n", weight);
 
     /* Regular properties are not set from axis values. */
-    axis.axisTag = DWRITE_FONT_AXIS_TAG_WEIGHT;
-    axis.value = 200.0f;
-    hr = IDWriteTextFormat3_SetFontAxisValues(format3, &axis, 1);
+    axes[0].axisTag = DWRITE_FONT_AXIS_TAG_WEIGHT;
+    axes[0].value = 200.0f;
+    hr = IDWriteTextFormat3_SetFontAxisValues(format3, axes, 1);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     weight = IDWriteTextFormat3_GetFontWeight(format3);
@@ -5960,6 +5960,36 @@ if (SUCCEEDED(hr))
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat3, (void **)&format3);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = IDWriteTextFormat3_GetFontAxisValueCount(format3);
+    ok(!count, "Unexpected axis count %u.\n", count);
+
+    axes[0].axisTag = DWRITE_FONT_AXIS_TAG_WEIGHT;
+    hr = IDWriteTextFormat3_GetFontAxisValues(format3, axes, 1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(axes[0].axisTag == 0 && axes[0].value == 0.0f, "Unexpected value.\n");
+
+    axes[0].axisTag = DWRITE_FONT_AXIS_TAG_WEIGHT;
+    axes[0].value = 200.0f;
+    axes[1].axisTag = DWRITE_FONT_AXIS_TAG_WIDTH;
+    axes[1].value = 2.0f;
+    hr = IDWriteTextFormat3_SetFontAxisValues(format3, axes, 2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = IDWriteTextFormat3_GetFontAxisValueCount(format3);
+    ok(count == 2, "Unexpected axis count %u.\n", count);
+
+    hr = IDWriteTextFormat3_GetFontAxisValues(format3, axes, 1);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteTextFormat3_GetFontAxisValues(format3, axes, 0);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteTextFormat3_GetFontAxisValues(format3, axes, 2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteTextFormat3_SetFontAxisValues(format3, axes, 0);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     count = IDWriteTextFormat3_GetFontAxisValueCount(format3);

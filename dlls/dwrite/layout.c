@@ -62,6 +62,9 @@ struct dwrite_textformat_data
 
     IDWriteFontCollection *collection;
     IDWriteFontFallback *fallback;
+
+    DWRITE_FONT_AXIS_VALUE *axis_values;
+    unsigned int axis_values_count;
 };
 
 enum layout_range_attr_kind {
@@ -328,6 +331,7 @@ static void release_format_data(struct dwrite_textformat_data *data)
     if (data->trimmingsign) IDWriteInlineObject_Release(data->trimmingsign);
     heap_free(data->family_name);
     heap_free(data->locale);
+    heap_free(data->axis_values);
 }
 
 static inline struct dwrite_textlayout *impl_from_IDWriteTextLayout4(IDWriteTextLayout4 *iface)
@@ -462,6 +466,41 @@ static inline HRESULT format_set_linespacing(struct dwrite_textformat_data *form
         *changed = memcmp(spacing, &format->spacing, sizeof(*spacing));
 
     format->spacing = *spacing;
+    return S_OK;
+}
+
+static HRESULT format_set_font_axisvalues(struct dwrite_textformat_data *format,
+        DWRITE_FONT_AXIS_VALUE const *axis_values, unsigned int num_values)
+{
+    heap_free(format->axis_values);
+    format->axis_values = NULL;
+    format->axis_values_count = 0;
+
+    if (num_values)
+    {
+        if (!(format->axis_values = heap_calloc(num_values, sizeof(*axis_values))))
+            return E_OUTOFMEMORY;
+        memcpy(format->axis_values, axis_values, num_values * sizeof(*axis_values));
+        format->axis_values_count = num_values;
+    }
+
+    return S_OK;
+}
+
+static HRESULT format_get_font_axisvalues(struct dwrite_textformat_data *format,
+        DWRITE_FONT_AXIS_VALUE *axis_values, unsigned int num_values)
+{
+    if (!format->axis_values_count)
+    {
+        if (num_values) memset(axis_values, 0, num_values * sizeof(*axis_values));
+        return S_OK;
+    }
+
+    if (num_values < format->axis_values_count)
+        return E_NOT_SUFFICIENT_BUFFER;
+
+    memcpy(axis_values, format->axis_values, min(num_values, format->axis_values_count) * sizeof(*axis_values));
+
     return S_OK;
 }
 
@@ -4922,24 +4961,30 @@ static HRESULT WINAPI dwritetextformat2_layout_GetLineSpacing(IDWriteTextFormat3
 static HRESULT WINAPI dwritetextformat3_layout_SetFontAxisValues(IDWriteTextFormat3 *iface,
         DWRITE_FONT_AXIS_VALUE const *axis_values, UINT32 num_values)
 {
-    FIXME("%p, %p, %u.\n", iface, axis_values, num_values);
+    struct dwrite_textlayout *layout = impl_layout_from_IDWriteTextFormat3(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %u.\n", iface, axis_values, num_values);
+
+    return format_set_font_axisvalues(&layout->format, axis_values, num_values);
 }
 
 static UINT32 WINAPI dwritetextformat3_layout_GetFontAxisValueCount(IDWriteTextFormat3 *iface)
 {
-    FIXME("%p.\n", iface);
+    struct dwrite_textlayout *layout = impl_layout_from_IDWriteTextFormat3(iface);
 
-    return 0;
+    TRACE("%p.\n", iface);
+
+    return layout->format.axis_values_count;
 }
 
 static HRESULT WINAPI dwritetextformat3_layout_GetFontAxisValues(IDWriteTextFormat3 *iface,
-        DWRITE_FONT_AXIS_VALUE const *axis_values, UINT32 num_values)
+        DWRITE_FONT_AXIS_VALUE *axis_values, UINT32 num_values)
 {
-    FIXME("%p, %p, %u.\n", iface, axis_values, num_values);
+    struct dwrite_textlayout *layout = impl_layout_from_IDWriteTextFormat3(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %u.\n", iface, axis_values, num_values);
+
+    return format_get_font_axisvalues(&layout->format, axis_values, num_values);
 }
 
 static DWRITE_AUTOMATIC_FONT_AXES WINAPI dwritetextformat3_layout_GetAutomaticFontAxes(IDWriteTextFormat3 *iface)
@@ -6042,24 +6087,30 @@ static HRESULT WINAPI dwritetextformat2_GetLineSpacing(IDWriteTextFormat3 *iface
 static HRESULT WINAPI dwritetextformat3_SetFontAxisValues(IDWriteTextFormat3 *iface,
         DWRITE_FONT_AXIS_VALUE const *axis_values, UINT32 num_values)
 {
-    FIXME("%p, %p, %u.\n", iface, axis_values, num_values);
+    struct dwrite_textformat *format = impl_from_IDWriteTextFormat3(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %u.\n", iface, axis_values, num_values);
+
+    return format_set_font_axisvalues(&format->format, axis_values, num_values);
 }
 
 static UINT32 WINAPI dwritetextformat3_GetFontAxisValueCount(IDWriteTextFormat3 *iface)
 {
-    FIXME("%p.\n", iface);
+    struct dwrite_textformat *format = impl_from_IDWriteTextFormat3(iface);
 
-    return 0;
+    TRACE("%p.\n", iface);
+
+    return format->format.axis_values_count;
 }
 
 static HRESULT WINAPI dwritetextformat3_GetFontAxisValues(IDWriteTextFormat3 *iface,
-        DWRITE_FONT_AXIS_VALUE const *axis_values, UINT32 num_values)
+        DWRITE_FONT_AXIS_VALUE *axis_values, UINT32 num_values)
 {
-    FIXME("%p, %p, %u.\n", iface, axis_values, num_values);
+    struct dwrite_textformat *format = impl_from_IDWriteTextFormat3(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %u.\n", iface, axis_values, num_values);
+
+    return format_get_font_axisvalues(&format->format, axis_values, num_values);
 }
 
 static DWRITE_AUTOMATIC_FONT_AXES WINAPI dwritetextformat3_GetAutomaticFontAxes(IDWriteTextFormat3 *iface)

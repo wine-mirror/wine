@@ -562,7 +562,7 @@ interface IDWriteTextFormat3 : IDWriteTextFormat2
         UINT32 num_values);
     UINT32 GetFontAxisValueCount();
     HRESULT GetFontAxisValues(
-        DWRITE_FONT_AXIS_VALUE const *axis_values,
+        DWRITE_FONT_AXIS_VALUE *axis_values,
         UINT32 num_values);
     DWRITE_AUTOMATIC_FONT_AXES GetAutomaticFontAxes();
     HRESULT SetAutomaticFontAxes(DWRITE_AUTOMATIC_FONT_AXES axes);
