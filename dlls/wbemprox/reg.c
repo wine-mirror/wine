@@ -568,3 +568,57 @@ HRESULT reg_set_dwordvalue( IWbemClassObject *obj, IWbemClassObject *in, IWbemCl
     if (out_params) IWbemClassObject_Release( out_params );
     return hr;
 }
+
+static void delete_key( HKEY root, const WCHAR *subkey, VARIANT *retval )
+{
+    LONG res;
+
+    TRACE("%p, %s\n", root, debugstr_w(subkey));
+
+    res = RegDeleteKeyExW( root, subkey, 0, 0 );
+    set_variant( VT_UI4, res, NULL, retval );
+}
+
+HRESULT reg_delete_key( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+{
+    VARIANT defkey, subkey, retval;
+    IWbemClassObject *sig, *out_params = NULL;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", in, out);
+
+    hr = IWbemClassObject_Get( in, L"hDefKey", 0, &defkey, NULL, NULL );
+    if (hr != S_OK) return hr;
+    hr = IWbemClassObject_Get( in, L"sSubKeyName", 0, &subkey, NULL, NULL );
+    if (hr != S_OK) return hr;
+
+    hr = create_signature( L"StdRegProv", L"DeleteKey", PARAM_OUT, &sig );
+    if (hr != S_OK)
+    {
+        VariantClear( &subkey );
+        return hr;
+    }
+    if (out)
+    {
+        hr = IWbemClassObject_SpawnInstance( sig, 0, &out_params );
+        if (hr != S_OK)
+        {
+            VariantClear( &subkey );
+            IWbemClassObject_Release( sig );
+            return hr;
+        }
+    }
+    delete_key( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), &retval );
+    if (out_params)
+        hr = IWbemClassObject_Put( out_params, L"ReturnValue", 0, &retval, CIM_UINT32 );
+
+    VariantClear( &subkey );
+    IWbemClassObject_Release( sig );
+    if (hr == S_OK && out)
+    {
+        *out = out_params;
+        IWbemClassObject_AddRef( out_params );
+    }
+    if (out_params) IWbemClassObject_Release( out_params );
+    return hr;
+}
