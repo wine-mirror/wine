@@ -1093,7 +1093,7 @@ interface IWMReaderAllocatorEx : IUnknown
 
 [
     object,
-    uuid(faed3d21-1b6b-4af7-8bc6-3e189bbc187b),
+    uuid(faed3d21-1b6b-4af7-8cb6-3e189bbc187b),
     pointer_default( unique ),
     local
 ]
