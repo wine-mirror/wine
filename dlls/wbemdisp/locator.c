@@ -1414,14 +1414,36 @@ static HRESULT WINAPI object_ReferencesAsync_(
 
 static HRESULT WINAPI object_ExecMethod_(
     ISWbemObject *iface,
-    BSTR strMethodName,
-    IDispatch *objWbemInParameters,
-    LONG iFlags,
-    IDispatch *objWbemNamedValueSet,
-    ISWbemObject **objWbemOutParameters )
+    BSTR method,
+    IDispatch *in_params,
+    LONG flags,
+    IDispatch *valueset,
+    ISWbemObject **out_params )
 {
-    FIXME( "\n" );
-    return E_NOTIMPL;
+    struct object *object = impl_from_ISWbemObject( iface );
+    VARIANT path;
+    HRESULT hr;
+
+    TRACE( "%p, %s, %p, %#x, %p, %p\n", object, debugstr_w(method), in_params, flags, valueset, out_params );
+
+    V_VT( &path ) = VT_EMPTY;
+    hr = IWbemClassObject_Get( object->object, L"__PATH", 0, &path, NULL, NULL );
+    if (SUCCEEDED(hr))
+    {
+        if (V_VT( &path ) != VT_BSTR)
+        {
+            WARN( "Unexpected object path value type.\n" );
+            VariantClear( &path );
+            return E_UNEXPECTED;
+        }
+
+        hr = ISWbemServices_ExecMethod( &object->services->ISWbemServices_iface, V_BSTR( &path ), method,
+                in_params, flags, valueset, out_params );
+
+        VariantClear( &path );
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI object_ExecMethodAsync_(
