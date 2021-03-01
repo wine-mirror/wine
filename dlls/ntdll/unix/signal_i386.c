@@ -771,23 +771,6 @@ static inline void restore_fpu( const CONTEXT *context )
 
 
 /***********************************************************************
- *           restore_fpux
- *
- * Restore the FPU extended context
- */
-static inline void restore_fpux( const CONTEXT *context )
-{
-    /* we have to enforce alignment by hand */
-    char buffer[sizeof(XSAVE_FORMAT) + 16];
-    XSAVE_FORMAT *state = (XSAVE_FORMAT *)(((ULONG_PTR)buffer + 15) & ~15);
-
-    memcpy( state, context->ExtendedRegisters, sizeof(*state) );
-    /* reset the current interrupt status */
-    state->StatusWord &= state->ControlWord | 0xff80;
-    __asm__ __volatile__( "fxrstor %0" : : "m" (*state) );
-}
-
-/***********************************************************************
  *           restore_xstate
  *
  * Restore the XState context
@@ -863,6 +846,32 @@ static void fpux_to_fpu( FLOATING_SAVE_AREA *fpu, const XSAVE_FORMAT *fpux )
             }
         }
         fpu->TagWord |= tag << (2 * i);
+    }
+}
+
+
+/***********************************************************************
+ *           fpu_to_fpux
+ *
+ * Fill extended FPU context from standard one.
+ */
+static void fpu_to_fpux( XSAVE_FORMAT *fpux, const FLOATING_SAVE_AREA *fpu )
+{
+    unsigned int i;
+
+    fpux->ControlWord   = fpu->ControlWord;
+    fpux->StatusWord    = fpu->StatusWord;
+    fpux->ErrorOffset   = fpu->ErrorOffset;
+    fpux->ErrorSelector = fpu->ErrorSelector;
+    fpux->ErrorOpcode   = fpu->ErrorSelector >> 16;
+    fpux->DataOffset    = fpu->DataOffset;
+    fpux->DataSelector  = fpu->DataSelector;
+    fpux->TagWord       = 0;
+    for (i = 0; i < 8; i++)
+    {
+        if (((fpu->TagWord >> (i * 2)) & 3) != 3)
+            fpux->TagWord |= 1 << i;
+        memcpy( &fpux->FloatRegisters[i], &fpu->RegisterArea[10 * i], 10 );
     }
 }
 
@@ -1041,6 +1050,16 @@ __ASM_GLOBAL_FUNC( set_full_cpu_context,
  */
 void signal_restore_full_cpu_context(void)
 {
+    struct syscall_xsave *xsave = get_syscall_xsave( get_syscall_frame() );
+
+    if (cpu_info.FeatureSet & CPU_FEATURE_FXSR)
+    {
+        __asm__ volatile( "fxrstor %0" : : "m"(xsave->u.xsave) );
+    }
+    else
+    {
+        __asm__ volatile( "frstor %0; fwait" : : "m" (xsave->u.fsave) );
+    }
     set_full_cpu_context();
 }
 
@@ -1272,8 +1291,24 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         frame->fs = context->SegFs;
         frame->gs = context->SegGs;
     }
-    if (flags & CONTEXT_EXTENDED_REGISTERS) restore_fpux( context );
-    else if (flags & CONTEXT_FLOATING_POINT) restore_fpu( context );
+    if (flags & CONTEXT_EXTENDED_REGISTERS)
+    {
+        struct syscall_xsave *xsave = get_syscall_xsave( frame );
+        memcpy( &xsave->u.xsave, context->ExtendedRegisters, sizeof(xsave->u.xsave) );
+        /* reset the current interrupt status */
+        xsave->u.xsave.StatusWord &= xsave->u.xsave.ControlWord | 0xff80;
+    }
+    else if (flags & CONTEXT_FLOATING_POINT)
+    {
+        if (cpu_info.FeatureSet & CPU_FEATURE_FXSR)
+        {
+            fpu_to_fpux( &get_syscall_xsave( frame )->u.xsave, &context->FloatSave );
+        }
+        else
+        {
+            get_syscall_xsave( frame )->u.fsave = context->FloatSave;
+        }
+    }
 
     restore_xstate( context );
 
