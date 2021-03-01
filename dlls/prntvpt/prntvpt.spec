@@ -24,4 +24,4 @@
 @ stub GetSchemaVersionThunk
 @ stub MergeAndValidatePrintTicketThunk2
 @ stub MergeAndValidatePrintTicketThunk
-@ stub UnbindPTProviderThunk
+@ stdcall UnbindPTProviderThunk(ptr) PTCloseProvider
