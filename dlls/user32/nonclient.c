@@ -976,7 +976,11 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip )
         hdc = GetDCEx( hwnd, hrgn, DCX_USESTYLE | DCX_WINDOW | DCX_EXCLUDERGN );
     }
 
-    if (!hdc) return;
+    if (!hdc)
+    {
+        DeleteObject( hrgn );
+        return;
+    }
 
     WIN_GetRectangles( hwnd, COORDS_WINDOW, &rect, NULL );
     GetClipBox( hdc, &rectClip );
