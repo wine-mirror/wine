@@ -530,6 +530,11 @@ void set_syscall_frame(void *frame)
     x86_thread_data()->syscall_frame = frame;
 }
 
+static struct syscall_xsave *get_syscall_xsave( struct syscall_frame *frame )
+{
+    return (struct syscall_xsave *)((ULONG_PTR)((struct syscall_xsave *)frame - 1) & ~63);
+}
+
 static inline WORD get_cs(void) { WORD res; __asm__( "movw %%cs,%0" : "=r" (res) ); return res; }
 static inline WORD get_ds(void) { WORD res; __asm__( "movw %%ds,%0" : "=r" (res) ); return res; }
 static inline WORD get_fs(void) { WORD res; __asm__( "movw %%fs,%0" : "=r" (res) ); return res; }
@@ -698,23 +703,6 @@ static inline void save_fpu( CONTEXT *context )
     float_status.StatusWord &= float_status.ControlWord | 0xffffff80;
 
     __asm__ __volatile__( "fldenv %0" : : "m" (float_status) );
-}
-
-
-/***********************************************************************
- *           save_fpux
- *
- * Save the thread FPU extended context.
- */
-static inline void save_fpux( CONTEXT *context )
-{
-    /* we have to enforce alignment by hand */
-    char buffer[sizeof(XSAVE_FORMAT) + 16];
-    XSAVE_FORMAT *state = (XSAVE_FORMAT *)(((ULONG_PTR)buffer + 15) & ~15);
-
-    context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
-    __asm__ __volatile__( "fxsave %0" : "=m" (*state) );
-    memcpy( context->ExtendedRegisters, state, sizeof(*state) );
 }
 
 
@@ -1328,6 +1316,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
     if (self)
     {
+        struct syscall_xsave *xsave = get_syscall_xsave( frame );
         if (needed_flags & CONTEXT_INTEGER)
         {
             context->Eax = frame->eax;
@@ -1356,8 +1345,19 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
             context->SegGs = frame->gs;
             context->ContextFlags |= CONTEXT_SEGMENTS;
         }
-        if (needed_flags & CONTEXT_FLOATING_POINT) save_fpu( context );
-        if (needed_flags & CONTEXT_EXTENDED_REGISTERS) save_fpux( context );
+        if (needed_flags & CONTEXT_FLOATING_POINT)
+        {
+            if (cpu_info.FeatureSet & CPU_FEATURE_FXSR)
+                fpux_to_fpu( &context->FloatSave, &xsave->u.xsave );
+            else
+                context->FloatSave = xsave->u.fsave;
+            context->ContextFlags |= CONTEXT_FLOATING_POINT;
+        }
+        if (needed_flags & CONTEXT_EXTENDED_REGISTERS)
+        {
+            memcpy( context->ExtendedRegisters, &xsave->u.xsave, sizeof(xsave->u.xsave) );
+            context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
+        }
         /* update the cached version of the debug registers */
         if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
         {
