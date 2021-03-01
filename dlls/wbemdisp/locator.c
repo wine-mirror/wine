@@ -1590,6 +1590,18 @@ static const ISWbemObjectVtbl object_vtbl =
     object_get_Security_
 };
 
+static struct object *unsafe_object_impl_from_IDispatch(IDispatch *iface)
+{
+    if (!iface)
+        return NULL;
+    if (iface->lpVtbl != (IDispatchVtbl *)&object_vtbl)
+    {
+        FIXME( "External implementations are not supported.\n" );
+        return NULL;
+    }
+    return CONTAINING_RECORD(iface, struct object, ISWbemObject_iface);
+}
+
 static HRESULT SWbemObject_create( struct services *services, IWbemClassObject *wbem_object,
         ISWbemObject **obj )
 {
@@ -2412,15 +2424,37 @@ static HRESULT WINAPI services_ExecNotificationQueryAsync(
 
 static HRESULT WINAPI services_ExecMethod(
     ISWbemServices *iface,
-    BSTR strObjectPath,
-    BSTR strMethodName,
-    IDispatch *objWbemInParameters,
-    LONG iFlags,
-    IDispatch *objWbemNamedValueSet,
-    ISWbemObject **objWbemOutParameters )
+    BSTR path,
+    BSTR method,
+    IDispatch *in_sparams,
+    LONG flags,
+    IDispatch *valueset,
+    ISWbemObject **out_sparams )
 {
-    FIXME( "\n" );
-    return E_NOTIMPL;
+    struct services *services = impl_from_ISWbemServices( iface );
+    IWbemClassObject *out_params = NULL;
+    struct object *in_params;
+    HRESULT hr;
+
+    TRACE( "%p, %s, %s, %p, %#x, %p, %p\n", services, debugstr_w(path), debugstr_w(method), in_sparams,
+            flags, valueset, out_sparams );
+
+    in_params = unsafe_object_impl_from_IDispatch( in_sparams );
+    out_params = NULL;
+
+    if (valueset)
+        FIXME("Named value set is unused\n");
+
+    hr = IWbemServices_ExecMethod( services->services, path, method, flags, NULL, in_params ? in_params->object : NULL,
+            out_sparams ? &out_params : NULL, NULL );
+
+    if (SUCCEEDED(hr) && out_params)
+    {
+        hr = SWbemObject_create( services, out_params, out_sparams );
+        IWbemClassObject_Release( out_params );
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI services_ExecMethodAsync(
