@@ -2,9 +2,9 @@ TESTDLL   = reg.exe
 IMPORTS   = advapi32
 
 C_SRCS = \
+	add.c \
 	copy.c \
 	delete.c \
 	export.c \
 	import.c \
-	query.c \
-	reg.c
+	query.c
