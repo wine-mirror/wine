@@ -10645,6 +10645,7 @@ static BOOL LISTVIEW_NCPaint(const LISTVIEW_INFO *infoPtr, HRGN region)
 
     /* Call default proc to get the scrollbars etc. painted */
     DefWindowProcW (infoPtr->hwndSelf, WM_NCPAINT, (WPARAM)cliprgn, 0);
+    DeleteObject(cliprgn);
 
     return FALSE;
 }

@@ -2514,7 +2514,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, const WCHAR *lpsz_r
 				abs(es->selection_end - es->selection_start) - strl, hrgn);
 			strl = 0;
 			e = s;
-			hrgn = CreateRectRgn(0, 0, 0, 0);
+                        SetRectRgn(hrgn, 0, 0, 0, 0);
 			EDIT_NOTIFY_PARENT(es, EN_MAXTEXT);
 		}
 	}
@@ -3674,6 +3674,8 @@ static void EDIT_WM_NCPaint(HWND hwnd, HRGN region)
 
     /* Call default proc to get the scrollbars etc. also painted */
     DefWindowProcW (hwnd, WM_NCPAINT, (WPARAM)cliprgn, 0);
+    if (cliprgn != region)
+        DeleteObject(cliprgn);
 }
 
 /*********************************************************************
