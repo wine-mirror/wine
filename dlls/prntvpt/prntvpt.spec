@@ -8,7 +8,7 @@
 @ stdcall PTConvertPrintTicketToDevMode(ptr ptr long long ptr ptr ptr)
 @ stdcall PTConvertDevModeToPrintTicket(ptr long ptr long ptr)
 @ stdcall PTReleaseMemory(ptr)
-@ stub ConvertDevModeToPrintTicketThunk2
+@ stdcall ConvertDevModeToPrintTicketThunk2(ptr ptr long long ptr ptr)
 @ stub ConvertDevModeToPrintTicketThunk
 @ stub ConvertPrintTicketToDevModeThunk2
 @ stub ConvertPrintTicketToDevModeThunk

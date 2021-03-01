@@ -1237,6 +1237,47 @@ HRESULT WINAPI PTConvertDevModeToPrintTicket(HPTPROVIDER provider, ULONG size, P
     return write_ticket(stream, &ticket, scope);
 }
 
+HRESULT WINAPI ConvertDevModeToPrintTicketThunk2(HPTPROVIDER provider, BYTE *dm, ULONG size,
+                                                 EPrintTicketScope scope, BYTE **ticket, INT *length)
+{
+    HRESULT hr;
+    IStream *stream;
+
+    TRACE("%p,%p,%lu,%d,%p,%p\n", provider, dm, size, scope, ticket, length);
+
+    if (!is_valid_provider(provider) || !dm || !ticket || !length)
+        return E_INVALIDARG;
+
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    if (hr != S_OK) return hr;
+
+    hr = PTConvertDevModeToPrintTicket(provider, size, (DEVMODEW *)dm, scope, stream);
+    if (hr == S_OK)
+    {
+        HGLOBAL hmem;
+        DWORD mem_size;
+
+        hr = GetHGlobalFromStream(stream, &hmem);
+        if (hr == S_OK)
+        {
+            mem_size = GlobalSize(hmem);
+            *ticket = CoTaskMemAlloc(mem_size);
+            if (*ticket)
+            {
+                BYTE *p = GlobalLock(hmem);
+                memcpy(*ticket, p, mem_size);
+                GlobalUnlock(hmem);
+                *length = mem_size;
+            }
+            else
+                hr = E_OUTOFMEMORY;
+        }
+    }
+
+    IStream_Release(stream);
+    return hr;
+}
+
 HRESULT WINAPI PTMergeAndValidatePrintTicket(HPTPROVIDER provider, IStream *base, IStream *delta,
                                              EPrintTicketScope scope, IStream *result, BSTR *error)
 {
