@@ -1782,16 +1782,10 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
 /***********************************************************************
  *           call_raise_user_exception_dispatcher
  */
-__ASM_GLOBAL_FUNC( call_raise_user_exception_dispatcher,
-                   "movl %fs:0x1f8,%eax\n\t"   /* x86_thread_data()->syscall_frame */
-                   "movl 0x1c(%eax),%ebx\n\t"  /* frame->ebx */
-                   "movl 0x28(%eax),%edi\n\t"  /* frame->edi */
-                   "movl 0x2c(%eax),%esi\n\t"  /* frame->esi */
-                   "movl 0x30(%eax),%ebp\n\t"  /* frame->ebp */
-                   "movl 4(%esp),%edx\n\t"     /* dispatcher */
-                   "movl $0,%fs:0x1f8\n\t"
-                   "leal 0x38(%eax),%esp\n\t"
-                   "jmp *%edx" )
+void WINAPI call_raise_user_exception_dispatcher( NTSTATUS (WINAPI *dispatcher)(void) )
+{
+    x86_thread_data()->syscall_frame->eip = (DWORD)dispatcher;
+}
 
 
 /***********************************************************************
