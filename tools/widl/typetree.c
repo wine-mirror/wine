@@ -901,7 +901,7 @@ static void compute_delegate_iface_names(type_t *delegate, type_t *type, typeref
 
 type_t *type_delegate_declare(char *name, struct namespace *namespace)
 {
-    type_t *type = get_type(TYPE_DELEGATE, name, NULL, 0);
+    type_t *type = get_type(TYPE_DELEGATE, name, namespace, 0);
     if (type_get_type_detect_alias(type) != TYPE_DELEGATE)
         error_loc("delegate %s previously not declared a delegate at %s:%d\n",
                   type->name, type->loc_info.input_name, type->loc_info.line_number);
