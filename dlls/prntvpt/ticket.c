@@ -747,6 +747,31 @@ HRESULT WINAPI PTConvertPrintTicketToDevMode(HPTPROVIDER provider, IStream *stre
     return S_OK;
 }
 
+HRESULT WINAPI ConvertPrintTicketToDevModeThunk2(HPTPROVIDER provider, BYTE *ticket, ULONG ticket_size, EDefaultDevmodeType type,
+                                                 EPrintTicketScope scope, BYTE **dm, ULONG *size, BSTR *error)
+{
+    static const LARGE_INTEGER zero;
+    HRESULT hr;
+    IStream *stream;
+
+    TRACE("%p,%p,%lu,%d,%d,%p,%p,%p\n", provider, ticket, ticket_size, type, scope, dm, size, error);
+
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    if (hr != S_OK) return hr;
+
+    hr = IStream_Write(stream, ticket, ticket_size, NULL);
+    if (hr == S_OK)
+    {
+        IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+
+        hr = PTConvertPrintTicketToDevMode(provider, stream, type, scope, size, (PDEVMODEW *)dm, error);
+    }
+
+    IStream_Release(stream);
+
+    return hr;
+}
+
 static HRESULT add_attribute(IXMLDOMElement *element, const WCHAR *attr, const WCHAR *value)
 {
     VARIANT var;

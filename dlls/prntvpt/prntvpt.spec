@@ -10,7 +10,7 @@
 @ stdcall PTReleaseMemory(ptr)
 @ stdcall ConvertDevModeToPrintTicketThunk2(ptr ptr long long ptr ptr)
 @ stub ConvertDevModeToPrintTicketThunk
-@ stub ConvertPrintTicketToDevModeThunk2
+@ stdcall ConvertPrintTicketToDevModeThunk2(ptr ptr long long long ptr ptr ptr)
 @ stub ConvertPrintTicketToDevModeThunk
 @ stdcall -private DllCanUnloadNow()
 @ stub DllGetClassObject
