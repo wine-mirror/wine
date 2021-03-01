@@ -1211,7 +1211,6 @@ static LRESULT LISTBOX_NCPaint( LB_DESCR *descr, HRGN region )
     OffsetRect(&r, -r.left, -r.top);
 
     hdc = GetDCEx(descr->self, region, DCX_WINDOW|DCX_INTERSECTRGN);
-    OffsetRect(&r, -r.left, -r.top);
 
     if (IsThemeBackgroundPartiallyTransparent (theme, 0, 0))
         DrawThemeParentBackground(descr->self, hdc, &r);

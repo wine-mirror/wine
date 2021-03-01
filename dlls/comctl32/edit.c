@@ -3664,7 +3664,6 @@ static void EDIT_WM_NCPaint(HWND hwnd, HRGN region)
         OffsetRect(&r, -r.left, -r.top);
 
         dc = GetDCEx(hwnd, region, DCX_WINDOW|DCX_INTERSECTRGN);
-        OffsetRect(&r, -r.left, -r.top);
 
         if (IsThemeBackgroundPartiallyTransparent(theme, part, state))
             DrawThemeParentBackground(hwnd, dc, &r);
