@@ -1456,7 +1456,19 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\tmovl %%ecx,-0x28(%%ebp)\n" ); /* frame->esp */
         output( "\tmovl 4(%%ebp),%%ecx\n" );
         output( "\tmovl %%ecx,-0x2c(%%ebp)\n" ); /* frame->eip */
-        output( "\tmovl %%esp,%%fs:0x1f8\n" );  /* x86_thread_data()->syscall_frame */
+        output( "\tsubl $0x200,%%esp\n") ;
+        output( "\tandl $~63,%%esp\n" );
+        if (!*variant)
+        {
+            output( "\tfnsave (%%esp)\n" );
+            output( "\tfwait\n" );
+        }
+        else
+        {
+            output( "\tfxsave (%%esp)\n" );
+        }
+        output( "\tleal -0x30(%%ebp),%%ecx\n" );
+        output( "\tmovl %%ecx,%%fs:0x1f8\n" );  /* x86_thread_data()->syscall_frame */
         output( "\tcmpl $%u,%%eax\n", count );
         output( "\tjae 4f\n" );
         if (UsePIC)
@@ -1479,6 +1491,17 @@ static void output_syscall_dispatcher( int count, const char *variant )
         else
             output( "\tcall *.Lsyscall_table(,%%eax,4)\n" );
         output( "2:\tmovl $0,%%fs:0x1f8\n" );
+        output( "\tleal -0x230(%%ebp),%%ebx\n") ;
+        output( "\tandl $~63,%%ebx\n" );
+        if (!*variant)
+        {
+            output( "\tfrstor (%%ebx)\n" );
+            output( "\tfwait\n" );
+        }
+        else
+        {
+            output( "\tfxrstor (%%ebx)\n" );
+        }
         output( "\tleal -0x30(%%ebp),%%ebx\n" );
         output_cfi( ".cfi_def_cfa_register %%ebx" );
         output_cfi( ".cfi_adjust_cfa_offset 0x30\n" );
@@ -1792,6 +1815,9 @@ void output_syscalls( DLLSPEC *spec )
 
         switch( target_cpu )
         {
+        case CPU_x86:
+            output_syscall_dispatcher( count, "_fxsave" );
+            break;
         case CPU_x86_64:
             output_syscall_dispatcher( count, "_xsave" );
             output_syscall_dispatcher( count, "_xsavec" );

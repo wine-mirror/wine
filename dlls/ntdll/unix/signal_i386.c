@@ -461,6 +461,17 @@ enum i386_trap_code
 #endif
 };
 
+struct syscall_xsave
+{
+    union
+    {
+        XSAVE_FORMAT       xsave;
+        FLOATING_SAVE_AREA fsave;
+    } u;
+};
+
+C_ASSERT( sizeof(struct syscall_xsave) == 0x200 );
+
 struct syscall_frame
 {
     DWORD              eflags;  /* 00 */
@@ -501,6 +512,8 @@ C_ASSERT( sizeof(struct x86_thread_data) <= sizeof(((struct ntdll_thread_data *)
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, exit_frame ) == 0x1f4 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, syscall_frame ) == 0x1f8 );
+
+static void *syscall_dispatcher;
 
 static inline struct x86_thread_data *x86_thread_data(void)
 {
@@ -2424,6 +2437,7 @@ NTSTATUS signal_alloc_thread( TEB *teb )
     }
     else thread_data->fs = gdt_fs_sel;
 
+    teb->WOW32Reserved = syscall_dispatcher;
     return STATUS_SUCCESS;
 }
 
@@ -2501,7 +2515,14 @@ void signal_init_process(void)
  */
 void *signal_init_syscalls(void)
 {
-    return __wine_syscall_dispatcher;
+    extern void __wine_syscall_dispatcher_fxsave(void) DECLSPEC_HIDDEN;
+
+    if (cpu_info.FeatureSet & CPU_FEATURE_FXSR)
+        syscall_dispatcher = __wine_syscall_dispatcher_fxsave;
+    else
+        syscall_dispatcher = __wine_syscall_dispatcher;
+
+    return NtCurrentTeb()->WOW32Reserved = syscall_dispatcher;
 }
 
 
