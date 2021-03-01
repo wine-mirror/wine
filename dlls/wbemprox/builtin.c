@@ -394,6 +394,7 @@ static const struct column col_stdregprov[] =
     { L"EnumValues",     CIM_FLAG_ARRAY|COL_FLAG_METHOD },
     { L"GetStringValue", CIM_FLAG_ARRAY|COL_FLAG_METHOD },
     { L"SetStringValue", CIM_FLAG_ARRAY|COL_FLAG_METHOD },
+    { L"SetDWORDValue",  CIM_FLAG_ARRAY|COL_FLAG_METHOD },
 };
 static const struct column col_systemenclosure[] =
 {
@@ -804,6 +805,7 @@ struct record_stdregprov
     class_method *enumvalues;
     class_method *getstringvalue;
     class_method *setstringvalue;
+    class_method *setdwordvalue;
 };
 struct record_sysrestore
 {
@@ -905,6 +907,11 @@ static const struct record_param data_param[] =
     { L"StdRegProv", L"SetStringValue", 1, L"sValueName", CIM_STRING },
     { L"StdRegProv", L"SetStringValue", 1, L"sValue", CIM_STRING },
     { L"StdRegProv", L"SetStringValue", -1, L"ReturnValue", CIM_UINT32 },
+    { L"StdRegProv", L"SetDWORDValue", 1, L"hDefKey", CIM_SINT32, 0x80000002 },
+    { L"StdRegProv", L"SetDWORDValue", 1, L"sSubKeyName", CIM_STRING },
+    { L"StdRegProv", L"SetDWORDValue", 1, L"sValueName", CIM_STRING },
+    { L"StdRegProv", L"SetDWORDValue", 1, L"uValue", CIM_UINT32 },
+    { L"StdRegProv", L"SetDWORDValue", -1, L"ReturnValue", CIM_UINT32 },
     { L"SystemRestore", L"Disable", 1, L"Drive", CIM_STRING },
     { L"SystemRestore", L"Disable", -1, L"ReturnValue", CIM_UINT32 },
     { L"SystemRestore", L"Enable", 1, L"Drive", CIM_STRING },
@@ -943,6 +950,7 @@ static const struct record_stdregprov data_stdregprov[] =
         reg_enum_values,
         reg_get_stringvalue,
         reg_set_stringvalue,
+        reg_set_dwordvalue,
     }
 };
 

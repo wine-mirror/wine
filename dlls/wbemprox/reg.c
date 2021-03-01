@@ -507,3 +507,64 @@ HRESULT reg_set_stringvalue( IWbemClassObject *obj, IWbemClassObject *in, IWbemC
     if (out_params) IWbemClassObject_Release( out_params );
     return hr;
 }
+
+static void set_dwordvalue( HKEY root, const WCHAR *subkey, const WCHAR *name, DWORD value, VARIANT *retval )
+{
+    LONG res;
+
+    TRACE("%p, %s, %s, %#x\n", root, debugstr_w(subkey), debugstr_w(name), value);
+
+    res = RegSetKeyValueW( root, subkey, name, REG_DWORD, &value, sizeof(value) );
+    set_variant( VT_UI4, res, NULL, retval );
+}
+
+HRESULT reg_set_dwordvalue( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+{
+    VARIANT defkey, subkey, name, value, retval;
+    IWbemClassObject *sig, *out_params = NULL;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", in, out);
+
+    hr = IWbemClassObject_Get( in, L"hDefKey", 0, &defkey, NULL, NULL );
+    if (hr != S_OK) return hr;
+    hr = IWbemClassObject_Get( in, L"sSubKeyName", 0, &subkey, NULL, NULL );
+    if (hr != S_OK) return hr;
+    hr = IWbemClassObject_Get( in, L"sValueName", 0, &name, NULL, NULL );
+    if (hr != S_OK) return hr;
+    hr = IWbemClassObject_Get( in, L"uValue", 0, &value, NULL, NULL );
+    if (hr != S_OK) return hr;
+
+    hr = create_signature( L"StdRegProv", L"SetDWORDValue", PARAM_OUT, &sig );
+    if (hr != S_OK)
+    {
+        VariantClear( &name );
+        VariantClear( &subkey );
+        return hr;
+    }
+    if (out)
+    {
+        hr = IWbemClassObject_SpawnInstance( sig, 0, &out_params );
+        if (hr != S_OK)
+        {
+            VariantClear( &name );
+            VariantClear( &subkey );
+            IWbemClassObject_Release( sig );
+            return hr;
+        }
+    }
+    set_dwordvalue( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), V_BSTR(&name), V_UI4(&value), &retval );
+    if (out_params)
+        hr = IWbemClassObject_Put( out_params, L"ReturnValue", 0, &retval, CIM_UINT32 );
+
+    VariantClear( &name );
+    VariantClear( &subkey );
+    IWbemClassObject_Release( sig );
+    if (hr == S_OK && out)
+    {
+        *out = out_params;
+        IWbemClassObject_AddRef( out_params );
+    }
+    if (out_params) IWbemClassObject_Release( out_params );
+    return hr;
+}
