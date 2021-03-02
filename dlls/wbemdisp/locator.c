@@ -527,6 +527,7 @@ struct member
     BSTR name;
     BOOL is_method;
     DISPID dispid;
+    CIMTYPE type;
 };
 
 struct object
@@ -1090,6 +1091,7 @@ static HRESULT init_members( struct object *object )
 {
     IWbemClassObject *sig_in, *sig_out;
     unsigned int i, capacity = 0, count = 0;
+    CIMTYPE type;
     HRESULT hr;
     BSTR name;
 
@@ -1098,12 +1100,13 @@ static HRESULT init_members( struct object *object )
     hr = IWbemClassObject_BeginEnumeration( object->object, 0 );
     if (SUCCEEDED( hr ))
     {
-        while (IWbemClassObject_Next( object->object, 0, &name, NULL, NULL, NULL ) == S_OK)
+        while (IWbemClassObject_Next( object->object, 0, &name, NULL, &type, NULL ) == S_OK)
         {
             if (!object_reserve_member( object, count + 1, &capacity )) goto error;
             object->members[count].name      = name;
             object->members[count].is_method = FALSE;
             object->members[count].dispid    = 0;
+            object->members[count].type      = type;
             count++;
             TRACE( "added property %s\n", debugstr_w(name) );
         }
