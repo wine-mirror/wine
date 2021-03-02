@@ -35,6 +35,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wbemdisp);
 
+struct namedvalueset
+{
+    ISWbemNamedValueSet ISWbemNamedValueSet_iface;
+    LONG refs;
+
+    IWbemContext *context;
+};
+
+static struct namedvalueset *unsafe_valueset_impl_from_IDispatch(IDispatch *iface);
+
+static IWbemContext * unsafe_get_context_from_namedvalueset( IDispatch *disp )
+{
+    struct namedvalueset *valueset = unsafe_valueset_impl_from_IDispatch( disp );
+    return valueset ? valueset->context : NULL;
+}
+
 static WCHAR *heap_strdupW( const WCHAR *src )
 {
     WCHAR *dst;
@@ -2751,14 +2767,13 @@ static HRESULT WINAPI locator_ConnectServer(
 {
     struct locator *locator = impl_from_ISWbemLocator( iface );
     IWbemServices *services;
+    IWbemContext *context;
     BSTR resource;
     HRESULT hr;
 
     TRACE( "%p, %s, %s, %s, %p, %s, %s, 0x%08x, %p, %p\n", iface, debugstr_w(strServer),
            debugstr_w(strNamespace), debugstr_w(strUser), strPassword, debugstr_w(strLocale),
            debugstr_w(strAuthority), iSecurityFlags, objWbemNamedValueSet, objWbemServices );
-
-    if (objWbemNamedValueSet) FIXME( "context not supported\n" );
 
     if (!locator->locator)
     {
@@ -2767,9 +2782,11 @@ static HRESULT WINAPI locator_ConnectServer(
         if (hr != S_OK) return hr;
     }
 
+    context = unsafe_get_context_from_namedvalueset( objWbemNamedValueSet );
+
     if (!(resource = build_resource_string( strServer, strNamespace ))) return E_OUTOFMEMORY;
     hr = IWbemLocator_ConnectServer( locator->locator, resource, strUser, strPassword, strLocale,
-                                     iSecurityFlags, strAuthority, NULL, &services );
+                                     iSecurityFlags, strAuthority, context, &services );
     SysFreeString( resource );
     if (hr != S_OK) return hr;
 
@@ -3046,14 +3063,6 @@ static HRESULT ISWbemSecurity_create( ISWbemSecurity **obj )
     TRACE( "returning iface %p\n", *obj );
     return S_OK;
 }
-
-struct namedvalueset
-{
-    ISWbemNamedValueSet ISWbemNamedValueSet_iface;
-    LONG refs;
-
-    IWbemContext *context;
-};
 
 struct namedvalue
 {
@@ -3477,6 +3486,18 @@ static const ISWbemNamedValueSetVtbl namedvalueset_vtbl =
     namedvalueset_Clone,
     namedvalueset_DeleteAll,
 };
+
+static struct namedvalueset *unsafe_valueset_impl_from_IDispatch(IDispatch *iface)
+{
+    if (!iface)
+        return NULL;
+    if (iface->lpVtbl != (IDispatchVtbl *)&namedvalueset_vtbl)
+    {
+        FIXME( "External implementations are not supported.\n" );
+        return NULL;
+    }
+    return CONTAINING_RECORD(iface, struct namedvalueset, ISWbemNamedValueSet_iface);
+}
 
 HRESULT SWbemNamedValueSet_create( void **obj )
 {
