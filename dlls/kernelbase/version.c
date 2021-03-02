@@ -240,7 +240,8 @@ done:
  * Copied from loader/pe_resource.c
  */
 static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_id( const IMAGE_RESOURCE_DIRECTORY *dir,
-                                                         WORD id, const void *root )
+                                                         WORD id, const void *root,
+                                                         DWORD root_size )
 {
     const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
     int min, max, pos;
@@ -248,11 +249,19 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_id( const IMAGE_RESOURCE_DI
     entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
     min = dir->NumberOfNamedEntries;
     max = min + dir->NumberOfIdEntries - 1;
+
+    if (max >= (root_size - ((INT_PTR)dir - (INT_PTR)root) - sizeof(*dir)) / sizeof(*entry))
+        return NULL;
+
     while (min <= max)
     {
         pos = (min + max) / 2;
         if (entry[pos].u.Id == id)
-            return (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + entry[pos].u2.s2.OffsetToDirectory);
+        {
+            DWORD offset = entry[pos].u2.s2.OffsetToDirectory;
+            if (offset > root_size - sizeof(*dir)) return NULL;
+            return (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + offset);
+        }
         if (entry[pos].u.Id > id) max = pos - 1;
         else min = pos + 1;
     }
@@ -294,7 +303,8 @@ static inline int push_language( WORD *list, int pos, WORD lang )
  *  find_entry_language
  */
 static const IMAGE_RESOURCE_DIRECTORY *find_entry_language( const IMAGE_RESOURCE_DIRECTORY *dir,
-                                                            const void *root, DWORD flags )
+                                                            const void *root, DWORD root_size,
+                                                            DWORD flags )
 {
     const IMAGE_RESOURCE_DIRECTORY *ret;
     WORD list[9];
@@ -319,7 +329,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_language( const IMAGE_RESOURCE
         pos = push_language( list, pos, MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT ) );
     }
 
-    for (i = 0; i < pos; i++) if ((ret = find_entry_by_id( dir, list[i], root ))) return ret;
+    for (i = 0; i < pos; i++) if ((ret = find_entry_by_id( dir, list[i], root, root_size ))) return ret;
     return find_entry_default( dir, root );
 }
 
@@ -413,7 +423,7 @@ static BOOL find_pe_resource( HANDLE handle, DWORD *resLen, DWORD *resOff, DWORD
     PIMAGE_DATA_DIRECTORY resDataDir;
     PIMAGE_SECTION_HEADER sections;
     LPBYTE resSection;
-    DWORD len, section_size, data_size;
+    DWORD len, section_size, data_size, resDirSize;
     const void *resDir;
     const IMAGE_RESOURCE_DIRECTORY *resPtr;
     const IMAGE_RESOURCE_DATA_ENTRY *resData;
@@ -486,21 +496,22 @@ static BOOL find_pe_resource( HANDLE handle, DWORD *resLen, DWORD *resOff, DWORD
 
     /* Find resource */
     resDir = resSection + (resDataDir->VirtualAddress - sections[i].VirtualAddress);
+    resDirSize = section_size - (resDataDir->VirtualAddress - sections[i].VirtualAddress);
 
     resPtr = resDir;
-    resPtr = find_entry_by_id( resPtr, VS_FILE_INFO, resDir );
+    resPtr = find_entry_by_id( resPtr, VS_FILE_INFO, resDir, resDirSize );
     if ( !resPtr )
     {
         TRACE("No typeid entry found\n" );
         goto done;
     }
-    resPtr = find_entry_by_id( resPtr, VS_VERSION_INFO, resDir );
+    resPtr = find_entry_by_id( resPtr, VS_VERSION_INFO, resDir, resDirSize );
     if ( !resPtr )
     {
         TRACE("No resid entry found\n" );
         goto done;
     }
-    resPtr = find_entry_language( resPtr, resDir, flags );
+    resPtr = find_entry_language( resPtr, resDir, resDirSize, flags );
     if ( !resPtr )
     {
         TRACE("No default language entry found\n" );
