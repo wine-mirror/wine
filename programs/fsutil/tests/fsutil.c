@@ -100,7 +100,7 @@ static void test_hardlink(void)
     ok(boolrc, "failed to get info about hardlink, error %#x\n", GetLastError());
     CloseHandle(hfile);
 
-    ok(info.nNumberOfLinks == 2, "our link is not a hardlink");
+    ok(info.nNumberOfLinks == 2, "our link is not a hardlink\n");
 
     rc = runcmd("fsutil hardlink create link file");
     ok(rc == 1, "fsutil didn't complain about already existing destination\n");
