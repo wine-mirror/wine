@@ -285,7 +285,7 @@ static void save_registry_key( HKEY key, const struct console_config *config )
     DWORD val, width, height, i;
     WCHAR color_name[13];
 
-    TRACE( "%s", debugstr_config( config ));
+    TRACE( "%s\n", debugstr_config( config ));
 
     for (i = 0; i < ARRAY_SIZE(config->color_map); i++)
     {
@@ -870,7 +870,7 @@ static void update_console_font( struct console *console, const WCHAR *font,
         EnumFontFamiliesW( console->window->mem_dc, NULL, get_first_font_enum, (LPARAM)&fc );
         if (fc.done) return;
     }
-    ERR( "Couldn't find a decent font" );
+    ERR( "Couldn't find a decent font\n" );
 }
 
 /* get a cell from a relative coordinate in window (takes into account the scrolling) */
