@@ -714,56 +714,6 @@ static inline void save_fpu( CONTEXT *context )
 
 
 /***********************************************************************
- *           save_xstate
- *
- * Save the XState context
- */
-static inline NTSTATUS save_xstate( CONTEXT *context )
-{
-    CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
-    DECLSPEC_ALIGN(64) struct
-    {
-        XSAVE_FORMAT xsave;
-        XSTATE xstate;
-    }
-    xsave_area;
-    XSTATE *xs;
-
-    if (!(cpu_info.FeatureSet & CPU_FEATURE_AVX) || !(xs = xstate_from_context( context )))
-        return STATUS_SUCCESS;
-
-    if (context_ex->XState.Length < offsetof(XSTATE, YmmContext)
-            || context_ex->XState.Length > sizeof(XSTATE))
-        return STATUS_INVALID_PARAMETER;
-
-    if (xstate_compaction_enabled)
-    {
-        /* xsavec doesn't use anything from the save area. */
-        __asm__ volatile( "xsavec %0" : "=m"(xsave_area)
-                : "a" ((unsigned int)(xs->CompactionMask & (1 << XSTATE_AVX))), "d" (0) );
-    }
-    else
-    {
-        /* xsave preserves those bits in the mask which are not in EDX:EAX, so zero it. */
-        xsave_area.xstate.Mask = xsave_area.xstate.CompactionMask = 0;
-        __asm__ volatile( "xsave %0" : "=m"(xsave_area)
-                : "a" ((unsigned int)(xs->Mask & (1 << XSTATE_AVX))), "d" (0) );
-    }
-
-    memcpy(xs, &xsave_area.xstate, offsetof(XSTATE, YmmContext));
-    if (xs->Mask & (1 << XSTATE_AVX))
-    {
-        if (context_ex->XState.Length < sizeof(XSTATE))
-            return STATUS_BUFFER_OVERFLOW;
-
-        memcpy(&xs->YmmContext, &xsave_area.xstate.YmmContext, sizeof(xs->YmmContext));
-    }
-
-    return STATUS_SUCCESS;
-}
-
-
-/***********************************************************************
  *           restore_fpu
  *
  * Restore the x87 FPU context
@@ -1334,14 +1284,10 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
  */
 NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 {
-    NTSTATUS ret, xsave_status;
     struct syscall_frame *frame = x86_thread_data()->syscall_frame;
     DWORD needed_flags = context->ContextFlags & ~CONTEXT_i386;
     BOOL self = (handle == GetCurrentThread());
-
-    /* Save xstate before any calls which can potentially change volatile ymm registers.
-     * E. g., debug output will clobber ymm registers. */
-    xsave_status = self ? save_xstate( context ) : STATUS_SUCCESS;
+    NTSTATUS ret;
 
     /* debug registers require a server call */
     if (needed_flags & CONTEXT_DEBUG_REGISTERS) self = FALSE;
@@ -1359,6 +1305,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
     if (self)
     {
         struct syscall_xsave *xsave = get_syscall_xsave( frame );
+        XSTATE *xstate;
         if (needed_flags & CONTEXT_INTEGER)
         {
             context->Eax = frame->eax;
@@ -1410,6 +1357,28 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
             x86_thread_data()->dr6 = context->Dr6;
             x86_thread_data()->dr7 = context->Dr7;
         }
+        if ((cpu_info.FeatureSet & CPU_FEATURE_AVX) && (xstate = xstate_from_context( context )))
+        {
+            struct syscall_xsave *xsave = get_syscall_xsave( frame );
+            CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
+            unsigned int mask;
+
+            if (context_ex->XState.Length < offsetof(XSTATE, YmmContext)
+                || context_ex->XState.Length > sizeof(XSTATE))
+                return STATUS_INVALID_PARAMETER;
+
+            mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & XSTATE_MASK_GSSE;
+            xstate->Mask = xsave->xstate.mask & mask;
+            xstate->CompactionMask = xstate_compaction_enabled ? (0x8000000000000000 | mask) : 0;
+            memset( xstate->Reserved, 0, sizeof(xstate->Reserved) );
+            if (xstate->Mask)
+            {
+                if (context_ex->XState.Length < sizeof(XSTATE))
+                    return STATUS_BUFFER_OVERFLOW;
+
+                memcpy( &xstate->YmmContext, xsave->xstate.ymm_high, sizeof(xsave->xstate.ymm_high) );
+            }
+        }
     }
 
     if (context->ContextFlags & (CONTEXT_INTEGER & ~CONTEXT_i386))
@@ -1425,7 +1394,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         TRACE( "%p: dr0=%08x dr1=%08x dr2=%08x dr3=%08x dr6=%08x dr7=%08x\n", handle,
                context->Dr0, context->Dr1, context->Dr2, context->Dr3, context->Dr6, context->Dr7 );
 
-    return xsave_status;
+    return STATUS_SUCCESS;
 }
 
 
