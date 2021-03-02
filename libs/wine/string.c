@@ -479,7 +479,7 @@ noconv:
 
 long int atolW( const WCHAR *str )
 {
-    return strtolW( str, (WCHAR **)0, 10 );
+    return strtolW( str, NULL, 10 );
 }
 
 int atoiW( const WCHAR *str )
