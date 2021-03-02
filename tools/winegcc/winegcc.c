@@ -1679,7 +1679,7 @@ int main(int argc, char **argv)
             strarray_add( opts.args, argv[i] );
             continue;
         }
-        if ((fstat( fd, &st ) == -1)) error( "Cannot stat %s", argv[i] + 1 );
+        if ((fstat( fd, &st ) == -1)) error( "Cannot stat %s\n", argv[i] + 1 );
         if (st.st_size)
         {
             input_buffer = xmalloc( st.st_size + 1 );
