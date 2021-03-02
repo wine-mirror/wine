@@ -1258,8 +1258,6 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
             xsave->xstate.mask &= ~XSTATE_MASK_GSSE;
     }
 
-    if (!(flags & CONTEXT_INTEGER)) frame->eax = STATUS_SUCCESS;
-    signal_restore_full_cpu_context();
     return STATUS_SUCCESS;
 }
 
@@ -2176,9 +2174,22 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     struct xcontext xcontext;
 
     init_handler( sigcontext );
-    save_context( &xcontext, sigcontext );
-    wait_suspend( &xcontext.c );
-    restore_context( &xcontext, sigcontext );
+    if (x86_thread_data()->syscall_frame)
+    {
+        DECLSPEC_ALIGN(64) XSTATE xs;
+        xcontext.c.ContextFlags = CONTEXT_FULL;
+        context_init_xstate( &xcontext.c, &xs );
+
+        NtGetContextThread( GetCurrentThread(), &xcontext.c );
+        wait_suspend( &xcontext.c );
+        NtSetContextThread( GetCurrentThread(), &xcontext.c );
+    }
+    else
+    {
+        save_context( &xcontext, sigcontext );
+        wait_suspend( &xcontext.c );
+        restore_context( &xcontext, sigcontext );
+    }
 }
 
 

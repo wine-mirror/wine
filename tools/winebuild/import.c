@@ -1509,9 +1509,17 @@ static void output_syscall_dispatcher( int count, const char *variant )
             output( "\tfrstor (%%ebx)\n" );
             output( "\tfwait\n" );
         }
-        else
+        else if(!strcmp( variant, "_fxsave" ))
         {
             output( "\tfxrstor (%%ebx)\n" );
+        }
+        else
+        {
+            output( "\tmovl %%eax,%%ecx\n" );
+            output( "\tmovl $7,%%eax\n" );
+            output( "\txorl %%edx,%%edx\n" );
+            output( "\txrstor (%%ebx)\n" );
+            output( "\tmovl %%ecx,%%eax\n" );
         }
         output( "\tleal -0x30(%%ebp),%%ebx\n" );
         output_cfi( ".cfi_def_cfa_register %%ebx" );

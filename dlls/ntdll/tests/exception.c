@@ -7762,7 +7762,7 @@ static void test_extended_context(void)
     memset(&xs->YmmContext, 0xcc, sizeof(xs->YmmContext));
     bret = GetThreadContext(thread, context);
     ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
-    ok(xs->Mask == (sizeof(void *) == 4 ? 4 : 0) || broken(sizeof(void *) == 4 && !xs->Mask) /* Win7u */,
+    ok(!xs->Mask || (sizeof(void *) == 4 && xs->Mask == 4),
             "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
     for (i = 0; i < 16 * 4; ++i)
         ok(((ULONG *)&xs->YmmContext)[i] == (xs->Mask ? (i < 8 * 4 ? 0 : 0x48484848) : 0xcccccccc),
