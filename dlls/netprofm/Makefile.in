@@ -1,7 +1,7 @@
 MODULE    = netprofm.dll
 IMPORTS   = iphlpapi
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	list.c \
