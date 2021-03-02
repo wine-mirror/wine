@@ -109,13 +109,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
-    DPVOICE_hInstance = hinstDLL;
-
     switch (fdwReason)
     {
-        case DLL_WINE_PREATTACH:
-            return FALSE;    /* prefer native version */
         case DLL_PROCESS_ATTACH:
+            DPVOICE_hInstance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
             break;
         default:
