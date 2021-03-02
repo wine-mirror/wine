@@ -2499,6 +2499,7 @@ static HRESULT WINAPI services_ExecMethod(
     struct services *services = impl_from_ISWbemServices( iface );
     IWbemClassObject *out_params = NULL;
     struct object *in_params;
+    IWbemContext *context;
     HRESULT hr;
 
     TRACE( "%p, %s, %s, %p, %#x, %p, %p\n", services, debugstr_w(path), debugstr_w(method), in_sparams,
@@ -2507,10 +2508,9 @@ static HRESULT WINAPI services_ExecMethod(
     in_params = unsafe_object_impl_from_IDispatch( in_sparams );
     out_params = NULL;
 
-    if (valueset)
-        FIXME("Named value set is unused\n");
+    context = unsafe_get_context_from_namedvalueset( valueset );
 
-    hr = IWbemServices_ExecMethod( services->services, path, method, flags, NULL, in_params ? in_params->object : NULL,
+    hr = IWbemServices_ExecMethod( services->services, path, method, flags, context, in_params ? in_params->object : NULL,
             out_sparams ? &out_params : NULL, NULL );
 
     if (SUCCEEDED(hr) && out_params)
