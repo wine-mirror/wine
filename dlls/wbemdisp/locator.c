@@ -1199,14 +1199,49 @@ static HRESULT WINAPI object_GetIDsOfNames(
     return S_OK;
 }
 
-static BSTR get_member_name( struct object *object, DISPID dispid )
+static BSTR get_member_name( struct object *object, DISPID dispid, CIMTYPE *type )
 {
     UINT i;
     for (i = 0; i < object->nb_members; i++)
     {
-        if (object->members[i].dispid == dispid) return object->members[i].name;
+        if (object->members[i].dispid == dispid)
+        {
+            *type = object->members[i].type;
+            return object->members[i].name;
+        }
     }
     return NULL;
+}
+
+static VARTYPE to_vartype( CIMTYPE type )
+{
+    switch (type)
+    {
+    case CIM_BOOLEAN:   return VT_BOOL;
+
+    case CIM_STRING:
+    case CIM_REFERENCE:
+    case CIM_DATETIME:  return VT_BSTR;
+
+    case CIM_SINT8:     return VT_I1;
+    case CIM_UINT8:     return VT_UI1;
+    case CIM_SINT16:    return VT_I2;
+
+    case CIM_UINT16:
+    case CIM_SINT32:    return VT_I4;
+
+    case CIM_UINT32:    return VT_UI4;
+
+    case CIM_SINT64:    return VT_I8;
+    case CIM_UINT64:    return VT_UI8;
+
+    case CIM_REAL32:    return VT_R4;
+
+    default:
+        ERR("unhandled type %u\n", type);
+        break;
+    }
+    return 0;
 }
 
 static HRESULT WINAPI object_Invoke(
@@ -1223,6 +1258,9 @@ static HRESULT WINAPI object_Invoke(
     struct object *object = impl_from_ISWbemObject( iface );
     BSTR name;
     ITypeInfo *typeinfo;
+    VARTYPE vartype;
+    VARIANT value;
+    CIMTYPE type;
     HRESULT hr;
 
     TRACE( "%p, %x, %s, %u, %x, %p, %p, %p, %p\n", object, member, debugstr_guid(riid),
@@ -1240,7 +1278,7 @@ static HRESULT WINAPI object_Invoke(
         return hr;
     }
 
-    if (!(name = get_member_name( object, member )))
+    if (!(name = get_member_name( object, member, &type )))
         return DISP_E_MEMBERNOTFOUND;
 
     if (flags == (DISPATCH_METHOD|DISPATCH_PROPERTYGET))
@@ -1255,7 +1293,15 @@ static HRESULT WINAPI object_Invoke(
             WARN( "Missing put property value\n" );
             return E_INVALIDARG;
         }
-        return IWbemClassObject_Put( object->object, name, 0, params->rgvarg, 0 );
+
+        vartype = to_vartype( type );
+        V_VT( &value ) = VT_EMPTY;
+        if (SUCCEEDED(hr = VariantChangeType( &value, params->rgvarg, 0, vartype )))
+        {
+            hr = IWbemClassObject_Put( object->object, name, 0, &value, 0 );
+            VariantClear( &value );
+        }
+        return hr;
     }
     else
     {
