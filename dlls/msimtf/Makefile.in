@@ -1,7 +1,7 @@
 MODULE    = msimtf.dll
 IMPORTS   = uuid imm32
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	activeimmapp.c \
