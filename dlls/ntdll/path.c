@@ -551,7 +551,8 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
             RtlInitUnicodeString( &str, nt_str );
             buflen = 3 * wcslen(name) + 1;
             unix_name = RtlAllocateHeap( GetProcessHeap(), 0, buflen );
-            if (!(status = wine_nt_to_unix_file_name( &str, unix_name, &buflen, FILE_OPEN )))
+            status = wine_nt_to_unix_file_name( &str, unix_name, &buflen, FILE_OPEN_IF );
+            if (!status || status == STATUS_NO_SUCH_FILE)
             {
                 buflen = wcslen(name) + 9;
                 status = wine_unix_to_nt_file_name( unix_name, nt_str, &buflen );
