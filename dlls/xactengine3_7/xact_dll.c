@@ -253,7 +253,7 @@ static HRESULT WINAPI IXACT3SoundBankImpl_Prepare(IXACT3SoundBank *iface,
     if (!cue)
     {
         FACTCue_Destroy(fcue);
-        ERR("Failed to allocate XACT3CueImpl!");
+        ERR("Failed to allocate XACT3CueImpl!\n");
         return E_OUTOFMEMORY;
     }
 
@@ -295,7 +295,7 @@ static HRESULT WINAPI IXACT3SoundBankImpl_Play(IXACT3SoundBank *iface,
         if (!cue)
         {
             FACTCue_Destroy(fcue);
-            ERR("Failed to allocate XACT3CueImpl!");
+            ERR("Failed to allocate XACT3CueImpl!\n");
             return E_OUTOFMEMORY;
         }
 
@@ -543,7 +543,7 @@ static HRESULT WINAPI IXACT3WaveBankImpl_Prepare(IXACT3WaveBank *iface,
     if (!wave)
     {
         FACTWave_Destroy(fwave);
-        ERR("Failed to allocate XACT3WaveImpl!");
+        ERR("Failed to allocate XACT3WaveImpl!\n");
         return E_OUTOFMEMORY;
     }
 
@@ -585,7 +585,7 @@ static HRESULT WINAPI IXACT3WaveBankImpl_Play(IXACT3WaveBank *iface,
         if (!wave)
         {
             FACTWave_Destroy(fwave);
-            ERR("Failed to allocate XACT3WaveImpl!");
+            ERR("Failed to allocate XACT3WaveImpl!\n");
             return E_OUTOFMEMORY;
         }
 
@@ -870,7 +870,7 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateSoundBank(IXACT3Engine *iface,
     if (!sb)
     {
         FACTSoundBank_Destroy(fsb);
-        ERR("Failed to allocate XACT3SoundBankImpl!");
+        ERR("Failed to allocate XACT3SoundBankImpl!\n");
         return E_OUTOFMEMORY;
     }
 
@@ -907,7 +907,7 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateInMemoryWaveBank(IXACT3Engine *ifac
     if (!wb)
     {
         FACTWaveBank_Destroy(fwb);
-        ERR("Failed to allocate XACT3WaveBankImpl!");
+        ERR("Failed to allocate XACT3WaveBankImpl!\n");
         return E_OUTOFMEMORY;
     }
 
@@ -955,7 +955,7 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateStreamingWaveBank(IXACT3Engine *ifa
     if (!wb)
     {
         FACTWaveBank_Destroy(fwb);
-        ERR("Failed to allocate XACT3WaveBankImpl!");
+        ERR("Failed to allocate XACT3WaveBankImpl!\n");
         return E_OUTOFMEMORY;
     }
 
