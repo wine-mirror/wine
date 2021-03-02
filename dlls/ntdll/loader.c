@@ -105,8 +105,6 @@ static const char * const reason_names[] =
     "PROCESS_ATTACH",
     "THREAD_ATTACH",
     "THREAD_DETACH",
-    NULL, NULL, NULL, NULL,
-    "WINE_PREATTACH"
 };
 
 struct file_id
@@ -1260,8 +1258,6 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
     const IMAGE_TLS_DIRECTORY *dir;
     const PIMAGE_TLS_CALLBACK *callback;
     ULONG dirsize;
-
-    if (reason == DLL_WINE_PREATTACH) return;
 
     dir = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_TLS, &dirsize );
     if (!dir || !dir->AddressOfCallBacks) return;
@@ -2687,14 +2683,6 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WC
             case LO_BUILTIN_NATIVE:
             case LO_DEFAULT:
                 nts = load_builtin_dll( load_path, &nt_name, flags, pwm, loadorder == LO_DEFAULT );
-                if (nts == STATUS_SUCCESS && loadorder == LO_DEFAULT &&
-                    (MODULE_InitDLL( *pwm, DLL_WINE_PREATTACH, NULL ) != STATUS_SUCCESS))
-                {
-                    /* stub-only dll, try native */
-                    TRACE( "%s pre-attach returned FALSE, preferring native\n", debugstr_us(&nt_name) );
-                    LdrUnloadDll( (*pwm)->ldr.DllBase );
-                    nts = STATUS_IMAGE_ALREADY_LOADED;
-                }
                 if (nts == STATUS_DLL_NOT_FOUND || nts == STATUS_IMAGE_ALREADY_LOADED)
                     nts = load_native_dll( load_path, &nt_name, mapping, &image_info, &id, flags, pwm );
                 break;
