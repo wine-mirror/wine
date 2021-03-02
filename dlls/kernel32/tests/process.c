@@ -2187,9 +2187,9 @@ static void test_IsWow64Process2(void)
 #elif defined __x86_64__
     USHORT expect_native = IMAGE_FILE_MACHINE_AMD64;
 #elif defined __arm__
-    USHORT expect_native = IMAGE_FILE_MACHINE_ARM;
+    USHORT expect_native = IMAGE_FILE_MACHINE_ARMNT;
 #elif defined __aarch64__
-    USHORT expect_native = IMAGE_FILE_MACHINE_ARM;
+    USHORT expect_native = IMAGE_FILE_MACHINE_ARM64;
 #else
     USHORT expect_native = 0;
 #endif

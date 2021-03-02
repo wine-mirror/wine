@@ -1002,7 +1002,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsWow64Process2( HANDLE process, USHORT *machine, 
         *native_machine = IMAGE_FILE_MACHINE_I386;
         break;
     case PROCESSOR_ARCHITECTURE_ARM:
-        *native_machine = IMAGE_FILE_MACHINE_ARM;
+        *native_machine = IMAGE_FILE_MACHINE_ARMNT;
         break;
     case PROCESSOR_ARCHITECTURE_AMD64:
         *native_machine = IMAGE_FILE_MACHINE_AMD64;
