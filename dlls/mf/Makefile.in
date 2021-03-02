@@ -3,7 +3,7 @@ IMPORTLIB = mf
 IMPORTS   = advapi32 mfplat ole32 uuid mfuuid strmiids
 DELAYIMPORTS = evr
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	copier.c \
