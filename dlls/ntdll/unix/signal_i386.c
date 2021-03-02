@@ -728,40 +728,6 @@ static inline void restore_fpu( const CONTEXT *context )
 
 
 /***********************************************************************
- *           restore_xstate
- *
- * Restore the XState context
- */
-static inline void restore_xstate( const CONTEXT *context )
-{
-    XSAVE_FORMAT *xrstor_base;
-    XSTATE *xs;
-
-    if (!(cpu_info.FeatureSet & CPU_FEATURE_AVX) || !(xs = xstate_from_context( context )))
-        return;
-
-    xrstor_base = (XSAVE_FORMAT *)xs - 1;
-
-    if (!(xs->CompactionMask & ((ULONG64)1 << 63)))
-    {
-        /* Non-compacted xrstor will load Mxcsr regardless of the specified mask. Loading garbage there
-         * may lead to fault. FPUX state should be restored by now, so we can reuse some space in
-         * ExtendedRegisters. */
-        XSAVE_FORMAT *fpux = (XSAVE_FORMAT *)context->ExtendedRegisters;
-        DWORD mxcsr, mxcsr_mask;
-
-        mxcsr = fpux->MxCsr;
-        mxcsr_mask = fpux->MxCsr_Mask;
-
-        assert( (void *)&xrstor_base->MxCsr > (void *)context->ExtendedRegisters );
-        xrstor_base->MxCsr = mxcsr;
-        xrstor_base->MxCsr_Mask = mxcsr_mask;
-    }
-    __asm__ volatile( "xrstor %0" : : "m"(*xrstor_base), "a" (4), "d" (0) );
-}
-
-
-/***********************************************************************
  *           fpux_to_fpu
  *
  * Build a standard FPU context from an extended one.
@@ -1009,7 +975,11 @@ void signal_restore_full_cpu_context(void)
 {
     struct syscall_xsave *xsave = get_syscall_xsave( get_syscall_frame() );
 
-    if (cpu_info.FeatureSet & CPU_FEATURE_FXSR)
+    if (cpu_info.FeatureSet & CPU_FEATURE_XSAVE)
+    {
+        __asm__ volatile( "xrstor %0" : : "m"(*xsave), "a" (7), "d" (0) );
+    }
+    else if (cpu_info.FeatureSet & CPU_FEATURE_FXSR)
     {
         __asm__ volatile( "fxrstor %0" : : "m"(xsave->u.xsave) );
     }
@@ -1196,6 +1166,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     struct syscall_frame *frame = x86_thread_data()->syscall_frame;
     DWORD flags = context->ContextFlags & ~CONTEXT_i386;
     BOOL self = (handle == GetCurrentThread());
+    XSTATE *xs;
 
     /* debug registers require a server call */
     if (self && (flags & CONTEXT_DEBUG_REGISTERS))
@@ -1266,8 +1237,26 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
             get_syscall_xsave( frame )->u.fsave = context->FloatSave;
         }
     }
+    if ((cpu_info.FeatureSet & CPU_FEATURE_AVX) && (xs = xstate_from_context( context )))
+    {
+        struct syscall_xsave *xsave = get_syscall_xsave( frame );
+        CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
 
-    restore_xstate( context );
+        if (context_ex->XState.Length < offsetof(XSTATE, YmmContext)
+            || context_ex->XState.Length > sizeof(XSTATE))
+            return STATUS_INVALID_PARAMETER;
+
+        if (xs->Mask & XSTATE_MASK_GSSE)
+        {
+            if (context_ex->XState.Length < sizeof(XSTATE))
+                return STATUS_BUFFER_OVERFLOW;
+
+            xsave->xstate.mask |= XSTATE_MASK_GSSE;
+            memcpy( &xsave->xstate.ymm_high, &xs->YmmContext, sizeof(xsave->xstate.ymm_high) );
+        }
+        else if (xs->CompactionMask & XSTATE_MASK_GSSE)
+            xsave->xstate.mask &= ~XSTATE_MASK_GSSE;
+    }
 
     if (!(flags & CONTEXT_INTEGER)) frame->eax = STATUS_SUCCESS;
     signal_restore_full_cpu_context();
