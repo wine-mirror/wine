@@ -7437,6 +7437,32 @@ static void test_GetExplicitEntriesFromAclW(void)
     ok(access2 == NULL, "access2 was not NULL\n");
     LocalFree(new_acl);
 
+    /* Make the ACL both Allow and Deny Everyone. */
+    res = AddAccessAllowedAce(old_acl, ACL_REVISION, KEY_READ, everyone_sid);
+    ok(res, "AddAccessAllowedAce failed with error %d\n", GetLastError());
+    res = AddAccessDeniedAce(old_acl, ACL_REVISION, KEY_WRITE, everyone_sid);
+    ok(res, "AddAccessDeniedAce failed with error %d\n", GetLastError());
+    /* Revoke Everyone. */
+    access.Trustee.ptstrName = everyone_sid;
+    access.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+    access.grfAccessPermissions = 0;
+    new_acl = NULL;
+    res = pSetEntriesInAclW(1, &access, old_acl, &new_acl);
+    ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
+    ok(new_acl != NULL, "returned acl was NULL\n");
+    /* Deny Everyone should remain (along with Grant Users from earlier). */
+    access2 = NULL;
+    res = pGetExplicitEntriesFromAclW(new_acl, &count, &access2);
+    ok(res == ERROR_SUCCESS, "GetExplicitEntriesFromAclW failed with error %d\n", GetLastError());
+    ok(count == 2, "Expected count == 2, got %d\n", count);
+    ok(access2[0].grfAccessMode == GRANT_ACCESS, "Expected GRANT_ACCESS, got %d\n", access2[0].grfAccessMode);
+    ok(access2[0].grfAccessPermissions == KEY_READ , "Expected KEY_READ, got %d\n", access2[0].grfAccessPermissions);
+    ok(EqualSid(access2[0].Trustee.ptstrName, users_sid), "Expected equal SIDs\n");
+    ok(access2[1].grfAccessMode == DENY_ACCESS, "Expected DENY_ACCESS, got %d\n", access2[1].grfAccessMode);
+    ok(access2[1].grfAccessPermissions == KEY_WRITE, "Expected KEY_WRITE, got %d\n", access2[1].grfAccessPermissions);
+    ok(EqualSid(access2[1].Trustee.ptstrName, everyone_sid), "Expected equal SIDs\n");
+    LocalFree(access2);
+
     FreeSid(users_sid);
     FreeSid(everyone_sid);
     HeapFree(GetProcessHeap(), 0, old_acl);

@@ -2314,8 +2314,7 @@ DWORD WINAPI SetEntriesInAclW( ULONG count, PEXPLICIT_ACCESSW pEntries,
                             add = FALSE;
                         break;
                     case ACCESS_DENIED_ACE_TYPE:
-                        if (EqualSid(ppsid[j], &((ACCESS_DENIED_ACE *)old_ace_header)->SidStart))
-                            add = FALSE;
+                        /* REVOKE_ACCESS does not affect ACCESS_DENIED_ACE. */
                         break;
                     case SYSTEM_AUDIT_ACE_TYPE:
                         if (EqualSid(ppsid[j], &((SYSTEM_AUDIT_ACE *)old_ace_header)->SidStart))
