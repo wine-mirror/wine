@@ -831,7 +831,7 @@ static void test_SQLWriteDSNToIni(void)
         ok(ret, "got %d\n", ret);
     }
 
-    /* Show that values are writen, even though an invalid driver was specified. */
+    /* Show that values are written, even though an invalid driver was specified. */
     ret = SQLWriteDSNToIni("wine_mis", "Missing Access Driver (*.mis)");
     ok(ret, "got %d\n", ret);
     if(ret)
