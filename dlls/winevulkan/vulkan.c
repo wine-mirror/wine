@@ -1507,7 +1507,7 @@ static inline VkTimeDomainEXT get_performance_counter_time_domain(void)
     return VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT;
 # endif
 #else
-    FIXME("No mapping for VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT on this platform.");
+    FIXME("No mapping for VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT on this platform.\n");
     return VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT;
 #endif
 }
@@ -1536,7 +1536,7 @@ static inline uint64_t convert_timestamp(VkTimeDomainEXT host_domain, VkTimeDoma
             && target_domain == VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT)
         return convert_monotonic_timestamp(value);
 
-    FIXME("Couldn't translate between host domain %d and target domain %d", host_domain, target_domain);
+    FIXME("Couldn't translate between host domain %d and target domain %d\n", host_domain, target_domain);
     return value;
 }
 
@@ -1609,7 +1609,7 @@ VkResult WINAPI wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(VkPhysicalDe
         else if (host_time_domains[i] == VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT)
             supports_monotonic_raw = TRUE;
         else
-            FIXME("Unknown time domain %d", host_time_domains[i]);
+            FIXME("Unknown time domain %d\n", host_time_domains[i]);
     }
 
     heap_free(host_time_domains);
@@ -1622,7 +1622,7 @@ VkResult WINAPI wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(VkPhysicalDe
     else if (supports_monotonic && performance_counter_domain == VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT)
         out_time_domains[out_time_domain_count++] = VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT;
     else
-        FIXME("VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT not supported on this platform.");
+        FIXME("VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT not supported on this platform.\n");
 
     /* Forward the device domain time */
     if (supports_device)
