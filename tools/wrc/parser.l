@@ -429,7 +429,7 @@ L\"			{
 				yy_push_state(tklstr);
 				wbufidx = 0;
 				if(!win32)
-					parser_error("16bit resource contains unicode strings\n");
+					parser_error("16bit resource contains unicode strings");
 			}
 <tklstr>\"{ws}+	|
 <tklstr>\"		{
