@@ -8008,12 +8008,12 @@ static void test_GetKernelObjectSecurity(void)
 
     ret = GetSecurityDescriptorDacl(sd, &present, &acl, &defaulted);
     ok(ret, "got error %u\n", GetLastError());
-    todo_wine ok(!present, "expeced no DACL present\n");
+    todo_wine ok(!present, "expected no DACL present\n");
     /* the descriptor is defaulted only on Windows >= 7 */
 
     ret = GetSecurityDescriptorSacl(sd, &present, &acl, &defaulted);
     ok(ret, "got error %u\n", GetLastError());
-    ok(!present, "expeced no SACL present\n");
+    ok(!present, "expected no SACL present\n");
     /* the descriptor is defaulted only on Windows >= 7 */
 
     free(sd);
