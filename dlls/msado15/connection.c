@@ -339,7 +339,7 @@ static HRESULT WINAPI connection_Execute( _Connection *iface, BSTR command, VARI
 {
     struct connection *connection = impl_from_Connection( iface );
     HRESULT hr;
-    ICommandText *comand_text;
+    ICommandText *command_text;
     DBROWCOUNT affected;
     IUnknown *rowset;
     _Recordset *recordset;
@@ -349,12 +349,12 @@ static HRESULT WINAPI connection_Execute( _Connection *iface, BSTR command, VARI
 
     if (connection->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
 
-    hr = create_command_text(connection->session, command, &comand_text);
+    hr = create_command_text(connection->session, command, &command_text);
     if (FAILED(hr))
         return hr;
 
-    hr = ICommandText_Execute(comand_text, NULL, &IID_IUnknown, NULL, &affected, &rowset);
-    ICommandText_Release(comand_text);
+    hr = ICommandText_Execute(command_text, NULL, &IID_IUnknown, NULL, &affected, &rowset);
+    ICommandText_Release(command_text);
     if (FAILED(hr))
         return hr;
 
