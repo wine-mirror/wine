@@ -1,7 +1,7 @@
 MODULE    = qdvd.dll
 IMPORTS   = strmbase strmiids uuid ole32
 
-EXTRADLLFLAGS = -mno-cygwin
+EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	graph.c \

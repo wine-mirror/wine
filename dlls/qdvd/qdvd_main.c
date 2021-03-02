@@ -104,9 +104,6 @@ static struct class_factory navigator_cf = {{&class_factory_vtbl}, navigator_cre
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
-    if (reason == DLL_WINE_PREATTACH)
-        return FALSE; /* prefer native version */
-
     if (reason == DLL_PROCESS_ATTACH)
     {
         qdvd_instance = instance;
