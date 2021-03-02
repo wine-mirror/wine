@@ -1059,50 +1059,52 @@ static HRESULT WINAPI object_GetTypeInfo(
     return E_NOTIMPL;
 }
 
+static BOOL object_reserve_member( struct object *object, unsigned int count, unsigned int *capacity )
+{
+    unsigned int new_capacity, max_capacity;
+    struct member *new_members;
+
+    if (count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~0u / sizeof(*object->members);
+    if (count > max_capacity)
+        return FALSE;
+
+    new_capacity = max(4, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = max_capacity;
+
+    if (!(new_members = heap_realloc( object->members, new_capacity * sizeof(*new_members) )))
+        return FALSE;
+
+    object->members = new_members;
+    *capacity = new_capacity;
+
+    return TRUE;
+}
+
 static HRESULT init_members( struct object *object )
 {
     IWbemClassObject *sig_in, *sig_out;
-    LONG i = 0, count = 0;
-    BSTR name;
+    unsigned int i, capacity = 0, count = 0;
     HRESULT hr;
+    BSTR name;
 
     if (object->members) return S_OK;
 
     hr = IWbemClassObject_BeginEnumeration( object->object, 0 );
     if (SUCCEEDED( hr ))
     {
-        while (IWbemClassObject_Next( object->object, 0, NULL, NULL, NULL, NULL ) == S_OK) count++;
-        IWbemClassObject_EndEnumeration( object->object );
-    }
-
-    hr = IWbemClassObject_BeginMethodEnumeration( object->object, 0 );
-    if (SUCCEEDED( hr ))
-    {
-        while (IWbemClassObject_NextMethod( object->object, 0, &name, &sig_in, &sig_out ) == S_OK)
-        {
-            count++;
-            SysFreeString( name );
-            if (sig_in) IWbemClassObject_Release( sig_in );
-            if (sig_out) IWbemClassObject_Release( sig_out );
-        }
-        IWbemClassObject_EndMethodEnumeration( object->object );
-    }
-
-    if (!(object->members = heap_alloc( sizeof(struct member) * count ))) return E_OUTOFMEMORY;
-
-    hr = IWbemClassObject_BeginEnumeration( object->object, 0 );
-    if (SUCCEEDED( hr ))
-    {
         while (IWbemClassObject_Next( object->object, 0, &name, NULL, NULL, NULL ) == S_OK)
         {
-            object->members[i].name      = name;
-            object->members[i].is_method = FALSE;
-            object->members[i].dispid    = 0;
-            if (++i > count)
-            {
-                IWbemClassObject_EndEnumeration( object->object );
-                goto error;
-            }
+            if (!object_reserve_member( object, count + 1, &capacity )) goto error;
+            object->members[count].name      = name;
+            object->members[count].is_method = FALSE;
+            object->members[count].dispid    = 0;
+            count++;
             TRACE( "added property %s\n", debugstr_w(name) );
         }
         IWbemClassObject_EndEnumeration( object->object );
@@ -1113,14 +1115,11 @@ static HRESULT init_members( struct object *object )
     {
         while (IWbemClassObject_NextMethod( object->object, 0, &name, &sig_in, &sig_out ) == S_OK)
         {
-            object->members[i].name      = name;
-            object->members[i].is_method = TRUE;
-            object->members[i].dispid    = 0;
-            if (++i > count)
-            {
-                IWbemClassObject_EndMethodEnumeration( object->object );
-                goto error;
-            }
+            if (!object_reserve_member( object, count + 1, &capacity )) goto error;
+            object->members[count].name      = name;
+            object->members[count].is_method = TRUE;
+            object->members[count].dispid    = 0;
+            count++;
             if (sig_in) IWbemClassObject_Release( sig_in );
             if (sig_out) IWbemClassObject_Release( sig_out );
             TRACE( "added method %s\n", debugstr_w(name) );
@@ -1133,7 +1132,8 @@ static HRESULT init_members( struct object *object )
     return S_OK;
 
 error:
-    for (--i; i >= 0; i--) SysFreeString( object->members[i].name );
+    for (i = 0; i < count; ++i)
+        SysFreeString( object->members[i].name );
     heap_free( object->members );
     object->members = NULL;
     object->nb_members = 0;
