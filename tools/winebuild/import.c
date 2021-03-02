@@ -1425,6 +1425,7 @@ static void output_syscall_dispatcher( int count, const char *variant )
 {
     const unsigned int invalid_param = 0xc000000d; /* STATUS_INVALID_PARAMETER */
     const char *symbol = strmake( "__wine_syscall_dispatcher%s", variant );
+    unsigned int i;
 
     output( "\t.align %d\n", get_alignment(4) );
     output( "\t%s\n", func_declaration(symbol) );
@@ -1456,16 +1457,26 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\tmovl %%ecx,-0x28(%%ebp)\n" ); /* frame->esp */
         output( "\tmovl 4(%%ebp),%%ecx\n" );
         output( "\tmovl %%ecx,-0x2c(%%ebp)\n" ); /* frame->eip */
-        output( "\tsubl $0x200,%%esp\n") ;
+        output( "\tsubl $0x2c0,%%esp\n") ;
         output( "\tandl $~63,%%esp\n" );
         if (!*variant)
         {
             output( "\tfnsave (%%esp)\n" );
             output( "\tfwait\n" );
         }
-        else
+        else if(!strcmp( variant, "_fxsave" ))
         {
             output( "\tfxsave (%%esp)\n" );
+        }
+        else
+        {
+            output( "\tmovl %%eax,%%ecx\n ");
+            output( "\tmovl $7,%%eax\n" );
+            output( "\txorl %%edx,%%edx\n" );
+            for (i = 0; i < 6; i++)
+                output( "\tmovl %%edx,0x%x(%%esp)\n", 0x200 + i * 4 );
+            output( "\txsave (%%esp)\n" );
+            output( "\tmovl %%ecx,%%eax\n ");
         }
         output( "\tleal -0x30(%%ebp),%%ecx\n" );
         output( "\tmovl %%ecx,%%fs:0x1f8\n" );  /* x86_thread_data()->syscall_frame */
@@ -1491,7 +1502,7 @@ static void output_syscall_dispatcher( int count, const char *variant )
         else
             output( "\tcall *.Lsyscall_table(,%%eax,4)\n" );
         output( "2:\tmovl $0,%%fs:0x1f8\n" );
-        output( "\tleal -0x230(%%ebp),%%ebx\n") ;
+        output( "\tleal -0x2f0(%%ebp),%%ebx\n") ;
         output( "\tandl $~63,%%ebx\n" );
         if (!*variant)
         {
@@ -1817,6 +1828,7 @@ void output_syscalls( DLLSPEC *spec )
         {
         case CPU_x86:
             output_syscall_dispatcher( count, "_fxsave" );
+            output_syscall_dispatcher( count, "_xsave" );
             break;
         case CPU_x86_64:
             output_syscall_dispatcher( count, "_xsave" );

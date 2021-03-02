@@ -468,9 +468,16 @@ struct syscall_xsave
         XSAVE_FORMAT       xsave;
         FLOATING_SAVE_AREA fsave;
     } u;
+    struct
+    {
+        ULONG64 mask;
+        ULONG64 compaction_mask;
+        ULONG64 reserved[6];
+        M128A   ymm_high[8];
+    } xstate;
 };
 
-C_ASSERT( sizeof(struct syscall_xsave) == 0x200 );
+C_ASSERT( sizeof(struct syscall_xsave) == 0x2c0 );
 
 struct syscall_frame
 {
@@ -2551,8 +2558,11 @@ void signal_init_process(void)
 void *signal_init_syscalls(void)
 {
     extern void __wine_syscall_dispatcher_fxsave(void) DECLSPEC_HIDDEN;
+    extern void __wine_syscall_dispatcher_xsave(void) DECLSPEC_HIDDEN;
 
-    if (cpu_info.FeatureSet & CPU_FEATURE_FXSR)
+    if (cpu_info.FeatureSet & CPU_FEATURE_XSAVE)
+        syscall_dispatcher = __wine_syscall_dispatcher_xsave;
+    else if (cpu_info.FeatureSet & CPU_FEATURE_FXSR)
         syscall_dispatcher = __wine_syscall_dispatcher_fxsave;
     else
         syscall_dispatcher = __wine_syscall_dispatcher;
