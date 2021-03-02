@@ -2094,6 +2094,22 @@ static void test_mbstowcs(void)
     ok(ret == 0, "wcstombs did not return 0, got %d\n", (int)ret);
     ok(!mOut[0], "mOut = %s\n", mOut);
 
+    if(pwcsrtombs) {
+        pwstr = wSimple;
+        err = -3;
+        ret = pwcsrtombs(mOut, &pwstr, 4, &err);
+        ok(ret == 4, "wcsrtombs did not return 4\n");
+        ok(err == 0, "err = %d\n", err);
+        ok(pwstr == wSimple+4, "pwstr = %p (wszSimple = %p)\n", pwstr, wSimple);
+        ok(!memcmp(mOut, mSimple, ret), "mOut = %s\n", mOut);
+
+        pwstr = wSimple;
+        ret = pwcsrtombs(mOut, &pwstr, 5, NULL);
+        ok(ret == 4, "wcsrtombs did not return 4\n");
+        ok(pwstr == NULL, "pwstr != NULL\n");
+        ok(!memcmp(mOut, mSimple, sizeof(mSimple)), "mOut = %s\n", mOut);
+    }
+
     if(!setlocale(LC_ALL, "Japanese_Japan.932")) {
         win_skip("Japanese_Japan.932 locale not available\n");
         return;

@@ -610,6 +610,9 @@ static size_t wcsrtombs_l(char *mbstr, const wchar_t **wcstr,
             mbstr[i] = (*wcstr)[i];
             if(!(*wcstr)[i]) break;
         }
+
+        if(i < count) *wcstr = NULL;
+        else *wcstr += i;
         return i;
     }
 
