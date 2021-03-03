@@ -76,7 +76,7 @@ done:
     return S_OK;
 }
 
-HRESULT service_pause_service( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+HRESULT service_pause_service( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT name, retval;
     IWbemClassObject *sig, *out_params = NULL;
@@ -121,7 +121,7 @@ done:
     return hr;
 }
 
-HRESULT service_resume_service( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+HRESULT service_resume_service( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT name, retval;
     IWbemClassObject *sig, *out_params = NULL;
@@ -190,7 +190,7 @@ done:
     return S_OK;
 }
 
-HRESULT service_start_service( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+HRESULT service_start_service( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT name, retval;
     IWbemClassObject *sig, *out_params = NULL;
@@ -235,7 +235,7 @@ done:
     return hr;
 }
 
-HRESULT service_stop_service( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+HRESULT service_stop_service( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT name, retval;
     IWbemClassObject *sig, *out_params = NULL;

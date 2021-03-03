@@ -882,7 +882,7 @@ static HRESULT WINAPI wbem_services_ExecMethod(
     hr = get_method( table, strMethodName, &func );
     if (hr != S_OK) goto done;
 
-    hr = func( obj, pInParams, ppOutParams );
+    hr = func( obj, NULL, pInParams, ppOutParams );
 
 done:
     if (result) IEnumWbemClassObject_Release( result );

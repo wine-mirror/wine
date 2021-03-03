@@ -62,7 +62,7 @@ done:
     return S_OK;
 }
 
-HRESULT process_get_owner( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+HRESULT process_get_owner( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT user, domain, retval;
     IWbemClassObject *sig, *out_params = NULL;

@@ -92,7 +92,7 @@ static HRESULT create_key( HKEY root, const WCHAR *subkey, VARIANT *retval )
     return HRESULT_FROM_WIN32( res );
 }
 
-HRESULT reg_create_key( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+HRESULT reg_create_key( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT defkey, subkey, retval;
     IWbemClassObject *sig, *out_params = NULL;
@@ -191,7 +191,7 @@ static HRESULT enum_key( HKEY root, const WCHAR *subkey, VARIANT *names, VARIANT
     return hr;
 }
 
-HRESULT reg_enum_key( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+HRESULT reg_enum_key( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT defkey, subkey, names, retval;
     IWbemClassObject *sig, *out_params = NULL;
@@ -301,7 +301,7 @@ done:
     return hr;
 }
 
-HRESULT reg_enum_values( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+HRESULT reg_enum_values( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT defkey, subkey, names, types, retval;
     IWbemClassObject *sig, *out_params = NULL;
@@ -384,7 +384,7 @@ done:
     return hr;
 }
 
-HRESULT reg_get_stringvalue( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+HRESULT reg_get_stringvalue( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT defkey, subkey, name, value, retval;
     IWbemClassObject *sig, *out_params = NULL;
@@ -453,7 +453,7 @@ static void set_stringvalue( HKEY root, const WCHAR *subkey, const WCHAR *name, 
     set_variant( VT_UI4, res, NULL, retval );
 }
 
-HRESULT reg_set_stringvalue( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+HRESULT reg_set_stringvalue( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT defkey, subkey, name, value, retval;
     IWbemClassObject *sig, *out_params = NULL;
@@ -518,7 +518,7 @@ static void set_dwordvalue( HKEY root, const WCHAR *subkey, const WCHAR *name, D
     set_variant( VT_UI4, res, NULL, retval );
 }
 
-HRESULT reg_set_dwordvalue( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+HRESULT reg_set_dwordvalue( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT defkey, subkey, name, value, retval;
     IWbemClassObject *sig, *out_params = NULL;
@@ -579,7 +579,7 @@ static void delete_key( HKEY root, const WCHAR *subkey, VARIANT *retval )
     set_variant( VT_UI4, res, NULL, retval );
 }
 
-HRESULT reg_delete_key( IWbemClassObject *obj, IWbemClassObject *in, IWbemClassObject **out )
+HRESULT reg_delete_key( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
 {
     VARIANT defkey, subkey, retval;
     IWbemClassObject *sig, *out_params = NULL;
