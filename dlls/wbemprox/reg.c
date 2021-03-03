@@ -550,14 +550,23 @@ HRESULT reg_set_stringvalue( IWbemClassObject *obj, IWbemContext *context, IWbem
     return hr;
 }
 
-static void set_dwordvalue( HKEY root, const WCHAR *subkey, const WCHAR *name, DWORD value, VARIANT *retval )
+static void set_dwordvalue( HKEY root, const WCHAR *subkey, const WCHAR *name, DWORD value, IWbemContext *context,
+        VARIANT *retval )
 {
+    HKEY hkey;
     LONG res;
 
     TRACE("%p, %s, %s, %#x\n", root, debugstr_w(subkey), debugstr_w(name), value);
 
-    res = RegSetKeyValueW( root, subkey, name, REG_DWORD, &value, sizeof(value) );
+    if ((res = RegOpenKeyExW( root, subkey, 0, KEY_SET_VALUE | reg_get_access_mask( context ), &hkey )))
+    {
+        set_variant( VT_UI4, res, NULL, retval );
+        return;
+    }
+
+    res = RegSetKeyValueW( hkey, NULL, name, REG_DWORD, &value, sizeof(value) );
     set_variant( VT_UI4, res, NULL, retval );
+    RegCloseKey( hkey );
 }
 
 HRESULT reg_set_dwordvalue( IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out )
@@ -595,7 +604,7 @@ HRESULT reg_set_dwordvalue( IWbemClassObject *obj, IWbemContext *context, IWbemC
             return hr;
         }
     }
-    set_dwordvalue( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), V_BSTR(&name), V_UI4(&value), &retval );
+    set_dwordvalue( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), V_BSTR(&name), V_UI4(&value), context, &retval );
     if (out_params)
         hr = IWbemClassObject_Put( out_params, L"ReturnValue", 0, &retval, CIM_UINT32 );
 
