@@ -551,19 +551,6 @@ static BOOL is_dynamic_env_var( const char *var )
             STARTS_WITH( var, "WINESERVERSOCKET=" ));
 }
 
-static BOOL is_dynamic_env_varW( const WCHAR *var )
-{
-    size_t i;
-    char name[20];
-
-    for (i = 0; i < sizeof(name) && var[i]; i++)
-    {
-        name[i] = var[i] < 0x80 ? var[i] : '?';
-        if (name[i] == '=') return is_dynamic_env_var( name );
-    }
-    return FALSE;
-}
-
 static unsigned int decode_utf8_char( unsigned char ch, const char **str, const char *strend )
 {
     /* number of following bytes in sequence based on first byte value (for bytes above 0x7f) */
@@ -1111,22 +1098,18 @@ static const char overrides_help_message[] =
  *
  * Return the initial environment.
  */
-static WCHAR *get_initial_environment( SIZE_T *ret_size )
+static WCHAR *get_initial_environment( SIZE_T *pos, SIZE_T *size )
 {
     char **e;
-    SIZE_T size = 1;
     WCHAR *env, *ptr, *end;
 
     /* estimate needed size */
-    for (e = main_envp; *e; e++)
-    {
-        if (is_dynamic_env_var( *e ) || is_special_env_var( *e )) continue;
-        size += strlen(*e) + 1;
-    }
+    *size = 1;
+    for (e = main_envp; *e; e++) *size += strlen(*e) + 1;
 
-    if (!(env = malloc( size * sizeof(WCHAR) ))) return NULL;
+    if (!(env = malloc( *size * sizeof(WCHAR) ))) return NULL;
     ptr = env;
-    end = env + size;
+    end = env + *size - 1;
     for (e = main_envp; *e && ptr < end; e++)
     {
         char *str = *e;
@@ -1146,89 +1129,116 @@ static WCHAR *get_initial_environment( SIZE_T *ret_size )
         if (is_dynamic_env_var( str )) continue;
         ptr += ntdll_umbstowcs( str, strlen(str) + 1, ptr, end - ptr );
     }
-    *ret_size = (ptr - env) * sizeof(WCHAR);
+    *pos = ptr - env;
     return env;
 }
 
 
-/* append a variable to the environment */
-static void append_envA( WCHAR *env, SIZE_T *pos, const char *name, const char *value )
+static WCHAR *find_env_var( WCHAR *env, SIZE_T size, const WCHAR *name, SIZE_T namelen )
 {
-    SIZE_T i = *pos;
+    WCHAR *p = env;
 
-    while (*name) env[i++] = (unsigned char)*name++;
-    env[i++] = '=';
-    i += ntdll_umbstowcs( value, strlen(value), env + i, strlen(value) );
-    env[i++] = 0;
-    *pos = i;
+    while (p < env + size)
+    {
+        if (!wcsnicmp( p, name, namelen ) && p[namelen] == '=') return p;
+        p += wcslen(p) + 1;
+    }
+    return NULL;
 }
 
-static void append_envW( WCHAR *env, SIZE_T *pos, const char *name, const WCHAR *value )
+/* set an environment variable, replacing it if it exists */
+static void set_env_var( WCHAR **env, SIZE_T *pos, SIZE_T *size,
+                         const WCHAR *name, SIZE_T namelen, const WCHAR *value )
 {
-    SIZE_T i = *pos;
+    WCHAR *p;
+    SIZE_T len;
 
-    while (*name) env[i++] = (unsigned char)*name++;
-    env[i++] = '=';
-    wcscpy( env + i, value );
-    *pos = i + wcslen( env + i ) + 1;
+    /* remove existing string */
+    if ((p = find_env_var( *env, *pos, name, namelen )))
+    {
+        len = wcslen(p) + 1;
+        memmove( p, p + len, (*pos - (p + len - *env)) * sizeof(WCHAR) );
+        *pos -= len;
+    }
+
+    if (!value) return;
+    len = wcslen( value );
+    if (*pos + namelen + len + 3 > *size)
+    {
+        *size = max( *size * 2, *pos + namelen + len + 3 );
+        *env = realloc( *env, *size * sizeof(WCHAR) );
+    }
+    memcpy( *env + *pos, name, namelen * sizeof(WCHAR) );
+    (*env)[*pos + namelen] = '=';
+    memcpy( *env + *pos + namelen + 1, value, (len + 1) * sizeof(WCHAR) );
+    *pos += namelen + len + 2;
+}
+
+static void append_envW( WCHAR **env, SIZE_T *pos, SIZE_T *size, const char *name, const WCHAR *value )
+{
+    WCHAR nameW[32];
+
+    ascii_to_unicode( nameW, name, strlen(name) + 1 );
+    set_env_var( env, pos, size, nameW, wcslen(nameW), value );
+}
+
+static void append_envA( WCHAR **env, SIZE_T *pos, SIZE_T *size, const char *name, const char *value )
+{
+    if (value)
+    {
+        SIZE_T len = strlen(value) + 1;
+        WCHAR *valueW = malloc( len * sizeof(WCHAR) );
+        ntdll_umbstowcs( value, len, valueW, len );
+        append_envW( env, pos, size, name, valueW );
+        free( valueW );
+    }
+    else append_envW( env, pos, size, name, NULL );
 }
 
 /* set an environment variable for one of the wine path variables */
-static void add_path_var( WCHAR *env, SIZE_T *pos, const char *name, const char *path )
+static void add_path_var( WCHAR **env, SIZE_T *pos, SIZE_T *size, const char *name, const char *path )
 {
-    WCHAR *nt_name;
+    WCHAR *nt_name = NULL;
 
-    if (unix_to_nt_file_name( path, &nt_name )) return;
-    append_envW( env, pos, name, nt_name );
+    if (path && unix_to_nt_file_name( path, &nt_name )) return;
+    append_envW( env, pos, size, name, nt_name );
     free( nt_name );
 }
 
 
 /*************************************************************************
- *		get_dynamic_environment
+ *		add_dynamic_environment
  *
- * Get the environment variables that can differ between processes.
+ * Add the environment variables that can differ between processes.
  */
-static WCHAR *get_dynamic_environment( SIZE_T *size )
+static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
 {
     const char *overrides = getenv( "WINEDLLOVERRIDES" );
-    SIZE_T alloc, pos = 0;
-    WCHAR *buffer;
     DWORD i;
     char str[22];
 
-    alloc = 20 * 10;  /* 10 variable names */
-    if (data_dir) alloc += strlen( data_dir ) + 9;
-    if (home_dir) alloc += strlen( home_dir ) + 9;
-    if (build_dir) alloc += strlen( build_dir ) + 9;
-    if (config_dir) alloc += strlen( config_dir ) + 9;
-    if (user_name) alloc += strlen( user_name );
-    if (overrides) alloc += strlen( overrides );
-    alloc += strlen(system_locale) + strlen(user_locale);
-    for (i = 0; dll_paths[i]; i++) alloc += 20 + strlen( dll_paths[i] ) + 9;
-
-    if (!(buffer = malloc( alloc * sizeof(WCHAR) ))) return NULL;
-    if (data_dir) add_path_var( buffer, &pos, "WINEDATADIR", data_dir );
-    if (home_dir) add_path_var( buffer, &pos, "WINEHOMEDIR", home_dir );
-    if (build_dir) add_path_var( buffer, &pos, "WINEBUILDDIR", build_dir );
-    if (config_dir) add_path_var( buffer, &pos, "WINECONFIGDIR", config_dir );
+    add_path_var( env, pos, size, "WINEDATADIR", data_dir );
+    add_path_var( env, pos, size, "WINEHOMEDIR", home_dir );
+    add_path_var( env, pos, size, "WINEBUILDDIR", build_dir );
+    add_path_var( env, pos, size, "WINECONFIGDIR", config_dir );
     for (i = 0; dll_paths[i]; i++)
     {
         sprintf( str, "WINEDLLDIR%u", i );
-        add_path_var( buffer, &pos, str, dll_paths[i] );
+        add_path_var( env, pos, size, str, dll_paths[i] );
     }
-    if (user_name) append_envA( buffer, &pos, "WINEUSERNAME", user_name );
-    if (overrides) append_envA( buffer, &pos, "WINEDLLOVERRIDES", overrides );
+    sprintf( str, "WINEDLLDIR%u", i );
+    append_envW( env, pos, size, str, NULL );
+    append_envA( env, pos, size, "WINEUSERNAME", user_name );
+    append_envA( env, pos, size, "WINEDLLOVERRIDES", overrides );
     if (unix_cp.data)
     {
         sprintf( str, "%u", unix_cp.data[1] );
-        append_envA( buffer, &pos, "WINEUNIXCP", str );
+        append_envA( env, pos, size, "WINEUNIXCP", str );
     }
-    append_envA( buffer, &pos, "WINELOCALE", system_locale );
-    if (strcmp( user_locale, system_locale )) append_envA( buffer, &pos, "WINEUSERLOCALE", user_locale );
-    assert( pos <= alloc );
-    *size = pos * sizeof(WCHAR);
-    return buffer;
+    else append_envW( env, pos, size, "WINEUNIXCP", NULL );
+    append_envA( env, pos, size, "WINELOCALE", system_locale );
+    append_envA( env, pos, size, "WINEUSERLOCALE",
+                 strcmp( user_locale, system_locale ) ? user_locale : NULL );
 }
 
 
@@ -1443,20 +1453,6 @@ static WCHAR *build_command_line( WCHAR **wargv )
 }
 
 
-/* copy the environment, skipping dynamic strings */
-static SIZE_T copy_environment( WCHAR *dst, const WCHAR *src )
-{
-    WCHAR *p;
-
-    for (p = dst; *src; src += wcslen( src ) + 1)
-    {
-        if (is_dynamic_env_varW( src )) continue;
-        wcscpy( p, src );
-        p += wcslen(p) + 1;
-    }
-    return p - dst;
-}
-
 static inline void copy_unicode_string( WCHAR **src, WCHAR **dst, UNICODE_STRING *str, UINT len )
 {
     str->Buffer = *dst;
@@ -1482,18 +1478,20 @@ static inline void put_unicode_string( WCHAR *src, WCHAR **dst, UNICODE_STRING *
 static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
 {
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
-    SIZE_T size, env_size = 0, dyn_size = 0;
+    SIZE_T size, env_pos, env_size;
     WCHAR *dst;
     WCHAR *cmdline = build_command_line( main_wargv + 1 );
-    WCHAR *env = get_initial_environment( &env_size );
-    WCHAR *dyn_env = get_dynamic_environment( &dyn_size );
+    WCHAR *env = get_initial_environment( &env_pos, &env_size );
     NTSTATUS status;
+
+    add_dynamic_environment( &env, &env_pos, &env_size );
+    env[env_pos++] = 0;
 
     size = (sizeof(*params)
             + MAX_PATH * sizeof(WCHAR)  /* curdir */
             + (wcslen( cmdline ) + 1) * sizeof(WCHAR)  /* command line */
             + (wcslen( main_wargv[0] ) + 1) * sizeof(WCHAR)  /* image path */
-            + env_size + dyn_size + sizeof(WCHAR));
+            + env_pos * sizeof(WCHAR));
 
     status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&params, 0, &size,
                                       MEM_COMMIT, PAGE_READWRITE );
@@ -1513,14 +1511,9 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     free( cmdline );
 
     params->Environment = dst;
-    params->EnvironmentSize = env_size + dyn_size + sizeof(WCHAR);
-    memcpy( dst, env, env_size );
-    dst += env_size / sizeof(WCHAR);
-    memcpy( dst, dyn_env, dyn_size );
-    dst += dyn_size / sizeof(WCHAR);
-    *dst = 0;
+    params->EnvironmentSize = env_pos * sizeof(WCHAR);
+    memcpy( dst, env, env_pos * sizeof(WCHAR) );
     free( env );
-    free( dyn_env );
 
     get_initial_console( params );
 
@@ -1533,9 +1526,9 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
  */
 void init_startup_info(void)
 {
-    WCHAR *src, *dst, *dyn_env;
+    WCHAR *src, *dst, *env;
     NTSTATUS status;
-    SIZE_T size, info_size, env_size, dyn_size = 0;
+    SIZE_T size, info_size, env_size, env_pos;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
     startup_info_t *info;
 
@@ -1552,12 +1545,16 @@ void init_startup_info(void)
         wine_server_set_reply( req, info, startup_info_size );
         status = wine_server_call( req );
         info_size = reply->info_size;
-        env_size = wine_server_reply_size( reply ) - info_size;
+        env_size = (wine_server_reply_size( reply ) - info_size) / sizeof(WCHAR);
     }
     SERVER_END_REQ;
     assert( !status );
 
-    dyn_env = get_dynamic_environment( &dyn_size );
+    env = malloc( env_size * sizeof(WCHAR) );
+    memcpy( env, (char *)info + info_size, env_size * sizeof(WCHAR) );
+    env_pos = env_size - 1;
+    add_dynamic_environment( &env, &env_pos, &env_size );
+    env[env_pos++] = 0;
 
     size = (sizeof(*params)
             + MAX_PATH * sizeof(WCHAR)  /* curdir */
@@ -1568,7 +1565,7 @@ void init_startup_info(void)
             + info->desktop_len + sizeof(WCHAR)
             + info->shellinfo_len + sizeof(WCHAR)
             + info->runtime_len + sizeof(WCHAR)
-            + env_size + dyn_size);
+            + env_pos * sizeof(WCHAR));
 
     status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&params, 0, &size,
                                       MEM_COMMIT, PAGE_READWRITE );
@@ -1619,12 +1616,9 @@ void init_startup_info(void)
     assert( (char *)src == (char *)info + info_size );
 
     params->Environment = dst;
-    dst += copy_environment( dst, src );
-    memcpy( dst, dyn_env, dyn_size );
-    dst += dyn_size / sizeof(WCHAR);
-    *dst++ = 0;
-    params->EnvironmentSize = (dst - params->Environment) * sizeof(WCHAR);
-    free( dyn_env );
+    params->EnvironmentSize = env_pos * sizeof(WCHAR);
+    memcpy( dst, env, env_pos * sizeof(WCHAR) );
+    free( env );
     free( info );
     NtCurrentTeb()->Peb->ProcessParameters = params;
 }
