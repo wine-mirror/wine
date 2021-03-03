@@ -1750,7 +1750,7 @@ DECL_HANDLER(queue_apc)
 
     if (thread)
     {
-        if (!queue_apc( NULL, thread, apc )) set_error( STATUS_THREAD_IS_TERMINATING );
+        if (!queue_apc( NULL, thread, apc )) set_error( STATUS_UNSUCCESSFUL );
         release_object( thread );
     }
     else if (process)
