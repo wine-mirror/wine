@@ -384,22 +384,30 @@ done:
     return hr;
 }
 
-static HRESULT get_stringvalue( HKEY root, const WCHAR *subkey, const WCHAR *name, VARIANT *value, VARIANT *retval )
+static HRESULT get_stringvalue( HKEY root, const WCHAR *subkey, const WCHAR *name, VARIANT *value,
+        IWbemContext *context, VARIANT *retval )
 {
+    DWORD size, mask, flags = RRF_RT_REG_SZ;
     HRESULT hr = S_OK;
     BSTR str = NULL;
-    DWORD size;
     LONG res;
 
     TRACE("%p, %s, %s\n", root, debugstr_w(subkey), debugstr_w(name));
 
-    if ((res = RegGetValueW( root, subkey, name, RRF_RT_REG_SZ, NULL, NULL, &size ))) goto done;
+    mask = reg_get_access_mask( context );
+
+    if (mask & KEY_WOW64_64KEY)
+        flags |= RRF_SUBKEY_WOW6464KEY;
+    else if (mask & KEY_WOW64_32KEY)
+        flags |= RRF_SUBKEY_WOW6432KEY;
+
+    if ((res = RegGetValueW( root, subkey, name, flags, NULL, NULL, &size ))) goto done;
     if (!(str = SysAllocStringLen( NULL, size / sizeof(WCHAR) - 1 )))
     {
         hr = E_OUTOFMEMORY;
         goto done;
     }
-    if (!(res = RegGetValueW( root, subkey, name, RRF_RT_REG_SZ, NULL, str, &size )))
+    if (!(res = RegGetValueW( root, subkey, name, flags, NULL, str, &size )))
         set_variant( VT_BSTR, 0, str, value );
 
 done:
@@ -442,7 +450,7 @@ HRESULT reg_get_stringvalue( IWbemClassObject *obj, IWbemContext *context, IWbem
         }
     }
     VariantInit( &value );
-    hr = get_stringvalue( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), V_BSTR(&name), &value, &retval );
+    hr = get_stringvalue( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), V_BSTR(&name), &value, context, &retval );
     if (hr != S_OK) goto done;
     if (out_params)
     {
