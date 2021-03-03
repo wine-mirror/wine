@@ -210,6 +210,7 @@ struct wbem_services
     CRITICAL_SECTION cs;
     WCHAR *namespace;
     struct async_header *async;
+    IWbemContext *context;
 };
 
 static inline struct wbem_services *impl_from_IWbemServices( IWbemServices *iface )
@@ -243,6 +244,8 @@ static ULONG WINAPI wbem_services_Release(
         }
         ws->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &ws->cs );
+        if (ws->context)
+            IWbemContext_Release( ws->context );
         heap_free( ws->namespace );
         heap_free( ws );
     }
@@ -293,7 +296,7 @@ static HRESULT WINAPI wbem_services_OpenNamespace(
     if ((wcsicmp( strNamespace, L"cimv2" ) && wcsicmp( strNamespace, L"default" )) || ws->namespace)
         return WBEM_E_INVALID_NAMESPACE;
 
-    return WbemServices_create( L"cimv2", (void **)ppWorkingNamespace );
+    return WbemServices_create( L"cimv2", NULL, (void **)ppWorkingNamespace );
 }
 
 static HRESULT WINAPI wbem_services_CancelAsyncCall(
@@ -933,21 +936,22 @@ static const IWbemServicesVtbl wbem_services_vtbl =
     wbem_services_ExecMethodAsync
 };
 
-HRESULT WbemServices_create( const WCHAR *namespace, LPVOID *ppObj )
+HRESULT WbemServices_create( const WCHAR *namespace, IWbemContext *context, LPVOID *ppObj )
 {
     struct wbem_services *ws;
 
     TRACE("(%p)\n", ppObj);
 
-    ws = heap_alloc( sizeof(*ws) );
+    ws = heap_alloc_zero( sizeof(*ws) );
     if (!ws) return E_OUTOFMEMORY;
 
     ws->IWbemServices_iface.lpVtbl = &wbem_services_vtbl;
     ws->refs      = 1;
     ws->namespace = heap_strdupW( namespace );
-    ws->async     = NULL;
     InitializeCriticalSection( &ws->cs );
     ws->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": wbemprox_services.cs");
+    if (context)
+        IWbemContext_Clone( context, &ws->context );
 
     *ppObj = &ws->IWbemServices_iface;
 

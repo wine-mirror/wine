@@ -161,14 +161,14 @@ static HRESULT WINAPI wbem_locator_ConnectServer(
     const BSTR Locale,
     LONG SecurityFlags,
     const BSTR Authority,
-    IWbemContext *pCtx,
+    IWbemContext *context,
     IWbemServices **ppNamespace)
 {
     HRESULT hr;
     WCHAR *server, *namespace;
 
     TRACE("%p, %s, %s, %s, %s, 0x%08x, %s, %p, %p)\n", iface, debugstr_w(NetworkResource), debugstr_w(User),
-          debugstr_w(Password), debugstr_w(Locale), SecurityFlags, debugstr_w(Authority), pCtx, ppNamespace);
+          debugstr_w(Password), debugstr_w(Locale), SecurityFlags, debugstr_w(Authority), context, ppNamespace);
 
     hr = parse_resource( NetworkResource, &server, &namespace );
     if (hr != S_OK) return hr;
@@ -187,7 +187,7 @@ static HRESULT WINAPI wbem_locator_ConnectServer(
     if (SecurityFlags)
         FIXME("unsupported flags\n");
 
-    hr = WbemServices_create( namespace, (void **)ppNamespace );
+    hr = WbemServices_create( namespace, context, (void **)ppNamespace );
     heap_free( namespace );
     heap_free( server );
     if (SUCCEEDED( hr ))

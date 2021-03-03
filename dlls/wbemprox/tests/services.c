@@ -24,6 +24,15 @@
 #include "wbemcli.h"
 #include "wine/test.h"
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
+}
+
 static void test_IClientSecurity(void)
 {
     HRESULT hr;
@@ -124,6 +133,7 @@ static void test_IWbemLocator(void)
     };
     IWbemLocator *locator;
     IWbemServices *services;
+    IWbemContext *context;
     unsigned int i;
     HRESULT hr;
     BSTR resource;
@@ -146,6 +156,20 @@ static void test_IWbemLocator(void)
         SysFreeString( resource );
         if (hr == S_OK) IWbemServices_Release( services );
     }
+
+    hr = CoCreateInstance( &CLSID_WbemContext, NULL, CLSCTX_INPROC_SERVER, &IID_IWbemContext, (void **)&context );
+    ok(hr == S_OK, "Failed to create context object, hr %#x.\n", hr);
+
+    EXPECT_REF(context, 1);
+    resource = SysAllocString( L"root\\default" );
+    hr = IWbemLocator_ConnectServer( locator, resource, NULL, NULL, NULL, 0, NULL, context, &services );
+    ok(hr == S_OK, "Failed to connect, hr %#x.\n", hr);
+    SysFreeString( resource );
+    EXPECT_REF(context, 1);
+    IWbemServices_Release( services );
+
+    IWbemContext_Release( context );
+
     IWbemLocator_Release( locator );
 }
 
