@@ -3467,9 +3467,11 @@ static HRESULT WINAPI namedvalueset_Clone(
 static HRESULT WINAPI namedvalueset_DeleteAll(
     ISWbemNamedValueSet *iface )
 {
-    FIXME("\n");
+    struct namedvalueset *set = impl_from_ISWbemNamedValueSet( iface );
 
-    return E_NOTIMPL;
+    TRACE("%p\n", set);
+
+    return IWbemContext_DeleteAll( set->context );
 }
 
 static const ISWbemNamedValueSetVtbl namedvalueset_vtbl =
