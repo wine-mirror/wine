@@ -233,7 +233,6 @@
 #include "shlwapi.h"
 #include "rtf.h"
 #include "imm.h"
-#include "res.h"
 
 #define STACK_SIZE_DEFAULT  100
 #define STACK_SIZE_MAX     1000
@@ -242,20 +241,11 @@
  
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
-static BOOL ME_RegisterEditorClass(HINSTANCE);
 static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, ME_Cursor *start, int nChars);
-static HCURSOR hLeft;
 
+HCURSOR cursor_reverse = NULL;
 BOOL me_debug = FALSE;
 HANDLE me_heap = NULL;
-
-static BOOL ME_ListBoxRegistered = FALSE;
-static BOOL ME_ComboBoxRegistered = FALSE;
-
-static inline BOOL is_version_nt(void)
-{
-    return !(GetVersion() & 0x80000000);
-}
 
 static ME_TextBuffer *ME_MakeText(void) {
   ME_TextBuffer *buf = heap_alloc(sizeof(*buf));
@@ -2939,15 +2929,16 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
   }
   ITextHost_TxScreenToClient(editor->texthost, &pt);
 
-  if (editor->nSelectionType == stLine && editor->bMouseCaptured) {
-      ITextHost_TxSetCursor(editor->texthost, hLeft, FALSE);
+  if (editor->nSelectionType == stLine && editor->bMouseCaptured)
+  {
+      ITextHost_TxSetCursor( editor->texthost, cursor_reverse, FALSE );
       return TRUE;
   }
   if (!editor->bEmulateVersion10 /* v4.1 */ &&
       pt.y < editor->rcFormat.top &&
       pt.x < editor->rcFormat.left)
   {
-      ITextHost_TxSetCursor(editor->texthost, hLeft, FALSE);
+      ITextHost_TxSetCursor( editor->texthost, cursor_reverse, FALSE );
       return TRUE;
   }
   if (pt.y < editor->rcFormat.top || pt.y > editor->rcFormat.bottom)
@@ -2962,7 +2953,7 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
   }
   if (pt.x < editor->rcFormat.left)
   {
-      ITextHost_TxSetCursor(editor->texthost, hLeft, FALSE);
+      ITextHost_TxSetCursor( editor->texthost, cursor_reverse, FALSE );
       return TRUE;
   }
   ME_CharFromPos(editor, pt.x, pt.y, &cursor, &isExact);
@@ -3243,37 +3234,6 @@ void ME_DestroyEditor(ME_TextEditor *editor)
   heap_free(editor);
 }
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("\n");
-    switch (fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-      DisableThreadLibraryCalls(hinstDLL);
-      me_heap = HeapCreate (0, 0x10000, 0);
-      if (!ME_RegisterEditorClass(hinstDLL)) return FALSE;
-      hLeft = LoadCursorW(hinstDLL, MAKEINTRESOURCEW(OCR_REVERSE));
-      LookupInit();
-      break;
-
-    case DLL_PROCESS_DETACH:
-      if (lpvReserved) break;
-      UnregisterClassW(RICHEDIT_CLASS20W, 0);
-      UnregisterClassW(MSFTEDIT_CLASS, 0);
-      UnregisterClassA(RICHEDIT_CLASS20A, 0);
-      UnregisterClassA("RichEdit50A", 0);
-      if (ME_ListBoxRegistered)
-          UnregisterClassW(L"REListBox20W", 0);
-      if (ME_ComboBoxRegistered)
-          UnregisterClassW(L"REComboBox20W", 0);
-      LookupCleanup();
-      HeapDestroy (me_heap);
-      release_typelib();
-      break;
-    }
-    return TRUE;
-}
-
 static inline int get_default_line_height( ME_TextEditor *editor )
 {
     int height = 0;
@@ -3290,142 +3250,6 @@ static inline int calc_wheel_change( int *remain, int amount_per_click )
     int change = amount_per_click * (float)*remain / WHEEL_DELTA;
     *remain -= WHEEL_DELTA * change / amount_per_click;
     return change;
-}
-
-static const char * const edit_messages[] = {
-  "EM_GETSEL",
-  "EM_SETSEL",
-  "EM_GETRECT",
-  "EM_SETRECT",
-  "EM_SETRECTNP",
-  "EM_SCROLL",
-  "EM_LINESCROLL",
-  "EM_SCROLLCARET",
-  "EM_GETMODIFY",
-  "EM_SETMODIFY",
-  "EM_GETLINECOUNT",
-  "EM_LINEINDEX",
-  "EM_SETHANDLE",
-  "EM_GETHANDLE",
-  "EM_GETTHUMB",
-  "EM_UNKNOWN_BF",
-  "EM_UNKNOWN_C0",
-  "EM_LINELENGTH",
-  "EM_REPLACESEL",
-  "EM_UNKNOWN_C3",
-  "EM_GETLINE",
-  "EM_LIMITTEXT",
-  "EM_CANUNDO",
-  "EM_UNDO",
-  "EM_FMTLINES",
-  "EM_LINEFROMCHAR",
-  "EM_UNKNOWN_CA",
-  "EM_SETTABSTOPS",
-  "EM_SETPASSWORDCHAR",
-  "EM_EMPTYUNDOBUFFER",
-  "EM_GETFIRSTVISIBLELINE",
-  "EM_SETREADONLY",
-  "EM_SETWORDBREAKPROC",
-  "EM_GETWORDBREAKPROC",
-  "EM_GETPASSWORDCHAR",
-  "EM_SETMARGINS",
-  "EM_GETMARGINS",
-  "EM_GETLIMITTEXT",
-  "EM_POSFROMCHAR",
-  "EM_CHARFROMPOS",
-  "EM_SETIMESTATUS",
-  "EM_GETIMESTATUS"
-};
-
-static const char * const richedit_messages[] = {
-  "EM_CANPASTE",
-  "EM_DISPLAYBAND",
-  "EM_EXGETSEL",
-  "EM_EXLIMITTEXT",
-  "EM_EXLINEFROMCHAR",
-  "EM_EXSETSEL",
-  "EM_FINDTEXT",
-  "EM_FORMATRANGE",
-  "EM_GETCHARFORMAT",
-  "EM_GETEVENTMASK",
-  "EM_GETOLEINTERFACE",
-  "EM_GETPARAFORMAT",
-  "EM_GETSELTEXT",
-  "EM_HIDESELECTION", 
-  "EM_PASTESPECIAL",
-  "EM_REQUESTRESIZE",
-  "EM_SELECTIONTYPE",
-  "EM_SETBKGNDCOLOR",
-  "EM_SETCHARFORMAT",
-  "EM_SETEVENTMASK",
-  "EM_SETOLECALLBACK",
-  "EM_SETPARAFORMAT",
-  "EM_SETTARGETDEVICE",
-  "EM_STREAMIN",
-  "EM_STREAMOUT",
-  "EM_GETTEXTRANGE",
-  "EM_FINDWORDBREAK",
-  "EM_SETOPTIONS",
-  "EM_GETOPTIONS",
-  "EM_FINDTEXTEX",
-  "EM_GETWORDBREAKPROCEX",
-  "EM_SETWORDBREAKPROCEX",
-  "EM_SETUNDOLIMIT",
-  "EM_UNKNOWN_USER_83",
-  "EM_REDO",
-  "EM_CANREDO",
-  "EM_GETUNDONAME",
-  "EM_GETREDONAME",
-  "EM_STOPGROUPTYPING",
-  "EM_SETTEXTMODE",
-  "EM_GETTEXTMODE",
-  "EM_AUTOURLDETECT",
-  "EM_GETAUTOURLDETECT",
-  "EM_SETPALETTE",
-  "EM_GETTEXTEX",
-  "EM_GETTEXTLENGTHEX",
-  "EM_SHOWSCROLLBAR",
-  "EM_SETTEXTEX",
-  "EM_UNKNOWN_USER_98",
-  "EM_UNKNOWN_USER_99",
-  "EM_SETPUNCTUATION",
-  "EM_GETPUNCTUATION",
-  "EM_SETWORDWRAPMODE",
-  "EM_GETWORDWRAPMODE",
-  "EM_SETIMECOLOR",
-  "EM_GETIMECOLOR",
-  "EM_SETIMEOPTIONS",
-  "EM_GETIMEOPTIONS",
-  "EM_CONVPOSITION",
-  "EM_UNKNOWN_USER_109",
-  "EM_UNKNOWN_USER_110",
-  "EM_UNKNOWN_USER_111",
-  "EM_UNKNOWN_USER_112",
-  "EM_UNKNOWN_USER_113",
-  "EM_UNKNOWN_USER_114",
-  "EM_UNKNOWN_USER_115",
-  "EM_UNKNOWN_USER_116",
-  "EM_UNKNOWN_USER_117",
-  "EM_UNKNOWN_USER_118",
-  "EM_UNKNOWN_USER_119",
-  "EM_SETLANGOPTIONS",
-  "EM_GETLANGOPTIONS",
-  "EM_GETIMECOMPMODE",
-  "EM_FINDTEXTW",
-  "EM_FINDTEXTEXW",
-  "EM_RECONVERSION",
-  "EM_SETIMEMODEBIAS",
-  "EM_GETIMEMODEBIAS"
-};
-
-static const char *
-get_msg_name(UINT msg)
-{
-  if (msg >= EM_GETSEL && msg <= EM_CHARFROMPOS)
-    return edit_messages[msg - EM_GETSEL];
-  if (msg >= EM_CANPASTE && msg <= EM_GETIMEMODEBIAS)
-    return richedit_messages[msg - EM_CANPASTE];
-  return "";
 }
 
 static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -4935,187 +4759,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   return 0L;
 }
 
-static BOOL create_windowed_editor(HWND hwnd, CREATESTRUCTW *create, BOOL emulate_10)
-{
-    ITextHost *host = ME_CreateTextHost( hwnd, create, emulate_10 );
-    ME_TextEditor *editor;
-
-    if (!host) return FALSE;
-
-    editor = ME_MakeEditor( host, emulate_10 );
-    if (!editor)
-    {
-        ITextHost_Release( host );
-        return FALSE;
-    }
-
-    editor->exStyleFlags = GetWindowLongW( hwnd, GWL_EXSTYLE );
-    editor->styleFlags |= GetWindowLongW( hwnd, GWL_STYLE ) & ES_WANTRETURN;
-    editor->hWnd = hwnd; /* FIXME: Remove editor's dependence on hWnd */
-    editor->hwndParent = create->hwndParent;
-
-    SetWindowLongPtrW( hwnd, 0, (LONG_PTR)editor );
-
-    return TRUE;
-}
-
-static LRESULT RichEditWndProc_common(HWND hWnd, UINT msg, WPARAM wParam,
-                                      LPARAM lParam, BOOL unicode)
-{
-  ME_TextEditor *editor;
-  HRESULT hresult;
-  LRESULT lresult = 0;
-
-  TRACE("enter hwnd %p msg %04x (%s) %lx %lx, unicode %d\n",
-        hWnd, msg, get_msg_name(msg), wParam, lParam, unicode);
-
-  editor = (ME_TextEditor *)GetWindowLongPtrW(hWnd, 0);
-  if (!editor)
-  {
-    if (msg == WM_NCCREATE)
-    {
-      CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
-
-      TRACE("WM_NCCREATE: hWnd %p style 0x%08x\n", hWnd, pcs->style);
-      return create_windowed_editor( hWnd, pcs, FALSE );
-    }
-    else
-    {
-      return DefWindowProcW(hWnd, msg, wParam, lParam);
-    }
-  }
-
-  switch (msg)
-  {
-    case WM_PAINT:
-    {
-      HDC hdc;
-      RECT rc;
-      PAINTSTRUCT ps;
-      HBRUSH old_brush;
-
-      update_caret(editor);
-      hdc = BeginPaint(editor->hWnd, &ps);
-      if (!editor->bEmulateVersion10 || (editor->nEventMask & ENM_UPDATE))
-        ME_SendOldNotify(editor, EN_UPDATE);
-      old_brush = SelectObject(hdc, editor->hbrBackground);
-
-      /* Erase area outside of the formatting rectangle */
-      if (ps.rcPaint.top < editor->rcFormat.top)
-      {
-        rc = ps.rcPaint;
-        rc.bottom = editor->rcFormat.top;
-        PatBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
-        ps.rcPaint.top = editor->rcFormat.top;
-      }
-      if (ps.rcPaint.bottom > editor->rcFormat.bottom) {
-        rc = ps.rcPaint;
-        rc.top = editor->rcFormat.bottom;
-        PatBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
-        ps.rcPaint.bottom = editor->rcFormat.bottom;
-      }
-      if (ps.rcPaint.left < editor->rcFormat.left) {
-        rc = ps.rcPaint;
-        rc.right = editor->rcFormat.left;
-        PatBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
-        ps.rcPaint.left = editor->rcFormat.left;
-      }
-      if (ps.rcPaint.right > editor->rcFormat.right) {
-        rc = ps.rcPaint;
-        rc.left = editor->rcFormat.right;
-        PatBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
-        ps.rcPaint.right = editor->rcFormat.right;
-      }
-
-      ME_PaintContent(editor, hdc, &ps.rcPaint);
-      SelectObject(hdc, old_brush);
-      EndPaint(editor->hWnd, &ps);
-      return 0;
-    }
-    case WM_ERASEBKGND:
-    {
-      HDC hDC = (HDC)wParam;
-      RECT rc;
-
-      if (GetUpdateRect(editor->hWnd, &rc, TRUE))
-        FillRect(hDC, &rc, editor->hbrBackground);
-      return 1;
-    }
-    case EM_SETOPTIONS:
-    {
-      DWORD dwStyle;
-      const DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
-                         ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN |
-                         ECO_SELECTIONBAR;
-      lresult = ME_HandleMessage(editor, msg, wParam, lParam, unicode, &hresult);
-      dwStyle = GetWindowLongW(hWnd, GWL_STYLE);
-      dwStyle = (dwStyle & ~mask) | (lresult & mask);
-      SetWindowLongW(hWnd, GWL_STYLE, dwStyle);
-      return lresult;
-    }
-    case EM_SETREADONLY:
-    {
-      DWORD dwStyle;
-      lresult = ME_HandleMessage(editor, msg, wParam, lParam, unicode, &hresult);
-      dwStyle = GetWindowLongW(hWnd, GWL_STYLE);
-      dwStyle &= ~ES_READONLY;
-      if (wParam)
-        dwStyle |= ES_READONLY;
-      SetWindowLongW(hWnd, GWL_STYLE, dwStyle);
-      return lresult;
-    }
-    default:
-      lresult = ME_HandleMessage(editor, msg, wParam, lParam, unicode, &hresult);
-  }
-
-  if (hresult == S_FALSE)
-    lresult = DefWindowProcW(hWnd, msg, wParam, lParam);
-
-  TRACE("exit hwnd %p msg %04x (%s) %lx %lx, unicode %d -> %lu\n",
-        hWnd, msg, get_msg_name(msg), wParam, lParam, unicode, lresult);
-
-  return lresult;
-}
-
-static LRESULT WINAPI RichEditWndProcW(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    BOOL unicode = TRUE;
-
-    /* Under Win9x RichEdit20W returns ANSI strings, see the tests. */
-    if (msg == WM_GETTEXT && (GetVersion() & 0x80000000))
-        unicode = FALSE;
-
-    return RichEditWndProc_common(hWnd, msg, wParam, lParam, unicode);
-}
-
-static LRESULT WINAPI RichEditWndProcA(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    return RichEditWndProc_common(hWnd, msg, wParam, lParam, FALSE);
-}
-
-/******************************************************************
- *        RichEditANSIWndProc (RICHED20.10)
- */
-LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    return RichEditWndProcA(hWnd, msg, wParam, lParam);
-}
-
-/******************************************************************
- *        RichEdit10ANSIWndProc (RICHED20.9)
- */
-LRESULT WINAPI RichEdit10ANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-  if (msg == WM_NCCREATE && !GetWindowLongPtrW(hWnd, 0))
-  {
-    CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
-
-    TRACE("WM_NCCREATE: hWnd %p style 0x%08x\n", hWnd, pcs->style);
-    return create_windowed_editor( hWnd, pcs, TRUE );
-  }
-  return RichEditANSIWndProc(hWnd, msg, wParam, lParam);
-}
-
 void ME_SendOldNotify(ME_TextEditor *editor, int nCode)
 {
   ITextHost_TxNotify(editor->texthost, nCode, NULL);
@@ -5190,114 +4833,6 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
   }
   *buffer = 0;
   return buffer - pStart;
-}
-
-static BOOL ME_RegisterEditorClass(HINSTANCE hInstance)
-{
-  WNDCLASSW wcW;
-  WNDCLASSA wcA;
-  
-  wcW.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
-  wcW.lpfnWndProc = RichEditWndProcW;
-  wcW.cbClsExtra = 0;
-  wcW.cbWndExtra = sizeof(ME_TextEditor *);
-  wcW.hInstance = NULL; /* hInstance would register DLL-local class */
-  wcW.hIcon = NULL;
-  wcW.hCursor = LoadCursorW(NULL, (LPWSTR)IDC_IBEAM);
-  wcW.hbrBackground = GetStockObject(NULL_BRUSH);
-  wcW.lpszMenuName = NULL;
-
-  if (is_version_nt())
-  {
-    wcW.lpszClassName = RICHEDIT_CLASS20W;
-    if (!RegisterClassW(&wcW)) return FALSE;
-    wcW.lpszClassName = MSFTEDIT_CLASS;
-    if (!RegisterClassW(&wcW)) return FALSE;
-  }
-  else
-  {
-    /* WNDCLASSA/W have the same layout */
-    wcW.lpszClassName = (LPCWSTR)"RichEdit20W";
-    if (!RegisterClassA((WNDCLASSA *)&wcW)) return FALSE;
-    wcW.lpszClassName = (LPCWSTR)"RichEdit50W";
-    if (!RegisterClassA((WNDCLASSA *)&wcW)) return FALSE;
-  }
-
-  wcA.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
-  wcA.lpfnWndProc = RichEditWndProcA;
-  wcA.cbClsExtra = 0;
-  wcA.cbWndExtra = sizeof(ME_TextEditor *);
-  wcA.hInstance = NULL; /* hInstance would register DLL-local class */
-  wcA.hIcon = NULL;
-  wcA.hCursor = LoadCursorW(NULL, (LPWSTR)IDC_IBEAM);
-  wcA.hbrBackground = GetStockObject(NULL_BRUSH);
-  wcA.lpszMenuName = NULL;
-  wcA.lpszClassName = RICHEDIT_CLASS20A;
-  if (!RegisterClassA(&wcA)) return FALSE;
-  wcA.lpszClassName = "RichEdit50A";
-  if (!RegisterClassA(&wcA)) return FALSE;
-
-  return TRUE;
-}
-
-static LRESULT WINAPI REComboWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-  /* FIXME: Not implemented */
-  TRACE("hWnd %p msg %04x (%s) %08lx %08lx\n",
-        hWnd, msg, get_msg_name(msg), wParam, lParam);
-  return DefWindowProcW(hWnd, msg, wParam, lParam);
-}
-
-static LRESULT WINAPI REListWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-  /* FIXME: Not implemented */
-  TRACE("hWnd %p msg %04x (%s) %08lx %08lx\n",
-        hWnd, msg, get_msg_name(msg), wParam, lParam);
-  return DefWindowProcW(hWnd, msg, wParam, lParam);
-}
-
-/******************************************************************
- *        REExtendedRegisterClass (RICHED20.8)
- *
- * FIXME undocumented
- * Need to check for errors and implement controls and callbacks 
- */
-LRESULT WINAPI REExtendedRegisterClass(void)
-{
-  WNDCLASSW wcW;
-  UINT result;
-
-  FIXME("semi stub\n");
-
-  wcW.cbClsExtra = 0;
-  wcW.cbWndExtra = 4;
-  wcW.hInstance = NULL;
-  wcW.hIcon = NULL;
-  wcW.hCursor = NULL;
-  wcW.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
-  wcW.lpszMenuName = NULL;
-
-  if (!ME_ListBoxRegistered)
-  {
-      wcW.style = CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS;
-      wcW.lpfnWndProc = REListWndProc;
-      wcW.lpszClassName = L"REListBox20W";
-      if (RegisterClassW(&wcW)) ME_ListBoxRegistered = TRUE;
-  }
-
-  if (!ME_ComboBoxRegistered)
-  {
-      wcW.style = CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW;
-      wcW.lpfnWndProc = REComboWndProc;
-      wcW.lpszClassName = L"REComboBox20W";
-      if (RegisterClassW(&wcW)) ME_ComboBoxRegistered = TRUE;  
-  }
-
-  result = 0;
-  if (ME_ListBoxRegistered)
-      result += 1;
-  if (ME_ComboBoxRegistered)
-      result += 2;
-
-  return result;
 }
 
 static int __cdecl wchar_comp( const void *key, const void *elem )

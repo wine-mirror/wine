@@ -27,6 +27,8 @@
 #include "textserv.h"
 #include "wine/debug.h"
 #include "editstr.h"
+#include "rtf.h"
+#include "res.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
@@ -40,7 +42,10 @@ typedef struct ITextHostImpl {
 
 static const ITextHostVtbl textHostVtbl;
 
-ITextHost *ME_CreateTextHost(HWND hwnd, CREATESTRUCTW *cs, BOOL bEmulateVersion10)
+static BOOL listbox_registered;
+static BOOL combobox_registered;
+
+static ITextHost *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL bEmulateVersion10 )
 {
     ITextHostImpl *texthost;
 
@@ -676,3 +681,368 @@ static const ITextHostVtbl textHostVtbl = {
     THISCALL(ITextHostImpl_TxImmReleaseContext),
     THISCALL(ITextHostImpl_TxGetSelectionBarWidth),
 };
+
+static const char * const edit_messages[] =
+{
+    "EM_GETSEL",           "EM_SETSEL",           "EM_GETRECT",             "EM_SETRECT",
+    "EM_SETRECTNP",        "EM_SCROLL",           "EM_LINESCROLL",          "EM_SCROLLCARET",
+    "EM_GETMODIFY",        "EM_SETMODIFY",        "EM_GETLINECOUNT",        "EM_LINEINDEX",
+    "EM_SETHANDLE",        "EM_GETHANDLE",        "EM_GETTHUMB",            "EM_UNKNOWN_BF",
+    "EM_UNKNOWN_C0",       "EM_LINELENGTH",       "EM_REPLACESEL",          "EM_UNKNOWN_C3",
+    "EM_GETLINE",          "EM_LIMITTEXT",        "EM_CANUNDO",             "EM_UNDO",
+    "EM_FMTLINES",         "EM_LINEFROMCHAR",     "EM_UNKNOWN_CA",          "EM_SETTABSTOPS",
+    "EM_SETPASSWORDCHAR",  "EM_EMPTYUNDOBUFFER",  "EM_GETFIRSTVISIBLELINE", "EM_SETREADONLY",
+    "EM_SETWORDBREAKPROC", "EM_GETWORDBREAKPROC", "EM_GETPASSWORDCHAR",     "EM_SETMARGINS",
+    "EM_GETMARGINS",       "EM_GETLIMITTEXT",     "EM_POSFROMCHAR",         "EM_CHARFROMPOS",
+    "EM_SETIMESTATUS",     "EM_GETIMESTATUS"
+};
+
+static const char * const richedit_messages[] =
+{
+    "EM_CANPASTE",         "EM_DISPLAYBAND",      "EM_EXGETSEL",            "EM_EXLIMITTEXT",
+    "EM_EXLINEFROMCHAR",   "EM_EXSETSEL",         "EM_FINDTEXT",            "EM_FORMATRANGE",
+    "EM_GETCHARFORMAT",    "EM_GETEVENTMASK",     "EM_GETOLEINTERFACE",     "EM_GETPARAFORMAT",
+    "EM_GETSELTEXT",       "EM_HIDESELECTION",    "EM_PASTESPECIAL",        "EM_REQUESTRESIZE",
+    "EM_SELECTIONTYPE",    "EM_SETBKGNDCOLOR",    "EM_SETCHARFORMAT",       "EM_SETEVENTMASK",
+    "EM_SETOLECALLBACK",   "EM_SETPARAFORMAT",    "EM_SETTARGETDEVICE",     "EM_STREAMIN",
+    "EM_STREAMOUT",        "EM_GETTEXTRANGE",     "EM_FINDWORDBREAK",       "EM_SETOPTIONS",
+    "EM_GETOPTIONS",       "EM_FINDTEXTEX",       "EM_GETWORDBREAKPROCEX",  "EM_SETWORDBREAKPROCEX",
+    "EM_SETUNDOLIMIT",     "EM_UNKNOWN_USER_83",  "EM_REDO",                "EM_CANREDO",
+    "EM_GETUNDONAME",      "EM_GETREDONAME",      "EM_STOPGROUPTYPING",     "EM_SETTEXTMODE",
+    "EM_GETTEXTMODE",      "EM_AUTOURLDETECT",    "EM_GETAUTOURLDETECT",    "EM_SETPALETTE",
+    "EM_GETTEXTEX",        "EM_GETTEXTLENGTHEX",  "EM_SHOWSCROLLBAR",       "EM_SETTEXTEX",
+    "EM_UNKNOWN_USER_98",  "EM_UNKNOWN_USER_99",  "EM_SETPUNCTUATION",      "EM_GETPUNCTUATION",
+    "EM_SETWORDWRAPMODE",  "EM_GETWORDWRAPMODE",  "EM_SETIMECOLOR",         "EM_GETIMECOLOR",
+    "EM_SETIMEOPTIONS",    "EM_GETIMEOPTIONS",    "EM_CONVPOSITION",        "EM_UNKNOWN_USER_109",
+    "EM_UNKNOWN_USER_110", "EM_UNKNOWN_USER_111", "EM_UNKNOWN_USER_112",    "EM_UNKNOWN_USER_113",
+    "EM_UNKNOWN_USER_114", "EM_UNKNOWN_USER_115", "EM_UNKNOWN_USER_116",    "EM_UNKNOWN_USER_117",
+    "EM_UNKNOWN_USER_118", "EM_UNKNOWN_USER_119", "EM_SETLANGOPTIONS",      "EM_GETLANGOPTIONS",
+    "EM_GETIMECOMPMODE",   "EM_FINDTEXTW",        "EM_FINDTEXTEXW",         "EM_RECONVERSION",
+    "EM_SETIMEMODEBIAS",   "EM_GETIMEMODEBIAS"
+};
+
+static const char *get_msg_name( UINT msg )
+{
+    if (msg >= EM_GETSEL && msg <= EM_CHARFROMPOS)
+        return edit_messages[msg - EM_GETSEL];
+    if (msg >= EM_CANPASTE && msg <= EM_GETIMEMODEBIAS)
+        return richedit_messages[msg - EM_CANPASTE];
+    return "";
+}
+
+static BOOL create_windowed_editor( HWND hwnd, CREATESTRUCTW *create, BOOL emulate_10 )
+{
+    ITextHost *host = host_create( hwnd, create, emulate_10 );
+    ME_TextEditor *editor;
+
+    if (!host) return FALSE;
+
+    editor = ME_MakeEditor( host, emulate_10 );
+    if (!editor)
+    {
+        ITextHost_Release( host );
+        return FALSE;
+    }
+
+    editor->exStyleFlags = GetWindowLongW( hwnd, GWL_EXSTYLE );
+    editor->styleFlags |= GetWindowLongW( hwnd, GWL_STYLE ) & ES_WANTRETURN;
+    editor->hWnd = hwnd; /* FIXME: Remove editor's dependence on hWnd */
+    editor->hwndParent = create->hwndParent;
+
+    SetWindowLongPtrW( hwnd, 0, (LONG_PTR)editor );
+
+    return TRUE;
+}
+
+static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
+                                       LPARAM lparam, BOOL unicode )
+{
+    ME_TextEditor *editor;
+    HRESULT hr;
+    LRESULT res = 0;
+
+    TRACE( "enter hwnd %p msg %04x (%s) %lx %lx, unicode %d\n",
+           hwnd, msg, get_msg_name(msg), wparam, lparam, unicode );
+
+    editor = (ME_TextEditor *)GetWindowLongPtrW( hwnd, 0 );
+    if (!editor)
+    {
+        if (msg == WM_NCCREATE)
+        {
+            CREATESTRUCTW *pcs = (CREATESTRUCTW *)lparam;
+
+            TRACE( "WM_NCCREATE: hwnd %p style 0x%08x\n", hwnd, pcs->style );
+            return create_windowed_editor( hwnd, pcs, FALSE );
+        }
+        else return DefWindowProcW( hwnd, msg, wparam, lparam );
+    }
+
+    switch (msg)
+    {
+    case WM_ERASEBKGND:
+    {
+        HDC hdc = (HDC)wparam;
+        RECT rc;
+
+        if (GetUpdateRect( editor->hWnd, &rc, TRUE ))
+            FillRect( hdc, &rc, editor->hbrBackground );
+        return 1;
+    }
+    case WM_PAINT:
+    {
+        HDC hdc;
+        RECT rc;
+        PAINTSTRUCT ps;
+        HBRUSH old_brush;
+
+        update_caret( editor );
+        hdc = BeginPaint( editor->hWnd, &ps );
+        if (!editor->bEmulateVersion10 || (editor->nEventMask & ENM_UPDATE))
+            ME_SendOldNotify( editor, EN_UPDATE );
+        old_brush = SelectObject( hdc, editor->hbrBackground );
+
+        /* Erase area outside of the formatting rectangle */
+        if (ps.rcPaint.top < editor->rcFormat.top)
+        {
+            rc = ps.rcPaint;
+            rc.bottom = editor->rcFormat.top;
+            PatBlt( hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
+            ps.rcPaint.top = editor->rcFormat.top;
+        }
+        if (ps.rcPaint.bottom > editor->rcFormat.bottom)
+        {
+            rc = ps.rcPaint;
+            rc.top = editor->rcFormat.bottom;
+            PatBlt( hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
+            ps.rcPaint.bottom = editor->rcFormat.bottom;
+        }
+        if (ps.rcPaint.left < editor->rcFormat.left)
+        {
+            rc = ps.rcPaint;
+            rc.right = editor->rcFormat.left;
+            PatBlt( hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
+            ps.rcPaint.left = editor->rcFormat.left;
+        }
+        if (ps.rcPaint.right > editor->rcFormat.right)
+        {
+            rc = ps.rcPaint;
+            rc.left = editor->rcFormat.right;
+            PatBlt( hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
+            ps.rcPaint.right = editor->rcFormat.right;
+        }
+
+        ME_PaintContent( editor, hdc, &ps.rcPaint );
+        SelectObject( hdc, old_brush );
+        EndPaint( editor->hWnd, &ps );
+        return 0;
+    }
+    case EM_SETOPTIONS:
+    {
+        DWORD style;
+        const DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
+            ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN |
+            ECO_SELECTIONBAR;
+
+        res = ME_HandleMessage( editor, msg, wparam, lparam, unicode, &hr );
+        style = GetWindowLongW( hwnd, GWL_STYLE );
+        style = (style & ~mask) | (res & mask);
+        SetWindowLongW( hwnd, GWL_STYLE, style );
+        return res;
+    }
+    case EM_SETREADONLY:
+    {
+        DWORD style;
+
+        res = ME_HandleMessage( editor, msg, wparam, lparam, unicode, &hr );
+        style = GetWindowLongW( hwnd, GWL_STYLE );
+        style &= ~ES_READONLY;
+        if (wparam) style |= ES_READONLY;
+        SetWindowLongW( hwnd, GWL_STYLE, style );
+        return res;
+    }
+    default:
+        res = ME_HandleMessage( editor, msg, wparam, lparam, unicode, &hr );
+    }
+
+    if (hr == S_FALSE)
+        res = DefWindowProcW( hwnd, msg, wparam, lparam );
+
+    TRACE( "exit hwnd %p msg %04x (%s) %lx %lx, unicode %d -> %lu\n",
+           hwnd, msg, get_msg_name(msg), wparam, lparam, unicode, res );
+
+    return res;
+}
+
+static LRESULT WINAPI RichEditWndProcW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    BOOL unicode = TRUE;
+
+    /* Under Win9x RichEdit20W returns ANSI strings, see the tests. */
+    if (msg == WM_GETTEXT && (GetVersion() & 0x80000000))
+        unicode = FALSE;
+
+    return RichEditWndProc_common( hwnd, msg, wparam, lparam, unicode );
+}
+
+static LRESULT WINAPI RichEditWndProcA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    return RichEditWndProc_common( hwnd, msg, wparam, lparam, FALSE );
+}
+
+/******************************************************************
+ *        RichEditANSIWndProc (RICHED20.10)
+ */
+LRESULT WINAPI RichEditANSIWndProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    return RichEditWndProcA( hwnd, msg, wparam, lparam );
+}
+
+/******************************************************************
+ *        RichEdit10ANSIWndProc (RICHED20.9)
+ */
+LRESULT WINAPI RichEdit10ANSIWndProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    if (msg == WM_NCCREATE && !GetWindowLongPtrW( hwnd, 0 ))
+    {
+        CREATESTRUCTW *pcs = (CREATESTRUCTW *)lparam;
+
+        TRACE( "WM_NCCREATE: hwnd %p style 0x%08x\n", hwnd, pcs->style );
+        return create_windowed_editor( hwnd, pcs, TRUE );
+    }
+    return RichEditANSIWndProc( hwnd, msg, wparam, lparam );
+}
+
+static LRESULT WINAPI REComboWndProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    /* FIXME: Not implemented */
+    TRACE( "hwnd %p msg %04x (%s) %08lx %08lx\n",
+           hwnd, msg, get_msg_name( msg ), wparam, lparam );
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static LRESULT WINAPI REListWndProc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    /* FIXME: Not implemented */
+    TRACE( "hwnd %p msg %04x (%s) %08lx %08lx\n",
+           hwnd, msg, get_msg_name( msg ), wparam, lparam );
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+/******************************************************************
+ *        REExtendedRegisterClass (RICHED20.8)
+ *
+ * FIXME undocumented
+ * Need to check for errors and implement controls and callbacks
+ */
+LRESULT WINAPI REExtendedRegisterClass( void )
+{
+    WNDCLASSW wc;
+    UINT result;
+
+    FIXME( "semi stub\n" );
+    wc.cbClsExtra = 0;
+    wc.cbWndExtra = 4;
+    wc.hInstance = NULL;
+    wc.hIcon = NULL;
+    wc.hCursor = NULL;
+    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wc.lpszMenuName = NULL;
+
+    if (!listbox_registered)
+    {
+        wc.style = CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS;
+        wc.lpfnWndProc = REListWndProc;
+        wc.lpszClassName = L"REListBox20W";
+        if (RegisterClassW( &wc )) listbox_registered = TRUE;
+    }
+
+    if (!combobox_registered)
+    {
+        wc.style = CS_PARENTDC | CS_DBLCLKS | CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW;
+        wc.lpfnWndProc = REComboWndProc;
+        wc.lpszClassName = L"REComboBox20W";
+        if (RegisterClassW( &wc )) combobox_registered = TRUE;
+    }
+
+    result = 0;
+    if (listbox_registered) result += 1;
+    if (combobox_registered) result += 2;
+
+    return result;
+}
+
+static BOOL register_classes( HINSTANCE instance )
+{
+    WNDCLASSW wcW;
+    WNDCLASSA wcA;
+
+    wcW.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
+    wcW.lpfnWndProc = RichEditWndProcW;
+    wcW.cbClsExtra = 0;
+    wcW.cbWndExtra = sizeof(ME_TextEditor *);
+    wcW.hInstance = NULL; /* hInstance would register DLL-local class */
+    wcW.hIcon = NULL;
+    wcW.hCursor = LoadCursorW( NULL, (LPWSTR)IDC_IBEAM );
+    wcW.hbrBackground = GetStockObject( NULL_BRUSH );
+    wcW.lpszMenuName = NULL;
+
+    if (!(GetVersion() & 0x80000000))
+    {
+        wcW.lpszClassName = RICHEDIT_CLASS20W;
+        if (!RegisterClassW( &wcW )) return FALSE;
+        wcW.lpszClassName = MSFTEDIT_CLASS;
+        if (!RegisterClassW( &wcW )) return FALSE;
+    }
+    else
+    {
+        /* WNDCLASSA/W have the same layout */
+        wcW.lpszClassName = (LPCWSTR)"RichEdit20W";
+        if (!RegisterClassA( (WNDCLASSA *)&wcW )) return FALSE;
+        wcW.lpszClassName = (LPCWSTR)"RichEdit50W";
+        if (!RegisterClassA( (WNDCLASSA *)&wcW )) return FALSE;
+    }
+
+    wcA.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
+    wcA.lpfnWndProc = RichEditWndProcA;
+    wcA.cbClsExtra = 0;
+    wcA.cbWndExtra = sizeof(ME_TextEditor *);
+    wcA.hInstance = NULL; /* hInstance would register DLL-local class */
+    wcA.hIcon = NULL;
+    wcA.hCursor = LoadCursorW( NULL, (LPWSTR)IDC_IBEAM );
+    wcA.hbrBackground = GetStockObject(NULL_BRUSH);
+    wcA.lpszMenuName = NULL;
+    wcA.lpszClassName = RICHEDIT_CLASS20A;
+    if (!RegisterClassA( &wcA )) return FALSE;
+    wcA.lpszClassName = "RichEdit50A";
+    if (!RegisterClassA( &wcA )) return FALSE;
+
+    return TRUE;
+}
+
+BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
+{
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( instance );
+        me_heap = HeapCreate( 0, 0x10000, 0 );
+        if (!register_classes( instance )) return FALSE;
+        cursor_reverse = LoadCursorW( instance, MAKEINTRESOURCEW( OCR_REVERSE ) );
+        LookupInit();
+        break;
+
+    case DLL_PROCESS_DETACH:
+        if (reserved) break;
+        UnregisterClassW( RICHEDIT_CLASS20W, 0 );
+        UnregisterClassW( MSFTEDIT_CLASS, 0 );
+        UnregisterClassA( RICHEDIT_CLASS20A, 0 );
+        UnregisterClassA( "RichEdit50A", 0 );
+        if (listbox_registered) UnregisterClassW( L"REListBox20W", 0 );
+        if (combobox_registered) UnregisterClassW( L"REComboBox20W", 0 );
+        LookupCleanup();
+        HeapDestroy( me_heap );
+        release_typelib();
+        break;
+    }
+    return TRUE;
+}

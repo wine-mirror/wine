@@ -23,6 +23,7 @@
 struct _RTF_Info;
 
 extern HANDLE me_heap DECLSPEC_HIDDEN;
+extern HCURSOR cursor_reverse DECLSPEC_HIDDEN;
 
 #define RUN_IS_HIDDEN(run) ((run)->style->fmt.dwMask & CFM_HIDDEN \
                              && (run)->style->fmt.dwEffects & CFE_HIDDEN)
@@ -316,7 +317,6 @@ static inline ME_DisplayItem *cell_get_di(ME_Cell *cell)
 
 
 /* txthost.c */
-ITextHost *ME_CreateTextHost(HWND hwnd, CREATESTRUCTW *cs, BOOL bEmulateVersion10) DECLSPEC_HIDDEN;
 #ifdef __ASM_USE_THISCALL_WRAPPER
 #define TXTHOST_VTABLE(This) (&itextHostStdcallVtbl)
 #else /* __i386__ */
