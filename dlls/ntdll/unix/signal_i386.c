@@ -1225,17 +1225,20 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         memcpy( &xsave->u.xsave, context->ExtendedRegisters, sizeof(xsave->u.xsave) );
         /* reset the current interrupt status */
         xsave->u.xsave.StatusWord &= xsave->u.xsave.ControlWord | 0xff80;
+        xsave->xstate.mask |= XSTATE_MASK_LEGACY;
     }
     else if (flags & CONTEXT_FLOATING_POINT)
     {
+        struct syscall_xsave *xsave = get_syscall_xsave( frame );
         if (cpu_info.FeatureSet & CPU_FEATURE_FXSR)
         {
-            fpu_to_fpux( &get_syscall_xsave( frame )->u.xsave, &context->FloatSave );
+            fpu_to_fpux( &xsave->u.xsave, &context->FloatSave );
         }
         else
         {
-            get_syscall_xsave( frame )->u.fsave = context->FloatSave;
+            xsave->u.fsave = context->FloatSave;
         }
+        xsave->xstate.mask |= XSTATE_MASK_LEGACY_FLOATING_POINT;
     }
     if ((cpu_info.FeatureSet & CPU_FEATURE_AVX) && (xs = xstate_from_context( context )))
     {
@@ -1323,15 +1326,53 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         }
         if (needed_flags & CONTEXT_FLOATING_POINT)
         {
-            if (cpu_info.FeatureSet & CPU_FEATURE_FXSR)
-                fpux_to_fpu( &context->FloatSave, &xsave->u.xsave );
-            else
+            if (!(cpu_info.FeatureSet & CPU_FEATURE_FXSR))
+            {
                 context->FloatSave = xsave->u.fsave;
+            }
+            else if (!xstate_compaction_enabled ||
+                     (xsave->xstate.mask & XSTATE_MASK_LEGACY_FLOATING_POINT))
+            {
+                fpux_to_fpu( &context->FloatSave, &xsave->u.xsave );
+            }
+            else
+            {
+                memset( &context->FloatSave, 0, sizeof(context->FloatSave) );
+                context->FloatSave.ControlWord = 0x37f;
+            }
             context->ContextFlags |= CONTEXT_FLOATING_POINT;
         }
         if (needed_flags & CONTEXT_EXTENDED_REGISTERS)
         {
-            memcpy( context->ExtendedRegisters, &xsave->u.xsave, sizeof(xsave->u.xsave) );
+            XSAVE_FORMAT *xs = (XSAVE_FORMAT *)context->ExtendedRegisters;
+
+            if (!xstate_compaction_enabled ||
+                (xsave->xstate.mask & XSTATE_MASK_LEGACY_FLOATING_POINT))
+            {
+                memcpy( xs, &xsave->u.xsave, FIELD_OFFSET( XSAVE_FORMAT, MxCsr ));
+                memcpy( xs->FloatRegisters, xsave->u.xsave.FloatRegisters,
+                        sizeof( xs->FloatRegisters ));
+            }
+            else
+            {
+                memset( xs, 0, FIELD_OFFSET( XSAVE_FORMAT, MxCsr ));
+                memset( xs->FloatRegisters, 0, sizeof( xs->FloatRegisters ));
+                xs->ControlWord = 0x37f;
+            }
+
+            if (!xstate_compaction_enabled || (xsave->xstate.mask & XSTATE_MASK_LEGACY_SSE))
+            {
+                memcpy( xs->XmmRegisters, xsave->u.xsave.XmmRegisters, sizeof( xs->XmmRegisters ));
+                xs->MxCsr      = xsave->u.xsave.MxCsr;
+                xs->MxCsr_Mask = xsave->u.xsave.MxCsr_Mask;
+            }
+            else
+            {
+                memset( xs->XmmRegisters, 0, sizeof( xs->XmmRegisters ));
+                xs->MxCsr      = 0x1f80;
+                xs->MxCsr_Mask = 0x2ffff;
+            }
+
             context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
         }
         /* update the cached version of the debug registers */
@@ -2528,8 +2569,11 @@ void *signal_init_syscalls(void)
 {
     extern void __wine_syscall_dispatcher_fxsave(void) DECLSPEC_HIDDEN;
     extern void __wine_syscall_dispatcher_xsave(void) DECLSPEC_HIDDEN;
+    extern void __wine_syscall_dispatcher_xsavec(void) DECLSPEC_HIDDEN;
 
-    if (cpu_info.FeatureSet & CPU_FEATURE_XSAVE)
+    if (xstate_compaction_enabled)
+        syscall_dispatcher = __wine_syscall_dispatcher_xsavec;
+    else if (cpu_info.FeatureSet & CPU_FEATURE_XSAVE)
         syscall_dispatcher = __wine_syscall_dispatcher_xsave;
     else if (cpu_info.FeatureSet & CPU_FEATURE_FXSR)
         syscall_dispatcher = __wine_syscall_dispatcher_fxsave;

@@ -1468,7 +1468,7 @@ static void output_syscall_dispatcher( int count, const char *variant )
         {
             output( "\tfxsave (%%esp)\n" );
         }
-        else
+        else if(!strcmp( variant, "_xsave" ))
         {
             output( "\tmovl %%eax,%%ecx\n ");
             output( "\tmovl $7,%%eax\n" );
@@ -1476,6 +1476,16 @@ static void output_syscall_dispatcher( int count, const char *variant )
             for (i = 0; i < 6; i++)
                 output( "\tmovl %%edx,0x%x(%%esp)\n", 0x200 + i * 4 );
             output( "\txsave (%%esp)\n" );
+            output( "\tmovl %%ecx,%%eax\n ");
+        }
+        else /* _xsavec */
+        {
+            output( "\tmovl %%eax,%%ecx\n ");
+            output( "\tmovl $7,%%eax\n" );
+            output( "\txorl %%edx,%%edx\n" );
+            for (i = 0; i < 16; i++)
+                output( "\tmovl %%edx,0x%x(%%esp)\n", 0x200 + i * 4 );
+            output( "\txsavec (%%esp)\n" );
             output( "\tmovl %%ecx,%%eax\n ");
         }
         output( "\tleal -0x30(%%ebp),%%ecx\n" );
@@ -1837,6 +1847,7 @@ void output_syscalls( DLLSPEC *spec )
         case CPU_x86:
             output_syscall_dispatcher( count, "_fxsave" );
             output_syscall_dispatcher( count, "_xsave" );
+            output_syscall_dispatcher( count, "_xsavec" );
             break;
         case CPU_x86_64:
             output_syscall_dispatcher( count, "_xsave" );
