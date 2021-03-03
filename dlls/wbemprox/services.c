@@ -1039,9 +1039,32 @@ static HRESULT WINAPI wbem_context_Clone(
     IWbemContext *iface,
     IWbemContext **newcopy )
 {
-    FIXME("%p, %p\n", iface, newcopy);
+    struct wbem_context *context = impl_from_IWbemContext( iface );
+    struct wbem_context_value *value;
+    IWbemContext *cloned_context;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", iface, newcopy);
+
+    if (SUCCEEDED(hr = WbemContext_create( (void **)&cloned_context )))
+    {
+        LIST_FOR_EACH_ENTRY( value, &context->values, struct wbem_context_value, entry )
+        {
+            if (FAILED(hr = IWbemContext_SetValue( cloned_context, value->name, 0, &value->value ))) break;
+        }
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        *newcopy = cloned_context;
+    }
+    else
+    {
+        *newcopy = NULL;
+        IWbemContext_Release( cloned_context );
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI wbem_context_GetNames(
