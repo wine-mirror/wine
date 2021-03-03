@@ -2359,8 +2359,7 @@ static void test_visual(void)
         SelectObject(mem_dc2, mem_bitmap2);
         BitBlt(mem_dc2, 0, 0, width, height, button_dc, 0, 0, SRCCOPY);
 
-        todo_wine_if(type == BS_PUSHBOX || (is_theme_active && !(type == BS_OWNERDRAW
-                || type == BS_COMMANDLINK || type == BS_DEFCOMMANDLINK)))
+        todo_wine_if(type == BS_PUSHBOX || (is_theme_active && type == BS_GROUPBOX))
         ok(equal_dc(mem_dc1, mem_dc2, width, height), "Type %#x: Expected content unchanged.\n", type);
 
         DeleteObject(mem_bitmap2);

@@ -743,6 +743,8 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         DefWindowProcW( hWnd, WM_SETTEXT, wParam, lParam );
         if (btn_type == BS_GROUPBOX) /* Yes, only for BS_GROUPBOX */
             InvalidateRect( hWnd, NULL, TRUE );
+        else if (GetWindowTheme( hWnd ))
+            RedrawWindow( hWnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW );
         else
             paint_button( infoPtr, btn_type, ODA_DRAWENTIRE );
         return 1; /* success. FIXME: check text length */
