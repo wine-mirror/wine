@@ -2737,13 +2737,11 @@ static void test_QueueUserAPC(void)
     ok(ret == WAIT_OBJECT_0, "got %u\n", ret);
 
     ret = pNtQueueApcThread(thread, call_user_apc, (ULONG_PTR)user_apc, 0, 0);
-todo_wine
     ok(ret == STATUS_UNSUCCESSFUL, "got %#x\n", ret);
 
     SetLastError(0xdeadbeef);
     ret = QueueUserAPC(user_apc, thread, 0);
     ok(!ret, "QueueUserAPC should fail\n");
-todo_wine
     ok(GetLastError() == ERROR_GEN_FAILURE, "got %u\n", GetLastError());
 
     CloseHandle(thread);
