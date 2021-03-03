@@ -836,11 +836,12 @@ static HRESULT WINAPI wbem_services_ExecMethod(
     const BSTR strObjectPath,
     const BSTR strMethodName,
     LONG lFlags,
-    IWbemContext *pCtx,
+    IWbemContext *context,
     IWbemClassObject *pInParams,
     IWbemClassObject **ppOutParams,
     IWbemCallResult **ppCallResult )
 {
+    struct wbem_services *services = impl_from_IWbemServices( iface );
     IEnumWbemClassObject *result = NULL;
     IWbemClassObject *obj = NULL;
     struct query *query = NULL;
@@ -851,7 +852,7 @@ static HRESULT WINAPI wbem_services_ExecMethod(
     HRESULT hr;
 
     TRACE("%p, %s, %s, %08x, %p, %p, %p, %p\n", iface, debugstr_w(strObjectPath),
-          debugstr_w(strMethodName), lFlags, pCtx, pInParams, ppOutParams, ppCallResult);
+          debugstr_w(strMethodName), lFlags, context, pInParams, ppOutParams, ppCallResult);
 
     if (lFlags) FIXME("flags %08x not supported\n", lFlags);
 
@@ -882,7 +883,7 @@ static HRESULT WINAPI wbem_services_ExecMethod(
     hr = get_method( table, strMethodName, &func );
     if (hr != S_OK) goto done;
 
-    hr = func( obj, NULL, pInParams, ppOutParams );
+    hr = func( obj, context ? context : services->context, pInParams, ppOutParams );
 
 done:
     if (result) IEnumWbemClassObject_Release( result );
