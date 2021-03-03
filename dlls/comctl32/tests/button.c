@@ -29,6 +29,8 @@
 
 #define IS_WNDPROC_HANDLE(x) (((ULONG_PTR)(x) >> 16) == (~0u >> 16))
 
+static BOOL is_theme_active;
+
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 static BOOL (WINAPI *pRemoveWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR);
 static LRESULT (WINAPI *pDefSubclassProc)(HWND, UINT, WPARAM, LPARAM);
@@ -116,6 +118,22 @@ static BOOL ignore_message( UINT message )
             message == WM_DWMNCRENDERINGCHANGED ||
             message == WM_GETTEXTLENGTH ||
             message == WM_GETTEXT);
+}
+
+static BOOL equal_dc(HDC hdc1, HDC hdc2, int width, int height)
+{
+    int x, y;
+
+    for (x = 0; x < width; ++x)
+    {
+        for (y = 0; y < height; ++y)
+        {
+            if (GetPixel(hdc1, x, y) != GetPixel(hdc2, x, y))
+                return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 static LRESULT CALLBACK button_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR id, DWORD_PTR ref_data)
@@ -2304,13 +2322,76 @@ static void test_style(void)
     }
 }
 
+static void test_visual(void)
+{
+    HBITMAP mem_bitmap1, mem_bitmap2;
+    HDC mem_dc1, mem_dc2, button_dc;
+    HWND button, parent;
+    int width, height;
+    DWORD type;
+    RECT rect;
+
+    parent = CreateWindowA("TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100,
+            100, 200, 200, 0, 0, 0, NULL);
+    ok(!!parent, "Failed to create the parent window.\n");
+    for (type = BS_PUSHBUTTON; type <= BS_DEFCOMMANDLINK; ++type)
+    {
+        /* Use WS_DISABLED to avoid glowing animations on Vista and Win7 */
+        button = create_button(type | WS_VISIBLE | WS_DISABLED, parent);
+        flush_events();
+
+        button_dc = GetDC(button);
+        GetClientRect(button, &rect);
+        width = rect.right - rect.left;
+        height = rect.bottom - rect.top;
+
+        mem_dc1 = CreateCompatibleDC(button_dc);
+        mem_bitmap1 = CreateCompatibleBitmap(button_dc, width, height);
+        SelectObject(mem_dc1, mem_bitmap1);
+        BitBlt(mem_dc1, 0, 0, width, height, button_dc, 0, 0, SRCCOPY);
+
+        /* Send WM_SETTEXT with the same window name */
+        SendMessageA(button, WM_SETTEXT, 0, (LPARAM)"test");
+        flush_events();
+
+        mem_dc2 = CreateCompatibleDC(button_dc);
+        mem_bitmap2 = CreateCompatibleBitmap(button_dc, width, height);
+        SelectObject(mem_dc2, mem_bitmap2);
+        BitBlt(mem_dc2, 0, 0, width, height, button_dc, 0, 0, SRCCOPY);
+
+        todo_wine_if(type == BS_PUSHBOX || (is_theme_active && !(type == BS_OWNERDRAW
+                || type == BS_COMMANDLINK || type == BS_DEFCOMMANDLINK)))
+        ok(equal_dc(mem_dc1, mem_dc2, width, height), "Type %#x: Expected content unchanged.\n", type);
+
+        DeleteObject(mem_bitmap2);
+        DeleteObject(mem_bitmap1);
+        DeleteDC(mem_dc2);
+        DeleteDC(mem_dc1);
+        ReleaseDC(button, button_dc);
+        DestroyWindow(button);
+    }
+
+    DestroyWindow(parent);
+}
+
 START_TEST(button)
 {
+    BOOL (WINAPI * pIsThemeActive)(VOID);
     ULONG_PTR ctx_cookie;
+    HMODULE uxtheme;
     HANDLE hCtx;
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
         return;
+
+    uxtheme = LoadLibraryA("uxtheme.dll");
+    if (uxtheme)
+    {
+        pIsThemeActive = (void*)GetProcAddress(uxtheme, "IsThemeActive");
+        if (pIsThemeActive)
+            is_theme_active = pIsThemeActive();
+        FreeLibrary(uxtheme);
+    }
 
     register_parent_class();
 
@@ -2327,6 +2408,7 @@ START_TEST(button)
     test_state();
     test_bcm_get_ideal_size();
     test_style();
+    test_visual();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
