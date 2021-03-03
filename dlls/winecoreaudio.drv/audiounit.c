@@ -30,6 +30,23 @@
 #undef ULONG
 #undef HRESULT
 #undef STDMETHODCALLTYPE
+#undef SUCCEEDED
+#undef FAILED
+#undef IS_ERROR
+#undef HRESULT_FACILITY
+#undef MAKE_HRESULT
+#undef S_OK
+#undef S_FALSE
+#undef E_UNEXPECTED
+#undef E_NOTIMPL
+#undef E_OUTOFMEMORY
+#undef E_INVALIDARG
+#undef E_NOINTERFACE
+#undef E_POINTER
+#undef E_HANDLE
+#undef E_ABORT
+#undef E_FAIL
+#undef E_ACCESSDENIED
 #include "coreaudio.h"
 #include "wine/debug.h"
 
