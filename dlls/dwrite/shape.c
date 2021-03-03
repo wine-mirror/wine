@@ -336,6 +336,12 @@ HRESULT shape_get_typographic_features(struct scriptshaping_context *context, co
     shape_get_script_lang_index(context, scripts, MS_GPOS_TAG, &script_index, &language_index);
     opentype_get_typographic_features(&context->cache->gpos, script_index, language_index, &t);
 
+    if (t.count == 0)
+    {
+        *actual_tagcount = 0;
+        return S_OK;
+    }
+
     /* Sort and remove duplicates. */
     qsort(t.tags, t.count, sizeof(*t.tags), tag_array_sorting_compare);
 
