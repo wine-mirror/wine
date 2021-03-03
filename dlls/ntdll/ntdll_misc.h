@@ -85,9 +85,6 @@ extern const struct unix_funcs *unix_funcs DECLSPEC_HIDDEN;
 
 extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;
 
-/* locale */
-extern LCID user_lcid, system_lcid;
-
 extern int CDECL NTDLL__vsnprintf( char *str, SIZE_T len, const char *format, __ms_va_list args ) DECLSPEC_HIDDEN;
 extern int CDECL NTDLL__vsnwprintf( WCHAR *str, SIZE_T len, const WCHAR *format, __ms_va_list args ) DECLSPEC_HIDDEN;
 

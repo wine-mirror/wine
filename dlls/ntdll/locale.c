@@ -100,8 +100,6 @@ struct norm_table
     /* WORD[]       composition character sequences */
 };
 
-LCID user_lcid = 0, system_lcid = 0;
-
 static NLSTABLEINFO nls_info;
 static HMODULE kernel32_handle;
 static struct norm_table *norm_tables[16];

@@ -175,6 +175,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_name( const IMAGE_RESOURCE_
 static NTSTATUS find_entry( HMODULE hmod, const LDR_RESOURCE_INFO *info,
                             ULONG level, const void **ret, int want_dir )
 {
+    static LCID user_lcid, system_lcid;
     ULONG size;
     const void *root;
     const IMAGE_RESOURCE_DIRECTORY *resdirptr;
@@ -212,6 +213,8 @@ static NTSTATUS find_entry( HMODULE hmod, const LDR_RESOURCE_INFO *info,
         /* user defaults, unless SYS_DEFAULT sublanguage specified  */
         if (SUBLANGID(info->Language) != SUBLANG_SYS_DEFAULT)
         {
+            if (!user_lcid) NtQueryDefaultLocale( TRUE, &user_lcid );
+
             /* 4. current thread locale language */
             pos = push_language( list, pos, LANGIDFROMLCID(NtCurrentTeb()->CurrentLocale) );
 
@@ -223,6 +226,7 @@ static NTSTATUS find_entry( HMODULE hmod, const LDR_RESOURCE_INFO *info,
         }
 
         /* now system defaults */
+        if (!system_lcid) NtQueryDefaultLocale( FALSE, &system_lcid );
 
         /* 7. system locale language */
         pos = push_language( list, pos, LANGIDFROMLCID( system_lcid ) );
