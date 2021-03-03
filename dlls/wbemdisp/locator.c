@@ -3450,9 +3450,11 @@ static HRESULT WINAPI namedvalueset_Remove(
     BSTR name,
     LONG flags )
 {
-    FIXME("\n");
+    struct namedvalueset *set = impl_from_ISWbemNamedValueSet( iface );
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %#x\n", set, debugstr_w(name), flags);
+
+    return IWbemContext_DeleteValue( set->context, name, flags );
 }
 
 static HRESULT WINAPI namedvalueset_Clone(
