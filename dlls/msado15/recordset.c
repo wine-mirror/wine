@@ -24,6 +24,7 @@
 #include "objbase.h"
 #include "msado15_backcompat.h"
 #include "oledb.h"
+#include "sqlucode.h"
 
 #include "wine/debug.h"
 
@@ -49,6 +50,8 @@ struct recordset
     IRowset           *row_set;
     EditModeEnum      editmode;
     VARIANT            filter;
+
+    DBTYPE            *columntypes;
 };
 
 struct fields
@@ -1210,12 +1213,15 @@ static void close_recordset( struct recordset *recordset )
     if (!recordset->fields) return;
     col_count = get_column_count( recordset );
 
+    free(recordset->columntypes);
+
     for (i = 0; i < col_count; i++)
     {
         struct field *field = impl_from_Field( recordset->fields->field[i] );
         field->recordset = NULL;
         Field_Release(&field->Field_iface);
     }
+
     recordset->fields->count = 0;
     Fields_Release( &recordset->fields->Fields_iface );
     recordset->fields = NULL;
@@ -1672,6 +1678,111 @@ static HRESULT create_command_text(IUnknown *session, BSTR command, ICommandText
     return S_OK;
 }
 
+#define ROUND_SIZE(size) (((size) + sizeof(void *) - 1) & ~(sizeof(void *) - 1))
+
+DEFINE_GUID(DBPROPSET_ROWSET,    0xc8b522be, 0x5cf3, 0x11ce, 0xad, 0xe5, 0x00, 0xaa, 0x00, 0x44, 0x77, 0x3d);
+
+static HRESULT create_bindings(IUnknown *rowset, struct recordset *recordset, DBBINDING **bind, DBBYTEOFFSET *size)
+{
+    HRESULT hr;
+    IColumnsInfo *columninfo;
+    DBORDINAL columns;
+    DBCOLUMNINFO *colinfo;
+    OLECHAR *stringsbuffer;
+    DBBINDING *bindings;
+    DBBYTEOFFSET offset;
+
+    *size = 0;
+
+    hr = IUnknown_QueryInterface(rowset, &IID_IColumnsInfo, (void**)&columninfo);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IColumnsInfo_GetColumnInfo(columninfo, &columns, &colinfo, &stringsbuffer);
+    if (SUCCEEDED(hr))
+    {
+        ULONG i;
+        DBOBJECT *dbobj;
+        offset = 1;
+
+        recordset->columntypes = malloc(sizeof(DBTYPE) * columns);
+
+        /* Do one allocation for the bindings and append the DBOBJECTS to the end.
+         * This is to save on multiple allocations vs a little bit of extra memory.
+         */
+        bindings = CoTaskMemAlloc( (sizeof(DBBINDING) + sizeof(DBOBJECT)) * columns);
+        dbobj = (DBOBJECT *)((char*)bindings + (sizeof(DBBINDING) * columns));
+
+        for (i=0; i < columns; i++)
+        {
+            TRACE("Column %lu, pwszName: %s, pTypeInfo %p, iOrdinal %Iu, dwFlags 0x%08lx, "
+                  "ulColumnSize %Iu, wType %d, bPrecision %d, bScale %d\n",
+                  i, debugstr_w(colinfo[i].pwszName), colinfo[i].pTypeInfo, colinfo[i].iOrdinal,
+                  colinfo[i].dwFlags, colinfo[i].ulColumnSize, colinfo[i].wType,
+                  colinfo[i].bPrecision, colinfo[i].bScale);
+
+            hr = append_field(recordset->fields, colinfo[i].pwszName, colinfo[i].wType, colinfo[i].ulColumnSize,
+                     colinfo[i].dwFlags, NULL);
+
+            bindings[i].iOrdinal = colinfo[i].iOrdinal;
+            bindings[i].obValue = offset;
+            bindings[i].pTypeInfo = NULL;
+            /* Always assigned the pObject even if it's not used. */
+            bindings[i].pObject = &dbobj[i];
+            bindings[i].pObject->dwFlags = 0;
+            bindings[i].pObject->iid = IID_ISequentialStream;
+            bindings[i].pBindExt = NULL;
+            bindings[i].dwPart = DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS;
+            bindings[i].dwMemOwner = DBMEMOWNER_CLIENTOWNED;
+            bindings[i].eParamIO = 0;
+
+            recordset->columntypes[i] = colinfo[i].wType;
+            if (colinfo[i].dwFlags & DBCOLUMNFLAGS_ISLONG)
+            {
+                colinfo[i].wType = DBTYPE_IUNKNOWN;
+
+                bindings[i].cbMaxLen = (colinfo[i].ulColumnSize + 1) * sizeof(WCHAR);
+                offset += sizeof(ISequentialStream*);
+            }
+            else if(colinfo[i].wType == DBTYPE_WSTR)
+            {
+                /* ulColumnSize is the number of characters in the string not the actual buffer size */
+                bindings[i].cbMaxLen = colinfo[i].ulColumnSize * sizeof(WCHAR);
+                offset += bindings[i].cbMaxLen;
+            }
+            else
+            {
+                bindings[i].cbMaxLen = colinfo[i].ulColumnSize;
+                offset += bindings[i].cbMaxLen;
+            }
+
+            bindings[i].dwFlags = 0;
+            bindings[i].wType = colinfo[i].wType;
+            bindings[i].bPrecision = colinfo[i].bPrecision;
+            bindings[i].bScale = colinfo[i].bScale;
+        }
+
+        offset = ROUND_SIZE(offset);
+        for (i=0; i < columns; i++)
+        {
+            bindings[i].obLength = offset;
+            bindings[i].obStatus = offset + sizeof(DBBYTEOFFSET);
+
+            offset += sizeof(DBBYTEOFFSET) + sizeof(DBBYTEOFFSET);
+        }
+
+        *size = offset;
+        *bind = bindings;
+
+        CoTaskMemFree(colinfo);
+        CoTaskMemFree(stringsbuffer);
+    }
+
+    IColumnsInfo_Release(columninfo);
+
+    return hr;
+}
+
 static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT active_connection,
                                       CursorTypeEnum cursor_type, LockTypeEnum lock_type, LONG options )
 {
@@ -1682,6 +1793,8 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     DBROWCOUNT affected;
     IUnknown *rowset;
     HRESULT hr;
+    DBBINDING *bindings;
+    DBBYTEOFFSET datasize;
 
     FIXME( "%p, %s, %s, %d, %d, %ld Semi-stub\n", recordset, debugstr_variant(&source), debugstr_variant(&active_connection),
            cursor_type, lock_type, options );
@@ -1725,6 +1838,29 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     ICommandText_Release(command_text);
     if (FAILED(hr) || !rowset)
         return hr;
+
+    /* We want to create the field member variable without mapping the rowset fields, this will
+     * save quering the fields twice.  Fields will be added while we create the bindings
+     */
+    hr = fields_create( recordset, &recordset->fields );
+    if (FAILED(hr))
+    {
+        IUnknown_Release(rowset);
+        return hr;
+    }
+
+    hr = create_bindings(rowset, recordset, &bindings, &datasize);
+    if (FAILED(hr))
+    {
+        WARN("Failed to load bindings (%lx)\n", hr);
+        IUnknown_Release(rowset);
+        return hr;
+    }
+
+    recordset->count = affected;
+    recordset->index = affected ? 0 : -1;
+
+    CoTaskMemFree(bindings);
 
     ADORecordsetConstruction_put_Rowset(&recordset->ADORecordsetConstruction_iface, rowset);
     recordset->cursor_type = cursor_type;
@@ -2339,6 +2475,7 @@ HRESULT Recordset_create( void **obj )
     recordset->row_set = NULL;
     recordset->editmode = adEditNone;
     VariantInit( &recordset->filter );
+    recordset->columntypes = NULL;
 
     *obj = &recordset->Recordset_iface;
     TRACE( "returning iface %p\n", *obj );
