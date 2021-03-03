@@ -1809,9 +1809,7 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
 
     sprintf( buffer, "%u", year );
     ascii_to_unicode( yearW, buffer, strlen(buffer) + 1 );
-
-    nameW.Buffer = (WCHAR *)Time_ZonesW;
-    nameW.Length = sizeof(Time_ZonesW) - sizeof(WCHAR);
+    init_unicode_string( &nameW, Time_ZonesW );
     InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
     if (NtOpenKey( &key, KEY_READ, &attr )) return;
 

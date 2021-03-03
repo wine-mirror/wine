@@ -168,9 +168,7 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
     wcscpy( buffer, type == NLS_SECTION_SORTKEYS ? sortdirW : systemdirW );
     p = strrchr( path, '/' ) + 1;
     ascii_to_unicode( buffer + wcslen(buffer), p, strlen(p) + 1 );
-    valueW.Buffer = buffer;
-    valueW.Length = wcslen( buffer ) * sizeof(WCHAR);
-    valueW.MaximumLength = sizeof( buffer );
+    init_unicode_string( &valueW, buffer );
     InitializeObjectAttributes( &attr, &valueW, 0, 0, NULL );
 
     status = open_unix_file( file, path, GENERIC_READ, &attr, 0, FILE_SHARE_READ,
@@ -1645,9 +1643,7 @@ NTSTATUS WINAPI NtGetNlsSectionPtr( ULONG type, ULONG id, void *unknown, void **
 
     if ((status = get_nls_section_name( type, id, name ))) return status;
 
-    nameW.Buffer = name;
-    nameW.Length = wcslen(name) * sizeof(WCHAR);
-    nameW.MaximumLength = sizeof(name);
+    init_unicode_string( &nameW, name );
     InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
     if ((status = NtOpenSection( &handle, SECTION_MAP_READ, &attr )))
     {

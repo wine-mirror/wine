@@ -1974,8 +1974,7 @@ static NTSTATUS get_mountmgr_fs_info( HANDLE handle, int fd, struct mountmgr_uni
     else
         drive->letter = 'a' + letter;
 
-    string.Buffer = (WCHAR *)MOUNTMGR_DEVICE_NAME;
-    string.Length = sizeof(MOUNTMGR_DEVICE_NAME) - sizeof(WCHAR);
+    init_unicode_string( &string, MOUNTMGR_DEVICE_NAME );
     InitializeObjectAttributes( &attr, &string, 0, NULL, NULL );
     status = NtOpenFile( &mountmgr, GENERIC_READ | SYNCHRONIZE, &attr, &io,
                          FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT );
@@ -2750,10 +2749,8 @@ static NTSTATUS open_hkcu_key( const char *path, HANDLE *key )
         len += sprintf( buffer + len, "-%u", sid->SubAuthority[i] );
     len += sprintf( buffer + len, "\\%s", path );
 
-    name.Buffer = bufferW;
-    name.Length = len * sizeof(WCHAR);
-    name.MaximumLength = name.Length + sizeof(WCHAR);
     ascii_to_unicode( bufferW, buffer, len + 1 );
+    init_unicode_string( &name, bufferW );
     InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, 0, NULL );
     return NtCreateKey( key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL );
 }
@@ -2787,9 +2784,7 @@ void init_files(void)
         DWORD dummy;
         UNICODE_STRING nameW;
 
-        nameW.MaximumLength = sizeof(showdotfilesW);
-        nameW.Length = nameW.MaximumLength - sizeof(WCHAR);
-        nameW.Buffer = showdotfilesW;
+        init_unicode_string( &nameW, showdotfilesW );
         if (!NtQueryValueKey( key, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
         {
             WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;

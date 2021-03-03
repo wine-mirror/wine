@@ -1618,9 +1618,7 @@ static void load_ntdll(void)
     void *module;
     char *name = build_path( dll_dir, "ntdll.dll.so" );
 
-    str.Buffer = path;
-    str.Length = sizeof(path) - sizeof(WCHAR);
-    str.MaximumLength = sizeof(path);
+    init_unicode_string( &str, path );
     InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
     name[strlen(name) - 3] = 0;  /* remove .so */
     status = open_builtin_file( name, &attr, &mapping, &module, &info, &st, FALSE );
