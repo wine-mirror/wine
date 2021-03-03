@@ -212,7 +212,7 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
     if (0)
     {
         /* FIXME: Uncomment after removing BindToStorage hack. */
-        ok(pformatetc != NULL, "pformatetx == NULL\n");
+        ok(pformatetc != NULL, "pformatetc == NULL\n");
         if(pformatetc) {
             ok(pformatetc->cfFormat == 0xc02d, "clipformat=%x\n", pformatetc->cfFormat);
             ok(pformatetc->ptd == NULL, "ptd = %p\n", pformatetc->ptd);

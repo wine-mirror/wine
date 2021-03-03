@@ -1973,7 +1973,7 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DW
     if(bind_to_object && !is_async_prot)
         ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION), "grfBSCF = %x\n", grfBSCF);
 
-    ok(pformatetc != NULL, "pformatetx == NULL\n");
+    ok(pformatetc != NULL, "pformatetc == NULL\n");
     if(pformatetc) {
         if (mime_type[0]) {
             INT ret;
