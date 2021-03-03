@@ -1748,7 +1748,7 @@ static DWORD ca_channel_layout_to_channel_mask(const AudioChannelLayout *layout)
 
     for (i = 0; i < layout->mNumberChannelDescriptions; ++i) {
         switch (layout->mChannelDescriptions[i].mChannelLabel) {
-            default: FIXME("Unhandled channel 0x%x\n", layout->mChannelDescriptions[i].mChannelLabel); break;
+            default: FIXME("Unhandled channel 0x%x\n", (unsigned int)layout->mChannelDescriptions[i].mChannelLabel); break;
             case kAudioChannelLabel_Left: mask |= SPEAKER_FRONT_LEFT; break;
             case kAudioChannelLabel_Mono:
             case kAudioChannelLabel_Center: mask |= SPEAKER_FRONT_CENTER; break;
@@ -1893,12 +1893,13 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
         sc = AudioObjectGetPropertyData(This->adevid, &addr, 0, NULL, &size, layout);
         if(sc == noErr){
             TRACE("Got channel layout: {tag: 0x%x, bitmap: 0x%x, num_descs: %u}\n",
-                    layout->mChannelLayoutTag, layout->mChannelBitmap, layout->mNumberChannelDescriptions);
+                  (unsigned int)layout->mChannelLayoutTag, (unsigned int)layout->mChannelBitmap,
+                  (unsigned int)layout->mNumberChannelDescriptions);
 
             if(layout->mChannelLayoutTag == kAudioChannelLayoutTag_UseChannelDescriptions){
                 convert_channel_layout(layout, fmt);
             }else{
-                WARN("Haven't implemented support for this layout tag: 0x%x, guessing at layout\n", layout->mChannelLayoutTag);
+                WARN("Haven't implemented support for this layout tag: 0x%x, guessing at layout\n", (unsigned int)layout->mChannelLayoutTag);
                 fmt->Format.nChannels = 0;
             }
         }else{
