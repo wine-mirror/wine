@@ -181,7 +181,7 @@ static HRESULT WINAPI property_QueryInterface( ISWbemProperty *iface, REFIID rii
     }
     else
     {
-        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        WARN( "interface %s not implemented\n", debugstr_guid(riid) );
         return E_NOINTERFACE;
     }
     ISWbemProperty_AddRef( iface );
@@ -380,7 +380,7 @@ static HRESULT WINAPI propertyset_QueryInterface( ISWbemPropertySet *iface,
     }
     else
     {
-        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        WARN( "interface %s not implemented\n", debugstr_guid(riid) );
         return E_NOINTERFACE;
     }
     ISWbemPropertySet_AddRef( iface );
@@ -592,7 +592,7 @@ static HRESULT WINAPI method_QueryInterface( ISWbemMethod *iface, REFIID riid, v
     }
     else
     {
-        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        WARN( "interface %s not implemented\n", debugstr_guid(riid) );
         return E_NOINTERFACE;
     }
     ISWbemMethod_AddRef( iface );
@@ -816,7 +816,7 @@ static HRESULT WINAPI methodset_QueryInterface( ISWbemMethodSet *iface, REFIID r
     }
     else
     {
-        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        WARN( "interface %s not implemented\n", debugstr_guid(riid) );
         return E_NOINTERFACE;
     }
     ISWbemMethodSet_AddRef( iface );
@@ -1047,7 +1047,7 @@ static HRESULT WINAPI object_QueryInterface(
     }
     else
     {
-        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        WARN( "interface %s not implemented\n", debugstr_guid(riid) );
         return E_NOINTERFACE;
     }
     ISWbemObject_AddRef( iface );
@@ -1748,7 +1748,7 @@ static HRESULT WINAPI objectset_QueryInterface(
     }
     else
     {
-        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        WARN( "interface %s not implemented\n", debugstr_guid(riid) );
         return E_NOINTERFACE;
     }
     ISWbemObjectSet_AddRef( iface );
@@ -2015,7 +2015,7 @@ static HRESULT WINAPI enumvar_QueryInterface(
     }
     else
     {
-        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        WARN( "interface %s not implemented\n", debugstr_guid(riid) );
         return E_NOINTERFACE;
     }
     IEnumVARIANT_AddRef( iface );
@@ -2144,7 +2144,7 @@ static HRESULT WINAPI services_QueryInterface(
     }
     else
     {
-        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        WARN( "interface %s not implemented\n", debugstr_guid(riid) );
         return E_NOINTERFACE;
     }
     ISWbemServices_AddRef( iface );
@@ -2649,7 +2649,7 @@ static HRESULT WINAPI locator_QueryInterface(
     }
     else
     {
-        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        WARN( "interface %s not implemented\n", debugstr_guid(riid) );
         return E_NOINTERFACE;
     }
     ISWbemLocator_AddRef( iface );
@@ -2888,7 +2888,7 @@ static HRESULT WINAPI security_QueryInterface(
     }
     else
     {
-        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        WARN( "interface %s not implemented\n", debugstr_guid(riid) );
         return E_NOINTERFACE;
     }
     ISWbemSecurity_AddRef( iface );
@@ -3100,7 +3100,7 @@ static HRESULT WINAPI namedvalue_QueryInterface(
     }
     else
     {
-        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        WARN( "interface %s not implemented\n", debugstr_guid(riid) );
         return E_NOINTERFACE;
     }
     ISWbemNamedValue_AddRef( iface );
@@ -3277,7 +3277,7 @@ static HRESULT WINAPI namedvalueset_QueryInterface(
     }
     else
     {
-        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        WARN( "interface %s not implemented\n", debugstr_guid(riid) );
         return E_NOINTERFACE;
     }
     ISWbemNamedValueSet_AddRef( iface );
