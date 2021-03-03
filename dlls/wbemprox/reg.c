@@ -270,7 +270,8 @@ done:
     return hr;
 }
 
-static HRESULT enum_values( HKEY root, const WCHAR *subkey, VARIANT *names, VARIANT *types, VARIANT *retval )
+static HRESULT enum_values( HKEY root, const WCHAR *subkey, VARIANT *names, VARIANT *types, IWbemContext *context,
+        VARIANT *retval )
 {
     HKEY hkey = NULL;
     HRESULT hr = S_OK;
@@ -281,7 +282,7 @@ static HRESULT enum_values( HKEY root, const WCHAR *subkey, VARIANT *names, VARI
 
     TRACE("%p, %s\n", root, debugstr_w(subkey));
 
-    if ((res = RegOpenKeyExW( root, subkey, 0, KEY_QUERY_VALUE, &hkey ))) goto done;
+    if ((res = RegOpenKeyExW( root, subkey, 0, KEY_QUERY_VALUE | reg_get_access_mask( context ), &hkey ))) goto done;
     if ((res = RegQueryInfoKeyW( hkey, NULL, NULL, NULL, NULL, NULL, NULL, &count, &buflen, NULL, NULL, NULL )))
         goto done;
 
@@ -356,7 +357,7 @@ HRESULT reg_enum_values( IWbemClassObject *obj, IWbemContext *context, IWbemClas
     }
     VariantInit( &names );
     VariantInit( &types );
-    hr = enum_values( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), &names, &types, &retval );
+    hr = enum_values( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), &names, &types, context, &retval );
     if (hr != S_OK) goto done;
     if (out_params)
     {
