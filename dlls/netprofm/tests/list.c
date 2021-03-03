@@ -229,7 +229,7 @@ static void test_INetworkListManager( void )
     INetworkConnection *conn;
     DWORD cookie;
     HRESULT hr;
-    ULONG ref1, ref2;
+    ULONG ref1, ref2, fetched;
     IID iid;
 
     hr = CoCreateInstance( &CLSID_NetworkListManager, NULL, CLSCTX_INPROC_SERVER,
@@ -355,11 +355,22 @@ static void test_INetworkListManager( void )
     ok( hr == S_OK, "got %08x\n", hr );
     if (conn_iter)
     {
+        fetched = 256;
+        hr = IEnumNetworkConnections_Next( conn_iter, 1, NULL, &fetched );
+        ok( hr == E_POINTER, "got hr %#x.\n", hr );
+        ok( fetched == 256, "got wrong feteched: %d.\n", fetched );
+
+        hr = IEnumNetworkConnections_Next( conn_iter, 0, NULL, &fetched );
+        ok( hr == E_POINTER, "got hr %#x.\n", hr );
+        ok( fetched == 256, "got wrong feteched: %d.\n", fetched );
+
         while ((hr = IEnumNetworkConnections_Next( conn_iter, 1, &conn, NULL )) == S_OK)
         {
             test_INetworkConnection( conn );
             INetworkConnection_Release( conn );
+            conn = (void *)0xdeadbeef;
         }
+        ok( !conn, "got wrong pointer: %p.\n", conn );
         IEnumNetworkConnections_Release( conn_iter );
     }
 
