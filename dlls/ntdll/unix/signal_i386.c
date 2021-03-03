@@ -1310,7 +1310,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
             context->Eip    = frame->eip;
             context->EFlags = frame->eflags;
             context->SegCs  = frame->cs;
-            context->SegSs  = frame->ds;
+            context->SegSs  = frame->ss;
             context->ContextFlags |= CONTEXT_CONTROL;
         }
         if (needed_flags & CONTEXT_SEGMENTS)
