@@ -140,7 +140,7 @@ case $host in
     ;;
 esac
 
-AC_SUBST(TARGETFLAGS,"")
+AC_SUBST(TARGETFLAGS)
 case $host in
   x86_64*|amd64*)
     if test "x$enable_win64" != "xyes" -a "$cross_compiling" != "yes"
@@ -152,7 +152,7 @@ case $host in
       test $wine_cv_cc_m32 != no || AC_MSG_ERROR([Cannot build a 32-bit program, you need to install 32-bit development libraries.])
       host_cpu="i386"
       notice_platform="32-bit "
-      TARGETFLAGS="-m32"
+      TARGETFLAGS="$TARGETFLAGS -m32"
       PKG_CONFIG_PATH=${PKG_CONFIG_PATH:-/usr/lib/i386-linux-gnu/pkgconfig:/usr/lib32/pkgconfig:/usr/lib/pkgconfig}
       export PKG_CONFIG_PATH
       enable_win16=${enable_win16:-yes}
@@ -169,7 +169,7 @@ case $host in
       CXX="$CXX -m64"
       host_cpu="x86_64"
       notice_platform="64-bit "
-      TARGETFLAGS="-m64"
+      TARGETFLAGS="$TARGETFLAGS -m64"
       enable_wow64cpu=${enable_wow64cpu:-yes}
     fi
     ;;
@@ -180,10 +180,10 @@ case $host in
     if test x"$wine_cv_thumb2" = xyes
     then
         CFLAGS="$CFLAGS -mthumb"
-        TARGETFLAGS="-mthumb"
+        TARGETFLAGS="$TARGETFLAGS -mthumb"
     else
         CFLAGS="$CFLAGS -marm"
-        TARGETFLAGS="-marm"
+        TARGETFLAGS="$TARGETFLAGS -marm"
     fi
     case $with_float_abi in
       soft|softfp|hard)
