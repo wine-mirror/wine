@@ -1534,11 +1534,14 @@ static HRESULT WINAPI object_Clone_(
 
 static HRESULT WINAPI object_GetObjectText_(
     ISWbemObject *iface,
-    LONG iFlags,
-    BSTR *strObjectText )
+    LONG flags,
+    BSTR *text )
 {
-    FIXME( "\n" );
-    return E_NOTIMPL;
+    struct object *object = impl_from_ISWbemObject( iface );
+
+    TRACE( "%p, %#x, %p\n", object, flags, text );
+
+    return IWbemClassObject_GetObjectText( object->object, flags, text );
 }
 
 static HRESULT WINAPI object_SpawnDerivedClass_(
