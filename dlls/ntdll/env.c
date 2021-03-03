@@ -1023,7 +1023,7 @@ void init_user_process_params(void)
 
     if (!params->DllPath.MaximumLength)  /* not inherited from parent process */
     {
-        first_prefix_start = set_registry_environment( &params->Environment, TRUE );
+        first_prefix_start = !ENV_FindVariable( params->Environment, L"COMSPEC", 7 );
         set_additional_environment( &params->Environment );
 
         get_image_path( params->ImagePathName.Buffer, image, sizeof(image) );

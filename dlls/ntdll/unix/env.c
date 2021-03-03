@@ -1242,6 +1242,148 @@ static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
 }
 
 
+static WCHAR *expand_value( WCHAR *env, SIZE_T size, const WCHAR *src, SIZE_T src_len )
+{
+    SIZE_T len, retlen = src_len, count = 0;
+    const WCHAR *var;
+    WCHAR *ret;
+
+    ret = malloc( retlen * sizeof(WCHAR) );
+    while (src_len)
+    {
+        if (*src != '%')
+        {
+            for (len = 0; len < src_len; len++) if (src[len] == '%') break;
+            var = src;
+            src += len;
+            src_len -= len;
+        }
+        else  /* we are at the start of a variable */
+        {
+            for (len = 1; len < src_len; len++) if (src[len] == '%') break;
+            if (len < src_len)
+            {
+                if ((var = find_env_var( env, size, src + 1, len - 1 )))
+                {
+                    src += len + 1;  /* skip the variable name */
+                    src_len -= len + 1;
+                    var += len;
+                    len = wcslen(var);
+                }
+                else
+                {
+                    var = src;  /* copy original name instead */
+                    len++;
+                    src += len;
+                    src_len -= len;
+                }
+            }
+            else  /* unfinished variable name, ignore it */
+            {
+                var = src;
+                src += len;
+                src_len = 0;
+            }
+        }
+        if (len >= retlen - count)
+        {
+            retlen *= 2;
+            ret = realloc( ret, retlen * sizeof(WCHAR) );
+        }
+        memcpy( ret + count, var, len * sizeof(WCHAR) );
+        count += len;
+    }
+    ret[count] = 0;
+    return ret;
+}
+
+/***********************************************************************
+ *           add_registry_variables
+ *
+ * Set environment variables by enumerating the values of a key;
+ * helper for add_registry_environment().
+ * Note that Windows happily truncates the value if it's too big.
+ */
+static void add_registry_variables( WCHAR **env, SIZE_T *pos, SIZE_T *size, HANDLE key, BOOL append )
+{
+    static const WCHAR pathW[] = {'P','A','T','H'};
+    NTSTATUS status;
+    DWORD index = 0, info_size, namelen, datalen;
+    WCHAR *data, *value, *p;
+    WCHAR buffer[offsetof(KEY_VALUE_FULL_INFORMATION, Name[1024]) / sizeof(WCHAR)];
+    KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
+
+    for (;;)
+    {
+        status = NtEnumerateValueKey( key, index++, KeyValueFullInformation,
+                                      buffer, sizeof(buffer) - sizeof(WCHAR), &info_size );
+        if (status != STATUS_SUCCESS && status != STATUS_BUFFER_OVERFLOW) break;
+
+        value = data = buffer + info->DataOffset / sizeof(WCHAR);
+        datalen = info->DataLength / sizeof(WCHAR);
+        namelen = info->NameLength / sizeof(WCHAR);
+
+        if (datalen && !data[datalen - 1]) datalen--;  /* don't count terminating null if any */
+        if (!datalen) continue;
+        data[datalen] = 0;
+        if (info->Type == REG_EXPAND_SZ) value = expand_value( *env, *pos, data, datalen );
+
+        /* PATH is magic */
+        if (append && namelen == 4 && !wcsnicmp( info->Name, pathW, 4 ) && (p = find_env_var( *env, *pos, pathW, 4 )))
+        {
+            static const WCHAR sepW[] = {';',0};
+            WCHAR *newpath = malloc( (wcslen(p) - 4 + datalen) * sizeof(WCHAR) );
+            wcscpy( newpath, p + 5 );
+            wcscat( newpath, sepW );
+            wcscat( newpath, data );
+            if (value != data) free( value );
+            value = newpath;
+        }
+
+        set_env_var( env, pos, size, info->Name, namelen, value );
+        if (value != data) free( value );
+    }
+}
+
+
+/***********************************************************************
+ *           add_registry_environment
+ *
+ * Set the environment variables specified in the registry.
+ */
+static void add_registry_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
+{
+    static const WCHAR syskeyW[] = {'\\','R','e','g','i','s','t','r','y',
+        '\\','M','a','c','h','i','n','e',
+        '\\','S','y','s','t','e','m',
+        '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+        '\\','C','o','n','t','r','o','l',
+        '\\','S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r',
+        '\\','E','n','v','i','r','o','n','m','e','n','t',0};
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    HANDLE key;
+
+    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
+    init_unicode_string( &nameW, syskeyW );
+    if (!NtOpenKey( &key, KEY_READ, &attr ))
+    {
+        add_registry_variables( env, pos, size, key, FALSE );
+        NtClose( key );
+    }
+    if (!open_hkcu_key( "Environment", &key ))
+    {
+        add_registry_variables( env, pos, size, key, TRUE );
+        NtClose( key );
+    }
+    if (!open_hkcu_key( "Volatile Environment", &key ))
+    {
+        add_registry_variables( env, pos, size, key, TRUE );
+        NtClose( key );
+    }
+}
+
+
 /*************************************************************************
  *		get_initial_console
  *
@@ -1485,6 +1627,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     NTSTATUS status;
 
     add_dynamic_environment( &env, &env_pos, &env_size );
+    add_registry_environment( &env, &env_pos, &env_size );
     env[env_pos++] = 0;
 
     size = (sizeof(*params)
