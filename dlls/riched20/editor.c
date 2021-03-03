@@ -3221,7 +3221,6 @@ void ME_DestroyEditor(ME_TextEditor *editor)
     DeleteObject(editor->hbrBackground);
   if(editor->lpOleCallback)
     IRichEditOleCallback_Release(editor->lpOleCallback);
-  ITextHost_Release(editor->texthost);
   if (editor->reOle)
   {
     IUnknown_Release(editor->reOle);

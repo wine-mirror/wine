@@ -38,7 +38,7 @@ struct text_services
    ITextServices ITextServices_iface;
    IUnknown *outer_unk;
    LONG ref;
-   ITextHost *pMyHost;
+   ITextHost *host;
    CRITICAL_SECTION csTxtSrv;
    ME_TextEditor *editor;
    char spare[256];
@@ -385,8 +385,7 @@ HRESULT WINAPI CreateTextServices(IUnknown  *pUnkOuter, ITextHost *pITextHost, I
    InitializeCriticalSection(&ITextImpl->csTxtSrv);
    ITextImpl->csTxtSrv.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ITextServicesImpl.csTxtSrv");
    ITextImpl->ref = 1;
-   ITextHost_AddRef(pITextHost);
-   ITextImpl->pMyHost = pITextHost;
+   ITextImpl->host = pITextHost; /* Don't take a ref of the host - this would lead to a mutual dependency */
    ITextImpl->IUnknown_inner.lpVtbl = &textservices_inner_vtbl;
    ITextImpl->ITextServices_iface.lpVtbl = &textservices_vtbl;
    ITextImpl->editor = ME_MakeEditor(pITextHost, FALSE);

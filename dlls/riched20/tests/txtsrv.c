@@ -602,6 +602,7 @@ static BOOL init_texthost(ITextServices **txtserv, ITextHost **ret)
        ITextServices object. */
     result = pCreateTextServices(NULL, &dummyTextHost->ITextHost_iface, &init);
     ok(result == S_OK, "Did not return S_OK when created (result =  %x)\n", result);
+    ok(dummyTextHost->refCount == 1, "host ref %d\n", dummyTextHost->refCount);
     if (result != S_OK) {
         CoTaskMemFree(dummyTextHost);
         win_skip("CreateTextServices failed.\n");
