@@ -75,6 +75,30 @@ static HRESULT to_i4_array( DWORD *values, DWORD count, VARIANT *var )
     return S_OK;
 }
 
+static unsigned int reg_get_access_mask( IWbemContext *context )
+{
+    VARIANT value;
+
+    if (!context) return 0;
+
+    V_VT( &value ) = VT_EMPTY;
+    if (FAILED(IWbemContext_GetValue( context, L"__ProviderArchitecture", 0, &value )))
+        return 0;
+
+    if (FAILED(VariantChangeType( &value, &value, 0, VT_I4 )))
+    {
+        VariantClear( &value );
+        return 0;
+    }
+
+    if (V_I4( &value ) == 32)
+        return KEY_WOW64_32KEY;
+    else if (V_I4( &value ) == 64)
+        return KEY_WOW64_64KEY;
+
+    return 0;
+}
+
 static HRESULT create_key( HKEY root, const WCHAR *subkey, VARIANT *retval )
 {
     LONG res;
@@ -569,13 +593,13 @@ HRESULT reg_set_dwordvalue( IWbemClassObject *obj, IWbemContext *context, IWbemC
     return hr;
 }
 
-static void delete_key( HKEY root, const WCHAR *subkey, VARIANT *retval )
+static void delete_key( HKEY root, const WCHAR *subkey, IWbemContext *context, VARIANT *retval )
 {
     LONG res;
 
     TRACE("%p, %s\n", root, debugstr_w(subkey));
 
-    res = RegDeleteKeyExW( root, subkey, 0, 0 );
+    res = RegDeleteKeyExW( root, subkey, reg_get_access_mask( context ), 0 );
     set_variant( VT_UI4, res, NULL, retval );
 }
 
@@ -608,7 +632,7 @@ HRESULT reg_delete_key( IWbemClassObject *obj, IWbemContext *context, IWbemClass
             return hr;
         }
     }
-    delete_key( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), &retval );
+    delete_key( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), context, &retval );
     if (out_params)
         hr = IWbemClassObject_Put( out_params, L"ReturnValue", 0, &retval, CIM_UINT32 );
 
