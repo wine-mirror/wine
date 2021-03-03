@@ -368,33 +368,36 @@ static const ITextServicesVtbl textservices_vtbl =
     THISCALL(fnTextSrv_TxGetCachedSize)
 };
 
+HRESULT create_text_services( IUnknown *outer, ITextHost *text_host, IUnknown **unk, BOOL emulate_10,
+                              ME_TextEditor **editor )
+{
+    struct text_services *services;
+
+    TRACE( "%p %p --> %p\n", outer, text_host, unk );
+    if (text_host == NULL) return E_POINTER;
+
+    services = CoTaskMemAlloc( sizeof(*services) );
+    if (services == NULL) return E_OUTOFMEMORY;
+    InitializeCriticalSection( &services->csTxtSrv );
+    services->csTxtSrv.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ITextServicesImpl.csTxtSrv");
+    services->ref = 1;
+    services->host = text_host; /* Don't take a ref of the host - this would lead to a mutual dependency */
+    services->IUnknown_inner.lpVtbl = &textservices_inner_vtbl;
+    services->ITextServices_iface.lpVtbl = &textservices_vtbl;
+    services->editor = ME_MakeEditor( text_host, emulate_10 );
+    if (editor) *editor = services->editor; /* To be removed */
+
+    if (outer) services->outer_unk = outer;
+    else services->outer_unk = &services->IUnknown_inner;
+
+    *unk = &services->IUnknown_inner;
+    return S_OK;
+}
+
 /******************************************************************
  *        CreateTextServices (RICHED20.4)
  */
-HRESULT WINAPI CreateTextServices(IUnknown  *pUnkOuter, ITextHost *pITextHost, IUnknown  **ppUnk)
+HRESULT WINAPI CreateTextServices( IUnknown *outer, ITextHost *text_host, IUnknown **unk )
 {
-   struct text_services *ITextImpl;
-
-   TRACE("%p %p --> %p\n", pUnkOuter, pITextHost, ppUnk);
-   if (pITextHost == NULL)
-      return E_POINTER;
-
-   ITextImpl = CoTaskMemAlloc(sizeof(*ITextImpl));
-   if (ITextImpl == NULL)
-      return E_OUTOFMEMORY;
-   InitializeCriticalSection(&ITextImpl->csTxtSrv);
-   ITextImpl->csTxtSrv.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ITextServicesImpl.csTxtSrv");
-   ITextImpl->ref = 1;
-   ITextImpl->host = pITextHost; /* Don't take a ref of the host - this would lead to a mutual dependency */
-   ITextImpl->IUnknown_inner.lpVtbl = &textservices_inner_vtbl;
-   ITextImpl->ITextServices_iface.lpVtbl = &textservices_vtbl;
-   ITextImpl->editor = ME_MakeEditor(pITextHost, FALSE);
-
-   if (pUnkOuter)
-      ITextImpl->outer_unk = pUnkOuter;
-   else
-      ITextImpl->outer_unk = &ITextImpl->IUnknown_inner;
-
-   *ppUnk = &ITextImpl->IUnknown_inner;
-   return S_OK;
+    return create_text_services( outer, text_host, unk, FALSE, NULL );
 }

@@ -377,6 +377,9 @@ BOOL ME_Undo(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 BOOL ME_Redo(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_EmptyUndoStack(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 
+/* txtsrv.c */
+HRESULT create_text_services( IUnknown *outer, ITextHost *text_host, IUnknown **unk, BOOL emulate_10, ME_TextEditor **editor ) DECLSPEC_HIDDEN;
+
 /* writer.c */
 LRESULT ME_StreamOutRange(ME_TextEditor *editor, DWORD dwFormat, const ME_Cursor *start, int nChars, EDITSTREAM *stream) DECLSPEC_HIDDEN;
 LRESULT ME_StreamOut(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream) DECLSPEC_HIDDEN;

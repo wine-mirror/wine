@@ -36,6 +36,8 @@ struct host
 {
     ITextHost ITextHost_iface;
     LONG ref;
+    ITextServices *text_srv;
+    ME_TextEditor *editor; /* to be removed */
     HWND window;
     BOOL emulate_10;
     PARAFORMAT2 para_fmt;
@@ -46,7 +48,7 @@ static const ITextHostVtbl textHostVtbl;
 static BOOL listbox_registered;
 static BOOL combobox_registered;
 
-static ITextHost *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
+struct host *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
 {
     struct host *texthost;
 
@@ -66,7 +68,7 @@ static ITextHost *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
     if (cs->style & ES_CENTER)
         texthost->para_fmt.wAlignment = PFA_CENTER;
 
-    return &texthost->ITextHost_iface;
+    return texthost;
 }
 
 static inline struct host *impl_from_ITextHost( ITextHost *iface )
@@ -104,6 +106,7 @@ static ULONG WINAPI ITextHostImpl_Release(ITextHost *iface)
     if (!ref)
     {
         SetWindowLongPtrW( host->window, 0, 0 );
+        ITextServices_Release( host->text_srv );
         CoTaskMemFree( host );
     }
     return ref;
@@ -723,24 +726,27 @@ static const char *get_msg_name( UINT msg )
 
 static BOOL create_windowed_editor( HWND hwnd, CREATESTRUCTW *create, BOOL emulate_10 )
 {
-    ITextHost *host = host_create( hwnd, create, emulate_10 );
-    ME_TextEditor *editor;
+    struct host *host = host_create( hwnd, create, emulate_10 );
+    IUnknown *unk;
+    HRESULT hr;
 
     if (!host) return FALSE;
 
-    editor = ME_MakeEditor( host, emulate_10 );
-    if (!editor)
+    hr = create_text_services( NULL, &host->ITextHost_iface, &unk, emulate_10, &host->editor );
+    if (FAILED( hr ))
     {
-        ITextHost_Release( host );
+        ITextHost_Release( &host->ITextHost_iface );
         return FALSE;
     }
+    IUnknown_QueryInterface( unk, &IID_ITextServices, (void **)&host->text_srv );
+    IUnknown_Release( unk );
 
-    editor->exStyleFlags = GetWindowLongW( hwnd, GWL_EXSTYLE );
-    editor->styleFlags |= GetWindowLongW( hwnd, GWL_STYLE ) & ES_WANTRETURN;
-    editor->hWnd = hwnd; /* FIXME: Remove editor's dependence on hWnd */
-    editor->hwndParent = create->hwndParent;
+    host->editor->exStyleFlags = GetWindowLongW( hwnd, GWL_EXSTYLE );
+    host->editor->styleFlags |= GetWindowLongW( hwnd, GWL_STYLE ) & ES_WANTRETURN;
+    host->editor->hWnd = hwnd; /* FIXME: Remove editor's dependence on hWnd */
+    host->editor->hwndParent = create->hwndParent;
 
-    SetWindowLongPtrW( hwnd, 0, (LONG_PTR)editor );
+    SetWindowLongPtrW( hwnd, 0, (LONG_PTR)host->editor );
 
     return TRUE;
 }
