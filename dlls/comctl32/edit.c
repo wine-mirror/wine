@@ -4597,7 +4597,6 @@ static LRESULT EDIT_WM_NCDestroy(EDITSTATE *es)
 static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     EDITSTATE *es = (EDITSTATE *)GetWindowLongPtrW(hwnd, 0);
-    HTHEME theme = GetWindowTheme(hwnd);
     LRESULT result = 0;
     RECT *rect;
 
@@ -4905,7 +4904,7 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
     case WM_ENABLE:
         es->bEnableState = (BOOL) wParam;
         EDIT_UpdateText(es, NULL, TRUE);
-        if (theme)
+        if (GetWindowTheme(hwnd))
             RedrawWindow(hwnd, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW);
         break;
 
@@ -4935,7 +4934,7 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         break;
 
     case WM_KILLFOCUS:
-        result = EDIT_WM_KillFocus(theme, es);
+        result = EDIT_WM_KillFocus(GetWindowTheme(hwnd), es);
         break;
 
     case WM_LBUTTONDBLCLK:
@@ -4972,7 +4971,7 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         break;
 
     case WM_SETFOCUS:
-        EDIT_WM_SetFocus(theme, es);
+        EDIT_WM_SetFocus(GetWindowTheme(hwnd), es);
         break;
 
     case WM_SETFONT:
@@ -5096,7 +5095,7 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         break;
 
     case WM_THEMECHANGED:
-        CloseThemeData (theme);
+        CloseThemeData(GetWindowTheme(hwnd));
         OpenThemeData(hwnd, WC_EDITW);
         break;
 
