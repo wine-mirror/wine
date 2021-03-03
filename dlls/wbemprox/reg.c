@@ -99,14 +99,14 @@ static unsigned int reg_get_access_mask( IWbemContext *context )
     return 0;
 }
 
-static HRESULT create_key( HKEY root, const WCHAR *subkey, VARIANT *retval )
+static HRESULT create_key( HKEY root, const WCHAR *subkey, IWbemContext *context, VARIANT *retval )
 {
     LONG res;
     HKEY hkey;
 
     TRACE("%p, %s\n", root, debugstr_w(subkey));
 
-    res = RegCreateKeyExW( root, subkey, 0, NULL, 0, 0, NULL, &hkey, NULL );
+    res = RegCreateKeyExW( root, subkey, 0, NULL, 0, reg_get_access_mask( context ), NULL, &hkey, NULL );
     set_variant( VT_UI4, res, NULL, retval );
     if (!res)
     {
@@ -145,7 +145,7 @@ HRESULT reg_create_key( IWbemClassObject *obj, IWbemContext *context, IWbemClass
             return hr;
         }
     }
-    hr = create_key( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), &retval );
+    hr = create_key( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), context, &retval );
     if (hr == S_OK && out_params)
         hr = IWbemClassObject_Put( out_params, L"ReturnValue", 0, &retval, CIM_UINT32 );
 
