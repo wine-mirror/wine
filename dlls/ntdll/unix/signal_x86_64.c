@@ -1864,7 +1864,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
             xsave->xstate.Mask |= XSTATE_MASK_GSSE;
             memcpy( &xsave->xstate.YmmContext, &xs->YmmContext, sizeof(xs->YmmContext) );
         }
-        else if (xs->CompactionMask & XSTATE_MASK_GSSE)
+        else
             xsave->xstate.Mask &= ~XSTATE_MASK_GSSE;
     }
     return STATUS_SUCCESS;
