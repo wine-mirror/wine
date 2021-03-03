@@ -160,7 +160,7 @@ HRESULT reg_create_key( IWbemClassObject *obj, IWbemContext *context, IWbemClass
     return hr;
 }
 
-static HRESULT enum_key( HKEY root, const WCHAR *subkey, VARIANT *names, VARIANT *retval )
+static HRESULT enum_key( HKEY root, const WCHAR *subkey, VARIANT *names, IWbemContext *context, VARIANT *retval )
 {
     HKEY hkey;
     HRESULT hr = S_OK;
@@ -172,7 +172,7 @@ static HRESULT enum_key( HKEY root, const WCHAR *subkey, VARIANT *names, VARIANT
     TRACE("%p, %s\n", root, debugstr_w(subkey));
 
     if (!(strings = heap_alloc( count * sizeof(BSTR) ))) return E_OUTOFMEMORY;
-    if ((res = RegOpenKeyExW( root, subkey, 0, KEY_ENUMERATE_SUB_KEYS, &hkey )))
+    if ((res = RegOpenKeyExW( root, subkey, 0, KEY_ENUMERATE_SUB_KEYS | reg_get_access_mask( context ), &hkey )))
     {
         set_variant( VT_UI4, res, NULL, retval );
         heap_free( strings );
@@ -245,7 +245,7 @@ HRESULT reg_enum_key( IWbemClassObject *obj, IWbemContext *context, IWbemClassOb
         }
     }
     VariantInit( &names );
-    hr = enum_key( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), &names, &retval );
+    hr = enum_key( (HKEY)(INT_PTR)V_I4(&defkey), V_BSTR(&subkey), &names, context, &retval );
     if (hr != S_OK) goto done;
     if (out_params)
     {
