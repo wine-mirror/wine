@@ -20,6 +20,8 @@
 
 #ifdef __x86_64__
 
+#include <stdlib.h>
+
 #include "wine/exception.h"
 #include "wine/debug.h"
 #include "cppexcept.h"
@@ -66,12 +68,14 @@ typedef struct
     UINT type_info;
     int offset;
     UINT handler;
-    UINT ret_addr;
+    UINT ret_addr[2];
 } catchblock_info;
 #define CATCHBLOCK_FLAGS     0x01
 #define CATCHBLOCK_TYPE_INFO 0x02
 #define CATCHBLOCK_OFFSET    0x04
-#define CATCHBLOCK_RET_ADDR  0x10
+#define CATCHBLOCK_RET_ADDR_MASK 0x30
+#define CATCHBLOCK_RET_ADDR      0x10
+#define CATCHBLOCK_TWO_RET_ADDRS 0x20
 
 #define TYPE_FLAG_CONST      1
 #define TYPE_FLAG_VOLATILE   2
@@ -81,6 +85,8 @@ typedef struct
 #define UNWIND_TYPE_DTOR_OBJ   1
 #define UNWIND_TYPE_DTOR_PTR   2
 #define UNWIND_TYPE_FRAME      3
+
+#define CONSOLIDATE_UNWIND_PARAMETER_COUNT 10
 
 typedef struct
 {
@@ -214,19 +220,31 @@ static void read_tryblock_info(BYTE **b, tryblock_info *ti, ULONG64 image_base)
 
 static BOOL read_catchblock_info(BYTE **b, catchblock_info *ci)
 {
+    BYTE ret_addr_type;
     memset(ci, 0, sizeof(*ci));
     ci->header = **b;
     (*b)++;
-    if (ci->header & ~(CATCHBLOCK_FLAGS | CATCHBLOCK_TYPE_INFO | CATCHBLOCK_OFFSET | CATCHBLOCK_RET_ADDR))
+    if (ci->header & ~(CATCHBLOCK_FLAGS | CATCHBLOCK_TYPE_INFO | CATCHBLOCK_OFFSET | CATCHBLOCK_RET_ADDR_MASK))
     {
         FIXME("unknown header: %x\n", ci->header);
         return FALSE;
     }
+    ret_addr_type = ci->header & CATCHBLOCK_RET_ADDR_MASK;
+    if (ret_addr_type == (CATCHBLOCK_RET_ADDR | CATCHBLOCK_TWO_RET_ADDRS))
+    {
+        FIXME("unsupported ret addr type.\n");
+        return FALSE;
+    }
+
     if (ci->header & CATCHBLOCK_FLAGS) ci->flags = decode_uint(b);
     if (ci->header & CATCHBLOCK_TYPE_INFO) ci->type_info = read_rva(b);
     if (ci->header & CATCHBLOCK_OFFSET) ci->offset = decode_uint(b);
     ci->handler = read_rva(b);
-    if (ci->header & CATCHBLOCK_RET_ADDR) ci->ret_addr = decode_uint(b);
+    if (ret_addr_type == CATCHBLOCK_RET_ADDR || ret_addr_type == CATCHBLOCK_TWO_RET_ADDRS)
+        ci->ret_addr[0] = decode_uint(b);
+    if (ret_addr_type == CATCHBLOCK_TWO_RET_ADDRS)
+        ci->ret_addr[1] = decode_uint(b);
+
     return TRUE;
 }
 
@@ -303,9 +321,9 @@ static BOOL validate_cxx_function_descr4(const cxx_function_descr *descr, DISPAT
             catchblock_info ci;
             if (!read_catchblock_info(&catchblock, &ci)) return FALSE;
             TRACE("        %d: header 0x%x offset %d handler 0x%x(%p) "
-                    "ret addr %x type %x %s\n", j, ci.header, ci.offset,
+                    "ret addr[0] %#x ret_addr[1] %#x type %#x %s\n", j, ci.header, ci.offset,
                     ci.handler, rva_to_ptr(ci.handler, image_base),
-                    ci.ret_addr, ci.type_info,
+                    ci.ret_addr[0], ci.ret_addr[1], ci.type_info,
                     dbgstr_type_info(rva_to_ptr(ci.type_info, image_base)));
         }
     }
@@ -535,14 +553,26 @@ static void* WINAPI call_catch_block4(EXCEPTION_RECORD *rec)
     __FINALLY_CTX(cxx_catch_cleanup, &ctx)
 
     FlsSetValue(fls_index, (void*)-2);
-    if (rec->ExceptionInformation[8]) return (void*)rec->ExceptionInformation[8];
-    return ret_addr;
+    TRACE("handler returned %p, ret_addr[0] %p, ret_addr[1] %p.\n",
+            ret_addr, rec->ExceptionInformation[8], rec->ExceptionInformation[9]);
+
+    if (rec->ExceptionInformation[9])
+    {
+        if ((ULONG_PTR)ret_addr > 1)
+        {
+            ERR("unexpected handler result %p.\n", ret_addr);
+            abort();
+        }
+        return (void*)rec->ExceptionInformation[8 + (ULONG_PTR)ret_addr];
+    }
+    return rec->ExceptionInformation[8] ? (void *)rec->ExceptionInformation[8] : ret_addr;
 }
 
 static inline BOOL cxx_is_consolidate(const EXCEPTION_RECORD *rec)
 {
-    return rec->ExceptionCode==STATUS_UNWIND_CONSOLIDATE && rec->NumberParameters==9 &&
-        rec->ExceptionInformation[0]==(ULONG_PTR)call_catch_block4;
+    return rec->ExceptionCode == STATUS_UNWIND_CONSOLIDATE
+        && rec->NumberParameters == CONSOLIDATE_UNWIND_PARAMETER_COUNT
+        && rec->ExceptionInformation[0] == (ULONG_PTR)call_catch_block4;
 }
 
 static inline void find_catch_block4(EXCEPTION_RECORD *rec, CONTEXT *context,
@@ -610,7 +640,7 @@ static inline void find_catch_block4(EXCEPTION_RECORD *rec, CONTEXT *context,
             memset(&catch_record, 0, sizeof(catch_record));
             catch_record.ExceptionCode = STATUS_UNWIND_CONSOLIDATE;
             catch_record.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-            catch_record.NumberParameters = 9;
+            catch_record.NumberParameters = CONSOLIDATE_UNWIND_PARAMETER_COUNT;
             catch_record.ExceptionInformation[0] = (ULONG_PTR)call_catch_block4;
             catch_record.ExceptionInformation[1] = orig_frame;
             catch_record.ExceptionInformation[2] = tryblock.catch_level;
@@ -620,9 +650,12 @@ static inline void find_catch_block4(EXCEPTION_RECORD *rec, CONTEXT *context,
                 (ULONG_PTR)rva_to_ptr(ci.handler, dispatch->ImageBase);
             catch_record.ExceptionInformation[6] = (ULONG_PTR)untrans_rec;
             catch_record.ExceptionInformation[7] = (ULONG_PTR)context;
-            if (ci.ret_addr)
+            if (ci.ret_addr[0])
                 catch_record.ExceptionInformation[8] = (ULONG_PTR)rva_to_ptr(
-                    ci.ret_addr + dispatch->FunctionEntry->BeginAddress, dispatch->ImageBase);
+                    ci.ret_addr[0] + dispatch->FunctionEntry->BeginAddress, dispatch->ImageBase);
+            if (ci.ret_addr[1])
+                catch_record.ExceptionInformation[9] = (ULONG_PTR)rva_to_ptr(
+                    ci.ret_addr[1] + dispatch->FunctionEntry->BeginAddress, dispatch->ImageBase);
             RtlUnwindEx((void*)frame, (void*)dispatch->ControlPc, &catch_record, NULL, &ctx, NULL);
         }
     }
