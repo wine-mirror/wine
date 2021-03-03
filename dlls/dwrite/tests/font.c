@@ -9394,11 +9394,9 @@ static void test_fontsetbuilder(void)
         ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
 
         hr = IDWriteFontSetBuilder1_AddFontFile(builder1, file);
-    todo_wine
         ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
 
         hr = IDWriteFontSetBuilder1_AddFontFile(builder1, file);
-    todo_wine
         ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
 
         hr = IDWriteFontSetBuilder1_CreateFontSet(builder1, &fontset);
@@ -9451,7 +9449,6 @@ static void test_fontsetbuilder(void)
 
             EXPECT_REF(ref, 1);
             hr = IDWriteFontSetBuilder_AddFontFaceReference(builder, ref);
-       todo_wine
             ok(hr == S_OK, "Failed to add fontface reference, hr %#x.\n", hr);
             EXPECT_REF(ref, 1);
 

@@ -250,11 +250,22 @@ struct dwrite_fontresource
     IDWriteFactory7 *factory;
 };
 
+struct dwrite_fontset_entry
+{
+    IDWriteFontFile *file;
+    unsigned int face_index;
+    unsigned int simulations;
+};
+
 struct dwrite_fontset_builder
 {
     IDWriteFontSetBuilder2 IDWriteFontSetBuilder2_iface;
     LONG refcount;
     IDWriteFactory7 *factory;
+
+    struct dwrite_fontset_entry *entries;
+    size_t count;
+    size_t capacity;
 };
 
 static void dwrite_grab_font_table(void *context, UINT32 table, const BYTE **data, UINT32 *size, void **data_context)
@@ -7103,16 +7114,63 @@ static ULONG WINAPI dwritefontsetbuilder_Release(IDWriteFontSetBuilder2 *iface)
 {
     struct dwrite_fontset_builder *builder = impl_from_IDWriteFontSetBuilder2(iface);
     ULONG refcount = InterlockedDecrement(&builder->refcount);
+    size_t i;
 
     TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
     {
         IDWriteFactory7_Release(builder->factory);
+        for (i = 0; i < builder->count; ++i)
+            IDWriteFontFile_Release(builder->entries[i].file);
+        heap_free(builder->entries);
         heap_free(builder);
     }
 
     return refcount;
+}
+
+static HRESULT fontset_builder_add_entry(struct dwrite_fontset_builder *builder, IDWriteFontFile *file,
+        unsigned int face_index, unsigned int simulations)
+{
+    struct dwrite_fontset_entry *entry;
+
+    if (!dwrite_array_reserve((void **)&builder->entries, &builder->capacity, builder->count + 1,
+            sizeof(*builder->entries)))
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    entry = &builder->entries[builder->count++];
+    entry->file = file;
+    IDWriteFontFile_AddRef(entry->file);
+    entry->face_index = face_index;
+    entry->simulations = simulations;
+
+    return S_OK;
+}
+
+static HRESULT fontset_builder_add_file(struct dwrite_fontset_builder *builder, IDWriteFontFile *file)
+{
+    DWRITE_FONT_FILE_TYPE filetype;
+    DWRITE_FONT_FACE_TYPE facetype;
+    unsigned int i, face_count;
+    BOOL supported = FALSE;
+    HRESULT hr;
+
+    if (FAILED(hr = IDWriteFontFile_Analyze(file, &supported, &filetype, &facetype, &face_count)))
+        return hr;
+
+    if (!supported)
+        return DWRITE_E_FILEFORMAT;
+
+    for (i = 0; i < face_count; ++i)
+    {
+        if (FAILED(hr = fontset_builder_add_entry(builder, file, i, DWRITE_FONT_SIMULATIONS_NONE)))
+            break;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI dwritefontsetbuilder_AddFontFaceReference_(IDWriteFontSetBuilder2 *iface,
@@ -7126,9 +7184,21 @@ static HRESULT WINAPI dwritefontsetbuilder_AddFontFaceReference_(IDWriteFontSetB
 static HRESULT WINAPI dwritefontsetbuilder_AddFontFaceReference(IDWriteFontSetBuilder2 *iface,
         IDWriteFontFaceReference *ref)
 {
-    FIXME("%p, %p.\n", iface, ref);
+    struct dwrite_fontset_builder *builder = impl_from_IDWriteFontSetBuilder2(iface);
+    unsigned int face_index, simulations;
+    IDWriteFontFile *file;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, ref);
+
+    if (FAILED(hr = IDWriteFontFaceReference_GetFontFile(ref, &file))) return hr;
+
+    face_index = IDWriteFontFaceReference_GetFontFaceIndex(ref);
+    simulations = IDWriteFontFaceReference_GetSimulations(ref);
+    hr = fontset_builder_add_entry(builder, file, face_index, simulations);
+    IDWriteFontFile_Release(file);
+
+    return hr;
 }
 
 static HRESULT WINAPI dwritefontsetbuilder_AddFontSet(IDWriteFontSetBuilder2 *iface, IDWriteFontSet *fontset)
@@ -7147,9 +7217,11 @@ static HRESULT WINAPI dwritefontsetbuilder_CreateFontSet(IDWriteFontSetBuilder2 
 
 static HRESULT WINAPI dwritefontsetbuilder1_AddFontFile(IDWriteFontSetBuilder2 *iface, IDWriteFontFile *file)
 {
-    FIXME("%p, %p.\n", iface, file);
+    struct dwrite_fontset_builder *builder = impl_from_IDWriteFontSetBuilder2(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, file);
+
+    return fontset_builder_add_file(builder, file);
 }
 
 static HRESULT WINAPI dwritefontsetbuilder2_AddFont(IDWriteFontSetBuilder2 *iface, IDWriteFontFile *file,
@@ -7165,9 +7237,18 @@ static HRESULT WINAPI dwritefontsetbuilder2_AddFont(IDWriteFontSetBuilder2 *ifac
 
 static HRESULT WINAPI dwritefontsetbuilder2_AddFontFile(IDWriteFontSetBuilder2 *iface, const WCHAR *filepath)
 {
-    FIXME("%p, %s.\n", iface, debugstr_w(filepath));
+    struct dwrite_fontset_builder *builder = impl_from_IDWriteFontSetBuilder2(iface);
+    IDWriteFontFile *file;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s.\n", iface, debugstr_w(filepath));
+
+    if (FAILED(hr = IDWriteFactory7_CreateFontFileReference(builder->factory, filepath, NULL, &file)))
+        return hr;
+
+    hr = fontset_builder_add_file(builder, file);
+    IDWriteFontFile_Release(file);
+    return hr;
 }
 
 static const IDWriteFontSetBuilder2Vtbl fontsetbuildervtbl =
