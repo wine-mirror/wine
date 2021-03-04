@@ -60,3 +60,15 @@ BOOL APIENTRY MprAdminIsServiceRunning(LPWSTR server)
 
     return FALSE;
 }
+
+/***********************************************************************
+ *      MprConfigServerConnect (MPRAPI.@)
+ */
+DWORD APIENTRY MprConfigServerConnect(LPWSTR server_name, HANDLE *hmprconfig)
+{
+    FIXME("server_name %s, hmprconfig %p stub.\n", debugstr_w(server_name), hmprconfig);
+
+    *hmprconfig = NULL;
+
+    return ERROR_NOT_SUPPORTED;
+}
