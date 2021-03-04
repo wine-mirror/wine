@@ -39,8 +39,6 @@ static const UNICODE_STRING null_str = { 0, 0, NULL };
 
 static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
-static BOOL first_prefix_start;  /* first ever process start in this prefix? */
-
 static inline SIZE_T get_env_length( const WCHAR *env )
 {
     const WCHAR *end = env;
@@ -63,116 +61,6 @@ static void set_env_var( WCHAR **env, const WCHAR *name, const WCHAR *val )
         RtlSetEnvironmentVariable( env, &nameW, &valW );
     }
     else RtlSetEnvironmentVariable( env, &nameW, NULL );
-}
-
-
-/***********************************************************************
- *           set_registry_variables
- *
- * Set environment variables by enumerating the values of a key;
- * helper for set_registry_environment().
- * Note that Windows happily truncates the value if it's too big.
- */
-static void set_registry_variables( WCHAR **env, HANDLE hkey, ULONG type )
-{
-    static const WCHAR pathW[] = {'P','A','T','H'};
-    UNICODE_STRING env_name, env_value;
-    NTSTATUS status;
-    DWORD size;
-    int index;
-    char buffer[1024*sizeof(WCHAR) + sizeof(KEY_VALUE_FULL_INFORMATION)];
-    WCHAR tmpbuf[1024];
-    UNICODE_STRING tmp;
-    KEY_VALUE_FULL_INFORMATION *info = (KEY_VALUE_FULL_INFORMATION *)buffer;
-
-    tmp.Buffer = tmpbuf;
-    tmp.MaximumLength = sizeof(tmpbuf);
-
-    for (index = 0; ; index++)
-    {
-        status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
-                                      buffer, sizeof(buffer), &size );
-        if (status != STATUS_SUCCESS && status != STATUS_BUFFER_OVERFLOW) break;
-        if (info->Type != type) continue;
-        env_name.Buffer = info->Name;
-        env_name.Length = env_name.MaximumLength = info->NameLength;
-        env_value.Buffer = (WCHAR *)(buffer + info->DataOffset);
-        env_value.Length = info->DataLength;
-        env_value.MaximumLength = sizeof(buffer) - info->DataOffset;
-        if (env_value.Length && !env_value.Buffer[env_value.Length/sizeof(WCHAR)-1])
-            env_value.Length -= sizeof(WCHAR);  /* don't count terminating null if any */
-        if (!env_value.Length) continue;
-        if (info->Type == REG_EXPAND_SZ)
-        {
-            status = RtlExpandEnvironmentStrings_U( *env, &env_value, &tmp, NULL );
-            if (status != STATUS_SUCCESS && status != STATUS_BUFFER_OVERFLOW) continue;
-            RtlCopyUnicodeString( &env_value, &tmp );
-        }
-        /* PATH is magic */
-        if (env_name.Length == sizeof(pathW) &&
-            !wcsnicmp( env_name.Buffer, pathW, ARRAY_SIZE( pathW )) &&
-            !RtlQueryEnvironmentVariable_U( *env, &env_name, &tmp ))
-        {
-            RtlAppendUnicodeToString( &tmp, L";" );
-            if (RtlAppendUnicodeStringToString( &tmp, &env_value )) continue;
-            RtlCopyUnicodeString( &env_value, &tmp );
-        }
-        RtlSetEnvironmentVariable( env, &env_name, &env_value );
-    }
-}
-
-
-/***********************************************************************
- *           set_registry_environment
- *
- * Set the environment variables specified in the registry.
- *
- * Note: Windows handles REG_SZ and REG_EXPAND_SZ in one pass with the
- * consequence that REG_EXPAND_SZ cannot be used reliably as it depends
- * on the order in which the variables are processed. But on Windows it
- * does not really matter since they only use %SystemDrive% and
- * %SystemRoot% which are predefined. But Wine defines these in the
- * registry, so we need two passes.
- */
-static BOOL set_registry_environment( WCHAR **env, BOOL first_time )
-{
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    HANDLE hkey;
-    BOOL ret = FALSE;
-
-    /* first the system environment variables */
-    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
-    RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\"
-                          "Session Manager\\Environment" );
-    if (first_time && !NtOpenKey( &hkey, KEY_READ, &attr ))
-    {
-        set_registry_variables( env, hkey, REG_SZ );
-        set_registry_variables( env, hkey, REG_EXPAND_SZ );
-        NtClose( hkey );
-    }
-    else ret = TRUE;
-
-    /* then the ones for the current user */
-    if (RtlOpenCurrentUser( KEY_READ, &attr.RootDirectory ) != STATUS_SUCCESS) return ret;
-    RtlInitUnicodeString( &nameW, L"Environment" );
-    if (first_time && !NtOpenKey( &hkey, KEY_READ, &attr ))
-    {
-        set_registry_variables( env, hkey, REG_SZ );
-        set_registry_variables( env, hkey, REG_EXPAND_SZ );
-        NtClose( hkey );
-    }
-
-    RtlInitUnicodeString( &nameW, L"Volatile Environment" );
-    if (!NtOpenKey( &hkey, KEY_READ, &attr ))
-    {
-        set_registry_variables( env, hkey, REG_SZ );
-        set_registry_variables( env, hkey, REG_EXPAND_SZ );
-        NtClose( hkey );
-    }
-
-    NtClose( attr.RootDirectory );
-    return ret;
 }
 
 
@@ -934,72 +822,6 @@ void WINAPI RtlDestroyProcessParameters( RTL_USER_PROCESS_PARAMETERS *params )
 
 
 /***********************************************************************
- *           run_wineboot
- */
-static void run_wineboot( WCHAR **env )
-{
-    UNICODE_STRING nameW, cmdlineW, dllpathW;
-    RTL_USER_PROCESS_PARAMETERS *params;
-    RTL_USER_PROCESS_INFORMATION info;
-    WCHAR *load_path, *dummy;
-    OBJECT_ATTRIBUTES attr;
-    LARGE_INTEGER timeout;
-    HANDLE handles[2];
-    NTSTATUS status;
-    ULONG redir = 0;
-    int count = 1;
-
-    RtlInitUnicodeString( &nameW, L"\\KernelObjects\\__wineboot_event" );
-    InitializeObjectAttributes( &attr, &nameW, OBJ_OPENIF, 0, NULL );
-
-    status = NtCreateEvent( &handles[0], EVENT_ALL_ACCESS, &attr, NotificationEvent, 0 );
-    if (status == STATUS_OBJECT_NAME_EXISTS) goto wait;
-    if (status)
-    {
-        ERR( "failed to create wineboot event, expect trouble\n" );
-        return;
-    }
-    LdrGetDllPath( L"C:\\windows\\system32\\wineboot.exe", LOAD_WITH_ALTERED_SEARCH_PATH,
-                   &load_path, &dummy );
-    RtlInitUnicodeString( &nameW, L"C:\\windows\\system32\\wineboot.exe" );
-    RtlInitUnicodeString( &dllpathW, load_path );
-    RtlInitUnicodeString( &cmdlineW, L"C:\\windows\\system32\\wineboot.exe --init" );
-    RtlCreateProcessParametersEx( &params, &nameW, &dllpathW, NULL, &cmdlineW, *env, NULL, NULL,
-                                  NULL, NULL, PROCESS_PARAMS_FLAG_NORMALIZED );
-    params->hStdInput  = 0;
-    params->hStdOutput = 0;
-    params->hStdError  = NtCurrentTeb()->Peb->ProcessParameters->hStdError;
-
-    RtlInitUnicodeString( &nameW, L"\\??\\C:\\windows\\system32\\wineboot.exe" );
-    RtlWow64EnableFsRedirectionEx( TRUE, &redir );
-    status = RtlCreateUserProcess( &nameW, OBJ_CASE_INSENSITIVE, params,
-                                   NULL, NULL, 0, FALSE, 0, 0, &info );
-    RtlWow64EnableFsRedirection( !redir );
-    RtlReleasePath( load_path );
-    RtlDestroyProcessParameters( params );
-    if (status)
-    {
-        ERR( "failed to start wineboot %x\n", status );
-        NtClose( handles[0] );
-        return;
-    }
-    NtResumeThread( info.Thread, NULL );
-    NtClose( info.Thread );
-    handles[count++] = info.Process;
-
-wait:
-    timeout.QuadPart = (ULONGLONG)(first_prefix_start ? 5 : 2) * 60 * 1000 * -10000;
-    if (NtWaitForMultipleObjects( count, handles, TRUE, FALSE, &timeout ) == WAIT_TIMEOUT)
-        ERR( "boot event wait timed out\n" );
-    while (count) NtClose( handles[--count] );
-
-    /* reload environment now that wineboot has run */
-    set_registry_environment( env, first_prefix_start );
-    set_additional_environment( env );
-}
-
-
-/***********************************************************************
  *           init_user_process_params
  *
  * Fill the initial RTL_USER_PROCESS_PARAMETERS structure from the server.
@@ -1023,7 +845,6 @@ void init_user_process_params(void)
 
     if (!params->DllPath.MaximumLength)  /* not inherited from parent process */
     {
-        first_prefix_start = !ENV_FindVariable( params->Environment, L"COMSPEC", 7 );
         set_additional_environment( &params->Environment );
 
         get_image_path( params->ImagePathName.Buffer, image, sizeof(image) );
@@ -1058,8 +879,6 @@ void init_user_process_params(void)
 
         RtlFreeUnicodeString( &cmdline );
         RtlReleasePath( load_path );
-
-        run_wineboot( &params->Environment );
     }
 
     if (RtlSetCurrentDirectory_U( &params->CurrentDirectory.DosPath ))

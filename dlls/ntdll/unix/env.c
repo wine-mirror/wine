@@ -1597,6 +1597,93 @@ static WCHAR *build_command_line( WCHAR **wargv )
 }
 
 
+/***********************************************************************
+ *           run_wineboot
+ */
+static void run_wineboot( WCHAR *env, SIZE_T size )
+{
+    static const WCHAR eventW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
+        '\\','_','_','w','i','n','e','b','o','o','t','_','e','v','e','n','t',0};
+    static const WCHAR appnameW[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s',
+        '\\','s','y','s','t','e','m','3','2','\\','w','i','n','e','b','o','o','t','.','e','x','e',0};
+    static const WCHAR cmdlineW[] = {'"','C',':','\\','w','i','n','d','o','w','s','\\',
+        's','y','s','t','e','m','3','2','\\','w','i','n','e','b','o','o','t','.','e','x','e','"',
+        ' ','-','-','i','n','i','t',0};
+    static const WCHAR sysdirW[] = {'C',':','\\','w','i','n','d','o','w','s',
+        '\\','s','y','s','t','e','m','3','2',0};
+    RTL_USER_PROCESS_PARAMETERS params = { sizeof(params), sizeof(params) };
+    PS_ATTRIBUTE_LIST ps_attr;
+    PS_CREATE_INFO create_info;
+    HANDLE process, thread, handles[2];
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    LARGE_INTEGER timeout;
+    NTSTATUS status;
+    int count = 1;
+
+    init_unicode_string( &nameW, eventW );
+    InitializeObjectAttributes( &attr, &nameW, OBJ_OPENIF, 0, NULL );
+    status = NtCreateEvent( &handles[0], EVENT_ALL_ACCESS, &attr, NotificationEvent, 0 );
+    if (status == STATUS_OBJECT_NAME_EXISTS) goto wait;
+    if (status)
+    {
+        ERR( "failed to create wineboot event, expect trouble\n" );
+        return;
+    }
+
+    env[size] = 0;
+    params.Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
+    params.Environment     = env;
+    params.EnvironmentSize = size;
+    init_unicode_string( &params.CurrentDirectory.DosPath, sysdirW );
+    init_unicode_string( &params.DllPath, sysdirW );
+    init_unicode_string( &params.ImagePathName, appnameW + 4 );
+    init_unicode_string( &params.CommandLine, cmdlineW );
+    init_unicode_string( &params.WindowTitle, appnameW + 4 );
+    init_unicode_string( &nameW, appnameW );
+
+    ps_attr.TotalLength = sizeof(ps_attr);
+    ps_attr.Attributes[0].Attribute    = PS_ATTRIBUTE_IMAGE_NAME;
+    ps_attr.Attributes[0].Size         = sizeof(appnameW) - sizeof(WCHAR);
+    ps_attr.Attributes[0].ValuePtr     = (WCHAR *)appnameW;
+    ps_attr.Attributes[0].ReturnLength = NULL;
+
+    wine_server_fd_to_handle( 2, GENERIC_WRITE | SYNCHRONIZE, OBJ_INHERIT, &params.hStdError );
+
+#ifndef _WIN64
+    if (NtCurrentTeb64() && !NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR])
+    {
+        NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = TRUE;
+        status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
+                                      NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
+                                      &create_info, &ps_attr );
+        NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = FALSE;
+    }
+    else
+#endif
+    status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
+                                  NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
+                                  &create_info, &ps_attr );
+    NtClose( params.hStdError );
+
+    if (status)
+    {
+        ERR( "failed to start wineboot %x\n", status );
+        NtClose( handles[0] );
+        return;
+    }
+    NtResumeThread( thread, NULL );
+    NtClose( thread );
+    handles[count++] = process;
+
+wait:
+    timeout.QuadPart = (ULONGLONG)5 * 60 * 1000 * -10000;
+    if (NtWaitForMultipleObjects( count, handles, TRUE, FALSE, &timeout ) == WAIT_TIMEOUT)
+        ERR( "boot event wait timed out\n" );
+    while (count) NtClose( handles[--count] );
+}
+
+
 static inline void copy_unicode_string( WCHAR **src, WCHAR **dst, UNICODE_STRING *str, UINT len )
 {
     str->Buffer = *dst;
@@ -1629,6 +1716,10 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     NTSTATUS status;
 
     add_dynamic_environment( &env, &env_pos, &env_size );
+    add_registry_environment( &env, &env_pos, &env_size );
+    env[env_pos] = 0;
+    run_wineboot( env, env_pos );
+    /* reload environment now that wineboot has run */
     add_registry_environment( &env, &env_pos, &env_size );
     env[env_pos++] = 0;
 
