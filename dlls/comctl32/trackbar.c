@@ -717,6 +717,8 @@ TRACKBAR_DrawThumb (TRACKBAR_INFO *infoPtr, HDC hdc)
             stateId = TUS_PRESSED;
         else if (infoPtr->flags & TB_THUMB_HOT)
             stateId = TUS_HOT;
+        else if (infoPtr->flags & TB_IS_FOCUSED)
+            stateId = TUS_FOCUSED;
         else
             stateId = TUS_NORMAL;
         
