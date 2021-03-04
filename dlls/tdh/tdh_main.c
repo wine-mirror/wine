@@ -48,3 +48,9 @@ ULONG WINAPI TdhLoadManifest(LPWSTR manifest)
     FIXME("(%s): stub\n", debugstr_w(manifest));
     return STATUS_SUCCESS;
 }
+
+ULONG WINAPI TdhLoadManifestFromBinary(LPWSTR binary)
+{
+    FIXME("(%s): stub\n", debugstr_w(binary));
+    return STATUS_SUCCESS;
+}
