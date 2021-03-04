@@ -1239,6 +1239,8 @@ static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
     append_envA( env, pos, size, "WINELOCALE", system_locale );
     append_envA( env, pos, size, "WINEUSERLOCALE",
                  strcmp( user_locale, system_locale ) ? user_locale : NULL );
+    append_envA( env, pos, size, "SystemDrive", "C:" );
+    append_envA( env, pos, size, "SystemRoot", "C:\\windows" );
 }
 
 
