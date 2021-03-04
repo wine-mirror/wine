@@ -602,7 +602,7 @@ BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping
 {
     char ch[2];
     WCHAR wch[2];
-    DWORD cp = get_input_codepage();
+    DWORD cp;
 
     wch[0] = wch[1] = 0;
     switch(message)
@@ -616,6 +616,7 @@ BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping
         {
             struct wm_char_mapping_data *data = get_user_thread_info()->wmchar_data;
             BYTE low = LOBYTE(*wparam);
+            cp = get_input_codepage();
 
             if (HIBYTE(*wparam))
             {
@@ -662,12 +663,14 @@ BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping
     case WM_SYSCHAR:
     case WM_SYSDEADCHAR:
     case WM_MENUCHAR:
+        cp = get_input_codepage();
         ch[0] = LOBYTE(*wparam);
         ch[1] = HIBYTE(*wparam);
         MultiByteToWideChar( cp, 0, ch, 2, wch, 2 );
         *wparam = MAKEWPARAM(wch[0], wch[1]);
         break;
     case WM_IME_CHAR:
+        cp = get_input_codepage();
         ch[0] = HIBYTE(*wparam);
         ch[1] = LOBYTE(*wparam);
         if (ch[0]) MultiByteToWideChar( cp, 0, ch, 2, wch, 2 );
@@ -689,13 +692,14 @@ static void map_wparam_WtoA( MSG *msg, BOOL remove )
     BYTE ch[4];
     WCHAR wch[2];
     DWORD len;
-    DWORD cp = get_input_codepage();
+    DWORD cp;
 
     switch(msg->message)
     {
     case WM_CHAR:
         if (!HIWORD(msg->wParam))
         {
+            cp = get_input_codepage();
             wch[0] = LOWORD(msg->wParam);
             ch[0] = ch[1] = 0;
             len = WideCharToMultiByte( cp, 0, wch, 1, (LPSTR)ch, 2, NULL, NULL );
@@ -723,6 +727,7 @@ static void map_wparam_WtoA( MSG *msg, BOOL remove )
     case WM_SYSCHAR:
     case WM_SYSDEADCHAR:
     case WM_MENUCHAR:
+        cp = get_input_codepage();
         wch[0] = LOWORD(msg->wParam);
         wch[1] = HIWORD(msg->wParam);
         ch[0] = ch[1] = 0;
@@ -730,6 +735,7 @@ static void map_wparam_WtoA( MSG *msg, BOOL remove )
         msg->wParam = MAKEWPARAM( ch[0] | (ch[1] << 8), 0 );
         break;
     case WM_IME_CHAR:
+        cp = get_input_codepage();
         wch[0] = LOWORD(msg->wParam);
         ch[0] = ch[1] = 0;
         len = WideCharToMultiByte( cp, 0, wch, 1, (LPSTR)ch, 2, NULL, NULL );
