@@ -861,6 +861,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     CLIENT_ID id;
     HANDLE parent = 0, debug = 0, token = 0;
     UNICODE_STRING path = {0};
+    OBJECT_ATTRIBUTES empty_attr = { sizeof(empty_attr) };
     SIZE_T i, attr_count = (attr->TotalLength - sizeof(attr->TotalLength)) / sizeof(PS_ATTRIBUTE);
     const PS_ATTRIBUTE *handles_attr = NULL;
     data_size_t handles_size;
@@ -893,6 +894,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
             break;
         }
     }
+    if (!process_attr) process_attr = &empty_attr;
 
     TRACE( "%s image %s cmdline %s parent %p\n", debugstr_us( &path ),
            debugstr_us( &params->ImagePathName ), debugstr_us( &params->CommandLine ), parent );
