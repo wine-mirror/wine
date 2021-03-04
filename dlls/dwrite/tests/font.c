@@ -9454,22 +9454,23 @@ static void test_fontsetbuilder(void)
             setcount = IDWriteFontSet_GetFontCount(fontset);
             ok(setcount == 1, "Unexpected font count %u.\n", setcount);
 
+            ref2 = (void *)0xdeadbeef;
+            hr = IDWriteFontSet_GetFontFaceReference(fontset, setcount, &ref2);
+            ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+            ok(!ref2, "Unexpected pointer.\n");
+
             ref2 = NULL;
             hr = IDWriteFontSet_GetFontFaceReference(fontset, 0, &ref2);
-       todo_wine
             ok(hr == S_OK, "Failed to get font face reference, hr %#x.\n", hr);
             ok(ref2 != ref, "Unexpected reference.\n");
 
             ref3 = NULL;
             hr = IDWriteFontSet_GetFontFaceReference(fontset, 0, &ref3);
-       todo_wine {
             ok(hr == S_OK, "Failed to get font face reference, hr %#x.\n", hr);
             ok(ref2 != ref3, "Unexpected reference.\n");
-       }
-            if (ref3)
-                IDWriteFontFaceReference_Release(ref3);
-            if (ref2)
-                IDWriteFontFaceReference_Release(ref2);
+
+            IDWriteFontFaceReference_Release(ref3);
+            IDWriteFontFaceReference_Release(ref2);
 
             for (id = DWRITE_FONT_PROPERTY_ID_FAMILY_NAME; id < DWRITE_FONT_PROPERTY_ID_TOTAL; ++id)
             {

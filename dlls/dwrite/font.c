@@ -7162,9 +7162,19 @@ static UINT32 WINAPI dwritefontset_GetFontCount(IDWriteFontSet3 *iface)
 static HRESULT WINAPI dwritefontset_GetFontFaceReference(IDWriteFontSet3 *iface, UINT32 index,
         IDWriteFontFaceReference **reference)
 {
-    FIXME("%p, %u, %p.\n", iface, index, reference);
+    struct dwrite_fontset *set = impl_from_IDWriteFontSet3(iface);
+    struct dwrite_fontset_entry *entry;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, index, reference);
+
+    *reference = NULL;
+
+    if (index >= set->count)
+        return E_INVALIDARG;
+
+    entry = &set->entries[index];
+    return IDWriteFactory7_CreateFontFaceReference_(set->factory, entry->file, entry->face_index,
+            entry->simulations, reference);
 }
 
 static HRESULT WINAPI dwritefontset_FindFontFaceReference(IDWriteFontSet3 *iface,
