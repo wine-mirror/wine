@@ -1631,18 +1631,14 @@ if (0) /* crashes on native */
                 ok(fontlist == (IDWriteFontList *)fontlist2, "Unexpected interface pointer.\n");
 
                 hr = IDWriteFontList2_GetFontSet(fontlist2, &fontset);
-            todo_wine
                 ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
                 hr = IDWriteFontList2_GetFontSet(fontlist2, &fontset2);
-            todo_wine {
                 ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
                 ok(fontset != fontset2, "Unexpected instance.\n");
-            }
-                if (fontset2)
-                    IDWriteFontSet1_Release(fontset2);
-                if (fontset)
-                    IDWriteFontSet1_Release(fontset);
+
+                IDWriteFontSet1_Release(fontset2);
+                IDWriteFontSet1_Release(fontset);
 
                 IDWriteFontList2_Release(fontlist2);
             }
@@ -9959,17 +9955,13 @@ static void test_family_font_set(void)
     if (SUCCEEDED(IDWriteFontFamily_QueryInterface(family, &IID_IDWriteFontFamily2, (void **)&family2)))
     {
         hr = IDWriteFontFamily2_GetFontSet(family2, &fontset);
-    todo_wine
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
         hr = IDWriteFontFamily2_GetFontSet(family2, &fontset2);
-    todo_wine
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
         ok(fontset != fontset2, "Unexpected fontset instance.\n");
         IDWriteFontSet1_Release(fontset2);
         IDWriteFontSet1_Release(fontset);
-    }
+
         IDWriteFontFamily2_Release(family2);
     }
     else

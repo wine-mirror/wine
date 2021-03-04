@@ -2725,9 +2725,12 @@ static HRESULT WINAPI dwritefontfamily2_GetMatchingFonts(IDWriteFontFamily2 *ifa
 
 static HRESULT WINAPI dwritefontfamily2_GetFontSet(IDWriteFontFamily2 *iface, IDWriteFontSet1 **fontset)
 {
-    FIXME("%p, %p.\n", iface, fontset);
+    struct dwrite_fontfamily *family = impl_from_IDWriteFontFamily2(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, fontset);
+
+    return fontset_create_from_font_data(family->collection->factory, family->data->fonts,
+            family->data->count, fontset);
 }
 
 static const IDWriteFontFamily2Vtbl fontfamilyvtbl =
@@ -2806,9 +2809,12 @@ static HRESULT WINAPI dwritefontfamilylist1_GetFontFaceReference(IDWriteFontList
 
 static HRESULT WINAPI dwritefontfamilylist2_GetFontSet(IDWriteFontList2 *iface, IDWriteFontSet1 **fontset)
 {
-    FIXME("%p, %p.\n", iface, fontset);
+    struct dwrite_fontfamily *family = impl_family_from_IDWriteFontList2(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, fontset);
+
+    return fontset_create_from_font_data(family->collection->factory, family->data->fonts,
+            family->data->count, fontset);
 }
 
 static const IDWriteFontList2Vtbl fontfamilylistvtbl =
