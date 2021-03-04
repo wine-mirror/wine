@@ -185,6 +185,22 @@ static void write_coclasses( const statement_list_t *stmts, const typelib_t *typ
     }
 }
 
+static void write_runtimeclasses_registry( const statement_list_t *stmts )
+{
+    const statement_t *stmt;
+    const type_t *type;
+
+    if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
+    {
+        if (stmt->type != STMT_TYPE) continue;
+        if (type_get_type((type = stmt->u.type)) != TYPE_RUNTIMECLASS) continue;
+        put_str( indent, "ForceRemove %s\n", format_namespace( type->namespace, "", ".", type->name, NULL ) );
+        put_str( indent++, "{\n" );
+        put_str( indent, "val 'DllPath' = s '%%MODULE%%'\n" );
+        put_str( --indent, "}\n" );
+    }
+}
+
 static int write_progid( const type_t *class )
 {
     const UUID *uuid = get_attrp( class->attrs, ATTR_UUID );
@@ -236,22 +252,44 @@ void write_regscript( const statement_list_t *stmts )
 
     init_output_buffer();
 
-    put_str( indent, "HKCR\n" );
-    put_str( indent++, "{\n" );
+    if (winrt_mode)
+    {
+        put_str( indent, "HKLM\n" );
+        put_str( indent++, "{\n" );
+        put_str( indent, "NoRemove Software\n" );
+        put_str( indent++, "{\n" );
+        put_str( indent, "NoRemove Microsoft\n" );
+        put_str( indent++, "{\n" );
+        put_str( indent, "NoRemove WindowsRuntime\n" );
+        put_str( indent++, "{\n" );
+        put_str( indent, "NoRemove ActivatableClassId\n" );
+        put_str( indent++, "{\n" );
+        write_runtimeclasses_registry( stmts );
+        put_str( --indent, "}\n" );
+        put_str( --indent, "}\n" );
+        put_str( --indent, "}\n" );
+        put_str( --indent, "}\n" );
+        put_str( --indent, "}\n" );
+    }
+    else
+    {
+        put_str( indent, "HKCR\n" );
+        put_str( indent++, "{\n" );
 
-    put_str( indent, "NoRemove Interface\n" );
-    put_str( indent++, "{\n" );
-    ps_factory = find_ps_factory( stmts );
-    if (ps_factory) write_interfaces( stmts, ps_factory );
-    put_str( --indent, "}\n" );
+        put_str( indent, "NoRemove Interface\n" );
+        put_str( indent++, "{\n" );
+        ps_factory = find_ps_factory( stmts );
+        if (ps_factory) write_interfaces( stmts, ps_factory );
+        put_str( --indent, "}\n" );
 
-    put_str( indent, "NoRemove CLSID\n" );
-    put_str( indent++, "{\n" );
-    write_coclasses( stmts, NULL );
-    put_str( --indent, "}\n" );
+        put_str( indent, "NoRemove CLSID\n" );
+        put_str( indent++, "{\n" );
+        write_coclasses( stmts, NULL );
+        put_str( --indent, "}\n" );
 
-    write_progids( stmts );
-    put_str( --indent, "}\n" );
+        write_progids( stmts );
+        put_str( --indent, "}\n" );
+    }
 
     if (strendswith( regscript_name, ".res" ))  /* create a binary resource file */
     {
