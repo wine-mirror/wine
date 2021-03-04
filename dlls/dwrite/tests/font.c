@@ -9400,17 +9400,13 @@ static void test_fontsetbuilder(void)
         ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
 
         hr = IDWriteFontSetBuilder1_CreateFontSet(builder1, &fontset);
-    todo_wine
         ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
 
-        if (SUCCEEDED(hr))
-        {
         /* No attempt to eliminate duplicates. */
         count = IDWriteFontSet_GetFontCount(fontset);
         ok(count == 2, "Unexpected font count %u.\n", count);
 
         IDWriteFontSet_Release(fontset);
-        }
 
         IDWriteFontFile_Release(file);
         IDWriteFontSetBuilder1_Release(builder1);
@@ -9453,33 +9449,37 @@ static void test_fontsetbuilder(void)
             EXPECT_REF(ref, 1);
 
             hr = IDWriteFontSetBuilder_CreateFontSet(builder, &fontset);
-       todo_wine
             ok(hr == S_OK, "Failed to create a font set, hr %#x.\n", hr);
 
-        if (SUCCEEDED(hr))
-        {
             setcount = IDWriteFontSet_GetFontCount(fontset);
             ok(setcount == 1, "Unexpected font count %u.\n", setcount);
 
+            ref2 = NULL;
             hr = IDWriteFontSet_GetFontFaceReference(fontset, 0, &ref2);
+       todo_wine
             ok(hr == S_OK, "Failed to get font face reference, hr %#x.\n", hr);
             ok(ref2 != ref, "Unexpected reference.\n");
 
+            ref3 = NULL;
             hr = IDWriteFontSet_GetFontFaceReference(fontset, 0, &ref3);
+       todo_wine {
             ok(hr == S_OK, "Failed to get font face reference, hr %#x.\n", hr);
             ok(ref2 != ref3, "Unexpected reference.\n");
-
-            IDWriteFontFaceReference_Release(ref3);
-            IDWriteFontFaceReference_Release(ref2);
+       }
+            if (ref3)
+                IDWriteFontFaceReference_Release(ref3);
+            if (ref2)
+                IDWriteFontFaceReference_Release(ref2);
 
             for (id = DWRITE_FONT_PROPERTY_ID_FAMILY_NAME; id < DWRITE_FONT_PROPERTY_ID_TOTAL; ++id)
             {
                 IDWriteLocalizedStrings *values;
                 WCHAR buffW[255], buff2W[255];
                 UINT32 c, ivalue = 0;
-                BOOL exists;
+                BOOL exists = FALSE;
 
                 hr = IDWriteFontSet_GetPropertyValues(fontset, 0, id, &exists, &values);
+            todo_wine
                 ok(hr == S_OK, "Failed to get property value, hr %#x.\n", hr);
 
                 if (!exists)
@@ -9529,7 +9529,6 @@ static void test_fontsetbuilder(void)
             }
 
             IDWriteFontSet_Release(fontset);
-        }
             IDWriteFontFaceReference_Release(ref);
             IDWriteFontSetBuilder_Release(builder);
 
