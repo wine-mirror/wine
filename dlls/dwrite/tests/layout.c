@@ -4699,12 +4699,6 @@ todo_wine {
 todo_wine
     ok(font != NULL, "got %p\n", font);
 if (font) {
-    /* font returned for Hiragana character, check if it supports Latin too */
-    exists = FALSE;
-    hr = IDWriteFont_HasCharacter(font, 'b', &exists);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(exists, "got %d\n", exists);
-
     IDWriteFont_Release(font);
 }
     /* Try with explicit collection, Tahoma will be forced. */
