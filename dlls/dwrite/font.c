@@ -7212,7 +7212,13 @@ static HRESULT WINAPI dwritefontset_GetPropertyValues_(IDWriteFontSet3 *iface, D
 static HRESULT WINAPI dwritefontset_GetPropertyValues(IDWriteFontSet3 *iface, UINT32 index, DWRITE_FONT_PROPERTY_ID id,
         BOOL *exists, IDWriteLocalizedStrings **values)
 {
-    FIXME("%p, %u, %d, %p, %p.\n", iface, index, id, exists, values);
+    static int once;
+
+    if (!once++)
+        FIXME("%p: stub\n", iface);
+
+    if (!once++)
+        FIXME("%p, %u, %d, %p, %p.\n", iface, index, id, exists, values);
 
     return E_NOTIMPL;
 }
