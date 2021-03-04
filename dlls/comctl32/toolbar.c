@@ -1078,7 +1078,7 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
         else if (tbcd.nmcd.uItemState & CDIS_SELECTED)
             stateId = TS_PRESSED;
         else if (tbcd.nmcd.uItemState & CDIS_CHECKED)
-            stateId = (tbcd.nmcd.uItemState & CDIS_HOT) ? TS_HOTCHECKED : TS_HOT;
+            stateId = (tbcd.nmcd.uItemState & CDIS_HOT) ? TS_HOTCHECKED : TS_CHECKED;
         else if ((tbcd.nmcd.uItemState & CDIS_HOT)
             || (drawSepDropDownArrow && btnPtr->bDropDownPressed))
             stateId = TS_HOT;
@@ -1099,7 +1099,7 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
             else if (btnPtr->bDropDownPressed || (tbcd.nmcd.uItemState & CDIS_SELECTED))
                 stateId = TS_PRESSED;
             else if (tbcd.nmcd.uItemState & CDIS_CHECKED)
-                stateId = (tbcd.nmcd.uItemState & CDIS_HOT) ? TS_HOTCHECKED : TS_HOT;
+                stateId = (tbcd.nmcd.uItemState & CDIS_HOT) ? TS_HOTCHECKED : TS_CHECKED;
             else if (tbcd.nmcd.uItemState & CDIS_HOT)
                 stateId = TS_HOT;
                 
