@@ -37,6 +37,7 @@
 #include "winnls.h"
 #include "commctrl.h"
 #include "comctl32.h"
+#include "uxtheme.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
 
@@ -424,6 +425,50 @@ HOTKEY_NCCreate (HWND hwnd, const CREATESTRUCTW *lpcs)
 }
 
 static LRESULT
+HOTKEY_NCPaint (HWND hwnd, HRGN region)
+{
+    INT cxEdge, cyEdge;
+    HRGN clipRgn;
+    HTHEME theme;
+    LONG exStyle;
+    RECT r;
+    HDC dc;
+
+    theme = OpenThemeData(NULL, WC_EDITW);
+    if (!theme)
+        return DefWindowProcW(hwnd, WM_NCPAINT, (WPARAM)region, 0);
+
+    exStyle = GetWindowLongW(hwnd, GWL_EXSTYLE);
+    if (!(exStyle & WS_EX_CLIENTEDGE))
+    {
+        CloseThemeData(theme);
+        return DefWindowProcW(hwnd, WM_NCPAINT, (WPARAM)region, 0);
+    }
+
+    cxEdge = GetSystemMetrics(SM_CXEDGE);
+    cyEdge = GetSystemMetrics(SM_CYEDGE);
+    GetWindowRect(hwnd, &r);
+
+    /* New clipping region passed to default proc to exclude border */
+    clipRgn = CreateRectRgn(r.left + cxEdge, r.top + cyEdge, r.right - cxEdge, r.bottom - cyEdge);
+    if (region != (HRGN)1)
+        CombineRgn(clipRgn, clipRgn, region, RGN_AND);
+    OffsetRect(&r, -r.left, -r.top);
+
+    dc = GetDCEx(hwnd, region, DCX_WINDOW | DCX_INTERSECTRGN);
+    if (IsThemeBackgroundPartiallyTransparent(theme, 0, 0))
+        DrawThemeParentBackground(hwnd, dc, &r);
+    DrawThemeBackground(theme, dc, 0, 0, &r, 0);
+    ReleaseDC(hwnd, dc);
+    CloseThemeData(theme);
+
+    /* Call default proc to get the scrollbars etc. also painted */
+    DefWindowProcW(hwnd, WM_NCPAINT, (WPARAM)clipRgn, 0);
+    DeleteObject(clipRgn);
+    return 0;
+}
+
+static LRESULT
 HOTKEY_SetFocus (HOTKEY_INFO *infoPtr)
 {
     infoPtr->bFocus = TRUE;
@@ -515,6 +560,9 @@ HOTKEY_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_NCCREATE:
 	    return HOTKEY_NCCreate (hwnd, (LPCREATESTRUCTW)lParam);
+
+        case WM_NCPAINT:
+            return HOTKEY_NCPaint (hwnd, (HRGN)wParam);
 
 	case WM_PRINTCLIENT:
 	case WM_PAINT:
