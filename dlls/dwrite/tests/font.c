@@ -1626,7 +1626,24 @@ if (0) /* crashes on native */
 
             if (SUCCEEDED(IDWriteFontFamily1_QueryInterface(family1, &IID_IDWriteFontList2, (void **)&fontlist2)))
             {
+                IDWriteFontSet1 *fontset = NULL, *fontset2 = NULL;
+
                 ok(fontlist == (IDWriteFontList *)fontlist2, "Unexpected interface pointer.\n");
+
+                hr = IDWriteFontList2_GetFontSet(fontlist2, &fontset);
+            todo_wine
+                ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+                hr = IDWriteFontList2_GetFontSet(fontlist2, &fontset2);
+            todo_wine {
+                ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+                ok(fontset != fontset2, "Unexpected instance.\n");
+            }
+                if (fontset2)
+                    IDWriteFontSet1_Release(fontset2);
+                if (fontset)
+                    IDWriteFontSet1_Release(fontset);
+
                 IDWriteFontList2_Release(fontlist2);
             }
             else
@@ -4067,6 +4084,18 @@ static void test_GetMatchingFonts(void)
 
     if (SUCCEEDED(IDWriteFontList_QueryInterface(fontlist, &IID_IDWriteFontList2, (void **)&fontlist3)))
     {
+        IDWriteFontSet1 *fontset, *fontset2;
+
+        hr = IDWriteFontList2_GetFontSet(fontlist3, &fontset);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+        hr = IDWriteFontList2_GetFontSet(fontlist3, &fontset2);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(fontset != fontset2, "Unexpected instance.\n");
+
+        IDWriteFontSet1_Release(fontset2);
+        IDWriteFontSet1_Release(fontset);
+
         IDWriteFontList2_Release(fontlist3);
     }
     else

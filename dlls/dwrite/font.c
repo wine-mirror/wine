@@ -278,6 +278,9 @@ struct dwrite_fontset_builder
     size_t capacity;
 };
 
+static HRESULT fontset_create_from_font_data(IDWriteFactory7 *factory, struct dwrite_font_data **fonts,
+        unsigned int count, IDWriteFontSet1 **ret);
+
 static void dwrite_grab_font_table(void *context, UINT32 table, const BYTE **data, UINT32 *size, void **data_context)
 {
     struct dwrite_fontface *fontface = context;
@@ -2385,9 +2388,12 @@ static HRESULT WINAPI dwritefontlist1_GetFontFaceReference(IDWriteFontList2 *ifa
 
 static HRESULT WINAPI dwritefontlist2_GetFontSet(IDWriteFontList2 *iface, IDWriteFontSet1 **fontset)
 {
-    FIXME("%p, %p.\n", iface, fontset);
+    struct dwrite_fontlist *fontlist = impl_from_IDWriteFontList2(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, fontset);
+
+    return fontset_create_from_font_data(fontlist->family->collection->factory, fontlist->fonts,
+            fontlist->font_count, fontset);
 }
 
 static const IDWriteFontList2Vtbl dwritefontlistvtbl =
@@ -7409,6 +7415,40 @@ static const IDWriteFontSet3Vtbl fontsetvtbl =
     dwritefontset3_GetFontSourceNameLength,
     dwritefontset3_GetFontSourceName,
 };
+
+static HRESULT fontset_create_from_font_data(IDWriteFactory7 *factory, struct dwrite_font_data **fonts,
+        unsigned int count, IDWriteFontSet1 **ret)
+{
+    struct dwrite_fontset *object;
+    unsigned int i;
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IDWriteFontSet3_iface.lpVtbl = &fontsetvtbl;
+    object->refcount = 1;
+    object->factory = factory;
+    IDWriteFactory7_AddRef(object->factory);
+
+    if (count)
+    {
+        object->entries = heap_calloc(count, sizeof(*object->entries));
+        object->count = count;
+
+        /* FIXME: set available properties too */
+        for (i = 0; i < object->count; ++i)
+        {
+            object->entries[i].file = fonts[i]->file;
+            object->entries[i].face_index = fonts[i]->face_index;
+            object->entries[i].simulations = fonts[i]->simulations;
+            IDWriteFontFile_AddRef(object->entries[i].file);
+        }
+    }
+
+    *ret = (IDWriteFontSet1 *)&object->IDWriteFontSet3_iface;
+
+    return S_OK;
+}
 
 static HRESULT fontset_builder_create_fontset(IDWriteFactory7 *factory, struct dwrite_fontset_entry *entries,
         unsigned int count, IDWriteFontSet **ret)
