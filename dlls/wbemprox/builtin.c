@@ -962,7 +962,8 @@ static const struct record_stdregprov data_stdregprov[] =
 
 static const struct record_sysrestore data_sysrestore[] =
 {
-    { NULL, NULL, 0, 0, 0, create_restore_point, disable_restore, enable_restore, get_last_restore_status, restore }
+    { NULL, NULL, 0, 0, 0, sysrestore_create, sysrestore_disable, sysrestore_enable, sysrestore_get_last_status,
+      sysrestore_restore }
 };
 
 static UINT16 systemenclosure_chassistypes[] =

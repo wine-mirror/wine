@@ -258,11 +258,11 @@ HRESULT service_start_service(IWbemClassObject *obj, IWbemContext *context, IWbe
 HRESULT service_stop_service(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
 HRESULT security_get_sd(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
 HRESULT security_set_sd(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
-HRESULT create_restore_point(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
-HRESULT disable_restore(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
-HRESULT enable_restore(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
-HRESULT get_last_restore_status(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
-HRESULT restore(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
+HRESULT sysrestore_create(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
+HRESULT sysrestore_disable(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
+HRESULT sysrestore_enable(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
+HRESULT sysrestore_get_last_status(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
+HRESULT sysrestore_restore(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
 
 static inline WCHAR *heap_strdupW( const WCHAR *src )
 {
