@@ -1853,7 +1853,7 @@ HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const built
             return hres;
         }
 
-        if(is_object_instance(val))
+        if(is_object_instance(val) && get_object(val))
             prot = iface_to_jsdisp(get_object(val));
         jsval_release(val);
     }

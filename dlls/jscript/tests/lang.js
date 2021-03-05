@@ -1864,6 +1864,21 @@ ok(tmp === "VT_DISPATCH", "getVT(Object(nullDisp) = " + tmp);
 tmp = Object(nullDisp).toString();
 ok(tmp === "[object Object]", "Object(nullDisp).toString() = " + tmp);
 
+function testNullPrototype() {
+    this.x = 13;
+}
+tmp = new testNullPrototype();
+ok(tmp.x === 13, "tmp.x !== 13");
+ok(!("y" in tmp), "tmp has 'y' property");
+testNullPrototype.prototype.y = 10;
+ok("y" in tmp, "tmp does not have 'y' property");
+tmp = new testNullPrototype();
+ok(tmp.y === 10, "tmp.y !== 10");
+testNullPrototype.prototype = nullDisp;
+tmp = new testNullPrototype();
+ok(tmp.x === 13, "tmp.x !== 13");
+ok(!("y" in tmp), "tmp has 'y' property");
+
 function do_test() {}
 function nosemicolon() {} nosemicolon();
 function () {} nosemicolon();
