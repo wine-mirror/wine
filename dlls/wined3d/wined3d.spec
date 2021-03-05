@@ -166,6 +166,8 @@
 @ cdecl wined3d_device_update_texture(ptr ptr ptr)
 @ cdecl wined3d_device_validate_device(ptr ptr)
 
+@ cdecl wined3d_device_context_set_shader(ptr long ptr)
+
 @ cdecl wined3d_output_find_closest_matching_mode(ptr ptr)
 @ cdecl wined3d_output_get_adapter(ptr)
 @ cdecl wined3d_output_get_desc(ptr ptr)

@@ -2214,6 +2214,7 @@ struct wined3d_blend_state;
 struct wined3d_buffer;
 struct wined3d_depth_stencil_state;
 struct wined3d_device;
+struct wined3d_device_context;
 struct wined3d_output;
 struct wined3d_palette;
 struct wined3d_query;
@@ -2546,6 +2547,9 @@ void __cdecl wined3d_device_update_sub_resource(struct wined3d_device *device, s
 HRESULT __cdecl wined3d_device_update_texture(struct wined3d_device *device,
         struct wined3d_texture *src_texture, struct wined3d_texture *dst_texture);
 HRESULT __cdecl wined3d_device_validate_device(const struct wined3d_device *device, DWORD *num_passes);
+
+void __cdecl wined3d_device_context_set_shader(struct wined3d_device_context *context,
+        enum wined3d_shader_type type, struct wined3d_shader *shader);
 
 HRESULT __cdecl wined3d_output_find_closest_matching_mode(const struct wined3d_output *output,
         struct wined3d_display_mode *mode);

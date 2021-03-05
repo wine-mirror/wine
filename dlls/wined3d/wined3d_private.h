@@ -89,7 +89,6 @@ struct wined3d_adapter;
 struct wined3d_buffer_vk;
 struct wined3d_context;
 struct wined3d_context_vk;
-struct wined3d_device_context;
 struct wined3d_gl_info;
 struct wined3d_state;
 struct wined3d_swapchain_gl;

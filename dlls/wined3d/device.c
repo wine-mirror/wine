@@ -2081,23 +2081,31 @@ struct wined3d_vertex_declaration * CDECL wined3d_device_get_vertex_declaration(
     return device->cs->c.state->vertex_declaration;
 }
 
-void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
+void CDECL wined3d_device_context_set_shader(struct wined3d_device_context *context,
+        enum wined3d_shader_type type, struct wined3d_shader *shader)
 {
-    struct wined3d_state *state = device->cs->c.state;
+    struct wined3d_state *state = context->state;
     struct wined3d_shader *prev;
 
-    TRACE("device %p, shader %p.\n", device, shader);
+    TRACE("context %p, type %#x, shader %p.\n", context, type, shader);
 
-    prev = state->shader[WINED3D_SHADER_TYPE_VERTEX];
+    prev = state->shader[type];
     if (shader == prev)
         return;
 
     if (shader)
         wined3d_shader_incref(shader);
-    state->shader[WINED3D_SHADER_TYPE_VERTEX] = shader;
-    wined3d_device_context_emit_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_VERTEX, shader);
+    state->shader[type] = shader;
+    wined3d_device_context_emit_set_shader(context, type, shader);
     if (prev)
         wined3d_shader_decref(prev);
+}
+
+void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
+{
+    TRACE("device %p, shader %p.\n", device, shader);
+
+    return wined3d_device_context_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_VERTEX, shader);
 }
 
 struct wined3d_shader * CDECL wined3d_device_get_vertex_shader(const struct wined3d_device *device)
@@ -2321,21 +2329,9 @@ static void wined3d_device_set_vs_consts_f(struct wined3d_device *device,
 
 void CDECL wined3d_device_set_pixel_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
-    struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_shader *prev;
-
     TRACE("device %p, shader %p.\n", device, shader);
 
-    prev = state->shader[WINED3D_SHADER_TYPE_PIXEL];
-    if (shader == prev)
-        return;
-
-    if (shader)
-        wined3d_shader_incref(shader);
-    state->shader[WINED3D_SHADER_TYPE_PIXEL] = shader;
-    wined3d_device_context_emit_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_PIXEL, shader);
-    if (prev)
-        wined3d_shader_decref(prev);
+    return wined3d_device_context_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_PIXEL, shader);
 }
 
 struct wined3d_shader * CDECL wined3d_device_get_pixel_shader(const struct wined3d_device *device)
@@ -2431,20 +2427,9 @@ static void wined3d_device_set_ps_consts_f(struct wined3d_device *device,
 
 void CDECL wined3d_device_set_hull_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
-    struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_shader *prev;
-
     TRACE("device %p, shader %p.\n", device, shader);
 
-    prev = state->shader[WINED3D_SHADER_TYPE_HULL];
-    if (shader == prev)
-        return;
-    if (shader)
-        wined3d_shader_incref(shader);
-    state->shader[WINED3D_SHADER_TYPE_HULL] = shader;
-    wined3d_device_context_emit_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_HULL, shader);
-    if (prev)
-        wined3d_shader_decref(prev);
+    return wined3d_device_context_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_HULL, shader);
 }
 
 struct wined3d_shader * CDECL wined3d_device_get_hull_shader(const struct wined3d_device *device)
@@ -2487,20 +2472,9 @@ struct wined3d_sampler * CDECL wined3d_device_get_hs_sampler(const struct wined3
 
 void CDECL wined3d_device_set_domain_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
-    struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_shader *prev;
-
     TRACE("device %p, shader %p.\n", device, shader);
 
-    prev = state->shader[WINED3D_SHADER_TYPE_DOMAIN];
-    if (shader == prev)
-        return;
-    if (shader)
-        wined3d_shader_incref(shader);
-    state->shader[WINED3D_SHADER_TYPE_DOMAIN] = shader;
-    wined3d_device_context_emit_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_DOMAIN, shader);
-    if (prev)
-        wined3d_shader_decref(prev);
+    return wined3d_device_context_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_DOMAIN, shader);
 }
 
 struct wined3d_shader * CDECL wined3d_device_get_domain_shader(const struct wined3d_device *device)
@@ -2543,20 +2517,9 @@ struct wined3d_sampler * CDECL wined3d_device_get_ds_sampler(const struct wined3
 
 void CDECL wined3d_device_set_geometry_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
-    struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_shader *prev;
-
     TRACE("device %p, shader %p.\n", device, shader);
 
-    prev = state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
-    if (shader == prev)
-        return;
-    if (shader)
-        wined3d_shader_incref(shader);
-    state->shader[WINED3D_SHADER_TYPE_GEOMETRY] = shader;
-    wined3d_device_context_emit_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_GEOMETRY, shader);
-    if (prev)
-        wined3d_shader_decref(prev);
+    return wined3d_device_context_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_GEOMETRY, shader);
 }
 
 struct wined3d_shader * CDECL wined3d_device_get_geometry_shader(const struct wined3d_device *device)
@@ -2598,20 +2561,9 @@ struct wined3d_sampler * CDECL wined3d_device_get_gs_sampler(const struct wined3
 
 void CDECL wined3d_device_set_compute_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
-    struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_shader *prev;
-
     TRACE("device %p, shader %p.\n", device, shader);
 
-    prev = state->shader[WINED3D_SHADER_TYPE_COMPUTE];
-    if (shader == prev)
-        return;
-    if (shader)
-        wined3d_shader_incref(shader);
-    state->shader[WINED3D_SHADER_TYPE_COMPUTE] = shader;
-    wined3d_device_context_emit_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_COMPUTE, shader);
-    if (prev)
-        wined3d_shader_decref(prev);
+    return wined3d_device_context_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_COMPUTE, shader);
 }
 
 struct wined3d_shader * CDECL wined3d_device_get_compute_shader(const struct wined3d_device *device)
