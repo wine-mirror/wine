@@ -741,38 +741,6 @@ HRESULT WINAPI /* DECLSPEC_HOTPATCH */ WerUnregisterRuntimeExceptionModule( cons
  ***********************************************************************/
 
 
-typedef struct _PEB32
-{
-    BOOLEAN InheritedAddressSpace;
-    BOOLEAN ReadImageFileExecOptions;
-    BOOLEAN BeingDebugged;
-    BOOLEAN SpareBool;
-    DWORD   Mutant;
-    DWORD   ImageBaseAddress;
-    DWORD   LdrData;
-} PEB32;
-
-typedef struct _LIST_ENTRY32
-{
-    DWORD Flink;
-    DWORD Blink;
-} LIST_ENTRY32;
-
-typedef struct _PEB_LDR_DATA32
-{
-    ULONG        Length;
-    BOOLEAN      Initialized;
-    DWORD        SsHandle;
-    LIST_ENTRY32 InLoadOrderModuleList;
-} PEB_LDR_DATA32;
-
-typedef struct _UNICODE_STRING32
-{
-    USHORT Length;
-    USHORT MaximumLength;
-    DWORD  Buffer;
-} UNICODE_STRING32;
-
 typedef struct _LDR_DATA_TABLE_ENTRY32
 {
     LIST_ENTRY32        InLoadOrderModuleList;
