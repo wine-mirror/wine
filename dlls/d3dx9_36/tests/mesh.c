@@ -29,16 +29,6 @@
 #include "rmxftmpl.h"
 #include "rmxfguid.h"
 
-#ifndef NAN
-/* From wine/port.h */
-static inline float __port_nan(void)
-{
-    static const unsigned __nan_bytes = 0x7fc00000;
-    return *(const float *)&__nan_bytes;
-}
-#define NAN __port_nan()
-#endif
-
 /* Set the WINETEST_DEBUG environment variable to be greater than 1 for verbose
  * function call traces of ID3DXAllocateHierarchy callbacks. */
 #define TRACECALLBACK if(winetest_debug > 1) trace
