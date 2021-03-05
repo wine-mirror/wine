@@ -19,26 +19,20 @@ msgid "Security"
 msgstr "Beveiliging"
 
 #: dlls/aclui/aclui.rc:32
-#, fuzzy
-#| msgid "&User name:"
 msgid "&Group or user names:"
-msgstr "&Gebruikersnaam:"
+msgstr "&Groeps- of gebruikersnamen:"
 
 #: dlls/aclui/aclui.rc:38
-#, fuzzy
-#| msgid "Yellow"
 msgid "Allow"
-msgstr "Geel"
+msgstr "Toestaan"
 
 #: dlls/aclui/aclui.rc:39
 msgid "Deny"
-msgstr ""
+msgstr "Weigeren"
 
 #: dlls/aclui/aclui.rc:47
-#, fuzzy
-#| msgid "Permission denied"
 msgid "Permissions for %1"
-msgstr "Toegang geweigerd"
+msgstr "Rechten voor %1"
 
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
@@ -16169,7 +16163,7 @@ msgid ""
 "or per-application settings in those tabs as well."
 msgstr ""
 "Voor elk programma kan Wine apart de Windows versie instellen. Dit tabblad "
-"isgekoppeld aan de tabbladen 'Bibliotheken' en 'Grafisch'. Hierdoor kan per "
+"is gekoppeld aan de tabbladen 'Bibliotheken' en 'Grafisch'. Hierdoor kan per "
 "programma de standaardinstellingen of programmaspecifieke instellingen "
 "gebruikt worden."
 
