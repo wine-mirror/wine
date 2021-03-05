@@ -3134,7 +3134,8 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
                 && (format->f.flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_INTEGER))
             continue;
 
-        if (wined3d_settings.offscreen_rendering_mode != ORM_FBO && format->f.id == WINED3DFMT_D16_LOCKABLE)
+        if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
+                && (format->f.id == WINED3DFMT_D16_LOCKABLE || format->f.id == WINED3DFMT_NULL))
             continue;
 
         format->internal = format_texture_info[i].gl_internal;
