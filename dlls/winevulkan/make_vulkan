@@ -357,9 +357,9 @@ class VkDefine(object):
 
 
 class VkEnum(object):
-    def __init__(self, name, values, alias=None):
+    def __init__(self, name, alias=None):
         self.name = name
-        self.values = values
+        self.values = [] if alias == None else alias.values
         self.required = False
         self.alias = alias
         self.aliased_by = []
@@ -367,7 +367,7 @@ class VkEnum(object):
     @staticmethod
     def from_alias(enum, alias):
         name = enum.attrib.get("name")
-        aliasee = VkEnum(name, alias.values, alias=alias)
+        aliasee = VkEnum(name, alias=alias)
 
         alias.add_aliased_by(aliasee)
         return aliasee
@@ -375,34 +375,43 @@ class VkEnum(object):
     @staticmethod
     def from_xml(enum):
         name = enum.attrib.get("name")
-        values = []
+        result = VkEnum(name)
 
         for v in enum.findall("enum"):
+            value_name = v.attrib.get("name")
             # Value is either a value or a bitpos, only one can exist.
             value = v.attrib.get("value")
             alias_name = v.attrib.get("alias")
             if alias_name:
-                alias = next(x for x in values if x.name == alias_name)
-                values.append(VkEnumValue(v.attrib.get("name"), value=alias.value, hex=alias.hex))
+                result.create_alias(value_name, alias_name)
             elif value:
-                # Some values are in hex form. We want to preserve the hex representation
-                # at least when we convert back to a string. Internally we want to use int.
-                if "0x" in value:
-                    values.append(VkEnumValue(v.attrib.get("name"), value=int(value, 0), hex=True))
-                else:
-                    values.append(VkEnumValue(v.attrib.get("name"), value=int(value, 0)))
+                result.create_value(value_name, value)
             else:
                 # bitmask
-                value = 1 << int(v.attrib.get("bitpos"))
-                values.append(VkEnumValue(v.attrib.get("name"), value=value, hex=True))
+                result.create_bitpos(value_name, int(v.attrib.get("bitpos")))
 
         # vulkan.h contains a *_MAX_ENUM value set to 32-bit at the time of writing,
         # which is to prepare for extensions as they can add values and hence affect
         # the size definition.
         max_name = re.sub(r'([0-9a-z_])([A-Z0-9])',r'\1_\2', name).upper() + "_MAX_ENUM"
-        values.append(VkEnumValue(max_name, value=0x7fffffff, hex=True))
+        result.create_value(max_name, "0x7fffffff")
 
-        return VkEnum(name, values)
+        return result
+
+    def create_alias(self, name, alias_name):
+        """ Create an aliased value for this enum """
+        self.add(VkEnumValue(name, alias=alias_name))
+
+    def create_value(self, name, value):
+        """ Create a new value for this enum """
+        # Some values are in hex form. We want to preserve the hex representation
+        # at least when we convert back to a string. Internally we want to use int.
+        hex = "0x" in value
+        self.add(VkEnumValue(name, value=int(value, 0), hex=hex))
+
+    def create_bitpos(self, name, pos):
+        """ Create a new bitmask value for this enum """
+        self.add(VkEnumValue(name, value=(1 << pos), hex=True))
 
     def add(self, value):
         """ Add a value to enum. """
@@ -2874,7 +2883,7 @@ class VkRegistry(object):
             if "bitpos" in enum_elem.keys():
                 # We need to add an extra value to an existing enum type.
                 # E.g. VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_CUBIC_BIT_IMG to VkFormatFeatureFlagBits.
-                enum.add(VkEnumValue(enum_elem.attrib["name"], value=(1 << int(enum_elem.attrib["bitpos"])), hex=True))
+                enum.create_bitpos(enum_elem.attrib["name"], int(enum_elem.attrib["bitpos"]))
 
             elif "offset" in enum_elem.keys():
                 # Extensions promoted to Core, have the extension number as part
@@ -2891,12 +2900,12 @@ class VkRegistry(object):
                 if direction is not None:
                     value = -value
 
-                enum.add(VkEnumValue(enum_elem.attrib["name"], value=value))
+                enum.create_value(enum_elem.attrib["name"], str(value))
 
             elif "value" in enum_elem.keys():
-                enum.add(VkEnumValue(enum_elem.attrib["name"], value=int(enum_elem.attrib["value"])))
+                enum.create_value(enum_elem.attrib["name"], enum_elem.attrib["value"])
             elif "alias" in enum_elem.keys():
-                enum.add(VkEnumValue(enum_elem.attrib["name"], alias=enum_elem.attrib["alias"]))
+                enum.create_alias(enum_elem.attrib["name"], enum_elem.attrib["alias"])
 
         elif "value" in enum_elem.keys():
             # Constants are not aliased, no need to add them here, they'll get added later on.
