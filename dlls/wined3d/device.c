@@ -1959,7 +1959,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
 
     for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
     {
-        wined3d_cs_emit_set_shader(device->cs, i, state->shader[i]);
+        wined3d_device_context_emit_set_shader(&device->cs->c, i, state->shader[i]);
         for (j = 0; j < MAX_CONSTANT_BUFFERS; ++j)
         {
             wined3d_cs_emit_set_constant_buffer(device->cs, i, j, state->cb[i][j]);
@@ -2095,7 +2095,7 @@ void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struc
     if (shader)
         wined3d_shader_incref(shader);
     state->shader[WINED3D_SHADER_TYPE_VERTEX] = shader;
-    wined3d_cs_emit_set_shader(device->cs, WINED3D_SHADER_TYPE_VERTEX, shader);
+    wined3d_device_context_emit_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_VERTEX, shader);
     if (prev)
         wined3d_shader_decref(prev);
 }
@@ -2333,7 +2333,7 @@ void CDECL wined3d_device_set_pixel_shader(struct wined3d_device *device, struct
     if (shader)
         wined3d_shader_incref(shader);
     state->shader[WINED3D_SHADER_TYPE_PIXEL] = shader;
-    wined3d_cs_emit_set_shader(device->cs, WINED3D_SHADER_TYPE_PIXEL, shader);
+    wined3d_device_context_emit_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_PIXEL, shader);
     if (prev)
         wined3d_shader_decref(prev);
 }
@@ -2442,7 +2442,7 @@ void CDECL wined3d_device_set_hull_shader(struct wined3d_device *device, struct 
     if (shader)
         wined3d_shader_incref(shader);
     state->shader[WINED3D_SHADER_TYPE_HULL] = shader;
-    wined3d_cs_emit_set_shader(device->cs, WINED3D_SHADER_TYPE_HULL, shader);
+    wined3d_device_context_emit_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_HULL, shader);
     if (prev)
         wined3d_shader_decref(prev);
 }
@@ -2498,7 +2498,7 @@ void CDECL wined3d_device_set_domain_shader(struct wined3d_device *device, struc
     if (shader)
         wined3d_shader_incref(shader);
     state->shader[WINED3D_SHADER_TYPE_DOMAIN] = shader;
-    wined3d_cs_emit_set_shader(device->cs, WINED3D_SHADER_TYPE_DOMAIN, shader);
+    wined3d_device_context_emit_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_DOMAIN, shader);
     if (prev)
         wined3d_shader_decref(prev);
 }
@@ -2554,7 +2554,7 @@ void CDECL wined3d_device_set_geometry_shader(struct wined3d_device *device, str
     if (shader)
         wined3d_shader_incref(shader);
     state->shader[WINED3D_SHADER_TYPE_GEOMETRY] = shader;
-    wined3d_cs_emit_set_shader(device->cs, WINED3D_SHADER_TYPE_GEOMETRY, shader);
+    wined3d_device_context_emit_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_GEOMETRY, shader);
     if (prev)
         wined3d_shader_decref(prev);
 }
@@ -2609,7 +2609,7 @@ void CDECL wined3d_device_set_compute_shader(struct wined3d_device *device, stru
     if (shader)
         wined3d_shader_incref(shader);
     state->shader[WINED3D_SHADER_TYPE_COMPUTE] = shader;
-    wined3d_cs_emit_set_shader(device->cs, WINED3D_SHADER_TYPE_COMPUTE, shader);
+    wined3d_device_context_emit_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_COMPUTE, shader);
     if (prev)
         wined3d_shader_decref(prev);
 }
