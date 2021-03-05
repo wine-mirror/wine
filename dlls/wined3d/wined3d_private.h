@@ -3777,8 +3777,6 @@ struct wined3d_device
 
     enum wined3d_feature_level feature_level;
 
-    struct wined3d_state *state;
-
     /* Internal use fields  */
     struct wined3d_device_creation_parameters create_parms;
     HWND focus_window;
@@ -4685,6 +4683,7 @@ struct wined3d_device_context
 {
     const struct wined3d_device_context_ops *ops;
     struct wined3d_device *device;
+    struct wined3d_state *state;
 };
 
 struct wined3d_cs

@@ -677,7 +677,7 @@ static void wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)
 void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *rects,
         DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil)
 {
-    const struct wined3d_state *state = cs->c.device->state;
+    const struct wined3d_state *state = cs->c.state;
     const struct wined3d_viewport *vp = &state->viewports[0];
     struct wined3d_rendertarget_view *view;
     struct wined3d_cs_clear *op;
@@ -886,7 +886,7 @@ static void acquire_compute_pipeline_resources(const struct wined3d_state *state
 void wined3d_cs_emit_dispatch(struct wined3d_cs *cs,
         unsigned int group_count_x, unsigned int group_count_y, unsigned int group_count_z)
 {
-    const struct wined3d_state *state = cs->c.device->state;
+    const struct wined3d_state *state = cs->c.state;
     struct wined3d_cs_dispatch *op;
 
     op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
@@ -904,7 +904,7 @@ void wined3d_cs_emit_dispatch(struct wined3d_cs *cs,
 void wined3d_cs_emit_dispatch_indirect(struct wined3d_cs *cs,
         struct wined3d_buffer *buffer, unsigned int offset)
 {
-    const struct wined3d_state *state = cs->c.device->state;
+    const struct wined3d_state *state = cs->c.state;
     struct wined3d_cs_dispatch *op;
 
     op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
@@ -1045,7 +1045,7 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, enum wined3d_primitive_type pri
         unsigned int index_count, unsigned int start_instance, unsigned int instance_count, bool indexed)
 {
     const struct wined3d_d3d_info *d3d_info = &cs->c.device->adapter->d3d_info;
-    const struct wined3d_state *state = cs->c.device->state;
+    const struct wined3d_state *state = cs->c.state;
     struct wined3d_cs_draw *op;
 
     op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
@@ -1069,7 +1069,7 @@ void wined3d_cs_emit_draw_indirect(struct wined3d_cs *cs, enum wined3d_primitive
         unsigned int patch_vertex_count, struct wined3d_buffer *buffer, unsigned int offset, bool indexed)
 {
     const struct wined3d_d3d_info *d3d_info = &cs->c.device->adapter->d3d_info;
-    const struct wined3d_state *state = cs->c.device->state;
+    const struct wined3d_state *state = cs->c.state;
     struct wined3d_cs_draw *op;
 
     op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
@@ -2987,6 +2987,12 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
     if (!(cs = heap_alloc_zero(sizeof(*cs))))
         return NULL;
 
+    if (FAILED(wined3d_state_create(device, &cs->c.state)))
+    {
+        heap_free(cs);
+        return NULL;
+    }
+
     cs->c.ops = &wined3d_cs_st_ops;
     cs->c.device = device;
     cs->serialize_commands = TRACE_ON(d3d_sync) || wined3d_settings.cs_multithreaded & WINED3D_CSMT_SERIALIZE;
@@ -3031,6 +3037,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
     return cs;
 
 fail:
+    wined3d_state_destroy(cs->c.state);
     state_cleanup(&cs->state);
     heap_free(cs);
     return NULL;
@@ -3046,6 +3053,7 @@ void wined3d_cs_destroy(struct wined3d_cs *cs)
             ERR("Closing event failed.\n");
     }
 
+    wined3d_state_destroy(cs->c.state);
     state_cleanup(&cs->state);
     heap_free(cs->data);
     heap_free(cs);
