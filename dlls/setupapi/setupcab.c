@@ -21,6 +21,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <share.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -33,36 +35,11 @@
 #include "fdi.h"
 #include "wine/debug.h"
 
-/* from msvcrt */
-#define _O_RDONLY      0
-#define _O_WRONLY      1
-#define _O_RDWR        2
-#define _O_ACCMODE     (_O_RDONLY|_O_WRONLY|_O_RDWR)
-#define _O_APPEND      0x0008
-#define _O_RANDOM      0x0010
-#define _O_SEQUENTIAL  0x0020
-#define _O_TEMPORARY   0x0040
-#define _O_NOINHERIT   0x0080
-#define _O_CREAT       0x0100
-#define _O_TRUNC       0x0200
-#define _O_EXCL        0x0400
-#define _O_SHORT_LIVED 0x1000
-#define _O_TEXT        0x4000
-#define _O_BINARY      0x8000
-
-#define	_SH_COMPAT     0x00
-#define	_SH_DENYRW     0x10
-#define	_SH_DENYWR     0x20
-#define	_SH_DENYRD     0x30
-#define	_SH_DENYNO     0x40
-
 OSVERSIONINFOW OsVersionInfo;
 
 HINSTANCE SETUPAPI_hInstance = 0;
 
-#define SC_HSC_A_MAGIC 0xACABFEED
 typedef struct {
-  UINT magic;
   HFDI hfdi;
   PSP_FILE_CALLBACK_A msghandler;
   PVOID context;
@@ -98,9 +75,6 @@ static INT_PTR CDECL sc_cb_open(char *pszFile, int oflag, int pmode)
   case _O_RDWR:
     ioflag |= GENERIC_READ | GENERIC_WRITE;
     break;
-  case _O_WRONLY | _O_RDWR: /* hmmm.. */
-    ERR("_O_WRONLY & _O_RDWR in oflag?\n");
-    return -1;
   }
 
   if (oflag & _O_CREAT) {
@@ -131,9 +105,6 @@ static INT_PTR CDECL sc_cb_open(char *pszFile, int oflag, int pmode)
     case _SH_DENYNO:
       sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
       break;
-    default:
-      ERR("<-- -1 (Unhandled pmode 0x%x)\n", pmode);
-      return -1;
   }
 
   sa.nLength              = sizeof( SECURITY_ATTRIBUTES );
@@ -185,7 +156,7 @@ static LONG CDECL sc_cb_lseek(INT_PTR hf, LONG dist, int seektype)
 static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 {
   FILE_IN_CABINET_INFO_A fici;
-  PSC_HSC_A phsc;
+  PSC_HSC_A phsc = pfdin->pv;
   CABINET_INFO_A ci;
   FILEPATHS_A fp;
   UINT err;
@@ -193,13 +164,6 @@ static INT_PTR CDECL sc_FNNOTIFY_A(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION p
   CHAR mysterio[SIZEOF_MYSTERIO]; /* how big? undocumented! probably 256... */
 
   memset(mysterio, 0, SIZEOF_MYSTERIO);
-
-  if (pfdin && pfdin->pv && (((PSC_HSC_A) pfdin->pv)->magic == SC_HSC_A_MAGIC))
-    phsc = pfdin->pv;
-  else {
-    ERR("pv %p is not an SC_HSC_A.\n", (pfdin) ? pfdin->pv : NULL);
-    return -1;
-  }
 
   switch (fdint) {
   case fdintCABINET_INFO:
@@ -327,7 +291,6 @@ BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
   /* remember the cabinet name */
   strcpy(my_hsc.most_recent_cabinet_name, pszCabinet);
 
-  my_hsc.magic = SC_HSC_A_MAGIC;
   my_hsc.msghandler = MsgHandler;
   my_hsc.context = Context;
   my_hsc.hfdi = FDICreate( sc_cb_alloc, sc_cb_free, sc_cb_open, sc_cb_read,
