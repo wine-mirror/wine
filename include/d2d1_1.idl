@@ -962,3 +962,5 @@ interface ID2D1Multithread : IUnknown
 [local] void __stdcall D2D1SinCos(float angle, float *s, float *c);
 [local] float __stdcall D2D1Tan(float angle);
 [local] float __stdcall D2D1Vec3Length(float x, float y, float z);
+[local] D2D1_COLOR_F __stdcall D2D1ConvertColorSpace(D2D1_COLOR_SPACE src_colour_space,
+        D2D1_COLOR_SPACE dst_colour_space, const D2D1_COLOR_F *colour);

@@ -735,6 +735,83 @@ float WINAPI D2D1Vec3Length(float x, float y, float z)
     return sqrtf(x * x + y * y + z * z);
 }
 
+/* See IEC 61966-2-1:1999; also described in the EXT_texture_sRGB OpenGL
+ * extension, among others. */
+static float srgb_transfer_function(float x)
+{
+    if (x <= 0.0f)
+        return 0.0f;
+    else if (x >= 1.0f)
+        return 1.0f;
+    else if (x <= 0.0031308f)
+        return 12.92f * x;
+    else
+        return 1.055f * powf(x, 1.0f / 2.4f) - 0.055f;
+}
+
+static float srgb_inverse_transfer_function(float x)
+{
+    if (x <= 0.0f)
+        return 0.0f;
+    else if (x >= 1.0f)
+        return 1.0f;
+    else if (x <= 0.04045f)
+        return x / 12.92f;
+    else
+        return powf((x + 0.055f) / 1.055f, 2.4f);
+}
+
+D2D1_COLOR_F WINAPI D2D1ConvertColorSpace(D2D1_COLOR_SPACE src_colour_space,
+        D2D1_COLOR_SPACE dst_colour_space, const D2D1_COLOR_F *colour)
+{
+    D2D1_COLOR_F ret;
+
+    TRACE("src_colour_space %#x, dst_colour_space %#x, colour %s.\n",
+            src_colour_space, dst_colour_space, debug_d2d_color_f(colour));
+
+    if (src_colour_space == D2D1_COLOR_SPACE_CUSTOM || dst_colour_space == D2D1_COLOR_SPACE_CUSTOM)
+    {
+        ret.r = 0.0f;
+        ret.g = 0.0f;
+        ret.b = 0.0f;
+        ret.a = 0.0f;
+
+        return ret;
+    }
+
+    if (src_colour_space == dst_colour_space)
+        return *colour;
+
+    if (src_colour_space == D2D1_COLOR_SPACE_SRGB && dst_colour_space == D2D1_COLOR_SPACE_SCRGB)
+    {
+        ret.r = srgb_inverse_transfer_function(colour->r);
+        ret.g = srgb_inverse_transfer_function(colour->g);
+        ret.b = srgb_inverse_transfer_function(colour->b);
+        ret.a = colour->a;
+
+        return ret;
+    }
+
+    if (src_colour_space == D2D1_COLOR_SPACE_SCRGB && dst_colour_space == D2D1_COLOR_SPACE_SRGB)
+    {
+        ret.r = srgb_transfer_function(colour->r);
+        ret.g = srgb_transfer_function(colour->g);
+        ret.b = srgb_transfer_function(colour->b);
+        ret.a = colour->a;
+
+        return ret;
+    }
+
+    FIXME("Unhandled conversion from source colour space %#x to destination colour space %#x.\n",
+            src_colour_space, dst_colour_space);
+    ret.r = 0.0f;
+    ret.g = 0.0f;
+    ret.b = 0.0f;
+    ret.a = 0.0f;
+
+    return ret;
+}
+
 static BOOL get_config_key_dword(HKEY default_key, HKEY application_key, const char *name, DWORD *value)
 {
     DWORD type, data, size;

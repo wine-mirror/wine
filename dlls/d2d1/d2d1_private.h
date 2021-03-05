@@ -640,6 +640,13 @@ static inline D2D1_INTERPOLATION_MODE d2d1_1_interp_mode_from_d2d1(D2D1_BITMAP_I
     return (D2D1_INTERPOLATION_MODE)mode;
 }
 
+static inline const char *debug_d2d_color_f(const D2D1_COLOR_F *colour)
+{
+    if (!colour)
+        return "(null)";
+    return wine_dbg_sprintf("{%.8e, %.8e, %.8e, %.8e}", colour->r, colour->g, colour->b, colour->a);
+}
+
 static inline const char *debug_d2d_point_2f(const D2D1_POINT_2F *point)
 {
     if (!point)

@@ -34,6 +34,8 @@ static HRESULT (WINAPI *pD2D1CreateDevice)(IDXGIDevice *dxgi_device,
 static void (WINAPI *pD2D1SinCos)(float angle, float *s, float *c);
 static float (WINAPI *pD2D1Tan)(float angle);
 static float (WINAPI *pD2D1Vec3Length)(float x, float y, float z);
+static D2D1_COLOR_F (WINAPI *pD2D1ConvertColorSpace)(D2D1_COLOR_SPACE src_colour_space,
+        D2D1_COLOR_SPACE dst_colour_space, const D2D1_COLOR_F *colour);
 
 static BOOL use_mt = TRUE;
 
@@ -461,6 +463,11 @@ static DWORD get_readback_colour(struct resource_readback *rb, unsigned int x, u
     return ((DWORD *)((BYTE *)rb->data + y * rb->pitch))[x];
 }
 
+static float clamp_float(float f, float lower, float upper)
+{
+    return f < lower ? lower : f > upper ? upper : f;
+}
+
 static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
 {
     unsigned int diff = x > y ? x - y : y - x;
@@ -490,6 +497,14 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
         return FALSE;
 
     return TRUE;
+}
+
+static BOOL compare_colour_f(const D2D1_COLOR_F *colour, float r, float g, float b, float a, unsigned int ulps)
+{
+    return compare_float(colour->r, r, ulps)
+            && compare_float(colour->g, g, ulps)
+            && compare_float(colour->b, b, ulps)
+            && compare_float(colour->a, a, ulps);
 }
 
 static BOOL compare_point(const D2D1_POINT_2F *point, float x, float y, unsigned int ulps)
@@ -9466,6 +9481,91 @@ static void test_math(BOOL d3d11)
     }
 }
 
+static void test_colour_space(BOOL d3d11)
+{
+    D2D1_COLOR_F src_colour, dst_colour, expected;
+    D2D1_COLOR_SPACE src_space, dst_space;
+    unsigned i, j, k;
+
+    static const D2D1_COLOR_SPACE colour_spaces[] =
+    {
+        D2D1_COLOR_SPACE_CUSTOM,
+        D2D1_COLOR_SPACE_SRGB,
+        D2D1_COLOR_SPACE_SCRGB,
+    };
+    static struct
+    {
+        D2D1_COLOR_F srgb;
+        D2D1_COLOR_F scrgb;
+    }
+    const test_data[] =
+    {
+        {{0.0f, 0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f, 0.0f}},
+        {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}},
+        {{1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+        /* Samples in the non-linear region. */
+        {{0.2f, 0.4f, 0.6f, 0.8f}, {0.0331047624f, 0.132868335f, 0.318546832f, 0.8f}},
+        {{0.3f, 0.5f, 0.7f, 0.9f}, {0.0732389688f, 0.214041144f, 0.447988421f, 0.9f}},
+        /* Samples in the linear region. */
+        {{0.0002f, 0.0004f, 0.0006f, 0.0008f}, {1.54798763e-005f, 3.09597526e-005f, 4.64396289e-005f, 0.0008f}},
+        {{0.0003f, 0.0005f, 0.0007f, 0.0009f}, {2.32198145e-005f, 3.86996908e-005f, 5.41795634e-005f, 0.0009f}},
+        /* Out of range samples */
+        {{-0.3f,  1.5f, -0.7f,  2.0f}, { 0.0f,  1.0f,  0.0f,  2.0f}},
+        {{ 1.5f, -0.3f,  2.0f, -0.7f}, { 1.0f,  0.0f,  1.0f, -0.7f}},
+        {{ 0.0f,  1.0f,  0.0f,  1.5f}, {-0.7f,  2.0f, -0.3f,  1.5f}},
+        {{ 1.0f,  0.0f,  1.0f, -0.3f}, { 2.0f, -0.7f,  1.5f, -0.3f}},
+    };
+
+    if (!pD2D1ConvertColorSpace)
+    {
+        win_skip("D2D1ConvertColorSpace() not available, skipping test.\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(colour_spaces); ++i)
+    {
+        src_space = colour_spaces[i];
+        for (j = 0; j < ARRAY_SIZE(colour_spaces); ++j)
+        {
+            dst_space = colour_spaces[j];
+            for (k = 0; k < ARRAY_SIZE(test_data); ++k)
+            {
+                if (src_space == D2D1_COLOR_SPACE_SCRGB)
+                    src_colour = test_data[k].scrgb;
+                else
+                    src_colour = test_data[k].srgb;
+
+                if (dst_space == D2D1_COLOR_SPACE_SCRGB)
+                    expected = test_data[k].scrgb;
+                else
+                    expected = test_data[k].srgb;
+
+                if (src_space == D2D1_COLOR_SPACE_CUSTOM || dst_space == D2D1_COLOR_SPACE_CUSTOM)
+                {
+                    set_color(&expected, 0.0f, 0.0f, 0.0f, 0.0f);
+                }
+                else if (src_space != dst_space)
+                {
+                    expected.r = clamp_float(expected.r, 0.0f, 1.0f);
+                    expected.g = clamp_float(expected.g, 0.0f, 1.0f);
+                    expected.b = clamp_float(expected.b, 0.0f, 1.0f);
+                }
+
+                dst_colour = pD2D1ConvertColorSpace(src_space, dst_space, &src_colour);
+                ok(compare_colour_f(&dst_colour, expected.r, expected.g, expected.b, expected.a, 1),
+                        "Got unexpected destination colour {%.8e, %.8e, %.8e, %.8e}, "
+                        "expected destination colour {%.8e, %.8e, %.8e, %.8e} for "
+                        "source colour {%.8e, %.8e, %.8e, %.8e}, "
+                        "source colour space %#x, destination colour space %#x.\n",
+                        dst_colour.r, dst_colour.g, dst_colour.b, dst_colour.a,
+                        expected.r, expected.g, expected.b, expected.a,
+                        src_colour.r, src_colour.g, src_colour.b, src_colour.a,
+                        src_space, dst_space);
+            }
+        }
+    }
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -9476,6 +9576,7 @@ START_TEST(d2d1)
     pD2D1SinCos = (void *)GetProcAddress(d2d1_dll, "D2D1SinCos");
     pD2D1Tan = (void *)GetProcAddress(d2d1_dll, "D2D1Tan");
     pD2D1Vec3Length = (void *)GetProcAddress(d2d1_dll, "D2D1Vec3Length");
+    pD2D1ConvertColorSpace = (void *)GetProcAddress(d2d1_dll, "D2D1ConvertColorSpace");
 
     use_mt = !getenv("WINETEST_NO_MT_D3D");
 
@@ -9523,6 +9624,7 @@ START_TEST(d2d1)
     queue_test(test_dpi);
     queue_test(test_wic_bitmap_format);
     queue_d3d10_test(test_math);
+    queue_d3d10_test(test_colour_space);
 
     run_queued_tests();
 }
