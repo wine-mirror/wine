@@ -30,8 +30,10 @@
 #include "winternl.h"
 
 #include "wine/asm.h"
+#include "wine/debug.h"
 #include "kernel_private.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(thread);
 
 /***********************************************************************
  *           BaseThreadInitThunk (KERNEL32.@)
@@ -96,6 +98,16 @@ BOOL WINAPI Wow64GetThreadContext( HANDLE handle, WOW64_CONTEXT *context)
 #else
     return set_ntstatus( STATUS_NOT_IMPLEMENTED );
 #endif
+}
+
+
+/***********************************************************************
+ * Wow64GetThreadSelectorEntry [KERNEL32.@]
+ */
+BOOL WINAPI Wow64GetThreadSelectorEntry( HANDLE thread, DWORD selector, WOW64_LDT_ENTRY *selector_entry)
+{
+    FIXME("(%p %u %p): stub\n", thread, selector, selector_entry);
+    return set_ntstatus( STATUS_NOT_IMPLEMENTED );
 }
 
 
