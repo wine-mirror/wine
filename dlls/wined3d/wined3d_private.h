@@ -4684,13 +4684,13 @@ struct wined3d_device_context_ops
 struct wined3d_device_context
 {
     const struct wined3d_device_context_ops *ops;
+    struct wined3d_device *device;
 };
 
 struct wined3d_cs
 {
     struct wined3d_device_context c;
 
-    struct wined3d_device *device;
     struct wined3d_state state;
     HMODULE wined3d_module;
     HANDLE thread;
