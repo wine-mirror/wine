@@ -49,7 +49,7 @@ HRESULT enable_restore( IWbemClassObject *obj, IWbemContext *context, IWbemClass
     IWbemClassObject *sig, *out_params = NULL;
     HRESULT hr;
 
-    TRACE("%p, %p\n", in, out);
+    TRACE("%p, %p, %p, %p\n", obj, context, in, out);
 
     hr = IWbemClassObject_Get( in, L"Drive", 0, &drive, NULL, NULL );
     if (hr != S_OK) return hr;

@@ -68,7 +68,7 @@ HRESULT process_get_owner( IWbemClassObject *obj, IWbemContext *context, IWbemCl
     IWbemClassObject *sig, *out_params = NULL;
     HRESULT hr;
 
-    TRACE("%p, %p, %p\n", obj, in, out);
+    TRACE("%p, %p, %p, %p\n", obj, context, in, out);
 
     hr = create_signature( L"Win32_Process", L"GetOwner", PARAM_OUT, &sig );
     if (hr != S_OK) return hr;

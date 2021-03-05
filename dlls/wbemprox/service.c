@@ -82,7 +82,7 @@ HRESULT service_pause_service( IWbemClassObject *obj, IWbemContext *context, IWb
     IWbemClassObject *sig, *out_params = NULL;
     HRESULT hr;
 
-    TRACE("%p, %p, %p\n", obj, in, out);
+    TRACE("%p, %p, %p, %p\n", obj, context, in, out);
 
     hr = IWbemClassObject_Get( obj, L"Name", 0, &name, NULL, NULL );
     if (hr != S_OK) return hr;
@@ -127,7 +127,7 @@ HRESULT service_resume_service( IWbemClassObject *obj, IWbemContext *context, IW
     IWbemClassObject *sig, *out_params = NULL;
     HRESULT hr;
 
-    TRACE("%p, %p, %p\n", obj, in, out);
+    TRACE("%p, %p, %p, %p\n", obj, context, in, out);
 
     hr = IWbemClassObject_Get( obj, L"Name", 0, &name, NULL, NULL );
     if (hr != S_OK) return hr;
@@ -196,7 +196,7 @@ HRESULT service_start_service( IWbemClassObject *obj, IWbemContext *context, IWb
     IWbemClassObject *sig, *out_params = NULL;
     HRESULT hr;
 
-    TRACE("%p, %p, %p\n", obj, in, out);
+    TRACE("%p, %p, %p, %p\n", obj, context, in, out);
 
     hr = IWbemClassObject_Get( obj, L"Name", 0, &name, NULL, NULL );
     if (hr != S_OK) return hr;
@@ -241,7 +241,7 @@ HRESULT service_stop_service( IWbemClassObject *obj, IWbemContext *context, IWbe
     IWbemClassObject *sig, *out_params = NULL;
     HRESULT hr;
 
-    TRACE("%p, %p, %p\n", obj, in, out);
+    TRACE("%p, %p, %p, %p\n", obj, context, in, out);
 
     hr = IWbemClassObject_Get( obj, L"Name", 0, &name, NULL, NULL );
     if (hr != S_OK) return hr;
