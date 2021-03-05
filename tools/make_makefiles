@@ -446,18 +446,17 @@ sub update_makefiles(@)
             if (defined $make{"APPMODE"}) { $dllflags .= " " . $make{"APPMODE"}; }
             die "MODULE should not be defined in $file" unless $file =~ /^(dlls|programs)\//;
             die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
-            die "Invalid MODULE in $file" if $name =~ /\./ && $make{"MODULE"} ne $name;
             if ($file =~ /^programs\//)
             {
                 die "EXTRADLLFLAGS should be defined in $file" unless $dllflags;
                 die "EXTRADLLFLAGS should contain -mconsole or -mwindows in $file" unless $dllflags =~ /-m(console|windows)/;
-                die "Invalid MODULE in $file" unless $name =~ /\./ || $make{"MODULE"} eq "$name.exe";
+                die "Invalid MODULE in $file" unless ($name =~ /\./ && $make{"MODULE"} eq $name) || $make{"MODULE"} eq "$name.exe";
             }
             else
             {
                 die "APPMODE should not be defined in $file" if defined $make{"APPMODE"} ;
                 die "EXTRADLLFLAGS should not contain -mconsole or -mwindows in $file" if $dllflags =~ /-m(console|windows)/;
-                die "Invalid MODULE in $file" unless $name =~ /\./ || $make{"MODULE"} eq "$name.dll";
+                die "Invalid MODULE in $file" unless ($name =~ /\./ && $make{"MODULE"} eq $name) || $make{"MODULE"} eq "$name.dll";
             }
             if (defined $make{"IMPORTLIB"})
             {
