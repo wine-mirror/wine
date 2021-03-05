@@ -63,16 +63,7 @@
 
 OSVERSIONINFOW OsVersionInfo;
 
-static HINSTANCE CABINET_hInstance = 0;
 HINSTANCE SETUPAPI_hInstance = 0;
-
-static HFDI (__cdecl *sc_FDICreate)(PFNALLOC, PFNFREE, PFNOPEN,
-                PFNREAD, PFNWRITE, PFNCLOSE, PFNSEEK, int, PERF);
-
-static BOOL (__cdecl *sc_FDICopy)(HFDI, char *, char *, int,
-                PFNFDINOTIFY, PFNFDIDECRYPT, void *);
-
-static BOOL (__cdecl *sc_FDIDestroy)(HFDI);
 
 #define SC_HSC_A_MAGIC 0xACABFEED
 typedef struct {
@@ -85,23 +76,6 @@ typedef struct {
 } SC_HSC_A, *PSC_HSC_A;
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
-
-static BOOL LoadCABINETDll(void)
-{
-  if (!CABINET_hInstance) {
-    CABINET_hInstance = LoadLibraryA("cabinet.dll");
-    if (CABINET_hInstance)  {
-      sc_FDICreate = (void *)GetProcAddress(CABINET_hInstance, "FDICreate");
-      sc_FDICopy = (void *)GetProcAddress(CABINET_hInstance, "FDICopy");
-      sc_FDIDestroy = (void *)GetProcAddress(CABINET_hInstance, "FDIDestroy");
-      return TRUE;
-    } else {
-      ERR("load cabinet dll failed.\n");
-      return FALSE;
-    }
-  } else
-    return TRUE;
-}
 
 /* FDICreate callbacks */
 
@@ -392,9 +366,6 @@ BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
   TRACE("(CabinetFile == %s, Reserved == %u, MsgHandler == ^%p, Context == ^%p)\n",
         debugstr_a(CabinetFile), Reserved, MsgHandler, Context);
 
-  if (!LoadCABINETDll())
-    return FALSE;
-
   if (!CabinetFile)
   {
     SetLastError(ERROR_INVALID_PARAMETER);
@@ -429,14 +400,14 @@ BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
   my_hsc.magic = SC_HSC_A_MAGIC;
   my_hsc.msghandler = MsgHandler;
   my_hsc.context = Context;
-  my_hsc.hfdi = sc_FDICreate( sc_cb_alloc, sc_cb_free, sc_cb_open, sc_cb_read,
+  my_hsc.hfdi = FDICreate( sc_cb_alloc, sc_cb_free, sc_cb_open, sc_cb_read,
                            sc_cb_write, sc_cb_close, sc_cb_lseek, cpuUNKNOWN, &erf );
 
   if (!my_hsc.hfdi) return FALSE;
 
-  ret = sc_FDICopy(my_hsc.hfdi, pszCabinet, pszCabPath, 0, sc_FNNOTIFY_A, NULL, &my_hsc);
+  ret = FDICopy(my_hsc.hfdi, pszCabinet, pszCabPath, 0, sc_FNNOTIFY_A, NULL, &my_hsc);
 
-  sc_FDIDestroy(my_hsc.hfdi);
+  FDIDestroy(my_hsc.hfdi);
   return ret;
 }
 
@@ -572,7 +543,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     case DLL_PROCESS_DETACH:
         if (lpvReserved) break;
         SetupCloseLog();
-        if (CABINET_hInstance) FreeLibrary(CABINET_hInstance);
         break;
     }
 
