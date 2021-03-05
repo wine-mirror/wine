@@ -2685,8 +2685,8 @@ Some influential environment variables:
   GNUTLS_CFLAGS
               C compiler flags for gnutls, overriding pkg-config
   GNUTLS_LIBS Linker flags for gnutls, overriding pkg-config
-  SANE_CFLAGS C compiler flags for libsane, overriding pkg-config
-  SANE_LIBS   Linker flags for libsane, overriding pkg-config
+  SANE_CFLAGS C compiler flags for sane-backends, overriding pkg-config
+  SANE_LIBS   Linker flags for sane-backends, overriding pkg-config
   USB_CFLAGS  C compiler flags for libusb-1.0, overriding pkg-config
   USB_LIBS    Linker flags for libusb-1.0, overriding pkg-config
   GPHOTO2_CFLAGS
@@ -13684,19 +13684,19 @@ if test "x$with_sane" != "xno"
 then
     if ${SANE_CFLAGS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
-  SANE_CFLAGS=`$PKG_CONFIG --cflags libsane 2>/dev/null`
+  SANE_CFLAGS=`$PKG_CONFIG --cflags sane-backends 2>/dev/null`
 fi
 fi
 test "$cross_compiling" = yes || SANE_CFLAGS=${SANE_CFLAGS:-`${SANE_CONFIG:-sane-config} --cflags 2>/dev/null`}
 if ${SANE_LIBS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
-  SANE_LIBS=`$PKG_CONFIG --libs libsane 2>/dev/null`
+  SANE_LIBS=`$PKG_CONFIG --libs sane-backends 2>/dev/null`
 fi
 fi
 test "$cross_compiling" = yes || SANE_LIBS=${SANE_LIBS:-`${SANE_CONFIG:-sane-config} --ldflags 2>/dev/null`}
 
-$as_echo "$as_me:${as_lineno-$LINENO}: libsane cflags: $SANE_CFLAGS" >&5
-$as_echo "$as_me:${as_lineno-$LINENO}: libsane libs: $SANE_LIBS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: sane-backends cflags: $SANE_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: sane-backends libs: $SANE_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $SANE_CFLAGS"
 ac_fn_c_check_header_mongrel "$LINENO" "sane/sane.h" "ac_cv_header_sane_sane_h" "$ac_includes_default"
