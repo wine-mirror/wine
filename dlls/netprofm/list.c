@@ -1736,8 +1736,10 @@ static void init_networks( struct list_manager *mgr )
     {
         struct network *network;
         struct connection *connection;
+        NET_LUID luid;
 
-        id.Data1 = aa->u.s.IfIndex;
+        ConvertInterfaceIndexToLuid(aa->u.s.IfIndex, &luid);
+        ConvertInterfaceLuidToGuid(&luid, &id);
 
         /* assume a one-to-one mapping between networks and connections */
         if (!(network = create_network( &id ))) goto done;
