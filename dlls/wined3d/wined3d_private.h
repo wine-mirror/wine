@@ -89,6 +89,7 @@ struct wined3d_adapter;
 struct wined3d_buffer_vk;
 struct wined3d_context;
 struct wined3d_context_vk;
+struct wined3d_device_context;
 struct wined3d_gl_info;
 struct wined3d_state;
 struct wined3d_swapchain_gl;
@@ -4671,18 +4672,24 @@ struct wined3d_cs_queue
     BYTE data[WINED3D_CS_QUEUE_SIZE];
 };
 
-struct wined3d_cs_ops
+struct wined3d_device_context_ops
 {
-    void *(*require_space)(struct wined3d_cs *cs, size_t size, enum wined3d_cs_queue_id queue_id);
-    void (*submit)(struct wined3d_cs *cs, enum wined3d_cs_queue_id queue_id);
-    void (*finish)(struct wined3d_cs *cs, enum wined3d_cs_queue_id queue_id);
-    void (*push_constants)(struct wined3d_cs *cs, enum wined3d_push_constants p,
+    void *(*require_space)(struct wined3d_device_context *context, size_t size, enum wined3d_cs_queue_id queue_id);
+    void (*submit)(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id);
+    void (*finish)(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id);
+    void (*push_constants)(struct wined3d_device_context *context, enum wined3d_push_constants p,
             unsigned int start_idx, unsigned int count, const void *constants);
+};
+
+struct wined3d_device_context
+{
+    const struct wined3d_device_context_ops *ops;
 };
 
 struct wined3d_cs
 {
-    const struct wined3d_cs_ops *ops;
+    struct wined3d_device_context c;
+
     struct wined3d_device *device;
     struct wined3d_state state;
     HMODULE wined3d_module;
@@ -4800,13 +4807,13 @@ HRESULT wined3d_cs_unmap(struct wined3d_cs *cs, struct wined3d_resource *resourc
 
 static inline void wined3d_cs_finish(struct wined3d_cs *cs, enum wined3d_cs_queue_id queue_id)
 {
-    cs->ops->finish(cs, queue_id);
+    cs->c.ops->finish(&cs->c, queue_id);
 }
 
 static inline void wined3d_cs_push_constants(struct wined3d_cs *cs, enum wined3d_push_constants p,
         unsigned int start_idx, unsigned int count, const void *constants)
 {
-    cs->ops->push_constants(cs, p, start_idx, count, constants);
+    cs->c.ops->push_constants(&cs->c, p, start_idx, count, constants);
 }
 
 static inline void wined3d_resource_wait_idle(struct wined3d_resource *resource)

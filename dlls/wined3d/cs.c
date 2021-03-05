@@ -458,12 +458,12 @@ struct wined3d_cs_stop
 static inline void *wined3d_cs_require_space(struct wined3d_cs *cs,
         size_t size, enum wined3d_cs_queue_id queue_id)
 {
-    return cs->ops->require_space(cs, size, queue_id);
+    return cs->c.ops->require_space(&cs->c, size, queue_id);
 }
 
 static inline void wined3d_cs_submit(struct wined3d_cs *cs, enum wined3d_cs_queue_id queue_id)
 {
-    cs->ops->submit(cs, queue_id);
+    cs->c.ops->submit(&cs->c, queue_id);
 }
 
 static const char *debug_cs_op(enum wined3d_cs_op op)
@@ -2023,9 +2023,15 @@ wined3d_cs_push_constant_info[] =
     {FIELD_OFFSET(struct wined3d_state, ps_consts_b), sizeof(BOOL),                 WINED3D_SHADER_CONST_PS_B},
 };
 
-static void wined3d_cs_st_push_constants(struct wined3d_cs *cs, enum wined3d_push_constants p,
+static struct wined3d_cs *wined3d_cs_from_context(struct wined3d_device_context *context)
+{
+    return CONTAINING_RECORD(context, struct wined3d_cs, c);
+}
+
+static void wined3d_cs_st_push_constants(struct wined3d_device_context *context, enum wined3d_push_constants p,
         unsigned int start_idx, unsigned int count, const void *constants)
 {
+    struct wined3d_cs *cs = wined3d_cs_from_context(context);
     struct wined3d_device *device = cs->device;
     unsigned int context_count;
     unsigned int i;
@@ -2048,12 +2054,13 @@ static void wined3d_cs_exec_push_constants(struct wined3d_cs *cs, const void *da
 {
     const struct wined3d_cs_push_constants *op = data;
 
-    wined3d_cs_st_push_constants(cs, op->type, op->start_idx, op->count, op->constants);
+    wined3d_cs_st_push_constants(&cs->c, op->type, op->start_idx, op->count, op->constants);
 }
 
-static void wined3d_cs_mt_push_constants(struct wined3d_cs *cs, enum wined3d_push_constants p,
+static void wined3d_cs_mt_push_constants(struct wined3d_device_context *context, enum wined3d_push_constants p,
         unsigned int start_idx, unsigned int count, const void *constants)
 {
+    struct wined3d_cs *cs = wined3d_cs_from_context(context);
     struct wined3d_cs_push_constants *op;
     size_t size;
 
@@ -2669,8 +2676,11 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_GENERATE_MIPMAPS            */ wined3d_cs_exec_generate_mipmaps,
 };
 
-static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size, enum wined3d_cs_queue_id queue_id)
+static void *wined3d_cs_st_require_space(struct wined3d_device_context *context,
+        size_t size, enum wined3d_cs_queue_id queue_id)
 {
+    struct wined3d_cs *cs = wined3d_cs_from_context(context);
+
     if (size > (cs->data_size - cs->end))
     {
         size_t new_size;
@@ -2694,8 +2704,9 @@ static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size, enu
     return (BYTE *)cs->data + cs->start;
 }
 
-static void wined3d_cs_st_submit(struct wined3d_cs *cs, enum wined3d_cs_queue_id queue_id)
+static void wined3d_cs_st_submit(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id)
 {
+    struct wined3d_cs *cs = wined3d_cs_from_context(context);
     enum wined3d_cs_op opcode;
     size_t start;
     BYTE *data;
@@ -2716,11 +2727,11 @@ static void wined3d_cs_st_submit(struct wined3d_cs *cs, enum wined3d_cs_queue_id
         heap_free(data);
 }
 
-static void wined3d_cs_st_finish(struct wined3d_cs *cs, enum wined3d_cs_queue_id queue_id)
+static void wined3d_cs_st_finish(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id)
 {
 }
 
-static const struct wined3d_cs_ops wined3d_cs_st_ops =
+static const struct wined3d_device_context_ops wined3d_cs_st_ops =
 {
     wined3d_cs_st_require_space,
     wined3d_cs_st_submit,
@@ -2747,10 +2758,12 @@ static void wined3d_cs_queue_submit(struct wined3d_cs_queue *queue, struct wined
         SetEvent(cs->event);
 }
 
-static void wined3d_cs_mt_submit(struct wined3d_cs *cs, enum wined3d_cs_queue_id queue_id)
+static void wined3d_cs_mt_submit(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id)
 {
+    struct wined3d_cs *cs = wined3d_cs_from_context(context);
+
     if (cs->thread_id == GetCurrentThreadId())
-        return wined3d_cs_st_submit(cs, queue_id);
+        return wined3d_cs_st_submit(context, queue_id);
 
     wined3d_cs_queue_submit(&cs->queue[queue_id], cs);
 }
@@ -2817,24 +2830,29 @@ static void *wined3d_cs_queue_require_space(struct wined3d_cs_queue *queue, size
     return packet->data;
 }
 
-static void *wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size, enum wined3d_cs_queue_id queue_id)
+static void *wined3d_cs_mt_require_space(struct wined3d_device_context *context,
+        size_t size, enum wined3d_cs_queue_id queue_id)
 {
+    struct wined3d_cs *cs = wined3d_cs_from_context(context);
+
     if (cs->thread_id == GetCurrentThreadId())
-        return wined3d_cs_st_require_space(cs, size, queue_id);
+        return wined3d_cs_st_require_space(context, size, queue_id);
 
     return wined3d_cs_queue_require_space(&cs->queue[queue_id], size, cs);
 }
 
-static void wined3d_cs_mt_finish(struct wined3d_cs *cs, enum wined3d_cs_queue_id queue_id)
+static void wined3d_cs_mt_finish(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id)
 {
+    struct wined3d_cs *cs = wined3d_cs_from_context(context);
+
     if (cs->thread_id == GetCurrentThreadId())
-        return wined3d_cs_st_finish(cs, queue_id);
+        return wined3d_cs_st_finish(context, queue_id);
 
     while (cs->queue[queue_id].head != *(volatile LONG *)&cs->queue[queue_id].tail)
         YieldProcessor();
 }
 
-static const struct wined3d_cs_ops wined3d_cs_mt_ops =
+static const struct wined3d_device_context_ops wined3d_cs_mt_ops =
 {
     wined3d_cs_mt_require_space,
     wined3d_cs_mt_submit,
@@ -2969,7 +2987,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
     if (!(cs = heap_alloc_zero(sizeof(*cs))))
         return NULL;
 
-    cs->ops = &wined3d_cs_st_ops;
+    cs->c.ops = &wined3d_cs_st_ops;
     cs->device = device;
     cs->serialize_commands = TRACE_ON(d3d_sync) || wined3d_settings.cs_multithreaded & WINED3D_CSMT_SERIALIZE;
 
@@ -2982,7 +3000,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
     if (wined3d_settings.cs_multithreaded & WINED3D_CSMT_ENABLE
             && !RtlIsCriticalSectionLockedByThread(NtCurrentTeb()->Peb->LoaderLock))
     {
-        cs->ops = &wined3d_cs_mt_ops;
+        cs->c.ops = &wined3d_cs_mt_ops;
 
         if (!(cs->event = CreateEventW(NULL, FALSE, FALSE, NULL)))
         {
