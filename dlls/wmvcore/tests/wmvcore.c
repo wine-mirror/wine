@@ -149,9 +149,9 @@ static void test_wmsyncreader_interfaces(void)
     todo_wine check_interface(reader, &IID_IWMHeaderInfo, TRUE);
     todo_wine check_interface(reader, &IID_IWMHeaderInfo2, TRUE);
     todo_wine check_interface(reader, &IID_IWMHeaderInfo3, TRUE);
-    todo_wine check_interface(reader, &IID_IWMProfile, TRUE);
-    todo_wine check_interface(reader, &IID_IWMProfile2, TRUE);
-    todo_wine check_interface(reader, &IID_IWMProfile3, TRUE);
+    check_interface(reader, &IID_IWMProfile, TRUE);
+    check_interface(reader, &IID_IWMProfile2, TRUE);
+    check_interface(reader, &IID_IWMProfile3, TRUE);
     todo_wine check_interface(reader, &IID_IWMPacketSize, TRUE);
     todo_wine check_interface(reader, &IID_IWMPacketSize2, TRUE);
     todo_wine check_interface(reader, &IID_IWMReaderTimecode, TRUE);
