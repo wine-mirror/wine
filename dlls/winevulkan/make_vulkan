@@ -357,8 +357,11 @@ class VkDefine(object):
 
 
 class VkEnum(object):
-    def __init__(self, name, alias=None):
+    def __init__(self, name, bitwidth, alias=None):
+        if not bitwidth in [32, 64]:
+            LOGGER.error("unknown bitwidth {0} for {1}".format(bitwidth, name))
         self.name = name
+        self.bitwidth = bitwidth
         self.values = [] if alias == None else alias.values
         self.required = False
         self.alias = alias
@@ -367,7 +370,7 @@ class VkEnum(object):
     @staticmethod
     def from_alias(enum, alias):
         name = enum.attrib.get("name")
-        aliasee = VkEnum(name, alias=alias)
+        aliasee = VkEnum(name, alias.bitwidth, alias=alias)
 
         alias.add_aliased_by(aliasee)
         return aliasee
@@ -375,7 +378,8 @@ class VkEnum(object):
     @staticmethod
     def from_xml(enum):
         name = enum.attrib.get("name")
-        result = VkEnum(name)
+        bitwidth = int(enum.attrib.get("bitwidth", "32"))
+        result = VkEnum(name, bitwidth)
 
         for v in enum.findall("enum"):
             value_name = v.attrib.get("name")
@@ -390,28 +394,29 @@ class VkEnum(object):
                 # bitmask
                 result.create_bitpos(value_name, int(v.attrib.get("bitpos")))
 
-        # vulkan.h contains a *_MAX_ENUM value set to 32-bit at the time of writing,
-        # which is to prepare for extensions as they can add values and hence affect
-        # the size definition.
-        max_name = re.sub(r'([0-9a-z_])([A-Z0-9])',r'\1_\2', name).upper() + "_MAX_ENUM"
-        result.create_value(max_name, "0x7fffffff")
+        if bitwidth == 32:
+            # vulkan.h contains a *_MAX_ENUM value set to 32-bit at the time of writing,
+            # which is to prepare for extensions as they can add values and hence affect
+            # the size definition.
+            max_name = re.sub(r'([0-9a-z_])([A-Z0-9])',r'\1_\2', name).upper() + "_MAX_ENUM"
+            result.create_value(max_name, "0x7fffffff")
 
         return result
 
     def create_alias(self, name, alias_name):
         """ Create an aliased value for this enum """
-        self.add(VkEnumValue(name, alias=alias_name))
+        self.add(VkEnumValue(name, self.bitwidth, alias=alias_name))
 
     def create_value(self, name, value):
         """ Create a new value for this enum """
         # Some values are in hex form. We want to preserve the hex representation
         # at least when we convert back to a string. Internally we want to use int.
         hex = "0x" in value
-        self.add(VkEnumValue(name, value=int(value, 0), hex=hex))
+        self.add(VkEnumValue(name, self.bitwidth, value=int(value, 0), hex=hex))
 
     def create_bitpos(self, name, pos):
         """ Create a new bitmask value for this enum """
-        self.add(VkEnumValue(name, value=(1 << pos), hex=True))
+        self.add(VkEnumValue(name, self.bitwidth, value=(1 << pos), hex=True))
 
     def add(self, value):
         """ Add a value to enum. """
@@ -432,13 +437,20 @@ class VkEnum(object):
         if self.is_alias():
             return ""
 
-        text = "typedef enum {0}\n{{\n".format(self.name)
+        default_value = 0x7ffffffe if self.bitwidth == 32 else 0xfffffffffffffffe
 
         # Print values sorted, values can have been added in a random order.
-        values = sorted(self.values, key=lambda value: value.value if value.value is not None else 0x7ffffffe)
-        for value in values:
-            text += "    {0},\n".format(value.definition())
-        text += "}} {0};\n".format(self.name)
+        values = sorted(self.values, key=lambda value: value.value if value.value is not None else default_value)
+
+        if self.bitwidth == 32:
+            text = "typedef enum {0}\n{{\n".format(self.name)
+            for value in values:
+                text += "    {0},\n".format(value.definition())
+            text += "}} {0};\n".format(self.name)
+        elif self.bitwidth == 64:
+            text = "typedef VkFlags64 {0};\n\n".format(self.name)
+            for value in values:
+                text += "static const {0} {1};\n".format(self.name, value.definition())
 
         for aliasee in self.aliased_by:
             text += "typedef {0} {1};\n".format(self.name, aliasee.name)
@@ -454,28 +466,31 @@ class VkEnum(object):
 
 
 class VkEnumValue(object):
-    def __init__(self, name, value=None, hex=False, alias=None):
+    def __init__(self, name, bitwidth, value=None, hex=False, alias=None):
         self.name = name
+        self.bitwidth = bitwidth
         self.value = value
         self.hex = hex
         self.alias = alias
 
     def __repr__(self):
+        postfix = "ull" if self.bitwidth == 64 else ""
         if self.is_alias():
             return "{0}={1}".format(self.name, self.alias)
-        return "{0}={1}".format(self.name, self.value)
+        return "{0}={1}{2}".format(self.name, self.value, postfix)
 
     def definition(self):
         """ Convert to text definition e.g. VK_FOO = 1 """
+        postfix = "ull" if self.bitwidth == 64 else ""
         if self.is_alias():
             return "{0} = {1}".format(self.name, self.alias)
 
         # Hex is commonly used for FlagBits and sometimes within
         # a non-FlagBits enum for a bitmask value as well.
         if self.hex:
-            return "{0} = 0x{1:08x}".format(self.name, self.value)
+            return "{0} = 0x{1:08x}{2}".format(self.name, self.value, postfix)
         else:
-            return "{0} = {1}".format(self.name, self.value)
+            return "{0} = {1}{2}".format(self.name, self.value, postfix)
 
     def is_alias(self):
         return self.alias is not None
