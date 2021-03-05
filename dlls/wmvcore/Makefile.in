@@ -6,6 +6,7 @@ EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
 	reader.c \
+	syncreader.c \
 	wmvcore_main.c \
 	writer.c
 
