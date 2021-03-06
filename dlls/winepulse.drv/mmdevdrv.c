@@ -2045,8 +2045,10 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
         This->started = TRUE;
         This->just_started = TRUE;
 
-        if(!This->timer)
+        if(!This->timer) {
             This->timer = CreateThread(NULL, 0, pulse_timer_cb, This, 0, NULL);
+            SetThreadPriority(This->timer, THREAD_PRIORITY_TIME_CRITICAL);
+        }
     }
     pthread_mutex_unlock(&pulse_lock);
     return hr;
