@@ -3526,7 +3526,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFileInformationByHandle( HANDLE file, FILE_INFO
     switch (class)
     {
     case FileNameInfo:
-    case FileRenameInfo:
     case FileAllocationInfo:
     case FileStreamInfo:
     case FileIdBothDirectoryInfo:
@@ -3553,6 +3552,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFileInformationByHandle( HANDLE file, FILE_INFO
         break;
     case FileIoPriorityHintInfo:
         status = NtSetInformationFile( file, &io, info, size, FileIoPriorityHintInformation );
+        break;
+    case FileRenameInfo:
+        status = NtSetInformationFile( file, &io, info, size, FileRenameInformation );
         break;
     case FileStandardInfo:
     case FileCompressionInfo:
