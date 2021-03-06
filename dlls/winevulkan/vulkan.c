@@ -1065,13 +1065,8 @@ VkResult WINAPI wine_vkEnumerateInstanceLayerProperties(uint32_t *count, VkLayer
 {
     TRACE("%p, %p\n", count, properties);
 
-    if (!properties)
-    {
-        *count = 0;
-        return VK_SUCCESS;
-    }
-
-    return VK_ERROR_LAYER_NOT_PRESENT;
+    *count = 0;
+    return VK_SUCCESS;
 }
 
 VkResult WINAPI wine_vkEnumerateInstanceVersion(uint32_t *version)
