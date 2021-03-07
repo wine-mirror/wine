@@ -2054,6 +2054,13 @@ struct wined3d_state * CDECL wined3d_device_get_state(struct wined3d_device *dev
     return device->cs->c.state;
 }
 
+struct wined3d_device_context * CDECL wined3d_device_get_immediate_context(struct wined3d_device *device)
+{
+    TRACE("device %p.\n", device);
+
+    return &device->cs->c;
+}
+
 void CDECL wined3d_device_set_vertex_declaration(struct wined3d_device *device,
         struct wined3d_vertex_declaration *declaration)
 {

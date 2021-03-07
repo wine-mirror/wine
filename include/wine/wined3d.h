@@ -2414,6 +2414,7 @@ struct wined3d_shader_resource_view * __cdecl wined3d_device_get_hs_resource_vie
         unsigned int idx);
 struct wined3d_sampler * __cdecl wined3d_device_get_hs_sampler(const struct wined3d_device *device, unsigned int idx);
 struct wined3d_shader * __cdecl wined3d_device_get_hull_shader(const struct wined3d_device *device);
+struct wined3d_device_context * __cdecl wined3d_device_get_immediate_context(struct wined3d_device *device);
 struct wined3d_buffer * __cdecl wined3d_device_get_index_buffer(const struct wined3d_device *device,
         enum wined3d_format_id *format, unsigned int *offset);
 unsigned int __cdecl wined3d_device_get_max_frame_latency(const struct wined3d_device *device);

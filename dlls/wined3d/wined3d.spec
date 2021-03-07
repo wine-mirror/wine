@@ -84,6 +84,7 @@
 @ cdecl wined3d_device_get_hs_resource_view(ptr long)
 @ cdecl wined3d_device_get_hs_sampler(ptr long)
 @ cdecl wined3d_device_get_hull_shader(ptr)
+@ cdecl wined3d_device_get_immediate_context(ptr)
 @ cdecl wined3d_device_get_index_buffer(ptr ptr ptr)
 @ cdecl wined3d_device_get_max_frame_latency(ptr)
 @ cdecl wined3d_device_get_npatch_mode(ptr)
