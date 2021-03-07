@@ -1213,6 +1213,7 @@
 @ stdcall RtlQueryInformationAcl(ptr ptr long long)
 @ stdcall RtlQueryPackageIdentity(long ptr ptr ptr ptr ptr)
 @ stdcall RtlQueryRegistryValues(long ptr ptr ptr ptr)
+@ stdcall RtlQueryRegistryValuesEx(long ptr ptr ptr ptr) RtlQueryRegistryValues
 @ stdcall RtlQueryTimeZoneInformation(ptr)
 @ stdcall -norelay RtlRaiseException(ptr)
 @ stdcall RtlRaiseStatus(long)
