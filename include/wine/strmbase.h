@@ -286,8 +286,6 @@ struct strmbase_qc
     BOOL qos_handled, is_dropped;
 };
 
-void strmbase_qc_init(struct strmbase_qc *qc, struct strmbase_pin *pin);
-
 struct strmbase_renderer
 {
     struct strmbase_filter filter;

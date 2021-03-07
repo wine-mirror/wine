@@ -53,9 +53,4 @@ static inline const char *debugstr_time(REFERENCE_TIME time)
     return wine_dbg_sprintf("%s", rev);
 }
 
-void QualityControlRender_Start(struct strmbase_qc *This, REFERENCE_TIME tStart);
-void QualityControlRender_DoQOS(struct strmbase_qc *priv);
-void QualityControlRender_BeginRender(struct strmbase_qc *This, REFERENCE_TIME start, REFERENCE_TIME stop);
-void QualityControlRender_EndRender(struct strmbase_qc *This);
-
 #endif /* __WINE_STRMBASE_PRIVATE_H */

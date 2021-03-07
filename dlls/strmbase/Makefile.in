@@ -7,6 +7,5 @@ C_SRCS = \
 	outputqueue.c \
 	pin.c \
 	pospass.c \
-	qualitycontrol.c \
 	renderer.c \
 	seeking.c
