@@ -4068,7 +4068,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             FILE_ID_INFORMATION *info = ptr;
 
             info->VolumeSerialNumber = 0;
-            if (!(io->u.Status = get_mountmgr_fs_info( handle, fd, &drive, sizeof(drive) )))
+            if (!get_mountmgr_fs_info( handle, fd, &drive, sizeof(drive) ))
                 info->VolumeSerialNumber = drive.serial;
             memset( &info->FileId, 0, sizeof(info->FileId) );
             *(ULONGLONG *)&info->FileId = st.st_ino;
