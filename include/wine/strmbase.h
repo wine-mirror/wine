@@ -282,7 +282,6 @@ struct strmbase_qc
     REFERENCE_TIME last_in_time, last_left, avg_duration, avg_pt, avg_render, start, stop;
     REFERENCE_TIME current_jitter, current_rstart, current_rstop, clockstart;
     double avg_rate;
-    LONG64 dropped;
     BOOL is_dropped;
 };
 
