@@ -59,7 +59,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
 static void QualityControlRender_Start(struct strmbase_qc *This, REFERENCE_TIME tStart)
 {
-    This->avg_render = This->last_in_time = This->last_left = This->avg_duration = This->avg_pt = -1;
+    This->last_in_time = This->last_left = This->avg_duration = This->avg_pt = -1;
     This->clockstart = tStart;
     This->avg_rate = -1.0;
     This->is_dropped = FALSE;
@@ -217,8 +217,6 @@ static void QualityControlRender_DoQOS(struct strmbase_qc *priv)
 
 static void QualityControlRender_BeginRender(struct strmbase_qc *This, REFERENCE_TIME start, REFERENCE_TIME stop)
 {
-    This->start = -1;
-
     This->current_rstart = start;
     This->current_rstop = max(stop, start);
 
@@ -237,32 +235,6 @@ static void QualityControlRender_BeginRender(struct strmbase_qc *This, REFERENCE
     This->is_dropped = QualityControlRender_IsLate(This, This->current_jitter, start, stop);
     TRACE("dropped %d, start %s, stop %s, jitter %s.\n", This->is_dropped,
             debugstr_time(start), debugstr_time(stop), debugstr_time(This->current_jitter));
-
-    if (!This->pin->filter->clock)
-        return;
-
-    IReferenceClock_GetTime(This->pin->filter->clock, &This->start);
-
-    TRACE("Starting at %s.\n", debugstr_time(This->start));
-}
-
-static void QualityControlRender_EndRender(struct strmbase_qc *This)
-{
-    REFERENCE_TIME elapsed;
-
-    TRACE("%p\n", This);
-
-    if (!This->pin->filter->clock || This->start < 0
-            || FAILED(IReferenceClock_GetTime(This->pin->filter->clock, &This->stop)))
-        return;
-
-    elapsed = This->start - This->stop;
-    if (elapsed < 0)
-        return;
-    if (This->avg_render < 0)
-        This->avg_render = elapsed;
-    else
-        This->avg_render = UPDATE_RUNNING_AVG(This->avg_render, elapsed);
 }
 
 static inline struct strmbase_renderer *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -447,7 +419,6 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
     {
         QualityControlRender_BeginRender(&filter->qc, start, stop);
         hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
-        QualityControlRender_EndRender(&filter->qc);
     }
 
     if (need_wait)
@@ -480,7 +451,6 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
     {
         QualityControlRender_BeginRender(&filter->qc, start, stop);
         hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
-        QualityControlRender_EndRender(&filter->qc);
     }
 
     QualityControlRender_DoQOS(&filter->qc);
