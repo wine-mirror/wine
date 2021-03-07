@@ -1414,18 +1414,18 @@ static void wined3d_cs_exec_set_constant_buffer(struct wined3d_cs *cs, const voi
     device_invalidate_state(cs->c.device, STATE_CONSTANT_BUFFER(op->type));
 }
 
-void wined3d_cs_emit_set_constant_buffer(struct wined3d_cs *cs, enum wined3d_shader_type type,
-        UINT cb_idx, struct wined3d_buffer *buffer)
+void wined3d_device_context_emit_set_constant_buffer(struct wined3d_device_context *context,
+        enum wined3d_shader_type type, UINT cb_idx, struct wined3d_buffer *buffer)
 {
     struct wined3d_cs_set_constant_buffer *op;
 
-    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_SET_CONSTANT_BUFFER;
     op->type = type;
     op->cb_idx = cb_idx;
     op->buffer = buffer;
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)

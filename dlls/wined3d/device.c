@@ -1926,6 +1926,7 @@ void CDECL wined3d_device_get_scissor_rects(const struct wined3d_device *device,
 
 void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3d_state *state)
 {
+    struct wined3d_device_context *context = &device->cs->c;
     const struct wined3d_light_info *light;
     unsigned int i, j;
 
@@ -1959,11 +1960,9 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
 
     for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
     {
-        wined3d_device_context_emit_set_shader(&device->cs->c, i, state->shader[i]);
+        wined3d_device_context_emit_set_shader(context, i, state->shader[i]);
         for (j = 0; j < MAX_CONSTANT_BUFFERS; ++j)
-        {
-            wined3d_cs_emit_set_constant_buffer(device->cs, i, j, state->cb[i][j]);
-        }
+            wined3d_device_context_emit_set_constant_buffer(context, i, j, state->cb[i][j]);
         for (j = 0; j < MAX_SAMPLER_OBJECTS; ++j)
         {
             wined3d_cs_emit_set_sampler(device->cs, i, j, state->sampler[i][j]);
@@ -2143,7 +2142,7 @@ void CDECL wined3d_device_set_constant_buffer(struct wined3d_device *device,
     if (buffer)
         wined3d_buffer_incref(buffer);
     state->cb[type][idx] = buffer;
-    wined3d_cs_emit_set_constant_buffer(device->cs, type, idx, buffer);
+    wined3d_device_context_emit_set_constant_buffer(&device->cs->c, type, idx, buffer);
     if (prev)
         wined3d_buffer_decref(prev);
 }
