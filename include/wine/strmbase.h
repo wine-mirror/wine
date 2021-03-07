@@ -283,7 +283,7 @@ struct strmbase_qc
     REFERENCE_TIME current_jitter, current_rstart, current_rstop, clockstart;
     double avg_rate;
     LONG64 rendered, dropped;
-    BOOL qos_handled, is_dropped;
+    BOOL is_dropped;
 };
 
 struct strmbase_renderer

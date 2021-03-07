@@ -64,7 +64,6 @@ static void QualityControlRender_Start(struct strmbase_qc *This, REFERENCE_TIME 
     This->avg_rate = -1.0;
     This->rendered = This->dropped = 0;
     This->is_dropped = FALSE;
-    This->qos_handled = TRUE; /* Lie that will be corrected on first adjustment */
 }
 
 static BOOL QualityControlRender_IsLate(struct strmbase_qc *This, REFERENCE_TIME jitter,
@@ -187,7 +186,6 @@ static void QualityControlRender_DoQOS(struct strmbase_qc *priv)
 
     if (priv->avg_rate >= 0.0)
     {
-        HRESULT hr;
         Quality q;
 
         /* If we have a valid rate, start sending QoS messages. */
@@ -211,8 +209,7 @@ static void QualityControlRender_DoQOS(struct strmbase_qc *priv)
             q.Proportion = 5000;
         q.Late = priv->current_jitter;
         q.TimeStamp = priv->current_rstart;
-        hr = IQualityControl_Notify(&priv->IQualityControl_iface, &priv->pin->filter->IBaseFilter_iface, q);
-        priv->qos_handled = hr == S_OK;
+        IQualityControl_Notify(&priv->IQualityControl_iface, &priv->pin->filter->IBaseFilter_iface, q);
     }
 
     /* Record when this buffer will leave us. */
