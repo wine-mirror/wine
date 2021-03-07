@@ -62,7 +62,7 @@ static void QualityControlRender_Start(struct strmbase_qc *This, REFERENCE_TIME 
     This->avg_render = This->last_in_time = This->last_left = This->avg_duration = This->avg_pt = -1;
     This->clockstart = tStart;
     This->avg_rate = -1.0;
-    This->rendered = This->dropped = 0;
+    This->dropped = 0;
     This->is_dropped = FALSE;
 }
 
@@ -240,8 +240,6 @@ static void QualityControlRender_BeginRender(struct strmbase_qc *This, REFERENCE
             debugstr_time(start), debugstr_time(stop), debugstr_time(This->current_jitter));
     if (This->is_dropped)
         This->dropped++;
-    else
-        This->rendered++;
 
     if (!This->pin->filter->clock)
         return;
