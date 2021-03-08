@@ -571,6 +571,22 @@ failed:
     return DIERR_OUTOFMEMORY;
 }
 
+static int verify_offset(const DataFormat *df, int offset)
+{
+    int i;
+
+    if (!df->offsets)
+        return -1;
+
+    for (i = df->wine_df->dwNumObjs - 1; i >= 0; i--)
+    {
+        if (df->offsets[i] == offset)
+            return offset;
+    }
+
+    return -1;
+}
+
 /* find an object by its offset in a data format */
 static int offset_to_object(const DataFormat *df, int offset)
 {
@@ -757,6 +773,46 @@ static BOOL load_mapping_settings(IDirectInputDeviceImpl *This, LPDIACTIONFORMAT
     CoTaskMemFree(guid_str);
 
     return mapped > 0;
+}
+
+static BOOL set_app_data(IDirectInputDeviceImpl *dev, int offset, UINT_PTR app_data)
+{
+    int num_actions = dev->num_actions;
+    ActionMap *action_map = dev->action_map, *target_map = NULL;
+
+    if (num_actions == 0)
+    {
+        num_actions = 1;
+        action_map = HeapAlloc(GetProcessHeap(), 0, sizeof(ActionMap));
+        if (!action_map) return FALSE;
+        target_map = &action_map[0];
+    }
+    else
+    {
+        int i;
+        for (i = 0; i < num_actions; i++)
+        {
+            if (dev->action_map[i].offset != offset) continue;
+            target_map = &dev->action_map[i];
+            break;
+        }
+
+        if (!target_map)
+        {
+            num_actions++;
+            action_map = HeapReAlloc(GetProcessHeap(), 0, action_map, sizeof(ActionMap)*num_actions);
+            if (!action_map) return FALSE;
+            target_map = &action_map[num_actions-1];
+        }
+    }
+
+    target_map->offset = offset;
+    target_map->uAppData = app_data;
+
+    dev->action_map = action_map;
+    dev->num_actions = num_actions;
+
+    return TRUE;
 }
 
 HRESULT _build_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, LPCWSTR lpszUserName, DWORD dwFlags, DWORD devMask, LPCDIDATAFORMAT df)
@@ -1445,6 +1501,23 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetProperty(
             }
             if (device_player)
                 lstrcpynW(device_player->username, ps->wsz, ARRAY_SIZE(device_player->username));
+            break;
+        }
+        case (DWORD_PTR) DIPROP_APPDATA:
+        {
+            int offset = -1;
+            LPCDIPROPPOINTER pp = (LPCDIPROPPOINTER)pdiph;
+            if (pdiph->dwSize != sizeof(DIPROPPOINTER)) return DIERR_INVALIDPARAM;
+
+            if (pdiph->dwHow == DIPH_BYID)
+                offset = id_to_offset(&This->data_format, pdiph->dwObj);
+            else if (pdiph->dwHow == DIPH_BYOFFSET)
+                offset = verify_offset(&This->data_format, pdiph->dwObj);
+            else
+                return DIERR_UNSUPPORTED;
+
+            if (offset == -1) return DIERR_OBJECTNOTFOUND;
+            if (!set_app_data(This, offset, pp->uData)) return DIERR_OUTOFMEMORY;
             break;
         }
         default:
