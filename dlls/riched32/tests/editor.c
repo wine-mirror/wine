@@ -53,7 +53,7 @@ static HWND new_richedit(HWND parent) {
 static BOOL is_rtl(void) {
   LOCALESIGNATURE sig;
 
-  return (GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_FONTSIGNATURE,
+  return (GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_FONTSIGNATURE,
                          (LPSTR) &sig, sizeof(LOCALESIGNATURE)) &&
           (sig.lsUsb[3] & 0x08000000) != 0);
 }
@@ -1440,7 +1440,7 @@ START_TEST( editor )
    * RICHED32.DLL, so the linker doesn't actually link to it. */
   hmoduleRichEdit = LoadLibraryA("riched32.dll");
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
-  is_lang_japanese = (PRIMARYLANGID(GetUserDefaultLangID()) == LANG_JAPANESE);
+  is_lang_japanese = (PRIMARYLANGID(GetSystemDefaultLangID()) == LANG_JAPANESE);
 
   test_WM_SETTEXT();
   test_EM_GETTEXTRANGE();
