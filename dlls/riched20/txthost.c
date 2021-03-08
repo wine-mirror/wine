@@ -67,6 +67,7 @@ struct host *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
         texthost->para_fmt.wAlignment = PFA_RIGHT;
     if (cs->style & ES_CENTER)
         texthost->para_fmt.wAlignment = PFA_CENTER;
+    texthost->editor = NULL;
 
     return texthost;
 }
@@ -315,16 +316,17 @@ DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetScrollBars,8)
 DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetScrollBars( ITextHost *iface, DWORD *scrollbar )
 {
     struct host *host = impl_from_ITextHost( iface );
-    ME_TextEditor *editor = (ME_TextEditor*)GetWindowLongPtrW( host->window, 0 );
     const DWORD mask = WS_VSCROLL|
                        WS_HSCROLL|
                        ES_AUTOVSCROLL|
                        ES_AUTOHSCROLL|
                        ES_DISABLENOSCROLL;
-    if (editor)
+    if (host->editor)
     {
-        *scrollbar = editor->styleFlags & mask;
-    } else {
+        *scrollbar = host->editor->styleFlags & mask;
+    }
+    else
+    {
         DWORD style = GetWindowLongW( host->window, GWL_STYLE );
         if (style & WS_VSCROLL)
             style |= ES_AUTOVSCROLL;
@@ -371,20 +373,21 @@ DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetPropertyBits,12)
 DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetPropertyBits( ITextHost *iface, DWORD mask, DWORD *bits )
 {
     struct host *host = impl_from_ITextHost( iface );
-    ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongPtrW( host->window, 0 );
     DWORD style;
     DWORD dwBits = 0;
 
-    if (editor)
+    if (host->editor)
     {
-        style = editor->styleFlags;
-        if (editor->mode & TM_RICHTEXT)
+        style = host->editor->styleFlags;
+        if (host->editor->mode & TM_RICHTEXT)
             dwBits |= TXTBIT_RICHTEXT;
-        if (editor->bWordWrap)
+        if (host->editor->bWordWrap)
             dwBits |= TXTBIT_WORDWRAP;
         if (style & ECO_AUTOWORDSELECTION)
             dwBits |= TXTBIT_AUTOWORDSEL;
-    } else {
+    }
+    else
+    {
         DWORD dwScrollBar;
 
         style = GetWindowLongW( host->window, GWL_STYLE );
@@ -438,11 +441,10 @@ DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxNotify,12)
 DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxNotify(ITextHost *iface, DWORD iNotify, void *pv)
 {
     struct host *host = impl_from_ITextHost( iface );
-    ME_TextEditor *editor = (ME_TextEditor*)GetWindowLongPtrW( host->window, 0 );
     HWND hwnd = host->window;
     UINT id;
 
-    if (!editor || !editor->hwndParent) return S_OK;
+    if (!host->editor || !host->editor->hwndParent) return S_OK;
 
     id = GetWindowLongW(hwnd, GWLP_ID);
 
@@ -465,7 +467,7 @@ DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxNotify(ITextHost *iface, DWOR
             info->hwndFrom = hwnd;
             info->idFrom = id;
             info->code = iNotify;
-            SendMessageW(editor->hwndParent, WM_NOTIFY, id, (LPARAM)info);
+            SendMessageW( host->editor->hwndParent, WM_NOTIFY, id, (LPARAM)info );
             break;
         }
 
@@ -481,7 +483,7 @@ DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxNotify(ITextHost *iface, DWOR
         case EN_MAXTEXT:
         case EN_SETFOCUS:
         case EN_VSCROLL:
-            SendMessageW(editor->hwndParent, WM_COMMAND, MAKEWPARAM(id, iNotify), (LPARAM)hwnd);
+            SendMessageW( host->editor->hwndParent, WM_COMMAND, MAKEWPARAM( id, iNotify ), (LPARAM)hwnd );
             break;
 
         case EN_MSGFILTER:
@@ -511,10 +513,8 @@ DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetSelectionBarWidth,8)
 DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetSelectionBarWidth( ITextHost *iface, LONG *width )
 {
     struct host *host = impl_from_ITextHost( iface );
-    ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongPtrW( host->window, 0 );
 
-    DWORD style = editor ? editor->styleFlags
-                         : GetWindowLongW( host->window, GWL_STYLE );
+    DWORD style = host->editor ? host->editor->styleFlags : GetWindowLongW( host->window, GWL_STYLE );
     *width = (style & ES_SELECTIONBAR) ? 225 : 0; /* in HIMETRIC */
     return S_OK;
 }
@@ -746,7 +746,7 @@ static BOOL create_windowed_editor( HWND hwnd, CREATESTRUCTW *create, BOOL emula
     host->editor->hWnd = hwnd; /* FIXME: Remove editor's dependence on hWnd */
     host->editor->hwndParent = create->hwndParent;
 
-    SetWindowLongPtrW( hwnd, 0, (LONG_PTR)host->editor );
+    SetWindowLongPtrW( hwnd, 0, (LONG_PTR)host );
 
     return TRUE;
 }
@@ -754,6 +754,7 @@ static BOOL create_windowed_editor( HWND hwnd, CREATESTRUCTW *create, BOOL emula
 static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
                                        LPARAM lparam, BOOL unicode )
 {
+    struct host *host;
     ME_TextEditor *editor;
     HRESULT hr;
     LRESULT res = 0;
@@ -761,8 +762,8 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
     TRACE( "enter hwnd %p msg %04x (%s) %lx %lx, unicode %d\n",
            hwnd, msg, get_msg_name(msg), wparam, lparam, unicode );
 
-    editor = (ME_TextEditor *)GetWindowLongPtrW( hwnd, 0 );
-    if (!editor)
+    host = (struct host *)GetWindowLongPtrW( hwnd, 0 );
+    if (!host)
     {
         if (msg == WM_NCCREATE)
         {
@@ -774,6 +775,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         else return DefWindowProcW( hwnd, msg, wparam, lparam );
     }
 
+    editor = host->editor;
     switch (msg)
     {
     case WM_ERASEBKGND:
