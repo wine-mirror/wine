@@ -80,7 +80,7 @@ static void flush_events(void)
     }
 }
 
-static void test_device_input(IDirectInputDevice8A *lpdid, DWORD event_type, DWORD event, DWORD expected)
+static void test_device_input(IDirectInputDevice8A *lpdid, DWORD event_type, DWORD event, UINT_PTR expected)
 {
     HRESULT hr;
     DIDEVICEOBJECTDATA obj_data;
@@ -91,7 +91,7 @@ static void test_device_input(IDirectInputDevice8A *lpdid, DWORD event_type, DWO
     ok (SUCCEEDED(hr), "Failed to acquire device hr=%08x\n", hr);
 
     if (event_type == INPUT_KEYBOARD)
-        keybd_event( event, DIK_SPACE, 0, 0);
+        keybd_event(event, MapVirtualKeyA(event, MAPVK_VK_TO_VSC), 0, 0);
 
     if (event_type == INPUT_MOUSE)
         mouse_event( event, 0, 0, 0, 0);
@@ -107,7 +107,7 @@ static void test_device_input(IDirectInputDevice8A *lpdid, DWORD event_type, DWO
         return;
     }
 
-    ok (obj_data.uAppData == expected, "Retrieval of action failed uAppData=%lu expected=%d\n", obj_data.uAppData, expected);
+    ok (obj_data.uAppData == expected, "Retrieval of action failed uAppData=%lu expected=%lu\n", obj_data.uAppData, expected);
 
     /* Check for buffer overflow */
     for (i = 0; i < 17; i++)
@@ -131,6 +131,14 @@ static void test_device_input(IDirectInputDevice8A *lpdid, DWORD event_type, DWO
     data_size = 1;
     hr = IDirectInputDevice8_GetDeviceData(lpdid, sizeof(obj_data), &obj_data, &data_size, 0);
     ok(hr == DI_OK && data_size == 1, "GetDeviceData() failed: %08x cnt:%d\n", hr, data_size);
+
+    /* drain device's queue */
+    while (data_size == 1)
+    {
+        hr = IDirectInputDevice8_GetDeviceData(lpdid, sizeof(obj_data), &obj_data, &data_size, 0);
+        ok(hr == DI_OK, "GetDeviceData() failed: %08x cnt:%d\n", hr, data_size);
+        if (hr != DI_OK) break;
+    }
 
     IDirectInputDevice_Unacquire(lpdid);
 }
