@@ -53,6 +53,7 @@ enum {
 
     - (void) postEvent:(macdrv_event*)inEvent;
     - (void) discardEventsMatchingMask:(macdrv_event_mask)mask forWindow:(NSWindow*)window;
+    - (void) discardEventsPassingTest:(BOOL (^)(macdrv_event* event))block;
 
     - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout flags:(NSUInteger)flags;
     - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout;
