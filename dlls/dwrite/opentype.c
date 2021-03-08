@@ -400,7 +400,7 @@ struct ot_script
     WORD default_langsys;
     WORD langsys_count;
     struct ot_langsys_record langsys[1];
-} OT_Script;
+};
 
 struct ot_script_record
 {
@@ -801,25 +801,6 @@ struct ot_gpos_mark_to_mark_format1
     WORD mark1_array;
     WORD mark2_array;
 };
-
-typedef struct {
-    WORD SubstFormat;
-    WORD Coverage;
-    WORD DeltaGlyphID;
-} GSUB_SingleSubstFormat1;
-
-typedef struct {
-    WORD SubstFormat;
-    WORD Coverage;
-    WORD GlyphCount;
-    WORD Substitute[1];
-} GSUB_SingleSubstFormat2;
-
-typedef struct {
-    WORD SubstFormat;
-    WORD ExtensionLookupType;
-    DWORD ExtensionOffset;
-} GSUB_ExtensionPosFormat1;
 
 struct kern_header
 {
