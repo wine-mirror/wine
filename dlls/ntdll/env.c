@@ -762,14 +762,13 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
             + ROUND_SIZE( ShellInfo->MaximumLength )
             + ROUND_SIZE( RuntimeInfo->MaximumLength ));
 
-    env_size = ROUND_SIZE( env_size );
-    if ((ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size + env_size )))
+    if ((ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, size + ROUND_SIZE( env_size ) )))
     {
         RTL_USER_PROCESS_PARAMETERS *params = ptr;
         params->AllocationSize  = size;
         params->Size            = size;
         params->Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
-        params->EnvironmentSize = env_size;
+        params->EnvironmentSize = ROUND_SIZE( env_size );
         if (cur_params) params->ConsoleFlags = cur_params->ConsoleFlags;
         /* all other fields are zero */
 
