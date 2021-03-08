@@ -53,6 +53,7 @@ struct type_descr timer_type =
 struct timer
 {
     struct object        obj;       /* object header */
+    struct event_sync   *sync;      /* sync object for wait/signal */
     int                  manual;    /* manual reset */
     int                  signaled;  /* current signaled state */
     unsigned int         period;    /* timer period in ms */
@@ -64,8 +65,7 @@ struct timer
 };
 
 static void timer_dump( struct object *obj, int verbose );
-static int timer_signaled( struct object *obj, struct wait_queue_entry *entry );
-static void timer_satisfied( struct object *obj, struct wait_queue_entry *entry );
+static struct object *timer_get_sync( struct object *obj );
 static void timer_destroy( struct object *obj );
 
 static const struct object_ops timer_ops =
@@ -73,13 +73,13 @@ static const struct object_ops timer_ops =
     sizeof(struct timer),      /* size */
     &timer_type,               /* type */
     timer_dump,                /* dump */
-    add_queue,                 /* add_queue */
-    remove_queue,              /* remove_queue */
-    timer_signaled,            /* signaled */
-    timer_satisfied,           /* satisfied */
+    NULL,                      /* add_queue */
+    NULL,                      /* remove_queue */
+    NULL,                      /* signaled */
+    NULL,                      /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
-    default_get_sync,          /* get_sync */
+    timer_get_sync,            /* get_sync */
     default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */
     default_set_sd,            /* set_sd */
@@ -105,12 +105,19 @@ static struct timer *create_timer( struct object *root, const struct unicode_str
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
+            timer->sync     = NULL;
             timer->manual   = manual;
             timer->signaled = 0;
             timer->when     = 0;
             timer->period   = 0;
             timer->timeout  = NULL;
             timer->thread   = NULL;
+
+            if (!(timer->sync = create_event_sync( manual, 0 )))
+            {
+                release_object( timer );
+                return NULL;
+            }
         }
     }
     return timer;
@@ -149,9 +156,8 @@ static void timer_callback( void *private )
     }
     else timer->timeout = NULL;
 
-    /* wake up waiters */
     timer->signaled = 1;
-    wake_up( &timer->obj, 0 );
+    signal_sync( timer->sync );
 }
 
 /* cancel a running timer */
@@ -182,6 +188,7 @@ static int set_timer( struct timer *timer, timeout_t expire, unsigned int period
     {
         period = 0;  /* period doesn't make any sense for a manual timer */
         timer->signaled = 0;
+        reset_sync( timer->sync );
     }
     timer->when     = (expire <= 0) ? expire - monotonic_time : max( expire, current_time );
     timer->period   = period;
@@ -202,18 +209,11 @@ static void timer_dump( struct object *obj, int verbose )
              timer->manual, get_timeout_str(timeout), timer->period );
 }
 
-static int timer_signaled( struct object *obj, struct wait_queue_entry *entry )
+static struct object *timer_get_sync( struct object *obj )
 {
     struct timer *timer = (struct timer *)obj;
     assert( obj->ops == &timer_ops );
-    return timer->signaled;
-}
-
-static void timer_satisfied( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct timer *timer = (struct timer *)obj;
-    assert( obj->ops == &timer_ops );
-    if (!timer->manual) timer->signaled = 0;
+    return grab_object( timer->sync );
 }
 
 static void timer_destroy( struct object *obj )
@@ -223,6 +223,7 @@ static void timer_destroy( struct object *obj )
 
     if (timer->timeout) remove_timeout_user( timer->timeout );
     if (timer->thread) release_object( timer->thread );
+    if (timer->sync) release_object( timer->sync );
 }
 
 /* create a timer */
