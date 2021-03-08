@@ -876,6 +876,12 @@ typedef struct DIPROPSTRING {
 } DIPROPSTRING, *LPDIPROPSTRING;
 typedef const DIPROPSTRING *LPCDIPROPSTRING;
 
+typedef struct DIPROPPOINTER {
+        DIPROPHEADER diph;
+        UINT_PTR uData;
+} DIPROPPOINTER, *LPDIPROPPOINTER;
+typedef const DIPROPPOINTER *LPCDIPROPPOINTER;
+
 /* special property GUIDs */
 #ifdef __cplusplus
 #define MAKEDIPROP(prop)	(*(const GUID *)(prop))
