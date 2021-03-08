@@ -155,7 +155,7 @@ static void test_WM_GETTEXTLENGTH(void)
     {
         SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text3);
         result = SendMessageA(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
-        ok(result == 8, "WM_GETTEXTLENGTH returned %d, expected 8\n", result);
+        todo_wine ok(result == 8, "WM_GETTEXTLENGTH returned %d, expected 8\n", result);
     }
 
     DestroyWindow(hwndRichEdit);
