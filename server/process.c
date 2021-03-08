@@ -90,7 +90,7 @@ struct type_descr process_type =
 };
 
 static void process_dump( struct object *obj, int verbose );
-static int process_signaled( struct object *obj, struct wait_queue_entry *entry );
+static struct object *process_get_sync( struct object *obj );
 static unsigned int process_map_access( struct object *obj, unsigned int access );
 static struct security_descriptor *process_get_sd( struct object *obj );
 static void process_poll_event( struct fd *fd, int event );
@@ -103,13 +103,13 @@ static const struct object_ops process_ops =
     sizeof(struct process),      /* size */
     &process_type,               /* type */
     process_dump,                /* dump */
-    add_queue,                   /* add_queue */
-    remove_queue,                /* remove_queue */
-    process_signaled,            /* signaled */
-    no_satisfied,                /* satisfied */
+    NULL,                        /* add_queue */
+    NULL,                        /* remove_queue */
+    NULL,                        /* signaled */
+    NULL,                        /* satisfied */
     no_signal,                   /* signal */
     no_get_fd,                   /* get_fd */
-    default_get_sync,            /* get_sync */
+    process_get_sync,            /* get_sync */
     process_map_access,          /* map_access */
     process_get_sd,              /* get_sd */
     default_set_sd,              /* set_sd */
@@ -662,6 +662,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
         close( fd );
         goto error;
     }
+    process->sync            = NULL;
     process->parent_id       = 0;
     process->debug_obj       = NULL;
     process->debug_event     = NULL;
@@ -720,6 +721,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
         goto error;
     }
     if (!(process->msg_fd = create_anonymous_fd( &process_fd_ops, fd, &process->obj, 0 ))) goto error;
+    if (!(process->sync = create_event_sync( 1, 0 ))) goto error;
 
     /* create the handle table */
     if (!parent)
@@ -793,6 +795,7 @@ static void process_destroy( struct object *obj )
     if (process->idle_event) release_object( process->idle_event );
     if (process->id) free_ptid( process->id );
     if (process->token) release_object( process->token );
+    if (process->sync) release_object( process->sync );
     list_remove( &process->rawinput_entry );
     free( process->rawinput_devices );
     free( process->dir_cache );
@@ -808,10 +811,11 @@ static void process_dump( struct object *obj, int verbose )
     fprintf( stderr, "Process id=%04x handles=%p\n", process->id, process->handles );
 }
 
-static int process_signaled( struct object *obj, struct wait_queue_entry *entry )
+static struct object *process_get_sync( struct object *obj )
 {
     struct process *process = (struct process *)obj;
-    return !process->running_threads;
+    assert( obj->ops == &process_ops );
+    return grab_object( process->sync );
 }
 
 static unsigned int process_map_access( struct object *obj, unsigned int access )
@@ -993,7 +997,7 @@ static void process_killed( struct process *process )
     finish_process_tracing( process );
     release_job_process( process );
     start_sigkill_timer( process );
-    wake_up( &process->obj, 0 );
+    signal_sync( process->sync );
 }
 
 /* add a thread to a process running threads list */
