@@ -34,14 +34,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
 struct text_services
 {
-   IUnknown IUnknown_inner;
-   ITextServices ITextServices_iface;
-   IUnknown *outer_unk;
-   LONG ref;
-   ITextHost *host;
-   CRITICAL_SECTION csTxtSrv;
-   ME_TextEditor *editor;
-   char spare[256];
+    IUnknown IUnknown_inner;
+    ITextServices ITextServices_iface;
+    IUnknown *outer_unk;
+    LONG ref;
+    ITextHost *host;
+    ME_TextEditor *editor;
+    char spare[256]; /* for bug #12179 */
 };
 
 static inline struct text_services *impl_from_IUnknown( IUnknown *iface )
@@ -95,8 +94,6 @@ static ULONG WINAPI ITextServicesImpl_Release(IUnknown *iface)
     if (!ref)
     {
         ME_DestroyEditor( services->editor );
-        services->csTxtSrv.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection( &services->csTxtSrv );
         CoTaskMemFree( services );
     }
     return ref;
@@ -378,8 +375,6 @@ HRESULT create_text_services( IUnknown *outer, ITextHost *text_host, IUnknown **
 
     services = CoTaskMemAlloc( sizeof(*services) );
     if (services == NULL) return E_OUTOFMEMORY;
-    InitializeCriticalSection( &services->csTxtSrv );
-    services->csTxtSrv.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ITextServicesImpl.csTxtSrv");
     services->ref = 1;
     services->host = text_host; /* Don't take a ref of the host - this would lead to a mutual dependency */
     services->IUnknown_inner.lpVtbl = &textservices_inner_vtbl;
