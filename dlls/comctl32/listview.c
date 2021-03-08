@@ -254,10 +254,6 @@ typedef struct tagLISTVIEW_INFO
   INT nItemHeight;
   INT nItemWidth;
 
-  /* sorting */
-  PFNLVCOMPARE pfnCompare;      /* sorting callback pointer */
-  LPARAM lParamSort;
-
   /* style */
   DWORD dwStyle;		/* the cached window GWL_STYLE */
   DWORD dwLvExStyle;		/* extended listview style */
@@ -9232,52 +9228,31 @@ static INT LISTVIEW_SetView(LISTVIEW_INFO *infoPtr, DWORD nView)
 
 /* LISTVIEW_SetWorkAreas */
 
-/***
- * DESCRIPTION:
- * Callback internally used by LISTVIEW_SortItems() in response of LVM_SORTITEMS
- *
- * PARAMETER(S):
- * [I] first : pointer to first ITEM_INFO to compare
- * [I] second : pointer to second ITEM_INFO to compare
- * [I] lParam : HWND of control
- *
- * RETURN:
- *   if first comes before second : negative
- *   if first comes after second : positive
- *   if first and second are equivalent : zero
- */
+struct sorting_context
+{
+    LISTVIEW_INFO *infoPtr;
+    PFNLVCOMPARE compare_func;
+    LPARAM lParam;
+};
+
+/* DPA_Sort() callback used for LVM_SORTITEMS */
 static INT WINAPI LISTVIEW_CallBackCompare(LPVOID first, LPVOID second, LPARAM lParam)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)lParam;
-  ITEM_INFO* lv_first = DPA_GetPtr( first, 0 );
-  ITEM_INFO* lv_second = DPA_GetPtr( second, 0 );
+    struct sorting_context *context = (struct sorting_context *)lParam;
+    ITEM_INFO* lv_first = DPA_GetPtr( first, 0 );
+    ITEM_INFO* lv_second = DPA_GetPtr( second, 0 );
 
-  /* Forward the call to the client defined callback */
-  return (infoPtr->pfnCompare)( lv_first->lParam , lv_second->lParam, infoPtr->lParamSort );
+    return context->compare_func(lv_first->lParam, lv_second->lParam, context->lParam);
 }
 
-/***
- * DESCRIPTION:
- * Callback internally used by LISTVIEW_SortItems() in response of LVM_SORTITEMSEX
- *
- * PARAMETER(S):
- * [I] first : pointer to first ITEM_INFO to compare
- * [I] second : pointer to second ITEM_INFO to compare
- * [I] lParam : HWND of control
- *
- * RETURN:
- *   if first comes before second : negative
- *   if first comes after second : positive
- *   if first and second are equivalent : zero
- */
+/* DPA_Sort() callback used for LVM_SORTITEMSEX */
 static INT WINAPI LISTVIEW_CallBackCompareEx(LPVOID first, LPVOID second, LPARAM lParam)
 {
-  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)lParam;
-  INT first_idx  = DPA_GetPtrIndex( infoPtr->hdpaItems, first  );
-  INT second_idx = DPA_GetPtrIndex( infoPtr->hdpaItems, second );
+    struct sorting_context *context = (struct sorting_context *)lParam;
+    INT first_idx  = DPA_GetPtrIndex( context->infoPtr->hdpaItems, first  );
+    INT second_idx = DPA_GetPtrIndex( context->infoPtr->hdpaItems, second );
 
-  /* Forward the call to the client defined callback */
-  return (infoPtr->pfnCompare)( first_idx, second_idx, infoPtr->lParamSort );
+    return context->compare_func(first_idx, second_idx, context->lParam);
 }
 
 /***
@@ -9301,6 +9276,7 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare,
     ITEM_INFO *lpItem;
     LPVOID selectionMarkItem = NULL;
     LPVOID focusedItem = NULL;
+    struct sorting_context context;
     int i;
 
     TRACE("(pfnCompare=%p, lParamSort=%lx)\n", pfnCompare, lParamSort);
@@ -9322,12 +9298,13 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare,
     if (infoPtr->nFocusedItem >= 0)
         focusedItem = DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nFocusedItem);
 
-    infoPtr->pfnCompare = pfnCompare;
-    infoPtr->lParamSort = lParamSort;
+    context.infoPtr = infoPtr;
+    context.compare_func = pfnCompare;
+    context.lParam = lParamSort;
     if (IsEx)
-        DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompareEx, (LPARAM)infoPtr);
+        DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompareEx, (LPARAM)&context);
     else
-        DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompare, (LPARAM)infoPtr);
+        DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompare, (LPARAM)&context);
 
     /* restore selection ranges */
     for (i=0; i < infoPtr->nItemCount; i++)
