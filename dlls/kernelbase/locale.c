@@ -5927,3 +5927,49 @@ INT WINAPI GetUserDefaultGeoName(LPWSTR geo_name, int count)
     lstrcpyW( geo_name, buffer );
     return size;
 }
+
+
+/***********************************************************************
+ *	SetUserDefaultGeoName  (kernelbase.@)
+ */
+BOOL WINAPI SetUserGeoName(PWSTR geo_name)
+{
+    unsigned int i;
+    WCHAR *endptr;
+    int uncode;
+
+    TRACE( "geo_name %s.\n", debugstr_w( geo_name ));
+
+    if (!geo_name)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (lstrlenW( geo_name ) == 3)
+    {
+        uncode = wcstol( geo_name, &endptr, 10 );
+        if (!uncode || endptr != geo_name + 3)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+        for (i = 0; i < ARRAY_SIZE(geoinfodata); ++i)
+            if (geoinfodata[i].uncode == uncode)
+                break;
+    }
+    else
+    {
+        if (!lstrcmpiW( geo_name, L"XX" ))
+            return SetUserGeoID( 39070 );
+        for (i = 0; i < ARRAY_SIZE(geoinfodata); ++i)
+            if (!lstrcmpiW( geo_name, geoinfodata[i].iso2W ))
+                break;
+    }
+    if (i == ARRAY_SIZE(geoinfodata))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    return SetUserGeoID( geoinfodata[i].id );
+}
