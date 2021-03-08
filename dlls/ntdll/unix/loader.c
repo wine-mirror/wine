@@ -1068,6 +1068,8 @@ static void fill_builtin_image_info( void *module, pe_image_info_t *info )
     info->header_size     = nt->OptionalHeader.SizeOfHeaders;
     info->file_size       = nt->OptionalHeader.SizeOfImage;
     info->checksum        = nt->OptionalHeader.CheckSum;
+    info->dbg_offset      = 0;
+    info->dbg_size        = 0;
     info->cpu             = client_cpu;
     info->__pad           = 0;
 }
