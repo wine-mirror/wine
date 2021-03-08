@@ -615,7 +615,7 @@ static void test_EM_POSFROMCHAR(void)
       "gg\n"
       "hh\n";
 
-  rtl = (GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_FONTSIGNATURE,
+  rtl = (GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_FONTSIGNATURE,
                         (LPSTR) &sig, sizeof(LOCALESIGNATURE)) &&
          (sig.lsUsb[3] & 0x08000000) != 0);
 
@@ -771,7 +771,7 @@ static void test_EM_SETCHARFORMAT(void)
   BOOL rtl;
   DWORD expect_effects;
 
-  rtl = (GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_FONTSIGNATURE,
+  rtl = (GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_FONTSIGNATURE,
                         (LPSTR) &sig, sizeof(LOCALESIGNATURE)) &&
          (sig.lsUsb[3] & 0x08000000) != 0);
 
@@ -5609,7 +5609,7 @@ static void test_EM_FORMATRANGE(void)
     {"WINE\r\n\r\nwine\r\nwine", 5, 6}
   };
 
-  skip_non_english = (PRIMARYLANGID(GetUserDefaultLangID()) != LANG_ENGLISH);
+  skip_non_english = (PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_ENGLISH);
   if (skip_non_english)
     skip("Skipping some tests on non-English platform\n");
 
@@ -8964,7 +8964,7 @@ START_TEST( editor )
    * RICHED20.DLL, so the linker doesn't actually link to it. */
   hmoduleRichEdit = LoadLibraryA("riched20.dll");
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
-  is_lang_japanese = (PRIMARYLANGID(GetUserDefaultLangID()) == LANG_JAPANESE);
+  is_lang_japanese = (PRIMARYLANGID(GetSystemDefaultLangID()) == LANG_JAPANESE);
 
   test_WM_CHAR();
   test_EM_FINDTEXT(FALSE);
