@@ -1033,9 +1033,8 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory7 *iface, DWRIT
 
     desc.factory = iface;
     desc.face_type = req_facetype;
-    desc.files = font_files;
+    desc.file = *font_files;
     desc.stream = stream;
-    desc.files_number = files_number;
     desc.index = index;
     desc.simulations = simulations;
     desc.font_data = NULL;

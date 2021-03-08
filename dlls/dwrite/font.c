@@ -639,14 +639,10 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
             IDWriteFontFace5_ReleaseFontTable(iface, fontface->cpal.context);
         if (fontface->colr.context)
             IDWriteFontFace5_ReleaseFontTable(iface, fontface->colr.context);
-        for (i = 0; i < fontface->file_count; i++)
-        {
-            if (fontface->files[i])
-                IDWriteFontFile_Release(fontface->files[i]);
-        }
+        if (fontface->file)
+            IDWriteFontFile_Release(fontface->file);
         if (fontface->stream)
             IDWriteFontFileStream_Release(fontface->stream);
-        heap_free(fontface->files);
         if (fontface->names)
             IDWriteLocalizedStrings_Release(fontface->names);
         if (fontface->family_names)
@@ -683,24 +679,20 @@ static HRESULT WINAPI dwritefontface_GetFiles(IDWriteFontFace5 *iface, UINT32 *n
     IDWriteFontFile **fontfiles)
 {
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
-    int i;
 
     TRACE("%p, %p, %p.\n", iface, number_of_files, fontfiles);
 
-    if (fontfiles == NULL)
+    if (!fontfiles)
     {
-        *number_of_files = fontface->file_count;
+        *number_of_files = 1;
         return S_OK;
     }
 
-    if (*number_of_files < fontface->file_count)
+    if (!*number_of_files)
         return E_INVALIDARG;
 
-    for (i = 0; i < fontface->file_count; i++)
-    {
-        IDWriteFontFile_AddRef(fontface->files[i]);
-        fontfiles[i] = fontface->files[i];
-    }
+    IDWriteFontFile_AddRef(fontface->file);
+    *fontfiles = fontface->file;
 
     return S_OK;
 }
@@ -1603,7 +1595,7 @@ static HRESULT WINAPI dwritefontface5_GetFontResource(IDWriteFontFace5 *iface, I
 
     TRACE("%p, %p.\n", iface, resource);
 
-    return IDWriteFactory7_CreateFontResource(fontface->factory, fontface->files[0], fontface->index, resource);
+    return IDWriteFactory7_CreateFontResource(fontface->factory, fontface->file, fontface->index, resource);
 }
 
 static BOOL WINAPI dwritefontface5_Equals(IDWriteFontFace5 *iface, IDWriteFontFace *other)
@@ -1619,7 +1611,7 @@ static BOOL WINAPI dwritefontface5_Equals(IDWriteFontFace5 *iface, IDWriteFontFa
 
     return fontface->index == other_face->index &&
             fontface->simulations == other_face->simulations &&
-            is_same_fontfile(fontface->files[0], other_face->files[0]);
+            is_same_fontfile(fontface->file, other_face->file);
 }
 
 static const IDWriteFontFace5Vtbl dwritefontfacevtbl =
@@ -1728,11 +1720,11 @@ static HRESULT WINAPI dwritefontface_reference_CreateFontFaceWithSimulations(IDW
 
     TRACE("%p, %#x, %p.\n", iface, simulations, ret);
 
-    hr = IDWriteFontFile_Analyze(fontface->files[0], &is_supported, &file_type, &face_type, &face_num);
+    hr = IDWriteFontFile_Analyze(fontface->file, &is_supported, &file_type, &face_type, &face_num);
     if (FAILED(hr))
         return hr;
 
-    hr = IDWriteFactory7_CreateFontFace(fontface->factory, face_type, 1, fontface->files, fontface->index,
+    hr = IDWriteFactory7_CreateFontFace(fontface->factory, face_type, 1, &fontface->file, fontface->index,
             simulations, &face);
     if (SUCCEEDED(hr))
     {
@@ -1774,7 +1766,7 @@ static HRESULT WINAPI dwritefontface_reference_GetFontFile(IDWriteFontFaceRefere
 
     TRACE("%p, %p.\n", iface, file);
 
-    *file = fontface->files[0];
+    *file = fontface->file;
     IDWriteFontFile_AddRef(*file);
 
     return S_OK;
@@ -1879,8 +1871,7 @@ static HRESULT get_fontface_from_font(struct dwrite_font *font, IDWriteFontFace5
 
     desc.factory = font->family->collection->factory;
     desc.face_type = data->face_type;
-    desc.files = &data->file;
-    desc.files_number = 1;
+    desc.file = data->file;
     desc.index = data->face_index;
     desc.simulations = data->simulations;
     desc.font_data = data;
@@ -3979,7 +3970,7 @@ static HRESULT init_font_data(const struct fontface_desc *desc, struct dwrite_fo
         return E_OUTOFMEMORY;
 
     data->ref = 1;
-    data->file = desc->files[0];
+    data->file = desc->file;
     data->face_index = desc->index;
     data->face_type = desc->face_type;
     IDWriteFontFile_AddRef(data->file);
@@ -4388,9 +4379,8 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
 
             desc.factory = factory;
             desc.face_type = face_type;
-            desc.files = &file;
+            desc.file = file;
             desc.stream = stream;
-            desc.files_number = 1;
             desc.index = i;
             desc.simulations = DWRITE_FONT_SIMULATIONS_NONE;
             desc.font_data = NULL;
@@ -4729,13 +4719,12 @@ static HRESULT eudc_collection_add_family(IDWriteFactory7 *factory, struct dwrit
         struct dwrite_font_data *font_data;
         struct fontface_desc desc;
 
-        /* alloc and init new font data structure */
+        /* Allocate new font data structure. */
         desc.factory = factory;
         desc.face_type = face_type;
         desc.index = i;
-        desc.files = &file;
+        desc.file = file;
         desc.stream = stream;
-        desc.files_number = 1;
         desc.simulations = DWRITE_FONT_SIMULATIONS_NONE;
         desc.font_data = NULL;
 
@@ -4983,17 +4972,10 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     if (!fontface)
         return E_OUTOFMEMORY;
 
-    fontface->files = heap_alloc_zero(sizeof(*fontface->files) * desc->files_number);
-    if (!fontface->files) {
-        heap_free(fontface);
-        return E_OUTOFMEMORY;
-    }
-
     fontface->IDWriteFontFace5_iface.lpVtbl = &dwritefontfacevtbl;
     fontface->IDWriteFontFaceReference_iface.lpVtbl = &dwritefontface_reference_vtbl;
     fontface->refcount = 1;
     fontface->type = desc->face_type;
-    fontface->file_count = desc->files_number;
     fontface->vdmx.exists = TRUE;
     fontface->gasp.exists = TRUE;
     fontface->cpal.exists = TRUE;
@@ -5002,11 +4984,8 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     fontface->simulations = desc->simulations;
     fontface->factory = desc->factory;
     IDWriteFactory7_AddRef(fontface->factory);
-
-    for (i = 0; i < fontface->file_count; i++) {
-        fontface->files[i] = desc->files[i];
-        IDWriteFontFile_AddRef(fontface->files[i]);
-    }
+    fontface->file = desc->file;
+    IDWriteFontFile_AddRef(fontface->file);
     fontface->stream = desc->stream;
     IDWriteFontFileStream_AddRef(fontface->stream);
 

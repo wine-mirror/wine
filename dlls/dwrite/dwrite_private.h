@@ -154,9 +154,8 @@ struct fontface_desc
 {
     IDWriteFactory7 *factory;
     DWRITE_FONT_FACE_TYPE face_type;
-    IDWriteFontFile * const *files;
+    IDWriteFontFile *file;
     IDWriteFontFileStream *stream;
-    UINT32 files_number;
     UINT32 index;
     DWRITE_FONT_SIMULATIONS simulations;
     struct dwrite_font_data *font_data; /* could be NULL when face is created directly with IDWriteFactory::CreateFontFace() */
@@ -243,8 +242,7 @@ struct dwrite_fontface
     LONG refcount;
 
     IDWriteFontFileStream *stream;
-    IDWriteFontFile **files;
-    UINT32 file_count;
+    IDWriteFontFile *file;
     UINT32 index;
 
     IDWriteFactory7 *factory;
