@@ -9230,7 +9230,7 @@ static INT LISTVIEW_SetView(LISTVIEW_INFO *infoPtr, DWORD nView)
 
 struct sorting_context
 {
-    LISTVIEW_INFO *infoPtr;
+    HDPA items;
     PFNLVCOMPARE compare_func;
     LPARAM lParam;
 };
@@ -9249,8 +9249,8 @@ static INT WINAPI LISTVIEW_CallBackCompare(LPVOID first, LPVOID second, LPARAM l
 static INT WINAPI LISTVIEW_CallBackCompareEx(LPVOID first, LPVOID second, LPARAM lParam)
 {
     struct sorting_context *context = (struct sorting_context *)lParam;
-    INT first_idx  = DPA_GetPtrIndex( context->infoPtr->hdpaItems, first  );
-    INT second_idx = DPA_GetPtrIndex( context->infoPtr->hdpaItems, second );
+    INT first_idx  = DPA_GetPtrIndex( context->items, first  );
+    INT second_idx = DPA_GetPtrIndex( context->items, second );
 
     return context->compare_func(first_idx, second_idx, context->lParam);
 }
@@ -9272,7 +9272,7 @@ static INT WINAPI LISTVIEW_CallBackCompareEx(LPVOID first, LPVOID second, LPARAM
 static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare,
                                LPARAM lParamSort, BOOL IsEx)
 {
-    HDPA hdpaSubItems;
+    HDPA hdpaSubItems, hdpaItems;
     ITEM_INFO *lpItem;
     LPVOID selectionMarkItem = NULL;
     LPVOID focusedItem = NULL;
@@ -9288,6 +9288,7 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare,
 
     /* if there are 0 or 1 items, there is no need to sort */
     if (infoPtr->nItemCount < 2) return TRUE;
+    if (!(hdpaItems = DPA_Clone(infoPtr->hdpaItems, NULL))) return FALSE;
 
     /* clear selection */
     ranges_clear(infoPtr->selectionRanges);
@@ -9298,13 +9299,15 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare,
     if (infoPtr->nFocusedItem >= 0)
         focusedItem = DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nFocusedItem);
 
-    context.infoPtr = infoPtr;
+    context.items = hdpaItems;
     context.compare_func = pfnCompare;
     context.lParam = lParamSort;
     if (IsEx)
-        DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompareEx, (LPARAM)&context);
+        DPA_Sort(hdpaItems, LISTVIEW_CallBackCompareEx, (LPARAM)&context);
     else
-        DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompare, (LPARAM)&context);
+        DPA_Sort(hdpaItems, LISTVIEW_CallBackCompare, (LPARAM)&context);
+    DPA_Destroy(infoPtr->hdpaItems);
+    infoPtr->hdpaItems = hdpaItems;
 
     /* restore selection ranges */
     for (i=0; i < infoPtr->nItemCount; i++)
