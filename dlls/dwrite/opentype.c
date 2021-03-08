@@ -6342,6 +6342,9 @@ BOOL opentype_has_vertical_variants(struct dwrite_fontface *fontface)
     struct lookups lookups = { 0 };
     UINT16 format;
 
+    if (fontface->flags & (FONTFACE_VERTICAL_VARIANTS | FONTFACE_NO_VERTICAL_VARIANTS))
+        return !!(fontface->flags & FONTFACE_VERTICAL_VARIANTS);
+
     context.cache = fontface_get_shaping_cache(fontface);
     context.table = &context.cache->gsub;
 
@@ -6384,7 +6387,12 @@ BOOL opentype_has_vertical_variants(struct dwrite_fontface *fontface)
 
     heap_free(lookups.lookups);
 
-    return !!count;
+    if (count)
+        fontface->flags |= FONTFACE_VERTICAL_VARIANTS;
+    else
+        fontface->flags |= FONTFACE_NO_VERTICAL_VARIANTS;
+
+    return !!(fontface->flags & FONTFACE_VERTICAL_VARIANTS);
 }
 
 HRESULT opentype_get_vertical_glyph_variants(struct dwrite_fontface *fontface, unsigned int glyph_count,
@@ -6398,7 +6406,7 @@ HRESULT opentype_get_vertical_glyph_variants(struct dwrite_fontface *fontface, u
 
     memcpy(glyphs, nominal_glyphs, glyph_count * sizeof(*glyphs));
 
-    if (!(fontface->flags & FONTFACE_HAS_VERTICAL_VARIANTS))
+    if (!opentype_has_vertical_variants(fontface))
         return S_OK;
 
     context.cache = fontface_get_shaping_cache(fontface);

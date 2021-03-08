@@ -182,11 +182,12 @@ struct fontfacecached
 
 enum font_flags
 {
-    FONT_IS_SYMBOL                 = 1 << 0,
-    FONT_IS_MONOSPACED             = 1 << 1,
-    FONT_IS_COLORED                = 1 << 2, /* CPAL/COLR support */
-    FONTFACE_HAS_KERNING_PAIRS     = 1 << 3,
-    FONTFACE_HAS_VERTICAL_VARIANTS = 1 << 4
+    FONT_IS_SYMBOL                 = 0x00000001,
+    FONT_IS_MONOSPACED             = 0x00000002,
+    FONT_IS_COLORED                = 0x00000004, /* CPAL/COLR support */
+    FONTFACE_HAS_KERNING_PAIRS     = 0x00000008,
+    FONTFACE_VERTICAL_VARIANTS     = 0x00000010,
+    FONTFACE_NO_VERTICAL_VARIANTS  = 0x00000020,
 };
 
 struct dwrite_cmap;
@@ -257,7 +258,7 @@ struct dwrite_fontface
         unsigned int ascent;
         unsigned int descent;
     } typo_metrics;
-    UINT32 flags;
+    unsigned int flags;
 
     struct dwrite_cmap cmap;
 

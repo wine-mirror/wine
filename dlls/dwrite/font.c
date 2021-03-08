@@ -1217,7 +1217,7 @@ static BOOL WINAPI dwritefontface1_HasVerticalGlyphVariants(IDWriteFontFace5 *if
 
     TRACE("%p.\n", iface);
 
-    return !!(fontface->flags & FONTFACE_HAS_VERTICAL_VARIANTS);
+    return opentype_has_vertical_variants(fontface);
 }
 
 static BOOL WINAPI dwritefontface2_IsColorFont(IDWriteFontFace5 *iface)
@@ -5004,8 +5004,6 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
 
     if (freetype_has_kerning_pairs(&fontface->IDWriteFontFace5_iface))
         fontface->flags |= FONTFACE_HAS_KERNING_PAIRS;
-    if (opentype_has_vertical_variants(fontface))
-        fontface->flags |= FONTFACE_HAS_VERTICAL_VARIANTS;
     fontface->glyph_image_formats = opentype_get_glyph_image_formats(&fontface->IDWriteFontFace5_iface);
 
     /* Font properties are reused from font object when 'normal' face creation path is used:
