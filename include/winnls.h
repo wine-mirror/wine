@@ -946,6 +946,7 @@ WINBASEAPI INT         WINAPI GetTimeFormatA(LCID,DWORD,const SYSTEMTIME*,LPCSTR
 WINBASEAPI INT         WINAPI GetTimeFormatEx(LPCWSTR,DWORD,const SYSTEMTIME*,LPCWSTR,LPWSTR,INT);
 WINBASEAPI INT         WINAPI GetTimeFormatW(LCID,DWORD,const SYSTEMTIME*,LPCWSTR,LPWSTR,INT);
 #define                       GetTimeFormat WINELIB_NAME_AW(GetTimeFormat)
+WINBASEAPI INT         WINAPI GetUserDefaultGeoName(LPWSTR,int);
 WINBASEAPI LANGID      WINAPI GetUserDefaultLangID(void);
 WINBASEAPI LCID        WINAPI GetUserDefaultLCID(void);
 WINBASEAPI INT         WINAPI GetUserDefaultLocaleName(LPWSTR,int);

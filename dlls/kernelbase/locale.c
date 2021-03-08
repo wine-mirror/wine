@@ -5740,6 +5740,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetUserGeoID( GEOID id )
         const WCHAR *name = geoinfo->kind == LOCATION_NATION ? L"Nation" : L"Region";
         swprintf( bufferW, ARRAY_SIZE(bufferW), L"%u", geoinfo->id );
         RegSetValueExW( hkey, name, 0, REG_SZ, (BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR) );
+
+        if (geoinfo->kind == LOCATION_NATION || geoinfo->kind == LOCATION_BOTH)
+            lstrcpyW( bufferW, geoinfo->iso2W );
+        else
+            swprintf( bufferW, ARRAY_SIZE(bufferW), L"%03u", geoinfo->uncode );
+        RegSetValueExW( hkey, L"Name", 0, REG_SZ, (BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR) );
         RegCloseKey( hkey );
     }
     return TRUE;
@@ -5876,4 +5882,48 @@ INT WINAPI DECLSPEC_HOTPATCH WideCharToMultiByte( UINT codepage, DWORD flags, LP
     }
     TRACE( "cp %d %s -> %s, ret = %d\n", codepage, debugstr_wn(src, srclen), debugstr_an(dst, ret), ret );
     return ret;
+}
+
+
+/***********************************************************************
+ *	GetUserDefaultGeoName  (kernelbase.@)
+ */
+INT WINAPI GetUserDefaultGeoName(LPWSTR geo_name, int count)
+{
+    const struct geoinfo *geoinfo;
+    WCHAR buffer[32];
+    LSTATUS status;
+    DWORD size;
+    HKEY key;
+
+    TRACE( "geo_name %p, count %d.\n", geo_name, count );
+
+    if (count && !geo_name)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (!(status = RegOpenKeyExW( intl_key, L"Geo", 0, KEY_ALL_ACCESS, &key )))
+    {
+        size = sizeof(buffer);
+        status = RegQueryValueExW( key, L"Name", NULL, NULL, (BYTE *)buffer, &size );
+        RegCloseKey( key );
+    }
+    if (status)
+    {
+        if ((geoinfo = get_geoinfo_ptr( GetUserGeoID( GEOCLASS_NATION ))) && geoinfo->id != 39070)
+            lstrcpyW( buffer, geoinfo->iso2W );
+        else
+            lstrcpyW( buffer, L"001" );
+    }
+    size = lstrlenW( buffer ) + 1;
+    if (count < size)
+    {
+        if (!count)
+            return size;
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    lstrcpyW( geo_name, buffer );
+    return size;
 }
