@@ -2786,18 +2786,13 @@ static inline BYTE get_max_level( UINT format )
     return 255;
 }
 
-static FT_Vector get_advance_metric( struct gdi_font *font, const FT_Glyph_Metrics *metrics,
-                                     const FT_Matrix *transMat, BOOL vertical_metrics )
+static FT_Vector get_advance_metric( struct gdi_font *font, FT_Pos base_advance,
+                                     const FT_Matrix *transMat )
 {
     FT_Vector adv;
-    FT_Fixed base_advance, em_scale = 0;
+    FT_Fixed em_scale = 0;
     BOOL fixed_pitch_full = FALSE;
     struct gdi_font *incoming_font = font->base_font ? font->base_font : font;
-
-    if (vertical_metrics)
-        base_advance = metrics->vertAdvance;
-    else
-        base_advance = metrics->horiAdvance;
 
     adv.x = base_advance;
     adv.y = 0;
@@ -2901,10 +2896,11 @@ static void compute_metrics( struct gdi_font *font, FT_BBox bbox, const FT_Glyph
                              GLYPHMETRICS *gm, ABC *abc )
 {
     FT_Vector adv, vec, origin;
+    FT_Fixed base_advance = vertical_metrics ? metrics->vertAdvance : metrics->horiAdvance;
 
     if (!needs_transform)
     {
-        adv = get_advance_metric( font, metrics, NULL, vertical_metrics );
+        adv = get_advance_metric( font, base_advance, NULL );
         gm->gmCellIncX = adv.x >> 6;
         gm->gmCellIncY = 0;
         origin.x = bbox.xMin;
@@ -2937,11 +2933,11 @@ static void compute_metrics( struct gdi_font *font, FT_BBox bbox, const FT_Glyph
             lsb = metrics->horiBearingX;
         }
 
-        adv = get_advance_metric( font, metrics, &matrices[matrix_hori], vertical_metrics );
+        adv = get_advance_metric( font, base_advance, &matrices[matrix_hori] );
         gm->gmCellIncX = adv.x >> 6;
         gm->gmCellIncY = adv.y >> 6;
 
-        adv = get_advance_metric( font, metrics, &matrices[matrix_unrotated], vertical_metrics );
+        adv = get_advance_metric( font, base_advance, &matrices[matrix_unrotated] );
         adv.x = pFT_Vector_Length( &adv );
         adv.y = 0;
 
