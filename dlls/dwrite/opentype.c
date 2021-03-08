@@ -46,6 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_CBLC_TAG DWRITE_MAKE_OPENTYPE_TAG('C','B','L','C')
 #define MS_CMAP_TAG DWRITE_MAKE_OPENTYPE_TAG('c','m','a','p')
 #define MS_META_TAG DWRITE_MAKE_OPENTYPE_TAG('m','e','t','a')
+#define MS_KERN_TAG DWRITE_MAKE_OPENTYPE_TAG('k','e','r','n')
 
 /* 'sbix' formats */
 #define MS_PNG__TAG DWRITE_MAKE_OPENTYPE_TAG('p','n','g',' ')
@@ -819,6 +820,19 @@ typedef struct {
     WORD ExtensionLookupType;
     DWORD ExtensionOffset;
 } GSUB_ExtensionPosFormat1;
+
+struct kern_header
+{
+    WORD version;
+    WORD table_count;
+};
+
+struct kern_subtable_header
+{
+    WORD version;
+    WORD length;
+    WORD coverage;
+};
 
 #include "poppack.h"
 
@@ -6448,6 +6462,135 @@ HRESULT opentype_get_vertical_glyph_variants(struct dwrite_fontface *fontface, u
     heap_free(context.u.subst.glyph_props);
     heap_free(context.glyph_infos);
     heap_free(lookups.lookups);
+
+    return S_OK;
+}
+
+BOOL opentype_has_kerning_pairs(struct dwrite_fontface *fontface)
+{
+    const struct kern_subtable_header *subtable;
+    struct file_stream_desc stream_desc;
+    const struct kern_header *header;
+    unsigned int offset, count, i;
+
+    if (fontface->flags & (FONTFACE_KERNING_PAIRS | FONTFACE_NO_KERNING_PAIRS))
+        return !!(fontface->flags & FONTFACE_KERNING_PAIRS);
+
+    fontface->flags |= FONTFACE_NO_KERNING_PAIRS;
+
+    stream_desc.stream = fontface->stream;
+    stream_desc.face_type = fontface->type;
+    stream_desc.face_index = fontface->index;
+
+    opentype_get_font_table(&stream_desc, MS_KERN_TAG, &fontface->kern);
+    if (fontface->kern.exists)
+    {
+        if ((header = table_read_ensure(&fontface->kern, 0, sizeof(*header))))
+        {
+            count = GET_BE_WORD(header->table_count);
+            offset = sizeof(*header);
+
+            /* Freetype limits table count this way. */
+            count = min(count, 32);
+
+            /* Check for presence of format 0 subtable with horizontal coverage. */
+            for (i = 0; i < count; ++i)
+            {
+                if (!(subtable = table_read_ensure(&fontface->kern, offset, sizeof(*subtable))))
+                    break;
+
+                if (subtable->version == 0 && GET_BE_WORD(subtable->coverage) & 1)
+                {
+                    fontface->flags &= ~FONTFACE_NO_KERNING_PAIRS;
+                    fontface->flags |= FONTFACE_KERNING_PAIRS;
+                    break;
+                }
+
+                offset += GET_BE_WORD(subtable->length);
+            }
+        }
+    }
+
+    if (fontface->flags & FONTFACE_NO_KERNING_PAIRS && fontface->kern.data)
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc.stream, fontface->kern.context);
+
+    return !!(fontface->flags & FONTFACE_KERNING_PAIRS);
+}
+
+struct kern_format0_compare_key
+{
+    UINT16 left;
+    UINT16 right;
+};
+
+static int kern_format0_compare(const void *a, const void *b)
+{
+    const struct kern_format0_compare_key *key = a;
+    const WORD *data = b;
+    UINT16 left = GET_BE_WORD(data[0]), right = GET_BE_WORD(data[1]);
+    int ret;
+
+    if ((ret = (int)key->left - (int)left)) return ret;
+    if ((ret = (int)key->right - (int)right)) return ret;
+    return 0;
+}
+
+HRESULT opentype_get_kerning_pairs(struct dwrite_fontface *fontface, unsigned int count,
+        const UINT16 *glyphs, INT32 *values)
+{
+    const struct kern_subtable_header *subtable;
+    unsigned int i, s, offset, pair_count, subtable_count;
+    struct kern_format0_compare_key key;
+    const struct kern_header *header;
+    const WORD *data;
+
+    if (!opentype_has_kerning_pairs(fontface))
+    {
+        memset(values, 0, count * sizeof(*values));
+        return S_OK;
+    }
+
+    subtable_count = table_read_be_word(&fontface->kern, 2);
+    subtable_count = min(subtable_count, 32);
+
+    for (i = 0; i < count - 1; ++i)
+    {
+        offset = sizeof(*header);
+
+        key.left = glyphs[i];
+        key.right = glyphs[i + 1];
+        values[i] = 0;
+
+        for (s = 0; s < subtable_count; ++s)
+        {
+            if (!(subtable = table_read_ensure(&fontface->kern, offset, sizeof(*subtable))))
+                break;
+
+            if (subtable->version == 0 && GET_BE_WORD(subtable->coverage) & 1)
+            {
+                if ((data = table_read_ensure(&fontface->kern, offset, GET_BE_WORD(subtable->length))))
+                {
+                    /* Skip subtable header */
+                    data += 3;
+                    pair_count = GET_BE_WORD(*data);
+                    data += 4;
+                    /* Move to pair data */
+                    if ((data = table_read_ensure(&fontface->kern, offset + 7 * sizeof(*data),
+                            pair_count * 3 * sizeof(*data))))
+                    {
+                        if ((data = bsearch(&key, data, pair_count, 3 * sizeof(*data), kern_format0_compare)))
+                        {
+                            values[i] = (short)GET_BE_WORD(data[2]);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            offset += GET_BE_WORD(subtable->length);
+        }
+    }
+    values[count - 1] = 0;
 
     return S_OK;
 }

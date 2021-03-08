@@ -639,6 +639,8 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
             IDWriteFontFace5_ReleaseFontTable(iface, fontface->cpal.context);
         if (fontface->colr.context)
             IDWriteFontFace5_ReleaseFontTable(iface, fontface->colr.context);
+        if (fontface->kern.context)
+            IDWriteFontFace5_ReleaseFontTable(iface, fontface->kern.context);
         if (fontface->file)
             IDWriteFontFile_Release(fontface->file);
         if (fontface->stream)
@@ -1155,32 +1157,22 @@ static HRESULT WINAPI dwritefontface1_GetGdiCompatibleGlyphAdvances(IDWriteFontF
 }
 
 static HRESULT WINAPI dwritefontface1_GetKerningPairAdjustments(IDWriteFontFace5 *iface, UINT32 count,
-    const UINT16 *indices, INT32 *adjustments)
+    const UINT16 *glyphs, INT32 *values)
 {
     struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
-    UINT32 i;
 
-    TRACE("%p, %u, %p, %p.\n", iface, count, indices, adjustments);
+    TRACE("%p, %u, %p, %p.\n", iface, count, glyphs, values);
 
-    if (!(indices || adjustments) || !count)
+    if (!(glyphs || values) || !count)
         return E_INVALIDARG;
 
-    if (!indices || count == 1) {
-        memset(adjustments, 0, count*sizeof(INT32));
-        return E_INVALIDARG;
-    }
-
-    if (!(fontface->flags & FONTFACE_HAS_KERNING_PAIRS))
+    if (!glyphs || count == 1)
     {
-        memset(adjustments, 0, count*sizeof(INT32));
-        return S_OK;
+        memset(values, 0, count * sizeof(*values));
+        return E_INVALIDARG;
     }
 
-    for (i = 0; i < count-1; i++)
-        adjustments[i] = freetype_get_kerning_pair_adjustment(iface, indices[i], indices[i+1]);
-    adjustments[count-1] = 0;
-
-    return S_OK;
+    return opentype_get_kerning_pairs(fontface, count, glyphs, values);
 }
 
 static BOOL WINAPI dwritefontface1_HasKerningPairs(IDWriteFontFace5 *iface)
@@ -1189,7 +1181,7 @@ static BOOL WINAPI dwritefontface1_HasKerningPairs(IDWriteFontFace5 *iface)
 
     TRACE("%p.\n", iface);
 
-    return !!(fontface->flags & FONTFACE_HAS_KERNING_PAIRS);
+    return opentype_has_kerning_pairs(fontface);
 }
 
 static HRESULT WINAPI dwritefontface1_GetRecommendedRenderingMode(IDWriteFontFace5 *iface,
@@ -4980,6 +4972,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     fontface->gasp.exists = TRUE;
     fontface->cpal.exists = TRUE;
     fontface->colr.exists = TRUE;
+    fontface->kern.exists = TRUE;
     fontface->index = desc->index;
     fontface->simulations = desc->simulations;
     fontface->factory = desc->factory;
@@ -5001,9 +4994,6 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
             fontface->caret.slopeRun = fontface->caret.slopeRise / 3;
         }
     }
-
-    if (freetype_has_kerning_pairs(&fontface->IDWriteFontFace5_iface))
-        fontface->flags |= FONTFACE_HAS_KERNING_PAIRS;
     fontface->glyph_image_formats = opentype_get_glyph_image_formats(&fontface->IDWriteFontFace5_iface);
 
     /* Font properties are reused from font object when 'normal' face creation path is used:

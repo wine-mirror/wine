@@ -562,37 +562,6 @@ UINT16 freetype_get_glyphcount(IDWriteFontFace5 *fontface)
     return count;
 }
 
-BOOL freetype_has_kerning_pairs(IDWriteFontFace5 *fontface)
-{
-    BOOL has_kerning_pairs = FALSE;
-    FT_Face face;
-
-    EnterCriticalSection(&freetype_cs);
-    if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0)
-        has_kerning_pairs = !!FT_HAS_KERNING(face);
-    LeaveCriticalSection(&freetype_cs);
-
-    return has_kerning_pairs;
-}
-
-INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace5 *fontface, UINT16 left, UINT16 right)
-{
-    INT32 adjustment = 0;
-    FT_Face face;
-
-    EnterCriticalSection(&freetype_cs);
-    if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0) {
-        FT_Vector kern;
-        if (FT_HAS_KERNING(face)) {
-            pFT_Get_Kerning(face, left, right, FT_KERNING_UNSCALED, &kern);
-            adjustment = kern.x;
-        }
-    }
-    LeaveCriticalSection(&freetype_cs);
-
-    return adjustment;
-}
-
 static inline void ft_matrix_from_dwrite_matrix(const DWRITE_MATRIX *m, FT_Matrix *ft_matrix)
 {
     ft_matrix->xx =  m->m11 * 0x10000;
@@ -876,16 +845,6 @@ HRESULT freetype_get_glyphrun_outline(IDWriteFontFace5 *fontface, float emSize, 
 }
 
 UINT16 freetype_get_glyphcount(IDWriteFontFace5 *fontface)
-{
-    return 0;
-}
-
-BOOL freetype_has_kerning_pairs(IDWriteFontFace5 *fontface)
-{
-    return FALSE;
-}
-
-INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace5 *fontface, UINT16 left, UINT16 right)
 {
     return 0;
 }
