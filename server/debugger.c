@@ -70,6 +70,7 @@ struct type_descr debug_obj_type =
 struct debug_obj
 {
     struct object        obj;         /* object header */
+    struct event_sync   *sync;       /* sync object for wait/signal */
     struct list          event_queue; /* pending events queue */
     unsigned int         flags;       /* debug flags */
 };
@@ -105,7 +106,7 @@ static const struct object_ops debug_event_ops =
 };
 
 static void debug_obj_dump( struct object *obj, int verbose );
-static int debug_obj_signaled( struct object *obj, struct wait_queue_entry *entry );
+static struct object *debug_obj_get_sync( struct object *obj );
 static void debug_obj_destroy( struct object *obj );
 
 static const struct object_ops debug_obj_ops =
@@ -113,13 +114,13 @@ static const struct object_ops debug_obj_ops =
     sizeof(struct debug_obj),      /* size */
     &debug_obj_type,               /* type */
     debug_obj_dump,                /* dump */
-    add_queue,                     /* add_queue */
-    remove_queue,                  /* remove_queue */
-    debug_obj_signaled,            /* signaled */
-    no_satisfied,                  /* satisfied */
+    NULL,                          /* add_queue */
+    NULL,                          /* remove_queue */
+    NULL,                          /* signaled */
+    NULL,                          /* satisfied */
     no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
-    default_get_sync,              /* get_sync */
+    debug_obj_get_sync,            /* get_sync */
     default_map_access,            /* map_access */
     default_get_sd,                /* get_sd */
     default_set_sd,                /* set_sd */
@@ -255,7 +256,7 @@ static void link_event( struct debug_obj *debug_obj, struct debug_event *event )
     {
         /* grab reference since debugger could be killed while trying to wake up */
         grab_object( debug_obj );
-        wake_up( &debug_obj->obj, 0 );
+        signal_sync( debug_obj->sync );
         release_object( debug_obj );
     }
 }
@@ -268,7 +269,7 @@ static void resume_event( struct debug_obj *debug_obj, struct debug_event *event
     if (!event->sender->process->debug_event)
     {
         grab_object( debug_obj );
-        wake_up( &debug_obj->obj, 0 );
+        signal_sync( debug_obj->sync );
         release_object( debug_obj );
     }
 }
@@ -329,11 +330,11 @@ static void debug_obj_dump( struct object *obj, int verbose )
              debug_obj->event_queue.next, debug_obj->event_queue.prev );
 }
 
-static int debug_obj_signaled( struct object *obj, struct wait_queue_entry *entry )
+static struct object *debug_obj_get_sync( struct object *obj )
 {
     struct debug_obj *debug_obj = (struct debug_obj *)obj;
     assert( obj->ops == &debug_obj_ops );
-    return find_event_to_send( debug_obj ) != NULL;
+    return grab_object( debug_obj->sync );
 }
 
 static void debug_obj_destroy( struct object *obj )
@@ -348,6 +349,8 @@ static void debug_obj_destroy( struct object *obj )
     /* free all pending events */
     while ((ptr = list_head( &debug_obj->event_queue )))
         unlink_event( debug_obj, LIST_ENTRY( ptr, struct debug_event, entry ));
+
+    if (debug_obj->sync) release_object( debug_obj->sync );
 }
 
 struct debug_obj *get_debug_obj( struct process *process, obj_handle_t handle, unsigned int access )
@@ -365,8 +368,15 @@ static struct debug_obj *create_debug_obj( struct object *root, const struct uni
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
+            debug_obj->sync  = NULL;
             debug_obj->flags = flags;
             list_init( &debug_obj->event_queue );
+
+            if (!(debug_obj->sync = create_event_sync( 1, 0 )))
+            {
+                release_object( debug_obj );
+                return NULL;
+            }
         }
     }
     return debug_obj;
@@ -584,6 +594,7 @@ DECL_HANDLER(wait_debug_event)
         reply->tid = get_thread_id( event->sender );
         alloc_event_handles( event, current->process );
         set_reply_data( &event->data, min( get_reply_max_size(), sizeof(event->data) ));
+        if (!find_event_to_send( debug_obj )) reset_sync( debug_obj->sync );
     }
     else
     {
