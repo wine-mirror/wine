@@ -833,6 +833,7 @@ HRESULT _set_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, L
     DWORD username_size = MAX_PATH;
     int i, action = 0, num_actions = 0;
     unsigned int offset = 0;
+    ActionMap *action_map;
 
     if (This->acquired) return DIERR_ACQUIRED;
 
@@ -848,15 +849,12 @@ HRESULT _set_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, L
 
     if (num_actions == 0) return DI_NOEFFECT;
 
-    This->num_actions = num_actions;
-
     /* Construct the dataformat and actionmap */
     obj_df = HeapAlloc(GetProcessHeap(), 0, sizeof(DIOBJECTDATAFORMAT)*num_actions);
     data_format.rgodf = (LPDIOBJECTDATAFORMAT)obj_df;
     data_format.dwNumObjs = num_actions;
 
-    HeapFree(GetProcessHeap(), 0, This->action_map);
-    This->action_map = HeapAlloc(GetProcessHeap(), 0, sizeof(ActionMap)*num_actions);
+    action_map = HeapAlloc(GetProcessHeap(), 0, sizeof(ActionMap)*num_actions);
 
     for (i = 0; i < lpdiaf->dwNumActions; i++)
     {
@@ -873,8 +871,8 @@ HRESULT _set_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, L
 
             memcpy(&obj_df[action], obj, df->dwObjSize);
 
-            This->action_map[action].uAppData = lpdiaf->rgoAction[i].uAppData;
-            This->action_map[action].offset = offset;
+            action_map[action].uAppData = lpdiaf->rgoAction[i].uAppData;
+            action_map[action].offset = offset;
             obj_df[action].dwOfs = offset;
             offset += (type & DIDFT_BUTTON) ? 1 : 4;
 
@@ -883,6 +881,9 @@ HRESULT _set_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, L
     }
 
     IDirectInputDevice8_SetDataFormat(iface, &data_format);
+
+    This->action_map = action_map;
+    This->num_actions = num_actions;
 
     HeapFree(GetProcessHeap(), 0, obj_df);
 
@@ -962,6 +963,7 @@ void queue_event(LPDIRECTINPUTDEVICE8A iface, int inst_id, DWORD data, DWORD tim
     This->data_queue[This->queue_head].dwData      = data;
     This->data_queue[This->queue_head].dwTimeStamp = time;
     This->data_queue[This->queue_head].dwSequence  = seq;
+    This->data_queue[This->queue_head].uAppData    = -1;
 
     /* Set uAppData by means of action mapping */
     if (This->num_actions > 0)
@@ -1062,6 +1064,10 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetDataFormat(LPDIRECTINPUTDEVICE8W ifac
     if (This->acquired) return DIERR_ACQUIRED;
 
     EnterCriticalSection(&This->crit);
+
+    HeapFree(GetProcessHeap(), 0, This->action_map);
+    This->action_map = NULL;
+    This->num_actions = 0;
 
     release_DataFormat(&This->data_format);
     res = create_DataFormat(df, &This->data_format);

@@ -362,6 +362,18 @@ static void test_action_mapping(void)
         /* Test keyboard input */
         test_device_input(data.keyboard, INPUT_KEYBOARD, VK_SPACE, 2);
 
+        /* setting format should reset action map */
+        hr = IDirectInputDevice8_SetDataFormat(data.keyboard, &c_dfDIKeyboard);
+        ok (SUCCEEDED(hr), "IDirectInputDevice8_SetDataFormat failed: %08x\n", hr);
+
+        test_device_input(data.keyboard, INPUT_KEYBOARD, VK_SPACE, -1);
+
+        /* back to action map */
+        hr = IDirectInputDevice8_SetActionMap(data.keyboard, data.lpdiaf, NULL, 0);
+        ok (SUCCEEDED(hr), "SetActionMap should succeed hr=%08x\n", hr);
+
+        test_device_input(data.keyboard, INPUT_KEYBOARD, VK_SPACE, 2);
+
         /* Test BuildActionMap with no suitable actions for a device */
         IDirectInputDevice_Unacquire(data.keyboard);
         af.dwDataSize = 4 * DITEST_KEYBOARDSPACE;
