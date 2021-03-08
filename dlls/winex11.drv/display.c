@@ -289,9 +289,9 @@ RECT get_work_area(const RECT *monitor_rect)
                             x11drv_atom(_GTK_WORKAREAS_D0), 0, ~0, False, XA_CARDINAL, &type,
                             &format, &count, &remaining, (unsigned char **)&work_area))
     {
-        if (type == XA_CARDINAL && format == 32 && count >= 4)
+        if (type == XA_CARDINAL && format == 32)
         {
-            for (i = 0; i + 3 < count; i += 4)
+            for (i = 0; i < count / 4; ++i)
             {
                 work_rect.left = work_area[i * 4];
                 work_rect.top = work_area[i * 4 + 1];
