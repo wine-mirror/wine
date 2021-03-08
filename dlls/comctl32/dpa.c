@@ -524,9 +524,9 @@ HDPA WINAPI DPA_Clone (const HDPA hdpa, HDPA hdpaNew)
  *     Success: pointer
  *     Failure: NULL
  */
-LPVOID WINAPI DPA_GetPtr (HDPA hdpa, INT nIndex)
+LPVOID WINAPI DPA_GetPtr (HDPA hdpa, INT_PTR nIndex)
 {
-    TRACE("(%p %d)\n", hdpa, nIndex);
+    TRACE("(%p %ld)\n", hdpa, nIndex);
 
     if (!hdpa)
         return NULL;
@@ -535,7 +535,7 @@ LPVOID WINAPI DPA_GetPtr (HDPA hdpa, INT nIndex)
         return NULL;
     }
     if ((nIndex < 0) || (nIndex >= hdpa->nItemCount)) {
-        WARN("not enough pointers in array (%d vs %d).\n",nIndex,hdpa->nItemCount);
+        WARN("not enough pointers in array (%ld vs %d).\n",nIndex,hdpa->nItemCount);
         return NULL;
     }
 

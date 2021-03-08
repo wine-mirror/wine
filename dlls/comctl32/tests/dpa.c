@@ -49,7 +49,7 @@ static PVOID   (WINAPI *pDPA_DeletePtr)(HDPA,INT);
 static BOOL    (WINAPI *pDPA_Destroy)(HDPA);
 static VOID    (WINAPI *pDPA_DestroyCallback)(HDPA,PFNDPAENUMCALLBACK,PVOID);
 static VOID    (WINAPI *pDPA_EnumCallback)(HDPA,PFNDPAENUMCALLBACK,PVOID); 
-static INT     (WINAPI *pDPA_GetPtr)(HDPA,INT);
+static PVOID   (WINAPI *pDPA_GetPtr)(HDPA,INT_PTR);
 static INT     (WINAPI *pDPA_GetPtrIndex)(HDPA,PVOID);
 static BOOL    (WINAPI *pDPA_Grow)(HDPA,INT);
 static INT     (WINAPI *pDPA_InsertPtr)(HDPA,INT,PVOID);
