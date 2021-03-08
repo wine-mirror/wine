@@ -2869,7 +2869,7 @@ static FT_BBox get_transformed_bbox( const FT_Glyph_Metrics *metrics,
             {
                 vec.x = metrics->horiBearingX + xc * metrics->width;
                 vec.y = metrics->horiBearingY - yc * metrics->height;
-                TRACE( "Vec %ld,i %ld\n", vec.x, vec.y );
+                TRACE( "Vec %ld, %ld\n", vec.x, vec.y );
                 pFT_Vector_Transform( &vec, &metrices[matrix_vert] );
                 if (xc == 0 && yc == 0)
                 {
