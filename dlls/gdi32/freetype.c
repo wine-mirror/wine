@@ -2786,13 +2786,13 @@ static inline BYTE get_max_level( UINT format )
     return 255;
 }
 
-static FT_Vector get_advance_metric(struct gdi_font *incoming_font, struct gdi_font *font,
-                                    const FT_Glyph_Metrics *metrics,
-                                    const FT_Matrix *transMat, BOOL vertical_metrics)
+static FT_Vector get_advance_metric( struct gdi_font *font, const FT_Glyph_Metrics *metrics,
+                                     const FT_Matrix *transMat, BOOL vertical_metrics )
 {
     FT_Vector adv;
     FT_Fixed base_advance, em_scale = 0;
     BOOL fixed_pitch_full = FALSE;
+    struct gdi_font *incoming_font = font->base_font ? font->base_font : font;
 
     if (vertical_metrics)
         base_advance = metrics->vertAdvance;
@@ -2895,8 +2895,7 @@ static FT_BBox get_transformed_bbox( const FT_Glyph_Metrics *metrics,
     return bbox;
 }
 
-static void compute_metrics( struct gdi_font *incoming_font, struct gdi_font *font,
-                             FT_BBox bbox, const FT_Glyph_Metrics *metrics,
+static void compute_metrics( struct gdi_font *font, FT_BBox bbox, const FT_Glyph_Metrics *metrics,
                              BOOL vertical, BOOL vertical_metrics,
                              BOOL needs_transform, const FT_Matrix matrices[3],
                              GLYPHMETRICS *gm, ABC *abc )
@@ -2905,7 +2904,7 @@ static void compute_metrics( struct gdi_font *incoming_font, struct gdi_font *fo
 
     if (!needs_transform)
     {
-        adv = get_advance_metric( incoming_font, font, metrics, NULL, vertical_metrics );
+        adv = get_advance_metric( font, metrics, NULL, vertical_metrics );
         gm->gmCellIncX = adv.x >> 6;
         gm->gmCellIncY = 0;
         origin.x = bbox.xMin;
@@ -2938,13 +2937,11 @@ static void compute_metrics( struct gdi_font *incoming_font, struct gdi_font *fo
             lsb = metrics->horiBearingX;
         }
 
-        adv = get_advance_metric( incoming_font, font, metrics, &matrices[matrix_hori],
-                                  vertical_metrics );
+        adv = get_advance_metric( font, metrics, &matrices[matrix_hori], vertical_metrics );
         gm->gmCellIncX = adv.x >> 6;
         gm->gmCellIncY = adv.y >> 6;
 
-        adv = get_advance_metric( incoming_font, font, metrics, &matrices[matrix_unrotated],
-                                  vertical_metrics );
+        adv = get_advance_metric( font, metrics, &matrices[matrix_unrotated], vertical_metrics );
         adv.x = pFT_Vector_Length( &adv );
         adv.y = 0;
 
@@ -3566,8 +3563,8 @@ static DWORD CDECL freetype_get_glyph_outline( struct gdi_font *font, UINT glyph
     }
 
     bbox = get_transformed_bbox( &metrics, needsTransform, matrices );
-    compute_metrics( base_font, font, bbox, &metrics, tategaki,
-                     vertical_metrics, needsTransform, matrices, lpgm, abc );
+    compute_metrics( font, bbox, &metrics, tategaki, vertical_metrics, needsTransform, matrices,
+                     lpgm, abc );
 
     switch (format)
     {
