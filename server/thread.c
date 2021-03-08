@@ -188,7 +188,7 @@ struct type_descr thread_type =
 };
 
 static void dump_thread( struct object *obj, int verbose );
-static int thread_signaled( struct object *obj, struct wait_queue_entry *entry );
+static struct object *thread_get_sync( struct object *obj );
 static unsigned int thread_map_access( struct object *obj, unsigned int access );
 static void thread_poll_event( struct fd *fd, int event );
 static struct list *thread_get_kernel_obj_list( struct object *obj );
@@ -199,13 +199,13 @@ static const struct object_ops thread_ops =
     sizeof(struct thread),      /* size */
     &thread_type,               /* type */
     dump_thread,                /* dump */
-    add_queue,                  /* add_queue */
-    remove_queue,               /* remove_queue */
-    thread_signaled,            /* signaled */
-    no_satisfied,               /* satisfied */
+    NULL,                       /* add_queue */
+    NULL,                       /* remove_queue */
+    NULL,                       /* signaled */
+    NULL,                       /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
-    default_get_sync,           /* get_sync */
+    thread_get_sync,            /* get_sync */
     thread_map_access,          /* map_access */
     default_get_sd,             /* get_sd */
     default_set_sd,             /* set_sd */
@@ -395,6 +395,7 @@ static inline void init_thread_structure( struct thread *thread )
 {
     int i;
 
+    thread->sync            = NULL;
     thread->unix_pid        = -1;  /* not known yet */
     thread->unix_tid        = -1;  /* not known yet */
     thread->context         = NULL;
@@ -547,11 +548,8 @@ struct thread *create_thread( int fd, struct process *process, const struct secu
         release_object( thread );
         return NULL;
     }
-    if (!(thread->request_fd = create_anonymous_fd( &thread_fd_ops, fd, &thread->obj, 0 )))
-    {
-        release_object( thread );
-        return NULL;
-    }
+    if (!(thread->request_fd = create_anonymous_fd( &thread_fd_ops, fd, &thread->obj, 0 ))) goto error;
+    if (!(thread->sync = create_event_sync( 1, 0 ))) goto error;
 
     if (process->desktop)
     {
@@ -566,6 +564,10 @@ struct thread *create_thread( int fd, struct process *process, const struct secu
     set_fd_events( thread->request_fd, POLLIN );  /* start listening to events */
     add_process_thread( thread->process, thread );
     return thread;
+
+error:
+    release_object( thread );
+    return NULL;
 }
 
 /* handle a client event */
@@ -642,6 +644,7 @@ static void destroy_thread( struct object *obj )
     release_object( thread->process );
     if (thread->id) free_ptid( thread->id );
     if (thread->token) release_object( thread->token );
+    if (thread->sync) release_object( thread->sync );
 }
 
 /* dump a thread on stdout for debugging purposes */
@@ -654,10 +657,11 @@ static void dump_thread( struct object *obj, int verbose )
              thread->id, thread->unix_pid, thread->unix_tid, thread->state );
 }
 
-static int thread_signaled( struct object *obj, struct wait_queue_entry *entry )
+static struct object *thread_get_sync( struct object *obj )
 {
-    struct thread *mythread = (struct thread *)obj;
-    return (mythread->state == TERMINATED);
+    struct thread *thread = (struct thread *)obj;
+    assert( obj->ops == &thread_ops );
+    return grab_object( thread->sync );
 }
 
 static unsigned int thread_map_access( struct object *obj, unsigned int access )
@@ -1564,7 +1568,7 @@ void kill_thread( struct thread *thread, int violent_death )
     }
     kill_console_processes( thread, 0 );
     abandon_mutexes( thread );
-    wake_up( &thread->obj, 0 );
+    signal_sync( thread->sync );
     if (violent_death) send_thread_signal( thread, SIGQUIT );
     cleanup_thread( thread );
     remove_process_thread( thread->process, thread );
