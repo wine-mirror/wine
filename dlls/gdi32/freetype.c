@@ -1922,6 +1922,11 @@ static BOOL init_freetype(void)
         pFT_Property_Set( library, "truetype", "interpreter-version", &interpreter_version );
     }
 
+#ifdef FT_LCD_FILTER_H
+    if (pFT_Library_SetLcdFilter)
+        pFT_Library_SetLcdFilter( library, FT_LCD_FILTER_DEFAULT );
+#endif
+
     return TRUE;
 
 sym_not_found:
@@ -3199,10 +3204,6 @@ static DWORD get_subpixel_glyph_bitmap( FT_GlyphSlot glyph, FT_BBox bbox, UINT f
         if (needs_transform)
             pFT_Outline_Transform( &glyph->outline, &matrices[matrix_vert] );
 
-#ifdef FT_LCD_FILTER_H
-        if (pFT_Library_SetLcdFilter)
-            pFT_Library_SetLcdFilter( library, FT_LCD_FILTER_DEFAULT );
-#endif
         pFT_Render_Glyph( glyph, render_mode );
 
         src_pitch = glyph->bitmap.pitch;
