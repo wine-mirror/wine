@@ -188,7 +188,7 @@ static size_t append_type_signature(char **buf, size_t *len, size_t pos, type_t 
         n += strappend(buf, len, pos + n, "rc(");
         n += append_namespaces(buf, len, pos + n, type->namespace, "", ".", type->name, NULL);
         n += strappend(buf, len, pos + n, ";");
-        n += append_type_signature(buf, len, pos + n, type_runtimeclass_get_default_iface(type));
+        n += append_type_signature(buf, len, pos + n, type_runtimeclass_get_default_iface(type, TRUE));
         n += strappend(buf, len, pos + n, ")");
         return n;
     case TYPE_POINTER:
@@ -379,7 +379,7 @@ static char *format_parameterized_type_impl_name(type_t *type, typeref_list_t *p
         {
             pos += strappend(&buf, &len, pos, "ABI::Windows::Foundation::Internal::AggregateType<%s", type->qualified_name);
             pos += append_pointer_stars(&buf, &len, pos, ref->type);
-            iface = type_runtimeclass_get_default_iface(type);
+            iface = type_runtimeclass_get_default_iface(type, TRUE);
             pos += strappend(&buf, &len, pos, ", %s", iface->qualified_name);
             pos += append_pointer_stars(&buf, &len, pos, ref->type);
             pos += strappend(&buf, &len, pos, " >");
@@ -843,10 +843,11 @@ type_t *type_runtimeclass_define(type_t *runtimeclass, attr_list_t *attrs, typer
     runtimeclass->attrs = check_runtimeclass_attrs(runtimeclass->name, attrs);
     runtimeclass->details.runtimeclass.ifaces = ifaces;
     runtimeclass->defined = TRUE;
-    if (!type_runtimeclass_get_default_iface(runtimeclass))
-        error_loc("missing default interface on runtimeclass %s\n", runtimeclass->name);
+    if (!type_runtimeclass_get_default_iface(runtimeclass, FALSE) &&
+        !get_attrp(runtimeclass->attrs, ATTR_STATIC))
+        error_loc("runtimeclass %s must have a default interface or static factory\n", runtimeclass->name);
 
-    LIST_FOR_EACH_ENTRY(ref, ifaces, typeref_t, entry)
+    if (ifaces) LIST_FOR_EACH_ENTRY(ref, ifaces, typeref_t, entry)
     {
         /* FIXME: this should probably not be allowed, here or in coclass, */
         /* but for now there's too many places in Wine IDL where it is to */

@@ -488,7 +488,7 @@ void write_type_left(FILE *h, const decl_spec_t *ds, enum name_type name_type, i
         fprintf(h, "%s", type_get_qualified_name(t, name_type));
         break;
       case TYPE_RUNTIMECLASS:
-        fprintf(h, "%s", type_get_name(type_runtimeclass_get_default_iface(t), name_type));
+        fprintf(h, "%s", type_get_name(type_runtimeclass_get_default_iface(t, TRUE), name_type));
         break;
       case TYPE_DELEGATE:
         fprintf(h, "%s", type_get_qualified_name(type_delegate_get_iface(t), name_type));

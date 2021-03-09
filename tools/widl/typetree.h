@@ -20,6 +20,9 @@
 
 #include "widltypes.h"
 #include <assert.h>
+#include <stdio.h>
+
+#include "utils.h"
 
 #ifndef WIDL_TYPE_TREE_H
 #define WIDL_TYPE_TREE_H
@@ -379,7 +382,7 @@ static inline typeref_list_t *type_runtimeclass_get_ifaces(const type_t *type)
     return type->details.runtimeclass.ifaces;
 }
 
-static inline type_t *type_runtimeclass_get_default_iface(const type_t *type)
+static inline type_t *type_runtimeclass_get_default_iface(const type_t *type, int check)
 {
     typeref_list_t *ifaces = type_runtimeclass_get_ifaces(type);
     typeref_t *ref;
@@ -389,7 +392,8 @@ static inline type_t *type_runtimeclass_get_default_iface(const type_t *type)
         if (is_attr(ref->attrs, ATTR_DEFAULT))
             return ref->type;
 
-    return NULL;
+    if (!check) return NULL;
+    error_loc_info(&type->loc_info, "runtimeclass %s needs a default interface\n", type->name);
 }
 
 static inline type_t *type_delegate_get_iface(const type_t *type)
