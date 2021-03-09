@@ -293,7 +293,6 @@ struct strmbase_renderer
 
     IQualityControl *qc_sink;
     REFERENCE_TIME last_left, avg_duration, avg_pt;
-    REFERENCE_TIME current_jitter, current_rstart, current_rstop;
     double avg_rate;
 
     const struct strmbase_renderer_ops *pFuncsTable;

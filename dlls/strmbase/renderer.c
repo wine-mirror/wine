@@ -63,17 +63,11 @@ static void reset_qos(struct strmbase_renderer *filter)
     filter->avg_rate = -1.0;
 }
 
-static void perform_qos(struct strmbase_renderer *filter)
+static void perform_qos(struct strmbase_renderer *filter,
+        const REFERENCE_TIME start, const REFERENCE_TIME stop, REFERENCE_TIME jitter)
 {
-    REFERENCE_TIME start, stop, jitter, pt, entered, left, duration;
+    REFERENCE_TIME pt, entered, left, duration;
     double rate;
-
-    if (!filter->filter.clock || filter->current_rstart < 0)
-        return;
-
-    start = filter->current_rstart;
-    stop = filter->current_rstop;
-    jitter = filter->current_jitter;
 
     if (jitter < 0)
     {
@@ -155,16 +149,16 @@ static void perform_qos(struct strmbase_renderer *filter)
         Quality q;
 
         /* If we have a valid rate, start sending QoS messages. */
-        if (filter->current_jitter < 0)
+        if (jitter < 0)
         {
             /* Make sure we never go below 0 when adding the jitter to the
              * timestamp. */
-            if (filter->current_rstart < -filter->current_jitter)
-                filter->current_jitter = -filter->current_rstart;
+            if (start < -jitter)
+                jitter = -start;
         }
         else
         {
-            filter->current_jitter += (filter->current_rstop - filter->current_rstart);
+            jitter += stop - start;
         }
 
         q.Type = (jitter > 0 ? Famine : Flood);
@@ -173,34 +167,13 @@ static void perform_qos(struct strmbase_renderer *filter)
             q.Proportion = 200;
         else if (q.Proportion > 5000)
             q.Proportion = 5000;
-        q.Late = filter->current_jitter;
-        q.TimeStamp = filter->current_rstart;
+        q.Late = jitter;
+        q.TimeStamp = start;
         IQualityControl_Notify(&filter->IQualityControl_iface, &filter->filter.IBaseFilter_iface, q);
     }
 
     /* Record when this buffer will leave us. */
     filter->last_left = left;
-}
-
-static void begin_render(struct strmbase_renderer *filter,
-        REFERENCE_TIME start, REFERENCE_TIME stop)
-{
-    filter->current_rstart = start;
-    filter->current_rstop = max(stop, start);
-
-    if (start >= 0)
-    {
-        REFERENCE_TIME now;
-        IReferenceClock_GetTime(filter->filter.clock, &now);
-        filter->current_jitter = (now - filter->stream_start) - start;
-    }
-    else
-    {
-        filter->current_jitter = 0;
-    }
-
-    TRACE("start %s, stop %s, jitter %s.\n",
-            debugstr_time(start), debugstr_time(stop), debugstr_time(filter->current_jitter));
 }
 
 static inline struct strmbase_renderer *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -384,14 +357,16 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
 
     if (need_wait)
     {
-        REFERENCE_TIME now;
+        REFERENCE_TIME now, jitter;
         DWORD_PTR cookie;
 
         IReferenceClock_GetTime(filter->filter.clock, &now);
 
-        begin_render(filter, start, stop);
+        /* "jitter" describes how early (negative) or late (positive) this
+         * buffer arrived, relative to its PTS. */
+        jitter = (now - filter->stream_start) - start;
 
-        if (now - filter->stream_start - start <= -10000)
+        if (jitter <= -10000) /* if we are early by at least 1 ms */
         {
             HANDLE handles[2] = {filter->advise_event, filter->flush_event};
             DWORD ret;
@@ -412,7 +387,7 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
         if (state == State_Running)
             hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
 
-        perform_qos(filter);
+        perform_qos(filter, start, stop, jitter);
     }
     else
     {
@@ -587,8 +562,6 @@ void strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown *outer,
     strmbase_passthrough_init(&filter->passthrough, (IUnknown *)&filter->filter.IBaseFilter_iface);
     ISeekingPassThru_Init(&filter->passthrough.ISeekingPassThru_iface, TRUE, &filter->sink.pin.IPin_iface);
     filter->IQualityControl_iface.lpVtbl = &quality_control_vtbl;
-
-    filter->current_rstart = filter->current_rstop = -1;
 
     filter->pFuncsTable = ops;
 
