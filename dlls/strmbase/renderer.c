@@ -59,39 +59,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 
 static void QualityControlRender_Start(struct strmbase_qc *This, REFERENCE_TIME tStart)
 {
-    This->last_in_time = This->last_left = This->avg_duration = This->avg_pt = -1;
+    This->last_left = This->avg_duration = This->avg_pt = -1;
     This->clockstart = tStart;
     This->avg_rate = -1.0;
-    This->is_dropped = FALSE;
-}
-
-static BOOL QualityControlRender_IsLate(struct strmbase_qc *This, REFERENCE_TIME jitter,
-                                        REFERENCE_TIME start, REFERENCE_TIME stop)
-{
-    REFERENCE_TIME max_lateness = 200000;
-
-    TRACE("jitter %s, start %s, stop %s.\n", debugstr_time(jitter),
-            debugstr_time(start), debugstr_time(stop));
-
-    /* we can add a valid stop time */
-    if (stop >= start)
-        max_lateness += stop;
-    else
-        max_lateness += start;
-
-    /* if the jitter bigger than duration and lateness we are too late */
-    if (start + jitter > max_lateness) {
-        WARN("buffer is too late %i > %i\n", (int)((start + jitter)/10000),  (int)(max_lateness/10000));
-        /* !!emergency!!, if we did not receive anything valid for more than a
-         * second, render it anyway so the user sees something */
-        if (This->last_in_time < 0 ||
-            start - This->last_in_time < 10000000)
-            return TRUE;
-        FIXME("A lot of buffers are being dropped.\n");
-        FIXME("There may be a timestamping problem, or this computer is too slow.\n");
-    }
-    This->last_in_time = start;
-    return FALSE;
 }
 
 static void QualityControlRender_DoQOS(struct strmbase_qc *priv)
@@ -170,7 +140,7 @@ static void QualityControlRender_DoQOS(struct strmbase_qc *priv)
 
     if (priv->last_left >= 0)
     {
-        if (priv->is_dropped || priv->avg_rate < 0.0)
+        if (priv->avg_rate < 0.0)
         {
             priv->avg_rate = rate;
         }
@@ -231,9 +201,7 @@ static void QualityControlRender_BeginRender(struct strmbase_qc *This, REFERENCE
         This->current_jitter = 0;
     }
 
-    /* FIXME: This isn't correct; we don't drop samples, nor should. */
-    This->is_dropped = QualityControlRender_IsLate(This, This->current_jitter, start, stop);
-    TRACE("dropped %d, start %s, stop %s, jitter %s.\n", This->is_dropped,
+    TRACE("start %s, stop %s, jitter %s.\n",
             debugstr_time(start), debugstr_time(stop), debugstr_time(This->current_jitter));
 }
 

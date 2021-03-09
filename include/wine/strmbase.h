@@ -279,10 +279,9 @@ struct strmbase_qc
     IQualityControl *tonotify;
 
     /* Render stuff */
-    REFERENCE_TIME last_in_time, last_left, avg_duration, avg_pt;
+    REFERENCE_TIME last_left, avg_duration, avg_pt;
     REFERENCE_TIME current_jitter, current_rstart, current_rstop, clockstart;
     double avg_rate;
-    BOOL is_dropped;
 };
 
 struct strmbase_renderer
