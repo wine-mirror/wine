@@ -1306,7 +1306,7 @@ static WCHAR *expand_value( WCHAR *env, SIZE_T size, const WCHAR *src, SIZE_T sr
  * helper for add_registry_environment().
  * Note that Windows happily truncates the value if it's too big.
  */
-static void add_registry_variables( WCHAR **env, SIZE_T *pos, SIZE_T *size, HANDLE key, BOOL append )
+static void add_registry_variables( WCHAR **env, SIZE_T *pos, SIZE_T *size, HANDLE key )
 {
     static const WCHAR pathW[] = {'P','A','T','H'};
     NTSTATUS status;
@@ -1331,13 +1331,13 @@ static void add_registry_variables( WCHAR **env, SIZE_T *pos, SIZE_T *size, HAND
         if (info->Type == REG_EXPAND_SZ) value = expand_value( *env, *pos, data, datalen );
 
         /* PATH is magic */
-        if (append && namelen == 4 && !wcsnicmp( info->Name, pathW, 4 ) && (p = find_env_var( *env, *pos, pathW, 4 )))
+        if (namelen == 4 && !wcsnicmp( info->Name, pathW, 4 ) && (p = find_env_var( *env, *pos, pathW, 4 )))
         {
             static const WCHAR sepW[] = {';',0};
-            WCHAR *newpath = malloc( (wcslen(p) - 4 + datalen) * sizeof(WCHAR) );
+            WCHAR *newpath = malloc( (wcslen(p) - 3 + wcslen(value)) * sizeof(WCHAR) );
             wcscpy( newpath, p + 5 );
             wcscat( newpath, sepW );
-            wcscat( newpath, data );
+            wcscat( newpath, value );
             if (value != data) free( value );
             value = newpath;
         }
@@ -1370,17 +1370,17 @@ static void add_registry_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
     init_unicode_string( &nameW, syskeyW );
     if (!NtOpenKey( &key, KEY_READ, &attr ))
     {
-        add_registry_variables( env, pos, size, key, FALSE );
+        add_registry_variables( env, pos, size, key );
         NtClose( key );
     }
     if (!open_hkcu_key( "Environment", &key ))
     {
-        add_registry_variables( env, pos, size, key, TRUE );
+        add_registry_variables( env, pos, size, key );
         NtClose( key );
     }
     if (!open_hkcu_key( "Volatile Environment", &key ))
     {
-        add_registry_variables( env, pos, size, key, TRUE );
+        add_registry_variables( env, pos, size, key );
         NtClose( key );
     }
 }
@@ -1708,18 +1708,28 @@ static inline void put_unicode_string( WCHAR *src, WCHAR **dst, UNICODE_STRING *
  */
 static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
 {
+    static const WCHAR pathW[] = {'P','A','T','H'};
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
     SIZE_T size, env_pos, env_size;
-    WCHAR *dst;
+    WCHAR *dst, *p, *path = NULL;
     WCHAR *cmdline = build_command_line( main_wargv + 1 );
     WCHAR *env = get_initial_environment( &env_pos, &env_size );
     NTSTATUS status;
 
+    /* store the initial PATH value */
+    if ((p = find_env_var( env, env_pos, pathW, 4 )))
+    {
+        path = malloc( (wcslen(p + 5) + 1) * sizeof(WCHAR) );
+        wcscpy( path, p + 5 );
+    }
     add_dynamic_environment( &env, &env_pos, &env_size );
     add_registry_environment( &env, &env_pos, &env_size );
     env[env_pos] = 0;
     run_wineboot( env, env_pos );
+
     /* reload environment now that wineboot has run */
+    set_env_var( &env, &env_pos, &env_size, pathW, 4, path );  /* reset PATH */
+    free( path );
     add_registry_environment( &env, &env_pos, &env_size );
     env[env_pos++] = 0;
 
