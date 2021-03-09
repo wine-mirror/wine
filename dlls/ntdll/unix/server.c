@@ -818,6 +818,21 @@ unsigned int server_wait( const union select_op *select_op, data_size_t size, UI
 }
 
 
+/* helper function to perform a server-side wait on an internal handle without
+ * using the fast synchronization path */
+unsigned int server_wait_for_object( HANDLE handle, BOOL alertable, const LARGE_INTEGER *timeout )
+{
+    union select_op select_op;
+    UINT flags = SELECT_INTERRUPTIBLE;
+
+    if (alertable) flags |= SELECT_ALERTABLE;
+
+    select_op.wait.op = SELECT_WAIT;
+    select_op.wait.handles[0] = wine_server_obj_handle( handle );
+    return server_wait( &select_op, offsetof( union select_op, wait.handles[1] ), flags, timeout );
+}
+
+
 /***********************************************************************
  *              NtContinue  (NTDLL.@)
  */

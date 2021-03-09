@@ -227,6 +227,7 @@ extern unsigned int server_select( const union select_op *select_op, data_size_t
                                    timeout_t abs_timeout, struct context_data *context, struct user_apc *user_apc );
 extern unsigned int server_wait( const union select_op *select_op, data_size_t size, UINT flags,
                                  const LARGE_INTEGER *timeout );
+extern unsigned int server_wait_for_object( HANDLE handle, BOOL alertable, const LARGE_INTEGER *timeout );
 extern unsigned int server_queue_process_apc( HANDLE process, const union apc_call *call,
                                               union apc_result *result );
 extern int server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
@@ -467,7 +468,7 @@ static inline struct async_data server_async( HANDLE handle, struct async_fileio
 
 static inline NTSTATUS wait_async( HANDLE handle, BOOL alertable )
 {
-    return NtWaitForSingleObject( handle, alertable, NULL );
+    return server_wait_for_object( handle, alertable, NULL );
 }
 
 static inline BOOL in_wow64_call(void)
