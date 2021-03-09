@@ -74,8 +74,10 @@ HANDLE keyed_event = 0;
 static const char *debugstr_timeout( const LARGE_INTEGER *timeout )
 {
     if (!timeout) return "(infinite)";
-    return wine_dbgstr_longlong( timeout->QuadPart );
+    return wine_dbg_sprintf( "%lld.%07ld", (long long)(timeout->QuadPart / TICKSPERSEC),
+                             (long)(timeout->QuadPart % TICKSPERSEC) );
 }
+
 
 /* return a monotonic time counter, in Win32 ticks */
 static inline ULONGLONG monotonic_counter(void)
@@ -311,6 +313,9 @@ NTSTATUS WINAPI NtCreateSemaphore( HANDLE *handle, ACCESS_MASK access, const OBJ
     data_size_t len;
     struct object_attributes *objattr;
 
+    TRACE( "access %#x, name %s, initial %d, max %d\n", access,
+           attr ? debugstr_us(attr->ObjectName) : "(null)", initial, max );
+
     *handle = 0;
     if (max <= 0 || initial < 0 || initial > max) return STATUS_INVALID_PARAMETER;
     if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
@@ -337,6 +342,8 @@ NTSTATUS WINAPI NtCreateSemaphore( HANDLE *handle, ACCESS_MASK access, const OBJ
 NTSTATUS WINAPI NtOpenSemaphore( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
     unsigned int ret;
+
+    TRACE( "access %#x, name %s\n", access, attr ? debugstr_us(attr->ObjectName) : "(null)" );
 
     *handle = 0;
     if ((ret = validate_open_object_attributes( attr ))) return ret;
@@ -397,6 +404,8 @@ NTSTATUS WINAPI NtReleaseSemaphore( HANDLE handle, ULONG count, ULONG *previous 
 {
     unsigned int ret;
 
+    TRACE( "handle %p, count %u, prev_count %p\n", handle, count, previous );
+
     SERVER_START_REQ( release_semaphore )
     {
         req->handle = wine_server_obj_handle( handle );
@@ -420,6 +429,9 @@ NTSTATUS WINAPI NtCreateEvent( HANDLE *handle, ACCESS_MASK access, const OBJECT_
     unsigned int ret;
     data_size_t len;
     struct object_attributes *objattr;
+
+    TRACE( "access %#x, name %s, type %u, state %u\n", access,
+           attr ? debugstr_us(attr->ObjectName) : "(null)", type, state );
 
     *handle = 0;
     if (type != NotificationEvent && type != SynchronizationEvent) return STATUS_INVALID_PARAMETER;
@@ -448,6 +460,8 @@ NTSTATUS WINAPI NtOpenEvent( HANDLE *handle, ACCESS_MASK access, const OBJECT_AT
 {
     unsigned int ret;
 
+    TRACE( "access %#x, name %s\n", access, attr ? debugstr_us(attr->ObjectName) : "(null)" );
+
     *handle = 0;
     if ((ret = validate_open_object_attributes( attr ))) return ret;
 
@@ -473,6 +487,8 @@ NTSTATUS WINAPI NtSetEvent( HANDLE handle, LONG *prev_state )
 {
     unsigned int ret;
 
+    TRACE( "handle %p, prev_state %p\n", handle, prev_state );
+
     SERVER_START_REQ( event_op )
     {
         req->handle = wine_server_obj_handle( handle );
@@ -491,6 +507,8 @@ NTSTATUS WINAPI NtSetEvent( HANDLE handle, LONG *prev_state )
 NTSTATUS WINAPI NtResetEvent( HANDLE handle, LONG *prev_state )
 {
     unsigned int ret;
+
+    TRACE( "handle %p, prev_state %p\n", handle, prev_state );
 
     SERVER_START_REQ( event_op )
     {
@@ -520,6 +538,8 @@ NTSTATUS WINAPI NtClearEvent( HANDLE handle )
 NTSTATUS WINAPI NtPulseEvent( HANDLE handle, LONG *prev_state )
 {
     unsigned int ret;
+
+    TRACE( "handle %p, prev_state %p\n", handle, prev_state );
 
     SERVER_START_REQ( event_op )
     {
@@ -577,6 +597,9 @@ NTSTATUS WINAPI NtCreateMutant( HANDLE *handle, ACCESS_MASK access, const OBJECT
     data_size_t len;
     struct object_attributes *objattr;
 
+    TRACE( "access %#x, name %s, owned %u\n", access,
+           attr ? debugstr_us(attr->ObjectName) : "(null)", owned );
+
     *handle = 0;
     if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
 
@@ -602,6 +625,8 @@ NTSTATUS WINAPI NtOpenMutant( HANDLE *handle, ACCESS_MASK access, const OBJECT_A
 {
     unsigned int ret;
 
+    TRACE( "access %#x, name %s\n", access, attr ? debugstr_us(attr->ObjectName) : "(null)" );
+
     *handle = 0;
     if ((ret = validate_open_object_attributes( attr ))) return ret;
 
@@ -626,6 +651,8 @@ NTSTATUS WINAPI NtOpenMutant( HANDLE *handle, ACCESS_MASK access, const OBJECT_A
 NTSTATUS WINAPI NtReleaseMutant( HANDLE handle, LONG *prev_count )
 {
     unsigned int ret;
+
+    TRACE( "handle %p, prev_count %p\n", handle, prev_count );
 
     SERVER_START_REQ( release_mutex )
     {
@@ -1426,6 +1453,9 @@ NTSTATUS WINAPI NtCreateTimer( HANDLE *handle, ACCESS_MASK access, const OBJECT_
     data_size_t len;
     struct object_attributes *objattr;
 
+    TRACE( "access %#x, name %s, type %u\n", access,
+           attr ? debugstr_us(attr->ObjectName) : "(null)", type );
+
     *handle = 0;
     if (type != NotificationTimer && type != SynchronizationTimer) return STATUS_INVALID_PARAMETER;
     if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
@@ -1452,6 +1482,8 @@ NTSTATUS WINAPI NtCreateTimer( HANDLE *handle, ACCESS_MASK access, const OBJECT_
 NTSTATUS WINAPI NtOpenTimer( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
     unsigned int ret;
+
+    TRACE( "access %#x, name %s\n", access, attr ? debugstr_us(attr->ObjectName) : "(null)" );
 
     *handle = 0;
     if ((ret = validate_open_object_attributes( attr ))) return ret;
@@ -1505,6 +1537,8 @@ NTSTATUS WINAPI NtSetTimer( HANDLE handle, const LARGE_INTEGER *when, PTIMER_APC
 NTSTATUS WINAPI NtCancelTimer( HANDLE handle, BOOLEAN *state )
 {
     unsigned int ret;
+
+    TRACE( "handle %p, state %p\n", handle, state );
 
     SERVER_START_REQ( cancel_timer )
     {
@@ -1574,13 +1608,23 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles, BO
 {
     union select_op select_op;
     UINT i, flags = SELECT_INTERRUPTIBLE;
+    unsigned int ret;
 
     if (!count || count > MAXIMUM_WAIT_OBJECTS) return STATUS_INVALID_PARAMETER_1;
+
+    if (TRACE_ON(sync))
+    {
+        TRACE( "wait_any %u, alertable %u, handles {%p", wait_any, alertable, handles[0] );
+        for (i = 1; i < count; i++) TRACE( ", %p", handles[i] );
+        TRACE( "}, timeout %s\n", debugstr_timeout(timeout) );
+    }
 
     if (alertable) flags |= SELECT_ALERTABLE;
     select_op.wait.op = wait_any ? SELECT_WAIT : SELECT_WAIT_ALL;
     for (i = 0; i < count; i++) select_op.wait.handles[i] = wine_server_obj_handle( handles[i] );
-    return server_wait( &select_op, offsetof( union select_op, wait.handles[count] ), flags, timeout );
+    ret = server_wait( &select_op, offsetof( union select_op, wait.handles[count] ), flags, timeout );
+    TRACE( "-> %#x\n", ret );
+    return ret;
 }
 
 
@@ -1601,6 +1645,8 @@ NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE signal, HANDLE wait,
 {
     union select_op select_op;
     UINT flags = SELECT_INTERRUPTIBLE;
+
+    TRACE( "signal %p, wait %p, alertable %u, timeout %s\n", signal, wait, alertable, debugstr_timeout(timeout) );
 
     if (!signal) return STATUS_INVALID_HANDLE;
 
@@ -1846,6 +1892,9 @@ NTSTATUS WINAPI NtCreateKeyedEvent( HANDLE *handle, ACCESS_MASK access,
     data_size_t len;
     struct object_attributes *objattr;
 
+    TRACE( "access %#x, name %s, flags %#x\n", access,
+           attr ? debugstr_us(attr->ObjectName) : "(null)", flags );
+
     *handle = 0;
     if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
 
@@ -1869,6 +1918,8 @@ NTSTATUS WINAPI NtCreateKeyedEvent( HANDLE *handle, ACCESS_MASK access,
 NTSTATUS WINAPI NtOpenKeyedEvent( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
     unsigned int ret;
+
+    TRACE( "access %#x, name %s\n", access, attr ? debugstr_us(attr->ObjectName) : "(null)" );
 
     *handle = 0;
     if ((ret = validate_open_object_attributes( attr ))) return ret;
@@ -1896,6 +1947,8 @@ NTSTATUS WINAPI NtWaitForKeyedEvent( HANDLE handle, const void *key,
     union select_op select_op;
     UINT flags = SELECT_INTERRUPTIBLE;
 
+    TRACE( "handle %p, key %p, alertable %u, timeout %s\n", handle, key, alertable, debugstr_timeout(timeout) );
+
     if (!handle) handle = keyed_event;
     if ((ULONG_PTR)key & 1) return STATUS_INVALID_PARAMETER_1;
     if (alertable) flags |= SELECT_ALERTABLE;
@@ -1914,6 +1967,8 @@ NTSTATUS WINAPI NtReleaseKeyedEvent( HANDLE handle, const void *key,
 {
     union select_op select_op;
     UINT flags = SELECT_INTERRUPTIBLE;
+
+    TRACE( "handle %p, key %p, alertable %u, timeout %s\n", handle, key, alertable, debugstr_timeout(timeout) );
 
     if (!handle) handle = keyed_event;
     if ((ULONG_PTR)key & 1) return STATUS_INVALID_PARAMETER_1;
