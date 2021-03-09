@@ -57,26 +57,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
 #define UPDATE_RUNNING_AVG_P(avg,val) DO_RUNNING_AVG(avg,val,16)
 #define UPDATE_RUNNING_AVG_N(avg,val) DO_RUNNING_AVG(avg,val,4)
 
-static void QualityControlRender_Start(struct strmbase_qc *This, REFERENCE_TIME tStart)
+static void reset_qos(struct strmbase_renderer *filter)
 {
-    This->last_left = This->avg_duration = This->avg_pt = -1;
-    This->clockstart = tStart;
-    This->avg_rate = -1.0;
+    filter->last_left = filter->avg_duration = filter->avg_pt = -1;
+    filter->avg_rate = -1.0;
 }
 
-static void QualityControlRender_DoQOS(struct strmbase_qc *priv)
+static void perform_qos(struct strmbase_renderer *filter)
 {
     REFERENCE_TIME start, stop, jitter, pt, entered, left, duration;
     double rate;
 
-    TRACE("%p\n", priv);
-
-    if (!priv->pin->filter->clock || priv->current_rstart < 0)
+    if (!filter->filter.clock || filter->current_rstart < 0)
         return;
 
-    start = priv->current_rstart;
-    stop = priv->current_rstop;
-    jitter = priv->current_jitter;
+    start = filter->current_rstart;
+    stop = filter->current_rstop;
+    jitter = filter->current_jitter;
 
     if (jitter < 0)
     {
@@ -103,16 +100,16 @@ static void QualityControlRender_DoQOS(struct strmbase_qc *priv)
 
     /* If we have the time when the last buffer left us, calculate processing
      * time. */
-    if (priv->last_left >= 0)
+    if (filter->last_left >= 0)
     {
-        if (entered > priv->last_left)
-            pt = entered - priv->last_left;
+        if (entered > filter->last_left)
+            pt = entered - filter->last_left;
         else
             pt = 0;
     }
     else
     {
-        pt = priv->avg_pt;
+        pt = filter->avg_pt;
     }
 
     TRACE("start %s, entered %s, left %s, pt %s, duration %s, jitter %s.\n",
@@ -120,89 +117,90 @@ static void QualityControlRender_DoQOS(struct strmbase_qc *priv)
             debugstr_time(pt), debugstr_time(duration), debugstr_time(jitter));
 
     TRACE("average duration %s, average pt %s, average rate %.16e.\n",
-            debugstr_time(priv->avg_duration), debugstr_time(priv->avg_pt), priv->avg_rate);
+            debugstr_time(filter->avg_duration), debugstr_time(filter->avg_pt), filter->avg_rate);
 
     /* Collect running averages. For first observations, we copy the values. */
-    if (priv->avg_duration < 0)
-        priv->avg_duration = duration;
+    if (filter->avg_duration < 0)
+        filter->avg_duration = duration;
     else
-        priv->avg_duration = UPDATE_RUNNING_AVG(priv->avg_duration, duration);
+        filter->avg_duration = UPDATE_RUNNING_AVG(filter->avg_duration, duration);
 
-    if (priv->avg_pt < 0)
-        priv->avg_pt = pt;
+    if (filter->avg_pt < 0)
+        filter->avg_pt = pt;
     else
-        priv->avg_pt = UPDATE_RUNNING_AVG(priv->avg_pt, pt);
+        filter->avg_pt = UPDATE_RUNNING_AVG(filter->avg_pt, pt);
 
-    if (priv->avg_duration != 0)
-        rate = (double)priv->avg_pt / (double)priv->avg_duration;
+    if (filter->avg_duration != 0)
+        rate = (double)filter->avg_pt / (double)filter->avg_duration;
     else
         rate = 0.0;
 
-    if (priv->last_left >= 0)
+    if (filter->last_left >= 0)
     {
-        if (priv->avg_rate < 0.0)
+        if (filter->avg_rate < 0.0)
         {
-            priv->avg_rate = rate;
+            filter->avg_rate = rate;
         }
         else
         {
             if (rate > 1.0)
-                priv->avg_rate = UPDATE_RUNNING_AVG_N(priv->avg_rate, rate);
+                filter->avg_rate = UPDATE_RUNNING_AVG_N(filter->avg_rate, rate);
             else
-                priv->avg_rate = UPDATE_RUNNING_AVG_P(priv->avg_rate, rate);
+                filter->avg_rate = UPDATE_RUNNING_AVG_P(filter->avg_rate, rate);
         }
     }
 
-    if (priv->avg_rate >= 0.0)
+    if (filter->avg_rate >= 0.0)
     {
         Quality q;
 
         /* If we have a valid rate, start sending QoS messages. */
-        if (priv->current_jitter < 0)
+        if (filter->current_jitter < 0)
         {
             /* Make sure we never go below 0 when adding the jitter to the
              * timestamp. */
-            if (priv->current_rstart < -priv->current_jitter)
-                priv->current_jitter = -priv->current_rstart;
+            if (filter->current_rstart < -filter->current_jitter)
+                filter->current_jitter = -filter->current_rstart;
         }
         else
         {
-            priv->current_jitter += (priv->current_rstop - priv->current_rstart);
+            filter->current_jitter += (filter->current_rstop - filter->current_rstart);
         }
 
         q.Type = (jitter > 0 ? Famine : Flood);
-        q.Proportion = 1000.0 / priv->avg_rate;
+        q.Proportion = 1000.0 / filter->avg_rate;
         if (q.Proportion < 200)
             q.Proportion = 200;
         else if (q.Proportion > 5000)
             q.Proportion = 5000;
-        q.Late = priv->current_jitter;
-        q.TimeStamp = priv->current_rstart;
-        IQualityControl_Notify(&priv->IQualityControl_iface, &priv->pin->filter->IBaseFilter_iface, q);
+        q.Late = filter->current_jitter;
+        q.TimeStamp = filter->current_rstart;
+        IQualityControl_Notify(&filter->IQualityControl_iface, &filter->filter.IBaseFilter_iface, q);
     }
 
     /* Record when this buffer will leave us. */
-    priv->last_left = left;
+    filter->last_left = left;
 }
 
-static void QualityControlRender_BeginRender(struct strmbase_qc *This, REFERENCE_TIME start, REFERENCE_TIME stop)
+static void begin_render(struct strmbase_renderer *filter,
+        REFERENCE_TIME start, REFERENCE_TIME stop)
 {
-    This->current_rstart = start;
-    This->current_rstop = max(stop, start);
+    filter->current_rstart = start;
+    filter->current_rstop = max(stop, start);
 
     if (start >= 0)
     {
         REFERENCE_TIME now;
-        IReferenceClock_GetTime(This->pin->filter->clock, &now);
-        This->current_jitter = (now - This->clockstart) - start;
+        IReferenceClock_GetTime(filter->filter.clock, &now);
+        filter->current_jitter = (now - filter->stream_start) - start;
     }
     else
     {
-        This->current_jitter = 0;
+        filter->current_jitter = 0;
     }
 
     TRACE("start %s, stop %s, jitter %s.\n",
-            debugstr_time(start), debugstr_time(stop), debugstr_time(This->current_jitter));
+            debugstr_time(start), debugstr_time(stop), debugstr_time(filter->current_jitter));
 }
 
 static inline struct strmbase_renderer *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -246,7 +244,7 @@ static HRESULT renderer_query_interface(struct strmbase_filter *iface, REFIID ii
     else if (IsEqualGUID(iid, &IID_IMediaSeeking))
         *out = &filter->passthrough.IMediaSeeking_iface;
     else if (IsEqualGUID(iid, &IID_IQualityControl))
-        *out = &filter->qc.IQualityControl_iface;
+        *out = &filter->IQualityControl_iface;
     else
         return E_NOINTERFACE;
 
@@ -276,7 +274,7 @@ static HRESULT renderer_start_stream(struct strmbase_filter *iface, REFERENCE_TI
     SetEvent(filter->state_event);
     if (filter->sink.pin.peer)
         filter->eos = FALSE;
-    QualityControlRender_Start(&filter->qc, filter->stream_start);
+    reset_qos(filter);
     if (filter->sink.pin.peer && filter->pFuncsTable->renderer_start_stream)
         filter->pFuncsTable->renderer_start_stream(filter);
 
@@ -385,7 +383,7 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
 
     if (state == State_Paused)
     {
-        QualityControlRender_BeginRender(&filter->qc, start, stop);
+        begin_render(filter, start, stop);
         hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
     }
 
@@ -417,11 +415,11 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
 
     if (state == State_Running)
     {
-        QualityControlRender_BeginRender(&filter->qc, start, stop);
+        begin_render(filter, start, stop);
         hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
     }
 
-    QualityControlRender_DoQOS(&filter->qc);
+    perform_qos(filter);
 
     return hr;
 }
@@ -480,7 +478,7 @@ static HRESULT sink_end_flush(struct strmbase_sink *iface)
     EnterCriticalSection(&filter->filter.stream_cs);
 
     filter->eos = FALSE;
-    QualityControlRender_Start(&filter->qc, filter->stream_start);
+    reset_qos(filter);
     strmbase_passthrough_invalidate_time(&filter->passthrough);
     ResetEvent(filter->flush_event);
 
@@ -500,47 +498,47 @@ static const struct strmbase_sink_ops sink_ops =
     .sink_end_flush = sink_end_flush,
 };
 
-static struct strmbase_qc *impl_from_IQualityControl(IQualityControl *iface)
+static struct strmbase_renderer *impl_from_IQualityControl(IQualityControl *iface)
 {
-    return CONTAINING_RECORD(iface, struct strmbase_qc, IQualityControl_iface);
+    return CONTAINING_RECORD(iface, struct strmbase_renderer, IQualityControl_iface);
 }
 
 static HRESULT WINAPI quality_control_QueryInterface(IQualityControl *iface, REFIID iid, void **out)
 {
-    struct strmbase_qc *qc = impl_from_IQualityControl(iface);
-    return IBaseFilter_QueryInterface(&qc->pin->filter->IBaseFilter_iface, iid, out);
+    struct strmbase_renderer *filter = impl_from_IQualityControl(iface);
+    return IUnknown_QueryInterface(filter->filter.outer_unk, iid, out);
 }
 
 static ULONG WINAPI quality_control_AddRef(IQualityControl *iface)
 {
-    struct strmbase_qc *qc = impl_from_IQualityControl(iface);
-    return IBaseFilter_AddRef(&qc->pin->filter->IBaseFilter_iface);
+    struct strmbase_renderer *filter = impl_from_IQualityControl(iface);
+    return IUnknown_AddRef(filter->filter.outer_unk);
 }
 
 static ULONG WINAPI quality_control_Release(IQualityControl *iface)
 {
-    struct strmbase_qc *qc = impl_from_IQualityControl(iface);
-    return IBaseFilter_Release(&qc->pin->filter->IBaseFilter_iface);
+    struct strmbase_renderer *filter = impl_from_IQualityControl(iface);
+    return IUnknown_Release(filter->filter.outer_unk);
 }
 
 static HRESULT WINAPI quality_control_Notify(IQualityControl *iface, IBaseFilter *sender, Quality q)
 {
-    struct strmbase_qc *qc = impl_from_IQualityControl(iface);
+    struct strmbase_renderer *filter = impl_from_IQualityControl(iface);
     HRESULT hr = S_FALSE;
 
-    TRACE("iface %p, sender %p, type %#x, proportion %u, late %s, timestamp %s.\n",
-        iface, sender, q.Type, q.Proportion, debugstr_time(q.Late), debugstr_time(q.TimeStamp));
+    TRACE("filter %p, sender %p, type %#x, proportion %u, late %s, timestamp %s.\n",
+            filter, sender, q.Type, q.Proportion, debugstr_time(q.Late), debugstr_time(q.TimeStamp));
 
-    if (qc->tonotify)
-        return IQualityControl_Notify(qc->tonotify, &qc->pin->filter->IBaseFilter_iface, q);
+    if (filter->qc_sink)
+        return IQualityControl_Notify(filter->qc_sink, &filter->filter.IBaseFilter_iface, q);
 
-    if (qc->pin->peer)
+    if (filter->sink.pin.peer)
     {
         IQualityControl *peer_qc = NULL;
-        IPin_QueryInterface(qc->pin->peer, &IID_IQualityControl, (void **)&peer_qc);
+        IPin_QueryInterface(filter->sink.pin.peer, &IID_IQualityControl, (void **)&peer_qc);
         if (peer_qc)
         {
-            hr = IQualityControl_Notify(peer_qc, &qc->pin->filter->IBaseFilter_iface, q);
+            hr = IQualityControl_Notify(peer_qc, &filter->filter.IBaseFilter_iface, q);
             IQualityControl_Release(peer_qc);
         }
     }
@@ -550,11 +548,11 @@ static HRESULT WINAPI quality_control_Notify(IQualityControl *iface, IBaseFilter
 
 static HRESULT WINAPI quality_control_SetSink(IQualityControl *iface, IQualityControl *sink)
 {
-    struct strmbase_qc *qc = impl_from_IQualityControl(iface);
+    struct strmbase_renderer *filter = impl_from_IQualityControl(iface);
 
-    TRACE("iface %p, sink %p.\n", iface, sink);
+    TRACE("filter %p, sink %p.\n", filter, sink);
 
-    qc->tonotify = sink;
+    filter->qc_sink = sink;
     return S_OK;
 }
 
@@ -582,14 +580,6 @@ void strmbase_renderer_cleanup(struct strmbase_renderer *filter)
     strmbase_filter_cleanup(&filter->filter);
 }
 
-static void strmbase_qc_init(struct strmbase_qc *qc, struct strmbase_pin *pin)
-{
-    memset(qc, 0, sizeof(*qc));
-    qc->pin = pin;
-    qc->current_rstart = qc->current_rstop = -1;
-    qc->IQualityControl_iface.lpVtbl = &quality_control_vtbl;
-}
-
 void strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown *outer,
         const CLSID *clsid, const WCHAR *sink_name, const struct strmbase_renderer_ops *ops)
 {
@@ -597,7 +587,9 @@ void strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown *outer,
     strmbase_filter_init(&filter->filter, outer, clsid, &filter_ops);
     strmbase_passthrough_init(&filter->passthrough, (IUnknown *)&filter->filter.IBaseFilter_iface);
     ISeekingPassThru_Init(&filter->passthrough.ISeekingPassThru_iface, TRUE, &filter->sink.pin.IPin_iface);
-    strmbase_qc_init(&filter->qc, &filter->sink.pin);
+    filter->IQualityControl_iface.lpVtbl = &quality_control_vtbl;
+
+    filter->current_rstart = filter->current_rstop = -1;
 
     filter->pFuncsTable = ops;
 
