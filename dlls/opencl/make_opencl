@@ -1,0 +1,299 @@
+#!/usr/bin/perl -w
+use strict;
+use XML::LibXML;
+
+# Copyright 2021 Zebediah Figura
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+
+# Files to generate
+my $spec_file = "opencl.spec";
+my $thunks_file = "opencl_thunks.c";
+
+# If set to 1, generate TRACEs for each OpenGL function
+my $gen_traces = 1;
+
+# List of categories to put in the 'opengl_core.c' file
+my %cat_1_0 = ( "CL_VERSION_1_0" => 1 );
+
+my %core_categories = ();
+
+my %arg_types =
+    (
+        "cl_bitfield"    => [ "int64",  "wine_dbgstr_longlong(%s)" ],
+        "double"         => [ "double", "%.16e" ],
+        "float"          => [ "float",  "%.8e" ],
+        "int"            => [ "long",   "%d" ],
+        "int8_t"         => [ "long",   "%d" ],
+        "int16_t"        => [ "long",   "%d" ],
+        "int32_t"        => [ "long",   "%d" ],
+        "int64_t"        => [ "int64",  "wine_dbgstr_longlong(%s)" ],
+        "intptr_t"       => [ "long",   "%ld" ],
+        "size_t"         => [ "long",   "%zu" ],
+        "uint8_t"        => [ "long",   "%u" ],
+        "uint16_t"       => [ "long",   "%u" ],
+        "uint32_t"       => [ "long",   "%u" ],
+        "uint64_t"       => [ "int64",  "wine_dbgstr_longlong(%s)" ],
+        "unsigned int"   => [ "long",   "%u" ],
+    );
+
+sub generate_thunk($$)
+{
+    my ($name, $func_ref) = @_;
+    my $call_arg = "";
+    my $trace_call_arg = "";
+    my $trace_arg = "";
+
+    my $ret = get_func_proto( "%s WINAPI wine_%s(%s)", $name, $func_ref );
+    foreach my $arg (@{$func_ref->[1]})
+    {
+        my $ptype = get_arg_type( $arg );
+        next unless $arg->findnodes("./name");
+        my $pname = get_arg_name( $arg );
+        my $param = $arg->textContent();
+        $call_arg .= " " . $pname . ",";
+        if ($param =~ /\*/ || $param =~ /\[/)
+        {
+            $trace_arg .= ", %p";
+            $trace_call_arg .= ", " . $pname;
+        }
+        elsif (defined $arg_types{$ptype})
+        {
+            my $format = ${$arg_types{$ptype}}[1];
+            $trace_arg .= ", " . ($format =~ /^%/ ? $format : "%s");
+            $trace_call_arg .= ", " . sprintf $format =~ /^%/ ? "%s" : $format, $pname;
+        }
+        else
+        {
+            die "Unknown type %s in %s\n", $param, $name;
+        }
+    }
+    $call_arg =~ s/,$/ /;
+    $trace_arg =~ s/^, //;
+    $ret .= "\n{\n";
+    $ret .= "    TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
+    $ret .= "    ";
+    $ret .= "return " unless is_void_func( $func_ref );
+    $ret .= "$name($call_arg);\n";
+    $ret .= "}\n";
+    return $ret;
+}
+
+sub is_void_func($)
+{
+    my $func = shift;
+    return 0 if @{$func->[0]->findnodes("./type")};
+    return $func->[0]->textContent() eq "void";
+}
+
+sub get_arg_type($)
+{
+    my $p = shift;
+    my @type = $p->findnodes("./type");
+    return @type ? $type[0]->textContent() : "cl_int";
+}
+
+sub get_arg_name($)
+{
+    my $p = shift;
+    my @name = $p->findnodes("./name");
+    return $name[0]->textContent();
+}
+
+sub get_func_proto($$$)
+{
+    my ($format, $name, $func) = @_;
+    die "unknown func $name" unless defined $func->[0];
+    my $proto = $func->[0]->textContent();
+    $proto =~ s/ +$//;
+    my $args = "";
+    foreach my $arg (@{$func->[1]})
+    {
+        (my $argtext = $arg->textContent()) =~ s/ +/ /g;
+        $args .= " " . $argtext . ",";
+    }
+    $args =~ s/,$/ /;
+    $args ||= "void";
+    return sprintf $format, $proto, $name, $args;
+}
+
+# extract and check the number of arguments
+if (@ARGV > 1)
+{
+    my $name0 = $0;
+    $name0 =~ s%^.*/%%;
+    die "Usage: $name0 [version]\n";
+}
+my $version = $ARGV[0] || "1.0";
+if ($version eq "1.0")
+{
+    %core_categories = %cat_1_0;
+}
+else
+{
+    die "Incorrect OpenCL version.\n";
+}
+
+my $url = "https://raw.githubusercontent.com/KhronosGroup/OpenCL-Docs";
+my $commit = "514965312a65e5d01ae17e23119dc95427b7149e";
+-f "cl-$commit.xml" || system "wget", "-O", "cl-$commit.xml", "$url/$commit/xml/cl.xml" || die "cannot download cl.xml";
+
+sub generate_spec_entry($$)
+{
+    my ($name, $func) = @_;
+    my $args=" ";
+    foreach my $arg (@{$func->[1]})
+    {
+        my $ptype = get_arg_type( $arg );
+        my $param = $arg->textContent();
+        if ($param =~ /[[*]/)
+        {
+            $args .= "ptr ";
+        }
+        elsif (defined($arg_types{$ptype}))
+        {
+            $args .= "$@$arg_types{$ptype}[0] ";
+        }
+        elsif ($ptype ne "void")
+        {
+            die "No conversion for func $name type $param\n";
+        }
+    }
+    $args = substr($args,1,-1);
+    return "@ stdcall $_($args) wine_$_";
+}
+
+my %core_functions;
+my %cl_enums;
+my (%cl_types, @cl_types);  # also use an array to preserve declaration order
+
+# some functions need a hand-written wrapper
+sub needs_wrapper($)
+{
+    my %funcs =
+        (
+            # need callback conversion
+            "clBuildProgram" => 1,
+            "clCreateContext" => 1,
+            "clCreateContextFromType" => 1,
+            "clEnqueueNativeKernel" => 1,
+
+            # need extension filtering
+            "clGetDeviceInfo" => 1,
+            "clGetPlatformInfo" => 1,
+
+            # needs function pointer conversion
+            "clGetExtensionFunctionAddress" => 1,
+        );
+    my $name = shift;
+
+    return defined $funcs{$name};
+}
+
+sub parse_file($)
+{
+    my $file = shift;
+    my $xml = XML::LibXML->load_xml( location => $file );
+    my %functions;
+    my %enums;
+
+    # save all functions
+    foreach my $command ($xml->findnodes("/registry/commands/command"))
+    {
+        my $proto = @{$command->findnodes("./proto")}[0];
+        my $name = @{$command->findnodes("./proto/name")}[0];
+        $proto->removeChild( $name );
+        my @params = $command->findnodes("./param");
+        $functions{$name->textContent()} = [ $proto, \@params ];
+    }
+
+    # save all enums
+    foreach my $enum ($xml->findnodes("/registry/enums/enum"))
+    {
+        $enums{$enum->{name}} = $enum->{value};
+    }
+
+    # save all types
+    foreach my $type ($xml->findnodes("/registry/types/type"))
+    {
+        my $name = @{$type->findnodes("./name")}[0];
+        next unless $name;
+        $name = $name->textContent;
+        push @cl_types, $name unless $cl_types{$name};
+        $cl_types{$name} = $type;
+
+        if ($type->{category} eq "define" and not defined($arg_types{$name}))
+        {
+            my $basetype = @{$type->findnodes("./type")}[0];
+            if ($type->textContent() =~ /[[*]/)
+            {
+                $arg_types{$name} = ["ptr", "%p"];
+            }
+            elsif (defined($basetype) and defined($arg_types{$basetype->textContent}))
+            {
+                $arg_types{$name} = $arg_types{$basetype->textContent};
+            }
+            elsif ($name ne "cl_icd_dispatch")
+            {
+                die "No conversion for type $name\n"
+            }
+        }
+    }
+
+    # generate core functions
+    foreach my $feature ($xml->findnodes("/registry/feature"))
+    {
+        next unless defined $core_categories{$feature->{name}};
+        foreach my $cmd ($feature->findnodes("./require/command"))
+        {
+            $core_functions{$cmd->{name}} = $functions{$cmd->{name}};
+        }
+        foreach my $enum ($feature->findnodes("./require/enum"))
+        {
+            $cl_enums{$enum->{name}} = $enums{$enum->{name}};
+        }
+    }
+}
+
+parse_file( "cl-$commit.xml" );
+
+# generate the spec file
+open(SPEC, ">$spec_file") or die "cannot create $spec_file";
+
+foreach (sort keys %core_functions)
+{
+    printf SPEC "%s\n", generate_spec_entry( $_, $core_functions{$_} );
+}
+
+close(SPEC);
+
+my $file_header =
+"/* Automatically generated from OpenCL registry files; DO NOT EDIT! */\n\n" .
+"#include \"config.h\"\n" .
+"#include \"opencl_private.h\"\n\n";
+
+$file_header .= "WINE_DEFAULT_DEBUG_CHANNEL(opencl);\n" if $gen_traces;
+
+# generate the thunks file
+open(THUNKS, ">$thunks_file") or die "cannot create $thunks_file";
+print THUNKS $file_header;
+
+foreach (sort keys %core_functions)
+{
+    next if needs_wrapper( $_ );
+    print THUNKS "\n", generate_thunk( $_, $core_functions{$_} );
+}
+
+close(THUNKS);
