@@ -378,14 +378,9 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
         strmbase_passthrough_update_time(&filter->passthrough, start);
         need_wait = TRUE;
     }
-    else
-        start = stop = -1;
 
     if (state == State_Paused)
-    {
-        begin_render(filter, start, stop);
         hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
-    }
 
     if (need_wait)
     {
@@ -393,6 +388,8 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
         DWORD_PTR cookie;
 
         IReferenceClock_GetTime(filter->filter.clock, &now);
+
+        begin_render(filter, start, stop);
 
         if (now - filter->stream_start - start <= -10000)
         {
@@ -411,15 +408,17 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
                 return S_OK;
             }
         }
-    }
 
-    if (state == State_Running)
+        if (state == State_Running)
+            hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
+
+        perform_qos(filter);
+    }
+    else
     {
-        begin_render(filter, start, stop);
-        hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
+        if (state == State_Running)
+            hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
     }
-
-    perform_qos(filter);
 
     return hr;
 }
