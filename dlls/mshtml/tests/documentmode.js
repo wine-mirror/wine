@@ -42,6 +42,8 @@ sync_test("elem_props", function() {
     test_exposed("addEventListener", v >= 9);
     test_exposed("removeEventListener", v >= 9);
     test_exposed("dispatchEvent", v >= 9);
+    test_exposed("msSetPointerCapture", v >= 10);
+    if (v >= 9) test_exposed("spellcheck", v >= 10);
 });
 
 sync_test("doc_props", function() {
