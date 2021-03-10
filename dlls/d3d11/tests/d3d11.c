@@ -16013,7 +16013,10 @@ static void test_clear_buffer_unordered_access_view(void)
             const struct uvec4 broken_result = {uvec4.x, uvec4.x, uvec4.x, uvec4.x}; /* Intel */
             data = get_readback_uvec4(&rb, x, 0);
             if (!(compare_uvec4(data, &uvec4) || broken(compare_uvec4(data, &broken_result))))
+            {
                 all_match = FALSE;
+                break;
+            }
         }
         ok(all_match, "Got {%#x, %#x, %#x, %#x}, expected {%#x, %#x, %#x, %#x} at %u.\n",
                 data->x, data->y, data->z, data->w, uvec4.x, uvec4.y, uvec4.z, uvec4.w, x);
@@ -16028,7 +16031,10 @@ static void test_clear_buffer_unordered_access_view(void)
             uvec4 = U(uav_desc).Buffer.FirstElement <= x ? fe_uvec4 : uvec4_data[i];
             broken_result.x = broken_result.y = broken_result.z = broken_result.w = uvec4.x;
             if (!(compare_uvec4(data, &uvec4) || broken(compare_uvec4(data, &broken_result))))
+            {
                 all_match = FALSE;
+                break;
+            }
         }
         ok(all_match, "Got {%#x, %#x, %#x, %#x}, expected {%#x, %#x, %#x, %#x} at %u.\n",
                 data->x, data->y, data->z, data->w, uvec4.x, uvec4.y, uvec4.z, uvec4.w, x);
