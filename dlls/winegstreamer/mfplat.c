@@ -458,7 +458,6 @@ static const struct mft
     const GUID **input_types;
     const UINT32 output_types_count;
     const GUID **output_types;
-    IMFAttributes *attributes;
 }
 mfts[] =
 {
@@ -472,7 +471,6 @@ mfts[] =
         audio_converter_supported_types,
         ARRAY_SIZE(audio_converter_supported_types),
         audio_converter_supported_types,
-        NULL
     },
 };
 
@@ -498,7 +496,7 @@ HRESULT mfplat_DllRegisterServer(void)
         }
 
         hr = MFTRegister(*(cur->clsid), *(cur->category), cur->name, cur->flags, cur->input_types_count,
-                    input_types, cur->output_types_count, output_types, cur->attributes);
+                    input_types, cur->output_types_count, output_types, NULL);
 
         if (FAILED(hr))
         {
