@@ -890,6 +890,7 @@ extract_test_proc (HMODULE hModule, LPCSTR lpszType, LPSTR lpszName, LONG_PTR lP
     DWORD err;
     HANDLE actctx;
     ULONG_PTR cookie;
+    BOOL run;
 
     if (aborting) return TRUE;
 
@@ -941,50 +942,39 @@ extract_test_proc (HMODULE hModule, LPCSTR lpszType, LPSTR lpszName, LONG_PTR lP
         else dll = 0;
     }
 
+    run = TRUE;
     if (!dll)
     {
         xprintf ("    %s=dll is missing\n", dllname);
-        if (actctx != INVALID_HANDLE_VALUE)
-        {
-            pDeactivateActCtx(0, cookie);
-            pReleaseActCtx(actctx);
-        }
-        return TRUE;
-    }
-    if(is_stub_dll(dllname))
-    {
-        FreeLibrary(dll);
-        xprintf ("    %s=dll is a stub\n", dllname);
-        if (actctx != INVALID_HANDLE_VALUE)
-        {
-            pDeactivateActCtx(0, cookie);
-            pReleaseActCtx(actctx);
-        }
-        return TRUE;
-    }
-    if (is_native_dll(dll))
-    {
-        FreeLibrary(dll);
-        xprintf ("    %s=load error Configured as native\n", dllname);
-        nr_native_dlls++;
-        if (actctx != INVALID_HANDLE_VALUE)
-        {
-            pDeactivateActCtx(0, cookie);
-            pReleaseActCtx(actctx);
-        }
-        return TRUE;
-    }
-    FreeLibrary(dll);
-
-    if (!(err = get_subtests( tempdir, &wine_tests[nr_of_files], lpszName )))
-    {
-        xprintf ("    %s=%s\n", dllname, get_file_version(filename));
-        nr_of_tests += wine_tests[nr_of_files].subtest_count;
-        nr_of_files++;
+        run = FALSE;
     }
     else
     {
-        xprintf ("    %s=load error %u\n", dllname, err);
+        if (is_stub_dll(dllname))
+        {
+            xprintf ("    %s=dll is a stub\n", dllname);
+            run = FALSE;
+        }
+        else if (is_native_dll(dll))
+        {
+            xprintf ("    %s=load error Configured as native\n", dllname);
+            nr_native_dlls++;
+            run = FALSE;
+        }
+        FreeLibrary(dll);
+    }
+
+    if (run)
+    {
+        err = get_subtests( tempdir, &wine_tests[nr_of_files], lpszName );
+        if (!err)
+        {
+            xprintf ("    %s=%s\n", dllname, get_file_version(filename));
+            nr_of_tests += wine_tests[nr_of_files].subtest_count;
+            nr_of_files++;
+        }
+        else
+            xprintf ("    %s=load error %u\n", dllname, err);
     }
 
     if (actctx != INVALID_HANDLE_VALUE)
