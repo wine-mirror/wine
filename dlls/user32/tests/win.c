@@ -3075,7 +3075,6 @@ todo_wine
     old_wnd_proc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)set_focus_on_activate_proc);
     ShowWindow(hwnd, SW_RESTORE);
     ok( GetActiveWindow() == hwnd, "parent window %p should be active\n", hwnd);
-todo_wine
     ok( GetFocus() == child, "Focus should be on child %p, not %p\n", child, GetFocus() );
     SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)old_wnd_proc);
 
