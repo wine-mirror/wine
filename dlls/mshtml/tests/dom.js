@@ -401,3 +401,17 @@ sync_test("storage", function() {
     ok(typeof(window.localStorage) === "object",
        "typeof(window.localStorage) = " + typeof(window.localStorage));
 });
+
+async_test("animation", function() {
+    document.body.innerHTML =
+        "<style>" +
+        "  @keyframes testAnimation {0% { opacity: 0; } 100% { opacity: 1; }}" +
+        "  .testAnimation { animation-name: testAnimation; animation-duration: 0.01s; }" +
+        "</style>";
+    var div = document.createElement("div");
+    div.addEventListener("animationstart", function() {
+        div.addEventListener("animationend", next_test);
+    });
+    document.body.appendChild(div);
+    div.className = "testAnimation";
+});

@@ -109,6 +109,10 @@ typedef struct {
 static const event_info_t event_info[] = {
     {L"abort",             EVENT_TYPE_EVENT,     DISPID_EVMETH_ONABORT,
         EVENT_BIND_TO_TARGET},
+    {L"animationend",      EVENT_TYPE_EVENT,     DISPID_EVPROP_ONANIMATIONEND,
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES},
+    {L"animationstart",    EVENT_TYPE_EVENT,     DISPID_EVPROP_ONANIMATIONSTART,
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES},
     {L"beforeactivate",    EVENT_TYPE_EVENT,     DISPID_EVMETH_ONBEFOREACTIVATE,
         EVENT_FIXME | EVENT_BUBBLES | EVENT_CANCELABLE},
     {L"beforeunload",      EVENT_TYPE_EVENT,     DISPID_EVMETH_ONBEFOREUNLOAD,
@@ -184,6 +188,8 @@ static const event_info_t event_info[] = {
     {L"unload",            EVENT_TYPE_UIEVENT,   DISPID_EVMETH_ONUNLOAD,
         EVENT_FIXME}
 };
+
+C_ASSERT(ARRAY_SIZE(event_info) == EVENTID_LAST);
 
 static eventid_t str_to_eid(const WCHAR *str)
 {
