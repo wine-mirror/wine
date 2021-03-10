@@ -8369,6 +8369,48 @@ static void test_iframe_elem(IHTMLElement *elem)
     IHTMLDocument2_Release(content_doc);
 }
 
+static void test_elem_spellcheck(IHTMLElement *iface)
+{
+    IHTMLElement7 *elem;
+    VARIANT v;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(iface, &IID_IHTMLElement7, (void**)&elem);
+    if(hres == E_NOINTERFACE) {
+        win_skip("IHTMLElement7 not supported\n");
+        return;
+    }
+    ok(hres == S_OK, "Could not get IHTMLElement7 interface: %08x\n", hres);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLElement7_get_spellcheck(elem, &v);
+    ok(hres == S_OK, "get_spellcheck failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BOOL && !V_BOOL(&v), "spellcheck = %s\n", wine_dbgstr_variant(&v));
+
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = VARIANT_TRUE;
+    hres = IHTMLElement7_put_spellcheck(elem, v);
+    ok(hres == S_OK, "put_spellcheck failed: %08x\n", hres);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLElement7_get_spellcheck(elem, &v);
+    ok(hres == S_OK, "get_spellcheck failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BOOL && V_BOOL(&v) == VARIANT_TRUE, "spellcheck = %s\n",
+       wine_dbgstr_variant(&v));
+
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = VARIANT_FALSE;
+    hres = IHTMLElement7_put_spellcheck(elem, v);
+    ok(hres == S_OK, "put_spellcheck failed: %08x\n", hres);
+
+    V_VT(&v) = VT_ERROR;
+    hres = IHTMLElement7_get_spellcheck(elem, &v);
+    ok(hres == S_OK, "get_spellcheck failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BOOL && !V_BOOL(&v), "spellcheck = %s\n", wine_dbgstr_variant(&v));
+
+    IHTMLElement7_Release(elem);
+}
+
 #define test_stylesheet_csstext(a,b,c) _test_stylesheet_csstext(__LINE__,a,b,c)
 static void _test_stylesheet_csstext(unsigned line, IHTMLStyleSheet *stylesheet, const WCHAR *exstr, BOOL is_todo)
 {
@@ -8981,6 +9023,7 @@ static void test_elems(IHTMLDocument2 *doc)
         test_elem_client_size((IUnknown*)elem);
         test_input_type(input, L"text");
         test_elem_istextedit(elem, VARIANT_TRUE);
+        test_elem_spellcheck(elem);
 
         test_node_get_value_str((IUnknown*)elem, NULL);
         test_node_put_value_str((IUnknown*)elem, L"test");

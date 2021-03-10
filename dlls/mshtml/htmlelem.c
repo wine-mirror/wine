@@ -5414,15 +5414,42 @@ static HRESULT WINAPI HTMLElement7_get_xmsAcceleratorKey(IHTMLElement7 *iface, B
 static HRESULT WINAPI HTMLElement7_put_spellcheck(IHTMLElement7 *iface, VARIANT v)
 {
     HTMLElement *This = impl_from_IHTMLElement7(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
+        return E_NOTIMPL;
+    }
+
+    if(V_VT(&v) != VT_BOOL) {
+        FIXME("unsupported argument %s\n", debugstr_variant(&v));
+        return E_NOTIMPL;
+    }
+
+    return map_nsresult(nsIDOMHTMLElement_SetSpellcheck(This->html_element, !!V_BOOL(&v)));
 }
 
 static HRESULT WINAPI HTMLElement7_get_spellcheck(IHTMLElement7 *iface, VARIANT *p)
 {
     HTMLElement *This = impl_from_IHTMLElement7(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool spellcheck;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->html_element) {
+        FIXME("non-HTML element\n");
+        return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLElement_GetSpellcheck(This->html_element, &spellcheck);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+
+    V_VT(p) = VT_BOOL;
+    V_BOOL(p) = spellcheck ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement7_put_onmsmanipulationstatechanged(IHTMLElement7 *iface, VARIANT v)
