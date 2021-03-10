@@ -1651,18 +1651,18 @@ static void wined3d_cs_exec_set_blend_state(struct wined3d_cs *cs, const void *d
     device_invalidate_state(cs->c.device, STATE_SAMPLE_MASK);
 }
 
-void wined3d_cs_emit_set_blend_state(struct wined3d_cs *cs, struct wined3d_blend_state *state,
-        const struct wined3d_color *blend_factor, unsigned int sample_mask)
+void wined3d_device_context_emit_set_blend_state(struct wined3d_device_context *context,
+        struct wined3d_blend_state *state, const struct wined3d_color *blend_factor, unsigned int sample_mask)
 {
     struct wined3d_cs_set_blend_state *op;
 
-    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_SET_BLEND_STATE;
     op->state = state;
     op->factor = *blend_factor;
     op->sample_mask = sample_mask;
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 static void wined3d_cs_exec_set_depth_stencil_state(struct wined3d_cs *cs, const void *data)

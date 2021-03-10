@@ -4741,8 +4741,6 @@ void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *sw
         const RECT *dst_rect, HWND dst_window_override, unsigned int swap_interval, DWORD flags) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_query_issue(struct wined3d_cs *cs, struct wined3d_query *query, DWORD flags) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_reset_state(struct wined3d_cs *cs) DECLSPEC_HIDDEN;
-void wined3d_cs_emit_set_blend_state(struct wined3d_cs *cs, struct wined3d_blend_state *state,
-        const struct wined3d_color *blend_factor, unsigned int sample_mask) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_clip_plane(struct wined3d_cs *cs, UINT plane_idx,
         const struct wined3d_vec4 *plane) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_color_key(struct wined3d_cs *cs, struct wined3d_texture *texture,
@@ -4810,6 +4808,9 @@ static inline void wined3d_cs_push_constants(struct wined3d_cs *cs, enum wined3d
     cs->c.ops->push_constants(&cs->c, p, start_idx, count, constants);
 }
 
+void wined3d_device_context_emit_set_blend_state(struct wined3d_device_context *context,
+        struct wined3d_blend_state *state, const struct wined3d_color *blend_factor,
+        unsigned int sample_mask) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_constant_buffer(struct wined3d_device_context *context,
         enum wined3d_shader_type type, UINT cb_idx, struct wined3d_buffer *buffer) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_shader(struct wined3d_device_context *context, enum wined3d_shader_type type,
