@@ -201,7 +201,9 @@ typedef struct _SecBuffer
 #define SECBUFFER_MECHLIST_SIGNATURE 12
 #define SECBUFFER_TARGET             13
 #define SECBUFFER_CHANNEL_BINDINGS   14
+#define SECBUFFER_ALERT              17
 #define SECBUFFER_APPLICATION_PROTOCOLS 18
+#define SECBUFFER_DTLS_MTU           24
 
 #define SECBUFFER_ATTRMASK               0xf0000000
 #define SECBUFFER_READONLY               0x80000000
