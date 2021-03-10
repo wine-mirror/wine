@@ -1138,6 +1138,7 @@ static DWORD get_tymed_from_nonole_cf(UINT cf)
     case CF_TEXT:
     case CF_OEMTEXT:
     case CF_UNICODETEXT:
+    case CF_HDROP:
         return TYMED_ISTREAM | TYMED_HGLOBAL;
     case CF_ENHMETAFILE:
         return TYMED_ENHMF;

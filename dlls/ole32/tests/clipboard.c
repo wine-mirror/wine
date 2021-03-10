@@ -28,6 +28,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "shellapi.h"
+#include "shlobj.h"
 
 #include "wine/test.h"
 
@@ -1513,6 +1515,24 @@ static HENHMETAFILE create_emf(void)
     return CloseEnhMetaFile(hdc);
 }
 
+static HDROP create_dropped_file(void)
+{
+    WCHAR path[] = L"C:\\testfile1\0";
+    DROPFILES *dropfiles;
+    DWORD offset;
+    HDROP hdrop;
+
+    offset = sizeof(DROPFILES);
+    hdrop = GlobalAlloc(GHND, offset + sizeof(path));
+    dropfiles = GlobalLock(hdrop);
+    dropfiles->pFiles = offset;
+    dropfiles->fWide = TRUE;
+    memcpy((char *)dropfiles + offset, path, sizeof(path));
+    GlobalUnlock(hdrop);
+
+    return hdrop;
+}
+
 static void test_nonole_clipboard(void)
 {
     HRESULT hr;
@@ -1524,6 +1544,7 @@ static void test_nonole_clipboard(void)
     HENHMETAFILE emf;
     STGMEDIUM med;
     DWORD obj_type;
+    HDROP hdrop;
 
     r = OpenClipboard(NULL);
     ok(r, "gle %d\n", GetLastError());
@@ -1552,6 +1573,7 @@ static void test_nonole_clipboard(void)
     hblob = GlobalAlloc(GMEM_DDESHARE|GMEM_MOVEABLE|GMEM_ZEROINIT, 10);
     emf = create_emf();
     hstorage = create_storage();
+    hdrop = create_dropped_file();
 
     r = OpenClipboard(NULL);
     ok(r, "gle %d\n", GetLastError());
@@ -1563,6 +1585,8 @@ static void test_nonole_clipboard(void)
     ok(h == emf, "got %p\n", h);
     h = SetClipboardData(cf_storage, hstorage);
     ok(h == hstorage, "got %p\n", h);
+    h = SetClipboardData(CF_HDROP, hdrop);
+    ok(h == hdrop, "got %p\n", h);
     r = CloseClipboard();
     ok(r, "gle %d\n", GetLastError());
 
@@ -1603,6 +1627,14 @@ static void test_nonole_clipboard(void)
     hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(fmt.cfFormat == cf_storage, "cf %04x\n", fmt.cfFormat);
+    ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
+    ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
+    ok(fmt.lindex == -1, "lindex %d\n", fmt.lindex);
+    ok(fmt.tymed == (TYMED_ISTREAM | TYMED_HGLOBAL), "tymed %x\n", fmt.tymed);
+
+    hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(fmt.cfFormat == CF_HDROP, "cf %04x\n", fmt.cfFormat);
     ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
     ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
     ok(fmt.lindex == -1, "lindex %d\n", fmt.lindex);
