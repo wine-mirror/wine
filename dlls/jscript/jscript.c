@@ -257,8 +257,7 @@ static HRESULT WINAPI JScriptError_GetSourcePosition(IActiveScriptError *iface, 
 {
     JScriptError *This = impl_from_IActiveScriptError(iface);
     bytecode_t *code = This->ei.code;
-    const WCHAR *nl, *p;
-    unsigned l;
+    unsigned line_pos, char_pos;
 
     TRACE("(%p)->(%p %p %p)\n", This, source_context, line, character);
 
@@ -272,16 +271,11 @@ static HRESULT WINAPI JScriptError_GetSourcePosition(IActiveScriptError *iface, 
     if(!line && !character)
         return S_OK;
 
-    l = code->start_line;
-    for(nl = p = code->source; p < code->source + This->ei.loc; p++) {
-        if(*p != '\n') continue;
-        l++;
-        nl = p + 1;
-    }
+    line_pos = get_location_line(code, This->ei.loc, &char_pos);
     if(line)
-        *line = l;
+        *line = line_pos;
     if(character)
-        *character = code->source + This->ei.loc - nl;
+        *character = char_pos;
     return S_OK;
 }
 

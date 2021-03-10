@@ -2236,6 +2236,20 @@ static void resolve_labels(compiler_ctx_t *ctx, unsigned off)
     ctx->labels_cnt = 0;
 }
 
+unsigned get_location_line(bytecode_t *code, unsigned loc, unsigned *char_pos)
+{
+    unsigned line = code->start_line;
+    const WCHAR *nl, *p;
+
+    for(nl = p = code->source; p < code->source + loc; p++) {
+        if(*p != '\n') continue;
+        line++;
+        nl = p + 1;
+    }
+    *char_pos = loc - (nl - code->source);
+    return line;
+}
+
 void release_bytecode(bytecode_t *code)
 {
     unsigned i;

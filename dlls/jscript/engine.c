@@ -2703,7 +2703,7 @@ static void pop_call_frame(script_ctx_t *ctx)
 
 static void print_backtrace(script_ctx_t *ctx)
 {
-    unsigned depth = 0, i;
+    unsigned depth = 0, i, line, char_pos;
     call_frame_t *frame;
 
     for(frame = ctx->call_ctx; frame; frame = frame->prev_frame) {
@@ -2724,7 +2724,8 @@ static void print_backtrace(script_ctx_t *ctx)
         }else {
             WARN("[detached frame]");
         }
-        WARN(")\n");
+        line = get_location_line(frame->bytecode, frame->bytecode->instrs[frame->ip].loc, &char_pos);
+        WARN(") context %s line %u char %u\n", wine_dbgstr_longlong(frame->bytecode->source_context), line, char_pos);
 
         if(!(frame->flags & EXEC_RETURN_TO_INTERP)) {
             WARN("%u\t[native code]\n", depth);

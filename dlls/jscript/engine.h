@@ -201,6 +201,8 @@ struct _bytecode_t {
 HRESULT compile_script(script_ctx_t*,const WCHAR*,UINT64,unsigned,const WCHAR*,const WCHAR*,BOOL,BOOL,named_item_t*,bytecode_t**) DECLSPEC_HIDDEN;
 void release_bytecode(bytecode_t*) DECLSPEC_HIDDEN;
 
+unsigned get_location_line(bytecode_t *code, unsigned loc, unsigned *char_pos) DECLSPEC_HIDDEN;
+
 static inline bytecode_t *bytecode_addref(bytecode_t *code)
 {
     code->ref++;
