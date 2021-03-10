@@ -1,5 +1,6 @@
 /*
  * Copyright 2017 Alex Henrie
+ * Copyright 2021 Vijay Kiran Kamuju
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,6 +31,7 @@ typedef struct
     IOleObject IOleObject_iface;
     IPersistStreamInit IPersistStreamInit_iface;
     IOleClientSite *client_site;
+    SIZEL extent;
     LONG ref;
 } DHTMLEditImpl;
 
@@ -700,15 +702,25 @@ static HRESULT WINAPI OleObject_GetUserType(IOleObject *iface, DWORD type_type, 
 static HRESULT WINAPI OleObject_SetExtent(IOleObject *iface, DWORD aspect, SIZEL *size_limit)
 {
     DHTMLEditImpl *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%u, %p) stub\n", This, aspect, size_limit);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%u, %p)\n", This, aspect, size_limit);
+
+    if(aspect != DVASPECT_CONTENT)
+        return DV_E_DVASPECT;
+
+    This->extent = *size_limit;
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_GetExtent(IOleObject *iface, DWORD aspect, SIZEL *size_limit)
 {
     DHTMLEditImpl *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%u, %p) stub\n", This, aspect, size_limit);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%u, %p)\n", This, aspect, size_limit);
+
+    if(aspect != DVASPECT_CONTENT)
+        return E_FAIL;
+
+    *size_limit = This->extent;
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_Advise(IOleObject *iface, IAdviseSink *sink, DWORD *conn)
@@ -849,6 +861,8 @@ static const IPersistStreamInitVtbl PersistStreamInitVtbl = {
 HRESULT dhtml_edit_create(REFIID iid, void **out)
 {
     DHTMLEditImpl *This;
+    DWORD dpi_x, dpi_y;
+    HDC hdc;
     HRESULT ret;
 
     TRACE("(%s, %p)\n", debugstr_guid(iid), out);
@@ -862,6 +876,14 @@ HRESULT dhtml_edit_create(REFIID iid, void **out)
     This->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
     This->client_site = NULL;
     This->ref = 1;
+
+    hdc = GetDC(0);
+    dpi_x = GetDeviceCaps(hdc, LOGPIXELSX);
+    dpi_y = GetDeviceCaps(hdc, LOGPIXELSY);
+    ReleaseDC(0, hdc);
+
+    This->extent.cx = MulDiv(192, 2540, dpi_x);
+    This->extent.cy = MulDiv(192, 2540, dpi_y);
 
     ret = IDHTMLEdit_QueryInterface(&This->IDHTMLEdit_iface, iid, out);
     IDHTMLEdit_Release(&This->IDHTMLEdit_iface);
