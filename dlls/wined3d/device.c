@@ -1740,25 +1740,10 @@ static void resolve_depth_buffer(struct wined3d_device *device)
 void CDECL wined3d_device_set_blend_state(struct wined3d_device *device,
         struct wined3d_blend_state *blend_state, const struct wined3d_color *blend_factor, unsigned int sample_mask)
 {
-    struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_blend_state *prev;
-
     TRACE("device %p, blend_state %p, blend_factor %s, sample_mask %#x.\n",
             device, blend_state, debug_color(blend_factor), sample_mask);
 
-    prev = state->blend_state;
-    if (prev == blend_state && !memcmp(blend_factor, &state->blend_factor, sizeof(*blend_factor))
-            && sample_mask == state->sample_mask)
-        return;
-
-    if (blend_state)
-        wined3d_blend_state_incref(blend_state);
-    state->blend_state = blend_state;
-    state->blend_factor = *blend_factor;
-    state->sample_mask = sample_mask;
-    wined3d_device_context_emit_set_blend_state(&device->cs->c, blend_state, blend_factor, sample_mask);
-    if (prev)
-        wined3d_blend_state_decref(prev);
+    wined3d_device_context_set_blend_state(&device->cs->c, blend_state, blend_factor, sample_mask);
 }
 
 struct wined3d_blend_state * CDECL wined3d_device_get_blend_state(const struct wined3d_device *device,
@@ -2131,6 +2116,30 @@ void CDECL wined3d_device_context_set_constant_buffer(struct wined3d_device_cont
     wined3d_device_context_emit_set_constant_buffer(context, type, idx, buffer);
     if (prev)
         wined3d_buffer_decref(prev);
+}
+
+void CDECL wined3d_device_context_set_blend_state(struct wined3d_device_context *context,
+        struct wined3d_blend_state *blend_state, const struct wined3d_color *blend_factor, unsigned int sample_mask)
+{
+    struct wined3d_state *state = context->state;
+    struct wined3d_blend_state *prev;
+
+    TRACE("context %p, blend_state %p, blend_factor %p, sample_mask %#x.\n",
+            context, blend_state, blend_factor, sample_mask);
+
+    prev = state->blend_state;
+    if (prev == blend_state && !memcmp(blend_factor, &state->blend_factor, sizeof(*blend_factor))
+            && sample_mask == state->sample_mask)
+        return;
+
+    if (blend_state)
+        wined3d_blend_state_incref(blend_state);
+    state->blend_state = blend_state;
+    state->blend_factor = *blend_factor;
+    state->sample_mask = sample_mask;
+    wined3d_device_context_emit_set_blend_state(context, blend_state, blend_factor, sample_mask);
+    if (prev)
+        wined3d_blend_state_decref(prev);
 }
 
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
