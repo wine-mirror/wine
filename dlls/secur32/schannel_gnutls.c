@@ -50,6 +50,10 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 /* Not present in gnutls version < 2.9.10. */
 static int (*pgnutls_cipher_get_block_size)(gnutls_cipher_algorithm_t);
 
+/* Not present in gnutls version < 3.0. */
+static void (*pgnutls_transport_set_pull_timeout_function)(gnutls_session_t,
+                                                           int (*)(gnutls_transport_ptr_t, unsigned int));
+
 /* Not present in gnutls version < 3.2.0. */
 static int (*pgnutls_alpn_get_selected_protocol)(gnutls_session_t, gnutls_datum_t *);
 static int (*pgnutls_alpn_set_protocols)(gnutls_session_t, const gnutls_datum_t *,
@@ -147,6 +151,12 @@ static int compat_cipher_get_block_size(gnutls_cipher_algorithm_t cipher)
     }
 }
 
+static void compat_gnutls_transport_set_pull_timeout_function(gnutls_session_t session,
+                                                              int (*func)(gnutls_transport_ptr_t, unsigned int))
+{
+    FIXME("\n");
+}
+
 static int compat_gnutls_privkey_export_x509(gnutls_privkey_t privkey, gnutls_x509_privkey_t *key)
 {
     FIXME("\n");
@@ -212,6 +222,8 @@ static const struct {
     DWORD enable_flag;
     const char *gnutls_flag;
 } protocol_priority_flags[] = {
+    {SP_PROT_DTLS1_2_CLIENT, "VERS-DTLS1.2"},
+    {SP_PROT_DTLS1_0_CLIENT, "VERS-DTLS1.0"},
     {SP_PROT_TLS1_3_CLIENT, "VERS-TLS1.3"},
     {SP_PROT_TLS1_2_CLIENT, "VERS-TLS1.2"},
     {SP_PROT_TLS1_1_CLIENT, "VERS-TLS1.1"},
@@ -257,14 +269,29 @@ DWORD schan_imp_enabled_protocols(void)
     return supported_protocols;
 }
 
+static int schan_pull_timeout(gnutls_transport_ptr_t transport, unsigned int timeout)
+{
+    struct schan_transport *t = (struct schan_transport *)transport;
+    SIZE_T count = 0;
+
+    if (schan_get_buffer(t, &t->in, &count)) return 1;
+    return 0;
+}
+
 BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cred)
 {
     gnutls_session_t *s = (gnutls_session_t*)session;
     char priority[128] = "NORMAL:%LATEST_RECORD_VERSION", *p;
     BOOL using_vers_all = FALSE, disabled;
-    unsigned i;
+    unsigned int i, flags = (cred->credential_use == SECPKG_CRED_INBOUND) ? GNUTLS_SERVER : GNUTLS_CLIENT;
+    int err;
 
-    int err = pgnutls_init(s, cred->credential_use == SECPKG_CRED_INBOUND ? GNUTLS_SERVER : GNUTLS_CLIENT);
+    if (cred->enabled_protocols & (SP_PROT_DTLS1_0_CLIENT | SP_PROT_DTLS1_2_CLIENT))
+    {
+        flags |= GNUTLS_DATAGRAM | GNUTLS_NONBLOCK;
+    }
+
+    err = pgnutls_init(s, flags);
     if (err != GNUTLS_E_SUCCESS)
     {
         pgnutls_perror(err);
@@ -315,6 +342,7 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
     }
 
     pgnutls_transport_set_pull_function(*s, schan_pull_adapter);
+    if (flags & GNUTLS_DATAGRAM) pgnutls_transport_set_pull_timeout_function(*s, schan_pull_timeout);
     pgnutls_transport_set_push_function(*s, schan_push_adapter);
 
     return TRUE;
@@ -400,6 +428,8 @@ static DWORD schannel_get_protocol(gnutls_protocol_t proto)
     case GNUTLS_TLS1_0: return SP_PROT_TLS1_0_CLIENT;
     case GNUTLS_TLS1_1: return SP_PROT_TLS1_1_CLIENT;
     case GNUTLS_TLS1_2: return SP_PROT_TLS1_2_CLIENT;
+    case GNUTLS_DTLS1_0: return SP_PROT_DTLS1_0_CLIENT;
+    case GNUTLS_DTLS1_2: return SP_PROT_DTLS1_2_CLIENT;
     default:
         FIXME("unknown protocol %d\n", proto);
         return 0;
@@ -1084,6 +1114,11 @@ BOOL schan_imp_init(void)
     {
         WARN("gnutls_cipher_get_block_size not found\n");
         pgnutls_cipher_get_block_size = compat_cipher_get_block_size;
+    }
+    if (!(pgnutls_transport_set_pull_timeout_function = dlsym(libgnutls_handle, "gnutls_transport_set_pull_timeout_function")))
+    {
+        WARN("gnutls_transport_set_pull_timeout_function not found\n");
+        pgnutls_transport_set_pull_timeout_function = compat_gnutls_transport_set_pull_timeout_function;
     }
     if (!(pgnutls_alpn_set_protocols = dlsym(libgnutls_handle, "gnutls_alpn_set_protocols")))
     {
