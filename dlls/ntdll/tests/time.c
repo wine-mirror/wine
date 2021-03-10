@@ -243,14 +243,13 @@ static void test_user_shared_data_time(void)
         do
         {
             pRtlQueryUnbiasedInterruptTime(&t1);
-            t2 = read_ksystem_time(&user_shared_data->InterruptTime);
+            t2 = read_ksystem_time(&user_shared_data->InterruptTime) - user_shared_data->InterruptTimeBias;
             pRtlQueryUnbiasedInterruptTime(&t3);
         } while(t3 < t1 && i++ < 1); /* allow for wrap, but only once */
 
         ok(t1 <= t2, "USD InterruptTime / RtlQueryUnbiasedInterruptTime are out of order %s %s\n",
            wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
-        ok(t2 <= t3 || broken(t2 == t3 + 82410089070) /* w864 has some weird offset on testbot */,
-           "USD InterruptTime / RtlQueryUnbiasedInterruptTime are out of order %s %s\n",
+        ok(t2 <= t3, "USD InterruptTime / RtlQueryUnbiasedInterruptTime are out of order %s %s\n",
            wine_dbgstr_longlong(t2), wine_dbgstr_longlong(t3));
     }
 }
