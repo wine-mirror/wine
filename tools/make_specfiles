@@ -251,6 +251,7 @@ my @dll_groups =
   "api-ms-win-core-job-l2-1-0",
   "api-ms-win-core-kernel32-legacy-l1-1-0",
   "api-ms-win-core-kernel32-legacy-l1-1-1",
+  "api-ms-win-core-kernel32-legacy-l1-1-2",
   "api-ms-win-core-kernel32-private-l1-1-1",
   "api-ms-win-core-largeinteger-l1-1-0",
   "api-ms-win-core-libraryloader-l1-2-1",
