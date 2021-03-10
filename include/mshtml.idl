@@ -10955,6 +10955,345 @@ interface IHTMLElement6 : IDispatch
     [id(DISPID_IHTMLELEMENT6_IE9_HASATTRIBUTES)]                        \
     VARIANT_BOOL ie9_hasAttributes()
 
+
+/*****************************************************************************
+ *    IHTMLElement7 interface
+ */
+[
+    odl,
+    oleautomation,
+    uuid(305107aa-98b5-11cf-bb82-00aa00bdce0b),
+    dual
+]
+interface IHTMLElement7 : IDispatch
+{
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSPOINTERDOWN), displaybind, bindable, hidden]
+    HRESULT onmspointerdown([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSPOINTERDOWN), displaybind, bindable, hidden]
+    HRESULT onmspointerdown([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSPOINTERMOVE), displaybind, bindable, hidden]
+    HRESULT onmspointermove([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSPOINTERMOVE), displaybind, bindable, hidden]
+    HRESULT onmspointermove([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSPOINTERUP), displaybind, bindable, hidden]
+    HRESULT onmspointerup([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSPOINTERUP), displaybind, bindable, hidden]
+    HRESULT onmspointerup([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSPOINTEROVER), displaybind, bindable, hidden]
+    HRESULT onmspointerover([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSPOINTEROVER), displaybind, bindable, hidden]
+    HRESULT onmspointerover([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSPOINTEROUT), displaybind, bindable, hidden]
+    HRESULT onmspointerout([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSPOINTEROUT), displaybind, bindable, hidden]
+    HRESULT onmspointerout([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSPOINTERCANCEL), displaybind, bindable, hidden]
+    HRESULT onmspointercancel([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSPOINTERCANCEL), displaybind, bindable, hidden]
+    HRESULT onmspointercancel([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSPOINTERHOVER), displaybind, bindable, hidden]
+    HRESULT onmspointerhover([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSPOINTERHOVER), displaybind, bindable, hidden]
+    HRESULT onmspointerhover([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSLOSTPOINTERCAPTURE), displaybind, bindable, hidden]
+    HRESULT onmslostpointercapture([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSLOSTPOINTERCAPTURE), displaybind, bindable, hidden]
+    HRESULT onmslostpointercapture([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSGOTPOINTERCAPTURE), displaybind, bindable, hidden]
+    HRESULT onmsgotpointercapture([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSGOTPOINTERCAPTURE), displaybind, bindable, hidden]
+    HRESULT onmsgotpointercapture([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSGESTURESTART), displaybind, bindable, hidden]
+    HRESULT onmsgesturestart([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSGESTURESTART), displaybind, bindable, hidden]
+    HRESULT onmsgesturestart([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSGESTURECHANGE), displaybind, bindable, hidden]
+    HRESULT onmsgesturechange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSGESTURECHANGE), displaybind, bindable, hidden]
+    HRESULT onmsgesturechange([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSGESTUREEND), displaybind, bindable, hidden]
+    HRESULT onmsgestureend([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSGESTUREEND), displaybind, bindable, hidden]
+    HRESULT onmsgestureend([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSGESTUREHOLD), displaybind, bindable, hidden]
+    HRESULT onmsgesturehold([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSGESTUREHOLD), displaybind, bindable, hidden]
+    HRESULT onmsgesturehold([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSGESTURETAP), displaybind, bindable, hidden]
+    HRESULT onmsgesturetap([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSGESTURETAP), displaybind, bindable, hidden]
+    HRESULT onmsgesturetap([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSGESTUREDOUBLETAP), displaybind, bindable, hidden]
+    HRESULT onmsgesturedoubletap([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSGESTUREDOUBLETAP), displaybind, bindable, hidden]
+    HRESULT onmsgesturedoubletap([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSINERTIASTART), displaybind, bindable, hidden]
+    HRESULT onmsinertiastart([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSINERTIASTART), displaybind, bindable, hidden]
+    HRESULT onmsinertiastart([out, retval] VARIANT *p);
+
+    [id(DISPID_IHTMLELEMENT7_MSSETPOINTERCAPTURE)]
+    HRESULT msSetPointerCapture([in] long pointerId);
+
+    [id(DISPID_IHTMLELEMENT7_MSRELEASEPOINTERCAPTURE)]
+    HRESULT msReleasePointerCapture([in] long pointerId);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSTRANSITIONSTART), displaybind, bindable, hidden]
+    HRESULT onmstransitionstart([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSTRANSITIONSTART), displaybind, bindable, hidden]
+    HRESULT onmstransitionstart([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSTRANSITIONEND), displaybind, bindable, hidden]
+    HRESULT onmstransitionend([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSTRANSITIONEND), displaybind, bindable, hidden]
+    HRESULT onmstransitionend([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSANIMATIONSTART), displaybind, bindable, hidden]
+    HRESULT onmsanimationstart([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSANIMATIONSTART), displaybind, bindable, hidden]
+    HRESULT onmsanimationstart([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSANIMATIONEND), displaybind, bindable, hidden]
+    HRESULT onmsanimationend([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSANIMATIONEND), displaybind, bindable, hidden]
+    HRESULT onmsanimationend([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSANIMATIONITERATION), displaybind, bindable, hidden]
+    HRESULT onmsanimationiteration([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSANIMATIONITERATION), displaybind, bindable, hidden]
+    HRESULT onmsanimationiteration([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONINVALID), displaybind, bindable, hidden]
+    HRESULT oninvalid([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONINVALID), displaybind, bindable, hidden]
+    HRESULT oninvalid([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_XMSACCELERATORKEY), displaybind, bindable]
+    HRESULT xmsAcceleratorKey([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_XMSACCELERATORKEY), displaybind, bindable]
+    HRESULT xmsAcceleratorKey([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_SPELLCHECK)]
+    HRESULT spellcheck([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_SPELLCHECK)]
+    HRESULT spellcheck([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSMANIPULATIONSTATECHANGED), displaybind, bindable, hidden]
+    HRESULT onmsmanipulationstatechanged([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSMANIPULATIONSTATECHANGED), displaybind, bindable, hidden]
+    HRESULT onmsmanipulationstatechanged([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLELEMENT7_ONCUECHANGE), displaybind, bindable, hidden]
+    HRESULT oncuechange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLELEMENT7_ONCUECHANGE), displaybind, bindable, hidden]
+    HRESULT oncuechange([out, retval] VARIANT *p);
+}
+
+#define WINE_IHTMLELEMENT7_DISPINTERFACE_DECL                           \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSPOINTERDOWN), displaybind, bindable, hidden] \
+    void onmspointerdown(VARIANT v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSPOINTERDOWN), displaybind, bindable, hidden] \
+    VARIANT onmspointerdown();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSPOINTERMOVE), displaybind, bindable, hidden] \
+    void onmspointermove(VARIANT v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSPOINTERMOVE), displaybind, bindable, hidden] \
+    VARIANT onmspointermove();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSPOINTERUP), displaybind, bindable, hidden] \
+    void onmspointerup(VARIANT v);                                      \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSPOINTERUP), displaybind, bindable, hidden] \
+    VARIANT onmspointerup();                                            \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSPOINTEROVER), displaybind, bindable, hidden] \
+    void onmspointerover(VARIANT v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSPOINTEROVER), displaybind, bindable, hidden] \
+    VARIANT onmspointerover();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSPOINTEROUT), displaybind, bindable, hidden] \
+    void onmspointerout(VARIANT v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSPOINTEROUT), displaybind, bindable, hidden] \
+    VARIANT onmspointerout();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSPOINTERCANCEL), displaybind, bindable, hidden] \
+    void onmspointercancel(VARIANT v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSPOINTERCANCEL), displaybind, bindable, hidden] \
+    VARIANT onmspointercancel();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSPOINTERHOVER), displaybind, bindable, hidden] \
+    void onmspointerhover(VARIANT v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSPOINTERHOVER), displaybind, bindable, hidden] \
+    VARIANT onmspointerhover();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSLOSTPOINTERCAPTURE), displaybind, bindable, hidden] \
+    void onmslostpointercapture(VARIANT v);                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSLOSTPOINTERCAPTURE), displaybind, bindable, hidden] \
+    VARIANT onmslostpointercapture();                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSGOTPOINTERCAPTURE), displaybind, bindable, hidden] \
+    void onmsgotpointercapture(VARIANT v);                              \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSGOTPOINTERCAPTURE), displaybind, bindable, hidden] \
+    VARIANT onmsgotpointercapture();                                    \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSGESTURESTART), displaybind, bindable, hidden] \
+    void onmsgesturestart(VARIANT v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSGESTURESTART), displaybind, bindable, hidden] \
+    VARIANT onmsgesturestart();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSGESTURECHANGE), displaybind, bindable, hidden] \
+    void onmsgesturechange(VARIANT v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSGESTURECHANGE), displaybind, bindable, hidden] \
+    VARIANT onmsgesturechange();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSGESTUREEND), displaybind, bindable, hidden] \
+    void onmsgestureend(VARIANT v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSGESTUREEND), displaybind, bindable, hidden] \
+    VARIANT onmsgestureend();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSGESTUREHOLD), displaybind, bindable, hidden] \
+    void onmsgesturehold(VARIANT v);                                    \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSGESTUREHOLD), displaybind, bindable, hidden] \
+    VARIANT onmsgesturehold();                                          \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSGESTURETAP), displaybind, bindable, hidden] \
+    void onmsgesturetap(VARIANT v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSGESTURETAP), displaybind, bindable, hidden] \
+    VARIANT onmsgesturetap();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSGESTUREDOUBLETAP), displaybind, bindable, hidden] \
+    void onmsgesturedoubletap(VARIANT v);                               \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSGESTUREDOUBLETAP), displaybind, bindable, hidden] \
+    VARIANT onmsgesturedoubletap();                                     \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSINERTIASTART), displaybind, bindable, hidden] \
+    void onmsinertiastart(VARIANT v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSINERTIASTART), displaybind, bindable, hidden] \
+    VARIANT onmsinertiastart();                                         \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT7_MSSETPOINTERCAPTURE)]                      \
+    void msSetPointerCapture([in] long pointerId);                      \
+                                                                        \
+    [id(DISPID_IHTMLELEMENT7_MSRELEASEPOINTERCAPTURE)]                  \
+    void msReleasePointerCapture([in] long pointerId);                  \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSTRANSITIONSTART), displaybind, bindable, hidden] \
+    void onmstransitionstart(VARIANT v);                                \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSTRANSITIONSTART), displaybind, bindable, hidden] \
+    VARIANT onmstransitionstart();                                      \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSTRANSITIONEND), displaybind, bindable, hidden] \
+    void onmstransitionend(VARIANT v);                                  \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSTRANSITIONEND), displaybind, bindable, hidden] \
+    VARIANT onmstransitionend();                                        \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSANIMATIONSTART), displaybind, bindable, hidden] \
+    void onmsanimationstart(VARIANT v);                                 \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSANIMATIONSTART), displaybind, bindable, hidden] \
+    VARIANT onmsanimationstart();                                       \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSANIMATIONEND), displaybind, bindable, hidden] \
+    void onmsanimationend(VARIANT v);                                   \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSANIMATIONEND), displaybind, bindable, hidden] \
+    VARIANT onmsanimationend();                                         \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSANIMATIONITERATION), displaybind, bindable, hidden] \
+    void onmsanimationiteration(VARIANT v);                             \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSANIMATIONITERATION), displaybind, bindable, hidden] \
+    VARIANT onmsanimationiteration();                                   \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONINVALID), displaybind, bindable, hidden] \
+    void oninvalid(VARIANT v);                                          \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONINVALID), displaybind, bindable, hidden] \
+    VARIANT oninvalid();                                                \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_XMSACCELERATORKEY), displaybind, bindable] \
+    void xmsAcceleratorKey(BSTR v);                                     \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_XMSACCELERATORKEY), displaybind, bindable] \
+    BSTR xmsAcceleratorKey();                                           \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_SPELLCHECK)]                      \
+    void spellcheck(VARIANT v);                                         \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_SPELLCHECK)]                      \
+    VARIANT spellcheck();                                               \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONMSMANIPULATIONSTATECHANGED), displaybind, bindable, hidden] \
+    void onmsmanipulationstatechanged(VARIANT v);                       \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONMSMANIPULATIONSTATECHANGED), displaybind, bindable, hidden] \
+    VARIANT onmsmanipulationstatechanged();                             \
+                                                                        \
+    [propput, id(DISPID_IHTMLELEMENT7_ONCUECHANGE), displaybind, bindable, hidden] \
+    void oncuechange(VARIANT v);                                        \
+                                                                        \
+    [propget, id(DISPID_IHTMLELEMENT7_ONCUECHANGE), displaybind, bindable, hidden] \
+    VARIANT oncuechange()
+
+
 /*****************************************************************************
  *    IElementTraversal interface
  */
@@ -11284,8 +11623,8 @@ interface IHTMLDatabinding : IDispatch
     interface IHTMLDOMNode2;                    \
  /* interface IHTMLElement5; */                 \
     interface IHTMLElement6;                    \
-    interface IHTMLDOMConstructor               \
- /* interface IHTMLElement7 */
+    interface IHTMLDOMConstructor;              \
+    interface IHTMLElement7
 
 #define WINE_HTMLELEMENT_DISPINTERFACE_DECL     \
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;       \
@@ -11296,7 +11635,8 @@ interface IHTMLDatabinding : IDispatch
     WINE_HTMLDOMNODE_DISPINTERFACE_DECL;        \
     WINE_IHTMLELEMENT5_DISPINTERFACE_DECL;      \
     WINE_IHTMLELEMENT6_DISPINTERFACE_DECL;      \
-    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;\
+    WINE_IHTMLELEMENT7_DISPINTERFACE_DECL
 
 #define WINE_HTMLDATAELEMENT_INTERFACES         \
     interface IHTMLElement;                     \
@@ -11310,8 +11650,8 @@ interface IHTMLDatabinding : IDispatch
  /* interface IHTMLElement5; */                 \
     interface IHTMLElement6;                    \
     interface IElementSelector;                 \
-    interface IHTMLDOMConstructor               \
- /* interface IHTMLElement7 */
+    interface IHTMLDOMConstructor;              \
+    interface IHTMLElement7
 
 #define WINE_HTMLDATAELEMENT_DISPINTERFACE_DECL \
     WINE_IHTMLELEMENT_DISPINTERFACE_DECL;       \
@@ -11324,7 +11664,8 @@ interface IHTMLDatabinding : IDispatch
     WINE_IHTMLELEMENT5_DISPINTERFACE_DECL;      \
     WINE_IHTMLELEMENT6_DISPINTERFACE_DECL;      \
     WINE_IELEMENTSELECTOR_DISPINTERFACE_DECL;   \
-    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;\
+    WINE_IHTMLELEMENT7_DISPINTERFACE_DECL
 
 /*****************************************************************************
  *    IHTMLGenericElement interface
