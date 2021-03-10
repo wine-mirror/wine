@@ -958,10 +958,11 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     }
 
     *pfContextAttr = ISC_RET_REPLAY_DETECT | ISC_RET_SEQUENCE_DETECT | ISC_RET_CONFIDENTIALITY | ISC_RET_STREAM;
-    if (ctx->req_ctx_attr & ISC_REQ_ALLOCATE_MEMORY)
-        *pfContextAttr |= ISC_RET_ALLOCATED_MEMORY;
-    if (ctx->req_ctx_attr & ISC_REQ_USE_SUPPLIED_CREDS)
-        *pfContextAttr |= ISC_RET_USED_SUPPLIED_CREDS;
+    if (ctx->req_ctx_attr & ISC_REQ_EXTENDED_ERROR) *pfContextAttr |= ISC_RET_EXTENDED_ERROR;
+    if (ctx->req_ctx_attr & ISC_REQ_DATAGRAM) *pfContextAttr |= ISC_RET_DATAGRAM;
+    if (ctx->req_ctx_attr & ISC_REQ_ALLOCATE_MEMORY) *pfContextAttr |= ISC_RET_ALLOCATED_MEMORY;
+    if (ctx->req_ctx_attr & ISC_REQ_USE_SUPPLIED_CREDS) *pfContextAttr |= ISC_RET_USED_SUPPLIED_CREDS;
+    if (ctx->req_ctx_attr & ISC_REQ_MANUAL_CRED_VALIDATION) *pfContextAttr |= ISC_RET_MANUAL_CRED_VALIDATION;
 
     return ret;
 }
