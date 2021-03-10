@@ -772,6 +772,13 @@ static void dump_buffer_desc(SecBufferDesc *desc)
     }
 }
 
+#define HEADER_SIZE_TLS  5
+
+static inline SIZE_T read_record_size(const BYTE *buf, SIZE_T header_size)
+{
+    return (buf[header_size - 2] << 8) | buf[header_size - 1];
+}
+
 /***********************************************************************
  *              InitializeSecurityContextW
  */
@@ -870,9 +877,9 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
         ptr = buffer->pvBuffer;
         expected_size = 0;
 
-        while (buffer->cbBuffer > expected_size + 5)
+        while (buffer->cbBuffer > expected_size + HEADER_SIZE_TLS)
         {
-            record_size = 5 + ((ptr[3] << 8) | ptr[4]);
+            record_size = HEADER_SIZE_TLS + read_record_size(ptr, HEADER_SIZE_TLS);
 
             if (buffer->cbBuffer < expected_size + record_size)
                 break;
@@ -1035,7 +1042,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
                         mac_size, message_size, block_size);
 
                 /* These are defined by the TLS RFC */
-                stream_sizes->cbHeader = 5;
+                stream_sizes->cbHeader = HEADER_SIZE_TLS;
                 stream_sizes->cbTrailer = mac_size + 256; /* Max 255 bytes padding + 1 for padding size */
                 stream_sizes->cbMaximumMessage = message_size;
                 stream_sizes->cbBuffers = 4;
@@ -1360,7 +1367,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     buffer = &message->pBuffers[idx];
     buf_ptr = buffer->pvBuffer;
 
-    expected_size = 5 + ((buf_ptr[3] << 8) | buf_ptr[4]);
+    expected_size = HEADER_SIZE_TLS + read_record_size(buf_ptr, HEADER_SIZE_TLS);
     if(buffer->cbBuffer < expected_size)
     {
         TRACE("Expected %u bytes, but buffer only contains %u bytes\n", expected_size, buffer->cbBuffer);
@@ -1377,7 +1384,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
         return SEC_E_INCOMPLETE_MESSAGE;
     }
 
-    data_size = expected_size - 5;
+    data_size = expected_size - HEADER_SIZE_TLS;
     data = heap_alloc(data_size);
 
     init_schan_buffers(&ctx->transport.in, message, schan_decrypt_message_get_next_buffer);
@@ -1412,21 +1419,21 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
 
     TRACE("Received %ld bytes\n", received);
 
-    memcpy(buf_ptr + 5, data, received);
+    memcpy(buf_ptr + HEADER_SIZE_TLS, data, received);
     heap_free(data);
 
     schan_decrypt_fill_buffer(message, SECBUFFER_DATA,
-        buf_ptr + 5, received);
+        buf_ptr + HEADER_SIZE_TLS, received);
 
     schan_decrypt_fill_buffer(message, SECBUFFER_STREAM_TRAILER,
-        buf_ptr + 5 + received, buffer->cbBuffer - 5 - received);
+        buf_ptr + HEADER_SIZE_TLS + received, buffer->cbBuffer - HEADER_SIZE_TLS - received);
 
     if(buffer->cbBuffer > expected_size)
         schan_decrypt_fill_buffer(message, SECBUFFER_EXTRA,
             buf_ptr + expected_size, buffer->cbBuffer - expected_size);
 
     buffer->BufferType = SECBUFFER_STREAM_HEADER;
-    buffer->cbBuffer = 5;
+    buffer->cbBuffer = HEADER_SIZE_TLS;
 
     return status;
 }
