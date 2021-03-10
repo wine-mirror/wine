@@ -468,7 +468,7 @@ HRESULT add_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *locale,
     if (*locale)
     {
         for (i = 0; i < count; i++)
-            if (!strcmpW(strings->data[i].locale, locale))
+            if (!lstrcmpiW(strings->data[i].locale, locale))
                 return S_OK;
     }
 
@@ -483,6 +483,7 @@ HRESULT add_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *locale,
         heap_free(strings->data[count].string);
         return E_OUTOFMEMORY;
     }
+    strlwrW(strings->data[count].locale);
 
     strings->count++;
 
