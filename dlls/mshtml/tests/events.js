@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+var tests = [];
+
 var test_content_loaded = (function() {
     var calls = "";
 
@@ -24,7 +26,7 @@ var test_content_loaded = (function() {
     }
 
     function record_call(msg) {
-        return function() { calls += msg + "," };
+        return function() { calls += msg + ","; };
     }
 
     window.addEventListener("DOMContentLoaded", record_call("window.capture"), true);
@@ -42,13 +44,15 @@ var test_content_loaded = (function() {
     };
 })();
 
-function test_listener_order() {
+async_test("content_loaded", test_content_loaded);
+
+sync_test("listener_order", function() {
     document.body.innerHTML = '<div></div>';
     var div = document.body.firstChild;
 
     var calls;
     function record_call(msg) {
-        return function() { calls += msg + "," };
+        return function() { calls += msg + ","; };
     }
 
     window.addEventListener("click", record_call("window.click(capture)"), true);
@@ -98,11 +102,9 @@ function test_listener_order() {
        + "div.click(bubble),new div.onclick,div.click(capture1),div.click(capture2),"
        + "body.onclick,body.click(bubble),body.click(bubble2),document.click(bubble),"
        + "document.onclick,window.click(bubble),", "calls = " + calls);
+});
 
-    next_test();
-}
-
-function test_add_listener_in_listener() {
+sync_test("add_listener_in_listener", function() {
     var calls;
 
     document.body.innerHTML = '<div><div></div></div>';
@@ -110,7 +112,7 @@ function test_add_listener_in_listener() {
     var div2 = div1.firstChild;
 
     function record_call(msg) {
-        return function() { calls += msg + "," };
+        return function() { calls += msg + ","; };
     }
 
     div1.addEventListener("click", function() {
@@ -126,18 +128,16 @@ function test_add_listener_in_listener() {
     calls = "";
     div2.click();
     ok(calls === "div2.click", "calls = " + calls);
+});
 
-    next_test();
-}
-
-function test_remove_listener_in_listener() {
+sync_test("remove_listener_in_listener", function() {
     var calls;
 
     document.body.innerHTML = '<div></div>';
     var div = document.body.firstChild;
 
     function record_call(msg) {
-        return function() { calls += msg + "," };
+        return function() { calls += msg + ","; };
     }
 
     var capture = record_call("capture"), bubble = record_call("bubble");
@@ -155,11 +155,9 @@ function test_remove_listener_in_listener() {
     calls = "";
     div.click();
     ok(calls === "remove,capture,bubble,onclick,", "calls = " + calls);
+});
 
-    next_test();
-}
-
-function test_add_remove_listener() {
+sync_test("add_remove_listener", function() {
     var calls;
 
     document.body.innerHTML = '<div></div>';
@@ -200,11 +198,9 @@ function test_add_remove_listener() {
     calls = "";
     div.click();
     ok(calls === "", "calls = " + calls);
+});
 
-    next_test();
-}
-
-function test_event_phase() {
+sync_test("event_phase", function() {
     document.body.innerHTML = '<div><div></div></div>';
     var div1 = document.body.firstChild;
     var div2 = div1.firstChild;
@@ -230,18 +226,16 @@ function test_event_phase() {
 
     div2.click();
     ok(last_event.eventPhase === 3, "last_event.eventPhase = " + last_event.eventPhase);
+});
 
-    next_test();
-}
-
-function test_stop_propagation() {
+sync_test("stop_propagation", function() {
     document.body.innerHTML = '<div><div></div></div>';
     var div1 = document.body.firstChild;
     var div2 = div1.firstChild;
 
     var calls;
     function record_call(msg) {
-        return function() { calls += msg + "," };
+        return function() { calls += msg + ","; };
     }
 
     function stop_propagation(e) {
@@ -304,11 +298,9 @@ function test_stop_propagation() {
     div2.click();
     ok(calls === "div1.click(capture),div2.click(capture),div2.click(bubble),stop,div1.click(bubble),",
        "calls = " + calls);
+});
 
-    next_test();
-}
-
-function test_prevent_default() {
+sync_test("prevent_default", function() {
     document.body.innerHTML = '<div><a href="about:blank"></a></div>';
     var div = document.body.firstChild;
     var a = div.firstChild;
@@ -385,11 +377,9 @@ function test_prevent_default() {
     ok(r === true, "dispatchEvent returned " + r);
     e.preventDefault();
     ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
+});
 
-    next_test();
-}
-
-function test_init_event() {
+sync_test("init_event", function() {
     var e = document.createEvent("Event");
     var calls;
 
@@ -457,11 +447,9 @@ function test_init_event() {
 
     document.body.dispatchEvent(e);
     ok(e.target === document.body, "target != body");
+});
 
-    next_test();
-}
-
-function test_current_target() {
+sync_test("current_target", function() {
     document.body.innerHTML = '<div><div></div></div>';
     var parent = document.body.firstChild;
     var child = parent.firstChild;
@@ -488,11 +476,9 @@ function test_current_target() {
     child.dispatchEvent(e);
     ok(calls === 4, "calls = " + calls + " expected 4");
     ok(e.currentTarget === null, "currentTarget != null");
+});
 
-    next_test();
-}
-
-function test_dispatch_event() {
+sync_test("dispatch_event", function() {
     document.body.innerHTML = '<div><div></div></div>';
     var parent = document.body.firstChild;
     var child = parent.firstChild;
@@ -563,11 +549,9 @@ function test_dispatch_event() {
     calls = "";
     xhr.dispatchEvent(e);
     ok(calls === "xhr.testing", "calls = " + calls);
+});
 
-    next_test();
-}
-
-function test_recursive_dispatch() {
+sync_test("recursive_dispatch", function() {
     document.body.innerHTML = '<div></div><div></div>';
     var elem1 = document.body.firstChild;
     var elem2 = elem1.nextSibling;
@@ -596,11 +580,9 @@ function test_recursive_dispatch() {
     elem1.dispatchEvent(e);
     ok(calls === "elem1.test,", "calls = " + calls);
     ok(e.eventPhase === 3, "eventPhase = " + e.eventPhase);
+});
 
-    next_test();
-}
-
-function test_time_stamp() {
+sync_test("time_stamp", function() {
     document.body.innerHTML = '<div></div>';
     var elem = document.body.firstChild;
     var calls, last_time_stamp;
@@ -634,11 +616,9 @@ function test_time_stamp() {
     calls = 0;
     elem.click();
     ok(calls === 1, "calls = " + calls);
+});
 
-    next_test();
-}
-
-function test_mouse_event() {
+sync_test("mouse_event", function() {
     var e;
 
     e = document.createEvent("MouseEvent");
@@ -727,11 +707,9 @@ function test_mouse_event() {
     ok(e.shiftKey === true, "shiftKey = " + e.shiftKey);
     ok(e.metaKey === true, "metaKey = " + e.metaKey);
     ok(e.button === 127, "button = " + e.button);
+});
 
-    next_test();
-}
-
-function test_ui_event() {
+sync_test("ui_event", function() {
     var e;
 
     e = document.createEvent("UIEvent");
@@ -744,11 +722,9 @@ function test_ui_event() {
     ok(e.detail === 3, "detail = " + e.detail);
     todo_wine.
     ok(e.view === window, "view != window");
+});
 
-    next_test();
-}
-
-function test_keyboard_event() {
+sync_test("keyboard_event", function() {
     var e;
 
     e = document.createEvent("KeyboardEvent");
@@ -765,11 +741,9 @@ function test_keyboard_event() {
     ok(e.location === 0, "location = " + e.location);
     ok(e.detail === 0, "detail = " + e.detail);
     ok(e.which === 0, "which = " + e.which);
+});
 
-    next_test();
-}
-
-function test_custom_event() {
+sync_test("custom_event", function() {
     var e = document.createEvent("CustomEvent");
 
     ok(e.detail === undefined, "detail = " + e.detail);
@@ -779,18 +753,16 @@ function test_custom_event() {
     ok(e.bubbles === true, "bubbles = " + e.bubbles);
     ok(e.cancelable === false, "cancelable = " + e.cancelable);
     ok(e.detail === 123, "detail = " + e.detail);
+});
 
-    next_test();
-}
-
-function test_error_event() {
+async_test("error_event", function() {
     document.body.innerHTML = '<div><img></img></div>';
     var div = document.body.firstChild;
     var img = div.firstChild;
     var calls = "";
 
     function record_call(msg) {
-        return function() { calls += msg + "," };
+        return function() { calls += msg + ","; };
     }
     var win_onerror = record_call("window.onerror");
     var doc_onerror = record_call("doc.onerror");
@@ -811,34 +783,12 @@ function test_error_event() {
     }, true);
 
     img.src = "about:blank";
-}
+});
 
-function test_detached_img_error_event() {
+async_test("detached_img_error_event", function() {
     var img = new Image();
     img.onerror = function() {
         next_test();
     }
     img.src = "about:blank";
-}
-
-var tests = [
-    test_content_loaded,
-    test_add_remove_listener,
-    test_add_listener_in_listener,
-    test_remove_listener_in_listener,
-    test_event_phase,
-    test_stop_propagation,
-    test_prevent_default,
-    test_init_event,
-    test_current_target,
-    test_dispatch_event,
-    test_recursive_dispatch,
-    test_ui_event,
-    test_mouse_event,
-    test_keyboard_event,
-    test_custom_event,
-    test_error_event,
-    test_detached_img_error_event,
-    test_time_stamp,
-    test_listener_order
-];
+});

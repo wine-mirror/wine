@@ -16,7 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-function test_input_selection() {
+var tests = [];
+
+sync_test("input_selection", function() {
     var input = document.createElement("input");
     input.type = "text";
     input.value = "test";
@@ -55,11 +57,9 @@ function test_input_selection() {
 
     input.setSelectionRange(3, 3);
     test_range(3, 3);
+});
 
-    next_test();
-}
-
-function test_textContent() {
+sync_test("textContent", function() {
     var text = document.createTextNode("test");
     ok(text.textContent === "test", "text.textContent = " + text.textContent);
 
@@ -85,11 +85,9 @@ function test_textContent() {
     ok(div.textContent === "10.5", "div.textContent = " + div.textContent);
 
     ok(document.textContent === null, "document.textContent = " + document.textContent);
+});
 
-    next_test();
-}
-
-function test_ElementTraversal() {
+sync_test("ElementTraversal", function() {
     var div = document.createElement("div");
     div.innerHTML = "abc<b>bold</b><script>/* */<script><div>text</div>def";
     ok(div.firstElementChild.outerHTML === "<b>bold</b>",
@@ -99,19 +97,15 @@ function test_ElementTraversal() {
     ok(div.firstElementChild === null, "div.firstElementChild = " + div.firstElementChild);
 
     ok(!("firstElementChild" in document), "firstElementChild found in document");
+});
 
-    next_test();
-}
-
-function test_head() {
+sync_test("head", function() {
     var h = document.head;
     ok(h.tagName === "HEAD", "h.tagName = " + h.tagName);
     ok(h === document.getElementsByTagName("head")[0], "unexpected head element");
+});
 
-    next_test();
-}
-
-function test_iframe() {
+async_test("iframe", function() {
     document.body.innerHTML = '<iframe src="runscript.html?frame.js"></iframe>'
     var iframe = document.body.firstChild;
 
@@ -124,9 +118,9 @@ function test_iframe() {
 
         next_test();
     });
-}
+});
 
-function test_iframe_location() {
+async_test("iframe_location", function() {
     document.body.innerHTML = '<iframe src="emptyfile"></iframe>'
     var iframe = document.body.firstChild;
 
@@ -140,9 +134,9 @@ function test_iframe_location() {
         }
         iframe.src = "empty/file";
     }
-}
+});
 
-function test_anchor() {
+sync_test("anchor", function() {
     var iframe = document.body.firstChild;
     var anchor = document.createElement("a");
 
@@ -162,11 +156,9 @@ function test_anchor() {
         todo_wine_if("todo_host" in t).
         ok(anchor.host === t.host, "anchor(" + t.href + ").host = " + anchor.host);
     }
+});
 
-    next_test();
-}
-
-function test_getElementsByClassName() {
+sync_test("getElementsByClassName", function() {
     var elems;
 
     document.body.innerHTML = '<div class="class1">'
@@ -187,11 +179,9 @@ function test_getElementsByClassName() {
 
     elems = document.getElementsByClassName("classnotfound");
     ok(elems.length == 0, "elems.length = " + elems.length);
+});
 
-    next_test();
-}
-
-function test_createElementNS() {
+sync_test("createElementNS", function() {
     var svg_ns = "http://www.w3.org/2000/svg";
     var elem;
 
@@ -210,11 +200,9 @@ function test_createElementNS() {
     elem = document.createElementNS("test", "svg");
     ok(elem.tagName === "svg", "elem.tagName = " + elem.tagName);
     ok(elem.namespaceURI === "test", "elem.namespaceURI = " + elem.namespaceURI);
+});
 
-    next_test();
-}
-
-function test_query_selector() {
+sync_test("query_selector", function() {
     document.body.innerHTML = '<div class="class1">'
         + '<div class="class1"></div>'
         + '<a id="class1" class="class2"></a>'
@@ -237,11 +225,9 @@ function test_query_selector() {
     ok(e.tagName === "A", "e.tagName = " + e.tagName);
     e = document.body.querySelector("a");
     ok(e.tagName === "A", "e.tagName = " + e.tagName);
+});
 
-    next_test();
-}
-
-function test_compare_position() {
+sync_test("compare_position", function() {
     document.body.innerHTML = '<div><div></div><div></div></div>';
 
     var parent = document.body.firstChild;
@@ -261,11 +247,9 @@ function test_compare_position() {
     compare_position(parent, child2, 0x14);
     compare_position(parent, elem, 0x21, 6);
     compare_position(elem, parent, 0x21, 6);
+});
 
-    next_test();
-}
-
-function test_rects() {
+sync_test("rects", function() {
     document.body.innerHTML = '<div>test</div>';
     var elem = document.body.firstChild;
     var rects = elem.getClientRects();
@@ -278,11 +262,9 @@ function test_rects() {
     elem = document.createElement("style");
     rects = elem.getClientRects();
     ok(rects.length === 0, "rect.length = " + rects.length);
+});
 
-    next_test();
-}
-
-function test_document_owner() {
+sync_test("document_owner", function() {
     var node;
 
     ok(document.ownerDocument === null, "ownerDocument = " + document.ownerDocument);
@@ -299,11 +281,9 @@ function test_document_owner() {
 
     node = document.createTextNode("test");
     ok(node.ownerDocument === document, "text.ownerDocument = " + node.ownerDocument);
+});
 
-    next_test();
-}
-
-function test_style_properties() {
+sync_test("style_properties", function() {
     document.body.innerHTML = '<div>test</div><svg></svg>';
     var elem = document.body.firstChild;
     var style = elem.style;
@@ -354,7 +334,6 @@ function test_style_properties() {
         ok(style.borderWidth === "5px", "style.borderWidth = " + style.borderWidth);
     }catch(e) {
         win_skip("skipping setProperty tests on too old IE version");
-        next_test();
         return;
     }
 
@@ -398,11 +377,9 @@ function test_style_properties() {
     ok(computed_style.zIndex === 4, "computed_style.zIndex = " + computed_style.zIndex);
 
     window.getComputedStyle(elem, null);
+});
 
-    next_test();
-}
-
-function test_stylesheets() {
+sync_test("stylesheets", function() {
     document.body.innerHTML = '<style>.div { margin-right: 1px; }</style>';
 
     ok(document.styleSheets.length === 1, "document.styleSheets.length = " + document.styleSheets.length);
@@ -416,33 +393,11 @@ function test_stylesheets() {
         stylesheet.rules.item(1);
         ok(false, "expected exception");
     }catch(e) {}
+});
 
-    next_test();
-}
-
-function test_storage() {
+sync_test("storage", function() {
     ok(typeof(window.sessionStorage) === "object",
        "typeof(window.sessionStorage) = " + typeof(window.sessionStorage));
     ok(typeof(window.localStorage) === "object",
        "typeof(window.localStorage) = " + typeof(window.localStorage));
-    next_test();
-}
-
-var tests = [
-    test_input_selection,
-    test_textContent,
-    test_ElementTraversal,
-    test_getElementsByClassName,
-    test_createElementNS,
-    test_head,
-    test_iframe,
-    test_iframe_location,
-    test_anchor,
-    test_query_selector,
-    test_compare_position,
-    test_rects,
-    test_document_owner,
-    test_style_properties,
-    test_stylesheets,
-    test_storage
-];
+});
