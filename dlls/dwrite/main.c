@@ -564,6 +564,19 @@ unsigned int get_localizedstrings_count(IDWriteLocalizedStrings *iface)
     return strings->count;
 }
 
+BOOL localizedstrings_contains(IDWriteLocalizedStrings *iface, const WCHAR *str)
+{
+    struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
+    unsigned int i;
+
+    for (i = 0; i < strings->count; ++i)
+    {
+        if (!lstrcmpiW(strings->data[i].string, str)) return TRUE;
+    }
+
+    return FALSE;
+}
+
 struct collectionloader
 {
     struct list entry;

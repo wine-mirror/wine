@@ -7280,6 +7280,47 @@ static HRESULT WINAPI dwritefontset_GetPropertyOccurrenceCount(IDWriteFontSet3 *
     return E_NOTIMPL;
 }
 
+static BOOL fontset_entry_is_matching(struct dwrite_fontset_entry *entry, DWRITE_FONT_PROPERTY const *props,
+        unsigned int count)
+{
+    IDWriteLocalizedStrings *value;
+    unsigned int i;
+    BOOL ret;
+
+    for (i = 0; i < count; ++i)
+    {
+        switch (props[i].propertyId)
+        {
+            case DWRITE_FONT_PROPERTY_ID_POSTSCRIPT_NAME:
+            case DWRITE_FONT_PROPERTY_ID_FULL_NAME:
+                if (!(value = fontset_entry_get_property(entry, props[i].propertyId)))
+                    return FALSE;
+
+                ret = localizedstrings_contains(value, props[i].propertyValue);
+                IDWriteLocalizedStrings_Release(value);
+                if (!ret) return FALSE;
+                break;
+            case DWRITE_FONT_PROPERTY_ID_WEIGHT_STRETCH_STYLE_FAMILY_NAME:
+            case DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FAMILY_NAME:
+            case DWRITE_FONT_PROPERTY_ID_WEIGHT_STRETCH_STYLE_FACE_NAME:
+            case DWRITE_FONT_PROPERTY_ID_WIN32_FAMILY_NAME:
+            case DWRITE_FONT_PROPERTY_ID_DESIGN_SCRIPT_LANGUAGE_TAG:
+            case DWRITE_FONT_PROPERTY_ID_SUPPORTED_SCRIPT_LANGUAGE_TAG:
+            case DWRITE_FONT_PROPERTY_ID_SEMANTIC_TAG:
+            case DWRITE_FONT_PROPERTY_ID_WEIGHT:
+            case DWRITE_FONT_PROPERTY_ID_STRETCH:
+            case DWRITE_FONT_PROPERTY_ID_STYLE:
+            case DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FACE_NAME:
+                FIXME("Unsupported property %d.\n", props[i].propertyId);
+                /* fallthrough */
+            default:
+                return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
 static HRESULT WINAPI dwritefontset_GetMatchingFonts_(IDWriteFontSet3 *iface, WCHAR const *family, DWRITE_FONT_WEIGHT weight,
         DWRITE_FONT_STRETCH stretch,  DWRITE_FONT_STYLE style, IDWriteFontSet **fontset)
 {
@@ -7289,11 +7330,46 @@ static HRESULT WINAPI dwritefontset_GetMatchingFonts_(IDWriteFontSet3 *iface, WC
 }
 
 static HRESULT WINAPI dwritefontset_GetMatchingFonts(IDWriteFontSet3 *iface, DWRITE_FONT_PROPERTY const *props, UINT32 count,
-        IDWriteFontSet **fontset)
+        IDWriteFontSet **filtered_set)
 {
-    FIXME("%p, %p, %u, %p.\n", iface, props, count, fontset);
+    struct dwrite_fontset *set = impl_from_IDWriteFontSet3(iface);
+    struct dwrite_fontset_entry **entries;
+    unsigned int i, matched_count = 0;
+    struct dwrite_fontset *object;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %u, %p.\n", iface, props, count, filtered_set);
+
+    if (!props && count)
+        return E_INVALIDARG;
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (!(entries = heap_calloc(set->count, sizeof(*entries))))
+    {
+        heap_free(object);
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < set->count; ++i)
+    {
+        if (fontset_entry_is_matching(set->entries[i], props, count))
+        {
+            entries[matched_count++] = addref_fontset_entry(set->entries[i]);
+        }
+    }
+
+    if (!matched_count)
+    {
+        heap_free(entries);
+        entries = NULL;
+    }
+
+    init_fontset(object, set->factory, entries, matched_count);
+
+    *filtered_set = (IDWriteFontSet *)&object->IDWriteFontSet3_iface;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefontset1_GetMatchingFonts(IDWriteFontSet3 *iface, DWRITE_FONT_PROPERTY const *property,
