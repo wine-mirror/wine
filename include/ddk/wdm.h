@@ -1292,11 +1292,25 @@ typedef struct _KUSER_SHARED_DATA {
     volatile ULONGLONG QpcBias;                            /* 0x3b8 */
     ULONG ActiveProcessorCount;                            /* 0x3c0 */
     volatile UCHAR ActiveGroupCount;                       /* 0x3c4 */
-    USHORT QpcData;                                        /* 0x3c6 */
+    union {
+        USHORT QpcData;                                    /* 0x3c6 */
+        struct {
+            UCHAR volatile QpcBypassEnabled;
+            UCHAR QpcShift;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME3;
     LARGE_INTEGER TimeZoneBiasEffectiveStart;              /* 0x3c8 */
     LARGE_INTEGER TimeZoneBiasEffectiveEnd;                /* 0x3d0 */
     XSTATE_CONFIGURATION XState;                           /* 0x3d8 */
 } KSHARED_USER_DATA, *PKSHARED_USER_DATA;
+
+#define SHARED_GLOBAL_FLAGS_QPC_BYPASS_ENABLED 0x01
+#define SHARED_GLOBAL_FLAGS_QPC_BYPASS_USE_HV_PAGE 0x02
+#define SHARED_GLOBAL_FLAGS_QPC_BYPASS_DISABLE_32BIT 0x04
+#define SHARED_GLOBAL_FLAGS_QPC_BYPASS_USE_MFENCE 0x10
+#define SHARED_GLOBAL_FLAGS_QPC_BYPASS_USE_LFENCE 0x20
+#define SHARED_GLOBAL_FLAGS_QPC_BYPASS_A73_ERRATA 0x40
+#define SHARED_GLOBAL_FLAGS_QPC_BYPASS_USE_RDTSCP 0x80
 
 typedef enum _MEMORY_CACHING_TYPE {
     MmNonCached = 0,
