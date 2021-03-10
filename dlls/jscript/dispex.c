@@ -502,7 +502,7 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop,  jsval_t *r)
         return hres;
     }
 
-    TRACE("%s ret %s\n", debugstr_w(prop->name), debugstr_jsval(*r));
+    TRACE("%p.%s ret %s\n", This, debugstr_w(prop->name), debugstr_jsval(*r));
     return hres;
 }
 
@@ -559,7 +559,7 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
         return E_FAIL;
     }
 
-    TRACE("%s = %s\n", debugstr_w(prop->name), debugstr_jsval(val));
+    TRACE("%p.%s = %s\n", This, debugstr_w(prop->name), debugstr_jsval(val));
 
     hres = jsval_copy(val, &prop->u.val);
     if(FAILED(hres))
