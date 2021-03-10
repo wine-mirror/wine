@@ -53,6 +53,7 @@ static int (*pgnutls_cipher_get_block_size)(gnutls_cipher_algorithm_t);
 /* Not present in gnutls version < 3.0. */
 static void (*pgnutls_transport_set_pull_timeout_function)(gnutls_session_t,
                                                            int (*)(gnutls_transport_ptr_t, unsigned int));
+static void (*pgnutls_dtls_set_mtu)(gnutls_session_t, unsigned int);
 
 /* Not present in gnutls version < 3.2.0. */
 static int (*pgnutls_alpn_get_selected_protocol)(gnutls_session_t, gnutls_datum_t *);
@@ -184,6 +185,11 @@ static int compat_gnutls_alpn_set_protocols(gnutls_session_t session, const gnut
 {
     FIXME("\n");
     return GNUTLS_E_INVALID_REQUEST;
+}
+
+static void compat_gnutls_dtls_set_mtu(gnutls_session_t session, unsigned int mtu)
+{
+    FIXME("\n");
 }
 
 static ssize_t schan_pull_adapter(gnutls_transport_ptr_t transport,
@@ -767,6 +773,15 @@ SECURITY_STATUS schan_imp_get_application_protocol(schan_imp_session session,
     return SEC_E_OK;
 }
 
+SECURITY_STATUS schan_imp_set_dtls_mtu(schan_imp_session session, unsigned int mtu)
+{
+    gnutls_session_t s = (gnutls_session_t)session;
+
+    pgnutls_dtls_set_mtu(s, mtu);
+    TRACE("MTU set to %u\n", mtu);
+    return SEC_E_OK;
+}
+
 static WCHAR *get_key_container_path(const CERT_CONTEXT *ctx)
 {
     static const WCHAR rsabaseW[] =
@@ -1129,6 +1144,11 @@ BOOL schan_imp_init(void)
     {
         WARN("gnutls_alpn_get_selected_protocol not found\n");
         pgnutls_alpn_get_selected_protocol = compat_gnutls_alpn_get_selected_protocol;
+    }
+    if (!(pgnutls_dtls_set_mtu = dlsym(libgnutls_handle, "gnutls_dtls_set_mtu")))
+    {
+        WARN("gnutls_dtls_set_mtu not found\n");
+        pgnutls_dtls_set_mtu = compat_gnutls_dtls_set_mtu;
     }
     if (!(pgnutls_privkey_export_x509 = dlsym(libgnutls_handle, "gnutls_privkey_export_x509")))
     {

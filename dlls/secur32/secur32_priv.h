@@ -253,5 +253,6 @@ extern void schan_imp_deinit(void) DECLSPEC_HIDDEN;
 extern void schan_imp_set_application_protocols(schan_imp_session, unsigned char *, unsigned int) DECLSPEC_HIDDEN;
 extern SECURITY_STATUS schan_imp_get_application_protocol(schan_imp_session,
                                                           SecPkgContext_ApplicationProtocol *) DECLSPEC_HIDDEN;
+extern SECURITY_STATUS schan_imp_set_dtls_mtu(schan_imp_session, unsigned int) DECLSPEC_HIDDEN;
 
 #endif /* ndef __SECUR32_PRIV_H__ */

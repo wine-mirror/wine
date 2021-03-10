@@ -879,6 +879,13 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             schan_imp_set_application_protocols(ctx->session, buffer->pvBuffer, buffer->cbBuffer);
         }
 
+        if (pInput && (idx = schan_find_sec_buffer_idx(pInput, 0, SECBUFFER_DTLS_MTU)) != -1)
+        {
+            buffer = &pInput->pBuffers[idx];
+            if (buffer->cbBuffer >= sizeof(WORD)) schan_imp_set_dtls_mtu(ctx->session, *(WORD *)buffer->pvBuffer);
+            else WARN("invalid buffer size %u\n", buffer->cbBuffer);
+        }
+
         phNewContext->dwLower = handle;
         phNewContext->dwUpper = 0;
     }

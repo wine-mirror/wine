@@ -1213,6 +1213,12 @@ SECURITY_STATUS schan_imp_get_application_protocol(schan_imp_session session,
     return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
+SECURITY_STATUS schan_imp_set_dtls_mtu(schan_imp_session session, unsigned int mtu)
+{
+    FIXME("no support for setting dtls mtu on this platform\n");
+    return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
 BOOL schan_imp_init(void)
 {
     TRACE("()\n");
