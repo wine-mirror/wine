@@ -5981,17 +5981,19 @@ void wined3d_format_copy_data(const struct wined3d_format *format, const uint8_t
         unsigned int dst_slice_pitch, unsigned int w, unsigned int h, unsigned int d)
 {
     unsigned int row_block_count, row_count, row_size, slice, row;
-    unsigned int slice_count = d;
+    unsigned int slice_count = d, slice_size;
     const uint8_t *src_row;
     uint8_t *dst_row;
 
     row_block_count = (w + format->block_width - 1) / format->block_width;
     row_count = (h + format->block_height - 1) / format->block_height;
     row_size = row_block_count * format->block_byte_count;
+    slice_size = row_size * row_count;
 
-    if (src_row_pitch == row_size && dst_row_pitch == row_size && src_slice_pitch == dst_slice_pitch)
+    if (src_row_pitch == row_size && dst_row_pitch == row_size
+            && ((src_slice_pitch == slice_size && dst_slice_pitch == slice_size) || slice_count == 1))
     {
-        memcpy(dst, src, slice_count * row_count * row_size);
+        memcpy(dst, src, slice_count * slice_size);
         return;
     }
 
