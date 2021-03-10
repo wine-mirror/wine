@@ -2288,9 +2288,21 @@ static void get_name_record_locale(enum OPENTYPE_PLATFORM_ID platform, USHORT la
     }
 }
 
+static BOOL opentype_is_english_namerecord(const struct dwrite_fonttable *table, unsigned int idx)
+{
+    const struct name_header *header = (const struct name_header *)table->data;
+    const struct name_record *record;
+
+    record = &header->records[idx];
+
+    return GET_BE_WORD(record->platformID) == OPENTYPE_PLATFORM_MAC &&
+            GET_BE_WORD(record->languageID) == TT_NAME_MAC_LANGID_ENGLISH;
+}
+
 static BOOL opentype_decode_namerecord(const struct dwrite_fonttable *table, unsigned int idx,
         IDWriteLocalizedStrings *strings)
 {
+    static const WCHAR enusW[] = {'e','n','-','U','S',0};
     USHORT lang_id, length, offset, encoding, platform;
     const struct name_header *header = (const struct name_header *)table->data;
     const struct name_record *record;
@@ -2338,7 +2350,8 @@ static BOOL opentype_decode_namerecord(const struct dwrite_fonttable *table, uns
         TRACE("string %s for locale %s found\n", debugstr_w(name_string), debugstr_w(locale));
         add_localizedstring(strings, locale, name_string);
         heap_free(name_string);
-        ret = TRUE;
+
+        ret = !lstrcmpW(locale, enusW);
     }
     else
         FIXME("handle NAME format 1\n");
@@ -2349,10 +2362,10 @@ static BOOL opentype_decode_namerecord(const struct dwrite_fonttable *table, uns
 static HRESULT opentype_get_font_strings_from_id(const struct dwrite_fonttable *table, enum OPENTYPE_STRING_ID id,
         IDWriteLocalizedStrings **strings)
 {
-    int i, count, candidate_mac, candidate_unicode;
+    int i, count, candidate_mac, candidate_mac_en, candidate_unicode;
     const struct name_record *records;
+    BOOL has_english;
     WORD format;
-    BOOL exists;
     HRESULT hr;
 
     if (!table->data)
@@ -2374,8 +2387,8 @@ static HRESULT opentype_get_font_strings_from_id(const struct dwrite_fonttable *
         count = 0;
     }
 
-    exists = FALSE;
-    candidate_unicode = candidate_mac = -1;
+    has_english = FALSE;
+    candidate_unicode = candidate_mac = candidate_mac_en = -1;
 
     for (i = 0; i < count; i++)
     {
@@ -2398,10 +2411,11 @@ static HRESULT opentype_get_font_strings_from_id(const struct dwrite_fonttable *
             case OPENTYPE_PLATFORM_MAC:
                 if (candidate_mac == -1)
                     candidate_mac = i;
+                if (candidate_mac_en == -1 && opentype_is_english_namerecord(table, i))
+                    candidate_mac_en = i;
                 break;
             case OPENTYPE_PLATFORM_WIN:
-                if (opentype_decode_namerecord(table, i, *strings))
-                    exists = TRUE;
+                has_english |= opentype_decode_namerecord(table, i, *strings);
                 break;
             default:
                 FIXME("platform %i not supported\n", platform);
@@ -2409,24 +2423,23 @@ static HRESULT opentype_get_font_strings_from_id(const struct dwrite_fonttable *
         }
     }
 
-    if (!exists)
-    {
-        if (candidate_mac != -1)
-            exists = opentype_decode_namerecord(table, candidate_mac, *strings);
-        if (!exists && candidate_unicode != -1)
-            exists = opentype_decode_namerecord(table, candidate_unicode, *strings);
+    if (!get_localizedstrings_count(*strings) && candidate_mac != -1)
+        has_english |= opentype_decode_namerecord(table, candidate_mac, *strings);
+    if (!get_localizedstrings_count(*strings) && candidate_unicode != -1)
+        has_english |= opentype_decode_namerecord(table, candidate_unicode, *strings);
+    if (!has_english && candidate_mac_en != -1)
+        opentype_decode_namerecord(table, candidate_mac_en, *strings);
 
-        if (!exists)
-        {
-            IDWriteLocalizedStrings_Release(*strings);
-            *strings = NULL;
-        }
+    if (!get_localizedstrings_count(*strings))
+    {
+        IDWriteLocalizedStrings_Release(*strings);
+        *strings = NULL;
     }
 
     if (*strings)
         sort_localizedstrings(*strings);
 
-    return exists ? S_OK : E_FAIL;
+    return *strings ? S_OK : E_FAIL;
 }
 
 static WCHAR *meta_get_lng_name(WCHAR *str, WCHAR **ctx)

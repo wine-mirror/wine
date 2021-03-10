@@ -323,11 +323,9 @@ static ULONG WINAPI localizedstrings_Release(IDWriteLocalizedStrings *iface)
 
 static UINT32 WINAPI localizedstrings_GetCount(IDWriteLocalizedStrings *iface)
 {
-    struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
-
     TRACE("%p.\n", iface);
 
-    return strings->count;
+    return get_localizedstrings_count(iface);
 }
 
 static HRESULT WINAPI localizedstrings_FindLocaleName(IDWriteLocalizedStrings *iface,
@@ -557,6 +555,12 @@ void sort_localizedstrings(IDWriteLocalizedStrings *iface)
     struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
 
     qsort(strings->data, strings->count, sizeof(*strings->data), localizedstrings_sorting_compare);
+}
+
+unsigned int get_localizedstrings_count(IDWriteLocalizedStrings *iface)
+{
+    struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
+    return strings->count;
 }
 
 struct collectionloader
