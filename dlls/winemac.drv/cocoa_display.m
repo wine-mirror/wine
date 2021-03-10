@@ -348,10 +348,15 @@ static int macdrv_get_gpu_info_from_display_id_using_metal(struct macdrv_gpu* gp
     int ret = -1;
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
+    /* Test if Metal is available */
+    if (&CGDirectDisplayCopyCurrentMetalDevice == NULL)
+        goto done;
+
     device = [CGDirectDisplayCopyCurrentMetalDevice(display_id) autorelease];
     if (device && [device respondsToSelector:@selector(registryID)])
         ret = macdrv_get_gpu_info_from_registry_id(gpu, device.registryID);
 
+done:
     [pool release];
     return ret;
 }
