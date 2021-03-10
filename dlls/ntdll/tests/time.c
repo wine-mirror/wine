@@ -206,9 +206,9 @@ static void test_user_shared_data_time(void)
     {
         t1 = GetTickCount();
         if (user_shared_data->NtMajorVersion <= 5 && user_shared_data->NtMinorVersion <= 1)
-            t2 = (*(volatile ULONG*)&user_shared_data->TickCountLowDeprecated * (ULONG64)user_shared_data->TickCountMultiplier) >> 24;
+            t2 = (DWORD)((*(volatile ULONG*)&user_shared_data->TickCountLowDeprecated * (ULONG64)user_shared_data->TickCountMultiplier) >> 24);
         else
-            t2 = (read_ksystem_time(&user_shared_data->u.TickCount) * user_shared_data->TickCountMultiplier) >> 24;
+            t2 = (DWORD)((read_ksystem_time(&user_shared_data->u.TickCount) * user_shared_data->TickCountMultiplier) >> 24);
         t3 = GetTickCount();
     } while(t3 < t1 && i++ < 1); /* allow for wrap, but only once */
 
