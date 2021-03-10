@@ -89,6 +89,7 @@ static const struct object_ops irp_call_ops =
 struct device_manager
 {
     struct object          obj;            /* object header */
+    struct event_sync     *sync;           /* sync object for wait/signal */
     struct list            devices;        /* list of devices */
     struct list            requests;       /* list of pending irps across all devices */
     struct irp_call       *current_call;   /* call currently executed on client side */
@@ -96,7 +97,7 @@ struct device_manager
 };
 
 static void device_manager_dump( struct object *obj, int verbose );
-static int device_manager_signaled( struct object *obj, struct wait_queue_entry *entry );
+static struct object *device_manager_get_sync( struct object *obj );
 static void device_manager_destroy( struct object *obj );
 
 static const struct object_ops device_manager_ops =
@@ -104,13 +105,13 @@ static const struct object_ops device_manager_ops =
     sizeof(struct device_manager),    /* size */
     &no_type,                         /* type */
     device_manager_dump,              /* dump */
-    add_queue,                        /* add_queue */
-    remove_queue,                     /* remove_queue */
-    device_manager_signaled,          /* signaled */
-    no_satisfied,                     /* satisfied */
+    NULL,                             /* add_queue */
+    NULL,                             /* remove_queue */
+    NULL,                             /* signaled */
+    NULL,                             /* satisfied */
     no_signal,                        /* signal */
     no_get_fd,                        /* get_fd */
-    default_get_sync,                 /* get_sync */
+    device_manager_get_sync,          /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -422,7 +423,7 @@ static void add_irp_to_queue( struct device_manager *manager, struct irp_call *i
     irp->thread = thread ? (struct thread *)grab_object( thread ) : NULL;
     if (irp->file) list_add_tail( &irp->file->requests, &irp->dev_entry );
     list_add_tail( &manager->requests, &irp->mgr_entry );
-    if (list_head( &manager->requests ) == &irp->mgr_entry) wake_up( &manager->obj, 0 );  /* first one */
+    if (list_head( &manager->requests ) == &irp->mgr_entry) signal_sync( manager->sync );
 }
 
 static struct object *device_open_file( struct object *obj, unsigned int access,
@@ -752,6 +753,7 @@ struct object *create_unix_device( struct object *root, const struct unicode_str
 /* terminate requests when the underlying device is deleted */
 static void delete_file( struct device_file *file )
 {
+    struct device_manager *manager = file->device->manager;
     struct irp_call *irp, *next;
 
     /* the pending requests may be the only thing holding a reference to the file */
@@ -764,6 +766,7 @@ static void delete_file( struct device_file *file )
         set_irp_result( irp, STATUS_FILE_DELETED, NULL, 0, 0 );
     }
 
+    if (list_empty( &manager->requests )) reset_sync( manager->sync );
     release_object( file );
 }
 
@@ -788,11 +791,11 @@ static void device_manager_dump( struct object *obj, int verbose )
     fprintf( stderr, "Device manager\n" );
 }
 
-static int device_manager_signaled( struct object *obj, struct wait_queue_entry *entry )
+static struct object *device_manager_get_sync( struct object *obj )
 {
     struct device_manager *manager = (struct device_manager *)obj;
-
-    return !list_empty( &manager->requests );
+    assert( obj->ops == &device_manager_ops );
+    return grab_object( manager->sync );
 }
 
 static void device_manager_destroy( struct object *obj )
@@ -829,6 +832,8 @@ static void device_manager_destroy( struct object *obj )
         assert( !irp->file && !irp->async );
         release_object( irp );
     }
+
+    if (manager->sync) release_object( manager->sync );
 }
 
 static struct device_manager *create_device_manager(void)
@@ -837,10 +842,17 @@ static struct device_manager *create_device_manager(void)
 
     if ((manager = alloc_object( &device_manager_ops )))
     {
+        manager->sync         = NULL;
         manager->current_call = NULL;
         list_init( &manager->devices );
         list_init( &manager->requests );
         wine_rb_init( &manager->kernel_objects, compare_kernel_object );
+
+        if (!(manager->sync = create_event_sync( 1, 0 )))
+        {
+            release_object( manager );
+            return NULL;
+        }
     }
     return manager;
 }
@@ -1027,6 +1039,8 @@ DECL_HANDLER(get_next_device_request)
                 }
                 list_remove( &irp->mgr_entry );
                 list_init( &irp->mgr_entry );
+                if (list_empty( &manager->requests )) reset_sync( manager->sync );
+
                 /* we already own the object if it's only on manager queue */
                 if (irp->file) grab_object( irp );
                 manager->current_call = irp;
