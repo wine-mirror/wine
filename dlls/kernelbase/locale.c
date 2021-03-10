@@ -533,6 +533,7 @@ static const struct geoinfo geoinfodata[] =
     { 161832015, L"BL", L"BLM", 10039880, 652 }, /* Saint Barthélemy */
     { 161832256, L"UM", L"UMI", 27114, 581 }, /* U.S. Minor Outlying Islands */
     { 161832257, L"XX", L"XX", 10026358, 419, LOCATION_REGION }, /* Latin America and the Caribbean */
+    { 161832258, L"BG", L"BES", 10039880, 535 }, /* Bonaire, Sint Eustatius and Saba */
 };
 
 /* NLS normalization file */
