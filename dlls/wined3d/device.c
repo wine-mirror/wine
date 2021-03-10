@@ -2107,6 +2107,32 @@ void CDECL wined3d_device_context_set_shader(struct wined3d_device_context *cont
         wined3d_shader_decref(prev);
 }
 
+void CDECL wined3d_device_context_set_constant_buffer(struct wined3d_device_context *context,
+        enum wined3d_shader_type type, unsigned int idx, struct wined3d_buffer *buffer)
+{
+    struct wined3d_state *state = context->state;
+    struct wined3d_buffer *prev;
+
+    TRACE("context %p, type %#x, idx %u, buffer %p.\n", context, type, idx, buffer);
+
+    if (idx >= MAX_CONSTANT_BUFFERS)
+    {
+        WARN("Invalid constant buffer index %u.\n", idx);
+        return;
+    }
+
+    prev = state->cb[type][idx];
+    if (buffer == prev)
+        return;
+
+    if (buffer)
+        wined3d_buffer_incref(buffer);
+    state->cb[type][idx] = buffer;
+    wined3d_device_context_emit_set_constant_buffer(context, type, idx, buffer);
+    if (prev)
+        wined3d_buffer_decref(prev);
+}
+
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
     TRACE("device %p, shader %p.\n", device, shader);
@@ -2124,27 +2150,9 @@ struct wined3d_shader * CDECL wined3d_device_get_vertex_shader(const struct wine
 void CDECL wined3d_device_set_constant_buffer(struct wined3d_device *device,
         enum wined3d_shader_type type, UINT idx, struct wined3d_buffer *buffer)
 {
-    struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_buffer *prev;
-
     TRACE("device %p, type %#x, idx %u, buffer %p.\n", device, type, idx, buffer);
 
-    if (idx >= MAX_CONSTANT_BUFFERS)
-    {
-        WARN("Invalid constant buffer index %u.\n", idx);
-        return;
-    }
-
-    prev = state->cb[type][idx];
-    if (buffer == prev)
-        return;
-
-    if (buffer)
-        wined3d_buffer_incref(buffer);
-    state->cb[type][idx] = buffer;
-    wined3d_device_context_emit_set_constant_buffer(&device->cs->c, type, idx, buffer);
-    if (prev)
-        wined3d_buffer_decref(prev);
+    return wined3d_device_context_set_constant_buffer(&device->cs->c, type, idx, buffer);
 }
 
 struct wined3d_buffer * CDECL wined3d_device_get_constant_buffer(const struct wined3d_device *device,
