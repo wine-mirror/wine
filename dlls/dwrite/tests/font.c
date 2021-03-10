@@ -9505,7 +9505,6 @@ static void test_fontsetbuilder(void)
                 BOOL exists = FALSE;
 
                 hr = IDWriteFontSet_GetPropertyValues(fontset, 0, id, &exists, &values);
-            todo_wine
                 ok(hr == S_OK, "Failed to get property value, hr %#x.\n", hr);
 
                 if (!exists)
@@ -9940,8 +9939,11 @@ static void test_family_font_set(void)
     IDWriteFontFamily2 *family2;
     IDWriteFontFamily *family;
     IDWriteFactory *factory;
-    unsigned int refcount;
+    unsigned int count, refcount;
     IDWriteFontSet1 *fontset, *fontset2;
+    IDWriteLocalizedStrings *values;
+    WCHAR buffW[64];
+    BOOL exists;
     HRESULT hr;
 
     factory = create_factory();
@@ -9959,6 +9961,39 @@ static void test_family_font_set(void)
         hr = IDWriteFontFamily2_GetFontSet(family2, &fontset2);
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
         ok(fontset != fontset2, "Unexpected fontset instance.\n");
+
+        count = IDWriteFontSet1_GetFontCount(fontset);
+
+        /* Invalid property id. */
+        exists = TRUE;
+        values = (void *)0xdeadbeef;
+        hr = IDWriteFontSet1_GetPropertyValues(fontset, 0, 100, &exists, &values);
+        ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+        ok(!exists && !values, "Unexpected return value.\n");
+
+        /* Invalid index. */
+        exists = TRUE;
+        values = (void *)0xdeadbeef;
+        hr = IDWriteFontSet1_GetPropertyValues(fontset, count, DWRITE_FONT_PROPERTY_ID_POSTSCRIPT_NAME, &exists, &values);
+        ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+        ok(!exists && !values, "Unexpected return value.\n");
+
+        exists = TRUE;
+        values = (void *)0xdeadbeef;
+        hr = IDWriteFontSet1_GetPropertyValues(fontset, count, 100, &exists, &values);
+        ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+        ok(!exists && !values, "Unexpected return value.\n");
+
+        hr = IDWriteFontSet1_GetPropertyValues(fontset, 0, DWRITE_FONT_PROPERTY_ID_POSTSCRIPT_NAME, &exists, &values);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(exists == !!values, "Unexpected return value.\n");
+        if (values)
+        {
+            hr = IDWriteLocalizedStrings_GetString(values, 0, buffW, ARRAY_SIZE(buffW));
+            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+            IDWriteLocalizedStrings_Release(values);
+        }
+
         IDWriteFontSet1_Release(fontset2);
         IDWriteFontSet1_Release(fontset);
 
