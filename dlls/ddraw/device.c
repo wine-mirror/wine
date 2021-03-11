@@ -3427,6 +3427,47 @@ static HRESULT d3d_device_prepare_vertex_buffer(struct d3d_device *device, UINT 
     return D3D_OK;
 }
 
+static void d3d_device_sync_rendertarget(struct d3d_device *device, BOOL upload)
+{
+    struct wined3d_rendertarget_view *rtv;
+
+    if (device->hardware_device)
+        return;
+
+    if ((rtv = wined3d_device_get_rendertarget_view(device->wined3d_device, 0)))
+        d3d_surface_sync_textures(wined3d_rendertarget_view_get_parent(rtv), upload);
+
+    if ((rtv = wined3d_device_get_depth_stencil_view(device->wined3d_device)))
+        d3d_surface_sync_textures(wined3d_rendertarget_view_get_parent(rtv), upload);
+}
+
+void d3d_device_sync_surfaces(struct d3d_device *device, BOOL upload)
+{
+    const struct wined3d_stateblock_state *state = device->stateblock_state;
+    struct ddraw_surface *surface;
+    unsigned int i, j;
+
+    if (device->hardware_device)
+        return;
+
+    d3d_device_sync_rendertarget(device, upload);
+
+    for (i = 0; i < ARRAY_SIZE(state->textures); ++i)
+    {
+        if (!state->textures[i])
+            continue;
+
+        j = 0;
+        while ((surface = wined3d_texture_get_sub_resource_parent(state->textures[i], j)))
+        {
+            if (!surface->draw_texture)
+                break;
+            d3d_surface_sync_textures(surface, upload);
+            ++j;
+        }
+    }
+}
+
 static HRESULT d3d_device7_DrawPrimitive(IDirect3DDevice7 *iface,
         D3DPRIMITIVETYPE primitive_type, DWORD fvf, void *vertices,
         DWORD vertex_count, DWORD flags)
@@ -3481,7 +3522,9 @@ static HRESULT d3d_device7_DrawPrimitive(IDirect3DDevice7 *iface,
     wined3d_stateblock_set_vertex_declaration(device->state, ddraw_find_decl(device->ddraw, fvf));
     wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_ddraw(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
+    d3d_device_sync_surfaces(device, TRUE);
     hr = wined3d_device_draw_primitive(device->wined3d_device, vb_pos / stride, vertex_count);
+    d3d_device_sync_surfaces(device, FALSE);
 
 done:
     wined3d_mutex_unlock();
@@ -3693,7 +3736,9 @@ static HRESULT d3d_device7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
     wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_ddraw(primitive_type), 0);
     wined3d_stateblock_set_base_vertex_index(device->state, vb_pos / stride);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
+    d3d_device_sync_surfaces(device, TRUE);
     hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / sizeof(*indices), index_count);
+    d3d_device_sync_surfaces(device, FALSE);
 
 done:
     wined3d_mutex_unlock();
@@ -4019,7 +4064,9 @@ static HRESULT d3d_device7_DrawPrimitiveStrided(IDirect3DDevice7 *iface, D3DPRIM
 
     wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_ddraw(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
+    d3d_device_sync_surfaces(device, TRUE);
     hr = wined3d_device_draw_primitive(device->wined3d_device, vb_pos / dst_stride, vertex_count);
+    d3d_device_sync_surfaces(device, FALSE);
 
 done:
     wined3d_mutex_unlock();
@@ -4155,7 +4202,9 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
     wined3d_stateblock_set_vertex_declaration(device->state, ddraw_find_decl(device->ddraw, fvf));
     wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_ddraw(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
+    d3d_device_sync_surfaces(device, TRUE);
     hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / sizeof(WORD), index_count);
+    d3d_device_sync_surfaces(device, FALSE);
 
 done:
     wined3d_mutex_unlock();
@@ -4277,7 +4326,9 @@ static HRESULT d3d_device7_DrawPrimitiveVB(IDirect3DDevice7 *iface, D3DPRIMITIVE
     /* Now draw the primitives */
     wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_ddraw(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
+    d3d_device_sync_surfaces(device, TRUE);
     hr = wined3d_device_draw_primitive(device->wined3d_device, start_vertex, vertex_count);
+    d3d_device_sync_surfaces(device, FALSE);
 
     wined3d_mutex_unlock();
 
@@ -4431,7 +4482,9 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
     wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_ddraw(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
+    d3d_device_sync_surfaces(device, TRUE);
     hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / sizeof(WORD), index_count);
+    d3d_device_sync_surfaces(device, FALSE);
 
     wined3d_mutex_unlock();
 
@@ -4778,7 +4831,7 @@ static HRESULT d3d_device7_SetTexture(IDirect3DDevice7 *iface,
     TRACE("iface %p, stage %u, texture %p.\n", iface, stage, texture);
 
     if (surf && (surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE))
-        wined3d_texture = surf->wined3d_texture;
+        wined3d_texture = surf->draw_texture ? surf->draw_texture : surf->wined3d_texture;
 
     wined3d_mutex_lock();
     wined3d_stateblock_set_texture(device->update_state, stage, wined3d_texture);
@@ -5270,7 +5323,9 @@ static HRESULT d3d_device7_Clear(IDirect3DDevice7 *iface, DWORD count,
 
     wined3d_mutex_lock();
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
+    d3d_device_sync_rendertarget(device, TRUE);
     hr = wined3d_device_clear(device->wined3d_device, count, (RECT *)rects, flags, &c, z, stencil);
+    d3d_device_sync_rendertarget(device, FALSE);
     wined3d_mutex_unlock();
 
     return hr;
@@ -5732,7 +5787,8 @@ static HRESULT d3d_device7_PreLoad(IDirect3DDevice7 *iface, IDirectDrawSurface7 
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    wined3d_resource_preload(wined3d_texture_get_resource(surface->wined3d_texture));
+    wined3d_resource_preload(wined3d_texture_get_resource(surface->draw_texture ? surface->draw_texture
+            : surface->wined3d_texture));
     wined3d_mutex_unlock();
 
     return D3D_OK;

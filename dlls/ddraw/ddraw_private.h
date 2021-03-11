@@ -176,6 +176,7 @@ struct ddraw_surface
     /* Connections to other Objects */
     struct ddraw *ddraw;
     struct wined3d_texture *wined3d_texture;
+    struct wined3d_texture *draw_texture;
     unsigned int sub_resource_idx;
     struct wined3d_rendertarget_view *wined3d_rtv;
     struct wined3d_private_store private_store;
@@ -652,6 +653,23 @@ static inline BOOL ddraw_surface_can_be_lost(const struct ddraw_surface *surface
 
     return surface->sysmem_fallback;
 }
+
+static inline void d3d_surface_sync_textures(struct ddraw_surface *surface, BOOL upload)
+{
+    if (!surface->draw_texture)
+        return;
+
+    if (upload)
+        wined3d_device_copy_sub_resource_region(surface->ddraw->wined3d_device,
+                wined3d_texture_get_resource(surface->draw_texture), surface->sub_resource_idx, 0, 0, 0,
+                wined3d_texture_get_resource(surface->wined3d_texture), surface->sub_resource_idx, NULL, 0);
+    else
+        wined3d_device_copy_sub_resource_region(surface->ddraw->wined3d_device,
+                wined3d_texture_get_resource(surface->wined3d_texture), surface->sub_resource_idx, 0, 0, 0,
+                wined3d_texture_get_resource(surface->draw_texture), surface->sub_resource_idx, NULL, 0);
+}
+
+void d3d_device_sync_surfaces(struct d3d_device *device, BOOL upload) DECLSPEC_HIDDEN;
 
 /* Used for generic dumping */
 struct flag_info
