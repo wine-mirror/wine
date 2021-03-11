@@ -936,10 +936,9 @@ sub dump_eucjp_codepage()
 
 ################################################################
 # build Korean Wansung table from the KSX1001 file
-# FIXME: compare to Windows we should add extra mappings for
-# characters added from Unicode 1.1 to enhance the completeness.
-sub dump_krwansung_codepage()
+sub dump_krwansung_codepage(@)
 {
+    my @cp949 = @_;
     @cp2uni = ();
     @glyph2uni = ();
     @lead_bytes = ();
@@ -970,6 +969,24 @@ sub dump_krwansung_codepage()
         die "Unrecognized line $_\n";
     }
     close $INPUT;
+
+    # get some extra mappings from cp 949
+    my @defined_lb;
+    map { $defined_lb[$_] = 1; } @lead_bytes;
+    foreach my $i (0x0000 .. 0xffff)
+    {
+        next if ($i >= 0x1100 && $i <= 0x11ff);  # range not used in 20949
+        next unless defined $cp949[$i];
+        if ($cp949[$i] >= 0xff)
+        {
+            # only add chars for lead bytes that exist in 20949
+            my $hi = $cp949[$i] >> 8;
+            my $lo = $cp949[$i] & 0xff;
+            next unless $defined_lb[$hi];
+            next unless $lo >= 0xa1 && $lo <= 0xfe;
+        }
+        add_mapping( $cp949[$i], $i );
+    }
 
     output_codepage_file( 20949 );
 }
@@ -2292,6 +2309,8 @@ sub dump_msdata_codepage($)
     close $INPUT;
 
     output_codepage_file( $codepage );
+
+    if ($codepage == 949) { dump_krwansung_codepage( @uni2cp ); }
 }
 
 ################################################################
@@ -2709,7 +2728,7 @@ sub dump_registry_script($%)
                 $i == $#subkeys && $def ? " = s '$def'" : "", 4 * $indent, "";
             $indent++;
         }
-        foreach my $v (@vals) { printf OUTPUT "%*sval $v\n", 4 * $indent, ""; }
+        foreach my $v (sort @vals) { printf OUTPUT "%*sval $v\n", 4 * $indent, ""; }
         for (my $i = 0; $i < @subkeys; $i++) { printf OUTPUT "%*s}\n", 4 * --$indent, ""; }
     }
     while ($indent) { printf OUTPUT "%*s}\n", 4 * --$indent, ""; }
@@ -2763,7 +2782,6 @@ dump_norm_table( "nls/normidna.nls" );
 dump_sortkey_table( "nls/sortdefault.nls", "Windows 10 Sorting Weight Table.txt" );
 foreach my $file (@allfiles) { dump_msdata_codepage( $file ); }
 dump_eucjp_codepage();
-dump_krwansung_codepage();
 dump_registry_script( "dlls/kernelbase/kernelbase.rgs", %registry_keys );
 
 exit 0;
