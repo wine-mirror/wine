@@ -559,7 +559,6 @@ struct process *create_process( int fd, struct process *parent, int inherit_all,
     list_init( &process->rawinput_devices );
 
     process->end_time = 0;
-    list_add_tail( &process_list, &process->entry );
 
     if (sd && !default_set_sd( &process->obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
                                DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION ))
@@ -646,7 +645,6 @@ static void process_destroy( struct object *obj )
     }
     if (process->console) release_object( process->console );
     if (process->msg_fd) release_object( process->msg_fd );
-    list_remove( &process->entry );
     if (process->idle_event) release_object( process->idle_event );
     if (process->id) free_ptid( process->id );
     if (process->token) release_object( process->token );
@@ -804,15 +802,11 @@ restart:
 /* kill all processes */
 static void kill_all_processes(void)
 {
-    for (;;)
-    {
-        struct process *process;
+    struct list *ptr;
 
-        LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
-        {
-            if (process->running_threads) break;
-        }
-        if (&process->entry == &process_list) break;  /* no process found */
+    while ((ptr = list_head( &process_list )))
+    {
+        struct process *process = LIST_ENTRY( ptr, struct process, entry );
         terminate_process( process, NULL, 1 );
     }
 }
@@ -828,7 +822,6 @@ void kill_console_processes( struct thread *renderer, int exit_code )
         LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
         {
             if (process == renderer->process) continue;
-            if (!process->running_threads) continue;
             if (process->console && console_get_renderer( process->console ) == renderer) break;
         }
         if (&process->entry == &process_list) break;  /* no process found */
@@ -875,6 +868,7 @@ void add_process_thread( struct process *process, struct thread *thread )
     list_add_tail( &process->thread_list, &thread->proc_entry );
     if (!process->running_threads++)
     {
+        list_add_tail( &process_list, &process->entry );
         running_processes++;
         if (!process->is_system)
         {
@@ -901,6 +895,7 @@ void remove_process_thread( struct process *process, struct thread *thread )
         /* we have removed the last running thread, exit the process */
         process->exit_code = thread->exit_code;
         generate_debug_event( thread, DbgExitProcessStateChange, process );
+        list_remove( &process->entry );
         process_killed( process );
     }
     else generate_debug_event( thread, DbgExitThreadStateChange, thread );
@@ -979,10 +974,8 @@ void detach_debugged_processes( struct debug_obj *debug_obj, int exit_code )
 
         /* find the first process being debugged by 'debugger' and still running */
         LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
-        {
-            if (!process->running_threads) continue;
             if (process->debug_obj == debug_obj) break;
-        }
+
         if (&process->entry == &process_list) break;  /* no process found */
         if (exit_code)
         {

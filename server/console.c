@@ -649,8 +649,7 @@ static int propagate_console_signal_cb(struct process *process, void *user)
 {
     struct console_signal_info* csi = (struct console_signal_info*)user;
 
-    if (process->console == csi->console && process->running_threads &&
-        (!csi->group || process->group_id == csi->group))
+    if (process->console == csi->console && (!csi->group || process->group_id == csi->group))
     {
         /* find a suitable thread to signal */
         struct thread *thread;

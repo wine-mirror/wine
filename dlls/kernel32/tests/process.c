@@ -4231,7 +4231,6 @@ static void test_dead_process(void)
         }
         offset += spi->NextEntryOffset;
     } while (spi->NextEntryOffset);
-    todo_wine
     ok( !found, "process still enumerated\n" );
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
