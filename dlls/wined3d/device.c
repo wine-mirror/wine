@@ -1774,7 +1774,7 @@ void CDECL wined3d_device_set_depth_stencil_state(struct wined3d_device *device,
         wined3d_depth_stencil_state_incref(depth_stencil_state);
     state->depth_stencil_state = depth_stencil_state;
     state->stencil_ref = stencil_ref;
-    wined3d_cs_emit_set_depth_stencil_state(device->cs, depth_stencil_state, stencil_ref);
+    wined3d_device_context_emit_set_depth_stencil_state(&device->cs->c, depth_stencil_state, stencil_ref);
     if (prev)
         wined3d_depth_stencil_state_decref(prev);
 }
@@ -2027,7 +2027,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
     }
 
     wined3d_device_context_emit_set_blend_state(context, state->blend_state, &state->blend_factor, state->sample_mask);
-    wined3d_cs_emit_set_depth_stencil_state(device->cs, state->depth_stencil_state, state->stencil_ref);
+    wined3d_device_context_emit_set_depth_stencil_state(context, state->depth_stencil_state, state->stencil_ref);
     wined3d_cs_emit_set_rasterizer_state(device->cs, state->rasterizer_state);
 }
 
