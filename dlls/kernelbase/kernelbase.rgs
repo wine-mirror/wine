@@ -76,6 +76,7 @@ HKLM
                         val '28603' = s 'c_28603.nls'
                         val '28605' = s 'c_28605.nls'
                         val '20932' = s 'c_20932.nls'
+                        val '20949' = s 'c_20949.nls'
                     }
                     Normalization
                     {
