@@ -1887,6 +1887,24 @@ ok(!tmp.hasOwnProperty("y"), "tmp has 'y' property");
 ok(!tmp.propertyIsEnumerable("y"), "tmp has 'y' property enumerable");
 ok(tmp.toString() == "[object Object]", "tmp.toString returned " + tmp.toString());
 
+testNullPrototype.prototype = 42;
+tmp = new testNullPrototype();
+ok(tmp.hasOwnProperty("x"), "tmp does not have 'x' property");
+ok(!tmp.hasOwnProperty("y"), "tmp has 'y' property");
+ok(tmp.toString() == "[object Object]", "tmp.toString returned " + tmp.toString());
+
+testNullPrototype.prototype = true;
+tmp = new testNullPrototype();
+ok(tmp.hasOwnProperty("x"), "tmp does not have 'x' property");
+ok(!tmp.hasOwnProperty("y"), "tmp has 'y' property");
+ok(tmp.toString() == "[object Object]", "tmp.toString returned " + tmp.toString());
+
+testNullPrototype.prototype = "foobar";
+tmp = new testNullPrototype();
+ok(tmp.hasOwnProperty("x"), "tmp does not have 'x' property");
+ok(!tmp.hasOwnProperty("y"), "tmp has 'y' property");
+ok(tmp.toString() == "[object Object]", "tmp.toString returned " + tmp.toString());
+
 function do_test() {}
 function nosemicolon() {} nosemicolon();
 function () {} nosemicolon();
