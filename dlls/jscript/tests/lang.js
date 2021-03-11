@@ -1878,6 +1878,14 @@ testNullPrototype.prototype = nullDisp;
 tmp = new testNullPrototype();
 ok(tmp.x === 13, "tmp.x !== 13");
 ok(!("y" in tmp), "tmp has 'y' property");
+ok(!tmp.hasOwnProperty("y"), "tmp has 'y' property");
+ok(!tmp.propertyIsEnumerable("y"), "tmp has 'y' property enumerable");
+ok(tmp.toString() == "[object Object]", "tmp.toString returned " + tmp.toString());
+testNullPrototype.prototype = null;
+tmp = new testNullPrototype();
+ok(!tmp.hasOwnProperty("y"), "tmp has 'y' property");
+ok(!tmp.propertyIsEnumerable("y"), "tmp has 'y' property enumerable");
+ok(tmp.toString() == "[object Object]", "tmp.toString returned " + tmp.toString());
 
 function do_test() {}
 function nosemicolon() {} nosemicolon();
