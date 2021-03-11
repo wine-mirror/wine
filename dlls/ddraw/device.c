@@ -7007,6 +7007,12 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw, c
     device->hardware_device = IsEqualGUID(&IID_IDirect3DTnLHalDevice, guid)
             || IsEqualGUID(&IID_IDirect3DHALDevice, guid);
 
+    if (device->hardware_device && !(target->surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY))
+    {
+        WARN("Surface %p is not in video memory.\n", target);
+        return D3DERR_SURFACENOTINVIDMEM;
+    }
+
     if (outer_unknown)
         device->outer_unknown = outer_unknown;
     else
@@ -7092,12 +7098,6 @@ HRESULT d3d_device_create(struct ddraw *ddraw, const GUID *guid, struct ddraw_su
                 "but the current DirectDrawRenderer does not support this.\n");
 
         return DDERR_OUTOFMEMORY;
-    }
-
-    if (!(target->surface_desc.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY))
-    {
-        WARN("Surface %p is not in video memory.\n", target);
-        return D3DERR_SURFACENOTINVIDMEM;
     }
 
     if (ddraw->d3ddevice)
