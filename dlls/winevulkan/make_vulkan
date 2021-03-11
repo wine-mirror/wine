@@ -405,7 +405,13 @@ class VkEnum(object):
 
     def create_alias(self, name, alias_name):
         """ Create an aliased value for this enum """
-        self.add(VkEnumValue(name, self.bitwidth, alias=alias_name))
+        # Older GCC versions need a literal to initialize a static const uint64_t
+        # which is what we use for 64bit bitmasks.
+        if self.bitwidth == 64:
+            alias = next(x for x in self.values if x.name == alias_name)
+            self.add(VkEnumValue(name, self.bitwidth, value=alias.value, hex=alias.hex, alias=alias_name))
+        else:
+            self.add(VkEnumValue(name, self.bitwidth, alias=alias_name))
 
     def create_value(self, name, value):
         """ Create a new value for this enum """
@@ -475,14 +481,14 @@ class VkEnumValue(object):
 
     def __repr__(self):
         postfix = "ull" if self.bitwidth == 64 else ""
-        if self.is_alias():
+        if self.is_alias() and self.value == None:
             return "{0}={1}".format(self.name, self.alias)
         return "{0}={1}{2}".format(self.name, self.value, postfix)
 
     def definition(self):
         """ Convert to text definition e.g. VK_FOO = 1 """
         postfix = "ull" if self.bitwidth == 64 else ""
-        if self.is_alias():
+        if self.is_alias() and self.value == None:
             return "{0} = {1}".format(self.name, self.alias)
 
         # Hex is commonly used for FlagBits and sometimes within
