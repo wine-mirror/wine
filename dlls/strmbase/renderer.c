@@ -198,7 +198,7 @@ static struct strmbase_pin *renderer_get_pin(struct strmbase_filter *iface, unsi
 static void renderer_destroy(struct strmbase_filter *iface)
 {
     struct strmbase_renderer *filter = impl_from_strmbase_filter(iface);
-    filter->pFuncsTable->renderer_destroy(filter);
+    filter->ops->renderer_destroy(filter);
 }
 
 static HRESULT renderer_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
@@ -206,8 +206,8 @@ static HRESULT renderer_query_interface(struct strmbase_filter *iface, REFIID ii
     struct strmbase_renderer *filter = impl_from_strmbase_filter(iface);
     HRESULT hr;
 
-    if (filter->pFuncsTable->renderer_query_interface
-            && SUCCEEDED(hr = filter->pFuncsTable->renderer_query_interface(filter, iid, out)))
+    if (filter->ops->renderer_query_interface
+            && SUCCEEDED(hr = filter->ops->renderer_query_interface(filter, iid, out)))
     {
         return hr;
     }
@@ -233,8 +233,8 @@ static HRESULT renderer_init_stream(struct strmbase_filter *iface)
         ResetEvent(filter->state_event);
     filter->eos = FALSE;
     ResetEvent(filter->flush_event);
-    if (filter->pFuncsTable->renderer_init_stream)
-        filter->pFuncsTable->renderer_init_stream(filter);
+    if (filter->ops->renderer_init_stream)
+        filter->ops->renderer_init_stream(filter);
 
     return filter->sink.pin.peer ? S_FALSE : S_OK;
 }
@@ -249,8 +249,8 @@ static HRESULT renderer_start_stream(struct strmbase_filter *iface, REFERENCE_TI
     if (filter->sink.pin.peer)
         filter->eos = FALSE;
     reset_qos(filter);
-    if (filter->sink.pin.peer && filter->pFuncsTable->renderer_start_stream)
-        filter->pFuncsTable->renderer_start_stream(filter);
+    if (filter->sink.pin.peer && filter->ops->renderer_start_stream)
+        filter->ops->renderer_start_stream(filter);
 
     return S_OK;
 }
@@ -261,8 +261,8 @@ static HRESULT renderer_stop_stream(struct strmbase_filter *iface)
 
     ResetEvent(filter->run_event);
 
-    if (filter->sink.pin.peer && filter->pFuncsTable->renderer_stop_stream)
-        filter->pFuncsTable->renderer_stop_stream(filter);
+    if (filter->sink.pin.peer && filter->ops->renderer_stop_stream)
+        filter->ops->renderer_stop_stream(filter);
 
     return S_OK;
 }
@@ -302,7 +302,7 @@ static const struct strmbase_filter_ops filter_ops =
 static HRESULT sink_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
 {
     struct strmbase_renderer *filter = impl_from_IPin(&pin->IPin_iface);
-    return filter->pFuncsTable->renderer_query_accept(filter, mt);
+    return filter->ops->renderer_query_accept(filter, mt);
 }
 
 static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
@@ -310,8 +310,8 @@ static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void
     struct strmbase_renderer *filter = impl_from_IPin(&iface->IPin_iface);
     HRESULT hr;
 
-    if (filter->pFuncsTable->renderer_pin_query_interface
-            && SUCCEEDED(hr = filter->pFuncsTable->renderer_pin_query_interface(filter, iid, out)))
+    if (filter->ops->renderer_pin_query_interface
+            && SUCCEEDED(hr = filter->ops->renderer_pin_query_interface(filter, iid, out)))
         return hr;
 
     if (IsEqualGUID(iid, &IID_IMemInputPin))
@@ -344,7 +344,7 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
         TRACE("Format change.\n");
         strmbase_dump_media_type(mt);
 
-        if (FAILED(filter->pFuncsTable->renderer_query_accept(filter, mt)))
+        if (FAILED(filter->ops->renderer_query_accept(filter, mt)))
             return VFW_E_TYPE_NOT_ACCEPTED;
         DeleteMediaType(mt);
     }
@@ -361,7 +361,7 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
 
         filter->current_sample = sample;
 
-        hr = filter->pFuncsTable->renderer_render(filter, sample);
+        hr = filter->ops->renderer_render(filter, sample);
 
         SetEvent(filter->state_event);
         LeaveCriticalSection(&filter->filter.stream_cs);
@@ -401,14 +401,14 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
         }
 
         if (state == State_Running)
-            hr = filter->pFuncsTable->renderer_render(filter, sample);
+            hr = filter->ops->renderer_render(filter, sample);
 
         perform_qos(filter, start, stop, jitter);
     }
     else
     {
         if (state == State_Running)
-            hr = filter->pFuncsTable->renderer_render(filter, sample);
+            hr = filter->ops->renderer_render(filter, sample);
     }
 
     return hr;
@@ -418,8 +418,8 @@ static HRESULT sink_connect(struct strmbase_sink *iface, IPin *peer, const AM_ME
 {
     struct strmbase_renderer *filter = impl_from_IPin(&iface->pin.IPin_iface);
 
-    if (filter->pFuncsTable->renderer_connect)
-        return filter->pFuncsTable->renderer_connect(filter, mt);
+    if (filter->ops->renderer_connect)
+        return filter->ops->renderer_connect(filter, mt);
     return S_OK;
 }
 
@@ -427,8 +427,8 @@ static void sink_disconnect(struct strmbase_sink *iface)
 {
     struct strmbase_renderer *filter = impl_from_IPin(&iface->pin.IPin_iface);
 
-    if (filter->pFuncsTable->renderer_disconnect)
-        filter->pFuncsTable->renderer_disconnect(filter);
+    if (filter->ops->renderer_disconnect)
+        filter->ops->renderer_disconnect(filter);
 }
 
 static HRESULT sink_eos(struct strmbase_sink *iface)
@@ -580,7 +580,7 @@ void strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown *outer,
     ISeekingPassThru_Init(&filter->passthrough.ISeekingPassThru_iface, TRUE, &filter->sink.pin.IPin_iface);
     filter->IQualityControl_iface.lpVtbl = &quality_control_vtbl;
 
-    filter->pFuncsTable = ops;
+    filter->ops = ops;
 
     strmbase_sink_init(&filter->sink, &filter->filter, sink_name, &sink_ops, NULL);
 

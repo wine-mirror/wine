@@ -300,7 +300,7 @@ struct strmbase_renderer
     REFERENCE_TIME last_left, avg_duration, avg_pt;
     double avg_rate;
 
-    const struct strmbase_renderer_ops *pFuncsTable;
+    const struct strmbase_renderer_ops *ops;
 
     BOOL eos;
 };
