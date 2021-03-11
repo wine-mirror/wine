@@ -7196,8 +7196,8 @@ HRESULT HTMLElement_get_attr_col(HTMLDOMNode *iface, HTMLAttributeCollection **a
 
     This->attrs->elem = This;
     list_init(&This->attrs->attrs);
-    init_dispex(&This->attrs->dispex, (IUnknown*)&This->attrs->IHTMLAttributeCollection_iface,
-            &HTMLAttributeCollection_dispex);
+    init_dispex_with_compat_mode(&This->attrs->dispex, (IUnknown*)&This->attrs->IHTMLAttributeCollection_iface,
+                                 &HTMLAttributeCollection_dispex, dispex_compat_mode(&iface->event_target.dispex));
 
     *ac = This->attrs;
     return S_OK;
