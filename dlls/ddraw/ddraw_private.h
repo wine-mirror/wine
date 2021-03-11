@@ -699,6 +699,15 @@ static inline struct wined3d_texture *ddraw_surface_get_draw_texture(struct ddra
     return surface->draw_texture;
 }
 
+static inline struct wined3d_texture *ddraw_surface_get_any_texture(struct ddraw_surface *surface, unsigned int flags)
+{
+    if (surface->texture_location & DDRAW_SURFACE_LOCATION_DEFAULT)
+        return ddraw_surface_get_default_texture(surface, flags);
+
+    assert(surface->texture_location & DDRAW_SURFACE_LOCATION_DRAW);
+    return ddraw_surface_get_draw_texture(surface, flags);
+}
+
 void d3d_device_sync_surfaces(struct d3d_device *device) DECLSPEC_HIDDEN;
 
 /* Used for generic dumping */

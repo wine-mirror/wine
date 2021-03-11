@@ -6171,9 +6171,9 @@ static void copy_mipmap_chain(struct d3d_device *device, struct ddraw_surface *d
             UINT src_h = src_rect.bottom - src_rect.top;
             RECT dst_rect = {point.x, point.y, point.x + src_w, point.y + src_h};
 
-            if (FAILED(hr = wined3d_texture_blt(ddraw_surface_get_default_texture(dst_level, DDRAW_SURFACE_RW),
+            if (FAILED(hr = wined3d_texture_blt(ddraw_surface_get_any_texture(dst_level, DDRAW_SURFACE_RW),
                     dst_level->sub_resource_idx, &dst_rect,
-                    ddraw_surface_get_default_texture(src_level, DDRAW_SURFACE_READ),
+                    ddraw_surface_get_any_texture(src_level, DDRAW_SURFACE_READ),
                     src_level->sub_resource_idx, &src_rect, 0, NULL, WINED3D_TEXF_POINT)))
                 ERR("Blit failed, hr %#x.\n", hr);
 
