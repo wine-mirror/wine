@@ -451,6 +451,7 @@ struct _script_ctx_t {
     jsdisp_t *uri_error_constr;
     jsdisp_t *number_constr;
     jsdisp_t *object_constr;
+    jsdisp_t *object_prototype;
     jsdisp_t *regexp_constr;
     jsdisp_t *string_constr;
     jsdisp_t *vbarray_constr;
