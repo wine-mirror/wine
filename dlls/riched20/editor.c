@@ -2744,11 +2744,8 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
   return FALSE;
 }
 
-static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
-                       LPARAM flags, BOOL unicode)
+static LRESULT handle_wm_char( ME_TextEditor *editor, WCHAR wstr, LPARAM flags )
 {
-  WCHAR wstr;
-
   if (editor->bMouseCaptured)
     return 0;
 
@@ -2756,14 +2753,6 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
   {
     MessageBeep(MB_ICONERROR);
     return 0; /* FIXME really 0 ? */
-  }
-
-  if (unicode)
-      wstr = (WCHAR)charCode;
-  else
-  {
-      CHAR charA = charCode;
-      MultiByteToWideChar(CP_ACP, 0, &charA, 1, &wstr, 1);
   }
 
   if (editor->bEmulateVersion10 && wstr == '\r')
@@ -4379,7 +4368,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     if ((editor->nEventMask & ENM_KEYEVENTS) &&
         !ME_FilterEvent(editor, msg, &wParam, &lParam))
       return 0;
-    return ME_Char(editor, wParam, lParam, unicode);
+    return handle_wm_char( editor, wParam, lParam );
   case WM_UNICHAR:
     if (unicode)
     {
@@ -4389,11 +4378,11 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
             if(wParam > 0xffff) /* convert to surrogates */
             {
                 wParam -= 0x10000;
-                ME_Char(editor, (wParam >> 10) + 0xd800, 0, TRUE);
-                ME_Char(editor, (wParam & 0x03ff) + 0xdc00, 0, TRUE);
-            } else {
-              ME_Char(editor, wParam, 0, TRUE);
+                handle_wm_char( editor, (wParam >> 10) + 0xd800, 0 );
+                handle_wm_char( editor, (wParam & 0x03ff) + 0xdc00, 0 );
             }
+            else
+                handle_wm_char( editor, wParam, 0 );
         }
         return 0;
     }

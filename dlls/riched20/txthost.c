@@ -780,6 +780,14 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
     editor = host->editor;
     switch (msg)
     {
+    case WM_CHAR:
+    {
+        WCHAR wc = wparam;
+
+        if (!unicode) MultiByteToWideChar( CP_ACP, 0, (char *)&wparam, 1, &wc, 1 );
+        hr = ITextServices_TxSendMessage( host->text_srv, msg, wc, lparam, &res );
+        break;
+    }
     case WM_DESTROY:
         ITextHost_Release( &host->ITextHost_iface );
         return 0;
