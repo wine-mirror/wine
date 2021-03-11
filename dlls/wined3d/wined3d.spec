@@ -170,6 +170,7 @@
 @ cdecl wined3d_device_context_set_blend_state(ptr ptr ptr long)
 @ cdecl wined3d_device_context_set_constant_buffer(ptr long long ptr)
 @ cdecl wined3d_device_context_set_depth_stencil_state(ptr ptr long)
+@ cdecl wined3d_device_context_set_rasterizer_state(ptr ptr)
 @ cdecl wined3d_device_context_set_shader(ptr long ptr)
 
 @ cdecl wined3d_output_find_closest_matching_mode(ptr ptr)

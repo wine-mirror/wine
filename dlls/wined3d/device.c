@@ -1780,21 +1780,9 @@ struct wined3d_depth_stencil_state * CDECL wined3d_device_get_depth_stencil_stat
 void CDECL wined3d_device_set_rasterizer_state(struct wined3d_device *device,
         struct wined3d_rasterizer_state *rasterizer_state)
 {
-    struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_rasterizer_state *prev;
-
     TRACE("device %p, rasterizer_state %p.\n", device, rasterizer_state);
 
-    prev = state->rasterizer_state;
-    if (prev == rasterizer_state)
-        return;
-
-    if (rasterizer_state)
-        wined3d_rasterizer_state_incref(rasterizer_state);
-    state->rasterizer_state = rasterizer_state;
-    wined3d_device_context_emit_set_rasterizer_state(&device->cs->c, rasterizer_state);
-    if (prev)
-        wined3d_rasterizer_state_decref(prev);
+    wined3d_device_context_set_rasterizer_state(&device->cs->c, rasterizer_state);
 }
 
 struct wined3d_rasterizer_state * CDECL wined3d_device_get_rasterizer_state(struct wined3d_device *device)
@@ -2148,6 +2136,26 @@ void CDECL wined3d_device_context_set_depth_stencil_state(struct wined3d_device_
     wined3d_device_context_emit_set_depth_stencil_state(context, depth_stencil_state, stencil_ref);
     if (prev)
         wined3d_depth_stencil_state_decref(prev);
+}
+
+void CDECL wined3d_device_context_set_rasterizer_state(struct wined3d_device_context *context,
+        struct wined3d_rasterizer_state *rasterizer_state)
+{
+    struct wined3d_state *state = context->state;
+    struct wined3d_rasterizer_state *prev;
+
+    TRACE("context %p, rasterizer_state %p.\n", context, rasterizer_state);
+
+    prev = state->rasterizer_state;
+    if (prev == rasterizer_state)
+        return;
+
+    if (rasterizer_state)
+        wined3d_rasterizer_state_incref(rasterizer_state);
+    state->rasterizer_state = rasterizer_state;
+    wined3d_device_context_emit_set_rasterizer_state(context, rasterizer_state);
+    if (prev)
+        wined3d_rasterizer_state_decref(prev);
 }
 
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)

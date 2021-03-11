@@ -2555,6 +2555,8 @@ void __cdecl wined3d_device_context_set_constant_buffer(struct wined3d_device_co
         enum wined3d_shader_type type, unsigned int idx, struct wined3d_buffer *buffer);
 void __cdecl wined3d_device_context_set_depth_stencil_state(struct wined3d_device_context *context,
         struct wined3d_depth_stencil_state *depth_stencil_state, unsigned int stencil_ref);
+void __cdecl wined3d_device_context_set_rasterizer_state(struct wined3d_device_context *context,
+        struct wined3d_rasterizer_state *rasterizer_state);
 void __cdecl wined3d_device_context_set_shader(struct wined3d_device_context *context,
         enum wined3d_shader_type type, struct wined3d_shader *shader);
 
