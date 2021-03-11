@@ -360,6 +360,29 @@ static D3DCOLOR get_surface_color(IDirectDrawSurface *surface, UINT x, UINT y)
     return color;
 }
 
+static void fill_surface(IDirectDrawSurface *surface, D3DCOLOR color)
+{
+    DDSURFACEDESC surface_desc = {sizeof(surface_desc)};
+    HRESULT hr;
+    unsigned int x, y;
+    DWORD *ptr;
+
+    hr = IDirectDrawSurface_Lock(surface, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+
+    for (y = 0; y < surface_desc.dwHeight; ++y)
+    {
+        ptr = (DWORD *)((BYTE *)surface_desc.lpSurface + y * U1(surface_desc).lPitch);
+        for (x = 0; x < surface_desc.dwWidth; ++x)
+        {
+            ptr[x] = color;
+        }
+    }
+
+    hr = IDirectDrawSurface_Unlock(surface, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+}
+
 static void check_rect(IDirectDrawSurface *surface, RECT r, const char *message)
 {
     LONG x_coords[2][2] =
@@ -461,6 +484,8 @@ static IDirect3DDevice2 *create_device_ex(IDirectDraw2 *ddraw, HWND window, DWOR
     surface_desc.dwSize = sizeof(surface_desc);
     surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
+    if (is_software_device_type(device_guid))
+        surface_desc.ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
     surface_desc.dwWidth = 640;
     surface_desc.dwHeight = 480;
 
@@ -496,6 +521,8 @@ static IDirect3DDevice2 *create_device_ex(IDirectDraw2 *ddraw, HWND window, DWOR
         surface_desc.dwSize = sizeof(surface_desc);
         surface_desc.dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT;
         surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+        if (is_software_device_type(device_guid))
+            surface_desc.ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
         U2(surface_desc).dwZBufferBitDepth = z_depths[i];
         surface_desc.dwWidth = 640;
         surface_desc.dwHeight = 480;
@@ -1263,7 +1290,7 @@ static void test_coop_level_threaded(void)
     IDirectDraw2_Release(ddraw);
 }
 
-static void test_depth_blit(void)
+static void test_depth_blit(const GUID *device_guid)
 {
     static D3DLVERTEX quad1[] =
     {
@@ -1283,6 +1310,7 @@ static void test_depth_blit(void)
 
     IDirect3DDevice2 *device;
     IDirectDrawSurface *ds1, *ds2, *ds3, *rt;
+    BOOL depth_fill_broken = FALSE;
     IDirect3DViewport2 *viewport;
     RECT src_rect, dst_rect;
     unsigned int i, j;
@@ -1297,7 +1325,7 @@ static void test_depth_blit(void)
     window = create_window();
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    if (!(device = create_device_ex(ddraw, window, DDSCL_NORMAL, device_guid)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
         IDirectDraw2_Release(ddraw);
@@ -1312,8 +1340,10 @@ static void test_depth_blit(void)
     memset(&ddsd_existing, 0, sizeof(ddsd_existing));
     ddsd_existing.dwSize = sizeof(ddsd_existing);
     hr = IDirectDrawSurface_GetSurfaceDesc(ds1, &ddsd_existing);
-    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     ddsd_new.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    if (is_software_device_type(device_guid))
+        ddsd_new.ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
     ddsd_new.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
     ddsd_new.dwWidth = ddsd_existing.dwWidth;
     ddsd_new.dwHeight = ddsd_existing.dwHeight;
@@ -1393,28 +1423,44 @@ static void test_depth_blit(void)
     fx.dwSize = sizeof(fx);
     U5(fx).dwFillDepth = 0;
     hr = IDirectDrawSurface_Blt(ds2, NULL, NULL, NULL, DDBLT_DEPTHFILL | DDBLT_WAIT, &fx);
-    ok(SUCCEEDED(hr), "Failed to clear the source z buffer, hr %#x.\n", hr);
+    ok(hr == D3D_OK || broken(is_software_device_type(device_guid)
+            && hr == 0x8876086c /* D3DERR_INVALIDCALL */), "Got unexpected hr %#x.\n", hr);
+    if (hr != D3D_OK)
+        depth_fill_broken = TRUE;
 
     /* This clears the Z buffer with 1.0 */
     hr = IDirect3DViewport2_Clear(viewport, 1, &d3drect, D3DCLEAR_ZBUFFER | D3DCLEAR_TARGET);
-    ok(SUCCEEDED(hr), "Failed to clear the color and z buffers, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    color = get_surface_color(rt, 80, 60);
+    /* For some reason clears and colour fill blits randomly fail with software render target. */
+    ok(color == 0x00ff0000 || broken(is_software_device_type(device_guid) && !color),
+            "Got unexpected colour 0x%08x.\n", color);
+    if (!color)
+    {
+        fill_surface(rt, 0xffff0000);
+
+        color = get_surface_color(rt, 80, 60);
+        ok(color == 0x00ff0000, "Got unexpected colour 0x%08x.\n", color);
+    }
 
     SetRect(&dst_rect, 0, 0, 320, 240);
     hr = IDirectDrawSurface_Blt(ds1, &dst_rect, ds2, NULL, DDBLT_WAIT, NULL);
-    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     IDirectDrawSurface_Release(ds3);
     IDirectDrawSurface_Release(ds2);
     IDirectDrawSurface_Release(ds1);
 
     hr = IDirect3DDevice2_BeginScene(device);
-    ok(SUCCEEDED(hr), "Failed to start a scene, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DVT_LVERTEX, quad1, 4, 0);
-    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice2_EndScene(device);
-    ok(SUCCEEDED(hr), "Failed to end a scene, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-    hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
-    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
@@ -1422,7 +1468,7 @@ static void test_depth_blit(void)
             unsigned int x = 80 * ((2 * j) + 1);
             unsigned int y = 60 * ((2 * i) + 1);
             color = get_surface_color(rt, x, y);
-            ok(compare_color(color, expected_colors[i][j], 1),
+            ok(compare_color(color, expected_colors[i][j], 1) || broken(depth_fill_broken && color == 0x0000ff00),
                     "Expected color 0x%08x at %u,%u, got 0x%08x.\n", expected_colors[i][j], x, y, color);
         }
     }
@@ -5489,29 +5535,6 @@ static void test_surface_discard(void)
     }
 
     DestroyWindow(window);
-}
-
-static void fill_surface(IDirectDrawSurface *surface, D3DCOLOR color)
-{
-    DDSURFACEDESC surface_desc = {sizeof(surface_desc)};
-    HRESULT hr;
-    unsigned int x, y;
-    DWORD *ptr;
-
-    hr = IDirectDrawSurface_Lock(surface, NULL, &surface_desc, DDLOCK_WAIT, NULL);
-    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
-
-    for (y = 0; y < surface_desc.dwHeight; ++y)
-    {
-        ptr = (DWORD *)((BYTE *)surface_desc.lpSurface + y * U1(surface_desc).lPitch);
-        for (x = 0; x < surface_desc.dwWidth; ++x)
-        {
-            ptr[x] = color;
-        }
-    }
-
-    hr = IDirectDrawSurface_Unlock(surface, NULL);
-    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
 }
 
 static void test_flip(void)
@@ -15291,7 +15314,7 @@ START_TEST(ddraw2)
     test_coop_level_d3d_state();
     test_surface_interface_mismatch();
     test_coop_level_threaded();
-    test_depth_blit();
+    run_for_each_device_type(test_depth_blit);
     test_texture_load_ckey();
     test_viewport_object();
     test_zenable();
