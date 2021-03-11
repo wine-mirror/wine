@@ -3883,14 +3883,11 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_REPLACESEL:
   {
-    int len = 0;
-    LONG codepage = unicode ? CP_UNICODE : CP_ACP;
-    LPWSTR wszText = ME_ToUnicode(codepage, (void *)lParam, &len);
+    WCHAR *text = (WCHAR *)lParam;
+    int len = text ? lstrlenW( text ) : 0;
 
-    TRACE("EM_REPLACESEL - %s\n", debugstr_w(wszText));
-
-    ME_ReplaceSel(editor, !!wParam, wszText, len);
-    ME_EndToUnicode(codepage, wszText);
+    TRACE( "EM_REPLACESEL - %s\n", debugstr_w( text ) );
+    ME_ReplaceSel( editor, !!wParam, text, len );
     return len;
   }
   case EM_SCROLLCARET:

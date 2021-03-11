@@ -849,6 +849,17 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         EndPaint( editor->hWnd, &ps );
         return 0;
     }
+    case EM_REPLACESEL:
+    {
+        int len;
+        LONG codepage = unicode ? CP_UNICODE : CP_ACP;
+        WCHAR *text = ME_ToUnicode( codepage, (void *)lparam, &len );
+
+        hr = ITextServices_TxSendMessage( host->text_srv, msg, wparam, (LPARAM)text, &res );
+        ME_EndToUnicode( codepage, text );
+        res = len;
+        break;
+    }
     case EM_SETOPTIONS:
     {
         DWORD style;
