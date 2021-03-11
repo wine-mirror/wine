@@ -353,7 +353,11 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
     }
 
     if (state == State_Paused)
+    {
+        filter->current_sample = sample;
         hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
+        filter->current_sample = NULL;
+    }
 
     if (need_wait)
     {

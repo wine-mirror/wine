@@ -291,6 +291,8 @@ struct strmbase_renderer
     HANDLE flush_event;
     REFERENCE_TIME stream_start;
 
+    IMediaSample *current_sample;
+
     IQualityControl *qc_sink;
     REFERENCE_TIME last_left, avg_duration, avg_pt;
     double avg_rate;

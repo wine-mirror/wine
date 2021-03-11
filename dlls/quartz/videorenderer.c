@@ -50,7 +50,6 @@ struct video_renderer
     DWORD saved_style;
 
     HANDLE run_event;
-    IMediaSample *current_sample;
 };
 
 static inline struct video_renderer *impl_from_video_window(struct video_window *iface)
@@ -109,14 +108,10 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
     {
         const HANDLE events[2] = {filter->run_event, filter->renderer.flush_event};
 
-        filter->current_sample = pSample;
-
         SetEvent(filter->renderer.state_event);
         LeaveCriticalSection(&filter->renderer.filter.stream_cs);
         WaitForMultipleObjects(2, events, FALSE, INFINITE);
         EnterCriticalSection(&filter->renderer.filter.stream_cs);
-
-        filter->current_sample = NULL;
     }
 
     return S_OK;
@@ -276,7 +271,7 @@ static HRESULT video_renderer_get_current_image(struct video_window *iface, LONG
         return VFW_E_NOT_PAUSED;
     }
 
-    if (!filter->current_sample)
+    if (!filter->renderer.current_sample)
     {
         LeaveCriticalSection(&filter->renderer.filter.stream_cs);
         return E_UNEXPECTED;
@@ -289,7 +284,7 @@ static HRESULT video_renderer_get_current_image(struct video_window *iface, LONG
     }
 
     memcpy(image, bih, sizeof(BITMAPINFOHEADER));
-    IMediaSample_GetPointer(filter->current_sample, &sample_data);
+    IMediaSample_GetPointer(filter->renderer.current_sample, &sample_data);
     memcpy((char *)image + sizeof(BITMAPINFOHEADER), sample_data, image_size);
 
     LeaveCriticalSection(&filter->renderer.filter.stream_cs);
