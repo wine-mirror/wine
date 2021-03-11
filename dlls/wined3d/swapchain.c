@@ -1039,6 +1039,7 @@ static void wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain_vk,
     const struct wined3d_swapchain_desc *desc = &swapchain_vk->s.state.desc;
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     VkCommandBuffer vk_command_buffer;
+    VkImageSubresourceRange vk_range;
     VkPresentInfoKHR present_desc;
     unsigned int present_idx;
     VkImageLayout vk_layout;
@@ -1075,23 +1076,29 @@ static void wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain_vk,
 
     wined3d_context_vk_end_current_render_pass(context_vk);
 
+    vk_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    vk_range.baseMipLevel = 0;
+    vk_range.levelCount = 1;
+    vk_range.baseArrayLayer = 0;
+    vk_range.layerCount = 1;
+
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
             vk_access_mask_from_bind_flags(back_buffer_vk->t.resource.bind_flags),
             VK_ACCESS_TRANSFER_READ_BIT,
             back_buffer_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            back_buffer_vk->vk_image, VK_IMAGE_ASPECT_COLOR_BIT);
+            back_buffer_vk->vk_image, &vk_range);
 
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
             0, VK_ACCESS_TRANSFER_WRITE_BIT,
             VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            swapchain_vk->vk_images[image_idx], VK_IMAGE_ASPECT_COLOR_BIT);
+            swapchain_vk->vk_images[image_idx], &vk_range);
 
-    blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    blit.srcSubresource.mipLevel = 0;
-    blit.srcSubresource.baseArrayLayer = 0;
-    blit.srcSubresource.layerCount = 1;
+    blit.srcSubresource.aspectMask = vk_range.aspectMask;
+    blit.srcSubresource.mipLevel = vk_range.baseMipLevel;
+    blit.srcSubresource.baseArrayLayer = vk_range.baseArrayLayer;
+    blit.srcSubresource.layerCount = vk_range.layerCount;
     blit.srcOffsets[0].x = src_rect->left;
     blit.srcOffsets[0].y = src_rect->top;
     blit.srcOffsets[0].z = 0;
@@ -1115,7 +1122,7 @@ static void wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain_vk,
             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
             VK_ACCESS_TRANSFER_WRITE_BIT, 0,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-            swapchain_vk->vk_images[image_idx], VK_IMAGE_ASPECT_COLOR_BIT);
+            swapchain_vk->vk_images[image_idx], &vk_range);
 
     if (desc->swap_effect == WINED3D_SWAP_EFFECT_DISCARD || desc->swap_effect == WINED3D_SWAP_EFFECT_FLIP_DISCARD)
         vk_layout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -1126,7 +1133,7 @@ static void wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain_vk,
             VK_ACCESS_TRANSFER_READ_BIT,
             vk_access_mask_from_bind_flags(back_buffer_vk->t.resource.bind_flags),
             vk_layout, back_buffer_vk->layout,
-            back_buffer_vk->vk_image, VK_IMAGE_ASPECT_COLOR_BIT);
+            back_buffer_vk->vk_image, &vk_range);
     back_buffer_vk->bind_mask = 0;
 
     swapchain_vk->vk_semaphores[present_idx].command_buffer_id = context_vk->current_command_buffer.id;

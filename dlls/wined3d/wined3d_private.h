@@ -2629,7 +2629,7 @@ VkRenderPass wined3d_context_vk_get_render_pass(struct wined3d_context_vk *conte
 void wined3d_context_vk_image_barrier(struct wined3d_context_vk *context_vk,
         VkCommandBuffer vk_command_buffer, VkPipelineStageFlags src_stage_mask, VkPipelineStageFlags dst_stage_mask,
         VkAccessFlags src_access_mask, VkAccessFlags dst_access_mask, VkImageLayout old_layout,
-        VkImageLayout new_layout, VkImage image, VkImageAspectFlags aspect_mask) DECLSPEC_HIDDEN;
+        VkImageLayout new_layout, VkImage image, const VkImageSubresourceRange *range) DECLSPEC_HIDDEN;
 HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 void wined3d_context_vk_poll_command_buffers(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;

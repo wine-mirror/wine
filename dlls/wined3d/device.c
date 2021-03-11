@@ -669,23 +669,22 @@ static bool wined3d_null_image_vk_init(struct wined3d_null_image_vk *image, stru
         return false;
     }
 
-    wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
-            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
-            VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            image->vk_image, VK_IMAGE_ASPECT_COLOR_BIT);
-
     range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     range.baseMipLevel = 0;
     range.levelCount = 1;
     range.baseArrayLayer = 0;
     range.layerCount = layer_count;
+
+    wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, image->vk_image, &range);
+
     VK_CALL(vkCmdClearColorImage(vk_command_buffer, image->vk_image,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &colour, 1, &range));
 
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, 0,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            image->vk_image, VK_IMAGE_ASPECT_COLOR_BIT);
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, image->vk_image, &range);
 
     TRACE("Created NULL image 0x%s, memory 0x%s.\n",
             wine_dbgstr_longlong(image->vk_image), wine_dbgstr_longlong(image->vk_memory));
