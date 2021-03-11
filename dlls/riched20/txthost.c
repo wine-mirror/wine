@@ -865,6 +865,18 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         SetWindowLongW( hwnd, GWL_STYLE, style );
         return res;
     }
+    case WM_SETTEXT:
+    {
+        char *textA = (char *)lparam;
+        WCHAR *text = (WCHAR *)lparam;
+        int len;
+
+        if (!unicode && textA && strncmp( textA, "{\\rtf", 5 ) && strncmp( textA, "{\\urtf", 6 ))
+            text = ME_ToUnicode( CP_ACP, textA, &len );
+        hr = ITextServices_TxSendMessage( host->text_srv, msg, wparam, (LPARAM)text, &res );
+        if (text != (WCHAR *)lparam) ME_EndToUnicode( CP_ACP, text );
+        break;
+    }
     default:
         res = ME_HandleMessage( editor, msg, wparam, lparam, unicode, &hr );
     }

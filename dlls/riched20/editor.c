@@ -3953,7 +3953,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
         ME_StreamInRTFString(editor, 0, (char *)lParam);
       }
       else
-        ME_SetText(editor, (void*)lParam, unicode);
+        ME_SetText( editor, (void*)lParam, TRUE );
     }
     else
       TRACE("WM_SETTEXT - NULL\n");
