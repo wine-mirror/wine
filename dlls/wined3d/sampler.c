@@ -204,7 +204,7 @@ static void wined3d_sampler_vk_cs_init(void *object)
     sampler_desc.mipLodBias = desc->lod_bias;
     sampler_desc.anisotropyEnable = desc->max_anisotropy != 1;
     sampler_desc.maxAnisotropy = desc->max_anisotropy;
-    sampler_desc.compareEnable = desc->compare;
+    sampler_desc.compareEnable = !!desc->compare;
     sampler_desc.compareOp = vk_compare_op_from_wined3d(desc->comparison_func);
     sampler_desc.minLod = desc->min_lod;
     sampler_desc.maxLod = desc->max_lod;
