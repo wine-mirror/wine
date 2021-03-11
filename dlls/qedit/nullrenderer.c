@@ -41,9 +41,8 @@ static HRESULT WINAPI NullRenderer_DoRenderSample(struct strmbase_renderer *ifac
     return S_OK;
 }
 
-static HRESULT WINAPI NullRenderer_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
+static HRESULT null_renderer_query_accept(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
-    TRACE("Not a stub!\n");
     return S_OK;
 }
 
@@ -57,7 +56,7 @@ static void null_renderer_destroy(struct strmbase_renderer *iface)
 
 static const struct strmbase_renderer_ops renderer_ops =
 {
-    .pfnCheckMediaType = NullRenderer_CheckMediaType,
+    .renderer_query_accept = null_renderer_query_accept,
     .pfnDoRenderSample = NullRenderer_DoRenderSample,
     .renderer_destroy = null_renderer_destroy,
 };

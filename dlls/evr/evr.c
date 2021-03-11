@@ -54,7 +54,7 @@ static HRESULT WINAPI evr_DoRenderSample(struct strmbase_renderer *iface, IMedia
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI evr_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
+static HRESULT evr_query_accept(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
     FIXME("Not implemented.\n");
     return E_NOTIMPL;
@@ -62,7 +62,7 @@ static HRESULT WINAPI evr_CheckMediaType(struct strmbase_renderer *iface, const 
 
 static const struct strmbase_renderer_ops renderer_ops =
 {
-    .pfnCheckMediaType = evr_CheckMediaType,
+    .renderer_query_accept = evr_query_accept,
     .pfnDoRenderSample = evr_DoRenderSample,
     .renderer_destroy = evr_destroy,
 };

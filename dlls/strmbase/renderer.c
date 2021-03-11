@@ -302,7 +302,7 @@ static const struct strmbase_filter_ops filter_ops =
 static HRESULT sink_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
 {
     struct strmbase_renderer *filter = impl_from_IPin(&pin->IPin_iface);
-    return filter->pFuncsTable->pfnCheckMediaType(filter, mt);
+    return filter->pFuncsTable->renderer_query_accept(filter, mt);
 }
 
 static HRESULT sink_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
@@ -344,7 +344,7 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
         TRACE("Format change.\n");
         strmbase_dump_media_type(mt);
 
-        if (FAILED(filter->pFuncsTable->pfnCheckMediaType(filter, mt)))
+        if (FAILED(filter->pFuncsTable->renderer_query_accept(filter, mt)))
             return VFW_E_TYPE_NOT_ACCEPTED;
         DeleteMediaType(mt);
     }

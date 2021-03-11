@@ -105,7 +105,7 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
     return S_OK;
 }
 
-static HRESULT WINAPI VideoRenderer_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
+static HRESULT video_renderer_query_accept(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
     if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Video))
         return S_FALSE;
@@ -213,7 +213,7 @@ static RECT video_renderer_get_default_rect(struct video_window *iface)
 
 static const struct strmbase_renderer_ops renderer_ops =
 {
-    .pfnCheckMediaType = VideoRenderer_CheckMediaType,
+    .renderer_query_accept = video_renderer_query_accept,
     .pfnDoRenderSample = VideoRenderer_DoRenderSample,
     .renderer_init_stream = video_renderer_init_stream,
     .renderer_stop_stream = video_renderer_stop_stream,

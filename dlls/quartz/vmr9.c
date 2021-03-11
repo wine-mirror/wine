@@ -312,7 +312,7 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
     return IVMRImagePresenter9_PresentImage(filter->presenter, filter->cookie, &info);
 }
 
-static HRESULT WINAPI VMR9_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
+static HRESULT vmr_query_accept(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
 {
     if (!IsEqualIID(&mt->majortype, &MEDIATYPE_Video) || !mt->pbFormat)
         return S_FALSE;
@@ -637,7 +637,7 @@ static HRESULT vmr_pin_query_interface(struct strmbase_renderer *iface, REFIID i
 
 static const struct strmbase_renderer_ops renderer_ops =
 {
-    .pfnCheckMediaType = VMR9_CheckMediaType,
+    .renderer_query_accept = vmr_query_accept,
     .pfnDoRenderSample = VMR9_DoRenderSample,
     .renderer_init_stream = vmr_init_stream,
     .renderer_start_stream = vmr_start_stream,
