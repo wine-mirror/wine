@@ -258,9 +258,10 @@ struct dwrite_fontfallback_builder
     size_t count;
 };
 
-struct dwrite_numbersubstitution {
+struct dwrite_numbersubstitution
+{
     IDWriteNumberSubstitution IDWriteNumberSubstitution_iface;
-    LONG ref;
+    LONG refcount;
 
     DWRITE_NUMBER_SUBSTITUTION_METHOD method;
     WCHAR *locale;
@@ -1871,7 +1872,7 @@ static HRESULT WINAPI dwritenumbersubstitution_QueryInterface(IDWriteNumberSubst
 static ULONG WINAPI dwritenumbersubstitution_AddRef(IDWriteNumberSubstitution *iface)
 {
     struct dwrite_numbersubstitution *object = impl_from_IDWriteNumberSubstitution(iface);
-    ULONG refcount = InterlockedIncrement(&object->ref);
+    ULONG refcount = InterlockedIncrement(&object->refcount);
 
     TRACE("%p, refcount %d.\n", iface, refcount);
 
@@ -1881,7 +1882,7 @@ static ULONG WINAPI dwritenumbersubstitution_AddRef(IDWriteNumberSubstitution *i
 static ULONG WINAPI dwritenumbersubstitution_Release(IDWriteNumberSubstitution *iface)
 {
     struct dwrite_numbersubstitution *object = impl_from_IDWriteNumberSubstitution(iface);
-    ULONG refcount = InterlockedDecrement(&object->ref);
+    ULONG refcount = InterlockedDecrement(&object->refcount);
 
     TRACE("%p, refcount %d.\n", iface, refcount);
 
@@ -1926,7 +1927,7 @@ HRESULT create_numbersubstitution(DWRITE_NUMBER_SUBSTITUTION_METHOD method, cons
         return E_OUTOFMEMORY;
 
     substitution->IDWriteNumberSubstitution_iface.lpVtbl = &numbersubstitutionvtbl;
-    substitution->ref = 1;
+    substitution->refcount = 1;
     substitution->ignore_user_override = ignore_user_override;
     substitution->method = method;
     substitution->locale = heap_strdupW(locale);
