@@ -110,7 +110,7 @@ void dispatch_event(EventTarget*,DOMEvent*) DECLSPEC_HIDDEN;
 
 HRESULT create_document_event(HTMLDocumentNode*,eventid_t,DOMEvent**) DECLSPEC_HIDDEN;
 HRESULT create_document_event_str(HTMLDocumentNode*,const WCHAR*,IDOMEvent**) DECLSPEC_HIDDEN;
-HRESULT create_event_from_nsevent(nsIDOMEvent*,DOMEvent**) DECLSPEC_HIDDEN;
+HRESULT create_event_from_nsevent(nsIDOMEvent*,compat_mode_t,DOMEvent**) DECLSPEC_HIDDEN;
 
 void init_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void release_nsevents(HTMLDocumentNode*) DECLSPEC_HIDDEN;

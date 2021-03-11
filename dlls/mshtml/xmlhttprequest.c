@@ -205,7 +205,7 @@ static nsresult NSAPI XMLHttpReqEventListener_HandleEvent(nsIDOMEventListener *i
     if(!This->xhr)
         return NS_OK;
 
-    hres = create_event_from_nsevent(nsevent, &event);
+    hres = create_event_from_nsevent(nsevent, dispex_compat_mode(&This->xhr->event_target.dispex), &event);
     if(SUCCEEDED(hres) ){
         dispatch_event(&This->xhr->event_target, event);
         IDOMEvent_Release(&event->IDOMEvent_iface);

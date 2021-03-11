@@ -1659,7 +1659,7 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
     if(FAILED(hres))
         return NS_ERROR_FAILURE;
 
-    hres = create_event_from_nsevent(aEvent, &event);
+    hres = create_event_from_nsevent(aEvent, dispex_compat_mode(&node->event_target.dispex), &event);
     if(SUCCEEDED(hres)) {
         dispatch_event(&node->event_target, event);
         IDOMEvent_Release(&event->IDOMEvent_iface);

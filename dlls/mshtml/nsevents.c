@@ -270,7 +270,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     }
 
     if(doc->window) {
-        hres = create_event_from_nsevent(event, &load_event);
+        hres = create_event_from_nsevent(event, dispex_compat_mode(&doc->node.event_target.dispex), &load_event);
         if(SUCCEEDED(hres)) {
             dispatch_event(&doc->window->event_target, load_event);
             IDOMEvent_Release(&load_event->IDOMEvent_iface);
@@ -319,7 +319,7 @@ static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *
     if(FAILED(hres))
         return NS_OK;
 
-    hres = create_event_from_nsevent(nsevent, &event);
+    hres = create_event_from_nsevent(nsevent, dispex_compat_mode(&doc->node.event_target.dispex), &event);
     if(FAILED(hres)) {
         node_release(node);
         return NS_OK;

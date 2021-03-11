@@ -2201,7 +2201,7 @@ static BOOL check_event_iface(nsIDOMEvent *event, REFIID riid)
     return TRUE;
 }
 
-static DOMEvent *alloc_event(nsIDOMEvent *nsevent, eventid_t event_id)
+static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, eventid_t event_id)
 {
     dispex_static_data_t *dispex_data = &DOMEvent_dispex;
     DOMEvent *event = NULL;
@@ -2266,11 +2266,11 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, eventid_t event_id)
     else
         event->keyboard_event = NULL;
 
-    init_dispex(&event->dispex, (IUnknown*)&event->IDOMEvent_iface, dispex_data);
+    init_dispex_with_compat_mode(&event->dispex, (IUnknown*)&event->IDOMEvent_iface, dispex_data, compat_mode);
     return event;
 }
 
-HRESULT create_event_from_nsevent(nsIDOMEvent *nsevent, DOMEvent **ret_event)
+HRESULT create_event_from_nsevent(nsIDOMEvent *nsevent, compat_mode_t compat_mode, DOMEvent **ret_event)
 {
     eventid_t event_id = EVENTID_LAST;
     DOMEvent *event;
@@ -2290,7 +2290,7 @@ HRESULT create_event_from_nsevent(nsIDOMEvent *nsevent, DOMEvent **ret_event)
     }
     nsAString_Finish(&nsstr);
 
-    event = alloc_event(nsevent, event_id);
+    event = alloc_event(nsevent, compat_mode, event_id);
     if(!event)
         return E_OUTOFMEMORY;
 
@@ -2313,7 +2313,7 @@ HRESULT create_document_event_str(HTMLDocumentNode *doc, const WCHAR *type, IDOM
         return E_FAIL;
     }
 
-    event = alloc_event(nsevent, EVENTID_LAST);
+    event = alloc_event(nsevent, dispex_compat_mode(&doc->node.event_target.dispex), EVENTID_LAST);
     nsIDOMEvent_Release(nsevent);
     if(!event)
         return E_OUTOFMEMORY;
@@ -2337,7 +2337,7 @@ HRESULT create_document_event(HTMLDocumentNode *doc, eventid_t event_id, DOMEven
         return E_FAIL;
     }
 
-    event = alloc_event(nsevent, event_id);
+    event = alloc_event(nsevent, dispex_compat_mode(&doc->node.event_target.dispex), event_id);
     if(!event)
         return E_OUTOFMEMORY;
 
