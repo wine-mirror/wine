@@ -10009,6 +10009,30 @@ static void test_family_font_set(void)
     ok(!refcount, "Unexpected factory refcount %u.\n", refcount);
 }
 
+static void test_system_font_set(void)
+{
+    IDWriteFactory3 *factory;
+    IDWriteFontSet *fontset;
+    unsigned int count;
+    HRESULT hr;
+
+    if (!(factory = create_factory_iid(&IID_IDWriteFactory3)))
+    {
+        win_skip("System font set is not supported.\n");
+        return;
+    }
+
+    hr = IDWriteFactory3_GetSystemFontSet(factory, &fontset);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = IDWriteFontSet_GetFontCount(fontset);
+    ok(!!count, "Unexpected font count %u.\n", count);
+
+    IDWriteFontSet_Release(fontset);
+
+    IDWriteFactory3_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -10081,6 +10105,7 @@ START_TEST(font)
     test_GetVerticalGlyphVariants();
     test_expiration_event();
     test_family_font_set();
+    test_system_font_set();
 
     IDWriteFactory_Release(factory);
 }

@@ -1509,11 +1509,152 @@ static HRESULT WINAPI dwritefactory3_CreateFontFaceReference(IDWriteFactory7 *if
     return hr;
 }
 
+static HRESULT create_system_path_list(WCHAR ***ret, unsigned int *ret_count)
+{
+    unsigned int index = 0, value_size, name_count, max_name_count, type, data_size;
+    WCHAR **paths = NULL, *name, *value = NULL;
+    size_t capacity = 0, count = 0;
+    HKEY hkey;
+    LONG r;
+
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts",
+            0, GENERIC_READ, &hkey))
+    {
+        return E_UNEXPECTED;
+    }
+
+    value_size = MAX_PATH * sizeof(*value);
+    value = heap_alloc(value_size);
+
+    max_name_count = MAX_PATH;
+    name = heap_alloc(max_name_count * sizeof(*name));
+
+    for (;;)
+    {
+        if (!value)
+        {
+            value_size = MAX_PATH * sizeof(*value);
+            value = heap_alloc(value_size);
+        }
+
+        do
+        {
+            name_count = max_name_count;
+            data_size = value_size - sizeof(*value);
+
+            r = RegEnumValueW(hkey, index, name, &name_count, NULL, &type, (BYTE *)value, &data_size);
+            if (r == ERROR_MORE_DATA)
+            {
+                if (name_count >= max_name_count)
+                {
+                    max_name_count *= 2;
+                    heap_free(name);
+                    name = heap_alloc(max_name_count * sizeof(*name));
+                }
+
+                if (data_size > value_size - sizeof(*value))
+                {
+                    heap_free(value);
+                    value_size = max(data_size + sizeof(*value), value_size * 2);
+                    value = heap_alloc(value_size);
+                }
+            }
+        } while (r == ERROR_MORE_DATA);
+
+        if (r != ERROR_SUCCESS)
+            break;
+
+        value[data_size / sizeof(*value)] = 0;
+        if (type == REG_SZ && *name != '@')
+        {
+            if (dwrite_array_reserve((void **)&paths, &capacity, count + 1, sizeof(*paths)))
+            {
+                if (!strchrW(value, '\\'))
+                {
+                    static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\\',0};
+                    WCHAR *ptrW;
+
+                    ptrW = heap_alloc((MAX_PATH + lstrlenW(value)) * sizeof(WCHAR));
+                    GetWindowsDirectoryW(ptrW, MAX_PATH);
+                    lstrcatW(ptrW, fontsW);
+                    lstrcatW(ptrW, value);
+
+                    heap_free(value);
+                    value = ptrW;
+                }
+
+                paths[count++] = value;
+                value = NULL;
+            }
+        }
+        index++;
+    }
+
+    heap_free(name);
+
+    *ret = paths;
+    *ret_count = count;
+
+    RegCloseKey(hkey);
+
+    return S_OK;
+}
+
+static int create_system_fontset_compare(const void *left, const void *right)
+{
+    const WCHAR *_l = *(WCHAR **)left, *_r = *(WCHAR **)right;
+    return lstrcmpiW(_l, _r);
+};
+
+static HRESULT create_system_fontset(IDWriteFactory7 *factory, REFIID riid, void **obj)
+{
+    IDWriteFontSetBuilder2 *builder;
+    IDWriteFontSet *fontset;
+    unsigned int i, j, count;
+    WCHAR **paths;
+    HRESULT hr;
+
+    *obj = NULL;
+
+    if (FAILED(hr = create_fontset_builder(factory, &builder))) return hr;
+
+    if (SUCCEEDED(hr = create_system_path_list(&paths, &count)))
+    {
+        /* Sort, skip duplicates. */
+
+        qsort(paths, count, sizeof(*paths), create_system_fontset_compare);
+
+        for (i = 0, j = 0; i < count; ++i)
+        {
+            if (i != j && !lstrcmpiW(paths[i], paths[j])) continue;
+
+            if (FAILED(hr = IDWriteFontSetBuilder2_AddFontFile(builder, paths[i])) && hr != DWRITE_E_FILEFORMAT)
+                WARN("Failed to add font file, hr %#x, path %s.\n", hr, debugstr_w(paths[i]));
+
+            j = i;
+        }
+
+        for (i = 0; i < count; ++i)
+            heap_free(paths[i]);
+        heap_free(paths);
+    }
+
+    if (SUCCEEDED(hr = IDWriteFontSetBuilder2_CreateFontSet(builder, &fontset)))
+    {
+        hr = IDWriteFontSet_QueryInterface(fontset, riid, obj);
+        IDWriteFontSet_Release(fontset);
+    }
+
+    IDWriteFontSetBuilder2_Release(builder);
+
+    return hr;
+}
+
 static HRESULT WINAPI dwritefactory3_GetSystemFontSet(IDWriteFactory7 *iface, IDWriteFontSet **fontset)
 {
-    FIXME("%p, %p: stub\n", iface, fontset);
+    TRACE("%p, %p.\n", iface, fontset);
 
-    return E_NOTIMPL;
+    return create_system_fontset(iface, &IID_IDWriteFontSet, (void **)fontset);
 }
 
 static HRESULT WINAPI dwritefactory3_CreateFontSetBuilder(IDWriteFactory7 *iface, IDWriteFontSetBuilder **builder)
@@ -1691,9 +1832,12 @@ static HRESULT WINAPI dwritefactory6_CreateFontResource(IDWriteFactory7 *iface, 
 static HRESULT WINAPI dwritefactory6_GetSystemFontSet(IDWriteFactory7 *iface, BOOL include_downloadable,
         IDWriteFontSet1 **fontset)
 {
-    FIXME("%p, %d, %p.\n", iface, include_downloadable, fontset);
+    TRACE("%p, %d, %p.\n", iface, include_downloadable, fontset);
 
-    return E_NOTIMPL;
+    if (include_downloadable)
+        FIXME("Downloadable fonts are not supported.\n");
+
+    return create_system_fontset(iface, &IID_IDWriteFontSet1, (void **)fontset);
 }
 
 static HRESULT WINAPI dwritefactory6_GetSystemFontCollection(IDWriteFactory7 *iface, BOOL include_downloadable,
@@ -1732,9 +1876,12 @@ static HRESULT WINAPI dwritefactory6_CreateTextFormat(IDWriteFactory7 *iface, co
 static HRESULT WINAPI dwritefactory7_GetSystemFontSet(IDWriteFactory7 *iface, BOOL include_downloadable,
         IDWriteFontSet2 **fontset)
 {
-    FIXME("%p, %d, %p.\n", iface, include_downloadable, fontset);
+    TRACE("%p, %d, %p.\n", iface, include_downloadable, fontset);
 
-    return E_NOTIMPL;
+    if (include_downloadable)
+        FIXME("Downloadable fonts are not supported.\n");
+
+    return create_system_fontset(iface, &IID_IDWriteFontSet2, (void **)fontset);
 }
 
 static HRESULT WINAPI dwritefactory7_GetSystemFontCollection(IDWriteFactory7 *iface, BOOL include_downloadable,
