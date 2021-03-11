@@ -496,9 +496,10 @@ static const struct dwrite_fonttable *get_fontface_cpal(struct dwrite_fontface *
     return &fontface->cpal;
 }
 
-static void addref_font_data(struct dwrite_font_data *data)
+static struct dwrite_font_data * addref_font_data(struct dwrite_font_data *data)
 {
     InterlockedIncrement(&data->ref);
+    return data;
 }
 
 static void release_font_data(struct dwrite_font_data *data)
@@ -2645,9 +2646,7 @@ static HRESULT WINAPI dwritefontfamily_GetMatchingFonts(IDWriteFontFamily2 *ifac
     {
         if (!func || func(family->data->fonts[i]))
         {
-            fonts->fonts[fonts->font_count] = family->data->fonts[i];
-            addref_font_data(family->data->fonts[i]);
-            fonts->font_count++;
+            fonts->fonts[fonts->font_count++] = addref_font_data(family->data->fonts[i]);
         }
     }
 
@@ -5006,8 +5005,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     */
     if (desc->font_data)
     {
-        font_data = desc->font_data;
-        addref_font_data(font_data);
+        font_data = addref_font_data(desc->font_data);
     }
     else
     {
