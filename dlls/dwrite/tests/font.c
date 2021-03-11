@@ -10011,8 +10011,11 @@ static void test_family_font_set(void)
 
 static void test_system_font_set(void)
 {
+    IDWriteFontSet *fontset, *filtered_set;
+    IDWriteFontFaceReference *ref;
+    IDWriteFontFace3 *fontface;
     IDWriteFactory3 *factory;
-    IDWriteFontSet *fontset;
+    DWRITE_FONT_PROPERTY p;
     unsigned int count;
     HRESULT hr;
 
@@ -10027,6 +10030,25 @@ static void test_system_font_set(void)
 
     count = IDWriteFontSet_GetFontCount(fontset);
     ok(!!count, "Unexpected font count %u.\n", count);
+
+    p.propertyId = DWRITE_FONT_PROPERTY_ID_FULL_NAME;
+    p.propertyValue = L"Tahoma";
+    p.localeName = L"";
+    hr = IDWriteFontSet_GetMatchingFonts(fontset, &p, 1, &filtered_set);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    count = IDWriteFontSet_GetFontCount(filtered_set);
+    ok(!!count, "Unexpected font count %u.\n", count);
+
+    hr = IDWriteFontSet_GetFontFaceReference(filtered_set, 0, &ref);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteFontFaceReference_CreateFontFace(ref, &fontface);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IDWriteFontFace3_Release(fontface);
+    IDWriteFontFaceReference_Release(ref);
+
+    IDWriteFontSet_Release(filtered_set);
 
     IDWriteFontSet_Release(fontset);
 
