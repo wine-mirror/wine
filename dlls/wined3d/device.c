@@ -1761,22 +1761,9 @@ struct wined3d_blend_state * CDECL wined3d_device_get_blend_state(const struct w
 void CDECL wined3d_device_set_depth_stencil_state(struct wined3d_device *device,
         struct wined3d_depth_stencil_state *depth_stencil_state, unsigned int stencil_ref)
 {
-    struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_depth_stencil_state *prev;
-
     TRACE("device %p, depth_stencil_state %p, stencil_ref %u.\n", device, depth_stencil_state, stencil_ref);
 
-    prev = state->depth_stencil_state;
-    if (prev == depth_stencil_state && state->stencil_ref == stencil_ref)
-        return;
-
-    if (depth_stencil_state)
-        wined3d_depth_stencil_state_incref(depth_stencil_state);
-    state->depth_stencil_state = depth_stencil_state;
-    state->stencil_ref = stencil_ref;
-    wined3d_device_context_emit_set_depth_stencil_state(&device->cs->c, depth_stencil_state, stencil_ref);
-    if (prev)
-        wined3d_depth_stencil_state_decref(prev);
+    wined3d_device_context_set_depth_stencil_state(&device->cs->c, depth_stencil_state, stencil_ref);
 }
 
 struct wined3d_depth_stencil_state * CDECL wined3d_device_get_depth_stencil_state(const struct wined3d_device *device,
@@ -2140,6 +2127,27 @@ void CDECL wined3d_device_context_set_blend_state(struct wined3d_device_context 
     wined3d_device_context_emit_set_blend_state(context, blend_state, blend_factor, sample_mask);
     if (prev)
         wined3d_blend_state_decref(prev);
+}
+
+void CDECL wined3d_device_context_set_depth_stencil_state(struct wined3d_device_context *context,
+        struct wined3d_depth_stencil_state *depth_stencil_state, unsigned int stencil_ref)
+{
+    struct wined3d_state *state = context->state;
+    struct wined3d_depth_stencil_state *prev;
+
+    TRACE("context %p, depth_stencil_state %p, stencil_ref %u.\n", context, depth_stencil_state, stencil_ref);
+
+    prev = state->depth_stencil_state;
+    if (prev == depth_stencil_state && state->stencil_ref == stencil_ref)
+        return;
+
+    if (depth_stencil_state)
+        wined3d_depth_stencil_state_incref(depth_stencil_state);
+    state->depth_stencil_state = depth_stencil_state;
+    state->stencil_ref = stencil_ref;
+    wined3d_device_context_emit_set_depth_stencil_state(context, depth_stencil_state, stencil_ref);
+    if (prev)
+        wined3d_depth_stencil_state_decref(prev);
 }
 
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
