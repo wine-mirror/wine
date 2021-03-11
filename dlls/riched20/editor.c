@@ -4277,9 +4277,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case WM_CREATE:
     return ME_WmCreate(editor, lParam, unicode);
-  case WM_DESTROY:
-    ME_DestroyEditor(editor);
-    return 0;
   case WM_SETCURSOR:
   {
     POINT cursor_pos;
