@@ -512,16 +512,12 @@ static HRESULT vmr_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE 
     return hr;
 }
 
-static HRESULT vmr_disconnect(struct strmbase_renderer *This)
+static void vmr_disconnect(struct strmbase_renderer *This)
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&This->filter.IBaseFilter_iface);
-    HRESULT hr = S_OK;
     DWORD i;
 
-    if (!filter->mode)
-        return S_FALSE;
-
-    if (filter->allocator && filter->presenter)
+    if (filter->mode && filter->allocator && filter->presenter)
     {
         for (i = 0; i < filter->num_surfaces; ++i)
             IDirect3DSurface9_Release(filter->surfaces[i]);
@@ -530,7 +526,6 @@ static HRESULT vmr_disconnect(struct strmbase_renderer *This)
         IVMRSurfaceAllocator9_TerminateDevice(filter->allocator, filter->cookie);
         filter->num_surfaces = 0;
     }
-    return hr;
 }
 
 static void vmr_free(struct quartz_vmr *filter)

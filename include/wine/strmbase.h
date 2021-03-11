@@ -313,7 +313,7 @@ struct strmbase_renderer_ops
     void (*renderer_start_stream)(struct strmbase_renderer *iface);
     void (*renderer_stop_stream)(struct strmbase_renderer *iface);
     HRESULT (*renderer_connect)(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt);
-    HRESULT (*renderer_disconnect)(struct strmbase_renderer *iface);
+    void (*renderer_disconnect)(struct strmbase_renderer *iface);
     void (*renderer_destroy)(struct strmbase_renderer *iface);
     HRESULT (*renderer_query_interface)(struct strmbase_renderer *iface, REFIID iid, void **out);
     HRESULT (*renderer_pin_query_interface)(struct strmbase_renderer *iface, REFIID iid, void **out);
