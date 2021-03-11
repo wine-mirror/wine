@@ -1149,7 +1149,21 @@ DECL_HANDLER(get_mapping_info)
     reply->flags   = mapping->flags;
 
     if (mapping->flags & SEC_IMAGE)
-        set_reply_data( &mapping->image, min( sizeof(mapping->image), get_reply_max_size() ));
+    {
+        struct unicode_str name = { NULL, 0 };
+        data_size_t size;
+        void *data;
+
+        if (mapping->fd) get_nt_name( mapping->fd, &name );
+        size = min( sizeof(pe_image_info_t) + name.len, get_reply_max_size() );
+        if ((data = set_reply_data_size( size )))
+        {
+            memcpy( data, &mapping->image, min( sizeof(pe_image_info_t), size ));
+            if (size > sizeof(pe_image_info_t))
+                memcpy( (pe_image_info_t *)data + 1, name.str, size - sizeof(pe_image_info_t) );
+        }
+        reply->total = sizeof(pe_image_info_t) + name.len;
+    }
 
     if (!(req->access & (SECTION_MAP_READ | SECTION_MAP_WRITE)))  /* query only */
     {

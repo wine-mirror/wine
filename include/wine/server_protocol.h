@@ -1917,7 +1917,10 @@ struct get_mapping_info_reply
     mem_size_t   size;
     unsigned int flags;
     obj_handle_t shared_file;
+    data_size_t  total;
     /* VARARG(image,pe_image_info); */
+    /* VARARG(name,unicode_str); */
+    char __pad_28[4];
 };
 
 
@@ -6228,7 +6231,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 684
+#define SERVER_PROTOCOL_VERSION 685
 
 /* ### protocol_version end ### */
 
