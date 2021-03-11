@@ -36,7 +36,7 @@ static struct null_renderer *impl_from_strmbase_renderer(struct strmbase_rendere
     return CONTAINING_RECORD(iface, struct null_renderer, renderer);
 }
 
-static HRESULT WINAPI NullRenderer_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *sample)
+static HRESULT null_renderer_render(struct strmbase_renderer *iface, IMediaSample *sample)
 {
     return S_OK;
 }
@@ -57,7 +57,7 @@ static void null_renderer_destroy(struct strmbase_renderer *iface)
 static const struct strmbase_renderer_ops renderer_ops =
 {
     .renderer_query_accept = null_renderer_query_accept,
-    .pfnDoRenderSample = NullRenderer_DoRenderSample,
+    .renderer_render = null_renderer_render,
     .renderer_destroy = null_renderer_destroy,
 };
 

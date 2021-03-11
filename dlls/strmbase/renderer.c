@@ -361,7 +361,7 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
 
         filter->current_sample = sample;
 
-        hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
+        hr = filter->pFuncsTable->renderer_render(filter, sample);
 
         SetEvent(filter->state_event);
         LeaveCriticalSection(&filter->filter.stream_cs);
@@ -401,14 +401,14 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
         }
 
         if (state == State_Running)
-            hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
+            hr = filter->pFuncsTable->renderer_render(filter, sample);
 
         perform_qos(filter, start, stop, jitter);
     }
     else
     {
         if (state == State_Running)
-            hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
+            hr = filter->pFuncsTable->renderer_render(filter, sample);
     }
 
     return hr;

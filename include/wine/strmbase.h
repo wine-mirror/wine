@@ -305,13 +305,12 @@ struct strmbase_renderer
     BOOL eos;
 };
 
-typedef HRESULT (WINAPI *BaseRenderer_DoRenderSample)(struct strmbase_renderer *iface, IMediaSample *sample);
 typedef HRESULT (WINAPI *BaseRenderer_BreakConnect) (struct strmbase_renderer *iface);
 
 struct strmbase_renderer_ops
 {
     HRESULT (*renderer_query_accept)(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt);
-    BaseRenderer_DoRenderSample pfnDoRenderSample;
+    HRESULT (*renderer_render)(struct strmbase_renderer *iface, IMediaSample *sample);
     void (*renderer_init_stream)(struct strmbase_renderer *iface);
     void (*renderer_start_stream)(struct strmbase_renderer *iface);
     void (*renderer_stop_stream)(struct strmbase_renderer *iface);

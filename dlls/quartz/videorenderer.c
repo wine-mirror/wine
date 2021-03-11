@@ -79,7 +79,7 @@ static void VideoRenderer_AutoShowWindow(struct video_renderer *This)
         ShowWindow(This->window.hwnd, SW_SHOW);
 }
 
-static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *pSample)
+static HRESULT video_renderer_render(struct strmbase_renderer *iface, IMediaSample *pSample)
 {
     struct video_renderer *filter = impl_from_strmbase_renderer(iface);
     RECT src = filter->window.src, dst = filter->window.dst;
@@ -214,7 +214,7 @@ static RECT video_renderer_get_default_rect(struct video_window *iface)
 static const struct strmbase_renderer_ops renderer_ops =
 {
     .renderer_query_accept = video_renderer_query_accept,
-    .pfnDoRenderSample = VideoRenderer_DoRenderSample,
+    .renderer_render = video_renderer_render,
     .renderer_init_stream = video_renderer_init_stream,
     .renderer_stop_stream = video_renderer_stop_stream,
     .renderer_destroy = video_renderer_destroy,

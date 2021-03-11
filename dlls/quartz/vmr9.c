@@ -206,7 +206,7 @@ static inline struct quartz_vmr *impl_from_IBaseFilter(IBaseFilter *iface)
     return CONTAINING_RECORD(iface, struct quartz_vmr, renderer.filter.IBaseFilter_iface);
 }
 
-static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *sample)
+static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
     unsigned int data_size, width, depth, src_pitch;
@@ -638,7 +638,7 @@ static HRESULT vmr_pin_query_interface(struct strmbase_renderer *iface, REFIID i
 static const struct strmbase_renderer_ops renderer_ops =
 {
     .renderer_query_accept = vmr_query_accept,
-    .pfnDoRenderSample = VMR9_DoRenderSample,
+    .renderer_render = vmr_render,
     .renderer_init_stream = vmr_init_stream,
     .renderer_start_stream = vmr_start_stream,
     .renderer_stop_stream = vmr_stop_stream,
