@@ -155,6 +155,9 @@ void DDRAW_Convert_DDSCAPS_1_To_2(const DDSCAPS *pIn, DDSCAPS2 *pOut) DECLSPEC_H
 void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2 *pIn, DDDEVICEIDENTIFIER *pOut) DECLSPEC_HIDDEN;
 struct wined3d_vertex_declaration *ddraw_find_decl(struct ddraw *ddraw, DWORD fvf) DECLSPEC_HIDDEN;
 
+#define DDRAW_SURFACE_LOCATION_DEFAULT 0x00000001
+#define DDRAW_SURFACE_LOCATION_DRAW    0x00000002
+
 struct ddraw_surface
 {
     /* IUnknown fields */
@@ -175,6 +178,7 @@ struct ddraw_surface
 
     /* Connections to other Objects */
     struct ddraw *ddraw;
+    unsigned int texture_location;
     struct wined3d_texture *wined3d_texture;
     struct wined3d_texture *draw_texture;
     unsigned int sub_resource_idx;
@@ -654,22 +658,48 @@ static inline BOOL ddraw_surface_can_be_lost(const struct ddraw_surface *surface
     return surface->sysmem_fallback;
 }
 
-static inline void d3d_surface_sync_textures(struct ddraw_surface *surface, BOOL upload)
+#define DDRAW_SURFACE_READ   0x00000001
+#define DDRAW_SURFACE_WRITE  0x00000002
+#define DDRAW_SURFACE_RW (DDRAW_SURFACE_READ | DDRAW_SURFACE_WRITE)
+
+static inline struct wined3d_texture *ddraw_surface_get_default_texture(struct ddraw_surface *surface, unsigned int flags)
+{
+    if (surface->draw_texture)
+    {
+        if (flags & DDRAW_SURFACE_READ && !(surface->texture_location & DDRAW_SURFACE_LOCATION_DEFAULT))
+        {
+            wined3d_device_copy_sub_resource_region(surface->ddraw->wined3d_device,
+                    wined3d_texture_get_resource(surface->wined3d_texture), surface->sub_resource_idx, 0, 0, 0,
+                    wined3d_texture_get_resource(surface->draw_texture), surface->sub_resource_idx, NULL, 0);
+            surface->texture_location |= DDRAW_SURFACE_LOCATION_DEFAULT;
+        }
+
+        if (flags & DDRAW_SURFACE_WRITE)
+            surface->texture_location = DDRAW_SURFACE_LOCATION_DEFAULT;
+    }
+    return surface->wined3d_texture;
+}
+
+static inline struct wined3d_texture *ddraw_surface_get_draw_texture(struct ddraw_surface *surface, unsigned int flags)
 {
     if (!surface->draw_texture)
-        return;
+        return surface->wined3d_texture;
 
-    if (upload)
+    if (flags & DDRAW_SURFACE_READ && !(surface->texture_location & DDRAW_SURFACE_LOCATION_DRAW))
+    {
         wined3d_device_copy_sub_resource_region(surface->ddraw->wined3d_device,
                 wined3d_texture_get_resource(surface->draw_texture), surface->sub_resource_idx, 0, 0, 0,
                 wined3d_texture_get_resource(surface->wined3d_texture), surface->sub_resource_idx, NULL, 0);
-    else
-        wined3d_device_copy_sub_resource_region(surface->ddraw->wined3d_device,
-                wined3d_texture_get_resource(surface->wined3d_texture), surface->sub_resource_idx, 0, 0, 0,
-                wined3d_texture_get_resource(surface->draw_texture), surface->sub_resource_idx, NULL, 0);
+        surface->texture_location |= DDRAW_SURFACE_LOCATION_DRAW;
+    }
+
+    if (flags & DDRAW_SURFACE_WRITE)
+        surface->texture_location = DDRAW_SURFACE_LOCATION_DRAW;
+
+    return surface->draw_texture;
 }
 
-void d3d_device_sync_surfaces(struct d3d_device *device, BOOL upload) DECLSPEC_HIDDEN;
+void d3d_device_sync_surfaces(struct d3d_device *device) DECLSPEC_HIDDEN;
 
 /* Used for generic dumping */
 struct flag_info

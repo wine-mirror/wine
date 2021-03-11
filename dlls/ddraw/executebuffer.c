@@ -81,10 +81,9 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                         ddraw_find_decl(device->ddraw, D3DFVF_TLVERTEX));
 
                 wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-                d3d_device_sync_surfaces(device, TRUE);
+                d3d_device_sync_surfaces(device);
                 for (i = 0; i < count; ++i)
                     wined3d_device_draw_primitive(device->wined3d_device, p[i].wFirst, p[i].wCount);
-                d3d_device_sync_surfaces(device, FALSE);
 
                 instr += sizeof(*p) * count;
                 break;
@@ -191,9 +190,8 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                         ddraw_find_decl(device->ddraw, D3DFVF_TLVERTEX));
                 wined3d_stateblock_set_index_buffer(device->state, buffer->index_buffer, WINED3DFMT_R16_UINT);
                 wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-                d3d_device_sync_surfaces(device, TRUE);
+                d3d_device_sync_surfaces(device);
                 wined3d_device_draw_indexed_primitive(device->wined3d_device, index_pos, index_count);
-                d3d_device_sync_surfaces(device, FALSE);
 
                 buffer->index_pos = index_pos + index_count;
                 break;
@@ -314,10 +312,9 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                                     ddraw_find_decl(device->ddraw, op == D3DPROCESSVERTICES_TRANSFORMLIGHT
                                     ? D3DFVF_VERTEX : D3DFVF_LVERTEX));
                             wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-                            d3d_device_sync_surfaces(device, TRUE);
+                            d3d_device_sync_surfaces(device);
                             wined3d_device_process_vertices(device->wined3d_device, ci->wStart, ci->wDest,
                                     ci->dwCount, buffer->dst_vertex_buffer, NULL, 0, D3DFVF_TLVERTEX);
-                            d3d_device_sync_surfaces(device, FALSE);
                             break;
 
                         case D3DPROCESSVERTICES_COPY:
