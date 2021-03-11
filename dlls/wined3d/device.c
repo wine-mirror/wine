@@ -1792,7 +1792,7 @@ void CDECL wined3d_device_set_rasterizer_state(struct wined3d_device *device,
     if (rasterizer_state)
         wined3d_rasterizer_state_incref(rasterizer_state);
     state->rasterizer_state = rasterizer_state;
-    wined3d_cs_emit_set_rasterizer_state(device->cs, rasterizer_state);
+    wined3d_device_context_emit_set_rasterizer_state(&device->cs->c, rasterizer_state);
     if (prev)
         wined3d_rasterizer_state_decref(prev);
 }
@@ -2015,7 +2015,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
 
     wined3d_device_context_emit_set_blend_state(context, state->blend_state, &state->blend_factor, state->sample_mask);
     wined3d_device_context_emit_set_depth_stencil_state(context, state->depth_stencil_state, state->stencil_ref);
-    wined3d_cs_emit_set_rasterizer_state(device->cs, state->rasterizer_state);
+    wined3d_device_context_emit_set_rasterizer_state(context, state->rasterizer_state);
 }
 
 struct wined3d_state * CDECL wined3d_device_get_state(struct wined3d_device *device)
