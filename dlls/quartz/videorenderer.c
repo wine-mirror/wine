@@ -48,8 +48,6 @@ struct video_renderer
     LONG FullScreenMode;
 
     DWORD saved_style;
-
-    HANDLE run_event;
 };
 
 static inline struct video_renderer *impl_from_video_window(struct video_window *iface)
@@ -106,7 +104,7 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
 
     if (filter->renderer.filter.state == State_Paused)
     {
-        const HANDLE events[2] = {filter->run_event, filter->renderer.flush_event};
+        const HANDLE events[2] = {filter->renderer.run_event, filter->renderer.flush_event};
 
         SetEvent(filter->renderer.state_event);
         LeaveCriticalSection(&filter->renderer.filter.stream_cs);
@@ -140,7 +138,6 @@ static void video_renderer_destroy(struct strmbase_renderer *iface)
     struct video_renderer *filter = impl_from_strmbase_renderer(iface);
 
     video_window_cleanup(&filter->window);
-    CloseHandle(filter->run_event);
     strmbase_renderer_cleanup(&filter->renderer);
     free(filter);
 
@@ -179,7 +176,7 @@ static void video_renderer_start_stream(struct strmbase_renderer *iface)
 {
     struct video_renderer *filter = impl_from_strmbase_renderer(iface);
 
-    SetEvent(filter->run_event);
+    SetEvent(filter->renderer.run_event);
 }
 
 static void video_renderer_stop_stream(struct strmbase_renderer *iface)
@@ -192,7 +189,7 @@ static void video_renderer_stop_stream(struct strmbase_renderer *iface)
         /* Black it out */
         RedrawWindow(This->window.hwnd, NULL, NULL, RDW_INVALIDATE | RDW_ERASE);
 
-    ResetEvent(This->run_event);
+    ResetEvent(This->renderer.run_event);
 }
 
 static void video_renderer_init_stream(struct strmbase_renderer *iface)
@@ -518,8 +515,6 @@ HRESULT video_renderer_create(IUnknown *outer, IUnknown **out)
         free(object);
         return hr;
     }
-
-    object->run_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
     TRACE("Created video renderer %p.\n", object);
     *out = &object->renderer.filter.IUnknown_inner;

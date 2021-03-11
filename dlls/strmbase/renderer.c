@@ -554,6 +554,7 @@ void strmbase_renderer_cleanup(struct strmbase_renderer *filter)
 
     CloseHandle(filter->state_event);
     CloseHandle(filter->advise_event);
+    CloseHandle(filter->run_event);
     CloseHandle(filter->flush_event);
     strmbase_filter_cleanup(&filter->filter);
 }
@@ -573,5 +574,6 @@ void strmbase_renderer_init(struct strmbase_renderer *filter, IUnknown *outer,
 
     filter->state_event = CreateEventW(NULL, TRUE, TRUE, NULL);
     filter->advise_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    filter->run_event = CreateEventW(NULL, TRUE, FALSE, NULL);
     filter->flush_event = CreateEventW(NULL, TRUE, TRUE, NULL);
 }

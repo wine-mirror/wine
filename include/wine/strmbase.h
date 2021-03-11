@@ -286,6 +286,9 @@ struct strmbase_renderer
     /* Signaled when the sample presentation time occurs. The streaming thread
      * waits for this event in Receive() if applicable. */
     HANDLE advise_event;
+    /* Signaled when the filter is running. The streaming thread waits for this
+     * event in Receive() while paused. */
+    HANDLE run_event;
     /* Signaled when a flush or state change occurs, i.e. anything that needs
      * to immediately unblock the streaming thread. */
     HANDLE flush_event;

@@ -108,8 +108,6 @@ struct quartz_vmr
     LONG VideoWidth;
     LONG VideoHeight;
     VMR9AspectRatioMode aspect_mode;
-
-    HANDLE run_event;
 };
 
 static inline BOOL is_vmr9(const struct quartz_vmr *filter)
@@ -211,7 +209,7 @@ static inline struct quartz_vmr *impl_from_IBaseFilter(IBaseFilter *iface)
 static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *sample)
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
-    const HANDLE events[2] = {filter->run_event, filter->renderer.flush_event};
+    const HANDLE events[2] = {filter->renderer.run_event, filter->renderer.flush_event};
     unsigned int data_size, width, depth, src_pitch;
     const BITMAPINFOHEADER *bitmap_header;
     REFERENCE_TIME start_time, end_time;
@@ -486,7 +484,7 @@ static void vmr_start_stream(struct strmbase_renderer *iface)
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
     IVMRImagePresenter9_StartPresenting(filter->presenter, filter->cookie);
-    SetEvent(filter->run_event);
+    SetEvent(filter->renderer.run_event);
 }
 
 static void vmr_stop_stream(struct strmbase_renderer *iface)
@@ -497,7 +495,7 @@ static void vmr_stop_stream(struct strmbase_renderer *iface)
 
     if (This->renderer.filter.state == State_Running)
         IVMRImagePresenter9_StopPresenting(This->presenter, This->cookie);
-    ResetEvent(This->run_event);
+    ResetEvent(This->renderer.run_event);
 }
 
 static HRESULT vmr_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
@@ -585,7 +583,6 @@ static void vmr_destroy(struct strmbase_renderer *iface)
         filter->allocator_d3d9_dev = NULL;
     }
 
-    CloseHandle(filter->run_event);
     FreeLibrary(filter->hD3d9);
     strmbase_renderer_cleanup(&filter->renderer);
     if (!filter->IVMRSurfaceAllocatorNotify9_refcount)
@@ -2609,8 +2606,6 @@ static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
         free(object);
         return hr;
     }
-
-    object->run_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
     object->mixing_prefs = MixerPref9_NoDecimation | MixerPref9_ARAdjustXorY
             | MixerPref9_BiLinearFiltering | MixerPref9_RenderTargetRGB;
