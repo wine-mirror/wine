@@ -4192,9 +4192,7 @@ static void test_dead_process(void)
     memset( data, 0, sizeof(data) );
     status = NtQueryInformationProcess( pi.hProcess, ProcessImageFileName, data, sizeof(data), NULL);
     ok( !status, "ProcessImageFileName failed %x\n", status );
-    todo_wine
     ok( ((UNICODE_STRING *)data)->Length, "ProcessImageFileName not set\n" );
-    todo_wine
     ok( ((UNICODE_STRING *)data)->Buffer[0] == '\\', "ProcessImageFileName not set\n" );
 
     memset( prio, 0xcc, sizeof(*prio) );

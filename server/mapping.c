@@ -353,6 +353,7 @@ struct memory_view *get_exe_view( struct process *process )
 static void add_process_view( struct thread *thread, struct memory_view *view )
 {
     struct process *process = thread->process;
+    struct unicode_str name;
 
     if (view->flags & SEC_IMAGE)
     {
@@ -362,6 +363,8 @@ static void add_process_view( struct thread *thread, struct memory_view *view )
         {
             /* main exe */
             list_add_head( &process->views, &view->entry );
+            if (get_view_nt_name( view, &name ) && (process->image = memdup( name.str, name.len )))
+                process->imagelen = name.len;
             return;
         }
     }

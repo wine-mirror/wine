@@ -536,6 +536,8 @@ struct process *create_process( int fd, struct process *parent, int inherit_all,
     process->is_system       = 0;
     process->debug_children  = 1;
     process->is_terminating  = 0;
+    process->imagelen        = 0;
+    process->image           = NULL;
     process->job             = NULL;
     process->console         = NULL;
     process->startup_state   = STARTUP_IN_PROGRESS;
@@ -649,6 +651,7 @@ static void process_destroy( struct object *obj )
     if (process->id) free_ptid( process->id );
     if (process->token) release_object( process->token );
     free( process->dir_cache );
+    free( process->image );
 }
 
 /* dump a process on stdout for debugging purposes */
@@ -1381,13 +1384,12 @@ DECL_HANDLER(get_process_debug_info)
 /* fetch the name of the process image */
 DECL_HANDLER(get_process_image_name)
 {
-    struct unicode_str name;
-    struct memory_view *view;
     struct process *process = get_process_from_handle( req->handle, PROCESS_QUERY_LIMITED_INFORMATION );
 
     if (!process) return;
-    if ((view = get_exe_view( process )) && get_view_nt_name( view, &name ))
+    if (process->image)
     {
+        struct unicode_str name = { process->image, process->imagelen };
         /* skip the \??\ prefix */
         if (req->win32 && name.len > 6 * sizeof(WCHAR) && name.str[5] == ':')
         {
@@ -1724,7 +1726,6 @@ DECL_HANDLER(list_processes)
 {
     struct process *process;
     struct thread *thread;
-    struct unicode_str nt_name;
     unsigned int pos = 0;
     char *buffer;
 
@@ -1733,10 +1734,8 @@ DECL_HANDLER(list_processes)
 
     LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
     {
-        struct memory_view *view = get_exe_view( process );
-        if (!view || !get_view_nt_name( view, &nt_name )) nt_name.len = 0;
         reply->info_size = (reply->info_size + 7) & ~7;
-        reply->info_size += sizeof(struct process_info) + nt_name.len;
+        reply->info_size += sizeof(struct process_info) + process->imagelen;
         reply->info_size = (reply->info_size + 7) & ~7;
         reply->info_size += process->running_threads * sizeof(struct thread_info);
         reply->process_count++;
@@ -1754,13 +1753,11 @@ DECL_HANDLER(list_processes)
     LIST_FOR_EACH_ENTRY( process, &process_list, struct process, entry )
     {
         struct process_info *process_info;
-        struct memory_view *view = get_exe_view( process );
 
         pos = (pos + 7) & ~7;
-        if (!view || !get_view_nt_name( view, &nt_name )) nt_name.len = 0;
         process_info = (struct process_info *)(buffer + pos);
         process_info->start_time = process->start_time;
-        process_info->name_len = nt_name.len;
+        process_info->name_len = process->imagelen;
         process_info->thread_count = process->running_threads;
         process_info->priority = process->priority;
         process_info->pid = process->id;
@@ -1768,8 +1765,8 @@ DECL_HANDLER(list_processes)
         process_info->handle_count = get_handle_table_count(process);
         process_info->unix_pid = process->unix_pid;
         pos += sizeof(*process_info);
-        memcpy( buffer + pos, nt_name.str, nt_name.len );
-        pos += nt_name.len;
+        memcpy( buffer + pos, process->image, process->imagelen );
+        pos += process->imagelen;
         pos = (pos + 7) & ~7;
         LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
         {
