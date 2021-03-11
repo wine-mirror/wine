@@ -1636,6 +1636,11 @@ static BOOL wined3d_query_vk_issue(struct wined3d_query *query, uint32_t flags)
             wined3d_context_vk_remove_pending_queries(context_vk, query_vk);
         memset((void *)query->data, 0, query->data_size);
         vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk);
+        if (query_vk->started)
+        {
+            wined3d_query_vk_end(query_vk, context_vk, vk_command_buffer);
+            list_remove(&query_vk->entry);
+        }
         wined3d_query_vk_begin(query_vk, context_vk, vk_command_buffer);
         list_add_head(&context_vk->active_queries, &query_vk->entry);
         query_vk->started = true;
