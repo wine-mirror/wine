@@ -38,16 +38,6 @@ static struct null_renderer *impl_from_strmbase_renderer(struct strmbase_rendere
 
 static HRESULT WINAPI NullRenderer_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *sample)
 {
-    struct null_renderer *filter = impl_from_strmbase_renderer(iface);
-
-    if (filter->renderer.filter.state == State_Paused)
-    {
-        const HANDLE events[2] = {filter->renderer.run_event, filter->renderer.flush_event};
-
-        SetEvent(filter->renderer.state_event);
-        WaitForMultipleObjects(2, events, FALSE, INFINITE);
-    }
-
     return S_OK;
 }
 
@@ -65,24 +55,10 @@ static void null_renderer_destroy(struct strmbase_renderer *iface)
     free(filter);
 }
 
-static void null_renderer_start_stream(struct strmbase_renderer *iface)
-{
-    struct null_renderer *filter = impl_from_strmbase_renderer(iface);
-    SetEvent(filter->renderer.run_event);
-}
-
-static void null_renderer_stop_stream(struct strmbase_renderer *iface)
-{
-    struct null_renderer *filter = impl_from_strmbase_renderer(iface);
-    ResetEvent(filter->renderer.run_event);
-}
-
 static const struct strmbase_renderer_ops renderer_ops =
 {
     .pfnCheckMediaType = NullRenderer_CheckMediaType,
     .pfnDoRenderSample = NullRenderer_DoRenderSample,
-    .renderer_start_stream = null_renderer_start_stream,
-    .renderer_stop_stream = null_renderer_stop_stream,
     .renderer_destroy = null_renderer_destroy,
 };
 

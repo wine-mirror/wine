@@ -209,7 +209,6 @@ static inline struct quartz_vmr *impl_from_IBaseFilter(IBaseFilter *iface)
 static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMediaSample *sample)
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
-    const HANDLE events[2] = {filter->renderer.run_event, filter->renderer.flush_event};
     unsigned int data_size, width, depth, src_pitch;
     const BITMAPINFOHEADER *bitmap_header;
     REFERENCE_TIME start_time, end_time;
@@ -310,17 +309,7 @@ static HRESULT WINAPI VMR9_DoRenderSample(struct strmbase_renderer *iface, IMedi
 
     IDirect3DSurface9_UnlockRect(info.lpSurf);
 
-    hr = IVMRImagePresenter9_PresentImage(filter->presenter, filter->cookie, &info);
-
-    if (filter->renderer.filter.state == State_Paused)
-    {
-        SetEvent(filter->renderer.state_event);
-        LeaveCriticalSection(&filter->renderer.filter.stream_cs);
-        WaitForMultipleObjects(2, events, FALSE, INFINITE);
-        EnterCriticalSection(&filter->renderer.filter.stream_cs);
-    }
-
-    return hr;
+    return IVMRImagePresenter9_PresentImage(filter->presenter, filter->cookie, &info);
 }
 
 static HRESULT WINAPI VMR9_CheckMediaType(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)
@@ -484,7 +473,6 @@ static void vmr_start_stream(struct strmbase_renderer *iface)
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
     IVMRImagePresenter9_StartPresenting(filter->presenter, filter->cookie);
-    SetEvent(filter->renderer.run_event);
 }
 
 static void vmr_stop_stream(struct strmbase_renderer *iface)
@@ -495,7 +483,6 @@ static void vmr_stop_stream(struct strmbase_renderer *iface)
 
     if (This->renderer.filter.state == State_Running)
         IVMRImagePresenter9_StopPresenting(This->presenter, This->cookie);
-    ResetEvent(This->renderer.run_event);
 }
 
 static HRESULT vmr_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE *mt)

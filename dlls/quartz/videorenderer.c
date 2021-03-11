@@ -102,16 +102,6 @@ static HRESULT WINAPI VideoRenderer_DoRenderSample(struct strmbase_renderer *ifa
             (BITMAPINFO *)get_bitmap_header(&filter->renderer.sink.pin.mt), DIB_RGB_COLORS, SRCCOPY);
     ReleaseDC(filter->window.hwnd, dc);
 
-    if (filter->renderer.filter.state == State_Paused)
-    {
-        const HANDLE events[2] = {filter->renderer.run_event, filter->renderer.flush_event};
-
-        SetEvent(filter->renderer.state_event);
-        LeaveCriticalSection(&filter->renderer.filter.stream_cs);
-        WaitForMultipleObjects(2, events, FALSE, INFINITE);
-        EnterCriticalSection(&filter->renderer.filter.stream_cs);
-    }
-
     return S_OK;
 }
 
@@ -172,13 +162,6 @@ static HRESULT video_renderer_pin_query_interface(struct strmbase_renderer *ifac
     return S_OK;
 }
 
-static void video_renderer_start_stream(struct strmbase_renderer *iface)
-{
-    struct video_renderer *filter = impl_from_strmbase_renderer(iface);
-
-    SetEvent(filter->renderer.run_event);
-}
-
 static void video_renderer_stop_stream(struct strmbase_renderer *iface)
 {
     struct video_renderer *This = impl_from_strmbase_renderer(iface);
@@ -188,8 +171,6 @@ static void video_renderer_stop_stream(struct strmbase_renderer *iface)
     if (This->window.AutoShow)
         /* Black it out */
         RedrawWindow(This->window.hwnd, NULL, NULL, RDW_INVALIDATE | RDW_ERASE);
-
-    ResetEvent(This->renderer.run_event);
 }
 
 static void video_renderer_init_stream(struct strmbase_renderer *iface)
@@ -235,7 +216,6 @@ static const struct strmbase_renderer_ops renderer_ops =
     .pfnCheckMediaType = VideoRenderer_CheckMediaType,
     .pfnDoRenderSample = VideoRenderer_DoRenderSample,
     .renderer_init_stream = video_renderer_init_stream,
-    .renderer_start_stream = video_renderer_start_stream,
     .renderer_stop_stream = video_renderer_stop_stream,
     .renderer_destroy = video_renderer_destroy,
     .renderer_query_interface = video_renderer_query_interface,

@@ -245,6 +245,7 @@ static HRESULT renderer_start_stream(struct strmbase_filter *iface, REFERENCE_TI
 
     filter->stream_start = start;
     SetEvent(filter->state_event);
+    SetEvent(filter->run_event);
     if (filter->sink.pin.peer)
         filter->eos = FALSE;
     reset_qos(filter);
@@ -257,6 +258,8 @@ static HRESULT renderer_start_stream(struct strmbase_filter *iface, REFERENCE_TI
 static HRESULT renderer_stop_stream(struct strmbase_filter *iface)
 {
     struct strmbase_renderer *filter = impl_from_strmbase_filter(iface);
+
+    ResetEvent(filter->run_event);
 
     if (filter->sink.pin.peer && filter->pFuncsTable->renderer_stop_stream)
         filter->pFuncsTable->renderer_stop_stream(filter);
@@ -354,8 +357,17 @@ static HRESULT WINAPI BaseRenderer_Receive(struct strmbase_sink *pin, IMediaSamp
 
     if (state == State_Paused)
     {
+        HANDLE events[2] = {filter->run_event, filter->flush_event};
+
         filter->current_sample = sample;
+
         hr = filter->pFuncsTable->pfnDoRenderSample(filter, sample);
+
+        SetEvent(filter->state_event);
+        LeaveCriticalSection(&filter->filter.stream_cs);
+        WaitForMultipleObjects(2, events, FALSE, INFINITE);
+        EnterCriticalSection(&filter->filter.stream_cs);
+
         filter->current_sample = NULL;
     }
 
