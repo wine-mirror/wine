@@ -256,7 +256,7 @@ static HRESULT WINAPI ddraw_surface7_QueryInterface(IDirectDrawSurface7 *iface, 
             {
                 HRESULT hr;
 
-                if (FAILED(hr = d3d_device_create(This->ddraw, This, (IUnknown *)&This->IDirectDrawSurface_iface,
+                if (FAILED(hr = d3d_device_create(This->ddraw, riid, This, (IUnknown *)&This->IDirectDrawSurface_iface,
                         1, &This->device1, (IUnknown *)&This->IDirectDrawSurface_iface)))
                 {
                     This->device1 = NULL;

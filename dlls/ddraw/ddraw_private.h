@@ -317,6 +317,7 @@ struct d3d_device
     IUnknown IUnknown_inner;
     LONG ref;
     UINT version;
+    BOOL hardware_device;
 
     IUnknown *outer_unknown;
     struct wined3d_device *wined3d_device;
@@ -364,7 +365,7 @@ struct d3d_device
     const struct wined3d_stateblock_state *stateblock_state;
 };
 
-HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target, IUnknown *rt_iface,
+HRESULT d3d_device_create(struct ddraw *ddraw, const GUID *guid, struct ddraw_surface *target, IUnknown *rt_iface,
         UINT version, struct d3d_device **device, IUnknown *outer_unknown) DECLSPEC_HIDDEN;
 enum wined3d_depth_buffer_type d3d_device_update_depth_stencil(struct d3d_device *device) DECLSPEC_HIDDEN;
 

@@ -6925,7 +6925,7 @@ static void ddraw_reset_viewport_state(struct ddraw *ddraw)
     wined3d_stateblock_set_scissor_rect(ddraw->state, &rect);
 }
 
-static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw,
+static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw, const GUID *guid,
         struct ddraw_surface *target, IUnknown *rt_iface, UINT version, IUnknown *outer_unknown)
 {
     static const struct wined3d_matrix ident =
@@ -6948,6 +6948,8 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw,
     device->IUnknown_inner.lpVtbl = &d3d_device_inner_vtbl;
     device->ref = 1;
     device->version = version;
+    device->hardware_device = IsEqualGUID(&IID_IDirect3DTnLHalDevice, guid)
+            || IsEqualGUID(&IID_IDirect3DHALDevice, guid);
 
     if (outer_unknown)
         device->outer_unknown = outer_unknown;
@@ -7006,14 +7008,14 @@ static HRESULT d3d_device_init(struct d3d_device *device, struct ddraw *ddraw,
     return D3D_OK;
 }
 
-HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target, IUnknown *rt_iface,
+HRESULT d3d_device_create(struct ddraw *ddraw, const GUID *guid, struct ddraw_surface *target, IUnknown *rt_iface,
         UINT version, struct d3d_device **device, IUnknown *outer_unknown)
 {
     struct d3d_device *object;
     HRESULT hr;
 
-    TRACE("ddraw %p, target %p, version %u, device %p, outer_unknown %p.\n",
-            ddraw, target, version, device, outer_unknown);
+    TRACE("ddraw %p, guid %s, target %p, version %u, device %p, outer_unknown %p.\n",
+            ddraw, debugstr_guid(guid), target, version, device, outer_unknown);
 
     if (!(target->surface_desc.ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
             || (target->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
@@ -7054,7 +7056,7 @@ HRESULT d3d_device_create(struct ddraw *ddraw, struct ddraw_surface *target, IUn
         return DDERR_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = d3d_device_init(object, ddraw, target, rt_iface, version, outer_unknown)))
+    if (FAILED(hr = d3d_device_init(object, ddraw, guid, target, rt_iface, version, outer_unknown)))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);
         heap_free(object);
