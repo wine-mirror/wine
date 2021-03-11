@@ -992,8 +992,8 @@ HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow *window, HTMLImageElement
     ret->ref = 1;
     ret->window = window;
 
-    init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLImageElementFactory_iface,
-            &HTMLImageElementFactory_dispex);
+    init_dispex_with_compat_mode(&ret->dispex, (IUnknown*)&ret->IHTMLImageElementFactory_iface,
+                                 &HTMLImageElementFactory_dispex, dispex_compat_mode(&window->event_target.dispex));
 
     *ret_val = ret;
     return S_OK;
