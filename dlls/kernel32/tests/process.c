@@ -4207,9 +4207,7 @@ static void test_dead_process(void)
 
     memset( &image, 0xcc, sizeof(image) );
     status = NtQueryInformationProcess( pi.hProcess, ProcessImageInformation, &image, sizeof(image), NULL);
-    todo_wine
     ok( status == STATUS_PROCESS_IS_TERMINATING, "ProcessImageInformation wrong error %x\n", status );
-    todo_wine
     ok( image.Machine == 0xcccc, "ProcessImageInformation info modified\n" );
 
     while ((status = NtQuerySystemInformation(SystemProcessInformation, buffer, size, &size)) == STATUS_INFO_LENGTH_MISMATCH)

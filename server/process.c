@@ -1361,8 +1361,12 @@ DECL_HANDLER(get_process_info)
             client_ptr_t base;
             const pe_image_info_t *info;
             struct memory_view *view = get_exe_view( process );
-            if (view && (info = get_view_image_info( view, &base )))
-                set_reply_data( info, min( sizeof(*info), get_reply_max_size() ));
+            if (view)
+            {
+                if ((info = get_view_image_info( view, &base )))
+                    set_reply_data( info, min( sizeof(*info), get_reply_max_size() ));
+            }
+            else set_error( STATUS_PROCESS_IS_TERMINATING );
         }
         release_object( process );
     }
