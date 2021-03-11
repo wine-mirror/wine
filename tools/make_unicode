@@ -26,6 +26,7 @@ my $UNIVERSION = "13.0.0";
 my $UNIDATA  = "https://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip";
 my $IDNADATA = "https://www.unicode.org/Public/idna/$UNIVERSION";
 my $JISDATA  = "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS";
+my $KSCDATA  = "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/KSC";
 my $REPORTS = "http://www.unicode.org/reports";
 my $MSDATA = "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498";
 my $MSCODEPAGES = "$MSDATA/Windows Supported Code Page Data Files.zip";
@@ -933,6 +934,45 @@ sub dump_eucjp_codepage()
     output_codepage_file( 20932 );
 }
 
+################################################################
+# build Korean Wansung table from the KSX1001 file
+# FIXME: compare to Windows we should add extra mappings for
+# characters added from Unicode 1.1 to enhance the completeness.
+sub dump_krwansung_codepage()
+{
+    @cp2uni = ();
+    @glyph2uni = ();
+    @lead_bytes = ();
+    @uni2cp = ();
+    $default_char = 0x3f;
+    $default_wchar = 0x003f;
+
+    # ASCII and undefined chars
+    foreach my $i (0x00 .. 0x9f) { add_mapping( $i, $i ); }
+    add_mapping( 0xa0, 0xf8e6 );
+    add_mapping( 0xad, 0xf8e7 );
+    add_mapping( 0xae, 0xf8e8 );
+    add_mapping( 0xaf, 0xf8e9 );
+    add_mapping( 0xfe, 0xf8ea );
+    add_mapping( 0xff, 0xf8eb );
+
+    my $INPUT = open_data_file( $KSCDATA, "KSX1001.TXT" );
+    while (<$INPUT>)
+    {
+        next if /^\#/;  # skip comments
+        next if /^$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        if (/^0x([0-9a-fA-F]+)\s+0x([0-9a-fA-F]+)\s+(\#.*)?/)
+        {
+            add_mapping( 0x8080 + hex $1, hex $2 );
+            next;
+        }
+        die "Unrecognized line $_\n";
+    }
+    close $INPUT;
+
+    output_codepage_file( 20949 );
+}
 
 ################################################################
 # build the sort keys table
@@ -2723,6 +2763,7 @@ dump_norm_table( "nls/normidna.nls" );
 dump_sortkey_table( "nls/sortdefault.nls", "Windows 10 Sorting Weight Table.txt" );
 foreach my $file (@allfiles) { dump_msdata_codepage( $file ); }
 dump_eucjp_codepage();
+dump_krwansung_codepage();
 dump_registry_script( "dlls/kernelbase/kernelbase.rgs", %registry_keys );
 
 exit 0;

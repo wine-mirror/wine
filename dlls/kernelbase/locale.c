@@ -161,6 +161,7 @@ static const struct { UINT cp; const WCHAR *name; } codepage_names[] =
     { 20127, L"US-ASCII (7bit)" },
     { 20866, L"Russian KOI8" },
     { 20932, L"EUC-JP" },
+    { 20949, L"Korean Wansung" },
     { 21866, L"Ukrainian KOI8" },
     { 28591, L"ISO 8859-1 Latin 1" },
     { 28592, L"ISO 8859-2 Latin 2 (East European)" },
