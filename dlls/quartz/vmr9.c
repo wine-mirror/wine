@@ -514,26 +514,21 @@ static HRESULT vmr_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE 
 
 static HRESULT WINAPI VMR9_BreakConnect(struct strmbase_renderer *This)
 {
-    struct quartz_vmr *pVMR9 = impl_from_IBaseFilter(&This->filter.IBaseFilter_iface);
+    struct quartz_vmr *filter = impl_from_IBaseFilter(&This->filter.IBaseFilter_iface);
     HRESULT hr = S_OK;
     DWORD i;
 
-    if (!pVMR9->mode)
+    if (!filter->mode)
         return S_FALSE;
-     if (This->sink.pin.peer && pVMR9->allocator && pVMR9->presenter)
-    {
-        if (pVMR9->renderer.filter.state != State_Stopped)
-        {
-            ERR("Disconnecting while not stopped! UNTESTED!!\n");
-        }
-        if (pVMR9->renderer.filter.state == State_Running)
-            hr = IVMRImagePresenter9_StopPresenting(pVMR9->presenter, pVMR9->cookie);
 
-        for (i = 0; i < pVMR9->num_surfaces; ++i)
-            IDirect3DSurface9_Release(pVMR9->surfaces[i]);
-        free(pVMR9->surfaces);
-        IVMRSurfaceAllocator9_TerminateDevice(pVMR9->allocator, pVMR9->cookie);
-        pVMR9->num_surfaces = 0;
+    if (filter->allocator && filter->presenter)
+    {
+        for (i = 0; i < filter->num_surfaces; ++i)
+            IDirect3DSurface9_Release(filter->surfaces[i]);
+        free(filter->surfaces);
+
+        IVMRSurfaceAllocator9_TerminateDevice(filter->allocator, filter->cookie);
+        filter->num_surfaces = 0;
     }
     return hr;
 }
