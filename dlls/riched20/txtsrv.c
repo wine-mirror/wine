@@ -339,6 +339,75 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxGetCachedSize(ITextServices *ifac
     return E_NOTIMPL;
 }
 
+#ifdef __ASM_USE_THISCALL_WRAPPER
+
+#define STDCALL(func) (void *) __stdcall_ ## func
+#ifdef _MSC_VER
+#define DEFINE_STDCALL_WRAPPER(num,func) \
+    __declspec(naked) HRESULT __stdcall_##func(void) \
+    { \
+        __asm pop eax \
+        __asm pop ecx \
+        __asm push eax \
+        __asm mov eax, [ecx] \
+        __asm jmp dword ptr [eax + 4*num] \
+    }
+#else /* _MSC_VER */
+#define DEFINE_STDCALL_WRAPPER(num,func) \
+   extern HRESULT __stdcall_ ## func(void); \
+   __ASM_GLOBAL_FUNC(__stdcall_ ## func, \
+                   "popl %eax\n\t" \
+                   "popl %ecx\n\t" \
+                   "pushl %eax\n\t" \
+                   "movl (%ecx), %eax\n\t" \
+                   "jmp *(4*(" #num "))(%eax)" )
+#endif /* _MSC_VER */
+
+DEFINE_STDCALL_WRAPPER(3, ITextServices_TxSendMessage)
+DEFINE_STDCALL_WRAPPER(4, ITextServices_TxDraw)
+DEFINE_STDCALL_WRAPPER(5, ITextServices_TxGetHScroll)
+DEFINE_STDCALL_WRAPPER(6, ITextServices_TxGetVScroll)
+DEFINE_STDCALL_WRAPPER(7, ITextServices_OnTxSetCursor)
+DEFINE_STDCALL_WRAPPER(8, ITextServices_TxQueryHitPoint)
+DEFINE_STDCALL_WRAPPER(9, ITextServices_OnTxInplaceActivate)
+DEFINE_STDCALL_WRAPPER(10, ITextServices_OnTxInplaceDeactivate)
+DEFINE_STDCALL_WRAPPER(11, ITextServices_OnTxUIActivate)
+DEFINE_STDCALL_WRAPPER(12, ITextServices_OnTxUIDeactivate)
+DEFINE_STDCALL_WRAPPER(13, ITextServices_TxGetText)
+DEFINE_STDCALL_WRAPPER(14, ITextServices_TxSetText)
+DEFINE_STDCALL_WRAPPER(15, ITextServices_TxGetCurTargetX)
+DEFINE_STDCALL_WRAPPER(16, ITextServices_TxGetBaseLinePos)
+DEFINE_STDCALL_WRAPPER(17, ITextServices_TxGetNaturalSize)
+DEFINE_STDCALL_WRAPPER(18, ITextServices_TxGetDropTarget)
+DEFINE_STDCALL_WRAPPER(19, ITextServices_OnTxPropertyBitsChange)
+DEFINE_STDCALL_WRAPPER(20, ITextServices_TxGetCachedSize)
+
+const ITextServicesVtbl text_services_stdcall_vtbl =
+{
+    NULL,
+    NULL,
+    NULL,
+    STDCALL(ITextServices_TxSendMessage),
+    STDCALL(ITextServices_TxDraw),
+    STDCALL(ITextServices_TxGetHScroll),
+    STDCALL(ITextServices_TxGetVScroll),
+    STDCALL(ITextServices_OnTxSetCursor),
+    STDCALL(ITextServices_TxQueryHitPoint),
+    STDCALL(ITextServices_OnTxInplaceActivate),
+    STDCALL(ITextServices_OnTxInplaceDeactivate),
+    STDCALL(ITextServices_OnTxUIActivate),
+    STDCALL(ITextServices_OnTxUIDeactivate),
+    STDCALL(ITextServices_TxGetText),
+    STDCALL(ITextServices_TxSetText),
+    STDCALL(ITextServices_TxGetCurTargetX),
+    STDCALL(ITextServices_TxGetBaseLinePos),
+    STDCALL(ITextServices_TxGetNaturalSize),
+    STDCALL(ITextServices_TxGetDropTarget),
+    STDCALL(ITextServices_OnTxPropertyBitsChange),
+    STDCALL(ITextServices_TxGetCachedSize),
+};
+
+#endif /* __ASM_USE_THISCALL_WRAPPER */
 
 static const ITextServicesVtbl textservices_vtbl =
 {

@@ -584,7 +584,8 @@ DEFINE_STDCALL_WRAPPER(39,ITextHostImpl_TxImmGetContext,4)
 DEFINE_STDCALL_WRAPPER(40,ITextHostImpl_TxImmReleaseContext,8)
 DEFINE_STDCALL_WRAPPER(41,ITextHostImpl_TxGetSelectionBarWidth,8)
 
-const ITextHostVtbl itextHostStdcallVtbl = {
+const ITextHostVtbl text_host_stdcall_vtbl =
+{
     NULL,
     NULL,
     NULL,
@@ -629,9 +630,10 @@ const ITextHostVtbl itextHostStdcallVtbl = {
     STDCALL(ITextHostImpl_TxGetSelectionBarWidth),
 };
 
-#endif /* __i386__ */
+#endif /* __ASM_USE_THISCALL_WRAPPER */
 
-static const ITextHostVtbl textHostVtbl = {
+static const ITextHostVtbl textHostVtbl =
+{
     ITextHostImpl_QueryInterface,
     ITextHostImpl_AddRef,
     ITextHostImpl_Release,

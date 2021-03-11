@@ -318,10 +318,11 @@ static inline ME_DisplayItem *cell_get_di(ME_Cell *cell)
 
 /* txthost.c */
 #ifdef __ASM_USE_THISCALL_WRAPPER
-#define TXTHOST_VTABLE(This) (&itextHostStdcallVtbl)
-#else /* __i386__ */
+extern const struct ITextHostVtbl text_host_stdcall_vtbl DECLSPEC_HIDDEN;
+#define TXTHOST_VTABLE(This) (&text_host_stdcall_vtbl)
+#else
 #define TXTHOST_VTABLE(This) (This)->lpVtbl
-#endif /* __i386__ */
+#endif
  /*** ITextHost methods ***/
 #define ITextHost_TxGetDC(This) TXTHOST_VTABLE(This)->TxGetDC(This)
 #define ITextHost_TxReleaseDC(This,a) TXTHOST_VTABLE(This)->TxReleaseDC(This,a)
@@ -379,6 +380,30 @@ void ME_EmptyUndoStack(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 
 /* txtsrv.c */
 HRESULT create_text_services( IUnknown *outer, ITextHost *text_host, IUnknown **unk, BOOL emulate_10, ME_TextEditor **editor ) DECLSPEC_HIDDEN;
+#ifdef __ASM_USE_THISCALL_WRAPPER
+extern const struct ITextServicesVtbl text_services_stdcall_vtbl DECLSPEC_HIDDEN;
+#define TXTSERV_VTABLE(This) (&text_services_stdcall_vtbl)
+#else
+#define TXTSERV_VTABLE(This) (This)->lpVtbl
+#endif
+#define ITextServices_TxSendMessage(This,a,b,c,d) TXTSERV_VTABLE(This)->TxSendMessage(This,a,b,c,d)
+#define ITextServices_TxDraw(This,a,b,c,d,e,f,g,h,i,j,k,l) TXTSERV_VTABLE(This)->ITextServices_TxDraw(This,a,b,c,d,e,f,g,h,i,j,k,l)
+#define ITextServices_TxGetHScroll(This,a,b,c,d,e) TXTSERV_VTABLE(This)->TxGetHScroll(This,a,b,c,d,e)
+#define ITextServices_TxGetVScroll(This,a,b,c,d,e) TXTSERV_VTABLE(This)->TxGetVScroll(This,a,b,c,d,e)
+#define ITextServices_OnTxSetCursor(This,a,b,c,d,e,f,g,h,i) TXTSERV_VTABLE(This)->OnTxSetCursor(This,a,b,c,d,e,f,g,h,i)
+#define ITextServices_TxQueryHitPoint(This,a,b,c,d,e,f,g,h,i,j) TXTSERV_VTABLE(This)->TxQueryHitPoint(This,a,b,c,d,e,f,g,h,i,j)
+#define ITextServices_OnTxInplaceActivate(This,a) TXTSERV_VTABLE(This)->OnTxInplaceActivate(This,a)
+#define ITextServices_OnTxInplaceDeactivate(This) TXTSERV_VTABLE(This)->OnTxInplaceDeactivate(This)
+#define ITextServices_OnTxUIActivate(This) TXTSERV_VTABLE(This)->OnTxUIActivate(This)
+#define ITextServices_OnTxUIDeactivate(This) TXTSERV_VTABLE(This)->OnTxUIDeactivate(This)
+#define ITextServices_TxGetText(This,a) TXTSERV_VTABLE(This)->TxGetText(This,a)
+#define ITextServices_TxSetText(This,a) TXTSERV_VTABLE(This)->TxSetText(This,a)
+#define ITextServices_TxGetCurTargetX(This,a) TXTSERV_VTABLE(This)->TxGetCurTargetX(This,a)
+#define ITextServices_TxGetBaseLinePos(This,a) TXTSERV_VTABLE(This)->TxGetBaseLinePos(This,a)
+#define ITextServices_TxGetNaturalSize(This,a,b,c,d,e,f,g,h) TXTSERV_VTABLE(This)->TxGetNaturalSize(This,a,b,c,d,e,f,g,h)
+#define ITextServices_TxGetDropTarget(This,a) TXTSERV_VTABLE(This)->TxGetDropTarget(This,a)
+#define ITextServices_OnTxPropertyBitsChange(This,a,b) TXTSERV_VTABLE(This)->OnTxPropertyBitsChange(This,a,b)
+#define ITextServices_TxGetCachedSize(This,a,b) TXTSERV_VTABLE(This)->TxGetCachedSize(This,a,b)
 
 /* writer.c */
 LRESULT ME_StreamOutRange(ME_TextEditor *editor, DWORD dwFormat, const ME_Cursor *start, int nChars, EDITSTREAM *stream) DECLSPEC_HIDDEN;

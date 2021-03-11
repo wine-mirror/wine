@@ -49,10 +49,6 @@
 #include "wine/list.h"
 #include "wine/rbtree.h"
 
-#ifdef __ASM_USE_THISCALL_WRAPPER
-extern const struct ITextHostVtbl itextHostStdcallVtbl DECLSPEC_HIDDEN;
-#endif /* __i386__ */
-
 typedef struct tagME_String
 {
   WCHAR *szData;
