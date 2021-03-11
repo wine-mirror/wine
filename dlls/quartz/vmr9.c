@@ -512,7 +512,7 @@ static HRESULT vmr_connect(struct strmbase_renderer *iface, const AM_MEDIA_TYPE 
     return hr;
 }
 
-static HRESULT WINAPI VMR9_BreakConnect(struct strmbase_renderer *This)
+static HRESULT vmr_disconnect(struct strmbase_renderer *This)
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&This->filter.IBaseFilter_iface);
     HRESULT hr = S_OK;
@@ -638,7 +638,7 @@ static const struct strmbase_renderer_ops renderer_ops =
     .renderer_start_stream = vmr_start_stream,
     .renderer_stop_stream = vmr_stop_stream,
     .renderer_connect = vmr_connect,
-    .pfnBreakConnect = VMR9_BreakConnect,
+    .renderer_disconnect = vmr_disconnect,
     .renderer_destroy = vmr_destroy,
     .renderer_query_interface = vmr_query_interface,
     .renderer_pin_query_interface = vmr_pin_query_interface,

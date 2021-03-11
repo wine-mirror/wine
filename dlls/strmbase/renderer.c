@@ -427,8 +427,8 @@ static void sink_disconnect(struct strmbase_sink *iface)
 {
     struct strmbase_renderer *filter = impl_from_IPin(&iface->pin.IPin_iface);
 
-    if (filter->pFuncsTable->pfnBreakConnect)
-        filter->pFuncsTable->pfnBreakConnect(filter);
+    if (filter->pFuncsTable->renderer_disconnect)
+        filter->pFuncsTable->renderer_disconnect(filter);
 }
 
 static HRESULT sink_eos(struct strmbase_sink *iface)
