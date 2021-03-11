@@ -3653,6 +3653,10 @@ static BOOL is_known_weight_value(DWRITE_FONT_WEIGHT weight, WCHAR *nameW)
     static const WCHAR extrablackW[] = {'E','x','t','r','a',' ','B','l','a','c','k',0};
     static const WCHAR extraboldW[] = {'E','x','t','r','a',' ','B','o','l','d',0};
     static const WCHAR demiboldW[] = {'D','e','m','i',' ','B','o','l','d',0};
+    static const WCHAR thinW[] = {'T','h','i','n',0};
+    static const WCHAR lightW[] = {'L','i','g','h','t',0};
+    static const WCHAR mediumW[] = {'M','e','d','i','u','m',0};
+    static const WCHAR blackW[] = {'B','l','a','c','k',0};
     const struct knownweight_entry *ptr;
 
     static const struct knownweight_entry knownweights[] = {
