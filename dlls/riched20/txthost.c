@@ -834,6 +834,22 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
             FillRect( hdc, &rc, editor->hbrBackground );
         return 1;
     }
+    case EM_FINDTEXT:
+    {
+        FINDTEXTW *params = (FINDTEXTW *)lparam;
+        FINDTEXTW new_params;
+        int len;
+
+        if (!unicode)
+        {
+            new_params.chrg = params->chrg;
+            new_params.lpstrText = ME_ToUnicode( CP_ACP, (char *)params->lpstrText, &len );
+            params = &new_params;
+        }
+        hr = ITextServices_TxSendMessage( host->text_srv, EM_FINDTEXTW, wparam, (LPARAM)params, &res );
+        if (!unicode) ME_EndToUnicode( CP_ACP, (WCHAR *)new_params.lpstrText );
+        break;
+    }
     case WM_GETTEXT:
     {
         GETTEXTEX params;
