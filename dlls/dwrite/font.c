@@ -7157,6 +7157,10 @@ static IDWriteLocalizedStrings * fontset_entry_get_property(struct dwrite_fontse
         opentype_get_font_info_strings(&stream_desc, DWRITE_INFORMATIONAL_STRING_FULL_NAME, &value);
     else if (property == DWRITE_FONT_PROPERTY_ID_POSTSCRIPT_NAME)
         opentype_get_font_info_strings(&stream_desc, DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_NAME, &value);
+    else if (property == DWRITE_FONT_PROPERTY_ID_DESIGN_SCRIPT_LANGUAGE_TAG)
+        opentype_get_font_info_strings(&stream_desc, DWRITE_INFORMATIONAL_STRING_DESIGN_SCRIPT_LANGUAGE_TAG, &value);
+    else if (property == DWRITE_FONT_PROPERTY_ID_SUPPORTED_SCRIPT_LANGUAGE_TAG)
+        opentype_get_font_info_strings(&stream_desc, DWRITE_INFORMATIONAL_STRING_SUPPORTED_SCRIPT_LANGUAGE_TAG, &value);
     else
         WARN("Unsupported property %u.\n", property);
 
@@ -7296,6 +7300,8 @@ static BOOL fontset_entry_is_matching(struct dwrite_fontset_entry *entry, DWRITE
         {
             case DWRITE_FONT_PROPERTY_ID_POSTSCRIPT_NAME:
             case DWRITE_FONT_PROPERTY_ID_FULL_NAME:
+            case DWRITE_FONT_PROPERTY_ID_DESIGN_SCRIPT_LANGUAGE_TAG:
+            case DWRITE_FONT_PROPERTY_ID_SUPPORTED_SCRIPT_LANGUAGE_TAG:
                 if (!(value = fontset_entry_get_property(entry, props[i].propertyId)))
                     return FALSE;
 
@@ -7307,8 +7313,6 @@ static BOOL fontset_entry_is_matching(struct dwrite_fontset_entry *entry, DWRITE
             case DWRITE_FONT_PROPERTY_ID_TYPOGRAPHIC_FAMILY_NAME:
             case DWRITE_FONT_PROPERTY_ID_WEIGHT_STRETCH_STYLE_FACE_NAME:
             case DWRITE_FONT_PROPERTY_ID_WIN32_FAMILY_NAME:
-            case DWRITE_FONT_PROPERTY_ID_DESIGN_SCRIPT_LANGUAGE_TAG:
-            case DWRITE_FONT_PROPERTY_ID_SUPPORTED_SCRIPT_LANGUAGE_TAG:
             case DWRITE_FONT_PROPERTY_ID_SEMANTIC_TAG:
             case DWRITE_FONT_PROPERTY_ID_WEIGHT:
             case DWRITE_FONT_PROPERTY_ID_STRETCH:
