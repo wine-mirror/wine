@@ -911,7 +911,7 @@ HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow*,HTMLImageElementFactory*
 HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow*,HTMLXMLHttpRequestFactory**) DECLSPEC_HIDDEN;
 HRESULT HTMLLocation_Create(HTMLInnerWindow*,HTMLLocation**) DECLSPEC_HIDDEN;
 IOmNavigator *OmNavigator_Create(void) DECLSPEC_HIDDEN;
-HRESULT HTMLScreen_Create(IHTMLScreen**) DECLSPEC_HIDDEN;
+HRESULT create_html_screen(compat_mode_t,IHTMLScreen**) DECLSPEC_HIDDEN;
 HRESULT create_performance(IHTMLPerformance**) DECLSPEC_HIDDEN;
 HRESULT create_history(HTMLInnerWindow*,OmHistory**) DECLSPEC_HIDDEN;
 HRESULT create_namespace_collection(IHTMLNamespaceCollection**) DECLSPEC_HIDDEN;
