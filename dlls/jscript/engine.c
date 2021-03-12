@@ -1304,7 +1304,7 @@ static HRESULT interp_local_ref(script_ctx_t *ctx)
     call_frame_t *frame = ctx->call_ctx;
     exprval_t ref;
 
-    TRACE("%d\n", arg);
+    TRACE("%s\n", debugstr_w(local_name(frame, arg)));
 
     if(!frame->base_scope || !frame->base_scope->frame)
         return interp_identifier_ref(ctx, local_name(frame, arg), flags);
@@ -1321,15 +1321,16 @@ static HRESULT interp_local(script_ctx_t *ctx)
     jsval_t copy;
     HRESULT hres;
 
-    TRACE("%d: %s\n", arg, debugstr_w(local_name(frame, arg)));
-
-    if(!frame->base_scope || !frame->base_scope->frame)
+    if(!frame->base_scope || !frame->base_scope->frame) {
+        TRACE("%s\n", debugstr_w(local_name(frame, arg)));
         return identifier_value(ctx, local_name(frame, arg));
+    }
 
     hres = jsval_copy(ctx->stack[local_off(frame, arg)], &copy);
     if(FAILED(hres))
         return hres;
 
+    TRACE("%s: %s\n", debugstr_w(local_name(frame, arg)), debugstr_jsval(copy));
     return stack_push(ctx, copy);
 }
 
