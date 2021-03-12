@@ -72,11 +72,11 @@ struct completion_wait
 
 struct completion
 {
-    struct object  obj;
-    struct list    queue;
-    struct list    wait_queue;
-    unsigned int   depth;
-    int            closed;
+    struct object       obj;
+    struct event_sync  *sync;
+    struct list         queue;
+    struct list         wait_queue;
+    unsigned int        depth;
 };
 
 static void completion_wait_dump( struct object*, int );
@@ -155,7 +155,7 @@ static void completion_wait_satisfied( struct object *obj, struct wait_queue_ent
 }
 
 static void completion_dump( struct object*, int );
-static int completion_signaled( struct object *obj, struct wait_queue_entry *entry );
+static struct object *completion_get_sync( struct object * );
 static int completion_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void completion_destroy( struct object * );
 
@@ -164,13 +164,13 @@ static const struct object_ops completion_ops =
     sizeof(struct completion), /* size */
     &completion_type,          /* type */
     completion_dump,           /* dump */
-    add_queue,                 /* add_queue */
-    remove_queue,              /* remove_queue */
-    completion_signaled,       /* signaled */
-    no_satisfied,              /* satisfied */
+    NULL,                      /* add_queue */
+    NULL,                      /* remove_queue */
+    NULL,                      /* signaled */
+    NULL,                      /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
-    default_get_sync,          /* get_sync */
+    completion_get_sync,       /* get_sync */
     default_map_access,        /* map_access */
     default_get_sd,            /* get_sd */
     default_set_sd,            /* set_sd */
@@ -193,6 +193,8 @@ static void completion_destroy( struct object *obj)
     {
         free( tmp );
     }
+
+    if (completion->sync) release_object( completion->sync );
 }
 
 static void completion_dump( struct object *obj, int verbose )
@@ -203,11 +205,11 @@ static void completion_dump( struct object *obj, int verbose )
     fprintf( stderr, "Completion depth=%u\n", completion->depth );
 }
 
-static int completion_signaled( struct object *obj, struct wait_queue_entry *entry )
+static struct object *completion_get_sync( struct object *obj )
 {
     struct completion *completion = (struct completion *)obj;
-
-    return !list_empty( &completion->queue ) || completion->closed;
+    assert( obj->ops == &completion_ops );
+    return grab_object( completion->sync );
 }
 
 static int completion_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
@@ -228,8 +230,7 @@ static int completion_close_handle( struct object *obj, struct process *process,
             cleanup_thread_completion( wait->thread );
         }
     }
-    completion->closed = 1;
-    wake_up( obj, 0 );
+    signal_sync( completion->sync );
     return 1;
 }
 
@@ -273,10 +274,16 @@ static struct completion *create_completion( struct object *root, const struct u
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
+            completion->sync = NULL;
             list_init( &completion->queue );
             list_init( &completion->wait_queue );
             completion->depth = 0;
-            completion->closed = 0;
+
+            if (!(completion->sync = create_event_sync( 1, 0 )))
+            {
+                release_object( completion );
+                return NULL;
+            }
         }
     }
 
@@ -309,7 +316,7 @@ void add_completion( struct completion *completion, apc_param_t ckey, apc_param_
         wake_up( &wait->obj, 1 );
         if (list_empty( &completion->queue )) return;
     }
-    if (!list_empty( &completion->queue )) wake_up( &completion->obj, 0 );
+    if (!list_empty( &completion->queue )) signal_sync( completion->sync );
 }
 
 /* create a completion */
@@ -410,6 +417,7 @@ DECL_HANDLER(remove_completion)
         reply->information = msg->information;
         free( msg );
         reply->wait_handle = 0;
+        if (list_empty( &completion->queue )) reset_sync( completion->sync );
     }
 
     release_object( completion );
