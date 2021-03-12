@@ -1468,7 +1468,6 @@ static int parser_error(unsigned *loc, parser_ctx_t *ctx, const char *str)
         ctx->error_loc = *loc;
     if(ctx->hres == S_OK)
         ctx->hres = JS_E_SYNTAX;
-    WARN("%s: %s\n", debugstr_w(ctx->begin + *loc), str);
     return 0;
 }
 
