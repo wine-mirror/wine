@@ -3978,9 +3978,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_GETTEXT:
   {
     GETTEXTEX ex;
-    ex.cb = wParam * (unicode ? sizeof(WCHAR) : sizeof(CHAR));
+    ex.cb = wParam * sizeof(WCHAR);
     ex.flags = GT_USECRLF;
-    ex.codepage = unicode ? CP_UNICODE : CP_ACP;
+    ex.codepage = CP_UNICODE;
     ex.lpDefaultChar = NULL;
     ex.lpUsedDefChar = NULL;
     return ME_GetTextEx(editor, &ex, lParam);
