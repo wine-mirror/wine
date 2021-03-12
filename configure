@@ -1659,6 +1659,7 @@ enable_wevtapi
 enable_wevtsvc
 enable_wiaservc
 enable_wimgapi
+enable_windows_media_speech
 enable_windowscodecs
 enable_windowscodecsext
 enable_winealsa_drv
@@ -21122,6 +21123,7 @@ wine_fn_config_makefile dlls/win32s16.dll16 enable_win16
 wine_fn_config_makefile dlls/win87em.dll16 enable_win16
 wine_fn_config_makefile dlls/winaspi.dll16 enable_win16
 wine_fn_config_makefile dlls/windebug.dll16 enable_win16
+wine_fn_config_makefile dlls/windows.media.speech enable_windows_media_speech
 wine_fn_config_makefile dlls/windowscodecs enable_windowscodecs
 wine_fn_config_makefile dlls/windowscodecs/tests enable_tests
 wine_fn_config_makefile dlls/windowscodecsext enable_windowscodecsext

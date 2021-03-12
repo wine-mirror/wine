@@ -82,7 +82,7 @@ static void test_ActivationFactories(void)
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = pRoGetActivationFactory(str2, &IID_IActivationFactory, (void **)&factory);
-    todo_wine ok(hr == REGDB_E_CLASSNOTREG, "got %08x\n", hr);
+    ok(hr == REGDB_E_CLASSNOTREG, "got %08x\n", hr);
 
     hr = pRoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
     todo_wine ok(hr == S_OK, "got %08x\n", hr);
@@ -90,7 +90,7 @@ static void test_ActivationFactories(void)
         IActivationFactory_Release(factory);
 
     hr = pRoActivateInstance(str2, &inspect);
-    todo_wine ok(hr == REGDB_E_CLASSNOTREG, "got %08x\n", hr);
+    ok(hr == REGDB_E_CLASSNOTREG, "got %08x\n", hr);
 
     hr = pRoActivateInstance(str, &inspect);
     todo_wine ok(hr == S_OK, "got %08x\n", hr);
