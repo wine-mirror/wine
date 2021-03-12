@@ -182,6 +182,7 @@ static int (CDECL *p_fegetenv)(fenv_t*);
 static int (CDECL *p_fesetenv)(const fenv_t*);
 static int (CDECL *p_fegetround)(void);
 static int (CDECL *p_fesetround)(int);
+static int (CDECL *p_fesetexceptflag)(const fexcept_t*,int);
 static int (CDECL *p_fetestexcept)(int);
 static int (CDECL *p__clearfp)(void);
 static _locale_t (__cdecl *p_wcreate_locale)(int, const wchar_t *);
@@ -258,6 +259,7 @@ static BOOL init(void)
     SET(p_fesetenv, "fesetenv");
     SET(p_fegetround, "fegetround");
     SET(p_fesetround, "fesetround");
+    SET(p_fesetexceptflag, "fesetexceptflag");
     SET(p_fetestexcept, "fetestexcept");
 
     SET(p__clearfp, "_clearfp");
@@ -799,7 +801,31 @@ static void test_feenv(void)
         FE_INVALID,
         FE_ALL_EXCEPT,
     };
+    static const struct {
+        fexcept_t except;
+        unsigned int flag;
+        unsigned int get;
+        fexcept_t expect;
+    } tests2[] = {
+        /* except                   flag                     get             expect */
+        { 0,                        0,                       0,              0 },
+        { FE_ALL_EXCEPT,            FE_INEXACT,              0,              0 },
+        { FE_ALL_EXCEPT,            FE_INEXACT,              FE_ALL_EXCEPT,  FE_INEXACT },
+        { FE_ALL_EXCEPT,            FE_INEXACT,              FE_INEXACT,     FE_INEXACT },
+        { FE_ALL_EXCEPT,            FE_INEXACT,              FE_OVERFLOW,    0 },
+        { FE_ALL_EXCEPT,            FE_ALL_EXCEPT,           FE_ALL_EXCEPT,  FE_ALL_EXCEPT },
+        { FE_ALL_EXCEPT,            FE_ALL_EXCEPT,           FE_INEXACT,     FE_INEXACT },
+        { FE_ALL_EXCEPT,            FE_ALL_EXCEPT,           0,              0 },
+        { FE_ALL_EXCEPT,            FE_ALL_EXCEPT,           ~0,             FE_ALL_EXCEPT },
+        { FE_ALL_EXCEPT,            FE_ALL_EXCEPT,           ~FE_ALL_EXCEPT, 0 },
+        { FE_INEXACT,               FE_ALL_EXCEPT,           FE_ALL_EXCEPT,  FE_INEXACT },
+        { FE_INEXACT,               FE_UNDERFLOW,            FE_ALL_EXCEPT,  0 },
+        { FE_UNDERFLOW,             FE_INEXACT,              FE_ALL_EXCEPT,  0 },
+        { FE_INEXACT|FE_UNDERFLOW,  FE_UNDERFLOW,            FE_ALL_EXCEPT,  FE_UNDERFLOW },
+        { FE_UNDERFLOW,             FE_INEXACT|FE_UNDERFLOW, FE_ALL_EXCEPT,  FE_UNDERFLOW },
+    };
     fenv_t env, env2;
+    fexcept_t except;
     int i, ret, flags;
 
     p__clearfp();
@@ -819,16 +845,37 @@ static void test_feenv(void)
     ret = p_fegetround();
     ok(ret == FE_TONEAREST, "Got unexpected round mode %#x.\n", ret);
 
+    if(0) { /* crash on windows */
+        p_fesetexceptflag(NULL, FE_ALL_EXCEPT);
+    }
+    except = FE_ALL_EXCEPT;
+    ret = p_fesetexceptflag(&except, FE_INEXACT|FE_UNDERFLOW);
+    ok(!ret, "fesetexceptflag returned %x\n", ret);
+    except = p_fetestexcept(FE_ALL_EXCEPT);
+    ok(except == (FE_INEXACT|FE_UNDERFLOW), "expected %x, got %lx\n", FE_INEXACT|FE_UNDERFLOW, except);
+
+    /* no crash, but no-op */
+    ret = p_fesetexceptflag(NULL, 0);
+    ok(!ret, "fesetexceptflag returned %x\n", ret);
+    except = p_fetestexcept(FE_ALL_EXCEPT);
+    ok(except == (FE_INEXACT|FE_UNDERFLOW), "expected %x, got %lx\n", FE_INEXACT|FE_UNDERFLOW, except);
+
+    /* zero clears all */
+    except = 0;
+    ret = p_fesetexceptflag(&except, FE_ALL_EXCEPT);
+    ok(!ret, "fesetexceptflag returned %x\n", ret);
+    except = p_fetestexcept(FE_ALL_EXCEPT);
+    ok(!except, "expected 0, got %lx\n", except);
+
     ret = p_fetestexcept(FE_ALL_EXCEPT);
     ok(!ret, "fetestexcept returned %x\n", ret);
 
     flags = 0;
+    /* adding bits with flags */
     for(i=0; i<ARRAY_SIZE(tests); i++) {
-        ret = p_fegetenv(&env);
-        ok(!ret, "Test %d: fegetenv returned %x\n", i, ret);
-        env._Fe_stat |= tests[i];
-        ret = p_fesetenv(&env);
-        ok(!ret, "Test %d: fesetenv returned %x\n", i, ret);
+        except = FE_ALL_EXCEPT;
+        ret = p_fesetexceptflag(&except, tests[i]);
+        ok(!ret, "Test %d: fesetexceptflag returned %x\n", i, ret);
 
         ret = p_fetestexcept(tests[i]);
         ok(ret == tests[i], "Test %d: expected %x, got %x\n", i, tests[i], ret);
@@ -836,6 +883,31 @@ static void test_feenv(void)
         flags |= tests[i];
         ret = p_fetestexcept(FE_ALL_EXCEPT);
         ok(ret == flags, "Test %d: expected %x, got %x\n", i, flags, ret);
+    }
+
+    p__clearfp();
+    /* setting bits with except */
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        except = tests[i];
+        ret = p_fesetexceptflag(&except, FE_ALL_EXCEPT);
+        ok(!ret, "Test %d: fesetexceptflag returned %x\n", i, ret);
+
+        ret = p_fetestexcept(tests[i]);
+        ok(ret == tests[i], "Test %d: expected %x, got %x\n", i, tests[i], ret);
+
+        ret = p_fetestexcept(FE_ALL_EXCEPT);
+        ok(ret == tests[i], "Test %d: expected %x, got %x\n", i, tests[i], ret);
+    }
+
+    for(i=0; i<ARRAY_SIZE(tests2); i++) {
+        p__clearfp();
+
+        except = tests2[i].except;
+        ret = p_fesetexceptflag(&except, tests2[i].flag);
+        ok(!ret, "Test %d: fesetexceptflag returned %x\n", i, ret);
+
+        ret = p_fetestexcept(tests2[i].get);
+        ok(ret == tests2[i].expect, "Test %d: expected %lx, got %x\n", i, tests2[i].expect, ret);
     }
     p__clearfp();
 }

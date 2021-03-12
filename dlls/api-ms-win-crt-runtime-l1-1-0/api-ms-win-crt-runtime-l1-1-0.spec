@@ -93,7 +93,7 @@
 @ cdecl fegetround() ucrtbase.fegetround
 @ stub feholdexcept
 @ cdecl fesetenv(ptr) ucrtbase.fesetenv
-@ stub fesetexceptflag
+@ cdecl fesetexceptflag(ptr long) ucrtbase.fesetexceptflag
 @ cdecl fesetround(long) ucrtbase.fesetround
 @ cdecl fetestexcept(long) ucrtbase.fetestexcept
 @ cdecl perror(str) ucrtbase.perror

@@ -2294,7 +2294,7 @@
 @ cdecl feof(ptr)
 @ cdecl ferror(ptr)
 @ cdecl fesetenv(ptr)
-@ stub fesetexceptflag
+@ cdecl fesetexceptflag(ptr long)
 @ cdecl fesetround(long)
 @ cdecl fetestexcept(long)
 @ cdecl fflush(ptr)

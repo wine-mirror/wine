@@ -2222,6 +2222,23 @@ int CDECL fetestexcept(int flags)
 {
     return _statusfp() & flags;
 }
+
+/*********************************************************************
+ *      fesetexceptflag (MSVCR120.@)
+ */
+int CDECL fesetexceptflag(const fexcept_t *status, int excepts)
+{
+    fenv_t env;
+
+    if(!excepts)
+        return 0;
+
+    fegetenv(&env);
+    excepts &= FE_ALL_EXCEPT;
+    env._Fe_stat &= ~excepts;
+    env._Fe_stat |= (*status & excepts);
+    return fesetenv(&env);
+}
 #endif
 
 #if _MSVCR_VER>=140
