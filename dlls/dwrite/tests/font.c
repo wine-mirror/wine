@@ -9512,6 +9512,13 @@ static void test_fontsetbuilder(void)
                 hr = IDWriteFontSet_GetPropertyValues(fontset, 0, id, &exists, &values);
                 ok(hr == S_OK, "Failed to get property value, hr %#x.\n", hr);
 
+                if (id == DWRITE_FONT_PROPERTY_ID_WEIGHT || id == DWRITE_FONT_PROPERTY_ID_STRETCH
+                        || id == DWRITE_FONT_PROPERTY_ID_STYLE)
+                {
+                todo_wine
+                    ok(exists, "Property %u expected to exist.\n", id);
+                }
+
                 if (!exists)
                     continue;
 
