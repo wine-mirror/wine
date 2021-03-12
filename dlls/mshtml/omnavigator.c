@@ -892,8 +892,8 @@ static HRESULT create_plugins_collection(OmNavigator *navigator, HTMLPluginsColl
     col->ref = 1;
     col->navigator = navigator;
 
-    init_dispex(&col->dispex, (IUnknown*)&col->IHTMLPluginsCollection_iface,
-                &HTMLPluginsCollection_dispex);
+    init_dispex_with_compat_mode(&col->dispex, (IUnknown*)&col->IHTMLPluginsCollection_iface,
+                                 &HTMLPluginsCollection_dispex, dispex_compat_mode(&navigator->dispex));
 
     *ret = col;
     return S_OK;
