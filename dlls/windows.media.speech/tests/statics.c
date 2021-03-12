@@ -88,8 +88,7 @@ static void test_SpeechSynthesizer(void)
     IAgileObject_Release(tmp_agile_object);
 
     hr = IInstalledVoicesStatic_get_AllVoices(voices_static, &voices);
-    todo_wine ok(SUCCEEDED(hr), "IInstalledVoicesStatic_get_AllVoices failed, hr %#x\n", hr);
-    if (FAILED(hr)) goto done;
+    ok(SUCCEEDED(hr), "IInstalledVoicesStatic_get_AllVoices failed, hr %#x\n", hr);
 
     hr = IVectorView_VoiceInformation_QueryInterface(voices, &IID_IInspectable, (void **)&tmp_inspectable);
     ok(SUCCEEDED(hr), "IVectorView_VoiceInformation_QueryInterface voices failed, hr %#x\n", hr);
@@ -101,13 +100,12 @@ static void test_SpeechSynthesizer(void)
 
     size = 0xdeadbeef;
     hr = IVectorView_VoiceInformation_get_Size(voices, &size);
-    ok(SUCCEEDED(hr), "IVectorView_VoiceInformation_QueryInterface voices failed, hr %#x\n", hr);
-    ok(size != 0 && size != 0xdeadbeef, "IVectorView_VoiceInformation_get_Size returned %u\n", size);
+    todo_wine ok(SUCCEEDED(hr), "IVectorView_VoiceInformation_QueryInterface voices failed, hr %#x\n", hr);
+    todo_wine ok(size != 0 && size != 0xdeadbeef, "IVectorView_VoiceInformation_get_Size returned %u\n", size);
 
     rc = IVectorView_VoiceInformation_Release(voices);
     ok(rc == 0, "IVectorView_VoiceInformation_Release returned unexpected refcount %d\n", rc);
 
-done:
     rc = IInstalledVoicesStatic_Release(voices_static);
     ok(rc == 4, "IInstalledVoicesStatic_Release returned unexpected refcount %d\n", rc);
 
