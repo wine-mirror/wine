@@ -753,6 +753,39 @@ static BOOL create_windowed_editor( HWND hwnd, CREATESTRUCTW *create, BOOL emula
     return TRUE;
 }
 
+static HRESULT get_text_rangeA( struct host *host, TEXTRANGEA *rangeA, LRESULT *res )
+{
+    TEXTRANGEW range;
+    HRESULT hr;
+    unsigned int count;
+    LRESULT len;
+
+    *res = 0;
+    if (rangeA->chrg.cpMin < 0) return S_OK;
+    ITextServices_TxSendMessage( host->text_srv, WM_GETTEXTLENGTH, 0, 0, &len );
+    range.chrg = rangeA->chrg;
+    if ((range.chrg.cpMin == 0 && range.chrg.cpMax == -1) || range.chrg.cpMax > len)
+        range.chrg.cpMax = len;
+    if (range.chrg.cpMin >= range.chrg.cpMax) return S_OK;
+    count = range.chrg.cpMax - range.chrg.cpMin + 1;
+    range.lpstrText = heap_alloc( count * sizeof(WCHAR) );
+    if (!range.lpstrText) return E_OUTOFMEMORY;
+    hr = ITextServices_TxSendMessage( host->text_srv, EM_GETTEXTRANGE, 0, (LPARAM)&range, &len );
+    if (hr == S_OK && len)
+    {
+        if (!host->emulate_10) count = INT_MAX;
+        len = WideCharToMultiByte( CP_ACP, 0, range.lpstrText, -1, rangeA->lpstrText, count, NULL, NULL );
+        if (!host->emulate_10) *res = len - 1;
+        else
+        {
+            *res = count - 1;
+            rangeA->lpstrText[*res] = '\0';
+        }
+    }
+    heap_free( range.lpstrText );
+    return hr;
+}
+
 static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
                                        LPARAM lparam, BOOL unicode )
 {
@@ -822,6 +855,11 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         hr = ITextServices_TxSendMessage( host->text_srv, EM_GETTEXTLENGTHEX, (WPARAM)&params, 0, &res );
         break;
     }
+    case EM_GETTEXTRANGE:
+        if (unicode) hr = ITextServices_TxSendMessage( host->text_srv, msg, wparam, lparam, &res );
+        else hr = get_text_rangeA( host, (TEXTRANGEA *)lparam, &res );
+        break;
+
     case WM_PAINT:
     {
         HDC hdc;

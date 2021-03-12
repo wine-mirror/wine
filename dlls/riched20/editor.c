@@ -4014,15 +4014,14 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     int nEnd = rng->chrg.cpMax;
     int textlength = ME_GetTextLength(editor);
 
-    TRACE("EM_GETTEXTRANGE min=%d max=%d unicode=%d textlength=%d\n",
-          rng->chrg.cpMin, rng->chrg.cpMax, unicode, textlength);
+    TRACE( "EM_GETTEXTRANGE min = %d max = %d textlength = %d\n", rng->chrg.cpMin, rng->chrg.cpMax, textlength );
     if (nStart < 0) return 0;
     if ((nStart == 0 && nEnd == -1) || nEnd > textlength)
       nEnd = textlength;
     if (nStart >= nEnd) return 0;
 
     cursor_from_char_ofs( editor, nStart, &start );
-    return ME_GetTextRange(editor, rng->lpstrText, &start, nEnd - nStart, unicode);
+    return ME_GetTextRange( editor, rng->lpstrText, &start, nEnd - nStart, TRUE );
   }
   case EM_GETLINE:
   {
