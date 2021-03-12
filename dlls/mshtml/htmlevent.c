@@ -2450,10 +2450,10 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
             V_DISPATCH(&arg) = (IDispatch*)&event_target->dispex.IDispatchEx_iface;
             V_VT(&v) = VT_EMPTY;
 
-            TRACE("%s >>>\n", debugstr_w(event->type));
+            TRACE("%p %s >>>\n", event_target, debugstr_w(event->type));
             hres = call_disp_func(listener->function, &dp, &v);
             if(hres == S_OK) {
-                TRACE("%s <<< %s\n", debugstr_w(event->type), debugstr_variant(&v));
+                TRACE("%p %s <<< %s\n", event_target, debugstr_w(event->type), debugstr_variant(&v));
 
                 if(event->cancelable) {
                     if(V_VT(&v) == VT_BOOL) {
@@ -2465,7 +2465,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
                 }
                 VariantClear(&v);
             }else {
-                WARN("%s <<< %08x\n", debugstr_w(event->type), hres);
+                WARN("%p %s <<< %08x\n", event_target, debugstr_w(event->type), hres);
             }
         }
     }
@@ -2530,10 +2530,10 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
                 ? (IDispatch*)event->event_obj : (IDispatch*)&event->IDOMEvent_iface;
             V_VT(&v) = VT_EMPTY;
 
-            TRACE("%s >>>\n", debugstr_w(event->type));
+            TRACE("%p %s >>>\n", event_target, debugstr_w(event->type));
             hres = call_disp_func(listener->function, &dp, &v);
             if(hres == S_OK) {
-                TRACE("%s <<< %s\n", debugstr_w(event->type),
+                TRACE("%p %s <<< %s\n", event_target, debugstr_w(event->type),
                       debugstr_variant(&v));
 
                 if(event->cancelable) {
@@ -2546,7 +2546,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
                 }
                 VariantClear(&v);
             }else {
-                WARN("%s <<< %08x\n", debugstr_w(event->type), hres);
+                WARN("%p %s <<< %08x\n", event_target, debugstr_w(event->type), hres);
             }
         }else {
             VARIANTARG arg;
@@ -2556,10 +2556,10 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
             V_DISPATCH(&arg) = (IDispatch*)event->event_obj;
             V_VT(&v) = VT_EMPTY;
 
-            TRACE("%s attached >>>\n", debugstr_w(event->type));
+            TRACE("%p %s attached >>>\n", event_target, debugstr_w(event->type));
             hres = call_disp_func(listener->function, &dp, &v);
             if(hres == S_OK) {
-                TRACE("%s attached <<<\n", debugstr_w(event->type));
+                TRACE("%p %s attached <<<\n", event_target, debugstr_w(event->type));
 
                 if(event->cancelable) {
                     if(V_VT(&v) == VT_BOOL) {
@@ -2571,7 +2571,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
                 }
                 VariantClear(&v);
             }else {
-                WARN("%s attached <<< %08x\n", debugstr_w(event->type), hres);
+                WARN("%p %s attached <<< %08x\n", event_target, debugstr_w(event->type), hres);
             }
         }
     }
@@ -2601,11 +2601,11 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
 
                     V_VT(&v) = VT_EMPTY;
 
-                    TRACE("cp %s [%u] >>>\n", debugstr_w(event->type), i);
+                    TRACE("%p cp %s [%u] >>>\n", event_target, debugstr_w(event->type), i);
                     hres = call_cp_func(cp->sinks[i].disp, event_info[event->event_id].dispid,
                             cp->data->pass_event_arg ? event->event_obj : NULL, &v);
                     if(hres == S_OK) {
-                        TRACE("cp %s [%u] <<<\n", debugstr_w(event->type), i);
+                        TRACE("%p cp %s [%u] <<<\n", event_target, debugstr_w(event->type), i);
 
                         if(event->cancelable) {
                             if(V_VT(&v) == VT_BOOL) {
@@ -2617,7 +2617,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
                         }
                         VariantClear(&v);
                     }else {
-                        WARN("cp %s [%u] <<< %08x\n", debugstr_w(event->type), i, hres);
+                        WARN("%p cp %s [%u] <<< %08x\n", event_target, debugstr_w(event->type), i, hres);
                     }
                 }
             }
