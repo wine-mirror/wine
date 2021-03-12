@@ -113,7 +113,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
     msvcrt_init_math(hinstDLL);
     msvcrt_init_io();
-    msvcrt_init_console();
     msvcrt_init_args();
     msvcrt_init_signals();
 #if _MSVCR_VER >= 100 && _MSVCR_VER <= 120
