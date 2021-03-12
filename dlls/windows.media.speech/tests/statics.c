@@ -100,7 +100,7 @@ static void test_SpeechSynthesizer(void)
 
     size = 0xdeadbeef;
     hr = IVectorView_VoiceInformation_get_Size(voices, &size);
-    todo_wine ok(SUCCEEDED(hr), "IVectorView_VoiceInformation_QueryInterface voices failed, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "IVectorView_VoiceInformation_QueryInterface voices failed, hr %#x\n", hr);
     todo_wine ok(size != 0 && size != 0xdeadbeef, "IVectorView_VoiceInformation_get_Size returned %u\n", size);
 
     rc = IVectorView_VoiceInformation_Release(voices);
