@@ -733,7 +733,8 @@ HRESULT create_history(HTMLInnerWindow *window, OmHistory **ret)
     if(!history)
         return E_OUTOFMEMORY;
 
-    init_dispex(&history->dispex, (IUnknown*)&history->IOmHistory_iface, &OmHistory_dispex);
+    init_dispex_with_compat_mode(&history->dispex, (IUnknown*)&history->IOmHistory_iface, &OmHistory_dispex,
+                                 dispex_compat_mode(&window->event_target.dispex));
     history->IOmHistory_iface.lpVtbl = &OmHistoryVtbl;
     history->ref = 1;
 
