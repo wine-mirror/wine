@@ -87,7 +87,7 @@
 @ cdecl _wsystem(wstr) ucrtbase._wsystem
 @ cdecl abort() ucrtbase.abort
 @ cdecl exit(long) ucrtbase.exit
-@ stub feclearexcept
+@ cdecl feclearexcept(long) ucrtbase.feclearexcept
 @ cdecl fegetenv(ptr) ucrtbase.fegetenv
 @ stub fegetexceptflag
 @ cdecl fegetround() ucrtbase.fegetround

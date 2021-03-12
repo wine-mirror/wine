@@ -184,6 +184,7 @@ static int (CDECL *p_fegetround)(void);
 static int (CDECL *p_fesetround)(int);
 static int (CDECL *p_fesetexceptflag)(const fexcept_t*,int);
 static int (CDECL *p_fetestexcept)(int);
+static int (CDECL *p_feclearexcept)(int);
 static int (CDECL *p__clearfp)(void);
 static _locale_t (__cdecl *p_wcreate_locale)(int, const wchar_t *);
 static void (__cdecl *p_free_locale)(_locale_t);
@@ -261,6 +262,7 @@ static BOOL init(void)
     SET(p_fesetround, "fesetround");
     SET(p_fesetexceptflag, "fesetexceptflag");
     SET(p_fetestexcept, "fetestexcept");
+    SET(p_feclearexcept, "feclearexcept");
 
     SET(p__clearfp, "_clearfp");
     SET(p_vsscanf, "vsscanf");
@@ -854,6 +856,11 @@ static void test_feenv(void)
     except = p_fetestexcept(FE_ALL_EXCEPT);
     ok(except == (FE_INEXACT|FE_UNDERFLOW), "expected %x, got %lx\n", FE_INEXACT|FE_UNDERFLOW, except);
 
+    ret = p_feclearexcept(~FE_ALL_EXCEPT);
+    ok(!ret, "feclearexceptflag returned %x\n", ret);
+    except = p_fetestexcept(FE_ALL_EXCEPT);
+    ok(except == (FE_INEXACT|FE_UNDERFLOW), "expected %x, got %lx\n", FE_INEXACT|FE_UNDERFLOW, except);
+
     /* no crash, but no-op */
     ret = p_fesetexceptflag(NULL, 0);
     ok(!ret, "fesetexceptflag returned %x\n", ret);
@@ -885,7 +892,18 @@ static void test_feenv(void)
         ok(ret == flags, "Test %d: expected %x, got %x\n", i, flags, ret);
     }
 
-    p__clearfp();
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        ret = p_feclearexcept(tests[i]);
+        ok(!ret, "Test %d: feclearexceptflag returned %x\n", i, ret);
+
+        flags &= ~tests[i];
+        except = p_fetestexcept(tests[i]);
+        ok(!except, "Test %d: expected %x, got %lx\n", i, flags, except);
+    }
+
+    except = p_fetestexcept(FE_ALL_EXCEPT);
+    ok(!except, "expected 0, got %lx\n", except);
+
     /* setting bits with except */
     for(i=0; i<ARRAY_SIZE(tests); i++) {
         except = tests[i];
@@ -909,7 +927,11 @@ static void test_feenv(void)
         ret = p_fetestexcept(tests2[i].get);
         ok(ret == tests2[i].expect, "Test %d: expected %lx, got %x\n", i, tests2[i].expect, ret);
     }
-    p__clearfp();
+
+    ret = p_feclearexcept(FE_ALL_EXCEPT);
+    ok(!ret, "feclearexceptflag returned %x\n", ret);
+    except = p_fetestexcept(FE_ALL_EXCEPT);
+    ok(!except, "expected 0, got %lx\n", except);
 }
 
 static void test__wcreate_locale(void)

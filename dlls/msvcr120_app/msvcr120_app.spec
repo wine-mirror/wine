@@ -1809,7 +1809,7 @@
 @ cdecl fdim(double double) msvcr120.fdim
 @ cdecl fdimf(float float) msvcr120.fdimf
 @ cdecl fdiml(double double) msvcr120.fdiml
-@ stub feclearexcept
+@ cdecl feclearexcept(long) msvcr120.feclearexcept
 @ cdecl fegetenv(ptr) msvcr120.fegetenv
 @ stub fegetexceptflag
 @ cdecl fegetround() msvcr120.fegetround

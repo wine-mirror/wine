@@ -37,6 +37,7 @@ _ACRTIMP int __cdecl fesetenv(const fenv_t*);
 _ACRTIMP int __cdecl fegetround(void);
 _ACRTIMP int __cdecl fesetround(int);
 _ACRTIMP int __cdecl fesetexceptflag(const fexcept_t*, int);
+_ACRTIMP int __cdecl feclearexcept(int);
 _ACRTIMP int __cdecl fetestexcept(int);
 
 #ifdef __cplusplus

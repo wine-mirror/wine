@@ -2286,7 +2286,7 @@
 @ cdecl fdim(double double)
 @ cdecl fdimf(float float)
 @ cdecl fdiml(double double) fdim
-@ stub feclearexcept
+@ cdecl feclearexcept(long)
 @ cdecl fegetenv(ptr)
 @ stub fegetexceptflag
 @ cdecl fegetround()
