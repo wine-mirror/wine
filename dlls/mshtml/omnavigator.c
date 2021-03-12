@@ -1036,8 +1036,8 @@ static HRESULT create_mime_types_collection(OmNavigator *navigator, HTMLMimeType
     col->ref = 1;
     col->navigator = navigator;
 
-    init_dispex(&col->dispex, (IUnknown*)&col->IHTMLMimeTypesCollection_iface,
-                &HTMLMimeTypesCollection_dispex);
+    init_dispex_with_compat_mode(&col->dispex, (IUnknown*)&col->IHTMLMimeTypesCollection_iface,
+                                 &HTMLMimeTypesCollection_dispex, dispex_compat_mode(&navigator->dispex));
 
     *ret = col;
     return S_OK;
