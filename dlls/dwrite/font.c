@@ -2336,12 +2336,9 @@ static DWRITE_LOCALITY WINAPI dwritefontlist1_GetFontLocality(IDWriteFontList2 *
     return DWRITE_LOCALITY_LOCAL;
 }
 
-static HRESULT WINAPI dwritefontlist1_GetFont(IDWriteFontList2 *iface, UINT32 index, IDWriteFont3 **font)
+static HRESULT fontlist_get_font(const struct dwrite_fontlist *fontlist, unsigned int index,
+        IDWriteFont3 **font)
 {
-    struct dwrite_fontlist *fontlist = impl_from_IDWriteFontList2(iface);
-
-    TRACE("%p, %u, %p.\n", iface, index, font);
-
     *font = NULL;
 
     if (fontlist->font_count == 0)
@@ -2353,9 +2350,19 @@ static HRESULT WINAPI dwritefontlist1_GetFont(IDWriteFontList2 *iface, UINT32 in
     return create_font(fontlist->family, index, font);
 }
 
+static HRESULT WINAPI dwritefontlist1_GetFont(IDWriteFontList2 *iface, UINT32 index, IDWriteFont3 **font)
+{
+    struct dwrite_fontlist *fontlist = impl_from_IDWriteFontList2(iface);
+
+    TRACE("%p, %u, %p.\n", iface, index, font);
+
+    return fontlist_get_font(fontlist, index, font);
+}
+
 static HRESULT WINAPI dwritefontlist1_GetFontFaceReference(IDWriteFontList2 *iface, UINT32 index,
     IDWriteFontFaceReference **reference)
 {
+    struct dwrite_fontlist *fontlist = impl_from_IDWriteFontList2(iface);
     IDWriteFont3 *font;
     HRESULT hr;
 
@@ -2363,12 +2370,11 @@ static HRESULT WINAPI dwritefontlist1_GetFontFaceReference(IDWriteFontList2 *ifa
 
     *reference = NULL;
 
-    hr = IDWriteFontList2_GetFont(iface, index, &font);
-    if (FAILED(hr))
-        return hr;
-
-    hr = IDWriteFont3_GetFontFaceReference(font, reference);
-    IDWriteFont3_Release(font);
+    if (SUCCEEDED(hr = fontlist_get_font(fontlist, index, &font)))
+    {
+        hr = IDWriteFont3_GetFontFaceReference(font, reference);
+        IDWriteFont3_Release(font);
+    }
 
     return hr;
 }
