@@ -2411,8 +2411,11 @@ static void test_GetMetrics(void)
 
             get_combined_font_name(familyW, faceW, nameW);
 
-            if (has_face_variations(fontface)) {
-                skip("%s: test does not support variable fonts.\n", wine_dbgstr_w(nameW));
+            if (has_face_variations(fontface))
+            {
+                static int once;
+                if (!once++)
+                    skip("GetMetrics() test does not support variable fonts.\n");
                 IDWriteFontFace_Release(fontface);
                 continue;
             }
@@ -2841,8 +2844,11 @@ if (0) /* crashes on native */
             hr = IDWriteFont_CreateFontFace(font, &fontface);
             ok(hr == S_OK, "got 0x%08x\n", hr);
 
-            if (has_face_variations(fontface)) {
-                skip("%s: test does not support variable fonts.\n", wine_dbgstr_w(nameW));
+            if (has_face_variations(fontface))
+            {
+                static int once;
+                if (!once++)
+                    skip("ConvertFontFaceToLOGFONT() test does not support variable fonts.\n");
                 IDWriteFontFace_Release(fontface);
                 IDWriteFont_Release(font);
                 continue;
@@ -3810,8 +3816,11 @@ if (strcmp(winetest_platform, "wine")) {
 
             IDWriteLocalizedStrings_Release(names);
 
-            if (IDWriteFontFace_IsSymbolFont(fontface)) {
-                skip("Skipping for symbol font %s %s.\n", wine_dbgstr_w(familynameW), wine_dbgstr_w(facenameW));
+            if (IDWriteFontFace_IsSymbolFont(fontface))
+            {
+                static int once;
+                if (!once++)
+                    skip("GetUnicodeRanges() test does not support symbol fonts.\n");
                 IDWriteFontFace_Release(fontface);
                 continue;
             }
@@ -4802,8 +4811,11 @@ if (0) { /* crashes on native */
             has_variations = has_face_variations(fontface);
             IDWriteFontFace_Release(fontface);
 
-            if (has_variations) {
-                skip("%s: test does not support variable fonts.\n", wine_dbgstr_w(nameW));
+            if (has_variations)
+            {
+                static int once;
+                if (!once++)
+                    skip("ConvertFontToLOGFONT() test does not support variable fonts.\n");
                 IDWriteFont_Release(font);
                 continue;
             }
