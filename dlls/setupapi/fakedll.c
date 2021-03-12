@@ -881,13 +881,18 @@ static int install_fake_dll( WCHAR *dest, WCHAR *file, const WCHAR *ext, BOOL ex
     WCHAR *destname = dest + lstrlenW(dest);
     WCHAR *name = wcsrchr( file, '\\' ) + 1;
     WCHAR *end = name + lstrlenW(name);
+    SIZE_T len = end - name;
 
     if (ext) lstrcpyW( end, ext );
-    if (!(ret = read_file( file, &data, &size, expect_builtin ))) return 0;
+    if (!(ret = read_file( file, &data, &size, expect_builtin )))
+    {
+        *end = 0;
+        return 0;
+    }
 
-    if (end > name + 2 && !wcsncmp( end - 2, L"16", 2 )) end -= 2;  /* remove "16" suffix */
-    memcpy( destname, name, (end - name) * sizeof(WCHAR) );
-    destname[end - name] = 0;
+    if (end > name + 2 && !wcsncmp( end - 2, L"16", 2 )) len -= 2;  /* remove "16" suffix */
+    memcpy( destname, name, len * sizeof(WCHAR) );
+    destname[len] = 0;
     if (!add_handled_dll( destname )) ret = -1;
 
     if (ret != -1)
@@ -906,6 +911,7 @@ static int install_fake_dll( WCHAR *dest, WCHAR *file, const WCHAR *ext, BOOL ex
         }
     }
     *destname = 0;  /* restore it for next file */
+    *end = 0;
     return ret;
 }
 
@@ -965,9 +971,14 @@ static void install_lib_dir( WCHAR *dest, WCHAR *file, const WCHAR *default_ext,
         {
             lstrcatW( name, L"\\" );
             lstrcatW( name, data.name );
-            if (!wcschr( data.name, '.' )) lstrcatW( name, default_ext );
-            if (!install_fake_dll( dest, file, NULL, expect_builtin, &delay_copy ))
-                install_fake_dll( dest, file, L".fake", FALSE, &delay_copy );
+            if (wcschr( data.name, '.' )) /* module possibly already has an extension */
+            {
+                if (install_fake_dll( dest, file, NULL, expect_builtin, &delay_copy )) continue;
+                if (install_fake_dll( dest, file, L".fake", FALSE, &delay_copy )) continue;
+            }
+            lstrcatW( name, default_ext );
+            if (install_fake_dll( dest, file, NULL, expect_builtin, &delay_copy )) continue;
+            if (install_fake_dll( dest, file, L".fake", FALSE, &delay_copy )) continue;
         }
         else install_fake_dll( dest, file, NULL, expect_builtin, &delay_copy );
     }
