@@ -2460,11 +2460,6 @@ static void test_system_fontcollection(void)
     ok(coll2 == collection, "got %p, was %p\n", coll2, collection);
     IDWriteFontCollection_Release(coll2);
 
-    hr = IDWriteFactory_GetSystemFontCollection(factory, &coll2, TRUE);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(coll2 == collection, "got %p, was %p\n", coll2, collection);
-    IDWriteFontCollection_Release(coll2);
-
     factory2 = create_factory();
     hr = IDWriteFactory_GetSystemFontCollection(factory2, &coll2, FALSE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -2652,10 +2647,8 @@ todo_wine
         hr = IDWriteFactory6_GetSystemFontCollection(factory6, FALSE, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE,
                 &collection2);
         ok(hr == S_OK, "Failed to get collection, hr %#x.\n", hr);
-        ok(collection == (IDWriteFontCollection *)collection2, "Unexpected instance.\n");
         IDWriteFontCollection2_Release(collection2);
     }
-
         IDWriteFactory6_Release(factory6);
     }
     else
