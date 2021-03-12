@@ -52,6 +52,7 @@ typedef LONG_PTR DB_LRESERVE;
 #include "cmdbas.idl"
 #include "cmdtxt.idl"
 #include "colinf.idl"
+#include "colrst.idl"
 #include "dbccmd.idl"
 #include "dbcses.idl"
 #include "srcrst.idl"

@@ -71,6 +71,7 @@ SOURCES = \
 	codecapi.h \
 	colinf.idl \
 	colordlg.h \
+	colrst.idl \
 	comcat.idl \
 	commctrl.h \
 	commctrl.rh \
