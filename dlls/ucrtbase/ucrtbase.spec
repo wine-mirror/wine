@@ -2296,7 +2296,7 @@
 @ cdecl fesetenv(ptr)
 @ stub fesetexceptflag
 @ cdecl fesetround(long)
-@ stub fetestexcept
+@ cdecl fetestexcept(long)
 @ cdecl fflush(ptr)
 @ cdecl fgetc(ptr)
 @ cdecl fgetpos(ptr ptr)

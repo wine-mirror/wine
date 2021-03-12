@@ -2214,6 +2214,14 @@ int CDECL fegetenv(fenv_t *env)
     env->_Fe_stat = _statusfp();
     return 0;
 }
+
+/*********************************************************************
+ *      fetestexcept (MSVCR120.@)
+ */
+int CDECL fetestexcept(int flags)
+{
+    return _statusfp() & flags;
+}
 #endif
 
 #if _MSVCR_VER>=140

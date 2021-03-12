@@ -2154,7 +2154,7 @@
 @ cdecl fesetenv(ptr)
 @ stub fesetexceptflag
 @ cdecl fesetround(long)
-@ stub fetestexcept
+@ cdecl fetestexcept(long)
 @ stub feupdateenv
 @ cdecl fflush(ptr)
 @ cdecl fgetc(ptr)

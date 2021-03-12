@@ -182,6 +182,7 @@ static int (CDECL *p_fegetenv)(fenv_t*);
 static int (CDECL *p_fesetenv)(const fenv_t*);
 static int (CDECL *p_fegetround)(void);
 static int (CDECL *p_fesetround)(int);
+static int (CDECL *p_fetestexcept)(int);
 static int (CDECL *p__clearfp)(void);
 static _locale_t (__cdecl *p_wcreate_locale)(int, const wchar_t *);
 static void (__cdecl *p_free_locale)(_locale_t);
@@ -257,6 +258,7 @@ static BOOL init(void)
     SET(p_fesetenv, "fesetenv");
     SET(p_fegetround, "fegetround");
     SET(p_fesetround, "fesetround");
+    SET(p_fetestexcept, "fetestexcept");
 
     SET(p__clearfp, "_clearfp");
     SET(p_vsscanf, "vsscanf");
@@ -788,8 +790,17 @@ static void test_critical_section(void)
 
 static void test_feenv(void)
 {
+    static const int tests[] = {
+        0,
+        FE_INEXACT,
+        FE_UNDERFLOW,
+        FE_OVERFLOW,
+        FE_DIVBYZERO,
+        FE_INVALID,
+        FE_ALL_EXCEPT,
+    };
     fenv_t env, env2;
-    int ret;
+    int i, ret, flags;
 
     p__clearfp();
 
@@ -807,6 +818,26 @@ static void test_feenv(void)
     ok(!ret, "fesetenv returned %x\n", ret);
     ret = p_fegetround();
     ok(ret == FE_TONEAREST, "Got unexpected round mode %#x.\n", ret);
+
+    ret = p_fetestexcept(FE_ALL_EXCEPT);
+    ok(!ret, "fetestexcept returned %x\n", ret);
+
+    flags = 0;
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        ret = p_fegetenv(&env);
+        ok(!ret, "Test %d: fegetenv returned %x\n", i, ret);
+        env._Fe_stat |= tests[i];
+        ret = p_fesetenv(&env);
+        ok(!ret, "Test %d: fesetenv returned %x\n", i, ret);
+
+        ret = p_fetestexcept(tests[i]);
+        ok(ret == tests[i], "Test %d: expected %x, got %x\n", i, tests[i], ret);
+
+        flags |= tests[i];
+        ret = p_fetestexcept(FE_ALL_EXCEPT);
+        ok(ret == flags, "Test %d: expected %x, got %x\n", i, flags, ret);
+    }
+    p__clearfp();
 }
 
 static void test__wcreate_locale(void)

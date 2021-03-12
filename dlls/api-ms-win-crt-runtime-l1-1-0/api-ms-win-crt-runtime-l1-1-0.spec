@@ -95,7 +95,7 @@
 @ cdecl fesetenv(ptr) ucrtbase.fesetenv
 @ stub fesetexceptflag
 @ cdecl fesetround(long) ucrtbase.fesetround
-@ stub fetestexcept
+@ cdecl fetestexcept(long) ucrtbase.fetestexcept
 @ cdecl perror(str) ucrtbase.perror
 @ cdecl quick_exit(long) ucrtbase.quick_exit
 @ cdecl raise(long) ucrtbase.raise
