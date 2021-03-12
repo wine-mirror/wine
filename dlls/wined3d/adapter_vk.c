@@ -1759,6 +1759,14 @@ static void adapter_vk_clear_uav(struct wined3d_context *context,
             clear_value, wined3d_context_vk(context));
 }
 
+static void adapter_vk_generate_mipmap(struct wined3d_context *context, struct wined3d_shader_resource_view *view)
+{
+    TRACE("context %p, view %p.\n", context, view);
+
+    wined3d_shader_resource_view_vk_generate_mipmap(wined3d_shader_resource_view_vk(view),
+            wined3d_context_vk(context));
+}
+
 static const struct wined3d_adapter_ops wined3d_adapter_vk_ops =
 {
     .adapter_destroy = adapter_vk_destroy,
@@ -1793,6 +1801,7 @@ static const struct wined3d_adapter_ops wined3d_adapter_vk_ops =
     .adapter_draw_primitive = adapter_vk_draw_primitive,
     .adapter_dispatch_compute = adapter_vk_dispatch_compute,
     .adapter_clear_uav = adapter_vk_clear_uav,
+    .adapter_generate_mipmap = adapter_vk_generate_mipmap,
 };
 
 static unsigned int wined3d_get_wine_vk_version(void)

@@ -2596,8 +2596,12 @@ static void wined3d_cs_exec_generate_mipmaps(struct wined3d_cs *cs, const void *
 {
     const struct wined3d_cs_generate_mipmaps *op = data;
     struct wined3d_shader_resource_view *view = op->view;
+    struct wined3d_context *context;
 
-    shader_resource_view_generate_mipmaps(view);
+    context = context_acquire(cs->c.device, NULL, 0);
+    cs->c.device->adapter->adapter_ops->adapter_generate_mipmap(context, view);
+    context_release(context);
+
     wined3d_resource_release(view->resource);
 }
 

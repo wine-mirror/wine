@@ -4225,6 +4225,9 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
         flags |= WINED3DFMT_FLAG_UNORDERED_ACCESS;
     }
 
+    if (!(~flags & (WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_FILTERING)))
+        flags |= WINED3DFMT_FLAG_GEN_MIPMAP;
+
     format->f.flags[WINED3D_GL_RES_TYPE_TEX_1D] |= flags;
     format->f.flags[WINED3D_GL_RES_TYPE_TEX_2D] |= flags;
     format->f.flags[WINED3D_GL_RES_TYPE_TEX_3D] |= flags;
