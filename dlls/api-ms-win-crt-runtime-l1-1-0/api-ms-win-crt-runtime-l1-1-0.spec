@@ -89,7 +89,7 @@
 @ cdecl exit(long) ucrtbase.exit
 @ cdecl feclearexcept(long) ucrtbase.feclearexcept
 @ cdecl fegetenv(ptr) ucrtbase.fegetenv
-@ stub fegetexceptflag
+@ cdecl fegetexceptflag(ptr long) ucrtbase.fegetexceptflag
 @ cdecl fegetround() ucrtbase.fegetround
 @ stub feholdexcept
 @ cdecl fesetenv(ptr) ucrtbase.fesetenv

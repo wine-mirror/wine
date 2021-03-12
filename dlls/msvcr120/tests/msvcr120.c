@@ -182,6 +182,7 @@ static int (CDECL *p_fegetenv)(fenv_t*);
 static int (CDECL *p_fesetenv)(const fenv_t*);
 static int (CDECL *p_fegetround)(void);
 static int (CDECL *p_fesetround)(int);
+static int (CDECL *p_fegetexceptflag)(fexcept_t*,int);
 static int (CDECL *p_fesetexceptflag)(const fexcept_t*,int);
 static int (CDECL *p_fetestexcept)(int);
 static int (CDECL *p_feclearexcept)(int);
@@ -260,6 +261,7 @@ static BOOL init(void)
     SET(p_fesetenv, "fesetenv");
     SET(p_fegetround, "fegetround");
     SET(p_fesetround, "fesetround");
+    SET(p_fegetexceptflag, "fegetexceptflag");
     SET(p_fesetexceptflag, "fesetexceptflag");
     SET(p_fetestexcept, "fetestexcept");
     SET(p_feclearexcept, "feclearexcept");
@@ -849,6 +851,7 @@ static void test_feenv(void)
 
     if(0) { /* crash on windows */
         p_fesetexceptflag(NULL, FE_ALL_EXCEPT);
+        p_fegetexceptflag(NULL, 0);
     }
     except = FE_ALL_EXCEPT;
     ret = p_fesetexceptflag(&except, FE_INEXACT|FE_UNDERFLOW);
@@ -890,6 +893,16 @@ static void test_feenv(void)
         flags |= tests[i];
         ret = p_fetestexcept(FE_ALL_EXCEPT);
         ok(ret == flags, "Test %d: expected %x, got %x\n", i, flags, ret);
+
+        except = ~0;
+        ret = p_fegetexceptflag(&except, ~0);
+        ok(!ret, "Test %d: fegetexceptflag returned %x.\n", i, ret);
+        ok(except == flags, "Test %d: expected %x, got %lx\n", i, flags, except);
+
+        except = ~0;
+        ret = p_fegetexceptflag(&except, tests[i]);
+        ok(!ret, "Test %d: fegetexceptflag returned %x.\n", i, ret);
+        ok(except == tests[i], "Test %d: expected %x, got %lx\n", i, tests[i], except);
     }
 
     for(i=0; i<ARRAY_SIZE(tests); i++) {
