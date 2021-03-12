@@ -801,6 +801,15 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
             FillRect( hdc, &rc, editor->hbrBackground );
         return 1;
     }
+    case WM_GETTEXTLENGTH:
+    {
+        GETTEXTLENGTHEX params;
+
+        params.flags = GTL_CLOSE | (host->emulate_10 ? 0 : GTL_USECRLF) | GTL_NUMCHARS;
+        params.codepage = unicode ? CP_UNICODE : CP_ACP;
+        hr = ITextServices_TxSendMessage( host->text_srv, EM_GETTEXTLENGTHEX, (WPARAM)&params, 0, &res );
+        break;
+    }
     case WM_PAINT:
     {
         HDC hdc;
