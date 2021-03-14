@@ -241,11 +241,8 @@ ULONG CDECL ldap_get_paged_count( WLDAP32_LDAP *ld, PLDAPSearch search,
         return WLDAP32_LDAP_SUCCESS;
     }
 
-    if (search->cookie)
-    {
-        heap_free( search->cookie );
-        search->cookie = NULL;
-    }
+    heap_free( search->cookie );
+    search->cookie = NULL;
 
     ret = ldap_parse_page_controlW( ld, server_ctrls, count, &search->cookie );
     if (ret == WLDAP32_LDAP_SUCCESS)
